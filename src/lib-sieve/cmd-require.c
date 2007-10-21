@@ -75,7 +75,7 @@ bool cmd_require_generate
 		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
 		
 		while ( stritem != NULL ) {
-			struct sieve_extension *ext = (struct sieve_extension *) arg->context;
+			struct sieve_extension *ext = (struct sieve_extension *) stritem->context;
 		
 			sieve_generator_register_extension(generator, ext);
 			
