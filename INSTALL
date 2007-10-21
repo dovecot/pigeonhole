@@ -1,0 +1,15 @@
+Compiling
+---------
+
+First of all you'll need to have built Dovecot sources available. It's also
+not a good idea to build the plugin against self-compiled Dovecot sources,
+but then actually use a prebuilt binary package of Dovecot. That might work
+if the Dovecot versions are the same, but it's not guaranteed.
+
+./configure --with-dovecot=../dovecot-1.0
+make
+sudo make install
+
+Configuring
+-----------
+
