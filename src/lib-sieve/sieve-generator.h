@@ -2,14 +2,18 @@
 #define __SIEVE_GENERATOR_H__
 
 #include "sieve-ast.h"
-
-typedef size_t sieve_size_t;
+#include "sieve-code.h"
 
 struct sieve_generator;
 
 struct sieve_generator *sieve_generator_create(struct sieve_ast *ast);
 void sieve_generator_free(struct sieve_generator *generator);
 
+void sieve_generator_register_opcode
+	(struct sieve_generator *generator, const struct sieve_opcode *opcode);
+unsigned int sieve_generator_find_opcode
+		(struct sieve_generator *generator, const struct sieve_opcode *opcode); 
+		
 /* Jump list */
 
 struct sieve_jumplist {
@@ -27,7 +31,9 @@ inline void sieve_generator_update_data
 	(struct sieve_generator *generator, sieve_size_t address, void *data, sieve_size_t size);
 inline sieve_size_t sieve_generator_get_current_address(struct sieve_generator *generator);
 
-sieve_size_t sieve_generator_emit_opcode(struct sieve_generator *generator, const char *extension, int opcode);
+sieve_size_t sieve_generator_emit_core_opcode(struct sieve_generator *generator, int opcode);
+sieve_size_t sieve_generator_emit_opcode(struct sieve_generator *generator, const struct sieve_opcode *opcode);
+
 sieve_size_t sieve_generator_emit_offset(struct sieve_generator *generator, int offset);
 void sieve_generator_resolve_offset(struct sieve_generator *generator, sieve_size_t address); 
 

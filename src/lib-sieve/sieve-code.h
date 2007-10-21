@@ -4,13 +4,15 @@
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 
+typedef size_t sieve_size_t;
+
 struct sieve_opcode {
 	bool (*dump)(struct sieve_interpreter *interpreter);
 	bool (*execute)(struct sieve_interpreter *interpreter);
 };
 
 enum sieve_core_operation {
-	SIEVE_OPCODE_LOAD      = 0x01
+	SIEVE_OPCODE_LOAD      = 0x01,
 	SIEVE_OPCODE_JMP       = 0x02,
 	SIEVE_OPCODE_JMPTRUE   = 0x03,
 	SIEVE_OPCODE_JMPFALSE  = 0x04,

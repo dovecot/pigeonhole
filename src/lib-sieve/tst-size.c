@@ -1,6 +1,7 @@
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
+#include "sieve-code.h"
 
 struct tst_size_context_data {
 	enum { SIZE_UNASSIGNED, SIZE_UNDER, SIZE_OVER } type;
@@ -104,9 +105,9 @@ bool tst_size_generate
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) ctx->data;
 
 	if ( ctx_data->type == SIZE_OVER ) 
-		sieve_generator_emit_core_opcode(generator, NULL, SIEVE_OPCODE_SIZEOVER);
+		sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_SIZEOVER);
 	else
-		sieve_generator_emit_core_opcode(generator, NULL, SIEVE_OPCODE_SIZEUNDER);
+		sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_SIZEUNDER);
 
 	sieve_generator_emit_number(generator, ctx_data->limit);
 	  

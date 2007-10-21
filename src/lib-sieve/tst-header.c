@@ -52,7 +52,7 @@ bool tst_header_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
 	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
-	sieve_generator_emit_core_opcode(generator, NULL, SIEVE_OPCODE_HEADER);
+	sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_HEADER);
 
 	/* Emit header names */  	
 	if ( !sieve_generator_emit_stringlist_argument(generator, arg) ) 

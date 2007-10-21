@@ -44,7 +44,7 @@ bool tst_allof_generate
 	
 	if ( jump_true ) {
 		/* All tests succeeded, jump to case TRUE */
-		sieve_generator_emit_core_opcode(generator, NULL, SIEVE_OPCODE_JMP);
+		sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_JMP);
 		sieve_jumplist_add(jumps, sieve_generator_emit_offset(generator, 0));
 		
 		/* All false exits jump here */

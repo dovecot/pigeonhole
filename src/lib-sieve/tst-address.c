@@ -55,7 +55,7 @@ bool tst_address_generate
 		struct sieve_command_context *ctx __attr_unused__) 
 {
 	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
-	sieve_generator_emit_core_opcode(generator, NULL, SIEVE_OPCODE_ADDRESS);
+	sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_ADDRESS);
 	
 	/* Emit header names */  	
 	if ( !sieve_generator_emit_stringlist_argument(generator, arg) ) 

@@ -65,7 +65,9 @@ bool cmd_if_generate(struct sieve_generator *generator, struct sieve_command_con
 bool cmd_else_generate(struct sieve_generator *generator, struct sieve_command_context *ctx);
 
 bool cmd_redirect_validate(struct sieve_validator *validator, struct sieve_command_context *context);
+
 bool cmd_require_validate(struct sieve_validator *validator, struct sieve_command_context *context);
+bool cmd_require_generate(struct sieve_generator *generator, struct sieve_command_context *ctx);
 
 extern const struct sieve_command sieve_core_commands[];
 extern const unsigned int sieve_core_commands_count;

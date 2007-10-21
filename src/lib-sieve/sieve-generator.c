@@ -7,8 +7,12 @@
 #include "hash.h"
 
 #include "sieve-common.h"
+#include "sieve-extensions.h"
 #include "sieve-commands-private.h"
+#include "sieve-code.h"
+
 #include "sieve-generator.h"
+
 
 /* Jump list */
 void sieve_jumplist_init(struct sieve_jumplist *jlist)
@@ -33,6 +37,13 @@ void sieve_jumplist_resolve(struct sieve_jumplist *jlist, struct sieve_generator
 	
 	array_free(&jlist->jumps);
 }
+
+/* Opcode */
+
+struct sieve_opcode_registration {
+	const struct sieve_opcode *opcode;
+	unsigned int code;
+};
 
 /* Generator */
 
@@ -74,18 +85,25 @@ void sieve_generator_free(struct sieve_generator *generator)
 
 /* Registration functions */
 
-void sieve_generator_register_extension
-	(struct sieve_validator *generator, const struct sieve_extension *extension) 
+void sieve_generator_register_opcode
+	(struct sieve_generator *generator, const struct sieve_opcode *opcode) 
 {
-	unsigned int index = hash_size(generator->extensions);
-	 
-	hash_insert(generator->extension, (void *) extension, (void *) index);
+	struct sieve_opcode_registration *reg;
+	
+	reg = p_new(generator->pool, struct sieve_opcode_registration, 1);
+	reg->opcode = opcode;
+	reg->code = hash_size(generator->opcodes);
+	
+	hash_insert(generator->opcodes, (void *) opcode, (void *) reg);
 }
 
 unsigned int sieve_generator_find_opcode
-		(struct sieve_validator *generator, const struct sieve_opcode *opcode) 
+		(struct sieve_generator *generator, const struct sieve_opcode *opcode) 
 {
-  return 	(unsigned int) hash_lookup(generator->opcodes, opcode);
+  struct sieve_opcode_registration *reg = 
+    (struct sieve_opcode_registration *) hash_lookup(generator->opcodes, opcode);
+    
+  return reg->code;
 }
 
 /* Emission functions */
@@ -233,7 +251,8 @@ sieve_size_t sieve_generator_emit_string_list
   const struct sieve_ast_argument *stritem;
   unsigned int listlen = sieve_ast_strlist_count(strlist);
   sieve_size_t end_offset = 0;
-  
+
+	/* Emit byte identifying the type of operand */	  
   sieve_size_t address = sieve_generator_emit_byte(generator, SIEVE_OPERAND_STRING_LIST);
   
   /* Give the interpreter an easy way to skip over this string list */
@@ -263,7 +282,8 @@ sieve_size_t sieve_generator_emit_core_opcode(struct sieve_generator *generator,
 	return sieve_generator_emit_data(generator, (void *) &op, 1);
 }
 
-sieve_size_t sieve_generator_emit_opcode(struct sieve_generator *generator, struct sieve_opcode *opcode) 
+sieve_size_t sieve_generator_emit_opcode
+	(struct sieve_generator *generator, const struct sieve_opcode *opcode) 
 {
 	unsigned char op = (1 << 6) + sieve_generator_find_opcode(generator, opcode);
 	
@@ -291,9 +311,9 @@ bool sieve_generate_test
 		if ( tst_node->context->command->generate(generator, tst_node->context) ) {
 			
 			if ( jump_true ) 
-				sieve_generator_emit_core_opcode(generator, NULL, SIEVE_OPCODE_JMPTRUE);
+				sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_JMPTRUE);
 			else
-				sieve_generator_emit_core_opcode(generator, NULL, SIEVE_OPCODE_JMPFALSE);
+				sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_JMPFALSE);
 			sieve_jumplist_add(jlist, sieve_generator_emit_offset(generator, 0));
 						
 			return TRUE;

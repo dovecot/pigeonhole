@@ -1,4 +1,7 @@
+#include <stdio.h>
+
 #include "sieve-code.h"
+#include "sieve-interpreter.h"
 
 /* Code dump for core commands */
 

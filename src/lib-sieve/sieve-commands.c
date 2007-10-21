@@ -79,7 +79,7 @@ bool cmd_stop_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx __attr_unused__) 
 {
-	sieve_generator_emit_opcode(generator, NULL, SIEVE_OPCODE_STOP);\
+	sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_STOP);
 	return TRUE;
 }
 
@@ -87,7 +87,7 @@ bool cmd_keep_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx __attr_unused__) 
 {
-	sieve_generator_emit_opcode(generator, NULL, SIEVE_OPCODE_KEEP);
+	sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_KEEP);
 	return TRUE;
 }
 
@@ -95,7 +95,7 @@ bool cmd_discard_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx __attr_unused__) 
 {
-	sieve_generator_emit_opcode(generator, NULL, SIEVE_OPCODE_DISCARD);
+	sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_DISCARD);
 	return TRUE;
 }
 
@@ -105,7 +105,7 @@ bool tst_false_generate
 		struct sieve_jumplist *jumps, bool jump_true)
 {
 	if ( !jump_true ) {
-		sieve_generator_emit_opcode(generator, NULL, SIEVE_OPCODE_JMP);
+		sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_JMP);
 		sieve_jumplist_add(jumps, sieve_generator_emit_offset(generator, 0));
 	}
 	
@@ -118,7 +118,7 @@ bool tst_true_generate
 		struct sieve_jumplist *jumps, bool jump_true)
 {
 	if ( jump_true ) {
-		sieve_generator_emit_opcode(generator, NULL, SIEVE_OPCODE_JMP);
+		sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_JMP);
 		sieve_jumplist_add(jumps, sieve_generator_emit_offset(generator, 0));
 	}
 	

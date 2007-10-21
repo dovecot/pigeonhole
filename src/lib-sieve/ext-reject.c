@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
@@ -6,13 +8,14 @@
 /* Forward declarations */
 
 static bool cmd_reject_validate(struct sieve_validator *validator, struct sieve_command_context *cmd);
-static bool ext_reject_opcode_dump(struct sieve_interpreter *interpreter, int opcode);
+static bool cmd_reject_generate(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+static bool opc_reject_dump(struct sieve_interpreter *interpreter);
 
 /* Extension definitions */
 
 static const struct sieve_command reject_command = 
-	{ "reject", SCT_COMMAND, NULL, cmd_reject_validate, NULL, NULL };
-static const struct sieve_opcode_extension reject_opcode = 
+	{ "reject", SCT_COMMAND, NULL, cmd_reject_validate, cmd_reject_generate, NULL };
+static const struct sieve_opcode reject_opcode = 
 	{ opc_reject_dump, NULL };
 
 /* 
@@ -51,7 +54,7 @@ bool ext_reject_validator_load(struct sieve_validator *validator)
  * Generation
  */
  
-bool cmd_reject_generate
+static bool cmd_reject_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
 	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
@@ -64,6 +67,16 @@ bool cmd_reject_generate
 	
 	return TRUE;
 }
+
+/* Load extension into generator */
+bool ext_reject_generator_load(struct sieve_generator *generator)
+{
+	/* Register new command */
+	sieve_generator_register_opcode(generator, &reject_opcode);
+
+	return TRUE;
+}
+
 
 /* 
  * Code dump

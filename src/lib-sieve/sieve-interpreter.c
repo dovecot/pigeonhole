@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "mempool.h"
+#include "array.h"
 
 #include "sieve-commands-private.h"
 #include "sieve-generator.h"
