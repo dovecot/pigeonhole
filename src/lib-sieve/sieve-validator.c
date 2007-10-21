@@ -201,7 +201,7 @@ static const struct sieve_tag *sieve_validator_find_tag
 
 /* Extension support */
 
-bool sieve_validator_load_extension
+const struct sieve_extension *sieve_validator_load_extension
 	(struct sieve_validator *validator, struct sieve_command_context *cmd, const char *extension) 
 {
 	const struct sieve_extension *ext = sieve_extension_acquire(extension); 
@@ -209,17 +209,17 @@ bool sieve_validator_load_extension
 	if ( ext == NULL ) {
 		sieve_command_validate_error(validator, cmd, 
 			"unsupported sieve capability '%s'", extension);
-		return FALSE;
+		return NULL;
 	}
 
 	if ( ext->validator_load != NULL && !ext->validator_load(validator) ) {
 		sieve_command_validate_error(validator, cmd, 
 			"failed to load sieve capability '%s'", extension);
-		return FALSE;
+		return NULL;
 	}
 	
 	i_info("loaded extension '%s'", extension);
-	return TRUE;
+	return ext;
 }
 
 /* Comparator validation */

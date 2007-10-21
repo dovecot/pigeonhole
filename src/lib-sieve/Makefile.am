@@ -31,6 +31,7 @@ exts = \
 sievec_SOURCES = \
 	sieve-lexer.c \
 	sieve-ast.c \
+	sieve-binary.c \
 	sieve-parser.c \
 	sieve-validator.c \
 	sieve-generator.c \

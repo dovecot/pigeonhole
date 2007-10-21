@@ -31,9 +31,8 @@ int main(int argc, char **argv) {
 	struct sieve_validator *validator;
 	struct sieve_generator *generator;
 	struct sieve_interpreter *interpreter;
-	buffer_t *code = NULL;
+	struct sieve_binary *binary;
 	
-
 	if ( argc < 2 ) {
 		printf( "Usage: sievec <filename>\n");
  		exit(1);
@@ -73,13 +72,14 @@ int main(int argc, char **argv) {
 			printf("Generating script...\n"); 		
 			generator = sieve_generator_create(ast);
 	
-			if ( !sieve_generate(generator, &code) || sieve_get_errors(ehandler) > 0 ) {
+			binary = sieve_generate(generator);
+			if ( sieve_get_errors(ehandler) > 0 || (binary == NULL) ) {
 				printf("Script generation failed.\n");
 			} else {
 				printf("Script generation successful.\n");
 				
 				printf("Code Dump:\n\n");
-				interpreter = sieve_interpreter_create(code);
+				interpreter = sieve_interpreter_create(binary);
 				
 				sieve_interpreter_dump_code(interpreter);
 				

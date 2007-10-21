@@ -3,12 +3,17 @@
 #include "sieve-validator.h"
 
 /* Forward declarations */
+
+static bool ext_envelope_validator_load(struct sieve_validator *validator);
 static bool tst_envelope_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
 static bool tst_envelope_validate
 	(struct sieve_validator *validator, struct sieve_command_context *tst);
 
-/* Test definitions */
+/* Extension definitions */
+
+const struct sieve_extension envelope_extension = 
+	{ "envelope", ext_envelope_validator_load, NULL, NULL, NULL };
 static const struct sieve_command envelope_test = 
 	{ "envelope", SCT_TEST, tst_envelope_registered, tst_envelope_validate, NULL, NULL };
 
@@ -55,7 +60,7 @@ static bool tst_envelope_validate(struct sieve_validator *validator, struct siev
 }
 
 /* Load extension into validator */
-bool ext_envelope_validator_load(struct sieve_validator *validator)
+static bool ext_envelope_validator_load(struct sieve_validator *validator)
 {
 	/* Register new test */
 	sieve_validator_register_command(validator, &envelope_test);

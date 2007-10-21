@@ -72,6 +72,9 @@ struct sieve_ast_argument {
   } _value;
   
   unsigned int source_line;
+
+	/* Arbitrary data associated with this ast element */
+	void *context;
 };
 
 struct sieve_ast_list {

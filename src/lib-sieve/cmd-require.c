@@ -5,6 +5,11 @@
 #include "sieve-extensions.h"
 #include "sieve-validator.h" 
 
+struct cmd_require_context_data {
+	struct sieve_ast_argument *arg;
+	struct sieve_extension *extension;
+};
+
 bool cmd_require_validate(struct sieve_validator *validator, struct sieve_command_context *cmd) 
 {
 	struct sieve_ast_argument *arg;
@@ -28,18 +33,20 @@ bool cmd_require_validate(struct sieve_validator *validator, struct sieve_comman
 	 	return FALSE;
 	}
 	
-	cmd->data = arg;
-
+	cmd->data = (void *) arg;
+	
 	/* Check argument and load specified extension(s) */
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING )
 		/* Single string */
-		sieve_validator_load_extension(validator, cmd, sieve_ast_argument_strc(arg));
+		arg->context = (void *) sieve_validator_load_extension
+			(validator, cmd, sieve_ast_argument_strc(arg));	
 	else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		/* String list */
 		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
 		
 		while ( stritem != NULL ) {
-			sieve_validator_load_extension(validator, cmd, sieve_ast_strlist_strc(stritem));
+			stritem->context = (void *) sieve_validator_load_extension
+				(validator, cmd, sieve_ast_strlist_strc(stritem));
 			
 			stritem = sieve_ast_strlist_next(stritem);
 		}
@@ -59,11 +66,24 @@ bool cmd_require_generate
 {
 	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
 	
-	sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_LOAD);
-
-	/* Emit  */  	
-	if ( !sieve_generator_emit_stringlist_argument(generator, arg) ) 
-		return FALSE;
+	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
+		struct sieve_extension *ext = (struct sieve_extension *) arg->context;
+		
+		sieve_generator_register_extension(generator, ext);
+	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
+		/* String list */
+		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
+		
+		while ( stritem != NULL ) {
+			struct sieve_extension *ext = (struct sieve_extension *) arg->context;
+		
+			sieve_generator_register_extension(generator, ext);
+			
+			stritem = sieve_ast_strlist_next(stritem);
+		}
+	} else {
+		i_unreached();
+	}
 	
 	return TRUE;
 }

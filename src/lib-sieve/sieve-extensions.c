@@ -3,10 +3,12 @@
 
 #include "sieve-extensions.h"
 
-const struct sieve_extension sieve_core_extensions[] = {
-	{ "fileinto", ext_fileinto_validator_load, NULL },
-	{ "reject", ext_reject_validator_load, ext_reject_generator_load },
-	{ "envelope", ext_envelope_validator_load, NULL }
+extern const struct sieve_extension fileinto_extension;
+extern const struct sieve_extension reject_extension;
+extern const struct sieve_extension envelope_extension;
+
+const struct sieve_extension *sieve_core_extensions[] = {
+	&fileinto_extension, &reject_extension, &envelope_extension 
 };
 
 const unsigned int sieve_core_extensions_count =
@@ -17,8 +19,8 @@ const struct sieve_extension *sieve_extension_acquire(const char *extension) {
 	
 	/* First try to acquire one of the compiled-in extensions */
 	for ( i = 0; i < sieve_core_extensions_count; i++ ) {
-		if ( strcasecmp(extension, sieve_core_extensions[i].name) == 0 ) 
-			return &sieve_core_extensions[i];
+		if ( strcasecmp(extension, sieve_core_extensions[i]->name) == 0 ) 
+			return sieve_core_extensions[i];
 	}
 	
 	/* Try to load a plugin */

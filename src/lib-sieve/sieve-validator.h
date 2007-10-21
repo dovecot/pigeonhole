@@ -46,7 +46,9 @@ bool sieve_validate_command_subtests
 	(struct sieve_validator *validator, struct sieve_command_context *cmd, const unsigned int count);
 bool sieve_validate_command_block(struct sieve_validator *validator, struct sieve_command_context *cmd, 
 	bool block_allowed, bool block_required);
-bool sieve_validator_load_extension
+
+/* Extensions */
+const struct sieve_extension *sieve_validator_load_extension
 	(struct sieve_validator *validator, struct sieve_command_context *cmd, const char *extension);
 
 #endif /* __SIEVE_VALIDATOR_H__ */

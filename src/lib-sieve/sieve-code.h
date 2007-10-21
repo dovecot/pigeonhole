@@ -1,15 +1,14 @@
 #ifndef __SIEVE_CODE_H__
 #define __SIEVE_CODE_H__
 
+#include <lib.h>
+#include <buffer.h>
+#include <array.h>
+
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 
 typedef size_t sieve_size_t;
-
-struct sieve_opcode {
-	bool (*dump)(struct sieve_interpreter *interpreter);
-	bool (*execute)(struct sieve_interpreter *interpreter);
-};
 
 enum sieve_core_operation {
 	SIEVE_OPCODE_LOAD      = 0x01,
@@ -31,6 +30,9 @@ enum sieve_core_operand {
   SIEVE_OPERAND_STRING       = 0x02,
   SIEVE_OPERAND_STRING_LIST  = 0x03
 };
+
+#define SIEVE_OPCODE_CORE_MASK  0x1F
+#define SIEVE_OPCODE_EXT_OFFSET (SIEVE_OPCODE_CORE_MASK + 1)
 
 #define SIEVE_CORE_OPERAND_MASK 0x0F
 #define SIEVE_CORE_OPERAND_BITS 4

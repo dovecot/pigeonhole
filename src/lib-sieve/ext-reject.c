@@ -9,14 +9,17 @@
 
 static bool cmd_reject_validate(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_reject_generate(struct sieve_generator *generator,	struct sieve_command_context *ctx);
-static bool opc_reject_dump(struct sieve_interpreter *interpreter);
+ 
+static bool ext_reject_validator_load(struct sieve_validator *validator);
+static bool ext_reject_generator_load(struct sieve_generator *generator);
+static bool ext_reject_opcode_dump(struct sieve_interpreter *interpreter);
 
 /* Extension definitions */
+struct sieve_extension reject_extension = 
+	{ "reject", ext_reject_validator_load, ext_reject_generator_load, ext_reject_opcode_dump, NULL };
 
 static const struct sieve_command reject_command = 
 	{ "reject", SCT_COMMAND, NULL, cmd_reject_validate, cmd_reject_generate, NULL };
-static const struct sieve_opcode reject_opcode = 
-	{ opc_reject_dump, NULL };
 
 /* 
  * Validation 
@@ -42,7 +45,7 @@ static bool cmd_reject_validate(struct sieve_validator *validator, struct sieve_
 }
 
 /* Load extension into validator */
-bool ext_reject_validator_load(struct sieve_validator *validator)
+static bool ext_reject_validator_load(struct sieve_validator *validator)
 {
 	/* Register new command */
 	sieve_validator_register_command(validator, &reject_command);
@@ -59,7 +62,7 @@ static bool cmd_reject_generate
 {
 	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
 	
-	sieve_generator_emit_opcode(generator, &reject_opcode);
+	sieve_generator_emit_opcode(generator, &reject_extension);
 
 	/* Emit reason string */  	
 	if ( !sieve_generator_emit_string_argument(generator, arg) ) 
@@ -69,11 +72,8 @@ static bool cmd_reject_generate
 }
 
 /* Load extension into generator */
-bool ext_reject_generator_load(struct sieve_generator *generator)
+static bool ext_reject_generator_load(struct sieve_generator *generator __attr_unused__)
 {
-	/* Register new command */
-	sieve_generator_register_opcode(generator, &reject_opcode);
-
 	return TRUE;
 }
 
@@ -82,7 +82,7 @@ bool ext_reject_generator_load(struct sieve_generator *generator)
  * Code dump
  */
  
-static bool opc_reject_dump(struct sieve_interpreter *interpreter)
+static bool ext_reject_opcode_dump(struct sieve_interpreter *interpreter)
 {
 	printf("REJECT\n");
 	sieve_interpreter_dump_operand(interpreter);

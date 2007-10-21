@@ -3,9 +3,12 @@
 #include "sieve-validator.h"
 
 /* Forward declarations */
+static bool ext_fileinto_validator_load(struct sieve_validator *validator);
 static bool cmd_fileinto_validate(struct sieve_validator *validator, struct sieve_command_context *cmd);
 
-/* Command definitions */
+/* Extension definitions */
+const struct sieve_extension fileinto_extension = 
+	{ "fileinto", ext_fileinto_validator_load, NULL, NULL, NULL };
 static const struct sieve_command fileinto_command = 
 	{ "fileinto", SCT_COMMAND, NULL, cmd_fileinto_validate, NULL, NULL };
 
@@ -26,7 +29,7 @@ static bool cmd_fileinto_validate(struct sieve_validator *validator, struct siev
 }
 
 /* Load extension into validator */
-bool ext_fileinto_validator_load(struct sieve_validator *validator)
+static bool ext_fileinto_validator_load(struct sieve_validator *validator)
 {
 	/* Register new command */
 	sieve_validator_register_command(validator, &fileinto_command);

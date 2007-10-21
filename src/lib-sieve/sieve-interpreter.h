@@ -3,13 +3,14 @@
 
 #include "lib.h"
 #include "buffer.h"
-#include "sieve-interpreter.h"
+
+#include "sieve-binary.h"
 
 struct sieve_coded_stringlist;
 
 struct sieve_interpreter;
 
-struct sieve_interpreter *sieve_interpreter_create(buffer_t *code);
+struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary);
 void sieve_interpreter_free(struct sieve_interpreter *interpreter);
 
 int sieve_interpreter_read_offset(struct sieve_interpreter *interpreter);
@@ -22,6 +23,8 @@ bool sieve_interpreter_read_stringlist
   (struct sieve_interpreter *interpreter, struct sieve_coded_stringlist **strlist);
 bool sieve_coded_stringlist_read_item
 	(struct sieve_coded_stringlist *strlist, string_t **str);  
+
+/* Code dump (debugging purposes) */
 
 void sieve_interpreter_dump_number(struct sieve_interpreter *interpreter);
 void sieve_interpreter_dump_string(struct sieve_interpreter *interpreter);

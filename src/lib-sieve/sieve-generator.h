@@ -9,10 +9,10 @@ struct sieve_generator;
 struct sieve_generator *sieve_generator_create(struct sieve_ast *ast);
 void sieve_generator_free(struct sieve_generator *generator);
 
-void sieve_generator_register_opcode
-	(struct sieve_generator *generator, const struct sieve_opcode *opcode);
-unsigned int sieve_generator_find_opcode
-		(struct sieve_generator *generator, const struct sieve_opcode *opcode); 
+void sieve_generator_register_extension
+	(struct sieve_generator *generator, const struct sieve_extension *extension);
+unsigned int sieve_generator_find_extension
+		(struct sieve_generator *generator, const struct sieve_extension *extension); 
 		
 /* Jump list */
 
@@ -32,7 +32,7 @@ inline void sieve_generator_update_data
 inline sieve_size_t sieve_generator_get_current_address(struct sieve_generator *generator);
 
 sieve_size_t sieve_generator_emit_core_opcode(struct sieve_generator *generator, int opcode);
-sieve_size_t sieve_generator_emit_opcode(struct sieve_generator *generator, const struct sieve_opcode *opcode);
+sieve_size_t sieve_generator_emit_opcode(struct sieve_generator *generator, const struct sieve_extension *extension);
 
 sieve_size_t sieve_generator_emit_offset(struct sieve_generator *generator, int offset);
 void sieve_generator_resolve_offset(struct sieve_generator *generator, sieve_size_t address); 
@@ -55,7 +55,7 @@ bool sieve_generator_emit_stringlist_argument
 bool sieve_generate_block(struct sieve_generator *generator, struct sieve_ast_node *block);
 bool sieve_generate_test(struct sieve_generator *generator, struct sieve_ast_node *tst_node, 
 	struct sieve_jumplist *jlist, bool jump_true);
-bool sieve_generate(struct sieve_generator *genarator, buffer_t **code);
+struct sieve_binary *sieve_generate(struct sieve_generator *genarator);
 
 #endif
 
