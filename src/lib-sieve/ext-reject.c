@@ -39,7 +39,7 @@ static bool cmd_reject_validate(struct sieve_validator *validator, struct sieve_
 		return FALSE;
 	}
 	
-	cmd->data = arg;
+	cmd->data = (void *) arg;
 	
 	return TRUE;
 }

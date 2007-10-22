@@ -1,5 +1,7 @@
 #noinst_LTLIBRARIES = libsieve-dovecot.la
 
+SUBDIRS = plugins
+
 sbin_PROGRAMS = sievec
 
 AM_CPPFLAGS = \
@@ -7,7 +9,8 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib
 
 sievec_LDADD = \
-	${dovecot_incdir}/src/lib/liblib.a
+	${dovecot_incdir}/src/lib/liblib.a \
+	./plugins/vacation/lib_ext_vacation.a
 
 tsts = \
 	tst-not.c \

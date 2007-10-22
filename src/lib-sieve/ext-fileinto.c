@@ -35,7 +35,7 @@ static bool cmd_fileinto_validate(struct sieve_validator *validator, struct siev
 		return FALSE;
 	}
 	
-	cmd->data = arg;
+	cmd->data = (void *) arg;
 	
 	return TRUE;
 }

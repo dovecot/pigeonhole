@@ -7,8 +7,11 @@ extern const struct sieve_extension fileinto_extension;
 extern const struct sieve_extension reject_extension;
 extern const struct sieve_extension envelope_extension;
 
+/* Plugins (FIXME: make this dynamic) */
+extern const struct sieve_extension vacation_extension;
+
 const struct sieve_extension *sieve_core_extensions[] = {
-	&fileinto_extension, &reject_extension, &envelope_extension 
+	&fileinto_extension, &reject_extension, &envelope_extension, &vacation_extension
 };
 
 const unsigned int sieve_core_extensions_count =
