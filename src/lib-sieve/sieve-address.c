@@ -1,14 +1,16 @@
-#include <string.h>
+#include "lib.h"
+#include "str.h"
+#include "message-parser.h"
+#include "message-address.h"
+#include "rfc822-parser.h"
 
-//#include "sieve-address.h"
+/* WARNING: This file contains code duplicated from dovecot/src/lib-mail/message-address.c */
 
 /* FIXME: Currently accepts only c-strings and no \0 characters (not according to spec) 
  */
 
 #ifdef TEST
 #include <stdio.h>
-
-typedef enum { FALSE, TRUE } bool;
 #endif
 
 /* Sieve address as defined in RFC3028 [SIEVE] and RFC822 [IMAIL]:
@@ -53,124 +55,152 @@ typedef enum { FALSE, TRUE } bool;
  *        at-sign ("@") and exactly one SPACE between  all  other <word>s. 
  */
 
-#define IS_CHAR(c) ( c <= 127 )
-#define IS_NOT_CTL(c) ( c > 31 && c < 127 )
-#define IS_SPACE(c) ( c == ' ' )
-#define IS_SPECIAL(c) ( strchr( "()<>@,;:\\\".[]", c) != NULL )
-#define IS_ATOM_CHAR(c) ( IS_NOT_CTL(c) && !IS_SPECIAL(c) && !IS_SPACE(c) )
-#define IS_QTEXT_CHAR(c) ( IS_CHAR(c) && c != '"' && c != '\\' && c != '\r' )
-#define IS_DTEXT_CHAR(c) ( IS_CHAR(c) && c != '[' && c != ']' && c != '\\' && c != '\r' )
-
-/* Useful macro's to manipulate the pointer, also prevents reading beyond end of string */
-#define shift(p) { if (**p == '\0') return FALSE; else printf("%c\n", **p); (*p)++; }
-#define cur(p) (**p)
-
-static bool parse_subdomain(const unsigned char **input) {
-	if ( cur(input) == '[' ) {
-  	/* Parse quoted-string */
-  	shift(input);
-  	while ( TRUE ) {
-  		if ( cur(input) == '\\' ) {
-  			shift(input);
-  			shift(input);
-  		} else if ( IS_DTEXT_CHAR(cur(input)) ) {
-  			shift(input);
-  		} else  
-  			break;
-  	}
-  	
-  	if ( cur(input) != ']' ) return FALSE;
-  	
-  	shift(input);
-  	return TRUE;
-	} else if ( IS_ATOM_CHAR(cur(input)) ) {
-		/* Parse atom */
-		while ( IS_ATOM_CHAR(cur(input)) ) {
-			shift(input);
-		}
-		
-		return TRUE;
-	}
+struct sieve_address_parser_context {
+	pool_t pool;
+	struct rfc822_parser_context parser;
 	
-	return FALSE;
-}
-
-static bool parse_word(const unsigned char **input) {
-  if ( cur(input) == '"' ) {
-  	/* Parse quoted-string */
-  	shift(input);
-  	while ( TRUE ) {
-  		if ( cur(input) == '\\' ) {
-  			shift(input);
-  			shift(input);
-  		} else if ( IS_QTEXT_CHAR(cur(input)) ) {
-  			shift(input);
-  		} else  
-  			break;
-  	}
-  	
-  	if ( cur(input) != '"' ) return FALSE;
-  	
-  	shift(input);
-  	return TRUE;
-	} else if ( IS_ATOM_CHAR(cur(input)) ) {
-		/* Parse atom */
-		while ( IS_ATOM_CHAR(cur(input)) ) {
-			shift(input);
-		}
-		
-		return TRUE;
-	}
+	const char *name, *mailbox, *domain;
 	
-	return FALSE;
-}
+	string_t *str;
+};
 
-bool sieve_address_validate(const unsigned char *address) 
+static int parse_local_part(struct sieve_address_parser_context *ctx)
 {
-	/* Parse local part */
-	if ( parse_word(&address) ) {
-		while ( cur(&address) == '.' ) {
-			shift(&address)
-			if ( !parse_word(&address) ) {
-				return FALSE;
-			}
-		}
-	} else return FALSE;
-	 
-	if ( cur(&address) == '@' ) {
-		shift(&address);
-		
-		if ( parse_subdomain(&address) ) {
-			while ( cur(&address) == '.' ) {
-				shift(&address)
-				if ( !parse_subdomain(&address) ) {
-					return FALSE;
-				}
-			}
-		} else return FALSE;
-		
-		return TRUE;
-	}
-	
-	return FALSE;
-}
+	int ret;
 
-#ifdef TEST /* TEST - gcc -DTEST -o test sieve-address.c */
+	/*
+	   local-part      = dot-atom / quoted-string / obs-local-part
+	   obs-local-part  = word *("." word)
+	*/
+	if (ctx->parser.data == ctx->parser.end)
+		return 0;
 
-#include <stdio.h>
-#include <stdlib.h>
-
-int main(int argc, char **argv) {
-	if ( argc != 2 ) {
-		printf("Usage: test <address>\n");
-		exit(1);
-	}
-	
-	if ( sieve_address_validate(argv[1]) ) 
-		printf("Addres valid.\n");
+	str_truncate(ctx->str, 0);
+	if (*ctx->parser.data == '"')
+		ret = rfc822_parse_quoted_string(&ctx->parser, ctx->str);
 	else
-		printf("Addres invalid.\n");
+		ret = rfc822_parse_dot_atom(&ctx->parser, ctx->str);
+	if (ret < 0)
+		return -1;
+
+	ctx->mailbox = p_strdup(ctx->pool, str_c(ctx->str));
+	return ret;
 }
+
+static int parse_domain(struct sieve_address_parser_context *ctx)
+{
+	int ret;
+
+	str_truncate(ctx->str, 0);
+	if ((ret = rfc822_parse_domain(&ctx->parser, ctx->str)) < 0)
+		return -1;
+
+	ctx->domain = p_strdup(ctx->pool, str_c(ctx->str));
+	return ret;
+}
+
+static int parse_angle_addr(struct sieve_address_parser_context *ctx)
+{
+	int ret;
+
+	/* "<" local-part "@" domain ">" */
+	i_assert(*ctx->parser.data == '<');
+	ctx->parser.data++;
+
+	if ((ret = rfc822_skip_lwsp(&ctx->parser)) <= 0)
+		return ret;
+
+	if ((ret = parse_local_part(ctx)) <= 0)
+		return ret;
+		
+	if (*ctx->parser.data == '@') {
+		if ((ret = parse_domain(ctx)) <= 0)
+			return ret;
+	}
+
+	if (*ctx->parser.data != '>')
+		return -1;
+	ctx->parser.data++;
+
+	return rfc822_skip_lwsp(&ctx->parser);
+}
+
+static int parse_name_addr(struct sieve_address_parser_context *ctx)
+{
+	/* phrase "<" addr-spec ">"     ; name & addr-spec	*/
+	str_truncate(ctx->str, 0);
+	if (rfc822_parse_phrase(&ctx->parser, ctx->str) <= 0 ||
+	    *ctx->parser.data != '<')
+		return -1;
+
+	ctx->addr.name = p_strdup(ctx->pool, str_c(ctx->str));
+	if (*ctx->addr.name == '\0') {
+		/* Cope with "<address>" without display name */
+		ctx->addr.name = NULL;
+	}
+	if (parse_angle_addr(ctx) < 0) {
+		/* broken */
+		ctx->addr.domain = p_strdup(ctx->pool, "SYNTAX_ERROR");
+	}
+	return ctx->parser.data != ctx->parser.end;
+}
+
+static int parse_addr_spec(struct message_address_parser_context *ctx)
+{
+	/* addr-spec       = local-part "@" domain */
+	int ret;
+
+	str_truncate(ctx->parser.last_comment, 0);
+
+	if ((ret = parse_local_part(ctx)) < 0)
+		return ret;
+	if (ret > 0 && *ctx->parser.data == '@') {
+		if ((ret = parse_domain(ctx)) < 0)
+			return ret;
+	}
+
+	if (str_len(ctx->parser.last_comment) > 0) {
+		ctx->addr.name =
+			p_strdup(ctx->pool, str_c(ctx->parser.last_comment));
+	}
+	return ret;
+}
+
+static int sieve_address_parse(pool_t pool, const unsigned char *data, size_t size)
+{
+	struct sieve_address_parser_context ctx;
+	const unsigned char *start;
+	int ret;
+
+	if (!pool->datastack_pool)
+		t_push();
+		
+	memset(&ctx, 0, sizeof(ctx));
+
+	rfc822_parser_init(&ctx.parser, data, size, t_str_new(128));
+	ctx.pool = pool;
+	ctx.str = t_str_new(128);
+
+	rfc822_skip_lwsp(&ctx.parser);
+	if (ctx->parser.data == ctx->parser.end)
+		return 0;
+
+ 	/* sieve-address      = addr-spec                    ; simple address
+ 	 *                    / phrase "<" addr-spec ">"     ; name & addr-spec
+ 	 */
+	start = ctx->parser.data; 
+	if ((ret = parse_name_addr(ctx)) < 0) {
+		/* nope, should be addr-spec */
+		ctx->parser.data = start;
+		if ((ret = parse_addr_spec(ctx)) < 0)
+			return -1;
+	}
+
+	if (!pool->datastack_pool
+		t_pop();
+	return ret;
+}
+
 
 #endif 
 
