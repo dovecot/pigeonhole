@@ -105,9 +105,9 @@ bool tst_size_generate
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) ctx->data;
 
 	if ( ctx_data->type == SIZE_OVER ) 
-		sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_SIZEOVER);
+		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_SIZEOVER);
 	else
-		sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_SIZEUNDER);
+		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_SIZEUNDER);
 
 	sieve_generator_emit_number(generator, ctx_data->limit);
 	  

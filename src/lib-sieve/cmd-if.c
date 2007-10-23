@@ -150,7 +150,7 @@ bool cmd_if_generate
 	/* Are we the final command in this if-elsif-else structure? */
 	if ( ctx_data->next != NULL ) {
 		/* No, generate jump to end of if-elsif-else structure (resolved later) */
-		sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_JMP);
+		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_JMP);
 		ctx_data->exit_jump = sieve_generator_emit_offset(generator, 0);
 	} else {
 		/* Yes, Resolve previous exit jumps to this point */

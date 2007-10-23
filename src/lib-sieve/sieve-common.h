@@ -35,4 +35,16 @@ struct sieve_generator;
 /* sieve-interpreter.h */
 struct sieve_interpreter;
 
+/*
+ *
+ */
+ 
+struct sieve_mail_context {
+	struct mail_namespace *namespaces;
+	struct mail_storage **storage_r;
+	struct mail *mail;
+	const char *destaddr;
+	const char *mailbox;
+};
+
 #endif

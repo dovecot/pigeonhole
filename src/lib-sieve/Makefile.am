@@ -6,7 +6,9 @@ sbin_PROGRAMS = sievec
 
 AM_CPPFLAGS = \
 	-I$(dovecot_incdir) \
-	-I$(dovecot_incdir)/src/lib
+	-I$(dovecot_incdir)/src/lib \
+	-I$(dovecot_incdir)/src/lib-mail \
+	-I$(dovecot_incdir)/src/lib-storage 
 
 sievec_LDADD = \
 	${dovecot_incdir}/src/lib/liblib.a \

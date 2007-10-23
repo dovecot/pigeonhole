@@ -11,7 +11,7 @@ struct sieve_binary {
 	buffer_t *code;
 };
 
-struct sieve_binary *sieve_binary_create_new() 
+struct sieve_binary *sieve_binary_create_new(void) 
 {
 	pool_t pool;
 	struct sieve_binary *binary;

@@ -18,7 +18,7 @@ static bool cmd_vacation_generate(struct sieve_generator *generator,	struct siev
 
 /* Extension definitions */
 const struct sieve_extension vacation_extension = 
-	{ "vacation", ext_vacation_validator_load, NULL, ext_vacation_opcode_dump, NULL };
+	{ "vacation", ext_vacation_validator_load, NULL, { ext_vacation_opcode_dump, NULL } };
 static const struct sieve_command vacation_command = 
 	{ "vacation", SCT_COMMAND, cmd_vacation_registered, cmd_vacation_validate, cmd_vacation_generate, NULL };
 
@@ -210,7 +210,7 @@ static bool cmd_vacation_generate
 {
 	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
 	
-	sieve_generator_emit_opcode(generator, &vacation_extension);
+	sieve_generator_emit_ext_opcode(generator, &vacation_extension);
 
 	/* Emit folder string */  	
 	if ( !sieve_generator_emit_string_argument(generator, arg) ) 

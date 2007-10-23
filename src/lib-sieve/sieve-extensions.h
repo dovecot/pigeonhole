@@ -3,6 +3,8 @@
 
 #include "lib.h"
 #include "sieve-validator.h"
+#include "sieve-generator.h"
+#include "sieve-code.h"
 
 struct sieve_extension {
 	const char *name;
@@ -10,8 +12,7 @@ struct sieve_extension {
 	bool (*validator_load)(struct sieve_validator *validator);
 	bool (*generator_load)(struct sieve_generator *generator);
 	
-	bool (*opcode_dump)(struct sieve_interpreter *interpreter);
-	bool (*opcode_execute)(struct sieve_interpreter *interpreter);
+	struct sieve_opcode opcode;
 };
 
 const struct sieve_extension *sieve_extension_acquire(const char *extension);

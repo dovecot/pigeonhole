@@ -244,16 +244,17 @@ sieve_size_t sieve_generator_emit_string_list
 
 /* Emit commands */
 
-sieve_size_t sieve_generator_emit_core_opcode(struct sieve_generator *generator, int opcode) 
+sieve_size_t sieve_generator_emit_opcode
+	(struct sieve_generator *generator, int opcode)
 {
 	unsigned char op = opcode & SIEVE_OPCODE_CORE_MASK;
 	
 	return sieve_binary_emit_byte(generator->binary, op);
 }
 
-sieve_size_t sieve_generator_emit_opcode
-	(struct sieve_generator *generator, const struct sieve_extension *extension) 
-{
+sieve_size_t sieve_generator_emit_ext_opcode
+	(struct sieve_generator *generator, const struct sieve_extension *extension)
+{	
 	unsigned char op = SIEVE_OPCODE_EXT_OFFSET + sieve_generator_find_extension(generator, extension);
 	
 	return sieve_binary_emit_byte(generator->binary, op);
@@ -280,9 +281,9 @@ bool sieve_generate_test
 		if ( tst_node->context->command->generate(generator, tst_node->context) ) {
 			
 			if ( jump_true ) 
-				sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_JMPTRUE);
+				sieve_generator_emit_opcode(generator, SIEVE_OPCODE_JMPTRUE);
 			else
-				sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_JMPFALSE);
+				sieve_generator_emit_opcode(generator, SIEVE_OPCODE_JMPFALSE);
 			sieve_jumplist_add(jlist, sieve_generator_emit_offset(generator, 0));
 						
 			return TRUE;

@@ -21,7 +21,7 @@ static bool tst_envelope_generate
 /* Extension definitions */
 
 const struct sieve_extension envelope_extension = 
-	{ "envelope", ext_envelope_validator_load, NULL, ext_envelope_opcode_dump, NULL };
+	{ "envelope", ext_envelope_validator_load, NULL, { ext_envelope_opcode_dump, NULL } };
 static const struct sieve_command envelope_test = 
 	{ "envelope", SCT_TEST, tst_envelope_registered, tst_envelope_validate, tst_envelope_generate, NULL };
 
@@ -91,7 +91,7 @@ static bool tst_envelope_generate
 {
 	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
 	
-	sieve_generator_emit_opcode(generator, &envelope_extension);
+	sieve_generator_emit_ext_opcode(generator, &envelope_extension);
 
 	/* Emit envelope-part */  	
 	if ( !sieve_generator_emit_stringlist_argument(generator, arg) ) 

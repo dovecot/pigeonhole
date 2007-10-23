@@ -43,7 +43,7 @@ bool tst_anyof_generate
 	
 	if ( !jump_true ) {
 		/* All tests failed, jump to case FALSE */
-		sieve_generator_emit_core_opcode(generator, SIEVE_OPCODE_JMP);
+		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_JMP);
 		sieve_jumplist_add(jumps, sieve_generator_emit_offset(generator, 0));
 		
 		/* All true exits jump here */

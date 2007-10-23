@@ -9,13 +9,17 @@
 /* Forward declarations */
 static bool ext_fileinto_validator_load(struct sieve_validator *validator);
 static bool ext_fileinto_opcode_dump(struct sieve_interpreter *interpreter);
+static bool ext_fileinto_opcode_execute(struct sieve_interpreter *interpreter); 
+
 
 static bool cmd_fileinto_validate(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_fileinto_generate(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
 /* Extension definitions */
 const struct sieve_extension fileinto_extension = 
-	{ "fileinto", ext_fileinto_validator_load, NULL, ext_fileinto_opcode_dump, NULL };
+	{ "fileinto", ext_fileinto_validator_load, NULL, 
+		{ ext_fileinto_opcode_dump, ext_fileinto_opcode_execute } 
+	};
 static const struct sieve_command fileinto_command = 
 	{ "fileinto", SCT_COMMAND, NULL, cmd_fileinto_validate, cmd_fileinto_generate, NULL };
 
@@ -58,7 +62,7 @@ static bool cmd_fileinto_generate
 {
 	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
 	
-	sieve_generator_emit_opcode(generator, &fileinto_extension);
+	sieve_generator_emit_ext_opcode(generator, &fileinto_extension);
 
 	/* Emit folder string */  	
 	if ( !sieve_generator_emit_string_argument(generator, arg) ) 
@@ -83,8 +87,10 @@ static bool ext_fileinto_opcode_dump(struct sieve_interpreter *interpreter)
  * Execution
  */
 
-static bool ext_fileinto_opcode_execute(struct sieve_interpreter *interpreter)
+static bool ext_fileinto_opcode_execute
+	(struct sieve_interpreter *interpreter __attr_unused__) 
 {
+	return TRUE;
 }
 
 /*

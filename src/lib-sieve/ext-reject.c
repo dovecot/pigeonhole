@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 
 #include "sieve-extensions.h"
@@ -16,7 +17,7 @@ static bool ext_reject_opcode_dump(struct sieve_interpreter *interpreter);
 
 /* Extension definitions */
 struct sieve_extension reject_extension = 
-	{ "reject", ext_reject_validator_load, ext_reject_generator_load, ext_reject_opcode_dump, NULL };
+	{ "reject", ext_reject_validator_load, ext_reject_generator_load, { ext_reject_opcode_dump, NULL } };
 
 static const struct sieve_command reject_command = 
 	{ "reject", SCT_COMMAND, NULL, cmd_reject_validate, cmd_reject_generate, NULL };
@@ -62,7 +63,7 @@ static bool cmd_reject_generate
 {
 	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
 	
-	sieve_generator_emit_opcode(generator, &reject_extension);
+	sieve_generator_emit_ext_opcode(generator, &reject_extension);
 
 	/* Emit reason string */  	
 	if ( !sieve_generator_emit_string_argument(generator, arg) ) 

@@ -31,8 +31,10 @@ inline void sieve_generator_update_data
 	(struct sieve_generator *generator, sieve_size_t address, void *data, sieve_size_t size);
 inline sieve_size_t sieve_generator_get_current_address(struct sieve_generator *generator);
 
-sieve_size_t sieve_generator_emit_core_opcode(struct sieve_generator *generator, int opcode);
-sieve_size_t sieve_generator_emit_opcode(struct sieve_generator *generator, const struct sieve_extension *extension);
+sieve_size_t sieve_generator_emit_opcode
+	(struct sieve_generator *generator, int opcode);
+sieve_size_t sieve_generator_emit_ext_opcode
+	(struct sieve_generator *generator, const struct sieve_extension *extension);
 
 sieve_size_t sieve_generator_emit_offset(struct sieve_generator *generator, int offset);
 void sieve_generator_resolve_offset(struct sieve_generator *generator, sieve_size_t address); 
