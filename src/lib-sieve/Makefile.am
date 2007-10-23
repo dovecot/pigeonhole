@@ -39,6 +39,7 @@ sievec_SOURCES = \
 	sieve-validator.c \
 	sieve-generator.c \
 	sieve-interpreter.c \
+	sieve-result.c \
 	sieve-error.c \
 	sieve-commands.c \
 	sieve-code.c \
@@ -51,10 +52,12 @@ sievec_SOURCES = \
 noinst_HEADERS = \
 	sieve-lexer.h \
 	sieve-ast.h \
+	sieve-binary.h \
 	sieve-parser.h \
 	sieve-validator.h \
 	sieve-generator.h \
 	sieve-interpreter.h \
+	sieve-result.h
 	sieve-error.h \
 	sieve-commands.h \
 	sieve-code.h

@@ -79,3 +79,32 @@ static bool ext_fileinto_opcode_dump(struct sieve_interpreter *interpreter)
 	return TRUE;
 }
 
+/*
+ * Execution
+ */
+
+static bool ext_fileinto_opcode_execute(struct sieve_interpreter *interpreter)
+{
+}
+
+/*
+static int sieve_fileinto(void *ac,
+              void *ic ATTR_UNUSED,
+              void *sc,
+              void *mc,
+              const char **errmsg ATTR_UNUSED)
+{
+    sieve_fileinto_context_t *fc = (sieve_fileinto_context_t *) ac;
+    script_data_t *sd = (script_data_t *) sc;
+    sieve_msgdata_t *md = (sieve_msgdata_t *) mc;
+    enum mail_flags flags;
+    const char *const *keywords;
+
+    get_flags(fc->imapflags, &flags, &keywords);
+
+    if (deliver_save(sd->namespaces, sd->storage_r, fc->mailbox,
+             md->mail, flags, keywords) < 0)
+        return SIEVE_FAIL;
+
+    return SIEVE_OK;
+}*/

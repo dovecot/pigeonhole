@@ -3,12 +3,21 @@
 
 #include "lib.h"
 #include "buffer.h"
+#include "mail-storage.h"
 
 #include "sieve-binary.h"
 
 struct sieve_coded_stringlist;
 
 struct sieve_interpreter;
+
+struct sieve_mail_context {
+	struct mail_namespace *namespaces;
+	struct mail_storage **storage_r;
+	struct mail *mail;
+	const char *destaddr;
+	const char *mailbox;
+};
 
 struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary);
 void sieve_interpreter_free(struct sieve_interpreter *interpreter);
