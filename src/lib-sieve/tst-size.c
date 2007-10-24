@@ -1,7 +1,23 @@
+#include <stdio.h>
+
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
+#include "sieve-generator.h"
+#include "sieve-interpreter.h"
 #include "sieve-code.h"
+
+/* Opcodes */
+
+static bool tst_size_over_opcode_dump(struct sieve_interpreter *interpreter);
+static bool tst_size_under_opcode_dump(struct sieve_interpreter *interpreter);
+
+const struct sieve_opcode tst_size_over_opcode = 
+	{ tst_size_over_opcode_dump, NULL };
+const struct sieve_opcode tst_size_under_opcode = 
+	{ tst_size_under_opcode_dump, NULL };
+
+/* Context structures */
 
 struct tst_size_context_data {
 	enum { SIZE_UNASSIGNED, SIZE_UNDER, SIZE_OVER } type;
@@ -114,3 +130,20 @@ bool tst_size_generate
 	return TRUE;
 }
 
+/* Code dump */
+
+static bool tst_size_over_opcode_dump(struct sieve_interpreter *interpreter)
+{
+    printf("SIZEOVER\n");
+    sieve_interpreter_dump_operand(interpreter);
+
+    return TRUE;
+}
+
+static bool tst_size_under_opcode_dump(struct sieve_interpreter *interpreter)
+{ 
+    printf("SIZEUNDER\n");
+    sieve_interpreter_dump_operand(interpreter);
+
+    return TRUE;
+}

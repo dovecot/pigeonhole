@@ -73,6 +73,21 @@ inline sieve_size_t sieve_interpreter_program_counter(struct sieve_interpreter *
 	return interpreter->pc;
 }
 
+inline bool sieve_interpreter_program_jump
+	(struct sieve_interpreter *interpreter)
+{
+	sieve_size_t pc = sieve_interpreter_program_counter(interpreter);
+	int offset = sieve_interpreter_read_offset(interpreter);
+
+	if ( pc + offset < interpreter->code_size && pc + offset > 0 ) {
+		interpreter->pc = pc + offset;
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+
 /* Literals */
 
 int sieve_interpreter_read_offset(struct sieve_interpreter *interpreter) 
@@ -171,32 +186,46 @@ bool sieve_coded_stringlist_read_item(struct sieve_coded_stringlist *strlist, st
   }  
   
   return FALSE;
-} 
+}
 
-/* Code Dump */
+/* Opcodes and operands */
 
-static void sieve_interpreter_dump_operation
+static const struct sieve_opcode *sieve_interpreter_read_opcode
 	(struct sieve_interpreter *interpreter) 
 {
 	unsigned int opcode;
 	
 	if ( CODE_BYTES_LEFT(interpreter) > 0 ) {
 		opcode = DATA_AT_PC(interpreter);
-		
-		printf("%08x: ", interpreter->pc);
 		CODE_JUMP(interpreter, 1);
 	
 		if ( opcode < SIEVE_OPCODE_EXT_OFFSET ) {
-			sieve_opcodes[opcode].dump(interpreter);
+			return sieve_opcodes[opcode];
 		} else {
 		  const struct sieve_extension *ext = 
 		  	sieve_binary_get_extension(interpreter->binary, opcode - SIEVE_OPCODE_EXT_OFFSET);
-		  	
-		  if ( ext->opcode.dump != NULL )
-			  (void) ext->opcode.dump(interpreter);
-			else
-				printf("OPCODE: %d, Extension %s provides no opcode_dump implementation.\n", opcode, ext->name);
+		  
+		  return &(ext->opcode);	
 		}
+	}		
+	
+	return NULL;
+}
+ 
+/* Code Dump */
+
+static void sieve_interpreter_dump_operation
+	(struct sieve_interpreter *interpreter) 
+{
+	const struct sieve_opcode *opcode = sieve_interpreter_read_opcode(interpreter);
+
+	if ( opcode != NULL ) {
+		printf("%08x: ", interpreter->pc-1);
+	
+		if ( opcode->dump != NULL )
+			(void) opcode->dump(interpreter);
+		else
+			printf("<< UNSPECIFIED OPERATION >>\n");
 	}		
 }
 
@@ -296,29 +325,20 @@ void sieve_interpreter_dump_code(struct sieve_interpreter *interpreter)
 
 /* Code execute */
 
-void sieve_interpreter_execute_opcode
+bool sieve_interpreter_execute_opcode
 	(struct sieve_interpreter *interpreter) 
 {
-	unsigned int opcode;
+	const struct sieve_opcode *opcode = sieve_interpreter_read_opcode(interpreter);
+
+	if ( opcode != NULL ) {
+		if ( opcode->execute != NULL )
+			return opcode->execute(interpreter);
+		
+		return TRUE;
+	}
 	
-	if ( CODE_BYTES_LEFT(interpreter) > 0 ) {
-		opcode = DATA_AT_PC(interpreter);
-		CODE_JUMP(interpreter, 1);
-	
-		if ( opcode < SIEVE_OPCODE_EXT_OFFSET ) {
-			sieve_opcodes[opcode].execute(interpreter);
-		} else {
-		  const struct sieve_extension *ext = 
-		  	sieve_binary_get_extension(interpreter->binary, opcode - SIEVE_OPCODE_EXT_OFFSET);
-		  	
-		  printf("%08x: ", interpreter->pc-1);
-		  if ( ext->opcode.execute != NULL )
-			  (void) ext->opcode.execute(interpreter);
-			else
-				printf("OPCODE: %d, Extension %s provides no opcode_dump implementation.\n", opcode, ext->name);
-		}
-	}		
-}
+	return FALSE;
+}		
 
 struct sieve_result *sieve_interpreter_run(struct sieve_interpreter *interpreter) 
 {
@@ -328,7 +348,10 @@ struct sieve_result *sieve_interpreter_run(struct sieve_interpreter *interpreter
 	result = sieve_result_create();
 	
 	while ( interpreter->pc < interpreter->code_size ) {
-		sieve_interpreter_execute_opcode(interpreter);
+		printf("%08x:\n", interpreter->pc);
+		
+		if ( !sieve_interpreter_execute_opcode(interpreter) )
+			return NULL;
 	}
 	
 	return result;

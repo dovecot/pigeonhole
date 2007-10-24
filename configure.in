@@ -60,6 +60,7 @@ src/Makefile
 src/lib-sieve/Makefile
 src/lib-sieve/plugins/Makefile
 src/lib-sieve/plugins/vacation/Makefile
+src/sieve-bin/Makefile
 stamp.h])
 
 AC_OUTPUT

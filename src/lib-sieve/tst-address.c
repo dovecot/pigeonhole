@@ -1,6 +1,17 @@
+#include <stdio.h>
+
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
+#include "sieve-generator.h"
+#include "sieve-interpreter.h"
+
+/* Opcodes */
+
+static bool tst_address_opcode_dump(struct sieve_interpreter *interpreter);
+
+const struct sieve_opcode tst_address_opcode = 
+	{ tst_address_opcode_dump, NULL };
 
 /* Test registration */
 
@@ -69,3 +80,13 @@ bool tst_address_generate
 	return TRUE;
 }
 
+/* Code dump */
+
+static bool tst_address_opcode_dump(struct sieve_interpreter *interpreter)
+{
+    printf("ADDRESS\n");
+    sieve_interpreter_dump_operand(interpreter);
+    sieve_interpreter_dump_operand(interpreter);
+
+    return TRUE;
+}

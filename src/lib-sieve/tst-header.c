@@ -1,8 +1,20 @@
+#include <stdio.h>
+
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
+#include "sieve-generator.h"
+#include "sieve-interpreter.h"
+
+/* Opcodes */
+
+static bool tst_header_opcode_dump(struct sieve_interpreter *interpreter);
+
+const struct sieve_opcode tst_header_opcode = 
+	{ tst_header_opcode_dump, NULL };
 
 /* Test registration */
+
 bool tst_header_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
@@ -66,3 +78,13 @@ bool tst_header_generate
 	return TRUE;
 }
 
+/* Code dump */
+
+static bool tst_header_opcode_dump(struct sieve_interpreter *interpreter)
+{
+    printf("HEADER\n");
+    sieve_interpreter_dump_operand(interpreter);
+    sieve_interpreter_dump_operand(interpreter);
+
+    return TRUE;
+}

@@ -83,6 +83,9 @@ int main(int argc, char **argv) {
 				
 				sieve_interpreter_dump_code(interpreter);
 				
+				printf("Code Execute:\n\n");
+				(void) sieve_interpreter_run(interpreter);
+				
 				sieve_interpreter_free(interpreter);
 			}
 			

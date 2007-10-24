@@ -1,6 +1,17 @@
+#include <stdio.h>
+
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
+#include "sieve-generator.h"
+#include "sieve-interpreter.h"
+
+/* Opcodes */
+
+static bool tst_exists_opcode_dump(struct sieve_interpreter *interpreter);
+
+const struct sieve_opcode tst_exists_opcode = 
+	{ tst_exists_opcode_dump, NULL };
 
 /* Test validation */
 
@@ -44,3 +55,12 @@ bool tst_exists_generate
 	return TRUE;
 }
 
+/* Code dump */
+
+static bool tst_exists_opcode_dump(struct sieve_interpreter *interpreter)
+{
+    printf("EXISTS\n");
+    sieve_interpreter_dump_operand(interpreter);
+
+    return TRUE;
+}

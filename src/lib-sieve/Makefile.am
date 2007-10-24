@@ -1,18 +1,12 @@
-#noinst_LTLIBRARIES = libsieve-dovecot.la
-
 SUBDIRS = plugins
 
-sbin_PROGRAMS = sievec
+noinst_LIBRARIES = libsieve.a
 
 AM_CPPFLAGS = \
 	-I$(dovecot_incdir) \
 	-I$(dovecot_incdir)/src/lib \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-storage 
-
-sievec_LDADD = \
-	${dovecot_incdir}/src/lib/liblib.a \
-	./plugins/vacation/lib_ext_vacation.a
 
 tsts = \
 	tst-not.c \
@@ -33,7 +27,7 @@ exts = \
 	ext-reject.c \
 	ext-envelope.c
 
-sievec_SOURCES = \
+libsieve_a_SOURCES = \
 	sieve-lexer.c \
 	sieve-ast.c \
 	sieve-binary.c \
@@ -48,8 +42,7 @@ sievec_SOURCES = \
 	$(tsts) \
 	$(cmds) \
 	sieve-extensions.c \
-	$(exts) \
-	sievec.c 
+	$(exts) 
 
 noinst_HEADERS = \
 	sieve-lexer.h \

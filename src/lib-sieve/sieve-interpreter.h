@@ -14,8 +14,13 @@ struct sieve_interpreter;
 struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary);
 void sieve_interpreter_free(struct sieve_interpreter *interpreter);
 
-inline void sieve_interpreter_reset(struct sieve_interpreter *interpreter);
-inline sieve_size_t sieve_interpreter_program_counter(struct sieve_interpreter *interpreter);
+inline void sieve_interpreter_reset
+	(struct sieve_interpreter *interpreter);
+inline sieve_size_t sieve_interpreter_program_counter
+	(struct sieve_interpreter *interpreter);
+inline bool sieve_interpreter_program_jump
+	(struct sieve_interpreter *interpreter);
+
 
 int sieve_interpreter_read_offset(struct sieve_interpreter *interpreter);
 bool sieve_interpreter_read_integer
@@ -39,7 +44,7 @@ void sieve_interpreter_dump_code(struct sieve_interpreter *interpreter);
 
 /* Code execute */
 
-void sieve_interpreter_execute_opcode(struct sieve_interpreter *interpreter); 
+bool sieve_interpreter_execute_opcode(struct sieve_interpreter *interpreter); 
 struct sieve_result *sieve_interpreter_run(struct sieve_interpreter *interpreter);
 
 

@@ -1,1 +1,1 @@
-SUBDIRS = lib-sieve
+SUBDIRS = lib-sieve sieve-bin

@@ -19,7 +19,7 @@ struct sieve_result {
 	unsigned int implicit_keep:1; 
 };
 
-struct sieve_result *sieve_result_create() 
+struct sieve_result *sieve_result_create(void) 
 {
 	pool_t pool;
 	struct sieve_result *result;

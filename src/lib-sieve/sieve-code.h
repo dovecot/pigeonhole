@@ -1,5 +1,5 @@
-#ifndef __SIEVE_CODE_H__
-#define __SIEVE_CODE_H__
+#ifndef __SIEVE_CODE_H
+#define __SIEVE_CODE_H
 
 #include <lib.h>
 #include <buffer.h>
@@ -28,7 +28,7 @@ enum sieve_core_operation {
 	SIEVE_OPCODE_SIZEUNDER
 };
 
-extern const struct sieve_opcode sieve_opcodes[];
+extern const struct sieve_opcode *sieve_opcodes[];
 
 enum sieve_core_operand {
   SIEVE_OPERAND_NUMBER       = 0x01,
