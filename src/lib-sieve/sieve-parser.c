@@ -39,15 +39,15 @@ static bool sieve_parser_recover(struct sieve_parser *parser, enum sieve_token_t
 
 struct sieve_parser *sieve_parser_create(int fd, struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
 {
-  pool_t pool;
 	struct sieve_parser *parser;
-  struct istream *stream;
+	struct istream *stream;
   
-	pool = pool_alloconly_create("sieve_parser", 4096);	
-	stream = i_stream_create_file(fd, pool,
-	 SIEVE_READ_BLOCK_SIZE, TRUE);
+	stream = i_stream_create_fd
+		(fd, SIEVE_READ_BLOCK_SIZE, TRUE);
 
 	if ( stream != NULL ) {
+		pool_t pool = pool_alloconly_create("sieve_parser", 4096);	
+
 		parser = p_new(pool, struct sieve_parser, 1);
 		parser->input = stream;
 		parser->pool = pool;
@@ -61,7 +61,6 @@ struct sieve_parser *sieve_parser_create(int fd, struct sieve_ast *ast, struct s
 		return parser;
 	}
 	
-	pool_unref(pool);
 	return NULL;
 }
 
@@ -74,7 +73,7 @@ void sieve_parser_free(struct sieve_parser *parser)
 
 	sieve_lexer_free(parser->lexer);
 
-	pool_unref(parser->pool);
+	pool_unref(&(parser->pool));
 }
 
 /* arguments = *argument [test / test-list]

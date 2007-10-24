@@ -17,7 +17,7 @@ unsigned int sieve_generator_find_extension
 /* Jump list */
 
 struct sieve_jumplist {
-	array_t ARRAY_DEFINE(jumps, sieve_size_t);
+	ARRAY_DEFINE(jumps, sieve_size_t);
 };
 
 void sieve_jumplist_init(struct sieve_jumplist *jlist);

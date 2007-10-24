@@ -116,9 +116,9 @@ static bool cmd_vacation_validate_addresses_tag
 }
 
 static bool cmd_vacation_validate_mime_tag
-	(struct sieve_validator *validator __attr_unused__, 
-	struct sieve_ast_argument **arg __attr_unused__, 
-	struct sieve_command_context *cmd __attr_unused__)
+	(struct sieve_validator *validator ATTR_UNUSED, 
+	struct sieve_ast_argument **arg ATTR_UNUSED, 
+	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	/* FIXME: assign somewhere */
 		

@@ -15,7 +15,7 @@
 /* Jump list */
 void sieve_jumplist_init(struct sieve_jumplist *jlist)
 {
-	ARRAY_CREATE(&jlist->jumps, pool_datastack_create(), sieve_size_t, 4);
+	t_array_init(&jlist->jumps, 4);
 }
 
 void sieve_jumplist_add(struct sieve_jumplist *jlist, sieve_size_t jump) 
@@ -78,11 +78,11 @@ struct sieve_generator *sieve_generator_create(struct sieve_ast *ast)
 
 void sieve_generator_free(struct sieve_generator *generator) 
 {
-	hash_destroy(generator->extension_index);
+	hash_destroy(&generator->extension_index);
 	
 	sieve_ast_unref(&generator->ast);
 	sieve_binary_unref(&generator->binary);
-	pool_unref(generator->pool);
+	pool_unref(&(generator->pool));
 }
 
 /* Registration functions */

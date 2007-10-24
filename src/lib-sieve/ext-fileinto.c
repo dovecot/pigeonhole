@@ -88,7 +88,7 @@ static bool ext_fileinto_opcode_dump(struct sieve_interpreter *interpreter)
  */
 
 static bool ext_fileinto_opcode_execute
-	(struct sieve_interpreter *interpreter __attr_unused__) 
+	(struct sieve_interpreter *interpreter ATTR_UNUSED) 
 {
 	return TRUE;
 }

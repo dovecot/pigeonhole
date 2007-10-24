@@ -73,7 +73,7 @@ bool cmd_if_validate(struct sieve_validator *validator, struct sieve_command_con
 	return TRUE;
 }
 
-bool cmd_elsif_validate(struct sieve_validator *validator __attr_unused__, struct sieve_command_context *cmd)
+bool cmd_elsif_validate(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd)
 {
 	struct sieve_command_context *prev_context;
 
@@ -92,7 +92,7 @@ bool cmd_elsif_validate(struct sieve_validator *validator __attr_unused__, struc
 	return TRUE;
 }
 
-bool cmd_else_validate(struct sieve_validator *validator __attr_unused__, struct sieve_command_context *cmd) 
+bool cmd_else_validate(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd) 
 {		
 	struct sieve_command_context *prev_context;
 	

@@ -38,7 +38,7 @@ struct sieve_result *sieve_result_create(void)
 
 void sieve_result_free(struct sieve_result *result) 
 {
-	pool_unref(result->pool);
+	pool_unref(&(result->pool));
 }
 
 void sieve_result_add_action

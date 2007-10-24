@@ -7,7 +7,7 @@
 
 struct sieve_binary {
 	pool_t pool;
-	array_t ARRAY_DEFINE(extensions, struct sieve_extension *); 
+	ARRAY_DEFINE(extensions, const struct sieve_extension *); 
 	buffer_t *code;
 };
 
@@ -22,7 +22,7 @@ struct sieve_binary *sieve_binary_create_new(void)
 	
 	binary->code = buffer_create_dynamic(pool, 256);
 	
-	ARRAY_CREATE(&binary->extensions, pool, struct sieve_extension *, 4);
+	p_array_init(&binary->extensions, pool, 4);
 	
 	return binary;
 }
@@ -35,7 +35,7 @@ void sieve_binary_ref(struct sieve_binary *binary)
 void sieve_binary_unref(struct sieve_binary **binary) 
 {
 	if ( binary != NULL && *binary != NULL ) {
-		pool_unref((*binary)->pool);
+		pool_unref(&((*binary)->pool));
 		*binary = NULL;
 	}
 }
@@ -44,14 +44,14 @@ void sieve_binary_unref(struct sieve_binary **binary)
 
 unsigned int sieve_binary_link_extension(struct sieve_binary *binary, const struct sieve_extension *extension) 
 {
-	array_append(&binary->extensions, &extension, 1);
+	array_append(&(binary->extensions), &extension, 1);
 	
-	return array_count(&binary->extensions) - 1;
+	return array_count(&(binary->extensions)) - 1;
 }
 
 const struct sieve_extension *sieve_binary_get_extension(struct sieve_binary *binary, unsigned int index) 
 {
-	const struct sieve_extension * const *ext = array_idx(&binary->extensions, index);
+	const struct sieve_extension * const*ext = array_idx(&(binary->extensions), index);
 	
 	return *ext;
 }

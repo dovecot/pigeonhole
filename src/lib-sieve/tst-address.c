@@ -63,7 +63,7 @@ bool tst_address_validate(struct sieve_validator *validator, struct sieve_comman
 
 bool tst_address_generate
 	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx __attr_unused__) 
+		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
 	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
 	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_ADDRESS);

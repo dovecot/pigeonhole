@@ -77,7 +77,7 @@ const char *sieve_command_type_name(const struct sieve_command *command) {
 /* Code generation for trivial commands and tests */
 bool cmd_stop_generate
 	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx __attr_unused__) 
+		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
 	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_STOP);
 	return TRUE;
@@ -85,7 +85,7 @@ bool cmd_stop_generate
 
 bool cmd_keep_generate
 	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx __attr_unused__) 
+		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
 	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_KEEP);
 	return TRUE;
@@ -93,7 +93,7 @@ bool cmd_keep_generate
 
 bool cmd_discard_generate
 	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx __attr_unused__) 
+		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
 	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_DISCARD);
 	return TRUE;
@@ -101,7 +101,7 @@ bool cmd_discard_generate
 
 bool tst_false_generate
 	(struct sieve_generator *generator, 
-		struct sieve_command_context *context __attr_unused__,
+		struct sieve_command_context *context ATTR_UNUSED,
 		struct sieve_jumplist *jumps, bool jump_true)
 {
 	if ( !jump_true ) {
@@ -114,7 +114,7 @@ bool tst_false_generate
 
 bool tst_true_generate
 	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx __attr_unused__,
+		struct sieve_command_context *ctx ATTR_UNUSED,
 		struct sieve_jumplist *jumps, bool jump_true)
 {
 	if ( jump_true ) {

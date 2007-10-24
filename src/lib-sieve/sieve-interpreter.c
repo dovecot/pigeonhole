@@ -59,8 +59,8 @@ struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary)
 
 void sieve_interpreter_free(struct sieve_interpreter *interpreter) 
 {
-	pool_unref(interpreter->pool);
 	sieve_binary_unref(&interpreter->binary);
+	pool_unref(&(interpreter->pool));
 }
 
 inline void sieve_interpreter_reset(struct sieve_interpreter *interpreter) 

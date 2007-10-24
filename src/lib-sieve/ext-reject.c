@@ -73,7 +73,7 @@ static bool cmd_reject_generate
 }
 
 /* Load extension into generator */
-static bool ext_reject_generator_load(struct sieve_generator *generator __attr_unused__)
+static bool ext_reject_generator_load(struct sieve_generator *generator ATTR_UNUSED)
 {
 	return TRUE;
 }

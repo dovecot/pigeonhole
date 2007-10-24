@@ -67,7 +67,7 @@ AUTOMAKE = ${SHELL} /home/stephan/src/dovecot-libsieve/missing --run automake-1.
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -std=gnu99 -g -O2 -Wall -W -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wchar-subscripts -Wformat=2 -Wbad-function-cast 
+CFLAGS = -std=gnu99 -g -O2 -Wall -W -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wchar-subscripts -Wformat=2 -Wbad-function-cast -Wstrict-aliasing=2 
 CPP = gcc -E
 CPPFLAGS = 
 CXX = g++
@@ -116,7 +116,7 @@ RAND_LIBS =
 RANLIB = ranlib
 SET_MAKE = 
 SHELL = /bin/bash
-STORAGE_LIBS =  /home/stephan/src/dovecot/dovecot-1.0.2/src/lib-storage/index/maildir/libstorage_maildir.a /home/stephan/src/dovecot/dovecot-1.0.2/src/lib-storage/index/mbox/libstorage_mbox.a /home/stephan/src/dovecot/dovecot-1.0.2/src/lib-storage/index/libstorage_index.a /home/stephan/src/dovecot/dovecot-1.0.2/src/lib-index/libindex.a
+STORAGE_LIBS =  /home/stephan/src/release/dovecot/src/lib-storage/index/maildir/libstorage_maildir.a /home/stephan/src/release/dovecot/src/lib-storage/index/mbox/libstorage_mbox.a /home/stephan/src/release/dovecot/src/lib-storage/index/dbox/libstorage_dbox.a /home/stephan/src/release/dovecot/src/lib-storage/index/cydir/libstorage_cydir.a /home/stephan/src/release/dovecot/src/lib-storage/index/libstorage_index.a /home/stephan/src/release/dovecot/src/lib-index/libindex.a
 STRIP = strip
 VERSION = 1.0.2
 ac_ct_CC = gcc
@@ -140,8 +140,8 @@ build_vendor = pc
 datadir = ${datarootdir}
 datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
-dovecot_incdir = /home/stephan/src/dovecot/dovecot-1.0.2
-dovecotdir = /home/stephan/src/dovecot/dovecot-1.0.2
+dovecot_incdir = /home/stephan/src/release/dovecot
+dovecotdir = /home/stephan/src/release/dovecot
 dvidir = ${docdir}
 exec_prefix = ${prefix}
 host = i686-pc-linux-gnu

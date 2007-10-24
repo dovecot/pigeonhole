@@ -71,10 +71,10 @@ struct sieve_validator *sieve_validator_create(struct sieve_ast *ast, struct sie
 
 void sieve_validator_free(struct sieve_validator *validator) 
 {
-	hash_destroy(validator->commands);
+	hash_destroy(&validator->commands);
 	
 	sieve_ast_unref(&validator->ast);
-	pool_unref(validator->pool);
+	pool_unref(&(validator->pool));
 }
 
 /* Command registry */
@@ -87,8 +87,8 @@ struct sieve_command_registration {
 
 /* Dummy function */
 static bool _cmd_unknown_validate
-	(struct sieve_validator *validator __attr_unused__, 
-	struct sieve_command_context *cmd __attr_unused__) 
+	(struct sieve_validator *validator ATTR_UNUSED, 
+	struct sieve_command_context *cmd ATTR_UNUSED) 
 {
 	i_unreached();
 	return FALSE;
@@ -157,9 +157,9 @@ static const struct sieve_command *
 /* Per-command tag registry */
 
 static bool _unknown_tag_validate
-	(struct sieve_validator *validator __attr_unused__, 
-	struct sieve_ast_argument **arg __attr_unused__, 
-	struct sieve_command_context *tst __attr_unused__)
+	(struct sieve_validator *validator ATTR_UNUSED, 
+	struct sieve_ast_argument **arg ATTR_UNUSED, 
+	struct sieve_command_context *tst ATTR_UNUSED)
 {
 	i_unreached();
 	return FALSE;
@@ -256,9 +256,9 @@ void sieve_validator_link_comparator_tag
 /* Match type validation */
 
 static bool sieve_validate_match_type_tag
-	(struct sieve_validator *validator __attr_unused__, 
-	struct sieve_ast_argument **arg __attr_unused__, 
-	struct sieve_command_context *cmd __attr_unused__)
+	(struct sieve_validator *validator ATTR_UNUSED, 
+	struct sieve_ast_argument **arg ATTR_UNUSED, 
+	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	/* Syntax:   
 	 *   ":is" / ":contains" / ":matches"
@@ -284,9 +284,9 @@ void sieve_validator_link_match_type_tags
 /* Address part validation */
 
 static bool sieve_validate_address_part_tag
-	(struct sieve_validator *validator __attr_unused__, 
-	struct sieve_ast_argument **arg __attr_unused__, 
-	struct sieve_command_context *cmd __attr_unused__)
+	(struct sieve_validator *validator ATTR_UNUSED, 
+	struct sieve_ast_argument **arg ATTR_UNUSED, 
+	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	/* Syntax:   
 	 *   ":localpart" / ":domain" / ":all"

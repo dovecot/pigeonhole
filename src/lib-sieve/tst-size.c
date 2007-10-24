@@ -31,7 +31,7 @@ struct tst_size_context_data {
 
 static bool tst_size_validate_over_tag
 	(struct sieve_validator *validator, 
-	struct sieve_ast_argument **arg __attr_unused__, 
+	struct sieve_ast_argument **arg ATTR_UNUSED, 
 	struct sieve_command_context *tst)
 {
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) tst->data;	
@@ -47,7 +47,7 @@ static bool tst_size_validate_over_tag
 
 static bool tst_size_validate_under_tag
 	(struct sieve_validator *validator, 
-	struct sieve_ast_argument **arg __attr_unused__, 
+	struct sieve_ast_argument **arg ATTR_UNUSED, 
 	struct sieve_command_context *tst)
 {
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) tst->data;	

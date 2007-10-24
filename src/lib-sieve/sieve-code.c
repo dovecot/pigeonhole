@@ -77,21 +77,21 @@ static bool sieve_code_dump_jmpfalse(struct sieve_interpreter *interpreter)
 	return TRUE;
 }	
 	
-static bool sieve_code_dump_stop(struct sieve_interpreter *interpreter __attr_unused__)
+static bool sieve_code_dump_stop(struct sieve_interpreter *interpreter ATTR_UNUSED)
 {	
 	printf("STOP\n");
 	
 	return TRUE;
 }
 
-static bool sieve_code_dump_keep(struct sieve_interpreter *interpreter __attr_unused__)
+static bool sieve_code_dump_keep(struct sieve_interpreter *interpreter ATTR_UNUSED)
 {	
 	printf("KEEP\n");
 	
 	return TRUE;
 }
 
-static bool sieve_code_dump_discard(struct sieve_interpreter *interpreter __attr_unused__)
+static bool sieve_code_dump_discard(struct sieve_interpreter *interpreter ATTR_UNUSED)
 {	
 	printf("DISCARD\n");
 	
@@ -121,21 +121,21 @@ static bool sieve_code_execute_jmpfalse(struct sieve_interpreter *interpreter)
 	return TRUE;
 }	
 	
-static bool sieve_code_execute_stop(struct sieve_interpreter *interpreter __attr_unused__)
+static bool sieve_code_execute_stop(struct sieve_interpreter *interpreter ATTR_UNUSED)
 {	
 	printf(">> STOP\n");
 	
 	return FALSE;
 }
 
-static bool sieve_code_execute_keep(struct sieve_interpreter *interpreter __attr_unused__)
+static bool sieve_code_execute_keep(struct sieve_interpreter *interpreter ATTR_UNUSED)
 {	
 	printf(">> KEEP\n");
 	
 	return TRUE;
 }
 
-static bool sieve_code_execute_discard(struct sieve_interpreter *interpreter __attr_unused__)
+static bool sieve_code_execute_discard(struct sieve_interpreter *interpreter ATTR_UNUSED)
 {	
 	printf(">> DISCARD\n");
 	

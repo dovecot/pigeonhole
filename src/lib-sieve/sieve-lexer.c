@@ -27,8 +27,8 @@ struct sieve_lexer {
 	int current_line;
 	
 	enum sieve_token_type token_type;
-  string_t *token_str_value;
-  int token_int_value;
+	string_t *token_str_value;
+	int token_int_value;
 	
 	struct sieve_error_handler *ehandler;
 	
@@ -59,8 +59,8 @@ struct sieve_lexer *sieve_lexer_create(struct istream *stream, struct sieve_erro
 	return lexer;
 }
 
-void sieve_lexer_free(struct sieve_lexer *lexer __attr_unused__) {
-	pool_unref(lexer->pool); /* This frees any allocated string value as well */
+void sieve_lexer_free(struct sieve_lexer *lexer ATTR_UNUSED) {
+	pool_unref(&(lexer->pool)); /* This frees any allocated string value as well */
 }
 
 static void sieve_lexer_shift(struct sieve_lexer *lexer) {
@@ -68,15 +68,15 @@ static void sieve_lexer_shift(struct sieve_lexer *lexer) {
 		lexer->current_line++;	
 	
 	if ( lexer->buffer != NULL && lexer->buffer_pos + 1 < lexer->buffer_size )
-	  lexer->buffer_pos++;
+		lexer->buffer_pos++;
 	else {
 		if ( lexer->buffer != NULL )
 			i_stream_skip(lexer->input, lexer->buffer_size);
 		
 		lexer->buffer = i_stream_get_data(lexer->input, &lexer->buffer_size);
 	  
-	  if ( lexer->buffer == NULL && i_stream_read(lexer->input) > 0 )
-	  	lexer->buffer = i_stream_get_data(lexer->input, &lexer->buffer_size);
+		if ( lexer->buffer == NULL && i_stream_read(lexer->input) > 0 )
+	  		lexer->buffer = i_stream_get_data(lexer->input, &lexer->buffer_size);
 	  	
 		lexer->buffer_pos = 0;
 	}
@@ -94,64 +94,66 @@ static __inline__ int sieve_lexer_curchar(struct sieve_lexer *lexer) {
   return lexer->buffer[lexer->buffer_pos];
 }
 
-const char *sieve_lexer_token_string(struct sieve_lexer *lexer) {
+const char *sieve_lexer_token_string(struct sieve_lexer *lexer) 
+{
 	switch ( lexer->token_type ) {
-	case STT_NONE: return "no token (bug)"; 		
-	case STT_WHITESPACE: return "whitespace (bug)";
-  case STT_EOF: return "end of file";
+		case STT_NONE: return "no token (bug)"; 		
+		case STT_WHITESPACE: return "whitespace (bug)";
+		case STT_EOF: return "end of file";
   
-  case STT_NUMBER: return "number"; 
-	case STT_IDENTIFIER: return "identifier"; 
-  case STT_TAG: return "tag";
-  case STT_STRING: return "string"; 
+		case STT_NUMBER: return "number"; 
+		case STT_IDENTIFIER: return "identifier"; 
+		case STT_TAG: return "tag";
+		case STT_STRING: return "string"; 
   
-  case STT_RBRACKET: return "')'"; 
-  case STT_LBRACKET: return "'('";
-  case STT_RCURLY: return "'}'"; 
-  case STT_LCURLY: return "'{'"; 
-  case STT_RSQUARE: return "']'"; 
-  case STT_LSQUARE: return "'['"; 
-  case STT_SEMICOLON: return "';'"; 
-  case STT_COMMA: return "','"; 
+		case STT_RBRACKET: return "')'"; 
+		case STT_LBRACKET: return "'('";
+		case STT_RCURLY: return "'}'"; 
+		case STT_LCURLY: return "'{'"; 
+		case STT_RSQUARE: return "']'"; 
+		case STT_LSQUARE: return "'['"; 
+		case STT_SEMICOLON: return "';'"; 
+		case STT_COMMA: return "','"; 
+  	
+		case STT_SLASH: return "'/'";  
+		case STT_COLON: return "':'";   
   
-  case STT_SLASH: return "'/'";  
-  case STT_COLON: return "':'";   
-  
-  case STT_GARBAGE: return "unknown characters"; 
-  case STT_ERROR: return "error token (bug)";
-  }
+		case STT_GARBAGE: return "unknown characters"; 
+		case STT_ERROR: return "error token (bug)";
+	}
    
-  return "unknown token (bug)";
+	return "unknown token (bug)";
 }
 	
-void sieve_lexer_print_token(struct sieve_lexer *lexer) {
+void sieve_lexer_print_token(struct sieve_lexer *lexer) 
+{
 	switch ( lexer->token_type ) {
-	case STT_NONE: printf("??NONE?? "); break;		
-	case STT_WHITESPACE: printf("??WHITESPACE?? "); break;
-  case STT_EOF: printf("EOF\n"); break;
+		case STT_NONE: printf("??NONE?? "); break;		
+		case STT_WHITESPACE: printf("??WHITESPACE?? "); break;
+		case STT_EOF: printf("EOF\n"); break;
   
-  case STT_NUMBER: printf("NUMBER "); break;
-	case STT_IDENTIFIER: printf("IDENTIFIER "); break;
-  case STT_TAG: printf("TAG "); break;
-  case STT_STRING: printf("STRING "); break;
+		case STT_NUMBER: printf("NUMBER "); break;
+		case STT_IDENTIFIER: printf("IDENTIFIER "); break;
+		case STT_TAG: printf("TAG "); break;
+		case STT_STRING: printf("STRING "); break;
   
-  case STT_RBRACKET: printf(") "); break;
-  case STT_LBRACKET: printf("( "); break;
-  case STT_RCURLY: printf("}\n"); break;
-  case STT_LCURLY: printf("{\n"); break;
-  case STT_RSQUARE: printf("] "); break;
-  case STT_LSQUARE: printf("[ "); break;
-  case STT_SEMICOLON: printf(";\n"); break;
-  case STT_COMMA: printf(", "); break;
+		case STT_RBRACKET: printf(") "); break;
+		case STT_LBRACKET: printf("( "); break;
+		case STT_RCURLY: printf("}\n"); break;
+		case STT_LCURLY: printf("{\n"); break;
+		case STT_RSQUARE: printf("] "); break;
+		case STT_LSQUARE: printf("[ "); break;
+		case STT_SEMICOLON: printf(";\n"); break;
+		case STT_COMMA: printf(", "); break;
   
-  case STT_SLASH: printf("/ "); break; 
-  case STT_COLON: printf(": "); break;  
-  
-  case STT_GARBAGE: printf(">>GARBAGE<<"); break;
-  case STT_ERROR: printf(">>ERROR<<"); break;
-  default: 
-  	printf("UNKNOWN ");
-  	break;
+		case STT_SLASH: printf("/ "); break; 
+		case STT_COLON: printf(": "); break;  
+  	
+		case STT_GARBAGE: printf(">>GARBAGE<<"); break;
+		case STT_ERROR: printf(">>ERROR<<"); break;
+	default: 
+		printf("UNKNOWN ");
+		break;
 	}
 }
 
@@ -264,7 +266,7 @@ bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 		return TRUE;
 		
 	// comment = bracket-comment / hash-comment
-  // white-space = 1*(SP / CRLF / HTAB) / comment
+  	// white-space = 1*(SP / CRLF / HTAB) / comment
 	case '\t':
 	case '\r':
 	case '\n':

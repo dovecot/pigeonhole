@@ -36,7 +36,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = i686-pc-linux-gnu
 host_triplet = i686-pc-linux-gnu
-sbin_PROGRAMS = sievec$(EXEEXT)
+bin_PROGRAMS = sievec$(EXEEXT)
 subdir = src/sieve-bin
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -46,15 +46,18 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/libsieve-config.h
 CONFIG_CLEAN_FILES =
-am__installdirs = "$(DESTDIR)$(sbindir)"
-sbinPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
-PROGRAMS = $(sbin_PROGRAMS)
+am__installdirs = "$(DESTDIR)$(bindir)"
+binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
+PROGRAMS = $(bin_PROGRAMS)
 am_sievec_OBJECTS = sievec.$(OBJEXT)
 sievec_OBJECTS = $(am_sievec_OBJECTS)
 am__DEPENDENCIES_1 = $(top_srcdir)/src/lib-sieve/libsieve.a \
 	$(dovecot_incdir)/src/lib/liblib.a
 am__DEPENDENCIES_2 = $(plugin_dir)/vacation/lib_ext_vacation.a
 am__DEPENDENCIES_3 =
+am__DEPENDENCIES_4 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
+	$(am__DEPENDENCIES_3) $(am__DEPENDENCIES_3) \
+	$(am__DEPENDENCIES_3)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -82,7 +85,7 @@ AUTOMAKE = ${SHELL} /home/stephan/src/dovecot-libsieve/missing --run automake-1.
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -std=gnu99 -g -O2 -Wall -W -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wchar-subscripts -Wformat=2 -Wbad-function-cast 
+CFLAGS = -std=gnu99 -g -O2 -Wall -W -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wchar-subscripts -Wformat=2 -Wbad-function-cast -Wstrict-aliasing=2 
 CPP = gcc -E
 CPPFLAGS = 
 CXX = g++
@@ -131,7 +134,7 @@ RAND_LIBS =
 RANLIB = ranlib
 SET_MAKE = 
 SHELL = /bin/bash
-STORAGE_LIBS =  /home/stephan/src/dovecot/dovecot-1.0.2/src/lib-storage/index/maildir/libstorage_maildir.a /home/stephan/src/dovecot/dovecot-1.0.2/src/lib-storage/index/mbox/libstorage_mbox.a /home/stephan/src/dovecot/dovecot-1.0.2/src/lib-storage/index/libstorage_index.a /home/stephan/src/dovecot/dovecot-1.0.2/src/lib-index/libindex.a
+STORAGE_LIBS =  /home/stephan/src/release/dovecot/src/lib-storage/index/maildir/libstorage_maildir.a /home/stephan/src/release/dovecot/src/lib-storage/index/mbox/libstorage_mbox.a /home/stephan/src/release/dovecot/src/lib-storage/index/dbox/libstorage_dbox.a /home/stephan/src/release/dovecot/src/lib-storage/index/cydir/libstorage_cydir.a /home/stephan/src/release/dovecot/src/lib-storage/index/libstorage_index.a /home/stephan/src/release/dovecot/src/lib-index/libindex.a
 STRIP = strip
 VERSION = 1.0.2
 ac_ct_CC = gcc
@@ -155,8 +158,8 @@ build_vendor = pc
 datadir = ${datarootdir}
 datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
-dovecot_incdir = /home/stephan/src/dovecot/dovecot-1.0.2
-dovecotdir = /home/stephan/src/dovecot/dovecot-1.0.2
+dovecot_incdir = /home/stephan/src/release/dovecot
+dovecotdir = /home/stephan/src/release/dovecot
 dvidir = ${docdir}
 exec_prefix = ${prefix}
 host = i686-pc-linux-gnu
@@ -198,20 +201,27 @@ plugins = \
 	$(plugin_dir)/vacation/lib_ext_vacation.a
 
 sievec_LDFLAGS = -export-dynamic
+sieve_test_LDFLAGS = -export-dynamic
 libs = \
 	$(top_srcdir)/src/lib-sieve/libsieve.a \
 	$(dovecot_incdir)/src/lib/liblib.a
 
-sievec_LDADD = \
+ldadd = \
 	$(libs) \
 	$(plugins) \
  	$(LIBICONV) \
     $(RAND_LIBS) \
     $(MODULE_LIBS)
 
+sievec_LDADD = $(ldadd)
+sieve_test_LDADD = $(ldadd)
 sievec_DEPENDENCIES = $(libs)
+sieve_test_DEPENDENCIES = $(libs)
 sievec_SOURCES = \
 	sievec.c 
+
+sieve_test_SOURCES = \
+	sieve_test.c
 
 all: all-am
 
@@ -246,30 +256,30 @@ $(top_srcdir)/configure: # $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): # $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-install-sbinPROGRAMS: $(sbin_PROGRAMS)
+install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
-	test -z "$(sbindir)" || $(mkdir_p) "$(DESTDIR)$(sbindir)"
-	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
 	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
 	  if test -f $$p \
 	     || test -f $$p1 \
 	  ; then \
 	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(sbinPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(sbindir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(sbinPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(sbindir)/$$f" || exit 1; \
+	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
+	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
 	  else :; fi; \
 	done
 
-uninstall-sbinPROGRAMS:
+uninstall-binPROGRAMS:
 	@$(NORMAL_UNINSTALL)
-	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
 	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
-	  echo " rm -f '$(DESTDIR)$(sbindir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(sbindir)/$$f"; \
+	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
 	done
 
-clean-sbinPROGRAMS:
-	@list='$(sbin_PROGRAMS)'; for p in $$list; do \
+clean-binPROGRAMS:
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
 	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
@@ -396,7 +406,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(PROGRAMS)
 installdirs:
-	for dir in "$(DESTDIR)$(sbindir)"; do \
+	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-am
@@ -425,8 +435,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-sbinPROGRAMS \
-	mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -446,7 +455,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am: install-sbinPROGRAMS
+install-exec-am: install-binPROGRAMS
 
 install-info: install-info-am
 
@@ -472,20 +481,19 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-info-am uninstall-sbinPROGRAMS
+uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 
-.PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libtool clean-sbinPROGRAMS ctags distclean \
-	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
+.PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
+	clean-generic clean-libtool ctags distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-binPROGRAMS install-data install-data-am install-exec \
 	install-exec-am install-info install-info-am install-man \
-	install-sbinPROGRAMS install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-info-am \
-	uninstall-sbinPROGRAMS
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-info-am
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
