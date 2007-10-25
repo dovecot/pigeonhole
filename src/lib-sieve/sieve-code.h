@@ -29,6 +29,7 @@ enum sieve_core_operation {
 };
 
 extern const struct sieve_opcode *sieve_opcodes[];
+extern const unsigned int sieve_opcode_count;
 
 enum sieve_core_operand {
   SIEVE_OPERAND_NUMBER       = 0x01,

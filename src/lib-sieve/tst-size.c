@@ -11,11 +11,13 @@
 
 static bool tst_size_over_opcode_dump(struct sieve_interpreter *interpreter);
 static bool tst_size_under_opcode_dump(struct sieve_interpreter *interpreter);
+static bool tst_size_over_opcode_execute(struct sieve_interpreter *interpreter);
+static bool tst_size_under_opcode_execute(struct sieve_interpreter *interpreter);
 
 const struct sieve_opcode tst_size_over_opcode = 
-	{ tst_size_over_opcode_dump, NULL };
+	{ tst_size_over_opcode_dump, tst_size_over_opcode_execute };
 const struct sieve_opcode tst_size_under_opcode = 
-	{ tst_size_under_opcode_dump, NULL };
+	{ tst_size_under_opcode_dump, tst_size_under_opcode_execute };
 
 /* Context structures */
 
@@ -146,4 +148,53 @@ static bool tst_size_under_opcode_dump(struct sieve_interpreter *interpreter)
     sieve_interpreter_dump_operand(interpreter);
 
     return TRUE;
+}
+
+/* Code execution */
+
+static bool tst_size_get(struct sieve_interpreter *interpreter, sieve_size_t *size) 
+{
+	struct mail *mail = sieve_interpreter_get_mail(interpreter);
+	uoff_t psize;
+
+	if (	mail_get_physical_size(mail, &psize) < 0	)
+		return FALSE;
+
+  *size = psize;
+  
+  return TRUE;
+}
+
+static bool tst_size_over_opcode_execute(struct sieve_interpreter *interpreter)
+{
+	sieve_size_t mail_size, limit;
+	
+	printf("SIZEOVER\n");
+	
+	if ( !sieve_interpreter_read_number_operand(interpreter, &limit) ) 
+		return FALSE;	
+	
+	if ( !tst_size_get(interpreter, &mail_size) )
+		return FALSE;
+	
+	sieve_interpreter_set_test_result(interpreter, (mail_size > limit));
+	
+	return TRUE;
+}
+
+static bool tst_size_under_opcode_execute(struct sieve_interpreter *interpreter)
+{ 
+	sieve_size_t mail_size, limit;
+	
+	printf("SIZEUNDER\n");
+	
+	if ( !sieve_interpreter_read_number_operand(interpreter, &limit) ) 
+		return FALSE;	
+	
+	if ( !tst_size_get(interpreter, &mail_size) )
+		return FALSE;
+	
+	sieve_interpreter_set_test_result(interpreter, (mail_size < limit));
+	
+	return TRUE;
 }

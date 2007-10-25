@@ -51,11 +51,15 @@ unsigned int sieve_binary_link_extension(struct sieve_binary *binary, const stru
 
 const struct sieve_extension *sieve_binary_get_extension(struct sieve_binary *binary, unsigned int index) 
 {
-	const struct sieve_extension * const*ext = array_idx(&(binary->extensions), index);
+	const struct sieve_extension * const *ext;
 	
-	return *ext;
+	if ( array_count(&(binary->extensions)) > index ) {
+		ext = array_idx(&(binary->extensions), index);
+		return *ext;
+	}
+	
+	return NULL;
 }
-
 
 /* Emission functions */
 

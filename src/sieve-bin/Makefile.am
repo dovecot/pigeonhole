@@ -16,8 +16,8 @@ plugin_dir = \
 plugins = \
 	$(plugin_dir)/vacation/lib_ext_vacation.a
 
-sievec_LDFLAGS = -export-dynamic
-sieve_test_LDFLAGS = -export-dynamic
+sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
+sieve_test_LDFLAGS = -export-dynamic -Wl,--start-group
 
 libs = \
 	$(top_srcdir)/src/lib-sieve/libsieve.a \

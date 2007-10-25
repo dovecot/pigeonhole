@@ -45,14 +45,20 @@ const struct sieve_opcode *sieve_opcodes[] = {
   &tst_size_under_opcode
 }; 
 
+const unsigned int sieve_opcode_count =
+	(sizeof(sieve_opcodes) / sizeof(sieve_opcodes[0]));
+
 /* Code dump for core commands */
 
 static bool sieve_code_dump_jmp(struct sieve_interpreter *interpreter)
 {
 	unsigned int pc = sieve_interpreter_program_counter(interpreter);
-	int offset = sieve_interpreter_read_offset(interpreter);
+	int offset;
 	
-	printf("JMP %d [%08x]\n", offset, pc + offset);
+	if ( sieve_interpreter_read_offset_operand(interpreter, &offset) ) 
+		printf("JMP %d [%08x]\n", offset, pc + offset);
+	else
+		return FALSE;
 	
 	return TRUE;
 }	
@@ -60,9 +66,12 @@ static bool sieve_code_dump_jmp(struct sieve_interpreter *interpreter)
 static bool sieve_code_dump_jmptrue(struct sieve_interpreter *interpreter)
 {	
 	unsigned int pc = sieve_interpreter_program_counter(interpreter);
-	int offset = sieve_interpreter_read_offset(interpreter);
-		
-	printf("JMPTRUE %d [%08x]\n", offset, pc + offset);
+	int offset;
+	
+	if ( sieve_interpreter_read_offset_operand(interpreter, &offset) ) 
+		printf("JMPTRUE %d [%08x]\n", offset, pc + offset);
+	else
+		return FALSE;
 	
 	return TRUE;
 }
@@ -70,9 +79,12 @@ static bool sieve_code_dump_jmptrue(struct sieve_interpreter *interpreter)
 static bool sieve_code_dump_jmpfalse(struct sieve_interpreter *interpreter)
 {	
 	unsigned int pc = sieve_interpreter_program_counter(interpreter);
-	int offset = sieve_interpreter_read_offset(interpreter);
+	int offset;
 	
-	printf("JMPFALSE %d [%08x]\n", offset, pc + offset);
+	if ( sieve_interpreter_read_offset_operand(interpreter, &offset) )
+		printf("JMPFALSE %d [%08x]\n", offset, pc + offset);
+	else
+		return FALSE;
 	
 	return TRUE;
 }	
@@ -102,21 +114,31 @@ static bool sieve_code_dump_discard(struct sieve_interpreter *interpreter ATTR_U
 
 static bool sieve_code_execute_jmp(struct sieve_interpreter *interpreter)
 {
-	sieve_interpreter_program_jump(interpreter);
+	printf("JMP\n");
+	if ( !sieve_interpreter_program_jump(interpreter, TRUE) )
+		return FALSE;
 	
 	return TRUE;
 }	
 		
 static bool sieve_code_execute_jmptrue(struct sieve_interpreter *interpreter)
 {	
-	sieve_interpreter_program_jump(interpreter);
+	if ( !sieve_interpreter_program_jump(interpreter,
+		sieve_interpreter_get_test_result(interpreter)) )
+		return FALSE;
+		
+	printf("JMPTRUE\n");
 	
 	return TRUE;
 }
 
 static bool sieve_code_execute_jmpfalse(struct sieve_interpreter *interpreter)
 {	
-	sieve_interpreter_program_jump(interpreter);
+	if ( !sieve_interpreter_program_jump(interpreter,
+		!sieve_interpreter_get_test_result(interpreter)) )
+		return FALSE;
+		
+	printf("JMPFALSE\n");
 	
 	return TRUE;
 }	

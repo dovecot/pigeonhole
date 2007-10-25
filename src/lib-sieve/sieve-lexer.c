@@ -194,6 +194,7 @@ __inline__ int sieve_lexer_current_line(struct sieve_lexer *lexer) {
  */
 bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer) 
 {
+	int start_line;
 	string_t *str;
 
 	/* Read first character */
@@ -228,6 +229,7 @@ bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 	//        ;; or unless it is followed by a character that isn't a
 	//        ;; slash.)
 	case '/': 
+		start_line = lexer->current_line;
 		sieve_lexer_shift(lexer);
 		
 		if ( sieve_lexer_curchar(lexer) == '*' ) { 
@@ -244,13 +246,13 @@ bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 						return TRUE;
 						
 					} else if ( sieve_lexer_curchar(lexer) == -1 ) {
-						sieve_lexer_error(lexer, "end of file before end of bracket comment ('/* ... */')");
+						sieve_lexer_error(lexer, "end of file before end of bracket comment ('/* ... */') started at line %d", start_line);
 						lexer->token_type = STT_ERROR;
 						return FALSE;
 					}
 
 				} else if ( sieve_lexer_curchar(lexer) == -1 ) {
-					sieve_lexer_error(lexer, "end of file before end of bracket comment ('/* ... */')");
+					sieve_lexer_error(lexer, "end of file before end of bracket comment ('/* ... */') started at line %d", start_line);
 					lexer->token_type = STT_ERROR;
 					return FALSE;
 					
@@ -286,11 +288,18 @@ bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 		
 	/* quoted-string */
 	case '"':
+		start_line = lexer->current_line;
 		sieve_lexer_shift(lexer);
 		str = str_new(lexer->pool, 16);
 		lexer->token_str_value = str;
 		
 		while ( sieve_lexer_curchar(lexer) != '"' ) {
+			if ( sieve_lexer_curchar(lexer) == -1 ) {
+				sieve_lexer_error(lexer, "end of file before end of quoted string started at line %d", start_line);
+				lexer->token_type = STT_ERROR;
+				return FALSE;
+			}
+			
 			if ( sieve_lexer_curchar(lexer) == '\\' ) {
 				sieve_lexer_shift(lexer);
 			}

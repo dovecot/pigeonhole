@@ -185,22 +185,22 @@ create_mbox_stream(int fd, const char *envelope_sender, bool **first_r)
 	return input;
 }
 
-void mail_test(struct mail *mail)
+void sieve_test(struct sieve_binary *sbin, struct mail *mail)
 {
 	const char *const *headers;
 
 	printf("HEADERS\n");
-    if (mail_get_headers_utf8(mail, "from", &headers) >= 0)
-	{
-		printf("HEADERS FOUND\n");	
+	if (mail_get_headers_utf8(mail, "from", &headers) >= 0) {	
 		int i;
 		for ( i = 0; headers[i] != NULL; i++ ) {
 			printf("HEADER: From: %s\n", headers[i]);
-        } 
+		} 
 	}
+	
+	sieve_execute(sbin, mail);
 }
 
-int main(void)
+int main(int argc, char **argv) 
 {
 	const char *envelope_sender = DEFAULT_ENVELOPE_SENDER;
 	const char *mailbox = "INBOX";
@@ -215,6 +215,8 @@ int main(void)
 	uid_t process_euid;
 	pool_t namespace_pool;
 	bool *input_first;
+	int fd;
+	struct sieve_binary *sbin;
 
 	lib_init();
 	ioloop = io_loop_create();
@@ -224,6 +226,27 @@ int main(void)
 	lib_signals_set_handler(SIGTERM, TRUE, sig_die, NULL);
 	lib_signals_ignore(SIGPIPE, TRUE);
 	lib_signals_ignore(SIGALRM, FALSE);
+		
+	if ( argc < 2 ) {
+		printf( "Usage: sieve_test <filename>\n");
+ 		exit(1);
+ 	}
+  
+  /* Compile sieve script */
+  
+	if ( (fd = open(argv[1], O_RDONLY)) < 0 ) {
+		perror("open()");
+		exit(1);
+	}
+
+	printf("Parsing sieve script '%s'...\n", argv[1]);
+
+	if ( (sbin = sieve_compile(fd)) == NULL ) 
+		exit(1);
+	
+	(void) sieve_dump(sbin);
+
+ 	close(fd);
 
 	/* we're non-root. get our username and possibly our home. */
 	process_euid = geteuid();
@@ -264,7 +287,7 @@ int main(void)
 
 	/* */
 	i_stream_seek(input, 0);
-	mail_test(mail);
+	sieve_test(sbin, mail);
 	//ret = deliver_save(ns, &storage, mailbox, mail, 0, NULL);
 
 	i_stream_unref(&input);
