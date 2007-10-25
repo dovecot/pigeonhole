@@ -12,7 +12,7 @@ struct sieve_command_registration;
 struct sieve_validator *sieve_validator_create(struct sieve_ast *ast, struct sieve_error_handler *ehandler);
 void sieve_validator_free(struct sieve_validator *validator);
 
-bool sieve_validate(struct sieve_validator *validator);
+bool sieve_validator_run(struct sieve_validator *validator);
 
 void sieve_validator_warning
 	(struct sieve_validator *validator, struct sieve_ast_node *node, const char *fmt, ...);

@@ -597,7 +597,7 @@ static bool sieve_validate_block(struct sieve_validator *validator, struct sieve
 	return TRUE;
 }
 
-bool sieve_validate(struct sieve_validator *validator) {	
+bool sieve_validator_run(struct sieve_validator *validator) {	
 	return sieve_validate_block(validator, sieve_ast_root(validator->ast));
 }
 

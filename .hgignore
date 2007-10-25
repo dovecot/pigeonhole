@@ -47,4 +47,5 @@ Makefile.in
 **/Makefile
 **/Makefile.in
 
-src/lib-sieve/sievec
+src/sieve-bin/sievec
+src/sieve-bin/sieve_test

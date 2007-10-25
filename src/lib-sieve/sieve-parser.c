@@ -340,7 +340,7 @@ static bool sieve_parse_commands
 	return result;
 }
 
-bool sieve_parse(struct sieve_parser *parser) 
+bool sieve_parser_run(struct sieve_parser *parser) 
 {
 	/* Scan first token */
 	sieve_lexer_skip_token(parser->lexer);

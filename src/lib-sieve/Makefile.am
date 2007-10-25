@@ -42,7 +42,8 @@ libsieve_a_SOURCES = \
 	$(tsts) \
 	$(cmds) \
 	sieve-extensions.c \
-	$(exts) 
+	$(exts) \
+	sieve.c 
 
 noinst_HEADERS = \
 	sieve-lexer.h \
@@ -55,5 +56,6 @@ noinst_HEADERS = \
 	sieve-result.h
 	sieve-error.h \
 	sieve-commands.h \
-	sieve-code.h
-	sieve-extensions.h
+	sieve-code.h \
+	sieve-extensions.h \
+	sieve.h

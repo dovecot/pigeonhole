@@ -252,7 +252,7 @@ void sieve_ast_ref(struct sieve_ast *ast) {
 }
 
 void sieve_ast_unref(struct sieve_ast **ast) {
-	if ( ast != NULL ) {
+	if ( ast != NULL && *ast != NULL ) {
 		pool_unref(&((*ast)->pool));
 		*ast = NULL;
 	}

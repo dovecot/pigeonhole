@@ -321,7 +321,7 @@ bool sieve_generate_block(struct sieve_generator *generator, struct sieve_ast_no
 	return TRUE;
 }
 
-struct sieve_binary *sieve_generate(struct sieve_generator *generator) {	
+struct sieve_binary *sieve_generator_run(struct sieve_generator *generator) {	
 	if ( sieve_generate_block(generator, sieve_ast_root(generator->ast)) ) {
 	 	return generator->binary;
 	} 
