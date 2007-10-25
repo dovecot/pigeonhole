@@ -91,7 +91,7 @@ static bool tst_exists_opcode_execute(struct sieve_interpreter *interpreter)
 	while ( !matched && sieve_coded_stringlist_next_item(hdr_list, &hdr_item) && hdr_item != NULL ) {
 		const char *const *headers;
 			
-		if ( mail_get_headers_utf8(mail, str_c(hdr_item), &headers) >= 0 && headers[0] != NULL) {	
+		if ( mail_get_headers_utf8(mail, str_c(hdr_item), &headers) >= 0 && headers[0] != NULL ) {	
 			matched = TRUE;				 
 		}
 	}
