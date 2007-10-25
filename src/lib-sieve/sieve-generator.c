@@ -195,7 +195,11 @@ bool sieve_generator_emit_stringlist_argument
 		(void) sieve_generator_emit_string(generator, sieve_ast_argument_str(arg));
 		return TRUE;
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
-		(void) sieve_generator_emit_string_list(generator, arg);
+		if ( sieve_ast_strlist_count(arg) == 1 )
+			sieve_generator_emit_string(generator, 
+				sieve_ast_argument_str(sieve_ast_strlist_first(arg)));
+		else
+			(void) sieve_generator_emit_string_list(generator, arg);
 		return TRUE;
 	}
 	

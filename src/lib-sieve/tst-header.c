@@ -9,9 +9,10 @@
 /* Opcodes */
 
 static bool tst_header_opcode_dump(struct sieve_interpreter *interpreter);
+static bool tst_header_opcode_execute(struct sieve_interpreter *interpreter);
 
 const struct sieve_opcode tst_header_opcode = 
-	{ tst_header_opcode_dump, NULL };
+	{ tst_header_opcode_dump, tst_header_opcode_execute };
 
 /* Test registration */
 
@@ -87,4 +88,53 @@ static bool tst_header_opcode_dump(struct sieve_interpreter *interpreter)
     sieve_interpreter_dump_operand(interpreter);
 
     return TRUE;
+}
+
+/* Code execution */
+
+static bool tst_header_opcode_execute(struct sieve_interpreter *interpreter)
+{
+	struct mail *mail = sieve_interpreter_get_mail(interpreter);
+	struct sieve_coded_stringlist *hdr_list;
+	struct sieve_coded_stringlist *key_list;
+	string_t *hdr_item;
+	bool matched;
+	
+	printf("?? HEADER\n");
+
+	t_push();
+		
+	/* Read header-list */
+	if ( (hdr_list=sieve_interpreter_read_stringlist_operand(interpreter)) == NULL ) {
+		t_pop();
+		return FALSE;
+	}
+	
+	/* Read key-list */
+	if ( (key_list=sieve_interpreter_read_stringlist_operand(interpreter)) == NULL ) {
+		t_pop();
+		return FALSE;
+	}
+	
+	/* Iterate through all requested headers to match */
+	hdr_item = NULL;
+	matched = FALSE;
+	while ( !matched && sieve_coded_stringlist_next_item(hdr_list, &hdr_item) && hdr_item != NULL ) {
+		const char *const *headers;
+			
+		if ( mail_get_headers_utf8(mail, str_c(hdr_item), &headers) >= 0 ) {	
+			
+			int i;
+			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
+				if ( sieve_stringlist_match(key_list, headers[i]) )
+					matched = TRUE;				
+			} 
+		}
+	}
+	
+	t_pop();
+	
+	sieve_interpreter_set_test_result(interpreter, matched);
+	
+	return TRUE;
 }
