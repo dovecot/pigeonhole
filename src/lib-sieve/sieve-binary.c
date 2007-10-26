@@ -61,7 +61,7 @@ const struct sieve_extension *sieve_binary_get_extension(struct sieve_binary *bi
 	return NULL;
 }
 
-/* Emission functions */
+/* Low-level emission functions */
 
 inline sieve_size_t sieve_binary_emit_data(struct sieve_binary *binary, void *data, sieve_size_t size) 
 {
@@ -92,4 +92,71 @@ inline const char *sieve_binary_get_code(struct sieve_binary *binary, sieve_size
 {
 	return buffer_get_data(binary->code, code_size);		
 }
+
+/* Offset emission functions */
+
+sieve_size_t sieve_binary_emit_offset(struct sieve_binary *binary, int offset) 
+{
+  int i;
+	sieve_size_t address = sieve_binary_get_code_size(binary);
+
+  for ( i = 3; i >= 0; i-- ) {
+    char c = (char) (offset >> (i * 8));
+	  (void) sieve_binary_emit_data(binary, &c, 1);
+	}
+	
+	return address;
+}
+
+void sieve_binary_resolve_offset
+	(struct sieve_binary *binary, sieve_size_t address) 
+{
+  int i;
+	int offset = sieve_binary_get_code_size(binary) - address; 
+	
+	for ( i = 3; i >= 0; i-- ) {
+    char c = (char) (offset >> (i * 8));
+	  (void) sieve_binary_update_data(binary, address + 3 - i, &c, 1);
+	}
+}
+
+/* Literal emission */
+
+sieve_size_t sieve_binary_emit_integer(struct sieve_binary *binary, sieve_size_t integer)
+{
+  int i;
+  char buffer[sizeof(sieve_size_t) + 1];
+  int bufpos = sizeof(buffer) - 1;
+  
+  buffer[bufpos] = integer & 0x7F;
+  bufpos--;
+  integer >>= 7;
+  while ( integer > 0 ) {
+  	buffer[bufpos] = integer & 0x7F;
+    bufpos--;
+    integer >>= 7;  
+  }
+  
+  bufpos++;
+  if ( (sizeof(buffer) - bufpos) > 1 ) { 
+    for ( i = bufpos; i < ((int) sizeof(buffer) - 1); i++) {
+      buffer[i] |= 0x80;
+    }
+  } 
+  
+  return sieve_binary_emit_data(binary, buffer + bufpos, sizeof(buffer) - bufpos);
+}
+
+sieve_size_t sieve_binary_emit_string(struct sieve_binary *binary, const string_t *str)
+{
+	sieve_size_t address = sieve_binary_emit_integer(binary, str_len(str));
+  (void) sieve_binary_emit_data(binary, (void *) str_data(str), str_len(str));
+
+  return address;
+}
+ 
+
+
+
+
 

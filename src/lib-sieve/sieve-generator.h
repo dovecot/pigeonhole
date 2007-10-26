@@ -36,11 +36,18 @@ sieve_size_t sieve_generator_emit_opcode
 sieve_size_t sieve_generator_emit_ext_opcode
 	(struct sieve_generator *generator, const struct sieve_extension *extension);
 
-sieve_size_t sieve_generator_emit_offset(struct sieve_generator *generator, int offset);
-void sieve_generator_resolve_offset(struct sieve_generator *generator, sieve_size_t address); 
+/* Offset emission */
 
-sieve_size_t sieve_generator_emit_integer
+inline sieve_size_t sieve_generator_emit_offset(struct sieve_generator *generator, int offset);
+inline void sieve_generator_resolve_offset(struct sieve_generator *generator, sieve_size_t address); 
+
+/* Literal emission */
+
+inline sieve_size_t sieve_generator_emit_integer
 	(struct sieve_generator *generator, sieve_size_t integer);
+	
+/* Operand emission */
+	
 sieve_size_t sieve_generator_emit_number
 	(struct sieve_generator *generator, sieve_size_t number);
 sieve_size_t sieve_generator_emit_string

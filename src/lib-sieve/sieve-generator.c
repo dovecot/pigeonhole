@@ -108,73 +108,37 @@ unsigned int sieve_generator_find_extension
   return reg->opcode;
 }
 
-/* Emission functions */
+/* Offset emission */
 
-sieve_size_t sieve_generator_emit_offset(struct sieve_generator *generator, int offset) 
+inline sieve_size_t sieve_generator_emit_offset(struct sieve_generator *generator, int offset) 
 {
-  int i;
-	sieve_size_t address = sieve_binary_get_code_size(generator->binary);
-
-  for ( i = 3; i >= 0; i-- ) {
-    char c = (char) (offset >> (i * 8));
-	  (void) sieve_binary_emit_data(generator->binary, &c, 1);
-	}
-	
-	return address;
+	return sieve_binary_emit_offset(generator->binary, offset);
 }
 
-void sieve_generator_resolve_offset
-	(struct sieve_generator *generator, sieve_size_t address) 
+inline void sieve_generator_resolve_offset(struct sieve_generator *generator, sieve_size_t address) 
 {
-  int i;
-	int offset = sieve_binary_get_code_size(generator->binary) - address; 
-	
-	for ( i = 3; i >= 0; i-- ) {
-    char c = (char) (offset >> (i * 8));
-	  (void) sieve_binary_update_data(generator->binary, address + 3 - i, &c, 1);
-	}
-} 
-
-/* Emit literals */
-
-sieve_size_t sieve_generator_emit_integer(struct sieve_generator *generator, sieve_size_t integer)
-{
-  int i;
-  char buffer[sizeof(sieve_size_t) + 1];
-  int bufpos = sizeof(buffer) - 1;
-  
-  buffer[bufpos] = integer & 0x7F;
-  bufpos--;
-  integer >>= 7;
-  while ( integer > 0 ) {
-  	buffer[bufpos] = integer & 0x7F;
-    bufpos--;
-    integer >>= 7;  
-  }
-  
-  bufpos++;
-  if ( (sizeof(buffer) - bufpos) > 1 ) { 
-    for ( i = bufpos; i < ((int) sizeof(buffer) - 1); i++) {
-      buffer[i] |= 0x80;
-    }
-  } 
-  
-  return sieve_binary_emit_data(generator->binary, buffer + bufpos, sizeof(buffer) - bufpos);
+	sieve_binary_resolve_offset(generator->binary, address);
 }
+
+/* Literal emission */
+
+inline sieve_size_t sieve_generator_emit_integer(struct sieve_generator *generator, sieve_size_t integer)
+{
+  return sieve_binary_emit_integer(generator->binary, integer);
+}
+
+inline static sieve_size_t sieve_generator_emit_string_item(struct sieve_generator *generator, const string_t *str)
+{
+  return sieve_binary_emit_string(generator->binary, str);
+}
+
+/* Operand emission */
 
 sieve_size_t sieve_generator_emit_number(struct sieve_generator *generator, sieve_size_t number)
 {
   sieve_size_t address = sieve_binary_emit_byte(generator->binary, SIEVE_OPERAND_NUMBER);
   
   (void) sieve_generator_emit_integer(generator, number);
-
-  return address;
-}
-
-static sieve_size_t sieve_generator_emit_string_item(struct sieve_generator *generator, const string_t *str)
-{
-	sieve_size_t address = sieve_generator_emit_integer(generator, str_len(str));
-  (void) sieve_binary_emit_data(generator->binary, (void *) str_data(str), str_len(str));
 
   return address;
 }
