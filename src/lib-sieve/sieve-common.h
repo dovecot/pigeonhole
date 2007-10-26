@@ -11,7 +11,7 @@ struct sieve_ast_node;
 struct sieve_ast_argument;
 
 /* sieve-commands.h */
-struct sieve_tag;
+struct sieve_argument;
 struct sieve_command;
 struct sieve_command_context;
 struct sieve_command_registration;

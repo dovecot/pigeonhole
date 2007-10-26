@@ -13,10 +13,12 @@ struct sieve_command_context;
 
 /* Command */
 
-struct sieve_tag {
+struct sieve_argument {
 	const char *identifier;
 	
 	bool (*validate)(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *context);
+	bool (*generate)(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *context);
 };
 

@@ -3,6 +3,7 @@
 
 #include "lib.h"
 
+#include "sieve-comparators.h"
 #include "sieve-common.h"
 #include "sieve-error.h"
 
@@ -25,12 +26,18 @@ void sieve_validator_error
 void sieve_validator_register_command
 	(struct sieve_validator *validator, const struct sieve_command *command);
 
-/* Tag registration */
+/* Argument registration */
 void sieve_validator_register_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
-	const struct sieve_tag *tag);
+	const struct sieve_argument *argument);
+	
+/* Comparator registration */
+void sieve_validator_register_comparator
+	(struct sieve_validator *validator, const struct sieve_comparator *cmp);
+const struct sieve_comparator *sieve_validator_find_comparator
+		(struct sieve_validator *validator, const char *comparator); 
 
-/* Special test tags */
+/* Special test arguments */
 void sieve_validator_link_comparator_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg); 
 void sieve_validator_link_match_type_tags

@@ -28,6 +28,7 @@
 			list->tail = node; \
 		} \
 		list->len++; \
+		node->list = list; \
 	}	 
 	
 /* List of AST nodes */
@@ -44,12 +45,49 @@ static struct sieve_ast_arg_list *sieve_ast_arg_list_create( pool_t pool )
 static void sieve_ast_arg_list_add( struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument )
 	__LIST_ADD(list, argument)
 
+static struct sieve_ast_argument *sieve_ast_arg_list_delete
+	(const struct sieve_ast_argument *first, const unsigned int count)
+{
+	const struct sieve_ast_argument *last;
+	unsigned int left;
+	
+	i_assert(first->list != NULL);
+	
+	/* Find the last of the deleted arguments */
+	left = count - 1;
+	last = first;
+	while ( left > 0 && last->next != NULL ) {
+		left--;
+		last = last->next;
+	}
+
+	/* Perform substitution */
+		
+	if ( first->list->head == first ) 
+		first->list->head = last->next;
+
+	if ( first->list->tail == last )
+		first->list->tail = first->prev;
+		
+	if ( first->prev != NULL )
+		first->prev->next = last->next;
+		
+	if ( last->next != NULL )
+		last->next->prev = first->prev;
+		
+	first->list->len -= count - left;
+	
+	/* Deleted objects are freed along with AST pool */
+	
+	return last->next;
+}
+
 /* AST Node */
 
 static struct sieve_ast_node *sieve_ast_node_create
 	(struct sieve_ast *ast, struct sieve_ast_node *parent, enum sieve_ast_type type, 
-	unsigned int source_line) {
-
+	unsigned int source_line) 
+{
 	struct sieve_ast_node *node = p_new(ast->pool, struct sieve_ast_node, 1);
 	
 	node->ast = ast;
@@ -71,7 +109,8 @@ static struct sieve_ast_node *sieve_ast_node_create
 	return node;
 }
 
-static void sieve_ast_node_add_command(struct sieve_ast_node *node, struct sieve_ast_node *command) {
+static void sieve_ast_node_add_command(struct sieve_ast_node *node, struct sieve_ast_node *command) 
+{
 	i_assert( command->type == SAT_COMMAND && (node->type == SAT_ROOT || node->type == SAT_COMMAND) );
 	
 	if (node->commands == NULL) node->commands = sieve_ast_list_create(node->ast->pool);
@@ -79,7 +118,8 @@ static void sieve_ast_node_add_command(struct sieve_ast_node *node, struct sieve
 	sieve_ast_list_add(node->commands, command);
 }
 
-static void sieve_ast_node_add_test(struct sieve_ast_node *node, struct sieve_ast_node *test) {
+static void sieve_ast_node_add_test(struct sieve_ast_node *node, struct sieve_ast_node *test) 
+{
 	i_assert( test->type == SAT_TEST && (node->type == SAT_TEST || node->type == SAT_COMMAND) );
 	
 	if (node->tests == NULL) node->tests = sieve_ast_list_create(node->ast->pool);
@@ -87,7 +127,8 @@ static void sieve_ast_node_add_test(struct sieve_ast_node *node, struct sieve_as
 	sieve_ast_list_add(node->tests, test);
 }
 
-static void sieve_ast_node_add_argument(struct sieve_ast_node *node, struct sieve_ast_argument *argument) {
+static void sieve_ast_node_add_argument(struct sieve_ast_node *node, struct sieve_ast_argument *argument) 
+{
 	i_assert( node->type == SAT_TEST || node->type == SAT_COMMAND );
 	
 	if (node->arguments == NULL) node->arguments = sieve_ast_arg_list_create(node->ast->pool);
@@ -97,8 +138,8 @@ static void sieve_ast_node_add_argument(struct sieve_ast_node *node, struct siev
 
 /* Argument AST node */
 static struct sieve_ast_argument *sieve_ast_argument_create
-	(struct sieve_ast *ast, unsigned int source_line) {
-	
+	(struct sieve_ast *ast, unsigned int source_line) 
+{	
 	struct sieve_ast_argument *arg = p_new(ast->pool, struct sieve_ast_argument, 1);
 	
 	arg->ast = ast;
@@ -107,13 +148,15 @@ static struct sieve_ast_argument *sieve_ast_argument_create
 	arg->next = NULL;
 	
 	arg->source_line = source_line;
+	arg->context = NULL;
+	arg->argument = NULL;
 			
 	return arg;
 }
 
 struct sieve_ast_argument *sieve_ast_argument_string_create
-	(struct sieve_ast_node *node, const string_t *str, unsigned int source_line) {
-	
+	(struct sieve_ast_node *node, const string_t *str, unsigned int source_line) 
+{	
 	struct sieve_ast_argument *argument = sieve_ast_argument_create
 		(node->ast, source_line);
 		
@@ -129,7 +172,8 @@ struct sieve_ast_argument *sieve_ast_argument_string_create
 }
 
 struct sieve_ast_argument *sieve_ast_argument_stringlist_create
-	(struct sieve_ast_node *node, unsigned int source_line) {
+	(struct sieve_ast_node *node, unsigned int source_line) 
+{
 
 	struct sieve_ast_argument *argument = sieve_ast_argument_create(node->ast, source_line);
 	
@@ -142,7 +186,8 @@ struct sieve_ast_argument *sieve_ast_argument_stringlist_create
 }
 
 void sieve_ast_stringlist_add
-	(struct sieve_ast_argument *list, const string_t *str, unsigned int source_line) {
+	(struct sieve_ast_argument *list, const string_t *str, unsigned int source_line) 
+{
 	struct sieve_ast_argument *stritem;
 	
 	i_assert( list->type == SAAT_STRING_LIST );
@@ -162,8 +207,8 @@ void sieve_ast_stringlist_add
 }
 
 struct sieve_ast_argument *sieve_ast_argument_tag_create
-	(struct sieve_ast_node *node, const char *tag, unsigned int source_line) {
-	
+	(struct sieve_ast_node *node, const char *tag, unsigned int source_line) 
+{	
 	struct sieve_ast_argument *argument = 
 		sieve_ast_argument_create(node->ast, source_line);
 	
@@ -176,7 +221,8 @@ struct sieve_ast_argument *sieve_ast_argument_tag_create
 }
 
 struct sieve_ast_argument *sieve_ast_argument_number_create
-	(struct sieve_ast_node *node, int number, unsigned int source_line) {
+	(struct sieve_ast_node *node, int number, unsigned int source_line) 
+{
 	
 	struct sieve_ast_argument *argument = 
 		sieve_ast_argument_create(node->ast, source_line);
@@ -189,6 +235,12 @@ struct sieve_ast_argument *sieve_ast_argument_number_create
 	return argument;
 }
 
+struct sieve_ast_argument *sieve_ast_arguments_delete
+	(struct sieve_ast_argument *first, unsigned int count) 
+{	
+	return sieve_ast_arg_list_delete(first, count);
+}
+
 const char *sieve_ast_argument_name(struct sieve_ast_argument *argument) {
 	switch ( argument->type ) {
 	
@@ -197,6 +249,7 @@ const char *sieve_ast_argument_name(struct sieve_ast_argument *argument) {
 	case SAAT_STRING: return "a string";
 	case SAAT_NUMBER: return "a number";
 	case SAAT_TAG: return "a tag";
+	
 	default: return "??ARGUMENT??";
 	}
 }

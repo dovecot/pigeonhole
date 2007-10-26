@@ -23,7 +23,6 @@ const struct sieve_opcode tst_size_under_opcode =
 
 struct tst_size_context_data {
 	enum { SIZE_UNASSIGNED, SIZE_UNDER, SIZE_OVER } type;
-	unsigned int limit;
 };
 
 #define TST_SIZE_ERROR_DUP_TAG \
@@ -33,7 +32,7 @@ struct tst_size_context_data {
 
 static bool tst_size_validate_over_tag
 	(struct sieve_validator *validator, 
-	struct sieve_ast_argument **arg ATTR_UNUSED, 
+	struct sieve_ast_argument **arg, 
 	struct sieve_command_context *tst)
 {
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) tst->data;	
@@ -44,6 +43,10 @@ static bool tst_size_validate_over_tag
 	}
 	
 	ctx_data->type = SIZE_OVER;
+	
+	/* Delete this tag */
+	*arg = sieve_ast_arguments_delete(*arg, 1);
+	
 	return TRUE;
 }
 
@@ -59,14 +62,20 @@ static bool tst_size_validate_under_tag
 		return FALSE;		
 	}
 	
-	ctx_data->type = SIZE_UNDER;	
+	ctx_data->type = SIZE_UNDER;
+	
+	/* Delete this tag */
+	*arg = sieve_ast_arguments_delete(*arg, 1);
+		
 	return TRUE;
 }
 
 /* Test registration */
 
-static const struct sieve_tag size_over_tag = { "over", tst_size_validate_over_tag };
-static const struct sieve_tag size_under_tag = { "under", tst_size_validate_under_tag };
+static const struct sieve_argument size_over_tag = 
+	{ "over", tst_size_validate_over_tag, NULL };
+static const struct sieve_argument size_under_tag = 
+	{ "under", tst_size_validate_under_tag, NULL };
 
 bool tst_size_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
@@ -86,7 +95,6 @@ bool tst_size_validate(struct sieve_validator *validator, struct sieve_command_c
 	/* Assign context */
 	ctx_data = p_new(sieve_command_pool(tst), struct tst_size_context_data, 1);
 	ctx_data->type = SIZE_UNASSIGNED;
-	ctx_data->limit = 0;
 	tst->data = ctx_data;
 	
 	/* Check envelope test syntax:
@@ -109,8 +117,6 @@ bool tst_size_validate(struct sieve_validator *validator, struct sieve_command_c
 		return FALSE; 
 	}
 	
-	ctx_data->limit = sieve_ast_argument_number(arg);
-	
 	return TRUE;
 }
 
@@ -120,6 +126,7 @@ bool tst_size_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx) 
 {
+	struct sieve_ast_argument *arg = sieve_ast_argument_first(ctx->ast_node);
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) ctx->data;
 
 	if ( ctx_data->type == SIZE_OVER ) 
@@ -127,7 +134,7 @@ bool tst_size_generate
 	else
 		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_SIZEUNDER);
 
-	sieve_generator_emit_number(generator, ctx_data->limit);
+	sieve_generator_emit_number(generator, sieve_ast_argument_number(arg));
 	  
 	return TRUE;
 }

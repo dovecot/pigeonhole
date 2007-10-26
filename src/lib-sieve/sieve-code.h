@@ -9,6 +9,7 @@
 
 typedef size_t sieve_size_t;
 
+/* Opcode: identifies what's to be done */
 struct sieve_opcode {
 	bool (*dump)(struct sieve_interpreter *interpreter);
 	bool (*execute)(struct sieve_interpreter *interpreter);
@@ -31,10 +32,19 @@ enum sieve_core_operation {
 extern const struct sieve_opcode *sieve_opcodes[];
 extern const unsigned int sieve_opcode_count;
 
+/* Operand: argument to and opcode */
+struct sieve_operand {
+	bool (*dump)(struct sieve_interpreter *interpreter);
+	bool (*execute)(struct sieve_interpreter *interpreter);
+};
+
 enum sieve_core_operand {
-  SIEVE_OPERAND_NUMBER       = 0x01,
-  SIEVE_OPERAND_STRING       = 0x02,
-  SIEVE_OPERAND_STRING_LIST  = 0x03
+  SIEVE_OPERAND_NUMBER,
+  SIEVE_OPERAND_STRING,
+  SIEVE_OPERAND_STRING_LIST,
+  SIEVE_OPERAND_COMPARATOR,
+  SIEVE_OPERAND_MATCH_TYPE,
+  SIEVE_OPERAND_ADDR_PART  
 };
 
 #define SIEVE_OPCODE_CORE_MASK  0x1F

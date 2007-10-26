@@ -266,6 +266,23 @@ sieve_size_t sieve_generator_emit_ext_opcode
 
 /* Generator functions */
 
+bool sieve_generate_arguments(struct sieve_generator *generator, 
+	struct sieve_command_context *cmd, struct sieve_ast_argument **arg)
+{
+	/* Parse all arguments with assigned generator function */
+	while ( *arg != NULL && (*arg)->argument != NULL) {
+		const struct sieve_argument *argument = (*arg)->argument;
+		
+		/* Call the generation function for the argument */ 
+		if ( argument->generate != NULL ) { 
+			if ( !argument->generate(generator, arg, cmd) ) 
+				return FALSE;
+		} else break;
+	}
+	
+	return TRUE;
+}
+
 bool sieve_generate_test
 	(struct sieve_generator *generator, struct sieve_ast_node *tst_node,
 		struct sieve_jumplist *jlist, bool jump_true) 

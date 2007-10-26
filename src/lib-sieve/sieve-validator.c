@@ -7,6 +7,7 @@
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
 #include "sieve-extensions.h"
+#include "sieve-comparators.h"
 
 /* Context/Semantics checker implementation */
 
@@ -17,13 +18,15 @@ struct sieve_validator {
 	struct sieve_error_handler *ehandler;
 	
 	/* Registries */
-	struct hash_table *commands; 
+	struct hash_table *commands;
+	struct hash_table *comparators; 
 };
 
 /* Predeclared statics */
 
 static void sieve_validator_register_core_commands(struct sieve_validator *validator);
 static void sieve_validator_register_core_tests(struct sieve_validator *validator);
+static void sieve_validator_register_core_comparators(struct sieve_validator *validator);
 
 /* Error management */
 
@@ -66,12 +69,18 @@ struct sieve_validator *sieve_validator_create(struct sieve_ast *ast, struct sie
 	sieve_validator_register_core_commands(validator);
 	sieve_validator_register_core_tests(validator);
 	
+	/* Setup comparator registry */
+	validator->comparators = hash_create
+		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
+	sieve_validator_register_core_comparators(validator);
+	
 	return validator;
 }
 
 void sieve_validator_free(struct sieve_validator *validator) 
 {
 	hash_destroy(&validator->commands);
+	hash_destroy(&validator->comparators);
 	
 	sieve_ast_unref(&validator->ast);
 	pool_unref(&(validator->pool));
@@ -165,11 +174,11 @@ static bool _unknown_tag_validate
 	return FALSE;
 }
 
-static const struct sieve_tag _unknown_tag = { "", _unknown_tag_validate };
+static const struct sieve_argument _unknown_tag = { "", _unknown_tag_validate, NULL };
 
 void sieve_validator_register_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
-	const struct sieve_tag *tag) 
+	const struct sieve_argument *tag) 
 {
 	if ( cmd_reg->tags == NULL ) {
 		cmd_reg->tags = hash_create
@@ -191,12 +200,12 @@ static void sieve_validator_register_unknown_tag
 	hash_insert(cmd_reg->tags, (void *) tag, (void *) &_unknown_tag);
 }
 
-static const struct sieve_tag *sieve_validator_find_tag
+static const struct sieve_argument *sieve_validator_find_tag
 	(struct sieve_command_registration *cmd_reg, const char *tag) 
 {
 	if ( cmd_reg->tags == NULL ) return NULL;
 	
-  return (struct sieve_tag *) hash_lookup(cmd_reg->tags, tag);
+  return (struct sieve_argument *) hash_lookup(cmd_reg->tags, tag);
 }
 
 /* Extension support */
@@ -222,30 +231,30 @@ const struct sieve_extension *sieve_validator_load_extension
 	return ext;
 }
 
-/* Comparator validation */
+/* Comparator registry */
 
-static bool sieve_validate_comparator_tag
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+void sieve_validator_register_comparator
+	(struct sieve_validator *validator, const struct sieve_comparator *cmp) 
 {
-	/* Only one possible tag, so we don't bother checking the identifier */
-	*arg = sieve_ast_argument_next(*arg);
-	
-	/* Check syntax:
-	 *   ":comparator" <comparator-name: string>
-	 */
-	if ( (*arg)->type != SAAT_STRING ) {
-		sieve_command_validate_error(validator, cmd, 
-			":comparator tag requires one string argument, but %s was found", sieve_ast_argument_name(*arg) );
-		return FALSE;
-	}
-	
-	/* FIXME: assign comparator somewhere */
-	
-	return TRUE;
+	hash_insert(validator->comparators, (void *) cmp->identifier, (void *) cmp);
 }
 
-static const struct sieve_tag comparator_tag = { "comparator", sieve_validate_comparator_tag };
+const struct sieve_comparator *sieve_validator_find_comparator
+		(struct sieve_validator *validator, const char *comparator) 
+{
+  return 	(const struct sieve_comparator *) hash_lookup(validator->comparators, comparator);
+}
+
+static void sieve_validator_register_core_comparators(struct sieve_validator *validator) 
+{
+	unsigned int i;
+	
+	for ( i = 0; i < sieve_core_comparators_count; i++ ) {
+		sieve_validator_register_comparator(validator, sieve_core_comparators[i]); 
+	}
+}
+
+/* Comparator validation */
 
 void sieve_validator_link_comparator_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
@@ -257,9 +266,13 @@ void sieve_validator_link_comparator_tag
 
 static bool sieve_validate_match_type_tag
 	(struct sieve_validator *validator ATTR_UNUSED, 
-	struct sieve_ast_argument **arg ATTR_UNUSED, 
+	struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
+	/* Skip tag */
+	*arg = sieve_ast_argument_next(*arg);
+
+
 	/* Syntax:   
 	 *   ":is" / ":contains" / ":matches"
    */
@@ -269,9 +282,12 @@ static bool sieve_validate_match_type_tag
 	return TRUE;
 }
 
-static const struct sieve_tag match_is_tag = { "is", sieve_validate_match_type_tag };
-static const struct sieve_tag match_contains_tag = { "contains", sieve_validate_match_type_tag };
-static const struct sieve_tag match_matches_tag = { "matches", sieve_validate_match_type_tag };
+static const struct sieve_argument match_is_tag = 
+	{ "is", sieve_validate_match_type_tag, NULL };
+static const struct sieve_argument match_contains_tag = 
+	{ "contains", sieve_validate_match_type_tag, NULL };
+static const struct sieve_argument match_matches_tag = 
+	{ "matches", sieve_validate_match_type_tag, NULL };
 
 void sieve_validator_link_match_type_tags
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
@@ -285,9 +301,12 @@ void sieve_validator_link_match_type_tags
 
 static bool sieve_validate_address_part_tag
 	(struct sieve_validator *validator ATTR_UNUSED, 
-	struct sieve_ast_argument **arg ATTR_UNUSED, 
+	struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
+	/* Skip argument */
+	*arg = sieve_ast_argument_next(*arg);
+
 	/* Syntax:   
 	 *   ":localpart" / ":domain" / ":all"
    */
@@ -297,9 +316,12 @@ static bool sieve_validate_address_part_tag
 	return TRUE;
 }
 
-static const struct sieve_tag address_localpart_tag = { "localpart", sieve_validate_address_part_tag };
-static const struct sieve_tag address_domain_tag = { "domain", sieve_validate_address_part_tag };
-static const struct sieve_tag address_all_tag = { "all", sieve_validate_address_part_tag };
+static const struct sieve_argument address_localpart_tag = 
+	{ "localpart", sieve_validate_address_part_tag, NULL };
+static const struct sieve_argument address_domain_tag = 
+	{ "domain", sieve_validate_address_part_tag, NULL };
+static const struct sieve_argument address_all_tag = 
+	{ "all", sieve_validate_address_part_tag, NULL };
 
 void sieve_validator_link_address_part_tags
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
@@ -344,7 +366,7 @@ bool sieve_validate_command_arguments
 	
 	/* Parse tagged and optional arguments */
 	while ( sieve_ast_argument_type(arg) == SAAT_TAG ) {
-		const struct sieve_tag *tag = sieve_validator_find_tag(cmd_reg, sieve_ast_argument_tag(arg));
+		const struct sieve_argument *tag = sieve_validator_find_tag(cmd_reg, sieve_ast_argument_tag(arg));
 		
 		if ( tag == NULL ) {
 			sieve_command_validate_error(validator, cmd, 
@@ -358,16 +380,17 @@ bool sieve_validate_command_arguments
 		if ( *(tag->identifier) == '\0' ) 
 			return FALSE;
 		
+		/* Assign the tagged argument type to the ast for later reference (in generator) */
+		arg->argument = tag;
+		
 		/* Call the validation function for the tag (if present)
 		 *   Fail if the validation fails.
 		 */ 
 		if ( tag->validate != NULL ) { 
 			if ( !tag->validate(validator, &arg, cmd) ) 
 				return FALSE;
-		}  
-			
-		/* Skip to next argument */ 
-		arg = sieve_ast_argument_next(arg);
+		} else
+			arg = sieve_ast_argument_next(arg);  
 	} 
 	
 	/* Remaining arguments should be positional (tags are not allowed here) */

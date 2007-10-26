@@ -40,7 +40,10 @@ static bool cmd_vacation_validate_days_tag
 			"the :days tag for the vacation command requires one number argument, but %s was found", sieve_ast_argument_name(*arg) );
 		return FALSE;
 	}
-	
+
+	/* Skip argument */
+	*arg = sieve_ast_argument_next(*arg);
+
 	/* FIXME: assign somewhere */
 	
 	return TRUE;
@@ -64,6 +67,9 @@ static bool cmd_vacation_validate_subject_tag
 		return FALSE;
 	}
 	
+	/* Skip tag */
+	*arg = sieve_ast_argument_next(*arg);
+
 	/* FIXME: assign somewhere */
 	
 	return TRUE;
@@ -86,7 +92,10 @@ static bool cmd_vacation_validate_from_tag
 				sieve_ast_argument_name(*arg) );
 		return FALSE;
 	}
-	
+
+	/* Skip argument */
+	*arg = sieve_ast_argument_next(*arg);
+
 	/* FIXME: assign somewhere */
 	
 	return TRUE;
@@ -112,6 +121,9 @@ static bool cmd_vacation_validate_addresses_tag
 	
 	/* FIXME: assign somewhere */
 	
+	/* Skip tag */
+	*arg = sieve_ast_argument_next(*arg);
+
 	return TRUE;
 }
 
@@ -120,6 +132,9 @@ static bool cmd_vacation_validate_mime_tag
 	struct sieve_ast_argument **arg ATTR_UNUSED, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
+	/* Skip tag */
+	*arg = sieve_ast_argument_next(*arg);
+
 	/* FIXME: assign somewhere */
 		
 	return TRUE;
@@ -150,12 +165,18 @@ static bool cmd_vacation_validate_handle_tag
 
 /* Command registration */
 
-static const struct sieve_tag vacation_days_tag = { "days", cmd_vacation_validate_days_tag };
-static const struct sieve_tag vacation_subject_tag = { "subject", cmd_vacation_validate_subject_tag };
-static const struct sieve_tag vacation_from_tag = { "from", cmd_vacation_validate_from_tag };
-static const struct sieve_tag vacation_addresses_tag = { "addresses", cmd_vacation_validate_addresses_tag };
-static const struct sieve_tag vacation_mime_tag = { "mime", cmd_vacation_validate_mime_tag };
-static const struct sieve_tag vacation_handle_tag = { "handle", cmd_vacation_validate_handle_tag };
+static const struct sieve_argument vacation_days_tag = 
+	{ "days", cmd_vacation_validate_days_tag, NULL };
+static const struct sieve_argument vacation_subject_tag =
+	{ "subject", cmd_vacation_validate_subject_tag, NULL };
+static const struct sieve_argument vacation_from_tag = 
+	{ "from", cmd_vacation_validate_from_tag, NULL };
+static const struct sieve_argument vacation_addresses_tag = 
+	{ "addresses", cmd_vacation_validate_addresses_tag, NULL };
+static const struct sieve_argument vacation_mime_tag = 
+	{ "mime", cmd_vacation_validate_mime_tag, NULL };
+static const struct sieve_argument vacation_handle_tag = 
+	{ "handle", cmd_vacation_validate_handle_tag, NULL };
 
 static bool cmd_vacation_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
