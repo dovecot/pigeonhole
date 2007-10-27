@@ -45,10 +45,14 @@ void sieve_validator_link_match_type_tags
 void sieve_validator_link_address_part_tags
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg); 
 
-/* Command validation */
+/* Argument validation */
 bool sieve_validate_command_arguments
 	(struct sieve_validator *validator, struct sieve_command_context *tst, 
 	 const unsigned int count, struct sieve_ast_argument **first_positional);
+void sieve_validator_argument_activate
+	(struct sieve_validator *validator, struct sieve_ast_argument *arg);	 
+
+/* Command validation */	 
 bool sieve_validate_command_subtests
 	(struct sieve_validator *validator, struct sieve_command_context *cmd, const unsigned int count);
 bool sieve_validate_command_block(struct sieve_validator *validator, struct sieve_command_context *cmd, 

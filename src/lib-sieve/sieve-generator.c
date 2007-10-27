@@ -127,90 +127,22 @@ inline sieve_size_t sieve_generator_emit_integer(struct sieve_generator *generat
   return sieve_binary_emit_integer(generator->binary, integer);
 }
 
-inline static sieve_size_t sieve_generator_emit_string_item(struct sieve_generator *generator, const string_t *str)
+inline sieve_size_t sieve_generator_emit_string(struct sieve_generator *generator, const string_t *str)
 {
   return sieve_binary_emit_string(generator->binary, str);
 }
 
-/* Operand emission */
+/* Emit operands */
 
-sieve_size_t sieve_generator_emit_number(struct sieve_generator *generator, sieve_size_t number)
+sieve_size_t sieve_generator_emit_operand
+	(struct sieve_generator *generator, int operand)
 {
-  sieve_size_t address = sieve_binary_emit_byte(generator->binary, SIEVE_OPERAND_NUMBER);
-  
-  (void) sieve_generator_emit_integer(generator, number);
-
-  return address;
-}
-
-sieve_size_t sieve_generator_emit_string(struct sieve_generator *generator, const string_t *str)
-{
-  sieve_size_t address = sieve_binary_emit_byte(generator->binary, SIEVE_OPERAND_STRING);
-  
-  (void) sieve_generator_emit_string_item(generator, str);
-  
-  return address;
-}
-
-bool sieve_generator_emit_stringlist_argument
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg)
-{
-	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
-		(void) sieve_generator_emit_string(generator, sieve_ast_argument_str(arg));
-		return TRUE;
-	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
-		if ( sieve_ast_strlist_count(arg) == 1 )
-			sieve_generator_emit_string(generator, 
-				sieve_ast_argument_str(sieve_ast_strlist_first(arg)));
-		else
-			(void) sieve_generator_emit_string_list(generator, arg);
-		return TRUE;
-	}
+	unsigned char op = operand & SIEVE_OPERAND_CORE_MASK;
 	
-	return FALSE;
+	return sieve_binary_emit_byte(generator->binary, op);
 }
 
-bool sieve_generator_emit_string_argument
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg)
-{
-	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
-		(void) sieve_generator_emit_string(generator, sieve_ast_argument_str(arg));
-		return TRUE;
-	} 
-	
-	return FALSE;
-}
-
-sieve_size_t sieve_generator_emit_string_list
-	(struct sieve_generator *generator, const struct sieve_ast_argument *strlist)
-{
-	sieve_size_t address;
-  const struct sieve_ast_argument *stritem;
-  unsigned int listlen = sieve_ast_strlist_count(strlist);
-  sieve_size_t end_offset = 0;
-
-	/* Emit byte identifying the type of operand */	  
-  address = sieve_binary_emit_byte(generator->binary, SIEVE_OPERAND_STRING_LIST);
-  
-  /* Give the interpreter an easy way to skip over this string list */
-  end_offset = sieve_generator_emit_offset(generator, 0);
-
-  /* Emit the length of the list */
-  (void) sieve_generator_emit_integer(generator, (int) listlen);
-
-	stritem = sieve_ast_strlist_first(strlist);
-	while ( stritem != NULL ) {
-		(void) sieve_generator_emit_string_item(generator, sieve_ast_strlist_str(stritem));
-		
-		stritem = sieve_ast_strlist_next(stritem);
-	}
-
-  (void) sieve_generator_resolve_offset(generator, end_offset);
-
-  return address;
-}
-
-/* Emit commands */
+/* Emit opcodes */
 
 sieve_size_t sieve_generator_emit_opcode
 	(struct sieve_generator *generator, int opcode)
@@ -231,18 +163,23 @@ sieve_size_t sieve_generator_emit_ext_opcode
 /* Generator functions */
 
 bool sieve_generate_arguments(struct sieve_generator *generator, 
-	struct sieve_command_context *cmd, struct sieve_ast_argument **arg)
+	struct sieve_command_context *cmd, struct sieve_ast_argument **last_arg)
 {
+	struct sieve_ast_argument *arg = sieve_ast_argument_first(cmd->ast_node);
+	
 	/* Parse all arguments with assigned generator function */
-	while ( *arg != NULL && (*arg)->argument != NULL) {
-		const struct sieve_argument *argument = (*arg)->argument;
+	while ( arg != NULL && arg->argument != NULL) {
+		const struct sieve_argument *argument = arg->argument;
 		
 		/* Call the generation function for the argument */ 
 		if ( argument->generate != NULL ) { 
-			if ( !argument->generate(generator, arg, cmd) ) 
+			if ( !argument->generate(generator, &arg, cmd) ) 
 				return FALSE;
 		} else break;
 	}
+	
+	if ( last_arg != NULL )
+		*last_arg = arg;
 	
 	return TRUE;
 }

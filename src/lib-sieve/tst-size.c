@@ -116,6 +116,7 @@ bool tst_size_validate(struct sieve_validator *validator, struct sieve_command_c
 			sieve_ast_argument_name(arg));
 		return FALSE; 
 	}
+	sieve_validator_argument_activate(validator, arg);
 	
 	return TRUE;
 }
@@ -126,7 +127,6 @@ bool tst_size_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx) 
 {
-	struct sieve_ast_argument *arg = sieve_ast_argument_first(ctx->ast_node);
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) ctx->data;
 
 	if ( ctx_data->type == SIZE_OVER ) 
@@ -134,7 +134,9 @@ bool tst_size_generate
 	else
 		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_SIZEUNDER);
 
-	sieve_generator_emit_number(generator, sieve_ast_argument_number(arg));
+ 	/* Generate arguments */
+    if ( !sieve_generate_arguments(generator, ctx, NULL) )
+        return FALSE;
 	  
 	return TRUE;
 }

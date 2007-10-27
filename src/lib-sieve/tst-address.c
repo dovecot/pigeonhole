@@ -48,6 +48,7 @@ bool tst_address_validate(struct sieve_validator *validator, struct sieve_comman
 			sieve_ast_argument_name(arg));
 		return FALSE; 
 	}
+	sieve_validator_argument_activate(validator, arg);
 	
 	arg = sieve_ast_argument_next(arg);
 	if ( sieve_ast_argument_type(arg) != SAAT_STRING && sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
@@ -56,6 +57,7 @@ bool tst_address_validate(struct sieve_validator *validator, struct sieve_comman
 			sieve_ast_argument_name(arg));
 		return FALSE; 
 	}
+	sieve_validator_argument_activate(validator, arg);
 	
 	return TRUE;
 }
@@ -64,18 +66,12 @@ bool tst_address_validate(struct sieve_validator *validator, struct sieve_comman
 
 bool tst_address_generate
 	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx ATTR_UNUSED) 
+		struct sieve_command_context *ctx) 
 {
-	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
 	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_ADDRESS);
 	
-	/* Emit header names */  	
-	if ( !sieve_generator_emit_stringlist_argument(generator, arg) ) 
-		return FALSE;
-	
-	/* Emit key list */
-	arg = sieve_ast_argument_next(arg);
-	if ( !sieve_generator_emit_stringlist_argument(generator, arg) ) 
+	/* Generate arguments */  	
+	if ( !sieve_generate_arguments(generator, ctx, NULL) )
 		return FALSE;
 	
 	return TRUE;

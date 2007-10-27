@@ -198,8 +198,8 @@ static bool cmd_vacation_validate(struct sieve_validator *validator, struct siev
 	
 	/* Check valid syntax: 
 	 *    vacation [":days" number] [":subject" string]
-   *                 [":from" string] [":addresses" string-list]
-   *                 [":mime"] [":handle" string] <reason: string>
+	 *                 [":from" string] [":addresses" string-list]
+	 *                 [":mime"] [":handle" string] <reason: string>
 	 */
 	if ( !sieve_validate_command_arguments(validator, cmd, 1, &arg) ||
 		!sieve_validate_command_subtests(validator, cmd, 0) || 
@@ -207,8 +207,8 @@ static bool cmd_vacation_validate(struct sieve_validator *validator, struct siev
 	 	
 		return FALSE;
 	}
-	
-	cmd->data = (void *) arg;
+
+	sieve_validator_argument_activate(validator, arg);	
 	
 	return TRUE;
 }
@@ -229,14 +229,12 @@ static bool ext_vacation_validator_load(struct sieve_validator *validator)
 static bool cmd_vacation_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
-	
 	sieve_generator_emit_ext_opcode(generator, &vacation_extension);
 
-	/* Emit folder string */  	
-	if ( !sieve_generator_emit_string_argument(generator, arg) ) 
-		return FALSE;
-	
+	/* Generate arguments */
+    if ( !sieve_generate_arguments(generator, ctx, NULL) )
+        return FALSE;	
+
 	return TRUE;
 }
 

@@ -472,7 +472,7 @@ bool sieve_interpreter_dump_operand
 	printf("%08x:   ", interpreter->pc);
   CODE_JUMP(interpreter, 1);
   
-  if ( opcode < SIEVE_CORE_OPERAND_MASK ) {  	
+  if ( opcode < SIEVE_OPERAND_CORE_MASK ) {  	
     switch (opcode) {
     case SIEVE_OPERAND_NUMBER:
     	sieve_interpreter_dump_number(interpreter);

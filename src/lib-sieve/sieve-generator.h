@@ -31,6 +31,8 @@ inline void sieve_generator_update_data
 	(struct sieve_generator *generator, sieve_size_t address, void *data, sieve_size_t size);
 inline sieve_size_t sieve_generator_get_current_address(struct sieve_generator *generator);
 
+sieve_size_t sieve_generator_emit_operand
+	(struct sieve_generator *generator, int operand);
 sieve_size_t sieve_generator_emit_opcode
 	(struct sieve_generator *generator, int opcode);
 sieve_size_t sieve_generator_emit_ext_opcode
@@ -45,21 +47,9 @@ inline void sieve_generator_resolve_offset(struct sieve_generator *generator, si
 
 inline sieve_size_t sieve_generator_emit_integer
 	(struct sieve_generator *generator, sieve_size_t integer);
-	
-/* Operand emission */
-	
-sieve_size_t sieve_generator_emit_number
-	(struct sieve_generator *generator, sieve_size_t number);
-sieve_size_t sieve_generator_emit_string
+inline sieve_size_t sieve_generator_emit_string
 	(struct sieve_generator *generator, const string_t *str);
-sieve_size_t sieve_generator_emit_string_list
-	(struct sieve_generator *generator, const struct sieve_ast_argument *strlist);
 	
-bool sieve_generator_emit_string_argument
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg);
-bool sieve_generator_emit_stringlist_argument
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg);
-
 /* AST generation API */
 bool sieve_generate_arguments(struct sieve_generator *generator, 
 	struct sieve_command_context *cmd, struct sieve_ast_argument **arg);

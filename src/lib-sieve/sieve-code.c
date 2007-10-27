@@ -1,11 +1,55 @@
-#include <stdio.h>
+#include "lib.h"
+#include "str.h"
+
+#include "sieve-generator.h"
+#include "sieve-interpreter.h"
 
 #include "sieve-code.h"
-#include "sieve-interpreter.h"
+
+#include <stdio.h>
 
 /* Operands */
 
+void sieve_operand_number_emit(struct sieve_generator *generator, sieve_size_t number) {
+	(void) sieve_generator_emit_operand(generator, SIEVE_OPERAND_NUMBER);
+  (void) sieve_generator_emit_integer(generator, number);
+}
 
+void sieve_operand_string_emit(struct sieve_generator *generator, string_t *str)
+{
+	(void) sieve_generator_emit_operand(generator, SIEVE_OPERAND_STRING);
+  (void) sieve_generator_emit_string(generator, str);
+}
+
+void sieve_operand_stringlist_emit_start
+	(struct sieve_generator *generator, unsigned int listlen, void **context)
+{
+  sieve_size_t *end_offset = t_new(sieve_size_t, 1);
+
+	/* Emit byte identifying the type of operand */	  
+  (void) sieve_generator_emit_operand(generator, SIEVE_OPERAND_STRING_LIST);
+  
+  /* Give the interpreter an easy way to skip over this string list */
+  *end_offset = sieve_generator_emit_offset(generator, 0);
+	*context = (void *) end_offset;
+
+  /* Emit the length of the list */
+  (void) sieve_generator_emit_integer(generator, (int) listlen);
+}
+
+void sieve_operand_stringlist_emit_item
+	(struct sieve_generator *generator, void *context ATTR_UNUSED, string_t *item)
+{
+	(void) sieve_generator_emit_string(generator, item);
+}
+
+void sieve_operand_stringlist_emit_end
+	(struct sieve_generator *generator, void *context)
+{
+	sieve_size_t *end_offset = (sieve_size_t *) context;
+
+	(void) sieve_generator_resolve_offset(generator, *end_offset);
+}
 
 /* Opcodes */
 

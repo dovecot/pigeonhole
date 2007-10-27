@@ -34,8 +34,11 @@ extern const unsigned int sieve_opcode_count;
 
 /* Operand: argument to and opcode */
 struct sieve_operand {
+	/* Code generator */
+	bool (*emit)(struct sieve_generator *generator, struct sieve_ast_argument *arg);
+
+	/* Interpreter */
 	bool (*dump)(struct sieve_interpreter *interpreter);
-	bool (*execute)(struct sieve_interpreter *interpreter);
 };
 
 enum sieve_core_operand {
@@ -47,10 +50,18 @@ enum sieve_core_operand {
   SIEVE_OPERAND_ADDR_PART  
 };
 
+void sieve_operand_number_emit(struct sieve_generator *generator, sieve_size_t number);
+void sieve_operand_string_emit(struct sieve_generator *generator, string_t *str);
+void sieve_operand_stringlist_emit_start
+	(struct sieve_generator *generator, unsigned int listlen, void **context);
+void sieve_operand_stringlist_emit_item
+	(struct sieve_generator *generator, void *context ATTR_UNUSED, string_t *item);
+void sieve_operand_stringlist_emit_end
+	(struct sieve_generator *generator, void *context);
+
 #define SIEVE_OPCODE_CORE_MASK  0x1F
 #define SIEVE_OPCODE_EXT_OFFSET (SIEVE_OPCODE_CORE_MASK + 1)
 
-#define SIEVE_CORE_OPERAND_MASK 0x0F
-#define SIEVE_CORE_OPERAND_BITS 4
+#define SIEVE_OPERAND_CORE_MASK 0x1F
 
 #endif

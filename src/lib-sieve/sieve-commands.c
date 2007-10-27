@@ -8,6 +8,100 @@
 #include "sieve-commands-private.h"
 #include "sieve-interpreter.h"
 
+/* Default arguments implemented in this file */
+
+static bool arg_number_generate(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *context);
+static bool arg_string_generate(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *context);
+static bool arg_string_list_generate(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *context);
+
+const struct sieve_argument number_argument =
+	{ "@number", NULL, arg_number_generate };
+const struct sieve_argument string_argument =
+	{ "@string", NULL, arg_string_generate };
+const struct sieve_argument string_list_argument =
+	{ "@string-list", NULL, arg_string_list_generate };	
+
+static bool arg_number_generate(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *context ATTR_UNUSED)
+{
+	if ( sieve_ast_argument_type(*arg) != SAAT_NUMBER ) {
+		return FALSE;
+	}
+	
+	sieve_operand_number_emit(generator, sieve_ast_argument_number(*arg));
+
+	*arg = sieve_ast_argument_next(*arg);
+
+  return TRUE;
+}
+
+static bool arg_string_generate(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *context ATTR_UNUSED)
+{
+  if ( sieve_ast_argument_type(*arg) != SAAT_STRING ) {
+		return FALSE;
+	} 
+
+	sieve_operand_string_emit(generator, sieve_ast_argument_str(*arg));
+  
+  *arg = sieve_ast_argument_next(*arg);
+  return TRUE;
+}
+
+static void emit_string_list_operand
+	(struct sieve_generator *generator, const struct sieve_ast_argument *strlist)
+{
+	void *list_context;
+  const struct sieve_ast_argument *stritem;
+  
+  t_push();
+  
+  printf("STRLIST: %d\n", sieve_ast_strlist_count(strlist));
+	sieve_operand_stringlist_emit_start
+		(generator, sieve_ast_strlist_count(strlist), &list_context);
+
+	stritem = sieve_ast_strlist_first(strlist);
+	while ( stritem != NULL ) {
+		sieve_operand_stringlist_emit_item
+			(generator, list_context, sieve_ast_strlist_str(stritem));
+		printf("STR: %s\n", sieve_ast_strlist_strc(stritem));
+		stritem = sieve_ast_strlist_next(stritem);
+	}
+
+  sieve_operand_stringlist_emit_end
+		(generator, list_context);
+
+  t_pop();
+}
+
+static bool arg_string_list_generate(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *context ATTR_UNUSED)
+{
+	if ( sieve_ast_argument_type(*arg) == SAAT_STRING ) {
+		
+		sieve_operand_string_emit(generator, sieve_ast_argument_str(*arg));
+		
+		*arg = sieve_ast_argument_next(*arg);
+		return TRUE;
+		
+	} else if ( sieve_ast_argument_type(*arg) == SAAT_STRING_LIST ) {
+
+		if ( sieve_ast_strlist_count(*arg) == 1 ) 
+			sieve_operand_string_emit(generator, 
+				sieve_ast_argument_str(sieve_ast_strlist_first(*arg)));
+		else
+			(void) emit_string_list_operand(generator, *arg);
+		
+		*arg = sieve_ast_argument_next(*arg);
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
 /* Trivial commands implemented in this file */
 
 const struct sieve_command sieve_core_tests[] = {

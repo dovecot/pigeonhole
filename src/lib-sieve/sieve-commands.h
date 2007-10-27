@@ -1,5 +1,5 @@
-#ifndef __SIEVE_COMMANDS_H__
-#define __SIEVE_COMMANDS_H__
+#ifndef __SIEVE_COMMANDS_H
+#define __SIEVE_COMMANDS_H
 
 #include "lib.h"
 
@@ -8,10 +8,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 
-struct sieve_test_context;
-struct sieve_command_context;
-
-/* Command */
+/* Argument */
 
 struct sieve_argument {
 	const char *identifier;
@@ -21,6 +18,12 @@ struct sieve_argument {
 	bool (*generate)(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *context);
 };
+
+extern const struct sieve_argument number_argument;
+extern const struct sieve_argument string_argument;
+extern const struct sieve_argument string_list_argument;
+
+/* Command */
 
 enum sieve_command_type {
 	SCT_COMMAND,
@@ -63,4 +66,4 @@ const char *sieve_command_type_name(const struct sieve_command *command);
 struct sieve_command_context *sieve_command_prev_context	
 	(struct sieve_command_context *context); 
 
-#endif /* __SIEVE_COMMANDS_H__ */
+#endif /* __SIEVE_COMMANDS_H */

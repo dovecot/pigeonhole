@@ -1,8 +1,11 @@
 #ifndef __SIEVE_BINARY_H
 #define __SIEVE_BINARY_H
 
-#include "sieve-extensions.h"
+#include "lib.h"
+#include "str.h"
+
 #include "sieve-code.h"
+#include "sieve-extensions.h"
 
 struct sieve_binary;
 

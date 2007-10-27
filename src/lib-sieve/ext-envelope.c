@@ -52,15 +52,14 @@ static bool tst_envelope_validate(struct sieve_validator *validator, struct siev
 		!sieve_validate_command_subtests(validator, tst, 0) ) {
 		return FALSE;
 	}
-		
-	tst->data = (void *) arg;	
-		
+				
 	if ( sieve_ast_argument_type(arg) != SAAT_STRING && sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
 		sieve_command_validate_error(validator, tst, 
 			"the envelope test expects a string-list as first argument (envelope part), but %s was found", 
 			sieve_ast_argument_name(arg));
 		return FALSE; 
 	}
+	sieve_validator_argument_activate(validator, arg);
 	
 	arg = sieve_ast_argument_next(arg);
 	if ( sieve_ast_argument_type(arg) != SAAT_STRING && sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
@@ -69,6 +68,7 @@ static bool tst_envelope_validate(struct sieve_validator *validator, struct siev
 			sieve_ast_argument_name(arg));
 		return FALSE; 
 	}
+	sieve_validator_argument_activate(validator, arg);
 	
 	return TRUE;
 }
@@ -89,20 +89,12 @@ static bool ext_envelope_validator_load(struct sieve_validator *validator)
 static bool tst_envelope_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
-	
 	sieve_generator_emit_ext_opcode(generator, &envelope_extension);
 
-	/* Emit envelope-part */  	
-	if ( !sieve_generator_emit_stringlist_argument(generator, arg) ) 
-		return FALSE;
-		
-	arg = sieve_ast_argument_next(arg);
-	
-	/* Emit key-list */  	
-	if ( !sieve_generator_emit_stringlist_argument(generator, arg) ) 
-		return FALSE;
-	
+	/* Generate arguments */
+    if ( !sieve_generate_arguments(generator, ctx, NULL) )
+        return FALSE;
+
 	return TRUE;
 }
 

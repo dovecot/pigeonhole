@@ -34,6 +34,7 @@ bool tst_exists_validate(struct sieve_validator *validator, struct sieve_command
 			sieve_ast_argument_name(arg));
 		return FALSE; 
 	}
+	sieve_validator_argument_activate(validator, arg);
 	
 	tst->data = arg;
 	
@@ -46,12 +47,11 @@ bool tst_exists_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx) 
 {
-	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
 	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_EXISTS);
-	
-	/* Emit header names */
-	if ( !sieve_generator_emit_stringlist_argument(generator, arg) ) 
-		return FALSE;
+
+ 	/* Generate arguments */
+    if ( !sieve_generate_arguments(generator, ctx, NULL) )
+        return FALSE;	
 	
 	return TRUE;
 }

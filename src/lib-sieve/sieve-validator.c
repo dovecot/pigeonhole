@@ -269,15 +269,12 @@ static bool sieve_validate_match_type_tag
 	struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
-	/* Skip tag */
-	*arg = sieve_ast_argument_next(*arg);
-
-
 	/* Syntax:   
 	 *   ":is" / ":contains" / ":matches"
    */
-
-	/* FIXME: Set appropriate setting somewhere */
+	
+	/* Not implemented, so delete it */
+	*arg = sieve_ast_arguments_delete(*arg, 1);
 		
 	return TRUE;
 }
@@ -304,15 +301,13 @@ static bool sieve_validate_address_part_tag
 	struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
-	/* Skip argument */
-	*arg = sieve_ast_argument_next(*arg);
-
 	/* Syntax:   
 	 *   ":localpart" / ":domain" / ":all"
    */
 
-	/* FIXME: Set appropriate setting somewhere */
-		
+	/* Not implemented, so delete it */
+	*arg = sieve_ast_arguments_delete(*arg, 1);		
+
 	return TRUE;
 }
 
@@ -420,6 +415,27 @@ bool sieve_validate_command_arguments
 	}
 
 	return TRUE;
+}
+
+void sieve_validator_argument_activate
+	(struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast_argument *arg)
+{
+	switch ( sieve_ast_argument_type(arg) ) {
+	case SAAT_NUMBER:
+		arg->argument = &number_argument;
+		break;
+	case SAAT_STRING:
+		arg->argument = &string_argument;
+		break;
+	case SAAT_STRING_LIST:
+		arg->argument = &string_list_argument;
+		break;
+	case SAAT_TAG:
+		i_error("!!BUG!!: sieve_validator_argument_activate: cannot activate tagged argument.");
+		break;
+	default:
+		break;
+	}
 }
  
 /* Command Validation API */ 
