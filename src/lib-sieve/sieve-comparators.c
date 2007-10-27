@@ -80,6 +80,8 @@ static bool tag_comparator_generate
 	opr_comparator_emit(generator, (struct sieve_comparator *) (*arg)->context);
 		
 	*arg = sieve_ast_argument_next(*arg);
+	
+	return TRUE;
 }
 
 /* 

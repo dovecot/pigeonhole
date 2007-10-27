@@ -13,6 +13,8 @@ struct sieve_binary *sieve_binary_create_new(void);
 void sieve_binary_ref(struct sieve_binary *binary);
 void sieve_binary_unref(struct sieve_binary **binary);
 
+void sieve_binary_commit(struct sieve_binary *binary);
+
 /* 
  * Extension handling 
  */
@@ -46,6 +48,25 @@ sieve_size_t sieve_binary_emit_string(struct sieve_binary *binary, const string_
  * Code retrieval 
  */
 
-inline const char *sieve_binary_get_code(struct sieve_binary *binary, sieve_size_t *code_size);
+/* Literals */
+bool sieve_binary_read_byte
+	(struct sieve_binary *binary, sieve_size_t *address, unsigned int *byte_val);
+bool sieve_binary_read_offset
+	(struct sieve_binary *binary, sieve_size_t *address, int *offset);
+bool sieve_binary_read_integer
+  (struct sieve_binary *binary, sieve_size_t *address, sieve_size_t *integer); 
+bool sieve_binary_read_string
+  (struct sieve_binary *binary, sieve_size_t *address, string_t **str);
+
+/* String list */
+
+struct sieve_coded_stringlist *sieve_binary_read_stringlist
+  (struct sieve_binary *binary, sieve_size_t *address, bool single);
+bool sieve_coded_stringlist_next_item(struct sieve_coded_stringlist *strlist, string_t **str);
+void sieve_coded_stringlist_reset(struct sieve_coded_stringlist *strlist);
+
+inline int sieve_coded_stringlist_get_length(struct sieve_coded_stringlist *strlist);
+inline sieve_size_t sieve_coded_stringlist_get_end_address(struct sieve_coded_stringlist *strlist);
+inline sieve_size_t sieve_coded_stringlist_get_current_offset(struct sieve_coded_stringlist *strlist);
 
 #endif

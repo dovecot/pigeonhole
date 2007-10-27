@@ -13,34 +13,11 @@
 
 #include "sieve-interpreter.h"
 
-struct sieve_coded_stringlist {
-  struct sieve_interpreter *interpreter;
-  sieve_size_t start_address;
-  sieve_size_t end_address;
-  sieve_size_t current_offset;
-  int length;
-  int index;
-};
-
-#define CODE_AT_PC(interpreter) (interpreter->code[interpreter->pc])
-#define DATA_AT_PC(interpreter) ((unsigned char) (interpreter->code[interpreter->pc]))
-#define CODE_BYTES_LEFT(interpreter) (interpreter->code_size - interpreter->pc)
-#define CODE_JUMP(interpreter, offset) interpreter->pc += offset
-
-#define ADDR_CODE_AT(interpreter, address) (interpreter->code[*address])
-#define ADDR_DATA_AT(interpreter, address) ((unsigned char) (interpreter->code[*address]))
-#define ADDR_BYTES_LEFT(interpreter, address) (interpreter->code_size - (*address))
-#define ADDR_JUMP(address, offset) (*address) += offset
-
 struct sieve_interpreter {
 	pool_t pool;
 	
 	struct sieve_binary *binary;
-	
-	/* Direct pointer to code inside binary (which is considered immutable) */
-	const char *code;
-	sieve_size_t code_size;
-	
+		
 	/* Execution status */
 	sieve_size_t pc; 
 	bool test_result;
@@ -60,8 +37,8 @@ struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary)
 	interpreter->pool = pool;
 	
 	interpreter->binary = binary;
-	interpreter->code = sieve_binary_get_code(binary, &interpreter->code_size);	
 	sieve_binary_ref(binary);
+	sieve_binary_commit(binary);
 	
 	interpreter->pc = 0;
 	
@@ -99,10 +76,10 @@ inline bool sieve_interpreter_program_jump
 	sieve_size_t pc = sieve_interpreter_program_counter(interpreter);
 	int offset;
 	
-	if ( !sieve_interpreter_read_offset(interpreter, &(interpreter->pc), &offset) )
+	if ( !sieve_interpreter_read_offset_operand(interpreter, &offset) )
 		return FALSE;
 
-	if ( pc + offset <= interpreter->code_size && pc + offset > 0 ) {
+	if ( pc + offset <= sieve_binary_get_code_size(interpreter->binary) && pc + offset > 0 ) {
 		if ( jump )
 			interpreter->pc = pc + offset;
 		
@@ -122,155 +99,6 @@ inline bool sieve_interpreter_get_test_result(struct sieve_interpreter *interpre
 	return interpreter->test_result;
 }
 
-/* Literals */
-
-bool sieve_interpreter_read_offset
-	(struct sieve_interpreter *interpreter, sieve_size_t *address, int *offset) 
-{
-	uint32_t offs = 0;
-	
-	if ( ADDR_BYTES_LEFT(interpreter, address) >= 4 ) {
-	  int i; 
-	  
-	  for ( i = 0; i < 4; i++ ) {
-	    offs = (offs << 8) + ADDR_DATA_AT(interpreter, address);
-	  	ADDR_JUMP(address, 1);
-	  }
-	  
-	  if ( offset != NULL )
-			*offset = (int) offs;
-			
-		return TRUE;
-	}
-	
-	return FALSE;
-}
-
-bool sieve_interpreter_read_integer
-  (struct sieve_interpreter *interpreter, sieve_size_t *address, sieve_size_t *integer) 
-{
-  int bits = sizeof(sieve_size_t) * 8;
-  *integer = 0;
-  
-  while ( (ADDR_DATA_AT(interpreter, address) & 0x80) > 0 ) {
-    if ( ADDR_BYTES_LEFT(interpreter, address) > 0 && bits > 0) {
-      *integer |= ADDR_DATA_AT(interpreter, address) & 0x7F;
-      ADDR_JUMP(address, 1);
-    
-      *integer <<= 7;
-      bits -= 7;
-    } else {
-      /* This is an error */
-      return FALSE;
-    }
-  }
-  
-  *integer |= ADDR_DATA_AT(interpreter, address) & 0x7F;
-  ADDR_JUMP(address, 1);
-  
-  return TRUE;
-}
-
-/* FIXME: add this to lib/str. */
-static string_t *t_str_const(const void *cdata, size_t size)
-{
-	string_t *result = t_str_new(size);
-	
-	str_append_n(result, cdata, size);
-	
-	return result;
-	//return buffer_create_const_data(pool_datastack_create(), cdata, size);
-}
-
-bool sieve_interpreter_read_string
-  (struct sieve_interpreter *interpreter, sieve_size_t *address, string_t **str) 
-{
-  sieve_size_t strlen = 0;
-  
-  if ( !sieve_interpreter_read_integer(interpreter, address, &strlen) ) 
-    return FALSE;
-      
-  if ( strlen > ADDR_BYTES_LEFT(interpreter, address) ) 
-    return FALSE;
-   
-  *str = t_str_const(&ADDR_CODE_AT(interpreter, address), strlen);
-	ADDR_JUMP(address, strlen);
-  
-  return TRUE;
-}
-
-struct sieve_coded_stringlist *sieve_interpreter_read_stringlist
-  (struct sieve_interpreter *interpreter, sieve_size_t *address, bool single)
-{
-	struct sieve_coded_stringlist *strlist;
-
-  sieve_size_t pc = *address;
-  sieve_size_t end; 
-  sieve_size_t length = 0; 
- 
- 	if ( single ) {
- 		sieve_size_t strlen;
- 		
- 		if ( !sieve_interpreter_read_integer(interpreter, address, &strlen) ) 
-    	return FALSE;
-    	
-    end = *address + strlen;
-    length = 1;
-    *address = pc;
-	} else {
-		int end_offset;
-		
-  	if ( !sieve_interpreter_read_offset(interpreter, address, &end_offset) )
-  		return NULL;
-  
-  	end = pc + end_offset;
-  
-  	if ( !sieve_interpreter_read_integer(interpreter, address, &length) ) 
-    	return NULL;
-  }
-  
-  if ( end > interpreter->code_size ) 
-  		return NULL;
-    
-	strlist = p_new(pool_datastack_create(), struct sieve_coded_stringlist, 1);
-	strlist->interpreter = interpreter;
-	strlist->start_address = *address;
-	strlist->current_offset = *address;
-	strlist->end_address = end;
-	strlist->length = length;
-	strlist->index = 0;
-  
-  /* Skip over the string list for now */
-  *address = end;
-  
-  return strlist;
-}
-
-bool sieve_coded_stringlist_next_item(struct sieve_coded_stringlist *strlist, string_t **str) 
-{
-	sieve_size_t address;
-  *str = NULL;
-  
-  if ( strlist->index >= strlist->length ) 
-    return TRUE;
-  else {
-  	address = strlist->current_offset;
-  	
-  	if ( sieve_interpreter_read_string(strlist->interpreter, &address, str) ) {
-    	strlist->index++;
-    	strlist->current_offset = address;
-    	return TRUE;
-    }
-  }  
-  
-  return FALSE;
-}
-
-void sieve_coded_stringlist_reset(struct sieve_coded_stringlist *strlist) 
-{  
-  strlist->current_offset = strlist->start_address;
-  strlist->index = 0;
-}
 
 /* Opcodes and operands */
 
@@ -279,9 +107,7 @@ static const struct sieve_opcode *sieve_interpreter_read_opcode
 {
 	unsigned int opcode;
 	
-	if ( CODE_BYTES_LEFT(interpreter) > 0 ) {
-		opcode = DATA_AT_PC(interpreter);
-		CODE_JUMP(interpreter, 1);
+	if ( sieve_binary_read_byte(interpreter->binary, &(interpreter->pc), &opcode) ) {
 	
 		if ( opcode < SIEVE_OPCODE_EXT_OFFSET ) {
 			if ( opcode < sieve_opcode_count )
@@ -305,38 +131,48 @@ static const struct sieve_opcode *sieve_interpreter_read_opcode
 bool sieve_interpreter_read_offset_operand
 	(struct sieve_interpreter *interpreter, int *offset) 
 {
-	return sieve_interpreter_read_offset(interpreter, &(interpreter->pc), offset);
+	return sieve_binary_read_offset(interpreter->binary, &(interpreter->pc), offset);
 }
 
 bool sieve_interpreter_read_number_operand
   (struct sieve_interpreter *interpreter, sieve_size_t *number)
 { 
-	if ( CODE_AT_PC(interpreter) != SIEVE_OPERAND_NUMBER ) {
+	unsigned int op;
+	
+	if ( !sieve_binary_read_byte(interpreter->binary, &(interpreter->pc), &op) )
 		return FALSE;
-	}
-	CODE_JUMP(interpreter, 1);
-
-	return sieve_interpreter_read_integer(interpreter, &(interpreter->pc), number);
+		
+	if ( op != SIEVE_OPERAND_NUMBER ) 
+		return FALSE;
+	
+	return sieve_binary_read_integer(interpreter->binary, &(interpreter->pc), number);
 }
 
 bool sieve_interpreter_read_string_operand
   (struct sieve_interpreter *interpreter, string_t **str)
 { 
-	if ( CODE_AT_PC(interpreter) != SIEVE_OPERAND_STRING ) {
+	unsigned int op;
+	
+	if ( !sieve_binary_read_byte(interpreter->binary, &(interpreter->pc), &op) )
 		return FALSE;
-	}
-	CODE_JUMP(interpreter, 1);
-
-	return sieve_interpreter_read_string(interpreter, &(interpreter->pc), str);
+		
+	if ( op != SIEVE_OPERAND_STRING ) 
+		return FALSE;
+	
+	return sieve_binary_read_string(interpreter->binary, &(interpreter->pc), str);
 }
 
 struct sieve_coded_stringlist *
 	sieve_interpreter_read_stringlist_operand
 	  (struct sieve_interpreter *interpreter)
 {
+	unsigned int op;
 	bool single = FALSE;
 	
-	switch ( CODE_AT_PC(interpreter) ) {
+	if ( !sieve_binary_read_byte(interpreter->binary, &(interpreter->pc), &op) )
+		return FALSE;
+	
+	switch ( op ) {
   case SIEVE_OPERAND_STRING:
   	single = TRUE;		
   	break;
@@ -346,10 +182,9 @@ struct sieve_coded_stringlist *
  	default:
   	return NULL;
 	}
-	CODE_JUMP(interpreter, 1);
 	
-	return sieve_interpreter_read_stringlist
-	  (interpreter, &(interpreter->pc), single);
+	return sieve_binary_read_stringlist
+	  (interpreter->binary, &(interpreter->pc), single);
 }
 
 /* Stringlist Utility */
@@ -396,7 +231,7 @@ bool sieve_interpreter_dump_number
 {
 	sieve_size_t number = 0;
 	
-	if (sieve_interpreter_read_integer(interpreter, &(interpreter->pc), &number) ) {
+	if (sieve_binary_read_integer(interpreter->binary, &(interpreter->pc), &number) ) {
 	  printf("NUM: %ld\n", (long) number);		
 	  
 	  return TRUE;
@@ -432,7 +267,7 @@ bool sieve_interpreter_dump_string
 {
 	string_t *str; 
 	
-	if ( sieve_interpreter_read_string(interpreter, &(interpreter->pc), &str) ) {
+	if ( sieve_binary_read_string(interpreter->binary, &(interpreter->pc), &str) ) {
 		sieve_interpreter_print_string(str);   		
 		
 		return TRUE;
@@ -446,17 +281,19 @@ bool sieve_interpreter_dump_string_list
 {
 	struct sieve_coded_stringlist *strlist;
 	
-  if ( (strlist=sieve_interpreter_read_stringlist(interpreter, &(interpreter->pc), FALSE)) != NULL ) {
+  if ( (strlist=sieve_binary_read_stringlist(interpreter->binary, &(interpreter->pc), FALSE)) != NULL ) {
   	sieve_size_t pc;
 		string_t *stritem;
 		
-		printf("STRLIST [%d] (END %08x)\n", strlist->length, strlist->end_address);
+		printf("STRLIST [%d] (END %08x)\n", 
+			sieve_coded_stringlist_get_length(strlist), 
+			sieve_coded_stringlist_get_end_address(strlist));
 	  	
-	 	pc = strlist->current_offset;
+	 	pc = sieve_coded_stringlist_get_current_offset(strlist);
 		while ( sieve_coded_stringlist_next_item(strlist, &stritem) && stritem != NULL ) {	
 			printf("%08x:      ", pc);
 			sieve_interpreter_print_string(stritem);
-			pc = strlist->current_offset;  
+			pc = sieve_coded_stringlist_get_current_offset(strlist);  
 		}
 		
 		return TRUE;
@@ -468,12 +305,14 @@ bool sieve_interpreter_dump_string_list
 bool sieve_interpreter_dump_operand
 	(struct sieve_interpreter *interpreter) 
 {
-  char opcode = CODE_AT_PC(interpreter);
+  unsigned int op;
 	printf("%08x:   ", interpreter->pc);
-  CODE_JUMP(interpreter, 1);
+	
+	if ( !sieve_binary_read_byte(interpreter->binary, &(interpreter->pc), &op) )
+		return FALSE;
   
-  if ( opcode < SIEVE_OPERAND_CORE_MASK ) {  	
-    switch (opcode) {
+  if ( op < SIEVE_OPERAND_CORE_MASK ) {  	
+    switch (op) {
     case SIEVE_OPERAND_NUMBER:
     	sieve_interpreter_dump_number(interpreter);
     	break;
@@ -501,14 +340,14 @@ void sieve_interpreter_dump_code(struct sieve_interpreter *interpreter)
 	interpreter->result = NULL;
 	interpreter->mail = NULL;
 	
-	while ( interpreter->pc < interpreter->code_size ) {
+	while ( interpreter->pc < sieve_binary_get_code_size(interpreter->binary) ) {
 		if ( !sieve_interpreter_dump_operation(interpreter) ) {
 			printf("Binary is corrupt.\n");
 			return;
 		}
 	}
 	
-	printf("%08x: [End of code]\n", interpreter->code_size);	
+	printf("%08x: [End of code]\n", sieve_binary_get_code_size(interpreter->binary));	
 }
 
 /* Code execute */
@@ -540,7 +379,7 @@ struct sieve_result *sieve_interpreter_run
 	interpreter->result = result;
 	interpreter->mail = mail;
 	
-	while ( interpreter->pc < interpreter->code_size ) {
+	while ( interpreter->pc < sieve_binary_get_code_size(interpreter->binary) ) {
 		printf("%08x: ", interpreter->pc);
 		
 		if ( !sieve_interpreter_execute_opcode(interpreter) ) {
