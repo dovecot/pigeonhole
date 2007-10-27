@@ -1,7 +1,15 @@
 #ifndef __SIEVE_COMPARATORS_H
 #define __SIEVE_COMPARATORS_H
 
+enum sieve_comparator_code {
+	SCI_I_OCTET,
+	SCI_I_ASCII_CASEMAP,
+	
+	SCI_CUSTOM
+};
+
 struct sieve_comparator {
+	enum sieve_comparator_code code;
 	const char *identifier;
 	
 	/* Equality, ordering, prefix and substring match */

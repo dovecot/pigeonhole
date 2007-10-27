@@ -61,6 +61,10 @@ const struct sieve_extension *sieve_binary_get_extension(struct sieve_binary *bi
 	return NULL;
 }
 
+/*
+ * Emission functions
+ */
+
 /* Low-level emission functions */
 
 inline sieve_size_t sieve_binary_emit_data(struct sieve_binary *binary, void *data, sieve_size_t size) 

@@ -44,7 +44,8 @@ inline sieve_size_t sieve_generator_emit_offset(struct sieve_generator *generato
 inline void sieve_generator_resolve_offset(struct sieve_generator *generator, sieve_size_t address); 
 
 /* Literal emission */
-
+inline sieve_size_t sieve_generator_emit_byte
+	(struct sieve_generator *generator, unsigned char btval);
 inline sieve_size_t sieve_generator_emit_integer
 	(struct sieve_generator *generator, sieve_size_t integer);
 inline sieve_size_t sieve_generator_emit_string

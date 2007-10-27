@@ -122,6 +122,12 @@ inline void sieve_generator_resolve_offset(struct sieve_generator *generator, si
 
 /* Literal emission */
 
+inline sieve_size_t sieve_generator_emit_byte(struct sieve_generator *generator, unsigned char btval)
+{
+  return sieve_binary_emit_byte(generator->binary, btval);
+}
+
+
 inline sieve_size_t sieve_generator_emit_integer(struct sieve_generator *generator, sieve_size_t integer)
 {
   return sieve_binary_emit_integer(generator->binary, integer);

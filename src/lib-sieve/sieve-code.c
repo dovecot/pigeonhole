@@ -10,7 +10,8 @@
 
 /* Operands */
 
-void sieve_operand_number_emit(struct sieve_generator *generator, sieve_size_t number) {
+void sieve_operand_number_emit(struct sieve_generator *generator, sieve_size_t number) 
+{
 	(void) sieve_generator_emit_operand(generator, SIEVE_OPERAND_NUMBER);
   (void) sieve_generator_emit_integer(generator, number);
 }

@@ -21,9 +21,12 @@ static int cmp_i_ascii_casemap_compare(const void *val1, size_t val1_size, const
 static bool tag_comparator_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd);
+static bool tag_comparator_generate
+	(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *cmd);
 
 const struct sieve_argument comparator_tag = 
-	{ "comparator", tag_comparator_validate, NULL };
+	{ "comparator", tag_comparator_validate, tag_comparator_generate };
 
 static bool tag_comparator_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
@@ -63,11 +66,20 @@ static bool tag_comparator_validate
 	return TRUE;
 }
 
+static void opr_comparator_emit
+	(struct sieve_generator *generator, struct sieve_comparator *cmp)
+{ 
+	(void) sieve_generator_emit_operand(generator, SIEVE_OPERAND_COMPARATOR);
+  (void) sieve_generator_emit_byte(generator, (unsigned char) cmp->code);
+}
+
 static bool tag_comparator_generate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+	(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *cmd ATTR_UNUSED)
 {
-	
+	opr_comparator_emit(generator, (struct sieve_comparator *) (*arg)->context);
+		
+	*arg = sieve_ast_argument_next(*arg);
 }
 
 /* 
@@ -75,11 +87,13 @@ static bool tag_comparator_generate
  */
 
 const struct sieve_comparator i_octet_comparator = {
+	SCI_I_OCTET,
 	"i;octet",
 	cmp_i_octet_compare
 };
 
 const struct sieve_comparator i_ascii_casemap_comparator = {
+	SCI_I_ASCII_CASEMAP,
 	"i;ascii-casemap",
 	cmp_i_ascii_casemap_compare
 };
