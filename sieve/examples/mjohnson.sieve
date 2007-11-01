@@ -1,3 +1,7 @@
+# Example Sieve Script
+#  Author: Matthew Johnson
+#  URL: http://wiki.fastmail.fm/index.php?title=MatthewJohnson
+
 ##########################################################################
 #######  SIEVE SCRIPT by Matthew Johnson - MRJ Solutions, Inc. ###########
 #######  Email me at mailto:mattjohnson2005@gmail.com ##

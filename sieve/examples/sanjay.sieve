@@ -1,3 +1,7 @@
+# Example Sieve Script
+#   Author: SanjaySheth
+#   URL: http://wiki.fastmail.fm/index.php?title=SanjaySieveSpamFilter
+
 if anyof (
 
       # Blacklisted sender domains

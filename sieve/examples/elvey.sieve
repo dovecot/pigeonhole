@@ -1,3 +1,7 @@
+# Example Sieve Script
+#   Author: Matthew Elvey
+#   URL: http://www.elvey.com/it/sieve/SieveScript.txt
+
 # Initial version completed and put in place 4/1/02 by Matthew Elvey  (firstname@lastname.com ; I've checked and it's not a valid address.); Copyright (C).and.current as of 5/19/2002 
 #Change log:
 #+ spam[:high]; major reordering; +DFC,BugTraq, PB up +Economist, FolderPath corrections 

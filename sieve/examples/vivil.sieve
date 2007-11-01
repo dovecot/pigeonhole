@@ -1,3 +1,7 @@
+# Example Sieve Script
+#   Author: Vivil
+#   URL: http://wiki.fastmail.fm/index.php?title=Vivil
+
 # *************************************************************************
 require ["envelope", "fileinto", "reject", "notify", "vacation", "regex", "relational", 
 "comparator-i;ascii-numeric"];

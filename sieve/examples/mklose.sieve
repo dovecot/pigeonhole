@@ -1,5 +1,8 @@
-require ["fileinto", "reject", "vacation", "regex", "relational", "comparator-i;ascii-numeric"];
+# Example Sieve Script
+#   Author: Michael Klose
+#   URL: http://wiki.fastmail.fm/index.php?title=MichaelKloseSieveScript
 
+require ["fileinto", "reject", "vacation", "regex", "relational", "comparator-i;ascii-numeric"];
 
 # Experimental
 
