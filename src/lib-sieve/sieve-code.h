@@ -32,15 +32,6 @@ enum sieve_core_operation {
 extern const struct sieve_opcode *sieve_opcodes[];
 extern const unsigned int sieve_opcode_count;
 
-/* Operand: argument to and opcode */
-struct sieve_operand {
-	/* Code generator */
-	bool (*emit)(struct sieve_generator *generator, struct sieve_ast_argument *arg);
-
-	/* Interpreter */
-	bool (*dump)(struct sieve_interpreter *interpreter);
-};
-
 enum sieve_core_operand {
   SIEVE_OPERAND_NUMBER,
   SIEVE_OPERAND_STRING,
@@ -48,6 +39,19 @@ enum sieve_core_operand {
   SIEVE_OPERAND_COMPARATOR,
   SIEVE_OPERAND_MATCH_TYPE,
   SIEVE_OPERAND_ADDR_PART  
+};
+
+/* Operand: argument to and opcode */
+struct sieve_operand {
+	/* Interpreter */
+	bool (*dump)(struct sieve_interpreter *interpreter);
+};
+
+struct sieve_operand_string {
+	struct sieve_operand operand;
+	
+	void (*emit)(struct sieve_generator *generator, string_t *str);
+	bool (*read)(struct sieve_interpreter *interpreter, string_t **str)
 };
 
 void sieve_operand_number_emit(struct sieve_generator *generator, sieve_size_t number);

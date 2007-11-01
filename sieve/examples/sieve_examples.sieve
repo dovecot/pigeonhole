@@ -1,3 +1,7 @@
+# Example Sieve Script
+#   Author: unknown
+#   URL: http://wiki.fastmail.fm/index.php?title=MoreSieveExamples
+
 require ["fileinto", "reject"];
 
 ###BYPASSES###
