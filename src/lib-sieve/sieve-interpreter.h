@@ -25,6 +25,9 @@ inline void sieve_interpreter_set_test_result
 	(struct sieve_interpreter *interpreter, bool result);
 inline bool sieve_interpreter_get_test_result
 	(struct sieve_interpreter *interpreter);
+	
+inline struct sieve_binary *sieve_interpreter_get_binary
+	(struct sieve_interpreter *interp);
 
 /* Opcodes and operands */
 
@@ -48,18 +51,13 @@ inline struct mail *sieve_interpreter_get_mail(struct sieve_interpreter *interpr
 
 /* Code dump (debugging purposes) */
 
-bool sieve_interpreter_dump_number(struct sieve_interpreter *interpreter);
-bool sieve_interpreter_dump_string(struct sieve_interpreter *interpreter);
-bool sieve_interpreter_dump_string_list(struct sieve_interpreter *interpreter);
-bool sieve_interpreter_dump_operand(struct sieve_interpreter *interpreter);
-
-void sieve_interpreter_dump_code(struct sieve_interpreter *interpreter);
+void sieve_interpreter_dump_code(struct sieve_interpreter *interp);
 
 /* Code execute */
 
-bool sieve_interpreter_execute_opcode(struct sieve_interpreter *interpreter); 
+bool sieve_interpreter_execute_operation(struct sieve_interpreter *interp); 
 struct sieve_result *sieve_interpreter_run
-	(struct sieve_interpreter *interpreter, struct mail *mail);
+	(struct sieve_interpreter *interp, struct mail *mail);
 
 
 #endif

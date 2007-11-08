@@ -1,8 +1,10 @@
 #include "lib.h"
 #include "compat.h"
 
+#include "sieve-binary.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
+
 #include "sieve-comparators.h"
 
 #include <string.h>
@@ -69,8 +71,10 @@ static bool tag_comparator_validate
 static void opr_comparator_emit
 	(struct sieve_generator *generator, struct sieve_comparator *cmp)
 { 
-	(void) sieve_generator_emit_operand(generator, SIEVE_OPERAND_COMPARATOR);
-  (void) sieve_generator_emit_byte(generator, (unsigned char) cmp->code);
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+
+	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_COMPARATOR);
+	(void) sieve_binary_emit_byte(sbin, (unsigned char) cmp->code);
 }
 
 static bool tag_comparator_generate

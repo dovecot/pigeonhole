@@ -2,7 +2,6 @@
 
 #include "lib.h"
 #include "mempool.h"
-#include "hash.h"
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
@@ -13,8 +12,9 @@
 #include "sieve-generator.h"
 
 /* Jump list */
-void sieve_jumplist_init(struct sieve_jumplist *jlist)
+void sieve_jumplist_init(struct sieve_jumplist *jlist, struct sieve_binary *sbin)
 {
+	jlist->binary = sbin;
 	t_array_init(&jlist->jumps, 4);
 }
 
@@ -23,25 +23,18 @@ void sieve_jumplist_add(struct sieve_jumplist *jlist, sieve_size_t jump)
 	array_append(&jlist->jumps, &jump, 1);
 }
 
-void sieve_jumplist_resolve(struct sieve_jumplist *jlist, struct sieve_generator *generator) 
+void sieve_jumplist_resolve(struct sieve_jumplist *jlist) 
 {
 	unsigned int i;
 	
 	for ( i = 0; i < array_count(&jlist->jumps); i++ ) {
 		const sieve_size_t *jump = array_idx(&jlist->jumps, i);
 	
-		sieve_generator_resolve_offset(generator, *jump);
+		sieve_binary_resolve_offset(jlist->binary, *jump);
 	}
 	
 	array_free(&jlist->jumps);
 }
-
-/* Extensions */
-
-struct sieve_extension_registration {
-	const struct sieve_extension *extension;
-	unsigned int opcode;
-};
 
 /* Generator */
 
@@ -51,8 +44,6 @@ struct sieve_generator {
 	struct sieve_ast *ast;
 	
 	struct sieve_binary *binary;
-	
-	struct hash_table *extension_index; 
 };
 
 struct sieve_generator *sieve_generator_create(struct sieve_ast *ast) 
@@ -70,101 +61,42 @@ struct sieve_generator *sieve_generator_create(struct sieve_ast *ast)
 	generator->binary = sieve_binary_create_new();
 	sieve_binary_ref(generator->binary);
 	
-	generator->extension_index = hash_create
-		(pool, pool, 0, NULL, NULL);
-	
 	return generator;
 }
 
 void sieve_generator_free(struct sieve_generator *generator) 
 {
-	hash_destroy(&generator->extension_index);
-	
 	sieve_ast_unref(&generator->ast);
 	sieve_binary_unref(&generator->binary);
 	pool_unref(&(generator->pool));
 }
 
-/* Registration functions */
-
-void sieve_generator_register_extension
-	(struct sieve_generator *generator, const struct sieve_extension *extension) 
+inline void sieve_generator_register_extension
+	(struct sieve_generator *gentr, const struct sieve_extension *ext) 
 {
-	struct sieve_extension_registration *reg;
-	
-	reg = p_new(generator->pool, struct sieve_extension_registration, 1);
-	reg->extension = extension;
-	reg->opcode = sieve_binary_link_extension(generator->binary, extension);
-	
-	hash_insert(generator->extension_index, (void *) extension, (void *) reg);
+	(void)sieve_binary_register_extension(gentr->binary, ext);
 }
 
-unsigned int sieve_generator_find_extension		
-	(struct sieve_generator *generator, const struct sieve_extension *extension) 
+/* Binary access */
+
+inline struct sieve_binary *sieve_generator_get_binary
+	(struct sieve_generator *gentr)
 {
-  struct sieve_extension_registration *reg = 
-    (struct sieve_extension_registration *) hash_lookup(generator->extension_index, extension);
-    
-  return reg->opcode;
+	return gentr->binary;
 }
 
-/* Offset emission */
-
-inline sieve_size_t sieve_generator_emit_offset(struct sieve_generator *generator, int offset) 
+inline sieve_size_t sieve_generator_emit_opcode
+	(struct sieve_generator *gentr, int opcode)
 {
-	return sieve_binary_emit_offset(generator->binary, offset);
+	return sieve_operation_emit_code(gentr->binary, opcode);
 }
 
-inline void sieve_generator_resolve_offset(struct sieve_generator *generator, sieve_size_t address) 
-{
-	sieve_binary_resolve_offset(generator->binary, address);
-}
-
-/* Literal emission */
-
-inline sieve_size_t sieve_generator_emit_byte(struct sieve_generator *generator, unsigned char btval)
-{
-  return sieve_binary_emit_byte(generator->binary, btval);
-}
-
-
-inline sieve_size_t sieve_generator_emit_integer(struct sieve_generator *generator, sieve_size_t integer)
-{
-  return sieve_binary_emit_integer(generator->binary, integer);
-}
-
-inline sieve_size_t sieve_generator_emit_string(struct sieve_generator *generator, const string_t *str)
-{
-  return sieve_binary_emit_string(generator->binary, str);
-}
-
-/* Emit operands */
-
-sieve_size_t sieve_generator_emit_operand
-	(struct sieve_generator *generator, int operand)
-{
-	unsigned char op = operand & SIEVE_OPERAND_CORE_MASK;
-	
-	return sieve_binary_emit_byte(generator->binary, op);
-}
-
-/* Emit opcodes */
-
-sieve_size_t sieve_generator_emit_opcode
-	(struct sieve_generator *generator, int opcode)
-{
-	unsigned char op = opcode & SIEVE_OPCODE_CORE_MASK;
-	
-	return sieve_binary_emit_byte(generator->binary, op);
-}
-
-sieve_size_t sieve_generator_emit_ext_opcode
-	(struct sieve_generator *generator, const struct sieve_extension *extension)
+inline sieve_size_t sieve_generator_emit_opcode_ext
+	(struct sieve_generator *gentr, const struct sieve_extension *ext)
 {	
-	unsigned char op = SIEVE_OPCODE_EXT_OFFSET + sieve_generator_find_extension(generator, extension);
-	
-	return sieve_binary_emit_byte(generator->binary, op);
+	return sieve_operation_emit_code_ext(gentr->binary, ext);
 }
+
 
 /* Generator functions */
 
@@ -209,10 +141,10 @@ bool sieve_generate_test
 		if ( tst_node->context->command->generate(generator, tst_node->context) ) {
 			
 			if ( jump_true ) 
-				sieve_generator_emit_opcode(generator, SIEVE_OPCODE_JMPTRUE);
+				sieve_operation_emit_code(generator->binary, SIEVE_OPCODE_JMPTRUE);
 			else
-				sieve_generator_emit_opcode(generator, SIEVE_OPCODE_JMPFALSE);
-			sieve_jumplist_add(jlist, sieve_generator_emit_offset(generator, 0));
+				sieve_operation_emit_code(generator->binary, SIEVE_OPCODE_JMPFALSE);
+			sieve_jumplist_add(jlist, sieve_binary_emit_offset(generator->binary, 0));
 						
 			return TRUE;
 		}	

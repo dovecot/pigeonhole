@@ -9,7 +9,9 @@
 /* Forward declarations */
 
 static bool ext_envelope_validator_load(struct sieve_validator *validator);
-static bool ext_envelope_opcode_dump(struct sieve_interpreter *interpreter);
+
+static bool ext_envelope_opcode_dump
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
 
 static bool tst_envelope_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
@@ -20,8 +22,11 @@ static bool tst_envelope_generate
 
 /* Extension definitions */
 
+const struct sieve_opcode envelope_opcode =
+	{ ext_envelope_opcode_dump, NULL };
 const struct sieve_extension envelope_extension = 
-	{ "envelope", ext_envelope_validator_load, NULL, { ext_envelope_opcode_dump, NULL } };
+	{ "envelope", ext_envelope_validator_load, NULL, &envelope_opcode, NULL };
+
 static const struct sieve_command envelope_test = 
 	{ "envelope", SCT_TEST, tst_envelope_registered, tst_envelope_validate, tst_envelope_generate, NULL };
 
@@ -89,7 +94,7 @@ static bool ext_envelope_validator_load(struct sieve_validator *validator)
 static bool tst_envelope_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_ext_opcode(generator, &envelope_extension);
+	sieve_generator_emit_opcode_ext(generator, &envelope_extension);
 
 	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -102,12 +107,14 @@ static bool tst_envelope_generate
  * Code dump
  */
  
-static bool ext_envelope_opcode_dump(struct sieve_interpreter *interpreter)
+static bool ext_envelope_opcode_dump
+	(struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_binary *sbin, sieve_size_t *address)
 {
 	printf("ENVELOPE\n");
-	sieve_interpreter_dump_operand(interpreter);
-	sieve_interpreter_dump_operand(interpreter);
-	
-	return TRUE;
+
+	return
+		sieve_opr_stringlist_dump(sbin, address) &&
+		sieve_opr_stringlist_dump(sbin, address);
 }
 

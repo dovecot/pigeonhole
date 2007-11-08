@@ -13,11 +13,16 @@ static bool cmd_reject_generate(struct sieve_generator *generator,	struct sieve_
  
 static bool ext_reject_validator_load(struct sieve_validator *validator);
 static bool ext_reject_generator_load(struct sieve_generator *generator);
-static bool ext_reject_opcode_dump(struct sieve_interpreter *interpreter);
+
+static bool ext_reject_opcode_dump
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
 
 /* Extension definitions */
+struct sieve_opcode reject_opcode = 
+	{ ext_reject_opcode_dump, NULL };
+	
 struct sieve_extension reject_extension = 
-	{ "reject", ext_reject_validator_load, ext_reject_generator_load, { ext_reject_opcode_dump, NULL } };
+	{ "reject", ext_reject_validator_load, ext_reject_generator_load, &reject_opcode, NULL };
 
 static const struct sieve_command reject_command = 
 	{ "reject", SCT_COMMAND, NULL, cmd_reject_validate, cmd_reject_generate, NULL };
@@ -61,7 +66,7 @@ static bool ext_reject_validator_load(struct sieve_validator *validator)
 static bool cmd_reject_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_ext_opcode(generator, &reject_extension);
+	sieve_generator_emit_opcode_ext(generator, &reject_extension);
 
 	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -81,11 +86,13 @@ static bool ext_reject_generator_load(struct sieve_generator *generator ATTR_UNU
  * Code dump
  */
  
-static bool ext_reject_opcode_dump(struct sieve_interpreter *interpreter)
+static bool ext_reject_opcode_dump
+	(struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_binary *sbin, sieve_size_t *address)
 {
 	printf("REJECT\n");
-	sieve_interpreter_dump_operand(interpreter);
 	
-	return TRUE;
+	return
+		sieve_opr_string_dump(sbin, address);
 }
 

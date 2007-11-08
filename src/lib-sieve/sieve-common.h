@@ -35,6 +35,17 @@ struct sieve_generator;
 /* sieve-interpreter.h */
 struct sieve_interpreter;
 
+/* sieve-extension.h */
+struct sieve_extension;
+
+/* sieve-code.h */
+struct sieve_operand;
+struct sieve_opcode;
+
+/* sieve-binary.h */
+typedef size_t sieve_size_t;
+struct sieve_binary;
+
 /*
  *
  */

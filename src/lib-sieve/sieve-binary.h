@@ -4,8 +4,7 @@
 #include "lib.h"
 #include "str.h"
 
-#include "sieve-code.h"
-#include "sieve-extensions.h"
+#include "sieve-common.h"
 
 struct sieve_binary;
 
@@ -19,8 +18,12 @@ void sieve_binary_commit(struct sieve_binary *binary);
  * Extension handling 
  */
 
-unsigned int sieve_binary_link_extension(struct sieve_binary *binary, const struct sieve_extension *extension);
-const struct sieve_extension *sieve_binary_get_extension(struct sieve_binary *binary, unsigned int index); 
+unsigned int sieve_binary_register_extension
+	(struct sieve_binary *sbin, const struct sieve_extension *extension);
+const struct sieve_extension *sieve_binary_get_extension
+	(struct sieve_binary *binary, unsigned int index); 
+unsigned int sieve_binary_get_extension_index		
+	(struct sieve_binary *sbin, const struct sieve_extension *extension); 
 
 /* 
  * Code emission 
@@ -44,6 +47,16 @@ void sieve_binary_resolve_offset(struct sieve_binary *binary, sieve_size_t addre
 sieve_size_t sieve_binary_emit_integer(struct sieve_binary *binary, sieve_size_t integer);
 sieve_size_t sieve_binary_emit_string(struct sieve_binary *binary, const string_t *str);
 
+/* Operand emission */
+
+sieve_size_t sieve_binary_emit_operand_id(struct sieve_binary *sbin, int operand);
+	
+/* Opcode emission */
+
+sieve_size_t sieve_binary_emit_opcode_id(struct sieve_binary *sbin, int opcode);
+sieve_size_t sieve_binary_emit_ext_opcode_id
+	(struct sieve_binary *sbin, const struct sieve_extension *extension);
+	
 /* 
  * Code retrieval 
  */
@@ -57,16 +70,5 @@ bool sieve_binary_read_integer
   (struct sieve_binary *binary, sieve_size_t *address, sieve_size_t *integer); 
 bool sieve_binary_read_string
   (struct sieve_binary *binary, sieve_size_t *address, string_t **str);
-
-/* String list */
-
-struct sieve_coded_stringlist *sieve_binary_read_stringlist
-  (struct sieve_binary *binary, sieve_size_t *address, bool single);
-bool sieve_coded_stringlist_next_item(struct sieve_coded_stringlist *strlist, string_t **str);
-void sieve_coded_stringlist_reset(struct sieve_coded_stringlist *strlist);
-
-inline int sieve_coded_stringlist_get_length(struct sieve_coded_stringlist *strlist);
-inline sieve_size_t sieve_coded_stringlist_get_end_address(struct sieve_coded_stringlist *strlist);
-inline sieve_size_t sieve_coded_stringlist_get_current_offset(struct sieve_coded_stringlist *strlist);
 
 #endif

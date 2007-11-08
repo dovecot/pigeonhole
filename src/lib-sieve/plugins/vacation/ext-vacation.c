@@ -2,6 +2,7 @@
 
 #include "sieve-common.h"
 
+#include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
@@ -10,15 +11,19 @@
 
 /* Forward declarations */
 static bool ext_vacation_validator_load(struct sieve_validator *validator);
-static bool ext_vacation_opcode_dump(struct sieve_interpreter *interpreter);
+
+static bool ext_vacation_opcode_dump
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
 
 static bool cmd_vacation_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
 static bool cmd_vacation_validate(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_vacation_generate(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
 /* Extension definitions */
+const struct sieve_opcode vacation_opcode = 
+	{ ext_vacation_opcode_dump, NULL };
 const struct sieve_extension vacation_extension = 
-	{ "vacation", ext_vacation_validator_load, NULL, { ext_vacation_opcode_dump, NULL } };
+	{ "vacation", ext_vacation_validator_load, NULL, &vacation_opcode, NULL};
 static const struct sieve_command vacation_command = 
 	{ "vacation", SCT_COMMAND, cmd_vacation_registered, cmd_vacation_validate, cmd_vacation_generate, NULL };
 
@@ -229,7 +234,7 @@ static bool ext_vacation_validator_load(struct sieve_validator *validator)
 static bool cmd_vacation_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_ext_opcode(generator, &vacation_extension);
+	sieve_generator_emit_opcode_ext(generator, &vacation_extension);
 
 	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -242,10 +247,12 @@ static bool cmd_vacation_generate
  * Code dump
  */
  
-static bool ext_vacation_opcode_dump(struct sieve_interpreter *interpreter)
+static bool ext_vacation_opcode_dump(
+	struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_binary *sbin, sieve_size_t *address)
 {
 	printf("VACATION\n");
-	sieve_interpreter_dump_operand(interpreter);
+	sieve_opr_string_dump(sbin, address);
 	
 	return TRUE;
 }

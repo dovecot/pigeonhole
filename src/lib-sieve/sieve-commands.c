@@ -27,70 +27,72 @@ const struct sieve_argument string_list_argument =
 static bool arg_number_generate(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *context ATTR_UNUSED)
 {
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+
 	if ( sieve_ast_argument_type(*arg) != SAAT_NUMBER ) {
 		return FALSE;
 	}
 	
-	sieve_operand_number_emit(generator, sieve_ast_argument_number(*arg));
+	sieve_opr_number_emit(sbin, sieve_ast_argument_number(*arg));
 
 	*arg = sieve_ast_argument_next(*arg);
 
-  return TRUE;
+	return TRUE;
 }
 
 static bool arg_string_generate(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *context ATTR_UNUSED)
 {
-  if ( sieve_ast_argument_type(*arg) != SAAT_STRING ) {
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+
+	if ( sieve_ast_argument_type(*arg) != SAAT_STRING ) {
 		return FALSE;
 	} 
 
-	sieve_operand_string_emit(generator, sieve_ast_argument_str(*arg));
+	sieve_opr_string_emit(sbin, sieve_ast_argument_str(*arg));
   
-  *arg = sieve_ast_argument_next(*arg);
-  return TRUE;
+	*arg = sieve_ast_argument_next(*arg);
+	return TRUE;
 }
 
 static void emit_string_list_operand
 	(struct sieve_generator *generator, const struct sieve_ast_argument *strlist)
-{
+{	
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 	void *list_context;
-  const struct sieve_ast_argument *stritem;
+	const struct sieve_ast_argument *stritem;
   
-  t_push();
+	t_push();
   
-  printf("STRLIST: %d\n", sieve_ast_strlist_count(strlist));
-	sieve_operand_stringlist_emit_start
-		(generator, sieve_ast_strlist_count(strlist), &list_context);
+	sieve_opr_stringlist_emit_start
+		(sbin, sieve_ast_strlist_count(strlist), &list_context);
 
 	stritem = sieve_ast_strlist_first(strlist);
 	while ( stritem != NULL ) {
-		sieve_operand_stringlist_emit_item
-			(generator, list_context, sieve_ast_strlist_str(stritem));
-		printf("STR: %s\n", sieve_ast_strlist_strc(stritem));
+		sieve_opr_stringlist_emit_item
+			(sbin, list_context, sieve_ast_strlist_str(stritem));
 		stritem = sieve_ast_strlist_next(stritem);
 	}
 
-  sieve_operand_stringlist_emit_end
-		(generator, list_context);
+	sieve_opr_stringlist_emit_end(sbin, list_context);
 
-  t_pop();
+	t_pop();
 }
 
 static bool arg_string_list_generate(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *context ATTR_UNUSED)
 {
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+
 	if ( sieve_ast_argument_type(*arg) == SAAT_STRING ) {
-		
-		sieve_operand_string_emit(generator, sieve_ast_argument_str(*arg));
+		sieve_opr_string_emit(sbin, sieve_ast_argument_str(*arg));
 		
 		*arg = sieve_ast_argument_next(*arg);
 		return TRUE;
 		
 	} else if ( sieve_ast_argument_type(*arg) == SAAT_STRING_LIST ) {
-
 		if ( sieve_ast_strlist_count(*arg) == 1 ) 
-			sieve_operand_string_emit(generator, 
+			sieve_opr_string_emit(sbin, 
 				sieve_ast_argument_str(sieve_ast_strlist_first(*arg)));
 		else
 			(void) emit_string_list_operand(generator, *arg);
@@ -173,7 +175,8 @@ bool cmd_stop_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
-	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_STOP);
+	sieve_operation_emit_code(
+		sieve_generator_get_binary(generator), SIEVE_OPCODE_STOP);
 	return TRUE;
 }
 
@@ -181,7 +184,8 @@ bool cmd_keep_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
-	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_KEEP);
+	sieve_operation_emit_code(
+        sieve_generator_get_binary(generator), SIEVE_OPCODE_KEEP);
 	return TRUE;
 }
 
@@ -189,7 +193,8 @@ bool cmd_discard_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
-	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_DISCARD);
+	sieve_operation_emit_code(
+        sieve_generator_get_binary(generator), SIEVE_OPCODE_DISCARD);
 	return TRUE;
 }
 
@@ -198,9 +203,11 @@ bool tst_false_generate
 		struct sieve_command_context *context ATTR_UNUSED,
 		struct sieve_jumplist *jumps, bool jump_true)
 {
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+
 	if ( !jump_true ) {
-		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_JMP);
-		sieve_jumplist_add(jumps, sieve_generator_emit_offset(generator, 0));
+		sieve_operation_emit_code(sbin, SIEVE_OPCODE_JMP);
+		sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
 	}
 	
 	return TRUE;
@@ -211,13 +218,13 @@ bool tst_true_generate
 		struct sieve_command_context *ctx ATTR_UNUSED,
 		struct sieve_jumplist *jumps, bool jump_true)
 {
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+
 	if ( jump_true ) {
-		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_JMP);
-		sieve_jumplist_add(jumps, sieve_generator_emit_offset(generator, 0));
+		sieve_operation_emit_code(sbin, SIEVE_OPCODE_JMP);
+		sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
 	}
 	
 	return TRUE;
 }
-
-
 

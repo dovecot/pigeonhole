@@ -8,8 +8,10 @@
 
 /* Opcodes */
 
-static bool tst_address_opcode_dump(struct sieve_interpreter *interpreter);
-static bool tst_address_opcode_execute(struct sieve_interpreter *interpreter);
+static bool tst_address_opcode_dump
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
+static bool tst_address_opcode_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
 
 const struct sieve_opcode tst_address_opcode = 
 	{ tst_address_opcode_dump, tst_address_opcode_execute };
@@ -79,20 +81,23 @@ bool tst_address_generate
 
 /* Code dump */
 
-static bool tst_address_opcode_dump(struct sieve_interpreter *interpreter)
+static bool tst_address_opcode_dump
+	(struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_binary *sbin, sieve_size_t *address)
 {
 	printf("ADDRESS\n");
-	sieve_interpreter_dump_operand(interpreter);
-	sieve_interpreter_dump_operand(interpreter);
 
-	return TRUE;
+	return
+		sieve_opr_stringlist_dump(sbin, address) &&
+		sieve_opr_stringlist_dump(sbin, address);
 }
 
 /* Code execution */
 
-static bool tst_address_opcode_execute(struct sieve_interpreter *interpreter)
+static bool tst_address_opcode_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address)
 {
-	struct mail *mail = sieve_interpreter_get_mail(interpreter);
+	struct mail *mail = sieve_interpreter_get_mail(interp);
 	struct sieve_coded_stringlist *hdr_list;
 	struct sieve_coded_stringlist *key_list;
 	string_t *hdr_item;
@@ -103,14 +108,16 @@ static bool tst_address_opcode_execute(struct sieve_interpreter *interpreter)
 	t_push();
 		
 	/* Read header-list */
-	if ( (hdr_list=sieve_interpreter_read_stringlist_operand(interpreter)) == NULL ) {
+	if ( (hdr_list=sieve_opr_stringlist_read(sbin, address)) == NULL ) {
 		t_pop();
+		printf("HDR_LIST FAILED\n");
 		return FALSE;
 	}
 	
 	/* Read key-list */
-	if ( (key_list=sieve_interpreter_read_stringlist_operand(interpreter)) == NULL ) {
+	if ( (key_list=sieve_opr_stringlist_read(sbin, address)) == NULL ) {
 		t_pop();
+		printf("KEY_LIST FAILED\n");
 		return FALSE;
 	}
 	
@@ -132,7 +139,7 @@ static bool tst_address_opcode_execute(struct sieve_interpreter *interpreter)
 	
 	t_pop();
 	
-	sieve_interpreter_set_test_result(interpreter, matched);
+	sieve_interpreter_set_test_result(interp, matched);
 	
 	return TRUE;
 }

@@ -1,22 +1,24 @@
 #include "lib.h"
+
 #include "mempool.h"
 #include "buffer.h"
+#include "hash.h"
 #include "array.h"
 
 #include "sieve-binary.h"
+#include "sieve-code.h"
 
-struct sieve_coded_stringlist {
-  struct sieve_binary *binary;
-  sieve_size_t start_address;
-  sieve_size_t end_address;
-  sieve_size_t current_offset;
-  int length;
-  int index;
+struct sieve_extension_registration {
+	const struct sieve_extension *extension;
+	unsigned int opcode;
 };
 
 struct sieve_binary {
 	pool_t pool;
+	
 	ARRAY_DEFINE(extensions, const struct sieve_extension *); 
+	struct hash_table *extension_index; 
+	
 	buffer_t *data;
 	
 	const char *code;
@@ -26,17 +28,19 @@ struct sieve_binary {
 struct sieve_binary *sieve_binary_create_new(void) 
 {
 	pool_t pool;
-	struct sieve_binary *binary;
+	struct sieve_binary *sbin;
 	
 	pool = pool_alloconly_create("sieve_binary", 4096);	
-	binary = p_new(pool, struct sieve_binary, 1);
-	binary->pool = pool;
+	sbin = p_new(pool, struct sieve_binary, 1);
+	sbin->pool = pool;
 	
-	binary->data = buffer_create_dynamic(pool, 256);
+	sbin->data = buffer_create_dynamic(pool, 256);
 	
-	p_array_init(&binary->extensions, pool, 4);
-	
-	return binary;
+	p_array_init(&sbin->extensions, pool, 4);
+	sbin->extension_index = hash_create
+		(pool, pool, 0, NULL, NULL);
+		
+	return sbin;
 }
 
 void sieve_binary_ref(struct sieve_binary *binary) 
@@ -64,7 +68,7 @@ void sieve_binary_commit(struct sieve_binary *binary)
 
 /* Extension handling */
 
-unsigned int sieve_binary_link_extension(struct sieve_binary *binary, const struct sieve_extension *extension) 
+static unsigned int sieve_binary_link_extension(struct sieve_binary *binary, const struct sieve_extension *extension) 
 {
 	array_append(&(binary->extensions), &extension, 1);
 	
@@ -81,6 +85,32 @@ const struct sieve_extension *sieve_binary_get_extension(struct sieve_binary *bi
 	}
 	
 	return NULL;
+}
+
+unsigned int sieve_binary_register_extension
+	(struct sieve_binary *sbin, const struct sieve_extension *extension) 
+{
+	struct sieve_extension_registration *reg;
+	
+	reg = p_new(sbin->pool, struct sieve_extension_registration, 1);
+	reg->extension = extension;
+	reg->opcode = sieve_binary_link_extension(sbin, extension);
+	
+	hash_insert(sbin->extension_index, (void *) extension, (void *) reg);
+	
+	return reg->opcode;
+}
+
+unsigned int sieve_binary_get_extension_index		
+	(struct sieve_binary *sbin, const struct sieve_extension *extension) 
+{
+  struct sieve_extension_registration *reg = 
+    (struct sieve_extension_registration *) hash_lookup(sbin->extension_index, extension);
+
+	if ( reg == NULL )
+		return sieve_binary_register_extension(sbin, extension);
+    
+  return reg->opcode;
 }
 
 /*
@@ -270,97 +300,4 @@ bool sieve_binary_read_string
   
   return TRUE;
 }
-
-/* String list */
-
-struct sieve_coded_stringlist *sieve_binary_read_stringlist
-  (struct sieve_binary *binary, sieve_size_t *address, bool single)
-{
-	struct sieve_coded_stringlist *strlist;
-
-  sieve_size_t pc = *address;
-  sieve_size_t end; 
-  sieve_size_t length = 0; 
- 
- 	if ( single ) {
- 		sieve_size_t strlen;
- 		
- 		if ( !sieve_binary_read_integer(binary, address, &strlen) ) 
-    	return FALSE;
-    	
-    end = *address + strlen;
-    length = 1;
-    *address = pc;
-	} else {
-		int end_offset;
-		
-  	if ( !sieve_binary_read_offset(binary, address, &end_offset) )
-  		return NULL;
-  
-  	end = pc + end_offset;
-  
-  	if ( !sieve_binary_read_integer(binary, address, &length) ) 
-    	return NULL;
-  }
-  
-  if ( end > binary->code_size ) 
-  		return NULL;
-    
-	strlist = p_new(pool_datastack_create(), struct sieve_coded_stringlist, 1);
-	strlist->binary = binary;
-	strlist->start_address = *address;
-	strlist->current_offset = *address;
-	strlist->end_address = end;
-	strlist->length = length;
-	strlist->index = 0;
-  
-  /* Skip over the string list for now */
-  *address = end;
-  
-  return strlist;
-}
-
-bool sieve_coded_stringlist_next_item(struct sieve_coded_stringlist *strlist, string_t **str) 
-{
-	sieve_size_t address;
-  *str = NULL;
-  
-  if ( strlist->index >= strlist->length ) 
-    return TRUE;
-  else {
-  	address = strlist->current_offset;
-  	
-  	if ( sieve_binary_read_string(strlist->binary, &address, str) ) {
-    	strlist->index++;
-    	strlist->current_offset = address;
-    	return TRUE;
-    }
-  }  
-  
-  return FALSE;
-}
-
-void sieve_coded_stringlist_reset(struct sieve_coded_stringlist *strlist) 
-{  
-  strlist->current_offset = strlist->start_address;
-  strlist->index = 0;
-}
-
-inline int sieve_coded_stringlist_get_length(struct sieve_coded_stringlist *strlist)
-{
-	return strlist->length;
-}
-
-inline sieve_size_t sieve_coded_stringlist_get_end_address(struct sieve_coded_stringlist *strlist)
-{
-	return strlist->end_address;
-}
-
-inline sieve_size_t sieve_coded_stringlist_get_current_offset(struct sieve_coded_stringlist *strlist)
-{
-	return strlist->current_offset;
-}
-
-
-
 

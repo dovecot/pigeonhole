@@ -3,6 +3,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-code.h"
+#include "sieve-binary.h"
 
 /* Context */
 
@@ -120,12 +121,12 @@ bool cmd_else_validate(struct sieve_validator *validator ATTR_UNUSED, struct sie
 
 /* Code generation */
 
-static void cmd_if_resolve_exit_jumps(struct sieve_generator *generator, struct cmd_if_context_data *ctx_data) 
+static void cmd_if_resolve_exit_jumps(struct sieve_binary *sbin, struct cmd_if_context_data *ctx_data) 
 {
 	struct cmd_if_context_data *if_ctx = ctx_data->previous;
 	
 	while ( if_ctx != NULL ) {
-		sieve_generator_resolve_offset(generator, if_ctx->exit_jump);
+		sieve_binary_resolve_offset(sbin, if_ctx->exit_jump);
 		if_ctx = if_ctx->previous;	
 	}
 }
@@ -133,12 +134,13 @@ static void cmd_if_resolve_exit_jumps(struct sieve_generator *generator, struct 
 bool cmd_if_generate
 	(struct sieve_generator *generator, struct sieve_command_context *ctx)
 {
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 	struct cmd_if_context_data *ctx_data = (struct cmd_if_context_data *) ctx->data;
 	struct sieve_ast_node *test;
-  struct sieve_jumplist jmplist;
+	struct sieve_jumplist jmplist;
 	
 	/* Prepare jumplist */
-	sieve_jumplist_init(&jmplist);
+	sieve_jumplist_init(&jmplist, sbin);
 	
 	/* Generate test condition */
 	test = sieve_ast_test_first(ctx->ast_node);
@@ -150,15 +152,15 @@ bool cmd_if_generate
 	/* Are we the final command in this if-elsif-else structure? */
 	if ( ctx_data->next != NULL ) {
 		/* No, generate jump to end of if-elsif-else structure (resolved later) */
-		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_JMP);
-		ctx_data->exit_jump = sieve_generator_emit_offset(generator, 0);
+		sieve_operation_emit_code(sbin, SIEVE_OPCODE_JMP);
+		ctx_data->exit_jump = sieve_binary_emit_offset(sbin, 0);
 	} else {
 		/* Yes, Resolve previous exit jumps to this point */
-		cmd_if_resolve_exit_jumps(generator, ctx_data);
+		cmd_if_resolve_exit_jumps(sbin, ctx_data);
 	}
 	
 	/* Case false ... (subsequent elsif/else commands might generate more) */
-  sieve_jumplist_resolve(&jmplist, generator);	
+	sieve_jumplist_resolve(&jmplist);	
 		
 	return TRUE;
 }
@@ -166,13 +168,14 @@ bool cmd_if_generate
 bool cmd_else_generate
 	(struct sieve_generator *generator, struct sieve_command_context *ctx)
 {
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 	struct cmd_if_context_data *ctx_data = (struct cmd_if_context_data *) ctx->data;
 	
-  /* Else */
+	/* Else */
 	sieve_generate_block(generator, ctx->ast_node);
 		
 	/* End: resolve all exit blocks */	
-	cmd_if_resolve_exit_jumps(generator, ctx_data);
+	cmd_if_resolve_exit_jumps(sbin, ctx_data);
 		
 	return TRUE;
 }

@@ -8,18 +8,21 @@
 
 /* Forward declarations */
 static bool ext_fileinto_validator_load(struct sieve_validator *validator);
-static bool ext_fileinto_opcode_dump(struct sieve_interpreter *interpreter);
-static bool ext_fileinto_opcode_execute(struct sieve_interpreter *interpreter); 
 
+static bool ext_fileinto_opcode_dump
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
+static bool ext_fileinto_opcode_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address); 
 
 static bool cmd_fileinto_validate(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_fileinto_generate(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
 /* Extension definitions */
+const struct sieve_opcode fileinto_opcode = 
+	{ ext_fileinto_opcode_dump, ext_fileinto_opcode_execute };
+
 const struct sieve_extension fileinto_extension = 
-	{ "fileinto", ext_fileinto_validator_load, NULL, 
-		{ ext_fileinto_opcode_dump, ext_fileinto_opcode_execute } 
-	};
+	{ "fileinto", ext_fileinto_validator_load, NULL, &fileinto_opcode, NULL	};
 static const struct sieve_command fileinto_command = 
 	{ "fileinto", SCT_COMMAND, NULL, cmd_fileinto_validate, cmd_fileinto_generate, NULL };
 
@@ -61,7 +64,7 @@ static bool ext_fileinto_validator_load(struct sieve_validator *validator)
 static bool cmd_fileinto_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_ext_opcode(generator, &fileinto_extension);
+	sieve_generator_emit_opcode_ext(generator, &fileinto_extension);
 
 	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -74,12 +77,14 @@ static bool cmd_fileinto_generate
  * Code dump
  */
  
-static bool ext_fileinto_opcode_dump(struct sieve_interpreter *interpreter)
+static bool ext_fileinto_opcode_dump
+	(struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_binary *sbin, sieve_size_t *address)
 {
 	printf("FILEINTO\n");
-	sieve_interpreter_dump_operand(interpreter);
-	
-	return TRUE;
+
+	return 
+		sieve_opr_string_dump(sbin, address);
 }
 
 /*
@@ -87,7 +92,9 @@ static bool ext_fileinto_opcode_dump(struct sieve_interpreter *interpreter)
  */
 
 static bool ext_fileinto_opcode_execute
-	(struct sieve_interpreter *interpreter ATTR_UNUSED) 
+	(struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_binary *sbin ATTR_UNUSED, 
+	sieve_size_t *address ATTR_UNUSED)
 {
 	return TRUE;
 }

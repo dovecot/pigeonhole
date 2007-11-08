@@ -1,6 +1,8 @@
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
+#include "sieve-code.h"
+#include "sieve-binary.h"
 
 bool tst_allof_validate(struct sieve_validator *validator, struct sieve_command_context *tst) 
 {
@@ -19,12 +21,13 @@ bool tst_allof_generate
 		struct sieve_command_context *ctx,
 		struct sieve_jumplist *jumps, bool jump_true)
 {
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 	struct sieve_ast_node *test;
 	struct sieve_jumplist false_jumps;
 	
 	if ( jump_true ) {
 		/* Prepare jumplist */
-		sieve_jumplist_init(&false_jumps);
+		sieve_jumplist_init(&false_jumps, sbin);
 	}
 	
 	test = sieve_ast_test_first(ctx->ast_node);
@@ -45,10 +48,10 @@ bool tst_allof_generate
 	if ( jump_true ) {
 		/* All tests succeeded, jump to case TRUE */
 		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_JMP);
-		sieve_jumplist_add(jumps, sieve_generator_emit_offset(generator, 0));
+		sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
 		
 		/* All false exits jump here */
-		sieve_jumplist_resolve(&false_jumps, generator);
+		sieve_jumplist_resolve(&false_jumps);
 	}
 		
 	return TRUE;
