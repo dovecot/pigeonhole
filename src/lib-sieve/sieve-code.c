@@ -24,6 +24,26 @@ struct sieve_coded_stringlist {
   int index;
 };
 
+static struct sieve_coded_stringlist *sieve_coded_stringlist_create
+	(struct sieve_binary *sbin, 
+	 sieve_size_t start_address, sieve_size_t length, sieve_size_t end)
+{
+	struct sieve_coded_stringlist *strlist;
+	
+  if ( end > sieve_binary_get_code_size(sbin) ) 
+  		return NULL;
+    
+	strlist = p_new(pool_datastack_create(), struct sieve_coded_stringlist, 1);
+	strlist->binary = sbin;
+	strlist->start_address = start_address;
+	strlist->current_offset = start_address;
+	strlist->end_address = end;
+	strlist->length = length;
+	strlist->index = 0;
+  
+  return strlist;
+}
+
 bool sieve_coded_stringlist_next_item(struct sieve_coded_stringlist *strlist, string_t **str) 
 {
 	sieve_size_t address;
@@ -145,11 +165,19 @@ const struct sieve_operand string_operand =
 static bool opr_stringlist_dump
 	(struct sieve_binary *sbin, sieve_size_t *address);
 static struct sieve_coded_stringlist *opr_stringlist_read
-	(struct sieve_binary *sbin, sieve_size_t *address, bool single);
+	(struct sieve_binary *sbin, sieve_size_t *address);
+static struct sieve_coded_stringlist *opr_stringlist_read_single
+	(struct sieve_binary *sbin, sieve_size_t *address);
 
 const struct sieve_opr_stringlist_interface stringlist_interface = { 
 	opr_stringlist_dump, 
 	opr_stringlist_read
+};
+
+/* Read a single string as string list */
+const struct sieve_opr_stringlist_interface stringlist_single_interface = { 
+	opr_stringlist_dump, 
+	opr_stringlist_read_single
 };
 	
 const struct sieve_operand_class stringlist_class = 
@@ -397,14 +425,14 @@ struct sieve_coded_stringlist *sieve_opr_stringlist_read
 	if ( operand->class == &stringlist_class )  	
 		intf = (const struct sieve_opr_stringlist_interface *) operand->class->interface; 
 	else if ( operand == &string_operand ) 
-		intf = (const struct sieve_opr_stringlist_interface *) stringlist_class.interface; 
+		intf = &stringlist_single_interface; 
 	else
 		return NULL;
 		
 	if ( intf->read == NULL ) 
 		return NULL;
 
-	return intf->read(sbin, address, operand == &string_operand);  
+	return intf->read(sbin, address);  
 }
 
 static bool opr_stringlist_dump
@@ -412,7 +440,7 @@ static bool opr_stringlist_dump
 {
 	struct sieve_coded_stringlist *strlist;
 	
-  if ( (strlist=opr_stringlist_read(sbin, address, FALSE)) != NULL ) {
+  if ( (strlist=opr_stringlist_read(sbin, address)) != NULL ) {
   	sieve_size_t pc;
 		string_t *stritem;
 		
@@ -433,8 +461,26 @@ static bool opr_stringlist_dump
 	return FALSE;
 }
 
+static struct sieve_coded_stringlist *opr_stringlist_read_single
+  (struct sieve_binary *sbin, sieve_size_t *address )
+{
+	struct sieve_coded_stringlist *strlist;
+	sieve_size_t strlen;
+  sieve_size_t pc = *address;
+  
+	if ( !sieve_binary_read_integer(sbin, address, &strlen) ) 
+  	return NULL;
+
+	strlist = sieve_coded_stringlist_create(sbin, pc, 1, *address + strlen); 
+
+  /* Skip over the string for now */
+  *address += strlen;
+  
+  return strlist;
+}
+
 static struct sieve_coded_stringlist *opr_stringlist_read
-  (struct sieve_binary *sbin, sieve_size_t *address, bool single)
+  (struct sieve_binary *sbin, sieve_size_t *address )
 {
 	struct sieve_coded_stringlist *strlist;
 
@@ -442,43 +488,24 @@ static struct sieve_coded_stringlist *opr_stringlist_read
   sieve_size_t end; 
   sieve_size_t length = 0; 
  
- 	if ( single ) {
- 		sieve_size_t strlen;
- 		
- 		if ( !sieve_binary_read_integer(sbin, address, &strlen) ) 
-    	return NULL;
+	int end_offset;
+	
+	if ( !sieve_binary_read_offset(sbin, address, &end_offset) )
+		return NULL;
 
-    end = *address + strlen;
-    length = 1;
-    *address = pc;
-	} else {
-		int end_offset;
-		
-  	if ( !sieve_binary_read_offset(sbin, address, &end_offset) )
-  		return NULL;
-  
-  	end = pc + end_offset;
-  
-  	if ( !sieve_binary_read_integer(sbin, address, &length) ) 
-    	return NULL;
-  }
-  
-  if ( end > sieve_binary_get_code_size(sbin) ) 
-  		return NULL;
-    
-	strlist = p_new(pool_datastack_create(), struct sieve_coded_stringlist, 1);
-	strlist->binary = sbin;
-	strlist->start_address = *address;
-	strlist->current_offset = *address;
-	strlist->end_address = end;
-	strlist->length = length;
-	strlist->index = 0;
-  
+	end = pc + end_offset;
+
+	if ( !sieve_binary_read_integer(sbin, address, &length) ) 
+  	return NULL;
+
+	strlist = sieve_coded_stringlist_create(sbin, *address, length, end); 
+
   /* Skip over the string list for now */
   *address = end;
   
   return strlist;
-}
+}  
+
 
 /* 
  * Opcodes

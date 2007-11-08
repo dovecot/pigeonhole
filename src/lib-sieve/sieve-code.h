@@ -50,7 +50,7 @@ struct sieve_opr_stringlist_interface {
 	bool (*dump)
 		(struct sieve_binary *sbin, sieve_size_t *address);
 	struct sieve_coded_stringlist *(*read)
-		(struct sieve_binary *sbin, sieve_size_t *address, bool single);
+		(struct sieve_binary *sbin, sieve_size_t *address);
 };
 
 enum sieve_core_operand {
