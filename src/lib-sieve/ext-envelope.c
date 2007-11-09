@@ -25,7 +25,7 @@ static bool tst_envelope_generate
 const struct sieve_opcode envelope_opcode =
 	{ ext_envelope_opcode_dump, NULL };
 const struct sieve_extension envelope_extension = 
-	{ "envelope", ext_envelope_validator_load, NULL, &envelope_opcode, NULL };
+	{ "envelope", ext_envelope_validator_load, NULL, NULL, &envelope_opcode, NULL };
 
 static const struct sieve_command envelope_test = 
 	{ "envelope", SCT_TEST, tst_envelope_registered, tst_envelope_validate, tst_envelope_generate, NULL };

@@ -2,15 +2,16 @@
 #define __SIEVE_COMPARATORS_H
 
 enum sieve_comparator_code {
-	SCI_I_OCTET,
-	SCI_I_ASCII_CASEMAP,
-	
-	SCI_CUSTOM
+	SIEVE_COMPARATOR_I_OCTET,
+	SIEVE_COMPARATOR_I_ASCII_CASEMAP,
+	SIEVE_COMPARATOR_CUSTOM
 };
 
 struct sieve_comparator {
-	enum sieve_comparator_code code;
 	const char *identifier;
+	
+	enum sieve_comparator_code code;
+	const struct sieve_extension *extension;
 	
 	/* Equality, ordering, prefix and substring match */
 	
@@ -22,6 +23,12 @@ extern const struct sieve_argument comparator_tag;
 
 extern const struct sieve_comparator *sieve_core_comparators[];
 extern const unsigned int sieve_core_comparators_count;
+
+const struct sieve_comparator *sieve_opr_comparator_read
+  (struct sieve_binary *sbin, sieve_size_t *address);
+
+void sieve_comparators_init_registry(struct sieve_interpreter *interp);
+
 
 
 #endif /* __SIEVE_COMPARATORS_H */

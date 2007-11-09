@@ -188,10 +188,13 @@ const struct sieve_operand stringlist_operand =
 	
 /* Core operands */
 
+extern struct sieve_operand comparator_operand;
+
 const struct sieve_operand *sieve_operands[] = {
 	&number_operand,
 	&string_operand,
-	&stringlist_operand
+	&stringlist_operand,
+	&comparator_operand
 }; 
 
 const unsigned int sieve_operand_count =

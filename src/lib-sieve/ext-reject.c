@@ -22,7 +22,7 @@ struct sieve_opcode reject_opcode =
 	{ ext_reject_opcode_dump, NULL };
 	
 struct sieve_extension reject_extension = 
-	{ "reject", ext_reject_validator_load, ext_reject_generator_load, &reject_opcode, NULL };
+	{ "reject", ext_reject_validator_load, ext_reject_generator_load, NULL, &reject_opcode, NULL };
 
 static const struct sieve_command reject_command = 
 	{ "reject", SCT_COMMAND, NULL, cmd_reject_validate, cmd_reject_generate, NULL };

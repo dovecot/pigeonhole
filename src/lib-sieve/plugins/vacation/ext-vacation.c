@@ -23,7 +23,7 @@ static bool cmd_vacation_generate(struct sieve_generator *generator,	struct siev
 const struct sieve_opcode vacation_opcode = 
 	{ ext_vacation_opcode_dump, NULL };
 const struct sieve_extension vacation_extension = 
-	{ "vacation", ext_vacation_validator_load, NULL, &vacation_opcode, NULL};
+	{ "vacation", ext_vacation_validator_load, NULL, NULL, &vacation_opcode, NULL};
 static const struct sieve_command vacation_command = 
 	{ "vacation", SCT_COMMAND, cmd_vacation_registered, cmd_vacation_validate, cmd_vacation_generate, NULL };
 

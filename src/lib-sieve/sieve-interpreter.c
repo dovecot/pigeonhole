@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "mempool.h"
 #include "array.h"
+#include "hash.h"
 #include "mail-storage.h"
 
 #include "sieve-commands-private.h"
@@ -18,6 +19,9 @@ struct sieve_interpreter {
 	
 	struct sieve_binary *binary;
 		
+	/* Object registries */
+	struct hash_table *registries; 
+		
 	/* Execution status */
 	sieve_size_t pc; 
 	bool test_result;
@@ -30,19 +34,24 @@ struct sieve_interpreter {
 struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary) 
 {
 	pool_t pool;
-	struct sieve_interpreter *interpreter;
+	struct sieve_interpreter *interp;
 	
 	pool = pool_alloconly_create("sieve_interpreter", 4096);	
-	interpreter = p_new(pool, struct sieve_interpreter, 1);
-	interpreter->pool = pool;
+	interp = p_new(pool, struct sieve_interpreter, 1);
+	interp->pool = pool;
 	
-	interpreter->binary = binary;
+	interp->binary = binary;
 	sieve_binary_ref(binary);
 	sieve_binary_commit(binary);
 	
-	interpreter->pc = 0;
+	interp->pc = 0;
+
+	interp->registries = hash_create(pool, pool, 0, NULL, NULL);
 	
-	return interpreter;
+	/* Init core functionalities */
+	sieve_comparators_init_registry(interp);
+	
+	return interp;
 }
 
 void sieve_interpreter_free(struct sieve_interpreter *interpreter) 
@@ -50,6 +59,58 @@ void sieve_interpreter_free(struct sieve_interpreter *interpreter)
 	sieve_binary_unref(&interpreter->binary);
 	pool_unref(&(interpreter->pool));
 }
+
+/* Object registry */
+
+struct sieve_interpreter_registry {
+	struct sieve_interpreter *interpreter;
+	const char *name;
+	ARRAY_DEFINE(registered, void);
+};
+
+struct sieve_interpreter_registry *
+	sieve_interpreter_registry_init(struct sieve_interpreter *interp, const char *name)
+{
+	struct sieve_interpreter_registry *reg = (struct sieve_interpreter_registry *) 
+		hash_lookup(interp->registries, name);
+	
+	if ( reg == NULL ) {
+		reg = p_new(interp->pool, struct sieve_interpreter_registry, 1);
+		reg->interpreter = interp;
+		reg->name = name;
+		array_create(&reg->registered, interp->pool, sizeof(void *), 5);
+		
+		hash_insert(interp->registries, (void *) name, (void *) reg);
+	}
+
+	return reg;
+}
+
+const void *sieve_interpreter_registry_get
+	(struct sieve_interpreter_registry *reg, const struct sieve_extension *ext)
+{
+	const void *result;
+	int index = sieve_binary_get_extension_index(reg->interpreter->binary, ext);
+	
+	if  ( index < 0 || index > (int) array_count(&reg->registered) )
+		return NULL;
+	
+	result = array_idx(&reg->registered, (unsigned int) index);		
+	
+	return result;
+}
+
+void  sieve_interpreter_registry_set
+	(struct sieve_interpreter_registry *reg, const struct sieve_extension *ext, const void *obj)
+{
+	int index = sieve_binary_get_extension_index(reg->interpreter->binary, ext);
+	
+	if  ( index < 0 || index > (int) array_count(&reg->registered) )
+		return;
+	
+	array_idx_set(&reg->registered, (unsigned int) index, obj);		
+}
+
 
 /* Accessing runtinme environment */
 

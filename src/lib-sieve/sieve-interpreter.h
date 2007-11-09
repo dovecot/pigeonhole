@@ -2,12 +2,12 @@
 #define __SIEVE_INTERPRETER_H__
 
 #include "lib.h"
+#include "array.h"
 #include "buffer.h"
 #include "mail-storage.h"
 
 #include "sieve-binary.h"
-
-struct sieve_coded_stringlist;
+#include "sieve-code.h"
 
 struct sieve_interpreter;
 
@@ -29,17 +29,22 @@ inline bool sieve_interpreter_get_test_result
 inline struct sieve_binary *sieve_interpreter_get_binary
 	(struct sieve_interpreter *interp);
 
+/* Object registry */
+
+struct sieve_interpreter_registry;
+
+struct sieve_interpreter_registry *
+	sieve_interpreter_registry_init(struct sieve_interpreter *interp, const char *name);
+const void *sieve_interpreter_registry_get
+	(struct sieve_interpreter_registry *reg, const struct sieve_extension *ext);
+void  sieve_interpreter_registry_set
+	(struct sieve_interpreter_registry *reg, const struct sieve_extension *ext, const void *obj);
+	
 /* Opcodes and operands */
 
 bool sieve_interpreter_read_offset_operand
 	(struct sieve_interpreter *interpreter, int *offset);
-bool sieve_interpreter_read_number_operand
-  (struct sieve_interpreter *interpreter, sieve_size_t *number);
-bool sieve_interpreter_read_string_operand
-  (struct sieve_interpreter *interpreter, string_t **str);
-struct sieve_coded_stringlist *sieve_interpreter_read_stringlist_operand
-	(struct sieve_interpreter *interpreter);
-	
+
 /* Stringlist Utility */
 
 bool sieve_stringlist_match

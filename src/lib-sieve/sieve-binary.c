@@ -68,7 +68,7 @@ void sieve_binary_commit(struct sieve_binary *binary)
 
 /* Extension handling */
 
-static unsigned int sieve_binary_link_extension(struct sieve_binary *binary, const struct sieve_extension *extension) 
+static int sieve_binary_link_extension(struct sieve_binary *binary, const struct sieve_extension *extension) 
 {
 	array_append(&(binary->extensions), &extension, 1);
 	
@@ -87,7 +87,7 @@ const struct sieve_extension *sieve_binary_get_extension(struct sieve_binary *bi
 	return NULL;
 }
 
-unsigned int sieve_binary_register_extension
+int sieve_binary_register_extension
 	(struct sieve_binary *sbin, const struct sieve_extension *extension) 
 {
 	struct sieve_extension_registration *reg;
@@ -101,15 +101,15 @@ unsigned int sieve_binary_register_extension
 	return reg->opcode;
 }
 
-unsigned int sieve_binary_get_extension_index		
+int sieve_binary_get_extension_index		
 	(struct sieve_binary *sbin, const struct sieve_extension *extension) 
 {
   struct sieve_extension_registration *reg = 
     (struct sieve_extension_registration *) hash_lookup(sbin->extension_index, extension);
 
 	if ( reg == NULL )
-		return sieve_binary_register_extension(sbin, extension);
-    
+		return -1;
+		    
   return reg->opcode;
 }
 

@@ -18,11 +18,11 @@ void sieve_binary_commit(struct sieve_binary *binary);
  * Extension handling 
  */
 
-unsigned int sieve_binary_register_extension
+int sieve_binary_register_extension
 	(struct sieve_binary *sbin, const struct sieve_extension *extension);
 const struct sieve_extension *sieve_binary_get_extension
 	(struct sieve_binary *binary, unsigned int index); 
-unsigned int sieve_binary_get_extension_index		
+int sieve_binary_get_extension_index		
 	(struct sieve_binary *sbin, const struct sieve_extension *extension); 
 
 /* 

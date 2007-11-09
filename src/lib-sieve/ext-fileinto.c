@@ -22,7 +22,7 @@ const struct sieve_opcode fileinto_opcode =
 	{ ext_fileinto_opcode_dump, ext_fileinto_opcode_execute };
 
 const struct sieve_extension fileinto_extension = 
-	{ "fileinto", ext_fileinto_validator_load, NULL, &fileinto_opcode, NULL	};
+	{ "fileinto", ext_fileinto_validator_load, NULL, NULL, &fileinto_opcode, NULL	};
 static const struct sieve_command fileinto_command = 
 	{ "fileinto", SCT_COMMAND, NULL, cmd_fileinto_validate, cmd_fileinto_generate, NULL };
 
