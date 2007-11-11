@@ -41,10 +41,14 @@ struct sieve_extension;
 /* sieve-code.h */
 struct sieve_operand;
 struct sieve_opcode;
+struct sieve_coded_stringlist;
 
 /* sieve-binary.h */
 typedef size_t sieve_size_t;
 struct sieve_binary;
+
+/* sieve-comparator.h */
+struct sieve_comparator;
 
 /*
  *

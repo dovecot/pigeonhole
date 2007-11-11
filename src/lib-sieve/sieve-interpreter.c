@@ -177,7 +177,7 @@ bool sieve_interpreter_read_offset_operand
 /* Stringlist Utility */
 
 bool sieve_stringlist_match
-	(struct sieve_coded_stringlist *key_list, const char *value)
+	(struct sieve_coded_stringlist *key_list, const char *value, const struct sieve_comparator *cmp)
 {
 	string_t *key_item;
 	sieve_coded_stringlist_reset(key_list);
@@ -185,7 +185,7 @@ bool sieve_stringlist_match
 	/* Match to all key values */
 	key_item = NULL;
 	while ( sieve_coded_stringlist_next_item(key_list, &key_item) && key_item != NULL ) {
-		if ( strncmp(value, str_c(key_item), str_len(key_item)) == 0 )
+		if ( cmp->compare(value, strlen(value), str_c(key_item), str_len(key_item)) == 0 )
 			return TRUE;  
   }
   

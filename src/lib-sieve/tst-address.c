@@ -179,7 +179,7 @@ static bool tst_address_opcode_execute
 			
 			int i;
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
-				if ( sieve_stringlist_match(key_list, headers[i]) )
+				if ( sieve_stringlist_match(key_list, headers[i], cmp) )
 					matched = TRUE;				
 			} 
 		}

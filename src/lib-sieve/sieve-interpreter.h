@@ -6,8 +6,7 @@
 #include "buffer.h"
 #include "mail-storage.h"
 
-#include "sieve-binary.h"
-#include "sieve-code.h"
+#include "sieve-common.h"
 
 struct sieve_interpreter;
 
@@ -48,7 +47,7 @@ bool sieve_interpreter_read_offset_operand
 /* Stringlist Utility */
 
 bool sieve_stringlist_match
-	(struct sieve_coded_stringlist *key_list, const char *value);
+	(struct sieve_coded_stringlist *key_list, const char *value, const struct sieve_comparator *cmp);
 
 /* Accessing runtime information */
 
