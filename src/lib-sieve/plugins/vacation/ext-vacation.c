@@ -183,14 +183,23 @@ static const struct sieve_argument vacation_mime_tag =
 static const struct sieve_argument vacation_handle_tag = 
 	{ "handle", cmd_vacation_validate_handle_tag, NULL };
 
+enum cmd_vacation_optional {
+	OPT_DAYS,
+	OPT_SUBJECT,
+	OPT_FROM,
+	OPT_ADDRESS,
+	OPT_MIME,
+	OPT_HANDLE
+};
+
 static bool cmd_vacation_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_days_tag); 	
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_subject_tag); 	
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_from_tag); 	
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_addresses_tag); 	
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_mime_tag); 	
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_handle_tag); 	
+	sieve_validator_register_tag(validator, cmd_reg, &vacation_days_tag, OPT_DAYS); 	
+	sieve_validator_register_tag(validator, cmd_reg, &vacation_subject_tag, OPT_SUBJECT); 	
+	sieve_validator_register_tag(validator, cmd_reg, &vacation_from_tag, OPT_FROM); 	
+	sieve_validator_register_tag(validator, cmd_reg, &vacation_addresses_tag, OPT_ADDRESS); 	
+	sieve_validator_register_tag(validator, cmd_reg, &vacation_mime_tag, OPT_MIME); 	
+	sieve_validator_register_tag(validator, cmd_reg, &vacation_handle_tag, OPT_HANDLE); 	
 
 	return TRUE;
 }

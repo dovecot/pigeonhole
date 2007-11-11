@@ -21,11 +21,17 @@ struct sieve_comparator {
 
 extern const struct sieve_argument comparator_tag;
 
+
+const struct sieve_comparator i_octet_comparator;
+const struct sieve_comparator i_ascii_casemap_comparator;
+
 extern const struct sieve_comparator *sieve_core_comparators[];
 extern const unsigned int sieve_core_comparators_count;
 
 const struct sieve_comparator *sieve_opr_comparator_read
   (struct sieve_binary *sbin, sieve_size_t *address);
+bool sieve_opr_comparator_dump
+	(struct sieve_binary *sbin, sieve_size_t *address);
 
 void sieve_comparators_init_registry(struct sieve_interpreter *interp);
 

@@ -149,7 +149,9 @@ static struct sieve_ast_argument *sieve_ast_argument_create
 	
 	arg->source_line = source_line;
 	arg->context = NULL;
+	
 	arg->argument = NULL;
+	arg->arg_id_code = 0;
 			
 	return arg;
 }

@@ -30,6 +30,8 @@ struct sieve_operand {
 	const char *name;
 	
 	const struct sieve_operand_class *class;
+
+	unsigned int positional:1;
 };
 
 struct sieve_opr_number_interface {
@@ -54,6 +56,7 @@ struct sieve_opr_stringlist_interface {
 };
 
 enum sieve_core_operand {
+	SIEVE_OPERAND_OPTIONAL,
   SIEVE_OPERAND_NUMBER,
   SIEVE_OPERAND_STRING,
   SIEVE_OPERAND_STRING_LIST,
@@ -68,6 +71,10 @@ extern const unsigned int sieve_operand_count;
 inline sieve_size_t sieve_operand_emit_code
 	(struct sieve_binary *sbin, int operand);
 const struct sieve_operand *sieve_operand_read
+	(struct sieve_binary *sbin, sieve_size_t *address);
+
+bool sieve_operand_optional_present(struct sieve_binary *sbin, sieve_size_t *address);
+unsigned int sieve_operand_optional_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 
 void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_size_t number);

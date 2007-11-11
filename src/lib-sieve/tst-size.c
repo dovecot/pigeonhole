@@ -83,8 +83,8 @@ static const struct sieve_argument size_under_tag =
 
 bool tst_size_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
-	sieve_validator_register_tag(validator, cmd_reg, &size_over_tag); 	
-	sieve_validator_register_tag(validator, cmd_reg, &size_under_tag); 	
+	sieve_validator_register_tag(validator, cmd_reg, &size_over_tag, 0); 	
+	sieve_validator_register_tag(validator, cmd_reg, &size_under_tag, 0); 	
 
 	return TRUE;
 }

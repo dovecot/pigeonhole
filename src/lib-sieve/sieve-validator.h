@@ -29,7 +29,7 @@ void sieve_validator_register_command
 /* Argument registration */
 void sieve_validator_register_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
-	const struct sieve_argument *argument);
+	const struct sieve_argument *argument, unsigned int id_code);
 	
 /* Comparator registration */
 void sieve_validator_register_comparator
@@ -39,11 +39,14 @@ const struct sieve_comparator *sieve_validator_find_comparator
 
 /* Special test arguments */
 void sieve_validator_link_comparator_tag
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg); 
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,
+		unsigned int id_code); 
 void sieve_validator_link_match_type_tags
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg); 
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,
+		unsigned int id_code); 
 void sieve_validator_link_address_part_tags
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg); 
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,
+		unsigned int id_code); 
 
 /* Argument validation */
 bool sieve_validate_command_arguments

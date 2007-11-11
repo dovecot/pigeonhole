@@ -103,11 +103,41 @@ inline sieve_size_t sieve_generator_emit_opcode_ext
 bool sieve_generate_arguments(struct sieve_generator *generator, 
 	struct sieve_command_context *cmd, struct sieve_ast_argument **last_arg)
 {
+	enum { ARG_START, ARG_OPTIONAL, ARG_POSITIONAL } state = ARG_START;
 	struct sieve_ast_argument *arg = sieve_ast_argument_first(cmd->ast_node);
 	
 	/* Parse all arguments with assigned generator function */
+	
 	while ( arg != NULL && arg->argument != NULL) {
 		const struct sieve_argument *argument = arg->argument;
+		
+		switch ( state ) {
+		case ARG_START: 
+			if ( arg->arg_id_code == 0 )
+				state = ARG_POSITIONAL;
+			else {
+				/* Mark start of optional operands with 0 operand identifier */
+				sieve_binary_emit_byte(generator->binary, SIEVE_OPERAND_OPTIONAL);
+				
+				/* Emit argument id for optional operand */
+				sieve_binary_emit_byte(generator->binary, arg->arg_id_code);
+
+				state = ARG_OPTIONAL;
+			}
+			break;
+		case ARG_OPTIONAL: 
+			if ( arg->arg_id_code == 0 )
+				state = ARG_POSITIONAL;
+			
+			/* Emit argument id for optional operand (0 marks the end of the optionals) */
+			sieve_binary_emit_byte(generator->binary, arg->arg_id_code);
+
+			break;
+		case ARG_POSITIONAL:
+			if ( arg->arg_id_code != 0 )
+				return FALSE;
+			break;
+		}
 		
 		/* Call the generation function for the argument */ 
 		if ( argument->generate != NULL ) { 

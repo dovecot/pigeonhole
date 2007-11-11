@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "lib.h"
 #include "compat.h"
 
@@ -31,7 +33,7 @@ static int cmp_i_ascii_casemap_compare(const void *val1, size_t val1_size, const
  */
  
 struct sieve_operand_class comparator_class = { "comparator", NULL };
-struct sieve_operand comparator_operand = { "comparator", &comparator_class };
+struct sieve_operand comparator_operand = { "comparator", &comparator_class, FALSE };
 
 /* 
  * Comparator tag 
@@ -132,6 +134,19 @@ const struct sieve_comparator *sieve_opr_comparator_read
 	}		
 		
 	return NULL;
+}
+
+bool sieve_opr_comparator_dump(struct sieve_binary *sbin, sieve_size_t *address)
+{
+	sieve_size_t pc = *address;
+	const struct sieve_comparator *cmp = sieve_opr_comparator_read(sbin, address);
+	
+	if ( cmp == NULL )
+		return FALSE;
+		
+	printf("%08x:   CMP: %s\n", pc, cmp->identifier);
+	
+	return TRUE;
 }
 
 static bool tag_comparator_generate

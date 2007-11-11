@@ -122,6 +122,34 @@ const struct sieve_operand *sieve_operand_read
 	return NULL;
 }
 
+bool sieve_operand_optional_present(struct sieve_binary *sbin, sieve_size_t *address)
+{	
+	sieve_size_t tmp_addr = *address;
+	unsigned int op = -1;
+	
+	if ( sieve_binary_read_byte(sbin, &tmp_addr, &op) && (op == SIEVE_OPERAND_OPTIONAL) ) {
+		*address = tmp_addr;
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+unsigned int sieve_operand_optional_read(struct sieve_binary *sbin, sieve_size_t *address)
+{
+	unsigned int id = -1;
+	
+	if ( sieve_binary_read_byte(sbin, address, &id) ) {
+		/* No more optionals */
+		if ( id == 0 ) 
+			return 0;
+			
+		return id;
+	}
+	
+	return -1;
+}
+
 /* 
  * Operand definitions
  */
@@ -140,7 +168,7 @@ const struct sieve_operand_class number_class =
 	{ "number", &number_interface };
 	
 const struct sieve_operand number_operand = 
-	{ "number", &number_class };
+	{ "@number", &number_class, TRUE };
 
 /* String */
 
@@ -157,7 +185,7 @@ const struct sieve_operand_class string_class =
 	{ "string", &string_interface };
 	
 const struct sieve_operand string_operand = 
-	{ "string", &string_class };
+	{ "@string", &string_class, TRUE };
 	
 
 /* String List */
@@ -184,13 +212,14 @@ const struct sieve_operand_class stringlist_class =
 	{ "string-list", &stringlist_interface };
 
 const struct sieve_operand stringlist_operand = 
-	{ "string-list", &stringlist_class };
+	{ "@string-list", &stringlist_class, TRUE };
 	
 /* Core operands */
 
 extern struct sieve_operand comparator_operand;
 
 const struct sieve_operand *sieve_operands[] = {
+	NULL, /* SIEVE_OPERAND_OPTIONAL */
 	&number_operand,
 	&string_operand,
 	&stringlist_operand,
@@ -499,8 +528,8 @@ static struct sieve_coded_stringlist *opr_stringlist_read
 	end = pc + end_offset;
 
 	if ( !sieve_binary_read_integer(sbin, address, &length) ) 
-  	return NULL;
-
+  	return NULL;	
+  	
 	strlist = sieve_coded_stringlist_create(sbin, *address, length, end); 
 
   /* Skip over the string list for now */

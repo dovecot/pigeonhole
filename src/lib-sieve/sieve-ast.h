@@ -83,6 +83,7 @@ struct sieve_ast_argument {
 
 	/* Argument associated with this ast element  */
 	const struct sieve_argument *argument;
+	unsigned int arg_id_code;
 
 	/* Context data associated with this ast element */
 	void *context;

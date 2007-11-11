@@ -30,13 +30,22 @@ const struct sieve_extension envelope_extension =
 static const struct sieve_command envelope_test = 
 	{ "envelope", SCT_TEST, tst_envelope_registered, tst_envelope_validate, tst_envelope_generate, NULL };
 
+/* Optional arguments */
+
+enum tst_envelope_optional {
+	OPT_END,
+	OPT_COMPARATOR,
+	OPT_ADDRESS_PART,
+	OPT_MATCH_TYPE
+};
+
 /* Command Registration */
 static bool tst_envelope_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_validator_link_comparator_tag(validator, cmd_reg);
-	sieve_validator_link_address_part_tags(validator, cmd_reg);
-	sieve_validator_link_match_type_tags(validator, cmd_reg);
+	sieve_validator_link_comparator_tag(validator, cmd_reg, OPT_COMPARATOR);
+	sieve_validator_link_address_part_tags(validator, cmd_reg, OPT_ADDRESS_PART);
+	sieve_validator_link_match_type_tags(validator, cmd_reg, OPT_MATCH_TYPE);
 	
 	return TRUE;
 }
@@ -111,7 +120,26 @@ static bool ext_envelope_opcode_dump
 	(struct sieve_interpreter *interp ATTR_UNUSED, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {
+	unsigned opt_code;
+
 	printf("ENVELOPE\n");
+
+	/* Handle any optional arguments */
+    if ( sieve_operand_optional_present(sbin, address) ) {
+        while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+            switch ( opt_code ) {
+            case OPT_COMPARATOR:
+                sieve_opr_comparator_dump(sbin, address);
+                break;
+            case OPT_MATCH_TYPE:
+                break;
+			case OPT_ADDRESS_PART:
+				break;
+            default:
+                return FALSE;
+            }
+        }
+    }
 
 	return
 		sieve_opr_stringlist_dump(sbin, address) &&

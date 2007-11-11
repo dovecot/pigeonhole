@@ -16,14 +16,23 @@ static bool tst_address_opcode_execute
 const struct sieve_opcode tst_address_opcode = 
 	{ tst_address_opcode_dump, tst_address_opcode_execute };
 
+/* Optional arguments */
+
+enum tst_address_optional {
+	OPT_END,
+	OPT_COMPARATOR,
+	OPT_ADDRESS_PART,
+	OPT_MATCH_TYPE
+};
+
 /* Test registration */
 
 bool tst_address_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_validator_link_comparator_tag(validator, cmd_reg);
-	sieve_validator_link_address_part_tags(validator, cmd_reg);
-	sieve_validator_link_match_type_tags(validator, cmd_reg);
+	sieve_validator_link_comparator_tag(validator, cmd_reg, OPT_COMPARATOR );
+	sieve_validator_link_address_part_tags(validator, cmd_reg, OPT_ADDRESS_PART);
+	sieve_validator_link_match_type_tags(validator, cmd_reg, OPT_MATCH_TYPE);
 
 	return TRUE;
 }
@@ -85,7 +94,26 @@ static bool tst_address_opcode_dump
 	(struct sieve_interpreter *interp ATTR_UNUSED, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {
+	unsigned int opt_code;
+
 	printf("ADDRESS\n");
+
+	/* Handle any optional arguments */
+    if ( sieve_operand_optional_present(sbin, address) ) {
+        while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+            switch ( opt_code ) {
+            case OPT_COMPARATOR:
+                sieve_opr_comparator_dump(sbin, address);
+                break;
+            case OPT_MATCH_TYPE:
+                break;
+			case OPT_ADDRESS_PART:
+				break;			
+            default:
+                return FALSE;
+            }
+        }
+    }
 
 	return
 		sieve_opr_stringlist_dump(sbin, address) &&
@@ -98,12 +126,32 @@ static bool tst_address_opcode_execute
 	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address)
 {
 	struct mail *mail = sieve_interpreter_get_mail(interp);
+	
+	const struct sieve_comparator *cmp = &i_octet_comparator;
+	unsigned int opt_code;
 	struct sieve_coded_stringlist *hdr_list;
 	struct sieve_coded_stringlist *key_list;
 	string_t *hdr_item;
 	bool matched;
 	
 	printf("?? ADDRESS\n");
+
+	/* Handle any optional arguments */
+    if ( sieve_operand_optional_present(sbin, address) ) {
+        while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+            switch ( opt_code ) {
+            case OPT_COMPARATOR:
+                cmp = sieve_opr_comparator_read(sbin, address);
+                break;
+            case OPT_MATCH_TYPE:
+                break;
+			case OPT_ADDRESS_PART:
+				break;
+            default:
+                return FALSE;
+            }
+        }
+    }
 
 	t_push();
 		
