@@ -109,8 +109,10 @@ const struct sieve_operand *sieve_operand_read
 			else
 				return NULL;
 		} else {
+			int ext_id = -1;
 		  const struct sieve_extension *ext = 
-		  	sieve_binary_get_extension(sbin, operand - SIEVE_OPERAND_EXT_OFFSET);
+		  	sieve_binary_extension_get_by_index
+		  		(sbin, operand - SIEVE_OPERAND_EXT_OFFSET, &ext_id);
 		  
 		  if ( ext != NULL )
 		  	return ext->operand;	
@@ -554,10 +556,10 @@ inline sieve_size_t sieve_operation_emit_code
 }
 
 inline sieve_size_t sieve_operation_emit_code_ext
-	(struct sieve_binary *sbin, const struct sieve_extension *extension)
+	(struct sieve_binary *sbin, int ext_id)
 {	
 	unsigned char op = SIEVE_OPCODE_EXT_OFFSET + 
-		sieve_binary_get_extension_index(sbin, extension);
+		sieve_binary_extension_get_index(sbin, ext_id);
 	
 	return sieve_binary_emit_byte(sbin, op);
 }
@@ -574,8 +576,10 @@ const struct sieve_opcode *sieve_operation_read
 			else
 				return NULL;
 		} else {
+			int ext_id = -1;
 		  const struct sieve_extension *ext = 
-		  	sieve_binary_get_extension(sbin, opcode - SIEVE_OPCODE_EXT_OFFSET);
+		  	sieve_binary_extension_get_by_index
+		  		(sbin, opcode - SIEVE_OPCODE_EXT_OFFSET, &ext_id);
 		  
 		  if ( ext != NULL )
 		  	return ext->opcode;	

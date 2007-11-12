@@ -5,19 +5,21 @@
 #include "hash.h"
 #include "array.h"
 
-#include "sieve-binary.h"
+#include "sieve-extensions.h"
 #include "sieve-code.h"
+#include "sieve-binary.h"
 
-struct sieve_extension_registration {
+struct sieve_binary_extension {
 	const struct sieve_extension *extension;
-	unsigned int opcode;
+	int ext_id;
+	int index;
 };
 
 struct sieve_binary {
 	pool_t pool;
 	
-	ARRAY_DEFINE(extensions, const struct sieve_extension *); 
-	struct hash_table *extension_index; 
+	ARRAY_DEFINE(extensions, struct sieve_binary_extension *); 
+	ARRAY_DEFINE(extension_index, struct sieve_binary_extension *); 
 	
 	buffer_t *data;
 	
@@ -36,9 +38,8 @@ struct sieve_binary *sieve_binary_create_new(void)
 	
 	sbin->data = buffer_create_dynamic(pool, 256);
 	
-	p_array_init(&sbin->extensions, pool, 4);
-	sbin->extension_index = hash_create
-		(pool, pool, 0, NULL, NULL);
+	p_array_init(&sbin->extensions, pool, sieve_extensions_get_count());
+	p_array_init(&sbin->extension_index, pool, sieve_extensions_get_count());
 		
 	return sbin;
 }
@@ -68,49 +69,58 @@ void sieve_binary_commit(struct sieve_binary *binary)
 
 /* Extension handling */
 
-static int sieve_binary_link_extension(struct sieve_binary *binary, const struct sieve_extension *extension) 
+int sieve_binary_extension_link
+	(struct sieve_binary *sbin, int ext_id) 
 {
-	array_append(&(binary->extensions), &extension, 1);
+	int index = array_count(&sbin->extensions);
+	const struct sieve_extension *ext = sieve_extension_get_by_id(ext_id); 
+	struct sieve_binary_extension *bext;
+
+	if ( ext != NULL ) {
+		bext = p_new(sbin->pool, struct sieve_binary_extension, 1);
+		bext->index = index;
+		bext->ext_id = ext_id;
+		bext->extension = ext;
 	
-	return array_count(&(binary->extensions)) - 1;
+		array_idx_set(&sbin->extensions, (unsigned int) index, &bext);
+		array_idx_set(&sbin->extension_index, (unsigned int) ext_id, &bext);
+	
+		return index;
+	}
+	
+	return -1;
 }
 
-const struct sieve_extension *sieve_binary_get_extension(struct sieve_binary *binary, unsigned int index) 
+const struct sieve_extension *sieve_binary_extension_get_by_index
+	(struct sieve_binary *sbin, int index, int *ext_id) 
 {
-	const struct sieve_extension * const *ext;
+	struct sieve_binary_extension * const *ext;
 	
-	if ( array_count(&(binary->extensions)) > index ) {
-		ext = array_idx(&(binary->extensions), index);
-		return *ext;
+	if ( index < (int) array_count(&sbin->extensions) ) {
+		ext = array_idx(&sbin->extensions, (unsigned int) index);
+		
+		if ( ext_id != NULL ) *ext_id = (*ext)->ext_id;
+		
+		return (*ext)->extension;
 	}
+	
+	if ( ext_id != NULL ) *ext_id = -1;
 	
 	return NULL;
 }
 
-int sieve_binary_register_extension
-	(struct sieve_binary *sbin, const struct sieve_extension *extension) 
+int sieve_binary_extension_get_index
+	(struct sieve_binary *sbin, int ext_id) 
 {
-	struct sieve_extension_registration *reg;
+	struct sieve_binary_extension * const *ext;
 	
-	reg = p_new(sbin->pool, struct sieve_extension_registration, 1);
-	reg->extension = extension;
-	reg->opcode = sieve_binary_link_extension(sbin, extension);
+	if ( ext_id < (int) array_count(&sbin->extension_index) ) {
+		ext = array_idx(&sbin->extension_index, (unsigned int) ext_id);
+		
+		return (*ext)->index;
+	}
 	
-	hash_insert(sbin->extension_index, (void *) extension, (void *) reg);
-	
-	return reg->opcode;
-}
-
-int sieve_binary_get_extension_index		
-	(struct sieve_binary *sbin, const struct sieve_extension *extension) 
-{
-  struct sieve_extension_registration *reg = 
-    (struct sieve_extension_registration *) hash_lookup(sbin->extension_index, extension);
-
-	if ( reg == NULL )
-		return -1;
-		    
-  return reg->opcode;
+	return -1;
 }
 
 /*

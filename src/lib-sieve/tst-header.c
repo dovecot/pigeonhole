@@ -30,7 +30,7 @@ enum tst_header_optional {
 bool tst_header_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_validator_link_comparator_tag(validator, cmd_reg, OPT_COMPARATOR);
+	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR);
 	sieve_validator_link_match_type_tags(validator, cmd_reg, OPT_MATCH_TYPE);
 
 	return TRUE;

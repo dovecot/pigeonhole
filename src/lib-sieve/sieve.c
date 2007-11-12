@@ -3,6 +3,7 @@
 #include "istream.h"
 #include "buffer.h"
 
+#include "sieve-extensions.h"
 #include "sieve-parser.h"
 #include "sieve-ast.h"
 #include "sieve-validator.h"
@@ -17,6 +18,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+
+bool sieve_init(const char *plugins)
+{
+	return sieve_extensions_init(plugins);
+}
+
+void sieve_deinit(void)
+{
+	sieve_extensions_deinit();
+}
 
 static struct sieve_ast *sieve_parse(int fd, struct sieve_error_handler *ehandler)
 {

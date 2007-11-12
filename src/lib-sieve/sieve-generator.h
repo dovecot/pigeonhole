@@ -9,8 +9,8 @@ struct sieve_generator;
 struct sieve_generator *sieve_generator_create(struct sieve_ast *ast);
 void sieve_generator_free(struct sieve_generator *generator);
 
-inline void sieve_generator_register_extension
-    (struct sieve_generator *gentr, const struct sieve_extension *ext);
+inline void sieve_generator_link_extension
+    (struct sieve_generator *generator, int ext_id);
     		
 /* Jump list */
 
@@ -35,7 +35,7 @@ inline struct sieve_binary *sieve_generator_get_binary
 inline sieve_size_t sieve_generator_emit_opcode
 	(struct sieve_generator *gentr, int opcode);
 inline sieve_size_t sieve_generator_emit_opcode_ext
-	(struct sieve_generator *gentr, const struct sieve_extension *extension);
+	(struct sieve_generator *gentr, int ext_id);
 
 /* Offset emission */
 

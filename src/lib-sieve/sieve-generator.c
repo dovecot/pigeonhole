@@ -71,10 +71,10 @@ void sieve_generator_free(struct sieve_generator *generator)
 	pool_unref(&(generator->pool));
 }
 
-inline void sieve_generator_register_extension
-	(struct sieve_generator *gentr, const struct sieve_extension *ext) 
+inline void sieve_generator_link_extension
+	(struct sieve_generator *generator, int ext_id) 
 {
-	(void)sieve_binary_register_extension(gentr->binary, ext);
+	(void)sieve_binary_extension_link(generator->binary, ext_id);
 }
 
 /* Binary access */
@@ -92,11 +92,10 @@ inline sieve_size_t sieve_generator_emit_opcode
 }
 
 inline sieve_size_t sieve_generator_emit_opcode_ext
-	(struct sieve_generator *gentr, const struct sieve_extension *ext)
+	(struct sieve_generator *gentr, int ext_id)
 {	
-	return sieve_operation_emit_code_ext(gentr->binary, ext);
+	return sieve_operation_emit_code_ext(gentr->binary, ext_id);
 }
-
 
 /* Generator functions */
 

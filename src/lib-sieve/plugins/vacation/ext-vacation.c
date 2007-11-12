@@ -10,6 +10,7 @@
 #include "sieve-interpreter.h"
 
 /* Forward declarations */
+static bool ext_vacation_load(int ext_id);
 static bool ext_vacation_validator_load(struct sieve_validator *validator);
 
 static bool ext_vacation_opcode_dump
@@ -20,12 +21,39 @@ static bool cmd_vacation_validate(struct sieve_validator *validator, struct siev
 static bool cmd_vacation_generate(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
 /* Extension definitions */
-const struct sieve_opcode vacation_opcode = 
-	{ ext_vacation_opcode_dump, NULL };
-const struct sieve_extension vacation_extension = 
-	{ "vacation", ext_vacation_validator_load, NULL, NULL, &vacation_opcode, NULL};
-static const struct sieve_command vacation_command = 
-	{ "vacation", SCT_COMMAND, cmd_vacation_registered, cmd_vacation_validate, cmd_vacation_generate, NULL };
+
+int ext_my_id;
+
+const struct sieve_opcode vacation_opcode = { 
+	ext_vacation_opcode_dump, 
+	NULL 
+};
+
+const struct sieve_extension vacation_extension = { 
+	"vacation", 
+	ext_vacation_load,
+	ext_vacation_validator_load, 
+	NULL, 
+	NULL, 
+	&vacation_opcode, 
+	NULL
+};
+
+static const struct sieve_command vacation_command = { 
+	"vacation", 
+	SCT_COMMAND, 
+	cmd_vacation_registered, 
+	cmd_vacation_validate, 
+	cmd_vacation_generate, 
+	NULL 
+};
+
+static bool ext_vacation_load(int ext_id)
+{
+	ext_my_id = ext_id;
+
+	return TRUE;
+}
 
 /* Tag validation */
 
@@ -243,7 +271,7 @@ static bool ext_vacation_validator_load(struct sieve_validator *validator)
 static bool cmd_vacation_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode_ext(generator, &vacation_extension);
+	sieve_generator_emit_opcode_ext(generator, ext_my_id);
 
 	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )

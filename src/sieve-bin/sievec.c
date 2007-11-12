@@ -34,10 +34,16 @@ int main(int argc, char **argv) {
 
 	printf("Parsing sieve script '%s'...\n", argv[1]);
 
-	sbin = sieve_compile(fd);
+	if ( sieve_init("") ) {
+		sbin = sieve_compile(fd);
 	
-	if ( sbin != NULL ) 
-		(void) sieve_dump(sbin);
+		if ( sbin != NULL ) 
+			(void) sieve_dump(sbin);
+
+		sieve_deinit();
+	} else {
+		printf("Failed to initialize sieve implementation.");
+	}
 
  	close(fd);
 }

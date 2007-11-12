@@ -12,6 +12,7 @@ struct sieve_interpreter;
 
 struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary);
 void sieve_interpreter_free(struct sieve_interpreter *interpreter);
+inline pool_t sieve_interpreter_pool(struct sieve_interpreter *interp);
 
 inline void sieve_interpreter_reset
 	(struct sieve_interpreter *interpreter);
@@ -28,16 +29,12 @@ inline bool sieve_interpreter_get_test_result
 inline struct sieve_binary *sieve_interpreter_get_binary
 	(struct sieve_interpreter *interp);
 
-/* Object registry */
+/* Extension support */
 
-struct sieve_interpreter_registry;
-
-struct sieve_interpreter_registry *
-	sieve_interpreter_registry_init(struct sieve_interpreter *interp, const char *name);
-const void *sieve_interpreter_registry_get
-	(struct sieve_interpreter_registry *reg, const struct sieve_extension *ext);
-void  sieve_interpreter_registry_set
-	(struct sieve_interpreter_registry *reg, const struct sieve_extension *ext, const void *obj);
+inline void sieve_interpreter_extension_set_context
+	(struct sieve_interpreter *interpreter, int ext_id, void *context);
+inline const void *sieve_interpreter_extension_get_context
+	(struct sieve_interpreter *interpreter, int ext_id);
 	
 /* Opcodes and operands */
 

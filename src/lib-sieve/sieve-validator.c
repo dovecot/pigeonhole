@@ -7,7 +7,9 @@
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
 #include "sieve-extensions.h"
+
 #include "sieve-comparators.h"
+#include "sieve-address-parts.h"
 
 /* Context/Semantics checker implementation */
 
@@ -19,7 +21,8 @@ struct sieve_validator {
 	
 	/* Registries */
 	struct hash_table *commands;
-	struct hash_table *comparators; 
+	
+	ARRAY_DEFINE(ext_contexts, void);
 };
 
 /* Predeclared statics */
@@ -50,6 +53,9 @@ void sieve_validator_error(struct sieve_validator *validator, struct sieve_ast_n
 	va_end(args);
 }
 
+extern struct sieve_extension comparator_extension;
+extern struct sieve_extension address_part_extension;
+
 struct sieve_validator *sieve_validator_create(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
 {
 	pool_t pool;
@@ -68,22 +74,27 @@ struct sieve_validator *sieve_validator_create(struct sieve_ast *ast, struct sie
 		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 	sieve_validator_register_core_commands(validator);
 	sieve_validator_register_core_tests(validator);
-	
-	/* Setup comparator registry */
-	validator->comparators = hash_create
-		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
-	sieve_validator_register_core_comparators(validator);
-	
+
+	array_create(&validator->ext_contexts, pool, sizeof(void *), 
+		sieve_extensions_get_count());
+		
+	(void)comparator_extension.validator_load(validator);	
+	(void)address_part_extension.validator_load(validator);	
+		
 	return validator;
 }
 
 void sieve_validator_free(struct sieve_validator *validator) 
 {
 	hash_destroy(&validator->commands);
-	hash_destroy(&validator->comparators);
 	
 	sieve_ast_unref(&validator->ast);
 	pool_unref(&(validator->pool));
+}
+
+inline pool_t sieve_validator_pool(struct sieve_validator *validator)
+{
+	return validator->pool;
 }
 
 /* Command registry */
@@ -234,57 +245,40 @@ static const struct sieve_argument *sieve_validator_find_tag
 
 /* Extension support */
 
-const struct sieve_extension *sieve_validator_load_extension
-	(struct sieve_validator *validator, struct sieve_command_context *cmd, const char *extension) 
+int sieve_validator_extension_load
+	(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+		const char *ext_name) 
 {
-	const struct sieve_extension *ext = sieve_extension_acquire(extension); 
+	const struct sieve_extension *ext;
+	int ext_id = sieve_extension_get_by_name(ext_name, &ext); 
 	
-	if ( ext == NULL ) {
+	if ( ext_id < 0 ) {
 		sieve_command_validate_error(validator, cmd, 
-			"unsupported sieve capability '%s'", extension);
-		return NULL;
+			"unsupported sieve capability '%s'", ext_name);
+		return -1;
 	}
 
 	if ( ext->validator_load != NULL && !ext->validator_load(validator) ) {
 		sieve_command_validate_error(validator, cmd, 
-			"failed to load sieve capability '%s'", extension);
+			"failed to load sieve capability '%s'", ext->name);
+		return -1;
+	}
+	
+	i_info("loaded extension '%s'", ext->name);
+	return ext_id;
+}
+
+inline void sieve_validator_extension_set_context(struct sieve_validator *validator, int ext_id, void *context)
+{
+	array_idx_set(&validator->ext_contexts, (unsigned int) ext_id, context);	
+}
+
+inline const void *sieve_validator_extension_get_context(struct sieve_validator *validator, int ext_id) 
+{
+	if  ( ext_id < 0 || ext_id > (int) array_count(&validator->ext_contexts) )
 		return NULL;
-	}
 	
-	i_info("loaded extension '%s'", extension);
-	return ext;
-}
-
-/* Comparator registry */
-
-void sieve_validator_register_comparator
-	(struct sieve_validator *validator, const struct sieve_comparator *cmp) 
-{
-	hash_insert(validator->comparators, (void *) cmp->identifier, (void *) cmp);
-}
-
-const struct sieve_comparator *sieve_validator_find_comparator
-		(struct sieve_validator *validator, const char *comparator) 
-{
-  return 	(const struct sieve_comparator *) hash_lookup(validator->comparators, comparator);
-}
-
-static void sieve_validator_register_core_comparators(struct sieve_validator *validator) 
-{
-	unsigned int i;
-	
-	for ( i = 0; i < sieve_core_comparators_count; i++ ) {
-		sieve_validator_register_comparator(validator, sieve_core_comparators[i]); 
-	}
-}
-
-/* Comparator validation */
-
-void sieve_validator_link_comparator_tag
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,	
-		unsigned int id_code) 
-{
-	sieve_validator_register_tag(validator, cmd_reg, &comparator_tag, id_code); 	
+	return array_idx(&validator->ext_contexts, (unsigned int) ext_id);		
 }
 
 /* Match type validation */
@@ -318,39 +312,6 @@ void sieve_validator_link_match_type_tags
 	sieve_validator_register_tag(validator, cmd_reg, &match_is_tag, id_code); 	
 	sieve_validator_register_tag(validator, cmd_reg, &match_contains_tag, id_code); 	
 	sieve_validator_register_tag(validator, cmd_reg, &match_matches_tag, id_code); 	
-}
-
-/* Address part validation */
-
-static bool sieve_validate_address_part_tag
-	(struct sieve_validator *validator ATTR_UNUSED, 
-	struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
-{
-	/* Syntax:   
-	 *   ":localpart" / ":domain" / ":all"
-   */
-
-	/* Not implemented, so delete it */
-	*arg = sieve_ast_arguments_delete(*arg, 1);		
-
-	return TRUE;
-}
-
-static const struct sieve_argument address_localpart_tag = 
-	{ "localpart", sieve_validate_address_part_tag, NULL };
-static const struct sieve_argument address_domain_tag = 
-	{ "domain", sieve_validate_address_part_tag, NULL };
-static const struct sieve_argument address_all_tag = 
-	{ "all", sieve_validate_address_part_tag, NULL };
-
-void sieve_validator_link_address_part_tags
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,
-		unsigned int id_code) 
-{
-	sieve_validator_register_tag(validator, cmd_reg, &address_localpart_tag, id_code); 	
-	sieve_validator_register_tag(validator, cmd_reg, &address_domain_tag, id_code); 	
-	sieve_validator_register_tag(validator, cmd_reg, &address_all_tag, id_code); 	
 }
 
 /* Tag Validation API */

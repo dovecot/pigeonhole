@@ -2,6 +2,9 @@
 
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
+
+#include "sieve-comparators.h"
+#include "sieve-address-parts.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -30,8 +33,8 @@ enum tst_address_optional {
 bool tst_address_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_validator_link_comparator_tag(validator, cmd_reg, OPT_COMPARATOR );
-	sieve_validator_link_address_part_tags(validator, cmd_reg, OPT_ADDRESS_PART);
+	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR );
+	sieve_address_parts_link_tags(validator, cmd_reg, OPT_ADDRESS_PART);
 	sieve_validator_link_match_type_tags(validator, cmd_reg, OPT_MATCH_TYPE);
 
 	return TRUE;

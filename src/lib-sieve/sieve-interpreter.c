@@ -7,10 +7,12 @@
 #include "hash.h"
 #include "mail-storage.h"
 
+#include "sieve-extensions.h"
 #include "sieve-commands-private.h"
 #include "sieve-generator.h"
 #include "sieve-binary.h"
 #include "sieve-result.h"
+#include "sieve-comparators.h"
 
 #include "sieve-interpreter.h"
 
@@ -20,7 +22,7 @@ struct sieve_interpreter {
 	struct sieve_binary *binary;
 		
 	/* Object registries */
-	struct hash_table *registries; 
+	ARRAY_DEFINE(ext_contexts, void); 
 		
 	/* Execution status */
 	sieve_size_t pc; 
@@ -46,10 +48,8 @@ struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary)
 	
 	interp->pc = 0;
 
-	interp->registries = hash_create(pool, pool, 0, NULL, NULL);
-	
-	/* Init core functionalities */
-	sieve_comparators_init_registry(interp);
+	array_create(&interp->ext_contexts, pool, sizeof(void *), 
+		sieve_extensions_get_count());
 	
 	return interp;
 }
@@ -60,55 +60,27 @@ void sieve_interpreter_free(struct sieve_interpreter *interpreter)
 	pool_unref(&(interpreter->pool));
 }
 
-/* Object registry */
-
-struct sieve_interpreter_registry {
-	struct sieve_interpreter *interpreter;
-	const char *name;
-	ARRAY_DEFINE(registered, void);
-};
-
-struct sieve_interpreter_registry *
-	sieve_interpreter_registry_init(struct sieve_interpreter *interp, const char *name)
+inline pool_t sieve_interpreter_pool(struct sieve_interpreter *interp)
 {
-	struct sieve_interpreter_registry *reg = (struct sieve_interpreter_registry *) 
-		hash_lookup(interp->registries, name);
-	
-	if ( reg == NULL ) {
-		reg = p_new(interp->pool, struct sieve_interpreter_registry, 1);
-		reg->interpreter = interp;
-		reg->name = name;
-		array_create(&reg->registered, interp->pool, sizeof(void *), 5);
-		
-		hash_insert(interp->registries, (void *) name, (void *) reg);
-	}
-
-	return reg;
+	return interp->pool;
 }
 
-const void *sieve_interpreter_registry_get
-	(struct sieve_interpreter_registry *reg, const struct sieve_extension *ext)
+
+/* Extension support */
+
+inline void sieve_interpreter_extension_set_context
+	(struct sieve_interpreter *interpreter, int ext_id, void *context)
 {
-	const void *result;
-	int index = sieve_binary_get_extension_index(reg->interpreter->binary, ext);
-	
-	if  ( index < 0 || index > (int) array_count(&reg->registered) )
+	array_idx_set(&interpreter->ext_contexts, (unsigned int) ext_id, context);	
+}
+
+inline const void *sieve_interpreter_extension_get_context
+	(struct sieve_interpreter *interpreter, int ext_id) 
+{
+	if  ( ext_id < 0 || ext_id > (int) array_count(&interpreter->ext_contexts) )
 		return NULL;
 	
-	result = array_idx(&reg->registered, (unsigned int) index);		
-	
-	return result;
-}
-
-void  sieve_interpreter_registry_set
-	(struct sieve_interpreter_registry *reg, const struct sieve_extension *ext, const void *obj)
-{
-	int index = sieve_binary_get_extension_index(reg->interpreter->binary, ext);
-	
-	if  ( index < 0 || index > (int) array_count(&reg->registered) )
-		return;
-	
-	array_idx_set(&reg->registered, (unsigned int) index, obj);		
+	return array_idx(&interpreter->ext_contexts, (unsigned int) ext_id);		
 }
 
 

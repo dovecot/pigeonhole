@@ -3,7 +3,6 @@
 
 #include "lib.h"
 
-#include "sieve-comparators.h"
 #include "sieve-common.h"
 #include "sieve-error.h"
 
@@ -12,6 +11,7 @@ struct sieve_command_registration;
 
 struct sieve_validator *sieve_validator_create(struct sieve_ast *ast, struct sieve_error_handler *ehandler);
 void sieve_validator_free(struct sieve_validator *validator);
+inline pool_t sieve_validator_pool(struct sieve_validator *validator);
 
 bool sieve_validator_run(struct sieve_validator *validator);
 
@@ -30,21 +30,9 @@ void sieve_validator_register_command
 void sieve_validator_register_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
 	const struct sieve_argument *argument, unsigned int id_code);
-	
-/* Comparator registration */
-void sieve_validator_register_comparator
-	(struct sieve_validator *validator, const struct sieve_comparator *cmp);
-const struct sieve_comparator *sieve_validator_find_comparator
-		(struct sieve_validator *validator, const char *comparator); 
 
 /* Special test arguments */
-void sieve_validator_link_comparator_tag
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,
-		unsigned int id_code); 
 void sieve_validator_link_match_type_tags
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,
-		unsigned int id_code); 
-void sieve_validator_link_address_part_tags
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,
 		unsigned int id_code); 
 
@@ -62,7 +50,10 @@ bool sieve_validate_command_block(struct sieve_validator *validator, struct siev
 	bool block_allowed, bool block_required);
 
 /* Extensions */
-const struct sieve_extension *sieve_validator_load_extension
-	(struct sieve_validator *validator, struct sieve_command_context *cmd, const char *extension);
+int sieve_validator_extension_load
+	(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+		const char *ext_name); 
+inline void sieve_validator_extension_set_context(struct sieve_validator *validator, int ext_id, void *context);
+inline const void *sieve_validator_extension_get_context(struct sieve_validator *validator, int ext_id);
 
 #endif /* __SIEVE_VALIDATOR_H__ */

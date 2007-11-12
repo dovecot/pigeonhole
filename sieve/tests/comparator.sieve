@@ -1,7 +1,7 @@
-if header :is :comparator "i;ascii-casemap" "from" "STEPHAN@drunksnipers.com" {
+if header :comparator "i;ascii-casemap" "from" "STEPHAN@drunksnipers.com" {
 	discard;
 
-	if address :is :comparator "i;octet" :domain "from" "drunksnipers.com" {
+	if address :comparator "i;octet" "from" "drunksnipers.com" {
 		keep;
 	}
 	stop;

@@ -164,7 +164,7 @@ int main(int argc, char **argv)
  		exit(1);
  	}
   
-  /* Compile sieve script */
+  	/* Compile sieve script */
   
 	if ( (fd = open(argv[1], O_RDONLY)) < 0 ) {
 		perror("open()");
@@ -173,9 +173,16 @@ int main(int argc, char **argv)
 
 	printf("Parsing sieve script '%s'...\n", argv[1]);
 
-	if ( (sbin = sieve_compile(fd)) == NULL ) 
+	if ( !sieve_init("") ) {
+		printf("Failed to initialize sieve implementation\n");
 		exit(1);
-	
+	}
+
+	if ( (sbin = sieve_compile(fd)) == NULL ) {
+		printf("Failed to compile sieve script\n");
+		exit(1);
+	}		 
+		
 	(void) sieve_dump(sbin);
 
  	close(fd);
@@ -225,7 +232,10 @@ int main(int argc, char **argv)
 
 	/* */
 	i_stream_seek(input, 0);
+
 	sieve_test(sbin, mail);
+
+	sieve_deinit();
 	//ret = deliver_save(ns, &storage, mailbox, mail, 0, NULL);
 
 	i_stream_unref(&input);

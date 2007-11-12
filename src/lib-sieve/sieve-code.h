@@ -57,12 +57,12 @@ struct sieve_opr_stringlist_interface {
 
 enum sieve_core_operand {
 	SIEVE_OPERAND_OPTIONAL,
-  SIEVE_OPERAND_NUMBER,
-  SIEVE_OPERAND_STRING,
-  SIEVE_OPERAND_STRING_LIST,
-  SIEVE_OPERAND_COMPARATOR,
-  SIEVE_OPERAND_MATCH_TYPE,
-  SIEVE_OPERAND_ADDR_PART  
+	SIEVE_OPERAND_NUMBER,
+	SIEVE_OPERAND_STRING,
+	SIEVE_OPERAND_STRING_LIST,
+	SIEVE_OPERAND_COMPARATOR,
+	SIEVE_OPERAND_MATCH_TYPE,
+	SIEVE_OPERAND_ADDRESS_PART  
 };
 
 extern const struct sieve_operand *sieve_operands[];
@@ -125,7 +125,7 @@ extern const unsigned int sieve_opcode_count;
 inline sieve_size_t sieve_operation_emit_code
 	(struct sieve_binary *sbin, int opcode);
 inline sieve_size_t sieve_operation_emit_code_ext
-	(struct sieve_binary *sbin, const struct sieve_extension *extension);
+	(struct sieve_binary *sbin, int ext_id);
 const struct sieve_opcode *sieve_operation_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 

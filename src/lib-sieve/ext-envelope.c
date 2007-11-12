@@ -2,12 +2,16 @@
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-comparators.h"
+#include "sieve-address-parts.h"
+
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 
 /* Forward declarations */
 
+static bool ext_envelope_load(int ext_id);
 static bool ext_envelope_validator_load(struct sieve_validator *validator);
 
 static bool ext_envelope_opcode_dump
@@ -22,13 +26,29 @@ static bool tst_envelope_generate
 
 /* Extension definitions */
 
+static int ext_my_id;
+
 const struct sieve_opcode envelope_opcode =
 	{ ext_envelope_opcode_dump, NULL };
-const struct sieve_extension envelope_extension = 
-	{ "envelope", ext_envelope_validator_load, NULL, NULL, &envelope_opcode, NULL };
+
+const struct sieve_extension envelope_extension = { 
+	"envelope", 
+	ext_envelope_load,
+	ext_envelope_validator_load, 
+	NULL, 
+	NULL, 
+	&envelope_opcode, 
+	NULL 
+};
 
 static const struct sieve_command envelope_test = 
 	{ "envelope", SCT_TEST, tst_envelope_registered, tst_envelope_validate, tst_envelope_generate, NULL };
+
+static bool ext_envelope_load(int ext_id) 
+{
+	ext_my_id = ext_id;
+	return TRUE;
+}
 
 /* Optional arguments */
 
@@ -43,8 +63,8 @@ enum tst_envelope_optional {
 static bool tst_envelope_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_validator_link_comparator_tag(validator, cmd_reg, OPT_COMPARATOR);
-	sieve_validator_link_address_part_tags(validator, cmd_reg, OPT_ADDRESS_PART);
+	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR);
+	sieve_address_parts_link_tags(validator, cmd_reg, OPT_ADDRESS_PART);
 	sieve_validator_link_match_type_tags(validator, cmd_reg, OPT_MATCH_TYPE);
 	
 	return TRUE;
@@ -103,7 +123,7 @@ static bool ext_envelope_validator_load(struct sieve_validator *validator)
 static bool tst_envelope_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode_ext(generator, &envelope_extension);
+	(void)sieve_generator_emit_opcode_ext(generator, ext_my_id);
 
 	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )

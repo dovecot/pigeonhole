@@ -18,13 +18,13 @@ void sieve_binary_commit(struct sieve_binary *binary);
  * Extension handling 
  */
 
-int sieve_binary_register_extension
-	(struct sieve_binary *sbin, const struct sieve_extension *extension);
-const struct sieve_extension *sieve_binary_get_extension
-	(struct sieve_binary *binary, unsigned int index); 
-int sieve_binary_get_extension_index		
-	(struct sieve_binary *sbin, const struct sieve_extension *extension); 
-
+int sieve_binary_extension_link
+	(struct sieve_binary *sbin, int ext_id);
+const struct sieve_extension *sieve_binary_extension_get_by_index
+	(struct sieve_binary *sbin, int index, int *ext_id);
+int sieve_binary_extension_get_index
+	(struct sieve_binary *sbin, int ext_id);
+	
 /* 
  * Code emission 
  */
