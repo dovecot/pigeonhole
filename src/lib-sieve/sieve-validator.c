@@ -29,7 +29,6 @@ struct sieve_validator {
 
 static void sieve_validator_register_core_commands(struct sieve_validator *validator);
 static void sieve_validator_register_core_tests(struct sieve_validator *validator);
-static void sieve_validator_register_core_comparators(struct sieve_validator *validator);
 
 /* Error management */
 
