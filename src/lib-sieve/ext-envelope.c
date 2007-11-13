@@ -154,6 +154,7 @@ static bool ext_envelope_opcode_dump
             case OPT_MATCH_TYPE:
                 break;
 			case OPT_ADDRESS_PART:
+                sieve_opr_address_part_dump(sbin, address);
 				break;
             default:
                 return FALSE;

@@ -20,12 +20,10 @@
  * Predeclarations 
  */
  
-static struct sieve_interpreter_registry *addrp_registry = NULL;
-
 static void opr_address_part_emit
 	(struct sieve_binary *sbin, unsigned int code);
 static void opr_address_part_emit_ext
-	(struct sieve_binary *sbin, const struct sieve_extension *ext);
+	(struct sieve_binary *sbin, int ext_id);
 
 /* 
  * Comparator 'extension' 
@@ -110,13 +108,32 @@ static bool addrp_validator_load(struct sieve_validator *validator)
 	return TRUE;
 }
 
+void sieve_address_parts_link_tags
+	(struct sieve_validator *validator, 
+		struct sieve_command_registration *cmd_reg,
+		unsigned int id_code) 
+{
+	struct addrp_validator_context *ctx = get_validator_context(validator);
+	struct hash_iterate_context *itx = hash_iterate_init(ctx->address_parts);
+	void *key; 
+	void *addrp;
+	
+	while ( hash_iterate(itx, &key, &addrp) ) {
+		sieve_validator_register_tag
+			(validator, cmd_reg, ((struct sieve_address_part *) addrp)->tag, id_code); 	
+	}
+
+	hash_iterate_deinit(&itx); 	
+}
 
 /*
  * Address-part operand
  */
  
-struct sieve_operand_class address_part_class = { "address-part", NULL };
-struct sieve_operand address_part_operand = { "address-part", &address_part_class, FALSE };
+struct sieve_operand_class address_part_class = 
+	{ "address-part", NULL };
+struct sieve_operand address_part_operand = 
+	{ "address-part", &address_part_class, FALSE };
 
 /* 
  * Address-part tag 
@@ -154,38 +171,16 @@ static bool tag_address_part_validate
 	return TRUE;
 }
 
-const struct sieve_argument address_localpart_tag = 
-	{ "localpart", tag_address_part_validate, NULL };
-const struct sieve_argument address_domain_tag = 
-	{ "domain", tag_address_part_validate, NULL };
-const struct sieve_argument address_all_tag = 
-	{ "all", tag_address_part_validate, NULL };
-
-/* Address part validation */
-
-void sieve_address_parts_link_tags
-	(struct sieve_validator *validator, 
-		struct sieve_command_registration *cmd_reg,
-		unsigned int id_code) 
-{
-	sieve_validator_register_tag
-		(validator, cmd_reg, &address_localpart_tag, id_code); 	
-	sieve_validator_register_tag
-		(validator, cmd_reg, &address_domain_tag, id_code); 	
-	sieve_validator_register_tag	
-		(validator, cmd_reg, &address_all_tag, id_code); 	
-}
-
 /* Code generation */
 
-static void opr_address_parts_emit
+static void opr_address_part_emit
 	(struct sieve_binary *sbin, unsigned int code)
 { 
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_ADDRESS_PART);
 	(void) sieve_binary_emit_byte(sbin, code);
 }
 
-static void opr_address_parts_emit_ext
+static void opr_address_part_emit_ext
 	(struct sieve_binary *sbin, int ext_id)
 { 
 	unsigned char cmp_code = SIEVE_ADDRESS_PART_CUSTOM + 
@@ -228,7 +223,8 @@ const struct sieve_address_part *sieve_opr_address_part_read
 bool sieve_opr_address_part_dump(struct sieve_binary *sbin, sieve_size_t *address)
 {
 	sieve_size_t pc = *address;
-	const struct sieve_address_part *addrp = sieve_opr_address_part_read(sbin, address);
+	const struct sieve_address_part *addrp = 
+		sieve_opr_address_part_read(sbin, address);
 	
 	if ( addrp == NULL )
 		return FALSE;
@@ -243,7 +239,8 @@ static bool tag_address_part_generate
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-	struct sieve_address_part *addrp = (struct sieve_address_part *) (*arg)->context;
+	struct sieve_address_part *addrp = 
+		(struct sieve_address_part *) (*arg)->context;
 	
 	if ( addrp->extension == NULL ) {
 		if ( addrp->code < SIEVE_ADDRESS_PART_CUSTOM )
@@ -262,22 +259,32 @@ static bool tag_address_part_generate
 /* 
  * Core address-part modifiers
  */
+ 
+const struct sieve_argument address_localpart_tag = 
+	{ "localpart", tag_address_part_validate, tag_address_part_generate };
+const struct sieve_argument address_domain_tag = 
+	{ "domain", tag_address_part_validate, tag_address_part_generate };
+const struct sieve_argument address_all_tag = 
+	{ "all", tag_address_part_validate, tag_address_part_generate };
 
 const struct sieve_address_part all_address_part = {
 	"all",
+	&address_all_tag,
 	SIEVE_ADDRESS_PART_ALL,
 	NULL
 };
 
 const struct sieve_address_part local_address_part = {
 	"localpart",
+	&address_localpart_tag,
 	SIEVE_ADDRESS_PART_LOCAL,
 	NULL
 };
 
 const struct sieve_address_part domain_address_part = {
 	"domain",
-	SIEVE_ADDRESS_PART_LOCAL,
+	&address_domain_tag,
+	SIEVE_ADDRESS_PART_DOMAIN,
 	NULL
 };
 

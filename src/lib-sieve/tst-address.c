@@ -5,6 +5,7 @@
 
 #include "sieve-comparators.h"
 #include "sieve-address-parts.h"
+
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -106,11 +107,14 @@ static bool tst_address_opcode_dump
         while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
             switch ( opt_code ) {
             case OPT_COMPARATOR:
-                sieve_opr_comparator_dump(sbin, address);
+				if ( !sieve_opr_comparator_dump(sbin, address) )
+					return FALSE;
                 break;
             case OPT_MATCH_TYPE:
                 break;
 			case OPT_ADDRESS_PART:
+				if ( !sieve_opr_address_part_dump(sbin, address) )
+					return FALSE;
 				break;			
             default:
                 return FALSE;
@@ -131,6 +135,7 @@ static bool tst_address_opcode_execute
 	struct mail *mail = sieve_interpreter_get_mail(interp);
 	
 	const struct sieve_comparator *cmp = &i_octet_comparator;
+	const struct sieve_address_part *addrp = &all_address_part;
 	unsigned int opt_code;
 	struct sieve_coded_stringlist *hdr_list;
 	struct sieve_coded_stringlist *key_list;
@@ -144,11 +149,14 @@ static bool tst_address_opcode_execute
         while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
             switch ( opt_code ) {
             case OPT_COMPARATOR:
-                cmp = sieve_opr_comparator_read(sbin, address);
+                if ( (cmp = sieve_opr_comparator_read(sbin, address)) == NULL )
+					return FALSE;
                 break;
             case OPT_MATCH_TYPE:
                 break;
 			case OPT_ADDRESS_PART:
+				if ( (addrp = sieve_opr_address_part_read(sbin, address)) == NULL )
+					return FALSE;
 				break;
             default:
                 return FALSE;
@@ -161,14 +169,12 @@ static bool tst_address_opcode_execute
 	/* Read header-list */
 	if ( (hdr_list=sieve_opr_stringlist_read(sbin, address)) == NULL ) {
 		t_pop();
-		printf("HDR_LIST FAILED\n");
 		return FALSE;
 	}
 	
 	/* Read key-list */
 	if ( (key_list=sieve_opr_stringlist_read(sbin, address)) == NULL ) {
 		t_pop();
-		printf("KEY_LIST FAILED\n");
 		return FALSE;
 	}
 	

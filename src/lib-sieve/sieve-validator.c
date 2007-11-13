@@ -67,18 +67,21 @@ struct sieve_validator *sieve_validator_create(struct sieve_ast *ast, struct sie
 	
 	validator->ast = ast;	
 	sieve_ast_ref(ast);
+
+	/* Setup storage for extension contexts */		
+	array_create(&validator->ext_contexts, pool, sizeof(void *), 
+		sieve_extensions_get_count());
 		
+	/* Pre-load core language features implemented as 'extensions' */
+	(void)comparator_extension.validator_load(validator);	
+	(void)address_part_extension.validator_load(validator);	
+
 	/* Setup command registry */
 	validator->commands = hash_create
 		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 	sieve_validator_register_core_commands(validator);
 	sieve_validator_register_core_tests(validator);
 
-	array_create(&validator->ext_contexts, pool, sizeof(void *), 
-		sieve_extensions_get_count());
-		
-	(void)comparator_extension.validator_load(validator);	
-	(void)address_part_extension.validator_load(validator);	
 		
 	return validator;
 }

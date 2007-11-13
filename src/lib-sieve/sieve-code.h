@@ -62,7 +62,9 @@ enum sieve_core_operand {
 	SIEVE_OPERAND_STRING_LIST,
 	SIEVE_OPERAND_COMPARATOR,
 	SIEVE_OPERAND_MATCH_TYPE,
-	SIEVE_OPERAND_ADDRESS_PART  
+	SIEVE_OPERAND_ADDRESS_PART,
+
+	SIEVE_OPERAND_CUSTOM
 };
 
 extern const struct sieve_operand *sieve_operands[];
@@ -116,7 +118,9 @@ enum sieve_core_operation {
 	SIEVE_OPCODE_HEADER, 
 	SIEVE_OPCODE_EXISTS, 
 	SIEVE_OPCODE_SIZEOVER,
-	SIEVE_OPCODE_SIZEUNDER
+	SIEVE_OPCODE_SIZEUNDER,
+	
+	SIEVE_OPCODE_CUSTOM
 };
 
 extern const struct sieve_opcode *sieve_opcodes[];
@@ -130,10 +134,5 @@ const struct sieve_opcode *sieve_operation_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 
 /* Core operands */
-
-#define SIEVE_OPCODE_CORE_MASK  0x1F
-#define SIEVE_OPCODE_EXT_OFFSET (SIEVE_OPCODE_CORE_MASK + 1)
-#define SIEVE_OPERAND_CORE_MASK 0x1F
-#define SIEVE_OPERAND_EXT_OFFSET (SIEVE_OPCODE_CORE_MASK + 1)
 
 #endif

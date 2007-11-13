@@ -10,6 +10,7 @@ enum sieve_address_part_code {
 
 struct sieve_address_part {
 	const char *identifier;
+	const struct sieve_argument *tag;
 	
 	enum sieve_address_part_code code;
 	const struct sieve_extension *extension;

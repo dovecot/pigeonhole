@@ -92,7 +92,7 @@ inline sieve_size_t sieve_coded_stringlist_get_current_offset(struct sieve_coded
 inline sieve_size_t sieve_operand_emit_code
 	(struct sieve_binary *sbin, int operand)
 {
-	unsigned char op = operand & SIEVE_OPERAND_CORE_MASK;
+	unsigned char op = operand;
 	
 	return sieve_binary_emit_byte(sbin, op);
 }
@@ -103,7 +103,7 @@ const struct sieve_operand *sieve_operand_read
 	unsigned int operand;
 	
 	if ( sieve_binary_read_byte(sbin, address, &operand) ) {
-		if ( operand < SIEVE_OPERAND_EXT_OFFSET ) {
+		if ( operand < SIEVE_OPERAND_CUSTOM ) {
 			if ( operand < sieve_operand_count )
 				return sieve_operands[operand];
 			else
@@ -112,7 +112,7 @@ const struct sieve_operand *sieve_operand_read
 			int ext_id = -1;
 		  const struct sieve_extension *ext = 
 		  	sieve_binary_extension_get_by_index
-		  		(sbin, operand - SIEVE_OPERAND_EXT_OFFSET, &ext_id);
+		  		(sbin, operand - SIEVE_OPERAND_CUSTOM, &ext_id);
 		  
 		  if ( ext != NULL )
 		  	return ext->operand;	
@@ -219,13 +219,16 @@ const struct sieve_operand stringlist_operand =
 /* Core operands */
 
 extern struct sieve_operand comparator_operand;
+extern struct sieve_operand address_part_operand;
 
 const struct sieve_operand *sieve_operands[] = {
 	NULL, /* SIEVE_OPERAND_OPTIONAL */
 	&number_operand,
 	&string_operand,
 	&stringlist_operand,
-	&comparator_operand
+	&comparator_operand,
+	NULL,
+	&address_part_operand
 }; 
 
 const unsigned int sieve_operand_count =
@@ -549,7 +552,7 @@ static struct sieve_coded_stringlist *opr_stringlist_read
 inline sieve_size_t sieve_operation_emit_code
 	(struct sieve_binary *sbin, int opcode)
 {
-	unsigned char op = opcode & SIEVE_OPCODE_CORE_MASK;
+	unsigned char op = opcode;
 	
 	return sieve_binary_emit_byte(sbin, op);
 }
@@ -557,7 +560,7 @@ inline sieve_size_t sieve_operation_emit_code
 inline sieve_size_t sieve_operation_emit_code_ext
 	(struct sieve_binary *sbin, int ext_id)
 {	
-	unsigned char op = SIEVE_OPCODE_EXT_OFFSET + 
+	unsigned char op = SIEVE_OPCODE_CUSTOM + 
 		sieve_binary_extension_get_index(sbin, ext_id);
 	
 	return sieve_binary_emit_byte(sbin, op);
@@ -569,7 +572,7 @@ const struct sieve_opcode *sieve_operation_read
 	unsigned int opcode;
 	
 	if ( sieve_binary_read_byte(sbin, address, &opcode) ) {
-		if ( opcode < SIEVE_OPCODE_EXT_OFFSET ) {
+		if ( opcode < SIEVE_OPCODE_CUSTOM ) {
 			if ( opcode < sieve_opcode_count )
 				return sieve_opcodes[opcode];
 			else
@@ -578,7 +581,7 @@ const struct sieve_opcode *sieve_operation_read
 			int ext_id = -1;
 			const struct sieve_extension *ext = 
 			sieve_binary_extension_get_by_index
-				(sbin, opcode - SIEVE_OPCODE_EXT_OFFSET, &ext_id);
+				(sbin, opcode - SIEVE_OPCODE_CUSTOM, &ext_id);
 		  
 			if ( ext != NULL )
 				return ext->opcode;	
