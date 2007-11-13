@@ -2,8 +2,10 @@
 
 #include "lib.h"
 #include "compat.h"
+#include "mempool.h"
 #include "hash.h"
 #include "array.h"
+#include "message-address.h"
 
 #include "sieve-extensions.h"
 #include "sieve-code.h"
@@ -256,6 +258,44 @@ static bool tag_address_part_generate
 	return TRUE;
 }
 
+/*
+ * Address Matching
+ */
+ 
+bool sieve_address_stringlist_match
+	(struct sieve_address_part *addrp, struct sieve_coded_stringlist *key_list,
+		struct sieve_comparator *cmp,	const char *data)
+{
+	bool matched = FALSE;
+	const struct message_address *addr;
+	
+	t_push();
+	
+	addr = message_address_parse
+		(unsafe_data_stack_pool, (const unsigned char *) data, 
+			strlen(data), 256, FALSE);
+	
+	while (!matched && addr != NULL) {
+		if (addr->domain != NULL) {
+			/* mailbox@domain */
+			const char *part;
+			
+			i_assert(addr->mailbox != NULL);
+			
+			part = addrp->extract_from(addr);
+			
+			if ( sieve_stringlist_match(key_list, part, cmp) )
+				matched = TRUE;				
+		} 
+
+		addr = addr->next;
+	}
+	
+	t_pop();
+	
+	return matched;
+}
+
 /* 
  * Core address-part modifiers
  */
@@ -267,25 +307,46 @@ const struct sieve_argument address_domain_tag =
 const struct sieve_argument address_all_tag = 
 	{ "all", tag_address_part_validate, tag_address_part_generate };
 
+static const char *addrp_all_extract_from
+	(const struct message_address *address)
+{
+	return t_strconcat(address->mailbox, "@", address->domain, NULL);
+}
+
+static const char *addrp_domain_extract_from
+	(const struct message_address *address)
+{
+	return address->domain;
+}
+
+static const char *addrp_localpart_extract_from
+	(const struct message_address *address)
+{
+	return address->mailbox;
+}
+
 const struct sieve_address_part all_address_part = {
 	"all",
 	&address_all_tag,
 	SIEVE_ADDRESS_PART_ALL,
-	NULL
+	NULL,
+	addrp_all_extract_from
 };
 
 const struct sieve_address_part local_address_part = {
 	"localpart",
 	&address_localpart_tag,
 	SIEVE_ADDRESS_PART_LOCAL,
-	NULL
+	NULL,
+	addrp_localpart_extract_from
 };
 
 const struct sieve_address_part domain_address_part = {
 	"domain",
 	&address_domain_tag,
 	SIEVE_ADDRESS_PART_DOMAIN,
-	NULL
+	NULL,
+	addrp_domain_extract_from
 };
 
 const struct sieve_address_part *sieve_core_address_parts[] = {

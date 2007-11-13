@@ -1,6 +1,10 @@
 #ifndef __SIEVE_ADDRESS_PARTS_H
 #define __SIEVE_ADDRESS_PARTS_H
 
+#include "message-address.h"
+
+#include "sieve-common.h"
+
 enum sieve_address_part_code {
 	SIEVE_ADDRESS_PART_ALL,
 	SIEVE_ADDRESS_PART_LOCAL,
@@ -14,6 +18,8 @@ struct sieve_address_part {
 	
 	enum sieve_address_part_code code;
 	const struct sieve_extension *extension;
+
+	const char *(*extract_from)(const struct message_address *address);
 };
 
 void sieve_address_parts_link_tags
@@ -38,6 +44,8 @@ const struct sieve_address_part *sieve_opr_address_part_read
 bool sieve_opr_address_part_dump
 	(struct sieve_binary *sbin, sieve_size_t *address);
 
-void sieve_address_parts_init_registry(struct sieve_interpreter *interp);
+bool sieve_address_stringlist_match
+	(struct sieve_address_part *addrp, struct sieve_coded_stringlist *key_list,
+		struct sieve_comparator *cmp, const char *data);
 
 #endif /* __SIEVE_ADDRESS_PARTS_H */
