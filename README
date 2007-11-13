@@ -1,2 +1,75 @@
-See INSTALL on how to install this plugin.
+Installation
+------------
+
+This package is currently not built for installation. To test the sieve 
+engine it is currently only useful to execute the binaries in the 
+src/sieve-bin/ directory:
+
+sievec <sieve-file>:
+
+Compiles the script and produces various dumps of intermittent compilation
+results. This already works pretty good for all supported features.
+
+sieve_test <sieve-file>:
+
+Reads mail message from standard input and executes the sieve script to
+produce a verdict. Currently only prints an execution dump with the 
+instructions encountered during execution.
+
+In the directory ./sieve various example are test scripts are bundled. 
+
+FEATURES
+--------
+
+* Well-structured 3-stage compiler; uses dovecot framework and avoids using
+  lex/yucc. 
+* Highly extendable with new sieve capabilities. This keeps the possibility
+  of plugins in mind. Should provide the necessary infrastructure for at least
+  all currently known (proposed) extensions. 
+
+What works:
+* Scripts can be parsed.
+* Script validation (contextual analysis) works almost completely.
+* Script code generation works for most core commands with exception
+  of match-related arguments. Comparators already work somewhat though
+* Interpreter runs and dumps core commands and tests. It is not possible
+  to specify alternative addr-parts or match-types yet though
+
+DESIGN
+------
+
+The compiler consists of the following stages:
+
+PARSER: sieve-parser.c, sieve-lexer.c
+  Parses the scriptfile and produces an abstract syntax tree for it 
+  (sieve-ast.c). 
+
+VALIDATOR: sieve-validator.c
+  Performs contextual analysis on the ast produced by the parser. This 
+  checks for the validity of commands, tests and arguments. The ast is 
+  decorated with any context data acquired during the process. This 
+  context is used by the last compiler stage. 
+
+GENERATOR: sieve-generator.c
+  This compiler stage uses a visitor pattern to wander through the ast
+  and produces sieve byte code (sieve-binary.c).
+
+The resulting binary can be fed to the interpreter for execution:
+
+INTERPRETER: sieve-interpreter.c 
+  The interpreter executes the byte code.
+
+TODO
+----
+
+* Implement address-part execution
+* Implement match-type execution
+* Produce a fully working interpreter that actually executes actions
+* Give the binary format some more thought, it is currently quite rough and
+  to the point. 
+* Produce a substitute sieve plugin for deliver (currently a stub)
+* Automate script tests
+* Use mmap for the binary script representation. 
+* Allow the currently in-memory byte-code to be stored as a script binary
+* Use dovecot streams for code dump
 

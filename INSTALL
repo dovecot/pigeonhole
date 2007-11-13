@@ -8,7 +8,9 @@ if the Dovecot versions are the same, but it's not guaranteed.
 
 ./configure --with-dovecot=../dovecot-1.0
 make
-sudo make install
+
+# NOT INSTALLABLE YET, refer to README
+#sudo make install
 
 Configuring
 -----------
