@@ -1,5 +1,5 @@
-#ifndef __SIEVE_COMMON_H__
-#define __SIEVE_COMMON_H__
+#ifndef __SIEVE_COMMON_H
+#define __SIEVE_COMMON_H
 
 /*
  * Predeclarations
@@ -62,4 +62,4 @@ struct sieve_mail_context {
 	const char *mailbox;
 };
 
-#endif
+#endif /* __SIEVE_COMMON_H */

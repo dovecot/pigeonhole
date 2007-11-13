@@ -1,5 +1,5 @@
-#ifndef __SIEVE_PARSER_H__
-#define __SIEVE_PARSER_H__
+#ifndef __SIEVE_PARSER_H
+#define __SIEVE_PARSER_H
 
 #include "lib.h"
 #include "sieve-lexer.h"
@@ -11,4 +11,4 @@ struct sieve_parser *sieve_parser_create(int fd, struct sieve_ast *ast, struct s
 void sieve_parser_free(struct sieve_parser *parser);
 bool sieve_parser_run(struct sieve_parser *parser);
 
-#endif /* __SIEVE_PARSER_H__ */
+#endif /* __SIEVE_PARSER_H */

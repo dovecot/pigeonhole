@@ -285,7 +285,6 @@ const struct sieve_address_part *sieve_core_address_parts[] = {
 	&all_address_part, &local_address_part, &domain_address_part
 };
 
-const unsigned int sieve_core_address_parts_count =
-	(sizeof(sieve_core_address_parts) / sizeof(sieve_core_address_parts[0]));
+const unsigned int sieve_core_address_parts_count = N_ELEMENTS(sieve_core_address_parts);
 
 

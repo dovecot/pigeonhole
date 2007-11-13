@@ -91,7 +91,7 @@ static __inline__ int sieve_lexer_curchar(struct sieve_lexer *lexer) {
 	if ( lexer->buffer == NULL )
 		return -1;
 	
-  return lexer->buffer[lexer->buffer_pos];
+	return lexer->buffer[lexer->buffer_pos];
 }
 
 const char *sieve_lexer_token_string(struct sieve_lexer *lexer) 
@@ -157,17 +157,17 @@ void sieve_lexer_print_token(struct sieve_lexer *lexer)
 	}
 }
 
-__inline__ enum sieve_token_type sieve_lexer_current_token(struct sieve_lexer *lexer) {
+inline enum sieve_token_type sieve_lexer_current_token(struct sieve_lexer *lexer) {
 	return lexer->token_type;
 }
 
-__inline__ const string_t *sieve_lexer_token_str(struct sieve_lexer *lexer) {
+inline const string_t *sieve_lexer_token_str(struct sieve_lexer *lexer) {
 	i_assert(	lexer->token_type == STT_STRING );
 		
 	return lexer->token_str_value;
 }
 
-__inline__ const char *sieve_lexer_token_ident(struct sieve_lexer *lexer) {
+inline const char *sieve_lexer_token_ident(struct sieve_lexer *lexer) {
 	i_assert(
 		lexer->token_type == STT_TAG ||
 		lexer->token_type == STT_IDENTIFIER);
@@ -175,17 +175,17 @@ __inline__ const char *sieve_lexer_token_ident(struct sieve_lexer *lexer) {
 	return str_c(lexer->token_str_value);
 }
 
-__inline__ int sieve_lexer_token_int(struct sieve_lexer *lexer) {
+inline int sieve_lexer_token_int(struct sieve_lexer *lexer) {
 	i_assert(lexer->token_type == STT_NUMBER);
 		
 	return lexer->token_int_value;
 }
 
-__inline__ bool sieve_lexer_eof(struct sieve_lexer *lexer) {
+inline bool sieve_lexer_eof(struct sieve_lexer *lexer) {
 	return lexer->token_type == STT_EOF;
 }
 
-__inline__ int sieve_lexer_current_line(struct sieve_lexer *lexer) {
+inline int sieve_lexer_current_line(struct sieve_lexer *lexer) {
 	return lexer->current_line;
 }
 
@@ -246,13 +246,17 @@ bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 						return TRUE;
 						
 					} else if ( sieve_lexer_curchar(lexer) == -1 ) {
-						sieve_lexer_error(lexer, "end of file before end of bracket comment ('/* ... */') started at line %d", start_line);
+						sieve_lexer_error(lexer, 
+							"end of file before end of bracket comment ('/* ... */') "
+							"started at line %d", start_line);
 						lexer->token_type = STT_ERROR;
 						return FALSE;
 					}
 
 				} else if ( sieve_lexer_curchar(lexer) == -1 ) {
-					sieve_lexer_error(lexer, "end of file before end of bracket comment ('/* ... */') started at line %d", start_line);
+					sieve_lexer_error(lexer, 
+						"end of file before end of bracket comment ('/* ... */') "
+						"started at line %d", start_line);
 					lexer->token_type = STT_ERROR;
 					return FALSE;
 					
@@ -295,7 +299,9 @@ bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 		
 		while ( sieve_lexer_curchar(lexer) != '"' ) {
 			if ( sieve_lexer_curchar(lexer) == -1 ) {
-				sieve_lexer_error(lexer, "end of file before end of quoted string started at line %d", start_line);
+				sieve_lexer_error(lexer, 
+					"end of file before end of quoted string "
+					"started at line %d", start_line);
 				lexer->token_type = STT_ERROR;
 				return FALSE;
 			}
@@ -355,150 +361,151 @@ bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 		/* number */
 		if ( IS_DIGIT(sieve_lexer_curchar(lexer)) ) {
 			int value = DIGIT_VAL(sieve_lexer_curchar(lexer));
-  		sieve_lexer_shift(lexer);
+			sieve_lexer_shift(lexer);
   		
-  		while ( IS_DIGIT(sieve_lexer_curchar(lexer)) ) {
-  			value = value * 10 + DIGIT_VAL(sieve_lexer_curchar(lexer));
-  			sieve_lexer_shift(lexer);
-  		}
+			while ( IS_DIGIT(sieve_lexer_curchar(lexer)) ) {
+				value = value * 10 + DIGIT_VAL(sieve_lexer_curchar(lexer));
+				sieve_lexer_shift(lexer);
+ 			}
   		
-  		switch ( sieve_lexer_curchar(lexer) ) { 
-  		case 'K': /* Kilo */
-  			value *= 1024;
-	  		sieve_lexer_shift(lexer);
-	  		break; 
-	  	case 'M': /* Mega */
-	  		value *= 1024*1024;
-	  		sieve_lexer_shift(lexer);
-	  		break;
-	  	case 'G': /* Giga */
-	  		value *= 1024*1024*1024;
-	  		sieve_lexer_shift(lexer);
-	  		break;
-	  	default:
-	  		/* Next token */
-	  		break;
-	  	}
+			switch ( sieve_lexer_curchar(lexer) ) { 
+			case 'K': /* Kilo */
+				value *= 1024;
+				sieve_lexer_shift(lexer);
+				break; 
+			case 'M': /* Mega */
+				value *= 1024*1024;
+				sieve_lexer_shift(lexer);
+				break;
+			case 'G': /* Giga */
+				value *= 1024*1024*1024;
+				sieve_lexer_shift(lexer);
+				break;
+			default:
+				/* Next token */
+				break;
+			}
   	
-  		lexer->token_type = STT_NUMBER;
-  		lexer->token_int_value = value;
-  		return TRUE;	
+			lexer->token_type = STT_NUMBER;
+			lexer->token_int_value = value;
+			return TRUE;	
   		
-  	/* identifier / tag */	
-  	} else if ( IS_ALPHA(sieve_lexer_curchar(lexer)) ||
-  		sieve_lexer_curchar(lexer) == '_' || 
-  		sieve_lexer_curchar(lexer) == ':' ) {
+		/* identifier / tag */	
+		} else if ( IS_ALPHA(sieve_lexer_curchar(lexer)) ||
+			sieve_lexer_curchar(lexer) == '_' || 
+			sieve_lexer_curchar(lexer) == ':' ) {
   		
-  		enum sieve_token_type type = STT_IDENTIFIER;
-  		str = str_new(lexer->pool, 16);
-  		lexer->token_str_value = str;
+			enum sieve_token_type type = STT_IDENTIFIER;
+			str = str_new(lexer->pool, 16);
+			lexer->token_str_value = str;
   		
-  		/* If it starts with a ':' it is a tag and not an identifier */
-  		if ( sieve_lexer_curchar(lexer) == ':' ) {
-  			sieve_lexer_shift(lexer); // discard colon
-  			type = STT_TAG;
+			/* If it starts with a ':' it is a tag and not an identifier */
+ 			if ( sieve_lexer_curchar(lexer) == ':' ) {
+				sieve_lexer_shift(lexer); // discard colon
+				type = STT_TAG;
   			
-  			/* First character still can't be a DIGIT */
-  			if ( IS_ALPHA(sieve_lexer_curchar(lexer)) ||
-  				sieve_lexer_curchar(lexer) == '_' ) { 
-  				str_append_c(str, sieve_lexer_curchar(lexer));
-  				sieve_lexer_shift(lexer);
-  			} else {
-  				/* Hmm, otherwise it is just a spurious colon */
-  				lexer->token_type = STT_COLON;
-  				return TRUE;
-  			}
-  		} else {
-  			str_append_c(str, sieve_lexer_curchar(lexer));
-  			sieve_lexer_shift(lexer);
-  		}
+				/* First character still can't be a DIGIT */
+ 				if ( IS_ALPHA(sieve_lexer_curchar(lexer)) ||
+					sieve_lexer_curchar(lexer) == '_' ) { 
+					str_append_c(str, sieve_lexer_curchar(lexer));
+					sieve_lexer_shift(lexer);
+				} else {
+					/* Hmm, otherwise it is just a spurious colon */
+					lexer->token_type = STT_COLON;
+					return TRUE;
+				}
+			} else {
+				str_append_c(str, sieve_lexer_curchar(lexer));
+				sieve_lexer_shift(lexer);
+			}
   		
-  		/* Scan the rest of the identifier */
-  		while ( IS_ALPHA(sieve_lexer_curchar(lexer)) ||
-  			IS_ALPHA(sieve_lexer_curchar(lexer)) ||
-  			sieve_lexer_curchar(lexer) == '_' ) {
-  			str_append_c(str, sieve_lexer_curchar(lexer));
-  			sieve_lexer_shift(lexer);
-  		}
+			/* Scan the rest of the identifier */
+			while ( IS_ALPHA(sieve_lexer_curchar(lexer)) ||
+				IS_ALPHA(sieve_lexer_curchar(lexer)) ||
+				sieve_lexer_curchar(lexer) == '_' ) {
+ 				str_append_c(str, sieve_lexer_curchar(lexer));
+				sieve_lexer_shift(lexer);
+			}
   			
-  		/* Is this in fact a multiline text string ? */
-  		if ( sieve_lexer_curchar(lexer) == ':' &&
-  			type == STT_IDENTIFIER && str_len(str) == 4 &&
-  			strncasecmp(str_c(str), "text", 4) == 0 ) {
-  			sieve_lexer_shift(lexer); // discard colon
+			/* Is this in fact a multiline text string ? */
+			if ( sieve_lexer_curchar(lexer) == ':' &&
+				type == STT_IDENTIFIER && str_len(str) == 4 &&
+				strncasecmp(str_c(str), "text", 4) == 0 ) {
+				sieve_lexer_shift(lexer); // discard colon
   			
-  			/* Discard SP and HTAB whitespace */
-  			while ( sieve_lexer_curchar(lexer) == ' ' || 
-  				sieve_lexer_curchar(lexer) == '\t' )
-  				sieve_lexer_shift(lexer);
+				/* Discard SP and HTAB whitespace */
+				while ( sieve_lexer_curchar(lexer) == ' ' || 
+					sieve_lexer_curchar(lexer) == '\t' )
+ 					sieve_lexer_shift(lexer);
   				
-  			/* Discard hash comment or handle single CRLF */
-  			if ( sieve_lexer_curchar(lexer) == '#' ) {
-  				while ( sieve_lexer_curchar(lexer) != '\n' )
-  					sieve_lexer_shift(lexer);
-  			} else if ( sieve_lexer_curchar(lexer) == '\r' ) {
-  				sieve_lexer_shift(lexer);
-  			}
+				/* Discard hash comment or handle single CRLF */
+				if ( sieve_lexer_curchar(lexer) == '#' ) {
+					while ( sieve_lexer_curchar(lexer) != '\n' )
+						sieve_lexer_shift(lexer);
+				} else if ( sieve_lexer_curchar(lexer) == '\r' ) {
+					sieve_lexer_shift(lexer);
+				}
   			
-  			/* Terminating LF required */
-  			if ( sieve_lexer_curchar(lexer) == '\n' ) {
-  				sieve_lexer_shift(lexer);
-  			} else {
-  				if ( sieve_lexer_curchar(lexer) == -1 ) {
-  					sieve_lexer_error(lexer, "end of file before end of multi-line string");
-  				} else {
-  					sieve_lexer_error(lexer, "invalid character '%c' after 'text:' in multiline string",
-  						sieve_lexer_curchar(lexer));
-  				}
-  				lexer->token_type = STT_ERROR;
-  				return FALSE;
-  			}
+				/* Terminating LF required */
+ 				if ( sieve_lexer_curchar(lexer) == '\n' ) {
+					sieve_lexer_shift(lexer);
+				} else {
+					if ( sieve_lexer_curchar(lexer) == -1 ) {
+						sieve_lexer_error(lexer, "end of file before end of multi-line string");
+					} else {
+ 						sieve_lexer_error(lexer, "invalid character '%c' after 'text:' in multiline string",
+							sieve_lexer_curchar(lexer));
+					}
+
+					lexer->token_type = STT_ERROR;
+					return FALSE;
+				}
   			
-  			/* Start over */
-  			str_truncate(str, 0); 
+				/* Start over */
+				str_truncate(str, 0); 
   			
-  			/* Parse literal lines */
-  			while ( TRUE ) {
-  				/* Remove dot-stuffing or detect end of text */
-  				if ( sieve_lexer_curchar(lexer) == '.' ) {
-  					bool cr_shifted = FALSE;
-  					sieve_lexer_shift(lexer);
+ 				/* Parse literal lines */
+				while ( TRUE ) {
+					/* Remove dot-stuffing or detect end of text */
+					if ( sieve_lexer_curchar(lexer) == '.' ) {
+						bool cr_shifted = FALSE;
+						sieve_lexer_shift(lexer);
   					
-  					/* Check for CRLF */
-  					if ( sieve_lexer_curchar(lexer) == '\r' ) 
-  						sieve_lexer_shift(lexer);
+						/* Check for CRLF */
+						if ( sieve_lexer_curchar(lexer) == '\r' ) 
+							sieve_lexer_shift(lexer);
   				
-  					if ( sieve_lexer_curchar(lexer) == '\n' ) {
-  						sieve_lexer_shift(lexer);
-  						lexer->token_type = STT_STRING;
-  						return TRUE;
-  					} else if ( cr_shifted ) 
-  						str_append_c(str, '\r');  	
-  				}
+						if ( sieve_lexer_curchar(lexer) == '\n' ) {
+							sieve_lexer_shift(lexer);
+							lexer->token_type = STT_STRING;
+							return TRUE;
+						} else if ( cr_shifted ) 
+							str_append_c(str, '\r');  	
+					}
   				
-  				/* Scan the rest of the line */
-  				while ( sieve_lexer_curchar(lexer) != '\n' ) {
-  					if ( sieve_lexer_curchar(lexer) == -1 ) {
-  						sieve_lexer_error(lexer, "end of file before end of multi-line string");
-  						lexer->token_type = STT_ERROR;
-  						return FALSE;
-  					}
+					/* Scan the rest of the line */
+					while ( sieve_lexer_curchar(lexer) != '\n' ) {
+						if ( sieve_lexer_curchar(lexer) == -1 ) {
+							sieve_lexer_error(lexer, "end of file before end of multi-line string");
+ 							lexer->token_type = STT_ERROR;
+ 							return FALSE;
+ 						}
   					
-  					str_append_c(str, sieve_lexer_curchar(lexer));
-  					sieve_lexer_shift(lexer);
-  				}
-  				str_append_c(str, '\n');
-  				sieve_lexer_shift(lexer);
-  			}
+						str_append_c(str, sieve_lexer_curchar(lexer));
+						sieve_lexer_shift(lexer);
+					}
+					str_append_c(str, '\n');
+					sieve_lexer_shift(lexer);
+				}
   			
-  			i_unreached();
-  			lexer->token_type = STT_ERROR;
-  			return FALSE;
-  		}
+ 				i_unreached();
+				lexer->token_type = STT_ERROR;
+				return FALSE;
+			}
   			
-  		lexer->token_type = type;
-  		return TRUE;
-  	}
+			lexer->token_type = type;
+			return TRUE;
+		}
 	
 		/* Error (unknown character and EOF handled already) */
 		if ( lexer->token_type != STT_GARBAGE ) 

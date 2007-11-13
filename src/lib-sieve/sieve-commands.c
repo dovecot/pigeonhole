@@ -119,8 +119,7 @@ const struct sieve_command sieve_core_tests[] = {
 	{ "allof", SCT_TEST, NULL, tst_allof_validate, NULL, tst_allof_generate }
 };
 
-const unsigned int sieve_core_tests_count =
-	(sizeof(sieve_core_tests) / sizeof(sieve_core_tests[0]));
+const unsigned int sieve_core_tests_count = N_ELEMENTS(sieve_core_tests);
 
 const struct sieve_command sieve_core_commands[] = {
 	{ "stop", SCT_COMMAND, NULL, NULL, cmd_stop_generate, NULL },
@@ -133,8 +132,7 @@ const struct sieve_command sieve_core_commands[] = {
 	{ "redirect", SCT_COMMAND, NULL, cmd_redirect_validate, NULL, NULL }
 };
 
-const unsigned int sieve_core_commands_count =
-	(sizeof(sieve_core_commands) / sizeof(sieve_core_commands[0]));
+const unsigned int sieve_core_commands_count = N_ELEMENTS(sieve_core_commands);
 	
 struct sieve_command_context *sieve_command_prev_context	
 	(struct sieve_command_context *context) 

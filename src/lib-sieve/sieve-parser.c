@@ -16,7 +16,7 @@
 #define SIEVE_READ_BLOCK_SIZE (1024*8)
 
 #define sieve_parser_error(parser, ...) \
-  { \
+	{ \
 		/* Don't report a parse error if the lexer complained already */ \
 		if ( sieve_lexer_current_token(parser->lexer) != STT_ERROR )  \
 			sieve_error(parser->ehandler, sieve_lexer_current_line(parser->lexer), __VA_ARGS__); \
@@ -67,7 +67,7 @@ struct sieve_parser *sieve_parser_create(int fd, struct sieve_ast *ast, struct s
 void sieve_parser_free(struct sieve_parser *parser)
 {
 	if (parser->input != NULL ) 
-	  i_stream_unref(&parser->input);
+		i_stream_unref(&parser->input);
 	  
 	sieve_ast_unref(&parser->ast);
 
@@ -346,7 +346,7 @@ bool sieve_parser_run(struct sieve_parser *parser)
 	sieve_lexer_skip_token(parser->lexer);
 
 	if ( sieve_parse_commands(parser, parser->ast->root) ) { 
-	  if ( sieve_lexer_current_token(parser->lexer) != STT_EOF ) { 
+		if ( sieve_lexer_current_token(parser->lexer) != STT_EOF ) { 
 			sieve_parser_error(parser, "unexpected token %s found at (the presumed) end of file",
 				sieve_lexer_token_string(parser->lexer));
 				
@@ -368,15 +368,15 @@ bool sieve_parser_run(struct sieve_parser *parser)
 
 /* Assign useful names to priorities for readability */ 
 enum sieve_grammatical_prio {
-  SGP_BLOCK = 3,
-  SGP_COMMAND = 2,
-  SGP_TEST_LIST = 1,
-  SGP_STRING_LIST = 0,
+	SGP_BLOCK = 3,
+	SGP_COMMAND = 2,
+	SGP_TEST_LIST = 1,
+	SGP_STRING_LIST = 0,
   
-  SGP_OTHER = -1
+	SGP_OTHER = -1
 };
 
-static __inline__ enum sieve_grammatical_prio __get_token_priority(enum sieve_token_type token) {
+static inline enum sieve_grammatical_prio __get_token_priority(enum sieve_token_type token) {
 	switch ( token ) {
 	case STT_LCURLY:
 	case STT_RCURLY: 

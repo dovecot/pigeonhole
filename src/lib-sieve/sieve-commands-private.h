@@ -1,5 +1,5 @@
-#ifndef __SIEVE_COMMANDS_PRIVATE_H__
-#define __SIEVE_COMMANDS_PRIVATE_H__
+#ifndef __SIEVE_COMMANDS_PRIVATE_H
+#define __SIEVE_COMMANDS_PRIVATE_H
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
@@ -75,5 +75,5 @@ extern const unsigned int sieve_core_commands_count;
 extern const struct sieve_command sieve_core_tests[];
 extern const unsigned int sieve_core_tests_count;
 
-#endif /* __SIEVE_COMMANDS_PRIVATE_H__ */
+#endif /* __SIEVE_COMMANDS_PRIVATE_H */
 

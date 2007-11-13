@@ -45,10 +45,10 @@ void sieve_verror(struct sieve_error_handler *ehandler, unsigned int line, const
 	/* FIXME: This seems cumbersome.. */
 	t_push();
 	nfmt = t_strdup_printf("%d: error: %s.\n", line, fmt);
-  vprintf(nfmt, args);
-  t_pop();
+	vprintf(nfmt, args);
+ 	t_pop();
   
-  ehandler->errors++;
+	ehandler->errors++;
 }
 
 void sieve_vwarning(struct sieve_error_handler *ehandler, unsigned int line, const char *fmt, va_list args) 
@@ -58,10 +58,10 @@ void sieve_vwarning(struct sieve_error_handler *ehandler, unsigned int line, con
 	/* FIXME: This seems cumbersome.. */
 	t_push();
 	nfmt = t_strdup_printf("%d: warning: %s.\n", line, fmt);
-  vprintf(nfmt, args);
-  t_pop();
+	vprintf(nfmt, args);
+	t_pop();
   
-  ehandler->warnings++;
+	ehandler->warnings++;
 }
 
 unsigned int sieve_get_errors(struct sieve_error_handler *ehandler) {

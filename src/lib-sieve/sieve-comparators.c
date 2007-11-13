@@ -332,7 +332,7 @@ const struct sieve_comparator *sieve_core_comparators[] = {
 };
 
 const unsigned int sieve_core_comparators_count =
-	(sizeof(sieve_core_comparators) / sizeof(sieve_core_comparators[0]));
+	N_ELEMENTS(sieve_core_comparators);
 
 static int cmp_i_octet_compare(const void *val1, size_t val1_size, 
 	const void *val2, size_t val2_size)

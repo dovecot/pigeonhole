@@ -297,17 +297,17 @@ static string_t *t_str_const(const void *cdata, size_t size)
 bool sieve_binary_read_string
   (struct sieve_binary *binary, sieve_size_t *address, string_t **str) 
 {
-  sieve_size_t strlen = 0;
+	sieve_size_t strlen = 0;
   
-  if ( !sieve_binary_read_integer(binary, address, &strlen) ) 
-    return FALSE;
-      
-  if ( strlen > ADDR_BYTES_LEFT(binary, address) ) 
-    return FALSE;
+	if ( !sieve_binary_read_integer(binary, address, &strlen) ) 
+		return FALSE;
+    	  
+	if ( strlen > ADDR_BYTES_LEFT(binary, address) ) 
+		return FALSE;
    
-  *str = t_str_const(&ADDR_CODE_AT(binary, address), strlen);
+	*str = t_str_const(&ADDR_CODE_AT(binary, address), strlen);
 	ADDR_JUMP(address, strlen);
   
-  return TRUE;
+	return TRUE;
 }
 

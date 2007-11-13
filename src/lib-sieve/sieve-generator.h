@@ -1,5 +1,5 @@
-#ifndef __SIEVE_GENERATOR_H__
-#define __SIEVE_GENERATOR_H__
+#ifndef __SIEVE_GENERATOR_H
+#define __SIEVE_GENERATOR_H
 
 #include "sieve-ast.h"
 #include "sieve-code.h"
@@ -62,5 +62,5 @@ bool sieve_generate_test(struct sieve_generator *generator, struct sieve_ast_nod
 	struct sieve_jumplist *jlist, bool jump_true);
 struct sieve_binary *sieve_generator_run(struct sieve_generator *genarator);
 
-#endif
+#endif /* __SIEVE_GENERATOR_H */
 

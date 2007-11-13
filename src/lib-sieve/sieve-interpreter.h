@@ -1,5 +1,5 @@
-#ifndef __SIEVE_INTERPRETER_H__
-#define __SIEVE_INTERPRETER_H__
+#ifndef __SIEVE_INTERPRETER_H
+#define __SIEVE_INTERPRETER_H
 
 #include "lib.h"
 #include "array.h"
@@ -61,4 +61,4 @@ struct sieve_result *sieve_interpreter_run
 	(struct sieve_interpreter *interp, struct mail *mail);
 
 
-#endif
+#endif /* __SIEVE_INTERPRETER_H */

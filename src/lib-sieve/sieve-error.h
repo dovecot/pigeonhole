@@ -1,5 +1,5 @@
-#ifndef __SIEVE_ERROR_H__
-#define __SIEVE_ERROR_H__
+#ifndef __SIEVE_ERROR_H
+#define __SIEVE_ERROR_H
 
 #include <stdarg.h>
 
@@ -18,4 +18,4 @@ unsigned int sieve_get_warnings(struct sieve_error_handler *ehandler);
 
 struct sieve_error_handler *sieve_error_handler_create();
 
-#endif /* __SIEVE_ERROR_H__ */
+#endif /* __SIEVE_ERROR_H */

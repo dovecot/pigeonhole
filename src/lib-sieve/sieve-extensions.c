@@ -31,7 +31,7 @@ const struct sieve_extension *sieve_core_extensions[] = {
 };
 
 const unsigned int sieve_core_extensions_count =
-	(sizeof(sieve_core_extensions) / sizeof(sieve_core_extensions[0]));
+	N_ELEMENTS(sieve_core_extensions);
 
 /* Extension state */
 
@@ -129,19 +129,19 @@ int sieve_extension_get_by_name(const char *name, const struct sieve_extension *
 		    
 	*ext = ereg->extension;
 	
-  return ereg->id;
+	return ereg->id;
 }
 
 int sieve_extension_get_id(const struct sieve_extension *extension) 
 {
-  struct sieve_extension_registration *ereg = 
-    (struct sieve_extension_registration *) 
-    	hash_lookup(extension_index, extension->name);
+	struct sieve_extension_registration *ereg = 
+		(struct sieve_extension_registration *) 
+			hash_lookup(extension_index, extension->name);
 
 	if ( ereg == NULL )
 		return -1;
 		    
-  return ereg->id;
+	return ereg->id;
 }
 
 static void sieve_extensions_deinit_registry() 

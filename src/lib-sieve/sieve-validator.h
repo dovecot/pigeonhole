@@ -1,5 +1,5 @@
-#ifndef __SIEVE_VALIDATOR_H__
-#define __SIEVE_VALIDATOR_H__
+#ifndef __SIEVE_VALIDATOR_H
+#define __SIEVE_VALIDATOR_H
 
 #include "lib.h"
 
@@ -56,4 +56,4 @@ int sieve_validator_extension_load
 inline void sieve_validator_extension_set_context(struct sieve_validator *validator, int ext_id, void *context);
 inline const void *sieve_validator_extension_get_context(struct sieve_validator *validator, int ext_id);
 
-#endif /* __SIEVE_VALIDATOR_H__ */
+#endif /* __SIEVE_VALIDATOR_H */

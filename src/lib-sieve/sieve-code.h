@@ -80,12 +80,12 @@ unsigned int sieve_operand_optional_read
 void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_size_t number);
 bool sieve_opr_number_dump(struct sieve_binary *sbin, sieve_size_t *address); 
 bool sieve_opr_number_read
-  (struct sieve_binary *sbin, sieve_size_t *address, sieve_size_t *number);
+	(struct sieve_binary *sbin, sieve_size_t *address, sieve_size_t *number);
 
 void sieve_opr_string_emit(struct sieve_binary *sbin, string_t *str);
 bool sieve_opr_string_dump(struct sieve_binary *sbin, sieve_size_t *address); 
 bool sieve_opr_string_read
-  (struct sieve_binary *sbin, sieve_size_t *address, string_t **str);
+	(struct sieve_binary *sbin, sieve_size_t *address, string_t **str);
 
 void sieve_opr_stringlist_emit_start
 	(struct sieve_binary *sbin, unsigned int listlen, void **context);
@@ -95,7 +95,7 @@ void sieve_opr_stringlist_emit_end
 	(struct sieve_binary *sbin, void *context);
 bool sieve_opr_stringlist_dump(struct sieve_binary *sbin, sieve_size_t *address);
 struct sieve_coded_stringlist *sieve_opr_stringlist_read
-  (struct sieve_binary *sbin, sieve_size_t *address);
+	(struct sieve_binary *sbin, sieve_size_t *address);
 
 
 /* Opcode: identifies what's to be done */

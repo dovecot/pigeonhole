@@ -16,12 +16,12 @@
  */
 
 struct sieve_coded_stringlist {
-  struct sieve_binary *binary;
-  sieve_size_t start_address;
-  sieve_size_t end_address;
-  sieve_size_t current_offset;
-  int length;
-  int index;
+	struct sieve_binary *binary;
+	sieve_size_t start_address;
+	sieve_size_t end_address;
+	sieve_size_t current_offset;
+	int length;
+	int index;
 };
 
 static struct sieve_coded_stringlist *sieve_coded_stringlist_create
@@ -30,7 +30,7 @@ static struct sieve_coded_stringlist *sieve_coded_stringlist_create
 {
 	struct sieve_coded_stringlist *strlist;
 	
-  if ( end > sieve_binary_get_code_size(sbin) ) 
+	if ( end > sieve_binary_get_code_size(sbin) ) 
   		return NULL;
     
 	strlist = p_new(pool_datastack_create(), struct sieve_coded_stringlist, 1);
@@ -41,33 +41,33 @@ static struct sieve_coded_stringlist *sieve_coded_stringlist_create
 	strlist->length = length;
 	strlist->index = 0;
   
-  return strlist;
+	return strlist;
 }
 
 bool sieve_coded_stringlist_next_item(struct sieve_coded_stringlist *strlist, string_t **str) 
 {
 	sieve_size_t address;
-  *str = NULL;
+	*str = NULL;
   
-  if ( strlist->index >= strlist->length ) 
-    return TRUE;
-  else {
-  	address = strlist->current_offset;
+	if ( strlist->index >= strlist->length ) 
+		return TRUE;
+	else {
+		address = strlist->current_offset;
   	
-  	if ( sieve_binary_read_string(strlist->binary, &address, str) ) {
-    	strlist->index++;
-    	strlist->current_offset = address;
-    	return TRUE;
-    }
-  }  
+		if ( sieve_binary_read_string(strlist->binary, &address, str) ) {
+			strlist->index++;
+			strlist->current_offset = address;
+			return TRUE;
+		}
+	}  
   
-  return FALSE;
+	return FALSE;
 }
 
 void sieve_coded_stringlist_reset(struct sieve_coded_stringlist *strlist) 
 {  
-  strlist->current_offset = strlist->start_address;
-  strlist->index = 0;
+	strlist->current_offset = strlist->start_address;
+	strlist->index = 0;
 }
 
 inline int sieve_coded_stringlist_get_length(struct sieve_coded_stringlist *strlist)
@@ -229,7 +229,7 @@ const struct sieve_operand *sieve_operands[] = {
 }; 
 
 const unsigned int sieve_operand_count =
-	(sizeof(sieve_operands) / sizeof(sieve_operands[0]));
+	N_ELEMENTS(sieve_operands);
 	
 /* 
  * Operand implementations 
@@ -240,7 +240,7 @@ const unsigned int sieve_operand_count =
 void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_size_t number) 
 {
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_NUMBER);
-  (void) sieve_binary_emit_integer(sbin, number);
+	(void) sieve_binary_emit_integer(sbin, number);
 }
 
 bool sieve_opr_number_dump(struct sieve_binary *sbin, sieve_size_t *address) 
@@ -284,9 +284,9 @@ static bool opr_number_dump(struct sieve_binary *sbin, sieve_size_t *address)
 	sieve_size_t number = 0;
 	
 	if (sieve_binary_read_integer(sbin, address, &number) ) {
-	  printf("NUM: %ld\n", (long) number);		
-	  
-	  return TRUE;
+		printf("NUM: %ld\n", (long) number);
+
+		return TRUE;
 	}
 	
 	return FALSE;
@@ -351,18 +351,18 @@ static void _print_string(string_t *str)
 	printf("STR[%ld]: \"", (long) str_len(str));
 
 	while ( i < 40 && i < str_len(str) ) {
-	  if ( sdata[i] > 31 ) 
-	    printf("%c", sdata[i]);
-	  else
-	    printf(".");
+		if ( sdata[i] > 31 ) 
+			printf("%c", sdata[i]);
+		else
+			printf(".");
 	    
 	  i++;
 	}
 	
 	if ( str_len(str) < 40 ) 
-	  printf("\"\n");
+		printf("\"\n");
 	else
-	  printf("...\n");
+		printf("...\n");
 }
 
 bool opr_string_dump(struct sieve_binary *sbin, sieve_size_t *address) 
@@ -373,9 +373,9 @@ bool opr_string_dump(struct sieve_binary *sbin, sieve_size_t *address)
 		_print_string(str);   		
 		
 		return TRUE;
-  }
+	}
   
-  return FALSE;
+	return FALSE;
 }
 
 static bool opr_string_read
@@ -389,17 +389,17 @@ static bool opr_string_read
 void sieve_opr_stringlist_emit_start
 	(struct sieve_binary *sbin, unsigned int listlen, void **context)
 {
-  sieve_size_t *end_offset = t_new(sieve_size_t, 1);
+	sieve_size_t *end_offset = t_new(sieve_size_t, 1);
 
 	/* Emit byte identifying the type of operand */	  
-  (void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_STRING_LIST);
+	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_STRING_LIST);
   
-  /* Give the interpreter an easy way to skip over this string list */
-  *end_offset = sieve_binary_emit_offset(sbin, 0);
+	/* Give the interpreter an easy way to skip over this string list */
+	*end_offset = sieve_binary_emit_offset(sbin, 0);
 	*context = (void *) end_offset;
 
-  /* Emit the length of the list */
-  (void) sieve_binary_emit_integer(sbin, (int) listlen);
+	/* Emit the length of the list */
+	(void) sieve_binary_emit_integer(sbin, (int) listlen);
 }
 
 void sieve_opr_stringlist_emit_item
@@ -474,8 +474,8 @@ static bool opr_stringlist_dump
 {
 	struct sieve_coded_stringlist *strlist;
 	
-  if ( (strlist=opr_stringlist_read(sbin, address)) != NULL ) {
-  	sieve_size_t pc;
+	if ( (strlist=opr_stringlist_read(sbin, address)) != NULL ) {
+  		sieve_size_t pc;
 		string_t *stritem;
 		
 		printf("STRLIST [%d] (END %08x)\n", 
@@ -500,17 +500,17 @@ static struct sieve_coded_stringlist *opr_stringlist_read_single
 {
 	struct sieve_coded_stringlist *strlist;
 	sieve_size_t strlen;
-  sieve_size_t pc = *address;
+	sieve_size_t pc = *address;
   
 	if ( !sieve_binary_read_integer(sbin, address, &strlen) ) 
   	return NULL;
 
 	strlist = sieve_coded_stringlist_create(sbin, pc, 1, *address + strlen); 
 
-  /* Skip over the string for now */
-  *address += strlen;
+	/* Skip over the string for now */
+	*address += strlen;
   
-  return strlist;
+	return strlist;
 }
 
 static struct sieve_coded_stringlist *opr_stringlist_read
@@ -518,9 +518,9 @@ static struct sieve_coded_stringlist *opr_stringlist_read
 {
 	struct sieve_coded_stringlist *strlist;
 
-  sieve_size_t pc = *address;
-  sieve_size_t end; 
-  sieve_size_t length = 0; 
+	sieve_size_t pc = *address;
+	sieve_size_t end; 
+	sieve_size_t length = 0; 
  
 	int end_offset;
 	
@@ -534,12 +534,11 @@ static struct sieve_coded_stringlist *opr_stringlist_read
   	
 	strlist = sieve_coded_stringlist_create(sbin, *address, length, end); 
 
-  /* Skip over the string list for now */
-  *address = end;
+	/* Skip over the string list for now */
+	*address = end;
   
-  return strlist;
+	return strlist;
 }  
-
 
 /* 
  * Opcodes
@@ -577,14 +576,14 @@ const struct sieve_opcode *sieve_operation_read
 				return NULL;
 		} else {
 			int ext_id = -1;
-		  const struct sieve_extension *ext = 
-		  	sieve_binary_extension_get_by_index
-		  		(sbin, opcode - SIEVE_OPCODE_EXT_OFFSET, &ext_id);
+			const struct sieve_extension *ext = 
+			sieve_binary_extension_get_by_index
+				(sbin, opcode - SIEVE_OPCODE_EXT_OFFSET, &ext_id);
 		  
-		  if ( ext != NULL )
-		  	return ext->opcode;	
-		  else
-		  	return NULL;
+			if ( ext != NULL )
+				return ext->opcode;	
+			else
+				return NULL;
 		}
 	}		
 	
@@ -619,22 +618,22 @@ extern const struct sieve_opcode tst_size_over_opcode;
 extern const struct sieve_opcode tst_size_under_opcode;
 
 const struct sieve_opcode *sieve_opcodes[] = {
-  &jmp_opcode,
-  &jmptrue_opcode, 
-  &jmpfalse_opcode,
-  &stop_opcode,
-  &keep_opcode,
-  &discard_opcode,
+	&jmp_opcode,
+	&jmptrue_opcode, 
+	&jmpfalse_opcode,
+	&stop_opcode,
+	&keep_opcode,
+	&discard_opcode,
 
-  &tst_address_opcode,
-  &tst_header_opcode,
-  &tst_exists_opcode,
-  &tst_size_over_opcode,
-  &tst_size_under_opcode
+	&tst_address_opcode,
+	&tst_header_opcode,
+	&tst_exists_opcode,
+	&tst_size_over_opcode,
+	&tst_size_under_opcode
 }; 
 
 const unsigned int sieve_opcode_count =
-	(sizeof(sieve_opcodes) / sizeof(sieve_opcodes[0]));
+	N_ELEMENTS(sieve_opcodes);
 
 /* Code dump for core commands */
 

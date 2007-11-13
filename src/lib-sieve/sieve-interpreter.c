@@ -159,9 +159,9 @@ bool sieve_stringlist_match
 	while ( sieve_coded_stringlist_next_item(key_list, &key_item) && key_item != NULL ) {
 		if ( cmp->compare(value, strlen(value), str_c(key_item), str_len(key_item)) == 0 )
 			return TRUE;  
-  }
+	}
   
-  return FALSE;
+	return FALSE;
 }
  
 /* Code Dump */

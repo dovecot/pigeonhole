@@ -1,5 +1,5 @@
-#ifndef __SIEVE_AST_H__
-#define __SIEVE_AST_H__
+#ifndef __SIEVE_AST_H
+#define __SIEVE_AST_H
 
 #include "lib.h"
 #include "str.h"
@@ -68,18 +68,18 @@ struct sieve_ast_argument {
 	struct sieve_ast_argument *next;
 	struct sieve_ast_argument *prev;
   
-  /* Parser-assigned data */
+	/* Parser-assigned data */
   
 	union {	
 		string_t *str;
 		struct sieve_ast_arg_list *strlist;
 		const char *tag;
 		int number;
-  } _value;
+	} _value;
   
-  unsigned int source_line;
+	unsigned int source_line;
   
-  /* Assigned during validation */
+	/* Assigned during validation */
 
 	/* Argument associated with this ast element  */
 	const struct sieve_argument *argument;
@@ -236,4 +236,4 @@ void sieve_ast_unparse(struct sieve_ast *ast);
 #define sieve_ast_strlist_strc(str) sieve_ast_argument_strc(str)
 #define sieve_ast_strlist_count(list) __LIST_COUNT(list, _value.strlist)
 
-#endif /* __SIEVE_AST_H__ */
+#endif /* __SIEVE_AST_H */
