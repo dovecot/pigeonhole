@@ -1,5 +1,16 @@
-#include <stdio.h>
-
+/* Extension subaddress 
+ * --------------------
+ *
+ * Author: Stephan Bosch
+ * Specification: RFC 3598
+ * Implementation: full, but not configurable
+ * Status: experimental, largely untested
+ * 
+ * FIXME: This extension is not configurable in any way. The separation 
+ * character is currently only configurable for compilation and not at runtime. 
+ *
+ */
+ 
 #include "sieve-common.h"
 
 #include "sieve-code.h"
@@ -10,7 +21,14 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 
+#include <string.h>
+
+/* Config */
+
+#define SUBADDRESS_DEFAULT_SEP_CHAR '+'
+
 /* Forward declarations */
+
 static bool ext_subaddress_load(int ext_id);
 static bool ext_subaddress_validator_load(struct sieve_validator *validator);
 static bool ext_subaddress_interpreter_load
@@ -18,7 +36,7 @@ static bool ext_subaddress_interpreter_load
 
 /* Extension definitions */
 
-int ext_my_id;
+static int ext_my_id;
 
 const struct sieve_extension subaddress_extension = { 
 	"subaddress", 
@@ -37,21 +55,29 @@ static bool ext_subaddress_load(int ext_id)
 	return TRUE;
 }
 
-/* */
+/* Actual extension implementation */
 
 static const char *subaddress_user_extract_from
 	(const struct message_address *address)
 {
-	i_info("subaddress: user: %s.", address->mailbox);
-	return address->mailbox;
+	const char *sep = strchr(address->mailbox, SUBADDRESS_DEFAULT_SEP_CHAR);
+	
+	if ( sep == NULL ) return address->mailbox;
+	
+	return t_strdup_until(address->mailbox, sep);
 }
 
 static const char *subaddress_detail_extract_from
 	(const struct message_address *address)
 {
-	i_info("subaddress: detail: %s.", address->mailbox);
-	return address->mailbox;
+	const char *sep = strchr(address->mailbox, SUBADDRESS_DEFAULT_SEP_CHAR);
+
+	if ( sep == NULL ) return NULL;
+		
+	return sep+1;
 }
+
+/* Extension access structures */
 
 enum ext_subaddress_address_part {
   SUBADDRESS_USER,
@@ -91,7 +117,6 @@ static const struct sieve_address_part *ext_subaddress_get_part
 
 const struct sieve_address_part_extension subaddress_addrp_extension = { 
 	NULL, 
-	
 	ext_subaddress_get_part
 };
 

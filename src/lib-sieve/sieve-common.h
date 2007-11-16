@@ -1,6 +1,8 @@
 #ifndef __SIEVE_COMMON_H
 #define __SIEVE_COMMON_H
 
+#include <sys/types.h>
+
 /*
  * Predeclarations
  */

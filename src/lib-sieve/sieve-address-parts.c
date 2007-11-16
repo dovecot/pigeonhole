@@ -105,6 +105,8 @@ const struct sieve_address_part *sieve_address_part_find
 	struct addrp_validator_registration *reg =
 		(struct addrp_validator_registration *) 
 			hash_lookup(ctx->registrations, identifier);
+			
+	if ( reg == NULL ) return NULL;
 
 	if ( ext_id != NULL ) *ext_id = reg->ext_id;
 
@@ -159,7 +161,7 @@ static inline struct addrp_interpreter_context *
 		sieve_interpreter_extension_get_context(interpreter, ext_my_id);
 }
 
-const struct sieve_address_part_extension *sieve_address_part_extension_get
+static const struct sieve_address_part_extension *sieve_address_part_extension_get
 	(struct sieve_interpreter *interpreter, int ext_id)
 {
 	struct addrp_interpreter_context *ctx = get_interpreter_context(interpreter);
@@ -382,7 +384,7 @@ bool sieve_address_stringlist_match
 
 			part = addrp->extract_from(addr);
 			
-			if ( sieve_stringlist_match(key_list, part, cmp) )
+			if ( part != NULL && sieve_stringlist_match(key_list, part, cmp) )
 				matched = TRUE;				
 		} 
 
