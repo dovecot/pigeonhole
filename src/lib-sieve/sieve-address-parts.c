@@ -56,6 +56,9 @@ static bool addrp_extension_load(int ext_id)
 /* 
  * Validator context:
  *   name-based address-part registry. 
+ *
+ * FIXME: This code will be duplicated across all extensions that introduce 
+ * a registry of some kind in the validator. 
  */
  
 struct addrp_validator_registration {
@@ -147,6 +150,9 @@ void sieve_address_parts_link_tags
 
 /*
  * Interpreter context:
+ *
+ * FIXME: This code will be duplicated across all extensions that introduce 
+ * a registry of some kind in the interpreter. 
  */
 
 struct addrp_interpreter_context {
@@ -230,13 +236,16 @@ static bool tag_address_part_validate
 	const struct sieve_address_part *addrp;
 
 	/* Syntax:   
-	 *   ":localpart" / ":domain" / ":all"
+	 *   ":localpart" / ":domain" / ":all" (subject to extension)
    */
 	
 	/* Get address_part from registry */
 	addrp = sieve_address_part_find
 		(validator, sieve_ast_argument_tag(*arg), &ext_id);
 	
+	/* In theory, addrp can never be NULL, because we must have found it earlier
+	 * to get here.
+	 */
 	if ( addrp == NULL ) {
 		sieve_command_validate_error(validator, cmd, 
 			"unknown address-part modifier '%s' "
