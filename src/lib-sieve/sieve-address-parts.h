@@ -14,12 +14,22 @@ enum sieve_address_part_code {
 
 struct sieve_address_part {
 	const char *identifier;
-	const struct sieve_argument *tag;
 	
 	enum sieve_address_part_code code;
+	
 	const struct sieve_extension *extension;
+	unsigned int ext_code;
 
 	const char *(*extract_from)(const struct message_address *address);
+};
+
+struct sieve_address_part_extension {
+	/* Either a single addr-part in this extension ... */
+	const struct sieve_address_part *address_part;
+	
+	/* ... or multiple: then the extension must handle emit/read */
+	const struct sieve_address_part *(*get_part)
+		(unsigned int code);
 };
 
 void sieve_address_parts_link_tags
@@ -28,24 +38,34 @@ void sieve_address_parts_link_tags
 		unsigned int id_code);
 		
 void sieve_address_part_register
-	(struct sieve_validator *validator, const struct sieve_address_part *addrp); 
+	(struct sieve_validator *validator, 
+	const struct sieve_address_part *addrp, int ext_id);
 const struct sieve_address_part *sieve_address_part_find
-		(struct sieve_validator *validator, const char *addrp_name);
+	(struct sieve_validator *validator, const char *identifier,
+		int *ext_id);
+void sieve_address_part_extension_set
+	(struct sieve_interpreter *interpreter, int ext_id,
+		const struct sieve_address_part_extension *ext);
 
-const struct sieve_address_part all_address_part;
-const struct sieve_address_part local_address_part;
-const struct sieve_address_part domain_address_part;
+extern const struct sieve_argument address_part_tag;
+
+extern const struct sieve_address_part all_address_part;
+extern const struct sieve_address_part local_address_part;
+extern const struct sieve_address_part domain_address_part;
 
 extern const struct sieve_address_part *sieve_core_address_parts[];
 extern const unsigned int sieve_core_address_parts_count;
 
 const struct sieve_address_part *sieve_opr_address_part_read
-  (struct sieve_binary *sbin, sieve_size_t *address);
+  (struct sieve_interpreter *interpreter, 
+  	struct sieve_binary *sbin, sieve_size_t *address);
 bool sieve_opr_address_part_dump
-	(struct sieve_binary *sbin, sieve_size_t *address);
+	(struct sieve_interpreter *interpreter,
+		struct sieve_binary *sbin, sieve_size_t *address);
 
 bool sieve_address_stringlist_match
-	(struct sieve_address_part *addrp, struct sieve_coded_stringlist *key_list,
-		struct sieve_comparator *cmp, const char *data);
+	(const struct sieve_address_part *addrp, 
+		struct sieve_coded_stringlist *key_list,
+		const struct sieve_comparator *cmp, const char *data);
 
 #endif /* __SIEVE_ADDRESS_PARTS_H */

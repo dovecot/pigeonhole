@@ -123,6 +123,12 @@ int sieve_binary_extension_get_index
 	return -1;
 }
 
+int sieve_binary_extensions_count(struct sieve_binary *sbin) 
+{
+	return (int) array_count(&sbin->extensions);
+}
+
+
 /*
  * Emission functions
  */

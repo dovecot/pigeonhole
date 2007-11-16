@@ -151,7 +151,7 @@ static bool cmp_interpreter_load(struct sieve_interpreter *interpreter)
 		p_new(pool, struct cmp_interpreter_context, 1);
 	
 	/* Setup comparator registry */
-	p_array_init(&ctx->cmp_extensions, default_pool, 4);
+	p_array_init(&ctx->cmp_extensions, pool, 4);
 
 	sieve_interpreter_extension_set_context(interpreter, ext_my_id, ctx);
 	
@@ -177,7 +177,7 @@ static bool tag_comparator_generate
 	struct sieve_command_context *cmd);
 
 const struct sieve_argument comparator_tag = 
-	{ "comparator", tag_comparator_validate, tag_comparator_generate };
+	{ "comparator", NULL, tag_comparator_validate, tag_comparator_generate };
 
 static bool tag_comparator_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 

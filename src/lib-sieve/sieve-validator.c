@@ -82,7 +82,6 @@ struct sieve_validator *sieve_validator_create(struct sieve_ast *ast, struct sie
 	sieve_validator_register_core_commands(validator);
 	sieve_validator_register_core_tests(validator);
 
-		
 	return validator;
 }
 
@@ -101,10 +100,13 @@ inline pool_t sieve_validator_pool(struct sieve_validator *validator)
 
 /* Command registry */
 
+struct sieve_tag_registration;
+
 struct sieve_command_registration {
 	const struct sieve_command *command;
 	
 	struct hash_table *tags;
+	ARRAY_DEFINE(instanced_tags, struct sieve_tag_registration *); 
 };
 
 /* Dummy function */
@@ -116,10 +118,10 @@ static bool _cmd_unknown_validate
 	return FALSE;
 }
 
-static const struct sieve_command unknown_command = { "", SCT_COMMAND, NULL, _cmd_unknown_validate, NULL, NULL };
-static const struct sieve_command_registration unknown_command_registration = { &unknown_command, NULL };
-static const struct sieve_command unknown_test = { "", SCT_TEST, NULL, _cmd_unknown_validate, NULL, NULL };
-static const struct sieve_command_registration unknown_test_registration = { &unknown_test, NULL };
+static const struct sieve_command unknown_command = 
+	{ "", SCT_COMMAND, NULL, _cmd_unknown_validate, NULL, NULL };
+static const struct sieve_command unknown_test = 
+	{ "", SCT_TEST, NULL, _cmd_unknown_validate, NULL, NULL };
 
 static void sieve_validator_register_core_tests(struct sieve_validator *validator) 
 {
@@ -139,26 +141,37 @@ static void sieve_validator_register_core_commands(struct sieve_validator *valid
 	}
 }
 
-void sieve_validator_register_command(struct sieve_validator *validator, const struct sieve_command *command) 
+static void _sieve_validator_register_command
+	(struct sieve_validator *validator, const struct sieve_command *command,
+	const char *identifier) 
 {
-	struct sieve_command_registration *record = p_new(validator->pool, struct sieve_command_registration, 1);
+	struct sieve_command_registration *record = 
+		p_new(validator->pool, struct sieve_command_registration, 1);
 	record->command = command;
 	record->tags = NULL;
-	hash_insert(validator->commands, (void *) command->identifier, (void *) record);
+	hash_insert(validator->commands, (void *) identifier, (void *) record);
 	
 	if ( command->registered != NULL ) {
 		command->registered(validator, record);
 	}
 }
 
-static void sieve_validator_register_unknown_command(struct sieve_validator *validator, const char *command) 
-{		
-	hash_insert(validator->commands, (void *) command, (void *) &unknown_command_registration);
+void sieve_validator_register_command
+	(struct sieve_validator *validator, const struct sieve_command *command) 
+{
+	_sieve_validator_register_command(validator, command, command->identifier);
 }
 
-static void sieve_validator_register_unknown_test(struct sieve_validator *validator, const char *test) 
+static void sieve_validator_register_unknown_command
+	(struct sieve_validator *validator, const char *command) 
+{
+	_sieve_validator_register_command(validator, &unknown_command, command);		
+}
+
+static void sieve_validator_register_unknown_test
+	(struct sieve_validator *validator, const char *test) 
 {		
-	hash_insert(validator->commands, (void *) test, (void *) &unknown_test_registration);
+	_sieve_validator_register_command(validator, &unknown_test, test);		
 }
 
 static struct sieve_command_registration *sieve_validator_find_command_registration
@@ -193,7 +206,8 @@ static bool _unknown_tag_validate
 	return FALSE;
 }
 
-static const struct sieve_argument _unknown_tag = { "", _unknown_tag_validate, NULL };
+static const struct sieve_argument _unknown_tag = 
+	{ "", NULL, _unknown_tag_validate, NULL };
 
 static void _sieve_validator_register_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
@@ -217,7 +231,19 @@ void sieve_validator_register_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
 	const struct sieve_argument *tag, unsigned int id_code) 
 {
-	_sieve_validator_register_tag(validator, cmd_reg, tag, tag->identifier, id_code);
+	if ( tag->is_instance_of == NULL )
+		_sieve_validator_register_tag(validator, cmd_reg, tag, tag->identifier, id_code);
+	else {
+		struct sieve_tag_registration *reg = 
+			p_new(validator->pool, struct sieve_tag_registration, 1);
+		reg->tag = tag;
+		reg->id_code = id_code;
+
+		if ( !array_is_created(&cmd_reg->instanced_tags) ) 
+				p_array_init(&cmd_reg->instanced_tags, validator->pool, 1);
+				
+		array_append(&cmd_reg->instanced_tags, &reg, 1);
+	}
 }
 
 static void sieve_validator_register_unknown_tag
@@ -228,21 +254,39 @@ static void sieve_validator_register_unknown_tag
 }
 
 static const struct sieve_argument *sieve_validator_find_tag
-	(struct sieve_command_registration *cmd_reg, const char *tag, unsigned int *id_code) 
+	(struct sieve_validator *validator, 
+		struct sieve_command_registration *cmd_reg, 
+		const char *tag, unsigned int *id_code) 
 {
+	unsigned int i;
 	const struct sieve_tag_registration *reg;
 	
 	*id_code = 0;
 	
-	if ( cmd_reg->tags == NULL ) return NULL;
+	if ( cmd_reg->tags != NULL ) {
+		reg = (const struct sieve_tag_registration *) 
+			hash_lookup(cmd_reg->tags, tag);
 	
-	reg = (const struct sieve_tag_registration *) hash_lookup(cmd_reg->tags, tag);
+		if ( reg != NULL ) {
+			*id_code = reg->id_code;
+  		return reg->tag; 
+  	}
+  }
+  
+  /* Not found so far, try the instanced tags */
+  if ( array_is_created(&cmd_reg->instanced_tags) ) {
+	  for ( i = 0; i < array_count(&cmd_reg->instanced_tags); i++ ) {
+	  	struct sieve_tag_registration * const *reg = 
+	  		array_idx(&cmd_reg->instanced_tags, i);
+  	
+	  	if ( (*reg)->tag != NULL && (*reg)->tag->is_instance_of(validator, tag) ) {
+	  		*id_code = (*reg)->id_code;
+	  		return (*reg)->tag;
+	  	}
+	  }
+	}
 	
-	if ( reg == NULL )return NULL;
-	
-	*id_code = reg->id_code;
-	
-  return reg->tag; 
+	return NULL;
 }
 
 /* Extension support */
@@ -301,11 +345,11 @@ static bool sieve_validate_match_type_tag
 }
 
 static const struct sieve_argument match_is_tag = 
-	{ "is", sieve_validate_match_type_tag, NULL };
+	{ "is", NULL, sieve_validate_match_type_tag, NULL };
 static const struct sieve_argument match_contains_tag = 
-	{ "contains", sieve_validate_match_type_tag, NULL };
+	{ "contains", NULL, sieve_validate_match_type_tag, NULL };
 static const struct sieve_argument match_matches_tag = 
-	{ "matches", sieve_validate_match_type_tag, NULL };
+	{ "matches", NULL, sieve_validate_match_type_tag, NULL };
 
 void sieve_validator_link_match_type_tags
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,
@@ -338,13 +382,15 @@ bool sieve_validate_command_arguments
 		
 		if ( cmd_reg == NULL ) {
 			sieve_command_validate_error(
-					validator, cmd, 
-					"!!BUG!!: the '%s' %s seemed to be known before, but somehow its registration got lost",
-					cmd->command->identifier, sieve_command_type_name(cmd->command)
-				);
-			i_error("BUG: the '%s' %s seemed to be known before, but somehow its registration got lost",
-					cmd->command->identifier, sieve_command_type_name(cmd->command)
-				);
+				validator, cmd, 
+				"!!BUG!!: the '%s' %s seemed to be known before, "
+				"but somehow its registration got lost",
+				cmd->command->identifier, sieve_command_type_name(cmd->command)
+			);
+			i_error("BUG: the '%s' %s seemed to be known before, "
+				"but somehow its registration got lost",
+				cmd->command->identifier, sieve_command_type_name(cmd->command)
+			);
 			return FALSE; 
 		}
 	}
@@ -353,18 +399,22 @@ bool sieve_validate_command_arguments
 	while ( sieve_ast_argument_type(arg) == SAAT_TAG ) {
 		unsigned int id_code;
 		const struct sieve_argument *tag = 
-			sieve_validator_find_tag(cmd_reg, sieve_ast_argument_tag(arg), &id_code);
+			sieve_validator_find_tag
+				(validator, cmd_reg, sieve_ast_argument_tag(arg), &id_code);
 		
 		if ( tag == NULL ) {
 			sieve_command_validate_error(validator, cmd, 
-				"unknown tagged argument ':%s' for the %s %s (reported only once at first occurence)",
-				sieve_ast_argument_tag(arg), cmd->command->identifier, sieve_command_type_name(cmd->command));
-			sieve_validator_register_unknown_tag(validator, cmd_reg, sieve_ast_argument_tag(arg));
-			return FALSE;				
+				"unknown tagged argument ':%s' for the %s %s "
+				"(reported only once at first occurence)",
+				sieve_ast_argument_tag(arg), cmd->command->identifier, 
+				sieve_command_type_name(cmd->command));
+			sieve_validator_register_unknown_tag
+				(validator, cmd_reg, sieve_ast_argument_tag(arg));
+			return FALSE;					
 		}
 		
 		/* Check whether previously tagged as unknown */
-		if ( *(tag->identifier) == '\0' ) 
+		if ( tag->identifier != NULL && *(tag->identifier) == '\0' ) 
 			return FALSE;
 		
 		/* Assign the tagged argument type to the ast for later reference (in generator) */
@@ -486,12 +536,16 @@ bool sieve_validate_command_block(struct sieve_validator *validator, struct siev
 	if ( block_required ) {
 		if ( !cmd->ast_node->block ) {
 			sieve_command_validate_error
-				( validator, cmd, "the %s command requires a command block, but it is missing", cmd->command->identifier );
+				( validator, cmd, 
+					"the %s command requires a command block, but it is missing", 
+					cmd->command->identifier );
 			return FALSE;
 		}
 	} else if ( !block_allowed && cmd->ast_node->block ) {
 		sieve_command_validate_error
-				( validator, cmd, "the %s command does not accept a command block, but one is specified anyway", cmd->command->identifier );
+				( validator, cmd, 
+					"the %s command does not accept a command block, but one is specified anyway", 
+					cmd->command->identifier );
 		return FALSE;
 	}
 	
@@ -518,7 +572,9 @@ static bool sieve_validate_test(struct sieve_validator *validator, struct sieve_
 		/* Identifier = "" when the command was previously marked as unknown */
 		if ( *(test->identifier) != '\0' ) {
 			if ( test->type != SCT_TEST ) {
-				sieve_validator_error(validator, tst_node, "attempted to use command '%s' as test", tst_node->identifier);
+				sieve_validator_error(
+					validator, tst_node, 
+					"attempted to use command '%s' as test", tst_node->identifier);
 			 	result = FALSE;
 			} else {
 				struct sieve_command_context *ctx = sieve_command_context_create(tst_node, test); 
@@ -540,7 +596,9 @@ static bool sieve_validate_test(struct sieve_validator *validator, struct sieve_
 			result = FALSE;
 			
 	} else {
-		sieve_validator_error(validator, tst_node, "unknown test '%s' (only reported once at first occurence)", tst_node->identifier);
+		sieve_validator_error(validator, tst_node, 
+			"unknown test '%s' (only reported once at first occurence)", 
+			tst_node->identifier);
 		sieve_validator_register_unknown_test(validator, tst_node->identifier);
 		
 		result = FALSE;
@@ -602,7 +660,10 @@ static bool sieve_validate_command(struct sieve_validator *validator, struct sie
 			result = FALSE;
 			
 	} else {
-		sieve_validator_error(validator, cmd_node, "unknown command '%s' (only reported once at first occurence)", cmd_node->identifier);
+		sieve_validator_error(
+			validator, cmd_node, 
+			"unknown command '%s' (only reported once at first occurence)", 
+			cmd_node->identifier);
 		sieve_validator_register_unknown_command(validator, cmd_node->identifier);
 		
 		result = FALSE;

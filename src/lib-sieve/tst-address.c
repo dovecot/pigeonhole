@@ -113,7 +113,7 @@ static bool tst_address_opcode_dump
             case OPT_MATCH_TYPE:
                 break;
 			case OPT_ADDRESS_PART:
-				if ( !sieve_opr_address_part_dump(sbin, address) )
+				if ( !sieve_opr_address_part_dump(interp, sbin, address) )
 					return FALSE;
 				break;			
             default:
@@ -155,7 +155,7 @@ static bool tst_address_opcode_execute
             case OPT_MATCH_TYPE:
                 break;
 			case OPT_ADDRESS_PART:
-				if ( (addrp = sieve_opr_address_part_read(sbin, address)) == NULL )
+				if ( (addrp = sieve_opr_address_part_read(interp, sbin, address)) == NULL )
 					return FALSE;
 				break;
             default:

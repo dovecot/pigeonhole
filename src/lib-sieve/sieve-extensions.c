@@ -24,10 +24,14 @@ extern const struct sieve_extension envelope_extension;
 /* Plugins (FIXME: make this dynamic) */
 
 extern const struct sieve_extension vacation_extension;
+extern const struct sieve_extension subaddress_extension;
 
 const struct sieve_extension *sieve_core_extensions[] = {
 	&comparator_extension, &address_part_extension, 
-	&fileinto_extension, &reject_extension, &envelope_extension, &vacation_extension
+	&fileinto_extension, &reject_extension, &envelope_extension, 
+	
+	/* 'Plugins' */
+	&vacation_extension, &subaddress_extension
 };
 
 const unsigned int sieve_core_extensions_count =
@@ -78,7 +82,8 @@ static struct hash_table *extension_index;
 static void sieve_extensions_init_registry(void)
 {	
 	p_array_init(&extensions, default_pool, 4);
-	extension_index = hash_create(default_pool, default_pool, 0, NULL, NULL);
+	extension_index = hash_create
+		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 }
 
 int sieve_extension_register(const struct sieve_extension *extension) 

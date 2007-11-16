@@ -24,6 +24,7 @@ const struct sieve_extension *sieve_binary_extension_get_by_index
 	(struct sieve_binary *sbin, int index, int *ext_id);
 int sieve_binary_extension_get_index
 	(struct sieve_binary *sbin, int ext_id);
+int sieve_binary_extensions_count(struct sieve_binary *sbin);
 	
 /* 
  * Code emission 

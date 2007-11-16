@@ -13,8 +13,10 @@ AM_CPPFLAGS = \
 plugin_dir = \
 	$(top_srcdir)/src/lib-sieve/plugins
 
+# These are not actual plugins just yet...
 plugins = \
-	$(plugin_dir)/vacation/lib_ext_vacation.a
+	$(plugin_dir)/vacation/lib_ext_vacation.a \
+	$(plugin_dir)/subaddress/lib_ext_subaddress.a
 
 sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
 sieve_test_LDFLAGS = -export-dynamic -Wl,--start-group

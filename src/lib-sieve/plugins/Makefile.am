@@ -1,1 +1,1 @@
-SUBDIRS = vacation
+SUBDIRS = vacation subaddress

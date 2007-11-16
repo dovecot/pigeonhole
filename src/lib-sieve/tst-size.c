@@ -77,9 +77,9 @@ static bool tst_size_validate_under_tag
 /* Test registration */
 
 static const struct sieve_argument size_over_tag = 
-	{ "over", tst_size_validate_over_tag, NULL };
+	{ "over", NULL, tst_size_validate_over_tag, NULL };
 static const struct sieve_argument size_under_tag = 
-	{ "under", tst_size_validate_under_tag, NULL };
+	{ "under", NULL, tst_size_validate_under_tag, NULL };
 
 bool tst_size_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {

@@ -22,7 +22,7 @@ struct sieve_interpreter {
 	struct sieve_binary *binary;
 		
 	/* Object registries */
-	ARRAY_DEFINE(ext_contexts, void); 
+	ARRAY_DEFINE(ext_contexts, void *); 
 		
 	/* Execution status */
 	sieve_size_t pc; 
@@ -33,8 +33,12 @@ struct sieve_interpreter {
 	struct mail *mail;	
 };
 
+extern struct sieve_extension comparator_extension;
+extern struct sieve_extension address_part_extension;
+
 struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary) 
 {
+	int i;
 	pool_t pool;
 	struct sieve_interpreter *interp;
 	
@@ -48,8 +52,20 @@ struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary)
 	
 	interp->pc = 0;
 
-	array_create(&interp->ext_contexts, pool, sizeof(void *), 
-		sieve_extensions_get_count());
+	p_array_init(&interp->ext_contexts, pool, 4);
+	//array_create(&interp->ext_contexts, pool, sizeof(void *), 
+	//		sieve_extensions_get_count());
+	
+	(void)comparator_extension.interpreter_load(interp);	
+	(void)address_part_extension.interpreter_load(interp);	
+
+	for ( i = 0; i < sieve_binary_extensions_count(binary); i++ ) {
+		const struct sieve_extension *ext = 
+			sieve_binary_extension_get_by_index(binary, i, NULL);
+		
+		if ( ext->interpreter_load != NULL )
+			ext->interpreter_load(interp);
+	}
 	
 	return interp;
 }
@@ -71,16 +87,20 @@ inline pool_t sieve_interpreter_pool(struct sieve_interpreter *interp)
 inline void sieve_interpreter_extension_set_context
 	(struct sieve_interpreter *interpreter, int ext_id, void *context)
 {
-	array_idx_set(&interpreter->ext_contexts, (unsigned int) ext_id, context);	
+	array_idx_set(&interpreter->ext_contexts, (unsigned int) ext_id, &context);	
 }
 
 inline const void *sieve_interpreter_extension_get_context
 	(struct sieve_interpreter *interpreter, int ext_id) 
 {
-	if  ( ext_id < 0 || ext_id > (int) array_count(&interpreter->ext_contexts) )
+	void * const *ctx;
+
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&interpreter->ext_contexts) )
 		return NULL;
 	
-	return array_idx(&interpreter->ext_contexts, (unsigned int) ext_id);		
+	ctx = array_idx(&interpreter->ext_contexts, (unsigned int) ext_id);		
+
+	return *ctx;
 }
 
 

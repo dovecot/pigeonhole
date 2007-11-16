@@ -199,17 +199,17 @@ static bool cmd_vacation_validate_handle_tag
 /* Command registration */
 
 static const struct sieve_argument vacation_days_tag = 
-	{ "days", cmd_vacation_validate_days_tag, NULL };
+	{ "days", NULL, cmd_vacation_validate_days_tag, NULL };
 static const struct sieve_argument vacation_subject_tag =
-	{ "subject", cmd_vacation_validate_subject_tag, NULL };
+	{ "subject", NULL, cmd_vacation_validate_subject_tag, NULL };
 static const struct sieve_argument vacation_from_tag = 
-	{ "from", cmd_vacation_validate_from_tag, NULL };
+	{ "from", NULL, cmd_vacation_validate_from_tag, NULL };
 static const struct sieve_argument vacation_addresses_tag = 
-	{ "addresses", cmd_vacation_validate_addresses_tag, NULL };
+	{ "addresses", NULL, cmd_vacation_validate_addresses_tag, NULL };
 static const struct sieve_argument vacation_mime_tag = 
-	{ "mime", cmd_vacation_validate_mime_tag, NULL };
+	{ "mime", NULL, cmd_vacation_validate_mime_tag, NULL };
 static const struct sieve_argument vacation_handle_tag = 
-	{ "handle", cmd_vacation_validate_handle_tag, NULL };
+	{ "handle", NULL, cmd_vacation_validate_handle_tag, NULL };
 
 enum cmd_vacation_optional {
 	OPT_DAYS,
