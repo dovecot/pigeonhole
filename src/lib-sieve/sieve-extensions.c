@@ -15,6 +15,18 @@ static void sieve_extensions_deinit_registry(void);
 extern const struct sieve_extension comparator_extension;
 extern const struct sieve_extension address_part_extension;
 
+/* Dummy extensions */
+
+static const struct sieve_extension comparator_i_octet_extension = {
+	"comparator-i;octet",
+	NULL, NULL, NULL, NULL, NULL, NULL
+};
+
+static const struct sieve_extension comparator_i_ascii_casemap_extension = {
+	"comparator-i;ascii-casemap",
+	NULL, NULL, NULL, NULL, NULL, NULL
+};
+
 /* Base extensions */
 
 extern const struct sieve_extension fileinto_extension;
@@ -28,6 +40,7 @@ extern const struct sieve_extension subaddress_extension;
 
 const struct sieve_extension *sieve_core_extensions[] = {
 	&comparator_extension, &address_part_extension, 
+	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension, 
 	&fileinto_extension, &reject_extension, &envelope_extension, 
 	
 	/* 'Plugins' */
