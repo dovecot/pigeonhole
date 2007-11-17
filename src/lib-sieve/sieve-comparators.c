@@ -61,7 +61,7 @@ static bool cmp_extension_load(int ext_id)
 
 /* 
  * Validator context:
- *   name-based address-part registry. 
+ *   name-based comparator registry. 
  *
  * FIXME: This code will be duplicated across all extensions that introduce 
  * a registry of some kind in the validator. 
@@ -69,7 +69,7 @@ static bool cmp_extension_load(int ext_id)
  
 struct cmp_validator_registration {
 	int ext_id;
-	const struct sieve_comparator *address_part;
+	const struct sieve_comparator *comparator;
 };
  
 struct cmp_validator_context {
@@ -90,7 +90,7 @@ static void _sieve_comparator_register
 	struct cmp_validator_registration *reg;
 	
 	reg = p_new(pool, struct cmp_validator_registration, 1);
-	reg->address_part = cmp;
+	reg->comparator = cmp;
 	reg->ext_id = ext_id;
 	
 	hash_insert(ctx->registrations, (void *) cmp->identifier, (void *) reg);
@@ -130,11 +130,11 @@ bool cmp_validator_load(struct sieve_validator *validator)
 	struct cmp_validator_context *ctx = 
 		p_new(pool, struct cmp_validator_context, 1);
 	
-	/* Setup address-part registry */
+	/* Setup comparator registry */
 	ctx->registrations = hash_create
 		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 
-	/* Register core address-parts */
+	/* Register core comparators */
 	for ( i = 0; i < sieve_core_comparators_count; i++ ) {
 		const struct sieve_comparator *cmp = sieve_core_comparators[i];
 		

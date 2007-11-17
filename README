@@ -5,37 +5,47 @@ This package is currently not built for installation. To test the sieve
 engine it is currently only useful to execute the binaries in the 
 src/sieve-bin/ directory:
 
-sievec <sieve-file>:
+sievec <sieve-file>
 
 Compiles the script and produces various dumps of intermittent compilation
 results. This already works pretty good for all supported features.
 
-sieve_test <sieve-file>:
+sieve_test <sieve-file>
 
 Reads mail message from standard input and executes the sieve script to
 produce a verdict. Currently only prints an execution dump with the 
 instructions encountered during execution.
 
-In the directory ./sieve various example are test scripts are bundled. 
+In the directory ./sieve various example scripts are bundled. 
 
-FEATURES
+Features
 --------
 
 * Well-structured 3-stage compiler; uses dovecot framework and avoids using
-  lex/yucc. 
+  lex/yucc. Parser doesn't bail on first error, but tries to find more.
 * Highly extendable with new sieve capabilities. This keeps the possibility
-  of plugins in mind. Should provide the necessary infrastructure for at least
-  all currently known (proposed) extensions. 
+  of plugins in mind. Should eventually provide the necessary infrastructure for 
+  at least all currently known (proposed) extensions.  
 
 What works:
-* Scripts can be parsed.
+* Scripts can be parsed, the grammar is fully supported. 
 * Script validation (contextual analysis) works almost completely.
 * Script code generation works for most core commands with exception
-  of match-related arguments. Comparators already work somewhat though
-* Interpreter runs and dumps core commands and tests. It is not possible
-  to specify alternative addr-parts or match-types yet though
+  of match-type arguments. Comparators and address-part modifiers already work.
+* Interpreter runs and dumps core commands and tests. Comparators and 
+  address-part modifiers have the desired effect. Match types other than :is are
+  not supported yet. Action commands have no effect. 
+ 
+Implemented extensions:
+	subaddress: full
+	comparator-i;ascii-numeric: full, but fails to handle leading zeros
+	vacation: validation and generation only. Execution is broken.
+	
+Other extensionsions will be added a soon as the necessary infrastructure is 
+available. Extensions supported by cmu-sieve have priority, although variables 
+might be implemented somewhere in between. 
 
-DESIGN
+Design
 ------
 
 The compiler consists of the following stages:
@@ -62,14 +72,16 @@ INTERPRETER: sieve-interpreter.c
 TODO
 ----
 
-* Implement address-part execution
 * Implement match-type execution
-* Produce a fully working interpreter that actually executes actions
+* Produce a fully working interpreter that actually executes actions, currently
+  tests are evaluated and actions just print their occurence.
 * Give the binary format some more thought, it is currently quite rough and
   to the point. 
-* Produce a substitute sieve plugin for deliver (currently a stub)
-* Automate script tests
+* Produce a substitute sieve plugin for deliver (currently a stub and not 
+  part of the make process)
+* Automate script tests; i.e. build a test suite.
 * Use mmap for the binary script representation. 
 * Allow the currently in-memory byte-code to be stored as a script binary
-* Use dovecot streams for code dump
+* Use dovecot streams for code dump (debugging), currently the code is riddled 
+  with printf()s. 
 

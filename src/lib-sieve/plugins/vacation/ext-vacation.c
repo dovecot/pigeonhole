@@ -1,3 +1,13 @@
+/* Extension vacation
+ * ------------------
+ *
+ * Author: Stephan Bosch
+ * Specification: draft-ietf-sieve-vacation-07
+ * Implementation: validation and generation work, no interpretation/execution.
+ * Status: under development
+ * 
+ */
+
 #include <stdio.h>
 
 #include "sieve-common.h"
@@ -274,8 +284,8 @@ static bool cmd_vacation_generate
 	sieve_generator_emit_opcode_ext(generator, ext_my_id);
 
 	/* Generate arguments */
-    if ( !sieve_generate_arguments(generator, ctx, NULL) )
-        return FALSE;	
+	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+		return FALSE;	
 
 	return TRUE;
 }

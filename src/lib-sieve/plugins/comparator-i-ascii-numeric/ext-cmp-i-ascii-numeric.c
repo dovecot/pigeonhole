@@ -3,7 +3,7 @@
  *
  * Author: Stephan Bosch
  * Specification: RFC 2244
- * Implementation: 
+ * Implementation: full, but fails to handle leading zeros.
  * Status: experimental, largely untested
  * 
  */
