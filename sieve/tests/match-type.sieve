@@ -1,4 +1,4 @@
-if address :is :comparator "i;octet" :domain "from" "STEPHAN" {
+if address :contains :comparator "i;ascii-casemap" :localpart "from" "STEPHAN" {
 	discard;
 
 	if address :contains :domain :comparator "i;octet" "from" "drunksnipers.com" {
