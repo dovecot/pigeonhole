@@ -57,7 +57,8 @@ const struct sieve_match_type regex_match_type = {
 	"regex",
 	SIEVE_MATCH_TYPE_CUSTOM,
 	&regex_match_extension,
-	0
+	0,
+	NULL
 };
 
 const struct sieve_match_type_extension regex_match_extension = { 

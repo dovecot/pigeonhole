@@ -22,9 +22,9 @@
  */
  
 static void opr_match_type_emit
-	(struct sieve_binary *sbin, struct sieve_match_type *addrp);
+	(struct sieve_binary *sbin, const struct sieve_match_type *mtch);
 static void opr_match_type_emit_ext
-	(struct sieve_binary *sbin, struct sieve_match_type *addrp, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_match_type *mtch, int ext_id);
 
 /* 
  * Address-part 'extension' 
@@ -78,25 +78,25 @@ static inline struct mtch_validator_context *
 
 static void _sieve_match_type_register
 	(pool_t pool, struct mtch_validator_context *ctx, 
-	const struct sieve_match_type *addrp, int ext_id) 
+	const struct sieve_match_type *mtch, int ext_id) 
 {
 	struct mtch_validator_registration *reg;
 	
 	reg = p_new(pool, struct mtch_validator_registration, 1);
-	reg->match_type = addrp;
+	reg->match_type = mtch;
 	reg->ext_id = ext_id;
 	
-	hash_insert(ctx->registrations, (void *) addrp->identifier, (void *) reg);
+	hash_insert(ctx->registrations, (void *) mtch->identifier, (void *) reg);
 }
  
 void sieve_match_type_register
 	(struct sieve_validator *validator, 
-	const struct sieve_match_type *addrp, int ext_id) 
+	const struct sieve_match_type *mtch, int ext_id) 
 {
 	pool_t pool = sieve_validator_pool(validator);
 	struct mtch_validator_context *ctx = get_validator_context(validator);
 
-	_sieve_match_type_register(pool, ctx, addrp, ext_id);
+	_sieve_match_type_register(pool, ctx, mtch, ext_id);
 }
 
 const struct sieve_match_type *sieve_match_type_find
@@ -129,9 +129,9 @@ bool mtch_validator_load(struct sieve_validator *validator)
 
 	/* Register core match-types */
 	for ( i = 0; i < sieve_core_match_types_count; i++ ) {
-		const struct sieve_match_type *addrp = sieve_core_match_types[i];
+		const struct sieve_match_type *mtch = sieve_core_match_types[i];
 		
-		_sieve_match_type_register(pool, ctx, addrp, -1);
+		_sieve_match_type_register(pool, ctx, mtch, -1);
 	}
 
 	sieve_validator_extension_set_context(validator, ext_my_id, ctx);
@@ -231,20 +231,21 @@ static bool tag_match_type_validate
 	struct sieve_command_context *cmd)
 {
 	int ext_id;
-	const struct sieve_match_type *addrp;
+	struct sieve_match_type_context *mtctx;
+	const struct sieve_match_type *mtch;
 
 	/* Syntax:   
-	 *   ":localpart" / ":domain" / ":all" (subject to extension)
+	 *   ":is" / ":contains" / ":matches" (subject to extension)
    */
 	
 	/* Get match_type from registry */
-	addrp = sieve_match_type_find
+	mtch = sieve_match_type_find
 		(validator, sieve_ast_argument_tag(*arg), &ext_id);
 	
-	/* In theory, addrp can never be NULL, because we must have found it earlier
+	/* In theory, mtch can never be NULL, because we must have found it earlier
 	 * to get here.
 	 */
-	if ( addrp == NULL ) {
+	if ( mtch == NULL ) {
 		sieve_command_validate_error(validator, cmd, 
 			"unknown match-type modifier '%s' "
 			"(this error should not occur and is probably a bug)", 
@@ -253,35 +254,43 @@ static bool tag_match_type_validate
 		return FALSE;
 	}
 
-	/* Store match-type in context */
-	(*arg)->context = (void *) addrp;
+	/* Create context */
+	mtctx = p_new(sieve_command_pool(cmd), struct sieve_match_type_context, 1);
+	mtctx->match_type = mtch;
+	mtctx->command_ctx = cmd;
+	
+	(*arg)->context = (void *) mtctx;
 	(*arg)->ext_id = ext_id;
 	
 	/* Skip tag */
 	*arg = sieve_ast_argument_next(*arg);
-
+	
+	if ( mtch->validate != NULL ) {
+		return mtch->validate(validator, arg, mtctx);
+	}
+	
 	return TRUE;
 }
 
 /* Code generation */
 
 static void opr_match_type_emit
-	(struct sieve_binary *sbin, struct sieve_match_type *addrp)
+	(struct sieve_binary *sbin, const struct sieve_match_type *mtch)
 { 
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_MATCH_TYPE);
-	(void) sieve_binary_emit_byte(sbin, addrp->code);
+	(void) sieve_binary_emit_byte(sbin, mtch->code);
 }
 
 static void opr_match_type_emit_ext
-	(struct sieve_binary *sbin, struct sieve_match_type *addrp, int ext_id)
+	(struct sieve_binary *sbin, const struct sieve_match_type *mtch, int ext_id)
 { 
 	unsigned char mtch_code = SIEVE_MATCH_TYPE_CUSTOM + 
 		sieve_binary_extension_get_index(sbin, ext_id);
 	
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_MATCH_TYPE);	
 	(void) sieve_binary_emit_byte(sbin, mtch_code);
-	if ( addrp->extension->match_type == NULL )
-		(void) sieve_binary_emit_byte(sbin, addrp->ext_code);
+	if ( mtch->extension->match_type == NULL )
+		(void) sieve_binary_emit_byte(sbin, mtch->ext_code);
 }
 
 const struct sieve_match_type *sieve_opr_match_type_read
@@ -332,13 +341,13 @@ bool sieve_opr_match_type_dump
 		struct sieve_binary *sbin, sieve_size_t *address)
 {
 	sieve_size_t pc = *address;
-	const struct sieve_match_type *addrp = 
+	const struct sieve_match_type *mtch = 
 		sieve_opr_match_type_read(interpreter, sbin, address);
 	
-	if ( addrp == NULL )
+	if ( mtch == NULL )
 		return FALSE;
 		
-	printf("%08x:   MATCH-TYPE: %s\n", pc, addrp->identifier);
+	printf("%08x:   MATCH-TYPE: %s\n", pc, mtch->identifier);
 	
 	return TRUE;
 }
@@ -348,16 +357,16 @@ static bool tag_match_type_generate
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-	struct sieve_match_type *addrp =
-		(struct sieve_match_type *) (*arg)->context;
+	struct sieve_match_type_context *mtctx =
+		(struct sieve_match_type_context *) (*arg)->context;
 	
-	if ( addrp->extension == NULL ) {
-		if ( addrp->code < SIEVE_MATCH_TYPE_CUSTOM )
-			opr_match_type_emit(sbin, addrp);
+	if ( mtctx->match_type->extension == NULL ) {
+		if ( mtctx->match_type->code < SIEVE_MATCH_TYPE_CUSTOM )
+			opr_match_type_emit(sbin, mtctx->match_type);
 		else
 			return FALSE;
 	} else {
-		opr_match_type_emit_ext(sbin, addrp, (*arg)->ext_id);
+		opr_match_type_emit_ext(sbin, mtctx->match_type, (*arg)->ext_id);
 	} 
 		
 	*arg = sieve_ast_argument_next(*arg);
@@ -386,6 +395,7 @@ const struct sieve_match_type is_match_type = {
 	SIEVE_MATCH_TYPE_IS,
 	NULL,
 	0,
+	NULL
 };
 
 const struct sieve_match_type contains_match_type = {
@@ -393,6 +403,7 @@ const struct sieve_match_type contains_match_type = {
 	SIEVE_MATCH_TYPE_CONTAINS,
 	NULL,
 	0,
+	NULL
 };
 
 const struct sieve_match_type matches_match_type = {
@@ -400,6 +411,7 @@ const struct sieve_match_type matches_match_type = {
 	SIEVE_MATCH_TYPE_MATCHES,
 	NULL,
 	0,
+	NULL
 };
 
 const struct sieve_match_type *sieve_core_match_types[] = {

@@ -11,6 +11,7 @@ enum sieve_match_type_code {
 };
 
 struct sieve_match_type_extension;
+struct sieve_match_type_context;
 
 struct sieve_match_type {
 	const char *identifier;
@@ -19,6 +20,10 @@ struct sieve_match_type {
 	
 	const struct sieve_match_type_extension *extension;
 	unsigned int ext_code;
+	
+	bool (*validate)
+		(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+			struct sieve_match_type_context *ctx);
 };
 
 struct sieve_match_type_extension {
@@ -30,6 +35,12 @@ struct sieve_match_type_extension {
 	/* ... or multiple: then the extension must handle emit/read */
 	const struct sieve_match_type *(*get_part)
 		(unsigned int code);
+};
+
+struct sieve_match_type_context {
+	struct sieve_command_context *command_ctx;
+	const struct sieve_match_type *match_type;
+	void *ctx_data;
 };
 
 void sieve_match_types_link_tags
