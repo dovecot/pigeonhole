@@ -3,6 +3,7 @@
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-comparators.h"
+#include "sieve-match-types.h"
 #include "sieve-address-parts.h"
 
 #include "sieve-validator.h"
@@ -65,7 +66,7 @@ static bool tst_envelope_registered(struct sieve_validator *validator, struct si
 	/* The order of these is not significant */
 	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR);
 	sieve_address_parts_link_tags(validator, cmd_reg, OPT_ADDRESS_PART);
-	sieve_validator_link_match_type_tags(validator, cmd_reg, OPT_MATCH_TYPE);
+	sieve_match_types_link_tags(validator, cmd_reg, OPT_MATCH_TYPE);
 	
 	return TRUE;
 }
@@ -152,6 +153,7 @@ static bool ext_envelope_opcode_dump
                 sieve_opr_comparator_dump(interp, sbin, address);
                 break;
             case OPT_MATCH_TYPE:
+                sieve_opr_match_type_dump(interp, sbin, address);
                 break;
 			case OPT_ADDRESS_PART:
                 sieve_opr_address_part_dump(interp, sbin, address);

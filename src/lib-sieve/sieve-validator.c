@@ -52,11 +52,9 @@ void sieve_validator_error(struct sieve_validator *validator, struct sieve_ast_n
 	va_end(args);
 }
 
-extern struct sieve_extension comparator_extension;
-extern struct sieve_extension address_part_extension;
-
 struct sieve_validator *sieve_validator_create(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
 {
+	unsigned int i;
 	pool_t pool;
 	struct sieve_validator *validator;
 	
@@ -73,8 +71,12 @@ struct sieve_validator *sieve_validator_create(struct sieve_ast *ast, struct sie
 		sieve_extensions_get_count());
 		
 	/* Pre-load core language features implemented as 'extensions' */
-	(void)comparator_extension.validator_load(validator);	
-	(void)address_part_extension.validator_load(validator);	
+	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
+		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
+		
+		if ( ext->validator_load != NULL )
+			(void)ext->validator_load(validator);		
+	}
 
 	/* Setup command registry */
 	validator->commands = hash_create
@@ -325,39 +327,6 @@ inline const void *sieve_validator_extension_get_context(struct sieve_validator 
 		return NULL;
 	
 	return array_idx(&validator->ext_contexts, (unsigned int) ext_id);		
-}
-
-/* Match type validation */
-
-static bool sieve_validate_match_type_tag
-	(struct sieve_validator *validator ATTR_UNUSED, 
-	struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
-{
-	/* Syntax:   
-	 *   ":is" / ":contains" / ":matches"
-   */
-	
-	/* Not implemented, so delete it */
-	*arg = sieve_ast_arguments_delete(*arg, 1);
-		
-	return TRUE;
-}
-
-static const struct sieve_argument match_is_tag = 
-	{ "is", NULL, sieve_validate_match_type_tag, NULL };
-static const struct sieve_argument match_contains_tag = 
-	{ "contains", NULL, sieve_validate_match_type_tag, NULL };
-static const struct sieve_argument match_matches_tag = 
-	{ "matches", NULL, sieve_validate_match_type_tag, NULL };
-
-void sieve_validator_link_match_type_tags
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,
-		unsigned int id_code) 
-{
-	sieve_validator_register_tag(validator, cmd_reg, &match_is_tag, id_code); 	
-	sieve_validator_register_tag(validator, cmd_reg, &match_contains_tag, id_code); 	
-	sieve_validator_register_tag(validator, cmd_reg, &match_matches_tag, id_code); 	
 }
 
 /* Tag Validation API */

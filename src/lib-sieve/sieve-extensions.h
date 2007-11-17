@@ -17,6 +17,9 @@ struct sieve_extension {
 	const struct sieve_operand *operand;
 };
 
+extern const struct sieve_extension *sieve_preloaded_extensions[];
+extern const unsigned int sieve_preloaded_extensions_count;
+
 const struct sieve_extension *sieve_extension_acquire(const char *extension);
 
 /* Extensions state */

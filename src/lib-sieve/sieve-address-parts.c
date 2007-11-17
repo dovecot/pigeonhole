@@ -339,7 +339,7 @@ bool sieve_opr_address_part_dump
 	if ( addrp == NULL )
 		return FALSE;
 		
-	printf("%08x:   ADDRP: %s\n", pc, addrp->identifier);
+	printf("%08x:   ADDRESS-PART: %s\n", pc, addrp->identifier);
 	
 	return TRUE;
 }

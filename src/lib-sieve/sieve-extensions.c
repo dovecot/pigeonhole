@@ -10,10 +10,18 @@
 static void sieve_extensions_init_registry(void);
 static void sieve_extensions_deinit_registry(void);
 
-/* Core extensions */
+/* Pre-loaded extensions */
 
 extern const struct sieve_extension comparator_extension;
+extern const struct sieve_extension match_type_extension;
 extern const struct sieve_extension address_part_extension;
+
+const struct sieve_extension *sieve_preloaded_extensions[] = {
+	&comparator_extension, &match_type_extension, &address_part_extension 
+};
+
+const unsigned int sieve_preloaded_extensions_count = 
+	N_ELEMENTS(sieve_preloaded_extensions);
 
 /* Dummy extensions */
 
@@ -40,7 +48,7 @@ extern const struct sieve_extension subaddress_extension;
 extern const struct sieve_extension comparator_i_ascii_numeric_extension;
 
 const struct sieve_extension *sieve_core_extensions[] = {
-	&comparator_extension, &address_part_extension, 
+	&comparator_extension, &match_type_extension, &address_part_extension, 
 	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension, 
 	&fileinto_extension, &reject_extension, &envelope_extension, 
 	

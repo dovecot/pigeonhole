@@ -73,6 +73,8 @@ TODO
 ----
 
 * Implement match-type execution
+* Resolve code duplication amongst comparator, address-part and match-type 
+  support as much as possible. 
 * Produce a fully working interpreter that actually executes actions, currently
   tests are evaluated and actions just print their occurence.
 * Give the binary format some more thought, it is currently quite rough and

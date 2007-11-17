@@ -33,12 +33,10 @@ struct sieve_interpreter {
 	struct mail *mail;	
 };
 
-extern struct sieve_extension comparator_extension;
-extern struct sieve_extension address_part_extension;
-
 struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary) 
 {
-	int i;
+	unsigned int i;
+	int idx;
 	pool_t pool;
 	struct sieve_interpreter *interp;
 	
@@ -53,15 +51,19 @@ struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary)
 	interp->pc = 0;
 
 	p_array_init(&interp->ext_contexts, pool, 4);
-	//array_create(&interp->ext_contexts, pool, sizeof(void *), 
-	//		sieve_extensions_get_count());
-	
-	(void)comparator_extension.interpreter_load(interp);	
-	(void)address_part_extension.interpreter_load(interp);	
 
-	for ( i = 0; i < sieve_binary_extensions_count(binary); i++ ) {
+	/* Pre-load core language features implemented as 'extensions' */
+	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
+		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
+		
+		if ( ext->interpreter_load != NULL )
+			(void)ext->interpreter_load(interp);		
+	}
+
+	/* Load other extensions listed in the binary */
+	for ( idx = 0; idx < sieve_binary_extensions_count(binary); idx++ ) {
 		const struct sieve_extension *ext = 
-			sieve_binary_extension_get_by_index(binary, i, NULL);
+			sieve_binary_extension_get_by_index(binary, idx, NULL);
 		
 		if ( ext->interpreter_load != NULL )
 			ext->interpreter_load(interp);

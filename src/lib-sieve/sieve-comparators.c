@@ -119,7 +119,7 @@ const struct sieve_comparator *sieve_comparator_find
 
 	if ( ext_id != NULL ) *ext_id = reg->ext_id;
 
-  return reg->address_part;
+  return reg->comparator;
 }
 
 bool cmp_validator_load(struct sieve_validator *validator)
@@ -347,7 +347,7 @@ bool sieve_opr_comparator_dump
 	if ( cmp == NULL )
 		return FALSE;
 		
-	printf("%08x:   CMP: %s\n", pc, cmp->identifier);
+	printf("%08x:   COMPARATOR: %s\n", pc, cmp->identifier);
 	
 	return TRUE;
 }

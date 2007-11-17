@@ -4,6 +4,7 @@
 #include "sieve-commands-private.h"
 
 #include "sieve-comparators.h"
+#include "sieve-match-types.h"
 #include "sieve-address-parts.h"
 
 #include "sieve-validator.h"
@@ -36,7 +37,7 @@ bool tst_address_registered(struct sieve_validator *validator, struct sieve_comm
 	/* The order of these is not significant */
 	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR );
 	sieve_address_parts_link_tags(validator, cmd_reg, OPT_ADDRESS_PART);
-	sieve_validator_link_match_type_tags(validator, cmd_reg, OPT_MATCH_TYPE);
+	sieve_match_types_link_tags(validator, cmd_reg, OPT_MATCH_TYPE);
 
 	return TRUE;
 }
@@ -111,6 +112,8 @@ static bool tst_address_opcode_dump
 					return FALSE;
                 break;
             case OPT_MATCH_TYPE:
+				if ( !sieve_opr_match_type_dump(interp, sbin, address) )
+                    return FALSE;
                 break;
 			case OPT_ADDRESS_PART:
 				if ( !sieve_opr_address_part_dump(interp, sbin, address) )
@@ -135,6 +138,7 @@ static bool tst_address_opcode_execute
 	struct mail *mail = sieve_interpreter_get_mail(interp);
 	
 	const struct sieve_comparator *cmp = &i_octet_comparator;
+	const struct sieve_match_type *mtch = &is_match_type;
 	const struct sieve_address_part *addrp = &all_address_part;
 	unsigned int opt_code;
 	struct sieve_coded_stringlist *hdr_list;
@@ -153,6 +157,8 @@ static bool tst_address_opcode_execute
 					return FALSE;
                 break;
             case OPT_MATCH_TYPE:
+                if ( (mtch = sieve_opr_match_type_read(interp, sbin, address)) == NULL )
+					return FALSE;
                 break;
 			case OPT_ADDRESS_PART:
 				if ( (addrp = sieve_opr_address_part_read(interp, sbin, address)) == NULL )

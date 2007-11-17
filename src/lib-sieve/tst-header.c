@@ -3,6 +3,7 @@
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-comparators.h"
+#include "sieve-match-types.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -31,7 +32,7 @@ bool tst_header_registered(struct sieve_validator *validator, struct sieve_comma
 {
 	/* The order of these is not significant */
 	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR);
-	sieve_validator_link_match_type_tags(validator, cmd_reg, OPT_MATCH_TYPE);
+	sieve_match_types_link_tags(validator, cmd_reg, OPT_MATCH_TYPE);
 
 	return TRUE;
 }
@@ -102,6 +103,7 @@ static bool tst_header_opcode_dump
 				sieve_opr_comparator_dump(interp, sbin, address);
 				break;
 			case OPT_MATCH_TYPE:
+				sieve_opr_match_type_dump(interp, sbin, address);
 				break;
 			default: 
 				return FALSE;
@@ -123,6 +125,7 @@ static bool tst_header_opcode_execute
 
 	unsigned int opt_code;
 	const struct sieve_comparator *cmp = &i_octet_comparator;
+	const struct sieve_match_type *mtch = &is_match_type;
 	struct sieve_coded_stringlist *hdr_list;
 	struct sieve_coded_stringlist *key_list;
 	string_t *hdr_item;
@@ -138,6 +141,7 @@ static bool tst_header_opcode_execute
                 cmp = sieve_opr_comparator_read(interp, sbin, address);
                 break;
             case OPT_MATCH_TYPE:
+                mtch = sieve_opr_match_type_read(interp, sbin, address);
                 break;
             default:
                 return FALSE;
