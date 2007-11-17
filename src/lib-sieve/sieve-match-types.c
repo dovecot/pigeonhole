@@ -265,6 +265,10 @@ static bool tag_match_type_validate
 	/* Skip tag */
 	*arg = sieve_ast_argument_next(*arg);
 	
+	/* Check whether this match type requires additional validation. 
+	 * Additional validation can override the match type recorded in the context 
+	 * for later code generation. 
+	 */
 	if ( mtch->validate != NULL ) {
 		return mtch->validate(validator, arg, mtctx);
 	}
@@ -311,22 +315,22 @@ const struct sieve_match_type *sieve_opr_match_type_read
 				return NULL;
 		} else {
 			int ext_id = -1;
-			const struct sieve_match_type_extension *ap_ext;
+			const struct sieve_match_type_extension *mtch_ext;
 
 			if ( sieve_binary_extension_get_by_index(sbin,
 				mtch_code - SIEVE_MATCH_TYPE_CUSTOM, &ext_id) == NULL )
 				return NULL; 
 
-			ap_ext = sieve_match_type_extension_get(interpreter, ext_id); 
+			mtch_ext = sieve_match_type_extension_get(interpreter, ext_id); 
  
-			if ( ap_ext != NULL ) {  	
+			if ( mtch_ext != NULL ) {  	
 				unsigned int code;
-				if ( ap_ext->match_type != NULL )
-					return ap_ext->match_type;
+				if ( mtch_ext->match_type != NULL )
+					return mtch_ext->match_type;
 		  	
 				if ( sieve_binary_read_byte(sbin, address, &code) &&
-					ap_ext->get_part != NULL )
-				return ap_ext->get_part(code);
+					mtch_ext->get_match != NULL )
+					return mtch_ext->get_match(code);
 			} else {
 				i_info("Unknown match-type modifier %d.", mtch_code); 
 			}

@@ -33,13 +33,18 @@ struct sieve_match_type_extension {
 	const struct sieve_match_type *match_type;
 	
 	/* ... or multiple: then the extension must handle emit/read */
-	const struct sieve_match_type *(*get_part)
+	const struct sieve_match_type *(*get_match)
 		(unsigned int code);
 };
 
 struct sieve_match_type_context {
 	struct sieve_command_context *command_ctx;
 	const struct sieve_match_type *match_type;
+	
+	/* Context data could be used in the future to pass data between validator and
+	 * generator in match types that use extra parameters. Currently not 
+	 * necessary, not even for the relational extension.
+	 */
 	void *ctx_data;
 };
 

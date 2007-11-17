@@ -36,6 +36,11 @@ static bool ext_relational_interpreter_load
 
 /* Types */
 
+enum ext_relational_match_type {
+  RELATIONAL_VALUE,
+  RELATIONAL_COUNT
+};
+
 enum relational_match {
 	REL_MATCH_GREATER,
 	REL_MATCH_GREATER_EQUAL,
@@ -45,6 +50,9 @@ enum relational_match {
 	REL_MATCH_NOT_EQUAL,
 	REL_MATCH_INVALID
 };
+
+#define REL_MATCH_INDEX(type, match) \
+	(type * REL_MATCH_INVALID + match)
 
 /* Extension definitions */
 
@@ -69,6 +77,8 @@ static bool ext_relational_load(int ext_id)
 
 /* Validation */
 
+static const struct sieve_match_type rel_match_types[];
+
 static bool ext_relational_parameter_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_match_type_context *ctx)
@@ -86,7 +96,7 @@ static bool ext_relational_parameter_validate
 	/* Did we get a string in the first place ? */ 
 	if ( (*arg)->type != SAAT_STRING ) {
 		sieve_command_validate_error(validator, ctx->command_ctx, 
-			"the :%s match-type requires a constant string argument containing "
+			"the :%s match-type requires a constant string argument being "
 			"one of \"gt\", \"ge\", \"lt\", \"le\", \"eq\" or \"ne\", "
 			"but %s was found", 
 			ctx->match_type->identifier, sieve_ast_argument_name(*arg));
@@ -145,7 +155,7 @@ static bool ext_relational_parameter_validate
 	
 	if ( rel_match >= REL_MATCH_INVALID ) {
 		sieve_command_validate_error(validator, ctx->command_ctx, 
-			"the :%s match-type requires a constant string argument containing "
+			"the :%s match-type requires a constant string argument being "
 			"one of \"gt\", \"ge\", \"lt\", \"le\", \"eq\" or \"ne\", "
 			"but \"%s\" was found", 
 			ctx->match_type->identifier, rel_match_id);
@@ -155,6 +165,13 @@ static bool ext_relational_parameter_validate
 	/* Delete argument */
 	*arg = sieve_ast_arguments_delete(*arg, 1);
 
+	/* Not used just yet */
+	ctx->ctx_data = (void *) rel_match;
+
+	/* Override the actual match type with a parameter-specific one */
+	ctx->match_type = &rel_match_types
+		[REL_MATCH_INDEX(ctx->match_type->ext_code, rel_match)];
+
 	return TRUE;
 }
 
@@ -163,12 +180,9 @@ static bool ext_relational_parameter_validate
 
 /* Extension access structures */
 
-enum ext_relational_match_type {
-  RELATIONAL_VALUE,
-  RELATIONAL_COUNT
-};
-
 extern const struct sieve_match_type_extension relational_match_extension;
+
+/* Parameter-independent match type objects, only used during validation */
 
 const struct sieve_match_type value_match_type = {
 	"value",
@@ -186,18 +200,50 @@ const struct sieve_match_type count_match_type = {
 	ext_relational_parameter_validate
 };
 
+/* Per-parameter match type objects, used for generation/interpretation 
+ * FIXME: This is fast, but kinda hideous.. however, otherwise context data 
+ * would have to be passed along with the match type objects everywhere.. also
+ * not such a great idea. This needs more thought
+ */
+
+#define VALUE_MATCH_TYPE(name, rel_match, func) {     \
+		"value-" name,                                    \
+		SIEVE_MATCH_TYPE_CUSTOM,                          \
+		&relational_match_extension,                      \
+		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match),     \
+		NULL,	                                            \
+	}
+
+#define COUNT_MATCH_TYPE(name, rel_match, func) {     \
+		"count-" name,                                    \
+		SIEVE_MATCH_TYPE_CUSTOM,                          \
+		&relational_match_extension,                      \
+		REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match),     \
+		NULL,	                                            \
+	}
+	
+static const struct sieve_match_type rel_match_types[] = { 
+	VALUE_MATCH_TYPE("gt", REL_MATCH_GREATER, NULL), 
+	VALUE_MATCH_TYPE("ge", REL_MATCH_GREATER_EQUAL, NULL), 
+	VALUE_MATCH_TYPE("lt", REL_MATCH_LESS, NULL), 
+	VALUE_MATCH_TYPE("le", REL_MATCH_LESS_EQUAL, NULL), 
+	VALUE_MATCH_TYPE("eq", REL_MATCH_EQUAL, NULL), 
+	VALUE_MATCH_TYPE("ne", REL_MATCH_NOT_EQUAL, NULL),
+
+	COUNT_MATCH_TYPE("gt", REL_MATCH_GREATER, NULL), 
+	COUNT_MATCH_TYPE("ge", REL_MATCH_GREATER_EQUAL, NULL), 
+	COUNT_MATCH_TYPE("lt", REL_MATCH_LESS, NULL), 
+	COUNT_MATCH_TYPE("le", REL_MATCH_LESS_EQUAL, NULL), 
+	COUNT_MATCH_TYPE("eq", REL_MATCH_EQUAL, NULL), 
+	COUNT_MATCH_TYPE("ne", REL_MATCH_NOT_EQUAL, NULL)
+};
+ 
 static const struct sieve_match_type *ext_relational_get_match 
 	(unsigned int code)
 {
-	switch ( code ) {
-	case RELATIONAL_VALUE:
-		return &value_match_type;
-	case RELATIONAL_COUNT:
-		return &count_match_type;
-	default:
-		break;
-	}
-	
+	if ( code < N_ELEMENTS(rel_match_types) ) 
+		return &rel_match_types[code];
+			
 	return NULL;
 }
 
