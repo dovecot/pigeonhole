@@ -40,6 +40,8 @@ Implemented extensions:
 	subaddress: full
 	comparator-i;ascii-numeric: full, but fails to handle leading zeros
 	vacation: validation and generation only. Execution is broken.
+	relational: validation and generation only. 
+	regex: skeleton
 	
 Other extensionsions will be added a soon as the necessary infrastructure is 
 available. Extensions supported by cmu-sieve have priority, although variables 

@@ -3,7 +3,7 @@
  *
  * Author: Stephan Bosch
  * Specification: RFC 3431
- * Implementation: validation only
+ * Implementation: validation and generation only
  * Status: under development
  * 
  */

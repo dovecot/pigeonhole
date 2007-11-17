@@ -3,7 +3,7 @@
  *
  * Author: Stephan Bosch
  * Specification: draft-murchison-sieve-regex-07
- * Implementation: 
+ * Implementation: skeleton
  * Status: under development
  * 
  */
