@@ -95,7 +95,7 @@ bool tst_address_generate
 /* Code dump */
 
 static bool tst_address_opcode_dump
-	(struct sieve_interpreter *interp ATTR_UNUSED, 
+	(struct sieve_interpreter *interp, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {
 	unsigned int opt_code;
@@ -107,7 +107,7 @@ static bool tst_address_opcode_dump
         while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
             switch ( opt_code ) {
             case OPT_COMPARATOR:
-				if ( !sieve_opr_comparator_dump(sbin, address) )
+				if ( !sieve_opr_comparator_dump(interp, sbin, address) )
 					return FALSE;
                 break;
             case OPT_MATCH_TYPE:
@@ -149,7 +149,7 @@ static bool tst_address_opcode_execute
         while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
             switch ( opt_code ) {
             case OPT_COMPARATOR:
-                if ( (cmp = sieve_opr_comparator_read(sbin, address)) == NULL )
+                if ( (cmp = sieve_opr_comparator_read(interp, sbin, address)) == NULL )
 					return FALSE;
                 break;
             case OPT_MATCH_TYPE:

@@ -192,7 +192,6 @@ void sieve_address_part_extension_set
 	array_idx_set(&ctx->addrp_extensions, (unsigned int) ext_id, &ext);
 }
 
-
 static bool addrp_interpreter_load(struct sieve_interpreter *interpreter)
 {
 	pool_t pool = sieve_interpreter_pool(interpreter);
@@ -282,7 +281,8 @@ static void opr_address_part_emit_ext
 	
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_ADDRESS_PART);	
 	(void) sieve_binary_emit_byte(sbin, addrp_code);
-	(void) sieve_binary_emit_byte(sbin, addrp->ext_code);
+	if ( addrp->extension->address_part == NULL )
+		(void) sieve_binary_emit_byte(sbin, addrp->ext_code);
 }
 
 const struct sieve_address_part *sieve_opr_address_part_read

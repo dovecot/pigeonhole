@@ -12,18 +12,22 @@ enum sieve_address_part_code {
 	SIEVE_ADDRESS_PART_CUSTOM
 };
 
+struct sieve_address_part_extension;
+
 struct sieve_address_part {
 	const char *identifier;
 	
 	enum sieve_address_part_code code;
 	
-	const struct sieve_extension *extension;
+	const struct sieve_address_part_extension *extension;
 	unsigned int ext_code;
 
 	const char *(*extract_from)(const struct message_address *address);
 };
 
 struct sieve_address_part_extension {
+	const struct sieve_extension *extension;
+
 	/* Either a single addr-part in this extension ... */
 	const struct sieve_address_part *address_part;
 	

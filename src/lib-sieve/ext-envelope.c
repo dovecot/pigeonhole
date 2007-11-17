@@ -137,7 +137,7 @@ static bool tst_envelope_generate
  */
  
 static bool ext_envelope_opcode_dump
-	(struct sieve_interpreter *interp ATTR_UNUSED, 
+	(struct sieve_interpreter *interp, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {
 	unsigned opt_code;
@@ -149,7 +149,7 @@ static bool ext_envelope_opcode_dump
         while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
             switch ( opt_code ) {
             case OPT_COMPARATOR:
-                sieve_opr_comparator_dump(sbin, address);
+                sieve_opr_comparator_dump(interp, sbin, address);
                 break;
             case OPT_MATCH_TYPE:
                 break;

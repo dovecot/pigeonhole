@@ -16,7 +16,8 @@ plugin_dir = \
 # These are not actual plugins just yet...
 plugins = \
 	$(plugin_dir)/vacation/lib_ext_vacation.a \
-	$(plugin_dir)/subaddress/lib_ext_subaddress.a
+	$(plugin_dir)/subaddress/lib_ext_subaddress.a \
+	$(plugin_dir)/comparator-i-ascii-numeric/lib_ext_comparator-i-ascii-numeric.a
 
 sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
 sieve_test_LDFLAGS = -export-dynamic -Wl,--start-group

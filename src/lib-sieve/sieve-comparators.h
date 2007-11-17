@@ -11,7 +11,9 @@ struct sieve_comparator {
 	const char *identifier;
 	
 	enum sieve_comparator_code code;
-	const struct sieve_extension *extension;
+	
+	const struct sieve_comparator_extension *extension;
+	unsigned int ext_code;
 	
 	/* Equality, ordering, prefix and substring match */
 	
@@ -21,9 +23,14 @@ struct sieve_comparator {
 };
 
 struct sieve_comparator_extension {
+	const struct sieve_extension *extension;
+	
+	/* Either a single comparator in this extension ... */
 	const struct sieve_comparator *comparator;
-	const struct sieve_comparator *(*read)
-		(struct sieve_binary *sbin, sieve_size_t *address);
+	
+	/* ... or multiple: then the extension must handle emit/read */
+	const struct sieve_comparator *(*get_comparator)
+		(unsigned int code);
 };
 
 void sieve_comparators_link_tag
@@ -35,13 +42,21 @@ const struct sieve_comparator i_octet_comparator;
 const struct sieve_comparator i_ascii_casemap_comparator;
 
 void sieve_comparator_register
-	(struct sieve_validator *validator, const struct sieve_comparator *cmp);
+	(struct sieve_validator *validator, 
+	const struct sieve_comparator *cmp, int ext_id); 
 const struct sieve_comparator *sieve_comparator_find
-		(struct sieve_validator *validator, const char *cmp_name);
+	(struct sieve_validator *validator, const char *identifier,
+		int *ext_id);
 
 const struct sieve_comparator *sieve_opr_comparator_read
-  (struct sieve_binary *sbin, sieve_size_t *address);
+  (struct sieve_interpreter *interpreter, 
+  	struct sieve_binary *sbin, sieve_size_t *address);
 bool sieve_opr_comparator_dump
-	(struct sieve_binary *sbin, sieve_size_t *address);
+	(struct sieve_interpreter *interpreter,
+		struct sieve_binary *sbin, sieve_size_t *address);
+
+void sieve_comparator_extension_set
+	(struct sieve_interpreter *interpreter, int ext_id,
+		const struct sieve_comparator_extension *ext);
 
 #endif /* __SIEVE_COMPARATORS_H */

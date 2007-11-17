@@ -37,6 +37,7 @@ extern const struct sieve_extension envelope_extension;
 
 extern const struct sieve_extension vacation_extension;
 extern const struct sieve_extension subaddress_extension;
+extern const struct sieve_extension comparator_i_ascii_numeric_extension;
 
 const struct sieve_extension *sieve_core_extensions[] = {
 	&comparator_extension, &address_part_extension, 
@@ -44,7 +45,8 @@ const struct sieve_extension *sieve_core_extensions[] = {
 	&fileinto_extension, &reject_extension, &envelope_extension, 
 	
 	/* 'Plugins' */
-	&vacation_extension, &subaddress_extension
+	&vacation_extension, &subaddress_extension, 
+	&comparator_i_ascii_numeric_extension
 };
 
 const unsigned int sieve_core_extensions_count =

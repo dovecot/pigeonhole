@@ -1,1 +1,1 @@
-SUBDIRS = vacation subaddress
+SUBDIRS = vacation subaddress comparator-i-ascii-numeric

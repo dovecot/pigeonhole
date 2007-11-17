@@ -84,10 +84,12 @@ enum ext_subaddress_address_part {
   SUBADDRESS_DETAIL
 };
 
+extern const struct sieve_address_part_extension subaddress_addrp_extension;
+
 const struct sieve_address_part user_address_part = {
 	"user",
 	SIEVE_ADDRESS_PART_CUSTOM,
-	&subaddress_extension,
+	&subaddress_addrp_extension,
 	SUBADDRESS_USER,
 	subaddress_user_extract_from
 };
@@ -95,7 +97,7 @@ const struct sieve_address_part user_address_part = {
 const struct sieve_address_part detail_address_part = {
 	"detail",
 	SIEVE_ADDRESS_PART_CUSTOM,
-	&subaddress_extension,
+	&subaddress_addrp_extension,
 	SUBADDRESS_DETAIL,
 	subaddress_detail_extract_from
 };
@@ -116,6 +118,7 @@ static const struct sieve_address_part *ext_subaddress_get_part
 }
 
 const struct sieve_address_part_extension subaddress_addrp_extension = { 
+	&subaddress_extension,
 	NULL, 
 	ext_subaddress_get_part
 };

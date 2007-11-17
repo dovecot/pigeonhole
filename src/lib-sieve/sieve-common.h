@@ -2,6 +2,13 @@
 #define __SIEVE_COMMON_H
 
 #include <sys/types.h>
+#include <stdint.h>
+
+/* 
+ * Types
+ */
+ 
+typedef uint64_t sieve_number_t;
 
 /*
  * Predeclarations
