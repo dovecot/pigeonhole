@@ -173,7 +173,7 @@ static bool tst_header_opcode_execute
 			
 			int i;
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
-				if ( sieve_stringlist_match(key_list, headers[i], cmp) )
+				if ( sieve_match_stringlist(mtch, cmp, key_list, headers[i]) )
 					matched = TRUE;				
 			} 
 		}

@@ -7,19 +7,33 @@ enum sieve_comparator_code {
 	SIEVE_COMPARATOR_CUSTOM
 };
 
+enum sieve_comparator_flags {
+	SIEVE_COMPARATOR_FLAG_ORDERING = (1 << 0),
+	SIEVE_COMPARATOR_FLAG_EQUALITY = (1 << 1),
+	SIEVE_COMPARATOR_FLAG_PREFIX_MATCH = (1 << 2),
+	SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH = (1 << 3),	
+};
+
 struct sieve_comparator {
 	const char *identifier;
 	
 	enum sieve_comparator_code code;
+	unsigned int flags;
 	
 	const struct sieve_comparator_extension *extension;
 	unsigned int ext_code;
 	
-	/* Equality, ordering, prefix and substring match */
+	/* Equality and ordering */
+
+	int (*compare)(const struct sieve_comparator *cmp, 
+		const char *val1, size_t val1_size, 
+		const char *val2, size_t val2_size);
 	
-	/* ( output similar to strncmp ) */
-	int (*compare)(const void *val1, size_t val1_size, 
-		const void *val2, size_t val2_size);
+	/* Prefix and substring match */
+	
+	bool (*char_match)(const struct sieve_comparator *cmp, 
+		const char **val1, const char *val1_end, 
+		const char **val2, const char *val2_end);
 };
 
 struct sieve_comparator_extension {

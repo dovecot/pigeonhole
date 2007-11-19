@@ -59,6 +59,12 @@ struct sieve_binary;
 /* sieve-comparator.h */
 struct sieve_comparator;
 
+/* sieve-match-types.h */
+struct sieve_match_type;
+
+/* sieve-address-parts.h */
+struct sieve_address_part;
+
 /*
  *
  */

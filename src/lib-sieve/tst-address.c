@@ -194,7 +194,7 @@ static bool tst_address_opcode_execute
 			
 			int i;
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
-				if ( sieve_address_stringlist_match(addrp, key_list, cmp, headers[i]) )
+				if ( sieve_address_match_stringlist(addrp, mtch, cmp, key_list, headers[i]) )
 					matched = TRUE;				
 			} 
 		}

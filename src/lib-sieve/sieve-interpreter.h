@@ -41,11 +41,6 @@ inline const void *sieve_interpreter_extension_get_context
 bool sieve_interpreter_read_offset_operand
 	(struct sieve_interpreter *interpreter, int *offset);
 
-/* Stringlist Utility */
-
-bool sieve_stringlist_match
-	(struct sieve_coded_stringlist *key_list, const char *value, const struct sieve_comparator *cmp);
-
 /* Accessing runtime information */
 
 inline struct mail *sieve_interpreter_get_mail(struct sieve_interpreter *interpreter);

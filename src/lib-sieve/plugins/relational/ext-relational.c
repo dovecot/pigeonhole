@@ -189,7 +189,8 @@ const struct sieve_match_type value_match_type = {
 	SIEVE_MATCH_TYPE_CUSTOM,
 	&relational_match_extension,
 	RELATIONAL_VALUE,
-	ext_relational_parameter_validate
+	ext_relational_parameter_validate,
+	NULL
 };
 
 const struct sieve_match_type count_match_type = {
@@ -197,7 +198,8 @@ const struct sieve_match_type count_match_type = {
 	SIEVE_MATCH_TYPE_CUSTOM,
 	&relational_match_extension,
 	RELATIONAL_COUNT,
-	ext_relational_parameter_validate
+	ext_relational_parameter_validate,
+	NULL
 };
 
 /* Per-parameter match type objects, used for generation/interpretation 
@@ -212,6 +214,7 @@ const struct sieve_match_type count_match_type = {
 		&relational_match_extension,                      \
 		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match),     \
 		NULL,	                                            \
+		NULL,                                             \
 	}
 
 #define COUNT_MATCH_TYPE(name, rel_match, func) {     \
@@ -220,6 +223,7 @@ const struct sieve_match_type count_match_type = {
 		&relational_match_extension,                      \
 		REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match),     \
 		NULL,	                                            \
+		NULL,                                             \
 	}
 	
 static const struct sieve_match_type rel_match_types[] = { 

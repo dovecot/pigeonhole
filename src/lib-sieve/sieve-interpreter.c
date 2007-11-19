@@ -166,25 +166,6 @@ bool sieve_interpreter_read_offset_operand
 {
 	return sieve_binary_read_offset(interpreter->binary, &(interpreter->pc), offset);
 }
-
-
-/* Stringlist Utility */
-
-bool sieve_stringlist_match
-	(struct sieve_coded_stringlist *key_list, const char *value, const struct sieve_comparator *cmp)
-{
-	string_t *key_item;
-	sieve_coded_stringlist_reset(key_list);
-				
-	/* Match to all key values */
-	key_item = NULL;
-	while ( sieve_coded_stringlist_next_item(key_list, &key_item) && key_item != NULL ) {
-		if ( cmp->compare(value, strlen(value), str_c(key_item), str_len(key_item)) == 0 )
-			return TRUE;  
-	}
-  
-	return FALSE;
-}
  
 /* Code Dump */
 

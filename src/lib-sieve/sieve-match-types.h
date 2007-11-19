@@ -24,6 +24,10 @@ struct sieve_match_type {
 	bool (*validate)
 		(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 			struct sieve_match_type_context *ctx);
+			
+	bool (*match)
+		(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
+			const char *val1, size_t val1_size, const char *val2, size_t val2_size);
 };
 
 struct sieve_match_type_extension {
@@ -78,5 +82,11 @@ const struct sieve_match_type *sieve_opr_match_type_read
 bool sieve_opr_match_type_dump
 	(struct sieve_interpreter *interpreter,
 		struct sieve_binary *sbin, sieve_size_t *address);
+		
+/* Stringlist Utility */
 
+bool sieve_match_stringlist
+	(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
+		struct sieve_coded_stringlist *key_list, const char *value);
+		
 #endif /* __SIEVE_MATCH_TYPES_H */

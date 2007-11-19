@@ -9,6 +9,7 @@
 #include "sieve-extensions.h"
 #include "sieve-code.h"
 #include "sieve-binary.h"
+#include "sieve-comparators.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -378,11 +379,76 @@ static bool tag_match_type_generate
 	return TRUE;
 }
 
+/* Stringlist Utility */
+
+bool sieve_match_stringlist
+	(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
+		struct sieve_coded_stringlist *key_list, const char *value)
+{
+	string_t *key_item;
+	sieve_coded_stringlist_reset(key_list);
+				
+	/* Match to all key values */
+	key_item = NULL;
+	while ( sieve_coded_stringlist_next_item(key_list, &key_item) && 
+		key_item != NULL ) 
+	{
+		if ( mtch->match(mtch, cmp, value, strlen(value), 
+			str_c(key_item), str_len(key_item)) )
+			return TRUE;  
+	}
+  
+	return FALSE;
+}
+
 /*
  * Matching
  */
  
+static bool mtch_is_match
+(const struct sieve_match_type *mtch ATTR_UNUSED, 
+	const struct sieve_comparator *cmp,
+	const char *val1, size_t val1_size, const char *val2, size_t val2_size)
+{
+	if ( cmp->compare != NULL )
+		return (cmp->compare(cmp, val1, val1_size, val2, val2_size) == 0);
 
+	return FALSE;
+}
+
+/* FIXME: Naive substring match implementation. Should switch to more 
+ * efficient algorithm if large values need to be searched (e.g. message body).
+ */
+static bool mtch_contains_match
+(const struct sieve_match_type *mtch ATTR_UNUSED, 
+	const struct sieve_comparator *cmp,
+	const char *val, size_t val_size, const char *key, size_t key_size)
+{
+	const char *vend = (const char *) val + val_size;
+	const char *kend = (const char *) key + key_size;
+	const char *vp = val;
+	const char *kp = key;
+
+	if ( cmp->char_match == NULL ) return FALSE;
+
+	while ( (vp < vend) && (kp < kend) ) {
+		if ( !cmp->char_match(cmp, &vp, vend, &kp, kend) ) {
+			vp = vp - (kp - key) + 1;
+    	kp = key;
+		}
+	}
+    
+  return (kp == kend);
+}
+
+static bool mtch_matches_match
+(const struct sieve_match_type *mtch ATTR_UNUSED, 
+	const struct sieve_comparator *cmp ATTR_UNUSED,
+	const char *val, size_t val_size, const char *key, size_t key_size)
+{
+	return FALSE;
+}
+			 
 /* 
  * Core match-type modifiers
  */
@@ -399,7 +465,8 @@ const struct sieve_match_type is_match_type = {
 	SIEVE_MATCH_TYPE_IS,
 	NULL,
 	0,
-	NULL
+	NULL,
+	mtch_is_match,
 };
 
 const struct sieve_match_type contains_match_type = {
@@ -407,7 +474,8 @@ const struct sieve_match_type contains_match_type = {
 	SIEVE_MATCH_TYPE_CONTAINS,
 	NULL,
 	0,
-	NULL
+	NULL,
+	mtch_contains_match,
 };
 
 const struct sieve_match_type matches_match_type = {
@@ -415,7 +483,8 @@ const struct sieve_match_type matches_match_type = {
 	SIEVE_MATCH_TYPE_MATCHES,
 	NULL,
 	0,
-	NULL
+	NULL,
+	mtch_matches_match
 };
 
 const struct sieve_match_type *sieve_core_match_types[] = {
@@ -424,5 +493,3 @@ const struct sieve_match_type *sieve_core_match_types[] = {
 
 const unsigned int sieve_core_match_types_count = 
 	N_ELEMENTS(sieve_core_match_types);
-
-

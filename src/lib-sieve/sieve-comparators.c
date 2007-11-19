@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "lib.h"
 #include "compat.h"
 #include "hash.h"
@@ -15,6 +13,8 @@
 #include "sieve-comparators.h"
 
 #include <string.h>
+#include <stdio.h>
+#include <ctype.h>
 
 /* 
  * Predeclarations 
@@ -29,9 +29,17 @@ static void opr_comparator_emit_ext
 	(struct sieve_binary *sbin, struct sieve_comparator *cmp, int ext_id);
 
 static int cmp_i_octet_compare
-	(const void *val1, size_t val1_size, const void *val2, size_t val2_size);
+	(const struct sieve_comparator *cmp,
+		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
+static bool cmp_i_octet_char_match
+	(const struct sieve_comparator *cmp, const char **val1, const char *val1_end, 
+		const char **val2, const char *val2_end);	
 static int cmp_i_ascii_casemap_compare
-	(const void *val1, size_t val1_size, const void *val2, size_t val2_size);
+	(const struct sieve_comparator *cmp,
+		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
+static bool cmp_i_ascii_casemap_char_match
+	(const struct sieve_comparator *cmp, const char **val1, const char *val1_end, 
+		const char **val2, const char *val2_end);
 
 /* 
  * Comparator 'extension' 
@@ -380,17 +388,23 @@ static bool tag_comparator_generate
 const struct sieve_comparator i_octet_comparator = {
 	"i;octet",
 	SIEVE_COMPARATOR_I_OCTET,
+	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY |
+		SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH | SIEVE_COMPARATOR_FLAG_PREFIX_MATCH,
 	NULL,
 	0,
-	cmp_i_octet_compare
+	cmp_i_octet_compare,
+	cmp_i_octet_char_match	
 };
 
 const struct sieve_comparator i_ascii_casemap_comparator = {
 	"i;ascii-casemap",
 	SIEVE_COMPARATOR_I_ASCII_CASEMAP,
+	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY |
+		SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH | SIEVE_COMPARATOR_FLAG_PREFIX_MATCH,
 	NULL,
 	0,
-	cmp_i_ascii_casemap_compare
+	cmp_i_ascii_casemap_compare,
+	cmp_i_ascii_casemap_char_match
 };
 
 const struct sieve_comparator *sieve_core_comparators[] = {
@@ -400,50 +414,84 @@ const struct sieve_comparator *sieve_core_comparators[] = {
 const unsigned int sieve_core_comparators_count =
 	N_ELEMENTS(sieve_core_comparators);
 
-static int cmp_i_octet_compare(const void *val1, size_t val1_size, 
-	const void *val2, size_t val2_size)
+static int cmp_i_octet_compare(
+	const struct sieve_comparator *cmp ATTR_UNUSED,
+	const char *val1, size_t val1_size, const char *val2, size_t val2_size)
 {
 	int result;
 
 	if ( val1_size == val2_size ) {
-		return memcmp(val1, val2, val1_size);
+		return memcmp((void *) val1, (void *) val2, val1_size);
 	} 
 	
 	if ( val1_size > val2_size ) {
-		result = memcmp(val1, val2, val2_size);
+		result = memcmp((void *) val1, (void *) val2, val2_size);
 		
 		if ( result == 0 ) return 1;
 		
 		return result;
 	} 
 
-	result = memcmp(val1, val2, val1_size);
+	result = memcmp((void *) val1, (void *) val2, val1_size);
 		
 	if ( result == 0 ) return -1;
 		
 	return result;
 }
 
-static int cmp_i_ascii_casemap_compare(const void *val1, size_t val1_size, const void *val2, size_t val2_size)
+static bool cmp_i_octet_char_match
+	(const struct sieve_comparator *cmp ATTR_UNUSED, 
+		const char **val1, const char *val1_end ATTR_UNUSED, 
+		const char **val2, const char *val2_end ATTR_UNUSED)
+{
+	if ( **val1 == **val2 ) {
+		(*val1)++;
+		(*val2)++;
+		
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+	
+static int cmp_i_ascii_casemap_compare(
+	const struct sieve_comparator *cmp ATTR_UNUSED,
+	const char *val1, size_t val1_size, const char *val2, size_t val2_size)
 {
 	int result;
 
 	if ( val1_size == val2_size ) {
-		return strncasecmp((const char *) val1, (const char *) val2, val1_size);
+		return strncasecmp(val1, val2, val1_size);
 	} 
 	
 	if ( val1_size > val2_size ) {
-		result = strncasecmp((const char *) val1, (const char *) val2, val2_size);
+		result = strncasecmp(val1, val2, val2_size);
 		
 		if ( result == 0 ) return 1;
 		
 		return result;
 	} 
 
-	result = strncasecmp((const char *) val1, (const char *) val2, val1_size);
+	result = strncasecmp(val1, val2, val1_size);
 		
 	if ( result == 0 ) return -1;
 		
 	return result;
 }
+
+static bool cmp_i_ascii_casemap_char_match
+	(const struct sieve_comparator *cmp ATTR_UNUSED, 
+		const char **val1, const char *val1_end ATTR_UNUSED, 
+		const char **val2, const char *val2_end ATTR_UNUSED)
+{
+	if ( tolower(**val1) == tolower(**val2) ) {
+		(*val1)++;
+		(*val2)++;
+		
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
 

@@ -52,16 +52,19 @@ static bool ext_cmp_i_ascii_numeric_load(int ext_id)
 /* Extension access structures */
 
 static int cmp_i_ascii_numeric_compare
-	(const void *val1, size_t val1_size, const void *val2, size_t val2_size);
+	(const struct sieve_comparator *cmp, 
+		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
 
 extern const struct sieve_comparator_extension i_ascii_numeric_comparator_ext;
 
 const struct sieve_comparator i_ascii_numeric_comparator = { 
 	"i;ascii-numeric",
 	SIEVE_COMPARATOR_CUSTOM,
+	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY,
 	&i_ascii_numeric_comparator_ext,
 	0,
-	cmp_i_ascii_numeric_compare
+	cmp_i_ascii_numeric_compare,
+	NULL
 };
 
 const struct sieve_comparator_extension i_ascii_numeric_comparator_ext = { 
@@ -92,7 +95,8 @@ static bool ext_cmp_i_ascii_numeric_interpreter_load
 /* Implementation */
 
 static int cmp_i_ascii_numeric_compare
-	(const void *val1, size_t val1_size, const void *val2, size_t val2_size)
+	(const struct sieve_comparator *cmp ATTR_UNUSED, 
+		const char *val1, size_t val1_size, const char *val2, size_t val2_size)
 {
 	unsigned int i = 0;
 	int result = 0;
