@@ -21,7 +21,8 @@ bool cmd_require_validate(struct sieve_validator *validator, struct sieve_comman
 			!sieve_ast_prev_cmd_is(cmd->ast_node, "require") ) ) {
 		
 		sieve_command_validate_error(validator, cmd, 
-			"the require command can only be placed at top level at the beginning of the file");
+			"the require command can only be placed at top level "
+			"at the beginning of the file");
 		return FALSE;
 	}
 	
@@ -61,7 +62,8 @@ bool cmd_require_validate(struct sieve_validator *validator, struct sieve_comman
 	} else {
 		/* Something else */
 		sieve_command_validate_error(validator, cmd, 
-			"the require command accepts a single string or string list argument but %s was found", 
+			"the require command accepts a single string or string list argument, "
+			"but %s was found", 
 			sieve_ast_argument_name(arg));
 		return FALSE;
 	}

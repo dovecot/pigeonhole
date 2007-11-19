@@ -51,7 +51,7 @@ static bool cmd_fileinto_validate(struct sieve_validator *validator, struct siev
 	struct sieve_ast_argument *arg;
 	
 	/* Check valid syntax: 
-	 *    reject <reason: string>
+	 *    fileinto <folder: string>
 	 */
 	if ( !sieve_validate_command_arguments(validator, cmd, 1, &arg) ||
 		!sieve_validate_command_subtests(validator, cmd, 0) || 
@@ -60,7 +60,10 @@ static bool cmd_fileinto_validate(struct sieve_validator *validator, struct siev
 		return FALSE;
 	}
 	
-
+	if ( !sieve_validate_positional_argument
+		(validator, cmd, arg, "folder", 1, SAAT_STRING) ) {
+		return FALSE;
+	}
 	sieve_validator_argument_activate(validator, arg);
 	
 	return TRUE;
@@ -85,8 +88,8 @@ static bool cmd_fileinto_generate
 	sieve_generator_emit_opcode_ext(generator, ext_my_id);
 
 	/* Generate arguments */
-    if ( !sieve_generate_arguments(generator, ctx, NULL) )
-        return FALSE;
+	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+		return FALSE;
 	
 	return TRUE;
 }

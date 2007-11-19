@@ -114,11 +114,9 @@ bool tst_size_validate(struct sieve_validator *validator, struct sieve_command_c
 		return FALSE;		
 	}
 		
-	if ( sieve_ast_argument_type(arg) != SAAT_NUMBER ) {
-		sieve_command_validate_error(validator, tst, 
-			"the size test expects a number as argument (limit), but %s was found", 
-			sieve_ast_argument_name(arg));
-		return FALSE; 
+	if ( !sieve_validate_positional_argument
+		(validator, tst, arg, "limit", 1, SAAT_NUMBER) ) {
+		return FALSE;
 	}
 	sieve_validator_argument_activate(validator, arg);
 	

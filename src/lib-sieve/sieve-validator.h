@@ -37,9 +37,14 @@ void sieve_validator_link_match_type_tags
 		unsigned int id_code); 
 
 /* Argument validation */
+
 bool sieve_validate_command_arguments
 	(struct sieve_validator *validator, struct sieve_command_context *tst, 
 	 const unsigned int count, struct sieve_ast_argument **first_positional);
+bool sieve_validate_positional_argument
+	(struct sieve_validator *validator, struct sieve_command_context *cmd,
+	struct sieve_ast_argument *arg, const char *arg_name, unsigned int arg_pos,
+	enum sieve_ast_argument_type req_type);
 void sieve_validator_argument_activate
 	(struct sieve_validator *validator, struct sieve_ast_argument *arg);	 
 

@@ -88,20 +88,17 @@ static bool tst_envelope_validate(struct sieve_validator *validator, struct siev
 		return FALSE;
 	}
 				
-	if ( sieve_ast_argument_type(arg) != SAAT_STRING && sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
-		sieve_command_validate_error(validator, tst, 
-			"the envelope test expects a string-list as first argument (envelope part), but %s was found", 
-			sieve_ast_argument_name(arg));
-		return FALSE; 
+	if ( !sieve_validate_positional_argument
+		(validator, tst, arg, "envelope part", 1, SAAT_STRING_LIST) ) {
+		return FALSE;
 	}
 	sieve_validator_argument_activate(validator, arg);
 	
 	arg = sieve_ast_argument_next(arg);
-	if ( sieve_ast_argument_type(arg) != SAAT_STRING && sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
-		sieve_command_validate_error(validator, tst, 
-			"the envelope test expects a string-list as second argument (key list), but %s was found", 
-			sieve_ast_argument_name(arg));
-		return FALSE; 
+	
+	if ( !sieve_validate_positional_argument
+		(validator, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
+		return FALSE;
 	}
 	sieve_validator_argument_activate(validator, arg);
 	

@@ -58,20 +58,17 @@ bool tst_address_validate(struct sieve_validator *validator, struct sieve_comman
 		
 	tst->data = arg;
 		
-	if ( sieve_ast_argument_type(arg) != SAAT_STRING && sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
-		sieve_command_validate_error(validator, tst, 
-			"the address test expects a string-list as first argument (header list), but %s was found", 
-			sieve_ast_argument_name(arg));
-		return FALSE; 
+	if ( !sieve_validate_positional_argument
+		(validator, tst, arg, "header list", 1, SAAT_STRING_LIST) ) {
+		return FALSE;
 	}
 	sieve_validator_argument_activate(validator, arg);
-	
+
 	arg = sieve_ast_argument_next(arg);
-	if ( sieve_ast_argument_type(arg) != SAAT_STRING && sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
-		sieve_command_validate_error(validator, tst, 
-			"the address test expects a string-list as second argument (key list), but %s was found", 
-			sieve_ast_argument_name(arg));
-		return FALSE; 
+	
+	if ( !sieve_validate_positional_argument
+		(validator, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
+		return FALSE;
 	}
 	sieve_validator_argument_activate(validator, arg);
 	
@@ -104,26 +101,26 @@ static bool tst_address_opcode_dump
 	printf("ADDRESS\n");
 
 	/* Handle any optional arguments */
-    if ( sieve_operand_optional_present(sbin, address) ) {
-        while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
-            switch ( opt_code ) {
-            case OPT_COMPARATOR:
+	if ( sieve_operand_optional_present(sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+			switch ( opt_code ) {
+			case OPT_COMPARATOR:
 				if ( !sieve_opr_comparator_dump(interp, sbin, address) )
 					return FALSE;
-                break;
-            case OPT_MATCH_TYPE:
+				break;
+			case OPT_MATCH_TYPE:
 				if ( !sieve_opr_match_type_dump(interp, sbin, address) )
-                    return FALSE;
-                break;
+					return FALSE;
+				break;
 			case OPT_ADDRESS_PART:
 				if ( !sieve_opr_address_part_dump(interp, sbin, address) )
 					return FALSE;
 				break;			
-            default:
-                return FALSE;
-            }
-        }
-    }
+			default:
+				return FALSE;
+			}
+		}
+	}
 
 	return
 		sieve_opr_stringlist_dump(sbin, address) &&
@@ -149,26 +146,26 @@ static bool tst_address_opcode_execute
 	printf("?? ADDRESS\n");
 
 	/* Handle any optional arguments */
-    if ( sieve_operand_optional_present(sbin, address) ) {
-        while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
-            switch ( opt_code ) {
-            case OPT_COMPARATOR:
-                if ( (cmp = sieve_opr_comparator_read(interp, sbin, address)) == NULL )
+	if ( sieve_operand_optional_present(sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+			switch ( opt_code ) {
+			case OPT_COMPARATOR:
+				if ( (cmp = sieve_opr_comparator_read(interp, sbin, address)) == NULL )
 					return FALSE;
-                break;
-            case OPT_MATCH_TYPE:
-                if ( (mtch = sieve_opr_match_type_read(interp, sbin, address)) == NULL )
+				break;
+			case OPT_MATCH_TYPE:
+				if ( (mtch = sieve_opr_match_type_read(interp, sbin, address)) == NULL )
 					return FALSE;
-                break;
+				break;
 			case OPT_ADDRESS_PART:
 				if ( (addrp = sieve_opr_address_part_read(interp, sbin, address)) == NULL )
 					return FALSE;
 				break;
-            default:
-                return FALSE;
-            }
-        }
-    }
+			default:
+				return FALSE;
+			}
+		}
+	}
 
 	t_push();
 		

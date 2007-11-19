@@ -30,11 +30,9 @@ bool tst_exists_validate(struct sieve_validator *validator, struct sieve_command
 		return FALSE;
 	}
 		
-	if ( sieve_ast_argument_type(arg) != SAAT_STRING && sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
-		sieve_command_validate_error(validator, tst, 
-			"the exists test expects a string-list as only argument (header names), but %s was found", 
-			sieve_ast_argument_name(arg));
-		return FALSE; 
+	if ( !sieve_validate_positional_argument
+		(validator, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
+		return FALSE;
 	}
 	sieve_validator_argument_activate(validator, arg);
 	

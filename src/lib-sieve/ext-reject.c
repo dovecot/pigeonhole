@@ -68,6 +68,10 @@ static bool cmd_reject_validate(struct sieve_validator *validator, struct sieve_
 		return FALSE;
 	}
 		
+	if ( !sieve_validate_positional_argument
+		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {
+		return FALSE;
+	}
 	sieve_validator_argument_activate(validator, arg);
 	
 	return TRUE;

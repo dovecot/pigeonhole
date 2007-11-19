@@ -1,3 +1,5 @@
+require "comparator-i;ascii-numeric";
+
 if header :isnot :comparator "i;ascii-casemap" "From" "nico" {
 	discard;
 }

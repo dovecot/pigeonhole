@@ -243,8 +243,8 @@ struct sieve_ast_argument *sieve_ast_arguments_delete
 	return sieve_ast_arg_list_delete(first, count);
 }
 
-const char *sieve_ast_argument_name(struct sieve_ast_argument *argument) {
-	switch ( argument->type ) {
+const char *sieve_ast_argument_type_name(enum sieve_ast_argument_type arg_type) {
+	switch ( arg_type ) {
 	
 	case SAAT_NONE: return "none";
 	case SAAT_STRING_LIST: return "a string list";

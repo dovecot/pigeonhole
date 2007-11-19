@@ -329,7 +329,48 @@ inline const void *sieve_validator_extension_get_context(struct sieve_validator 
 	return array_idx(&validator->ext_contexts, (unsigned int) ext_id);		
 }
 
-/* Tag Validation API */
+/* Argument Validation API */
+
+bool sieve_validate_positional_argument
+	(struct sieve_validator *validator, struct sieve_command_context *cmd,
+	struct sieve_ast_argument *arg, const char *arg_name, unsigned int arg_pos,
+	enum sieve_ast_argument_type req_type)
+{
+	if ( sieve_ast_argument_type(arg) != req_type && 
+		(sieve_ast_argument_type(arg) != SAAT_STRING || 
+			req_type != SAAT_STRING_LIST) ) 
+	{
+		sieve_command_validate_error(validator, cmd, 
+			"the %s %s expects %s as argument %d (%s), but %s was found", 
+			cmd->command->identifier, sieve_command_type_name(cmd->command), 
+			sieve_ast_argument_type_name(req_type),
+			arg_pos, arg_name, sieve_ast_argument_name(arg));
+		return FALSE; 
+	}
+	
+	return TRUE;
+}
+
+void sieve_validator_argument_activate
+	(struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast_argument *arg)
+{
+	switch ( sieve_ast_argument_type(arg) ) {
+	case SAAT_NUMBER:
+		arg->argument = &number_argument;
+		break;
+	case SAAT_STRING:
+		arg->argument = &string_argument;
+		break;
+	case SAAT_STRING_LIST:
+		arg->argument = &string_list_argument;
+		break;
+	case SAAT_TAG:
+		i_error("!!BUG!!: sieve_validator_argument_activate: cannot activate tagged argument.");
+		break;
+	default:
+		break;
+	}
+}
 
 /* Test validation API */
 
@@ -427,27 +468,6 @@ bool sieve_validate_command_arguments
 	}
 
 	return TRUE;
-}
-
-void sieve_validator_argument_activate
-	(struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast_argument *arg)
-{
-	switch ( sieve_ast_argument_type(arg) ) {
-	case SAAT_NUMBER:
-		arg->argument = &number_argument;
-		break;
-	case SAAT_STRING:
-		arg->argument = &string_argument;
-		break;
-	case SAAT_STRING_LIST:
-		arg->argument = &string_list_argument;
-		break;
-	case SAAT_TAG:
-		i_error("!!BUG!!: sieve_validator_argument_activate: cannot activate tagged argument.");
-		break;
-	default:
-		break;
-	}
 }
  
 /* Command Validation API */ 
@@ -580,15 +600,16 @@ static bool sieve_validate_test(struct sieve_validator *validator, struct sieve_
 
 static bool sieve_validate_test_list(struct sieve_validator *validator, struct sieve_ast_node *test_list) 
 {
+	bool result = TRUE;
 	struct sieve_ast_node *test;
 
 	test = sieve_ast_test_first(test_list);
 	while ( test != NULL ) {	
-		sieve_validate_test(validator, test);	
+		result = result && sieve_validate_test(validator, test);	
 		test = sieve_ast_test_next(test);
 	}		
 	
-	return TRUE;
+	return result;
 }
 
 static bool sieve_validate_command(struct sieve_validator *validator, struct sieve_ast_node *cmd_node) 
@@ -646,17 +667,18 @@ static bool sieve_validate_command(struct sieve_validator *validator, struct sie
 
 static bool sieve_validate_block(struct sieve_validator *validator, struct sieve_ast_node *block) 
 {
+	bool result = TRUE;
 	struct sieve_ast_node *command;
 
 	t_push();	
 	command = sieve_ast_command_first(block);
 	while ( command != NULL ) {	
-		sieve_validate_command(validator, command);	
+		result = result && sieve_validate_command(validator, command);	
 		command = sieve_ast_command_next(command);
 	}		
 	t_pop();
 	
-	return TRUE;
+	return result;
 }
 
 bool sieve_validator_run(struct sieve_validator *validator) {	

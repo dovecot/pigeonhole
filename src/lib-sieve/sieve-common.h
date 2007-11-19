@@ -15,6 +15,8 @@ typedef uint64_t sieve_number_t;
  */
 
 /* sieve-ast.h */
+enum sieve_ast_argument_type;
+
 struct sieve_ast;
 struct sieve_ast_node;
 struct sieve_ast_argument;

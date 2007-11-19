@@ -244,7 +244,8 @@ static bool cmd_vacation_registered(struct sieve_validator *validator, struct si
 
 /* Command validation */
 
-static bool cmd_vacation_validate(struct sieve_validator *validator, struct sieve_command_context *cmd) 
+static bool cmd_vacation_validate(struct sieve_validator *validator, 
+	struct sieve_command_context *cmd) 
 { 	
 	struct sieve_ast_argument *arg;
 	
@@ -260,6 +261,10 @@ static bool cmd_vacation_validate(struct sieve_validator *validator, struct siev
 		return FALSE;
 	}
 
+	if ( !sieve_validate_positional_argument
+		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {
+		return FALSE;
+	}
 	sieve_validator_argument_activate(validator, arg);	
 	
 	return TRUE;

@@ -163,7 +163,9 @@ struct sieve_ast_argument *sieve_ast_argument_number_create
 struct sieve_ast_argument *sieve_ast_arguments_delete
 	(struct sieve_ast_argument *first, unsigned int count);
 	
-const char *sieve_ast_argument_name(struct sieve_ast_argument *argument);
+const char *sieve_ast_argument_type_name(enum sieve_ast_argument_type arg_type);
+#define sieve_ast_argument_name(argument) \
+	sieve_ast_argument_type_name((argument)->type)
 
 void sieve_ast_stringlist_add
 	(struct sieve_ast_argument *list, const string_t *str, unsigned int source_line);

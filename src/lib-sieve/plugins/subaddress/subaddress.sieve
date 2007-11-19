@@ -8,7 +8,7 @@ if address :comparator "i;ascii-casemap" :user "from" "STEPHAN" {
 		keep;
 		stop;
 	}
-	fileinto "INBOX.frop";
+	stop;
 }
 
 keep;

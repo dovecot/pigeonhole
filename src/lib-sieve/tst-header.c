@@ -51,20 +51,17 @@ bool tst_header_validate(struct sieve_validator *validator, struct sieve_command
 		!sieve_validate_command_subtests(validator, tst, 0) ) 
 		return FALSE;
 	
-	if ( sieve_ast_argument_type(arg) != SAAT_STRING && sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
-		sieve_command_validate_error(validator, tst, 
-			"the header test expects a string-list as first argument (header names), but %s was found", 
-			sieve_ast_argument_name(arg));
-		return FALSE; 
+	if ( !sieve_validate_positional_argument
+		(validator, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
+		return FALSE;
 	}
 	sieve_validator_argument_activate(validator, arg);
 	
 	arg = sieve_ast_argument_next(arg);
-	if ( sieve_ast_argument_type(arg) != SAAT_STRING && sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
-		sieve_command_validate_error(validator, tst, 
-			"the header test expects a string-list as second argument (key list), but %s was found", 
-			sieve_ast_argument_name(arg));
-		return FALSE; 
+
+	if ( !sieve_validate_positional_argument
+		(validator, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
+		return FALSE;
 	}
 	sieve_validator_argument_activate(validator, arg);
 	
@@ -79,8 +76,8 @@ bool tst_header_generate
 	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_HEADER);
 
  	/* Generate arguments */
-    if ( !sieve_generate_arguments(generator, ctx, NULL) )
-        return FALSE;
+	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+		return FALSE;
 	
 	return TRUE;
 }
@@ -93,7 +90,7 @@ static bool tst_header_opcode_dump
 {
 	unsigned int opt_code;
 
-    printf("HEADER\n");
+	printf("HEADER\n");
 
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(sbin, address) ) {
@@ -112,8 +109,8 @@ static bool tst_header_opcode_dump
 	}
 
 	return
-    	sieve_opr_stringlist_dump(sbin, address) &&
-    	sieve_opr_stringlist_dump(sbin, address);
+		sieve_opr_stringlist_dump(sbin, address) &&
+		sieve_opr_stringlist_dump(sbin, address);
 }
 
 /* Code execution */
@@ -134,20 +131,20 @@ static bool tst_header_opcode_execute
 	printf("?? HEADER\n");
 
 	/* Handle any optional arguments */
-    if ( sieve_operand_optional_present(sbin, address) ) {
-        while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
-            switch ( opt_code ) {
-            case OPT_COMPARATOR:
-                cmp = sieve_opr_comparator_read(interp, sbin, address);
-                break;
-            case OPT_MATCH_TYPE:
-                mtch = sieve_opr_match_type_read(interp, sbin, address);
-                break;
-            default:
-                return FALSE;
-            }
-        }
-    }
+	if ( sieve_operand_optional_present(sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+			switch ( opt_code ) {
+			case OPT_COMPARATOR:
+				cmp = sieve_opr_comparator_read(interp, sbin, address);
+				break;
+			case OPT_MATCH_TYPE:
+				mtch = sieve_opr_match_type_read(interp, sbin, address);
+				break;
+			default:
+				return FALSE;
+			}
+		}
+	}
 
 	t_push();
 		
