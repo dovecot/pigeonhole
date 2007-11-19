@@ -388,6 +388,10 @@ bool sieve_match_stringlist
 	string_t *key_item;
 	sieve_coded_stringlist_reset(key_list);
 				
+	/* Reject unimplemented match-type */
+	if ( mtch->match == NULL )
+		return FALSE;
+				
 	/* Match to all key values */
 	key_item = NULL;
 	while ( sieve_coded_stringlist_next_item(key_list, &key_item) && 
