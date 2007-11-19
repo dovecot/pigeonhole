@@ -47,9 +47,11 @@ bool tst_header_validate(struct sieve_validator *validator, struct sieve_command
 	 *   header [COMPARATOR] [MATCH-TYPE]
 	 *     <header-names: string-list> <key-list: string-list>
 	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 2, &arg) ||
+	if ( !sieve_validate_command_arguments(validator, tst, 2) ||
 		!sieve_validate_command_subtests(validator, tst, 0) ) 
 		return FALSE;
+
+	arg = tst->first_positional;
 	
 	if ( !sieve_validate_positional_argument
 		(validator, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {

@@ -101,12 +101,14 @@ bool tst_size_validate(struct sieve_validator *validator, struct sieve_command_c
 	ctx_data->type = SIZE_UNASSIGNED;
 	tst->data = ctx_data;
 	
-	/* Check envelope test syntax:
+	/* Check size test syntax:
 	 *    size <":over" / ":under"> <limit: number>
 	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 1, &arg) ||
+	if ( !sieve_validate_command_arguments(validator, tst, 1) ||
 		!sieve_validate_command_subtests(validator, tst, 0) ) 
 		return FALSE;
+
+	arg = tst->first_positional;
 
 	if ( ctx_data->type == SIZE_UNASSIGNED ) {
 		sieve_command_validate_error(validator, tst, 

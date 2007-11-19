@@ -52,11 +52,11 @@ bool tst_address_validate(struct sieve_validator *validator, struct sieve_comman
 	 *    address [ADDRESS-PART] [COMPARATOR] [MATCH-TYPE]
  	 *       <header-list: string-list> <key-list: string-list>
 	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 2, &arg) ||
+	if ( !sieve_validate_command_arguments(validator, tst, 2) ||
 		!sieve_validate_command_subtests(validator, tst, 0) ) 
 		return FALSE;
 		
-	tst->data = arg;
+	arg = tst->first_positional;
 		
 	if ( !sieve_validate_positional_argument
 		(validator, tst, arg, "header list", 1, SAAT_STRING_LIST) ) {

@@ -49,9 +49,17 @@ struct sieve_command {
 
 struct sieve_command_context {
 	const struct sieve_command *command;
-	struct sieve_command_registration *cmd_reg;
-	struct sieve_ast_node *ast_node;
 	
+	/* The registration of this command in the validator */
+	struct sieve_command_registration *cmd_reg;
+
+	/* The ast node of this command */
+	struct sieve_ast_node *ast_node;
+			
+	/* First positional argument */
+	struct sieve_ast_argument *first_positional;
+
+	/* Command-specific context data*/
 	void *data;
 };
 

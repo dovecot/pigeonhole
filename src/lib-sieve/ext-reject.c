@@ -61,12 +61,14 @@ static bool cmd_reject_validate(struct sieve_validator *validator, struct sieve_
 	/* Check valid syntax: 
 	 *    reject <reason: string>
 	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 1, &arg) ||
+	if ( !sieve_validate_command_arguments(validator, cmd, 1) ||
 		!sieve_validate_command_subtests(validator, cmd, 0) || 
 	 	!sieve_validate_command_block(validator, cmd, FALSE, FALSE) ) {
 	 	
 		return FALSE;
 	}
+
+	arg = cmd->first_positional;
 		
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {

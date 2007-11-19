@@ -83,10 +83,12 @@ static bool tst_envelope_validate(struct sieve_validator *validator, struct siev
 	 *   envelope [COMPARATOR] [ADDRESS-PART] [MATCH-TYPE]
 	 *     <envelope-part: string-list> <key-list: string-list>   
 	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 2, &arg) ||
+	if ( !sieve_validate_command_arguments(validator, tst, 2) ||
 		!sieve_validate_command_subtests(validator, tst, 0) ) {
 		return FALSE;
 	}
+
+	arg = tst->first_positional;
 				
 	if ( !sieve_validate_positional_argument
 		(validator, tst, arg, "envelope part", 1, SAAT_STRING_LIST) ) {

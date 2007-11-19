@@ -6,10 +6,10 @@
 
 bool tst_anyof_validate(struct sieve_validator *validator, struct sieve_command_context *tst) 
 {
-	/* Check envelope test syntax (optional tags are registered above):
+	/* Check anyof test syntax (optional tags are registered above):
 	 *   anyof <tests: test-list>   
 	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 0, NULL) ||
+	if ( !sieve_validate_command_arguments(validator, tst, 0) ||
 		!sieve_validate_command_subtests(validator, tst, 2) ) 
 		return FALSE;
 	

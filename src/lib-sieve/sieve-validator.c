@@ -376,7 +376,7 @@ void sieve_validator_argument_activate
 
 bool sieve_validate_command_arguments
 	(struct sieve_validator *validator, struct sieve_command_context *cmd, 
-	 const unsigned int count, struct sieve_ast_argument **first_positional) 
+	 const unsigned int count) 
 {
 	struct sieve_ast_argument *arg;
 	unsigned int real_count = 0;
@@ -442,9 +442,7 @@ bool sieve_validate_command_arguments
 	} 
 	
 	/* Remaining arguments should be positional (tags are not allowed here) */
-	
-	if ( first_positional != NULL )  
-		*first_positional = arg;
+	cmd->first_positional = arg;
 	
 	while ( arg != NULL ) {
 		if ( sieve_ast_argument_type(arg) == SAAT_TAG ) {
@@ -571,12 +569,12 @@ static bool sieve_validate_test(struct sieve_validator *validator, struct sieve_
 			
 				/* Call command validation function if specified or execute defaults otherwise */
 				if ( test->validate != NULL )
-					result = result && test->validate(validator, ctx);
+					result = test->validate(validator, ctx) && result;
 				else {
 					/* Check default syntax 
 	 				 *   Syntax: test
 	 				 */
-	 				if ( !sieve_validate_command_arguments(validator,ctx, 0, NULL) ||
+	 				if ( !sieve_validate_command_arguments(validator,ctx, 0) ||
 	 					!sieve_validate_command_subtests(validator, ctx, 0) ) 
 	 					return FALSE; 
 				}
@@ -593,7 +591,7 @@ static bool sieve_validate_test(struct sieve_validator *validator, struct sieve_
 		result = FALSE;
 	}
 	
-	result = result && sieve_validate_test_list(validator, tst_node);
+	result = sieve_validate_test_list(validator, tst_node) && result;
 
 	return result;
 }
@@ -605,7 +603,7 @@ static bool sieve_validate_test_list(struct sieve_validator *validator, struct s
 
 	test = sieve_ast_test_first(test_list);
 	while ( test != NULL ) {	
-		result = result && sieve_validate_test(validator, test);	
+		result = sieve_validate_test(validator, test) && result;	
 		test = sieve_ast_test_next(test);
 	}		
 	
@@ -633,12 +631,12 @@ static bool sieve_validate_command(struct sieve_validator *validator, struct sie
 			
 				/* Call command validation function if specified or execute defaults otherwise */
 				if ( command->validate != NULL )
-					result = result && command->validate(validator, ctx);
+					result = command->validate(validator, ctx) && result;
 				else {
 					/* Check default syntax 
 	 				 *   Syntax: command
 	 				 */
-					if ( !sieve_validate_command_arguments(validator,ctx, 0, NULL) ||
+					if ( !sieve_validate_command_arguments(validator,ctx, 0) ||
 	 					!sieve_validate_command_subtests(validator, ctx, 0) || 
 	 					!sieve_validate_command_block(validator, ctx, FALSE, FALSE) ) {
 	 				
@@ -659,8 +657,8 @@ static bool sieve_validate_command(struct sieve_validator *validator, struct sie
 		result = FALSE;
 	}
 	
-	result = result && sieve_validate_test_list(validator, cmd_node);
-	result = result && sieve_validate_block(validator, cmd_node);
+	result = sieve_validate_test_list(validator, cmd_node) && result;
+	result = sieve_validate_block(validator, cmd_node) && result;
 	
 	return result;
 }
@@ -673,7 +671,7 @@ static bool sieve_validate_block(struct sieve_validator *validator, struct sieve
 	t_push();	
 	command = sieve_ast_command_first(block);
 	while ( command != NULL ) {	
-		result = result && sieve_validate_command(validator, command);	
+		result = sieve_validate_command(validator, command) && result;	
 		command = sieve_ast_command_next(command);
 	}		
 	t_pop();

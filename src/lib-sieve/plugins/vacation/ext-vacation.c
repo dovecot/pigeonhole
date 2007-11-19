@@ -109,9 +109,11 @@ static bool cmd_vacation_validate_subject_tag
 				sieve_ast_argument_name(*arg) );
 		return FALSE;
 	}
+
+	(*arg)->parameters = sieve_ast_argument_next(*arg);
 	
-	/* Skip tag */
-	*arg = sieve_ast_argument_next(*arg);
+	/* Delete parameter from arg list */
+	*arg = sieve_ast_arguments_delete(*arg,1);
 
 	/* FIXME: assign somewhere */
 	
@@ -136,11 +138,11 @@ static bool cmd_vacation_validate_from_tag
 		return FALSE;
 	}
 
-	/* Skip argument */
-	*arg = sieve_ast_argument_next(*arg);
+	(*arg)->parameters = sieve_ast_argument_next(*arg);
 
-	/* FIXME: assign somewhere */
-	
+	/* Delete parameter from argument list */
+	*arg = sieve_ast_arguments_delete(*arg, 1);
+
 	return TRUE;
 }
 
@@ -162,10 +164,10 @@ static bool cmd_vacation_validate_addresses_tag
 		return FALSE;
 	}
 	
-	/* FIXME: assign somewhere */
-	
-	/* Skip tag */
-	*arg = sieve_ast_argument_next(*arg);
+	(*arg)->parameters = sieve_ast_argument_next(*arg);	
+
+	/* Delete parameter from argument list */
+	*arg = sieve_ast_arguments_delete(*arg, 1);
 
 	return TRUE;
 }
@@ -200,9 +202,12 @@ static bool cmd_vacation_validate_handle_tag
 				sieve_ast_argument_name(*arg) );
 		return FALSE;
 	}
+
+	(*arg)->parameters = sieve_ast_argument_next(*arg);
 	
-	/* FIXME: assign somewhere */
-	
+	/* Delete parameter from argument list */
+	*arg = sieve_ast_arguments_delete(*arg, 1);
+
 	return TRUE;
 }
 
@@ -254,12 +259,14 @@ static bool cmd_vacation_validate(struct sieve_validator *validator,
 	 *                 [":from" string] [":addresses" string-list]
 	 *                 [":mime"] [":handle" string] <reason: string>
 	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 1, &arg) ||
+	if ( !sieve_validate_command_arguments(validator, cmd, 1) ||
 		!sieve_validate_command_subtests(validator, cmd, 0) || 
 	 	!sieve_validate_command_block(validator, cmd, FALSE, FALSE) ) {
 	 	
 		return FALSE;
 	}
+
+	arg = cmd->first_positional;
 
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {

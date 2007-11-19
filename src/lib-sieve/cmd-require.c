@@ -29,13 +29,13 @@ bool cmd_require_validate(struct sieve_validator *validator, struct sieve_comman
 	/* Check valid syntax 
 	 *   Syntax: require <capabilities: string-list>
 	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 1, &arg ) ||
+	if ( !sieve_validate_command_arguments(validator, cmd, 1) ||
 	 	!sieve_validate_command_subtests(validator, cmd, 0) || 
 	 	!sieve_validate_command_block(validator, cmd, FALSE, FALSE) ) {
 	 	return FALSE;
 	}
 	
-	cmd->data = (void *) arg;
+	arg = cmd->first_positional;
 	
 	/* Check argument and load specified extension(s) */
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
@@ -74,7 +74,7 @@ bool cmd_require_validate(struct sieve_validator *validator, struct sieve_comman
 bool cmd_require_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	struct sieve_ast_argument *arg = (struct sieve_ast_argument *) ctx->data;
+	struct sieve_ast_argument *arg = ctx->first_positional;
 	
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		int ext_id = (int) arg->context;

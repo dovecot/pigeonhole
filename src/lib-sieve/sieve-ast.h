@@ -85,6 +85,9 @@ struct sieve_ast_argument {
 	const struct sieve_argument *argument;
 	unsigned int arg_id_code;
 
+	/* Parameters to this (tag) argument */
+	struct sieve_ast_argument *parameters;
+	
 	/* Context data associated with this ast element */
 	void *context;
 	
@@ -135,13 +138,17 @@ struct sieve_ast_node {
 
 	/* Arguments (NULL if not allocated) */
 	struct sieve_ast_arg_list *arguments;	
-		
-	/* Context (associated during validation) */
-	struct sieve_command_context *context;	
-	
+
+	/* Identifier of command or test */
 	const char *identifier;		
-	
+
+	/* The location in the file where this command was started */
 	unsigned int source_line;
+		
+	/* Assigned during validation */
+		
+	/* Context */
+	struct sieve_command_context *context;	
 };
 
 struct sieve_ast {

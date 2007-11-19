@@ -39,7 +39,7 @@ static bool cmd_if_check_syntax(struct sieve_validator *validator, struct sieve_
 	 *      Syntax:   if <test1: test> <block1: block>
 	 *      Syntax:   elsif <test2: test> <block2: block>
 	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 0, NULL) ||
+	if ( !sieve_validate_command_arguments(validator, cmd, 0) ||
 	 	!sieve_validate_command_subtests(validator, cmd, 1) || 
 	 	!sieve_validate_command_block(validator, cmd, TRUE, TRUE) ) {
 	 	
@@ -103,7 +103,7 @@ bool cmd_else_validate(struct sieve_validator *validator ATTR_UNUSED, struct sie
 	/* Check valid parameter syntax: 
 	 *   Syntax:   else <block>
 	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 0, NULL) ||
+	if ( !sieve_validate_command_arguments(validator, cmd, 0) ||
 	 	!sieve_validate_command_subtests(validator, cmd, 0) || 
 	 	!sieve_validate_command_block(validator, cmd, TRUE, TRUE) ) {
 	 	

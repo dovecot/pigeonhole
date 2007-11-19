@@ -53,12 +53,14 @@ static bool cmd_fileinto_validate(struct sieve_validator *validator, struct siev
 	/* Check valid syntax: 
 	 *    fileinto <folder: string>
 	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 1, &arg) ||
+	if ( !sieve_validate_command_arguments(validator, cmd, 1) ||
 		!sieve_validate_command_subtests(validator, cmd, 0) || 
 	 	!sieve_validate_command_block(validator, cmd, FALSE, FALSE) ) {
 	 	
 		return FALSE;
 	}
+
+	arg = cmd->first_positional;
 	
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "folder", 1, SAAT_STRING) ) {

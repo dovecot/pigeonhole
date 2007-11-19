@@ -11,11 +11,13 @@ bool cmd_redirect_validate(struct sieve_validator *validator, struct sieve_comma
 	/* Check valid syntax 
 	 *   Syntax:   redirect <address: string>
 	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 1, &arg) ||
+	if ( !sieve_validate_command_arguments(validator, cmd, 1) ||
 	 	!sieve_validate_command_subtests(validator, cmd, 0) || 
 	 	!sieve_validate_command_block(validator, cmd, FALSE, FALSE) ) {
 	 	return FALSE;
 	}
+
+	arg = cmd->first_positional;
 
 	/* Check argument */
 	if ( !sieve_validate_positional_argument
