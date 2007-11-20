@@ -83,14 +83,17 @@ struct sieve_command_context *sieve_command_context_create
 const char *sieve_command_type_name(const struct sieve_command *command);		
 		
 #define sieve_command_validate_error(validator, context, ...) \
-	sieve_validator_error(validator, context->ast_node, __VA_ARGS__)
+	sieve_validator_error(validator, (context)->ast_node, __VA_ARGS__)
 #define sieve_command_pool(context) \
-	sieve_ast_node_pool(context->ast_node)
+	sieve_ast_node_pool((context)->ast_node)
+
+#define sieve_command_first_argument(context) \
+	sieve_ast_argument_first((context)->ast_node)
 	
 #define sieve_command_is_toplevel(context) \
-	( sieve_ast_node_type(sieve_ast_node_parent(context->ast_node)) == SAT_ROOT )
+	( sieve_ast_node_type(sieve_ast_node_parent((context)->ast_node)) == SAT_ROOT )
 #define sieve_command_is_first(context) \
-	( sieve_ast_node_prev(context->ast_node) == NULL )	
+	( sieve_ast_node_prev((context)->ast_node) == NULL )	
 
 struct sieve_command_context *sieve_command_prev_context	
 	(struct sieve_command_context *context); 

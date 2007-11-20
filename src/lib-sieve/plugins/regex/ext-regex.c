@@ -13,7 +13,10 @@
 #include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+
+#include "sieve-comparators.h"
 #include "sieve-match-types.h"
+
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -53,13 +56,17 @@ static bool ext_regex_load(int ext_id)
 
 extern const struct sieve_match_type_extension regex_match_extension;
 
+bool mtch_regex_validate_context
+(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+    struct sieve_match_type_context *ctx);
+
 const struct sieve_match_type regex_match_type = {
 	"regex",
 	SIEVE_MATCH_TYPE_CUSTOM,
 	&regex_match_extension,
 	0,
 	NULL,
-	NULL,
+	mtch_regex_validate_context,
 	NULL
 };
 
@@ -68,6 +75,34 @@ const struct sieve_match_type_extension regex_match_extension = {
 	&regex_match_type, 
 	NULL
 };
+
+/* Validation */
+
+bool mtch_regex_validate_context
+(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+	struct sieve_match_type_context *ctx)
+{
+	struct sieve_ast_argument *carg = 
+		sieve_command_first_argument(ctx->command_ctx);
+
+	while ( carg != NULL ) {
+		if ( carg != arg && carg->argument == &comparator_tag ) {
+			if (!sieve_comparator_tag_is(carg, &i_ascii_casemap_comparator) &&
+				!sieve_comparator_tag_is(carg, &i_octet_comparator) )
+			{
+				sieve_command_validate_error(validator, ctx->command_ctx, 
+					"regex match type only supports i;octet and i;ascii-casemap comparators" );
+				return FALSE;	
+			}
+
+			return TRUE;
+		}
+	
+		carg = sieve_ast_argument_next(carg);
+	}
+
+	return TRUE;
+}
 
 /* Load extension into validator */
 

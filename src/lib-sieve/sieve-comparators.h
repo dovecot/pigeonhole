@@ -47,13 +47,17 @@ struct sieve_comparator_extension {
 		(unsigned int code);
 };
 
+extern const struct sieve_argument comparator_tag;
+
 void sieve_comparators_link_tag
 	(struct sieve_validator *validator, 
 		struct sieve_command_registration *cmd_reg,	
 		unsigned int id_code);
+inline bool sieve_comparator_tag_is
+(struct sieve_ast_argument *tag, const struct sieve_comparator *cmp);
 
-const struct sieve_comparator i_octet_comparator;
-const struct sieve_comparator i_ascii_casemap_comparator;
+extern const struct sieve_comparator i_octet_comparator;
+extern const struct sieve_comparator i_ascii_casemap_comparator;
 
 void sieve_comparator_register
 	(struct sieve_validator *validator, 

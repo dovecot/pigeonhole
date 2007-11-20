@@ -465,7 +465,8 @@ static bool sieve_validate_command_arguments
 static bool sieve_validate_arguments_context
 (struct sieve_validator *validator, struct sieve_command_context *cmd)
 { 
-	struct sieve_ast_argument *arg = sieve_ast_argument_first(cmd->ast_node);
+	struct sieve_ast_argument *arg = 
+		sieve_command_first_argument(cmd);
 	
 	while ( arg != NULL ) {
 		const struct sieve_argument *argument = arg->argument;
