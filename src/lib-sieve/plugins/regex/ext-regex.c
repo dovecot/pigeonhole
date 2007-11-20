@@ -26,6 +26,7 @@
 #include "sieve-interpreter.h"
 
 #include <sys/types.h>
+#include <ctype.h>
 #include <regex.h>
 
 /* Forward declarations */
@@ -110,13 +111,31 @@ static const char *_regexp_error(regex_t *regexp, int errorcode)
 	return "";
 }
 
+static bool mtch_regex_validate_regexp
+(struct sieve_validator *validator, struct sieve_match_type_context *ctx,
+	struct sieve_ast_argument *key, int cflags) 
+{
+	int ret;
+	regex_t regexp;
+
+	if ( (ret=regcomp(&regexp, sieve_ast_argument_strc(key), cflags)) != 0 ) {
+		sieve_command_validate_error(validator, ctx->command_ctx,
+			"invalid regular expression for regex match: %s", 
+			_regexp_error(&regexp, ret));
+
+		regfree(&regexp);	
+		return FALSE;
+	}
+
+	regfree(&regexp);
+	return TRUE;
+}
+	
 bool mtch_regex_validate_context
 (struct sieve_validator *validator, struct sieve_ast_argument *arg,
 	struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg)
 {
-	bool result = TRUE;
-	int ret, cflags;
-	regex_t regexp;
+	int cflags;
 	struct sieve_ast_argument *carg = 
 		sieve_command_first_argument(ctx->command_ctx);
 	
@@ -140,15 +159,26 @@ bool mtch_regex_validate_context
 		carg = sieve_ast_argument_next(carg);
 	}
 
-	if ( (ret=regcomp(&regexp, sieve_ast_argument_strc(key_arg), cflags)) != 0 ) {
-		sieve_command_validate_error(validator, ctx->command_ctx,
-			"invalid regular expression for regex match: %s", 
-			_regexp_error(&regexp, ret));
-		
-		result = FALSE;
-	}
+	/* Validate regular expression(s) */
+	if ( sieve_ast_argument_type(key_arg) == SAAT_STRING ) {
+		/* Single string */	
+		if ( !mtch_regex_validate_regexp(validator, ctx, key_arg, cflags) )
+			return FALSE;
 
-	regfree(&regexp);
+	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
+		/* String list */
+		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
+
+		while ( stritem != NULL ) {
+			if ( !mtch_regex_validate_regexp(validator, ctx, stritem, cflags) )
+				return FALSE;
+
+			stritem = sieve_ast_strlist_next(stritem);
+		}
+	} else {
+		/* ??? */ 
+		return FALSE;
+	} 
 
 	return TRUE;
 }
