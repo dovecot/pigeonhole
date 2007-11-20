@@ -292,6 +292,15 @@ inline bool sieve_comparator_tag_is
 		((const struct sieve_comparator *) tag->context) == cmp);
 }
 
+inline const struct sieve_comparator *sieve_comparator_tag_get
+(struct sieve_ast_argument *tag)
+{
+	if ( tag->argument != &comparator_tag ) 
+		return NULL;
+		 
+	return (const struct sieve_comparator *) tag->context;
+}
+
 /* Code generation */
 
 static void opr_comparator_emit

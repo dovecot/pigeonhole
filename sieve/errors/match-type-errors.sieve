@@ -1,3 +1,5 @@
+require "comparator-i;ascii-numeric";
+
 if address :contains :is :comparator "i;ascii-casemap" :localpart "from" "STEPHAN" {
 	discard;
 
@@ -5,6 +7,10 @@ if address :contains :is :comparator "i;ascii-casemap" :localpart "from" "STEPHA
 		keep;
 	}
 	stop;
+}
+
+if header :contains :comparator "i;ascii-numeric" "from" "drunksnipers.com" {
+    keep;
 }
 
 keep;

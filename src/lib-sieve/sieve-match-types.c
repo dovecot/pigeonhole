@@ -253,8 +253,7 @@ static bool tag_match_type_validate
 			"(this error should not occur and is probably a bug)", 
 			sieve_ast_argument_strc(*arg));
 
-		return FALSE;
-	}
+		return FALSE;	}
 
 	/* Create context */
 	mtctx = p_new(sieve_command_pool(cmd), struct sieve_match_type_context, 1);
@@ -524,6 +523,38 @@ static bool mtch_is_match
 	return FALSE;
 }
 
+/* :contains */
+
+static bool mtch_contains_validate_context
+(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+    struct sieve_match_type_context *ctx, 
+	struct sieve_ast_argument *key_arg ATTR_UNUSED)
+{
+	struct sieve_ast_argument *carg =
+		sieve_command_first_argument(ctx->command_ctx);
+
+    while ( carg != NULL && carg != ctx->command_ctx->first_positional ) {
+		if ( carg != arg && carg->argument == &comparator_tag ) {
+			const struct sieve_comparator *cmp =
+				sieve_comparator_tag_get(carg);
+			
+			if ( (cmp->flags & SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH) == 0 ) {
+                sieve_command_validate_error(validator, ctx->command_ctx,
+                    "the specified %s comparator does not support "
+					"sub-string matching as required by the :%s match type",
+					cmp->identifier, ctx->match_type->identifier );
+
+				return FALSE;
+			}
+            return TRUE;
+		}
+
+		carg = sieve_ast_argument_next(carg);
+	}
+
+	return TRUE;
+}
+
 /* FIXME: Naive substring match implementation. Should switch to more 
  * efficient algorithm if large values need to be searched (e.g. message body).
  */
@@ -584,7 +615,9 @@ const struct sieve_match_type contains_match_type = {
 	SIEVE_MATCH_TYPE_CONTAINS,
 	NULL,
 	0,
-	NULL, NULL, NULL,
+	NULL,
+	mtch_contains_validate_context, 
+	NULL,
 	mtch_contains_match,
 	NULL
 };
@@ -594,7 +627,9 @@ const struct sieve_match_type matches_match_type = {
 	SIEVE_MATCH_TYPE_MATCHES,
 	NULL,
 	0,
-	NULL, NULL, NULL,
+	NULL,
+	mtch_contains_validate_context, 
+	NULL,
 	mtch_matches_match,
 	NULL
 };

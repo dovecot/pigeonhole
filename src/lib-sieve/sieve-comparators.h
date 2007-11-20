@@ -54,7 +54,9 @@ void sieve_comparators_link_tag
 		struct sieve_command_registration *cmd_reg,	
 		unsigned int id_code);
 inline bool sieve_comparator_tag_is
-(struct sieve_ast_argument *tag, const struct sieve_comparator *cmp);
+	(struct sieve_ast_argument *tag, const struct sieve_comparator *cmp);
+inline const struct sieve_comparator *sieve_comparator_tag_get
+	(struct sieve_ast_argument *tag);
 
 extern const struct sieve_comparator i_octet_comparator;
 extern const struct sieve_comparator i_ascii_casemap_comparator;

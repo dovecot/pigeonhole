@@ -1,3 +1,5 @@
+require "comparator-i;ascii-numeric";
+
 if address :contains :comparator "i;ascii-casemap" :localpart "from" "STEPHAN" {
 	discard;
 
