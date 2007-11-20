@@ -4,19 +4,28 @@
 #include "sieve-code.h"
 #include "sieve-binary.h"
 
-bool tst_allof_validate(struct sieve_validator *validator, struct sieve_command_context *tst) 
-{
-	/* Check allof test syntax (optional tags are registered above):
-	 *   allof <tests: test-list>   
-	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 0) ||
-		!sieve_validate_command_subtests(validator, tst, 2) ) 
-		return FALSE;
-		
-	return TRUE;
-}
+/* Allof test 
+ * 
+ * Syntax 
+ *   allof <tests: test-list>   
+ */
 
-bool tst_allof_generate
+static bool tst_allof_generate
+	(struct sieve_generator *generator, 
+		struct sieve_command_context *ctx,
+		struct sieve_jumplist *jumps, bool jump_true);
+
+const struct sieve_command tst_allof = { 
+	"allof", 
+	SCT_TEST, 
+	0, 2, FALSE, FALSE,
+	NULL, NULL, NULL, NULL, 
+	tst_allof_generate 
+};
+
+/* Code generation */
+
+static bool tst_allof_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx,
 		struct sieve_jumplist *jumps, bool jump_true)

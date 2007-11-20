@@ -35,32 +35,32 @@ const struct sieve_extension fileinto_extension = {
 	NULL	
 };
 
-static const struct sieve_command fileinto_command = 
-	{ "fileinto", SCT_COMMAND, NULL, cmd_fileinto_validate, cmd_fileinto_generate, NULL };
-
 static bool ext_fileinto_load(int ext_id) 
 {
 	ext_my_id = ext_id;
 	return TRUE;
 }
 
+/* Fileinto command
+ *
+ * Syntax: 
+ *   fileinto <folder: string>
+ */
+static const struct sieve_command fileinto_command = { 
+	"fileinto", 
+	SCT_COMMAND,
+	1, 0, FALSE, FALSE, 
+	NULL, NULL,
+	cmd_fileinto_validate, 
+	cmd_fileinto_generate, 
+	NULL 
+};
+
 /* Validation */
 
 static bool cmd_fileinto_validate(struct sieve_validator *validator, struct sieve_command_context *cmd) 
 { 	
-	struct sieve_ast_argument *arg;
-	
-	/* Check valid syntax: 
-	 *    fileinto <folder: string>
-	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 1) ||
-		!sieve_validate_command_subtests(validator, cmd, 0) || 
-	 	!sieve_validate_command_block(validator, cmd, FALSE, FALSE) ) {
-	 	
-		return FALSE;
-	}
-
-	arg = cmd->first_positional;
+	struct sieve_ast_argument *arg = cmd->first_positional;
 	
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "folder", 1, SAAT_STRING) ) {

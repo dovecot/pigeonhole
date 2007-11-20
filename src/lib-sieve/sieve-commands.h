@@ -36,8 +36,16 @@ struct sieve_command {
 	const char *identifier;
 	enum sieve_command_type type;
 	
+	/* High-level command syntax */
+	unsigned int positional_arguments;
+	unsigned int subtests;
+	bool block_allowed;
+	bool block_required;
+	
 	bool (*registered)
 		(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg); 
+	bool (*pre_validate)
+		(struct sieve_validator *validator, struct sieve_command_context *context); 
 	bool (*validate)
 		(struct sieve_validator *validator, struct sieve_command_context *context); 
 	bool (*generate) 

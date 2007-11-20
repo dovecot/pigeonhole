@@ -11,7 +11,7 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 
-/* Opcodes */
+/* Opcode */
 
 static bool tst_address_opcode_dump
 	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
@@ -20,6 +20,31 @@ static bool tst_address_opcode_execute
 
 const struct sieve_opcode tst_address_opcode = 
 	{ tst_address_opcode_dump, tst_address_opcode_execute };
+
+/* Address test
+ *
+ * Syntax:
+ *    address [ADDRESS-PART] [COMPARATOR] [MATCH-TYPE]
+ *       <header-list: string-list> <key-list: string-list>
+ */
+
+static bool tst_address_registered
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+static bool tst_address_validate
+	(struct sieve_validator *validator, struct sieve_command_context *tst);
+static bool tst_address_generate
+	(struct sieve_generator *generator, struct sieve_command_context *ctx);
+
+const struct sieve_command tst_address = { 
+	"address", 
+	SCT_TEST, 
+	2, 0, FALSE, FALSE,
+	tst_address_registered,
+	NULL, 
+	tst_address_validate, 
+	tst_address_generate, 
+	NULL 
+};
 
 /* Optional arguments */
 
@@ -32,7 +57,8 @@ enum tst_address_optional {
 
 /* Test registration */
 
-bool tst_address_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+static bool tst_address_registered
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
 	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR );
@@ -44,19 +70,10 @@ bool tst_address_registered(struct sieve_validator *validator, struct sieve_comm
 
 /* Test validation */
 
-bool tst_address_validate(struct sieve_validator *validator, struct sieve_command_context *tst) 
+static bool tst_address_validate
+	(struct sieve_validator *validator, struct sieve_command_context *tst) 
 {
-	struct sieve_ast_argument *arg;
-	
-	/* Check envelope test syntax (optional tags are registered above):
-	 *    address [ADDRESS-PART] [COMPARATOR] [MATCH-TYPE]
- 	 *       <header-list: string-list> <key-list: string-list>
-	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 2) ||
-		!sieve_validate_command_subtests(validator, tst, 0) ) 
-		return FALSE;
-		
-	arg = tst->first_positional;
+	struct sieve_ast_argument *arg = tst->first_positional;
 		
 	if ( !sieve_validate_positional_argument
 		(validator, tst, arg, "header list", 1, SAAT_STRING_LIST) ) {
@@ -77,9 +94,8 @@ bool tst_address_validate(struct sieve_validator *validator, struct sieve_comman
 
 /* Test generation */
 
-bool tst_address_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx) 
+static bool tst_address_generate
+	(struct sieve_generator *generator, struct sieve_command_context *ctx) 
 {
 	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_ADDRESS);
 	

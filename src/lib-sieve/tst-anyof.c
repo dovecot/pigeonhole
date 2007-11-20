@@ -4,19 +4,27 @@
 #include "sieve-code.h"
 #include "sieve-binary.h"
 
-bool tst_anyof_validate(struct sieve_validator *validator, struct sieve_command_context *tst) 
-{
-	/* Check anyof test syntax (optional tags are registered above):
-	 *   anyof <tests: test-list>   
-	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 0) ||
-		!sieve_validate_command_subtests(validator, tst, 2) ) 
-		return FALSE;
-	
-	return TRUE;
-}
+/* Anyof test 
+ *
+ * Syntax 
+ *   anyof <tests: test-list>   
+ */
 
-bool tst_anyof_generate	
+static bool tst_anyof_generate	
+	(struct sieve_generator *generator, struct sieve_command_context *ctx,
+		struct sieve_jumplist *jumps, bool jump_true);
+
+const struct sieve_command tst_anyof = { 
+	"anyof", 
+	SCT_TEST, 
+	0, 2, FALSE, FALSE,
+	NULL, NULL, NULL, NULL, 
+	tst_anyof_generate 
+};
+
+/* Code generation */
+
+static bool tst_anyof_generate	
 	(struct sieve_generator *generator, struct sieve_command_context *ctx,
 		struct sieve_jumplist *jumps, bool jump_true)
 {

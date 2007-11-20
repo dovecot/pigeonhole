@@ -42,14 +42,28 @@ const struct sieve_extension envelope_extension = {
 	NULL 
 };
 
-static const struct sieve_command envelope_test = 
-	{ "envelope", SCT_TEST, tst_envelope_registered, tst_envelope_validate, tst_envelope_generate, NULL };
-
 static bool ext_envelope_load(int ext_id) 
 {
 	ext_my_id = ext_id;
 	return TRUE;
 }
+
+/* Envelope test 
+ *
+ * Syntax
+ *   envelope [COMPARATOR] [ADDRESS-PART] [MATCH-TYPE]
+ *     <envelope-part: string-list> <key-list: string-list>   
+ */
+static const struct sieve_command envelope_test = { 
+	"envelope", 
+	SCT_TEST, 
+	2, 0, FALSE, FALSE,
+	tst_envelope_registered, 
+	NULL,
+	tst_envelope_validate, 
+	tst_envelope_generate, 
+	NULL 
+};
 
 /* Optional arguments */
 
@@ -77,18 +91,7 @@ static bool tst_envelope_registered(struct sieve_validator *validator, struct si
  
 static bool tst_envelope_validate(struct sieve_validator *validator, struct sieve_command_context *tst) 
 { 		
-	struct sieve_ast_argument *arg;
-	
-	/* Check envelope test syntax (optional tags are registered above):
-	 *   envelope [COMPARATOR] [ADDRESS-PART] [MATCH-TYPE]
-	 *     <envelope-part: string-list> <key-list: string-list>   
-	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 2) ||
-		!sieve_validate_command_subtests(validator, tst, 0) ) {
-		return FALSE;
-	}
-
-	arg = tst->first_positional;
+	struct sieve_ast_argument *arg = tst->first_positional;
 				
 	if ( !sieve_validate_positional_argument
 		(validator, tst, arg, "envelope part", 1, SAAT_STRING_LIST) ) {

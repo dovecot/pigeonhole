@@ -20,6 +20,7 @@
 #include "sieve-interpreter.h"
 
 /* Forward declarations */
+
 static bool ext_vacation_load(int ext_id);
 static bool ext_vacation_validator_load(struct sieve_validator *validator);
 
@@ -49,21 +50,30 @@ const struct sieve_extension vacation_extension = {
 	NULL
 };
 
-static const struct sieve_command vacation_command = { 
-	"vacation", 
-	SCT_COMMAND, 
-	cmd_vacation_registered, 
-	cmd_vacation_validate, 
-	cmd_vacation_generate, 
-	NULL 
-};
-
 static bool ext_vacation_load(int ext_id)
 {
 	ext_my_id = ext_id;
 
 	return TRUE;
 }
+
+/* Vacation command 
+ *	
+ * Syntax: 
+ *    vacation [":days" number] [":subject" string]
+ *                 [":from" string] [":addresses" string-list]
+ *                 [":mime"] [":handle" string] <reason: string>
+ */
+static const struct sieve_command vacation_command = { 
+	"vacation",
+	SCT_COMMAND, 
+	1, 0, FALSE, FALSE, 
+	cmd_vacation_registered,
+	NULL,  
+	cmd_vacation_validate, 
+	cmd_vacation_generate, 
+	NULL 
+};
 
 /* Tag validation */
 
@@ -252,21 +262,7 @@ static bool cmd_vacation_registered(struct sieve_validator *validator, struct si
 static bool cmd_vacation_validate(struct sieve_validator *validator, 
 	struct sieve_command_context *cmd) 
 { 	
-	struct sieve_ast_argument *arg;
-	
-	/* Check valid syntax: 
-	 *    vacation [":days" number] [":subject" string]
-	 *                 [":from" string] [":addresses" string-list]
-	 *                 [":mime"] [":handle" string] <reason: string>
-	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 1) ||
-		!sieve_validate_command_subtests(validator, cmd, 0) || 
-	 	!sieve_validate_command_block(validator, cmd, FALSE, FALSE) ) {
-	 	
-		return FALSE;
-	}
-
-	arg = cmd->first_positional;
+	struct sieve_ast_argument *arg = cmd->first_positional;
 
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {

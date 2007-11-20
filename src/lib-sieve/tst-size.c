@@ -23,6 +23,32 @@ const struct sieve_opcode tst_size_over_opcode =
 const struct sieve_opcode tst_size_under_opcode = 
 	{ tst_size_under_opcode_dump, tst_size_under_opcode_execute };
 
+/* Size test 
+ *
+ * Syntax:
+ *    size <":over" / ":under"> <limit: number>
+ */
+
+static bool tst_size_registered
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+static bool tst_size_pre_validate
+	(struct sieve_validator *validator, struct sieve_command_context *tst);
+static bool tst_size_validate
+	(struct sieve_validator *validator, struct sieve_command_context *tst);
+static bool tst_size_generate
+	(struct sieve_generator *generator, struct sieve_command_context *ctx); 
+
+const struct sieve_command tst_size = { 
+	"size", 
+	SCT_TEST, 
+	1, 0, FALSE, FALSE,
+	tst_size_registered, 
+	tst_size_pre_validate,
+	tst_size_validate, 
+	tst_size_generate, 
+	NULL 
+};
+
 /* Context structures */
 
 struct tst_size_context_data {
@@ -35,8 +61,7 @@ struct tst_size_context_data {
 /* Tag validation */
 
 static bool tst_size_validate_over_tag
-	(struct sieve_validator *validator, 
-	struct sieve_ast_argument **arg, 
+(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *tst)
 {
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) tst->data;	
@@ -55,8 +80,7 @@ static bool tst_size_validate_over_tag
 }
 
 static bool tst_size_validate_under_tag
-	(struct sieve_validator *validator, 
-	struct sieve_ast_argument **arg ATTR_UNUSED, 
+(struct sieve_validator *validator, struct sieve_ast_argument **arg ATTR_UNUSED, 
 	struct sieve_command_context *tst)
 {
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) tst->data;	
@@ -81,7 +105,8 @@ static const struct sieve_argument size_over_tag =
 static const struct sieve_argument size_under_tag = 
 	{ "under", NULL, tst_size_validate_under_tag, NULL };
 
-bool tst_size_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+static bool tst_size_registered
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	sieve_validator_register_tag(validator, cmd_reg, &size_over_tag, 0); 	
 	sieve_validator_register_tag(validator, cmd_reg, &size_under_tag, 0); 	
@@ -91,25 +116,25 @@ bool tst_size_registered(struct sieve_validator *validator, struct sieve_command
 
 /* Test validation */
 
-bool tst_size_validate(struct sieve_validator *validator, struct sieve_command_context *tst) 
+static bool tst_size_pre_validate
+	(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *tst) 
 {
 	struct tst_size_context_data *ctx_data;
-	struct sieve_ast_argument *arg;
 	
 	/* Assign context */
 	ctx_data = p_new(sieve_command_pool(tst), struct tst_size_context_data, 1);
 	ctx_data->type = SIZE_UNASSIGNED;
 	tst->data = ctx_data;
+
+	return TRUE;
+}
+
+static bool tst_size_validate
+	(struct sieve_validator *validator, struct sieve_command_context *tst) 
+{
+	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) tst->data;
+	struct sieve_ast_argument *arg = tst->first_positional;
 	
-	/* Check size test syntax:
-	 *    size <":over" / ":under"> <limit: number>
-	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 1) ||
-		!sieve_validate_command_subtests(validator, tst, 0) ) 
-		return FALSE;
-
-	arg = tst->first_positional;
-
 	if ( ctx_data->type == SIZE_UNASSIGNED ) {
 		sieve_command_validate_error(validator, tst, 
 			"the size test requires either the :under or the :over tag to be specified");
@@ -128,8 +153,7 @@ bool tst_size_validate(struct sieve_validator *validator, struct sieve_command_c
 /* Test generation */
 
 bool tst_size_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx) 
+	(struct sieve_generator *generator, struct sieve_command_context *ctx) 
 {
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) ctx->data;
 

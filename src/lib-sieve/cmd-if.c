@@ -5,6 +5,62 @@
 #include "sieve-code.h"
 #include "sieve-binary.h"
 
+/* Predeclarations */
+
+static bool cmd_if_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+static bool cmd_elsif_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+static bool cmd_if_generate
+	(struct sieve_generator *generator, struct sieve_command_context *ctx);
+static bool cmd_else_generate
+	(struct sieve_generator *generator, struct sieve_command_context *ctx);
+
+/* If command
+ *
+ * Syntax:   
+ *   if <test1: test> <block1: block>
+ */
+const struct sieve_command cmd_if = { 
+	"if", 
+	SCT_COMMAND, 
+	0, 1, TRUE, TRUE,
+	NULL, NULL,
+	cmd_if_validate, 
+	cmd_if_generate, 
+	NULL 
+};
+
+/* ElsIf command
+ *
+ * Santax:
+ *   elsif <test2: test> <block2: block>
+ */
+const struct sieve_command cmd_elsif = {
+    "elsif", 
+	SCT_COMMAND,
+	0, 1, TRUE, TRUE, 
+	NULL, NULL, 
+	cmd_elsif_validate, 
+	cmd_if_generate, 
+	NULL 
+};
+
+/* Else command 
+ *
+ * Syntax:   
+ *   else <block>
+ */
+const struct sieve_command cmd_else = {
+    "else", 
+	SCT_COMMAND, 
+	0, 0, TRUE, TRUE,
+	NULL, NULL,
+	cmd_elsif_validate, 
+	cmd_else_generate, 
+	NULL 
+};
+
 /* Context */
 
 struct cmd_if_context_data {
@@ -33,24 +89,20 @@ static void cmd_if_initialize_context_data
 
 /* Validation */
 
-static bool cmd_if_check_syntax(struct sieve_validator *validator, struct sieve_command_context *cmd) 
-{ 	
-	/* Check valid syntax: 
-	 *      Syntax:   if <test1: test> <block1: block>
-	 *      Syntax:   elsif <test2: test> <block2: block>
-	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 0) ||
-	 	!sieve_validate_command_subtests(validator, cmd, 1) || 
-	 	!sieve_validate_command_block(validator, cmd, TRUE, TRUE) ) {
-	 	
-		return FALSE;
-	}
+static bool cmd_if_validate
+	(struct sieve_validator *validator ATTR_UNUSED, 
+		struct sieve_command_context *cmd) 
+{
+	cmd_if_initialize_context_data(cmd, NULL);
 	
 	return TRUE;
 }
 
-static bool cmd_else_check_placement(struct sieve_validator *validator, struct sieve_command_context *cmd)
+static bool cmd_elsif_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd)
 {
+	struct sieve_command_context *prev_context;
+
 	/* Check valid command placement */
 	if ( sieve_ast_command_prev(cmd->ast_node) == NULL ||
 			( !sieve_ast_prev_cmd_is(cmd->ast_node, "if") &&
@@ -61,67 +113,19 @@ static bool cmd_else_check_placement(struct sieve_validator *validator, struct s
 		return FALSE;
 	}
 	
-	return TRUE;
-}
-
-bool cmd_if_validate(struct sieve_validator *validator, struct sieve_command_context *cmd) 
-{
-	/* Check valid parameter syntax */
-	if ( !cmd_if_check_syntax(validator, cmd) ) return FALSE;
-	
-	cmd_if_initialize_context_data(cmd, NULL);
-	
-	return TRUE;
-}
-
-bool cmd_elsif_validate(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd)
-{
-	struct sieve_command_context *prev_context;
-
-	/* Check valid command placement */
-	if ( !cmd_else_check_placement(validator, cmd) ) return FALSE;
-	
-	/* Check valid parameter syntax */
-	if ( !cmd_if_check_syntax(validator, cmd) ) return FALSE;
-
 	/* Previous command in this block is 'if' or 'elsif', so we can safely refer to its context data */
 	prev_context = sieve_command_prev_context(cmd);
 	i_assert( prev_context != NULL ); 
 	
 	cmd_if_initialize_context_data(cmd, prev_context->data);
 
-	return TRUE;
-}
-
-bool cmd_else_validate(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd) 
-{		
-	struct sieve_command_context *prev_context;
-	
-	/* Check valid command placement */
-	if ( !cmd_else_check_placement(validator, cmd) ) return FALSE;
-	
-	/* Check valid parameter syntax: 
-	 *   Syntax:   else <block>
-	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 0) ||
-	 	!sieve_validate_command_subtests(validator, cmd, 0) || 
-	 	!sieve_validate_command_block(validator, cmd, TRUE, TRUE) ) {
-	 	
-		return FALSE;
-	}
-	
-	/* Previous command in this block is 'if' or 'elsif', so we can safely refer to its context data */
-	prev_context = sieve_command_prev_context(cmd);
-	i_assert( prev_context != NULL ); 
-	
-	cmd_if_initialize_context_data(cmd, prev_context->data);
-	
 	return TRUE;
 }
 
 /* Code generation */
 
-static void cmd_if_resolve_exit_jumps(struct sieve_binary *sbin, struct cmd_if_context_data *ctx_data) 
+static void cmd_if_resolve_exit_jumps
+	(struct sieve_binary *sbin, struct cmd_if_context_data *ctx_data) 
 {
 	struct cmd_if_context_data *if_ctx = ctx_data->previous;
 	
@@ -131,7 +135,7 @@ static void cmd_if_resolve_exit_jumps(struct sieve_binary *sbin, struct cmd_if_c
 	}
 }
 
-bool cmd_if_generate
+static bool cmd_if_generate
 	(struct sieve_generator *generator, struct sieve_command_context *ctx)
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
@@ -165,7 +169,7 @@ bool cmd_if_generate
 	return TRUE;
 }
 
-bool cmd_else_generate
+static bool cmd_else_generate
 	(struct sieve_generator *generator, struct sieve_command_context *ctx)
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);

@@ -8,7 +8,7 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 
-/* Opcodes */
+/* Opcode */
 
 static bool tst_header_opcode_dump
 	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
@@ -17,6 +17,31 @@ static bool tst_header_opcode_execute
 
 const struct sieve_opcode tst_header_opcode = 
 	{ tst_header_opcode_dump, tst_header_opcode_execute };
+
+/* Header test 
+ *
+ * Syntax:
+ *   header [COMPARATOR] [MATCH-TYPE]
+ *     <header-names: string-list> <key-list: string-list>
+ */
+
+static bool tst_header_registered
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+static bool tst_header_validate
+	(struct sieve_validator *validator, struct sieve_command_context *tst);
+static bool tst_header_generate
+	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+
+const struct sieve_command tst_header = { 
+	"header", 
+	SCT_TEST, 
+	2, 0, FALSE, FALSE,
+	tst_header_registered, 
+	NULL,
+	tst_header_validate, 
+	tst_header_generate, 
+	NULL 
+};
 
 /* Optional arguments */
 
@@ -28,7 +53,8 @@ enum tst_header_optional {
 
 /* Test registration */
 
-bool tst_header_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+static bool tst_header_registered
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
 	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR);
@@ -39,19 +65,10 @@ bool tst_header_registered(struct sieve_validator *validator, struct sieve_comma
 
 /* Test validation */
 
-bool tst_header_validate(struct sieve_validator *validator, struct sieve_command_context *tst) 
+static bool tst_header_validate
+	(struct sieve_validator *validator, struct sieve_command_context *tst) 
 { 		
-	struct sieve_ast_argument *arg;
-	
-	/* Check header test syntax (optional tags are registered above):
-	 *   header [COMPARATOR] [MATCH-TYPE]
-	 *     <header-names: string-list> <key-list: string-list>
-	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 2) ||
-		!sieve_validate_command_subtests(validator, tst, 0) ) 
-		return FALSE;
-
-	arg = tst->first_positional;
+	struct sieve_ast_argument *arg = tst->first_positional;
 	
 	if ( !sieve_validate_positional_argument
 		(validator, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
@@ -72,7 +89,7 @@ bool tst_header_validate(struct sieve_validator *validator, struct sieve_command
 
 /* Test generation */
 
-bool tst_header_generate
+static bool tst_header_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
 	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_HEADER);

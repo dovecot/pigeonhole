@@ -16,21 +16,34 @@ static bool tst_exists_opcode_execute
 const struct sieve_opcode tst_exists_opcode = 
 	{ tst_exists_opcode_dump, tst_exists_opcode_execute };
 
+/* Exists test
+ *  
+ * Syntax:
+ *    exists <header-names: string-list>
+ */
+
+static bool tst_exists_validate
+  (struct sieve_validator *validator, struct sieve_command_context *tst);
+static bool tst_exists_generate
+	(struct sieve_generator *generator, struct sieve_command_context *ctx);
+
+const struct sieve_command tst_exists = { 
+	"exists", 
+	SCT_TEST, 
+	1, 0, FALSE, FALSE,
+	NULL, 
+	NULL,
+	tst_exists_validate, 
+	tst_exists_generate, 
+	NULL 
+};
+
 /* Test validation */
 
-bool tst_exists_validate(struct sieve_validator *validator, struct sieve_command_context *tst) 
+static bool tst_exists_validate
+  (struct sieve_validator *validator, struct sieve_command_context *tst) 
 {
-	struct sieve_ast_argument *arg;
-	
-	/* Check envelope test syntax:
-	 *    exists <header-names: string-list>
-	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 1) ||
-		!sieve_validate_command_subtests(validator, tst, 0) ) { 
-		return FALSE;
-	}
-
-	arg = tst->first_positional;
+	struct sieve_ast_argument *arg = tst->first_positional;
 		
 	if ( !sieve_validate_positional_argument
 		(validator, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
@@ -45,9 +58,8 @@ bool tst_exists_validate(struct sieve_validator *validator, struct sieve_command
 
 /* Test generation */
 
-bool tst_exists_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx) 
+static bool tst_exists_generate
+	(struct sieve_generator *generator, struct sieve_command_context *ctx) 
 {
 	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_EXISTS);
 

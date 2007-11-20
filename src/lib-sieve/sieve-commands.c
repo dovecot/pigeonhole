@@ -105,35 +105,93 @@ static bool arg_string_list_generate(struct sieve_generator *generator, struct s
 	return FALSE;
 }
 
+/* Trivial tests implemented in this file */
+
+static bool tst_false_generate
+	(struct sieve_generator *generator, 
+		struct sieve_command_context *context ATTR_UNUSED,
+		struct sieve_jumplist *jumps, bool jump_true);
+static bool tst_true_generate
+	(struct sieve_generator *generator, 
+		struct sieve_command_context *ctx ATTR_UNUSED,
+		struct sieve_jumplist *jumps, bool jump_true);
+
+static const struct sieve_command tst_false = { 
+	"false", 
+	SCT_TEST, 
+	0, 0, FALSE, FALSE,
+	NULL, NULL, NULL, NULL, 
+	tst_false_generate 
+};
+
+static const struct sieve_command tst_true = { 
+	"true", 
+	SCT_TEST, 
+	0, 0, FALSE, FALSE,
+	NULL, NULL, NULL, NULL, 
+	tst_true_generate 
+};
+
 /* Trivial commands implemented in this file */
 
-const struct sieve_command sieve_core_tests[] = {
-	{ "false", SCT_TEST, NULL, NULL, NULL, tst_false_generate },
-	{ "true", SCT_TEST, NULL, NULL, NULL, tst_true_generate },
-	{ "address", SCT_TEST, tst_address_registered, tst_address_validate, tst_address_generate, NULL },
-	{ "header", SCT_TEST, tst_header_registered, tst_header_validate, tst_header_generate, NULL },
-	{ "exists", SCT_TEST, NULL, tst_exists_validate, tst_exists_generate, NULL },
-	{ "size", SCT_TEST, tst_size_registered, tst_size_validate, tst_size_generate, NULL },
-	{ "not", SCT_TEST, NULL, tst_not_validate, NULL, tst_not_generate },
-	{ "anyof", SCT_TEST, NULL, tst_anyof_validate, NULL, tst_anyof_generate },
-	{ "allof", SCT_TEST, NULL, tst_allof_validate, NULL, tst_allof_generate }
+static bool cmd_stop_generate
+	(struct sieve_generator *generator, 
+		struct sieve_command_context *ctx ATTR_UNUSED);
+static bool cmd_keep_generate
+	(struct sieve_generator *generator, 
+		struct sieve_command_context *ctx ATTR_UNUSED);
+static bool cmd_discard_generate
+	(struct sieve_generator *generator, 
+		struct sieve_command_context *ctx ATTR_UNUSED); 
+
+static const struct sieve_command cmd_stop = { 
+	"stop", 
+	SCT_COMMAND, 
+	0, 0, FALSE, FALSE,
+	NULL, NULL, NULL, 
+	cmd_stop_generate, 
+	NULL 
+};
+
+static const struct sieve_command cmd_keep = { 
+	"keep", 
+	SCT_COMMAND, 
+	0, 0, FALSE, FALSE,
+	NULL, NULL, NULL, 
+	cmd_keep_generate, 
+	NULL
+};
+
+static const struct sieve_command cmd_discard = { 
+	"discard", 
+	SCT_COMMAND, 
+	0, 0, FALSE, FALSE,
+	NULL, NULL, NULL, 
+	cmd_discard_generate, 
+	NULL 
+};
+
+/* Lists of core tests and commands */
+
+const struct sieve_command *sieve_core_tests[] = {
+	&tst_false, &tst_true,
+
+	&tst_address, &tst_header, &tst_exists, &tst_size, 	
+	&tst_not, &tst_anyof, &tst_allof
 };
 
 const unsigned int sieve_core_tests_count = N_ELEMENTS(sieve_core_tests);
 
-const struct sieve_command sieve_core_commands[] = {
-	{ "stop", SCT_COMMAND, NULL, NULL, cmd_stop_generate, NULL },
-	{ "keep", SCT_COMMAND, NULL, NULL, cmd_keep_generate, NULL},
-	{ "discard", SCT_COMMAND, NULL, NULL, cmd_discard_generate, NULL },
-	{ "require", SCT_COMMAND, NULL, cmd_require_validate, cmd_require_generate, NULL },
-	{ "if", SCT_COMMAND, NULL, cmd_if_validate, cmd_if_generate, NULL },
-	{ "elsif", SCT_COMMAND, NULL, cmd_elsif_validate, cmd_if_generate, NULL },
-	{ "else", SCT_COMMAND, NULL, cmd_else_validate, cmd_else_generate, NULL },
-	{ "redirect", SCT_COMMAND, NULL, cmd_redirect_validate, NULL, NULL }
+const struct sieve_command *sieve_core_commands[] = {
+	&cmd_stop, &cmd_keep, &cmd_discard,
+
+	&cmd_require, &cmd_if, &cmd_elsif, &cmd_else, &cmd_redirect
 };
 
 const unsigned int sieve_core_commands_count = N_ELEMENTS(sieve_core_commands);
 	
+/* Command context */
+
 struct sieve_command_context *sieve_command_prev_context	
 	(struct sieve_command_context *context) 
 {
@@ -170,7 +228,8 @@ const char *sieve_command_type_name(const struct sieve_command *command) {
 }
 
 /* Code generation for trivial commands and tests */
-bool cmd_stop_generate
+
+static bool cmd_stop_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
@@ -179,7 +238,7 @@ bool cmd_stop_generate
 	return TRUE;
 }
 
-bool cmd_keep_generate
+static bool cmd_keep_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
@@ -188,7 +247,7 @@ bool cmd_keep_generate
 	return TRUE;
 }
 
-bool cmd_discard_generate
+static bool cmd_discard_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
@@ -197,7 +256,7 @@ bool cmd_discard_generate
 	return TRUE;
 }
 
-bool tst_false_generate
+static bool tst_false_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *context ATTR_UNUSED,
 		struct sieve_jumplist *jumps, bool jump_true)
@@ -212,7 +271,7 @@ bool tst_false_generate
 	return TRUE;
 }
 
-bool tst_true_generate
+static bool tst_true_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx ATTR_UNUSED,
 		struct sieve_jumplist *jumps, bool jump_true)

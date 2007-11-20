@@ -5,12 +5,38 @@
 #include "sieve-extensions.h"
 #include "sieve-validator.h" 
 
+/* Types */
+
 struct cmd_require_context_data {
 	struct sieve_ast_argument *arg;
 	struct sieve_extension *extension;
 };
 
-bool cmd_require_validate(struct sieve_validator *validator, struct sieve_command_context *cmd) 
+/* Require command
+ *
+ * Syntax 
+ *   Syntax: require <capabilities: string-list>
+ */
+
+static bool cmd_require_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+static bool cmd_require_generate
+	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+
+const struct sieve_command cmd_require = { 
+	"require", 
+	SCT_COMMAND, 
+	1, 0, FALSE, FALSE,
+	NULL, NULL, 
+	cmd_require_validate, 
+	cmd_require_generate, 
+	NULL 
+};
+
+/* Command validation */
+
+static bool cmd_require_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd) 
 {
 	bool result = TRUE;
 	struct sieve_ast_argument *arg;
@@ -25,16 +51,7 @@ bool cmd_require_validate(struct sieve_validator *validator, struct sieve_comman
 			"at the beginning of the file");
 		return FALSE;
 	}
-	
-	/* Check valid syntax 
-	 *   Syntax: require <capabilities: string-list>
-	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 1) ||
-	 	!sieve_validate_command_subtests(validator, cmd, 0) || 
-	 	!sieve_validate_command_block(validator, cmd, FALSE, FALSE) ) {
-	 	return FALSE;
-	}
-	
+		
 	arg = cmd->first_positional;
 	
 	/* Check argument and load specified extension(s) */
@@ -71,7 +88,9 @@ bool cmd_require_validate(struct sieve_validator *validator, struct sieve_comman
 	return result;
 }
 
-bool cmd_require_generate
+/* Command code generation */
+
+static bool cmd_require_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
 	struct sieve_ast_argument *arg = ctx->first_positional;

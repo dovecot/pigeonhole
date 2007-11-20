@@ -2,19 +2,27 @@
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
 
-bool tst_not_validate(struct sieve_validator *validator, struct sieve_command_context *tst) 
-{
-	/* Check not test syntax (optional tags are registered above):
-	 *   allof <tests: test-list>   
-	 */
-	if ( !sieve_validate_command_arguments(validator, tst, 0) ||
-		!sieve_validate_command_subtests(validator, tst, 1) ) 
-		return FALSE;
-	
-	return TRUE;
-}
+/* Not test 
+ *
+ * Syntax:
+ *   not <tests: test-list>   
+ */
 
-bool tst_not_generate
+static bool tst_not_generate
+	(struct sieve_generator *generator, struct sieve_command_context *ctx,
+		struct sieve_jumplist *jumps, bool jump_true);
+
+const struct sieve_command tst_not = { 
+	"not", 
+	SCT_TEST, 
+	0, 1, FALSE, FALSE,
+	NULL, NULL, NULL, NULL, 
+	tst_not_generate 
+};
+
+/* Code generation */
+
+static bool tst_not_generate
 	(struct sieve_generator *generator, struct sieve_command_context *ctx,
 		struct sieve_jumplist *jumps, bool jump_true)
 {

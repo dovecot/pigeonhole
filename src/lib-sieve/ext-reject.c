@@ -35,20 +35,26 @@ struct sieve_extension reject_extension = {
 	NULL 
 };
 
-static const struct sieve_command reject_command = { 
-	"reject", 
-	SCT_COMMAND, 
-	NULL, 
-	cmd_reject_validate, 
-	cmd_reject_generate, 
-	NULL 
-};
-
 static bool ext_reject_load(int ext_id) 
 {
 	ext_my_id = ext_id;
 	return TRUE;
 }
+
+/* Reject command
+ * 
+ * Syntax: 
+ *   reject <reason: string>
+ */
+static const struct sieve_command reject_command = { 
+	"reject", 
+	SCT_COMMAND, 
+	1, 0, FALSE, FALSE,
+	NULL, NULL,
+	cmd_reject_validate, 
+	cmd_reject_generate, 
+	NULL 
+};
 
 /* 
  * Validation 
@@ -56,19 +62,7 @@ static bool ext_reject_load(int ext_id)
 
 static bool cmd_reject_validate(struct sieve_validator *validator, struct sieve_command_context *cmd) 
 { 	
-	struct sieve_ast_argument *arg;
-		
-	/* Check valid syntax: 
-	 *    reject <reason: string>
-	 */
-	if ( !sieve_validate_command_arguments(validator, cmd, 1) ||
-		!sieve_validate_command_subtests(validator, cmd, 0) || 
-	 	!sieve_validate_command_block(validator, cmd, FALSE, FALSE) ) {
-	 	
-		return FALSE;
-	}
-
-	arg = cmd->first_positional;
+	struct sieve_ast_argument *arg = cmd->first_positional;
 		
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {

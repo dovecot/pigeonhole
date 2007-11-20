@@ -120,17 +120,21 @@ static bool _cmd_unknown_validate
 	return FALSE;
 }
 
-static const struct sieve_command unknown_command = 
-	{ "", SCT_COMMAND, NULL, _cmd_unknown_validate, NULL, NULL };
-static const struct sieve_command unknown_test = 
-	{ "", SCT_TEST, NULL, _cmd_unknown_validate, NULL, NULL };
+static const struct sieve_command unknown_command = { 
+	"", SCT_COMMAND, 0, 0, FALSE, FALSE , 
+	NULL, NULL, _cmd_unknown_validate, NULL, NULL 
+};
+static const struct sieve_command unknown_test = { 
+	"", SCT_TEST, 0, 0, FALSE, FALSE,
+	NULL, NULL, _cmd_unknown_validate, NULL, NULL 
+};
 
 static void sieve_validator_register_core_tests(struct sieve_validator *validator) 
 {
 	unsigned int i;
 	
 	for ( i = 0; i < sieve_core_tests_count; i++ ) {
-		sieve_validator_register_command(validator, &sieve_core_tests[i]); 
+		sieve_validator_register_command(validator, sieve_core_tests[i]); 
 	}
 }
 
@@ -139,7 +143,7 @@ static void sieve_validator_register_core_commands(struct sieve_validator *valid
 	unsigned int i;
 	
 	for ( i = 0; i < sieve_core_commands_count; i++ ) {
-		sieve_validator_register_command(validator, &sieve_core_commands[i]); 
+		sieve_validator_register_command(validator, sieve_core_commands[i]); 
 	}
 }
 
@@ -374,9 +378,9 @@ void sieve_validator_argument_activate
 
 /* Test validation API */
 
-bool sieve_validate_command_arguments
-	(struct sieve_validator *validator, struct sieve_command_context *cmd, 
-	 const unsigned int count) 
+static bool sieve_validate_command_arguments
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	const unsigned int count) 
 {
 	struct sieve_ast_argument *arg;
 	unsigned int real_count = 0;
@@ -470,8 +474,9 @@ bool sieve_validate_command_arguments
  
 /* Command Validation API */ 
                  
-bool sieve_validate_command_subtests
-	( struct sieve_validator *validator, struct sieve_command_context *cmd, const unsigned int count ) \
+static bool sieve_validate_command_subtests
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	const unsigned int count) 
 {
 	switch ( count ) {
 	
@@ -515,7 +520,8 @@ bool sieve_validate_command_subtests
 	return TRUE;
 }
 
-bool sieve_validate_command_block(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+static bool sieve_validate_command_block
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
 	bool block_allowed, bool block_required) 
 {
 	i_assert( cmd->ast_node->type == SAT_COMMAND );
@@ -564,20 +570,30 @@ static bool sieve_validate_test(struct sieve_validator *validator, struct sieve_
 					"attempted to use command '%s' as test", tst_node->identifier);
 			 	result = FALSE;
 			} else {
-				struct sieve_command_context *ctx = sieve_command_context_create(tst_node, test); 
+				struct sieve_command_context *ctx = 
+					sieve_command_context_create(tst_node, test); 
 				tst_node->context = ctx;
-			
-				/* Call command validation function if specified or execute defaults otherwise */
-				if ( test->validate != NULL )
-					result = test->validate(validator, ctx) && result;
-				else {
-					/* Check default syntax 
-	 				 *   Syntax: test
-	 				 */
-	 				if ( !sieve_validate_command_arguments(validator,ctx, 0) ||
-	 					!sieve_validate_command_subtests(validator, ctx, 0) ) 
-	 					return FALSE; 
-				}
+
+				/* If pre-validation fails, don't bother to validate further 
+				 * as context might be missing and doing so is not very useful for 
+				 * further error reporting anyway
+				 */
+				if ( test->pre_validate == NULL || 
+					test->pre_validate(validator, ctx) ) {
+	
+					/* Check syntax */
+		 			if ( 
+		 				!sieve_validate_command_arguments
+		 					(validator,ctx, test->positional_arguments) ||
+		 				!sieve_validate_command_subtests
+		 					(validator, ctx, test->subtests) ) 
+		 				return FALSE; 
+				
+					/* Call command validation function if specified */
+					if ( test->validate != NULL )
+						result = test->validate(validator, ctx) && result;
+				} else 
+					result = FALSE;
 			}
 		} else 
 			result = FALSE;
@@ -596,7 +612,8 @@ static bool sieve_validate_test(struct sieve_validator *validator, struct sieve_
 	return result;
 }
 
-static bool sieve_validate_test_list(struct sieve_validator *validator, struct sieve_ast_node *test_list) 
+static bool sieve_validate_test_list
+	(struct sieve_validator *validator, struct sieve_ast_node *test_list) 
 {
 	bool result = TRUE;
 	struct sieve_ast_node *test;
@@ -610,7 +627,8 @@ static bool sieve_validate_test_list(struct sieve_validator *validator, struct s
 	return result;
 }
 
-static bool sieve_validate_command(struct sieve_validator *validator, struct sieve_ast_node *cmd_node) 
+static bool sieve_validate_command
+	(struct sieve_validator *validator, struct sieve_ast_node *cmd_node) 
 {
 	bool result = TRUE;
 	const struct sieve_command *command;
@@ -623,26 +641,37 @@ static bool sieve_validate_command(struct sieve_validator *validator, struct sie
 		/* Identifier = "" when the command was previously marked as unknown */
 		if ( *(command->identifier) != '\0' ) {
 			if ( command->type != SCT_COMMAND ) {
-				sieve_validator_error(validator, cmd_node, "attempted to use test '%s' as command", cmd_node->identifier);
+				sieve_validator_error(
+					validator, cmd_node, 
+					"attempted to use test '%s' as command", cmd_node->identifier);
 			 	result = FALSE;
 			} else { 
-				struct sieve_command_context *ctx = sieve_command_context_create(cmd_node, command); 
+				struct sieve_command_context *ctx = 
+					sieve_command_context_create(cmd_node, command); 
 				cmd_node->context = ctx;
 			
-				/* Call command validation function if specified or execute defaults otherwise */
-				if ( command->validate != NULL )
-					result = command->validate(validator, ctx) && result;
-				else {
-					/* Check default syntax 
-	 				 *   Syntax: command
-	 				 */
-					if ( !sieve_validate_command_arguments(validator,ctx, 0) ||
-	 					!sieve_validate_command_subtests(validator, ctx, 0) || 
-	 					!sieve_validate_command_block(validator, ctx, FALSE, FALSE) ) {
-	 				
+				/* If pre-validation fails, don't bother to validate further 
+				 * as context might be missing and doing so is not very useful for 
+				 * further error reporting anyway
+				 */
+				if ( command->pre_validate == NULL || 
+					command->pre_validate(validator, ctx) ) {
+			
+					/* Check syntax */
+					if ( 
+						!sieve_validate_command_arguments
+							(validator, ctx, command->positional_arguments) ||
+	 					!sieve_validate_command_subtests
+	 						(validator, ctx, command->subtests) || 
+	 					!sieve_validate_command_block
+	 						(validator, ctx, command->block_allowed, command->block_required) ) 
 	 					result = FALSE;
-					}
-				}
+			
+					/* Call command validation function if specified */
+					if ( command->validate != NULL )
+						result = command->validate(validator, ctx) && result;
+				} else
+					result = FALSE;
 			}
 		} else 
 			result = FALSE;
