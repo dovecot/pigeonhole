@@ -1,10 +1,16 @@
 /* Extension regex 
- * --------------------
+ * ---------------
  *
- * Author: Stephan Bosch
+ * Authors: Stephan Bosch
  * Specification: draft-murchison-sieve-regex-07
- * Implementation: skeleton
- * Status: under development
+ * Implementation: full, but suboptimal
+ * Status: experimental, largely untested
+ *
+ * FIXME: Regular expressions are compiled during compilation and 
+ * again during interpretation. This is suboptimal and should be 
+ * changed. This requires dumping the compiled regex to the binary. 
+ * Most likely, this will only be possible when we implement regular
+ * expressions ourselves. 
  * 
  */
 
@@ -66,9 +72,6 @@ static bool ext_regex_load(int ext_id)
 
 	return TRUE;
 }
-
-/* Actual extension implementation */
-
 
 /* Extension access structures */
 
@@ -194,6 +197,8 @@ bool mtch_regex_validate_context
 
 	return TRUE;
 }
+
+/* Actual extension implementation */
 
 void *mtch_regex_match_init
 (const struct sieve_match_type *mtch ATTR_UNUSED, 

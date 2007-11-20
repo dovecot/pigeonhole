@@ -1,3 +1,8 @@
+Compilation
+-----------
+
+Refer to INSTALL file.
+
 Installation
 ------------
 
@@ -30,20 +35,20 @@ Features
 What works:
 * Scripts can be parsed, the grammar is fully supported. 
 * Script validation (contextual analysis) works almost completely.
-* Script code generation works for most core commands with exception
-  of match-type arguments. Comparators and address-part modifiers already work.
-* Interpreter runs and dumps core commands and tests. Comparators and 
-  address-part modifiers have the desired effect. Match types other than :is are
-  not supported yet. Action commands have no effect. 
+* Script code generation works for most core commands. Comparators, match-types 
+  and address-part modifiers already work.
+* Interpreter runs and dumps core commands and tests. Comparators, match-types and 
+  address-part modifiers have the desired effect. Match type :matches is not 
+  supported yet. Action commands have no effect. 
  
-Implemented extensions:
+Implemented extensions and their implementation status:
 	subaddress: full
 	comparator-i;ascii-numeric: full, but fails to handle leading zeros
 	vacation: validation and generation only. Execution is broken.
 	relational: validation and generation only. 
-	regex: skeleton
+	regex: full, but suboptimal
 	
-Other extensionsions will be added a soon as the necessary infrastructure is 
+Other extensions will be added a soon as the necessary infrastructure is 
 available. Extensions supported by cmu-sieve have priority, although variables 
 might be implemented somewhere in between. 
 
@@ -74,9 +79,11 @@ INTERPRETER: sieve-interpreter.c
 TODO
 ----
 
-* Implement match-type execution
+* Further implement error handling and limit the maximum number of errors. 
 * Resolve code duplication amongst comparator, address-part and match-type 
   support as much as possible. 
+* Use dovecot streams for code dump (debugging), currently the code is riddled 
+  with printf()s. 
 * Produce a fully working interpreter that actually executes actions, currently
   tests are evaluated and actions just print their occurence.
 * Give the binary format some more thought, it is currently quite rough and
@@ -86,6 +93,4 @@ TODO
 * Automate script tests; i.e. build a test suite.
 * Use mmap for the binary script representation. 
 * Allow the currently in-memory byte-code to be stored as a script binary
-* Use dovecot streams for code dump (debugging), currently the code is riddled 
-  with printf()s. 
 
