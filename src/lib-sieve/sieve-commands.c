@@ -223,7 +223,7 @@ const char *sieve_command_type_name(const struct sieve_command *command) {
 	case SCT_TEST: return "test";
 	case SCT_COMMAND: return "command";
 	default:
-		i_unreached();
+		break;
 	}
 	return "??COMMAND-TYPE??";
 }
