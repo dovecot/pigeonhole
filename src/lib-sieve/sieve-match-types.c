@@ -465,17 +465,20 @@ bool sieve_match_value
 	while ( sieve_coded_stringlist_next_item(mctx->key_list, &key_item) && 
 		key_item != NULL ) 
 	{
-		void * const *kctx;
+		void *key_ctx = NULL;
+		void * const *kctx = &key_ctx;
 
-		if ( mctx->value_index == 0 && mtch->match_init != NULL ) {
-			void *key_ctx = mtch->match_init(
-				mctx->match_type, mctx->comparator,
-				str_c(key_item), str_len(key_item)); 
+		if ( mtch->match_init != NULL ) {
+			if ( mctx->value_index == 0 ) {
+				key_ctx = mtch->match_init(
+					mctx->match_type, mctx->comparator,
+					str_c(key_item), str_len(key_item)); 
 
-			kctx = &key_ctx;
-			array_idx_set(&mctx->key_contexts, key_index, kctx); 
-		} else 
-			kctx = array_idx(&mctx->key_contexts, key_index);
+				kctx = &key_ctx;
+				array_idx_set(&mctx->key_contexts, key_index, kctx); 
+			} else 
+				kctx = array_idx(&mctx->key_contexts, key_index);
+		}
 
 		if ( mtch->match
 			(mctx->match_type, mctx->comparator, value, strlen(value), 
