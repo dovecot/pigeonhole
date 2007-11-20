@@ -28,6 +28,7 @@ extern const struct sieve_argument string_list_argument;
 /* Command */
 
 enum sieve_command_type {
+	SCT_NONE,
 	SCT_COMMAND,
 	SCT_TEST
 };

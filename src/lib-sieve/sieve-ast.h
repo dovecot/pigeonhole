@@ -190,6 +190,8 @@ struct sieve_ast *sieve_ast_create( void );
 void sieve_ast_ref(struct sieve_ast *ast);
 void sieve_ast_unref(struct sieve_ast **ast);
 
+const char *sieve_ast_type_name(enum sieve_ast_type ast_type);
+
 /* Debug */
 void sieve_ast_unparse(struct sieve_ast *ast);
 

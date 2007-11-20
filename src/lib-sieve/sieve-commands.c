@@ -219,6 +219,7 @@ struct sieve_command_context *sieve_command_context_create
 
 const char *sieve_command_type_name(const struct sieve_command *command) {
 	switch ( command->type ) {
+	case SCT_NONE: return "command of unspecified type (bug)";
 	case SCT_TEST: return "test";
 	case SCT_COMMAND: return "command";
 	default:

@@ -313,6 +313,18 @@ void sieve_ast_unref(struct sieve_ast **ast) {
 	}
 }
 
+const char *sieve_ast_type_name(enum sieve_ast_type ast_type) {
+	switch ( ast_type ) {
+	
+	case SAT_NONE: return "none";
+	case SAT_ROOT: return "ast root node";
+	case SAT_COMMAND: return "command";
+	case SAT_TEST: return "test";
+	
+	default: return "??AST NODE??";
+	}
+}
+
 /* Debug */
 
 /* Unparsing, currently implemented using plain printf()s */
