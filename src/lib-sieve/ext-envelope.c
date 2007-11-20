@@ -106,6 +106,9 @@ static bool tst_envelope_validate(struct sieve_validator *validator, struct siev
 		return FALSE;
 	}
 	sieve_validator_argument_activate(validator, arg);
+
+	/* Validate the key argument to a specified match type */
+	sieve_match_type_validate(validator, tst, arg);
 	
 	return TRUE;
 }

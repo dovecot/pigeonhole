@@ -7,6 +7,7 @@
 #include "array.h"
 
 #include "sieve-extensions.h"
+#include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-binary.h"
 #include "sieve-comparators.h"
@@ -277,12 +278,14 @@ static bool tag_match_type_validate
 	return TRUE;
 }
 
-static bool tag_match_type_validate_context
+bool sieve_match_type_validate_argument
 (struct sieve_validator *validator, struct sieve_ast_argument *arg,
-	struct sieve_command_context *cmd ATTR_UNUSED)
+	struct sieve_ast_argument *key_arg )
 {
 	struct sieve_match_type_context *mtctx = 
 		(struct sieve_match_type_context *) arg->context;
+
+	i_assert(arg->argument == &match_type_tag);
 
 	/* Check whether this match type requires additional validation. 
 	 * Additional validation can override the match type recorded in the context 
@@ -290,10 +293,27 @@ static bool tag_match_type_validate_context
 	 */
 	if ( mtctx != NULL && mtctx->match_type != NULL &&
 		mtctx->match_type->validate_context != NULL ) {
-		return mtctx->match_type->validate_context(validator, arg, mtctx);
+		return mtctx->match_type->validate_context(validator, arg, mtctx, key_arg);
 	}
 	
 	return TRUE;
+}
+
+bool sieve_match_type_validate
+(struct sieve_validator *validator, struct sieve_command_context *cmd,
+	struct sieve_ast_argument *key_arg )
+{
+	struct sieve_ast_argument *arg = sieve_command_first_argument(cmd);
+
+	while ( arg != NULL && arg != cmd->first_positional ) {
+		if ( arg->argument == &match_type_tag ) {
+			if ( !sieve_match_type_validate_argument(validator, arg, key_arg) ) 
+				return FALSE;
+		}
+		arg = sieve_ast_argument_next(arg);
+	}
+
+	return TRUE;	
 }
 
 /* Code generation */
@@ -478,7 +498,7 @@ const struct sieve_argument match_type_tag = {
 	"MATCH-TYPE",
 	tag_match_type_is_instance_of, 
 	tag_match_type_validate, 
-	tag_match_type_validate_context,
+	NULL,
 	tag_match_type_generate 
 };
  

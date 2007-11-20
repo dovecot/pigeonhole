@@ -26,7 +26,7 @@ struct sieve_match_type {
 			struct sieve_match_type_context *ctx);
 	bool (*validate_context)
 		(struct sieve_validator *validator, struct sieve_ast_argument *arg, 
-			struct sieve_match_type_context *ctx);
+			struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg);
 			
 	bool (*match)
 		(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
@@ -59,6 +59,12 @@ void sieve_match_types_link_tags
 	(struct sieve_validator *validator, 
 		struct sieve_command_registration *cmd_reg,
 		unsigned int id_code);
+bool sieve_match_type_validate_argument
+(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+	struct sieve_ast_argument *key_arg);
+bool sieve_match_type_validate
+(struct sieve_validator *validator, struct sieve_command_context *cmd,
+	struct sieve_ast_argument *key_arg);
 		
 void sieve_match_type_register
 	(struct sieve_validator *validator, 
