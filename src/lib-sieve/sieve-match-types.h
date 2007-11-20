@@ -24,6 +24,9 @@ struct sieve_match_type {
 	bool (*validate)
 		(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 			struct sieve_match_type_context *ctx);
+	bool (*validate_context)
+		(struct sieve_validator *validator, struct sieve_ast_argument *arg, 
+			struct sieve_match_type_context *ctx);
 			
 	bool (*match)
 		(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,

@@ -190,7 +190,7 @@ const struct sieve_match_type value_match_type = {
 	&relational_match_extension,
 	RELATIONAL_VALUE,
 	ext_relational_parameter_validate,
-	NULL
+	NULL, NULL
 };
 
 const struct sieve_match_type count_match_type = {
@@ -199,7 +199,7 @@ const struct sieve_match_type count_match_type = {
 	&relational_match_extension,
 	RELATIONAL_COUNT,
 	ext_relational_parameter_validate,
-	NULL
+	NULL, NULL
 };
 
 /* Per-parameter match type objects, used for generation/interpretation 
@@ -208,22 +208,20 @@ const struct sieve_match_type count_match_type = {
  * not such a great idea. This needs more thought
  */
 
-#define VALUE_MATCH_TYPE(name, rel_match, func) {     \
+#define VALUE_MATCH_TYPE(name, rel_match, func) {         \
 		"value-" name,                                    \
 		SIEVE_MATCH_TYPE_CUSTOM,                          \
 		&relational_match_extension,                      \
 		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match),     \
-		NULL,	                                            \
-		NULL,                                             \
+		NULL, NULL, NULL                                  \
 	}
 
-#define COUNT_MATCH_TYPE(name, rel_match, func) {     \
+#define COUNT_MATCH_TYPE(name, rel_match, func) {         \
 		"count-" name,                                    \
 		SIEVE_MATCH_TYPE_CUSTOM,                          \
 		&relational_match_extension,                      \
 		REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match),     \
-		NULL,	                                            \
-		NULL,                                             \
+		NULL, NULL, NULL                                  \
 	}
 	
 static const struct sieve_match_type rel_match_types[] = { 

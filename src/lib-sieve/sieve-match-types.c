@@ -237,7 +237,7 @@ static bool tag_match_type_validate
 
 	/* Syntax:   
 	 *   ":is" / ":contains" / ":matches" (subject to extension)
-   */
+   	 */
 	
 	/* Get match_type from registry */
 	mtch = sieve_match_type_find
@@ -272,6 +272,25 @@ static bool tag_match_type_validate
 	 */
 	if ( mtch->validate != NULL ) {
 		return mtch->validate(validator, arg, mtctx);
+	}
+	
+	return TRUE;
+}
+
+static bool tag_match_type_validate_context
+(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+	struct sieve_command_context *cmd ATTR_UNUSED)
+{
+	struct sieve_match_type_context *mtctx = 
+		(struct sieve_match_type_context *) arg->context;
+
+	/* Check whether this match type requires additional validation. 
+	 * Additional validation can override the match type recorded in the context 
+	 * for later code generation. 
+	 */
+	if ( mtctx != NULL && mtctx->match_type != NULL &&
+		mtctx->match_type->validate_context != NULL ) {
+		return mtctx->match_type->validate_context(validator, arg, mtctx);
 	}
 	
 	return TRUE;
@@ -459,7 +478,7 @@ const struct sieve_argument match_type_tag = {
 	NULL,
 	tag_match_type_is_instance_of, 
 	tag_match_type_validate, 
-	NULL,
+	tag_match_type_validate_context,
 	tag_match_type_generate 
 };
  
@@ -468,7 +487,7 @@ const struct sieve_match_type is_match_type = {
 	SIEVE_MATCH_TYPE_IS,
 	NULL,
 	0,
-	NULL,
+	NULL, NULL,
 	mtch_is_match,
 };
 
@@ -477,7 +496,7 @@ const struct sieve_match_type contains_match_type = {
 	SIEVE_MATCH_TYPE_CONTAINS,
 	NULL,
 	0,
-	NULL,
+	NULL, NULL,
 	mtch_contains_match,
 };
 
@@ -486,7 +505,7 @@ const struct sieve_match_type matches_match_type = {
 	SIEVE_MATCH_TYPE_MATCHES,
 	NULL,
 	0,
-	NULL,
+	NULL, NULL,
 	mtch_matches_match
 };
 
