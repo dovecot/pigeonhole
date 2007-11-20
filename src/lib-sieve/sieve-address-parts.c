@@ -370,10 +370,9 @@ static bool tag_address_part_generate
  * Address Matching
  */
  
-bool sieve_address_match_stringlist
-	(const struct sieve_address_part *addrp, const struct sieve_match_type *mtch, 
-		const struct sieve_comparator *cmp,	struct sieve_coded_stringlist *key_list,
-		const char *data)
+bool sieve_address_match
+(const struct sieve_address_part *addrp, struct sieve_match_context *mctx, 		
+	const char *data)
 {
 	bool matched = FALSE;
 	const struct message_address *addr;
@@ -393,7 +392,7 @@ bool sieve_address_match_stringlist
 
 			part = addrp->extract_from(addr);
 			
-			if ( part != NULL && sieve_match_stringlist(mtch, cmp, key_list, part) )
+			if ( part != NULL && sieve_match_value(mctx, part) )
 				matched = TRUE;				
 		} 
 

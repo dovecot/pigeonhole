@@ -63,6 +63,7 @@ struct sieve_comparator;
 
 /* sieve-match-types.h */
 struct sieve_match_type;
+struct sieve_match_context;
 
 /* sieve-address-parts.h */
 struct sieve_address_part;

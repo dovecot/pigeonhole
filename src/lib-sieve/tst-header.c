@@ -141,10 +141,10 @@ static bool tst_header_opcode_execute
 	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address)
 {
 	struct mail *mail = sieve_interpreter_get_mail(interp);
-
 	unsigned int opt_code;
 	const struct sieve_comparator *cmp = &i_octet_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
+	struct sieve_match_context *mctx;
 	struct sieve_coded_stringlist *hdr_list;
 	struct sieve_coded_stringlist *key_list;
 	string_t *hdr_item;
@@ -181,7 +181,9 @@ static bool tst_header_opcode_execute
 		t_pop();
 		return FALSE;
 	}
-	
+
+	mctx = sieve_match_begin(mtch, cmp, key_list); 	
+
 	/* Iterate through all requested headers to match */
 	hdr_item = NULL;
 	matched = FALSE;
@@ -192,11 +194,13 @@ static bool tst_header_opcode_execute
 			
 			int i;
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
-				if ( sieve_match_stringlist(mtch, cmp, key_list, headers[i]) )
+				if ( sieve_match_value(mctx, headers[i]) )
 					matched = TRUE;				
 			} 
 		}
 	}
+
+	sieve_match_end(mctx); 	
 	
 	t_pop();
 	

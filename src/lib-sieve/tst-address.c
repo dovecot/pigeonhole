@@ -157,6 +157,7 @@ static bool tst_address_opcode_execute
 	const struct sieve_match_type *mtch = &is_match_type;
 	const struct sieve_address_part *addrp = &all_address_part;
 	unsigned int opt_code;
+	struct sieve_match_context *mctx;
 	struct sieve_coded_stringlist *hdr_list;
 	struct sieve_coded_stringlist *key_list;
 	string_t *hdr_item;
@@ -199,6 +200,9 @@ static bool tst_address_opcode_execute
 		t_pop();
 		return FALSE;
 	}
+
+	/* Initialize match context */
+    mctx = sieve_match_begin(mtch, cmp, key_list);
 	
 	/* Iterate through all requested headers to match */
 	hdr_item = NULL;
@@ -210,12 +214,14 @@ static bool tst_address_opcode_execute
 			
 			int i;
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
-				if ( sieve_address_match_stringlist(addrp, mtch, cmp, key_list, headers[i]) )
+				if ( sieve_address_match(addrp, mctx, headers[i]) )
 					matched = TRUE;				
 			} 
 		}
 	}
 	
+    sieve_match_end(mctx);
+
 	t_pop();
 	
 	sieve_interpreter_set_test_result(interp, matched);

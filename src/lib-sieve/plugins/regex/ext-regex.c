@@ -36,6 +36,16 @@ static bool ext_regex_validator_load(struct sieve_validator *validator);
 static bool ext_regex_interpreter_load
 	(struct sieve_interpreter *interpreter);
 
+void *mtch_regex_match_init
+	(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
+		const char *key, size_t key_size);
+static bool mtch_regex_match
+	(const struct sieve_match_type *mtch ATTR_UNUSED, 
+		const struct sieve_comparator *cmp, const char *val, size_t val_size, 
+		const char *key, size_t key_size, void *key_context);
+void mtch_regex_match_deinit
+	(const struct sieve_match_type *mtch, void *key_context);
+
 /* Extension definitions */
 
 static int ext_my_id;
@@ -75,7 +85,9 @@ const struct sieve_match_type regex_match_type = {
 	0,
 	NULL,
 	mtch_regex_validate_context,
-	NULL
+	mtch_regex_match_init,
+	mtch_regex_match,
+	mtch_regex_match_deinit,
 };
 
 const struct sieve_match_type_extension regex_match_extension = { 
@@ -181,6 +193,45 @@ bool mtch_regex_validate_context
 	} 
 
 	return TRUE;
+}
+
+void *mtch_regex_match_init
+(const struct sieve_match_type *mtch ATTR_UNUSED, 
+	const struct sieve_comparator *cmp, const char *key, 
+	size_t key_size ATTR_UNUSED)
+{
+	int ret;
+	int cflags;
+	regex_t *regexp = p_new(pool_datastack_create(), regex_t, 1);
+
+	if ( cmp == &i_octet_comparator ) 
+		cflags =  REG_EXTENDED | REG_NOSUB;
+	else if ( cmp ==  &i_ascii_casemap_comparator )
+		cflags =  REG_EXTENDED | REG_NOSUB | REG_ICASE;
+	else
+		return NULL;
+
+	if ( (ret=regcomp(regexp, key, cflags)) != 0 ) {
+    	/* FIXME: Do something useful, i.e. report error somewhere */
+		return NULL;
+	}
+
+	return regexp;
+}
+
+static bool mtch_regex_match
+(const struct sieve_match_type *mtch ATTR_UNUSED, 
+	const struct sieve_comparator *cmp ATTR_UNUSED, const char *val, 
+	size_t val_size ATTR_UNUSED, const char *key ATTR_UNUSED, 
+	size_t key_size ATTR_UNUSED, void *key_context)
+{
+	return ( regexec((regex_t *) key_context, val, 0, NULL, 0) == 0 );
+}
+
+void mtch_regex_match_deinit
+	(const struct sieve_match_type *mtch ATTR_UNUSED, void *key_context)
+{
+	regfree((regex_t *) key_context);
 }
 
 /* Load extension into validator */

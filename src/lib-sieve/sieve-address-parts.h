@@ -67,9 +67,8 @@ bool sieve_opr_address_part_dump
 	(struct sieve_interpreter *interpreter,
 		struct sieve_binary *sbin, sieve_size_t *address);
 
-bool sieve_address_match_stringlist
-	(const struct sieve_address_part *addrp, const struct sieve_match_type *mtch, 
-		const struct sieve_comparator *cmp,	struct sieve_coded_stringlist *key_list,
-		const char *data);
+bool sieve_address_match
+(const struct sieve_address_part *addrp, struct sieve_match_context *mctx,
+    const char *data);
 
 #endif /* __SIEVE_ADDRESS_PARTS_H */

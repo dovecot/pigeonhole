@@ -416,43 +416,107 @@ static bool tag_match_type_generate
 	return TRUE;
 }
 
-/* Stringlist Utility */
+/* Match Utility */
 
-bool sieve_match_stringlist
-	(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
-		struct sieve_coded_stringlist *key_list, const char *value)
+struct sieve_match_context {
+	const struct sieve_match_type *match_type;	
+	const struct sieve_comparator *comparator; 
+	struct sieve_coded_stringlist *key_list;
+
+	ARRAY_DEFINE(key_contexts, void *);
+
+	int value_index;
+};
+
+struct sieve_match_context *sieve_match_begin
+(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp, 
+	struct sieve_coded_stringlist *key_list)
 {
+	struct sieve_match_context *mctx = 
+		p_new(pool_datastack_create(), struct sieve_match_context, 1);  
+	int listlen = sieve_coded_stringlist_get_length(key_list);
+
+	mctx->match_type = mtch;
+	mctx->comparator = cmp;
+	mctx->key_list = key_list;
+	mctx->value_index = 0;
+	
+	p_array_init(&mctx->key_contexts, pool_datastack_create(), listlen);
+	array_idx_clear(&mctx->key_contexts, listlen-1);
+
+	return mctx;
+}
+
+bool sieve_match_value
+	(struct sieve_match_context *mctx, const char *value)
+{
+	const struct sieve_match_type *mtch = mctx->match_type;
+	unsigned int key_index;
 	string_t *key_item;
-	sieve_coded_stringlist_reset(key_list);
+	sieve_coded_stringlist_reset(mctx->key_list);
 				
 	/* Reject unimplemented match-type */
 	if ( mtch->match == NULL )
 		return FALSE;
 				
 	/* Match to all key values */
+	key_index = 0;
 	key_item = NULL;
-	while ( sieve_coded_stringlist_next_item(key_list, &key_item) && 
+	while ( sieve_coded_stringlist_next_item(mctx->key_list, &key_item) && 
 		key_item != NULL ) 
 	{
-		if ( mtch->match(mtch, cmp, value, strlen(value), 
-			str_c(key_item), str_len(key_item)) )
+		void * const *kctx;
+
+		if ( mctx->value_index == 0 && mtch->match_init != NULL ) {
+			void *key_ctx = mtch->match_init(
+				mctx->match_type, mctx->comparator,
+				str_c(key_item), str_len(key_item)); 
+
+			kctx = &key_ctx;
+			array_idx_set(&mctx->key_contexts, key_index, kctx); 
+		} else 
+			kctx = array_idx(&mctx->key_contexts, key_index);
+
+		if ( mtch->match
+			(mctx->match_type, mctx->comparator, value, strlen(value), 
+			str_c(key_item), str_len(key_item), *kctx) )
 			return TRUE;  
+	
+		key_index++;
 	}
-  
+
+	mctx->value_index++;
+
+	return FALSE;
+}
+
+bool sieve_match_end(struct sieve_match_context *mctx)
+{
+	unsigned int i;
+	const struct sieve_match_type *mtch = mctx->match_type;
+
+	if ( mtch->match_deinit != NULL ) {
+		for ( i = 0; i < array_count(&mctx->key_contexts); i++ ) {
+			void * const *kctx = array_idx(&mctx->key_contexts, i);
+
+			mtch->match_deinit(mtch, *kctx);
+ 	 	}
+	}
+
 	return FALSE;
 }
 
 /*
  * Matching
  */
- 
+
 static bool mtch_is_match
 (const struct sieve_match_type *mtch ATTR_UNUSED, 
-	const struct sieve_comparator *cmp,
-	const char *val1, size_t val1_size, const char *val2, size_t val2_size)
+	const struct sieve_comparator *cmp,	const char *val1, size_t val1_size, 
+	const char *key, size_t key_size, void *key_context ATTR_UNUSED)
 {
 	if ( cmp->compare != NULL )
-		return (cmp->compare(cmp, val1, val1_size, val2, val2_size) == 0);
+		return (cmp->compare(cmp, val1, val1_size, key, key_size) == 0);
 
 	return FALSE;
 }
@@ -462,8 +526,8 @@ static bool mtch_is_match
  */
 static bool mtch_contains_match
 (const struct sieve_match_type *mtch ATTR_UNUSED, 
-	const struct sieve_comparator *cmp,
-	const char *val, size_t val_size, const char *key, size_t key_size)
+	const struct sieve_comparator *cmp, const char *val, size_t val_size, 
+	const char *key, size_t key_size, void *key_context ATTR_UNUSED)
 {
 	const char *vend = (const char *) val + val_size;
 	const char *kend = (const char *) key + key_size;
@@ -484,8 +548,8 @@ static bool mtch_contains_match
 
 static bool mtch_matches_match
 (const struct sieve_match_type *mtch ATTR_UNUSED, 
-	const struct sieve_comparator *cmp ATTR_UNUSED,
-	const char *val, size_t val_size, const char *key, size_t key_size)
+	const struct sieve_comparator *cmp,	const char *val, size_t val_size, 
+	const char *key, size_t key_size, void *key_context ATTR_UNUSED)
 {
 	return FALSE;
 }
@@ -507,8 +571,9 @@ const struct sieve_match_type is_match_type = {
 	SIEVE_MATCH_TYPE_IS,
 	NULL,
 	0,
-	NULL, NULL,
+	NULL, NULL, NULL,
 	mtch_is_match,
+	NULL
 };
 
 const struct sieve_match_type contains_match_type = {
@@ -516,8 +581,9 @@ const struct sieve_match_type contains_match_type = {
 	SIEVE_MATCH_TYPE_CONTAINS,
 	NULL,
 	0,
-	NULL, NULL,
+	NULL, NULL, NULL,
 	mtch_contains_match,
+	NULL
 };
 
 const struct sieve_match_type matches_match_type = {
@@ -525,8 +591,9 @@ const struct sieve_match_type matches_match_type = {
 	SIEVE_MATCH_TYPE_MATCHES,
 	NULL,
 	0,
-	NULL, NULL,
-	mtch_matches_match
+	NULL, NULL, NULL,
+	mtch_matches_match,
+	NULL
 };
 
 const struct sieve_match_type *sieve_core_match_types[] = {
