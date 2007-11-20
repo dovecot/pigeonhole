@@ -587,11 +587,13 @@ static bool sieve_validate_test(struct sieve_validator *validator, struct sieve_
 		 					(validator,ctx, test->positional_arguments) ||
 		 				!sieve_validate_command_subtests
 		 					(validator, ctx, test->subtests) ) 
-		 				return FALSE; 
-				
-					/* Call command validation function if specified */
-					if ( test->validate != NULL )
-						result = test->validate(validator, ctx) && result;
+		 			{
+		 				result = FALSE; 
+		 			} else {
+						/* Call command validation function if specified */
+						if ( test->validate != NULL )
+							result = test->validate(validator, ctx) && result;
+					}
 				} else 
 					result = FALSE;
 			}
@@ -665,11 +667,13 @@ static bool sieve_validate_command
 	 						(validator, ctx, command->subtests) || 
 	 					!sieve_validate_command_block
 	 						(validator, ctx, command->block_allowed, command->block_required) ) 
+	 				{
 	 					result = FALSE;
-			
-					/* Call command validation function if specified */
-					if ( command->validate != NULL )
-						result = command->validate(validator, ctx) && result;
+	 				} else {
+						/* Call command validation function if specified */
+						if ( command->validate != NULL )
+							result = command->validate(validator, ctx) && result;
+					}
 				} else
 					result = FALSE;
 			}
