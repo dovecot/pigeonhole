@@ -2,6 +2,8 @@
 #   Author: SanjaySheth
 #   URL: http://wiki.fastmail.fm/index.php?title=SanjaySieveSpamFilter
 
+require "fileinto";
+
 if anyof (
 
       # Blacklisted sender domains
