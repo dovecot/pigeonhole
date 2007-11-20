@@ -40,14 +40,16 @@ static bool cmd_require_validate
 {
 	bool result = TRUE;
 	struct sieve_ast_argument *arg;
+	struct sieve_command_context *prev_context = 
+		sieve_command_prev_context(cmd);
 	
 	/* Check valid command placement */
-	if ( sieve_ast_node_type(sieve_ast_node_parent(cmd->ast_node)) != SAT_ROOT ||
-		( sieve_ast_command_prev(cmd->ast_node) != NULL &&
-			!sieve_ast_prev_cmd_is(cmd->ast_node, "require") ) ) {
-		
+	if ( !sieve_command_is_toplevel(cmd) ||
+		( !sieve_command_is_first(cmd) && prev_context != NULL &&
+			prev_context->command != &cmd_require ) ) 
+	{	
 		sieve_command_validate_error(validator, cmd, 
-			"the require command can only be placed at top level "
+			"require commands can only be placed at top level "
 			"at the beginning of the file");
 		return FALSE;
 	}

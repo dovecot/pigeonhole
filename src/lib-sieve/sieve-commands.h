@@ -81,6 +81,11 @@ const char *sieve_command_type_name(const struct sieve_command *command);
 #define sieve_command_pool(context) \
 	sieve_ast_node_pool(context->ast_node)
 	
+#define sieve_command_is_toplevel(context) \
+	( sieve_ast_node_type(sieve_ast_node_parent(context->ast_node)) == SAT_ROOT )
+#define sieve_command_is_first(context) \
+	( sieve_ast_node_prev(context->ast_node) == NULL )	
+
 struct sieve_command_context *sieve_command_prev_context	
 	(struct sieve_command_context *context); 
 

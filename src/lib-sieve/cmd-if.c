@@ -101,22 +101,23 @@ static bool cmd_if_validate
 static bool cmd_elsif_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd)
 {
-	struct sieve_command_context *prev_context;
+	struct sieve_command_context *prev_context = 
+		sieve_command_prev_context(cmd);
 
 	/* Check valid command placement */
-	if ( sieve_ast_command_prev(cmd->ast_node) == NULL ||
-			( !sieve_ast_prev_cmd_is(cmd->ast_node, "if") &&
-				!sieve_ast_prev_cmd_is(cmd->ast_node, "elsif") ) ) {
-		
+	if ( prev_context == NULL ||
+		( prev_context->command != &cmd_if &&
+			prev_context->command != &cmd_elsif ) ) 
+	{		
 		sieve_command_validate_error(validator, cmd, 
-			"the %s command must follow an if or elseif command", cmd->command->identifier);
+			"the %s command must follow an if or elseif command", 
+			cmd->command->identifier);
 		return FALSE;
 	}
 	
-	/* Previous command in this block is 'if' or 'elsif', so we can safely refer to its context data */
-	prev_context = sieve_command_prev_context(cmd);
-	i_assert( prev_context != NULL ); 
-	
+	/* Previous command in this block is 'if' or 'elsif', so we can safely refer 
+	 * to its context data 
+	 */
 	cmd_if_initialize_context_data(cmd, prev_context->data);
 
 	return TRUE;
