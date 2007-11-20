@@ -358,12 +358,12 @@ bool sieve_opr_match_type_dump
 }
 
 static bool tag_match_type_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 	struct sieve_match_type_context *mtctx =
-		(struct sieve_match_type_context *) (*arg)->context;
+		(struct sieve_match_type_context *) arg->context;
 	
 	if ( mtctx->match_type->extension == NULL ) {
 		if ( mtctx->match_type->code < SIEVE_MATCH_TYPE_CUSTOM )
@@ -371,11 +371,9 @@ static bool tag_match_type_generate
 		else
 			return FALSE;
 	} else {
-		opr_match_type_emit_ext(sbin, mtctx->match_type, (*arg)->ext_id);
+		opr_match_type_emit_ext(sbin, mtctx->match_type, arg->ext_id);
 	} 
-		
-	*arg = sieve_ast_argument_next(*arg);
-	
+			
 	return TRUE;
 }
 

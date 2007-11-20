@@ -347,12 +347,12 @@ bool sieve_opr_address_part_dump
 }
 
 static bool tag_address_part_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 	struct sieve_address_part *addrp =
-		(struct sieve_address_part *) (*arg)->context;
+		(struct sieve_address_part *) arg->context;
 	
 	if ( addrp->extension == NULL ) {
 		if ( addrp->code < SIEVE_ADDRESS_PART_CUSTOM )
@@ -360,11 +360,9 @@ static bool tag_address_part_generate
 		else
 			return FALSE;
 	} else {
-		opr_address_part_emit_ext(sbin, addrp, (*arg)->ext_id);
+		opr_address_part_emit_ext(sbin, addrp, arg->ext_id);
 	} 
 		
-	*arg = sieve_ast_argument_next(*arg);
-	
 	return TRUE;
 }
 

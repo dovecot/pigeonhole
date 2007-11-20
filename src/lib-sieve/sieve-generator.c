@@ -140,9 +140,11 @@ bool sieve_generate_arguments(struct sieve_generator *generator,
 		
 		/* Call the generation function for the argument */ 
 		if ( argument->generate != NULL ) { 
-			if ( !argument->generate(generator, &arg, cmd) ) 
+			if ( !argument->generate(generator, arg, cmd) ) 
 				return FALSE;
 		} else break;
+
+		arg = sieve_ast_argument_next(arg);
 	}
 	
 	if ( last_arg != NULL )

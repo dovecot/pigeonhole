@@ -225,7 +225,7 @@ static bool tag_comparator_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd);
 static bool tag_comparator_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd);
 
 const struct sieve_argument comparator_tag = 
@@ -361,11 +361,11 @@ bool sieve_opr_comparator_dump
 }
 
 static bool tag_comparator_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument **arg, 
+	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-	struct sieve_comparator *cmp = (struct sieve_comparator *) (*arg)->context;
+	struct sieve_comparator *cmp = (struct sieve_comparator *) arg->context;
 	
 	if ( cmp->extension == NULL ) {
 		if ( cmp->code < SIEVE_COMPARATOR_CUSTOM )
@@ -373,11 +373,9 @@ static bool tag_comparator_generate
 		else
 			return FALSE;
 	} else {
-		opr_comparator_emit_ext(sbin, cmp, (*arg)->ext_id);
+		opr_comparator_emit_ext(sbin, cmp, arg->ext_id);
 	} 
 		
-	*arg = sieve_ast_argument_next(*arg);
-	
 	return TRUE;
 }
 
