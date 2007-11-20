@@ -459,6 +459,7 @@ const struct sieve_argument match_type_tag = {
 	NULL,
 	tag_match_type_is_instance_of, 
 	tag_match_type_validate, 
+	NULL,
 	tag_match_type_generate 
 };
  

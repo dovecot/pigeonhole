@@ -22,11 +22,11 @@ static bool arg_string_list_generate
 	struct sieve_command_context *context);
 
 const struct sieve_argument number_argument =
-	{ "@number", NULL, NULL, arg_number_generate };
+	{ "@number", NULL, NULL, NULL, arg_number_generate };
 const struct sieve_argument string_argument =
-	{ "@string", NULL, NULL, arg_string_generate };
+	{ "@string", NULL, NULL, NULL, arg_string_generate };
 const struct sieve_argument string_list_argument =
-	{ "@string-list", NULL, NULL, arg_string_list_generate };	
+	{ "@string-list", NULL, NULL, NULL, arg_string_list_generate };	
 
 static bool arg_number_generate
 (struct sieve_generator *generator, struct sieve_ast_argument *arg, 

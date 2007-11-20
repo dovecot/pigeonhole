@@ -228,8 +228,13 @@ static bool tag_comparator_generate
 	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd);
 
-const struct sieve_argument comparator_tag = 
-	{ "comparator", NULL, tag_comparator_validate, tag_comparator_generate };
+const struct sieve_argument comparator_tag = { 
+	"comparator", 
+	NULL, 
+	tag_comparator_validate, 
+	NULL,
+	tag_comparator_generate 
+};
 
 static bool tag_comparator_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 

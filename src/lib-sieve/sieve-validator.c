@@ -203,7 +203,7 @@ static bool _unknown_tag_validate
 }
 
 static const struct sieve_argument _unknown_tag = 
-	{ "", NULL, _unknown_tag_validate, NULL };
+	{ "", NULL, _unknown_tag_validate, NULL, NULL };
 
 static void _sieve_validator_register_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 

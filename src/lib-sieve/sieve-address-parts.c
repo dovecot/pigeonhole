@@ -412,7 +412,8 @@ bool sieve_address_match_stringlist
 const struct sieve_argument address_part_tag = { 
 	NULL,
 	tag_address_part_is_instance_of, 
-	tag_address_part_validate, 
+	tag_address_part_validate,
+	NULL, 
 	tag_address_part_generate 
 };
  
