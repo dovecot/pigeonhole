@@ -461,6 +461,25 @@ static bool sieve_validate_command_arguments
 
 	return TRUE;
 }
+
+static bool sieve_validate_arguments_context
+(struct sieve_validator *validator, struct sieve_command_context *cmd)
+{ 
+	struct sieve_ast_argument *arg = sieve_ast_argument_first(cmd->ast_node);
+	
+	while ( arg != NULL ) {
+		const struct sieve_argument *argument = arg->argument;
+		
+		if ( argument != NULL && argument->validate_context != NULL ) { 
+			if ( !argument->validate_context(validator, arg, cmd) ) 
+				return FALSE;
+		}
+		
+		arg = sieve_ast_argument_next(arg);
+	}
+
+	return TRUE;
+}
  
 /* Command Validation API */ 
                  
@@ -553,6 +572,8 @@ static bool sieve_validate_command
 	
 	i_assert( ast_type == SAT_TEST || ast_type == SAT_COMMAND );
 	
+	/* Verify the command specified by this node */
+	
 	command = sieve_validator_find_command(validator, cmd_node->identifier);
 	
 	if ( command != NULL ) {
@@ -567,41 +588,44 @@ static bool sieve_validate_command
 					sieve_ast_type_name(ast_type));
 			
 			 	return FALSE;
-			
-			} else { 
-				struct sieve_command_context *ctx = 
-					sieve_command_context_create(cmd_node, command); 
-				cmd_node->context = ctx;
-			
-				/* If pre-validation fails, don't bother to validate further 
-				 * as context might be missing and doing so is not very useful for 
-				 * further error reporting anyway
-				 */
-				if ( command->pre_validate == NULL || 
-					command->pre_validate(validator, ctx) ) {
-			
-					/* Check syntax */
-					if ( 
-						!sieve_validate_command_arguments
-							(validator, ctx, command->positional_arguments) ||
-	 					!sieve_validate_command_subtests
-	 						(validator, ctx, command->subtests) || 
-	 					(ast_type == SAT_COMMAND && !sieve_validate_command_block
-	 						(validator, ctx, command->block_allowed, 
-	 							command->block_required)) ) 
-	 				{
-	 					result = FALSE;
-	 				} else {
-						/* Call command validation function if specified */
-						if ( command->validate != NULL )
-							result = command->validate(validator, ctx) && result;
-					}
-				} else
-					result = FALSE;
-			}
+			} 
+			 
+			struct sieve_command_context *ctx = 
+				sieve_command_context_create(cmd_node, command); 
+			cmd_node->context = ctx;
+		
+			/* If pre-validation fails, don't bother to validate further 
+			 * as context might be missing and doing so is not very useful for 
+			 * further error reporting anyway
+			 */
+			if ( command->pre_validate == NULL || 
+				command->pre_validate(validator, ctx) ) {
+		
+				/* Check syntax */
+				if ( 
+					!sieve_validate_command_arguments
+						(validator, ctx, command->positional_arguments) ||
+ 					!sieve_validate_command_subtests
+ 						(validator, ctx, command->subtests) || 
+ 					(ast_type == SAT_COMMAND && !sieve_validate_command_block
+ 						(validator, ctx, command->block_allowed, 
+ 							command->block_required)) ) 
+ 				{
+ 					result = FALSE;
+ 				} else {
+					/* Call command validation function if specified */
+					if ( command->validate != NULL )
+						result = command->validate(validator, ctx) && result;
+				}
+			} else
+				result = FALSE;
+				
+			if ( result ) 
+				result = sieve_validate_arguments_context(validator, ctx);
+				
 		} else 
 			result = FALSE;
-			
+				
 	} else {
 		sieve_validator_error(
 			validator, cmd_node, 
@@ -612,6 +636,8 @@ static bool sieve_validate_command
 		
 		result = FALSE;
 	}
+	
+	/* Descend further into the AST */
 	
 	result = sieve_validate_test_list(validator, cmd_node) && result;
 
