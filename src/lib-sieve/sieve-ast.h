@@ -232,6 +232,7 @@ void sieve_ast_unparse(struct sieve_ast *ast);
 
 /* AST argument macros */
 #define sieve_ast_argument_first(node) __LIST_FIRST(node, arguments)
+#define sieve_ast_argument_prev(argument) __LIST_PREV(argument)
 #define sieve_ast_argument_next(argument) __LIST_NEXT(argument)
 #define sieve_ast_argument_count(node) __LIST_COUNT(node, arguments)
 #define sieve_ast_argument_type(argument) ((argument) == NULL ? SAAT_NONE : (argument)->type)

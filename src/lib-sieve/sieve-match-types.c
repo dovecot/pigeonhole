@@ -475,7 +475,7 @@ static bool mtch_matches_match
  */
 
 const struct sieve_argument match_type_tag = { 
-	NULL,
+	"MATCH-TYPE",
 	tag_match_type_is_instance_of, 
 	tag_match_type_validate, 
 	tag_match_type_validate_context,

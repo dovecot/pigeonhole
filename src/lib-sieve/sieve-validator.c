@@ -402,6 +402,8 @@ static bool sieve_validate_command_arguments
 	/* Parse tagged and optional arguments */
 	while ( sieve_ast_argument_type(arg) == SAAT_TAG ) {
 		unsigned int id_code;
+		struct sieve_ast_argument *tag_arg = arg;
+		struct sieve_ast_argument *parg; 
 		const struct sieve_argument *tag = 
 			sieve_validator_find_tag
 				(validator, cmd_reg, sieve_ast_argument_tag(arg), &id_code);
@@ -421,18 +423,43 @@ static bool sieve_validate_command_arguments
 		if ( tag->identifier != NULL && *(tag->identifier) == '\0' ) 
 			return FALSE;
 		
-		/* Assign the tagged argument type to the ast for later reference (in generator) */
+		/* Assign the tagged argument type to the ast for later reference 
+		 * (in generator) 
+		 */
 		arg->argument = tag;
 		arg->arg_id_code = id_code;
 		
 		/* Call the validation function for the tag (if present)
-		 *   Fail if the validation fails.
+		 *   Fail if the validation fails:
+		 *     Let's not whine multiple times about a single command having multiple 
+		 *     bad arguments...
 		 */ 
 		if ( tag->validate != NULL ) { 
 			if ( !tag->validate(validator, &arg, cmd) ) 
 				return FALSE;
 		} else
 			arg = sieve_ast_argument_next(arg);  
+			
+		/* Scan backwards for any duplicates */
+		parg = sieve_ast_argument_prev(tag_arg);
+		while ( parg != NULL ) {
+			if ( parg->argument == tag ) {
+				const char *tag_id = sieve_ast_argument_tag(tag_arg);
+				const char *tag_desc =
+					strcmp(tag->identifier, tag_id) != 0 ?
+					t_strdup_printf("%s argument (:%s)", tag->identifier, tag_id) : 
+					t_strdup_printf(":%s argument", tag->identifier); 
+					 
+				sieve_command_validate_error(validator, cmd, 
+					"encountered duplicate %s for the %s %s",
+					tag_desc, cmd->command->identifier, 
+					sieve_command_type_name(cmd->command));
+					
+				return FALSE;	
+			}
+			
+			parg = sieve_ast_argument_prev(parg);
+		}
 	} 
 	
 	/* Remaining arguments should be positional (tags are not allowed here) */
@@ -441,8 +468,10 @@ static bool sieve_validate_command_arguments
 	while ( arg != NULL ) {
 		if ( sieve_ast_argument_type(arg) == SAAT_TAG ) {
 			sieve_command_validate_error(validator, cmd, 
-				"encountered an unexpected tagged argument ':%s' while validating positional arguments for the %s %s",
-				sieve_ast_argument_tag(arg), cmd->command->identifier, sieve_command_type_name(cmd->command));
+				"encountered an unexpected tagged argument ':%s' "
+				"while validating positional arguments for the %s %s",
+				sieve_ast_argument_tag(arg), cmd->command->identifier, 
+				sieve_command_type_name(cmd->command));
 			return FALSE;
 		}
 		
