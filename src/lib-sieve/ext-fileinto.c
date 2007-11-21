@@ -116,9 +116,21 @@ static bool ext_fileinto_opcode_dump
 
 static bool ext_fileinto_opcode_execute
 	(struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin ATTR_UNUSED, 
-	sieve_size_t *address ATTR_UNUSED)
+	struct sieve_binary *sbin, 
+	sieve_size_t *address)
 {
+	string_t *folder;
+
+	t_push();
+
+	if ( !sieve_opr_string_read(sbin, address, &folder) ) {
+		t_pop();
+		return FALSE;
+	}
+
+	printf(">> FILEINTO \"%s\"\n", str_c(folder));
+
+	t_pop();
 	return TRUE;
 }
 
