@@ -237,7 +237,7 @@ int main(int argc, char **argv)
 
 	msgdata.mail = mail;
 	msgdata.return_path = "nico@example.com";
-	msgdata.rcpt_address = "sirius+sieve@rename-it.nl";
+	msgdata.to_address = "sirius+sieve@rename-it.nl";
 	msgdata.auth_user = "stephan";
 	sieve_test(sbin, &msgdata);
 

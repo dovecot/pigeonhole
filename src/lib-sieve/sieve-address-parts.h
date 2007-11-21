@@ -67,8 +67,25 @@ bool sieve_opr_address_part_dump
 	(struct sieve_interpreter *interpreter,
 		struct sieve_binary *sbin, sieve_size_t *address);
 
+/* Match utility */
+
 bool sieve_address_match
 (const struct sieve_address_part *addrp, struct sieve_match_context *mctx,
     const char *data);
+
+enum sieve_addrmatch_opt_operand {
+	SIEVE_AM_OPT_END,
+	SIEVE_AM_OPT_COMPARATOR,
+	SIEVE_AM_OPT_ADDRESS_PART,
+	SIEVE_AM_OPT_MATCH_TYPE
+};
+
+bool sieve_addrmatch_default_dump_optionals
+(struct sieve_interpreter *interp, 
+	struct sieve_binary *sbin, sieve_size_t *address);
+bool sieve_addrmatch_default_get_optionals
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address, const struct sieve_address_part **addp, 
+		const struct sieve_match_type **mtch, const struct sieve_comparator **cmp);
 
 #endif /* __SIEVE_ADDRESS_PARTS_H */

@@ -405,6 +405,71 @@ bool sieve_address_match
 }
 
 /* 
+ * Default ADDRESS-PART, MATCH-TYPE, COMPARATOR access
+ */
+ 
+bool sieve_addrmatch_default_dump_optionals
+(struct sieve_interpreter *interp, 
+	struct sieve_binary *sbin, sieve_size_t *address) 
+{
+	unsigned int opt_code;
+	
+	if ( sieve_operand_optional_present(sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+			switch ( opt_code ) {
+			case SIEVE_AM_OPT_COMPARATOR:
+				if ( !sieve_opr_comparator_dump(interp, sbin, address) )
+					return FALSE;
+				break;
+			case SIEVE_AM_OPT_MATCH_TYPE:
+				if ( !sieve_opr_match_type_dump(interp, sbin, address) )
+					return FALSE;
+				break;
+			case SIEVE_AM_OPT_ADDRESS_PART:
+				if ( !sieve_opr_address_part_dump(interp, sbin, address) )
+					return FALSE;
+				break;
+			default:
+				return FALSE;
+			}
+		}
+	}
+	
+	return TRUE;
+}
+
+bool sieve_addrmatch_default_get_optionals
+(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+	sieve_size_t *address, const struct sieve_address_part **addrp, 
+	const struct sieve_match_type **mtch, const struct sieve_comparator **cmp) 
+{
+	unsigned int opt_code;
+	
+	if ( sieve_operand_optional_present(sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+			switch ( opt_code ) {
+			case SIEVE_AM_OPT_COMPARATOR:
+				if ( (*cmp = sieve_opr_comparator_read(interp, sbin, address)) == NULL )
+					return FALSE;
+				break;
+			case SIEVE_AM_OPT_MATCH_TYPE:
+				if ( (*mtch = sieve_opr_match_type_read(interp, sbin, address)) == NULL )
+					return FALSE;
+				break;
+			case SIEVE_AM_OPT_ADDRESS_PART:
+				if ( (*addrp = sieve_opr_address_part_read(interp, sbin, address)) == NULL )
+					return FALSE;
+				break;
+			default:
+				return FALSE;
+			}
+		}
+	}
+	
+	return TRUE;
+}
+
+/* 
  * Core address-part modifiers
  */
 

@@ -1,5 +1,8 @@
 #include <stdio.h>
 
+#include "lib.h"
+#include "array.h"
+
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-comparators.h"
@@ -17,6 +20,8 @@ static bool ext_envelope_validator_load(struct sieve_validator *validator);
 
 static bool ext_envelope_opcode_dump
 	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
+static bool ext_envelope_opcode_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
 
 static bool tst_envelope_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
@@ -30,7 +35,7 @@ static bool tst_envelope_generate
 static int ext_my_id;
 
 const struct sieve_opcode envelope_opcode =
-	{ ext_envelope_opcode_dump, NULL };
+	{ ext_envelope_opcode_dump, ext_envelope_opcode_execute };
 
 const struct sieve_extension envelope_extension = { 
 	"envelope", 
@@ -65,22 +70,13 @@ static const struct sieve_command envelope_test = {
 	NULL 
 };
 
-/* Optional arguments */
-
-enum tst_envelope_optional {
-	OPT_END,
-	OPT_COMPARATOR,
-	OPT_ADDRESS_PART,
-	OPT_MATCH_TYPE
-};
-
 /* Command Registration */
 static bool tst_envelope_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR);
-	sieve_address_parts_link_tags(validator, cmd_reg, OPT_ADDRESS_PART);
-	sieve_match_types_link_tags(validator, cmd_reg, OPT_MATCH_TYPE);
+	sieve_comparators_link_tag(validator, cmd_reg, SIEVE_AM_OPT_COMPARATOR);
+	sieve_address_parts_link_tags(validator, cmd_reg, SIEVE_AM_OPT_ADDRESS_PART);
+	sieve_match_types_link_tags(validator, cmd_reg, SIEVE_AM_OPT_MATCH_TYPE);
 	
 	return TRUE;
 }
@@ -132,45 +128,117 @@ static bool tst_envelope_generate
 	(void)sieve_generator_emit_opcode_ext(generator, ext_my_id);
 
 	/* Generate arguments */
-    if ( !sieve_generate_arguments(generator, ctx, NULL) )
-        return FALSE;
+	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+		return FALSE;
 
 	return TRUE;
 }
 
 /* 
- * Code dump
+ * Code dump 
  */
  
 static bool ext_envelope_opcode_dump
 	(struct sieve_interpreter *interp, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {
-	unsigned opt_code;
-
 	printf("ENVELOPE\n");
 
 	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
-			switch ( opt_code ) {
-			case OPT_COMPARATOR:
-				sieve_opr_comparator_dump(interp, sbin, address);
-				break;
-			case OPT_MATCH_TYPE:
-				sieve_opr_match_type_dump(interp, sbin, address);
-				break;
-			case OPT_ADDRESS_PART:
-				sieve_opr_address_part_dump(interp, sbin, address);
-				break;
-			default:
-				return FALSE;
-			}
-		}
-	}
+	if ( !sieve_addrmatch_default_dump_optionals(interp, sbin, address) )
+		return FALSE;
 
 	return
 		sieve_opr_stringlist_dump(sbin, address) &&
 		sieve_opr_stringlist_dump(sbin, address);
 }
 
+static int ext_envelope_get_field
+(struct sieve_message_data *msgdata, const char *field, 
+	const char *const **value_r) 
+{
+	const char *value;
+	ARRAY_DEFINE(envelope_values, const char *);
+	
+ 	p_array_init(&envelope_values, pool_datastack_create(), 2);
+ 	
+	if ( strncmp(field, "from", 4) == 0 )
+		value = msgdata->return_path;
+	else if ( strncmp(field, "to", 2) == 0 )
+		value = msgdata->to_address;	
+	else if ( strncmp(field, "to", 2) == 0 )	
+		value = msgdata->auth_user;
+	
+	printf("SIZEOF: %d\n", sizeof(value));
+		
+	if ( value != NULL )
+		array_append(&envelope_values, &value, 1);
+	
+	value = NULL;
+  array_append(&envelope_values, &value, 1);
+  *value_r = array_idx(&envelope_values, 0);
+
+	return 0;
+}
+
+static bool ext_envelope_opcode_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address)
+{
+	struct sieve_message_data *msgdata = sieve_interpreter_get_msgdata(interp);
+
+	const struct sieve_comparator *cmp = &i_octet_comparator;
+	const struct sieve_match_type *mtch = &is_match_type;
+	const struct sieve_address_part *addrp = &all_address_part;
+	struct sieve_match_context *mctx;
+	struct sieve_coded_stringlist *hdr_list;
+	struct sieve_coded_stringlist *key_list;
+	string_t *hdr_item;
+	bool matched;
+	
+	printf("?? ENVELOPE\n");
+
+	if ( !sieve_addrmatch_default_get_optionals
+		(interp, sbin, address, &addrp, &mtch, &cmp) )
+		return FALSE; 
+
+	t_push();
+		
+	/* Read header-list */
+	if ( (hdr_list=sieve_opr_stringlist_read(sbin, address)) == NULL ) {
+		t_pop();
+		return FALSE;
+	}
+
+	/* Read key-list */
+	if ( (key_list=sieve_opr_stringlist_read(sbin, address)) == NULL ) {
+		t_pop();
+		return FALSE;
+	}
+	
+	/* Initialize match context */
+	mctx = sieve_match_begin(mtch, cmp, key_list);
+	
+	/* Iterate through all requested headers to match */
+	hdr_item = NULL;
+	matched = FALSE;
+	while ( !matched && sieve_coded_stringlist_next_item(hdr_list, &hdr_item) && hdr_item != NULL ) {
+		const char *const *fields;
+			
+		if ( ext_envelope_get_field(msgdata, str_c(hdr_item), &fields) >= 0 ) {	
+			
+			int i;
+			for ( i = 0; !matched && fields[i] != NULL; i++ ) {
+				if ( sieve_address_match(addrp, mctx, fields[i]) )
+					matched = TRUE;				
+			} 
+		}
+	}
+	
+	matched = sieve_match_end(mctx) || matched;
+
+	t_pop();
+	
+	sieve_interpreter_set_test_result(interp, matched);
+	
+	return TRUE;
+}

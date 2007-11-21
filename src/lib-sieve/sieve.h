@@ -9,7 +9,7 @@ struct sieve_binary;
 struct sieve_message_data {
 	struct mail *mail;
 	const char *return_path;
-	const char *rcpt_address;
+	const char *to_address;
 	const char *auth_user;
 };	
 
