@@ -182,8 +182,8 @@ static int ext_envelope_get_fields
 	if ( value != NULL )
 		array_append(&envelope_values, &value, 1);
 	
-  array_append_space(&envelope_values);
-  *value_r = array_idx(&envelope_values, 0);
+	(void)array_append_space(&envelope_values);
+	*value_r = array_idx(&envelope_values, 0);
 
 	return 0;
 }
