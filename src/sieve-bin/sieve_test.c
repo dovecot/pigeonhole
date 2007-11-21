@@ -130,7 +130,9 @@ static void sieve_test
 		} 
 	}
 	
-	sieve_execute(sbin, msgdata);
+	if ( sieve_execute(sbin, msgdata) ) {
+		printf("Script executed to an end succesfully.\n");
+	}
 }
 
 int main(int argc, char **argv) 
