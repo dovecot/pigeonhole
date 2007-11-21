@@ -163,7 +163,7 @@ static bool ext_envelope_opcode_dump
 		sieve_opr_stringlist_dump(sbin, address);
 }
 
-static int ext_envelope_get_field
+static int ext_envelope_get_fields
 (struct sieve_message_data *msgdata, const char *field, 
 	const char *const **value_r) 
 {
@@ -184,8 +184,7 @@ static int ext_envelope_get_field
 	if ( value != NULL )
 		array_append(&envelope_values, &value, 1);
 	
-	value = NULL;
-  array_append(&envelope_values, &value, 1);
+  array_append_space(&envelope_values);
   *value_r = array_idx(&envelope_values, 0);
 
 	return 0;
@@ -234,7 +233,7 @@ static bool ext_envelope_opcode_execute
 	while ( !matched && sieve_coded_stringlist_next_item(hdr_list, &hdr_item) && hdr_item != NULL ) {
 		const char *const *fields;
 			
-		if ( ext_envelope_get_field(msgdata, str_c(hdr_item), &fields) >= 0 ) {	
+		if ( ext_envelope_get_fields(msgdata, str_c(hdr_item), &fields) >= 0 ) {	
 			
 			int i;
 			for ( i = 0; !matched && fields[i] != NULL; i++ ) {
