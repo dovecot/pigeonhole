@@ -46,7 +46,7 @@ Extensions and their implementation status:
   Base specification (RFC3028):
     fileinto: validation and generation
     reject: validation and generation
-    envelope: validation and generation
+    envelope: full
 	encoded-character: planned (draft-ietf-sieve-3028bis)
 
   Other RFCs/drafts:
@@ -94,6 +94,8 @@ INTERPRETER: sieve-interpreter.c
 TODO
 ----
 
+* Resolve code duplication introduced for handling address-parts and match-types
+  in different command implementations. 
 * Further implement error handling and limit the maximum number of errors. 
 * Resolve code duplication amongst comparator, address-part and match-type 
   support as much as possible. 

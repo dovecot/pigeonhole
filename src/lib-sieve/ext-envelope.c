@@ -1,3 +1,13 @@
+/* Extension envelope 
+ * ------------------
+ *
+ * Authors: Stephan Bosch
+ * Specification: RFC3028
+ * Implementation: full
+ * Status: experimental, largely untested
+ *
+ */
+
 #include <stdio.h>
 
 #include "lib.h"
