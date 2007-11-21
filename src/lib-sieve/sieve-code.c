@@ -795,13 +795,15 @@ static bool opc_jmpfalse_execute(
 }	
 	
 static bool opc_stop_execute(
-	struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_interpreter *interp, 
 	struct sieve_binary *sbin ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {	
 	printf(">> STOP\n");
 	
-	return FALSE;
+	sieve_interpreter_stop(interp);
+
+	return TRUE;
 }
 
 static bool opc_keep_execute(

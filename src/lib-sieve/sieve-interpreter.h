@@ -19,6 +19,8 @@ inline pool_t sieve_interpreter_pool(struct sieve_interpreter *interp);
 
 inline void sieve_interpreter_reset
 	(struct sieve_interpreter *interpreter);
+inline void sieve_interpreter_stop
+	(struct sieve_interpreter *interpreter);
 inline sieve_size_t sieve_interpreter_program_counter
 	(struct sieve_interpreter *interpreter);
 inline bool sieve_interpreter_program_jump

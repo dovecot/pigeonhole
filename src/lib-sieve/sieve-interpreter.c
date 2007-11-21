@@ -27,9 +27,10 @@ struct sieve_interpreter {
 	/* Execution status */
 	sieve_size_t pc; 
 	bool test_result;
-	struct sieve_result *result; 
+	bool stopped;
 	
 	/* Execution environment */
+	struct sieve_result *result; 
 	struct sieve_message_data *msgdata;	
 };
 
@@ -119,6 +120,11 @@ inline struct sieve_message_data *
 inline void sieve_interpreter_reset(struct sieve_interpreter *interpreter) 
 {
 	interpreter->pc = 0;
+}
+
+inline void sieve_interpreter_stop(struct sieve_interpreter *interpreter)
+{
+    interpreter->stopped = TRUE;
 }
 
 inline sieve_size_t sieve_interpreter_program_counter(struct sieve_interpreter *interpreter)
@@ -236,7 +242,8 @@ struct sieve_result *sieve_interpreter_run
 	interp->result = result;
 	interp->msgdata = msgdata;
 	
-	while ( interp->pc < sieve_binary_get_code_size(interp->binary) ) {
+	while ( !interp->stopped && 
+		interp->pc < sieve_binary_get_code_size(interp->binary) ) {
 		printf("%08x: ", interp->pc);
 		
 		if ( !sieve_interpreter_execute_operation(interp) ) {
