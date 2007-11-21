@@ -1,21 +1,26 @@
 require ["comparator-i;ascii-numeric", "relational"];
 
-if header :value "gt" :comparator "i;ascii-numeric" "x-spam-score" "2" {
+if header :value "eq" :comparator "i;ascii-numeric" "x-spam-score" "2" {
 	discard;
 	stop;
 }
 
-if header :value "ne" :comparator "i;ascii-numeric" "x-spam-score" "2" {
+if header :value "lt" :comparator "i;ascii-numeric" "x-spam-score" "2" {
 	discard;
 	stop;
 }
 
-if header :count "lt" :comparator "i;ascii-numeric" "x-spam-score" "2" {
+if header :value "lt" :comparator "i;ascii-numeric" "x-spam-score" "2" {
 	discard;
 	stop;
 }
 
-if header :count "eq" :comparator "i;ascii-numeric" "x-spam-score" "2" {
+if header :count "ne" :comparator "i;ascii-numeric" "to" "2" {
+	discard;
+	stop;
+}
+
+if header :count "ge" :comparator "i;ascii-numeric" "to" "2" {
 	discard;
 	stop;
 }

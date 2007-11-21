@@ -3,8 +3,8 @@
  *
  * Author: Stephan Bosch
  * Specification: RFC 3431
- * Implementation: validation and generation only
- * Status: under development
+ * Implementation: full
+ * Status: experimental, largely untested
  * 
  */
 
@@ -215,18 +215,51 @@ static bool mtch_value_match
 	return FALSE;
 }
 
+static void mtch_count_match_init(struct sieve_match_context *mctx)
+{
+	mctx->data = (void *) 0;
+}
+
 static bool mtch_count_match
 (struct sieve_match_context *mctx, 
 	const char *val ATTR_UNUSED, size_t val_size ATTR_UNUSED, 
-	const char *key, size_t key_size, int key_index)
+	const char *key ATTR_UNUSED, size_t key_size ATTR_UNUSED,
+	 int key_index) 
 {
-	unsigned int val_count = 0;
+	unsigned int val_count = (unsigned int) mctx->data;
+
+	/* Count values */
+	if ( key_index == -1 ) {
+		val_count++;
+		mctx->data = (void *) val_count;	
+	}
+
+	return FALSE;
+}
+
+static bool mtch_count_match_deinit(struct sieve_match_context *mctx)
+{
+	unsigned int val_count = (unsigned int) mctx->data;
+	int key_index;
+	string_t *key_item;
+    sieve_coded_stringlist_reset(mctx->key_list);
 
 	string_t *value = t_str_new(20);
 	str_printfa(value, "%d", val_count);
 	
-	mtch_value_match
-		(mctx, str_c(value), str_len(value), key, key_size, key_index);
+    /* Match to all key values */
+    key_index = 0;
+    key_item = NULL;
+    while ( sieve_coded_stringlist_next_item(mctx->key_list, &key_item) &&
+        key_item != NULL )
+    {
+        if ( mtch_value_match
+			(mctx, str_c(value), str_len(value), str_c(key_item), 
+			str_len(key_item), key_index) )
+            return TRUE;
+
+        key_index++;
+    }
 
 	return FALSE;
 }
@@ -240,6 +273,7 @@ extern const struct sieve_match_type_extension relational_match_extension;
 const struct sieve_match_type value_match_type = {
 	"value",
 	SIEVE_MATCH_TYPE_CUSTOM,
+	TRUE,
 	&relational_match_extension,
 	RELATIONAL_VALUE,
 	mtch_relational_validate,
@@ -249,6 +283,7 @@ const struct sieve_match_type value_match_type = {
 const struct sieve_match_type count_match_type = {
 	"count",
 	SIEVE_MATCH_TYPE_CUSTOM,
+	FALSE,
 	&relational_match_extension,
 	RELATIONAL_COUNT,
 	mtch_relational_validate,
@@ -264,6 +299,7 @@ const struct sieve_match_type count_match_type = {
 #define VALUE_MATCH_TYPE(name, rel_match, func) {         \
 		"value-" name,                                    \
 		SIEVE_MATCH_TYPE_CUSTOM,                          \
+		TRUE,                                             \
 		&relational_match_extension,                      \
 		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match),     \
 		NULL, NULL, NULL,                                 \
@@ -274,11 +310,13 @@ const struct sieve_match_type count_match_type = {
 #define COUNT_MATCH_TYPE(name, rel_match, func) {         \
 		"count-" name,                                    \
 		SIEVE_MATCH_TYPE_CUSTOM,                          \
+        FALSE,                                            \
 		&relational_match_extension,                      \
 		REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match),     \
-		NULL, NULL, NULL,                                 \
+		NULL, NULL,                                       \
+		mtch_count_match_init,                            \
 		mtch_count_match,                                 \
-		NULL                                              \
+		mtch_count_match_deinit                           \
 	}
 	
 static const struct sieve_match_type rel_match_types[] = { 

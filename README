@@ -41,16 +41,31 @@ What works:
   address-part modifiers have the desired effect. Match type :matches is not 
   supported yet. Action commands have no effect. 
  
-Implemented extensions and their implementation status:
-	subaddress: full
-	comparator-i;ascii-numeric: full, but fails to handle leading zeros
-	vacation: validation and generation only. Execution is broken.
-	relational: validation and generation only. 
-	regex: full, but suboptimal
-	
-Other extensions will be added a soon as the necessary infrastructure is 
-available. Extensions supported by cmu-sieve have priority, although variables 
-might be implemented somewhere in between. 
+Extensions and their implementation status:
+
+  Base specification (RFC3028):
+    fileinto: validation and generation
+    reject: validation and generation
+    envelope: validation and generation
+	encoded-character: planned (draft-ietf-sieve-3028bis)
+
+  Other RFCs/drafts:
+    subaddress: full
+    comparator-i;ascii-numeric: full, but fails to handle leading zeros
+    relational: full 
+    regex: full, but suboptimal
+    vacation: validation and generation, but interpretation is broken
+    imapflags: planned (* first implement tests) 
+    include: planned (* first leave out variables support)  
+	variables: planned (* also amend previously implemented extensions)
+    body: planned                        
+    notify: planned (* match cmu-sieve support initially)
+    copy: planned       
+
+All implemented extensions are like the engine itself currently very much 
+experimental. Other extensions will be added a soon as the necessary 
+infrastructure is available. Extensions supported by cmu-sieve have priority, 
+although variables might be implemented somewhere in between. 
 
 Design
 ------

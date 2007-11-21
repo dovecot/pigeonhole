@@ -80,6 +80,7 @@ bool mtch_regex_validate_context
 const struct sieve_match_type regex_match_type = {
 	"regex",
 	SIEVE_MATCH_TYPE_CUSTOM,
+	TRUE,
 	&regex_match_extension,
 	0,
 	NULL,

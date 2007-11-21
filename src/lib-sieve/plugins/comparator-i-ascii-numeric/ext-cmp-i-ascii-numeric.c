@@ -101,7 +101,7 @@ static int cmp_i_ascii_numeric_compare
 	unsigned int i = 0;
 	int result = 0;
 	const char *nval1 = (const char *) val1, *nval2 = (const char *) val2;
-	
+
 	while ( i < val1_size && i < val2_size ) {	
 		if ( isdigit(nval1[i]) )  {
 			if ( isdigit(nval2[i]) ) {

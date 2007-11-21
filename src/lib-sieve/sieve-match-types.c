@@ -253,7 +253,8 @@ static bool tag_match_type_validate
 			"(this error should not occur and is probably a bug)", 
 			sieve_ast_argument_strc(*arg));
 
-		return FALSE;	}
+		return FALSE;	
+	}
 
 	/* Create context */
 	mtctx = p_new(sieve_command_pool(cmd), struct sieve_match_type_context, 1);
@@ -439,8 +440,6 @@ bool sieve_match_value
 	(struct sieve_match_context *mctx, const char *value)
 {
 	const struct sieve_match_type *mtch = mctx->match_type;
-	unsigned int key_index;
-	string_t *key_item;
 	sieve_coded_stringlist_reset(mctx->key_list);
 				
 	/* Reject unimplemented match-type */
@@ -448,17 +447,24 @@ bool sieve_match_value
 		return FALSE;
 				
 	/* Match to all key values */
-	key_index = 0;
-	key_item = NULL;
-	while ( sieve_coded_stringlist_next_item(mctx->key_list, &key_item) && 
-		key_item != NULL ) 
-	{
-		if ( mtch->match
-			(mctx, value, strlen(value), str_c(key_item), 
-				str_len(key_item), key_index) )
-			return TRUE;  
+	if ( mtch->is_iterative ) {
+		unsigned int key_index = 0;
+		string_t *key_item = NULL;
 	
-		key_index++;
+		while ( sieve_coded_stringlist_next_item(mctx->key_list, &key_item) && 
+			key_item != NULL ) 
+		{
+			if ( mtch->match
+				(mctx, value, strlen(value), str_c(key_item), 
+					str_len(key_item), key_index) ) {
+				return TRUE;  
+			}
+	
+			key_index++;
+		}
+	} else {
+		if ( mtch->match(mctx, value, strlen(value), NULL, 0, -1) )
+			return TRUE;  
 	}
 
 	return FALSE;
@@ -545,7 +551,7 @@ static bool mtch_contains_match
 		}
 	}
     
-  return (kp == kend);
+  	return (kp == kend);
 }
 
 static bool mtch_matches_match
@@ -570,6 +576,7 @@ const struct sieve_argument match_type_tag = {
 const struct sieve_match_type is_match_type = {
 	"is",
 	SIEVE_MATCH_TYPE_IS,
+	TRUE,
 	NULL,
 	0,
 	NULL, NULL, NULL,
@@ -580,6 +587,7 @@ const struct sieve_match_type is_match_type = {
 const struct sieve_match_type contains_match_type = {
 	"contains",
 	SIEVE_MATCH_TYPE_CONTAINS,
+	TRUE,
 	NULL,
 	0,
 	NULL,
@@ -592,6 +600,7 @@ const struct sieve_match_type contains_match_type = {
 const struct sieve_match_type matches_match_type = {
 	"matches",
 	SIEVE_MATCH_TYPE_MATCHES,
+	TRUE,
 	NULL,
 	0,
 	NULL,

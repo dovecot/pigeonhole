@@ -26,6 +26,11 @@ struct sieve_match_type {
 	const char *identifier;
 	
 	enum sieve_match_type_code code;
+
+	/* Match function called for every key value or should it be called once
+	 * for every tested value? (TRUE = first alternative)
+	 */
+	bool is_iterative;
 	
 	const struct sieve_match_type_extension *extension;
 	unsigned int ext_code;

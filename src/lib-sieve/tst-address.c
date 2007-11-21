@@ -220,7 +220,7 @@ static bool tst_address_opcode_execute
 		}
 	}
 	
-    sieve_match_end(mctx);
+    matched = sieve_match_end(mctx) || matched;
 
 	t_pop();
 	
