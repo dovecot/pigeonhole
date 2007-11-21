@@ -10,6 +10,14 @@ enum sieve_match_type_code {
 	SIEVE_MATCH_TYPE_CUSTOM
 };
 
+struct sieve_match_context {
+    const struct sieve_match_type *match_type;
+    const struct sieve_comparator *comparator;
+    struct sieve_coded_stringlist *key_list;
+
+    void *data;
+};
+
 struct sieve_match_type;
 struct sieve_match_type_extension;
 struct sieve_match_type_context;
@@ -29,14 +37,11 @@ struct sieve_match_type {
 		(struct sieve_validator *validator, struct sieve_ast_argument *arg, 
 			struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg);
 			
-	void *(*match_init)
-		(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
-			const char *key, size_t key_size);
+	void (*match_init)(struct sieve_match_context *mctx);
 	bool (*match)
-		(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
-			const char *val, size_t val_size, const char *key, size_t key_size,
-			void *key_context);
-	void (*match_deinit)(const struct sieve_match_type *mtch, void *key_context);
+		(struct sieve_match_context *mctx, const char *val, size_t val_size, 
+			const char *key, size_t key_size, int key_index);
+	bool (*match_deinit)(struct sieve_match_context *mctx);
 };
 
 struct sieve_match_type_extension {
@@ -99,8 +104,6 @@ bool sieve_opr_match_type_dump
 		struct sieve_binary *sbin, sieve_size_t *address);
 		
 /* Match Utility */
-
-struct sieve_match_context;
 
 struct sieve_match_context *sieve_match_begin
 (const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,

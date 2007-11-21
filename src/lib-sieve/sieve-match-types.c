@@ -29,7 +29,7 @@ static void opr_match_type_emit_ext
 	(struct sieve_binary *sbin, const struct sieve_match_type *mtch, int ext_id);
 
 /* 
- * Address-part 'extension' 
+ * Match-type 'extension' 
  */
 
 static int ext_my_id = -1;
@@ -417,31 +417,20 @@ static bool tag_match_type_generate
 
 /* Match Utility */
 
-struct sieve_match_context {
-	const struct sieve_match_type *match_type;	
-	const struct sieve_comparator *comparator; 
-	struct sieve_coded_stringlist *key_list;
-
-	ARRAY_DEFINE(key_contexts, void *);
-
-	int value_index;
-};
-
 struct sieve_match_context *sieve_match_begin
 (const struct sieve_match_type *mtch, const struct sieve_comparator *cmp, 
 	struct sieve_coded_stringlist *key_list)
 {
 	struct sieve_match_context *mctx = 
 		p_new(pool_datastack_create(), struct sieve_match_context, 1);  
-	int listlen = sieve_coded_stringlist_get_length(key_list);
 
 	mctx->match_type = mtch;
 	mctx->comparator = cmp;
 	mctx->key_list = key_list;
-	mctx->value_index = 0;
-	
-	p_array_init(&mctx->key_contexts, pool_datastack_create(), listlen);
-	array_idx_clear(&mctx->key_contexts, listlen-1);
+
+	if ( mtch->match_init != NULL ) {
+		mtch->match_init(mctx);
+	}
 
 	return mctx;
 }
@@ -464,45 +453,23 @@ bool sieve_match_value
 	while ( sieve_coded_stringlist_next_item(mctx->key_list, &key_item) && 
 		key_item != NULL ) 
 	{
-		void *key_ctx = NULL;
-		void * const *kctx = &key_ctx;
-
-		if ( mtch->match_init != NULL ) {
-			if ( mctx->value_index == 0 ) {
-				key_ctx = mtch->match_init(
-					mctx->match_type, mctx->comparator,
-					str_c(key_item), str_len(key_item)); 
-
-				kctx = &key_ctx;
-				array_idx_set(&mctx->key_contexts, key_index, kctx); 
-			} else 
-				kctx = array_idx(&mctx->key_contexts, key_index);
-		}
-
 		if ( mtch->match
-			(mctx->match_type, mctx->comparator, value, strlen(value), 
-			str_c(key_item), str_len(key_item), *kctx) )
+			(mctx, value, strlen(value), str_c(key_item), 
+				str_len(key_item), key_index) )
 			return TRUE;  
 	
 		key_index++;
 	}
-
-	mctx->value_index++;
 
 	return FALSE;
 }
 
 bool sieve_match_end(struct sieve_match_context *mctx)
 {
-	unsigned int i;
 	const struct sieve_match_type *mtch = mctx->match_type;
 
 	if ( mtch->match_deinit != NULL ) {
-		for ( i = 0; i < array_count(&mctx->key_contexts); i++ ) {
-			void * const *kctx = array_idx(&mctx->key_contexts, i);
-
-			mtch->match_deinit(mtch, *kctx);
- 	 	}
+		return mtch->match_deinit(mctx);
 	}
 
 	return FALSE;
@@ -513,12 +480,13 @@ bool sieve_match_end(struct sieve_match_context *mctx)
  */
 
 static bool mtch_is_match
-(const struct sieve_match_type *mtch ATTR_UNUSED, 
-	const struct sieve_comparator *cmp,	const char *val1, size_t val1_size, 
-	const char *key, size_t key_size, void *key_context ATTR_UNUSED)
+(struct sieve_match_context *mctx ATTR_UNUSED, 
+	const char *val1, size_t val1_size, 
+	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {
-	if ( cmp->compare != NULL )
-		return (cmp->compare(cmp, val1, val1_size, key, key_size) == 0);
+	if ( mctx->comparator->compare != NULL )
+		return (mctx->comparator->compare(mctx->comparator, 
+			val1, val1_size, key, key_size) == 0);
 
 	return FALSE;
 }
@@ -559,21 +527,21 @@ static bool mtch_contains_validate_context
  * efficient algorithm if large values need to be searched (e.g. message body).
  */
 static bool mtch_contains_match
-(const struct sieve_match_type *mtch ATTR_UNUSED, 
-	const struct sieve_comparator *cmp, const char *val, size_t val_size, 
-	const char *key, size_t key_size, void *key_context ATTR_UNUSED)
+(struct sieve_match_context *mctx, const char *val, size_t val_size, 
+	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {
 	const char *vend = (const char *) val + val_size;
 	const char *kend = (const char *) key + key_size;
 	const char *vp = val;
 	const char *kp = key;
 
-	if ( cmp->char_match == NULL ) return FALSE;
+	if ( mctx->comparator->char_match == NULL ) 
+		return FALSE;
 
 	while ( (vp < vend) && (kp < kend) ) {
-		if ( !cmp->char_match(cmp, &vp, vend, &kp, kend) ) {
+		if ( !mctx->comparator->char_match(mctx->comparator, &vp, vend, &kp, kend) ) {
 			vp = vp - (kp - key) + 1;
-    	kp = key;
+			kp = key;
 		}
 	}
     
@@ -581,9 +549,8 @@ static bool mtch_contains_match
 }
 
 static bool mtch_matches_match
-(const struct sieve_match_type *mtch ATTR_UNUSED, 
-	const struct sieve_comparator *cmp,	const char *val, size_t val_size, 
-	const char *key, size_t key_size, void *key_context ATTR_UNUSED)
+(struct sieve_match_context *mctx, const char *val, size_t val_size, 
+	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {
 	return FALSE;
 }

@@ -16,12 +16,16 @@
  *                             / "le" / "eq" / "ne" ) DQUOTE
  */ 
 
+#include "lib.h"
+#include "str.h"
+
 #include "sieve-common.h"
 
 #include "sieve-ast.h"
 #include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-comparators.h"
 #include "sieve-match-types.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -53,6 +57,10 @@ enum relational_match {
 
 #define REL_MATCH_INDEX(type, match) \
 	(type * REL_MATCH_INVALID + match)
+#define REL_MATCH_TYPE(index) \
+	(index / REL_MATCH_INVALID)
+#define REL_MATCH(index) \
+	(index % REL_MATCH_INVALID)
 
 /* Extension definitions */
 
@@ -79,7 +87,7 @@ static bool ext_relational_load(int ext_id)
 
 static const struct sieve_match_type rel_match_types[];
 
-static bool ext_relational_parameter_validate
+static bool mtch_relational_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_match_type_context *ctx)
 {	
@@ -177,6 +185,51 @@ static bool ext_relational_parameter_validate
 
 /* Actual extension implementation */
 
+static bool mtch_value_match
+(struct sieve_match_context *mctx, const char *val, size_t val_size, 
+	const char *key, size_t key_size, int key_index ATTR_UNUSED)
+{
+	const struct sieve_match_type *mtch = mctx->match_type;
+	unsigned int rel_match = REL_MATCH(mtch->ext_code);	
+	int cmp_result = mctx->comparator->
+		compare(mctx->comparator, val, val_size, key, key_size);
+
+	switch ( rel_match ) {
+	case REL_MATCH_GREATER:
+		return ( cmp_result > 0 );
+	case REL_MATCH_GREATER_EQUAL:
+		return ( cmp_result >= 0 );
+	case REL_MATCH_LESS:
+		return ( cmp_result < 0 );
+	case REL_MATCH_LESS_EQUAL:
+		return ( cmp_result <= 0 );
+	case REL_MATCH_EQUAL:
+		return ( cmp_result == 0 );
+	case REL_MATCH_NOT_EQUAL:
+		return ( cmp_result != 0 );
+	case REL_MATCH_INVALID:
+ 	default:
+		break;
+	}	
+	
+	return FALSE;
+}
+
+static bool mtch_count_match
+(struct sieve_match_context *mctx, 
+	const char *val ATTR_UNUSED, size_t val_size ATTR_UNUSED, 
+	const char *key, size_t key_size, int key_index)
+{
+	unsigned int val_count = 0;
+
+	string_t *value = t_str_new(20);
+	str_printfa(value, "%d", val_count);
+	
+	mtch_value_match
+		(mctx, str_c(value), str_len(value), key, key_size, key_index);
+
+	return FALSE;
+}
 
 /* Extension access structures */
 
@@ -189,7 +242,7 @@ const struct sieve_match_type value_match_type = {
 	SIEVE_MATCH_TYPE_CUSTOM,
 	&relational_match_extension,
 	RELATIONAL_VALUE,
-	ext_relational_parameter_validate,
+	mtch_relational_validate,
 	NULL, NULL, NULL, NULL
 };
 
@@ -198,7 +251,7 @@ const struct sieve_match_type count_match_type = {
 	SIEVE_MATCH_TYPE_CUSTOM,
 	&relational_match_extension,
 	RELATIONAL_COUNT,
-	ext_relational_parameter_validate,
+	mtch_relational_validate,
 	NULL, NULL, NULL, NULL
 };
 
@@ -213,7 +266,9 @@ const struct sieve_match_type count_match_type = {
 		SIEVE_MATCH_TYPE_CUSTOM,                          \
 		&relational_match_extension,                      \
 		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match),     \
-		NULL, NULL, NULL, NULL, NULL                      \
+		NULL, NULL, NULL,                                 \
+		mtch_value_match,                                 \
+		NULL                                              \
 	}
 
 #define COUNT_MATCH_TYPE(name, rel_match, func) {         \
@@ -221,7 +276,9 @@ const struct sieve_match_type count_match_type = {
 		SIEVE_MATCH_TYPE_CUSTOM,                          \
 		&relational_match_extension,                      \
 		REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match),     \
-		NULL, NULL, NULL, NULL, NULL                      \
+		NULL, NULL, NULL,                                 \
+		mtch_count_match,                                 \
+		NULL                                              \
 	}
 	
 static const struct sieve_match_type rel_match_types[] = { 
