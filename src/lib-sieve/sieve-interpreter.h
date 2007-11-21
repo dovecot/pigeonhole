@@ -8,6 +8,9 @@
 
 #include "sieve-common.h"
 
+/* FIXME: make dumps use some interpreter function */
+#include <stdio.h>
+
 struct sieve_interpreter;
 
 struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary);

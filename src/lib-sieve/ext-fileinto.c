@@ -1,3 +1,14 @@
+/* Extension fileinto 
+ * ------------------
+ *
+ * Authors: Stephan Bosch
+ * Specification: RFC3028
+ * Implementation: validation, generation and interpretation, no actual 
+ *   execution. 
+ * Status: experimental, largely untested
+ *
+ */
+
 #include <stdio.h>
 
 #include "sieve-extensions.h"
@@ -7,16 +18,21 @@
 #include "sieve-interpreter.h"
 
 /* Forward declarations */
+
 static bool ext_fileinto_load(int ext_id);
 static bool ext_fileinto_validator_load(struct sieve_validator *validator);
 
 static bool ext_fileinto_opcode_dump
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
 static bool ext_fileinto_opcode_execute
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address); 
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address); 
 
-static bool cmd_fileinto_validate(struct sieve_validator *validator, struct sieve_command_context *cmd);
-static bool cmd_fileinto_generate(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+static bool cmd_fileinto_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+static bool cmd_fileinto_generate
+	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
 /* Extension definitions */
 
@@ -133,25 +149,3 @@ static bool ext_fileinto_opcode_execute
 	t_pop();
 	return TRUE;
 }
-
-/*
-static int sieve_fileinto(void *ac,
-              void *ic ATTR_UNUSED,
-              void *sc,
-              void *mc,
-              const char **errmsg ATTR_UNUSED)
-{
-    sieve_fileinto_context_t *fc = (sieve_fileinto_context_t *) ac;
-    script_data_t *sd = (script_data_t *) sc;
-    sieve_msgdata_t *md = (sieve_msgdata_t *) mc;
-    enum mail_flags flags;
-    const char *const *keywords;
-
-    get_flags(fc->imapflags, &flags, &keywords);
-
-    if (deliver_save(sd->namespaces, sd->storage_r, fc->mailbox,
-             md->mail, flags, keywords) < 0)
-        return SIEVE_FAIL;
-
-    return SIEVE_OK;
-}*/

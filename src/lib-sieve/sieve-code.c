@@ -594,26 +594,60 @@ const struct sieve_opcode *sieve_operation_read
 	return NULL;
 }
 
-static bool opc_jmp_dump(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool opc_jmptrue_dump(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool opc_jmpfalse_dump(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool opc_stop_dump(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool	opc_keep_dump(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool opc_discard_dump(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
+/* Declaration of opcodes defined in this file */
 
-static bool opc_jmp_execute(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool opc_jmptrue_execute(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool opc_jmpfalse_execute(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool opc_stop_execute(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool opc_keep_execute(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool opc_discard_execute(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
+static bool opc_jmp_dump
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+static bool opc_jmptrue_dump
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+static bool opc_jmpfalse_dump
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+static bool opc_stop_dump
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+static bool	opc_keep_dump
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+static bool opc_discard_dump
+	(struct sieve_interpreter *interp, 	struct sieve_binary *sbin, 
+		sieve_size_t *address);
 
-const struct sieve_opcode jmp_opcode = { opc_jmp_dump, opc_jmp_execute };
-const struct sieve_opcode jmptrue_opcode = { opc_jmptrue_dump, opc_jmptrue_execute };
-const struct sieve_opcode jmpfalse_opcode = { opc_jmpfalse_dump, opc_jmpfalse_execute };
-const struct sieve_opcode stop_opcode = { opc_stop_dump, opc_stop_execute };
-const struct sieve_opcode keep_opcode = { opc_keep_dump, opc_keep_execute };
-const struct sieve_opcode discard_opcode = { opc_discard_dump, opc_discard_execute };
+static bool opc_jmp_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+static bool opc_jmptrue_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+static bool opc_jmpfalse_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+static bool opc_stop_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+static bool opc_keep_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+static bool opc_discard_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+
+const struct sieve_opcode jmp_opcode = 
+	{ opc_jmp_dump, opc_jmp_execute };
+const struct sieve_opcode jmptrue_opcode = 
+	{ opc_jmptrue_dump, opc_jmptrue_execute };
+const struct sieve_opcode jmpfalse_opcode = 
+	{ opc_jmpfalse_dump, opc_jmpfalse_execute };
+const struct sieve_opcode cmd_stop_opcode = 
+	{ opc_stop_dump, opc_stop_execute };
+const struct sieve_opcode cmd_keep_opcode = 
+	{ opc_keep_dump, opc_keep_execute };
+const struct sieve_opcode cmd_discard_opcode = 
+	{ opc_discard_dump, opc_discard_execute };
+
+extern const struct sieve_opcode cmd_redirect_opcode;
 
 extern const struct sieve_opcode tst_address_opcode;
 extern const struct sieve_opcode tst_header_opcode;
@@ -625,9 +659,11 @@ const struct sieve_opcode *sieve_opcodes[] = {
 	&jmp_opcode,
 	&jmptrue_opcode, 
 	&jmpfalse_opcode,
-	&stop_opcode,
-	&keep_opcode,
-	&discard_opcode,
+	
+	&cmd_stop_opcode,
+	&cmd_keep_opcode,
+	&cmd_discard_opcode,
+	&cmd_redirect_opcode,
 
 	&tst_address_opcode,
 	&tst_header_opcode,
