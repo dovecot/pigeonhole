@@ -43,7 +43,8 @@ bool sieve_interpreter_read_offset_operand
 
 /* Accessing runtime information */
 
-inline struct mail *sieve_interpreter_get_mail(struct sieve_interpreter *interpreter);
+inline struct sieve_message_data *
+	sieve_interpreter_get_msgdata(struct sieve_interpreter *interpreter);
 
 /* Code dump (debugging purposes) */
 
@@ -53,7 +54,7 @@ void sieve_interpreter_dump_code(struct sieve_interpreter *interp);
 
 bool sieve_interpreter_execute_operation(struct sieve_interpreter *interp); 
 struct sieve_result *sieve_interpreter_run
-	(struct sieve_interpreter *interp, struct mail *mail);
+	(struct sieve_interpreter *interp, struct sieve_message_data *message);
 
 
 #endif /* __SIEVE_INTERPRETER_H */

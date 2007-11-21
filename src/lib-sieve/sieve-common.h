@@ -4,6 +4,8 @@
 #include <sys/types.h>
 #include <stdint.h>
 
+#include "sieve.h"
+
 /* 
  * Types
  */

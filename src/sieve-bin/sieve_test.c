@@ -117,19 +117,20 @@ static struct istream *create_raw_stream(int fd)
 	return input;
 }
 
-static void sieve_test(struct sieve_binary *sbin, struct mail *mail)
+static void sieve_test
+	(struct sieve_binary *sbin, struct sieve_message_data *msgdata)
 {
 	const char *const *headers;
 
 	printf("HEADERS\n");
-	if (mail_get_headers_utf8(mail, "from", &headers) >= 0) {	
+	if (mail_get_headers_utf8(msgdata->mail, "from", &headers) >= 0) {	
 		int i;
 		for ( i = 0; headers[i] != NULL; i++ ) {
 			printf("HEADER: From: %s\n", headers[i]);
 		} 
 	}
 	
-	sieve_execute(sbin, mail);
+	sieve_execute(sbin, msgdata);
 }
 
 int main(int argc, char **argv) 
@@ -149,6 +150,7 @@ int main(int argc, char **argv)
 	pool_t namespace_pool;
 	int fd;
 	struct sieve_binary *sbin;
+	struct sieve_message_data msgdata;
 
 	lib_init();
 	ioloop = io_loop_create();
@@ -233,7 +235,11 @@ int main(int argc, char **argv)
 	/* */
 	i_stream_seek(input, 0);
 
-	sieve_test(sbin, mail);
+	msgdata.mail = mail;
+	msgdata.return_path = "nico@example.com";
+	msgdata.rcpt_address = "sirius+sieve@rename-it.nl";
+	msgdata.auth_user = "stephan";
+	sieve_test(sbin, &msgdata);
 
 	sieve_deinit();
 	//ret = deliver_save(ns, &storage, mailbox, mail, 0, NULL);

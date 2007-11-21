@@ -30,7 +30,7 @@ struct sieve_interpreter {
 	struct sieve_result *result; 
 	
 	/* Execution environment */
-	struct mail *mail;	
+	struct sieve_message_data *msgdata;	
 };
 
 struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary) 
@@ -108,9 +108,10 @@ inline const void *sieve_interpreter_extension_get_context
 
 /* Accessing runtinme environment */
 
-inline struct mail *sieve_interpreter_get_mail(struct sieve_interpreter *interpreter) 
+inline struct sieve_message_data *
+	sieve_interpreter_get_msgdata(struct sieve_interpreter *interpreter) 
 {
-	return interpreter->mail;
+	return interpreter->msgdata;
 }
 
 /* Program counter */
@@ -194,7 +195,7 @@ void sieve_interpreter_dump_code(struct sieve_interpreter *interpreter)
 	sieve_interpreter_reset(interpreter);
 	
 	interpreter->result = NULL;
-	interpreter->mail = NULL;
+	interpreter->msgdata = NULL;
 	
 	while ( interpreter->pc < sieve_binary_get_code_size(interpreter->binary) ) {
 		if ( !sieve_interpreter_dump_operation(interpreter) ) {
@@ -226,14 +227,14 @@ bool sieve_interpreter_execute_operation
 }		
 
 struct sieve_result *sieve_interpreter_run
-	(struct sieve_interpreter *interp, struct mail *mail) 
+	(struct sieve_interpreter *interp, struct sieve_message_data *msgdata) 
 {
 	struct sieve_result *result;
 	sieve_interpreter_reset(interp);
 	
 	result = sieve_result_create();
 	interp->result = result;
-	interp->mail = mail;
+	interp->msgdata = msgdata;
 	
 	while ( interp->pc < sieve_binary_get_code_size(interp->binary) ) {
 		printf("%08x: ", interp->pc);

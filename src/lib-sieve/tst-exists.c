@@ -87,7 +87,7 @@ static bool tst_exists_opcode_dump
 static bool tst_exists_opcode_execute
 	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address)
 {
-	struct mail *mail = sieve_interpreter_get_mail(interp);
+	struct sieve_message_data *msgdata = sieve_interpreter_get_msgdata(interp);
 	struct sieve_coded_stringlist *hdr_list;
 	string_t *hdr_item;
 	bool matched;
@@ -105,10 +105,12 @@ static bool tst_exists_opcode_execute
 	/* Iterate through all requested headers to match */
 	hdr_item = NULL;
 	matched = FALSE;
-	while ( !matched && sieve_coded_stringlist_next_item(hdr_list, &hdr_item) && hdr_item != NULL ) {
+	while ( !matched && sieve_coded_stringlist_next_item(hdr_list, &hdr_item) && 
+		hdr_item != NULL ) {
 		const char *const *headers;
 			
-		if ( mail_get_headers_utf8(mail, str_c(hdr_item), &headers) >= 0 && headers[0] != NULL ) {	
+		if ( mail_get_headers_utf8(msgdata->mail, str_c(hdr_item), &headers) >= 0 && 
+			headers[0] != NULL ) {	
 			matched = TRUE;				 
 		}
 	}

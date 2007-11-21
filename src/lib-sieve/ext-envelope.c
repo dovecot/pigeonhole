@@ -151,23 +151,23 @@ static bool ext_envelope_opcode_dump
 	printf("ENVELOPE\n");
 
 	/* Handle any optional arguments */
-    if ( sieve_operand_optional_present(sbin, address) ) {
-        while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
-            switch ( opt_code ) {
-            case OPT_COMPARATOR:
-                sieve_opr_comparator_dump(interp, sbin, address);
-                break;
-            case OPT_MATCH_TYPE:
-                sieve_opr_match_type_dump(interp, sbin, address);
-                break;
-			case OPT_ADDRESS_PART:
-                sieve_opr_address_part_dump(interp, sbin, address);
+	if ( sieve_operand_optional_present(sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+			switch ( opt_code ) {
+			case OPT_COMPARATOR:
+				sieve_opr_comparator_dump(interp, sbin, address);
 				break;
-            default:
-                return FALSE;
-            }
-        }
-    }
+			case OPT_MATCH_TYPE:
+				sieve_opr_match_type_dump(interp, sbin, address);
+				break;
+			case OPT_ADDRESS_PART:
+				sieve_opr_address_part_dump(interp, sbin, address);
+				break;
+			default:
+				return FALSE;
+			}
+		}
+	}
 
 	return
 		sieve_opr_stringlist_dump(sbin, address) &&

@@ -140,7 +140,7 @@ static bool tst_header_opcode_dump
 static bool tst_header_opcode_execute
 	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address)
 {
-	struct mail *mail = sieve_interpreter_get_mail(interp);
+	struct sieve_message_data *msgdata = sieve_interpreter_get_msgdata(interp);
 	unsigned int opt_code;
 	const struct sieve_comparator *cmp = &i_octet_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
@@ -190,7 +190,7 @@ static bool tst_header_opcode_execute
 	while ( !matched && sieve_coded_stringlist_next_item(hdr_list, &hdr_item) && hdr_item != NULL ) {
 		const char *const *headers;
 			
-		if ( mail_get_headers_utf8(mail, str_c(hdr_item), &headers) >= 0 ) {	
+		if ( mail_get_headers_utf8(msgdata->mail, str_c(hdr_item), &headers) >= 0 ) {	
 			
 			int i;
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {

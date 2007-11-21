@@ -195,10 +195,10 @@ static bool tst_size_under_opcode_dump
 
 static bool tst_size_get(struct sieve_interpreter *interp, sieve_size_t *size) 
 {
-	struct mail *mail = sieve_interpreter_get_mail(interp);
+	struct sieve_message_data *msgdata = sieve_interpreter_get_msgdata(interp);
 	uoff_t psize;
 
-	if ( mail_get_physical_size(mail, &psize) < 0 )
+	if ( mail_get_physical_size(msgdata->mail, &psize) < 0 )
 		return FALSE;
 
 	*size = psize;
