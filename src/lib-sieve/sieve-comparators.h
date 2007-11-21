@@ -32,8 +32,10 @@ struct sieve_comparator {
 	/* Prefix and substring match */
 	
 	bool (*char_match)(const struct sieve_comparator *cmp, 
-		const char **val1, const char *val1_end, 
-		const char **val2, const char *val2_end);
+		const char **val, const char *val_end,
+		const char **key, const char *key_end);
+	bool (*char_skip)(const struct sieve_comparator *cmp, 
+		const char **val, const char *val_end);
 };
 
 struct sieve_comparator_extension {

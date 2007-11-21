@@ -64,6 +64,7 @@ const struct sieve_comparator i_ascii_numeric_comparator = {
 	&i_ascii_numeric_comparator_ext,
 	0,
 	cmp_i_ascii_numeric_compare,
+	NULL,
 	NULL
 };
 

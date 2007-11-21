@@ -536,6 +536,7 @@ static bool mtch_contains_match
 (struct sieve_match_context *mctx, const char *val, size_t val_size, 
 	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {
+	const struct sieve_comparator *cmp = mctx->comparator;
 	const char *vend = (const char *) val + val_size;
 	const char *kend = (const char *) key + key_size;
 	const char *vp = val;
@@ -545,20 +546,118 @@ static bool mtch_contains_match
 		return FALSE;
 
 	while ( (vp < vend) && (kp < kend) ) {
-		if ( !mctx->comparator->char_match(mctx->comparator, &vp, vend, &kp, kend) ) {
-			vp = vp - (kp - key) + 1;
-			kp = key;
-		}
+		if ( !cmp->char_match(cmp, &vp, vend, &kp, kend) )
+			vp++;
 	}
     
-  	return (kp == kend);
+	return (kp == kend);
+}
+
+static bool _matches_section
+	(const struct sieve_comparator *cmp, 
+		const char **val, const char *vend, 
+		const char **key, const char *kend)
+{
+	const char *val_begin = *val;
+	const char *key_begin = *key;
+	const char *wp = *key;
+
+	while ( *key < kend ) {
+		char wildcard;
+		
+		/* Find next ? wildcard, \ escape or end of key pattern */
+		while ( wp < kend && *wp != '?' && *wp != '\\' ) {
+			wp++;
+		}
+		
+		wildcard = *wp;
+		
+		/* Match text */
+		if ( wp > *key && !cmp->char_match(cmp, val, vend, key, wp) ) 		
+			break;
+		
+		if ( *key == kend ) return TRUE;
+
+		wp++;			
+		*key = wp;			
+		
+		if ( wildcard == '\\' )
+			wp++;
+		else if ( !cmp->char_skip(cmp, val, vend) ) 
+				break;
+	}
+		
+	if ( *key < kend ) {
+		/* Reset */
+		*val = val_begin;
+		*key = key_begin;	
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 static bool mtch_matches_match
 (struct sieve_match_context *mctx, const char *val, size_t val_size, 
 	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {
-	return FALSE;
+	const struct sieve_comparator *cmp = mctx->comparator;
+	const char *vend = (const char *) val + val_size;
+	const char *kend = (const char *) key + key_size;
+	const char *vp = val;
+	const char *kp = key;
+	const char *wp = key;
+	
+	/* Match the pattern as a two-level structure: 
+	 *   <pattern> = <section>*<section>*<section>....
+	 *   <section> = [text]?[text]?[text].... 
+	 */
+	 
+	while (kp < kend) {
+		char wildcard;
+		
+		/* Find next * wildcard or end of key pattern */
+		
+		while ( wp < kend && *wp != '*' ) {
+			if ( *wp == '\\' ) {
+				/* Defer handling of escaping for ? to the _matches_section function */
+				if ( wp < kend - 1 && *(wp+1) == '?' )
+					wp++;
+				else 
+					break;
+			}
+			
+			wp++;
+		}
+		
+		wildcard = *wp;
+		
+		/* Find this section */
+		if ( wp > kp ) {
+			while ( (vp < vend) && (kp < wp) ) {
+				
+				if ( !_matches_section(cmp, &vp, vend, &kp, wp) ) {
+					/* First section must match without offset */
+					if ( kp == key ) return FALSE; 
+					
+					vp++;
+				}
+			}
+		}
+		
+		/* Check whether we matched up to the * wildcard or the end */
+		if ( wp > kp ) return FALSE; 
+		
+		if ( kp == kend ) return TRUE;
+
+		wp++;						
+		kp = wp;
+		
+		if ( wildcard == '\\' )
+			wp++;
+	}
+	
+	return (kp == kend);
 }
 			 
 /* 

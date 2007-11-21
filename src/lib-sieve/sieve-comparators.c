@@ -33,7 +33,10 @@ static int cmp_i_octet_compare
 		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
 static bool cmp_i_octet_char_match
 	(const struct sieve_comparator *cmp, const char **val1, const char *val1_end, 
-		const char **val2, const char *val2_end);	
+		const char **val2, const char *val2_end);
+static bool cmp_i_octet_char_skip
+	(const struct sieve_comparator *cmp, const char **val, const char *val_end);
+	
 static int cmp_i_ascii_casemap_compare
 	(const struct sieve_comparator *cmp,
 		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
@@ -412,7 +415,8 @@ const struct sieve_comparator i_octet_comparator = {
 	NULL,
 	0,
 	cmp_i_octet_compare,
-	cmp_i_octet_char_match	
+	cmp_i_octet_char_match,
+	cmp_i_octet_char_skip	
 };
 
 const struct sieve_comparator i_ascii_casemap_comparator = {
@@ -423,7 +427,8 @@ const struct sieve_comparator i_ascii_casemap_comparator = {
 	NULL,
 	0,
 	cmp_i_ascii_casemap_compare,
-	cmp_i_ascii_casemap_char_match
+	cmp_i_ascii_casemap_char_match,
+	cmp_i_octet_char_skip
 };
 
 const struct sieve_comparator *sieve_core_comparators[] = {
@@ -460,13 +465,34 @@ static int cmp_i_octet_compare(
 
 static bool cmp_i_octet_char_match
 	(const struct sieve_comparator *cmp ATTR_UNUSED, 
-		const char **val1, const char *val1_end ATTR_UNUSED, 
-		const char **val2, const char *val2_end ATTR_UNUSED)
+		const char **val, const char *val_end, 
+		const char **key, const char *key_end)
 {
-	if ( **val1 == **val2 ) {
-		(*val1)++;
-		(*val2)++;
-		
+	const char *val_begin = *val;
+	const char *key_begin = *key;
+	
+	while ( **val == **key && *val < val_end && *key < key_end ) {
+		(*val)++;
+		(*key)++;
+	}
+	
+	if ( *key < key_end ) {
+		/* Reset */
+		*val = val_begin;
+		*key = key_begin;	
+	
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+
+static bool cmp_i_octet_char_skip
+	(const struct sieve_comparator *cmp ATTR_UNUSED, 
+		const char **val, const char *val_end)
+{
+	if ( *val < val_end ) {
+		(*val)++;
 		return TRUE;
 	}
 	
@@ -500,17 +526,27 @@ static int cmp_i_ascii_casemap_compare(
 
 static bool cmp_i_ascii_casemap_char_match
 	(const struct sieve_comparator *cmp ATTR_UNUSED, 
-		const char **val1, const char *val1_end ATTR_UNUSED, 
-		const char **val2, const char *val2_end ATTR_UNUSED)
+		const char **val, const char *val_end, 
+		const char **key, const char *key_end)
 {
-	if ( tolower(**val1) == tolower(**val2) ) {
-		(*val1)++;
-		(*val2)++;
-		
-		return TRUE;
+	const char *val_begin = *val;
+	const char *key_begin = *key;
+	
+	while ( tolower(**val) == tolower(**key) &&
+		*val < val_end && *key < key_end ) {
+		(*val)++;
+		(*key)++;
 	}
 	
-	return FALSE;
+	if ( *key < key_end ) {
+		/* Reset */
+		*val = val_begin;
+		*key = key_begin;	
+		
+		return FALSE;
+	}
+	
+	return TRUE;
 }
 
 
