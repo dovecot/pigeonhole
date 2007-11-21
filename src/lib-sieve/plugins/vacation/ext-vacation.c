@@ -1,10 +1,11 @@
 /* Extension vacation
  * ------------------
  *
- * Author: Stephan Bosch
+ * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-vacation-07
- * Implementation: validation and generation work, no interpretation/execution.
- * Status: under development
+ * Implementation: validation, generation and interpretation, no actual 
+ *   execution.
+ * Status: experimental, largely untested
  * 
  */
 
