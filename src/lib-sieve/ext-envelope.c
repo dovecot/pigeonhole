@@ -178,8 +178,6 @@ static int ext_envelope_get_fields
 		value = msgdata->to_address;	
 	else if ( strncmp(field, "to", 2) == 0 )	
 		value = msgdata->auth_user;
-	
-	printf("SIZEOF: %d\n", sizeof(value));
 		
 	if ( value != NULL )
 		array_append(&envelope_values, &value, 1);
