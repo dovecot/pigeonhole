@@ -44,6 +44,10 @@ bool sieve_validate_positional_argument
 	enum sieve_ast_argument_type req_type);
 void sieve_validator_argument_activate
 	(struct sieve_validator *validator, struct sieve_ast_argument *arg);	 
+bool sieve_validate_tag_parameter
+	(struct sieve_validator *validator, struct sieve_command_context *cmd,
+	struct sieve_ast_argument *tag, struct sieve_ast_argument *param,
+	enum sieve_ast_argument_type req_type);
 
 /* Extensions */
 int sieve_validator_extension_load

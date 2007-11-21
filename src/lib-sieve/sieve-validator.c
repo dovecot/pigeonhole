@@ -366,6 +366,28 @@ void sieve_validator_argument_activate
 	}
 }
 
+bool sieve_validate_tag_parameter
+	(struct sieve_validator *validator, struct sieve_command_context *cmd,
+	struct sieve_ast_argument *tag, struct sieve_ast_argument *param,
+	enum sieve_ast_argument_type req_type)
+{
+	if ( sieve_ast_argument_type(param) != req_type && 
+		(sieve_ast_argument_type(param) != SAAT_STRING || 
+			req_type != SAAT_STRING_LIST) ) 
+	{
+		sieve_command_validate_error(validator, cmd, 
+			"the :%s tag for the %s %s requires %s as parameter, "
+			"but %s was found", sieve_ast_argument_tag(tag), 
+			cmd->command->identifier, sieve_command_type_name(cmd->command),
+			sieve_ast_argument_type_name(req_type),	sieve_ast_argument_name(param));
+		return FALSE;
+	}
+	sieve_validator_argument_activate(validator, param);
+	param->arg_id_code = tag->arg_id_code;
+	
+	return TRUE;
+}
+
 /* Test validation API */
 
 static bool sieve_validate_command_arguments

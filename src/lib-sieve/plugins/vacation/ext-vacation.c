@@ -25,11 +25,18 @@ static bool ext_vacation_load(int ext_id);
 static bool ext_vacation_validator_load(struct sieve_validator *validator);
 
 static bool ext_vacation_opcode_dump
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
+static bool ext_vacation_opcode_execute
+	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+		sieve_size_t *address);
 
-static bool cmd_vacation_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
-static bool cmd_vacation_validate(struct sieve_validator *validator, struct sieve_command_context *cmd);
-static bool cmd_vacation_generate(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+static bool cmd_vacation_registered
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+static bool cmd_vacation_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+static bool cmd_vacation_generate
+	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
 /* Extension definitions */
 
@@ -37,7 +44,7 @@ int ext_my_id;
 
 const struct sieve_opcode vacation_opcode = { 
 	ext_vacation_opcode_dump, 
-	NULL 
+	ext_vacation_opcode_execute
 };
 
 const struct sieve_extension vacation_extension = { 
@@ -77,107 +84,76 @@ static const struct sieve_command vacation_command = {
 
 /* Tag validation */
 
-static bool cmd_vacation_validate_days_tag
+static bool cmd_vacation_validate_number_tag
 	(struct sieve_validator *validator, 
 	struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd)
 {
-	/* Only one possible tag, so we don't bother checking the identifier */
-	*arg = sieve_ast_argument_next(*arg);
+	struct sieve_ast_argument *tag = *arg;
+	
+	/* Detach the tag itself */
+	*arg = sieve_ast_arguments_delete(*arg,1);
 	
 	/* Check syntax:
 	 *   :days number
 	 */
-	if ( (*arg)->type != SAAT_NUMBER ) {
-		sieve_command_validate_error(validator, cmd, 
-			"the :days tag for the vacation command requires one number argument, but %s was found", sieve_ast_argument_name(*arg) );
+	if ( !sieve_validate_tag_parameter
+		(validator, cmd, tag, *arg, SAAT_NUMBER) ) {
 		return FALSE;
 	}
 
-	/* Skip argument */
+	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
-
-	/* FIXME: assign somewhere */
 	
 	return TRUE;
 }
 
-static bool cmd_vacation_validate_subject_tag
+static bool cmd_vacation_validate_string_tag
 	(struct sieve_validator *validator, 
 	struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd)
 {
-	/* Only one possible tag, so we don't bother checking the identifier */
-	*arg = sieve_ast_argument_next(*arg);
+	struct sieve_ast_argument *tag = *arg;
+
+	/* Detach the tag itself */
+	*arg = sieve_ast_arguments_delete(*arg,1);
 	
 	/* Check syntax:
 	 *   :subject string
-	 */
-	if ( (*arg)->type != SAAT_STRING ) {
-		sieve_command_validate_error(validator, cmd, 
-			"the :subject tag for the vacation command requires one string argument, but %s was found", 
-				sieve_ast_argument_name(*arg) );
-		return FALSE;
-	}
-
-	(*arg)->parameters = sieve_ast_argument_next(*arg);
-	
-	/* Delete parameter from arg list */
-	*arg = sieve_ast_arguments_delete(*arg,1);
-
-	/* FIXME: assign somewhere */
-	
-	return TRUE;
-}
-
-static bool cmd_vacation_validate_from_tag
-	(struct sieve_validator *validator, 
-	struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
-{
-	/* Only one possible tag, so we don't bother checking the identifier */
-	*arg = sieve_ast_argument_next(*arg);
-	
-	/* Check syntax:
 	 *   :from string
+	 *   :handle string
 	 */
-	if ( (*arg)->type != SAAT_STRING ) {
-		sieve_command_validate_error(validator, cmd, 
-			"the :from tag for the vacation command requires one string argument, but %s was found", 
-				sieve_ast_argument_name(*arg) );
+	if ( !sieve_validate_tag_parameter
+		(validator, cmd, tag, *arg, SAAT_STRING) ) {
 		return FALSE;
 	}
-
-	(*arg)->parameters = sieve_ast_argument_next(*arg);
-
-	/* Delete parameter from argument list */
-	*arg = sieve_ast_arguments_delete(*arg, 1);
+		
+	/* Skip parameter */
+	*arg = sieve_ast_argument_next(*arg);
 
 	return TRUE;
 }
 
-static bool cmd_vacation_validate_addresses_tag
+static bool cmd_vacation_validate_stringlist_tag
 	(struct sieve_validator *validator, 
 	struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd)
 {
-	/* Only one possible tag, so we don't bother checking the identifier */
-	*arg = sieve_ast_argument_next(*arg);
+	struct sieve_ast_argument *tag = *arg;
+
+	/* Detach the tag itself */
+	*arg = sieve_ast_arguments_delete(*arg,1);
 	
 	/* Check syntax:
 	 *   :addresses string-list
 	 */
-	if ( (*arg)->type != SAAT_STRING && (*arg)->type != SAAT_STRING_LIST ) {
-		sieve_command_validate_error(validator, cmd, 
-			"the :addresses tag for the vacation command requires one string argument, but %s was found", 
-				sieve_ast_argument_name(*arg) );
+	if ( !sieve_validate_tag_parameter
+		(validator, cmd, tag, *arg, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
-	(*arg)->parameters = sieve_ast_argument_next(*arg);	
-
-	/* Delete parameter from argument list */
-	*arg = sieve_ast_arguments_delete(*arg, 1);
+	/* Skip parameter */
+	*arg = sieve_ast_argument_next(*arg);
 
 	return TRUE;
 }
@@ -187,101 +163,75 @@ static bool cmd_vacation_validate_mime_tag
 	struct sieve_ast_argument **arg ATTR_UNUSED, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
-	/* Skip tag */
-	*arg = sieve_ast_argument_next(*arg);
-
-	/* FIXME: assign somewhere */
+	/* FIXME: currently not generated */
+	*arg = sieve_ast_arguments_delete(*arg,1);
 		
-	return TRUE;
-}
-
-static bool cmd_vacation_validate_handle_tag
-	(struct sieve_validator *validator, 
-	struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
-{
-	/* Only one possible tag, so we don't bother checking the identifier */
-	*arg = sieve_ast_argument_next(*arg);
-	
-	/* Check syntax:
-	 *   :addresses string-list
-	 */
-	if ( (*arg)->type != SAAT_STRING ) {
-		sieve_command_validate_error(validator, cmd, 
-			"the :handle tag for the vacation command requires one string argument, but %s was found", 
-				sieve_ast_argument_name(*arg) );
-		return FALSE;
-	}
-
-	(*arg)->parameters = sieve_ast_argument_next(*arg);
-	
-	/* Delete parameter from argument list */
-	*arg = sieve_ast_arguments_delete(*arg, 1);
-
 	return TRUE;
 }
 
 /* Command registration */
 
 static const struct sieve_argument vacation_days_tag = { 
-	"days", 
-	NULL, 
-	cmd_vacation_validate_days_tag, 
+	"days", NULL, 
+	cmd_vacation_validate_number_tag, 
 	NULL, NULL 
 };
 
 static const struct sieve_argument vacation_subject_tag = { 
-	"subject", 
-	NULL, 
-	cmd_vacation_validate_subject_tag, 
+	"subject", NULL, 
+	cmd_vacation_validate_string_tag, 
 	NULL, NULL 
 };
 
 static const struct sieve_argument vacation_from_tag = { 
-	"from", 
-	NULL, 
-	cmd_vacation_validate_from_tag, 
+	"from", NULL, 
+	cmd_vacation_validate_string_tag, 
 	NULL, NULL 
 };
 
 static const struct sieve_argument vacation_addresses_tag = { 
-	"addresses", 
-	NULL, 
-	cmd_vacation_validate_addresses_tag, 
+	"addresses", NULL, 
+	cmd_vacation_validate_stringlist_tag, 
 	NULL, NULL 
 };
 
 static const struct sieve_argument vacation_mime_tag = { 
-	"mime",
-	NULL, 
+	"mime",	NULL, 
 	cmd_vacation_validate_mime_tag, 
 	NULL, NULL 
 };
 
 static const struct sieve_argument vacation_handle_tag = { 
-	"handle", 
-	NULL, 
-	cmd_vacation_validate_handle_tag, 
+	"handle", NULL, 
+	cmd_vacation_validate_string_tag, 
 	NULL, NULL 
 };
 
 enum cmd_vacation_optional {
+	OPT_END,
 	OPT_DAYS,
 	OPT_SUBJECT,
 	OPT_FROM,
-	OPT_ADDRESS,
+	OPT_ADDRESSES,
 	OPT_MIME,
 	OPT_HANDLE
 };
 
-static bool cmd_vacation_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+static bool cmd_vacation_registered
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_days_tag, OPT_DAYS); 	
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_subject_tag, OPT_SUBJECT); 	
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_from_tag, OPT_FROM); 	
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_addresses_tag, OPT_ADDRESS); 	
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_mime_tag, OPT_MIME); 	
-	sieve_validator_register_tag(validator, cmd_reg, &vacation_handle_tag, OPT_HANDLE); 	
+	sieve_validator_register_tag
+		(validator, cmd_reg, &vacation_days_tag, OPT_DAYS); 	
+	sieve_validator_register_tag
+		(validator, cmd_reg, &vacation_subject_tag, OPT_SUBJECT); 	
+	sieve_validator_register_tag
+		(validator, cmd_reg, &vacation_from_tag, OPT_FROM); 	
+	sieve_validator_register_tag
+		(validator, cmd_reg, &vacation_addresses_tag, OPT_ADDRESSES); 	
+	sieve_validator_register_tag
+		(validator, cmd_reg, &vacation_mime_tag, OPT_MIME); 	
+	sieve_validator_register_tag
+		(validator, cmd_reg, &vacation_handle_tag, OPT_HANDLE); 	
 
 	return TRUE;
 }
@@ -334,10 +284,84 @@ static bool cmd_vacation_generate
 static bool ext_vacation_opcode_dump(
 	struct sieve_interpreter *interp ATTR_UNUSED, 
 	struct sieve_binary *sbin, sieve_size_t *address)
-{
+{	
+	unsigned int opt_code;
+	
 	printf("VACATION\n");
-	sieve_opr_string_dump(sbin, address);
+	
+	if ( sieve_operand_optional_present(sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+			switch ( opt_code ) {
+			case OPT_DAYS:
+				if ( !sieve_opr_number_dump(sbin, address) )
+					return FALSE;
+				break;
+			case OPT_SUBJECT:
+			case OPT_FROM:
+			case OPT_HANDLE: 
+				if ( !sieve_opr_string_dump(sbin, address) )
+					return FALSE;
+				break;
+			case OPT_ADDRESSES:
+				if ( !sieve_opr_stringlist_dump(sbin, address) )
+					return FALSE;
+				break;
+			case OPT_MIME:
+				break;
+			
+			default:
+				return FALSE;
+			}
+		}
+	}
+	
+	return sieve_opr_string_dump(sbin, address);
+}
+
+/* 
+ * Code execution
+ */
+ 
+static bool ext_vacation_opcode_execute(
+	struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_binary *sbin, sieve_size_t *address)
+{	
+	unsigned int opt_code;
+	sieve_size_t days = 0;
+	string_t *reason, *subject, *from, *handle;
+		
+	if ( sieve_operand_optional_present(sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+			switch ( opt_code ) {
+			case OPT_DAYS:
+				if ( !sieve_opr_number_read(sbin, address, &days) ) return FALSE;
+				break;
+			case OPT_SUBJECT:
+				if ( !sieve_opr_string_read(sbin, address, &subject) ) return FALSE;
+				break;
+			case OPT_FROM:
+				if ( !sieve_opr_string_read(sbin, address, &from) ) return FALSE;
+				break;
+			case OPT_HANDLE: 
+				if ( !sieve_opr_string_read(sbin, address, &handle) ) return FALSE;
+				break;
+			case OPT_ADDRESSES:
+				if ( sieve_opr_stringlist_read(sbin, address) == NULL ) return FALSE;
+				break;
+			case OPT_MIME:
+				break;
+			default:
+				return FALSE;
+			}
+		}
+	}
+	
+	if ( !sieve_opr_string_read(sbin, address, &reason) ) 
+		return FALSE;
+	
+	printf(">> VACATION \"%s\"\n", str_c(reason));
 	
 	return TRUE;
 }
+
 
