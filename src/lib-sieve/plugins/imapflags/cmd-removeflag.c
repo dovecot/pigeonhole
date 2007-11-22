@@ -13,14 +13,9 @@
 static bool cmd_removeflag_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
-static bool cmd_removeflag_opcode_dump
-	(const struct sieve_opcode *opcode ATTR_UNUSED,
-		struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
-		sieve_size_t *address);
 static bool cmd_removeflag_opcode_execute
-	(const struct sieve_opcode *opcode ATTR_UNUSED,
-		struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
-		sieve_size_t *address);
+	(const struct sieve_opcode *opcode,	struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
 
 /* Removeflag command 
  *
@@ -46,7 +41,7 @@ const struct sieve_opcode removeflag_opcode = {
 	SIEVE_OPCODE_CUSTOM,
 	&imapflags_extension,
 	EXT_IMAPFLAGS_OPCODE_REMOVEFLAG,
-	cmd_removeflag_opcode_dump, 
+	sieve_opcode_string_dump, 
 	cmd_removeflag_opcode_execute 
 };
 
@@ -66,22 +61,7 @@ static bool cmd_removeflag_generate
 
 	return TRUE;
 }
-
-/* 
- * Code dump
- */
  
-static bool cmd_removeflag_opcode_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
-{
-	printf("REMOVEFLAG\n");
-
-	return 
-		sieve_opr_string_dump(sbin, address);
-}
-
 /*
  * Execution
  */

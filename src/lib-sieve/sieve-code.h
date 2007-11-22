@@ -154,6 +154,9 @@ const struct sieve_opcode *sieve_operation_read
 bool sieve_opcode_trivial_dump
 	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
 		struct sieve_binary *sbin, sieve_size_t *address);
+bool sieve_opcode_string_dump
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
 
 /* Core operands */
 

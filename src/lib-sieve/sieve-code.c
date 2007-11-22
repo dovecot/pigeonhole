@@ -695,6 +695,8 @@ static bool opc_jmp_dump(
 	return TRUE;
 }	
 			
+/* Code dump for trivial opcodes */
+
 bool sieve_opcode_trivial_dump
 (const struct sieve_opcode *opcode,
 	struct sieve_interpreter *interp ATTR_UNUSED, 
@@ -704,6 +706,18 @@ bool sieve_opcode_trivial_dump
 	
 	return TRUE;
 }
+
+bool sieve_opcode_string_dump
+(const struct sieve_opcode *opcode,
+	struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_binary *sbin, sieve_size_t *address)
+{
+	printf("%s\n", opcode->mnemonic);
+
+	return 
+		sieve_opr_string_dump(sbin, address);
+}
+
 
 /* Code execution for core commands */
 

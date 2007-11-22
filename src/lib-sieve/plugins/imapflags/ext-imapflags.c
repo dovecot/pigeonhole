@@ -41,7 +41,7 @@ extern const struct sieve_opcode addflag_opcode;
 extern const struct sieve_opcode removeflag_opcode;
 
 const struct sieve_opcode *imapflags_opcodes[] = 
-	{ &setflag_opcode, &addflag_opcode };
+	{ &setflag_opcode, &addflag_opcode, &removeflag_opcode };
 const struct sieve_extension imapflags_extension = { 
 	"imapflags", 
 	ext_imapflags_load,

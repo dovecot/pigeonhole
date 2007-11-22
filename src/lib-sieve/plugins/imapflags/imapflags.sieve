@@ -1,6 +1,10 @@
 require "imapflags";
 require "fileinto";
 
+setflag "\\Seen";
+addflag "$DSNRequired";
+removeflag "$DSNRequired";
+
 if header :contains "from" "boss@frobnitzm.example.edu" {
 	setflag "\\Flagged";
 	fileinto "INBOX.From Boss";

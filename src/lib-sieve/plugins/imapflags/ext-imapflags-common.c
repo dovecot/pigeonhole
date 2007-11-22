@@ -32,7 +32,7 @@ bool ext_imapflags_command_validate
 			cmd->command->identifier, sieve_ast_argument_name(arg));
 		return FALSE; 
 	}
-	//sieve_validator_argument_activate(validator, arg);
+	sieve_validator_argument_activate(validator, arg);
 
 	arg2 = sieve_ast_argument_next(arg);
 	
@@ -70,7 +70,7 @@ bool ext_imapflags_command_validate
 			return FALSE;
 		}
 
-		//sieve_validator_argument_activate(validator, arg2);
+		sieve_validator_argument_activate(validator, arg2);
 	}	
 	return TRUE;
 }

@@ -11,6 +11,11 @@
 
 static bool cmd_addflag_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	
+static bool cmd_addflag_opcode_execute
+	(const struct sieve_opcode *opcode,	struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
+
 
 /* Addflag command 
  *
@@ -36,8 +41,8 @@ const struct sieve_opcode addflag_opcode = {
 	SIEVE_OPCODE_CUSTOM,
 	&imapflags_extension,
 	EXT_IMAPFLAGS_OPCODE_ADDFLAG,
-	NULL,
-	NULL
+	sieve_opcode_string_dump,
+	cmd_addflag_opcode_execute
 };
 
 
@@ -56,4 +61,26 @@ static bool cmd_addflag_generate
 	return TRUE;
 }
 
+/*
+ * Execution
+ */
 
+static bool cmd_addflag_opcode_execute
+(const struct sieve_opcode *opcode ATTR_UNUSED,
+	struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_binary *sbin, sieve_size_t *address)
+{
+	string_t *redirect;
+
+	t_push();
+
+	if ( !sieve_opr_string_read(sbin, address, &redirect) ) {
+		t_pop();
+		return FALSE;
+	}
+
+	printf(">> ADDFLAG \"%s\"\n", str_c(redirect));
+
+	t_pop();
+	return TRUE;
+}
