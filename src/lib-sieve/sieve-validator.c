@@ -391,11 +391,11 @@ bool sieve_validate_tag_parameter
 /* Test validation API */
 
 static bool sieve_validate_command_arguments
-(struct sieve_validator *validator, struct sieve_command_context *cmd, 
-	const unsigned int count) 
+(struct sieve_validator *validator, struct sieve_command_context *cmd) 
 {
+	int arg_count = cmd->command->positional_arguments;
+	int real_count = 0;
 	struct sieve_ast_argument *arg;
-	unsigned int real_count = 0;
 	struct sieve_command_registration *cmd_reg = NULL;
 	
 	/* Validate any tags that might be present */\
@@ -503,10 +503,11 @@ static bool sieve_validate_command_arguments
 	}
 	
 	/* Check the required count versus the real number of arguments */
-	if ( real_count != count ) {
+	if ( arg_count >= 0 && real_count != arg_count ) {
 		sieve_command_validate_error(validator, cmd, 
 			"the %s %s requires %d positional argument(s), but %d is/are specified",
-			cmd->command->identifier, sieve_command_type_name(cmd->command), count, real_count);
+			cmd->command->identifier, sieve_command_type_name(cmd->command), 
+			arg_count, real_count);
 		return FALSE;
 	}
 
@@ -655,9 +656,7 @@ static bool sieve_validate_command
 		
 				/* Check syntax */
 				if ( 
-					( command->positional_arguments >= 0 && 
-						!sieve_validate_command_arguments
-							(validator, ctx, command->positional_arguments) ) ||
+					!sieve_validate_command_arguments(validator, ctx) ||
  					!sieve_validate_command_subtests
  						(validator, ctx, command->subtests) || 
  					(ast_type == SAT_COMMAND && !sieve_validate_command_block

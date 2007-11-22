@@ -11,6 +11,53 @@
 bool ext_imapflags_command_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd)
 {
+	struct sieve_ast_argument *arg = cmd->first_positional;
+	struct sieve_ast_argument *arg2;
+	
+	/* Check arguments */
+	
+	if ( arg == NULL ) {
+		sieve_command_validate_error(validator, cmd, 
+			"the %s command expects at least one argument, but none was found", 
+			cmd->command->identifier);
+		return FALSE;
+	}
+	
+	if ( sieve_ast_argument_type(arg) != SAAT_STRING && 
+		sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) 
+	{
+		sieve_command_validate_error(validator, cmd, 
+			"the %s command expects either a string (variable name) or "
+			"a string-list (list of flags) as first argument, but %s was found", 
+			cmd->command->identifier, sieve_ast_argument_name(arg));
+		return FALSE; 
+	}
+	//sieve_validator_argument_activate(validator, arg);
+
+	arg2 = sieve_ast_argument_next(arg);
+	
+	if ( arg2 != NULL ) {
+		if ( sieve_ast_argument_type(arg) != SAAT_STRING ) 
+		{
+			sieve_command_validate_error(validator, cmd, 
+				"if a second argument is specified for the %s command, the first "
+				"must be a string (variable name), but %s was found",
+				cmd->command->identifier, sieve_ast_argument_name(arg));
+			return FALSE; 
+		}		
+
+		if ( sieve_ast_argument_type(arg2) != SAAT_STRING && 
+			sieve_ast_argument_type(arg2) != SAAT_STRING_LIST ) 
+		{
+			sieve_command_validate_error(validator, cmd, 
+				"the %s command expects a string list (list of flags) as "
+				"second argument when two arguments are specified, "
+				"but %s was found",
+				cmd->command->identifier, sieve_ast_argument_name(arg2));
+			return FALSE; 
+		}
+		//sieve_validator_argument_activate(validator, arg);
+	}	
 	return TRUE;
 }
 
