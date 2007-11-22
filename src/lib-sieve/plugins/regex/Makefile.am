@@ -1,4 +1,4 @@
-noinst_LIBRARIES = lib_ext_regex.a
+noinst_LTLIBRARIES = libsieve_ext_regex.la
 
 AM_CPPFLAGS = \
 	-I../../ \
@@ -7,6 +7,6 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-storage 
 
-lib_ext_regex_a_SOURCES = \
+libsieve_ext_regex_la_SOURCES = \
 	ext-regex.c
 

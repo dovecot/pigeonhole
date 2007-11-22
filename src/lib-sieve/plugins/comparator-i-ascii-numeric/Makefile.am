@@ -1,4 +1,4 @@
-noinst_LIBRARIES = lib_ext_comparator-i-ascii-numeric.a
+noinst_LTLIBRARIES = libsieve_ext_comparator-i-ascii-numeric.la
 
 AM_CPPFLAGS = \
 	-I../../ \
@@ -7,6 +7,6 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-storage 
 
-lib_ext_comparator_i_ascii_numeric_a_SOURCES = \
+libsieve_ext_comparator_i_ascii_numeric_la_SOURCES = \
 	ext-cmp-i-ascii-numeric.c
 

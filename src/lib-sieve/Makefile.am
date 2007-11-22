@@ -1,6 +1,6 @@
 SUBDIRS = plugins
 
-noinst_LIBRARIES = libsieve.a
+noinst_LTLIBRARIES = libsieve.la
 
 AM_CPPFLAGS = \
 	-I$(dovecot_incdir) \
@@ -27,7 +27,18 @@ exts = \
 	ext-reject.c \
 	ext-envelope.c
 
-libsieve_a_SOURCES = \
+# These are not actual plugins just yet...
+plugins = \
+    ./plugins/vacation/libsieve_ext_vacation.la \
+    ./plugins/subaddress/libsieve_ext_subaddress.la \
+    ./plugins/comparator-i-ascii-numeric/libsieve_ext_comparator-i-ascii-numeric.la \
+    ./plugins/relational/libsieve_ext_relational.la \
+    ./plugins/regex/libsieve_ext_regex.la
+
+libsieve_la_DEPENDENCIES = $(plugins)
+libsieve_la_LIBADD = $(plugins)
+
+libsieve_la_SOURCES = \
 	sieve-lexer.c \
 	sieve-ast.c \
 	sieve-binary.c \

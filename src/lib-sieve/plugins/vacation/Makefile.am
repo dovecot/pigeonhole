@@ -1,4 +1,4 @@
-noinst_LIBRARIES = lib_ext_vacation.a
+noinst_LTLIBRARIES = libsieve_ext_vacation.la
 
 AM_CPPFLAGS = \
 	-I../../ \
@@ -7,6 +7,6 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-storage 
 
-lib_ext_vacation_a_SOURCES = \
+libsieve_ext_vacation_la_SOURCES = \
 	ext-vacation.c
 

@@ -10,22 +10,11 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-storage/index \
 	-I$(dovecot_incdir)/src/lib-storage/index/raw 
 
-plugin_dir = \
-	$(top_srcdir)/src/lib-sieve/plugins
-
-# These are not actual plugins just yet...
-plugins = \
-	$(plugin_dir)/vacation/lib_ext_vacation.a \
-	$(plugin_dir)/subaddress/lib_ext_subaddress.a \
-	$(plugin_dir)/comparator-i-ascii-numeric/lib_ext_comparator-i-ascii-numeric.a \
-	$(plugin_dir)/relational/lib_ext_relational.a \
-	$(plugin_dir)/regex/lib_ext_regex.a
-
 sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
 sieve_test_LDFLAGS = -export-dynamic -Wl,--start-group
 
 libs = \
-	$(top_srcdir)/src/lib-sieve/libsieve.a \
+	$(top_srcdir)/src/lib-sieve/libsieve.la \
 	$(dovecot_incdir)/src/lib-storage/list/libstorage_list.a \
 	$(dovecot_incdir)/src/lib-storage/index/raw/libstorage_raw.a \
     $(dovecot_incdir)/src/lib-storage/index/libstorage_index.a \
@@ -38,7 +27,6 @@ libs = \
 
 ldadd = \
 	$(libs) \
-	$(plugins) \
  	$(LIBICONV) \
     $(RAND_LIBS) \
     $(MODULE_LIBS)
