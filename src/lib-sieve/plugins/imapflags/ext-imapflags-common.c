@@ -37,6 +37,8 @@ bool ext_imapflags_command_validate
 	arg2 = sieve_ast_argument_next(arg);
 	
 	if ( arg2 != NULL ) {
+		/* First check syntax sanity */
+				
 		if ( sieve_ast_argument_type(arg) != SAAT_STRING ) 
 		{
 			sieve_command_validate_error(validator, cmd, 
@@ -45,7 +47,7 @@ bool ext_imapflags_command_validate
 				cmd->command->identifier, sieve_ast_argument_name(arg));
 			return FALSE; 
 		}		
-
+		
 		if ( sieve_ast_argument_type(arg2) != SAAT_STRING && 
 			sieve_ast_argument_type(arg2) != SAAT_STRING_LIST ) 
 		{
@@ -56,7 +58,19 @@ bool ext_imapflags_command_validate
 				cmd->command->identifier, sieve_ast_argument_name(arg2));
 			return FALSE; 
 		}
-		//sieve_validator_argument_activate(validator, arg);
+		
+		/* Then check whether the second argument is permitted */
+		
+		/* IF !VARIABLE EXTENSION LOADED */
+		{
+			sieve_command_validate_error(validator, cmd, 
+				"the %s command only allows for the specification of a "
+				"variable name when the variables extension is active",
+				cmd->command->identifier);
+			return FALSE;
+		}
+
+		//sieve_validator_argument_activate(validator, arg2);
 	}	
 	return TRUE;
 }
