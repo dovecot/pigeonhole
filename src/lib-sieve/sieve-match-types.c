@@ -485,6 +485,8 @@ bool sieve_match_end(struct sieve_match_context *mctx)
  * Matching
  */
 
+/* :is */
+
 static bool mtch_is_match
 (struct sieve_match_context *mctx ATTR_UNUSED, 
 	const char *val1, size_t val1_size, 
@@ -553,16 +555,29 @@ static bool mtch_contains_match
 	return (kp == kend);
 }
 
+/* :matches */
+
+/* Quick 'n dirty debug */
+//#define MATCH_DEBUG
+#ifdef MATCH_DEBUG
+#define debug_printf(...) printf (__VA_ARGS__)
+#else
+#define debug_printf(...) 
+#endif
+
 static bool _matches_section
 	(const struct sieve_comparator *cmp, 
-		const char **val, const char *vend, 
-		const char **key, const char *kend)
+		const char **val, const char *vend, const char **key, const char *kend,
+		bool must_end)
 {
 	const char *val_begin = *val;
 	const char *key_begin = *key;
 	const char *wp = *key;
 
-	while ( *key < kend ) {
+	/* Scan through the pattern. Within the specified bounds it can only contain
+	 * ? and \. The caller handles * already. 
+	 */
+	while ( *key < kend && *val < vend) {
 		char wildcard;
 		
 		/* Find next ? wildcard, \ escape or end of key pattern */
@@ -576,25 +591,28 @@ static bool _matches_section
 		if ( wp > *key && !cmp->char_match(cmp, val, vend, key, wp) ) 		
 			break;
 		
-		if ( *key == kend ) return TRUE;
-
+		/* Break the loop if the match was successful already */
+		if ( *key == kend && (!must_end || *val == vend) )
+			return TRUE;
+			
 		wp++;			
 		*key = wp;			
-		
+
+		/* Only skip a character in the value string if we found '?' before */		
 		if ( wildcard == '\\' )
 			wp++;
 		else if ( !cmp->char_skip(cmp, val, vend) ) 
 				break;
 	}
 		
-	if ( *key < kend ) {
-		/* Reset */
-		*val = val_begin;
-		*key = key_begin;	
-		return FALSE;
-	}
-
-	return TRUE;
+	/* Was this match succesful ? */
+	if ( *key == kend && (!must_end || *val == vend) )
+		return TRUE;
+	
+	/* Reset */
+	*val = val_begin;
+	*key = key_begin;	
+	return FALSE;
 }
 
 static bool mtch_matches_match
@@ -611,16 +629,23 @@ static bool mtch_matches_match
 	/* Match the pattern as a two-level structure: 
 	 *   <pattern> = <section>*<section>*<section>....
 	 *   <section> = [text]?[text]?[text].... 
+	 *
+	 * Escape sequences \? and \* need special attention. 
 	 */
 	 
-	while (kp < kend) {
+	debug_printf("MATCH key: %s\n", key);
+	debug_printf("MATCH val: %s\n", val);
+
+	while (kp < kend && vp < vend) {
 		char wildcard;
 		
 		/* Find next * wildcard or end of key pattern */
 		
 		while ( wp < kend && *wp != '*' ) {
 			if ( *wp == '\\' ) {
-				/* Defer handling of escaping for ? to the _matches_section function */
+				/* Defer handling of escaping for ? to the _matches_section function. 
+				 * There is no way to escape these here. 
+				 */
 				if ( wp < kend - 1 && *(wp+1) == '?' )
 					wp++;
 				else 
@@ -631,33 +656,61 @@ static bool mtch_matches_match
 		}
 		
 		wildcard = *wp;
+		debug_printf("MATCH found wildcard: %c %d\n", wildcard, (int) (wp-key));
 		
 		/* Find this section */
 		if ( wp > kp ) {
 			while ( (vp < vend) && (kp < wp) ) {
+#ifdef MATCH_DEBUG
+				const char *skp = kp;
+				const char *svp = vp;
+#endif
 				
-				if ( !_matches_section(cmp, &vp, vend, &kp, wp) ) {
+				if ( !_matches_section(cmp, &vp, vend, &kp, wp, (wp == kend)) ) {
 					/* First section must match without offset */
-					if ( kp == key ) return FALSE; 
-					
+					if ( kp == key ) {
+						debug_printf("MATCH first section failed\n");
+						return FALSE; 
+					}
 					vp++;
+				} else {
+					debug_printf("MATCH matched section key: %s\n", t_strdup_until(skp, wp)); 
+					debug_printf("MATCH matched section val: %s\n", svp); 
 				}
 			}
 		}
 		
 		/* Check whether we matched up to the * wildcard or the end */
-		if ( wp > kp ) return FALSE; 
-		
-		if ( kp == kend ) return TRUE;
+		if ( wp > kp ) {
+			debug_printf("MATCH failed to find substring\n");
 
+			return FALSE;
+		} 
+		
+		/* Break the loop if match was successful already */
+		if (kp == kend && vp == vend) return TRUE;
+		
+		/* Advance loop to next wildcard search */
 		wp++;						
 		kp = wp;
 		
+		/* Check whether string ends in a wildcard 
+		 * (avoid scnning the rest of the string)
+		 */
+		if ( kp == kend && wildcard == '*' ) 
+			return TRUE;
+		
+		/* Current wp is escaped.. */
 		if ( wildcard == '\\' )
 			wp++;
 	}
 	
-	return (kp == kend);
+	debug_printf("MATCH loop ended\n");
+	
+	/* By definition, the match is only successful if both value and key pattern
+	 * are exhausted.
+	 */
+	return (kp == kend && vp == vend);
 }
 			 
 /* 

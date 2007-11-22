@@ -22,8 +22,17 @@ if address :matches "from" "stephan+sieve@drunksnipers.co?" {
 if address :matches "from" "?t?phan?sieve?drunksnip?rs.co?" {
 	fileinto "G";
 }
-if address :matches "x-bullshit" "33333\\?\\?\\??" {
+if header :matches "x-bullshit" "33333\\?\\?\\??" {
 	fileinto "H";
+}
+if header :matches "x-bullshit" "33333*\\?\\??" {
+    fileinto "I";
+}
+if header :matches "x-bullshit" "*\\?\\?\\?a" {
+    fileinto "J";
+}
+if header :matches "x-bullshit" "*3333\\?\\?\\?a" {
+    fileinto "K";
 }
 
 fileinto "SHOULD NOT MATCH";
@@ -48,7 +57,16 @@ if address :matches "from" "sephan+sieve@drunksnipers.co?" {
 if address :matches "from" "?t?phan?sieve?dunksnip?rs.co?" {
 	fileinto "G";
 }
-if address :matches "x-bullshit" "33333\\?\\??" {
+if header :matches "x-bullshit" "33333\\?\\?\\?" {
 	fileinto "H";
+}
+if header :matches "x-bullshit" "33333\\?\\?\\?aa" {
+    fileinto "I";
+}
+if header :matches "x-bullshit" "\\*3333\\?\\?\\?a" {
+    fileinto "J";
+}
+if header :matches "x-bullshit" "\\f3333\\?\\?\\?a" {
+    fileinto "J";
 }
 
