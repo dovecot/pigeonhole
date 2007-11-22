@@ -186,7 +186,8 @@ bool sieve_generate_test
 	return TRUE;
 }
 
-static bool sieve_generate_command(struct sieve_generator *generator, struct sieve_ast_node *cmd_node) 
+static bool sieve_generate_command
+	(struct sieve_generator *generator, struct sieve_ast_node *cmd_node) 
 {
 	i_assert( cmd_node->context != NULL && cmd_node->context->command != NULL );
 
@@ -197,7 +198,8 @@ static bool sieve_generate_command(struct sieve_generator *generator, struct sie
 	return TRUE;		
 }
 
-bool sieve_generate_block(struct sieve_generator *generator, struct sieve_ast_node *block) 
+bool sieve_generate_block
+	(struct sieve_generator *generator, struct sieve_ast_node *block) 
 {
 	struct sieve_ast_node *command;
 

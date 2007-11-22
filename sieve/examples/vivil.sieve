@@ -1,9 +1,10 @@
 # Example Sieve Script
 #   Author: Vivil
 #   URL: http://wiki.fastmail.fm/index.php?title=Vivil
+#   Removed unused notify require
 
 # *************************************************************************
-require ["envelope", "fileinto", "reject", "notify", "vacation", "regex", "relational", 
+require ["envelope", "fileinto", "reject", "vacation", "regex", "relational", 
 "comparator-i;ascii-numeric"];
 
 

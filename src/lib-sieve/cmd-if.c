@@ -67,6 +67,7 @@ struct cmd_if_context_data {
 	struct cmd_if_context_data *previous;
 	struct cmd_if_context_data *next;
 	
+	bool jump_generated;
 	sieve_size_t exit_jump;
 };
 
@@ -80,6 +81,7 @@ static void cmd_if_initialize_context_data
 	ctx_data->previous = previous;
 	ctx_data->next = NULL;
 	ctx_data->exit_jump = 0;
+	ctx_data->jump_generated = FALSE;
 	
 	if ( previous != NULL )
 		previous->next = ctx_data;
@@ -131,7 +133,8 @@ static void cmd_if_resolve_exit_jumps
 	struct cmd_if_context_data *if_ctx = ctx_data->previous;
 	
 	while ( if_ctx != NULL ) {
-		sieve_binary_resolve_offset(sbin, if_ctx->exit_jump);
+		if ( if_ctx->jump_generated ) 
+			sieve_binary_resolve_offset(sbin, if_ctx->exit_jump);
 		if_ctx = if_ctx->previous;	
 	}
 }
@@ -156,9 +159,16 @@ static bool cmd_if_generate
 	
 	/* Are we the final command in this if-elsif-else structure? */
 	if ( ctx_data->next != NULL ) {
-		/* No, generate jump to end of if-elsif-else structure (resolved later) */
-		sieve_operation_emit_code(sbin, SIEVE_OPCODE_JMP);
-		ctx_data->exit_jump = sieve_binary_emit_offset(sbin, 0);
+		/* No, generate jump to end of if-elsif-else structure (resolved later) 
+		 * This of course is not necessary if the {} block contains a command 
+		 * like stop at top level that unconditionally exits the block already
+		 * anyway. 
+		 */
+		if ( !sieve_command_block_exits_unconditionally(ctx) ) {
+			sieve_operation_emit_code(sbin, SIEVE_OPCODE_JMP);
+			ctx_data->exit_jump = sieve_binary_emit_offset(sbin, 0);
+			ctx_data->jump_generated = TRUE;
+		}
 	} else {
 		/* Yes, Resolve previous exit jumps to this point */
 		cmd_if_resolve_exit_jumps(sbin, ctx_data);

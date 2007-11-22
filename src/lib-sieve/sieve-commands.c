@@ -138,6 +138,9 @@ static const struct sieve_command tst_true = {
 static bool cmd_stop_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx ATTR_UNUSED);
+static bool cmd_stop_validate
+	(struct sieve_validator *validator, struct sieve_command_context *ctx);
+	
 static bool cmd_keep_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx ATTR_UNUSED);
@@ -149,7 +152,8 @@ static const struct sieve_command cmd_stop = {
 	"stop", 
 	SCT_COMMAND, 
 	0, 0, FALSE, FALSE,
-	NULL, NULL, NULL, 
+	NULL, NULL,  
+	cmd_stop_validate, 
 	cmd_stop_generate, 
 	NULL 
 };
@@ -193,10 +197,22 @@ const unsigned int sieve_core_commands_count = N_ELEMENTS(sieve_core_commands);
 	
 /* Command context */
 
-struct sieve_command_context *sieve_command_prev_context	
+inline struct sieve_command_context *sieve_command_prev_context	
 	(struct sieve_command_context *context) 
 {
 	struct sieve_ast_node *node = sieve_ast_node_prev(context->ast_node);
+	
+	if ( node != NULL ) {
+		return node->context;
+	}
+	
+	return NULL;
+}
+
+inline struct sieve_command_context *sieve_command_parent_context	
+	(struct sieve_command_context *context) 
+{
+	struct sieve_ast_node *node = sieve_ast_node_parent(context->ast_node);
 	
 	if ( node != NULL ) {
 		return node->context;
@@ -215,6 +231,8 @@ struct sieve_command_context *sieve_command_context_create
 	cmd->ast_node = cmd_node;	
 	cmd->command = command;
 	
+	cmd->block_exit_command = NULL;
+	
 	return cmd;
 }
 
@@ -229,7 +247,32 @@ const char *sieve_command_type_name(const struct sieve_command *command) {
 	return "??COMMAND-TYPE??";
 }
 
+inline void sieve_command_exit_block_unconditionally
+	(struct sieve_command_context *cmd)
+{
+	struct sieve_command_context *parent = sieve_command_parent_context(cmd);
+
+	/* Only the first unconditional exit is of importance */
+	if ( parent != NULL && parent->block_exit_command == NULL ) 
+		parent->block_exit_command = cmd;
+}
+
+inline bool sieve_command_block_exits_unconditionally
+	(struct sieve_command_context *cmd)
+{
+	return ( cmd->block_exit_command != NULL );
+}
+
 /* Code generation for trivial commands and tests */
+
+static bool cmd_stop_validate
+	(struct sieve_validator *validator ATTR_UNUSED, 
+		struct sieve_command_context *ctx)
+{
+	sieve_command_exit_block_unconditionally(ctx);
+	
+	return TRUE;
+}
 
 static bool cmd_stop_generate
 	(struct sieve_generator *generator, 

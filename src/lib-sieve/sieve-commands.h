@@ -70,8 +70,11 @@ struct sieve_command_context {
 	/* The ast node of this command */
 	struct sieve_ast_node *ast_node;
 			
-	/* First positional argument */
+	/* First positional argument, found during argument validation */
 	struct sieve_ast_argument *first_positional;
+
+	/* The child ast node that unconditionally exits this command's block */
+	struct sieve_command_context *block_exit_command;
 
 	/* Command-specific context data*/
 	void *data;
@@ -95,7 +98,14 @@ const char *sieve_command_type_name(const struct sieve_command *command);
 #define sieve_command_is_first(context) \
 	( sieve_ast_node_prev((context)->ast_node) == NULL )	
 
-struct sieve_command_context *sieve_command_prev_context	
+inline struct sieve_command_context *sieve_command_prev_context	
 	(struct sieve_command_context *context); 
+inline struct sieve_command_context *sieve_command_parent_context	
+	(struct sieve_command_context *context);
+	
+inline void sieve_command_exit_block_unconditionally
+	(struct sieve_command_context *cmd);
+inline bool sieve_command_block_exits_unconditionally
+	(struct sieve_command_context *cmd);
 
 #endif /* __SIEVE_COMMANDS_H */

@@ -57,9 +57,11 @@ inline void sieve_generator_register_extension
 bool sieve_generate_arguments(struct sieve_generator *generator, 
 	struct sieve_command_context *cmd, struct sieve_ast_argument **arg);
 
-bool sieve_generate_block(struct sieve_generator *generator, struct sieve_ast_node *block);
-bool sieve_generate_test(struct sieve_generator *generator, struct sieve_ast_node *tst_node, 
-	struct sieve_jumplist *jlist, bool jump_true);
+bool sieve_generate_block
+	(struct sieve_generator *generator, struct sieve_ast_node *block);
+bool sieve_generate_test
+	(struct sieve_generator *generator, struct sieve_ast_node *tst_node, 
+		struct sieve_jumplist *jlist, bool jump_true);
 struct sieve_binary *sieve_generator_run(struct sieve_generator *genarator);
 
 #endif /* __SIEVE_GENERATOR_H */
