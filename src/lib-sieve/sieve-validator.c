@@ -655,8 +655,9 @@ static bool sieve_validate_command
 		
 				/* Check syntax */
 				if ( 
-					!sieve_validate_command_arguments
-						(validator, ctx, command->positional_arguments) ||
+					( command->positional_arguments >= 0 && 
+						!sieve_validate_command_arguments
+							(validator, ctx, command->positional_arguments) ) ||
  					!sieve_validate_command_subtests
  						(validator, ctx, command->subtests) || 
  					(ast_type == SAT_COMMAND && !sieve_validate_command_block

@@ -24,6 +24,12 @@
 static bool ext_imapflags_load(int ext_id);
 static bool ext_imapflags_validator_load(struct sieve_validator *validator);
 
+/* Commands */
+
+extern const struct sieve_command cmd_setflag;
+extern const struct sieve_command cmd_addflag;
+extern const struct sieve_command cmd_removeflag;
+
 /* Extension definitions */
 
 int ext_my_id;
@@ -48,10 +54,12 @@ static bool ext_imapflags_load(int ext_id)
 /* Load extension into validator */
 
 static bool ext_imapflags_validator_load
-	(struct sieve_validator *validator ATTR_UNUSED)
+	(struct sieve_validator *validator)
 {
 	/* Register new command */
-	//sieve_validator_register_command(validator, &imapflags_command);
+	sieve_validator_register_command(validator, &cmd_setflag);
+	sieve_validator_register_command(validator, &cmd_addflag);
+	sieve_validator_register_command(validator, &cmd_removeflag);
 
 	return TRUE;
 }
