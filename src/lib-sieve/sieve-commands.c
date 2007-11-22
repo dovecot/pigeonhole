@@ -247,6 +247,11 @@ const char *sieve_command_type_name(const struct sieve_command *command) {
 	return "??COMMAND-TYPE??";
 }
 
+/* Use this function with caution. The command commits to exiting the block.
+ * When it for some reason does not, the interpretation will break later on, 
+ * because exiting jumps are not generated when they would otherwise be 
+ * necessary.
+ */
 inline void sieve_command_exit_block_unconditionally
 	(struct sieve_command_context *cmd)
 {
