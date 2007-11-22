@@ -9,21 +9,18 @@
 /* Forward declarations */
 
 static bool cmd_redirect_opcode_dump
-	(struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
+	(const struct sieve_opcode *opcode, 
+		struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
 		sieve_size_t *address);
 static bool cmd_redirect_opcode_execute
-	(struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
+	(const struct sieve_opcode *opcode, 
+		struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
 		sieve_size_t *address);
 
 static bool cmd_redirect_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_redirect_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
-
-/* Redirect opcode */
-
-const struct sieve_opcode cmd_redirect_opcode = 
-	{ cmd_redirect_opcode_dump, cmd_redirect_opcode_execute };
 
 /* Redirect command 
  * 
@@ -39,6 +36,16 @@ const struct sieve_command cmd_redirect = {
 	cmd_redirect_validate, 
 	cmd_redirect_generate, 
 	NULL 
+};
+
+/* Redirect opcode */
+
+const struct sieve_opcode cmd_redirect_opcode = { 
+	"REDIRECT",
+	SIEVE_OPCODE_REDIRECT,
+	NULL, 0,
+	cmd_redirect_opcode_dump, 
+	cmd_redirect_opcode_execute 
 };
 
 /* Validation */
@@ -65,7 +72,7 @@ static bool cmd_redirect_validate
 static bool cmd_redirect_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_REDIRECT);
+	sieve_generator_emit_opcode(generator, &cmd_redirect_opcode);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -79,7 +86,8 @@ static bool cmd_redirect_generate
  */
  
 static bool cmd_redirect_opcode_dump
-	(struct sieve_interpreter *interp ATTR_UNUSED, 
+(const struct sieve_opcode *opcode ATTR_UNUSED,
+	struct sieve_interpreter *interp ATTR_UNUSED, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {
 	printf("REDIRECT\n");
@@ -93,7 +101,8 @@ static bool cmd_redirect_opcode_dump
  */
 
 static bool cmd_redirect_opcode_execute
-	(struct sieve_interpreter *interp ATTR_UNUSED, 
+(const struct sieve_opcode *opcode ATTR_UNUSED,
+	struct sieve_interpreter *interp ATTR_UNUSED, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {
 	string_t *redirect;

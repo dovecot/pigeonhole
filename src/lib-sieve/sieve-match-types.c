@@ -44,7 +44,7 @@ const struct sieve_extension match_type_extension = {
 	mtch_validator_load,
 	NULL,
 	mtch_interpreter_load,
-	NULL,
+	SIEVE_EXT_DEFINE_NO_OPCODES,
 	NULL
 };
 	
@@ -209,7 +209,7 @@ static bool mtch_interpreter_load(struct sieve_interpreter *interpreter)
 }
 
 /*
- * Address-part operand
+ * Match-type operand
  */
  
 struct sieve_operand_class match_type_class = 
@@ -218,7 +218,7 @@ struct sieve_operand match_type_operand =
 	{ "match-type", &match_type_class, FALSE };
 
 /* 
- * Address-part tag 
+ * Match-type tag 
  */
   
 static bool tag_match_type_is_instance_of

@@ -45,7 +45,7 @@ const struct sieve_extension address_part_extension = {
 	addrp_validator_load,
 	NULL,
 	addrp_interpreter_load,
-	NULL,
+	SIEVE_EXT_DEFINE_NO_OPCODES,
 	NULL
 };
 	

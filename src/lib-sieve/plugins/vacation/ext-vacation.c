@@ -26,11 +26,11 @@ static bool ext_vacation_load(int ext_id);
 static bool ext_vacation_validator_load(struct sieve_validator *validator);
 
 static bool ext_vacation_opcode_dump
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
-		sieve_size_t *address);
+	(const struct sieve_opcode *opcode,	struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
 static bool ext_vacation_opcode_execute
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
-		sieve_size_t *address);
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
 
 static bool cmd_vacation_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
@@ -43,10 +43,7 @@ static bool cmd_vacation_generate
 
 int ext_my_id;
 
-const struct sieve_opcode vacation_opcode = { 
-	ext_vacation_opcode_dump, 
-	ext_vacation_opcode_execute
-};
+const struct sieve_opcode vacation_opcode;
 
 const struct sieve_extension vacation_extension = { 
 	"vacation", 
@@ -54,7 +51,7 @@ const struct sieve_extension vacation_extension = {
 	ext_vacation_validator_load, 
 	NULL, 
 	NULL, 
-	&vacation_opcode, 
+	SIEVE_EXT_DEFINE_OPCODE(vacation_opcode),
 	NULL
 };
 
@@ -81,6 +78,16 @@ static const struct sieve_command vacation_command = {
 	cmd_vacation_validate, 
 	cmd_vacation_generate, 
 	NULL 
+};
+
+/* Vacation opcode */
+const struct sieve_opcode vacation_opcode = { 
+	"VACATION",
+	SIEVE_OPCODE_CUSTOM,
+	&vacation_extension,
+	0,
+	ext_vacation_opcode_dump, 
+	ext_vacation_opcode_execute
 };
 
 /* Tag validation */
@@ -269,7 +276,7 @@ static bool ext_vacation_validator_load(struct sieve_validator *validator)
 static bool cmd_vacation_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode_ext(generator, ext_my_id);
+	sieve_generator_emit_opcode_ext(generator, &vacation_opcode, ext_my_id);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -282,7 +289,8 @@ static bool cmd_vacation_generate
  * Code dump
  */
  
-static bool ext_vacation_opcode_dump(
+static bool ext_vacation_opcode_dump
+(const struct sieve_opcode *opcode ATTR_UNUSED,
 	struct sieve_interpreter *interp ATTR_UNUSED, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {	
@@ -323,7 +331,8 @@ static bool ext_vacation_opcode_dump(
  * Code execution
  */
  
-static bool ext_vacation_opcode_execute(
+static bool ext_vacation_opcode_execute
+(const struct sieve_opcode *opcode ATTR_UNUSED,
 	struct sieve_interpreter *interp ATTR_UNUSED, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {	

@@ -27,18 +27,17 @@ static bool cmd_reject_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx); 
 
 static bool ext_reject_opcode_dump
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
-		sieve_size_t *address);
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
 static bool ext_reject_opcode_execute
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
-		sieve_size_t *address);
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
 
 /* Extension definitions */
 
 static int ext_my_id;
 
-struct sieve_opcode reject_opcode = 
-	{ ext_reject_opcode_dump, ext_reject_opcode_execute };
+struct sieve_opcode reject_opcode;
 	
 struct sieve_extension reject_extension = { 
 	"reject", 
@@ -46,7 +45,7 @@ struct sieve_extension reject_extension = {
 	ext_reject_validator_load, 
 	NULL, 
 	NULL, 
-	&reject_opcode, 
+	SIEVE_EXT_DEFINE_OPCODE(reject_opcode), 
 	NULL 
 };
 
@@ -69,6 +68,17 @@ static const struct sieve_command reject_command = {
 	cmd_reject_validate, 
 	cmd_reject_generate, 
 	NULL 
+};
+
+/* Reject opcode */
+
+struct sieve_opcode reject_opcode = { 
+	"REJECT",
+	SIEVE_OPCODE_CUSTOM,
+	&reject_extension, 
+	0,
+	ext_reject_opcode_dump, 
+	ext_reject_opcode_execute 
 };
 
 /* 
@@ -104,7 +114,7 @@ static bool ext_reject_validator_load(struct sieve_validator *validator)
 static bool cmd_reject_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode_ext(generator, ext_my_id);
+	sieve_generator_emit_opcode_ext(generator, &reject_opcode, ext_my_id);
 
 	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -118,7 +128,8 @@ static bool cmd_reject_generate
  */
  
 static bool ext_reject_opcode_dump
-	(struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
+	(const struct sieve_opcode *opcode ATTR_UNUSED,
+		struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
 		sieve_size_t *address)
 {
 	printf("REJECT\n");
@@ -132,7 +143,8 @@ static bool ext_reject_opcode_dump
  */
 
 static bool ext_reject_opcode_execute
-	(struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
+	(const struct sieve_opcode *opcode ATTR_UNUSED,
+		struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
 		sieve_size_t *address)
 {
 	string_t *reason;

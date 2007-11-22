@@ -60,7 +60,7 @@ const struct sieve_extension comparator_extension = {
 	cmp_validator_load,
 	NULL,
 	cmp_interpreter_load,
-	NULL,
+	SIEVE_EXT_DEFINE_NO_OPCODES,
 	NULL
 };
 	

@@ -7,22 +7,6 @@
 #include "sieve-interpreter.h"
 #include "sieve-code.h"
 
-/* Opcodes */
-
-static bool tst_size_over_opcode_dump
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool tst_size_under_opcode_dump
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool tst_size_over_opcode_execute
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool tst_size_under_opcode_execute
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-
-const struct sieve_opcode tst_size_over_opcode = 
-	{ tst_size_over_opcode_dump, tst_size_over_opcode_execute };
-const struct sieve_opcode tst_size_under_opcode = 
-	{ tst_size_under_opcode_dump, tst_size_under_opcode_execute };
-
 /* Size test 
  *
  * Syntax:
@@ -47,6 +31,31 @@ const struct sieve_command tst_size = {
 	tst_size_validate, 
 	tst_size_generate, 
 	NULL 
+};
+
+/* Opcodes */
+
+static bool tst_size_opcode_dump
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
+static bool tst_size_opcode_execute
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
+
+const struct sieve_opcode tst_size_over_opcode = { 
+	"SIZE-OVER",
+	SIEVE_OPCODE_SIZE_OVER,
+	NULL, 0,
+	tst_size_opcode_dump, 
+	tst_size_opcode_execute 
+};
+
+const struct sieve_opcode tst_size_under_opcode = {
+	"SIEVE-UNDER",
+	SIEVE_OPCODE_SIZE_UNDER,
+	NULL, 0, 
+	tst_size_opcode_dump, 
+	tst_size_opcode_execute 
 };
 
 /* Context structures */
@@ -158,9 +167,9 @@ bool tst_size_generate
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) ctx->data;
 
 	if ( ctx_data->type == SIZE_OVER ) 
-		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_SIZEOVER);
+		sieve_generator_emit_opcode(generator, &tst_size_over_opcode);
 	else
-		sieve_generator_emit_opcode(generator, SIEVE_OPCODE_SIZEUNDER);
+		sieve_generator_emit_opcode(generator, &tst_size_under_opcode);
 
  	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -171,24 +180,15 @@ bool tst_size_generate
 
 /* Code dump */
 
-static bool tst_size_over_opcode_dump
-	(struct sieve_interpreter *interp ATTR_UNUSED, 
+static bool tst_size_opcode_dump
+(const struct sieve_opcode *opcode,
+	struct sieve_interpreter *interp ATTR_UNUSED, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {
-    printf("SIZEOVER\n");
+    printf("%s\n", opcode->mnemonic);
     
 	return 
 		sieve_opr_number_dump(sbin, address);
-}
-
-static bool tst_size_under_opcode_dump
-	(struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
-{ 
-    printf("SIZEUNDER\n");
-
-	return
-    	sieve_opr_number_dump(sbin, address);
 }
 
 /* Code execution */
@@ -206,12 +206,14 @@ static bool tst_size_get(struct sieve_interpreter *interp, sieve_size_t *size)
 	return TRUE;
 }
 
-static bool tst_size_over_opcode_execute
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address)
+static bool tst_size_opcode_execute
+(const struct sieve_opcode *opcode,
+	struct sieve_interpreter *interp, struct sieve_binary *sbin, 
+	sieve_size_t *address)
 {
 	sieve_size_t mail_size, limit;
 	
-	printf("SIZEOVER\n");
+	printf("%s\n", opcode->mnemonic);
 	
 	if ( !sieve_opr_number_read(sbin, address, &limit) ) 
 		return FALSE;	
@@ -219,25 +221,11 @@ static bool tst_size_over_opcode_execute
 	if ( !tst_size_get(interp, &mail_size) )
 		return FALSE;
 	
-	sieve_interpreter_set_test_result(interp, (mail_size > limit));
-	
+	if ( opcode == &tst_size_over_opcode )
+		sieve_interpreter_set_test_result(interp, (mail_size > limit));
+	else
+		sieve_interpreter_set_test_result(interp, (mail_size < limit));
+
 	return TRUE;
 }
 
-static bool tst_size_under_opcode_execute
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address)
-{ 
-	sieve_size_t mail_size, limit;
-	
-	printf("SIZEUNDER\n");
-	
-	if ( !sieve_opr_number_read(sbin, address, &limit) ) 
-		return FALSE;	
-	
-	if ( !tst_size_get(interp, &mail_size) )
-		return FALSE;
-	
-	sieve_interpreter_set_test_result(interp, (mail_size < limit));
-	
-	return TRUE;
-}

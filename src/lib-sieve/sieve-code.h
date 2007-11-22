@@ -102,12 +102,7 @@ struct sieve_coded_stringlist *sieve_opr_stringlist_read
 
 /* Opcode: identifies what's to be done */
 
-struct sieve_opcode {
-	bool (*dump)(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-	bool (*execute)(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-};
-
-enum sieve_core_operation {
+enum sieve_operation_code {
 	SIEVE_OPCODE_JMP,
 	SIEVE_OPCODE_JMPTRUE,
 	SIEVE_OPCODE_JMPFALSE,
@@ -120,21 +115,45 @@ enum sieve_core_operation {
 	SIEVE_OPCODE_ADDRESS,
 	SIEVE_OPCODE_HEADER, 
 	SIEVE_OPCODE_EXISTS, 
-	SIEVE_OPCODE_SIZEOVER,
-	SIEVE_OPCODE_SIZEUNDER,
+	SIEVE_OPCODE_SIZE_OVER,
+	SIEVE_OPCODE_SIZE_UNDER,
 	
 	SIEVE_OPCODE_CUSTOM
+};
+
+struct sieve_opcode {
+	const char *mnemonic;
+	
+	enum sieve_operation_code code;
+	
+	const struct sieve_extension *extension;
+	unsigned int ext_code;
+	
+	bool (*dump)
+		(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+			struct sieve_binary *sbin, sieve_size_t *address);
+	bool (*execute)
+		(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+			struct sieve_binary *sbin, sieve_size_t *address);
 };
 
 extern const struct sieve_opcode *sieve_opcodes[];
 extern const unsigned int sieve_opcode_count;
 
+extern const struct sieve_opcode sieve_jmp_opcode;
+extern const struct sieve_opcode sieve_jmptrue_opcode;
+extern const struct sieve_opcode sieve_jmpfalse_opcode; 
+
 inline sieve_size_t sieve_operation_emit_code
-	(struct sieve_binary *sbin, int opcode);
+	(struct sieve_binary *sbin, const struct sieve_opcode *op);
 inline sieve_size_t sieve_operation_emit_code_ext
-	(struct sieve_binary *sbin, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_opcode *op, int ext_id);	
 const struct sieve_opcode *sieve_operation_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
+
+bool sieve_opcode_trivial_dump
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
 
 /* Core operands */
 

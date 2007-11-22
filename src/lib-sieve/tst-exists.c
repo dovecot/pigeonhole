@@ -6,16 +6,6 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 
-/* Opcodes */
-
-static bool tst_exists_opcode_dump
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-static bool tst_exists_opcode_execute
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address);
-
-const struct sieve_opcode tst_exists_opcode = 
-	{ tst_exists_opcode_dump, tst_exists_opcode_execute };
-
 /* Exists test
  *  
  * Syntax:
@@ -36,6 +26,23 @@ const struct sieve_command tst_exists = {
 	tst_exists_validate, 
 	tst_exists_generate, 
 	NULL 
+};
+
+/* Opcodes */
+
+static bool tst_exists_opcode_dump
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
+static bool tst_exists_opcode_execute
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
+
+const struct sieve_opcode tst_exists_opcode = { 
+	"EXISTS",
+	SIEVE_OPCODE_EXISTS,
+	NULL, 0, 
+	tst_exists_opcode_dump, 
+	tst_exists_opcode_execute 
 };
 
 /* Test validation */
@@ -61,7 +68,7 @@ static bool tst_exists_validate
 static bool tst_exists_generate
 	(struct sieve_generator *generator, struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode(generator, SIEVE_OPCODE_EXISTS);
+	sieve_generator_emit_opcode(generator, &tst_exists_opcode);
 
  	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -73,7 +80,8 @@ static bool tst_exists_generate
 /* Code dump */
 
 static bool tst_exists_opcode_dump
-	(struct sieve_interpreter *interp ATTR_UNUSED, 
+(const struct sieve_opcode *opcode ATTR_UNUSED, 
+	struct sieve_interpreter *interp ATTR_UNUSED, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {
     printf("EXISTS\n");
@@ -85,7 +93,8 @@ static bool tst_exists_opcode_dump
 /* Code execution */
 
 static bool tst_exists_opcode_execute
-	(struct sieve_interpreter *interp, struct sieve_binary *sbin, sieve_size_t *address)
+(const struct sieve_opcode *opcode ATTR_UNUSED, struct sieve_interpreter *interp, 
+	struct sieve_binary *sbin, sieve_size_t *address)
 {
 	struct sieve_message_data *msgdata = sieve_interpreter_get_msgdata(interp);
 	struct sieve_coded_stringlist *hdr_list;

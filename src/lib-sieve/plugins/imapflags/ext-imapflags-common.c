@@ -37,7 +37,7 @@ bool ext_imapflags_command_validate
 	arg2 = sieve_ast_argument_next(arg);
 	
 	if ( arg2 != NULL ) {
-		/* First check syntax sanity */
+		/* First, check syntax sanity */
 				
 		if ( sieve_ast_argument_type(arg) != SAAT_STRING ) 
 		{
@@ -59,7 +59,7 @@ bool ext_imapflags_command_validate
 			return FALSE; 
 		}
 		
-		/* Then check whether the second argument is permitted */
+		/* Then, check whether the second argument is permitted */
 		
 		/* IF !VARIABLE EXTENSION LOADED */
 		{

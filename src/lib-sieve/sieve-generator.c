@@ -86,15 +86,15 @@ inline struct sieve_binary *sieve_generator_get_binary
 }
 
 inline sieve_size_t sieve_generator_emit_opcode
-	(struct sieve_generator *gentr, int opcode)
+	(struct sieve_generator *gentr, const struct sieve_opcode *opcode)
 {
 	return sieve_operation_emit_code(gentr->binary, opcode);
 }
 
 inline sieve_size_t sieve_generator_emit_opcode_ext
-	(struct sieve_generator *gentr, int ext_id)
+	(struct sieve_generator *gentr, const struct sieve_opcode *opcode, int ext_id)
 {	
-	return sieve_operation_emit_code_ext(gentr->binary, ext_id);
+	return sieve_operation_emit_code_ext(gentr->binary, opcode, ext_id);
 }
 
 /* Generator functions */
@@ -172,9 +172,9 @@ bool sieve_generate_test
 		if ( tst_node->context->command->generate(generator, tst_node->context) ) {
 			
 			if ( jump_true ) 
-				sieve_operation_emit_code(generator->binary, SIEVE_OPCODE_JMPTRUE);
+				sieve_operation_emit_code(generator->binary, &sieve_jmptrue_opcode);
 			else
-				sieve_operation_emit_code(generator->binary, SIEVE_OPCODE_JMPFALSE);
+				sieve_operation_emit_code(generator->binary, &sieve_jmpfalse_opcode);
 			sieve_jumplist_add(jlist, sieve_binary_emit_offset(generator->binary, 0));
 						
 			return TRUE;

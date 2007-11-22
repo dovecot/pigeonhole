@@ -13,9 +13,26 @@ struct sieve_extension {
 	bool (*generator_load)(struct sieve_generator *generator);
 	bool (*interpreter_load)(struct sieve_interpreter *interpreter);
 
-	const struct sieve_opcode *opcode;
+	/* Extension can introduce a single or multiple opcodes */
+	union {
+		const struct sieve_opcode **list;
+		const struct sieve_opcode *single;
+	} opcodes;
+	unsigned int opcodes_count;
+
+	/* Extension can introduce a single or multiple operands */
 	const struct sieve_operand *operand;
 };
+
+/* FIXME: This is not ANSI-compliant C, so it might break on some targets.
+ * We'll see, otherwise do an ugly typecast on first union element. 
+ */
+#define SIEVE_EXT_DEFINE_NO_OPCODES \
+	{ list: NULL }, 0
+#define SIEVE_EXT_DEFINE_OPCODE(OP) \
+	{ single: &OP }, 1
+#define SIEVE_EXT_DEFINE_OPCODES(OPS) \
+	{ list: OPS }, N_ELEMENTS(OPS)
 
 extern const struct sieve_extension *sieve_preloaded_extensions[];
 extern const unsigned int sieve_preloaded_extensions_count;

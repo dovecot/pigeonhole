@@ -58,7 +58,7 @@ const struct sieve_extension regex_extension = {
 	ext_regex_validator_load,
 	NULL, 
 	ext_regex_interpreter_load,  
-	NULL, 
+	SIEVE_EXT_DEFINE_NO_OPCODES, 
 	NULL
 };
 

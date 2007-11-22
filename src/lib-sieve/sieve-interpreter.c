@@ -186,7 +186,7 @@ static bool sieve_interpreter_dump_operation
 		printf("%08x: ", interp->pc-1);
 	
 		if ( opcode->dump != NULL )
-			return opcode->dump(interp, interp->binary, &(interp->pc));
+			return opcode->dump(opcode, interp, interp->binary, &(interp->pc));
 		else
 			printf("<< UNSPECIFIED OPERATION >>\n");
 			
@@ -222,7 +222,7 @@ bool sieve_interpreter_execute_operation
 
 	if ( opcode != NULL ) {
 		if ( opcode->execute != NULL )
-			return opcode->execute(interp, interp->binary, &(interp->pc));
+			return opcode->execute(opcode, interp, interp->binary, &(interp->pc));
 		else
 			printf("\n");
 			

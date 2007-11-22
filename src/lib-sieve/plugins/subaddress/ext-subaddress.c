@@ -44,7 +44,7 @@ const struct sieve_extension subaddress_extension = {
 	ext_subaddress_validator_load,
 	NULL, 
 	ext_subaddress_interpreter_load,  
-	NULL, 
+	SIEVE_EXT_DEFINE_NO_OPCODES, 
 	NULL
 };
 

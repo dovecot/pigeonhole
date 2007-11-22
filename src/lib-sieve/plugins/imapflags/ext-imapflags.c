@@ -19,6 +19,8 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 
+#include "ext-imapflags-common.h"
+
 /* Forward declarations */
 
 static bool ext_imapflags_load(int ext_id);
@@ -32,21 +34,27 @@ extern const struct sieve_command cmd_removeflag;
 
 /* Extension definitions */
 
-int ext_my_id;
+int ext_imapflags_my_id;
 
+extern const struct sieve_opcode setflag_opcode;
+extern const struct sieve_opcode addflag_opcode;
+extern const struct sieve_opcode removeflag_opcode;
+
+const struct sieve_opcode *imapflags_opcodes[] = 
+	{ &setflag_opcode, &addflag_opcode };
 const struct sieve_extension imapflags_extension = { 
 	"imapflags", 
 	ext_imapflags_load,
 	ext_imapflags_validator_load, 
 	NULL, 
 	NULL, 
-	NULL, 
+	SIEVE_EXT_DEFINE_OPCODES(imapflags_opcodes), 
 	NULL
 };
 
 static bool ext_imapflags_load(int ext_id)
 {
-	ext_my_id = ext_id;
+	ext_imapflags_my_id = ext_id;
 
 	return TRUE;
 }

@@ -268,6 +268,77 @@ inline bool sieve_command_block_exits_unconditionally
 	return ( cmd->block_exit_command != NULL );
 }
 
+/* Opcodes */
+
+static bool opc_stop_execute
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
+static bool opc_keep_execute
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
+static bool opc_discard_execute
+	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
+		struct sieve_binary *sbin, sieve_size_t *address);
+
+const struct sieve_opcode cmd_stop_opcode = { 
+	"STOP",
+	SIEVE_OPCODE_STOP,
+	NULL,
+	0,
+	sieve_opcode_trivial_dump, 
+	opc_stop_execute 
+};
+
+const struct sieve_opcode cmd_keep_opcode = { 
+	"KEEP",
+	SIEVE_OPCODE_KEEP,
+	NULL,
+	0,
+	sieve_opcode_trivial_dump, 
+	opc_keep_execute 
+};
+
+const struct sieve_opcode cmd_discard_opcode = { 
+	"DISCARD",
+	SIEVE_OPCODE_DISCARD,
+	NULL,
+	0,
+	sieve_opcode_trivial_dump, 
+	opc_discard_execute 
+};
+
+static bool opc_stop_execute
+(const struct sieve_opcode *opcode ATTR_UNUSED, 
+	struct sieve_interpreter *interp, struct sieve_binary *sbin ATTR_UNUSED, 
+	sieve_size_t *address ATTR_UNUSED)
+{	
+	printf(">> STOP\n");
+	
+	sieve_interpreter_stop(interp);
+
+	return TRUE;
+}
+
+static bool opc_keep_execute
+(const struct sieve_opcode *opcode ATTR_UNUSED,
+	struct sieve_interpreter *interp ATTR_UNUSED, 	
+	struct sieve_binary *sbin ATTR_UNUSED, sieve_size_t *address ATTR_UNUSED)
+{	
+	printf(">> KEEP\n");
+	
+	return TRUE;
+}
+
+static bool opc_discard_execute
+(const struct sieve_opcode *opcode ATTR_UNUSED,
+	struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_binary *sbin ATTR_UNUSED, sieve_size_t *address ATTR_UNUSED)
+{	
+	printf(">> DISCARD\n");
+	
+	return TRUE;
+}
+
 /* Code generation for trivial commands and tests */
 
 static bool cmd_stop_validate
@@ -284,7 +355,7 @@ static bool cmd_stop_generate
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
 	sieve_operation_emit_code(
-		sieve_generator_get_binary(generator), SIEVE_OPCODE_STOP);
+		sieve_generator_get_binary(generator), &cmd_stop_opcode);
 	return TRUE;
 }
 
@@ -293,7 +364,7 @@ static bool cmd_keep_generate
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
 	sieve_operation_emit_code(
-        sieve_generator_get_binary(generator), SIEVE_OPCODE_KEEP);
+        sieve_generator_get_binary(generator), &cmd_keep_opcode);
 	return TRUE;
 }
 
@@ -302,7 +373,7 @@ static bool cmd_discard_generate
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
 	sieve_operation_emit_code(
-        sieve_generator_get_binary(generator), SIEVE_OPCODE_DISCARD);
+        sieve_generator_get_binary(generator), &cmd_discard_opcode);
 	return TRUE;
 }
 
@@ -314,7 +385,7 @@ static bool tst_false_generate
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 
 	if ( !jump_true ) {
-		sieve_operation_emit_code(sbin, SIEVE_OPCODE_JMP);
+		sieve_operation_emit_code(sbin, &sieve_jmp_opcode);
 		sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
 	}
 	
@@ -329,7 +400,7 @@ static bool tst_true_generate
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 
 	if ( jump_true ) {
-		sieve_operation_emit_code(sbin, SIEVE_OPCODE_JMP);
+		sieve_operation_emit_code(sbin, &sieve_jmp_opcode);
 		sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
 	}
 	
