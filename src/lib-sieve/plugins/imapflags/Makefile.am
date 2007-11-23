@@ -10,11 +10,15 @@ AM_CPPFLAGS = \
 cmds = \
 	cmd-setflag.c \
 	cmd-addflag.c \
-	cmd-removeflag.c
+	cmd-removeflag.c 
+
+tsts = \
+	tst-hasflag.c
 
 libsieve_ext_imapflags_la_SOURCES = \
 	ext-imapflags-common.c \
 	$(cmds) \
+	$(tsts) \
 	ext-imapflags.c
 
 noinst_HEADERS = \

@@ -1,5 +1,7 @@
 require "imapflags";
 require "fileinto";
+require "relational";
+require "comparator-i;ascii-numeric";
 
 setflag "\\Seen";
 addflag "$DSNRequired";
@@ -17,4 +19,8 @@ if header :contains "Disposition-Notification-To" "mel@example.com" {
 if header :contains "from" "imap@cac.washington.example.edu" {
 	removeflag "$MDNRequired";
 	fileinto "INBOX.imap-list";
+}
+
+if hasflag :count "ge" :comparator "i;ascii-numeric" "2" {
+	fileinto "INBOX.imap-twoflags";
 }

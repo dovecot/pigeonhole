@@ -32,16 +32,22 @@ extern const struct sieve_command cmd_setflag;
 extern const struct sieve_command cmd_addflag;
 extern const struct sieve_command cmd_removeflag;
 
-/* Extension definitions */
+extern const struct sieve_command tst_hasflag;
 
-int ext_imapflags_my_id;
+/* Opcodes */
 
 extern const struct sieve_opcode setflag_opcode;
 extern const struct sieve_opcode addflag_opcode;
 extern const struct sieve_opcode removeflag_opcode;
+extern const struct sieve_opcode hasflag_opcode;
 
 const struct sieve_opcode *imapflags_opcodes[] = 
-	{ &setflag_opcode, &addflag_opcode, &removeflag_opcode };
+	{ &setflag_opcode, &addflag_opcode, &removeflag_opcode, &hasflag_opcode };
+
+/* Extension definitions */
+
+int ext_imapflags_my_id;
+
 const struct sieve_extension imapflags_extension = { 
 	"imapflags", 
 	ext_imapflags_load,
@@ -68,6 +74,7 @@ static bool ext_imapflags_validator_load
 	sieve_validator_register_command(validator, &cmd_setflag);
 	sieve_validator_register_command(validator, &cmd_addflag);
 	sieve_validator_register_command(validator, &cmd_removeflag);
+	sieve_validator_register_command(validator, &tst_hasflag);
 
 	return TRUE;
 }

@@ -7,7 +7,8 @@ extern const struct sieve_extension imapflags_extension;
 enum ext_imapflags_opcode {
 	EXT_IMAPFLAGS_OPCODE_SETFLAG,
 	EXT_IMAPFLAGS_OPCODE_ADDFLAG,
-	EXT_IMAPFLAGS_OPCODE_REMOVEFLAG
+	EXT_IMAPFLAGS_OPCODE_REMOVEFLAG,
+	EXT_IMAPFLAGS_OPCODE_HASFLAG
 };
 
 bool ext_imapflags_command_validate

@@ -92,7 +92,7 @@ static bool tst_header_validate
 	sieve_validator_argument_activate(validator, arg);
 
 	/* Validate the key argument to a specified match type */
-    sieve_match_type_validate(validator, tst, arg);
+  sieve_match_type_validate(validator, tst, arg);
 	
 	return TRUE;
 }
