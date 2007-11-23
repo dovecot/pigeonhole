@@ -271,8 +271,8 @@ static bool tag_comparator_validate
 		return FALSE;
 	}
 	
-	/* String argument not needed during code generation, so delete it from argument list */
-	*arg = sieve_ast_arguments_delete(*arg, 1);
+	/* String argument not needed during code generation, so detach it from argument list */
+	*arg = sieve_ast_arguments_detach(*arg, 1);
 
 	/* Store comparator in context */
 	tag->context = (void *) cmp;

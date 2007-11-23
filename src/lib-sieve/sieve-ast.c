@@ -42,13 +42,36 @@ static void sieve_ast_list_add( struct sieve_ast_list *list, struct sieve_ast_no
 static struct sieve_ast_arg_list *sieve_ast_arg_list_create( pool_t pool ) 
 	__LIST_CREATE(pool, struct sieve_ast_arg_list)
 	
-static void sieve_ast_arg_list_add( struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument )
+static void sieve_ast_arg_list_add
+	( struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument )
 	__LIST_ADD(list, argument)
 
-static struct sieve_ast_argument *sieve_ast_arg_list_delete
-	(const struct sieve_ast_argument *first, const unsigned int count)
+inline static void sieve_ast_arg_list_substitute
+(struct sieve_ast_arg_list *list, 
+	struct sieve_ast_argument *argument, struct sieve_ast_argument *replacement) 
 {
-	const struct sieve_ast_argument *last;
+	if ( list->head == argument )
+		list->head = replacement;
+	if ( list->tail == argument )
+		list->tail = replacement;
+		
+	if ( argument->prev != NULL )
+		argument->prev->next = replacement;
+	if ( argument->next != NULL )
+		argument->next->prev = replacement;
+	
+	replacement->prev = argument->prev;
+	replacement->next = argument->next;
+	replacement->list = argument->list;
+	
+	argument->next = NULL;
+	argument->prev = NULL;
+}
+
+static struct sieve_ast_argument *sieve_ast_arg_list_detach
+	(struct sieve_ast_argument *first, const unsigned int count)
+{
+	struct sieve_ast_argument *last, *result;
 	unsigned int left;
 	
 	i_assert(first->list != NULL);
@@ -77,9 +100,13 @@ static struct sieve_ast_argument *sieve_ast_arg_list_delete
 		
 	first->list->len -= count - left;
 	
-	/* Deleted objects are freed along with AST pool */
+	result = last->next;
+	first->prev = NULL;
+	last->next = NULL;
 	
-	return last->next;
+	/* Detached objects will eventually freed along with AST pool */
+	
+	return result;
 }
 
 /* AST Node */
@@ -109,7 +136,8 @@ static struct sieve_ast_node *sieve_ast_node_create
 	return node;
 }
 
-static void sieve_ast_node_add_command(struct sieve_ast_node *node, struct sieve_ast_node *command) 
+static void sieve_ast_node_add_command
+	(struct sieve_ast_node *node, struct sieve_ast_node *command) 
 {
 	i_assert( command->type == SAT_COMMAND && (node->type == SAT_ROOT || node->type == SAT_COMMAND) );
 	
@@ -118,7 +146,8 @@ static void sieve_ast_node_add_command(struct sieve_ast_node *node, struct sieve
 	sieve_ast_list_add(node->commands, command);
 }
 
-static void sieve_ast_node_add_test(struct sieve_ast_node *node, struct sieve_ast_node *test) 
+static void sieve_ast_node_add_test
+	(struct sieve_ast_node *node, struct sieve_ast_node *test) 
 {
 	i_assert( test->type == SAT_TEST && (node->type == SAT_TEST || node->type == SAT_COMMAND) );
 	
@@ -127,13 +156,20 @@ static void sieve_ast_node_add_test(struct sieve_ast_node *node, struct sieve_as
 	sieve_ast_list_add(node->tests, test);
 }
 
-static void sieve_ast_node_add_argument(struct sieve_ast_node *node, struct sieve_ast_argument *argument) 
+static void sieve_ast_node_add_argument
+	(struct sieve_ast_node *node, struct sieve_ast_argument *argument) 
 {
 	i_assert( node->type == SAT_TEST || node->type == SAT_COMMAND );
 	
 	if (node->arguments == NULL) node->arguments = sieve_ast_arg_list_create(node->ast->pool);
 	
 	sieve_ast_arg_list_add(node->arguments, argument);
+}
+
+static void sieve_ast_argument_substitute
+	(struct sieve_ast_argument *argument, struct sieve_ast_argument *replacement) 
+{
+	sieve_ast_arg_list_substitute(argument->list, argument, replacement);
 }
 
 /* Argument AST node */
@@ -176,8 +212,8 @@ struct sieve_ast_argument *sieve_ast_argument_string_create
 struct sieve_ast_argument *sieve_ast_argument_stringlist_create
 	(struct sieve_ast_node *node, unsigned int source_line) 
 {
-
-	struct sieve_ast_argument *argument = sieve_ast_argument_create(node->ast, source_line);
+	struct sieve_ast_argument *argument = 
+		sieve_ast_argument_create(node->ast, source_line);
 	
 	argument->type = SAAT_STRING_LIST;
 	argument->_value.strlist = NULL;
@@ -187,8 +223,22 @@ struct sieve_ast_argument *sieve_ast_argument_stringlist_create
 	return argument;
 }
 
-void sieve_ast_stringlist_add
-	(struct sieve_ast_argument *list, const string_t *str, unsigned int source_line) 
+struct sieve_ast_argument *sieve_ast_argument_stringlist_substitute
+	(struct sieve_ast_node *node, struct sieve_ast_argument *arg) 
+{
+	struct sieve_ast_argument *argument = 
+		sieve_ast_argument_create(node->ast, arg->source_line);
+	
+	argument->type = SAAT_STRING_LIST;
+	argument->_value.strlist = NULL;
+	
+	sieve_ast_argument_substitute(arg, argument);
+
+	return argument;
+}
+
+static void _sieve_ast_stringlist_add
+	(struct sieve_ast_argument *list, string_t *str, unsigned int source_line) 
 {
 	struct sieve_ast_argument *stritem;
 	
@@ -202,10 +252,27 @@ void sieve_ast_stringlist_add
 	stritem->type = SAAT_STRING;
 	
 	/* Clone string */
-	stritem->_value.str = str_new(list->ast->pool, str_len(str));
-	str_append_str(stritem->_value.str, str);
+	stritem->_value.str = str;
 
 	sieve_ast_arg_list_add(list->_value.strlist, stritem);
+}
+
+void sieve_ast_stringlist_add
+	(struct sieve_ast_argument *list, const string_t *str, unsigned int source_line) 
+{
+	string_t *copied_str = str_new(list->ast->pool, str_len(str));
+	str_append_str(copied_str, str);
+
+	_sieve_ast_stringlist_add(list, copied_str, source_line);
+}
+
+void sieve_ast_stringlist_add_strc
+	(struct sieve_ast_argument *list, const char *str, unsigned int source_line) 
+{
+	string_t *copied_str = str_new(list->ast->pool, strlen(str));
+	str_append(copied_str, str);
+	
+	_sieve_ast_stringlist_add(list, copied_str, source_line);
 }
 
 struct sieve_ast_argument *sieve_ast_argument_tag_create
@@ -237,10 +304,10 @@ struct sieve_ast_argument *sieve_ast_argument_number_create
 	return argument;
 }
 
-struct sieve_ast_argument *sieve_ast_arguments_delete
+struct sieve_ast_argument *sieve_ast_arguments_detach
 	(struct sieve_ast_argument *first, unsigned int count) 
 {	
-	return sieve_ast_arg_list_delete(first, count);
+	return sieve_ast_arg_list_detach(first, count);
 }
 
 const char *sieve_ast_argument_type_name(enum sieve_ast_argument_type arg_type) {

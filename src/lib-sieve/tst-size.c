@@ -83,7 +83,7 @@ static bool tst_size_validate_over_tag
 	ctx_data->type = SIZE_OVER;
 	
 	/* Delete this tag */
-	*arg = sieve_ast_arguments_delete(*arg, 1);
+	*arg = sieve_ast_arguments_detach(*arg, 1);
 	
 	return TRUE;
 }
@@ -102,7 +102,7 @@ static bool tst_size_validate_under_tag
 	ctx_data->type = SIZE_UNDER;
 	
 	/* Delete this tag */
-	*arg = sieve_ast_arguments_delete(*arg, 1);
+	*arg = sieve_ast_arguments_detach(*arg, 1);
 		
 	return TRUE;
 }

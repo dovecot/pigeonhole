@@ -3,12 +3,15 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-imapflags-05
- * Implementation: skeleton
+ * Implementation: commands and tests work to some extent, but
+ *   no flags are associated with messages.
  * Status: under development
  *
  */
 
-#include <stdio.h>
+#include "lib.h"
+#include "mempool.h"
+#include "str.h"
 
 #include "sieve-common.h"
 
@@ -21,10 +24,13 @@
 
 #include "ext-imapflags-common.h"
 
+
 /* Forward declarations */
 
 static bool ext_imapflags_load(int ext_id);
 static bool ext_imapflags_validator_load(struct sieve_validator *validator);
+static bool ext_imapflags_interpreter_load
+	(struct sieve_interpreter *interpreter);
 
 /* Commands */
 
@@ -49,11 +55,11 @@ const struct sieve_opcode *imapflags_opcodes[] =
 int ext_imapflags_my_id;
 
 const struct sieve_extension imapflags_extension = { 
-	"imapflags", 
+	"imap4flags", 
 	ext_imapflags_load,
 	ext_imapflags_validator_load, 
 	NULL, 
-	NULL, 
+	ext_imapflags_interpreter_load, 
 	SIEVE_EXT_DEFINE_OPCODES(imapflags_opcodes), 
 	NULL
 };
@@ -78,5 +84,26 @@ static bool ext_imapflags_validator_load
 
 	return TRUE;
 }
+
+/*
+ * Interpreter context
+ */
+
+static bool ext_imapflags_interpreter_load
+	(struct sieve_interpreter *interpreter)
+{
+	pool_t pool = sieve_interpreter_pool(interpreter);
+	
+	struct ext_imapflags_interpreter_context *ctx = 
+		p_new(pool, struct ext_imapflags_interpreter_context, 1);
+	
+	ctx->internal_flags = str_new(pool, 32);
+	
+	sieve_interpreter_extension_set_context
+		(interpreter, ext_imapflags_my_id, ctx);
+	
+	return TRUE;
+}
+
 
 

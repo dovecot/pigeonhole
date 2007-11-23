@@ -171,7 +171,7 @@ static bool mtch_relational_validate
 	}
 	
 	/* Delete argument */
-	*arg = sieve_ast_arguments_delete(*arg, 1);
+	*arg = sieve_ast_arguments_detach(*arg, 1);
 
 	/* Not used just yet */
 	ctx->ctx_data = (void *) rel_match;

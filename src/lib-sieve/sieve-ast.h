@@ -160,14 +160,17 @@ struct sieve_ast {
 /* sieve_ast_argument */
 struct sieve_ast_argument *sieve_ast_argument_string_create
 	(struct sieve_ast_node *node, const string_t *str, unsigned int source_line);
-struct sieve_ast_argument *sieve_ast_argument_stringlist_create
-	(struct sieve_ast_node *node, unsigned int source_line);
 struct sieve_ast_argument *sieve_ast_argument_tag_create
 	(struct sieve_ast_node *node, const char *tag, unsigned int source_line);
 struct sieve_ast_argument *sieve_ast_argument_number_create
 	(struct sieve_ast_node *node, int number, unsigned int source_line);
 
-struct sieve_ast_argument *sieve_ast_arguments_delete
+struct sieve_ast_argument *sieve_ast_argument_stringlist_create
+	(struct sieve_ast_node *node, unsigned int source_line);
+struct sieve_ast_argument *sieve_ast_argument_stringlist_substitute
+	(struct sieve_ast_node *node, struct sieve_ast_argument *arg);
+
+struct sieve_ast_argument *sieve_ast_arguments_detach
 	(struct sieve_ast_argument *first, unsigned int count);
 	
 const char *sieve_ast_argument_type_name(enum sieve_ast_argument_type arg_type);
@@ -176,6 +179,8 @@ const char *sieve_ast_argument_type_name(enum sieve_ast_argument_type arg_type);
 
 void sieve_ast_stringlist_add
 	(struct sieve_ast_argument *list, const string_t *str, unsigned int source_line);
+void sieve_ast_stringlist_add_strc
+	(struct sieve_ast_argument *list, const char *str, unsigned int source_line);
 
 /* sieve_ast_test */
 struct sieve_ast_node *sieve_ast_test_create
@@ -199,6 +204,7 @@ void sieve_ast_unparse(struct sieve_ast *ast);
 
 /* Generic list access macros */
 #define __LIST_FIRST(node, list) ((node)->list == NULL ? NULL : (node)->list->head)
+#define __LIST_LAST(node, list) ((node)->list == NULL ? NULL : (node)->list->tail)
 #define __LIST_NEXT(item) ((item)->next)
 #define __LIST_PREV(item) ((item)->prev)
 #define __LIST_COUNT(node, list) ((node)->list == NULL || (node)->list->head == NULL ? 0 : (node)->list->len)
@@ -232,6 +238,7 @@ void sieve_ast_unparse(struct sieve_ast *ast);
 
 /* AST argument macros */
 #define sieve_ast_argument_first(node) __LIST_FIRST(node, arguments)
+#define sieve_ast_argument_last(node) __LIST_LAST(node, arguments)
 #define sieve_ast_argument_prev(argument) __LIST_PREV(argument)
 #define sieve_ast_argument_next(argument) __LIST_NEXT(argument)
 #define sieve_ast_argument_count(node) __LIST_COUNT(node, arguments)
@@ -246,7 +253,9 @@ void sieve_ast_unparse(struct sieve_ast *ast);
 /* AST string list macros */
 // @UNSAFE: should check whether we are actually accessing a string list
 #define sieve_ast_strlist_first(list) __LIST_FIRST(list, _value.strlist)
+#define sieve_ast_strlist_last(list) __LIST_LAST(list, _value.strlist)
 #define sieve_ast_strlist_next(str) __LIST_NEXT(str)
+#define sieve_ast_strlist_prev(str) __LIST_PREV(str)
 #define sieve_ast_strlist_str(str) sieve_ast_argument_str(str)
 #define sieve_ast_strlist_strc(str) sieve_ast_argument_strc(str)
 #define sieve_ast_strlist_count(list) __LIST_COUNT(list, _value.strlist)

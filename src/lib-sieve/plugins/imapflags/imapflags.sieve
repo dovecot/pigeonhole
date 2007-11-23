@@ -1,4 +1,4 @@
-require "imapflags";
+require "imap4flags";
 require "fileinto";
 require "relational";
 require "comparator-i;ascii-numeric";
@@ -17,7 +17,7 @@ if header :contains "Disposition-Notification-To" "mel@example.com" {
 }
 
 if header :contains "from" "imap@cac.washington.example.edu" {
-	removeflag "$MDNRequired";
+	removeflag "$MDNRequired \\Flagged \\Seen \\Deleted";
 	fileinto "INBOX.imap-list";
 }
 

@@ -100,7 +100,7 @@ static bool cmd_vacation_validate_number_tag
 	struct sieve_ast_argument *tag = *arg;
 	
 	/* Detach the tag itself */
-	*arg = sieve_ast_arguments_delete(*arg,1);
+	*arg = sieve_ast_arguments_detach(*arg,1);
 	
 	/* Check syntax:
 	 *   :days number
@@ -124,7 +124,7 @@ static bool cmd_vacation_validate_string_tag
 	struct sieve_ast_argument *tag = *arg;
 
 	/* Detach the tag itself */
-	*arg = sieve_ast_arguments_delete(*arg,1);
+	*arg = sieve_ast_arguments_detach(*arg,1);
 	
 	/* Check syntax:
 	 *   :subject string
@@ -150,7 +150,7 @@ static bool cmd_vacation_validate_stringlist_tag
 	struct sieve_ast_argument *tag = *arg;
 
 	/* Detach the tag itself */
-	*arg = sieve_ast_arguments_delete(*arg,1);
+	*arg = sieve_ast_arguments_detach(*arg,1);
 	
 	/* Check syntax:
 	 *   :addresses string-list
@@ -172,7 +172,7 @@ static bool cmd_vacation_validate_mime_tag
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	/* FIXME: currently not generated */
-	*arg = sieve_ast_arguments_delete(*arg,1);
+	*arg = sieve_ast_arguments_detach(*arg,1);
 		
 	return TRUE;
 }

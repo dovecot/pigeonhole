@@ -40,7 +40,7 @@ const struct sieve_opcode setflag_opcode = {
 	SIEVE_OPCODE_CUSTOM,
 	&imapflags_extension,
 	EXT_IMAPFLAGS_OPCODE_SETFLAG,
-	sieve_opcode_string_dump,
+	ext_imapflags_command_opcode_dump,
 	cmd_setflag_opcode_execute
 };
 
@@ -65,22 +65,32 @@ static bool cmd_setflag_generate
 
 static bool cmd_setflag_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
+	struct sieve_interpreter *interp, 
 	struct sieve_binary *sbin, sieve_size_t *address)
 {
-	string_t *redirect;
-
+	string_t *flag_item;
+	struct sieve_coded_stringlist *flag_list;
+	
+	printf("?? SETFLAG\n");
+	
 	t_push();
-
-	if ( !sieve_opr_string_read(sbin, address, &redirect) ) {
+		
+	/* Read header-list */
+	if ( (flag_list=sieve_opr_stringlist_read(sbin, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}
-
-	printf(">> SETFLAG \"%s\"\n", str_c(redirect));
+		
+	/* Iterate through all requested headers to match */
+	while ( sieve_coded_stringlist_next_item(flag_list, &flag_item) && 
+		flag_item != NULL ) {
+		ext_imapflags_set_flags(interp, flag_item);
+	}
 
 	t_pop();
+	
+	printf("  FLAGS: %s\n", ext_imapflags_get_flags(interp));
+	
 	return TRUE;
 }
-
 
