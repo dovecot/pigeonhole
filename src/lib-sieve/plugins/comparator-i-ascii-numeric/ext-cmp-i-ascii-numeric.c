@@ -3,7 +3,7 @@
  *
  * Author: Stephan Bosch
  * Specification: RFC 2244
- * Implementation: full, but fails to handle leading zeros.
+ * Implementation: full
  * Status: experimental, largely untested
  * 
  */
@@ -97,35 +97,40 @@ static bool ext_cmp_i_ascii_numeric_interpreter_load
 
 static int cmp_i_ascii_numeric_compare
 	(const struct sieve_comparator *cmp ATTR_UNUSED, 
-		const char *val1, size_t val1_size, const char *val2, size_t val2_size)
-{
-	unsigned int i = 0;
-	int result = 0;
-	const char *nval1 = (const char *) val1, *nval2 = (const char *) val2;
+		const char *val, size_t val_size, const char *key, size_t key_size)
+{	
+	const char *vend = val + val_size;
+	const char *kend = key + key_size;
+	const char *vp = val;
+	const char *kp = key;
+	
+	/* Ignore leading zeros */
 
-	while ( i < val1_size && i < val2_size ) {	
-		if ( isdigit(nval1[i]) )  {
-			if ( isdigit(nval2[i]) ) {
-				if ( result == 0 && nval1[i] != nval2[i] ) { 
-					if ( nval1[i] > nval2[i] )
-						result = 1;
-					else
-						result = 0;
-				}
-			} else {
-				return 1;
-			}
-		} else {
-			if ( isdigit(nval2[i]) ) {
-				return -1;
-			} else {
-				return result;
-			}
-		}
-				
-		i++;
+	while ( *vp == '0' && vp < vend )  
+		vp++;
+
+	while ( *kp == '0' && kp < kend )  
+		kp++;
+
+	while ( vp < vend && kp < kend ) {
+		if ( !isdigit(*vp) || !isdigit(*kp) ) 
+			break;
+
+		if ( *vp != *kp ) 
+			break;
+
+		vp++;
+		kp++;	
 	}
+
+	if ( vp == vend || !isdigit(*vp) ) {
+		if ( kp == kend || !isdigit(*kp) ) 
+			return 0;
+		else	
+			return -1;
+	} else if ( kp == kend || !isdigit(*kp) )  
+		return 1;
 		
-	return result;
+	return (*vp > *kp);
 }
 

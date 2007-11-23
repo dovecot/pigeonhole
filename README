@@ -50,7 +50,7 @@ Extensions and their implementation status:
 
   Other RFCs/drafts:
     subaddress: full
-    comparator-i;ascii-numeric: full, but fails to handle leading zeros
+    comparator-i;ascii-numeric: full
     relational: full 
     regex: full, but suboptimal
     vacation: validation, generation and interpretation; no execution
