@@ -15,8 +15,13 @@ void sieve_binary_unref(struct sieve_binary **sbin);
 void sieve_binary_load(struct sieve_binary *sbin);
 
 /* 
- * Extension handling 
+ * Extension support 
  */
+ 
+inline void sieve_binary_extension_set_context
+	(struct sieve_binary *sbin, int ext_id, void *context);
+inline const void *sieve_binary_extension_get_context
+	(struct sieve_binary *sbin, int ext_id);
 
 int sieve_binary_extension_link
 	(struct sieve_binary *sbin, int ext_id);

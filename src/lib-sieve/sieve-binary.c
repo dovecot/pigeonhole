@@ -18,6 +18,8 @@ struct sieve_binary_extension {
 struct sieve_binary {
 	pool_t pool;
 	
+	ARRAY_DEFINE(ext_contexts, void *); 
+	
 	ARRAY_DEFINE(extensions, struct sieve_binary_extension *); 
 	ARRAY_DEFINE(extension_index, struct sieve_binary_extension *); 
 	
@@ -37,6 +39,8 @@ struct sieve_binary *sieve_binary_create_new(void)
 	sbin->pool = pool;
 	
 	sbin->data = buffer_create_dynamic(pool, 256);
+	
+	p_array_init(&sbin->ext_contexts, pool, 5);
 	
 	p_array_init(&sbin->extensions, pool, 5);
 	p_array_init(&sbin->extension_index, pool, sieve_extensions_get_count());
@@ -77,6 +81,27 @@ void sieve_binary_load(struct sieve_binary *sbin)
 		if ( ext->binary_load != NULL )
 			ext->binary_load(sbin);
 	}
+}
+
+/* Extension contexts */
+
+inline void sieve_binary_extension_set_context
+	(struct sieve_binary *sbin, int ext_id, void *context)
+{
+	array_idx_set(&sbin->ext_contexts, (unsigned int) ext_id, &context);	
+}
+
+inline const void *sieve_binary_extension_get_context
+	(struct sieve_binary *sbin, int ext_id) 
+{
+	void * const *ctx;
+
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&sbin->ext_contexts) )
+		return NULL;
+	
+	ctx = array_idx(&sbin->ext_contexts, (unsigned int) ext_id);		
+
+	return *ctx;
 }
 
 /* Extension handling */

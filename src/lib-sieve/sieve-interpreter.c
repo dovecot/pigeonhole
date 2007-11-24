@@ -19,7 +19,7 @@
 struct sieve_interpreter {
 	pool_t pool;
 			
-	/* Object registries */
+	/* Runtime data for extensions */
 	ARRAY_DEFINE(ext_contexts, void *); 
 		
 	/* Execution status */
