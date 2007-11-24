@@ -231,14 +231,19 @@ bool sieve_interpreter_execute_operation
 }		
 
 bool sieve_interpreter_run
-(struct sieve_interpreter *interp, struct sieve_message_data *msgdata,
-	struct sieve_result *result) 
+(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
+	const struct sieve_mail_environment *menv, struct sieve_result **result) 
 {
+	bool is_topmost = ( *result == NULL );
 	sieve_interpreter_reset(interp);
 	
+	if ( *result == NULL )
+		*result = sieve_result_create();
+	else
+		sieve_result_ref(*result);
 	interp->runenv.msgdata = msgdata;
-	interp->runenv.result = result;		
-	sieve_result_ref(result);
+	interp->runenv.result = *result;		
+	interp->runenv.mailenv = menv;
 	
 	while ( !interp->stopped && 
 		interp->pc < sieve_binary_get_code_size(interp->runenv.sbin) ) {
@@ -246,16 +251,22 @@ bool sieve_interpreter_run
 		
 		if ( !sieve_interpreter_execute_operation(interp) ) {
 			printf("Execution aborted.\n");
-			sieve_result_unref(&result);
+			sieve_result_unref(result);
 			return FALSE;
 		}
 	}
 	
 	interp->runenv.result = NULL;
 	interp->runenv.msgdata = NULL;
+	interp->runenv.mailenv = NULL;
 	
-	sieve_result_unref(&result);
-
+	if ( is_topmost ) {
+		sieve_result_print(*result);
+		sieve_result_execute(*result, msgdata, menv);
+	}
+	
+	sieve_result_unref(result);
+	
 	return TRUE;
 }
 

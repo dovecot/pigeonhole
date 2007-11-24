@@ -11,6 +11,16 @@ struct sieve_message_data {
 	const char *return_path;
 	const char *to_address;
 	const char *auth_user;
+	const char *id;
+};
+
+struct sieve_mail_environment {
+	/* Interface for sending mail (callbacks if you like) */
+	int (*send_rejection)
+		(const struct sieve_message_data *msgdata, const char *recipient, 
+			const char *reason);
+	int (*send_forward)
+		(const struct sieve_message_data *msgdata, const char *forwardto);
 };	
 
 bool sieve_init(const char *plugins);
@@ -19,6 +29,7 @@ void sieve_deinit(void);
 struct sieve_binary *sieve_compile(int fd);
 void sieve_dump(struct sieve_binary *binary);
 bool sieve_execute
-	(struct sieve_binary *binary, struct sieve_message_data *msgdata);
+	(struct sieve_binary *binary, const struct sieve_message_data *msgdata,
+		const struct sieve_mail_environment *menv);
 
 #endif

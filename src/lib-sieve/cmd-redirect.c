@@ -1,10 +1,12 @@
 #include "lib.h"
+#include "str-sanitize.h"
 
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-result.h"
 
 /* Forward declarations */
 
@@ -44,6 +46,24 @@ const struct sieve_opcode cmd_redirect_opcode = {
 	NULL, 0,
 	cmd_redirect_opcode_dump, 
 	cmd_redirect_opcode_execute 
+};
+
+/* Redirect action */
+
+static void act_redirect_print
+	(const struct sieve_action *action, void *context);	
+static int act_redirect_execute
+	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv, 
+		void *context);
+		
+struct act_redirect_context {
+	const char *to_address;
+};
+
+const struct sieve_action act_redirect = {
+	"redirect",
+	act_redirect_print,
+	act_redirect_execute
 };
 
 /* Validation */
@@ -94,14 +114,16 @@ static bool cmd_redirect_opcode_dump
 }
 
 /*
- * Execution
+ * Intepretation
  */
 
 static bool cmd_redirect_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	struct act_redirect_context *act;
 	string_t *redirect;
+	pool_t pool;
 
 	t_push();
 
@@ -111,7 +133,45 @@ static bool cmd_redirect_opcode_execute
 	}
 
 	printf(">> REDIRECT \"%s\"\n", str_c(redirect));
-
+	
+	pool = sieve_result_pool(renv->result);
+	act = p_new(pool, struct act_redirect_context, 1);
+	act->to_address = p_strdup(pool, str_c(redirect));
+	
+	sieve_result_add_action(renv->result, &act_redirect, (void *) act);
+	
 	t_pop();
 	return TRUE;
 }
+
+/*
+ * Action
+ */
+
+static void act_redirect_print
+(const struct sieve_action *action ATTR_UNUSED, void *context)	
+{
+	struct act_redirect_context *ctx = (struct act_redirect_context *) context;
+	
+	printf("* redirect message to: %s\n", ctx->to_address);
+}
+
+static int act_redirect_execute
+(const struct sieve_action *action ATTR_UNUSED, 
+	const struct sieve_action_exec_env *aenv, void *context)
+{
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	struct act_redirect_context *ctx = (struct act_redirect_context *) context;
+	int res;
+	
+	if ((res = aenv->mailenv->
+		send_forward(msgdata, ctx->to_address)) == 0) {
+		i_info("msgid=%s: forwarded to <%s>",
+			msgdata->id == NULL ? "" : str_sanitize(msgdata->id, 80),
+				str_sanitize(ctx->to_address, 80));
+  }
+  
+	return res;
+}
+
+

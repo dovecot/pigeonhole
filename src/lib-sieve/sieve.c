@@ -144,14 +144,15 @@ void sieve_dump(struct sieve_binary *binary)
 }
 	
 bool sieve_execute
-	(struct sieve_binary *binary, struct sieve_message_data *msgdata) 
+	(struct sieve_binary *binary, const struct sieve_message_data *msgdata,
+		const struct sieve_mail_environment *menv) 
 {
-	struct sieve_result *sres = sieve_result_create();
+	struct sieve_result *sres = NULL;
 	struct sieve_interpreter *interpreter = sieve_interpreter_create(binary);			
 	bool result = TRUE;
 							
 	printf("Code Execute:\n\n");
-	if ( !sieve_interpreter_run(interpreter, msgdata, sres) ) {
+	if ( !sieve_interpreter_run(interpreter, msgdata, menv, &sres) ) {
 		result = FALSE;
 	}
 				

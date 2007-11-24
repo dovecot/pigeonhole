@@ -3,8 +3,10 @@
 
 #include "sieve-result.h"
 
+#include <stdio.h>
+
 struct sieve_result_action {
-	struct sieve_action *action;
+	const struct sieve_action *action;
 	void *context;
 
 	struct sieve_result_action *prev, *next; 
@@ -13,6 +15,7 @@ struct sieve_result_action {
 struct sieve_result {
 	pool_t pool;
 	
+	struct sieve_action_exec_env action_env;
 	struct sieve_result_action *first_action;
 	struct sieve_result_action *last_action;
 	
@@ -27,7 +30,7 @@ struct sieve_result *sieve_result_create(void)
 	pool = pool_alloconly_create("sieve_result", 4096);	
 	result = p_new(pool, struct sieve_result, 1);
 	result->pool = pool;
-	
+		
 	result->first_action = NULL;
 	result->last_action = NULL;
 	
@@ -49,9 +52,13 @@ void sieve_result_unref(struct sieve_result **result)
 	*result = NULL;
 }
 
+inline pool_t sieve_result_pool(struct sieve_result *result)
+{
+	return result->pool;
+}
 
 void sieve_result_add_action
-	(struct sieve_result *result, struct sieve_action *action, void *context)		
+(struct sieve_result *result, const struct sieve_action *action, void *context)		
 {
 	struct sieve_result_action *raction;
 	
@@ -74,15 +81,18 @@ void sieve_result_add_action
 	}	
 }	
 
-bool sieve_result_dump(struct sieve_result *result)
+bool sieve_result_print(struct sieve_result *result)
 {
 	struct sieve_result_action *rac = result->first_action;
 	
-	while ( rac != NULL ) {
-		if ( rac->action->dump != NULL ) {
-			
+	printf("\nPerformed actions:\n");
+	while ( rac != NULL ) {		
+		const struct sieve_action *act = rac->action;
+	
+		if ( act->print != NULL ) {
+			act->print(act, rac->context);	
 		} else {
-			printf("ACTION: %s (no further information)\n", rac->action->name); 
+			printf("* %s\n", act->name); 
 		}
 		rac = rac->next;	
 	}
@@ -90,17 +100,25 @@ bool sieve_result_dump(struct sieve_result *result)
 	return TRUE;
 }
 
-bool sieve_result_execute(struct sieve_result *result)
-{
-	struct sieve_result_action *raction = result->first_action;
+bool sieve_result_execute
+	(struct sieve_result *result, const struct sieve_message_data *msgdata,
+		const struct sieve_mail_environment *menv)
+{ 
+	struct sieve_result_action *rac = result->first_action;
 	
-	while ( raction != NULL ) {
-		if ( raction->action->execute != NULL ) {
-			
+	result->action_env.msgdata = msgdata;
+	result->action_env.mailenv = menv;
+	
+	printf("\n");
+	while ( rac != NULL ) {
+		const struct sieve_action *act = rac->action;
+	
+		if ( act->execute != NULL ) {
+			(void) act->execute(act, &result->action_env, rac->context);
 		} else {
-			i_warning("Action %s performs absolutely nothing.", raction->action->name);	
+			i_warning("Action %s performs absolutely nothing.", act->name);	
 		}
-		raction = raction->next;	
+		rac = rac->next;	
 	}
 	
 	return TRUE;

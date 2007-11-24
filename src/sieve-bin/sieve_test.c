@@ -118,21 +118,29 @@ static struct istream *create_raw_stream(int fd)
 }
 
 static void sieve_test
-	(struct sieve_binary *sbin, struct sieve_message_data *msgdata)
+	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
+		const struct sieve_mail_environment *mailenv)
 {
-	const char *const *headers;
-
-	printf("HEADERS\n");
-	if (mail_get_headers_utf8(msgdata->mail, "from", &headers) >= 0) {	
-		int i;
-		for ( i = 0; headers[i] != NULL; i++ ) {
-			printf("HEADER: From: %s\n", headers[i]);
-		} 
-	}
-	
-	if ( sieve_execute(sbin, msgdata) ) {
+	if ( sieve_execute(sbin, msgdata, mailenv) ) {
 		printf("Script executed to an end succesfully.\n");
 	}
+}
+
+static int sieve_send_rejection
+(const struct sieve_message_data *msgdata ATTR_UNUSED, 
+	const char *recipient, const char *reason)
+{
+	i_info("<<NOT PERFORMED>> Rejected mail to %s with reason \"%s\"\n", 
+		recipient, reason);  
+	return 0;
+}
+
+static int sieve_send_forward
+(const struct sieve_message_data *msgdata ATTR_UNUSED, 
+	const char *forwardto)
+{
+	i_info("<<NOT PERFORMED>> Forwarded mail to %s.", forwardto);
+	return 0;
 }
 
 int main(int argc, char **argv) 
@@ -153,6 +161,7 @@ int main(int argc, char **argv)
 	int fd;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
+	struct sieve_mail_environment mailenv;
 
 	lib_init();
 	ioloop = io_loop_create();
@@ -237,14 +246,22 @@ int main(int argc, char **argv)
 	/* */
 	i_stream_seek(input, 0);
 
+	/* Collect necessary message data */
+	memset(&msgdata, 0, sizeof(msgdata));
 	msgdata.mail = mail;
 	msgdata.return_path = "nico@example.com";
 	msgdata.to_address = "sirius+sieve@rename-it.nl";
 	msgdata.auth_user = "stephan";
-	sieve_test(sbin, &msgdata);
+	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
+	
+	memset(&mailenv, 0, sizeof(mailenv));
+	mailenv.send_forward = sieve_send_forward;
+	mailenv.send_rejection = sieve_send_rejection;
+	
+	/* Run the test */
+	sieve_test(sbin, &msgdata, &mailenv);
 
 	sieve_deinit();
-	//ret = deliver_save(ns, &storage, mailbox, mail, 0, NULL);
 
 	i_stream_unref(&input);
 

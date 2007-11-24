@@ -8,7 +8,8 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-index \
 	-I$(dovecot_incdir)/src/lib-storage \
 	-I$(dovecot_incdir)/src/lib-storage/index \
-	-I$(dovecot_incdir)/src/lib-storage/index/raw 
+	-I$(dovecot_incdir)/src/lib-storage/index/raw \
+	-I$(dovecot_incdir)/src/deliver
 
 sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
 sieve_test_LDFLAGS = -export-dynamic -Wl,--start-group
@@ -41,5 +42,5 @@ sievec_SOURCES = \
 	sievec.c 
 
 sieve_test_SOURCES = \
-	sieve_test.c
+	sieve_test.c 
 
