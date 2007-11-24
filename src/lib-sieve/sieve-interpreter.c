@@ -187,8 +187,10 @@ static bool sieve_interpreter_dump_operation
 	
 		if ( opcode->dump != NULL )
 			return opcode->dump(opcode, interp, interp->binary, &(interp->pc));
+		else if ( opcode->mnemonic != NULL )
+			printf("%s\n", opcode->mnemonic);
 		else
-			printf("<< UNSPECIFIED OPERATION >>\n");
+			return FALSE;
 			
 		return TRUE;
 	}		
@@ -224,7 +226,7 @@ bool sieve_interpreter_execute_operation
 		if ( opcode->execute != NULL )
 			return opcode->execute(opcode, interp, interp->binary, &(interp->pc));
 		else
-			printf("\n");
+			return FALSE;
 			
 		return TRUE;
 	}
