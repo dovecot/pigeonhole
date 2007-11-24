@@ -13,8 +13,8 @@ static bool cmd_setflag_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
 static bool cmd_setflag_opcode_execute
-	(const struct sieve_opcode *opcode,	struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode,
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 /* Setflag command 
  *
@@ -65,8 +65,7 @@ static bool cmd_setflag_generate
 
 static bool cmd_setflag_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp, 
-	struct sieve_binary *sbin, sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *flag_item;
 	struct sieve_coded_stringlist *flag_list;
@@ -76,7 +75,7 @@ static bool cmd_setflag_opcode_execute
 	t_push();
 		
 	/* Read header-list */
-	if ( (flag_list=sieve_opr_stringlist_read(sbin, address)) == NULL ) {
+	if ( (flag_list=sieve_opr_stringlist_read(renv->sbin, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}
@@ -84,12 +83,12 @@ static bool cmd_setflag_opcode_execute
 	/* Iterate through all requested headers to match */
 	while ( sieve_coded_stringlist_next_item(flag_list, &flag_item) && 
 		flag_item != NULL ) {
-		ext_imapflags_set_flags(interp, flag_item);
+		ext_imapflags_set_flags(renv->interp, flag_item);
 	}
 
 	t_pop();
 	
-	printf("  FLAGS: %s\n", ext_imapflags_get_flags_string(interp));
+	printf("  FLAGS: %s\n", ext_imapflags_get_flags_string(renv->interp));
 	
 	return TRUE;
 }

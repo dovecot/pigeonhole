@@ -36,10 +36,19 @@ struct sieve_result *sieve_result_create(void)
 	return result;
 }
 
-void sieve_result_free(struct sieve_result *result) 
+void sieve_result_ref(struct sieve_result *result) 
 {
-	pool_unref(&(result->pool));
+	pool_ref(result->pool);
 }
+
+void sieve_result_unref(struct sieve_result **result) 
+{
+	if ( result != NULL && *result != NULL ) {
+		pool_unref(&((*result)->pool));
+	}
+	*result = NULL;
+}
+
 
 void sieve_result_add_action
 	(struct sieve_result *result, struct sieve_action *action, void *context)		
@@ -65,12 +74,28 @@ void sieve_result_add_action
 	}	
 }	
 
+bool sieve_result_dump(struct sieve_result *result)
+{
+	struct sieve_result_action *rac = result->first_action;
+	
+	while ( rac != NULL ) {
+		if ( rac->action->dump != NULL ) {
+			
+		} else {
+			printf("ACTION: %s (no further information)\n", rac->action->name); 
+		}
+		rac = rac->next;	
+	}
+	
+	return TRUE;
+}
+
 bool sieve_result_execute(struct sieve_result *result)
 {
 	struct sieve_result_action *raction = result->first_action;
 	
 	while ( raction != NULL ) {
-		if ( raction->action->perform != NULL ) {
+		if ( raction->action->execute != NULL ) {
 			
 		} else {
 			i_warning("Action %s performs absolutely nothing.", raction->action->name);	

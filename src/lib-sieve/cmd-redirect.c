@@ -9,13 +9,11 @@
 /* Forward declarations */
 
 static bool cmd_redirect_opcode_dump
-	(const struct sieve_opcode *opcode, 
-		struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
-		sieve_size_t *address);
+	(const struct sieve_opcode *opcode,
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool cmd_redirect_opcode_execute
 	(const struct sieve_opcode *opcode, 
-		struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
-		sieve_size_t *address);
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool cmd_redirect_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
@@ -87,13 +85,12 @@ static bool cmd_redirect_generate
  
 static bool cmd_redirect_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	printf("REDIRECT\n");
 
 	return 
-		sieve_opr_string_dump(sbin, address);
+		sieve_opr_string_dump(renv->sbin, address);
 }
 
 /*
@@ -102,14 +99,13 @@ static bool cmd_redirect_opcode_dump
 
 static bool cmd_redirect_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *redirect;
 
 	t_push();
 
-	if ( !sieve_opr_string_read(sbin, address, &redirect) ) {
+	if ( !sieve_opr_string_read(renv->sbin, address, &redirect) ) {
 		t_pop();
 		return FALSE;
 	}

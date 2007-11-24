@@ -81,13 +81,12 @@ bool ext_imapflags_command_validate
 
 bool ext_imapflags_command_opcode_dump
 (const struct sieve_opcode *opcode,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	printf("%s\n", opcode->mnemonic);
 
 	return 
-		sieve_opr_stringlist_dump(sbin, address);
+		sieve_opr_stringlist_dump(renv->sbin, address);
 }
 
 /* Context access */

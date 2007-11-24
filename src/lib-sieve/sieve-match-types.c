@@ -338,16 +338,15 @@ static void opr_match_type_emit_ext
 }
 
 const struct sieve_match_type *sieve_opr_match_type_read
-  (struct sieve_interpreter *interpreter, 
-		struct sieve_binary *sbin, sieve_size_t *address)
+  (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	unsigned int mtch_code;
-	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
+	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
 	
 	if ( operand == NULL || operand->class != &match_type_class ) 
 		return NULL;
 	
-	if ( sieve_binary_read_byte(sbin, address, &mtch_code) ) {
+	if ( sieve_binary_read_byte(renv->sbin, address, &mtch_code) ) {
 		if ( mtch_code < SIEVE_MATCH_TYPE_CUSTOM ) {
 			if ( mtch_code < sieve_core_match_types_count )
 				return sieve_core_match_types[mtch_code];
@@ -357,18 +356,18 @@ const struct sieve_match_type *sieve_opr_match_type_read
 			int ext_id = -1;
 			const struct sieve_match_type_extension *mtch_ext;
 
-			if ( sieve_binary_extension_get_by_index(sbin,
+			if ( sieve_binary_extension_get_by_index(renv->sbin,
 				mtch_code - SIEVE_MATCH_TYPE_CUSTOM, &ext_id) == NULL )
 				return NULL; 
 
-			mtch_ext = sieve_match_type_extension_get(interpreter, ext_id); 
+			mtch_ext = sieve_match_type_extension_get(renv->interp, ext_id); 
  
 			if ( mtch_ext != NULL ) {  	
 				unsigned int code;
 				if ( mtch_ext->match_type != NULL )
 					return mtch_ext->match_type;
 		  	
-				if ( sieve_binary_read_byte(sbin, address, &code) &&
+				if ( sieve_binary_read_byte(renv->sbin, address, &code) &&
 					mtch_ext->get_match != NULL )
 					return mtch_ext->get_match(code);
 			} else {
@@ -381,12 +380,11 @@ const struct sieve_match_type *sieve_opr_match_type_read
 }
 
 bool sieve_opr_match_type_dump
-	(struct sieve_interpreter *interpreter,
-		struct sieve_binary *sbin, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	sieve_size_t pc = *address;
 	const struct sieve_match_type *mtch = 
-		sieve_opr_match_type_read(interpreter, sbin, address);
+		sieve_opr_match_type_read(renv, address);
 	
 	if ( mtch == NULL )
 		return FALSE;

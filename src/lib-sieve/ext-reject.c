@@ -27,11 +27,11 @@ static bool cmd_reject_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx); 
 
 static bool ext_reject_opcode_dump
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool ext_reject_opcode_execute
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode,
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 /* Extension definitions */
 
@@ -128,14 +128,13 @@ static bool cmd_reject_generate
  */
  
 static bool ext_reject_opcode_dump
-	(const struct sieve_opcode *opcode ATTR_UNUSED,
-		struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
-		sieve_size_t *address)
+(const struct sieve_opcode *opcode ATTR_UNUSED,
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	printf("REJECT\n");
 	
 	return
-		sieve_opr_string_dump(sbin, address);
+		sieve_opr_string_dump(renv->sbin, address);
 }
 
 /*
@@ -143,15 +142,14 @@ static bool ext_reject_opcode_dump
  */
 
 static bool ext_reject_opcode_execute
-	(const struct sieve_opcode *opcode ATTR_UNUSED,
-		struct sieve_interpreter *interp ATTR_UNUSED, struct sieve_binary *sbin, 
-		sieve_size_t *address)
+(const struct sieve_opcode *opcode ATTR_UNUSED,
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *reason;
 
 	t_push();
 
-	if ( !sieve_opr_string_read(sbin, address, &reason) ) {
+	if ( !sieve_opr_string_read(renv->sbin, address, &reason) ) {
 		t_pop();
 		return FALSE;
 	}

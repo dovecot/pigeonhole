@@ -18,23 +18,21 @@
 
 struct sieve_interpreter {
 	pool_t pool;
-	
-	struct sieve_binary *binary;
-		
+			
 	/* Object registries */
 	ARRAY_DEFINE(ext_contexts, void *); 
 		
 	/* Execution status */
-	sieve_size_t pc; 
-	bool test_result;
-	bool stopped;
 	
-	/* Execution environment */
-	struct sieve_result *result; 
-	struct sieve_message_data *msgdata;	
+	sieve_size_t pc;  /* Program counter */
+	bool stopped;     /* Explicit successful stop requested */
+	bool test_result; /* Result of previous test command */
+	
+	/* Runtime environment environment */
+	struct sieve_runtime_env runenv; 
 };
 
-struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary) 
+struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *sbin) 
 {
 	unsigned int i;
 	int idx;
@@ -44,10 +42,11 @@ struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary)
 	pool = pool_alloconly_create("sieve_interpreter", 4096);	
 	interp = p_new(pool, struct sieve_interpreter, 1);
 	interp->pool = pool;
+	interp->runenv.interp = interp;
 	
-	interp->binary = binary;
-	sieve_binary_ref(binary);
-	sieve_binary_commit(binary);
+	interp->runenv.sbin = sbin;
+	sieve_binary_ref(sbin);
+	sieve_binary_commit(sbin);
 	
 	interp->pc = 0;
 
@@ -62,9 +61,9 @@ struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary)
 	}
 
 	/* Load other extensions listed in the binary */
-	for ( idx = 0; idx < sieve_binary_extensions_count(binary); idx++ ) {
+	for ( idx = 0; idx < sieve_binary_extensions_count(sbin); idx++ ) {
 		const struct sieve_extension *ext = 
-			sieve_binary_extension_get_by_index(binary, idx, NULL);
+			sieve_binary_extension_get_by_index(sbin, idx, NULL);
 		
 		if ( ext->interpreter_load != NULL )
 			ext->interpreter_load(interp);
@@ -73,10 +72,10 @@ struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *binary)
 	return interp;
 }
 
-void sieve_interpreter_free(struct sieve_interpreter *interpreter) 
+void sieve_interpreter_free(struct sieve_interpreter *interp) 
 {
-	sieve_binary_unref(&interpreter->binary);
-	pool_unref(&(interpreter->pool));
+	sieve_binary_unref(&interp->runenv.sbin);
+	pool_unref(&(interp->pool));
 }
 
 inline pool_t sieve_interpreter_pool(struct sieve_interpreter *interp)
@@ -106,44 +105,41 @@ inline const void *sieve_interpreter_extension_get_context
 	return *ctx;
 }
 
-
-/* Accessing runtinme environment */
-
-inline struct sieve_message_data *
-	sieve_interpreter_get_msgdata(struct sieve_interpreter *interpreter) 
-{
-	return interpreter->msgdata;
-}
-
 /* Program counter */
 
-inline void sieve_interpreter_reset(struct sieve_interpreter *interpreter) 
+inline void sieve_interpreter_reset(struct sieve_interpreter *interp) 
 {
-	interpreter->pc = 0;
+	interp->pc = 0;
+	interp->stopped = FALSE;
+	interp->test_result = FALSE;
+	interp->runenv.msgdata = NULL;
+	interp->runenv.result = NULL;
 }
 
-inline void sieve_interpreter_stop(struct sieve_interpreter *interpreter)
+inline void sieve_interpreter_stop(struct sieve_interpreter *interp)
 {
-    interpreter->stopped = TRUE;
+	interp->stopped = TRUE;
 }
 
-inline sieve_size_t sieve_interpreter_program_counter(struct sieve_interpreter *interpreter)
+inline sieve_size_t sieve_interpreter_program_counter(struct sieve_interpreter *interp)
 {
-	return interpreter->pc;
+	return interp->pc;
 }
 
 inline bool sieve_interpreter_program_jump
-	(struct sieve_interpreter *interpreter, bool jump)
+	(struct sieve_interpreter *interp, bool jump)
 {
-	sieve_size_t pc = sieve_interpreter_program_counter(interpreter);
+	sieve_size_t pc = interp->pc;
 	int offset;
 	
-	if ( !sieve_interpreter_read_offset_operand(interpreter, &offset) )
+	if ( !sieve_interpreter_read_offset_operand(interp, &offset) )
 		return FALSE;
 
-	if ( pc + offset <= sieve_binary_get_code_size(interpreter->binary) && pc + offset > 0 ) {
+	if ( pc + offset <= sieve_binary_get_code_size(interp->runenv.sbin) && 
+		pc + offset > 0 ) 
+	{	
 		if ( jump )
-			interpreter->pc = pc + offset;
+			interp->pc = pc + offset;
 		
 		return TRUE;
 	}
@@ -151,27 +147,24 @@ inline bool sieve_interpreter_program_jump
 	return FALSE;
 }
 
-inline void sieve_interpreter_set_test_result(struct sieve_interpreter *interpreter, bool result)
+inline void sieve_interpreter_set_test_result
+	(struct sieve_interpreter *interp, bool result)
 {
-	interpreter->test_result = result;
+	interp->test_result = result;
 }
 
-inline bool sieve_interpreter_get_test_result(struct sieve_interpreter *interpreter)
+inline bool sieve_interpreter_get_test_result
+	(struct sieve_interpreter *interp)
 {
-	return interpreter->test_result;
-}
-
-inline struct sieve_binary *sieve_interpreter_get_binary(struct sieve_interpreter *interp)
-{
-	return interp->binary;
+	return interp->test_result;
 }
 
 /* Opcodes and operands */
 
 bool sieve_interpreter_read_offset_operand
-	(struct sieve_interpreter *interpreter, int *offset) 
+	(struct sieve_interpreter *interp, int *offset) 
 {
-	return sieve_binary_read_offset(interpreter->binary, &(interpreter->pc), offset);
+	return sieve_binary_read_offset(interp->runenv.sbin, &(interp->pc), offset);
 }
  
 /* Code Dump */
@@ -180,13 +173,13 @@ static bool sieve_interpreter_dump_operation
 	(struct sieve_interpreter *interp) 
 {
 	const struct sieve_opcode *opcode = 
-		sieve_operation_read(interp->binary, &(interp->pc));
+		sieve_operation_read(interp->runenv.sbin, &(interp->pc));
 
 	if ( opcode != NULL ) {
 		printf("%08x: ", interp->pc-1);
 	
 		if ( opcode->dump != NULL )
-			return opcode->dump(opcode, interp, interp->binary, &(interp->pc));
+			return opcode->dump(opcode, &(interp->runenv), &(interp->pc));
 		else if ( opcode->mnemonic != NULL )
 			printf("%s\n", opcode->mnemonic);
 		else
@@ -198,21 +191,23 @@ static bool sieve_interpreter_dump_operation
 	return FALSE;
 }
 
-void sieve_interpreter_dump_code(struct sieve_interpreter *interpreter) 
+void sieve_interpreter_dump_code(struct sieve_interpreter *interp) 
 {
-	sieve_interpreter_reset(interpreter);
+	sieve_interpreter_reset(interp);
 	
-	interpreter->result = NULL;
-	interpreter->msgdata = NULL;
+	interp->runenv.result = NULL;
+	interp->runenv.msgdata = NULL;
 	
-	while ( interpreter->pc < sieve_binary_get_code_size(interpreter->binary) ) {
-		if ( !sieve_interpreter_dump_operation(interpreter) ) {
+	while ( interp->pc < 
+		sieve_binary_get_code_size(interp->runenv.sbin) ) {
+		if ( !sieve_interpreter_dump_operation(interp) ) {
 			printf("Binary is corrupt.\n");
 			return;
 		}
 	}
 	
-	printf("%08x: [End of code]\n", sieve_binary_get_code_size(interpreter->binary));	
+	printf("%08x: [End of code]\n", 
+		sieve_binary_get_code_size(interp->runenv.sbin));	
 }
 
 /* Code execute */
@@ -220,11 +215,12 @@ void sieve_interpreter_dump_code(struct sieve_interpreter *interpreter)
 bool sieve_interpreter_execute_operation
 	(struct sieve_interpreter *interp) 
 {
-	const struct sieve_opcode *opcode = sieve_operation_read(interp->binary, &(interp->pc));
+	const struct sieve_opcode *opcode = 
+		sieve_operation_read(interp->runenv.sbin, &(interp->pc));
 
 	if ( opcode != NULL ) {
 		if ( opcode->execute != NULL )
-			return opcode->execute(opcode, interp, interp->binary, &(interp->pc));
+			return opcode->execute(opcode, &(interp->runenv), &(interp->pc));
 		else
 			return FALSE;
 			
@@ -234,29 +230,33 @@ bool sieve_interpreter_execute_operation
 	return FALSE;
 }		
 
-struct sieve_result *sieve_interpreter_run
-	(struct sieve_interpreter *interp, struct sieve_message_data *msgdata) 
+bool sieve_interpreter_run
+(struct sieve_interpreter *interp, struct sieve_message_data *msgdata,
+	struct sieve_result *result) 
 {
-	struct sieve_result *result;
 	sieve_interpreter_reset(interp);
 	
-	result = sieve_result_create();
-	interp->result = result;
-	interp->msgdata = msgdata;
+	interp->runenv.msgdata = msgdata;
+	interp->runenv.result = result;		
+	sieve_result_ref(result);
 	
 	while ( !interp->stopped && 
-		interp->pc < sieve_binary_get_code_size(interp->binary) ) {
+		interp->pc < sieve_binary_get_code_size(interp->runenv.sbin) ) {
 		printf("%08x: ", interp->pc);
 		
 		if ( !sieve_interpreter_execute_operation(interp) ) {
 			printf("Execution aborted.\n");
-			return NULL;
+			sieve_result_unref(&result);
+			return FALSE;
 		}
 	}
 	
-	interp->result = NULL;
+	interp->runenv.result = NULL;
+	interp->runenv.msgdata = NULL;
 	
-	return result;
+	sieve_result_unref(&result);
+
+	return TRUE;
 }
 
 

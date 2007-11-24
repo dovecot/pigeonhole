@@ -36,11 +36,11 @@ const struct sieve_command tst_size = {
 /* Opcodes */
 
 static bool tst_size_opcode_dump
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool tst_size_opcode_execute
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_opcode tst_size_over_opcode = { 
 	"SIZE-OVER",
@@ -182,23 +182,22 @@ bool tst_size_generate
 
 static bool tst_size_opcode_dump
 (const struct sieve_opcode *opcode,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
     printf("%s\n", opcode->mnemonic);
     
 	return 
-		sieve_opr_number_dump(sbin, address);
+		sieve_opr_number_dump(renv->sbin, address);
 }
 
 /* Code execution */
 
-static bool tst_size_get(struct sieve_interpreter *interp, sieve_size_t *size) 
+static bool tst_size_get
+(const struct sieve_runtime_env *renv, sieve_size_t *size) 
 {
-	struct sieve_message_data *msgdata = sieve_interpreter_get_msgdata(interp);
 	uoff_t psize;
 
-	if ( mail_get_physical_size(msgdata->mail, &psize) < 0 )
+	if ( mail_get_physical_size(renv->msgdata->mail, &psize) < 0 )
 		return FALSE;
 
 	*size = psize;
@@ -208,23 +207,22 @@ static bool tst_size_get(struct sieve_interpreter *interp, sieve_size_t *size)
 
 static bool tst_size_opcode_execute
 (const struct sieve_opcode *opcode,
-	struct sieve_interpreter *interp, struct sieve_binary *sbin, 
-	sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	sieve_size_t mail_size, limit;
 	
 	printf("%s\n", opcode->mnemonic);
 	
-	if ( !sieve_opr_number_read(sbin, address, &limit) ) 
+	if ( !sieve_opr_number_read(renv->sbin, address, &limit) ) 
 		return FALSE;	
 	
-	if ( !tst_size_get(interp, &mail_size) )
+	if ( !tst_size_get(renv, &mail_size) )
 		return FALSE;
 	
 	if ( opcode == &tst_size_over_opcode )
-		sieve_interpreter_set_test_result(interp, (mail_size > limit));
+		sieve_interpreter_set_test_result(renv->interp, (mail_size > limit));
 	else
-		sieve_interpreter_set_test_result(interp, (mail_size < limit));
+		sieve_interpreter_set_test_result(renv->interp, (mail_size < limit));
 
 	return TRUE;
 }

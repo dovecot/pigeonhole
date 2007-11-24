@@ -36,11 +36,11 @@ const struct sieve_command tst_header = {
 /* Opcode */
 
 static bool tst_header_opcode_dump
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *runenv, sieve_size_t *address);
 static bool tst_header_opcode_execute
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *runenv, sieve_size_t *address);
 
 const struct sieve_opcode tst_header_opcode = { 
 	"HEADER",
@@ -114,23 +114,22 @@ static bool tst_header_generate
 /* Code dump */
 
 static bool tst_header_opcode_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED, 
-	struct sieve_interpreter *interp, struct sieve_binary *sbin, 
-	sieve_size_t *address)
+(const struct sieve_opcode *opcode ATTR_UNUSED,
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	unsigned int opt_code;
 
 	printf("HEADER\n");
 
 	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
 			switch ( opt_code ) {
 			case OPT_COMPARATOR:
-				sieve_opr_comparator_dump(interp, sbin, address);
+				sieve_opr_comparator_dump(renv, address);
 				break;
 			case OPT_MATCH_TYPE:
-				sieve_opr_match_type_dump(interp, sbin, address);
+				sieve_opr_match_type_dump(renv, address);
 				break;
 			default: 
 				return FALSE;
@@ -139,18 +138,16 @@ static bool tst_header_opcode_dump
 	}
 
 	return
-		sieve_opr_stringlist_dump(sbin, address) &&
-		sieve_opr_stringlist_dump(sbin, address);
+		sieve_opr_stringlist_dump(renv->sbin, address) &&
+		sieve_opr_stringlist_dump(renv->sbin, address);
 }
 
 /* Code execution */
 
 static bool tst_header_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
-	struct sieve_interpreter *interp, struct sieve_binary *sbin, 
-	sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	struct sieve_message_data *msgdata = sieve_interpreter_get_msgdata(interp);
 	unsigned int opt_code;
 	const struct sieve_comparator *cmp = &i_octet_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
@@ -163,14 +160,14 @@ static bool tst_header_opcode_execute
 	printf("?? HEADER\n");
 
 	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
 			switch ( opt_code ) {
 			case OPT_COMPARATOR:
-				cmp = sieve_opr_comparator_read(interp, sbin, address);
+				cmp = sieve_opr_comparator_read(renv, address);
 				break;
 			case OPT_MATCH_TYPE:
-				mtch = sieve_opr_match_type_read(interp, sbin, address);
+				mtch = sieve_opr_match_type_read(renv, address);
 				break;
 			default:
 				return FALSE;
@@ -181,13 +178,13 @@ static bool tst_header_opcode_execute
 	t_push();
 		
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(sbin, address)) == NULL ) {
+	if ( (hdr_list=sieve_opr_stringlist_read(renv->sbin, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}
 	
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(sbin, address)) == NULL ) {
+	if ( (key_list=sieve_opr_stringlist_read(renv->sbin, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}
@@ -200,7 +197,7 @@ static bool tst_header_opcode_execute
 	while ( !matched && sieve_coded_stringlist_next_item(hdr_list, &hdr_item) && hdr_item != NULL ) {
 		const char *const *headers;
 			
-		if ( mail_get_headers_utf8(msgdata->mail, str_c(hdr_item), &headers) >= 0 ) {	
+		if ( mail_get_headers_utf8(renv->msgdata->mail, str_c(hdr_item), &headers) >= 0 ) {	
 			
 			int i;
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
@@ -214,7 +211,7 @@ static bool tst_header_opcode_execute
 	
 	t_pop();
 	
-	sieve_interpreter_set_test_result(interp, matched);
+	sieve_interpreter_set_test_result(renv->interp, matched);
 	
 	return TRUE;
 }

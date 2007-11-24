@@ -271,21 +271,21 @@ inline bool sieve_command_block_exits_unconditionally
 /* Opcodes */
 
 static bool opc_stop_execute
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool opc_keep_execute
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool opc_discard_execute
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_opcode cmd_stop_opcode = { 
 	"STOP",
 	SIEVE_OPCODE_STOP,
 	NULL,
 	0,
-	sieve_opcode_trivial_dump, 
+	NULL, 
 	opc_stop_execute 
 };
 
@@ -294,7 +294,7 @@ const struct sieve_opcode cmd_keep_opcode = {
 	SIEVE_OPCODE_KEEP,
 	NULL,
 	0,
-	sieve_opcode_trivial_dump, 
+	NULL, 
 	opc_keep_execute 
 };
 
@@ -303,26 +303,26 @@ const struct sieve_opcode cmd_discard_opcode = {
 	SIEVE_OPCODE_DISCARD,
 	NULL,
 	0,
-	sieve_opcode_trivial_dump, 
+	NULL, 
 	opc_discard_execute 
 };
 
 static bool opc_stop_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
-	struct sieve_interpreter *interp, struct sieve_binary *sbin ATTR_UNUSED, 
+	const struct sieve_runtime_env *renv,  
 	sieve_size_t *address ATTR_UNUSED)
 {	
 	printf(">> STOP\n");
 	
-	sieve_interpreter_stop(interp);
+	sieve_interpreter_stop(renv->interp);
 
 	return TRUE;
 }
 
 static bool opc_keep_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 	
-	struct sieve_binary *sbin ATTR_UNUSED, sieve_size_t *address ATTR_UNUSED)
+	const struct sieve_runtime_env *renv ATTR_UNUSED, 
+	sieve_size_t *address ATTR_UNUSED)
 {	
 	printf(">> KEEP\n");
 	
@@ -331,8 +331,8 @@ static bool opc_keep_execute
 
 static bool opc_discard_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin ATTR_UNUSED, sieve_size_t *address ATTR_UNUSED)
+	const struct sieve_runtime_env *renv ATTR_UNUSED, 
+	sieve_size_t *address ATTR_UNUSED)
 {	
 	printf(">> DISCARD\n");
 	

@@ -326,37 +326,36 @@ static void opr_comparator_emit_ext
 }
 
 const struct sieve_comparator *sieve_opr_comparator_read
-  (struct sieve_interpreter *interpreter, 
-  	struct sieve_binary *sbin, sieve_size_t *address)
+  (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	unsigned int cmp_code;
-	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
+	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
 	
 	if ( operand == NULL || operand->class != &comparator_class ) 
 		return NULL;
 	
-	if ( sieve_binary_read_byte(sbin, address, &cmp_code) ) {
+	if ( sieve_binary_read_byte(renv->sbin, address, &cmp_code) ) {
 		if ( cmp_code < SIEVE_COMPARATOR_CUSTOM ) {
 			if ( cmp_code < sieve_core_comparators_count )
 				return sieve_core_comparators[cmp_code];
 			else
 				return NULL;
 		} else {
-		  int ext_id = -1;
+			int ext_id = -1;
 			const struct sieve_comparator_extension *cmp_ext;
 
-			if ( sieve_binary_extension_get_by_index(sbin,
+			if ( sieve_binary_extension_get_by_index(renv->sbin,
 				cmp_code - SIEVE_COMPARATOR_CUSTOM, &ext_id) == NULL )
 				return NULL; 
 
-			cmp_ext = sieve_comparator_extension_get(interpreter, ext_id); 
+			cmp_ext = sieve_comparator_extension_get(renv->interp, ext_id); 
  
 			if ( cmp_ext != NULL ) {  	
 				unsigned int code;
 				if ( cmp_ext->comparator != NULL )
 					return cmp_ext->comparator;
 		  	
-				if ( sieve_binary_read_byte(sbin, address, &code) &&
+				if ( sieve_binary_read_byte(renv->sbin, address, &code) &&
 					cmp_ext->get_comparator != NULL )
 					return cmp_ext->get_comparator(code);
 			} else {
@@ -369,12 +368,11 @@ const struct sieve_comparator *sieve_opr_comparator_read
 }
 
 bool sieve_opr_comparator_dump
-	(struct sieve_interpreter *interpreter,
-		struct sieve_binary *sbin, sieve_size_t *address)
+	(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	sieve_size_t pc = *address;
 	const struct sieve_comparator *cmp = 
-		sieve_opr_comparator_read(interpreter, sbin, address);
+		sieve_opr_comparator_read(renv, address);
 	
 	if ( cmp == NULL )
 		return FALSE;

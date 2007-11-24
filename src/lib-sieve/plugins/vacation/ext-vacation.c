@@ -26,11 +26,11 @@ static bool ext_vacation_load(int ext_id);
 static bool ext_vacation_validator_load(struct sieve_validator *validator);
 
 static bool ext_vacation_opcode_dump
-	(const struct sieve_opcode *opcode,	struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode,	
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool ext_vacation_opcode_execute
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool cmd_vacation_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
@@ -291,28 +291,27 @@ static bool cmd_vacation_generate
  
 static bool ext_vacation_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	unsigned int opt_code;
 	
 	printf("VACATION\n");
 	
-	if ( sieve_operand_optional_present(sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
 			switch ( opt_code ) {
 			case OPT_DAYS:
-				if ( !sieve_opr_number_dump(sbin, address) )
+				if ( !sieve_opr_number_dump(renv->sbin, address) )
 					return FALSE;
 				break;
 			case OPT_SUBJECT:
 			case OPT_FROM:
 			case OPT_HANDLE: 
-				if ( !sieve_opr_string_dump(sbin, address) )
+				if ( !sieve_opr_string_dump(renv->sbin, address) )
 					return FALSE;
 				break;
 			case OPT_ADDRESSES:
-				if ( !sieve_opr_stringlist_dump(sbin, address) )
+				if ( !sieve_opr_stringlist_dump(renv->sbin, address) )
 					return FALSE;
 				break;
 			case OPT_MIME:
@@ -324,7 +323,7 @@ static bool ext_vacation_opcode_dump
 		}
 	}
 	
-	return sieve_opr_string_dump(sbin, address);
+	return sieve_opr_string_dump(renv->sbin, address);
 }
 
 /* 
@@ -333,30 +332,29 @@ static bool ext_vacation_opcode_dump
  
 static bool ext_vacation_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	unsigned int opt_code;
 	sieve_size_t days = 0;
 	string_t *reason, *subject, *from, *handle;
 		
-	if ( sieve_operand_optional_present(sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
 			switch ( opt_code ) {
 			case OPT_DAYS:
-				if ( !sieve_opr_number_read(sbin, address, &days) ) return FALSE;
+				if ( !sieve_opr_number_read(renv->sbin, address, &days) ) return FALSE;
 				break;
 			case OPT_SUBJECT:
-				if ( !sieve_opr_string_read(sbin, address, &subject) ) return FALSE;
+				if ( !sieve_opr_string_read(renv->sbin, address, &subject) ) return FALSE;
 				break;
 			case OPT_FROM:
-				if ( !sieve_opr_string_read(sbin, address, &from) ) return FALSE;
+				if ( !sieve_opr_string_read(renv->sbin, address, &from) ) return FALSE;
 				break;
 			case OPT_HANDLE: 
-				if ( !sieve_opr_string_read(sbin, address, &handle) ) return FALSE;
+				if ( !sieve_opr_string_read(renv->sbin, address, &handle) ) return FALSE;
 				break;
 			case OPT_ADDRESSES:
-				if ( sieve_opr_stringlist_read(sbin, address) == NULL ) return FALSE;
+				if ( sieve_opr_stringlist_read(renv->sbin, address) == NULL ) return FALSE;
 				break;
 			case OPT_MIME:
 				break;
@@ -366,7 +364,7 @@ static bool ext_vacation_opcode_execute
 		}
 	}
 	
-	if ( !sieve_opr_string_read(sbin, address, &reason) ) 
+	if ( !sieve_opr_string_read(renv->sbin, address, &reason) ) 
 		return FALSE;
 	
 	printf(">> VACATION \"%s\"\n", str_c(reason));

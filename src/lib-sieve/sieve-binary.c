@@ -53,8 +53,8 @@ void sieve_binary_unref(struct sieve_binary **binary)
 {
 	if ( binary != NULL && *binary != NULL ) {
 		pool_unref(&((*binary)->pool));
-		*binary = NULL;
 	}
+	*binary = NULL;
 }
 
 inline sieve_size_t sieve_binary_get_code_size(struct sieve_binary *binary)

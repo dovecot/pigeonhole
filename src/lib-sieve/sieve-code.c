@@ -606,18 +606,18 @@ const struct sieve_opcode *sieve_operation_read
 /* Declaration of opcodes defined in this file */
 
 static bool opc_jmp_dump
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool opc_jmp_execute
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool opc_jmptrue_execute
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool opc_jmpfalse_execute
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_opcode sieve_jmp_opcode = { 
 	"JMP",
@@ -679,15 +679,14 @@ const unsigned int sieve_opcode_count =
 
 /* Code dump for core commands */
 
-static bool opc_jmp_dump(
-	const struct sieve_opcode *opcode,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
+static bool opc_jmp_dump
+(const struct sieve_opcode *opcode,
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	unsigned int pc = *address;
 	int offset;
 	
-	if ( sieve_binary_read_offset(sbin, address, &offset) ) 
+	if ( sieve_binary_read_offset(renv->sbin, address, &offset) ) 
 		printf("%s %d [%08x]\n", opcode->mnemonic, offset, pc + offset);
 	else
 		return FALSE;
@@ -697,37 +696,24 @@ static bool opc_jmp_dump(
 			
 /* Code dump for trivial opcodes */
 
-bool sieve_opcode_trivial_dump
-(const struct sieve_opcode *opcode,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin ATTR_UNUSED,sieve_size_t *address ATTR_UNUSED)
-{	
-	printf("%s\n", opcode->mnemonic);
-	
-	return TRUE;
-}
-
 bool sieve_opcode_string_dump
 (const struct sieve_opcode *opcode,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	printf("%s\n", opcode->mnemonic);
 
 	return 
-		sieve_opr_string_dump(sbin, address);
+		sieve_opr_string_dump(renv->sbin, address);
 }
-
 
 /* Code execution for core commands */
 
 static bool opc_jmp_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
-	struct sieve_interpreter *interp, struct sieve_binary *sbin ATTR_UNUSED, 
-	sieve_size_t *address ATTR_UNUSED) 
+	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED) 
 {
 	printf("JMP\n");
-	if ( !sieve_interpreter_program_jump(interp, TRUE) )
+	if ( !sieve_interpreter_program_jump(renv->interp, TRUE) )
 		return FALSE;
 	
 	return TRUE;
@@ -735,11 +721,10 @@ static bool opc_jmp_execute
 		
 static bool opc_jmptrue_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
-	struct sieve_interpreter *interp,	struct sieve_binary *sbin ATTR_UNUSED, 
-	sieve_size_t *address ATTR_UNUSED)
+	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {	
-	if ( !sieve_interpreter_program_jump(interp,
-		sieve_interpreter_get_test_result(interp)) )
+	if ( !sieve_interpreter_program_jump(renv->interp,
+		sieve_interpreter_get_test_result(renv->interp)) )
 		return FALSE;
 		
 	printf("JMPTRUE\n");
@@ -749,11 +734,10 @@ static bool opc_jmptrue_execute
 
 static bool opc_jmpfalse_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
-	struct sieve_interpreter *interp, struct sieve_binary *sbin ATTR_UNUSED, 
-	sieve_size_t *address ATTR_UNUSED)
+	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {	
-	if ( !sieve_interpreter_program_jump(interp,
-		!sieve_interpreter_get_test_result(interp)) )
+	if ( !sieve_interpreter_program_jump(renv->interp,
+		!sieve_interpreter_get_test_result(renv->interp)) )
 		return FALSE;
 		
 	printf("JMPFALSE\n");

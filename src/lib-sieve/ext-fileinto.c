@@ -23,11 +23,11 @@ static bool ext_fileinto_load(int ext_id);
 static bool ext_fileinto_validator_load(struct sieve_validator *validator);
 
 static bool ext_fileinto_opcode_dump
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool ext_fileinto_opcode_execute
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address); 
+	(const struct sieve_opcode *opcode, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address); 
 
 static bool cmd_fileinto_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
@@ -128,13 +128,12 @@ static bool cmd_fileinto_generate
  
 static bool ext_fileinto_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	printf("FILEINTO\n");
 
 	return 
-		sieve_opr_string_dump(sbin, address);
+		sieve_opr_string_dump(renv->sbin, address);
 }
 
 /*
@@ -143,15 +142,13 @@ static bool ext_fileinto_opcode_dump
 
 static bool ext_fileinto_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, 
-	sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *folder;
 
 	t_push();
 
-	if ( !sieve_opr_string_read(sbin, address, &folder) ) {
+	if ( !sieve_opr_string_read(renv->sbin, address, &folder) ) {
 		t_pop();
 		return FALSE;
 	}

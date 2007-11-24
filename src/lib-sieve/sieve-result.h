@@ -8,17 +8,20 @@ struct sieve_result;
 struct sieve_action {
 	const char *name;
 
-	int (*perform)
+	int (*execute)
 		(struct sieve_interpreter *interpreter, struct sieve_result *result, void *context);	
 	int (*dump)
 		(struct sieve_interpreter *interpreter, struct sieve_result *result, void *context);	
 };
 
 struct sieve_result *sieve_result_create(void);
-void sieve_result_free(struct sieve_result *result);
+void sieve_result_ref(struct sieve_result *result); 
+void sieve_result_unref(struct sieve_result **result); 
 
 void sieve_result_add_action
 	(struct sieve_result *result, struct sieve_action *action, void *context);		
+
+bool sieve_result_dump(struct sieve_result *result);
 
 bool sieve_result_execute(struct sieve_result *result);
 

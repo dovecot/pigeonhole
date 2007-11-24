@@ -20,11 +20,11 @@ static bool tst_hasflag_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
 static bool tst_hasflag_opcode_dump
-	(const struct sieve_opcode *opcode,	struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode,	
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool tst_hasflag_opcode_execute
-	(const struct sieve_opcode *opcode,	struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode,	
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 /* Hasflag test
  *
@@ -140,7 +140,9 @@ static bool tst_hasflag_validate
 	return TRUE;
 }
 
-/* Code generation */
+/*
+ * Code generation 
+ */
 
 static bool tst_hasflag_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx)
@@ -160,23 +162,22 @@ static bool tst_hasflag_generate
  */
  
 static bool tst_hasflag_opcode_dump
-	(const struct sieve_opcode *opcode ATTR_UNUSED,	
-		struct sieve_interpreter *interp, struct sieve_binary *sbin, 
-		sieve_size_t *address)
+(const struct sieve_opcode *opcode ATTR_UNUSED,	
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	unsigned int opt_code;
 
 	printf("HASFLAG\n");
 
 	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
 			switch ( opt_code ) {
 			case OPT_COMPARATOR:
-				sieve_opr_comparator_dump(interp, sbin, address);
+				sieve_opr_comparator_dump(renv, address);
 				break;
 			case OPT_MATCH_TYPE:
-				sieve_opr_match_type_dump(interp, sbin, address);
+				sieve_opr_match_type_dump(renv, address);
 				break;
 			default: 
 				return FALSE;
@@ -185,7 +186,7 @@ static bool tst_hasflag_opcode_dump
 	}
 
 	return
-		sieve_opr_stringlist_dump(sbin, address);
+		sieve_opr_stringlist_dump(renv->sbin, address);
 }
 
 /*
@@ -194,8 +195,7 @@ static bool tst_hasflag_opcode_dump
 
 static bool tst_hasflag_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	struct sieve_interpreter *interp ATTR_UNUSED, 
-	struct sieve_binary *sbin, sieve_size_t *address)
+	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	unsigned int opt_code;
 	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
@@ -209,14 +209,14 @@ static bool tst_hasflag_opcode_execute
 	printf("?? HASFLAG\n");
 
 	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
 			switch ( opt_code ) {
 			case OPT_COMPARATOR:
-				cmp = sieve_opr_comparator_read(interp, sbin, address);
+				cmp = sieve_opr_comparator_read(renv, address);
 				break;
 			case OPT_MATCH_TYPE:
-				mtch = sieve_opr_match_type_read(interp, sbin, address);
+				mtch = sieve_opr_match_type_read(renv, address);
 				break;
 			default:
 				return FALSE;
@@ -227,7 +227,7 @@ static bool tst_hasflag_opcode_execute
 	t_push();
 		
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(sbin, address)) == NULL ) {
+	if ( (key_list=sieve_opr_stringlist_read(renv->sbin, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}
@@ -235,7 +235,7 @@ static bool tst_hasflag_opcode_execute
 	matched = FALSE;
 	mctx = sieve_match_begin(mtch, cmp, key_list); 	
 
-	ext_imapflags_get_flags_init(&iter, interp);
+	ext_imapflags_get_flags_init(&iter, renv->interp);
 	
 	while ( (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
 		if ( sieve_match_value(mctx, flag) )
@@ -246,7 +246,7 @@ static bool tst_hasflag_opcode_execute
 	
 	t_pop();
 	
-	sieve_interpreter_set_test_result(interp, matched);
+	sieve_interpreter_set_test_result(renv->interp, matched);
 	
 	return TRUE;
 }

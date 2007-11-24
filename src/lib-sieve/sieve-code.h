@@ -130,11 +130,11 @@ struct sieve_opcode {
 	unsigned int ext_code;
 	
 	bool (*dump)
-		(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-			struct sieve_binary *sbin, sieve_size_t *address);
+		(const struct sieve_opcode *opcode, 
+			const struct sieve_runtime_env *renv, sieve_size_t *address);
 	bool (*execute)
-		(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-			struct sieve_binary *sbin, sieve_size_t *address);
+		(const struct sieve_opcode *opcode, 
+			const struct sieve_runtime_env *renv, sieve_size_t *address);
 };
 
 extern const struct sieve_opcode *sieve_opcodes[];
@@ -151,12 +151,9 @@ inline sieve_size_t sieve_operation_emit_code_ext
 const struct sieve_opcode *sieve_operation_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 
-bool sieve_opcode_trivial_dump
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
 bool sieve_opcode_string_dump
-	(const struct sieve_opcode *opcode, struct sieve_interpreter *interp, 
-		struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_opcode *opcode,
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 /* Core operands */
 

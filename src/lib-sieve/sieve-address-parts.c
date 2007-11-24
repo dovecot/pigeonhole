@@ -288,16 +288,15 @@ static void opr_address_part_emit_ext
 }
 
 const struct sieve_address_part *sieve_opr_address_part_read
-  (struct sieve_interpreter *interpreter, 
-		struct sieve_binary *sbin, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	unsigned int addrp_code;
-	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
+	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
 	
 	if ( operand == NULL || operand->class != &address_part_class ) 
 		return NULL;
 	
-	if ( sieve_binary_read_byte(sbin, address, &addrp_code) ) {
+	if ( sieve_binary_read_byte(renv->sbin, address, &addrp_code) ) {
 		if ( addrp_code < SIEVE_ADDRESS_PART_CUSTOM ) {
 			if ( addrp_code < sieve_core_address_parts_count )
 				return sieve_core_address_parts[addrp_code];
@@ -307,18 +306,18 @@ const struct sieve_address_part *sieve_opr_address_part_read
 			int ext_id = -1;
 			const struct sieve_address_part_extension *ap_ext;
 
-			if ( sieve_binary_extension_get_by_index(sbin,
+			if ( sieve_binary_extension_get_by_index(renv->sbin,
 				addrp_code - SIEVE_ADDRESS_PART_CUSTOM, &ext_id) == NULL )
 				return NULL; 
 
-			ap_ext = sieve_address_part_extension_get(interpreter, ext_id); 
+			ap_ext = sieve_address_part_extension_get(renv->interp, ext_id); 
  
 			if ( ap_ext != NULL ) {  	
 				unsigned int code;
 				if ( ap_ext->address_part != NULL )
 					return ap_ext->address_part;
 		  	
-				if ( sieve_binary_read_byte(sbin, address, &code) &&
+				if ( sieve_binary_read_byte(renv->sbin, address, &code) &&
 					ap_ext->get_part != NULL )
 				return ap_ext->get_part(code);
 			} else {
@@ -331,12 +330,11 @@ const struct sieve_address_part *sieve_opr_address_part_read
 }
 
 bool sieve_opr_address_part_dump
-	(struct sieve_interpreter *interpreter,
-		struct sieve_binary *sbin, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	sieve_size_t pc = *address;
 	const struct sieve_address_part *addrp = 
-		sieve_opr_address_part_read(interpreter, sbin, address);
+		sieve_opr_address_part_read(renv, address);
 	
 	if ( addrp == NULL )
 		return FALSE;
@@ -409,24 +407,23 @@ bool sieve_address_match
  */
  
 bool sieve_addrmatch_default_dump_optionals
-(struct sieve_interpreter *interp, 
-	struct sieve_binary *sbin, sieve_size_t *address) 
+(const struct sieve_runtime_env *renv, sieve_size_t *address) 
 {
 	unsigned int opt_code;
 	
-	if ( sieve_operand_optional_present(sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
 			switch ( opt_code ) {
 			case SIEVE_AM_OPT_COMPARATOR:
-				if ( !sieve_opr_comparator_dump(interp, sbin, address) )
+				if ( !sieve_opr_comparator_dump(renv, address) )
 					return FALSE;
 				break;
 			case SIEVE_AM_OPT_MATCH_TYPE:
-				if ( !sieve_opr_match_type_dump(interp, sbin, address) )
+				if ( !sieve_opr_match_type_dump(renv, address) )
 					return FALSE;
 				break;
 			case SIEVE_AM_OPT_ADDRESS_PART:
-				if ( !sieve_opr_address_part_dump(interp, sbin, address) )
+				if ( !sieve_opr_address_part_dump(renv, address) )
 					return FALSE;
 				break;
 			default:
@@ -439,25 +436,25 @@ bool sieve_addrmatch_default_dump_optionals
 }
 
 bool sieve_addrmatch_default_get_optionals
-(struct sieve_interpreter *interp, struct sieve_binary *sbin, 
-	sieve_size_t *address, const struct sieve_address_part **addrp, 
-	const struct sieve_match_type **mtch, const struct sieve_comparator **cmp) 
+(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	const struct sieve_address_part **addrp, const struct sieve_match_type **mtch, 
+	const struct sieve_comparator **cmp) 
 {
 	unsigned int opt_code;
 	
-	if ( sieve_operand_optional_present(sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
 			switch ( opt_code ) {
 			case SIEVE_AM_OPT_COMPARATOR:
-				if ( (*cmp = sieve_opr_comparator_read(interp, sbin, address)) == NULL )
+				if ( (*cmp = sieve_opr_comparator_read(renv, address)) == NULL )
 					return FALSE;
 				break;
 			case SIEVE_AM_OPT_MATCH_TYPE:
-				if ( (*mtch = sieve_opr_match_type_read(interp, sbin, address)) == NULL )
+				if ( (*mtch = sieve_opr_match_type_read(renv, address)) == NULL )
 					return FALSE;
 				break;
 			case SIEVE_AM_OPT_ADDRESS_PART:
-				if ( (*addrp = sieve_opr_address_part_read(interp, sbin, address)) == NULL )
+				if ( (*addrp = sieve_opr_address_part_read(renv, address)) == NULL )
 					return FALSE;
 				break;
 			default:

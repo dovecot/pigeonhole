@@ -4,8 +4,12 @@
 #include "buffer.h"
 
 #include "sieve-extensions.h"
-#include "sieve-parser.h"
+
 #include "sieve-ast.h"
+#include "sieve-binary.h"
+#include "sieve-result.h"
+
+#include "sieve-parser.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -142,16 +146,18 @@ void sieve_dump(struct sieve_binary *binary)
 bool sieve_execute
 	(struct sieve_binary *binary, struct sieve_message_data *msgdata) 
 {
+	struct sieve_result *sres = sieve_result_create();
 	struct sieve_interpreter *interpreter = sieve_interpreter_create(binary);			
 	bool result = TRUE;
 							
 	printf("Code Execute:\n\n");
-	if ( sieve_interpreter_run(interpreter, msgdata) == NULL ) {
+	if ( !sieve_interpreter_run(interpreter, msgdata, sres) ) {
 		result = FALSE;
 	}
 				
 	sieve_interpreter_free(interpreter);
 	
+	sieve_result_unref(&sres);
 	return result;
 }
 	
