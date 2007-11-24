@@ -54,7 +54,7 @@ Extensions and their implementation status:
     relational: full 
     regex: full, but suboptimal
     vacation: validation, generation and interpretation; no execution
-    imapflags: validation, generation and interpretation for commands 
+    imapflags: flag management works, but flags are not stored.
     include: planned (* first leave out variables support)  
 	variables: planned (* also amend previously implemented extensions)
     body: planned                        
@@ -97,7 +97,9 @@ TODO
 * Produce a fully working interpreter that actually executes actions, currently
   tests are evaluated and actions just print their occurence.
 * Resolve code duplication introduced for handling address-parts and match-types
-  in different command implementations. 
+  in different command implementations.
+* Implement a faster substring search algorithm to make sopport for the body 
+  extension a less bad idea.  
 * Further implement error handling and limit the maximum number of errors. 
 * Resolve code duplication amongst comparator, address-part and match-type 
   support as much as possible. 
@@ -107,6 +109,8 @@ TODO
   to the point. 
 * Produce a substitute sieve plugin for deliver (currently a stub and not 
   part of the make process)
+* Full standards compliance review for the engine and all fully implemented sieve
+  extensions.
 * Automate script tests; i.e. build a test suite.
 * Use mmap for the binary script representation. 
 * Allow the currently in-memory byte-code to be stored as a script binary

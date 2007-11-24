@@ -3,8 +3,7 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-imapflags-05
- * Implementation: commands and tests work to some extent, but
- *   no flags are associated with messages.
+ * Implementation: flag managesiement works, not stored though. 
  * Status: under development
  *
  */
