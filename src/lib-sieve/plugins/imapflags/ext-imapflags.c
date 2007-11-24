@@ -57,7 +57,7 @@ const struct sieve_extension imapflags_extension = {
 	"imap4flags", 
 	ext_imapflags_load,
 	ext_imapflags_validator_load, 
-	NULL, 
+	NULL, NULL,
 	ext_imapflags_interpreter_load, 
 	SIEVE_EXT_DEFINE_OPCODES(imapflags_opcodes), 
 	NULL

@@ -40,10 +40,10 @@ static bool addrp_validator_load(struct sieve_validator *validator);
 static bool addrp_interpreter_load(struct sieve_interpreter *interp);
 
 const struct sieve_extension address_part_extension = {
-	"@address-part",
+	"@address-parts",
 	addrp_extension_load,
 	addrp_validator_load,
-	NULL,
+	NULL, NULL,
 	addrp_interpreter_load,
 	SIEVE_EXT_DEFINE_NO_OPCODES,
 	NULL

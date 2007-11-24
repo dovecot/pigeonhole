@@ -46,7 +46,7 @@ struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *sbin)
 	
 	interp->runenv.sbin = sbin;
 	sieve_binary_ref(sbin);
-	sieve_binary_commit(sbin);
+	sieve_binary_load(sbin);
 	
 	interp->pc = 0;
 

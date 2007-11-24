@@ -39,10 +39,10 @@ static bool mtch_validator_load(struct sieve_validator *validator);
 static bool mtch_interpreter_load(struct sieve_interpreter *interp);
 
 const struct sieve_extension match_type_extension = {
-	"@match-type",
+	"@match-types",
 	mtch_extension_load,
 	mtch_validator_load,
-	NULL,
+	NULL, NULL,
 	mtch_interpreter_load,
 	SIEVE_EXT_DEFINE_NO_OPCODES,
 	NULL

@@ -8,9 +8,11 @@ struct sieve_extension {
 	const char *name;
 	
 	bool (*load)(int ext_id);
-	
+
 	bool (*validator_load)(struct sieve_validator *validator);	
 	bool (*generator_load)(struct sieve_generator *generator);
+
+	bool (*binary_load)(struct sieve_binary *binary);
 	bool (*interpreter_load)(struct sieve_interpreter *interpreter);
 
 	/* Extension can introduce a single or multiple opcodes */

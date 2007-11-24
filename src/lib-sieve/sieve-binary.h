@@ -9,10 +9,10 @@
 struct sieve_binary;
 
 struct sieve_binary *sieve_binary_create_new(void);
-void sieve_binary_ref(struct sieve_binary *binary);
-void sieve_binary_unref(struct sieve_binary **binary);
+void sieve_binary_ref(struct sieve_binary *sbin);
+void sieve_binary_unref(struct sieve_binary **sbin);
 
-void sieve_binary_commit(struct sieve_binary *binary);
+void sieve_binary_load(struct sieve_binary *sbin);
 
 /* 
  * Extension handling 

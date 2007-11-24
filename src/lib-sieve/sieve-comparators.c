@@ -55,10 +55,10 @@ static bool cmp_validator_load(struct sieve_validator *validator);
 static bool cmp_interpreter_load(struct sieve_interpreter *interp);
 
 const struct sieve_extension comparator_extension = {
-	"@comparator",
+	"@comparators",
 	cmp_extension_load,
 	cmp_validator_load,
-	NULL,
+	NULL, NULL,
 	cmp_interpreter_load,
 	SIEVE_EXT_DEFINE_NO_OPCODES,
 	NULL

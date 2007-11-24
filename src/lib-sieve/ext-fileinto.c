@@ -44,8 +44,7 @@ const struct sieve_extension fileinto_extension = {
 	"fileinto", 
 	ext_fileinto_load,
 	ext_fileinto_validator_load, 
-	NULL, 
-	NULL, 
+	NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPCODE(fileinto_opcode), 
 	NULL	
 };

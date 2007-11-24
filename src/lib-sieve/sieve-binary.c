@@ -38,33 +38,45 @@ struct sieve_binary *sieve_binary_create_new(void)
 	
 	sbin->data = buffer_create_dynamic(pool, 256);
 	
-	p_array_init(&sbin->extensions, pool, sieve_extensions_get_count());
+	p_array_init(&sbin->extensions, pool, 5);
 	p_array_init(&sbin->extension_index, pool, sieve_extensions_get_count());
 		
 	return sbin;
 }
 
-void sieve_binary_ref(struct sieve_binary *binary) 
+void sieve_binary_ref(struct sieve_binary *sbin) 
 {
-	pool_ref(binary->pool);
+	pool_ref(sbin->pool);
 }
 
-void sieve_binary_unref(struct sieve_binary **binary) 
+void sieve_binary_unref(struct sieve_binary **sbin) 
 {
-	if ( binary != NULL && *binary != NULL ) {
-		pool_unref(&((*binary)->pool));
+	if ( sbin != NULL && *sbin != NULL ) {
+		pool_unref(&((*sbin)->pool));
 	}
-	*binary = NULL;
+	*sbin = NULL;
 }
 
-inline sieve_size_t sieve_binary_get_code_size(struct sieve_binary *binary)
+inline sieve_size_t sieve_binary_get_code_size(struct sieve_binary *sbin)
 {
-	return buffer_get_used_size(binary->data);
+	return buffer_get_used_size(sbin->data);
 }
 
-void sieve_binary_commit(struct sieve_binary *binary)
+void sieve_binary_load(struct sieve_binary *sbin)
 {
-	binary->code = buffer_get_data(binary->data, &(binary->code_size));			
+	unsigned int i;
+	
+	/* Currently only memory binary support */
+	sbin->code = buffer_get_data(sbin->data, &(sbin->code_size));			
+	
+	for ( i = 0; i < array_count(&sbin->extensions); i++ ) {
+		struct sieve_binary_extension * const *aext = 
+			array_idx(&sbin->extensions, i);
+		const struct sieve_extension *ext = (*aext)->extension;
+		
+		if ( ext->binary_load != NULL )
+			ext->binary_load(sbin);
+	}
 }
 
 /* Extension handling */
@@ -127,7 +139,6 @@ int sieve_binary_extensions_count(struct sieve_binary *sbin)
 {
 	return (int) array_count(&sbin->extensions);
 }
-
 
 /*
  * Emission functions
