@@ -199,7 +199,6 @@ static bool mtch_binary_load(struct sieve_binary *sbin)
 {
 	pool_t pool = sieve_binary_pool(sbin);
 	
-	printf("BINARY MATCH-TYPES LOADED\n");
 	struct mtch_binary_context *ctx = 
 		p_new(pool, struct mtch_binary_context, 1);
 	
