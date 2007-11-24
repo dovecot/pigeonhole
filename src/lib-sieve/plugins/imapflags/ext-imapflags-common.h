@@ -26,7 +26,17 @@ bool ext_imapflags_command_opcode_dump
 
 /* Flag registration */
 
-const char *ext_imapflags_get_flags(struct sieve_interpreter *interpreter);
+struct ext_imapflags_iter {
+	string_t *flags_list;
+	unsigned int offset;
+	unsigned int last;
+};
+	
+const char *ext_imapflags_iter_get_flag
+	(struct ext_imapflags_iter *iter);
+
+const char *ext_imapflags_get_flags_string
+	(struct sieve_interpreter *interpreter);
 
 void ext_imapflags_set_flags
 	(struct sieve_interpreter *interpreter, string_t *flags);
@@ -34,6 +44,9 @@ void ext_imapflags_add_flags
 	(struct sieve_interpreter *interpreter, string_t *flags);
 void ext_imapflags_remove_flags
 	(struct sieve_interpreter *interpreter, string_t *flags);
+
+void ext_imapflags_get_flags_init
+	(struct ext_imapflags_iter *iter, struct sieve_interpreter *interpreter);
 
 
 #endif /* __EXT_IMAPFLAGS_COMMON_H */

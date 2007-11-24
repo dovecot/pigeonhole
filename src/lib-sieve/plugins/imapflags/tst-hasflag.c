@@ -202,6 +202,8 @@ static bool tst_hasflag_opcode_execute
 	const struct sieve_match_type *mtch = &is_match_type;
 	struct sieve_match_context *mctx;
 	struct sieve_coded_stringlist *key_list;
+	struct ext_imapflags_iter iter;
+	const char *flag;
 	bool matched;
 	
 	printf("?? HASFLAG\n");
@@ -233,10 +235,12 @@ static bool tst_hasflag_opcode_execute
 	matched = FALSE;
 	mctx = sieve_match_begin(mtch, cmp, key_list); 	
 
-	/*
-				if ( sieve_match_value(mctx, headers[i]) )
-					matched = TRUE;				
-  */
+	ext_imapflags_get_flags_init(&iter, interp);
+	
+	while ( (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
+		if ( sieve_match_value(mctx, flag) )
+			matched = TRUE; 	
+	}
 
 	matched = sieve_match_end(mctx) || matched; 	
 	

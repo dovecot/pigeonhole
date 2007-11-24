@@ -71,7 +71,7 @@ static bool cmd_setflag_opcode_execute
 	string_t *flag_item;
 	struct sieve_coded_stringlist *flag_list;
 	
-	printf("?? SETFLAG\n");
+	printf("SETFLAG\n");
 	
 	t_push();
 		
@@ -89,7 +89,7 @@ static bool cmd_setflag_opcode_execute
 
 	t_pop();
 	
-	printf("  FLAGS: %s\n", ext_imapflags_get_flags(interp));
+	printf("  FLAGS: %s\n", ext_imapflags_get_flags_string(interp));
 	
 	return TRUE;
 }

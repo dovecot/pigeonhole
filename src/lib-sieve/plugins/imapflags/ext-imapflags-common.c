@@ -90,7 +90,6 @@ bool ext_imapflags_command_opcode_dump
 		sieve_opr_stringlist_dump(sbin, address);
 }
 
-
 /* Context access */
 
 static inline struct ext_imapflags_interpreter_context *
@@ -100,18 +99,13 @@ static inline struct ext_imapflags_interpreter_context *
 		sieve_interpreter_extension_get_context(interpreter, ext_imapflags_my_id);
 }
 
-static string_t *ext_imapflags_get_flags_string
+static string_t *_get_flags_string
 	(struct sieve_interpreter *interpreter)
 {
 	struct ext_imapflags_interpreter_context *ctx = 
 		_get_interpreter_context(interpreter);
 		
 	return ctx->internal_flags;
-}
-
-const char *ext_imapflags_get_flags(struct sieve_interpreter *interpreter)
-{
-	return str_c(ext_imapflags_get_flags_string(interpreter));
 }
 
 /* Flag operations */
@@ -138,21 +132,16 @@ static bool flag_is_valid(const char *flag)
 	return TRUE;  
 }
 
-struct flags_list_iter {
-	string_t *flags_list;
-	unsigned int offset;
-	unsigned int last;
-};
-
-static void flags_list_iter_init
-	(struct flags_list_iter *iter, string_t *flags_list) 
+static void ext_imapflags_iter_init
+	(struct ext_imapflags_iter *iter, string_t *flags_list) 
 {
 	iter->flags_list = flags_list;
 	iter->offset = 0;
 	iter->last = 0;
 }
 
-static const char *flags_list_iter_get_flag(struct flags_list_iter *iter) 
+const char *ext_imapflags_iter_get_flag
+	(struct ext_imapflags_iter *iter) 
 {
 	unsigned int len = str_len(iter->flags_list);
 	const unsigned char *fp;
@@ -189,7 +178,8 @@ static const char *flags_list_iter_get_flag(struct flags_list_iter *iter)
 	return NULL;
 }
 
-static void flags_list_iter_delete_last(struct flags_list_iter *iter) 
+static void ext_imapflags_iter_delete_last
+	(struct ext_imapflags_iter *iter) 
 {
 	iter->offset++;
 	if ( iter->offset > str_len(iter->flags_list) )
@@ -205,11 +195,11 @@ static void flags_list_iter_delete_last(struct flags_list_iter *iter)
 static bool flags_list_flag_exists(string_t *flags_list, const char *flag)
 {
 	const char *flg;
-	struct flags_list_iter flit;
+	struct ext_imapflags_iter flit;
 		
-	flags_list_iter_init(&flit, flags_list);
+	ext_imapflags_iter_init(&flit, flags_list);
 	
-	while ( (flg=flags_list_iter_get_flag(&flit)) != NULL ) {
+	while ( (flg=ext_imapflags_iter_get_flag(&flit)) != NULL ) {
 		if ( strcasecmp(flg, flag) == 0 ) 
 			return TRUE; 	
 	}
@@ -220,13 +210,13 @@ static bool flags_list_flag_exists(string_t *flags_list, const char *flag)
 static void flags_list_flag_delete(string_t *flags_list, const char *flag)
 {
 	const char *flg;
-	struct flags_list_iter flit;
+	struct ext_imapflags_iter flit;
 		
-	flags_list_iter_init(&flit, flags_list);
+	ext_imapflags_iter_init(&flit, flags_list);
 	
-	while ( (flg=flags_list_iter_get_flag(&flit)) != NULL ) {
+	while ( (flg=ext_imapflags_iter_get_flag(&flit)) != NULL ) {
 		if ( strcasecmp(flg, flag) == 0 ) {
-			flags_list_iter_delete_last(&flit);
+			ext_imapflags_iter_delete_last(&flit);
 		} 	
 	}
 }
@@ -235,11 +225,11 @@ static void flags_list_add_flags
 	(string_t *flags_list, string_t *flags)
 {	
 	const char *flg;
-	struct flags_list_iter flit;
+	struct ext_imapflags_iter flit;
 		
-	flags_list_iter_init(&flit, flags);
+	ext_imapflags_iter_init(&flit, flags);
 	
-	while ( (flg=flags_list_iter_get_flag(&flit)) != NULL ) {
+	while ( (flg=ext_imapflags_iter_get_flag(&flit)) != NULL ) {
 		if ( flag_is_valid(flg) && !flags_list_flag_exists(flags_list, flg) ) {
 			if ( str_len(flags_list) != 0 ) 
 				str_append_c(flags_list, ' '); 
@@ -252,11 +242,11 @@ static void flags_list_remove_flags
 	(string_t *flags_list, string_t *flags)
 {	
 	const char *flg;
-	struct flags_list_iter flit;
+	struct ext_imapflags_iter flit;
 		
-	flags_list_iter_init(&flit, flags);
+	ext_imapflags_iter_init(&flit, flags);
 	
-	while ( (flg=flags_list_iter_get_flag(&flit)) != NULL ) {
+	while ( (flg=ext_imapflags_iter_get_flag(&flit)) != NULL ) {
 		flags_list_flag_delete(flags_list, flg); 	
 	}
 }
@@ -273,7 +263,7 @@ static void flags_list_set_flags
 void ext_imapflags_set_flags
 	(struct sieve_interpreter *interpreter, string_t *flags)
 {
-	string_t *cur_flags = ext_imapflags_get_flags_string(interpreter);
+	string_t *cur_flags = _get_flags_string(interpreter);
 
 	flags_list_set_flags(cur_flags, flags);		
 }
@@ -281,7 +271,7 @@ void ext_imapflags_set_flags
 void ext_imapflags_add_flags
 	(struct sieve_interpreter *interpreter, string_t *flags)
 {
-	string_t *cur_flags = ext_imapflags_get_flags_string(interpreter);
+	string_t *cur_flags = _get_flags_string(interpreter);
 	
 	flags_list_add_flags(cur_flags, flags);		
 }
@@ -289,9 +279,22 @@ void ext_imapflags_add_flags
 void ext_imapflags_remove_flags
 	(struct sieve_interpreter *interpreter, string_t *flags)
 {
-	string_t *cur_flags = ext_imapflags_get_flags_string(interpreter);
+	string_t *cur_flags = _get_flags_string(interpreter);
 	
 	flags_list_remove_flags(cur_flags, flags);		
+}
+
+const char *ext_imapflags_get_flags_string(struct sieve_interpreter *interpreter)
+{
+	return str_c(_get_flags_string(interpreter));
+}
+
+void ext_imapflags_get_flags_init
+	(struct ext_imapflags_iter *iter, struct sieve_interpreter *interpreter)
+{
+	string_t *cur_flags = _get_flags_string(interpreter);
+	
+	ext_imapflags_iter_init(iter, cur_flags);		
 }
 
 	
