@@ -52,14 +52,15 @@ static int ext_my_id = -1;
 
 static bool cmp_extension_load(int ext_id);
 static bool cmp_validator_load(struct sieve_validator *validator);
-static bool cmp_interpreter_load(struct sieve_interpreter *interp);
+static bool cmp_binary_load(struct sieve_binary *sbin);
 
 const struct sieve_extension comparator_extension = {
 	"@comparators",
 	cmp_extension_load,
 	cmp_validator_load,
-	NULL, NULL,
-	cmp_interpreter_load,
+	NULL, 
+	cmp_binary_load,
+	NULL,
 	SIEVE_EXT_DEFINE_NO_OPCODES,
 	NULL
 };
@@ -161,22 +162,22 @@ bool cmp_validator_load(struct sieve_validator *validator)
  * Interpreter context:
  */
 
-struct cmp_interpreter_context {
+struct cmp_binary_context {
 	ARRAY_DEFINE(cmp_extensions, 
 		const struct sieve_comparator_extension *); 
 };
 
-static inline struct cmp_interpreter_context *
-	get_interpreter_context(struct sieve_interpreter *interpreter)
+static inline struct cmp_binary_context *
+	get_binary_context(struct sieve_binary *sbin)
 {
-	return (struct cmp_interpreter_context *) 
-		sieve_interpreter_extension_get_context(interpreter, ext_my_id);
+	return (struct cmp_binary_context *) 
+		sieve_binary_extension_get_context(sbin, ext_my_id);
 }
 
 static const struct sieve_comparator_extension *sieve_comparator_extension_get
-	(struct sieve_interpreter *interpreter, int ext_id)
+	(struct sieve_binary *sbin, int ext_id)
 {
-	struct cmp_interpreter_context *ctx = get_interpreter_context(interpreter);
+	struct cmp_binary_context *ctx = get_binary_context(sbin);
 	
 	if ( ext_id > 0 && ext_id < (int) array_count(&ctx->cmp_extensions) ) {
 		const struct sieve_comparator_extension * const *ext;
@@ -190,25 +191,25 @@ static const struct sieve_comparator_extension *sieve_comparator_extension_get
 }
 
 void sieve_comparator_extension_set
-	(struct sieve_interpreter *interpreter, int ext_id,
+	(struct sieve_binary *sbin, int ext_id,
 		const struct sieve_comparator_extension *ext)
 {
-	struct cmp_interpreter_context *ctx = get_interpreter_context(interpreter);
+	struct cmp_binary_context *ctx = get_binary_context(sbin);
 
 	array_idx_set(&ctx->cmp_extensions, (unsigned int) ext_id, &ext);
 }
 
-static bool cmp_interpreter_load(struct sieve_interpreter *interpreter)
+static bool cmp_binary_load(struct sieve_binary *sbin)
 {
-	pool_t pool = sieve_interpreter_pool(interpreter);
+	pool_t pool = sieve_binary_pool(sbin);
 	
-	struct cmp_interpreter_context *ctx = 
-		p_new(pool, struct cmp_interpreter_context, 1);
+	struct cmp_binary_context *ctx = 
+		p_new(pool, struct cmp_binary_context, 1);
 	
 	/* Setup comparator registry */
 	p_array_init(&ctx->cmp_extensions, pool, 4);
 
-	sieve_interpreter_extension_set_context(interpreter, ext_my_id, ctx);
+	sieve_binary_extension_set_context(sbin, ext_my_id, ctx);
 	
 	return TRUE;
 }
@@ -326,15 +327,15 @@ static void opr_comparator_emit_ext
 }
 
 const struct sieve_comparator *sieve_opr_comparator_read
-  (const struct sieve_runtime_env *renv, sieve_size_t *address)
+  (struct sieve_binary *sbin, sieve_size_t *address)
 {
 	unsigned int cmp_code;
-	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
+	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
 	
 	if ( operand == NULL || operand->class != &comparator_class ) 
 		return NULL;
 	
-	if ( sieve_binary_read_byte(renv->sbin, address, &cmp_code) ) {
+	if ( sieve_binary_read_byte(sbin, address, &cmp_code) ) {
 		if ( cmp_code < SIEVE_COMPARATOR_CUSTOM ) {
 			if ( cmp_code < sieve_core_comparators_count )
 				return sieve_core_comparators[cmp_code];
@@ -344,18 +345,18 @@ const struct sieve_comparator *sieve_opr_comparator_read
 			int ext_id = -1;
 			const struct sieve_comparator_extension *cmp_ext;
 
-			if ( sieve_binary_extension_get_by_index(renv->sbin,
+			if ( sieve_binary_extension_get_by_index(sbin,
 				cmp_code - SIEVE_COMPARATOR_CUSTOM, &ext_id) == NULL )
 				return NULL; 
 
-			cmp_ext = sieve_comparator_extension_get(renv->interp, ext_id); 
+			cmp_ext = sieve_comparator_extension_get(sbin, ext_id); 
  
 			if ( cmp_ext != NULL ) {  	
 				unsigned int code;
 				if ( cmp_ext->comparator != NULL )
 					return cmp_ext->comparator;
 		  	
-				if ( sieve_binary_read_byte(renv->sbin, address, &code) &&
+				if ( sieve_binary_read_byte(sbin, address, &code) &&
 					cmp_ext->get_comparator != NULL )
 					return cmp_ext->get_comparator(code);
 			} else {
@@ -368,11 +369,11 @@ const struct sieve_comparator *sieve_opr_comparator_read
 }
 
 bool sieve_opr_comparator_dump
-	(const struct sieve_runtime_env *renv, sieve_size_t *address)
+	(struct sieve_binary *sbin, sieve_size_t *address)
 {
 	sieve_size_t pc = *address;
 	const struct sieve_comparator *cmp = 
-		sieve_opr_comparator_read(renv, address);
+		sieve_opr_comparator_read(sbin, address);
 	
 	if ( cmp == NULL )
 		return FALSE;

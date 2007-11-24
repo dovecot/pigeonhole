@@ -174,10 +174,10 @@ static bool tst_hasflag_opcode_dump
 		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
 			switch ( opt_code ) {
 			case OPT_COMPARATOR:
-				sieve_opr_comparator_dump(renv, address);
+				sieve_opr_comparator_dump(renv->sbin, address);
 				break;
 			case OPT_MATCH_TYPE:
-				sieve_opr_match_type_dump(renv, address);
+				sieve_opr_match_type_dump(renv->sbin, address);
 				break;
 			default: 
 				return FALSE;
@@ -213,10 +213,10 @@ static bool tst_hasflag_opcode_execute
 		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
 			switch ( opt_code ) {
 			case OPT_COMPARATOR:
-				cmp = sieve_opr_comparator_read(renv, address);
+				cmp = sieve_opr_comparator_read(renv->sbin, address);
 				break;
 			case OPT_MATCH_TYPE:
-				mtch = sieve_opr_match_type_read(renv, address);
+				mtch = sieve_opr_match_type_read(renv->sbin, address);
 				break;
 			default:
 				return FALSE;

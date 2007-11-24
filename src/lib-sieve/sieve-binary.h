@@ -12,6 +12,7 @@ struct sieve_binary *sieve_binary_create_new(void);
 void sieve_binary_ref(struct sieve_binary *sbin);
 void sieve_binary_unref(struct sieve_binary **sbin);
 
+inline pool_t sieve_binary_pool(struct sieve_binary *sbin);
 void sieve_binary_load(struct sieve_binary *sbin);
 
 /* 

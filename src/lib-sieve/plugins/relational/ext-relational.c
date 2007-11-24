@@ -35,8 +35,7 @@
 
 static bool ext_relational_load(int ext_id);
 static bool ext_relational_validator_load(struct sieve_validator *validator);
-static bool ext_relational_interpreter_load
-	(struct sieve_interpreter *interpreter);
+static bool ext_relational_binary_load(struct sieve_binary *sbin);
 
 /* Types */
 
@@ -70,8 +69,9 @@ const struct sieve_extension relational_extension = {
 	"relational", 
 	ext_relational_load,
 	ext_relational_validator_load,
-	NULL, NULL,
-	ext_relational_interpreter_load,  
+	NULL, 
+	ext_relational_binary_load,  
+	NULL,
 	SIEVE_EXT_DEFINE_NO_OPCODES, 
 	NULL
 };
@@ -362,13 +362,12 @@ static bool ext_relational_validator_load(struct sieve_validator *validator)
 	return TRUE;
 }
 
-/* Load extension into interpreter */
+/* Load extension into binary */
 
-static bool ext_relational_interpreter_load
-	(struct sieve_interpreter *interpreter)
+static bool ext_relational_binary_load(struct sieve_binary *sbin)
 {
 	sieve_match_type_extension_set
-		(interpreter, ext_my_id, &relational_match_extension);
+		(sbin, ext_my_id, &relational_match_extension);
 
 	return TRUE;
 }

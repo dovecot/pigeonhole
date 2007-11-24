@@ -39,8 +39,7 @@
 
 static bool ext_regex_load(int ext_id);
 static bool ext_regex_validator_load(struct sieve_validator *validator);
-static bool ext_regex_interpreter_load
-	(struct sieve_interpreter *interpreter);
+static bool ext_regex_binary_load(struct sieve_binary *sbin);
 
 void mtch_regex_match_init(struct sieve_match_context *mctx);
 static bool mtch_regex_match
@@ -56,8 +55,9 @@ const struct sieve_extension regex_extension = {
 	"regex", 
 	ext_regex_load,
 	ext_regex_validator_load,
-	NULL, NULL,
-	ext_regex_interpreter_load,  
+	NULL, 
+	ext_regex_binary_load,
+	NULL,  
 	SIEVE_EXT_DEFINE_NO_OPCODES, 
 	NULL
 };
@@ -292,13 +292,12 @@ static bool ext_regex_validator_load(struct sieve_validator *validator)
 	return TRUE;
 }
 
-/* Load extension into interpreter */
+/* Load extension into binary */
 
-static bool ext_regex_interpreter_load
-	(struct sieve_interpreter *interpreter)
+static bool ext_regex_binary_load(struct sieve_binary *sbin)
 {
 	sieve_match_type_extension_set
-		(interpreter, ext_my_id, &regex_match_extension);
+		(sbin, ext_my_id, &regex_match_extension);
 
 	return TRUE;
 }

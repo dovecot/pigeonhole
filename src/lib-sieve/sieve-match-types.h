@@ -89,7 +89,7 @@ const struct sieve_match_type *sieve_match_type_find
 	(struct sieve_validator *validator, const char *identifier,
 		int *ext_id);
 void sieve_match_type_extension_set
-	(struct sieve_interpreter *interpreter, int ext_id,
+	(struct sieve_binary *sbin, int ext_id,
 		const struct sieve_match_type_extension *ext);
 
 extern const struct sieve_argument match_type_tag;
@@ -102,9 +102,9 @@ extern const struct sieve_match_type *sieve_core_match_types[];
 extern const unsigned int sieve_core_match_types_count;
 
 const struct sieve_match_type *sieve_opr_match_type_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(struct sieve_binary *sbin, sieve_size_t *address);
 bool sieve_opr_match_type_dump
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(struct sieve_binary *sbin, sieve_size_t *address);
 		
 /* Match Utility */
 

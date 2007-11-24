@@ -47,8 +47,9 @@ void sieve_address_part_register
 const struct sieve_address_part *sieve_address_part_find
 	(struct sieve_validator *validator, const char *identifier,
 		int *ext_id);
+		
 void sieve_address_part_extension_set
-	(struct sieve_interpreter *interpreter, int ext_id,
+	(struct sieve_binary *sbin, int ext_id,
 		const struct sieve_address_part_extension *ext);
 
 extern const struct sieve_argument address_part_tag;
@@ -61,9 +62,9 @@ extern const struct sieve_address_part *sieve_core_address_parts[];
 extern const unsigned int sieve_core_address_parts_count;
 
 const struct sieve_address_part *sieve_opr_address_part_read
- 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+ 	(struct sieve_binary *sbin, sieve_size_t *address);
 bool sieve_opr_address_part_dump
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(struct sieve_binary *sbin, sieve_size_t *address);
 
 /* Match utility */
 
@@ -79,9 +80,9 @@ enum sieve_addrmatch_opt_operand {
 };
 
 bool sieve_addrmatch_default_dump_optionals
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(struct sieve_binary *sbin, sieve_size_t *address);
 bool sieve_addrmatch_default_get_optionals
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	(struct sieve_binary *sbin, sieve_size_t *address, 
 		const struct sieve_address_part **addp, 
 		const struct sieve_match_type **mtch, const struct sieve_comparator **cmp);
 

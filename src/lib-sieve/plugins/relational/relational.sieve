@@ -1,4 +1,4 @@
-require ["comparator-i;ascii-numeric", "relational", "fileinto"];
+require ["relational", "comparator-i;ascii-numeric", "fileinto"];
 
 if header :value "eq" :comparator "i;ascii-numeric" "x-spam-score" "2" {
 	fileinto "INBOX.fail";

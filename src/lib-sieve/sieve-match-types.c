@@ -36,14 +36,15 @@ static int ext_my_id = -1;
 
 static bool mtch_extension_load(int ext_id);
 static bool mtch_validator_load(struct sieve_validator *validator);
-static bool mtch_interpreter_load(struct sieve_interpreter *interp);
+static bool mtch_binary_load(struct sieve_binary *sbin);
 
 const struct sieve_extension match_type_extension = {
 	"@match-types",
 	mtch_extension_load,
 	mtch_validator_load,
-	NULL, NULL,
-	mtch_interpreter_load,
+	NULL,
+	mtch_binary_load,
+	NULL,
 	SIEVE_EXT_DEFINE_NO_OPCODES,
 	NULL
 };
@@ -153,27 +154,28 @@ void sieve_match_types_link_tags
  * Interpreter context:
  *
  * FIXME: This code will be duplicated across all extensions that introduce 
- * a registry of some kind in the interpreter. 
+ * a registry of some kind in the binary. 
  */
 
-struct mtch_interpreter_context {
+struct mtch_binary_context {
 	ARRAY_DEFINE(mtch_extensions, 
 		const struct sieve_match_type_extension *); 
 };
 
-static inline struct mtch_interpreter_context *
-	get_interpreter_context(struct sieve_interpreter *interpreter)
+static inline struct mtch_binary_context *
+	get_binary_context(struct sieve_binary *sbin)
 {
-	return (struct mtch_interpreter_context *) 
-		sieve_interpreter_extension_get_context(interpreter, ext_my_id);
+	return (struct mtch_binary_context *) 
+		sieve_binary_extension_get_context(sbin, ext_my_id);
 }
 
 static const struct sieve_match_type_extension *sieve_match_type_extension_get
-	(struct sieve_interpreter *interpreter, int ext_id)
+	(struct sieve_binary *sbin, int ext_id)
 {
-	struct mtch_interpreter_context *ctx = get_interpreter_context(interpreter);
+	struct mtch_binary_context *ctx = get_binary_context(sbin);
 	
-	if ( (ctx != NULL) && (ext_id > 0) && (ext_id < (int) array_count(&ctx->mtch_extensions)) ) {
+	if ( (ctx != NULL) && (ext_id > 0) && 
+		(ext_id < (int) array_count(&ctx->mtch_extensions)) ) {
 		const struct sieve_match_type_extension * const *ext;
 
 		ext = array_idx(&ctx->mtch_extensions, (unsigned int) ext_id);
@@ -185,25 +187,26 @@ static const struct sieve_match_type_extension *sieve_match_type_extension_get
 }
 
 void sieve_match_type_extension_set
-	(struct sieve_interpreter *interpreter, int ext_id,
+	(struct sieve_binary *sbin, int ext_id,
 		const struct sieve_match_type_extension *ext)
 {
-	struct mtch_interpreter_context *ctx = get_interpreter_context(interpreter);
+	struct mtch_binary_context *ctx = get_binary_context(sbin);
 
 	array_idx_set(&ctx->mtch_extensions, (unsigned int) ext_id, &ext);
 }
 
-static bool mtch_interpreter_load(struct sieve_interpreter *interpreter)
+static bool mtch_binary_load(struct sieve_binary *sbin)
 {
-	pool_t pool = sieve_interpreter_pool(interpreter);
+	pool_t pool = sieve_binary_pool(sbin);
 	
-	struct mtch_interpreter_context *ctx = 
-		p_new(pool, struct mtch_interpreter_context, 1);
+	printf("BINARY MATCH-TYPES LOADED\n");
+	struct mtch_binary_context *ctx = 
+		p_new(pool, struct mtch_binary_context, 1);
 	
-	/* Setup comparator registry */
+	/* Setup match-type registry */
 	p_array_init(&ctx->mtch_extensions, pool, 4);
 
-	sieve_interpreter_extension_set_context(interpreter, ext_my_id, ctx);
+	sieve_binary_extension_set_context(sbin, ext_my_id, ctx);
 	
 	return TRUE;
 }
@@ -338,15 +341,15 @@ static void opr_match_type_emit_ext
 }
 
 const struct sieve_match_type *sieve_opr_match_type_read
-  (const struct sieve_runtime_env *renv, sieve_size_t *address)
+  (struct sieve_binary *sbin, sieve_size_t *address)
 {
 	unsigned int mtch_code;
-	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
+	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
 	
 	if ( operand == NULL || operand->class != &match_type_class ) 
 		return NULL;
 	
-	if ( sieve_binary_read_byte(renv->sbin, address, &mtch_code) ) {
+	if ( sieve_binary_read_byte(sbin, address, &mtch_code) ) {
 		if ( mtch_code < SIEVE_MATCH_TYPE_CUSTOM ) {
 			if ( mtch_code < sieve_core_match_types_count )
 				return sieve_core_match_types[mtch_code];
@@ -356,18 +359,18 @@ const struct sieve_match_type *sieve_opr_match_type_read
 			int ext_id = -1;
 			const struct sieve_match_type_extension *mtch_ext;
 
-			if ( sieve_binary_extension_get_by_index(renv->sbin,
+			if ( sieve_binary_extension_get_by_index(sbin,
 				mtch_code - SIEVE_MATCH_TYPE_CUSTOM, &ext_id) == NULL )
 				return NULL; 
 
-			mtch_ext = sieve_match_type_extension_get(renv->interp, ext_id); 
+			mtch_ext = sieve_match_type_extension_get(sbin, ext_id); 
  
 			if ( mtch_ext != NULL ) {  	
 				unsigned int code;
 				if ( mtch_ext->match_type != NULL )
 					return mtch_ext->match_type;
 		  	
-				if ( sieve_binary_read_byte(renv->sbin, address, &code) &&
+				if ( sieve_binary_read_byte(sbin, address, &code) &&
 					mtch_ext->get_match != NULL )
 					return mtch_ext->get_match(code);
 			} else {
@@ -380,11 +383,11 @@ const struct sieve_match_type *sieve_opr_match_type_read
 }
 
 bool sieve_opr_match_type_dump
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+(struct sieve_binary *sbin, sieve_size_t *address)
 {
 	sieve_size_t pc = *address;
 	const struct sieve_match_type *mtch = 
-		sieve_opr_match_type_read(renv, address);
+		sieve_opr_match_type_read(sbin, address);
 	
 	if ( mtch == NULL )
 		return FALSE;

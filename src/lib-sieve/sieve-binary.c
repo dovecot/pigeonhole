@@ -66,6 +66,11 @@ inline sieve_size_t sieve_binary_get_code_size(struct sieve_binary *sbin)
 	return buffer_get_used_size(sbin->data);
 }
 
+inline pool_t sieve_binary_pool(struct sieve_binary *sbin)
+{
+	return sbin->pool;
+}
+
 void sieve_binary_load(struct sieve_binary *sbin)
 {
 	unsigned int i;
@@ -73,6 +78,15 @@ void sieve_binary_load(struct sieve_binary *sbin)
 	/* Currently only memory binary support */
 	sbin->code = buffer_get_data(sbin->data, &(sbin->code_size));			
 	
+	/* Pre-load core language features implemented as 'extensions' */
+	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
+		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
+		
+		if ( ext->binary_load != NULL )
+			(void)ext->binary_load(sbin);		
+	}
+	
+	/* Load other extensions into binary */
 	for ( i = 0; i < array_count(&sbin->extensions); i++ ) {
 		struct sieve_binary_extension * const *aext = 
 			array_idx(&sbin->extensions, i);

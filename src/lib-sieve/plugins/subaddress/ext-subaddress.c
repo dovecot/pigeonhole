@@ -31,8 +31,7 @@
 
 static bool ext_subaddress_load(int ext_id);
 static bool ext_subaddress_validator_load(struct sieve_validator *validator);
-static bool ext_subaddress_interpreter_load
-	(struct sieve_interpreter *interpreter);
+static bool ext_subaddress_binary_load(struct sieve_binary *sbin);
 
 /* Extension definitions */
 
@@ -42,8 +41,9 @@ const struct sieve_extension subaddress_extension = {
 	"subaddress", 
 	ext_subaddress_load,
 	ext_subaddress_validator_load,
-	NULL, NULL,
-	ext_subaddress_interpreter_load,  
+	NULL, 
+	ext_subaddress_binary_load,
+	NULL,  
 	SIEVE_EXT_DEFINE_NO_OPCODES, 
 	NULL
 };
@@ -135,13 +135,12 @@ static bool ext_subaddress_validator_load(struct sieve_validator *validator)
 	return TRUE;
 }
 
-/* Load extension into interpreter */
+/* Load extension into binary */
 
-static bool ext_subaddress_interpreter_load
-	(struct sieve_interpreter *interpreter)
+static bool ext_subaddress_binary_load(struct sieve_binary *sbin)
 {
 	sieve_address_part_extension_set
-		(interpreter, ext_my_id, &subaddress_addrp_extension);
+		(sbin, ext_my_id, &subaddress_addrp_extension);
 
 	return TRUE;
 }

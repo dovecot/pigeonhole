@@ -167,7 +167,7 @@ static bool ext_envelope_opcode_dump
 	printf("ENVELOPE\n");
 
 	/* Handle any optional arguments */
-	if ( !sieve_addrmatch_default_dump_optionals(renv, address) )
+	if ( !sieve_addrmatch_default_dump_optionals(renv->sbin, address) )
 		return FALSE;
 
 	return
@@ -216,7 +216,7 @@ static bool ext_envelope_opcode_execute
 	printf("?? ENVELOPE\n");
 
 	if ( !sieve_addrmatch_default_get_optionals
-		(renv, address, &addrp, &mtch, &cmp) )
+		(renv->sbin, address, &addrp, &mtch, &cmp) )
 		return FALSE; 
 
 	t_push();

@@ -116,7 +116,7 @@ static bool tst_address_opcode_dump
 	printf("ADDRESS\n");
 
 	//* Handle any optional arguments */
-	if ( !sieve_addrmatch_default_dump_optionals(renv, address) )
+	if ( !sieve_addrmatch_default_dump_optionals(renv->sbin, address) )
 		return FALSE;
 
 	return
@@ -142,7 +142,7 @@ static bool tst_address_opcode_execute
 	printf("?? ADDRESS\n");
 
 	if ( !sieve_addrmatch_default_get_optionals
-		(renv, address, &addrp, &mtch, &cmp) )
+		(renv->sbin, address, &addrp, &mtch, &cmp) )
 		return FALSE; 
 
 	t_push();
