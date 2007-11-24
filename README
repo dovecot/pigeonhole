@@ -96,6 +96,7 @@ TODO
 
 * Produce a fully working interpreter that actually executes actions, currently
   tests are evaluated and actions just print their occurence.
+* Extract code dump functionality from interpreter and start sieve-code-dump.c
 * Resolve code duplication introduced for handling address-parts and match-types
   in different command implementations.
 * Implement a faster substring search algorithm to make sopport for the body 
