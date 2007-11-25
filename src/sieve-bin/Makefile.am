@@ -1,4 +1,4 @@
-bin_PROGRAMS = sievec sieve_test
+bin_PROGRAMS = sievec sieve-test sieve-exec
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
@@ -13,6 +13,7 @@ AM_CPPFLAGS = \
 
 sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
 sieve_test_LDFLAGS = -export-dynamic -Wl,--start-group
+sieve_exec_LDFLAGS = -export-dynamic -Wl,--start-group
 
 libs = \
 	$(top_srcdir)/src/lib-sieve/libsieve.la \
@@ -34,13 +35,27 @@ ldadd = \
 
 sievec_LDADD = $(ldadd)
 sieve_test_LDADD = $(ldadd)
+sieve_exec_LDADD = $(ldadd)
 
 sievec_DEPENDENCIES = $(libs)
 sieve_test_DEPENDENCIES = $(libs)
+sieve_exec_DEPENDENCIES = $(libs)
+
+common_sources = \
+	bin-common.c \
+	mail-raw.c
 
 sievec_SOURCES = \
 	sievec.c 
 
 sieve_test_SOURCES = \
-	sieve_test.c 
+	$(common_sources) \
+	sieve-test.c 
 
+sieve_exec_SOURCES = \
+	$(common_sources) \
+	sieve-exec.c 
+
+noinst_HEADERS = \
+	bin-common.h \
+	mail-raw.h

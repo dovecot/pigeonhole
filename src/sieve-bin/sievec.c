@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 	printf("Parsing sieve script '%s'...\n", argv[1]);
 
 	if ( sieve_init("") ) {
-		sbin = sieve_compile(fd);
+		sbin = sieve_compile(fd, TRUE);
 	
 		if ( sbin != NULL ) 
 			(void) sieve_dump(sbin);

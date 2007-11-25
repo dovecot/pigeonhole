@@ -237,10 +237,12 @@ bool sieve_interpreter_run
 	bool is_topmost = ( *result == NULL );
 	sieve_interpreter_reset(interp);
 	
-	if ( *result == NULL )
+	if ( is_topmost )
 		*result = sieve_result_create();
-	else
+	else {
 		sieve_result_ref(*result);
+		printf("REF\n");
+	}
 	interp->runenv.msgdata = msgdata;
 	interp->runenv.result = *result;		
 	interp->runenv.mailenv = menv;
@@ -261,7 +263,6 @@ bool sieve_interpreter_run
 	interp->runenv.mailenv = NULL;
 	
 	if ( is_topmost ) {
-		sieve_result_print(*result);
 		sieve_result_execute(*result, msgdata, menv);
 	}
 	

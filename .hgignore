@@ -48,4 +48,6 @@ Makefile.in
 **/Makefile.in
 
 src/sieve-bin/sievec
-src/sieve-bin/sieve_test
+src/sieve-bin/sieve-test
+src/sieve-bin/sieve-exec
+

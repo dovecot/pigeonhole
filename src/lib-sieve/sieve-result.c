@@ -47,9 +47,11 @@ void sieve_result_ref(struct sieve_result *result)
 void sieve_result_unref(struct sieve_result **result) 
 {
 	if ( result != NULL && *result != NULL ) {
-		pool_unref(&((*result)->pool));
+		pool_t pool = (*result)->pool;
+		pool_unref(&pool);
+		if ( pool == NULL )
+			*result = NULL;
 	}
-	*result = NULL;
 }
 
 inline pool_t sieve_result_pool(struct sieve_result *result)

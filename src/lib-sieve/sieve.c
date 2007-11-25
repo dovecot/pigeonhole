@@ -80,7 +80,7 @@ static struct sieve_binary *sieve_generate(struct sieve_ast *ast)
 	return result;
 }
 
-struct sieve_binary *sieve_compile(int fd) 
+struct sieve_binary *sieve_compile(int fd, bool verbose) 
 {
 	struct sieve_binary *result;
 	struct sieve_error_handler *ehandler;
@@ -91,19 +91,23 @@ struct sieve_binary *sieve_compile(int fd)
 	
 	/* Parse */
 
-	printf("Parsing sieve script...\n");
+	if ( verbose )
+		printf("Parsing sieve script...\n");
 	
 	if ( (ast = sieve_parse(fd, ehandler)) == NULL ) {
  		printf("Parse failed.\n");
  		return NULL;
  	}
 
- 	printf("Parse successful.\n");
- 	sieve_ast_unparse(ast);
-
+	if ( verbose ) {
+	 	printf("Parse successful.\n");
+	 	sieve_ast_unparse(ast);
+	}
+	
 	/* Validate */
 	
-	printf("Validating script...\n");
+	if ( verbose )
+		printf("Validating script...\n");
 	
 	if ( !sieve_validate(ast, ehandler) ) {
 		printf("Validation failed.\n");
@@ -112,11 +116,13 @@ struct sieve_binary *sieve_compile(int fd)
  		return NULL;
  	}
  	
- 	printf("Validation successful.\n");
-
+ 	if ( verbose ) 
+	 	printf("Validation successful.\n");
+	
 	/* Generate */
 	
-	printf("Generating script...\n");
+	if ( verbose ) 
+		printf("Generating script...\n");
 	
 	if ( (result=sieve_generate(ast)) == NULL ) {
 		printf("Script generation failed.\n");
@@ -124,8 +130,9 @@ struct sieve_binary *sieve_compile(int fd)
 		sieve_ast_unref(&ast);
 		return NULL;
 	}
-		
-	printf("Script generation successful.\n");
+	
+	if ( verbose )	
+		printf("Script generation successful.\n");
 	
 	/* Cleanup */
 	sieve_ast_unref(&ast);
@@ -142,23 +149,42 @@ void sieve_dump(struct sieve_binary *binary)
 	
 	sieve_interpreter_free(interpreter);
 }
-	
-bool sieve_execute
-	(struct sieve_binary *binary, const struct sieve_message_data *msgdata,
-		const struct sieve_mail_environment *menv) 
+
+bool sieve_test
+	(struct sieve_binary *binary, const struct sieve_message_data *msgdata) 
 {
-	struct sieve_result *sres = NULL;
-	struct sieve_interpreter *interpreter = sieve_interpreter_create(binary);			
+	struct sieve_result *sres = sieve_result_create();
+	struct sieve_interpreter *interp = sieve_interpreter_create(binary);			
 	bool result = TRUE;
 							
 	printf("Code Execute:\n\n");
-	if ( !sieve_interpreter_run(interpreter, msgdata, menv, &sres) ) {
-		result = FALSE;
-	}
-				
-	sieve_interpreter_free(interpreter);
+	result = sieve_interpreter_run(interp, msgdata, NULL, &sres);
 	
+	if ( result ) {
+		printf("Script executed successfully.\n\n");
+		sieve_result_print(sres);
+	}
+	
+	sieve_interpreter_free(interp);
 	sieve_result_unref(&sres);
 	return result;
 }
+
+bool sieve_execute
+	(struct sieve_binary *binary, const struct sieve_message_data *msgdata,
+		const struct sieve_mail_environment *menv) 	
+{
+	struct sieve_result *sres = NULL;
+	struct sieve_interpreter *interp = sieve_interpreter_create(binary);			
+	bool result = TRUE;
+							
+	printf("Code Execute:\n\n");
+	result = sieve_interpreter_run(interp, msgdata, menv, &sres);
+				
+	sieve_interpreter_free(interp);
+	sieve_result_unref(&sres);
+	return result;
+}
+
+
 	
