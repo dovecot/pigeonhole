@@ -15,13 +15,14 @@ sievec <sieve-file>
 Compiles the script and produces various dumps of intermittent compilation
 results. This already works pretty good for all supported features.
 
-sieve_test <sieve-file>
+sieve-test <sieve-file> [<mailfile>/-]
 
-Reads mail message from standard input and executes the sieve script to
-produce a verdict. Currently only prints an execution dump with the 
-instructions encountered during execution.
+Reads mail message from the specified mailfile (- = stdin) and executes the 
+sieve script to produce a verdict. This prints an execution dump with the 
+instructions encountered during execution and finally it prints a list of 
+actions that would have been performed on this message. 
 
-In the directory ./sieve various example scripts are bundled. 
+Various example scripts are bundled in the directory 'sieve'.
 
 Features
 --------

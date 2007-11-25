@@ -241,7 +241,6 @@ bool sieve_interpreter_run
 		*result = sieve_result_create();
 	else {
 		sieve_result_ref(*result);
-		printf("REF\n");
 	}
 	interp->runenv.msgdata = msgdata;
 	interp->runenv.result = *result;		

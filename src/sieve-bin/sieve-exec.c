@@ -31,7 +31,7 @@ static int sieve_send_forward
 
 int main(int argc, char **argv) 
 {
-	int fd;
+	int sfd, mfd;
 	struct mail_raw *mailr;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
@@ -40,17 +40,34 @@ int main(int argc, char **argv)
 	bin_init();
 
 	if ( argc < 2 ) {
-		printf( "Usage: sieve_test <filename>\n");
+		printf( "Usage: sieve-exec <sieve-file> [<mailfile>/-]\n");
  		exit(1);
  	}
   
-  	/* Compile sieve script */
+  	/* Open sieve script */
   
-	if ( (fd = open(argv[1], O_RDONLY)) < 0 ) {
+	if ( (sfd = open(argv[1], O_RDONLY)) < 0 ) {
 		perror("open()");
 		exit(1);
 	}
 
+ 	/* Open mail file */
+ 
+	if ( argc > 2 )
+    {
+        if ( *(argv[2]) == '-' && *(argv[2]+1) == '\0' )
+            mfd = 0;
+        else {
+            if ( (mfd = open(argv[2], O_RDONLY)) < 0 ) {
+                perror("Failed to open mail file");
+                exit(1);
+            }
+        }
+    } else
+        mfd = 0;
+
+	/* Compile sieve script */
+	
 	printf("Parsing sieve script '%s'...\n", argv[1]);
 
 	if ( !sieve_init("") ) {
@@ -58,18 +75,18 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if ( (sbin = sieve_compile(fd, FALSE)) == NULL ) {
+	if ( (sbin = sieve_compile(sfd, FALSE)) == NULL ) {
 		printf("Failed to compile sieve script\n");
 		exit(1);
 	}		 
 		
 	(void) sieve_dump(sbin);
 
- 	close(fd);
+ 	close(sfd);
 
 	mail_raw_init();
 
-	mailr = mail_raw_open(0);
+	mailr = mail_raw_open(mfd);
 
 	/* Collect necessary message data */
 	memset(&msgdata, 0, sizeof(msgdata));
@@ -89,6 +106,7 @@ int main(int argc, char **argv)
 	sieve_deinit();
 
 	mail_raw_close(mailr);
+	close(mfd);
 
 	mail_raw_deinit();
 	bin_deinit();  
