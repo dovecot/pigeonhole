@@ -22,7 +22,8 @@ static void sig_die(int signo, void *context ATTR_UNUSED)
 	   which is too common at least while testing :) */
 	if (signo != SIGINT)
 		i_warning("Killed with signal %d", signo);
-	io_loop_stop(ioloop);
+	// io_loop_stop(ioloop); We are not running an ioloop
+	exit(1);
 }
 
 void bin_init(void) 

@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 	/* Open mail file */
 	if ( argc > 2 ) 
 	{
-		if ( *(argv[2]) == '-' && *(argv[2]+1) == '\0' ) 
+		if ( strcmp(argv[2], "-") == 0 )
 			mfd = 0;
 		else {
 			if ( (mfd = open(argv[2], O_RDONLY)) < 0 ) {
