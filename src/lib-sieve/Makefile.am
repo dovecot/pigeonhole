@@ -56,6 +56,7 @@ libsieve_la_SOURCES = \
 	sieve-address-parts.c \
 	sieve-commands.c \
 	sieve-code.c \
+	sieve-actions.c \
 	$(tsts) \
 	$(cmds) \
 	sieve-extensions.c \

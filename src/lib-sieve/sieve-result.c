@@ -1,6 +1,9 @@
 #include "lib.h"
 #include "mempool.h"
 
+#include "sieve-common.h"
+#include "sieve-interpreter.h"
+#include "sieve-actions.h"
 #include "sieve-result.h"
 
 #include <stdio.h>
@@ -60,9 +63,10 @@ inline pool_t sieve_result_pool(struct sieve_result *result)
 }
 
 bool sieve_result_add_action
-(struct sieve_result *result, const struct sieve_runtime_env *renv,
+(const struct sieve_runtime_env *renv,
 	const struct sieve_action *action, void *context)		
 {
+	struct sieve_result *result = renv->result;
 	struct sieve_result_action *raction;
 	
 	/* First, check for duplicates or conflicts */

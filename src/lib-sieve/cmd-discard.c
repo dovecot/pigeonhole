@@ -2,6 +2,7 @@
 
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
+#include "sieve-actions.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -78,7 +79,7 @@ static bool opc_discard_execute
 {	
 	printf(">> DISCARD\n");
 	
-	sieve_result_add_action(renv->result, renv, &act_discard, NULL);
+	sieve_result_add_action(renv, &act_discard, NULL);
 	
 	return TRUE;
 }

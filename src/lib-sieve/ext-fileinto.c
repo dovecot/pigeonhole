@@ -13,9 +13,11 @@
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-actions.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-result.h"
 
 /* Forward declarations */
 
@@ -154,6 +156,13 @@ static bool ext_fileinto_opcode_execute
 
 	printf(">> FILEINTO \"%s\"\n", str_c(folder));
 
+	sieve_act_store_add_to_result(renv, str_c(folder));
+
 	t_pop();
 	return TRUE;
 }
+
+
+
+
+

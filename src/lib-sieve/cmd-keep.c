@@ -42,18 +42,6 @@ const struct sieve_opcode cmd_keep_opcode = {
 	opc_keep_execute 
 };
 
-/* Keep action */
-
-static int act_keep_execute
-	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv, 
-		void *context);
-		
-const struct sieve_action act_keep = {
-	"keep",
-	NULL, NULL, NULL,
-	act_keep_execute
-};
-
 /*
  * Generation
  */
@@ -78,22 +66,9 @@ static bool opc_keep_execute
 {	
 	printf(">> KEEP\n");
 	
-	sieve_result_add_action(renv->result, renv, &act_keep, NULL);
+	sieve_act_store_add_to_result(renv, "INBOX");
 	
 	return TRUE;
 }
-
-/*
- * Action
- */
- 
-static int act_keep_execute
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *context)
-{  
-	return 0;
-}
-
-
 
 

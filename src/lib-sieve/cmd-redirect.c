@@ -3,6 +3,7 @@
 
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
+#include "sieve-actions.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -144,7 +145,7 @@ static bool cmd_redirect_opcode_execute
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = p_strdup(pool, str_c(redirect));
 	
-	sieve_result_add_action(renv->result, renv, &act_redirect, (void *) act);
+	sieve_result_add_action(renv, &act_redirect, (void *) act);
 	
 	t_pop();
 	return TRUE;

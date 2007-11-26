@@ -71,16 +71,11 @@ struct sieve_match_context;
 /* sieve-address-parts.h */
 struct sieve_address_part;
 
-/*
- *
- */
- 
-struct sieve_mail_context {
-	struct mail_namespace *namespaces;
-	struct mail_storage **storage_r;
-	struct mail *mail;
-	const char *destaddr;
-	const char *mailbox;
-};
+/* sieve-result.h */
+struct sieve_result;
+
+/* sieve-actions.h */
+struct sieve_action_exec_env;
+struct sieve_action;
 
 #endif /* __SIEVE_COMMON_H */
