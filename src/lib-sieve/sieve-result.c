@@ -60,29 +60,37 @@ inline pool_t sieve_result_pool(struct sieve_result *result)
 }
 
 bool sieve_result_add_action
-(struct sieve_result *result, const struct sieve_action *action, void *context)		
+(struct sieve_result *result, const struct sieve_runtime_env *renv,
+	const struct sieve_action *action, void *context)		
 {
 	struct sieve_result_action *raction;
 	
-	/* First, check for duplicates */
+	/* First, check for duplicates or conflicts */
 	raction = result->first_action;
 	while ( raction != NULL ) {
+		const struct sieve_action *oact = raction->action;
+		
 		if ( raction->action == action ) {
-			const struct sieve_action *oact = raction->action;
-			
-			if ( oact->check_duplicate != NULL ) {
-				if ( oact->check_duplicate(action, raction->context, context) )
+			/* Possible duplicate */
+			if ( action->check_duplicate != NULL ) {
+				if ( action->check_duplicate
+					(renv, action, raction->context, context) )
 					return FALSE;
 			} else 
 				return FALSE; 
+		} else {
+			/* Check conflict */
+			if ( action->check_conflict != NULL &&
+				action->check_conflict(renv, action, oact, context) ) 
+				return FALSE;
+			
+			if ( oact->check_conflict != NULL &&
+				oact->check_conflict(renv, oact, action, raction->context) )
+				return FALSE;
 		}
 		raction = raction->next;
 	}
-	
-	/* Check for conflicts */
-	
-	/* FIXME: Unimplemented */
-	
+		
 	/* Create new action object */
 	raction = p_new(result->pool, struct sieve_result_action, 1);
 	raction->action = action;

@@ -51,7 +51,7 @@ static int act_keep_execute
 		
 const struct sieve_action act_keep = {
 	"keep",
-	NULL, NULL,
+	NULL, NULL, NULL,
 	act_keep_execute
 };
 
@@ -80,7 +80,7 @@ static bool opc_keep_execute
 {	
 	printf(">> KEEP\n");
 	
-	sieve_result_add_action(renv->result, &act_keep, NULL);
+	sieve_result_add_action(renv->result, renv, &act_keep, NULL);
 	
 	return TRUE;
 }

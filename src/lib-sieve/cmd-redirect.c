@@ -51,8 +51,8 @@ const struct sieve_opcode cmd_redirect_opcode = {
 /* Redirect action */
 
 static bool act_redirect_check_duplicate
-	(const struct sieve_action *action1 ATTR_UNUSED, void *context1, 
-		void *context2);
+	(const struct sieve_runtime_env *renv,
+		const struct sieve_action *action1, void *context1, void *context2);
 static void act_redirect_print
 	(const struct sieve_action *action, void *context);	
 static int act_redirect_execute
@@ -66,6 +66,7 @@ struct act_redirect_context {
 const struct sieve_action act_redirect = {
 	"redirect",
 	act_redirect_check_duplicate, 
+	NULL,
 	act_redirect_print,
 	act_redirect_execute
 };
@@ -143,19 +144,20 @@ static bool cmd_redirect_opcode_execute
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = p_strdup(pool, str_c(redirect));
 	
-	sieve_result_add_action(renv->result, &act_redirect, (void *) act);
+	sieve_result_add_action(renv->result, renv, &act_redirect, (void *) act);
 	
 	t_pop();
 	return TRUE;
 }
 
 /*
- * Actionstatic bool act_redirect_check_duplicate
-(const struct sieve_action *action1 ATTR_UNUSED, void *context1, void *context2)
+ * Action
  */
  
 static bool act_redirect_check_duplicate
-(const struct sieve_action *action1 ATTR_UNUSED, void *context1, void *context2)
+(const struct sieve_runtime_env *renv ATTR_UNUSED,
+	const struct sieve_action *action1 ATTR_UNUSED, 
+	void *context1, void *context2)
 {
 	struct act_redirect_context *ctx1 = (struct act_redirect_context *) context1;
 	struct act_redirect_context *ctx2 = (struct act_redirect_context *) context2;
