@@ -20,7 +20,8 @@ tsts = \
 cmds = \
 	cmd-if.c \
 	cmd-require.c \
-	cmd-redirect.c 	
+	cmd-redirect.c \
+	cmd-keep.c
 
 exts = \
 	ext-fileinto.c \

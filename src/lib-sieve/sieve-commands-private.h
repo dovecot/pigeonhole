@@ -11,6 +11,9 @@ extern const struct sieve_command cmd_if;
 extern const struct sieve_command cmd_elsif;
 extern const struct sieve_command cmd_else;
 extern const struct sieve_command cmd_redirect;
+extern const struct sieve_command cmd_keep;
+extern const struct sieve_command cmd_stop;
+extern const struct sieve_command cmd_discard;
 
 /* Core tests */
 
