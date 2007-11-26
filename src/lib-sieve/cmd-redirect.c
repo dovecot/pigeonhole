@@ -134,6 +134,7 @@ static bool cmd_redirect_opcode_execute
 
 	printf(">> REDIRECT \"%s\"\n", str_c(redirect));
 	
+	/* Add redirect action to the result */
 	pool = sieve_result_pool(renv->result);
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = p_strdup(pool, str_c(redirect));
