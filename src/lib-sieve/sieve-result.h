@@ -13,6 +13,9 @@ struct sieve_action_exec_env {
 struct sieve_action {
 	const char *name;
 
+	bool (*check_duplicate)	
+		(const struct sieve_action *action1, void *context1, void *context2);	
+
 	void (*print)
 		(const struct sieve_action *action, void *context);	
 	int (*execute)
@@ -25,7 +28,7 @@ void sieve_result_ref(struct sieve_result *result);
 void sieve_result_unref(struct sieve_result **result); 
 inline pool_t sieve_result_pool(struct sieve_result *result);
 
-void sieve_result_add_action
+bool sieve_result_add_action
 	(struct sieve_result *result, const struct sieve_action *action, 
 		void *context);		
 

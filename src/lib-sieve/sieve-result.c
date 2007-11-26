@@ -59,10 +59,29 @@ inline pool_t sieve_result_pool(struct sieve_result *result)
 	return result->pool;
 }
 
-void sieve_result_add_action
+bool sieve_result_add_action
 (struct sieve_result *result, const struct sieve_action *action, void *context)		
 {
 	struct sieve_result_action *raction;
+	
+	/* First, check for duplicates */
+	raction = result->first_action;
+	while ( raction != NULL ) {
+		if ( raction->action == action ) {
+			const struct sieve_action *oact = raction->action;
+			
+			if ( oact->check_duplicate != NULL ) {
+				if ( oact->check_duplicate(action, raction->context, context) )
+					return FALSE;
+			} else 
+				return FALSE; 
+		}
+		raction = raction->next;
+	}
+	
+	/* Check for conflicts */
+	
+	/* FIXME: Unimplemented */
 	
 	/* Create new action object */
 	raction = p_new(result->pool, struct sieve_result_action, 1);
@@ -81,6 +100,8 @@ void sieve_result_add_action
 		result->last_action = raction;
 		raction->next = NULL;
 	}	
+	
+	return TRUE;
 }	
 
 bool sieve_result_print(struct sieve_result *result)

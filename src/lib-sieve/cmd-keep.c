@@ -51,7 +51,7 @@ static int act_keep_execute
 		
 const struct sieve_action act_keep = {
 	"keep",
-	NULL,
+	NULL, NULL,
 	act_keep_execute
 };
 
@@ -88,7 +88,7 @@ static bool opc_keep_execute
 /*
  * Action
  */
-
+ 
 static int act_keep_execute
 (const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv, void *context)
