@@ -3,8 +3,7 @@
  *
  * Authors: Stephan Bosch
  * Specification: RFC3028
- * Implementation: validation, generation and interpretation, no actual 
- *   execution. 
+ * Implementation: no action effect
  * Status: experimental, largely untested
  *
  */
