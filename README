@@ -56,7 +56,7 @@ Base tests and their implementation status:
 Base commands and their implementation status:
 	require: full
 	if,elsif,else: full
-	discard: no action effect
+	discard: full
 	keep: no action effect
 	redirect: full
 	stop: trivial, full

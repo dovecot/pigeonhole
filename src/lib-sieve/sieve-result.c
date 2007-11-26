@@ -37,7 +37,7 @@ struct sieve_result *sieve_result_create(void)
 	result->first_action = NULL;
 	result->last_action = NULL;
 	
-	result->implicit_keep = 1;
+	result->implicit_keep = TRUE;
 
 	return result;
 }
@@ -60,6 +60,11 @@ void sieve_result_unref(struct sieve_result **result)
 inline pool_t sieve_result_pool(struct sieve_result *result)
 {
 	return result->pool;
+}
+
+void sieve_result_cancel_implicit_keep(struct sieve_result *result)
+{
+	result->implicit_keep = FALSE;
 }
 
 bool sieve_result_add_action
@@ -131,6 +136,8 @@ bool sieve_result_print(struct sieve_result *result)
 		}
 		rac = rac->next;	
 	}
+	
+	printf("\nImplicit keep: %s\n", result->implicit_keep ? "yes" : "no");
 	
 	return TRUE;
 }

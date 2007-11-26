@@ -16,6 +16,8 @@ bool sieve_result_add_action
 
 bool sieve_result_print(struct sieve_result *result);
 
+void sieve_result_cancel_implicit_keep(struct sieve_result *result);
+
 bool sieve_result_execute
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,
 		const struct sieve_mail_environment *menv);

@@ -145,7 +145,8 @@ static bool cmd_redirect_opcode_execute
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = p_strdup(pool, str_c(redirect));
 	
-	sieve_result_add_action(renv, &act_redirect, (void *) act);
+	if ( sieve_result_add_action(renv, &act_redirect, (void *) act) )
+		sieve_result_cancel_implicit_keep(renv->result);
 	
 	t_pop();
 	return TRUE;
@@ -189,7 +190,7 @@ static int act_redirect_execute
 		send_forward(msgdata, ctx->to_address)) == 0) {
 		i_info("msgid=%s: forwarded to <%s>",
 			msgdata->id == NULL ? "" : str_sanitize(msgdata->id, 80),
-				str_sanitize(ctx->to_address, 80));
+			str_sanitize(ctx->to_address, 80));
   }
   
 	return res;

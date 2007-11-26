@@ -64,12 +64,17 @@ static bool opc_keep_execute
 	const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {	
+	bool added = FALSE;
+	
 	printf(">> KEEP\n");
 	
 	if ( renv->mailenv != NULL && renv->mailenv->inbox != NULL )
-		sieve_act_store_add_to_result(renv,	renv->mailenv->inbox);
+		added = sieve_act_store_add_to_result(renv,	renv->mailenv->inbox);
 	else
-		sieve_act_store_add_to_result(renv,	"INBOX");
+		added = sieve_act_store_add_to_result(renv,	"INBOX");
+	
+	if ( added ) 
+		sieve_result_cancel_implicit_keep(renv->result);
 		
 	return TRUE;
 }
