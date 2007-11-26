@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 	struct mail_raw *mailr;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
-
+	struct sieve_mail_environment mailenv;
 	bin_init();
 
 	if ( argc < 2 ) {
@@ -76,9 +76,14 @@ int main(int argc, char **argv)
 	msgdata.to_address = "sirius+sieve@rename-it.nl";
 	msgdata.auth_user = "stephan";
 	(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
+
+	memset(&mailenv, 0, sizeof(mailenv));
+    mailenv.inbox = "INBOX";
+    mailenv.send_forward = NULL;
+    mailenv.send_rejection = NULL;
 	
 	/* Run the test */
-	(void) sieve_test(sbin, &msgdata);
+	(void) sieve_test(sbin, &msgdata, &mailenv);
 
 	sieve_deinit();
 

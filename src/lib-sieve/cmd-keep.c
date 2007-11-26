@@ -66,8 +66,11 @@ static bool opc_keep_execute
 {	
 	printf(">> KEEP\n");
 	
-	sieve_act_store_add_to_result(renv, "INBOX");
-	
+	if ( renv->mailenv != NULL && renv->mailenv->inbox != NULL )
+		sieve_act_store_add_to_result(renv,	renv->mailenv->inbox);
+	else
+		sieve_act_store_add_to_result(renv,	"INBOX");
+		
 	return TRUE;
 }
 

@@ -97,6 +97,7 @@ int main(int argc, char **argv)
 	(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
 	
 	memset(&mailenv, 0, sizeof(mailenv));
+	mailenv.inbox = "INBOX";
 	mailenv.send_forward = sieve_send_forward;
 	mailenv.send_rejection = sieve_send_rejection;
 	
