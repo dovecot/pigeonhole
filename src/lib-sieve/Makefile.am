@@ -21,7 +21,8 @@ cmds = \
 	cmd-if.c \
 	cmd-require.c \
 	cmd-redirect.c \
-	cmd-keep.c
+	cmd-keep.c \
+	cmd-discard.c
 
 exts = \
 	ext-fileinto.c \

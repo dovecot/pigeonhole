@@ -141,10 +141,6 @@ static bool cmd_stop_generate
 static bool cmd_stop_validate
 	(struct sieve_validator *validator, struct sieve_command_context *ctx);
 	
-static bool cmd_discard_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx ATTR_UNUSED); 
-
 const struct sieve_command cmd_stop = { 
 	"stop", 
 	SCT_COMMAND, 
@@ -152,15 +148,6 @@ const struct sieve_command cmd_stop = {
 	NULL, NULL,  
 	cmd_stop_validate, 
 	cmd_stop_generate, 
-	NULL 
-};
-
-const struct sieve_command cmd_discard = { 
-	"discard", 
-	SCT_COMMAND, 
-	0, 0, FALSE, FALSE,
-	NULL, NULL, NULL, 
-	cmd_discard_generate, 
 	NULL 
 };
 
@@ -261,9 +248,6 @@ inline bool sieve_command_block_exits_unconditionally
 static bool opc_stop_execute
 	(const struct sieve_opcode *opcode, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
-static bool opc_discard_execute
-	(const struct sieve_opcode *opcode, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_opcode cmd_stop_opcode = { 
 	"STOP",
@@ -272,15 +256,6 @@ const struct sieve_opcode cmd_stop_opcode = {
 	0,
 	NULL, 
 	opc_stop_execute 
-};
-
-const struct sieve_opcode cmd_discard_opcode = { 
-	"DISCARD",
-	SIEVE_OPCODE_DISCARD,
-	NULL,
-	0,
-	NULL, 
-	opc_discard_execute 
 };
 
 static bool opc_stop_execute
@@ -295,15 +270,6 @@ static bool opc_stop_execute
 	return TRUE;
 }
 
-static bool opc_discard_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
-	const struct sieve_runtime_env *renv ATTR_UNUSED, 
-	sieve_size_t *address ATTR_UNUSED)
-{	
-	printf(">> DISCARD\n");
-	
-	return TRUE;
-}
 
 /* Code generation for trivial commands and tests */
 
@@ -322,15 +288,6 @@ static bool cmd_stop_generate
 {
 	sieve_operation_emit_code(
 		sieve_generator_get_binary(generator), &cmd_stop_opcode);
-	return TRUE;
-}
-
-static bool cmd_discard_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx ATTR_UNUSED) 
-{
-	sieve_operation_emit_code(
-        sieve_generator_get_binary(generator), &cmd_discard_opcode);
 	return TRUE;
 }
 

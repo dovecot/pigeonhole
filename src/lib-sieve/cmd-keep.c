@@ -1,5 +1,4 @@
 #include "lib.h"
-#include "str-sanitize.h"
 
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
@@ -70,7 +69,7 @@ static bool cmd_keep_generate
 }
 
 /*
- * Intepretation
+ * Interpretation
  */
 
 static bool opc_keep_execute
