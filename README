@@ -15,7 +15,7 @@ sievec <sieve-file>
 Compiles the script and produces various dumps of intermittent compilation
 results. This already works pretty good for all supported features.
 
-sieve-test <sieve-file> [<mailfile>/-]
+sieve-test <sieve-file> [ <mailfile> / - ]
 
 Reads mail message from the specified mailfile (- = stdin) and executes the 
 sieve script to produce a verdict. This prints an execution dump with the 
@@ -39,8 +39,27 @@ What works:
 * Script code generation works for most core commands. Comparators, match-types 
   and address-part modifiers already work.
 * Interpreter runs and dumps core commands and tests. Comparators, match-types and 
-  address-part modifiers have the desired effect. Action commands have no effect. 
- 
+  address-part modifiers have the desired effect. 
+* The interpreter produces a result containing a set of actions to execute. The
+  basic functionality for action execution is not present. Duplicate actions can
+  now be avoided. Detecting action conflicts are the next item to resolve.
+
+Base tests and their implementation status:
+	false, true: trivial, full
+	address: full
+	header: full 
+	exists: full
+	size: full 	
+	not, anyof, allof: full
+
+Base commands and their implementation status:
+	require: full
+	if,elsif,else: full
+	discard: interprets, but no action effect
+	keep: interprets and action is registered, no execution
+	redirect: full
+	stop: trivial, full
+	
 Extensions and their implementation status:
 
   Base specification (RFC3028):
@@ -96,7 +115,7 @@ TODO
 ----
 
 * Produce a fully working interpreter that actually executes actions, currently
-  tests are evaluated and actions just print their occurence.
+  tests are evaluated, but actions just print their occurence.
 * Extract code dump functionality from interpreter and start sieve-code-dump.c
 * Resolve code duplication introduced for handling address-parts and match-types
   in different command implementations.
