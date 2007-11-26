@@ -121,6 +121,8 @@ TODO
 * Extract code dump functionality from interpreter and start sieve-code-dump.c
 * Resolve code duplication introduced for handling address-parts and match-types
   in different command implementations.
+* Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
+  Character Sets). 
 * Implement a faster substring search algorithm to make sopport for the body 
   extension a less bad idea.  
 * Further implement error handling and limit the maximum number of errors. 
