@@ -42,6 +42,18 @@ const struct sieve_opcode cmd_discard_opcode = {
 	opc_discard_execute 
 };
 
+/* Discard action */
+
+static int act_discard_execute
+	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv, 
+		void *context);
+		
+const struct sieve_action act_discard = {
+	"discard",
+	NULL, NULL, NULL,
+	act_discard_execute
+};
+
 /*
  * Generation
  */
@@ -66,7 +78,22 @@ static bool opc_discard_execute
 {	
 	printf(">> DISCARD\n");
 	
+	sieve_result_add_action(renv->result, renv, &act_discard, NULL);
+	
 	return TRUE;
 }
+
+/*
+ * Action
+ */
+ 
+static int act_discard_execute
+(const struct sieve_action *action ATTR_UNUSED, 
+	const struct sieve_action_exec_env *aenv, void *context)
+{  
+	
+	return 0;
+}
+
 
 

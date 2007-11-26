@@ -54,7 +54,6 @@ const struct sieve_action act_keep = {
 	act_keep_execute
 };
 
-
 /*
  * Generation
  */
