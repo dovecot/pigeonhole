@@ -40,10 +40,12 @@ What works:
 * Script code generation works for most core commands. Comparators, match-types 
   and address-part modifiers already work.
 * Interpreter runs and dumps core commands and tests. Comparators, match-types and 
-  address-part modifiers have the desired effect. 
-* The interpreter produces a result containing a set of actions to execute. The
-  basic functionality for action execution is not present. Duplicate actions can
-  now be avoided. Detecting action conflicts are the next item to resolve.
+  address-part modifiers have the desired effect. Most test commands work as 
+  specified.
+* The interpreter produces a result containing a set of actions to execute.
+  Duplicate actions can now be avoided and conflicts can be detected. The redirect,
+  keep, discard and fileinto commands now produce effective actions. Other action
+  commands are still pretty much dummies.
 
 Base tests and their implementation status:
 	false, true: trivial, full
@@ -57,14 +59,14 @@ Base commands and their implementation status:
 	require: full
 	if,elsif,else: full
 	discard: full
-	keep: no action effect
+	keep: full
 	redirect: full
 	stop: trivial, full
 	
 Extensions and their implementation status:
 
   Base specification (RFC3028):
-    fileinto: no action effect
+    fileinto: full
     reject: validation, generation and interpretation; no execution
     envelope: full
 	encoded-character: planned (draft-ietf-sieve-3028bis)
@@ -75,11 +77,11 @@ Extensions and their implementation status:
     relational: full 
     regex: full, but suboptimal
     vacation: validation, generation and interpretation; no execution
-    imapflags: flag management works, but flags are not stored.
+    imapflags: flag management works, but flags are not stored (no :flags)
+    copy: copy tag is activated for redirect and fileinto, nothing else
     include: planned (* first leave out variables support)  
 	variables: planned (* also amend previously implemented extensions)
     body: planned                        
-    copy: planned       
     notify: planned (- lowest priority)
 
 All implemented extensions are like the engine itself currently very much 
@@ -106,7 +108,7 @@ GENERATOR: sieve-generator.c
   This last compiler stage uses a visitor pattern to wander through the ast
   and produces sieve byte code (sieve-binary.c).
 
-The resulting binary can be fed to the interpreter for execution:
+The resulting (in-memory) binary can be fed to the interpreter for execution:
 
 INTERPRETER: sieve-interpreter.c 
   The interpreter executes the byte code and produces a sieve_result object. 
@@ -136,6 +138,8 @@ TODO
   part of the make process)
 * Full standards compliance review for the engine and all fully implemented sieve
   extensions.
+* Full security review. Enforce limits on number of created objects, script size,
+  etc...
 * Automate script tests; i.e. build a test suite.
 * Use mmap for the binary script representation. 
 * Allow the currently in-memory byte-code to be stored as a script binary
