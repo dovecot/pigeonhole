@@ -15,10 +15,14 @@ cmds = \
 tsts = \
 	tst-hasflag.c
 
+tags = \
+	tag-flags.c
+
 libsieve_ext_imapflags_la_SOURCES = \
 	ext-imapflags-common.c \
 	$(cmds) \
 	$(tsts) \
+	$(tags) \
 	ext-imapflags.c
 
 noinst_HEADERS = \

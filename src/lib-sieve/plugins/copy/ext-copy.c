@@ -57,7 +57,7 @@ static bool tag_copy_validate
 	return TRUE;
 }
 
-/* Command registration */
+/* Tag */
 
 static const struct sieve_argument copy_tag = { 
 	"copy", NULL, 

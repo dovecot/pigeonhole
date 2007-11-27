@@ -178,9 +178,8 @@ bool sieve_result_execute
 	
 	printf("\nTransaction execute:\n");
 	
-	if ( success )
-		rac = result->first_action;
-	
+	last_attempted = rac;
+	rac = result->first_action;
 	while ( success && rac != NULL ) {
 		const struct sieve_action *act = rac->action;
 	
@@ -201,7 +200,6 @@ bool sieve_result_execute
 		printf("\nTransaction rollback:\n");
 
 	commit_ok = success;
-	last_attempted = rac;
 	rac = result->first_action;
 	while ( rac != NULL && rac != last_attempted ) {
 		const struct sieve_action *act = rac->action;

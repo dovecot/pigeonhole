@@ -192,7 +192,8 @@ static bool act_store_commit
 	
 	act_store_log_status(trans, aenv->msgdata, FALSE, status);
 	
-	mailbox_close(&trans->box);
+	if ( trans->box != NULL )
+		mailbox_close(&trans->box);
 	
 	return status;
 }
@@ -208,8 +209,9 @@ static void act_store_rollback
 	  mailbox_transaction_rollback(&trans->mail_trans);
   
   act_store_log_status(trans, aenv->msgdata, TRUE, success);
-  
-  mailbox_close(&trans->box);
+
+	if ( trans->box != NULL )  
+	  mailbox_close(&trans->box);
 }
 
 

@@ -24,3 +24,5 @@ if header :contains "from" "imap@cac.washington.example.edu" {
 if hasflag :count "ge" :comparator "i;ascii-numeric" "2" {
 	fileinto "INBOX.imap-twoflags";
 }
+
+fileinto :flags "\\Seen" "INBOX";
