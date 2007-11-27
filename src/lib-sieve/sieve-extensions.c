@@ -53,6 +53,7 @@ extern const struct sieve_extension comparator_i_ascii_numeric_extension;
 extern const struct sieve_extension relational_extension;
 extern const struct sieve_extension regex_extension;
 extern const struct sieve_extension imapflags_extension;
+extern const struct sieve_extension copy_extension;
 
 const struct sieve_extension *sieve_core_extensions[] = {
 	&comparator_extension, &match_type_extension, &address_part_extension, 
@@ -62,7 +63,8 @@ const struct sieve_extension *sieve_core_extensions[] = {
 	/* 'Plugins' */
 	&vacation_extension, &subaddress_extension, 
 	&comparator_i_ascii_numeric_extension, 
-	&relational_extension, &regex_extension, &imapflags_extension
+	&relational_extension, &regex_extension, &imapflags_extension,
+	&copy_extension
 };
 
 const unsigned int sieve_core_extensions_count =

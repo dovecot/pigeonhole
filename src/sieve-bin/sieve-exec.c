@@ -3,6 +3,7 @@
 #include "lib.h"
 #include "mail-storage.h"
 #include "mail-namespace.h"
+#include "env-util.h"
 
 #include "bin-common.h"
 #include "mail-raw.h"

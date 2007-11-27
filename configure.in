@@ -65,6 +65,7 @@ src/lib-sieve/plugins/comparator-i-ascii-numeric/Makefile
 src/lib-sieve/plugins/relational/Makefile
 src/lib-sieve/plugins/regex/Makefile
 src/lib-sieve/plugins/imapflags/Makefile
+src/lib-sieve/plugins/copy/Makefile
 src/sieve-bin/Makefile
 stamp.h])
 
