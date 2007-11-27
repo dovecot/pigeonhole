@@ -12,7 +12,7 @@ if address :contains "to" "vestingbar" {
 #redirect "nico@example.nl";
 #redirect "stephan@example.com";
 
-#fileinto "INBOX.frop";
-#fileinto "INBOX";
+fileinto "frop";
+fileinto "INBOX";
 keep;
 discard;

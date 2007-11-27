@@ -188,9 +188,11 @@ static bool act_store_commit
 {  
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
-	bool status = mailbox_transaction_commit(&trans->mail_trans);
+	bool status = mailbox_transaction_commit(&trans->mail_trans) == 0;
 	
 	act_store_log_status(trans, aenv->msgdata, FALSE, status);
+	
+	mailbox_close(&trans->box);
 	
 	return status;
 }
@@ -206,6 +208,8 @@ static void act_store_rollback
 	  mailbox_transaction_rollback(&trans->mail_trans);
   
   act_store_log_status(trans, aenv->msgdata, TRUE, success);
+  
+  mailbox_close(&trans->box);
 }
 
 

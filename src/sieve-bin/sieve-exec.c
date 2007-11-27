@@ -106,9 +106,10 @@ int main(int argc, char **argv)
     }
 
 	env_put(t_strdup_printf("NAMESPACE_1=%s", "maildir:/home/stephan/Maildir"));
-	env_put("NAMESPACE_1_PREFIX=INBOX.");
-	env_put("NAMESPACE_1_LIST=yes");
-	env_put("NAMESPACE_1_SUBSCRIPTIONS=yes");
+	env_put("NAMESPACE_1_INBOX=1");
+	env_put("NAMESPACE_1_LIST=1");
+	env_put("NAMESPACE_1_SEP=.");
+	env_put("NAMESPACE_1_SUBSCRIPTIONS=1");
 
 	namespaces_pool = namespaces_init();
 	
