@@ -60,7 +60,7 @@ static bool tag_copy_validate
 /* Command registration */
 
 static const struct sieve_argument copy_tag = { 
-	"days", NULL, 
+	"copy", NULL, 
 	tag_copy_validate, 
 	NULL, NULL 
 };
@@ -68,8 +68,12 @@ static const struct sieve_argument copy_tag = {
 /* Load extension into validator */
 static bool ext_copy_validator_load(struct sieve_validator *validator)
 {
-	/* Register new command */
-	//sieve_validator_register_tag(validator, cmd_reg, &copy_tag, -1); 	
+	/* Register copy tag with redirect and fileinto commands and we don't care
+	 * whether these commands are registered or even whether they will be
+	 * registered at all. The validator handles either situation gracefully 
+	 */
+	sieve_validator_register_external_tag(validator, &copy_tag, "redirect", 0);
+	sieve_validator_register_external_tag(validator, &copy_tag, "fileinto", 0);
 
 	return TRUE;
 }

@@ -143,7 +143,13 @@ static void sieve_validator_register_core_commands(struct sieve_validator *valid
 	}
 }
 
-static void _sieve_validator_register_command
+static struct sieve_command_registration *sieve_validator_find_command_registration
+		(struct sieve_validator *validator, const char *command) 
+{
+  return 	(struct sieve_command_registration *) hash_lookup(validator->commands, command);
+}
+
+static struct sieve_command_registration *_sieve_validator_register_command
 	(struct sieve_validator *validator, const struct sieve_command *command,
 	const char *identifier) 
 {
@@ -152,28 +158,30 @@ static void _sieve_validator_register_command
 	record->command = command;
 	record->tags = NULL;
 	hash_insert(validator->commands, (void *) identifier, (void *) record);
-	
-	if ( command->registered != NULL ) {
-		command->registered(validator, record);
-	}
+		
+	return record;
 }
 
 void sieve_validator_register_command
 	(struct sieve_validator *validator, const struct sieve_command *command) 
 {
-	_sieve_validator_register_command(validator, command, command->identifier);
+	struct sieve_command_registration *cmd_reg =
+		sieve_validator_find_command_registration(validator, command->identifier);
+		
+	if ( cmd_reg == NULL ) 
+		cmd_reg = _sieve_validator_register_command
+			(validator, command, command->identifier);
+	else
+		cmd_reg->command = command;
+	
+	if ( command->registered != NULL ) 
+		command->registered(validator, cmd_reg);
 }
 
 static void sieve_validator_register_unknown_command
 	(struct sieve_validator *validator, const char *command) 
 {
-	_sieve_validator_register_command(validator, &unknown_command, command);		
-}
-
-static struct sieve_command_registration *sieve_validator_find_command_registration
-		(struct sieve_validator *validator, const char *command) 
-{
-  return 	(struct sieve_command_registration *) hash_lookup(validator->commands, command);
+	(void)_sieve_validator_register_command(validator, &unknown_command, command);		
 }
 
 static const struct sieve_command *
@@ -221,6 +229,21 @@ static void _sieve_validator_register_tag
 	}
 	
 	hash_insert(cmd_reg->tags, (void *) identifier, (void *) reg);
+}
+
+void sieve_validator_register_external_tag
+(struct sieve_validator *validator, const struct sieve_argument *tag, 
+	const char *command, unsigned int id_code) 
+{
+	struct sieve_command_registration *cmd_reg = 
+		sieve_validator_find_command_registration(validator, command);
+		
+	if ( cmd_reg == NULL ) {
+		cmd_reg = _sieve_validator_register_command(validator, NULL, command);
+	}
+	
+	_sieve_validator_register_tag
+		(validator, cmd_reg, tag, tag->identifier, id_code);
 }
 
 void sieve_validator_register_tag

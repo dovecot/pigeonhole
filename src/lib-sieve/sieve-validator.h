@@ -25,6 +25,9 @@ void sieve_validator_error
 /* Command/Test registration */
 void sieve_validator_register_command
 	(struct sieve_validator *validator, const struct sieve_command *command);
+void sieve_validator_register_external_tag
+	(struct sieve_validator *validator, const struct sieve_argument *tag, 
+		const char *command, unsigned int id_code);
 
 /* Argument registration */
 void sieve_validator_register_tag
