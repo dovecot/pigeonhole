@@ -21,9 +21,20 @@ struct sieve_action {
 
 	void (*print)
 		(const struct sieve_action *action, void *context);	
-	int (*execute)
+		
+	bool (*start)
 		(const struct sieve_action *action, 
-			const struct sieve_action_exec_env *aenv, void *context);	
+			const struct sieve_action_exec_env *aenv, void *context, 
+			void **tr_context);		
+	bool (*execute)
+		(const struct sieve_action *action, 
+			const struct sieve_action_exec_env *aenv, void *tr_context);
+	bool (*commit)
+		(const struct sieve_action *action, 
+			const struct sieve_action_exec_env *aenv, void *tr_context);
+	void (*rollback)
+		(const struct sieve_action *action, 
+			const struct sieve_action_exec_env *aenv, void *tr_context);
 };
 
 /* Actions common to multiple commands */

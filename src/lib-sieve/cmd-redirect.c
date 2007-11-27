@@ -56,9 +56,9 @@ static bool act_redirect_check_duplicate
 		const struct sieve_action *action1, void *context1, void *context2);
 static void act_redirect_print
 	(const struct sieve_action *action, void *context);	
-static int act_redirect_execute
-	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv, 
-		void *context);
+static bool act_redirect_commit
+(const struct sieve_action *action ATTR_UNUSED, 
+	const struct sieve_action_exec_env *aenv, void *tr_context);
 		
 struct act_redirect_context {
 	const char *to_address;
@@ -69,7 +69,9 @@ const struct sieve_action act_redirect = {
 	act_redirect_check_duplicate, 
 	NULL,
 	act_redirect_print,
-	act_redirect_execute
+	NULL, NULL,
+	act_redirect_commit,
+	NULL
 };
 
 /* Validation */
@@ -178,12 +180,12 @@ static void act_redirect_print
 	printf("* redirect message to: %s\n", ctx->to_address);
 }
 
-static int act_redirect_execute
+static bool act_redirect_commit
 (const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *context)
+	const struct sieve_action_exec_env *aenv, void *tr_context)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
-	struct act_redirect_context *ctx = (struct act_redirect_context *) context;
+	struct act_redirect_context *ctx = (struct act_redirect_context *) tr_context;
 	int res;
 	
 	if ((res = aenv->mailenv->
@@ -191,9 +193,10 @@ static int act_redirect_execute
 		i_info("msgid=%s: forwarded to <%s>",
 			msgdata->id == NULL ? "" : str_sanitize(msgdata->id, 80),
 			str_sanitize(ctx->to_address, 80));
+  	return TRUE;
   }
   
-	return res;
+	return FALSE;
 }
 
 

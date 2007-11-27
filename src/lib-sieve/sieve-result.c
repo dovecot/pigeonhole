@@ -11,7 +11,7 @@
 struct sieve_result_action {
 	const struct sieve_action *action;
 	void *context;
-
+	void *tr_context;
 	struct sieve_result_action *prev, *next; 
 };
 
@@ -104,6 +104,7 @@ bool sieve_result_add_action
 	raction = p_new(result->pool, struct sieve_result_action, 1);
 	raction->action = action;
 	raction->context = context;
+	raction->tr_context = NULL;
 	
 	/* Add */
 	if ( result->first_action == NULL ) {
@@ -146,22 +147,68 @@ bool sieve_result_execute
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,
 		const struct sieve_mail_environment *menv)
 { 
-	struct sieve_result_action *rac = result->first_action;
+	bool success = TRUE, commit_ok;
+	struct sieve_result_action *rac;
 	
 	result->action_env.msgdata = msgdata;
 	result->action_env.mailenv = menv;
 	
-	printf("\n");
-	while ( rac != NULL ) {
+	/* Transaction start */
+	
+	printf("\nTransaction start:\n");
+	
+	rac = result->first_action;
+	while ( success && rac != NULL ) {
+		const struct sieve_action *act = rac->action;
+	
+		if ( act->start != NULL ) {
+			success = success && act->start(act, &result->action_env, rac->context, 
+				&rac->tr_context);
+		} 
+		rac = rac->next;	
+	}
+	
+	/* Transaction execute */
+	
+	printf("\nTransaction execute:\n");
+	
+	rac = result->first_action;
+	while ( success && rac != NULL ) {
 		const struct sieve_action *act = rac->action;
 	
 		if ( act->execute != NULL ) {
-			(void) act->execute(act, &result->action_env, rac->context);
+			void *context = rac->tr_context == NULL ? 
+				rac->context : rac->tr_context;
+				
+			success = success && act->execute(act, &result->action_env, context);
+		} 
+		rac = rac->next;	
+	}
+	
+	/* Transaction commit/rollback */
+	if ( success )
+		printf("\nTransaction commit:\n");
+	else
+		printf("\nTransaction rollback:\n");
+
+	commit_ok = success;
+	rac = result->first_action;
+	while ( rac != NULL ) {
+		const struct sieve_action *act = rac->action;
+		void *context = rac->tr_context == NULL ? 
+				rac->context : rac->tr_context;
+		
+		if ( success ) {
+			if ( act->commit != NULL ) 
+				commit_ok = act->commit(act, &result->action_env, context) && commit_ok;
 		} else {
-			i_warning("Action %s performs absolutely nothing.", act->name);	
+			if ( act->rollback != NULL ) 
+				act->rollback(act, &result->action_env, context);
 		}
 		rac = rac->next;	
 	}
 	
-	return TRUE;
+	printf("\nTransaction result: %s\n", commit_ok ? "success" : "failed");
+	
+	return commit_ok;
 }
