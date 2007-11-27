@@ -9,6 +9,8 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-storage \
 	-I$(dovecot_incdir)/src/lib-storage/index \
 	-I$(dovecot_incdir)/src/lib-storage/index/raw \
+	-I$(dovecot_incdir)/src/lib-storage/index/mbox \
+	-I$(dovecot_incdir)/src/lib-storage/index/maildir \
 	-I$(dovecot_incdir)/src/deliver
 
 sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
@@ -19,6 +21,8 @@ libs = \
 	$(top_srcdir)/src/lib-sieve/libsieve.la \
 	$(dovecot_incdir)/src/lib-storage/list/libstorage_list.a \
 	$(dovecot_incdir)/src/lib-storage/index/raw/libstorage_raw.a \
+	$(dovecot_incdir)/src/lib-storage/index/maildir/libstorage_maildir.a \
+	$(dovecot_incdir)/src/lib-storage/index/mbox/libstorage_mbox.a \
     $(dovecot_incdir)/src/lib-storage/index/libstorage_index.a \
     $(dovecot_incdir)/src/lib-storage/libstorage.a \
     $(dovecot_incdir)/src/lib-index/libindex.a \
@@ -43,6 +47,7 @@ sieve_exec_DEPENDENCIES = $(libs)
 
 common_sources = \
 	bin-common.c \
+	namespaces.c \
 	mail-raw.c
 
 sievec_SOURCES = \
@@ -58,4 +63,5 @@ sieve_exec_SOURCES = \
 
 noinst_HEADERS = \
 	bin-common.h \
+	namespaces.h \
 	mail-raw.h

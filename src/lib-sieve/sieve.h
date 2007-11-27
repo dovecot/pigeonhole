@@ -16,6 +16,7 @@ struct sieve_message_data {
 
 struct sieve_mail_environment {
 	const char *inbox;
+	struct mail_namespace *namespaces;
 	
 	/* Interface for sending mail (callbacks if you like) */
 	int (*send_rejection)

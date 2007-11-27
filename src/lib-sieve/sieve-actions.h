@@ -1,9 +1,13 @@
 #ifndef __SIEVE_ACTIONS_H
 #define __SIEVE_ACTIONS_H
 
+#include "lib.h"
+#include "mail-storage.h"
+
 #include "sieve-common.h"
 
-struct sieve_action_exec_env {
+struct sieve_action_exec_env { 
+	struct sieve_result *result;
 	const struct sieve_message_data *msgdata;
 	const struct sieve_mail_environment *mailenv;
 };
@@ -34,7 +38,7 @@ struct sieve_action {
 			const struct sieve_action_exec_env *aenv, void *tr_context);
 	void (*rollback)
 		(const struct sieve_action *action, 
-			const struct sieve_action_exec_env *aenv, void *tr_context);
+			const struct sieve_action_exec_env *aenv, void *tr_context, bool success);
 };
 
 /* Actions common to multiple commands */
@@ -43,6 +47,14 @@ const struct sieve_action act_store;
 
 struct act_store_context {
 	const char *folder;
+};
+
+struct act_store_transaction {
+	struct act_store_context *context;
+	struct mail_namespace *namespace;
+	struct mailbox *box;
+	struct mailbox_transaction_context *mail_trans;
+	const char *error;
 };
 
 bool sieve_act_store_add_to_result

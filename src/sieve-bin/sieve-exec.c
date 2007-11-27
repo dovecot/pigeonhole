@@ -1,13 +1,20 @@
 /* Copyright (c) 2005-2007 Dovecot authors, see the included COPYING file */
 
 #include "lib.h"
+#include "mail-storage.h"
+#include "mail-namespace.h"
 
 #include "bin-common.h"
 #include "mail-raw.h"
+#include "namespaces.h"
 #include "sieve.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <pwd.h>
+
 
 #define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
@@ -31,7 +38,12 @@ static int sieve_send_forward
 
 int main(int argc, char **argv) 
 {
+	const char *user;
+    struct passwd *pw;
+    uid_t process_euid;
 	int sfd, mfd;
+	pool_t namespaces_pool;
+	struct mail_namespace *ns;
 	struct mail_raw *mailr;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
@@ -84,8 +96,26 @@ int main(int argc, char **argv)
 
  	close(sfd);
 
-	mail_raw_init();
+    process_euid = geteuid();
+    pw = getpwuid(process_euid);
+    if (pw != NULL) {
+        user = t_strdup(pw->pw_name);
+    } else {
+        i_fatal("Couldn't lookup our username (uid=%s)",
+            dec2str(process_euid));
+    }
 
+	env_put(t_strdup_printf("NAMESPACE_1=%s", "maildir:/home/stephan/Maildir"));
+	env_put("NAMESPACE_1_PREFIX=INBOX.");
+	env_put("NAMESPACE_1_LIST=yes");
+	env_put("NAMESPACE_1_SUBSCRIPTIONS=yes");
+
+	namespaces_pool = namespaces_init();
+	
+	if (mail_namespaces_init(namespaces_pool, user, &ns) < 0)
+        i_fatal("Namespace initialization failed");
+
+	mail_raw_init(namespaces_pool, user);
 	mailr = mail_raw_open(mfd);
 
 	/* Collect necessary message data */
@@ -98,6 +128,7 @@ int main(int argc, char **argv)
 	
 	memset(&mailenv, 0, sizeof(mailenv));
 	mailenv.inbox = "INBOX";
+	mailenv.namespaces = ns;
 	mailenv.send_forward = sieve_send_forward;
 	mailenv.send_rejection = sieve_send_rejection;
 	
@@ -110,6 +141,8 @@ int main(int argc, char **argv)
 	close(mfd);
 
 	mail_raw_deinit();
+	mail_namespaces_deinit(&ns);
+	namespaces_deinit();
 	bin_deinit();  
 	return 0;
 }

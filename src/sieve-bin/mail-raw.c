@@ -28,20 +28,6 @@
 
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
-/* Hideous .... */
-
-extern struct mail_storage raw_storage;
-void mail_storage_register_all(void) {
-	mail_storage_class_register(&raw_storage);
-}
-
-extern struct mailbox_list fs_mailbox_list;
-void index_mailbox_list_init(void);
-void mailbox_list_register_all(void) {
-	mailbox_list_register(&fs_mailbox_list);
-	index_mailbox_list_init();
-}
-
 /* After buffer grows larger than this, create a temporary file to /tmp
    where to read the mail. */
 #define MAIL_MAX_MEMORY_BUFFER (1024*128)
@@ -91,29 +77,11 @@ static struct istream *create_raw_stream(int fd)
 	return input;
 }
 
-static pool_t namespaces_pool;
 static struct mail_namespace *raw_ns;
 
-void mail_raw_init(void) 
+void mail_raw_init(pool_t namespaces_pool, const char *user) 
 {
-	const char *user, *error;
-	struct passwd *pw;
-	uid_t process_euid;
-
-	mail_storage_init();
-	mail_storage_register_all();
-	mailbox_list_register_all();
-
-	process_euid = geteuid();
-	pw = getpwuid(process_euid);
-	if (pw != NULL) {
-		user = t_strdup(pw->pw_name);
- 	} else {
-		i_fatal("Couldn't lookup our username (uid=%s)",
-			dec2str(process_euid));
-    }
-
-	namespaces_pool = pool_alloconly_create("namespaces", 1024);
+	const char *error;
 
 	raw_ns = mail_namespaces_init_empty(namespaces_pool);
 	raw_ns->flags |= NAMESPACE_FLAG_INTERNAL;
@@ -173,8 +141,5 @@ void mail_raw_close(struct mail_raw *mailr)
 void mail_raw_deinit(void)
 {
 	mail_namespaces_deinit(&raw_ns);
-	mail_storage_deinit();
-
-	pool_unref(&namespaces_pool);
 }
 

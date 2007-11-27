@@ -12,6 +12,7 @@ struct sieve_result_action {
 	const struct sieve_action *action;
 	void *context;
 	void *tr_context;
+	bool success;
 	struct sieve_result_action *prev, *next; 
 };
 
@@ -33,6 +34,7 @@ struct sieve_result *sieve_result_create(void)
 	pool = pool_alloconly_create("sieve_result", 4096);	
 	result = p_new(pool, struct sieve_result, 1);
 	result->pool = pool;
+	result->action_env.result = result;
 		
 	result->first_action = NULL;
 	result->last_action = NULL;
@@ -73,7 +75,7 @@ bool sieve_result_add_action
 {
 	struct sieve_result *result = renv->result;
 	struct sieve_result_action *raction;
-	
+		
 	/* First, check for duplicates or conflicts */
 	raction = result->first_action;
 	while ( raction != NULL ) {
@@ -105,6 +107,7 @@ bool sieve_result_add_action
 	raction->action = action;
 	raction->context = context;
 	raction->tr_context = NULL;
+	raction->success = FALSE;
 	
 	/* Add */
 	if ( result->first_action == NULL ) {
@@ -149,6 +152,8 @@ bool sieve_result_execute
 { 
 	bool success = TRUE, commit_ok;
 	struct sieve_result_action *rac;
+	struct sieve_result_action *last_attempted;
+
 	
 	result->action_env.msgdata = msgdata;
 	result->action_env.mailenv = menv;
@@ -162,8 +167,9 @@ bool sieve_result_execute
 		const struct sieve_action *act = rac->action;
 	
 		if ( act->start != NULL ) {
-			success = success && act->start(act, &result->action_env, rac->context, 
+			rac->success = act->start(act, &result->action_env, rac->context, 
 				&rac->tr_context);
+			success = success && rac->success;
 		} 
 		rac = rac->next;	
 	}
@@ -172,7 +178,9 @@ bool sieve_result_execute
 	
 	printf("\nTransaction execute:\n");
 	
-	rac = result->first_action;
+	if ( success )
+		rac = result->first_action;
+	
 	while ( success && rac != NULL ) {
 		const struct sieve_action *act = rac->action;
 	
@@ -180,7 +188,8 @@ bool sieve_result_execute
 			void *context = rac->tr_context == NULL ? 
 				rac->context : rac->tr_context;
 				
-			success = success && act->execute(act, &result->action_env, context);
+			rac->success = act->execute(act, &result->action_env, context);
+			success = success && rac->success;
 		} 
 		rac = rac->next;	
 	}
@@ -192,8 +201,9 @@ bool sieve_result_execute
 		printf("\nTransaction rollback:\n");
 
 	commit_ok = success;
+	last_attempted = rac;
 	rac = result->first_action;
-	while ( rac != NULL ) {
+	while ( rac != NULL && rac != last_attempted ) {
 		const struct sieve_action *act = rac->action;
 		void *context = rac->tr_context == NULL ? 
 				rac->context : rac->tr_context;
@@ -203,7 +213,7 @@ bool sieve_result_execute
 				commit_ok = act->commit(act, &result->action_env, context) && commit_ok;
 		} else {
 			if ( act->rollback != NULL ) 
-				act->rollback(act, &result->action_env, context);
+				act->rollback(act, &result->action_env, context, rac->success);
 		}
 		rac = rac->next;	
 	}

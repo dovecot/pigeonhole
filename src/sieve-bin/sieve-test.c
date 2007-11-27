@@ -4,17 +4,26 @@
 
 #include "bin-common.h"
 #include "mail-raw.h"
+#include "namespaces.h"
 #include "sieve.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <pwd.h>
+
 
 #define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
 int main(int argc, char **argv) 
 {
+	const char *user;
+    struct passwd *pw;
+    uid_t process_euid;
 	int sfd, mfd;
+	pool_t namespaces_pool;
 	struct mail_raw *mailr;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
@@ -64,8 +73,18 @@ int main(int argc, char **argv)
 	(void) sieve_dump(sbin);
 
  	close(sfd);
+	
+    process_euid = geteuid();
+    pw = getpwuid(process_euid);
+    if (pw != NULL) {
+        user = t_strdup(pw->pw_name);
+    } else {
+        i_fatal("Couldn't lookup our username (uid=%s)",
+            dec2str(process_euid));
+    }
 
-	mail_raw_init();
+	namespaces_pool = namespaces_init();
+	mail_raw_init(namespaces_pool, user);
 
 	mailr = mail_raw_open(mfd);
 
@@ -79,8 +98,6 @@ int main(int argc, char **argv)
 
 	memset(&mailenv, 0, sizeof(mailenv));
     mailenv.inbox = "INBOX";
-    mailenv.send_forward = NULL;
-    mailenv.send_rejection = NULL;
 	
 	/* Run the test */
 	(void) sieve_test(sbin, &msgdata, &mailenv);
@@ -92,6 +109,7 @@ int main(int argc, char **argv)
 		close(mfd);
 
 	mail_raw_deinit();
+	namespaces_deinit();
 	bin_deinit();  
 	return 0;
 }
