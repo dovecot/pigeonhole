@@ -24,13 +24,13 @@ static bool act_store_start
 	(const struct sieve_action *action,
 		const struct sieve_action_exec_env *aenv, void *context, void **tr_context);
 static bool act_store_execute
-	(const struct sieve_action *action ATTR_UNUSED, 
+	(const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, void *tr_context);
 static bool act_store_commit
-	(const struct sieve_action *action ATTR_UNUSED, 
+	(const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, void *tr_context);
 static void act_store_rollback
-	(const struct sieve_action *action ATTR_UNUSED, 
+	(const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool success);
 		
 const struct sieve_action act_store = {

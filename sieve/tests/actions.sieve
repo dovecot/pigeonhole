@@ -9,8 +9,8 @@ if address :contains "to" "vestingbar" {
 }
 
 #redirect "stephan@rename-it.nl";
-#redirect "nico@example.nl";
-#redirect "stephan@example.com";
+redirect "nico@example.nl";
+redirect "stephan@example.com";
 
 fileinto "frop";
 fileinto "INBOX";
