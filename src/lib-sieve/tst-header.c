@@ -117,14 +117,19 @@ static bool tst_header_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	unsigned int opt_code;
+	int opt_code = 1;
 
 	printf("HEADER\n");
 
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
+		while ( opt_code != 0 ) {
+			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) 
+				return FALSE;
+
 			switch ( opt_code ) {
+			case 0:
+				break;
 			case OPT_COMPARATOR:
 				sieve_opr_comparator_dump(renv->sbin, address);
 				break;
@@ -148,7 +153,7 @@ static bool tst_header_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	unsigned int opt_code;
+	int opt_code = 1;
 	const struct sieve_comparator *cmp = &i_octet_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
 	struct sieve_match_context *mctx;
@@ -161,8 +166,13 @@ static bool tst_header_opcode_execute
 
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(renv->sbin, address)) ) {
+		while ( opt_code != 0 ) {
+			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) )
+				return FALSE;
+
 			switch ( opt_code ) {
+			case 0: 
+				break;
 			case OPT_COMPARATOR:
 				cmp = sieve_opr_comparator_read(renv->sbin, address);
 				break;

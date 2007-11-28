@@ -77,8 +77,8 @@ const struct sieve_operand *sieve_operand_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 
 bool sieve_operand_optional_present(struct sieve_binary *sbin, sieve_size_t *address);
-unsigned int sieve_operand_optional_read
-	(struct sieve_binary *sbin, sieve_size_t *address);
+bool sieve_operand_optional_read
+	(struct sieve_binary *sbin, sieve_size_t *address, int *id_code);
 
 void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_size_t number);
 bool sieve_opr_number_dump(struct sieve_binary *sbin, sieve_size_t *address); 

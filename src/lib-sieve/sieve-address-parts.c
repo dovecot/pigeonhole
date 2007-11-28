@@ -377,11 +377,16 @@ bool sieve_address_match
 bool sieve_addrmatch_default_dump_optionals
 (struct sieve_binary *sbin, sieve_size_t *address) 
 {
-	unsigned int opt_code;
+	int opt_code = 1;
 	
 	if ( sieve_operand_optional_present(sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+		while ( opt_code != 0 ) {
+			if ( !sieve_operand_optional_read(sbin, address, &opt_code) ) 
+				return FALSE;
+
 			switch ( opt_code ) {
+			case 0:
+				break;
 			case SIEVE_AM_OPT_COMPARATOR:
 				if ( !sieve_opr_comparator_dump(sbin, address) )
 					return FALSE;
@@ -408,11 +413,17 @@ bool sieve_addrmatch_default_get_optionals
 	const struct sieve_address_part **addrp, const struct sieve_match_type **mtch, 
 	const struct sieve_comparator **cmp) 
 {
-	unsigned int opt_code;
+	int opt_code = 1;
+	
 	
 	if ( sieve_operand_optional_present(sbin, address) ) {
-		while ( (opt_code=sieve_operand_optional_read(sbin, address)) ) {
+		while ( opt_code != 0 ) {
+			if ( !sieve_operand_optional_read(sbin, address, &opt_code) )
+				return FALSE;
+				  
 			switch ( opt_code ) {
+			case 0:
+				break;
 			case SIEVE_AM_OPT_COMPARATOR:
 				if ( (*cmp = sieve_opr_comparator_read(sbin, address)) == NULL )
 					return FALSE;

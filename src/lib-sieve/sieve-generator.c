@@ -119,7 +119,7 @@ bool sieve_generate_arguments(struct sieve_generator *generator,
 				sieve_binary_emit_byte(generator->binary, SIEVE_OPERAND_OPTIONAL);
 				
 				/* Emit argument id for optional operand */
-				sieve_binary_emit_byte(generator->binary, arg->arg_id_code);
+				sieve_binary_emit_byte(generator->binary, (unsigned char) arg->arg_id_code);
 
 				state = ARG_OPTIONAL;
 			}
@@ -129,7 +129,7 @@ bool sieve_generate_arguments(struct sieve_generator *generator,
 				state = ARG_POSITIONAL;
 			
 			/* Emit argument id for optional operand (0 marks the end of the optionals) */
-			sieve_binary_emit_byte(generator->binary, arg->arg_id_code);
+			sieve_binary_emit_byte(generator->binary, (unsigned char) arg->arg_id_code);
 
 			break;
 		case ARG_POSITIONAL:

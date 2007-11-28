@@ -137,19 +137,18 @@ bool sieve_operand_optional_present(struct sieve_binary *sbin, sieve_size_t *add
 	return FALSE;
 }
 
-unsigned int sieve_operand_optional_read(struct sieve_binary *sbin, sieve_size_t *address)
+bool sieve_operand_optional_read(struct sieve_binary *sbin, sieve_size_t *address, int *id_code)
 {
-	unsigned int id = -1;
-	
+	unsigned int id;
+
 	if ( sieve_binary_read_byte(sbin, address, &id) ) {
-		/* No more optionals */
-		if ( id == 0 ) 
-			return 0;
-			
-		return id;
+		*id_code = (int) id;
+		return TRUE;
 	}
 	
-	return -1;
+	*id_code = 0;
+
+	return FALSE;
 }
 
 /* 
