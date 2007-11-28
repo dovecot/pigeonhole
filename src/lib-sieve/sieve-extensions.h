@@ -22,19 +22,23 @@ struct sieve_extension {
 	} opcodes;
 	unsigned int opcodes_count;
 
-	/* Extension can introduce a single or multiple operands */
+	/* Extension can introduce a single or multiple operands (FIXME) */
 	const struct sieve_operand *operand;
 };
 
 /* FIXME: This is not ANSI-compliant C, so it might break on some targets.
- * We'll see, otherwise do an ugly typecast on first union element. 
+ * We'll see, otherwise do an ugly typecast to first union element type. 
  */
-#define SIEVE_EXT_DEFINE_NO_OPCODES \
+#define SIEVE_EXT_DEFINE_NO_OBJECTS \
 	{ list: NULL }, 0
-#define SIEVE_EXT_DEFINE_OPCODE(OP) \
-	{ single: &OP }, 1
-#define SIEVE_EXT_DEFINE_OPCODES(OPS) \
-	{ list: OPS }, N_ELEMENTS(OPS)
+#define SIEVE_EXT_DEFINE_OBJECT(OBJ) \
+	{ single: &OBJ }, 1
+#define SIEVE_EXT_DEFINE_OBJECTS(OBJS) \
+	{ list: OBJS }, N_ELEMENTS(OBJS)
+
+#define SIEVE_EXT_DEFINE_NO_OPCODES SIEVE_EXT_DEFINE_NO_OBJECTS
+#define SIEVE_EXT_DEFINE_OPCODE(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
+#define SIEVE_EXT_DEFINE_OPCODES(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 extern const struct sieve_extension *sieve_preloaded_extensions[];
 extern const unsigned int sieve_preloaded_extensions_count;

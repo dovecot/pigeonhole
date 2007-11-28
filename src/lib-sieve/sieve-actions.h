@@ -6,6 +6,8 @@
 
 #include "sieve-common.h"
 
+/* Sieve action */
+
 struct sieve_action_exec_env { 
 	struct sieve_result *result;
 	const struct sieve_message_data *msgdata;
@@ -41,6 +43,8 @@ struct sieve_action {
 			const struct sieve_action_exec_env *aenv, void *tr_context, bool success);
 };
 
+/* Action side effects */
+
 struct sieve_side_effect {
 	const char *name;
 	const struct sieve_action *to_action;
@@ -62,6 +66,24 @@ struct sieve_side_effect {
 			const struct sieve_action_exec_env *aenv, void *se_context,
 			void *tr_context, bool success);
 };
+
+struct sieve_side_effect_extension {
+	const struct sieve_extension *extension;
+
+	/* Extension can introduce a single or multiple action side effects */
+	union {
+		const struct sieve_side_effect **list;
+		const struct sieve_side_effect *single;
+	} side_effects;
+	unsigned int side_effects_count;
+};
+
+#define SIEVE_EXT_DEFINE_SIDE_EFFECT(SEF) SIEVE_EXT_DEFINE_OBJECT(SEF)
+#define SIEVE_EXT_DEFINE_SIDE_EFFECTS(SEFS) SIEVE_EXT_DEFINE_OBJECTS(SEFS)
+
+void sieve_side_effect_extension_set
+	(struct sieve_binary *sbin, int ext_id,
+		const struct sieve_side_effect_extension *ext);
 
 /* Actions common to multiple commands */
 

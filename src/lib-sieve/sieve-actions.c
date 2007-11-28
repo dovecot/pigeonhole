@@ -3,9 +3,62 @@
 #include "mail-storage.h"
 #include "mail-namespace.h"
 
+#include "sieve-extensions.h"
+#include "sieve-binary.h"
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
-#include "sieve-actions.h"
+#include "sieve-actions.h"\
+
+/* 
+ * Side-effects 'extension' 
+ */
+
+static int ext_my_id = -1;
+
+static bool seffect_extension_load(int ext_id);
+static bool seffect_binary_load(struct sieve_binary *sbin);
+
+const struct sieve_extension side_effects_extension = {
+	"@side-effects",
+	seffect_extension_load,
+	NULL, NULL, 
+	seffect_binary_load,
+	NULL,
+	SIEVE_EXT_DEFINE_NO_OPCODES,
+	NULL
+};
+	
+static bool seffect_extension_load(int ext_id) 
+{
+	ext_my_id = ext_id;
+	return TRUE;
+}
+
+/*
+ * Binary context
+ */
+
+static inline const struct sieve_side_effect_extension *
+	sieve_side_effect_extension_get(struct sieve_binary *sbin, int ext_id)
+{
+	return (const struct sieve_side_effect_extension *)
+		sieve_binary_registry_get_object(sbin, ext_my_id, ext_id);
+}
+
+void sieve_side_effect_extension_set
+	(struct sieve_binary *sbin, int ext_id,
+		const struct sieve_side_effect_extension *ext)
+{
+	sieve_binary_registry_set_object
+		(sbin, ext_my_id, ext_id, (const void *) ext);
+}
+
+static bool seffect_binary_load(struct sieve_binary *sbin)
+{
+	sieve_binary_registry_init(sbin, ext_my_id);
+	
+	return TRUE;
+}
 
 /*
  * Actions common to multiple core commands 

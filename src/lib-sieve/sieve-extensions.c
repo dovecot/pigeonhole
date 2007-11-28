@@ -15,9 +15,11 @@ static void sieve_extensions_deinit_registry(void);
 extern const struct sieve_extension comparator_extension;
 extern const struct sieve_extension match_type_extension;
 extern const struct sieve_extension address_part_extension;
+extern const struct sieve_extension side_effects_extension;
 
 const struct sieve_extension *sieve_preloaded_extensions[] = {
-	&comparator_extension, &match_type_extension, &address_part_extension 
+	&comparator_extension, &match_type_extension, &address_part_extension,
+	&side_effects_extension 
 };
 
 const unsigned int sieve_preloaded_extensions_count = 
@@ -56,8 +58,14 @@ extern const struct sieve_extension imapflags_extension;
 extern const struct sieve_extension copy_extension;
 
 const struct sieve_extension *sieve_core_extensions[] = {
-	&comparator_extension, &match_type_extension, &address_part_extension, 
+	/* Preloaded extensions */
+	&comparator_extension, &match_type_extension, &address_part_extension,
+	&side_effects_extension,
+	
+	/* Dummy extensions */ 
 	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension, 
+	
+	/* Base extensions */
 	&fileinto_extension, &reject_extension, &envelope_extension, 
 	
 	/* 'Plugins' */
