@@ -151,61 +151,27 @@ void sieve_match_types_link_tags
 }
 
 /*
- * Interpreter context:
- *
- * FIXME: This code will be duplicated across all extensions that introduce 
- * a registry of some kind in the binary. 
+ * Binary context
  */
 
-struct mtch_binary_context {
-	ARRAY_DEFINE(mtch_extensions, 
-		const struct sieve_match_type_extension *); 
-};
-
-static inline struct mtch_binary_context *
-	get_binary_context(struct sieve_binary *sbin)
-{
-	return (struct mtch_binary_context *) 
-		sieve_binary_extension_get_context(sbin, ext_my_id);
-}
-
-static const struct sieve_match_type_extension *sieve_match_type_extension_get
+static inline const struct sieve_match_type_extension *sieve_match_type_extension_get
 	(struct sieve_binary *sbin, int ext_id)
-{
-	struct mtch_binary_context *ctx = get_binary_context(sbin);
-	
-	if ( (ctx != NULL) && (ext_id > 0) && 
-		(ext_id < (int) array_count(&ctx->mtch_extensions)) ) {
-		const struct sieve_match_type_extension * const *ext;
-
-		ext = array_idx(&ctx->mtch_extensions, (unsigned int) ext_id);
-
-		return *ext;
-	}
-	
-	return NULL;
+{	
+	return (const struct sieve_match_type_extension *)
+		sieve_binary_registry_get_object(sbin, ext_my_id, ext_id);
 }
 
 void sieve_match_type_extension_set
 	(struct sieve_binary *sbin, int ext_id,
 		const struct sieve_match_type_extension *ext)
 {
-	struct mtch_binary_context *ctx = get_binary_context(sbin);
-
-	array_idx_set(&ctx->mtch_extensions, (unsigned int) ext_id, &ext);
+	sieve_binary_registry_set_object
+		(sbin, ext_my_id, ext_id, (const void *) ext);
 }
 
 static bool mtch_binary_load(struct sieve_binary *sbin)
 {
-	pool_t pool = sieve_binary_pool(sbin);
-	
-	struct mtch_binary_context *ctx = 
-		p_new(pool, struct mtch_binary_context, 1);
-	
-	/* Setup match-type registry */
-	p_array_init(&ctx->mtch_extensions, pool, 4);
-
-	sieve_binary_extension_set_context(sbin, ext_my_id, ctx);
+	sieve_binary_registry_init(sbin, ext_my_id);
 	
 	return TRUE;
 }

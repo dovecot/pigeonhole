@@ -78,4 +78,14 @@ bool sieve_binary_read_integer
 bool sieve_binary_read_string
   (struct sieve_binary *binary, sieve_size_t *address, string_t **str);
 
+/* 
+ * Default registry context (used at various occasions)
+ */
+ 
+const void *sieve_binary_registry_get_object
+	(struct sieve_binary *sbin, int ext_id, int id);
+void sieve_binary_registry_set_object
+	(struct sieve_binary *sbin, int ext_id, int id, const void *object);
+void sieve_binary_registry_init(struct sieve_binary *sbin, int ext_id);
+
 #endif

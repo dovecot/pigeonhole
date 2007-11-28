@@ -159,57 +159,27 @@ bool cmp_validator_load(struct sieve_validator *validator)
 }
 
 /*
- * Interpreter context:
+ * Binary context
  */
 
-struct cmp_binary_context {
-	ARRAY_DEFINE(cmp_extensions, 
-		const struct sieve_comparator_extension *); 
-};
-
-static inline struct cmp_binary_context *
-	get_binary_context(struct sieve_binary *sbin)
+static inline const struct sieve_comparator_extension *
+	sieve_comparator_extension_get(struct sieve_binary *sbin, int ext_id)
 {
-	return (struct cmp_binary_context *) 
-		sieve_binary_extension_get_context(sbin, ext_my_id);
-}
-
-static const struct sieve_comparator_extension *sieve_comparator_extension_get
-	(struct sieve_binary *sbin, int ext_id)
-{
-	struct cmp_binary_context *ctx = get_binary_context(sbin);
-	
-	if ( ext_id > 0 && ext_id < (int) array_count(&ctx->cmp_extensions) ) {
-		const struct sieve_comparator_extension * const *ext;
-
-		ext = array_idx(&ctx->cmp_extensions, (unsigned int) ext_id);
-
-		return *ext;
-	}
-	
-	return NULL;
+	return (const struct sieve_comparator_extension *)
+		sieve_binary_registry_get_object(sbin, ext_my_id, ext_id);
 }
 
 void sieve_comparator_extension_set
 	(struct sieve_binary *sbin, int ext_id,
 		const struct sieve_comparator_extension *ext)
 {
-	struct cmp_binary_context *ctx = get_binary_context(sbin);
-
-	array_idx_set(&ctx->cmp_extensions, (unsigned int) ext_id, &ext);
+	sieve_binary_registry_set_object
+		(sbin, ext_my_id, ext_id, (const void *) ext);
 }
 
 static bool cmp_binary_load(struct sieve_binary *sbin)
 {
-	pool_t pool = sieve_binary_pool(sbin);
-	
-	struct cmp_binary_context *ctx = 
-		p_new(pool, struct cmp_binary_context, 1);
-	
-	/* Setup comparator registry */
-	p_array_init(&ctx->cmp_extensions, pool, 4);
-
-	sieve_binary_extension_set_context(sbin, ext_my_id, ctx);
+	sieve_binary_registry_init(sbin, ext_my_id);
 	
 	return TRUE;
 }

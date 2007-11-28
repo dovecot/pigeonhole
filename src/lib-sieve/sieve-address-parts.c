@@ -152,63 +152,27 @@ void sieve_address_parts_link_tags
 }
 
 /*
- * Binary context:
- *
- * FIXME: This code will be duplicated across all extensions that introduce 
- * a registry of some kind in the binary. 
+ * Binary context
  */
 
-struct addrp_binary_context {
-	ARRAY_DEFINE(addrp_extensions, 
-		const struct sieve_address_part_extension *); 
-};
-
-static inline struct addrp_binary_context *
-	get_binary_context(struct sieve_binary *sbin)
+static inline const struct sieve_address_part_extension *
+	sieve_address_part_extension_get(struct sieve_binary *sbin, int ext_id)
 {
-	return (struct addrp_binary_context *) 
-		sieve_binary_extension_get_context(sbin, ext_my_id);
-}
-
-static const struct sieve_address_part_extension *
-sieve_address_part_extension_get
-	(struct sieve_binary *sbin, int ext_id)
-{
-	struct addrp_binary_context *ctx = get_binary_context(sbin);
-	
-	if ( (ctx != NULL) && (ext_id > 0) && 
-		(ext_id < (int) array_count(&ctx->addrp_extensions)) ) {
-		const struct sieve_address_part_extension * const *ext;
-
-		ext = array_idx(&ctx->addrp_extensions, (unsigned int) ext_id);
-
-		return *ext;
-	}
-	
-	return NULL;
+	return (const struct sieve_address_part_extension *)
+		sieve_binary_registry_get_object(sbin, ext_my_id, ext_id);
 }
 
 void sieve_address_part_extension_set
 	(struct sieve_binary *sbin, int ext_id,
 		const struct sieve_address_part_extension *ext)
 {
-	struct addrp_binary_context *ctx = get_binary_context(sbin);
-
-	array_idx_set(&ctx->addrp_extensions, (unsigned int) ext_id, &ext);
+	sieve_binary_registry_set_object
+		(sbin, ext_my_id, ext_id, (const void *) ext);
 }
 
 static bool addrp_binary_load(struct sieve_binary *sbin)
 {
-	pool_t pool = sieve_binary_pool(sbin);
-	
-	struct addrp_binary_context *ctx = 
-		p_new(pool, struct addrp_binary_context, 1);
-	
-	/* Setup comparator registry */
-	p_array_init(&ctx->addrp_extensions, pool, 4);
-
-	sieve_binary_extension_set_context
-		(sbin, ext_my_id, ctx);
+	sieve_binary_registry_init(sbin, ext_my_id);
 	
 	return TRUE;
 }

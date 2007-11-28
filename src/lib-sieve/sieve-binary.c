@@ -367,3 +367,54 @@ bool sieve_binary_read_string
 	return TRUE;
 }
 
+/* Binary registry */
+
+struct sieve_binary_registry {
+	ARRAY_DEFINE(objects, const void *); 
+};
+
+static inline struct sieve_binary_registry *
+	get_binary_registry(struct sieve_binary *sbin, int ext_id)
+{
+	return (struct sieve_binary_registry *) 
+		sieve_binary_extension_get_context(sbin, ext_id);
+}
+
+const void *sieve_binary_registry_get_object
+	(struct sieve_binary *sbin, int ext_id, int id)
+{
+	struct sieve_binary_registry *reg = get_binary_registry(sbin, ext_id);
+	
+	if ( (reg != NULL) && (id > 0) && 
+		(id < (int) array_count(&reg->objects)) ) {
+		const void * const *obj;
+
+		obj = array_idx(&reg->objects, (unsigned int) id);
+
+		return *obj;
+	}
+	
+	return NULL;
+}
+
+void sieve_binary_registry_set_object
+	(struct sieve_binary *sbin, int ext_id, int id, const void *object)
+{
+	struct sieve_binary_registry *reg = get_binary_registry(sbin, ext_id);
+
+	array_idx_set(&reg->objects, (unsigned int) id, &object);
+}
+
+void sieve_binary_registry_init(struct sieve_binary *sbin, int ext_id)
+{
+	pool_t pool = sieve_binary_pool(sbin);
+	
+	struct sieve_binary_registry *reg = 
+		p_new(pool, struct sieve_binary_registry, 1);
+	
+	/* Setup match-type registry */
+	p_array_init(&reg->objects, pool, 4);
+
+	sieve_binary_extension_set_context(sbin, ext_id, (void *) reg);
+}
+
