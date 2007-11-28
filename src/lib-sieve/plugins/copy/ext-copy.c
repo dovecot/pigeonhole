@@ -24,6 +24,7 @@
 
 static bool ext_copy_load(int ext_id);
 static bool ext_copy_validator_load(struct sieve_validator *validator);
+static bool ext_copy_binary_load(struct sieve_binary *sbin);
 
 /* Extension definitions */
 
@@ -33,7 +34,9 @@ const struct sieve_extension copy_extension = {
 	"copy", 
 	ext_copy_load,
 	ext_copy_validator_load, 
-	NULL, NULL, NULL, 
+	NULL, 
+	ext_copy_binary_load, 
+	NULL, 
 	SIEVE_EXT_DEFINE_NO_OPCODES,
 	NULL
 };
@@ -115,4 +118,12 @@ static bool ext_copy_validator_load(struct sieve_validator *validator)
 
 	return TRUE;
 }
+
+static bool ext_copy_binary_load(struct sieve_binary *sbin)
+{
+	sieve_side_effect_extension_set(sbin, ext_my_id, &ext_copy_side_effect);
+
+	return TRUE;
+}
+
 
