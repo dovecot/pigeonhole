@@ -51,7 +51,7 @@ const struct sieve_opcode tst_size_over_opcode = {
 };
 
 const struct sieve_opcode tst_size_under_opcode = {
-	"SIEVE-UNDER",
+	"SIZE-UNDER",
 	SIEVE_OPCODE_SIZE_UNDER,
 	NULL, 0, 
 	tst_size_opcode_dump, 

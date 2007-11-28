@@ -38,12 +38,11 @@ struct sieve_address_part_extension {
 
 void sieve_address_parts_link_tags
 	(struct sieve_validator *validator, 
-		struct sieve_command_registration *cmd_reg,
-		unsigned int id_code);
+		struct sieve_command_registration *cmd_reg, int id_code);
 		
 void sieve_address_part_register
 	(struct sieve_validator *validator, 
-	const struct sieve_address_part *addrp, int ext_id);
+		const struct sieve_address_part *addrp, int ext_id);
 const struct sieve_address_part *sieve_address_part_find
 	(struct sieve_validator *validator, const char *identifier,
 		int *ext_id);

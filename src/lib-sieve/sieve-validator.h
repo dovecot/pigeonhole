@@ -27,12 +27,12 @@ void sieve_validator_register_command
 	(struct sieve_validator *validator, const struct sieve_command *command);
 void sieve_validator_register_external_tag
 	(struct sieve_validator *validator, const struct sieve_argument *tag, 
-		const char *command, unsigned int id_code);
+		const char *command, int id_code);
 
 /* Argument registration */
 void sieve_validator_register_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
-	const struct sieve_argument *argument, unsigned int id_code);
+	const struct sieve_argument *argument, int id_code);
 
 /* Special test arguments */
 void sieve_validator_link_match_type_tags

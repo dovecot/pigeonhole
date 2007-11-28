@@ -26,7 +26,7 @@ static bool ext_copy_validator_load(struct sieve_validator *validator);
 
 /* Extension definitions */
 
-int ext_my_id;
+static int ext_my_id;
 
 const struct sieve_extension copy_extension = { 
 	"copy", 

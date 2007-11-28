@@ -144,7 +144,7 @@ bool mtch_validator_load(struct sieve_validator *validator)
 
 void sieve_match_types_link_tags
 	(struct sieve_validator *validator, 
-		struct sieve_command_registration *cmd_reg, unsigned int id_code) 
+		struct sieve_command_registration *cmd_reg, int id_code) 
 {	
 	sieve_validator_register_tag
 		(validator, cmd_reg, &match_type_tag, id_code); 	

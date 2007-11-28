@@ -254,7 +254,7 @@ static bool tag_comparator_validate
 
 void sieve_comparators_link_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,	
-		unsigned int id_code) 
+		int id_code) 
 {
 	sieve_validator_register_tag(validator, cmd_reg, &comparator_tag, id_code); 	
 }

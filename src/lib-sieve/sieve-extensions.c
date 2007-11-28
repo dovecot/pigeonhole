@@ -139,7 +139,7 @@ int sieve_extension_register(const struct sieve_extension *extension)
 	ereg->id = ext_id;
 	
 	hash_insert(extension_index, (void *) extension->name, (void *) ereg);
-	
+
 	return ext_id;
 }
 

@@ -135,7 +135,7 @@ int sieve_binary_extension_link
 	
 		array_idx_set(&sbin->extensions, (unsigned int) index, &bext);
 		array_idx_set(&sbin->extension_index, (unsigned int) ext_id, &bext);
-	
+
 		return index;
 	}
 	
@@ -167,7 +167,7 @@ int sieve_binary_extension_get_index
 	
 	if ( ext_id < (int) array_count(&sbin->extension_index) ) {
 		ext = array_idx(&sbin->extension_index, (unsigned int) ext_id);
-		
+	
 		return (*ext)->index;
 	}
 	

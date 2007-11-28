@@ -145,7 +145,7 @@ bool addrp_validator_load(struct sieve_validator *validator)
 
 void sieve_address_parts_link_tags
 	(struct sieve_validator *validator, 
-		struct sieve_command_registration *cmd_reg, unsigned int id_code) 
+		struct sieve_command_registration *cmd_reg, int id_code) 
 {	
 	sieve_validator_register_tag
 		(validator, cmd_reg, &address_part_tag, id_code); 	

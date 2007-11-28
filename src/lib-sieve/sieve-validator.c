@@ -198,7 +198,7 @@ static const struct sieve_command *
 struct sieve_tag_registration {
 	const struct sieve_argument *tag;
 	
-	unsigned int id_code;
+	int id_code;
 };
 
 static bool _unknown_tag_validate
@@ -215,7 +215,7 @@ static const struct sieve_argument _unknown_tag =
 
 static void _sieve_validator_register_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
-	const struct sieve_argument *tag, const char *identifier, unsigned int id_code) 
+	const struct sieve_argument *tag, const char *identifier, int id_code) 
 {
 	struct sieve_tag_registration *reg;
 	
@@ -233,7 +233,7 @@ static void _sieve_validator_register_tag
 
 void sieve_validator_register_external_tag
 (struct sieve_validator *validator, const struct sieve_argument *tag, 
-	const char *command, unsigned int id_code) 
+	const char *command, int id_code) 
 {
 	struct sieve_command_registration *cmd_reg = 
 		sieve_validator_find_command_registration(validator, command);
@@ -248,7 +248,7 @@ void sieve_validator_register_external_tag
 
 void sieve_validator_register_tag
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
-	const struct sieve_argument *tag, unsigned int id_code) 
+	const struct sieve_argument *tag, int id_code) 
 {
 	if ( tag->is_instance_of == NULL )
 		_sieve_validator_register_tag(validator, cmd_reg, tag, tag->identifier, id_code);

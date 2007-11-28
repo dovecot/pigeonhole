@@ -73,8 +73,7 @@ struct sieve_match_type_context {
 
 void sieve_match_types_link_tags
 	(struct sieve_validator *validator, 
-		struct sieve_command_registration *cmd_reg,
-		unsigned int id_code);
+		struct sieve_command_registration *cmd_reg, int id_code);
 bool sieve_match_type_validate_argument
 (struct sieve_validator *validator, struct sieve_ast_argument *arg,
 	struct sieve_ast_argument *key_arg);
