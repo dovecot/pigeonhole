@@ -221,6 +221,7 @@ const struct sieve_operand stringlist_operand =
 extern struct sieve_operand comparator_operand;
 extern struct sieve_operand match_type_operand;
 extern struct sieve_operand address_part_operand;
+extern struct sieve_operand side_effect_operand;
 
 const struct sieve_operand *sieve_operands[] = {
 	NULL, /* SIEVE_OPERAND_OPTIONAL */
@@ -229,7 +230,8 @@ const struct sieve_operand *sieve_operands[] = {
 	&stringlist_operand,
 	&comparator_operand,
 	&match_type_operand,
-	&address_part_operand
+	&address_part_operand,
+	&side_effect_operand
 }; 
 
 const unsigned int sieve_operand_count =

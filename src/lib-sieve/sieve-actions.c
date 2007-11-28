@@ -3,6 +3,7 @@
 #include "mail-storage.h"
 #include "mail-namespace.h"
 
+#include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"
@@ -24,7 +25,7 @@ const struct sieve_extension side_effects_extension = {
 	NULL, NULL, 
 	seffect_binary_load,
 	NULL,
-	SIEVE_EXT_DEFINE_NO_OPCODES,
+	SIEVE_EXT_DEFINE_NO_OPCODES, /* Opcode is hardcoded */
 	NULL
 };
 	
@@ -58,6 +59,23 @@ static bool seffect_binary_load(struct sieve_binary *sbin)
 	sieve_binary_registry_init(sbin, ext_my_id);
 	
 	return TRUE;
+}
+
+/*
+ * Side-effect operand
+ */
+ 
+static struct sieve_operand_class side_effect_class = 
+	{ "side-effect", NULL };
+struct sieve_operand side_effect_operand = 
+	{ "side-effect", &side_effect_class, FALSE };
+
+void sieve_opr_side_effect_emit
+	(struct sieve_binary *sbin, struct sieve_side_effect *seffect, int ext_id)
+{ 
+	sieve_binary_emit_extension
+		(sbin, seffect, ext_id, 0, SIEVE_OPERAND_SIDE_EFFECT, 
+		seffect->extension->side_effects_count > 1)
 }
 
 /*

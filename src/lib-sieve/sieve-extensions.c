@@ -58,7 +58,7 @@ extern const struct sieve_extension imapflags_extension;
 extern const struct sieve_extension copy_extension;
 
 const struct sieve_extension *sieve_core_extensions[] = {
-	/* Preloaded extensions */
+	/* Preloaded 'extensions' */
 	&comparator_extension, &match_type_extension, &address_part_extension,
 	&side_effects_extension,
 	

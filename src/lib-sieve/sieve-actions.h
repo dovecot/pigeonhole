@@ -45,10 +45,15 @@ struct sieve_action {
 
 /* Action side effects */
 
+struct sieve_side_effect_extension;
+
 struct sieve_side_effect {
 	const char *name;
 	const struct sieve_action *to_action;
 	
+	const struct sieve_side_effect_extension *extension;
+	unsigned int ext_code;
+
 	bool (*pre_execute)
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 			const struct sieve_action_exec_env *aenv, void **se_context, 
@@ -84,6 +89,9 @@ struct sieve_side_effect_extension {
 void sieve_side_effect_extension_set
 	(struct sieve_binary *sbin, int ext_id,
 		const struct sieve_side_effect_extension *ext);
+
+void sieve_opr_side_effect_emit
+	(struct sieve_binary *sbin, struct sieve_side_effect *seffect, int ext_id);
 
 /* Actions common to multiple commands */
 
