@@ -14,6 +14,7 @@
 
 #include "sieve-code.h"
 #include "sieve-extensions.h"
+#include "sieve-actions.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -44,6 +45,25 @@ static bool ext_copy_load(int ext_id)
 	return TRUE;
 }
 
+/* Side effect */
+
+const struct sieve_side_effect_extension ext_copy_side_effect;
+
+const struct sieve_side_effect copy_side_effect = {
+	"copy",
+	&act_store,
+	
+	&ext_copy_side_effect,
+	0,
+	NULL, NULL, NULL, NULL
+};
+
+const struct sieve_side_effect_extension ext_copy_side_effect = {
+	&copy_extension,
+
+	SIEVE_EXT_DEFINE_SIDE_EFFECT(copy_side_effect)
+};
+
 /* Tag validation */
 
 static bool tag_copy_validate
@@ -57,12 +77,30 @@ static bool tag_copy_validate
 	return TRUE;
 }
 
+/* Tag generation */
+
+static bool tag_copy_generate
+(struct sieve_generator *generator, struct sieve_ast_argument *arg,
+    struct sieve_command_context *context ATTR_UNUSED)
+{
+    struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+
+    if ( sieve_ast_argument_type(arg) != SAAT_TAG ) {
+        return FALSE;
+    }
+
+    sieve_opr_side_effect_emit(sbin, &copy_side_effect, ext_my_id);
+
+    return TRUE;
+}
+
 /* Tag */
 
 static const struct sieve_argument copy_tag = { 
 	"copy", NULL, 
 	tag_copy_validate, 
-	NULL, NULL 
+	NULL,
+	tag_copy_generate
 };
 
 /* Load extension into validator */
@@ -72,8 +110,8 @@ static bool ext_copy_validator_load(struct sieve_validator *validator)
 	 * whether these commands are registered or even whether they will be
 	 * registered at all. The validator handles either situation gracefully 
 	 */
-	sieve_validator_register_external_tag(validator, &copy_tag, "redirect", 0);
-	sieve_validator_register_external_tag(validator, &copy_tag, "fileinto", 0);
+	sieve_validator_register_external_tag(validator, &copy_tag, "redirect", -1);
+	sieve_validator_register_external_tag(validator, &copy_tag, "fileinto", -1);
 
 	return TRUE;
 }

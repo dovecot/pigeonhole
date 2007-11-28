@@ -89,8 +89,8 @@ static bool ext_imapflags_validator_load
 	 * whether these commands are registered or even whether they will be
 	 * registered at all. The validator handles either situation gracefully 
 	 */
-	sieve_validator_register_external_tag(validator, &tag_flags, "keep", 0);
-	sieve_validator_register_external_tag(validator, &tag_flags, "fileinto", 0);
+	sieve_validator_register_external_tag(validator, &tag_flags, "keep", -1);
+	sieve_validator_register_external_tag(validator, &tag_flags, "fileinto", -1);
 
 	return TRUE;
 }

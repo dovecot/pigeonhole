@@ -71,7 +71,8 @@ struct sieve_operand side_effect_operand =
 	{ "side-effect", &side_effect_class, FALSE };
 
 void sieve_opr_side_effect_emit
-	(struct sieve_binary *sbin, struct sieve_side_effect *seffect, int ext_id)
+	(struct sieve_binary *sbin, const struct sieve_side_effect *seffect, 
+		int ext_id)
 { 
 	sieve_binary_emit_extension
 		(sbin, seffect, ext_id, 0, SIEVE_OPERAND_SIDE_EFFECT, 

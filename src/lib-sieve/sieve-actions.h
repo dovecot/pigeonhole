@@ -91,7 +91,8 @@ void sieve_side_effect_extension_set
 		const struct sieve_side_effect_extension *ext);
 
 void sieve_opr_side_effect_emit
-	(struct sieve_binary *sbin, struct sieve_side_effect *seffect, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_side_effect *seffect, 
+		int ext_id);
 
 /* Actions common to multiple commands */
 
