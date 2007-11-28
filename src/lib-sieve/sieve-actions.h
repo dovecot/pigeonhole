@@ -41,6 +41,28 @@ struct sieve_action {
 			const struct sieve_action_exec_env *aenv, void *tr_context, bool success);
 };
 
+struct sieve_side_effect {
+	const char *name;
+	const struct sieve_action *to_action;
+	
+	bool (*pre_execute)
+		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
+			const struct sieve_action_exec_env *aenv, void **se_context, 
+			void *tr_context);
+	bool (*post_execute)
+		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
+			const struct sieve_action_exec_env *aenv, void *se_context, 
+			void *tr_context);
+	bool (*post_commit)
+		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
+			const struct sieve_action_exec_env *aenv, void *se_context,
+			void *tr_context);
+	void (*rollback)
+		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
+			const struct sieve_action_exec_env *aenv, void *se_context,
+			void *tr_context, bool success);
+};
+
 /* Actions common to multiple commands */
 
 const struct sieve_action act_store;

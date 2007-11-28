@@ -9,11 +9,21 @@
 #include <stdio.h>
 
 struct sieve_result_action {
+	struct sieve_result *result;
 	const struct sieve_action *action;
 	void *context;
 	void *tr_context;
 	bool success;
 	struct sieve_result_action *prev, *next; 
+
+	struct sieve_result_side_effect *first_effect;
+	struct sieve_result_side_effect *last_effect;
+};
+
+struct sieve_result_side_effect {
+	const struct sieve_side_effect *seffect;
+	void *context;
+	struct sieve_result_side_effect *prev, *next; 
 };
 
 struct sieve_result {
@@ -104,6 +114,7 @@ bool sieve_result_add_action
 		
 	/* Create new action object */
 	raction = p_new(result->pool, struct sieve_result_action, 1);
+	raction->result = result;
 	raction->action = action;
 	raction->context = context;
 	raction->tr_context = NULL;
@@ -120,6 +131,33 @@ bool sieve_result_add_action
 		raction->prev = result->last_action;
 		result->last_action = raction;
 		raction->next = NULL;
+	}	
+	
+	return TRUE;
+}	
+
+bool sieve_result_add_side_effect
+(struct sieve_result_action *raction, const struct sieve_side_effect *seffect, 
+	void *context)		
+{
+	struct sieve_result_side_effect *reffect;
+	
+	/* Create new action object */
+	reffect = p_new(raction->result->pool, struct sieve_result_side_effect, 1);
+	reffect->seffect = seffect;
+	reffect->context = context;
+	
+	/* Add */
+	if ( raction->first_effect == NULL ) {
+		raction->first_effect = reffect;
+		raction->last_effect = reffect;
+		reffect->prev = NULL;
+		reffect->next = NULL;
+	} else {
+		raction->last_effect->next = reffect;
+		reffect->prev = raction->last_effect;
+		raction->last_effect = reffect;
+		reffect->next = NULL;
 	}	
 	
 	return TRUE;
@@ -154,7 +192,6 @@ bool sieve_result_execute
 	struct sieve_result_action *rac;
 	struct sieve_result_action *last_attempted;
 
-	
 	result->action_env.msgdata = msgdata;
 	result->action_env.mailenv = menv;
 	
@@ -182,14 +219,37 @@ bool sieve_result_execute
 	rac = result->first_action;
 	while ( success && rac != NULL ) {
 		const struct sieve_action *act = rac->action;
-	
-		if ( act->execute != NULL ) {
-			void *context = rac->tr_context == NULL ? 
+		struct sieve_result_side_effect *rsef;
+		const struct sieve_side_effect *sef;
+		void *context = rac->tr_context == NULL ? 
 				rac->context : rac->tr_context;
-				
+		
+		/* Execute pre-execute event of side effects */
+		rsef = rac->first_effect;
+		while ( rsef != NULL ) {
+			sef = rsef->seffect;
+			if ( sef->pre_execute != NULL ) 
+				sef->pre_execute
+					(sef, act, &result->action_env, &rsef->context, context);
+			rsef = rsef->next;
+		}
+	
+		/* Execute the action itself */
+		if ( act->execute != NULL ) {
 			rac->success = act->execute(act, &result->action_env, context);
 			success = success && rac->success;
-		} 
+		}
+		
+		/* Execute pre-execute event of side effects */
+		rsef = rac->first_effect;
+		while ( rsef != NULL ) {
+			sef = rsef->seffect;
+			if ( sef->post_execute != NULL ) 
+				sef->post_execute
+					(sef, act, &result->action_env, rsef->context, context);
+			rsef = rsef->next;
+		}
+		 
 		rac = rac->next;	
 	}
 	
@@ -203,15 +263,38 @@ bool sieve_result_execute
 	rac = result->first_action;
 	while ( rac != NULL && rac != last_attempted ) {
 		const struct sieve_action *act = rac->action;
+		struct sieve_result_side_effect *rsef;
+		const struct sieve_side_effect *sef;
 		void *context = rac->tr_context == NULL ? 
 				rac->context : rac->tr_context;
 		
 		if ( success ) {
 			if ( act->commit != NULL ) 
 				commit_ok = act->commit(act, &result->action_env, context) && commit_ok;
+	
+			/* Execute post_commit event of side effects */
+			rsef = rac->first_effect;
+			while ( rsef != NULL ) {
+				sef = rsef->seffect;
+				if ( sef->post_commit != NULL ) 
+					sef->post_commit
+						(sef, act, &result->action_env, rsef->context, context);
+				rsef = rsef->next;
+			}
 		} else {
 			if ( act->rollback != NULL ) 
 				act->rollback(act, &result->action_env, context, rac->success);
+				
+			/* Rollback side effects */
+			rsef = rac->first_effect;
+			while ( rsef != NULL ) {
+				sef = rsef->seffect;
+				if ( sef->rollback != NULL ) 
+					sef->rollback
+						(sef, act, &result->action_env, rsef->context, context, 
+						rac->success);
+				rsef = rsef->next;
+			}
 		}
 		rac = rac->next;	
 	}

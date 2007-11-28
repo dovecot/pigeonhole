@@ -77,5 +77,6 @@ struct sieve_result;
 /* sieve-actions.h */
 struct sieve_action_exec_env;
 struct sieve_action;
+struct sieve_side_effect;
 
 #endif /* __SIEVE_COMMON_H */
