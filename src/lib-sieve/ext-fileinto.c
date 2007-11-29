@@ -132,6 +132,9 @@ static bool ext_fileinto_opcode_dump
 {
 	printf("FILEINTO\n");
 
+	if ( !sieve_interpreter_handle_optional_operands(renv, address, NULL) )
+		return FALSE;
+
 	return 
 		sieve_opr_string_dump(renv->sbin, address);
 }
@@ -144,7 +147,11 @@ static bool ext_fileinto_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	struct sieve_side_effects_list *slist = NULL; 
 	string_t *folder;
+	
+	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
+		return FALSE;
 
 	t_push();
 
@@ -155,7 +162,7 @@ static bool ext_fileinto_opcode_execute
 
 	printf(">> FILEINTO \"%s\"\n", str_c(folder));
 
-	if ( sieve_act_store_add_to_result(renv, str_c(folder)) )
+	if ( sieve_act_store_add_to_result(renv, slist, str_c(folder)) )
 		sieve_result_cancel_implicit_keep(renv->result);
 
 	t_pop();

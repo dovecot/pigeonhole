@@ -71,6 +71,8 @@ sieve_size_t sieve_binary_emit_ext_opcode_id
 /* Literals */
 bool sieve_binary_read_byte
 	(struct sieve_binary *binary, sieve_size_t *address, unsigned int *byte_val);
+bool sieve_binary_read_code
+	(struct sieve_binary *binary, sieve_size_t *address, int *code);
 bool sieve_binary_read_offset
 	(struct sieve_binary *binary, sieve_size_t *address, int *offset);
 bool sieve_binary_read_integer

@@ -115,7 +115,8 @@ struct act_store_transaction {
 };
 
 bool sieve_act_store_add_to_result
-	(const struct sieve_runtime_env *renv, const char *folder);
+	(const struct sieve_runtime_env *renv, 
+		struct sieve_side_effects_list *seffects, const char *folder);
 
 		
 #endif /* __SIEVE_ACTIONS_H */

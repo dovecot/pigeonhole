@@ -289,8 +289,25 @@ bool sieve_binary_read_byte
 		return TRUE;
 	}
 	
+	*byte_val = 0;
 	return FALSE;
 }
+
+bool sieve_binary_read_code
+	(struct sieve_binary *binary, sieve_size_t *address, int *code) 
+{	
+	if ( ADDR_BYTES_LEFT(binary, address) >= 1 ) {
+		if ( code != NULL )
+			*code = ADDR_CODE_AT(binary, address);
+		ADDR_JUMP(address, 1);
+			
+		return TRUE;
+	}
+	
+	*code = 0;
+	return FALSE;
+}
+
 
 bool sieve_binary_read_offset
 	(struct sieve_binary *binary, sieve_size_t *address, int *offset) 

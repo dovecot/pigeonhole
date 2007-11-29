@@ -117,6 +117,9 @@ static bool cmd_redirect_opcode_dump
 {
 	printf("REDIRECT\n");
 
+	if ( !sieve_interpreter_handle_optional_operands(renv, address, NULL) )
+		return FALSE;
+
 	return 
 		sieve_opr_string_dump(renv->sbin, address);
 }
@@ -129,9 +132,13 @@ static bool cmd_redirect_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	struct sieve_side_effects_list *slist = NULL;
 	struct act_redirect_context *act;
 	string_t *redirect;
 	pool_t pool;
+
+	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
+		return FALSE;
 
 	t_push();
 
@@ -147,7 +154,7 @@ static bool cmd_redirect_opcode_execute
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = p_strdup(pool, str_c(redirect));
 	
-	if ( sieve_result_add_action(renv, &act_redirect, (void *) act) )
+	if ( sieve_result_add_action(renv, &act_redirect, slist, (void *) act) )
 		sieve_result_cancel_implicit_keep(renv->result);
 	
 	t_pop();

@@ -140,22 +140,8 @@ bool sieve_operand_optional_present(struct sieve_binary *sbin, sieve_size_t *add
 
 bool sieve_operand_optional_read(struct sieve_binary *sbin, sieve_size_t *address, int *id_code)
 {
-	unsigned int id;
-
-	while ( sieve_binary_read_byte(sbin, address, &id) ) {
-		*id_code = (int) id;
-		
-		if ( *id_code == SIEVE_OPT_SIDE_EFFECT ) {
-			const struct sieve_side_effect *seffect = 
-				sieve_opr_side_effect_read(sbin, address);
-
-			printf("SIDE_EFFECT!!!\n");
-			if ( seffect == NULL ) return FALSE;
-			
-			printf("        : SIDE_EFFECT: %s\n", seffect->name);
-		} else 
-			return TRUE;
-	}
+	if ( sieve_binary_read_code(sbin, address, id_code) ) 
+		return TRUE;
 	
 	*id_code = 0;
 

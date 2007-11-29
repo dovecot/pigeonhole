@@ -7,14 +7,20 @@
 #include "sieve-result.h"
 
 #include <stdio.h>
-
 struct sieve_result_action {
 	struct sieve_result *result;
 	const struct sieve_action *action;
 	void *context;
 	void *tr_context;
 	bool success;
+	
+	struct sieve_side_effects_list *seffects;
+	
 	struct sieve_result_action *prev, *next; 
+};
+
+struct sieve_side_effects_list {
+	struct sieve_result *result;
 
 	struct sieve_result_side_effect *first_effect;
 	struct sieve_result_side_effect *last_effect;
@@ -81,7 +87,8 @@ void sieve_result_cancel_implicit_keep(struct sieve_result *result)
 
 bool sieve_result_add_action
 (const struct sieve_runtime_env *renv,
-	const struct sieve_action *action, void *context)		
+	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
+	void *context)		
 {
 	struct sieve_result *result = renv->result;
 	struct sieve_result_action *raction;
@@ -119,6 +126,7 @@ bool sieve_result_add_action
 	raction->context = context;
 	raction->tr_context = NULL;
 	raction->success = FALSE;
+	raction->seffects = seffects;
 	
 	/* Add */
 	if ( result->first_action == NULL ) {
@@ -131,33 +139,6 @@ bool sieve_result_add_action
 		raction->prev = result->last_action;
 		result->last_action = raction;
 		raction->next = NULL;
-	}	
-	
-	return TRUE;
-}	
-
-bool sieve_result_add_side_effect
-(struct sieve_result_action *raction, const struct sieve_side_effect *seffect, 
-	void *context)		
-{
-	struct sieve_result_side_effect *reffect;
-	
-	/* Create new action object */
-	reffect = p_new(raction->result->pool, struct sieve_result_side_effect, 1);
-	reffect->seffect = seffect;
-	reffect->context = context;
-	
-	/* Add */
-	if ( raction->first_effect == NULL ) {
-		raction->first_effect = reffect;
-		raction->last_effect = reffect;
-		reffect->prev = NULL;
-		reffect->next = NULL;
-	} else {
-		raction->last_effect->next = reffect;
-		reffect->prev = raction->last_effect;
-		raction->last_effect = reffect;
-		reffect->next = NULL;
 	}	
 	
 	return TRUE;
@@ -225,7 +206,7 @@ bool sieve_result_execute
 				rac->context : rac->tr_context;
 		
 		/* Execute pre-execute event of side effects */
-		rsef = rac->first_effect;
+		rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
 		while ( rsef != NULL ) {
 			sef = rsef->seffect;
 			if ( sef->pre_execute != NULL ) 
@@ -241,7 +222,7 @@ bool sieve_result_execute
 		}
 		
 		/* Execute pre-execute event of side effects */
-		rsef = rac->first_effect;
+		rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
 		while ( rsef != NULL ) {
 			sef = rsef->seffect;
 			if ( sef->post_execute != NULL ) 
@@ -273,7 +254,7 @@ bool sieve_result_execute
 				commit_ok = act->commit(act, &result->action_env, context) && commit_ok;
 	
 			/* Execute post_commit event of side effects */
-			rsef = rac->first_effect;
+			rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
 			while ( rsef != NULL ) {
 				sef = rsef->seffect;
 				if ( sef->post_commit != NULL ) 
@@ -286,7 +267,7 @@ bool sieve_result_execute
 				act->rollback(act, &result->action_env, context, rac->success);
 				
 			/* Rollback side effects */
-			rsef = rac->first_effect;
+			rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
 			while ( rsef != NULL ) {
 				sef = rsef->seffect;
 				if ( sef->rollback != NULL ) 
@@ -303,3 +284,47 @@ bool sieve_result_execute
 	
 	return commit_ok;
 }
+
+/*
+ * Side effects list
+ */
+struct sieve_side_effects_list *sieve_side_effects_list_create
+	(struct sieve_result *result)
+{
+	struct sieve_side_effects_list *list = 
+		p_new(result->pool, struct sieve_side_effects_list, 1);
+	
+	list->result = result;
+	list->first_effect = NULL;
+	list->last_effect = NULL;
+	
+	return list;
+};
+
+void sieve_side_effects_list_add
+(struct sieve_side_effects_list *list, const struct sieve_side_effect *seffect, 
+	void *context)		
+{
+	struct sieve_result_side_effect *reffect;
+	
+	/* Create new action object */
+	reffect = p_new(list->result->pool, struct sieve_result_side_effect, 1);
+	reffect->seffect = seffect;
+	reffect->context = context;
+	
+	/* Add */
+	if ( list->first_effect == NULL ) {
+		list->first_effect = reffect;
+		list->last_effect = reffect;
+		reffect->prev = NULL;
+		reffect->next = NULL;
+	} else {
+		list->last_effect->next = reffect;
+		reffect->prev = list->last_effect;
+		list->last_effect = reffect;
+		reffect->next = NULL;
+	}	
+}	
+
+
+

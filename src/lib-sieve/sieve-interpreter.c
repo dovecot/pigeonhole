@@ -9,6 +9,7 @@
 
 #include "sieve-extensions.h"
 #include "sieve-commands-private.h"
+#include "sieve-actions.h"
 #include "sieve-generator.h"
 #include "sieve-binary.h"
 #include "sieve-result.h"
@@ -165,6 +166,36 @@ bool sieve_interpreter_read_offset_operand
 	(struct sieve_interpreter *interp, int *offset) 
 {
 	return sieve_binary_read_offset(interp->runenv.sbin, &(interp->pc), offset);
+}
+
+bool sieve_interpreter_handle_optional_operands
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
+		struct sieve_side_effects_list **list)
+{
+	int opt_code;
+	
+	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+		while ( opt_code != 0 ) {
+			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) )
+				return FALSE;
+
+			if ( opt_code == SIEVE_OPT_SIDE_EFFECT ) {
+				if ( list != NULL && *list == NULL ) 
+					*list = sieve_side_effects_list_create(renv->result);
+					
+				const struct sieve_side_effect *seffect = 
+					sieve_opr_side_effect_read(renv->sbin, address);
+
+				if ( seffect == NULL ) return FALSE;
+			
+				printf("        : SIDE_EFFECT: %s\n", seffect->name);
+				
+				if ( list != NULL )
+					sieve_side_effects_list_add(*list, seffect, NULL);
+			}
+		}
+	}
+	return TRUE;
 }
  
 /* Code Dump */

@@ -50,6 +50,11 @@ inline const void *sieve_interpreter_extension_get_context
 
 bool sieve_interpreter_read_offset_operand
 	(struct sieve_interpreter *interp, int *offset);
+	
+struct sieve_result_action;
+bool sieve_interpreter_handle_optional_operands
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
+		struct sieve_side_effects_list **list);
 
 /* Code dump (debugging purposes) */
 
