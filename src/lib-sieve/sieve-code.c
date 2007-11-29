@@ -3,6 +3,7 @@
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
+#include "sieve-actions.h"
 #include "sieve-binary.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -141,9 +142,19 @@ bool sieve_operand_optional_read(struct sieve_binary *sbin, sieve_size_t *addres
 {
 	unsigned int id;
 
-	if ( sieve_binary_read_byte(sbin, address, &id) ) {
+	while ( sieve_binary_read_byte(sbin, address, &id) ) {
 		*id_code = (int) id;
-		return TRUE;
+		
+		if ( *id_code == SIEVE_OPT_SIDE_EFFECT ) {
+			const struct sieve_side_effect *seffect = 
+				sieve_opr_side_effect_read(sbin, address);
+
+			printf("SIDE_EFFECT!!!\n");
+			if ( seffect == NULL ) return FALSE;
+			
+			printf("        : SIDE_EFFECT: %s\n", seffect->name);
+		} else 
+			return TRUE;
 	}
 	
 	*id_code = 0;

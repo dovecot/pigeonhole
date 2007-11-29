@@ -74,9 +74,11 @@ static bool tag_copy_validate
 	struct sieve_ast_argument **arg ATTR_UNUSED, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
-	/* FIXME: currently not generated */
+	/* FIXME: currently not generated * /
 	*arg = sieve_ast_arguments_detach(*arg,1);
-		
+	*/	
+	*arg = sieve_ast_argument_next(*arg);
+
 	return TRUE;
 }
 

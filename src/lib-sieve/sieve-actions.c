@@ -79,6 +79,42 @@ void sieve_opr_side_effect_emit
 		seffect->extension->side_effects_count > 1)
 }
 
+/* FIXME: Duplicated */
+const struct sieve_side_effect *sieve_opr_side_effect_read
+(struct sieve_binary *sbin, sieve_size_t *address)
+{
+	unsigned int seffect_code;
+	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
+	
+	if ( operand == NULL || operand->class != &side_effect_class ) 
+		return NULL;
+	
+	if ( sieve_binary_read_byte(sbin, address, &seffect_code) ) {
+		int ext_id = -1;
+		const struct sieve_side_effect_extension *se_ext;
+
+		if ( sieve_binary_extension_get_by_index(sbin,
+			seffect_code, &ext_id) == NULL )
+			return NULL; 
+
+		se_ext = sieve_side_effect_extension_get(sbin, ext_id); 
+
+		if ( se_ext != NULL ) {  	
+			unsigned int code;
+			if ( se_ext->side_effects_count == 1 )
+				return se_ext->side_effects.single;
+	  	
+			if ( sieve_binary_read_byte(sbin, address, &code) )
+				return se_ext->side_effects.list[code];
+		} else {
+			i_info("Unknown action side-effect %d.", seffect_code); 
+		}
+	}		
+		
+	return NULL; 
+}
+
+
 /*
  * Actions common to multiple core commands 
  */

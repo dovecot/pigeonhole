@@ -255,6 +255,7 @@ static void opr_address_part_emit_ext
 		(void) sieve_binary_emit_byte(sbin, addrp->ext_code);
 }
 
+/* FIXME: Duplicated */
 const struct sieve_address_part *sieve_opr_address_part_read
 (struct sieve_binary *sbin, sieve_size_t *address)
 {

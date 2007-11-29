@@ -86,6 +86,8 @@ struct sieve_side_effect_extension {
 #define SIEVE_EXT_DEFINE_SIDE_EFFECT(SEF) SIEVE_EXT_DEFINE_OBJECT(SEF)
 #define SIEVE_EXT_DEFINE_SIDE_EFFECTS(SEFS) SIEVE_EXT_DEFINE_OBJECTS(SEFS)
 
+#define SIEVE_OPT_SIDE_EFFECT -1
+
 void sieve_side_effect_extension_set
 	(struct sieve_binary *sbin, int ext_id,
 		const struct sieve_side_effect_extension *ext);
@@ -93,6 +95,8 @@ void sieve_side_effect_extension_set
 void sieve_opr_side_effect_emit
 	(struct sieve_binary *sbin, const struct sieve_side_effect *seffect, 
 		int ext_id);
+const struct sieve_side_effect *sieve_opr_side_effect_read
+	(struct sieve_binary *sbin, sieve_size_t *address);
 
 /* Actions common to multiple commands */
 

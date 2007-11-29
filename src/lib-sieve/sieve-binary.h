@@ -88,7 +88,8 @@ void sieve_binary_registry_set_object
 	(struct sieve_binary *sbin, int ext_id, int id, const void *object);
 void sieve_binary_registry_init(struct sieve_binary *sbin, int ext_id);
 
-/* */
+/* These macros are not a very nice solution to the code duplication. I really
+ * need to think about this more */
 
 #define sieve_binary_emit_extension(sbin, obj, ext_id, base, operand, mult)   \
 	unsigned char code = base + sieve_binary_extension_get_index(sbin, ext_id); \
@@ -97,6 +98,5 @@ void sieve_binary_registry_init(struct sieve_binary *sbin, int ext_id);
 	(void) sieve_binary_emit_byte(sbin, code);                                  \
 	if ( mult )                                                                 \
 		(void) sieve_binary_emit_byte(sbin, obj->ext_code);                       
-
 
 #endif
