@@ -3,7 +3,7 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-imapflags-05
- * Implementation: flag managesiement works, not stored though. 
+ * Implementation: flag management works, not stored though. 
  * Status: under development
  *
  */
@@ -16,6 +16,7 @@
 
 #include "sieve-code.h"
 #include "sieve-extensions.h"
+#include "sieve-actions.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -30,6 +31,7 @@ static bool ext_imapflags_load(int ext_id);
 static bool ext_imapflags_validator_load(struct sieve_validator *validator);
 static bool ext_imapflags_interpreter_load
 	(struct sieve_interpreter *interpreter);
+static bool ext_imapflags_binary_load(struct sieve_binary *sbin);
 
 /* Commands */
 
@@ -61,7 +63,8 @@ const struct sieve_extension imapflags_extension = {
 	"imap4flags", 
 	ext_imapflags_load,
 	ext_imapflags_validator_load, 
-	NULL, NULL,
+	NULL, 
+	ext_imapflags_binary_load,
 	ext_imapflags_interpreter_load, 
 	SIEVE_EXT_DEFINE_OPCODES(imapflags_opcodes), 
 	NULL
@@ -73,6 +76,8 @@ static bool ext_imapflags_load(int ext_id)
 
 	return TRUE;
 }
+
+extern const struct sieve_side_effect_extension imapflags_seffect_extension;
 
 /* Load extension into validator */
 
@@ -91,6 +96,18 @@ static bool ext_imapflags_validator_load
 	 */
 	sieve_validator_register_external_tag(validator, &tag_flags, "keep", -1);
 	sieve_validator_register_external_tag(validator, &tag_flags, "fileinto", -1);
+
+	return TRUE;
+}
+
+/*
+ * Binary context
+ */
+
+static bool ext_imapflags_binary_load(struct sieve_binary *sbin)
+{
+	sieve_side_effect_extension_set(sbin, ext_imapflags_my_id, 
+		&imapflags_seffect_extension);
 
 	return TRUE;
 }

@@ -180,6 +180,8 @@ bool sieve_interpreter_handle_optional_operands
 				return FALSE;
 
 			if ( opt_code == SIEVE_OPT_SIDE_EFFECT ) {
+				void *context = NULL;
+			
 				if ( list != NULL && *list == NULL ) 
 					*list = sieve_side_effects_list_create(renv->result);
 					
@@ -189,9 +191,14 @@ bool sieve_interpreter_handle_optional_operands
 				if ( seffect == NULL ) return FALSE;
 			
 				printf("        : SIDE_EFFECT: %s\n", seffect->name);
+
+				if ( list != NULL ) {
+					if ( seffect->read != NULL && !seffect->read
+						(seffect, renv, address, &context) )
+						return FALSE;
 				
-				if ( list != NULL )
-					sieve_side_effects_list_add(*list, seffect, NULL);
+					sieve_side_effects_list_add(*list, seffect, context);
+				}
 			}
 		}
 	}

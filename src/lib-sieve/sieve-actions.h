@@ -53,6 +53,11 @@ struct sieve_side_effect {
 	
 	const struct sieve_side_effect_extension *extension;
 	unsigned int ext_code;
+	
+	bool (*read)
+		(const struct sieve_side_effect *seffect ATTR_UNUSED, 
+			const struct sieve_runtime_env *renv, sieve_size_t *address,
+			void **se_context);
 
 	void (*print)
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 

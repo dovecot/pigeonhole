@@ -70,6 +70,7 @@ const struct sieve_side_effect copy_side_effect = {
 	
 	&ext_copy_side_effect,
 	0,
+	NULL,
 	seff_copy_print,
 	NULL, NULL,
 	seff_copy_post_commit, 
