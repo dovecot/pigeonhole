@@ -3,8 +3,8 @@
  *
  * Authors: Stephan Bosch
  * Specification: RFC 3894
- * Implementation: 
- * Status: under development
+ * Implementation: full
+ * Status: experimental, largely untested
  * 
  */
 
@@ -52,6 +52,9 @@ static bool ext_copy_load(int ext_id)
 
 const struct sieve_side_effect_extension ext_copy_side_effect;
 
+void seff_copy_print
+	(const struct sieve_side_effect *seffect,	const struct sieve_action *action, 
+		void *se_context, bool *keep);
 bool seff_copy_pre_execute
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, void **se_context, 
@@ -59,7 +62,7 @@ bool seff_copy_pre_execute
 bool seff_copy_post_commit
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 			const struct sieve_action_exec_env *aenv, void *se_context,
-			void *tr_context);
+			void *tr_context, bool *keep);
 
 const struct sieve_side_effect copy_side_effect = {
 	"copy",
@@ -67,8 +70,8 @@ const struct sieve_side_effect copy_side_effect = {
 	
 	&ext_copy_side_effect,
 	0,
-	seff_copy_pre_execute, 
-	NULL, 
+	seff_copy_print,
+	NULL, NULL,
 	seff_copy_post_commit, 
 	NULL
 };
@@ -122,21 +125,24 @@ static const struct sieve_argument copy_tag = {
 
 /* Side effect execution */
 
-bool seff_copy_pre_execute
-(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
-	const struct sieve_action_exec_env *aenv, void **se_context, 
-	void *tr_context)
+void seff_copy_print
+	(const struct sieve_side_effect *seffect ATTR_UNUSED, 
+		const struct sieve_action *action ATTR_UNUSED, 
+		void *se_context ATTR_UNUSED, bool *keep)
 {
-	printf("        + implicit keep preserved\n");
-	return TRUE;
+	printf("        + preserve implicit keep\n");
+
+	*keep = TRUE;
 }
 
 bool seff_copy_post_commit
-	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
-		const struct sieve_action_exec_env *aenv, void *se_context,
-		void *tr_context)
+(const struct sieve_side_effect *seffect ATTR_UNUSED, 
+	const struct sieve_action *action, 
+	const struct sieve_action_exec_env *aenv ATTR_UNUSED, 
+		void *se_context ATTR_UNUSED,	void *tr_context ATTR_UNUSED, bool *keep)
 {	
-	printf("        + implicit keep restored\n");
+	i_info("implicit keep preserved after %s action.", action->name);
+	*keep = TRUE;
 	return TRUE;
 }
 

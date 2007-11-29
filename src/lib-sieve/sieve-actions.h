@@ -26,7 +26,7 @@ struct sieve_action {
 			void *context1);
 
 	void (*print)
-		(const struct sieve_action *action, void *context);	
+		(const struct sieve_action *action, void *context, bool *keep);	
 		
 	bool (*start)
 		(const struct sieve_action *action, 
@@ -37,7 +37,7 @@ struct sieve_action {
 			const struct sieve_action_exec_env *aenv, void *tr_context);
 	bool (*commit)
 		(const struct sieve_action *action, 
-			const struct sieve_action_exec_env *aenv, void *tr_context);
+			const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 	void (*rollback)
 		(const struct sieve_action *action, 
 			const struct sieve_action_exec_env *aenv, void *tr_context, bool success);
@@ -54,6 +54,10 @@ struct sieve_side_effect {
 	const struct sieve_side_effect_extension *extension;
 	unsigned int ext_code;
 
+	void (*print)
+		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
+			void *se_context, bool *keep);
+
 	bool (*pre_execute)
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 			const struct sieve_action_exec_env *aenv, void **se_context, 
@@ -65,7 +69,7 @@ struct sieve_side_effect {
 	bool (*post_commit)
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 			const struct sieve_action_exec_env *aenv, void *se_context,
-			void *tr_context);
+			void *tr_context, bool *keep);
 	void (*rollback)
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 			const struct sieve_action_exec_env *aenv, void *se_context,

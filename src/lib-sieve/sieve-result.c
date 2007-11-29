@@ -38,8 +38,6 @@ struct sieve_result {
 	struct sieve_action_exec_env action_env;
 	struct sieve_result_action *first_action;
 	struct sieve_result_action *last_action;
-	
-	unsigned int implicit_keep:1; 
 };
 
 struct sieve_result *sieve_result_create(void) 
@@ -54,8 +52,6 @@ struct sieve_result *sieve_result_create(void)
 		
 	result->first_action = NULL;
 	result->last_action = NULL;
-	
-	result->implicit_keep = TRUE;
 
 	return result;
 }
@@ -78,11 +74,6 @@ void sieve_result_unref(struct sieve_result **result)
 inline pool_t sieve_result_pool(struct sieve_result *result)
 {
 	return result->pool;
-}
-
-void sieve_result_cancel_implicit_keep(struct sieve_result *result)
-{
-	result->implicit_keep = FALSE;
 }
 
 bool sieve_result_add_action
@@ -146,21 +137,38 @@ bool sieve_result_add_action
 
 bool sieve_result_print(struct sieve_result *result)
 {
+	bool implicit_keep = TRUE;
 	struct sieve_result_action *rac = result->first_action;
 	
 	printf("\nPerformed actions:\n");
 	while ( rac != NULL ) {		
+		bool keep = TRUE;
 		const struct sieve_action *act = rac->action;
+		struct sieve_result_side_effect *rsef;
+		const struct sieve_side_effect *sef;
+
 	
 		if ( act->print != NULL ) {
-			act->print(act, rac->context);	
+			act->print(act, rac->context, &keep);
 		} else {
 			printf("* %s\n", act->name); 
 		}
+	
+		/* Print side effects */
+		rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
+		while ( rsef != NULL ) {
+			sef = rsef->seffect;
+			if ( sef->print != NULL ) 
+				sef->print
+					(sef, act, rsef->context, &keep);
+			rsef = rsef->next;
+		}
+
+		implicit_keep = implicit_keep && keep;		
 		rac = rac->next;	
 	}
 	
-	printf("\nImplicit keep: %s\n", result->implicit_keep ? "yes" : "no");
+	printf("\nImplicit keep: %s\n", implicit_keep ? "yes" : "no");
 	
 	return TRUE;
 }
@@ -169,6 +177,7 @@ bool sieve_result_execute
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,
 		const struct sieve_mail_environment *menv)
 { 
+	bool implicit_keep = TRUE;
 	bool success = TRUE, commit_ok;
 	struct sieve_result_action *rac;
 	struct sieve_result_action *last_attempted;
@@ -250,8 +259,11 @@ bool sieve_result_execute
 				rac->context : rac->tr_context;
 		
 		if ( success ) {
+			bool keep = TRUE;
+		
 			if ( act->commit != NULL ) 
-				commit_ok = act->commit(act, &result->action_env, context) && commit_ok;
+				commit_ok = act->commit(act, &result->action_env, context, &keep) && 
+					commit_ok;
 	
 			/* Execute post_commit event of side effects */
 			rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
@@ -259,9 +271,12 @@ bool sieve_result_execute
 				sef = rsef->seffect;
 				if ( sef->post_commit != NULL ) 
 					sef->post_commit
-						(sef, act, &result->action_env, rsef->context, context);
+						(sef, act, &result->action_env, rsef->context, context, 
+							&keep);
 				rsef = rsef->next;
 			}
+			
+			implicit_keep = implicit_keep && keep;
 		} else {
 			if ( act->rollback != NULL ) 
 				act->rollback(act, &result->action_env, context, rac->success);
@@ -277,6 +292,7 @@ bool sieve_result_execute
 				rsef = rsef->next;
 			}
 		}
+		
 		rac = rac->next;	
 	}
 	

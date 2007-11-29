@@ -126,7 +126,7 @@ static bool act_store_check_duplicate
 		const struct sieve_action *action1 ATTR_UNUSED, 
 		void *context1, void *context2);
 static void act_store_print
-	(const struct sieve_action *action ATTR_UNUSED, void *context);
+	(const struct sieve_action *action ATTR_UNUSED, void *context, bool *keep);
 
 static bool act_store_start
 	(const struct sieve_action *action,
@@ -136,7 +136,7 @@ static bool act_store_execute
 		const struct sieve_action_exec_env *aenv, void *tr_context);
 static bool act_store_commit
 	(const struct sieve_action *action, 
-		const struct sieve_action_exec_env *aenv, void *tr_context);
+		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 static void act_store_rollback
 	(const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool success);
@@ -184,11 +184,13 @@ static bool act_store_check_duplicate
 }
 
 static void act_store_print
-(const struct sieve_action *action ATTR_UNUSED, void *context)	
+(const struct sieve_action *action ATTR_UNUSED, void *context, bool *keep)	
 {
 	struct act_store_context *ctx = (struct act_store_context *) context;
 	
 	printf("* store message in folder: %s\n", ctx->folder);
+	
+	*keep = FALSE;
 }
 
 /* Store transaction */
@@ -274,7 +276,7 @@ static void act_store_log_status
 		mailbox_name = str_sanitize(mailbox_get_name(trans->box), 80);
 
 	if (!rolled_back && status) {
-		i_info("msgid=%s: saved mail to %s", msgid, mailbox_name);
+		i_info("msgid=%s: stored mail into mailbox '%s'", msgid, mailbox_name);
 	} else {
 		const char *errstr;
 		enum mail_error error;
@@ -285,21 +287,24 @@ static void act_store_log_status
 			errstr = mail_storage_get_last_error(trans->namespace->storage, &error);
 
 		if ( status )
-			i_info("msgid=%s: save to %s aborted.", msgid, mailbox_name);
+			i_info("msgid=%s: store into mailbox '%s' aborted.", msgid, mailbox_name);
 		else
-			i_info("msgid=%s: save failed to %s: %s", msgid, mailbox_name, errstr);
+			i_info("msgid=%s: failed to store into mailbox '%s': %s", 
+				msgid, mailbox_name, errstr);
 	}
 }
 
 static bool act_store_commit
 (const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *tr_context)
+	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
 {  
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
 	bool status = mailbox_transaction_commit(&trans->mail_trans) == 0;
 	
 	act_store_log_status(trans, aenv->msgdata, FALSE, status);
+	
+	*keep = !status;
 	
 	if ( trans->box != NULL )
 		mailbox_close(&trans->box);

@@ -162,8 +162,7 @@ static bool ext_fileinto_opcode_execute
 
 	printf(">> FILEINTO \"%s\"\n", str_c(folder));
 
-	if ( sieve_act_store_add_to_result(renv, slist, str_c(folder)) )
-		sieve_result_cancel_implicit_keep(renv->result);
+	(void) sieve_act_store_add_to_result(renv, slist, str_c(folder));
 
 	t_pop();
 	return TRUE;

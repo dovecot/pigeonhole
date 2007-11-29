@@ -55,10 +55,10 @@ static bool act_redirect_check_duplicate
 	(const struct sieve_runtime_env *renv,
 		const struct sieve_action *action1, void *context1, void *context2);
 static void act_redirect_print
-	(const struct sieve_action *action, void *context);	
+	(const struct sieve_action *action, void *context, bool *keep);	
 static bool act_redirect_commit
 (const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *tr_context);
+	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 		
 struct act_redirect_context {
 	const char *to_address;
@@ -154,8 +154,7 @@ static bool cmd_redirect_opcode_execute
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = p_strdup(pool, str_c(redirect));
 	
-	if ( sieve_result_add_action(renv, &act_redirect, slist, (void *) act) )
-		sieve_result_cancel_implicit_keep(renv->result);
+	(void) sieve_result_add_action(renv, &act_redirect, slist, (void *) act);
 	
 	t_pop();
 	return TRUE;
@@ -180,16 +179,18 @@ static bool act_redirect_check_duplicate
 }
 
 static void act_redirect_print
-(const struct sieve_action *action ATTR_UNUSED, void *context)	
+(const struct sieve_action *action ATTR_UNUSED, void *context, bool *keep)	
 {
 	struct act_redirect_context *ctx = (struct act_redirect_context *) context;
 	
 	printf("* redirect message to: %s\n", ctx->to_address);
+	
+	*keep = FALSE;
 }
 
 static bool act_redirect_commit
 (const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *tr_context)
+	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct act_redirect_context *ctx = (struct act_redirect_context *) tr_context;
@@ -200,6 +201,8 @@ static bool act_redirect_commit
 		i_info("msgid=%s: forwarded to <%s>",
 			msgdata->id == NULL ? "" : str_sanitize(msgdata->id, 80),
 			str_sanitize(ctx->to_address, 80));
+
+		*keep = FALSE;
   	return TRUE;
   }
   
