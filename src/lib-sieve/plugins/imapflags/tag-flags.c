@@ -1,5 +1,6 @@
 #include "lib.h"
 #include "array.h"
+#include "mail-storage.h"
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
@@ -38,14 +39,10 @@ bool seff_flags_read
 void seff_flags_print
 	(const struct sieve_side_effect *seffect,	const struct sieve_action *action, 
 		void *se_context, bool *keep);
-bool seff_flags_pre_execute
+bool seff_flags_post_execute
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
-		const struct sieve_action_exec_env *aenv, void **se_context, 
-		void *tr_context);
-bool seff_flags_post_commit
-		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
-			const struct sieve_action_exec_env *aenv, void *se_context,
-			void *tr_context, bool *keep);
+		const struct sieve_action_exec_env *aenv, 
+		void *se_context, void *tr_context);
 
 const struct sieve_side_effect flags_side_effect = {
 	"flags",
@@ -55,9 +52,9 @@ const struct sieve_side_effect flags_side_effect = {
 	0,
 	seff_flags_read,
 	seff_flags_print,
-	NULL, NULL,
-	seff_flags_post_commit, 
-	NULL
+	NULL,
+	seff_flags_post_execute, 
+	NULL, NULL
 };
 
 const struct sieve_side_effect_extension imapflags_seffect_extension = {
@@ -120,17 +117,24 @@ static bool tag_flags_generate
 
 /* Side effect execution */
 
+struct seff_flags_context {
+	const char *const *keywords;
+	enum mail_flags flags;
+};
+
 bool seff_flags_read
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address,
 	void **se_context)
 {
 	pool_t pool = sieve_result_pool(renv->result);
-	ARRAY_DEFINE(flags, const char *);
-	string_t *flag_item;
+	struct seff_flags_context *ctx;
+	ARRAY_DEFINE(keywords, const char *);
+	string_t *flags_item;
 	struct sieve_coded_stringlist *flag_list;
 	
-	p_array_init(&flags, pool, 2);
+	ctx = p_new(pool, struct seff_flags_context, 1);
+	p_array_init(&keywords, pool, 2);
 	
 	t_push();
 	
@@ -141,16 +145,37 @@ bool seff_flags_read
 	}
 	
 	/* Iterate through all requested headers to match */
-	flag_item = NULL;
-	while ( sieve_coded_stringlist_next_item(flag_list, &flag_item) && 
-		flag_item != NULL ) {
-		const char *flag = str_c(flag_item);
-		
-		array_append(&flags, &flag, 1);
+	flags_item = NULL;
+	while ( sieve_coded_stringlist_next_item(flag_list, &flags_item) && 
+		flags_item != NULL ) {
+		const char *flag;
+		struct ext_imapflags_iter flit;
+
+		ext_imapflags_iter_init(&flit, flags_item);
+	
+		while ( (flag=ext_imapflags_iter_get_flag(&flit)) != NULL ) {		
+			if (flag != NULL && *flag != '\\') {
+				/* keyword */
+				array_append(&keywords, &flag, 1);
+			} else {
+				/* system flag */
+				if (flag == NULL || strcasecmp(flag, "\\flagged") == 0)
+					ctx->flags |= MAIL_FLAGGED;
+				else if (strcasecmp(flag, "\\answered") == 0)
+					ctx->flags |= MAIL_ANSWERED;
+				else if (strcasecmp(flag, "\\deleted") == 0)
+					ctx->flags |= MAIL_DELETED;
+				else if (strcasecmp(flag, "\\seen") == 0)
+					ctx->flags |= MAIL_SEEN;
+				else if (strcasecmp(flag, "\\draft") == 0)
+					ctx->flags |= MAIL_DRAFT;
+			}
+		}
 	}
 	
-	(void)array_append_space(&flags);
-	*se_context = (void **) array_idx(&flags, 0);
+	(void)array_append_space(&keywords);
+	ctx->keywords = array_idx(&keywords, 0);
+	*se_context = (void *) ctx;
 
 	t_pop();
 	
@@ -162,14 +187,30 @@ void seff_flags_print
 	const struct sieve_action *action ATTR_UNUSED, 
 	void *se_context ATTR_UNUSED, bool *keep)
 {
-	const char *const *flags = (const char *const *) se_context;
+	struct seff_flags_context *ctx = (struct seff_flags_context *) se_context;
+	const char *const *keywords = ctx->keywords;
 	
 	printf("        + add flags:");
 
-	while ( *flags != NULL ) {
-		printf(" %s", *flags);
+	if ( (ctx->flags & MAIL_FLAGGED) > 0 )
+		printf(" \\flagged\n");
+
+	if ( (ctx->flags & MAIL_ANSWERED) > 0 )
+		printf(" \\answered");
 		
-		flags++;
+	if ( (ctx->flags & MAIL_DELETED) > 0 )
+		printf(" \\deleted");
+					
+	if ( (ctx->flags & MAIL_SEEN) > 0 )
+		printf(" \\seen");
+		
+	if ( (ctx->flags & MAIL_DRAFT) > 0 )
+		printf(" \\draft");
+
+	while ( *keywords != NULL ) {
+		printf(" %s", *keywords);
+		
+		keywords++;
 	};
 	
 	printf("\n");
@@ -177,14 +218,22 @@ void seff_flags_print
 	*keep = TRUE;
 }
 
-bool seff_flags_post_commit
+bool seff_flags_post_execute
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
-	const struct sieve_action *action, 
+	const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv ATTR_UNUSED, 
-	void *se_context ATTR_UNUSED,	void *tr_context ATTR_UNUSED, bool *keep)
+	void *se_context, void *tr_context)
 {	
-	i_info("implicit keep preserved after %s action.", action->name);
-	*keep = TRUE;
+	struct seff_flags_context *ctx = (struct seff_flags_context *) se_context;
+	struct act_store_transaction *trans = 
+		(struct act_store_transaction *) tr_context;
+
+	printf("SETTING FLAGS\n");
+	/* Update message flags. */
+	mail_update_flags(trans->dest_mail, MODIFY_ADD, ctx->flags);
+	/* Update message keywords. */
+	//mail_update_keywords(trans->dest_mail, MODIFY_REPLACE, keywords);
+	
 	return TRUE;
 }
 

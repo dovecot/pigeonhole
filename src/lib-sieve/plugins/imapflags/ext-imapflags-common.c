@@ -131,7 +131,7 @@ static bool flag_is_valid(const char *flag)
 	return TRUE;  
 }
 
-static void ext_imapflags_iter_init
+void ext_imapflags_iter_init
 	(struct ext_imapflags_iter *iter, string_t *flags_list) 
 {
 	iter->flags_list = flags_list;

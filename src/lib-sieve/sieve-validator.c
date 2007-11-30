@@ -32,7 +32,9 @@ static void sieve_validator_register_core_tests(struct sieve_validator *validato
 
 /* Error management */
 
-void sieve_validator_warning(struct sieve_validator *validator, struct sieve_ast_node *node, const char *fmt, ...) 
+void sieve_validator_warning
+(struct sieve_validator *validator, struct sieve_ast_node *node, 
+	const char *fmt, ...) 
 { 
 	va_list args;
 	va_start(args, fmt);
@@ -42,7 +44,9 @@ void sieve_validator_warning(struct sieve_validator *validator, struct sieve_ast
 	va_end(args);
 }
  
-void sieve_validator_error(struct sieve_validator *validator, struct sieve_ast_node *node, const char *fmt, ...) 
+void sieve_validator_error
+(struct sieve_validator *validator, struct sieve_ast_node *node, 
+	const char *fmt, ...) 
 {
 	va_list args;
 	va_start(args, fmt);

@@ -31,6 +31,9 @@ struct ext_imapflags_iter {
 	unsigned int offset;
 	unsigned int last;
 };
+
+void ext_imapflags_iter_init
+	(struct ext_imapflags_iter *iter, string_t *flags_list);
 	
 const char *ext_imapflags_iter_get_flag
 	(struct ext_imapflags_iter *iter);

@@ -120,6 +120,7 @@ struct act_store_transaction {
 	struct mail_namespace *namespace;
 	struct mailbox *box;
 	struct mailbox_transaction_context *mail_trans;
+	struct mail *dest_mail;
 	const char *error;
 };
 

@@ -1,5 +1,7 @@
 #include "lib.h"
 #include "mempool.h"
+#include "strfuncs.h"
+#include "str-sanitize.h"
 
 #include "sieve-common.h"
 #include "sieve-interpreter.h"
@@ -7,6 +9,7 @@
 #include "sieve-result.h"
 
 #include <stdio.h>
+
 struct sieve_result_action {
 	struct sieve_result *result;
 	const struct sieve_action *action;
@@ -75,6 +78,40 @@ inline pool_t sieve_result_pool(struct sieve_result *result)
 {
 	return result->pool;
 }
+
+/* Logging of result */
+
+void sieve_result_log
+	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	/* Kludgy, needs explict support from liblib.a (something like i_vinfo) */
+	
+	i_info("msgid=%s: %s", aenv->msgdata->id == NULL ? 
+		"unspecified" : str_sanitize(aenv->msgdata->id, 80), 
+		t_strdup_vprintf(fmt, args)); 
+	
+	va_end(args);
+}
+
+void sieve_result_error
+	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	/* Kludgy, needs explict support from liblib.a (something like i_vinfo) */
+	
+	i_error("msgid=%s: %s", aenv->msgdata->id == NULL ? 
+		"unspecified" : str_sanitize(aenv->msgdata->id, 80), 
+		t_strdup_vprintf(fmt, args)); 
+	
+	va_end(args);
+}
+
+/* Result composition */
 
 bool sieve_result_add_action
 (const struct sieve_runtime_env *renv,

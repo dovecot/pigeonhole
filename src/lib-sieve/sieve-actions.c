@@ -8,7 +8,9 @@
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
-#include "sieve-actions.h"\
+#include "sieve-actions.h"
+
+#include <ctype.h>
 
 /* 
  * Side-effects 'extension' 
@@ -47,6 +49,7 @@ static inline const struct sieve_side_effect_extension *
 }
 
 void sieve_side_effect_extension_set
+
 	(struct sieve_binary *sbin, int ext_id,
 		const struct sieve_side_effect_extension *ext)
 {
@@ -113,7 +116,6 @@ const struct sieve_side_effect *sieve_opr_side_effect_read
 		
 	return NULL; 
 }
-
 
 /*
  * Actions common to multiple core commands 
@@ -228,10 +230,8 @@ static bool act_store_start
 	trans->namespace = ns;
 	trans->box = box;
 	
-	if ( box == NULL ) {
-		printf("Open failed\n");
-		act_store_get_storage_error(aenv, trans);
-	}	
+	if ( box == NULL ) 
+		act_store_get_storage_error(aenv, trans);	
 	
 	*tr_context = (void *)trans;
 
@@ -250,8 +250,10 @@ static bool act_store_execute
 	trans->mail_trans = mailbox_transaction_begin
 		(trans->box, MAILBOX_TRANSACTION_FLAG_EXTERNAL);
 
-  if (mailbox_copy(trans->mail_trans, aenv->msgdata->mail, 0, NULL, NULL) < 0) {
-  	printf("Copy failed\n");
+	trans->dest_mail = mail_alloc(trans->mail_trans, 0, NULL);
+
+  if (mailbox_copy(trans->mail_trans, aenv->msgdata->mail, MAIL_DRAFT, NULL, 
+  	trans->dest_mail) < 0) {
   	act_store_get_storage_error(aenv, trans);
  		return FALSE;
  	}
@@ -261,22 +263,17 @@ static bool act_store_execute
 
 static void act_store_log_status
 (struct act_store_transaction *trans, 
-	const struct sieve_message_data *msgdata, bool rolled_back, bool status )
+	const struct sieve_action_exec_env *aenv, bool rolled_back, bool status )
 {
-	const char *msgid, *mailbox_name;
+	const char *mailbox_name;
 	
-	if (mail_get_first_header(msgdata->mail, "Message-ID", &msgid) <= 0)
-		msgid = "";
-	else
-		msgid = str_sanitize(msgid, 80);
-
 	if ( trans->box == NULL )
 		mailbox_name = str_sanitize(trans->context->folder, 80);
 	else
 		mailbox_name = str_sanitize(mailbox_get_name(trans->box), 80);
 
 	if (!rolled_back && status) {
-		i_info("msgid=%s: stored mail into mailbox '%s'", msgid, mailbox_name);
+		sieve_result_log(aenv, "stored mail into mailbox '%s'", mailbox_name);
 	} else {
 		const char *errstr;
 		enum mail_error error;
@@ -285,12 +282,12 @@ static void act_store_log_status
 			errstr = trans->error;
 		else
 			errstr = mail_storage_get_last_error(trans->namespace->storage, &error);
-
+			
 		if ( status )
-			i_info("msgid=%s: store into mailbox '%s' aborted.", msgid, mailbox_name);
+			sieve_result_log(aenv, "store into mailbox '%s' aborted.", mailbox_name);
 		else
-			i_info("msgid=%s: failed to store into mailbox '%s': %s", 
-				msgid, mailbox_name, errstr);
+			sieve_result_error(aenv, "failed to store into mailbox '%s': %s", 
+				mailbox_name, errstr);
 	}
 }
 
@@ -302,7 +299,7 @@ static bool act_store_commit
 		(struct act_store_transaction *) tr_context;
 	bool status = mailbox_transaction_commit(&trans->mail_trans) == 0;
 	
-	act_store_log_status(trans, aenv->msgdata, FALSE, status);
+	act_store_log_status(trans, aenv, FALSE, status);
 	
 	*keep = !status;
 	
@@ -319,11 +316,11 @@ static void act_store_rollback
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
 
+  act_store_log_status(trans, aenv, TRUE, success);
+
 	if ( trans->mail_trans != NULL )
 	  mailbox_transaction_rollback(&trans->mail_trans);
   
-  act_store_log_status(trans, aenv->msgdata, TRUE, success);
-
 	if ( trans->box != NULL )  
 	  mailbox_close(&trans->box);
 }
