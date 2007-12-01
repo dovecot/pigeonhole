@@ -13,6 +13,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 
 #include "sieve.h"
 
@@ -142,12 +143,12 @@ struct sieve_binary *sieve_compile(int fd, bool verbose)
 
 void sieve_dump(struct sieve_binary *binary) 
 {
-	struct sieve_interpreter *interpreter = sieve_interpreter_create(binary);			
+	struct sieve_code_dumper *dumpr = sieve_code_dumper_create(binary);			
 
 	printf("Code Dump:\n\n");
-	sieve_interpreter_dump_code(interpreter);	
+	sieve_code_dumper_run(dumpr);	
 	
-	sieve_interpreter_free(interpreter);
+	sieve_code_dumper_free(dumpr);
 }
 
 bool sieve_test

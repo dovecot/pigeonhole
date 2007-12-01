@@ -22,6 +22,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 
 /* Forward declarations */
 
@@ -30,7 +31,7 @@ static bool ext_envelope_validator_load(struct sieve_validator *validator);
 
 static bool ext_envelope_opcode_dump
 	(const struct sieve_opcode *opcode, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool ext_envelope_opcode_execute
 	(const struct sieve_opcode *opcode,
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
@@ -162,17 +163,17 @@ static bool tst_envelope_generate
  
 static bool ext_envelope_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	printf("ENVELOPE\n");
 
 	/* Handle any optional arguments */
-	if ( !sieve_addrmatch_default_dump_optionals(renv->sbin, address) )
+	if ( !sieve_addrmatch_default_dump_optionals(denv, address) )
 		return FALSE;
 
 	return
-		sieve_opr_stringlist_dump(renv->sbin, address) &&
-		sieve_opr_stringlist_dump(renv->sbin, address);
+		sieve_opr_stringlist_dump(denv, address) &&
+		sieve_opr_stringlist_dump(denv, address);
 }
 
 static int ext_envelope_get_fields

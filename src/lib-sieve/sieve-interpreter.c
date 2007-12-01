@@ -50,7 +50,6 @@ struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *sbin)
 	
 	interp->runenv.sbin = sbin;
 	sieve_binary_ref(sbin);
-	sieve_binary_load(sbin);
 	
 	interp->pc = 0;
 
@@ -171,7 +170,7 @@ inline bool sieve_interpreter_program_jump
 	sieve_size_t pc = interp->pc;
 	int offset;
 	
-	if ( !sieve_interpreter_read_offset_operand(interp, &offset) )
+	if ( !sieve_binary_read_offset(interp->runenv.sbin, &(interp->pc), &offset) )
 		return FALSE;
 
 	if ( pc + offset <= sieve_binary_get_code_size(interp->runenv.sbin) && 
@@ -200,12 +199,6 @@ inline bool sieve_interpreter_get_test_result
 
 /* Opcodes and operands */
 
-bool sieve_interpreter_read_offset_operand
-	(struct sieve_interpreter *interp, int *offset) 
-{
-	return sieve_binary_read_offset(interp->runenv.sbin, &(interp->pc), offset);
-}
-
 bool sieve_interpreter_handle_optional_operands
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,
 		struct sieve_side_effects_list **list)
@@ -228,8 +221,6 @@ bool sieve_interpreter_handle_optional_operands
 
 				if ( seffect == NULL ) return FALSE;
 			
-				printf("        : SIDE_EFFECT: %s\n", seffect->name);
-
 				if ( list != NULL ) {
 					if ( seffect->read != NULL && !seffect->read
 						(seffect, renv, address, &context) )
@@ -243,49 +234,6 @@ bool sieve_interpreter_handle_optional_operands
 	return TRUE;
 }
  
-/* Code Dump */
-
-static bool sieve_interpreter_dump_operation
-	(struct sieve_interpreter *interp) 
-{
-	const struct sieve_opcode *opcode = 
-		sieve_operation_read(interp->runenv.sbin, &(interp->pc));
-
-	if ( opcode != NULL ) {
-		printf("%08x: ", interp->pc-1);
-	
-		if ( opcode->dump != NULL )
-			return opcode->dump(opcode, &(interp->runenv), &(interp->pc));
-		else if ( opcode->mnemonic != NULL )
-			printf("%s\n", opcode->mnemonic);
-		else
-			return FALSE;
-			
-		return TRUE;
-	}		
-	
-	return FALSE;
-}
-
-void sieve_interpreter_dump_code(struct sieve_interpreter *interp) 
-{
-	sieve_interpreter_reset(interp);
-	
-	interp->runenv.result = NULL;
-	interp->runenv.msgdata = NULL;
-	
-	while ( interp->pc < 
-		sieve_binary_get_code_size(interp->runenv.sbin) ) {
-		if ( !sieve_interpreter_dump_operation(interp) ) {
-			printf("Binary is corrupt.\n");
-			return;
-		}
-	}
-	
-	printf("%08x: [End of code]\n", 
-		sieve_binary_get_code_size(interp->runenv.sbin));	
-}
-
 /* Code execute */
 
 bool sieve_interpreter_execute_operation

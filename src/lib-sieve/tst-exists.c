@@ -32,7 +32,7 @@ const struct sieve_command tst_exists = {
 
 static bool tst_exists_opcode_dump
 	(const struct sieve_opcode *opcode, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool tst_exists_opcode_execute
 	(const struct sieve_opcode *opcode, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
@@ -81,12 +81,12 @@ static bool tst_exists_generate
 
 static bool tst_exists_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
     printf("EXISTS\n");
 
 	return
-    	sieve_opr_stringlist_dump(renv->sbin, address);
+    	sieve_opr_stringlist_dump(denv, address);
 }
 
 /* Code execution */

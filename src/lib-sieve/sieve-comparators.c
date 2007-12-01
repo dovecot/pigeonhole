@@ -9,6 +9,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 
 #include "sieve-comparators.h"
 
@@ -339,11 +340,11 @@ const struct sieve_comparator *sieve_opr_comparator_read
 }
 
 bool sieve_opr_comparator_dump
-	(struct sieve_binary *sbin, sieve_size_t *address)
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_size_t pc = *address;
 	const struct sieve_comparator *cmp = 
-		sieve_opr_comparator_read(sbin, address);
+		sieve_opr_comparator_read(denv->sbin, address);
 	
 	if ( cmp == NULL )
 		return FALSE;

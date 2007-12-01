@@ -22,6 +22,7 @@
 #include "sieve-actions.h"
 #include "sieve-validator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 #include "sieve-result.h"
 
 /* Forward declarations */
@@ -36,7 +37,7 @@ static bool cmd_reject_generate
 
 static bool ext_reject_opcode_dump
 	(const struct sieve_opcode *opcode, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool ext_reject_opcode_execute
 	(const struct sieve_opcode *opcode,
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
@@ -165,12 +166,15 @@ static bool cmd_reject_generate
  
 static bool ext_reject_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	printf("REJECT\n");
+
+	if ( !sieve_code_dumper_print_optional_operands(denv, address) )
+        return FALSE;
 	
 	return
-		sieve_opr_string_dump(renv->sbin, address);
+		sieve_opr_string_dump(denv, address);
 }
 
 /*

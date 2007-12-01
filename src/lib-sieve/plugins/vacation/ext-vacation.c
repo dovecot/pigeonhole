@@ -26,6 +26,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 #include "sieve-result.h"
 
 #include <stdio.h>
@@ -37,7 +38,7 @@ static bool ext_vacation_validator_load(struct sieve_validator *validator);
 
 static bool ext_vacation_opcode_dump
 	(const struct sieve_opcode *opcode,	
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool ext_vacation_opcode_execute
 	(const struct sieve_opcode *opcode, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
@@ -336,32 +337,32 @@ static bool cmd_vacation_generate
  
 static bool ext_vacation_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
 	int opt_code = 1;
 	
 	printf("VACATION\n");
 	
-	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+	if ( sieve_operand_optional_present(denv->sbin, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) 
+			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 
 				return FALSE;
 
 			switch ( opt_code ) {
 			case 0:
 				break;
 			case OPT_DAYS:
-				if ( !sieve_opr_number_dump(renv->sbin, address) )
+				if ( !sieve_opr_number_dump(denv, address) )
 					return FALSE;
 				break;
 			case OPT_SUBJECT:
 			case OPT_FROM:
 			case OPT_HANDLE: 
-				if ( !sieve_opr_string_dump(renv->sbin, address) )
+				if ( !sieve_opr_string_dump(denv, address) )
 					return FALSE;
 				break;
 			case OPT_ADDRESSES:
-				if ( !sieve_opr_stringlist_dump(renv->sbin, address) )
+				if ( !sieve_opr_stringlist_dump(denv, address) )
 					return FALSE;
 				break;
 			case OPT_MIME:
@@ -373,7 +374,7 @@ static bool ext_vacation_opcode_dump
 		}
 	}
 	
-	return sieve_opr_string_dump(renv->sbin, address);
+	return sieve_opr_string_dump(denv, address);
 }
 
 /* 

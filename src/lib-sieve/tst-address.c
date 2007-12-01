@@ -40,7 +40,7 @@ const struct sieve_command tst_address = {
 
 static bool tst_address_opcode_dump
 	(const struct sieve_opcode *opcode, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool tst_address_opcode_execute
 	(const struct sieve_opcode *opcode, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
@@ -111,17 +111,17 @@ static bool tst_address_generate
 
 static bool tst_address_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,	
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	printf("ADDRESS\n");
 
 	//* Handle any optional arguments */
-	if ( !sieve_addrmatch_default_dump_optionals(renv->sbin, address) )
+	if ( !sieve_addrmatch_default_dump_optionals(denv, address) )
 		return FALSE;
 
 	return
-		sieve_opr_stringlist_dump(renv->sbin, address) &&
-		sieve_opr_stringlist_dump(renv->sbin, address);
+		sieve_opr_stringlist_dump(denv, address) &&
+		sieve_opr_stringlist_dump(denv, address);
 }
 
 /* Code execution */

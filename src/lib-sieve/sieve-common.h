@@ -49,6 +49,10 @@ struct sieve_generator;
 struct sieve_runtime_env;
 struct sieve_interpreter;
 
+/* sieve-code-dumper.h */
+struct sieve_dumptime_env;
+struct sieve_code_dumper;
+
 /* sieve-extension.h */
 struct sieve_extension;
 

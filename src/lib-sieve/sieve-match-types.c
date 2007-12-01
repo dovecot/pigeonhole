@@ -14,6 +14,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 
 #include "sieve-match-types.h"
 
@@ -348,11 +349,11 @@ const struct sieve_match_type *sieve_opr_match_type_read
 }
 
 bool sieve_opr_match_type_dump
-(struct sieve_binary *sbin, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_size_t pc = *address;
 	const struct sieve_match_type *mtch = 
-		sieve_opr_match_type_read(sbin, address);
+		sieve_opr_match_type_read(denv->sbin, address);
 	
 	if ( mtch == NULL )
 		return FALSE;
@@ -363,7 +364,7 @@ bool sieve_opr_match_type_dump
 }
 
 static bool tag_match_type_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);

@@ -22,7 +22,7 @@ bool ext_imapflags_command_validate
 
 bool ext_imapflags_command_opcode_dump
 (const struct sieve_opcode *opcode,	
-	const struct sieve_runtime_env *renv, sieve_size_t *address);
+	const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
 /* Flag registration */
 

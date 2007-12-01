@@ -37,7 +37,7 @@ const struct sieve_command tst_size = {
 
 static bool tst_size_opcode_dump
 	(const struct sieve_opcode *opcode, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool tst_size_opcode_execute
 	(const struct sieve_opcode *opcode, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
@@ -182,12 +182,12 @@ bool tst_size_generate
 
 static bool tst_size_opcode_dump
 (const struct sieve_opcode *opcode,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
     printf("%s\n", opcode->mnemonic);
     
 	return 
-		sieve_opr_number_dump(renv->sbin, address);
+		sieve_opr_number_dump(denv, address);
 }
 
 /* Code execution */

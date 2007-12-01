@@ -103,7 +103,7 @@ extern const unsigned int sieve_core_match_types_count;
 const struct sieve_match_type *sieve_opr_match_type_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 bool sieve_opr_match_type_dump
-	(struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 		
 /* Match Utility */
 

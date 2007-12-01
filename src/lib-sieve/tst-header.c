@@ -7,6 +7,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 
 /* Header test 
  *
@@ -37,10 +38,10 @@ const struct sieve_command tst_header = {
 
 static bool tst_header_opcode_dump
 	(const struct sieve_opcode *opcode, 
-		const struct sieve_runtime_env *runenv, sieve_size_t *address);
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool tst_header_opcode_execute
 	(const struct sieve_opcode *opcode, 
-		const struct sieve_runtime_env *runenv, sieve_size_t *address);
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_opcode tst_header_opcode = { 
 	"HEADER",
@@ -115,26 +116,26 @@ static bool tst_header_generate
 
 static bool tst_header_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int opt_code = 1;
 
 	printf("HEADER\n");
 
 	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+	if ( sieve_operand_optional_present(denv->sbin, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) 
+			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 
 				return FALSE;
 
 			switch ( opt_code ) {
 			case 0:
 				break;
 			case OPT_COMPARATOR:
-				sieve_opr_comparator_dump(renv->sbin, address);
+				sieve_opr_comparator_dump(denv, address);
 				break;
 			case OPT_MATCH_TYPE:
-				sieve_opr_match_type_dump(renv->sbin, address);
+				sieve_opr_match_type_dump(denv, address);
 				break;
 			default: 
 				return FALSE;
@@ -143,8 +144,8 @@ static bool tst_header_opcode_dump
 	}
 
 	return
-		sieve_opr_stringlist_dump(renv->sbin, address) &&
-		sieve_opr_stringlist_dump(renv->sbin, address);
+		sieve_opr_stringlist_dump(denv, address) &&
+		sieve_opr_stringlist_dump(denv, address);
 }
 
 /* Code execution */

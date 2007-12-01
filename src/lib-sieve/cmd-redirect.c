@@ -9,6 +9,7 @@
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 #include "sieve-result.h"
 
 #include <stdio.h>
@@ -17,7 +18,7 @@
 
 static bool cmd_redirect_opcode_dump
 	(const struct sieve_opcode *opcode,
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool cmd_redirect_opcode_execute
 	(const struct sieve_opcode *opcode, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
@@ -118,15 +119,15 @@ static bool cmd_redirect_generate
  
 static bool cmd_redirect_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	printf("REDIRECT\n");
 
-	if ( !sieve_interpreter_handle_optional_operands(renv, address, NULL) )
+	if ( !sieve_code_dumper_print_optional_operands(denv, address) )
 		return FALSE;
 
 	return 
-		sieve_opr_string_dump(renv->sbin, address);
+		sieve_opr_string_dump(denv, address);
 }
 
 /*

@@ -32,14 +32,17 @@ const struct sieve_argument tag_flags = {
 
 const struct sieve_side_effect_extension ext_flags_side_effect;
 
-bool seff_flags_read
+static bool seff_flags_dump
+	(const struct sieve_side_effect *seffect,
+    	const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static bool seff_flags_read
 	(const struct sieve_side_effect *seffect, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address,
 		void **se_context);
-void seff_flags_print
+static void seff_flags_print
 	(const struct sieve_side_effect *seffect,	const struct sieve_action *action, 
 		void *se_context, bool *keep);
-bool seff_flags_post_execute
+static bool seff_flags_post_execute
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, 
 		void *se_context, void *tr_context);
@@ -50,6 +53,7 @@ const struct sieve_side_effect flags_side_effect = {
 	
 	&ext_flags_side_effect,
 	0,
+	seff_flags_dump,
 	seff_flags_read,
 	seff_flags_print,
 	NULL,
@@ -122,7 +126,14 @@ struct seff_flags_context {
 	enum mail_flags flags;
 };
 
-bool seff_flags_read
+static bool seff_flags_dump
+(const struct sieve_side_effect *seffect, 
+	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	return TRUE;
+}
+
+static bool seff_flags_read
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address,
 	void **se_context)
@@ -144,7 +155,7 @@ bool seff_flags_read
 		return FALSE;
 	}
 	
-	/* Iterate through all requested headers to match */
+	/* Unpack */
 	flags_item = NULL;
 	while ( sieve_coded_stringlist_next_item(flag_list, &flags_item) && 
 		flags_item != NULL ) {
@@ -182,7 +193,7 @@ bool seff_flags_read
 	return TRUE;
 }
 
-void seff_flags_print
+static void seff_flags_print
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_action *action ATTR_UNUSED, 
 	void *se_context ATTR_UNUSED, bool *keep)
@@ -218,7 +229,7 @@ void seff_flags_print
 	*keep = TRUE;
 }
 
-bool seff_flags_post_execute
+static bool seff_flags_post_execute
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv ATTR_UNUSED, 

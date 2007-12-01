@@ -15,6 +15,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 
 #include "sieve-address-parts.h"
 
@@ -299,11 +300,11 @@ const struct sieve_address_part *sieve_opr_address_part_read
 }
 
 bool sieve_opr_address_part_dump
-(struct sieve_binary *sbin, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_size_t pc = *address;
 	const struct sieve_address_part *addrp = 
-		sieve_opr_address_part_read(sbin, address);
+		sieve_opr_address_part_read(denv->sbin, address);
 	
 	if ( addrp == NULL )
 		return FALSE;
@@ -376,28 +377,28 @@ bool sieve_address_match
  */
  
 bool sieve_addrmatch_default_dump_optionals
-(struct sieve_binary *sbin, sieve_size_t *address) 
+(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
 {
 	int opt_code = 1;
 	
-	if ( sieve_operand_optional_present(sbin, address) ) {
+	if ( sieve_operand_optional_present(denv->sbin, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(sbin, address, &opt_code) ) 
+			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 
 				return FALSE;
 
 			switch ( opt_code ) {
 			case 0:
 				break;
 			case SIEVE_AM_OPT_COMPARATOR:
-				if ( !sieve_opr_comparator_dump(sbin, address) )
+				if ( !sieve_opr_comparator_dump(denv, address) )
 					return FALSE;
 				break;
 			case SIEVE_AM_OPT_MATCH_TYPE:
-				if ( !sieve_opr_match_type_dump(sbin, address) )
+				if ( !sieve_opr_match_type_dump(denv, address) )
 					return FALSE;
 				break;
 			case SIEVE_AM_OPT_ADDRESS_PART:
-				if ( !sieve_opr_address_part_dump(sbin, address) )
+				if ( !sieve_opr_address_part_dump(denv, address) )
 					return FALSE;
 				break;
 			default:
