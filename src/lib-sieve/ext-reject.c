@@ -9,12 +9,20 @@
  *
  */
 
-#include <stdio.h>
+#include "lib.h"
+#include "ioloop.h"
+#include "hostpid.h"
+#include "message-date.h"
+#include "message-size.h"
+#include "istream.h"
+#include "istream-header-filter.h"
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-actions.h"
 #include "sieve-validator.h"
 #include "sieve-interpreter.h"
+#include "sieve-result.h"
 
 /* Forward declarations */
 
@@ -78,6 +86,28 @@ struct sieve_opcode reject_opcode = {
 	0,
 	ext_reject_opcode_dump, 
 	ext_reject_opcode_execute 
+};
+
+/* Reject action */
+
+static void act_reject_print
+	(const struct sieve_action *action, void *context, bool *keep);	
+static bool act_reject_commit
+(const struct sieve_action *action ATTR_UNUSED, 
+	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
+		
+struct act_reject_context {
+	const char *reason;
+};
+
+const struct sieve_action act_reject = {
+	"reject",
+	NULL, 
+	NULL,
+	act_reject_print,
+	NULL, NULL,
+	act_reject_commit,
+	NULL
 };
 
 /* 
@@ -144,9 +174,15 @@ static bool ext_reject_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	struct sieve_side_effects_list *slist = NULL;
+	struct act_reject_context *act;
 	string_t *reason;
+	pool_t pool;
 
 	t_push();
+	
+	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
+		return FALSE;
 
 	if ( !sieve_opr_string_read(renv->sbin, address, &reason) ) {
 		t_pop();
@@ -155,7 +191,150 @@ static bool ext_reject_opcode_execute
 
 	printf(">> REJECT \"%s\"\n", str_c(reason));
 
+	/* Add reject action to the result */
+	pool = sieve_result_pool(renv->result);
+	act = p_new(pool, struct act_reject_context, 1);
+	act->reason = p_strdup(pool, str_c(reason));
+	
+	(void) sieve_result_add_action(renv, &act_reject, slist, (void *) act);
+	
 	t_pop();
 	return TRUE;
 }
+
+/*
+ * Action
+ */
+ 
+static void act_reject_print
+(const struct sieve_action *action ATTR_UNUSED, void *context, bool *keep)	
+{
+	struct act_reject_context *ctx = (struct act_reject_context *) context;
+	
+	printf("* reject message with reason: %s\n", ctx->reason);
+	
+	*keep = FALSE;
+}
+
+static bool act_reject_send	
+	(const struct sieve_action_exec_env *aenv, struct act_reject_context *ctx)
+{
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_mail_environment *mailenv = aenv->mailenv;
+	struct istream *input;
+	void *smtp_handle;
+	struct message_size hdr_size;
+  FILE *f;
+	const char *new_msgid, *boundary;
+	const unsigned char *data;
+	const char *header;
+	size_t size;
+	int ret;
+
+	/* Just to be sure */
+	if ( mailenv->smtp_open == NULL || mailenv->smtp_close == NULL ) {
+		sieve_result_error(aenv, "reject action has no means to send mail.");
+		return FALSE;
+	}
+
+	smtp_handle = mailenv->smtp_open(msgdata->return_path, NULL, &f);
+
+  new_msgid = sieve_get_new_message_id(mailenv);
+	boundary = t_strdup_printf("%s/%s", my_pid, mailenv->hostname);
+
+	fprintf(f, "Message-ID: %s\r\n", new_msgid);
+	fprintf(f, "Date: %s\r\n", message_date_create(ioloop_time));
+	fprintf(f, "From: Mail Delivery Subsystem <%s>\r\n",
+	  mailenv->postmaster_address);
+	fprintf(f, "To: <%s>\r\n", msgdata->return_path);
+	fprintf(f, "MIME-Version: 1.0\r\n");
+	fprintf(f, "Content-Type: "
+	  "multipart/report; report-type=disposition-notification;\r\n"
+	  "\tboundary=\"%s\"\r\n", boundary);
+	fprintf(f, "Subject: Automatically rejected mail\r\n");
+	fprintf(f, "Auto-Submitted: auto-replied (rejected)\r\n");
+	fprintf(f, "Precedence: bulk\r\n");
+	fprintf(f, "\r\nThis is a MIME-encapsulated message\r\n\r\n");
+
+	/* Human readable status report */
+	fprintf(f, "--%s\r\n", boundary);
+	fprintf(f, "Content-Type: text/plain; charset=utf-8\r\n");
+	fprintf(f, "Content-Disposition: inline\r\n");
+	fprintf(f, "Content-Transfer-Encoding: 8bit\r\n\r\n");
+
+	/* FIXME: var_expand_table expansion not possible */
+	fprintf(f, "Your message to <%s> was automatically rejected:\r\n"	
+		"%s\r\n", msgdata->to_address, ctx->reason);
+
+  /* MDN status report */
+	fprintf(f, "--%s\r\n"
+		"Content-Type: message/disposition-notification\r\n\r\n", boundary);
+	fprintf(f, "Reporting-UA: %s; Dovecot Mail Delivery Agent\r\n",
+		mailenv->hostname);
+	if (mail_get_first_header(msgdata->mail, "Original-Recipient", &header) > 0)
+		fprintf(f, "Original-Recipient: rfc822; %s\r\n", header);
+	fprintf(f, "Final-Recipient: rfc822; %s\r\n",	msgdata->to_address);
+
+	if ( msgdata->id != NULL )
+		fprintf(f, "Original-Message-ID: %s\r\n", msgdata->id);
+	fprintf(f, "Disposition: "
+		"automatic-action/MDN-sent-automatically; deleted\r\n");
+	fprintf(f, "\r\n");
+
+	/* original message's headers */
+	fprintf(f, "--%s\r\nContent-Type: message/rfc822\r\n\r\n", boundary);
+
+  if (mail_get_stream(msgdata->mail, &hdr_size, NULL, &input) == 0) {
+    /* Note: If you add more headers, they need to be sorted.
+       We'll drop Content-Type because we're not including the message
+       body, and having a multipart Content-Type may confuse some
+       MIME parsers when they don't see the message boundaries. */
+    static const char *const exclude_headers[] = {
+	    "Content-Type"
+    };
+
+    input = i_stream_create_header_filter(input,
+    	HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR | HEADER_FILTER_HIDE_BODY, 
+    	exclude_headers, N_ELEMENTS(exclude_headers), 
+    	null_header_filter_callback, NULL);
+
+		while ((ret = i_stream_read_data(input, &data, &size, 0)) > 0) {
+			if (fwrite(data, size, 1, f) == 0)
+				break;
+				i_stream_skip(input, size);
+		}
+		i_stream_unref(&input);
+			
+		i_assert(ret != 0);
+	}
+
+	fprintf(f, "\r\n\r\n--%s--\r\n", boundary);
+
+	return mailenv->smtp_close(smtp_handle);
+}
+
+static bool act_reject_commit
+(const struct sieve_action *action ATTR_UNUSED, 
+	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
+{
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	struct act_reject_context *ctx = (struct act_reject_context *) tr_context;
+	
+	if ( msgdata->return_path == NULL || *(msgdata->return_path) == '\0' ) {
+    sieve_result_log(aenv, "discarded reject to <>");
+    
+    *keep = FALSE;
+    return TRUE;
+  }
+	
+	if ( act_reject_send(aenv, ctx) ) {
+		sieve_result_log(aenv, "rejected");	
+
+		*keep = FALSE;
+  	return TRUE;
+  }
+  
+	return FALSE;
+}
+
 

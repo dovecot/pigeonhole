@@ -9,16 +9,27 @@
  * 
  */
 
-#include <stdio.h>
+#include "lib.h"
+#include "md5.h"
+#include "hostpid.h"
+#include "str-sanitize.h"
+#include "message-address.h"
+#include "message-date.h"
+#include "ioloop.h"
 
 #include "sieve-common.h"
 
 #include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-actions.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-result.h"
+
+#include <stdio.h>
+
 
 /* Forward declarations */
 
@@ -87,6 +98,35 @@ const struct sieve_opcode vacation_opcode = {
 	0,
 	ext_vacation_opcode_dump, 
 	ext_vacation_opcode_execute
+};
+
+/* Vacation action */
+
+static void act_vacation_print
+	(const struct sieve_action *action, void *context, bool *keep);	
+static bool act_vacation_commit
+(const struct sieve_action *action ATTR_UNUSED, 
+	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
+		
+struct act_vacation_context {
+	const char *reason;
+
+	sieve_size_t days;
+	const char *subject;
+	const char *handle;
+	bool mime;
+	const char *from;
+	const char *const *addresses;
+};
+
+const struct sieve_action act_vacation = {
+	"vacation",
+	NULL, 
+	NULL,
+	act_vacation_print,
+	NULL, NULL,
+	act_vacation_commit,
+	NULL
 };
 
 /* Tag validation */
@@ -338,9 +378,12 @@ static bool ext_vacation_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
+	struct sieve_side_effects_list *slist = NULL;
+	struct act_vacation_context *act;
+	pool_t pool;
 	int opt_code = 1;
-	sieve_size_t days = 0;
-	string_t *reason, *subject, *from, *handle;
+	sieve_size_t days = 7;
+	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
 		
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
 		while ( opt_code != 0 ) {
@@ -378,7 +421,344 @@ static bool ext_vacation_opcode_execute
 	
 	printf(">> VACATION \"%s\"\n", str_c(reason));
 	
+	/* Add vacation action to the result */
+	pool = sieve_result_pool(renv->result);
+	act = p_new(pool, struct act_vacation_context, 1);
+	act->reason = p_strdup(pool, str_c(reason));
+	if ( subject != NULL )
+		act->subject = p_strdup(pool, str_c(subject));
+	if ( from != NULL )
+		act->from = p_strdup(pool, str_c(from));
+	if ( handle != NULL )
+		act->handle = p_strdup(pool, str_c(handle));
+	act->days = days;
+	
+	/* FIXME: :addresses is ignored */
+	
+	(void) sieve_result_add_action(renv, &act_vacation, slist, (void *) act);
+	
 	return TRUE;
 }
+
+/*
+ * Action
+ */
+ 
+static void act_vacation_print
+(const struct sieve_action *action ATTR_UNUSED, void *context, 
+	bool *keep ATTR_UNUSED)	
+{
+	struct act_vacation_context *ctx = (struct act_vacation_context *) context;
+	
+	printf( 	"* send vacation message:\n"
+						"    => days   : %d\n", ctx->days);
+	if ( ctx->subject != NULL )
+		printf(	"    => subject: %s\n", ctx->subject);
+	if ( ctx->from != NULL )
+		printf(	"    => from   : %s\n", ctx->from);
+	if ( ctx->handle != NULL )
+		printf(	"    => handle : %s\n", ctx->handle);
+	printf(		"\nSTART MESSAGE\n%s\nEND MESSAGE\n", ctx->reason);
+}
+
+static const char * const _list_headers[] = {
+	"list-id",
+	"list-owner",
+	"list-subscribe",
+	"list-post",	
+	"list-unsubscribe",
+	"list-help",
+	"list-archive",
+	NULL
+};
+
+static const char * const _my_address_headers[] = {
+	"to",
+	"cc",
+	"bcc",
+	"resent-to",	
+	"resent-cc",
+	"resent-bcc",
+	NULL
+};
+
+static inline bool _is_system_address(const char *address)
+{
+	if ( strncasecmp(address, "MAILER-DAEMON", 13) == 0 )
+		return TRUE;
+
+	if ( strncasecmp(address, "LISTSERV", 8) == 0 )
+		return TRUE;
+
+	if ( strncasecmp(address, "majordomo", 9) == 0 )
+		return TRUE;
+
+	if ( strstr(address, "-request@") != NULL )
+		return TRUE;
+
+	if ( strncmp(address, "owner-", 6) == 0 )
+		return TRUE;
+
+	return FALSE;
+}
+
+static inline bool _contains_my_address
+	(const char * const *headers, const char *my_address)
+{
+	const char *const *hdsp = headers;
+	
+	while ( *hdsp != NULL ) {
+		const struct message_address *addr;
+
+		t_push();
+	
+		addr = message_address_parse
+			(pool_datastack_create(), (const unsigned char *) *hdsp, 
+				strlen(*hdsp), 256, FALSE);
+
+		while ( addr != NULL ) {
+			if (addr->domain != NULL) {
+				i_assert(addr->mailbox != NULL);
+
+				if ( strcmp(t_strconcat(addr->mailbox, "@", addr->domain, NULL),
+					my_address) == 0 ) {
+					t_pop();
+					return TRUE;
+				}
+			}
+
+			addr = addr->next;
+		}
+
+		t_pop();
+		
+		hdsp++;
+	}
+	
+	return FALSE;
+}
+
+static bool act_vacation_send	
+	(const struct sieve_action_exec_env *aenv, struct act_vacation_context *ctx)
+{
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_mail_environment *mailenv = aenv->mailenv;
+	void *smtp_handle;
+  FILE *f;
+ 	const char *outmsgid;
+
+	/* Just to be sure */
+	if ( mailenv->smtp_open == NULL || mailenv->smtp_close == NULL ) {
+		sieve_result_error(aenv, "vacation action has no means to send mail.");
+		return FALSE;
+	}
+
+  smtp_handle = mailenv->smtp_open(msgdata->return_path, NULL, &f);
+  outmsgid = sieve_get_new_message_id(mailenv);
+    
+	fprintf(f, "Message-ID: %s\r\n", outmsgid);
+	fprintf(f, "Date: %s\r\n", message_date_create(ioloop_time));
+	if ( ctx->from != NULL && *(ctx->from) != '\0' )
+		fprintf(f, "From: <%s>\r\n", ctx->from);
+	else
+		fprintf(f, "From: <%s>\r\n", msgdata->to_address);
+		
+	fprintf(f, "To: <%s>\r\n", msgdata->return_path);
+	fprintf(f, "Subject: %s\r\n", str_sanitize(ctx->subject, 80));
+	if ( msgdata->id != NULL ) 
+		fprintf(f, "In-Reply-To: %s\r\n", msgdata->id);
+	fprintf(f, "Auto-Submitted: auto-replied (vacation)\r\n");
+
+	/* FIXME: What about the required references header ? */
+
+	fprintf(f, "X-Sieve: %s\r\n", SIEVE_IMPLEMENTATION);
+
+	fprintf(f, "Precedence: bulk\r\n");
+	fprintf(f, "MIME-Version: 1.0\r\n");
+    
+	if (	ctx->mime	) {
+		fprintf(f, "Content-Type: multipart/mixed;"
+			"\r\n\tboundary=\"%s/%s\"\r\n", my_pid, mailenv->hostname);
+		fprintf(f, "\r\nThis is a MIME-encapsulated message\r\n\r\n");
+		fprintf(f, "--%s/%s\r\n", my_pid, mailenv->hostname);
+	} else {
+		fprintf(f, "Content-Type: text/plain; charset=utf-8\r\n");
+		fprintf(f, "Content-Transfer-Encoding: 8bit\r\n");
+		fprintf(f, "\r\n");
+	}
+
+	fprintf(f, "%s\r\n", ctx->reason);
+    
+	if ( ctx->mime )
+		fprintf(f, "\r\n--%s/%s--\r\n", my_pid, mailenv->hostname);
+
+	if ( mailenv->smtp_close(smtp_handle) ) {
+		/*mailenv->duplicate_mark(outmsgid, strlen(outmsgid),
+		  mailenv->username, ioloop_time + DUPLICATE_DEFAULT_KEEP);*/
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+static void act_vacation_hash
+(const struct sieve_message_data *msgdata, struct act_vacation_context *vctx, 
+	unsigned char hash_r[])
+{
+	struct md5_context ctx;
+
+	md5_init(&ctx);
+	md5_update(&ctx, msgdata->return_path, strlen(msgdata->return_path));
+
+	if ( vctx->handle != NULL && *(vctx->handle) != '\0' ) 
+		md5_update(&ctx, vctx->handle, strlen(vctx->handle));
+	else {
+		md5_update(&ctx, msgdata->to_address, strlen(msgdata->to_address));
+		md5_update(&ctx, vctx->reason, strlen(vctx->reason));
+	}
+
+	md5_final(&ctx, hash_r);
+}
+
+static bool act_vacation_commit
+(const struct sieve_action *action ATTR_UNUSED, 
+	const struct sieve_action_exec_env *aenv, void *tr_context, 
+	bool *keep ATTR_UNUSED)
+{
+	const char *const *hdsp;
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_mail_environment *mailenv = aenv->mailenv;
+	struct act_vacation_context *ctx = (struct act_vacation_context *) tr_context;
+	unsigned char dupl_hash[MD5_RESULTLEN];
+	const char *const *headers;
+	pool_t pool;
+
+	/* Is the return_path unset ?
+	 */
+	if ( msgdata->return_path == NULL || *(msgdata->return_path) == '\0' ) {
+		sieve_result_log(aenv, "discarded vacation reply to <>");
+  	return TRUE;
+  }    
+	
+	/* Are we perhaps trying to respond to ourselves ? 
+	 * (FIXME: verify this to :addresses as well)
+	 */
+	if ( strcmp(msgdata->return_path, msgdata->to_address) == 0 ) {
+		sieve_result_log(aenv, "discarded vacation reply to own address");
+  	return TRUE;
+	}
+	
+	/* Did whe respond to this user before? */
+  if (mailenv->duplicate_check(dupl_hash, sizeof(dupl_hash), mailenv->username)) 
+  {
+		sieve_result_log(aenv, "discarded duplicate vacation response to <%s>",
+			str_sanitize(msgdata->return_path, 80));
+		return TRUE;
+	}
+	
+	/* Are we trying to respond to a mailing list ? */
+	hdsp = _list_headers;
+	while ( *hdsp != NULL ) {
+		if ( mail_get_headers_utf8
+			(msgdata->mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
+			/* Yes, bail out */
+			sieve_result_log(aenv, 
+				"discarding vacation response to mailinglist recipient <%s>", 
+				msgdata->return_path);	
+			return TRUE;				 
+		}
+		hdsp++;
+	}
+	
+	/* Is the message that we are replying to an automatic reply ? */
+	if ( mail_get_headers_utf8
+		(msgdata->mail, "auto-submitted", &headers) >= 0 ) {
+		/* Theoretically multiple headers could exist, so lets make sure */
+		hdsp = headers;
+		while ( *hdsp != NULL ) {
+			if ( strcasecmp(*hdsp, "no") != 0 ) {
+				sieve_result_log(aenv, 
+					"discardig vacation response to auto-submitted message from <%s>", 
+					msgdata->return_path);	
+					return TRUE;				 
+			}
+			hdsp++;
+		}
+	}
+	
+	/* Check for non-standard precedence header */
+	if ( mail_get_headers_utf8
+		(msgdata->mail, "precedence", &headers) >= 0 ) {
+		/* Theoretically multiple headers could exist, so lets make sure */
+		hdsp = headers;
+		while ( *hdsp != NULL ) {
+			if ( strcasecmp(*hdsp, "junk") == 0 || strcasecmp(*hdsp, "bulk") == 0 ||
+				strcasecmp(*hdsp, "list") == 0 ) {
+				sieve_result_log(aenv, 
+					"discarding vacation response to precedence=%s message from <%s>", 
+					*hdsp, msgdata->return_path);	
+					return TRUE;				 
+			}
+			hdsp++;
+		}
+	}
+	
+	/* Do not reply to system addresses */
+	if ( _is_system_address(msgdata->return_path) ) {
+		sieve_result_log(aenv, 
+			"not sending vacation response to system address <%s>", 
+			msgdata->return_path);	
+		return TRUE;				
+	} 
+	
+	/* Is the original message directly addressed to me? */
+	hdsp = _my_address_headers;
+	while ( *hdsp != NULL ) {
+		if ( mail_get_headers_utf8
+			(msgdata->mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
+			
+			if ( _contains_my_address(headers, msgdata->to_address) ) 
+				break;
+		}
+		hdsp++;
+	}	
+
+	if ( *hdsp == NULL ) {
+		/* No, bail out */
+		sieve_result_log(aenv, 
+			"discarding vacation response for implicitly delivered message", 
+			msgdata->return_path);	
+		return TRUE;				 
+	}	
+		
+	/* Make sure we have a subject for our reply */
+	if ( ctx->subject == NULL || *(ctx->subject) == '\0' ) {
+		if ( mail_get_headers_utf8
+			(msgdata->mail, "subject", &headers) >= 0 && headers[0] != NULL ) {
+			pool = sieve_result_pool(aenv->result);
+			ctx->subject = p_strconcat(pool, "Auto: ", headers[0], NULL);
+		}	else {
+			ctx->subject = "Automated reply";
+		}
+	}	
+	
+	/* Send the message */
+	
+	if ( act_vacation_send(aenv, ctx) ) {
+		sieve_result_log(aenv, "sent vacation response to <%s>", 
+			str_sanitize(msgdata->return_path, 80));	
+
+		mailenv->duplicate_mark(dupl_hash, sizeof(dupl_hash), mailenv->username,
+			ioloop_time + ctx->days * (24 * 60 * 60));
+
+  	return TRUE;
+  }
+
+	sieve_result_error(aenv, "failed to send vacation response to <%s>", 
+		str_sanitize(msgdata->return_path, 80));	
+	return FALSE;
+}
+
+
 
 

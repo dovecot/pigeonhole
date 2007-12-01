@@ -128,5 +128,10 @@ bool sieve_act_store_add_to_result
 	(const struct sieve_runtime_env *renv, 
 		struct sieve_side_effects_list *seffects, const char *folder);
 
+/* Message transmission */
+
+const char *sieve_get_new_message_id
+	(const struct sieve_mail_environment *mailenv);
+
 		
 #endif /* __SIEVE_ACTIONS_H */

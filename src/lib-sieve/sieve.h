@@ -4,6 +4,11 @@
 #include "lib.h"
 #include "mail-storage.h"
 
+#include <stdio.h>
+
+#define SIEVE_VERSION "0.0.1"
+#define SIEVE_IMPLEMENTATION "Dovecot Sieve " SIEVE_VERSION
+
 struct sieve_binary;
 
 struct sieve_message_data {
@@ -18,12 +23,21 @@ struct sieve_mail_environment {
 	const char *inbox;
 	struct mail_namespace *namespaces;
 	
-	/* Interface for sending mail (callbacks if you like) */
-	int (*send_rejection)
-		(const struct sieve_message_data *msgdata, const char *recipient, 
-			const char *reason);
-	int (*send_forward)
-		(const struct sieve_message_data *msgdata, const char *forwardto);
+	const char *username;
+	const char *hostname;
+	const char *postmaster_address;
+	
+	/* Callbacks */
+	
+	/* Interface for sending mail */
+	void *(*smtp_open)
+		(const char *destination, const char *return_path, FILE **file_r);
+	bool (*smtp_close)(void *handle);
+	
+	/* Interface for marking and checking duplicates */
+	int (*duplicate_check)(const void *id, size_t id_size, const char *user);
+	void (*duplicate_mark)(const void *id, size_t id_size,
+                    const char *user, time_t time);
 };	
 
 bool sieve_init(const char *plugins);

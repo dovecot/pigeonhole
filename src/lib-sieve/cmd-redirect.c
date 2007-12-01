@@ -1,5 +1,7 @@
 #include "lib.h"
 #include "str-sanitize.h"
+#include "istream.h"
+#include "istream-header-filter.h"
 
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
@@ -8,6 +10,8 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
+
+#include <stdio.h>
 
 /* Forward declarations */
 
@@ -188,19 +192,52 @@ static void act_redirect_print
 	*keep = FALSE;
 }
 
+static bool act_redirect_send	
+	(const struct sieve_action_exec_env *aenv, struct act_redirect_context *ctx)
+{
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_mail_environment *mailenv = aenv->mailenv;
+	struct istream *input;
+	static const char *hide_headers[] = { "Return-Path" };
+	void *smtp_handle;
+	FILE *f;
+	const unsigned char *data;
+	size_t size;
+	int ret;
+	
+	/* Just to be sure */
+	if ( mailenv->smtp_open == NULL || mailenv->smtp_close == NULL ) {
+		sieve_result_error(aenv, "redirect action has no means to send mail.");
+		return FALSE;
+	}
+	
+	if (mail_get_stream(msgdata->mail, NULL, NULL, &input) < 0)
+		return -1;
+		
+  smtp_handle = mailenv->smtp_open(ctx->to_address, msgdata->return_path, &f);
+
+  input = i_stream_create_header_filter
+  	(input, HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR, hide_headers,
+		N_ELEMENTS(hide_headers), null_header_filter_callback, NULL);
+
+	while ((ret = i_stream_read_data(input, &data, &size, 0)) > 0) {	
+		if (fwrite(data, size, 1, f) == 0)
+			break;
+		i_stream_skip(input, size);
+	}
+
+	return mailenv->smtp_close(smtp_handle);
+}
+
 static bool act_redirect_commit
 (const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
 {
-	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct act_redirect_context *ctx = (struct act_redirect_context *) tr_context;
-	int res;
 	
-	if ((res = aenv->mailenv->
-		send_forward(msgdata, ctx->to_address)) == 0) {
-		i_info("msgid=%s: forwarded to <%s>",
-			msgdata->id == NULL ? "" : str_sanitize(msgdata->id, 80),
-			str_sanitize(ctx->to_address, 80));
+	if ( act_redirect_send(aenv, ctx) ) {
+		sieve_result_log(aenv, "forwarded to <%s>", 
+			str_sanitize(ctx->to_address, 80));	
 
 		*keep = FALSE;
   	return TRUE;

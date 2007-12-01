@@ -347,7 +347,7 @@ bool sieve_address_match
 	t_push();
 	
 	addr = message_address_parse
-		(unsafe_data_stack_pool, (const unsigned char *) data, 
+		(pool_datastack_create(), (const unsigned char *) data, 
 			strlen(data), 256, FALSE);
 	
 	while (!matched && addr != NULL) {

@@ -1,4 +1,5 @@
 #include "lib.h"
+#include "ioloop.h"
 #include "str-sanitize.h"
 #include "mail-storage.h"
 #include "mail-namespace.h"
@@ -11,6 +12,19 @@
 #include "sieve-actions.h"
 
 #include <ctype.h>
+
+/*
+ * Message transmission (FIXME: place this somewhere more appropriate)
+ */
+const char *sieve_get_new_message_id
+	(const struct sieve_mail_environment *mailenv)
+{
+	static int count = 0;
+	
+	return t_strdup_printf("<dovecot-sieve-%s-%s-%d@%s>",
+		dec2str(ioloop_timeval.tv_sec), dec2str(ioloop_timeval.tv_usec),
+    count++, mailenv->hostname);
+}
 
 /* 
  * Side-effects 'extension' 

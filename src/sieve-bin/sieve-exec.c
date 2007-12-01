@@ -20,28 +20,43 @@
 #define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
-static int sieve_send_rejection
-(const struct sieve_message_data *msgdata ATTR_UNUSED, 
-	const char *recipient, const char *reason)
+static void *sieve_smtp_open(const char *destination,
+	const char *return_path, FILE **file_r)
+{getenv("HOSTNAME");
+	printf("Sending mesage from <%s> to <%s>:\n\nSTART MESSAGE:\n", 
+		return_path == NULL || *return_path == '\0' ? "" : return_path, 
+		destination);
+	
+	*file_r = stdout;
+	
+	return NULL;	
+}
+
+static bool sieve_smtp_close(void *handle ATTR_UNUSED)
 {
-	i_info("<<NOT PERFORMED>> Rejected mail to %s with reason \"%s\"\n", 
-		recipient, reason);  
+	printf("END MESSAGE\n\n");
+	return TRUE;
+}
+
+static int duplicate_check(const void *id ATTR_UNUSED, size_t id_size ATTR_UNUSED, 
+	const char *user)
+{
+	printf("Checked duplicate for user %s.\n", user);
 	return 0;
 }
 
-static int sieve_send_forward
-(const struct sieve_message_data *msgdata ATTR_UNUSED, 
-	const char *forwardto)
+static void duplicate_mark
+(const void *id ATTR_UNUSED, size_t id_size ATTR_UNUSED, const char *user, 
+	time_t time ATTR_UNUSED)
 {
-	i_info("<<NOT PERFORMED>> Forwarded mail to %s.", forwardto);
-	return 0;
+	printf("Marked duplicate for user %s.\n", user);
 }
 
 int main(int argc, char **argv) 
 {
 	const char *user;
-    struct passwd *pw;
-    uid_t process_euid;
+	struct passwd *pw;
+	uid_t process_euid;
 	int sfd, mfd;
 	pool_t namespaces_pool;
 	struct mail_namespace *ns;
@@ -57,7 +72,7 @@ int main(int argc, char **argv)
  		exit(1);
  	}
   
-  	/* Open sieve script */
+	/* Open sieve script */
   
 	if ( (sfd = open(argv[1], O_RDONLY)) < 0 ) {
 		perror("open()");
@@ -67,17 +82,17 @@ int main(int argc, char **argv)
  	/* Open mail file */
  
 	if ( argc > 2 )
-    {
-        if ( strcmp(argv[2], "-") == 0 )
-            mfd = 0;
-        else {
-            if ( (mfd = open(argv[2], O_RDONLY)) < 0 ) {
-                perror("Failed to open mail file");
-                exit(1);
-            }
-        }
-    } else
-        mfd = 0;
+	{
+		if ( strcmp(argv[2], "-") == 0 )
+			mfd = 0;
+		else {
+			if ( (mfd = open(argv[2], O_RDONLY)) < 0 ) {
+				perror("Failed to open mail file");
+				exit(1);
+			}
+		}
+	} else
+		mfd = 0;
 
 	/* Compile sieve script */
 	
@@ -97,14 +112,14 @@ int main(int argc, char **argv)
 
  	close(sfd);
 
-    process_euid = geteuid();
-    pw = getpwuid(process_euid);
-    if (pw != NULL) {
-        user = t_strdup(pw->pw_name);
-    } else {
-        i_fatal("Couldn't lookup our username (uid=%s)",
-            dec2str(process_euid));
-    }
+	process_euid = geteuid();
+	pw = getpwuid(process_euid);
+	if (pw != NULL) {
+		user = t_strdup(pw->pw_name);
+	} else {
+		i_fatal("Couldn't lookup our username (uid=%s)",
+		dec2str(process_euid));
+	}
 
 	env_put(t_strdup_printf("NAMESPACE_1=%s", "maildir:/home/stephan/Maildir"));
 	env_put("NAMESPACE_1_INBOX=1");
@@ -115,7 +130,7 @@ int main(int argc, char **argv)
 	namespaces_pool = namespaces_init();
 	
 	if (mail_namespaces_init(namespaces_pool, user, &ns) < 0)
-        i_fatal("Namespace initialization failed");
+		i_fatal("Namespace initialization failed");
 
 	mail_raw_init(namespaces_pool, user);
 	mailr = mail_raw_open(mfd);
@@ -124,15 +139,20 @@ int main(int argc, char **argv)
 	memset(&msgdata, 0, sizeof(msgdata));
 	msgdata.mail = mailr->mail;
 	msgdata.return_path = "nico@example.com";
-	msgdata.to_address = "sirius+sieve@rename-it.nl";
-	msgdata.auth_user = "stephan";
+	msgdata.to_address = "sirius@rename-it.nl";
+	msgdata.auth_user = "nico";
 	(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
 	
 	memset(&mailenv, 0, sizeof(mailenv));
 	mailenv.inbox = "INBOX";
 	mailenv.namespaces = ns;
-	mailenv.send_forward = sieve_send_forward;
-	mailenv.send_rejection = sieve_send_rejection;
+	mailenv.username = "stephan";
+	mailenv.hostname = "host.example.com";
+	mailenv.postmaster_address = "postmaster@example.com";
+	mailenv.smtp_open = sieve_smtp_open;
+	mailenv.smtp_close = sieve_smtp_close;
+	mailenv.duplicate_mark = duplicate_mark;
+	mailenv.duplicate_check = duplicate_check;
 	
 	/* Run */
 	sieve_execute(sbin, &msgdata, &mailenv);

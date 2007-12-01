@@ -98,6 +98,7 @@ int main(int argc, char **argv)
 
 	memset(&mailenv, 0, sizeof(mailenv));
     mailenv.inbox = "INBOX";
+	mailenv.username = "stephan";
 	
 	/* Run the test */
 	(void) sieve_test(sbin, &msgdata, &mailenv);
