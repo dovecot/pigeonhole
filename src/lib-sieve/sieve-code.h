@@ -104,6 +104,7 @@ struct sieve_coded_stringlist *sieve_opr_stringlist_read
 /* Opcode: identifies what's to be done */
 
 enum sieve_operation_code {
+	SIEVE_OPCODE_INVALID,
 	SIEVE_OPCODE_JMP,
 	SIEVE_OPCODE_JMPTRUE,
 	SIEVE_OPCODE_JMPFALSE,

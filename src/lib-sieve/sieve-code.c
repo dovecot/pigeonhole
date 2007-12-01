@@ -656,6 +656,7 @@ extern const struct sieve_opcode tst_size_over_opcode;
 extern const struct sieve_opcode tst_size_under_opcode;
 
 const struct sieve_opcode *sieve_opcodes[] = {
+	NULL, 
 	&sieve_jmp_opcode,
 	&sieve_jmptrue_opcode, 
 	&sieve_jmpfalse_opcode,
