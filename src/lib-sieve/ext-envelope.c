@@ -188,7 +188,7 @@ static int ext_envelope_get_fields
 		value = msgdata->return_path;
 	else if ( strncmp(field, "to", 2) == 0 )
 		value = msgdata->to_address;	
-	else if ( strncmp(field, "to", 2) == 0 )	
+	else if ( strncmp(field, "auth", 2) == 0 ) /* Non-standard */
 		value = msgdata->auth_user;
 		
 	if ( value != NULL )
