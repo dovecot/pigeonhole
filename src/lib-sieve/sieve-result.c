@@ -113,11 +113,12 @@ void sieve_result_error
 
 /* Result composition */
 
-bool sieve_result_add_action
+int sieve_result_add_action
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
 	void *context)		
 {
+	int ret = 0;
 	struct sieve_result *result = renv->result;
 	struct sieve_result_action *raction;
 		
@@ -129,20 +130,20 @@ bool sieve_result_add_action
 		if ( raction->action == action ) {
 			/* Possible duplicate */
 			if ( action->check_duplicate != NULL ) {
-				if ( action->check_duplicate
-					(renv, action, raction->context, context) )
-					return FALSE;
+				if ( (ret=action->check_duplicate
+					(renv, action, raction->context, context)) != 0 )
+					return ret;
 			} else 
-				return FALSE; 
+				return 1; 
 		} else {
 			/* Check conflict */
 			if ( action->check_conflict != NULL &&
-				action->check_conflict(renv, action, oact, context) ) 
-				return FALSE;
+				(ret=action->check_conflict(renv, action, oact, context)) != 0 ) 
+				return ret;
 			
 			if ( oact->check_conflict != NULL &&
-				oact->check_conflict(renv, oact, action, raction->context) )
-				return FALSE;
+				(ret=oact->check_conflict(renv, oact, action, raction->context)) != 0 )
+				return ret;
 		}
 		raction = raction->next;
 	}
@@ -169,7 +170,7 @@ bool sieve_result_add_action
 		raction->next = NULL;
 	}	
 	
-	return TRUE;
+	return 0;
 }	
 
 bool sieve_result_print(struct sieve_result *result)

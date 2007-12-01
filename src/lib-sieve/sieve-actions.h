@@ -14,16 +14,23 @@ struct sieve_action_exec_env {
 	const struct sieve_mail_environment *mailenv;
 };
 
+enum sieve_action_flags {
+	SIEVE_ACTFLAG_TRIES_DELIVER = (1 << 0),
+	SIEVE_ACTFLAG_SENDS_RESPONSE = (1 << 1)
+};
+
 struct sieve_action {
 	const char *name;
+	unsigned int flags;
 
-	bool (*check_duplicate)	
+	int (*check_duplicate)	
 		(const struct sieve_runtime_env *renv,
 			const struct sieve_action *action, void *context1, void *context2);	
-	bool (*check_conflict)
+	int (*check_conflict)
 		(const struct sieve_runtime_env *renv,
-			const struct sieve_action *action1, const struct sieve_action *action2,
-			void *context1);
+			const struct sieve_action *action, 
+			const struct sieve_action *other_action,
+			void *context);
 
 	void (*print)
 		(const struct sieve_action *action, void *context, bool *keep);	
@@ -124,7 +131,7 @@ struct act_store_transaction {
 	const char *error;
 };
 
-bool sieve_act_store_add_to_result
+int sieve_act_store_add_to_result
 	(const struct sieve_runtime_env *renv, 
 		struct sieve_side_effects_list *seffects, const char *folder);
 

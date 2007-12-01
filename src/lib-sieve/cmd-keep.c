@@ -66,18 +66,19 @@ static bool opc_keep_execute
 	sieve_size_t *address ATTR_UNUSED)
 {	
 	struct sieve_side_effects_list *slist = NULL;
-	
+	int ret = 0;	
+
 	printf(">> KEEP\n");
 	
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;
 	
 	if ( renv->mailenv != NULL && renv->mailenv->inbox != NULL )
-		(void) sieve_act_store_add_to_result(renv,	slist, renv->mailenv->inbox);
+		ret = sieve_act_store_add_to_result(renv,	slist, renv->mailenv->inbox);
 	else
-		(void) sieve_act_store_add_to_result(renv,	slist, "INBOX");
+		ret = sieve_act_store_add_to_result(renv,	slist, "INBOX");
 	
-	return TRUE;
+	return ret >= 0;
 }
 
 

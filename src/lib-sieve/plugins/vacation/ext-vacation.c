@@ -30,7 +30,6 @@
 
 #include <stdio.h>
 
-
 /* Forward declarations */
 
 static bool ext_vacation_load(int ext_id);
@@ -102,11 +101,17 @@ const struct sieve_opcode vacation_opcode = {
 
 /* Vacation action */
 
+static int act_vacation_check_duplicate
+	(const struct sieve_runtime_env *renv, const struct sieve_action *action1,
+    	void *context1, void *context2);
+int act_vacation_check_conflict
+	(const struct sieve_runtime_env *renv, const struct sieve_action *action,
+		const struct sieve_action *other_action, void *context);
 static void act_vacation_print
 	(const struct sieve_action *action, void *context, bool *keep);	
 static bool act_vacation_commit
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
+	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv, 
+		void *tr_context, bool *keep);
 		
 struct act_vacation_context {
 	const char *reason;
@@ -121,8 +126,9 @@ struct act_vacation_context {
 
 const struct sieve_action act_vacation = {
 	"vacation",
-	NULL, 
-	NULL,
+	SIEVE_ACTFLAG_SENDS_RESPONSE,
+	act_vacation_check_duplicate, 
+	act_vacation_check_conflict,
 	act_vacation_print,
 	NULL, NULL,
 	act_vacation_commit,
@@ -435,14 +441,36 @@ static bool ext_vacation_opcode_execute
 	
 	/* FIXME: :addresses is ignored */
 	
-	(void) sieve_result_add_action(renv, &act_vacation, slist, (void *) act);
-	
-	return TRUE;
+	return ( sieve_result_add_action(renv, &act_vacation, slist, (void *) act) >= 0 );
 }
 
 /*
  * Action
  */
+
+static int act_vacation_check_duplicate
+(const struct sieve_runtime_env *renv ATTR_UNUSED,
+	const struct sieve_action *action1 ATTR_UNUSED,
+	void *context1 ATTR_UNUSED, void *context2 ATTR_UNUSED)
+{
+	sieve_runtime_error(renv, "duplicate 'vacation' action not allowed.");
+	return -1;
+}
+
+int act_vacation_check_conflict
+(const struct sieve_runtime_env *renv,
+	const struct sieve_action *action ATTR_UNUSED,
+	const struct sieve_action *other_action, void *context ATTR_UNUSED)
+{
+	if ( (other_action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
+		sieve_runtime_error(renv, "'vacation' action conflicts with other action: "
+			"'%s' action sends a response back to the sender.",	
+			other_action->name);
+		return -1;
+	}
+
+	return 0;
+}
  
 static void act_vacation_print
 (const struct sieve_action *action ATTR_UNUSED, void *context, 
@@ -649,8 +677,9 @@ static bool act_vacation_commit
 	}
 	
 	/* Did whe respond to this user before? */
-  if (mailenv->duplicate_check(dupl_hash, sizeof(dupl_hash), mailenv->username)) 
-  {
+	act_vacation_hash(msgdata, ctx, dupl_hash);
+	if (mailenv->duplicate_check(dupl_hash, sizeof(dupl_hash), mailenv->username)) 
+	{
 		sieve_result_log(aenv, "discarded duplicate vacation response to <%s>",
 			str_sanitize(msgdata->return_path, 80));
 		return TRUE;

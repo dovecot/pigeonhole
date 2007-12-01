@@ -25,9 +25,12 @@ struct sieve_interpreter {
 		
 	/* Execution status */
 	
-	sieve_size_t pc;  /* Program counter */
-	bool stopped;     /* Explicit successful stop requested */
-	bool test_result; /* Result of previous test command */
+	sieve_size_t pc;          /* Program counter */
+	bool stopped;             /* Explicit successful stop requested */
+	bool test_result;         /* Result of previous test command */
+
+	const struct sieve_opcode *current_op; /* Current opcode */ 
+	sieve_size_t current_op_addr;          /* Start address of current opcode */
 	
 	/* Runtime environment environment */
 	struct sieve_runtime_env runenv; 
@@ -82,6 +85,41 @@ void sieve_interpreter_free(struct sieve_interpreter *interp)
 inline pool_t sieve_interpreter_pool(struct sieve_interpreter *interp)
 {
 	return interp->pool;
+}
+
+/* Error handling */
+
+/* FIXME: Add support to send errors elsewhere */
+
+void sieve_runtime_log
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+{
+	const char *op = runenv->interp->current_op == NULL ?
+		"<<NOOP>>" : runenv->interp->current_op->mnemonic;
+	va_list args;
+	va_start(args, fmt);
+
+	
+	/* Kludgy, needs explict support from liblib.a (something like i_vinfo) */	
+	i_info("%s at #%08x: %s", op, runenv->interp->current_op_addr, 
+		t_strdup_vprintf(fmt, args)); 
+	
+	va_end(args);
+}
+
+void sieve_runtime_error
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+{
+	const char *op = runenv->interp->current_op == NULL ?
+		"<<NOOP>>" : runenv->interp->current_op->mnemonic;
+	va_list args;
+	va_start(args, fmt);
+	
+	/* Kludgy, needs explict support from liblib.a (something like i_vinfo) */
+	i_error("%s at #%08x: %s", op, runenv->interp->current_op_addr, 
+		t_strdup_vprintf(fmt, args)); 
+	
+	va_end(args);
 }
 
 
@@ -253,7 +291,10 @@ void sieve_interpreter_dump_code(struct sieve_interpreter *interp)
 bool sieve_interpreter_execute_operation
 	(struct sieve_interpreter *interp) 
 {
-	const struct sieve_opcode *opcode = 
+	const struct sieve_opcode *opcode;
+
+	interp->current_op_addr = interp->pc;
+	interp->current_op = opcode =
 		sieve_operation_read(interp->runenv.sbin, &(interp->pc));
 
 	if ( opcode != NULL ) {

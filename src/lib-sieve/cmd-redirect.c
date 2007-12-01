@@ -55,7 +55,7 @@ const struct sieve_opcode cmd_redirect_opcode = {
 
 /* Redirect action */
 
-static bool act_redirect_check_duplicate
+static int act_redirect_check_duplicate
 	(const struct sieve_runtime_env *renv,
 		const struct sieve_action *action1, void *context1, void *context2);
 static void act_redirect_print
@@ -70,6 +70,7 @@ struct act_redirect_context {
 
 const struct sieve_action act_redirect = {
 	"redirect",
+	SIEVE_ACTFLAG_TRIES_DELIVER,
 	act_redirect_check_duplicate, 
 	NULL,
 	act_redirect_print,
@@ -140,6 +141,7 @@ static bool cmd_redirect_opcode_execute
 	struct act_redirect_context *act;
 	string_t *redirect;
 	pool_t pool;
+	int ret = 0;
 
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;
@@ -158,17 +160,17 @@ static bool cmd_redirect_opcode_execute
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = p_strdup(pool, str_c(redirect));
 	
-	(void) sieve_result_add_action(renv, &act_redirect, slist, (void *) act);
+	ret = sieve_result_add_action(renv, &act_redirect, slist, (void *) act);
 	
 	t_pop();
-	return TRUE;
+	return (ret >= 0);
 }
 
 /*
  * Action
  */
  
-static bool act_redirect_check_duplicate
+static int act_redirect_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
 	const struct sieve_action *action1 ATTR_UNUSED, 
 	void *context1, void *context2)
@@ -177,9 +179,9 @@ static bool act_redirect_check_duplicate
 	struct act_redirect_context *ctx2 = (struct act_redirect_context *) context2;
 	
 	if ( strcmp(ctx1->to_address, ctx2->to_address) == 0 ) 
-		return TRUE;
+		return 1;
 		
-	return FALSE;
+	return 0;
 }
 
 static void act_redirect_print

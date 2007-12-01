@@ -149,6 +149,7 @@ static bool ext_fileinto_opcode_execute
 {
 	struct sieve_side_effects_list *slist = NULL; 
 	string_t *folder;
+	int ret = 0;
 	
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;
@@ -162,10 +163,10 @@ static bool ext_fileinto_opcode_execute
 
 	printf(">> FILEINTO \"%s\"\n", str_c(folder));
 
-	(void) sieve_act_store_add_to_result(renv, slist, str_c(folder));
+	ret = sieve_act_store_add_to_result(renv, slist, str_c(folder));
 
 	t_pop();
-	return TRUE;
+	return ( ret >= 0 );
 }
 
 

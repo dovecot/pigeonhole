@@ -17,7 +17,7 @@ void sieve_result_log
 void sieve_result_error
 	(const struct sieve_action_exec_env *aenv, const char *fmt, ...);
 	
-bool sieve_result_add_action
+int sieve_result_add_action
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
 	void *context);

@@ -90,11 +90,17 @@ struct sieve_opcode reject_opcode = {
 
 /* Reject action */
 
+static int act_reject_check_duplicate
+	(const struct sieve_runtime_env *renv, const struct sieve_action *action1,
+		void *context1, void *context2);
+int act_reject_check_conflict
+	(const struct sieve_runtime_env *renv, const struct sieve_action *action,
+    	const struct sieve_action *other_action, void *context);
 static void act_reject_print
 	(const struct sieve_action *action, void *context, bool *keep);	
 static bool act_reject_commit
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
+	(const struct sieve_action *action ATTR_UNUSED, 
+		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 		
 struct act_reject_context {
 	const char *reason;
@@ -102,8 +108,9 @@ struct act_reject_context {
 
 const struct sieve_action act_reject = {
 	"reject",
-	NULL, 
-	NULL,
+	SIEVE_ACTFLAG_SENDS_RESPONSE,
+	act_reject_check_duplicate, 
+	act_reject_check_conflict,
 	act_reject_print,
 	NULL, NULL,
 	act_reject_commit,
@@ -178,6 +185,7 @@ static bool ext_reject_opcode_execute
 	struct act_reject_context *act;
 	string_t *reason;
 	pool_t pool;
+	int ret;
 
 	t_push();
 	
@@ -196,15 +204,46 @@ static bool ext_reject_opcode_execute
 	act = p_new(pool, struct act_reject_context, 1);
 	act->reason = p_strdup(pool, str_c(reason));
 	
-	(void) sieve_result_add_action(renv, &act_reject, slist, (void *) act);
+	ret = sieve_result_add_action(renv, &act_reject, slist, (void *) act);
 	
 	t_pop();
-	return TRUE;
+	return ( ret >= 0 );
 }
 
 /*
  * Action
  */
+
+static int act_reject_check_duplicate
+(const struct sieve_runtime_env *renv ATTR_UNUSED,
+	const struct sieve_action *action1 ATTR_UNUSED,
+	void *context1 ATTR_UNUSED, void *context2 ATTR_UNUSED)
+{
+	sieve_runtime_error(renv, "duplicate 'reject' action not allowed.");	
+	return -1;
+}
+ 
+int act_reject_check_conflict
+(const struct sieve_runtime_env *renv,
+	const struct sieve_action *action ATTR_UNUSED, 
+	const struct sieve_action *other_action, void *context ATTR_UNUSED)
+{
+	if ( (other_action->flags & SIEVE_ACTFLAG_TRIES_DELIVER) > 0 ) {
+		sieve_runtime_error(renv, "'reject' action conflicts with other action: "
+			"'%s' action tries to deliver the message.",
+			other_action->name);	
+		return -1;
+	}
+
+	if ( (other_action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
+		sieve_runtime_error(renv, "'reject' action conflicts with other action: "
+			"'%s' sends a response to the sender.",
+			other_action->name);	
+		return -1;
+	}
+	
+	return 0;
+}
  
 static void act_reject_print
 (const struct sieve_action *action ATTR_UNUSED, void *context, bool *keep)	
@@ -224,7 +263,7 @@ static bool act_reject_send
 	struct istream *input;
 	void *smtp_handle;
 	struct message_size hdr_size;
-  FILE *f;
+	FILE *f;
 	const char *new_msgid, *boundary;
 	const unsigned char *data;
 	const char *header;
@@ -239,18 +278,18 @@ static bool act_reject_send
 
 	smtp_handle = mailenv->smtp_open(msgdata->return_path, NULL, &f);
 
-  new_msgid = sieve_get_new_message_id(mailenv);
+	new_msgid = sieve_get_new_message_id(mailenv);
 	boundary = t_strdup_printf("%s/%s", my_pid, mailenv->hostname);
 
 	fprintf(f, "Message-ID: %s\r\n", new_msgid);
 	fprintf(f, "Date: %s\r\n", message_date_create(ioloop_time));
 	fprintf(f, "From: Mail Delivery Subsystem <%s>\r\n",
-	  mailenv->postmaster_address);
+		mailenv->postmaster_address);
 	fprintf(f, "To: <%s>\r\n", msgdata->return_path);
 	fprintf(f, "MIME-Version: 1.0\r\n");
 	fprintf(f, "Content-Type: "
-	  "multipart/report; report-type=disposition-notification;\r\n"
-	  "\tboundary=\"%s\"\r\n", boundary);
+		"multipart/report; report-type=disposition-notification;\r\n"
+		"\tboundary=\"%s\"\r\n", boundary);
 	fprintf(f, "Subject: Automatically rejected mail\r\n");
 	fprintf(f, "Auto-Submitted: auto-replied (rejected)\r\n");
 	fprintf(f, "Precedence: bulk\r\n");
@@ -266,7 +305,7 @@ static bool act_reject_send
 	fprintf(f, "Your message to <%s> was automatically rejected:\r\n"	
 		"%s\r\n", msgdata->to_address, ctx->reason);
 
-  /* MDN status report */
+	/* MDN status report */
 	fprintf(f, "--%s\r\n"
 		"Content-Type: message/disposition-notification\r\n\r\n", boundary);
 	fprintf(f, "Reporting-UA: %s; Dovecot Mail Delivery Agent\r\n",
@@ -284,7 +323,7 @@ static bool act_reject_send
 	/* original message's headers */
 	fprintf(f, "--%s\r\nContent-Type: message/rfc822\r\n\r\n", boundary);
 
-  if (mail_get_stream(msgdata->mail, &hdr_size, NULL, &input) == 0) {
+	if (mail_get_stream(msgdata->mail, &hdr_size, NULL, &input) == 0) {
     /* Note: If you add more headers, they need to be sorted.
        We'll drop Content-Type because we're not including the message
        body, and having a multipart Content-Type may confuse some
@@ -321,18 +360,18 @@ static bool act_reject_commit
 	struct act_reject_context *ctx = (struct act_reject_context *) tr_context;
 	
 	if ( msgdata->return_path == NULL || *(msgdata->return_path) == '\0' ) {
-    sieve_result_log(aenv, "discarded reject to <>");
+		sieve_result_log(aenv, "discarded reject to <>");
     
-    *keep = FALSE;
-    return TRUE;
-  }
+		*keep = FALSE;
+		return TRUE;
+	}
 	
 	if ( act_reject_send(aenv, ctx) ) {
 		sieve_result_log(aenv, "rejected");	
 
 		*keep = FALSE;
-  	return TRUE;
-  }
+		return TRUE;
+	}
   
 	return FALSE;
 }

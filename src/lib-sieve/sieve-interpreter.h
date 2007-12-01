@@ -39,6 +39,13 @@ inline void sieve_interpreter_set_test_result
 inline bool sieve_interpreter_get_test_result
 	(struct sieve_interpreter *interp);
 	
+/* Error handling */
+
+void sieve_runtime_log
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...);
+void sieve_runtime_error
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...);
+
 /* Extension support */
 
 inline void sieve_interpreter_extension_set_context

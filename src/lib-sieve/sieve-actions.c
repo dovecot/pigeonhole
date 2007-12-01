@@ -16,6 +16,7 @@
 /*
  * Message transmission (FIXME: place this somewhere more appropriate)
  */
+ 
 const char *sieve_get_new_message_id
 	(const struct sieve_mail_environment *mailenv)
 {
@@ -137,7 +138,7 @@ const struct sieve_side_effect *sieve_opr_side_effect_read
  
 /* Store action */
 
-static bool act_store_check_duplicate
+static int act_store_check_duplicate
 	(const struct sieve_runtime_env *renv ATTR_UNUSED,
 		const struct sieve_action *action1 ATTR_UNUSED, 
 		void *context1, void *context2);
@@ -159,6 +160,7 @@ static void act_store_rollback
 		
 const struct sieve_action act_store = {
 	"store",
+	SIEVE_ACTFLAG_TRIES_DELIVER,
 	act_store_check_duplicate, 
 	NULL, 
 	act_store_print,
@@ -168,7 +170,7 @@ const struct sieve_action act_store = {
 	act_store_rollback,
 };
 
-bool sieve_act_store_add_to_result
+int sieve_act_store_add_to_result
 (const struct sieve_runtime_env *renv, 
 	struct sieve_side_effects_list *seffects, const char *folder)
 {
@@ -185,7 +187,7 @@ bool sieve_act_store_add_to_result
 
 /* Store action implementation */
 
-static bool act_store_check_duplicate
+static int act_store_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
 	const struct sieve_action *action1 ATTR_UNUSED, 
 	void *context1, void *context2)
@@ -194,9 +196,9 @@ static bool act_store_check_duplicate
 	struct act_store_context *ctx2 = (struct act_store_context *) context2;
 	
 	if ( strcmp(ctx1->folder, ctx2->folder) == 0 ) 
-		return TRUE;
+		return 1;
 		
-	return FALSE;
+	return 0;
 }
 
 static void act_store_print

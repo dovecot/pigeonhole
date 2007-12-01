@@ -53,7 +53,8 @@ static bool act_discard_commit
 		
 const struct sieve_action act_discard = {
 	"discard",
-	NULL,	NULL,
+	0,
+	NULL, NULL,
 	act_discard_print,
 	NULL, NULL,
 	act_discard_commit,
@@ -85,9 +86,7 @@ static bool opc_discard_execute
 {	
 	printf(">> DISCARD\n");
 	
-	(void) sieve_result_add_action(renv, &act_discard, NULL, NULL);
-
-	return TRUE;
+	return ( sieve_result_add_action(renv, &act_discard, NULL, NULL) >= 0 );
 }
 
 /*

@@ -25,6 +25,11 @@ extern const struct sieve_command tst_not;
 extern const struct sieve_command tst_anyof;
 extern const struct sieve_command tst_allof;
 
+/* Core actions */
+
+extern const struct sieve_action act_redirect;
+extern const struct sieve_action act_store;
+
 /* Lists */
 
 extern const struct sieve_command *sieve_core_commands[];
