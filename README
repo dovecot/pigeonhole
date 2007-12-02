@@ -15,14 +15,27 @@ sievec <sieve-file>
 Compiles the script and produces various dumps of intermittent compilation
 results. This already works pretty good for all supported features.
 
-sieve-test <sieve-file> [ <mailfile> / - ]
+sieve-test [-r <recipient address>][-s <envelope sender>]
+           [-m <mailbox>][-d <dump filename>] <scriptfile> <mailfile>
 
-Reads mail message from the specified mailfile (- = stdin) and executes the 
+Reads mail message from the specified mailfile and executes the specified 
 sieve script to produce a verdict. This prints an execution dump with the 
 instructions encountered during execution and finally it prints a list of 
-actions that would have been performed on this message. 
+actions that would have been performed on this message.
+
+Options:
+	-r  envelope recipient address
+	-s	envelope sender
+	-m	the mailbox where the keep action should store
+	-d	causes a dump of the generated code to be written to the specified
+		file. Using - as filename causes the dump to be written to stdout
 
 Various example scripts are bundled in the directory 'sieve'.
+
+Authors
+-------
+
+Refer to AUTHORS file.
 
 Features
 --------
@@ -41,11 +54,10 @@ What works:
   and address-part modifiers already work.
 * Interpreter runs and dumps core commands and tests. Comparators, match-types and 
   address-part modifiers have the desired effect. Most test commands work as 
-  specified.
+  specified (see list below).
 * The interpreter produces a result containing a set of actions to execute.
-  Duplicate actions can now be avoided and conflicts can be detected. The redirect,
-  keep, discard and fileinto commands now produce effective actions. Other action
-  commands are still pretty much dummies.
+  Duplicate actions can now be avoided and conflicts can be detected. 
+* Execution is now also supported for all core commands.  
 
 Base tests and their implementation status:
 	false, true: trivial, full
@@ -67,7 +79,7 @@ Extensions and their implementation status:
 
   Base specification (RFC3028):
     fileinto: full
-    reject: validation, generation and interpretation; no execution
+    reject: full
     envelope: full
 	encoded-character: planned (draft-ietf-sieve-3028bis)
 
@@ -76,7 +88,8 @@ Extensions and their implementation status:
     comparator-i;ascii-numeric: full
     relational: full 
     regex: full, but suboptimal
-    vacation: validation, generation and interpretation; no execution
+    vacation: almost complete; no support for required References header
+              and :addresses and :mime are currently ignored.
     imapflags: flag management works, but flags are not stored 
     copy: full
     include: planned (* first leave out variables support)  
@@ -117,30 +130,25 @@ INTERPRETER: sieve-interpreter.c
 TODO
 ----
 
-* Produce a fully working interpreter that actually executes actions, currently
-  tests are evaluated, but actions just print their occurence.
+* Further implement error handling and limit the maximum number of errors. 
+* Produce a substitute sieve plugin for deliver (currently a stub and not 
+  part of the make process)
 * Verify outgoing mail addresses
-* Extract code dump functionality from interpreter and start sieve-code-dump.c
 * Resolve code duplication introduced for handling address-parts and match-types
   in different command implementations.
+* Resolve code duplication amongst comparator, address-part and match-type 
+  support as much as possible. 
+* Allow the currently in-memory byte-code to be stored as a script binary
 * Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
   Character Sets). 
 * Implement a faster substring search algorithm to make sopport for the body 
   extension a less bad idea.  
-* Further implement error handling and limit the maximum number of errors. 
-* Resolve code duplication amongst comparator, address-part and match-type 
-  support as much as possible. 
-* Use dovecot streams for code dump (debugging), currently the code is riddled 
-  with printf()s. 
 * Give the binary format some more thought, it is currently quite rough and
   to the point. 
-* Produce a substitute sieve plugin for deliver (currently a stub and not 
-  part of the make process)
 * Full standards compliance review for the engine and all fully implemented sieve
   extensions.
 * Full security review. Enforce limits on number of created objects, script size,
-  etc...
+  execution time, etc...
 * Automate script tests; i.e. build a test suite.
 * Use mmap for the binary script representation. 
-* Allow the currently in-memory byte-code to be stored as a script binary
 

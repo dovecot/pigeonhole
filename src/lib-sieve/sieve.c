@@ -1,3 +1,5 @@
+/* Copyright (c) 2002-2007 Dovecot authors, see the included COPYING file */
+
 #include "lib.h"
 #include "str.h"
 #include "istream.h"

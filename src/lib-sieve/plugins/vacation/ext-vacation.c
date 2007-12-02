@@ -3,8 +3,8 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-vacation-07
- * Implementation: validation, generation and interpretation, no actual 
- *   execution.
+ * Implementation: almost complete, the required sopport for  Refences header 
+ *   is missing and :addresses and :mime are ignored.
  * Status: experimental, largely untested
  * 
  */

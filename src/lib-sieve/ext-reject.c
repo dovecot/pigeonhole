@@ -3,8 +3,7 @@
  *
  * Authors: Stephan Bosch
  * Specification: RFC3028, draft-ietf-sieve-refuse-reject-04
- * Implementation: validation, generation and interpretation, no actual 
- *   execution. 
+ * Implementation: full  
  * Status: experimental, largely untested
  *
  */

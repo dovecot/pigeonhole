@@ -3,7 +3,7 @@
  *
  * Authors: Stephan Bosch
  * Specification: RFC3028
- * Implementation: no action effect
+ * Implementation: full
  * Status: experimental, largely untested
  *
  */

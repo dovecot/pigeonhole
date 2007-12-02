@@ -1,3 +1,5 @@
+/* Copyright (c) 2002-2007 Dovecot authors, see the included COPYING file */
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
