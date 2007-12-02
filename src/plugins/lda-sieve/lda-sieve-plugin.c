@@ -16,7 +16,7 @@
 
 static deliver_mail_func_t *next_deliver_mail;
 
-static const char *get_sieve_path(void)
+static const char *lda_sieve_get_path(void)
 {
 	const char *script_path, *home;
 	struct stat st;
@@ -61,13 +61,13 @@ static const char *get_sieve_path(void)
 	return script_path;
 }
 
-static void *sieve_smtp_open(const char *destination,
+static void *lda_sieve_smtp_open(const char *destination,
 	const char *return_path, FILE **file_r)
 {
 	return (void *) smtp_client_open(destination, return_path, file_r);
 }
 
-static bool sieve_smtp_close(void *handle)
+static bool lda_sieve_smtp_close(void *handle)
 {
 	struct smtp_client *smtp_client = (struct smtp_client *) handle;
 	
@@ -103,8 +103,8 @@ static int lda_sieve_run
 	mailenv.username = username;
 	mailenv.hostname = deliver_set->hostname;
 	mailenv.postmaster_address = deliver_set->postmaster_address;
-	mailenv.smtp_open = sieve_smtp_open;
-	mailenv.smtp_close = sieve_smtp_close;
+	mailenv.smtp_open = lda_sieve_smtp_open;
+	mailenv.smtp_close = lda_sieve_smtp_close;
 	mailenv.duplicate_mark = duplicate_mark;
 	mailenv.duplicate_check = duplicate_check;
 
@@ -123,7 +123,7 @@ static int lda_sieve_deliver_mail
 {
 	const char *script_path;
 
-	script_path = get_sieve_path();
+	script_path = lda_sieve_get_path();
 	if (script_path == NULL)
 		return 0;
 
@@ -134,13 +134,13 @@ static int lda_sieve_deliver_mail
 			     destaddr, getenv("USER"), mailbox);
 }
 
-void lda_sieve_plugin_init(void)
+void sieve_plugin_init(void)
 {
 	next_deliver_mail = deliver_mail;
 	deliver_mail = lda_sieve_deliver_mail;
 }
 
-void lda_sieve_plugin_deinit(void)
+void sieve_plugin_deinit(void)
 {
 	deliver_mail = next_deliver_mail;
 }
