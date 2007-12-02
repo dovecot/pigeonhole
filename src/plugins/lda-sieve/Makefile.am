@@ -1,5 +1,3 @@
-SUBDIRS = libsieve
-
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
 	-I$(dovecot_incdir) \
@@ -11,23 +9,15 @@ AM_CPPFLAGS = \
 
 lda_moduledir = $(moduledir)/lda
 
-lib90_cmusieve_plugin_la_LDFLAGS = -module -avoid-version
+lib90_sieve_plugin_la_LDFLAGS = -module -avoid-version
 
-lda_module_LTLIBRARIES = \
-	lib90_cmusieve_plugin.la
+lda_module_LTLIBRARIES = lib90_sieve_plugin.la
 
-lib90_cmusieve_plugin_la_LIBADD = \
-	libsieve/libsieve.la
+lib90_sieve_plugin_la_LIBADD = \
+	$(top_srcdir)/src/lib-sieve/libsieve.la
 
-lib90_cmusieve_plugin_la_SOURCES = \
-	cmusieve-plugin.c \
-	imparse.c \
-	map.c \
-	sieve-cmu.c
+lib90_sieve_plugin_la_SOURCES = \
+	lda-sieve-plugin.c 
 
 noinst_HEADERS = \
-	cmusieve-plugin.h \
-	imparse.h \
-	libconfig.h \
-	map.h \
-	xmalloc.h
+	lda-sieve-plugin.h

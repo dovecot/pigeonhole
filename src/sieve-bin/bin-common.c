@@ -68,19 +68,11 @@ const char *bin_get_user(void)
 
 struct sieve_binary *bin_compile_sieve_script(const char *filename)
 {
-	int sfd;
 	struct sieve_binary *sbin;
 	
-	if ( (sfd = open(filename, O_RDONLY)) < 0 ) 
-		i_fatal("Failed to open sieve script %s: %m", filename);
-	
-	if ( (sbin = sieve_compile(sfd)) == NULL ) 
-	{
-		close(sfd);
+	if ( (sbin = sieve_compile(filename)) == NULL ) 
 		i_fatal("Failed to compile sieve script\n");
-	}
 		
-	close(sfd);
 	return sbin;
 }
 	

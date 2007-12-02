@@ -1,1 +1,1 @@
-SUBDIRS = lib-sieve sieve-bin
+SUBDIRS = lib-sieve sieve-bin plugins
