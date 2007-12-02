@@ -2,7 +2,9 @@
 #include <string.h>
 
 #include "lib.h"
+#include "str.h"
 #include "mempool.h"
+#include "ostream.h"
 
 #include "sieve-extensions.h"
 #include "sieve-commands-private.h"
@@ -20,6 +22,10 @@ struct sieve_code_dumper {
 	/* Dump status */
 	sieve_size_t pc;          /* Program counter */
 	
+	const struct sieve_opcode *opcode;
+	sieve_size_t mark_address;
+	unsigned int indent;
+	
 	/* Runtime environment environment */
 	struct sieve_dumptime_env dumpenv; 
 };
@@ -27,30 +33,77 @@ struct sieve_code_dumper {
 struct sieve_code_dumper *sieve_code_dumper_create(struct sieve_binary *sbin) 
 {
 	pool_t pool;
-	struct sieve_code_dumper *dumpr;
+	struct sieve_code_dumper *dumper;
 	
 	pool = pool_alloconly_create("sieve_code_dumper", 4096);	
-	dumpr = p_new(pool, struct sieve_code_dumper, 1);
-	dumpr->pool = pool;
-	dumpr->dumpenv.dumpr = dumpr;
+	dumper = p_new(pool, struct sieve_code_dumper, 1);
+	dumper->pool = pool;
+	dumper->dumpenv.dumper = dumper;
 	
-	dumpr->dumpenv.sbin = sbin;
+	dumper->dumpenv.sbin = sbin;
 	sieve_binary_ref(sbin);
 	
-	dumpr->pc = 0;
+	dumper->pc = 0;
 	
-	return dumpr;
+	return dumper;
 }
 
-void sieve_code_dumper_free(struct sieve_code_dumper *dumpr) 
+void sieve_code_dumper_free(struct sieve_code_dumper *dumper) 
 {
-	sieve_binary_unref(&dumpr->dumpenv.sbin);
-	pool_unref(&(dumpr->pool));
+	sieve_binary_unref(&dumper->dumpenv.sbin);
+	pool_unref(&(dumper->pool));
 }
 
-inline pool_t sieve_code_dumper_pool(struct sieve_code_dumper *dumpr)
+inline pool_t sieve_code_dumper_pool(struct sieve_code_dumper *dumper)
 {
-	return dumpr->pool;
+	return dumper->pool;
+}
+
+/* Dump functions */
+
+void sieve_code_dumpf
+(const struct sieve_dumptime_env *denv, const char *fmt, ...)
+{
+	unsigned tab = denv->dumper->indent;
+	 
+	string_t *outbuf = t_str_new(128);
+	va_list args;
+	
+	va_start(args, fmt);	
+	str_printfa(outbuf, "%08x: ", denv->dumper->mark_address);
+	
+	while ( tab > 0 )	{
+		str_append(outbuf, "  ");
+		tab--;
+	}
+	
+	str_vprintfa(outbuf, fmt, args);
+	str_append_c(outbuf, '\n');
+	va_end(args);
+	
+	o_stream_send(denv->stream, str_data(outbuf), str_len(outbuf));
+}
+
+inline void sieve_code_mark(const struct sieve_dumptime_env *denv)
+{
+	denv->dumper->mark_address = denv->dumper->pc;
+}
+
+inline void sieve_code_mark_specific
+(const struct sieve_dumptime_env *denv, sieve_size_t location)
+{
+	denv->dumper->mark_address = location;
+}
+
+inline void sieve_code_descend(const struct sieve_dumptime_env *denv)
+{
+	denv->dumper->indent++;
+}
+
+inline void sieve_code_ascend(const struct sieve_dumptime_env *denv)
+{
+	if ( denv->dumper->indent > 0 )
+		denv->dumper->indent--;
 }
 
 /* Opcodes and operands */
@@ -66,12 +119,7 @@ bool sieve_code_dumper_print_optional_operands
 				return FALSE;
 
 			if ( opt_code == SIEVE_OPT_SIDE_EFFECT ) {
-				const struct sieve_side_effect *seffect = 
-					sieve_opr_side_effect_read(denv->sbin, address);
-
-				if ( seffect == NULL ) return FALSE;
-			
-				if ( seffect->read != NULL && !seffect->dump(seffect, denv, address) )
+				if ( !sieve_opr_side_effect_dump(denv, address) )
 					return FALSE;
 			}
 		}
@@ -82,18 +130,24 @@ bool sieve_code_dumper_print_optional_operands
 /* Code Dump */
 
 static bool sieve_code_dumper_print_operation
-	(struct sieve_code_dumper *dumpr) 
-{
-	const struct sieve_opcode *opcode = 
-		sieve_operation_read(dumpr->dumpenv.sbin, &(dumpr->pc));
-
-	if ( opcode != NULL ) {
-		printf("%08x: ", dumpr->pc-1);
+	(struct sieve_code_dumper *dumper) 
+{	
+	const struct sieve_opcode *opcode;
 	
+	/* Mark start address of opcode */
+	dumper->indent = 0;
+	dumper->mark_address = dumper->pc;
+
+	/* Read opcode */
+	dumper->opcode = opcode = 
+		sieve_operation_read(dumper->dumpenv.sbin, &(dumper->pc));
+
+	/* Try to dump it */
+	if ( opcode != NULL ) {
 		if ( opcode->dump != NULL )
-			return opcode->dump(opcode, &(dumpr->dumpenv), &(dumpr->pc));
+			return opcode->dump(opcode, &(dumper->dumpenv), &(dumper->pc));
 		else if ( opcode->mnemonic != NULL )
-			printf("%s\n", opcode->mnemonic);
+			sieve_code_dumpf(&(dumper->dumpenv), "%s", opcode->mnemonic);
 		else
 			return FALSE;
 			
@@ -103,18 +157,23 @@ static bool sieve_code_dumper_print_operation
 	return FALSE;
 }
 
-void sieve_code_dumper_run(struct sieve_code_dumper *dumpr) 
+void sieve_code_dumper_run
+	(struct sieve_code_dumper *dumper, struct ostream *stream) 
 {
-	dumpr->pc = 0;
+	dumper->pc = 0;
+	dumper->dumpenv.stream = stream;
 	
-	while ( dumpr->pc < 
-		sieve_binary_get_code_size(dumpr->dumpenv.sbin) ) {
-		if ( !sieve_code_dumper_print_operation(dumpr) ) {
-			printf("Binary is corrupt.\n");
+	while ( dumper->pc < 
+		sieve_binary_get_code_size(dumper->dumpenv.sbin) ) {
+		if ( !sieve_code_dumper_print_operation(dumper) ) {
+			sieve_code_dumpf(&(dumper->dumpenv), "Binary is corrupt.");
 			return;
 		}
 	}
 	
-	printf("%08x: [End of code]\n", 
-		sieve_binary_get_code_size(dumpr->dumpenv.sbin));	
+	/* Mark end of the binary */
+	dumper->indent = 0;
+	dumper->mark_address = sieve_binary_get_code_size(dumper->dumpenv.sbin);
+
+	sieve_code_dumpf(&(dumper->dumpenv), "[End of code]");	
 }

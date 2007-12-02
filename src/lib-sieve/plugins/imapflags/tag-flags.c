@@ -32,10 +32,10 @@ const struct sieve_argument tag_flags = {
 
 const struct sieve_side_effect_extension ext_flags_side_effect;
 
-static bool seff_flags_dump
+static bool seff_flags_dump_context
 	(const struct sieve_side_effect *seffect,
     	const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool seff_flags_read
+static bool seff_flags_read_context
 	(const struct sieve_side_effect *seffect, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address,
 		void **se_context);
@@ -53,8 +53,8 @@ const struct sieve_side_effect flags_side_effect = {
 	
 	&ext_flags_side_effect,
 	0,
-	seff_flags_dump,
-	seff_flags_read,
+	seff_flags_dump_context,
+	seff_flags_read_context,
 	seff_flags_print,
 	NULL,
 	seff_flags_post_execute, 
@@ -126,14 +126,14 @@ struct seff_flags_context {
 	enum mail_flags flags;
 };
 
-static bool seff_flags_dump
-(const struct sieve_side_effect *seffect, 
+static bool seff_flags_dump_context
+(const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	return TRUE;
+	return sieve_opr_stringlist_dump(denv, address);
 }
 
-static bool seff_flags_read
+static bool seff_flags_read_context
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address,
 	void **se_context)

@@ -1,6 +1,7 @@
 /* Copyright (c) 2005-2007 Dovecot authors, see the included COPYING file */
 
 #include "lib.h"
+#include "ostream.h"
 #include "mail-storage.h"
 #include "mail-namespace.h"
 #include "env-util.h"
@@ -108,7 +109,14 @@ int main(int argc, char **argv)
 		exit(1);
 	}		 
 		
-	(void) sieve_dump(sbin);
+	if ( sbin != NULL ) { 
+		struct ostream *dumpstream = o_stream_create_fd(1, 0, FALSE);
+
+		if ( dumpstream != NULL ) {
+			(void) sieve_dump(sbin, dumpstream);
+			o_stream_unref(&dumpstream);
+		}
+	}
 
  	close(sfd);
 

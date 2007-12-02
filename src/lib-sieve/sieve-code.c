@@ -1,5 +1,6 @@
 #include "lib.h"
 #include "str.h"
+#include "str-sanitize.h"
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
@@ -259,12 +260,13 @@ void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_size_t number)
 bool sieve_opr_number_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
 {
-	sieve_size_t pc = *address;
-	const struct sieve_operand *operand = sieve_operand_read(denv->sbin, address);
+	const struct sieve_operand *operand;
 	const struct sieve_opr_number_interface *intf;
 	
-	printf("%08x:   ", pc);
+	sieve_code_mark(denv);
 	
+	operand = sieve_operand_read(denv->sbin, address);
+
 	if ( operand == NULL || operand->class != &number_class ) 
 		return FALSE;
 		
@@ -299,7 +301,7 @@ static bool opr_number_dump
 	sieve_size_t number = 0;
 	
 	if (sieve_binary_read_integer(denv->sbin, address, &number) ) {
-		printf("NUM: %ld\n", (long) number);
+		sieve_code_dumpf(denv, "NUM: %ld", (long) number);
 
 		return TRUE;
 	}
@@ -318,17 +320,17 @@ static bool opr_number_read
 void sieve_opr_string_emit(struct sieve_binary *sbin, string_t *str)
 {
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_STRING);
-  (void) sieve_binary_emit_string(sbin, str);
+	(void) sieve_binary_emit_string(sbin, str);
 }
 
 bool sieve_opr_string_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
 {
-	sieve_size_t pc = *address;
-	const struct sieve_operand *operand = sieve_operand_read(denv->sbin, address);
+	const struct sieve_operand *operand;
 	const struct sieve_opr_string_interface *intf;
 	
-	printf("%08x:   ", pc);
+	sieve_code_mark(denv);
+	operand = sieve_operand_read(denv->sbin, address);
 	
 	if ( operand == NULL || operand->class != &string_class ) 
 		return FALSE;
@@ -359,26 +361,15 @@ bool sieve_opr_string_read
 }
 
 
-static void _print_string(string_t *str) 
+static void _dump_string
+(const struct sieve_dumptime_env *denv, string_t *str) 
 {
-	unsigned int i = 0;
-  const unsigned char *sdata = str_data(str);
-
-	printf("STR[%ld]: \"", (long) str_len(str));
-
-	while ( i < 40 && i < str_len(str) ) {
-		if ( sdata[i] > 31 ) 
-			printf("%c", sdata[i]);
-		else
-			printf(".");
-	    
-	  i++;
-	}
-	
-	if ( str_len(str) < 40 ) 
-		printf("\"\n");
+	if ( str_len(str) > 80 )
+		sieve_code_dumpf(denv, "STR[%ld]: \"%s", 
+			(long) str_len(str), str_sanitize(str_c(str), 80));
 	else
-		printf("...\n");
+		sieve_code_dumpf(denv, "STR[%ld]: \"%s\"", 
+			(long) str_len(str), str_sanitize(str_c(str), 80));		
 }
 
 bool opr_string_dump
@@ -387,7 +378,7 @@ bool opr_string_dump
 	string_t *str; 
 	
 	if ( sieve_binary_read_string(denv->sbin, address, &str) ) {
-		_print_string(str);   		
+		_dump_string(denv, str);   		
 		
 		return TRUE;
 	}
@@ -436,11 +427,11 @@ void sieve_opr_stringlist_emit_end
 bool sieve_opr_stringlist_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
 {
-	sieve_size_t pc = *address;
-	const struct sieve_operand *operand = sieve_operand_read(denv->sbin, address);
-	
-	printf("%08x:   ", pc);
-	
+	const struct sieve_operand *operand;
+
+	sieve_code_mark(denv);
+	operand = sieve_operand_read(denv->sbin, address);
+		
 	if ( operand == NULL )
 		return FALSE;
 	
@@ -493,19 +484,21 @@ static bool opr_stringlist_dump
 	struct sieve_coded_stringlist *strlist;
 	
 	if ( (strlist=opr_stringlist_read(denv->sbin, address)) != NULL ) {
-  		sieve_size_t pc;
 		string_t *stritem;
 		
-		printf("STRLIST [%d] (END %08x)\n", 
+		sieve_code_dumpf(denv, "STRLIST [%d] (END %08x)", 
 			sieve_coded_stringlist_get_length(strlist), 
 			sieve_coded_stringlist_get_end_address(strlist));
 	  	
-	 	pc = sieve_coded_stringlist_get_current_offset(strlist);
+		sieve_code_mark_specific(denv,
+			sieve_coded_stringlist_get_current_offset(strlist));
+		sieve_code_descend(denv);
 		while ( sieve_coded_stringlist_next_item(strlist, &stritem) && stritem != NULL ) {	
-			printf("%08x:      ", pc);
-			_print_string(stritem);
-			pc = sieve_coded_stringlist_get_current_offset(strlist);  
+			_dump_string(denv, stritem);
+			sieve_code_mark_specific(denv,
+				sieve_coded_stringlist_get_current_offset(strlist));  
 		}
+		sieve_code_ascend(denv);
 		
 		return TRUE;
 	}
@@ -703,7 +696,8 @@ static bool opc_jmp_dump
 	int offset;
 	
 	if ( sieve_binary_read_offset(denv->sbin, address, &offset) ) 
-		printf("%s %d [%08x]\n", opcode->mnemonic, offset, pc + offset);
+		sieve_code_dumpf(denv, "%s %d [%08x]", 
+			opcode->mnemonic, offset, pc + offset);
 	else
 		return FALSE;
 	
@@ -716,7 +710,7 @@ bool sieve_opcode_string_dump
 (const struct sieve_opcode *opcode,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	printf("%s\n", opcode->mnemonic);
+	sieve_code_dumpf(denv, "%s", opcode->mnemonic);
 
 	return 
 		sieve_opr_string_dump(denv, address);

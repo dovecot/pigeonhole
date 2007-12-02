@@ -165,7 +165,8 @@ static bool ext_envelope_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	printf("ENVELOPE\n");
+	sieve_code_dumpf(denv, "ENVELOPE");
+	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
 	if ( !sieve_addrmatch_default_dump_optionals(denv, address) )

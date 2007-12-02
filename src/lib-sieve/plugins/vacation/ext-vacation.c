@@ -341,8 +341,9 @@ static bool ext_vacation_opcode_dump
 {	
 	int opt_code = 1;
 	
-	printf("VACATION\n");
-	
+	sieve_code_dumpf(denv, "VACATION");
+	sieve_code_descend(denv);	
+
 	if ( sieve_operand_optional_present(denv->sbin, address) ) {
 		while ( opt_code != 0 ) {
 			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 

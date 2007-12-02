@@ -1,6 +1,7 @@
 /* Copyright (c) 2005-2007 Dovecot authors, see the included COPYING file */
 
 #include "lib.h"
+#include "ostream.h"
 
 #include "bin-common.h"
 #include "mail-raw.h"
@@ -69,8 +70,15 @@ int main(int argc, char **argv)
 		printf("Failed to compile sieve script\n");
 		exit(1);
 	}		 
-		
-	(void) sieve_dump(sbin);
+
+	if ( sbin != NULL ) { 
+		struct ostream *dumpstream = o_stream_create_fd(1, 0, FALSE);
+
+		if ( dumpstream != NULL ) {
+			(void) sieve_dump(sbin, dumpstream);
+			o_stream_unref(&dumpstream);
+		}
+	}		
 
  	close(sfd);
 	

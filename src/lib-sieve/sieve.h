@@ -44,7 +44,7 @@ bool sieve_init(const char *plugins);
 void sieve_deinit(void);
 
 struct sieve_binary *sieve_compile(int fd, bool verbose);
-void sieve_dump(struct sieve_binary *binary);
+void sieve_dump(struct sieve_binary *binary, struct ostream *stream);
 bool sieve_test
 	(struct sieve_binary *binary, const struct sieve_message_data *msgdata, 
 		const struct sieve_mail_environment *menv);

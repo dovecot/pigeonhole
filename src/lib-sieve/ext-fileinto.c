@@ -131,7 +131,8 @@ static bool ext_fileinto_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	printf("FILEINTO\n");
+	sieve_code_dumpf(denv, "FILEINTO");
+	sieve_code_descend(denv);
 
 	if ( !sieve_code_dumper_print_optional_operands(denv, address) )
 		return FALSE;

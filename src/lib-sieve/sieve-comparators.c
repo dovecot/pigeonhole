@@ -342,14 +342,15 @@ const struct sieve_comparator *sieve_opr_comparator_read
 bool sieve_opr_comparator_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_size_t pc = *address;
-	const struct sieve_comparator *cmp = 
-		sieve_opr_comparator_read(denv->sbin, address);
+	const struct sieve_comparator *cmp;
+
+	sieve_code_mark(denv);
+	cmp = sieve_opr_comparator_read(denv->sbin, address);
 	
 	if ( cmp == NULL )
 		return FALSE;
 		
-	printf("%08x:   COMPARATOR: %s\n", pc, cmp->identifier);
+	sieve_code_dumpf(denv, "COMPARATOR: %s", cmp->identifier);
 	
 	return TRUE;
 }

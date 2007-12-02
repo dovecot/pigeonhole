@@ -61,10 +61,10 @@ struct sieve_side_effect {
 	const struct sieve_side_effect_extension *extension;
 	unsigned int ext_code;
 	
-	bool (*dump)
+	bool (*dump_context)
 		(const struct sieve_side_effect *seffect, 
 			const struct sieve_dumptime_env *renv, sieve_size_t *address);
-	bool (*read)
+	bool (*read_context)
 		(const struct sieve_side_effect *seffect, 
 			const struct sieve_runtime_env *renv, sieve_size_t *address,
 			void **se_context);
@@ -114,6 +114,8 @@ void sieve_side_effect_extension_set
 void sieve_opr_side_effect_emit
 	(struct sieve_binary *sbin, const struct sieve_side_effect *seffect, 
 		int ext_id);
+bool sieve_opr_side_effect_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 const struct sieve_side_effect *sieve_opr_side_effect_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 

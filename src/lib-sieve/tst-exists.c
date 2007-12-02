@@ -5,6 +5,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 
 /* Exists test
  *  
@@ -83,7 +84,8 @@ static bool tst_exists_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-    printf("EXISTS\n");
+    sieve_code_dumpf(denv, "EXISTS");
+	sieve_code_descend(denv);
 
 	return
     	sieve_opr_stringlist_dump(denv, address);

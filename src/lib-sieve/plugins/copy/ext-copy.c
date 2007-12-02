@@ -53,9 +53,6 @@ static bool ext_copy_load(int ext_id)
 
 const struct sieve_side_effect_extension ext_copy_side_effect;
 
-static bool seff_copy_dump
-	(const struct sieve_side_effect *seffect,
-    	const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static void seff_copy_print
 	(const struct sieve_side_effect *seffect,	const struct sieve_action *action, 
 		void *se_context, bool *keep);
@@ -69,8 +66,7 @@ const struct sieve_side_effect copy_side_effect = {
 	&act_store,	
 	&ext_copy_side_effect,
 	0,
-	seff_copy_dump,
-	NULL,
+	NULL, NULL,
 	seff_copy_print,
 	NULL, NULL,
 	seff_copy_post_commit, 
@@ -125,13 +121,6 @@ static const struct sieve_argument copy_tag = {
 };
 
 /* Side effect execution */
-
-static bool seff_copy_dump
-(const struct sieve_side_effect *seffect,
-    const struct sieve_dumptime_env *denv, sieve_size_t *address)
-{
-	return TRUE;   
-}
 
 static void seff_copy_print
 	(const struct sieve_side_effect *seffect ATTR_UNUSED, 

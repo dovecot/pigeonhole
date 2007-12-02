@@ -141,12 +141,12 @@ struct sieve_binary *sieve_compile(int fd, bool verbose)
 	return result;
 }
 
-void sieve_dump(struct sieve_binary *binary) 
+void sieve_dump(struct sieve_binary *binary, struct ostream *stream) 
 {
 	struct sieve_code_dumper *dumpr = sieve_code_dumper_create(binary);			
 
 	printf("Code Dump:\n\n");
-	sieve_code_dumper_run(dumpr);	
+	sieve_code_dumper_run(dumpr, stream);	
 	
 	sieve_code_dumper_free(dumpr);
 }

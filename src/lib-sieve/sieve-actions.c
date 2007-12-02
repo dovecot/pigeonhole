@@ -8,6 +8,7 @@
 #include "sieve-extensions.h"
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 #include "sieve-result.h"
 #include "sieve-actions.h"
 
@@ -95,6 +96,29 @@ void sieve_opr_side_effect_emit
 	sieve_binary_emit_extension
 		(sbin, seffect, ext_id, 0, SIEVE_OPERAND_SIDE_EFFECT, 
 		seffect->extension->side_effects_count > 1)
+}
+
+bool sieve_opr_side_effect_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	const struct sieve_side_effect *seffect;
+
+    sieve_code_mark(denv);
+	seffect = sieve_opr_side_effect_read(denv->sbin, address);
+
+	if ( seffect == NULL ) 
+		return FALSE;
+
+    sieve_code_dumpf(denv, "SIDE-EFFECT: %s", seffect->name);
+
+	if ( seffect->dump_context != NULL ) {
+		sieve_code_descend(denv);
+		if ( !seffect->dump_context(seffect, denv, address) )
+			return FALSE;	
+		sieve_code_ascend(denv);
+	}
+
+    return TRUE;
 }
 
 /* FIXME: Duplicated */

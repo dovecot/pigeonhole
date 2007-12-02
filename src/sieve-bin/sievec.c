@@ -9,14 +9,10 @@
 #include "lib.h"
 #include "str.h"
 #include "istream.h"
+#include "ostream.h"
 #include "buffer.h"
 
 #include "sieve.h"
-
-static int _open_fd(const char *path)
-{
-	return open(path, O_RDONLY);
-}
 
 int main(int argc, char **argv) {
 	int fd;
@@ -27,7 +23,7 @@ int main(int argc, char **argv) {
  		exit(1);
  	}
   
-	if ( (fd = _open_fd(argv[1])) < 0 ) {
+	if ( (fd = open(argv[1], O_RDONLY)) < 0 ) {
 		perror("open()");
 		exit(1);
 	}
@@ -37,8 +33,14 @@ int main(int argc, char **argv) {
 	if ( sieve_init("") ) {
 		sbin = sieve_compile(fd, TRUE);
 	
-		if ( sbin != NULL ) 
-			(void) sieve_dump(sbin);
+		if ( sbin != NULL ) {
+			struct ostream *dumpstream = o_stream_create_fd(1, 0, FALSE);
+
+			if ( dumpstream != NULL ) {
+				(void) sieve_dump(sbin, dumpstream);
+				o_stream_unref(&dumpstream);
+			}
+		}
 
 		sieve_deinit();
 	} else {

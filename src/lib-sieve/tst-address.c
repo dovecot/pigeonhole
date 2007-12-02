@@ -10,6 +10,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 
 /* Address test
  *
@@ -113,8 +114,9 @@ static bool tst_address_opcode_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,	
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	printf("ADDRESS\n");
-
+	sieve_code_dumpf(denv, "ADDRESS");
+	sieve_code_descend(denv);
+	
 	//* Handle any optional arguments */
 	if ( !sieve_addrmatch_default_dump_optionals(denv, address) )
 		return FALSE;

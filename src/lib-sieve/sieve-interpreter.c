@@ -222,7 +222,7 @@ bool sieve_interpreter_handle_optional_operands
 				if ( seffect == NULL ) return FALSE;
 			
 				if ( list != NULL ) {
-					if ( seffect->read != NULL && !seffect->read
+					if ( seffect->read_context != NULL && !seffect->read_context
 						(seffect, renv, address, &context) )
 						return FALSE;
 				

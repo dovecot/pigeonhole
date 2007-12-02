@@ -302,14 +302,15 @@ const struct sieve_address_part *sieve_opr_address_part_read
 bool sieve_opr_address_part_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_size_t pc = *address;
-	const struct sieve_address_part *addrp = 
-		sieve_opr_address_part_read(denv->sbin, address);
+	const struct sieve_address_part *addrp; 
+		
+	sieve_code_mark(denv);
+	addrp = sieve_opr_address_part_read(denv->sbin, address);
 	
 	if ( addrp == NULL )
 		return FALSE;
 		
-	printf("%08x:   ADDRESS-PART: %s\n", pc, addrp->identifier);
+	sieve_code_dumpf(denv, "ADDRESS-PART: %s", addrp->identifier);
 	
 	return TRUE;
 }

@@ -351,14 +351,15 @@ const struct sieve_match_type *sieve_opr_match_type_read
 bool sieve_opr_match_type_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_size_t pc = *address;
-	const struct sieve_match_type *mtch = 
-		sieve_opr_match_type_read(denv->sbin, address);
+	const struct sieve_match_type *mtch;
+
+	sieve_code_mark(denv); 
+	mtch = sieve_opr_match_type_read(denv->sbin, address);
 	
 	if ( mtch == NULL )
 		return FALSE;
 		
-	printf("%08x:   MATCH-TYPE: %s\n", pc, mtch->identifier);
+	sieve_code_dumpf(denv, "MATCH-TYPE: %s", mtch->identifier);
 	
 	return TRUE;
 }

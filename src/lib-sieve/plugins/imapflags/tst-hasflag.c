@@ -168,7 +168,7 @@ static bool tst_hasflag_opcode_dump
 {
 	int opt_code = 1;
 
-	printf("HASFLAG\n");
+	sieve_code_dumpf(denv, "HASFLAG");
 
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(denv->sbin, address) ) {

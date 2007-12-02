@@ -5,6 +5,7 @@
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-code-dumper.h"
 
 #include "ext-imapflags-common.h"
 
@@ -83,7 +84,8 @@ bool ext_imapflags_command_opcode_dump
 (const struct sieve_opcode *opcode,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	printf("%s\n", opcode->mnemonic);
+	sieve_code_dumpf(denv, "%s", opcode->mnemonic);
+	sieve_code_descend(denv);
 
 	return 
 		sieve_opr_stringlist_dump(denv, address);

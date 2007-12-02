@@ -120,7 +120,8 @@ static bool tst_header_opcode_dump
 {
 	int opt_code = 1;
 
-	printf("HEADER\n");
+	sieve_code_dumpf(denv, "HEADER");
+	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(denv->sbin, address) ) {
