@@ -70,7 +70,7 @@ static void *lda_sieve_smtp_open(const char *destination,
 static bool lda_sieve_smtp_close(void *handle)
 {
 	struct smtp_client *smtp_client = (struct smtp_client *) handle;
-	
+
 	return ( smtp_client_close(smtp_client) >= 0 );
 }
 
@@ -82,10 +82,10 @@ static int lda_sieve_run
 	struct sieve_message_data msgdata;
 	struct sieve_mail_environment mailenv;
 	struct sieve_binary *sbin;
-	
+
 	if ( debug )
 		i_info("lda-sieve: Compiling script %s", script_path);
-	
+
 	if ( (sbin=sieve_compile(script_path)) == NULL )
 		return -1;
 
@@ -96,7 +96,7 @@ static int lda_sieve_run
 	msgdata.to_address = destaddr;
 	msgdata.auth_user = username;
 	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
-	
+
 	memset(&mailenv, 0, sizeof(mailenv));
 	mailenv.inbox = mailbox;
 	mailenv.namespaces = namespaces;
@@ -110,10 +110,10 @@ static int lda_sieve_run
 
 	if ( debug )
 		i_info("lda-sieve: Executing (in-memory) script %s", script_path);
-	
+
 	if ( sieve_execute(sbin, &msgdata, &mailenv) )
 		return 1;
-		
+
 	return -1;
 }
 
@@ -136,6 +136,8 @@ static int lda_sieve_deliver_mail
 
 void sieve_plugin_init(void)
 {
+	sieve_init("");
+
 	next_deliver_mail = deliver_mail;
 	deliver_mail = lda_sieve_deliver_mail;
 }
@@ -143,4 +145,6 @@ void sieve_plugin_init(void)
 void sieve_plugin_deinit(void)
 {
 	deliver_mail = next_deliver_mail;
+
+	sieve_deinit();
 }
