@@ -81,7 +81,7 @@ static struct sieve_binary *sieve_generate(struct sieve_ast *ast)
 	return result;
 }
 
-struct sieve_binary *sieve_compile(int fd, bool verbose) 
+struct sieve_binary *sieve_compile(int fd) 
 {
 	struct sieve_binary *result;
 	struct sieve_error_handler *ehandler;
@@ -91,49 +91,26 @@ struct sieve_binary *sieve_compile(int fd, bool verbose)
 	ehandler = sieve_error_handler_create();  
 	
 	/* Parse */
-
-	if ( verbose )
-		printf("Parsing sieve script...\n");
-	
 	if ( (ast = sieve_parse(fd, ehandler)) == NULL ) {
- 		printf("Parse failed.\n");
- 		return NULL;
- 	}
-
-	if ( verbose ) {
-	 	printf("Parse successful.\n");
-	 	sieve_ast_unparse(ast);
+ 		i_error("failed to parse script");
+		return NULL;
 	}
-	
+
 	/* Validate */
-	
-	if ( verbose )
-		printf("Validating script...\n");
-	
 	if ( !sieve_validate(ast, ehandler) ) {
-		printf("Validation failed.\n");
+		i_error("failed to validate script");
 		
  		sieve_ast_unref(&ast);
  		return NULL;
  	}
  	
- 	if ( verbose ) 
-	 	printf("Validation successful.\n");
-	
 	/* Generate */
-	
-	if ( verbose ) 
-		printf("Generating script...\n");
-	
 	if ( (result=sieve_generate(ast)) == NULL ) {
-		printf("Script generation failed.\n");
+		i_error("failed to generate script");
 		
 		sieve_ast_unref(&ast);
 		return NULL;
 	}
-	
-	if ( verbose )	
-		printf("Script generation successful.\n");
 	
 	/* Cleanup */
 	sieve_ast_unref(&ast);
@@ -145,7 +122,6 @@ void sieve_dump(struct sieve_binary *binary, struct ostream *stream)
 {
 	struct sieve_code_dumper *dumpr = sieve_code_dumper_create(binary);			
 
-	printf("Code Dump:\n\n");
 	sieve_code_dumper_run(dumpr, stream);	
 	
 	sieve_code_dumper_free(dumpr);
@@ -159,13 +135,10 @@ bool sieve_test
 	struct sieve_interpreter *interp = sieve_interpreter_create(binary);			
 	bool result = TRUE;
 							
-	printf("Code Execute:\n\n");
 	result = sieve_interpreter_run(interp, msgdata, menv, &sres);
 	
-	if ( result ) {
-		printf("Script executed successfully.\n\n");
+	if ( result ) 
 		sieve_result_print(sres);
-	}
 	
 	sieve_interpreter_free(interp);
 	sieve_result_unref(&sres);
@@ -180,7 +153,6 @@ bool sieve_execute
 	struct sieve_interpreter *interp = sieve_interpreter_create(binary);			
 	bool result = TRUE;
 							
-	printf("Code Execute:\n\n");
 	result = sieve_interpreter_run(interp, msgdata, menv, &sres);
 				
 	sieve_interpreter_free(interp);

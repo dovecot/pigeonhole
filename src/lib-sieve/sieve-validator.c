@@ -333,7 +333,6 @@ int sieve_validator_extension_load
 		return -1;
 	}
 	
-	i_info("loaded extension '%s'", ext->name);
 	return ext_id;
 }
 

@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
  	}
   
 	sbin = bin_compile_sieve_script(argv[1]);
-	bin_dump_sieve_binary_to(sbin, "-");
+	bin_dump_sieve_binary_to(sbin, "frop.sdump");
 
 	bin_deinit();
 }

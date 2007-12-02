@@ -4,6 +4,9 @@
 
 #include "sieve-error.h"
 
+/* FIMXE: This error handling is just a stub for what it should be. 
+ */
+
 struct sieve_error_handler {	
 	int errors;
 	int warnings;

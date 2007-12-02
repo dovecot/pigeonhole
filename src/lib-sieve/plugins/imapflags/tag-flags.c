@@ -239,6 +239,8 @@ static bool seff_flags_post_execute
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
 
+	if ( trans->dest_mail == NULL ) return TRUE;
+
 	printf("SETTING FLAGS\n");
 	/* Update message flags. */
 	mail_update_flags(trans->dest_mail, MODIFY_ADD, ctx->flags);

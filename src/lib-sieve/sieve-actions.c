@@ -253,24 +253,26 @@ static bool act_store_start
 {  
 	struct act_store_context *ctx = (struct act_store_context *) context;
 	struct act_store_transaction *trans;
-	struct mail_namespace *ns;
-	struct mailbox *box;
+	struct mail_namespace *ns = NULL;
+	struct mailbox *box = NULL;
 	pool_t pool;
 
-	ns = mail_namespace_find(aenv->mailenv->namespaces, &ctx->folder);
-	if (ns == NULL) 
-		return FALSE;
+	if ( aenv->mailenv->namespaces != NULL ) {
+		ns = mail_namespace_find(aenv->mailenv->namespaces, &ctx->folder);
+		if (ns == NULL) 
+			return FALSE;
 		
-	box = mailbox_open(ns->storage, ctx->folder, NULL, MAILBOX_OPEN_FAST |
-		MAILBOX_OPEN_KEEP_RECENT);
-						
+		box = mailbox_open(ns->storage, ctx->folder, NULL, MAILBOX_OPEN_FAST |
+			MAILBOX_OPEN_KEEP_RECENT);
+	}
+					
 	pool = sieve_result_pool(aenv->result);
 	trans = p_new(pool, struct act_store_transaction, 1);
 	trans->context = ctx;
 	trans->namespace = ns;
 	trans->box = box;
 	
-	if ( box == NULL ) 
+	if ( ns != NULL && box == NULL ) 
 		act_store_get_storage_error(aenv, trans);	
 	
 	*tr_context = (void *)trans;
@@ -284,6 +286,9 @@ static bool act_store_execute
 {   
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
+
+	if ( trans->namespace == NULL )
+		return TRUE;
 			
 	if ( trans->box == NULL ) return FALSE;
 	
@@ -292,9 +297,9 @@ static bool act_store_execute
 
 	trans->dest_mail = mail_alloc(trans->mail_trans, 0, NULL);
 
-  if (mailbox_copy(trans->mail_trans, aenv->msgdata->mail, MAIL_DRAFT, NULL, 
-  	trans->dest_mail) < 0) {
-  	act_store_get_storage_error(aenv, trans);
+	if (mailbox_copy(trans->mail_trans, aenv->msgdata->mail, 0, NULL, 
+		trans->dest_mail) < 0) {
+		act_store_get_storage_error(aenv, trans);
  		return FALSE;
  	}
  		 	
@@ -312,22 +317,26 @@ static void act_store_log_status
 	else
 		mailbox_name = str_sanitize(mailbox_get_name(trans->box), 80);
 
-	if (!rolled_back && status) {
-		sieve_result_log(aenv, "stored mail into mailbox '%s'", mailbox_name);
-	} else {
-		const char *errstr;
-		enum mail_error error;
+	if ( trans->namespace == NULL ) {
+		sieve_result_log(aenv, "store into mailbox '%s' not performed.", mailbox_name);
+	} else {	
+		if ( !rolled_back && status ) {
+			sieve_result_log(aenv, "stored mail into mailbox '%s'", mailbox_name);
+		} else {
+			const char *errstr;
+			enum mail_error error;
 		
-		if ( trans->error != NULL )
-			errstr = trans->error;
-		else
-			errstr = mail_storage_get_last_error(trans->namespace->storage, &error);
+			if ( trans->error != NULL )
+				errstr = trans->error;
+			else
+				errstr = mail_storage_get_last_error(trans->namespace->storage, &error);
 			
-		if ( status )
-			sieve_result_log(aenv, "store into mailbox '%s' aborted.", mailbox_name);
-		else
-			sieve_result_error(aenv, "failed to store into mailbox '%s': %s", 
-				mailbox_name, errstr);
+			if ( status )
+				sieve_result_log(aenv, "store into mailbox '%s' aborted.", mailbox_name);
+			else
+				sieve_result_error(aenv, "failed to store into mailbox '%s': %s", 
+					mailbox_name, errstr);
+		}
 	}
 }
 
@@ -337,15 +346,21 @@ static bool act_store_commit
 {  
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
-	bool status = mailbox_transaction_commit(&trans->mail_trans) == 0;
+	bool status = TRUE;
+
+	if ( trans->namespace != NULL ) {
+		if ( trans->dest_mail != NULL ) 
+			mail_free(&trans->dest_mail);	
+
+		status = mailbox_transaction_commit(&trans->mail_trans) == 0;
+	} 
 	
 	act_store_log_status(trans, aenv, FALSE, status);
-	
 	*keep = !status;
-	
+		
 	if ( trans->box != NULL )
 		mailbox_close(&trans->box);
-	
+
 	return status;
 }
 
@@ -356,7 +371,10 @@ static void act_store_rollback
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
 
-  act_store_log_status(trans, aenv, TRUE, success);
+	act_store_log_status(trans, aenv, TRUE, success);
+
+	if ( trans->dest_mail != NULL ) 
+		mail_free(&trans->dest_mail);	
 
 	if ( trans->mail_trans != NULL )
 	  mailbox_transaction_rollback(&trans->mail_trans);

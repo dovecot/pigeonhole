@@ -17,10 +17,19 @@
 #define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
+static void print_help(void)
+{
+	printf(
+"Usage: sieve-test [-r <recipient address>][-s <envelope sender>]\n"
+"                  [-m <mailbox>][-d <dump filename>] <scriptfile> <mailfile>\n"
+	);
+}
+
 int main(int argc, char **argv) 
 {
+	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile; 
 	const char *user;
-	int mfd;
+	int i, mfd;
 	pool_t namespaces_pool;
 	struct mail_raw *mailr;
 	struct sieve_binary *sbin;
@@ -29,56 +38,91 @@ int main(int argc, char **argv)
 
 	bin_init();
 
-	if ( argc < 2 ) {
-		printf( "Usage: sieve-test <sieve-file> [<mailfile>/-]\n");
- 		exit(1);
- 	}
-
-	/* Open mail file */
-	if ( argc > 2 ) 
-	{
-		if ( strcmp(argv[2], "-") == 0 )
-			mfd = 0;
-		else {
-			if ( (mfd = open(argv[2], O_RDONLY)) < 0 ) {
-				perror("Failed to open mail file");
-				exit(1);
-			}
+	/* Parse arguments */
+	scriptfile = recipient = sender = mailbox = dumpfile = mailfile = NULL;
+	for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-r") == 0) {
+			/* recipient address */
+			i++;
+			if (i == argc)
+				i_fatal("Missing -r argument");
+			recipient = argv[i];
+		} else if (strcmp(argv[i], "-s") == 0) {
+			/* envelope sender */
+			i++;
+			if (i == argc)
+				i_fatal("Missing -s argument");
+			sender = argv[i];
+		} else if (strcmp(argv[i], "-m") == 0) {
+			/* default mailbox (keep box) */
+			i++;
+			if (i == argc) 
+				i_fatal("Missing -m argument");
+			mailbox = argv[i];
+		} else if (strcmp(argv[i], "-d") == 0) {
+			/* dump file */
+			i++;
+			if (i == argc)
+				i_fatal("Missing -d argument");
+			dumpfile = argv[i];
+		} else if ( scriptfile == NULL ) {
+			scriptfile = argv[i];
+		} else if ( mailfile == NULL ) {
+			mailfile = argv[i];
+		} else {
+			print_help();
+			i_fatal("Unknown argument: %s", argv[i]);
 		}
-	} else 
-		mfd = 0;
+	}
+	
+	if ( scriptfile == NULL ) {
+		print_help();
+		i_fatal("Missing <scriptfile> argument");
+	}
+	
+	if ( mailfile == NULL ) {
+		print_help();
+		i_fatal("Missing <mailfile> argument");
+	}
+
+	/* Open the mail file */
+	mfd = bin_open_mail_file(mailfile);
 	
 	/* Compile sieve script */
-	sbin = bin_compile_sieve_script(argv[1]);
+	sbin = bin_compile_sieve_script(scriptfile);
 	
 	/* Dump script */
-	bin_dump_sieve_binary_to(sbin, "-");
+	bin_dump_sieve_binary_to(sbin, dumpfile);
 	
 	user = bin_get_user();
+
 	namespaces_pool = namespaces_init();
 	mail_raw_init(namespaces_pool, user);
-
 	mailr = mail_raw_open(mfd);
+
+	bin_fill_in_envelope(mailr->mail, &recipient, &sender);
+
+	if ( mailbox == NULL )
+		mailbox = "INBOX";
 
 	/* Collect necessary message data */
 	memset(&msgdata, 0, sizeof(msgdata));
 	msgdata.mail = mailr->mail;
-	msgdata.return_path = "nico@example.com";
-	msgdata.to_address = "sirius+sieve@rename-it.nl";
-	msgdata.auth_user = "stephan";
+	msgdata.return_path = sender;
+	msgdata.to_address = recipient;
+	msgdata.auth_user = user;
 	(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
 
 	memset(&mailenv, 0, sizeof(mailenv));
-    mailenv.inbox = "INBOX";
-	mailenv.username = "stephan";
+	mailenv.inbox = "INBOX";
+	mailenv.username = user;
 	
 	/* Run the test */
 	(void) sieve_test(sbin, &msgdata, &mailenv);
 
+	bin_close_mail_file(mfd);
+	
 	mail_raw_close(mailr);
-	if ( mfd > 0 ) 
-		close(mfd);
-
 	mail_raw_deinit();
 	namespaces_deinit();
 

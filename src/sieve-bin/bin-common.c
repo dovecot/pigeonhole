@@ -1,5 +1,3 @@
-/* Copyright (c) 2005-2007 Dovecot authors, see the included COPYING file */
-
 #include "lib.h"
 #include "lib-signals.h"
 #include "ioloop.h"
@@ -14,6 +12,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <pwd.h>
+
+/* Functionality common to all sieve test binaries */
+
+/* FIXME: this file is currently very messy */
 
 static struct ioloop *ioloop;
 
@@ -39,7 +41,7 @@ void bin_init(void)
 	lib_signals_ignore(SIGALRM, FALSE);
 
 	if ( !sieve_init("") ) 
-		i_fatal("failed to initialize sieve implementation\n");
+		i_fatal("Failed to initialize sieve implementation\n");
 }
 
 void bin_deinit(void)
@@ -60,7 +62,7 @@ const char *bin_get_user(void)
 		return t_strdup(pw->pw_name);
 	} 
 		
-	i_fatal("couldn't lookup our username (uid=%s)", dec2str(process_euid));
+	i_fatal("Couldn't lookup our username (uid=%s)", dec2str(process_euid));
 	return NULL;
 }
 
@@ -69,15 +71,13 @@ struct sieve_binary *bin_compile_sieve_script(const char *filename)
 	int sfd;
 	struct sieve_binary *sbin;
 	
-	i_info("compiling sieve script '%s'...\n", filename);
-
 	if ( (sfd = open(filename, O_RDONLY)) < 0 ) 
-		i_info("failed to open sieve script %s: %m", filename);
+		i_fatal("Failed to open sieve script %s: %m", filename);
 	
-	if ( (sbin = sieve_compile(sfd, FALSE)) == NULL ) 
+	if ( (sbin = sieve_compile(sfd)) == NULL ) 
 	{
 		close(sfd);
-		i_fatal("failed to compile sieve script\n");
+		i_fatal("Failed to compile sieve script\n");
 	}
 		
 	close(sfd);
@@ -89,11 +89,13 @@ void bin_dump_sieve_binary_to(struct sieve_binary *sbin, const char *filename)
 	int dfd = -1;
 	struct ostream *dumpstream;
 	
+	if ( filename == NULL ) return;
+	
 	if ( strcmp(filename, "-") == 0 ) 
 		dumpstream = o_stream_create_fd(1, 0, FALSE);
 	else {
-		if ( (dfd = open(filename, O_WRONLY)) < 0 ) {
-			i_fatal("failed to open dump-file for writing: %m");
+		if ( (dfd = open(filename, O_WRONLY | O_CREAT)) < 0 ) {
+			i_fatal("Failed to open dump-file for writing: %m");
 			exit(1);
 		}
 		
@@ -104,9 +106,52 @@ void bin_dump_sieve_binary_to(struct sieve_binary *sbin, const char *filename)
 		(void) sieve_dump(sbin, dumpstream);
 		o_stream_destroy(&dumpstream);
 	} else {
-		i_fatal("failed to create stream for sieve code dump.");
+		i_fatal("Failed to create stream for sieve code dump.");
 	}
 	
 	if ( dfd != -1 )
 		close(dfd);
-}	
+}
+
+int bin_open_mail_file(const char *filename)
+{
+	int mfd;
+	
+	if ( strcmp(filename, "-") == 0 )
+		return 0;
+
+	if ( (mfd = open(filename, O_RDONLY)) < 0 ) 
+		i_fatal("Failed to open mail file: %m");			
+	
+	return mfd;
+}
+
+void bin_close_mail_file(int mfd)
+{
+	if ( mfd != 0 )
+		close(mfd);
+}
+
+void bin_fill_in_envelope
+	(struct mail *mail, const char **recipient, const char **sender)
+{
+	/* Get recipient address */
+	if ( *recipient == NULL ) 
+		(void)mail_get_first_header(mail, "Envelope-To", recipient);
+	if ( *recipient == NULL ) 
+		(void)mail_get_first_header(mail, "To", recipient);
+	if ( *recipient == NULL ) 
+		*recipient = "recipient@example.com";
+	
+	/* Get sender address */
+	if ( *sender == NULL ) 
+		(void)mail_get_first_header(mail, "Return-path", sender);
+	if ( *sender == NULL ) 
+		(void)mail_get_first_header(mail, "Sender", sender);
+	if ( *sender == NULL ) 
+		(void)mail_get_first_header(mail, "From", sender);
+	if ( *sender == NULL ) 
+		*sender = "sender@example.com";
+}
+
+

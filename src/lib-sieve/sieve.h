@@ -43,7 +43,7 @@ struct sieve_mail_environment {
 bool sieve_init(const char *plugins);
 void sieve_deinit(void);
 
-struct sieve_binary *sieve_compile(int fd, bool verbose);
+struct sieve_binary *sieve_compile(int fd);
 void sieve_dump(struct sieve_binary *binary, struct ostream *stream);
 bool sieve_test
 	(struct sieve_binary *binary, const struct sieve_message_data *msgdata, 

@@ -174,6 +174,8 @@ void sieve_code_dumper_run
 	/* Mark end of the binary */
 	dumper->indent = 0;
 	dumper->mark_address = sieve_binary_get_code_size(dumper->dumpenv.sbin);
-
 	sieve_code_dumpf(&(dumper->dumpenv), "[End of code]");	
+
+	/* Add empty line to the file */
+	o_stream_send_str(dumper->dumpenv.stream, "\n");
 }

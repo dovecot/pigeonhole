@@ -54,10 +54,21 @@ static void duplicate_mark
 	i_info("marked duplicate for user %s.\n", user);
 }
 
+static void print_help(void)
+{
+	printf(
+"Usage: sieve-exec [-r <recipient address>][-s <envelope sender>]\n"
+"                  [-m <mailbox>][-d <dump filename>][-l <mail location>]\n"
+"                  <scriptfile> <mailfile>\n"
+	);
+}
+
 int main(int argc, char **argv) 
 {
+	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile;
+	const char *mailloc; 
 	const char *user;
-	int mfd;
+	int i, mfd;
 	pool_t namespaces_pool;
 	struct mail_namespace *ns;
 	struct mail_raw *mailr;
@@ -67,57 +78,105 @@ int main(int argc, char **argv)
 
 	bin_init();
 
-	if ( argc < 2 ) {
-		printf( "Usage: sieve-exec <sieve-file> [<mailfile>/-]\n");
- 		exit(1);
- 	}
-  
- 	/* Open mail file */
- 
-	if ( argc > 2 )
-	{
-		if ( strcmp(argv[2], "-") == 0 )
-			mfd = 0;
-		else {
-			if ( (mfd = open(argv[2], O_RDONLY)) < 0 ) {
-				perror("Failed to open mail file");
-				exit(1);
-			}
+	/* Parse arguments */
+	scriptfile = recipient = sender = mailbox = dumpfile = mailfile = NULL;
+	mailloc = NULL;
+	for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-r") == 0) {
+			/* recipient address */
+			i++;
+			if (i == argc)
+				i_fatal("Missing -r argument");
+			recipient = argv[i];
+		} else if (strcmp(argv[i], "-s") == 0) {
+			/* envelope sender */
+			i++;
+			if (i == argc)
+				i_fatal("Missing -s argument");
+			sender = argv[i];
+		} else if (strcmp(argv[i], "-m") == 0) {
+			/* default mailbox (keep box) */
+			i++;
+			if (i == argc) 
+				i_fatal("Missing -m argument");
+			mailbox = argv[i];
+		} else if (strcmp(argv[i], "-d") == 0) {
+			/* dump file */
+			i++;
+			if (i == argc)
+				i_fatal("Missing -d argument");
+			dumpfile = argv[i];
+		} else if (strcmp(argv[i], "-l") == 0) {
+			/* mail location */
+			i++;
+			if (i == argc)
+				i_fatal("Missing -l argument");
+			mailloc = argv[i];
+		} else if ( scriptfile == NULL ) {
+			scriptfile = argv[i];
+		} else if ( mailfile == NULL ) {
+			mailfile = argv[i];
+		} else {
+			print_help();
+			i_fatal("Unknown argument: %s", argv[i]);
 		}
-	} else
-		mfd = 0;
-
-	sbin = bin_compile_sieve_script(argv[1]);	 	
-	bin_dump_sieve_binary_to(sbin, "-");
-
-	user = bin_get_user();
-
-	env_put(t_strdup_printf("NAMESPACE_1=%s", "maildir:/home/stephan/Maildir"));
-	env_put("NAMESPACE_1_INBOX=1");
-	env_put("NAMESPACE_1_LIST=1");
-	env_put("NAMESPACE_1_SEP=.");
-	env_put("NAMESPACE_1_SUBSCRIPTIONS=1");
-
-	namespaces_pool = namespaces_init();
+	}
 	
-	if (mail_namespaces_init(namespaces_pool, user, &ns) < 0)
-		i_fatal("Namespace initialization failed");
+	if ( scriptfile == NULL ) {
+		print_help();
+		i_fatal("Missing <scriptfile> argument");
+	}
+	
+	if ( mailfile == NULL ) {
+		print_help();
+		i_fatal("Missing <mailfile> argument");
+	}
+
+	/* Open the mail file */
+	mfd = bin_open_mail_file(mailfile);
+	
+	/* Compile sieve script */
+	sbin = bin_compile_sieve_script(scriptfile);
+	
+	/* Dump script */
+	bin_dump_sieve_binary_to(sbin, dumpfile);
+	
+	user = bin_get_user();
+	namespaces_pool = namespaces_init();
+
+	if ( mailloc != NULL ) {
+		env_put(t_strdup_printf("NAMESPACE_1=%s", mailloc));
+		env_put("NAMESPACE_1_INBOX=1");
+		env_put("NAMESPACE_1_LIST=1");
+		env_put("NAMESPACE_1_SEP=.");
+		env_put("NAMESPACE_1_SUBSCRIPTIONS=1");
+	
+		if (mail_namespaces_init(namespaces_pool, user, &ns) < 0)
+			i_fatal("Namespace initialization failed");
+	} else {
+		ns = NULL;
+	}
 
 	mail_raw_init(namespaces_pool, user);
 	mailr = mail_raw_open(mfd);
 
+	bin_fill_in_envelope(mailr->mail, &recipient, &sender);
+
+	if ( mailbox == NULL )
+		mailbox = "INBOX";
+		
 	/* Collect necessary message data */
 	memset(&msgdata, 0, sizeof(msgdata));
 	msgdata.mail = mailr->mail;
-	msgdata.return_path = "nico@example.com";
-	msgdata.to_address = "sirius@rename-it.nl";
+	msgdata.return_path = sender;
+	msgdata.to_address = recipient;
 	msgdata.auth_user = "nico";
 	(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
 	
 	memset(&mailenv, 0, sizeof(mailenv));
 	mailenv.inbox = "INBOX";
 	mailenv.namespaces = ns;
-	mailenv.username = "stephan";
+	mailenv.username = user;
 	mailenv.hostname = "host.example.com";
 	mailenv.postmaster_address = "postmaster@example.com";
 	mailenv.smtp_open = sieve_smtp_open;
@@ -128,12 +187,12 @@ int main(int argc, char **argv)
 	/* Run */
 	sieve_execute(sbin, &msgdata, &mailenv);
 
+	bin_close_mail_file(mfd);
 	mail_raw_close(mailr);
-	close(mfd);
-
 	mail_raw_deinit();
-	mail_namespaces_deinit(&ns);
 	namespaces_deinit();
+
 	bin_deinit();  
 	return 0;
 }
+
