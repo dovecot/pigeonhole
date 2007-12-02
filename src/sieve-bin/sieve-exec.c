@@ -23,10 +23,11 @@
 
 static void *sieve_smtp_open(const char *destination,
 	const char *return_path, FILE **file_r)
-{getenv("HOSTNAME");
-	printf("Sending mesage from <%s> to <%s>:\n\nSTART MESSAGE:\n", 
+{
+	i_info("sending mesage from <%s> to <%s>:",
 		return_path == NULL || *return_path == '\0' ? "" : return_path, 
 		destination);
+	printf("\nSTART MESSAGE:\n");
 	
 	*file_r = stdout;
 	
@@ -42,7 +43,7 @@ static bool sieve_smtp_close(void *handle ATTR_UNUSED)
 static int duplicate_check(const void *id ATTR_UNUSED, size_t id_size ATTR_UNUSED, 
 	const char *user)
 {
-	printf("Checked duplicate for user %s.\n", user);
+	i_info("checked duplicate for user %s.\n", user);
 	return 0;
 }
 
@@ -50,15 +51,13 @@ static void duplicate_mark
 (const void *id ATTR_UNUSED, size_t id_size ATTR_UNUSED, const char *user, 
 	time_t time ATTR_UNUSED)
 {
-	printf("Marked duplicate for user %s.\n", user);
+	i_info("marked duplicate for user %s.\n", user);
 }
 
 int main(int argc, char **argv) 
 {
 	const char *user;
-	struct passwd *pw;
-	uid_t process_euid;
-	int sfd, mfd;
+	int mfd;
 	pool_t namespaces_pool;
 	struct mail_namespace *ns;
 	struct mail_raw *mailr;
@@ -73,13 +72,6 @@ int main(int argc, char **argv)
  		exit(1);
  	}
   
-	/* Open sieve script */
-  
-	if ( (sfd = open(argv[1], O_RDONLY)) < 0 ) {
-		perror("open()");
-		exit(1);
-	}
-
  	/* Open mail file */
  
 	if ( argc > 2 )
@@ -95,39 +87,10 @@ int main(int argc, char **argv)
 	} else
 		mfd = 0;
 
-	/* Compile sieve script */
-	
-	printf("Parsing sieve script '%s'...\n", argv[1]);
+	sbin = bin_compile_sieve_script(argv[1]);	 	
+	bin_dump_sieve_binary_to(sbin, "-");
 
-	if ( !sieve_init("") ) {
-		printf("Failed to initialize sieve implementation\n");
-		exit(1);
-	}
-
-	if ( (sbin = sieve_compile(sfd, FALSE)) == NULL ) {
-		printf("Failed to compile sieve script\n");
-		exit(1);
-	}		 
-		
-	if ( sbin != NULL ) { 
-		struct ostream *dumpstream = o_stream_create_fd(1, 0, FALSE);
-
-		if ( dumpstream != NULL ) {
-			(void) sieve_dump(sbin, dumpstream);
-			o_stream_unref(&dumpstream);
-		}
-	}
-
- 	close(sfd);
-
-	process_euid = geteuid();
-	pw = getpwuid(process_euid);
-	if (pw != NULL) {
-		user = t_strdup(pw->pw_name);
-	} else {
-		i_fatal("Couldn't lookup our username (uid=%s)",
-		dec2str(process_euid));
-	}
+	user = bin_get_user();
 
 	env_put(t_strdup_printf("NAMESPACE_1=%s", "maildir:/home/stephan/Maildir"));
 	env_put("NAMESPACE_1_INBOX=1");
@@ -164,8 +127,6 @@ int main(int argc, char **argv)
 	
 	/* Run */
 	sieve_execute(sbin, &msgdata, &mailenv);
-
-	sieve_deinit();
 
 	mail_raw_close(mailr);
 	close(mfd);

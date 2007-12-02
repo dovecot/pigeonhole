@@ -51,6 +51,7 @@ common_sources = \
 	mail-raw.c
 
 sievec_SOURCES = \
+	$(common_sources) \
 	sievec.c 
 
 sieve_test_SOURCES = \

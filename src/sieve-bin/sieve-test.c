@@ -14,34 +14,25 @@
 #include <fcntl.h>
 #include <pwd.h>
 
-
 #define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
 int main(int argc, char **argv) 
 {
 	const char *user;
-    struct passwd *pw;
-    uid_t process_euid;
-	int sfd, mfd;
+	int mfd;
 	pool_t namespaces_pool;
 	struct mail_raw *mailr;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
 	struct sieve_mail_environment mailenv;
+
 	bin_init();
 
 	if ( argc < 2 ) {
 		printf( "Usage: sieve-test <sieve-file> [<mailfile>/-]\n");
  		exit(1);
  	}
-  
-  	/* Open sieve script */
-  
-	if ( (sfd = open(argv[1], O_RDONLY)) < 0 ) {
-		perror("Failed to open sieve script");
-		exit(1);
-	}
 
 	/* Open mail file */
 	if ( argc > 2 ) 
@@ -58,39 +49,12 @@ int main(int argc, char **argv)
 		mfd = 0;
 	
 	/* Compile sieve script */
-
-	printf("Parsing sieve script '%s'...\n", argv[1]);
-
-	if ( !sieve_init("") ) {
-		printf("Failed to initialize sieve implementation\n");
-		exit(1);
-	}
-
-	if ( (sbin = sieve_compile(sfd, TRUE)) == NULL ) {
-		printf("Failed to compile sieve script\n");
-		exit(1);
-	}		 
-
-	if ( sbin != NULL ) { 
-		struct ostream *dumpstream = o_stream_create_fd(1, 0, FALSE);
-
-		if ( dumpstream != NULL ) {
-			(void) sieve_dump(sbin, dumpstream);
-			o_stream_unref(&dumpstream);
-		}
-	}		
-
- 	close(sfd);
+	sbin = bin_compile_sieve_script(argv[1]);
 	
-    process_euid = geteuid();
-    pw = getpwuid(process_euid);
-    if (pw != NULL) {
-        user = t_strdup(pw->pw_name);
-    } else {
-        i_fatal("Couldn't lookup our username (uid=%s)",
-            dec2str(process_euid));
-    }
-
+	/* Dump script */
+	bin_dump_sieve_binary_to(sbin, "-");
+	
+	user = bin_get_user();
 	namespaces_pool = namespaces_init();
 	mail_raw_init(namespaces_pool, user);
 
@@ -111,14 +75,13 @@ int main(int argc, char **argv)
 	/* Run the test */
 	(void) sieve_test(sbin, &msgdata, &mailenv);
 
-	sieve_deinit();
-
 	mail_raw_close(mailr);
 	if ( mfd > 0 ) 
 		close(mfd);
 
 	mail_raw_deinit();
 	namespaces_deinit();
+
 	bin_deinit();  
 	return 0;
 }
