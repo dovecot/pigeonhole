@@ -15,6 +15,7 @@
 
 struct sieve_validator {
 	pool_t pool;
+	const char *scriptname;
 	struct sieve_ast *ast;
 	
 	struct sieve_error_handler *ehandler;
@@ -39,7 +40,9 @@ void sieve_validator_warning
 	va_list args;
 	va_start(args, fmt);
 	
-	sieve_vwarning(validator->ehandler, sieve_ast_node_line(node), fmt, args); 
+	sieve_vwarning(validator->ehandler, 
+		t_strdup_printf("%s:%d", sieve_ast_scriptname(validator->ast),
+			sieve_ast_node_line(node)), fmt, args); 
 	
 	va_end(args);
 }
@@ -51,12 +54,15 @@ void sieve_validator_error
 	va_list args;
 	va_start(args, fmt);
 	
-	sieve_verror(validator->ehandler, sieve_ast_node_line(node), fmt, args); 
+	sieve_verror(validator->ehandler, 
+		t_strdup_printf("%s:%d", sieve_ast_scriptname(validator->ast),
+		sieve_ast_node_line(node)), fmt, args); 
 	
 	va_end(args);
 }
 
-struct sieve_validator *sieve_validator_create(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
+struct sieve_validator *sieve_validator_create
+	(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
 {
 	unsigned int i;
 	pool_t pool;

@@ -354,13 +354,14 @@ struct sieve_ast_node *sieve_ast_command_create
 }
 
 /* The AST */
-struct sieve_ast *sieve_ast_create( void ) {
+struct sieve_ast *sieve_ast_create(const char *scriptname) {
 	pool_t pool;
 	struct sieve_ast *ast;
 	
 	pool = pool_alloconly_create("sieve_ast", 4096);	
 	ast = p_new(pool, struct sieve_ast, 1);
 	ast->pool = pool;
+	ast->scriptname = p_strdup(pool, scriptname);
 	
 	ast->root = sieve_ast_node_create(ast, NULL, SAT_ROOT, 0);
 	

@@ -8,6 +8,8 @@
 
 #include <stdio.h>
 
+#include "sieve-error.h"
+
 #define SIEVE_VERSION "0.0.1"
 #define SIEVE_IMPLEMENTATION "Dovecot Sieve " SIEVE_VERSION
 
@@ -45,7 +47,8 @@ struct sieve_mail_environment {
 bool sieve_init(const char *plugins);
 void sieve_deinit(void);
 
-struct sieve_binary *sieve_compile(const char *scriptpath);
+struct sieve_binary *sieve_compile
+	(const char *scriptpath, struct sieve_error_handler *ehandler);
 void sieve_dump(struct sieve_binary *binary, struct ostream *stream);
 bool sieve_test
 	(struct sieve_binary *binary, const struct sieve_message_data *msgdata, 

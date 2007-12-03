@@ -9,23 +9,14 @@
 #include "sieve-error.h"
 #include "sieve-ast.h"
 
-/* FIXME: Enforce maximums on the number of arguments, tests, commands, nesting levels, etc.
- *
+/* FIXME: Enforce maximums on the number of arguments, tests, commands, 
+ * nesting levels, etc.
  */
-
-#define SIEVE_READ_BLOCK_SIZE (1024*8)
-
-#define sieve_parser_error(parser, ...) \
-	{ \
-		/* Don't report a parse error if the lexer complained already */ \
-		if ( sieve_lexer_current_token(parser->lexer) != STT_ERROR )  \
-			sieve_error(parser->ehandler, sieve_lexer_current_line(parser->lexer), __VA_ARGS__); \
-	}
-#define sieve_parser_warning(parser, ...) \
-	sieve_error(parser->ehandler, sieve_lexer_current_line(parser->lexer), __VA_ARGS__)
 
 struct sieve_parser {
 	pool_t pool;
+	const char *scriptname;
+	
 	struct istream *input;
 	
 	struct sieve_error_handler *ehandler;
@@ -34,10 +25,46 @@ struct sieve_parser {
 	struct sieve_ast *ast;
 };
 
-/* Forward declarations */
-static bool sieve_parser_recover(struct sieve_parser *parser, enum sieve_token_type end_token);
+#define SIEVE_READ_BLOCK_SIZE (1024*8)
 
-struct sieve_parser *sieve_parser_create(int fd, struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
+inline static void sieve_parser_error
+	(struct sieve_parser *parser, const char *fmt, ...) 
+{ 
+	va_list args;
+	va_start(args, fmt);
+
+	/* Don't report a parse error if the lexer complained already */ 
+	if ( sieve_lexer_current_token(parser->lexer) != STT_ERROR )  
+	{
+		sieve_verror(parser->ehandler, 
+			t_strdup_printf("%s:%d", parser->scriptname,
+			sieve_lexer_current_line(parser->lexer)),
+			fmt, args); 
+	}
+	
+	va_end(args);
+}
+
+inline static void sieve_parser_warning
+	(struct sieve_parser *parser, const char *fmt, ...) 
+{
+	va_list args;
+	va_start(args, fmt);
+
+	sieve_vwarning(parser->ehandler, 
+		t_strdup_printf("%s:%d", parser->scriptname,
+		sieve_lexer_current_line(parser->lexer)),
+		fmt, args);
+		
+	va_end(args);
+} 
+
+/* Forward declarations */
+static bool sieve_parser_recover
+	(struct sieve_parser *parser, enum sieve_token_type end_token);
+
+struct sieve_parser *sieve_parser_create
+(int fd, const char *scriptname, struct sieve_error_handler *ehandler)
 {
 	struct sieve_parser *parser;
 	struct istream *stream;
@@ -49,12 +76,12 @@ struct sieve_parser *sieve_parser_create(int fd, struct sieve_ast *ast, struct s
 		pool_t pool = pool_alloconly_create("sieve_parser", 4096);	
 
 		parser = p_new(pool, struct sieve_parser, 1);
-		parser->input = stream;
 		parser->pool = pool;
+		parser->scriptname = p_strdup(pool, scriptname);
+		parser->input = stream;
 		
-		parser->lexer = sieve_lexer_create(stream, ehandler);
-		parser->ast = ast;
-		sieve_ast_ref(ast);
+		parser->lexer = sieve_lexer_create(stream, scriptname, ehandler);
+		parser->ast = NULL;
 		
 		parser->ehandler = ehandler;
 		
@@ -68,8 +95,9 @@ void sieve_parser_free(struct sieve_parser *parser)
 {
 	if (parser->input != NULL ) 
 		i_stream_unref(&parser->input);
-	  
-	sieve_ast_unref(&parser->ast);
+
+	if (parser->ast != NULL)	  
+		sieve_ast_unref(&parser->ast);
 
 	sieve_lexer_free(parser->lexer);
 
@@ -340,22 +368,32 @@ static bool sieve_parse_commands
 	return result;
 }
 
-bool sieve_parser_run(struct sieve_parser *parser) 
+bool sieve_parser_run
+	(struct sieve_parser *parser, struct sieve_ast **ast) 
 {
+	if ( parser->ast != NULL )
+		sieve_ast_unref(&parser->ast);
+	
+	*ast = NULL;
+	parser->ast = sieve_ast_create(parser->scriptname);
+
 	/* Scan first token */
 	sieve_lexer_skip_token(parser->lexer);
 
 	if ( sieve_parse_commands(parser, parser->ast->root) ) { 
 		if ( sieve_lexer_current_token(parser->lexer) != STT_EOF ) { 
-			sieve_parser_error(parser, "unexpected token %s found at (the presumed) end of file",
+			sieve_parser_error(parser, 
+				"unexpected token %s found at (the presumed) end of file",
 				sieve_lexer_token_string(parser->lexer));
-				
+			sieve_ast_unref(&parser->ast);
 			return FALSE;				
 		}
 		
+		*ast = parser->ast;
 		return TRUE;
 	} 
 	
+	sieve_ast_unref(&parser->ast);
 	return FALSE;
 }	
 

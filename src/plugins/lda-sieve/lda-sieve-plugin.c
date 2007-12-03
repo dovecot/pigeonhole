@@ -81,13 +81,20 @@ static int lda_sieve_run
 	bool debug = ( getenv("DEBUG") != NULL );
 	struct sieve_message_data msgdata;
 	struct sieve_mail_environment mailenv;
+	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
+
+	ehandler = sieve_stderr_ehandler_create();
 
 	if ( debug )
 		i_info("lda-sieve: Compiling script %s", script_path);
 
-	if ( (sbin=sieve_compile(script_path)) == NULL )
+	if ( (sbin=sieve_compile(script_path, ehandler)) == NULL ) {
+		sieve_error_handler_free(&ehandler);
 		return -1;
+	}
+
+	sieve_error_handler_free(&ehandler);
 
 	/* Collect necessary message data */
 	memset(&msgdata, 0, sizeof(msgdata));

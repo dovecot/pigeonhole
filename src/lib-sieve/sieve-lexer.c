@@ -17,11 +17,9 @@
 #define IS_ALPHA(c) ( (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') )
 #define IS_QUANTIFIER(c) (c == 'K' || c == 'M' || c =='G') 
 
-#define sieve_lexer_error(lexer, ...) sieve_error(lexer->ehandler, lexer->current_line, __VA_ARGS__)
-#define sieve_lexer_warning(lexer, ...) sieve_warning(lexer->ehandler, lexer->current_line, __VA_ARGS__)
-
 struct sieve_lexer {
 	pool_t pool;
+	const char *scriptname;
 	struct istream *input;
 		
 	int current_line;
@@ -38,11 +36,41 @@ struct sieve_lexer {
 	size_t buffer_pos;
 };
 
-struct sieve_lexer *sieve_lexer_create(struct istream *stream, struct sieve_error_handler *ehandler) {
+inline static void sieve_lexer_error
+(struct sieve_lexer *lexer, const char *fmt, ...) 
+{
+	va_list args;
+	va_start(args, fmt);
+
+	sieve_verror(lexer->ehandler, 
+		t_strdup_printf("%s:%d", lexer->scriptname, lexer->current_line),
+		fmt, args);
+		
+	va_end(args);
+}
+
+inline static void sieve_lexer_warning
+(struct sieve_lexer *lexer, const char *fmt, ...) 
+{
+	va_list args;
+	va_start(args, fmt);
+
+	sieve_vwarning(lexer->ehandler, 
+		t_strdup_printf("%s:%d", lexer->scriptname, lexer->current_line),
+		fmt, args);
+		
+	va_end(args);
+}
+
+struct sieve_lexer *sieve_lexer_create
+(struct istream *stream, const char *scriptname, 
+	struct sieve_error_handler *ehandler) 
+{
 	pool_t pool = pool_alloconly_create("sieve_lexer", 1024);	
 	struct sieve_lexer *lexer = p_new(pool, struct sieve_lexer, 1);
 
 	lexer->pool = pool;
+	lexer->scriptname = p_strdup(pool, scriptname);
 	lexer->input = stream;
 	
 	lexer->buffer = NULL;

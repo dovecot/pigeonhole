@@ -40,7 +40,9 @@ enum sieve_token_type {
 struct sieve_token;
 struct sieve_lexer;
 
-struct sieve_lexer *sieve_lexer_create(struct istream *stream, struct sieve_error_handler *ehandler);
+struct sieve_lexer *sieve_lexer_create
+	(struct istream *stream, const char *scriptname,  
+		struct sieve_error_handler *ehandler);
 void sieve_lexer_free(struct sieve_lexer *lexer);
 
 bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer);

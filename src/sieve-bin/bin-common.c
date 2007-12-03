@@ -68,10 +68,17 @@ const char *bin_get_user(void)
 
 struct sieve_binary *bin_compile_sieve_script(const char *filename)
 {
+	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 	
-	if ( (sbin = sieve_compile(filename)) == NULL ) 
+	ehandler = sieve_stderr_ehandler_create();
+
+	if ( (sbin = sieve_compile(filename, ehandler)) == NULL ) {
+		sieve_error_handler_free(&ehandler);
 		i_fatal("Failed to compile sieve script\n");
+	}
+
+	sieve_error_handler_free(&ehandler);
 		
 	return sbin;
 }
