@@ -83,14 +83,22 @@ static int lda_sieve_run
 	struct sieve_mail_environment mailenv;
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
+	const char *scriptlog;
 
-	ehandler = sieve_logfile_ehandler_create(t_strconcat(script_path, ".log", NULL));
+	t_push();
+
+	scriptlog = t_strconcat(script_path, ".log", NULL);
+	ehandler = sieve_logfile_ehandler_create(scriptlog);
 
 	if ( debug )
-		i_info("lda-sieve: Compiling script %s", script_path);
+		i_info("sieve: Compiling script %s", script_path);
 
 	if ( (sbin=sieve_compile(script_path, ehandler)) == NULL ) {
+		i_error("sieve: Failed to compile script. "
+			"Log should be available as %s.", scriptlog);
+
 		sieve_error_handler_free(&ehandler);
+		t_pop();
 		return -1;
 	}
 
@@ -116,11 +124,15 @@ static int lda_sieve_run
 	mailenv.duplicate_check = duplicate_check;
 
 	if ( debug )
-		i_info("lda-sieve: Executing (in-memory) script %s", script_path);
+		i_info("sieve: Executing (in-memory) script %s", script_path);
 
-	if ( sieve_execute(sbin, &msgdata, &mailenv) )
+	if ( sieve_execute(sbin, &msgdata, &mailenv) ) {
+		i_error("sieve: Failed to execute script");
+		t_pop();
 		return 1;
+	}
 
+	t_pop();
 	return -1;
 }
 
