@@ -41,8 +41,9 @@ unsigned int sieve_get_warnings(struct sieve_error_handler *ehandler);
 
 void sieve_error_handler_free(struct sieve_error_handler **ehandler);
 
-/* STDERR handler */
+/* Error handlers */
 
-struct sieve_error_handler *sieve_stderr_ehandler_create(void); 
+struct sieve_error_handler *sieve_stderr_ehandler_create(void);
+struct sieve_error_handler *sieve_logfile_ehandler_create(const char *logfile);  
 
 #endif /* __SIEVE_ERROR_H */

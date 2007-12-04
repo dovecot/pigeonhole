@@ -84,7 +84,7 @@ static int lda_sieve_run
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 
-	ehandler = sieve_stderr_ehandler_create();
+	ehandler = sieve_logfile_ehandler_create(t_strconcat(script_path, ".log", NULL));
 
 	if ( debug )
 		i_info("lda-sieve: Compiling script %s", script_path);

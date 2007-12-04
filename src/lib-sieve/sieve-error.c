@@ -1,8 +1,18 @@
 #include <stdio.h>
 
 #include "lib.h"
+#include "str.h"
+#include "ostream.h"
 
 #include "sieve-error.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+/* FIXME: There is some overlap with dovecot/src/lib/failures.c */
 
 /* This should be moved to a sieve-errors-private.h when the need for other 
  * types of (externally defined) error handlers arises.
@@ -19,6 +29,8 @@ struct sieve_error_handler {
 	void (*vwarning)
 		(struct sieve_error_handler *ehandler, const char *location, 
 			const char *fmt, va_list args);
+	void (*free)
+		(struct sieve_error_handler *ehandler);
 };
 
 void sieve_verror
@@ -50,6 +62,9 @@ void sieve_error_handler_free(struct sieve_error_handler **ehandler)
 	pool_t pool;
 	
 	if ( *ehandler != NULL ) {
+		if ( (*ehandler)->free != NULL )
+			(*ehandler)->free(*ehandler);
+	
 		pool = (*ehandler)->pool;
 		pool_unref(&pool);
 	
@@ -58,7 +73,7 @@ void sieve_error_handler_free(struct sieve_error_handler **ehandler)
 	}
 }
 
-/* Output errors directly to stderror */
+/* Output errors directly to stderror (merge this with logfile below?) */
 
 static void sieve_stderr_verror
 (struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
@@ -92,5 +107,150 @@ struct sieve_error_handler *sieve_stderr_ehandler_create( void )
 	ehandler->vwarning = sieve_stderr_vwarning;
 	
 	return ehandler;	
+}
+
+/* Output errors to a log file */
+
+struct sieve_logfile_ehandler {
+	struct sieve_error_handler handler;
+	
+	const char *logfile;
+	bool started;
+	int fd;
+	struct ostream *stream;
+};
+
+static void sieve_logfile_vprintf
+(struct sieve_logfile_ehandler *ehandler, const char *location, 
+	const char *prefix,	const char *fmt, va_list args) 
+{
+	string_t *outbuf;
+	
+	if ( ehandler->stream == NULL ) return;
+	
+	t_push();
+	
+	outbuf = t_str_new(256);
+	str_printfa(outbuf, "%s: %s: ", location, prefix);	
+	str_vprintfa(outbuf, fmt, args);
+	str_append(outbuf, ".\n");
+	
+	o_stream_send(ehandler->stream, str_data(outbuf), str_len(outbuf));
+	
+	t_pop();
+}
+
+inline static void sieve_logfile_printf
+(struct sieve_logfile_ehandler *ehandler, const char *location, const char *prefix,
+	const char *fmt, ...) 
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	sieve_logfile_vprintf(ehandler, location, prefix, fmt, args);
+	
+	va_end(args);
+}
+
+static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
+{
+	int fd;
+	struct ostream *ostream = NULL;
+	struct tm *tm;
+	char buf[256];
+	time_t now;
+
+	fd = open(ehandler->logfile, O_CREAT | O_APPEND | O_WRONLY, 0600);
+	if (fd == -1) {
+		i_error("sieve: Failed to open logfile %s (logging to STDERR): %m", 
+			ehandler->logfile);
+		fd = STDERR_FILENO;
+	}
+	/* else
+		fd_close_on_exec(fd, TRUE); Necessary? */
+
+	ostream = o_stream_create_fd(fd, 0, FALSE);
+	if ( ostream == NULL ) {
+		/* Can't we do anything else in this most awkward situation? */
+		i_error("sieve: Failed to open log stream on open file %s. "
+			"Nothing will be logged.", 
+			ehandler->logfile);
+	} 
+
+	ehandler->fd = fd;
+	ehandler->stream = ostream;
+	ehandler->started = TRUE;
+	
+	if ( ostream != NULL ) {
+		now = time(NULL);	
+		tm = localtime(&now);
+
+		if (strftime(buf, sizeof(buf), "%b %d %H:%M:%S", tm) > 0) {
+			sieve_logfile_printf(ehandler, "sieve", "info",
+				"started log at %s", buf);
+		}
+	}
+}
+
+static void sieve_logfile_verror
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, va_list args) 
+{
+	struct sieve_logfile_ehandler *handler = 
+		(struct sieve_logfile_ehandler *) ehandler;
+
+	if ( !handler->started ) sieve_logfile_start(handler);	
+
+	sieve_logfile_vprintf(handler, location, "error", fmt, args);
+}
+
+static void sieve_logfile_vwarning
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, va_list args) 
+{
+	struct sieve_logfile_ehandler *handler = 
+		(struct sieve_logfile_ehandler *) ehandler;
+
+	if ( !handler->started ) sieve_logfile_start(handler);	
+
+	sieve_logfile_vprintf(handler, location, "warning", fmt, args);
+}
+
+static void sieve_logfile_free
+(struct sieve_error_handler *ehandler)
+{
+	struct sieve_logfile_ehandler *handler = 
+		(struct sieve_logfile_ehandler *) ehandler;
+		
+	if ( handler->stream != NULL ) {
+		o_stream_destroy(&(handler->stream));
+		if ( handler->fd != STDERR_FILENO )
+			close(handler->fd);
+	}
+}
+
+struct sieve_error_handler *sieve_logfile_ehandler_create(const char *logfile) 
+{
+	pool_t pool;
+	struct sieve_logfile_ehandler *ehandler;
+	
+	pool = pool_alloconly_create("logfile_error_handler", 256);	
+	ehandler = p_new(pool, struct sieve_logfile_ehandler, 1);
+	ehandler->handler.pool = pool;
+	ehandler->handler.errors = 0;
+	ehandler->handler.warnings = 0;
+	ehandler->handler.verror = sieve_logfile_verror;
+	ehandler->handler.vwarning = sieve_logfile_vwarning;
+	ehandler->handler.free = sieve_logfile_free;
+	
+	/* Don't open logfile until something is actually logged. 
+	 * Let's not pullute the sieve directory with useless logfiles.
+	 */
+	ehandler->logfile = p_strdup(pool, logfile);
+	ehandler->started = FALSE;
+	ehandler->stream = NULL;
+	ehandler->fd = -1;
+	
+	return &(ehandler->handler);	
 }
 
