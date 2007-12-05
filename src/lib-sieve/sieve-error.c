@@ -48,7 +48,7 @@ void sieve_verror
 		const char *fmt, va_list args)
 {
 	if ( ehandler->log_master )
-		i_error("%s: %s", location, t_strdup_vprintf(fmt, args));
+		i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
 
 	ehandler->verror(ehandler, location, fmt, args);
 	ehandler->errors++;
@@ -59,7 +59,7 @@ void sieve_vwarning
 		const char *fmt, va_list args)
 {
 	if ( ehandler->log_master )
-		i_warning("%s: %s", location, t_strdup_vprintf(fmt, args));
+		i_warning("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
 		
 	ehandler->vwarning(ehandler, location, fmt, args);
 	ehandler->warnings++;
@@ -70,7 +70,7 @@ void sieve_vinfo
 		const char *fmt, va_list args)
 {
 	if ( ehandler->log_master )
-		i_info("%s: %s", location, t_strdup_vprintf(fmt, args));
+		i_info("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
 	
 	if ( ehandler->log_info )	
 		ehandler->vinfo(ehandler, location, fmt, args);

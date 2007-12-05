@@ -109,7 +109,7 @@ void sieve_runtime_error
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_vinfo(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
+	sieve_verror(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
 	va_end(args);
 }
 
