@@ -4,6 +4,7 @@
 #include "str-sanitize.h"
 
 #include "sieve-common.h"
+#include "sieve-error.h"
 #include "sieve-interpreter.h"
 #include "sieve-actions.h"
 #include "sieve-result.h"
@@ -37,20 +38,23 @@ struct sieve_result_side_effect {
 
 struct sieve_result {
 	pool_t pool;
-	
+	struct sieve_error_handler *ehandler;
+		
 	struct sieve_action_exec_env action_env;
 	struct sieve_result_action *first_action;
 	struct sieve_result_action *last_action;
 };
 
-struct sieve_result *sieve_result_create(void) 
+struct sieve_result *sieve_result_create
+(struct sieve_error_handler *ehandler) 
 {
 	pool_t pool;
 	struct sieve_result *result;
-	
+	 
 	pool = pool_alloconly_create("sieve_result", 4096);	
 	result = p_new(pool, struct sieve_result, 1);
 	result->pool = pool;
+	result->ehandler = ehandler;
 	result->action_env.result = result;
 		
 	result->first_action = NULL;
@@ -81,33 +85,29 @@ inline pool_t sieve_result_pool(struct sieve_result *result)
 
 /* Logging of result */
 
-void sieve_result_log
-	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+static const char *_get_location(const struct sieve_action_exec_env *aenv)
 {
-	va_list args;
-	va_start(args, fmt);
-	
-	/* Kludgy, needs explict support from liblib.a (something like i_vinfo) */
-	
-	i_info("msgid=%s: %s", aenv->msgdata->id == NULL ? 
-		"unspecified" : str_sanitize(aenv->msgdata->id, 80), 
-		t_strdup_vprintf(fmt, args)); 
-	
-	va_end(args);
+	return t_strdup_printf("msgid=%s", aenv->msgdata->id == NULL ? 
+		"unspecified" : str_sanitize(aenv->msgdata->id, 80));
 }
 
 void sieve_result_error
 	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 {
 	va_list args;
-	va_start(args, fmt);
 	
-	/* Kludgy, needs explict support from liblib.a (something like i_vinfo) */
+	va_start(args, fmt);	
+	sieve_verror(aenv->result->ehandler, _get_location(aenv), fmt, args); 
+	va_end(args);
+}
+
+void sieve_result_log
+	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+{
+	va_list args;
 	
-	i_error("msgid=%s: %s", aenv->msgdata->id == NULL ? 
-		"unspecified" : str_sanitize(aenv->msgdata->id, 80), 
-		t_strdup_vprintf(fmt, args)); 
-	
+	va_start(args, fmt);	
+	sieve_vinfo(aenv->result->ehandler, _get_location(aenv), fmt, args); 
 	va_end(args);
 }
 

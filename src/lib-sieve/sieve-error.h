@@ -11,6 +11,9 @@ void sieve_verror
 void sieve_vwarning
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args); 
+void sieve_vinfo
+	(struct sieve_error_handler *ehandler, const char *location, 
+		const char *fmt, va_list args); 
 
 inline static void sieve_error
 (struct sieve_error_handler *ehandler, const char *location, 
@@ -35,6 +38,23 @@ inline static void sieve_warning
 	
 	va_end(args);
 }
+
+inline static void sieve_info
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...) 
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	sieve_vinfo(ehandler, location, fmt, args);
+	
+	va_end(args);
+}
+
+void sieve_error_handler_accept_infolog
+	(struct sieve_error_handler *ehandler, bool enable);
+void sieve_error_handler_copy_masterlog
+	(struct sieve_error_handler *ehandler, bool enable);
 
 unsigned int sieve_get_errors(struct sieve_error_handler *ehandler);
 unsigned int sieve_get_warnings(struct sieve_error_handler *ehandler);

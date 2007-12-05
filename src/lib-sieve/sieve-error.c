@@ -12,8 +12,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/* FIXME: There is some overlap with dovecot/src/lib/failures.c */
-
 /* This should be moved to a sieve-errors-private.h when the need for other 
  * types of (externally defined) error handlers arises.
  */
@@ -23,12 +21,24 @@ struct sieve_error_handler {
 	int errors;
 	int warnings;
 	
+	/* Should we copy log to i_error, i_warning and i_info? */
+	bool log_master; 
+	
+	/* Should the errorhandler handle or discard info log?
+	 * (This does not influence the previous setting) 
+	 */
+	bool log_info;
+	
 	void (*verror)
 		(struct sieve_error_handler *ehandler, const char *location, 
 			const char *fmt, va_list args);
 	void (*vwarning)
 		(struct sieve_error_handler *ehandler, const char *location, 
 			const char *fmt, va_list args);
+	void (*vinfo)
+		(struct sieve_error_handler *ehandler, const char *location, 
+			const char *fmt, va_list args);
+
 	void (*free)
 		(struct sieve_error_handler *ehandler);
 };
@@ -37,6 +47,9 @@ void sieve_verror
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args)
 {
+	if ( ehandler->log_master )
+		i_error("%s: %s", location, t_strdup_vprintf(fmt, args));
+
 	ehandler->verror(ehandler, location, fmt, args);
 	ehandler->errors++;
 }
@@ -45,8 +58,22 @@ void sieve_vwarning
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args)
 {
+	if ( ehandler->log_master )
+		i_warning("%s: %s", location, t_strdup_vprintf(fmt, args));
+		
 	ehandler->vwarning(ehandler, location, fmt, args);
 	ehandler->warnings++;
+}
+
+void sieve_vinfo
+	(struct sieve_error_handler *ehandler, const char *location, 
+		const char *fmt, va_list args)
+{
+	if ( ehandler->log_master )
+		i_info("%s: %s", location, t_strdup_vprintf(fmt, args));
+	
+	if ( ehandler->log_info )	
+		ehandler->vinfo(ehandler, location, fmt, args);
 }
 
 unsigned int sieve_get_errors(struct sieve_error_handler *ehandler) {
@@ -55,6 +82,18 @@ unsigned int sieve_get_errors(struct sieve_error_handler *ehandler) {
 
 unsigned int sieve_get_warnings(struct sieve_error_handler *ehandler) {
 	return ehandler->errors;
+}
+
+void sieve_error_handler_accept_infolog
+	(struct sieve_error_handler *ehandler, bool enable)
+{
+	ehandler->log_info = enable;	
+}
+
+void sieve_error_handler_copy_masterlog
+	(struct sieve_error_handler *ehandler, bool enable)
+{
+	ehandler->log_master = enable;
 }
 
 void sieve_error_handler_free(struct sieve_error_handler **ehandler)
@@ -89,6 +128,13 @@ static void sieve_stderr_vwarning
 	fprintf(stderr, "%s: warning: %s.\n", location, t_strdup_vprintf(fmt, args));
 }
 
+static void sieve_stderr_vinfo
+(struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
+	const char *fmt, va_list args) 
+{
+	fprintf(stderr, "%s: info: %s.\n", location, t_strdup_vprintf(fmt, args));
+}
+
 struct sieve_error_handler *sieve_stderr_ehandler_create( void ) 
 {
 	pool_t pool;
@@ -105,6 +151,7 @@ struct sieve_error_handler *sieve_stderr_ehandler_create( void )
 	ehandler->warnings = 0;
 	ehandler->verror = sieve_stderr_verror;
 	ehandler->vwarning = sieve_stderr_vwarning;
+	ehandler->vinfo = sieve_stderr_vinfo;
 	
 	return ehandler;	
 }
@@ -216,6 +263,19 @@ static void sieve_logfile_vwarning
 	sieve_logfile_vprintf(handler, location, "warning", fmt, args);
 }
 
+static void sieve_logfile_vinfo
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, va_list args) 
+{
+	struct sieve_logfile_ehandler *handler = 
+		(struct sieve_logfile_ehandler *) ehandler;
+
+	if ( !handler->started ) sieve_logfile_start(handler);	
+
+	sieve_logfile_vprintf(handler, location, "info", fmt, args);
+}
+
+
 static void sieve_logfile_free
 (struct sieve_error_handler *ehandler)
 {
@@ -241,6 +301,7 @@ struct sieve_error_handler *sieve_logfile_ehandler_create(const char *logfile)
 	ehandler->handler.warnings = 0;
 	ehandler->handler.verror = sieve_logfile_verror;
 	ehandler->handler.vwarning = sieve_logfile_vwarning;
+	ehandler->handler.vinfo = sieve_logfile_vinfo;
 	ehandler->handler.free = sieve_logfile_free;
 	
 	/* Don't open logfile until something is actually logged. 

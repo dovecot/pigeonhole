@@ -21,7 +21,8 @@ struct sieve_runtime_env {
 	struct sieve_result *result;
 };
 
-struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *sbin);
+struct sieve_interpreter *sieve_interpreter_create
+	(struct sieve_binary *sbin, struct sieve_error_handler *ehandler);
 void sieve_interpreter_free(struct sieve_interpreter *interp);
 inline pool_t sieve_interpreter_pool(struct sieve_interpreter *interp);
 
@@ -41,9 +42,11 @@ inline bool sieve_interpreter_get_test_result
 	
 /* Error handling */
 
-void sieve_runtime_log
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...);
 void sieve_runtime_error
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...);
+void sieve_runtime_warning
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...);
+void sieve_runtime_log
 	(const struct sieve_runtime_env *runenv, const char *fmt, ...);
 
 /* Extension support */

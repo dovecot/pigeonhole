@@ -75,6 +75,7 @@ int main(int argc, char **argv)
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
 	struct sieve_mail_environment mailenv;
+	struct sieve_error_handler *ehandler;
 
 	bin_init();
 
@@ -184,8 +185,12 @@ int main(int argc, char **argv)
 	mailenv.duplicate_mark = duplicate_mark;
 	mailenv.duplicate_check = duplicate_check;
 	
+	ehandler = sieve_stderr_ehandler_create();
+
 	/* Run */
-	sieve_execute(sbin, &msgdata, &mailenv);
+	sieve_execute(sbin, &msgdata, &mailenv, ehandler);
+
+	sieve_error_handler_free(&ehandler);
 
 	bin_close_mail_file(mfd);
 	mail_raw_close(mailr);

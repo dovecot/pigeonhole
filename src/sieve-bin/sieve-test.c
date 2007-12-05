@@ -35,6 +35,7 @@ int main(int argc, char **argv)
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
 	struct sieve_mail_environment mailenv;
+	struct sieve_error_handler *ehandler;
 
 	bin_init();
 
@@ -116,9 +117,13 @@ int main(int argc, char **argv)
 	memset(&mailenv, 0, sizeof(mailenv));
 	mailenv.inbox = "INBOX";
 	mailenv.username = user;
+
+	ehandler = sieve_stderr_ehandler_create();	
 	
 	/* Run the test */
-	(void) sieve_test(sbin, &msgdata, &mailenv);
+	(void) sieve_test(sbin, &msgdata, &mailenv, ehandler);
+
+	sieve_error_handler_free(&ehandler);
 
 	bin_close_mail_file(mfd);
 	

@@ -95,14 +95,17 @@ static int lda_sieve_run
 
 	if ( (sbin=sieve_compile(script_path, ehandler)) == NULL ) {
 		i_error("sieve: Failed to compile script. "
-			"Log should be available as %s.", scriptlog);
+			"Log should be available as %s", scriptlog);
 
 		sieve_error_handler_free(&ehandler);
 		t_pop();
 		return -1;
 	}
 
-	sieve_error_handler_free(&ehandler);
+	/* Log the messages to the system error handlers as well from this moment
+	 * on.
+	 */
+	sieve_error_handler_copy_masterlog(ehandler, TRUE);
 
 	/* Collect necessary message data */
 	memset(&msgdata, 0, sizeof(msgdata));
@@ -126,12 +129,15 @@ static int lda_sieve_run
 	if ( debug )
 		i_info("sieve: Executing (in-memory) script %s", script_path);
 
-	if ( sieve_execute(sbin, &msgdata, &mailenv) ) {
+	if ( sieve_execute(sbin, &msgdata, &mailenv, ehandler) ) {
 		i_error("sieve: Failed to execute script");
+		
+		sieve_error_handler_free(&ehandler);
 		t_pop();
 		return 1;
 	}
 
+	sieve_error_handler_free(&ehandler);
 	t_pop();
 	return -1;
 }

@@ -7,6 +7,7 @@
 #include "hash.h"
 #include "mail-storage.h"
 
+#include "sieve-error.h"
 #include "sieve-extensions.h"
 #include "sieve-commands-private.h"
 #include "sieve-actions.h"
@@ -20,6 +21,8 @@
 struct sieve_interpreter {
 	pool_t pool;
 			
+	struct sieve_error_handler *ehandler;
+
 	/* Runtime data for extensions */
 	ARRAY_DEFINE(ext_contexts, void *); 
 		
@@ -36,7 +39,8 @@ struct sieve_interpreter {
 	struct sieve_runtime_env runenv; 
 };
 
-struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *sbin) 
+struct sieve_interpreter *sieve_interpreter_create
+(struct sieve_binary *sbin, struct sieve_error_handler *ehandler) 
 {
 	unsigned int i;
 	int idx;
@@ -46,6 +50,7 @@ struct sieve_interpreter *sieve_interpreter_create(struct sieve_binary *sbin)
 	pool = pool_alloconly_create("sieve_interpreter", 4096);	
 	interp = p_new(pool, struct sieve_interpreter, 1);
 	interp->pool = pool;
+	interp->ehandler = ehandler;
 	interp->runenv.interp = interp;
 	
 	interp->runenv.sbin = sbin;
@@ -88,39 +93,45 @@ inline pool_t sieve_interpreter_pool(struct sieve_interpreter *interp)
 
 /* Error handling */
 
-/* FIXME: Add support to send errors elsewhere */
-
-void sieve_runtime_log
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+/* This is not particularly user friendly, so we might want to consider storing
+ * the original line numbers of the script in the binary somewhere...
+ */
+static const char *_get_location(const struct sieve_runtime_env *runenv)
 {
 	const char *op = runenv->interp->current_op == NULL ?
 		"<<NOOP>>" : runenv->interp->current_op->mnemonic;
-	va_list args;
-	va_start(args, fmt);
-
-	
-	/* Kludgy, needs explict support from liblib.a (something like i_vinfo) */	
-	i_info("%s at #%08x: %s", op, runenv->interp->current_op_addr, 
-		t_strdup_vprintf(fmt, args)); 
-	
-	va_end(args);
+	return t_strdup_printf("#%08x: %s", runenv->interp->current_op_addr, op);
 }
 
 void sieve_runtime_error
 	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
 {
-	const char *op = runenv->interp->current_op == NULL ?
-		"<<NOOP>>" : runenv->interp->current_op->mnemonic;
 	va_list args;
+	
 	va_start(args, fmt);
-	
-	/* Kludgy, needs explict support from liblib.a (something like i_vinfo) */
-	i_error("%s at #%08x: %s", op, runenv->interp->current_op_addr, 
-		t_strdup_vprintf(fmt, args)); 
-	
+	sieve_vinfo(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
 	va_end(args);
 }
 
+void sieve_runtime_warning
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+{	
+	va_list args;
+	
+	va_start(args, fmt);
+	sieve_vwarning(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
+	va_end(args);
+}
+
+void sieve_runtime_log
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+{	
+	va_list args;
+	
+	va_start(args, fmt);
+	sieve_vinfo(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
+	va_end(args);
+}
 
 /* Extension support */
 
@@ -265,7 +276,7 @@ bool sieve_interpreter_run
 	sieve_interpreter_reset(interp);
 	
 	if ( is_topmost )
-		*result = sieve_result_create();
+		*result = sieve_result_create(interp->ehandler);
 	else {
 		sieve_result_ref(*result);
 	}
