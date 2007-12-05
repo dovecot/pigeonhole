@@ -129,14 +129,14 @@ static int lda_sieve_run
 	if ( debug )
 		i_info("sieve: Executing (in-memory) script %s", script_path);
 
-	if ( sieve_execute(sbin, &msgdata, &mailenv, ehandler) ) {
-		i_error("sieve: Failed to execute script");
-		
+	if ( sieve_execute(sbin, &msgdata, &mailenv, ehandler) ) {		
 		sieve_error_handler_free(&ehandler);
 		t_pop();
 		return 1;
 	}
 
+	i_error("sieve: Failed to execute script");
+	
 	sieve_error_handler_free(&ehandler);
 	t_pop();
 	return -1;
