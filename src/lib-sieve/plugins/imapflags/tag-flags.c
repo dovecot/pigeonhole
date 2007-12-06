@@ -138,6 +138,7 @@ static bool seff_flags_read_context
 	const struct sieve_runtime_env *renv, sieve_size_t *address,
 	void **se_context)
 {
+	bool result = TRUE;
 	pool_t pool = sieve_result_pool(renv->result);
 	struct seff_flags_context *ctx;
 	ARRAY_DEFINE(keywords, const char *);
@@ -157,7 +158,7 @@ static bool seff_flags_read_context
 	
 	/* Unpack */
 	flags_item = NULL;
-	while ( sieve_coded_stringlist_next_item(flag_list, &flags_item) && 
+	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flags_item)) && 
 		flags_item != NULL ) {
 		const char *flag;
 		struct ext_imapflags_iter flit;
@@ -190,7 +191,7 @@ static bool seff_flags_read_context
 
 	t_pop();
 	
-	return TRUE;
+	return result;
 }
 
 static void seff_flags_print

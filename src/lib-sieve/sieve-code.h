@@ -1,9 +1,10 @@
 #ifndef __SIEVE_CODE_H
 #define __SIEVE_CODE_H
 
-#include <lib.h>
-#include <buffer.h>
-#include <array.h>
+#include "lib.h"
+#include "buffer.h"
+#include "mempool.h"
+#include "array.h"
 
 #include "sieve-common.h"
 
@@ -11,12 +12,20 @@
 
 struct sieve_coded_stringlist;
 
-bool sieve_coded_stringlist_next_item(struct sieve_coded_stringlist *strlist, string_t **str);
-void sieve_coded_stringlist_reset(struct sieve_coded_stringlist *strlist);
+bool sieve_coded_stringlist_next_item
+	(struct sieve_coded_stringlist *strlist, string_t **str);
+void sieve_coded_stringlist_reset
+	(struct sieve_coded_stringlist *strlist);
+bool sieve_coded_stringlist_read_all
+	(struct sieve_coded_stringlist *strlist, pool_t pool,
+		const char * const **list_r);
 
-inline int sieve_coded_stringlist_get_length(struct sieve_coded_stringlist *strlist);
-inline sieve_size_t sieve_coded_stringlist_get_end_address(struct sieve_coded_stringlist *strlist);
-inline sieve_size_t sieve_coded_stringlist_get_current_offset(struct sieve_coded_stringlist *strlist);
+inline int sieve_coded_stringlist_get_length
+	(struct sieve_coded_stringlist *strlist);
+inline sieve_size_t sieve_coded_stringlist_get_end_address
+	(struct sieve_coded_stringlist *strlist);
+inline sieve_size_t sieve_coded_stringlist_get_current_offset
+	(struct sieve_coded_stringlist *strlist);
 
 /* Operand: argument to an opcode */
 

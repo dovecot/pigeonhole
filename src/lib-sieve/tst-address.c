@@ -132,6 +132,7 @@ static bool tst_address_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
+	bool result = TRUE;
 	const struct sieve_comparator *cmp = &i_octet_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
 	const struct sieve_address_part *addrp = &all_address_part;
@@ -167,7 +168,8 @@ static bool tst_address_opcode_execute
 	/* Iterate through all requested headers to match */
 	hdr_item = NULL;
 	matched = FALSE;
-	while ( !matched && sieve_coded_stringlist_next_item(hdr_list, &hdr_item) && hdr_item != NULL ) {
+	while ( !matched && (result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
+		&& hdr_item != NULL ) {
 		const char *const *headers;
 			
 		if ( mail_get_headers_utf8(renv->msgdata->mail, str_c(hdr_item), &headers) >= 0 ) {	
@@ -184,7 +186,8 @@ static bool tst_address_opcode_execute
 
 	t_pop();
 	
-	sieve_interpreter_set_test_result(renv->interp, matched);
+	if ( result )
+		sieve_interpreter_set_test_result(renv->interp, matched);
 	
-	return TRUE;
+	return result;
 }

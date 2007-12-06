@@ -97,6 +97,7 @@ static bool tst_exists_opcode_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	bool result = TRUE;
 	struct sieve_coded_stringlist *hdr_list;
 	string_t *hdr_item;
 	bool matched;
@@ -114,8 +115,8 @@ static bool tst_exists_opcode_execute
 	/* Iterate through all requested headers to match */
 	hdr_item = NULL;
 	matched = FALSE;
-	while ( !matched && sieve_coded_stringlist_next_item(hdr_list, &hdr_item) && 
-		hdr_item != NULL ) {
+	while ( !matched && (result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
+		&& hdr_item != NULL ) {
 		const char *const *headers;
 			
 		if ( mail_get_headers_utf8
@@ -127,7 +128,8 @@ static bool tst_exists_opcode_execute
 	
 	t_pop();
 	
-	sieve_interpreter_set_test_result(renv->interp, matched);
+	if ( result )
+		sieve_interpreter_set_test_result(renv->interp, matched);
 	
-	return TRUE;
+	return result;
 }

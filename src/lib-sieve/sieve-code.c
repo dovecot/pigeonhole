@@ -92,6 +92,32 @@ inline sieve_size_t sieve_coded_stringlist_get_current_offset
 	return strlist->current_offset;
 }
 
+bool sieve_coded_stringlist_read_all
+(struct sieve_coded_stringlist *strlist, pool_t pool,
+	const char * const **list_r)
+{
+	bool result = FALSE;
+	ARRAY_DEFINE(items, const char *);
+	string_t *item;
+	
+	sieve_coded_stringlist_reset(strlist);
+	
+	p_array_init(&items, pool, 4);
+	
+	item = NULL;
+	while ( (result=sieve_coded_stringlist_next_item(strlist, &item)) && 
+		item != NULL ) {
+		const char *stritem = p_strdup(pool, str_c(item));
+		
+		array_append(&items, &stritem, 1);
+	}
+	
+	(void)array_append_space(&items);
+	*list_r = array_idx(&items, 0);
+
+	return result;
+}
+
 /*
  * Operand functions
  */
@@ -481,6 +507,7 @@ struct sieve_coded_stringlist *sieve_opr_stringlist_read
 static bool opr_stringlist_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
 {
+	bool result = TRUE;
 	struct sieve_coded_stringlist *strlist;
 	
 	if ( (strlist=opr_stringlist_read(denv->sbin, address)) != NULL ) {
@@ -493,14 +520,15 @@ static bool opr_stringlist_dump
 		sieve_code_mark_specific(denv,
 			sieve_coded_stringlist_get_current_offset(strlist));
 		sieve_code_descend(denv);
-		while ( sieve_coded_stringlist_next_item(strlist, &stritem) && stritem != NULL ) {	
+		while ( (result=sieve_coded_stringlist_next_item(strlist, &stritem)) && 
+			stritem != NULL ) {	
 			_dump_string(denv, stritem);
 			sieve_code_mark_specific(denv,
 				sieve_coded_stringlist_get_current_offset(strlist));  
 		}
 		sieve_code_ascend(denv);
 		
-		return TRUE;
+		return result;
 	}
 	
 	return FALSE;
