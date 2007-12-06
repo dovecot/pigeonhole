@@ -203,13 +203,13 @@ bool sieve_generate_block
 {
 	struct sieve_ast_node *command;
 
-	t_push();	
-	command = sieve_ast_command_first(block);
-	while ( command != NULL ) {	
-		sieve_generate_command(generator, command);	
-		command = sieve_ast_command_next(command);
-	}		
-	t_pop();
+	T_FRAME(	
+		command = sieve_ast_command_first(block);
+		while ( command != NULL ) {	
+			sieve_generate_command(generator, command);	
+			command = sieve_ast_command_next(command);
+		}		
+	);
 	
 	return TRUE;
 }

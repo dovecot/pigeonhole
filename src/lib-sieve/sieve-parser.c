@@ -41,10 +41,10 @@ inline static void sieve_parser_error
 	/* Don't report a parse error if the lexer complained already */ 
 	if ( sieve_lexer_current_token(parser->lexer) != STT_ERROR )  
 	{
-		sieve_verror(parser->ehandler, 
+		T_FRAME(sieve_verror(parser->ehandler, 
 			t_strdup_printf("%s:%d", parser->scriptname,
 			sieve_lexer_current_line(parser->lexer)),
-			fmt, args); 
+			fmt, args)); 
 	}
 	
 	va_end(args);
@@ -56,10 +56,10 @@ inline static void sieve_parser_warning
 	va_list args;
 	va_start(args, fmt);
 
-	sieve_vwarning(parser->ehandler, 
+	T_FRAME(sieve_vwarning(parser->ehandler, 
 		t_strdup_printf("%s:%d", parser->scriptname,
 		sieve_lexer_current_line(parser->lexer)),
-		fmt, args);
+		fmt, args));
 		
 	va_end(args);
 } 

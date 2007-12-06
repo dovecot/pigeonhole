@@ -175,16 +175,14 @@ static void sieve_logfile_vprintf
 	
 	if ( ehandler->stream == NULL ) return;
 	
-	t_push();
+	T_FRAME(
+		outbuf = t_str_new(256);
+		str_printfa(outbuf, "%s: %s: ", location, prefix);	
+		str_vprintfa(outbuf, fmt, args);
+		str_append(outbuf, ".\n");
 	
-	outbuf = t_str_new(256);
-	str_printfa(outbuf, "%s: %s: ", location, prefix);	
-	str_vprintfa(outbuf, fmt, args);
-	str_append(outbuf, ".\n");
-	
-	o_stream_send(ehandler->stream, str_data(outbuf), str_len(outbuf));
-	
-	t_pop();
+		o_stream_send(ehandler->stream, str_data(outbuf), str_len(outbuf));
+	);
 }
 
 inline static void sieve_logfile_printf

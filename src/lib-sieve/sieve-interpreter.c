@@ -109,7 +109,9 @@ void sieve_runtime_error
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_verror(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
+	T_FRAME(
+		sieve_verror(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
+	);
 	va_end(args);
 }
 
@@ -119,7 +121,9 @@ void sieve_runtime_warning
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_vwarning(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
+	T_FRAME(
+		sieve_vwarning(runenv->interp->ehandler, _get_location(runenv), fmt, args);
+	); 
 	va_end(args);
 }
 
@@ -129,7 +133,9 @@ void sieve_runtime_log
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_vinfo(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
+	T_FRAME(
+		sieve_vinfo(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
+	);
 	va_end(args);
 }
 

@@ -345,30 +345,28 @@ bool sieve_address_match
 {
 	bool matched = FALSE;
 	const struct message_address *addr;
-	
-	t_push();
-	
-	addr = message_address_parse
-		(pool_datastack_create(), (const unsigned char *) data, 
-			strlen(data), 256, FALSE);
-	
-	while (!matched && addr != NULL) {
-		if (addr->domain != NULL) {
-			/* mailbox@domain */
-			const char *part;
-			
-			i_assert(addr->mailbox != NULL);
 
-			part = addrp->extract_from(addr);
-			
-			if ( part != NULL && sieve_match_value(mctx, part) )
-				matched = TRUE;				
-		} 
-
-		addr = addr->next;
-	}
+	T_FRAME(
+		addr = message_address_parse
+			(pool_datastack_create(), (const unsigned char *) data, 
+				strlen(data), 256, FALSE);
 	
-	t_pop();
+		while (!matched && addr != NULL) {
+			if (addr->domain != NULL) {
+				/* mailbox@domain */
+				const char *part;
+			
+				i_assert(addr->mailbox != NULL);
+
+				part = addrp->extract_from(addr);
+			
+				if ( part != NULL && sieve_match_value(mctx, part) )
+					matched = TRUE;				
+			} 
+
+			addr = addr->next;
+		}
+	);
 	
 	return matched;
 }

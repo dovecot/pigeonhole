@@ -40,9 +40,9 @@ void sieve_validator_warning
 	va_list args;
 	va_start(args, fmt);
 	
-	sieve_vwarning(validator->ehandler, 
+	T_FRAME(sieve_vwarning(validator->ehandler, 
 		t_strdup_printf("%s:%d", sieve_ast_scriptname(validator->ast),
-			sieve_ast_node_line(node)), fmt, args); 
+			sieve_ast_node_line(node)), fmt, args)); 
 	
 	va_end(args);
 }
@@ -54,9 +54,9 @@ void sieve_validator_error
 	va_list args;
 	va_start(args, fmt);
 	
-	sieve_verror(validator->ehandler, 
+	T_FRAME(sieve_verror(validator->ehandler, 
 		t_strdup_printf("%s:%d", sieve_ast_scriptname(validator->ast),
-		sieve_ast_node_line(node)), fmt, args); 
+		sieve_ast_node_line(node)), fmt, args)); 
 	
 	va_end(args);
 }
@@ -751,13 +751,13 @@ static bool sieve_validate_block(struct sieve_validator *validator, struct sieve
 	bool result = TRUE;
 	struct sieve_ast_node *command;
 
-	t_push();	
-	command = sieve_ast_command_first(block);
-	while ( command != NULL ) {	
-		result = sieve_validate_command(validator, command) && result;	
-		command = sieve_ast_command_next(command);
-	}		
-	t_pop();
+	T_FRAME(	
+		command = sieve_ast_command_first(block);
+		while ( command != NULL ) {	
+			result = sieve_validate_command(validator, command) && result;	
+			command = sieve_ast_command_next(command);
+		}		
+	);
 	
 	return result;
 }

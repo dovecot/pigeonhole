@@ -65,21 +65,19 @@ static void emit_string_list_operand
 	void *list_context;
 	const struct sieve_ast_argument *stritem;
   
-	t_push();
-  
-	sieve_opr_stringlist_emit_start
-		(sbin, sieve_ast_strlist_count(strlist), &list_context);
+	T_FRAME(
+ 		sieve_opr_stringlist_emit_start
+			(sbin, sieve_ast_strlist_count(strlist), &list_context);
 
-	stritem = sieve_ast_strlist_first(strlist);
-	while ( stritem != NULL ) {
-		sieve_opr_stringlist_emit_item
-			(sbin, list_context, sieve_ast_strlist_str(stritem));
-		stritem = sieve_ast_strlist_next(stritem);
-	}
+		stritem = sieve_ast_strlist_first(strlist);
+		while ( stritem != NULL ) {
+			sieve_opr_stringlist_emit_item
+				(sbin, list_context, sieve_ast_strlist_str(stritem));
+			stritem = sieve_ast_strlist_next(stritem);
+		}
 
-	sieve_opr_stringlist_emit_end(sbin, list_context);
-
-	t_pop();
+		sieve_opr_stringlist_emit_end(sbin, list_context);
+	);
 }
 
 static bool arg_string_list_generate

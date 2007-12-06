@@ -193,8 +193,10 @@ static bool ext_reject_opcode_execute
 
 	t_push();
 	
-	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
+	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) ) {
+		t_pop();
 		return FALSE;
+	}
 
 	if ( !sieve_opr_string_read(renv->sbin, address, &reason) ) {
 		t_pop();

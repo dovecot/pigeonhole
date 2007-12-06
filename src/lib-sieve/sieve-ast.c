@@ -583,13 +583,13 @@ void sieve_ast_unparse(struct sieve_ast *ast) {
 
 	printf("Unparsing Abstract Syntax Tree:\n");
 
-	t_push();	
-	command = sieve_ast_command_first(sieve_ast_root(ast));
-	while ( command != NULL ) {	
-		sieve_ast_unparse_command(command, 0);
-		command = sieve_ast_command_next(command);
-	}		
-	t_pop();
+	T_FRAME(	
+		command = sieve_ast_command_first(sieve_ast_root(ast));
+		while ( command != NULL ) {	
+			sieve_ast_unparse_command(command, 0);
+			command = sieve_ast_command_next(command);
+		}		
+	);
 }
 
 

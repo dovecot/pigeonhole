@@ -8,6 +8,9 @@
 
 struct sieve_error_handler;
 
+/* For these functions it is the responsibility of the caller to
+ * manage the datastack.
+ */
 void sieve_verror
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args);
@@ -35,7 +38,7 @@ inline static void sieve_error
 	va_list args;
 	va_start(args, fmt);
 	
-	sieve_verror(ehandler, location, fmt, args);
+	T_FRAME(sieve_verror(ehandler, location, fmt, args));
 	
 	va_end(args);
 }
@@ -47,7 +50,7 @@ inline static void sieve_warning
 	va_list args;
 	va_start(args, fmt);
 	
-	sieve_vwarning(ehandler, location, fmt, args);
+	T_FRAME(sieve_vwarning(ehandler, location, fmt, args));
 	
 	va_end(args);
 }
@@ -59,7 +62,7 @@ inline static void sieve_info
 	va_list args;
 	va_start(args, fmt);
 	
-	sieve_vinfo(ehandler, location, fmt, args);
+	T_FRAME(sieve_vinfo(ehandler, location, fmt, args));
 	
 	va_end(args);
 }
