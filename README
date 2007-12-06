@@ -169,15 +169,18 @@ RESULT: sieve-result.c sieve-actions.c
 TODO
 ----
 
-In order of descending priority
+In order of descending priority/precedence
 * Implement dropping errors in the user's mailbox as a mail message.
 * Limit the maximum number of errors. 
 * Finish implementing all extensions supported by cmusieve
 * Verify outgoing mail addresses
 * Allow the currently in-memory byte-code to be stored as a script binary
 * Use mmap for the binary script representation. 
+* Add development documentation, i.e. comment on library functions and document
+  the binary and byte-code format. 
 * Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
   Character Sets). 
+* Get rid of all <stdio.h> printf()s in the library. 
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...
 * Full standards compliance review for the engine and all fully implemented 
