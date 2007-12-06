@@ -1,6 +1,5 @@
-WARNING: This sieve implementation is highly experimental. In addition to 
-the usual GPL disclaimer I urge you not to use this for any important mail
-just yet!
+WARNING: This sieve implementation is highly experimental. In addition to the 
+usual GPL disclaimer I urge you not to use this for any important mail just yet!
 
 Compiling and Configuring
 -------------------------
@@ -10,25 +9,24 @@ Refer to INSTALL file.
 Using
 -----
 
-The main purpose of this package is to replace the existing cmusieve 
-plugin that is currently available for dovecot's deliver. With this 
-respect it is currently not very different from the cmusieve 
-implementation. 
+The main purpose of this package is to replace the existing cmusieve plugin that 
+is currently available for dovecot's deliver. With this respect it is currently 
+not very different from the cmusieve implementation. 
 
-Unlike cmusieve, this sieve module logs runtime errors to <scriptfile>.log 
-if it can and not <scriptfile>.exe. It appends new timestamped log entries 
-to the end of the logfile. I currently didn't bother to implement log 
-rotation, so keep this in mind. Some development-related debug output is
-sent to stderr at all times, this will be removed when this project matures. 
+Unlike cmusieve, this sieve module logs runtime errors to <scriptfile>.log if it 
+can and not '<scriptfile>.err'. It appends new timestamped log entries to the 
+end of the logfile. I currently didn't bother to implement log rotation, so keep 
+this in mind. Some development-related debug output is sent to stderr/stdout at 
+all times, this will be removed when this project matures. 
 
-To test the sieve engine outside deliver it is useful to execute the 
-binaries that exist in the src/sieve-bin/ directory:
+To test the sieve engine outside deliver it is useful to execute the binaries 
+that exist in the src/sieve-bin/ directory:
 
 --
 
 sievec <sieve-file>
 
-Compiles the script and produces various dumps of intermittent compilation
+Compiles the script and produces various dumps of intermittent compilation 
 results. This already works pretty good for all supported features.
 
 -- 
@@ -36,10 +34,10 @@ results. This already works pretty good for all supported features.
 sieve-test [-r <recipient address>][-s <envelope sender>]
            [-m <mailbox>][-d <dump filename>] <scriptfile> <mailfile>
 
-Reads mail message from the specified mailfile and executes the specified 
-sieve script to produce a verdict. This prints an execution dump with the 
-instructions encountered during execution and finally it prints a list of 
-actions that would have been performed on this message.
+Reads mail message from the specified mailfile and executes the specified sieve 
+script to produce a verdict. This prints an execution dump with the instructions 
+encountered during execution and finally it prints a list of actions that would 
+have been performed on this message.
 
 Options:
 	-r  envelope recipient address
@@ -68,18 +66,18 @@ Features
 
 * Well-structured 3-stage compiler; uses dovecot framework and avoids using
   lex/yucc. Compiler doesn't bail on first error, but tries to find more.
-* Highly extendable with new sieve capabilities. This keeps the possibility
-  of plugins in mind. Should eventually provide the necessary infrastructure for 
-  at least all currently known (proposed) extensions.  
+* Highly extendable with new sieve capabilities. This keeps the possibility of 
+  plugins in mind. Should eventually provide the necessary infrastructure for at 
+  least all currently known (proposed) extensions.  
 
 What works:
 * Scripts can be parsed, the grammar is fully supported. 
-* Script validation (contextual analysis) works almost completely. Outgoing 
-  mail addresses are not verified yet as required. 
+* Script validation (contextual analysis) works almost completely. Outgoing mail 
+  addresses are not verified yet as required. 
 * Script code generation works for most core commands. Comparators, match-types 
   and address-part modifiers already work.
-* Interpreter runs and dumps core commands and tests. Comparators, match-types and 
-  address-part modifiers have the desired effect. Most test commands work as 
+* Interpreter runs and dumps core commands and tests. Comparators, match-types 
+  and address-part modifiers have the desired effect. Most test commands work as 
   specified (see list below).
 * The interpreter produces a result containing a set of actions to execute.
   Duplicate actions can now be avoided and conflicts can be detected. 
@@ -141,41 +139,59 @@ PARSER: sieve-parser.c, sieve-lexer.c
   (sieve-ast.c). 
 
 VALIDATOR: sieve-validator.c
-  Performs contextual analysis on the ast produced by the parser. This 
-  checks for the validity of commands, tests and arguments. The ast is 
-  decorated with any context data acquired during the process. This 
-  context is used by the last compiler stage. 
+  Performs contextual analysis on the ast produced by the parser. This checks 
+  for the validity of commands, tests and arguments. Also, the ast is decorated 
+  with any context data acquired during the process. This context is used by the 
+  last compiler stage. 
 
 GENERATOR: sieve-generator.c
-  This last compiler stage uses a visitor pattern to wander through the ast
-  and produces sieve byte code (sieve-binary.c).
+  This last compiler stage uses a visitor pattern to wander through the ast and 
+  produces sieve byte code (sieve-binary.c).
 
 The resulting (in-memory) binary can be fed to the interpreter for execution:
 
 INTERPRETER: sieve-interpreter.c 
   The interpreter executes the byte code and produces a sieve_result object. 
   This result is no more than just a collection of actions to be performed. 
+  During execution, action commands add actions to the result. Duplates and 
+  conflicts between actions are handled in this execution phase.
+
+RESULT: sieve-result.c sieve-actions.c
+  When the result is to be executed, it needs no further checking, as the 
+  validity of the result was verified during interpretation already. The 
+  result's actions are executed in a transaction-like atomic manner. If one of 
+  the actions fails, the whole transaction is rolled back meaning that either 
+  everything succeeds or everything fails. This is only possible to some extent:
+  transmitted responses can of course not be rolled back. However, these are 
+  executed in the commit phase, meaning that they will only be performed if all
+  other actions were successful. 
 
 TODO
 ----
 
-* Further implement error handling and limit the maximum number of errors. 
+In order of descending priority
+* Implement dropping errors in the user's mailbox as a mail message.
+* Limit the maximum number of errors. 
+* Finish implementing all extensions supported by cmusieve
 * Verify outgoing mail addresses
+* Allow the currently in-memory byte-code to be stored as a script binary
+* Use mmap for the binary script representation. 
+* Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
+  Character Sets). 
+* Full security review. Enforce limits on number of created objects, script 
+  size, execution time, etc...
+* Full standards compliance review for the engine and all fully implemented 
+  sieve extensions.
+* Make the sieve plugins true plugins and add a SIEVE_PLUGINS config item to the
+  lda-sieve plugin. 
+* ## MAKE A FIRST RELEASE ##
 * Resolve code duplication introduced for handling address-parts and match-types
   in different command implementations.
 * Resolve code duplication amongst comparator, address-part and match-type 
   support as much as possible. 
-* Allow the currently in-memory byte-code to be stored as a script binary
-* Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
-  Character Sets). 
-* Implement a faster substring search algorithm to make sopport for the body 
-  extension a less bad idea.  
 * Give the binary format some more thought, it is currently quite rough and
   to the point. 
-* Full standards compliance review for the engine and all fully implemented sieve
-  extensions.
-* Full security review. Enforce limits on number of created objects, script size,
-  execution time, etc...
+* Implement a faster substring search algorithm to make sopport for the body 
+  extension a less bad idea.  
 * Automate script tests; i.e. build a test suite.
-* Use mmap for the binary script representation. 
 
