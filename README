@@ -1,19 +1,37 @@
-Compilation
------------
+WARNING: This sieve implementation is highly experimental. In addition to 
+the usual GPL disclaimer I urge you not to use this for any important mail
+just yet!
+
+Compiling and Configuring
+-------------------------
 
 Refer to INSTALL file.
 
-Installation
-------------
+Using
+-----
 
-This package is currently not built for installation. To test the sieve 
-engine it is currently only useful to execute the binaries in the 
-src/sieve-bin/ directory:
+The main purpose of this package is to replace the existing cmusieve 
+plugin that is currently available for dovecot's deliver. With this 
+respect it is currently not very different from the cmusieve 
+implementation. 
+
+Unlike cmusieve, this sieve module logs runtime errors to <scriptfile>.log 
+if it can and not <scriptfile>.exe. It appends new timestamped log entries 
+to the end of the logfile. I currently didn't bother to implement log 
+rotation, so keep this in mind. Some development-related debug output is
+sent to stderr at all times, this will be removed when this project matures. 
+
+To test the sieve engine outside deliver it is useful to execute the 
+binaries that exist in the src/sieve-bin/ directory:
+
+--
 
 sievec <sieve-file>
 
 Compiles the script and produces various dumps of intermittent compilation
 results. This already works pretty good for all supported features.
+
+-- 
 
 sieve-test [-r <recipient address>][-s <envelope sender>]
            [-m <mailbox>][-d <dump filename>] <scriptfile> <mailfile>
@@ -29,6 +47,14 @@ Options:
 	-m	the mailbox where the keep action should store
 	-d	causes a dump of the generated code to be written to the specified
 		file. Using - as filename causes the dump to be written to stdout
+
+--
+
+sieve-exec
+
+Currently undocumented.
+
+--
 
 Various example scripts are bundled in the directory 'sieve'.
 
@@ -58,6 +84,9 @@ What works:
 * The interpreter produces a result containing a set of actions to execute.
   Duplicate actions can now be avoided and conflicts can be detected. 
 * Execution is now also supported for all core commands.  
+* This sieve implementation is available as an alternative plugin to dovecot's 
+  deliver. Hopefully this will soon be able to replace the current cmusieve 
+  implementation.
 
 Base tests and their implementation status:
 	false, true: trivial, full
@@ -131,8 +160,6 @@ TODO
 ----
 
 * Further implement error handling and limit the maximum number of errors. 
-* Produce a substitute sieve plugin for deliver (currently a stub and not 
-  part of the make process)
 * Verify outgoing mail addresses
 * Resolve code duplication introduced for handling address-parts and match-types
   in different command implementations.

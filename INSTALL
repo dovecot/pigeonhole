@@ -1,3 +1,7 @@
+WARNING: This sieve implementation is highly experimental. In addition to
+the usual GPL disclaimer I urge you not to use this for any important mail
+just yet!
+
 Compiling
 ---------
 
@@ -8,10 +12,13 @@ if the Dovecot versions are the same, but it's not guaranteed.
 
 ./configure --with-dovecot=../dovecot-1.0
 make
-
-# NOT INSTALLABLE YET, refer to README
-#sudo make install
+sudo make install
 
 Configuring
 -----------
 
+Currently identical to cmusieve module. The name of the module is 'sieve', 
+however, and not 'cmusieve'. For a detailed description on installing the 
+cmusieve plugin for deliver refer to the dovecot wiki:
+
+http://wiki.dovecot.org/LDA/Sieve
