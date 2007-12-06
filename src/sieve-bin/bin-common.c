@@ -72,6 +72,7 @@ struct sieve_binary *bin_compile_sieve_script(const char *filename)
 	struct sieve_binary *sbin;
 	
 	ehandler = sieve_stderr_ehandler_create();
+	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	if ( (sbin = sieve_compile(filename, ehandler)) == NULL ) {
 		sieve_error_handler_free(&ehandler);

@@ -157,7 +157,7 @@ static bool ext_fileinto_opcode_execute
 		return FALSE;
 
 	t_push();
-
+	
 	if ( !sieve_opr_string_read(renv->sbin, address, &folder) ) {
 		t_pop();
 		return FALSE;

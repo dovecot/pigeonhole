@@ -211,6 +211,33 @@ bool sieve_result_print(struct sieve_result *result)
 	return TRUE;
 }
 
+static bool sieve_result_implicit_keep(struct sieve_result *result)
+{	
+	bool success = TRUE;
+	bool dummy = TRUE;
+	struct act_store_context ctx;
+	void *tr_context;
+	
+	ctx.folder = result->action_env.mailenv->inbox;
+	
+	/* FIXME: Handle persistent side-effects for the (implicit) keep action */
+	
+	success = act_store.start
+		(&act_store, &result->action_env, (void *) &ctx, &tr_context);
+
+	success = success && act_store.execute
+		(&act_store, &result->action_env, tr_context);
+	
+	if ( success ) {	
+		return act_store.commit
+			(&act_store, &result->action_env, tr_context, &dummy); 
+	}
+		
+	act_store.rollback(&act_store, &result->action_env, tr_context, success);
+
+	return FALSE;
+}
+
 bool sieve_result_execute
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,
 		const struct sieve_mail_environment *menv)
@@ -225,7 +252,7 @@ bool sieve_result_execute
 	
 	/* Transaction start */
 	
-	printf("\nTransaction start:\n");
+	printf("\nTransaction start:\n"); /* REMOVEME */
 	
 	rac = result->first_action;
 	while ( success && rac != NULL ) {
@@ -241,7 +268,7 @@ bool sieve_result_execute
 	
 	/* Transaction execute */
 	
-	printf("\nTransaction execute:\n");
+	printf("\nTransaction execute:\n"); /* REMOVEME */
 	
 	last_attempted = rac;
 	rac = result->first_action;
@@ -282,7 +309,7 @@ bool sieve_result_execute
 	}
 	
 	/* Transaction commit/rollback */
-	if ( success )
+	if ( success ) /* REMOVEME */
 		printf("\nTransaction commit:\n");
 	else
 		printf("\nTransaction rollback:\n");
@@ -334,9 +361,25 @@ bool sieve_result_execute
 		rac = rac->next;	
 	}
 	
+	/* REMOVEME */
 	printf("\nTransaction result: %s\n", commit_ok ? "success" : "failed");
+
+	/* Return value indicates whether the caller should attempt an implicit keep 
+	 * of its own. So, if the above transaction fails, but the implicit keep below
+	 * succeeds, the return value is still true. An error is/should be logged 
+	 * though.
+	 */
 	
-	return commit_ok;
+	/* Execute implicit keep if the transaction failed or when the implicit keep
+	 * was not canceled during transaction. 
+	 */
+	if ( !commit_ok || implicit_keep ) {
+		printf("Executing implicit keep\n");
+		return sieve_result_implicit_keep(result);
+	}
+	
+	/* Unconditional success */
+	return TRUE;
 }
 
 /*

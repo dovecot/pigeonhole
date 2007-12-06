@@ -186,9 +186,13 @@ int main(int argc, char **argv)
 	mailenv.duplicate_check = duplicate_check;
 	
 	ehandler = sieve_stderr_ehandler_create();
+	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	/* Run */
-	sieve_execute(sbin, &msgdata, &mailenv, ehandler);
+	if ( sieve_execute(sbin, &msgdata, &mailenv, ehandler) )
+		i_info("Final result: success\n");
+	else
+		i_info("Final result: failed (caller please handle implicit keep!)\n");
 
 	sieve_error_handler_free(&ehandler);
 
