@@ -382,6 +382,7 @@ static bool ext_vacation_opcode_execute
 	int opt_code = 1;
 	sieve_size_t days = 7;
 	bool mime = FALSE;
+	struct sieve_coded_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
 		
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
@@ -393,19 +394,25 @@ static bool ext_vacation_opcode_execute
 			case 0:
 				break;
 			case OPT_DAYS:
-				if ( !sieve_opr_number_read(renv->sbin, address, &days) ) return FALSE;
+				if ( !sieve_opr_number_read(renv->sbin, address, &days) ) 
+					return FALSE;
 				break;
 			case OPT_SUBJECT:
-				if ( !sieve_opr_string_read(renv->sbin, address, &subject) ) return FALSE;
+				if ( !sieve_opr_string_read(renv->sbin, address, &subject) ) 
+					return FALSE;
 				break;
 			case OPT_FROM:
-				if ( !sieve_opr_string_read(renv->sbin, address, &from) ) return FALSE;
+				if ( !sieve_opr_string_read(renv->sbin, address, &from) ) 
+					return FALSE;
 				break;
 			case OPT_HANDLE: 
-				if ( !sieve_opr_string_read(renv->sbin, address, &handle) ) return FALSE;
+				if ( !sieve_opr_string_read(renv->sbin, address, &handle) ) 	
+					return FALSE;
 				break;
 			case OPT_ADDRESSES:
-				if ( sieve_opr_stringlist_read(renv->sbin, address) == NULL ) return FALSE;
+				if ( (addresses=sieve_opr_stringlist_read(renv->sbin, address)) 
+					== NULL ) 
+					return FALSE;
 				break;
 			case OPT_MIME:
 				mime = TRUE;
@@ -425,14 +432,16 @@ static bool ext_vacation_opcode_execute
 	pool = sieve_result_pool(renv->result);
 	act = p_new(pool, struct act_vacation_context, 1);
 	act->reason = p_strdup(pool, str_c(reason));
+	act->days = days;
+	act->mime = mime;
 	if ( subject != NULL )
 		act->subject = p_strdup(pool, str_c(subject));
 	if ( from != NULL )
 		act->from = p_strdup(pool, str_c(from));
 	if ( handle != NULL )
 		act->handle = p_strdup(pool, str_c(handle));
-	act->days = days;
-	act->mime = mime;
+	if ( addresses != NULL )
+		sieve_coded_stringlist_read_all(addresses, pool, &(act->addresses));
 	
 	/* FIXME: :addresses is ignored */
 	
@@ -656,7 +665,7 @@ static bool act_vacation_commit
   }    
 	
 	/* Are we perhaps trying to respond to ourselves ? 
-	 * (FIXME: verify this to :addresses as well)
+	 * (FIXME: verify this to :addresses as well?)
 	 */
 	if ( strcmp(msgdata->return_path, msgdata->to_address) == 0 ) {
 		sieve_result_log(aenv, "discarded vacation reply to own address");
@@ -727,7 +736,9 @@ static bool act_vacation_commit
 		return TRUE;				
 	} 
 	
-	/* Is the original message directly addressed to me? */
+	/* Is the original message directly addressed to the user or the addresses
+	 * specified using the :addresses tag? 
+	 */
 	hdsp = _my_address_headers;
 	while ( *hdsp != NULL ) {
 		if ( mail_get_headers_utf8
@@ -735,6 +746,18 @@ static bool act_vacation_commit
 			
 			if ( _contains_my_address(headers, msgdata->to_address) ) 
 				break;
+			
+			if ( ctx->addresses != NULL ) {
+				bool found = FALSE;
+				const char * const *my_address = ctx->addresses;
+		
+				while ( !found && *my_address != NULL ) {
+					found = _contains_my_address(headers, *my_address);
+					my_address++;
+				}
+				
+				if ( found ) break;
+			}
 		}
 		hdsp++;
 	}	
