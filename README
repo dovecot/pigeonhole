@@ -116,7 +116,7 @@ Extensions and their implementation status:
     relational: full 
     regex: full, but suboptimal
     vacation: almost complete; no support for required References header
-              and :addresses and :mime are currently ignored.
+              and :addresses is currently ignored.
     imapflags: flag management works, but flags are not stored 
     copy: full
     include: planned (* first leave out variables support)  

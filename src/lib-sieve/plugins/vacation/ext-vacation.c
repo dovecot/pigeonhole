@@ -4,7 +4,7 @@
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-vacation-07
  * Implementation: almost complete, the required sopport for  Refences header 
- *   is missing and :addresses and :mime are ignored.
+ *   is missing and :addresses is ignored.
  * Status: experimental, largely untested
  * 
  */
@@ -209,17 +209,6 @@ static bool cmd_vacation_validate_stringlist_tag
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
 
-	return TRUE;
-}
-
-static bool cmd_vacation_validate_mime_tag
-	(struct sieve_validator *validator ATTR_UNUSED, 
-	struct sieve_ast_argument **arg ATTR_UNUSED, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
-{
-	/* FIXME: currently not generated */
-	*arg = sieve_ast_arguments_detach(*arg,1);
-		
 	return TRUE;
 }
 
