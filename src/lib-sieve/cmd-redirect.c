@@ -1,4 +1,5 @@
 #include "lib.h"
+#include "ioloop.h"
 #include "str-sanitize.h"
 #include "istream.h"
 #include "istream-header-filter.h"
@@ -13,6 +14,10 @@
 #include "sieve-result.h"
 
 #include <stdio.h>
+
+/* Config */
+
+#define CMD_REDIRECT_DUPLICATE_KEEP (3600 * 24)
 
 /* Forward declarations */
 
@@ -238,8 +243,31 @@ static bool act_redirect_commit
 	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
 {
 	struct act_redirect_context *ctx = (struct act_redirect_context *) tr_context;
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_mail_environment *mailenv = aenv->mailenv;
+	const char *dupeid;
 	
+	/* Prevent mail loops if possible */
+  dupeid = msgdata->id == NULL ? 
+  	NULL : t_strdup_printf("%s-%s", msgdata->id, ctx->to_address);
+	if (dupeid != NULL) {
+	  /* Check whether we've seen this message before */
+  	if (mailenv->duplicate_check(dupeid, strlen(dupeid), mailenv->username)) {
+      sieve_result_log(aenv, "discarded duplicate forward to <%s>",
+				str_sanitize(ctx->to_address, 80));
+			return TRUE;
+  	}
+  }
+	
+	/* Try to forward the message */
 	if ( act_redirect_send(aenv, ctx) ) {
+	
+		/* Mark this message id as forwarded to the specified destination */
+		if (dupeid != NULL) {
+			mailenv->duplicate_mark(dupeid, strlen(dupeid), mailenv->username,
+				ioloop_time + CMD_REDIRECT_DUPLICATE_KEEP);
+		}
+	
 		sieve_result_log(aenv, "forwarded to <%s>", 
 			str_sanitize(ctx->to_address, 80));	
 
