@@ -151,7 +151,7 @@ void sieve_dump(struct sieve_binary *sbin, struct ostream *stream)
 	sieve_code_dumper_free(dumpr);
 }
 
-bool sieve_test
+int sieve_test
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
 		const struct sieve_mail_environment *menv, 
 		struct sieve_error_handler *ehandler) 	
@@ -159,19 +159,19 @@ bool sieve_test
 	struct sieve_result *sres = sieve_result_create(ehandler);
 	struct sieve_interpreter *interp = 
 		sieve_interpreter_create(sbin, ehandler);			
-	bool result = TRUE;
+	int ret = 0;
 							
-	result = sieve_interpreter_run(interp, msgdata, menv, &sres);
+	ret = sieve_interpreter_run(interp, msgdata, menv, &sres);
 	
-	if ( result ) 
-		sieve_result_print(sres);
+	if ( ret > 0 ) 
+		ret = sieve_result_print(sres);
 	
 	sieve_interpreter_free(interp);
 	sieve_result_unref(&sres);
-	return result;
+	return ret;
 }
 
-bool sieve_execute
+int sieve_execute
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
 		const struct sieve_mail_environment *menv,
 		struct sieve_error_handler *ehandler) 	
@@ -179,13 +179,13 @@ bool sieve_execute
 	struct sieve_result *sres = NULL;
 	struct sieve_interpreter *interp = 
 		sieve_interpreter_create(sbin, ehandler);			
-	bool result = TRUE;
+	int ret = 0;
 							
-	result = sieve_interpreter_run(interp, msgdata, menv, &sres);
+	ret = sieve_interpreter_run(interp, msgdata, menv, &sres);
 				
 	sieve_interpreter_free(interp);
 	sieve_result_unref(&sres);
-	return result;
+	return ret;
 }
 
 

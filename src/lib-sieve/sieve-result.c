@@ -238,7 +238,7 @@ static bool sieve_result_implicit_keep(struct sieve_result *result)
 	return FALSE;
 }
 
-bool sieve_result_execute
+int sieve_result_execute
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,
 		const struct sieve_mail_environment *menv)
 { 
@@ -375,11 +375,15 @@ bool sieve_result_execute
 	 */
 	if ( !commit_ok || implicit_keep ) {
 		printf("Executing implicit keep\n");
-		return sieve_result_implicit_keep(result);
+		
+		if ( !sieve_result_implicit_keep(result) ) 
+			return -1;
+			
+		return ( commit_ok ? 1 /* Success */ : 0 /* Implicit keep executed */ );
 	}
 	
 	/* Unconditional success */
-	return TRUE;
+	return 1;
 }
 
 /*

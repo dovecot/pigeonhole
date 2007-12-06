@@ -274,11 +274,12 @@ bool sieve_interpreter_execute_operation
 	return FALSE;
 }		
 
-bool sieve_interpreter_run
+int sieve_interpreter_run
 (struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
 	const struct sieve_mail_environment *menv, struct sieve_result **result) 
 {
 	bool is_topmost = ( *result == NULL );
+	int ret = 0;
 	sieve_interpreter_reset(interp);
 	
 	if ( is_topmost )
@@ -297,7 +298,7 @@ bool sieve_interpreter_run
 		if ( !sieve_interpreter_execute_operation(interp) ) {
 			printf("Execution aborted.\n");
 			sieve_result_unref(result);
-			return FALSE;
+			return -1;
 		}
 	}
 	
@@ -305,13 +306,14 @@ bool sieve_interpreter_run
 	interp->runenv.msgdata = NULL;
 	interp->runenv.mailenv = NULL;
 	
+	ret = 1;
 	if ( is_topmost ) {
-		sieve_result_execute(*result, msgdata, menv);
+		ret = sieve_result_execute(*result, msgdata, menv);
 	}
 	
 	sieve_result_unref(result);
 	
-	return TRUE;
+	return ret;
 }
 
 

@@ -84,8 +84,7 @@ static int lda_sieve_run
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 	const char *scriptlog;
-
-	t_push();
+	int ret = 0;
 
 	scriptlog = t_strconcat(script_path, ".log", NULL);
 	ehandler = sieve_logfile_ehandler_create(scriptlog);
@@ -98,7 +97,6 @@ static int lda_sieve_run
 			"Log should be available as %s", scriptlog);
 
 		sieve_error_handler_free(&ehandler);
-		t_pop();
 		return -1;
 	}
 
@@ -129,17 +127,14 @@ static int lda_sieve_run
 	if ( debug )
 		i_info("sieve: Executing (in-memory) script %s", script_path);
 
-	if ( sieve_execute(sbin, &msgdata, &mailenv, ehandler) ) {		
-		sieve_error_handler_free(&ehandler);
-		t_pop();
-		return 1;
-	}
+	ret = sieve_execute(sbin, &msgdata, &mailenv, ehandler);
 
-	i_error("sieve: Failed to execute script");
-	
+	if ( ret < 0 )
+		i_error("sieve: Failed to execute script %s", script_path);
+
 	sieve_error_handler_free(&ehandler);
-	t_pop();
-	return -1;
+
+	return ret;
 }
 
 static int lda_sieve_deliver_mail
@@ -147,6 +142,7 @@ static int lda_sieve_deliver_mail
 	struct mail *mail, const char *destaddr, const char *mailbox)
 {
 	const char *script_path;
+	int ret;
 
 	script_path = lda_sieve_get_path();
 	if (script_path == NULL)
@@ -155,8 +151,12 @@ static int lda_sieve_deliver_mail
 	if (getenv("DEBUG") != NULL)
 		i_info("sieve: Using sieve path: %s", script_path);
 
-	return lda_sieve_run(namespaces, mail, script_path,
-			     destaddr, getenv("USER"), mailbox);
+	T_FRAME(
+		ret = lda_sieve_run(namespaces, mail, script_path, destaddr, 
+			getenv("USER"), mailbox)
+	);
+
+	return ( ret >= 0 ? 1 : -1 ); 
 }
 
 void sieve_plugin_init(void)

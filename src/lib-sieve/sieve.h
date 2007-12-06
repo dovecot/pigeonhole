@@ -51,12 +51,12 @@ struct sieve_binary *sieve_compile
 	(const char *scriptpath, struct sieve_error_handler *ehandler);
 
 void sieve_dump(struct sieve_binary *sbin, struct ostream *stream);
-bool sieve_test
+int sieve_test
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata, 
 		const struct sieve_mail_environment *menv, 
 		struct sieve_error_handler *ehandler);
 
-bool sieve_execute
+int sieve_execute
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
 		const struct sieve_mail_environment *menv,
 		struct sieve_error_handler *ehandler);

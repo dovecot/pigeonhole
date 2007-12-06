@@ -69,7 +69,7 @@ bool sieve_interpreter_handle_optional_operands
 
 bool sieve_interpreter_execute_operation(struct sieve_interpreter *interp); 
 
-bool sieve_interpreter_run
+int sieve_interpreter_run
 (struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
 	const struct sieve_mail_environment *menv, struct sieve_result **result);
 
