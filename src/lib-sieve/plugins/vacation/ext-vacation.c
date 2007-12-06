@@ -3,8 +3,8 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-vacation-07
- * Implementation: almost complete, the required sopport for  Refences header 
- *   is missing and :addresses is ignored.
+ * Implementation: almost complete; the required sopport for Refences header 
+ *   is missing.
  * Status: experimental, largely untested
  * 
  */
@@ -597,8 +597,13 @@ static bool act_vacation_send
 		
 	fprintf(f, "To: <%s>\r\n", msgdata->return_path);
 	fprintf(f, "Subject: %s\r\n", str_sanitize(ctx->subject, 80));
-	if ( msgdata->id != NULL ) 
+	
+	/* Produce a proper reply */
+	if ( msgdata->id != NULL ) {
 		fprintf(f, "In-Reply-To: %s\r\n", msgdata->id);
+		
+		/* FIXME: Update References header */
+	}
 	fprintf(f, "Auto-Submitted: auto-replied (vacation)\r\n");
 
 	/* FIXME: What about the required references header ? */
