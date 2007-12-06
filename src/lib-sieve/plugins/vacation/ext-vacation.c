@@ -250,9 +250,7 @@ static const struct sieve_argument vacation_addresses_tag = {
 };
 
 static const struct sieve_argument vacation_mime_tag = { 
-	"mime",	NULL, 
-	cmd_vacation_validate_mime_tag, 
-	NULL, NULL 
+	"mime",	NULL, NULL, NULL, NULL /* Only generate opt_code */ 
 };
 
 static const struct sieve_argument vacation_handle_tag = { 
@@ -346,6 +344,8 @@ static bool ext_vacation_opcode_dump
 
 	if ( sieve_operand_optional_present(denv->sbin, address) ) {
 		while ( opt_code != 0 ) {
+			sieve_code_mark(denv);
+			
 			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 
 				return FALSE;
 
@@ -367,6 +367,7 @@ static bool ext_vacation_opcode_dump
 					return FALSE;
 				break;
 			case OPT_MIME:
+				sieve_code_dumpf(denv, "MIME");	
 				break;
 			
 			default:
@@ -391,6 +392,7 @@ static bool ext_vacation_opcode_execute
 	pool_t pool;
 	int opt_code = 1;
 	sieve_size_t days = 7;
+	bool mime = FALSE;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
 		
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
@@ -417,6 +419,7 @@ static bool ext_vacation_opcode_execute
 				if ( sieve_opr_stringlist_read(renv->sbin, address) == NULL ) return FALSE;
 				break;
 			case OPT_MIME:
+				mime = TRUE;
 				break;
 			default:
 				return FALSE;
@@ -440,6 +443,7 @@ static bool ext_vacation_opcode_execute
 	if ( handle != NULL )
 		act->handle = p_strdup(pool, str_c(handle));
 	act->days = days;
+	act->mime = mime;
 	
 	/* FIXME: :addresses is ignored */
 	
@@ -606,12 +610,7 @@ static bool act_vacation_send
 	fprintf(f, "Precedence: bulk\r\n");
 	fprintf(f, "MIME-Version: 1.0\r\n");
     
-	if (	ctx->mime	) {
-		fprintf(f, "Content-Type: multipart/mixed;"
-			"\r\n\tboundary=\"%s/%s\"\r\n", my_pid, senv->hostname);
-		fprintf(f, "\r\nThis is a MIME-encapsulated message\r\n\r\n");
-		fprintf(f, "--%s/%s\r\n", my_pid, senv->hostname);
-	} else {
+	if ( !ctx->mime ) {
 		fprintf(f, "Content-Type: text/plain; charset=utf-8\r\n");
 		fprintf(f, "Content-Transfer-Encoding: 8bit\r\n");
 		fprintf(f, "\r\n");
@@ -619,11 +618,8 @@ static bool act_vacation_send
 
 	fprintf(f, "%s\r\n", ctx->reason);
     
-	if ( ctx->mime )
-		fprintf(f, "\r\n--%s/%s--\r\n", my_pid, senv->hostname);
-
 	if ( senv->smtp_close(smtp_handle) ) {
-		/*senv->duplicate_mark(outmsgid, strlen(outmsgid),
+		/*senv->duplicate_mark(outmsgid, strlen(outmsgid),          WHY?!
 		  senv->username, ioloop_time + DUPLICATE_DEFAULT_KEEP);*/
 		return TRUE;
 	}

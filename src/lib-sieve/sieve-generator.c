@@ -142,7 +142,7 @@ bool sieve_generate_arguments(struct sieve_generator *generator,
 		if ( argument->generate != NULL ) { 
 			if ( !argument->generate(generator, arg, cmd) ) 
 				return FALSE;
-		} else break;
+		} else if ( state == ARG_POSITIONAL ) break;
 
 		arg = sieve_ast_argument_next(arg);
 	}
