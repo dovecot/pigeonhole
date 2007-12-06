@@ -80,7 +80,7 @@ static int lda_sieve_run
 {
 	bool debug = ( getenv("DEBUG") != NULL );
 	struct sieve_message_data msgdata;
-	struct sieve_mail_environment mailenv;
+	struct sieve_script_env scriptenv;
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 	const char *scriptlog;
@@ -113,21 +113,21 @@ static int lda_sieve_run
 	msgdata.auth_user = username;
 	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
 
-	memset(&mailenv, 0, sizeof(mailenv));
-	mailenv.inbox = mailbox;
-	mailenv.namespaces = namespaces;
-	mailenv.username = username;
-	mailenv.hostname = deliver_set->hostname;
-	mailenv.postmaster_address = deliver_set->postmaster_address;
-	mailenv.smtp_open = lda_sieve_smtp_open;
-	mailenv.smtp_close = lda_sieve_smtp_close;
-	mailenv.duplicate_mark = duplicate_mark;
-	mailenv.duplicate_check = duplicate_check;
+	memset(&scriptenv, 0, sizeof(scriptenv));
+	scriptenv.inbox = mailbox;
+	scriptenv.namespaces = namespaces;
+	scriptenv.username = username;
+	scriptenv.hostname = deliver_set->hostname;
+	scriptenv.postmaster_address = deliver_set->postmaster_address;
+	scriptenv.smtp_open = lda_sieve_smtp_open;
+	scriptenv.smtp_close = lda_sieve_smtp_close;
+	scriptenv.duplicate_mark = duplicate_mark;
+	scriptenv.duplicate_check = duplicate_check;
 
 	if ( debug )
 		i_info("sieve: Executing (in-memory) script %s", script_path);
 
-	ret = sieve_execute(sbin, &msgdata, &mailenv, ehandler);
+	ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler);
 
 	if ( ret < 0 )
 		i_error("sieve: Failed to execute script %s", script_path);

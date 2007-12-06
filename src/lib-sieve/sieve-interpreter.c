@@ -276,7 +276,7 @@ bool sieve_interpreter_execute_operation
 
 int sieve_interpreter_run
 (struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-	const struct sieve_mail_environment *menv, struct sieve_result **result) 
+	const struct sieve_script_env *senv, struct sieve_result **result) 
 {
 	bool is_topmost = ( *result == NULL );
 	int ret = 0;
@@ -289,7 +289,7 @@ int sieve_interpreter_run
 	}
 	interp->runenv.msgdata = msgdata;
 	interp->runenv.result = *result;		
-	interp->runenv.mailenv = menv;
+	interp->runenv.scriptenv = senv;
 	
 	while ( !interp->stopped && 
 		interp->pc < sieve_binary_get_code_size(interp->runenv.sbin) ) {
@@ -304,11 +304,11 @@ int sieve_interpreter_run
 	
 	interp->runenv.result = NULL;
 	interp->runenv.msgdata = NULL;
-	interp->runenv.mailenv = NULL;
+	interp->runenv.scriptenv = NULL;
 	
 	ret = 1;
 	if ( is_topmost ) {
-		ret = sieve_result_execute(*result, msgdata, menv);
+		ret = sieve_result_execute(*result, msgdata, senv);
 	}
 	
 	sieve_result_unref(result);

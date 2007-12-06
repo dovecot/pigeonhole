@@ -218,7 +218,7 @@ static bool sieve_result_implicit_keep(struct sieve_result *result)
 	struct act_store_context ctx;
 	void *tr_context;
 	
-	ctx.folder = result->action_env.mailenv->inbox;
+	ctx.folder = result->action_env.scriptenv->inbox;
 	
 	/* FIXME: Handle persistent side-effects for the (implicit) keep action */
 	
@@ -240,7 +240,7 @@ static bool sieve_result_implicit_keep(struct sieve_result *result)
 
 int sieve_result_execute
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,
-		const struct sieve_mail_environment *menv)
+		const struct sieve_script_env *senv)
 { 
 	bool implicit_keep = TRUE;
 	bool success = TRUE, commit_ok;
@@ -248,7 +248,7 @@ int sieve_result_execute
 	struct sieve_result_action *last_attempted;
 
 	result->action_env.msgdata = msgdata;
-	result->action_env.mailenv = menv;
+	result->action_env.scriptenv = senv;
 	
 	/* Transaction start */
 	

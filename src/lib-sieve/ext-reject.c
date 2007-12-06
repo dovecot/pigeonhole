@@ -265,7 +265,7 @@ static bool act_reject_send
 	(const struct sieve_action_exec_env *aenv, struct act_reject_context *ctx)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
-	const struct sieve_mail_environment *mailenv = aenv->mailenv;
+	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct istream *input;
 	void *smtp_handle;
 	struct message_size hdr_size;
@@ -277,20 +277,20 @@ static bool act_reject_send
 	int ret;
 
 	/* Just to be sure */
-	if ( mailenv->smtp_open == NULL || mailenv->smtp_close == NULL ) {
+	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
 		sieve_result_error(aenv, "reject action has no means to send mail.");
 		return FALSE;
 	}
 
-	smtp_handle = mailenv->smtp_open(msgdata->return_path, NULL, &f);
+	smtp_handle = senv->smtp_open(msgdata->return_path, NULL, &f);
 
-	new_msgid = sieve_get_new_message_id(mailenv);
-	boundary = t_strdup_printf("%s/%s", my_pid, mailenv->hostname);
+	new_msgid = sieve_get_new_message_id(senv);
+	boundary = t_strdup_printf("%s/%s", my_pid, senv->hostname);
 
 	fprintf(f, "Message-ID: %s\r\n", new_msgid);
 	fprintf(f, "Date: %s\r\n", message_date_create(ioloop_time));
 	fprintf(f, "From: Mail Delivery Subsystem <%s>\r\n",
-		mailenv->postmaster_address);
+		senv->postmaster_address);
 	fprintf(f, "To: <%s>\r\n", msgdata->return_path);
 	fprintf(f, "MIME-Version: 1.0\r\n");
 	fprintf(f, "Content-Type: "
@@ -315,7 +315,7 @@ static bool act_reject_send
 	fprintf(f, "--%s\r\n"
 		"Content-Type: message/disposition-notification\r\n\r\n", boundary);
 	fprintf(f, "Reporting-UA: %s; Dovecot Mail Delivery Agent\r\n",
-		mailenv->hostname);
+		senv->hostname);
 	if (mail_get_first_header(msgdata->mail, "Original-Recipient", &header) > 0)
 		fprintf(f, "Original-Recipient: rfc822; %s\r\n", header);
 	fprintf(f, "Final-Recipient: rfc822; %s\r\n",	msgdata->to_address);
@@ -355,7 +355,7 @@ static bool act_reject_send
 
 	fprintf(f, "\r\n\r\n--%s--\r\n", boundary);
 
-	return mailenv->smtp_close(smtp_handle);
+	return senv->smtp_close(smtp_handle);
 }
 
 static bool act_reject_commit

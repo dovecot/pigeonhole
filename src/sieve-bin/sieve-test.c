@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 	struct mail_raw *mailr;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
-	struct sieve_mail_environment mailenv;
+	struct sieve_script_env scriptenv;
 	struct sieve_error_handler *ehandler;
 
 	bin_init();
@@ -114,14 +114,14 @@ int main(int argc, char **argv)
 	msgdata.auth_user = user;
 	(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
 
-	memset(&mailenv, 0, sizeof(mailenv));
-	mailenv.inbox = "INBOX";
-	mailenv.username = user;
+	memset(&scriptenv, 0, sizeof(scriptenv));
+	scriptenv.inbox = "INBOX";
+	scriptenv.username = user;
 
 	ehandler = sieve_stderr_ehandler_create();	
 	
 	/* Run the test */
-	(void) sieve_test(sbin, &msgdata, &mailenv, ehandler);
+	(void) sieve_test(sbin, &msgdata, &scriptenv, ehandler);
 
 	sieve_error_handler_free(&ehandler);
 

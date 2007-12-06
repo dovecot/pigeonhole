@@ -19,13 +19,13 @@
  */
  
 const char *sieve_get_new_message_id
-	(const struct sieve_mail_environment *mailenv)
+	(const struct sieve_script_env *senv)
 {
 	static int count = 0;
 	
 	return t_strdup_printf("<dovecot-sieve-%s-%s-%d@%s>",
 		dec2str(ioloop_timeval.tv_sec), dec2str(ioloop_timeval.tv_usec),
-    count++, mailenv->hostname);
+    count++, senv->hostname);
 }
 
 /* 
@@ -257,8 +257,8 @@ static bool act_store_start
 	struct mailbox *box = NULL;
 	pool_t pool;
 
-	if ( aenv->mailenv->namespaces != NULL ) {
-		ns = mail_namespace_find(aenv->mailenv->namespaces, &ctx->folder);
+	if ( aenv->scriptenv->namespaces != NULL ) {
+		ns = mail_namespace_find(aenv->scriptenv->namespaces, &ctx->folder);
 		if (ns == NULL) 
 			return FALSE;
 		

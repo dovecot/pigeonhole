@@ -23,7 +23,7 @@ struct sieve_message_data {
 	const char *id;
 };
 
-struct sieve_mail_environment {
+struct sieve_script_env {
 	const char *inbox;
 	struct mail_namespace *namespaces;
 	
@@ -53,12 +53,12 @@ struct sieve_binary *sieve_compile
 void sieve_dump(struct sieve_binary *sbin, struct ostream *stream);
 int sieve_test
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata, 
-		const struct sieve_mail_environment *menv, 
+		const struct sieve_script_env *senv, 
 		struct sieve_error_handler *ehandler);
 
 int sieve_execute
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-		const struct sieve_mail_environment *menv,
+		const struct sieve_script_env *senv,
 		struct sieve_error_handler *ehandler);
 
 #endif

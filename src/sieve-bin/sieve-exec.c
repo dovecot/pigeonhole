@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 	struct mail_raw *mailr;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
-	struct sieve_mail_environment mailenv;
+	struct sieve_script_env scriptenv;
 	struct sieve_error_handler *ehandler;
 
 	bin_init();
@@ -174,22 +174,22 @@ int main(int argc, char **argv)
 	msgdata.auth_user = "nico";
 	(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
 	
-	memset(&mailenv, 0, sizeof(mailenv));
-	mailenv.inbox = "INBOX";
-	mailenv.namespaces = ns;
-	mailenv.username = user;
-	mailenv.hostname = "host.example.com";
-	mailenv.postmaster_address = "postmaster@example.com";
-	mailenv.smtp_open = sieve_smtp_open;
-	mailenv.smtp_close = sieve_smtp_close;
-	mailenv.duplicate_mark = duplicate_mark;
-	mailenv.duplicate_check = duplicate_check;
+	memset(&scriptenv, 0, sizeof(scriptenv));
+	scriptenv.inbox = "INBOX";
+	scriptenv.namespaces = ns;
+	scriptenv.username = user;
+	scriptenv.hostname = "host.example.com";
+	scriptenv.postmaster_address = "postmaster@example.com";
+	scriptenv.smtp_open = sieve_smtp_open;
+	scriptenv.smtp_close = sieve_smtp_close;
+	scriptenv.duplicate_mark = duplicate_mark;
+	scriptenv.duplicate_check = duplicate_check;
 	
 	ehandler = sieve_stderr_ehandler_create();
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	/* Run */
-	if ( sieve_execute(sbin, &msgdata, &mailenv, ehandler) > 0 )
+	if ( sieve_execute(sbin, &msgdata, &scriptenv, ehandler) > 0 )
 		i_info("Final result: success\n");
 	else
 		i_info("Final result: failed (caller please handle implicit keep!)\n");

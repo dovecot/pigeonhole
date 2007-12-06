@@ -17,7 +17,7 @@ struct sieve_runtime_env {
 	struct sieve_interpreter *interp;
 	struct sieve_binary *sbin;
 	const struct sieve_message_data *msgdata;
-	const struct sieve_mail_environment *mailenv;
+	const struct sieve_script_env *scriptenv;
 	struct sieve_result *result;
 };
 
@@ -71,6 +71,6 @@ bool sieve_interpreter_execute_operation(struct sieve_interpreter *interp);
 
 int sieve_interpreter_run
 (struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-	const struct sieve_mail_environment *menv, struct sieve_result **result);
+	const struct sieve_script_env *senv, struct sieve_result **result);
 
 #endif /* __SIEVE_INTERPRETER_H */

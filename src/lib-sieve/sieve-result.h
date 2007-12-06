@@ -33,7 +33,7 @@ void sieve_result_cancel_implicit_keep(struct sieve_result *result);
 
 int sieve_result_execute
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,
-		const struct sieve_mail_environment *menv);
+		const struct sieve_script_env *senv);
 		
 struct sieve_side_effects_list *sieve_side_effects_list_create
 	(struct sieve_result *result);

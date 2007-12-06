@@ -572,19 +572,19 @@ static bool act_vacation_send
 	(const struct sieve_action_exec_env *aenv, struct act_vacation_context *ctx)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
-	const struct sieve_mail_environment *mailenv = aenv->mailenv;
+	const struct sieve_script_env *senv = aenv->scriptenv;
 	void *smtp_handle;
-  FILE *f;
+	FILE *f;
  	const char *outmsgid;
 
 	/* Just to be sure */
-	if ( mailenv->smtp_open == NULL || mailenv->smtp_close == NULL ) {
+	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
 		sieve_result_error(aenv, "vacation action has no means to send mail.");
 		return FALSE;
 	}
 
-  smtp_handle = mailenv->smtp_open(msgdata->return_path, NULL, &f);
-  outmsgid = sieve_get_new_message_id(mailenv);
+	smtp_handle = senv->smtp_open(msgdata->return_path, NULL, &f);
+	outmsgid = sieve_get_new_message_id(senv);
     
 	fprintf(f, "Message-ID: %s\r\n", outmsgid);
 	fprintf(f, "Date: %s\r\n", message_date_create(ioloop_time));
@@ -608,9 +608,9 @@ static bool act_vacation_send
     
 	if (	ctx->mime	) {
 		fprintf(f, "Content-Type: multipart/mixed;"
-			"\r\n\tboundary=\"%s/%s\"\r\n", my_pid, mailenv->hostname);
+			"\r\n\tboundary=\"%s/%s\"\r\n", my_pid, senv->hostname);
 		fprintf(f, "\r\nThis is a MIME-encapsulated message\r\n\r\n");
-		fprintf(f, "--%s/%s\r\n", my_pid, mailenv->hostname);
+		fprintf(f, "--%s/%s\r\n", my_pid, senv->hostname);
 	} else {
 		fprintf(f, "Content-Type: text/plain; charset=utf-8\r\n");
 		fprintf(f, "Content-Transfer-Encoding: 8bit\r\n");
@@ -620,11 +620,11 @@ static bool act_vacation_send
 	fprintf(f, "%s\r\n", ctx->reason);
     
 	if ( ctx->mime )
-		fprintf(f, "\r\n--%s/%s--\r\n", my_pid, mailenv->hostname);
+		fprintf(f, "\r\n--%s/%s--\r\n", my_pid, senv->hostname);
 
-	if ( mailenv->smtp_close(smtp_handle) ) {
-		/*mailenv->duplicate_mark(outmsgid, strlen(outmsgid),
-		  mailenv->username, ioloop_time + DUPLICATE_DEFAULT_KEEP);*/
+	if ( senv->smtp_close(smtp_handle) ) {
+		/*senv->duplicate_mark(outmsgid, strlen(outmsgid),
+		  senv->username, ioloop_time + DUPLICATE_DEFAULT_KEEP);*/
 		return TRUE;
 	}
 	
@@ -657,7 +657,7 @@ static bool act_vacation_commit
 {
 	const char *const *hdsp;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
-	const struct sieve_mail_environment *mailenv = aenv->mailenv;
+	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct act_vacation_context *ctx = (struct act_vacation_context *) tr_context;
 	unsigned char dupl_hash[MD5_RESULTLEN];
 	const char *const *headers;
@@ -680,7 +680,7 @@ static bool act_vacation_commit
 	
 	/* Did whe respond to this user before? */
 	act_vacation_hash(msgdata, ctx, dupl_hash);
-	if (mailenv->duplicate_check(dupl_hash, sizeof(dupl_hash), mailenv->username)) 
+	if (senv->duplicate_check(dupl_hash, sizeof(dupl_hash), senv->username)) 
 	{
 		sieve_result_log(aenv, "discarded duplicate vacation response to <%s>",
 			str_sanitize(msgdata->return_path, 80));
@@ -778,7 +778,7 @@ static bool act_vacation_commit
 		sieve_result_log(aenv, "sent vacation response to <%s>", 
 			str_sanitize(msgdata->return_path, 80));	
 
-		mailenv->duplicate_mark(dupl_hash, sizeof(dupl_hash), mailenv->username,
+		senv->duplicate_mark(dupl_hash, sizeof(dupl_hash), senv->username,
 			ioloop_time + ctx->days * (24 * 60 * 60));
 
   	return TRUE;

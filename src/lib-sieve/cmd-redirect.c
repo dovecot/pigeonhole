@@ -205,7 +205,7 @@ static bool act_redirect_send
 	(const struct sieve_action_exec_env *aenv, struct act_redirect_context *ctx)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
-	const struct sieve_mail_environment *mailenv = aenv->mailenv;
+	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct istream *input;
 	static const char *hide_headers[] = { "Return-Path" };
 	void *smtp_handle;
@@ -215,7 +215,7 @@ static bool act_redirect_send
 	int ret;
 	
 	/* Just to be sure */
-	if ( mailenv->smtp_open == NULL || mailenv->smtp_close == NULL ) {
+	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
 		sieve_result_error(aenv, "redirect action has no means to send mail.");
 		return FALSE;
 	}
@@ -223,7 +223,7 @@ static bool act_redirect_send
 	if (mail_get_stream(msgdata->mail, NULL, NULL, &input) < 0)
 		return -1;
 		
-  smtp_handle = mailenv->smtp_open(ctx->to_address, msgdata->return_path, &f);
+  smtp_handle = senv->smtp_open(ctx->to_address, msgdata->return_path, &f);
 
   input = i_stream_create_header_filter
   	(input, HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR, hide_headers,
@@ -235,7 +235,7 @@ static bool act_redirect_send
 		i_stream_skip(input, size);
 	}
 
-	return mailenv->smtp_close(smtp_handle);
+	return senv->smtp_close(smtp_handle);
 }
 
 static bool act_redirect_commit
@@ -244,27 +244,27 @@ static bool act_redirect_commit
 {
 	struct act_redirect_context *ctx = (struct act_redirect_context *) tr_context;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
-	const struct sieve_mail_environment *mailenv = aenv->mailenv;
+	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *dupeid;
 	
 	/* Prevent mail loops if possible */
-  dupeid = msgdata->id == NULL ? 
-  	NULL : t_strdup_printf("%s-%s", msgdata->id, ctx->to_address);
+	dupeid = msgdata->id == NULL ? 
+  		NULL : t_strdup_printf("%s-%s", msgdata->id, ctx->to_address);
 	if (dupeid != NULL) {
-	  /* Check whether we've seen this message before */
-  	if (mailenv->duplicate_check(dupeid, strlen(dupeid), mailenv->username)) {
-      sieve_result_log(aenv, "discarded duplicate forward to <%s>",
+		/* Check whether we've seen this message before */
+  		if (senv->duplicate_check(dupeid, strlen(dupeid), senv->username)) {
+			sieve_result_log(aenv, "discarded duplicate forward to <%s>",
 				str_sanitize(ctx->to_address, 80));
 			return TRUE;
-  	}
-  }
+		}
+	}
 	
 	/* Try to forward the message */
 	if ( act_redirect_send(aenv, ctx) ) {
 	
 		/* Mark this message id as forwarded to the specified destination */
 		if (dupeid != NULL) {
-			mailenv->duplicate_mark(dupeid, strlen(dupeid), mailenv->username,
+			senv->duplicate_mark(dupeid, strlen(dupeid), senv->username,
 				ioloop_time + CMD_REDIRECT_DUPLICATE_KEEP);
 		}
 	
@@ -272,8 +272,8 @@ static bool act_redirect_commit
 			str_sanitize(ctx->to_address, 80));	
 
 		*keep = FALSE;
-  	return TRUE;
-  }
+  		return TRUE;
+  	}
   
 	return FALSE;
 }

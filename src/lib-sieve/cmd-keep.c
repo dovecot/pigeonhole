@@ -73,10 +73,10 @@ static bool opc_keep_execute
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;
 	
-	if ( renv->mailenv != NULL && renv->mailenv->inbox != NULL )
-		ret = sieve_act_store_add_to_result(renv,	slist, renv->mailenv->inbox);
+	if ( renv->scriptenv != NULL && renv->scriptenv->inbox != NULL )
+		ret = sieve_act_store_add_to_result(renv, slist, renv->scriptenv->inbox);
 	else
-		ret = sieve_act_store_add_to_result(renv,	slist, "INBOX");
+		ret = sieve_act_store_add_to_result(renv, slist, "INBOX");
 	
 	return ret >= 0;
 }

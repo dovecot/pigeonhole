@@ -11,7 +11,7 @@
 struct sieve_action_exec_env { 
 	struct sieve_result *result;
 	const struct sieve_message_data *msgdata;
-	const struct sieve_mail_environment *mailenv;
+	const struct sieve_script_env *scriptenv;
 };
 
 enum sieve_action_flags {
@@ -143,7 +143,7 @@ int sieve_act_store_add_to_result
 /* Message transmission */
 
 const char *sieve_get_new_message_id
-	(const struct sieve_mail_environment *mailenv);
+	(const struct sieve_script_env *senv);
 
 		
 #endif /* __SIEVE_ACTIONS_H */
