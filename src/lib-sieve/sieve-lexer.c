@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "lib.h"
+#include "compat.h"
 #include "str.h"
 #include "istream.h"
 
@@ -37,7 +38,13 @@ struct sieve_lexer {
 };
 
 inline static void sieve_lexer_error
-(struct sieve_lexer *lexer, const char *fmt, ...) 
+	(struct sieve_lexer *lexer, const char *fmt, ...) ATTR_FORMAT(2, 3);
+inline static void sieve_lexer_warning
+	(struct sieve_lexer *lexer, const char *fmt, ...) ATTR_FORMAT(2, 3);
+
+
+inline static void sieve_lexer_error
+(struct sieve_lexer *lexer, const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -50,7 +57,7 @@ inline static void sieve_lexer_error
 }
 
 inline static void sieve_lexer_warning
-(struct sieve_lexer *lexer, const char *fmt, ...) 
+(struct sieve_lexer *lexer, const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);

@@ -19,7 +19,8 @@ inline pool_t sieve_code_dumper_pool(struct sieve_code_dumper *dumper);
 /*  */	
 	
 void sieve_code_dumpf
-(const struct sieve_dumptime_env *denv, const char *fmt, ...);
+	(const struct sieve_dumptime_env *denv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 
 inline void sieve_code_mark(const struct sieve_dumptime_env *denv);
 inline void sieve_code_mark_specific

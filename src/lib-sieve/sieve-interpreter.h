@@ -43,11 +43,14 @@ inline bool sieve_interpreter_get_test_result
 /* Error handling */
 
 void sieve_runtime_error
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...);
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 void sieve_runtime_warning
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...);
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 void sieve_runtime_log
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...);
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 
 /* Extension support */
 

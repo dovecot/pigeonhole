@@ -16,9 +16,11 @@ inline pool_t sieve_validator_pool(struct sieve_validator *validator);
 bool sieve_validator_run(struct sieve_validator *validator);
 
 void sieve_validator_warning
-	(struct sieve_validator *validator, struct sieve_ast_node *node, const char *fmt, ...);
+	(struct sieve_validator *validator, struct sieve_ast_node *node, 
+		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_validator_error
-	(struct sieve_validator *validator, struct sieve_ast_node *node, const char *fmt, ...);
+	(struct sieve_validator *validator, struct sieve_ast_node *node, 
+		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 /* Command Programmers Interface */
 

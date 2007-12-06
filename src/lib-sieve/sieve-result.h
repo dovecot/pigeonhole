@@ -13,11 +13,15 @@ void sieve_result_ref(struct sieve_result *result);
 void sieve_result_unref(struct sieve_result **result); 
 inline pool_t sieve_result_pool(struct sieve_result *result);
 
+/* Error handling */
+
 void sieve_result_log
-	(const struct sieve_action_exec_env *aenv, const char *fmt, ...);
+	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 void sieve_result_error
-	(const struct sieve_action_exec_env *aenv, const char *fmt, ...);
-	
+	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
+
 int sieve_result_add_action
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action, struct sieve_side_effects_list *seffects,

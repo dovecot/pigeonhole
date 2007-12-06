@@ -757,8 +757,7 @@ static bool act_vacation_commit
 	if ( *hdsp == NULL ) {
 		/* No, bail out */
 		sieve_result_log(aenv, 
-			"discarding vacation response for implicitly delivered message", 
-			msgdata->return_path);	
+			"discarding vacation response for implicitly delivered message");	
 		return TRUE;				 
 	}	
 		

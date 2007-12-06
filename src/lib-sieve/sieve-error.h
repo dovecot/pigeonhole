@@ -1,6 +1,9 @@
 #ifndef __SIEVE_ERROR_H
 #define __SIEVE_ERROR_H
 
+#include "lib.h"
+#include "compat.h"
+
 #include <stdarg.h>
 
 struct sieve_error_handler;
@@ -17,7 +20,17 @@ void sieve_vinfo
 
 inline static void sieve_error
 (struct sieve_error_handler *ehandler, const char *location, 
-	const char *fmt, ...) 
+	const char *fmt, ...) ATTR_FORMAT(3, 4);
+inline static void sieve_warning
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...) ATTR_FORMAT(3, 4);
+inline static void sieve_info
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...) ATTR_FORMAT(3, 4);
+
+inline static void sieve_error
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -29,7 +42,7 @@ inline static void sieve_error
 
 inline static void sieve_warning
 (struct sieve_error_handler *ehandler, const char *location, 
-	const char *fmt, ...) 
+	const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -41,7 +54,7 @@ inline static void sieve_warning
 
 inline static void sieve_info
 (struct sieve_error_handler *ehandler, const char *location, 
-	const char *fmt, ...) 
+	const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);

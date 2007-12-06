@@ -28,7 +28,12 @@ struct sieve_parser {
 #define SIEVE_READ_BLOCK_SIZE (1024*8)
 
 inline static void sieve_parser_error
-	(struct sieve_parser *parser, const char *fmt, ...) 
+	(struct sieve_parser *parser, const char *fmt, ...) ATTR_FORMAT(2, 3);
+inline static void sieve_parser_warning
+	(struct sieve_parser *parser, const char *fmt, ...) ATTR_FORMAT(2, 3);
+
+inline static void sieve_parser_error
+	(struct sieve_parser *parser, const char *fmt, ...)
 { 
 	va_list args;
 	va_start(args, fmt);
@@ -46,7 +51,7 @@ inline static void sieve_parser_error
 }
 
 inline static void sieve_parser_warning
-	(struct sieve_parser *parser, const char *fmt, ...) 
+	(struct sieve_parser *parser, const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
