@@ -37,7 +37,8 @@ plugins = \
     ./plugins/relational/libsieve_ext_relational.la \
     ./plugins/regex/libsieve_ext_regex.la \
     ./plugins/copy/libsieve_ext_copy.la \
-    ./plugins/imapflags/libsieve_ext_imapflags.la
+    ./plugins/imapflags/libsieve_ext_imapflags.la \
+    ./plugins/include/libsieve_ext_include.la
 
 libsieve_la_DEPENDENCIES = $(plugins)
 libsieve_la_LIBADD = $(plugins)
