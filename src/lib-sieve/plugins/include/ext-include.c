@@ -40,7 +40,7 @@ static const struct sieve_opcode *ext_include_opcodes[] =
 
 /* Extension definitions */
 
-int ext_my_id;
+int ext_include_my_id;
 
 const struct sieve_extension include_extension = { 
 	"include", 
@@ -53,7 +53,7 @@ const struct sieve_extension include_extension = {
 
 static bool ext_include_load(int ext_id)
 {
-	ext_my_id = ext_id;
+	ext_include_my_id = ext_id;
 
 	return TRUE;
 }
@@ -65,6 +65,9 @@ static bool ext_include_validator_load(struct sieve_validator *validator)
 	/* Register new commands */
 	sieve_validator_register_command(validator, &cmd_include);
 	sieve_validator_register_command(validator, &cmd_return);
+	
+	ext_include_register_validator_context(validator,
+		sieve_validator_get_script(validator));
 
 	return TRUE;
 }

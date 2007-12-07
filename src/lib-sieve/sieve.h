@@ -24,13 +24,15 @@ struct sieve_message_data {
 };
 
 struct sieve_script_env {
+	/* Mail-related */
 	const char *inbox;
 	struct mail_namespace *namespaces;
 	
+	/* System-related */
 	const char *username;
 	const char *hostname;
 	const char *postmaster_address;
-	
+		
 	/* Callbacks */
 	
 	/* Interface for sending mail */

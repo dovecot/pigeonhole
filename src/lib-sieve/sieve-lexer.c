@@ -1,17 +1,19 @@
+#include "lib.h"
+#include "compat.h"
+#include "str.h"
+#include "istream.h"
+
+#include "sieve-error.h"
+#include "sieve-script.h"
+
+#include "sieve-lexer.h"
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "lib.h"
-#include "compat.h"
-#include "str.h"
-#include "istream.h"
-
-#include "sieve-lexer.h"
-#include "sieve-error.h"
 
 #define IS_DIGIT(c) ( c >= '0' && c <= '9' )
 #define DIGIT_VAL(c) ( c - '0' )
@@ -20,7 +22,8 @@
 
 struct sieve_lexer {
 	pool_t pool;
-	const char *scriptname;
+
+	struct sieve_script *script;
 	struct istream *input;
 		
 	int current_line;
@@ -42,7 +45,6 @@ inline static void sieve_lexer_error
 inline static void sieve_lexer_warning
 	(struct sieve_lexer *lexer, const char *fmt, ...) ATTR_FORMAT(2, 3);
 
-
 inline static void sieve_lexer_error
 (struct sieve_lexer *lexer, const char *fmt, ...)
 {
@@ -50,7 +52,8 @@ inline static void sieve_lexer_error
 	va_start(args, fmt);
 
 	T_FRAME(sieve_verror(lexer->ehandler, 
-		t_strdup_printf("%s:%d", lexer->scriptname, lexer->current_line),
+		t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
+			lexer->current_line),
 		fmt, args));
 		
 	va_end(args);
@@ -63,22 +66,33 @@ inline static void sieve_lexer_warning
 	va_start(args, fmt);
 
 	T_FRAME(sieve_vwarning(lexer->ehandler, 
-		t_strdup_printf("%s:%d", lexer->scriptname, lexer->current_line),
+		t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
+			lexer->current_line),
 		fmt, args));
 		
 	va_end(args);
 }
 
 struct sieve_lexer *sieve_lexer_create
-(struct istream *stream, const char *scriptname, 
-	struct sieve_error_handler *ehandler) 
+(struct sieve_script *script, struct sieve_error_handler *ehandler) 
 {
-	pool_t pool = pool_alloconly_create("sieve_lexer", 1024);	
-	struct sieve_lexer *lexer = p_new(pool, struct sieve_lexer, 1);
-
+	pool_t pool;
+	struct sieve_lexer *lexer;
+	struct istream *stream;
+	
+	stream = sieve_script_open(script, ehandler);
+	if ( stream == NULL )
+		return NULL;
+	
+	pool = pool_alloconly_create("sieve_lexer", 1024);	
+	lexer = p_new(pool, struct sieve_lexer, 1);
 	lexer->pool = pool;
-	lexer->scriptname = p_strdup(pool, scriptname);
+	
 	lexer->input = stream;
+	i_stream_ref(lexer->input);
+	
+	lexer->script = script;
+	sieve_script_ref(script);
 	
 	lexer->buffer = NULL;
 	lexer->buffer_size = 0;
@@ -94,11 +108,20 @@ struct sieve_lexer *sieve_lexer_create
 	return lexer;
 }
 
-void sieve_lexer_free(struct sieve_lexer *lexer ATTR_UNUSED) {
-	pool_unref(&(lexer->pool)); /* This frees any allocated string value as well */
+void sieve_lexer_free(struct sieve_lexer **lexer) 
+{	
+	i_stream_unref(&(*lexer)->input);
+
+	sieve_script_close((*lexer)->script);
+	sieve_script_unref(&(*lexer)->script);
+
+	pool_unref(&(*lexer)->pool); 
+
+	*lexer = NULL;
 }
 
-static void sieve_lexer_shift(struct sieve_lexer *lexer) {
+static void sieve_lexer_shift(struct sieve_lexer *lexer) 
+{
 	if ( lexer->buffer != NULL && lexer->buffer[lexer->buffer_pos] == '\n' ) 
 		lexer->current_line++;	
 	

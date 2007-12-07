@@ -153,9 +153,10 @@ struct sieve_ast_node {
 
 struct sieve_ast {
 	pool_t pool;
+	int refcount;
 	
-	const char *scriptname;
-	
+	struct sieve_script *script;
+		
 	struct sieve_ast_node *root;
 };
 	
@@ -193,7 +194,7 @@ struct sieve_ast_node *sieve_ast_command_create
 	(struct sieve_ast_node *parent, const char *identifier, unsigned int source_line);
 	
 /* sieve_ast */
-struct sieve_ast *sieve_ast_create(const char *scriptname);
+struct sieve_ast *sieve_ast_create(struct sieve_script *script);
 void sieve_ast_ref(struct sieve_ast *ast);
 void sieve_ast_unref(struct sieve_ast **ast);
 
@@ -213,7 +214,7 @@ void sieve_ast_unparse(struct sieve_ast *ast);
 
 /* AST macros */
 #define sieve_ast_root(ast) (ast->root)
-#define sieve_ast_scriptname(ast) (ast->scriptname)
+#define sieve_ast_script(ast) (ast->script)
 #define sieve_ast_pool(ast) (ast->pool)
 
 /* AST node macros */

@@ -45,6 +45,7 @@ libsieve_la_LIBADD = $(plugins)
 
 libsieve_la_SOURCES = \
 	sieve-lexer.c \
+	sieve-script.c \
 	sieve-ast.c \
 	sieve-binary.c \
 	sieve-parser.c \

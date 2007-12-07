@@ -2,6 +2,7 @@
 #include "mempool.h"
 #include "hash.h"
 
+#include "sieve-script.h"
 #include "sieve-ast.h"
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
@@ -15,15 +16,16 @@
 
 struct sieve_validator {
 	pool_t pool;
-	const char *scriptname;
+	
 	struct sieve_ast *ast;
+	struct sieve_script *script;
 	
 	struct sieve_error_handler *ehandler;
 	
 	/* Registries */
 	struct hash_table *commands;
 	
-	ARRAY_DEFINE(ext_contexts, void);
+	ARRAY_DEFINE(ext_contexts, void *);
 };
 
 /* Predeclared statics */
@@ -41,7 +43,7 @@ void sieve_validator_warning
 	va_start(args, fmt);
 	
 	T_FRAME(sieve_vwarning(validator->ehandler, 
-		t_strdup_printf("%s:%d", sieve_ast_scriptname(validator->ast),
+		t_strdup_printf("%s:%d", sieve_script_name(validator->script),
 			sieve_ast_node_line(node)), fmt, args)); 
 	
 	va_end(args);
@@ -55,11 +57,27 @@ void sieve_validator_error
 	va_start(args, fmt);
 	
 	T_FRAME(sieve_verror(validator->ehandler, 
-		t_strdup_printf("%s:%d", sieve_ast_scriptname(validator->ast),
+		t_strdup_printf("%s:%d", sieve_script_name(validator->script),
 		sieve_ast_node_line(node)), fmt, args)); 
 	
 	va_end(args);
 }
+
+void sieve_validator_critical
+(struct sieve_validator *validator, struct sieve_ast_node *node, 
+	const char *fmt, ...) 
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_FRAME(sieve_vcritical(validator->ehandler, 
+		t_strdup_printf("%s:%d", sieve_script_name(validator->script),
+		sieve_ast_node_line(node)), fmt, args)); 
+	
+	va_end(args);
+}
+
+/* Validator object */
 
 struct sieve_validator *sieve_validator_create
 	(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
@@ -71,9 +89,11 @@ struct sieve_validator *sieve_validator_create
 	pool = pool_alloconly_create("sieve_validator", 4096);	
 	validator = p_new(pool, struct sieve_validator, 1);
 	validator->pool = pool;
+	
 	validator->ehandler = ehandler;
 	
 	validator->ast = ast;	
+	validator->script = sieve_ast_script(ast);
 	sieve_ast_ref(ast);
 
 	/* Setup storage for extension contexts */		
@@ -97,17 +117,37 @@ struct sieve_validator *sieve_validator_create
 	return validator;
 }
 
-void sieve_validator_free(struct sieve_validator *validator) 
+void sieve_validator_free(struct sieve_validator **validator) 
 {
-	hash_destroy(&validator->commands);
-	
-	sieve_ast_unref(&validator->ast);
-	pool_unref(&(validator->pool));
+	hash_destroy(&(*validator)->commands);
+	sieve_ast_unref(&(*validator)->ast);
+
+	pool_unref(&(*validator)->pool);
+
+	*validator = NULL;
 }
 
 inline pool_t sieve_validator_pool(struct sieve_validator *validator)
 {
 	return validator->pool;
+}
+
+inline struct sieve_error_handler *sieve_validator_get_error_handler
+	(struct sieve_validator *validator)
+{
+	return validator->ehandler;
+}
+
+inline struct sieve_ast *sieve_validator_get_ast
+	(struct sieve_validator *validator)
+{
+	return validator->ast;
+}
+
+inline struct sieve_script *sieve_validator_get_script
+	(struct sieve_validator *validator)
+{
+	return validator->script;
 }
 
 /* Command registry */
@@ -342,17 +382,23 @@ int sieve_validator_extension_load
 	return ext_id;
 }
 
-inline void sieve_validator_extension_set_context(struct sieve_validator *validator, int ext_id, void *context)
+inline void sieve_validator_extension_set_context
+	(struct sieve_validator *validator, int ext_id, void *context)
 {
-	array_idx_set(&validator->ext_contexts, (unsigned int) ext_id, context);	
+	array_idx_set(&validator->ext_contexts, (unsigned int) ext_id, &context);	
 }
 
-inline const void *sieve_validator_extension_get_context(struct sieve_validator *validator, int ext_id) 
+inline const void *sieve_validator_extension_get_context
+	(struct sieve_validator *validator, int ext_id) 
 {
-	if  ( ext_id < 0 || ext_id > (int) array_count(&validator->ext_contexts) )
+	void * const *ctx;
+
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&validator->ext_contexts) )
 		return NULL;
 	
-	return array_idx(&validator->ext_contexts, (unsigned int) ext_id);		
+	ctx = array_idx(&validator->ext_contexts, (unsigned int) ext_id);		
+
+	return *ctx;
 }
 
 /* Argument Validation API */

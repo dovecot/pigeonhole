@@ -20,6 +20,9 @@ void sieve_vwarning
 void sieve_vinfo
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args); 
+void sieve_vcritical
+	(struct sieve_error_handler *ehandler, const char *location, 
+		const char *fmt, va_list args); 
 
 inline static void sieve_error
 (struct sieve_error_handler *ehandler, const char *location, 
@@ -28,6 +31,9 @@ inline static void sieve_warning
 (struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
 inline static void sieve_info
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...) ATTR_FORMAT(3, 4);
+inline static void sieve_critical
 (struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
 
@@ -63,6 +69,18 @@ inline static void sieve_info
 	va_start(args, fmt);
 	
 	T_FRAME(sieve_vinfo(ehandler, location, fmt, args));
+	
+	va_end(args);
+}
+
+inline static void sieve_critical
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_FRAME(sieve_vcritical(ehandler, location, fmt, args));
 	
 	va_end(args);
 }

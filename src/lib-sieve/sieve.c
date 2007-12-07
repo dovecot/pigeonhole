@@ -7,6 +7,7 @@
 
 #include "sieve-extensions.h"
 
+#include "sieve-script.h"
 #include "sieve-ast.h"
 #include "sieve-binary.h"
 #include "sieve-result.h"
@@ -18,6 +19,7 @@
 #include "sieve-code-dumper.h"
 
 #include "sieve.h"
+#include "sieve-common.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -36,14 +38,14 @@ void sieve_deinit(void)
 	sieve_extensions_deinit();
 }
 
-static struct sieve_ast *sieve_parse
-	(int fd, const char *scriptname, struct sieve_error_handler *ehandler)
+struct sieve_ast *sieve_parse
+	(struct sieve_script *script, struct sieve_error_handler *ehandler)
 {
 	struct sieve_parser *parser;
 	struct sieve_ast *ast;
 	
 	/* Parse */
-	parser = sieve_parser_create(fd, scriptname, ehandler);
+	parser = sieve_parser_create(script, ehandler);
 
  	if ( !sieve_parser_run(parser, &ast) || sieve_get_errors(ehandler) > 0 ) {
  		if ( ast != NULL )
@@ -53,7 +55,7 @@ static struct sieve_ast *sieve_parse
  	} else 
 		sieve_ast_ref(ast);
 	
-	sieve_parser_free(parser); 	
+	sieve_parser_free(&parser); 	
 	
 	return ast;
 }
@@ -66,7 +68,7 @@ static bool sieve_validate(struct sieve_ast *ast, struct sieve_error_handler *eh
 	if ( !sieve_validator_run(validator) || sieve_get_errors(ehandler) > 0 ) 
 		result = FALSE;
 	
-	sieve_validator_free(validator);	
+	sieve_validator_free(&validator);	
 		
 	return result;
 }
@@ -83,29 +85,29 @@ static struct sieve_binary *sieve_generate(struct sieve_ast *ast)
 	return result;
 }
 
-static struct sieve_binary *sieve_compile_fd
-(int fd, const char *scriptname, struct sieve_error_handler *ehandler) 
+static struct sieve_binary *sieve_compile_script
+(struct sieve_script *script, struct sieve_error_handler *ehandler) 
 {
-	struct sieve_binary *result;
 	struct sieve_ast *ast;
+	struct sieve_binary *sbin;		
   	
 	/* Parse */
-	if ( (ast = sieve_parse(fd, scriptname, ehandler)) == NULL ) {
- 		sieve_error(ehandler, scriptname, "failed to parse script");
+	if ( (ast = sieve_parse(script, ehandler)) == NULL ) {
+ 		sieve_error(ehandler, sieve_script_name(script), "parse failed");
 		return NULL;
 	}
 
 	/* Validate */
 	if ( !sieve_validate(ast, ehandler) ) {
-		sieve_error(ehandler, scriptname, "failed to validate script");
+		sieve_error(ehandler, sieve_script_name(script), "validation failed");
 		
  		sieve_ast_unref(&ast);
  		return NULL;
  	}
  	
 	/* Generate */
-	if ( (result=sieve_generate(ast)) == NULL ) {
-		sieve_error(ehandler, scriptname, "failed to generate script");
+	if ( (sbin=sieve_generate(ast)) == NULL ) {
+		sieve_error(ehandler, sieve_script_name(script), "code generation failed");
 		
 		sieve_ast_unref(&ast);
 		return NULL;
@@ -114,31 +116,21 @@ static struct sieve_binary *sieve_compile_fd
 	/* Cleanup */
 	sieve_ast_unref(&ast);
 
-	return result;
+	return sbin;
 }
 
 struct sieve_binary *sieve_compile
-	(const char *scriptpath, struct sieve_error_handler *ehandler)
+	(const char *script_path, struct sieve_error_handler *ehandler)
 {
-	int sfd;
-	const char *scriptname;
+	struct sieve_script *script;
 	struct sieve_binary *sbin;
+
+	script = sieve_script_create(script_path, NULL);
 	
+	sbin = sieve_compile_script(script, ehandler);
 	
-	if ( (sfd = open(scriptpath, O_RDONLY)) < 0 ) {
-		sieve_error(ehandler, scriptpath, "failed to open sieve script: %m");
-		return NULL;
-	}
+	sieve_script_unref(&script);
 	
-	scriptname = strrchr(scriptpath, '/');
-	if ( scriptname == NULL )	
-		scriptname = scriptpath;
-	else
-		scriptname++;
-	
-	sbin = sieve_compile_fd(sfd, scriptname, ehandler);
-		
-	close(sfd);
 	return sbin;
 }
 

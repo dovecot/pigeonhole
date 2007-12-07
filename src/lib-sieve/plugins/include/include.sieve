@@ -1,5 +1,5 @@
 require "include";
 
-include "frop.sieve";
-include :global "friep.sieve";
-include :personal "frml.sieve";
+include "included1";
+include :global "included2";
+include :personal "included3";

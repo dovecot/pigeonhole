@@ -4,6 +4,7 @@
 #include "istream.h"
 #include "failures.h"
 
+#include "sieve-script.h"
 #include "sieve-lexer.h"
 #include "sieve-parser.h"
 #include "sieve-error.h"
@@ -15,17 +16,14 @@
 
 struct sieve_parser {
 	pool_t pool;
-	const char *scriptname;
 	
-	struct istream *input;
-	
+	struct sieve_script *script;
+		
 	struct sieve_error_handler *ehandler;
 	
 	struct sieve_lexer *lexer;
 	struct sieve_ast *ast;
 };
-
-#define SIEVE_READ_BLOCK_SIZE (1024*8)
 
 inline static void sieve_parser_error
 	(struct sieve_parser *parser, const char *fmt, ...) ATTR_FORMAT(2, 3);
@@ -42,7 +40,8 @@ inline static void sieve_parser_error
 	if ( sieve_lexer_current_token(parser->lexer) != STT_ERROR )  
 	{
 		T_FRAME(sieve_verror(parser->ehandler, 
-			t_strdup_printf("%s:%d", parser->scriptname,
+			t_strdup_printf("%s:%d", 
+			sieve_script_name(parser->script),
 			sieve_lexer_current_line(parser->lexer)),
 			fmt, args)); 
 	}
@@ -57,7 +56,8 @@ inline static void sieve_parser_warning
 	va_start(args, fmt);
 
 	T_FRAME(sieve_vwarning(parser->ehandler, 
-		t_strdup_printf("%s:%d", parser->scriptname,
+		t_strdup_printf("%s:%d", 
+		sieve_script_name(parser->script),
 		sieve_lexer_current_line(parser->lexer)),
 		fmt, args));
 		
@@ -69,23 +69,23 @@ static bool sieve_parser_recover
 	(struct sieve_parser *parser, enum sieve_token_type end_token);
 
 struct sieve_parser *sieve_parser_create
-(int fd, const char *scriptname, struct sieve_error_handler *ehandler)
+(struct sieve_script *script, struct sieve_error_handler *ehandler)
 {
 	struct sieve_parser *parser;
-	struct istream *stream;
+	struct sieve_lexer *lexer;
+	
+	lexer = sieve_lexer_create(script, ehandler);
   
-	stream = i_stream_create_fd
-		(fd, SIEVE_READ_BLOCK_SIZE, TRUE);
-
-	if ( stream != NULL ) {
+	if ( lexer != NULL ) {
 		pool_t pool = pool_alloconly_create("sieve_parser", 4096);	
 
 		parser = p_new(pool, struct sieve_parser, 1);
 		parser->pool = pool;
-		parser->scriptname = p_strdup(pool, scriptname);
-		parser->input = stream;
 		
-		parser->lexer = sieve_lexer_create(stream, scriptname, ehandler);
+		parser->script = script;
+		sieve_script_ref(script);
+				
+		parser->lexer = lexer;
 		parser->ast = NULL;
 		
 		parser->ehandler = ehandler;
@@ -96,17 +96,17 @@ struct sieve_parser *sieve_parser_create
 	return NULL;
 }
 
-void sieve_parser_free(struct sieve_parser *parser)
+void sieve_parser_free(struct sieve_parser **parser)
 {
-	if (parser->input != NULL ) 
-		i_stream_unref(&parser->input);
+	if ((*parser)->ast != NULL)	  
+		sieve_ast_unref(&(*parser)->ast);
 
-	if (parser->ast != NULL)	  
-		sieve_ast_unref(&parser->ast);
+	sieve_lexer_free(&(*parser)->lexer);
+	sieve_script_unref(&(*parser)->script);
 
-	sieve_lexer_free(parser->lexer);
-
-	pool_unref(&(parser->pool));
+	pool_unref(&(*parser)->pool);
+	
+	*parser = NULL;
 }
 
 /* arguments = *argument [test / test-list]
@@ -380,7 +380,7 @@ bool sieve_parser_run
 		sieve_ast_unref(&parser->ast);
 	
 	*ast = NULL;
-	parser->ast = sieve_ast_create(parser->scriptname);
+	parser->ast = sieve_ast_create(parser->script);
 
 	/* Scan first token */
 	sieve_lexer_skip_token(parser->lexer);

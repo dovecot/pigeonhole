@@ -12,6 +12,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define CRITICAL_MSG \
+	"internal error occurred: refer to server log for more information."
+#define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
+
 /* This should be moved to a sieve-errors-private.h when the need for other 
  * types of (externally defined) error handlers arises.
  */
@@ -74,6 +78,22 @@ void sieve_vinfo
 	
 	if ( ehandler->log_info )	
 		ehandler->vinfo(ehandler, location, fmt, args);
+}
+
+void sieve_vcritical
+	(struct sieve_error_handler *ehandler, const char *location, 
+		const char *fmt, va_list args)
+{
+	char str[256];
+	struct tm *tm; 
+	
+	tm = localtime(&ioloop_time);
+	
+	i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	
+	sieve_error(ehandler, location, "%s", 
+		strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ? 
+			str : CRITICAL_MSG );	
 }
 
 unsigned int sieve_get_errors(struct sieve_error_handler *ehandler) {

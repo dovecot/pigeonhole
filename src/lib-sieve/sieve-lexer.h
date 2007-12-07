@@ -3,7 +3,7 @@
 
 #include "lib.h"
 
-#include "sieve-error.h"
+#include "sieve-common.h"
 
 enum sieve_token_type {
 	STT_NONE,
@@ -41,9 +41,8 @@ struct sieve_token;
 struct sieve_lexer;
 
 struct sieve_lexer *sieve_lexer_create
-	(struct istream *stream, const char *scriptname,  
-		struct sieve_error_handler *ehandler);
-void sieve_lexer_free(struct sieve_lexer *lexer);
+	(struct sieve_script *script, struct sieve_error_handler *ehandler);
+void sieve_lexer_free(struct sieve_lexer **lexer);
 
 bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer);
 bool sieve_lexer_skip_token(struct sieve_lexer *lexer);

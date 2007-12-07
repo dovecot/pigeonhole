@@ -16,6 +16,9 @@ typedef uint64_t sieve_number_t;
  * Predeclarations
  */
 
+/* sieve-error.h */
+struct sieve_error_handler;
+
 /* sieve-ast.h */
 enum sieve_ast_argument_type;
 
@@ -83,5 +86,13 @@ struct sieve_side_effects_list;
 struct sieve_action_exec_env;
 struct sieve_action;
 struct sieve_side_effect;
+
+/* sieve-script.h */
+struct sieve_script;
+
+/* sieve.c */
+struct sieve_ast *sieve_parse
+	(struct sieve_script *script, struct sieve_error_handler *ehandler);
+	
 
 #endif /* __SIEVE_COMMON_H */
