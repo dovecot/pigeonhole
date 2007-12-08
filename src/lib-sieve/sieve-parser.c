@@ -379,26 +379,32 @@ bool sieve_parser_run
 	if ( parser->ast != NULL )
 		sieve_ast_unref(&parser->ast);
 	
-	*ast = NULL;
-	parser->ast = sieve_ast_create(parser->script);
+	if ( *ast == NULL )
+		*ast = sieve_ast_create(parser->script);
+	else 
+		sieve_ast_ref(*ast);
+		
+	parser->ast = *ast;
 
 	/* Scan first token */
 	sieve_lexer_skip_token(parser->lexer);
 
-	if ( sieve_parse_commands(parser, parser->ast->root) ) { 
+	if ( sieve_parse_commands(parser, sieve_ast_root(parser->ast)) ) { 
 		if ( sieve_lexer_current_token(parser->lexer) != STT_EOF ) { 
 			sieve_parser_error(parser, 
 				"unexpected token %s found at (the presumed) end of file",
 				sieve_lexer_token_string(parser->lexer));
-			sieve_ast_unref(&parser->ast);
+	
+			parser->ast = NULL;
+			sieve_ast_unref(ast);
 			return FALSE;				
 		}
-		
-		*ast = parser->ast;
+	
 		return TRUE;
 	} 
 	
-	sieve_ast_unref(&parser->ast);
+	parser->ast = NULL;
+	sieve_ast_unref(ast);
 	return FALSE;
 }	
 

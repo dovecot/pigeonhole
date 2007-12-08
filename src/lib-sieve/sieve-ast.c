@@ -8,6 +8,86 @@
 
 #include "sieve-ast.h"
 
+/* Forward declarations */
+
+static struct sieve_ast_node *sieve_ast_node_create
+	(struct sieve_ast *ast, struct sieve_ast_node *parent, 
+		enum sieve_ast_type type, unsigned int source_line);
+
+/* The AST object */
+
+struct sieve_ast {
+	pool_t pool;
+	int refcount;
+		
+	struct sieve_script *script;
+		
+	struct sieve_ast_node *root;
+};
+
+struct sieve_ast *sieve_ast_create(struct sieve_script *script) 
+{
+	pool_t pool;
+	struct sieve_ast *ast;
+	
+	pool = pool_alloconly_create("sieve_ast", 4096);	
+	ast = p_new(pool, struct sieve_ast, 1);
+	ast->pool = pool;
+	ast->refcount = 1;
+	
+	ast->script = script;
+	sieve_script_ref(script);
+		
+	ast->root = sieve_ast_node_create(ast, NULL, SAT_ROOT, 0);
+	ast->root->identifier = "ROOT";
+	
+	return ast;
+}
+
+void sieve_ast_ref(struct sieve_ast *ast) {
+	ast->refcount++;
+}
+
+void sieve_ast_unref(struct sieve_ast **ast) {
+	i_assert((*ast)->refcount > 0);
+
+	if (--(*ast)->refcount != 0)
+		return;
+	
+	sieve_script_unref(&(*ast)->script);
+	
+	pool_unref(&(*ast)->pool);
+	
+	*ast = NULL;
+}
+
+inline struct sieve_ast_node *sieve_ast_root(struct sieve_ast *ast)
+{
+	return ast->root;
+}
+
+inline pool_t sieve_ast_pool(struct sieve_ast *ast)
+{
+	return ast->pool;
+}
+
+inline struct sieve_script *sieve_ast_script(struct sieve_ast *ast)
+{
+	return ast->script;
+}
+
+const char *sieve_ast_type_name(enum sieve_ast_type ast_type) {
+	switch ( ast_type ) {
+	
+	case SAT_NONE: return "none";
+	case SAT_ROOT: return "ast root node";
+	case SAT_COMMAND: return "command";
+	case SAT_TEST: return "test";
+	
+	default: return "??AST NODE??";
+	}
+}
+
 /* Very simplistic linked list implementation
  */
 #define __LIST_CREATE(pool, type) { \
@@ -355,54 +435,6 @@ struct sieve_ast_node *sieve_ast_command_create
 	return command;
 }
 
-/* The AST */
-struct sieve_ast *sieve_ast_create(struct sieve_script *script) {
-	pool_t pool;
-	struct sieve_ast *ast;
-	
-	pool = pool_alloconly_create("sieve_ast", 4096);	
-	ast = p_new(pool, struct sieve_ast, 1);
-	ast->pool = pool;
-	ast->refcount = 1;
-	
-	ast->script = script;
-	sieve_script_ref(script);
-	
-	ast->root = sieve_ast_node_create(ast, NULL, SAT_ROOT, 0);
-	
-	ast->root->identifier = "ROOT";
-	
-	return ast;
-}
-
-void sieve_ast_ref(struct sieve_ast *ast) {
-	ast->refcount++;
-}
-
-void sieve_ast_unref(struct sieve_ast **ast) {
-	i_assert((*ast)->refcount > 0);
-
-	if (--(*ast)->refcount != 0)
-		return;
-	
-	sieve_script_unref(&(*ast)->script);
-		
-	pool_unref(&(*ast)->pool);
-	
-	*ast = NULL;
-}
-
-const char *sieve_ast_type_name(enum sieve_ast_type ast_type) {
-	switch ( ast_type ) {
-	
-	case SAT_NONE: return "none";
-	case SAT_ROOT: return "ast root node";
-	case SAT_COMMAND: return "command";
-	case SAT_TEST: return "test";
-	
-	default: return "??AST NODE??";
-	}
-}
 
 /* Debug */
 

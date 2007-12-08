@@ -1,8 +1,9 @@
 #include "sieve-common.h"
+#include "sieve-error.h"
 #include "sieve-script.h"
 #include "sieve-ast.h"
 #include "sieve-commands.h"
-#include "sieve-error.h"
+#include "sieve-parser.h"
 #include "sieve-validator.h"
 
 #include "ext-include-common.h"

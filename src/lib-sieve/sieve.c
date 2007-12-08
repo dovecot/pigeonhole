@@ -42,7 +42,7 @@ struct sieve_ast *sieve_parse
 	(struct sieve_script *script, struct sieve_error_handler *ehandler)
 {
 	struct sieve_parser *parser;
-	struct sieve_ast *ast;
+	struct sieve_ast *ast = NULL;
 	
 	/* Parse */
 	parser = sieve_parser_create(script, ehandler);

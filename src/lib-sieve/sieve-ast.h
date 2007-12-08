@@ -151,14 +151,18 @@ struct sieve_ast_node {
 	struct sieve_command_context *context;	
 };
 
-struct sieve_ast {
-	pool_t pool;
-	int refcount;
-	
-	struct sieve_script *script;
-		
-	struct sieve_ast_node *root;
-};
+struct sieve_ast;
+
+/* sieve_ast */
+struct sieve_ast *sieve_ast_create(struct sieve_script *script);
+void sieve_ast_ref(struct sieve_ast *ast);
+void sieve_ast_unref(struct sieve_ast **ast);
+
+inline struct sieve_ast_node *sieve_ast_root(struct sieve_ast *ast);
+inline pool_t sieve_ast_pool(struct sieve_ast *ast);
+inline struct sieve_script *sieve_ast_script(struct sieve_ast *ast);
+
+const char *sieve_ast_type_name(enum sieve_ast_type ast_type);
 	
 /* sieve_ast_argument */
 struct sieve_ast_argument *sieve_ast_argument_string_create
@@ -193,13 +197,6 @@ struct sieve_ast_node *sieve_ast_test_create
 struct sieve_ast_node *sieve_ast_command_create
 	(struct sieve_ast_node *parent, const char *identifier, unsigned int source_line);
 	
-/* sieve_ast */
-struct sieve_ast *sieve_ast_create(struct sieve_script *script);
-void sieve_ast_ref(struct sieve_ast *ast);
-void sieve_ast_unref(struct sieve_ast **ast);
-
-const char *sieve_ast_type_name(enum sieve_ast_type ast_type);
-
 /* Debug */
 void sieve_ast_unparse(struct sieve_ast *ast);
 
@@ -213,12 +210,9 @@ void sieve_ast_unparse(struct sieve_ast *ast);
 #define __LIST_COUNT(node, list) ((node)->list == NULL || (node)->list->head == NULL ? 0 : (node)->list->len)
 
 /* AST macros */
-#define sieve_ast_root(ast) (ast->root)
-#define sieve_ast_script(ast) (ast->script)
-#define sieve_ast_pool(ast) (ast->pool)
 
 /* AST node macros */
-#define sieve_ast_node_pool(node) ((node)->ast->pool)
+#define sieve_ast_node_pool(node) (sieve_ast_pool((node)->ast))
 #define sieve_ast_node_parent(node) ((node)->parent)
 #define sieve_ast_node_prev(node) __LIST_PREV(node)
 #define sieve_ast_node_next(node) __LIST_NEXT(node)
