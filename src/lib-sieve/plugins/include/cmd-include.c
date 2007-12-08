@@ -162,7 +162,6 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	struct cmd_include_context_data *ctx_data = 
 		(struct cmd_include_context_data *) cmd->data;
 	const char *script_name, *script_path;
-	struct sieve_script *script;
 	struct sieve_ast *ast;
 
 	if ( !sieve_validate_positional_argument
@@ -185,17 +184,12 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	else 
 		return FALSE;
 
-	script = sieve_script_create(script_path, script_name);
-
 	/* Validate */
 	if ( !ext_include_validate_include
-		(validator, cmd, script, &ast) ) {
-		sieve_script_unref(&script);
+		(validator, cmd, script_path, script_name, &ast) ) {
  		return FALSE;
  	}
- 	
- 	sieve_script_unref(&script);
- 	
+ 	 	
  	ctx_data->ast = ast;
 	sieve_validator_argument_activate(validator, arg);	
 	

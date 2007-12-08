@@ -125,7 +125,8 @@ struct sieve_binary *sieve_compile
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
 
-	script = sieve_script_create(script_path, NULL);
+	if ( (script = sieve_script_create(script_path, NULL, ehandler)) == NULL )
+		return NULL;
 	
 	sbin = sieve_compile_script(script, ehandler);
 	

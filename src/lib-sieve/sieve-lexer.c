@@ -80,7 +80,7 @@ struct sieve_lexer *sieve_lexer_create
 	struct sieve_lexer *lexer;
 	struct istream *stream;
 	
-	stream = sieve_script_open(script, ehandler);
+	stream = sieve_script_open(script);
 	if ( stream == NULL )
 		return NULL;
 	

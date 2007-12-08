@@ -29,7 +29,7 @@ void ext_include_register_validator_context
 	(struct sieve_validator *validator, struct sieve_script *script);
 
 bool ext_include_validate_include
-(struct sieve_validator *validator, struct sieve_command_context *cmd,
-	struct sieve_script *script, struct sieve_ast **ast_r);
+	(struct sieve_validator *validator, struct sieve_command_context *cmd,
+		const char *script_path, const char *script_name, struct sieve_ast **ast_r);
 
 #endif /* __EXT_INCLUDE_COMMON_H */

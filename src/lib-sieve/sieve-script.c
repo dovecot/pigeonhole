@@ -13,6 +13,10 @@ struct sieve_script {
 	pool_t pool;
 	unsigned int refcount;
 	
+	struct stat st;
+
+	struct sieve_error_handler *ehandler;
+		
 	/* Parameters */
 	const char *name;
 	const char *path;	
@@ -25,17 +29,32 @@ struct sieve_script {
 /* Script object */
 
 struct sieve_script *sieve_script_create
-	(const char *path, const char *name)
+	(const char *path, const char *name, struct sieve_error_handler *ehandler)
 {
 	pool_t pool;
+	struct stat st;
 	struct sieve_script *script;
+	
+	/* First obtain stat data from the system */
+	
+	if ( stat(path, &st) < 0 ) {
+		if ( errno == ENOENT )
+			sieve_error(ehandler, name, "sieve script does not exist");
+		else 
+			sieve_critical(ehandler, path, "failed to stat sieve script: %m");
+		return NULL;
+	}
+	
+	/* Only create object if it stat()s without problems */
 	
 	pool = pool_alloconly_create("sieve_script", 1024);
 	script = p_new(pool, struct sieve_script, 1);
 	script->pool = pool;
 	script->refcount = 1;
+	script->ehandler = ehandler;
 	
-	script->path = p_strdup(pool, path);
+	memcpy((void *) &script->st, (void *) &st, sizeof(st));
+	script->path = p_strdup(pool, path);	
 		
 	if ( name == NULL || *name == '\0' ) {
 		const char *filename, *ext;
@@ -84,17 +103,18 @@ void sieve_script_unref(struct sieve_script **script)
 
 /* Stream manageement */
 
-struct istream *sieve_script_open(struct sieve_script *script, 
-	struct sieve_error_handler *ehandler)
+struct istream *sieve_script_open(struct sieve_script *script)
 {
 	int fd;
 
 	if ( (fd=open(script->path, O_RDONLY)) < 0 ) {
-		if ( errno == ENOENT )
-			sieve_error(ehandler, script->path, "sieve script '%s' does not exist",
-				script->name);
-		else 
-			sieve_critical(ehandler, script->path, "failed to open sieve script: %m");
+		if ( errno == ENOENT ) 
+			/* Not supposed to occur, create() does stat already */
+			sieve_error(script->ehandler, script->name, 
+				"sieve script '%s' does not exist", script->name);
+		else
+			sieve_critical(script->ehandler, script->path, 
+				"failed to open sieve script: %m");
 		return NULL;
 	}	
 
@@ -112,8 +132,8 @@ void sieve_script_close(struct sieve_script *script)
 
 bool sieve_script_equals
 (struct sieve_script *script1, struct sieve_script *script2)
-{
-	return ( strcmp(script1->path, script2->path) == 0 );
+{	
+	return ( script1->st.st_ino == script2->st.st_ino );
 }
 
 /* Inline accessors */
