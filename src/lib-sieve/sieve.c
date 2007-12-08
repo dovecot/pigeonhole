@@ -48,9 +48,6 @@ struct sieve_ast *sieve_parse
 	parser = sieve_parser_create(script, ehandler);
 
  	if ( !sieve_parser_run(parser, &ast) || sieve_get_errors(ehandler) > 0 ) {
- 		if ( ast != NULL )
- 			/* This really shouldn't happen */
- 			sieve_ast_unref(&ast);
  		ast = NULL;
  	} else 
 		sieve_ast_ref(ast);

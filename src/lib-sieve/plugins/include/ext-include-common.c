@@ -80,6 +80,10 @@ bool ext_include_validate_include
 	struct ext_include_validator_context *ctx;
 	struct sieve_error_handler *ehandler = 
 		sieve_validator_get_error_handler(validator);
+		
+	/* Do not include more scripts when errors have occured already. */
+	if ( sieve_get_errors(ehandler) > 0 )
+		return FALSE;
 	
 	/* Create script object */
 	if ( (script = sieve_script_create(script_path, script_name, ehandler)) 
