@@ -84,6 +84,24 @@ struct sieve_binary *bin_compile_sieve_script(const char *filename)
 	return sbin;
 }
 	
+struct sieve_binary *bin_open_sieve_script(const char *filename)
+{
+	struct sieve_error_handler *ehandler;
+	struct sieve_binary *sbin;
+	
+	ehandler = sieve_stderr_ehandler_create();
+	sieve_error_handler_accept_infolog(ehandler, TRUE);
+
+	if ( (sbin = sieve_open(filename, ehandler)) == NULL ) {
+		sieve_error_handler_free(&ehandler);
+		i_fatal("Failed to compile sieve script\n");
+	}
+
+	sieve_error_handler_free(&ehandler);
+		
+	return sbin;
+}
+	
 void bin_dump_sieve_binary_to(struct sieve_binary *sbin, const char *filename)	
 {
 	int dfd = -1;

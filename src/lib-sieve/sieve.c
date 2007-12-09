@@ -117,7 +117,7 @@ static struct sieve_binary *sieve_compile_script
 }
 
 struct sieve_binary *sieve_compile
-	(const char *script_path, struct sieve_error_handler *ehandler)
+(const char *script_path, struct sieve_error_handler *ehandler)
 {
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
@@ -131,6 +131,33 @@ struct sieve_binary *sieve_compile
 	
 	return sbin;
 }
+
+struct sieve_binary *sieve_open
+(const char *script_path, struct sieve_error_handler *ehandler)
+{
+	struct sieve_script *script;
+	struct sieve_binary *sbin;
+	const char *binpath;
+	
+	script = sieve_script_create(script_path, NULL, ehandler);
+
+	if ( script == NULL )
+		return NULL;
+
+	T_FRAME(
+		binpath = sieve_script_binpath(script);	
+		sbin = sieve_binary_load(binpath);
+	
+		if ( sbin == NULL ) {
+			sbin = sieve_compile_script(script, ehandler);
+			(void) sieve_binary_save(sbin, binpath);	
+		}
+	);
+	
+	sieve_script_unref(&script);
+
+	return sbin;
+} 
 
 void sieve_dump(struct sieve_binary *sbin, struct ostream *stream) 
 {
@@ -178,5 +205,9 @@ int sieve_execute
 	return ret;
 }
 
+void sieve_close(struct sieve_binary **sbin)
+{
+	sieve_binary_unref(sbin);
+}
 
 	

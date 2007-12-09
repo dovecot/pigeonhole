@@ -19,6 +19,7 @@ struct sieve_script {
 		
 	/* Parameters */
 	const char *name;
+	const char *dirpath;
 	const char *path;	
 
 	/* Stream */
@@ -34,6 +35,7 @@ struct sieve_script *sieve_script_create
 	pool_t pool;
 	struct stat st;
 	struct sieve_script *script;
+	const char *dirpath;
 
 	T_FRAME(
 		if ( name == NULL || *name == '\0' ) {
@@ -42,10 +44,13 @@ struct sieve_script *sieve_script_create
 		
 			/* Extract filename from path */
 			filename = strrchr(path, '/');
-			if ( filename == NULL )
+			if ( filename == NULL ) {
+				dirpath = "";
 				filename = path;
-			else
+			} else {
+				dirpath = t_strdup_until(path, filename);
 				filename++;
+			}
 	
 			/* Extract the script name */
 			ext = strrchr(filename, '.');
@@ -75,6 +80,7 @@ struct sieve_script *sieve_script_create
 	
 			memcpy((void *) &script->st, (void *) &st, sizeof(st));
 			script->path = p_strdup(pool, path);	
+			script->dirpath = p_strdup(pool, dirpath);
 			script->name = p_strdup(pool, name);
 		}
 	);
@@ -147,6 +153,11 @@ inline const char *sieve_script_name(struct sieve_script *script)
 inline const char *sieve_script_path(struct sieve_script *script)
 {
 	return script->path;
+}
+
+inline const char *sieve_script_binpath(struct sieve_script *script)
+{
+	return t_strconcat(script->dirpath, "/", script->name, ".svbin", NULL);
 }
 
 

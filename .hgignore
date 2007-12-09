@@ -44,6 +44,7 @@ Makefile.in
 *.la
 *.lai
 *.so
+*.svbin
 **/Makefile
 **/Makefile.in
 

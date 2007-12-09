@@ -222,11 +222,11 @@ static bool _sieve_binary_save
 	
 	/* Create block containing all used extensions 
 	 *   FIXME: Per-extension this should also store binary version numbers and 
-	 *   the id of its extension-specific block (if any)
+	 *   the id of its first extension-specific block (if any)
 	 */
 	
 	extensions = buffer_create_dynamic(sbin->pool, 256);
-	sbin->data = extensions;
+	sieve_binary_set_active_block(sbin, extensions);	
 	
 	ext_count = array_count(&sbin->extensions);
 	sieve_binary_emit_integer(sbin, ext_count);
@@ -236,13 +236,16 @@ static bool _sieve_binary_save
 			= array_idx(&sbin->extensions, i);
 		
 		sieve_binary_emit_cstring(sbin, (*ext)->extension->name);
-	}	
+	}
+	sieve_binary_set_active_block(sbin, sbin->code_buffer);	
 	
-	_save_block(stream, 0, extensions);
+	if ( !_save_block(stream, 0, extensions) ) 
+		return FALSE;
 	
 	/* Create block containing the main program */
-	_save_block(stream, 1, sbin->code_buffer);
-	
+	if ( !_save_block(stream, 1, sbin->code_buffer) )
+		return FALSE;
+
 	return TRUE;
 } 
 
@@ -273,11 +276,12 @@ bool sieve_binary_save
 	if (result && (rename(temp_path, path) < 0)) {
 		i_error("sieve: rename(%s, %s) failed for binary save: %m",
 			temp_path, path);
+		result = FALSE;
+	}
 
-		/* Get rid of temp output */
+	if ( !result ) {
+		/* Get rid of temp output (if any) */
 		(void) unlink(temp_path);
-		
-		return FALSE;
 	}
 	
 	return result;

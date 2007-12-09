@@ -11,6 +11,7 @@ void bin_deinit(void);
 const char *bin_get_user(void);
 
 struct sieve_binary *bin_compile_sieve_script(const char *filename);
+struct sieve_binary *bin_open_sieve_script(const char *filename);
 void bin_dump_sieve_binary_to(struct sieve_binary *sbin, const char *filename);
 
 int bin_open_mail_file(const char *filename);

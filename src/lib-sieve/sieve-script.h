@@ -23,5 +23,6 @@ bool sieve_script_equals
 
 inline const char *sieve_script_name(struct sieve_script *script);
 inline const char *sieve_script_path(struct sieve_script *script);
+inline const char *sieve_script_binpath(struct sieve_script *script);
 
 #endif /* __SIEVE_SCRIPT_H */

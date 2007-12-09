@@ -90,7 +90,7 @@ int main(int argc, char **argv)
 	mfd = bin_open_mail_file(mailfile);
 	
 	/* Compile sieve script */
-	sbin = bin_compile_sieve_script(scriptfile);
+	sbin = bin_open_sieve_script(scriptfile);
 	
 	/* Dump script */
 	bin_dump_sieve_binary_to(sbin, dumpfile);
@@ -123,6 +123,7 @@ int main(int argc, char **argv)
 	/* Run the test */
 	(void) sieve_test(sbin, &msgdata, &scriptenv, ehandler);
 
+	sieve_close(&sbin);
 	sieve_error_handler_free(&ehandler);
 
 	bin_close_mail_file(mfd);

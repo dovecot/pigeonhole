@@ -10,7 +10,6 @@
 
 #include "lib.h"
 #include "sieve.h"
-#include "sieve-binary.h"
 
 #include "bin-common.h"
 
@@ -63,7 +62,7 @@ int main(int argc, char **argv) {
 			sieve_binary_save(sbin, outfile);
 		}
 		
-		sieve_binary_unref(&sbin);
+		sieve_close(&sbin);
 	}
 		
 	bin_deinit();
