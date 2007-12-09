@@ -544,10 +544,10 @@ static struct sieve_coded_stringlist *opr_stringlist_read_single
 	if ( !sieve_binary_read_integer(sbin, address, &strlen) ) 
   	return NULL;
 
-	strlist = sieve_coded_stringlist_create(sbin, pc, 1, *address + strlen); 
+	strlist = sieve_coded_stringlist_create(sbin, pc, 1, *address + strlen + 1); 
 
 	/* Skip over the string for now */
-	*address += strlen;
+	*address += strlen + 1;
   
 	return strlist;
 }

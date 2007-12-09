@@ -163,18 +163,22 @@ const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id)
 
 int sieve_extension_get_by_name(const char *name, const struct sieve_extension **ext) 
 {
-  struct sieve_extension_registration *ereg = 
-    (struct sieve_extension_registration *) hash_lookup(extension_index, name);
+  struct sieve_extension_registration *ereg;
 	
-	*ext = NULL;
+	if ( ext != NULL )
+		*ext = NULL;
+		
+	if ( *name == '@' )
+		return -1;	
+		
+	ereg = (struct sieve_extension_registration *) 
+		hash_lookup(extension_index, name);
 
 	if ( ereg == NULL )
 		return -1;
-	
-	if ( *(ereg->extension->name) == '@' )
-		return -1;
-		    
-	*ext = ereg->extension;
+		
+	if ( ext != NULL )    
+		*ext = ereg->extension;
 	
 	return ereg->id;
 }

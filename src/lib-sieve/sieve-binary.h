@@ -13,7 +13,12 @@ void sieve_binary_ref(struct sieve_binary *sbin);
 void sieve_binary_unref(struct sieve_binary **sbin);
 
 inline pool_t sieve_binary_pool(struct sieve_binary *sbin);
-void sieve_binary_load(struct sieve_binary *sbin);
+
+void sieve_binary_activate(struct sieve_binary *sbin);
+
+bool sieve_binary_save
+	(struct sieve_binary *sbin, const char *path);
+struct sieve_binary *sieve_binary_load(const char *path);
 
 /* 
  * Extension support 

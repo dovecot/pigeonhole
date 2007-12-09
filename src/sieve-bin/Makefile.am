@@ -1,4 +1,4 @@
-bin_PROGRAMS = sievec sieve-test sieve-exec
+bin_PROGRAMS = sievec sieved sieve-test sieve-exec
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
@@ -14,6 +14,7 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/deliver
 
 sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
+sieved_LDFLAGS = -export-dynamic -Wl,--start-group 
 sieve_test_LDFLAGS = -export-dynamic -Wl,--start-group
 sieve_exec_LDFLAGS = -export-dynamic -Wl,--start-group
 
@@ -38,10 +39,12 @@ ldadd = \
     $(MODULE_LIBS)
 
 sievec_LDADD = $(ldadd)
+sieved_LDADD = $(ldadd)
 sieve_test_LDADD = $(ldadd)
 sieve_exec_LDADD = $(ldadd)
 
 sievec_DEPENDENCIES = $(libs)
+sieved_DEPENDENCIES = $(libs)
 sieve_test_DEPENDENCIES = $(libs)
 sieve_exec_DEPENDENCIES = $(libs)
 
@@ -53,6 +56,10 @@ common_sources = \
 sievec_SOURCES = \
 	$(common_sources) \
 	sievec.c 
+
+sieved_SOURCES = \
+	$(common_sources) \
+	sieved.c 
 
 sieve_test_SOURCES = \
 	$(common_sources) \

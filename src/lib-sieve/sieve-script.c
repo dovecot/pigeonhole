@@ -34,50 +34,51 @@ struct sieve_script *sieve_script_create
 	pool_t pool;
 	struct stat st;
 	struct sieve_script *script;
-	
-	/* First obtain stat data from the system */
-	
-	if ( stat(path, &st) < 0 ) {
-		if ( errno == ENOENT )
-			sieve_error(ehandler, name, "sieve script does not exist");
-		else 
-			sieve_critical(ehandler, path, "failed to stat sieve script: %m");
-		return NULL;
-	}
-	
-	/* Only create object if it stat()s without problems */
-	
-	pool = pool_alloconly_create("sieve_script", 1024);
-	script = p_new(pool, struct sieve_script, 1);
-	script->pool = pool;
-	script->refcount = 1;
-	script->ehandler = ehandler;
-	
-	memcpy((void *) &script->st, (void *) &st, sizeof(st));
-	script->path = p_strdup(pool, path);	
+
+	T_FRAME(
+		if ( name == NULL || *name == '\0' ) {
+			const char *filename;
+			const char *ext;
 		
-	if ( name == NULL || *name == '\0' ) {
-		const char *filename, *ext;
-	
-		T_FRAME(
 			/* Extract filename from path */
 			filename = strrchr(path, '/');
 			if ( filename == NULL )
 				filename = path;
 			else
 				filename++;
-
-			/* Extract the script name */
-		  ext = strrchr(filename, '.');
-		  if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
-				script->name = p_strdup(pool, filename);
-		  else
-		  	script->name = p_strdup_until(pool, filename, ext);
-		);
-	} else {
-		script->name = p_strdup(pool, name);
-	}
 	
+			/* Extract the script name */
+			ext = strrchr(filename, '.');
+			if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
+				name = filename;
+			else
+				name = t_strdup_until(filename, ext);
+		} 
+		
+		/* First obtain stat data from the system */
+	
+		if ( stat(path, &st) < 0 ) {
+			if ( errno == ENOENT )
+				sieve_error(ehandler, name, "sieve script does not exist");
+			else 
+				sieve_critical(ehandler, path, "failed to stat sieve script: %m");
+			script = NULL;
+		} else {
+	
+			/* Only create object if it stat()s without problems */
+	
+			pool = pool_alloconly_create("sieve_script", 1024);
+			script = p_new(pool, struct sieve_script, 1);
+			script->pool = pool;
+			script->refcount = 1;
+			script->ehandler = ehandler;
+	
+			memcpy((void *) &script->st, (void *) &st, sizeof(st));
+			script->path = p_strdup(pool, path);	
+			script->name = p_strdup(pool, name);
+		}
+	);
+
 	return script;
 }
 

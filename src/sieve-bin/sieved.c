@@ -17,25 +17,19 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sievec [-d] <scriptfile> <outfile>\n"
+"Usage: sieved <binfile> [<outfile>]\n"
 	);
 }
 
 int main(int argc, char **argv) {
 	int i;
 	struct sieve_binary *sbin;
-	bool dump = FALSE;
-	const char *scriptfile, *outfile;
-	
-	bin_init();
-	
-	scriptfile = outfile = NULL;
+	const char *binfile, *outfile;
+		
+	binfile = outfile = NULL;
 	for (i = 1; i < argc; i++) {
-		if (strcmp(argv[i], "-d") == 0) {
-			/* dump file */
-			dump = TRUE;
-		} else if ( scriptfile == NULL ) {
-			scriptfile = argv[i];
+		if ( binfile == NULL ) {
+			binfile = argv[i];
 		} else if ( outfile == NULL ) {
 			outfile = argv[i];
 		} else {
@@ -44,27 +38,22 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	if ( scriptfile == NULL ) {
+	if ( binfile == NULL ) {
 		print_help();
-		i_fatal("Missing <scriptfile> argument");
+		i_fatal("Missing <binfile> argument");
 	}
 	
-	if ( outfile == NULL ) {
-		print_help();
-		i_fatal("Missing <outfile> argument");
-	}
-
-	sbin = bin_compile_sieve_script(scriptfile);
+	bin_init();
+	
+	sbin = sieve_binary_load(binfile);
 
 	if ( sbin != NULL ) {
-		if ( dump ) 
-			bin_dump_sieve_binary_to(sbin, "-");
-		else {
-			sieve_binary_save(sbin, outfile);
-		}
-		
+		bin_dump_sieve_binary_to(sbin, outfile == NULL ? "-" : outfile);
+	
 		sieve_binary_unref(&sbin);
-	}
-		
+	} else 
+		i_error("Failed to load binary: %s", binfile);
+	
 	bin_deinit();
 }
+
