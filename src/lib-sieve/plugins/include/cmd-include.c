@@ -68,8 +68,8 @@ const struct sieve_opcode include_opcode = {
 struct cmd_include_context_data {
 	enum { LOCATION_PERSONAL, LOCATION_GLOBAL } location;
 	bool location_assigned;
-	struct sieve_script *script;
-	struct sieve_ast *ast;
+	const char *script_name;
+	const char *script_path;
 };   
 
 /* Tags */
@@ -158,12 +158,11 @@ static bool cmd_include_pre_validate
 static bool cmd_include_validate(struct sieve_validator *validator, 
 	struct sieve_command_context *cmd) 
 { 	
+	pool_t pool = sieve_command_pool(cmd);
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct cmd_include_context_data *ctx_data = 
 		(struct cmd_include_context_data *) cmd->data;
-	const char *script_name, *script_path;
-	struct sieve_ast *ast;
-
+	
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "value", 1, SAAT_STRING) ) {
 		return FALSE;
@@ -171,27 +170,20 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	
 	/* Get script path */
 
-	script_name = sieve_ast_argument_strc(arg);
+	ctx_data->script_name = sieve_ast_argument_strc(arg);
 	
 	/* FIXME: Hardcoded */
 #define HARDCODED_DIR "src/lib-sieve/plugins/include/"
 	if ( ctx_data->location == LOCATION_PERSONAL )
-		script_path = t_strconcat
-  		(HARDCODED_DIR, script_name, ".sieve", NULL);
+		ctx_data->script_path = p_strconcat
+  		(pool, HARDCODED_DIR, ctx_data->script_name, ".sieve", NULL);
 	else if ( ctx_data->location == LOCATION_GLOBAL )
-		script_path = t_strconcat
-  		(HARDCODED_DIR, script_name, ".sieve", NULL);
+		ctx_data->script_path = p_strconcat
+  		(pool, HARDCODED_DIR, ctx_data->script_name, ".sieve", NULL);
 	else 
 		return FALSE;
-
-	/* Validate */
-	if ( !ext_include_validate_include
-		(validator, cmd, script_path, script_name, &ast) ) {
- 		return FALSE;
- 	}
- 	 	
- 	ctx_data->ast = ast;
-	sieve_validator_argument_activate(validator, arg);	
+		
+	arg = sieve_ast_arguments_detach(arg, 1);
 	
 	return TRUE;
 }
@@ -201,8 +193,17 @@ static bool cmd_include_validate(struct sieve_validator *validator,
  */
  
 static bool cmd_include_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
+	(struct sieve_generator *generator,	struct sieve_command_context *cmd) 
 {
+	struct cmd_include_context_data *ctx_data = 
+		(struct cmd_include_context_data *) cmd->data;
+
+	/* Generate */
+	if ( !ext_include_generate_include
+		(generator, cmd, ctx_data->script_path, ctx_data->script_name) ) {
+ 		return FALSE;
+ 	}
+ 	 		
 	return TRUE;
 }
 

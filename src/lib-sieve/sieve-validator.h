@@ -14,11 +14,11 @@ struct sieve_validator *sieve_validator_create
 void sieve_validator_free(struct sieve_validator **validator);
 inline pool_t sieve_validator_pool(struct sieve_validator *validator);
 
-inline struct sieve_error_handler *sieve_validator_get_error_handler
+inline struct sieve_error_handler *sieve_validator_error_handler
 	(struct sieve_validator *validator);
-inline struct sieve_ast *sieve_validator_get_ast
+inline struct sieve_ast *sieve_validator_ast
 	(struct sieve_validator *validator);
-inline struct sieve_script *sieve_validator_get_script
+inline struct sieve_script *sieve_validator_script
 	(struct sieve_validator *validator);
 
 bool sieve_validator_run(struct sieve_validator *validator);

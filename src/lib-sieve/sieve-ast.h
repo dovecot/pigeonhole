@@ -163,6 +163,11 @@ inline pool_t sieve_ast_pool(struct sieve_ast *ast);
 inline struct sieve_script *sieve_ast_script(struct sieve_ast *ast);
 
 const char *sieve_ast_type_name(enum sieve_ast_type ast_type);
+
+/* error reporting */
+void sieve_ast_error
+(struct sieve_error_handler *ehandler, sieve_error_vfunc_t vfunc, 
+	struct sieve_ast_node *node, const char *fmt, va_list args);
 	
 /* sieve_ast_argument */
 struct sieve_ast_argument *sieve_ast_argument_string_create

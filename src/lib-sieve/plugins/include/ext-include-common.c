@@ -3,42 +3,41 @@
 #include "sieve-script.h"
 #include "sieve-ast.h"
 #include "sieve-commands.h"
-#include "sieve-parser.h"
-#include "sieve-validator.h"
+#include "sieve-generator.h"
 
 #include "ext-include-common.h"
 
-/* Validator context management */
+/* Generator context management */
 
 static struct ext_include_main_context *ext_include_create_main_context
-(struct sieve_validator *validator)
+(struct sieve_generator *gentr)
 {
-	pool_t pool = sieve_validator_pool(validator);
+	pool_t pool = sieve_generator_pool(gentr);
 	
 	struct ext_include_main_context *ctx = 
 		p_new(pool, struct ext_include_main_context, 1);
 	
-	ctx->validator = validator;
+	ctx->generator = gentr;
 	ctx->included_scripts = hash_create
 		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 	
 	return ctx;
 }
 
-static struct ext_include_validator_context *
-	ext_include_create_validator_context
-(struct sieve_validator *validator, 
-	struct ext_include_validator_context *parent, struct sieve_script *script)
+static struct ext_include_generator_context *
+	ext_include_create_generator_context
+(struct sieve_generator *gentr, struct ext_include_generator_context *parent, 
+	struct sieve_script *script)
 {	
-	struct ext_include_validator_context *ctx;
+	struct ext_include_generator_context *ctx;
 
-	pool_t pool = sieve_validator_pool(validator);
-	ctx = p_new(pool, struct ext_include_validator_context, 1);
+	pool_t pool = sieve_generator_pool(gentr);
+	ctx = p_new(pool, struct ext_include_generator_context, 1);
 	ctx->parent = parent;
 	ctx->script = script;
 	if ( parent == NULL ) {
 		ctx->nesting_level = 0;
-		ctx->main = ext_include_create_main_context(validator);
+		ctx->main = ext_include_create_main_context(gentr);
 	} else {
 		ctx->nesting_level = parent->nesting_level + 1;
 		ctx->main = parent->main;
@@ -47,40 +46,38 @@ static struct ext_include_validator_context *
 	return ctx;
 }
 
-inline struct ext_include_validator_context *
-	ext_include_get_validator_context
-(struct sieve_validator *validator)
+inline struct ext_include_generator_context *ext_include_get_generator_context
+(struct sieve_generator *gentr)
 {
-	return (struct ext_include_validator_context *)
-		sieve_validator_extension_get_context(validator, ext_include_my_id);
+	return (struct ext_include_generator_context *)
+		sieve_generator_extension_get_context(gentr, ext_include_my_id);
 }
 
-void ext_include_register_validator_context
-(struct sieve_validator *validator, struct sieve_script *script)
+void ext_include_register_generator_context(struct sieve_generator *gentr)
 {
-	struct ext_include_validator_context *ctx = 
-		ext_include_get_validator_context(validator);
+	struct ext_include_generator_context *ctx = 
+		ext_include_get_generator_context(gentr);
+	struct sieve_script *script = sieve_generator_script(gentr);
 	
 	if ( ctx == NULL ) {
-		ctx = ext_include_create_validator_context(validator, NULL, script);
+		ctx = ext_include_create_generator_context(gentr, NULL, script);
 		
-		sieve_validator_extension_set_context
-			(validator, ext_include_my_id, (void *) ctx);		
+		sieve_generator_extension_set_context
+			(gentr, ext_include_my_id, (void *) ctx);		
 	}
 }
 
-bool ext_include_validate_include
-(struct sieve_validator *validator, struct sieve_command_context *cmd,
-	const char *script_path, const char *script_name, struct sieve_ast **ast_r)
+bool ext_include_generate_include
+(struct sieve_generator *gentr, struct sieve_command_context *cmd,
+	const char *script_path, const char *script_name)
 {
 	bool result = TRUE;
 	struct sieve_script *script;
-	struct sieve_validator *subvalid; 
-	struct ext_include_validator_context *parent =
-		ext_include_get_validator_context(validator);
-	struct ext_include_validator_context *ctx;
-	struct sieve_error_handler *ehandler = 
-		sieve_validator_get_error_handler(validator);
+	struct sieve_ast *ast;
+	struct ext_include_generator_context *parent =
+		ext_include_get_generator_context(gentr);
+	struct ext_include_generator_context *ctx;
+	struct sieve_error_handler *ehandler = sieve_generator_error_handler(gentr);
 		
 	/* Do not include more scripts when errors have occured already. */
 	if ( sieve_get_errors(ehandler) > 0 )
@@ -91,15 +88,12 @@ bool ext_include_validate_include
 		== NULL )
 		return FALSE;
 	
-	*ast_r = NULL;
-	
 	/* Check for circular include */
 	
 	ctx = parent;
 	while ( ctx != NULL ) {
 		if ( sieve_script_equals(ctx->script, script) ) {
-			sieve_command_validate_error
-				(validator, cmd, "circular include");
+			sieve_command_generate_error(gentr, cmd, "circular include");
 				
 			sieve_script_unref(&script);
 			return FALSE;
@@ -107,34 +101,24 @@ bool ext_include_validate_include
 		
 		ctx = ctx->parent;
 	}	
-			
-	/* Parse script */
-	
-	if ( (*ast_r = sieve_parse(script, ehandler)) == NULL ) {
- 		sieve_command_validate_error
- 			(validator, cmd, "parse failed for included script '%s'", script_name);
-		sieve_script_unref(&script);
-		return FALSE;
+  	
+	/* Parse */
+	if ( (ast = sieve_parse(script, ehandler)) == NULL ) {
+ 		sieve_command_generate_error(gentr, cmd, 
+ 			"failed to parse included script '%s'", script_name);
+		return NULL;
 	}
-	
-	/* AST now holds a reference, so we can drop it already */
-	sieve_script_unref(&script);
-	
-	/* Validate script */
 
-	subvalid = sieve_validator_create(*ast_r, ehandler);	
-	ctx = ext_include_create_validator_context(subvalid, parent, script);
-	sieve_validator_extension_set_context(subvalid, ext_include_my_id, ctx);		
+	/* Validate */
+	if ( !sieve_validate(ast, ehandler) ) {
+		sieve_command_generate_error(gentr, cmd, 
+			"failed to validate included script '%s'", script_name);
 		
-	if ( !sieve_validator_run(subvalid) || sieve_get_errors(ehandler) > 0 ) {
-		sieve_command_validate_error
-			(validator, cmd, "validation failed for included script '%s'", 
-				script_name);
-		sieve_ast_unref(ast_r);
-		result = FALSE;
-	}
-		
-	sieve_validator_free(&subvalid);	
+ 		sieve_ast_unref(&ast);
+ 		return NULL;
+ 	}
+ 	
+	sieve_ast_unref(&ast); 	 	
 		
 	return result;
 }

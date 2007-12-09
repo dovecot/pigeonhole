@@ -88,6 +88,20 @@ const char *sieve_ast_type_name(enum sieve_ast_type ast_type) {
 	}
 }
 
+/* AST-based error reporting */
+
+void sieve_ast_error
+(struct sieve_error_handler *ehandler, sieve_error_vfunc_t vfunc, 
+	struct sieve_ast_node *node, const char *fmt, va_list args) 
+{ 
+	struct sieve_script *script = node->ast->script;
+	
+	T_FRAME(vfunc(ehandler, 
+		t_strdup_printf("%s:%d", sieve_script_name(script),
+			sieve_ast_node_line(node)), fmt, args)); 
+}
+ 
+
 /* Very simplistic linked list implementation
  */
 #define __LIST_CREATE(pool, type) { \

@@ -24,6 +24,7 @@
 
 static bool ext_include_load(int ext_id);
 static bool ext_include_validator_load(struct sieve_validator *validator);
+static bool ext_include_generator_load(struct sieve_generator *gentr);
 
 /* Commands */
 
@@ -46,7 +47,8 @@ const struct sieve_extension include_extension = {
 	"include", 
 	ext_include_load,
 	ext_include_validator_load, 
-	NULL, NULL, NULL, 
+	ext_include_generator_load,
+	NULL, NULL, 
 	SIEVE_EXT_DEFINE_OPCODES(ext_include_opcodes),
 	NULL
 };
@@ -65,9 +67,15 @@ static bool ext_include_validator_load(struct sieve_validator *validator)
 	/* Register new commands */
 	sieve_validator_register_command(validator, &cmd_include);
 	sieve_validator_register_command(validator, &cmd_return);
-	
-	ext_include_register_validator_context(validator,
-		sieve_validator_get_script(validator));
+
+	return TRUE;
+}	
+
+/* Load extension into generator */
+
+static bool ext_include_generator_load(struct sieve_generator *gentr)
+{
+	ext_include_register_generator_context(gentr);
 
 	return TRUE;
 }

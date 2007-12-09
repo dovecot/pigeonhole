@@ -35,23 +35,22 @@ struct sieve_script *sieve_script_create
 	pool_t pool;
 	struct stat st;
 	struct sieve_script *script;
-	const char *dirpath;
+	const char *filename, *dirpath;
 
 	T_FRAME(
+		/* Extract filename from path */
+		filename = strrchr(path, '/');
+		if ( filename == NULL ) {
+			dirpath = "";
+			filename = path;
+		} else {
+			dirpath = t_strdup_until(path, filename);
+			filename++;
+		}
+	
 		if ( name == NULL || *name == '\0' ) {
-			const char *filename;
 			const char *ext;
 		
-			/* Extract filename from path */
-			filename = strrchr(path, '/');
-			if ( filename == NULL ) {
-				dirpath = "";
-				filename = path;
-			} else {
-				dirpath = t_strdup_until(path, filename);
-				filename++;
-			}
-	
 			/* Extract the script name */
 			ext = strrchr(filename, '.');
 			if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
@@ -64,7 +63,7 @@ struct sieve_script *sieve_script_create
 	
 		if ( stat(path, &st) < 0 ) {
 			if ( errno == ENOENT )
-				sieve_error(ehandler, name, "sieve script does not exist");
+				sieve_error(ehandler, path, "sieve script does not exist");
 			else 
 				sieve_critical(ehandler, path, "failed to stat sieve script: %m");
 			script = NULL;

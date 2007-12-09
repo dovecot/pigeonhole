@@ -8,6 +8,10 @@
 
 struct sieve_error_handler;
 
+typedef void (*sieve_error_vfunc_t)
+	(struct sieve_error_handler *ehandler, const char *location, 
+		const char *fmt, va_list args);
+
 /* For these functions it is the responsibility of the caller to
  * manage the datastack.
  */

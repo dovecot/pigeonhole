@@ -57,7 +57,7 @@ struct sieve_ast *sieve_parse
 	return ast;
 }
 
-static bool sieve_validate(struct sieve_ast *ast, struct sieve_error_handler *ehandler)
+bool sieve_validate(struct sieve_ast *ast, struct sieve_error_handler *ehandler)
 {
 	bool result = TRUE;
 	struct sieve_validator *validator = sieve_validator_create(ast, ehandler);
@@ -70,9 +70,10 @@ static bool sieve_validate(struct sieve_ast *ast, struct sieve_error_handler *eh
 	return result;
 }
 
-static struct sieve_binary *sieve_generate(struct sieve_ast *ast)
+static struct sieve_binary *sieve_generate
+	(struct sieve_ast *ast, struct sieve_error_handler *ehandler)
 {
-	struct sieve_generator *generator = sieve_generator_create(ast);
+	struct sieve_generator *generator = sieve_generator_create(ast, ehandler);
 	struct sieve_binary *result;
 		
 	result = sieve_generator_run(generator);
@@ -103,7 +104,7 @@ static struct sieve_binary *sieve_compile_script
  	}
  	
 	/* Generate */
-	if ( (sbin=sieve_generate(ast)) == NULL ) {
+	if ( (sbin=sieve_generate(ast, ehandler)) == NULL ) {
 		sieve_error(ehandler, sieve_script_name(script), "code generation failed");
 		
 		sieve_ast_unref(&ast);
@@ -146,7 +147,7 @@ struct sieve_binary *sieve_open
 
 	T_FRAME(
 		binpath = sieve_script_binpath(script);	
-		sbin = sieve_binary_load(binpath);
+		sbin = sieve_binary_load(binpath, script);
 	
 		if ( sbin == NULL ) {
 			sbin = sieve_compile_script(script, ehandler);

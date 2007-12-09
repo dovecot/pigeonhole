@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 	
 	bin_init();
 	
-	sbin = sieve_binary_load(binfile);
+	sbin = sieve_binary_load(binfile, NULL);
 
 	if ( sbin != NULL ) {
 		bin_dump_sieve_binary_to(sbin, outfile == NULL ? "-" : outfile);

@@ -90,6 +90,11 @@ const char *sieve_command_type_name(const struct sieve_command *command);
 #define sieve_command_validate_critical(validator, context, ...) \
 	sieve_validator_critical(validator, (context)->ast_node, __VA_ARGS__)
 
+#define sieve_command_generate_error(gentr, context, ...) \
+	sieve_generator_error(gentr, (context)->ast_node, __VA_ARGS__)
+#define sieve_command_generate_critical(gentr, context, ...) \
+	sieve_generator_critical(gentr, (context)->ast_node, __VA_ARGS__)
+
 #define sieve_command_pool(context) \
 	sieve_ast_node_pool((context)->ast_node)
 

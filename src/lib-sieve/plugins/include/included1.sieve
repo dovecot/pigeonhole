@@ -1,3 +1,3 @@
 require "fileinto";
 
-fileinto "INBOX.frop";
+fileinto "INBOX.frop"

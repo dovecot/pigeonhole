@@ -41,6 +41,8 @@ struct sieve_binary_extension {
 struct sieve_binary {
 	pool_t pool;
 	
+	struct sieve_script *script;
+	
 	/* When the binary is loaded into memory or when it is being constructed by
 	 * the generator, extensions will be associated to the binary. The extensions
 	 * array is a sequential lit of all used extensions. The extension_index 
@@ -73,7 +75,7 @@ struct sieve_binary {
 	size_t code_size;
 };
 
-static struct sieve_binary *sieve_binary_create(void) 
+static struct sieve_binary *sieve_binary_create(struct sieve_script *script) 
 {
 	pool_t pool;
 	struct sieve_binary *sbin;
@@ -81,6 +83,7 @@ static struct sieve_binary *sieve_binary_create(void)
 	pool = pool_alloconly_create("sieve_binary", 4096);	
 	sbin = p_new(pool, struct sieve_binary, 1);
 	sbin->pool = pool;
+	sbin->script = script;
 	
 	p_array_init(&sbin->extensions, pool, 5);
 	p_array_init(&sbin->extension_index, pool, sieve_extensions_get_count());
@@ -90,9 +93,9 @@ static struct sieve_binary *sieve_binary_create(void)
 	return sbin;
 }
 
-struct sieve_binary *sieve_binary_create_new(void) 
+struct sieve_binary *sieve_binary_create_new(struct sieve_script *script) 
 {
-	struct sieve_binary *sbin = sieve_binary_create();
+	struct sieve_binary *sbin = sieve_binary_create(script);
 	
 	sbin->code_buffer = buffer_create_dynamic(sbin->pool, 256);
 	sbin->data = sbin->code_buffer;	
@@ -121,6 +124,11 @@ inline sieve_size_t sieve_binary_get_code_size(struct sieve_binary *sbin)
 inline pool_t sieve_binary_pool(struct sieve_binary *sbin)
 {
 	return sbin->pool;
+}
+
+inline struct sieve_script *sieve_binary_script(struct sieve_binary *sbin)
+{
+	return sbin->script;
 }
 
 static inline void sieve_binary_set_active_block
@@ -431,7 +439,8 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 	return TRUE;
 }
 
-struct sieve_binary *sieve_binary_load(const char *path)
+struct sieve_binary *sieve_binary_load
+	(const char *path, struct sieve_script *script)
 {
 	int fd;
 	struct stat st;
@@ -455,7 +464,7 @@ struct sieve_binary *sieve_binary_load(const char *path)
 	}
 	
 	/* Create binary object */
-	sbin = sieve_binary_create();
+	sbin = sieve_binary_create(script);
 	sbin->path = p_strdup(sbin->pool, path);
 	
 	/* Allocate memory buffer
@@ -493,7 +502,8 @@ struct sieve_binary *sieve_binary_load(const char *path)
 		sbin = NULL;
 	}
 	
-	sieve_binary_activate(sbin);
+	if ( sbin != NULL )
+		sieve_binary_activate(sbin);
 
 	return sbin;
 }

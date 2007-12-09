@@ -41,27 +41,47 @@ void sieve_jumplist_resolve(struct sieve_jumplist *jlist)
 struct sieve_generator {
 	pool_t pool;
 	
+	struct sieve_error_handler *ehandler;
+	
 	struct sieve_ast *ast;
+	struct sieve_script *script;
 	
 	struct sieve_binary *binary;
+	
+	ARRAY_DEFINE(ext_contexts, void *);
 };
 
-struct sieve_generator *sieve_generator_create(struct sieve_ast *ast) 
+struct sieve_generator *sieve_generator_create
+	(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
 {
 	pool_t pool;
-	struct sieve_generator *generator;
+	struct sieve_generator *gentr;
 	
 	pool = pool_alloconly_create("sieve_generator", 4096);	
-	generator = p_new(pool, struct sieve_generator, 1);
-	generator->pool = pool;
+	gentr = p_new(pool, struct sieve_generator, 1);
+	gentr->pool = pool;
+	gentr->ehandler = ehandler;
 	
-	generator->ast = ast;	
+	gentr->ast = ast;	
+	gentr->script = sieve_ast_script(ast);
 	sieve_ast_ref(ast);
 
-	generator->binary = sieve_binary_create_new();
-	sieve_binary_ref(generator->binary);
+	/* Setup storage for extension contexts */		
+	array_create(&gentr->ext_contexts, pool, sizeof(void *), 
+		sieve_extensions_get_count());
+
+	gentr->binary = sieve_binary_create_new(sieve_ast_script(ast));
+	sieve_binary_ref(gentr->binary);
 	
-	return generator;
+	/* Pre-load core language features implemented as 'extensions' (none) */
+	/*for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
+		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
+		
+		if ( ext->generator_load != NULL )
+			(void)ext->generator_load(gentr);		
+	}*/
+	
+	return gentr;
 }
 
 void sieve_generator_free(struct sieve_generator *generator) 
@@ -71,10 +91,82 @@ void sieve_generator_free(struct sieve_generator *generator)
 	pool_unref(&(generator->pool));
 }
 
-inline void sieve_generator_link_extension
-	(struct sieve_generator *generator, int ext_id) 
+inline struct sieve_script *sieve_generator_get_script
+	(struct sieve_generator *gentr)
 {
-	(void)sieve_binary_extension_link(generator->binary, ext_id);
+	return gentr->script;
+}
+
+/* Error handling */
+
+void sieve_generator_warning
+(struct sieve_generator *gentr, struct sieve_ast_node *node, 
+	const char *fmt, ...) 
+{ 
+	va_list args;
+	
+	va_start(args, fmt);
+	sieve_ast_error(gentr->ehandler, sieve_vwarning, node, fmt, args);
+	va_end(args);
+}
+ 
+void sieve_generator_error
+(struct sieve_generator *gentr, struct sieve_ast_node *node, 
+	const char *fmt, ...) 
+{
+	va_list args;
+	
+	va_start(args, fmt);
+	sieve_ast_error(gentr->ehandler, sieve_verror, node, fmt, args);
+	va_end(args);
+}
+
+void sieve_generator_critical
+(struct sieve_generator *gentr, struct sieve_ast_node *node, 
+	const char *fmt, ...) 
+{
+	va_list args;
+	
+	va_start(args, fmt);
+	sieve_ast_error(gentr->ehandler, sieve_vcritical, node, fmt, args);
+	va_end(args);
+}
+
+/* Extension support */
+
+bool sieve_generator_link_extension
+	(struct sieve_generator *gentr, int ext_id) 
+{
+	const struct sieve_extension *ext = sieve_extension_get_by_id(ext_id);
+	
+	(void)sieve_binary_extension_link(gentr->binary, ext_id);
+	
+	if ( ext == NULL ) 
+		return FALSE;
+	
+	if ( ext->generator_load != NULL )
+		return ext->generator_load(gentr);
+	
+	return TRUE;
+}
+
+inline void sieve_generator_extension_set_context
+	(struct sieve_generator *gentr, int ext_id, void *context)
+{
+	array_idx_set(&gentr->ext_contexts, (unsigned int) ext_id, &context);	
+}
+
+inline const void *sieve_generator_extension_get_context
+	(struct sieve_generator *gentr, int ext_id) 
+{
+	void * const *ctx;
+
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&gentr->ext_contexts) )
+		return NULL;
+	
+	ctx = array_idx(&gentr->ext_contexts, (unsigned int) ext_id);		
+
+	return *ctx;
 }
 
 /* Binary access */
@@ -201,17 +293,18 @@ static bool sieve_generate_command
 bool sieve_generate_block
 	(struct sieve_generator *generator, struct sieve_ast_node *block) 
 {
+	bool result = TRUE;
 	struct sieve_ast_node *command;
 
 	T_FRAME(	
 		command = sieve_ast_command_first(block);
-		while ( command != NULL ) {	
-			sieve_generate_command(generator, command);	
+		while ( result && command != NULL ) {	
+			result = sieve_generate_command(generator, command);	
 			command = sieve_ast_command_next(command);
 		}		
 	);
 	
-	return TRUE;
+	return result;
 }
 
 struct sieve_binary *sieve_generator_run(struct sieve_generator *generator) {	
@@ -222,5 +315,25 @@ struct sieve_binary *sieve_generator_run(struct sieve_generator *generator) {
 	
 	return NULL;
 }
+
+/* Accessors */
+
+inline struct sieve_error_handler *sieve_generator_error_handler
+	(struct sieve_generator *gentr)
+{
+	return gentr->ehandler;
+}
+
+inline pool_t sieve_generator_pool(struct sieve_generator *gentr)
+{
+	return gentr->pool;
+}
+
+inline struct sieve_script *sieve_generator_script
+	(struct sieve_generator *gentr)
+{
+	return gentr->script;
+}
+
 
 

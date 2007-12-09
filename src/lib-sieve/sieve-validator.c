@@ -40,12 +40,9 @@ void sieve_validator_warning
 	const char *fmt, ...) 
 { 
 	va_list args;
+	
 	va_start(args, fmt);
-	
-	T_FRAME(sieve_vwarning(validator->ehandler, 
-		t_strdup_printf("%s:%d", sieve_script_name(validator->script),
-			sieve_ast_node_line(node)), fmt, args)); 
-	
+	sieve_ast_error(validator->ehandler, sieve_vwarning, node, fmt, args);
 	va_end(args);
 }
  
@@ -54,12 +51,9 @@ void sieve_validator_error
 	const char *fmt, ...) 
 {
 	va_list args;
+	
 	va_start(args, fmt);
-	
-	T_FRAME(sieve_verror(validator->ehandler, 
-		t_strdup_printf("%s:%d", sieve_script_name(validator->script),
-		sieve_ast_node_line(node)), fmt, args)); 
-	
+	sieve_ast_error(validator->ehandler, sieve_verror, node, fmt, args);
 	va_end(args);
 }
 
@@ -68,12 +62,9 @@ void sieve_validator_critical
 	const char *fmt, ...) 
 {
 	va_list args;
+	
 	va_start(args, fmt);
-	
-	T_FRAME(sieve_vcritical(validator->ehandler, 
-		t_strdup_printf("%s:%d", sieve_script_name(validator->script),
-		sieve_ast_node_line(node)), fmt, args)); 
-	
+	sieve_ast_error(validator->ehandler, sieve_vcritical, node, fmt, args);
 	va_end(args);
 }
 
@@ -100,6 +91,12 @@ struct sieve_validator *sieve_validator_create
 	array_create(&validator->ext_contexts, pool, sizeof(void *), 
 		sieve_extensions_get_count());
 		
+	/* Setup command registry */
+	validator->commands = hash_create
+		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
+	sieve_validator_register_core_commands(validator);
+	sieve_validator_register_core_tests(validator);
+	
 	/* Pre-load core language features implemented as 'extensions' */
 	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
 		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
@@ -107,13 +104,7 @@ struct sieve_validator *sieve_validator_create
 		if ( ext->validator_load != NULL )
 			(void)ext->validator_load(validator);		
 	}
-
-	/* Setup command registry */
-	validator->commands = hash_create
-		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
-	sieve_validator_register_core_commands(validator);
-	sieve_validator_register_core_tests(validator);
-
+	
 	return validator;
 }
 
@@ -132,19 +123,19 @@ inline pool_t sieve_validator_pool(struct sieve_validator *validator)
 	return validator->pool;
 }
 
-inline struct sieve_error_handler *sieve_validator_get_error_handler
+inline struct sieve_error_handler *sieve_validator_error_handler
 	(struct sieve_validator *validator)
 {
 	return validator->ehandler;
 }
 
-inline struct sieve_ast *sieve_validator_get_ast
+inline struct sieve_ast *sieve_validator_ast
 	(struct sieve_validator *validator)
 {
 	return validator->ast;
 }
 
-inline struct sieve_script *sieve_validator_get_script
+inline struct sieve_script *sieve_validator_script
 	(struct sieve_validator *validator)
 {
 	return validator->script;
