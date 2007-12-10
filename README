@@ -59,7 +59,7 @@ Options:
 
 sieve-exec
 
-Currently undocumented.
+Currently undocumented (will be merged with sieve-test).
 
 --
 
@@ -86,7 +86,7 @@ What works:
 * Script code generation works for all core commands. Comparators, match-types 
   and address-part modifiers work as required.
 * Interpreter runs core commands and tests. Comparators, match-types and 
-	address-part modifiers have the desired effect. Most test commands work as 
+  address-part modifiers have the desired effect. Most test commands work as 
   specified (see list below).
 * The interpreter produces a result containing a set of actions to execute.
   Duplicate actions can be avoided and conflicts can be detected. 
@@ -177,24 +177,23 @@ RESULT: sieve-result.c sieve-actions.c
   
 Debugging:
 
-CODE-DUMPER: sieve-code-dumper.c
-	A loaded binary can be dumped to a stream in human-readable form using the 
-	code-dumper. It's implementation is similar to the interpreter, with the 
-	exception that it performs no actions and just sequentially wanders through 
-	the byte code printing instructions along the way. The term human-readable is 
-	a bit optimistic though; currently the presented data looks like an assembly
-	language. 
+CODE-DUMPER: sieve-code-dumper.c 
+  A loaded binary can be dumped to a stream in human-readable form using the 
+  code-dumper. It's implementation is similar to the interpreter, with the 
+  exception that it performs no actions and just sequentially wanders through 
+  the byte code printing instructions along the way. The term human-readable is 
+  a bit optimistic though; currently the presented data looks like an assembly
+  language. 
 
 TODO
 ----
 
 In order of descending priority/precedence
-* Implement dropping errors in the user's mailbox as a mail message.
-* Limit the maximum number of errors. 
-* Finish implementing all extensions supported by cmusieve
-* Verify outgoing mail addresses
 * Allow the currently in-memory byte-code to be stored as a script binary
-* Use mmap for the binary script representation. 
+* Finish implementing all extensions supported by cmusieve
+* Limit the maximum number of errors. 
+* Verify outgoing mail addresses
+* Implement dropping errors in the user's mailbox as a mail message.
 * Add development documentation, i.e. comment on library functions and document
   the binary and byte-code format. 
 * Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
@@ -210,8 +209,9 @@ In order of descending priority/precedence
 * Resolve code duplication introduced for handling address-parts and match-types
   in different command implementations.
 * Resolve code duplication amongst comparator, address-part and match-type 
-  support as much as possible. 
-* Give the binary format some more thought, it is currently quite rough and
+  support as much as possible.
+* Use mmap for the binary script representation.  
+* Give the byte code format some more thought, it is currently quite rough and
   to the point. 
 * Implement a faster substring search algorithm to make sopport for the body 
   extension a less bad idea.  
