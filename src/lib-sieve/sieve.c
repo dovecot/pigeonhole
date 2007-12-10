@@ -74,13 +74,13 @@ static struct sieve_binary *sieve_generate
 	(struct sieve_ast *ast, struct sieve_error_handler *ehandler)
 {
 	struct sieve_generator *generator = sieve_generator_create(ast, ehandler);
-	struct sieve_binary *result;
+	struct sieve_binary *sbin = NULL;
 		
-	result = sieve_generator_run(generator);
+	(void) sieve_generator_run(generator, &sbin);
 	
 	sieve_generator_free(generator);
 	
-	return result;
+	return sbin;
 }
 
 static struct sieve_binary *sieve_compile_script

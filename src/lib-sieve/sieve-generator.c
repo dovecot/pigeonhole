@@ -69,9 +69,6 @@ struct sieve_generator *sieve_generator_create
 	/* Setup storage for extension contexts */		
 	array_create(&gentr->ext_contexts, pool, sizeof(void *), 
 		sieve_extensions_get_count());
-
-	gentr->binary = sieve_binary_create_new(sieve_ast_script(ast));
-	sieve_binary_ref(gentr->binary);
 	
 	/* Pre-load core language features implemented as 'extensions' (none) */
 	/*for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
@@ -87,7 +84,10 @@ struct sieve_generator *sieve_generator_create
 void sieve_generator_free(struct sieve_generator *generator) 
 {
 	sieve_ast_unref(&generator->ast);
-	sieve_binary_unref(&generator->binary);
+	
+	if ( generator->binary != NULL )
+		sieve_binary_unref(&generator->binary);
+	
 	pool_unref(&(generator->pool));
 }
 
@@ -307,13 +307,28 @@ bool sieve_generate_block
 	return result;
 }
 
-struct sieve_binary *sieve_generator_run(struct sieve_generator *generator) {	
-	if ( sieve_generate_block(generator, sieve_ast_root(generator->ast)) ) {
-		sieve_binary_activate(generator->binary);
-	 	return generator->binary;
-	} 
+bool sieve_generator_run
+	(struct sieve_generator *generator, struct sieve_binary **sbin) 
+{
+	bool topmost = ( *sbin == NULL );
+	bool result = TRUE;
 	
-	return NULL;
+	if ( topmost )
+		*sbin = sieve_binary_create_new(sieve_ast_script(generator->ast));
+	
+	sieve_binary_ref(*sbin);
+		
+	generator->binary = *sbin;
+	
+	if ( !sieve_generate_block(generator, sieve_ast_root(generator->ast)) ) 
+		result = FALSE;
+	else if ( topmost ) 
+		sieve_binary_activate(*sbin);
+	
+	generator->binary = NULL;
+	sieve_binary_unref(sbin);
+	
+	return result;
 }
 
 /* Accessors */

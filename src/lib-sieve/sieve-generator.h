@@ -91,7 +91,8 @@ bool sieve_generate_block
 bool sieve_generate_test
 	(struct sieve_generator *generator, struct sieve_ast_node *tst_node, 
 		struct sieve_jumplist *jlist, bool jump_true);
-struct sieve_binary *sieve_generator_run(struct sieve_generator *genarator);
+bool sieve_generator_run
+	(struct sieve_generator *generator, struct sieve_binary **sbin);
 
 /* Accessors */
 

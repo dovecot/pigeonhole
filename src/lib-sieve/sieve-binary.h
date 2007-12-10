@@ -21,6 +21,19 @@ bool sieve_binary_save
 	(struct sieve_binary *sbin, const char *path);
 struct sieve_binary *sieve_binary_load
 	(const char *path, struct sieve_script *script);
+	
+/* 
+ * Block management 
+ */
+ 
+enum sieve_binary_system_block {
+	SBIN_SYSBLOCK_EXTENSIONS,
+	SBIN_SYSBLOCK_MAIN_PROGRAM
+};
+
+unsigned int sieve_binary_block_set_active
+	(struct sieve_binary *sbin, unsigned int id);
+unsigned int sieve_binary_block_create(struct sieve_binary *sbin);
 
 /* 
  * Extension support 

@@ -40,6 +40,7 @@ struct sieve_binary_extension {
 
 struct sieve_binary {
 	pool_t pool;
+	int refcount;
 	
 	struct sieve_script *script;
 	
@@ -61,16 +62,18 @@ struct sieve_binary {
 	/* Attributes of a loaded binary */
 	const char *path;
 	
-	/* Pointer to the binary in memory (could be mmap()ed as well) */
+	/* Pointer to the binary in memory (could be mmap()ed as well)
+	 * This is only set when the binary is read from disk and not live-generated. 
+	 */
 	const void *memory;
 	const void *memory_end;
 	
-	/* Current buffer: all emit and read functions act upon this buffer */
+	/* Blocks */
+	ARRAY_DEFINE(blocks, buffer_t *); 
+	unsigned int active_block;
+	
+	/* Current block buffer: all emit and read functions act upon this buffer */
 	buffer_t *data;
-	
-	/* Code buffer */
-	buffer_t *code_buffer;
-	
 	const char *code;
 	size_t code_size;
 };
@@ -83,37 +86,47 @@ static struct sieve_binary *sieve_binary_create(struct sieve_script *script)
 	pool = pool_alloconly_create("sieve_binary", 4096);	
 	sbin = p_new(pool, struct sieve_binary, 1);
 	sbin->pool = pool;
+	sbin->refcount = 1;
 	sbin->script = script;
 	
 	p_array_init(&sbin->extensions, pool, 5);
 	p_array_init(&sbin->extension_index, pool, sieve_extensions_get_count());
 	
 	p_array_init(&sbin->ext_contexts, pool, 5);
+	
+	p_array_init(&sbin->blocks, pool, 3);
 		
 	return sbin;
 }
 
 struct sieve_binary *sieve_binary_create_new(struct sieve_script *script) 
 {
-	struct sieve_binary *sbin = sieve_binary_create(script);
+	struct sieve_binary *sbin = sieve_binary_create(script); 
 	
-	sbin->code_buffer = buffer_create_dynamic(sbin->pool, 256);
-	sbin->data = sbin->code_buffer;	
+	/* Extensions block */
+	(void) sieve_binary_block_create(sbin);
+	
+	/* Main program block */
+	sieve_binary_block_set_active(sbin, sieve_binary_block_create(sbin));
 	
 	return sbin;
 }
 
 void sieve_binary_ref(struct sieve_binary *sbin) 
 {
-	pool_ref(sbin->pool);
+	sbin->refcount++;
 }
 
 void sieve_binary_unref(struct sieve_binary **sbin) 
 {
-	if ( sbin != NULL && *sbin != NULL ) {
-		pool_unref(&((*sbin)->pool));
-		*sbin = NULL;
-	}
+	i_assert((*sbin)->refcount > 0);
+
+	if (--(*sbin)->refcount != 0)
+		return;
+
+	pool_unref(&((*sbin)->pool));
+	
+	*sbin = NULL;
 }
 
 inline sieve_size_t sieve_binary_get_code_size(struct sieve_binary *sbin)
@@ -131,11 +144,56 @@ inline struct sieve_script *sieve_binary_script(struct sieve_binary *sbin)
 	return sbin->script;
 }
 
-static inline void sieve_binary_set_active_block
-	(struct sieve_binary *sbin, buffer_t *buffer)
+/* Block management */
+
+static inline buffer_t *sieve_binary_block_get
+	(struct sieve_binary *sbin, unsigned int id) 
 {
-	sbin->data = buffer;
-	sbin->code = buffer_get_data(buffer, &sbin->code_size);
+	buffer_t * const *block;
+
+	if  ( id >= array_count(&sbin->blocks) )
+		return NULL;
+	
+	block = array_idx(&sbin->blocks, id);		
+
+	return *block;
+}
+
+static inline unsigned int sieve_binary_block_add
+	(struct sieve_binary *sbin, buffer_t *blockbuf)
+{
+	unsigned int id = array_count(&sbin->blocks);
+	
+	array_append(&sbin->blocks, &blockbuf, 1);	
+	return id;
+}
+
+static inline unsigned int sieve_binary_block_count
+	(struct sieve_binary *sbin)
+{
+	return array_count(&sbin->blocks);
+}
+
+unsigned int sieve_binary_block_set_active
+	(struct sieve_binary *sbin, unsigned int id)
+{
+	unsigned int old_id = sbin->active_block;
+	buffer_t *buffer = sieve_binary_block_get(sbin, id);
+	
+	if ( buffer != NULL ) {
+		sbin->data = buffer;
+		sbin->code = buffer_get_data(buffer, &sbin->code_size);
+		sbin->active_block = id;
+	}
+	
+	return old_id;
+}
+
+unsigned int sieve_binary_block_create(struct sieve_binary *sbin)
+{
+	buffer_t *buffer = buffer_create_dynamic(sbin->pool, 64);
+
+	return sieve_binary_block_add(sbin, buffer);
 }
 
 /* Saving and loading the binary to/from a file. */
@@ -192,12 +250,18 @@ static bool _save_aligned(struct ostream *stream, const void *data, size_t size)
 	return TRUE;
 } 
 
-static bool _save_block(struct ostream *stream, int id, buffer_t *block)
+static bool _save_block
+(struct sieve_binary *sbin, struct ostream *stream, unsigned int id)
 {
 	struct sieve_binary_block_header block_header;
+	buffer_t *block;
 	const void *data;
 	size_t size;
-	
+		
+	block = sieve_binary_block_get(sbin, id);
+	if ( block == NULL )
+		return FALSE;
+		
 	data = buffer_get_data(block, &size);
 	
 	block_header.id = id;
@@ -213,7 +277,6 @@ static bool _sieve_binary_save
 	(struct sieve_binary *sbin, struct ostream *stream)
 {
 	struct sieve_binary_header header;
-	buffer_t *extensions;
 	unsigned int ext_count, i;
 	
 	/* Create header */
@@ -232,10 +295,7 @@ static bool _sieve_binary_save
 	 *   FIXME: Per-extension this should also store binary version numbers and 
 	 *   the id of its first extension-specific block (if any)
 	 */
-	
-	extensions = buffer_create_dynamic(sbin->pool, 256);
-	sieve_binary_set_active_block(sbin, extensions);	
-	
+	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_EXTENSIONS);	
 	ext_count = array_count(&sbin->extensions);
 	sieve_binary_emit_integer(sbin, ext_count);
 	
@@ -245,14 +305,12 @@ static bool _sieve_binary_save
 		
 		sieve_binary_emit_cstring(sbin, (*ext)->extension->name);
 	}
-	sieve_binary_set_active_block(sbin, sbin->code_buffer);	
+	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);	
 	
-	if ( !_save_block(stream, 0, extensions) ) 
-		return FALSE;
-	
-	/* Create block containing the main program */
-	if ( !_save_block(stream, 1, sbin->code_buffer) )
-		return FALSE;
+	for ( i = 0; i < sieve_binary_block_count(sbin); i++ ) {
+		if ( !_save_block(sbin, stream, i) ) 
+			return FALSE;
+	}
 
 	return TRUE;
 } 
@@ -319,6 +377,7 @@ static buffer_t *_load_block
 	const struct sieve_binary_block_header *header = 
 		LOAD_ALIGNED(sbin, offset, const struct sieve_binary_block_header);
 	const void *data;
+	buffer_t *block;
 	
 	if ( header == NULL ) {
 		i_error("sieve: block %d of loaded binary %s is truncated", id, sbin->path);
@@ -338,18 +397,19 @@ static buffer_t *_load_block
 		return NULL;
 	}
 	
-	return buffer_create_const_data(sbin->pool, data, header->size);
+	block = buffer_create_const_data(sbin->pool, data, header->size);
+	sieve_binary_block_add(sbin, block);
+	return block;
 }
 
-static bool _sieve_binary_load_extensions	
-	(struct sieve_binary *sbin, buffer_t *extensions)
+static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 {
 	sieve_size_t offset = 0;
 	sieve_size_t count = 0;
 	bool result = TRUE;
 	unsigned int i;
 	
-	sieve_binary_set_active_block(sbin, extensions);
+	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_EXTENSIONS);
 
 	if ( !sieve_binary_read_integer(sbin, &offset, &count) )
 		return FALSE;
@@ -383,7 +443,7 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 	const void *offset = sbin->memory;
 	const struct sieve_binary_header *header;
 	buffer_t *extensions;
-	int i;
+	unsigned int i;
 	
 	/* Verify header */
 	
@@ -419,7 +479,7 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 	if ( extensions == NULL ) 
 		return FALSE;
 		
-	if ( !_sieve_binary_load_extensions(sbin, extensions) ) {
+	if ( !_sieve_binary_load_extensions(sbin) ) {
 		i_error("sieve: extension block of loaded binary %s is corrupt", 
 			sbin->path);
 		return FALSE;
@@ -427,13 +487,13 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 	
 	/* Load the main program */
 	
-	if ( header->blocks == 1 ) {
-		/* Empty binary is not an error, but just plain stupid */
-		sbin->code_buffer = buffer_create_dynamic(sbin->pool, 32);
-	} else {	
-		sbin->code_buffer = _load_block(sbin, &offset, 1);
-		if ( sbin->code_buffer == NULL ) 
+	for ( i = 1; i < header->blocks; i++ ) {	
+		buffer_t *block = _load_block(sbin, &offset, i);
+		if ( block == NULL ) {
+			i_error("sieve: block %d of loaded binary %s is corrupt", 
+				i, sbin->path);
 			return FALSE;
+		}
 	}
 				
 	return TRUE;
@@ -512,7 +572,7 @@ void sieve_binary_activate(struct sieve_binary *sbin)
 {
 	unsigned int i;
 	
-	sieve_binary_set_active_block(sbin, sbin->code_buffer);
+	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);
 	
 	/* Pre-load core language features implemented as 'extensions' */
 	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
