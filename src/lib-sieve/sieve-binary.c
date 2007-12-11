@@ -284,7 +284,7 @@ static bool _sieve_binary_save
 	header.magic = SIEVE_BINARY_MAGIC;
 	header.version_major = SIEVE_BINARY_VERSION_MAJOR;
 	header.version_minor = SIEVE_BINARY_VERSION_MINOR;
-	header.blocks = 2;
+	header.blocks = sieve_binary_block_count(sbin);
 
 	if ( !_save_aligned(stream, &header, sizeof(header)) ) {
 		i_error("sieve: failed to save binary header: %m");
@@ -485,7 +485,9 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 		return FALSE;
 	}	
 	
-	/* Load the main program */
+	/* Load the other blocks */
+	
+	printf("BLOCKS: %d\n", header->blocks);
 	
 	for ( i = 1; i < header->blocks; i++ ) {	
 		buffer_t *block = _load_block(sbin, &offset, i);
