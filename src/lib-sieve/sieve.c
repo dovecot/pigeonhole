@@ -78,7 +78,7 @@ static struct sieve_binary *sieve_generate
 		
 	(void) sieve_generator_run(generator, &sbin);
 	
-	sieve_generator_free(generator);
+	sieve_generator_free(&generator);
 	
 	return sbin;
 }

@@ -81,14 +81,16 @@ struct sieve_generator *sieve_generator_create
 	return gentr;
 }
 
-void sieve_generator_free(struct sieve_generator *generator) 
+void sieve_generator_free(struct sieve_generator **generator) 
 {
-	sieve_ast_unref(&generator->ast);
+	sieve_ast_unref(&(*generator)->ast);
 	
-	if ( generator->binary != NULL )
-		sieve_binary_unref(&generator->binary);
+	if ( (*generator)->binary != NULL )
+		sieve_binary_unref(&(*generator)->binary);
 	
-	pool_unref(&(generator->pool));
+	pool_unref(&((*generator)->pool));
+	
+	*generator = NULL;
 }
 
 inline struct sieve_script *sieve_generator_get_script

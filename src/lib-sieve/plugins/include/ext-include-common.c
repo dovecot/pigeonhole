@@ -2,6 +2,7 @@
 #include "sieve-error.h"
 #include "sieve-script.h"
 #include "sieve-ast.h"
+#include "sieve-binary.h"
 #include "sieve-commands.h"
 #include "sieve-generator.h"
 
@@ -74,10 +75,13 @@ bool ext_include_generate_include
 	bool result = TRUE;
 	struct sieve_script *script;
 	struct sieve_ast *ast;
+	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
+	struct sieve_generator *subgentr;
 	struct ext_include_generator_context *parent =
 		ext_include_get_generator_context(gentr);
 	struct ext_include_generator_context *ctx;
 	struct sieve_error_handler *ehandler = sieve_generator_error_handler(gentr);
+	unsigned this_block_id, new_block_id; 
 		
 	/* Do not include more scripts when errors have occured already. */
 	if ( sieve_get_errors(ehandler) > 0 )
@@ -106,7 +110,7 @@ bool ext_include_generate_include
 	if ( (ast = sieve_parse(script, ehandler)) == NULL ) {
  		sieve_command_generate_error(gentr, cmd, 
  			"failed to parse included script '%s'", script_name);
-		return NULL;
+		return FALSE;
 	}
 
 	/* Validate */
@@ -115,9 +119,21 @@ bool ext_include_generate_include
 			"failed to validate included script '%s'", script_name);
 		
  		sieve_ast_unref(&ast);
- 		return NULL;
+ 		return FALSE;
  	}
+
+	new_block_id = sieve_binary_block_create(sbin);
+	this_block_id = sieve_binary_block_set_active(sbin, new_block_id); 	
+ 	subgentr = sieve_generator_create(ast, ehandler);			
  	
+	if ( !sieve_generator_run(subgentr, &sbin) ) {
+		sieve_command_generate_error(gentr, cmd, 
+			"failed to validate included script '%s'", script_name);
+ 		result = FALSE;
+	}
+	
+	(void) sieve_binary_block_set_active(sbin, this_block_id); 	
+	sieve_generator_free(&subgentr);
 	sieve_ast_unref(&ast); 	 	
 		
 	return result;

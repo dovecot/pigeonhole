@@ -623,7 +623,7 @@ int sieve_binary_extension_link
 	const struct sieve_extension *ext = sieve_extension_get_by_id(ext_id); 
 	struct sieve_binary_extension *bext;
 
-	if ( ext != NULL ) {
+	if ( ext != NULL && sieve_binary_extension_get_index(sbin, ext_id) == -1 ) {
 		bext = p_new(sbin->pool, struct sieve_binary_extension, 1);
 		bext->index = index;
 		bext->ext_id = ext_id;
@@ -661,10 +661,11 @@ int sieve_binary_extension_get_index
 {
 	struct sieve_binary_extension * const *ext;
 	
-	if ( ext_id < (int) array_count(&sbin->extension_index) ) {
+	if ( ext_id > 0 && ext_id < (int) array_count(&sbin->extension_index) ) {
 		ext = array_idx(&sbin->extension_index, (unsigned int) ext_id);
 	
-		return (*ext)->index;
+		if ( *ext != NULL )
+			return (*ext)->index;
 	}
 	
 	return -1;

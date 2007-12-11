@@ -8,7 +8,7 @@ struct sieve_generator;
 
 struct sieve_generator *sieve_generator_create
 	(struct sieve_ast *ast, struct sieve_error_handler *ehandler);
-void sieve_generator_free(struct sieve_generator *generator);
+void sieve_generator_free(struct sieve_generator **generator);
 
 inline struct sieve_script *sieve_generator_get_script
 	(struct sieve_generator *gentr);
