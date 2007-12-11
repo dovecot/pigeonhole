@@ -125,7 +125,10 @@ bool ext_include_generate_include
 	new_block_id = sieve_binary_block_create(sbin);
 	this_block_id = sieve_binary_block_set_active(sbin, new_block_id); 	
  	subgentr = sieve_generator_create(ast, ehandler);			
- 	
+ 
+  sieve_generator_extension_set_context(subgentr, ext_include_my_id,
+		ext_include_create_generator_context(subgentr, parent, script));		
+		
 	if ( !sieve_generator_run(subgentr, &sbin) ) {
 		sieve_command_generate_error(gentr, cmd, 
 			"failed to validate included script '%s'", script_name);
