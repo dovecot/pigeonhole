@@ -3,9 +3,14 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-daboo-sieve-include-05
- * Implementation: skeleton
+ * Implementation: basic include functionality starts to emerge. 
  * Status: under development
  * 
+ */
+ 
+/* FIXME: Current include implementation does not allow for parts of the script
+ * to be located in external binaries; all included scripts are recompiled and
+ * the resulting byte code is imported into the main binary in separate blocks.
  */
 
 #include "lib.h"

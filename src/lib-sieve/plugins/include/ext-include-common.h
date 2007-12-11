@@ -11,20 +11,12 @@
 extern int ext_include_my_id;
 extern const struct sieve_extension include_extension;
 
+/* Main context, currently not used for anything and might be removed */
+
 struct ext_include_main_context {
 	struct sieve_generator *generator;
-	struct hash_table *included_scripts;
 };
 
-struct ext_include_generator_context {
-	unsigned int nesting_level;
-	struct sieve_script *script;
-	struct ext_include_main_context *main;
-	struct ext_include_generator_context *parent;
-};
-
-inline struct ext_include_generator_context *ext_include_get_generator_context
-	(struct sieve_generator *gentr);
 void ext_include_register_generator_context
 	(struct sieve_generator *gentr);
 

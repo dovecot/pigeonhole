@@ -136,10 +136,15 @@ void sieve_script_close(struct sieve_script *script)
 
 /* Comparison */
 
-bool sieve_script_equals
+int sieve_script_cmp
 (struct sieve_script *script1, struct sieve_script *script2)
 {	
-	return ( script1->st.st_ino == script2->st.st_ino );
+	return ( script1->st.st_ino == script2->st.st_ino ) ? 0 : -1;
+}
+
+unsigned int sieve_script_hash(struct sieve_script *script)
+{	
+	return (unsigned int) script->st.st_ino;
 }
 
 /* Inline accessors */

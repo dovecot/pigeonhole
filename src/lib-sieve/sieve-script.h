@@ -18,8 +18,15 @@ void sieve_script_unref(struct sieve_script **script);
 struct istream *sieve_script_open(struct sieve_script *script);
 void sieve_script_close(struct sieve_script *script);
 
-bool sieve_script_equals
-(struct sieve_script *script1, struct sieve_script *script2);
+int sieve_script_cmp
+	(struct sieve_script *script1, struct sieve_script *script2);
+unsigned int sieve_script_hash(struct sieve_script *script);
+
+static inline bool sieve_script_equals
+	(struct sieve_script *script1, struct sieve_script *script2)
+{
+	return ( sieve_script_cmp(script1, script2) == 0 );
+}
 
 inline const char *sieve_script_name(struct sieve_script *script);
 inline const char *sieve_script_path(struct sieve_script *script);
