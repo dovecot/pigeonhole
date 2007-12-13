@@ -30,4 +30,11 @@ bool ext_include_generate_include
 
 void ext_include_binary_free(struct sieve_binary *sbin);
 
+/* Interpreter */
+
+void ext_include_register_interpreter_context
+	(struct sieve_interpreter *interp);
+bool ext_include_execute_include
+	(const struct sieve_runtime_env *renv, unsigned int block_id);
+
 #endif /* __EXT_INCLUDE_COMMON_H */

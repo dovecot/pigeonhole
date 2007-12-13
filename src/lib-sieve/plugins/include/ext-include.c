@@ -35,6 +35,7 @@ static bool ext_include_load(int ext_id);
 static bool ext_include_validator_load(struct sieve_validator *validator);
 static bool ext_include_generator_load(struct sieve_generator *gentr);
 static bool ext_include_binary_load(struct sieve_binary *sbin);
+static bool ext_include_interpreter_load(struct sieve_interpreter *interp);
 
 /* Commands */
 
@@ -58,7 +59,8 @@ const struct sieve_extension include_extension = {
 	ext_include_load,
 	ext_include_validator_load, 
 	ext_include_generator_load,
-	ext_include_binary_load, NULL, 
+	ext_include_binary_load, 
+	ext_include_interpreter_load, 
 	SIEVE_EXT_DEFINE_OPCODES(ext_include_opcodes),
 	NULL
 };
@@ -96,10 +98,22 @@ static bool ext_include_generator_load(struct sieve_generator *gentr)
 	return TRUE;
 }
 
+/* Load extension into binary */
+
 static bool ext_include_binary_load(struct sieve_binary *sbin)
 {
 	sieve_binary_extension_set(sbin, ext_include_my_id, &include_binary_ext);
 	
 	return TRUE;
 }
+
+/* Load extension into interpreter */
+
+static bool ext_include_interpreter_load(struct sieve_interpreter *interp)
+{
+	ext_include_register_interpreter_context(interp);
+	
+	return TRUE;
+}
+
 

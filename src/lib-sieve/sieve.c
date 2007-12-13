@@ -184,7 +184,7 @@ int sieve_test
 	if ( ret > 0 ) 
 		ret = sieve_result_print(sres);
 	
-	sieve_interpreter_free(interp);
+	sieve_interpreter_free(&interp);
 	sieve_result_unref(&sres);
 	return ret;
 }
@@ -201,7 +201,7 @@ int sieve_execute
 							
 	ret = sieve_interpreter_run(interp, msgdata, senv, &sres);
 				
-	sieve_interpreter_free(interp);
+	sieve_interpreter_free(&interp);
 	sieve_result_unref(&sres);
 	return ret;
 }

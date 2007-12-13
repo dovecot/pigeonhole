@@ -5,6 +5,7 @@
 #include "sieve-binary.h"
 #include "sieve-commands.h"
 #include "sieve-generator.h"
+#include "sieve-interpreter.h"
 
 #include "ext-include-common.h"
 
@@ -26,6 +27,16 @@ static inline struct ext_include_generator_context *
 struct ext_include_binary_context {
 	struct sieve_binary *binary;
 	struct hash_table *included_scripts;
+};
+
+/* Interpreter context */
+
+struct ext_include_interpreter_context {
+	struct sieve_interpreter *interp;
+	unsigned int nesting_level;
+	struct sieve_script *script;
+	unsigned int block_id;
+	struct ext_include_interpreter_context *parent;
 };
 
 /* Main context management */
@@ -187,6 +198,62 @@ static bool ext_include_script_is_included
 	return TRUE;
 }
 
+/* Interpreter context management */
+
+static struct ext_include_interpreter_context *
+	ext_include_create_interpreter_context
+(struct sieve_interpreter *interp, 
+	struct ext_include_interpreter_context *parent, 
+	struct sieve_script *script, unsigned int block_id)
+{	
+	struct ext_include_interpreter_context *ctx;
+
+	pool_t pool = sieve_interpreter_pool(interp);
+	ctx = p_new(pool, struct ext_include_interpreter_context, 1);
+	ctx->parent = parent;
+	ctx->script = script;
+	ctx->block_id = block_id;
+	if ( parent == NULL ) 
+		ctx->nesting_level = 0;
+	else
+		ctx->nesting_level = parent->nesting_level + 1;
+	
+	return ctx;
+}
+
+static inline struct ext_include_interpreter_context *
+	ext_include_get_interpreter_context
+(struct sieve_interpreter *interp)
+{
+	return (struct ext_include_interpreter_context *)
+		sieve_interpreter_extension_get_context(interp, ext_include_my_id);
+}
+
+static inline void ext_include_initialize_interpreter_context
+(struct sieve_interpreter *interp, 
+	struct ext_include_interpreter_context *parent, 
+	struct sieve_script *script, unsigned int block_id)
+{
+	sieve_interpreter_extension_set_context(interp, ext_include_my_id,
+		ext_include_create_interpreter_context(interp, parent, script, block_id));
+}
+
+void ext_include_register_interpreter_context
+(struct sieve_interpreter *interp)
+{
+	struct ext_include_interpreter_context *ctx = 
+		ext_include_get_interpreter_context(interp);
+	struct sieve_script *script = sieve_interpreter_script(interp);
+	
+	if ( ctx == NULL ) {
+		ctx = ext_include_create_interpreter_context
+			(interp, NULL, script, SBIN_SYSBLOCK_MAIN_PROGRAM);
+		
+		sieve_interpreter_extension_set_context
+			(interp, ext_include_my_id, (void *) ctx);		
+	}
+}
+
 /* Including a script during generation */
 
 bool ext_include_generate_include
@@ -296,3 +363,30 @@ bool ext_include_generate_include
 	return result;
 }
 
+/* Executing an included script during interpretation */
+
+bool ext_include_execute_include
+	(const struct sieve_runtime_env *renv, unsigned int block_id)
+{
+	int result = TRUE;
+	struct ext_include_interpreter_context *ctx =
+		ext_include_get_interpreter_context(renv->interp);
+	struct sieve_error_handler *ehandler = 
+		sieve_interpreter_get_error_handler(renv->interp);
+	struct sieve_interpreter *subinterp;
+	unsigned int this_block_id;
+	bool interrupted;
+	
+	this_block_id = sieve_binary_block_set_active(renv->sbin, block_id); 	
+	subinterp = sieve_interpreter_create(renv->sbin, ehandler);			
+	ext_include_initialize_interpreter_context(subinterp, ctx, NULL, block_id);
+	
+	result = ( sieve_interpreter_start
+		(subinterp, renv->msgdata, renv->scriptenv, renv->result, &interrupted)
+		== 1 );
+				
+	(void) sieve_binary_block_set_active(renv->sbin, this_block_id); 	
+	sieve_interpreter_free(&subinterp);
+	
+	return result;
+}

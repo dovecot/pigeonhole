@@ -240,8 +240,13 @@ static bool opc_include_dump
 static bool opc_include_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
-{	
-	return TRUE;
+{
+	int block;
+	
+	if ( !sieve_binary_read_offset(renv->sbin, address, &block) )
+		return FALSE;
+	
+	return ext_include_execute_include(renv, (unsigned int) block);
 }
 
 

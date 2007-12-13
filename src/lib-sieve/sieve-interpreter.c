@@ -54,6 +54,7 @@ struct sieve_interpreter *sieve_interpreter_create
 	interp->runenv.interp = interp;
 	
 	interp->runenv.sbin = sbin;
+	interp->runenv.script = sieve_binary_script(sbin);
 	sieve_binary_ref(sbin);
 	
 	interp->pc = 0;
@@ -80,15 +81,30 @@ struct sieve_interpreter *sieve_interpreter_create
 	return interp;
 }
 
-void sieve_interpreter_free(struct sieve_interpreter *interp) 
+void sieve_interpreter_free(struct sieve_interpreter **interp) 
 {
-	sieve_binary_unref(&interp->runenv.sbin);
-	pool_unref(&(interp->pool));
+	sieve_binary_unref(&(*interp)->runenv.sbin);
+	
+	pool_unref(&((*interp)->pool));
+	
+	*interp = NULL;
 }
 
 inline pool_t sieve_interpreter_pool(struct sieve_interpreter *interp)
 {
 	return interp->pool;
+}
+
+inline struct sieve_script *sieve_interpreter_script
+	(struct sieve_interpreter *interp)
+{
+	return interp->runenv.script;
+}
+
+inline struct sieve_error_handler *sieve_interpreter_get_error_handler
+	(struct sieve_interpreter *interp)
+{
+	return interp->ehandler;
 }
 
 /* Error handling */
@@ -304,11 +320,11 @@ int sieve_interpreter_continue
 
 int sieve_interpreter_start
 (struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_result **result,
+	const struct sieve_script_env *senv, struct sieve_result *result,
 	bool *interrupted) 
 {
 	interp->runenv.msgdata = msgdata;
-	interp->runenv.result = *result;		
+	interp->runenv.result = result;		
 	interp->runenv.scriptenv = senv;
 	
 	return sieve_interpreter_continue(interp, interrupted); 
@@ -328,7 +344,7 @@ int sieve_interpreter_run
 		sieve_result_ref(*result);
 	}
 	
-	ret = sieve_interpreter_start(interp, msgdata, senv, result, NULL);
+	ret = sieve_interpreter_start(interp, msgdata, senv, *result, NULL);
 
 	if ( ret >= 0 && is_topmost ) {
 		ret = sieve_result_execute(*result, msgdata, senv);
