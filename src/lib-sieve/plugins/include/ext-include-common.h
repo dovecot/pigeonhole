@@ -17,14 +17,16 @@ struct ext_include_main_context {
 	struct sieve_generator *generator;
 };
 
+/* Generator */
+
 void ext_include_register_generator_context
 	(struct sieve_generator *gentr);
 
 bool ext_include_generate_include
 	(struct sieve_generator *gentr, struct sieve_command_context *cmd,
-		const char *script_path, const char *script_name);
+		const char *script_path, const char *script_name, unsigned int *blk_id_r);
 
-/* Binary context */
+/* Binary */
 
 void ext_include_binary_free(struct sieve_binary *sbin);
 

@@ -7,6 +7,10 @@
  * Status: under development
  *
  */
+ 
+/* FIXME: As long as variables extension is not implemented, this extension will
+ * not support the variable parameter to the commands/tests/tags.
+ */
 
 #include "lib.h"
 #include "mempool.h"

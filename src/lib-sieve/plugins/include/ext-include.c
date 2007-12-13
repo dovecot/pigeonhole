@@ -12,6 +12,10 @@
  * to be located in external binaries; all included scripts are recompiled and
  * the resulting byte code is imported into the main binary in separate blocks.
  */
+ 
+/* FIXME: As long as variables extension is not implemented, this extension will
+ * not define import/export commands.
+ */
 
 #include "lib.h"
 

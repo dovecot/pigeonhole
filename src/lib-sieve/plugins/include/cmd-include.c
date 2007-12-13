@@ -7,6 +7,7 @@
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
+#include "sieve-binary.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-code-dumper.h"
@@ -31,7 +32,7 @@ static bool cmd_include_pre_validate
 static bool cmd_include_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_include_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	(struct sieve_generator *gentr,	struct sieve_command_context *ctx);
 
 /* Include command 
  *	
@@ -193,16 +194,23 @@ static bool cmd_include_validate(struct sieve_validator *validator,
  */
  
 static bool cmd_include_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *cmd) 
+	(struct sieve_generator *gentr,	struct sieve_command_context *cmd) 
 {
+	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
 	struct cmd_include_context_data *ctx_data = 
 		(struct cmd_include_context_data *) cmd->data;
+	unsigned int block_id;
 
-	/* Generate */
+	/* Compile (if necessary) and include the script into the binary.
+	 * This yields the id of the binary block containing the compiled byte code.  
+	 */
 	if ( !ext_include_generate_include
-		(generator, cmd, ctx_data->script_path, ctx_data->script_name) ) {
+		(gentr, cmd, ctx_data->script_path, ctx_data->script_name, &block_id) ) 
  		return FALSE;
- 	}
+ 		
+ 	sieve_generator_emit_opcode_ext	
+		(gentr, &include_opcode, ext_include_my_id);
+	sieve_binary_emit_offset(sbin, block_id); 
  	 		
 	return TRUE;
 }
@@ -215,6 +223,13 @@ static bool opc_include_dump
 (const struct sieve_opcode *opcode ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
+	int block;
+	
+	if ( !sieve_binary_read_offset(denv->sbin, address, &block) )
+		return FALSE;
+		
+	sieve_code_dumpf(denv, "INCLUDE [BLOCK: %d]", block);
+	 
 	return TRUE;
 }
 

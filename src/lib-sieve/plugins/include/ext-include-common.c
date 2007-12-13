@@ -191,7 +191,7 @@ static bool ext_include_script_is_included
 
 bool ext_include_generate_include
 (struct sieve_generator *gentr, struct sieve_command_context *cmd,
-	const char *script_path, const char *script_name)
+	const char *script_path, const char *script_name, unsigned *blk_id_r)
 {
 	bool result = TRUE;
 	struct sieve_script *script;
@@ -205,9 +205,21 @@ bool ext_include_generate_include
 	struct sieve_error_handler *ehandler = sieve_generator_error_handler(gentr);
 	unsigned this_block_id, inc_block_id; 
 		
-	/* Do not include more scripts when errors have occured already. */
+	*blk_id_r = 0;
+		
+	/* Just to be sure: do not include more scripts when errors have occured 
+	 * already. 
+	 */
 	if ( sieve_get_errors(ehandler) > 0 )
 		return FALSE;
+		
+	/* Limit nesting level */
+	if ( ctx->nesting_level >= EXT_INCLUDE_MAX_NESTING_LEVEL ) {
+		sieve_command_generate_error
+			(gentr, cmd, "cannot nest includes deeper than %d levels",
+				EXT_INCLUDE_MAX_NESTING_LEVEL);
+		return FALSE;
+	}
 	
 	/* Create script object */
 	if ( (script = sieve_script_create(script_path, script_name, ehandler)) 
@@ -215,7 +227,6 @@ bool ext_include_generate_include
 		return FALSE;
 	
 	/* Check for circular include */
-	
 	pctx = ctx;
 	while ( pctx != NULL ) {
 		if ( sieve_script_equals(pctx->script, script) ) {
@@ -228,17 +239,17 @@ bool ext_include_generate_include
 		pctx = pctx->parent;
 	}	
 
+	/* Get/create our context from the binary we are working on */
 	binctx = ext_include_get_binary_context(sbin);
 	
 	/* Is the script already compiled into the current binary? */
 	if ( !ext_include_script_is_included(binctx, script, &inc_block_id) )	{	
-		/* Allocate a new block in the binary and mark the script as included 
-		 * already.
+		/* No, allocate a new block in the binary and mark the script as included.
 		 */
 		inc_block_id = sieve_binary_block_create(sbin);
 		ext_include_script_include(binctx, script, inc_block_id);
 		
-		/* Include list now holds a reference */
+		/* Include list now holds a reference, so we can release it here safely */
 		sieve_script_unref(&script);
 		
 		/* Parse */
@@ -263,7 +274,7 @@ bool ext_include_generate_include
 			
 		if ( !sieve_generator_run(subgentr, &sbin) ) {
 			sieve_command_generate_error(gentr, cmd, 
-				"failed to validate included script '%s'", script_name);
+				"failed to generate code for included script '%s'", script_name);
 	 		result = FALSE;
 		}
 				
@@ -273,7 +284,10 @@ bool ext_include_generate_include
 		/* Cleanup */
 		sieve_ast_unref(&ast);		
 	} else 
+		/* Yes, aready compiled and included, so release script object right away */
 		sieve_script_unref(&script);
+
+	if ( result ) *blk_id_r = inc_block_id;
 	
 	return result;
 }
