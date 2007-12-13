@@ -33,7 +33,7 @@ static inline sieve_size_t sieve_binary_emit_cstring
 	(struct sieve_binary *binary, const char *str);
 
 struct sieve_binary_extension_reg {
-	const struct sieve_extension *extension; /* Null for pre-loaded extensions */
+	const struct sieve_extension *extension; 
 	const struct sieve_binary_extension *binext;
 	int ext_id;
 	int index;
@@ -50,16 +50,18 @@ struct sieve_binary {
 	 * the generator, extensions will be associated to the binary. The extensions
 	 * array is a sequential list of all used extensions. The extension_index 
 	 * array is a mapping ext_id -> binary_extension. This is used to obtain the 
-	 * index code associated with an extension for this particular binary. 
+	 * index code associated with an extension for this particular binary. The 
+	 * linked_extensions list all extensions linked to this binary object other
+	 * than the preloaded language features implemented as 'extensions'. 
 	 * 
-	 * Both arrays refer to the same extension registration objects. Upon loading 
+	 * All arrays refer to the same extension registration objects. Upon loading 
 	 * a binary, the 'require'd extensions will sometimes need to associate 
 	 * context data to the binary object in memory. This is stored in these 
 	 * registration objects as well.
 	 */
-	ARRAY_DEFINE(linked_extensions, struct sieve_binary_extension_reg *); 
 	ARRAY_DEFINE(extensions, struct sieve_binary_extension_reg *); 
 	ARRAY_DEFINE(extension_index, struct sieve_binary_extension_reg *); 
+	ARRAY_DEFINE(linked_extensions, struct sieve_binary_extension_reg *); 
 		
 	/* Attributes of a loaded binary */
 	const char *path;
@@ -126,12 +128,30 @@ void sieve_binary_ref(struct sieve_binary *sbin)
 	sbin->refcount++;
 }
 
+static inline void sieve_binary_extensions_free(struct sieve_binary *sbin) 
+{
+	unsigned int ext_count, i;
+	
+	/* Cleanup binary extensions */
+	ext_count = array_count(&sbin->extensions);	
+	for ( i = 0; i < ext_count; i++ ) {
+		struct sieve_binary_extension_reg * const *ereg
+			= array_idx(&sbin->extensions, i);
+		const struct sieve_binary_extension *binext = (*ereg)->binext;
+		
+		if ( binext != NULL && binext->binary_free != NULL )
+			binext->binary_free(sbin);
+	}
+}
+
 void sieve_binary_unref(struct sieve_binary **sbin) 
 {
 	i_assert((*sbin)->refcount > 0);
 
 	if (--(*sbin)->refcount != 0)
 		return;
+
+	sieve_binary_extensions_free(*sbin);
 
 	pool_unref(&((*sbin)->pool));
 	
@@ -312,8 +332,7 @@ static bool _sieve_binary_save
 		struct sieve_binary_extension_reg * const *ext
 			= array_idx(&sbin->linked_extensions, i);
 		
-		if ( *((*ext)->extension->name) != '@' )
-			sieve_binary_emit_cstring(sbin, (*ext)->extension->name);
+		sieve_binary_emit_cstring(sbin, (*ext)->extension->name);
 	}
 	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);	
 	
