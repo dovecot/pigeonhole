@@ -267,7 +267,11 @@ bool ext_include_generate_include
 	 		return FALSE;
 	 	}
 
-		/* Generate */
+		/* Generate 
+		 *
+		 * FIXME: It might not be a good idea to recurse code generation for 
+		 * included scripts.
+		 */
 		this_block_id = sieve_binary_block_set_active(sbin, inc_block_id); 	
 	 	subgentr = sieve_generator_create(ast, ehandler);			
 		ext_include_initialize_generator_context(subgentr, ctx, script);

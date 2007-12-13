@@ -28,7 +28,7 @@ inline pool_t sieve_interpreter_pool(struct sieve_interpreter *interp);
 
 inline void sieve_interpreter_reset
 	(struct sieve_interpreter *interp);
-inline void sieve_interpreter_stop
+inline void sieve_interpreter_interrupt
 	(struct sieve_interpreter *interp);
 inline sieve_size_t sieve_interpreter_program_counter
 	(struct sieve_interpreter *interp);
@@ -69,8 +69,14 @@ bool sieve_interpreter_handle_optional_operands
 
 bool sieve_interpreter_execute_operation(struct sieve_interpreter *interp); 
 
+int sieve_interpreter_continue
+	(struct sieve_interpreter *interp, bool *interrupted);
+int sieve_interpreter_start
+	(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
+		const struct sieve_script_env *senv, struct sieve_result **result,
+		bool *interrupted);
 int sieve_interpreter_run
-(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_result **result);
+	(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
+		const struct sieve_script_env *senv, struct sieve_result **result);
 
 #endif /* __SIEVE_INTERPRETER_H */

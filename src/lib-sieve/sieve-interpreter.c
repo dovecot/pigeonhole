@@ -29,7 +29,7 @@ struct sieve_interpreter {
 	/* Execution status */
 	
 	sieve_size_t pc;          /* Program counter */
-	bool stopped;             /* Explicit successful stop requested */
+	bool interrupted;         /* Interpreter interrupt requested */
 	bool test_result;         /* Result of previous test command */
 
 	const struct sieve_opcode *current_op; /* Current opcode */ 
@@ -165,15 +165,15 @@ inline const void *sieve_interpreter_extension_get_context
 inline void sieve_interpreter_reset(struct sieve_interpreter *interp) 
 {
 	interp->pc = 0;
-	interp->stopped = FALSE;
+	interp->interrupted = FALSE;
 	interp->test_result = FALSE;
 	interp->runenv.msgdata = NULL;
 	interp->runenv.result = NULL;
 }
 
-inline void sieve_interpreter_stop(struct sieve_interpreter *interp)
+inline void sieve_interpreter_interrupt(struct sieve_interpreter *interp)
 {
-	interp->stopped = TRUE;
+	interp->interrupted = TRUE;
 }
 
 inline sieve_size_t sieve_interpreter_program_counter(struct sieve_interpreter *interp)
@@ -274,6 +274,46 @@ bool sieve_interpreter_execute_operation
 	return FALSE;
 }		
 
+int sieve_interpreter_continue
+(struct sieve_interpreter *interp, bool *interrupted) 
+{
+	int ret = 1;
+	
+	sieve_result_ref(interp->runenv.result);
+	interp->interrupted = FALSE;
+	
+	if ( interrupted != NULL )
+		*interrupted = FALSE;
+	
+	while ( ret >= 0 && !interp->interrupted && 
+		interp->pc < sieve_binary_get_code_size(interp->runenv.sbin) ) {
+		printf("%08x: ", interp->pc);
+		
+		if ( !sieve_interpreter_execute_operation(interp) ) {
+			printf("Execution aborted.\n");
+			ret = -1;
+		}
+	}
+	
+	if ( interrupted != NULL )
+		*interrupted = interp->interrupted;
+	
+	sieve_result_unref(&interp->runenv.result);
+	return ret;
+}
+
+int sieve_interpreter_start
+(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
+	const struct sieve_script_env *senv, struct sieve_result **result,
+	bool *interrupted) 
+{
+	interp->runenv.msgdata = msgdata;
+	interp->runenv.result = *result;		
+	interp->runenv.scriptenv = senv;
+	
+	return sieve_interpreter_continue(interp, interrupted); 
+}
+
 int sieve_interpreter_run
 (struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
 	const struct sieve_script_env *senv, struct sieve_result **result) 
@@ -287,27 +327,10 @@ int sieve_interpreter_run
 	else {
 		sieve_result_ref(*result);
 	}
-	interp->runenv.msgdata = msgdata;
-	interp->runenv.result = *result;		
-	interp->runenv.scriptenv = senv;
 	
-	while ( !interp->stopped && 
-		interp->pc < sieve_binary_get_code_size(interp->runenv.sbin) ) {
-		printf("%08x: ", interp->pc);
-		
-		if ( !sieve_interpreter_execute_operation(interp) ) {
-			printf("Execution aborted.\n");
-			sieve_result_unref(result);
-			return -1;
-		}
-	}
-	
-	interp->runenv.result = NULL;
-	interp->runenv.msgdata = NULL;
-	interp->runenv.scriptenv = NULL;
-	
-	ret = 1;
-	if ( is_topmost ) {
+	ret = sieve_interpreter_start(interp, msgdata, senv, result, NULL);
+
+	if ( ret >= 0 && is_topmost ) {
 		ret = sieve_result_execute(*result, msgdata, senv);
 	}
 	

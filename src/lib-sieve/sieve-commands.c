@@ -263,7 +263,7 @@ static bool opc_stop_execute
 {	
 	printf(">> STOP\n");
 	
-	sieve_interpreter_stop(renv->interp);
+	sieve_interpreter_interrupt(renv->interp);
 
 	return TRUE;
 }
