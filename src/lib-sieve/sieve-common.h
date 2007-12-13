@@ -93,6 +93,7 @@ struct sieve_script;
 /* sieve.c */
 struct sieve_ast *sieve_parse
 	(struct sieve_script *script, struct sieve_error_handler *ehandler);
-	
+bool sieve_validate
+	(struct sieve_ast *ast, struct sieve_error_handler *ehandler);	
 
 #endif /* __SIEVE_COMMON_H */

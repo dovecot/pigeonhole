@@ -135,6 +135,23 @@ static inline struct ext_include_binary_context *ext_include_get_binary_context
 	return ctx;
 }
 
+void ext_include_binary_free(struct sieve_binary *sbin)
+{
+	struct ext_include_binary_context *binctx = 
+		ext_include_get_binary_context(sbin);
+	struct hash_iterate_context *hctx = 
+		hash_iterate_init(binctx->included_scripts);
+	void *key, *value;
+		
+	while ( hash_iterate(hctx, &key, &value) ) {
+		struct _included_script *incscript = (struct _included_script *) value;
+		
+		sieve_script_unref(&incscript->script);
+	}
+
+	hash_iterate_deinit(&hctx);
+}
+
 static void ext_include_script_include
 (struct ext_include_binary_context *binctx, struct sieve_script *script,
 	unsigned int block_id)
@@ -148,9 +165,7 @@ static void ext_include_script_include
 	
 	printf("INCLUDE: %s\n", sieve_script_path(script));
 	
-	/* FIXME: NOWW!!
-	 *   THIS WILL CAUSE A MEMORY LEAK!!
-	 */ 
+	/* Unreferenced on binary_free */
 	sieve_script_ref(script);
 	
 	hash_insert(binctx->included_scripts, (void *) script, (void *) incscript);

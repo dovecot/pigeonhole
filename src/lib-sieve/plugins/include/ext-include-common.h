@@ -24,4 +24,8 @@ bool ext_include_generate_include
 	(struct sieve_generator *gentr, struct sieve_command_context *cmd,
 		const char *script_path, const char *script_name);
 
+/* Binary context */
+
+void ext_include_binary_free(struct sieve_binary *sbin);
+
 #endif /* __EXT_INCLUDE_COMMON_H */

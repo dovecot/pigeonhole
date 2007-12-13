@@ -57,6 +57,7 @@ struct sieve_binary {
 	 * context data to the binary object in memory. This is stored in these 
 	 * registration objects as well.
 	 */
+	ARRAY_DEFINE(linked_extensions, struct sieve_binary_extension_reg *); 
 	ARRAY_DEFINE(extensions, struct sieve_binary_extension_reg *); 
 	ARRAY_DEFINE(extension_index, struct sieve_binary_extension_reg *); 
 		
@@ -83,7 +84,7 @@ static struct sieve_binary *sieve_binary_create(struct sieve_script *script)
 {
 	pool_t pool;
 	struct sieve_binary *sbin;
-	const int *ext_id;
+	unsigned int i;
 	
 	pool = pool_alloconly_create("sieve_binary", 4096);	
 	sbin = p_new(pool, struct sieve_binary, 1);
@@ -91,16 +92,17 @@ static struct sieve_binary *sieve_binary_create(struct sieve_script *script)
 	sbin->refcount = 1;
 	sbin->script = script;
 	
+	p_array_init(&sbin->linked_extensions, pool, 5);
 	p_array_init(&sbin->extensions, pool, 5);
 	p_array_init(&sbin->extension_index, pool, sieve_extensions_get_count());
 	
 	p_array_init(&sbin->blocks, pool, 3);
 
-	/* Pre-link core language features implemented as 'extensions' */	
-	ext_id = sieve_extensions_get_preloaded_ext_ids();
-	while ( *ext_id > -1 ) {
-		sieve_binary_extension_link(sbin, *ext_id);
-		ext_id++;
+	/* Pre-load core language features implemented as 'extensions' */
+	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
+		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
+		if ( ext->binary_load != NULL )
+			(void)ext->binary_load(sbin);		
 	}
 			
 	return sbin;
@@ -303,14 +305,15 @@ static bool _sieve_binary_save
 	 *   the id of its first extension-specific block (if any)
 	 */
 	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_EXTENSIONS);	
-	ext_count = array_count(&sbin->extensions);
+	ext_count = array_count(&sbin->linked_extensions);
 	sieve_binary_emit_integer(sbin, ext_count);
 	
 	for ( i = 0; i < ext_count; i++ ) {
 		struct sieve_binary_extension_reg * const *ext
-			= array_idx(&sbin->extensions, i);
+			= array_idx(&sbin->linked_extensions, i);
 		
-		sieve_binary_emit_cstring(sbin, (*ext)->extension->name);
+		if ( *((*ext)->extension->name) != '@' )
+			sieve_binary_emit_cstring(sbin, (*ext)->extension->name);
 	}
 	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);	
 	
@@ -432,7 +435,7 @@ static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 				ext_id = sieve_extension_get_by_name(str_c(extension), NULL);	
 			
 				if ( ext_id < 0 ) { 
-					i_error("sieve: loaded binary %s contains unknown extension %s", 
+					i_error("sieve: loaded binary %s requires unknown extension '%s'", 
 						sbin->path, str_c(extension));
 					result = FALSE;					
 				} else 
@@ -582,11 +585,11 @@ void sieve_binary_activate(struct sieve_binary *sbin)
 	unsigned int i;
 	
 	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);
-		
+	
 	/* Load other extensions into binary */
-	for ( i = 0; i < array_count(&sbin->extensions); i++ ) {
+	for ( i = 0; i < array_count(&sbin->linked_extensions); i++ ) {
 		struct sieve_binary_extension_reg * const *ereg = 
-			array_idx(&sbin->extensions, i);
+			array_idx(&sbin->linked_extensions, i);
 		const struct sieve_extension *ext = (*ereg)->extension;
 		
 		if ( ext != NULL && ext->binary_load != NULL )
@@ -634,7 +637,7 @@ inline void sieve_binary_extension_set_context
 		sieve_binary_extension_get_reg(sbin, ext_id);
 	
 	if ( ereg == NULL ) {
-		/* Only pre-loaded extensions should cause this */
+		/* Failsafe, this shouldn't happen */
 		ereg = sieve_binary_extension_create_reg(sbin, 
 		  sieve_extension_get_by_id(ext_id), ext_id);
 	}
@@ -655,6 +658,22 @@ inline const void *sieve_binary_extension_get_context
 	return NULL;
 }
 
+inline void sieve_binary_extension_set
+(struct sieve_binary *sbin, int ext_id, 
+	const struct sieve_binary_extension *bext)
+{
+	struct sieve_binary_extension_reg *ereg = 
+		sieve_binary_extension_get_reg(sbin, ext_id);
+	
+	if ( ereg == NULL ) {
+		/* Failsafe, this shouldn't happen */
+		ereg = sieve_binary_extension_create_reg(sbin, 
+		  sieve_extension_get_by_id(ext_id), ext_id);
+	}
+	
+	ereg->binext = bext;
+}
+
 int sieve_binary_extension_link
 	(struct sieve_binary *sbin, int ext_id) 
 {
@@ -663,6 +682,8 @@ int sieve_binary_extension_link
 	if ( ext != NULL && sieve_binary_extension_get_index(sbin, ext_id) == -1 ) {
 		struct sieve_binary_extension_reg *ereg = 
 			sieve_binary_extension_create_reg(sbin, ext, ext_id);
+		
+		array_append(&sbin->linked_extensions, &ereg, 1);
 		
 		return ereg->index;
 	}
