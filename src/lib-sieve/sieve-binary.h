@@ -39,6 +39,13 @@ unsigned int sieve_binary_block_create(struct sieve_binary *sbin);
  * Extension support 
  */
  
+struct sieve_binary_extension {
+	struct sieve_extension *extension;
+
+	bool (*save)(struct sieve_binary *sbin);
+	void (*free)(struct sieve_binary *sbin);
+};
+ 
 inline void sieve_binary_extension_set_context
 	(struct sieve_binary *sbin, int ext_id, void *context);
 inline const void *sieve_binary_extension_get_context
