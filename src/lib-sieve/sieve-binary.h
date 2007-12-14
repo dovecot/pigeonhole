@@ -28,7 +28,8 @@ struct sieve_binary *sieve_binary_load
  
 enum sieve_binary_system_block {
 	SBIN_SYSBLOCK_EXTENSIONS,
-	SBIN_SYSBLOCK_MAIN_PROGRAM
+	SBIN_SYSBLOCK_MAIN_PROGRAM,
+	SBIN_SYSBLOCK_LAST
 };
 
 unsigned int sieve_binary_block_set_active
