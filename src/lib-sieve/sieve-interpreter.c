@@ -313,7 +313,7 @@ int sieve_interpreter_continue
 	
 	if ( interrupted != NULL )
 		*interrupted = interp->interrupted;
-	
+			
 	sieve_result_unref(&interp->runenv.result);
 	return ret;
 }

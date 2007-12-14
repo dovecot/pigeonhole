@@ -426,6 +426,8 @@ bool ext_include_execute_include
 					subinterp = curctx->interp; 	
 					
 					/* Continue parent */
+					curctx->inc_block_id = 0;
+					curctx->returned = FALSE;
 					result = ( sieve_interpreter_continue(subinterp, &interrupted) == 1 );
 				} else {
 					if ( curctx->inc_block_id >= SBIN_SYSBLOCK_LAST ) {
@@ -435,13 +437,13 @@ bool ext_include_execute_include
 						subinterp = sieve_interpreter_create(renv->sbin, ehandler);			
 						curctx = ext_include_initialize_interpreter_context
 							(subinterp, curctx, NULL, curctx->inc_block_id);
-						
-						curctx->inc_block_id = 0;
-							
+													
 						/* Activate the sub-include's block */
 						(void) sieve_binary_block_set_active(renv->sbin, curctx->block_id);
 						
 						/* Start the sub-include's interpreter */
+						curctx->inc_block_id = 0;
+						curctx->returned = FALSE;
 						result = ( sieve_interpreter_start
 							(subinterp, renv->msgdata, renv->scriptenv, renv->result, 
 								&interrupted) == 1 );		 	

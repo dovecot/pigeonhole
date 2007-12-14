@@ -208,9 +208,7 @@ unsigned int sieve_binary_block_set_active
 {
 	unsigned int old_id = sbin->active_block;
 	buffer_t *buffer = sieve_binary_block_get(sbin, id);
-	
-	printf("ACTIVE BLOCK %d\n", id);
-	
+		
 	if ( buffer != NULL ) {
 		sbin->data = buffer;
 		sbin->code = buffer_get_data(buffer, &sbin->code_size);
