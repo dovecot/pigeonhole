@@ -408,15 +408,17 @@ bool ext_include_execute_include
 		 * include to the top-level interpreter, which is here.
 		 */
 		if ( result && interrupted && !curctx->returned ) {
-			while ( result && interrupted ) {
-				if ( curctx->returned && curctx->parent != NULL ) {
+			while ( result ) {
+				if ( ( (interrupted && curctx->returned) || (!interrupted) ) && 
+					curctx->parent != NULL ) {
+					
 					/* Sub-interpreter executed return */
 					
 					/* Ascend interpreter stack */
 					curctx = curctx->parent;
 					sieve_interpreter_free(&subinterp);
 					
-					/* This was the top-most sub-interpreter, bail out */
+					/* This is the top-most sub-interpreter, bail out */
 					if ( curctx->parent == NULL ) break;
 					
 					/* Reactivate parent */
@@ -445,17 +447,12 @@ bool ext_include_execute_include
 								&interrupted) == 1 );		 	
 					} else {
 						/* Sub-interpreter was interrupted outside this extension, probably
-						 * stop command was executed. Generate interrupt ourselves, 
+						 * stop command was executed. Generate an interrupt ourselves, 
 						 * ending all script execution.
 						 */
 						sieve_interpreter_interrupt(renv->interp);
 						break;
 					}
-				}
-				
-				if ( result && !interrupted ) {
-					interrupted = TRUE;
-					curctx->returned = TRUE;
 				}
 			}
 		}
