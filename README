@@ -27,7 +27,7 @@ that exist in the src/sieve-bin/ directory:
 sievec [-d] <sieve-file> <out-file>
 
 Compiles the script and produces a sieve binary. However, when the -d option is
-provided a code dump is written to the output file. When the output file is '-'
+provided, a code dump is written to the output file. When the output file is '-'
 the dump output is written to stdout (only if -d is specified). 
 
 --
@@ -118,7 +118,8 @@ Extensions and their implementation status:
     fileinto: full
     reject: full
     envelope: full
-    encoded-character: planned (draft-ietf-sieve-3028bis)
+    encoded-character: planned (draft-ietf-sieve-3028bis); to be implemented
+      just before variables.
 
   Other RFCs/drafts:
     subaddress: full
@@ -126,12 +127,13 @@ Extensions and their implementation status:
     relational: full 
     copy: full
     regex: full, but suboptimal
-    vacation: almost complete; no support for required References header
+    vacation: almost complete, but no support for required References header
     imapflags: flag management works, but flags are not stored 
-    include: basic functionality: validation, and included scripts are compiled
+    include: basic include execution behavior starts to emerge
     variables: planned (* also amend previously implemented extensions)
     body: planned                        
-    notify: planned (- lowest priority)
+
+    notify: planned, mailto only (- very low priority)
 
 All implemented extensions are like the engine itself currently very much 
 experimental. Other extensions will be added a soon as the necessary 
@@ -188,12 +190,16 @@ CODE-DUMPER: sieve-code-dumper.c
 TODO
 ----
 
-In order of descending priority/precedence
-* Allow the currently in-memory byte-code to be stored as a script binary
-* Finish implementing all extensions supported by cmusieve
+Current:
+* Implement include extension
+
+Next (in order of descending priority/precedence):
+* Finish implementing all extensions supported by cmusieve, except notify.
+* Implement variables extension.
 * Limit the maximum number of errors. 
 * Verify outgoing mail addresses
-* Implement dropping errors in the user's mailbox as a mail message.
+* Implement dropping errors in/forwarding errors to the user's mailbox as a mail 
+  message.
 * Add development documentation, i.e. comment on library functions and document
   the binary and byte-code format. 
 * Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
@@ -210,6 +216,7 @@ In order of descending priority/precedence
   in different command implementations.
 * Resolve code duplication amongst comparator, address-part and match-type 
   support as much as possible.
+* Implement notify extension with sole support for mailto mechanism. 
 * Use mmap for the binary script representation.  
 * Give the byte code format some more thought, it is currently quite rough and
   to the point. 
