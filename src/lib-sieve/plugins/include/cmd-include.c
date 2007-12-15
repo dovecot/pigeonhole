@@ -67,10 +67,9 @@ const struct sieve_opcode include_opcode = {
 /* Context structures */
 
 struct cmd_include_context_data {
-	enum { LOCATION_PERSONAL, LOCATION_GLOBAL } location;
+	enum ext_include_script_location location;
 	bool location_assigned;
 	const char *script_name;
-	const char *script_path;
 };   
 
 /* Tags */
@@ -159,7 +158,6 @@ static bool cmd_include_pre_validate
 static bool cmd_include_validate(struct sieve_validator *validator, 
 	struct sieve_command_context *cmd) 
 { 	
-	pool_t pool = sieve_command_pool(cmd);
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct cmd_include_context_data *ctx_data = 
 		(struct cmd_include_context_data *) cmd->data;
@@ -172,17 +170,6 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	/* Get script path */
 
 	ctx_data->script_name = sieve_ast_argument_strc(arg);
-	
-	/* FIXME: Hardcoded */
-#define HARDCODED_DIR "src/lib-sieve/plugins/include/"
-	if ( ctx_data->location == LOCATION_PERSONAL )
-		ctx_data->script_path = p_strconcat
-  		(pool, HARDCODED_DIR, ctx_data->script_name, ".sieve", NULL);
-	else if ( ctx_data->location == LOCATION_GLOBAL )
-		ctx_data->script_path = p_strconcat
-  		(pool, HARDCODED_DIR, ctx_data->script_name, ".sieve", NULL);
-	else 
-		return FALSE;
 		
 	arg = sieve_ast_arguments_detach(arg, 1);
 	
@@ -205,7 +192,7 @@ static bool cmd_include_generate
 	 * This yields the id of the binary block containing the compiled byte code.  
 	 */
 	if ( !ext_include_generate_include
-		(gentr, cmd, ctx_data->script_path, ctx_data->script_name, &block_id) ) 
+		(gentr, cmd, ctx_data->location, ctx_data->script_name, &block_id) ) 
  		return FALSE;
  		
  	sieve_generator_emit_opcode_ext	

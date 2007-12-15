@@ -19,8 +19,10 @@ void sieve_binary_activate(struct sieve_binary *sbin);
 
 bool sieve_binary_save
 	(struct sieve_binary *sbin, const char *path);
-struct sieve_binary *sieve_binary_load
+	
+struct sieve_binary *sieve_binary_open
 	(const char *path, struct sieve_script *script);
+bool sieve_binary_load(struct sieve_binary *sbin);
 	
 /* 
  * Block management 
@@ -35,7 +37,9 @@ enum sieve_binary_system_block {
 unsigned int sieve_binary_block_set_active
 	(struct sieve_binary *sbin, unsigned int id);
 unsigned int sieve_binary_block_create(struct sieve_binary *sbin);
-
+inline void sieve_binary_block_clear
+	(struct sieve_binary *sbin, unsigned int id);
+	
 /* 
  * Extension support 
  */
@@ -55,6 +59,9 @@ inline const void *sieve_binary_extension_get_context
 inline void sieve_binary_extension_set
 	(struct sieve_binary *sbin, int ext_id, 
 		const struct sieve_binary_extension *bext);
+
+unsigned int sieve_binary_extension_create_block
+	(struct sieve_binary *sbin, int ext_id);
 
 int sieve_binary_extension_link
 	(struct sieve_binary *sbin, int ext_id);
@@ -92,6 +99,8 @@ sieve_size_t sieve_binary_emit_integer
 	(struct sieve_binary *binary, sieve_size_t integer);
 sieve_size_t sieve_binary_emit_string
 	(struct sieve_binary *binary, const string_t *str);
+sieve_size_t sieve_binary_emit_cstring
+	(struct sieve_binary *binary, const char *str);
 
 /* Operand emission */
 

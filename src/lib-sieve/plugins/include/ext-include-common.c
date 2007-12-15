@@ -26,6 +26,8 @@ static inline struct ext_include_generator_context *
 
 struct ext_include_binary_context {
 	struct sieve_binary *binary;
+	unsigned int dependency_block;
+	
 	struct hash_table *included_scripts;
 };
 
@@ -41,6 +43,23 @@ struct ext_include_interpreter_context {
 	bool returned;
 	struct ext_include_interpreter_context *parent;
 };
+
+/* Script access */
+
+#define HARDCODED_PERSONAL_DIR "src/lib-sieve/plugins/include/"
+#define HARDCODED_GLOBAL_DIR "src/lib-sieve/plugins/include/"
+
+const char *ext_include_get_script_path
+(enum ext_include_script_location location, const char *script_name)
+{
+	/* FIXME: Hardcoded */	
+	if ( location == LOCATION_PERSONAL )
+		return t_strconcat(HARDCODED_PERSONAL_DIR, script_name, ".sieve", NULL);
+	else if ( location == LOCATION_GLOBAL )
+		return t_strconcat(HARDCODED_GLOBAL_DIR, script_name, ".sieve", NULL);
+	
+	return NULL;
+}
 
 /* Main context management */
 
@@ -116,6 +135,8 @@ void ext_include_register_generator_context
 
 struct _included_script {
 	struct sieve_script *script;
+	enum ext_include_script_location location;
+	
 	unsigned int block_id;
 };
 
@@ -127,7 +148,10 @@ static struct ext_include_binary_context *ext_include_create_binary_context
 	struct ext_include_binary_context *ctx = 
 		p_new(pool, struct ext_include_binary_context, 1);
 	
-	ctx->binary = sbin;
+	ctx->binary = sbin;		
+	ctx->dependency_block = 
+		sieve_binary_extension_create_block(sbin, ext_include_my_id);
+	
 	ctx->included_scripts = hash_create(pool, pool, 0, 
 		(hash_callback_t *) sieve_script_hash, 
 		(hash_cmp_callback_t *) sieve_script_cmp);
@@ -149,6 +173,32 @@ static inline struct ext_include_binary_context *ext_include_get_binary_context
 	return ctx;
 }
 
+void ext_include_binary_save(struct sieve_binary *sbin)
+{
+	struct ext_include_binary_context *binctx = 
+		ext_include_get_binary_context(sbin);
+	struct hash_iterate_context *hctx = 
+		hash_iterate_init(binctx->included_scripts);
+	void *key, *value;
+	unsigned int prvblk;
+	
+	sieve_binary_block_clear(sbin, binctx->dependency_block);
+	prvblk = sieve_binary_block_set_active(sbin, binctx->dependency_block);	
+		
+	sieve_binary_emit_integer(sbin, hash_count(binctx->included_scripts));	
+	while ( hash_iterate(hctx, &key, &value) ) {
+		struct _included_script *incscript = (struct _included_script *) value;
+
+		sieve_binary_emit_integer(sbin, incscript->block_id);
+		sieve_binary_emit_byte(sbin, incscript->location);
+		sieve_binary_emit_cstring(sbin, sieve_script_name(incscript->script));
+	}
+	
+	(void) sieve_binary_block_set_active(sbin, prvblk);
+
+	hash_iterate_deinit(&hctx);
+}
+
 void ext_include_binary_free(struct sieve_binary *sbin)
 {
 	struct ext_include_binary_context *binctx = 
@@ -168,13 +218,14 @@ void ext_include_binary_free(struct sieve_binary *sbin)
 
 static void ext_include_script_include
 (struct ext_include_binary_context *binctx, struct sieve_script *script,
-	unsigned int block_id)
+	enum ext_include_script_location location, unsigned int block_id)
 {
 	pool_t pool = sieve_binary_pool(binctx->binary);
 	struct _included_script *incscript;
 	
 	incscript = p_new(pool, struct _included_script, 1);
 	incscript->script = script;
+	incscript->location = location;
 	incscript->block_id = block_id;
 	
 	printf("INCLUDE: %s\n", sieve_script_path(script));
@@ -267,9 +318,11 @@ void ext_include_register_interpreter_context
 
 bool ext_include_generate_include
 (struct sieve_generator *gentr, struct sieve_command_context *cmd,
-	const char *script_path, const char *script_name, unsigned *blk_id_r)
+	enum ext_include_script_location location, const char *script_name, 
+	unsigned *blk_id_r)
 {
 	bool result = TRUE;
+	const char *script_path;
 	struct sieve_script *script;
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
@@ -282,7 +335,7 @@ bool ext_include_generate_include
 	unsigned this_block_id, inc_block_id; 
 		
 	*blk_id_r = 0;
-		
+
 	/* Just to be sure: do not include more scripts when errors have occured 
 	 * already. 
 	 */
@@ -296,6 +349,11 @@ bool ext_include_generate_include
 				EXT_INCLUDE_MAX_NESTING_LEVEL);
 		return FALSE;
 	}
+	
+	/* Find the script */
+	script_path = ext_include_get_script_path(location, script_name);
+	if ( script_path == NULL )
+		return FALSE;
 	
 	/* Create script object */
 	if ( (script = sieve_script_create(script_path, script_name, ehandler)) 
@@ -323,7 +381,7 @@ bool ext_include_generate_include
 		/* No, allocate a new block in the binary and mark the script as included.
 		 */
 		inc_block_id = sieve_binary_block_create(sbin);
-		ext_include_script_include(binctx, script, inc_block_id);
+		ext_include_script_include(binctx, script, location, inc_block_id);
 		
 		/* Include list now holds a reference, so we can release it here safely */
 		sieve_script_unref(&script);
@@ -412,7 +470,7 @@ bool ext_include_execute_include
 				if ( ( (interrupted && curctx->returned) || (!interrupted) ) && 
 					curctx->parent != NULL ) {
 					
-					/* Sub-interpreter executed return */
+					/* Sub-interpreter ended or executed return */
 					
 					/* Ascend interpreter stack */
 					curctx = curctx->parent;

@@ -6,10 +6,27 @@
 
 #include "sieve-common.h"
 
+/* Configuration */
+
 #define EXT_INCLUDE_MAX_NESTING_LEVEL 10
+
+/* Extension */
 
 extern int ext_include_my_id;
 extern const struct sieve_extension include_extension;
+
+/* Types */
+
+enum ext_include_script_location { 
+	LOCATION_PERSONAL, 
+	LOCATION_GLOBAL,
+	LOCATION_INVALID 
+}; 
+
+/* Script access */
+
+const char *ext_include_get_script_path
+	(enum ext_include_script_location location, const char *script_name);
 
 /* Main context, currently not used for anything and might be removed */
 
@@ -24,10 +41,12 @@ void ext_include_register_generator_context
 
 bool ext_include_generate_include
 	(struct sieve_generator *gentr, struct sieve_command_context *cmd,
-		const char *script_path, const char *script_name, unsigned int *blk_id_r);
+		enum ext_include_script_location location, const char *script_name, 
+		unsigned *blk_id_r);
 
 /* Binary */
 
+void ext_include_binary_save(struct sieve_binary *sbin);
 void ext_include_binary_free(struct sieve_binary *sbin);
 
 /* Interpreter */
