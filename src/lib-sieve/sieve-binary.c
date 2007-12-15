@@ -681,6 +681,93 @@ static struct sieve_binary_file *_file_memory_open(const char *path)
 	return &file->binfile;
 }
 
+/* File open in lazy mode (only read what is needed into memory) */
+
+static bool _file_lazy_read
+(struct sieve_binary_file *file, off_t *offset, void *buffer, size_t size)
+{
+	off_t start = *offset;
+	int ret;
+	void *indata = buffer;
+	size_t insize = size;
+	
+	*offset = SIEVE_BINARY_ALIGN(*offset);
+
+	/* Seek to the correct position */ 
+	if ( *offset != start && lseek(file->fd, *offset, SEEK_SET) == (off_t) -1 ) {
+		i_error("sieve: failed to seek(fd, %lld, SEEK_SET) in binary %s: %m", 
+			(long long) *offset, file->path);
+		return FALSE;
+	}	
+
+	/* Read record into memory */
+	while (insize > 0) {
+		if ( (ret=read(file->fd, indata, insize)) < 0 ) {
+			i_error("sieve: failed to read from binary %s: %m", file->path);
+			break;
+		}
+		
+		indata = PTR_OFFSET(indata, ret);
+		insize -= ret;
+	}	
+
+	if ( insize != 0 ) {
+		/* Failed to read the whole requested record */
+		return FALSE;
+	}
+	
+	*offset += size;
+
+	return TRUE;
+}
+
+static const void *_file_lazy_load_data
+	(struct sieve_binary_file *file, off_t *offset, size_t size)
+{	
+	void *data = t_malloc(size);
+
+	if ( _file_lazy_read(file, offset, data, size) ) {
+		return data;
+	}
+	
+	return NULL;
+}
+
+static buffer_t *_file_lazy_load_buffer
+	(struct sieve_binary_file *file, off_t *offset, size_t size)
+{			
+	buffer_t *buffer = buffer_create_static_hard(file->pool, size);
+	
+	if ( _file_lazy_read
+		(file, offset, buffer_get_space_unsafe(buffer, 0, size), size) ) {
+		return buffer;
+	}
+	
+	return NULL;
+}
+
+static struct sieve_binary_file *_file_lazy_open(const char *path)
+{
+	pool_t pool;
+	struct sieve_binary_file *file;
+	
+	pool = pool_alloconly_create("sieve_binary_file_memory", 1024);
+	file = p_new(pool, struct sieve_binary_file, 1);
+	file->pool = pool;
+	file->path = p_strdup(pool, path);
+	file->load_data = _file_lazy_load_data;
+	file->load_buffer = _file_lazy_load_buffer;
+	
+	if ( !sieve_binary_file_open(file, path) ) {
+		pool_unref(&pool);
+		return NULL;
+	}
+
+	return file;
+}
+
+/* Load binary */
+
 #define LOAD_HEADER(sbin, offset, header) \
 	(header *) sbin->file->load_data(sbin->file, offset, sizeof(header))
 
@@ -784,73 +871,84 @@ static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 
 static bool _sieve_binary_load(struct sieve_binary *sbin)
 {
+	bool result = TRUE;
 	off_t offset = 0;
 	const struct sieve_binary_header *header;
 	struct sieve_binary_block *extensions;
-	unsigned int i;
+	unsigned int i, blk_count;
 	
 	/* Verify header */
 	
-	header = LOAD_HEADER(sbin, &offset, const struct sieve_binary_header);
-	if ( header == NULL ) {
-		i_error("sieve: loaded binary %s is not even large enough "
-			"to contain a header.", sbin->path);
-		return FALSE;
-	}
+	T_FRAME(
+		header = LOAD_HEADER(sbin, &offset, const struct sieve_binary_header);
+		if ( header == NULL ) {
+			i_error("sieve: loaded binary %s is not even large enough "
+				"to contain a header.", sbin->path);
+			result = FALSE;
+		} else if ( header->magic != SIEVE_BINARY_MAGIC ) {
+			if ( header->magic != SIEVE_BINARY_MAGIC_OTHER_ENDIAN ) 
+				i_error("sieve: loaded binary %s has corrupted header %08x", 
+					sbin->path, header->magic);
+			result = FALSE;
+		} else if ( result && (
+		  header->version_major != SIEVE_BINARY_VERSION_MAJOR || 
+			header->version_minor != SIEVE_BINARY_VERSION_MINOR ) ) {
+			/* Binary is of different version. Caller will have to recompile */
+			result = FALSE;
+		} else if ( result && header->blocks == 0 ) {
+			i_error("sieve: loaded binary %s contains no blocks", sbin->path);
+			result = FALSE; 
+		} else {
+			blk_count = header->blocks;
+		}
+	);
 	
-	if ( header->magic != SIEVE_BINARY_MAGIC ) {
-		if ( header->magic != SIEVE_BINARY_MAGIC_OTHER_ENDIAN ) 
-			i_error("sieve: loaded binary %s has corrupted header %08x", 
-				sbin->path, header->magic);
-
-		return FALSE;
-	}
-	
-	if ( header->version_major != SIEVE_BINARY_VERSION_MAJOR || 
-		header->version_minor != SIEVE_BINARY_VERSION_MINOR ) {
-		/* Binary is of different version. Caller will have to recompile */
-		return FALSE;
-	} 
-	
-	if ( header->blocks == 0 ) {
-		i_error("sieve: loaded binary %s contains no blocks", sbin->path);
-		return FALSE; 
-	}
+	if ( !result ) return FALSE;
 	
 	/* Load block index */
-	printf("BLOCKS: %d\n", header->blocks);
 	
-	for ( i = 0; i < header->blocks; i++ ) {	
-		if ( !_load_block_index_record(sbin, &offset, i) ) {
-			i_error("sieve: block index record %d of loaded binary %s is corrupt", 
-				i, sbin->path);
-			return FALSE;
-		}
+	printf("BLOCKS: %d\n", blk_count);
+	
+	for ( i = 0; i < blk_count && result; i++ ) {	
+		T_FRAME(
+			if ( !_load_block_index_record(sbin, &offset, i) ) {
+				i_error("sieve: block index record %d of loaded binary %s is corrupt", 
+					i, sbin->path);
+				result = FALSE;
+			}
+		);
 	}
+	
+	if ( !result ) return FALSE;
 	
 	/* Load extensions used by this binary */
 	
-	extensions =_load_block(sbin, &offset, 0);
-	if ( extensions == NULL ) 
-		return FALSE;
-		
-	if ( !_sieve_binary_load_extensions(sbin) ) {
-		i_error("sieve: extension block of loaded binary %s is corrupt", 
-			sbin->path);
-		return FALSE;
-	}	
+	T_FRAME(
+		extensions =_load_block(sbin, &offset, 0);
+		if ( extensions == NULL ) {
+			result = FALSE;
+		} else if ( !_sieve_binary_load_extensions(sbin) ) {
+			i_error("sieve: extension block of loaded binary %s is corrupt", 
+				sbin->path);
+			result = FALSE;
+		}
+	);
+	
+	if ( !result ) return FALSE;
 	
 	/* Load the other blocks */
 	
-	for ( i = 1; i < header->blocks; i++ ) {	
-		if ( _load_block(sbin, &offset, i) == NULL ) {
-			i_error("sieve: block %d of loaded binary %s is corrupt", 
-				i, sbin->path);
-			return FALSE;
-		}
+	for ( i = 1; result && i < blk_count; i++ ) {	
+		T_FRAME(
+			if ( _load_block(sbin, &offset, i) == NULL ) {
+				i_error("sieve: block %d of loaded binary %s is corrupt", 
+					i, sbin->path);
+				result = FALSE;
+			}
+		);
 	}
 				
-	return TRUE;
+	return result;
 }
 
 struct sieve_binary *sieve_binary_open
@@ -859,7 +957,8 @@ struct sieve_binary *sieve_binary_open
 	struct sieve_binary *sbin;
 	struct sieve_binary_file *file;
 		
-	file = _file_memory_open(path);	
+	//file = _file_memory_open(path);	
+	file = _file_lazy_open(path);
 	if ( file == NULL )
 		return NULL;
 		
@@ -875,7 +974,7 @@ bool sieve_binary_load(struct sieve_binary *sbin)
 {
 	i_assert(sbin->file != NULL);
 
-	if ( !sbin->file->load(sbin->file) )
+	if ( sbin->file->load != NULL && !sbin->file->load(sbin->file) )
 		return FALSE;			
 	
 	if ( !_sieve_binary_load(sbin) ) {
