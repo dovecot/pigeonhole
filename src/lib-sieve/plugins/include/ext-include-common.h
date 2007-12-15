@@ -46,7 +46,7 @@ bool ext_include_generate_include
 
 /* Binary */
 
-void ext_include_binary_save(struct sieve_binary *sbin);
+bool ext_include_binary_save(struct sieve_binary *sbin);
 void ext_include_binary_free(struct sieve_binary *sbin);
 
 /* Interpreter */

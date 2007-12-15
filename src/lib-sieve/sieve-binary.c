@@ -28,6 +28,12 @@
 
 /* Forward declarations */
 
+struct sieve_binary_file;
+
+static bool sieve_binary_file_open
+	(struct sieve_binary_file *file, const char *path);
+static void sieve_binary_file_close(struct sieve_binary_file **file);
+
 static inline sieve_size_t sieve_binary_emit_dynamic_data
 	(struct sieve_binary *binary, void *data, size_t size);
 
@@ -44,7 +50,7 @@ struct sieve_binary_extension_reg {
 	const struct sieve_extension *extension; 
 	
 	/* Extension to the binary; typically used to manage extension-specific blocks 
-	 * in the binary and as a meanssieve_binary_block_count(sbin); to get a binary_free notification to release
+	 * in the binary and as a means to get a binary_free notification to release
 	 * references held by extensions. 
 	 */
 	const struct sieve_binary_extension *binext;	
@@ -64,13 +70,27 @@ struct sieve_binary_block {
 	uoff_t offset;
 };
 
+struct sieve_binary_file {
+	pool_t pool;
+	const char *path;
+	
+	struct stat st;
+	int fd;
+
+	bool (*load)(struct sieve_binary_file *file);	
+	const void *(*load_data)
+		(struct sieve_binary_file *file, off_t *offset, size_t size);
+	buffer_t *(*load_buffer)
+		(struct sieve_binary_file *file, off_t *offset, size_t size);
+};
+
 struct sieve_binary {
 	pool_t pool;
 	int refcount;
 	
 	struct sieve_script *script;
-	struct stat st;
-	int fd;
+	
+	struct sieve_binary_file *file;
 	
 	/* When the binary is loaded into memory or when it is being constructed by
 	 * the generator, extensions can be associated to the binary. The extensions
@@ -91,13 +111,7 @@ struct sieve_binary {
 		
 	/* Attributes of a loaded binary */
 	const char *path;
-	
-	/* Pointer to the binary in memory (could be mmap()ed as well)
-	 * This is only set when the binary is read from disk and not live-generated. 
-	 */
-	const void *memory;
-	off_t memory_size;
-	
+		
 	/* Blocks */
 	ARRAY_DEFINE(blocks, struct sieve_binary_block *); 
 	unsigned int active_block;
@@ -119,8 +133,6 @@ static struct sieve_binary *sieve_binary_create(struct sieve_script *script)
 	sbin->pool = pool;
 	sbin->refcount = 1;
 	sbin->script = script;
-	
-	sbin->fd = -1;
 	
 	p_array_init(&sbin->linked_extensions, pool, 5);
 	p_array_init(&sbin->extensions, pool, 5);
@@ -181,8 +193,8 @@ void sieve_binary_unref(struct sieve_binary **sbin)
 
 	sieve_binary_extensions_free(*sbin);
 	
-	if ( (*sbin)->fd >= 0 )
-		close((*sbin)->fd);
+	if ( (*sbin)->file != NULL )
+		sieve_binary_file_close(&(*sbin)->file);
 	
 	pool_unref(&((*sbin)->pool));
 	
@@ -523,13 +535,63 @@ bool sieve_binary_save
 	return result;
 }
 
-static const void *load_aligned_data
-	(struct sieve_binary *sbin, off_t *offset, size_t size)
+/* Binary file management */
+
+static bool sieve_binary_file_open
+	(struct sieve_binary_file *file, const char *path)
+{
+	int fd;
+	struct stat st;
+	
+	if ( stat(path, &st) < 0 ) {
+		if ( errno != ENOENT ) {
+			i_error("sieve: binary stat(%s) failed: %m", path);
+		}
+		return FALSE;
+	}
+	
+	if ( (fd=open(path, O_RDONLY)) < 0 ) {
+		if ( errno != ENOENT ) {
+			i_error("sieve: binary open(%s) failed: %m", path);
+		}
+		return FALSE;
+	}
+	
+	file->fd = fd;
+	memcpy(&file->st, &st, sizeof(struct stat));
+
+	return TRUE;
+}
+	
+static void sieve_binary_file_close(struct sieve_binary_file **file)
+{
+	if ( (*file)->fd != -1 )
+		close((*file)->fd);
+
+	pool_unref(&(*file)->pool);
+	
+	*file = NULL;
+}
+
+/* File loaded/mapped to memory */
+
+struct _file_memory {
+	struct sieve_binary_file binfile;
+
+	/* Pointer to the binary in memory */
+	const void *memory;
+	off_t memory_size;
+};
+
+static const void *_file_memory_load_data
+	(struct sieve_binary_file *file, off_t *offset, size_t size)
 {	
+	struct _file_memory *fmem = (struct _file_memory *) file;
+
 	*offset = SIEVE_BINARY_ALIGN(*offset);
 
-	if ( (*offset) + size <= sbin->memory_size ) {
-		const void *data = PTR_OFFSET(sbin->memory, *offset);
+	if ( (*offset) + size <= fmem->memory_size ) {
+		const void *data = PTR_OFFSET(fmem->memory, *offset);
 		*offset += size;
 		
 		return data;
@@ -538,23 +600,89 @@ static const void *load_aligned_data
 	return NULL;
 }
 
-static buffer_t *load_aligned_buffer
-	(struct sieve_binary *sbin, off_t *offset, size_t size)
+static buffer_t *_file_memory_load_buffer
+	(struct sieve_binary_file *file, off_t *offset, size_t size)
 {	
+	struct _file_memory *fmem = (struct _file_memory *) file;
+
 	*offset = SIEVE_BINARY_ALIGN(*offset);
 
-	if ( (*offset) + size <= sbin->memory_size ) {
-		const void *data = PTR_OFFSET(sbin->memory, *offset);
+	if ( (*offset) + size <= fmem->memory_size ) {
+		const void *data = PTR_OFFSET(fmem->memory, *offset);
 		*offset += size;
 		
-		return buffer_create_const_data(sbin->pool, data, size);
+		return buffer_create_const_data(file->pool, data, size);
 	}
 	
 	return NULL;
 }
 
+static bool _file_memory_load(struct sieve_binary_file *file)
+{
+	struct _file_memory *fmem = (struct _file_memory *) file;
+	int ret;
+	size_t size;
+	void *indata;
+		
+	i_assert(file->fd > 0);
+		
+	/* Allocate memory buffer
+	 * FIXME: provide mmap support 
+	 */
+	indata = p_malloc(file->pool, file->st.st_size);
+	size = file->st.st_size; 
+	
+	fmem->memory = indata;
+	fmem->memory_size = file->st.st_size;
+
+	/* Return to beginning of the file */ 
+	if ( lseek(file->fd, 0, SEEK_SET) == (off_t) -1 ) {
+		i_error("sieve: failed to seek() in binary %s: %m", file->path);
+		return FALSE;
+	}	
+
+	/* Read the whole file into memory */
+	while (size > 0) {
+		if ( (ret=read(file->fd, indata, size)) < 0 ) {
+			i_error("sieve: failed to read from binary %s: %m", file->path);
+			break;
+		}
+		
+		indata = PTR_OFFSET(indata, ret);
+		size -= ret;
+	}	
+
+	if ( size != 0 ) {
+		/* Failed to read the whole file */
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+
+static struct sieve_binary_file *_file_memory_open(const char *path)
+{
+	pool_t pool;
+	struct _file_memory *file;
+	
+	pool = pool_alloconly_create("sieve_binary_file_memory", 1024);
+	file = p_new(pool, struct _file_memory, 1);
+	file->binfile.pool = pool;
+	file->binfile.path = p_strdup(pool, path);
+	file->binfile.load = _file_memory_load;
+	file->binfile.load_data = _file_memory_load_data;
+	file->binfile.load_buffer = _file_memory_load_buffer;
+	
+	if ( !sieve_binary_file_open(&file->binfile, path) ) {
+		pool_unref(&pool);
+		return NULL;
+	}
+
+	return &file->binfile;
+}
+
 #define LOAD_HEADER(sbin, offset, header) \
-	(header *) load_aligned_data(sbin, offset, sizeof(header))
+	(header *) sbin->file->load_data(sbin->file, offset, sizeof(header))
 
 static struct sieve_binary_block *_load_block
 	(struct sieve_binary *sbin, off_t *offset, unsigned int id)
@@ -582,7 +710,7 @@ static struct sieve_binary_block *_load_block
 		return NULL;
 	}
 	
-	block->buffer = load_aligned_buffer(sbin, offset, header->size);
+	block->buffer = sbin->file->load_buffer(sbin->file, offset, header->size);
 	if ( block->buffer == NULL ) {
 		i_error("sieve: block %d of loaded binary %s has invalid size %d", 
 			id, sbin->path, header->size);
@@ -728,71 +856,27 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 struct sieve_binary *sieve_binary_open
 	(const char *path, struct sieve_script *script)
 {
-	int fd;
-	struct stat st;
 	struct sieve_binary *sbin;
-	
-	if ( stat(path, &st) < 0 ) {
-		if ( errno != ENOENT ) {
-			i_error("sieve: binary stat(%s) failed: %m", path);
-		}
+	struct sieve_binary_file *file;
+		
+	file = _file_memory_open(path);	
+	if ( file == NULL )
 		return NULL;
-	}
-	
-	if ( (fd=open(path, O_RDONLY)) < 0 ) {
-		if ( errno != ENOENT ) {
-			i_error("sieve: binary open(%s) failed: %m", path);
-		}
-		return NULL;
-	}
-	
+		
 	/* Create binary object */
 	sbin = sieve_binary_create(script);
 	sbin->path = p_strdup(sbin->pool, path);
-	sbin->fd = fd;
-	memcpy(&sbin->st, &st, sizeof(st));
-	
+	sbin->file = file;
+
 	return sbin;
 }
 
 bool sieve_binary_load(struct sieve_binary *sbin)
-{	
-	int ret;
-	size_t size;
-	void *indata;
-	
-	i_assert(sbin->fd > 0);
-		
-	/* Allocate memory buffer
-	 * FIXME: provide mmap support 
-	 */
-	indata = p_malloc(sbin->pool, sbin->st.st_size);
-	size = sbin->st.st_size; 
-	
-	sbin->memory = indata;
-	sbin->memory_size = sbin->st.st_size;
+{
+	i_assert(sbin->file != NULL);
 
-	/* Return to beginning of the file */ 
-	if ( lseek(sbin->fd, 0, SEEK_SET) == (off_t) -1 ) {
-		i_error("sieve: failed to seek() in binary %s: %m", sbin->path);
-		return FALSE;
-	}	
-
-	/* Read the whole file into memory */
-	while (size > 0) {
-		if ( (ret=read(sbin->fd, indata, size)) < 0 ) {
-			i_error("sieve: failed to read from binary %s: %m", sbin->path);
-			break;
-		}
-		
-		indata = PTR_OFFSET(indata, ret);
-		size -= ret;
-	}	
-
-	if ( size != 0 ) {
-		/* Failed to read the whole file */
-		return FALSE;
-	}
+	if ( !sbin->file->load(sbin->file) )
+		return FALSE;			
 	
 	if ( !_sieve_binary_load(sbin) ) {
 		/* Failed to interpret binary header and/or block structure */

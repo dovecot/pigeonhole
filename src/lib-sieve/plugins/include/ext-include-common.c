@@ -173,7 +173,7 @@ static inline struct ext_include_binary_context *ext_include_get_binary_context
 	return ctx;
 }
 
-void ext_include_binary_save(struct sieve_binary *sbin)
+bool ext_include_binary_save(struct sieve_binary *sbin)
 {
 	struct ext_include_binary_context *binctx = 
 		ext_include_get_binary_context(sbin);
@@ -197,6 +197,8 @@ void ext_include_binary_save(struct sieve_binary *sbin)
 	(void) sieve_binary_block_set_active(sbin, prvblk);
 
 	hash_iterate_deinit(&hctx);
+	
+	return TRUE;
 }
 
 void ext_include_binary_free(struct sieve_binary *sbin)
