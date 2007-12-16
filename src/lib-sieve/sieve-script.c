@@ -147,6 +147,12 @@ unsigned int sieve_script_hash(struct sieve_script *script)
 	return (unsigned int) script->st.st_ino;
 }
 
+inline bool sieve_script_older
+(struct sieve_script *script, time_t time)
+{
+	return ( script->st.st_mtime < time );
+}
+
 /* Inline accessors */
 
 inline const char *sieve_script_name(struct sieve_script *script)

@@ -183,8 +183,9 @@ bool ext_include_binary_save(struct sieve_binary *sbin)
 	unsigned int prvblk;
 	
 	sieve_binary_block_clear(sbin, binctx->dependency_block);
-	prvblk = sieve_binary_block_set_active(sbin, binctx->dependency_block);	
-		
+	if ( !sieve_binary_block_set_active(sbin, binctx->dependency_block, &prvblk) )	
+		return FALSE;
+			
 	sieve_binary_emit_integer(sbin, hash_count(binctx->included_scripts));	
 	while ( hash_iterate(hctx, &key, &value) ) {
 		struct _included_script *incscript = (struct _included_script *) value;
@@ -194,7 +195,7 @@ bool ext_include_binary_save(struct sieve_binary *sbin)
 		sieve_binary_emit_cstring(sbin, sieve_script_name(incscript->script));
 	}
 	
-	(void) sieve_binary_block_set_active(sbin, prvblk);
+	(void) sieve_binary_block_set_active(sbin, prvblk, NULL);
 
 	hash_iterate_deinit(&hctx);
 	
@@ -408,18 +409,19 @@ bool ext_include_generate_include
 		 * FIXME: It might not be a good idea to recurse code generation for 
 		 * included scripts.
 		 */
-		this_block_id = sieve_binary_block_set_active(sbin, inc_block_id); 	
-	 	subgentr = sieve_generator_create(ast, ehandler);			
-		ext_include_initialize_generator_context(subgentr, ctx, script);
-			
-		if ( !sieve_generator_run(subgentr, &sbin) ) {
-			sieve_command_generate_error(gentr, cmd, 
-				"failed to generate code for included script '%s'", script_name);
-	 		result = FALSE;
-		}
+		if ( sieve_binary_block_set_active(sbin, inc_block_id, &this_block_id) ) {
+		 	subgentr = sieve_generator_create(ast, ehandler);			
+			ext_include_initialize_generator_context(subgentr, ctx, script);
 				
-		(void) sieve_binary_block_set_active(sbin, this_block_id); 	
-		sieve_generator_free(&subgentr);
+			if ( !sieve_generator_run(subgentr, &sbin) ) {
+				sieve_command_generate_error(gentr, cmd, 
+					"failed to generate code for included script '%s'", script_name);
+		 		result = FALSE;
+			}
+					
+			(void) sieve_binary_block_set_active(sbin, this_block_id, NULL); 	
+			sieve_generator_free(&subgentr);
+		} else result = FALSE;
 		
 		/* Cleanup */
 		sieve_ast_unref(&ast);		
@@ -458,10 +460,12 @@ bool ext_include_execute_include
 			(subinterp, ctx, NULL, block_id);
 	
 		/* Activate and start the top-level included script */
-		this_block_id = sieve_binary_block_set_active(renv->sbin, block_id); 			
-		result = ( sieve_interpreter_start
-			(subinterp, renv->msgdata, renv->scriptenv, renv->result, &interrupted)
-			== 1 );
+		if ( sieve_binary_block_set_active(renv->sbin, block_id, &this_block_id) ) 			
+			result = ( sieve_interpreter_start
+				(subinterp, renv->msgdata, renv->scriptenv, renv->result, &interrupted)
+				== 1 );
+		else
+			result = FALSE;
 		
 		/* Included scripts can have includes of their own. This is not implemented
 		 * recursively. Rather, the sub-interpreter interrupts and defers the 
@@ -482,7 +486,8 @@ bool ext_include_execute_include
 					if ( curctx->parent == NULL ) break;
 					
 					/* Reactivate parent */
-					(void) sieve_binary_block_set_active(renv->sbin, curctx->block_id);
+					(void) sieve_binary_block_set_active
+						(renv->sbin, curctx->block_id, NULL);
 					subinterp = curctx->interp; 	
 					
 					/* Continue parent */
@@ -499,14 +504,16 @@ bool ext_include_execute_include
 							(subinterp, curctx, NULL, curctx->inc_block_id);
 													
 						/* Activate the sub-include's block */
-						(void) sieve_binary_block_set_active(renv->sbin, curctx->block_id);
-						
-						/* Start the sub-include's interpreter */
-						curctx->inc_block_id = 0;
-						curctx->returned = FALSE;
-						result = ( sieve_interpreter_start
-							(subinterp, renv->msgdata, renv->scriptenv, renv->result, 
-								&interrupted) == 1 );		 	
+						if ( sieve_binary_block_set_active
+							(renv->sbin, curctx->block_id, NULL) ) {
+							/* Start the sub-include's interpreter */
+							curctx->inc_block_id = 0;
+							curctx->returned = FALSE;
+							result = ( sieve_interpreter_start
+								(subinterp, renv->msgdata, renv->scriptenv, renv->result, 
+									&interrupted) == 1 );		 	
+						} else 
+							result = FALSE;
 					} else {
 						/* Sub-interpreter was interrupted outside this extension, probably
 						 * stop command was executed. Generate an interrupt ourselves, 
@@ -526,7 +533,7 @@ bool ext_include_execute_include
 		}
 
 		/* Return to our own block */
-		(void) sieve_binary_block_set_active(renv->sbin, this_block_id); 	
+		(void) sieve_binary_block_set_active(renv->sbin, this_block_id, NULL); 	
 	} else {
 		/* We are an included script already, defer inclusion to main interpreter */
 		ctx->inc_block_id = block_id;

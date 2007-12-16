@@ -149,12 +149,17 @@ struct sieve_binary *sieve_open
 		binpath = sieve_script_binpath(script);	
 		sbin = sieve_binary_open(binpath, script);
 	
-		if ( sbin != NULL && !sieve_binary_load(sbin) ) {
-			sieve_binary_unref(&sbin);
-			sbin = NULL;
+		if (sbin != NULL) {
+			if ( !sieve_binary_up_to_date(sbin) ) {
+				sieve_binary_unref(&sbin);
+				sbin = NULL;
+			} else if ( !sieve_binary_load(sbin) ) {
+				sieve_binary_unref(&sbin);
+				sbin = NULL;
+			}
 		}
 		
-		if ( sbin == NULL ) {
+		if ( sbin == NULL ) {	
 			sbin = sieve_compile_script(script, ehandler);
 			(void) sieve_binary_save(sbin, binpath);	
 		}

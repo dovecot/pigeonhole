@@ -21,6 +21,7 @@ void sieve_script_close(struct sieve_script *script);
 int sieve_script_cmp
 	(struct sieve_script *script1, struct sieve_script *script2);
 unsigned int sieve_script_hash(struct sieve_script *script);
+inline bool sieve_script_older(struct sieve_script *script, time_t time);
 
 static inline bool sieve_script_equals
 	(struct sieve_script *script1, struct sieve_script *script2)

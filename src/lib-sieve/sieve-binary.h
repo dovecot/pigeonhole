@@ -22,6 +22,7 @@ bool sieve_binary_save
 	
 struct sieve_binary *sieve_binary_open
 	(const char *path, struct sieve_script *script);
+bool sieve_binary_up_to_date(struct sieve_binary *sbin);
 bool sieve_binary_load(struct sieve_binary *sbin);
 	
 /* 
@@ -34,8 +35,8 @@ enum sieve_binary_system_block {
 	SBIN_SYSBLOCK_LAST
 };
 
-unsigned int sieve_binary_block_set_active
-	(struct sieve_binary *sbin, unsigned int id);
+bool sieve_binary_block_set_active
+	(struct sieve_binary *sbin, unsigned int id, unsigned *old_id_r);
 unsigned int sieve_binary_block_create(struct sieve_binary *sbin);
 inline void sieve_binary_block_clear
 	(struct sieve_binary *sbin, unsigned int id);
@@ -49,6 +50,8 @@ struct sieve_binary_extension {
 
 	bool (*binary_save)(struct sieve_binary *sbin);
 	void (*binary_free)(struct sieve_binary *sbin);
+	
+	bool (*binary_is_up_to_date)(struct sieve_binary *sbin);
 };
  
 inline void sieve_binary_extension_set_context

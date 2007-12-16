@@ -8,6 +8,8 @@
 
 #include "sieve-extensions.h"
 #include "sieve-code.h"
+#include "sieve-script.h"
+
 #include "sieve-binary.h"
 
 #include <stdint.h>
@@ -33,6 +35,15 @@ struct sieve_binary_file;
 static bool sieve_binary_file_open
 	(struct sieve_binary_file *file, const char *path);
 static void sieve_binary_file_close(struct sieve_binary_file **file);
+
+static struct sieve_binary_block *sieve_binary_load_block
+	(struct sieve_binary *sbin, unsigned int id);
+
+static inline struct sieve_binary_extension_reg *sieve_binary_extension_get_reg
+	(struct sieve_binary *sbin, int ext_id);
+static inline int sieve_binary_extension_register
+	(struct sieve_binary *sbin, int ext_id, 
+		struct sieve_binary_extension_reg **reg);
 
 static inline sieve_size_t sieve_binary_emit_dynamic_data
 	(struct sieve_binary *binary, void *data, size_t size);
@@ -70,12 +81,16 @@ struct sieve_binary_block {
 	uoff_t offset;
 };
 
+/* FIXME: In essence this is an unbuffered stream implementation. Manybe this 
+ * can be merged with the generic dovecot istream interface.
+ */
 struct sieve_binary_file {
 	pool_t pool;
 	const char *path;
 	
 	struct stat st;
 	int fd;
+	off_t offset;
 
 	bool (*load)(struct sieve_binary_file *file);	
 	const void *(*load_data)
@@ -158,7 +173,8 @@ struct sieve_binary *sieve_binary_create_new(struct sieve_script *script)
 	(void) sieve_binary_block_create(sbin);
 	
 	/* Main program block */
-	sieve_binary_block_set_active(sbin, sieve_binary_block_create(sbin));
+	(void) sieve_binary_block_set_active
+		(sbin, sieve_binary_block_create(sbin), NULL);
 	
 	return sbin;
 }
@@ -254,19 +270,35 @@ inline void sieve_binary_block_clear
 	buffer_reset(block->buffer);
 }
 
-unsigned int sieve_binary_block_set_active
-	(struct sieve_binary *sbin, unsigned int id)
+bool sieve_binary_block_set_active
+	(struct sieve_binary *sbin, unsigned int id, unsigned *old_id_r)
 {
-	unsigned int old_id = sbin->active_block;
 	struct sieve_binary_block *block = sieve_binary_block_get(sbin, id);
-		
-	if ( block != NULL ) {
-		sbin->data = block->buffer;
-		sbin->code = buffer_get_data(block->buffer, &sbin->code_size);
-		sbin->active_block = id;
+			
+	if ( block == NULL ) return FALSE;
+	
+	if ( block->buffer == NULL ) {
+		if ( sbin->file ) {
+			/* Try to acces the block in the binary on disk (apperently we were lazy)
+			 */
+			if ( sieve_binary_load_block(sbin, id) == NULL || block->buffer == NULL )
+				return FALSE;
+		} else {
+			/* Block buffer is missing during code generation. This is what we would 
+			 * call a bug. FAIL. 
+			 */
+			return FALSE;
+		}
 	}
 	
-	return old_id;
+	if ( old_id_r != NULL ) 
+		*old_id_r = sbin->active_block;
+
+	sbin->data = block->buffer;
+	sbin->code = buffer_get_data(block->buffer, &sbin->code_size);
+	sbin->active_block = id;
+	
+	return TRUE;
 }
 
 unsigned int sieve_binary_block_create(struct sieve_binary *sbin)
@@ -286,7 +318,10 @@ static struct sieve_binary_block *sieve_binary_block_create_id
 	
 	block = p_new(sbin->pool, struct sieve_binary_block, 1);
 
-	array_idx_set(&sbin->blocks, id, &block);		
+	if ( id >= SBIN_SYSBLOCK_LAST )
+		array_idx_set(&sbin->blocks, id, &block);		
+	else
+		(void)sieve_binary_block_add(sbin, block);
 	
 	return block;
 }
@@ -468,7 +503,9 @@ static bool _sieve_binary_save
 	 *   FIXME: Per-extension this should also store binary version numbers and 
 	 *   the id of its first extension-specific block (if any)
 	 */
-	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_EXTENSIONS);	
+	if ( !sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_EXTENSIONS, NULL) )
+		return FALSE;
+		
 	ext_count = array_count(&sbin->linked_extensions);
 	sieve_binary_emit_integer(sbin, ext_count);
 	
@@ -477,8 +514,11 @@ static bool _sieve_binary_save
 			= array_idx(&sbin->linked_extensions, i);
 		
 		sieve_binary_emit_cstring(sbin, (*ext)->extension->name);
+		sieve_binary_emit_integer(sbin, (*ext)->block_id);
 	}
-	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);	
+	
+	if ( !sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM, NULL) )
+		return FALSE;
 	
 	/* Save all blocks into the binary */
 	
@@ -593,10 +633,11 @@ static const void *_file_memory_load_data
 	if ( (*offset) + size <= fmem->memory_size ) {
 		const void *data = PTR_OFFSET(fmem->memory, *offset);
 		*offset += size;
+		file->offset = *offset;
 		
 		return data;
 	}
-	
+		
 	return NULL;
 }
 
@@ -610,6 +651,7 @@ static buffer_t *_file_memory_load_buffer
 	if ( (*offset) + size <= fmem->memory_size ) {
 		const void *data = PTR_OFFSET(fmem->memory, *offset);
 		*offset += size;
+		file->offset = *offset;
 		
 		return buffer_create_const_data(file->pool, data, size);
 	}
@@ -632,10 +674,11 @@ static bool _file_memory_load(struct sieve_binary_file *file)
 	indata = p_malloc(file->pool, file->st.st_size);
 	size = file->st.st_size; 
 	
+	file->offset = 0; 
 	fmem->memory = indata;
 	fmem->memory_size = file->st.st_size;
 
-	/* Return to beginning of the file */ 
+	/* Return to beginning of the file */
 	if ( lseek(file->fd, 0, SEEK_SET) == (off_t) -1 ) {
 		i_error("sieve: failed to seek() in binary %s: %m", file->path);
 		return FALSE;
@@ -686,15 +729,15 @@ static struct sieve_binary_file *_file_memory_open(const char *path)
 static bool _file_lazy_read
 (struct sieve_binary_file *file, off_t *offset, void *buffer, size_t size)
 {
-	off_t start = *offset;
 	int ret;
 	void *indata = buffer;
 	size_t insize = size;
 	
 	*offset = SIEVE_BINARY_ALIGN(*offset);
-
+	
 	/* Seek to the correct position */ 
-	if ( *offset != start && lseek(file->fd, *offset, SEEK_SET) == (off_t) -1 ) {
+	if ( *offset != file->offset && 
+		lseek(file->fd, *offset, SEEK_SET) == (off_t) -1 ) {
 		i_error("sieve: failed to seek(fd, %lld, SEEK_SET) in binary %s: %m", 
 			(long long) *offset, file->path);
 		return FALSE;
@@ -717,6 +760,7 @@ static bool _file_lazy_read
 	}
 	
 	*offset += size;
+	file->offset = *offset;
 
 	return TRUE;
 }
@@ -777,15 +821,15 @@ static struct sieve_binary_block *_load_block
 	const struct sieve_binary_block_header *header = 
 		LOAD_HEADER(sbin, offset, const struct sieve_binary_block_header);
 	struct sieve_binary_block *block;
-	
+		
 	if ( header == NULL ) {
 		i_error("sieve: block %d of loaded binary %s is truncated", id, sbin->path);
 		return NULL;
 	}
 	
 	if ( header->id != id ) {
-		i_error("sieve: block %d of loaded binary %s has unexpected id", id, 
-			sbin->path);
+		i_error("sieve: block %d of loaded binary %s has unexpected id %d", id, 
+			sbin->path, header->id);
 		return NULL;
 	}
 	
@@ -805,6 +849,21 @@ static struct sieve_binary_block *_load_block
 	}
 		
 	return block;
+}
+
+static struct sieve_binary_block *sieve_binary_load_block
+	(struct sieve_binary *sbin, unsigned int id)
+{
+	struct sieve_binary_block *block;
+	off_t offset;
+	
+	block = sieve_binary_block_get(sbin, id);
+	
+	if ( block == NULL ) return NULL;
+	
+	offset = block->offset;
+	
+	return _load_block(sbin, &offset, id);
 }
 
 static bool _load_block_index_record
@@ -840,7 +899,8 @@ static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 	bool result = TRUE;
 	unsigned int i;
 	
-	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_EXTENSIONS);
+	if ( !sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_EXTENSIONS, NULL) ) 
+		return FALSE;
 
 	if ( !sieve_binary_read_integer(sbin, &offset, &count) )
 		return FALSE;
@@ -859,8 +919,13 @@ static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 					i_error("sieve: loaded binary %s requires unknown extension '%s'", 
 						sbin->path, str_c(extension));
 					result = FALSE;					
-				} else 
-					(void) sieve_binary_extension_link(sbin, ext_id);
+				} else {
+					struct sieve_binary_extension_reg *ereg = NULL;
+					
+					(void) sieve_binary_extension_register(sbin, ext_id, &ereg);
+					if ( !sieve_binary_read_integer(sbin, &offset, &ereg->block_id) )
+						result = FALSE;
+				}
 			}	else
 				result = FALSE;
 		);
@@ -869,7 +934,7 @@ static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 	return result;
 }
 
-static bool _sieve_binary_load(struct sieve_binary *sbin)
+static bool _sieve_binary_open(struct sieve_binary *sbin)
 {
 	bool result = TRUE;
 	off_t offset = 0;
@@ -882,12 +947,12 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 	T_FRAME(
 		header = LOAD_HEADER(sbin, &offset, const struct sieve_binary_header);
 		if ( header == NULL ) {
-			i_error("sieve: loaded binary %s is not even large enough "
+			i_error("sieve: opened binary %s is not even large enough "
 				"to contain a header.", sbin->path);
 			result = FALSE;
 		} else if ( header->magic != SIEVE_BINARY_MAGIC ) {
 			if ( header->magic != SIEVE_BINARY_MAGIC_OTHER_ENDIAN ) 
-				i_error("sieve: loaded binary %s has corrupted header %08x", 
+				i_error("sieve: opened binary %s has corrupted header %08x", 
 					sbin->path, header->magic);
 			result = FALSE;
 		} else if ( result && (
@@ -896,7 +961,7 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 			/* Binary is of different version. Caller will have to recompile */
 			result = FALSE;
 		} else if ( result && header->blocks == 0 ) {
-			i_error("sieve: loaded binary %s contains no blocks", sbin->path);
+			i_error("sieve: opened binary %s contains no blocks", sbin->path);
 			result = FALSE; 
 		} else {
 			blk_count = header->blocks;
@@ -912,7 +977,7 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 	for ( i = 0; i < blk_count && result; i++ ) {	
 		T_FRAME(
 			if ( !_load_block_index_record(sbin, &offset, i) ) {
-				i_error("sieve: block index record %d of loaded binary %s is corrupt", 
+				i_error("sieve: block index record %d of opened binary %s is corrupt", 
 					i, sbin->path);
 				result = FALSE;
 			}
@@ -928,13 +993,30 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 		if ( extensions == NULL ) {
 			result = FALSE;
 		} else if ( !_sieve_binary_load_extensions(sbin) ) {
-			i_error("sieve: extension block of loaded binary %s is corrupt", 
+			i_error("sieve: extension block of opened binary %s is corrupt", 
 				sbin->path);
 			result = FALSE;
 		}
 	);
+		
+	return result;
+}
+
+static bool _sieve_binary_load(struct sieve_binary *sbin) 
+{	
+	bool result = TRUE;
+	unsigned int i, blk_count;
+	struct sieve_binary_block *block;
+	off_t offset;
 	
-	if ( !result ) return FALSE;
+	blk_count = array_count(&sbin->blocks);
+	if ( blk_count == 1 ) {
+		/* Binary is empty */
+		return TRUE;
+	}	
+
+	block = sieve_binary_block_get(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);
+	offset = block->offset;
 	
 	/* Load the other blocks */
 	
@@ -966,6 +1048,11 @@ struct sieve_binary *sieve_binary_open
 	sbin = sieve_binary_create(script);
 	sbin->path = p_strdup(sbin->pool, path);
 	sbin->file = file;
+	
+	if ( !_sieve_binary_open(sbin) ) {
+		sieve_binary_unref(&sbin);
+		return NULL;
+	}
 
 	return sbin;
 }
@@ -974,8 +1061,9 @@ bool sieve_binary_load(struct sieve_binary *sbin)
 {
 	i_assert(sbin->file != NULL);
 
+	/*
 	if ( sbin->file->load != NULL && !sbin->file->load(sbin->file) )
-		return FALSE;			
+		return FALSE;	*/		
 	
 	if ( !_sieve_binary_load(sbin) ) {
 		/* Failed to interpret binary header and/or block structure */
@@ -986,11 +1074,21 @@ bool sieve_binary_load(struct sieve_binary *sbin)
 	return TRUE;
 }
 
+bool sieve_binary_up_to_date(struct sieve_binary *sbin)
+{
+	i_assert(sbin->file != NULL);
+
+	if ( !sieve_script_older(sbin->script, sbin->file->st.st_mtime) )
+		return FALSE;
+	
+	return TRUE;
+}
+
 void sieve_binary_activate(struct sieve_binary *sbin)
 {
 	unsigned int i;
 	
-	sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);
+	(void)sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM, NULL);
 	
 	/* Load other extensions into binary */
 	for ( i = 0; i < array_count(&sbin->linked_extensions); i++ ) {
@@ -1083,7 +1181,8 @@ inline void sieve_binary_extension_set
 unsigned int sieve_binary_extension_create_block
 (struct sieve_binary *sbin, int ext_id)
 {
-	unsigned int block;
+	struct sieve_binary_block *block;	
+	unsigned int block_id;
 	struct sieve_binary_extension_reg *ereg = 
 		sieve_binary_extension_get_reg(sbin, ext_id);
 	
@@ -1093,16 +1192,20 @@ unsigned int sieve_binary_extension_create_block
 		  sieve_extension_get_by_id(ext_id), ext_id);
 	}
 	
-	block = sieve_binary_block_create(sbin);
-	if ( ereg->block_id < SBIN_SYSBLOCK_LAST )
-		ereg->block_id = block;
+	block = p_new(sbin->pool, struct sieve_binary_block, 1);
+	block->buffer = buffer_create_dynamic(sbin->pool, 64);
+
+	block_id = sieve_binary_block_add(sbin, block);
 	
-	return block;
+	if ( ereg->block_id < SBIN_SYSBLOCK_LAST )
+		ereg->block_id = block_id;
+	block->ext_id = ereg->index;
+	
+	return block_id;
 }
 
-
-int sieve_binary_extension_link
-	(struct sieve_binary *sbin, int ext_id) 
+static inline int sieve_binary_extension_register
+(struct sieve_binary *sbin, int ext_id, struct sieve_binary_extension_reg **reg) 
 {
 	const struct sieve_extension *ext = sieve_extension_get_by_id(ext_id);
 	
@@ -1112,10 +1215,17 @@ int sieve_binary_extension_link
 		
 		array_append(&sbin->linked_extensions, &ereg, 1);
 		
+		if ( reg != NULL ) *reg = ereg;
 		return ereg->index;
 	}
 	
 	return -1;
+}
+
+int sieve_binary_extension_link
+	(struct sieve_binary *sbin, int ext_id) 
+{	
+	return sieve_binary_extension_register(sbin, ext_id, NULL);
 }
 
 const struct sieve_extension *sieve_binary_extension_get_by_index
