@@ -17,6 +17,11 @@ extern const struct sieve_extension include_extension;
 
 /* Types */
 
+enum ext_include_opcode {
+	EXT_INCLUDE_OPCODE_INCLUDE,
+	EXT_INCLUDE_OPCODE_RETURN
+};
+
 enum ext_include_script_location { 
 	EXT_INCLUDE_LOCATION_PERSONAL, 
 	EXT_INCLUDE_LOCATION_GLOBAL,
@@ -53,9 +58,10 @@ void ext_include_binary_free(struct sieve_binary *sbin);
 
 /* Interpreter */
 
-void ext_include_register_interpreter_context
-	(struct sieve_interpreter *interp);
+void ext_include_register_interpreter_context(struct sieve_interpreter *interp);
+
 bool ext_include_execute_include
 	(const struct sieve_runtime_env *renv, unsigned int block_id);
+void ext_include_execute_return(const struct sieve_runtime_env *renv);
 
 #endif /* __EXT_INCLUDE_COMMON_H */

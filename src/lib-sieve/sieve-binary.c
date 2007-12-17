@@ -729,7 +729,7 @@ static bool _file_memory_load(struct sieve_binary_file *file)
 
 	/* Read the whole file into memory */
 	while (size > 0) {
-		if ( (ret=read(file->fd, indata, size)) < 0 ) {
+		if ( (ret=read(file->fd, indata, size)) <= 0 ) {
 			i_error("sieve: failed to read from binary %s: %m", file->path);
 			break;
 		}
@@ -789,7 +789,11 @@ static bool _file_lazy_read
 	/* Read record into memory */
 	while (insize > 0) {
 		if ( (ret=read(file->fd, indata, insize)) <= 0 ) {
-			i_error("sieve: failed to read from binary %s: %m", file->path);
+			if ( ret == 0 ) 
+				i_error("sieve: binary %s is truncated (more data expected)", 
+					file->path);
+			else
+				i_error("sieve: failed to read from binary %s: %m", file->path);
 			break;
 		}
 		

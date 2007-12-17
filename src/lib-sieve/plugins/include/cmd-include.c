@@ -59,7 +59,7 @@ const struct sieve_opcode include_opcode = {
 	"include",
 	SIEVE_OPCODE_CUSTOM,
 	&include_extension,
-	0,
+	EXT_INCLUDE_OPCODE_INCLUDE,
 	opc_include_dump, 
 	opc_include_execute
 };

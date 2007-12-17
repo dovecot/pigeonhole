@@ -655,3 +655,13 @@ bool ext_include_execute_include
 	
 	return result;
 }
+
+void ext_include_execute_return(const struct sieve_runtime_env *renv)
+{
+	struct ext_include_interpreter_context *ctx =
+		ext_include_get_interpreter_context(renv->interp);
+	
+	ctx->returned = TRUE;
+	sieve_interpreter_interrupt(renv->interp);	
+}
+	

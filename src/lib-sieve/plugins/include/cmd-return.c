@@ -35,9 +35,9 @@ const struct sieve_command cmd_return = {
 
 const struct sieve_opcode return_opcode = { 
 	"return",
-	0,
+	SIEVE_OPCODE_CUSTOM,
 	&include_extension,
-	0,
+	EXT_INCLUDE_OPCODE_RETURN,
 	NULL, 
 	opc_return_execute 
 };
@@ -47,9 +47,11 @@ const struct sieve_opcode return_opcode = {
  */
 
 static bool cmd_return_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx ATTR_UNUSED) 
+(struct sieve_generator *gentr, struct sieve_command_context *ctx ATTR_UNUSED) 
 {
+	sieve_generator_emit_opcode_ext	
+		(gentr, &return_opcode, ext_include_my_id);
+
 	return TRUE;
 }
 
@@ -59,9 +61,11 @@ static bool cmd_return_generate
 
 static bool opc_return_execute
 (const struct sieve_opcode *opcode ATTR_UNUSED,
-	const struct sieve_runtime_env *renv ATTR_UNUSED, 
+	const struct sieve_runtime_env *renv, 
 	sieve_size_t *address ATTR_UNUSED)
 {	
+	ext_include_execute_return(renv);
+
 	return TRUE;
 }
 
