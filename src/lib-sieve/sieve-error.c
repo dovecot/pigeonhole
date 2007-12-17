@@ -51,6 +51,8 @@ void sieve_verror
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args)
 {
+	if ( ehandler == NULL ) return;
+	
 	if ( ehandler->log_master )
 		i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
 
@@ -62,6 +64,8 @@ void sieve_vwarning
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args)
 {
+	if ( ehandler == NULL ) return;
+
 	if ( ehandler->log_master )
 		i_warning("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
 		
@@ -73,6 +77,8 @@ void sieve_vinfo
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args)
 {
+	if ( ehandler == NULL ) return;
+
 	if ( ehandler->log_master )
 		i_info("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
 	
@@ -91,16 +97,22 @@ void sieve_vcritical
 	
 	i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
 	
+	if ( ehandler == NULL ) return;
+	
 	sieve_error(ehandler, location, "%s", 
 		strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ? 
 			str : CRITICAL_MSG );	
 }
 
 unsigned int sieve_get_errors(struct sieve_error_handler *ehandler) {
+	if ( ehandler == NULL ) return 0;
+	
 	return ehandler->errors;
 }
 
 unsigned int sieve_get_warnings(struct sieve_error_handler *ehandler) {
+	if ( ehandler == NULL ) return 0;
+
 	return ehandler->errors;
 }
 

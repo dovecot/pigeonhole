@@ -107,9 +107,9 @@ static bool cmd_include_validate_location_tag
 	}
 	
 	if ( (*arg)->argument == &include_personal_tag )
-		ctx_data->location = LOCATION_PERSONAL;
+		ctx_data->location = EXT_INCLUDE_LOCATION_PERSONAL;
 	else if ( (*arg)->argument == &include_global_tag )
-		ctx_data->location = LOCATION_GLOBAL;
+		ctx_data->location = EXT_INCLUDE_LOCATION_GLOBAL;
 	else
 		return FALSE;
 	
@@ -149,7 +149,7 @@ static bool cmd_include_pre_validate
 
 	/* Assign context */
 	ctx_data = p_new(sieve_command_pool(cmd), struct cmd_include_context_data, 1);
-	ctx_data->location = LOCATION_PERSONAL;
+	ctx_data->location = EXT_INCLUDE_LOCATION_PERSONAL;
 	cmd->data = ctx_data;
 	
 	return TRUE;

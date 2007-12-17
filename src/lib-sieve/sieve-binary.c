@@ -17,18 +17,28 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define SIEVE_BINARY_MAGIC              0xdeadbeaf
-#define SIEVE_BINARY_MAGIC_OTHER_ENDIAN 0xefbeadde 
+/*
+ * Config
+ */
+ 
+#define SIEVE_BINARY_VERSION_MAJOR     0
+#define SIEVE_BINARY_VERSION_MINOR     0
 
-#define SIEVE_BINARY_VERSION_MAJOR 0
-#define SIEVE_BINARY_VERSION_MINOR 0
+/*
+ * Macros
+ */
+
+#define SIEVE_BINARY_MAGIC              0xcafebabe
+#define SIEVE_BINARY_MAGIC_OTHER_ENDIAN 0xbebafeca 
 
 #define SIEVE_BINARY_ALIGN(offset) \
 	(((offset) + 3) & ~3)
 #define SIEVE_BINARY_ALIGN_PTR(ptr) \
 	((void *) SIEVE_BINARY_ALIGN(((size_t) ptr)))
 
-/* Forward declarations */
+/* 
+ * Forward declarations 
+ */
 
 struct sieve_binary_file;
 
@@ -47,6 +57,10 @@ static inline int sieve_binary_extension_register
 
 static inline sieve_size_t sieve_binary_emit_dynamic_data
 	(struct sieve_binary *binary, void *data, size_t size);
+
+/* 
+ * Internal structures
+ */
 
 /* Extension registration */
 
@@ -73,6 +87,8 @@ struct sieve_binary_extension_reg {
 	unsigned int block_id;
 };
 
+/* Block */
+
 struct sieve_binary_block {
 	buffer_t *buffer;
 	int ext_index;
@@ -98,6 +114,10 @@ struct sieve_binary_file {
 	buffer_t *(*load_buffer)
 		(struct sieve_binary_file *file, off_t *offset, size_t size);
 };
+
+/*
+ * Binary object
+ */
 
 struct sieve_binary {
 	pool_t pool;
@@ -232,7 +252,22 @@ inline struct sieve_script *sieve_binary_script(struct sieve_binary *sbin)
 	return sbin->script;
 }
 
-/* Block management */
+inline const char *sieve_binary_path(struct sieve_binary *sbin)
+{
+	return sbin->path;
+}
+
+inline bool sieve_binary_script_older
+(struct sieve_binary *sbin, struct sieve_script *script)
+{
+	i_assert(sbin->file != NULL);
+	return ( sieve_script_older(script, sbin->file->st.st_mtime) );
+}
+
+
+/* 
+ * Block management 
+ */
 
 static inline struct sieve_binary_block *sieve_binary_block_get
 	(struct sieve_binary *sbin, unsigned int id) 
@@ -326,8 +361,10 @@ static struct sieve_binary_block *sieve_binary_block_create_id
 	return block;
 }
 
-/* Saving and loading the binary to/from a file. */
-
+/*
+ * Header and record structures of the binary on disk 
+ */
+ 
 struct sieve_binary_header {
 	uint32_t magic;
 	uint16_t version_major;
@@ -346,6 +383,10 @@ struct sieve_binary_block_header {
 	uint32_t id; 
 	uint32_t size;
 };
+
+/* 
+ * Saving the binary to a file. 
+ */
 
 inline static bool _save_skip(struct ostream *stream, size_t size)
 {	
@@ -575,7 +616,9 @@ bool sieve_binary_save
 	return result;
 }
 
-/* Binary file management */
+/* 
+ * Binary file management 
+ */
 
 static bool sieve_binary_file_open
 	(struct sieve_binary_file *file, const char *path)
@@ -745,7 +788,7 @@ static bool _file_lazy_read
 
 	/* Read record into memory */
 	while (insize > 0) {
-		if ( (ret=read(file->fd, indata, insize)) < 0 ) {
+		if ( (ret=read(file->fd, indata, insize)) <= 0 ) {
 			i_error("sieve: failed to read from binary %s: %m", file->path);
 			break;
 		}
@@ -810,7 +853,9 @@ static struct sieve_binary_file *_file_lazy_open(const char *path)
 	return file;
 }
 
-/* Load binary */
+/* 
+ * Load binary from a file
+ */
 
 #define LOAD_HEADER(sbin, offset, header) \
 	(header *) sbin->file->load_data(sbin->file, offset, sizeof(header))
@@ -952,7 +997,7 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 			result = FALSE;
 		} else if ( header->magic != SIEVE_BINARY_MAGIC ) {
 			if ( header->magic != SIEVE_BINARY_MAGIC_OTHER_ENDIAN ) 
-				i_error("sieve: opened binary %s has corrupted header %08x", 
+				i_error("sieve: opened binary %s has corrupted header (0x%08x)", 
 					sbin->path, header->magic);
 			result = FALSE;
 		} else if ( result && (
@@ -1036,6 +1081,7 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 struct sieve_binary *sieve_binary_open
 	(const char *path, struct sieve_script *script)
 {
+	unsigned int ext_count, i;
 	struct sieve_binary *sbin;
 	struct sieve_binary_file *file;
 		
@@ -1053,6 +1099,23 @@ struct sieve_binary *sieve_binary_open
 		sieve_binary_unref(&sbin);
 		return NULL;
 	}
+	
+	sieve_binary_activate(sbin);
+	
+	/* Signal open event to extensions */
+	ext_count = array_count(&sbin->extensions);	
+	for ( i = 0; i < ext_count; i++ ) {
+		struct sieve_binary_extension_reg * const *ereg
+			= array_idx(&sbin->extensions, i);
+		const struct sieve_binary_extension *binext = (*ereg)->binext;
+		
+		if ( binext != NULL && binext->binary_open != NULL && 
+			!binext->binary_open(sbin) ) {
+			/* Extension thinks its corrupt */
+			sieve_binary_unref(&sbin);
+			return NULL;
+		}
+	}	
 
 	return sbin;
 }
@@ -1070,16 +1133,32 @@ bool sieve_binary_load(struct sieve_binary *sbin)
 		return FALSE;
 	}
 	
-	sieve_binary_activate(sbin);	
 	return TRUE;
 }
 
+/*
+ *
+ */
+
 bool sieve_binary_up_to_date(struct sieve_binary *sbin)
 {
+	unsigned int ext_count, i;
+	
 	i_assert(sbin->file != NULL);
 
 	if ( !sieve_script_older(sbin->script, sbin->file->st.st_mtime) )
 		return FALSE;
+	
+	ext_count = array_count(&sbin->extensions);	
+	for ( i = 0; i < ext_count; i++ ) {
+		struct sieve_binary_extension_reg * const *ereg
+			= array_idx(&sbin->extensions, i);
+		const struct sieve_binary_extension *binext = (*ereg)->binext;
+		
+		if ( binext != NULL && binext->binary_up_to_date != NULL && 
+			!binext->binary_up_to_date(sbin) )
+			return FALSE;
+	}
 	
 	return TRUE;
 }
@@ -1101,7 +1180,9 @@ void sieve_binary_activate(struct sieve_binary *sbin)
 	}
 }
 
-/* Extension handling */
+/* 
+ * Extension handling 
+ */
 
 static inline struct sieve_binary_extension_reg *sieve_binary_extension_get_reg
 (struct sieve_binary *sbin, int ext_id)
@@ -1202,6 +1283,17 @@ unsigned int sieve_binary_extension_create_block
 	block->ext_id = ereg->index;
 	
 	return block_id;
+}
+
+unsigned int sieve_binary_extension_get_block
+(struct sieve_binary *sbin, int ext_id)
+{
+	struct sieve_binary_extension_reg *ereg = 
+		sieve_binary_extension_get_reg(sbin, ext_id);
+		
+	if ( ereg == NULL ) return 0;
+	
+	return ereg->block_id;
 }
 
 static inline int sieve_binary_extension_register
@@ -1473,7 +1565,7 @@ bool sieve_binary_read_integer
   return TRUE;
 }
 
-/* FIXME: add this to lib/str. */
+/* FIXME: add this to lib/str. (now commented out) */
 static string_t *t_str_const(const void *cdata, size_t size)
 {
 	string_t *result = t_str_new(size);
@@ -1506,7 +1598,9 @@ bool sieve_binary_read_string
 	return TRUE;
 }
 
-/* Binary registry */
+/* 
+ * Binary registry 
+ */
 
 struct sieve_binary_registry {
 	ARRAY_DEFINE(objects, const void *); 

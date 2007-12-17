@@ -14,6 +14,9 @@ void sieve_binary_unref(struct sieve_binary **sbin);
 
 inline pool_t sieve_binary_pool(struct sieve_binary *sbin);
 inline struct sieve_script *sieve_binary_script(struct sieve_binary *sbin);
+inline const char *sieve_binary_path(struct sieve_binary *sbin);
+inline bool sieve_binary_script_older
+	(struct sieve_binary *sbin, struct sieve_script *script);
 
 void sieve_binary_activate(struct sieve_binary *sbin);
 
@@ -49,9 +52,11 @@ struct sieve_binary_extension {
 	const struct sieve_extension *extension;
 
 	bool (*binary_save)(struct sieve_binary *sbin);
+	bool (*binary_open)(struct sieve_binary *sbin);
+	
 	void (*binary_free)(struct sieve_binary *sbin);
 	
-	bool (*binary_is_up_to_date)(struct sieve_binary *sbin);
+	bool (*binary_up_to_date)(struct sieve_binary *sbin);
 };
  
 inline void sieve_binary_extension_set_context
@@ -65,6 +70,8 @@ inline void sieve_binary_extension_set
 
 unsigned int sieve_binary_extension_create_block
 	(struct sieve_binary *sbin, int ext_id);
+unsigned int sieve_binary_extension_get_block
+(struct sieve_binary *sbin, int ext_id);
 
 int sieve_binary_extension_link
 	(struct sieve_binary *sbin, int ext_id);

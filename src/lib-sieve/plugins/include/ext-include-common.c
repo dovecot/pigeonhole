@@ -9,6 +9,10 @@
 
 #include "ext-include-common.h"
 
+/*
+ * Forward declarations
+ */
+
 /* Generator context */
 
 struct ext_include_generator_context {
@@ -44,7 +48,9 @@ struct ext_include_interpreter_context {
 	struct ext_include_interpreter_context *parent;
 };
 
-/* Script access */
+/* 
+ * Script access 
+ */
 
 #define HARDCODED_PERSONAL_DIR "src/lib-sieve/plugins/include/"
 #define HARDCODED_GLOBAL_DIR "src/lib-sieve/plugins/include/"
@@ -53,15 +59,17 @@ const char *ext_include_get_script_path
 (enum ext_include_script_location location, const char *script_name)
 {
 	/* FIXME: Hardcoded */	
-	if ( location == LOCATION_PERSONAL )
+	if ( location == EXT_INCLUDE_LOCATION_PERSONAL )
 		return t_strconcat(HARDCODED_PERSONAL_DIR, script_name, ".sieve", NULL);
-	else if ( location == LOCATION_GLOBAL )
+	else if ( location == EXT_INCLUDE_LOCATION_GLOBAL )
 		return t_strconcat(HARDCODED_GLOBAL_DIR, script_name, ".sieve", NULL);
 	
 	return NULL;
 }
 
-/* Main context management */
+/* 
+ * Main context management 
+ */
 
 static struct ext_include_main_context *ext_include_create_main_context
 (struct sieve_generator *gentr)
@@ -76,7 +84,9 @@ static struct ext_include_main_context *ext_include_create_main_context
 	return ctx;
 }
 
-/* Generator context management */
+/* 
+ * Generator context management 
+ */
 
 static struct ext_include_generator_context *
 	ext_include_create_generator_context
@@ -131,7 +141,9 @@ void ext_include_register_generator_context
 	}
 }
 
-/* Binary context functions */
+/* 
+ * Binary context functions 
+ */
 
 struct _included_script {
 	struct sieve_script *script;
@@ -148,10 +160,7 @@ static struct ext_include_binary_context *ext_include_create_binary_context
 	struct ext_include_binary_context *ctx = 
 		p_new(pool, struct ext_include_binary_context, 1);
 	
-	ctx->binary = sbin;		
-	ctx->dependency_block = 
-		sieve_binary_extension_create_block(sbin, ext_include_my_id);
-	
+	ctx->binary = sbin;			
 	ctx->included_scripts = hash_create(pool, pool, 0, 
 		(hash_callback_t *) sieve_script_hash, 
 		(hash_cmp_callback_t *) sieve_script_cmp);
@@ -171,52 +180,6 @@ static inline struct ext_include_binary_context *ext_include_get_binary_context
 	};
 	
 	return ctx;
-}
-
-bool ext_include_binary_save(struct sieve_binary *sbin)
-{
-	struct ext_include_binary_context *binctx = 
-		ext_include_get_binary_context(sbin);
-	struct hash_iterate_context *hctx = 
-		hash_iterate_init(binctx->included_scripts);
-	void *key, *value;
-	unsigned int prvblk;
-	
-	sieve_binary_block_clear(sbin, binctx->dependency_block);
-	if ( !sieve_binary_block_set_active(sbin, binctx->dependency_block, &prvblk) )	
-		return FALSE;
-			
-	sieve_binary_emit_integer(sbin, hash_count(binctx->included_scripts));	
-	while ( hash_iterate(hctx, &key, &value) ) {
-		struct _included_script *incscript = (struct _included_script *) value;
-
-		sieve_binary_emit_integer(sbin, incscript->block_id);
-		sieve_binary_emit_byte(sbin, incscript->location);
-		sieve_binary_emit_cstring(sbin, sieve_script_name(incscript->script));
-	}
-	
-	(void) sieve_binary_block_set_active(sbin, prvblk, NULL);
-
-	hash_iterate_deinit(&hctx);
-	
-	return TRUE;
-}
-
-void ext_include_binary_free(struct sieve_binary *sbin)
-{
-	struct ext_include_binary_context *binctx = 
-		ext_include_get_binary_context(sbin);
-	struct hash_iterate_context *hctx = 
-		hash_iterate_init(binctx->included_scripts);
-	void *key, *value;
-		
-	while ( hash_iterate(hctx, &key, &value) ) {
-		struct _included_script *incscript = (struct _included_script *) value;
-		
-		sieve_script_unref(&incscript->script);
-	}
-
-	hash_iterate_deinit(&hctx);
 }
 
 static void ext_include_script_include
@@ -248,14 +211,151 @@ static bool ext_include_script_is_included
 		
 	if ( incscript == 0 )
 		return FALSE;
-		
-	printf("ALREADY INCLUDED: %s\n", sieve_script_path(incscript->script));
-		
+				
 	*block_id = incscript->block_id;
 	return TRUE;
 }
 
-/* Interpreter context management */
+bool ext_include_binary_save(struct sieve_binary *sbin)
+{
+	struct ext_include_binary_context *binctx = 
+		ext_include_get_binary_context(sbin);
+	struct hash_iterate_context *hctx = 
+		hash_iterate_init(binctx->included_scripts);
+	void *key, *value;
+	unsigned int prvblk;
+	
+	sieve_binary_block_clear(sbin, binctx->dependency_block);
+	if ( !sieve_binary_block_set_active(sbin, binctx->dependency_block, &prvblk) )	
+		return FALSE;
+			
+	sieve_binary_emit_integer(sbin, hash_count(binctx->included_scripts));	
+	while ( hash_iterate(hctx, &key, &value) ) {
+		struct _included_script *incscript = (struct _included_script *) value;
+
+		sieve_binary_emit_integer(sbin, incscript->block_id);
+		sieve_binary_emit_byte(sbin, incscript->location);
+		sieve_binary_emit_cstring(sbin, sieve_script_name(incscript->script));
+	}
+	
+	(void) sieve_binary_block_set_active(sbin, prvblk, NULL);
+
+	hash_iterate_deinit(&hctx);
+	
+	return TRUE;
+}
+
+bool ext_include_binary_open(struct sieve_binary *sbin)
+{
+	struct ext_include_binary_context *binctx; 
+	unsigned int block, prvblk, depcount, i;
+	sieve_size_t offset;
+	
+	block = sieve_binary_extension_get_block(sbin, ext_include_my_id);
+	
+	if ( !sieve_binary_block_set_active(sbin, block, &prvblk) )
+		return FALSE; 
+		
+	offset = 0;	
+		
+	if ( !sieve_binary_read_integer(sbin, &offset, &depcount) ) {
+		i_error("sieve: include: failed to read include count "
+			"for dependency block %d of binary %s", block, sieve_binary_path(sbin)); 
+		return FALSE;
+	}
+	
+	binctx = ext_include_get_binary_context(sbin);
+		
+	/* Read dependencies */
+	for ( i = 0; i < depcount; i++ ) {
+		unsigned int block_id;
+		enum ext_include_script_location location;
+		string_t *script_name;
+		const char *script_path;
+		struct sieve_script *script;
+		
+		if ( 
+			!sieve_binary_read_integer(sbin, &offset, &block_id) ||
+			!sieve_binary_read_byte(sbin, &offset, &location) ||
+			!sieve_binary_read_string(sbin, &offset, &script_name) ) {
+			/* Binary is corrupt, recompile */
+			i_error("sieve: include: failed to read included script "
+				"from dependency block %d of binary %s", block, sieve_binary_path(sbin)); 
+			return FALSE;
+		}
+		
+		printf("SCRIPT: %d %d %s\n", block_id, location, str_c(script_name));
+	
+		if ( location >= EXT_INCLUDE_LOCATION_INVALID ) {
+			/* Binary is corrupt, recompile */
+			i_error("sieve: include: dependency block %d of binary %s "
+				"reports invalid script location (id %d).", 
+				block, sieve_binary_path(sbin), location); 
+			return FALSE;
+		}		
+		
+		/* Can we find/open the script dependency ? */
+		script_path = ext_include_get_script_path(location, str_c(script_name));		
+		if ( script_path == NULL || 
+			!(script=sieve_script_create(script_path, str_c(script_name), NULL)) ) {
+			/* No, recompile */
+			return FALSE;
+		}
+		
+		ext_include_script_include(binctx, script, location, block_id);
+				
+		sieve_script_unref(&script);
+	}
+	
+	/* Restore previously active block */
+	(void)sieve_binary_block_set_active(sbin, prvblk, NULL);
+
+	return TRUE;	
+}
+
+bool ext_include_binary_up_to_date(struct sieve_binary *sbin)
+{
+	struct ext_include_binary_context *binctx = 
+		ext_include_get_binary_context(sbin);
+	struct hash_iterate_context *hctx;
+	void *key, *value;
+		
+	/* Release references to all included script objects */
+	hctx = hash_iterate_init(binctx->included_scripts);
+	while ( hash_iterate(hctx, &key, &value) ) {
+		struct _included_script *incscript = (struct _included_script *) value;
+		
+		/* Is the binary newer than this dependency? */
+		if ( !sieve_binary_script_older(sbin, incscript->script) ) {
+			/* No, recompile */
+			return FALSE;
+		}
+	}
+	hash_iterate_deinit(&hctx);
+
+	return TRUE;
+}
+
+void ext_include_binary_free(struct sieve_binary *sbin)
+{
+	struct ext_include_binary_context *binctx = 
+		ext_include_get_binary_context(sbin);
+	struct hash_iterate_context *hctx;
+	void *key, *value;
+		
+	/* Release references to all included script objects */
+	hctx = hash_iterate_init(binctx->included_scripts);
+	while ( hash_iterate(hctx, &key, &value) ) {
+		struct _included_script *incscript = (struct _included_script *) value;
+		
+		sieve_script_unref(&incscript->script);
+	}
+	hash_iterate_deinit(&hctx);
+}
+
+/* 
+ * Interpreter context management 
+ */
 
 static struct ext_include_interpreter_context *
 	ext_include_create_interpreter_context
@@ -317,7 +417,9 @@ void ext_include_register_interpreter_context
 	}
 }
 
-/* Including a script during generation */
+/* 
+ * Including a script during generation 
+ */
 
 bool ext_include_generate_include
 (struct sieve_generator *gentr, struct sieve_command_context *cmd,
@@ -379,6 +481,11 @@ bool ext_include_generate_include
 	/* Get/create our context from the binary we are working on */
 	binctx = ext_include_get_binary_context(sbin);
 	
+	/* Create dependency block */
+	if ( binctx->dependency_block == 0 )
+		binctx->dependency_block = 
+			sieve_binary_extension_create_block(sbin, ext_include_my_id);
+
 	/* Is the script already compiled into the current binary? */
 	if ( !ext_include_script_is_included(binctx, script, &inc_block_id) )	{	
 		/* No, allocate a new block in the binary and mark the script as included.
@@ -434,7 +541,9 @@ bool ext_include_generate_include
 	return result;
 }
 
-/* Executing an included script during interpretation */
+/* 
+ * Executing an included script during interpretation 
+ */
 
 bool ext_include_execute_include
 	(const struct sieve_runtime_env *renv, unsigned int block_id)
@@ -497,6 +606,10 @@ bool ext_include_execute_include
 				} else {
 					if ( curctx->inc_block_id >= SBIN_SYSBLOCK_LAST ) {
 						/* Sub-include requested */
+				
+						/* FIXME: Check circular include during interpretation as well. 
+						 * Let's not trust user-owned binaries.
+						 */
 						
 						/* Create sub-interpreter */
 						subinterp = sieve_interpreter_create(renv->sbin, ehandler);			

@@ -18,9 +18,9 @@ extern const struct sieve_extension include_extension;
 /* Types */
 
 enum ext_include_script_location { 
-	LOCATION_PERSONAL, 
-	LOCATION_GLOBAL,
-	LOCATION_INVALID 
+	EXT_INCLUDE_LOCATION_PERSONAL, 
+	EXT_INCLUDE_LOCATION_GLOBAL,
+	EXT_INCLUDE_LOCATION_INVALID 
 }; 
 
 /* Script access */
@@ -47,6 +47,8 @@ bool ext_include_generate_include
 /* Binary */
 
 bool ext_include_binary_save(struct sieve_binary *sbin);
+bool ext_include_binary_open(struct sieve_binary *sbin);
+bool ext_include_binary_up_to_date(struct sieve_binary *sbin);
 void ext_include_binary_free(struct sieve_binary *sbin);
 
 /* Interpreter */
