@@ -3,9 +3,25 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-body-07
- * Implementation: full, but needs some more work
+ * Implementation: full, but text body-transform implementation is simple
  * Status: experimental, largely untested
  *
+ */
+ 
+/* FIXME: 
+ *
+ * From draft spec (07) with respect to :text body transform:
+ *
+ * "Sophisticated implementations MAY strip mark-up from the text
+ *  prior to matching, and MAY convert media types other than text
+ *  to text prior to matching.
+ *
+ *  (For example, they may be able to convert proprietary text
+ *  editor formats to text or apply optical character recognition
+ *  algorithms to image data.)"
+ *
+ * We might want to do this in the future, i.e. we must evaluate whether this is 
+ * feasible.
  */
  
 #include "lib.h"

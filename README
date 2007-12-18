@@ -130,10 +130,10 @@ Extensions and their implementation status:
     relational: full 
     copy: full
     regex: full, but suboptimal
+    body: full, but text body-transform implementation is simple
     vacation: almost complete, but no support for required References header
     imapflags: flag management works, but flags are not stored 
     include: full, but needs much more work
-    body: full, but needs some more work  
     variables: planned (* also amend previously implemented extensions)
 
     notify: planned, mailto only (- very low priority)
