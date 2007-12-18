@@ -67,6 +67,7 @@ src/lib-sieve/plugins/regex/Makefile
 src/lib-sieve/plugins/imapflags/Makefile
 src/lib-sieve/plugins/copy/Makefile
 src/lib-sieve/plugins/include/Makefile
+src/lib-sieve/plugins/body/Makefile
 src/plugins/Makefile
 src/plugins/lda-sieve/Makefile
 src/sieve-bin/Makefile

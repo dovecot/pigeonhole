@@ -130,7 +130,7 @@ Extensions and their implementation status:
     vacation: almost complete, but no support for required References header
     imapflags: flag management works, but flags are not stored 
     include: full, but needs much more work
-    body: planned                        
+    body: skeleton                        
     variables: planned (* also amend previously implemented extensions)
 
     notify: planned, mailto only (- very low priority)
@@ -194,6 +194,7 @@ Current:
 * Implement body extension
 
 Next (in order of descending priority/precedence):
+* Implement encoded-character extension
 * Implement variables extension.
 * Finish implementing all extensions supported by cmusieve, except notify.
 * Limit the maximum number of errors. 
