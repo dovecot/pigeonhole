@@ -3,8 +3,8 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-body-07
- * Implementation: skeleton
- * Status: under development
+ * Implementation: full, but needs some more work
+ * Status: experimental, largely untested
  *
  */
  

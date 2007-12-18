@@ -73,11 +73,14 @@ Refer to AUTHORS file.
 Features
 --------
 
-* Well-structured 3-stage compiler; uses dovecot framework and avoids using
+* Well-structured 3-stage compiler: uses dovecot framework and avoids using
   lex/yucc. Compiler doesn't bail on first error, but tries to find more.
-* Highly extendable with new sieve capabilities. This keeps the possibility of 
-  plugins in mind. Should eventually provide the necessary infrastructure for at 
-  least all currently known (proposed) extensions.  
+* Highly extendable with new sieve capabilities: This keeps the possibility of 
+  plugins in mind. It should eventually provide the necessary infrastructure for 
+  at least all currently known (proposed) extensions. The goal is to keep the
+  extension interface provided by sieve engine as generic as possible, i.e. 
+  without explicit support for specific extensions. New similar extensions can
+  then use the same interface methods without changes to the sieve engine code.
 
 What works:
 * Scripts can be parsed, the grammar is fully supported. 
@@ -130,13 +133,13 @@ Extensions and their implementation status:
     vacation: almost complete, but no support for required References header
     imapflags: flag management works, but flags are not stored 
     include: full, but needs much more work
-    body: skeleton                        
+    body: full, but needs some more work  
     variables: planned (* also amend previously implemented extensions)
 
     notify: planned, mailto only (- very low priority)
 
 All implemented extensions are like the engine itself currently very much 
-experimental. Other extensions will be added a soon as the necessary 
+experimental. Other extensions will be added as soon as the necessary 
 infrastructure is available. Extensions supported by cmu-sieve have priority, 
 although variables might be implemented somewhere in between. 
 
@@ -191,7 +194,7 @@ TODO
 ----
 
 Current:
-* Implement body extension
+* Finish body extension
 
 Next (in order of descending priority/precedence):
 * Implement encoded-character extension
@@ -199,10 +202,7 @@ Next (in order of descending priority/precedence):
 * Finish implementing all extensions supported by cmusieve, except notify.
 * Limit the maximum number of errors. 
 * Verify outgoing mail addresses
-* Implement dropping errors in/forwarding errors to the user's mailbox as a mail 
-  message.
-* Add development documentation, i.e. comment on library functions and document
-  the binary and byte-code format. 
+* Implement dropping errors inthe user's mailbox as a mail message.
 * Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
   Character Sets). 
 * Get rid of all <stdio.h> printf()s in the library. 
@@ -212,11 +212,16 @@ Next (in order of descending priority/precedence):
   sieve extensions.
 * Make the sieve plugins true plugins and add a SIEVE_PLUGINS config item to the
   lda-sieve plugin. 
+* Make sure cmusieve can be replaced seamlessly with this new plugin.
 * ## MAKE A FIRST RELEASE ##
 * Resolve code duplication introduced for handling address-parts and match-types
   in different command implementations.
 * Resolve code duplication amongst comparator, address-part and match-type 
   support as much as possible.
+* Add development documentation, i.e. comment on library functions and document
+  the binary and byte-code format. 
+* Make the engine and its extensions much more configurable. Possibly this can be
+  merged with Dovecot's new master config implementation.
 * Implement notify extension with sole support for mailto mechanism. 
 * Support mmap'ing a sieve binary upon load. 
 * Give the byte code format some more thought, it is currently quite rough and
@@ -224,4 +229,6 @@ Next (in order of descending priority/precedence):
 * Implement a faster substring search algorithm to make sopport for the body 
   extension a less bad idea.  
 * Automate script tests; i.e. build a test suite.
+* Try to implement proposed notify mechanisms other than mailto. Currently: xmpp
+  and sip
 
