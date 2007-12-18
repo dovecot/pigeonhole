@@ -3,8 +3,8 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-daboo-sieve-include-05
- * Implementation: basic include functionality starts to emerge. 
- * Status: under development
+ * Implementation: full, but needs much more work 
+ * Status: experimental, largely untested
  * 
  */
  

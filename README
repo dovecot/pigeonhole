@@ -129,9 +129,9 @@ Extensions and their implementation status:
     regex: full, but suboptimal
     vacation: almost complete, but no support for required References header
     imapflags: flag management works, but flags are not stored 
-    include: basic include execution behavior starts to emerge
-    variables: planned (* also amend previously implemented extensions)
+    include: full, but needs much more work
     body: planned                        
+    variables: planned (* also amend previously implemented extensions)
 
     notify: planned, mailto only (- very low priority)
 
@@ -191,11 +191,11 @@ TODO
 ----
 
 Current:
-* Implement include extension
+* Implement body extension
 
 Next (in order of descending priority/precedence):
-* Finish implementing all extensions supported by cmusieve, except notify.
 * Implement variables extension.
+* Finish implementing all extensions supported by cmusieve, except notify.
 * Limit the maximum number of errors. 
 * Verify outgoing mail addresses
 * Implement dropping errors in/forwarding errors to the user's mailbox as a mail 
@@ -217,7 +217,7 @@ Next (in order of descending priority/precedence):
 * Resolve code duplication amongst comparator, address-part and match-type 
   support as much as possible.
 * Implement notify extension with sole support for mailto mechanism. 
-* Use mmap for the binary script representation.  
+* Support mmap'ing a sieve binary upon load. 
 * Give the byte code format some more thought, it is currently quite rough and
   to the point. 
 * Implement a faster substring search algorithm to make sopport for the body 
