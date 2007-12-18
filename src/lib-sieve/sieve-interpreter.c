@@ -18,6 +18,79 @@
 
 #include "sieve-interpreter.h"
 
+/* 
+ * Message context 
+ *   (might get moved to separate file) 
+ */
+
+struct sieve_message_context {
+	pool_t pool;
+	int refcount;
+	
+	/* Context data for extensions */
+	ARRAY_DEFINE(ext_contexts, void *); 
+};
+
+static struct sieve_message_context *sieve_message_context_create(void)
+{
+	pool_t pool;
+	struct sieve_message_context *msgctx;
+	
+	pool = pool_alloconly_create("sieve_message_context", 1024);
+	msgctx = p_new(pool, struct sieve_message_context, 1);
+	msgctx->pool = pool;
+	msgctx->refcount = 1;
+	
+	p_array_init(&msgctx->ext_contexts, pool, 4);
+	
+	return msgctx;
+}
+
+static void sieve_message_context_ref(struct sieve_message_context *msgctx)
+{
+	msgctx->refcount++;
+}
+
+static void sieve_message_context_unref(struct sieve_message_context **msgctx)
+{
+	i_assert((*msgctx)->refcount > 0);
+
+	if (--(*msgctx)->refcount != 0)
+		return;
+	
+	pool_unref(&((*msgctx)->pool));
+	
+	*msgctx = NULL;
+}
+
+inline void sieve_message_context_extension_set
+	(struct sieve_message_context *msgctx, int ext_id, void *context)
+{
+	array_idx_set(&msgctx->ext_contexts, (unsigned int) ext_id, &context);	
+}
+
+inline const void *sieve_message_context_extension_get
+	(struct sieve_message_context *msgctx, int ext_id) 
+{
+	void * const *ctx;
+
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&msgctx->ext_contexts) )
+		return NULL;
+	
+	ctx = array_idx(&msgctx->ext_contexts, (unsigned int) ext_id);		
+
+	return *ctx;
+}
+
+inline pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
+{
+	return msgctx->pool;
+}
+
+/* 
+ * Interpreter 
+ */
+
 struct sieve_interpreter {
 	pool_t pool;
 			
@@ -84,7 +157,10 @@ struct sieve_interpreter *sieve_interpreter_create
 void sieve_interpreter_free(struct sieve_interpreter **interp) 
 {
 	sieve_binary_unref(&(*interp)->runenv.sbin);
-	
+
+	if ( (*interp)->runenv.msgctx != NULL )
+		 sieve_message_context_unref(&(*interp)->runenv.msgctx);
+		 
 	pool_unref(&((*interp)->pool));
 	
 	*interp = NULL;
@@ -320,12 +396,19 @@ int sieve_interpreter_continue
 
 int sieve_interpreter_start
 (struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_result *result,
-	bool *interrupted) 
+	const struct sieve_script_env *senv, struct sieve_message_context *msgctx, 
+	struct sieve_result *result, bool *interrupted) 
 {
 	interp->runenv.msgdata = msgdata;
 	interp->runenv.result = result;		
 	interp->runenv.scriptenv = senv;
+	
+	if ( msgctx == NULL )
+		interp->runenv.msgctx = sieve_message_context_create();
+	else {
+		interp->runenv.msgctx = msgctx;
+		sieve_message_context_ref(msgctx);
+	}
 	
 	return sieve_interpreter_continue(interp, interrupted); 
 }
@@ -344,7 +427,7 @@ int sieve_interpreter_run
 		sieve_result_ref(*result);
 	}
 	
-	ret = sieve_interpreter_start(interp, msgdata, senv, *result, NULL);
+	ret = sieve_interpreter_start(interp, msgdata, senv, NULL, *result, NULL);
 
 	if ( ret >= 0 && is_topmost ) {
 		ret = sieve_result_execute(*result, msgdata, senv);

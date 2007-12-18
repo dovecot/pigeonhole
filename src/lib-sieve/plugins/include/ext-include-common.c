@@ -571,8 +571,8 @@ bool ext_include_execute_include
 		/* Activate and start the top-level included script */
 		if ( sieve_binary_block_set_active(renv->sbin, block_id, &this_block_id) ) 			
 			result = ( sieve_interpreter_start
-				(subinterp, renv->msgdata, renv->scriptenv, renv->result, &interrupted)
-				== 1 );
+				(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx, renv->result, 
+					&interrupted) == 1 );
 		else
 			result = FALSE;
 		
@@ -623,8 +623,8 @@ bool ext_include_execute_include
 							curctx->inc_block_id = 0;
 							curctx->returned = FALSE;
 							result = ( sieve_interpreter_start
-								(subinterp, renv->msgdata, renv->scriptenv, renv->result, 
-									&interrupted) == 1 );		 	
+								(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx,
+									renv->result, &interrupted) == 1 );		 	
 						} else 
 							result = FALSE;
 					} else {
