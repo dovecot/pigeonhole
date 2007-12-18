@@ -121,8 +121,7 @@ Extensions and their implementation status:
     fileinto: full
     reject: full
     envelope: full
-    encoded-character: planned (draft-ietf-sieve-3028bis); to be implemented
-      just before variables.
+    encoded-character: skeleton
 
   Other RFCs/drafts:
     subaddress: full
@@ -131,9 +130,9 @@ Extensions and their implementation status:
     copy: full
     regex: full, but suboptimal
     body: full, but text body-transform implementation is simple
+    include: full, but needs much more work
     vacation: almost complete, but no support for required References header
     imapflags: flag management works, but flags are not stored 
-    include: full, but needs much more work
     variables: planned (* also amend previously implemented extensions)
 
     notify: planned, mailto only (- very low priority)
