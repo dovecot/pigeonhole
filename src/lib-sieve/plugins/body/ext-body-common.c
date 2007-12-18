@@ -233,18 +233,14 @@ static bool ext_body_parts_add_missing
 	return ( input->stream_errno == 0 );
 }
 
-/* FIXME: This will be inefficient in combination with include extension, 
- * creating a new context for each sub-interpreter. We should provide a means to 
- * associate context data with the message itself. 
- */
 static struct ext_body_message_context *ext_body_get_context
-(struct sieve_interpreter *interp)
+(struct sieve_message_context *msgctx)
 {
-	pool_t pool = sieve_interpreter_pool(interp);
+	pool_t pool = sieve_message_context_pool(msgctx);
 	struct ext_body_message_context *ctx;
 	
 	ctx = (struct ext_body_message_context *)
-		sieve_interpreter_extension_get_context(interp, ext_body_my_id);
+		sieve_message_context_extension_get(msgctx, ext_body_my_id);
 	
 	if ( ctx == NULL ) {
 		ctx = p_new(pool, struct ext_body_message_context, 1);	
@@ -253,8 +249,8 @@ static struct ext_body_message_context *ext_body_get_context
 		p_array_init(&ctx->return_body_parts, pool, 8);
 		ctx->tmp_buffer = buffer_create_dynamic(pool, 1024*64);
 		
-		sieve_interpreter_extension_set_context
-			(interp, ext_body_my_id, (void *) ctx);
+		sieve_message_context_extension_set
+			(msgctx, ext_body_my_id, (void *) ctx);
 	}
 	
 	return ctx;
@@ -265,7 +261,7 @@ bool ext_body_get_content
 	int decode_to_plain, struct ext_body_part **parts_r)
 {
 	bool result = TRUE;
-	struct ext_body_message_context *ctx = ext_body_get_context(renv->interp);
+	struct ext_body_message_context *ctx = ext_body_get_context(renv->msgctx);
 
 	T_FRAME(
 		if ( !ext_body_parts_add_missing
