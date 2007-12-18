@@ -152,12 +152,12 @@ static bool ext_body_parts_add_missing
 	int ret;
 
 	if (ext_body_get_return_parts(ctx, content_types, decode_to_plain))
-		return 0;
+		return TRUE;
 
 	if (mail_get_stream(msgdata->mail, NULL, NULL, &input) < 0)
-		return -1;
+		return FALSE;
 	if (mail_get_parts(msgdata->mail, &const_parts) < 0)
-		return -1;
+		return FALSE;
 	parts = (struct message_part *)const_parts;
 
 	buffer_set_used_size(ctx->tmp_buffer, 0);

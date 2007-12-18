@@ -365,7 +365,7 @@ static bool ext_body_opcode_execute
 
 	/* Iterate through all requested body parts to match */
 	matched = FALSE;
-	while ( !matched && body_parts->content != NULL ) {	
+	while ( !matched && body_parts->content != NULL ) {
 		if ( sieve_match_value(mctx, body_parts->content, body_parts->size) )
 			matched = TRUE;			
 		body_parts++;	
