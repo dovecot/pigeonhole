@@ -1,6 +1,10 @@
 Stephan Bosch <stephan@rename-it.nl>
 
-For and using the Dovecot secure IMAP server by:
+This plugin is partly based on the original cmusieve plugin for the Dovecot 
+secure IMAP server. Both cmusieve plugin and IMAP server are primarily 
+written by:
 
 Timo Sirainen <tss@iki.fi>
 
+View the AUTHORS files in the Dovecot and Dovecot-Sieve distributions for 
+other authors of Dovecot or the cmusieve plugin.

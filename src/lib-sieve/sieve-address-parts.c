@@ -360,7 +360,7 @@ bool sieve_address_match
 
 				part = addrp->extract_from(addr);
 			
-				if ( part != NULL && sieve_match_value(mctx, part) )
+				if ( part != NULL && sieve_match_value(mctx, part, strlen(part)) )
 					matched = TRUE;				
 			} 
 

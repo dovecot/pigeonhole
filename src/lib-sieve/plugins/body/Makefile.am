@@ -7,6 +7,11 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-storage 
 
+tsts = \
+	tst-body.c
+
 libsieve_ext_body_la_SOURCES = \
+	ext-body-common.c \
+	$(tsts) \
 	ext-body.c
 

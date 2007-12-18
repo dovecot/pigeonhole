@@ -136,7 +136,7 @@ static bool tst_hasflag_validate
 	
 	/* Validate the key argument to a specified match type */
 	
-  sieve_match_type_validate(validator, tst, arg2);
+	sieve_match_type_validate(validator, tst, arg2);
 	
 	return TRUE;
 }
@@ -249,7 +249,7 @@ static bool tst_hasflag_opcode_execute
 	ext_imapflags_get_flags_init(&iter, renv->interp);
 	
 	while ( (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
-		if ( sieve_match_value(mctx, flag) )
+		if ( sieve_match_value(mctx, flag, strlen(flag)) )
 			matched = TRUE; 	
 	}
 

@@ -111,7 +111,7 @@ struct sieve_match_context *sieve_match_begin
 (const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
     struct sieve_coded_stringlist *key_list);
 bool sieve_match_value
-    (struct sieve_match_context *mctx, const char *value);
+    (struct sieve_match_context *mctx, const char *value, size_t val_size);
 bool sieve_match_end(struct sieve_match_context *mctx);
 		
 #endif /* __SIEVE_MATCH_TYPES_H */

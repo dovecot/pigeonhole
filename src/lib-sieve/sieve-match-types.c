@@ -405,7 +405,7 @@ struct sieve_match_context *sieve_match_begin
 }
 
 bool sieve_match_value
-	(struct sieve_match_context *mctx, const char *value)
+	(struct sieve_match_context *mctx, const char *value, size_t val_size)
 {
 	const struct sieve_match_type *mtch = mctx->match_type;
 	sieve_coded_stringlist_reset(mctx->key_list);
@@ -423,7 +423,7 @@ bool sieve_match_value
 			key_item != NULL ) 
 		{
 			if ( mtch->match
-				(mctx, value, strlen(value), str_c(key_item), 
+				(mctx, value, val_size, str_c(key_item), 
 					str_len(key_item), key_index) ) {
 				return TRUE;  
 			}

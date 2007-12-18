@@ -215,7 +215,7 @@ static bool tst_header_opcode_execute
 			
 			int i;
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
-				if ( sieve_match_value(mctx, headers[i]) )
+				if ( sieve_match_value(mctx, headers[i], strlen(headers[i])) )
 					matched = TRUE;				
 			} 
 		}
