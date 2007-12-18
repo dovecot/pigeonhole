@@ -199,7 +199,7 @@ bool sieve_generate_arguments(struct sieve_generator *generator,
 	enum { ARG_START, ARG_OPTIONAL, ARG_POSITIONAL } state = ARG_START;
 	struct sieve_ast_argument *arg = sieve_ast_argument_first(cmd->ast_node);
 	
-	/* Parse all arguments with assigned generator function */
+	/* Generate all arguments with assigned generator function */
 	
 	while ( arg != NULL && arg->argument != NULL) {
 		const struct sieve_argument *argument = arg->argument;
@@ -246,6 +246,29 @@ bool sieve_generate_arguments(struct sieve_generator *generator,
 	
 	return TRUE;
 }
+
+bool sieve_generate_argument_parameters(struct sieve_generator *gentr, 
+	struct sieve_command_context *cmd, struct sieve_ast_argument *arg)
+{
+	struct sieve_ast_argument *param = arg->parameters;
+	
+	/* Generate all parameters with assigned generator function */
+	
+	while ( param != NULL && param->argument != NULL) {
+		const struct sieve_argument *parameter = param->argument;
+				
+		/* Call the generation function for the parameter */ 
+		if ( parameter->generate != NULL ) { 
+			if ( !parameter->generate(gentr, param, cmd) ) 
+				return FALSE;
+		}
+
+		param = sieve_ast_argument_next(param);
+	}
+		
+	return TRUE;
+}
+
 
 bool sieve_generate_test
 	(struct sieve_generator *generator, struct sieve_ast_node *tst_node,

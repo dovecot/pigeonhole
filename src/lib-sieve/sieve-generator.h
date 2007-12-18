@@ -85,6 +85,8 @@ inline sieve_size_t sieve_generator_emit_string
 
 bool sieve_generate_arguments(struct sieve_generator *generator, 
 	struct sieve_command_context *cmd, struct sieve_ast_argument **arg);
+bool sieve_generate_argument_parameters(struct sieve_generator *gentr, 
+	struct sieve_command_context *cmd, struct sieve_ast_argument *arg);
 
 bool sieve_generate_block
 	(struct sieve_generator *generator, struct sieve_ast_node *block);
