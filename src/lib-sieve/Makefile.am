@@ -27,7 +27,8 @@ cmds = \
 exts = \
 	ext-fileinto.c \
 	ext-reject.c \
-	ext-envelope.c
+	ext-envelope.c \
+	ext-encoded-character.c
 
 # These are not actual plugins just yet...
 plugins = \

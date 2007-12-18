@@ -48,6 +48,7 @@ static const struct sieve_extension comparator_i_ascii_casemap_extension = {
 extern const struct sieve_extension fileinto_extension;
 extern const struct sieve_extension reject_extension;
 extern const struct sieve_extension envelope_extension;
+extern const struct sieve_extension encoded_character_extension;
 
 /* Plugins (FIXME: make this dynamic) */
 
@@ -71,6 +72,7 @@ const struct sieve_extension *sieve_core_extensions[] = {
 	
 	/* Base extensions */
 	&fileinto_extension, &reject_extension, &envelope_extension, 
+	&encoded_character_extension,
 	
 	/* 'Plugins' */
 	&vacation_extension, &subaddress_extension, 
