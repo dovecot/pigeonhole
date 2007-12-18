@@ -85,12 +85,12 @@ static bool cmd_addflag_opcode_execute
 	/* Iterate through all requested headers to match */
 	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flag_item)) && 
 		flag_item != NULL ) {
-		ext_imapflags_add_flags(renv->interp, flag_item);
+		ext_imapflags_add_flags(renv, flag_item);
 	}
 
 	t_pop();
 	
-	printf("  FLAGS: %s\n", ext_imapflags_get_flags_string(renv->interp));
+	printf("  FLAGS: %s\n", ext_imapflags_get_flags_string(renv));
 	
 	return result;
 }

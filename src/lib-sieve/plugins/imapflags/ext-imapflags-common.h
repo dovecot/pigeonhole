@@ -13,10 +13,6 @@ enum ext_imapflags_opcode {
 	EXT_IMAPFLAGS_OPCODE_HASFLAG
 };
 
-struct ext_imapflags_interpreter_context {
-	string_t *internal_flags;
-};
-
 bool ext_imapflags_command_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 
@@ -39,17 +35,17 @@ const char *ext_imapflags_iter_get_flag
 	(struct ext_imapflags_iter *iter);
 
 const char *ext_imapflags_get_flags_string
-	(struct sieve_interpreter *interpreter);
+	(const struct sieve_runtime_env *renv);
 
 void ext_imapflags_set_flags
-	(struct sieve_interpreter *interpreter, string_t *flags);
+	(const struct sieve_runtime_env *renv, string_t *flags);
 void ext_imapflags_add_flags
-	(struct sieve_interpreter *interpreter, string_t *flags);
+	(const struct sieve_runtime_env *renv, string_t *flags);
 void ext_imapflags_remove_flags
-	(struct sieve_interpreter *interpreter, string_t *flags);
+	(const struct sieve_runtime_env *renv, string_t *flags);
 
 void ext_imapflags_get_flags_init
-	(struct ext_imapflags_iter *iter, struct sieve_interpreter *interpreter);
+	(struct ext_imapflags_iter *iter, const struct sieve_runtime_env *renv);
 
 
 #endif /* __EXT_IMAPFLAGS_COMMON_H */

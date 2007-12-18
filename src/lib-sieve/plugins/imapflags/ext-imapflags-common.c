@@ -93,18 +93,35 @@ bool ext_imapflags_command_opcode_dump
 
 /* Context access */
 
-static inline struct ext_imapflags_interpreter_context *
-	_get_interpreter_context(struct sieve_interpreter *interpreter)
+struct ext_imapflags_message_context {
+    string_t *internal_flags;
+};
+
+static inline struct ext_imapflags_message_context *
+	_get_message_context(struct sieve_message_context *msgctx)
 {
-	return (struct ext_imapflags_interpreter_context *) 
-		sieve_interpreter_extension_get_context(interpreter, ext_imapflags_my_id);
+	struct ext_imapflags_message_context *mctx =
+		(struct ext_imapflags_message_context *) 
+		sieve_message_context_extension_get(msgctx, ext_imapflags_my_id);
+
+	if ( mctx == NULL ) {
+		pool_t pool = sieve_message_context_pool(msgctx);
+
+		mctx =p_new(pool, struct ext_imapflags_message_context, 1);
+		mctx->internal_flags = str_new(pool, 32);
+
+		sieve_message_context_extension_set	
+			(msgctx, ext_imapflags_my_id, mctx);
+	}
+
+	return mctx;
 }
 
 static string_t *_get_flags_string
-	(struct sieve_interpreter *interpreter)
+	(struct sieve_message_context *msgctx)
 {
-	struct ext_imapflags_interpreter_context *ctx = 
-		_get_interpreter_context(interpreter);
+	struct ext_imapflags_message_context *ctx = 
+		_get_message_context(msgctx);
 		
 	return ctx->internal_flags;
 }
@@ -262,38 +279,39 @@ static void flags_list_set_flags
 /* Flag registration */
 
 void ext_imapflags_set_flags
-	(struct sieve_interpreter *interpreter, string_t *flags)
+	(const struct sieve_runtime_env *renv, string_t *flags)
 {
-	string_t *cur_flags = _get_flags_string(interpreter);
+	string_t *cur_flags = _get_flags_string(renv->msgctx);
 
 	flags_list_set_flags(cur_flags, flags);		
 }
 
 void ext_imapflags_add_flags
-	(struct sieve_interpreter *interpreter, string_t *flags)
+	(const struct sieve_runtime_env *renv, string_t *flags)
 {
-	string_t *cur_flags = _get_flags_string(interpreter);
+	string_t *cur_flags = _get_flags_string(renv->msgctx);
 	
 	flags_list_add_flags(cur_flags, flags);		
 }
 
 void ext_imapflags_remove_flags
-	(struct sieve_interpreter *interpreter, string_t *flags)
+	(const struct sieve_runtime_env *renv, string_t *flags)
 {
-	string_t *cur_flags = _get_flags_string(interpreter);
+	string_t *cur_flags = _get_flags_string(renv->msgctx);
 	
 	flags_list_remove_flags(cur_flags, flags);		
 }
 
-const char *ext_imapflags_get_flags_string(struct sieve_interpreter *interpreter)
+const char *ext_imapflags_get_flags_string
+	(const struct sieve_runtime_env *renv)
 {
-	return str_c(_get_flags_string(interpreter));
+	return str_c(_get_flags_string(renv->msgctx));
 }
 
 void ext_imapflags_get_flags_init
-	(struct ext_imapflags_iter *iter, struct sieve_interpreter *interpreter)
+	(struct ext_imapflags_iter *iter, const struct sieve_runtime_env *renv)
 {
-	string_t *cur_flags = _get_flags_string(interpreter);
+	string_t *cur_flags = _get_flags_string(renv->msgctx);
 	
 	ext_imapflags_iter_init(iter, cur_flags);		
 }

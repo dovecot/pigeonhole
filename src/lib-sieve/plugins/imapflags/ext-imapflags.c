@@ -121,18 +121,9 @@ static bool ext_imapflags_binary_load(struct sieve_binary *sbin)
  */
 
 static bool ext_imapflags_interpreter_load
-	(struct sieve_interpreter *interpreter)
+	(struct sieve_interpreter *interpreter ATTR_UNUSED)
 {
-	pool_t pool = sieve_interpreter_pool(interpreter);
-	
-	struct ext_imapflags_interpreter_context *ctx = 
-		p_new(pool, struct ext_imapflags_interpreter_context, 1);
-	
-	ctx->internal_flags = str_new(pool, 32);
-	
-	sieve_interpreter_extension_set_context
-		(interpreter, ext_imapflags_my_id, ctx);
-	
+	/* Will contain something when variables extension is implemented */
 	return TRUE;
 }
 

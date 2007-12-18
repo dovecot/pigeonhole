@@ -246,7 +246,7 @@ static bool tst_hasflag_opcode_execute
 	matched = FALSE;
 	mctx = sieve_match_begin(mtch, cmp, key_list); 	
 
-	ext_imapflags_get_flags_init(&iter, renv->interp);
+	ext_imapflags_get_flags_init(&iter, renv);
 	
 	while ( (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
 		if ( sieve_match_value(mctx, flag, strlen(flag)) )
