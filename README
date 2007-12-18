@@ -194,10 +194,9 @@ TODO
 ----
 
 Current:
-* Finish body extension
+* Implement encoded-character extension
 
 Next (in order of descending priority/precedence):
-* Implement encoded-character extension
 * Implement variables extension.
 * Finish implementing all extensions supported by cmusieve, except notify.
 * Limit the maximum number of errors. 
@@ -213,6 +212,9 @@ Next (in order of descending priority/precedence):
 * Make the sieve plugins true plugins and add a SIEVE_PLUGINS config item to the
   lda-sieve plugin. 
 * Make sure cmusieve can be replaced seamlessly with this new plugin.
+* Make a few elaborate test scripts to test engine and all implemented extensions 
+  a little better. Also include specially crafted e-mail messages that give 
+  deterministic and thus testable results.
 * ## MAKE A FIRST RELEASE ##
 * Resolve code duplication introduced for handling address-parts and match-types
   in different command implementations.
