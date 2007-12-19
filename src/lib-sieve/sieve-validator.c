@@ -1,4 +1,6 @@
 #include "lib.h"
+#include "array.h"
+#include "buffer.h"
 #include "mempool.h"
 #include "hash.h"
 
@@ -12,6 +14,11 @@
 #include "sieve-comparators.h"
 #include "sieve-address-parts.h"
 
+struct sieve_default_argument {
+	const struct sieve_argument *argument;
+	struct sieve_default_argument *overrides;
+};
+
 /* Context/Semantics checker implementation */
 
 struct sieve_validator {
@@ -23,9 +30,12 @@ struct sieve_validator {
 	struct sieve_error_handler *ehandler;
 	
 	/* Registries */
+	
 	struct hash_table *commands;
 	
 	ARRAY_DEFINE(ext_contexts, void *);
+	
+	struct sieve_default_argument default_arguments[SAT_COUNT];
 };
 
 /* Predeclared statics */
@@ -86,6 +96,14 @@ struct sieve_validator *sieve_validator_create
 	validator->ast = ast;	
 	validator->script = sieve_ast_script(ast);
 	sieve_ast_ref(ast);
+
+	/* Setup default arguments */
+	validator->default_arguments[SAT_NUMBER].
+		argument = &number_argument;
+	validator->default_arguments[SAT_CONST_STRING].
+		argument = &string_argument;
+	validator->default_arguments[SAT_CONST_STRING_LIST].
+		argument = &string_list_argument;
 
 	/* Setup storage for extension contexts */		
 	array_create(&validator->ext_contexts, pool, sizeof(void *), 
@@ -415,20 +433,30 @@ bool sieve_validate_positional_argument
 }
 
 void sieve_validator_argument_activate
-	(struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast_argument *arg)
+	(struct sieve_validator *validator ATTR_UNUSED, 
+		struct sieve_ast_argument *arg, bool constant)
 {
 	switch ( sieve_ast_argument_type(arg) ) {
 	case SAAT_NUMBER:
-		arg->argument = &number_argument;
+		arg->argument = validator->default_arguments[SAT_NUMBER].argument;
 		break;
 	case SAAT_STRING:
-		arg->argument = &string_argument;
+		if ( validator->default_arguments[SAT_VAR_STRING].argument == NULL ||
+			constant )
+			arg->argument = validator->
+					default_arguments[SAT_CONST_STRING].argument;
+		else
+			arg->argument = validator->
+					default_arguments[SAT_VAR_STRING].argument;
 		break;
 	case SAAT_STRING_LIST:
-		arg->argument = &string_list_argument;
-		break;
-	case SAAT_TAG:
-		i_error("!!BUG!!: sieve_validator_argument_activate: cannot activate tagged argument.");
+		if ( validator->default_arguments[SAT_VAR_STRING_LIST].argument == NULL ||
+			constant )
+			arg->argument = validator->
+					default_arguments[SAT_CONST_STRING_LIST].argument;
+		else
+			arg->argument = validator->
+					default_arguments[SAT_VAR_STRING_LIST].argument;
 		break;
 	default:
 		break;
@@ -451,7 +479,7 @@ bool sieve_validate_tag_parameter
 			sieve_ast_argument_type_name(req_type),	sieve_ast_argument_name(param));
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, param);
+	sieve_validator_argument_activate(validator, param, FALSE);
 	param->arg_id_code = tag->arg_id_code;
 	
 	return TRUE;

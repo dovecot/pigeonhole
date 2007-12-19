@@ -18,8 +18,11 @@
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-code.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h"
+#include "sieve-generator.h"
+#include "sieve-binary.h"
 #include "sieve-interpreter.h"
 #include "sieve-code-dumper.h"
 #include "sieve-result.h"
@@ -129,7 +132,7 @@ static bool cmd_reject_validate(struct sieve_validator *validator, struct sieve_
 		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, arg);
+	sieve_validator_argument_activate(validator, arg, FALSE);
 	
 	return TRUE;
 }

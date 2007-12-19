@@ -15,6 +15,7 @@
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-code.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
 #include "sieve-address-parts.h"
@@ -115,7 +116,7 @@ static bool tst_envelope_validate(struct sieve_validator *validator, struct siev
 		(validator, tst, arg, "envelope part", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, arg);
+	sieve_validator_argument_activate(validator, arg, FALSE);
 	
 	arg = sieve_ast_argument_next(arg);
 	
@@ -123,7 +124,7 @@ static bool tst_envelope_validate(struct sieve_validator *validator, struct siev
 		(validator, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, arg);
+	sieve_validator_argument_activate(validator, arg, FALSE);
 
 	/* Validate the key argument to a specified match type */
 	sieve_match_type_validate(validator, tst, arg);

@@ -2,6 +2,7 @@
 
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
+#include "sieve-code.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"

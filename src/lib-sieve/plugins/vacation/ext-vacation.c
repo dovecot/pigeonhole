@@ -288,7 +288,7 @@ static bool cmd_vacation_validate(struct sieve_validator *validator,
 		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, arg);	
+	sieve_validator_argument_activate(validator, arg, FALSE);	
 	
 	return TRUE;
 }

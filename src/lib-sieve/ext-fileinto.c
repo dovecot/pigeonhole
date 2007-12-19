@@ -12,6 +12,7 @@
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-code.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -93,7 +94,7 @@ static bool cmd_fileinto_validate(struct sieve_validator *validator, struct siev
 		(validator, cmd, arg, "folder", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, arg);
+	sieve_validator_argument_activate(validator, arg, FALSE);
 	
 	return TRUE;
 }

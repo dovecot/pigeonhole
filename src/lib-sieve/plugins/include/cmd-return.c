@@ -1,5 +1,6 @@
 #include "lib.h"
 
+#include "sieve-code.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"

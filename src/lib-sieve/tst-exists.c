@@ -2,6 +2,7 @@
 
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
+#include "sieve-code.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -57,7 +58,7 @@ static bool tst_exists_validate
 		(validator, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, arg);
+	sieve_validator_argument_activate(validator, arg, FALSE);
 	
 	tst->data = arg;
 	

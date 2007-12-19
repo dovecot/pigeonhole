@@ -1,6 +1,7 @@
 #include "lib.h"
 
 #include "sieve-commands.h"
+#include "sieve-code.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
 #include "sieve-validator.h" 
@@ -103,10 +104,11 @@ static bool tst_hasflag_validate
 			"as first argument, but %s was found", sieve_ast_argument_name(arg));
 		return FALSE; 
 	}
-	sieve_validator_argument_activate(validator, arg);
 	
 	arg2 = sieve_ast_argument_next(arg);
 	if ( arg2 != NULL ) {
+		sieve_validator_argument_activate(validator, arg, TRUE);
+
 		/* First, check syntax sanity */
 		
 		if ( sieve_ast_argument_type(arg2) != SAAT_STRING && 
@@ -129,10 +131,10 @@ static bool tst_hasflag_validate
 				"variable list when the variables extension is active");
 			return FALSE;
 		}
-	
-		sieve_validator_argument_activate(validator, arg2);
 	} else 
 		arg2 = arg;
+
+	sieve_validator_argument_activate(validator, arg2, FALSE);
 	
 	/* Validate the key argument to a specified match type */
 	

@@ -1,7 +1,7 @@
 #include "lib.h"
 
-#include "sieve-commands.h"
 #include "sieve-commands-private.h"
+#include "sieve-code.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -35,10 +35,9 @@ bool ext_imapflags_command_validate
 	}
 
 	arg2 = sieve_ast_argument_next(arg);
-	
-	if ( arg2 != NULL ) {
-		sieve_validator_argument_activate(validator, arg);
-		
+	if ( arg2 != NULL ) {		
+		sieve_validator_argument_activate(validator, arg, TRUE);
+
 		/* First, check syntax sanity */
 				
 		if ( sieve_ast_argument_type(arg) != SAAT_STRING ) 
@@ -71,12 +70,11 @@ bool ext_imapflags_command_validate
 				cmd->command->identifier);
 			return FALSE;
 		}
-		
-	} else 
+	} else
 		arg2 = arg;
-	
-	sieve_validator_argument_activate(validator, arg2);
-	
+
+	sieve_validator_argument_activate(validator, arg2, FALSE);	
+
 	return TRUE;
 }
 

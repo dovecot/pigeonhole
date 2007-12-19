@@ -8,6 +8,7 @@
 
 #include "sieve-extensions.h"
 #include "sieve-commands-private.h"
+#include "sieve-code.h"
 #include "sieve-actions.h"
 #include "sieve-generator.h"
 #include "sieve-binary.h"

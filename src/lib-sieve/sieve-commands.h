@@ -5,8 +5,6 @@
 
 #include "sieve-common.h"
 #include "sieve-ast.h"
-#include "sieve-validator.h"
-#include "sieve-generator.h"
 
 /* Argument */
 

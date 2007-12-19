@@ -1,6 +1,8 @@
 #ifndef __SIEVE_COMPARATORS_H
 #define __SIEVE_COMPARATORS_H
 
+#include "sieve-common.h"
+
 enum sieve_comparator_code {
 	SIEVE_COMPARATOR_I_OCTET,
 	SIEVE_COMPARATOR_I_ASCII_CASEMAP,

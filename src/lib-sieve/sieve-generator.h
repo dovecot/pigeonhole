@@ -1,8 +1,7 @@
 #ifndef __SIEVE_GENERATOR_H
 #define __SIEVE_GENERATOR_H
 
-#include "sieve-ast.h"
-#include "sieve-code.h"
+#include "sieve-common.h"
 
 struct sieve_generator;
 

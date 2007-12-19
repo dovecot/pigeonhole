@@ -9,6 +9,7 @@
 
 #include "sieve-extensions.h"
 #include "sieve-code.h"
+#include "sieve-commands.h"
 #include "sieve-binary.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"

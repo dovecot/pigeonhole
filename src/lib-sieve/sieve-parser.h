@@ -2,8 +2,8 @@
 #define __SIEVE_PARSER_H
 
 #include "lib.h"
-#include "sieve-lexer.h"
-#include "sieve-ast.h"
+
+#include "sieve-common.h"
 
 struct sieve_parser;
 

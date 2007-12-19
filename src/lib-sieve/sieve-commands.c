@@ -5,8 +5,8 @@
 #include "sieve-generator.h"
 #include "sieve-binary.h"
 
-#include "sieve-commands.h"
 #include "sieve-commands-private.h"
+#include "sieve-code.h"
 #include "sieve-interpreter.h"
 
 /* Default arguments implemented in this file */

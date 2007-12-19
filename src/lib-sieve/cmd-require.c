@@ -4,6 +4,7 @@
 #include "sieve-commands-private.h"
 #include "sieve-extensions.h"
 #include "sieve-validator.h" 
+#include "sieve-generator.h"
 
 /* Types */
 

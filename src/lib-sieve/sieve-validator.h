@@ -4,7 +4,16 @@
 #include "lib.h"
 
 #include "sieve-common.h"
-#include "sieve-error.h"
+
+enum sieve_argument_type {
+	SAT_NUMBER,
+	SAT_CONST_STRING,
+	SAT_CONST_STRING_LIST,
+	SAT_VAR_STRING,
+	SAT_VAR_STRING_LIST,
+	
+	SAT_COUNT
+};
 
 struct sieve_validator;
 struct sieve_command_registration;
@@ -55,7 +64,8 @@ bool sieve_validate_positional_argument
 	struct sieve_ast_argument *arg, const char *arg_name, unsigned int arg_pos,
 	enum sieve_ast_argument_type req_type);
 void sieve_validator_argument_activate
-	(struct sieve_validator *validator, struct sieve_ast_argument *arg);	 
+	(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+		bool constant);	 
 bool sieve_validate_tag_parameter
 	(struct sieve_validator *validator, struct sieve_command_context *cmd,
 	struct sieve_ast_argument *tag, struct sieve_ast_argument *param,

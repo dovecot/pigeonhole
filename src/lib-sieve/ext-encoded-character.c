@@ -11,6 +11,7 @@
 #include "lib.h"
 
 #include "sieve-extensions.h"
+#include "sieve-commands.h"
 #include "sieve-validator.h"
 
 /* Forward declarations */
@@ -37,10 +38,27 @@ static bool ext_encoded_character_load(int ext_id)
 	return TRUE;
 }
 
+/* New argument */
+
+bool arg_encoded_string_validate
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *context);
+
+const struct sieve_argument encoded_string_argument =
+	{ "@encoded-string", NULL, arg_encoded_string_validate, NULL, NULL };
+
+bool arg_encoded_string_validate
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *context)
+{
+	return TRUE;
+}
+
 /* Load extension into validator */
 
 static bool ext_encoded_character_validator_load
 	(struct sieve_validator *validator ATTR_UNUSED)
 {
+//	sieve_validator_argument_override(validator, 
 	return TRUE;
 }
