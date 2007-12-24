@@ -98,7 +98,7 @@ static bool cmd_redirect_validate
 		(validator, cmd, arg, "address", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, arg, FALSE);
+	sieve_validator_argument_activate(validator, cmd, arg, FALSE);
 	 
 	return TRUE;
 }

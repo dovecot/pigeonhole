@@ -63,13 +63,21 @@ bool sieve_validate_positional_argument
 	(struct sieve_validator *validator, struct sieve_command_context *cmd,
 	struct sieve_ast_argument *arg, const char *arg_name, unsigned int arg_pos,
 	enum sieve_ast_argument_type req_type);
-void sieve_validator_argument_activate
-	(struct sieve_validator *validator, struct sieve_ast_argument *arg,
-		bool constant);	 
+bool sieve_validator_argument_activate
+(struct sieve_validator *validator, struct sieve_command_context *cmd,
+	struct sieve_ast_argument *arg, bool constant);
+		
 bool sieve_validate_tag_parameter
 	(struct sieve_validator *validator, struct sieve_command_context *cmd,
 	struct sieve_ast_argument *tag, struct sieve_ast_argument *param,
 	enum sieve_ast_argument_type req_type);
+	
+void sieve_validator_argument_override
+(struct sieve_validator *validator, enum sieve_argument_type type, 
+	const struct sieve_argument *argument);
+bool sieve_validator_argument_activate_super
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	struct sieve_ast_argument *arg, bool constant);
 
 /* Extensions */
 int sieve_validator_extension_load

@@ -36,7 +36,7 @@ bool ext_imapflags_command_validate
 
 	arg2 = sieve_ast_argument_next(arg);
 	if ( arg2 != NULL ) {		
-		sieve_validator_argument_activate(validator, arg, TRUE);
+		sieve_validator_argument_activate(validator, cmd, arg, TRUE);
 
 		/* First, check syntax sanity */
 				
@@ -73,7 +73,7 @@ bool ext_imapflags_command_validate
 	} else
 		arg2 = arg;
 
-	sieve_validator_argument_activate(validator, arg2, FALSE);	
+	sieve_validator_argument_activate(validator, cmd, arg2, FALSE);	
 
 	return TRUE;
 }

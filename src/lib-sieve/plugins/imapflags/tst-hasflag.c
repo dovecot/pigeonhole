@@ -107,7 +107,7 @@ static bool tst_hasflag_validate
 	
 	arg2 = sieve_ast_argument_next(arg);
 	if ( arg2 != NULL ) {
-		sieve_validator_argument_activate(validator, arg, TRUE);
+		sieve_validator_argument_activate(validator, tst, arg, TRUE);
 
 		/* First, check syntax sanity */
 		
@@ -134,7 +134,7 @@ static bool tst_hasflag_validate
 	} else 
 		arg2 = arg;
 
-	sieve_validator_argument_activate(validator, arg2, FALSE);
+	sieve_validator_argument_activate(validator, tst, arg2, FALSE);
 	
 	/* Validate the key argument to a specified match type */
 	

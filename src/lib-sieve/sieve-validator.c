@@ -19,11 +19,13 @@ struct sieve_default_argument {
 	struct sieve_default_argument *overrides;
 };
 
-/* Context/Semantics checker implementation */
+/* 
+ * Context/Semantics checker implementation 
+ */
 
 struct sieve_validator {
 	pool_t pool;
-	
+
 	struct sieve_ast *ast;
 	struct sieve_script *script;
 	
@@ -36,6 +38,7 @@ struct sieve_validator {
 	ARRAY_DEFINE(ext_contexts, void *);
 	
 	struct sieve_default_argument default_arguments[SAT_COUNT];
+	struct sieve_default_argument *current_defarg;
 };
 
 /* Predeclared statics */
@@ -277,7 +280,7 @@ static void _sieve_validator_register_tag
 	const struct sieve_argument *tag, const char *identifier, int id_code) 
 {
 	struct sieve_tag_registration *reg;
-	
+
 	reg = p_new(validator->pool, struct sieve_tag_registration, 1);
 	reg->tag = tag;
 	reg->id_code = id_code;
@@ -412,6 +415,81 @@ inline const void *sieve_validator_extension_get_context
 
 /* Argument Validation API */
 
+void sieve_validator_argument_override
+(struct sieve_validator *validator, enum sieve_argument_type type, 
+	const struct sieve_argument *argument)
+{
+	struct sieve_default_argument *arg = 
+		p_new(validator->pool, struct sieve_default_argument, 1);
+	
+	*arg = validator->default_arguments[type];
+	
+	validator->default_arguments[type].overrides = arg;
+	validator->default_arguments[type].argument = argument;
+}
+
+static bool sieve_validator_argument_default_activate
+(struct sieve_validator *validator, struct sieve_command_context *cmd,
+	struct sieve_default_argument *defarg, struct sieve_ast_argument *arg)
+{
+	bool result = TRUE;
+	struct sieve_default_argument *prev_defarg;
+	
+	prev_defarg = validator->current_defarg;
+	validator->current_defarg = defarg;
+	
+	arg->argument = defarg->argument;
+	if (defarg->argument != NULL && defarg->argument->validate != NULL )
+		result = defarg->argument->validate(validator, &arg, cmd); 
+		
+	validator->current_defarg = prev_defarg;	
+		
+	return TRUE;
+}
+
+bool sieve_validator_argument_activate_super
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	struct sieve_ast_argument *arg, bool constant ATTR_UNUSED)
+{
+	if ( validator->current_defarg == NULL && 
+		validator->current_defarg->overrides == NULL ) 
+		return FALSE;
+	
+	return sieve_validator_argument_default_activate
+		(validator, cmd, validator->current_defarg->overrides, arg);
+}
+
+bool sieve_validator_argument_activate
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	struct sieve_ast_argument *arg, bool constant)
+{
+	struct sieve_default_argument *defarg;
+	
+	switch ( sieve_ast_argument_type(arg) ) {
+	case SAAT_NUMBER:
+		defarg = &validator->default_arguments[SAT_NUMBER];
+		break;
+	case SAAT_STRING:
+		if ( validator->default_arguments[SAT_VAR_STRING].argument == NULL ||
+			constant )
+			defarg = &validator->default_arguments[SAT_CONST_STRING];
+		else
+			defarg = &validator->default_arguments[SAT_VAR_STRING];
+		break;
+	case SAAT_STRING_LIST:
+		if ( validator->default_arguments[SAT_VAR_STRING_LIST].argument == NULL ||
+			constant )
+			defarg = &validator->default_arguments[SAT_CONST_STRING_LIST];
+		else
+			defarg = &validator->default_arguments[SAT_VAR_STRING_LIST];
+		break;
+	default:
+		return FALSE;
+	}
+	
+	return sieve_validator_argument_default_activate(validator, cmd, defarg, arg);
+}
+
 bool sieve_validate_positional_argument
 	(struct sieve_validator *validator, struct sieve_command_context *cmd,
 	struct sieve_ast_argument *arg, const char *arg_name, unsigned int arg_pos,
@@ -432,37 +510,6 @@ bool sieve_validate_positional_argument
 	return TRUE;
 }
 
-void sieve_validator_argument_activate
-	(struct sieve_validator *validator ATTR_UNUSED, 
-		struct sieve_ast_argument *arg, bool constant)
-{
-	switch ( sieve_ast_argument_type(arg) ) {
-	case SAAT_NUMBER:
-		arg->argument = validator->default_arguments[SAT_NUMBER].argument;
-		break;
-	case SAAT_STRING:
-		if ( validator->default_arguments[SAT_VAR_STRING].argument == NULL ||
-			constant )
-			arg->argument = validator->
-					default_arguments[SAT_CONST_STRING].argument;
-		else
-			arg->argument = validator->
-					default_arguments[SAT_VAR_STRING].argument;
-		break;
-	case SAAT_STRING_LIST:
-		if ( validator->default_arguments[SAT_VAR_STRING_LIST].argument == NULL ||
-			constant )
-			arg->argument = validator->
-					default_arguments[SAT_CONST_STRING_LIST].argument;
-		else
-			arg->argument = validator->
-					default_arguments[SAT_VAR_STRING_LIST].argument;
-		break;
-	default:
-		break;
-	}
-}
-
 bool sieve_validate_tag_parameter
 	(struct sieve_validator *validator, struct sieve_command_context *cmd,
 	struct sieve_ast_argument *tag, struct sieve_ast_argument *param,
@@ -479,7 +526,7 @@ bool sieve_validate_tag_parameter
 			sieve_ast_argument_type_name(req_type),	sieve_ast_argument_name(param));
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, param, FALSE);
+	sieve_validator_argument_activate(validator, cmd, param, FALSE);
 	param->arg_id_code = tag->arg_id_code;
 	
 	return TRUE;

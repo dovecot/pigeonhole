@@ -252,6 +252,9 @@ void sieve_ast_unparse(struct sieve_ast *ast);
 #define sieve_ast_argument_tag(argument) ((argument)->_value.tag)
 #define sieve_ast_argument_number(argument) ((argument)->_value.number)
 
+#define sieve_ast_argument_str_set(argument, newstr) \
+	(argument)->_value.str = newstr
+
 /* AST string list macros */
 // @UNSAFE: should check whether we are actually accessing a string list
 #define sieve_ast_strlist_first(list) __LIST_FIRST(list, _value.strlist)
