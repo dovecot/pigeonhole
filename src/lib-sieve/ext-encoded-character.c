@@ -221,8 +221,6 @@ bool arg_encoded_string_validate
 		if ( strstart != strend )
 			str_append_n(newstr, strstart, strend-strstart);	
 	
-		printf("RESULT: %s\n", str_c(newstr));
-	
 		sieve_ast_argument_str_set(*arg, newstr);
 	}
 	

@@ -452,7 +452,7 @@ bool sieve_validator_argument_activate_super
 	struct sieve_ast_argument *arg, bool constant ATTR_UNUSED)
 {
 	if ( validator->current_defarg == NULL && 
-		validator->current_defarg->overrides == NULL ) 
+		validator->current_defarg->overrides == NULL )
 		return FALSE;
 	
 	return sieve_validator_argument_default_activate
