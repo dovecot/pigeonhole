@@ -133,9 +133,9 @@ Extensions and their implementation status:
     include: full, but needs much more work
     vacation: almost complete, but no support for required References header
     imapflags: flag management works, but flags are not stored 
-    variables: planned (* also amend previously implemented extensions)
+    variables: skeleton
 
-    notify: planned, mailto only (- very low priority)
+    notify: planned, first mailto only (- very low priority)
 
 All implemented extensions are like the engine itself currently very much 
 experimental. Other extensions will be added as soon as the necessary 

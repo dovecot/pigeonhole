@@ -40,7 +40,8 @@ plugins = \
     ./plugins/copy/libsieve_ext_copy.la \
     ./plugins/imapflags/libsieve_ext_imapflags.la \
     ./plugins/include/libsieve_ext_include.la \
-    ./plugins/body/libsieve_ext_body.la
+    ./plugins/body/libsieve_ext_body.la \
+    ./plugins/variables/libsieve_ext_variables.la
 
 libsieve_la_DEPENDENCIES = $(plugins)
 libsieve_la_LIBADD = $(plugins)
