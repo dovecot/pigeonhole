@@ -121,7 +121,7 @@ Extensions and their implementation status:
     fileinto: full
     reject: full
     envelope: full
-    encoded-character: skeleton
+    encoded-character: full
 
   Other RFCs/drafts:
     subaddress: full
@@ -193,10 +193,9 @@ TODO
 ----
 
 Current:
-* Implement encoded-character extension
+* Implement variables extension.
 
 Next (in order of descending priority/precedence):
-* Implement variables extension.
 * Finish implementing all extensions supported by cmusieve, except notify.
 * Limit the maximum number of errors. 
 * Verify outgoing mail addresses

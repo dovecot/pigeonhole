@@ -3,12 +3,13 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-3028bis-13.txt
- * Implementation: skeleton  
- * Status: under development
+ * Implementation: full 
+ * Status: experimental, largely untested
  *
  */
 
 #include "lib.h"
+#include "unichar.h"
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
@@ -100,7 +101,7 @@ static bool _parse_hexint
 	return ( digit > 0 );
 }
 
-static bool _decode_hex
+static int _decode_hex
 (const char **in, const char *inend, string_t *result) 
 {
 	int values = 0;
@@ -116,11 +117,12 @@ static bool _decode_hex
 		values++;
 	}
 	
-	return ( values > 0 );
+	return ( values > 0 ? 1 : 0 );
 }
 
-static bool _decode_unicode
-(const char **in, const char *inend, string_t *result) 
+static int _decode_unicode
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	const char **in, const char *inend, string_t *result) 
 {
 	int values = 0;
 	
@@ -130,19 +132,28 @@ static bool _decode_unicode
 		if ( !_skip_whitespace(in, inend) ) return FALSE;
 		
 		if ( !_parse_hexint(in, inend, 6, &unicode_hex) ) break;
-		
-		/* FIXME: unicode is unimplemented */
-		str_append(result, ">>unicode unimplemented<<");
+
+		if ( (unicode_hex <= 0xD7FF) || 
+			(unicode_hex >= 0xE000 && unicode_hex <= 0x10FFFF)	) 
+			uni_ucs4_to_utf8_c((unichar_t) unicode_hex, result);
+		else {
+			sieve_command_validate_error(validator, cmd, 
+				"invalid unicode character 0x%08x in encoded character substitution",
+					unicode_hex);
+			return -1;
+		}	
 		values++;
 	}
 	
-	return ( values > 0 );
+	return ( values > 0 ? 1 : 0 );
 }
 
 bool arg_encoded_string_validate
-(struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast_argument **arg, 
+(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd)
 {
+	bool result = TRUE;
+	int ret;
 	enum { ST_NONE, ST_OPEN, ST_TYPE, ST_CLOSE } 
 		state = ST_NONE;
 	string_t *str = sieve_ast_argument_str(*arg);
@@ -156,7 +167,7 @@ bool arg_encoded_string_validate
 			
 		p = strval;
 		strstart = p;
-		while ( p < strend ) {
+		while ( result && p < strend ) {
 			switch ( state ) {
 			case ST_NONE:
 				if ( *p == '$' ) {
@@ -186,12 +197,18 @@ bool arg_encoded_string_validate
 				str_truncate(tmpstr, 0);
 				if ( strncasecmp(mark, "hex", p - mark) == 0 ) {
 					p++;
-					if ( !_decode_hex(&p, strend, tmpstr) ) 
+					ret = _decode_hex(&p, strend, tmpstr);
+					if ( ret <= 0 ) { 
 						state = ST_NONE;
+						if ( ret < 0 ) result = FALSE;
+					}
 				} else if ( strncasecmp(mark, "unicode", p - mark) == 0 ) {
 					p++;
-					if ( !_decode_unicode(&p, strend, tmpstr) ) 
+					ret = _decode_unicode(validator, cmd, &p, strend, tmpstr);
+					if ( ret <= 0 ) { 
 						state = ST_NONE;
+						if ( ret < 0 ) result = FALSE;
+					}
 				} else {	
 					p++;
 					state = ST_NONE;

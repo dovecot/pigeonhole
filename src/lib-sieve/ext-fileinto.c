@@ -2,7 +2,7 @@
  * ------------------
  *
  * Authors: Stephan Bosch
- * Specification: RFC3028
+ * Specification: RFC3028, draft-ietf-sieve-3028bis-13.txt
  * Implementation: full
  * Status: experimental, largely untested
  *
