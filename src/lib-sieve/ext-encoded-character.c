@@ -59,7 +59,8 @@ static bool _skip_whitespace
 			continue;
 		}
 		
-		if ( **in != ' ' && **in != '\n' ) /* Loose LF is non-standard */
+		/* (Loose LF is non-standard) */
+		if ( **in != ' ' && **in != '\n' && **in != '\t' ) 
 			break;
 			
 		(*in)++;
@@ -78,8 +79,9 @@ static bool _parse_hexint
 	
 		if ( (**in) >= '0' && (**in) <= '9' ) 
 			*result = ((*result) << 4) + (**in) - ((unsigned int) '0');
+		/* Lower-case version is not allowed by RFC 
 		else if ( (**in) >= 'a' && (**in) <= 'f' )
-			*result = ((*result) << 4) + (**in) - ((unsigned int) 'a') + 0x0a;
+			*result = ((*result) << 4) + (**in) - ((unsigned int) 'a') + 0x0a;*/
 		else if ( (**in) >= 'A' && (**in) <= 'F' )
 			*result = ((*result) << 4) + (**in) - ((unsigned int) 'A') + 0x0a;
 		else
