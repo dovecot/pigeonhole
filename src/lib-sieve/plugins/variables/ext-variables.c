@@ -15,6 +15,8 @@
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 
+#include "ext-variables-common.h"
+
 #include <ctype.h>
 
 /* Forward declarations */
@@ -22,22 +24,36 @@
 static bool ext_variables_load(int ext_id);
 static bool ext_variables_validator_load(struct sieve_validator *validator);
 
+/* Commands */
+
+extern const struct sieve_command cmd_set;
+extern const struct sieve_command tst_string;
+
+/* Opcodes */
+
+extern const struct sieve_opcode cmd_set_opcode;
+extern const struct sieve_opcode tst_string_opcode;
+
+const struct sieve_opcode *ext_variables_opcodes[] = {
+	&cmd_set_opcode, &tst_string_opcode
+};
+
 /* Extension definitions */
 
-static int ext_my_id;
+int ext_variables_my_id;
 	
 struct sieve_extension variables_extension = { 
 	"variables", 
 	ext_variables_load,
 	ext_variables_validator_load, 
 	NULL, NULL, NULL, 
-	SIEVE_EXT_DEFINE_NO_OPCODES, 
+	SIEVE_EXT_DEFINE_OPCODES(ext_variables_opcodes), 
 	NULL 
 };
 
 static bool ext_variables_load(int ext_id) 
 {
-	ext_my_id = ext_id;
+	ext_variables_my_id = ext_id;
 	return TRUE;
 }
 
@@ -142,7 +158,13 @@ static bool arg_variable_string_validate
 static bool ext_variables_validator_load
 	(struct sieve_validator *validator ATTR_UNUSED)
 {
-	sieve_validator_argument_override(validator, SAT_VAR_STRING, 
-		&variable_string_argument); 
+	/*sieve_validator_argument_override(validator, SAT_VAR_STRING, 
+		&variable_string_argument);*/ 
+		
+	sieve_validator_register_command(validator, &cmd_set);
+	sieve_validator_register_command(validator, &tst_string);
+	
+	ext_variables_validator_initialize(validator);
+
 	return TRUE;
 }
