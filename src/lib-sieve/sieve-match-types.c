@@ -191,48 +191,39 @@ struct sieve_operand match_type_operand =
  */
   
 static bool tag_match_type_is_instance_of
-	(struct sieve_validator *validator, const char *tag)
-{
-	return sieve_match_type_find(validator, tag, NULL) != NULL;
-}
- 
-static bool tag_match_type_validate
-	(struct sieve_validator *validator, 
-	struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	struct sieve_ast_argument *arg)
 {
 	int ext_id;
 	struct sieve_match_type_context *mtctx;
-	const struct sieve_match_type *mtch;
-
-	/* Syntax:   
-	 *   ":is" / ":contains" / ":matches" (subject to extension)
-   	 */
-	
-	/* Get match_type from registry */
-	mtch = sieve_match_type_find
-		(validator, sieve_ast_argument_tag(*arg), &ext_id);
-	
-	/* In theory, mtch can never be NULL, because we must have found it earlier
-	 * to get here.
-	 */
-	if ( mtch == NULL ) {
-		sieve_command_validate_error(validator, cmd, 
-			"unknown match-type modifier '%s' "
-			"(this error should not occur and is probably a bug)", 
-			sieve_ast_argument_strc(*arg));
-
-		return FALSE;	
-	}
-
+	const struct sieve_match_type *mtch = 
+		sieve_match_type_find(validator, sieve_ast_argument_tag(arg), &ext_id);
+		
+	if ( mtch == NULL ) return FALSE;	
+		
 	/* Create context */
 	mtctx = p_new(sieve_command_pool(cmd), struct sieve_match_type_context, 1);
 	mtctx->match_type = mtch;
+	mtctx->ext_id = ext_id;
 	mtctx->command_ctx = cmd;
 	
-	(*arg)->context = (void *) mtctx;
-	(*arg)->ext_id = ext_id;
+	arg->context = (void *) mtctx;
 	
+	return TRUE;
+}
+ 
+static bool tag_match_type_validate
+(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *cmd ATTR_UNUSED)
+{
+	struct sieve_match_type_context *mtctx = 
+		(struct sieve_match_type_context *) (*arg)->context;
+	const struct sieve_match_type *mtch = mtctx->match_type;
+
+	/* Syntax:   
+	 *   ":is" / ":contains" / ":matches" (subject to extension)
+	 */
+		
 	/* Skip tag */
 	*arg = sieve_ast_argument_next(*arg);
 	
@@ -378,7 +369,7 @@ static bool tag_match_type_generate
 		else
 			return FALSE;
 	} else {
-		opr_match_type_emit_ext(sbin, mtctx->match_type, arg->ext_id);
+		opr_match_type_emit_ext(sbin, mtctx->match_type, mtctx->ext_id);
 	} 
 			
 	return TRUE;

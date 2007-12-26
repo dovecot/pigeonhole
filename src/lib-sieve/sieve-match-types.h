@@ -64,6 +64,8 @@ struct sieve_match_type_context {
 	struct sieve_command_context *command_ctx;
 	const struct sieve_match_type *match_type;
 	
+	int ext_id;
+	
 	/* Context data could be used in the future to pass data between validator and
 	 * generator in match types that use extra parameters. Currently not 
 	 * necessary, not even for the relational extension.

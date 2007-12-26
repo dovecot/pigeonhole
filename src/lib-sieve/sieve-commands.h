@@ -11,17 +11,20 @@
 struct sieve_argument {
 	const char *identifier;
 	
-	bool (*is_instance_of)(struct sieve_validator *validator, const char *tag);
+	bool (*is_instance_of)
+		(struct sieve_validator *validator, struct sieve_command_context *cmdctx,
+			struct sieve_ast_argument *arg);
 	
 	bool (*validate)
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *context);
+		(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+			struct sieve_command_context *context);
 	bool (*validate_context)
-	(struct sieve_validator *validator, struct sieve_ast_argument *arg, 
-		struct sieve_command_context *context);
+		(struct sieve_validator *validator, struct sieve_ast_argument *arg, 
+			struct sieve_command_context *context);
 		
-	bool (*generate)(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
-		struct sieve_command_context *context);
+	bool (*generate)
+		(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+			struct sieve_command_context *context);
 };
 
 extern const struct sieve_argument number_argument;
@@ -62,7 +65,7 @@ struct sieve_command {
 struct sieve_command_context {
 	const struct sieve_command *command;
 	
-	/* The registration of this command in the validator */
+	/* The registration of this command in the validator (sieve-validator.h) */
 	struct sieve_command_registration *cmd_reg;
 
 	/* The ast node of this command */
@@ -79,7 +82,8 @@ struct sieve_command_context {
 };
 
 struct sieve_command_context *sieve_command_context_create
-	(struct sieve_ast_node *cmd_node, const struct sieve_command *command);
+	(struct sieve_ast_node *cmd_node, const struct sieve_command *command,
+		struct sieve_command_registration *reg);
 		
 const char *sieve_command_type_name(const struct sieve_command *command);		
 		

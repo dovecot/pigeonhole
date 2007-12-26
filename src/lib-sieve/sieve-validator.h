@@ -47,6 +47,9 @@ void sieve_validator_critical
 /* Command/Test registration */
 void sieve_validator_register_command
 	(struct sieve_validator *validator, const struct sieve_command *command);
+const struct sieve_command *sieve_validator_find_command
+	(struct sieve_validator *validator, const char *command);	
+	
 void sieve_validator_register_external_tag
 	(struct sieve_validator *validator, const struct sieve_argument *tag, 
 		const char *command, int id_code);

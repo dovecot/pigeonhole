@@ -89,9 +89,6 @@ struct sieve_ast_argument {
 	
 	/* Context data associated with this ast element */
 	void *context;
-	
-	/* Indicates whether this argument is part of which extension */
-	int ext_id;
 };
 
 struct sieve_ast_list {

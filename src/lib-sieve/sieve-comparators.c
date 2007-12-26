@@ -26,9 +26,9 @@ extern const struct sieve_comparator *sieve_core_comparators[];
 extern const unsigned int sieve_core_comparators_count;
 
 static void opr_comparator_emit
-	(struct sieve_binary *sbin, struct sieve_comparator *cmp);
+	(struct sieve_binary *sbin, const struct sieve_comparator *cmp);
 static void opr_comparator_emit_ext
-	(struct sieve_binary *sbin, struct sieve_comparator *cmp, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id);
 
 static int cmp_i_octet_compare
 	(const struct sieve_comparator *cmp,
@@ -217,6 +217,7 @@ static bool tag_comparator_validate
 	struct sieve_command_context *cmd)
 {
 	int ext_id;
+	struct sieve_comparator_context *cmpctx;
 	struct sieve_ast_argument *tag = *arg;
 	const struct sieve_comparator *cmp;
 	
@@ -244,12 +245,19 @@ static bool tag_comparator_validate
 		return FALSE;
 	}
 	
-	/* String argument not needed during code generation, so detach it from argument list */
+	/* String argument not needed during code generation, so detach it from 
+	 * argument list 
+	 */
 	*arg = sieve_ast_arguments_detach(*arg, 1);
 
+	/* Create context */
+	cmpctx = p_new(sieve_command_pool(cmd), struct sieve_comparator_context, 1);
+	cmpctx->command_ctx = cmd;
+	cmpctx->comparator = cmp;
+	cmpctx->ext_id = ext_id;
+
 	/* Store comparator in context */
-	tag->context = (void *) cmp;
-	tag->ext_id = ext_id;
+	tag->context = (void *) cmpctx;
 	
 	return TRUE;
 }
@@ -280,14 +288,14 @@ inline const struct sieve_comparator *sieve_comparator_tag_get
 /* Code generation */
 
 static void opr_comparator_emit
-	(struct sieve_binary *sbin, struct sieve_comparator *cmp)
+	(struct sieve_binary *sbin, const struct sieve_comparator *cmp)
 { 
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_COMPARATOR);
 	(void) sieve_binary_emit_byte(sbin, cmp->code);
 }
 
 static void opr_comparator_emit_ext
-	(struct sieve_binary *sbin, struct sieve_comparator *cmp, int ext_id)
+	(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id)
 { 
 	unsigned char cmp_code = SIEVE_COMPARATOR_CUSTOM + 
 		sieve_binary_extension_get_index(sbin, ext_id);
@@ -361,7 +369,9 @@ static bool tag_comparator_generate
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-	struct sieve_comparator *cmp = (struct sieve_comparator *) arg->context;
+	struct sieve_comparator_context *cmpctx = 
+		(struct sieve_comparator_context *) arg->context;
+	const struct sieve_comparator *cmp = cmpctx->comparator;
 	
 	if ( cmp->extension == NULL ) {
 		if ( cmp->code < SIEVE_COMPARATOR_CUSTOM )
@@ -369,7 +379,7 @@ static bool tag_comparator_generate
 		else
 			return FALSE;
 	} else {
-		opr_comparator_emit_ext(sbin, cmp, arg->ext_id);
+		opr_comparator_emit_ext(sbin, cmp, cmpctx->ext_id);
 	} 
 		
 	return TRUE;

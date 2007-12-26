@@ -27,9 +27,10 @@
  */
  
 static void opr_address_part_emit
-	(struct sieve_binary *sbin, struct sieve_address_part *addrp);
+	(struct sieve_binary *sbin, const struct sieve_address_part *addrp);
 static void opr_address_part_emit_ext
-	(struct sieve_binary *sbin, struct sieve_address_part *addrp, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_address_part *addrp, 
+		int ext_id);
 
 /* 
  * Address-part 'extension' 
@@ -193,42 +194,38 @@ struct sieve_operand address_part_operand =
  */
   
 static bool tag_address_part_is_instance_of
-	(struct sieve_validator *validator, const char *tag)
+(struct sieve_validator *validator, struct sieve_command_context *cmd,
+	struct sieve_ast_argument *arg)
 {
-	return sieve_address_part_find(validator, tag, NULL) != NULL;
+	int ext_id;
+	struct sieve_address_part_context *adpctx;
+	const struct sieve_address_part *addrp = sieve_address_part_find
+		(validator, sieve_ast_argument_tag(arg), &ext_id);
+
+	if ( addrp == NULL ) return FALSE;
+
+	adpctx = p_new(sieve_command_pool(cmd), struct sieve_address_part_context, 1);
+	adpctx->command_ctx = cmd;
+	adpctx->address_part = addrp;
+	adpctx->ext_id = ext_id;
+
+	/* Store address-part in context */
+	arg->context = (void *) adpctx;
+
+	return TRUE;
 }
  
 static bool tag_address_part_validate
-	(struct sieve_validator *validator, 
-	struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+(struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *cmd ATTR_UNUSED)
 {
-	int ext_id;
-	const struct sieve_address_part *addrp;
-
+	/* FIXME: Currenly trivial, but might need to allow for further validation for
+	 * future extensions.
+	 */
+	 
 	/* Syntax:   
 	 *   ":localpart" / ":domain" / ":all" (subject to extension)
    */
-	
-	/* Get address_part from registry */
-	addrp = sieve_address_part_find
-		(validator, sieve_ast_argument_tag(*arg), &ext_id);
-	
-	/* In theory, addrp can never be NULL, because we must have found it earlier
-	 * to get here.
-	 */
-	if ( addrp == NULL ) {
-		sieve_command_validate_error(validator, cmd, 
-			"unknown address-part modifier '%s' "
-			"(this error should not occur and is probably a bug)", 
-			sieve_ast_argument_strc(*arg));
-
-		return FALSE;
-	}
-
-	/* Store address-part in context */
-	(*arg)->context = (void *) addrp;
-	(*arg)->ext_id = ext_id;
 	
 	/* Skip tag */
 	*arg = sieve_ast_argument_next(*arg);
@@ -239,14 +236,14 @@ static bool tag_address_part_validate
 /* Code generation */
 
 static void opr_address_part_emit
-	(struct sieve_binary *sbin, struct sieve_address_part *addrp)
+(struct sieve_binary *sbin, const struct sieve_address_part *addrp)
 { 
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_ADDRESS_PART);
 	(void) sieve_binary_emit_byte(sbin, addrp->code);
 }
 
 static void opr_address_part_emit_ext
-	(struct sieve_binary *sbin, struct sieve_address_part *addrp, int ext_id)
+(struct sieve_binary *sbin, const struct sieve_address_part *addrp, int ext_id)
 { 
 	unsigned char addrp_code = SIEVE_ADDRESS_PART_CUSTOM + 
 		sieve_binary_extension_get_index(sbin, ext_id);
@@ -321,8 +318,9 @@ static bool tag_address_part_generate
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-	struct sieve_address_part *addrp =
-		(struct sieve_address_part *) arg->context;
+	struct sieve_address_part_context *adpctx =
+		(struct sieve_address_part_context *) arg->context;
+	const struct sieve_address_part *addrp = adpctx->address_part;	
 	
 	if ( addrp->extension == NULL ) {
 		if ( addrp->code < SIEVE_ADDRESS_PART_CUSTOM )
@@ -330,7 +328,7 @@ static bool tag_address_part_generate
 		else
 			return FALSE;
 	} else {
-		opr_address_part_emit_ext(sbin, addrp, arg->ext_id);
+		opr_address_part_emit_ext(sbin, addrp, adpctx->ext_id);
 	} 
 		
 	return TRUE;

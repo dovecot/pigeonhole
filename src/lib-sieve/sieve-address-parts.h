@@ -36,6 +36,13 @@ struct sieve_address_part_extension {
 		(unsigned int code);
 };
 
+struct sieve_address_part_context {
+	struct sieve_command_context *command_ctx;
+	const struct sieve_address_part *address_part;
+	
+	int ext_id;
+};
+
 void sieve_address_parts_link_tags
 	(struct sieve_validator *validator, 
 		struct sieve_command_registration *cmd_reg, int id_code);

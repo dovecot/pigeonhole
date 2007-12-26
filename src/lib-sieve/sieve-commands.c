@@ -195,7 +195,8 @@ inline struct sieve_command_context *sieve_command_parent_context
 }
 
 struct sieve_command_context *sieve_command_context_create
-	(struct sieve_ast_node *cmd_node, const struct sieve_command *command)
+	(struct sieve_ast_node *cmd_node, const struct sieve_command *command,
+		struct sieve_command_registration *reg)
 {
 	struct sieve_command_context *cmd;
 	
@@ -203,6 +204,7 @@ struct sieve_command_context *sieve_command_context_create
 	
 	cmd->ast_node = cmd_node;	
 	cmd->command = command;
+	cmd->cmd_reg = reg;
 	
 	cmd->block_exit_command = NULL;
 	

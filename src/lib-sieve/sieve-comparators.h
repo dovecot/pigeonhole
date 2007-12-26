@@ -51,6 +51,13 @@ struct sieve_comparator_extension {
 		(unsigned int code);
 };
 
+struct sieve_comparator_context {
+	struct sieve_command_context *command_ctx;
+	const struct sieve_comparator *comparator;
+	
+	int ext_id;
+};
+
 extern const struct sieve_argument comparator_tag;
 
 void sieve_comparators_link_tag
