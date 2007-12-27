@@ -23,7 +23,7 @@
 
 #include "sieve-ast.h"
 #include "sieve-code.h"
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-commands.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
@@ -40,8 +40,8 @@ static bool ext_relational_binary_load(struct sieve_binary *sbin);
 /* Types */
 
 enum ext_relational_match_type {
-  RELATIONAL_VALUE,
-  RELATIONAL_COUNT
+	RELATIONAL_VALUE,
+	RELATIONAL_COUNT
 };
 
 enum relational_match {
@@ -72,8 +72,8 @@ const struct sieve_extension relational_extension = {
 	NULL, 
 	ext_relational_binary_load,  
 	NULL,
-	SIEVE_EXT_DEFINE_NO_OPCODES, 
-	NULL
+	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_relational_load(int ext_id)

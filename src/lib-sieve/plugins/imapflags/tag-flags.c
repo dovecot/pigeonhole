@@ -2,14 +2,14 @@
 #include "array.h"
 #include "mail-storage.h"
 
-#include "sieve-extensions.h"
-#include "sieve-commands.h"
 #include "sieve-code.h"
-#include "sieve-actions.h"
+#include "sieve-extensions-private.h"
+#include "sieve-commands.h"
 #include "sieve-result.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-actions.h"
 
 #include "ext-imapflags-common.h"
 

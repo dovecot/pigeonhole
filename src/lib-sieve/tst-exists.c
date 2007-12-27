@@ -30,21 +30,21 @@ const struct sieve_command tst_exists = {
 	NULL 
 };
 
-/* Opcodes */
+/* Operations */
 
-static bool tst_exists_opcode_dump
-	(const struct sieve_opcode *opcode, 
+static bool tst_exists_operation_dump
+	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool tst_exists_opcode_execute
-	(const struct sieve_opcode *opcode, 
+static bool tst_exists_operation_execute
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_opcode tst_exists_opcode = { 
+const struct sieve_operation tst_exists_operation = { 
 	"EXISTS",
-	SIEVE_OPCODE_EXISTS,
-	NULL, 0, 
-	tst_exists_opcode_dump, 
-	tst_exists_opcode_execute 
+	NULL,
+	SIEVE_OPERATION_EXISTS,
+	tst_exists_operation_dump, 
+	tst_exists_operation_execute 
 };
 
 /* Test validation */
@@ -70,7 +70,7 @@ static bool tst_exists_validate
 static bool tst_exists_generate
 	(struct sieve_generator *generator, struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode(generator, &tst_exists_opcode);
+	sieve_generator_emit_operation(generator, &tst_exists_operation);
 
  	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -81,8 +81,8 @@ static bool tst_exists_generate
 
 /* Code dump */
 
-static bool tst_exists_opcode_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED, 
+static bool tst_exists_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
     sieve_code_dumpf(denv, "EXISTS");
@@ -94,8 +94,8 @@ static bool tst_exists_opcode_dump
 
 /* Code execution */
 
-static bool tst_exists_opcode_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED, 
+static bool tst_exists_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	bool result = TRUE;

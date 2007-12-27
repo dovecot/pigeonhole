@@ -20,7 +20,7 @@
 #include "sieve-common.h"
 
 #include "sieve-code.h"
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-commands.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h"
@@ -36,11 +36,11 @@
 static bool ext_vacation_load(int ext_id);
 static bool ext_vacation_validator_load(struct sieve_validator *validator);
 
-static bool ext_vacation_opcode_dump
-	(const struct sieve_opcode *opcode,	
+static bool ext_vacation_operation_dump
+	(const struct sieve_operation *op,	
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_vacation_opcode_execute
-	(const struct sieve_opcode *opcode, 
+static bool ext_vacation_operation_execute
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool cmd_vacation_registered
@@ -54,15 +54,15 @@ static bool cmd_vacation_generate
 
 int ext_my_id;
 
-const struct sieve_opcode vacation_opcode;
+const struct sieve_operation vacation_operation;
 
 const struct sieve_extension vacation_extension = { 
 	"vacation", 
 	ext_vacation_load,
 	ext_vacation_validator_load, 
 	NULL, NULL, NULL, 
-	SIEVE_EXT_DEFINE_OPCODE(vacation_opcode),
-	NULL
+	SIEVE_EXT_DEFINE_OPERATION(vacation_operation),
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_vacation_load(int ext_id)
@@ -90,14 +90,13 @@ static const struct sieve_command vacation_command = {
 	NULL 
 };
 
-/* Vacation opcode */
-const struct sieve_opcode vacation_opcode = { 
+/* Vacation operation */
+const struct sieve_operation vacation_operation = { 
 	"VACATION",
-	SIEVE_OPCODE_CUSTOM,
 	&vacation_extension,
 	0,
-	ext_vacation_opcode_dump, 
-	ext_vacation_opcode_execute
+	ext_vacation_operation_dump, 
+	ext_vacation_operation_execute
 };
 
 /* Vacation action */
@@ -309,7 +308,7 @@ static bool ext_vacation_validator_load(struct sieve_validator *validator)
 static bool cmd_vacation_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode_ext(generator, &vacation_opcode, ext_my_id);
+	sieve_generator_emit_operation_ext(generator, &vacation_operation, ext_my_id);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -322,8 +321,8 @@ static bool cmd_vacation_generate
  * Code dump
  */
  
-static bool ext_vacation_opcode_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool ext_vacation_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
 	int opt_code = 1;
@@ -372,8 +371,8 @@ static bool ext_vacation_opcode_dump
  * Code execution
  */
  
-static bool ext_vacation_opcode_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool ext_vacation_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	struct sieve_side_effects_list *slist = NULL;

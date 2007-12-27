@@ -5,6 +5,7 @@
 #include "mail-storage.h"
 
 #include "sieve-common.h"
+#include "sieve-extensions-private.h"
 
 /* Sieve action */
 
@@ -59,7 +60,7 @@ struct sieve_side_effect {
 	const struct sieve_action *to_action;
 	
 	const struct sieve_side_effect_extension *extension;
-	unsigned int ext_code;
+	unsigned int code;
 	
 	bool (*dump_context)
 		(const struct sieve_side_effect *seffect, 
@@ -94,12 +95,7 @@ struct sieve_side_effect {
 struct sieve_side_effect_extension {
 	const struct sieve_extension *extension;
 
-	/* Extension can introduce a single or multiple action side effects */
-	union {
-		const struct sieve_side_effect **list;
-		const struct sieve_side_effect *single;
-	} side_effects;
-	unsigned int side_effects_count;
+	struct sieve_extension_obj_registry side_effects;
 };
 
 #define SIEVE_EXT_DEFINE_SIDE_EFFECT(SEF) SIEVE_EXT_DEFINE_OBJECT(SEF)

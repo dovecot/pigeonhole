@@ -17,11 +17,11 @@
  * Forward declarations 
  */
 
-static bool ext_body_opcode_dump
-	(const struct sieve_opcode *opcode, 
+static bool ext_body_operation_dump
+	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_body_opcode_execute
-	(const struct sieve_opcode *opcode,
+static bool ext_body_operation_execute
+	(const struct sieve_operation *op,
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool tst_body_registered
@@ -48,15 +48,14 @@ const struct sieve_command body_test = {
 	NULL 
 };
 
-/* body opcode */
+/* Body operation */
 
-const struct sieve_opcode body_opcode = { 
+const struct sieve_operation body_operation = { 
 	"body",
-	SIEVE_OPCODE_CUSTOM,
 	&body_extension,
 	0,
-	ext_body_opcode_dump, 
-	ext_body_opcode_execute 
+	ext_body_operation_dump, 
+	ext_body_operation_execute 
 };
 
 enum tst_body_optional {	
@@ -208,7 +207,8 @@ static bool tst_body_validate
 static bool tst_body_generate
 	(struct sieve_generator *gentr,	struct sieve_command_context *ctx) 
 {
-	(void)sieve_generator_emit_opcode_ext(gentr, &body_opcode, ext_body_my_id);
+	(void)sieve_generator_emit_operation_ext
+		(gentr, &body_operation, ext_body_my_id);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(gentr, ctx, NULL) )
@@ -234,8 +234,8 @@ static bool tag_body_transform_generate
  * Code dump 
  */
  
-static bool ext_body_opcode_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED, 
+static bool ext_body_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int opt_code = 1;
@@ -292,8 +292,8 @@ static bool ext_body_opcode_dump
 		sieve_opr_stringlist_dump(denv, address);
 }
 
-static bool ext_body_opcode_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool ext_body_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	bool result = TRUE;

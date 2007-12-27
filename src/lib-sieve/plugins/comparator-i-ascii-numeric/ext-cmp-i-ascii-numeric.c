@@ -11,7 +11,7 @@
 #include "sieve-common.h"
 
 #include "sieve-code.h"
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-comparators.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -36,8 +36,8 @@ const struct sieve_extension comparator_i_ascii_numeric_extension = {
 	NULL, 
 	ext_cmp_i_ascii_numeric_binary_load,  
 	NULL,
-	SIEVE_EXT_DEFINE_NO_OPCODES, 
-	NULL
+	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_cmp_i_ascii_numeric_load(int ext_id)

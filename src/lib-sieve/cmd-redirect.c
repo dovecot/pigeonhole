@@ -22,11 +22,11 @@
 
 /* Forward declarations */
 
-static bool cmd_redirect_opcode_dump
-	(const struct sieve_opcode *opcode,
+static bool cmd_redirect_operation_dump
+	(const struct sieve_operation *op,
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_redirect_opcode_execute
-	(const struct sieve_opcode *opcode, 
+static bool cmd_redirect_operation_execute
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool cmd_redirect_validate
@@ -50,14 +50,14 @@ const struct sieve_command cmd_redirect = {
 	NULL 
 };
 
-/* Redirect opcode */
+/* Redirect operation */
 
-const struct sieve_opcode cmd_redirect_opcode = { 
+const struct sieve_operation cmd_redirect_operation = { 
 	"REDIRECT",
-	SIEVE_OPCODE_REDIRECT,
-	NULL, 0,
-	cmd_redirect_opcode_dump, 
-	cmd_redirect_opcode_execute 
+	NULL, 
+	SIEVE_OPERATION_REDIRECT,
+	cmd_redirect_operation_dump, 
+	cmd_redirect_operation_execute 
 };
 
 /* Redirect action */
@@ -110,7 +110,7 @@ static bool cmd_redirect_validate
 static bool cmd_redirect_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode(generator, &cmd_redirect_opcode);
+	sieve_generator_emit_operation(generator, &cmd_redirect_operation);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -123,8 +123,8 @@ static bool cmd_redirect_generate
  * Code dump
  */
  
-static bool cmd_redirect_opcode_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool cmd_redirect_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "REDIRECT");
@@ -141,8 +141,8 @@ static bool cmd_redirect_opcode_dump
  * Intepretation
  */
 
-static bool cmd_redirect_opcode_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool cmd_redirect_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_side_effects_list *slist = NULL;

@@ -9,7 +9,7 @@
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 
 #include "sieve-comparators.h"
 #include "sieve-address-parts.h"

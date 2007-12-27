@@ -165,7 +165,7 @@ static bool cmd_if_generate
 		 * anyway. 
 		 */
 		if ( !sieve_command_block_exits_unconditionally(ctx) ) {
-			sieve_operation_emit_code(sbin, &sieve_jmp_opcode);
+			sieve_operation_emit_code(sbin, &sieve_jmp_operation, -1);
 			ctx_data->exit_jump = sieve_binary_emit_offset(sbin, 0);
 			ctx_data->jump_generated = TRUE;
 		}

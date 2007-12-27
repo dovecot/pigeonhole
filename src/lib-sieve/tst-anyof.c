@@ -56,7 +56,7 @@ static bool tst_anyof_generate
 	
 	if ( !jump_true ) {
 		/* All tests failed, jump to case FALSE */
-		sieve_operation_emit_code(sbin, &sieve_jmp_opcode);
+		sieve_operation_emit_code(sbin, &sieve_jmp_operation, -1);
 		sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
 		
 		/* All true exits jump here */

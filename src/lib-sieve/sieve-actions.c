@@ -5,7 +5,7 @@
 #include "mail-namespace.h"
 
 #include "sieve-code.h"
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"
 #include "sieve-code-dumper.h"
@@ -43,8 +43,8 @@ const struct sieve_extension side_effects_extension = {
 	NULL, NULL, 
 	seffect_binary_load,
 	NULL,
-	SIEVE_EXT_DEFINE_NO_OPCODES, /* Opcode is hardcoded */
-	NULL
+	SIEVE_EXT_DEFINE_NO_OPERATIONS, /* Opcode is hardcoded */
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 	
 static bool seffect_extension_load(int ext_id) 
@@ -93,9 +93,12 @@ void sieve_opr_side_effect_emit
 	(struct sieve_binary *sbin, const struct sieve_side_effect *seffect, 
 		int ext_id)
 { 
-	sieve_binary_emit_extension
-		(sbin, seffect, ext_id, 0, SIEVE_OPERAND_SIDE_EFFECT, 
-		seffect->extension->side_effects_count > 1)
+	sieve_size_t address;
+
+	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_SIDE_EFFECT);
+
+	sieve_extension_emit_object
+		(seffect, side_effects, sbin, ext_id, 0, address); 
 }
 
 bool sieve_opr_side_effect_dump
@@ -127,13 +130,15 @@ const struct sieve_side_effect *sieve_opr_side_effect_read
 {
 	unsigned int seffect_code;
 	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
-	
+
 	if ( operand == NULL || operand->class != &side_effect_class ) 
 		return NULL;
+		
 	
 	if ( sieve_binary_read_byte(sbin, address, &seffect_code) ) {
 		int ext_id = -1;
 		const struct sieve_side_effect_extension *se_ext;
+		const struct sieve_side_effect *seffect;
 
 		if ( sieve_binary_extension_get_by_index(sbin,
 			seffect_code, &ext_id) == NULL )
@@ -141,16 +146,11 @@ const struct sieve_side_effect *sieve_opr_side_effect_read
 
 		se_ext = sieve_side_effect_extension_get(sbin, ext_id); 
 
-		if ( se_ext != NULL ) {  	
-			unsigned int code;
-			if ( se_ext->side_effects_count == 1 )
-				return se_ext->side_effects.single;
-	  	
-			if ( sieve_binary_read_byte(sbin, address, &code) )
-				return se_ext->side_effects.list[code];
-		} else {
-			i_info("Unknown action side-effect %d.", seffect_code); 
-		}
+		sieve_extension_read_object 
+			(se_ext, struct sieve_side_effect, side_effects, sbin, 
+			address, seffect)
+
+		return seffect;
 	}		
 		
 	return NULL; 

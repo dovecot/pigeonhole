@@ -49,15 +49,15 @@ extern const struct sieve_command tst_hasflag;
 
 extern const struct sieve_argument tag_flags;
 
-/* Opcodes */
+/* Operations */
 
-extern const struct sieve_opcode setflag_opcode;
-extern const struct sieve_opcode addflag_opcode;
-extern const struct sieve_opcode removeflag_opcode;
-extern const struct sieve_opcode hasflag_opcode;
+extern const struct sieve_operation setflag_operation;
+extern const struct sieve_operation addflag_operation;
+extern const struct sieve_operation removeflag_operation;
+extern const struct sieve_operation hasflag_operation;
 
-const struct sieve_opcode *imapflags_opcodes[] = 
-	{ &setflag_opcode, &addflag_opcode, &removeflag_opcode, &hasflag_opcode };
+const struct sieve_operation *imapflags_operations[] = 
+	{ &setflag_operation, &addflag_operation, &removeflag_operation, &hasflag_operation };
 
 /* Extension definitions */
 
@@ -70,8 +70,8 @@ const struct sieve_extension imapflags_extension = {
 	NULL, 
 	ext_imapflags_binary_load,
 	ext_imapflags_interpreter_load, 
-	SIEVE_EXT_DEFINE_OPCODES(imapflags_opcodes), 
-	NULL
+	SIEVE_EXT_DEFINE_OPERATIONS(imapflags_operations), 
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_imapflags_load(int ext_id)

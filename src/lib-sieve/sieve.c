@@ -161,7 +161,9 @@ struct sieve_binary *sieve_open
 		
 		if ( sbin == NULL ) {	
 			sbin = sieve_compile_script(script, ehandler);
-			(void) sieve_binary_save(sbin, binpath);	
+
+			if ( sbin != NULL )
+				(void) sieve_binary_save(sbin, binpath);	
 		}
 	);
 	

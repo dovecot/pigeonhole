@@ -34,29 +34,29 @@ const struct sieve_command tst_size = {
 	NULL 
 };
 
-/* Opcodes */
+/* Operations */
 
-static bool tst_size_opcode_dump
-	(const struct sieve_opcode *opcode, 
+static bool tst_size_operation_dump
+	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool tst_size_opcode_execute
-	(const struct sieve_opcode *opcode, 
+static bool tst_size_operation_execute
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_opcode tst_size_over_opcode = { 
+const struct sieve_operation tst_size_over_operation = { 
 	"SIZE-OVER",
-	SIEVE_OPCODE_SIZE_OVER,
-	NULL, 0,
-	tst_size_opcode_dump, 
-	tst_size_opcode_execute 
+	NULL, 
+	SIEVE_OPERATION_SIZE_OVER,
+	tst_size_operation_dump, 
+	tst_size_operation_execute 
 };
 
-const struct sieve_opcode tst_size_under_opcode = {
+const struct sieve_operation tst_size_under_operation = {
 	"SIZE-UNDER",
-	SIEVE_OPCODE_SIZE_UNDER,
-	NULL, 0, 
-	tst_size_opcode_dump, 
-	tst_size_opcode_execute 
+	NULL, 
+	SIEVE_OPERATION_SIZE_UNDER,
+	tst_size_operation_dump, 
+	tst_size_operation_execute 
 };
 
 /* Context structures */
@@ -168,9 +168,9 @@ bool tst_size_generate
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) ctx->data;
 
 	if ( ctx_data->type == SIZE_OVER ) 
-		sieve_generator_emit_opcode(generator, &tst_size_over_opcode);
+		sieve_generator_emit_operation(generator, &tst_size_over_operation);
 	else
-		sieve_generator_emit_opcode(generator, &tst_size_under_opcode);
+		sieve_generator_emit_operation(generator, &tst_size_under_operation);
 
  	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -181,11 +181,11 @@ bool tst_size_generate
 
 /* Code dump */
 
-static bool tst_size_opcode_dump
-(const struct sieve_opcode *opcode,
+static bool tst_size_operation_dump
+(const struct sieve_operation *op,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-    sieve_code_dumpf(denv, "%s", opcode->mnemonic);
+    sieve_code_dumpf(denv, "%s", op->mnemonic);
 	sieve_code_descend(denv);
 	
 	return 
@@ -207,13 +207,13 @@ static bool tst_size_get
 	return TRUE;
 }
 
-static bool tst_size_opcode_execute
-(const struct sieve_opcode *opcode,
+static bool tst_size_operation_execute
+(const struct sieve_operation *op,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	sieve_size_t mail_size, limit;
 	
-	printf("%s\n", opcode->mnemonic);
+	printf("%s\n", op->mnemonic);
 	
 	if ( !sieve_opr_number_read(renv->sbin, address, &limit) ) 
 		return FALSE;	
@@ -221,7 +221,7 @@ static bool tst_size_opcode_execute
 	if ( !tst_size_get(renv, &mail_size) )
 		return FALSE;
 	
-	if ( opcode == &tst_size_over_opcode )
+	if ( op == &tst_size_over_operation )
 		sieve_interpreter_set_test_result(renv->interp, (mail_size > limit));
 	else
 		sieve_interpreter_set_test_result(renv->interp, (mail_size < limit));

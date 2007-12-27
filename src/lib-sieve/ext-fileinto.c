@@ -10,7 +10,7 @@
 
 #include <stdio.h>
 
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-actions.h"
@@ -25,11 +25,11 @@
 static bool ext_fileinto_load(int ext_id);
 static bool ext_fileinto_validator_load(struct sieve_validator *validator);
 
-static bool ext_fileinto_opcode_dump
-	(const struct sieve_opcode *opcode, 
+static bool ext_fileinto_operation_dump
+	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_fileinto_opcode_execute
-	(const struct sieve_opcode *opcode, 
+static bool ext_fileinto_operation_execute
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address); 
 
 static bool cmd_fileinto_validate
@@ -41,15 +41,15 @@ static bool cmd_fileinto_generate
 
 static int ext_my_id;
 
-const struct sieve_opcode fileinto_opcode;
+const struct sieve_operation fileinto_operation;
 
 const struct sieve_extension fileinto_extension = { 
 	"fileinto", 
 	ext_fileinto_load,
 	ext_fileinto_validator_load, 
 	NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPCODE(fileinto_opcode), 
-	NULL	
+	SIEVE_EXT_DEFINE_OPERATION(fileinto_operation), 
+	SIEVE_EXT_DEFINE_NO_OPERANDS	
 };
 
 static bool ext_fileinto_load(int ext_id) 
@@ -73,15 +73,14 @@ static const struct sieve_command fileinto_command = {
 	NULL 
 };
 
-/* Fileinto opcode */
+/* Fileinto operation */
 
-const struct sieve_opcode fileinto_opcode = { 
+const struct sieve_operation fileinto_operation = { 
 	"FILEINTO",
-	SIEVE_OPCODE_CUSTOM,
 	&fileinto_extension,
 	0,
-	ext_fileinto_opcode_dump, 
-	ext_fileinto_opcode_execute 
+	ext_fileinto_operation_dump, 
+	ext_fileinto_operation_execute 
 };
 
 /* Validation */
@@ -115,7 +114,7 @@ static bool ext_fileinto_validator_load(struct sieve_validator *validator)
 static bool cmd_fileinto_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode_ext(generator, &fileinto_opcode, ext_my_id);
+	sieve_generator_emit_operation_ext(generator, &fileinto_operation, ext_my_id);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -128,8 +127,8 @@ static bool cmd_fileinto_generate
  * Code dump
  */
  
-static bool ext_fileinto_opcode_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool ext_fileinto_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "FILEINTO");
@@ -146,8 +145,8 @@ static bool ext_fileinto_opcode_dump
  * Execution
  */
 
-static bool ext_fileinto_opcode_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool ext_fileinto_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_side_effects_list *slist = NULL; 

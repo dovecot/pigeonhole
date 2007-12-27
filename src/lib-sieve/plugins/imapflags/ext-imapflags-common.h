@@ -7,17 +7,17 @@ extern int ext_imapflags_my_id;
 extern const struct sieve_extension imapflags_extension;
 
 enum ext_imapflags_opcode {
-	EXT_IMAPFLAGS_OPCODE_SETFLAG,
-	EXT_IMAPFLAGS_OPCODE_ADDFLAG,
-	EXT_IMAPFLAGS_OPCODE_REMOVEFLAG,
-	EXT_IMAPFLAGS_OPCODE_HASFLAG
+	EXT_IMAPFLAGS_OPERATION_SETFLAG,
+	EXT_IMAPFLAGS_OPERATION_ADDFLAG,
+	EXT_IMAPFLAGS_OPERATION_REMOVEFLAG,
+	EXT_IMAPFLAGS_OPERATION_HASFLAG
 };
 
 bool ext_imapflags_command_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 
-bool ext_imapflags_command_opcode_dump
-(const struct sieve_opcode *opcode,	
+bool ext_imapflags_command_operation_dump
+(const struct sieve_operation *op,	
 	const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
 /* Flag registration */

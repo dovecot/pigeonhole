@@ -78,11 +78,11 @@ bool ext_imapflags_command_validate
 	return TRUE;
 }
 
-bool ext_imapflags_command_opcode_dump
-(const struct sieve_opcode *opcode,
+bool ext_imapflags_command_operation_dump
+(const struct sieve_operation *op,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_code_dumpf(denv, "%s", opcode->mnemonic);
+	sieve_code_dumpf(denv, "%s", op->mnemonic);
 	sieve_code_descend(denv);
 
 	return 

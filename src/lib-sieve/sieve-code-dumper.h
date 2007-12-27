@@ -28,7 +28,7 @@ inline void sieve_code_mark_specific
 inline void sieve_code_descend(const struct sieve_dumptime_env *denv);
 inline void sieve_code_ascend(const struct sieve_dumptime_env *denv);
 
-/* Opcodes and operands */
+/* Operations and operands */
 	
 bool sieve_code_dumper_print_optional_operands
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);

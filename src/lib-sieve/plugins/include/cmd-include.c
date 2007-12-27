@@ -17,10 +17,10 @@
 /* Forward declarations */
 
 static bool opc_include_dump
-	(const struct sieve_opcode *opcode,	
+	(const struct sieve_operation *op,	
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool opc_include_execute
-	(const struct sieve_opcode *opcode, 
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool cmd_include_registered
@@ -53,13 +53,12 @@ const struct sieve_command cmd_include = {
 	NULL 
 };
 
-/* Include opcode */
+/* Include operation */
 
-const struct sieve_opcode include_opcode = { 
+const struct sieve_operation include_operation = { 
 	"include",
-	SIEVE_OPCODE_CUSTOM,
 	&include_extension,
-	EXT_INCLUDE_OPCODE_INCLUDE,
+	EXT_INCLUDE_OPERATION_INCLUDE,
 	opc_include_dump, 
 	opc_include_execute
 };
@@ -195,8 +194,8 @@ static bool cmd_include_generate
 		(gentr, cmd, ctx_data->location, ctx_data->script_name, &block_id) ) 
  		return FALSE;
  		
- 	sieve_generator_emit_opcode_ext	
-		(gentr, &include_opcode, ext_include_my_id);
+ 	sieve_generator_emit_operation_ext	
+		(gentr, &include_operation, ext_include_my_id);
 	sieve_binary_emit_offset(sbin, block_id); 
  	 		
 	return TRUE;
@@ -207,7 +206,7 @@ static bool cmd_include_generate
  */
  
 static bool opc_include_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int block;
@@ -225,7 +224,7 @@ static bool opc_include_dump
  */
  
 static bool opc_include_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	int block;

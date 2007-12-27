@@ -8,8 +8,8 @@ extern int ext_variables_my_id;
 extern struct sieve_extension variables_extension;
 
 enum ext_variables_opcode {
-	EXT_VARIABLES_OPCODE_SET,
-	EXT_VARIABLES_OPCODE_STRING
+	EXT_VARIABLES_OPERATION_SET,
+	EXT_VARIABLES_OPERATION_STRING
 };
 
 /* Extension */

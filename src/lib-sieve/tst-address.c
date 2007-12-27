@@ -38,21 +38,21 @@ const struct sieve_command tst_address = {
 	NULL 
 };
 
-/* Opcode */
+/* Operands */
 
-static bool tst_address_opcode_dump
-	(const struct sieve_opcode *opcode, 
+static bool tst_address_operation_dump
+	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool tst_address_opcode_execute
-	(const struct sieve_opcode *opcode, 
+static bool tst_address_operation_execute
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_opcode tst_address_opcode = { 
+const struct sieve_operation tst_address_operation = { 
 	"ADDRESS",
-	SIEVE_OPCODE_ADDRESS,
-	NULL, 0,
-	tst_address_opcode_dump, 
-	tst_address_opcode_execute 
+	NULL,
+	SIEVE_OPERATION_ADDRESS,
+	tst_address_operation_dump, 
+	tst_address_operation_execute 
 };
 
 /* Test registration */
@@ -100,7 +100,7 @@ static bool tst_address_validate
 static bool tst_address_generate
 	(struct sieve_generator *generator, struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode(generator, &tst_address_opcode);
+	sieve_generator_emit_operation(generator, &tst_address_operation);
 	
 	/* Generate arguments */  	
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -111,8 +111,8 @@ static bool tst_address_generate
 
 /* Code dump */
 
-static bool tst_address_opcode_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED,	
+static bool tst_address_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED,	
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "ADDRESS");
@@ -129,8 +129,8 @@ static bool tst_address_opcode_dump
 
 /* Code execution */
 
-static bool tst_address_opcode_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED, 
+static bool tst_address_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	bool result = TRUE;

@@ -13,11 +13,11 @@
 
 /* Forward declarations */
 
-static bool opc_set_dump
-	(const struct sieve_opcode *opcode,	
+static bool cmd_set_operation_dump
+	(const struct sieve_operation *op,	
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool opc_set_execute
-	(const struct sieve_opcode *opcode, 
+static bool cmd_set_operation_execute
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool cmd_set_registered
@@ -43,14 +43,13 @@ const struct sieve_command cmd_set = {
 	NULL 
 };
 
-/* set opcode */
-const struct sieve_opcode cmd_set_opcode = { 
+/* Set operation */
+const struct sieve_operation cmd_set_operation = { 
 	"SET",
-	SIEVE_OPCODE_CUSTOM,
 	&variables_extension,
-	EXT_VARIABLES_OPCODE_SET,
-	opc_set_dump, 
-	opc_set_execute
+	EXT_VARIABLES_OPERATION_SET,
+	cmd_set_operation_dump, 
+	cmd_set_operation_execute
 };
 
 /* Tag validation */
@@ -63,9 +62,10 @@ const struct sieve_opcode cmd_set_opcode = {
  */
  
 static bool tag_modifier_is_instance_of
-	(struct sieve_validator *validator, const char *tag)
+	(struct sieve_validator *validator, struct sieve_ast_argument *arg)
 {
-	return ext_variables_set_modifier_find(validator, tag) != NULL;
+	return ext_variables_set_modifier_find
+		(validator, sieve_ast_argument_tag(arg)) != NULL;
 }
 
 static bool tag_modifier_validate
@@ -174,8 +174,8 @@ static bool cmd_set_validate(struct sieve_validator *validator,
 static bool cmd_set_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode_ext
-		(generator, &cmd_set_opcode, ext_variables_my_id);
+	sieve_generator_emit_operation_ext
+		(generator, &cmd_set_operation, ext_variables_my_id);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -188,8 +188,8 @@ static bool cmd_set_generate
  * Code dump
  */
  
-static bool opc_set_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool cmd_set_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
 	sieve_code_dumpf(denv, "SET");
@@ -204,8 +204,8 @@ static bool opc_set_dump
  * Code execution
  */
  
-static bool opc_set_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool cmd_set_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	return TRUE;

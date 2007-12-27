@@ -59,10 +59,10 @@ inline sieve_size_t sieve_generator_get_current_address
 
 inline struct sieve_binary *sieve_generator_get_binary
 	(struct sieve_generator *gentr);
-inline sieve_size_t sieve_generator_emit_opcode
-	(struct sieve_generator *gentr, const struct sieve_opcode *opcode);
-inline sieve_size_t sieve_generator_emit_opcode_ext
-	(struct sieve_generator *gentr, const struct sieve_opcode *opcode, int ext_id);
+inline sieve_size_t sieve_generator_emit_operation
+	(struct sieve_generator *gentr, const struct sieve_operation *op);
+inline sieve_size_t sieve_generator_emit_operation_ext
+	(struct sieve_generator *gentr, const struct sieve_operation *op, int ext_id);
 
 /* Offset emission */
 

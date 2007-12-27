@@ -15,8 +15,8 @@ static bool cmd_discard_generate
 	(struct sieve_generator *generator, 
 		struct sieve_command_context *ctx ATTR_UNUSED); 
 
-static bool opc_discard_execute
-	(const struct sieve_opcode *opcode, 
+static bool cmd_discard_operation_execute
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 		
 /* Discard command 
@@ -33,15 +33,14 @@ const struct sieve_command cmd_discard = {
 	NULL 
 };
 
-/* Discard opcode */
+/* Discard operation */
 
-const struct sieve_opcode cmd_discard_opcode = { 
+const struct sieve_operation cmd_discard_operation = { 
 	"DISCARD",
-	SIEVE_OPCODE_DISCARD,
 	NULL,
-	0,
+	SIEVE_OPERATION_DISCARD,
 	NULL, 
-	opc_discard_execute 
+	cmd_discard_operation_execute 
 };
 
 /* discard action */
@@ -72,7 +71,7 @@ static bool cmd_discard_generate
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
 	sieve_operation_emit_code(
-        sieve_generator_get_binary(generator), &cmd_discard_opcode);
+        sieve_generator_get_binary(generator), &cmd_discard_operation, -1);
 	return TRUE;
 }
 
@@ -80,8 +79,8 @@ static bool cmd_discard_generate
  * Interpretation
  */
 
-static bool opc_discard_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool cmd_discard_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {	

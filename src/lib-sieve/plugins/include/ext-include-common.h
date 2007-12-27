@@ -18,8 +18,8 @@ extern const struct sieve_extension include_extension;
 /* Types */
 
 enum ext_include_opcode {
-	EXT_INCLUDE_OPCODE_INCLUDE,
-	EXT_INCLUDE_OPCODE_RETURN
+	EXT_INCLUDE_OPERATION_INCLUDE,
+	EXT_INCLUDE_OPERATION_RETURN
 };
 
 enum ext_include_script_location { 

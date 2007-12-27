@@ -23,7 +23,7 @@ struct sieve_code_dumper {
 	/* Dump status */
 	sieve_size_t pc;          /* Program counter */
 	
-	const struct sieve_opcode *opcode;
+	const struct sieve_operation *operation;
 	sieve_size_t mark_address;
 	unsigned int indent;
 	
@@ -107,7 +107,7 @@ inline void sieve_code_ascend(const struct sieve_dumptime_env *denv)
 		denv->dumper->indent--;
 }
 
-/* Opcodes and operands */
+/* Operations and operands */
 
 bool sieve_code_dumper_print_optional_operands
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
@@ -133,22 +133,22 @@ bool sieve_code_dumper_print_optional_operands
 static bool sieve_code_dumper_print_operation
 	(struct sieve_code_dumper *dumper) 
 {	
-	const struct sieve_opcode *opcode;
+	const struct sieve_operation *op;
 	
-	/* Mark start address of opcode */
+	/* Mark start address of operation */
 	dumper->indent = 0;
 	dumper->mark_address = dumper->pc;
 
-	/* Read opcode */
-	dumper->opcode = opcode = 
+	/* Read operation */
+	dumper->operation = op = 
 		sieve_operation_read(dumper->dumpenv.sbin, &(dumper->pc));
 
 	/* Try to dump it */
-	if ( opcode != NULL ) {
-		if ( opcode->dump != NULL )
-			return opcode->dump(opcode, &(dumper->dumpenv), &(dumper->pc));
-		else if ( opcode->mnemonic != NULL )
-			sieve_code_dumpf(&(dumper->dumpenv), "%s", opcode->mnemonic);
+	if ( op != NULL ) {
+		if ( op->dump != NULL )
+			return op->dump(op, &(dumper->dumpenv), &(dumper->pc));
+		else if ( op->mnemonic != NULL )
+			sieve_code_dumpf(&(dumper->dumpenv), "%s", op->mnemonic);
 		else
 			return FALSE;
 			

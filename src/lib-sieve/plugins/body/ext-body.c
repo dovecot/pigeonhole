@@ -27,7 +27,7 @@
 #include "lib.h"
 #include "array.h"
 
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-commands.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
@@ -48,10 +48,10 @@
 extern const struct sieve_command body_test;
  
 /*
- * Opcodes
+ * Operations
  */
 
-extern const struct sieve_opcode body_opcode;
+extern const struct sieve_operation body_operation;
 
 /* 
  * Extension definitions 
@@ -67,8 +67,8 @@ const struct sieve_extension body_extension = {
 	ext_body_load,
 	ext_body_validator_load, 
 	NULL, NULL, NULL, 
-	SIEVE_EXT_DEFINE_OPCODE(body_opcode), 
-	NULL 
+	SIEVE_EXT_DEFINE_OPERATION(body_operation), 
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_body_load(int ext_id) 

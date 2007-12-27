@@ -11,8 +11,8 @@
 
 /* Forward declarations */
 
-static bool opc_keep_execute
-	(const struct sieve_opcode *opcode, 
+static bool cmd_keep_operation_execute
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool cmd_keep_generate
@@ -33,15 +33,14 @@ const struct sieve_command cmd_keep = {
 	NULL
 };
 
-/* Keep opcode */
+/* Keep operation */
 
-const struct sieve_opcode cmd_keep_opcode = { 
+const struct sieve_operation cmd_keep_operation = { 
 	"KEEP",
-	SIEVE_OPCODE_KEEP,
 	NULL,
-	0,
+	SIEVE_OPERATION_KEEP,
 	NULL, 
-	opc_keep_execute 
+	cmd_keep_operation_execute 
 };
 
 /*
@@ -53,7 +52,7 @@ static bool cmd_keep_generate
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
 	sieve_operation_emit_code(
-        sieve_generator_get_binary(generator), &cmd_keep_opcode);
+        sieve_generator_get_binary(generator), &cmd_keep_operation, -1);
 	return TRUE;
 }
 
@@ -61,8 +60,8 @@ static bool cmd_keep_generate
  * Interpretation
  */
 
-static bool opc_keep_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool cmd_keep_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {	

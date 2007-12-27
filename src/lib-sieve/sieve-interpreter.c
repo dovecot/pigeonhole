@@ -106,8 +106,8 @@ struct sieve_interpreter {
 	bool interrupted;         /* Interpreter interrupt requested */
 	bool test_result;         /* Result of previous test command */
 
-	const struct sieve_opcode *current_op; /* Current opcode */ 
-	sieve_size_t current_op_addr;          /* Start address of current opcode */
+	const struct sieve_operation *current_op; /* Current operation */ 
+	sieve_size_t current_op_addr;             /* Start address of current operation */
 	
 	/* Runtime environment environment */
 	struct sieve_runtime_env runenv; 
@@ -307,7 +307,7 @@ inline bool sieve_interpreter_get_test_result
 	return interp->test_result;
 }
 
-/* Opcodes and operands */
+/* Operations and operands */
 
 bool sieve_interpreter_handle_optional_operands
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,
@@ -349,15 +349,15 @@ bool sieve_interpreter_handle_optional_operands
 bool sieve_interpreter_execute_operation
 	(struct sieve_interpreter *interp) 
 {
-	const struct sieve_opcode *opcode;
+	const struct sieve_operation *op;
 
 	interp->current_op_addr = interp->pc;
-	interp->current_op = opcode =
+	interp->current_op = op =
 		sieve_operation_read(interp->runenv.sbin, &(interp->pc));
 
-	if ( opcode != NULL ) {
-		if ( opcode->execute != NULL )
-			return opcode->execute(opcode, &(interp->runenv), &(interp->pc));
+	if ( op != NULL ) {
+		if ( op->execute != NULL )
+			return op->execute(op, &(interp->runenv), &(interp->pc));
 		else
 			return FALSE;
 			

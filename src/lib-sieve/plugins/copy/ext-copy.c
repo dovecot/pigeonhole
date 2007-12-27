@@ -13,7 +13,7 @@
 #include "sieve-common.h"
 
 #include "sieve-code.h"
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-actions.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
@@ -38,8 +38,8 @@ const struct sieve_extension copy_extension = {
 	NULL, 
 	ext_copy_binary_load, 
 	NULL, 
-	SIEVE_EXT_DEFINE_NO_OPCODES,
-	NULL
+	SIEVE_EXT_DEFINE_NO_OPERATIONS,
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_copy_load(int ext_id)

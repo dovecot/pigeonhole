@@ -3,7 +3,7 @@
 #include "hash.h"
 #include "array.h"
 
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-code.h"
 #include "sieve-commands.h"
 #include "sieve-binary.h"
@@ -63,8 +63,8 @@ const struct sieve_extension comparator_extension = {
 	NULL, 
 	cmp_binary_load,
 	NULL,
-	SIEVE_EXT_DEFINE_NO_OPCODES,
-	NULL
+	SIEVE_EXT_DEFINE_NO_OPERATIONS,
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 	
 static bool cmp_extension_load(int ext_id) 
@@ -272,8 +272,12 @@ void sieve_comparators_link_tag
 inline bool sieve_comparator_tag_is
 (struct sieve_ast_argument *tag, const struct sieve_comparator *cmp)
 {
-	return (tag->argument == &comparator_tag && 
-		((const struct sieve_comparator *) tag->context) == cmp);
+	const struct sieve_comparator_context *cmpctx = 
+		(const struct sieve_comparator_context *) tag->context;
+
+	if ( cmpctx == NULL ) return FALSE;
+	
+	return ( tag->argument == &comparator_tag && cmpctx->comparator == cmp );
 }
 
 inline const struct sieve_comparator *sieve_comparator_tag_get

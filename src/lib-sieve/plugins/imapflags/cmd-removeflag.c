@@ -13,8 +13,8 @@
 static bool cmd_removeflag_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
-static bool cmd_removeflag_opcode_execute
-	(const struct sieve_opcode *opcode,	
+static bool cmd_removeflag_operation_execute
+	(const struct sieve_operation *op,	
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 /* Removeflag command 
@@ -34,15 +34,14 @@ const struct sieve_command cmd_removeflag = {
 	NULL 
 };
 
-/* Removeflag opcode */
+/* Removeflag operation */
 
-const struct sieve_opcode removeflag_opcode = { 
+const struct sieve_operation removeflag_operation = { 
 	"REMOVEFLAG",
-	SIEVE_OPCODE_CUSTOM,
 	&imapflags_extension,
-	EXT_IMAPFLAGS_OPCODE_REMOVEFLAG,
-	ext_imapflags_command_opcode_dump, 
-	cmd_removeflag_opcode_execute 
+	EXT_IMAPFLAGS_OPERATION_REMOVEFLAG,
+	ext_imapflags_command_operation_dump, 
+	cmd_removeflag_operation_execute 
 };
 
 /* 
@@ -52,8 +51,8 @@ const struct sieve_opcode removeflag_opcode = {
 static bool cmd_removeflag_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx)
 {
-	sieve_generator_emit_opcode_ext
-		(generator, &removeflag_opcode, ext_imapflags_my_id);
+	sieve_generator_emit_operation_ext
+		(generator, &removeflag_operation, ext_imapflags_my_id);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -66,8 +65,8 @@ static bool cmd_removeflag_generate
  * Execution
  */
 
-static bool cmd_removeflag_opcode_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool cmd_removeflag_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	bool result = TRUE;

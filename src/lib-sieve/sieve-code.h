@@ -27,7 +27,7 @@ inline sieve_size_t sieve_coded_stringlist_get_end_address
 inline sieve_size_t sieve_coded_stringlist_get_current_offset
 	(struct sieve_coded_stringlist *strlist);
 
-/* Operand: argument to an opcode */
+/* Operand: argument to an operation */
 
 struct sieve_operand_class {
 	const char *name;
@@ -114,60 +114,56 @@ struct sieve_coded_stringlist *sieve_opr_stringlist_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 
 
-/* Opcode: identifies what's to be done */
+/* Operation: identifies what's to be done */
 
 enum sieve_operation_code {
-	SIEVE_OPCODE_INVALID,
-	SIEVE_OPCODE_JMP,
-	SIEVE_OPCODE_JMPTRUE,
-	SIEVE_OPCODE_JMPFALSE,
+	SIEVE_OPERATION_INVALID,
+	SIEVE_OPERATION_JMP,
+	SIEVE_OPERATION_JMPTRUE,
+	SIEVE_OPERATION_JMPFALSE,
 	
-	SIEVE_OPCODE_STOP,
-	SIEVE_OPCODE_KEEP,
-	SIEVE_OPCODE_DISCARD,
-	SIEVE_OPCODE_REDIRECT,
+	SIEVE_OPERATION_STOP,
+	SIEVE_OPERATION_KEEP,
+	SIEVE_OPERATION_DISCARD,
+	SIEVE_OPERATION_REDIRECT,
 	
-	SIEVE_OPCODE_ADDRESS,
-	SIEVE_OPCODE_HEADER, 
-	SIEVE_OPCODE_EXISTS, 
-	SIEVE_OPCODE_SIZE_OVER,
-	SIEVE_OPCODE_SIZE_UNDER,
+	SIEVE_OPERATION_ADDRESS,
+	SIEVE_OPERATION_HEADER, 
+	SIEVE_OPERATION_EXISTS, 
+	SIEVE_OPERATION_SIZE_OVER,
+	SIEVE_OPERATION_SIZE_UNDER,
 	
-	SIEVE_OPCODE_CUSTOM
+	SIEVE_OPERATION_CUSTOM
 };
 
-struct sieve_opcode {
+struct sieve_operation {
 	const char *mnemonic;
 	
-	enum sieve_operation_code code;
-	
 	const struct sieve_extension *extension;
-	unsigned int ext_code;
+	unsigned int code;
 	
 	bool (*dump)
-		(const struct sieve_opcode *opcode, 
+		(const struct sieve_operation *op, 
 			const struct sieve_dumptime_env *denv, sieve_size_t *address);
 	bool (*execute)
-		(const struct sieve_opcode *opcode, 
+		(const struct sieve_operation *op, 
 			const struct sieve_runtime_env *renv, sieve_size_t *address);
 };
 
-extern const struct sieve_opcode *sieve_opcodes[];
-extern const unsigned int sieve_opcode_count;
+extern const struct sieve_operation *sieve_operations[];
+extern const unsigned int sieve_operations_count;
 
-extern const struct sieve_opcode sieve_jmp_opcode;
-extern const struct sieve_opcode sieve_jmptrue_opcode;
-extern const struct sieve_opcode sieve_jmpfalse_opcode; 
+extern const struct sieve_operation sieve_jmp_operation;
+extern const struct sieve_operation sieve_jmptrue_operation;
+extern const struct sieve_operation sieve_jmpfalse_operation; 
 
 inline sieve_size_t sieve_operation_emit_code
-	(struct sieve_binary *sbin, const struct sieve_opcode *op);
-inline sieve_size_t sieve_operation_emit_code_ext
-	(struct sieve_binary *sbin, const struct sieve_opcode *op, int ext_id);	
-const struct sieve_opcode *sieve_operation_read
+	(struct sieve_binary *sbin, const struct sieve_operation *op, int ext_id);	
+const struct sieve_operation *sieve_operation_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 
-bool sieve_opcode_string_dump
-	(const struct sieve_opcode *opcode,
+bool sieve_operation_string_dump
+	(const struct sieve_operation *op,
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
 /* Core operands */

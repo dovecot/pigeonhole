@@ -7,7 +7,7 @@
 #include "array.h"
 #include "message-address.h"
 
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-code.h"
 #include "sieve-commands.h"
 #include "sieve-binary.h"
@@ -49,8 +49,8 @@ const struct sieve_extension address_part_extension = {
 	NULL, 
 	addrp_binary_load,
 	NULL,
-	SIEVE_EXT_DEFINE_NO_OPCODES,
-	NULL
+	SIEVE_EXT_DEFINE_NO_OPERATIONS,
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 	
 static bool addrp_extension_load(int ext_id) 

@@ -21,11 +21,11 @@ static bool tst_hasflag_validate
 static bool tst_hasflag_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
-static bool tst_hasflag_opcode_dump
-	(const struct sieve_opcode *opcode,	
+static bool tst_hasflag_operation_dump
+	(const struct sieve_operation *op,	
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool tst_hasflag_opcode_execute
-	(const struct sieve_opcode *opcode,	
+static bool tst_hasflag_operation_execute
+	(const struct sieve_operation *op,	
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 /* Hasflag test
@@ -47,15 +47,14 @@ const struct sieve_command tst_hasflag = {
 	NULL 
 };
 
-/* Hasflag opcode */
+/* Hasflag operation */
 
-const struct sieve_opcode hasflag_opcode = { 
+const struct sieve_operation hasflag_operation = { 
 	"HASFLAG",
-	SIEVE_OPCODE_CUSTOM,
 	&imapflags_extension,
-	EXT_IMAPFLAGS_OPCODE_HASFLAG,
-	tst_hasflag_opcode_dump,
-	tst_hasflag_opcode_execute
+	EXT_IMAPFLAGS_OPERATION_HASFLAG,
+	tst_hasflag_operation_dump,
+	tst_hasflag_operation_execute
 };
 
 /* Optional arguments */
@@ -150,8 +149,8 @@ static bool tst_hasflag_validate
 static bool tst_hasflag_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx)
 {
-	sieve_generator_emit_opcode_ext
-		(generator, &hasflag_opcode, ext_imapflags_my_id);
+	sieve_generator_emit_operation_ext
+		(generator, &hasflag_operation, ext_imapflags_my_id);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -164,13 +163,14 @@ static bool tst_hasflag_generate
  * Code dump 
  */
  
-static bool tst_hasflag_opcode_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED,	
+static bool tst_hasflag_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED,	
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int opt_code = 1;
 
 	sieve_code_dumpf(denv, "HASFLAG");
+	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(denv->sbin, address) ) {
@@ -201,8 +201,8 @@ static bool tst_hasflag_opcode_dump
  * Execution
  */
 
-static bool tst_hasflag_opcode_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool tst_hasflag_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	int opt_code = 1;

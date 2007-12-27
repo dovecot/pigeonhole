@@ -4,7 +4,7 @@
 #include "mempool.h"
 
 #include "sieve-common.h"
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-commands-private.h"
 #include "sieve-code.h"
 #include "sieve-binary.h"
@@ -179,16 +179,16 @@ inline struct sieve_binary *sieve_generator_get_binary
 	return gentr->binary;
 }
 
-inline sieve_size_t sieve_generator_emit_opcode
-	(struct sieve_generator *gentr, const struct sieve_opcode *opcode)
+inline sieve_size_t sieve_generator_emit_operation
+	(struct sieve_generator *gentr, const struct sieve_operation *op)
 {
-	return sieve_operation_emit_code(gentr->binary, opcode);
+	return sieve_operation_emit_code(gentr->binary, op, -1);
 }
 
-inline sieve_size_t sieve_generator_emit_opcode_ext
-	(struct sieve_generator *gentr, const struct sieve_opcode *opcode, int ext_id)
+inline sieve_size_t sieve_generator_emit_operation_ext
+	(struct sieve_generator *gentr, const struct sieve_operation *op, int ext_id)
 {	
-	return sieve_operation_emit_code_ext(gentr->binary, opcode, ext_id);
+	return sieve_operation_emit_code(gentr->binary, op, ext_id);
 }
 
 /* Generator functions */
@@ -289,9 +289,9 @@ bool sieve_generate_test
 		if ( tst_node->context->command->generate(generator, tst_node->context) ) {
 			
 			if ( jump_true ) 
-				sieve_operation_emit_code(generator->binary, &sieve_jmptrue_opcode);
+				sieve_operation_emit_code(generator->binary, &sieve_jmptrue_operation, -1);
 			else
-				sieve_operation_emit_code(generator->binary, &sieve_jmpfalse_opcode);
+				sieve_operation_emit_code(generator->binary, &sieve_jmpfalse_operation, -1);
 			sieve_jumplist_add(jlist, sieve_binary_emit_offset(generator->binary, 0));
 						
 			return TRUE;

@@ -16,7 +16,7 @@
 #include "istream.h"
 #include "istream-header-filter.h"
 
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-actions.h"
@@ -37,26 +37,26 @@ static bool cmd_reject_validate
 static bool cmd_reject_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx); 
 
-static bool ext_reject_opcode_dump
-	(const struct sieve_opcode *opcode, 
+static bool ext_reject_operation_dump
+	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_reject_opcode_execute
-	(const struct sieve_opcode *opcode,
+static bool ext_reject_operation_execute
+	(const struct sieve_operation *op,
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 /* Extension definitions */
 
 static int ext_my_id;
 
-struct sieve_opcode reject_opcode;
+struct sieve_operation reject_operation;
 	
 struct sieve_extension reject_extension = { 
 	"reject", 
 	ext_reject_load,
 	ext_reject_validator_load, 
 	NULL, NULL, NULL, 
-	SIEVE_EXT_DEFINE_OPCODE(reject_opcode), 
-	NULL 
+	SIEVE_EXT_DEFINE_OPERATION(reject_operation), 
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_reject_load(int ext_id) 
@@ -80,15 +80,14 @@ static const struct sieve_command reject_command = {
 	NULL 
 };
 
-/* Reject opcode */
+/* Reject operation */
 
-struct sieve_opcode reject_opcode = { 
+struct sieve_operation reject_operation = { 
 	"REJECT",
-	SIEVE_OPCODE_CUSTOM,
 	&reject_extension, 
 	0,
-	ext_reject_opcode_dump, 
-	ext_reject_opcode_execute 
+	ext_reject_operation_dump, 
+	ext_reject_operation_execute 
 };
 
 /* Reject action */
@@ -153,7 +152,8 @@ static bool ext_reject_validator_load(struct sieve_validator *validator)
 static bool cmd_reject_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_opcode_ext(generator, &reject_opcode, ext_my_id);
+	sieve_generator_emit_operation_ext
+		(generator, &reject_operation, ext_my_id);
 
 	/* Generate arguments */
     if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -166,8 +166,8 @@ static bool cmd_reject_generate
  * Code dump
  */
  
-static bool ext_reject_opcode_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool ext_reject_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "REJECT");
@@ -184,8 +184,8 @@ static bool ext_reject_opcode_dump
  * Execution
  */
 
-static bool ext_reject_opcode_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool ext_reject_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_side_effects_list *slist = NULL;

@@ -13,7 +13,7 @@
 #include "lib.h"
 #include "array.h"
 
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-comparators.h"
@@ -30,11 +30,11 @@
 static bool ext_envelope_load(int ext_id);
 static bool ext_envelope_validator_load(struct sieve_validator *validator);
 
-static bool ext_envelope_opcode_dump
-	(const struct sieve_opcode *opcode, 
+static bool ext_envelope_operation_dump
+	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_envelope_opcode_execute
-	(const struct sieve_opcode *opcode,
+static bool ext_envelope_operation_execute
+	(const struct sieve_operation *op,
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool tst_envelope_registered
@@ -48,15 +48,15 @@ static bool tst_envelope_generate
 
 static int ext_my_id;
 
-const struct sieve_opcode envelope_opcode;
+const struct sieve_operation envelope_operation;
 
 const struct sieve_extension envelope_extension = { 
 	"envelope", 
 	ext_envelope_load,
 	ext_envelope_validator_load, 
 	NULL, NULL, NULL, 
-	SIEVE_EXT_DEFINE_OPCODE(envelope_opcode), 
-	NULL 
+	SIEVE_EXT_DEFINE_OPERATION(envelope_operation), 
+	SIEVE_EXT_DEFINE_NO_OPERANDS 
 };
 
 static bool ext_envelope_load(int ext_id) 
@@ -82,15 +82,14 @@ static const struct sieve_command envelope_test = {
 	NULL 
 };
 
-/* Envelope opcode */
+/* Envelope operation */
 
-const struct sieve_opcode envelope_opcode = { 
+const struct sieve_operation envelope_operation = { 
 	"ENVELOPE",
-	SIEVE_OPCODE_CUSTOM,
 	&envelope_extension,
 	0,
-	ext_envelope_opcode_dump, 
-	ext_envelope_opcode_execute 
+	ext_envelope_operation_dump, 
+	ext_envelope_operation_execute 
 };
 
 /* Command Registration */
@@ -148,8 +147,8 @@ static bool ext_envelope_validator_load(struct sieve_validator *validator)
 static bool tst_envelope_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	(void)sieve_generator_emit_opcode_ext
-		(generator, &envelope_opcode, ext_my_id);
+	(void)sieve_generator_emit_operation_ext
+		(generator, &envelope_operation, ext_my_id);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -162,8 +161,8 @@ static bool tst_envelope_generate
  * Code dump 
  */
  
-static bool ext_envelope_opcode_dump
-(const struct sieve_opcode *opcode ATTR_UNUSED, 
+static bool ext_envelope_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "ENVELOPE");
@@ -203,8 +202,8 @@ static int ext_envelope_get_fields
 	return 0;
 }
 
-static bool ext_envelope_opcode_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool ext_envelope_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	bool result = TRUE;

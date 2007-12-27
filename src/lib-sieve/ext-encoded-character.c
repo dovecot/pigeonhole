@@ -11,7 +11,7 @@
 #include "lib.h"
 #include "unichar.h"
 
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 
@@ -29,8 +29,8 @@ struct sieve_extension encoded_character_extension = {
 	ext_encoded_character_load,
 	ext_encoded_character_validator_load, 
 	NULL, NULL, NULL, 
-	SIEVE_EXT_DEFINE_NO_OPCODES, 
-	NULL 
+	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_encoded_character_load(int ext_id) 

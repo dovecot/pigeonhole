@@ -21,7 +21,7 @@
 
 #include "sieve-common.h"
 
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -42,13 +42,13 @@ static bool ext_include_interpreter_load(struct sieve_interpreter *interp);
 extern const struct sieve_command cmd_include;
 extern const struct sieve_command cmd_return;
 
-/* Opcodes */
+/* Operations */
 
-extern const struct sieve_opcode include_opcode;
-extern const struct sieve_opcode return_opcode;
+extern const struct sieve_operation include_operation;
+extern const struct sieve_operation return_operation;
 
-static const struct sieve_opcode *ext_include_opcodes[] =
-	{ &include_opcode, &return_opcode };
+static const struct sieve_operation *ext_include_operations[] =
+	{ &include_operation, &return_operation };
 
 /* Extension definitions */
 
@@ -61,8 +61,8 @@ const struct sieve_extension include_extension = {
 	ext_include_generator_load,
 	ext_include_binary_load, 
 	ext_include_interpreter_load, 
-	SIEVE_EXT_DEFINE_OPCODES(ext_include_opcodes),
-	NULL
+	SIEVE_EXT_DEFINE_OPERATIONS(ext_include_operations),
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_include_load(int ext_id)

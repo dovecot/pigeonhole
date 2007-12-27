@@ -142,14 +142,14 @@ const struct sieve_operand *sieve_operand_read
 			else
 				return NULL;
 		} else {
-			int ext_id = -1;
+/*			int ext_id = -1;
 		  const struct sieve_extension *ext = 
 		  	sieve_binary_extension_get_by_index
 		  		(sbin, operand - SIEVE_OPERAND_CUSTOM, &ext_id);
 		  
 		  if ( ext != NULL )
 		  	return ext->operand;	
-		  else
+		  else*/
 		  	return NULL;
 		}
 	}		
@@ -580,58 +580,32 @@ static struct sieve_coded_stringlist *opr_stringlist_read
 }  
 
 /* 
- * Opcodes
+ * Operations
  */
 
-/* Opcode functions */
+/* Operation functions */
 
 inline sieve_size_t sieve_operation_emit_code
-	(struct sieve_binary *sbin, const struct sieve_opcode *op)
-{
-	return sieve_binary_emit_byte(sbin, op->code);
-}
-
-inline sieve_size_t sieve_operation_emit_code_ext
-	(struct sieve_binary *sbin, const struct sieve_opcode *op, int ext_id)
+	(struct sieve_binary *sbin, const struct sieve_operation *op, int ext_id)
 {	
-	sieve_size_t address;
-	unsigned char opcode = SIEVE_OPCODE_CUSTOM + 
-		sieve_binary_extension_get_index(sbin, ext_id);
-	
-	address = sieve_binary_emit_byte(sbin, opcode);
-	if ( op->extension->opcodes_count > 1 ) 
-		(void) sieve_binary_emit_byte(sbin, op->ext_code);
-		
-	return address;
+	return sieve_extension_emit_operation
+		(op, sbin, ext_id, SIEVE_OPERATION_CUSTOM);
 }
 
-const struct sieve_opcode *sieve_operation_read
+const struct sieve_operation *sieve_operation_read
 	(struct sieve_binary *sbin, sieve_size_t *address) 
 {
 	unsigned int opcode;
 	
 	if ( sieve_binary_read_byte(sbin, address, &opcode) ) {
-		if ( opcode < SIEVE_OPCODE_CUSTOM ) {
-			if ( opcode < sieve_opcode_count )
-				return sieve_opcodes[opcode];
+		if ( opcode < SIEVE_OPERATION_CUSTOM ) {
+			if ( opcode < sieve_operations_count )
+				return sieve_operations[opcode];
 			else
 				return NULL;
 		} else {
-			int ext_id = -1;
-			const struct sieve_extension *ext = 
-			sieve_binary_extension_get_by_index
-				(sbin, opcode - SIEVE_OPCODE_CUSTOM, &ext_id);
-		  
-			if ( ext != NULL && ext->opcodes_count != 0 ) {
-				unsigned int code;
-				
-				if ( ext->opcodes_count == 1 ) 
-					return ext->opcodes.single;
-				
-				if ( sieve_binary_read_byte(sbin, address, &code) && 
-					code < ext->opcodes_count ) 
-					return ext->opcodes.list[code];
-			} 
+			return sieve_extension_read_operation
+				(opcode - SIEVE_OPERATION_CUSTOM, sbin, address);
 		}
 	}		
 	
@@ -641,83 +615,80 @@ const struct sieve_opcode *sieve_operation_read
 /* Declaration of opcodes defined in this file */
 
 static bool opc_jmp_dump
-	(const struct sieve_opcode *opcode, 
+	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
 static bool opc_jmp_execute
-	(const struct sieve_opcode *opcode, 
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool opc_jmptrue_execute
-	(const struct sieve_opcode *opcode, 
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 static bool opc_jmpfalse_execute
-	(const struct sieve_opcode *opcode, 
+	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_opcode sieve_jmp_opcode = { 
+const struct sieve_operation sieve_jmp_operation = { 
 	"JMP",
-	SIEVE_OPCODE_JMP,
 	NULL,
-	0,
+	SIEVE_OPERATION_JMP,
 	opc_jmp_dump, 
 	opc_jmp_execute 
 };
 
-const struct sieve_opcode sieve_jmptrue_opcode = { 
+const struct sieve_operation sieve_jmptrue_operation = { 
 	"JMPTRUE",
-	SIEVE_OPCODE_JMPTRUE,
 	NULL,
-	0,
+	SIEVE_OPERATION_JMPTRUE,
 	opc_jmp_dump, 
 	opc_jmptrue_execute 
 };
 
-const struct sieve_opcode sieve_jmpfalse_opcode = { 
+const struct sieve_operation sieve_jmpfalse_operation = { 
 	"JMPFALSE",
-	SIEVE_OPCODE_JMPFALSE,
 	NULL,
-	0,
+	SIEVE_OPERATION_JMPFALSE,
 	opc_jmp_dump, 
 	opc_jmpfalse_execute 
 };
 	
-extern const struct sieve_opcode cmd_stop_opcode;
-extern const struct sieve_opcode cmd_keep_opcode;
-extern const struct sieve_opcode cmd_discard_opcode;
-extern const struct sieve_opcode cmd_redirect_opcode;
+extern const struct sieve_operation cmd_stop_operation;
+extern const struct sieve_operation cmd_keep_operation;
+extern const struct sieve_operation cmd_discard_operation;
+extern const struct sieve_operation cmd_redirect_operation;
 
-extern const struct sieve_opcode tst_address_opcode;
-extern const struct sieve_opcode tst_header_opcode;
-extern const struct sieve_opcode tst_exists_opcode;
-extern const struct sieve_opcode tst_size_over_opcode;
-extern const struct sieve_opcode tst_size_under_opcode;
+extern const struct sieve_operation tst_address_operation;
+extern const struct sieve_operation tst_header_operation;
+extern const struct sieve_operation tst_exists_operation;
+extern const struct sieve_operation tst_size_over_operation;
+extern const struct sieve_operation tst_size_under_operation;
 
-const struct sieve_opcode *sieve_opcodes[] = {
+const struct sieve_operation *sieve_operations[] = {
 	NULL, 
 	
-	&sieve_jmp_opcode,
-	&sieve_jmptrue_opcode, 
-	&sieve_jmpfalse_opcode,
+	&sieve_jmp_operation,
+	&sieve_jmptrue_operation, 
+	&sieve_jmpfalse_operation,
 	
-	&cmd_stop_opcode,
-	&cmd_keep_opcode,
-	&cmd_discard_opcode,
-	&cmd_redirect_opcode,
+	&cmd_stop_operation,
+	&cmd_keep_operation,
+	&cmd_discard_operation,
+	&cmd_redirect_operation,
 
-	&tst_address_opcode,
-	&tst_header_opcode,
-	&tst_exists_opcode,
-	&tst_size_over_opcode,
-	&tst_size_under_opcode
+	&tst_address_operation,
+	&tst_header_operation,
+	&tst_exists_operation,
+	&tst_size_over_operation,
+	&tst_size_under_operation
 }; 
 
-const unsigned int sieve_opcode_count =
-	N_ELEMENTS(sieve_opcodes);
+const unsigned int sieve_operations_count =
+	N_ELEMENTS(sieve_operations);
 
 /* Code dump for core commands */
 
 static bool opc_jmp_dump
-(const struct sieve_opcode *opcode,
+(const struct sieve_operation *op,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	unsigned int pc = *address;
@@ -725,20 +696,20 @@ static bool opc_jmp_dump
 	
 	if ( sieve_binary_read_offset(denv->sbin, address, &offset) ) 
 		sieve_code_dumpf(denv, "%s %d [%08x]", 
-			opcode->mnemonic, offset, pc + offset);
+			op->mnemonic, offset, pc + offset);
 	else
 		return FALSE;
 	
 	return TRUE;
 }	
 			
-/* Code dump for trivial opcodes */
+/* Code dump for trivial operations */
 
-bool sieve_opcode_string_dump
-(const struct sieve_opcode *opcode,
+bool sieve_operation_string_dump
+(const struct sieve_operation *op,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_code_dumpf(denv, "%s", opcode->mnemonic);
+	sieve_code_dumpf(denv, "%s", op->mnemonic);
 
 	return 
 		sieve_opr_string_dump(denv, address);
@@ -747,7 +718,7 @@ bool sieve_opcode_string_dump
 /* Code execution for core commands */
 
 static bool opc_jmp_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED, 
+(const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED) 
 {
 	printf("JMP\n");
@@ -758,7 +729,7 @@ static bool opc_jmp_execute
 }	
 		
 static bool opc_jmptrue_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED, 
+(const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {	
 	if ( !sieve_interpreter_program_jump(renv->interp,
@@ -771,7 +742,7 @@ static bool opc_jmptrue_execute
 }
 
 static bool opc_jmpfalse_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED, 
+(const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {	
 	if ( !sieve_interpreter_program_jump(renv->interp,

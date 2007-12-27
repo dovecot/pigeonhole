@@ -13,8 +13,8 @@
 static bool cmd_addflag_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 	
-static bool cmd_addflag_opcode_execute
-	(const struct sieve_opcode *opcode,	
+static bool cmd_addflag_operation_execute
+	(const struct sieve_operation *op,	
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 
@@ -35,15 +35,14 @@ const struct sieve_command cmd_addflag = {
 	NULL 
 };
 
-/* Addflag opcode */
+/* Addflag operation */
 
-const struct sieve_opcode addflag_opcode = { 
+const struct sieve_operation addflag_operation = { 
 	"ADDFLAG",
-	SIEVE_OPCODE_CUSTOM,
 	&imapflags_extension,
-	EXT_IMAPFLAGS_OPCODE_ADDFLAG,
-	ext_imapflags_command_opcode_dump,
-	cmd_addflag_opcode_execute
+	EXT_IMAPFLAGS_OPERATION_ADDFLAG,
+	ext_imapflags_command_operation_dump,
+	cmd_addflag_operation_execute
 };
 
 /* Code generation */
@@ -51,8 +50,8 @@ const struct sieve_opcode addflag_opcode = {
 static bool cmd_addflag_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx)
 {
-	sieve_generator_emit_opcode_ext	
-		(generator, &addflag_opcode, ext_imapflags_my_id);
+	sieve_generator_emit_operation_ext	
+		(generator, &addflag_operation, ext_imapflags_my_id);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
@@ -65,8 +64,8 @@ static bool cmd_addflag_generate
  * Execution
  */
 
-static bool cmd_addflag_opcode_execute
-(const struct sieve_opcode *opcode ATTR_UNUSED,
+static bool cmd_addflag_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	bool result = TRUE;

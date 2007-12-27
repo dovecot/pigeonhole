@@ -11,7 +11,7 @@
 #include "lib.h"
 #include "unichar.h"
 
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 
@@ -29,13 +29,13 @@ static bool ext_variables_validator_load(struct sieve_validator *validator);
 extern const struct sieve_command cmd_set;
 extern const struct sieve_command tst_string;
 
-/* Opcodes */
+/* Operations */
 
-extern const struct sieve_opcode cmd_set_opcode;
-extern const struct sieve_opcode tst_string_opcode;
+extern const struct sieve_operation cmd_set_operation;
+extern const struct sieve_operation tst_string_operation;
 
-const struct sieve_opcode *ext_variables_opcodes[] = {
-	&cmd_set_opcode, &tst_string_opcode
+const struct sieve_operation *ext_variables_operations[] = {
+	&cmd_set_operation, &tst_string_operation
 };
 
 /* Extension definitions */
@@ -47,8 +47,8 @@ struct sieve_extension variables_extension = {
 	ext_variables_load,
 	ext_variables_validator_load, 
 	NULL, NULL, NULL, 
-	SIEVE_EXT_DEFINE_OPCODES(ext_variables_opcodes), 
-	NULL 
+	SIEVE_EXT_DEFINE_OPERATIONS(ext_variables_operations), 
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_variables_load(int ext_id) 

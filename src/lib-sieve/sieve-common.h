@@ -61,7 +61,7 @@ struct sieve_extension;
 
 /* sieve-code.h */
 struct sieve_operand;
-struct sieve_opcode;
+struct sieve_operation;
 struct sieve_coded_stringlist;
 
 /* sieve-binary.h */

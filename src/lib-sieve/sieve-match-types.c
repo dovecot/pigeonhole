@@ -6,7 +6,7 @@
 #include "hash.h"
 #include "array.h"
 
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-binary.h"
@@ -46,8 +46,8 @@ const struct sieve_extension match_type_extension = {
 	NULL,
 	mtch_binary_load,
 	NULL,
-	SIEVE_EXT_DEFINE_NO_OPCODES,
-	NULL
+	SIEVE_EXT_DEFINE_NO_OPERATIONS,
+	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 	
 static bool mtch_extension_load(int ext_id) 
