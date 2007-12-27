@@ -59,7 +59,6 @@ extern const struct sieve_comparator_extension i_ascii_numeric_comparator_ext;
 
 const struct sieve_comparator i_ascii_numeric_comparator = { 
 	"i;ascii-numeric",
-	SIEVE_COMPARATOR_CUSTOM,
 	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY,
 	&i_ascii_numeric_comparator_ext,
 	0,
@@ -70,8 +69,7 @@ const struct sieve_comparator i_ascii_numeric_comparator = {
 
 const struct sieve_comparator_extension i_ascii_numeric_comparator_ext = { 
 	&comparator_i_ascii_numeric_extension,
-	&i_ascii_numeric_comparator, 
-	NULL
+	SIEVE_EXT_DEFINE_COMPARATOR(i_ascii_numeric_comparator)
 };
 
 /* Load extension into validator */

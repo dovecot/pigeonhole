@@ -16,11 +16,9 @@ struct sieve_address_part_extension;
 
 struct sieve_address_part {
 	const char *identifier;
-	
-	enum sieve_address_part_code code;
-	
+		
 	const struct sieve_address_part_extension *extension;
-	unsigned int ext_code;
+	unsigned int code;
 
 	const char *(*extract_from)(const struct message_address *address);
 };
@@ -28,13 +26,11 @@ struct sieve_address_part {
 struct sieve_address_part_extension {
 	const struct sieve_extension *extension;
 
-	/* Either a single addr-part in this extension ... */
-	const struct sieve_address_part *address_part;
-	
-	/* ... or multiple: then the extension must handle emit/read */
-	const struct sieve_address_part *(*get_part)
-		(unsigned int code);
+	struct sieve_extension_obj_registry address_parts;
 };
+
+#define SIEVE_EXT_DEFINE_ADDRESS_PART(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
+#define SIEVE_EXT_DEFINE_ADDRESS_PARTS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 struct sieve_address_part_context {
 	struct sieve_command_context *command_ctx;

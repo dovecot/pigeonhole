@@ -2,6 +2,7 @@
 #define __SIEVE_COMPARATORS_H
 
 #include "sieve-common.h"
+#include "sieve-extensions-private.h"
 
 enum sieve_comparator_code {
 	SIEVE_COMPARATOR_I_OCTET,
@@ -19,11 +20,10 @@ enum sieve_comparator_flags {
 struct sieve_comparator {
 	const char *identifier;
 	
-	enum sieve_comparator_code code;
 	unsigned int flags;
 	
 	const struct sieve_comparator_extension *extension;
-	unsigned int ext_code;
+	unsigned int code;
 	
 	/* Equality and ordering */
 
@@ -43,13 +43,11 @@ struct sieve_comparator {
 struct sieve_comparator_extension {
 	const struct sieve_extension *extension;
 	
-	/* Either a single comparator in this extension ... */
-	const struct sieve_comparator *comparator;
-	
-	/* ... or multiple: then the extension must handle emit/read */
-	const struct sieve_comparator *(*get_comparator)
-		(unsigned int code);
+	struct sieve_extension_obj_registry comparators;
 };
+
+#define SIEVE_EXT_DEFINE_COMPARATOR(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
+#define SIEVE_EXT_DEFINE_COMPARATORS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 struct sieve_comparator_context {
 	struct sieve_command_context *command_ctx;

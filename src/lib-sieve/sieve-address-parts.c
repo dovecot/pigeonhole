@@ -27,8 +27,6 @@
  */
  
 static void opr_address_part_emit
-	(struct sieve_binary *sbin, const struct sieve_address_part *addrp);
-static void opr_address_part_emit_ext
 	(struct sieve_binary *sbin, const struct sieve_address_part *addrp, 
 		int ext_id);
 
@@ -236,22 +234,20 @@ static bool tag_address_part_validate
 /* Code generation */
 
 static void opr_address_part_emit
-(struct sieve_binary *sbin, const struct sieve_address_part *addrp)
-{ 
-	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_ADDRESS_PART);
-	(void) sieve_binary_emit_byte(sbin, addrp->code);
-}
-
-static void opr_address_part_emit_ext
 (struct sieve_binary *sbin, const struct sieve_address_part *addrp, int ext_id)
 { 
-	unsigned char addrp_code = SIEVE_ADDRESS_PART_CUSTOM + 
-		sieve_binary_extension_get_index(sbin, ext_id);
-	
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_ADDRESS_PART);	
-	(void) sieve_binary_emit_byte(sbin, addrp_code);
-	if ( addrp->extension->address_part == NULL )
-		(void) sieve_binary_emit_byte(sbin, addrp->ext_code);
+
+	if ( ext_id >= 0 ) {
+		sieve_size_t dummy;
+		
+		sieve_extension_emit_object
+			(addrp, address_parts, sbin, ext_id, SIEVE_ADDRESS_PART_CUSTOM, dummy); 
+		
+		return;
+	} 
+	
+	(void) sieve_binary_emit_byte(sbin, addrp->code);
 }
 
 /* FIXME: Duplicated */
@@ -271,26 +267,22 @@ const struct sieve_address_part *sieve_opr_address_part_read
 			else
 				return NULL;
 		} else {
-			int ext_id = -1;
-			const struct sieve_address_part_extension *ap_ext;
+			const struct sieve_address_part_extension *addrp_ext;
+			const struct sieve_address_part *addrp;
+			int ext_id = -1; 
+			
+			if ( sieve_binary_extension_get_by_index
+				(sbin, addrp_code - SIEVE_ADDRESS_PART_CUSTOM, &ext_id) == NULL )
+				return NULL;
+	
+			if ( (addrp_ext=sieve_address_part_extension_get(sbin, ext_id)) == NULL )
+				return NULL;
+	
+			sieve_extension_read_object 
+				(addrp_ext, struct sieve_address_part, address_parts, sbin, address, 
+					addrp)
 
-			if ( sieve_binary_extension_get_by_index(sbin,
-				addrp_code - SIEVE_ADDRESS_PART_CUSTOM, &ext_id) == NULL )
-				return NULL; 
-
-			ap_ext = sieve_address_part_extension_get(sbin, ext_id); 
- 
-			if ( ap_ext != NULL ) {  	
-				unsigned int code;
-				if ( ap_ext->address_part != NULL )
-					return ap_ext->address_part;
-		  	
-				if ( sieve_binary_read_byte(sbin, address, &code) &&
-					ap_ext->get_part != NULL )
-				return ap_ext->get_part(code);
-			} else {
-				i_info("Unknown address-part modifier %d.", addrp_code); 
-			}
+			return addrp;
 		}
 	}		
 		
@@ -324,11 +316,11 @@ static bool tag_address_part_generate
 	
 	if ( addrp->extension == NULL ) {
 		if ( addrp->code < SIEVE_ADDRESS_PART_CUSTOM )
-			opr_address_part_emit(sbin, addrp);
+			opr_address_part_emit(sbin, addrp, -1);
 		else
 			return FALSE;
 	} else {
-		opr_address_part_emit_ext(sbin, addrp, adpctx->ext_id);
+		opr_address_part_emit(sbin, addrp, adpctx->ext_id);
 	} 
 		
 	return TRUE;
@@ -477,25 +469,22 @@ static const char *addrp_localpart_extract_from
 
 const struct sieve_address_part all_address_part = {
 	"all",
-	SIEVE_ADDRESS_PART_ALL,
 	NULL,
-	0,
+	SIEVE_ADDRESS_PART_ALL,
 	addrp_all_extract_from
 };
 
 const struct sieve_address_part local_address_part = {
 	"localpart",
-	SIEVE_ADDRESS_PART_LOCAL,
 	NULL,
-	0,
+	SIEVE_ADDRESS_PART_LOCAL,
 	addrp_localpart_extract_from
 };
 
 const struct sieve_address_part domain_address_part = {
 	"domain",
-	SIEVE_ADDRESS_PART_DOMAIN,
 	NULL,
-	0,
+	SIEVE_ADDRESS_PART_DOMAIN,
 	addrp_domain_extract_from
 };
 

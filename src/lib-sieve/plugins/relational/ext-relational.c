@@ -85,7 +85,7 @@ static bool ext_relational_load(int ext_id)
 
 /* Validation */
 
-static const struct sieve_match_type rel_match_types[];
+static const struct sieve_match_type *rel_match_types[];
 
 static bool mtch_relational_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
@@ -177,8 +177,8 @@ static bool mtch_relational_validate
 	ctx->ctx_data = (void *) rel_match;
 
 	/* Override the actual match type with a parameter-specific one */
-	ctx->match_type = &rel_match_types
-		[REL_MATCH_INDEX(ctx->match_type->ext_code, rel_match)];
+	ctx->match_type = rel_match_types
+		[REL_MATCH_INDEX(ctx->match_type->code, rel_match)];
 
 	return TRUE;
 }
@@ -190,7 +190,7 @@ static bool mtch_value_match
 	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {
 	const struct sieve_match_type *mtch = mctx->match_type;
-	unsigned int rel_match = REL_MATCH(mtch->ext_code);	
+	unsigned int rel_match = REL_MATCH(mtch->code);	
 	int cmp_result = mctx->comparator->
 		compare(mctx->comparator, val, val_size, key, key_size);
 
@@ -271,9 +271,7 @@ extern const struct sieve_match_type_extension relational_match_extension;
 /* Parameter-independent match type objects, only used during validation */
 
 const struct sieve_match_type value_match_type = {
-	"value",
-	SIEVE_MATCH_TYPE_CUSTOM,
-	TRUE,
+	"value", TRUE,
 	&relational_match_extension,
 	RELATIONAL_VALUE,
 	mtch_relational_validate,
@@ -281,9 +279,7 @@ const struct sieve_match_type value_match_type = {
 };
 
 const struct sieve_match_type count_match_type = {
-	"count",
-	SIEVE_MATCH_TYPE_CUSTOM,
-	FALSE,
+	"count", FALSE,
 	&relational_match_extension,
 	RELATIONAL_COUNT,
 	mtch_relational_validate,
@@ -296,58 +292,51 @@ const struct sieve_match_type count_match_type = {
  * not such a great idea. This needs more thought
  */
 
-#define VALUE_MATCH_TYPE(name, rel_match, func) {         \
-		"value-" name,                                    \
-		SIEVE_MATCH_TYPE_CUSTOM,                          \
-		TRUE,                                             \
-		&relational_match_extension,                      \
-		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match),     \
-		NULL, NULL, NULL,                                 \
-		mtch_value_match,                                 \
-		NULL                                              \
-	}
-
-#define COUNT_MATCH_TYPE(name, rel_match, func) {         \
-		"count-" name,                                    \
-		SIEVE_MATCH_TYPE_CUSTOM,                          \
-        FALSE,                                            \
-		&relational_match_extension,                      \
-		REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match),     \
-		NULL, NULL,                                       \
-		mtch_count_match_init,                            \
-		mtch_count_match,                                 \
-		mtch_count_match_deinit                           \
-	}
-	
-static const struct sieve_match_type rel_match_types[] = { 
-	VALUE_MATCH_TYPE("gt", REL_MATCH_GREATER, NULL), 
-	VALUE_MATCH_TYPE("ge", REL_MATCH_GREATER_EQUAL, NULL), 
-	VALUE_MATCH_TYPE("lt", REL_MATCH_LESS, NULL), 
-	VALUE_MATCH_TYPE("le", REL_MATCH_LESS_EQUAL, NULL), 
-	VALUE_MATCH_TYPE("eq", REL_MATCH_EQUAL, NULL), 
-	VALUE_MATCH_TYPE("ne", REL_MATCH_NOT_EQUAL, NULL),
-
-	COUNT_MATCH_TYPE("gt", REL_MATCH_GREATER, NULL), 
-	COUNT_MATCH_TYPE("ge", REL_MATCH_GREATER_EQUAL, NULL), 
-	COUNT_MATCH_TYPE("lt", REL_MATCH_LESS, NULL), 
-	COUNT_MATCH_TYPE("le", REL_MATCH_LESS_EQUAL, NULL), 
-	COUNT_MATCH_TYPE("eq", REL_MATCH_EQUAL, NULL), 
-	COUNT_MATCH_TYPE("ne", REL_MATCH_NOT_EQUAL, NULL)
-};
- 
-static const struct sieve_match_type *ext_relational_get_match 
-	(unsigned int code)
-{
-	if ( code < N_ELEMENTS(rel_match_types) ) 
-		return &rel_match_types[code];
-			
-	return NULL;
+#define VALUE_MATCH_TYPE(name, rel_match)                   \
+const struct sieve_match_type rel_match_value_ ## name = {  \
+	"value-" #name, TRUE,                                   \
+	&relational_match_extension,                            \
+	REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match),           \
+	NULL, NULL, NULL,                                       \
+	mtch_value_match,                                       \
+	NULL                                                    \
 }
 
+#define COUNT_MATCH_TYPE(name, rel_match)                   \
+const struct sieve_match_type rel_match_count_ ## name = {  \
+	"count-" #name, FALSE,                                  \
+	&relational_match_extension,                            \
+	REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match),           \
+	NULL, NULL,                                             \
+	mtch_count_match_init,                                  \
+	mtch_count_match,                                       \
+	mtch_count_match_deinit                                 \
+}
+	
+VALUE_MATCH_TYPE(gt, REL_MATCH_GREATER);
+VALUE_MATCH_TYPE(ge, REL_MATCH_GREATER_EQUAL); 
+VALUE_MATCH_TYPE(lt, REL_MATCH_LESS);
+VALUE_MATCH_TYPE(le, REL_MATCH_LESS_EQUAL); 
+VALUE_MATCH_TYPE(eq, REL_MATCH_EQUAL);
+VALUE_MATCH_TYPE(ne, REL_MATCH_NOT_EQUAL);
+
+COUNT_MATCH_TYPE(gt, REL_MATCH_GREATER);
+COUNT_MATCH_TYPE(ge, REL_MATCH_GREATER_EQUAL);
+COUNT_MATCH_TYPE(lt, REL_MATCH_LESS);
+COUNT_MATCH_TYPE(le, REL_MATCH_LESS_EQUAL);
+COUNT_MATCH_TYPE(eq, REL_MATCH_EQUAL);
+COUNT_MATCH_TYPE(ne, REL_MATCH_NOT_EQUAL);
+
+static const struct sieve_match_type *rel_match_types[] = { 
+	&rel_match_value_gt, &rel_match_value_ge, &rel_match_value_lt, 
+	&rel_match_value_le, &rel_match_value_eq, &rel_match_value_ne,
+	&rel_match_count_gt, &rel_match_count_ge, &rel_match_count_lt, 
+	&rel_match_count_le, &rel_match_count_eq, &rel_match_count_ne 
+};
+ 
 const struct sieve_match_type_extension relational_match_extension = { 
 	&relational_extension,
-	NULL, 
-	ext_relational_get_match
+	SIEVE_EXT_DEFINE_MATCH_TYPES(rel_match_types) 
 };
 
 /* Load extension into validator */

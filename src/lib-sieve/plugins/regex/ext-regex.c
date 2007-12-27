@@ -78,9 +78,7 @@ bool mtch_regex_validate_context
     struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg);
 
 const struct sieve_match_type regex_match_type = {
-	"regex",
-	SIEVE_MATCH_TYPE_CUSTOM,
-	TRUE,
+	"regex", TRUE,
 	&regex_match_extension,
 	0,
 	NULL,
@@ -92,8 +90,7 @@ const struct sieve_match_type regex_match_type = {
 
 const struct sieve_match_type_extension regex_match_extension = { 
 	&regex_extension,
-	&regex_match_type, 
-	NULL
+	SIEVE_EXT_DEFINE_MATCH_TYPE(regex_match_type)
 };
 
 /* Validation */

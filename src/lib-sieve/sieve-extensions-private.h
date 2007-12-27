@@ -2,7 +2,6 @@
 #define __SIEVE_EXTENSIONS_PRIVATE_H
 
 #include "sieve-common.h"
-#include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-binary.h"
 
@@ -87,46 +86,12 @@ struct sieve_extension {
 };
 
 /*  
- * Opcode access
+ * Opcodes and operands
  */
  
 #define SIEVE_EXT_DEFINE_NO_OPERATIONS SIEVE_EXT_DEFINE_NO_OBJECTS
 #define SIEVE_EXT_DEFINE_OPERATION(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
 #define SIEVE_EXT_DEFINE_OPERATIONS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
-
-static inline const struct sieve_operation *sieve_extension_read_operation
-(unsigned int ext_code, struct sieve_binary *sbin, sieve_size_t *address) 
-{
-	struct sieve_operation *op;
-	int ext_id = -1; 
-	const struct sieve_extension *ext = sieve_binary_extension_get_by_index
-		(sbin, ext_code, &ext_id);
-	
-	sieve_extension_read_object 
-		(ext, struct sieve_operation, opcodes, sbin, address, op)
-
-	return op;
-}
-
-static inline sieve_size_t sieve_extension_emit_operation
-(const struct sieve_operation *op, struct sieve_binary *sbin, int ext_id, 
-	unsigned int offset)
-{
-	if ( ext_id >= 0 ) {
-		sieve_size_t address;
-		
-		sieve_extension_emit_object
-			(op, opcodes, sbin, ext_id, offset, address); 
-		
-		return address;
-	} 
-	
-	return sieve_binary_emit_byte(sbin, op->code);
-}
-
-/* 
- * Operand access 
- */
 
 #define SIEVE_EXT_DEFINE_NO_OPERANDS SIEVE_EXT_DEFINE_NO_OBJECTS
 

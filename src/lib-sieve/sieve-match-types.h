@@ -24,8 +24,6 @@ struct sieve_match_type_context;
 
 struct sieve_match_type {
 	const char *identifier;
-	
-	enum sieve_match_type_code code;
 
 	/* Match function called for every key value or should it be called once
 	 * for every tested value? (TRUE = first alternative)
@@ -33,7 +31,7 @@ struct sieve_match_type {
 	bool is_iterative;
 	
 	const struct sieve_match_type_extension *extension;
-	unsigned int ext_code;
+	unsigned int code;
 	
 	bool (*validate)
 		(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
@@ -52,13 +50,11 @@ struct sieve_match_type {
 struct sieve_match_type_extension {
 	const struct sieve_extension *extension;
 
-	/* Either a single match-type in this extension ... */
-	const struct sieve_match_type *match_type;
-	
-	/* ... or multiple: then the extension must handle emit/read */
-	const struct sieve_match_type *(*get_match)
-		(unsigned int code);
+	struct sieve_extension_obj_registry match_types;
 };
+
+#define SIEVE_EXT_DEFINE_MATCH_TYPE(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
+#define SIEVE_EXT_DEFINE_MATCH_TYPES(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 struct sieve_match_type_context {
 	struct sieve_command_context *command_ctx;

@@ -588,8 +588,16 @@ static struct sieve_coded_stringlist *opr_stringlist_read
 inline sieve_size_t sieve_operation_emit_code
 	(struct sieve_binary *sbin, const struct sieve_operation *op, int ext_id)
 {	
-	return sieve_extension_emit_operation
-		(op, sbin, ext_id, SIEVE_OPERATION_CUSTOM);
+	if ( ext_id >= 0 ) {
+		sieve_size_t address;
+		
+		sieve_extension_emit_object
+			(op, opcodes, sbin, ext_id, SIEVE_OPERATION_CUSTOM, address); 
+		
+		return address;
+	} 
+	
+	return sieve_binary_emit_byte(sbin, op->code);
 }
 
 const struct sieve_operation *sieve_operation_read
@@ -604,8 +612,18 @@ const struct sieve_operation *sieve_operation_read
 			else
 				return NULL;
 		} else {
-			return sieve_extension_read_operation
-				(opcode - SIEVE_OPERATION_CUSTOM, sbin, address);
+			struct sieve_operation *op;
+			int ext_id = -1; 
+			const struct sieve_extension *ext;
+			
+			if ( (ext=sieve_binary_extension_get_by_index
+				(sbin, opcode - SIEVE_OPERATION_CUSTOM, &ext_id)) == NULL )
+				return NULL;
+	
+			sieve_extension_read_object 
+				(ext, struct sieve_operation, opcodes, sbin, address, op)
+
+			return op;
 		}
 	}		
 	

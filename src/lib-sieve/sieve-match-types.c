@@ -25,8 +25,6 @@
  */
  
 static void opr_match_type_emit
-	(struct sieve_binary *sbin, const struct sieve_match_type *mtch);
-static void opr_match_type_emit_ext
 	(struct sieve_binary *sbin, const struct sieve_match_type *mtch, int ext_id);
 
 /* 
@@ -279,22 +277,21 @@ bool sieve_match_type_validate
 /* Code generation */
 
 static void opr_match_type_emit
-	(struct sieve_binary *sbin, const struct sieve_match_type *mtch)
-{ 
-	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_MATCH_TYPE);
-	(void) sieve_binary_emit_byte(sbin, mtch->code);
-}
-
-static void opr_match_type_emit_ext
 	(struct sieve_binary *sbin, const struct sieve_match_type *mtch, int ext_id)
 { 
-	unsigned char mtch_code = SIEVE_MATCH_TYPE_CUSTOM + 
-		sieve_binary_extension_get_index(sbin, ext_id);
-	
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_MATCH_TYPE);	
-	(void) sieve_binary_emit_byte(sbin, mtch_code);
-	if ( mtch->extension->match_type == NULL )
-		(void) sieve_binary_emit_byte(sbin, mtch->ext_code);
+
+	if ( ext_id >= 0 ) {
+		sieve_size_t dummy;
+		
+		sieve_extension_emit_object
+			(mtch, match_types, sbin, ext_id, SIEVE_MATCH_TYPE_CUSTOM, dummy); 
+		
+		return;
+	} 
+	
+	(void) sieve_binary_emit_byte(sbin, mtch->code);
+
 }
 
 const struct sieve_match_type *sieve_opr_match_type_read
@@ -313,26 +310,21 @@ const struct sieve_match_type *sieve_opr_match_type_read
 			else
 				return NULL;
 		} else {
-			int ext_id = -1;
 			const struct sieve_match_type_extension *mtch_ext;
+			const struct sieve_match_type *mtch;
+			int ext_id = -1; 
+			
+			if ( sieve_binary_extension_get_by_index
+				(sbin, mtch_code - SIEVE_MATCH_TYPE_CUSTOM, &ext_id) == NULL )
+				return NULL;
+	
+			if ( (mtch_ext=sieve_match_type_extension_get(sbin, ext_id)) == NULL )
+				return NULL;
+	
+			sieve_extension_read_object 
+				(mtch_ext, struct sieve_match_type, match_types, sbin, address, mtch)
 
-			if ( sieve_binary_extension_get_by_index(sbin,
-				mtch_code - SIEVE_MATCH_TYPE_CUSTOM, &ext_id) == NULL )
-				return NULL; 
-
-			mtch_ext = sieve_match_type_extension_get(sbin, ext_id); 
- 
-			if ( mtch_ext != NULL ) {  	
-				unsigned int code;
-				if ( mtch_ext->match_type != NULL )
-					return mtch_ext->match_type;
-		  	
-				if ( sieve_binary_read_byte(sbin, address, &code) &&
-					mtch_ext->get_match != NULL )
-					return mtch_ext->get_match(code);
-			} else {
-				i_info("Unknown match-type modifier %d.", mtch_code); 
-			}
+			return mtch;
 		}
 	}		
 		
@@ -365,11 +357,11 @@ static bool tag_match_type_generate
 	
 	if ( mtctx->match_type->extension == NULL ) {
 		if ( mtctx->match_type->code < SIEVE_MATCH_TYPE_CUSTOM )
-			opr_match_type_emit(sbin, mtctx->match_type);
+			opr_match_type_emit(sbin, mtctx->match_type, -1);
 		else
 			return FALSE;
 	} else {
-		opr_match_type_emit_ext(sbin, mtctx->match_type, mtctx->ext_id);
+		opr_match_type_emit(sbin, mtctx->match_type, mtctx->ext_id);
 	} 
 			
 	return TRUE;
@@ -685,22 +677,18 @@ const struct sieve_argument match_type_tag = {
 };
  
 const struct sieve_match_type is_match_type = {
-	"is",
-	SIEVE_MATCH_TYPE_IS,
-	TRUE,
+	"is", TRUE,
 	NULL,
-	0,
+	SIEVE_MATCH_TYPE_IS,
 	NULL, NULL, NULL,
 	mtch_is_match,
 	NULL
 };
 
 const struct sieve_match_type contains_match_type = {
-	"contains",
-	SIEVE_MATCH_TYPE_CONTAINS,
-	TRUE,
+	"contains", TRUE,
 	NULL,
-	0,
+	SIEVE_MATCH_TYPE_CONTAINS,
 	NULL,
 	mtch_contains_validate_context, 
 	NULL,
@@ -709,11 +697,9 @@ const struct sieve_match_type contains_match_type = {
 };
 
 const struct sieve_match_type matches_match_type = {
-	"matches",
-	SIEVE_MATCH_TYPE_MATCHES,
-	TRUE,
+	"matches", TRUE,
 	NULL,
-	0,
+	SIEVE_MATCH_TYPE_MATCHES,
 	NULL,
 	mtch_contains_validate_context, 
 	NULL,
