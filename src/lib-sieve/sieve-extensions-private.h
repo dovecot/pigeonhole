@@ -22,49 +22,6 @@ static inline const void *_sieve_extension_get_object
 	return NULL;
 }
 
-static inline const void *_sieve_extension_read_object
-(const struct sieve_extension_obj_registry *reg, struct sieve_binary *sbin, 
-	sieve_size_t *address)
-{ 		
-	unsigned int code = 0; 	
-		
-	if ( reg->count > 1) 
-		sieve_binary_read_byte(sbin, address, &code); 
-	
-	return _sieve_extension_get_object(reg, code);
-}
-
-#define sieve_extension_read_object\
-(ext, type, field, sbin, address, result) \
-{ \
-	result = NULL; \
-	\
-	if ( ext != NULL && ext->field.count != 0 ) \
-		result = (type *) _sieve_extension_read_object \
-			(&ext->field, sbin, address); \
-} 
-
-static inline sieve_size_t _sieve_extension_emit_object
-(struct sieve_binary *sbin, int ext_id, unsigned char offset)
-{
-	unsigned char code = offset + 
-		sieve_binary_extension_get_index(sbin, ext_id);
-
-	return sieve_binary_emit_byte(sbin, code);
-}
-#define sieve_extension_emit_object\
-(obj, ext_field, sbin, ext_id, offset, address_r) \
-{ \
-	address_r = _sieve_extension_emit_object(sbin, ext_id, offset); \
-	\
-	if ( obj->extension->ext_field.count > 1 ) \
-		(void) sieve_binary_emit_byte(sbin, obj->code); \
-}
-
-/*
- * Extension object
- */
-
 static inline sieve_size_t _sieve_extension_emit_obj
 (struct sieve_binary *sbin, 
 	const struct sieve_extension_obj_registry *defreg,
@@ -101,14 +58,18 @@ static inline const void *_sieve_extension_read_obj
 	if ( sieve_binary_read_byte(sbin, address, &obj_code) ) { 
 		if ( obj_code < defreg->count ) { 
 			return _sieve_extension_get_object(defreg, obj_code); 
-		} else { 
+		} else {
+			unsigned int code = 0; 	 
 			const struct sieve_extension_obj_registry *reg;
 		
 			if ( (reg=get_reg_func(sbin, obj_code - defreg->count)) == NULL || 
 				reg->count == 0 ) 
 				return NULL; 
-				
-			return _sieve_extension_read_object(reg, sbin, address);
+		
+			if ( reg->count > 1) 
+				sieve_binary_read_byte(sbin, address, &code); 
+	
+			return _sieve_extension_get_object(reg, code);
 		}
 	}
 	
