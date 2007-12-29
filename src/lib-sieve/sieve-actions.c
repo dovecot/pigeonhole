@@ -14,6 +14,9 @@
 
 #include <ctype.h>
 
+static struct sieve_extension_obj_registry seff_default_reg =
+	SIEVE_EXT_DEFINE_NO_SIDE_EFFECTS;
+
 /*
  * Message transmission (FIXME: place this somewhere more appropriate)
  */
@@ -93,38 +96,28 @@ void sieve_opr_side_effect_emit
 	(struct sieve_binary *sbin, const struct sieve_side_effect *seffect, 
 		int ext_id)
 { 
-	sieve_size_t address;
-
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_SIDE_EFFECT);
 
-	sieve_extension_emit_object
-		(seffect, side_effects, sbin, ext_id, 0, address); 
+	(void) sieve_extension_emit_obj
+		(sbin, &seff_default_reg, seffect, side_effects, ext_id);
 }
 
-bool sieve_opr_side_effect_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+static const struct sieve_extension_obj_registry *
+	sieve_side_effect_registry_get
+(struct sieve_binary *sbin, unsigned int ext_index)
 {
-	const struct sieve_side_effect *seffect;
+	int ext_id = -1; 
+	const struct sieve_side_effect_extension *ext;
+	
+	if ( sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id) == NULL )
+		return NULL;
 
-    sieve_code_mark(denv);
-	seffect = sieve_opr_side_effect_read(denv->sbin, address);
-
-	if ( seffect == NULL ) 
-		return FALSE;
-
-    sieve_code_dumpf(denv, "SIDE-EFFECT: %s", seffect->name);
-
-	if ( seffect->dump_context != NULL ) {
-		sieve_code_descend(denv);
-		if ( !seffect->dump_context(seffect, denv, address) )
-			return FALSE;	
-		sieve_code_ascend(denv);
-	}
-
-    return TRUE;
+	if ( (ext=sieve_side_effect_extension_get(sbin, ext_id)) == NULL ) 
+		return NULL;
+		
+	return &(ext->side_effects);
 }
 
-/* FIXME: Duplicated */
 const struct sieve_side_effect *sieve_opr_side_effect_read
 (struct sieve_binary *sbin, sieve_size_t *address)
 {
@@ -134,26 +127,32 @@ const struct sieve_side_effect *sieve_opr_side_effect_read
 	if ( operand == NULL || operand->class != &side_effect_class ) 
 		return NULL;
 		
-	
-	if ( sieve_binary_read_byte(sbin, address, &seffect_code) ) {
-		int ext_id = -1;
-		const struct sieve_side_effect_extension *se_ext;
-		const struct sieve_side_effect *seffect;
+	return sieve_extension_read_obj
+		(struct sieve_side_effect, sbin, address, &seff_default_reg, 
+			sieve_side_effect_registry_get);
+}
 
-		if ( sieve_binary_extension_get_by_index(sbin,
-			seffect_code, &ext_id) == NULL )
-			return NULL; 
+bool sieve_opr_side_effect_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	const struct sieve_side_effect *seffect;
 
-		se_ext = sieve_side_effect_extension_get(sbin, ext_id); 
+	sieve_code_mark(denv);
+	seffect = sieve_opr_side_effect_read(denv->sbin, address);
 
-		sieve_extension_read_object 
-			(se_ext, struct sieve_side_effect, side_effects, sbin, 
-			address, seffect)
+	if ( seffect == NULL ) 
+		return FALSE;
 
-		return seffect;
-	}		
-		
-	return NULL; 
+	sieve_code_dumpf(denv, "SIDE-EFFECT: %s", seffect->name);
+
+	if ( seffect->dump_context != NULL ) {
+		sieve_code_descend(denv);
+		if ( !seffect->dump_context(seffect, denv, address) )
+			return FALSE;	
+		sieve_code_ascend(denv);
+	}
+
+	return TRUE;
 }
 
 /*

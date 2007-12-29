@@ -21,9 +21,23 @@
 #include <string.h>
 
 /* 
- * Predeclarations 
+ * Default match types
+ */ 
+
+const struct sieve_match_type *sieve_core_match_types[] = {
+	&is_match_type, &contains_match_type, &matches_match_type
+};
+
+const unsigned int sieve_core_match_types_count = 
+	N_ELEMENTS(sieve_core_match_types);
+
+static struct sieve_extension_obj_registry mtch_default_reg =
+	SIEVE_EXT_DEFINE_MATCH_TYPES(sieve_core_match_types);
+
+/* 
+ * Forward declarations 
  */
- 
+  
 static void opr_match_type_emit
 	(struct sieve_binary *sbin, const struct sieve_match_type *mtch, int ext_id);
 
@@ -274,61 +288,46 @@ bool sieve_match_type_validate
 	return TRUE;	
 }
 
-/* Code generation */
+/* 
+ * Code generation 
+ */
 
 static void opr_match_type_emit
 	(struct sieve_binary *sbin, const struct sieve_match_type *mtch, int ext_id)
 { 
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_MATCH_TYPE);	
-
-	if ( ext_id >= 0 ) {
-		sieve_size_t dummy;
-		
-		sieve_extension_emit_object
-			(mtch, match_types, sbin, ext_id, SIEVE_MATCH_TYPE_CUSTOM, dummy); 
-		
-		return;
-	} 
 	
-	(void) sieve_binary_emit_byte(sbin, mtch->code);
+	(void) sieve_extension_emit_obj
+		(sbin, &mtch_default_reg, mtch, match_types, ext_id);
+}
 
+static const struct sieve_extension_obj_registry *
+	sieve_match_type_registry_get
+(struct sieve_binary *sbin, unsigned int ext_index)
+{
+	int ext_id = -1; 
+	const struct sieve_match_type_extension *ext;
+	
+	if ( sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id) == NULL )
+		return NULL;
+
+	if ( (ext=sieve_match_type_extension_get(sbin, ext_id)) == NULL ) 
+		return NULL;
+		
+	return &(ext->match_types);
 }
 
 const struct sieve_match_type *sieve_opr_match_type_read
   (struct sieve_binary *sbin, sieve_size_t *address)
 {
-	unsigned int mtch_code;
 	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
 	
 	if ( operand == NULL || operand->class != &match_type_class ) 
 		return NULL;
-	
-	if ( sieve_binary_read_byte(sbin, address, &mtch_code) ) {
-		if ( mtch_code < SIEVE_MATCH_TYPE_CUSTOM ) {
-			if ( mtch_code < sieve_core_match_types_count )
-				return sieve_core_match_types[mtch_code];
-			else
-				return NULL;
-		} else {
-			const struct sieve_match_type_extension *mtch_ext;
-			const struct sieve_match_type *mtch;
-			int ext_id = -1; 
-			
-			if ( sieve_binary_extension_get_by_index
-				(sbin, mtch_code - SIEVE_MATCH_TYPE_CUSTOM, &ext_id) == NULL )
-				return NULL;
-	
-			if ( (mtch_ext=sieve_match_type_extension_get(sbin, ext_id)) == NULL )
-				return NULL;
-	
-			sieve_extension_read_object 
-				(mtch_ext, struct sieve_match_type, match_types, sbin, address, mtch)
 
-			return mtch;
-		}
-	}		
-		
-	return NULL; 
+	return sieve_extension_read_obj
+		(struct sieve_match_type, sbin, address, &mtch_default_reg, 
+			sieve_match_type_registry_get);
 }
 
 bool sieve_opr_match_type_dump
@@ -706,10 +705,3 @@ const struct sieve_match_type matches_match_type = {
 	mtch_matches_match,
 	NULL
 };
-
-const struct sieve_match_type *sieve_core_match_types[] = {
-	&is_match_type, &contains_match_type, &matches_match_type
-};
-
-const unsigned int sieve_core_match_types_count = 
-	N_ELEMENTS(sieve_core_match_types);

@@ -13,7 +13,7 @@
 #include "lib.h"
 #include "array.h"
 
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-comparators.h"

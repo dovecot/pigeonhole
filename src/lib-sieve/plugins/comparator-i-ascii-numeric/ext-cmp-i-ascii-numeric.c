@@ -11,7 +11,7 @@
 #include "sieve-common.h"
 
 #include "sieve-code.h"
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 #include "sieve-comparators.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"

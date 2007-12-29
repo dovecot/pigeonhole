@@ -6,7 +6,7 @@
 #include "array.h"
 #include "ostream.h"
 
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 #include "sieve-code.h"
 #include "sieve-script.h"
 

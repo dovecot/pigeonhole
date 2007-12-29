@@ -2,7 +2,7 @@
 #define __SIEVE_COMPARATORS_H
 
 #include "sieve-common.h"
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 
 enum sieve_comparator_code {
 	SIEVE_COMPARATOR_I_OCTET,

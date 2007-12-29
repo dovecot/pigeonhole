@@ -5,7 +5,7 @@
 #include "mail-storage.h"
 
 #include "sieve-common.h"
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 
 /* Sieve action */
 
@@ -98,6 +98,7 @@ struct sieve_side_effect_extension {
 	struct sieve_extension_obj_registry side_effects;
 };
 
+#define SIEVE_EXT_DEFINE_NO_SIDE_EFFECTS SIEVE_EXT_DEFINE_NO_OBJECTS
 #define SIEVE_EXT_DEFINE_SIDE_EFFECT(SEF) SIEVE_EXT_DEFINE_OBJECT(SEF)
 #define SIEVE_EXT_DEFINE_SIDE_EFFECTS(SEFS) SIEVE_EXT_DEFINE_OBJECTS(SEFS)
 

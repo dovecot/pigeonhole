@@ -3,7 +3,7 @@
 #include "str-sanitize.h"
 
 #include "sieve-common.h"
-#include "sieve-extensions.h"
+#include "sieve-extensions-private.h"
 #include "sieve-actions.h"
 #include "sieve-binary.h"
 #include "sieve-generator.h"
@@ -582,54 +582,7 @@ static struct sieve_coded_stringlist *opr_stringlist_read
 /* 
  * Operations
  */
-
-/* Operation functions */
-
-inline sieve_size_t sieve_operation_emit_code
-	(struct sieve_binary *sbin, const struct sieve_operation *op, int ext_id)
-{	
-	if ( ext_id >= 0 ) {
-		sieve_size_t address;
-		
-		sieve_extension_emit_object
-			(op, opcodes, sbin, ext_id, SIEVE_OPERATION_CUSTOM, address); 
-		
-		return address;
-	} 
-	
-	return sieve_binary_emit_byte(sbin, op->code);
-}
-
-const struct sieve_operation *sieve_operation_read
-	(struct sieve_binary *sbin, sieve_size_t *address) 
-{
-	unsigned int opcode;
-	
-	if ( sieve_binary_read_byte(sbin, address, &opcode) ) {
-		if ( opcode < SIEVE_OPERATION_CUSTOM ) {
-			if ( opcode < sieve_operations_count )
-				return sieve_operations[opcode];
-			else
-				return NULL;
-		} else {
-			struct sieve_operation *op;
-			int ext_id = -1; 
-			const struct sieve_extension *ext;
-			
-			if ( (ext=sieve_binary_extension_get_by_index
-				(sbin, opcode - SIEVE_OPERATION_CUSTOM, &ext_id)) == NULL )
-				return NULL;
-	
-			sieve_extension_read_object 
-				(ext, struct sieve_operation, opcodes, sbin, address, op)
-
-			return op;
-		}
-	}		
-	
-	return NULL;
-}
-
+ 
 /* Declaration of opcodes defined in this file */
 
 static bool opc_jmp_dump
@@ -703,6 +656,67 @@ const struct sieve_operation *sieve_operations[] = {
 const unsigned int sieve_operations_count =
 	N_ELEMENTS(sieve_operations);
 
+static struct sieve_extension_obj_registry oprt_default_reg =
+	SIEVE_EXT_DEFINE_OPERATIONS(sieve_operations);
+
+/* Operation functions */
+
+inline sieve_size_t sieve_operation_emit_code
+	(struct sieve_binary *sbin, const struct sieve_operation *op, int ext_id)
+{	
+	return sieve_extension_emit_obj
+		(sbin, &oprt_default_reg, op, operations, ext_id);
+}
+
+static const struct sieve_extension_obj_registry *
+	sieve_operation_registry_get
+(struct sieve_binary *sbin, unsigned int ext_index)
+{
+	int ext_id = -1; 
+	const struct sieve_extension *ext;
+	
+	if ( (ext=sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id)) 
+		== NULL )
+		return NULL;
+		
+	return &(ext->operations);
+}
+
+const struct sieve_operation *sieve_operation_read
+	(struct sieve_binary *sbin, sieve_size_t *address) 
+{
+	return sieve_extension_read_obj
+		(struct sieve_operation, sbin, address, &oprt_default_reg, 
+			sieve_operation_registry_get);
+
+/*	unsigned int opcode;
+	
+	if ( sieve_binary_read_byte(sbin, address, &opcode) ) {
+		if ( opcode < SIEVE_OPERATION_CUSTOM ) {
+			if ( opcode < sieve_operations_count )
+				return sieve_operations[opcode];
+			else
+				return NULL;
+		} else {
+			struct sieve_operation *op;
+			int ext_id = -1; 
+			const struct sieve_extension *ext;
+			
+			if ( (ext=sieve_binary_extension_get_by_index
+				(sbin, opcode - SIEVE_OPERATION_CUSTOM, &ext_id)) == NULL )
+				return NULL;
+	
+			sieve_extension_read_object 
+				(ext, struct sieve_operation, opcodes, sbin, address, op)
+
+			return op;
+		}
+	}		
+	
+	return NULL;*/
+}
+
+	
 /* Code dump for core commands */
 
 static bool opc_jmp_dump

@@ -4,12 +4,12 @@
 #include "mempool.h"
 #include "hash.h"
 
+#include "sieve-extensions.h"
 #include "sieve-script.h"
 #include "sieve-ast.h"
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
-#include "sieve-extensions-private.h"
 
 #include "sieve-comparators.h"
 #include "sieve-address-parts.h"

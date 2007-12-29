@@ -20,7 +20,7 @@
 #include "sieve-common.h"
 
 #include "sieve-code.h"
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h"

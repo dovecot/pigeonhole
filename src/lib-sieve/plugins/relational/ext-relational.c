@@ -23,7 +23,7 @@
 
 #include "sieve-ast.h"
 #include "sieve-code.h"
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"

@@ -11,7 +11,7 @@
 #include "lib.h"
 #include "unichar.h"
 
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 

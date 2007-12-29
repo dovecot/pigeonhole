@@ -4,7 +4,7 @@
 #include "mempool.h"
 
 #include "sieve-common.h"
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 #include "sieve-commands-private.h"
 #include "sieve-code.h"
 #include "sieve-binary.h"

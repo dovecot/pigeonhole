@@ -23,9 +23,23 @@
 #include <string.h>
 
 /* 
- * Predeclarations 
+ * Default address parts
  */
- 
+
+const struct sieve_address_part *sieve_core_address_parts[] = {
+	&all_address_part, &local_address_part, &domain_address_part
+};
+
+const unsigned int sieve_core_address_parts_count = 
+	N_ELEMENTS(sieve_core_address_parts);
+
+static struct sieve_extension_obj_registry addrp_default_reg =
+	SIEVE_EXT_DEFINE_ADDRESS_PARTS(sieve_core_address_parts);
+
+/* 
+ * Forward declarations 
+ */
+  
 static void opr_address_part_emit
 	(struct sieve_binary *sbin, const struct sieve_address_part *addrp, 
 		int ext_id);
@@ -231,62 +245,46 @@ static bool tag_address_part_validate
 	return TRUE;
 }
 
-/* Code generation */
+/* 
+ * Code generation 
+ */
 
 static void opr_address_part_emit
 (struct sieve_binary *sbin, const struct sieve_address_part *addrp, int ext_id)
-{ 
+{
 	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_ADDRESS_PART);	
 
-	if ( ext_id >= 0 ) {
-		sieve_size_t dummy;
-		
-		sieve_extension_emit_object
-			(addrp, address_parts, sbin, ext_id, SIEVE_ADDRESS_PART_CUSTOM, dummy); 
-		
-		return;
-	} 
-	
-	(void) sieve_binary_emit_byte(sbin, addrp->code);
+	(void) sieve_extension_emit_obj
+		(sbin, &addrp_default_reg, addrp, address_parts, ext_id);
 }
 
-/* FIXME: Duplicated */
+static const struct sieve_extension_obj_registry *
+	sieve_address_part_registry_get
+(struct sieve_binary *sbin, unsigned int ext_index)
+{
+	int ext_id = -1; 
+	const struct sieve_address_part_extension *ext;
+	
+	if ( sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id) == NULL )
+		return NULL;
+
+	if ( (ext=sieve_address_part_extension_get(sbin, ext_id)) == NULL ) 
+		return NULL;
+		
+	return &(ext->address_parts);
+}
+
 const struct sieve_address_part *sieve_opr_address_part_read
 (struct sieve_binary *sbin, sieve_size_t *address)
 {
-	unsigned int addrp_code;
 	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
 	
 	if ( operand == NULL || operand->class != &address_part_class ) 
 		return NULL;
-	
-	if ( sieve_binary_read_byte(sbin, address, &addrp_code) ) {
-		if ( addrp_code < SIEVE_ADDRESS_PART_CUSTOM ) {
-			if ( addrp_code < sieve_core_address_parts_count )
-				return sieve_core_address_parts[addrp_code];
-			else
-				return NULL;
-		} else {
-			const struct sieve_address_part_extension *addrp_ext;
-			const struct sieve_address_part *addrp;
-			int ext_id = -1; 
-			
-			if ( sieve_binary_extension_get_by_index
-				(sbin, addrp_code - SIEVE_ADDRESS_PART_CUSTOM, &ext_id) == NULL )
-				return NULL;
-	
-			if ( (addrp_ext=sieve_address_part_extension_get(sbin, ext_id)) == NULL )
-				return NULL;
-	
-			sieve_extension_read_object 
-				(addrp_ext, struct sieve_address_part, address_parts, sbin, address, 
-					addrp)
 
-			return addrp;
-		}
-	}		
-		
-	return NULL; 
+	return sieve_extension_read_obj
+		(struct sieve_address_part, sbin, address, &addrp_default_reg, 
+			sieve_address_part_registry_get);
 }
 
 bool sieve_opr_address_part_dump
@@ -487,12 +485,4 @@ const struct sieve_address_part domain_address_part = {
 	SIEVE_ADDRESS_PART_DOMAIN,
 	addrp_domain_extract_from
 };
-
-const struct sieve_address_part *sieve_core_address_parts[] = {
-	&all_address_part, &local_address_part, &domain_address_part
-};
-
-const unsigned int sieve_core_address_parts_count = 
-	N_ELEMENTS(sieve_core_address_parts);
-
 
