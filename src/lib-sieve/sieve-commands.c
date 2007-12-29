@@ -12,31 +12,35 @@
 /* Default arguments implemented in this file */
 
 static bool arg_number_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context);
+	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+		struct sieve_command_context *context);
 static bool arg_string_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context);
+	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+		struct sieve_command_context *context);
+static bool arg_string_list_validate
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *context);
 static bool arg_string_list_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context);
+	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+		struct sieve_command_context *context);
 
 const struct sieve_argument number_argument =
 	{ "@number", NULL, NULL, NULL, arg_number_generate };
 const struct sieve_argument string_argument =
 	{ "@string", NULL, NULL, NULL, arg_string_generate };
-const struct sieve_argument string_list_argument =
-	{ "@string-list", NULL, NULL, NULL, arg_string_list_generate };	
+
+const struct sieve_argument string_list_argument = { 
+	"@string-list", NULL, 
+	arg_string_list_validate, 
+	NULL, 
+	arg_string_list_generate 
+};	
 
 static bool arg_number_generate
 (struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *context ATTR_UNUSED)
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-
-	if ( sieve_ast_argument_type(arg) != SAAT_NUMBER ) {
-		return FALSE;
-	}
 	
 	sieve_opr_number_emit(sbin, sieve_ast_argument_number(arg));
 
@@ -49,56 +53,69 @@ static bool arg_string_generate
 {
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 
-	if ( sieve_ast_argument_type(arg) != SAAT_STRING ) {
-		return FALSE;
-	} 
-
 	sieve_opr_string_emit(sbin, sieve_ast_argument_str(arg));
   
 	return TRUE;
 }
 
-static void emit_string_list_operand
-	(struct sieve_generator *generator, const struct sieve_ast_argument *strlist)
+static bool arg_string_list_validate
+(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *context)
+{
+	struct sieve_ast_argument *stritem;
+
+	stritem = sieve_ast_strlist_first(*arg);	
+	while ( stritem != NULL ) {
+		if ( !sieve_validator_argument_activate(validator, context, stritem, FALSE) )
+			return FALSE;
+			
+		stritem = sieve_ast_strlist_next(stritem);
+	}
+
+	return FALSE;	
+}
+
+static inline bool emit_string_list_operand
+(struct sieve_generator *generator, const struct sieve_ast_argument *strlist,
+	struct sieve_command_context *context)
 {	
 	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 	void *list_context;
-	const struct sieve_ast_argument *stritem;
-  
-	T_FRAME(
- 		sieve_opr_stringlist_emit_start
-			(sbin, sieve_ast_strlist_count(strlist), &list_context);
+	struct sieve_ast_argument *stritem;
+   	
+	sieve_opr_stringlist_emit_start
+		(sbin, sieve_ast_strlist_count(strlist), &list_context);
 
-		stritem = sieve_ast_strlist_first(strlist);
-		while ( stritem != NULL ) {
-			sieve_opr_stringlist_emit_item
-				(sbin, list_context, sieve_ast_strlist_str(stritem));
-			stritem = sieve_ast_strlist_next(stritem);
-		}
+	stritem = sieve_ast_strlist_first(strlist);
+	while ( stritem != NULL ) {
+		if ( !sieve_generate_argument(generator, stritem, context) )
+			return FALSE;
+			
+		stritem = sieve_ast_strlist_next(stritem);
+	}
 
-		sieve_opr_stringlist_emit_end(sbin, list_context);
-	);
+	sieve_opr_stringlist_emit_end(sbin, list_context);
+	
+	return TRUE;
 }
 
 static bool arg_string_list_generate
 (struct sieve_generator *generator, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context ATTR_UNUSED)
+	struct sieve_command_context *context)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
-		sieve_opr_string_emit(sbin, sieve_ast_argument_str(arg));
-		
-		return TRUE;
-		
+		return ( sieve_generate_argument(generator, arg, context) );
+
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
-		if ( sieve_ast_strlist_count(arg) == 1 ) 
-			sieve_opr_string_emit(sbin, 
-				sieve_ast_argument_str(sieve_ast_strlist_first(arg)));
-		else
-			(void) emit_string_list_operand(generator, arg);
+		bool result = TRUE;
 		
-		return TRUE;
+		if ( sieve_ast_strlist_count(arg) == 1 ) 
+			return ( sieve_generate_argument
+				(generator, sieve_ast_strlist_first(arg), context) );
+		else
+			T_FRAME( result=emit_string_list_operand(generator, arg, context) );
+		
+		return result;
 	}
 	
 	return FALSE;

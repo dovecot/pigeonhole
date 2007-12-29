@@ -193,6 +193,18 @@ inline sieve_size_t sieve_generator_emit_operation_ext
 
 /* Generator functions */
 
+bool sieve_generate_argument
+(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+	struct sieve_command_context *cmd)
+{
+	const struct sieve_argument *argument = arg->argument;
+	
+	if ( argument == NULL ) return FALSE;
+	
+	return ( argument->generate == NULL || 	
+		argument->generate(generator, arg, cmd) );
+}
+
 bool sieve_generate_arguments(struct sieve_generator *generator, 
 	struct sieve_command_context *cmd, struct sieve_ast_argument **last_arg)
 {

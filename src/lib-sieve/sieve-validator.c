@@ -105,7 +105,7 @@ struct sieve_validator *sieve_validator_create
 		argument = &number_argument;
 	validator->default_arguments[SAT_CONST_STRING].
 		argument = &string_argument;
-	validator->default_arguments[SAT_CONST_STRING_LIST].
+	validator->default_arguments[SAT_STRING_LIST].
 		argument = &string_list_argument;
 
 	/* Setup storage for extension contexts */		
@@ -482,11 +482,7 @@ bool sieve_validator_argument_activate
 			defarg = &validator->default_arguments[SAT_VAR_STRING];
 		break;
 	case SAAT_STRING_LIST:
-		if ( validator->default_arguments[SAT_VAR_STRING_LIST].argument == NULL ||
-			constant )
-			defarg = &validator->default_arguments[SAT_CONST_STRING_LIST];
-		else
-			defarg = &validator->default_arguments[SAT_VAR_STRING_LIST];
+		defarg = &validator->default_arguments[SAT_STRING_LIST];
 		break;
 	default:
 		return FALSE;
