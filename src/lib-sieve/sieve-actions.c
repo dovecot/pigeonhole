@@ -121,7 +121,6 @@ static const struct sieve_extension_obj_registry *
 const struct sieve_side_effect *sieve_opr_side_effect_read
 (struct sieve_binary *sbin, sieve_size_t *address)
 {
-	unsigned int seffect_code;
 	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
 
 	if ( operand == NULL || operand->class != &side_effect_class ) 

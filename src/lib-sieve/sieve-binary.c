@@ -1590,8 +1590,9 @@ bool sieve_binary_read_string
     	  
 	if ( strlen > ADDR_BYTES_LEFT(binary, address) ) 
 		return FALSE;
-   
-	*str = t_str_const(&ADDR_CODE_AT(binary, address), strlen);
+ 
+ 	if ( str != NULL )  
+		*str = t_str_const(&ADDR_CODE_AT(binary, address), strlen);
 	ADDR_JUMP(address, strlen);
 	
 	if ( ADDR_CODE_AT(binary, address) != 0 )

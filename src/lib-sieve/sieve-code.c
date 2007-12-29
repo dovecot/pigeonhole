@@ -58,7 +58,7 @@ bool sieve_coded_stringlist_next_item
 	else {
 		address = strlist->current_offset;
   	
-		if ( sieve_binary_read_string(strlist->binary, &address, str) ) {
+		if ( sieve_opr_string_read(strlist->binary, &address, str) ) {
 			strlist->index++;
 			strlist->current_offset = address;
 			return TRUE;
@@ -213,7 +213,7 @@ static bool opr_string_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
 const struct sieve_opr_string_interface string_interface ={ 
-	opr_string_dump, 
+	opr_string_dump,
 	opr_string_read
 };
 	
@@ -230,20 +230,12 @@ static bool opr_stringlist_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static struct sieve_coded_stringlist *opr_stringlist_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
-static struct sieve_coded_stringlist *opr_stringlist_read_single
-	(struct sieve_binary *sbin, sieve_size_t *address);
 
 const struct sieve_opr_stringlist_interface stringlist_interface = { 
 	opr_stringlist_dump, 
 	opr_stringlist_read
 };
 
-/* Read a single string as string list */
-const struct sieve_opr_stringlist_interface stringlist_single_interface = { 
-	opr_stringlist_dump, 
-	opr_stringlist_read_single
-};
-	
 const struct sieve_operand_class stringlist_class = 
 	{ "string-list", &stringlist_interface };
 
@@ -386,7 +378,6 @@ bool sieve_opr_string_read
 	return intf->read(sbin, address, str);  
 }
 
-
 static void _dump_string
 (const struct sieve_dumptime_env *denv, string_t *str) 
 {
@@ -439,7 +430,7 @@ void sieve_opr_stringlist_emit_start
 void sieve_opr_stringlist_emit_item
 	(struct sieve_binary *sbin, void *context ATTR_UNUSED, string_t *item)
 {
-	(void) sieve_binary_emit_string(sbin, item);
+	(void) sieve_opr_string_emit(sbin, item);
 }
 
 void sieve_opr_stringlist_emit_end
@@ -485,23 +476,34 @@ bool sieve_opr_stringlist_dump
 struct sieve_coded_stringlist *sieve_opr_stringlist_read
   (struct sieve_binary *sbin, sieve_size_t *address)
 {
+	sieve_size_t start = *address;
 	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
-	const struct sieve_opr_stringlist_interface *intf;
 	
-	if ( operand == NULL)
+	if ( operand == NULL )
 		return NULL;
 		
-	if ( operand->class == &stringlist_class )  	
-		intf = (const struct sieve_opr_stringlist_interface *) operand->class->interface; 
-	else if ( operand == &string_operand ) 
-		intf = &stringlist_single_interface; 
-	else
-		return NULL;
-		
-	if ( intf->read == NULL ) 
-		return NULL;
+	if ( operand->class == &stringlist_class ) {
+		const struct sieve_opr_stringlist_interface *intf = 
+			(const struct sieve_opr_stringlist_interface *) operand->class->interface;
+			
+		if ( intf->read == NULL ) 
+			return NULL;
 
-	return intf->read(sbin, address);  
+		return intf->read(sbin, address);  
+	} else if ( operand->class == &string_class ) {
+		/* Special case, accept single string as string list as well. */
+		const struct sieve_opr_string_interface *intf = 
+			(const struct sieve_opr_string_interface *) operand->class->interface;
+		
+  	if ( intf->read == NULL || !intf->read(sbin, address, NULL) ) {
+  		printf("FAILED TO SKIP\n");
+  		return NULL;
+  	}
+  
+		return sieve_coded_stringlist_create(sbin, start, 1, *address); 
+	}	
+	
+	return NULL;
 }
 
 static bool opr_stringlist_dump
@@ -532,24 +534,6 @@ static bool opr_stringlist_dump
 	}
 	
 	return FALSE;
-}
-
-static struct sieve_coded_stringlist *opr_stringlist_read_single
-  (struct sieve_binary *sbin, sieve_size_t *address )
-{
-	struct sieve_coded_stringlist *strlist;
-	sieve_size_t strlen;
-	sieve_size_t pc = *address;
-  
-	if ( !sieve_binary_read_integer(sbin, address, &strlen) ) 
-  	return NULL;
-
-	strlist = sieve_coded_stringlist_create(sbin, pc, 1, *address + strlen + 1); 
-
-	/* Skip over the string for now */
-	*address += strlen + 1;
-  
-	return strlist;
 }
 
 static struct sieve_coded_stringlist *opr_stringlist_read
