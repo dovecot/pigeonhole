@@ -1,10 +1,16 @@
 #include "lib.h"
 #include "hash.h"
+#include "str.h"
 
 #include "sieve-common.h"
 #include "sieve-ast.h"
+#include "sieve-binary.h"
+#include "sieve-code.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
+#include "sieve-generator.h"
+#include "sieve-code-dumper.h"
+#include "sieve-interpreter.h"
 
 #include "ext-variables-common.h"
 
@@ -127,7 +133,7 @@ static bool arg_variable_generate
 	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 		struct sieve_command_context *context);
 
-const struct sieve_argument variable_argument =
+const struct sieve_argument variable_argument = 
 	{ "@variable", NULL, NULL, NULL, arg_variable_generate };
 
 void ext_variables_variable_argument_activate
@@ -146,9 +152,68 @@ void ext_variables_variable_argument_activate
 
 static bool arg_variable_generate
 (struct sieve_generator *generator, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context)
+	struct sieve_command_context *context ATTR_UNUSED)
 {
+	struct sieve_variable *var = (struct sieve_variable *) arg->context;
+	
+	ext_variables_variable_emit(sieve_generator_get_binary(generator), var);
+
 	return TRUE;
+}
+
+/* Variable operands */
+
+static bool opr_variable_read
+	(struct sieve_binary *sbin, sieve_size_t *address, string_t **str);
+static bool opr_variable_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+
+const struct sieve_opr_string_interface variable_interface = { 
+	opr_variable_dump,
+	opr_variable_read
+};
+		
+const struct sieve_operand variable_operand = { 
+	"variable", 
+	&variables_extension, 0,
+	&string_class,
+	&variable_interface
+};	
+
+void ext_variables_variable_emit
+	(struct sieve_binary *sbin, struct sieve_variable *var) 
+{
+	(void) sieve_operand_emit_code(sbin, &variable_operand, ext_variables_my_id);
+	(void) sieve_binary_emit_integer(sbin, var->index);
+}
+
+static bool opr_variable_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
+{
+	sieve_size_t number = 0;
+	
+	if (sieve_binary_read_integer(denv->sbin, address, &number) ) {
+		sieve_code_dumpf(denv, "VARIABLE: %ld [?]", (long) number);
+
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+static bool opr_variable_read
+  (struct sieve_binary *sbin, sieve_size_t *address, string_t **str)
+{ 
+	sieve_size_t number = 0;
+	
+	if (sieve_binary_read_integer(sbin, address, &number) ) {
+		*str = t_str_new(10);
+		str_append(*str, "VARIABLE");
+
+		return TRUE;
+	}
+	
+	return FALSE;
 }
 
 /* Set modifier registration */

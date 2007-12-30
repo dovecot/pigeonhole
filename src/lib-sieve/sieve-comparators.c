@@ -200,12 +200,13 @@ static bool cmp_binary_load(struct sieve_binary *sbin)
  */
  
 struct sieve_operand_class comparator_class = 
-	{ "comparator", NULL };
+	{ "comparator" };
 
 struct sieve_operand comparator_operand = { 
 	"comparator", 
 	NULL, SIEVE_OPERAND_COMPARATOR, 
-	&comparator_class
+	&comparator_class,
+	NULL
 };
 
 /* 

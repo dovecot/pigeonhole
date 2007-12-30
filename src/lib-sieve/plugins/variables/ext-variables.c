@@ -38,6 +38,10 @@ const struct sieve_operation *ext_variables_operations[] = {
 	&cmd_set_operation, &tst_string_operation
 };
 
+/* Operands */
+
+extern const struct sieve_operand variable_operand;
+
 /* Extension definitions */
 
 int ext_variables_my_id;
@@ -48,7 +52,7 @@ struct sieve_extension variables_extension = {
 	ext_variables_validator_load, 
 	NULL, NULL, NULL, 
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_variables_operations), 
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	SIEVE_EXT_DEFINE_OPERAND(variable_operand)
 };
 
 static bool ext_variables_load(int ext_id) 

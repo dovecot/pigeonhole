@@ -31,8 +31,6 @@ inline sieve_size_t sieve_coded_stringlist_get_current_offset
 
 struct sieve_operand_class {
 	const char *name;
-	
-	const void *interface;
 };
 
 struct sieve_operand {
@@ -42,6 +40,7 @@ struct sieve_operand {
 	unsigned int code;
 	
 	const struct sieve_operand_class *class;
+	const void *interface;
 };
 
 struct sieve_opr_number_interface {
@@ -77,6 +76,14 @@ enum sieve_core_operand {
 
 	SIEVE_OPERAND_CUSTOM
 };
+
+const struct sieve_operand_class number_class;
+const struct sieve_operand_class string_class;
+const struct sieve_operand_class stringlist_class;
+
+extern const struct sieve_operand number_operand;
+extern const struct sieve_operand string_operand;
+extern const struct sieve_operand stringlist_operand;
 
 extern const struct sieve_operand *sieve_operands[];
 extern const unsigned int sieve_operand_count;

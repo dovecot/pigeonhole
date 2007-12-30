@@ -119,11 +119,9 @@ bool sieve_coded_stringlist_read_all
 }
 
 /*
- * Operands
+ * Core operands
  */
  
-/* Core operands */
-
 const struct sieve_operand number_operand;
 const struct sieve_operand string_operand;
 const struct sieve_operand stringlist_operand;
@@ -149,7 +147,9 @@ const unsigned int sieve_operand_count =
 static struct sieve_extension_obj_registry oprd_default_reg =
 	SIEVE_EXT_DEFINE_OPERANDS(sieve_operands);
 
-/* Operand functions */
+/* 
+ * Operand functions 
+ */
 
 inline sieve_size_t sieve_operand_emit_code
 	(struct sieve_binary *sbin, const struct sieve_operand *opr, int ext_id)
@@ -179,42 +179,6 @@ const struct sieve_operand *sieve_operand_read
 		(struct sieve_operand, sbin, address, &oprd_default_reg, 
 			sieve_operand_registry_get);
 }
-
-/*
-inline sieve_size_t sieve_operand_emit_code
-	(struct sieve_binary *sbin, int operand)
-{
-	unsigned char op = operand;
-	
-	return sieve_binary_emit_byte(sbin, op);
-}
- 
-const struct sieve_operand *sieve_operand_read
-	(struct sieve_binary *sbin, sieve_size_t *address) 
-{
-	unsigned int operand;
-	
-	if ( sieve_binary_read_byte(sbin, address, &operand) ) {
-		if ( operand < SIEVE_OPERAND_CUSTOM ) {
-			if ( operand < sieve_operand_count )
-				return sieve_operands[operand];
-			else
-				return NULL;
-		} else {
-/ *			int ext_id = -1;
-		  const struct sieve_extension *ext = 
-		  	sieve_binary_extension_get_by_index
-		  		(sbin, operand - SIEVE_OPERAND_CUSTOM, &ext_id);
-		  
-		  if ( ext != NULL )
-		  	return ext->operand;	
-		  else * /
-		  	return NULL;
-		}
-	}		
-	
-	return NULL;
-}*/
 
 bool sieve_operand_optional_present
 	(struct sieve_binary *sbin, sieve_size_t *address)
@@ -259,12 +223,13 @@ const struct sieve_opr_number_interface number_interface = {
 };
 
 const struct sieve_operand_class number_class = 
-	{ "number", &number_interface };
+	{ "number" };
 	
 const struct sieve_operand number_operand = { 
 	"@number", 
 	NULL, SIEVE_OPERAND_NUMBER,
-	&number_class 
+	&number_class,
+	&number_interface 
 };
 
 /* String */
@@ -280,12 +245,13 @@ const struct sieve_opr_string_interface string_interface ={
 };
 	
 const struct sieve_operand_class string_class = 
-	{ "string", &string_interface };
+	{ "string" };
 	
 const struct sieve_operand string_operand = { 
 	"@string", 
 	NULL, SIEVE_OPERAND_STRING,
-	&string_class
+	&string_class,
+	&string_interface
 };	
 
 /* String List */
@@ -301,12 +267,13 @@ const struct sieve_opr_stringlist_interface stringlist_interface = {
 };
 
 const struct sieve_operand_class stringlist_class = 
-	{ "string-list", &stringlist_interface };
+	{ "string-list" };
 
 const struct sieve_operand stringlist_operand =	{ 
 	"@string-list", 
 	NULL, SIEVE_OPERAND_STRING_LIST,
-	&stringlist_class
+	&stringlist_class, 
+	&stringlist_interface
 };
 	
 /* 
@@ -334,7 +301,7 @@ bool sieve_opr_number_dump
 	if ( operand == NULL || operand->class != &number_class ) 
 		return FALSE;
 		
-	intf = (const struct sieve_opr_number_interface *) operand->class->interface; 
+	intf = (const struct sieve_opr_number_interface *) operand->interface; 
 	
 	if ( intf->dump == NULL )
 		return FALSE;
@@ -351,7 +318,7 @@ bool sieve_opr_number_read
 	if ( operand == NULL || operand->class != &number_class ) 
 		return FALSE;
 		
-	intf = (const struct sieve_opr_number_interface *) operand->class->interface; 
+	intf = (const struct sieve_opr_number_interface *) operand->interface; 
 	
 	if ( intf->read == NULL )
 		return FALSE;
@@ -399,7 +366,7 @@ bool sieve_opr_string_dump
 	if ( operand == NULL || operand->class != &string_class ) 
 		return FALSE;
 		
-	intf = (const struct sieve_opr_string_interface *) operand->class->interface; 
+	intf = (const struct sieve_opr_string_interface *) operand->interface; 
 	
 	if ( intf->dump == NULL ) 
 		return FALSE;
@@ -416,7 +383,7 @@ bool sieve_opr_string_read
 	if ( operand == NULL || operand->class != &string_class ) 
 		return FALSE;
 		
-	intf = (const struct sieve_opr_string_interface *) operand->class->interface; 
+	intf = (const struct sieve_opr_string_interface *) operand->interface; 
 	
 	if ( intf->read == NULL )
 		return FALSE;
@@ -500,7 +467,7 @@ bool sieve_opr_stringlist_dump
 	
 	if ( operand->class == &stringlist_class ) {
 		const struct sieve_opr_stringlist_interface *intf =
-			(const struct sieve_opr_stringlist_interface *) operand->class->interface; 
+			(const struct sieve_opr_stringlist_interface *) operand->interface; 
 		
 		if ( intf->dump == NULL )
 			return FALSE;
@@ -508,7 +475,7 @@ bool sieve_opr_stringlist_dump
 		return intf->dump(denv, address); 
 	} else if ( operand->class == &string_class ) {
 		const struct sieve_opr_string_interface *intf =
-			(const struct sieve_opr_string_interface *) operand->class->interface; 
+			(const struct sieve_opr_string_interface *) operand->interface; 
 	
 		if ( intf->dump == NULL ) 
 			return FALSE;
@@ -530,7 +497,7 @@ struct sieve_coded_stringlist *sieve_opr_stringlist_read
 		
 	if ( operand->class == &stringlist_class ) {
 		const struct sieve_opr_stringlist_interface *intf = 
-			(const struct sieve_opr_stringlist_interface *) operand->class->interface;
+			(const struct sieve_opr_stringlist_interface *) operand->interface;
 			
 		if ( intf->read == NULL ) 
 			return NULL;
@@ -539,7 +506,7 @@ struct sieve_coded_stringlist *sieve_opr_stringlist_read
 	} else if ( operand->class == &string_class ) {
 		/* Special case, accept single string as string list as well. */
 		const struct sieve_opr_string_interface *intf = 
-			(const struct sieve_opr_string_interface *) operand->class->interface;
+			(const struct sieve_opr_string_interface *) operand->interface;
 		
   	if ( intf->read == NULL || !intf->read(sbin, address, NULL) ) {
   		printf("FAILED TO SKIP\n");

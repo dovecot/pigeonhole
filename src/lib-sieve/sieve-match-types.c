@@ -194,13 +194,14 @@ static bool mtch_binary_load(struct sieve_binary *sbin)
  */
  
 struct sieve_operand_class match_type_class = 
-	{ "match-type", NULL };
+	{ "match-type" };
 
 struct sieve_operand match_type_operand = { 
 	"match-type", 
 	NULL,
 	SIEVE_OPERAND_MATCH_TYPE,
-	&match_type_class
+	&match_type_class,
+	NULL
 };
 
 /* 

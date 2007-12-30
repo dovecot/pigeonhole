@@ -88,12 +88,13 @@ static bool seffect_binary_load(struct sieve_binary *sbin)
  */
  
 static struct sieve_operand_class side_effect_class = 
-	{ "side-effect", NULL };
+	{ "side-effect" };
 
 struct sieve_operand side_effect_operand = { 
 	"side-effect", 
 	NULL, SIEVE_OPERAND_SIDE_EFFECT,
-	&side_effect_class
+	&side_effect_class,
+	NULL
 };
 
 void sieve_opr_side_effect_emit

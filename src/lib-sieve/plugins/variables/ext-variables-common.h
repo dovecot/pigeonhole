@@ -41,6 +41,9 @@ const struct ext_variables_set_modifier *ext_variables_set_modifier_find
 	
 /* Variables */
 
+void ext_variables_variable_emit
+	(struct sieve_binary *sbin, struct sieve_variable *var);
+
 void ext_variables_variable_argument_activate
 	(struct sieve_validator *validator, struct sieve_ast_argument *arg);
 

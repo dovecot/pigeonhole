@@ -197,12 +197,13 @@ static bool addrp_binary_load(struct sieve_binary *sbin)
  */
  
 struct sieve_operand_class address_part_class = 
-	{ "address-part", NULL };
+	{ "address-part" };
 
 struct sieve_operand address_part_operand = { 
 	"address-part", 
 	NULL, SIEVE_OPERAND_ADDRESS_PART,
-	&address_part_class
+	&address_part_class,
+	NULL
 };
 
 /* 
