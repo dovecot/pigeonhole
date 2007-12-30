@@ -3,6 +3,8 @@
 
 #include "sieve-common.h"
 
+#include "sieve-ext-variables.h"
+
 extern int ext_variables_my_id;
 
 extern struct sieve_extension variables_extension;
@@ -36,5 +38,13 @@ struct ext_variables_set_modifier {
 
 const struct ext_variables_set_modifier *ext_variables_set_modifier_find
 	(struct sieve_validator *validator, const char *identifier);
+	
+/* Variables */
+
+void ext_variables_variable_argument_activate
+	(struct sieve_validator *validator, struct sieve_ast_argument *arg);
+
+struct sieve_variable *ext_variables_validator_get_variable
+(struct sieve_validator *validator, const char *variable);
 
 #endif /* __EXT_VARIABLES_COMMON_H */

@@ -3,6 +3,7 @@
 #include "sieve-common.h"
 
 #include "sieve-code.h"
+#include "sieve-ast.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -62,7 +63,9 @@ const struct sieve_operation cmd_set_operation = {
  */
  
 static bool tag_modifier_is_instance_of
-	(struct sieve_validator *validator, struct sieve_ast_argument *arg)
+(struct sieve_validator *validator, 
+	struct sieve_command_context *cmdctx ATTR_UNUSED,	
+	struct sieve_ast_argument *arg)
 {
 	return ext_variables_set_modifier_find
 		(validator, sieve_ast_argument_tag(arg)) != NULL;
@@ -149,13 +152,13 @@ static bool cmd_set_validate(struct sieve_validator *validator,
 	struct sieve_command_context *cmd) 
 { 	
 	struct sieve_ast_argument *arg = cmd->first_positional;
-
+	
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "name", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, cmd, arg, TRUE);	
-	
+	ext_variables_variable_argument_activate(validator, arg);
+
 	arg = sieve_ast_argument_next(arg);
 	
 	if ( !sieve_validate_positional_argument
@@ -196,7 +199,6 @@ static bool cmd_set_operation_dump
 	sieve_code_descend(denv);
 
 	return 
-		sieve_opr_string_dump(denv, address) &&
 		sieve_opr_string_dump(denv, address);
 }
 
