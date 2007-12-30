@@ -195,8 +195,13 @@ static bool mtch_binary_load(struct sieve_binary *sbin)
  
 struct sieve_operand_class match_type_class = 
 	{ "match-type", NULL };
-struct sieve_operand match_type_operand = 
-	{ "match-type", &match_type_class, FALSE };
+
+struct sieve_operand match_type_operand = { 
+	"match-type", 
+	NULL,
+	SIEVE_OPERAND_MATCH_TYPE,
+	&match_type_class
+};
 
 /* 
  * Match-type tag 
@@ -295,7 +300,7 @@ bool sieve_match_type_validate
 static void opr_match_type_emit
 	(struct sieve_binary *sbin, const struct sieve_match_type *mtch, int ext_id)
 { 
-	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_MATCH_TYPE);	
+	(void) sieve_operand_emit_code(sbin, &match_type_operand, -1);	
 	
 	(void) sieve_extension_emit_obj
 		(sbin, &mtch_default_reg, mtch, match_types, ext_id);

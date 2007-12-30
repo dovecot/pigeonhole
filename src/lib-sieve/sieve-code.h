@@ -38,9 +38,10 @@ struct sieve_operand_class {
 struct sieve_operand {
 	const char *name;
 	
+	struct sieve_extension *extension;
+	unsigned int code;
+	
 	const struct sieve_operand_class *class;
-
-	unsigned int positional:1;
 };
 
 struct sieve_opr_number_interface {
@@ -81,7 +82,7 @@ extern const struct sieve_operand *sieve_operands[];
 extern const unsigned int sieve_operand_count;
 
 inline sieve_size_t sieve_operand_emit_code
-	(struct sieve_binary *sbin, int operand);
+	(struct sieve_binary *sbin, const struct sieve_operand *opr, int ext_id);
 const struct sieve_operand *sieve_operand_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 

@@ -89,14 +89,18 @@ static bool seffect_binary_load(struct sieve_binary *sbin)
  
 static struct sieve_operand_class side_effect_class = 
 	{ "side-effect", NULL };
-struct sieve_operand side_effect_operand = 
-	{ "side-effect", &side_effect_class, FALSE };
+
+struct sieve_operand side_effect_operand = { 
+	"side-effect", 
+	NULL, SIEVE_OPERAND_SIDE_EFFECT,
+	&side_effect_class
+};
 
 void sieve_opr_side_effect_emit
 	(struct sieve_binary *sbin, const struct sieve_side_effect *seffect, 
 		int ext_id)
 { 
-	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_SIDE_EFFECT);
+	(void) sieve_operand_emit_code(sbin, &side_effect_operand, -1);
 
 	(void) sieve_extension_emit_obj
 		(sbin, &seff_default_reg, seffect, side_effects, ext_id);

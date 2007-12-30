@@ -198,8 +198,12 @@ static bool addrp_binary_load(struct sieve_binary *sbin)
  
 struct sieve_operand_class address_part_class = 
 	{ "address-part", NULL };
-struct sieve_operand address_part_operand = 
-	{ "address-part", &address_part_class, FALSE };
+
+struct sieve_operand address_part_operand = { 
+	"address-part", 
+	NULL, SIEVE_OPERAND_ADDRESS_PART,
+	&address_part_class
+};
 
 /* 
  * Address-part tag 
@@ -252,7 +256,7 @@ static bool tag_address_part_validate
 static void opr_address_part_emit
 (struct sieve_binary *sbin, const struct sieve_address_part *addrp, int ext_id)
 {
-	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_ADDRESS_PART);	
+	(void) sieve_operand_emit_code(sbin, &address_part_operand, -1);	
 
 	(void) sieve_extension_emit_obj
 		(sbin, &addrp_default_reg, addrp, address_parts, ext_id);

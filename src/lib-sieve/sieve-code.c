@@ -119,9 +119,68 @@ bool sieve_coded_stringlist_read_all
 }
 
 /*
- * Operand functions
+ * Operands
  */
  
+/* Core operands */
+
+const struct sieve_operand number_operand;
+const struct sieve_operand string_operand;
+const struct sieve_operand stringlist_operand;
+extern const struct sieve_operand comparator_operand;
+extern const struct sieve_operand match_type_operand;
+extern const struct sieve_operand address_part_operand;
+extern const struct sieve_operand side_effect_operand;
+
+const struct sieve_operand *sieve_operands[] = {
+	NULL, /* SIEVE_OPERAND_OPTIONAL */
+	&number_operand,
+	&string_operand,
+	&stringlist_operand,
+	&comparator_operand,
+	&match_type_operand,
+	&address_part_operand,
+	&side_effect_operand
+}; 
+
+const unsigned int sieve_operand_count =
+	N_ELEMENTS(sieve_operands);
+
+static struct sieve_extension_obj_registry oprd_default_reg =
+	SIEVE_EXT_DEFINE_OPERANDS(sieve_operands);
+
+/* Operand functions */
+
+inline sieve_size_t sieve_operand_emit_code
+	(struct sieve_binary *sbin, const struct sieve_operand *opr, int ext_id)
+{	
+	return sieve_extension_emit_obj
+		(sbin, &oprd_default_reg, opr, operands, ext_id);
+}
+
+static const struct sieve_extension_obj_registry *
+	sieve_operand_registry_get
+(struct sieve_binary *sbin, unsigned int ext_index)
+{
+	int ext_id = -1; 
+	const struct sieve_extension *ext;
+	
+	if ( (ext=sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id)) 
+		== NULL )
+		return NULL;
+		
+	return &(ext->operands);
+}
+
+const struct sieve_operand *sieve_operand_read
+	(struct sieve_binary *sbin, sieve_size_t *address) 
+{
+	return sieve_extension_read_obj
+		(struct sieve_operand, sbin, address, &oprd_default_reg, 
+			sieve_operand_registry_get);
+}
+
+/*
 inline sieve_size_t sieve_operand_emit_code
 	(struct sieve_binary *sbin, int operand)
 {
@@ -142,20 +201,20 @@ const struct sieve_operand *sieve_operand_read
 			else
 				return NULL;
 		} else {
-/*			int ext_id = -1;
+/ *			int ext_id = -1;
 		  const struct sieve_extension *ext = 
 		  	sieve_binary_extension_get_by_index
 		  		(sbin, operand - SIEVE_OPERAND_CUSTOM, &ext_id);
 		  
 		  if ( ext != NULL )
 		  	return ext->operand;	
-		  else*/
+		  else * /
 		  	return NULL;
 		}
 	}		
 	
 	return NULL;
-}
+}*/
 
 bool sieve_operand_optional_present
 	(struct sieve_binary *sbin, sieve_size_t *address)
@@ -202,8 +261,11 @@ const struct sieve_opr_number_interface number_interface = {
 const struct sieve_operand_class number_class = 
 	{ "number", &number_interface };
 	
-const struct sieve_operand number_operand = 
-	{ "@number", &number_class, TRUE };
+const struct sieve_operand number_operand = { 
+	"@number", 
+	NULL, SIEVE_OPERAND_NUMBER,
+	&number_class 
+};
 
 /* String */
 
@@ -220,9 +282,11 @@ const struct sieve_opr_string_interface string_interface ={
 const struct sieve_operand_class string_class = 
 	{ "string", &string_interface };
 	
-const struct sieve_operand string_operand = 
-	{ "@string", &string_class, TRUE };
-	
+const struct sieve_operand string_operand = { 
+	"@string", 
+	NULL, SIEVE_OPERAND_STRING,
+	&string_class
+};	
 
 /* String List */
 
@@ -239,29 +303,11 @@ const struct sieve_opr_stringlist_interface stringlist_interface = {
 const struct sieve_operand_class stringlist_class = 
 	{ "string-list", &stringlist_interface };
 
-const struct sieve_operand stringlist_operand = 
-	{ "@string-list", &stringlist_class, TRUE };
-	
-/* Core operands */
-
-extern struct sieve_operand comparator_operand;
-extern struct sieve_operand match_type_operand;
-extern struct sieve_operand address_part_operand;
-extern struct sieve_operand side_effect_operand;
-
-const struct sieve_operand *sieve_operands[] = {
-	NULL, /* SIEVE_OPERAND_OPTIONAL */
-	&number_operand,
-	&string_operand,
-	&stringlist_operand,
-	&comparator_operand,
-	&match_type_operand,
-	&address_part_operand,
-	&side_effect_operand
-}; 
-
-const unsigned int sieve_operand_count =
-	N_ELEMENTS(sieve_operands);
+const struct sieve_operand stringlist_operand =	{ 
+	"@string-list", 
+	NULL, SIEVE_OPERAND_STRING_LIST,
+	&stringlist_class
+};
 	
 /* 
  * Operand implementations 
@@ -271,7 +317,7 @@ const unsigned int sieve_operand_count =
 
 void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_size_t number) 
 {
-	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_NUMBER);
+	(void) sieve_operand_emit_code(sbin, &number_operand, -1);
 	(void) sieve_binary_emit_integer(sbin, number);
 }
 
@@ -337,7 +383,7 @@ static bool opr_number_read
 
 void sieve_opr_string_emit(struct sieve_binary *sbin, string_t *str)
 {
-	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_STRING);
+	(void) sieve_operand_emit_code(sbin, &string_operand, -1);
 	(void) sieve_binary_emit_string(sbin, str);
 }
 
@@ -417,7 +463,7 @@ void sieve_opr_stringlist_emit_start
 	sieve_size_t *end_offset = t_new(sieve_size_t, 1);
 
 	/* Emit byte identifying the type of operand */	  
-	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_STRING_LIST);
+	(void) sieve_operand_emit_code(sbin, &stringlist_operand, -1);
   
 	/* Give the interpreter an easy way to skip over this string list */
 	*end_offset = sieve_binary_emit_offset(sbin, 0);
@@ -672,34 +718,7 @@ const struct sieve_operation *sieve_operation_read
 	return sieve_extension_read_obj
 		(struct sieve_operation, sbin, address, &oprt_default_reg, 
 			sieve_operation_registry_get);
-
-/*	unsigned int opcode;
-	
-	if ( sieve_binary_read_byte(sbin, address, &opcode) ) {
-		if ( opcode < SIEVE_OPERATION_CUSTOM ) {
-			if ( opcode < sieve_operations_count )
-				return sieve_operations[opcode];
-			else
-				return NULL;
-		} else {
-			struct sieve_operation *op;
-			int ext_id = -1; 
-			const struct sieve_extension *ext;
-			
-			if ( (ext=sieve_binary_extension_get_by_index
-				(sbin, opcode - SIEVE_OPERATION_CUSTOM, &ext_id)) == NULL )
-				return NULL;
-	
-			sieve_extension_read_object 
-				(ext, struct sieve_operation, opcodes, sbin, address, op)
-
-			return op;
-		}
-	}		
-	
-	return NULL;*/
 }
-
 	
 /* Code dump for core commands */
 

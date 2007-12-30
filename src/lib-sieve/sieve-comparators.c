@@ -201,8 +201,12 @@ static bool cmp_binary_load(struct sieve_binary *sbin)
  
 struct sieve_operand_class comparator_class = 
 	{ "comparator", NULL };
-struct sieve_operand comparator_operand = 
-	{ "comparator", &comparator_class, FALSE };
+
+struct sieve_operand comparator_operand = { 
+	"comparator", 
+	NULL, SIEVE_OPERAND_COMPARATOR, 
+	&comparator_class
+};
 
 /* 
  * Comparator tag 
@@ -305,7 +309,7 @@ inline const struct sieve_comparator *sieve_comparator_tag_get
 static void opr_comparator_emit
 	(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id)
 { 
-	(void) sieve_operand_emit_code(sbin, SIEVE_OPERAND_COMPARATOR);	
+	(void) sieve_operand_emit_code(sbin, &comparator_operand, -1);	
 
 	(void) sieve_extension_emit_obj
 		(sbin, &cmp_default_reg, cmp, comparators, ext_id);
