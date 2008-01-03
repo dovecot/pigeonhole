@@ -188,6 +188,69 @@ struct sieve_error_handler *sieve_stderr_ehandler_create( void )
 	return ehandler;	
 }
 
+/* Output errors to a string buffer */
+
+struct sieve_strbuf_ehandler {
+    struct sieve_error_handler handler;
+
+	string_t *errors;
+};
+
+static void sieve_strbuf_verror
+(struct sieve_error_handler *ehandler, const char *location,
+    const char *fmt, va_list args)
+{
+    struct sieve_strbuf_ehandler *handler =
+        (struct sieve_strbuf_ehandler *) ehandler;
+
+	str_printfa(handler->errors, "%s: error: ", location);
+	str_vprintfa(handler->errors, fmt, args);
+	str_append(handler->errors, ".\n");
+}
+
+static void sieve_strbuf_vwarning
+(struct sieve_error_handler *ehandler, const char *location,
+    const char *fmt, va_list args)
+{
+    struct sieve_strbuf_ehandler *handler =
+        (struct sieve_strbuf_ehandler *) ehandler;
+
+	str_printfa(handler->errors, "%s: warning: ", location);
+    str_vprintfa(handler->errors, fmt, args);
+    str_append(handler->errors, ".\n");
+}
+
+static void sieve_strbuf_vinfo
+(struct sieve_error_handler *ehandler, const char *location,
+    const char *fmt, va_list args)
+{
+    struct sieve_strbuf_ehandler *handler =
+        (struct sieve_strbuf_ehandler *) ehandler;
+	
+	str_printfa(handler->errors, "%s: info: ", location);
+    str_vprintfa(handler->errors, fmt, args);
+    str_append(handler->errors, ".\n");
+}
+
+struct sieve_error_handler *sieve_strbuf_ehandler_create
+(string_t *strbuf)
+{
+    pool_t pool;
+    struct sieve_strbuf_ehandler *ehandler;
+
+    pool = pool_alloconly_create("strbuf_error_handler", 256);
+    ehandler = p_new(pool, struct sieve_strbuf_ehandler, 1);
+	ehandler->errors = strbuf;
+    ehandler->handler.pool = pool;
+    ehandler->handler.errors = 0;
+    ehandler->handler.warnings = 0;
+    ehandler->handler.verror = sieve_strbuf_verror;
+    ehandler->handler.vwarning = sieve_strbuf_vwarning;
+    ehandler->handler.vinfo = sieve_strbuf_vinfo;
+
+    return &(ehandler->handler);
+}
+
 /* Output errors to a log file */
 
 struct sieve_logfile_ehandler {

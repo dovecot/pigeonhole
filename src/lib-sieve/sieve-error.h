@@ -102,6 +102,7 @@ void sieve_error_handler_free(struct sieve_error_handler **ehandler);
 /* Error handlers */
 
 struct sieve_error_handler *sieve_stderr_ehandler_create(void);
+struct sieve_error_handler *sieve_strbuf_ehandler_create(string_t *strbuf);
 struct sieve_error_handler *sieve_logfile_ehandler_create(const char *logfile);  
 
 #endif /* __SIEVE_ERROR_H */
