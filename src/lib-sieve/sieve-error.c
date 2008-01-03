@@ -64,7 +64,7 @@ void sieve_vcritical
 	
 	tm = localtime(&ioloop_time);
 	
-	i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	i_error("sieve: error: %s: %s", location, t_strdup_vprintf(fmt, args));
 	
 	if ( ehandler == NULL ) return;
 	
