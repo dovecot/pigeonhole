@@ -750,7 +750,6 @@ static bool sieve_validate_command
 	enum sieve_ast_type ast_type = sieve_ast_node_type(cmd_node);
 	bool result = TRUE;
 	struct sieve_command_registration *cmd_reg;
-	const struct sieve_command *command;
 	
 	i_assert( ast_type == SAT_TEST || ast_type == SAT_COMMAND );
 	
@@ -758,9 +757,10 @@ static bool sieve_validate_command
 	
 	cmd_reg = sieve_validator_find_command_registration
 		(validator, cmd_node->identifier);
-	command = cmd_reg->command;
 	
-	if ( command != NULL ) {
+	if ( cmd_reg != NULL && cmd_reg->command != NULL ) {
+		const struct sieve_command *command = cmd_reg->command;
+
 		/* Identifier = "" when the command was previously marked as unknown */
 		if ( *(command->identifier) != '\0' ) {
 			if ( (command->type == SCT_COMMAND && ast_type == SAT_TEST) || 
