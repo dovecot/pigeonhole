@@ -3,9 +3,6 @@
 #ifndef __SIEVE_H
 #define __SIEVE_H
 
-#include "lib.h"
-#include "mail-storage.h"
-
 #include <stdio.h>
 
 #include "sieve-error.h"
@@ -100,5 +97,10 @@ int sieve_execute
  *   Closes a compiled/opened sieve binary.
  */
 void sieve_close(struct sieve_binary **sbin);
+
+/* sieve_get_capabilities:
+ *
+ */
+const char *sieve_get_capabilities(void);
 
 #endif

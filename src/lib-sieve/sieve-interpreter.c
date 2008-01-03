@@ -124,9 +124,11 @@ struct sieve_interpreter *sieve_interpreter_create
 	pool = pool_alloconly_create("sieve_interpreter", 4096);	
 	interp = p_new(pool, struct sieve_interpreter, 1);
 	interp->pool = pool;
+
 	interp->ehandler = ehandler;
-	interp->runenv.interp = interp;
-	
+	sieve_error_handler_ref(ehandler);
+
+	interp->runenv.interp = interp;	
 	interp->runenv.sbin = sbin;
 	interp->runenv.script = sieve_binary_script(sbin);
 	sieve_binary_ref(sbin);
@@ -161,6 +163,8 @@ void sieve_interpreter_free(struct sieve_interpreter **interp)
 
 	if ( (*interp)->runenv.msgctx != NULL )
 		 sieve_message_context_unref(&(*interp)->runenv.msgctx);
+
+	sieve_error_handler_unref(&(*interp)->ehandler);
 		 
 	pool_unref(&((*interp)->pool));
 	

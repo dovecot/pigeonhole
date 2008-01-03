@@ -95,6 +95,7 @@ struct sieve_validator *sieve_validator_create
 	validator->pool = pool;
 	
 	validator->ehandler = ehandler;
+	sieve_error_handler_ref(ehandler);
 	
 	validator->ast = ast;	
 	validator->script = sieve_ast_script(ast);
@@ -133,6 +134,8 @@ void sieve_validator_free(struct sieve_validator **validator)
 {
 	hash_destroy(&(*validator)->commands);
 	sieve_ast_unref(&(*validator)->ast);
+
+	sieve_error_handler_unref(&(*validator)->ehandler);
 
 	pool_unref(&(*validator)->pool);
 

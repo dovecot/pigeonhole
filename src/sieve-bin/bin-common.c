@@ -3,6 +3,7 @@
 #include "ioloop.h"
 #include "ostream.h"
 #include "hostpid.h"
+#include "mail-storage.h"
 
 #include "sieve.h"
 #include "bin-common.h"
@@ -75,11 +76,11 @@ struct sieve_binary *bin_compile_sieve_script(const char *filename)
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	if ( (sbin = sieve_compile(filename, ehandler)) == NULL ) {
-		sieve_error_handler_free(&ehandler);
+		sieve_error_handler_unref(&ehandler);
 		i_fatal("Failed to compile sieve script\n");
 	}
 
-	sieve_error_handler_free(&ehandler);
+	sieve_error_handler_unref(&ehandler);
 		
 	return sbin;
 }
@@ -93,11 +94,11 @@ struct sieve_binary *bin_open_sieve_script(const char *filename)
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	if ( (sbin = sieve_open(filename, ehandler)) == NULL ) {
-		sieve_error_handler_free(&ehandler);
+		sieve_error_handler_unref(&ehandler);
 		i_fatal("Failed to compile sieve script\n");
 	}
 
-	sieve_error_handler_free(&ehandler);
+	sieve_error_handler_unref(&ehandler);
 		
 	return sbin;
 }

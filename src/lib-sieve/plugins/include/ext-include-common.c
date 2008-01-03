@@ -297,7 +297,7 @@ bool ext_include_binary_open(struct sieve_binary *sbin)
 		/* Can we find/open the script dependency ? */
 		script_path = ext_include_get_script_path(location, str_c(script_name));		
 		if ( script_path == NULL || 
-			!(script=sieve_script_create(script_path, str_c(script_name), NULL)) ) {
+			!(script=sieve_script_create(script_path, str_c(script_name), NULL, NULL)) ) {
 			/* No, recompile */
 			return FALSE;
 		}
@@ -461,7 +461,7 @@ bool ext_include_generate_include
 		return FALSE;
 	
 	/* Create script object */
-	if ( (script = sieve_script_create(script_path, script_name, ehandler)) 
+	if ( (script = sieve_script_create(script_path, script_name, ehandler, NULL)) 
 		== NULL )
 		return FALSE;
 	

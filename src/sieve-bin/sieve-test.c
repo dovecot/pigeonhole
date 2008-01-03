@@ -2,6 +2,7 @@
 
 #include "lib.h"
 #include "ostream.h"
+#include "mail-storage.h"
 
 #include "bin-common.h"
 #include "mail-raw.h"
@@ -124,7 +125,7 @@ int main(int argc, char **argv)
 	(void) sieve_test(sbin, &msgdata, &scriptenv, ehandler);
 
 	sieve_close(&sbin);
-	sieve_error_handler_free(&ehandler);
+	sieve_error_handler_unref(&ehandler);
 
 	bin_close_mail_file(mfd);
 	

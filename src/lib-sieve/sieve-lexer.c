@@ -80,7 +80,7 @@ struct sieve_lexer *sieve_lexer_create
 	struct sieve_lexer *lexer;
 	struct istream *stream;
 	
-	stream = sieve_script_open(script);
+	stream = sieve_script_open(script, NULL);
 	if ( stream == NULL )
 		return NULL;
 	
@@ -88,6 +88,9 @@ struct sieve_lexer *sieve_lexer_create
 	lexer = p_new(pool, struct sieve_lexer, 1);
 	lexer->pool = pool;
 	
+	lexer->ehandler = ehandler;
+	sieve_error_handler_ref(ehandler);
+
 	lexer->input = stream;
 	i_stream_ref(lexer->input);
 	
@@ -102,9 +105,7 @@ struct sieve_lexer *sieve_lexer_create
 	lexer->token_type = STT_NONE;
 	lexer->token_str_value = NULL;
 	lexer->token_int_value = 0;
-	
-	lexer->ehandler = ehandler;
-	
+		
 	return lexer;
 }
 
@@ -114,6 +115,8 @@ void sieve_lexer_free(struct sieve_lexer **lexer)
 
 	sieve_script_close((*lexer)->script);
 	sieve_script_unref(&(*lexer)->script);
+
+	sieve_error_handler_unref(&(*lexer)->ehandler);
 
 	pool_unref(&(*lexer)->pool); 
 

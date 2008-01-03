@@ -123,7 +123,7 @@ struct sieve_binary *sieve_compile
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
 
-	if ( (script = sieve_script_create(script_path, NULL, ehandler)) == NULL )
+	if ( (script = sieve_script_create(script_path, NULL, ehandler, NULL)) == NULL )
 		return NULL;
 	
 	sbin = sieve_compile_script(script, ehandler);
@@ -140,7 +140,7 @@ struct sieve_binary *sieve_open
 	struct sieve_binary *sbin;
 	const char *binpath;
 	
-	script = sieve_script_create(script_path, NULL, ehandler);
+	script = sieve_script_create(script_path, NULL, ehandler, NULL);
 
 	if ( script == NULL )
 		return NULL;
@@ -223,4 +223,7 @@ void sieve_close(struct sieve_binary **sbin)
 	sieve_binary_unref(sbin);
 }
 
-	
+const char *sieve_get_capabilities(void) 
+{
+	return "fileinto reject envelope encoded-character";	
+}

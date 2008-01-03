@@ -4,7 +4,7 @@
 #include "str.h"
 #include "ostream.h"
 
-#include "sieve-error.h"
+#include "sieve-error-private.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -15,37 +15,6 @@
 #define CRITICAL_MSG \
 	"internal error occurred: refer to server log for more information."
 #define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
-
-/* This should be moved to a sieve-errors-private.h when the need for other 
- * types of (externally defined) error handlers arises.
- */
-struct sieve_error_handler {	
-	pool_t pool;
-	
-	int errors;
-	int warnings;
-	
-	/* Should we copy log to i_error, i_warning and i_info? */
-	bool log_master; 
-	
-	/* Should the errorhandler handle or discard info log?
-	 * (This does not influence the previous setting) 
-	 */
-	bool log_info;
-	
-	void (*verror)
-		(struct sieve_error_handler *ehandler, const char *location, 
-			const char *fmt, va_list args);
-	void (*vwarning)
-		(struct sieve_error_handler *ehandler, const char *location, 
-			const char *fmt, va_list args);
-	void (*vinfo)
-		(struct sieve_error_handler *ehandler, const char *location, 
-			const char *fmt, va_list args);
-
-	void (*free)
-		(struct sieve_error_handler *ehandler);
-};
 
 void sieve_verror
 	(struct sieve_error_handler *ehandler, const char *location, 
@@ -128,20 +97,37 @@ void sieve_error_handler_copy_masterlog
 	ehandler->log_master = enable;
 }
 
-void sieve_error_handler_free(struct sieve_error_handler **ehandler)
+void sieve_error_handler_init
+	(struct sieve_error_handler *ehandler, pool_t pool)
 {
-	pool_t pool;
-	
-	if ( *ehandler != NULL ) {
-		if ( (*ehandler)->free != NULL )
-			(*ehandler)->free(*ehandler);
-	
-		pool = (*ehandler)->pool;
-		pool_unref(&pool);
-	
-		if ( pool == NULL )
-			*ehandler = NULL;
-	}
+	ehandler->pool = pool;
+	ehandler->refcount = 1;
+	ehandler->errors = 0;
+	ehandler->warnings = 0;
+}
+
+void sieve_error_handler_ref(struct sieve_error_handler *ehandler)
+{
+	if ( ehandler == NULL ) return;
+
+	ehandler->refcount++;
+}
+
+void sieve_error_handler_unref(struct sieve_error_handler **ehandler)
+{
+	if ( *ehandler == NULL ) return;
+
+    i_assert((*ehandler)->refcount > 0);
+
+    if (--(*ehandler)->refcount != 0)
+        return;
+
+	if ( (*ehandler)->free != NULL )
+		(*ehandler)->free(*ehandler);
+
+	pool_unref(&((*ehandler)->pool));
+
+	*ehandler = NULL;
 }
 
 /* Output errors directly to stderror (merge this with logfile below?) */
@@ -172,15 +158,15 @@ struct sieve_error_handler *sieve_stderr_ehandler_create( void )
 	pool_t pool;
 	struct sieve_error_handler *ehandler;
 	
-	/* Pool is not strictly necessary, but other hander types will need a pool,
+	/* Pool is not strictly necessary, but other handler types will need a pool,
 	 * so this one will have one too.
 	 */
 	pool = pool_alloconly_create
-		("stderr_error_handler", sizeof(struct sieve_error_handler));	
+		("stderr_error_handler", sizeof(struct sieve_error_handler));
+//		("stderr_error_handler", 128);	
 	ehandler = p_new(pool, struct sieve_error_handler, 1);
-	ehandler->pool = pool;
-	ehandler->errors = 0;
-	ehandler->warnings = 0;
+	sieve_error_handler_init(ehandler, pool);
+
 	ehandler->verror = sieve_stderr_verror;
 	ehandler->vwarning = sieve_stderr_vwarning;
 	ehandler->vinfo = sieve_stderr_vinfo;
@@ -241,9 +227,9 @@ struct sieve_error_handler *sieve_strbuf_ehandler_create
     pool = pool_alloconly_create("strbuf_error_handler", 256);
     ehandler = p_new(pool, struct sieve_strbuf_ehandler, 1);
 	ehandler->errors = strbuf;
-    ehandler->handler.pool = pool;
-    ehandler->handler.errors = 0;
-    ehandler->handler.warnings = 0;
+    
+	sieve_error_handler_init(&ehandler->handler, pool);
+
     ehandler->handler.verror = sieve_strbuf_verror;
     ehandler->handler.vwarning = sieve_strbuf_vwarning;
     ehandler->handler.vinfo = sieve_strbuf_vinfo;
@@ -389,9 +375,8 @@ struct sieve_error_handler *sieve_logfile_ehandler_create(const char *logfile)
 	
 	pool = pool_alloconly_create("logfile_error_handler", 256);	
 	ehandler = p_new(pool, struct sieve_logfile_ehandler, 1);
-	ehandler->handler.pool = pool;
-	ehandler->handler.errors = 0;
-	ehandler->handler.warnings = 0;
+	sieve_error_handler_init(&ehandler->handler, pool);
+
 	ehandler->handler.verror = sieve_logfile_verror;
 	ehandler->handler.vwarning = sieve_logfile_vwarning;
 	ehandler->handler.vinfo = sieve_logfile_vinfo;

@@ -38,6 +38,8 @@ struct sieve_result_side_effect {
 
 struct sieve_result {
 	pool_t pool;
+	int refcount;
+
 	struct sieve_error_handler *ehandler;
 		
 	struct sieve_action_exec_env action_env;
@@ -53,8 +55,12 @@ struct sieve_result *sieve_result_create
 	 
 	pool = pool_alloconly_create("sieve_result", 4096);	
 	result = p_new(pool, struct sieve_result, 1);
+	result->refcount = 1;
 	result->pool = pool;
+	
 	result->ehandler = ehandler;
+	sieve_error_handler_ref(ehandler);
+
 	result->action_env.result = result;
 		
 	result->first_action = NULL;
@@ -65,17 +71,21 @@ struct sieve_result *sieve_result_create
 
 void sieve_result_ref(struct sieve_result *result) 
 {
-	pool_ref(result->pool);
+	result->refcount++;
 }
 
 void sieve_result_unref(struct sieve_result **result) 
 {
-	if ( result != NULL && *result != NULL ) {
-		pool_t pool = (*result)->pool;
-		pool_unref(&pool);
-		if ( pool == NULL )
-			*result = NULL;
-	}
+	i_assert((*result)->refcount > 0);
+
+    if (--(*result)->refcount != 0)
+        return;
+
+	sieve_error_handler_unref(&(*result)->ehandler);
+
+    pool_unref(&(*result)->pool);
+
+    *result = NULL;
 }
 
 inline pool_t sieve_result_pool(struct sieve_result *result)

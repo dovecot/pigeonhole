@@ -97,7 +97,8 @@ void sieve_error_handler_copy_masterlog
 unsigned int sieve_get_errors(struct sieve_error_handler *ehandler);
 unsigned int sieve_get_warnings(struct sieve_error_handler *ehandler);
 
-void sieve_error_handler_free(struct sieve_error_handler **ehandler);
+void sieve_error_handler_ref(struct sieve_error_handler *ehandler);
+void sieve_error_handler_unref(struct sieve_error_handler **ehandler);
 
 /* Error handlers */
 

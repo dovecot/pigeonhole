@@ -72,6 +72,8 @@ libsieve_la_SOURCES = \
 
 noinst_HEADERS = \
 	sieve-lexer.h \
+	sieve-script.h \
+	sieve-script-private.h
 	sieve-ast.h \
 	sieve-binary.h \
 	sieve-parser.h \
@@ -79,8 +81,9 @@ noinst_HEADERS = \
 	sieve-generator.h \
 	sieve-interpreter.h \
 	sieve-code-dumper.h \
-	sieve-result.h
+	sieve-result.h \
 	sieve-error.h \
+	sieve-error-private.h \
 	sieve-comparators.h \
 	sieve-match-types.h \
 	sieve-address-parts.h \

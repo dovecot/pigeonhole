@@ -195,7 +195,7 @@ int main(int argc, char **argv)
 		i_info("Final result: failed (caller please handle implicit keep!)\n");
 
 	sieve_close(&sbin);
-	sieve_error_handler_free(&ehandler);
+	sieve_error_handler_unref(&ehandler);
 
 	bin_close_mail_file(mfd);
 	mail_raw_close(mailr);

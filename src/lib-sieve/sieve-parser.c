@@ -82,14 +82,15 @@ struct sieve_parser *sieve_parser_create
 		parser = p_new(pool, struct sieve_parser, 1);
 		parser->pool = pool;
 		
+		parser->ehandler = ehandler;
+		sieve_error_handler_ref(ehandler);
+
 		parser->script = script;
 		sieve_script_ref(script);
 				
 		parser->lexer = lexer;
 		parser->ast = NULL;
-		
-		parser->ehandler = ehandler;
-		
+				
 		return parser;
 	}
 	
@@ -103,6 +104,8 @@ void sieve_parser_free(struct sieve_parser **parser)
 
 	sieve_lexer_free(&(*parser)->lexer);
 	sieve_script_unref(&(*parser)->script);
+
+	sieve_error_handler_unref(&(*parser)->ehandler);
 
 	pool_unref(&(*parser)->pool);
 	

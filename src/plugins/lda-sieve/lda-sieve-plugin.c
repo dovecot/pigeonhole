@@ -96,7 +96,7 @@ static int lda_sieve_run
 		i_error("sieve: Failed to compile script. "
 			"Log should be available as %s", scriptlog);
 
-		sieve_error_handler_free(&ehandler);
+		sieve_error_handler_unref(&ehandler);
 		return -1;
 	}
 
@@ -132,7 +132,7 @@ static int lda_sieve_run
 	if ( ret < 0 )
 		i_error("sieve: Failed to execute script %s", script_path);
 
-	sieve_error_handler_free(&ehandler);
+	sieve_error_handler_unref(&ehandler);
 
 	return ret;
 }

@@ -60,7 +60,9 @@ struct sieve_generator *sieve_generator_create
 	pool = pool_alloconly_create("sieve_generator", 4096);	
 	gentr = p_new(pool, struct sieve_generator, 1);
 	gentr->pool = pool;
+
 	gentr->ehandler = ehandler;
+	sieve_error_handler_ref(ehandler);
 	
 	gentr->ast = ast;	
 	gentr->script = sieve_ast_script(ast);
@@ -88,6 +90,8 @@ void sieve_generator_free(struct sieve_generator **generator)
 	if ( (*generator)->binary != NULL )
 		sieve_binary_unref(&(*generator)->binary);
 	
+	sieve_error_handler_unref(&(*generator)->ehandler);
+
 	pool_unref(&((*generator)->pool));
 	
 	*generator = NULL;
