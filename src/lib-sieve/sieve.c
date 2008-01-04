@@ -225,5 +225,5 @@ void sieve_close(struct sieve_binary **sbin)
 
 const char *sieve_get_capabilities(void) 
 {
-	return "fileinto reject envelope encoded-character";	
+	return sieve_extensions_get_string();
 }

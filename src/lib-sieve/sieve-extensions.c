@@ -1,4 +1,5 @@
 #include "lib.h"
+#include "str.h"
 #include "mempool.h"
 #include "hash.h"
 #include "array.h"
@@ -216,7 +217,54 @@ int sieve_extension_get_id(const struct sieve_extension *extension)
 	return ereg->id;
 }
 
-static void sieve_extensions_deinit_registry() 
+static bool _list_extension(const struct sieve_extension *ext)
+{
+	if ( *ext->name == '@' ) return FALSE;
+
+	if ( ext->validator_load == NULL && ext->generator_load == NULL &&
+		ext->binary_load == NULL && ext->interpreter_load == NULL &&
+		ext->load == NULL && 
+		ext->operations.count == 0 && ext->operands.count == 0 ) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+const char *sieve_extensions_get_string(void)
+{
+	unsigned int i = 0, ext_count = array_count(&extensions);
+	string_t *extstr = t_str_new(256);
+
+	if ( ext_count > 0 ) {
+		const struct sieve_extension * const *ext =
+			array_idx(&extensions, i);
+
+		while ( !_list_extension(*ext) ) {
+			if ( i < ext_count ) 
+				ext = array_idx(&extensions, i);
+			else
+				break;
+			i++;
+		}
+
+		str_append(extstr, (*ext)->name);
+ 
+		while ( i < ext_count ) {
+			ext = array_idx(&extensions, i);
+
+			if ( _list_extension(*ext) ) {
+				str_append_c(extstr, ' ');
+				str_append(extstr, (*ext)->name);
+			}
+			i++;
+		}
+	}
+
+	return str_c(extstr);
+}
+
+static void sieve_extensions_deinit_registry(void) 
 {
 	struct hash_iterate_context *itx = 
 		hash_iterate_init(extension_index);

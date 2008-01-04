@@ -38,7 +38,7 @@ struct sieve_extension {
 	ext->field->count;
 
 /* Opcodes and operands */
- 
+
 #define SIEVE_EXT_DEFINE_NO_OPERATIONS SIEVE_EXT_DEFINE_NO_OBJECTS
 #define SIEVE_EXT_DEFINE_OPERATION(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
 #define SIEVE_EXT_DEFINE_OPERATIONS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
@@ -57,7 +57,7 @@ const struct sieve_extension *sieve_extension_acquire(const char *extension);
 
 /* Extensions state */
 
-bool sieve_extensions_init(const char *sieve_plugins ATTR_UNUSED); 
+bool sieve_extensions_init(const char *sieve_plugins ATTR_UNUSED);
 const int *sieve_extensions_get_preloaded_ext_ids(void);
 void sieve_extensions_deinit(void);
 
@@ -65,8 +65,10 @@ void sieve_extensions_deinit(void);
 
 int sieve_extension_register(const struct sieve_extension *extension);
 int sieve_extensions_get_count(void);
-const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id); 
-int sieve_extension_get_by_name(const char *name, const struct sieve_extension **ext); 
-int sieve_extension_get_id(const struct sieve_extension *extension); 
+const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id);
+int sieve_extension_get_by_name(const char *name, const struct sieve_extension **ext);
+int sieve_extension_get_id(const struct sieve_extension *extension);
+
+const char *sieve_extensions_get_string(void);
 
 #endif /* __SIEVE_EXTENSIONS_H */
