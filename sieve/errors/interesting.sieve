@@ -3,6 +3,8 @@ require ["copy", "relational"];
 require "envelope";
 require "regex";
 
+va
+
 if header :is "To" "Stephan \"Nico\" Bosch <nico@voorbeeld.nl>" {
 	fileinto "INBOX.stephan";	
 } elsif header :matches "To" "*@voorbeeld.nl" {
