@@ -83,7 +83,7 @@ static struct sieve_binary *sieve_generate
 	return sbin;
 }
 
-static struct sieve_binary *sieve_compile_script
+struct sieve_binary *sieve_compile_script
 (struct sieve_script *script, struct sieve_error_handler *ehandler) 
 {
 	struct sieve_ast *ast;

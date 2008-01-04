@@ -10,6 +10,7 @@
 #define SIEVE_VERSION "0.0.1"
 #define SIEVE_IMPLEMENTATION "Dovecot Sieve " SIEVE_VERSION
 
+struct sieve_script;
 struct sieve_binary;
 
 /* The mail message + envelope data */
@@ -50,26 +51,31 @@ struct sieve_script_env {
 bool sieve_init(const char *plugins);
 void sieve_deinit(void);
 
+/* sieve_compile_script:
+ */
+struct sieve_binary *sieve_compile_script
+	(struct sieve_script *script, struct sieve_error_handler *ehandler);
+
 /* sieve_compile:
  *
- *   Compiles the script into a binary. 
+ *   Compiles the script into a binary.
  */
 struct sieve_binary *sieve_compile
 	(const char *scriptpath, struct sieve_error_handler *ehandler);
 
 /* sieve_open:
- * 
+ *
  *   First tries to open the binary version of the specified script and
- *   if it does not exist or if it contains errors, the script is 
- *   (re-)compiled. The binary is updated if the script is recompiled. 
+ *   if it does not exist or if it contains errors, the script is
+ *   (re-)compiled. The binary is updated if the script is recompiled.
  *   Note that errors in the bytecode are not caught here.
- *   
+ *
  */
 struct sieve_binary *sieve_open
 	(const char *scriptpath, struct sieve_error_handler *ehandler);
 
 /* sieve_dump:
- * 
+ *
  *   Dumps the byte code in human-readable form to the specified ostream.
  */
 void sieve_dump(struct sieve_binary *sbin, struct ostream *stream);
