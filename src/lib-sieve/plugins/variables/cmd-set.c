@@ -211,6 +211,11 @@ static bool cmd_set_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
+	struct sieve_variable_storage *storage = 
+		ext_variables_interpreter_get_storage(renv->interp);
+
+	
+	
 	return TRUE;
 }
 

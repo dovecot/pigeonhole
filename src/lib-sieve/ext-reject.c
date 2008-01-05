@@ -201,7 +201,7 @@ static bool ext_reject_operation_execute
 		return FALSE;
 	}
 
-	if ( !sieve_opr_string_read(renv->sbin, address, &reason) ) {
+	if ( !sieve_opr_string_read(renv, address, &reason) ) {
 		t_pop();
 		return FALSE;
 	}

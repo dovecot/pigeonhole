@@ -70,6 +70,57 @@ struct sieve_variable *sieve_variable_scope_get_variable
 	return var;
 }
 
+/* Variable storage */
+
+struct sieve_variable_storage {
+	pool_t pool;
+	ARRAY_DEFINE(var_values, string_t *); 
+};
+
+struct sieve_variable_storage *sieve_variable_storage_create(pool_t pool)
+{
+	struct sieve_variable_storage *storage;
+	
+	storage = p_new(pool, struct sieve_variable_storage, 1);
+	storage->pool = pool;
+		
+	p_array_init(&storage->var_values, pool, 4);
+
+	return storage;
+}
+
+void sieve_variable_get
+(struct sieve_variable_storage *storage, unsigned int index, string_t **value)
+{
+	*value = NULL;
+	
+	if  ( index < array_count(&storage->var_values) ) {
+		string_t * const *varent;
+			
+		varent = array_idx(&storage->var_values, index);
+		
+		*value = *varent;
+	};
+} 
+
+void sieve_variable_assign
+(struct sieve_variable_storage *storage, unsigned int index, 
+	const string_t *value)
+{
+	string_t *varval;
+	
+	sieve_variable_get(storage, index, &varval);
+	
+	if ( varval == NULL ) {
+		varval = str_new(storage->pool, str_len(value));
+		array_idx_set(&storage->var_values, index, &varval);	
+	} else {
+		str_truncate(varval, 0);
+	}
+	
+	str_append_str(varval, value);
+}
+
 /* Validator context */
 
 struct ext_variables_validator_context {
@@ -127,6 +178,51 @@ struct sieve_variable *ext_variables_validator_get_variable
 	return sieve_variable_scope_get_variable(ctx->main_scope, variable);
 }
 
+/* Interpreter context */
+
+struct ext_variables_interpreter_context {
+	struct sieve_variable_storage *local_storage;
+};
+
+static struct ext_variables_interpreter_context *
+ext_variables_interpreter_context_create(struct sieve_interpreter *interp)
+{		
+	pool_t pool = sieve_interpreter_pool(interp);
+	struct ext_variables_interpreter_context *ctx;
+	
+	ctx = p_new(pool, struct ext_variables_interpreter_context, 1);
+	ctx->local_storage = sieve_variable_storage_create(pool);
+
+	sieve_interpreter_extension_set_context
+		(interp, ext_variables_my_id, (void *) ctx);
+
+	return ctx;
+}
+
+void ext_variables_interpreter_initialize(struct sieve_interpreter *interp)
+{
+	struct ext_variables_interpreter_context *ctx;
+	
+	/* Create our context */
+	ctx = ext_variables_interpreter_context_create(interp);
+}
+
+static inline struct ext_variables_interpreter_context *
+ext_variables_interpreter_context_get(struct sieve_interpreter *interp)
+{
+	return (struct ext_variables_interpreter_context *)
+		sieve_interpreter_extension_get_context(interp, ext_variables_my_id);
+}
+
+struct sieve_variable_storage *ext_variables_interpreter_get_storage
+	(struct sieve_interpreter *interp)
+{
+	struct ext_variables_interpreter_context *ctx = 
+		ext_variables_interpreter_context_get(interp);
+		
+	return ctx->local_storage;
+}
+
 /* Variable arguments */
 
 static bool arg_variable_generate
@@ -156,7 +252,7 @@ static bool arg_variable_generate
 {
 	struct sieve_variable *var = (struct sieve_variable *) arg->context;
 	
-	ext_variables_variable_emit(sieve_generator_get_binary(generator), var);
+	ext_variables_opr_variable_emit(sieve_generator_get_binary(generator), var);
 
 	return TRUE;
 }
@@ -164,7 +260,7 @@ static bool arg_variable_generate
 /* Variable operands */
 
 static bool opr_variable_read
-	(struct sieve_binary *sbin, sieve_size_t *address, string_t **str);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
 static bool opr_variable_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
@@ -180,7 +276,7 @@ const struct sieve_operand variable_operand = {
 	&variable_interface
 };	
 
-void ext_variables_variable_emit
+void ext_variables_opr_variable_emit
 	(struct sieve_binary *sbin, struct sieve_variable *var) 
 {
 	(void) sieve_operand_emit_code(sbin, &variable_operand, ext_variables_my_id);
@@ -190,10 +286,10 @@ void ext_variables_variable_emit
 static bool opr_variable_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
 {
-	sieve_size_t number = 0;
+	sieve_size_t index = 0;
 	
-	if (sieve_binary_read_integer(denv->sbin, address, &number) ) {
-		sieve_code_dumpf(denv, "VARIABLE: %ld [?]", (long) number);
+	if (sieve_binary_read_integer(denv->sbin, address, &index) ) {
+		sieve_code_dumpf(denv, "VARIABLE: %ld [?]", (long) index);
 
 		return TRUE;
 	}
@@ -202,14 +298,28 @@ static bool opr_variable_dump
 }
 
 static bool opr_variable_read
-  (struct sieve_binary *sbin, sieve_size_t *address, string_t **str)
+  (const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
 { 
-	sieve_size_t number = 0;
+	sieve_size_t index = 0;
 	
-	if (sieve_binary_read_integer(sbin, address, &number) ) {
+	if (sieve_binary_read_integer(renv->sbin, address, &index) ) {
 		*str = t_str_new(10);
 		str_append(*str, "VARIABLE");
 
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+bool ext_variables_opr_variable_assign
+	(struct sieve_binary *sbin, sieve_size_t *address, string_t *str)
+{
+	sieve_size_t index = 0;
+	
+	if (sieve_binary_read_integer(sbin, address, &index) ) {
+		/* FIXME: Assign */
+	
 		return TRUE;
 	}
 	

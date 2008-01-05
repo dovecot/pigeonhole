@@ -9,6 +9,7 @@
  */
 
 #include "lib.h"
+#include "str.h"
 #include "unichar.h"
 
 #include "sieve-extensions.h"
@@ -23,6 +24,7 @@
 
 static bool ext_variables_load(int ext_id);
 static bool ext_variables_validator_load(struct sieve_validator *validator);
+static bool ext_variables_interpreter_load(struct sieve_interpreter *interp);
 
 /* Commands */
 
@@ -50,7 +52,8 @@ struct sieve_extension variables_extension = {
 	"variables", 
 	ext_variables_load,
 	ext_variables_validator_load, 
-	NULL, NULL, NULL, 
+	NULL, NULL,
+	ext_variables_interpreter_load, 
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_variables_operations), 
 	SIEVE_EXT_DEFINE_OPERAND(variable_operand)
 };
@@ -160,7 +163,7 @@ static bool arg_variable_string_validate
 /* Load extension into validator */
 
 static bool ext_variables_validator_load
-	(struct sieve_validator *validator ATTR_UNUSED)
+	(struct sieve_validator *validator)
 {
 	/*sieve_validator_argument_override(validator, SAT_VAR_STRING, 
 		&variable_string_argument);*/ 
@@ -169,6 +172,16 @@ static bool ext_variables_validator_load
 	sieve_validator_register_command(validator, &tst_string);
 	
 	ext_variables_validator_initialize(validator);
+
+	return TRUE;
+}
+
+/* Load extension into interpreter */
+
+static bool ext_variables_interpreter_load
+	(struct sieve_interpreter *interp)
+{
+	ext_variables_interpreter_initialize(interp);
 
 	return TRUE;
 }

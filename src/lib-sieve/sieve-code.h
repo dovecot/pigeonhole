@@ -47,21 +47,23 @@ struct sieve_opr_number_interface {
 	bool (*dump)	
 		(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 	bool (*read)
-	  (struct sieve_binary *sbin, sieve_size_t *address, sieve_size_t *number);
+	  (const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	  	sieve_size_t *number);
 };
 
 struct sieve_opr_string_interface {
 	bool (*dump)
 		(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 	bool (*read)
-		(struct sieve_binary *sbin, sieve_size_t *address, string_t **str);
+		(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+			string_t **str);
 };
 
 struct sieve_opr_stringlist_interface {
 	bool (*dump)
 		(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 	struct sieve_coded_stringlist *(*read)
-		(struct sieve_binary *sbin, sieve_size_t *address);
+		(const struct sieve_runtime_env *renv, sieve_size_t *address);
 };
 
 enum sieve_core_operand {
@@ -102,13 +104,14 @@ void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_size_t number);
 bool sieve_opr_number_dump	
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address); 
 bool sieve_opr_number_read
-	(struct sieve_binary *sbin, sieve_size_t *address, sieve_size_t *number);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+		sieve_size_t *number);
 
 void sieve_opr_string_emit(struct sieve_binary *sbin, string_t *str);
 bool sieve_opr_string_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address); 
 bool sieve_opr_string_read
-	(struct sieve_binary *sbin, sieve_size_t *address, string_t **str);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
 
 void sieve_opr_stringlist_emit_start
 	(struct sieve_binary *sbin, unsigned int listlen, void **context);
@@ -119,7 +122,7 @@ void sieve_opr_stringlist_emit_end
 bool sieve_opr_stringlist_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 struct sieve_coded_stringlist *sieve_opr_stringlist_read
-	(struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 
 /* Operation: identifies what's to be done */

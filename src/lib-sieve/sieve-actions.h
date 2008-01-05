@@ -114,7 +114,7 @@ void sieve_opr_side_effect_emit
 bool sieve_opr_side_effect_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 const struct sieve_side_effect *sieve_opr_side_effect_read
-	(struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 /* Actions common to multiple commands */
 

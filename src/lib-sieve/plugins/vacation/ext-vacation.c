@@ -393,23 +393,23 @@ static bool ext_vacation_operation_execute
 			case 0:
 				break;
 			case OPT_DAYS:
-				if ( !sieve_opr_number_read(renv->sbin, address, &days) ) 
+				if ( !sieve_opr_number_read(renv, address, &days) ) 
 					return FALSE;
 				break;
 			case OPT_SUBJECT:
-				if ( !sieve_opr_string_read(renv->sbin, address, &subject) ) 
+				if ( !sieve_opr_string_read(renv, address, &subject) ) 
 					return FALSE;
 				break;
 			case OPT_FROM:
-				if ( !sieve_opr_string_read(renv->sbin, address, &from) ) 
+				if ( !sieve_opr_string_read(renv, address, &from) ) 
 					return FALSE;
 				break;
 			case OPT_HANDLE: 
-				if ( !sieve_opr_string_read(renv->sbin, address, &handle) ) 	
+				if ( !sieve_opr_string_read(renv, address, &handle) ) 	
 					return FALSE;
 				break;
 			case OPT_ADDRESSES:
-				if ( (addresses=sieve_opr_stringlist_read(renv->sbin, address)) 
+				if ( (addresses=sieve_opr_stringlist_read(renv, address)) 
 					== NULL ) 
 					return FALSE;
 				break;
@@ -422,7 +422,7 @@ static bool ext_vacation_operation_execute
 		}
 	}
 	
-	if ( !sieve_opr_string_read(renv->sbin, address, &reason) ) 
+	if ( !sieve_opr_string_read(renv, address, &reason) ) 
 		return FALSE;
 	
 	printf(">> VACATION \"%s\"\n", str_c(reason));

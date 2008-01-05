@@ -156,7 +156,7 @@ static bool cmd_redirect_operation_execute
 
 	t_push();
 
-	if ( !sieve_opr_string_read(renv->sbin, address, &redirect) ) {
+	if ( !sieve_opr_string_read(renv, address, &redirect) ) {
 		t_pop();
 		return FALSE;
 	}

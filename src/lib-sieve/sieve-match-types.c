@@ -323,26 +323,36 @@ static const struct sieve_extension_obj_registry *
 	return &(ext->match_types);
 }
 
-const struct sieve_match_type *sieve_opr_match_type_read
+static inline const struct sieve_match_type *sieve_match_type_read
   (struct sieve_binary *sbin, sieve_size_t *address)
 {
-	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
-	
-	if ( operand == NULL || operand->class != &match_type_class ) 
-		return NULL;
-
 	return sieve_extension_read_obj
 		(struct sieve_match_type, sbin, address, &mtch_default_reg, 
 			sieve_match_type_registry_get);
 }
 
+const struct sieve_match_type *sieve_opr_match_type_read
+  (const struct sieve_runtime_env *renv, sieve_size_t *address)
+{
+	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
+	
+	if ( operand == NULL || operand->class != &match_type_class ) 
+		return NULL;
+
+	return sieve_match_type_read(renv->sbin, address);
+}
+
 bool sieve_opr_match_type_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
+	const struct sieve_operand *operand = sieve_operand_read(denv->sbin, address);
 	const struct sieve_match_type *mtch;
+	
+	if ( operand == NULL || operand->class != &match_type_class ) 
+		return NULL;
 
 	sieve_code_mark(denv); 
-	mtch = sieve_opr_match_type_read(denv->sbin, address);
+	mtch = sieve_match_type_read(denv->sbin, address);
 	
 	if ( mtch == NULL )
 		return FALSE;

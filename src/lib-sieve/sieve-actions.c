@@ -123,26 +123,36 @@ static const struct sieve_extension_obj_registry *
 	return &(ext->side_effects);
 }
 
-const struct sieve_side_effect *sieve_opr_side_effect_read
+static inline const struct sieve_side_effect *sieve_side_effect_read
 (struct sieve_binary *sbin, sieve_size_t *address)
 {
-	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
-
-	if ( operand == NULL || operand->class != &side_effect_class ) 
-		return NULL;
-		
 	return sieve_extension_read_obj
 		(struct sieve_side_effect, sbin, address, &seff_default_reg, 
 			sieve_side_effect_registry_get);
 }
 
+const struct sieve_side_effect *sieve_opr_side_effect_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
+{
+	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
+
+	if ( operand == NULL || operand->class != &side_effect_class ) 
+		return NULL;
+		
+	return sieve_side_effect_read(renv->sbin, address);
+}
+
 bool sieve_opr_side_effect_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
+	const struct sieve_operand *operand = sieve_operand_read(denv->sbin, address);
 	const struct sieve_side_effect *seffect;
 
+	if ( operand == NULL || operand->class != &side_effect_class ) 
+		return NULL;
+
 	sieve_code_mark(denv);
-	seffect = sieve_opr_side_effect_read(denv->sbin, address);
+	seffect = sieve_side_effect_read(denv->sbin, address);
 
 	if ( seffect == NULL ) 
 		return FALSE;

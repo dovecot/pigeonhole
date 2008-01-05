@@ -17,6 +17,7 @@ enum ext_variables_opcode {
 /* Extension */
 
 void ext_variables_validator_initialize(struct sieve_validator *validator);
+void ext_variables_interpreter_initialize(struct sieve_interpreter *interp);
 
 /* Set modifiers */
 
@@ -41,13 +42,19 @@ const struct ext_variables_set_modifier *ext_variables_set_modifier_find
 	
 /* Variables */
 
-void ext_variables_variable_emit
+void ext_variables_opr_variable_emit
 	(struct sieve_binary *sbin, struct sieve_variable *var);
+bool ext_variables_opr_variable_assign
+	(struct sieve_binary *sbin, sieve_size_t *address, string_t *str);
 
 void ext_variables_variable_argument_activate
 	(struct sieve_validator *validator, struct sieve_ast_argument *arg);
 
 struct sieve_variable *ext_variables_validator_get_variable
 (struct sieve_validator *validator, const char *variable);
+
+struct sieve_variable_storage *ext_variables_interpreter_get_storage
+	(struct sieve_interpreter *interp);
+
 
 #endif /* __EXT_VARIABLES_COMMON_H */

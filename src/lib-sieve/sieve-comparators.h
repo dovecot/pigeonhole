@@ -77,7 +77,7 @@ const struct sieve_comparator *sieve_comparator_find
 		int *ext_id);
 
 const struct sieve_comparator *sieve_opr_comparator_read
-	(struct sieve_binary *sbin, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 bool sieve_opr_comparator_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 

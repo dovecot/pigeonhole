@@ -158,7 +158,7 @@ static bool ext_fileinto_operation_execute
 
 	t_push();
 	
-	if ( !sieve_opr_string_read(renv->sbin, address, &folder) ) {
+	if ( !sieve_opr_string_read(renv, address, &folder) ) {
 		t_pop();
 		return FALSE;
 	}

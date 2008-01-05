@@ -178,10 +178,10 @@ static bool tst_header_operation_execute
 			case 0: 
 				break;
 			case OPT_COMPARATOR:
-				cmp = sieve_opr_comparator_read(renv->sbin, address);
+				cmp = sieve_opr_comparator_read(renv, address);
 				break;
 			case OPT_MATCH_TYPE:
-				mtch = sieve_opr_match_type_read(renv->sbin, address);
+				mtch = sieve_opr_match_type_read(renv, address);
 				break;
 			default:
 				return FALSE;
@@ -192,13 +192,13 @@ static bool tst_header_operation_execute
 	t_push();
 		
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv->sbin, address)) == NULL ) {
+	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}
 	
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv->sbin, address)) == NULL ) {
+	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}

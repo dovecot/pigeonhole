@@ -331,7 +331,7 @@ bool sieve_interpreter_handle_optional_operands
 					*list = sieve_side_effects_list_create(renv->result);
 					
 				const struct sieve_side_effect *seffect = 
-					sieve_opr_side_effect_read(renv->sbin, address);
+					sieve_opr_side_effect_read(renv, address);
 
 				if ( seffect == NULL ) return FALSE;
 			

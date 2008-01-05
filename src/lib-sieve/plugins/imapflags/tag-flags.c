@@ -152,7 +152,7 @@ static bool seff_flags_read_context
 	t_push();
 	
 	/* Read key-list */
-	if ( (flag_list=sieve_opr_stringlist_read(renv->sbin, address)) == NULL ) {
+	if ( (flag_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}

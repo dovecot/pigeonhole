@@ -215,7 +215,7 @@ static bool tst_size_operation_execute
 	
 	printf("%s\n", op->mnemonic);
 	
-	if ( !sieve_opr_number_read(renv->sbin, address, &limit) ) 
+	if ( !sieve_opr_number_read(renv, address, &limit) ) 
 		return FALSE;	
 	
 	if ( !tst_size_get(renv, &mail_size) )

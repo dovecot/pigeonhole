@@ -146,19 +146,19 @@ static bool tst_address_operation_execute
 	printf("?? ADDRESS\n");
 
 	if ( !sieve_addrmatch_default_get_optionals
-		(renv->sbin, address, &addrp, &mtch, &cmp) )
+		(renv, address, &addrp, &mtch, &cmp) )
 		return FALSE; 
 
 	t_push();
 		
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv->sbin, address)) == NULL ) {
+	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}
 	
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv->sbin, address)) == NULL ) {
+	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}

@@ -332,26 +332,36 @@ static const struct sieve_extension_obj_registry *
 	return &(ext->comparators);
 }
 
-const struct sieve_comparator *sieve_opr_comparator_read
+static inline const struct sieve_comparator *sieve_comparator_read
   (struct sieve_binary *sbin, sieve_size_t *address)
 {
-	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
-	
-	if ( operand == NULL || operand->class != &comparator_class ) 
-		return NULL;
-	
 	return sieve_extension_read_obj
 		(struct sieve_comparator, sbin, address, &cmp_default_reg, 
 			sieve_comparator_registry_get);
 }
 
+const struct sieve_comparator *sieve_opr_comparator_read
+  (const struct sieve_runtime_env *renv, sieve_size_t *address)
+{
+	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
+	
+	if ( operand == NULL || operand->class != &comparator_class ) 
+		return NULL;
+	
+	return sieve_comparator_read(renv->sbin, address);
+}
+
 bool sieve_opr_comparator_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
+	const struct sieve_operand *operand = sieve_operand_read(denv->sbin, address);
 	const struct sieve_comparator *cmp;
+	
+	if ( operand == NULL || operand->class != &comparator_class ) 
+		return NULL;
 
 	sieve_code_mark(denv);
-	cmp = sieve_opr_comparator_read(denv->sbin, address);
+	cmp = sieve_comparator_read(denv->sbin, address);
 	
 	if ( cmp == NULL )
 		return FALSE;
