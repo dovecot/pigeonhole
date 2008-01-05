@@ -395,7 +395,7 @@ bool sieve_parser_run
 	if ( sieve_parse_commands(parser, sieve_ast_root(parser->ast)) ) { 
 		if ( sieve_lexer_current_token(parser->lexer) != STT_EOF ) { 
 			sieve_parser_error(parser, 
-				"unexpected token %s found at (the presumed) end of file",
+				"unexpected %s found at (the presumed) end of file",
 				sieve_lexer_token_string(parser->lexer));
 	
 			parser->ast = NULL;
