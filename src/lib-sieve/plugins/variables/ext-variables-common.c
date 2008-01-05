@@ -14,6 +14,8 @@
 
 #include "ext-variables-common.h"
 
+#include <ctype.h>
+
 /* Forward declarations */
 
 extern const struct ext_variables_set_modifier lower_modifier;
@@ -223,7 +225,11 @@ struct sieve_variable_storage *ext_variables_interpreter_get_storage
 	return ctx->local_storage;
 }
 
-/* Variable arguments */
+/* 
+ * Arguments 
+ */
+
+/* Variable argument */
 
 static bool arg_variable_generate
 	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
@@ -231,6 +237,28 @@ static bool arg_variable_generate
 
 const struct sieve_argument variable_argument = 
 	{ "@variable", NULL, NULL, NULL, arg_variable_generate };
+
+static struct sieve_ast_argument *ext_variables_variable_argument_create
+(struct sieve_validator *validator, struct sieve_ast *ast, 
+	unsigned int source_line,	const char *variable)
+{
+	struct ext_variables_validator_context *ctx;
+	struct sieve_variable *var;
+	struct sieve_ast_argument *arg;
+	
+	ctx = ext_variables_validator_context_get(validator);
+	var = sieve_variable_scope_get_variable(ctx->main_scope, variable);
+
+	if ( var == NULL ) 
+		return NULL;
+	
+	arg = sieve_ast_argument_create(ast, source_line);
+	arg->type = SAAT_STRING;
+	arg->argument = &variable_argument;
+	arg->context = (void *) var;
+	
+	return arg;
+}
 
 void ext_variables_variable_argument_activate
 (struct sieve_validator *validator, struct sieve_ast_argument *arg)
@@ -257,21 +285,219 @@ static bool arg_variable_generate
 	return TRUE;
 }
 
-/* Variable operands */
+/* Variable string argument */
 
-static bool opr_variable_read
+static bool arg_variable_string_validate
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *context);
+static bool arg_variable_string_generate
+(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+	struct sieve_command_context *context);
+
+const struct sieve_argument variable_string_argument = { 
+	"@variable-string", 
+	NULL, 
+	arg_variable_string_validate, 
+	NULL, 
+	arg_variable_string_generate,
+};
+
+struct _variable_string_data {
+	struct sieve_ast_arg_list *str_parts;
+};
+
+inline static struct sieve_ast_argument *_add_string_element
+(struct sieve_ast_arg_list *list, struct sieve_ast_argument *arg)
+{
+	struct sieve_ast_argument *strarg = 
+		sieve_ast_argument_create(arg->ast, arg->source_line);
+	sieve_ast_arg_list_add(list, strarg);
+	strarg->type = SAAT_STRING;
+
+	return strarg;
+}
+
+static bool arg_variable_string_validate
+(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *cmd)
+{
+	enum { ST_NONE, ST_OPEN, ST_VARIABLE, ST_CLOSE } state = ST_NONE;
+	pool_t pool = sieve_ast_pool((*arg)->ast);
+	struct sieve_ast_arg_list *arglist = NULL;
+	string_t *str = sieve_ast_argument_str(*arg);
+	string_t *ident;
+	const char *p, *mark, *strstart, *substart = NULL;
+	const char *strval = (const char *) str_data(str);
+	const char *strend = strval + str_len(str);
+	struct _variable_string_data *strdata;
+	bool result = TRUE;
+	
+	//t_push();
+			
+	ident = t_str_new(32);	
+		
+	p = strval;
+	strstart = p;
+	while ( result && p < strend ) {
+		switch ( state ) {
+		case ST_NONE:
+			if ( *p == '$' ) {
+				substart = p;
+				state = ST_OPEN;
+			}
+			p++;
+			break;
+		case ST_OPEN:
+			if ( *p == '{' ) {
+				state = ST_VARIABLE;
+				p++;
+			} else 
+				state = ST_NONE;
+			break;
+		case ST_VARIABLE:
+			mark = p;
+			
+			if ( p < strend ) {
+				if (*p == '_' || isalpha(*p) ) {
+					str_append_c(ident, *p);
+					p++;
+				
+					while ( p < strend && (*p == '_' || isalnum(*p)) ) {
+						str_append_c(ident, *p);
+						p++;
+					}
+					state = ST_CLOSE;
+				} else if ( isdigit(*p) ) {
+					unsigned int num_variable = *p - '0';
+					p++;
+					
+					while ( p < strend && isdigit(*p) ) {
+						num_variable = num_variable*10 + (*p - '0');
+						p++;
+					} 
+					state = ST_CLOSE;
+				} else 
+					state = ST_NONE;
+			}  			
+			
+			break;
+		case ST_CLOSE:
+			if ( *p == '}' ) {				
+				struct sieve_ast_argument *strarg;
+				
+				/* We now know that the substitution is valid */	
+				
+				if ( arglist == NULL ) {
+					arglist = sieve_ast_arg_list_create(pool);
+				}
+				
+				if ( substart > strstart ) {
+					strarg = _add_string_element(arglist, *arg);
+					strarg->_value.str = str_new(pool, substart - strstart);
+					str_append_n(strarg->_value.str, strstart, substart - strstart); 
+					
+					if ( !sieve_validator_argument_activate_super
+						(validator, cmd, strarg, FALSE) )
+						return FALSE;
+						
+					printf("STR: %s\n", t_strdup_until(strstart, substart));
+				}
+				
+				/* Find the variable */
+				strarg = ext_variables_variable_argument_create
+					(validator, (*arg)->ast, (*arg)->source_line, str_c(ident));
+				if ( strarg != NULL )
+					sieve_ast_arg_list_add(arglist, strarg);
+
+				printf("VAR: %s\n", str_c(ident));
+				str_truncate(ident, 0);
+				
+				strstart = p + 1;
+				substart = strstart;
+			}
+			state = ST_NONE;
+			p++;	
+		}
+	}
+
+	//t_pop();
+	
+	if ( arglist == NULL ) {
+		printf("STR: %s\n", strval);
+		return sieve_validator_argument_activate_super
+			(validator, cmd, *arg, TRUE);
+	}
+	
+	if ( substart > strstart ) {
+		struct sieve_ast_argument *strarg = _add_string_element(arglist, *arg);
+		strarg->_value.str = str_new(pool, substart - strstart);
+		str_append_n(strarg->_value.str, strstart, substart - strstart); 
+		
+		if ( !sieve_validator_argument_activate_super
+			(validator, cmd, strarg, FALSE) )
+			return FALSE;
+
+		printf("STR: %s\n", t_strdup_until(strstart, substart));
+	}	
+	
+	strdata = p_new(pool, struct _variable_string_data, 1);
+	strdata->str_parts = arglist;
+	
+	(*arg)->context = (void *) strdata;
+
+	return TRUE;
+}
+
+#define _string_data_first(data) __AST_LIST_FIRST((data)->str_parts)
+#define _string_data_count(data) __AST_LIST_COUNT((data)->str_parts)
+#define _string_data_next(item) __AST_LIST_NEXT(item)
+
+static bool arg_variable_string_generate
+(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+	struct sieve_command_context *cmd) 
+{
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+	struct _variable_string_data *strdata = 
+		(struct _variable_string_data *) arg->context;
+	struct sieve_ast_argument *strpart;
+	
+	if ( _string_data_count(strdata) == 1 )
+		sieve_generate_argument(generator, _string_data_first(strdata), cmd);
+	else {
+		ext_variables_opr_variable_string_emit(sbin, _string_data_count(strdata));
+
+		strpart = _string_data_first(strdata);
+		while ( strpart != NULL ) {
+			if ( !sieve_generate_argument(generator, strpart, cmd) )
+				return FALSE;
+			
+			strpart = _string_data_next(strpart);
+		}
+	}
+	
+	return TRUE;
+}
+
+/* 
+ * Operands 
+ */
+
+/* Variable operand */
+
+static bool opr_variable_read_value
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
 static bool opr_variable_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
 const struct sieve_opr_string_interface variable_interface = { 
 	opr_variable_dump,
-	opr_variable_read
+	opr_variable_read_value
 };
 		
 const struct sieve_operand variable_operand = { 
 	"variable", 
-	&variables_extension, 0,
+	&variables_extension, 
+	EXT_VARIABLES_OPERAND_VARIABLE,
 	&string_class,
 	&variable_interface
 };	
@@ -297,14 +523,17 @@ static bool opr_variable_dump
 	return FALSE;
 }
 
-static bool opr_variable_read
+static bool opr_variable_read_value
   (const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
 { 
+	struct sieve_variable_storage *storage;
 	sieve_size_t index = 0;
 	
+	storage = ext_variables_interpreter_get_storage(renv->interp);
+	if ( storage == NULL ) return FALSE;
+		
 	if (sieve_binary_read_integer(renv->sbin, address, &index) ) {
-		*str = t_str_new(10);
-		str_append(*str, "VARIABLE");
+		sieve_variable_get(storage, index, str);
 
 		return TRUE;
 	}
@@ -312,18 +541,95 @@ static bool opr_variable_read
 	return FALSE;
 }
 
-bool ext_variables_opr_variable_assign
-	(struct sieve_binary *sbin, sieve_size_t *address, string_t *str)
+bool ext_variables_opr_variable_read
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+		struct sieve_variable_storage **storage, unsigned int *var_index)
 {
-	sieve_size_t index = 0;
+	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
+	sieve_size_t idx = 0;
 	
-	if (sieve_binary_read_integer(sbin, address, &index) ) {
-		/* FIXME: Assign */
+	if ( operand != &variable_operand ) 
+		return FALSE;
+		
+	*storage = ext_variables_interpreter_get_storage(renv->interp);
+	if ( *storage == NULL ) return FALSE;
 	
+	if (sieve_binary_read_integer(renv->sbin, address, &idx) ) {
+		*var_index = idx;
 		return TRUE;
 	}
 	
 	return FALSE;
+}
+
+/* Variable string operand */
+
+static bool opr_variable_string_read
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
+static bool opr_variable_string_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+
+const struct sieve_opr_string_interface variable_string_interface = { 
+	opr_variable_string_dump,
+	opr_variable_string_read
+};
+		
+const struct sieve_operand variable_string_operand = { 
+	"variable-string", 
+	&variables_extension, 
+	EXT_VARIABLES_OPERAND_VARIABLE_STRING,
+	&string_class,
+	&variable_string_interface
+};	
+
+void ext_variables_opr_variable_string_emit
+	(struct sieve_binary *sbin, unsigned int elements) 
+{
+	(void) sieve_operand_emit_code
+		(sbin, &variable_string_operand, ext_variables_my_id);
+	(void) sieve_binary_emit_integer(sbin, elements);
+}
+
+static bool opr_variable_string_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
+{
+	sieve_size_t elements = 0;
+	unsigned int i;
+	
+	if (!sieve_binary_read_integer(denv->sbin, address, &elements) )
+		return FALSE;
+	
+	sieve_code_dumpf(denv, "VARSTR [%ld]:", (long) elements);
+
+	sieve_code_descend(denv);
+	for ( i = 0; i < (unsigned int) elements; i++ ) {
+		sieve_opr_string_dump(denv, address);
+	}
+	sieve_code_ascend(denv);
+	
+	return TRUE;
+}
+
+static bool opr_variable_string_read
+  (const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
+{ 
+	sieve_size_t elements = 0;
+	unsigned int i;
+		
+	if ( !sieve_binary_read_integer(renv->sbin, address, &elements) )
+		return FALSE;
+
+	*str = t_str_new(128);
+	for ( i = 0; i < (unsigned int) elements; i++ ) {
+		string_t *strelm;
+		
+		if ( !sieve_opr_string_read(renv, address, &strelm) ) 
+			return FALSE;
+		
+		str_append_str(*str, strelm);
+	}
+
+	return TRUE;
 }
 
 /* Set modifier registration */

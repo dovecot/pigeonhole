@@ -75,8 +75,6 @@ static bool tag_modifier_validate
 (struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd)
 {
-	struct sieve_ast_argument *tag = *arg;
-	
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
 	
@@ -165,7 +163,7 @@ static bool cmd_set_validate(struct sieve_validator *validator,
 		(validator, cmd, arg, "value", 2, SAAT_STRING) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, cmd, arg, TRUE);	
+	sieve_validator_argument_activate(validator, cmd, arg, FALSE);	
 	
 	return TRUE;
 }
@@ -211,11 +209,20 @@ static bool cmd_set_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
-	struct sieve_variable_storage *storage = 
-		ext_variables_interpreter_get_storage(renv->interp);
-
+	struct sieve_variable_storage *storage;
+	unsigned int var_index;
+	string_t *value;
 	
+	printf(">> SET\n");
 	
+	if ( !ext_variables_opr_variable_read(renv, address, &storage, &var_index) )
+		return FALSE;
+		
+	if ( !sieve_opr_string_read(renv, address, &value) )
+		return FALSE;
+		
+	sieve_variable_assign(storage, var_index, value);
+		
 	return TRUE;
 }
 

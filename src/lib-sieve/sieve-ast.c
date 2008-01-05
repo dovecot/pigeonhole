@@ -135,16 +135,16 @@ static void sieve_ast_list_add( struct sieve_ast_list *list, struct sieve_ast_no
 	__LIST_ADD(list, node)
 
 /* List of argument AST nodes */
-static struct sieve_ast_arg_list *sieve_ast_arg_list_create( pool_t pool ) 
+struct sieve_ast_arg_list *sieve_ast_arg_list_create( pool_t pool ) 
 	__LIST_CREATE(pool, struct sieve_ast_arg_list)
 	
-static void sieve_ast_arg_list_add
+void sieve_ast_arg_list_add
 	( struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument )
 	__LIST_ADD(list, argument)
 
-inline static void sieve_ast_arg_list_substitute
-(struct sieve_ast_arg_list *list, 
-	struct sieve_ast_argument *argument, struct sieve_ast_argument *replacement) 
+void sieve_ast_arg_list_substitute
+(struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument, 
+	struct sieve_ast_argument *replacement)
 {
 	if ( list->head == argument )
 		list->head = replacement;
@@ -269,10 +269,11 @@ static void sieve_ast_argument_substitute
 }
 
 /* Argument AST node */
-static struct sieve_ast_argument *sieve_ast_argument_create
+struct sieve_ast_argument *sieve_ast_argument_create
 	(struct sieve_ast *ast, unsigned int source_line) 
 {	
-	struct sieve_ast_argument *arg = p_new(ast->pool, struct sieve_ast_argument, 1);
+	struct sieve_ast_argument *arg = 
+		p_new(ast->pool, struct sieve_ast_argument, 1);
 	
 	arg->ast = ast;
 	

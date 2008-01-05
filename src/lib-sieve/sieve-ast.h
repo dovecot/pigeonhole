@@ -34,13 +34,13 @@
 	                 |   [number | tag | *string]
 	                 .
 	                 
-	 Tests and commands are defined using the same structure: sieve_ast_node. However, arguments and 
-	 string-lists are described using sieve_ast_argument.  
+	 Tests and commands are defined using the same structure: sieve_ast_node. 
+	 However, arguments and string-lists are described using sieve_ast_argument.  
 */
 
-/* IMPORTANT NOTICE: Do not decorate the AST with objects other than those allocated on 
- * the ast's pool or static const objects. Otherwise it is possible that pointers in the tree 
- * become dangling which is highly undesirable.
+/* IMPORTANT NOTICE: Do not decorate the AST with objects other than those 
+ * allocated on the ast's pool or static const objects. Otherwise it is possible 
+ * that pointers in the tree become dangling which is highly undesirable.
  */
 
 struct sieve_ast_list;
@@ -166,6 +166,17 @@ void sieve_ast_error
 	struct sieve_ast_node *node, const char *fmt, va_list args);
 	
 /* sieve_ast_argument */
+
+struct sieve_ast_argument *sieve_ast_argument_create
+	(struct sieve_ast *ast, unsigned int source_line);
+
+struct sieve_ast_arg_list *sieve_ast_arg_list_create(pool_t pool);	
+void sieve_ast_arg_list_add
+	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument);
+void sieve_ast_arg_list_substitute
+(struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument, 
+	struct sieve_ast_argument *replacement);
+
 struct sieve_ast_argument *sieve_ast_argument_string_create
 	(struct sieve_ast_node *node, const string_t *str, unsigned int source_line);
 struct sieve_ast_argument *sieve_ast_argument_tag_create
@@ -186,17 +197,21 @@ const char *sieve_ast_argument_type_name(enum sieve_ast_argument_type arg_type);
 	sieve_ast_argument_type_name((argument)->type)
 
 void sieve_ast_stringlist_add
-	(struct sieve_ast_argument *list, const string_t *str, unsigned int source_line);
+	(struct sieve_ast_argument *list, const string_t *str, 
+		unsigned int source_line);
 void sieve_ast_stringlist_add_strc
-	(struct sieve_ast_argument *list, const char *str, unsigned int source_line);
+	(struct sieve_ast_argument *list, const char *str, 
+		unsigned int source_line);
 
 /* sieve_ast_test */
 struct sieve_ast_node *sieve_ast_test_create
-	(struct sieve_ast_node *parent, const char *identifier, unsigned int source_line);
+	(struct sieve_ast_node *parent, const char *identifier, 
+		unsigned int source_line);
 	
 /* sieve_ast_command */
 struct sieve_ast_node *sieve_ast_command_create
-	(struct sieve_ast_node *parent, const char *identifier, unsigned int source_line);
+	(struct sieve_ast_node *parent, const char *identifier, 
+		unsigned int source_line);
 	
 /* Debug */
 void sieve_ast_unparse(struct sieve_ast *ast);
@@ -204,45 +219,54 @@ void sieve_ast_unparse(struct sieve_ast *ast);
 /* AST access macros */
 
 /* Generic list access macros */
-#define __LIST_FIRST(node, list) ((node)->list == NULL ? NULL : (node)->list->head)
-#define __LIST_LAST(node, list) ((node)->list == NULL ? NULL : (node)->list->tail)
-#define __LIST_NEXT(item) ((item)->next)
-#define __LIST_PREV(item) ((item)->prev)
-#define __LIST_COUNT(node, list) ((node)->list == NULL || (node)->list->head == NULL ? 0 : (node)->list->len)
+#define __AST_LIST_FIRST(list) \
+	((list) == NULL ? NULL : (list)->head)
+#define __AST_LIST_LAST(list) \
+	((list) == NULL ? NULL : (list)->tail)
+#define __AST_LIST_COUNT(list) \
+	((list) == NULL || (list)->head == NULL ? 0 : (list)->len)
+#define __AST_LIST_NEXT(item) ((item)->next)
+#define __AST_LIST_PREV(item) ((item)->prev)
+
+#define __AST_NODE_LIST_FIRST(node, list) __AST_LIST_FIRST((node)->list)
+#define __AST_NODE_LIST_LAST(node, list) __AST_LIST_LAST((node)->list)
+#define __AST_NODE_LIST_COUNT(node, list) __AST_LIST_COUNT((node)->list)
 
 /* AST macros */
 
 /* AST node macros */
 #define sieve_ast_node_pool(node) (sieve_ast_pool((node)->ast))
 #define sieve_ast_node_parent(node) ((node)->parent)
-#define sieve_ast_node_prev(node) __LIST_PREV(node)
-#define sieve_ast_node_next(node) __LIST_NEXT(node)
+#define sieve_ast_node_prev(node) __AST_LIST_PREV(node)
+#define sieve_ast_node_next(node) __AST_LIST_NEXT(node)
 #define sieve_ast_node_type(node) ((node) == NULL ? SAT_NONE : (node)->type)
 #define sieve_ast_node_line(node) ((node) == NULL ? 0 : (node)->source_line)
 
 /* AST command node macros */
-#define sieve_ast_command_first(node) __LIST_FIRST(node, commands)
-#define sieve_ast_command_prev(command) __LIST_PREV(command)
-#define sieve_ast_command_next(command) __LIST_NEXT(command)
-#define sieve_ast_command_count(node) __LIST_COUNT(node, commands)
+#define sieve_ast_command_first(node) __AST_NODE_LIST_FIRST(node, commands)
+#define sieve_ast_command_count(node) __AST_NODE_LIST_COUNT(node, commands)
+#define sieve_ast_command_prev(command) __AST_LIST_PREV(command)
+#define sieve_ast_command_next(command) __AST_LIST_NEXT(command)
 
 /* Compare the identifier of the previous command */
 #define sieve_ast_prev_cmd_is(cmd, id) \
 	( (cmd)->prev == NULL ? FALSE : strncasecmp((cmd)->prev->identifier, id, sizeof(id)-1) == 0 )
 	
 /* AST test macros */
-#define sieve_ast_test_first(node) __LIST_FIRST(node, tests)
-#define sieve_ast_test_next(test) __LIST_NEXT(test)
-#define sieve_ast_test_count(node) __LIST_COUNT(node, tests)
+#define sieve_ast_test_count(node) __AST_NODE_LIST_COUNT(node, tests)
+#define sieve_ast_test_first(node) __AST_NODE_LIST_FIRST(node, tests)
+#define sieve_ast_test_next(test) __AST_LIST_NEXT(test)
 
 /* AST argument macros */
-#define sieve_ast_argument_first(node) __LIST_FIRST(node, arguments)
-#define sieve_ast_argument_last(node) __LIST_LAST(node, arguments)
-#define sieve_ast_argument_prev(argument) __LIST_PREV(argument)
-#define sieve_ast_argument_next(argument) __LIST_NEXT(argument)
-#define sieve_ast_argument_count(node) __LIST_COUNT(node, arguments)
-#define sieve_ast_argument_type(argument) ((argument) == NULL ? SAAT_NONE : (argument)->type)
-#define sieve_ast_argument_line(argument) ((argument) == NULL ? 0 : (argument)->source_line)
+#define sieve_ast_argument_first(node) __AST_NODE_LIST_FIRST(node, arguments)
+#define sieve_ast_argument_last(node) __AST_NODE_LIST_LAST(node, arguments)
+#define sieve_ast_argument_count(node) __AST_NODE_LIST_COUNT(node, arguments)
+#define sieve_ast_argument_prev(argument) __AST_LIST_PREV(argument)
+#define sieve_ast_argument_next(argument) __AST_LIST_NEXT(argument)
+#define sieve_ast_argument_type(argument) \
+	((argument) == NULL ? SAAT_NONE : (argument)->type)
+#define sieve_ast_argument_line(argument) \
+	((argument) == NULL ? 0 : (argument)->source_line)
 
 #define sieve_ast_argument_str(argument) ((argument)->_value.str)
 #define sieve_ast_argument_strc(argument) (str_c((argument)->_value.str))
@@ -254,12 +278,15 @@ void sieve_ast_unparse(struct sieve_ast *ast);
 
 /* AST string list macros */
 // @UNSAFE: should check whether we are actually accessing a string list
-#define sieve_ast_strlist_first(list) __LIST_FIRST(list, _value.strlist)
-#define sieve_ast_strlist_last(list) __LIST_LAST(list, _value.strlist)
-#define sieve_ast_strlist_next(str) __LIST_NEXT(str)
-#define sieve_ast_strlist_prev(str) __LIST_PREV(str)
+#define sieve_ast_strlist_first(list) \
+	__AST_NODE_LIST_FIRST(list, _value.strlist)
+#define sieve_ast_strlist_last(list) \
+	__AST_NODE_LIST_LAST(list, _value.strlist)
+#define sieve_ast_strlist_count(list) \
+	__AST_NODE_LIST_COUNT(list, _value.strlist)
+#define sieve_ast_strlist_next(str) __AST_LIST_NEXT(str)
+#define sieve_ast_strlist_prev(str) __AST_LIST_PREV(str)
 #define sieve_ast_strlist_str(str) sieve_ast_argument_str(str)
 #define sieve_ast_strlist_strc(str) sieve_ast_argument_strc(str)
-#define sieve_ast_strlist_count(list) __LIST_COUNT(list, _value.strlist)
 
 #endif /* __SIEVE_AST_H */

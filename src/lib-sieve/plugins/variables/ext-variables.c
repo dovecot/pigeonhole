@@ -43,6 +43,12 @@ const struct sieve_operation *ext_variables_operations[] = {
 /* Operands */
 
 extern const struct sieve_operand variable_operand;
+extern const struct sieve_operand variable_string_operand;
+
+const struct sieve_operation *ext_variables_operands[] = {
+	&variable_operand, &variable_string_operand
+};
+
 
 /* Extension definitions */
 
@@ -55,7 +61,7 @@ struct sieve_extension variables_extension = {
 	NULL, NULL,
 	ext_variables_interpreter_load, 
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_variables_operations), 
-	SIEVE_EXT_DEFINE_OPERAND(variable_operand)
+	SIEVE_EXT_DEFINE_OPERANDS(ext_variables_operands)
 };
 
 static bool ext_variables_load(int ext_id) 
@@ -64,109 +70,13 @@ static bool ext_variables_load(int ext_id)
 	return TRUE;
 }
 
-/* New argument */
-
-static bool arg_variable_string_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *context);
-
-const struct sieve_argument variable_string_argument =
-	{ "@variable-string", NULL, arg_variable_string_validate, NULL, NULL };
-
-static bool arg_variable_string_validate
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd)
-{
-	bool result = TRUE;
-	enum { ST_NONE, ST_OPEN, ST_VARIABLE, ST_CLOSE } 
-		state = ST_NONE;
-	string_t *str = sieve_ast_argument_str(*arg);
-	string_t *tmpstr, *newstr = NULL;
-	const char *p, *mark, *strstart, *substart = NULL;
-	const char *strval = (const char *) str_data(str);
-	const char *strend = strval + str_len(str);
-
-	T_FRAME(		
-		tmpstr = t_str_new(32);	
-			
-		p = strval;
-		strstart = p;
-		while ( result && p < strend ) {
-			switch ( state ) {
-			case ST_NONE:
-				if ( *p == '$' ) {
-					substart = p;
-					state = ST_OPEN;
-				}
-				p++;
-				break;
-			case ST_OPEN:
-				if ( *p == '{' ) {
-					state = ST_VARIABLE;
-					p++;
-				} else 
-					state = ST_NONE;
-				break;
-			case ST_VARIABLE:
-				mark = p;
-				
-				if ( p < strend ) {
-					if (*p == '_' || isalpha(*p) ) {
-						p++;
-					
-						while ( p < strend && (*p == '_' || isalnum(*p)) ) {
-							p++;
-						}
-					} else if ( isdigit(*p) ) {
-						unsigned int num_variable = *p - '0';
-						p++;
-						
-						while ( p < strend && isdigit(*p) ) {
-							num_variable = num_variable*10 + (*p - '0');
-							p++;
-						} 
-					}
-				} 			
-				
-				break;
-			case ST_CLOSE:
-				if ( *p == '}' ) {				
-					/* We now know that the substitution is valid */	
-					
-					if ( newstr == NULL ) {
-						newstr = str_new(sieve_ast_pool((*arg)->ast), str_len(str)*2);
-					}
-					
-					str_append_n(newstr, strstart, substart-strstart);
-					str_append_str(newstr, tmpstr);
-					
-					strstart = p + 1;
-					substart = strstart;
-				}
-				state = ST_NONE;
-				p++;	
-			}
-		}
-	);
-	
-	if ( newstr != NULL ) {
-		if ( strstart != strend )
-			str_append_n(newstr, strstart, strend-strstart);	
-	
-		sieve_ast_argument_str_set(*arg, newstr);
-	}
-	
-	return sieve_validator_argument_activate_super
-		(validator, cmd, *arg, TRUE);
-}
-
 /* Load extension into validator */
 
 static bool ext_variables_validator_load
 	(struct sieve_validator *validator)
 {
-	/*sieve_validator_argument_override(validator, SAT_VAR_STRING, 
-		&variable_string_argument);*/ 
+	sieve_validator_argument_override(validator, SAT_VAR_STRING, 
+		&variable_string_argument); 
 		
 	sieve_validator_register_command(validator, &cmd_set);
 	sieve_validator_register_command(validator, &tst_string);
