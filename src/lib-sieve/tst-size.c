@@ -155,9 +155,8 @@ static bool tst_size_validate
 		(validator, tst, arg, "limit", 1, SAAT_NUMBER) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, tst, arg, FALSE);
 	
-	return TRUE;
+	return sieve_validator_argument_activate(validator, tst, arg, FALSE);
 }
 
 /* Test generation */

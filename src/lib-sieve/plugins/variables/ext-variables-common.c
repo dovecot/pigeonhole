@@ -428,10 +428,10 @@ static bool arg_variable_string_validate
 			(validator, cmd, *arg, TRUE);
 	}
 	
-	if ( substart > strstart ) {
+	if ( strend > strstart ) {
 		struct sieve_ast_argument *strarg = _add_string_element(arglist, *arg);
-		strarg->_value.str = str_new(pool, substart - strstart);
-		str_append_n(strarg->_value.str, strstart, substart - strstart); 
+		strarg->_value.str = str_new(pool, strend - strstart);
+		str_append_n(strarg->_value.str, strstart, strend - strstart); 
 		
 		if ( !sieve_validator_argument_activate_super
 			(validator, cmd, strarg, FALSE) )

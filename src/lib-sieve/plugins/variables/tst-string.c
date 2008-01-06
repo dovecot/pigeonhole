@@ -85,7 +85,9 @@ static bool tst_string_validate
 		(validator, tst, arg, "source", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, tst, arg, FALSE);
+	
+	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+		return FALSE;
 	
 	arg = sieve_ast_argument_next(arg);
 
@@ -93,12 +95,12 @@ static bool tst_string_validate
 		(validator, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, tst, arg, FALSE);
+	
+	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+		return FALSE;
 
 	/* Validate the key argument to a specified match type */
-	sieve_match_type_validate(validator, tst, arg);
-	
-	return TRUE;
+	return sieve_match_type_validate(validator, tst, arg);
 }
 
 /* Test generation */

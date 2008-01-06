@@ -93,9 +93,8 @@ static bool cmd_fileinto_validate(struct sieve_validator *validator, struct siev
 		(validator, cmd, arg, "folder", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, cmd, arg, FALSE);
 	
-	return TRUE;
+	return sieve_validator_argument_activate(validator, cmd, arg, FALSE);
 }
 
 /* Load extension into validator */

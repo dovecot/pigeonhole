@@ -457,7 +457,7 @@ static bool sieve_validator_argument_default_activate
 		
 	validator->current_defarg = prev_defarg;	
 		
-	return TRUE;
+	return result;
 }
 
 bool sieve_validator_argument_activate_super
@@ -470,6 +470,8 @@ bool sieve_validator_argument_activate_super
 		return FALSE;
 	
 	if ( validator->current_defarg->overrides == NULL ) {
+		enum sieve_argument_type prev_type = validator->current_defarg_type;
+		
 		switch ( validator->current_defarg_type ) {
 		case SAT_NUMBER:
 		case SAT_CONST_STRING:
@@ -482,6 +484,8 @@ bool sieve_validator_argument_activate_super
 		default: 
 			return FALSE;
 		}
+		
+		validator->current_defarg_type = prev_type;
 	} else
 		defarg = validator->current_defarg->overrides;
 	
@@ -554,10 +558,10 @@ bool sieve_validate_tag_parameter
 			sieve_ast_argument_type_name(req_type),	sieve_ast_argument_name(param));
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, cmd, param, FALSE);
+
 	param->arg_id_code = tag->arg_id_code;
-	
-	return TRUE;
+
+	return sieve_validator_argument_activate(validator, cmd, param, FALSE);
 }
 
 /* Test validation API */

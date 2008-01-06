@@ -58,11 +58,8 @@ static bool tst_exists_validate
 		(validator, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, tst, arg, FALSE);
 	
-	tst->data = arg;
-	
-	return TRUE;
+	return sieve_validator_argument_activate(validator, tst, arg, FALSE);
 }
 
 /* Test generation */

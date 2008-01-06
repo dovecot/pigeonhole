@@ -131,9 +131,8 @@ static bool cmd_reject_validate(struct sieve_validator *validator, struct sieve_
 		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, cmd, arg, FALSE);
 	
-	return TRUE;
+	return sieve_validator_argument_activate(validator, cmd, arg, FALSE);
 }
 
 /* Load extension into validator */

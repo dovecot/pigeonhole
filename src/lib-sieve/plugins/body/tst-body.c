@@ -140,7 +140,9 @@ static bool tag_body_transform_validate
 			(validator, cmd, tag, *arg, SAAT_STRING_LIST) ) {
 			return FALSE;
 		}
-		sieve_validator_argument_activate(validator, cmd, *arg, FALSE);
+		
+		if ( !sieve_validator_argument_activate(validator, cmd, *arg, FALSE) )
+			return FALSE;
 		
 		/* Assign tag parameters */
 		tag->parameters = *arg;
@@ -192,12 +194,12 @@ static bool tst_body_validate
 		(validator, tst, arg, "key list", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, tst, arg, FALSE);
+
+	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+		return FALSE;
 
 	/* Validate the key argument to a specified match type */
-	sieve_match_type_validate(validator, tst, arg);
-	
-	return TRUE;
+	return sieve_match_type_validate(validator, tst, arg);
 }
 
 /*

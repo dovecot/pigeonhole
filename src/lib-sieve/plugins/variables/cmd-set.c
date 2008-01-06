@@ -155,6 +155,7 @@ static bool cmd_set_validate(struct sieve_validator *validator,
 		(validator, cmd, arg, "name", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
+	
 	ext_variables_variable_argument_activate(validator, arg);
 
 	arg = sieve_ast_argument_next(arg);
@@ -163,9 +164,8 @@ static bool cmd_set_validate(struct sieve_validator *validator,
 		(validator, cmd, arg, "value", 2, SAAT_STRING) ) {
 		return FALSE;
 	}
-	sieve_validator_argument_activate(validator, cmd, arg, FALSE);	
 	
-	return TRUE;
+	return sieve_validator_argument_activate(validator, cmd, arg, FALSE);	
 }
 
 /*
