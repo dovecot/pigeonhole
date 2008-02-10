@@ -3,9 +3,11 @@
 #include "str.h"
 
 #include "sieve-common.h"
+
 #include "sieve-ast.h"
 #include "sieve-binary.h"
 #include "sieve-code.h"
+
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -32,6 +34,25 @@ const struct ext_variables_set_modifier *default_set_modifiers[] = {
 
 const unsigned int default_set_modifiers_count = 
 	N_ELEMENTS(default_set_modifiers);
+	
+/*
+ * Binary context
+ */
+
+const struct sieve_variables_extension *
+	sieve_variables_extension_get(struct sieve_binary *sbin, int ext_id)
+{
+	return (const struct sieve_variables_extension *)
+		sieve_binary_registry_get_object(sbin, ext_variables_my_id, ext_id);
+}
+
+void sieve_variables_extension_set
+	(struct sieve_binary *sbin, int ext_id,
+		const struct sieve_variables_extension *ext)
+{
+	sieve_binary_registry_set_object
+		(sbin, ext_variables_my_id, ext_id, (const void *) ext);
+}
 
 /* Variable scope */
 
@@ -515,7 +536,7 @@ static bool opr_variable_dump
 	sieve_size_t index = 0;
 	
 	if (sieve_binary_read_integer(denv->sbin, address, &index) ) {
-		sieve_code_dumpf(denv, "VARIABLE: %ld [?]", (long) index);
+		sieve_code_dumpf(denv, "VAR: %ld", (long) index);
 
 		return TRUE;
 	}

@@ -40,10 +40,14 @@ struct ext_variables_set_modifier {
 	int code;
 	
 	unsigned int precedence;
+	
+	bool (*modify)(string_t *in, string_t *result);
 };
 
 const struct ext_variables_set_modifier *ext_variables_set_modifier_find
 	(struct sieve_validator *validator, const char *identifier);
+	
+extern const struct ext_variables_set_modifier *core_modifiers[];
 	
 /* Arguments */
 
@@ -68,6 +72,10 @@ struct sieve_variable *ext_variables_validator_get_variable
 
 struct sieve_variable_storage *ext_variables_interpreter_get_storage
 	(struct sieve_interpreter *interp);
+	
+/* Extensions */
 
+const struct sieve_variables_extension *
+	sieve_variables_extension_get(struct sieve_binary *sbin, int ext_id);
 
 #endif /* __EXT_VARIABLES_COMMON_H */

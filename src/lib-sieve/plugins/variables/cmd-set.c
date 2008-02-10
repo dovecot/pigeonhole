@@ -1,16 +1,23 @@
 #include "lib.h"
+#include "str.h"
+#include "array.h"
 
 #include "sieve-common.h"
+#include "sieve-extensions-private.h"
 
 #include "sieve-code.h"
 #include "sieve-ast.h"
 #include "sieve-commands.h"
+#include "sieve-binary.h"
+
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-code-dumper.h"
 
 #include "ext-variables-common.h"
+
+#include <ctype.h>
 
 /* Forward declarations */
 
@@ -23,6 +30,8 @@ static bool cmd_set_operation_execute
 
 static bool cmd_set_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+static bool cmd_set_pre_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_set_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_set_generate
@@ -38,7 +47,7 @@ const struct sieve_command cmd_set = {
 	SCT_COMMAND, 
 	2, 0, FALSE, FALSE, 
 	cmd_set_registered,
-	NULL,  
+	cmd_set_pre_validate,  
 	cmd_set_validate, 
 	cmd_set_generate, 
 	NULL 
@@ -53,6 +62,12 @@ const struct sieve_operation cmd_set_operation = {
 	cmd_set_operation_execute
 };
 
+/* Compiler context */
+struct cmd_set_context {
+	ARRAY_DEFINE(modifiers, struct ext_variables_set_modifier *);
+	
+};
+
 /* Tag validation */
 
 /* [MODIFIER]:
@@ -63,28 +78,28 @@ const struct sieve_operation cmd_set_operation = {
  */
  
 static bool tag_modifier_is_instance_of
-(struct sieve_validator *validator, 
+(struct sieve_validator *validator ATTR_UNUSED, 
 	struct sieve_command_context *cmdctx ATTR_UNUSED,	
 	struct sieve_ast_argument *arg)
 {
-	return ext_variables_set_modifier_find
-		(validator, sieve_ast_argument_tag(arg)) != NULL;
+	arg->context = (void *) ext_variables_set_modifier_find
+		(validator, sieve_ast_argument_tag(arg));
+		
+	return arg->context != NULL;
 }
 
 static bool tag_modifier_validate
 (struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd)
 {
-	/* Skip parameter */
-	*arg = sieve_ast_argument_next(*arg);
+	struct ext_variables_set_modifier *smodf = (*arg)->context;
+	struct cmd_set_context *sctx = (struct cmd_set_context *) cmd->data;
 	
-	return TRUE;
-}
-
-static bool tag_modifier_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
-{
+	array_append(&sctx->modifiers, &smodf, 1);
+	
+	/* Added to modifier list; self-destruct to prevent duplicate generation */
+	*arg = sieve_ast_arguments_detach(*arg, 1);
+	
 	return TRUE;
 }
 
@@ -92,47 +107,73 @@ const struct sieve_argument modifier_tag = {
 	"MODIFIER",
 	tag_modifier_is_instance_of, 
 	tag_modifier_validate, 
-	NULL,
-	tag_modifier_generate 
+	NULL, NULL
 };
 
 /* Pre-defined modifiers */
 
+bool mod_upperfirst_modify(string_t *in, string_t *result);
+bool mod_lowerfirst_modify(string_t *in, string_t *result);
+bool mod_upper_modify(string_t *in, string_t *result);
+bool mod_lower_modify(string_t *in, string_t *result);
+
 const struct ext_variables_set_modifier lower_modifier = {
 	"lower", 
 	EXT_VARIABLES_SET_MODIFIER_LOWER,
-	40
+	40,
+	NULL
 };
 
 const struct ext_variables_set_modifier upper_modifier = {
 	"upper", 
 	EXT_VARIABLES_SET_MODIFIER_UPPER,
-	40
+	40,
+	NULL
 };
 
 const struct ext_variables_set_modifier lowerfirst_modifier = {
 	"lowerfirst", 
 	EXT_VARIABLES_SET_MODIFIER_LOWERFIRST,
-	30
+	30,
+	NULL
 };
 
 const struct ext_variables_set_modifier upperfirst_modifier = {
 	"upperfirst", 
 	EXT_VARIABLES_SET_MODIFIER_UPPERFIRST,
-	30
+	30,
+	NULL
 };
 
 const struct ext_variables_set_modifier quotewildcard_modifier = {
 	"quotewildcard",
 	EXT_VARIABLES_SET_MODIFIER_QUOTEWILDCARD,
-	20
+	20,
+	NULL
 };
 
 const struct ext_variables_set_modifier length_modifier = {
 	"length", 
 	EXT_VARIABLES_SET_MODIFIER_LENGTH,
-	10
+	10,
+	NULL
 };
+
+const struct ext_variables_set_modifier *core_modifiers[] = {
+	&lower_modifier,
+	&upper_modifier,
+	&lowerfirst_modifier,
+	&upperfirst_modifier,
+	&quotewildcard_modifier,
+	&length_modifier
+};
+
+static struct sieve_extension_obj_registry setmodf_default_reg =
+	SIEVE_EXT_DEFINE_SET_MODIFIERS(core_modifiers);
+
+/* Modifier read */
+
+
 
 /* Command registration */
 
@@ -146,11 +187,24 @@ static bool cmd_set_registered
 
 /* Command validation */
 
+static bool cmd_set_pre_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd)
+{
+	pool_t pool = sieve_command_pool(cmd);
+	struct cmd_set_context *sctx = p_new(pool, struct cmd_set_context, 1);
+	
+	p_array_init(&sctx->modifiers, pool, 2);
+
+	cmd->data = (void *) sctx;
+	
+	return TRUE;
+} 
+
 static bool cmd_set_validate(struct sieve_validator *validator, 
 	struct sieve_command_context *cmd) 
-{ 	
+{ 
 	struct sieve_ast_argument *arg = cmd->first_positional;
-	
+		
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "name", 1, SAAT_STRING) ) {
 		return FALSE;
@@ -175,14 +229,55 @@ static bool cmd_set_validate(struct sieve_validator *validator,
 static bool cmd_set_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
+	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+	struct cmd_set_context *sctx = (struct cmd_set_context *) ctx->data;
+	unsigned int i;	
+
 	sieve_generator_emit_operation_ext
 		(generator, &cmd_set_operation, ext_variables_my_id);
+
+	/* Generate modifiers */
+	sieve_binary_emit_byte(sbin, array_count(&sctx->modifiers));
+	for ( i = 0; i < array_count(&sctx->modifiers); i++ ) {
+		struct ext_variables_set_modifier * const * smodf =
+			array_idx(&sctx->modifiers, i);
+			
+		sieve_binary_emit_byte(sbin, (*smodf)->code);
+	} 
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
 		return FALSE;	
 
 	return TRUE;
+}
+
+/* 
+ * Modifier access
+ */
+ 
+static const struct sieve_extension_obj_registry *
+	cmd_set_modifier_registry_get
+(struct sieve_binary *sbin, unsigned int ext_index)
+{
+	int ext_id = -1; 
+	const struct sieve_variables_extension *ext;
+	
+	if ( sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id) == NULL )
+		return NULL;
+
+	if ( (ext=sieve_variables_extension_get(sbin, ext_id)) == NULL ) 
+		return NULL;
+		
+	return &(ext->set_modifiers);
+}
+
+static const struct ext_variables_set_modifier *cmd_set_modifier_read
+	(struct sieve_binary *sbin, sieve_size_t *address) 
+{
+	return sieve_extension_read_obj
+		(struct ext_variables_set_modifier, sbin, address, &setmodf_default_reg, 
+			cmd_set_modifier_registry_get);
 }
 
 /* 
@@ -193,9 +288,24 @@ static bool cmd_set_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
+	unsigned int mdfs, i;
+	
 	sieve_code_dumpf(denv, "SET");
 	sieve_code_descend(denv);
-
+	
+	if ( !sieve_binary_read_byte(denv->sbin, address, &mdfs) ) 
+		return FALSE;
+	
+	for ( i = 0; i < mdfs; i++ ) {
+		const struct ext_variables_set_modifier *modf =
+			cmd_set_modifier_read(denv->sbin, address);
+		
+		if ( modf == NULL )
+			return FALSE;
+			
+		sieve_code_dumpf(denv, "MOD: %s", modf->identifier);
+	}
+	
 	return 
 		sieve_opr_string_dump(denv, address) &&
 		sieve_opr_string_dump(denv, address);
@@ -210,13 +320,24 @@ static bool cmd_set_operation_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	struct sieve_variable_storage *storage;
-	unsigned int var_index;
+	unsigned int var_index, mdfs, i;
 	string_t *value;
 	
 	printf(">> SET\n");
 	
-	if ( !ext_variables_opr_variable_read(renv, address, &storage, &var_index) )
+	if ( !sieve_binary_read_byte(renv->sbin, address, &mdfs) ) 
 		return FALSE;
+	
+	for ( i = 0; i < mdfs; i++ ) {
+		const struct ext_variables_set_modifier *modf =
+			cmd_set_modifier_read(renv->sbin, address);
+			
+		if ( modf == NULL )
+			return FALSE;
+	}
+	
+	if ( !ext_variables_opr_variable_read(renv, address, &storage, &var_index) )
+		return FALSE;	
 		
 	if ( !sieve_opr_string_read(renv, address, &value) )
 		return FALSE;
@@ -226,7 +347,64 @@ static bool cmd_set_operation_execute
 	return TRUE;
 }
 
+/* Pre-defined modifier implementation */
 
+bool mod_upperfirst_modify(string_t *in, string_t *result)
+{
+	char *content;
+	
+	if ( in != NULL )
+		str_append_str(result, in);
+		
+	content = str_c_modifiable(result);
+	content[0] = toupper(content[0]);
 
+	return TRUE;
+}
+
+bool mod_lowerfirst_modify(string_t *in, string_t *result)
+{
+	char *content;
+	
+	if ( in != NULL )
+		str_append_str(result, in);
+		
+	content = str_c_modifiable(result);
+	content[0] = tolower(content[0]);
+	
+	return TRUE;
+}
+
+bool mod_upper_modify(string_t *in, string_t *result)
+{
+	unsigned int i;
+	char *content;
+	
+	if ( in != NULL )
+		str_append_str(result, in);
+		
+	content = str_c_modifiable(result);
+	for ( i = 0; i < str_len(result); i++ ) {
+		content[i] = toupper(content[i]);
+	}
+	
+	return TRUE;
+}
+
+bool mod_lower_modify(string_t *in, string_t *result)
+{
+	unsigned int i;
+	char *content;
+	
+	if ( in != NULL )
+		str_append_str(result, in);
+		
+	content = str_c_modifiable(result);
+	for ( i = 0; i < str_len(result); i++ ) {
+		content[i] = toupper(content[i]);
+	}
+	
+	return TRUE;
+}
 
 

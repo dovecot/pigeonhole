@@ -3,7 +3,7 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-variables-08.txt
- * Implementation: skeleton
+ * Implementation: basic variables support
  * Status: under development
  *
  */
@@ -14,6 +14,8 @@
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-binary.h"
+
 #include "sieve-validator.h"
 
 #include "ext-variables-common.h"
@@ -24,6 +26,7 @@
 
 static bool ext_variables_load(int ext_id);
 static bool ext_variables_validator_load(struct sieve_validator *validator);
+static bool ext_variables_binary_load(struct sieve_binary *sbin);
 static bool ext_variables_interpreter_load(struct sieve_interpreter *interp);
 
 /* Commands */
@@ -37,7 +40,8 @@ extern const struct sieve_operation cmd_set_operation;
 extern const struct sieve_operation tst_string_operation;
 
 const struct sieve_operation *ext_variables_operations[] = {
-	&cmd_set_operation, &tst_string_operation
+	&cmd_set_operation, 
+	&tst_string_operation
 };
 
 /* Operands */
@@ -45,10 +49,10 @@ const struct sieve_operation *ext_variables_operations[] = {
 extern const struct sieve_operand variable_operand;
 extern const struct sieve_operand variable_string_operand;
 
-const struct sieve_operation *ext_variables_operands[] = {
-	&variable_operand, &variable_string_operand
+const struct sieve_operand *ext_variables_operands[] = {
+	&variable_operand, 
+	&variable_string_operand
 };
-
 
 /* Extension definitions */
 
@@ -58,7 +62,8 @@ struct sieve_extension variables_extension = {
 	"variables", 
 	ext_variables_load,
 	ext_variables_validator_load, 
-	NULL, NULL,
+	NULL, 
+	ext_variables_binary_load,
 	ext_variables_interpreter_load, 
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_variables_operations), 
 	SIEVE_EXT_DEFINE_OPERANDS(ext_variables_operands)
@@ -82,6 +87,16 @@ static bool ext_variables_validator_load
 	sieve_validator_register_command(validator, &tst_string);
 	
 	ext_variables_validator_initialize(validator);
+
+	return TRUE;
+}
+
+/* Load extension intro binary */
+
+static bool ext_variables_binary_load
+	(struct sieve_binary *sbin)
+{
+	sieve_binary_registry_init(sbin, ext_variables_my_id);
 
 	return TRUE;
 }
