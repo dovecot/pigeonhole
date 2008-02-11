@@ -1,8 +1,8 @@
 require "variables";
 require "fileinto";
 
-set :upper "foo" "foosome";
-set :lower "bar" "bareable";
+set :length :upper "foo" "foosome";
+set :quotewildcard :lower "bar" "bareable";
 
 #fileinto "${foo}.${bar}";
 

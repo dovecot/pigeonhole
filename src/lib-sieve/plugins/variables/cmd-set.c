@@ -92,10 +92,24 @@ static bool tag_modifier_validate
 (struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd)
 {
+	unsigned int i;
+	bool inserted;
 	struct ext_variables_set_modifier *smodf = (*arg)->context;
 	struct cmd_set_context *sctx = (struct cmd_set_context *) cmd->data;
 	
-	array_append(&sctx->modifiers, &smodf, 1);
+	inserted = FALSE;
+	for ( i = 0; i < array_count(&sctx->modifiers) && !inserted; i++ ) {
+		struct ext_variables_set_modifier * const * mdf =
+			array_idx(&sctx->modifiers, i);
+			
+		if ( (*mdf)->precedence < smodf->precedence ) {
+			array_insert(&sctx->modifiers, i, &smodf, 1);
+			inserted = TRUE;
+		}
+	}
+	
+	if ( !inserted )
+		array_append(&sctx->modifiers, &smodf, 1);
 	
 	/* Added to modifier list; self-destruct to prevent duplicate generation */
 	*arg = sieve_ast_arguments_detach(*arg, 1);
@@ -234,8 +248,12 @@ static bool cmd_set_generate
 	unsigned int i;	
 
 	sieve_generator_emit_operation_ext
-		(generator, &cmd_set_operation, ext_variables_my_id);
+		(generator, &cmd_set_operation, ext_variables_my_id); 
 
+	/* Generate arguments */
+	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+		return FALSE;	
+		
 	/* Generate modifiers */
 	sieve_binary_emit_byte(sbin, array_count(&sctx->modifiers));
 	for ( i = 0; i < array_count(&sctx->modifiers); i++ ) {
@@ -243,11 +261,7 @@ static bool cmd_set_generate
 			array_idx(&sctx->modifiers, i);
 			
 		sieve_binary_emit_byte(sbin, (*smodf)->code);
-	} 
-
-	/* Generate arguments */
-	if ( !sieve_generate_arguments(generator, ctx, NULL) )
-		return FALSE;	
+	}
 
 	return TRUE;
 }
@@ -293,6 +307,10 @@ static bool cmd_set_operation_dump
 	sieve_code_dumpf(denv, "SET");
 	sieve_code_descend(denv);
 	
+	if ( !sieve_opr_string_dump(denv, address) ||
+		!sieve_opr_string_dump(denv, address) )
+		return FALSE;
+	
 	if ( !sieve_binary_read_byte(denv->sbin, address, &mdfs) ) 
 		return FALSE;
 	
@@ -306,9 +324,7 @@ static bool cmd_set_operation_dump
 		sieve_code_dumpf(denv, "MOD: %s", modf->identifier);
 	}
 	
-	return 
-		sieve_opr_string_dump(denv, address) &&
-		sieve_opr_string_dump(denv, address);
+	return TRUE;
 }
 
 /* 
@@ -325,6 +341,12 @@ static bool cmd_set_operation_execute
 	
 	printf(">> SET\n");
 	
+	if ( !ext_variables_opr_variable_read(renv, address, &storage, &var_index) )
+		return FALSE;	
+		
+	if ( !sieve_opr_string_read(renv, address, &value) )
+		return FALSE;
+		
 	if ( !sieve_binary_read_byte(renv->sbin, address, &mdfs) ) 
 		return FALSE;
 	
@@ -335,12 +357,6 @@ static bool cmd_set_operation_execute
 		if ( modf == NULL )
 			return FALSE;
 	}
-	
-	if ( !ext_variables_opr_variable_read(renv, address, &storage, &var_index) )
-		return FALSE;	
-		
-	if ( !sieve_opr_string_read(renv, address, &value) )
-		return FALSE;
 		
 	sieve_variable_assign(storage, var_index, value);
 		
