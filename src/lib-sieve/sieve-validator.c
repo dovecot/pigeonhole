@@ -878,13 +878,13 @@ static bool sieve_validate_block(struct sieve_validator *validator, struct sieve
 	bool result = TRUE;
 	struct sieve_ast_node *command;
 
-	T_FRAME(	
+	T_BEGIN {	
 		command = sieve_ast_command_first(block);
 		while ( command != NULL ) {	
 			result = sieve_validate_command(validator, command) && result;	
 			command = sieve_ast_command_next(command);
 		}		
-	);
+	} T_END;
 	
 	return result;
 }

@@ -337,13 +337,13 @@ bool sieve_generate_block
 	bool result = TRUE;
 	struct sieve_ast_node *command;
 
-	T_FRAME(	
+	T_BEGIN {	
 		command = sieve_ast_command_first(block);
 		while ( result && command != NULL ) {	
 			result = sieve_generate_command(generator, command);	
 			command = sieve_ast_command_next(command);
 		}		
-	);
+	} T_END;
 	
 	return result;
 }

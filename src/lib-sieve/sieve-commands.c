@@ -112,9 +112,12 @@ static bool arg_string_list_generate
 		if ( sieve_ast_strlist_count(arg) == 1 ) 
 			return ( sieve_generate_argument
 				(generator, sieve_ast_strlist_first(arg), context) );
-		else
-			T_FRAME( result=emit_string_list_operand(generator, arg, context) );
-		
+		else {
+			T_BEGIN { 
+				result=emit_string_list_operand(generator, arg, context);
+			} T_END;
+		}
+
 		return result;
 	}
 	

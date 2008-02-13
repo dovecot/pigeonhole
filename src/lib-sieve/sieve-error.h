@@ -48,7 +48,9 @@ inline static void sieve_error
 	va_list args;
 	va_start(args, fmt);
 	
-	T_FRAME(sieve_verror(ehandler, location, fmt, args));
+	T_BEGIN {
+		sieve_verror(ehandler, location, fmt, args);
+	} T_END;
 	
 	va_end(args);
 }
@@ -60,8 +62,10 @@ inline static void sieve_warning
 	va_list args;
 	va_start(args, fmt);
 	
-	T_FRAME(sieve_vwarning(ehandler, location, fmt, args));
-	
+	T_BEGIN {
+		sieve_vwarning(ehandler, location, fmt, args);
+	} T_END;
+
 	va_end(args);
 }
 
@@ -72,7 +76,9 @@ inline static void sieve_info
 	va_list args;
 	va_start(args, fmt);
 	
-	T_FRAME(sieve_vinfo(ehandler, location, fmt, args));
+	T_BEGIN {
+		sieve_vinfo(ehandler, location, fmt, args);
+	} T_END;
 	
 	va_end(args);
 }
@@ -84,7 +90,9 @@ inline static void sieve_critical
 	va_list args;
 	va_start(args, fmt);
 	
-	T_FRAME(sieve_vcritical(ehandler, location, fmt, args));
+	T_BEGIN { 
+		sieve_vcritical(ehandler, location, fmt, args);
+	} T_END;
 	
 	va_end(args);
 }

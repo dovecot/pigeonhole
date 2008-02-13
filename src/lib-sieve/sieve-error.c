@@ -256,14 +256,14 @@ static void sieve_logfile_vprintf
 	
 	if ( ehandler->stream == NULL ) return;
 	
-	T_FRAME(
+	T_BEGIN {
 		outbuf = t_str_new(256);
 		str_printfa(outbuf, "%s: %s: ", location, prefix);	
 		str_vprintfa(outbuf, fmt, args);
 		str_append(outbuf, ".\n");
 	
 		o_stream_send(ehandler->stream, str_data(outbuf), str_len(outbuf));
-	);
+	} T_END;
 }
 
 inline static void sieve_logfile_printf

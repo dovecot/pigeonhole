@@ -164,7 +164,7 @@ bool arg_encoded_string_validate
 	const char *strval = (const char *) str_data(str);
 	const char *strend = strval + str_len(str);
 
-	T_FRAME(		
+	T_BEGIN {		
 		tmpstr = t_str_new(32);	
 			
 		p = strval;
@@ -234,7 +234,7 @@ bool arg_encoded_string_validate
 				p++;	
 			}
 		}
-	);
+	} T_END;
 	
 	if ( newstr != NULL ) {
 		if ( strstart != strend )

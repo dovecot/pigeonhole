@@ -200,10 +200,10 @@ static bool ext_body_parts_add_missing
 				continue;
 			}
 		
-			T_FRAME(
+			T_BEGIN {
 				body_part->content_type =
 					p_strdup(ctx->pool, _parse_content_type(block.hdr));
-			);
+			} T_END;
 			continue;
 		}
 
@@ -263,11 +263,11 @@ bool ext_body_get_content
 	bool result = TRUE;
 	struct ext_body_message_context *ctx = ext_body_get_context(renv->msgctx);
 
-	T_FRAME(
+	T_BEGIN {
 		if ( !ext_body_parts_add_missing
 			(renv->msgdata, ctx, content_types, decode_to_plain != 0) )
 			result = FALSE;
-	);
+	} T_END;
 	
 	if ( !result ) return FALSE;
 

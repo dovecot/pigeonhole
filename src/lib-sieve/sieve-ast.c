@@ -96,9 +96,11 @@ void sieve_ast_error
 { 
 	struct sieve_script *script = node->ast->script;
 	
-	T_FRAME(vfunc(ehandler, 
-		t_strdup_printf("%s:%d", sieve_script_name(script),
-			sieve_ast_node_line(node)), fmt, args)); 
+	T_BEGIN {
+		vfunc(ehandler, 
+			t_strdup_printf("%s:%d", sieve_script_name(script),
+				sieve_ast_node_line(node)), fmt, args);
+	} T_END; 
 }
  
 
@@ -641,13 +643,13 @@ void sieve_ast_unparse(struct sieve_ast *ast) {
 
 	printf("Unparsing Abstract Syntax Tree:\n");
 
-	T_FRAME(	
+	T_BEGIN {	
 		command = sieve_ast_command_first(sieve_ast_root(ast));
 		while ( command != NULL ) {	
 			sieve_ast_unparse_command(command, 0);
 			command = sieve_ast_command_next(command);
 		}		
-	);
+	} T_END;
 }
 
 

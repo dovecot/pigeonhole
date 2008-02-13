@@ -145,7 +145,7 @@ struct sieve_binary *sieve_open
 	if ( script == NULL )
 		return NULL;
 
-	T_FRAME(
+	T_BEGIN {
 		binpath = sieve_script_binpath(script);	
 		sbin = sieve_binary_open(binpath, script);
 	
@@ -165,7 +165,7 @@ struct sieve_binary *sieve_open
 			if ( sbin != NULL )
 				(void) sieve_binary_save(sbin, binpath);	
 		}
-	);
+	} T_END;
 	
 	sieve_script_unref(&script);
 

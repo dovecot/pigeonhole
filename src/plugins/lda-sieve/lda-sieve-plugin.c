@@ -151,10 +151,10 @@ static int lda_sieve_deliver_mail
 	if (getenv("DEBUG") != NULL)
 		i_info("sieve: Using sieve path: %s", script_path);
 
-	T_FRAME(
+	T_BEGIN { 
 		ret = lda_sieve_run(namespaces, mail, script_path, destaddr, 
-			getenv("USER"), mailbox)
-	);
+			getenv("USER"), mailbox);
+	} T_END;
 
 	return ( ret >= 0 ? 1 : -1 ); 
 }

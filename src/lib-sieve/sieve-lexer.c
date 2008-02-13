@@ -51,10 +51,12 @@ inline static void sieve_lexer_error
 	va_list args;
 	va_start(args, fmt);
 
-	T_FRAME(sieve_verror(lexer->ehandler, 
-		t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
-			lexer->current_line),
-		fmt, args));
+	T_BEGIN {
+		sieve_verror(lexer->ehandler, 
+			t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
+				lexer->current_line),
+			fmt, args);
+	} T_END;
 		
 	va_end(args);
 }
@@ -65,10 +67,12 @@ inline static void sieve_lexer_warning
 	va_list args;
 	va_start(args, fmt);
 
-	T_FRAME(sieve_vwarning(lexer->ehandler, 
-		t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
+	T_BEGIN { 
+		sieve_vwarning(lexer->ehandler, 
+			t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
 			lexer->current_line),
-		fmt, args));
+			fmt, args);
+	} T_END;
 		
 	va_end(args);
 }

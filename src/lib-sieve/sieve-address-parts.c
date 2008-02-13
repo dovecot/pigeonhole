@@ -350,7 +350,7 @@ bool sieve_address_match
 	bool matched = FALSE;
 	const struct message_address *addr;
 
-	T_FRAME(
+	T_BEGIN {
 		addr = message_address_parse
 			(pool_datastack_create(), (const unsigned char *) data, 
 				strlen(data), 256, FALSE);
@@ -370,7 +370,7 @@ bool sieve_address_match
 
 			addr = addr->next;
 		}
-	);
+	} T_END;
 	
 	return matched;
 }

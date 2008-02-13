@@ -956,7 +956,7 @@ static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 		return FALSE;
 	
 	for ( i = 0; result && i < count; i++ ) {
-		T_FRAME(
+		T_BEGIN {
 			string_t *extension;
 			int ext_id;
 			
@@ -978,7 +978,7 @@ static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 				}
 			}	else
 				result = FALSE;
-		);
+		} T_END;
 	}		
 		
 	return result;
@@ -994,7 +994,7 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 	
 	/* Verify header */
 	
-	T_FRAME(
+	T_BEGIN {
 		header = LOAD_HEADER(sbin, &offset, const struct sieve_binary_header);
 		if ( header == NULL ) {
 			i_error("sieve: opened binary %s is not even large enough "
@@ -1016,7 +1016,7 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 		} else {
 			blk_count = header->blocks;
 		}
-	);
+	} T_END;
 	
 	if ( !result ) return FALSE;
 	
@@ -1025,20 +1025,20 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 	printf("BLOCKS: %d\n", blk_count);
 	
 	for ( i = 0; i < blk_count && result; i++ ) {	
-		T_FRAME(
+		T_BEGIN {
 			if ( !_load_block_index_record(sbin, &offset, i) ) {
 				i_error("sieve: block index record %d of opened binary %s is corrupt", 
 					i, sbin->path);
 				result = FALSE;
 			}
-		);
+		} T_END;
 	}
 	
 	if ( !result ) return FALSE;
 	
 	/* Load extensions used by this binary */
 	
-	T_FRAME(
+	T_BEGIN {
 		extensions =_load_block(sbin, &offset, 0);
 		if ( extensions == NULL ) {
 			result = FALSE;
@@ -1047,7 +1047,7 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 				sbin->path);
 			result = FALSE;
 		}
-	);
+	} T_END;
 		
 	return result;
 }
@@ -1071,13 +1071,13 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 	/* Load the other blocks */
 	
 	for ( i = 1; result && i < blk_count; i++ ) {	
-		T_FRAME(
+		T_BEGIN {
 			if ( _load_block(sbin, &offset, i) == NULL ) {
 				i_error("sieve: block %d of loaded binary %s is corrupt", 
 					i, sbin->path);
 				result = FALSE;
 			}
-		);
+		} T_END;
 	}
 				
 	return result;
