@@ -25,7 +25,6 @@ install-sh
 missing
 mkinstalldirs
 ABOUT-NLS
-COPYING
 build-stamp
 configure-stamp
 dovecot.spec
