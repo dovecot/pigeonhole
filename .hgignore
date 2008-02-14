@@ -4,8 +4,8 @@ autom4te.cache
 compile
 config.cache
 config.guess
-libsieve-config.h
-libsieve-config.h.in
+dsieve-config.h
+dsieve-config.h.in
 config.log
 config.status
 config.sub

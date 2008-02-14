@@ -1,7 +1,7 @@
-AC_INIT(dovecot-libsieve, 1.0.2, [stephan@rename-it.nl])
+AC_INIT([dovecot-sieve], [0.0.1], [dovecot@dovecot.org], [dovecot-1.2-sieve])
 AC_CONFIG_SRCDIR([src])
 
-AC_CONFIG_HEADERS([libsieve-config.h])
+AC_CONFIG_HEADERS([dsieve-config.h])
 AM_INIT_AUTOMAKE
 
 AM_MAINTAINER_MODE
