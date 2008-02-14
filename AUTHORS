@@ -7,4 +7,5 @@ written by:
 Timo Sirainen <tss@iki.fi>
 
 View the AUTHORS files in the Dovecot and Dovecot-Sieve distributions for 
-other authors of Dovecot or the cmusieve plugin.
+other authors of Dovecot or the cmusieve plugin. No CMU code is incorporated
+in this implementation. 
