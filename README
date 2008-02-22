@@ -84,8 +84,8 @@ Features
 
 What works:
 * Scripts can be parsed, the grammar is fully supported. 
-* Script validation (contextual analysis) works almost completely. Outgoing mail 
-  addresses are not verified yet as required. 
+* Script validation (contextual analysis) works almost completely. However, 
+  outgoing mail addresses are not verified yet as required. 
 * Script code generation works for all core commands. Comparators, match-types 
   and address-part modifiers work as required.
 * Interpreter runs core commands and tests. Comparators, match-types and 
@@ -95,6 +95,10 @@ What works:
   Duplicate actions can be avoided and conflicts can be detected. 
 * Execution of the result is supported for all core action commands and all
   fully implemented extensions (see list below).  
+* Compiled binary code can be saved to and loaded back from disk. The binary 
+  is structured as a set of data blocks, which can contain extension-dependent
+  extra data. For example, the include extension uses this to store the 
+  compiled included scripts (no external inclusion of binaries supported yet).
 * This sieve implementation is now available as an alternative plugin to  
   dovecot's deliver. It is not completely useful yet, but hopefully this will 
   soon be able to replace the current cmusieve implementation.
@@ -133,14 +137,14 @@ Extensions and their implementation status:
     include: full, but needs much more work
     vacation: almost complete, but no support for required References header
     imapflags: flag management works, but flags are not stored 
-    variables: skeleton
+    variables: very basic support
 
     notify: planned, first mailto only (- very low priority)
 
 All implemented extensions are like the engine itself currently very much 
-experimental. Other extensions will be added as soon as the necessary 
-infrastructure is available. Extensions supported by cmu-sieve have priority, 
-although variables might be implemented somewhere in between. 
+experimental. A status of 'full' does not mean that the extension is bug-free 
+and RFC-compliant. Other extensions will be added as soon as the necessary 
+infrastructure is available. Extensions supported by cmu-sieve have priority.
 
 Design
 ------
@@ -186,15 +190,23 @@ CODE-DUMPER: sieve-code-dumper.c
   code-dumper. It's implementation is similar to the interpreter, with the 
   exception that it performs no actions and just sequentially wanders through 
   the byte code printing instructions along the way. The term human-readable is 
-  a bit optimistic though; currently the presented data looks like an assembly
+  a bit optimistic though; currently, the presented data looks like an assembly
   language. 
 
 TODO
 ----
 
 Current:
-* Implement variables extension.
-
+* Implement variables extension
+  Implemented:
+  -> Core variables substitution works
+  Remaining: 
+  -> Accept namespaces
+  -> Recognize match variables
+  -> Provide appropriate errors on various mishandled occasions
+  -> Provide support for include, imapflags and other extensions that (partly)
+     depend on variables support.
+     
 Next (in order of descending priority/precedence):
 * Finish implementing all extensions supported by cmusieve, except notify.
 * Limit the maximum number of errors. 
