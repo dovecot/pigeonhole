@@ -549,6 +549,8 @@ static bool opr_variable_read_value
 		
 	if (sieve_binary_read_integer(renv->sbin, address, &index) ) {
 		sieve_variable_get(storage, index, str);
+		
+		if ( *str == NULL ) *str = t_str_new(0);
 
 		return TRUE;
 	}

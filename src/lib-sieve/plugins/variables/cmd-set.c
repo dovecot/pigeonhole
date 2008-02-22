@@ -131,6 +131,7 @@ bool mod_upper_modify(string_t *in, string_t **result);
 bool mod_lowerfirst_modify(string_t *in, string_t **result);
 bool mod_upperfirst_modify(string_t *in, string_t **result);
 bool mod_length_modify(string_t *in, string_t **result);
+bool mod_quotewildcard_modify(string_t *in, string_t **result);
 
 const struct ext_variables_set_modifier lower_modifier = {
 	"lower", 
@@ -164,7 +165,7 @@ const struct ext_variables_set_modifier quotewildcard_modifier = {
 	"quotewildcard",
 	EXT_VARIABLES_SET_MODIFIER_QUOTEWILDCARD,
 	20,
-	NULL
+	mod_quotewildcard_modify
 };
 
 const struct ext_variables_set_modifier length_modifier = {
@@ -439,6 +440,27 @@ bool mod_length_modify(string_t *in, string_t **result)
 
 	return TRUE;
 }
+
+bool mod_quotewildcard_modify(string_t *in, string_t **result)
+{
+	unsigned int i;
+	const char *content;
+	
+	*result = t_str_new(str_len(in) * 2);
+	content = (const char *) str_data(in);
+	
+	for ( i = 0; i < str_len(in); i++ ) {
+		if ( content[i] == '*' || content[i] == '?' || content[i] == '\\' ) {
+			str_append_c(*result, '\\');
+		}
+		str_append_c(*result, content[i]);
+	}
+	
+	return TRUE;
+}
+
+
+
 
 
 
