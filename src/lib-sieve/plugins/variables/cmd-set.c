@@ -101,6 +101,13 @@ static bool tag_modifier_validate
 	for ( i = 0; i < array_count(&sctx->modifiers) && !inserted; i++ ) {
 		struct ext_variables_set_modifier * const * mdf =
 			array_idx(&sctx->modifiers, i);
+	
+		if ( (*mdf)->precedence == smodf->precedence ) {
+			sieve_command_validate_error(validator, cmd, 
+				"modifiers :%s and :%s specified for the set command conflict with "
+				"equal precedence", (*mdf)->identifier, smodf->identifier);
+			return FALSE;
+		}
 			
 		if ( (*mdf)->precedence < smodf->precedence ) {
 			array_insert(&sctx->modifiers, i, &smodf, 1);
@@ -205,6 +212,7 @@ static bool cmd_set_pre_validate
 	pool_t pool = sieve_command_pool(cmd);
 	struct cmd_set_context *sctx = p_new(pool, struct cmd_set_context, 1);
 	
+	/* Create an array for the sorted list of modifiers */
 	p_array_init(&sctx->modifiers, pool, 2);
 
 	cmd->data = (void *) sctx;
@@ -252,7 +260,7 @@ static bool cmd_set_generate
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
 		return FALSE;	
 		
-	/* Generate modifiers */
+	/* Generate modifiers (already sorted during validation) */
 	sieve_binary_emit_byte(sbin, array_count(&sctx->modifiers));
 	for ( i = 0; i < array_count(&sctx->modifiers); i++ ) {
 		struct ext_variables_set_modifier * const * smodf =
@@ -305,13 +313,16 @@ static bool cmd_set_operation_dump
 	sieve_code_dumpf(denv, "SET");
 	sieve_code_descend(denv);
 	
+	/* Print both variable name and string value */
 	if ( !sieve_opr_string_dump(denv, address) ||
 		!sieve_opr_string_dump(denv, address) )
 		return FALSE;
 	
+	/* Read the number of applied modifiers we need to read */
 	if ( !sieve_binary_read_byte(denv->sbin, address, &mdfs) ) 
 		return FALSE;
 	
+	/* Print all modifiers (sorted during code generation already) */
 	for ( i = 0; i < mdfs; i++ ) {
 		const struct ext_variables_set_modifier *modf =
 			cmd_set_modifier_read(denv->sbin, address);
@@ -339,16 +350,21 @@ static bool cmd_set_operation_execute
 	
 	printf(">> SET\n");
 	
+	/* Read the variable identifier */
 	if ( !ext_variables_opr_variable_read(renv, address, &storage, &var_index) )
 		return FALSE;	
 		
+	/* Read the raw string value */
 	if ( !sieve_opr_string_read(renv, address, &value) )
 		return FALSE;
 		
+	/* Read the number of modifiers used */
 	if ( !sieve_binary_read_byte(renv->sbin, address, &mdfs) ) 
 		return FALSE;
 	
+	/* Determine and assign the value */
 	T_BEGIN {
+		/* Apply modifiers if necessary (sorted during code generation already) */
 		if ( str_len(value) > 0 ) {
 			for ( i = 0; i < mdfs; i++ ) {
 				string_t *new_value;
@@ -371,6 +387,7 @@ static bool cmd_set_operation_execute
 			}
 		}	
 		
+		/* Actually assign the value if all is well */
 		if ( value != NULL ) {
 			sieve_variable_assign(storage, var_index, value);
 		}	
@@ -379,7 +396,7 @@ static bool cmd_set_operation_execute
 	return ( value != NULL );
 }
 
-/* Pre-defined modifier implementation */
+/* Pre-defined modifier implementations */
 
 bool mod_upperfirst_modify(string_t *in, string_t **result)
 {
