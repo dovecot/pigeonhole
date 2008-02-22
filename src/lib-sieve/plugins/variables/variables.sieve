@@ -3,9 +3,8 @@ require "fileinto";
 
 set :lower :upperfirst "foo" "FOOSOME";
 set :upperfirst :lower "bar" "BARABLE";
-set :upper :lowerfirst "hutse" "hutsefluts";
-set :lowerfirst :upper "piep" "piepsnot";
-
+set :upper :lowerfirst "HutsE" "hutsefluts";
+set :lowerfirst :upper "pIEp" "piepsnot";
 
 #fileinto "${foo}.${bar}";
 

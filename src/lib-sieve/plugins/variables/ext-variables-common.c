@@ -71,7 +71,7 @@ struct sieve_variable_scope *sieve_variable_scope_create(pool_t pool)
 	scope = p_new(pool, struct sieve_variable_scope, 1);
 	scope->pool = pool;
 	scope->variables = hash_create
-		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
+		(pool, pool, 0, strcase_hash, (hash_cmp_callback_t *)strcasecmp);
 		
 	return scope;
 }
