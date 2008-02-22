@@ -130,6 +130,7 @@ bool mod_lower_modify(string_t *in, string_t **result);
 bool mod_upper_modify(string_t *in, string_t **result);
 bool mod_lowerfirst_modify(string_t *in, string_t **result);
 bool mod_upperfirst_modify(string_t *in, string_t **result);
+bool mod_length_modify(string_t *in, string_t **result);
 
 const struct ext_variables_set_modifier lower_modifier = {
 	"lower", 
@@ -170,7 +171,7 @@ const struct ext_variables_set_modifier length_modifier = {
 	"length", 
 	EXT_VARIABLES_SET_MODIFIER_LENGTH,
 	10,
-	NULL
+	mod_length_modify
 };
 
 const struct ext_variables_set_modifier *core_modifiers[] = {
@@ -353,12 +354,19 @@ static bool cmd_set_operation_execute
 				const struct ext_variables_set_modifier *modf;
 				
 				modf = cmd_set_modifier_read(renv->sbin, address);
-				if ( modf == NULL || !modf->modify(value, &new_value) ) {
+				if ( modf == NULL ) {
 					value = NULL;
 					break;
-				}	
+				}
 				
-				value = new_value;
+				if ( modf->modify != NULL ) {
+					if ( !modf->modify(value, &new_value) ) {
+						value = NULL;
+						break;
+					}
+					
+					value = new_value;
+				}
 			}
 		}	
 		
@@ -423,5 +431,14 @@ bool mod_lower_modify(string_t *in, string_t **result)
 
 	return TRUE;
 }
+
+bool mod_length_modify(string_t *in, string_t **result)
+{
+	*result = t_str_new(64);
+	str_printfa(*result, "%d", str_len(in));
+
+	return TRUE;
+}
+
 
 

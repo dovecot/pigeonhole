@@ -420,8 +420,6 @@ static bool arg_variable_string_validate
 					if ( !sieve_validator_argument_activate_super
 						(validator, cmd, strarg, FALSE) )
 						return FALSE;
-						
-					printf("STR: %s\n", t_strdup_until(strstart, substart));
 				}
 				
 				/* Find the variable */
@@ -430,7 +428,6 @@ static bool arg_variable_string_validate
 				if ( strarg != NULL )
 					sieve_ast_arg_list_add(arglist, strarg);
 
-				printf("VAR: %s\n", str_c(ident));
 				str_truncate(ident, 0);
 				
 				strstart = p + 1;
@@ -444,7 +441,6 @@ static bool arg_variable_string_validate
 	//t_pop();
 	
 	if ( arglist == NULL ) {
-		printf("STR: %s\n", strval);
 		return sieve_validator_argument_activate_super
 			(validator, cmd, *arg, TRUE);
 	}
@@ -457,8 +453,6 @@ static bool arg_variable_string_validate
 		if ( !sieve_validator_argument_activate_super
 			(validator, cmd, strarg, FALSE) )
 			return FALSE;
-
-		printf("STR: %s\n", t_strdup_until(strstart, substart));
 	}	
 	
 	strdata = p_new(pool, struct _variable_string_data, 1);

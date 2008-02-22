@@ -14,5 +14,8 @@ set :lowerfirst :upper "piep" "piepsnot";
 set "friep" "it is ${foo} but not ${bar}!";
 set "frop" "van je ${hutse} en ${piep}!";
 
+set :length "len_frop" "${frop}";
+
 fileinto "${friep}";
 fileinto "${frop}";
+fileinto "LEN-${len_frop}";
