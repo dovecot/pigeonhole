@@ -126,37 +126,37 @@ const struct sieve_argument modifier_tag = {
 
 /* Pre-defined modifiers */
 
-bool mod_upperfirst_modify(string_t *in, string_t *result);
-bool mod_lowerfirst_modify(string_t *in, string_t *result);
-bool mod_upper_modify(string_t *in, string_t *result);
-bool mod_lower_modify(string_t *in, string_t *result);
+bool mod_lower_modify(string_t *in, string_t **result);
+bool mod_upper_modify(string_t *in, string_t **result);
+bool mod_lowerfirst_modify(string_t *in, string_t **result);
+bool mod_upperfirst_modify(string_t *in, string_t **result);
 
 const struct ext_variables_set_modifier lower_modifier = {
 	"lower", 
 	EXT_VARIABLES_SET_MODIFIER_LOWER,
 	40,
-	NULL
+	mod_lower_modify
 };
 
 const struct ext_variables_set_modifier upper_modifier = {
 	"upper", 
 	EXT_VARIABLES_SET_MODIFIER_UPPER,
 	40,
-	NULL
+	mod_upper_modify
 };
 
 const struct ext_variables_set_modifier lowerfirst_modifier = {
 	"lowerfirst", 
 	EXT_VARIABLES_SET_MODIFIER_LOWERFIRST,
 	30,
-	NULL
+	mod_lowerfirst_modify
 };
 
 const struct ext_variables_set_modifier upperfirst_modifier = {
 	"upperfirst", 
 	EXT_VARIABLES_SET_MODIFIER_UPPERFIRST,
 	30,
-	NULL
+	mod_upperfirst_modify
 };
 
 const struct ext_variables_set_modifier quotewildcard_modifier = {
@@ -184,10 +184,6 @@ const struct ext_variables_set_modifier *core_modifiers[] = {
 
 static struct sieve_extension_obj_registry setmodf_default_reg =
 	SIEVE_EXT_DEFINE_SET_MODIFIERS(core_modifiers);
-
-/* Modifier read */
-
-
 
 /* Command registration */
 
@@ -350,76 +346,81 @@ static bool cmd_set_operation_execute
 	if ( !sieve_binary_read_byte(renv->sbin, address, &mdfs) ) 
 		return FALSE;
 	
-	for ( i = 0; i < mdfs; i++ ) {
-		const struct ext_variables_set_modifier *modf =
-			cmd_set_modifier_read(renv->sbin, address);
+	T_BEGIN {
+		if ( str_len(value) > 0 ) {
+			for ( i = 0; i < mdfs; i++ ) {
+				string_t *new_value;
+				const struct ext_variables_set_modifier *modf;
+				
+				modf = cmd_set_modifier_read(renv->sbin, address);
+				if ( modf == NULL || !modf->modify(value, &new_value) ) {
+					value = NULL;
+					break;
+				}	
+				
+				value = new_value;
+			}
+		}	
+		
+		if ( value != NULL ) {
+			sieve_variable_assign(storage, var_index, value);
+		}	
+	} T_END;
 			
-		if ( modf == NULL )
-			return FALSE;
-	}
-		
-	sieve_variable_assign(storage, var_index, value);
-		
-	return TRUE;
+	return ( value != NULL );
 }
 
 /* Pre-defined modifier implementation */
 
-bool mod_upperfirst_modify(string_t *in, string_t *result)
+bool mod_upperfirst_modify(string_t *in, string_t **result)
 {
 	char *content;
 	
-	if ( in != NULL )
-		str_append_str(result, in);
+	*result = t_str_new(str_len(in));
+	str_append_str(*result, in);
 		
-	content = str_c_modifiable(result);
+	content = str_c_modifiable(*result);
 	content[0] = toupper(content[0]);
 
 	return TRUE;
 }
 
-bool mod_lowerfirst_modify(string_t *in, string_t *result)
+bool mod_lowerfirst_modify(string_t *in, string_t **result)
 {
 	char *content;
 	
-	if ( in != NULL )
-		str_append_str(result, in);
+	*result = t_str_new(str_len(in));
+	str_append_str(*result, in);
 		
-	content = str_c_modifiable(result);
-	content[0] = tolower(content[0]);
+	content = str_c_modifiable(*result);
+	content[0] = i_tolower(content[0]);
+
+	return TRUE;
+}
+
+bool mod_upper_modify(string_t *in, string_t **result)
+{
+	char *content;
+	
+	*result = t_str_new(str_len(in));
+	str_append_str(*result, in);
+
+	content = str_c_modifiable(*result);
+	content = str_ucase(content);
 	
 	return TRUE;
 }
 
-bool mod_upper_modify(string_t *in, string_t *result)
+bool mod_lower_modify(string_t *in, string_t **result)
 {
-	unsigned int i;
 	char *content;
 	
-	if ( in != NULL )
-		str_append_str(result, in);
-		
-	content = str_c_modifiable(result);
-	for ( i = 0; i < str_len(result); i++ ) {
-		content[i] = toupper(content[i]);
-	}
-	
-	return TRUE;
-}
+	*result = t_str_new(str_len(in));
+	str_append_str(*result, in);
 
-bool mod_lower_modify(string_t *in, string_t *result)
-{
-	unsigned int i;
-	char *content;
-	
-	if ( in != NULL )
-		str_append_str(result, in);
-		
-	content = str_c_modifiable(result);
-	for ( i = 0; i < str_len(result); i++ ) {
-		content[i] = toupper(content[i]);
-	}
-	
+	content = str_c_modifiable(*result);
+	content = str_lcase(content);
+
 	return TRUE;
 }
 

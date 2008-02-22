@@ -41,7 +41,7 @@ struct ext_variables_set_modifier {
 	
 	unsigned int precedence;
 	
-	bool (*modify)(string_t *in, string_t *result);
+	bool (*modify)(string_t *in, string_t **result);
 };
 
 const struct ext_variables_set_modifier *ext_variables_set_modifier_find
