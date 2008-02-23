@@ -548,10 +548,14 @@ static bool opr_variable_read_value
 	if ( storage == NULL ) return FALSE;
 		
 	if (sieve_binary_read_integer(renv->sbin, address, &index) ) {
-		sieve_variable_get(storage, index, str);
+		/* Parameter str can be NULL if we are requested to only skip and not 
+		 * actually read the argument.
+	 	*/
+		if ( str != NULL ) {
+			sieve_variable_get(storage, index, str);
 		
-		if ( *str == NULL ) *str = t_str_new(0);
-
+			if ( *str == NULL ) *str = t_str_new(0);
+		}
 		return TRUE;
 	}
 	
@@ -636,14 +640,24 @@ static bool opr_variable_string_read
 	if ( !sieve_binary_read_integer(renv->sbin, address, &elements) )
 		return FALSE;
 
-	*str = t_str_new(128);
-	for ( i = 0; i < (unsigned int) elements; i++ ) {
-		string_t *strelm;
+	/* Parameter str can be NULL if we are requested to only skip and not 
+	 * actually read the argument.
+	 */
+	if ( str == NULL ) {
+		for ( i = 0; i < (unsigned int) elements; i++ ) {		
+			if ( !sieve_opr_string_read(renv, address, NULL) ) 
+				return FALSE;
+		}
+	} else {
+		*str = t_str_new(128);
+		for ( i = 0; i < (unsigned int) elements; i++ ) {
+			string_t *strelm;
 		
-		if ( !sieve_opr_string_read(renv, address, &strelm) ) 
-			return FALSE;
+			if ( !sieve_opr_string_read(renv, address, &strelm) ) 
+				return FALSE;
 		
-		str_append_str(*str, strelm);
+			str_append_str(*str, strelm);
+		}
 	}
 
 	return TRUE;

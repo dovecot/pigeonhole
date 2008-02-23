@@ -540,9 +540,9 @@ struct sieve_coded_stringlist *sieve_opr_stringlist_read
 		const struct sieve_opr_string_interface *intf = 
 			(const struct sieve_opr_string_interface *) operand->interface;
 		
-  	if ( intf->read == NULL || !intf->read(renv, address, NULL) ) {
-  		return NULL;
-  	}
+		if ( intf->read == NULL || !intf->read(renv, address, NULL) ) {
+			return NULL;
+		}
   
 		return sieve_coded_stringlist_create(renv, start, 1, *address); 
 	}	

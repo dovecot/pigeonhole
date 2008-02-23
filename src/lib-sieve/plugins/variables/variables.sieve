@@ -21,8 +21,18 @@ fileinto "${frop}";
 fileinto "LEN-${len_frop}";
 fileinto "${quote_friep}";
 
-if string "${foo}" "foosome" {
-	keep;
-} elsif string :comparator "i;ascii-casemap" "${foo}" "foosome" {
+set "header" "subject";
+set :lower "hvalue" "moNey";
+set :lower "speed" "very fast";
+
+if header :contains "${header}" ["${hvalue}"] {
+	fileinto "Oeh, het werkt.";
+} 
+
+if header :contains "${header}" ["${hvalue} ${speed}"] {
+	fileinto "Oeh, dit werkt ook.";
+} 
+
+if header :comparator "i;ascii-casemap" "${foo}" "foosome" {
 	fileinto "CASE";
 }
