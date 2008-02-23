@@ -20,3 +20,9 @@ fileinto "${friep}";
 fileinto "${frop}";
 fileinto "LEN-${len_frop}";
 fileinto "${quote_friep}";
+
+if string "${foo}" "foosome" {
+	keep;
+} elsif string :comparator "i;ascii-casemap" "${foo}" "foosome" {
+	fileinto "CASE";
+}

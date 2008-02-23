@@ -174,9 +174,9 @@ bool mtch_regex_validate_context
 		if ( !mtch_regex_validate_regexp(validator, ctx, key_arg, cflags) )
 			return FALSE;
 
-	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
+	} else if ( sieve_ast_argument_type(key_arg) == SAAT_STRING_LIST ) {
 		/* String list */
-		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
+		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(key_arg);
 
 		while ( stritem != NULL ) {
 			if ( !mtch_regex_validate_regexp(validator, ctx, stritem, cflags) )
@@ -186,6 +186,9 @@ bool mtch_regex_validate_context
 		}
 	} else {
 		/* ??? */ 
+		sieve_command_validate_error(validator, ctx->command_ctx, 
+			"!!BUG!!: mtch_regex_validate_context: invalid ast argument type(%s)",
+			sieve_ast_argument_type_name(sieve_ast_argument_type(key_arg)) );
 		return FALSE;
 	} 
 

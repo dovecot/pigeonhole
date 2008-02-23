@@ -72,7 +72,7 @@ static bool arg_string_list_validate
 		stritem = sieve_ast_strlist_next(stritem);
 	}
 
-	return FALSE;	
+	return TRUE;	
 }
 
 static inline bool emit_string_list_operand

@@ -216,15 +216,8 @@ static bool tst_string_operation_execute
 		(result=sieve_coded_stringlist_next_item(source, &src_item)) 
 		&& src_item != NULL ) {
 			
-		/*
-		if ( mail_get_strings_utf8(renv->msgdata->mail, str_c(hdr_item), &strings) >= 0 ) {	
-			
-			int i;
-			for ( i = 0; !matched && strings[i] != NULL; i++ ) {
-				if ( sieve_match_value(mctx, strings[i], strlen(strings[i])) )
-					matched = TRUE;				
-			} 
-		}*/
+		if ( sieve_match_value(mctx, str_c(src_item), str_len(src_item)) )
+			matched = TRUE;				
 	}
 
 	matched = sieve_match_end(mctx) || matched; 	
