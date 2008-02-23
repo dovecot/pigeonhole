@@ -2,7 +2,7 @@
  * -------------------
  *
  * Authors: Stephan Bosch
- * Specification: draft-ietf-sieve-variables-08.txt
+ * Specification: RFC 5229
  * Implementation: basic variables support
  * Status: under development
  *
