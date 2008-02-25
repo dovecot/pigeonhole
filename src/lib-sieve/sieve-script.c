@@ -78,7 +78,7 @@ struct sieve_script *sieve_script_init
 			script->ehandler = ehandler;
 			sieve_error_handler_ref(ehandler);
 	
-			memcpy((void *) &script->st, (void *) &st, sizeof(st));
+			script->st = st;
 			script->path = p_strdup(pool, path);
 			script->filename = p_strdup(pool, filename);
 			script->dirpath = p_strdup(pool, dirpath);
