@@ -512,7 +512,7 @@ static bool cmp_i_ascii_casemap_char_match
 	const char *val_begin = *val;
 	const char *key_begin = *key;
 	
-	while ( tolower(**val) == tolower(**key) &&
+	while ( i_tolower(**val) == i_tolower(**key) &&
 		*val < val_end && *key < key_end ) {
 		(*val)++;
 		(*key)++;

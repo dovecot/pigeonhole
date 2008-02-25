@@ -110,7 +110,7 @@ static const char *_regexp_error(regex_t *regexp, int errorcode)
 		errsize = regerror(errorcode, regexp, errbuf, errsize);
 	 
 		/* We don't want the error to start with a capital letter */
-		errbuf[0] = tolower(errbuf[0]);
+		errbuf[0] = i_tolower(errbuf[0]);
 
 		buffer_append_space_unsafe(error_buf, errsize);
 
