@@ -1391,16 +1391,14 @@ inline void sieve_binary_update_data
 
 /* Offset emission functions */
 
-/* FIXME: This is endian/alignment independent, but it is bound to be slow.
- */
 sieve_size_t sieve_binary_emit_offset(struct sieve_binary *binary, int offset) 
 {
-  int i;
+	int i;
 	sieve_size_t address = sieve_binary_get_code_size(binary);
 
-  for ( i = 3; i >= 0; i-- ) {
-    char c = (char) (offset >> (i * 8));
-	  (void) sieve_binary_emit_data(binary, &c, 1);
+	for ( i = 3; i >= 0; i-- ) {
+		char c = (char) (offset >> (i * 8));
+		(void) sieve_binary_emit_data(binary, &c, 1);
 	}
 	
 	return address;
@@ -1409,70 +1407,67 @@ sieve_size_t sieve_binary_emit_offset(struct sieve_binary *binary, int offset)
 void sieve_binary_resolve_offset
 	(struct sieve_binary *binary, sieve_size_t address) 
 {
-  int i;
+	int i;
 	int offset = sieve_binary_get_code_size(binary) - address; 
 	
 	for ( i = 3; i >= 0; i-- ) {
-    char c = (char) (offset >> (i * 8));
-	  (void) sieve_binary_update_data(binary, address + 3 - i, &c, 1);
+		char c = (char) (offset >> (i * 8));	
+		(void) sieve_binary_update_data(binary, address + 3 - i, &c, 1);
 	}
 }
 
 /* Literal emission */
 
-/* FIXME: This is endian/alignment independent and it saves bytes, but it is 
- * bound to be slow.
- */
 sieve_size_t sieve_binary_emit_integer
 (struct sieve_binary *binary, sieve_size_t integer)
 {
-  int i;
-  char buffer[sizeof(sieve_size_t) + 1];
-  int bufpos = sizeof(buffer) - 1;
+	int i;
+	char buffer[sizeof(sieve_size_t) + 1];
+	int bufpos = sizeof(buffer) - 1;
   
-  buffer[bufpos] = integer & 0x7F;
-  bufpos--;
-  integer >>= 7;
-  while ( integer > 0 ) {
-  	buffer[bufpos] = integer & 0x7F;
-    bufpos--;
-    integer >>= 7;  
-  }
+	buffer[bufpos] = integer & 0x7F;
+	bufpos--;
+	integer >>= 7;
+	while ( integer > 0 ) {
+		buffer[bufpos] = integer & 0x7F;
+		bufpos--;
+		integer >>= 7;  
+	}
   
-  bufpos++;
-  if ( (sizeof(buffer) - bufpos) > 1 ) { 
-    for ( i = bufpos; i < ((int) sizeof(buffer) - 1); i++) {
-      buffer[i] |= 0x80;
-    }
-  } 
+	bufpos++;
+	if ( (sizeof(buffer) - bufpos) > 1 ) { 
+		for ( i = bufpos; i < ((int) sizeof(buffer) - 1); i++) {
+			buffer[i] |= 0x80;
+		}
+	} 
   
-  return sieve_binary_emit_data(binary, buffer + bufpos, sizeof(buffer) - bufpos);
+	return sieve_binary_emit_data(binary, buffer + bufpos, sizeof(buffer) - bufpos);
 }
 
 static inline sieve_size_t sieve_binary_emit_dynamic_data
 	(struct sieve_binary *binary, void *data, size_t size)
 {
 	sieve_size_t address = sieve_binary_emit_integer(binary, size);
-  (void) sieve_binary_emit_data(binary, data, size);
+	(void) sieve_binary_emit_data(binary, data, size);
   
-  return address;
+	return address;
 }
 
 sieve_size_t sieve_binary_emit_cstring
 	(struct sieve_binary *binary, const char *str)
 {
-  sieve_size_t address = sieve_binary_emit_dynamic_data
-  	(binary, (void *) str, strlen(str));
-  sieve_binary_emit_byte(binary, 0);
+	sieve_size_t address = sieve_binary_emit_dynamic_data
+		(binary, (void *) str, strlen(str));
+	sieve_binary_emit_byte(binary, 0);
   
-  return address;
+	return address;
 }
 
 sieve_size_t sieve_binary_emit_string
 	(struct sieve_binary *binary, const string_t *str)
 {
-  sieve_size_t address = sieve_binary_emit_dynamic_data
-  	(binary, (void *) str_data(str), str_len(str));
+	sieve_size_t address = sieve_binary_emit_dynamic_data
+		(binary, (void *) str_data(str), str_len(str));
 	sieve_binary_emit_byte(binary, 0);
 	
 	return address;
@@ -1526,14 +1521,14 @@ bool sieve_binary_read_offset
 	uint32_t offs = 0;
 	
 	if ( ADDR_BYTES_LEFT(binary, address) >= 4 ) {
-	  int i; 
+		int i; 
 	  
-	  for ( i = 0; i < 4; i++ ) {
-	    offs = (offs << 8) + ADDR_DATA_AT(binary, address);
-	  	ADDR_JUMP(address, 1);
-	  }
+		for ( i = 0; i < 4; i++ ) {
+			offs = (offs << 8) + ADDR_DATA_AT(binary, address);
+			ADDR_JUMP(address, 1);
+		}
 	  
-	  if ( offset != NULL )
+		if ( offset != NULL )
 			*offset = (int) offs;
 			
 		return TRUE;
@@ -1545,29 +1540,29 @@ bool sieve_binary_read_offset
 bool sieve_binary_read_integer
   (struct sieve_binary *binary, sieve_size_t *address, sieve_size_t *integer) 
 {
-  int bits = sizeof(sieve_size_t) * 8;
-  *integer = 0;
+	int bits = sizeof(sieve_size_t) * 8;
+	*integer = 0;
   
-  if ( ADDR_BYTES_LEFT(binary, address) == 0 )
-  	return FALSE;
+	if ( ADDR_BYTES_LEFT(binary, address) == 0 )
+		return FALSE;
   
-  while ( (ADDR_DATA_AT(binary, address) & 0x80) > 0 ) {
-    if ( ADDR_BYTES_LEFT(binary, address) > 0 && bits > 0) {
-      *integer |= ADDR_DATA_AT(binary, address) & 0x7F;
-      ADDR_JUMP(address, 1);
+	while ( (ADDR_DATA_AT(binary, address) & 0x80) > 0 ) {
+		if ( ADDR_BYTES_LEFT(binary, address) > 0 && bits > 0) {
+			*integer |= ADDR_DATA_AT(binary, address) & 0x7F;
+			ADDR_JUMP(address, 1);
     
-      *integer <<= 7;
-      bits -= 7;
-    } else {
-      /* This is an error */
-      return FALSE;
-    }
-  }
+			*integer <<= 7;
+			bits -= 7;
+		} else {
+			/* This is an error */
+			return FALSE;
+		}
+	}
   
-  *integer |= ADDR_DATA_AT(binary, address) & 0x7F;
-  ADDR_JUMP(address, 1);
+	*integer |= ADDR_DATA_AT(binary, address) & 0x7F;
+	ADDR_JUMP(address, 1);
   
-  return TRUE;
+	return TRUE;
 }
 
 /* FIXME: add this to lib/str. (now commented out) */
