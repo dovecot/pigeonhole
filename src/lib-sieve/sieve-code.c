@@ -36,7 +36,7 @@ static struct sieve_coded_stringlist *sieve_coded_stringlist_create
 	if ( end > sieve_binary_get_code_size(renv->sbin) ) 
   		return NULL;
     
-	strlist = p_new(pool_datastack_create(), struct sieve_coded_stringlist, 1);
+	strlist = t_new(struct sieve_coded_stringlist, 1);
 	strlist->runenv = renv;
 	strlist->start_address = start_address;
 	strlist->current_offset = start_address;

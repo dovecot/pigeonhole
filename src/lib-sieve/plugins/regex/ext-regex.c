@@ -205,11 +205,10 @@ struct mtch_regex_context {
 void mtch_regex_match_init
 	(struct sieve_match_context *mctx)
 {
-	pool_t pool = pool_datastack_create();
 	struct mtch_regex_context *ctx = 
-		p_new(pool, struct mtch_regex_context, 1);
+		t_new(struct mtch_regex_context, 1);
 	
-	p_array_init(&ctx->reg_expressions, pool, 4);
+	t_array_init(&ctx->reg_expressions, 4);
 
 	ctx->value_index = -1;
 

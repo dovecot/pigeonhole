@@ -388,8 +388,7 @@ struct sieve_match_context *sieve_match_begin
 (const struct sieve_match_type *mtch, const struct sieve_comparator *cmp, 
 	struct sieve_coded_stringlist *key_list)
 {
-	struct sieve_match_context *mctx = 
-		p_new(pool_datastack_create(), struct sieve_match_context, 1);  
+	struct sieve_match_context *mctx = t_new(struct sieve_match_context, 1);  
 
 	mctx->match_type = mtch;
 	mctx->comparator = cmp;
