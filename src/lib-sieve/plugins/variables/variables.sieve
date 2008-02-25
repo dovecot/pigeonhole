@@ -33,6 +33,6 @@ if header :contains "${header}" ["${hvalue} ${speed}"] {
 	fileinto "Oeh, dit werkt ook.";
 } 
 
-if header :comparator "i;ascii-casemap" "${foo}" "foosome" {
+if string :comparator "i;ascii-casemap" "${foo}" "foosome" {
 	fileinto "CASE";
 }

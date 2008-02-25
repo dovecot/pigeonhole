@@ -186,7 +186,7 @@ static int ext_envelope_get_fields
 	const char *value;
 	ARRAY_DEFINE(envelope_values, const char *);
 	
- 	p_array_init(&envelope_values, pool_datastack_create(), 2);
+ 	t_array_init(&envelope_values, 2);
  	
 	if ( strncmp(field, "from", 4) == 0 )
 		value = msgdata->return_path;
