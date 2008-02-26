@@ -31,6 +31,8 @@ static const char *lda_sieve_get_path(void)
 			return NULL;
 		}
 
+		script_path = home_expand(script_path);
+
 		if (*script_path != '/' && *script_path != '\0') {
 			/* relative path. change to absolute. */
 			script_path = t_strconcat(getenv("HOME"), "/",
