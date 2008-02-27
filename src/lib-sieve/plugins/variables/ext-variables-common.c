@@ -338,29 +338,62 @@ inline static struct sieve_ast_argument *_add_string_element
 	return strarg;
 }
 
+/* Variable Substitution
+ * ---------------------
+ * 
+ * The variable strings are preprocessed into an AST list consisting of variable 
+ * substitutions and constant parts of the string. The variables to which
+ * the substitutions link are looked up and their index in their scope storage
+ * is what is added to the list and eventually emitted as byte code. So in byte
+ * code a variable string will look as a series of substrings interrupted by
+ * integer operands that refer to variables. During execution the strings and 
+ * the looked-up variables are concatenated to obtain the desired result. The 
+ * the variable references are simple indexes into an array of variables, so
+ * looking these up during execution is a trivial process.
+ * 
+ * However (RFC 5229):
+ *   Tests or actions in future extensions may need to access the
+ *   unexpanded version of the string argument and, e.g., do the expansion
+ *   after setting variables in its namespace.  The design of the
+ *   implementation should allow this.
+ *
+ * Various options exist to provide this feature. If the extension is entirely
+ * namespace-based there is actually not very much of a problem. The variable
+ * list can easily be extended with new argument-types that refer to a variable
+ * identifier in stead of an index in the variable's storage. 
+ */
 static bool arg_variable_string_validate
 (struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd)
 {
+	struct _variable_name {
+		string_t *identifier;
+		int num_variable;
+	};
+
 	enum { ST_NONE, ST_OPEN, ST_VARIABLE, ST_CLOSE } state = ST_NONE;
 	pool_t pool = sieve_ast_pool((*arg)->ast);
 	struct sieve_ast_arg_list *arglist = NULL;
 	string_t *str = sieve_ast_argument_str(*arg);
-	string_t *ident;
 	const char *p, *mark, *strstart, *substart = NULL;
 	const char *strval = (const char *) str_data(str);
 	const char *strend = strval + str_len(str);
 	struct _variable_string_data *strdata;
 	bool result = TRUE;
+
+	ARRAY_DEFINE(substitution, struct _variable_name);	
+	unsigned int nspace_used = 0;
 	
-	//t_push();
-			
-	ident = t_str_new(32);	
-		
+	t_push();
+	
+	/* Initialize substitution structure */
+	t_array_init(&substitution, 2);		
+	
 	p = strval;
 	strstart = p;
 	while ( result && p < strend ) {
 		switch ( state ) {
+		/* Nothing found yet */
 		case ST_NONE:
 			if ( *p == '$' ) {
 				substart = p;
@@ -368,6 +401,7 @@ static bool arg_variable_string_validate
 			}
 			p++;
 			break;
+		/* Got '$' */
 		case ST_OPEN:
 			if ( *p == '{' ) {
 				state = ST_VARIABLE;
@@ -375,31 +409,74 @@ static bool arg_variable_string_validate
 			} else 
 				state = ST_NONE;
 			break;
+		/* Got '${' */ 
 		case ST_VARIABLE:
 			mark = p;
 			
-			if ( p < strend ) {
-				if (*p == '_' || isalpha(*p) ) {
-					str_append_c(ident, *p);
+			/* Reset */
+			nspace_used = 0;
+						
+			for (;;) { 
+				struct _variable_name *cur_element;
+				string_t *cur_ident;
+
+				/* Acquire current position in the substitution structure or allocate 
+				 * a new one if this substitution consists of more elements than before.
+				 */
+				if ( nspace_used < array_count(&substitution) ) {
+					cur_element = array_idx_modifiable
+						(&substitution, (unsigned int) nspace_used);
+					cur_ident = cur_element->identifier;
+				} else {
+					cur_element = array_append_space(&substitution);
+					cur_ident = cur_element->identifier = t_str_new(32);
+				}
+
+				/* Identifier */
+				if ( *p == '_' || isalpha(*p) ) {
+					cur_element->num_variable = -1;
+					str_truncate(cur_ident, 0);
+					str_append_c(cur_ident, *p);
 					p++;
 				
 					while ( p < strend && (*p == '_' || isalnum(*p)) ) {
-						str_append_c(ident, *p);
+						str_append_c(cur_ident, *p);
 						p++;
 					}
+									
 					state = ST_CLOSE;
+				
+				/* Num-variable */
 				} else if ( isdigit(*p) ) {
-					unsigned int num_variable = *p - '0';
+					cur_element->num_variable = *p - '0';
 					p++;
 					
 					while ( p < strend && isdigit(*p) ) {
-						num_variable = num_variable*10 + (*p - '0');
+						cur_element->num_variable = cur_element->num_variable*10 + (*p - '0');
 						p++;
 					} 
+					
 					state = ST_CLOSE;
-				} else 
+
+					/* If a num-variable is first, no more elements can follow because no
+					 * namespace is specified.
+					 */
+					if ( nspace_used == 0 ) {
+						nspace_used = 1;
+						break;
+					}
+				} else {
 					state = ST_NONE;
-			}  			
+					break;
+				}
+				
+				nspace_used++;
+				
+				if ( p < strend && *p == '.' ) 
+					p++;
+				else
+					break;
+			}
 			
 			break;
 		case ST_CLOSE:
@@ -412,52 +489,94 @@ static bool arg_variable_string_validate
 					arglist = sieve_ast_arg_list_create(pool);
 				}
 				
+				/* Add the substring that is before the substitution to the 
+				 * variable-string AST.
+				 *
+				 * FIXME: For efficiency, if the variable is not found we should 
+				 * coalesce this substring with the one after the substitution.
+				 */
 				if ( substart > strstart ) {
 					strarg = _add_string_element(arglist, *arg);
 					strarg->_value.str = str_new(pool, substart - strstart);
 					str_append_n(strarg->_value.str, strstart, substart - strstart); 
 					
+					/* Give other substitution extensions a chance to do their work */
 					if ( !sieve_validator_argument_activate_super
 						(validator, cmd, strarg, FALSE) )
 						return FALSE;
 				}
 				
 				/* Find the variable */
-				strarg = ext_variables_variable_argument_create
-					(validator, (*arg)->ast, (*arg)->source_line, str_c(ident));
-				if ( strarg != NULL )
-					sieve_ast_arg_list_add(arglist, strarg);
-
-				str_truncate(ident, 0);
+				if ( nspace_used == 1 ) {
+					const struct _variable_name *cur_element = 
+						array_idx(&substitution, 0);
+						
+					if ( cur_element->num_variable == -1 ) {
+						string_t *cur_ident = cur_element->identifier; 
+						
+						strarg = ext_variables_variable_argument_create
+							(validator, (*arg)->ast, (*arg)->source_line, str_c(cur_ident));
+						if ( strarg != NULL )
+							sieve_ast_arg_list_add(arglist, strarg);
+					} else {
+						/* FIXME: Match substitutions are not supported */
+					}
+				} else {
+					unsigned int i;
+					/* FIXME: Namespaces are not supported. */
+					/* DEBUG: Just print the variable substitution: */
+					
+					printf("NS_VARIABLE: ");
+					for ( i = 0; i < nspace_used; i++ ) {
+						const struct _variable_name *cur_element = 
+							array_idx(&substitution, i);
+							
+						if ( cur_element->num_variable == -1 ) {
+							printf("%s.", str_c(cur_element->identifier));
+						} else {
+							printf("%d.", cur_element->num_variable);
+						}
+					}
+					printf("\n");
+				}
 				
 				strstart = p + 1;
 				substart = strstart;
 			}
+		
+			/* Finished, reset for the next substitution */	
 			state = ST_NONE;
 			p++;	
 		}
 	}
 
-	//t_pop();
+	t_pop();
 	
 	if ( arglist == NULL ) {
+		/* No substitutions in this string, pass it on to any other substution
+		 * extension.
+		 */
 		return sieve_validator_argument_activate_super
 			(validator, cmd, *arg, TRUE);
 	}
 	
+	/* Add the final substring that comes after the last substitution to the 
+	 * variable-string AST.
+	 */
 	if ( strend > strstart ) {
 		struct sieve_ast_argument *strarg = _add_string_element(arglist, *arg);
 		strarg->_value.str = str_new(pool, strend - strstart);
 		str_append_n(strarg->_value.str, strstart, strend - strstart); 
-		
+	
+		/* Give other substitution extensions a chance to do their work */	
 		if ( !sieve_validator_argument_activate_super
 			(validator, cmd, strarg, FALSE) )
 			return FALSE;
 	}	
 	
+	/* Assign the constructed variable-string AST-branch to the actual AST */
 	strdata = p_new(pool, struct _variable_string_data, 1);
 	strdata->str_parts = arglist;
-	
 	(*arg)->context = (void *) strdata;
 
 	return TRUE;

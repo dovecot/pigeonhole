@@ -93,7 +93,8 @@ const struct sieve_operation envelope_operation = {
 };
 
 /* Command Registration */
-static bool tst_envelope_registered(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+static bool tst_envelope_registered
+(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
 	sieve_comparators_link_tag(validator, cmd_reg, SIEVE_AM_OPT_COMPARATOR);
@@ -107,7 +108,8 @@ static bool tst_envelope_registered(struct sieve_validator *validator, struct si
  * Validation 
  */
  
-static bool tst_envelope_validate(struct sieve_validator *validator, struct sieve_command_context *tst) 
+static bool tst_envelope_validate
+(struct sieve_validator *validator, struct sieve_command_context *tst) 
 { 		
 	struct sieve_ast_argument *arg = tst->first_positional;
 				
