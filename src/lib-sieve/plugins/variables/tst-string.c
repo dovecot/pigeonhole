@@ -47,7 +47,7 @@ static bool tst_string_operation_execute
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation tst_string_operation = { 
-	"string",
+	"STRING",
 	&variables_extension, 
 	EXT_VARIABLES_OPERATION_STRING, 
 	tst_string_operation_dump, 
@@ -108,7 +108,8 @@ static bool tst_string_validate
 static bool tst_string_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_operation(generator, &tst_string_operation);
+	sieve_generator_emit_operation_ext
+		(generator, &tst_string_operation, ext_variables_my_id);
 
  	/* Generate arguments */
 	if ( !sieve_generate_arguments(generator, ctx, NULL) )
