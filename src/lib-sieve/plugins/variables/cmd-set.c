@@ -230,7 +230,9 @@ static bool cmd_set_validate(struct sieve_validator *validator,
 		return FALSE;
 	}
 	
-	ext_variables_variable_argument_activate(validator, arg);
+	if ( !ext_variables_variable_assignment_activate(validator, arg, cmd) ) {
+		return FALSE;
+	}
 
 	arg = sieve_ast_argument_next(arg);
 	

@@ -64,8 +64,9 @@ bool ext_variables_opr_variable_read
 void ext_variables_opr_variable_string_emit
 	(struct sieve_binary *sbin, unsigned int elements);
 
-void ext_variables_variable_argument_activate
-	(struct sieve_validator *validator, struct sieve_ast_argument *arg);
+bool ext_variables_variable_assignment_activate
+(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+	struct sieve_command_context *cmd);
 
 struct sieve_variable *ext_variables_validator_get_variable
 (struct sieve_validator *validator, const char *variable);

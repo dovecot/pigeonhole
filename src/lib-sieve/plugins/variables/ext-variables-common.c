@@ -283,18 +283,57 @@ static struct sieve_ast_argument *ext_variables_variable_argument_create
 	return arg;
 }
 
-void ext_variables_variable_argument_activate
-(struct sieve_validator *validator, struct sieve_ast_argument *arg)
+bool ext_variables_variable_assignment_activate
+(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+	struct sieve_command_context *cmd)
 {
 	struct ext_variables_validator_context *ctx;
 	struct sieve_variable *var;
-	
-	ctx = ext_variables_validator_context_get(validator);
-	var = sieve_variable_scope_get_variable(ctx->main_scope, 
-		sieve_ast_argument_strc(arg));
+	string_t *variable;
+	const char *varstr, *varend;
+	ARRAY_TYPE(ext_variable_name) vname;	
+	int nelements = 0;
 
-	arg->argument = &variable_argument;
-	arg->context = (void *) var;
+	t_array_init(&vname, 2);			
+	
+	variable = sieve_ast_argument_str(arg);
+	varstr = str_c(variable);
+	varend = PTR_OFFSET(varstr, str_len(variable));
+	nelements = ext_variable_name_parse(&vname, &varstr, varend);
+	
+	if ( nelements < 0 || varstr != varend ) {
+		sieve_command_validate_error(validator, cmd, 
+			"invalid variable name in assignment");
+		return FALSE;
+	}
+	
+	if ( nelements == 1 ) {
+		const struct ext_variable_name *cur_element = 
+			array_idx(&vname, 0);
+
+		if ( cur_element->num_variable == -1 ) {
+			ctx = ext_variables_validator_context_get(validator);
+			var = sieve_variable_scope_get_variable
+				(ctx->main_scope, str_c(cur_element->identifier));
+
+			arg->argument = &variable_argument;
+			arg->context = (void *) var;
+			
+			return TRUE;
+		} else {
+			sieve_command_validate_error(validator, cmd, 
+				"cannot assign to match variable");
+		}
+	} else {
+		const struct ext_variable_name *cur_element = 
+			array_idx(&vname, 0);
+
+		/* FIXME: Variable namespaces unsupported. */
+		sieve_command_validate_error(validator, cmd, 
+				"cannot assign to variable in unknown namespace '%s'", 
+				str_c(cur_element->identifier));
+	}
+	return FALSE;
 }
 
 static bool arg_variable_generate
