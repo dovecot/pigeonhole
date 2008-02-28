@@ -7,6 +7,12 @@
  * Status: under development
  *
  */
+ 
+/* FIXME: This implementation of the variables extension does not support 
+ * namespaces. It recognizes them, but there is currently no support to let
+ * a an extension register a new namespace. Currently no such extension exists 
+ * and therefore this support has a very low implementation priority.
+ */
 
 #include "lib.h"
 #include "str.h"

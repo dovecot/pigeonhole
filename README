@@ -201,11 +201,10 @@ Current:
 * Implement variables extension
   Implemented:
   -> Core variables substitution works
+  -> Accept namespaces (parse, no real support; proper error messages)
   Current:
-  -> Accept namespaces
-  Remaining: 
-  -> Recognize match variables
-  -> Provide appropriate errors on various mishandled occasions
+  -> Support match variables
+  Remaining:
   -> Provide support for include, imapflags and other extensions that (partly)
      depend on variables support.
      
@@ -222,29 +221,33 @@ Next (in order of descending priority/precedence):
   Character Sets). 
 * Get rid of all <stdio.h> printf()s in the library; use trace macro instead
 * Use lib/llist.h for the AST implementation. 
+* Make the sieve plugins true plugins and add a SIEVE_PLUGINS config item to the
+  lda-sieve plugin.
+
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...
 * Full standards compliance review for the engine and all fully implemented 
   sieve extensions.
-* Make the sieve plugins true plugins and add a SIEVE_PLUGINS config item to the
-  lda-sieve plugin. 
+* Code cleanup 
 * Make sure cmusieve can be replaced seamlessly with this new plugin.
-* Make a few elaborate test scripts to test engine and all implemented extensions 
-  a little better. Also include specially crafted e-mail messages that give 
-  deterministic and thus testable results.
+* Make a few elaborate test scripts to test engine and all implemented 
+  extensions a little better. Also include specially crafted e-mail messages 
+  that give deterministic and thus testable results.
+
 * ## MAKE A FIRST RELEASE ##
+
+* Automate script tests; i.e. build a test suite.
 * Resolve code duplication introduced for handling address-parts and match-types
   in different command implementations.
 * Resolve code duplication amongst comparator, address-part and match-type 
   support as much as possible.
 * Add development documentation, i.e. comment on library functions and document
   the binary and byte-code format. 
-* Make the engine and its extensions much more configurable. Possibly this can be
-  merged with Dovecot's new master config implementation.
+* Make the engine and its extensions much more configurable. Possibly this can 
+  be merged with Dovecot's new master config implementation.
 * Implement notify extension with sole support for mailto mechanism. 
 * Give the byte code format some more thought, it is currently quite rough and
   to the point. 
-* Automate script tests; i.e. build a test suite.
 * Try to implement proposed notify mechanisms other than mailto. Currently: xmpp
   and sip
 
