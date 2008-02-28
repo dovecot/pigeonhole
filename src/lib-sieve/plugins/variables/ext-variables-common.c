@@ -362,27 +362,98 @@ inline static struct sieve_ast_argument *_add_string_element
  * list can easily be extended with new argument-types that refer to a variable
  * identifier in stead of an index in the variable's storage. 
  */
+ 
+struct variable_name {
+	string_t *identifier;
+	int num_variable;
+};
+
+ARRAY_DEFINE_TYPE(variable_name, struct variable_name);
+ 
+static int arg_variable_parse
+(ARRAY_TYPE(variable_name) *vname, const char **str, const char *strend)
+{
+	const char *p = *str;
+	int nspace_used = 0;
+				
+	for (;;) { 
+		struct variable_name *cur_element;
+		string_t *cur_ident;
+
+		/* Acquire current position in the substitution structure or allocate 
+		 * a new one if this substitution consists of more elements than before.
+		 */
+		if ( nspace_used < (int) array_count(vname) ) {
+			cur_element = array_idx_modifiable
+				(vname, (unsigned int) nspace_used);
+			cur_ident = cur_element->identifier;
+		} else {
+			cur_element = array_append_space(vname);
+			cur_ident = cur_element->identifier = t_str_new(32);
+		}
+
+		/* Identifier */
+		if ( *p == '_' || isalpha(*p) ) {
+			cur_element->num_variable = -1;
+			str_truncate(cur_ident, 0);
+			str_append_c(cur_ident, *p);
+			p++;
+		
+			while ( p < strend && (*p == '_' || isalnum(*p)) ) {
+				str_append_c(cur_ident, *p);
+				p++;
+			}
+		
+		/* Num-variable */
+		} else if ( isdigit(*p) ) {
+			cur_element->num_variable = *p - '0';
+			p++;
+			
+			while ( p < strend && isdigit(*p) ) {
+				cur_element->num_variable = cur_element->num_variable*10 + (*p - '0');
+				p++;
+			} 
+
+			/* If a num-variable is first, no more elements can follow because no
+			 * namespace is specified.
+			 */
+			if ( nspace_used == 0 ) {
+				*str = p;
+				return 1;
+			}
+		} else {
+			*str = p;
+			return -1;
+		}
+		
+		nspace_used++;
+		
+		if ( p < strend && *p == '.' ) 
+			p++;
+		else
+			break;
+	}
+	
+	*str = p;
+	return nspace_used;
+} 
+ 
 static bool arg_variable_string_validate
 (struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd)
 {
-	struct _variable_name {
-		string_t *identifier;
-		int num_variable;
-	};
-
 	enum { ST_NONE, ST_OPEN, ST_VARIABLE, ST_CLOSE } state = ST_NONE;
 	pool_t pool = sieve_ast_pool((*arg)->ast);
 	struct sieve_ast_arg_list *arglist = NULL;
 	string_t *str = sieve_ast_argument_str(*arg);
-	const char *p, *mark, *strstart, *substart = NULL;
+	const char *p, *strstart, *substart = NULL;
 	const char *strval = (const char *) str_data(str);
 	const char *strend = strval + str_len(str);
 	struct _variable_string_data *strdata;
 	bool result = TRUE;
-
-	ARRAY_DEFINE(substitution, struct _variable_name);	
-	unsigned int nspace_used = 0;
+	
+	ARRAY_TYPE(variable_name) substitution;	
+	int nelements = 0;
 	
 	t_push();
 	
@@ -411,72 +482,12 @@ static bool arg_variable_string_validate
 			break;
 		/* Got '${' */ 
 		case ST_VARIABLE:
-			mark = p;
+			nelements = arg_variable_parse(&substitution, &p, strend);
 			
-			/* Reset */
-			nspace_used = 0;
-						
-			for (;;) { 
-				struct _variable_name *cur_element;
-				string_t *cur_ident;
-
-				/* Acquire current position in the substitution structure or allocate 
-				 * a new one if this substitution consists of more elements than before.
-				 */
-				if ( nspace_used < array_count(&substitution) ) {
-					cur_element = array_idx_modifiable
-						(&substitution, (unsigned int) nspace_used);
-					cur_ident = cur_element->identifier;
-				} else {
-					cur_element = array_append_space(&substitution);
-					cur_ident = cur_element->identifier = t_str_new(32);
-				}
-
-				/* Identifier */
-				if ( *p == '_' || isalpha(*p) ) {
-					cur_element->num_variable = -1;
-					str_truncate(cur_ident, 0);
-					str_append_c(cur_ident, *p);
-					p++;
-				
-					while ( p < strend && (*p == '_' || isalnum(*p)) ) {
-						str_append_c(cur_ident, *p);
-						p++;
-					}
-									
-					state = ST_CLOSE;
-				
-				/* Num-variable */
-				} else if ( isdigit(*p) ) {
-					cur_element->num_variable = *p - '0';
-					p++;
-					
-					while ( p < strend && isdigit(*p) ) {
-						cur_element->num_variable = cur_element->num_variable*10 + (*p - '0');
-						p++;
-					} 
-					
-					state = ST_CLOSE;
-
-					/* If a num-variable is first, no more elements can follow because no
-					 * namespace is specified.
-					 */
-					if ( nspace_used == 0 ) {
-						nspace_used = 1;
-						break;
-					}
-				} else {
-					state = ST_NONE;
-					break;
-				}
-				
-				nspace_used++;
-				
-				if ( p < strend && *p == '.' ) 
-					p++;
-				else
-					break;
-			}
+			if ( nelements < 0 )
+				state = ST_NONE;
+			else 
+				state = ST_CLOSE;
 			
 			break;
 		case ST_CLOSE:
@@ -507,8 +518,8 @@ static bool arg_variable_string_validate
 				}
 				
 				/* Find the variable */
-				if ( nspace_used == 1 ) {
-					const struct _variable_name *cur_element = 
+				if ( nelements == 1 ) {
+					const struct variable_name *cur_element = 
 						array_idx(&substitution, 0);
 						
 					if ( cur_element->num_variable == -1 ) {
@@ -522,14 +533,14 @@ static bool arg_variable_string_validate
 						/* FIXME: Match substitutions are not supported */
 					}
 				} else {
-					unsigned int i;
+					int i;
 					/* FIXME: Namespaces are not supported. */
 					/* DEBUG: Just print the variable substitution: */
 					
 					printf("NS_VARIABLE: ");
-					for ( i = 0; i < nspace_used; i++ ) {
-						const struct _variable_name *cur_element = 
-							array_idx(&substitution, i);
+					for ( i = 0; i < nelements; i++ ) {
+						const struct variable_name *cur_element = 
+							array_idx(&substitution, (unsigned int) i);
 							
 						if ( cur_element->num_variable == -1 ) {
 							printf("%s.", str_c(cur_element->identifier));
