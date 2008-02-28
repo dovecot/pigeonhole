@@ -10,8 +10,8 @@ Using
 -----
 
 The main purpose of this package is to replace the existing cmusieve plugin that 
-is currently available for dovecot's deliver. With this respect it is currently 
-not very different from the cmusieve implementation. 
+is currently available for Dovecot's deliver. With this respect it is currently 
+not very different from the cmusieve plugin implementation. 
 
 Unlike cmusieve, this sieve module logs runtime errors to <scriptfile>.log if it 
 can and not '<scriptfile>.err'. It appends new timestamped log entries to the 
@@ -63,7 +63,7 @@ Currently undocumented (will be merged with sieve-test).
 
 --
 
-Various example scripts are bundled in the directory 'sieve'.
+Various example scripts are bundled in the directory 'sieve'. 
 
 Authors
 -------
@@ -140,11 +140,12 @@ Extensions and their implementation status:
     variables: very basic support
 
     notify: planned, first mailto only (- very low priority)
+	editheader: planned, needs additional support from Dovecot though.
 
 All implemented extensions are like the engine itself currently very much 
 experimental. A status of 'full' does not mean that the extension is bug-free 
-and RFC-compliant. Other extensions will be added as soon as the necessary 
-infrastructure is available. Extensions supported by cmu-sieve have priority.
+or even RFC-compliant. Other extensions will be added as soon as the necessary 
+infrastructure is available. Extensions supported by cmusieve have priority.
 
 Design
 ------
@@ -200,8 +201,9 @@ Current:
 * Implement variables extension
   Implemented:
   -> Core variables substitution works
-  Remaining: 
+  Current:
   -> Accept namespaces
+  Remaining: 
   -> Recognize match variables
   -> Provide appropriate errors on various mishandled occasions
   -> Provide support for include, imapflags and other extensions that (partly)
