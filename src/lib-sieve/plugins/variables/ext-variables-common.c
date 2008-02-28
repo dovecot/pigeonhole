@@ -1,6 +1,7 @@
 #include "lib.h"
 #include "hash.h"
 #include "str.h"
+#include "array.h"
 
 #include "sieve-common.h"
 
@@ -15,6 +16,7 @@
 #include "sieve-interpreter.h"
 
 #include "ext-variables-common.h"
+#include "ext-variables-name.h"
 
 #include <ctype.h>
 
@@ -338,106 +340,6 @@ inline static struct sieve_ast_argument *_add_string_element
 	return strarg;
 }
 
-/* Variable Substitution
- * ---------------------
- * 
- * The variable strings are preprocessed into an AST list consisting of variable 
- * substitutions and constant parts of the string. The variables to which
- * the substitutions link are looked up and their index in their scope storage
- * is what is added to the list and eventually emitted as byte code. So in byte
- * code a variable string will look as a series of substrings interrupted by
- * integer operands that refer to variables. During execution the strings and 
- * the looked-up variables are concatenated to obtain the desired result. The 
- * the variable references are simple indexes into an array of variables, so
- * looking these up during execution is a trivial process.
- * 
- * However (RFC 5229):
- *   Tests or actions in future extensions may need to access the
- *   unexpanded version of the string argument and, e.g., do the expansion
- *   after setting variables in its namespace.  The design of the
- *   implementation should allow this.
- *
- * Various options exist to provide this feature. If the extension is entirely
- * namespace-based there is actually not very much of a problem. The variable
- * list can easily be extended with new argument-types that refer to a variable
- * identifier in stead of an index in the variable's storage. 
- */
- 
-struct variable_name {
-	string_t *identifier;
-	int num_variable;
-};
-
-ARRAY_DEFINE_TYPE(variable_name, struct variable_name);
- 
-static int arg_variable_parse
-(ARRAY_TYPE(variable_name) *vname, const char **str, const char *strend)
-{
-	const char *p = *str;
-	int nspace_used = 0;
-				
-	for (;;) { 
-		struct variable_name *cur_element;
-		string_t *cur_ident;
-
-		/* Acquire current position in the substitution structure or allocate 
-		 * a new one if this substitution consists of more elements than before.
-		 */
-		if ( nspace_used < (int) array_count(vname) ) {
-			cur_element = array_idx_modifiable
-				(vname, (unsigned int) nspace_used);
-			cur_ident = cur_element->identifier;
-		} else {
-			cur_element = array_append_space(vname);
-			cur_ident = cur_element->identifier = t_str_new(32);
-		}
-
-		/* Identifier */
-		if ( *p == '_' || isalpha(*p) ) {
-			cur_element->num_variable = -1;
-			str_truncate(cur_ident, 0);
-			str_append_c(cur_ident, *p);
-			p++;
-		
-			while ( p < strend && (*p == '_' || isalnum(*p)) ) {
-				str_append_c(cur_ident, *p);
-				p++;
-			}
-		
-		/* Num-variable */
-		} else if ( isdigit(*p) ) {
-			cur_element->num_variable = *p - '0';
-			p++;
-			
-			while ( p < strend && isdigit(*p) ) {
-				cur_element->num_variable = cur_element->num_variable*10 + (*p - '0');
-				p++;
-			} 
-
-			/* If a num-variable is first, no more elements can follow because no
-			 * namespace is specified.
-			 */
-			if ( nspace_used == 0 ) {
-				*str = p;
-				return 1;
-			}
-		} else {
-			*str = p;
-			return -1;
-		}
-		
-		nspace_used++;
-		
-		if ( p < strend && *p == '.' ) 
-			p++;
-		else
-			break;
-	}
-	
-	*str = p;
-	return nspace_used;
-} 
- 
 static bool arg_variable_string_validate
 (struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd)
@@ -452,7 +354,7 @@ static bool arg_variable_string_validate
 	struct _variable_string_data *strdata;
 	bool result = TRUE;
 	
-	ARRAY_TYPE(variable_name) substitution;	
+	ARRAY_TYPE(ext_variable_name) substitution;	
 	int nelements = 0;
 	
 	t_push();
@@ -482,7 +384,7 @@ static bool arg_variable_string_validate
 			break;
 		/* Got '${' */ 
 		case ST_VARIABLE:
-			nelements = arg_variable_parse(&substitution, &p, strend);
+			nelements = ext_variable_name_parse(&substitution, &p, strend);
 			
 			if ( nelements < 0 )
 				state = ST_NONE;
@@ -519,7 +421,7 @@ static bool arg_variable_string_validate
 				
 				/* Find the variable */
 				if ( nelements == 1 ) {
-					const struct variable_name *cur_element = 
+					const struct ext_variable_name *cur_element = 
 						array_idx(&substitution, 0);
 						
 					if ( cur_element->num_variable == -1 ) {
@@ -539,7 +441,7 @@ static bool arg_variable_string_validate
 					
 					printf("NS_VARIABLE: ");
 					for ( i = 0; i < nelements; i++ ) {
-						const struct variable_name *cur_element = 
+						const struct ext_variable_name *cur_element = 
 							array_idx(&substitution, (unsigned int) i);
 							
 						if ( cur_element->num_variable == -1 ) {
