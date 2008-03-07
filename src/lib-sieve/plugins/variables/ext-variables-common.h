@@ -16,6 +16,7 @@ enum ext_variables_opcode {
 
 enum ext_variables_operand {
 	EXT_VARIABLES_OPERAND_VARIABLE,
+	EXT_VARIABLES_OPERAND_MATCH_VALUE,
 	EXT_VARIABLES_OPERAND_VARIABLE_STRING
 };
 
@@ -57,6 +58,8 @@ extern const struct sieve_argument variable_string_argument;
 
 void ext_variables_opr_variable_emit
 	(struct sieve_binary *sbin, struct sieve_variable *var);
+void ext_variables_opr_match_value_emit
+	(struct sieve_binary *sbin, unsigned int index);
 bool ext_variables_opr_variable_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
 		struct sieve_variable_storage **storage, unsigned int *var_index);

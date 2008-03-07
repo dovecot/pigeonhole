@@ -2,6 +2,7 @@
 #define __SIEVE_MATCH_TYPES_H
 
 #include "sieve-common.h"
+#include "sieve-extensions.h"
 
 enum sieve_match_type_code {
 	SIEVE_MATCH_TYPE_IS,
@@ -11,11 +12,12 @@ enum sieve_match_type_code {
 };
 
 struct sieve_match_context {
-    const struct sieve_match_type *match_type;
-    const struct sieve_comparator *comparator;
-    struct sieve_coded_stringlist *key_list;
+	struct sieve_interpreter *interp;
+	const struct sieve_match_type *match_type;
+	const struct sieve_comparator *comparator;
+	struct sieve_coded_stringlist *key_list;
 
-    void *data;
+	void *data;
 };
 
 struct sieve_match_type;
@@ -69,6 +71,21 @@ struct sieve_match_type_context {
 	void *ctx_data;
 };
 
+/* Match values */
+
+struct sieve_match_values;
+
+bool sieve_match_values_set_enabled
+	(struct sieve_interpreter *interp, bool enable);
+struct sieve_match_values *sieve_match_values_start
+	(struct sieve_interpreter *interp);
+void sieve_match_values_add
+	(struct sieve_match_values *mvalues, string_t *value);
+void sieve_match_values_get
+	(struct sieve_interpreter *interp, unsigned int index, string_t **value_r);
+
+/* ... */
+
 void sieve_match_types_link_tags
 	(struct sieve_validator *validator, 
 		struct sieve_command_registration *cmd_reg, int id_code);
@@ -106,8 +123,9 @@ bool sieve_opr_match_type_dump
 /* Match Utility */
 
 struct sieve_match_context *sieve_match_begin
-(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
-    struct sieve_coded_stringlist *key_list);
+(struct sieve_interpreter *interp, 
+	const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
+	struct sieve_coded_stringlist *key_list);
 bool sieve_match_value
     (struct sieve_match_context *mctx, const char *value, size_t val_size);
 bool sieve_match_end(struct sieve_match_context *mctx);

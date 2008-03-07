@@ -189,6 +189,143 @@ static bool mtch_binary_load(struct sieve_binary *sbin)
 	return TRUE;
 }
 
+/* 
+ * Interpreter context
+ */
+
+struct mtch_interpreter_context {
+	struct sieve_match_values *match_values;
+	bool match_values_enabled;
+};
+
+static inline struct mtch_interpreter_context *
+get_interpreter_context(struct sieve_interpreter *interp)
+{
+	return (struct mtch_interpreter_context *)
+		sieve_interpreter_extension_get_context(interp, ext_my_id);
+}
+
+static struct mtch_interpreter_context *
+mtch_interpreter_context_init(struct sieve_interpreter *interp)
+{		
+	pool_t pool = sieve_interpreter_pool(interp);
+	struct mtch_interpreter_context *ctx;
+	
+	ctx = p_new(pool, struct mtch_interpreter_context, 1);
+
+	sieve_interpreter_extension_set_context
+		(interp, ext_my_id, (void *) ctx);
+
+	return ctx;
+}
+
+/*
+ * Match values
+ */
+ 
+struct sieve_match_values {
+	pool_t pool;
+	ARRAY_DEFINE(values, string_t *);
+	unsigned count;
+};
+
+bool sieve_match_values_set_enabled
+(struct sieve_interpreter *interp, bool enable)
+{
+	bool previous;
+	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
+	
+	if ( ctx == NULL && enable ) 
+		ctx = mtch_interpreter_context_init(interp);
+	
+	previous = ctx->match_values_enabled;
+	ctx->match_values_enabled = enable;
+	
+	return previous;
+}
+
+struct sieve_match_values *sieve_match_values_start(struct sieve_interpreter *interp)
+{
+	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
+	
+	if ( ctx == NULL || !ctx->match_values_enabled )
+		return NULL;
+		
+	if ( ctx->match_values == NULL ) {
+		pool_t pool = sieve_interpreter_pool(interp);
+		
+		ctx->match_values = p_new(pool, struct sieve_match_values, 1);
+		ctx->match_values->pool = pool;
+		p_array_init(&ctx->match_values->values, pool, 4);
+	}
+	
+	ctx->match_values->count = 0;
+	
+	return ctx->match_values;
+}
+
+void sieve_match_values_add
+	(struct sieve_match_values *mvalues, string_t *value) 
+{
+	string_t *entry;
+	
+	if ( mvalues == NULL ) return;
+	
+	if ( mvalues->count >= array_count(&mvalues->values) ) {
+		entry = str_new(mvalues->pool, 64);
+		array_append(&mvalues->values, &entry, 1);
+	} else {
+		string_t * const *ep = array_idx(&mvalues->values, mvalues->count);
+		entry = *ep;
+		str_truncate(entry, 0);
+	}
+	
+	if ( value != NULL )
+		str_append_str(entry, value);
+	
+	mvalues->count++;
+}
+
+void sieve_match_values_set_first
+	(struct sieve_match_values *mvalues, string_t *value) 
+{
+	string_t * const *entry;
+
+	if ( mvalues == NULL ) return;
+	
+	if ( mvalues->count == 0 ) {
+		sieve_match_values_add(mvalues, value);
+		
+		return;
+	}
+	
+	entry = array_idx(&mvalues->values, mvalues->count);
+	str_truncate(*entry, 0);
+}
+
+void sieve_match_values_get
+	(struct sieve_interpreter *interp, unsigned int index, string_t **value_r) 
+{
+	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
+	struct sieve_match_values *mvalues;
+
+	if ( ctx == NULL || ctx->match_values == NULL ) {
+		*value_r = NULL;
+		return;
+	}
+	
+	mvalues = ctx->match_values;
+	if ( index <= mvalues->count ) {
+		string_t * const *entry = array_idx(&mvalues->values, index);
+		
+		*value_r = *entry;
+		return;
+	}
+
+	*value_r = NULL;	
+}
+
+
 /*
  * Match-type operand
  */
@@ -385,11 +522,12 @@ static bool tag_match_type_generate
 /* Match Utility */
 
 struct sieve_match_context *sieve_match_begin
-(const struct sieve_match_type *mtch, const struct sieve_comparator *cmp, 
-	struct sieve_coded_stringlist *key_list)
+(struct sieve_interpreter *interp, const struct sieve_match_type *mtch, 
+	const struct sieve_comparator *cmp, struct sieve_coded_stringlist *key_list)
 {
 	struct sieve_match_context *mctx = t_new(struct sieve_match_context, 1);  
 
+	mctx->interp = interp;
 	mctx->match_type = mtch;
 	mctx->comparator = cmp;
 	mctx->key_list = key_list;
@@ -523,14 +661,14 @@ static bool mtch_contains_match
 /* :matches */
 
 /* Quick 'n dirty debug */
-//#define MATCH_DEBUG
+#define MATCH_DEBUG
 #ifdef MATCH_DEBUG
 #define debug_printf(...) printf (__VA_ARGS__)
 #else
 #define debug_printf(...) 
 #endif
 
-static bool _matches_section
+static inline bool _matches_section
 	(const struct sieve_comparator *cmp, 
 		const char **val, const char *vend, const char **key, const char *kend,
 		bool must_end)
@@ -585,12 +723,18 @@ static bool mtch_matches_match
 	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {
 	const struct sieve_comparator *cmp = mctx->comparator;
+	struct sieve_match_values *mvalues;
+	string_t *match = t_str_new(32);
 	const char *vend = (const char *) val + val_size;
 	const char *kend = (const char *) key + key_size;
-	const char *vp = val;
-	const char *kp = key;
-	const char *wp = key;
+	const char *vp = val; /* Value pointer */
+	const char *kp = key; /* Key pointer */
+	const char *wp = key; /* Wildcard (key) pointer */
 	
+	/* Reset match values list */
+	mvalues = sieve_match_values_start(mctx->interp);
+	sieve_match_values_add(mvalues, NULL);
+
 	/* Match the pattern as a two-level structure: 
 	 *   <pattern> = <section>*<section>*<section>....
 	 *   <section> = [text]?[text]?[text].... 
@@ -601,6 +745,7 @@ static bool mtch_matches_match
 	debug_printf("MATCH key: %s\n", key);
 	debug_printf("MATCH val: %s\n", val);
 
+	/* Loop until either key or value ends */
 	while (kp < kend && vp < vend) {
 		char wildcard;
 		
@@ -620,10 +765,21 @@ static bool mtch_matches_match
 			wp++;
 		}
 		
-		wildcard = *wp;
-		debug_printf("MATCH found wildcard: %c %d\n", wildcard, (int) (wp-key));
-		
-		/* Find this section */
+		/* Record wildcard character or \0 */
+		if ( wp < kend ) {
+			wildcard = *wp;
+			debug_printf("MATCH found wildcard: %c %d\n", wildcard, (int) (wp-key));
+		} else
+			wildcard = '\0';
+
+		if ( kp > key+1 ) { 
+			debug_printf("MATCH value (previous): %s %d\n", str_c(match), kp-key); 
+			sieve_match_values_add(mvalues, match);
+		}
+			
+		str_truncate(match, 0);
+			
+		/* Find this section (starting at kp and ending at wp-1)*/
 		if ( wp > kp ) {
 			while ( (vp < vend) && (kp < wp) ) {
 #ifdef MATCH_DEBUG
@@ -637,8 +793,12 @@ static bool mtch_matches_match
 						debug_printf("MATCH first section failed\n");
 						return FALSE; 
 					}
+					
+					/* Wildcard eats the character */
+					str_append_c(match, *vp); /* Add it to the match value */
 					vp++;
 				} else {
+					/* Section successfully matched */
 					debug_printf("MATCH matched section key: %s\n", t_strdup_until(skp, wp)); 
 					debug_printf("MATCH matched section val: %s\n", svp); 
 				}
@@ -651,9 +811,9 @@ static bool mtch_matches_match
 
 			return FALSE;
 		} 
-		
+				
 		/* Break the loop if match was successful already */
-		if (kp == kend && vp == vend) return TRUE;
+		if (kp == kend && vp == vend) break;
 		
 		/* Advance loop to next wildcard search */
 		wp++;						
@@ -662,15 +822,23 @@ static bool mtch_matches_match
 		/* Check whether string ends in a wildcard 
 		 * (avoid scnning the rest of the string)
 		 */
-		if ( kp == kend && wildcard == '*' ) 
-			return TRUE;
+		if ( kp == kend && wildcard == '*' ) {
+			str_append_n(match, vp, vend-vp);
+			vp = vend;
+			break;
+		}
 		
 		/* Current wp is escaped.. */
 		if ( wildcard == '\\' )
 			wp++;
+			
+		debug_printf("MATCH loop '*'\n"); 
 	}
 	
 	debug_printf("MATCH loop ended\n");
+
+	debug_printf("MATCH value (end loop): %s\n", str_c(match)); 
+	sieve_match_values_add(mvalues, match);
 	
 	/* By definition, the match is only successful if both value and key pattern
 	 * are exhausted.

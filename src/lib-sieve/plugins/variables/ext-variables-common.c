@@ -8,6 +8,7 @@
 #include "sieve-ast.h"
 #include "sieve-binary.h"
 #include "sieve-code.h"
+#include "sieve-match-types.h"
 
 #include "sieve-commands.h"
 #include "sieve-validator.h"
@@ -230,6 +231,9 @@ void ext_variables_interpreter_initialize(struct sieve_interpreter *interp)
 	
 	/* Create our context */
 	ctx = ext_variables_interpreter_context_create(interp);
+	
+	/* Enable support for match values */
+	(void) sieve_match_values_set_enabled(interp, TRUE);
 }
 
 static inline struct ext_variables_interpreter_context *
@@ -343,6 +347,41 @@ static bool arg_variable_generate
 	struct sieve_variable *var = (struct sieve_variable *) arg->context;
 	
 	ext_variables_opr_variable_emit(sieve_generator_get_binary(generator), var);
+
+	return TRUE;
+}
+
+/* Match value argument */
+
+static bool arg_match_value_generate
+(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+	struct sieve_command_context *context ATTR_UNUSED);
+
+const struct sieve_argument match_value_argument = 
+	{ "@match_value", NULL, NULL, NULL, arg_match_value_generate };
+
+static struct sieve_ast_argument *ext_variables_match_value_argument_create
+(struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast *ast, 
+	unsigned int source_line,	unsigned int index)
+{
+	struct sieve_ast_argument *arg;
+	
+	arg = sieve_ast_argument_create(ast, source_line);
+	arg->type = SAAT_STRING;
+	arg->argument = &match_value_argument;
+	arg->context = (void *) index;
+	
+	return arg;
+}
+
+static bool arg_match_value_generate
+(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+	struct sieve_command_context *context ATTR_UNUSED)
+{
+	unsigned int index = (unsigned int) arg->context;
+	
+	ext_variables_opr_match_value_emit
+		(sieve_generator_get_binary(generator), index);
 
 	return TRUE;
 }
@@ -464,6 +503,7 @@ static bool arg_variable_string_validate
 						array_idx(&substitution, 0);
 						
 					if ( cur_element->num_variable == -1 ) {
+						/* Add variable argument '${identifier}' */
 						string_t *cur_ident = cur_element->identifier; 
 						
 						strarg = ext_variables_variable_argument_create
@@ -471,7 +511,12 @@ static bool arg_variable_string_validate
 						if ( strarg != NULL )
 							sieve_ast_arg_list_add(arglist, strarg);
 					} else {
-						/* FIXME: Match substitutions are not supported */
+						/* Add match value argument '${000}' */
+						strarg = ext_variables_match_value_argument_create
+							(validator, (*arg)->ast, (*arg)->source_line, 
+							cur_element->num_variable);
+						if ( strarg != NULL )
+							sieve_ast_arg_list_add(arglist, strarg);
 					}
 				} else {
 					int i;
@@ -648,6 +693,68 @@ bool ext_variables_opr_variable_read
 	
 	if (sieve_binary_read_integer(renv->sbin, address, &idx) ) {
 		*var_index = idx;
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+/* Match value operand */
+
+static bool opr_match_value_read
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
+static bool opr_match_value_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+
+const struct sieve_opr_string_interface match_value_interface = { 
+	opr_match_value_dump,
+	opr_match_value_read
+};
+		
+const struct sieve_operand match_value_operand = { 
+	"match-value", 
+	&variables_extension, 
+	EXT_VARIABLES_OPERAND_MATCH_VALUE,
+	&string_class,
+	&match_value_interface
+};	
+
+void ext_variables_opr_match_value_emit
+	(struct sieve_binary *sbin, unsigned int index) 
+{
+	(void) sieve_operand_emit_code
+		(sbin, &match_value_operand, ext_variables_my_id);
+	(void) sieve_binary_emit_integer(sbin, index);
+}
+
+static bool opr_match_value_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
+{
+	sieve_size_t index = 0;
+	
+	if (sieve_binary_read_integer(denv->sbin, address, &index) ) {
+		sieve_code_dumpf(denv, "MVALUE: %ld", (long) index);
+
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+static bool opr_match_value_read
+  (const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
+{ 
+	sieve_size_t index = 0;
+			
+	if (sieve_binary_read_integer(renv->sbin, address, &index) ) {
+		/* Parameter str can be NULL if we are requested to only skip and not 
+		 * actually read the argument.
+		 	*/
+		if ( str != NULL ) {
+			sieve_match_values_get(renv->interp, (unsigned int) index, str);
+		
+			if ( *str == NULL ) *str = t_str_new(0);
+		}
 		return TRUE;
 	}
 	

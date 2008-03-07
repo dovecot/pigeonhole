@@ -241,7 +241,7 @@ static bool ext_envelope_operation_execute
 	}
 	
 	/* Initialize match context */
-	mctx = sieve_match_begin(mtch, cmp, key_list);
+	mctx = sieve_match_begin(renv->interp, mtch, cmp, key_list);
 	
 	/* Iterate through all requested headers to match */
 	hdr_item = NULL;

@@ -246,7 +246,7 @@ static bool tst_hasflag_operation_execute
 	}
 
 	matched = FALSE;
-	mctx = sieve_match_begin(mtch, cmp, key_list); 	
+	mctx = sieve_match_begin(renv->interp, mtch, cmp, key_list); 	
 
 	ext_imapflags_get_flags_init(&iter, renv);
 	
