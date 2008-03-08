@@ -21,3 +21,10 @@ set "match2" "toptoptop";
 if string :matches "${match2}" "*top" {
 	fileinto "TEST 3: ${1}";
 } 
+
+set "match3" "ik ben een tukker met grote oren en een lelijke broek.";
+
+# Test 4
+if string :matches "${match3}" "ik ben * met * en *." {
+	fileinto "TEST 4: Hij is een ${1} met ${2} en ${3}!";
+}

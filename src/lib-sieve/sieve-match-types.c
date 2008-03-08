@@ -725,6 +725,7 @@ static bool mtch_matches_match
 	const struct sieve_comparator *cmp = mctx->comparator;
 	struct sieve_match_values *mvalues;
 	string_t *match = t_str_new(32);
+	bool match_found = FALSE;
 	const char *vend = (const char *) val + val_size;
 	const char *kend = (const char *) key + key_size;
 	const char *vp = val; /* Value pointer */
@@ -772,7 +773,7 @@ static bool mtch_matches_match
 		} else
 			wildcard = '\0';
 
-		if ( kp > key+1 ) { 
+		if ( match_found ) { 
 			debug_printf("MATCH value (previous): %s %d\n", str_c(match), kp-key); 
 			sieve_match_values_add(mvalues, match);
 		}
@@ -781,6 +782,9 @@ static bool mtch_matches_match
 			
 		/* Find this section (starting at kp and ending at wp-1)*/
 		if ( wp > kp ) {
+			if ( kp > key )
+				match_found = TRUE;
+		
 			while ( (vp < vend) && (kp < wp) ) {
 #ifdef MATCH_DEBUG
 				const char *skp = kp;
