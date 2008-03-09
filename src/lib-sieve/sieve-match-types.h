@@ -81,6 +81,8 @@ struct sieve_match_values *sieve_match_values_start
 	(struct sieve_interpreter *interp);
 void sieve_match_values_add
 	(struct sieve_match_values *mvalues, string_t *value);
+void sieve_match_values_add_char
+	(struct sieve_match_values *mvalues, char c);	
 void sieve_match_values_get
 	(struct sieve_interpreter *interp, unsigned int index, string_t **value_r);
 

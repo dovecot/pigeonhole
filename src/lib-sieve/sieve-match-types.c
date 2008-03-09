@@ -264,13 +264,13 @@ struct sieve_match_values *sieve_match_values_start(struct sieve_interpreter *in
 	return ctx->match_values;
 }
 
-void sieve_match_values_add
-	(struct sieve_match_values *mvalues, string_t *value) 
+static string_t *sieve_match_values_add_entry
+	(struct sieve_match_values *mvalues) 
 {
 	string_t *entry;
 	
-	if ( mvalues == NULL ) return;
-	
+	if ( mvalues == NULL ) return NULL;	
+		
 	if ( mvalues->count >= array_count(&mvalues->values) ) {
 		entry = str_new(mvalues->pool, 64);
 		array_append(&mvalues->values, &entry, 1);
@@ -280,27 +280,27 @@ void sieve_match_values_add
 		str_truncate(entry, 0);
 	}
 	
-	if ( value != NULL )
-		str_append_str(entry, value);
-	
 	mvalues->count++;
-}
 
-void sieve_match_values_set_first
+	return entry;
+}
+	
+void sieve_match_values_add
 	(struct sieve_match_values *mvalues, string_t *value) 
 {
-	string_t * const *entry;
+	string_t *entry = sieve_match_values_add_entry(mvalues); 
 
-	if ( mvalues == NULL ) return;
-	
-	if ( mvalues->count == 0 ) {
-		sieve_match_values_add(mvalues, value);
-		
-		return;
-	}
-	
-	entry = array_idx(&mvalues->values, mvalues->count);
-	str_truncate(*entry, 0);
+	if ( entry != NULL && value != NULL )
+		str_append_str(entry, value);
+}
+
+void sieve_match_values_add_char
+	(struct sieve_match_values *mvalues, char c) 
+{
+	string_t *entry = sieve_match_values_add_entry(mvalues); 
+
+	if ( entry != NULL )
+		str_append_c(entry, c);
 }
 
 void sieve_match_values_get
@@ -315,7 +315,7 @@ void sieve_match_values_get
 	}
 	
 	mvalues = ctx->match_values;
-	if ( index <= mvalues->count ) {
+	if ( index < array_count(&mvalues->values) && index < mvalues->count ) {
 		string_t * const *entry = array_idx(&mvalues->values, index);
 		
 		*value_r = *entry;
@@ -668,54 +668,39 @@ static bool mtch_contains_match
 #define debug_printf(...) 
 #endif
 
-static inline bool _matches_section
-	(const struct sieve_comparator *cmp, 
-		const char **val, const char *vend, const char **key, const char *kend,
-		bool must_end)
+/* FIXME: Naive implementation, substitute this with dovecot src/lib/str-find.c
+ */
+static inline bool _string_find(const struct sieve_comparator *cmp, 
+	const char **valp, const char *vend, const char **keyp, const char *kend)
 {
-	const char *val_begin = *val;
-	const char *key_begin = *key;
-	const char *wp = *key;
-
-	/* Scan through the pattern. Within the specified bounds it can only contain
-	 * ? and \. The caller handles * already. 
-	 */
-	while ( *key < kend && *val < vend) {
-		char wildcard;
-		
-		/* Find next ? wildcard, \ escape or end of key pattern */
-		while ( wp < kend && *wp != '?' && *wp != '\\' ) {
-			wp++;
-		}
-		
-		wildcard = *wp;
-		
-		/* Match text */
-		if ( wp > *key && !cmp->char_match(cmp, val, vend, key, wp) ) 		
-			break;
-		
-		/* Break the loop if the match was successful already */
-		if ( *key == kend && (!must_end || *val == vend) )
-			return TRUE;
-			
-		wp++;			
-		*key = wp;			
-
-		/* Only skip a character in the value string if we found '?' before */		
-		if ( wildcard == '\\' )
-			wp++;
-		else if ( !cmp->char_skip(cmp, val, vend) ) 
-				break;
+	while ( (*valp < vend) && (*keyp < kend) ) {
+		if ( !cmp->char_match(cmp, valp, vend, keyp, kend) )
+			(*valp)++;
 	}
-		
-	/* Was this match succesful ? */
-	if ( *key == kend && (!must_end || *val == vend) )
-		return TRUE;
 	
-	/* Reset */
-	*val = val_begin;
-	*key = key_begin;	
-	return FALSE;
+	return (*keyp == kend);
+}
+
+static char _scan_key_section
+	(string_t *section, const char **wcardp, const char *key_end)
+{
+	/* Find next * wildcard and resolve escape sequences */	
+	str_truncate(section, 0);
+	while ( *wcardp < key_end && **wcardp != '*' && **wcardp != '?') {
+		if ( **wcardp == '\\' ) {
+			(*wcardp)++;
+		}
+		str_append_c(section, **wcardp);
+		(*wcardp)++;
+	}
+	
+	/* Record wildcard character or \0 */
+	if ( *wcardp < key_end ) {			
+		return **wcardp;
+	} 
+	
+	i_assert( *wcardp == key_end );
+	return '\0';
 }
 
 static bool mtch_matches_match
@@ -724,125 +709,180 @@ static bool mtch_matches_match
 {
 	const struct sieve_comparator *cmp = mctx->comparator;
 	struct sieve_match_values *mvalues;
-	string_t *match = t_str_new(32);
-	bool match_found = FALSE;
+	string_t *mvalue = t_str_new(32);
+	string_t *mchars = t_str_new(32);
+	string_t *section = t_str_new(32);
+	string_t *subsection = t_str_new(32);
 	const char *vend = (const char *) val + val_size;
 	const char *kend = (const char *) key + key_size;
 	const char *vp = val; /* Value pointer */
 	const char *kp = key; /* Key pointer */
 	const char *wp = key; /* Wildcard (key) pointer */
+	const char *pvp = val;
+	bool backtrack = FALSE;
+	char wcard = '\0', next_wcard = '\0';
+	unsigned int i, j = 0;
 	
 	/* Reset match values list */
 	mvalues = sieve_match_values_start(mctx->interp);
 	sieve_match_values_add(mvalues, NULL);
 
-	/* Match the pattern as a two-level structure: 
+	/* Match the pattern: 
 	 *   <pattern> = <section>*<section>*<section>....
 	 *   <section> = [text]?[text]?[text].... 
 	 *
 	 * Escape sequences \? and \* need special attention. 
 	 */
 	 
-	debug_printf("MATCH key: %s\n", key);
-	debug_printf("MATCH val: %s\n", val);
+	debug_printf("MATCH key: %s\n", t_strdup_until(key, kend));
+	debug_printf("MATCH val: %s\n", t_strdup_until(val, vend));
 
 	/* Loop until either key or value ends */
-	while (kp < kend && vp < vend) {
-		char wildcard;
+	while (kp < kend && vp < vend && j < 40) {
+		const char *needle, *nend;
 		
-		/* Find next * wildcard or end of key pattern */
+		if ( !backtrack ) {
+			wcard = next_wcard;		
+			next_wcard = _scan_key_section(section, &wp, kend);
+			debug_printf("MATCH found wildcard '%c' at pos [%d]\n", 
+				next_wcard, (int) (wp-key));
+				
+			str_truncate(mvalue, 0);
+		} else
+			backtrack = FALSE;
 		
-		while ( wp < kend && *wp != '*' ) {
-			if ( *wp == '\\' ) {
-				/* Defer handling of escaping for ? to the _matches_section function. 
-				 * There is no way to escape these here. 
-				 */
-				if ( wp < kend - 1 && *(wp+1) == '?' )
-					wp++;
-				else 
+		needle = str_c(section);
+		nend = PTR_OFFSET(needle, str_len(section));		
+		 
+		debug_printf("MATCH sneedle: '%s'\n", t_strdup_until(needle, nend));
+		debug_printf("MATCH skey: '%s'\n", t_strdup_until(kp, kend));
+		debug_printf("MATCH swp: '%s'\n", t_strdup_until(wp, kend));
+		debug_printf("MATCH sval: '%s'\n", t_strdup_until(vp, vend));
+		
+		pvp = vp;
+		if ( next_wcard == '\0' ) {
+			debug_printf("MATCH find end.\n");				 
+			
+			/* Find substring at the end of string */
+			if ( vend - str_len(section) < vp ) {
+				break;
+			}
+
+			vp = PTR_OFFSET(vend, -str_len(section));
+			str_append_n(mvalue, pvp, vp-pvp);
+			sieve_match_values_add(mvalues, mvalue);
+			
+			if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
+				debug_printf("MATCH failed fixed\n");				 
+				break;
+			}
+
+			if ( wp < kend ) wp++;
+			kp = wp;
+		} else {
+			const char *prv = NULL;
+			const char *prk = NULL;
+			const char *prw = NULL;
+			const char *chars;
+			debug_printf("MATCH find.\n");
+						
+			if ( wcard == '\0' ) {
+				debug_printf("MATCH bkey: '%s'\n", t_strdup_until(needle, nend));
+				debug_printf("MATCH bval: '%s'\n", t_strdup_until(vp, vend));
+
+				if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
+					debug_printf("MATCH failed begin\n");				 
 					break;
+				}
+
+			} else {
+				/* Find substring (enclosed between wildcards) */
+				if ( !_string_find(cmp, &vp, vend, &needle, nend)	) {
+					debug_printf("MATCH failed find\n"); 
+					break;
+				}
+			
+				prv = vp - str_len(section);
+				prk = kp;
+				prw = wp;
+				str_append_n(mvalue, pvp, vp-pvp-str_len(section));
+				debug_printf("MATCH :: %s\n", t_strdup_until(pvp, vp-str_len(section)));
 			}
 			
-			wp++;
-		}
+			if ( wp < kend ) wp++;
+			kp = wp;
 		
-		/* Record wildcard character or \0 */
-		if ( wp < kend ) {
-			wildcard = *wp;
-			debug_printf("MATCH found wildcard: %c %d\n", wildcard, (int) (wp-key));
-		} else
-			wildcard = '\0';
-
-		if ( match_found ) { 
-			debug_printf("MATCH value (previous): %s %d\n", str_c(match), kp-key); 
-			sieve_match_values_add(mvalues, match);
-		}
-			
-		str_truncate(match, 0);
-			
-		/* Find this section (starting at kp and ending at wp-1)*/
-		if ( wp > kp ) {
-			if ( kp > key )
-				match_found = TRUE;
-		
-			while ( (vp < vend) && (kp < wp) ) {
-#ifdef MATCH_DEBUG
-				const char *skp = kp;
-				const char *svp = vp;
-#endif
+			str_truncate(mchars, 0);
+			while ( next_wcard == '?' ) {
+				debug_printf("MATCH ?\n");
 				
-				if ( !_matches_section(cmp, &vp, vend, &kp, wp, (wp == kend)) ) {
-					/* First section must match without offset */
-					if ( kp == key ) {
-						debug_printf("MATCH first section failed\n");
-						return FALSE; 
-					}
+				/* Add match value */ 
+				str_append_c(mchars, *vp);
+				vp++;
+				
+				next_wcard = _scan_key_section(subsection, &wp, kend);
+				debug_printf("MATCH found next wildcard '%c' at pos [%d]\n", 
+					next_wcard, (int) (wp-key));
 					
-					/* Wildcard eats the character */
-					str_append_c(match, *vp); /* Add it to the match value */
-					vp++;
-				} else {
-					/* Section successfully matched */
-					debug_printf("MATCH matched section key: %s\n", t_strdup_until(skp, wp)); 
-					debug_printf("MATCH matched section val: %s\n", svp); 
+				needle = str_c(subsection);
+				nend = PTR_OFFSET(needle, str_len(subsection));
+
+				debug_printf("MATCH fkey: '%s'\n", t_strdup_until(needle, nend));
+				debug_printf("MATCH fval: '%s'\n", t_strdup_until(vp, vend));
+
+				if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
+					if ( prv != NULL && prv + 1 < vend ) {
+						vp = prv;
+						kp = prk;
+						wp = prw;
+				
+						str_append_c(mvalue, *vp);
+						vp++;
+				
+						wcard = '*';
+						next_wcard = '?';
+				
+						backtrack = TRUE;				 
+					}
+					debug_printf("MATCH failed fixed\n");
+					break;
+				}
+				
+				if ( wp < kend ) wp++;
+				kp = wp;
+			}
+			
+			if ( !backtrack ) {
+				if ( next_wcard != '*' && next_wcard != '\0' ) {
+					debug_printf("MATCH failed '?'\n");	
+					break;
+				}
+				
+				if ( prv != NULL )
+					sieve_match_values_add(mvalues, mvalue);
+				chars = (const char *) str_data(mchars);
+				for ( i = 0; i < str_len(mchars); i++ ) {
+					sieve_match_values_add_char(mvalues, chars[i]);
 				}
 			}
 		}
-		
-		/* Check whether we matched up to the * wildcard or the end */
-		if ( wp > kp ) {
-			debug_printf("MATCH failed to find substring\n");
-
-			return FALSE;
-		} 
-				
-		/* Break the loop if match was successful already */
-		if (kp == kend && vp == vend) break;
-		
-		/* Advance loop to next wildcard search */
-		wp++;						
-		kp = wp;
-		
+					
 		/* Check whether string ends in a wildcard 
-		 * (avoid scnning the rest of the string)
+		 * (avoid scanning the rest of the string)
 		 */
-		if ( kp == kend && wildcard == '*' ) {
-			str_append_n(match, vp, vend-vp);
+		if ( kp == kend && next_wcard == '*' ) {
+			str_append_n(mvalue, vp, vend-vp);
+			sieve_match_values_add(mvalues, mvalue);
+			kp = kend;
 			vp = vend;
 			break;
-		}
-		
-		/* Current wp is escaped.. */
-		if ( wildcard == '\\' )
-			wp++;
-			
-		debug_printf("MATCH loop '*'\n"); 
+		}			
+					
+		debug_printf("MATCH loop\n");
+		j++;
 	}
 	
 	debug_printf("MATCH loop ended\n");
-
-	debug_printf("MATCH value (end loop): %s\n", str_c(match)); 
-	sieve_match_values_add(mvalues, match);
 	
 	/* By definition, the match is only successful if both value and key pattern
 	 * are exhausted.
