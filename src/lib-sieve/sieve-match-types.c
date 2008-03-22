@@ -661,7 +661,7 @@ static bool mtch_contains_match
 /* :matches */
 
 /* Quick 'n dirty debug */
-#define MATCH_DEBUG
+//#define MATCH_DEBUG
 #ifdef MATCH_DEBUG
 #define debug_printf(...) printf (__VA_ARGS__)
 #else
@@ -684,7 +684,7 @@ static inline bool _string_find(const struct sieve_comparator *cmp,
 static char _scan_key_section
 	(string_t *section, const char **wcardp, const char *key_end)
 {
-	/* Find next * wildcard and resolve escape sequences */	
+	/* Find next wildcard and resolve escape sequences */	
 	str_truncate(section, 0);
 	while ( *wcardp < key_end && **wcardp != '*' && **wcardp != '?') {
 		if ( **wcardp == '\\' ) {
@@ -709,19 +709,24 @@ static bool mtch_matches_match
 {
 	const struct sieve_comparator *cmp = mctx->comparator;
 	struct sieve_match_values *mvalues;
-	string_t *mvalue = t_str_new(32);
-	string_t *mchars = t_str_new(32);
-	string_t *section = t_str_new(32);
-	string_t *subsection = t_str_new(32);
+	
+	string_t *mvalue = t_str_new(32);     /* Match value (*) */
+	string_t *mchars = t_str_new(32);     /* Match characters (.?..?.??) */
+	string_t *section = t_str_new(32);    /* Section (after beginning or *) */
+	string_t *subsection = t_str_new(32); /* Sub-section (after ?) */
+	
 	const char *vend = (const char *) val + val_size;
 	const char *kend = (const char *) key + key_size;
-	const char *vp = val; /* Value pointer */
-	const char *kp = key; /* Key pointer */
-	const char *wp = key; /* Wildcard (key) pointer */
-	const char *pvp = val;
-	bool backtrack = FALSE;
-	char wcard = '\0', next_wcard = '\0';
-	unsigned int i, j = 0;
+	const char *vp = val;   /* Value pointer */
+	const char *kp = key;   /* Key pointer */
+	const char *wp = key;   /* Wildcard (key) pointer */
+	const char *pvp = val;  /* Previous value Pointer */
+	
+	bool backtrack = FALSE; /* TRUE: match of '?'-connected sections failed */
+	char wcard = '\0';      /* Current wildcard */
+	char next_wcard = '\0'; /* Next  widlcard */
+	unsigned int key_offset = 0;
+	unsigned int j = 0;
 	
 	/* Reset match values list */
 	mvalues = sieve_match_values_start(mctx->interp);
@@ -742,8 +747,27 @@ static bool mtch_matches_match
 		const char *needle, *nend;
 		
 		if ( !backtrack ) {
-			wcard = next_wcard;		
-			next_wcard = _scan_key_section(section, &wp, kend);
+			wcard = next_wcard;
+			
+			/* Find the needle to look for in the string */	
+			key_offset = 0;	
+			for (;;) {
+				next_wcard = _scan_key_section(section, &wp, kend);
+				
+				if ( wcard == '\0' || str_len(section) > 0 ) 
+					break;
+					
+				if ( next_wcard == '*' ) {	
+					break;
+				}
+					
+				if ( wp < kend ) 
+					wp++;
+				else 
+					break;
+				key_offset++;
+			}
+			
 			debug_printf("MATCH found wildcard '%c' at pos [%d]\n", 
 				next_wcard, (int) (wp-key));
 				
@@ -760,7 +784,9 @@ static bool mtch_matches_match
 		debug_printf("MATCH sval: '%s'\n", t_strdup_until(vp, vend));
 		
 		pvp = vp;
-		if ( next_wcard == '\0' ) {
+		if ( next_wcard == '\0' ) {			
+			const char *qp, *qend;
+			
 			debug_printf("MATCH find end.\n");				 
 			
 			/* Find substring at the end of string */
@@ -769,24 +795,33 @@ static bool mtch_matches_match
 			}
 
 			vp = PTR_OFFSET(vend, -str_len(section));
-			str_append_n(mvalue, pvp, vp-pvp);
-			sieve_match_values_add(mvalues, mvalue);
-			
+			qend = vp;
+			qp = vp - key_offset;
+			str_append_n(mvalue, pvp, qp-pvp);
+					
 			if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
-				debug_printf("MATCH failed fixed\n");				 
+				debug_printf("MATCH failed end\n");				 
 				break;
 			}
+			
+			sieve_match_values_add(mvalues, mvalue);
+			for ( ; qp < qend; qp++ )
+				sieve_match_values_add_char(mvalues, *qp); 
 
-			if ( wp < kend ) wp++;
-			kp = wp;
+			kp = kend;
+			vp = vend;
+			break;
 		} else {
 			const char *prv = NULL;
 			const char *prk = NULL;
 			const char *prw = NULL;
 			const char *chars;
 			debug_printf("MATCH find.\n");
-						
+		
+			str_truncate(mchars, 0);
+							
 			if ( wcard == '\0' ) {
+				/* Match needs to happen right at the beginning */
 				debug_printf("MATCH bkey: '%s'\n", t_strdup_until(needle, nend));
 				debug_printf("MATCH bval: '%s'\n", t_strdup_until(vp, vend));
 
@@ -796,7 +831,9 @@ static bool mtch_matches_match
 				}
 
 			} else {
-				/* Find substring (enclosed between wildcards) */
+				const char *qp, *qend;
+				
+				/* Match may happen at any offset: find substring */
 				if ( !_string_find(cmp, &vp, vend, &needle, nend)	) {
 					debug_printf("MATCH failed find\n"); 
 					break;
@@ -805,14 +842,19 @@ static bool mtch_matches_match
 				prv = vp - str_len(section);
 				prk = kp;
 				prw = wp;
-				str_append_n(mvalue, pvp, vp-pvp-str_len(section));
-				debug_printf("MATCH :: %s\n", t_strdup_until(pvp, vp-str_len(section)));
+				
+				qend = vp - str_len(section);
+				qp = qend - key_offset;
+				str_append_n(mvalue, pvp, qp-pvp);
+				for ( ; qp < qend; qp++ )
+					str_append_c(mchars, *qp);
+					//sieve_match_values_add_char(mvalues, *qp); 
+				debug_printf("MATCH :: %s\n", str_c(mvalue));
 			}
 			
 			if ( wp < kend ) wp++;
 			kp = wp;
 		
-			str_truncate(mchars, 0);
 			while ( next_wcard == '?' ) {
 				debug_printf("MATCH ?\n");
 				
@@ -853,6 +895,8 @@ static bool mtch_matches_match
 			}
 			
 			if ( !backtrack ) {
+				unsigned int i;
+				
 				if ( next_wcard != '*' && next_wcard != '\0' ) {
 					debug_printf("MATCH failed '?'\n");	
 					break;
@@ -871,6 +915,7 @@ static bool mtch_matches_match
 		 * (avoid scanning the rest of the string)
 		 */
 		if ( kp == kend && next_wcard == '*' ) {
+			str_truncate(mvalue, 0);
 			str_append_n(mvalue, vp, vend-vp);
 			sieve_match_values_add(mvalues, mvalue);
 			kp = kend;

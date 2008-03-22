@@ -81,3 +81,55 @@ if string :matches "${match6}" "*one?zero?five" {
 	fileinto "FAILED 8: ${match6}";
 	stop;
 }
+
+# Test 9
+
+set "match7" "frop";
+
+if string :matches "${match7}" "??op" {
+	fileinto "TEST 9: ${1}-${2}-op";
+} else {
+	fileinto "FAILED 9: ${match7}";
+	stop;
+}
+
+# Test 10
+
+if string :matches "${match7}" "fr??" {
+	fileinto "TEST 10: fr-${1}-${2}";
+} else {
+	fileinto "FAILED 10: ${match7}";
+	stop;
+}
+
+# Test 11
+
+set "match8" "klopfropstroptop";
+
+if string :matches "${match8}" "*fr??*top" {
+	fileinto "TEST 11: ${1}: fr-${2}-${3}: ${4}";
+} else {
+	fileinto "FAILED 11: ${match8}";
+	stop;
+}
+
+if string :matches "${match8}" "?*fr??*top" {
+	fileinto "TEST 12: ${1}-${2}: fr-${3}-${4}: ${5}";
+} else {
+	fileinto "FAILED 12: ${match8}";
+	stop;
+}
+
+if string :matches "${match8}" "*?op" {
+	fileinto "TEST 13: ${1} ${2} op";
+} else {
+	fileinto "FAILED 13: ${match8}";
+	stop;
+}
+
+if string :matches "${match8}" "*?op*" {
+	fileinto "TEST 14: (*?op*): ${1}:${2}:${3}:${4}:${5}:${6}:${7}:";
+} else {
+	fileinto "FAILED 14: ${match8}";
+	stop;
+}
