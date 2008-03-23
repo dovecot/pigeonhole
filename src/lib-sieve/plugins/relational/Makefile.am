@@ -8,5 +8,10 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-storage 
 
 libsieve_ext_relational_la_SOURCES = \
-	ext-relational.c
+	ext-relational-common.c \
+	mcht-value.c \
+	mcht-count.c \
+	ext-relational.c 
 
+noinst_HEADER = \
+	ext-relational-common.h
