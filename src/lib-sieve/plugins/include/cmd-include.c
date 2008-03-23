@@ -191,7 +191,7 @@ static bool cmd_include_generate
 	 * This yields the id of the binary block containing the compiled byte code.  
 	 */
 	if ( !ext_include_generate_include
-		(gentr, cmd, ctx_data->location, ctx_data->script_name, &block_id) ) 
+		(gentr, cmd, ctx_data->location, ctx_data->script_name, &block_id) )
  		return FALSE;
  		
  	sieve_generator_emit_operation_ext	

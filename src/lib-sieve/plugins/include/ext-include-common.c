@@ -462,7 +462,7 @@ bool ext_include_generate_include
 	
 	/* Create script object */
 	if ( (script = sieve_script_create(script_path, script_name, ehandler, NULL)) 
-		== NULL )
+		== NULL ) 
 		return FALSE;
 	
 	/* Check for circular include */

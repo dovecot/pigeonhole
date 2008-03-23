@@ -15,11 +15,20 @@
 extern int ext_include_my_id;
 extern const struct sieve_extension include_extension;
 
+/* Commands */
+
+extern const struct sieve_command cmd_include;
+extern const struct sieve_command cmd_return;
+extern const struct sieve_command cmd_import;
+extern const struct sieve_command cmd_export;
+
 /* Types */
 
 enum ext_include_opcode {
 	EXT_INCLUDE_OPERATION_INCLUDE,
-	EXT_INCLUDE_OPERATION_RETURN
+	EXT_INCLUDE_OPERATION_RETURN,
+	EXT_INCLUDE_OPERATION_IMPORT,
+	EXT_INCLUDE_OPERATION_EXPORT
 };
 
 enum ext_include_script_location { 

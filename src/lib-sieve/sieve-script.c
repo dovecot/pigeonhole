@@ -25,68 +25,66 @@ struct sieve_script *sieve_script_init
 	if ( exists_r != NULL )
 		*exists_r = FALSE;
 
-//	t_push();
-
-	/* Extract filename from path */
-	filename = strrchr(path, '/');
-	if ( filename == NULL ) {
-		dirpath = "";
-		filename = path;
-	} else {
-		dirpath = t_strdup_until(path, filename);
-		filename++;
-	}
-	
-	if ( name == NULL || *name == '\0' ) {
-		const char *ext;
+	T_BEGIN {
+		/* Extract filename from path */
+		filename = strrchr(path, '/');
+		if ( filename == NULL ) {
+			dirpath = "";
+			filename = path;
+		} else {
+			dirpath = t_strdup_until(path, filename);
+			filename++;
+		}
 		
-		/* Extract the script name */
-		ext = strrchr(filename, '.');
-		if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
-			name = filename;
-		else
-			name = t_strdup_until(filename, ext);
-	} 
+		if ( name == NULL || *name == '\0' ) {
+			const char *ext;
+			
+			/* Extract the script name */
+			ext = strrchr(filename, '.');
+			if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
+				name = filename;
+			else
+				name = t_strdup_until(filename, ext);
+		} 
+			
+		/* First obtain stat data from the system */
 		
-	/* First obtain stat data from the system */
-	
-	if ( (ret=stat(path, &st)) != 0 && (errno != ENOENT || exists_r == NULL) ) {
-		if ( errno == ENOENT ) 
-			sieve_error(ehandler, name, "sieve script does not exist");
-		else
-			sieve_critical(ehandler, name, "failed to stat sieve script file '%s': %m", path);
-		script = NULL;
-	} else {
-		/* Only create/init the object if it stat()s without problems */
-
-		if ( ret == 0 && !S_ISREG(st.st_mode) ) {
-			sieve_critical(ehandler, name, 
-				"sieve script file '%s' is not a regular file.", path);
+		if ( (ret=stat(path, &st)) != 0 && (errno != ENOENT || exists_r == NULL) ) {
+			if ( errno == ENOENT ) 
+				sieve_error(ehandler, name, "sieve script does not exist");
+			else
+				sieve_critical(ehandler, name, "failed to stat sieve script file '%s': %m", path);
 			script = NULL;
 		} else {
-			if ( exists_r != NULL )
-				*exists_r = ( ret == 0 );
+			/* Only create/init the object if it stat()s without problems */
 
-			if ( script == NULL ) {
-				pool = pool_alloconly_create("sieve_script", 1024);
-				script = p_new(pool, struct sieve_script, 1);
-				script->pool = pool;
-			} else 
-				pool = script->pool;
-	
-			script->refcount = 1;
-			script->ehandler = ehandler;
-			sieve_error_handler_ref(ehandler);
-	
-			script->st = st;
-			script->path = p_strdup(pool, path);
-			script->filename = p_strdup(pool, filename);
-			script->dirpath = p_strdup(pool, dirpath);
-			script->name = p_strdup(pool, name);
+			if ( ret == 0 && !S_ISREG(st.st_mode) ) {
+				sieve_critical(ehandler, name, 
+					"sieve script file '%s' is not a regular file.", path);
+				script = NULL;
+			} else {
+				if ( exists_r != NULL )
+					*exists_r = ( ret == 0 );
+
+				if ( script == NULL ) {
+					pool = pool_alloconly_create("sieve_script", 1024);
+					script = p_new(pool, struct sieve_script, 1);
+					script->pool = pool;
+				} else 
+					pool = script->pool;
+		
+				script->refcount = 1;
+				script->ehandler = ehandler;
+				sieve_error_handler_ref(ehandler);
+		
+				script->st = st;
+				script->path = p_strdup(pool, path);
+				script->filename = p_strdup(pool, filename);
+				script->dirpath = p_strdup(pool, dirpath);
+				script->name = p_strdup(pool, name);
+			}
 		}
-	}
-	
-//	t_pop();
+	} T_END;	
 
 	return script;
 }

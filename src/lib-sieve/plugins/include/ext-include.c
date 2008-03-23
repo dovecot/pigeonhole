@@ -37,18 +37,19 @@ static bool ext_include_generator_load(struct sieve_generator *gentr);
 static bool ext_include_binary_load(struct sieve_binary *sbin);
 static bool ext_include_interpreter_load(struct sieve_interpreter *interp);
 
-/* Commands */
-
-extern const struct sieve_command cmd_include;
-extern const struct sieve_command cmd_return;
-
 /* Operations */
 
 extern const struct sieve_operation include_operation;
 extern const struct sieve_operation return_operation;
+extern const struct sieve_operation import_operation;
+extern const struct sieve_operation export_operation;
 
-static const struct sieve_operation *ext_include_operations[] =
-	{ &include_operation, &return_operation };
+static const struct sieve_operation *ext_include_operations[] = { 
+	&include_operation, 
+	&return_operation, 
+	&import_operation, 
+	&export_operation 
+};
 
 /* Extension definitions */
 
@@ -87,6 +88,8 @@ static bool ext_include_validator_load(struct sieve_validator *validator)
 	/* Register new commands */
 	sieve_validator_register_command(validator, &cmd_include);
 	sieve_validator_register_command(validator, &cmd_return);
+	sieve_validator_register_command(validator, &cmd_import);
+	sieve_validator_register_command(validator, &cmd_export);
 
 	return TRUE;
 }	

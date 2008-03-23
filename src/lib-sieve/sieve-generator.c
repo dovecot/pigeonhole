@@ -368,6 +368,11 @@ bool sieve_generator_run
 	
 	generator->binary = NULL;
 	sieve_binary_unref(sbin);
+
+	if ( topmost && !result ) {
+		sieve_binary_unref(sbin);
+		*sbin = NULL;
+	}
 	
 	return result;
 }
