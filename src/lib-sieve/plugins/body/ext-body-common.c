@@ -227,8 +227,7 @@ static bool ext_body_parts_add_missing
 	have_all = ext_body_get_return_parts(ctx, content_types, decode_to_plain);
 	i_assert(have_all);
 
-	if (message_parser_deinit(&parser, &parts) < 0)
-		i_unreached(); 
+	(void)message_parser_deinit(&parser, &parts);
 	if (decoder != NULL)
 		message_decoder_deinit(&decoder);
 	return ( input->stream_errno == 0 );

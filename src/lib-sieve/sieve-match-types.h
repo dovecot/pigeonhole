@@ -121,6 +121,11 @@ const struct sieve_match_type *sieve_opr_match_type_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 bool sieve_opr_match_type_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+
+bool sieve_match_substring_validate_context
+	(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+    	struct sieve_match_type_context *ctx,
+		struct sieve_ast_argument *key_arg);
 		
 /* Match Utility */
 

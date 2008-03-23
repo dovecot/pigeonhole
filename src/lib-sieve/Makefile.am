@@ -30,6 +30,11 @@ exts = \
 	ext-envelope.c \
 	ext-encoded-character.c
 
+mchts = \
+	mcht-is.c \
+	mcht-contains.c \
+	mcht-matches.c
+
 # These are not actual plugins just yet...
 plugins = \
     ./plugins/vacation/libsieve_ext_vacation.la \
@@ -60,6 +65,7 @@ libsieve_la_SOURCES = \
 	sieve-error.c \
 	sieve-comparators.c \
 	sieve-match-types.c \
+	$(mchts) \
 	sieve-address-parts.c \
 	sieve-commands.c \
 	sieve-code.c \
