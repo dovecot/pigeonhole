@@ -303,6 +303,15 @@ void sieve_match_values_add_char
 		str_append_c(entry, c);
 }
 
+void sieve_match_values_skip
+	(struct sieve_match_values *mvalues, int num) 
+{
+	int i;
+	
+	for ( i = 0; i < num; i++ )
+		(void) sieve_match_values_add_entry(mvalues); 
+}
+
 void sieve_match_values_get
 	(struct sieve_interpreter *interp, unsigned int index, string_t **value_r) 
 {

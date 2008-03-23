@@ -20,6 +20,11 @@
 #include <ctype.h>
 #include <regex.h>
 
+/*
+ * Configuration
+ */
+
+#define MCHT_REGEX_MAX_SUBSTITUTIONS 64
 /* 
  * Forward declarations 
  */
@@ -108,7 +113,7 @@ bool mcht_regex_validate_context
 			if ( sieve_comparator_tag_is(carg, &i_ascii_casemap_comparator) )
 				cflags =  REG_EXTENDED | REG_NOSUB | REG_ICASE;
 			else if ( sieve_comparator_tag_is(carg, &i_octet_comparator) )
-				cflags =  REG_EXTENDED | REG_NOSUB ;
+				cflags =  REG_EXTENDED | REG_NOSUB;
 			else {
 				sieve_command_validate_error(validator, ctx->command_ctx, 
 					"regex match type only supports "
@@ -121,7 +126,7 @@ bool mcht_regex_validate_context
 	
 		carg = sieve_ast_argument_next(carg);
 	}
-
+		
 	/* Validate regular expression(s) */
 	if ( sieve_ast_argument_type(key_arg) == SAAT_STRING ) {
 		/* Single string */	
@@ -156,6 +161,9 @@ bool mcht_regex_validate_context
 struct mcht_regex_context {
 	ARRAY_DEFINE(reg_expressions, regex_t *);
 	int value_index;
+	struct sieve_match_values *mvalues;
+	regmatch_t *pmatch;
+	size_t nmatch;
 };
 
 void mcht_regex_match_init
@@ -167,7 +175,15 @@ void mcht_regex_match_init
 	t_array_init(&ctx->reg_expressions, 4);
 
 	ctx->value_index = -1;
-
+	ctx->mvalues = sieve_match_values_start(mctx->interp);
+	if ( ctx->mvalues != NULL ) {
+		ctx->pmatch = t_new(regmatch_t, MCHT_REGEX_MAX_SUBSTITUTIONS);
+		ctx->nmatch = MCHT_REGEX_MAX_SUBSTITUTIONS;
+	} else {
+		ctx->pmatch = NULL;
+		ctx->nmatch = 0;
+	}
+	
 	mctx->data = (void *) ctx;
 }
 
@@ -182,17 +198,19 @@ static regex_t *mcht_regex_get
 	int cflags;
 	
 	if ( ctx->value_index <= 0 ) {
-		regexp = p_new(pool_datastack_create(), regex_t, 1);
+		regexp = t_new(regex_t, 1);
 
 		if ( cmp == &i_octet_comparator ) 
-			cflags =  REG_EXTENDED | REG_NOSUB;
+			cflags =  REG_EXTENDED;
 		else if ( cmp ==  &i_ascii_casemap_comparator )
-			cflags =  REG_EXTENDED | REG_NOSUB | REG_ICASE;
+			cflags =  REG_EXTENDED | REG_ICASE;
 		else
 			return NULL;
+			
+		if ( ctx->mvalues == NULL ) cflags |= REG_NOSUB;
 
 		if ( (ret=regcomp(regexp, key, cflags)) != 0 ) {
-    		/* FIXME: Do something useful, i.e. report error somewhere */
+			/* FIXME: Do something useful, i.e. report error somewhere */
 			return NULL;
 		}
 
@@ -219,7 +237,28 @@ static bool mcht_regex_match
 
 	regexp = mcht_regex_get(ctx, mctx->comparator, key, key_index);
 	 
-	return ( regexec(regexp, val, 0, NULL, 0) == 0 );
+	if ( regexec(regexp, val, ctx->nmatch, ctx->pmatch, 0) == 0 ) {
+		size_t i;
+		int skipped = 0;
+		string_t *subst = t_str_new(32);
+		
+		for ( i = 0; i < ctx->nmatch; i++ ) {
+			str_truncate(subst, 0);
+			
+			if ( ctx->pmatch[i].rm_so != -1 ) {
+				if ( skipped > 0 )
+					sieve_match_values_skip(ctx->mvalues, skipped);
+					
+				str_append_n(subst, val + ctx->pmatch[i].rm_so, 
+					ctx->pmatch[i].rm_eo - ctx->pmatch[i].rm_so);
+				sieve_match_values_add(ctx->mvalues, subst);
+			} else 
+				skipped++;
+		}
+		return TRUE;
+	}
+	
+	return FALSE;
 }
 
 bool mcht_regex_match_deinit
