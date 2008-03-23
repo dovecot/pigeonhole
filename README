@@ -202,9 +202,8 @@ Current:
   Implemented:
   -> Core variables substitution works
   -> Accept namespaces (parse, no real support; proper error messages)
-  Current:
   -> Support match variables
-  Remaining:
+  Current:
   -> Provide support for include, imapflags and other extensions that (partly)
      depend on variables support.
      
