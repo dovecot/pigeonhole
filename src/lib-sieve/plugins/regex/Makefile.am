@@ -8,5 +8,8 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-storage 
 
 libsieve_ext_regex_la_SOURCES = \
+	mcht-regex.c \
 	ext-regex.c
 
+noinst_HEADERS = \
+	ext-regex-common.h
