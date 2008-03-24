@@ -134,13 +134,16 @@ Extensions and their implementation status:
     copy: full
     regex: full, but suboptimal
     body: full, but text body-transform implementation is simple
-    include: full, but needs much more work
-    vacation: almost complete, but no support for required References header
-    imapflags: flag management works, but flags are not stored 
-    variables: very basic support
+    include: almost full; needs more work (no variables; no external binaries)
+    vacation: almost full; no support for required References header
+    imapflags: flag management works, but flags are not stored (no variables)
+    variables: untested core functionality present; need to provide support
+               other extensions that depend on this one
 
-    notify: planned, first mailto only (- very low priority)
-	editheader: planned, needs additional support from Dovecot though.
+  Low priority:
+    notify: planned, first mailto only 
+    editheader: planned, needs additional support from Dovecot though.
+    mimeloop: planned
 
 All implemented extensions are like the engine itself currently very much 
 experimental. A status of 'full' does not mean that the extension is bug-free 
@@ -200,12 +203,15 @@ TODO
 Current:
 * Implement variables extension
   Implemented:
-  -> Core variables substitution works
+  -> Core variable substitution works
   -> Accept namespaces (parse, no real support; proper error messages)
   -> Support match variables
   Current:
   -> Provide support for include, imapflags and other extensions that (partly)
      depend on variables support.
+  -> Implement variables support for include extension
+  Remaining:
+  -> Implement variabls support for imapflags extension
      
 Next (in order of descending priority/precedence):
 * Finish implementing all extensions supported by cmusieve, except notify.
@@ -231,7 +237,8 @@ Next (in order of descending priority/precedence):
 * Make sure cmusieve can be replaced seamlessly with this new plugin.
 * Make a few elaborate test scripts to test engine and all implemented 
   extensions a little better. Also include specially crafted e-mail messages 
-  that give deterministic and thus testable results.
+  that give deterministic and thus testable results. 
+  (This might become an initial version of the test suite)
 
 * ## MAKE A FIRST RELEASE ##
 
@@ -245,8 +252,12 @@ Next (in order of descending priority/precedence):
 * Make the engine and its extensions much more configurable. Possibly this can 
   be merged with Dovecot's new master config implementation.
 * Implement notify extension with sole support for mailto mechanism. 
+* Implement editheader extension
+* Implement mimeloop extension
 * Give the byte code format some more thought, it is currently quite rough and
   to the point. 
 * Try to implement proposed notify mechanisms other than mailto. Currently: xmpp
   and sip
+* Implement namespace support for variables extension 
+  (possibly needed by test suite; in that case priority is much higher)
 
