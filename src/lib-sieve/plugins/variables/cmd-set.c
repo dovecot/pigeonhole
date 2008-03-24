@@ -207,7 +207,7 @@ static bool cmd_set_registered
 /* Command validation */
 
 static bool cmd_set_pre_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd)
+	(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd)
 {
 	pool_t pool = sieve_command_pool(cmd);
 	struct cmd_set_context *sctx = p_new(pool, struct cmd_set_context, 1);

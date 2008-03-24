@@ -204,6 +204,11 @@ struct sieve_variable *ext_variables_validator_get_variable
 	return sieve_variable_scope_get_variable(ctx->main_scope, variable);
 }
 
+bool sieve_ext_variables_is_active(struct sieve_validator *valdtr)
+{
+	return ( ext_variables_validator_context_get(valdtr) != NULL );
+}
+
 /* Interpreter context */
 
 struct ext_variables_interpreter_context {

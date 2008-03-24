@@ -6,6 +6,7 @@
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-ext-variables.h"
 
 #include "ext-include-common.h"
 
@@ -66,6 +67,12 @@ static bool cmd_import_validate
 		sieve_command_validate_error(validator, cmd, 
 			"import commands can only be placed at top level "
 			"at the beginning of the file after any require commands");
+		return FALSE;
+	}
+	
+	if ( !sieve_ext_variables_is_active(validator) ) {
+		sieve_command_validate_error(validator, cmd, 
+			"import command requires that variables extension is active");
 		return FALSE;
 	}
 	
