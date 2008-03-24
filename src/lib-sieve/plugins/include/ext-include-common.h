@@ -55,7 +55,7 @@ void ext_include_register_generator_context
 
 bool ext_include_generate_include
 	(struct sieve_generator *gentr, struct sieve_command_context *cmd,
-		enum ext_include_script_location location, const char *script_name, 
+		enum ext_include_script_location location, struct sieve_script *script, 
 		unsigned *blk_id_r);
 
 /* Binary */

@@ -423,12 +423,10 @@ void ext_include_register_interpreter_context
 
 bool ext_include_generate_include
 (struct sieve_generator *gentr, struct sieve_command_context *cmd,
-	enum ext_include_script_location location, const char *script_name, 
+	enum ext_include_script_location location, struct sieve_script *script, 
 	unsigned *blk_id_r)
 {
 	bool result = TRUE;
-	const char *script_path;
-	struct sieve_script *script;
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
 	struct ext_include_binary_context *binctx;
@@ -455,23 +453,12 @@ bool ext_include_generate_include
 		return FALSE;
 	}
 	
-	/* Find the script */
-	script_path = ext_include_get_script_path(location, script_name);
-	if ( script_path == NULL )
-		return FALSE;
-	
-	/* Create script object */
-	if ( (script = sieve_script_create(script_path, script_name, ehandler, NULL)) 
-		== NULL ) 
-		return FALSE;
-	
 	/* Check for circular include */
 	pctx = ctx;
 	while ( pctx != NULL ) {
 		if ( sieve_script_equals(pctx->script, script) ) {
 			sieve_command_generate_error(gentr, cmd, "circular include");
 				
-			sieve_script_unref(&script);
 			return FALSE;
 		}
 		
@@ -488,13 +475,12 @@ bool ext_include_generate_include
 
 	/* Is the script already compiled into the current binary? */
 	if ( !ext_include_script_is_included(binctx, script, &inc_block_id) )	{	
+		const char *script_name = sieve_script_name(script);
+		
 		/* No, allocate a new block in the binary and mark the script as included.
 		 */
 		inc_block_id = sieve_binary_block_create(sbin);
 		ext_include_script_include(binctx, script, location, inc_block_id);
-		
-		/* Include list now holds a reference, so we can release it here safely */
-		sieve_script_unref(&script);
 		
 		/* Parse */
 		if ( (ast = sieve_parse(script, ehandler)) == NULL ) {
@@ -532,9 +518,7 @@ bool ext_include_generate_include
 		
 		/* Cleanup */
 		sieve_ast_unref(&ast);		
-	} else 
-		/* Yes, aready compiled and included, so release script object right away */
-		sieve_script_unref(&script);
+	} 
 
 	if ( result ) *blk_id_r = inc_block_id;
 	

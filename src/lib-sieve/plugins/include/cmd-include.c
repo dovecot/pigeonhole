@@ -68,7 +68,7 @@ const struct sieve_operation include_operation = {
 struct cmd_include_context_data {
 	enum ext_include_script_location location;
 	bool location_assigned;
-	const char *script_name;
+	struct sieve_script *script;
 };   
 
 /* Tags */
@@ -122,23 +122,34 @@ static bool cmd_include_validate_location_tag
 
 /* Command registration */
 
-enum cmd_include_optional {
-	OPT_END,
-	OPT_LOCATION
-};
-
 static bool cmd_include_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	sieve_validator_register_tag
-		(validator, cmd_reg, &include_personal_tag, OPT_LOCATION); 	
+		(validator, cmd_reg, &include_personal_tag, 0); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &include_global_tag, OPT_LOCATION); 	
+		(validator, cmd_reg, &include_global_tag, 0); 	
 
 	return TRUE;
 }
 
-/* Command validation */
+/* 
+ * Command validation 
+ */
+
+static void cmd_include_ast_destroy
+(struct sieve_ast *ast ATTR_UNUSED, struct sieve_ast_node *node)
+{
+	struct sieve_command_context *cmd = node->context;
+	struct cmd_include_context_data *ctx_data = 
+		(struct cmd_include_context_data *) cmd->data;
+		
+	sieve_script_unref(&ctx_data->script);
+}
+
+static const struct sieve_ast_node_object cmd_include_ast_object = {
+	cmd_include_ast_destroy
+};
 
 static bool cmd_include_pre_validate
 	(struct sieve_validator *validator ATTR_UNUSED, 
@@ -160,15 +171,28 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct cmd_include_context_data *ctx_data = 
 		(struct cmd_include_context_data *) cmd->data;
+	struct sieve_script *script;
+	const char *script_path, *script_name;
 	
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "value", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
+		
+	/* Find the script */
+	script_name = sieve_ast_argument_strc(arg);
+	script_path = ext_include_get_script_path(ctx_data->location, script_name);
+	if ( script_path == NULL )
+		return FALSE;
 	
-	/* Get script path */
-
-	ctx_data->script_name = sieve_ast_argument_strc(arg);
+	/* Create script object */
+	if ( (script = sieve_script_create(script_path, script_name, 
+		sieve_validator_error_handler(validator), NULL)) == NULL ) 
+		return FALSE;	
+		
+	sieve_ast_link_object(cmd->ast_node, &cmd_include_ast_object);
+	ctx_data->script = script;
+	sieve_script_ref(script);	
 		
 	arg = sieve_ast_arguments_detach(arg, 1);
 	
@@ -191,7 +215,7 @@ static bool cmd_include_generate
 	 * This yields the id of the binary block containing the compiled byte code.  
 	 */
 	if ( !ext_include_generate_include
-		(gentr, cmd, ctx_data->location, ctx_data->script_name, &block_id) )
+		(gentr, cmd, ctx_data->location, ctx_data->script, &block_id) )
  		return FALSE;
  		
  	sieve_generator_emit_operation_ext	

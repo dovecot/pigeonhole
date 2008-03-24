@@ -3,6 +3,7 @@
 #include "lib.h"
 #include "str.h"
 #include "mempool.h"
+#include "array.h"
 
 #include "sieve-script.h"
 
@@ -14,6 +15,13 @@ static struct sieve_ast_node *sieve_ast_node_create
 	(struct sieve_ast *ast, struct sieve_ast_node *parent, 
 		enum sieve_ast_type type, unsigned int source_line);
 
+/* Links to other objects (notified if AST is destroyed) */
+
+struct sieve_ast_node_link {
+	struct sieve_ast_node *node;
+	const struct sieve_ast_node_object *object;
+};
+
 /* The AST object */
 
 struct sieve_ast {
@@ -23,6 +31,8 @@ struct sieve_ast {
 	struct sieve_script *script;
 		
 	struct sieve_ast_node *root;
+	
+	ARRAY_DEFINE(node_links, struct sieve_ast_node_link);
 };
 
 struct sieve_ast *sieve_ast_create(struct sieve_script *script) 
@@ -41,21 +51,46 @@ struct sieve_ast *sieve_ast_create(struct sieve_script *script)
 	ast->root = sieve_ast_node_create(ast, NULL, SAT_ROOT, 0);
 	ast->root->identifier = "ROOT";
 	
+	p_array_init(&ast->node_links, pool, 4);
+	
 	return ast;
 }
 
-void sieve_ast_ref(struct sieve_ast *ast) {
+void sieve_ast_link_object
+(struct sieve_ast_node *node, const struct sieve_ast_node_object *obj)
+{
+	struct sieve_ast_node_link link;
+	
+	link.node = node;
+	link.object = obj;
+	array_append(&node->ast->node_links, &link, 1);
+}
+
+void sieve_ast_ref(struct sieve_ast *ast) 
+{
 	ast->refcount++;
 }
 
-void sieve_ast_unref(struct sieve_ast **ast) {
+void sieve_ast_unref(struct sieve_ast **ast) 
+{
+	unsigned int i, lcount;
+	const struct sieve_ast_node_link *node_links;
+	
 	i_assert((*ast)->refcount > 0);
 
 	if (--(*ast)->refcount != 0)
 		return;
 	
+	/* Release script reference */
 	sieve_script_unref(&(*ast)->script);
 	
+	/* Signal linked objects that the AST is being destroyed */
+	node_links = array_get(&(*ast)->node_links, &lcount);
+	for ( i = 0; i < lcount; i++ ) {
+		node_links[i].object->ast_destroy(*ast, node_links[i].node);
+	}
+	
+	/* Destroy AST */
 	pool_unref(&(*ast)->pool);
 	
 	*ast = NULL;
