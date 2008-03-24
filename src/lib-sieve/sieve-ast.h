@@ -167,6 +167,12 @@ inline struct sieve_script *sieve_ast_script(struct sieve_ast *ast);
 
 const char *sieve_ast_type_name(enum sieve_ast_type ast_type);
 
+/* extension support */
+inline void sieve_ast_extension_set_context
+	(struct sieve_ast *ast, int ext_id, void *context);
+inline const void *sieve_ast_extension_get_context
+	(struct sieve_ast *ast, int ext_id);
+
 /* error reporting */
 void sieve_ast_error
 (struct sieve_error_handler *ehandler, sieve_error_vfunc_t vfunc, 

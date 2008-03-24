@@ -41,14 +41,10 @@ static bool ext_include_interpreter_load(struct sieve_interpreter *interp);
 
 extern const struct sieve_operation include_operation;
 extern const struct sieve_operation return_operation;
-extern const struct sieve_operation import_operation;
-extern const struct sieve_operation export_operation;
 
 static const struct sieve_operation *ext_include_operations[] = { 
 	&include_operation, 
-	&return_operation, 
-	&import_operation, 
-	&export_operation 
+	&return_operation
 };
 
 /* Extension definitions */

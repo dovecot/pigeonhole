@@ -14,13 +14,6 @@
 
 static bool cmd_export_validate
   (struct sieve_validator *validator, struct sieve_command_context *cmd);
-static bool cmd_export_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx ATTR_UNUSED);
-
-static bool opc_export_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
 		
 /* Export command 
  * 
@@ -31,20 +24,9 @@ const struct sieve_command cmd_export = {
 	"export", 
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
-	NULL, NULL,
+	NULL, NULL, 
 	cmd_export_validate, 
-	cmd_export_generate, 
-	NULL
-};
-
-/* Export operation */
-
-const struct sieve_operation export_operation = { 
-	"export",
-	&include_extension,
-	EXT_INCLUDE_OPERATION_EXPORT,
-	NULL, 
-	opc_export_execute 
+	NULL, NULL
 };
 
 /*
@@ -77,38 +59,41 @@ static bool cmd_export_validate
 		return FALSE;
 	}
 	
-	if ( !sieve_validate_positional_argument
-		(validator, cmd, arg, "value", 1, SAAT_STRING_LIST) ) {
+	/* Register imported variable */
+	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
+		/* Single string */
+		const char *variable = sieve_ast_argument_strc(arg);
+		
+		if ( !ext_include_export_variable(arg->ast, variable) ) {
+			sieve_command_validate_error(validator, cmd, 
+				"cannot export imported variable '%s'", variable);
+			return FALSE;
+		}
+
+	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
+		/* String list */
+		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
+		
+		while ( stritem != NULL ) {
+			const char *variable = sieve_ast_argument_strc(stritem);
+			
+			if ( !ext_include_export_variable(arg->ast, variable) ) {
+				sieve_command_validate_error(validator, cmd, 
+					"cannot export imported variable '%s'", variable);
+				return FALSE;
+			}
+	
+			stritem = sieve_ast_strlist_next(stritem);
+		}
+	} else {
+		/* Something else */
+		sieve_command_validate_error(validator, cmd, 
+			"the export command accepts a single string or string list argument, "
+			"but %s was found", 
+			sieve_ast_argument_name(arg));
 		return FALSE;
 	}
 	
-	//return sieve_validator_argument_activate(validator, cmd, arg, FALSE);
+	(void)sieve_ast_arguments_detach(arg, 1);
 	return TRUE;
 }
-
-/*
- * Generation
- */
-
-static bool cmd_export_generate
-(struct sieve_generator *gentr, struct sieve_command_context *ctx ATTR_UNUSED) 
-{
-	sieve_generator_emit_operation_ext	
-		(gentr, &export_operation, ext_include_my_id);
-
-	return TRUE;
-}
-
-/*
- * Interpretation
- */
-
-static bool opc_export_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, 
-	sieve_size_t *address ATTR_UNUSED)
-{	
-	return TRUE;
-}
-
-

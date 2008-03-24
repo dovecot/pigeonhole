@@ -22,8 +22,10 @@ struct sieve_variable {
 struct sieve_variable_scope;
 
 struct sieve_variable_scope *sieve_variable_scope_create(pool_t pool);
-struct sieve_variable *sieve_variable_scope_get_variable
+struct sieve_variable *sieve_variable_scope_declare
 	(struct sieve_variable_scope *scope, const char *identifier);
+struct sieve_variable *sieve_variable_scope_get_variable
+	(struct sieve_variable_scope *scope, const char *identifier, bool create);
 	
 /* 
  * Variable storage

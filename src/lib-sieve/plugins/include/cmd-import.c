@@ -14,13 +14,6 @@
 
 static bool cmd_import_validate
   (struct sieve_validator *validator, struct sieve_command_context *cmd); 
-static bool cmd_import_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx ATTR_UNUSED);
-		
-static bool opc_import_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
 		
 /* Import command 
  * 
@@ -33,18 +26,7 @@ const struct sieve_command cmd_import = {
 	1, 0, FALSE, FALSE,
 	NULL, NULL,
 	cmd_import_validate, 
-	cmd_import_generate, 
-	NULL
-};
-
-/* Import operation */
-
-const struct sieve_operation import_operation = { 
-	"import",
-	&include_extension,
-	EXT_INCLUDE_OPERATION_IMPORT,
-	NULL, 
-	opc_import_execute 
+	NULL, NULL
 };
 
 /*
@@ -75,39 +57,34 @@ static bool cmd_import_validate
 			"import command requires that variables extension is active");
 		return FALSE;
 	}
+		
+	/* Register imported variable */
+	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
+		/* Single string */
+		const char *variable = sieve_ast_argument_strc(arg);
+		
+		ext_include_import_variable(arg->ast, variable);
+
+	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
+		/* String list */
+		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
+		
+		while ( stritem != NULL ) {
+			const char *variable = sieve_ast_argument_strc(stritem);
+			ext_include_import_variable(arg->ast, variable);
 	
-	if ( !sieve_validate_positional_argument
-		(validator, cmd, arg, "value", 1, SAAT_STRING_LIST) ) {
+			stritem = sieve_ast_strlist_next(stritem);
+		}
+	} else {
+		/* Something else */
+		sieve_command_validate_error(validator, cmd, 
+			"the import command accepts a single string or string list argument, "
+			"but %s was found", 
+			sieve_ast_argument_name(arg));
 		return FALSE;
 	}
 	
-	//return sieve_validator_argument_activate(validator, cmd, arg, FALSE);
+	(void)sieve_ast_arguments_detach(arg, 1);
 	return TRUE;
 }
-
-/*
- * Generation
- */
-
-static bool cmd_import_generate
-(struct sieve_generator *gentr, struct sieve_command_context *ctx ATTR_UNUSED) 
-{
-	sieve_generator_emit_operation_ext	
-		(gentr, &import_operation, ext_include_my_id);
-
-	return TRUE;
-}
-
-/*
- * Interpretation
- */
-
-static bool opc_import_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, 
-	sieve_size_t *address ATTR_UNUSED)
-{	
-	return TRUE;
-}
-
 

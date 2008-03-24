@@ -79,19 +79,26 @@ struct sieve_variable_scope *sieve_variable_scope_create(pool_t pool)
 	return scope;
 }
 
-struct sieve_variable *sieve_variable_scope_get_variable
+struct sieve_variable *sieve_variable_scope_declare
 (struct sieve_variable_scope *scope, const char *identifier)
+{
+	struct sieve_variable *var = p_new(scope->pool, struct sieve_variable, 1);
+	var->identifier = identifier;
+	var->index = scope->next_index++;
+		
+	hash_insert(scope->variables, (void *) identifier, (void *) var);
+	
+	return var;
+}
+
+struct sieve_variable *sieve_variable_scope_get_variable
+(struct sieve_variable_scope *scope, const char *identifier, bool declare)
 {
 	struct sieve_variable *var = 
 		(struct sieve_variable *) hash_lookup(scope->variables, identifier);
 	
-	if ( var == NULL ) {
-		var = p_new(scope->pool, struct sieve_variable, 1);
-		var->identifier = identifier;
-		var->index = scope->next_index++;
-		
-		hash_insert(scope->variables, (void *) identifier, (void *) var);
-	} 
+	if ( var == NULL && declare )
+		var = sieve_variable_scope_declare(scope, identifier);
 	
 	return var;
 }
@@ -196,12 +203,12 @@ ext_variables_validator_context_get(struct sieve_validator *validator)
 }
 
 struct sieve_variable *ext_variables_validator_get_variable
-(struct sieve_validator *validator, const char *variable)
+(struct sieve_validator *validator, const char *variable, bool declare)
 {
 	struct ext_variables_validator_context *ctx = 
 		ext_variables_validator_context_get(validator);
 		
-	return sieve_variable_scope_get_variable(ctx->main_scope, variable);
+	return sieve_variable_scope_get_variable(ctx->main_scope, variable, declare);
 }
 
 bool sieve_ext_variables_is_active(struct sieve_validator *valdtr)
@@ -279,7 +286,7 @@ static struct sieve_ast_argument *ext_variables_variable_argument_create
 	struct sieve_ast_argument *arg;
 	
 	ctx = ext_variables_validator_context_get(validator);
-	var = sieve_variable_scope_get_variable(ctx->main_scope, variable);
+	var = sieve_variable_scope_get_variable(ctx->main_scope, variable, TRUE);
 
 	if ( var == NULL ) 
 		return NULL;
@@ -323,7 +330,7 @@ bool ext_variables_variable_assignment_activate
 		if ( cur_element->num_variable == -1 ) {
 			ctx = ext_variables_validator_context_get(validator);
 			var = sieve_variable_scope_get_variable
-				(ctx->main_scope, str_c(cur_element->identifier));
+				(ctx->main_scope, str_c(cur_element->identifier), TRUE);
 
 			arg->argument = &variable_argument;
 			arg->context = (void *) var;

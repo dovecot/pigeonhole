@@ -6,6 +6,7 @@
 #include "array.h"
 
 #include "sieve-script.h"
+#include "sieve-extensions.h"
 
 #include "sieve-ast.h"
 
@@ -32,6 +33,8 @@ struct sieve_ast {
 		
 	struct sieve_ast_node *root;
 	
+	ARRAY_DEFINE(ext_contexts, void *);
+
 	ARRAY_DEFINE(node_links, struct sieve_ast_node_link);
 };
 
@@ -52,6 +55,7 @@ struct sieve_ast *sieve_ast_create(struct sieve_script *script)
 	ast->root->identifier = "ROOT";
 	
 	p_array_init(&ast->node_links, pool, 4);
+	p_array_init(&ast->ext_contexts, pool, sieve_extensions_get_count());
 	
 	return ast;
 }
@@ -121,6 +125,27 @@ const char *sieve_ast_type_name(enum sieve_ast_type ast_type) {
 	
 	default: return "??AST NODE??";
 	}
+}
+
+/* Extension support */
+
+inline void sieve_ast_extension_set_context
+	(struct sieve_ast *ast, int ext_id, void *context)
+{
+	array_idx_set(&ast->ext_contexts, (unsigned int) ext_id, &context);	
+}
+
+inline const void *sieve_ast_extension_get_context
+	(struct sieve_ast *ast, int ext_id) 
+{
+	void * const *ctx;
+
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&ast->ext_contexts) )
+		return NULL;
+	
+	ctx = array_idx(&ast->ext_contexts, (unsigned int) ext_id);		
+
+	return *ctx;
 }
 
 /* AST-based error reporting */

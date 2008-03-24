@@ -73,4 +73,9 @@ bool ext_include_execute_include
 	(const struct sieve_runtime_env *renv, unsigned int block_id);
 void ext_include_execute_return(const struct sieve_runtime_env *renv);
 
+/* Variables import-export */
+
+void ext_include_import_variable(struct sieve_ast *ast, const char *variable);
+bool ext_include_export_variable(struct sieve_ast *ast, const char *variable);
+
 #endif /* __EXT_INCLUDE_COMMON_H */

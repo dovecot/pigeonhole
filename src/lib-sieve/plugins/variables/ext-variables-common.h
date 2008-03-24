@@ -72,7 +72,7 @@ bool ext_variables_variable_assignment_activate
 	struct sieve_command_context *cmd);
 
 struct sieve_variable *ext_variables_validator_get_variable
-(struct sieve_validator *validator, const char *variable);
+(struct sieve_validator *validator, const char *variable, bool declare);
 
 struct sieve_variable_storage *ext_variables_interpreter_get_storage
 	(struct sieve_interpreter *interp);
