@@ -9,6 +9,7 @@
 #include "sieve-ext-variables.h"
 
 #include "ext-include-common.h"
+#include "ext-include-variables.h"
 
 /* Forward declarations */
 
@@ -64,7 +65,7 @@ static bool cmd_export_validate
 		/* Single string */
 		const char *variable = sieve_ast_argument_strc(arg);
 		
-		if ( !ext_include_export_variable(arg->ast, variable) ) {
+		if ( !ext_include_variable_export(arg->ast, variable) ) {
 			sieve_command_validate_error(validator, cmd, 
 				"cannot export imported variable '%s'", variable);
 			return FALSE;
@@ -77,7 +78,7 @@ static bool cmd_export_validate
 		while ( stritem != NULL ) {
 			const char *variable = sieve_ast_argument_strc(stritem);
 			
-			if ( !ext_include_export_variable(arg->ast, variable) ) {
+			if ( !ext_include_variable_export(arg->ast, variable) ) {
 				sieve_command_validate_error(validator, cmd, 
 					"cannot export imported variable '%s'", variable);
 				return FALSE;

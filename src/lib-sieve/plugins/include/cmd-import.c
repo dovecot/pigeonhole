@@ -9,6 +9,7 @@
 #include "sieve-ext-variables.h"
 
 #include "ext-include-common.h"
+#include "ext-include-variables.h"
 
 /* Forward declarations */
 
@@ -63,7 +64,7 @@ static bool cmd_import_validate
 		/* Single string */
 		const char *variable = sieve_ast_argument_strc(arg);
 		
-		ext_include_import_variable(arg->ast, variable);
+		ext_include_variable_import(arg->ast, variable);
 
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		/* String list */
@@ -71,7 +72,7 @@ static bool cmd_import_validate
 		
 		while ( stritem != NULL ) {
 			const char *variable = sieve_ast_argument_strc(stritem);
-			ext_include_import_variable(arg->ast, variable);
+			ext_include_variable_import(arg->ast, variable);
 	
 			stritem = sieve_ast_strlist_next(stritem);
 		}

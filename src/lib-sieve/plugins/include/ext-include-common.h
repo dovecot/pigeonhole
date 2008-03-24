@@ -43,12 +43,6 @@ enum ext_include_script_location {
 const char *ext_include_get_script_path
 	(enum ext_include_script_location location, const char *script_name);
 
-/* Main context, currently not used for anything and might be removed */
-
-struct ext_include_main_context {
-	struct sieve_generator *generator;
-};
-
 /* Generator */
 
 void ext_include_register_generator_context
@@ -66,10 +60,5 @@ void ext_include_register_interpreter_context(struct sieve_interpreter *interp);
 bool ext_include_execute_include
 	(const struct sieve_runtime_env *renv, unsigned int block_id);
 void ext_include_execute_return(const struct sieve_runtime_env *renv);
-
-/* Variables import-export */
-
-void ext_include_import_variable(struct sieve_ast *ast, const char *variable);
-bool ext_include_export_variable(struct sieve_ast *ast, const char *variable);
 
 #endif /* __EXT_INCLUDE_COMMON_H */
