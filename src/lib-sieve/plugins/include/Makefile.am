@@ -17,7 +17,9 @@ cmds = \
 libsieve_ext_include_la_SOURCES = \
 	$(cmds) \
 	ext-include-common.c \
+	ext-include-binary.c \
 	ext-include.c
 
 noinst_HEADERS = \
-	ext-include-common.h
+	ext-include-common.h \
+	ext-include-binary.h

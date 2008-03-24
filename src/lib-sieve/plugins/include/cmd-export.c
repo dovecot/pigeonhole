@@ -59,7 +59,7 @@ static bool cmd_export_validate
 		return FALSE;
 	}
 	
-	/* Register imported variable */
+	/* Register exported variable */
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		/* Single string */
 		const char *variable = sieve_ast_argument_strc(arg);

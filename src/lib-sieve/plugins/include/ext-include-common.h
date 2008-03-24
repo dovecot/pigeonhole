@@ -14,6 +14,7 @@
 
 extern int ext_include_my_id;
 extern const struct sieve_extension include_extension;
+extern const struct sieve_binary_extension include_binary_ext;
 
 /* Commands */
 
@@ -57,13 +58,6 @@ bool ext_include_generate_include
 	(struct sieve_generator *gentr, struct sieve_command_context *cmd,
 		enum ext_include_script_location location, struct sieve_script *script, 
 		unsigned *blk_id_r);
-
-/* Binary */
-
-bool ext_include_binary_save(struct sieve_binary *sbin);
-bool ext_include_binary_open(struct sieve_binary *sbin);
-bool ext_include_binary_up_to_date(struct sieve_binary *sbin);
-void ext_include_binary_free(struct sieve_binary *sbin);
 
 /* Interpreter */
 

@@ -69,14 +69,6 @@ static bool ext_include_load(int ext_id)
 	return TRUE;
 }
 
-const struct sieve_binary_extension include_binary_ext = {
-	&include_extension,
-	ext_include_binary_save,
-	ext_include_binary_open,
-	ext_include_binary_free,
-	ext_include_binary_up_to_date
-};
-
 /* Load extension into validator */
 
 static bool ext_include_validator_load(struct sieve_validator *validator)
