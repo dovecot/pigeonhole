@@ -22,7 +22,7 @@ static void print_help(void)
 {
 	printf(
 "Usage: sieve-test [-r <recipient address>][-s <envelope sender>]\n"
-"                  [-m <mailbox>][-d <dump filename>] <scriptfile> <mailfile>\n"
+"                  [-m <mailbox>][-d <dump filename>][-c] <scriptfile> <mailfile>\n"
 	);
 }
 
@@ -37,6 +37,7 @@ int main(int argc, char **argv)
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_error_handler *ehandler;
+	bool force_compile = FALSE;
 
 	bin_init();
 
@@ -67,6 +68,9 @@ int main(int argc, char **argv)
 			if (i == argc)
 				i_fatal("Missing -d argument");
 			dumpfile = argv[i];
+		} else if (strcmp(argv[i], "-c") == 0) {
+            /* force compile */
+			force_compile = TRUE;
 		} else if ( scriptfile == NULL ) {
 			scriptfile = argv[i];
 		} else if ( mailfile == NULL ) {
@@ -91,8 +95,12 @@ int main(int argc, char **argv)
 	mfd = bin_open_mail_file(mailfile);
 	
 	/* Compile sieve script */
-	sbin = bin_open_sieve_script(scriptfile);
-	
+	if ( force_compile ) {
+		sbin = bin_compile_sieve_script(scriptfile);
+	} else {
+		sbin = bin_open_sieve_script(scriptfile);
+	}
+
 	/* Dump script */
 	bin_dump_sieve_binary_to(sbin, dumpfile);
 	
