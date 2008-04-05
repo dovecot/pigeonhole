@@ -16,6 +16,7 @@ tsts = \
 libsieve_ext_variables_la_SOURCES = \
 	ext-variables-common.c \
 	ext-variables-name.c \
+	ext-variables-arguments.c \
 	$(cmds) \
 	$(tsts) \
 	ext-variables.c
@@ -23,5 +24,6 @@ libsieve_ext_variables_la_SOURCES = \
 noinst_HEADERS = \
 	ext-variables-common.h \
 	ext-variables-name.h \
+	ext-variables-arguments.h \
 	sieve-ext-variables.h
 

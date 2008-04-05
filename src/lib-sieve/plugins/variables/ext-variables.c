@@ -26,6 +26,7 @@
 #include "sieve-validator.h"
 
 #include "ext-variables-common.h"
+#include "ext-variables-arguments.h"
 
 #include <ctype.h>
 

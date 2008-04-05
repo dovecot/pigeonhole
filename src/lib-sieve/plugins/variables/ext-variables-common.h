@@ -50,10 +50,6 @@ const struct ext_variables_set_modifier *ext_variables_set_modifier_find
 	
 extern const struct ext_variables_set_modifier *core_modifiers[];
 	
-/* Arguments */
-
-extern const struct sieve_argument variable_string_argument;
-	
 /* Variables */
 
 void ext_variables_opr_variable_emit
