@@ -20,7 +20,6 @@
 struct ext_include_generator_context {
 	unsigned int nesting_level;
 	struct sieve_script *script;
-	struct ext_include_variables_scope *var_scope;
 	struct ext_include_generator_context *parent;
 };
 
@@ -81,10 +80,8 @@ static struct ext_include_generator_context *
 	ctx->script = script;
 	if ( parent == NULL ) {
 		ctx->nesting_level = 0;
-		ctx->var_scope = ext_include_variables_scope_create(pool);
 	} else {
 		ctx->nesting_level = parent->nesting_level + 1;
-		ctx->var_scope = parent->var_scope;
 	}
 	
 	return ctx;
@@ -253,6 +250,9 @@ bool ext_include_generate_include
 	 			"failed to parse included script '%s'", script_name);
 	 		return FALSE;
 		}
+		
+		/* Included scripts inherit global variable scope */
+		(void)ext_include_create_ast_context(ast, cmd->ast_node->ast);
 
 		/* Validate */
 		if ( !sieve_validate(ast, ehandler) ) {

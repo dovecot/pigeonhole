@@ -64,7 +64,8 @@ static bool cmd_import_validate
 		/* Single string */
 		const char *variable = sieve_ast_argument_strc(arg);
 		
-		ext_include_variable_import(arg->ast, variable);
+		if ( !ext_include_variable_import(validator, cmd, variable) )
+			return FALSE;
 
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		/* String list */
@@ -72,7 +73,9 @@ static bool cmd_import_validate
 		
 		while ( stritem != NULL ) {
 			const char *variable = sieve_ast_argument_strc(stritem);
-			ext_include_variable_import(arg->ast, variable);
+			
+			if ( !ext_include_variable_import(validator, cmd, variable) )
+				return FALSE;
 	
 			stritem = sieve_ast_strlist_next(stritem);
 		}
