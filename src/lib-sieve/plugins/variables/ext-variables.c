@@ -27,6 +27,7 @@
 
 #include "ext-variables-common.h"
 #include "ext-variables-arguments.h"
+#include "ext-variables-operands.h"
 
 #include <ctype.h>
 

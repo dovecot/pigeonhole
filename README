@@ -133,7 +133,7 @@ Extensions and their implementation status:
     comparator-i;ascii-numeric: full
     relational: full 
     copy: full
-    regex: full, but suboptimal
+    regex: full, but suboptimal, no UTF-8
     body: full, but text body-transform implementation is simple
     include: almost full; needs more work (no variables; no external binaries)
     vacation: almost full; no support for required References header

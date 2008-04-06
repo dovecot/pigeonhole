@@ -17,6 +17,7 @@ libsieve_ext_variables_la_SOURCES = \
 	ext-variables-common.c \
 	ext-variables-name.c \
 	ext-variables-arguments.c \
+	ext-variables-operands.c \
 	$(cmds) \
 	$(tsts) \
 	ext-variables.c
@@ -25,5 +26,6 @@ noinst_HEADERS = \
 	ext-variables-common.h \
 	ext-variables-name.h \
 	ext-variables-arguments.h \
-	sieve-ext-variables.h
+	ext-variables-operands.h \
+	sieve-ext-variables.h 
 
