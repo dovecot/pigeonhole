@@ -135,7 +135,7 @@ Extensions and their implementation status:
     copy: full
     regex: full, but suboptimal, no UTF-8
     body: full, but text body-transform implementation is simple
-    include: almost full; needs more work (no variables; no external binaries)
+    include: almost full; needs more work (no external binaries)
     vacation: almost full; no support for required References header
     imapflags: flag management works, but flags are not stored (no variables)
     variables: untested core functionality present; need to provide support
@@ -207,18 +207,15 @@ Current:
   -> Core variable substitution works
   -> Accept namespaces (parse, no real support; proper error messages)
   -> Support match variables
-  Current:
-  -> Provide support for include, imapflags and other extensions that (partly)
-     depend on variables support.
   -> Implement variables support for include extension
-  Remaining:
-  -> Implement variabls support for imapflags extension
+  Current:
+  -> Provide support for extensions that (partly) depend on variables support.
+  -> Implement variables support for imapflags extension
      
 Next (in order of descending priority/precedence):
 * Finish implementing all extensions supported by cmusieve, except notify.
 * Limit the maximum number of errors. 
 * Verify outgoing mail addresses
-* Use lib/str-find.h for :contains and :matches match types  
 * Add normalize() method to comparators to normalize the string before mathing
   (for efficiency).
 * Implement comparator-i;unicode-casemap
@@ -244,6 +241,7 @@ Next (in order of descending priority/precedence):
 * ## MAKE A FIRST RELEASE ##
 
 * Automate script tests; i.e. build a test suite.
+* Use lib/str-find.h for :contains and :matches match types  
 * Resolve code duplication introduced for handling address-parts and match-types
   in different command implementations.
 * Resolve code duplication amongst comparator, address-part and match-type 
