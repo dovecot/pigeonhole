@@ -39,42 +39,72 @@ const struct sieve_operand variable_operand = {
 	EXT_VARIABLES_OPERAND_VARIABLE,
 	&string_class,
 	&variable_interface
-};	
+};
 
 void ext_variables_opr_variable_emit
 	(struct sieve_binary *sbin, struct sieve_variable *var) 
 {
+	if ( var->ext_id < 0 ) {
+		/* Default variable storage */
+		(void) sieve_operand_emit_code(sbin, &variable_operand, ext_variables_my_id);
+		(void) sieve_binary_emit_byte(sbin, 0);
+		(void) sieve_binary_emit_integer(sbin, var->index);
+		return;
+	} 
+	
 	(void) sieve_operand_emit_code(sbin, &variable_operand, ext_variables_my_id);
+	(void) sieve_binary_emit_byte(sbin, 1 +	var->ext_id);
 	(void) sieve_binary_emit_integer(sbin, var->index);
 }
 
 static bool opr_variable_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
 {
+	unsigned int code;
+	int ext_id;
 	sieve_size_t index = 0;
+	const struct sieve_extension *ext = NULL;
 	
-	if (sieve_binary_read_integer(denv->sbin, address, &index) ) {
-		sieve_code_dumpf(denv, "VAR: %ld", (long) index);
-
-		return TRUE;
+	if ( !sieve_binary_read_byte(denv->sbin, address, &code) ) {
+		return FALSE;
+	} 
+	ext_id = code - 1;
+	
+	if ( ext_id >= 0 && (ext = sieve_extension_get_by_id(ext_id)) == NULL ) {
+		return FALSE;
 	}
 	
-	return FALSE;
+	if ( !sieve_binary_read_integer(denv->sbin, address, &index) ) {
+		return FALSE;
+	}
+		
+	if ( ext == NULL )
+		sieve_code_dumpf(denv, "VAR: %ld", (long) index);
+	else
+		sieve_code_dumpf(denv, "VAR: [%d:%s] %ld", ext_id, ext->name, (long) index);
+	return TRUE;
 }
 
 static bool opr_variable_read_value
   (const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
 { 
+	unsigned int code;
+	int ext_id;
 	struct sieve_variable_storage *storage;
 	sieve_size_t index = 0;
 	
-	storage = ext_variables_interpreter_get_storage(renv->interp);
+	if ( !sieve_binary_read_byte(renv->sbin, address, &code) ) {
+		return FALSE;
+	}
+	ext_id = code - 1;
+	
+	storage = sieve_ext_variables_get_storage(renv->interp, ext_id);
 	if ( storage == NULL ) return FALSE;
-		
+	
 	if (sieve_binary_read_integer(renv->sbin, address, &index) ) {
 		/* Parameter str can be NULL if we are requested to only skip and not 
 		 * actually read the argument.
-	 	*/
+		 */
 		if ( str != NULL ) {
 			sieve_variable_get(storage, index, str);
 		
@@ -87,20 +117,28 @@ static bool opr_variable_read_value
 }
 
 bool ext_variables_opr_variable_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-		struct sieve_variable_storage **storage, unsigned int *var_index)
+(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	struct sieve_variable_storage **storage, unsigned int *var_index)
 {
+	unsigned int code;
+	int ext_id;
 	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
 	sieve_size_t idx = 0;
 	
 	if ( operand != &variable_operand ) 
 		return FALSE;
 		
-	*storage = ext_variables_interpreter_get_storage(renv->interp);
-	if ( *storage == NULL ) return FALSE;
+	if ( !sieve_binary_read_byte(renv->sbin, address, &code) ) {
+		return FALSE;
+	}
+	ext_id = code - 1;
+		
+	*storage = sieve_ext_variables_get_storage(renv->interp, ext_id);
+	if ( *storage == NULL )	return FALSE;
 	
 	if (sieve_binary_read_integer(renv->sbin, address, &idx) ) {
 		*var_index = idx;
+		
 		return TRUE;
 	}
 	

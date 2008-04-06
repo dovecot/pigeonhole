@@ -71,7 +71,7 @@ struct sieve_variable *ext_variables_validator_get_variable
 (struct sieve_validator *validator, const char *variable, bool declare);
 
 struct sieve_variable_storage *ext_variables_interpreter_get_storage
-	(struct sieve_interpreter *interp);
+	(struct sieve_interpreter *interp, unsigned int ext_id);
 	
 /* Extensions */
 

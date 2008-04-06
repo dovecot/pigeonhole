@@ -8,8 +8,6 @@
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 
-bool sieve_ext_variables_is_active(struct sieve_validator *valdtr);
-
 /*
  * Variable scope
  */
@@ -17,13 +15,17 @@ bool sieve_ext_variables_is_active(struct sieve_validator *valdtr);
 struct sieve_variable {
 	const char *identifier;
 	unsigned int index;
+	int ext_id;
 };
 
 struct sieve_variable_scope;
 
-struct sieve_variable_scope *sieve_variable_scope_create(pool_t pool);
+struct sieve_variable_scope *sieve_variable_scope_create
+	(pool_t pool, int ext_id);
 struct sieve_variable *sieve_variable_scope_declare
 	(struct sieve_variable_scope *scope, const char *identifier);
+struct sieve_variable *sieve_variable_scope_import
+	(struct sieve_variable_scope *scope, struct sieve_variable *var);
 struct sieve_variable *sieve_variable_scope_get_variable
 	(struct sieve_variable_scope *scope, const char *identifier, bool create);
 	
@@ -58,4 +60,19 @@ void sieve_variables_extension_set
 	(struct sieve_binary *sbin, int ext_id,
 		const struct sieve_variables_extension *ext);
 
+/*
+ * Variables access
+ */
+
+bool sieve_ext_variables_is_active(struct sieve_validator *valdtr);
+
+struct sieve_variable_scope *sieve_ext_variables_get_main_scope
+	(struct sieve_validator *validator);
+	
+struct sieve_variable_storage *sieve_ext_variables_get_storage
+	(struct sieve_interpreter *interp, int ext_id);
+void sieve_ext_variables_set_storage
+	(struct sieve_interpreter *interp, struct sieve_variable_storage *storage,
+		int ext_id);	
+	
 #endif /* __SIEVE_EXT_VARIABLES_H */

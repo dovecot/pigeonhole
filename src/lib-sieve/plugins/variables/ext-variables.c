@@ -55,10 +55,6 @@ const struct sieve_operation *ext_variables_operations[] = {
 
 /* Operands */
 
-extern const struct sieve_operand variable_operand;
-extern const struct sieve_operand match_value_operand;
-extern const struct sieve_operand variable_string_operand;
-
 const struct sieve_operand *ext_variables_operands[] = {
 	&variable_operand, 
 	&match_value_operand,

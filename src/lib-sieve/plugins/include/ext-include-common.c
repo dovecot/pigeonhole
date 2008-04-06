@@ -306,6 +306,7 @@ bool ext_include_execute_include
 		struct sieve_error_handler *ehandler = 
 			sieve_interpreter_get_error_handler(renv->interp);
 		struct sieve_interpreter *subinterp;
+		struct sieve_variable_storage *varstrg;
 		unsigned int this_block_id;
 		bool interrupted = FALSE;	
 
@@ -316,6 +317,10 @@ bool ext_include_execute_include
 		subinterp = sieve_interpreter_create(renv->sbin, ehandler);			
 		curctx = ext_include_initialize_interpreter_context
 			(subinterp, ctx, NULL, block_id);
+			
+		/* Create variable storage for global variables */
+		varstrg = sieve_ext_variables_get_storage(renv->interp, ext_include_my_id);
+		sieve_ext_variables_set_storage(subinterp, varstrg, ext_include_my_id);
 	
 		/* Activate and start the top-level included script */
 		if ( sieve_binary_block_set_active(renv->sbin, block_id, &this_block_id) ) 			

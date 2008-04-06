@@ -11,8 +11,7 @@ AM_CPPFLAGS = \
 cmds = \
 	cmd-include.c \
 	cmd-return.c \
-	cmd-import.c \
-	cmd-export.c
+	cmd-import.c
 
 libsieve_ext_include_la_SOURCES = \
 	$(cmds) \

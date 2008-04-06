@@ -30,6 +30,20 @@ const struct sieve_command cmd_import = {
 	NULL, NULL
 };
 
+/* Export command 
+ * 
+ * Syntax
+ *   export
+ */	
+const struct sieve_command cmd_export = { 
+	"export", 
+	SCT_COMMAND, 
+	1, 0, FALSE, FALSE,
+	NULL, NULL, 
+	cmd_import_validate, 
+	NULL, NULL
+};
+
 /*
  * Validation
  */
@@ -45,17 +59,21 @@ static bool cmd_import_validate
 	if ( !sieve_command_is_toplevel(cmd) ||
 		( !sieve_command_is_first(cmd) && prev_context != NULL &&
 			prev_context->command != &cmd_require && 
-			prev_context->command != &cmd_import) ) 
+			prev_context->command != &cmd_import &&
+			(cmd->command != &cmd_export || prev_context->command != &cmd_export) ) ) 
 	{	
 		sieve_command_validate_error(validator, cmd, 
-			"import commands can only be placed at top level "
-			"at the beginning of the file after any require commands");
+			"%s commands can only be placed at top level "
+			"at the beginning of the file after any require %scommands",
+			cmd->command->identifier, cmd->command == &cmd_export ? "or import " : "");
 		return FALSE;
 	}
+
 	
 	if ( !sieve_ext_variables_is_active(validator) ) {
 		sieve_command_validate_error(validator, cmd, 
-			"import command requires that variables extension is active");
+			"%s command requires that variables extension is active",
+			cmd->command->identifier);
 		return FALSE;
 	}
 		
@@ -64,7 +82,8 @@ static bool cmd_import_validate
 		/* Single string */
 		const char *variable = sieve_ast_argument_strc(arg);
 		
-		if ( !ext_include_variable_import(validator, cmd, variable) )
+		if ( !ext_include_variable_import_global
+			(validator, cmd, variable, cmd->command == &cmd_export) )
 			return FALSE;
 
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
@@ -74,7 +93,8 @@ static bool cmd_import_validate
 		while ( stritem != NULL ) {
 			const char *variable = sieve_ast_argument_strc(stritem);
 			
-			if ( !ext_include_variable_import(validator, cmd, variable) )
+			if ( !ext_include_variable_import_global
+				(validator, cmd, variable, cmd->command == &cmd_export) )
 				return FALSE;
 	
 			stritem = sieve_ast_strlist_next(stritem);
@@ -82,8 +102,8 @@ static bool cmd_import_validate
 	} else {
 		/* Something else */
 		sieve_command_validate_error(validator, cmd, 
-			"the import command accepts a single string or string list argument, "
-			"but %s was found", 
+			"the %s command accepts a single string or string list argument, "
+			"but %s was found", cmd->command->identifier,
 			sieve_ast_argument_name(arg));
 		return FALSE;
 	}

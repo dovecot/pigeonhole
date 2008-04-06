@@ -353,7 +353,8 @@ static bool cmd_set_operation_execute
 	printf(">> SET\n");
 	
 	/* Read the variable identifier */
-	if ( !ext_variables_opr_variable_read(renv, address, &storage, &var_index) )
+	if ( !ext_variables_opr_variable_read
+		(renv, address, &storage, &var_index) )
 		return FALSE;	
 		
 	/* Read the raw string value */
