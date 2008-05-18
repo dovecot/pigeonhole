@@ -1,4 +1,4 @@
-/* Copyright (c) 2002-2007 Dovecot authors, see the included COPYING file */
+/* Copyright (c) 2002-2007 Dovecot Sieve authors, see the included COPYING file */
 
 #include "lib.h"
 #include "str.h"
@@ -16,7 +16,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
-#include "sieve-code-dumper.h"
+#include "sieve-binary-dumper.h"
 
 #include "sieve.h"
 #include "sieve-common.h"
@@ -174,11 +174,11 @@ struct sieve_binary *sieve_open
 
 void sieve_dump(struct sieve_binary *sbin, struct ostream *stream) 
 {
-	struct sieve_code_dumper *dumpr = sieve_code_dumper_create(sbin);			
+	struct sieve_binary_dumper *dumpr = sieve_binary_dumper_create(sbin);			
 
-	sieve_code_dumper_run(dumpr, stream);	
+	sieve_binary_dumper_run(dumpr, stream);	
 	
-	sieve_code_dumper_free(dumpr);
+	sieve_binary_dumper_free(&dumpr);
 }
 
 int sieve_test
@@ -214,7 +214,6 @@ int sieve_execute
 	ret = sieve_interpreter_run(interp, msgdata, senv, &sres);
 				
 	sieve_interpreter_free(&interp);
-	sieve_result_unref(&sres);
 	return ret;
 }
 

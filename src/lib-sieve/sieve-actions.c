@@ -8,7 +8,7 @@
 #include "sieve-extensions-private.h"
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"
-#include "sieve-code-dumper.h"
+#include "sieve-dump.h"
 #include "sieve-result.h"
 #include "sieve-actions.h"
 
@@ -277,8 +277,13 @@ static bool act_store_start
 		
 		box = mailbox_open(ns->storage, ctx->folder, NULL, MAILBOX_OPEN_FAST |
 			MAILBOX_OPEN_KEEP_RECENT);
+	
+		if (box != NULL && mailbox_sync(box, 0, 0, NULL) < 0) {
+			mailbox_close(&box);
+			box = NULL;
+		}
 	}
-					
+				
 	pool = sieve_result_pool(aenv->result);
 	trans = p_new(pool, struct act_store_transaction, 1);
 	trans->context = ctx;

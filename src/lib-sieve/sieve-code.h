@@ -172,6 +172,8 @@ inline sieve_size_t sieve_operation_emit_code
 	(struct sieve_binary *sbin, const struct sieve_operation *op, int ext_id);	
 const struct sieve_operation *sieve_operation_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
+const char *sieve_operation_read_string
+    (struct sieve_binary *sbin, sieve_size_t *address);
 
 bool sieve_operation_string_dump
 	(const struct sieve_operation *op,

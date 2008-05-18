@@ -9,7 +9,7 @@
 #include "sieve-generator.h"
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"
-#include "sieve-code-dumper.h"
+#include "sieve-dump.h"
 
 #include "ext-body-common.h"
 

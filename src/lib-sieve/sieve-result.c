@@ -294,7 +294,7 @@ int sieve_result_execute
 		while ( rsef != NULL ) {
 			sef = rsef->seffect;
 			if ( sef->pre_execute != NULL ) 
-				sef->pre_execute
+				success = success & sef->pre_execute
 					(sef, act, &result->action_env, &rsef->context, context);
 			rsef = rsef->next;
 		}
@@ -305,12 +305,12 @@ int sieve_result_execute
 			success = success && rac->success;
 		}
 		
-		/* Execute pre-execute event of side effects */
+		/* Execute post-execute event of side effects */
 		rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
 		while ( rsef != NULL ) {
 			sef = rsef->seffect;
 			if ( sef->post_execute != NULL ) 
-				sef->post_execute
+				success = success && sef->post_execute
 					(sef, act, &result->action_env, rsef->context, context);
 			rsef = rsef->next;
 		}

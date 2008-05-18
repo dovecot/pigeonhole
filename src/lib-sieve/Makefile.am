@@ -61,6 +61,7 @@ libsieve_la_SOURCES = \
 	sieve-generator.c \
 	sieve-interpreter.c \
 	sieve-code-dumper.c \
+	sieve-binary-dumper.c \
 	sieve-result.c \
 	sieve-error.c \
 	sieve-comparators.c \
@@ -87,6 +88,7 @@ noinst_HEADERS = \
 	sieve-generator.h \
 	sieve-interpreter.h \
 	sieve-code-dumper.h \
+	sieve-binary-dumper.h \
 	sieve-result.h \
 	sieve-error.h \
 	sieve-error-private.h \

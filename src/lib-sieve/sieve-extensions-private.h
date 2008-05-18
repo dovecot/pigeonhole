@@ -79,4 +79,33 @@ static inline const void *_sieve_extension_read_obj
 	((const type *) _sieve_extension_read_obj \
 		(sbin, address, defreg, get_reg_func))
 
+static inline const char *sieve_extension_read_obj_string
+(struct sieve_binary *sbin, sieve_size_t *address, 
+	const struct sieve_extension_obj_registry *defreg, 
+	const struct sieve_extension_obj_registry *(*get_reg_func)
+		(struct sieve_binary *sbin, unsigned int index)) 
+{ 
+	unsigned int obj_code; 
+
+	if ( sieve_binary_read_byte(sbin, address, &obj_code) ) { 
+		if ( obj_code < defreg->count ) { 
+			return t_strdup_printf("[CODE: %d]", obj_code); 
+		} else {
+			unsigned int code = 0; 	 
+			const struct sieve_extension_obj_registry *reg;
+		
+			if ( (reg=get_reg_func(sbin, obj_code - defreg->count)) == NULL ||
+				reg->count == 0 ) 
+				return t_strdup_printf("[EXT: %d; NO CODES!]", obj_code);
+		
+			if ( reg->count > 1) 
+				sieve_binary_read_byte(sbin, address, &code); 
+	
+			return t_strdup_printf("[EXT: %d; CODE: %d]", obj_code, code);
+		}
+	}
+	
+	return NULL;
+}
+
 #endif /* __SIEVE_EXTENSIONS_PRIVATE_H */

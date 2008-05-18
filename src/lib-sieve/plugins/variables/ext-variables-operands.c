@@ -13,7 +13,7 @@
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
-#include "sieve-code-dumper.h"
+#include "sieve-dump.h"
 #include "sieve-interpreter.h"
 
 #include "ext-variables-common.h"

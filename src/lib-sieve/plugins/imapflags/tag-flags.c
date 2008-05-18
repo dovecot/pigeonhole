@@ -234,20 +234,25 @@ static void seff_flags_print
 static bool seff_flags_post_execute
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv ATTR_UNUSED, 
+	const struct sieve_action_exec_env *aenv, 
 	void *se_context, void *tr_context)
 {	
 	struct seff_flags_context *ctx = (struct seff_flags_context *) se_context;
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
+	struct mail_keywords *keywords;
 
 	if ( trans->dest_mail == NULL ) return TRUE;
 
-	printf("SETTING FLAGS\n");
+ 	if (mailbox_keywords_create(trans->box, ctx->keywords, &keywords) < 0) {
+		sieve_result_error(aenv, "invalid keywords");
+		return FALSE;
+	}
+
 	/* Update message flags. */
 	mail_update_flags(trans->dest_mail, MODIFY_ADD, ctx->flags);
 	/* Update message keywords. */
-	//mail_update_keywords(trans->dest_mail, MODIFY_REPLACE, keywords);
+	mail_update_keywords(trans->dest_mail, MODIFY_ADD, keywords);
 	
 	return TRUE;
 }

@@ -88,11 +88,11 @@ int sieve_binary_extensions_count(struct sieve_binary *sbin);
 /* Low-level emission functions */
 
 inline sieve_size_t sieve_binary_emit_data
-	(struct sieve_binary *binary, void *data, sieve_size_t size);
+	(struct sieve_binary *binary, const void *data, sieve_size_t size);
 inline sieve_size_t sieve_binary_emit_byte
 	(struct sieve_binary *binary, unsigned char byte);
 inline void sieve_binary_update_data
-	(struct sieve_binary *binary, sieve_size_t address, void *data, 
+	(struct sieve_binary *binary, sieve_size_t address, const void *data, 
 		sieve_size_t size);
 inline sieve_size_t sieve_binary_get_code_size(struct sieve_binary *binary);
 

@@ -10,7 +10,7 @@
 #include "sieve-binary.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
-#include "sieve-code-dumper.h"
+#include "sieve-dump.h"
 
 #include "ext-include-common.h"
 

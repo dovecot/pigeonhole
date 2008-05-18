@@ -57,7 +57,7 @@ static inline int sieve_binary_extension_register
 		struct sieve_binary_extension_reg **reg);
 
 static inline sieve_size_t sieve_binary_emit_dynamic_data
-	(struct sieve_binary *binary, void *data, size_t size);
+	(struct sieve_binary *binary, const void *data, size_t size);
 
 /* 
  * Internal structures
@@ -1367,7 +1367,7 @@ int sieve_binary_extensions_count(struct sieve_binary *sbin)
 /* Low-level emission functions */
 
 inline sieve_size_t sieve_binary_emit_data
-(struct sieve_binary *binary, void *data, sieve_size_t size) 
+(struct sieve_binary *binary, const void *data, sieve_size_t size) 
 {
 	sieve_size_t address = buffer_get_used_size(binary->data);
 	  
@@ -1383,7 +1383,7 @@ inline sieve_size_t sieve_binary_emit_byte
 }
 
 inline void sieve_binary_update_data
-(struct sieve_binary *binary, sieve_size_t address, void *data, 
+(struct sieve_binary *binary, sieve_size_t address, const void *data, 
 	sieve_size_t size) 
 {
 	buffer_write(binary->data, address, data, size);
@@ -1445,7 +1445,7 @@ sieve_size_t sieve_binary_emit_integer
 }
 
 static inline sieve_size_t sieve_binary_emit_dynamic_data
-	(struct sieve_binary *binary, void *data, size_t size)
+	(struct sieve_binary *binary, const void *data, size_t size)
 {
 	sieve_size_t address = sieve_binary_emit_integer(binary, size);
 	(void) sieve_binary_emit_data(binary, data, size);

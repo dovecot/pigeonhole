@@ -7,7 +7,7 @@
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
-#include "sieve-code-dumper.h"
+#include "sieve-dump.h"
 
 #include "ext-imapflags-common.h"
 

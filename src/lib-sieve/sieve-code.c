@@ -8,7 +8,7 @@
 #include "sieve-binary.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
-#include "sieve-code-dumper.h"
+#include "sieve-dump.h"
 
 #include "sieve-code.h"
 
@@ -702,6 +702,14 @@ const struct sieve_operation *sieve_operation_read
 {
 	return sieve_extension_read_obj
 		(struct sieve_operation, sbin, address, &oprt_default_reg, 
+			sieve_operation_registry_get);
+}
+
+const char *sieve_operation_read_string
+	(struct sieve_binary *sbin, sieve_size_t *address) 
+{
+	return sieve_extension_read_obj_string
+		(sbin, address, &oprt_default_reg, 
 			sieve_operation_registry_get);
 }
 	

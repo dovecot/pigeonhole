@@ -37,6 +37,7 @@ Makefile.in
 *~
 *.o
 *.lo
+*.loT
 *.Po
 *.Plo
 *.a

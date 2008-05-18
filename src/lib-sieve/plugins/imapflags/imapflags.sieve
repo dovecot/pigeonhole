@@ -25,4 +25,4 @@ if hasflag :count "ge" :comparator "i;ascii-numeric" "2" {
 	fileinto "imap-twoflags";
 }
 
-fileinto :flags "\\Seen $MDNRequired \\Draft" "INBOX";
+fileinto :flags "\\Seen MDNRequired \\Draft" "INBOX";
