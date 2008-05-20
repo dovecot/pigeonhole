@@ -26,20 +26,18 @@ const struct sieve_extension *sieve_preloaded_extensions[] = {
 const unsigned int sieve_preloaded_extensions_count = 
 	N_ELEMENTS(sieve_preloaded_extensions);
 
-ARRAY_DEFINE(sieve_preloaded_ext_ids, int);
-
 /* Dummy extensions */
 
 static const struct sieve_extension comparator_i_octet_extension = {
 	"comparator-i;octet",
-	NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static const struct sieve_extension comparator_i_ascii_casemap_extension = {
 	"comparator-i;ascii-casemap",
-	NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
@@ -92,44 +90,21 @@ const unsigned int sieve_core_extensions_count =
 bool sieve_extensions_init(const char *sieve_plugins ATTR_UNUSED) 
 {
 	unsigned int i;
-	int ext_id;
 	
 	sieve_extensions_init_registry();
 	
-	i_array_init(&sieve_preloaded_ext_ids, sieve_core_extensions_count);
-	
 	/* Pre-load core extensions */
 	for ( i = 0; i < sieve_core_extensions_count; i++ ) {
-		ext_id = sieve_extension_register(sieve_core_extensions[i]);
-		
-		array_append(&sieve_preloaded_ext_ids, &ext_id, 1);
-			
-		if ( sieve_core_extensions[i]->load != NULL && 
-			!sieve_core_extensions[i]->load(ext_id) ) {
-			i_error("sieve: failed to load '%s' extension support.", 
-				sieve_core_extensions[i]->name);
-			return FALSE;
-		}
+		(void) sieve_extension_register(sieve_core_extensions[i]);
 	}
 	
-	ext_id = -1;
-	array_append(&sieve_preloaded_ext_ids, &ext_id, 1);
-	
 	/* More extensions can be added through plugins */
-	/* FIXME */
 	
 	return TRUE;
 }
 
-const int *sieve_extensions_get_preloaded_ext_ids(void)
-{
-	return array_idx(&sieve_preloaded_ext_ids, 0);
-}
-
 void sieve_extensions_deinit(void)
-{
-	array_free(&sieve_preloaded_ext_ids);
-	
+{	
 	sieve_extensions_deinit_registry();
 }
 
@@ -162,6 +137,11 @@ int sieve_extension_register(const struct sieve_extension *extension)
 	ereg->id = ext_id;
 	
 	hash_insert(extension_index, (void *) extension->name, (void *) ereg);
+
+	if ( extension->load != NULL && !extension->load(ext_id) ) {
+		i_error("sieve: failed to load '%s' extension support.", extension->name);
+		return -1;
+	}
 
 	return ext_id;
 }

@@ -65,7 +65,7 @@ static void testsuite_init(void)
 	if ( !sieve_init("") ) 
 		i_fatal("Failed to initialize sieve implementation\n");
 
-	sieve_extension_register(&testsuite_extension);
+	(void) sieve_extension_register(&testsuite_extension);
 }
 
 static void testsuite_deinit(void)

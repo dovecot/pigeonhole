@@ -45,7 +45,7 @@ const struct sieve_extension testsuite_extension = {
 	"vnd.dovecot.testsuite", 
 	ext_testsuite_load,
 	ext_testsuite_validator_load, 
-	NULL, 
+	NULL, NULL,
 	ext_testsuite_binary_load, 
 	NULL, 
 	SIEVE_EXT_DEFINE_OPERATION(test_message_operation),

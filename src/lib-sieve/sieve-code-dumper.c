@@ -160,7 +160,7 @@ static bool sieve_code_dumper_print_operation
 	opcode_string = sieve_operation_read_string(denv->sbin, &address);
 
 	if ( opcode_string != NULL )
-		sieve_code_dumpf(denv, "Unknown upcode: %s", opcode_string);
+		sieve_code_dumpf(denv, "Unknown opcode: %s", opcode_string);
 	else
 		sieve_code_dumpf(denv, "Failed to read opcode.");
 	return FALSE;

@@ -37,10 +37,10 @@ static inline sieve_size_t _sieve_extension_emit_obj
 		
 		if ( reg->count > 1 ) 
 			(void) sieve_binary_emit_byte(sbin, obj_code);
-	
+		
 		return address;
 	} 
-	
+
 	return sieve_binary_emit_byte(sbin, obj_code);
 }
 #define sieve_extension_emit_obj(sbin, defreg, obj, reg, ext_id)\
@@ -94,8 +94,10 @@ static inline const char *sieve_extension_read_obj_string
 			unsigned int code = 0; 	 
 			const struct sieve_extension_obj_registry *reg;
 		
-			if ( (reg=get_reg_func(sbin, obj_code - defreg->count)) == NULL ||
-				reg->count == 0 ) 
+			if ( (reg=get_reg_func(sbin, obj_code - defreg->count)) == NULL )
+				return t_strdup_printf("[EXT: %d; NO REGISTRY]", obj_code);
+				
+			if ( reg->count == 0 ) 
 				return t_strdup_printf("[EXT: %d; NO CODES!]", obj_code);
 		
 			if ( reg->count > 1) 

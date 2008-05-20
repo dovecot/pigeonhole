@@ -32,7 +32,7 @@ static bool cmd_test_message_validate
 static bool cmd_test_message_generate
 	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
 
-/* Redirect command 
+/* Test command 
  * 
  * Syntax
  *   redirect <address: string>
@@ -48,7 +48,7 @@ const struct sieve_command cmd_test_message = {
 	NULL 
 };
 
-/* Redirect operation */
+/* Test operation */
 
 const struct sieve_operation test_message_operation = { 
 	"TEST_MESSAGE",
@@ -115,7 +115,6 @@ static bool cmd_test_message_operation_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *message;
-	int ret = 0;
 
 	t_push();
 
@@ -127,7 +126,8 @@ static bool cmd_test_message_operation_execute
 	printf(">> TEST MESSAGE \"%s\"\n", str_c(message));
 	
 	t_pop();
-	return (ret >= 0);
+	
+	return TRUE;
 }
 
 

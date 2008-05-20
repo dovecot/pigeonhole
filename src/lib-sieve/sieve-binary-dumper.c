@@ -124,4 +124,7 @@ void sieve_binary_dumper_run
 			}
 		}
 	}
+	
+	/* Finish with empty line */
+	sieve_binary_dumpf(denv, "\n");
 }
