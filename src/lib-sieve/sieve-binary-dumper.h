@@ -13,7 +13,14 @@ void sieve_binary_dumper_free
 pool_t sieve_binary_dumper_pool
 	(struct sieve_binary_dumper *dumper);
 
-/* */
+/* Formatted output */
+
+void sieve_binary_dumpf
+	(const struct sieve_dumptime_env *denv, const char *fmt, ...);
+void sieve_binary_dump_sectionf
+	(const struct sieve_dumptime_env *denv, const char *fmt, ...);
+
+/* Dumper execution */
 
 void sieve_binary_dumper_run
 	(struct sieve_binary_dumper *dumper, struct ostream *stream);

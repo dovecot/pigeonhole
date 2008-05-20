@@ -98,7 +98,7 @@ struct sieve_binary_block {
 	uoff_t offset;
 };
 
-/* FIXME: In essence this is an unbuffered stream implementation. Manybe this 
+/* FIXME: In essence this is an unbuffered stream implementation. Maybe this 
  * can be merged with the generic dovecot istream interface.
  */
 struct sieve_binary_file {

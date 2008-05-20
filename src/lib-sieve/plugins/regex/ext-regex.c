@@ -52,6 +52,7 @@ const struct sieve_extension regex_extension = {
 	ext_regex_load,
 	ext_regex_validator_load,
 	NULL, 
+	NULL,
 	ext_regex_binary_load,
 	NULL,  
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 

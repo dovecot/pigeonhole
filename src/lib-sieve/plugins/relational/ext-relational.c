@@ -49,6 +49,7 @@ const struct sieve_extension relational_extension = {
 	ext_relational_load,
 	ext_relational_validator_load,
 	NULL, 
+	NULL,
 	ext_relational_binary_load,  
 	NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 

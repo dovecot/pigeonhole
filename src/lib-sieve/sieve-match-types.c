@@ -56,6 +56,7 @@ const struct sieve_extension match_type_extension = {
 	mtch_extension_load,
 	mtch_validator_load,
 	NULL,
+	NULL,
 	mtch_binary_load,
 	NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,

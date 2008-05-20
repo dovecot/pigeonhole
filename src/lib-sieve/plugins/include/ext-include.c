@@ -22,8 +22,10 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-binary.h"
+#include "sieve-dump.h"
 
 #include "ext-include-common.h"
+#include "ext-include-binary.h"
 
 /* Forward declarations */
 
@@ -52,8 +54,9 @@ const struct sieve_extension include_extension = {
 	ext_include_load,
 	ext_include_validator_load, 
 	ext_include_generator_load,
-	ext_include_binary_load, 
 	ext_include_interpreter_load, 
+	ext_include_binary_load, 
+	ext_include_binary_dump,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_include_operations),
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
@@ -87,15 +90,6 @@ static bool ext_include_generator_load(struct sieve_generator *gentr)
 	return TRUE;
 }
 
-/* Load extension into binary */
-
-static bool ext_include_binary_load(struct sieve_binary *sbin)
-{
-	sieve_binary_extension_set(sbin, ext_include_my_id, &include_binary_ext);
-	
-	return TRUE;
-}
-
 /* Load extension into interpreter */
 
 static bool ext_include_interpreter_load(struct sieve_interpreter *interp)
@@ -105,4 +99,15 @@ static bool ext_include_interpreter_load(struct sieve_interpreter *interp)
 	return TRUE;
 }
 
+/* Load extension into binary */
 
+static bool ext_include_binary_load(struct sieve_binary *sbin)
+{
+	/* Register extension to the binary object to get notified of events like 
+	 * opening or saving the binary. The implemententation of these hooks is found
+	 * in ext-include-binary.c
+	 */
+	sieve_binary_extension_set(sbin, ext_include_my_id, &include_binary_ext);
+	
+	return TRUE;
+}

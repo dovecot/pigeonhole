@@ -4,6 +4,7 @@
 #include "sieve-binary.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-dump.h"
 
 #include "ext-include-common.h"
 #include "ext-include-binary.h"
@@ -86,7 +87,7 @@ static inline struct ext_include_binary_context *ext_include_binary_get_context
  */
  
 struct ext_include_binary_context *ext_include_binary_init
-	(struct sieve_binary *sbin)
+(struct sieve_binary *sbin)
 {
 	struct ext_include_binary_context *ctx;
 	
@@ -112,8 +113,6 @@ void ext_include_binary_script_include
 	incscript->script = script;
 	incscript->location = location;
 	incscript->block_id = block_id;
-	
-	printf("INCLUDE: %s\n", sieve_script_path(script));
 	
 	/* Unreferenced on binary_free */
 	sieve_script_ref(script);
@@ -270,5 +269,58 @@ static void ext_include_binary_free(struct sieve_binary *sbin)
 		sieve_script_unref(&incscript->script);
 	}
 	hash_iterate_deinit(&hctx);
+}
+
+inline static const char *_script_location
+(enum ext_include_script_location loc)
+{
+	switch ( loc ) {
+	case EXT_INCLUDE_LOCATION_PERSONAL:
+		return "personal";
+	case EXT_INCLUDE_LOCATION_GLOBAL:
+		return "global";
+	default:
+		break;
+	}
+	
+	return "<<INVALID LOCATION>>";
+}
+
+bool ext_include_binary_dump(struct sieve_dumptime_env *denv)
+{
+	struct sieve_binary *sbin = denv->sbin;
+	struct ext_include_binary_context *binctx = 
+		ext_include_binary_get_context(sbin);
+	struct hash_iterate_context *hctx = 
+		hash_iterate_init(binctx->included_scripts);
+	void *key, *value;
+	unsigned int prvblk = 0;
+				
+	while ( hash_iterate(hctx, &key, &value) ) {
+		struct _included_script *incscript = (struct _included_script *) value;
+
+		sieve_binary_dump_sectionf(denv, "Included %s script '%s' (block: %d)", 
+			_script_location(incscript->location), 
+			sieve_script_name(incscript->script), incscript->block_id);
+			
+		if ( prvblk == 0 ) {
+			if ( !sieve_binary_block_set_active(sbin, incscript->block_id, &prvblk) )	
+				return FALSE;
+		} else {
+			if ( !sieve_binary_block_set_active(sbin, incscript->block_id, NULL) )	
+				return FALSE;
+		}
+				
+		denv->cdumper = sieve_code_dumper_create(denv);
+		sieve_code_dumper_run(denv->cdumper);
+		sieve_code_dumper_free(&(denv->cdumper));
+	}
+	
+	if ( !sieve_binary_block_set_active(sbin, prvblk, NULL) ) 
+		return FALSE;
+	
+	hash_iterate_deinit(&hctx);
+	
+	return TRUE;	
 }
 

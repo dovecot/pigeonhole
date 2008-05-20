@@ -36,6 +36,7 @@ const struct sieve_extension copy_extension = {
 	ext_copy_load,
 	ext_copy_validator_load, 
 	NULL, 
+	NULL,
 	ext_copy_binary_load, 
 	NULL, 
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,

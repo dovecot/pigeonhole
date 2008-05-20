@@ -20,8 +20,11 @@ struct sieve_extension {
 
 	bool (*validator_load)(struct sieve_validator *validator);	
 	bool (*generator_load)(struct sieve_generator *generator);
-	bool (*binary_load)(struct sieve_binary *binary);
+	
 	bool (*interpreter_load)(struct sieve_interpreter *interpreter);
+	
+	bool (*binary_load)(struct sieve_binary *binary);
+	bool (*binary_dump)(struct sieve_dumptime_env *denv);
 
 	struct sieve_extension_obj_registry operations;
 	struct sieve_extension_obj_registry operands;

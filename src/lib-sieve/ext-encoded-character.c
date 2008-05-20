@@ -28,7 +28,7 @@ struct sieve_extension encoded_character_extension = {
 	"encoded-character", 
 	ext_encoded_character_load,
 	ext_encoded_character_validator_load, 
-	NULL, NULL, NULL, 
+	NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
