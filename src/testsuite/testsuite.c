@@ -1,29 +1,14 @@
 /* Copyright (c) 2005-2007 Dovecot authors, see the included COPYING file */
 
 #include "lib.h"
-#include "ostream.h"
-#include "mail-storage.h"
-
-#include "mail-raw.h"
-#include "namespaces.h"
-#include "sieve.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <pwd.h>
-
-#define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
-#define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
-
-#include "lib.h"
 #include "lib-signals.h"
 #include "ioloop.h"
 #include "ostream.h"
 #include "hostpid.h"
 #include "mail-storage.h"
 
+#include "mail-raw.h"
+#include "namespaces.h"
 #include "sieve.h"
 #include "sieve-extensions.h"
 
@@ -35,7 +20,8 @@
 #include <fcntl.h>
 #include <pwd.h>
 
-/* Functionality common to all sieve test binaries */
+#define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
+#define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
 /* FIXME: this file is currently very messy */
 
@@ -137,28 +123,6 @@ static void _dump_sieve_binary_to(struct sieve_binary *sbin, const char *filenam
 		close(dfd);
 }
 
-static void _fill_in_envelope
-	(struct mail *mail, const char **recipient, const char **sender)
-{
-	/* Get recipient address */
-	if ( *recipient == NULL ) 
-		(void)mail_get_first_header(mail, "Envelope-To", recipient);
-	if ( *recipient == NULL ) 
-		(void)mail_get_first_header(mail, "To", recipient);
-	if ( *recipient == NULL ) 
-		*recipient = "recipient@example.com";
-	
-	/* Get sender address */
-	if ( *sender == NULL ) 
-		(void)mail_get_first_header(mail, "Return-path", sender);
-	if ( *sender == NULL ) 
-		(void)mail_get_first_header(mail, "Sender", sender);
-	if ( *sender == NULL ) 
-		(void)mail_get_first_header(mail, "From", sender);
-	if ( *sender == NULL ) 
-		*sender = "sender@example.com";
-}
-
 static void print_help(void)
 {
 	printf(
@@ -166,33 +130,20 @@ static void print_help(void)
 	);
 }
 
-static const char *message_data = 
-"From: stephan@rename-it.nl\n"
-"To: sirius@drunksnipers.com\n"
-"Subject: Frop!\n"
-"\n"
-"Friep!\n";
-
 int main(int argc, char **argv) 
 {
-	const char *scriptfile, *dumpfile, *recipient, *sender; 
+	const char *scriptfile, *dumpfile; 
 	const char *user;
 	int i;
 	pool_t namespaces_pool;
-	struct mail_raw *mailr;
 	struct sieve_binary *sbin;
-	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_error_handler *ehandler;
-	string_t *mail_buffer;
 
 	testsuite_init();
 
-	mail_buffer = t_str_new(1024);
-	str_append(mail_buffer, message_data);
-
 	/* Parse arguments */
-	scriptfile = dumpfile = recipient = sender = NULL;
+	scriptfile = dumpfile =  NULL;
 	for (i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-d") == 0) {
 			/* dump file */
@@ -219,21 +170,9 @@ int main(int argc, char **argv)
 	/* Dump script */
 	_dump_sieve_binary_to(sbin, dumpfile);
 	
-	user = _get_user();
-
 	namespaces_pool = namespaces_init();
-	mail_raw_init(namespaces_pool, user);
-	mailr = mail_raw_open(mail_buffer);
-
-	_fill_in_envelope(mailr->mail, &recipient, &sender);
-
-	/* Collect necessary message data */
-	memset(&msgdata, 0, sizeof(msgdata));
-	msgdata.mail = mailr->mail;
-	msgdata.return_path = recipient;
-	msgdata.to_address = sender;
-	msgdata.auth_user = user;
-	(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
+	user = _get_user();
+	testsuite_message_init(namespaces_pool, user);
 
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	scriptenv.inbox = "INBOX";
@@ -242,13 +181,12 @@ int main(int argc, char **argv)
 	ehandler = sieve_stderr_ehandler_create();	
 	
 	/* Run the test */
-	(void) sieve_test(sbin, &msgdata, &scriptenv, ehandler);
+	(void) sieve_test(sbin, &testsuite_msgdata, &scriptenv, ehandler);
 
 	sieve_close(&sbin);
 	sieve_error_handler_unref(&ehandler);
 
-	mail_raw_close(mailr);
-	mail_raw_deinit();
+	testsuite_message_deinit();
 	namespaces_deinit();
 
 	testsuite_deinit();  

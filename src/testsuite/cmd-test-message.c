@@ -125,6 +125,8 @@ static bool cmd_test_message_operation_execute
 
 	printf(">> TEST MESSAGE \"%s\"\n", str_c(message));
 	
+	testsuite_message_set(message);
+	
 	t_pop();
 	
 	return TRUE;

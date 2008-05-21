@@ -43,6 +43,7 @@ cmds = \
 testsuite_SOURCES = \
 	namespaces.c \
 	mail-raw.c \
+	testsuite-common.c \
 	$(cmds) \
 	ext-testsuite.c \
 	testsuite.c

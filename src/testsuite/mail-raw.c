@@ -70,8 +70,9 @@ struct mail_raw *mail_raw_open(string_t *mail_data)
 		i_fatal("Can't sync raw mail: %s",
 		mail_storage_get_last_error(raw_ns->storage, &error));
 	}
-    raw_box = (struct raw_mailbox *) mailr->box;
-    raw_box->envelope_sender = DEFAULT_ENVELOPE_SENDER;
+  
+	raw_box = (struct raw_mailbox *) mailr->box;
+	raw_box->envelope_sender = DEFAULT_ENVELOPE_SENDER;
 
 	mailr->trans = mailbox_transaction_begin(mailr->box, 0);
 	mailr->mail = mail_alloc(mailr->trans, 0, NULL);
