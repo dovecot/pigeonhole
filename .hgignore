@@ -53,3 +53,4 @@ src/sieve-bin/sieved
 src/sieve-bin/sieve-test
 src/sieve-bin/sieve-exec
 
+src/testsuite/testsuite
