@@ -213,6 +213,7 @@ Current:
   -> Implement variables support for imapflags extension
      
 Next (in order of descending priority/precedence):
+* Vacation extension accepts duplicate tags (not allowed)
 * Finish implementing all extensions supported by cmusieve, except notify.
 * Limit the maximum number of errors. 
 * Verify outgoing mail addresses
