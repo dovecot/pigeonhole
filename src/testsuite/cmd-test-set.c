@@ -15,6 +15,7 @@
 #include "sieve-result.h"
 
 #include "testsuite-common.h"
+#include "testsuite-objects.h"
 
 #include <stdio.h>
 

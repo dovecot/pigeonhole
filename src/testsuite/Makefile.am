@@ -44,11 +44,13 @@ testsuite_SOURCES = \
 	namespaces.c \
 	mail-raw.c \
 	testsuite-common.c \
+	testsuite-objects.c \
 	$(cmds) \
 	ext-testsuite.c \
 	testsuite.c
 
 noinst_HEADERS = \
 	testsuite-common.h \
+	testsuite-objects.h \
 	namespaces.h \
 	mail-raw.h
