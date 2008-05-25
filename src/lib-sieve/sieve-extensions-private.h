@@ -21,6 +21,8 @@ static inline const void *_sieve_extension_get_object
 	}
 	return NULL;
 }
+#define sieve_extension_get_object(type, reg, code) \
+	((const type *) _sieve_extension_get_object(&(reg), code))
 
 static inline sieve_size_t _sieve_extension_emit_obj
 (struct sieve_binary *sbin, 

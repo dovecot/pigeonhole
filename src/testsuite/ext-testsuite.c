@@ -24,22 +24,33 @@
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
 
+#include "testsuite-common.h"
+
 /* Forward declarations */
 
 static bool ext_testsuite_load(int ext_id);
 static bool ext_testsuite_validator_load(struct sieve_validator *validator);
 static bool ext_testsuite_binary_load(struct sieve_binary *sbin);
 
+/* Commands */
+
+extern const struct sieve_command cmd_test_set;
+
+/* Operands */
+
+const struct sieve_operand *testsuite_operands[] =
+    { &testsuite_object_operand };
+
+/* Operations */
+
+extern const struct sieve_operation test_set_operation;
+
+const struct sieve_operation *testsuite_operations[] =
+    { &test_set_operation };
+    
 /* Extension definitions */
 
 int ext_testsuite_my_id;
-
-extern const struct sieve_operation test_message_operation;
-
-const struct sieve_operation *testsuite_operations[] =
-    { &test_message_operation };
-
-extern const struct sieve_command cmd_test_message;
 
 const struct sieve_extension testsuite_extension = { 
 	"vnd.dovecot.testsuite", 
@@ -48,8 +59,8 @@ const struct sieve_extension testsuite_extension = {
 	NULL, NULL,
 	ext_testsuite_binary_load, 
 	NULL, 
-	SIEVE_EXT_DEFINE_OPERATION(test_message_operation),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	SIEVE_EXT_DEFINE_OPERATION(test_set_operation),
+	SIEVE_EXT_DEFINE_OPERAND(testsuite_object_operand)
 };
 
 static bool ext_testsuite_load(int ext_id)
@@ -60,13 +71,17 @@ static bool ext_testsuite_load(int ext_id)
 }
 
 /* Load extension into validator */
+
 static bool ext_testsuite_validator_load(struct sieve_validator *validator)
 {
-	sieve_validator_register_command(validator, &cmd_test_message);
-	return TRUE;
+	sieve_validator_register_command(validator, &cmd_test_set);
+	
+	return testsuite_validator_context_initialize(validator);
 }
 
-static bool ext_testsuite_binary_load(struct sieve_binary *sbin)
+/* Load extension into binary */
+
+static bool ext_testsuite_binary_load(struct sieve_binary *sbin ATTR_UNUSED)
 {
 	return TRUE;
 }

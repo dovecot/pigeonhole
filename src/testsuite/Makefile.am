@@ -38,7 +38,7 @@ testsuite_LDADD = $(ldadd)
 testsuite_DEPENDENCIES = $(libs)
 
 cmds = \
-	cmd-test-message.c
+	cmd-test-set.c
 
 testsuite_SOURCES = \
 	namespaces.c \

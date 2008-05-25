@@ -1,6 +1,6 @@
 require "vnd.dovecot.testsuite";
 
-test_message text:
+test_set "message" text:
 From: sirius@rename-it.nl
 To: nico@vestingbar.nl
 Subject: Frop!
@@ -14,7 +14,7 @@ if not header :contains "from" "rename-it.nl" {
 	stop;
 }
 
-test_message text:
+test_set "message" text:
 From: nico@vestingbar.nl
 To: stephan@zuiphol.nl
 Subject: Friep!

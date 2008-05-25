@@ -36,7 +36,7 @@ struct sieve_operand_class {
 struct sieve_operand {
 	const char *name;
 	
-	struct sieve_extension *extension;
+	const struct sieve_extension *extension;
 	unsigned int code;
 	
 	const struct sieve_operand_class *class;
