@@ -7,9 +7,9 @@
  * Implementation: skeleton
  * Status: under development
  * Purpose: This custom extension is used to add sieve commands that act
- *   on the test suite. This provides the ability to specify and change the input 
- *   message inside the script and to fail validation, code generation and 
- *   particularly execution based on predicates.
+ *   on the test suite. This provides the ability to specify and change the 
+ *   input message inside the script and to fail validation, code generation and 
+ *   execution based on predicates.
  */
 
 #include <stdio.h>

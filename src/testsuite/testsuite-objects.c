@@ -131,10 +131,15 @@ const struct sieve_operand testsuite_object_operand = {
 };
 
 static void testsuite_object_emit
-	(struct sieve_binary *sbin, const struct testsuite_object *obj, int ext_id)
+(struct sieve_binary *sbin, const struct testsuite_object *obj, int ext_id,
+	int member_id)
 { 
 	(void) sieve_operand_emit_code(sbin, obj->operand, ext_id);	
 	(void) sieve_binary_emit_byte(sbin, obj->code);
+	
+	if ( obj->get_member_id != NULL ) {
+		(void) sieve_binary_emit_byte(sbin, (unsigned char) member_id);
+	}
 }
 
 const struct testsuite_object *testsuite_object_read
@@ -159,18 +164,55 @@ const struct testsuite_object *testsuite_object_read
 		(struct testsuite_object, intf->testsuite_objects, obj_code);
 }
 
+const struct testsuite_object *testsuite_object_read_member
+(struct sieve_binary *sbin, sieve_size_t *address, int *member_id)
+{
+	const struct testsuite_object *object;
+		
+	if ( (object = testsuite_object_read(sbin, address)) == NULL )
+		return NULL;
+		
+	*member_id = -1;
+	if ( object->get_member_id != NULL ) {
+		if ( !sieve_binary_read_code(sbin, address, member_id) ) 
+			return NULL;
+	}
+	
+	return object;
+}
+
+const char *testsuite_object_member_name
+(const struct testsuite_object *object, int member_id)
+{
+	const char *member = NULL;
+
+	if ( object->get_member_id != NULL ) {
+		if ( object->get_member_name != NULL )
+			member = object->get_member_name(member_id);
+	} else 
+		return object->identifier;
+		
+	if ( member == NULL )	
+		return t_strdup_printf("%s.%d", object->identifier, member_id);
+	
+	return t_strdup_printf("%s.%s", object->identifier, member);
+}
+
 bool testsuite_object_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	const struct testsuite_object *object;
+	int member_id;
 
 	sieve_code_mark(denv);
 		
-	if ( (object = testsuite_object_read(denv->sbin, address)) == NULL )
+	if ( (object = testsuite_object_read_member(denv->sbin, address, &member_id)) 
+		== NULL )
 		return FALSE;
 	
-	sieve_code_dumpf(denv, "TESTSUITE_OBJECT: %s", object->identifier);
-		
+	sieve_code_dumpf(denv, "TESTSUITE_OBJECT: %s", 
+		testsuite_object_member_name(object, member_id));
+	
 	return TRUE;
 }
 
@@ -188,6 +230,7 @@ const struct sieve_argument testsuite_object_argument =
 struct testsuite_object_argctx {
 	const struct testsuite_object *object;
 	int ext_id;
+	int member;
 };
 
 bool testsuite_object_argument_activate
@@ -196,8 +239,19 @@ bool testsuite_object_argument_activate
 {
 	const char *objname = sieve_ast_argument_strc(arg);
 	const struct testsuite_object *object;
-	int ext_id;
+	int ext_id, member_id;
+	const char *member;
 	struct testsuite_object_argctx *ctx;
+	
+	/* Parse the object specifier */
+	
+	member = strchr(objname, '.');
+	if ( member != NULL ) {
+		objname = t_strdup_until(objname, member);
+		member++;
+	}
+	
+	/* Find the object */
 	
 	object = testsuite_object_find(valdtr, objname, &ext_id);
 	if ( object == NULL ) {
@@ -206,9 +260,24 @@ bool testsuite_object_argument_activate
 		return FALSE;
 	}
 	
+	/* Find the object member */
+	
+	member_id = -1;
+	if ( member != NULL ) {
+		if ( object->get_member_id == NULL || 
+			(member_id=object->get_member_id(member)) == -1 ) {
+			sieve_command_validate_error(valdtr, cmd, 
+				"member '%s' does not exist for testsuite object '%s'", member, objname);
+			return FALSE;
+		}
+	}
+	
+	/* Assign argument context */
+	
 	ctx = p_new(sieve_command_pool(cmd), struct testsuite_object_argctx, 1);
 	ctx->object = object;
 	ctx->ext_id = ext_id;
+	ctx->member = member_id;
 	
 	arg->argument = &testsuite_object_argument;
 	arg->context = (void *) ctx;
@@ -224,7 +293,7 @@ static bool arg_testsuite_object_generate
 	struct testsuite_object_argctx *ctx = 
 		(struct testsuite_object_argctx *) arg->context;
 	
-	testsuite_object_emit(sbin, ctx->object, ctx->ext_id);
+	testsuite_object_emit(sbin, ctx->object, ctx->ext_id, ctx->member);
 		
 	return TRUE;
 }
@@ -235,18 +304,28 @@ static bool arg_testsuite_object_generate
  
 static bool tsto_message_set_member(int id, string_t *value);
 
+static int tsto_envelope_get_member_id(const char *identifier);
+static const char *tsto_envelope_get_member_name(int id);
+static bool tsto_envelope_set_member(int id, string_t *value);
+
+
 const struct testsuite_object message_testsuite_object = { 
 	"message",
 	TESTSUITE_OBJECT_MESSAGE,
 	&testsuite_object_operand,
-	NULL, tsto_message_set_member, NULL
+	NULL, NULL, 
+	tsto_message_set_member, 
+	NULL
 };
 
 const struct testsuite_object envelope_testsuite_object = { 
 	"envelope",
 	TESTSUITE_OBJECT_ENVELOPE,
 	&testsuite_object_operand,
-	NULL, NULL, NULL
+	tsto_envelope_get_member_id, 
+	tsto_envelope_get_member_name,
+	tsto_envelope_set_member, 
+	NULL
 };
 
 static bool tsto_message_set_member(int id, string_t *value) 
@@ -256,4 +335,44 @@ static bool tsto_message_set_member(int id, string_t *value)
 	testsuite_message_set(value);
 	
 	return TRUE;
+}
+
+static int tsto_envelope_get_member_id(const char *identifier)
+{
+	if ( strcasecmp(identifier, "from") == 0 )
+		return 0;
+	if ( strcasecmp(identifier, "to") == 0 )
+		return 1;
+	if ( strcasecmp(identifier, "auth") == 0 )
+		return 2;	
+	
+	return -1;
+}
+
+static const char *tsto_envelope_get_member_name(int id) 
+{
+	switch ( id ) {
+	case 0: return "from";
+	case 1: return "to";
+	case 2: return "auth";
+	}
+	
+	return NULL;
+}
+
+static bool tsto_envelope_set_member(int id, string_t *value)
+{
+	switch ( id ) {
+	case 0: 
+		testsuite_envelope_set_sender(str_c(value));
+		return TRUE;
+	case 1:
+		testsuite_envelope_set_recipient(str_c(value));
+		return TRUE;
+	case 2: 
+		testsuite_envelope_set_auth_user(str_c(value));
+		return TRUE;
+	}
+	
+	return FALSE;
 }

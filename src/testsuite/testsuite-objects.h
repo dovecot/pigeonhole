@@ -19,6 +19,7 @@ struct testsuite_object {
 	const struct sieve_operand *operand;
 	
 	int (*get_member_id)(const char *identifier);
+	const char *(*get_member_name)(int id);
 	bool (*set_member)(int id, string_t *value);
 	string_t *(*get_member)(int id);
 };
@@ -43,6 +44,10 @@ bool testsuite_object_argument_activate
 
 const struct testsuite_object *testsuite_object_read
   (struct sieve_binary *sbin, sieve_size_t *address);
+const struct testsuite_object *testsuite_object_read_member
+  (struct sieve_binary *sbin, sieve_size_t *address, int *member_id);
+const char *testsuite_object_member_name
+	(const struct testsuite_object *object, int member_id);
 bool testsuite_object_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 

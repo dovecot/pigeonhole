@@ -14,6 +14,10 @@ void testsuite_message_deinit(void);
 
 void testsuite_message_set(string_t *message);
 
+void testsuite_envelope_set_sender(const char *value);
+void testsuite_envelope_set_recipient(const char *value);
+void testsuite_envelope_set_auth_user(const char *value);
+
 /* Testsuite validator context */
 
 struct testsuite_validator_context {

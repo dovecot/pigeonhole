@@ -144,10 +144,12 @@ static bool cmd_test_set_operation_execute
 {
 	const struct testsuite_object *object;
 	string_t *value;
+	int member_id;
 
 	t_push();
 	
-	if ( (object=testsuite_object_read(renv->sbin, address)) == NULL ) {
+	if ( (object=testsuite_object_read_member(renv->sbin, address, &member_id)) 
+		== NULL ) {
 		t_pop();
 		return FALSE;
 	}
@@ -157,9 +159,15 @@ static bool cmd_test_set_operation_execute
 		return FALSE;
 	}
 
-	printf(">> TEST SET %s = \"%s\"\n", object->identifier, str_c(value));
+	printf(">> TEST SET %s = \"%s\"\n", 
+		testsuite_object_member_name(object, member_id), str_c(value));
 	
-	object->set_member(-1, value);
+	if ( object->set_member == NULL ) {
+		t_pop();
+		return FALSE;
+	}
+		
+	object->set_member(member_id, value);
 	
 	t_pop();
 	

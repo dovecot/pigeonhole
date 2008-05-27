@@ -8,6 +8,7 @@ Subject: Frop!
 Frop!
 .
 ;
+test_set "envelope.from" "stephan@rename-it.nl";
 
 if not header :contains "from" "rename-it.nl" {
 	discard;
@@ -22,6 +23,7 @@ Subject: Friep!
 Friep!
 .
 ;
+test_set "envelope.from" "stephan@rename-it.nl";
 
 if not header :is "from" "nico@vestingbar.nl" {
     discard;

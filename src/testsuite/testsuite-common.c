@@ -102,6 +102,21 @@ void testsuite_message_deinit(void)
 	mail_raw_deinit();
 }
 
+void testsuite_envelope_set_sender(const char *value)
+{
+	testsuite_msgdata.return_path = value;
+}
+
+void testsuite_envelope_set_recipient(const char *value)
+{
+	testsuite_msgdata.to_address = value;
+}
+
+void testsuite_envelope_set_auth_user(const char *value)
+{
+	testsuite_msgdata.auth_user = value;
+}
+
 /* 
  * Validator context 
  */
