@@ -34,6 +34,7 @@ static bool ext_testsuite_binary_load(struct sieve_binary *sbin);
 
 /* Commands */
 
+extern const struct sieve_command cmd_test;
 extern const struct sieve_command cmd_test_set;
 
 /* Operands */
@@ -43,10 +44,11 @@ const struct sieve_operand *testsuite_operands[] =
 
 /* Operations */
 
+extern const struct sieve_operation test_operation;
 extern const struct sieve_operation test_set_operation;
 
 const struct sieve_operation *testsuite_operations[] =
-    { &test_set_operation };
+    { &test_operation, &test_set_operation };
     
 /* Extension definitions */
 
@@ -59,7 +61,7 @@ const struct sieve_extension testsuite_extension = {
 	NULL, NULL,
 	ext_testsuite_binary_load, 
 	NULL, 
-	SIEVE_EXT_DEFINE_OPERATION(test_set_operation),
+	SIEVE_EXT_DEFINE_OPERATIONS(testsuite_operations),
 	SIEVE_EXT_DEFINE_OPERAND(testsuite_object_operand)
 };
 
@@ -74,6 +76,7 @@ static bool ext_testsuite_load(int ext_id)
 
 static bool ext_testsuite_validator_load(struct sieve_validator *validator)
 {
+	sieve_validator_register_command(validator, &cmd_test);
 	sieve_validator_register_command(validator, &cmd_test_set);
 	
 	return testsuite_validator_context_initialize(validator);

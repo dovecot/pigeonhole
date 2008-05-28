@@ -38,7 +38,7 @@ static bool tst_allof_generate
 	
 	if ( jump_true ) {
 		/* Prepare jumplist */
-		sieve_jumplist_init(&false_jumps, sbin);
+		sieve_jumplist_init_temp(&false_jumps, sbin);
 	}
 	
 	test = sieve_ast_test_first(ctx->ast_node);

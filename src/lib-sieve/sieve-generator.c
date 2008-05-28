@@ -12,7 +12,15 @@
 #include "sieve-generator.h"
 
 /* Jump list */
-void sieve_jumplist_init(struct sieve_jumplist *jlist, struct sieve_binary *sbin)
+void sieve_jumplist_init
+	(struct sieve_jumplist *jlist, pool_t pool, struct sieve_binary *sbin)
+{
+	jlist->binary = sbin;
+	p_array_init(&jlist->jumps, pool, 4);
+}
+
+void sieve_jumplist_init_temp
+	(struct sieve_jumplist *jlist, struct sieve_binary *sbin)
 {
 	jlist->binary = sbin;
 	t_array_init(&jlist->jumps, 4);

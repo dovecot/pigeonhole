@@ -26,6 +26,13 @@ struct testsuite_validator_context {
 
 bool testsuite_validator_context_initialize(struct sieve_validator *valdtr);
 
+/* Testsuite operations */
+
+enum testsuite_operation_code {
+	TESTSUITE_OPERATION_TEST,
+	TESTSUITE_OPERATION_TEST_SET
+};
+
 /* Testsuite operands */
 
 extern const struct sieve_operand testsuite_object_operand;

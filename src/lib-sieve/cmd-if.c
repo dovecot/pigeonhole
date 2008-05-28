@@ -148,7 +148,7 @@ static bool cmd_if_generate
 	struct sieve_jumplist jmplist;
 	
 	/* Prepare jumplist */
-	sieve_jumplist_init(&jmplist, sbin);
+	sieve_jumplist_init_temp(&jmplist, sbin);
 	
 	/* Generate test condition */
 	test = sieve_ast_test_first(ctx->ast_node);

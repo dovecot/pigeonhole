@@ -36,7 +36,7 @@ static bool tst_anyof_generate
 	
 	if ( !jump_true ) {
 		/* Prepare jumplist */
-		sieve_jumplist_init(&true_jumps, sbin);
+		sieve_jumplist_init_temp(&true_jumps, sbin);
 	}
 	
 	test = sieve_ast_test_first(ctx->ast_node);

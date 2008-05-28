@@ -308,7 +308,6 @@ static int tsto_envelope_get_member_id(const char *identifier);
 static const char *tsto_envelope_get_member_name(int id);
 static bool tsto_envelope_set_member(int id, string_t *value);
 
-
 const struct testsuite_object message_testsuite_object = { 
 	"message",
 	TESTSUITE_OBJECT_MESSAGE,
@@ -328,6 +327,12 @@ const struct testsuite_object envelope_testsuite_object = {
 	NULL
 };
 
+enum testsuite_object_envelope_field {
+	TESTSUITE_OBJECT_ENVELOPE_FROM,
+	TESTSUITE_OBJECT_ENVELOPE_TO,
+	TESTSUITE_OBJECT_ENVELOPE_AUTH_USER
+};
+
 static bool tsto_message_set_member(int id, string_t *value) 
 {
 	if ( id != -1 ) return FALSE;
@@ -340,11 +345,11 @@ static bool tsto_message_set_member(int id, string_t *value)
 static int tsto_envelope_get_member_id(const char *identifier)
 {
 	if ( strcasecmp(identifier, "from") == 0 )
-		return 0;
+		return TESTSUITE_OBJECT_ENVELOPE_FROM;
 	if ( strcasecmp(identifier, "to") == 0 )
-		return 1;
+		return TESTSUITE_OBJECT_ENVELOPE_TO;
 	if ( strcasecmp(identifier, "auth") == 0 )
-		return 2;	
+		return TESTSUITE_OBJECT_ENVELOPE_AUTH_USER;	
 	
 	return -1;
 }
@@ -352,9 +357,12 @@ static int tsto_envelope_get_member_id(const char *identifier)
 static const char *tsto_envelope_get_member_name(int id) 
 {
 	switch ( id ) {
-	case 0: return "from";
-	case 1: return "to";
-	case 2: return "auth";
+	case TESTSUITE_OBJECT_ENVELOPE_FROM: 
+		return "from";
+	case TESTSUITE_OBJECT_ENVELOPE_TO: 
+		return "to";
+	case TESTSUITE_OBJECT_ENVELOPE_AUTH_USER: 
+		return "auth";
 	}
 	
 	return NULL;
@@ -363,13 +371,13 @@ static const char *tsto_envelope_get_member_name(int id)
 static bool tsto_envelope_set_member(int id, string_t *value)
 {
 	switch ( id ) {
-	case 0: 
+	case TESTSUITE_OBJECT_ENVELOPE_FROM: 
 		testsuite_envelope_set_sender(str_c(value));
 		return TRUE;
-	case 1:
+	case TESTSUITE_OBJECT_ENVELOPE_TO:
 		testsuite_envelope_set_recipient(str_c(value));
 		return TRUE;
-	case 2: 
+	case TESTSUITE_OBJECT_ENVELOPE_AUTH_USER: 
 		testsuite_envelope_set_auth_user(str_c(value));
 		return TRUE;
 	}

@@ -54,22 +54,9 @@ const struct sieve_command cmd_test_set = {
 const struct sieve_operation test_set_operation = { 
 	"TEST_SET",
 	&testsuite_extension, 
-	0,
+	TESTSUITE_OPERATION_TEST_SET,
 	cmd_test_set_operation_dump, 
 	cmd_test_set_operation_execute 
-};
-
-/* Fields */
-
-enum cmd_test_set_object {
-	CMD_SET_OBJ_MESSAGE,
-	CMD_SET_OBJ_ENVELOPE
-};
-
-enum cmd_test_set_envelope_field {
-	CMD_SET_ENVELOPE_SENDER,
-	CMD_SET_ENVELOPE_RECIPIENT,
-	CMD_SET_ENVELOPE_AUTH_USER
 };
 
 /* 
@@ -77,28 +64,28 @@ enum cmd_test_set_envelope_field {
  */
  
 static bool cmd_test_set_validate
-(struct sieve_validator *validator, struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr, struct sieve_command_context *cmd) 
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 
 	/* Check arguments */
 	
 	if ( !sieve_validate_positional_argument
-		(validator, cmd, arg, "object", 1, SAAT_STRING) ) {
+		(valdtr, cmd, arg, "object", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
 	
-	if ( !testsuite_object_argument_activate(validator, arg, cmd) )
+	if ( !testsuite_object_argument_activate(valdtr, arg, cmd) )
 		return FALSE;
 	
 	arg = sieve_ast_argument_next(arg);
 	
 	if ( !sieve_validate_positional_argument
-		(validator, cmd, arg, "value", 2, SAAT_STRING) ) {
+		(valdtr, cmd, arg, "value", 2, SAAT_STRING) ) {
 		return FALSE;
 	}
 	
-	return sieve_validator_argument_activate(validator, cmd, arg, FALSE);
+	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
 /*

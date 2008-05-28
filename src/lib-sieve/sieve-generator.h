@@ -36,12 +36,15 @@ inline const void *sieve_generator_extension_get_context
 /* Jump list */
 
 struct sieve_jumplist {
+	pool_t pool;
 	struct sieve_binary *binary;
 	ARRAY_DEFINE(jumps, sieve_size_t);
 };
 
-void sieve_jumplist_init
+void sieve_jumplist_init_temp
 	(struct sieve_jumplist *jlist, struct sieve_binary *sbin);
+void sieve_jumplist_init
+	(struct sieve_jumplist *jlist, pool_t pool, struct sieve_binary *sbin);
 void sieve_jumplist_add
 	(struct sieve_jumplist *jlist, sieve_size_t jump);
 void sieve_jumplist_resolve(struct sieve_jumplist *jlist);

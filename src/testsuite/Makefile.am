@@ -38,6 +38,7 @@ testsuite_LDADD = $(ldadd)
 testsuite_DEPENDENCIES = $(libs)
 
 cmds = \
+	cmd-test.c \
 	cmd-test-set.c
 
 testsuite_SOURCES = \
