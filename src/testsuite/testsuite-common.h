@@ -26,12 +26,25 @@ struct testsuite_validator_context {
 
 bool testsuite_validator_context_initialize(struct sieve_validator *valdtr);
 
+/* Testsuite generator context */
+
+struct testsuite_generator_context {
+	struct sieve_jumplist *exit_jumps;
+};
+
+bool testsuite_generator_context_initialize(struct sieve_generator *gentr);
+
 /* Testsuite operations */
 
 enum testsuite_operation_code {
 	TESTSUITE_OPERATION_TEST,
+	TESTSUITE_OPERATION_TEST_FAIL,
 	TESTSUITE_OPERATION_TEST_SET
 };
+
+extern const struct sieve_operation test_operation;
+extern const struct sieve_operation test_fail_operation;
+extern const struct sieve_operation test_set_operation;
 
 /* Testsuite operands */
 

@@ -29,26 +29,25 @@
 /* Forward declarations */
 
 static bool ext_testsuite_load(int ext_id);
-static bool ext_testsuite_validator_load(struct sieve_validator *validator);
+static bool ext_testsuite_validator_load(struct sieve_validator *valdtr);
+static bool ext_testsuite_generator_load(struct sieve_generator *gentr);
 static bool ext_testsuite_binary_load(struct sieve_binary *sbin);
 
 /* Commands */
 
 extern const struct sieve_command cmd_test;
+extern const struct sieve_command cmd_test_fail;
 extern const struct sieve_command cmd_test_set;
+
+/* Operations */
+
+const struct sieve_operation *testsuite_operations[] =
+    { &test_operation, &test_fail_operation, &test_set_operation };
 
 /* Operands */
 
 const struct sieve_operand *testsuite_operands[] =
     { &testsuite_object_operand };
-
-/* Operations */
-
-extern const struct sieve_operation test_operation;
-extern const struct sieve_operation test_set_operation;
-
-const struct sieve_operation *testsuite_operations[] =
-    { &test_operation, &test_set_operation };
     
 /* Extension definitions */
 
@@ -57,8 +56,9 @@ int ext_testsuite_my_id;
 const struct sieve_extension testsuite_extension = { 
 	"vnd.dovecot.testsuite", 
 	ext_testsuite_load,
-	ext_testsuite_validator_load, 
-	NULL, NULL,
+	ext_testsuite_validator_load,
+	ext_testsuite_generator_load,
+	NULL,
 	ext_testsuite_binary_load, 
 	NULL, 
 	SIEVE_EXT_DEFINE_OPERATIONS(testsuite_operations),
@@ -74,12 +74,20 @@ static bool ext_testsuite_load(int ext_id)
 
 /* Load extension into validator */
 
-static bool ext_testsuite_validator_load(struct sieve_validator *validator)
+static bool ext_testsuite_validator_load(struct sieve_validator *valdtr)
 {
-	sieve_validator_register_command(validator, &cmd_test);
-	sieve_validator_register_command(validator, &cmd_test_set);
+	sieve_validator_register_command(valdtr, &cmd_test);
+	sieve_validator_register_command(valdtr, &cmd_test_fail);
+	sieve_validator_register_command(valdtr, &cmd_test_set);
 	
-	return testsuite_validator_context_initialize(validator);
+	return testsuite_validator_context_initialize(valdtr);
+}
+
+/* Load extension into generator */
+
+static bool ext_testsuite_generator_load(struct sieve_generator *gentr)
+{
+	return testsuite_generator_context_initialize(gentr);
 }
 
 /* Load extension into binary */

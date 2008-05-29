@@ -39,6 +39,7 @@ testsuite_DEPENDENCIES = $(libs)
 
 cmds = \
 	cmd-test.c \
+	cmd-test-fail.c \
 	cmd-test-set.c
 
 testsuite_SOURCES = \

@@ -41,10 +41,12 @@ struct sieve_jumplist {
 	ARRAY_DEFINE(jumps, sieve_size_t);
 };
 
+struct sieve_jumplist *sieve_jumplist_create
+	(pool_t pool, struct sieve_binary *sbin);
 void sieve_jumplist_init_temp
 	(struct sieve_jumplist *jlist, struct sieve_binary *sbin);
-void sieve_jumplist_init
-	(struct sieve_jumplist *jlist, pool_t pool, struct sieve_binary *sbin);
+void sieve_jumplist_reset
+	(struct sieve_jumplist *jlist);
 void sieve_jumplist_add
 	(struct sieve_jumplist *jlist, sieve_size_t jump);
 void sieve_jumplist_resolve(struct sieve_jumplist *jlist);

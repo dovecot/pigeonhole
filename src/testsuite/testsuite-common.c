@@ -127,13 +127,32 @@ bool testsuite_validator_context_initialize(struct sieve_validator *valdtr)
 	struct testsuite_validator_context *ctx = 
 		p_new(pool, struct testsuite_validator_context, 1);
 	
-	/* Setup comparator registry */
+	/* Setup object registry */
 	ctx->object_registrations = hash_create
 		(pool, pool, 0, str_hash, (hash_cmp_callback_t *) strcmp);
 
 	testsuite_register_core_objects(pool, ctx);
 	
 	sieve_validator_extension_set_context(valdtr, ext_testsuite_my_id, ctx);
+
+	return TRUE;
+}
+
+/* 
+ * Generator context 
+ */
+
+bool testsuite_generator_context_initialize(struct sieve_generator *gentr)
+{
+	pool_t pool = sieve_validator_pool(gentr);
+	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
+	struct testsuite_generator_context *ctx = 
+		p_new(pool, struct testsuite_generator_context, 1);
+	
+	/* Setup exit jumplist */
+	ctx->exit_jumps = sieve_jumplist_create(pool, sbin);
+	
+	sieve_generator_extension_set_context(gentr, ext_testsuite_my_id, ctx);
 
 	return TRUE;
 }

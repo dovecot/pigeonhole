@@ -12,8 +12,7 @@ Frop!
 	test_set "envelope.from" "stephan@rename-it.nl";
 
 	if not header :contains "from" "rename-it.nl" {
-		discard;
-		stop;
+		test_fail "Message data not set properly.";
 	}
 
 	test_set "message" text:
@@ -27,8 +26,7 @@ Friep!
 	test_set "envelope.from" "stephan@rename-it.nl";
 
 	if not header :is "from" "nico@vestingbar.nl" {
-    	discard;
-    	stop;
+    	test_fail "Message data not set properly.";
 	} 
 
 	keep;
