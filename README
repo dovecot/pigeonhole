@@ -1,8 +1,12 @@
+Sieve implementation for Dovecot (1.1)
+
 ################################################################################
                                  !! WARNING !!
   
  This sieve implementation is highly experimental. In addition to the usual GPL 
-     disclaimer I urge you not to use this for any important mail just yet!
+   disclaimer you are advised not to use this for any important mail just yet!
+     
+      	The current status of this project is outlined in the TODO file.
   
 ################################################################################
 
@@ -24,8 +28,18 @@ end of the logfile. I currently didn't bother to implement log rotation, so keep
 this in mind. Some development-related debug output is sent to stderr/stdout at 
 all times, this will be removed when this project matures. 
 
+The cmusieve plugin compiled the script into a file with an appended c, e.g. 
+'test.sievec'. This new implementation recognizes scripts to have the .sieve 
+extension. The binary is (by default) written to a file with extension .svbin. 
+This means that the default .dovecot.sieve is compiled into .dovecot.svbin. 
+Included scripts are currently always compiled into the main binary, meaning 
+that no other files are written and no permission to do so is necessary for the 
+global script directories. 
+
 To test the sieve engine outside deliver it is useful to execute the binaries 
-that exist in the src/sieve-bin/ directory:
+that exist in the src/sieve-bin/ directory of this package. After installation, 
+these scripts are available in the dovecot lib directory. The following commands
+are available:
 
 --
 
@@ -54,12 +68,12 @@ encountered during execution and finally it prints a list of actions that would
 have been performed on this message.
 
 Options:
-	-r  envelope recipient address
-	-s	envelope sender
-	-m	the mailbox where the keep action should store
-	-d	causes a dump of the generated code to be written to the specified
-		file. Using - as filename causes the dump to be written to stdout
-	-c  force compilation (ignore any existing binary)
+  -r  envelope recipient address
+  -s  envelope sender
+  -m  the mailbox where the keep action should store
+  -d  causes a dump of the generated code to be written to the specified
+      file. Using - as filename causes the dump to be written to stdout
+  -c  force compilation (ignore any existing binary)
 
 --
 
@@ -158,12 +172,14 @@ or even fully RFC-compliant. Other extensions will be added as soon as the
 necessary infrastructure is available. Extensions already supported by cmusieve
 have priority.
 
-Design
-------
+Contact Info
+------------
 
-Refer to DESIGN file.
+Stephan Bosch <stephan at rename-it dot nl>
+IRC: Freenode, #dovecot, S[r]us
 
-TODO
-----
+Please use the Dovecot mailing list <dovecot at dovecot.org> for questions about 
+this package. You can post to the list without subscribing, the mail then waits 
+in a moderator queue for a while. See http://dovecot.org/mailinglists.html
 
-Refer to TODO file.
+

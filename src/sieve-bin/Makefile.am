@@ -1,3 +1,5 @@
+pkglibexecdir = $(libexecdir)/dovecot
+
 bin_PROGRAMS = sievec sieved sieve-test sieve-exec
 
 AM_CPPFLAGS = \
