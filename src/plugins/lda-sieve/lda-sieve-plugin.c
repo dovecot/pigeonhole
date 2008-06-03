@@ -92,10 +92,10 @@ static int lda_sieve_run
 	ehandler = sieve_logfile_ehandler_create(scriptlog);
 
 	if ( debug )
-		i_info("sieve: Compiling script %s", script_path);
+		i_info("sieve: Opening script %s", script_path);
 
-	if ( (sbin=sieve_compile(script_path, ehandler)) == NULL ) {
-		i_error("sieve: Failed to compile script. "
+	if ( (sbin=sieve_open(script_path, ehandler)) == NULL ) {
+		i_error("sieve: Failed to open script. "
 			"Log should be available as %s", scriptlog);
 
 		sieve_error_handler_unref(&ehandler);
