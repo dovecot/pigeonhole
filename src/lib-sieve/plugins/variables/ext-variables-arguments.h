@@ -9,10 +9,6 @@
 
 extern const struct sieve_argument variable_argument;
 
-bool ext_variables_variable_assignment_activate
-	(struct sieve_validator *validator, struct sieve_ast_argument *arg,
-		struct sieve_command_context *cmd);
-
 /* 
  * Match value argument 
  */

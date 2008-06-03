@@ -230,7 +230,7 @@ static bool cmd_set_validate(struct sieve_validator *validator,
 		return FALSE;
 	}
 	
-	if ( !ext_variables_variable_assignment_activate(validator, arg, cmd) ) {
+	if ( !sieve_variable_argument_activate(validator, cmd, arg, TRUE) ) {
 		return FALSE;
 	}
 
@@ -352,10 +352,10 @@ static bool cmd_set_operation_execute
 	
 	printf(">> SET\n");
 	
-	/* Read the variable identifier */
-	if ( !ext_variables_opr_variable_read
+	/* Read the variable */
+	if ( !sieve_variable_operand_read
 		(renv, address, &storage, &var_index) )
-		return FALSE;	
+		return FALSE;
 		
 	/* Read the raw string value */
 	if ( !sieve_opr_string_read(renv, address, &value) )
@@ -384,7 +384,7 @@ static bool cmd_set_operation_execute
 						value = NULL;
 						break;
 					}
-					
+				
 					value = new_value;
 				}
 			}

@@ -115,19 +115,20 @@ static bool opr_variable_read_value
 	
 	return FALSE;
 }
-
-bool ext_variables_opr_variable_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	struct sieve_variable_storage **storage, unsigned int *var_index)
+		
+bool sieve_variable_operand_read_data
+(const struct sieve_runtime_env *renv, const struct sieve_operand *operand, 
+	sieve_size_t *address, struct sieve_variable_storage **storage, 
+	unsigned int *var_index)
 {
 	unsigned int code;
 	int ext_id;
-	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
 	sieve_size_t idx = 0;
-	
-	if ( operand != &variable_operand ) 
+
+	if ( operand != &variable_operand ) {
 		return FALSE;
-		
+	}
+
 	if ( !sieve_binary_read_byte(renv->sbin, address, &code) ) {
 		return FALSE;
 	}
@@ -145,6 +146,16 @@ bool ext_variables_opr_variable_read
 	return FALSE;
 }
 
+bool sieve_variable_operand_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	struct sieve_variable_storage **storage, unsigned int *var_index)
+{
+	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
+
+	return sieve_variable_operand_read_data
+		(renv, operand, address, storage, var_index);
+}
+	
 /* 
  * Match value operand 
  */

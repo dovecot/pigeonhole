@@ -13,6 +13,7 @@
 
 #include "ext-variables-common.h"
 #include "ext-variables-name.h"
+#include "ext-variables-arguments.h"
 
 /* 
  * Variable argument 
@@ -45,9 +46,9 @@ static struct sieve_ast_argument *ext_variables_variable_argument_create
 	return arg;
 }
 
-bool ext_variables_variable_assignment_activate
-(struct sieve_validator *validator, struct sieve_ast_argument *arg,
-	struct sieve_command_context *cmd)
+bool sieve_variable_argument_activate
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	struct sieve_ast_argument *arg, bool assignment)
 {
 	struct sieve_variable *var;
 	string_t *variable;
@@ -64,7 +65,7 @@ bool ext_variables_variable_assignment_activate
 	
 	if ( nelements < 0 || varstr != varend ) {
 		sieve_command_validate_error(validator, cmd, 
-			"invalid variable name in assignment");
+			"invalid variable name '%s'", varstr);
 		return FALSE;
 	}
 	
@@ -81,8 +82,17 @@ bool ext_variables_variable_assignment_activate
 			
 			return TRUE;
 		} else {
-			sieve_command_validate_error(validator, cmd, 
-				"cannot assign to match variable");
+			if ( assignment ) {
+				arg->argument = &match_value_argument;
+				arg->context = (void *) cur_element->num_variable;
+				
+				return TRUE;
+			} else {		
+				sieve_command_validate_error(validator, cmd, 
+					"cannot assign to match variable");
+				
+				return FALSE;
+			}
 		}
 	} else {
 		const struct ext_variable_name *cur_element = 

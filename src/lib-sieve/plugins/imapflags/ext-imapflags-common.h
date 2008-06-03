@@ -3,6 +3,9 @@
 
 #include "lib.h"
 
+#include "sieve-common.h"
+#include "sieve-ext-variables.h"
+
 extern int ext_imapflags_my_id;
 extern const struct sieve_extension imapflags_extension;
 
@@ -16,9 +19,16 @@ enum ext_imapflags_opcode {
 bool ext_imapflags_command_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 
+bool ext_imapflags_command_operands_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 bool ext_imapflags_command_operation_dump
 (const struct sieve_operation *op,	
 	const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	
+bool ext_imapflags_command_operands_read
+(	const struct sieve_runtime_env *renv, sieve_size_t *address,
+	struct sieve_coded_stringlist **flag_list, 
+	struct sieve_variable_storage **storage, unsigned int *var_index);
 
 /* Flag registration */
 

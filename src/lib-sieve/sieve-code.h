@@ -101,15 +101,27 @@ bool sieve_operand_optional_read
 	(struct sieve_binary *sbin, sieve_size_t *address, int *id_code);
 
 void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_size_t number);
+bool sieve_opr_number_dump_data	
+	(const struct sieve_dumptime_env *denv, const struct sieve_operand *operand,
+		sieve_size_t *address); 
 bool sieve_opr_number_dump	
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address); 
+bool sieve_opr_number_read_data
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
+		sieve_size_t *address, sieve_size_t *number);
 bool sieve_opr_number_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
 		sieve_size_t *number);
 
 void sieve_opr_string_emit(struct sieve_binary *sbin, string_t *str);
+bool sieve_opr_string_dump_data
+	(const struct sieve_dumptime_env *denv, const struct sieve_operand *operand,
+		sieve_size_t *address); 
 bool sieve_opr_string_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address); 
+bool sieve_opr_string_read_data
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
+		sieve_size_t *address, string_t **str);
 bool sieve_opr_string_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
 
@@ -119,10 +131,35 @@ void sieve_opr_stringlist_emit_item
 	(struct sieve_binary *sbin, void *context ATTR_UNUSED, string_t *item);
 void sieve_opr_stringlist_emit_end
 	(struct sieve_binary *sbin, void *context);
+bool sieve_opr_stringlist_dump_data
+	(const struct sieve_dumptime_env *denv, const struct sieve_operand *operand, 
+		sieve_size_t *address);
 bool sieve_opr_stringlist_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+struct sieve_coded_stringlist *sieve_opr_stringlist_read_data
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand, 
+		sieve_size_t op_address, sieve_size_t *address);
 struct sieve_coded_stringlist *sieve_opr_stringlist_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+
+static inline bool sieve_operand_is_number
+(const struct sieve_operand *operand)
+{
+	return ( operand != NULL && operand->class == &number_class );
+}
+
+static inline bool sieve_operand_is_string
+(const struct sieve_operand *operand)
+{
+	return ( operand != NULL && operand->class == &string_class );
+}
+
+static inline bool sieve_operand_is_stringlist
+(const struct sieve_operand *operand)
+{
+	return ( operand != NULL && 
+		(operand->class == &stringlist_class || operand->class == &string_class) );
+}
 
 
 /* Operation: identifies what's to be done */

@@ -72,13 +72,15 @@ static bool cmd_removeflag_operation_execute
 	bool result = TRUE;
 	string_t *flag_item;
 	struct sieve_coded_stringlist *flag_list;
+	struct sieve_variable_storage *storage;
+	unsigned int var_index;
 	
 	printf("REMOVEFLAG\n");
 	
 	t_push();
-		
-	/* Read header-list */
-	if ( (flag_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
+	
+	if ( !ext_imapflags_command_operands_read
+		(renv, address, &flag_list, &storage, &var_index) ) {
 		t_pop();
 		return FALSE;
 	}

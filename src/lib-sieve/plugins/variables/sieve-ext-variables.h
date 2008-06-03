@@ -74,5 +74,29 @@ struct sieve_variable_storage *sieve_ext_variables_get_storage
 void sieve_ext_variables_set_storage
 	(struct sieve_interpreter *interp, struct sieve_variable_storage *storage,
 		int ext_id);	
+		
+/* Variable arguments */
+
+bool sieve_variable_argument_activate
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	struct sieve_ast_argument *arg, bool assignment);
 	
+/* Variable operands */
+
+extern const struct sieve_operand variable_operand;
+
+bool sieve_variable_operand_read_data
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand, 
+		sieve_size_t *address, struct sieve_variable_storage **storage, 
+		unsigned int *var_index);
+bool sieve_variable_operand_read
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+		struct sieve_variable_storage **storage, unsigned int *var_index);
+		
+static inline bool sieve_operand_is_variable
+(const struct sieve_operand *operand)
+{
+	return ( operand != NULL && operand == &variable_operand );
+}	
+
 #endif /* __SIEVE_EXT_VARIABLES_H */

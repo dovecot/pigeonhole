@@ -17,9 +17,6 @@ extern const struct sieve_operand variable_operand;
 
 void ext_variables_opr_variable_emit
 	(struct sieve_binary *sbin, struct sieve_variable *var);
-bool ext_variables_opr_variable_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-		struct sieve_variable_storage **storage, unsigned int *var_index);
 
 /* 
  * Match value operand 

@@ -71,18 +71,21 @@ static bool cmd_addflag_operation_execute
 	bool result = TRUE;
 	string_t *flag_item;
 	struct sieve_coded_stringlist *flag_list;
+	struct sieve_variable_storage *storage;
+	unsigned int var_index;
 	
 	printf("ADDFLAG\n");
 	
 	t_push();
-		
-	/* Read header-list */
-	if ( (flag_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
+	
+	if ( !ext_imapflags_command_operands_read
+		(renv, address, &flag_list, &storage, &var_index) ) {
 		t_pop();
 		return FALSE;
 	}
 	
-	/* Iterate through all requested headers to match */
+	/* Iterate through all added flags */
+	
 	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flag_item)) && 
 		flag_item != NULL ) {
 		ext_imapflags_add_flags(renv, flag_item);

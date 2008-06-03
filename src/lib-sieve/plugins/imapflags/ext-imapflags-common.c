@@ -8,6 +8,8 @@
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
 
+#include "sieve-ext-variables.h"
+
 #include "ext-imapflags-common.h"
 
 bool ext_imapflags_command_validate
@@ -20,8 +22,8 @@ bool ext_imapflags_command_validate
 	
 	if ( arg == NULL ) {
 		sieve_command_validate_error(validator, cmd, 
-			"the %s command expects at least one argument, but none was found", 
-			cmd->command->identifier);
+			"the %s %s expects at least one argument, but none was found", 
+			cmd->command->identifier, sieve_command_type_name(cmd->command));
 		return FALSE;
 	}
 	
@@ -29,53 +31,73 @@ bool ext_imapflags_command_validate
 		sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) 
 	{
 		sieve_command_validate_error(validator, cmd, 
-			"the %s command expects either a string (variable name) or "
+			"the %s %s expects either a string (variable name) or "
 			"a string-list (list of flags) as first argument, but %s was found", 
-			cmd->command->identifier, sieve_ast_argument_name(arg));
+			cmd->command->identifier, sieve_command_type_name(cmd->command),
+			sieve_ast_argument_name(arg));
 		return FALSE; 
 	}
 
 	arg2 = sieve_ast_argument_next(arg);
 	if ( arg2 != NULL ) {		
-		if ( !sieve_validator_argument_activate(validator, cmd, arg, TRUE) )
-			return FALSE;
-
 		/* First, check syntax sanity */
 				
 		if ( sieve_ast_argument_type(arg) != SAAT_STRING ) 
 		{
 			sieve_command_validate_error(validator, cmd, 
-				"if a second argument is specified for the %s command, the first "
+				"if a second argument is specified for the %s %s, the first "
 				"must be a string (variable name), but %s was found",
-				cmd->command->identifier, sieve_ast_argument_name(arg));
-			return FALSE; 
-		}		
-		
-		if ( sieve_ast_argument_type(arg2) != SAAT_STRING && 
-			sieve_ast_argument_type(arg2) != SAAT_STRING_LIST ) 
-		{
-			sieve_command_validate_error(validator, cmd, 
-				"the %s command expects a string list (list of flags) as "
-				"second argument when two arguments are specified, "
-				"but %s was found",
-				cmd->command->identifier, sieve_ast_argument_name(arg2));
+				cmd->command->identifier, sieve_command_type_name(cmd->command), 
+				sieve_ast_argument_name(arg));
 			return FALSE; 
 		}
 		
 		/* Then, check whether the second argument is permitted */
 		
-		/* IF !VARIABLE EXTENSION LOADED */
+		if ( !sieve_ext_variables_is_active(validator) )	{
+			sieve_command_validate_error(validator, cmd, 
+				"the %s %s only allows for the specification of a "
+				"variable name when the variables extension is active",
+				cmd->command->identifier, sieve_command_type_name(cmd->command));
+			return FALSE;
+		}		
+		
+		if ( !sieve_variable_argument_activate(validator, cmd, arg, TRUE) )
+			return FALSE;
+		
+		if ( sieve_ast_argument_type(arg2) != SAAT_STRING && 
+			sieve_ast_argument_type(arg2) != SAAT_STRING_LIST ) 
 		{
 			sieve_command_validate_error(validator, cmd, 
-				"the %s command only allows for the specification of a "
-				"variable name when the variables extension is active",
-				cmd->command->identifier);
-			return FALSE;
+				"the %s %s command expects a string list (list of flags) as "
+				"second argument when two arguments are specified, "
+				"but %s was found",
+				cmd->command->identifier, sieve_command_type_name(cmd->command),
+				sieve_ast_argument_name(arg2));
+			return FALSE; 
 		}
 	} else
 		arg2 = arg;
 
 	return sieve_validator_argument_activate(validator, cmd, arg2, FALSE);	
+}
+
+bool ext_imapflags_command_operands_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	const struct sieve_operand *operand;
+	
+	sieve_code_mark(denv);
+	operand = sieve_operand_read(denv->sbin, address);
+
+	if ( sieve_operand_is_variable(operand) ) {	
+		return 
+			sieve_opr_string_dump_data(denv, operand, address) &&
+			sieve_opr_stringlist_dump(denv, address);
+	}
+	
+	return 
+			sieve_opr_stringlist_dump_data(denv, operand, address);
 }
 
 bool ext_imapflags_command_operation_dump
@@ -85,8 +107,44 @@ bool ext_imapflags_command_operation_dump
 	sieve_code_dumpf(denv, "%s", op->mnemonic);
 	sieve_code_descend(denv);
 
-	return 
-		sieve_opr_stringlist_dump(denv, address);
+	return ext_imapflags_command_operands_dump(denv, address); 
+}
+
+bool ext_imapflags_command_operands_read
+(	const struct sieve_runtime_env *renv, sieve_size_t *address,
+	struct sieve_coded_stringlist **flag_list, 
+	struct sieve_variable_storage **storage, unsigned int *var_index)
+{
+	sieve_size_t op_address = *address;
+	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
+
+	if ( operand == NULL ) 
+		return FALSE;
+		
+	if ( sieve_operand_is_variable(operand) ) {		
+		/* Read the variable operand */
+		if ( !sieve_variable_operand_read_data
+			(renv, operand, address, storage, var_index) )
+			return FALSE;
+		
+		/* Read flag list */
+		if ( (*flag_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
+			return FALSE;
+		}
+	} else if ( sieve_operand_is_stringlist(operand) ) {	
+		*storage = NULL;
+		*var_index = 0;
+		
+		/* Read flag list */
+		if ( (*flag_list=sieve_opr_stringlist_read_data
+			(renv, operand, op_address, address)) == NULL ) {
+			return FALSE;
+		}
+	} else {
+		return FALSE;
+	}
+	
+	return TRUE;
 }
 
 /* Context access */

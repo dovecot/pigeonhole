@@ -84,62 +84,13 @@ static bool tst_hasflag_registered
 static bool tst_hasflag_validate
 	(struct sieve_validator *validator,	struct sieve_command_context *tst)
 {
-	struct sieve_ast_argument *arg = tst->first_positional;
-	struct sieve_ast_argument *arg2;
-	
-	/* First validate arguments */
-		
-	if ( arg == NULL ) {
-		sieve_command_validate_error(validator, tst, 
-			"the hasflag test expects at least one argument, but none was found");
+	if ( !ext_imapflags_command_validate(validator, tst) )
 		return FALSE;
-	}
-	
-	if ( sieve_ast_argument_type(arg) != SAAT_STRING && 
-		sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) 
-	{
-		sieve_command_validate_error(validator, tst, 
-			"the hasflag test expects a string-list (variable list or list of flags) "
-			"as first argument, but %s was found", sieve_ast_argument_name(arg));
-		return FALSE; 
-	}
-	
-	arg2 = sieve_ast_argument_next(arg);
-	if ( arg2 != NULL ) {
-		if ( !sieve_validator_argument_activate(validator, tst, arg, TRUE) )
-			return FALSE;
-
-		/* First, check syntax sanity */
 		
-		if ( sieve_ast_argument_type(arg2) != SAAT_STRING && 
-			sieve_ast_argument_type(arg2) != SAAT_STRING_LIST ) 
-		{
-			sieve_command_validate_error(validator, tst, 
-				"the hasflag test expects a string list (list of flags) as "
-				"second argument when two arguments are specified, "
-				"but %s was found",
-				sieve_ast_argument_name(arg2));
-			return FALSE; 
-		}
-		
-		/* Then, check whether the second argument is permitted */
-		
-		/* IF !VARIABLE EXTENSION LOADED */
-		{
-			sieve_command_validate_error(validator, tst, 
-				"the hasflag test only allows for the specification of a "
-				"variable list when the variables extension is active");
-			return FALSE;
-		}
-	} else 
-		arg2 = arg;
-
-	if ( !sieve_validator_argument_activate(validator, tst, arg2, FALSE) )
-		return FALSE;
-	
 	/* Validate the key argument to a specified match type */
 	
-	return sieve_match_type_validate(validator, tst, arg2);
+	return sieve_match_type_validate(validator, tst, 
+		sieve_ast_argument_next(tst->first_positional));
 }
 
 /*
@@ -193,8 +144,7 @@ static bool tst_hasflag_operation_dump
  		}
 	}
 
-	return
-		sieve_opr_stringlist_dump(denv, address);
+	return ext_imapflags_command_operands_dump(denv, address); 
 }
 
 /*
@@ -209,7 +159,9 @@ static bool tst_hasflag_operation_execute
 	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
 	struct sieve_match_context *mctx;
-	struct sieve_coded_stringlist *key_list;
+	struct sieve_coded_stringlist *flag_list;
+	struct sieve_variable_storage *storage;
+	unsigned int var_index;
 	struct ext_imapflags_iter iter;
 	const char *flag;
 	bool matched;
@@ -239,14 +191,15 @@ static bool tst_hasflag_operation_execute
 
 	t_push();
 		
-	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
+	if ( !ext_imapflags_command_operands_read
+		(renv, address, &flag_list, &storage, &var_index) ) {
 		t_pop();
 		return FALSE;
 	}
 
+
 	matched = FALSE;
-	mctx = sieve_match_begin(renv->interp, mtch, cmp, key_list); 	
+	mctx = sieve_match_begin(renv->interp, mtch, cmp, flag_list); 	
 
 	ext_imapflags_get_flags_init(&iter, renv);
 	
