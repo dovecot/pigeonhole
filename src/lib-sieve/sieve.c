@@ -172,6 +172,12 @@ struct sieve_binary *sieve_open
 	return sbin;
 } 
 
+bool sieve_save
+    (struct sieve_binary *sbin, const char *path)
+{
+	return sieve_binary_save(sbin, path);
+}
+
 void sieve_dump(struct sieve_binary *sbin, struct ostream *stream) 
 {
 	struct sieve_binary_dumper *dumpr = sieve_binary_dumper_create(sbin);			

@@ -49,11 +49,11 @@ bool sieve_lexer_skip_token(struct sieve_lexer *lexer);
 const char *sieve_lexer_token_string(struct sieve_lexer *lexer);
 void sieve_lexer_print_token(struct sieve_lexer *lexer);
 
-inline enum sieve_token_type sieve_lexer_current_token(struct sieve_lexer *lexer);
-inline const string_t *sieve_lexer_token_str(struct sieve_lexer *lexer);
-inline const char *sieve_lexer_token_ident(struct sieve_lexer *lexer);
-inline int sieve_lexer_token_int(struct sieve_lexer *lexer);
-inline int sieve_lexer_current_line(struct sieve_lexer *lexer);
-inline bool sieve_lexer_eof(struct sieve_lexer *lexer);
+enum sieve_token_type sieve_lexer_current_token(struct sieve_lexer *lexer);
+const string_t *sieve_lexer_token_str(struct sieve_lexer *lexer);
+const char *sieve_lexer_token_ident(struct sieve_lexer *lexer);
+int sieve_lexer_token_int(struct sieve_lexer *lexer);
+int sieve_lexer_current_line(struct sieve_lexer *lexer);
+bool sieve_lexer_eof(struct sieve_lexer *lexer);
 
 #endif /* __SIEVE_LEXER_H */

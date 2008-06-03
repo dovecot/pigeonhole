@@ -20,11 +20,11 @@ bool sieve_coded_stringlist_read_all
 	(struct sieve_coded_stringlist *strlist, pool_t pool,
 		const char * const **list_r);
 
-inline int sieve_coded_stringlist_get_length
+int sieve_coded_stringlist_get_length
 	(struct sieve_coded_stringlist *strlist);
-inline sieve_size_t sieve_coded_stringlist_get_end_address
+sieve_size_t sieve_coded_stringlist_get_end_address
 	(struct sieve_coded_stringlist *strlist);
-inline sieve_size_t sieve_coded_stringlist_get_current_offset
+sieve_size_t sieve_coded_stringlist_get_current_offset
 	(struct sieve_coded_stringlist *strlist);
 
 /* Operand: argument to an operation */
@@ -90,7 +90,7 @@ extern const struct sieve_operand stringlist_operand;
 extern const struct sieve_operand *sieve_operands[];
 extern const unsigned int sieve_operand_count;
 
-inline sieve_size_t sieve_operand_emit_code
+sieve_size_t sieve_operand_emit_code
 	(struct sieve_binary *sbin, const struct sieve_operand *opr, int ext_id);
 const struct sieve_operand *sieve_operand_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
@@ -168,7 +168,7 @@ extern const struct sieve_operation sieve_jmp_operation;
 extern const struct sieve_operation sieve_jmptrue_operation;
 extern const struct sieve_operation sieve_jmpfalse_operation; 
 
-inline sieve_size_t sieve_operation_emit_code
+sieve_size_t sieve_operation_emit_code
 	(struct sieve_binary *sbin, const struct sieve_operation *op, int ext_id);	
 const struct sieve_operation *sieve_operation_read
 	(struct sieve_binary *sbin, sieve_size_t *address);

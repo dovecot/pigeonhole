@@ -20,13 +20,13 @@ struct sieve_command_registration;
 struct sieve_validator *sieve_validator_create
 	(struct sieve_ast *ast, struct sieve_error_handler *ehandler);
 void sieve_validator_free(struct sieve_validator **validator);
-inline pool_t sieve_validator_pool(struct sieve_validator *validator);
+pool_t sieve_validator_pool(struct sieve_validator *validator);
 
-inline struct sieve_error_handler *sieve_validator_error_handler
+struct sieve_error_handler *sieve_validator_error_handler
 	(struct sieve_validator *validator);
-inline struct sieve_ast *sieve_validator_ast
+struct sieve_ast *sieve_validator_ast
 	(struct sieve_validator *validator);
-inline struct sieve_script *sieve_validator_script
+struct sieve_script *sieve_validator_script
 	(struct sieve_validator *validator);
 
 bool sieve_validator_run(struct sieve_validator *validator);

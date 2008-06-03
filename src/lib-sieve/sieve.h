@@ -80,6 +80,12 @@ struct sieve_binary *sieve_open
  */
 void sieve_dump(struct sieve_binary *sbin, struct ostream *stream);
 
+/* sieve_save:
+ *  Saves the binary as the file indicated by the path parameter.
+ */
+bool sieve_save
+    (struct sieve_binary *sbin, const char *path);
+
 /* sieve_test:
  *
  *   Executes the bytecode, but only prints the result to stdout.

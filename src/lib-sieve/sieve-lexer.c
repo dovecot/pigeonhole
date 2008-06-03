@@ -152,7 +152,7 @@ static void sieve_lexer_shift(struct sieve_lexer *lexer)
   	printf("NULL!\n");*/
 }
 
-static __inline__ int sieve_lexer_curchar(struct sieve_lexer *lexer) {	
+static inline int sieve_lexer_curchar(struct sieve_lexer *lexer) {	
 	if ( lexer->buffer == NULL )
 		return -1;
 	
@@ -222,17 +222,17 @@ void sieve_lexer_print_token(struct sieve_lexer *lexer)
 	}
 }
 
-inline enum sieve_token_type sieve_lexer_current_token(struct sieve_lexer *lexer) {
+enum sieve_token_type sieve_lexer_current_token(struct sieve_lexer *lexer) {
 	return lexer->token_type;
 }
 
-inline const string_t *sieve_lexer_token_str(struct sieve_lexer *lexer) {
+const string_t *sieve_lexer_token_str(struct sieve_lexer *lexer) {
 	i_assert(	lexer->token_type == STT_STRING );
 		
 	return lexer->token_str_value;
 }
 
-inline const char *sieve_lexer_token_ident(struct sieve_lexer *lexer) {
+const char *sieve_lexer_token_ident(struct sieve_lexer *lexer) {
 	i_assert(
 		lexer->token_type == STT_TAG ||
 		lexer->token_type == STT_IDENTIFIER);
@@ -240,17 +240,17 @@ inline const char *sieve_lexer_token_ident(struct sieve_lexer *lexer) {
 	return str_c(lexer->token_str_value);
 }
 
-inline int sieve_lexer_token_int(struct sieve_lexer *lexer) {
+int sieve_lexer_token_int(struct sieve_lexer *lexer) {
 	i_assert(lexer->token_type == STT_NUMBER);
 		
 	return lexer->token_int_value;
 }
 
-inline bool sieve_lexer_eof(struct sieve_lexer *lexer) {
+bool sieve_lexer_eof(struct sieve_lexer *lexer) {
 	return lexer->token_type == STT_EOF;
 }
 
-inline int sieve_lexer_current_line(struct sieve_lexer *lexer) {
+int sieve_lexer_current_line(struct sieve_lexer *lexer) {
 	return lexer->current_line;
 }
 

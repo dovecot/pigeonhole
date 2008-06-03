@@ -88,7 +88,7 @@ void sieve_result_unref(struct sieve_result **result)
     *result = NULL;
 }
 
-inline pool_t sieve_result_pool(struct sieve_result *result)
+pool_t sieve_result_pool(struct sieve_result *result)
 {
 	return result->pool;
 }

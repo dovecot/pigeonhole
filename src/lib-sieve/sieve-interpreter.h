@@ -15,11 +15,11 @@
 
 struct sieve_message_context;
 
-inline void sieve_message_context_extension_set
+void sieve_message_context_extension_set
 	(struct sieve_message_context *msgctx, int ext_id, void *context);
-inline const void *sieve_message_context_extension_get
+const void *sieve_message_context_extension_get
 	(struct sieve_message_context *msgctx, int ext_id);
-inline pool_t sieve_message_context_pool
+pool_t sieve_message_context_pool
 	(struct sieve_message_context *msgctx);
 
 /* Interpreter */
@@ -43,25 +43,25 @@ struct sieve_interpreter *sieve_interpreter_create
 	(struct sieve_binary *sbin, struct sieve_error_handler *ehandler);
 void sieve_interpreter_free(struct sieve_interpreter **interp);
 
-inline pool_t sieve_interpreter_pool
+pool_t sieve_interpreter_pool
 	(struct sieve_interpreter *interp);
-inline struct sieve_script *sieve_interpreter_script
+struct sieve_script *sieve_interpreter_script
 	(struct sieve_interpreter *interp);
-inline struct sieve_error_handler *sieve_interpreter_get_error_handler
+struct sieve_error_handler *sieve_interpreter_get_error_handler
 	(struct sieve_interpreter *interp);
 
-inline void sieve_interpreter_reset
+void sieve_interpreter_reset
 	(struct sieve_interpreter *interp);
-inline void sieve_interpreter_interrupt
+void sieve_interpreter_interrupt
 	(struct sieve_interpreter *interp);
-inline sieve_size_t sieve_interpreter_program_counter
+sieve_size_t sieve_interpreter_program_counter
 	(struct sieve_interpreter *interp);
-inline bool sieve_interpreter_program_jump
+bool sieve_interpreter_program_jump
 	(struct sieve_interpreter *interp, bool jump);
 	
-inline void sieve_interpreter_set_test_result
+void sieve_interpreter_set_test_result
 	(struct sieve_interpreter *interp, bool result);
-inline bool sieve_interpreter_get_test_result
+bool sieve_interpreter_get_test_result
 	(struct sieve_interpreter *interp);
 	
 /* Error handling */
@@ -78,9 +78,9 @@ void sieve_runtime_log
 
 /* Extension support */
 
-inline void sieve_interpreter_extension_set_context
+void sieve_interpreter_extension_set_context
 	(struct sieve_interpreter *interp, int ext_id, void *context);
-inline const void *sieve_interpreter_extension_get_context
+const void *sieve_interpreter_extension_get_context
 	(struct sieve_interpreter *interp, int ext_id);
 	
 /* Opcodes and operands */

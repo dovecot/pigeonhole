@@ -11,7 +11,7 @@ struct sieve_result *sieve_result_create
 	(struct sieve_error_handler *ehandler);
 void sieve_result_ref(struct sieve_result *result); 
 void sieve_result_unref(struct sieve_result **result); 
-inline pool_t sieve_result_pool(struct sieve_result *result);
+pool_t sieve_result_pool(struct sieve_result *result);
 
 /* Error handling */
 

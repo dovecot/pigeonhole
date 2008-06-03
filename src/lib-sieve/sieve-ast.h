@@ -161,16 +161,16 @@ void sieve_ast_unref(struct sieve_ast **ast);
 void sieve_ast_link_object
 	(struct sieve_ast_node *node, const struct sieve_ast_node_object *obj);
 
-inline struct sieve_ast_node *sieve_ast_root(struct sieve_ast *ast);
-inline pool_t sieve_ast_pool(struct sieve_ast *ast);
-inline struct sieve_script *sieve_ast_script(struct sieve_ast *ast);
+struct sieve_ast_node *sieve_ast_root(struct sieve_ast *ast);
+pool_t sieve_ast_pool(struct sieve_ast *ast);
+struct sieve_script *sieve_ast_script(struct sieve_ast *ast);
 
 const char *sieve_ast_type_name(enum sieve_ast_type ast_type);
 
 /* extension support */
-inline void sieve_ast_extension_set_context
+void sieve_ast_extension_set_context
 	(struct sieve_ast *ast, int ext_id, void *context);
-inline const void *sieve_ast_extension_get_context
+const void *sieve_ast_extension_get_context
 	(struct sieve_ast *ast, int ext_id);
 
 /* error reporting */

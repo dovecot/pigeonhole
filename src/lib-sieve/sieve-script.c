@@ -169,30 +169,30 @@ unsigned int sieve_script_hash(struct sieve_script *script)
 	return (unsigned int) script->st.st_ino;
 }
 
-inline bool sieve_script_older
+bool sieve_script_older
 (struct sieve_script *script, time_t time)
 {
 	return ( script->st.st_mtime < time );
 }
 
-/* Inline accessors */
+/* Accessors */
 
-inline const char *sieve_script_name(struct sieve_script *script)
+const char *sieve_script_name(struct sieve_script *script)
 {
 	return script->name;
 }
 
-inline const char *sieve_script_filename(struct sieve_script *script)
+const char *sieve_script_filename(struct sieve_script *script)
 {
 	return script->filename;
 }
 
-inline const char *sieve_script_path(struct sieve_script *script)
+const char *sieve_script_path(struct sieve_script *script)
 {
 	return script->path;
 }
 
-inline const char *sieve_script_binpath(struct sieve_script *script)
+const char *sieve_script_binpath(struct sieve_script *script)
 {
 	return t_strconcat(script->dirpath, "/", script->name, ".svbin", NULL);
 }

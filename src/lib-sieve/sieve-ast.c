@@ -100,17 +100,17 @@ void sieve_ast_unref(struct sieve_ast **ast)
 	*ast = NULL;
 }
 
-inline struct sieve_ast_node *sieve_ast_root(struct sieve_ast *ast)
+struct sieve_ast_node *sieve_ast_root(struct sieve_ast *ast)
 {
 	return ast->root;
 }
 
-inline pool_t sieve_ast_pool(struct sieve_ast *ast)
+pool_t sieve_ast_pool(struct sieve_ast *ast)
 {
 	return ast->pool;
 }
 
-inline struct sieve_script *sieve_ast_script(struct sieve_ast *ast)
+struct sieve_script *sieve_ast_script(struct sieve_ast *ast)
 {
 	return ast->script;
 }
@@ -129,13 +129,13 @@ const char *sieve_ast_type_name(enum sieve_ast_type ast_type) {
 
 /* Extension support */
 
-inline void sieve_ast_extension_set_context
+void sieve_ast_extension_set_context
 	(struct sieve_ast *ast, int ext_id, void *context)
 {
 	array_idx_set(&ast->ext_contexts, (unsigned int) ext_id, &context);	
 }
 
-inline const void *sieve_ast_extension_get_context
+const void *sieve_ast_extension_get_context
 	(struct sieve_ast *ast, int ext_id) 
 {
 	void * const *ctx;

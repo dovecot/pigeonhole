@@ -144,24 +144,24 @@ void sieve_validator_free(struct sieve_validator **validator)
 	*validator = NULL;
 }
 
-inline pool_t sieve_validator_pool(struct sieve_validator *validator)
+pool_t sieve_validator_pool(struct sieve_validator *validator)
 {
 	return validator->pool;
 }
 
-inline struct sieve_error_handler *sieve_validator_error_handler
+struct sieve_error_handler *sieve_validator_error_handler
 	(struct sieve_validator *validator)
 {
 	return validator->ehandler;
 }
 
-inline struct sieve_ast *sieve_validator_ast
+struct sieve_ast *sieve_validator_ast
 	(struct sieve_validator *validator)
 {
 	return validator->ast;
 }
 
-inline struct sieve_script *sieve_validator_script
+struct sieve_script *sieve_validator_script
 	(struct sieve_validator *validator)
 {
 	return validator->script;
@@ -404,13 +404,13 @@ int sieve_validator_extension_load
 	return ext_id;
 }
 
-inline void sieve_validator_extension_set_context
+void sieve_validator_extension_set_context
 	(struct sieve_validator *validator, int ext_id, void *context)
 {
 	array_idx_set(&validator->ext_contexts, (unsigned int) ext_id, &context);	
 }
 
-inline const void *sieve_validator_extension_get_context
+const void *sieve_validator_extension_get_context
 	(struct sieve_validator *validator, int ext_id) 
 {
 	void * const *ctx;

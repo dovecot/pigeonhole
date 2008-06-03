@@ -144,7 +144,7 @@ bool testsuite_validator_context_initialize(struct sieve_validator *valdtr)
 
 bool testsuite_generator_context_initialize(struct sieve_generator *gentr)
 {
-	pool_t pool = sieve_validator_pool(gentr);
+	pool_t pool = sieve_generator_pool(gentr);
 	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
 	struct testsuite_generator_context *ctx = 
 		p_new(pool, struct testsuite_generator_context, 1);

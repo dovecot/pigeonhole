@@ -9,7 +9,7 @@ struct sieve_generator *sieve_generator_create
 	(struct sieve_ast *ast, struct sieve_error_handler *ehandler);
 void sieve_generator_free(struct sieve_generator **generator);
 
-inline struct sieve_script *sieve_generator_get_script
+struct sieve_script *sieve_generator_get_script
 	(struct sieve_generator *gentr);
 
 /* Error handling */
@@ -28,9 +28,9 @@ void sieve_generator_critical
 
 bool sieve_generator_link_extension
 	(struct sieve_generator *gentr, int ext_id);
-inline void sieve_generator_extension_set_context
+void sieve_generator_extension_set_context
 	(struct sieve_generator *gentr, int ext_id, void *context);
-inline const void *sieve_generator_extension_get_context
+const void *sieve_generator_extension_get_context
 	(struct sieve_generator *gentr, int ext_id);
     		
 /* Jump list */
@@ -52,37 +52,37 @@ void sieve_jumplist_add
 void sieve_jumplist_resolve(struct sieve_jumplist *jlist);
 
 /* Code emission API */
-inline sieve_size_t sieve_generator_emit_data
+sieve_size_t sieve_generator_emit_data
 	(struct sieve_generator *generator, void *data, sieve_size_t size);
-inline sieve_size_t sieve_generator_emit_byte
+sieve_size_t sieve_generator_emit_byte
 	(struct sieve_generator *generator, unsigned char byte); 
-inline void sieve_generator_update_data
+void sieve_generator_update_data
 	(struct sieve_generator *generator, sieve_size_t address, void *data, 
 		sieve_size_t size);
-inline sieve_size_t sieve_generator_get_current_address
+sieve_size_t sieve_generator_get_current_address
 	(struct sieve_generator *generator);
 
-inline struct sieve_binary *sieve_generator_get_binary
+struct sieve_binary *sieve_generator_get_binary
 	(struct sieve_generator *gentr);
-inline sieve_size_t sieve_generator_emit_operation
+sieve_size_t sieve_generator_emit_operation
 	(struct sieve_generator *gentr, const struct sieve_operation *op);
-inline sieve_size_t sieve_generator_emit_operation_ext
+sieve_size_t sieve_generator_emit_operation_ext
 	(struct sieve_generator *gentr, const struct sieve_operation *op, int ext_id);
 
 /* Offset emission */
 
-inline sieve_size_t sieve_generator_emit_offset
+sieve_size_t sieve_generator_emit_offset
 	(struct sieve_generator *generator, int offset);
-inline void sieve_generator_resolve_offset
+void sieve_generator_resolve_offset
 	(struct sieve_generator *generator, sieve_size_t address); 
 
 /* Literal emission */
 
-inline sieve_size_t sieve_generator_emit_byte
+sieve_size_t sieve_generator_emit_byte
 	(struct sieve_generator *generator, unsigned char btval);
-inline sieve_size_t sieve_generator_emit_integer
+sieve_size_t sieve_generator_emit_integer
 	(struct sieve_generator *generator, sieve_size_t integer);
-inline sieve_size_t sieve_generator_emit_string
+sieve_size_t sieve_generator_emit_string
 	(struct sieve_generator *generator, const string_t *str);
 
 /* API */
@@ -105,10 +105,10 @@ bool sieve_generator_run
 
 /* Accessors */
 
-inline struct sieve_error_handler *sieve_generator_error_handler
+struct sieve_error_handler *sieve_generator_error_handler
 	(struct sieve_generator *gentr);
-inline pool_t sieve_generator_pool(struct sieve_generator *gentr);
-inline struct sieve_script *sieve_generator_script
+pool_t sieve_generator_pool(struct sieve_generator *gentr);
+struct sieve_script *sieve_generator_script
 	(struct sieve_generator *gentr);
 
 #endif /* __SIEVE_GENERATOR_H */

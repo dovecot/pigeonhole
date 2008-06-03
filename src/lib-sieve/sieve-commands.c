@@ -75,7 +75,7 @@ static bool arg_string_list_validate
 	return TRUE;	
 }
 
-static inline bool emit_string_list_operand
+static bool emit_string_list_operand
 (struct sieve_generator *generator, const struct sieve_ast_argument *strlist,
 	struct sieve_command_context *context)
 {	
@@ -190,7 +190,7 @@ const unsigned int sieve_core_commands_count = N_ELEMENTS(sieve_core_commands);
 	
 /* Command context */
 
-inline struct sieve_command_context *sieve_command_prev_context	
+struct sieve_command_context *sieve_command_prev_context	
 	(struct sieve_command_context *context) 
 {
 	struct sieve_ast_node *node = sieve_ast_node_prev(context->ast_node);
@@ -202,7 +202,7 @@ inline struct sieve_command_context *sieve_command_prev_context
 	return NULL;
 }
 
-inline struct sieve_command_context *sieve_command_parent_context	
+struct sieve_command_context *sieve_command_parent_context	
 	(struct sieve_command_context *context) 
 {
 	struct sieve_ast_node *node = sieve_ast_node_parent(context->ast_node);
@@ -247,7 +247,7 @@ const char *sieve_command_type_name(const struct sieve_command *command) {
  * because exiting jumps are not generated when they would otherwise be 
  * necessary.
  */
-inline void sieve_command_exit_block_unconditionally
+void sieve_command_exit_block_unconditionally
 	(struct sieve_command_context *cmd)
 {
 	struct sieve_command_context *parent = sieve_command_parent_context(cmd);
@@ -257,7 +257,7 @@ inline void sieve_command_exit_block_unconditionally
 		parent->block_exit_command = cmd;
 }
 
-inline bool sieve_command_block_exits_unconditionally
+bool sieve_command_block_exits_unconditionally
 	(struct sieve_command_context *cmd)
 {
 	return ( cmd->block_exit_command != NULL );

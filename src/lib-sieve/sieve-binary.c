@@ -238,27 +238,27 @@ void sieve_binary_unref(struct sieve_binary **sbin)
 	*sbin = NULL;
 }
 
-inline sieve_size_t sieve_binary_get_code_size(struct sieve_binary *sbin)
+sieve_size_t sieve_binary_get_code_size(struct sieve_binary *sbin)
 {
 	return buffer_get_used_size(sbin->data);
 }
 
-inline pool_t sieve_binary_pool(struct sieve_binary *sbin)
+pool_t sieve_binary_pool(struct sieve_binary *sbin)
 {
 	return sbin->pool;
 }
 
-inline struct sieve_script *sieve_binary_script(struct sieve_binary *sbin)
+struct sieve_script *sieve_binary_script(struct sieve_binary *sbin)
 {
 	return sbin->script;
 }
 
-inline const char *sieve_binary_path(struct sieve_binary *sbin)
+const char *sieve_binary_path(struct sieve_binary *sbin)
 {
 	return sbin->path;
 }
 
-inline bool sieve_binary_script_older
+bool sieve_binary_script_older
 (struct sieve_binary *sbin, struct sieve_script *script)
 {
 	i_assert(sbin->file != NULL);
@@ -298,7 +298,7 @@ static inline unsigned int sieve_binary_block_count
 	return array_count(&sbin->blocks);
 }
 
-inline void sieve_binary_block_clear
+void sieve_binary_block_clear
 	(struct sieve_binary *sbin, unsigned int id)
 {
 	struct sieve_binary_block *block = sieve_binary_block_get(sbin, id);
@@ -389,7 +389,7 @@ struct sieve_binary_block_header {
  * Saving the binary to a file. 
  */
 
-inline static bool _save_skip(struct ostream *stream, size_t size)
+static inline bool _save_skip(struct ostream *stream, size_t size)
 {	
 	if ( (o_stream_seek(stream, stream->offset + size)) <= 0 ) 
 		return FALSE;
@@ -397,7 +397,7 @@ inline static bool _save_skip(struct ostream *stream, size_t size)
 	return TRUE;
 }
 
-inline static bool _save_skip_aligned
+static inline bool _save_skip_aligned
 	(struct ostream *stream, size_t size, uoff_t *offset)
 {
 	uoff_t aligned_offset = SIEVE_BINARY_ALIGN(stream->offset);
@@ -657,6 +657,8 @@ static void sieve_binary_file_close(struct sieve_binary_file **file)
 	*file = NULL;
 }
 
+#if 0 /* file_memory is currently unused */
+
 /* File loaded/mapped to memory */
 
 struct _file_memory {
@@ -767,6 +769,8 @@ static struct sieve_binary_file *_file_memory_open(const char *path)
 
 	return &file->binfile;
 }
+
+#endif /* file_lazy is currently unused */
 
 /* File open in lazy mode (only read what is needed into memory) */
 
@@ -1189,8 +1193,8 @@ void sieve_binary_activate(struct sieve_binary *sbin)
  * Extension handling 
  */
 
-static inline struct sieve_binary_extension_reg *sieve_binary_extension_get_reg
-(struct sieve_binary *sbin, int ext_id)
+static inline struct sieve_binary_extension_reg *sieve_binary_extension_get_reg 
+(struct sieve_binary *sbin, int ext_id) 
 {
 	if ( ext_id >= 0 && ext_id < (int) array_count(&sbin->extension_index) ) {
 		struct sieve_binary_extension_reg * const *ereg = 
@@ -1220,7 +1224,7 @@ static inline struct sieve_binary_extension_reg *
 	return ereg;
 }
 
-inline void sieve_binary_extension_set_context
+void sieve_binary_extension_set_context
 	(struct sieve_binary *sbin, int ext_id, void *context)
 {
 	struct sieve_binary_extension_reg *ereg = 
@@ -1235,7 +1239,7 @@ inline void sieve_binary_extension_set_context
 	ereg->context = context;
 }
 
-inline const void *sieve_binary_extension_get_context
+const void *sieve_binary_extension_get_context
 	(struct sieve_binary *sbin, int ext_id) 
 {
 	struct sieve_binary_extension_reg *ereg = 
@@ -1248,7 +1252,7 @@ inline const void *sieve_binary_extension_get_context
 	return NULL;
 }
 
-inline void sieve_binary_extension_set
+void sieve_binary_extension_set
 (struct sieve_binary *sbin, int ext_id, 
 	const struct sieve_binary_extension *bext)
 {
@@ -1366,7 +1370,7 @@ int sieve_binary_extensions_count(struct sieve_binary *sbin)
 
 /* Low-level emission functions */
 
-inline sieve_size_t sieve_binary_emit_data
+sieve_size_t sieve_binary_emit_data
 (struct sieve_binary *binary, const void *data, sieve_size_t size) 
 {
 	sieve_size_t address = buffer_get_used_size(binary->data);
@@ -1376,13 +1380,13 @@ inline sieve_size_t sieve_binary_emit_data
 	return address;
 }
 
-inline sieve_size_t sieve_binary_emit_byte
+sieve_size_t sieve_binary_emit_byte
 (struct sieve_binary *binary, unsigned char byte) 
 {
 	return sieve_binary_emit_data(binary, &byte, 1);
 }
 
-inline void sieve_binary_update_data
+void sieve_binary_update_data
 (struct sieve_binary *binary, sieve_size_t address, const void *data, 
 	sieve_size_t size) 
 {

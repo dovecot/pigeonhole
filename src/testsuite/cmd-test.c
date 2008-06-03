@@ -82,7 +82,6 @@ static inline struct testsuite_generator_context *
 static bool cmd_test_generate
 	(struct sieve_generator *gentr, struct sieve_command_context *ctx)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
 	struct testsuite_generator_context *genctx = 
 		_get_generator_context(gentr);
 	

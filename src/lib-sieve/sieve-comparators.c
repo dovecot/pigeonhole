@@ -286,7 +286,7 @@ void sieve_comparators_link_tag
 	sieve_validator_register_tag(validator, cmd_reg, &comparator_tag, id_code); 	
 }
 
-inline bool sieve_comparator_tag_is
+bool sieve_comparator_tag_is
 (struct sieve_ast_argument *tag, const struct sieve_comparator *cmp)
 {
 	const struct sieve_comparator_context *cmpctx = 
@@ -297,7 +297,7 @@ inline bool sieve_comparator_tag_is
 	return ( tag->argument == &comparator_tag && cmpctx->comparator == cmp );
 }
 
-inline const struct sieve_comparator *sieve_comparator_tag_get
+const struct sieve_comparator *sieve_comparator_tag_get
 (struct sieve_ast_argument *tag)
 {
 	if ( tag->argument != &comparator_tag ) 

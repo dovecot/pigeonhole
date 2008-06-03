@@ -64,13 +64,13 @@ static void sieve_message_context_unref(struct sieve_message_context **msgctx)
 	*msgctx = NULL;
 }
 
-inline void sieve_message_context_extension_set
+void sieve_message_context_extension_set
 	(struct sieve_message_context *msgctx, int ext_id, void *context)
 {
 	array_idx_set(&msgctx->ext_contexts, (unsigned int) ext_id, &context);	
 }
 
-inline const void *sieve_message_context_extension_get
+const void *sieve_message_context_extension_get
 	(struct sieve_message_context *msgctx, int ext_id) 
 {
 	void * const *ctx;
@@ -83,7 +83,7 @@ inline const void *sieve_message_context_extension_get
 	return *ctx;
 }
 
-inline pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
+pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
 {
 	return msgctx->pool;
 }
@@ -171,18 +171,18 @@ void sieve_interpreter_free(struct sieve_interpreter **interp)
 	*interp = NULL;
 }
 
-inline pool_t sieve_interpreter_pool(struct sieve_interpreter *interp)
+pool_t sieve_interpreter_pool(struct sieve_interpreter *interp)
 {
 	return interp->pool;
 }
 
-inline struct sieve_script *sieve_interpreter_script
+struct sieve_script *sieve_interpreter_script
 	(struct sieve_interpreter *interp)
 {
 	return interp->runenv.script;
 }
 
-inline struct sieve_error_handler *sieve_interpreter_get_error_handler
+struct sieve_error_handler *sieve_interpreter_get_error_handler
 	(struct sieve_interpreter *interp)
 {
 	return interp->ehandler;
@@ -238,13 +238,13 @@ void sieve_runtime_log
 
 /* Extension support */
 
-inline void sieve_interpreter_extension_set_context
+void sieve_interpreter_extension_set_context
 	(struct sieve_interpreter *interpreter, int ext_id, void *context)
 {
 	array_idx_set(&interpreter->ext_contexts, (unsigned int) ext_id, &context);	
 }
 
-inline const void *sieve_interpreter_extension_get_context
+const void *sieve_interpreter_extension_get_context
 	(struct sieve_interpreter *interpreter, int ext_id) 
 {
 	void * const *ctx;
@@ -259,7 +259,7 @@ inline const void *sieve_interpreter_extension_get_context
 
 /* Program counter */
 
-inline void sieve_interpreter_reset(struct sieve_interpreter *interp) 
+void sieve_interpreter_reset(struct sieve_interpreter *interp) 
 {
 	interp->pc = 0;
 	interp->interrupted = FALSE;
@@ -268,17 +268,17 @@ inline void sieve_interpreter_reset(struct sieve_interpreter *interp)
 	interp->runenv.result = NULL;
 }
 
-inline void sieve_interpreter_interrupt(struct sieve_interpreter *interp)
+void sieve_interpreter_interrupt(struct sieve_interpreter *interp)
 {
 	interp->interrupted = TRUE;
 }
 
-inline sieve_size_t sieve_interpreter_program_counter(struct sieve_interpreter *interp)
+sieve_size_t sieve_interpreter_program_counter(struct sieve_interpreter *interp)
 {
 	return interp->pc;
 }
 
-inline bool sieve_interpreter_program_jump
+bool sieve_interpreter_program_jump
 	(struct sieve_interpreter *interp, bool jump)
 {
 	sieve_size_t pc = interp->pc;
@@ -299,13 +299,13 @@ inline bool sieve_interpreter_program_jump
 	return FALSE;
 }
 
-inline void sieve_interpreter_set_test_result
+void sieve_interpreter_set_test_result
 	(struct sieve_interpreter *interp, bool result)
 {
 	interp->test_result = result;
 }
 
-inline bool sieve_interpreter_get_test_result
+bool sieve_interpreter_get_test_result
 	(struct sieve_interpreter *interp)
 {
 	return interp->test_result;

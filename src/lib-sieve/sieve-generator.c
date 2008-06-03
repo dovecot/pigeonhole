@@ -116,7 +116,7 @@ void sieve_generator_free(struct sieve_generator **generator)
 	*generator = NULL;
 }
 
-inline struct sieve_script *sieve_generator_get_script
+struct sieve_script *sieve_generator_get_script
 	(struct sieve_generator *gentr)
 {
 	return gentr->script;
@@ -175,13 +175,13 @@ bool sieve_generator_link_extension
 	return TRUE;
 }
 
-inline void sieve_generator_extension_set_context
+void sieve_generator_extension_set_context
 	(struct sieve_generator *gentr, int ext_id, void *context)
 {
 	array_idx_set(&gentr->ext_contexts, (unsigned int) ext_id, &context);	
 }
 
-inline const void *sieve_generator_extension_get_context
+const void *sieve_generator_extension_get_context
 	(struct sieve_generator *gentr, int ext_id) 
 {
 	void * const *ctx;
@@ -196,19 +196,19 @@ inline const void *sieve_generator_extension_get_context
 
 /* Binary access */
 
-inline struct sieve_binary *sieve_generator_get_binary
+struct sieve_binary *sieve_generator_get_binary
 	(struct sieve_generator *gentr)
 {
 	return gentr->binary;
 }
 
-inline sieve_size_t sieve_generator_emit_operation
+sieve_size_t sieve_generator_emit_operation
 	(struct sieve_generator *gentr, const struct sieve_operation *op)
 {
 	return sieve_operation_emit_code(gentr->binary, op, -1);
 }
 
-inline sieve_size_t sieve_generator_emit_operation_ext
+sieve_size_t sieve_generator_emit_operation_ext
 	(struct sieve_generator *gentr, const struct sieve_operation *op, int ext_id)
 {	
 	return sieve_operation_emit_code(gentr->binary, op, ext_id);
@@ -398,18 +398,18 @@ bool sieve_generator_run
 
 /* Accessors */
 
-inline struct sieve_error_handler *sieve_generator_error_handler
+struct sieve_error_handler *sieve_generator_error_handler
 	(struct sieve_generator *gentr)
 {
 	return gentr->ehandler;
 }
 
-inline pool_t sieve_generator_pool(struct sieve_generator *gentr)
+pool_t sieve_generator_pool(struct sieve_generator *gentr)
 {
 	return gentr->pool;
 }
 
-inline struct sieve_script *sieve_generator_script
+struct sieve_script *sieve_generator_script
 	(struct sieve_generator *gentr)
 {
 	return gentr->script;

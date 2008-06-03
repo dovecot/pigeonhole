@@ -74,19 +74,19 @@ void sieve_coded_stringlist_reset(struct sieve_coded_stringlist *strlist)
 	strlist->index = 0;
 }
 
-inline int sieve_coded_stringlist_get_length
+int sieve_coded_stringlist_get_length
 	(struct sieve_coded_stringlist *strlist)
 {
 	return strlist->length;
 }
 
-inline sieve_size_t sieve_coded_stringlist_get_end_address
+sieve_size_t sieve_coded_stringlist_get_end_address
 (struct sieve_coded_stringlist *strlist)
 {
 	return strlist->end_address;
 }
 
-inline sieve_size_t sieve_coded_stringlist_get_current_offset
+sieve_size_t sieve_coded_stringlist_get_current_offset
 	(struct sieve_coded_stringlist *strlist)
 {
 	return strlist->current_offset;
@@ -180,7 +180,7 @@ static struct sieve_extension_obj_registry oprd_default_reg =
  * Operand functions 
  */
 
-inline sieve_size_t sieve_operand_emit_code
+sieve_size_t sieve_operand_emit_code
 	(struct sieve_binary *sbin, const struct sieve_operand *opr, int ext_id)
 {	
 	return sieve_extension_emit_obj
@@ -676,7 +676,7 @@ static struct sieve_extension_obj_registry oprt_default_reg =
 
 /* Operation functions */
 
-inline sieve_size_t sieve_operation_emit_code
+sieve_size_t sieve_operation_emit_code
 	(struct sieve_binary *sbin, const struct sieve_operation *op, int ext_id)
 {	
 	return sieve_extension_emit_obj
