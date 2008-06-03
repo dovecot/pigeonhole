@@ -965,8 +965,6 @@ static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 			int ext_id;
 			
 			if ( sieve_binary_read_string(sbin, &offset, &extension) ) { 
-				printf("EXTENSION: %s\n", str_c(extension));
-				
 				ext_id = sieve_extension_get_by_name(str_c(extension), NULL);	
 			
 				if ( ext_id < 0 ) { 
@@ -1025,8 +1023,6 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 	if ( !result ) return FALSE;
 	
 	/* Load block index */
-	
-	printf("BLOCKS: %d\n", blk_count);
 	
 	for ( i = 0; i < blk_count && result; i++ ) {	
 		T_BEGIN {

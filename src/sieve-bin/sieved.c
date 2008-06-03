@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 	
 	sbin = sieve_binary_open(binfile, NULL);
 
-	if ( sbin != NULL && sieve_binary_load(sbin) ) {
+	if ( sbin != NULL && !sieve_binary_load(sbin) ) {
 		sieve_binary_unref(&sbin);
 		sbin = NULL;
 	}
