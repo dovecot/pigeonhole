@@ -27,3 +27,5 @@ libsieve_ext_imapflags_la_SOURCES = \
 
 noinst_HEADERS = \
 	ext-imapflags-common.h
+
+EXTRA_DIST = *.txt *.sieve

@@ -10,3 +10,4 @@ AM_CPPFLAGS = \
 libsieve_ext_vacation_la_SOURCES = \
 	ext-vacation.c
 
+EXTRA_DIST = *.txt *.sieve

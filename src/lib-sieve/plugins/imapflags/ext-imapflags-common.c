@@ -1,4 +1,5 @@
 #include "lib.h"
+#include "str.h"
 
 #include "sieve-commands-private.h"
 #include "sieve-code.h"

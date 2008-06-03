@@ -10,3 +10,4 @@ AM_CPPFLAGS = \
 libsieve_ext_copy_la_SOURCES = \
 	ext-copy.c
 
+EXTRA_DIST = *.sieve *.txt

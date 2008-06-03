@@ -13,5 +13,7 @@ libsieve_ext_relational_la_SOURCES = \
 	mcht-count.c \
 	ext-relational.c 
 
-noinst_HEADER = \
+noinst_HEADERS = \
 	ext-relational-common.h
+
+EXTRA_DIST = *.txt *.sieve

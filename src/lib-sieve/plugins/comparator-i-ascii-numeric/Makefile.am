@@ -10,3 +10,4 @@ AM_CPPFLAGS = \
 libsieve_ext_comparator_i_ascii_numeric_la_SOURCES = \
 	ext-cmp-i-ascii-numeric.c
 
+EXTRA_DIST = *.txt *.sieve

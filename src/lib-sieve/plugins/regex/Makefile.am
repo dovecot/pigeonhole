@@ -13,3 +13,5 @@ libsieve_ext_regex_la_SOURCES = \
 
 noinst_HEADERS = \
 	ext-regex-common.h
+
+EXTRA_DIST = *.txt *.sieve

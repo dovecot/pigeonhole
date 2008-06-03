@@ -24,3 +24,5 @@ noinst_HEADERS = \
 	ext-include-common.h \
 	ext-include-binary.h \
 	ext-include-variables.h
+
+EXTRA_DIST = *.txt *.sieve

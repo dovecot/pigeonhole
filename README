@@ -1,5 +1,10 @@
-WARNING: This sieve implementation is highly experimental. In addition to the 
-usual GPL disclaimer I urge you not to use this for any important mail just yet!
+################################################################################
+                                 !! WARNING !!
+  
+ This sieve implementation is highly experimental. In addition to the usual GPL 
+     disclaimer I urge you not to use this for any important mail just yet!
+  
+################################################################################
 
 Compiling and Configuring
 -------------------------
@@ -90,17 +95,18 @@ What works:
 * Script code generation works for all core commands. Comparators, match-types 
   and address-part modifiers work as required.
 * Interpreter runs core commands and tests. Comparators, match-types and 
-  address-part modifiers have the desired effect. Most test commands work as 
-  specified (see list below).
+  address-part modifiers have the desired effect. 
 * The interpreter produces a result containing a set of actions to execute.
-  Duplicate actions can be avoided and conflicts can be detected. 
+  Duplicate actions can be avoided and conflicts can be detected. Multiple 
+  scripts could be executed in succession on the result object although no 
+  support to do so is currently available.
 * Execution of the result is supported for all core action commands and all
   fully implemented extensions (see list below).  
 * Compiled binary code can be saved to and loaded back from disk. The binary 
   is structured as a set of data blocks, which can contain extension-dependent
   extra data. For example, the include extension uses this to store the 
   compiled included scripts (no external inclusion of binaries supported yet).
-* This sieve implementation is now available as an alternative plugin to  
+* This sieve implementation is available as an alternative plugin to  
   dovecot's deliver. It is not completely useful yet, but hopefully this will 
   soon be able to replace the current cmusieve implementation.
 
@@ -122,7 +128,7 @@ Base commands and their implementation status:
 	
 Extensions and their implementation status:
 
-  Base specification (RFC3028):
+  Base specification (RFC5228):
     fileinto: full
     reject: full
     envelope: full
@@ -133,13 +139,13 @@ Extensions and their implementation status:
     comparator-i;ascii-numeric: full
     relational: full 
     copy: full
-    regex: full, but suboptimal, no UTF-8
+    regex: full, but suboptimal and no UTF-8
     body: full, but text body-transform implementation is simple
-    include: almost full; needs more work (no external binaries)
+    include: almost full; needs some more work (no external binaries)
     vacation: almost full; no support for required References header
     imapflags: flag management works, but flags are not stored (no variables)
-    variables: untested core functionality present; need to provide support
-               other extensions that depend on this one
+    variables: largely untested core functionality present; need to provide 
+               suppor other extensions that depend on this one
 
   Low priority:
     notify: planned, first mailto only 
@@ -148,116 +154,16 @@ Extensions and their implementation status:
 
 All implemented extensions are like the engine itself currently very much 
 experimental. A status of 'full' does not mean that the extension is bug-free 
-or even RFC-compliant. Other extensions will be added as soon as the necessary 
-infrastructure is available. Extensions supported by cmusieve have priority.
+or even fully RFC-compliant. Other extensions will be added as soon as the 
+necessary infrastructure is available. Extensions already supported by cmusieve
+have priority.
 
 Design
 ------
 
-The compiler consists of the following stages:
-
-PARSER: sieve-parser.c, sieve-lexer.c
-  Parses the scriptfile and produces an abstract syntax tree for it 
-  (sieve-ast.c). 
-
-VALIDATOR: sieve-validator.c
-  Performs contextual analysis on the ast produced by the parser. This checks 
-  for the validity of commands, tests and arguments. Also, the ast is decorated 
-  with any context data acquired during the process. This context is used by the 
-  last compiler stage. 
-
-GENERATOR: sieve-generator.c
-  This last compiler stage uses a visitor pattern to wander through the ast and 
-  produces sieve byte code (sieve-binary.c).
-
-The resulting (in-memory) binary can be fed to the interpreter for execution:
-
-INTERPRETER: sieve-interpreter.c 
-  The interpreter executes the byte code and produces a sieve_result object. 
-  This result is no more than just a collection of actions to be performed. 
-  During execution, action commands add actions to the result. Duplates and 
-  conflicts between actions are handled in this execution phase.
-
-RESULT: sieve-result.c sieve-actions.c
-  When the result is to be executed, it needs no further checking, as the 
-  validity of the result was verified during interpretation already. The 
-  result's actions are executed in a transaction-like atomic manner. If one of 
-  the actions fails, the whole transaction is rolled back meaning that either 
-  everything succeeds or everything fails. This is only possible to some extent:
-  transmitted responses can of course not be rolled back. However, these are 
-  executed in the commit phase, meaning that they will only be performed if all
-  other actions were successful.
-  
-Debugging:
-
-CODE-DUMPER: sieve-code-dumper.c 
-  A loaded binary can be dumped to a stream in human-readable form using the 
-  code-dumper. It's implementation is similar to the interpreter, with the 
-  exception that it performs no actions and just sequentially wanders through 
-  the byte code printing instructions along the way. The term human-readable is 
-  a bit optimistic though; currently, the presented data looks like an assembly
-  language. 
+Refer to DESIGN file.
 
 TODO
 ----
 
-Current:
-* Implement variables extension
-  Implemented:
-  -> Core variable substitution works
-  -> Accept namespaces (parse, no real support; proper error messages)
-  -> Support match variables
-  -> Implement variables support for include extension
-  Current:
-  -> Provide support for extensions that (partly) depend on variables support.
-  -> Implement variables support for imapflags extension
-     
-Next (in order of descending priority/precedence):
-* Vacation extension accepts duplicate tags (not allowed)
-* Finish implementing all extensions supported by cmusieve, except notify.
-* Limit the maximum number of errors. 
-* Verify outgoing mail addresses
-* Add normalize() method to comparators to normalize the string before mathing
-  (for efficiency).
-* Implement comparator-i;unicode-casemap
-* Implement dropping errors in the user's mailbox as a mail message.
-* Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
-  Character Sets). 
-* Get rid of all <stdio.h> printf()s in the library; use trace macro instead
-* Use lib/llist.h for the AST implementation. 
-* Make the sieve plugins true plugins and add a SIEVE_PLUGINS config item to the
-  lda-sieve plugin.
-
-* Full security review. Enforce limits on number of created objects, script 
-  size, execution time, etc...
-* Full standards compliance review for the engine and all fully implemented 
-  sieve extensions.
-* Code cleanup 
-* Make sure cmusieve can be replaced seamlessly with this new plugin.
-* Make a few elaborate test scripts to test engine and all implemented 
-  extensions a little better. Also include specially crafted e-mail messages 
-  that give deterministic and thus testable results. 
-  (This might become an initial version of the test suite)
-
-* ## MAKE A FIRST RELEASE ##
-
-* Automate script tests; i.e. build a test suite.
-* Use lib/str-find.h for :contains and :matches match types  
-* Resolve code duplication introduced for handling address-parts and match-types
-  in different command implementations.
-* Resolve code duplication amongst comparator, address-part and match-type 
-  support as much as possible.
-* Add development documentation, i.e. comment on library functions and document
-  the binary and byte-code format. 
-* Make the engine and its extensions much more configurable. Possibly this can 
-  be merged with Dovecot's new master config implementation.
-* Implement notify extension with sole support for mailto mechanism. 
-* Implement editheader extension
-* Implement mimeloop extension
-* Give the byte code format some more thought, it is currently quite rough and
-  to the point. 
-* Try to implement proposed notify mechanisms other than mailto. Currently: xmpp
-  and sip
-* Implement namespace support for variables extension 
-  (possibly needed by test suite; in that case priority is much higher)
-
+Refer to TODO file.

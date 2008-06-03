@@ -10,3 +10,4 @@ AM_CPPFLAGS = \
 libsieve_ext_subaddress_la_SOURCES = \
 	ext-subaddress.c
 
+EXTRA_DIST = *.txt *.sieve

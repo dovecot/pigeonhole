@@ -29,3 +29,4 @@ noinst_HEADERS = \
 	ext-variables-operands.h \
 	sieve-ext-variables.h 
 
+EXTRA_DIST = *.txt *.sieve

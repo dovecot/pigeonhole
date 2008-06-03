@@ -1,6 +1,11 @@
-WARNING: This sieve implementation is highly experimental. In addition to
-the usual GPL disclaimer I urge you not to use this for any important mail
-just yet!
+################################################################################
+                                 !! WARNING !!
+  
+ This sieve implementation is highly experimental. In addition to the usual GPL 
+     disclaimer I urge you not to use this for any important mail just yet!
+  
+################################################################################
+
 
 Compiling
 ---------
