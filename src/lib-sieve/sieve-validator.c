@@ -581,7 +581,6 @@ static bool sieve_validate_command_arguments
 	/* Visit tagged and optional arguments */
 	while ( sieve_ast_argument_type(arg) == SAAT_TAG ) {
 		unsigned int id_code;
-		struct sieve_ast_argument *tag_arg = arg;
 		struct sieve_ast_argument *parg; 
 		const struct sieve_argument *tag = 
 			sieve_validator_find_tag(validator, cmd, arg, &id_code);
@@ -605,29 +604,20 @@ static bool sieve_validate_command_arguments
 		 * (in generator) 
 		 */
 		arg->argument = tag;
-		arg->arg_id_code = id_code;
-		
-		/* Call the validation function for the tag (if present)
-		 *   Fail if the validation fails:
-		 *     Let's not whine multiple times about a single command having multiple 
-		 *     bad arguments...
-		 */ 
-		if ( tag->validate != NULL ) { 
-			if ( !tag->validate(validator, &arg, cmd) ) 
-				return FALSE;
-		} else
-			arg = sieve_ast_argument_next(arg);  
+		arg->arg_id_code = id_code;  
 			
 		/* Scan backwards for any duplicates */
-		parg = sieve_ast_argument_prev(tag_arg);
+		parg = sieve_ast_argument_prev(arg);
 		while ( parg != NULL ) {
-			if ( parg->argument == tag ) {
-				const char *tag_id = sieve_ast_argument_tag(tag_arg);
+			if ( (sieve_ast_argument_type(parg) == SAAT_TAG && parg->argument == tag) 
+				|| parg->arg_id_code == id_code ) 
+			{
+				const char *tag_id = sieve_ast_argument_tag(arg);
 				const char *tag_desc =
 					strcmp(tag->identifier, tag_id) != 0 ?
 					t_strdup_printf("%s argument (:%s)", tag->identifier, tag_id) : 
-					t_strdup_printf(":%s argument", tag->identifier); 
-					 
+					t_strdup_printf(":%s argument", tag->identifier); 	 
+				
 				sieve_command_validate_error(validator, cmd, 
 					"encountered duplicate %s for the %s %s",
 					tag_desc, cmd->command->identifier, 
@@ -638,6 +628,17 @@ static bool sieve_validate_command_arguments
 			
 			parg = sieve_ast_argument_prev(parg);
 		}
+		
+		/* Call the validation function for the tag (if present)
+		 *   Fail if the validation fails:
+		 *     Let's not whine multiple	times about a single command having multiple 
+		 *     bad arguments...
+		 */ 
+		if ( tag->validate != NULL ) { 
+			if ( !tag->validate(validator, &arg, cmd) ) 
+				return FALSE;
+		} else
+			arg = sieve_ast_argument_next(arg);
 	} 
 	
 	/* Remaining arguments should be positional (tags are not allowed here) */

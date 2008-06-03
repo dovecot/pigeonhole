@@ -1,5 +1,5 @@
 require "vacation";
-vacation :subject "At the beach" :days 16 :mime text:
+vacation :subject "At the beach" :days 16 :mime :days 12 text:
 Content-Type: multipart/alternative; boundary=foo
 
 --foo
