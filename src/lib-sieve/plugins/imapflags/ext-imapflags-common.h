@@ -45,17 +45,22 @@ const char *ext_imapflags_iter_get_flag
 	(struct ext_imapflags_iter *iter);
 
 const char *ext_imapflags_get_flags_string
-	(const struct sieve_runtime_env *renv);
+(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
+	unsigned int var_index);
 
 void ext_imapflags_set_flags
-	(const struct sieve_runtime_env *renv, string_t *flags);
+	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
+		unsigned int var_index, string_t *flags);
 void ext_imapflags_add_flags
-	(const struct sieve_runtime_env *renv, string_t *flags);
+	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
+		unsigned int var_index, string_t *flags);
 void ext_imapflags_remove_flags
-	(const struct sieve_runtime_env *renv, string_t *flags);
+	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
+		unsigned int var_index, string_t *flags);
 
 void ext_imapflags_get_flags_init
-	(struct ext_imapflags_iter *iter, const struct sieve_runtime_env *renv);
+	(struct ext_imapflags_iter *iter, const struct sieve_runtime_env *renv,
+		struct sieve_variable_storage *storage, unsigned int var_index);
 
 
 #endif /* __EXT_IMAPFLAGS_COMMON_H */

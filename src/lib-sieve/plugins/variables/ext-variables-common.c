@@ -150,21 +150,31 @@ void sieve_variable_get
 	};
 } 
 
+void sieve_variable_get_modifiable
+(struct sieve_variable_storage *storage, unsigned int index, string_t **value)
+{
+	sieve_variable_get(storage, index, value);
+	
+	if ( *value == NULL ) {
+		*value = str_new(storage->pool, 256);
+		array_idx_set(&storage->var_values, index, value);	
+	} 
+}
+
 void sieve_variable_assign
 (struct sieve_variable_storage *storage, unsigned int index, 
 	const string_t *value)
 {
 	string_t *varval;
 	
-	sieve_variable_get(storage, index, &varval);
-	
+	sieve_variable_get_modifiable(storage, index, &varval);
+
 	if ( varval == NULL ) {
 		varval = str_new(storage->pool, str_len(value));
 		array_idx_set(&storage->var_values, index, &varval);	
-	} else {
-		str_truncate(varval, 0);
-	}
-	
+	} 
+
+	str_truncate(varval, 0);
 	str_append_str(varval, value);
 }
 

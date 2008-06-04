@@ -201,7 +201,7 @@ static bool tst_hasflag_operation_execute
 	matched = FALSE;
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, flag_list); 	
 
-	ext_imapflags_get_flags_init(&iter, renv);
+	ext_imapflags_get_flags_init(&iter, renv, storage, var_index);
 	
 	while ( (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
 		if ( sieve_match_value(mctx, flag, strlen(flag)) )

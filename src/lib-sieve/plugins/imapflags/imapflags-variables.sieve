@@ -6,7 +6,7 @@ require "variables";
 
 setflag "frop" "\\Seen";
 addflag "frop" "$DSNRequired";
-removeflag "friep" "$DSNRequired";
+removeflag "frop" "$DSNRequired";
 
 if header :contains "from" "boss@frobnitzm.example.edu" {
 	setflag "frop" "\\Flagged";

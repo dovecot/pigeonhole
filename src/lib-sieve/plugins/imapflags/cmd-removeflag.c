@@ -88,12 +88,13 @@ static bool cmd_removeflag_operation_execute
 	/* Iterate through all requested headers to match */
 	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flag_item)) && 
 		flag_item != NULL ) {
-		ext_imapflags_remove_flags(renv, flag_item);
+		ext_imapflags_remove_flags(renv, storage, var_index, flag_item);
 	}
 
 	t_pop();
 	
-	printf("  FLAGS: %s\n", ext_imapflags_get_flags_string(renv));
+	printf("  FLAGS: %s\n", 
+		ext_imapflags_get_flags_string(renv, storage, var_index));
 	
 	return result;
 }
