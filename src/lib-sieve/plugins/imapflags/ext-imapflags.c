@@ -45,10 +45,6 @@ extern const struct sieve_command cmd_removeflag;
 
 extern const struct sieve_command tst_hasflag;
 
-/* Tagged arguments */
-
-extern const struct sieve_argument tag_flags;
-
 /* Operations */
 
 extern const struct sieve_operation setflag_operation;
@@ -95,12 +91,8 @@ static bool ext_imapflags_validator_load
 	sieve_validator_register_command(validator, &cmd_removeflag);
 	sieve_validator_register_command(validator, &tst_hasflag);
 	
-	/* Register :flags tag with keep and fileinto commands and we don't care
-	 * whether these commands are registered or even whether they will be
-	 * registered at all. The validator handles either situation gracefully 
-	 */
-	sieve_validator_register_external_tag(validator, &tag_flags, "keep", -1);
-	sieve_validator_register_external_tag(validator, &tag_flags, "fileinto", -1);
+	ext_imapflags_attach_flags_tag(validator, "keep");
+	ext_imapflags_attach_flags_tag(validator, "fileinto");
 
 	return TRUE;
 }

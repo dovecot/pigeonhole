@@ -224,8 +224,11 @@ static bool arg_testsuite_object_generate
 	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 		struct sieve_command_context *cmd);
 
-const struct sieve_argument testsuite_object_argument = 
-	{ "testsuite-object", NULL, NULL, NULL, arg_testsuite_object_generate };
+const struct sieve_argument testsuite_object_argument = { 
+	"testsuite-object", 
+	NULL, NULL, NULL, NULL,
+	arg_testsuite_object_generate 
+};
  
 struct testsuite_object_argctx {
 	const struct testsuite_object *object;

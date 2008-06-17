@@ -634,7 +634,8 @@ bool sieve_match_substring_validate_context
 
 const struct sieve_argument match_type_tag = { 
 	"MATCH-TYPE",
-	tag_match_type_is_instance_of, 
+	tag_match_type_is_instance_of,
+	NULL, 
 	tag_match_type_validate, 
 	NULL,
 	tag_match_type_generate 

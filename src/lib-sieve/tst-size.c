@@ -110,10 +110,19 @@ static bool tst_size_validate_under_tag
 
 /* Test registration */
 
-static const struct sieve_argument size_over_tag = 
-	{ "over", NULL, tst_size_validate_over_tag, NULL, NULL };
-static const struct sieve_argument size_under_tag = 
-	{ "under", NULL, tst_size_validate_under_tag, NULL, NULL };
+static const struct sieve_argument size_over_tag = { 
+	"over", 
+	NULL, NULL,
+	tst_size_validate_over_tag, 
+	NULL, NULL 
+};
+
+static const struct sieve_argument size_under_tag = { 
+	"under", 
+	NULL, NULL, 
+	tst_size_validate_under_tag, 
+	NULL, NULL 
+};
 
 static bool tst_size_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 

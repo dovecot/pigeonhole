@@ -58,7 +58,10 @@ void sieve_validator_register_tag
 	(struct sieve_validator *validator, 
 		struct sieve_command_registration *cmd_reg, 
 		const struct sieve_argument *argument, int id_code);
-
+void sieve_validator_register_persistent_tag
+	(struct sieve_validator *validator, const struct sieve_argument *tag, 
+		const char *command);
+		
 /* Argument validation */
 
 bool sieve_validate_positional_argument

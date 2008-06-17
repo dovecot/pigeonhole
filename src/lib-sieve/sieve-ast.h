@@ -186,6 +186,9 @@ struct sieve_ast_argument *sieve_ast_argument_create
 struct sieve_ast_arg_list *sieve_ast_arg_list_create(pool_t pool);	
 void sieve_ast_arg_list_add
 	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument);
+void sieve_ast_arg_list_insert
+	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *before,
+		struct sieve_ast_argument *argument);
 void sieve_ast_arg_list_substitute
 (struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument, 
 	struct sieve_ast_argument *replacement);
@@ -196,6 +199,9 @@ struct sieve_ast_argument *sieve_ast_argument_tag_create
 	(struct sieve_ast_node *node, const char *tag, unsigned int source_line);
 struct sieve_ast_argument *sieve_ast_argument_number_create
 	(struct sieve_ast_node *node, int number, unsigned int source_line);
+
+struct sieve_ast_argument *sieve_ast_argument_tag_insert
+(struct sieve_ast_argument *before, const char *tag, unsigned int source_line); 
 
 struct sieve_ast_argument *sieve_ast_argument_stringlist_create
 	(struct sieve_ast_node *node, unsigned int source_line);

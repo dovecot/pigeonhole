@@ -29,6 +29,9 @@ bool ext_imapflags_command_operands_read
 (	const struct sieve_runtime_env *renv, sieve_size_t *address,
 	struct sieve_coded_stringlist **flag_list, 
 	struct sieve_variable_storage **storage, unsigned int *var_index);
+	
+void ext_imapflags_attach_flags_tag
+	(struct sieve_validator *valdtr, const char *command);
 
 /* Flag registration */
 

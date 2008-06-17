@@ -83,21 +83,24 @@ static bool tag_body_transform_generate
 		struct sieve_command_context *cmd);
  
 static const struct sieve_argument body_raw_tag = { 
-	"raw", NULL, 
+	"raw", 
+	NULL, NULL,
 	tag_body_transform_validate, 
 	NULL, 
 	tag_body_transform_generate 
 };
 
 static const struct sieve_argument body_content_tag = { 
-	"content", NULL, 
+	"content", 
+	NULL, NULL,
 	tag_body_transform_validate, 
 	NULL, 
 	tag_body_transform_generate 
 };
 
 static const struct sieve_argument body_text_tag = { 
-	"text", NULL, 
+	"text", 
+	NULL, NULL,
 	tag_body_transform_validate, 
 	NULL, 
 	tag_body_transform_generate

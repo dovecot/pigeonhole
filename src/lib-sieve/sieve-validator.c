@@ -176,6 +176,7 @@ struct sieve_command_registration {
 	
 	struct hash_table *tags;
 	ARRAY_DEFINE(instanced_tags, struct sieve_tag_registration *); 
+	ARRAY_DEFINE(persistent_tags, struct sieve_tag_registration *); 
 };
 
 /* Dummy function */
@@ -277,11 +278,15 @@ static bool _unknown_tag_validate
 	return FALSE;
 }
 
-static const struct sieve_argument _unknown_tag = 
-	{ "", NULL, _unknown_tag_validate, NULL, NULL };
+static const struct sieve_argument _unknown_tag = { 
+	"", 
+	NULL, NULL, 
+	_unknown_tag_validate, 
+	NULL, NULL 
+};
 
 static void _sieve_validator_register_tag
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
+(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
 	const struct sieve_argument *tag, const char *identifier, int id_code) 
 {
 	struct sieve_tag_registration *reg;
@@ -296,6 +301,31 @@ static void _sieve_validator_register_tag
 	}
 	
 	hash_insert(cmd_reg->tags, (void *) identifier, (void *) reg);
+}
+
+void sieve_validator_register_persistent_tag
+(struct sieve_validator *validator, const struct sieve_argument *tag, 
+	const char *command)
+{
+	struct sieve_command_registration *cmd_reg = 
+		sieve_validator_find_command_registration(validator, command);
+	struct sieve_tag_registration *reg = 
+		p_new(validator->pool, struct sieve_tag_registration, 1);
+	
+	reg->tag = tag;
+	reg->id_code = -1;
+	
+	if ( cmd_reg == NULL ) {
+		cmd_reg = _sieve_validator_register_command(validator, NULL, command);
+	}	
+		
+	/* Add the tag to the persistent tags list if necessary */
+	if ( tag->validate_persistent != NULL ) {
+		if ( !array_is_created(&cmd_reg->persistent_tags) ) 
+			p_array_init(&cmd_reg->persistent_tags, validator->pool, 1);
+				
+		array_append(&cmd_reg->persistent_tags, &reg, 1);
+	}
 }
 
 void sieve_validator_register_external_tag
@@ -573,9 +603,8 @@ static bool sieve_validate_command_arguments
 	int real_count = 0;
 	struct sieve_ast_argument *arg;
 	struct sieve_command_registration *cmd_reg = cmd->cmd_reg;
-	
+
 	/* Validate any tags that might be present */
-	
 	arg = sieve_ast_argument_first(cmd->ast_node);
 		
 	/* Visit tagged and optional arguments */
@@ -666,6 +695,22 @@ static bool sieve_validate_command_arguments
 			cmd->command->identifier, sieve_command_type_name(cmd->command), 
 			arg_count, real_count);
 		return FALSE;
+	}
+	
+	/* Call initial validation for persistent arguments */
+  if ( array_is_created(&cmd_reg->persistent_tags) ) {
+  	unsigned int i;
+  	
+	  for ( i = 0; i < array_count(&cmd_reg->persistent_tags); i++ ) {
+	  	struct sieve_tag_registration * const *reg = 
+	  		array_idx(&cmd_reg->persistent_tags, i);
+			const struct sieve_argument *tag = (*reg)->tag;
+  	
+	  	if ( tag != NULL && tag->validate_persistent != NULL ) { /* To be sure */
+	  		if ( !tag->validate_persistent(validator, cmd) )
+	  			return FALSE;
+	  	}
+	  }
 	}
 
 	return TRUE;

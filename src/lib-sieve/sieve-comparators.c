@@ -223,7 +223,7 @@ static bool tag_comparator_generate
 
 const struct sieve_argument comparator_tag = { 
 	"comparator", 
-	NULL, 
+	NULL, NULL,
 	tag_comparator_validate, 
 	NULL,
 	tag_comparator_generate 

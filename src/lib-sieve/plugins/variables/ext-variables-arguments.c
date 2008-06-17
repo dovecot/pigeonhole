@@ -23,8 +23,11 @@ static bool arg_variable_generate
 	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 		struct sieve_command_context *context);
 
-const struct sieve_argument variable_argument = 
-	{ "@variable", NULL, NULL, NULL, arg_variable_generate };
+const struct sieve_argument variable_argument = { 
+	"@variable", 
+	NULL, NULL, NULL, NULL,
+	arg_variable_generate 
+};
 
 static struct sieve_ast_argument *ext_variables_variable_argument_create
 (struct sieve_validator *validator, struct sieve_ast *ast, 
@@ -125,8 +128,11 @@ static bool arg_match_value_generate
 (struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *context ATTR_UNUSED);
 
-const struct sieve_argument match_value_argument = 
-	{ "@match_value", NULL, NULL, NULL, arg_match_value_generate };
+const struct sieve_argument match_value_argument = { 
+	"@match_value", 
+	NULL, NULL, NULL, NULL,
+	arg_match_value_generate 
+};
 
 static struct sieve_ast_argument *ext_variables_match_value_argument_create
 (struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast *ast, 
@@ -167,7 +173,7 @@ static bool arg_variable_string_generate
 
 const struct sieve_argument variable_string_argument = { 
 	"@variable-string", 
-	NULL, 
+	NULL, NULL,
 	arg_variable_string_validate, 
 	NULL, 
 	arg_variable_string_generate,

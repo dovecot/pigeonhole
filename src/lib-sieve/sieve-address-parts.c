@@ -458,6 +458,7 @@ bool sieve_addrmatch_default_get_optionals
 const struct sieve_argument address_part_tag = { 
 	"ADDRESS-PART",
 	tag_address_part_is_instance_of, 
+	NULL,
 	tag_address_part_validate,
 	NULL, 
 	tag_address_part_generate 

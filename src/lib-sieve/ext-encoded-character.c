@@ -45,8 +45,12 @@ bool arg_encoded_string_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *context);
 
-const struct sieve_argument encoded_string_argument =
-	{ "@encoded-string", NULL, arg_encoded_string_validate, NULL, NULL };
+const struct sieve_argument encoded_string_argument = { 
+	"@encoded-string", 
+	NULL, NULL,
+	arg_encoded_string_validate, 
+	NULL, NULL 
+};
 
 static bool _skip_whitespace
 	(const char **in, const char *inend)

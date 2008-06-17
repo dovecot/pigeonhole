@@ -13,6 +13,8 @@
 
 #include "ext-imapflags-common.h"
 
+static bool tag_flags_validate_persistent
+	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool tag_flags_validate
 	(struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
@@ -23,9 +25,18 @@ static bool tag_flags_generate
 /* Tag */
 
 const struct sieve_argument tag_flags = { 
-	"flags", NULL, 
+	"flags", 
+	NULL, NULL,
 	tag_flags_validate, 
 	NULL, 
+	tag_flags_generate 
+};
+
+const struct sieve_argument tag_flags_implicit = { 
+	"@flags-implicit", 
+	NULL, 
+	tag_flags_validate_persistent,
+	NULL,	NULL, 
 	tag_flags_generate 
 };
 
@@ -40,6 +51,10 @@ static bool seff_flags_read_context
 	(const struct sieve_side_effect *seffect, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address,
 		void **se_context);
+static bool seff_flags_read_implicit_context
+	(const struct sieve_side_effect *seffect, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address,
+		void **se_context);
 static void seff_flags_print
 	(const struct sieve_side_effect *seffect,	const struct sieve_action *action, 
 		void *se_context, bool *keep);
@@ -48,12 +63,17 @@ static bool seff_flags_post_execute
 		const struct sieve_action_exec_env *aenv, 
 		void *se_context, void *tr_context);
 
+enum ext_imapflags_side_effect_type {
+	EXT_IMAPFLAGS_SEFFECT_FLAGS,
+	EXT_IMAPFLAGS_SEFFECT_FLAGS_IMPLICIT,
+};
+
 const struct sieve_side_effect flags_side_effect = {
 	"flags",
 	&act_store,
 	
 	&ext_flags_side_effect,
-	0,
+	EXT_IMAPFLAGS_SEFFECT_FLAGS,
 	seff_flags_dump_context,
 	seff_flags_read_context,
 	seff_flags_print,
@@ -62,13 +82,42 @@ const struct sieve_side_effect flags_side_effect = {
 	NULL, NULL
 };
 
+const struct sieve_side_effect flags_implicit_side_effect = {
+	"flags-implicit",
+	&act_store,
+	
+	&ext_flags_side_effect,
+	EXT_IMAPFLAGS_SEFFECT_FLAGS_IMPLICIT,
+	NULL,
+	seff_flags_read_implicit_context,
+	seff_flags_print,
+	NULL,
+	seff_flags_post_execute, 
+	NULL, NULL
+};
+
+const struct sieve_side_effect *imapflags_side_effects[] = {
+	&flags_side_effect, &flags_implicit_side_effect
+};
+
 const struct sieve_side_effect_extension imapflags_seffect_extension = {
 	&imapflags_extension,
 
-	SIEVE_EXT_DEFINE_SIDE_EFFECT(flags_side_effect)
+	SIEVE_EXT_DEFINE_SIDE_EFFECTS(imapflags_side_effects)
 };
 
 /* Tag validation */
+
+static bool tag_flags_validate_persistent
+(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd)
+{	
+	if ( sieve_command_find_argument(cmd, &tag_flags) == NULL ) {
+		printf("ADD DYNAMIC\n");
+		sieve_command_add_dynamic_tag(cmd, &tag_flags_implicit);
+	}
+	
+	return TRUE;
+}
 
 static bool tag_flags_validate
 (struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
@@ -108,13 +157,20 @@ static bool tag_flags_generate
       return FALSE;
   }
 
-  sieve_opr_side_effect_emit(sbin, &flags_side_effect, ext_imapflags_my_id);
-
-	param = arg->parameters;
+	if ( arg->argument == &tag_flags ) {
+		sieve_opr_side_effect_emit(sbin, &flags_side_effect, ext_imapflags_my_id);
+		  
+		param = arg->parameters;
 	
-	/* Call the generation function for the argument */ 
-	if ( param->argument != NULL && param->argument->generate != NULL && 
-		!param->argument->generate(generator, param, cmd) ) 
+		/* Call the generation function for the argument */ 
+		if ( param->argument != NULL && param->argument->generate != NULL && 
+			!param->argument->generate(generator, param, cmd) ) 
+			return FALSE;
+	} else if ( arg->argument == &tag_flags_implicit ) {
+		printf("GENERATE IMPLICIT\n");
+		sieve_opr_side_effect_emit
+			(sbin, &flags_implicit_side_effect, ext_imapflags_my_id);
+	} else
 		return FALSE;
 	
   return TRUE;
@@ -151,7 +207,7 @@ static bool seff_flags_read_context
 	
 	t_push();
 	
-	/* Read key-list */
+	/* Read flag-list */
 	if ( (flag_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
 		t_pop();
 		return FALSE;
@@ -194,6 +250,54 @@ static bool seff_flags_read_context
 	
 	return result;
 }
+
+static bool seff_flags_read_implicit_context
+(const struct sieve_side_effect *seffect ATTR_UNUSED, 
+	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED,
+	void **se_context)
+{
+	bool result = TRUE;
+	pool_t pool = sieve_result_pool(renv->result);
+	struct seff_flags_context *ctx;
+	const char *flag;
+	struct ext_imapflags_iter flit;
+	ARRAY_DEFINE(keywords, const char *);
+	
+	ctx = p_new(pool, struct seff_flags_context, 1);
+	p_array_init(&keywords, pool, 2);
+	
+	t_push();
+		
+	/* Unpack */
+	ext_imapflags_get_flags_init(&flit, renv, NULL, 0);
+	while ( (flag=ext_imapflags_iter_get_flag(&flit)) != NULL ) {		
+		if (flag != NULL && *flag != '\\') {
+			/* keyword */
+			array_append(&keywords, &flag, 1);
+		} else {
+			/* system flag */
+			if (flag == NULL || strcasecmp(flag, "\\flagged") == 0)
+				ctx->flags |= MAIL_FLAGGED;
+			else if (strcasecmp(flag, "\\answered") == 0)
+				ctx->flags |= MAIL_ANSWERED;
+			else if (strcasecmp(flag, "\\deleted") == 0)
+				ctx->flags |= MAIL_DELETED;
+			else if (strcasecmp(flag, "\\seen") == 0)
+				ctx->flags |= MAIL_SEEN;
+			else if (strcasecmp(flag, "\\draft") == 0)
+				ctx->flags |= MAIL_DRAFT;
+		}
+	}
+	
+	(void)array_append_space(&keywords);
+	ctx->keywords = array_idx(&keywords, 0);
+	*se_context = (void *) ctx;
+
+	t_pop();
+	
+	return result;
+}
+
 
 static void seff_flags_print
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 

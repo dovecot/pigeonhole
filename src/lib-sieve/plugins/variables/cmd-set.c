@@ -127,6 +127,7 @@ static bool tag_modifier_validate
 const struct sieve_argument modifier_tag = { 
 	"MODIFIER",
 	tag_modifier_is_instance_of, 
+	NULL,
 	tag_modifier_validate, 
 	NULL, NULL
 };

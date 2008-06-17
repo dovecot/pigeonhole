@@ -78,13 +78,15 @@ static bool cmd_include_validate_location_tag
 		struct sieve_command_context *cmd);
 
 static const struct sieve_argument include_personal_tag = { 
-	"personal", NULL, 
+	"personal", 
+	NULL, NULL,
 	cmd_include_validate_location_tag, 
 	NULL, NULL 
 };
 
 static const struct sieve_argument include_global_tag = { 
-	"global", NULL, 
+	"global", 
+	NULL, NULL,
 	cmd_include_validate_location_tag, 
 	NULL, NULL 
 };

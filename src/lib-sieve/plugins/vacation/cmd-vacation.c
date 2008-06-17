@@ -188,35 +188,41 @@ static bool cmd_vacation_validate_stringlist_tag
  */
 
 static const struct sieve_argument vacation_days_tag = { 
-	"days", NULL, 
+	"days", 
+	NULL, NULL,
 	cmd_vacation_validate_number_tag, 
 	NULL, NULL 
 };
 
 static const struct sieve_argument vacation_subject_tag = { 
-	"subject", NULL, 
+	"subject", 
+	NULL, NULL,
 	cmd_vacation_validate_string_tag, 
 	NULL, NULL 
 };
 
 static const struct sieve_argument vacation_from_tag = { 
-	"from", NULL, 
+	"from", 
+	NULL, NULL,
 	cmd_vacation_validate_string_tag, 
 	NULL, NULL 
 };
 
 static const struct sieve_argument vacation_addresses_tag = { 
-	"addresses", NULL, 
+	"addresses", 
+	NULL, NULL,
 	cmd_vacation_validate_stringlist_tag, 
 	NULL, NULL 
 };
 
 static const struct sieve_argument vacation_mime_tag = { 
-	"mime",	NULL, NULL, NULL, NULL /* Only generate opt_code */ 
+	"mime",	
+	NULL, NULL, NULL, NULL, NULL /* Only generate opt_code */ 
 };
 
 static const struct sieve_argument vacation_handle_tag = { 
-	"handle", NULL, 
+	"handle", 
+	NULL, NULL, 
 	cmd_vacation_validate_string_tag, 
 	NULL, NULL 
 };

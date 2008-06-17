@@ -15,6 +15,8 @@ struct sieve_argument {
 		(struct sieve_validator *validator, struct sieve_command_context *cmdctx,
 			struct sieve_ast_argument *arg);
 	
+	bool (*validate_persistent) // FIXME: this method must be moved down
+		(struct sieve_validator *validator, struct sieve_command_context *cmdctx);
 	bool (*validate)
 		(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 			struct sieve_command_context *context);
@@ -112,6 +114,11 @@ struct sieve_command_context *sieve_command_prev_context
 	(struct sieve_command_context *context); 
 struct sieve_command_context *sieve_command_parent_context	
 	(struct sieve_command_context *context);
+	
+struct sieve_ast_argument *sieve_command_add_dynamic_tag
+	(struct sieve_command_context *cmd, const struct sieve_argument *tag);
+struct sieve_ast_argument *sieve_command_find_argument
+	(struct sieve_command_context *cmd, const struct sieve_argument *argument);	
 	
 void sieve_command_exit_block_unconditionally
 	(struct sieve_command_context *cmd);

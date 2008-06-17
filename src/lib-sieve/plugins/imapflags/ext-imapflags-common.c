@@ -12,6 +12,13 @@
 
 #include "ext-imapflags-common.h"
 
+/* Tagged arguments */
+
+extern const struct sieve_argument tag_flags;
+extern const struct sieve_argument tag_flags_implicit;
+
+/* Common functions */
+
 bool ext_imapflags_command_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd)
 {
@@ -145,6 +152,25 @@ bool ext_imapflags_command_operands_read
 	}
 	
 	return TRUE;
+}
+
+/* Flags tag registration */
+
+void ext_imapflags_attach_flags_tag
+(struct sieve_validator *valdtr, const char *command)
+{
+	/* Register :flags tag with the command and we don't care whether it is 
+	 * registered or even whether it will be registered at all. The validator 
+	 * handles either situation gracefully 
+	 */
+	 
+	/* Tag specified by user */
+	sieve_validator_register_external_tag
+		(valdtr, &tag_flags, command, -1);
+		
+	/* Implicit tag if none is specified */
+	sieve_validator_register_persistent_tag
+		(valdtr, &tag_flags_implicit, command);
 }
 
 /* Context access */

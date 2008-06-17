@@ -115,7 +115,8 @@ static bool tag_copy_generate
 /* Tag */
 
 static const struct sieve_argument copy_tag = { 
-	"copy", NULL, 
+	"copy", 
+	NULL, NULL,
 	tag_copy_validate, 
 	NULL,
 	tag_copy_generate

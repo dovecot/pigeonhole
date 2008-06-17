@@ -24,13 +24,21 @@ static bool arg_string_list_generate
 	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
 		struct sieve_command_context *context);
 
-const struct sieve_argument number_argument =
-	{ "@number", NULL, NULL, NULL, arg_number_generate };
-const struct sieve_argument string_argument =
-	{ "@string", NULL, NULL, NULL, arg_string_generate };
+const struct sieve_argument number_argument = { 
+	"@number", 
+	NULL, NULL, NULL, NULL,
+	arg_number_generate 
+};
+
+const struct sieve_argument string_argument = { 
+	"@string", 
+	NULL, NULL, NULL, NULL,
+	arg_string_generate 
+};
 
 const struct sieve_argument string_list_argument = { 
-	"@string-list", NULL, 
+	"@string-list", 
+	NULL, NULL,
 	arg_string_list_validate, 
 	NULL, 
 	arg_string_list_generate 
@@ -240,6 +248,39 @@ const char *sieve_command_type_name(const struct sieve_command *command) {
 		break;
 	}
 	return "??COMMAND-TYPE??";
+}
+
+struct sieve_ast_argument *sieve_command_add_dynamic_tag
+(struct sieve_command_context *cmd, const struct sieve_argument *tag)
+{
+	struct sieve_ast_argument *arg;
+	
+	if ( cmd->first_positional != NULL )
+		arg = sieve_ast_argument_tag_insert
+			(cmd->first_positional, tag->identifier, cmd->ast_node->source_line);
+	else
+		arg = sieve_ast_argument_tag_create
+			(cmd->ast_node, tag->identifier, cmd->ast_node->source_line);
+	
+	arg->argument = tag;
+	
+	return arg;
+}
+
+struct sieve_ast_argument *sieve_command_find_argument
+(struct sieve_command_context *cmd, const struct sieve_argument *argument)
+{
+	struct sieve_ast_argument *arg = sieve_ast_argument_first(cmd->ast_node);
+		
+	/* Visit tagged and optional arguments */
+	while ( arg != NULL ) {
+		if ( arg->argument == argument ) 
+			return arg;
+			
+		arg = sieve_ast_argument_next(arg);
+	}
+	
+	return arg;
 }
 
 /* Use this function with caution. The command commits to exiting the block.
