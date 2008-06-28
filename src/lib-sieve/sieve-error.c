@@ -25,8 +25,10 @@ void sieve_verror
 	if ( ehandler->log_master )
 		i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
 
-	ehandler->verror(ehandler, location, fmt, args);
-	ehandler->errors++;
+	if ( sieve_errors_more_allowed(ehandler) ) {
+		ehandler->verror(ehandler, location, fmt, args);
+		ehandler->errors++;
+	}
 }
 
 void sieve_vwarning
@@ -85,6 +87,10 @@ unsigned int sieve_get_warnings(struct sieve_error_handler *ehandler) {
 	return ehandler->errors;
 }
 
+bool sieve_errors_more_allowed(struct sieve_error_handler *ehandler) {
+	return ehandler->max_errors == 0 || ehandler->errors < ehandler->max_errors;
+}
+
 void sieve_error_handler_accept_infolog
 	(struct sieve_error_handler *ehandler, bool enable)
 {
@@ -98,10 +104,12 @@ void sieve_error_handler_copy_masterlog
 }
 
 void sieve_error_handler_init
-	(struct sieve_error_handler *ehandler, pool_t pool)
+	(struct sieve_error_handler *ehandler, pool_t pool, unsigned int max_errors)
 {
 	ehandler->pool = pool;
 	ehandler->refcount = 1;
+	ehandler->max_errors = max_errors;
+	
 	ehandler->errors = 0;
 	ehandler->warnings = 0;
 }
@@ -153,7 +161,8 @@ static void sieve_stderr_vinfo
 	fprintf(stderr, "%s: info: %s.\n", location, t_strdup_vprintf(fmt, args));
 }
 
-struct sieve_error_handler *sieve_stderr_ehandler_create( void ) 
+struct sieve_error_handler *sieve_stderr_ehandler_create
+(unsigned int max_errors) 
 {
 	pool_t pool;
 	struct sieve_error_handler *ehandler;
@@ -163,9 +172,8 @@ struct sieve_error_handler *sieve_stderr_ehandler_create( void )
 	 */
 	pool = pool_alloconly_create
 		("stderr_error_handler", sizeof(struct sieve_error_handler));
-//		("stderr_error_handler", 128);	
 	ehandler = p_new(pool, struct sieve_error_handler, 1);
-	sieve_error_handler_init(ehandler, pool);
+	sieve_error_handler_init(ehandler, pool, max_errors);
 
 	ehandler->verror = sieve_stderr_verror;
 	ehandler->vwarning = sieve_stderr_vwarning;
@@ -177,7 +185,7 @@ struct sieve_error_handler *sieve_stderr_ehandler_create( void )
 /* Output errors to a string buffer */
 
 struct sieve_strbuf_ehandler {
-    struct sieve_error_handler handler;
+	struct sieve_error_handler handler;
 
 	string_t *errors;
 };
@@ -186,8 +194,8 @@ static void sieve_strbuf_verror
 (struct sieve_error_handler *ehandler, const char *location,
     const char *fmt, va_list args)
 {
-    struct sieve_strbuf_ehandler *handler =
-        (struct sieve_strbuf_ehandler *) ehandler;
+	struct sieve_strbuf_ehandler *handler =
+		(struct sieve_strbuf_ehandler *) ehandler;
 
 	str_printfa(handler->errors, "%s: error: ", location);
 	str_vprintfa(handler->errors, fmt, args);
@@ -198,43 +206,43 @@ static void sieve_strbuf_vwarning
 (struct sieve_error_handler *ehandler, const char *location,
     const char *fmt, va_list args)
 {
-    struct sieve_strbuf_ehandler *handler =
-        (struct sieve_strbuf_ehandler *) ehandler;
+	struct sieve_strbuf_ehandler *handler =
+		(struct sieve_strbuf_ehandler *) ehandler;
 
 	str_printfa(handler->errors, "%s: warning: ", location);
-    str_vprintfa(handler->errors, fmt, args);
-    str_append(handler->errors, ".\n");
+	str_vprintfa(handler->errors, fmt, args);
+	str_append(handler->errors, ".\n");
 }
 
 static void sieve_strbuf_vinfo
 (struct sieve_error_handler *ehandler, const char *location,
     const char *fmt, va_list args)
 {
-    struct sieve_strbuf_ehandler *handler =
-        (struct sieve_strbuf_ehandler *) ehandler;
+	struct sieve_strbuf_ehandler *handler =
+		(struct sieve_strbuf_ehandler *) ehandler;
 	
 	str_printfa(handler->errors, "%s: info: ", location);
-    str_vprintfa(handler->errors, fmt, args);
-    str_append(handler->errors, ".\n");
+	str_vprintfa(handler->errors, fmt, args);
+	str_append(handler->errors, ".\n");
 }
 
 struct sieve_error_handler *sieve_strbuf_ehandler_create
-(string_t *strbuf)
+(string_t *strbuf, unsigned int max_errors)
 {
-    pool_t pool;
-    struct sieve_strbuf_ehandler *ehandler;
+	pool_t pool;
+	struct sieve_strbuf_ehandler *ehandler;
 
-    pool = pool_alloconly_create("strbuf_error_handler", 256);
-    ehandler = p_new(pool, struct sieve_strbuf_ehandler, 1);
+	pool = pool_alloconly_create("strbuf_error_handler", 256);
+	ehandler = p_new(pool, struct sieve_strbuf_ehandler, 1);
 	ehandler->errors = strbuf;
     
-	sieve_error_handler_init(&ehandler->handler, pool);
+	sieve_error_handler_init(&ehandler->handler, pool, max_errors);
 
-    ehandler->handler.verror = sieve_strbuf_verror;
-    ehandler->handler.vwarning = sieve_strbuf_vwarning;
-    ehandler->handler.vinfo = sieve_strbuf_vinfo;
+	ehandler->handler.verror = sieve_strbuf_verror;
+	ehandler->handler.vwarning = sieve_strbuf_vwarning;
+	ehandler->handler.vinfo = sieve_strbuf_vinfo;
 
-    return &(ehandler->handler);
+	return &(ehandler->handler);
 }
 
 /* Output errors to a log file */
@@ -368,14 +376,15 @@ static void sieve_logfile_free
 	}
 }
 
-struct sieve_error_handler *sieve_logfile_ehandler_create(const char *logfile) 
+struct sieve_error_handler *sieve_logfile_ehandler_create
+(const char *logfile, unsigned int max_errors) 
 {
 	pool_t pool;
 	struct sieve_logfile_ehandler *ehandler;
 	
 	pool = pool_alloconly_create("logfile_error_handler", 256);	
 	ehandler = p_new(pool, struct sieve_logfile_ehandler, 1);
-	sieve_error_handler_init(&ehandler->handler, pool);
+	sieve_error_handler_init(&ehandler->handler, pool, max_errors);
 
 	ehandler->handler.verror = sieve_logfile_verror;
 	ehandler->handler.vwarning = sieve_logfile_vwarning;

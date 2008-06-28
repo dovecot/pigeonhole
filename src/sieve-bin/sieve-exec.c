@@ -185,7 +185,7 @@ int main(int argc, char **argv)
 	scriptenv.duplicate_mark = duplicate_mark;
 	scriptenv.duplicate_check = duplicate_check;
 	
-	ehandler = sieve_stderr_ehandler_create();
+	ehandler = sieve_stderr_ehandler_create(0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	/* Run */

@@ -81,7 +81,7 @@ static struct sieve_binary *_compile_sieve_script(const char *filename)
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 	
-	ehandler = sieve_stderr_ehandler_create();
+	ehandler = sieve_stderr_ehandler_create(0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	if ( (sbin = sieve_compile(filename, ehandler)) == NULL ) {
@@ -178,7 +178,7 @@ int main(int argc, char **argv)
 	scriptenv.inbox = "INBOX";
 	scriptenv.username = user;
 
-	ehandler = sieve_stderr_ehandler_create();	
+	ehandler = sieve_stderr_ehandler_create(0);	
 	
 	/* Run the test */
 	(void) sieve_test(sbin, &testsuite_msgdata, &scriptenv, ehandler);

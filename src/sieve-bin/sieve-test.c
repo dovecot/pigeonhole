@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 	scriptenv.inbox = "INBOX";
 	scriptenv.username = user;
 
-	ehandler = sieve_stderr_ehandler_create();	
+	ehandler = sieve_stderr_ehandler_create(0);	
 	
 	/* Run the test */
 	(void) sieve_test(sbin, &msgdata, &scriptenv, ehandler);

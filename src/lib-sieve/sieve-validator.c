@@ -819,7 +819,7 @@ static bool sieve_validate_command
 	(struct sieve_validator *validator, struct sieve_ast_node *cmd_node);
 	
 static bool sieve_validate_command
-	(struct sieve_validator *validator, struct sieve_ast_node *cmd_node) 
+	(struct sieve_validator *valdtr, struct sieve_ast_node *cmd_node) 
 {
 	enum sieve_ast_type ast_type = sieve_ast_node_type(cmd_node);
 	bool result = TRUE;
@@ -830,7 +830,7 @@ static bool sieve_validate_command
 	/* Verify the command specified by this node */
 	
 	cmd_reg = sieve_validator_find_command_registration
-		(validator, cmd_node->identifier);
+		(valdtr, cmd_node->identifier);
 	
 	if ( cmd_reg != NULL && cmd_reg->command != NULL ) {
 		const struct sieve_command *command = cmd_reg->command;
@@ -841,7 +841,7 @@ static bool sieve_validate_command
 				(command->type == SCT_TEST && ast_type == SAT_COMMAND) ) 
 			{
 				sieve_validator_error(
-					validator, cmd_node, "attempted to use %s '%s' as %s", 
+					valdtr, cmd_node, "attempted to use %s '%s' as %s", 
 					sieve_command_type_name(command),	cmd_node->identifier,
 					sieve_ast_type_name(ast_type));
 			
@@ -857,77 +857,85 @@ static bool sieve_validate_command
 			 * further error reporting anyway
 			 */
 			if ( command->pre_validate == NULL || 
-				command->pre_validate(validator, ctx) ) {
+				command->pre_validate(valdtr, ctx) ) {
 		
 				/* Check syntax */
 				if ( 
-					!sieve_validate_command_arguments(validator, ctx) ||
+					!sieve_validate_command_arguments(valdtr, ctx) ||
  					!sieve_validate_command_subtests
- 						(validator, ctx, command->subtests) || 
+ 						(valdtr, ctx, command->subtests) || 
  					(ast_type == SAT_COMMAND && !sieve_validate_command_block
- 						(validator, ctx, command->block_allowed, 
+ 						(valdtr, ctx, command->block_allowed, 
  							command->block_required)) ) 
  				{
  					result = FALSE;
  				} else {
 					/* Call command validation function if specified */
 					if ( command->validate != NULL )
-						result = command->validate(validator, ctx) && result;
+						result = command->validate(valdtr, ctx) && result;
 				}
 			} else
 				result = FALSE;
 				
-			if ( result ) 
-				result = sieve_validate_arguments_context(validator, ctx);
+			result = result && sieve_validate_arguments_context(valdtr, ctx);
 				
 		} else 
 			result = FALSE;
 				
 	} else {
 		sieve_validator_error(
-			validator, cmd_node, 
+			valdtr, cmd_node, 
 			"unknown %s '%s' (only reported once at first occurence)", 
 			sieve_ast_type_name(ast_type), cmd_node->identifier);
 			
-		sieve_validator_register_unknown_command(validator, cmd_node->identifier);
+		sieve_validator_register_unknown_command(valdtr, cmd_node->identifier);
 		
 		result = FALSE;
 	}
 	
-	/* Descend further into the AST */
+	/*  
+	 * Descend further into the AST 
+	 */
 	
-	result = sieve_validate_test_list(validator, cmd_node) && result;
+	/* Tests */
+	if ( result || sieve_errors_more_allowed(valdtr->ehandler) )
+		result = sieve_validate_test_list(valdtr, cmd_node) && result;
 
-	if ( ast_type == SAT_COMMAND )
-		result = sieve_validate_block(validator, cmd_node) && result;
+	/* Command block */
+	if ( ast_type == SAT_COMMAND && 
+		(result || sieve_errors_more_allowed(valdtr->ehandler)) )
+		result = sieve_validate_block(valdtr, cmd_node) && result;
 	
 	return result;
 }
 
 static bool sieve_validate_test_list
-	(struct sieve_validator *validator, struct sieve_ast_node *test_list) 
+	(struct sieve_validator *valdtr, struct sieve_ast_node *test_list) 
 {
 	bool result = TRUE;
 	struct sieve_ast_node *test;
 
 	test = sieve_ast_test_first(test_list);
-	while ( test != NULL ) {	
-		result = sieve_validate_command(validator, test) && result;	
+	while ( test != NULL && (result || 
+		sieve_errors_more_allowed(valdtr->ehandler))) {	
+		result = sieve_validate_command(valdtr, test) && result;	
 		test = sieve_ast_test_next(test);
 	}		
 	
 	return result;
 }
 
-static bool sieve_validate_block(struct sieve_validator *validator, struct sieve_ast_node *block) 
+static bool sieve_validate_block
+(struct sieve_validator *valdtr, struct sieve_ast_node *block) 
 {
 	bool result = TRUE;
 	struct sieve_ast_node *command;
 
 	T_BEGIN {	
 		command = sieve_ast_command_first(block);
-		while ( command != NULL ) {	
-			result = sieve_validate_command(validator, command) && result;	
+		while ( command != NULL && (result || 
+			sieve_errors_more_allowed(valdtr->ehandler)) ) {	
+			result = sieve_validate_command(valdtr, command) && result;	
 			command = sieve_ast_command_next(command);
 		}		
 	} T_END;

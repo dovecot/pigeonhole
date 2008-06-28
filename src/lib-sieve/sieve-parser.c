@@ -17,6 +17,8 @@
 struct sieve_parser {
 	pool_t pool;
 	
+	bool valid;
+	
 	struct sieve_script *script;
 		
 	struct sieve_error_handler *ehandler;
@@ -47,6 +49,8 @@ inline static void sieve_parser_error
 				fmt, args);
 		} T_END; 
 	}
+	
+	parser->valid = FALSE;
 	
 	va_end(args);
 }
@@ -85,6 +89,7 @@ struct sieve_parser *sieve_parser_create
 
 		parser = p_new(pool, struct sieve_parser, 1);
 		parser->pool = pool;
+		parser->valid = TRUE;
 		
 		parser->ehandler = ehandler;
 		sieve_error_handler_ref(ehandler);
@@ -132,7 +137,8 @@ static bool sieve_parse_arguments
 	bool argument = TRUE, result = TRUE;
 	
 	/* Parse arguments */
-	while ( argument && result ) {
+	while ( argument && result && 
+		(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
 		struct sieve_ast_argument *arg;
 		
 		switch ( sieve_lexer_current_token(lexer) ) {
@@ -148,7 +154,8 @@ static bool sieve_parse_arguments
 					(arg, sieve_lexer_token_str(lexer), sieve_lexer_current_line(parser->lexer));
 				sieve_lexer_skip_token(lexer);
 				 
-				while ( sieve_lexer_current_token(lexer) == STT_COMMA ) {
+				while ( sieve_lexer_current_token(lexer) == STT_COMMA &&
+					(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
 					sieve_lexer_skip_token(lexer);
 				
 					if ( sieve_lexer_current_token(lexer) == STT_STRING ) {
@@ -247,7 +254,8 @@ static bool sieve_parse_arguments
 			if ( sieve_parse_arguments(parser, test) ) {
 			
 				/* More tests ? */
-				while ( sieve_lexer_current_token(lexer) == STT_COMMA ) {
+				while ( sieve_lexer_current_token(lexer) == STT_COMMA && 
+					(parser->valid && sieve_errors_more_allowed(parser->ehandler)) ) {
 					sieve_lexer_skip_token(lexer);
 					
 					/* Test starts with identifier */
@@ -316,7 +324,8 @@ static bool sieve_parse_commands
 	struct sieve_lexer *lexer = parser->lexer;
 	bool result = TRUE;
 
-	while ( sieve_lexer_current_token(lexer) == STT_IDENTIFIER ) {
+	while ( sieve_lexer_current_token(lexer) == STT_IDENTIFIER && 
+		(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
 		struct sieve_ast_node *command = 
 			sieve_ast_command_create
 				(block, sieve_lexer_token_ident(lexer), sieve_lexer_current_line(parser->lexer));
@@ -407,7 +416,7 @@ bool sieve_parser_run
 			return FALSE;				
 		}
 	
-		return TRUE;
+		return parser->valid;
 	} 
 	
 	parser->ast = NULL;

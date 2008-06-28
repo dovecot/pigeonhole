@@ -14,6 +14,8 @@
 
 #define SIEVE_SCRIPT_PATH "~/.dovecot.sieve"
 
+#define LDA_SIEVE_MAX_ERRORS 10
+
 static deliver_mail_func_t *next_deliver_mail;
 
 static const char *lda_sieve_get_path(void)
@@ -89,14 +91,14 @@ static int lda_sieve_run
 	int ret = 0;
 
 	scriptlog = t_strconcat(script_path, ".log", NULL);
-	ehandler = sieve_logfile_ehandler_create(scriptlog);
+	ehandler = sieve_logfile_ehandler_create(scriptlog, LDA_SIEVE_MAX_ERRORS);
 
 	if ( debug )
 		i_info("sieve: Opening script %s", script_path);
 
 	if ( (sbin=sieve_open(script_path, ehandler)) == NULL ) {
-		i_error("sieve: Failed to open script. "
-			"Log should be available as %s", scriptlog);
+		i_error("sieve: Failed to open script %s. "
+			"Log should be available as %s", script_path, scriptlog);
 
 		sieve_error_handler_unref(&ehandler);
 		return -1;
