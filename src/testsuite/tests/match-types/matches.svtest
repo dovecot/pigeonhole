@@ -1,0 +1,150 @@
+require "vnd.dovecot.testsuite";
+
+test_set "message" text:
+From: stephan+sieve@drunksnipers.com
+To: sirius@rename-it.nl
+To: nico@vestingbar.nl
+Cc: me@example.com
+Cc: timo@dovecot.com
+X-Hufter: TRUE
+Subject: make your money very fast!!!
+X-Spam-Score: 300
+X-Bullshit: 33333???a
+Message-ID: <90a02fe01fc25e131d0e9c4c45975894@example.com>
+
+Het werkt!
+.
+;
+
+test "MATCH-A" {
+	if not address :matches "from" "*@d*ksn*ers.com" {
+		test_fail "A case should have matched";
+	}
+}
+
+test "MATCH-B" {
+	if not address :matches "from" "stephan+sieve@drunksnipers.*" {
+		test_fail "B case should have matched";
+	}
+}
+
+test "MATCH-C" {
+	if not address :matches "from" "*+sieve@drunksnipers.com" {
+		test_fail "C case should have matched";
+	}
+}
+
+test "MATCH-D" {
+	if not address :matches "from" "stephan+sieve?drunksnipers.com" {
+		test_fail "D case should have matched";
+	}
+}
+
+test "MATCH-E" {
+	if not address :matches "from" "?tephan+sieve@drunksnipers.com" {
+		test_fail "E case should have matched";
+	}
+}
+
+test "MATCH-F" {
+	if not address :matches "from" "stephan+sieve@drunksnipers.co?" {
+		test_fail "F case should have matched";
+	}
+}
+
+test "MATCH-G" {
+	if not address :matches "from" "?t?phan?sieve?drunksnip?rs.co?" {
+		test_fail "G case should have matched";
+	}
+}
+
+test "MATCH-H" {
+	if not header :matches "x-bullshit" "33333\\?\\?\\??" {
+		test_fail "H case should have matched";
+	}
+}
+
+test "MATCH-I" {
+	if not header :matches "x-bullshit" "33333*\\?\\??" {
+		test_fail "I case should have matched";
+	}
+}
+
+test "MATCH-J" {
+	if not header :matches "x-bullshit" "*\\?\\?\\?a" {
+		test_fail "J case should have matched";
+	}
+}
+
+test "MATCH-K" {
+	if not header :matches "x-bullshit" "*3333\\?\\?\\?a" {
+		test_fail "K case should have matched";
+	}
+}
+
+test "NO-MATCH-A" {
+	if address :matches "from" "*@d*kn*ers.com" {
+		test_fail "A case should not have matched";
+	}
+}
+
+test "NO-MATCH-B" {
+	if address :matches "from" "stepan+sieve@drunksnipers.*" {
+		test_fail "B case should not have matched";
+	}
+}
+
+test "NO-MATCH-C" {
+	if address :matches "from" "*+sieve@drunksnipers.om" {
+		test_fail "C case should not have matched";
+	}
+}
+
+test "NO-MATCH-D" {
+	if address :matches "from" "stephan+sieve?drunksipers.com" {
+		test_fail "D case should not have matched";
+	}
+}
+
+test "NO-MATCH-E" {
+	if address :matches "from" "?tephan+sievedrunksnipers.com" {
+		test_fail "E case should not have matched";
+	}
+}
+
+test "NO-MATCH-F" {
+	if address :matches "from" "sephan+sieve@drunksnipers.co?" {
+		test_fail "F case should not have matched";
+	}
+}
+
+test "NO-MATCH-G" {
+	if address :matches "from" "?t?phan?sieve?dunksnip?rs.co?" {
+		test_fail "G case should not have matched";
+	}
+}
+
+test "NO-MATCH-H" {
+	if header :matches "x-bullshit" "33333\\?\\?\\?" {
+		test_fail "H case should not have matched";
+	}
+}
+
+test "NO-MATCH-I" {
+	if header :matches "x-bullshit" "33333\\?\\?\\?aa" {
+		test_fail "I case should not have matched";
+	}
+}
+
+test "NO-MATCH-J" {
+	if header :matches "x-bullshit" "\\*3333\\?\\?\\?a" {
+		test_fail "J case should not have matched";
+	}
+}
+
+test "NO-MATCH-K" {
+	if header :matches "x-bullshit" "\\f3333\\?\\?\\?a" {
+		test_fail "K case should not have matched";
+	}
+}
+

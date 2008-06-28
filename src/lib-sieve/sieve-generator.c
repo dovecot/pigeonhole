@@ -51,8 +51,6 @@ void sieve_jumplist_resolve(struct sieve_jumplist *jlist)
 	
 		sieve_binary_resolve_offset(jlist->binary, *jump);
 	}
-	
-	array_free(&jlist->jumps);
 }
 
 /* Generator */
