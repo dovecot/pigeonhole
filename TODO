@@ -1,7 +1,5 @@
 Next (in order of descending priority/precedence):
 * Finish implementing all extensions supported by cmusieve, except notify.
-* Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
-  Character Sets). 
 * Get rid of all <stdio.h> printf()s in the library; use trace macro instead
 * Use lib/llist.h for the AST implementation. 
 * Make the sieve plugins true plugins and add a SIEVE_PLUGINS config item to the
@@ -22,7 +20,10 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A FIRST RELEASE ##
 
-* Verify outgoing mail addresses at runtime (e.g. after variables substitution)
+* Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
+  Character Sets). 
+* Verify outgoing mail addresses at runtime when necessary (e.g. after variables 
+  substitution)
 * Implement dropping errors in the user's mailbox as a mail message.
 * Add normalize() method to comparators to normalize the string before mathing
   (for efficiency).
