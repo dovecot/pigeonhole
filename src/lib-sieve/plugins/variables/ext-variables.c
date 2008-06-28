@@ -3,9 +3,8 @@
  *
  * Authors: Stephan Bosch
  * Specification: RFC 5229
- * Implementation: full variables support, working on support for other 
- *                 extensions.
- * Status: under development
+ * Implementation: mostly full; no support for future namespaces
+ * Status: experimental, largely untested
  *
  */
  

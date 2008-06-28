@@ -3,7 +3,7 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-daboo-sieve-include-05
- * Implementation: full, but needs much more work 
+ * Implementation: full, but needs some more work 
  * Status: experimental, largely untested
  * 
  */

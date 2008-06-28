@@ -149,7 +149,7 @@ Extensions and their implementation status:
     encoded-character: full
 
   Other RFCs/drafts:
-    subaddress: full
+    subaddress: full, but not configurable
     comparator-i;ascii-numeric: full
     relational: full 
     copy: full
