@@ -251,7 +251,8 @@ const char *sieve_command_type_name(const struct sieve_command *command) {
 }
 
 struct sieve_ast_argument *sieve_command_add_dynamic_tag
-(struct sieve_command_context *cmd, const struct sieve_argument *tag)
+(struct sieve_command_context *cmd, const struct sieve_argument *tag, 
+	int id_code)
 {
 	struct sieve_ast_argument *arg;
 	
@@ -263,6 +264,7 @@ struct sieve_ast_argument *sieve_command_add_dynamic_tag
 			(cmd->ast_node, tag->identifier, cmd->ast_node->source_line);
 	
 	arg->argument = tag;
+	arg->arg_id_code = id_code;
 	
 	return arg;
 }

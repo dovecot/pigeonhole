@@ -111,19 +111,22 @@ void sieve_code_ascend(const struct sieve_dumptime_env *denv)
 bool sieve_code_dumper_print_optional_operands
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	int opt_code;
+	int opt_code = -1;
 	
 	if ( sieve_operand_optional_present(denv->sbin, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) )
+		
+		while ( opt_code != 0 ) {			
+			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) {
+				sieve_binary_corrupt(denv->sbin, "failed to read optional operand");
 				return FALSE;
+			}
 
 			if ( opt_code == SIEVE_OPT_SIDE_EFFECT ) {
 				if ( !sieve_opr_side_effect_dump(denv, address) )
 					return FALSE;
 			}
 		}
-	}
+	} 
 	return TRUE;
 }
  

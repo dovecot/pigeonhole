@@ -154,15 +154,19 @@ bool sieve_opr_side_effect_dump
 	sieve_code_mark(denv);
 	seffect = sieve_side_effect_read(denv->sbin, address);
 
-	if ( seffect == NULL ) 
+	if ( seffect == NULL ) {
+		sieve_binary_corrupt(denv->sbin, "failed to read side effect");
 		return FALSE;
+	}
 
 	sieve_code_dumpf(denv, "SIDE-EFFECT: %s", seffect->name);
 
 	if ( seffect->dump_context != NULL ) {
 		sieve_code_descend(denv);
-		if ( !seffect->dump_context(seffect, denv, address) )
+		if ( !seffect->dump_context(seffect, denv, address) ) {
+			sieve_binary_corrupt(denv->sbin, "failed to read side effect context");
 			return FALSE;	
+		}
 		sieve_code_ascend(denv);
 	}
 

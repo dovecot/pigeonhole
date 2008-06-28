@@ -42,7 +42,7 @@ const struct sieve_argument tag_flags_implicit = {
 
 /* Side effect */
 
-const struct sieve_side_effect_extension ext_flags_side_effect;
+extern const struct sieve_side_effect_extension imapflags_seffect_extension;
 
 static bool seff_flags_dump_context
 	(const struct sieve_side_effect *seffect,
@@ -72,7 +72,7 @@ const struct sieve_side_effect flags_side_effect = {
 	"flags",
 	&act_store,
 	
-	&ext_flags_side_effect,
+	&imapflags_seffect_extension,
 	EXT_IMAPFLAGS_SEFFECT_FLAGS,
 	seff_flags_dump_context,
 	seff_flags_read_context,
@@ -86,7 +86,7 @@ const struct sieve_side_effect flags_implicit_side_effect = {
 	"flags-implicit",
 	&act_store,
 	
-	&ext_flags_side_effect,
+	&imapflags_seffect_extension,
 	EXT_IMAPFLAGS_SEFFECT_FLAGS_IMPLICIT,
 	NULL,
 	seff_flags_read_implicit_context,
@@ -112,8 +112,7 @@ static bool tag_flags_validate_persistent
 (struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd)
 {	
 	if ( sieve_command_find_argument(cmd, &tag_flags) == NULL ) {
-		printf("ADD DYNAMIC\n");
-		sieve_command_add_dynamic_tag(cmd, &tag_flags_implicit);
+		sieve_command_add_dynamic_tag(cmd, &tag_flags_implicit, -1);
 	}
 	
 	return TRUE;
@@ -167,7 +166,6 @@ static bool tag_flags_generate
 			!param->argument->generate(generator, param, cmd) ) 
 			return FALSE;
 	} else if ( arg->argument == &tag_flags_implicit ) {
-		printf("GENERATE IMPLICIT\n");
 		sieve_opr_side_effect_emit
 			(sbin, &flags_implicit_side_effect, ext_imapflags_my_id);
 	} else

@@ -116,7 +116,8 @@ struct sieve_command_context *sieve_command_parent_context
 	(struct sieve_command_context *context);
 	
 struct sieve_ast_argument *sieve_command_add_dynamic_tag
-	(struct sieve_command_context *cmd, const struct sieve_argument *tag);
+	(struct sieve_command_context *cmd, const struct sieve_argument *tag,
+		int id_code);
 struct sieve_ast_argument *sieve_command_find_argument
 	(struct sieve_command_context *cmd, const struct sieve_argument *argument);	
 	

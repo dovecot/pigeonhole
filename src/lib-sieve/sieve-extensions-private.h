@@ -19,6 +19,7 @@ static inline const void *_sieve_extension_get_object
 		const void * const *objects = (const void * const *) reg->objects;
 		return objects[code]; 
 	}
+	
 	return NULL;
 }
 #define sieve_extension_get_object(type, reg, code) \
@@ -59,19 +60,35 @@ static inline const void *_sieve_extension_read_obj
 
 	if ( sieve_binary_read_byte(sbin, address, &obj_code) ) { 
 		if ( obj_code < defreg->count ) { 
-			return _sieve_extension_get_object(defreg, obj_code); 
+			const void *object = _sieve_extension_get_object(defreg, obj_code); 
+			
+			if ( object == 0 ) 
+				sieve_binary_corrupt(sbin, "failed to read object with code %d "
+					"from default object registry", obj_code);
+			
+			return object;
 		} else {
+			const void *object;
 			unsigned int code = 0; 	 
 			const struct sieve_extension_obj_registry *reg;
 		
 			if ( (reg=get_reg_func(sbin, obj_code - defreg->count)) == NULL || 
-				reg->count == 0 ) 
+				reg->count == 0 ) {
+				sieve_binary_corrupt(sbin, 
+					"failed to read object registry with code %d", obj_code);
 				return NULL; 
+			}
 		
 			if ( reg->count > 1) 
 				sieve_binary_read_byte(sbin, address, &code); 
 	
-			return _sieve_extension_get_object(reg, code);
+			object = _sieve_extension_get_object(reg, code);
+			
+			if ( object == 0 ) 
+				sieve_binary_corrupt(sbin, "failed to read object with code %d "
+					"from object registry %d", code, obj_code);
+			
+			return object;
 		}
 	}
 	

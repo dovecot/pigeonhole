@@ -11,13 +11,14 @@
 #include <stdio.h>
 
 #include "sieve-extensions.h"
+#include "sieve-binary.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
-#include "sieve-code-dumper.h"
+#include "sieve-dump.h"
 #include "sieve-result.h"
 
 /* Forward declarations */
@@ -133,11 +134,18 @@ static bool ext_fileinto_operation_dump
 	sieve_code_dumpf(denv, "FILEINTO");
 	sieve_code_descend(denv);
 
-	if ( !sieve_code_dumper_print_optional_operands(denv, address) )
+	if ( !sieve_code_dumper_print_optional_operands(denv, address) ) {
+		sieve_binary_corrupt(denv->sbin, 
+			"FILEINTO: failed to dump optional operands");
 		return FALSE;
+	}
 
-	return 
-		sieve_opr_string_dump(denv, address);
+	if ( !sieve_opr_string_dump(denv, address) ) {
+		sieve_binary_corrupt(denv->sbin, "FILEINTO: failed to dump string operand");
+		return FALSE;
+	}
+	
+	return TRUE;
 }
 
 /*
@@ -159,6 +167,7 @@ static bool ext_fileinto_operation_execute
 	
 	if ( !sieve_opr_string_read(renv, address, &folder) ) {
 		t_pop();
+		sieve_binary_corrupt(renv->sbin, "FILEINTO: failed to read string operand");
 		return FALSE;
 	}
 
