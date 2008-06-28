@@ -157,9 +157,8 @@ Extensions and their implementation status:
     body: full, but text body-transform implementation is simple
     include: almost full; needs some more work (no external binaries)
     vacation: almost full; no support for required References header
-    imapflags: flag management works, but flags are not stored (no variables)
-    variables: largely untested core functionality present; need to provide 
-               suppor other extensions that depend on this one
+    imapflags: flag management works, but flags are not stored
+    variables: mostly full; currently no support for future namespaces 
 
   Low priority:
     notify: planned, first mailto only 

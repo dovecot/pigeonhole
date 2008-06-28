@@ -9,7 +9,8 @@ Next (in order of descending priority/precedence):
 * Make the sieve plugins true plugins and add a SIEVE_PLUGINS config item to the
   lda-sieve plugin.
 * Revise extension support for comparators, match-types, address-parts and 
-  side-effects.
+  side-effects. Current implementation emits redundant bytes and associated code
+  is not very neat.
 
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...
