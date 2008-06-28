@@ -25,6 +25,13 @@
 /* 
  * Forward declarations 
  */
+ 
+static const struct sieve_argument vacation_days_tag;
+static const struct sieve_argument vacation_subject_tag;
+static const struct sieve_argument vacation_from_tag;
+static const struct sieve_argument vacation_addresses_tag;
+static const struct sieve_argument vacation_mime_tag;
+static const struct sieve_argument vacation_handle_tag;
 
 static bool ext_vacation_operation_dump
 	(const struct sieve_operation *op,	
@@ -151,6 +158,13 @@ static bool cmd_vacation_validate_string_tag
 	 */
 	if ( !sieve_validate_tag_parameter
 		(validator, cmd, tag, *arg, SAAT_STRING) ) {
+		return FALSE;
+	}
+
+	if ( tag->argument == &vacation_from_tag && 
+		sieve_argument_is_string_literal(*arg) &&
+		!sieve_validate_address(validator, cmd->ast_node, 
+			sieve_ast_argument_str(*arg)) ) {
 		return FALSE;
 	}
 		

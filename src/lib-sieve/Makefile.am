@@ -57,6 +57,7 @@ libsieve_la_SOURCES = \
 	sieve-ast.c \
 	sieve-binary.c \
 	sieve-parser.c \
+	sieve-validator-address.c \
 	sieve-validator.c \
 	sieve-generator.c \
 	sieve-interpreter.c \

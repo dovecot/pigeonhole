@@ -88,6 +88,9 @@ struct sieve_command_context *sieve_command_context_create
 		struct sieve_command_registration *reg);
 		
 const char *sieve_command_type_name(const struct sieve_command *command);		
+
+#define sieve_argument_is_string_literal(arg) \
+	( (arg)->argument == &string_argument )
 		
 #define sieve_command_validate_error(validator, context, ...) \
 	sieve_validator_error(validator, (context)->ast_node, __VA_ARGS__)

@@ -92,6 +92,7 @@ static bool cmd_redirect_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd) 
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
+	string_t *address;
 
 	/* Check argument */
 	if ( !sieve_validate_positional_argument
@@ -99,7 +100,16 @@ static bool cmd_redirect_validate
 		return FALSE;
 	}
 	
-	return sieve_validator_argument_activate(validator, cmd, arg, FALSE);
+	if ( !sieve_validator_argument_activate(validator, cmd, arg, FALSE) )
+		return FALSE;
+
+	if ( sieve_argument_is_string_literal(arg) &&
+		!sieve_validate_address(validator, cmd->ast_node, 
+		sieve_ast_argument_str(arg)) ) {
+		return FALSE;		
+	}		
+
+	return TRUE;
 }
 
 /*

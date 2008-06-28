@@ -40,6 +40,12 @@ void sieve_validator_error
 void sieve_validator_critical
 	(struct sieve_validator *validator, struct sieve_ast_node *node, 
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
+		
+/* Address validation */
+
+bool sieve_validate_address
+	(struct sieve_validator *valdtr, struct sieve_ast_node *node,
+		string_t *address);
 
 /* Command Programmers Interface */
 
