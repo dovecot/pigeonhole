@@ -38,7 +38,7 @@ const struct sieve_match_type matches_match_type = {
  */
 
 /* Quick 'n dirty debug */
-#define MATCH_DEBUG
+//#define MATCH_DEBUG
 #ifdef MATCH_DEBUG
 #define debug_printf(...) printf (__VA_ARGS__)
 #else
