@@ -213,11 +213,15 @@ static bool tst_header_operation_execute
 	while ( !matched && (result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
 		&& hdr_item != NULL ) {
 		const char *const *headers;
+
+		printf("HEADER: %s\n", str_c(hdr_item));
+
 			
 		if ( mail_get_headers_utf8(renv->msgdata->mail, str_c(hdr_item), &headers) >= 0 ) {	
 			
 			int i;
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
+				printf("HEADER: %s %s\n", str_c(hdr_item), headers[i]);
 				if ( sieve_match_value(mctx, headers[i], strlen(headers[i])) )
 					matched = TRUE;				
 			} 

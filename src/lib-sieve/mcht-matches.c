@@ -38,7 +38,7 @@ const struct sieve_match_type matches_match_type = {
  */
 
 /* Quick 'n dirty debug */
-//#define MATCH_DEBUG
+#define MATCH_DEBUG
 #ifdef MATCH_DEBUG
 #define debug_printf(...) printf (__VA_ARGS__)
 #else
@@ -225,7 +225,6 @@ static bool mcht_matches_match
 				str_append_n(mvalue, pvp, qp-pvp);
 				for ( ; qp < qend; qp++ )
 					str_append_c(mchars, *qp);
-					//sieve_match_values_add_char(mvalues, *qp); 
 				debug_printf("MATCH :: %s\n", str_c(mvalue));
 			}
 			
@@ -249,7 +248,8 @@ static bool mcht_matches_match
 				debug_printf("MATCH fkey: '%s'\n", t_strdup_until(needle, nend));
 				debug_printf("MATCH fval: '%s'\n", t_strdup_until(vp, vend));
 
-				if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
+				if ( (needle == nend && vp < vend ) || 
+					!cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
 					if ( prv != NULL && prv + 1 < vend ) {
 						vp = prv;
 						kp = prk;
@@ -262,7 +262,12 @@ static bool mcht_matches_match
 						next_wcard = '?';
 				
 						backtrack = TRUE;				 
+						debug_printf("MATCH backtrack\n");
+					} else {
+						/* We are sure to have failed */
+						return FALSE;
 					}
+					
 					debug_printf("MATCH failed fixed\n");
 					break;
 				}

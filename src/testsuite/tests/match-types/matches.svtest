@@ -71,7 +71,7 @@ test "MATCH-I" {
 }
 
 test "MATCH-J" {
-	if not header :matches "x-bullshit" "*\\?\\?\\?a" {
+	if not header :matches "X-Bullshit" "*\\?\\?\\?a" {
 		test_fail "J case should have matched";
 	}
 }

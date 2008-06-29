@@ -37,36 +37,36 @@ if header :matches "x-bullshit" "*3333\\?\\?\\?a" {
 
 fileinto "SHOULD NOT MATCH";
 if address :matches "from" "*@d*kn*ers.com" {
-	fileinto "A";
+	fileinto "NA";
 }
 if address :matches "from" "stepan+sieve@drunksnipers.*" {
-	fileinto "B";
+	fileinto "NB";
 }
 if address :matches "from" "*+sieve@drunksnipers.om" {
-	fileinto "C";
+	fileinto "NC";
 }
 if address :matches "from" "stephan+sieve?drunksipers.com" {
-	fileinto "D";
+	fileinto "ND";
 }
 if address :matches "from" "?tephan+sievedrunksnipers.com" {
-	fileinto "E";
+	fileinto "NE";
 }
 if address :matches "from" "sephan+sieve@drunksnipers.co?" {
-	fileinto "F";
+	fileinto "NF";
 }
 if address :matches "from" "?t?phan?sieve?dunksnip?rs.co?" {
-	fileinto "G";
+	fileinto "NG";
 }
 if header :matches "x-bullshit" "33333\\?\\?\\?" {
-	fileinto "H";
+	fileinto "NH";
 }
 if header :matches "x-bullshit" "33333\\?\\?\\?aa" {
-    fileinto "I";
+    fileinto "NI";
 }
 if header :matches "x-bullshit" "\\*3333\\?\\?\\?a" {
-    fileinto "J";
+    fileinto "NJ";
 }
 if header :matches "x-bullshit" "\\f3333\\?\\?\\?a" {
-    fileinto "J";
+    fileinto "NK";
 }
 
