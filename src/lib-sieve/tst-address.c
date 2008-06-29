@@ -145,7 +145,7 @@ static bool tst_address_operation_execute
 	string_t *hdr_item;
 	bool matched;
 	
-	printf("?? ADDRESS\n");
+	sieve_runtime_trace(renv, "ADDRESS test");
 
 	if ( !sieve_addrmatch_default_get_optionals
 		(renv, address, &addrp, &mtch, &cmp) )

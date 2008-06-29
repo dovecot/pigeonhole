@@ -254,9 +254,11 @@ static bool opc_include_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	int block;
-	
+		
 	if ( !sieve_binary_read_offset(renv->sbin, address, &block) )
 		return FALSE;
+	
+	sieve_runtime_trace(renv, "INCLUDE command (BLOCK: %d)", block);
 	
 	return ext_include_execute_include(renv, (unsigned int) block);
 }

@@ -75,6 +75,17 @@ void sieve_runtime_warning
 void sieve_runtime_log
 	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
 		ATTR_FORMAT(2, 3);
+		
+void _sieve_runtime_trace
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
+		
+#ifdef SIEVE_TRACE
+# define sieve_runtime_trace(runenv, ...) \
+	_sieve_runtime_trace(runenv, __VA_ARGS__)
+#else
+# define sieve_runtime_trace(runenv, ...)
+#endif
 
 /* Extension support */
 

@@ -84,7 +84,7 @@ static bool cmd_discard_operation_execute
 	const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {	
-	printf(">> DISCARD\n");
+	sieve_runtime_trace(renv, "DISCARD action");
 	
 	return ( sieve_result_add_action(renv, &act_discard, NULL, NULL) >= 0 );
 }

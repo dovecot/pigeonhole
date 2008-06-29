@@ -146,7 +146,7 @@ static bool cmd_test_set_operation_execute
 		return FALSE;
 	}
 
-	printf(">> TEST SET %s = \"%s\"\n", 
+	sieve_runtime_trace(renv, "TEST SET command (%s = \"%s\")", 
 		testsuite_object_member_name(object, member_id), str_c(value));
 	
 	if ( object->set_member == NULL ) {

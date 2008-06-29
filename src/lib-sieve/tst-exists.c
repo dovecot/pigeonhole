@@ -100,7 +100,7 @@ static bool tst_exists_operation_execute
 	string_t *hdr_item;
 	bool matched;
 	
-	printf("?? EXISTS\n");
+	sieve_runtime_trace(renv, "EXISTS test");
 
 	t_push();
 		

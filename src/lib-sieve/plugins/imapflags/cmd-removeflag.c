@@ -75,7 +75,7 @@ static bool cmd_removeflag_operation_execute
 	struct sieve_variable_storage *storage;
 	unsigned int var_index;
 	
-	printf("REMOVEFLAG\n");
+	sieve_runtime_trace(renv, "REMOVEFLAG action");
 	
 	t_push();
 	

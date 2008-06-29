@@ -166,7 +166,7 @@ static bool tst_hasflag_operation_execute
 	const char *flag;
 	bool matched;
 	
-	printf("?? HASFLAG\n");
+	sieve_runtime_trace(renv, "HASFLAG test");
 
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {

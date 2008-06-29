@@ -312,7 +312,7 @@ static bool ext_body_operation_execute
 	struct ext_body_part *body_parts;
 	bool matched;
 	
-	printf("?? BODY\n");
+	sieve_runtime_trace(renv, "BODY action");
 
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {

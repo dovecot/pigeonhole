@@ -52,10 +52,14 @@ static void testsuite_init(void)
 		i_fatal("Failed to initialize sieve implementation\n");
 
 	(void) sieve_extension_register(&testsuite_extension);
+	
+	testsuite_test_context_init();
 }
 
 static void testsuite_deinit(void)
 {
+	testsuite_test_context_deinit();
+	
 	sieve_deinit();
 	
 	lib_signals_deinit();

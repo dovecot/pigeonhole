@@ -68,7 +68,7 @@ static bool cmd_keep_operation_execute
 	struct sieve_side_effects_list *slist = NULL;
 	int ret = 0;	
 
-	printf(">> KEEP\n");
+	sieve_runtime_trace(renv, "KEEP action");
 	
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;

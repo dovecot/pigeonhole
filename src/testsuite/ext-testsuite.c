@@ -41,8 +41,12 @@ extern const struct sieve_command cmd_test_set;
 
 /* Operations */
 
-const struct sieve_operation *testsuite_operations[] =
-    { &test_operation, &test_fail_operation, &test_set_operation };
+const struct sieve_operation *testsuite_operations[] = { 
+	&test_operation, 
+	&test_finish_operation,
+	&test_fail_operation, 
+	&test_set_operation 
+};
 
 /* Operands */
 

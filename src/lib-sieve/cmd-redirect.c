@@ -170,7 +170,7 @@ static bool cmd_redirect_operation_execute
 		return FALSE;
 	}
 
-	printf(">> REDIRECT \"%s\"\n", str_c(redirect));
+	sieve_runtime_trace(renv, "REDIRECT action (\"%s\")", str_c(redirect));
 	
 	/* Add redirect action to the result */
 	pool = sieve_result_pool(renv->result);

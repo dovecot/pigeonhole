@@ -64,6 +64,8 @@ static bool opc_return_execute
 	const struct sieve_runtime_env *renv, 
 	sieve_size_t *address ATTR_UNUSED)
 {	
+	sieve_runtime_trace(renv, "RETURN command");
+
 	ext_include_execute_return(renv);
 
 	return TRUE;

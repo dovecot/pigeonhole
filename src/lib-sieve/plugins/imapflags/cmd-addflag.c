@@ -74,7 +74,7 @@ static bool cmd_addflag_operation_execute
 	struct sieve_variable_storage *storage;
 	unsigned int var_index;
 	
-	printf("ADDFLAG\n");
+	sieve_runtime_trace(renv, "ADDFLAG command");
 	
 	t_push();
 	

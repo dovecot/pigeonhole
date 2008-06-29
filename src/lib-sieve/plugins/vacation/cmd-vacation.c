@@ -371,6 +371,8 @@ static bool ext_vacation_operation_execute
 	struct sieve_coded_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
 		
+	sieve_runtime_trace(renv, "VACATION action");	
+		
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
 		while ( opt_code != 0 ) {
 			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) 
@@ -411,8 +413,6 @@ static bool ext_vacation_operation_execute
 	
 	if ( !sieve_opr_string_read(renv, address, &reason) ) 
 		return FALSE;
-	
-	printf(">> VACATION \"%s\"\n", str_c(reason));
 	
 	/* Add vacation action to the result */
 	pool = sieve_result_pool(renv->result);

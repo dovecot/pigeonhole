@@ -38,11 +38,13 @@ bool testsuite_generator_context_initialize(struct sieve_generator *gentr);
 
 enum testsuite_operation_code {
 	TESTSUITE_OPERATION_TEST,
+	TESTSUITE_OPERATION_TEST_FINISH,
 	TESTSUITE_OPERATION_TEST_FAIL,
 	TESTSUITE_OPERATION_TEST_SET
 };
 
 extern const struct sieve_operation test_operation;
+extern const struct sieve_operation test_finish_operation;
 extern const struct sieve_operation test_fail_operation;
 extern const struct sieve_operation test_set_operation;
 
@@ -53,5 +55,13 @@ extern const struct sieve_operand testsuite_object_operand;
 enum testsuite_operand_code {
 	TESTSUITE_OPERAND_OBJECT
 };
+
+/* Test context */
+
+void testsuite_test_context_init(void);
+void testsuite_test_start(string_t *name);
+void testsuite_test_fail(string_t *reason);
+void testsuite_test_succeed(string_t *reason);
+void testsuite_test_context_deinit(void);
 
 #endif /* __TESTSUITE_COMMON_H */

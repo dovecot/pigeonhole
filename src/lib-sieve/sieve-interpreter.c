@@ -236,6 +236,19 @@ void sieve_runtime_log
 	va_end(args);
 }
 
+void _sieve_runtime_trace
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+{	
+	va_list args;
+	
+	va_start(args, fmt);
+	T_BEGIN {
+		printf("%08x: %s\n", runenv->interp->current_op_addr, 
+			t_strdup_vprintf(fmt, args)); 
+	} T_END;
+	va_end(args);
+}
+
 /* Extension support */
 
 void sieve_interpreter_extension_set_context
@@ -384,7 +397,6 @@ int sieve_interpreter_continue
 	
 	while ( ret >= 0 && !interp->interrupted && 
 		interp->pc < sieve_binary_get_code_size(interp->runenv.sbin) ) {
-		printf("%08x: ", interp->pc);
 		
 		if ( !sieve_interpreter_execute_operation(interp) ) {
 			printf("Execution aborted.\n");

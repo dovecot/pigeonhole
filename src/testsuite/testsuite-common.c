@@ -1,4 +1,5 @@
 #include "lib.h"
+#include "str.h"
 #include "string.h"
 #include "ostream.h"
 #include "hash.h"
@@ -24,6 +25,11 @@
 /* Testsuite message environment */
 
 struct sieve_message_data testsuite_msgdata;
+
+/* Test context */
+
+static string_t *test_name;
+unsigned int test_index;
 
 /* 
  * Testsuite message environment 
@@ -156,3 +162,62 @@ bool testsuite_generator_context_initialize(struct sieve_generator *gentr)
 
 	return TRUE;
 }
+
+/*
+ * Test context
+ */
+ 
+void testsuite_test_context_init(void)
+{
+	test_name = str_new(default_pool, 128);
+	test_index = 0;	
+}
+
+void testsuite_test_start(string_t *name)
+{
+	str_truncate(test_name, 0);
+	str_append_str(test_name, name);
+
+	test_index++;
+}
+
+void testsuite_test_fail(string_t *reason)
+{	
+	if ( str_len(test_name) == 0 ) {
+		if ( reason == NULL || str_len(reason) == 0 )
+			printf("%d: Test FAILED\n", test_index);
+		else
+			printf("%d: Test FAILED: %s\n", test_index, str_c(reason));
+	} else {
+		if ( reason == NULL || str_len(reason) == 0 )
+			printf("%d: Test '%s' FAILED\n", test_index, str_c(test_name));
+		else
+			printf("%d: Test '%s' FAILED: %s\n", test_index, 
+				str_c(test_name), str_c(reason));
+	}
+
+	str_truncate(test_name, 0);
+}
+
+void testsuite_test_succeed(string_t *reason)
+{
+	if ( str_len(test_name) == 0 ) {
+		if ( reason == NULL || str_len(reason) == 0 )
+			printf("%d: Test SUCCEEDED\n", test_index);
+		else
+			printf("%d: Test SUCCEEDED: %s\n", test_index, str_c(reason));
+	} else {
+		if ( reason == NULL || str_len(reason) == 0 )
+			printf("%d: Test '%s' SUCCEEDED\n", test_index, str_c(test_name));
+		else
+			printf("%d: Test '%s' SUCCEEDED: %s\n", test_index, 
+				str_c(test_name), str_c(reason));
+	}
+	str_truncate(test_name, 0);
+}
+
+void testsuite_test_context_deinit(void)
+{
+	//str_free(test_name);
+}
+

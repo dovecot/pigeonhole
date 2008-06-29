@@ -351,7 +351,7 @@ static bool cmd_set_operation_execute
 	unsigned int var_index, mdfs, i;
 	string_t *value;
 	
-	printf(">> SET\n");
+	sieve_runtime_trace(renv, "SET action");
 	
 	/* Read the variable */
 	if ( !sieve_variable_operand_read

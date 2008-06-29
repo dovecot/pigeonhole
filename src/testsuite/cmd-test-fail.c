@@ -135,7 +135,8 @@ static bool cmd_test_fail_operation_execute
 		return FALSE;
 	}
 
-	printf("TEST FAILED: %s\n", str_c(reason));
+	sieve_runtime_trace(renv, "TEST FAIL");
+	testsuite_test_fail(reason);
 	
 	t_pop();
 	

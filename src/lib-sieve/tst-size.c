@@ -221,7 +221,7 @@ static bool tst_size_operation_execute
 {
 	sieve_size_t mail_size, limit;
 	
-	printf("%s\n", op->mnemonic);
+	sieve_runtime_trace(renv, "%s test", op->mnemonic);
 	
 	if ( !sieve_opr_number_read(renv, address, &limit) ) 
 		return FALSE;	

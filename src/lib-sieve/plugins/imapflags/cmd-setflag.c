@@ -73,7 +73,7 @@ static bool cmd_setflag_operation_execute
 	struct sieve_variable_storage *storage;
 	unsigned int var_index;
 	
-	printf("SETFLAG\n");
+	sieve_runtime_trace(renv, "SETFLAG action");
 	
 	t_push();
 	

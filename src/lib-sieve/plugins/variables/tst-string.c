@@ -171,7 +171,7 @@ static bool tst_string_operation_execute
 	string_t *src_item;
 	bool matched;
 	
-	printf("?? STRING\n");
+	sieve_runtime_trace(renv, "STRING test");
 
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {

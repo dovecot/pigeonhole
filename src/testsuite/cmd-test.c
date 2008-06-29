@@ -2,6 +2,7 @@
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
+#include "sieve-interpreter.h"
 #include "sieve-code.h"
 #include "sieve-binary.h"
 #include "sieve-dump.h"
@@ -14,6 +15,9 @@ static bool cmd_test_operation_dump
 	(const struct sieve_operation *op,
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool cmd_test_operation_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
+static bool cmd_test_finish_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -45,6 +49,14 @@ const struct sieve_operation test_operation = {
 	TESTSUITE_OPERATION_TEST,
 	cmd_test_operation_dump, 
 	cmd_test_operation_execute 
+};
+
+const struct sieve_operation test_finish_operation = { 
+	"TEST-FINISH",
+	&testsuite_extension, 
+	TESTSUITE_OPERATION_TEST_FINISH,
+	NULL, 
+	cmd_test_finish_operation_execute 
 };
 
 /* Validation */
@@ -98,6 +110,9 @@ static bool cmd_test_generate
 	/* Test body */
 	sieve_generate_block(gentr, ctx->ast_node);
 	
+	sieve_generator_emit_operation_ext(gentr, &test_finish_operation, 
+		ext_testsuite_my_id);
+	
 	/* Resolve exit jumps to this point */
 	sieve_jumplist_resolve(genctx->exit_jumps); 
 			
@@ -135,13 +150,28 @@ static bool cmd_test_operation_execute
 		t_pop();
 		return FALSE;
 	}
+	
+	testsuite_test_start(test_name);
 
-	printf("TEST: %s\n", str_c(test_name));
+	sieve_runtime_trace(renv, "TEST \"%s\"", str_c(test_name));
 	
 	t_pop();
 	
 	return TRUE;
 }
+
+static bool cmd_test_finish_operation_execute
+(const struct sieve_operation *op ATTR_UNUSED,
+	const struct sieve_runtime_env *renv ATTR_UNUSED, 
+	sieve_size_t *address ATTR_UNUSED)
+{
+	sieve_runtime_trace(renv, "TEST FINISHED");
+	
+	testsuite_test_succeed(NULL);
+	
+	return TRUE;
+}
+
 
 
 
