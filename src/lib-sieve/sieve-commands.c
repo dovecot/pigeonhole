@@ -325,7 +325,7 @@ static bool opc_stop_execute
 	const struct sieve_runtime_env *renv,  
 	sieve_size_t *address ATTR_UNUSED)
 {	
-	printf(">> STOP\n");
+	sieve_runtime_trace(renv, "STOP");
 	
 	sieve_interpreter_interrupt(renv->interp);
 
