@@ -205,7 +205,7 @@ static bool ext_reject_operation_execute
 		return FALSE;
 	}
 
-	printf(">> REJECT \"%s\"\n", str_c(reason));
+	sieve_runtime_trace(renv, "REJECT action (\"%s\")", str_c(reason));
 
 	/* Add reject action to the result */
 	pool = sieve_result_pool(renv->result);

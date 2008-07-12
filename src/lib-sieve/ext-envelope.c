@@ -220,7 +220,7 @@ static bool ext_envelope_operation_execute
 	string_t *hdr_item;
 	bool matched;
 	
-	printf("?? ENVELOPE\n");
+	sieve_runtime_trace(renv, "ENVELOPE test");
 
 	if ( !sieve_addrmatch_default_get_optionals
 		(renv, address, &addrp, &mtch, &cmp) )

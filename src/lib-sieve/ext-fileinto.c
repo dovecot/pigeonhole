@@ -171,7 +171,7 @@ static bool ext_fileinto_operation_execute
 		return FALSE;
 	}
 
-	printf(">> FILEINTO \"%s\"\n", str_c(folder));
+	sieve_runtime_trace(renv, "FILEINTO action (\"%s\")", str_c(folder));
 
 	ret = sieve_act_store_add_to_result(renv, slist, str_c(folder));
 
