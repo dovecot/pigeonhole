@@ -1,0 +1,77 @@
+require "vnd.dovecot.testsuite";
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: test@dovecot.org
+Subject: Test
+
+Test!
+.
+;
+
+test "IF-true" {
+	if true {
+	} else {
+		test_fail "executed wrong alternative";
+	}
+}
+
+test "IF-false" {
+	if false {
+		test_fail "executed wrong alternative";
+	}
+}
+
+test "ELSEIF-true" {
+	if false {
+		test_fail "executed wrong alternative (if)";
+	} elsif true {
+	} else {
+		test_fail "executed wrong alternative (else)";	
+	}
+}
+
+test "ELSEIF-false" {
+	if false {
+		test_fail "executed wrong alternative (if)";
+	} elsif false {
+		test_fail "executed wrong alternative (elsif)";	
+	} else {
+	}
+}
+
+test "IF-address-true" {
+	if address :is "from" "stephan@rename-it.nl" {
+	} else {
+		test_fail "executed wrong alternative";
+	}
+}
+
+test "IF-address-false" {
+	if address :is "from" "tss@iki.fi" {
+		test_fail "executed wrong alternative";
+	}
+}
+
+test "ELSEIF-address-true" {
+	if address :is "from" "tss@iki.fi" {
+		test_fail "executed wrong alternative (if)";
+	} elsif address :is "from" "stephan@rename-it.nl" {
+	} else {
+		test_fail "executed wrong alternative (else)";	
+	}
+}
+
+test "ELSEIF-address-false" {
+	if address :is "from" "tss@iki.fi" {
+		test_fail "executed wrong alternative (if)";
+	} elsif address :is "to" "stephan@rename-it.nl" {
+		test_fail "executed wrong alternative (elsif)";	
+	} else {
+	}
+}
+
+test "STOP" {
+	stop;
+	test_fail "continued after stop";
+}
