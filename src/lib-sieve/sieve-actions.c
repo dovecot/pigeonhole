@@ -340,7 +340,7 @@ static void act_store_log_status
 		mailbox_name = str_sanitize(mailbox_get_name(trans->box), 80);
 
 	if ( trans->namespace == NULL ) {
-		sieve_result_log(aenv, "store into mailbox '%s' not performed.", mailbox_name);
+		sieve_result_log(aenv, "store into mailbox '%s' not performed", mailbox_name);
 	} else {	
 		if ( !rolled_back && status ) {
 			sieve_result_log(aenv, "stored mail into mailbox '%s'", mailbox_name);
@@ -354,7 +354,7 @@ static void act_store_log_status
 				errstr = mail_storage_get_last_error(trans->namespace->storage, &error);
 			
 			if ( status )
-				sieve_result_log(aenv, "store into mailbox '%s' aborted.", mailbox_name);
+				sieve_result_log(aenv, "store into mailbox '%s' aborted", mailbox_name);
 			else
 				sieve_result_error(aenv, "failed to store into mailbox '%s': %s", 
 					mailbox_name, errstr);
