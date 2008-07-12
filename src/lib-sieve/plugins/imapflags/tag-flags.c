@@ -346,15 +346,18 @@ static bool seff_flags_post_execute
 
 	if ( trans->dest_mail == NULL ) return TRUE;
 
- 	if (mailbox_keywords_create(trans->box, ctx->keywords, &keywords) < 0) {
-		sieve_result_error(aenv, "invalid keywords");
-		return FALSE;
+	if ( *(ctx->keywords) != NULL ) {
+	 	if (mailbox_keywords_create(trans->box, ctx->keywords, &keywords) < 0) {
+			sieve_result_error(aenv, "invalid keywords");
+			return FALSE;
+		}
+		
+		/* Update message keywords. */
+		mail_update_keywords(trans->dest_mail, MODIFY_ADD, keywords);
 	}
 
 	/* Update message flags. */
 	mail_update_flags(trans->dest_mail, MODIFY_ADD, ctx->flags);
-	/* Update message keywords. */
-	mail_update_keywords(trans->dest_mail, MODIFY_ADD, keywords);
 	
 	return TRUE;
 }

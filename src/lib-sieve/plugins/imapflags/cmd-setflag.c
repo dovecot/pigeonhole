@@ -73,7 +73,7 @@ static bool cmd_setflag_operation_execute
 	struct sieve_variable_storage *storage;
 	unsigned int var_index;
 	
-	sieve_runtime_trace(renv, "SETFLAG action");
+	sieve_runtime_trace(renv, "SETFLAG command");
 	
 	t_push();
 	
@@ -83,16 +83,13 @@ static bool cmd_setflag_operation_execute
 		return FALSE;
 	}
 			
-	/* Iterate through all requested headers to match */
+	/* Iterate through all flags to set */
 	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flag_item)) && 
 		flag_item != NULL ) {
 		ext_imapflags_set_flags(renv, storage, var_index, flag_item);
 	}
 
 	t_pop();
-	
-	printf("  FLAGS: %s\n", 
-		ext_imapflags_get_flags_string(renv, storage, var_index));
 	
 	return result;
 }
