@@ -3,7 +3,8 @@
 #include "rfc822-parser.h"
 
 #include "sieve-common.h"
-#include "sieve-validator.h"
+
+#include "sieve-address.h"
 
 /* Mail message address according to RFC 2822 and implemented in the Dovecot 
  * message address parser:
@@ -49,14 +50,13 @@
  */ 
  
 struct sieve_address_parser_context {
-	struct sieve_validator *valdtr;
-	struct sieve_ast_node *node;
-	
 	struct rfc822_parser_context parser;
 
 	string_t *address;
 
 	string_t *str;
+	
+	string_t *error;
 };
 
 static inline void sieve_address_error
@@ -68,10 +68,10 @@ static inline void sieve_address_error
 {
 	va_list args;
 	
+	str_truncate(ctx->error, 0);
+
 	va_start(args, fmt);
-	sieve_validator_error(ctx->valdtr, ctx->node, 
-		"specified address '%s' is invalid: %s", str_c(ctx->address), 
-		t_strdup_vprintf(fmt, args));
+	str_vprintfa(ctx->error, fmt, args);
 	va_end(args);
 }
 	
@@ -157,7 +157,7 @@ static int parse_name_addr(struct sieve_address_parser_context *ctx)
 	}
 	ctx->parser.data++;
 
-	if (rfc822_skip_lwsp(&ctx->parser) <= 0)
+	if (rfc822_skip_lwsp(&ctx->parser) < 0)
 		return FALSE;
 
 	return TRUE;
@@ -188,23 +188,27 @@ static bool parse_sieve_address(struct sieve_address_parser_context *ctx)
 	return ret > 0;
 }
 
-bool sieve_validate_address
-(struct sieve_validator *valdtr, struct sieve_ast_node *node,
-	string_t *address)
+bool sieve_address_validate
+(string_t *address, const char **error_r)
 {
 	struct sieve_address_parser_context ctx;
 
 	memset(&ctx, 0, sizeof(ctx));
 	rfc822_parser_init(&ctx.parser, str_data(address), str_len(address), 
 		t_str_new(128));
-	ctx.valdtr = valdtr;
-	ctx.node = node;
 	ctx.address = address;
 	ctx.str = t_str_new(128);
+	ctx.error = t_str_new(128);
 
 	rfc822_skip_lwsp(&ctx.parser);
+	if ( !parse_sieve_address(&ctx) )
+	{
+		*error_r = str_c(ctx.error);
+		return FALSE;
+	}
 	
-	return parse_sieve_address(&ctx);
+	*error_r = NULL;
+	return TRUE;
 }
 
 

@@ -57,7 +57,7 @@ libsieve_la_SOURCES = \
 	sieve-ast.c \
 	sieve-binary.c \
 	sieve-parser.c \
-	sieve-validator-address.c \
+	sieve-address.c \
 	sieve-validator.c \
 	sieve-generator.c \
 	sieve-interpreter.c \
@@ -85,6 +85,7 @@ noinst_HEADERS = \
 	sieve-ast.h \
 	sieve-binary.h \
 	sieve-parser.h \
+	sieve-address.h \
 	sieve-validator.h \
 	sieve-generator.h \
 	sieve-interpreter.h \

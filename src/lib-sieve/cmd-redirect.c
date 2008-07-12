@@ -4,6 +4,7 @@
 #include "istream.h"
 #include "istream-header-filter.h"
 
+#include "sieve-address.h"
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-code.h"
@@ -92,7 +93,6 @@ static bool cmd_redirect_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd) 
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
-	string_t *address;
 
 	/* Check argument */
 	if ( !sieve_validate_positional_argument
@@ -103,10 +103,16 @@ static bool cmd_redirect_validate
 	if ( !sieve_validator_argument_activate(validator, cmd, arg, FALSE) )
 		return FALSE;
 
-	if ( sieve_argument_is_string_literal(arg) &&
-		!sieve_validate_address(validator, cmd->ast_node, 
-		sieve_ast_argument_str(arg)) ) {
-		return FALSE;		
+	if ( sieve_argument_is_string_literal(arg) ) {
+		string_t *address = sieve_ast_argument_str(arg);
+		const char *error;
+
+		if ( !sieve_address_validate(address, &error) ) {
+			sieve_command_validate_error(validator, cmd, 
+				"specified redirect address '%s' is invalid: %s",
+            	str_c(address), error);
+			return FALSE;		
+		}
 	}		
 
 	return TRUE;
