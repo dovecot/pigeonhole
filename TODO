@@ -7,6 +7,7 @@ Next (in order of descending priority/precedence):
 * Emit line numbers for certain action commands to provide useful runtime error
   messages.
 * Improve handling of old/corrupt binaries.
+* Handle persistent side-effects for the (implicit) keep action 
 
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...

@@ -131,6 +131,9 @@ struct act_store_transaction {
 	struct mailbox_transaction_context *mail_trans;
 	struct mail *dest_mail;
 	const char *error;
+	
+	enum mail_flags flags;
+	ARRAY_DEFINE(keywords, const char *);
 };
 
 int sieve_act_store_add_to_result

@@ -293,7 +293,8 @@ static bool act_store_start
 	trans->context = ctx;
 	trans->namespace = ns;
 	trans->box = box;
-	
+	trans->flags = 0;
+		
 	if ( ns != NULL && box == NULL ) 
 		act_store_get_storage_error(aenv, trans);	
 	
@@ -308,19 +309,37 @@ static bool act_store_execute
 {   
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
-
-	if ( trans->namespace == NULL )
-		return TRUE;
-			
-	if ( trans->box == NULL ) return FALSE;
+	struct mail_keywords *keywords = NULL;
+	
+	if ( trans == NULL || trans->namespace == NULL || trans->box == NULL ) 
+		return FALSE;
 	
 	trans->mail_trans = mailbox_transaction_begin
 		(trans->box, MAILBOX_TRANSACTION_FLAG_EXTERNAL);
 
 	trans->dest_mail = mail_alloc(trans->mail_trans, 0, NULL);
 
-	if (mailbox_copy(trans->mail_trans, aenv->msgdata->mail, 0, NULL, 
-		trans->dest_mail) < 0) {
+	if ( array_is_created(&trans->keywords) && array_count(&trans->keywords) > 0 ) 
+	{
+		const char *const *kwds;
+	
+		printf("KEYWORDS: %d\n", array_count(&trans->keywords));
+	
+		(void)array_append_space(&trans->keywords);
+		kwds = array_idx(&trans->keywords, 0);
+				
+		/* FIXME: Do we need to clear duplicates? */
+		
+		if ( mailbox_keywords_create(trans->box, kwds, &keywords) < 0) {
+			sieve_result_error(aenv, "invalid keywords set for stored message");
+			keywords = NULL;
+		}
+	}
+	
+	printf("FLAGS: %d\n", trans->flags);
+
+	if (mailbox_copy(trans->mail_trans, aenv->msgdata->mail, trans->flags, 
+		keywords, trans->dest_mail) < 0) {
 		act_store_get_storage_error(aenv, trans);
  		return FALSE;
  	}
