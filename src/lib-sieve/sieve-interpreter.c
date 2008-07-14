@@ -48,6 +48,9 @@ struct sieve_interpreter {
 struct sieve_interpreter *sieve_interpreter_create
 (struct sieve_binary *sbin, struct sieve_error_handler *ehandler) 
 {
+	unsigned int i;
+	int idx;
+
 	pool_t pool;
 	struct sieve_interpreter *interp;
 	
@@ -66,6 +69,23 @@ struct sieve_interpreter *sieve_interpreter_create
 	interp->pc = 0;
 
 	p_array_init(&interp->ext_contexts, pool, 4);
+
+	/* Pre-load core language features implemented as 'extensions' */
+	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
+		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
+		
+		if ( ext->interpreter_load != NULL )
+			(void)ext->interpreter_load(interp);		
+	}
+
+	/* Load other extensions listed in the binary */
+	for ( idx = 0; idx < sieve_binary_extensions_count(sbin); idx++ ) {
+		const struct sieve_extension *ext = 
+			sieve_binary_extension_get_by_index(sbin, idx, NULL);
+		
+		if ( ext->interpreter_load != NULL )
+			ext->interpreter_load(interp);
+	}
 	
 	return interp;
 }

@@ -43,7 +43,7 @@ static bool seffect_binary_load(struct sieve_binary *sbin);
 const struct sieve_extension side_effects_extension = {
 	"@side-effects",
 	seffect_extension_load,
-	NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
 	seffect_binary_load,
 	NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, /* Opcode is hardcoded */

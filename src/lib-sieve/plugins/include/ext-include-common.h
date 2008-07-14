@@ -55,7 +55,7 @@ bool ext_include_generate_include
 
 /* Interpreter */
 
-void ext_include_runtime_context_init(const struct sieve_runtime_env *renv);
+void ext_include_interpreter_context_init(struct sieve_interpreter *interp);
 
 bool ext_include_execute_include
 	(const struct sieve_runtime_env *renv, unsigned int block_id);
