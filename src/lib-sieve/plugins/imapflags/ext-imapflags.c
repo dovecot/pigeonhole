@@ -3,8 +3,8 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-imapflags-05
- * Implementation: flag management works, not stored though. 
- * Status: under development
+ * Implementation: full 
+ * Status: experimental, largely untested
  *
  */
  

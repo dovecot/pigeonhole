@@ -149,15 +149,15 @@ Extensions and their implementation status:
     encoded-character: full
 
   Other RFCs/drafts:
-    subaddress: full, but not configurable
+    subaddress: mostly full; not configurable
     comparator-i;ascii-numeric: full
     relational: full 
     copy: full
-    regex: full, but suboptimal and no UTF-8
+    regex: mostly full; but suboptimal and no UTF-8
     body: full, but text body-transform implementation is simple
-    include: almost full; needs some more work (no external binaries)
-    vacation: almost full; no support for required References header
-    imapflags: flag management works, but flags are not stored
+    include: mostly full; needs some more work (no external binaries)
+    vacation: mostly full; no support for required References header
+    imapflags: full
     variables: mostly full; currently no support for future namespaces 
 
   Low priority:

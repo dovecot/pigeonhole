@@ -329,26 +329,71 @@ bool sieve_result_print(struct sieve_result *result)
 	return TRUE;
 }
 
-static bool sieve_result_implicit_keep(struct sieve_result *result)
+static bool sieve_result_implicit_keep
+	(struct sieve_result *result, bool rollback)
 {	
 	bool success = TRUE;
 	bool dummy = TRUE;
 	struct act_store_context ctx;
+	struct sieve_result_side_effect *rsef, *rsef_first = NULL;
 	void *tr_context;
 	
 	ctx.folder = result->action_env.scriptenv->inbox;
 	
-	/* FIXME: Handle persistent side-effects for the (implicit) keep action */
+	/* Also apply any implicit side effects if applicable */
+	if ( !rollback && result->implicit_seffects != NULL ) {
+		struct sieve_result_implicit_side_effects *implseff;
+		
+		/* Check for implicit side effects to store action */
+		implseff = (struct sieve_result_implicit_side_effects *) 
+				hash_lookup(result->implicit_seffects, &act_store);
+		
+		if ( implseff != NULL && implseff->seffects != NULL ) 
+			rsef_first = implseff->seffects->first_effect;
+		
+	}
 	
 	success = act_store.start
 		(&act_store, &result->action_env, (void *) &ctx, &tr_context);
 
+	rsef = rsef_first;
+	while ( rsef != NULL ) {
+		const struct sieve_side_effect *sef = rsef->seffect;
+		if ( sef->pre_execute != NULL ) 
+			success = success & sef->pre_execute
+				(sef, &act_store, &result->action_env, &rsef->context, tr_context);
+		rsef = rsef->next;
+	}
+
 	success = success && act_store.execute
-		(&act_store, &result->action_env, tr_context);
+			(&act_store, &result->action_env, tr_context);
+			
+	rsef = rsef_first;
+	while ( rsef != NULL ) {
+		const struct sieve_side_effect *sef = rsef->seffect;
+		if ( sef->post_execute != NULL ) 
+			success = success && sef->post_execute
+				(sef, &act_store, &result->action_env, rsef->context, tr_context);
+		rsef = rsef->next;
+	}
 	
 	if ( success ) {	
-		return act_store.commit
-			(&act_store, &result->action_env, tr_context, &dummy); 
+		success = act_store.commit
+			(&act_store, &result->action_env, tr_context, &dummy);
+
+		rsef = rsef_first;
+		while ( rsef != NULL ) {
+			const struct sieve_side_effect *sef = rsef->seffect;
+			bool keep = TRUE;
+			
+			if ( sef->post_commit != NULL ) 
+				sef->post_commit
+					(sef, &act_store, &result->action_env, rsef->context, tr_context, 
+						&keep);
+			rsef = rsef->next;
+		}
+			
+		return success; 
 	}
 		
 	act_store.rollback(&act_store, &result->action_env, tr_context, success);
@@ -494,7 +539,7 @@ int sieve_result_execute
 	if ( !commit_ok || implicit_keep ) {
 		printf("Executing implicit keep\n");
 		
-		if ( !sieve_result_implicit_keep(result) ) 
+		if ( !sieve_result_implicit_keep(result, !commit_ok) ) 
 			return -1;
 			
 		return ( commit_ok ? 1 /* Success */ : 0 /* Implicit keep executed */ );

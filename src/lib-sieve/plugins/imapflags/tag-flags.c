@@ -235,7 +235,7 @@ static void seff_flags_print
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_action *action ATTR_UNUSED, 
 	struct sieve_result *result,
-	void *se_context ATTR_UNUSED, bool *keep)
+	void *se_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
 	struct seff_flags_context *ctx = (struct seff_flags_context *) se_context;
 	unsigned int i;
@@ -243,31 +243,31 @@ static void seff_flags_print
 	if ( ctx == NULL )
 		ctx = seff_flags_get_implicit_context(result);
 	
-	printf("        + add flags:");
+	if ( ctx->flags != 0 || array_count(&ctx->keywords) ) { 
+		printf("        + add flags:");
 
-	if ( (ctx->flags & MAIL_FLAGGED) > 0 )
-		printf(" \\flagged\n");
+		if ( (ctx->flags & MAIL_FLAGGED) > 0 )
+			printf(" \\flagged\n");
 
-	if ( (ctx->flags & MAIL_ANSWERED) > 0 )
-		printf(" \\answered");
+		if ( (ctx->flags & MAIL_ANSWERED) > 0 )
+			printf(" \\answered");
 		
-	if ( (ctx->flags & MAIL_DELETED) > 0 )
-		printf(" \\deleted");
+		if ( (ctx->flags & MAIL_DELETED) > 0 )
+			printf(" \\deleted");
 					
-	if ( (ctx->flags & MAIL_SEEN) > 0 )
-		printf(" \\seen");
+		if ( (ctx->flags & MAIL_SEEN) > 0 )
+			printf(" \\seen");
 		
-	if ( (ctx->flags & MAIL_DRAFT) > 0 )
-		printf(" \\draft");
+		if ( (ctx->flags & MAIL_DRAFT) > 0 )
+			printf(" \\draft");
 
-	for ( i = 0; i < array_count(&ctx->keywords); i++ ) {
-		const char *const *keyword = array_idx(&ctx->keywords, i);
-		printf(" %s", *keyword);
-	};
+		for ( i = 0; i < array_count(&ctx->keywords); i++ ) {
+			const char *const *keyword = array_idx(&ctx->keywords, i);
+			printf(" %s", *keyword);
+		};
+	}
 	
 	printf("\n");
-
-	*keep = TRUE;
 }
 
 static bool seff_flags_pre_execute
