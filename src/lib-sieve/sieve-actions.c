@@ -239,7 +239,10 @@ static int act_store_check_duplicate
 	if ( strcmp(ctx1->folder, ctx2->folder) == 0 ) 
 		return 1;
 		
-	return 0;
+	return ( 
+		strcasecmp(ctx1->folder, "INBOX") == 0 && 
+		strcasecmp(ctx2->folder, "INBOX") == 0 
+	); 
 }
 
 static void act_store_print
