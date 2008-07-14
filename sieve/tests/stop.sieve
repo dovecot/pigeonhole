@@ -1,6 +1,6 @@
 require "fileinto";
 
-if address :contains "from" "frop" {
+if address :contains "from" "sieve" {
 	fileinto "junk";
 	stop;
 }

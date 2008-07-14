@@ -370,7 +370,7 @@ static bool sieve_parse_commands
 			if ( sieve_parse_commands(parser, command) ) {
 			
 				if ( sieve_lexer_current_token(lexer) != STT_RCURLY ) {
-					sieve_parser_error(parser, "expected end of compound block '}' but found %s",
+					sieve_parser_error(parser, "expected end of compound block '}', but found %s",
 						sieve_lexer_token_string(lexer));
 					result = sieve_parser_recover(parser, STT_RCURLY);				
 				} else 

@@ -456,7 +456,7 @@ static int act_vacation_check_duplicate
 	const struct sieve_action *action1 ATTR_UNUSED,
 	void *context1 ATTR_UNUSED, void *context2 ATTR_UNUSED)
 {
-	sieve_runtime_error(renv, "duplicate 'vacation' action not allowed.");
+	sieve_runtime_error(renv, "duplicate 'vacation' action not allowed");
 	return -1;
 }
 
@@ -467,7 +467,7 @@ int act_vacation_check_conflict
 {
 	if ( (other_action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
 		sieve_runtime_error(renv, "'vacation' action conflicts with other action: "
-			"'%s' action sends a response back to the sender.",	
+			"'%s' action also sends a response back to the sender",	
 			other_action->name);
 		return -1;
 	}

@@ -228,7 +228,7 @@ static int act_reject_check_duplicate
 	const struct sieve_action *action1 ATTR_UNUSED,
 	void *context1 ATTR_UNUSED, void *context2 ATTR_UNUSED)
 {
-	sieve_runtime_error(renv, "duplicate 'reject' action not allowed.");	
+	sieve_runtime_error(renv, "duplicate 'reject' action not allowed");	
 	return -1;
 }
  
@@ -239,14 +239,14 @@ int act_reject_check_conflict
 {
 	if ( (other_action->flags & SIEVE_ACTFLAG_TRIES_DELIVER) > 0 ) {
 		sieve_runtime_error(renv, "'reject' action conflicts with other action: "
-			"'%s' action tries to deliver the message.",
+			"'%s' action tries to deliver the message",
 			other_action->name);	
 		return -1;
 	}
 
 	if ( (other_action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
 		sieve_runtime_error(renv, "'reject' action conflicts with other action: "
-			"'%s' sends a response to the sender.",
+			"'%s' sends a response to the sender",
 			other_action->name);	
 		return -1;
 	}

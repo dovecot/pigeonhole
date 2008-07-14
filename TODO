@@ -7,7 +7,7 @@ Next (in order of descending priority/precedence):
 * Improve handling of old/corrupt binaries.
 
 * Full standards compliance review for the engine and all fully implemented 
-  sieve extensions.\
+  sieve extensions.
 * Code cleanup 
 * Make sure cmusieve can be replaced seamlessly with the new plugin.
 * Full security review. Enforce limits on number of created objects, script 
