@@ -131,7 +131,7 @@ static int lda_sieve_run
 	if ( debug )
 		i_info("sieve: Executing (in-memory) script %s", script_path);
 
-	ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler);
+	ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler, NULL);
 
 	if ( ret < 0 )
 		i_error("sieve: Failed to execute script %s", script_path);

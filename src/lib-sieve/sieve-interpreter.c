@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "lib.h"
+#include "ostream.h"
 #include "mempool.h"
 #include "array.h"
 #include "hash.h"
@@ -46,7 +47,8 @@ struct sieve_interpreter {
 };
 
 struct sieve_interpreter *sieve_interpreter_create
-(struct sieve_binary *sbin, struct sieve_error_handler *ehandler) 
+(struct sieve_binary *sbin, struct sieve_error_handler *ehandler,
+	struct ostream *trace_stream) 
 {
 	unsigned int i;
 	int idx;
@@ -63,8 +65,10 @@ struct sieve_interpreter *sieve_interpreter_create
 
 	interp->runenv.interp = interp;	
 	interp->runenv.sbin = sbin;
+	interp->runenv.trace_stream = trace_stream;
 	interp->runenv.script = sieve_binary_script(sbin);
 	sieve_binary_ref(sbin);
+	
 	
 	interp->pc = 0;
 
@@ -169,18 +173,25 @@ void sieve_runtime_log
 	va_end(args);
 }
 
+#ifdef SIEVE_RUNTIME_TRACE
 void _sieve_runtime_trace
 	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
 {	
+	string_t *outbuf = t_str_new(128);
 	va_list args;
 	
-	va_start(args, fmt);
+	va_start(args, fmt);	
+	str_printfa(outbuf, "%08x: ", runenv->interp->current_op_addr); 
 	T_BEGIN {
-		printf("%08x: %s\n", runenv->interp->current_op_addr, 
-			t_strdup_vprintf(fmt, args)); 
+		str_vprintfa(outbuf, fmt, args); 
 	} T_END;
+	str_append_c(outbuf, '\n');
+
 	va_end(args);
+	
+	o_stream_send(runenv->trace_stream, str_data(outbuf), str_len(outbuf));	
 }
+#endif
 
 /* Extension support */
 

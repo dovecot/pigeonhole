@@ -26,10 +26,13 @@ struct sieve_runtime_env {
 
 	struct sieve_binary *sbin;
 	struct sieve_result *result;
+
+	struct ostream *trace_stream;
 };
 
 struct sieve_interpreter *sieve_interpreter_create
-	(struct sieve_binary *sbin, struct sieve_error_handler *ehandler);
+	(struct sieve_binary *sbin, struct sieve_error_handler *ehandler,
+		struct ostream *trace_stream);
 void sieve_interpreter_free(struct sieve_interpreter **interp);
 
 pool_t sieve_interpreter_pool
@@ -64,16 +67,24 @@ void sieve_runtime_warning
 void sieve_runtime_log
 	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
 		ATTR_FORMAT(2, 3);
+
+/* Runtime Trace */
+
+#ifdef SIEVE_RUNTIME_TRACE
 		
 void _sieve_runtime_trace
 	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
 		ATTR_FORMAT(2, 3);
 		
-#ifdef SIEVE_TRACE
-# define sieve_runtime_trace(runenv, ...) \
-	_sieve_runtime_trace(runenv, __VA_ARGS__)
+# define sieve_runtime_trace(runenv, ...) STMT_START { \
+		if ( (runenv)->trace_stream != NULL ) \
+	  	_sieve_runtime_trace((runenv), __VA_ARGS__); \
+	} STMT_END
+	
 #else
+
 # define sieve_runtime_trace(runenv, ...)
+
 #endif
 
 /* Extension support */

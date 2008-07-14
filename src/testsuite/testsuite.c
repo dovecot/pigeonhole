@@ -188,7 +188,8 @@ int main(int argc, char **argv)
 	teststream = o_stream_create_fd(1, 0, FALSE);
 	
 	/* Run the test */
-	(void) sieve_test(sbin, &testsuite_msgdata, &scriptenv, teststream, ehandler);
+	(void) sieve_test
+		(sbin, &testsuite_msgdata, &scriptenv, teststream, ehandler, NULL);
 
 	o_stream_destroy(&teststream);
 

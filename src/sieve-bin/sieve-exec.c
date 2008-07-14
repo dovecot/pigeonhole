@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	/* Run */
-	switch ( sieve_execute(sbin, &msgdata, &scriptenv, ehandler) ) {
+	switch ( sieve_execute(sbin, &msgdata, &scriptenv, ehandler, NULL) ) {
 	case 1:
 		i_info("Final result: success\n");
 		break;

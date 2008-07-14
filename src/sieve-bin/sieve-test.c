@@ -20,9 +20,15 @@
 
 static void print_help(void)
 {
+#ifdef SIEVE_RUNTIME_TRACE
+#  define SVTRACE "[-t]"
+#else
+#  define SVTRACE
+#endif
 	printf(
 "Usage: sieve-test [-r <recipient address>][-s <envelope sender>]\n"
-"                  [-m <mailbox>][-d <dump filename>][-c] <scriptfile> <mailfile>\n"
+"                  [-m <mailbox>][-d <dump filename>][-c]" SVTRACE "\n"
+"                  <scriptfile> <mailfile>\n"
 	);
 }
 
@@ -39,6 +45,11 @@ int main(int argc, char **argv)
 	struct sieve_error_handler *ehandler;
 	struct ostream *teststream;
 	bool force_compile = FALSE;
+
+#ifdef SIEVE_RUNTIME_TRACE
+	bool trace = FALSE;
+	struct ostream *trace_stream = FALSE;
+#endif
 
 	bin_init();
 
@@ -72,6 +83,11 @@ int main(int argc, char **argv)
 		} else if (strcmp(argv[i], "-c") == 0) {
             /* force compile */
 			force_compile = TRUE;
+#ifdef SIEVE_RUNTIME_TRACE
+		} else if (strcmp(argv[i], "-t") == 0) {
+            /* runtime trace */
+			trace = TRUE;
+#endif
 		} else if ( scriptfile == NULL ) {
 			scriptfile = argv[i];
 		} else if ( mailfile == NULL ) {
@@ -132,8 +148,16 @@ int main(int argc, char **argv)
 
 	teststream = o_stream_create_fd(1, 0, FALSE);	
 
+#ifdef SIEVE_RUNTIME_TRACE
+	if ( trace )
+		trace_stream = teststream;
+	else
+		trace_stream = NULL;
+#endif
+
 	/* Run the test */
-	(void) sieve_test(sbin, &msgdata, &scriptenv, teststream, ehandler);
+	(void) sieve_test
+		(sbin, &msgdata, &scriptenv, teststream, ehandler, trace_stream);
 
 	o_stream_destroy(&teststream);
 

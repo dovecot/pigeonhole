@@ -10,6 +10,8 @@
 #define SIEVE_VERSION "0.0.1"
 #define SIEVE_IMPLEMENTATION "Dovecot Sieve " SIEVE_VERSION
 
+#define SIEVE_RUNTIME_TRACE
+
 struct sieve_script;
 struct sieve_binary;
 
@@ -93,7 +95,7 @@ bool sieve_save
 int sieve_test
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata, 
 		const struct sieve_script_env *senv, struct ostream *stream,
-		struct sieve_error_handler *ehandler);
+		struct sieve_error_handler *ehandler, struct ostream *trace_stream);
 
 /* sieve_execute:
  *
@@ -101,8 +103,8 @@ int sieve_test
  */
 int sieve_execute
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv,
-		struct sieve_error_handler *ehandler);
+		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
+		struct ostream *trace_stream);
 
 /* sieve_close:
  *

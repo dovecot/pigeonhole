@@ -188,13 +188,13 @@ void sieve_dump(struct sieve_binary *sbin, struct ostream *stream)
 }
 
 int sieve_test
-	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, struct ostream *stream,
-		struct sieve_error_handler *ehandler) 	
+(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
+	const struct sieve_script_env *senv, struct ostream *stream,
+	struct sieve_error_handler *ehandler, struct ostream *trace_stream) 	
 {
 	struct sieve_result *sres = sieve_result_create(ehandler);
 	struct sieve_interpreter *interp = 
-		sieve_interpreter_create(sbin, ehandler);			
+		sieve_interpreter_create(sbin, ehandler, trace_stream);			
 	int ret = 0;
 							
 	ret = sieve_interpreter_run(interp, msgdata, senv, &sres);
@@ -208,13 +208,13 @@ int sieve_test
 }
 
 int sieve_execute
-	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv,
-		struct sieve_error_handler *ehandler) 	
+(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
+	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler, 
+	struct ostream *trace_stream) 	
 {
 	struct sieve_result *sres = NULL;
 	struct sieve_interpreter *interp = 
-		sieve_interpreter_create(sbin, ehandler);			
+		sieve_interpreter_create(sbin, ehandler, trace_stream);			
 	int ret = 0;
 							
 	ret = sieve_interpreter_run(interp, msgdata, senv, &sres);

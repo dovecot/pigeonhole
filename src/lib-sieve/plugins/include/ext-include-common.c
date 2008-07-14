@@ -314,7 +314,8 @@ bool ext_include_execute_include
 
 		/* Create interpreter for top-level included script (first sub-interpreter) 
 		 */
-		subinterp = sieve_interpreter_create(renv->sbin, ehandler);			
+		subinterp = sieve_interpreter_create
+			(renv->sbin, ehandler, renv->trace_stream);			
 		curctx = ext_include_initialize_interpreter_context
 			(subinterp, ctx, NULL, block_id);
 			
@@ -366,7 +367,8 @@ bool ext_include_execute_include
 						 */
 						
 						/* Create sub-interpreter */
-						subinterp = sieve_interpreter_create(renv->sbin, ehandler);			
+						subinterp = sieve_interpreter_create
+							(renv->sbin, ehandler, renv->trace_stream);			
 						curctx = ext_include_initialize_interpreter_context
 							(subinterp, curctx, NULL, curctx->inc_block_id);
 													
