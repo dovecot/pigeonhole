@@ -413,9 +413,9 @@ int sieve_result_execute
 	result->action_env.msgdata = msgdata;
 	result->action_env.scriptenv = senv;
 	
-	/* Transaction start */
-	
-	printf("\nTransaction start:\n"); /* REMOVEME */
+	/* 
+     * Transaction start 
+     */
 	
 	rac = result->first_action;
 	while ( success && rac != NULL ) {
@@ -429,9 +429,9 @@ int sieve_result_execute
 		rac = rac->next;	
 	}
 	
-	/* Transaction execute */
-	
-	printf("\nTransaction execute:\n"); /* REMOVEME */
+	/* 
+     * Transaction execute 
+     */
 	
 	last_attempted = rac;
 	rac = result->first_action;
@@ -471,11 +471,9 @@ int sieve_result_execute
 		rac = rac->next;	
 	}
 	
-	/* Transaction commit/rollback */
-	if ( success ) /* REMOVEME */
-		printf("\nTransaction commit:\n");
-	else
-		printf("\nTransaction rollback:\n");
+	/* 
+     * Transaction commit/rollback 
+     */
 
 	commit_ok = success;
 	rac = result->first_action;
@@ -524,9 +522,6 @@ int sieve_result_execute
 		rac = rac->next;	
 	}
 	
-	/* REMOVEME */
-	printf("\nTransaction result: %s\n", commit_ok ? "success" : "failed");
-
 	/* Return value indicates whether the caller should attempt an implicit keep 
 	 * of its own. So, if the above transaction fails, but the implicit keep below
 	 * succeeds, the return value is still true. An error is/should be logged 
@@ -536,9 +531,7 @@ int sieve_result_execute
 	/* Execute implicit keep if the transaction failed or when the implicit keep
 	 * was not canceled during transaction. 
 	 */
-	if ( !commit_ok || implicit_keep ) {
-		printf("Executing implicit keep\n");
-		
+	if ( !commit_ok || implicit_keep ) {		
 		if ( !sieve_result_implicit_keep(result, !commit_ok) ) 
 			return -1;
 			

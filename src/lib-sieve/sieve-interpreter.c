@@ -332,7 +332,7 @@ int sieve_interpreter_continue
 		interp->pc < sieve_binary_get_code_size(interp->runenv.sbin) ) {
 		
 		if ( !sieve_interpreter_execute_operation(interp) ) {
-			printf("Execution aborted.\n");
+			sieve_runtime_trace(&interp->runenv, "[[EXECUTION ABORTED]]");
 			ret = -1;
 		}
 	}

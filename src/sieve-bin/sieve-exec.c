@@ -189,10 +189,19 @@ int main(int argc, char **argv)
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	/* Run */
-	if ( sieve_execute(sbin, &msgdata, &scriptenv, ehandler) > 0 )
+	switch ( sieve_execute(sbin, &msgdata, &scriptenv, ehandler) ) {
+	case 1:
 		i_info("Final result: success\n");
-	else
-		i_info("Final result: failed (caller please handle implicit keep!)\n");
+		break;
+	case 0:
+		i_info("Final result: failed; resolved with successful implicit keep\n");
+		break;
+	case -1:
+		i_info("Final result: utter failure (caller please handle implicit keep!)\n");
+		break;
+	default:
+		i_info("Final result: unrecognized return value?!\n");	
+	}
 
 	sieve_close(&sbin);
 	sieve_error_handler_unref(&ehandler);

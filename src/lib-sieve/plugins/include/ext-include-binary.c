@@ -202,8 +202,6 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 			return FALSE;
 		}
 		
-		printf("SCRIPT: %d %d %s\n", block_id, location, str_c(script_name));
-	
 		if ( location >= EXT_INCLUDE_LOCATION_INVALID ) {
 			/* Binary is corrupt, recompile */
 			i_error("sieve: include: dependency block %d of binary %s "

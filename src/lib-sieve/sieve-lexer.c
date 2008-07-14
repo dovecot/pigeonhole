@@ -145,11 +145,6 @@ static void sieve_lexer_shift(struct sieve_lexer *lexer)
 	  	
 		lexer->buffer_pos = 0;
 	}
-
-	/*if ( lexer->buffer != NULL )	
-		printf("D %c\n", lexer->buffer[lexer->buffer_pos]);
-	else 
-  	printf("NULL!\n");*/
 }
 
 static inline int sieve_lexer_curchar(struct sieve_lexer *lexer) {	
@@ -596,9 +591,6 @@ bool sieve_lexer_skip_token(struct sieve_lexer *lexer)
 	while ( lexer->token_type == STT_WHITESPACE ) {
 		if ( !sieve_lexer_scan_raw_token(lexer) ) return FALSE;
 	}
-	
-	//sieve_lexer_print_token(lexer);
-	//printf("\n");
 	
 	return TRUE;
 }

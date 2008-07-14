@@ -17,6 +17,7 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A FIRST RELEASE ##
 
+* Implement notify extension with sole support for mailto mechanism. 
 * Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
   Character Sets). 
 * Verify outgoing mail addresses at runtime when necessary (e.g. after variables 
@@ -35,7 +36,6 @@ Next (in order of descending priority/precedence):
   the binary and byte-code format. 
 * Make the engine and its extensions much more configurable. Possibly this can 
   be merged with Dovecot's new master config implementation.
-* Implement notify extension with sole support for mailto mechanism. 
 * Implement editheader extension
 * Implement mimeloop extension
 * Give the byte code format some more thought, it is currently quite rough and

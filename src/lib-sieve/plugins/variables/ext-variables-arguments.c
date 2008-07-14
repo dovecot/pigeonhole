@@ -295,22 +295,7 @@ static bool arg_variable_string_validate
 							sieve_ast_arg_list_add(arglist, strarg);
 					}
 				} else {
-					int i;
 					/* FIXME: Namespaces are not supported. */
-					/* DEBUG: Just print the variable substitution: */
-					
-					printf("NS_VARIABLE: ");
-					for ( i = 0; i < nelements; i++ ) {
-						const struct ext_variable_name *cur_element = 
-							array_idx(&substitution, (unsigned int) i);
-							
-						if ( cur_element->num_variable == -1 ) {
-							printf("%s.", str_c(cur_element->identifier));
-						} else {
-							printf("%d.", cur_element->num_variable);
-						}
-					}
-					printf("\n");
 				}
 				
 				strstart = p + 1;

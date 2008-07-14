@@ -84,7 +84,6 @@ bool ext_include_variable_import_global
 			ctx->global_vars = sieve_variable_scope_create(pool, ext_include_my_id);
 		}
 		
-		printf("VAR EXPORT: %s\n", variable);
 		var = sieve_variable_scope_get_variable(ctx->global_vars, variable, TRUE);
 		
 	} else {
@@ -101,7 +100,6 @@ bool ext_include_variable_import_global
 			return FALSE;
 		}
 		
-		printf("VAR IMPORT: %s\n", variable);
 		(void)sieve_variable_scope_declare(ctx->import_vars, variable);
 	}
 
