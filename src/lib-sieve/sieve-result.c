@@ -317,7 +317,7 @@ void sieve_result_action_printf
 	va_list args;
 	
 	va_start(args, fmt);	
-	str_append(outbuf, "\n * ");
+	str_append(outbuf, " * ");
 	str_vprintfa(outbuf, fmt, args);
 	str_append_c(outbuf, '\n');
 	va_end(args);
@@ -350,7 +350,7 @@ bool sieve_result_print
 	penv.result = result;
 	penv.stream = stream;
 	
-	sieve_result_printf(&penv, "\nPerformed actions:\n");
+	sieve_result_printf(&penv, "\nPerformed actions:\n\n");
 	rac = result->first_action;
 	while ( rac != NULL ) {		
 		bool keep = TRUE;

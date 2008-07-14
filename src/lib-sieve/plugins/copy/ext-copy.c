@@ -136,7 +136,7 @@ static void seff_copy_print
 
 static bool seff_copy_post_commit
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
-	const struct sieve_action *action, 
+	const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv ATTR_UNUSED, 
 		void *se_context ATTR_UNUSED,	void *tr_context ATTR_UNUSED, bool *keep)
 {	

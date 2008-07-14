@@ -167,13 +167,20 @@ static bool cmd_vacation_validate_string_tag
 		sieve_argument_is_string_literal(*arg) ) {
 		string_t *address = sieve_ast_argument_str(*arg);
 		const char *error;
+ 		bool result;
+ 		
+ 		T_BEGIN {
+ 			result = sieve_address_validate(address, &error);
  
-		if ( !sieve_address_validate(address, &error) ) {
-			sieve_command_validate_error(validator, cmd, 
-				"specified :from address '%s' is invalid for vacation action: %s", 
-				str_c(address), error);
+			if ( !result ) {
+				sieve_command_validate_error(validator, cmd, 
+					"specified :from address '%s' is invalid for vacation action: %s", 
+					str_c(address), error);
+			}
+		} T_END;
+		
+		if ( !result )
 			return FALSE;
-		}
 	}
 		
 	/* Skip parameter */

@@ -244,7 +244,7 @@ bool arg_encoded_string_validate
 		if ( strstart != strend )
 			str_append_n(newstr, strstart, strend-strstart);	
 	
-		sieve_ast_argument_str_set(*arg, newstr);
+		sieve_ast_argument_string_set(*arg, newstr);
 	}
 	
 	return sieve_validator_argument_activate_super

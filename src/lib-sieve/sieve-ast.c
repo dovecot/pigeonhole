@@ -389,6 +389,22 @@ struct sieve_ast_argument *sieve_ast_argument_string_create
 	return argument;
 }
 
+void sieve_ast_argument_string_set
+	(struct sieve_ast_argument *argument, string_t *newstr)
+{
+	i_assert( argument->type == SAAT_STRING);
+	argument->_value.str = newstr;
+}
+
+void sieve_ast_argument_string_setc
+	(struct sieve_ast_argument *argument, const char *newstr)
+{
+	i_assert( argument->type == SAAT_STRING);
+	
+	str_truncate(argument->_value.str, 0);
+	str_append(argument->_value.str, newstr);
+}
+
 struct sieve_ast_argument *sieve_ast_argument_stringlist_create
 	(struct sieve_ast_node *node, unsigned int source_line) 
 {

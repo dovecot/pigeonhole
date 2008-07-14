@@ -107,13 +107,21 @@ static bool cmd_redirect_validate
 	if ( sieve_argument_is_string_literal(arg) ) {
 		string_t *address = sieve_ast_argument_str(arg);
 		const char *error;
+		const char *norm_address;
 
-		if ( !sieve_address_validate(address, &error) ) {
-			sieve_command_validate_error(validator, cmd, 
-				"specified redirect address '%s' is invalid: %s",
-            	str_c(address), error);
-			return FALSE;		
-		}
+		T_BEGIN {
+			norm_address = sieve_address_normalize(address, &error);
+		
+			if ( norm_address == NULL ) {
+				sieve_command_validate_error(validator, cmd, 
+					"specified redirect address '%s' is invalid: %s",
+					str_c(address), error);
+			} else {
+				sieve_ast_argument_string_setc(arg, norm_address);
+			}
+		} T_END;
+
+		return ( norm_address != NULL );
 	}		
 
 	return TRUE;

@@ -200,6 +200,11 @@ struct sieve_ast_argument *sieve_ast_argument_tag_create
 struct sieve_ast_argument *sieve_ast_argument_number_create
 	(struct sieve_ast_node *node, int number, unsigned int source_line);
 
+void sieve_ast_argument_string_set
+	(struct sieve_ast_argument *argument, string_t *newstr);
+void sieve_ast_argument_string_setc
+	(struct sieve_ast_argument *argument, const char *newstr);
+
 struct sieve_ast_argument *sieve_ast_argument_tag_insert
 (struct sieve_ast_argument *before, const char *tag, unsigned int source_line); 
 
@@ -291,9 +296,6 @@ void sieve_ast_unparse(struct sieve_ast *ast);
 #define sieve_ast_argument_strc(argument) (str_c((argument)->_value.str))
 #define sieve_ast_argument_tag(argument) ((argument)->_value.tag)
 #define sieve_ast_argument_number(argument) ((argument)->_value.number)
-
-#define sieve_ast_argument_str_set(argument, newstr) \
-	(argument)->_value.str = newstr
 
 /* AST string list macros */
 // @UNSAFE: should check whether we are actually accessing a string list

@@ -55,6 +55,8 @@ struct sieve_address_parser_context {
 	string_t *address;
 
 	string_t *str;
+	string_t *local_part;
+	string_t *domain;
 	
 	string_t *error;
 };
@@ -83,13 +85,13 @@ static bool parse_local_part(struct sieve_address_parser_context *ctx)
 	   local-part      = dot-atom / quoted-string / obs-local-part
 	   obs-local-part  = word *("." word)
 	*/
-	str_truncate(ctx->str, 0);
+	str_truncate(ctx->local_part, 0);
 
 	if (ctx->parser.data < ctx->parser.end) {
 		if (*ctx->parser.data == '"')
-			ret = rfc822_parse_quoted_string(&ctx->parser, ctx->str);
+			ret = rfc822_parse_quoted_string(&ctx->parser, ctx->local_part);
 		else
-			ret = rfc822_parse_dot_atom(&ctx->parser, ctx->str);
+			ret = rfc822_parse_dot_atom(&ctx->parser, ctx->local_part);
 	
 		if (ret < 0) {
 			sieve_address_error(ctx, "invalid local part");
@@ -97,7 +99,7 @@ static bool parse_local_part(struct sieve_address_parser_context *ctx)
 		}
 	}
 
-	if ( str_len(ctx->str) == 0 ) {
+	if ( str_len(ctx->local_part) == 0 ) {
 		sieve_address_error(ctx, "missing local part");
 		return FALSE;
 	}
@@ -109,9 +111,9 @@ static bool parse_domain(struct sieve_address_parser_context *ctx)
 {
 	int ret;
 
-	str_truncate(ctx->str, 0);
-	if ((ret = rfc822_parse_domain(&ctx->parser, ctx->str)) < 0 ||
-		str_len(ctx->str) == 0 ) {
+	str_truncate(ctx->domain, 0);
+	if ((ret = rfc822_parse_domain(&ctx->parser, ctx->domain)) < 0 ||
+		str_len(ctx->domain) == 0 ) {
 		sieve_address_error(ctx, "invalid or missing domain");
 		
 		return FALSE;
@@ -167,6 +169,15 @@ static bool parse_sieve_address(struct sieve_address_parser_context *ctx)
 {
 	const unsigned char *start;
 	int ret;
+	
+	/* Initialize parser */
+	
+	rfc822_parser_init(&ctx->parser, str_data(ctx->address), str_len(ctx->address), 
+		t_str_new(128));
+
+	/* Parse */
+	
+	rfc822_skip_lwsp(&ctx->parser);
 
 	if (ctx->parser.data == ctx->parser.end) {
 		sieve_address_error(ctx, "empty address");
@@ -188,19 +199,42 @@ static bool parse_sieve_address(struct sieve_address_parser_context *ctx)
 	return ret > 0;
 }
 
+const char *sieve_address_normalize
+(string_t *address, const char **error_r)
+{
+	struct sieve_address_parser_context ctx;
+
+	memset(&ctx, 0, sizeof(ctx));
+	ctx.address = address;
+	
+	ctx.local_part = t_str_new(128);
+	ctx.domain = t_str_new(128);
+	ctx.str = t_str_new(128);
+	ctx.error = t_str_new(128);
+
+	if ( !parse_sieve_address(&ctx) )
+	{
+		*error_r = str_c(ctx.error);
+		return NULL;
+	}
+	
+	*error_r = NULL;
+	(void)str_lcase(str_c_modifiable(ctx.domain));
+	
+	return t_strconcat(str_c(ctx.local_part), "@", str_c(ctx.domain), NULL);
+}
+
 bool sieve_address_validate
 (string_t *address, const char **error_r)
 {
 	struct sieve_address_parser_context ctx;
 
 	memset(&ctx, 0, sizeof(ctx));
-	rfc822_parser_init(&ctx.parser, str_data(address), str_len(address), 
-		t_str_new(128));
 	ctx.address = address;
-	ctx.str = t_str_new(128);
+
+	ctx.local_part = ctx.domain = ctx.str = t_str_new(128);
 	ctx.error = t_str_new(128);
 
-	rfc822_skip_lwsp(&ctx.parser);
 	if ( !parse_sieve_address(&ctx) )
 	{
 		*error_r = str_c(ctx.error);
@@ -210,5 +244,6 @@ bool sieve_address_validate
 	*error_r = NULL;
 	return TRUE;
 }
+
 
 
