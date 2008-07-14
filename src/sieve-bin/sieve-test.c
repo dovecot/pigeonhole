@@ -37,6 +37,7 @@ int main(int argc, char **argv)
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_error_handler *ehandler;
+	struct ostream *teststream;
 	bool force_compile = FALSE;
 
 	bin_init();
@@ -128,9 +129,13 @@ int main(int argc, char **argv)
 	scriptenv.username = user;
 
 	ehandler = sieve_stderr_ehandler_create(0);	
-	
+
+	teststream = o_stream_create_fd(1, 0, FALSE);	
+
 	/* Run the test */
-	(void) sieve_test(sbin, &msgdata, &scriptenv, ehandler);
+	(void) sieve_test(sbin, &msgdata, &scriptenv, teststream, ehandler);
+
+	o_stream_destroy(&teststream);
 
 	sieve_close(&sbin);
 	sieve_error_handler_unref(&ehandler);

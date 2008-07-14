@@ -189,7 +189,7 @@ void sieve_dump(struct sieve_binary *sbin, struct ostream *stream)
 
 int sieve_test
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, 
+		const struct sieve_script_env *senv, struct ostream *stream,
 		struct sieve_error_handler *ehandler) 	
 {
 	struct sieve_result *sres = sieve_result_create(ehandler);
@@ -200,7 +200,7 @@ int sieve_test
 	ret = sieve_interpreter_run(interp, msgdata, senv, &sres);
 	
 	if ( ret > 0 ) 
-		ret = sieve_result_print(sres);
+		ret = sieve_result_print(sres, stream);
 	
 	sieve_interpreter_free(&interp);
 	sieve_result_unref(&sres);

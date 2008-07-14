@@ -56,7 +56,7 @@ int act_vacation_check_conflict
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action,
 		const struct sieve_action *other_action, void *context);
 static void act_vacation_print
-	(const struct sieve_action *action, struct sieve_result *result,
+	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		void *context, bool *keep);	
 static bool act_vacation_commit
 	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv, 
@@ -469,20 +469,21 @@ int act_vacation_check_conflict
 }
  
 static void act_vacation_print
-(const struct sieve_action *action ATTR_UNUSED, struct sieve_result *result ATTR_UNUSED,
-	void *context, bool *keep ATTR_UNUSED)	
+(const struct sieve_action *action ATTR_UNUSED, 
+	const struct sieve_result_print_env *rpenv, void *context, 
+	bool *keep ATTR_UNUSED)	
 {
 	struct act_vacation_context *ctx = (struct act_vacation_context *) context;
 	
-	printf( 	"* send vacation message:\n"
-						"    => days   : %d\n", ctx->days);
+	sieve_result_action_printf( rpenv, "send vacation message:");
+	sieve_result_printf(rpenv, "    => days   : %d\n", ctx->days);
 	if ( ctx->subject != NULL )
-		printf(	"    => subject: %s\n", ctx->subject);
+		sieve_result_printf(rpenv, "    => subject: %s\n", ctx->subject);
 	if ( ctx->from != NULL )
-		printf(	"    => from   : %s\n", ctx->from);
+		sieve_result_printf(rpenv, "    => from   : %s\n", ctx->from);
 	if ( ctx->handle != NULL )
-		printf(	"    => handle : %s\n", ctx->handle);
-	printf(		"\nSTART MESSAGE\n%s\nEND MESSAGE\n", ctx->reason);
+		sieve_result_printf(rpenv, "    => handle : %s\n", ctx->handle);
+	sieve_result_printf(rpenv, "\nSTART MESSAGE\n%s\nEND MESSAGE\n", ctx->reason);
 }
 
 static const char * const _list_headers[] = {

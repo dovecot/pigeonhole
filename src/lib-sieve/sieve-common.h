@@ -84,6 +84,7 @@ struct sieve_address_part;
 /* sieve-result.h */
 struct sieve_result;
 struct sieve_side_effects_list;
+struct sieve_result_print_env;
 
 /* sieve-actions.h */
 struct sieve_action_exec_env;

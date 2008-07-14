@@ -371,7 +371,7 @@ static void sieve_validator_register_unknown_tag
 
 static const struct sieve_argument *sieve_validator_find_tag
 (struct sieve_validator *validator, struct sieve_command_context *cmd, 
-	struct sieve_ast_argument *arg, unsigned int *id_code) 
+	struct sieve_ast_argument *arg, int *id_code) 
 {
 	const char *tag;
 	unsigned int i;
@@ -609,7 +609,7 @@ static bool sieve_validate_command_arguments
 		
 	/* Visit tagged and optional arguments */
 	while ( sieve_ast_argument_type(arg) == SAAT_TAG ) {
-		unsigned int id_code;
+		int id_code;
 		struct sieve_ast_argument *parg; 
 		const struct sieve_argument *tag = 
 			sieve_validator_find_tag(validator, cmd, arg, &id_code);
@@ -639,7 +639,7 @@ static bool sieve_validate_command_arguments
 		parg = sieve_ast_argument_prev(arg);
 		while ( parg != NULL ) {
 			if ( (sieve_ast_argument_type(parg) == SAAT_TAG && parg->argument == tag) 
-				|| parg->arg_id_code == id_code ) 
+				|| (id_code > 0 && parg->arg_id_code == id_code) ) 
 			{
 				const char *tag_id = sieve_ast_argument_tag(arg);
 				const char *tag_desc =

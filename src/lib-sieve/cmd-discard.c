@@ -46,7 +46,7 @@ const struct sieve_operation cmd_discard_operation = {
 /* discard action */
 
 static void act_discard_print
-	(const struct sieve_action *action, struct sieve_result *result,
+	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		void *context, bool *keep);	
 static bool act_discard_commit
 (const struct sieve_action *action, 
@@ -96,10 +96,10 @@ static bool cmd_discard_operation_execute
  
 static void act_discard_print
 (const struct sieve_action *action ATTR_UNUSED, 
-	struct sieve_result *result ATTR_UNUSED, void *context ATTR_UNUSED, 
+	const struct sieve_result_print_env *rpenv, void *context ATTR_UNUSED, 
 	bool *keep)	
 {
-	printf("* discard\n");
+	sieve_result_action_printf(rpenv, "discard");
 	
 	*keep = FALSE;
 }

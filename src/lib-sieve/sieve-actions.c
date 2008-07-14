@@ -183,7 +183,7 @@ static int act_store_check_duplicate
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action1, 
 		void *context1, void *context2);
 static void act_store_print
-	(const struct sieve_action *action, struct sieve_result *result,
+	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		void *context, bool *keep);
 
 static bool act_store_start
@@ -244,11 +244,11 @@ static int act_store_check_duplicate
 
 static void act_store_print
 (const struct sieve_action *action ATTR_UNUSED, 
-	struct sieve_result *result ATTR_UNUSED, void *context, bool *keep)	
+	const struct sieve_result_print_env *rpenv, void *context, bool *keep)	
 {
 	struct act_store_context *ctx = (struct act_store_context *) context;
 	
-	printf("* store message in folder: %s\n", ctx->folder);
+	sieve_result_action_printf(rpenv, "store message in folder: %s", ctx->folder);
 	
 	*keep = FALSE;
 }

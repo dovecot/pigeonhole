@@ -82,7 +82,7 @@ struct sieve_ast_argument {
 
 	/* Argument associated with this ast element  */
 	const struct sieve_argument *argument;
-	unsigned int arg_id_code;
+	int arg_id_code;
 
 	/* Parameters to this (tag) argument */
 	struct sieve_ast_argument *parameters;

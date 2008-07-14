@@ -99,7 +99,7 @@ int act_reject_check_conflict
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action,
     	const struct sieve_action *other_action, void *context);
 static void act_reject_print
-	(const struct sieve_action *action, struct sieve_result *result,
+	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		void *context, bool *keep);	
 static bool act_reject_commit
 	(const struct sieve_action *action ATTR_UNUSED, 
@@ -256,11 +256,11 @@ int act_reject_check_conflict
  
 static void act_reject_print
 (const struct sieve_action *action ATTR_UNUSED, 
-	struct sieve_result *result ATTR_UNUSED, void *context, bool *keep)	
+	const struct sieve_result_print_env *rpenv, void *context, bool *keep)	
 {
 	struct act_reject_context *ctx = (struct act_reject_context *) context;
 	
-	printf("* reject message with reason: %s\n", ctx->reason);
+	sieve_result_action_printf(rpenv, "reject message with reason: %s", ctx->reason);
 	
 	*keep = FALSE;
 }

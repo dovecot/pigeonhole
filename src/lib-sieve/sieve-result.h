@@ -18,6 +18,22 @@ void sieve_result_extension_set_context
 const void *sieve_result_extension_get_context
 	(struct sieve_result *result, int ext_id); 
 
+/* Printing */
+
+struct sieve_result_print_env {
+	struct sieve_result *result;
+	struct ostream *stream;
+};
+
+void sieve_result_printf
+	(const struct sieve_result_print_env *penv, const char *fmt, ...);
+void sieve_result_action_printf
+	(const struct sieve_result_print_env *penv, const char *fmt, ...);
+void sieve_result_seffect_printf
+	(const struct sieve_result_print_env *penv, const char *fmt, ...);
+
+bool sieve_result_print(struct sieve_result *result, struct ostream *stream);
+
 /* Error handling */
 
 void sieve_result_log
@@ -35,8 +51,6 @@ int sieve_result_add_action
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
 	void *context);
-
-bool sieve_result_print(struct sieve_result *result);
 
 void sieve_result_cancel_implicit_keep(struct sieve_result *result);
 

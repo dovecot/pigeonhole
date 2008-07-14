@@ -42,8 +42,8 @@ static bool seff_flags_read_context
 		const struct sieve_runtime_env *renv, sieve_size_t *address,
 		void **se_context);
 static void seff_flags_print
-	(const struct sieve_side_effect *seffect,	const struct sieve_action *action,
-		struct sieve_result *result, void *se_context, bool *keep);
+	(const struct sieve_side_effect *seffect, const struct sieve_action *action,
+		const struct sieve_result_print_env *rpenv, void *se_context, bool *keep);
 static bool seff_flags_pre_execute
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, 
@@ -168,7 +168,10 @@ static bool seff_flags_read_context
 		while ( (flag=ext_imapflags_iter_get_flag(&flit)) != NULL ) {		
 			if (flag != NULL && *flag != '\\') {
 				/* keyword */
-				array_append(&ctx->keywords, &flag, 1);
+				const char *keyword = p_strdup(pool, flag);
+
+				array_append(&ctx->keywords, &keyword, 1);
+
 			} else {
 				/* system flag */
 				if (flag == NULL || strcasecmp(flag, "\\flagged") == 0)
@@ -210,7 +213,8 @@ static struct seff_flags_context *seff_flags_get_implicit_context
 	while ( (flag=ext_imapflags_iter_get_flag(&flit)) != NULL ) {		
 		if (flag != NULL && *flag != '\\') {
 			/* keyword */
-			array_append(&ctx->keywords, &flag, 1);
+			const char *keyword = p_strdup(pool, flag);
+			array_append(&ctx->keywords, &keyword, 1);
 		} else {
 			/* system flag */
 			if (flag == NULL || strcasecmp(flag, "\\flagged") == 0)
@@ -234,40 +238,43 @@ static struct seff_flags_context *seff_flags_get_implicit_context
 static void seff_flags_print
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_action *action ATTR_UNUSED, 
-	struct sieve_result *result,
-	void *se_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
+	const struct sieve_result_print_env *rpenv,
+	void *se_context, bool *keep ATTR_UNUSED)
 {
+	struct sieve_result *result = rpenv->result;
 	struct seff_flags_context *ctx = (struct seff_flags_context *) se_context;
 	unsigned int i;
 	
 	if ( ctx == NULL )
 		ctx = seff_flags_get_implicit_context(result);
 	
-	if ( ctx->flags != 0 || array_count(&ctx->keywords) ) { 
-		printf("        + add flags:");
+	if ( ctx->flags != 0 || array_count(&ctx->keywords) > 0 ) {
+		T_BEGIN {
+			string_t *flags = t_str_new(128);
+ 
+			if ( (ctx->flags & MAIL_FLAGGED) > 0 )
+				str_printfa(flags, " \\flagged\n");
 
-		if ( (ctx->flags & MAIL_FLAGGED) > 0 )
-			printf(" \\flagged\n");
-
-		if ( (ctx->flags & MAIL_ANSWERED) > 0 )
-			printf(" \\answered");
+			if ( (ctx->flags & MAIL_ANSWERED) > 0 )
+				str_printfa(flags, " \\answered");
 		
-		if ( (ctx->flags & MAIL_DELETED) > 0 )
-			printf(" \\deleted");
+			if ( (ctx->flags & MAIL_DELETED) > 0 )
+				str_printfa(flags, " \\deleted");
 					
-		if ( (ctx->flags & MAIL_SEEN) > 0 )
-			printf(" \\seen");
-		
-		if ( (ctx->flags & MAIL_DRAFT) > 0 )
-			printf(" \\draft");
+			if ( (ctx->flags & MAIL_SEEN) > 0 )
+				str_printfa(flags, " \\seen");
+			
+			if ( (ctx->flags & MAIL_DRAFT) > 0 )
+				str_printfa(flags, " \\draft");
 
-		for ( i = 0; i < array_count(&ctx->keywords); i++ ) {
-			const char *const *keyword = array_idx(&ctx->keywords, i);
-			printf(" %s", *keyword);
-		};
+			for ( i = 0; i < array_count(&ctx->keywords); i++ ) {
+				const char *const *keyword = array_idx(&ctx->keywords, i);
+				str_printfa(flags, " %s", *keyword);
+			}
+
+			sieve_result_seffect_printf(rpenv, "add flags:%s", str_c(flags));
+		} T_END;
 	}
-	
-	printf("\n");
 }
 
 static bool seff_flags_pre_execute

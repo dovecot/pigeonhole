@@ -1,6 +1,8 @@
 #include "lib.h"
 #include "mempool.h"
+#include "ostream.h"
 #include "hash.h"
+#include "str.h"
 #include "strfuncs.h"
 #include "str-sanitize.h"
 
@@ -289,25 +291,77 @@ int sieve_result_add_action
 	}
 	
 	return 0;
-}	
+}
 
-bool sieve_result_print(struct sieve_result *result)
-{
-	bool implicit_keep = TRUE;
-	struct sieve_result_action *rac = result->first_action;
+/*
+ * Result printing
+ */
+
+void sieve_result_printf
+(const struct sieve_result_print_env *penv, const char *fmt, ...)
+{	
+	string_t *outbuf = t_str_new(128);
+	va_list args;
 	
-	printf("\nPerformed actions:\n");
+	va_start(args, fmt);	
+	str_vprintfa(outbuf, fmt, args);
+	va_end(args);
+	
+	o_stream_send(penv->stream, str_data(outbuf), str_len(outbuf));
+}
+
+void sieve_result_action_printf
+(const struct sieve_result_print_env *penv, const char *fmt, ...)
+{	
+	string_t *outbuf = t_str_new(128);
+	va_list args;
+	
+	va_start(args, fmt);	
+	str_append(outbuf, "\n * ");
+	str_vprintfa(outbuf, fmt, args);
+	str_append_c(outbuf, '\n');
+	va_end(args);
+	
+	o_stream_send(penv->stream, str_data(outbuf), str_len(outbuf));
+}
+
+void sieve_result_seffect_printf
+(const struct sieve_result_print_env *penv, const char *fmt, ...)
+{	
+	string_t *outbuf = t_str_new(128);
+	va_list args;
+	
+	va_start(args, fmt);	
+	str_append(outbuf, "        + ");
+	str_vprintfa(outbuf, fmt, args);
+	str_append_c(outbuf, '\n');
+	va_end(args);
+	
+	o_stream_send(penv->stream, str_data(outbuf), str_len(outbuf));
+}
+
+bool sieve_result_print
+(struct sieve_result *result, struct ostream *stream)
+{
+	struct sieve_result_print_env penv;
+	bool implicit_keep = TRUE;
+	struct sieve_result_action *rac;
+	
+	penv.result = result;
+	penv.stream = stream;
+	
+	sieve_result_printf(&penv, "\nPerformed actions:\n");
+	rac = result->first_action;
 	while ( rac != NULL ) {		
 		bool keep = TRUE;
 		const struct sieve_action *act = rac->action;
 		struct sieve_result_side_effect *rsef;
 		const struct sieve_side_effect *sef;
 
-	
 		if ( act->print != NULL ) {
-			act->print(act, result, rac->context, &keep);
+			act->print(act, &penv, rac->context, &keep);
 		} else {
-			printf("* %s\n", act->name); 
+			sieve_result_action_printf(&penv, act->name); 
 		}
 	
 		/* Print side effects */
@@ -316,15 +370,16 @@ bool sieve_result_print(struct sieve_result *result)
 			sef = rsef->seffect;
 			if ( sef->print != NULL ) 
 				sef->print
-					(sef, act, result, rsef->context, &keep);
+					(sef, act, &penv, rsef->context, &keep);
 			rsef = rsef->next;
 		}
-
+			
 		implicit_keep = implicit_keep && keep;		
 		rac = rac->next;	
 	}
 	
-	printf("\nImplicit keep: %s\n", implicit_keep ? "yes" : "no");
+	sieve_result_printf
+		(&penv, "\nImplicit keep: %s\n", implicit_keep ? "yes" : "no");
 	
 	return TRUE;
 }

@@ -88,11 +88,11 @@ bool sieve_save
 
 /* sieve_test:
  *
- *   Executes the bytecode, but only prints the result to stdout.
+ *   Executes the bytecode, but only prints the result to the given stream.
  */ 
 int sieve_test
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata, 
-		const struct sieve_script_env *senv, 
+		const struct sieve_script_env *senv, struct ostream *stream,
 		struct sieve_error_handler *ehandler);
 
 /* sieve_execute:
