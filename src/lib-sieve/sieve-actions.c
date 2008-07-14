@@ -180,11 +180,11 @@ bool sieve_opr_side_effect_dump
 /* Store action */
 
 static int act_store_check_duplicate
-	(const struct sieve_runtime_env *renv ATTR_UNUSED,
-		const struct sieve_action *action1 ATTR_UNUSED, 
+	(const struct sieve_runtime_env *renv, const struct sieve_action *action1, 
 		void *context1, void *context2);
 static void act_store_print
-	(const struct sieve_action *action ATTR_UNUSED, void *context, bool *keep);
+	(const struct sieve_action *action, struct sieve_result *result,
+		void *context, bool *keep);
 
 static bool act_store_start
 	(const struct sieve_action *action,
@@ -243,7 +243,8 @@ static int act_store_check_duplicate
 }
 
 static void act_store_print
-(const struct sieve_action *action ATTR_UNUSED, void *context, bool *keep)	
+(const struct sieve_action *action ATTR_UNUSED, 
+	struct sieve_result *result ATTR_UNUSED, void *context, bool *keep)	
 {
 	struct act_store_context *ctx = (struct act_store_context *) context;
 	
@@ -322,9 +323,7 @@ static bool act_store_execute
 	if ( array_is_created(&trans->keywords) && array_count(&trans->keywords) > 0 ) 
 	{
 		const char *const *kwds;
-	
-		printf("KEYWORDS: %d\n", array_count(&trans->keywords));
-	
+		
 		(void)array_append_space(&trans->keywords);
 		kwds = array_idx(&trans->keywords, 0);
 				
@@ -336,8 +335,6 @@ static bool act_store_execute
 		}
 	}
 	
-	printf("FLAGS: %d\n", trans->flags);
-
 	if (mailbox_copy(trans->mail_trans, aenv->msgdata->mail, trans->flags, 
 		keywords, trans->dest_mail) < 0) {
 		act_store_get_storage_error(aenv, trans);

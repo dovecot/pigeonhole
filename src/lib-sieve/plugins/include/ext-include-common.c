@@ -167,19 +167,18 @@ static inline struct ext_include_interpreter_context *
 	return ctx;
 }
 
-void ext_include_register_interpreter_context
-(struct sieve_interpreter *interp)
+void ext_include_runtime_context_init
+(const struct sieve_runtime_env *renv)
 {
 	struct ext_include_interpreter_context *ctx = 
-		ext_include_get_interpreter_context(interp);
-	struct sieve_script *script = sieve_interpreter_script(interp);
+		ext_include_get_interpreter_context(renv->interp);
 	
 	if ( ctx == NULL ) {
 		ctx = ext_include_create_interpreter_context
-			(interp, NULL, script, SBIN_SYSBLOCK_MAIN_PROGRAM);
+			(renv->interp, NULL, renv->script, SBIN_SYSBLOCK_MAIN_PROGRAM);
 		
 		sieve_interpreter_extension_set_context
-			(interp, ext_include_my_id, (void *) ctx);		
+			(renv->interp, ext_include_my_id, (void *) ctx);		
 	}
 }
 

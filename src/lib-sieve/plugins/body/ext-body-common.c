@@ -10,6 +10,7 @@
 #include "message-decoder.h"
 
 #include "sieve-common.h"
+#include "sieve-message.h"
 #include "sieve-interpreter.h"
 
 #include "ext-body-common.h"

@@ -9,6 +9,7 @@
 
 #include "sieve-error.h"
 #include "sieve-extensions.h"
+#include "sieve-message.h"
 #include "sieve-commands-private.h"
 #include "sieve-code.h"
 #include "sieve-actions.h"
@@ -18,75 +19,6 @@
 #include "sieve-comparators.h"
 
 #include "sieve-interpreter.h"
-
-/* 
- * Message context 
- *   (might get moved to separate file) 
- */
-
-struct sieve_message_context {
-	pool_t pool;
-	int refcount;
-	
-	/* Context data for extensions */
-	ARRAY_DEFINE(ext_contexts, void *); 
-};
-
-static struct sieve_message_context *sieve_message_context_create(void)
-{
-	pool_t pool;
-	struct sieve_message_context *msgctx;
-	
-	pool = pool_alloconly_create("sieve_message_context", 1024);
-	msgctx = p_new(pool, struct sieve_message_context, 1);
-	msgctx->pool = pool;
-	msgctx->refcount = 1;
-	
-	p_array_init(&msgctx->ext_contexts, pool, 4);
-	
-	return msgctx;
-}
-
-static void sieve_message_context_ref(struct sieve_message_context *msgctx)
-{
-	msgctx->refcount++;
-}
-
-static void sieve_message_context_unref(struct sieve_message_context **msgctx)
-{
-	i_assert((*msgctx)->refcount > 0);
-
-	if (--(*msgctx)->refcount != 0)
-		return;
-	
-	pool_unref(&((*msgctx)->pool));
-	
-	*msgctx = NULL;
-}
-
-void sieve_message_context_extension_set
-	(struct sieve_message_context *msgctx, int ext_id, void *context)
-{
-	array_idx_set(&msgctx->ext_contexts, (unsigned int) ext_id, &context);	
-}
-
-const void *sieve_message_context_extension_get
-	(struct sieve_message_context *msgctx, int ext_id) 
-{
-	void * const *ctx;
-
-	if  ( ext_id < 0 || ext_id >= (int) array_count(&msgctx->ext_contexts) )
-		return NULL;
-	
-	ctx = array_idx(&msgctx->ext_contexts, (unsigned int) ext_id);		
-
-	return *ctx;
-}
-
-pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
-{
-	return msgctx->pool;
-}
 
 /* 
  * Interpreter 
@@ -116,8 +48,6 @@ struct sieve_interpreter {
 struct sieve_interpreter *sieve_interpreter_create
 (struct sieve_binary *sbin, struct sieve_error_handler *ehandler) 
 {
-	unsigned int i;
-	int idx;
 	pool_t pool;
 	struct sieve_interpreter *interp;
 	
@@ -136,23 +66,6 @@ struct sieve_interpreter *sieve_interpreter_create
 	interp->pc = 0;
 
 	p_array_init(&interp->ext_contexts, pool, 4);
-
-	/* Pre-load core language features implemented as 'extensions' */
-	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
-		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
-		
-		if ( ext->interpreter_load != NULL )
-			(void)ext->interpreter_load(interp);		
-	}
-
-	/* Load other extensions listed in the binary */
-	for ( idx = 0; idx < sieve_binary_extensions_count(sbin); idx++ ) {
-		const struct sieve_extension *ext = 
-			sieve_binary_extension_get_by_index(sbin, idx, NULL);
-		
-		if ( ext->interpreter_load != NULL )
-			ext->interpreter_load(interp);
-	}
 	
 	return interp;
 }
@@ -416,6 +329,10 @@ int sieve_interpreter_start
 	const struct sieve_script_env *senv, struct sieve_message_context *msgctx, 
 	struct sieve_result *result, bool *interrupted) 
 {
+	struct sieve_binary *sbin = interp->runenv.sbin;
+	unsigned int i;
+	int idx;
+	
 	interp->runenv.msgdata = msgdata;
 	interp->runenv.result = result;		
 	interp->runenv.scriptenv = senv;
@@ -427,6 +344,23 @@ int sieve_interpreter_start
 		sieve_message_context_ref(msgctx);
 	}
 	
+	/* Pre-load core language features implemented as 'extensions' */
+	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
+		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
+		
+		if ( ext->runtime_load != NULL )
+			(void)ext->runtime_load(&interp->runenv);		
+	}
+
+	/* Load other extensions listed in the binary */
+	for ( idx = 0; idx < sieve_binary_extensions_count(sbin); idx++ ) {
+		const struct sieve_extension *ext = 
+			sieve_binary_extension_get_by_index(sbin, idx, NULL);
+		
+		if ( ext->runtime_load != NULL )
+			ext->runtime_load(&interp->runenv);
+	}
+
 	return sieve_interpreter_continue(interp, interrupted); 
 }
 

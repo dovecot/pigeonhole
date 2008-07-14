@@ -67,10 +67,11 @@ static int act_redirect_check_duplicate
 	(const struct sieve_runtime_env *renv,
 		const struct sieve_action *action1, void *context1, void *context2);
 static void act_redirect_print
-	(const struct sieve_action *action, void *context, bool *keep);	
+	(const struct sieve_action *action, struct sieve_result *result,
+		void *context, bool *keep);	
 static bool act_redirect_commit
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
+	(const struct sieve_action *action ATTR_UNUSED, 
+		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 		
 struct act_redirect_context {
 	const char *to_address;
@@ -208,7 +209,8 @@ static int act_redirect_check_duplicate
 }
 
 static void act_redirect_print
-(const struct sieve_action *action ATTR_UNUSED, void *context, bool *keep)	
+(const struct sieve_action *action ATTR_UNUSED, 
+	struct sieve_result *result ATTR_UNUSED, void *context, bool *keep)	
 {
 	struct act_redirect_context *ctx = (struct act_redirect_context *) context;
 	

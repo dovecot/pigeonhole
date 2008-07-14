@@ -93,6 +93,9 @@ struct sieve_side_effect;
 /* sieve-script.h */
 struct sieve_script;
 
+/* sieve-message.h */
+struct sieve_message_context;
+
 /* sieve.c */
 struct sieve_ast *sieve_parse
 	(struct sieve_script *script, struct sieve_error_handler *ehandler);

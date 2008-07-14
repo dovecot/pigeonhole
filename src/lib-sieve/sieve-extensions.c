@@ -202,7 +202,7 @@ static bool _list_extension(const struct sieve_extension *ext)
 	if ( *ext->name == '@' ) return FALSE;
 
 	if ( ext->validator_load == NULL && ext->generator_load == NULL &&
-		ext->binary_load == NULL && ext->interpreter_load == NULL &&
+		ext->binary_load == NULL && ext->runtime_load == NULL &&
 		ext->load == NULL && 
 		ext->operations.count == 0 && ext->operands.count == 0 ) {
 		return FALSE;

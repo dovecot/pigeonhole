@@ -13,8 +13,6 @@
 
 #include "ext-imapflags-common.h"
 
-static bool tag_flags_validate_persistent
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool tag_flags_validate
 	(struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
@@ -32,14 +30,6 @@ const struct sieve_argument tag_flags = {
 	tag_flags_generate 
 };
 
-const struct sieve_argument tag_flags_implicit = { 
-	"@flags-implicit", 
-	NULL, 
-	tag_flags_validate_persistent,
-	NULL,	NULL, 
-	tag_flags_generate 
-};
-
 /* Side effect */
 
 extern const struct sieve_side_effect_extension imapflags_seffect_extension;
@@ -51,29 +41,20 @@ static bool seff_flags_read_context
 	(const struct sieve_side_effect *seffect, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address,
 		void **se_context);
-static bool seff_flags_read_implicit_context
-	(const struct sieve_side_effect *seffect, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address,
-		void **se_context);
 static void seff_flags_print
-	(const struct sieve_side_effect *seffect,	const struct sieve_action *action, 
-		void *se_context, bool *keep);
+	(const struct sieve_side_effect *seffect,	const struct sieve_action *action,
+		struct sieve_result *result, void *se_context, bool *keep);
 static bool seff_flags_pre_execute
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, 
 		void **se_context, void *tr_context);
-
-enum ext_imapflags_side_effect_type {
-	EXT_IMAPFLAGS_SEFFECT_FLAGS,
-	EXT_IMAPFLAGS_SEFFECT_FLAGS_IMPLICIT,
-};
 
 const struct sieve_side_effect flags_side_effect = {
 	"flags",
 	&act_store,
 	
 	&imapflags_seffect_extension,
-	EXT_IMAPFLAGS_SEFFECT_FLAGS,
+	0,
 	seff_flags_dump_context,
 	seff_flags_read_context,
 	seff_flags_print,
@@ -81,40 +62,13 @@ const struct sieve_side_effect flags_side_effect = {
 	NULL, NULL, NULL
 };
 
-const struct sieve_side_effect flags_implicit_side_effect = {
-	"flags-implicit",
-	&act_store,
-	
-	&imapflags_seffect_extension,
-	EXT_IMAPFLAGS_SEFFECT_FLAGS_IMPLICIT,
-	NULL,
-	seff_flags_read_implicit_context,
-	seff_flags_print,
-	seff_flags_pre_execute, 
-	NULL, NULL, NULL
-};
-
-const struct sieve_side_effect *imapflags_side_effects[] = {
-	&flags_side_effect, &flags_implicit_side_effect
-};
-
 const struct sieve_side_effect_extension imapflags_seffect_extension = {
 	&imapflags_extension,
 
-	SIEVE_EXT_DEFINE_SIDE_EFFECTS(imapflags_side_effects)
+	SIEVE_EXT_DEFINE_SIDE_EFFECT(flags_side_effect)
 };
 
 /* Tag validation */
-
-static bool tag_flags_validate_persistent
-(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd)
-{	
-	if ( sieve_command_find_argument(cmd, &tag_flags) == NULL ) {
-		sieve_command_add_dynamic_tag(cmd, &tag_flags_implicit, -1);
-	}
-	
-	return TRUE;
-}
 
 static bool tag_flags_validate
 (struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
@@ -154,19 +108,13 @@ static bool tag_flags_generate
       return FALSE;
   }
 
-	if ( arg->argument == &tag_flags ) {
-		sieve_opr_side_effect_emit(sbin, &flags_side_effect, ext_imapflags_my_id);
-		  
-		param = arg->parameters;
-	
-		/* Call the generation function for the argument */ 
-		if ( param->argument != NULL && param->argument->generate != NULL && 
-			!param->argument->generate(generator, param, cmd) ) 
-			return FALSE;
-	} else if ( arg->argument == &tag_flags_implicit ) {
-		sieve_opr_side_effect_emit
-			(sbin, &flags_implicit_side_effect, ext_imapflags_my_id);
-	} else
+	sieve_opr_side_effect_emit(sbin, &flags_side_effect, ext_imapflags_my_id);
+	  
+	param = arg->parameters;
+
+	/* Call the generation function for the argument */ 
+	if ( param->argument != NULL && param->argument->generate != NULL && 
+		!param->argument->generate(generator, param, cmd) ) 
 		return FALSE;
 	
   return TRUE;
@@ -244,13 +192,10 @@ static bool seff_flags_read_context
 	return result;
 }
 
-static bool seff_flags_read_implicit_context
-(const struct sieve_side_effect *seffect ATTR_UNUSED, 
-	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED,
-	void **se_context)
+static struct seff_flags_context *seff_flags_get_implicit_context
+(struct sieve_result *result)
 {
-	bool result = TRUE;
-	pool_t pool = sieve_result_pool(renv->result);
+	pool_t pool = sieve_result_pool(result);
 	struct seff_flags_context *ctx;
 	const char *flag;
 	struct ext_imapflags_iter flit;
@@ -261,7 +206,7 @@ static bool seff_flags_read_implicit_context
 	t_push();
 		
 	/* Unpack */
-	ext_imapflags_get_flags_init(&flit, renv, NULL, 0);
+	ext_imapflags_get_implicit_flags_init(&flit, result);
 	while ( (flag=ext_imapflags_iter_get_flag(&flit)) != NULL ) {		
 		if (flag != NULL && *flag != '\\') {
 			/* keyword */
@@ -280,22 +225,23 @@ static bool seff_flags_read_implicit_context
 				ctx->flags |= MAIL_DRAFT;
 		}
 	}
-	
-	*se_context = (void *) ctx;
 
 	t_pop();
 	
-	return result;
+	return ctx;
 }
-
 
 static void seff_flags_print
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_action *action ATTR_UNUSED, 
+	struct sieve_result *result,
 	void *se_context ATTR_UNUSED, bool *keep)
 {
 	struct seff_flags_context *ctx = (struct seff_flags_context *) se_context;
 	unsigned int i;
+	
+	if ( ctx == NULL )
+		ctx = seff_flags_get_implicit_context(result);
 	
 	printf("        + add flags:");
 
@@ -333,6 +279,11 @@ static bool seff_flags_pre_execute
 	struct seff_flags_context *ctx = (struct seff_flags_context *) *se_context;
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
+		
+	if ( ctx == NULL ) {
+		ctx = seff_flags_get_implicit_context(aenv->result);
+		*se_context = (void *) ctx;
+	}
 
 	/* Assign mail keywords for subsequent mailbox_copy() */
 	if ( array_count(&ctx->keywords) > 0 ) {
@@ -342,10 +293,7 @@ static bool seff_flags_pre_execute
 		}
 		
 		array_append_array(&trans->keywords, &ctx->keywords);
-		
-		printf("keywords: %d\n", array_count(&ctx->keywords));
 	}
-	printf("flags: %d\n", trans->flags);
 
 	/* Assign mail flags for subsequent mailbox_copy() */
 	trans->flags |= ctx->flags;

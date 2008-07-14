@@ -6,6 +6,7 @@
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-result.h"
 #include "sieve-dump.h"
 
 #include "sieve-ext-variables.h"
@@ -167,45 +168,49 @@ void ext_imapflags_attach_flags_tag
 	/* Tag specified by user */
 	sieve_validator_register_external_tag
 		(valdtr, &tag_flags, command, -1);
-		
-	/* Implicit tag if none is specified */
-	sieve_validator_register_persistent_tag
-		(valdtr, &tag_flags_implicit, command);
 }
 
 /* Context access */
 
-struct ext_imapflags_message_context {
+struct ext_imapflags_result_context {
     string_t *internal_flags;
 };
 
-static inline struct ext_imapflags_message_context *
-	_get_message_context(struct sieve_message_context *msgctx)
+static inline struct ext_imapflags_result_context *
+	_get_result_context(struct sieve_result *result)
 {
-	struct ext_imapflags_message_context *mctx =
-		(struct ext_imapflags_message_context *) 
-		sieve_message_context_extension_get(msgctx, ext_imapflags_my_id);
+	struct ext_imapflags_result_context *rctx =
+		(struct ext_imapflags_result_context *) 
+		sieve_result_extension_get_context(result, ext_imapflags_my_id);
 
-	if ( mctx == NULL ) {
-		pool_t pool = sieve_message_context_pool(msgctx);
+	if ( rctx == NULL ) {
+		pool_t pool = sieve_result_pool(result);
 
-		mctx =p_new(pool, struct ext_imapflags_message_context, 1);
-		mctx->internal_flags = str_new(pool, 32);
+		rctx =p_new(pool, struct ext_imapflags_result_context, 1);
+		rctx->internal_flags = str_new(pool, 32);
 
-		sieve_message_context_extension_set	
-			(msgctx, ext_imapflags_my_id, mctx);
+		sieve_result_extension_set_context
+			(result, ext_imapflags_my_id, rctx);
 	}
 
-	return mctx;
+	return rctx;
 }
 
 static string_t *_get_flags_string
-	(struct sieve_message_context *msgctx)
+	(struct sieve_result *result)
 {
-	struct ext_imapflags_message_context *ctx = 
-		_get_message_context(msgctx);
+	struct ext_imapflags_result_context *ctx = 
+		_get_result_context(result);
 		
 	return ctx->internal_flags;
+}
+
+/* Initialization */
+
+void ext_imapflags_runtime_init(const struct sieve_runtime_env *renv)
+{	
+	sieve_result_add_implicit_side_effect
+		(renv->result, &act_store, &flags_side_effect, NULL);
 }
 
 /* Flag operations */
@@ -369,7 +374,7 @@ void ext_imapflags_set_flags
 	if ( storage != NULL ) 
 		sieve_variable_get_modifiable(storage, var_index, &cur_flags);
 	else
-		cur_flags = _get_flags_string(renv->msgctx);
+		cur_flags = _get_flags_string(renv->result);
 
 	flags_list_set_flags(cur_flags, flags);		
 }
@@ -383,7 +388,7 @@ void ext_imapflags_add_flags
 	if ( storage != NULL ) 
 		sieve_variable_get_modifiable(storage, var_index, &cur_flags);
 	else
-		cur_flags = _get_flags_string(renv->msgctx);
+		cur_flags = _get_flags_string(renv->result);
 	
 	flags_list_add_flags(cur_flags, flags);		
 }
@@ -397,7 +402,7 @@ void ext_imapflags_remove_flags
 	if ( storage != NULL ) 
 		sieve_variable_get_modifiable(storage, var_index, &cur_flags);
 	else
-		cur_flags = _get_flags_string(renv->msgctx);
+		cur_flags = _get_flags_string(renv->result);
 	
 	flags_list_remove_flags(cur_flags, flags);		
 }
@@ -411,7 +416,7 @@ const char *ext_imapflags_get_flags_string
 	if ( storage != NULL ) 
 		sieve_variable_get_modifiable(storage, var_index, &cur_flags);
 	else
-		cur_flags = _get_flags_string(renv->msgctx);
+		cur_flags = _get_flags_string(renv->result);
 
 	return str_c(cur_flags);
 }
@@ -425,10 +430,19 @@ void ext_imapflags_get_flags_init
 	if ( storage != NULL ) 
 		sieve_variable_get_modifiable(storage, var_index, &cur_flags);
 	else
-		cur_flags = _get_flags_string(renv->msgctx);
+		cur_flags = _get_flags_string(renv->result);
 	
 	ext_imapflags_iter_init(iter, cur_flags);		
 }
+
+void ext_imapflags_get_implicit_flags_init
+(struct ext_imapflags_iter *iter, struct sieve_result *result)
+{
+	string_t *cur_flags = _get_flags_string(result);
+	
+	ext_imapflags_iter_init(iter, cur_flags);		
+}
+
 
 	
 	

@@ -34,7 +34,8 @@ struct sieve_action {
 			void *context);
 
 	void (*print)
-		(const struct sieve_action *action, void *context, bool *keep);	
+		(const struct sieve_action *action, struct sieve_result *result, 
+			void *context, bool *keep);	
 		
 	bool (*start)
 		(const struct sieve_action *action, 
@@ -72,7 +73,7 @@ struct sieve_side_effect {
 			
 	void (*print)
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
-			void *se_context, bool *keep);
+			struct sieve_result *result, void *se_context, bool *keep);
 
 	bool (*pre_execute)
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 

@@ -1,4 +1,5 @@
 require "include";
+require "variables";
 
 include "included1";
 include :global "included2";

@@ -52,6 +52,7 @@ libsieve_la_DEPENDENCIES = $(plugins)
 libsieve_la_LIBADD = $(plugins)
 
 libsieve_la_SOURCES = \
+	sieve-message.c \
 	sieve-lexer.c \
 	sieve-script.c \
 	sieve-ast.c \
@@ -79,6 +80,7 @@ libsieve_la_SOURCES = \
 	sieve.c 
 
 noinst_HEADERS = \
+	sieve-message.h \
 	sieve-lexer.h \
 	sieve-script.h \
 	sieve-script-private.h \

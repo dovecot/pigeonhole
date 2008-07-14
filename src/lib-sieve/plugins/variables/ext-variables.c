@@ -21,6 +21,7 @@
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-binary.h"
+#include "sieve-interpreter.h"
 
 #include "sieve-validator.h"
 
@@ -35,7 +36,7 @@
 static bool ext_variables_load(int ext_id);
 static bool ext_variables_validator_load(struct sieve_validator *validator);
 static bool ext_variables_binary_load(struct sieve_binary *sbin);
-static bool ext_variables_interpreter_load(struct sieve_interpreter *interp);
+static bool ext_variables_runtime_load(const struct sieve_runtime_env *renv);
 
 /* Commands */
 
@@ -69,7 +70,7 @@ struct sieve_extension variables_extension = {
 	ext_variables_load,
 	ext_variables_validator_load, 
 	NULL, 
-	ext_variables_interpreter_load, 
+	ext_variables_runtime_load, 
 	ext_variables_binary_load,
 	NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_variables_operations), 
@@ -110,10 +111,10 @@ static bool ext_variables_binary_load
 
 /* Load extension into interpreter */
 
-static bool ext_variables_interpreter_load
-	(struct sieve_interpreter *interp)
+static bool ext_variables_runtime_load
+	(const struct sieve_runtime_env *renv)
 {
-	ext_variables_interpreter_initialize(interp);
+	ext_variables_interpreter_initialize(renv->interp);
 
 	return TRUE;
 }

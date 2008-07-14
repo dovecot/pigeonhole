@@ -28,9 +28,9 @@
 /* Forward declarations */
 
 static bool ext_imapflags_load(int ext_id);
-static bool ext_imapflags_validator_load(struct sieve_validator *validator);
-static bool ext_imapflags_interpreter_load
-	(struct sieve_interpreter *interpreter);
+static bool ext_imapflags_validator_load(struct sieve_validator *valdtr);
+static bool ext_imapflags_runtime_load
+	(const struct sieve_runtime_env *renv);
 static bool ext_imapflags_binary_load(struct sieve_binary *sbin);
 
 /* Commands */
@@ -60,7 +60,7 @@ const struct sieve_extension imapflags_extension = {
 	ext_imapflags_load,
 	ext_imapflags_validator_load, 
 	NULL, 
-	ext_imapflags_interpreter_load, 
+	ext_imapflags_runtime_load, 
 	ext_imapflags_binary_load,
 	NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(imapflags_operations), 
@@ -79,16 +79,16 @@ extern const struct sieve_side_effect_extension imapflags_seffect_extension;
 /* Load extension into validator */
 
 static bool ext_imapflags_validator_load
-	(struct sieve_validator *validator)
+	(struct sieve_validator *valdtr)
 {
 	/* Register commands */
-	sieve_validator_register_command(validator, &cmd_setflag);
-	sieve_validator_register_command(validator, &cmd_addflag);
-	sieve_validator_register_command(validator, &cmd_removeflag);
-	sieve_validator_register_command(validator, &tst_hasflag);
+	sieve_validator_register_command(valdtr, &cmd_setflag);
+	sieve_validator_register_command(valdtr, &cmd_addflag);
+	sieve_validator_register_command(valdtr, &cmd_removeflag);
+	sieve_validator_register_command(valdtr, &tst_hasflag);
 	
-	ext_imapflags_attach_flags_tag(validator, "keep");
-	ext_imapflags_attach_flags_tag(validator, "fileinto");
+	ext_imapflags_attach_flags_tag(valdtr, "keep");
+	ext_imapflags_attach_flags_tag(valdtr, "fileinto");
 
 	return TRUE;
 }
@@ -109,10 +109,11 @@ static bool ext_imapflags_binary_load(struct sieve_binary *sbin)
  * Interpreter context
  */
 
-static bool ext_imapflags_interpreter_load
-	(struct sieve_interpreter *interpreter ATTR_UNUSED)
+static bool ext_imapflags_runtime_load
+	(const struct sieve_runtime_env *renv)
 {
-	/* Will contain something when variables extension is implemented */
+	ext_imapflags_runtime_init(renv);
+	
 	return TRUE;
 }
 

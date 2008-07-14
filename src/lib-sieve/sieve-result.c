@@ -1,5 +1,6 @@
 #include "lib.h"
 #include "mempool.h"
+#include "hash.h"
 #include "strfuncs.h"
 #include "str-sanitize.h"
 
@@ -10,6 +11,10 @@
 #include "sieve-result.h"
 
 #include <stdio.h>
+
+/*
+ *
+ */
 
 struct sieve_result_action {
 	struct sieve_result *result;
@@ -36,15 +41,25 @@ struct sieve_result_side_effect {
 	struct sieve_result_side_effect *prev, *next; 
 };
 
+struct sieve_result_implicit_side_effects {
+	const struct sieve_action *action;
+	struct sieve_side_effects_list *seffects;
+};
+
 struct sieve_result {
 	pool_t pool;
 	int refcount;
+	
+	/* Context data for extensions */
+	ARRAY_DEFINE(ext_contexts, void *); 
 
 	struct sieve_error_handler *ehandler;
 		
 	struct sieve_action_exec_env action_env;
 	struct sieve_result_action *first_action;
 	struct sieve_result_action *last_action;
+	
+	struct hash_table *implicit_seffects;
 };
 
 struct sieve_result *sieve_result_create
@@ -58,6 +73,8 @@ struct sieve_result *sieve_result_create
 	result->refcount = 1;
 	result->pool = pool;
 	
+	p_array_init(&result->ext_contexts, pool, 4);
+	
 	result->ehandler = ehandler;
 	sieve_error_handler_ref(ehandler);
 
@@ -66,6 +83,7 @@ struct sieve_result *sieve_result_create
 	result->first_action = NULL;
 	result->last_action = NULL;
 
+	result->implicit_seffects = NULL;
 	return result;
 }
 
@@ -78,19 +96,38 @@ void sieve_result_unref(struct sieve_result **result)
 {
 	i_assert((*result)->refcount > 0);
 
-    if (--(*result)->refcount != 0)
-        return;
+	if (--(*result)->refcount != 0)
+		return;
 
 	sieve_error_handler_unref(&(*result)->ehandler);
 
-    pool_unref(&(*result)->pool);
+	pool_unref(&(*result)->pool);
 
-    *result = NULL;
+ 	*result = NULL;
 }
 
 pool_t sieve_result_pool(struct sieve_result *result)
 {
 	return result->pool;
+}
+
+void sieve_result_extension_set_context
+	(struct sieve_result *result, int ext_id, void *context)
+{
+	array_idx_set(&result->ext_contexts, (unsigned int) ext_id, &context);	
+}
+
+const void *sieve_result_extension_get_context
+	(struct sieve_result *result, int ext_id) 
+{
+	void * const *ctx;
+
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&result->ext_contexts) )
+		return NULL;
+	
+	ctx = array_idx(&result->ext_contexts, (unsigned int) ext_id);		
+
+	return *ctx;
 }
 
 /* Logging of result */
@@ -122,6 +159,33 @@ void sieve_result_log
 }
 
 /* Result composition */
+
+void sieve_result_add_implicit_side_effect
+(struct sieve_result *result, const struct sieve_action *to_action, 
+	const struct sieve_side_effect *seffect, void *context)
+{
+	struct sieve_result_implicit_side_effects *implseff = NULL;
+	
+	if ( result->implicit_seffects == NULL ) {
+		result->implicit_seffects = hash_create
+			(result->pool, result->pool, 0, NULL, NULL);
+	} else {
+		implseff = (struct sieve_result_implicit_side_effects *) 
+			hash_lookup(result->implicit_seffects, to_action);
+	}
+
+	if ( implseff == NULL ) {
+		implseff = p_new
+			(result->pool, struct sieve_result_implicit_side_effects, 1);
+		implseff->action = to_action;
+		implseff->seffects = sieve_side_effects_list_create(result);
+		
+		hash_insert(result->implicit_seffects, (void *) to_action, 
+			(void *) implseff);
+	}	
+	
+	sieve_side_effects_list_add(implseff->seffects, seffect, context);
+}
 
 int sieve_result_add_action
 (const struct sieve_runtime_env *renv,
@@ -180,6 +244,50 @@ int sieve_result_add_action
 		raction->next = NULL;
 	}	
 	
+	/* Apply any implicit side effects */
+	if ( result->implicit_seffects != NULL ) {
+		struct sieve_result_implicit_side_effects *implseff;
+		
+		/* Check for implicit side effects to this particular action */
+		implseff = (struct sieve_result_implicit_side_effects *) 
+				hash_lookup(result->implicit_seffects, action);
+		
+		if ( implseff != NULL ) {
+			struct sieve_result_side_effect *iseff;
+			
+			/* Iterate through all implicit side effects and add those that are 
+			 * missing.
+			 */
+			iseff = implseff->seffects->first_effect;
+			while ( iseff != NULL ) {
+				struct sieve_result_side_effect *seff;
+				bool exists = FALSE;
+				
+				/* Scan for presence */
+				if ( seffects != NULL ) {
+					seff = seffects->first_effect;
+					while ( seff != NULL ) {
+						if ( seff->seffect == iseff->seffect ) {
+							exists = TRUE;
+							break;
+						}
+					
+						seff = seff->next;
+					}
+				} else {
+					raction->seffects = seffects = sieve_side_effects_list_create(result);
+				}
+				
+				/* If not present, add it */
+				if ( !exists ) {
+					sieve_side_effects_list_add(seffects, iseff->seffect, iseff->context);
+				}
+				
+				iseff = iseff->next;
+			}
+		}
+	}
+	
 	return 0;
 }	
 
@@ -197,7 +305,7 @@ bool sieve_result_print(struct sieve_result *result)
 
 	
 		if ( act->print != NULL ) {
-			act->print(act, rac->context, &keep);
+			act->print(act, result, rac->context, &keep);
 		} else {
 			printf("* %s\n", act->name); 
 		}
@@ -208,7 +316,7 @@ bool sieve_result_print(struct sieve_result *result)
 			sef = rsef->seffect;
 			if ( sef->print != NULL ) 
 				sef->print
-					(sef, act, rsef->context, &keep);
+					(sef, act, result, rsef->context, &keep);
 			rsef = rsef->next;
 		}
 
@@ -418,7 +526,7 @@ void sieve_side_effects_list_add
 {
 	struct sieve_result_side_effect *reffect;
 	
-	/* Create new action object */
+	/* Create new side effect object */
 	reffect = p_new(list->result->pool, struct sieve_result_side_effect, 1);
 	reffect->seffect = seffect;
 	reffect->context = context;

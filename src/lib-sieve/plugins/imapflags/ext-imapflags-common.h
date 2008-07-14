@@ -7,7 +7,9 @@
 #include "sieve-ext-variables.h"
 
 extern int ext_imapflags_my_id;
+
 extern const struct sieve_extension imapflags_extension;
+extern const struct sieve_side_effect flags_side_effect;
 
 enum ext_imapflags_opcode {
 	EXT_IMAPFLAGS_OPERATION_SETFLAG,
@@ -32,6 +34,10 @@ bool ext_imapflags_command_operands_read
 	
 void ext_imapflags_attach_flags_tag
 	(struct sieve_validator *valdtr, const char *command);
+
+/* Initialization */
+
+void ext_imapflags_runtime_init(const struct sieve_runtime_env *renv);
 
 /* Flag registration */
 
@@ -64,6 +70,8 @@ void ext_imapflags_remove_flags
 void ext_imapflags_get_flags_init
 	(struct ext_imapflags_iter *iter, const struct sieve_runtime_env *renv,
 		struct sieve_variable_storage *storage, unsigned int var_index);
+void ext_imapflags_get_implicit_flags_init
+	(struct ext_imapflags_iter *iter, struct sieve_result *result);
 
 
 #endif /* __EXT_IMAPFLAGS_COMMON_H */

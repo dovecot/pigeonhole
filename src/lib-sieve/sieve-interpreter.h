@@ -11,17 +11,6 @@
 /* FIXME: make execution dumps use some interpreter function */
 #include <stdio.h>
 
-/* Message context */
-
-struct sieve_message_context;
-
-void sieve_message_context_extension_set
-	(struct sieve_message_context *msgctx, int ext_id, void *context);
-const void *sieve_message_context_extension_get
-	(struct sieve_message_context *msgctx, int ext_id);
-pool_t sieve_message_context_pool
-	(struct sieve_message_context *msgctx);
-
 /* Interpreter */
 
 struct sieve_interpreter;

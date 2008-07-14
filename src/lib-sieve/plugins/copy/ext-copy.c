@@ -55,12 +55,12 @@ static bool ext_copy_load(int ext_id)
 const struct sieve_side_effect_extension ext_copy_side_effect;
 
 static void seff_copy_print
-	(const struct sieve_side_effect *seffect,	const struct sieve_action *action, 
-		void *se_context, bool *keep);
+	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
+		struct sieve_result *result, void *se_context, bool *keep);
 static bool seff_copy_post_commit
-		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
-			const struct sieve_action_exec_env *aenv, void *se_context,
-			void *tr_context, bool *keep);
+	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
+		const struct sieve_action_exec_env *aenv, void *se_context,
+		void *tr_context, bool *keep);
 
 const struct sieve_side_effect copy_side_effect = {
 	"copy",
@@ -125,9 +125,10 @@ static const struct sieve_argument copy_tag = {
 /* Side effect execution */
 
 static void seff_copy_print
-	(const struct sieve_side_effect *seffect ATTR_UNUSED, 
-		const struct sieve_action *action ATTR_UNUSED, 
-		void *se_context ATTR_UNUSED, bool *keep)
+(const struct sieve_side_effect *seffect ATTR_UNUSED, 
+	const struct sieve_action *action ATTR_UNUSED, 
+	struct sieve_result *result ATTR_UNUSED,
+	void *se_context ATTR_UNUSED, bool *keep)
 {
 	printf("        + preserve implicit keep\n");
 
