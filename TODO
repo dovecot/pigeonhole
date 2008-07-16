@@ -14,7 +14,8 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A FIRST RELEASE ##
 
-* Build a server test mail accounts that processes lots and lots of mail 
+* Build a sieve tool to filter an entire existing mailbox through a sieve script.
+* Build a server with test mail accounts that processes lots and lots of mail 
   (e.g. spam, mailing lists etc.)
 * Implement environment extension
 * Implement notify extension with sole support for mailto mechanism. 
