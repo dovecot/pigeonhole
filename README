@@ -160,8 +160,10 @@ Extensions and their implementation status:
     imapflags: full
     variables: mostly full; currently no support for future namespaces 
 
-  Low priority:
+  Next in order of descending priority:
+	environment: planned
     notify: planned, first mailto only 
+	date,index: planned
     editheader: planned, needs additional support from Dovecot though.
     mimeloop: planned
 
