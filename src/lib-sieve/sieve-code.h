@@ -27,6 +27,16 @@ sieve_size_t sieve_coded_stringlist_get_end_address
 sieve_size_t sieve_coded_stringlist_get_current_offset
 	(struct sieve_coded_stringlist *strlist);
 
+/* Source line */
+
+void sieve_code_source_line_emit
+	(struct sieve_binary *sbin, unsigned int source_line);
+bool sieve_code_source_line_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+bool sieve_code_source_line_read
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+    	unsigned int *source_line);
+
 /* Operand: argument to an operation */
 
 struct sieve_operand_class {

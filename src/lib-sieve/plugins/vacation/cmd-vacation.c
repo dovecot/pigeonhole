@@ -9,6 +9,7 @@
 #include "sieve-common.h"
 
 #include "sieve-code.h"
+#include "sieve-script.h"
 #include "sieve-address.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
@@ -47,7 +48,7 @@ static bool cmd_vacation_registered
 static bool cmd_vacation_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_vacation_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 static int act_vacation_check_duplicate
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action1,
@@ -307,13 +308,16 @@ static bool cmd_vacation_validate
  */
  
 static bool cmd_vacation_generate
-(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_operation_ext(generator, &vacation_operation, 
-		ext_vacation_my_id);
+	sieve_operation_emit_code
+		(cgenv->sbin, &vacation_operation, ext_vacation_my_id);
+
+	/* Emit source line */
+	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;	
 
 	return TRUE;
@@ -331,6 +335,10 @@ static bool ext_vacation_operation_dump
 	
 	sieve_code_dumpf(denv, "VACATION");
 	sieve_code_descend(denv);	
+
+	/* Source line */
+	if ( !sieve_code_source_line_dump(denv, address) )
+		return FALSE;
 
 	if ( sieve_operand_optional_present(denv->sbin, address) ) {
 		while ( opt_code != 0 ) {
@@ -385,8 +393,13 @@ static bool ext_vacation_operation_execute
 	bool mime = FALSE;
 	struct sieve_coded_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
+	unsigned int source_line;
 		
 	sieve_runtime_trace(renv, "VACATION action");	
+
+	/* Source line */
+	if ( !sieve_code_source_line_read(renv, address, &source_line) ) 
+		return FALSE;
 		
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
 		while ( opt_code != 0 ) {
@@ -444,7 +457,8 @@ static bool ext_vacation_operation_execute
 	if ( addresses != NULL )
 		sieve_coded_stringlist_read_all(addresses, pool, &(act->addresses));
 		
-	return ( sieve_result_add_action(renv, &act_vacation, slist, (void *) act) >= 0 );
+	return ( sieve_result_add_action(renv, &act_vacation, slist, 
+		sieve_script_name(renv->script), source_line, (void *) act) >= 0 );
 }
 
 /*

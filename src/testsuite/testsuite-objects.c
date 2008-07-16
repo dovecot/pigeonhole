@@ -221,7 +221,7 @@ bool testsuite_object_dump
  */
  
 static bool arg_testsuite_object_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 		struct sieve_command_context *cmd);
 
 const struct sieve_argument testsuite_object_argument = { 
@@ -289,14 +289,13 @@ bool testsuite_object_argument_activate
 }
 
 static bool arg_testsuite_object_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 	struct testsuite_object_argctx *ctx = 
 		(struct testsuite_object_argctx *) arg->context;
 	
-	testsuite_object_emit(sbin, ctx->object, ctx->ext_id, ctx->member);
+	testsuite_object_emit(cgenv->sbin, ctx->object, ctx->ext_id, ctx->member);
 		
 	return TRUE;
 }

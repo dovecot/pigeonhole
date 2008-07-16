@@ -15,9 +15,9 @@
  */
 
 static bool tst_exists_validate
-  (struct sieve_validator *validator, struct sieve_command_context *tst);
+	(struct sieve_validator *validator, struct sieve_command_context *tst);
 static bool tst_exists_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 const struct sieve_command tst_exists = { 
 	"exists", 
@@ -65,12 +65,12 @@ static bool tst_exists_validate
 /* Test generation */
 
 static bool tst_exists_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_operation(generator, &tst_exists_operation);
+	sieve_operation_emit_code(cgenv->sbin, &tst_exists_operation, -1);
 
  	/* Generate arguments */
-    if ( !sieve_generate_arguments(generator, ctx, NULL) )
+    if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
         return FALSE;	
 	
 	return TRUE;

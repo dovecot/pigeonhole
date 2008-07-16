@@ -15,7 +15,7 @@ static bool opc_return_execute
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool cmd_return_generate
-	(struct sieve_generator *generator, 
+	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command_context *ctx ATTR_UNUSED);
 		
 /* Return command 
@@ -47,10 +47,11 @@ const struct sieve_operation return_operation = {
  */
 
 static bool cmd_return_generate
-(struct sieve_generator *gentr, struct sieve_command_context *ctx ATTR_UNUSED) 
+(const struct sieve_codegen_env *cgenv, 
+	struct sieve_command_context *ctx ATTR_UNUSED) 
 {
-	sieve_generator_emit_operation_ext	
-		(gentr, &return_operation, ext_include_my_id);
+	sieve_operation_emit_code	
+		(cgenv->sbin, &return_operation, ext_include_my_id);
 
 	return TRUE;
 }

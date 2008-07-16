@@ -509,20 +509,19 @@ bool sieve_opr_match_type_dump
 }
 
 static bool tag_match_type_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 	struct sieve_match_type_context *mtctx =
 		(struct sieve_match_type_context *) arg->context;
 	
 	if ( mtctx->match_type->extension == NULL ) {
 		if ( mtctx->match_type->code < SIEVE_MATCH_TYPE_CUSTOM )
-			opr_match_type_emit(sbin, mtctx->match_type, -1);
+			opr_match_type_emit(cgenv->sbin, mtctx->match_type, -1);
 		else
 			return FALSE;
 	} else {
-		opr_match_type_emit(sbin, mtctx->match_type, mtctx->ext_id);
+		opr_match_type_emit(cgenv->sbin, mtctx->match_type, mtctx->ext_id);
 	} 
 			
 	return TRUE;

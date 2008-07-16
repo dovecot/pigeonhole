@@ -4,6 +4,7 @@
 #include "istream.h"
 #include "istream-header-filter.h"
 
+#include "sieve-script.h"
 #include "sieve-address.h"
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
@@ -33,7 +34,7 @@ static bool cmd_redirect_operation_execute
 static bool cmd_redirect_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_redirect_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 /* Redirect command 
  * 
@@ -132,12 +133,15 @@ static bool cmd_redirect_validate
  */
  
 static bool cmd_redirect_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_operation(generator, &cmd_redirect_operation);
+	sieve_operation_emit_code(cgenv->sbin, &cmd_redirect_operation, -1);
+
+	/* Emit line number */
+	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;
 	
 	return TRUE;
@@ -153,6 +157,10 @@ static bool cmd_redirect_operation_dump
 {
 	sieve_code_dumpf(denv, "REDIRECT");
 	sieve_code_descend(denv);
+
+	/* Source line */
+    if ( !sieve_code_source_line_dump(denv, address) )
+        return FALSE;
 
 	if ( !sieve_code_dumper_print_optional_operands(denv, address) )
 		return FALSE;
@@ -172,8 +180,13 @@ static bool cmd_redirect_operation_execute
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_redirect_context *act;
 	string_t *redirect;
+	unsigned int source_line;
 	pool_t pool;
 	int ret = 0;
+
+	/* Source line */
+    if ( !sieve_code_source_line_read(renv, address, &source_line) )
+        return FALSE;
 
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;
@@ -192,7 +205,8 @@ static bool cmd_redirect_operation_execute
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = p_strdup(pool, str_c(redirect));
 	
-	ret = sieve_result_add_action(renv, &act_redirect, slist, (void *) act);
+	ret = sieve_result_add_action(renv, &act_redirect, slist, 
+		sieve_script_name(renv->script), source_line, (void *) act);
 	
 	t_pop();
 	return (ret >= 0);

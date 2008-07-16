@@ -1,8 +1,10 @@
 #include "lib.h"
 
+#include "sieve-script.h"
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-code.h"
+#include "sieve-dump.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
@@ -11,12 +13,15 @@
 
 /* Forward declarations */
 
+static bool cmd_keep_operation_dump
+	(const struct sieve_operation *op,
+    	const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool cmd_keep_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 static bool cmd_keep_generate
-	(struct sieve_generator *generator, 
+	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command_context *ctx ATTR_UNUSED);
 		
 /* Keep command 
@@ -39,7 +44,7 @@ const struct sieve_operation cmd_keep_operation = {
 	"KEEP",
 	NULL,
 	SIEVE_OPERATION_KEEP,
-	NULL, 
+	cmd_keep_operation_dump, 
 	cmd_keep_operation_execute 
 };
 
@@ -48,12 +53,33 @@ const struct sieve_operation cmd_keep_operation = {
  */
 
 static bool cmd_keep_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx ATTR_UNUSED) 
+(const struct sieve_codegen_env *cgenv, 
+	struct sieve_command_context *ctx ATTR_UNUSED) 
 {
-	sieve_operation_emit_code(
-        sieve_generator_get_binary(generator), &cmd_keep_operation, -1);
+	sieve_operation_emit_code(cgenv->sbin, &cmd_keep_operation, -1);
+
+	/* Emit line number */
+    sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
+
 	return TRUE;
+}
+
+/* 
+ * Code dump
+ */
+
+static bool cmd_keep_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED,
+    const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+    sieve_code_dumpf(denv, "KEEP");
+    sieve_code_descend(denv);
+
+    /* Source line */
+    if ( !sieve_code_source_line_dump(denv, address) )
+        return FALSE;
+
+    return sieve_code_dumper_print_optional_operands(denv, address);
 }
 
 /*
@@ -66,17 +92,24 @@ static bool cmd_keep_operation_execute
 	sieve_size_t *address ATTR_UNUSED)
 {	
 	struct sieve_side_effects_list *slist = NULL;
+	unsigned int source_line;
 	int ret = 0;	
 
 	sieve_runtime_trace(renv, "KEEP action");
+
+	/* Source line */
+    if ( !sieve_code_source_line_read(renv, address, &source_line) )
+        return FALSE;
 	
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;
 	
 	if ( renv->scriptenv != NULL && renv->scriptenv->inbox != NULL )
-		ret = sieve_act_store_add_to_result(renv, slist, renv->scriptenv->inbox);
+		ret = sieve_act_store_add_to_result(renv, slist, renv->scriptenv->inbox, 
+			sieve_script_name(renv->script), source_line);
 	else
-		ret = sieve_act_store_add_to_result(renv, slist, "INBOX");
+		ret = sieve_act_store_add_to_result(renv, slist, "INBOX",
+			sieve_script_name(renv->script), source_line);
 	
 	return ret >= 0;
 }

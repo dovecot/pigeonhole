@@ -25,7 +25,7 @@ static bool tst_address_registered
 static bool tst_address_validate
 	(struct sieve_validator *validator, struct sieve_command_context *tst);
 static bool tst_address_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 const struct sieve_command tst_address = { 
 	"address", 
@@ -100,12 +100,12 @@ static bool tst_address_validate
 /* Test generation */
 
 static bool tst_address_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_operation(generator, &tst_address_operation);
+	sieve_operation_emit_code(cgenv->sbin, &tst_address_operation, -1);
 	
 	/* Generate arguments */  	
-	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;
 	
 	return TRUE;

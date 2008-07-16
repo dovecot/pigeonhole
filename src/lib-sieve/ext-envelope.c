@@ -42,7 +42,7 @@ static bool tst_envelope_registered
 static bool tst_envelope_validate
 	(struct sieve_validator *validator, struct sieve_command_context *tst);
 static bool tst_envelope_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 /* Extension definitions */
 
@@ -149,13 +149,13 @@ static bool ext_envelope_validator_load(struct sieve_validator *validator)
  */
  
 static bool tst_envelope_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	(void)sieve_generator_emit_operation_ext
-		(generator, &envelope_operation, ext_my_id);
+	(void)sieve_operation_emit_code
+		(cgenv->sbin, &envelope_operation, ext_my_id);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;
 
 	return TRUE;

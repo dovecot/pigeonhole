@@ -31,7 +31,7 @@ static bool cmd_test_set_operation_execute
 static bool cmd_test_set_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_test_set_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 /* Test_set command 
  * 
@@ -93,13 +93,13 @@ static bool cmd_test_set_validate
  */
  
 static bool cmd_test_set_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_operation_ext(generator, &test_set_operation, 
+	sieve_operation_emit_code(cgenv->sbin, &test_set_operation, 
 		ext_testsuite_my_id);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;
 	
 	return TRUE;

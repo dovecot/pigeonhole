@@ -47,6 +47,7 @@ struct sieve_validator;
 /* sieve-generator.h */
 struct sieve_jumplist;
 struct sieve_generator;
+struct sieve_codegen_env;
 
 /* sieve-interpreter.h */
 struct sieve_runtime_env;

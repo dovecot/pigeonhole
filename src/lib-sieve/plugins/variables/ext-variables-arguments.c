@@ -20,7 +20,7 @@
  */
 
 static bool arg_variable_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 		struct sieve_command_context *context);
 
 const struct sieve_argument variable_argument = { 
@@ -110,12 +110,12 @@ bool sieve_variable_argument_activate
 }
 
 static bool arg_variable_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *context ATTR_UNUSED)
 {
 	struct sieve_variable *var = (struct sieve_variable *) arg->context;
 	
-	ext_variables_opr_variable_emit(sieve_generator_get_binary(generator), var);
+	ext_variables_opr_variable_emit(cgenv->sbin, var);
 
 	return TRUE;
 }
@@ -125,7 +125,7 @@ static bool arg_variable_generate
  */
 
 static bool arg_match_value_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *context ATTR_UNUSED);
 
 const struct sieve_argument match_value_argument = { 
@@ -149,13 +149,12 @@ static struct sieve_ast_argument *ext_variables_match_value_argument_create
 }
 
 static bool arg_match_value_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *context ATTR_UNUSED)
 {
 	unsigned int index = (unsigned int) arg->context;
 	
-	ext_variables_opr_match_value_emit
-		(sieve_generator_get_binary(generator), index);
+	ext_variables_opr_match_value_emit(cgenv->sbin, index);
 
 	return TRUE;
 }
@@ -168,7 +167,7 @@ static bool arg_variable_string_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *context);
 static bool arg_variable_string_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *context);
 
 const struct sieve_argument variable_string_argument = { 
@@ -345,22 +344,22 @@ static bool arg_variable_string_validate
 #define _string_data_next(item) __AST_LIST_NEXT(item)
 
 static bool arg_variable_string_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd) 
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+	struct sieve_binary *sbin = cgenv->sbin;
 	struct _variable_string_data *strdata = 
 		(struct _variable_string_data *) arg->context;
 	struct sieve_ast_argument *strpart;
 	
 	if ( _string_data_count(strdata) == 1 )
-		sieve_generate_argument(generator, _string_data_first(strdata), cmd);
+		sieve_generate_argument(cgenv, _string_data_first(strdata), cmd);
 	else {
 		ext_variables_opr_variable_string_emit(sbin, _string_data_count(strdata));
 
 		strpart = _string_data_first(strdata);
 		while ( strpart != NULL ) {
-			if ( !sieve_generate_argument(generator, strpart, cmd) )
+			if ( !sieve_generate_argument(cgenv, strpart, cmd) )
 				return FALSE;
 			
 			strpart = _string_data_next(strpart);

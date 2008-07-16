@@ -13,7 +13,7 @@
  */
 
 static bool tst_anyof_generate	
-	(struct sieve_generator *generator, struct sieve_command_context *ctx,
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx,
 		struct sieve_jumplist *jumps, bool jump_true);
 
 const struct sieve_command tst_anyof = { 
@@ -27,10 +27,10 @@ const struct sieve_command tst_anyof = {
 /* Code generation */
 
 static bool tst_anyof_generate	
-	(struct sieve_generator *generator, struct sieve_command_context *ctx,
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx,
 		struct sieve_jumplist *jumps, bool jump_true)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+	struct sieve_binary *sbin = cgenv->sbin;
 	struct sieve_ast_node *test;
 	struct sieve_jumplist true_jumps;
 	
@@ -47,9 +47,9 @@ static bool tst_anyof_generate
 		 * case 
 		 */
 		if ( !jump_true ) 
-			sieve_generate_test(generator, test, &true_jumps, TRUE);
+			sieve_generate_test(cgenv, test, &true_jumps, TRUE);
 		else
-			sieve_generate_test(generator, test, jumps, TRUE);
+			sieve_generate_test(cgenv, test, jumps, TRUE);
 		
 		test = sieve_ast_test_next(test);
 	}	

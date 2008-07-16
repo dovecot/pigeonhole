@@ -16,6 +16,7 @@
 #include "istream.h"
 #include "istream-header-filter.h"
 
+#include "sieve-script.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -35,7 +36,7 @@ static bool ext_reject_validator_load(struct sieve_validator *validator);
 static bool cmd_reject_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_reject_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx); 
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx); 
 
 static bool ext_reject_operation_dump
 	(const struct sieve_operation *op, 
@@ -150,13 +151,16 @@ static bool ext_reject_validator_load(struct sieve_validator *validator)
  */
  
 static bool cmd_reject_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_operation_ext
-		(generator, &reject_operation, ext_my_id);
+	sieve_operation_emit_code
+		(cgenv->sbin, &reject_operation, ext_my_id);
+
+	/* Emit line number */
+    sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
 
 	/* Generate arguments */
-    if ( !sieve_generate_arguments(generator, ctx, NULL) )
+    if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
         return FALSE;
 	
 	return TRUE;
@@ -173,6 +177,10 @@ static bool ext_reject_operation_dump
 	sieve_code_dumpf(denv, "REJECT");
 	sieve_code_descend(denv);
 	
+	/* Source line */
+    if ( !sieve_code_source_line_dump(denv, address) )
+        return FALSE;
+
 	if ( !sieve_code_dumper_print_optional_operands(denv, address) )
         return FALSE;
 	
@@ -191,11 +199,16 @@ static bool ext_reject_operation_execute
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_reject_context *act;
 	string_t *reason;
+	unsigned int source_line;
 	pool_t pool;
 	int ret;
 
-	t_push();
+	/* Source line */
+    if ( !sieve_code_source_line_read(renv, address, &source_line) )
+        return FALSE;
 	
+	t_push();
+
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) ) {
 		t_pop();
 		return FALSE;
@@ -213,7 +226,8 @@ static bool ext_reject_operation_execute
 	act = p_new(pool, struct act_reject_context, 1);
 	act->reason = p_strdup(pool, str_c(reason));
 	
-	ret = sieve_result_add_action(renv, &act_reject, slist, (void *) act);
+	ret = sieve_result_add_action(renv, &act_reject, slist, 
+		sieve_script_name(renv->script), source_line, (void *) act);
 	
 	t_pop();
 	return ( ret >= 0 );

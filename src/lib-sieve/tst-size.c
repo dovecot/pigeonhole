@@ -21,7 +21,7 @@ static bool tst_size_pre_validate
 static bool tst_size_validate
 	(struct sieve_validator *validator, struct sieve_command_context *tst);
 static bool tst_size_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx); 
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx); 
 
 const struct sieve_command tst_size = { 
 	"size", 
@@ -171,17 +171,17 @@ static bool tst_size_validate
 /* Test generation */
 
 bool tst_size_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) ctx->data;
 
 	if ( ctx_data->type == SIZE_OVER ) 
-		sieve_generator_emit_operation(generator, &tst_size_over_operation);
+		sieve_operation_emit_code(cgenv->sbin, &tst_size_over_operation, -1);
 	else
-		sieve_generator_emit_operation(generator, &tst_size_under_operation);
+		sieve_operation_emit_code(cgenv->sbin, &tst_size_under_operation, -1);
 
  	/* Generate arguments */
-    if ( !sieve_generate_arguments(generator, ctx, NULL) )
+    if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
         return FALSE;
 	  
 	return TRUE;

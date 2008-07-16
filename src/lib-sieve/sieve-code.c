@@ -145,7 +145,43 @@ static bool sieve_coded_stringlist_dump
 	return TRUE;
 }
 	
+/*
+ * Source line
+ */
 
+void sieve_code_source_line_emit
+(struct sieve_binary *sbin, unsigned int source_line)
+{
+    (void)sieve_binary_emit_integer(sbin, source_line);
+}
+
+bool sieve_code_source_line_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+    sieve_size_t number = 0;
+
+	sieve_code_mark(denv);
+    if (sieve_binary_read_integer(denv->sbin, address, &number) ) {
+        sieve_code_dumpf(denv, "(source line: %ld)", (long) number);
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+bool sieve_code_source_line_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	unsigned int *source_line)
+{
+	sieve_size_t number;
+
+    if ( !sieve_binary_read_integer(renv->sbin, address, &number) )
+		return FALSE;
+
+	*source_line = number;
+	return TRUE;
+}
 
 /*
  * Core operands

@@ -13,7 +13,7 @@
  */
 
 static bool tst_allof_generate
-	(struct sieve_generator *generator, 
+	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command_context *ctx,
 		struct sieve_jumplist *jumps, bool jump_true);
 
@@ -28,11 +28,11 @@ const struct sieve_command tst_allof = {
 /* Code generation */
 
 static bool tst_allof_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx,
-		struct sieve_jumplist *jumps, bool jump_true)
+(const struct sieve_codegen_env *cgenv, 
+	struct sieve_command_context *ctx,
+	struct sieve_jumplist *jumps, bool jump_true)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+	struct sieve_binary *sbin = cgenv->sbin;
 	struct sieve_ast_node *test;
 	struct sieve_jumplist false_jumps;
 	
@@ -49,16 +49,16 @@ static bool tst_allof_generate
 		 * case 
 		 */
 		if ( jump_true ) 
-			sieve_generate_test(generator, test, &false_jumps, FALSE);
+			sieve_generate_test(cgenv, test, &false_jumps, FALSE);
 		else
-			sieve_generate_test(generator, test, jumps, FALSE);
+			sieve_generate_test(cgenv, test, jumps, FALSE);
 		
 		test = sieve_ast_test_next(test);
 	}	
 	
 	if ( jump_true ) {
 		/* All tests succeeded, jump to case TRUE */
-		sieve_generator_emit_operation(generator, &sieve_jmp_operation);
+		sieve_operation_emit_code(cgenv->sbin, &sieve_jmp_operation, -1);
 		sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
 		
 		/* All false exits jump here */

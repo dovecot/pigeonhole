@@ -24,7 +24,7 @@ static bool tst_string_registered
 static bool tst_string_validate
 	(struct sieve_validator *validator, struct sieve_command_context *tst);
 static bool tst_string_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 const struct sieve_command tst_string = { 
 	"string", 
@@ -106,13 +106,13 @@ static bool tst_string_validate
 /* Test generation */
 
 static bool tst_string_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_operation_ext
-		(generator, &tst_string_operation, ext_variables_my_id);
+	sieve_operation_emit_code
+		(cgenv->sbin, &tst_string_operation, ext_variables_my_id);
 
  	/* Generate arguments */
-	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;
 	
 	return TRUE;

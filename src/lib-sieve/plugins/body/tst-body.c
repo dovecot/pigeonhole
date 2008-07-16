@@ -29,7 +29,7 @@ static bool tst_body_registered
 static bool tst_body_validate
 	(struct sieve_validator *validator, struct sieve_command_context *tst);
 static bool tst_body_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv,	struct sieve_command_context *ctx);
 
 /* body test 
  *
@@ -79,7 +79,7 @@ static bool tag_body_transform_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
 static bool tag_body_transform_generate	
-	(struct sieve_generator *gentr, struct sieve_ast_argument *arg, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 		struct sieve_command_context *cmd);
  
 static const struct sieve_argument body_raw_tag = { 
@@ -210,27 +210,26 @@ static bool tst_body_validate
  */
  
 static bool tst_body_generate
-	(struct sieve_generator *gentr,	struct sieve_command_context *ctx) 
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	(void)sieve_generator_emit_operation_ext
-		(gentr, &body_operation, ext_body_my_id);
+	(void)sieve_operation_emit_code
+		(cgenv->sbin, &body_operation, ext_body_my_id);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(gentr, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;
 
 	return TRUE;
 }
 
 static bool tag_body_transform_generate
-(struct sieve_generator *gentr, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
 	enum tst_body_transform transform =	(enum tst_body_transform) arg->context;
 	
-	sieve_binary_emit_byte(sbin, transform);
-	sieve_generate_argument_parameters(gentr, cmd, arg); 
+	sieve_binary_emit_byte(cgenv->sbin, transform);
+	sieve_generate_argument_parameters(cgenv, cmd, arg); 
 			
 	return TRUE;
 }

@@ -12,9 +12,9 @@ static bool cmd_if_validate
 static bool cmd_elsif_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_if_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 static bool cmd_else_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 /* If command
  *
@@ -140,9 +140,9 @@ static void cmd_if_resolve_exit_jumps
 }
 
 static bool cmd_if_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx)
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+	struct sieve_binary *sbin = cgenv->sbin;
 	struct cmd_if_context_data *ctx_data = (struct cmd_if_context_data *) ctx->data;
 	struct sieve_ast_node *test;
 	struct sieve_jumplist jmplist;
@@ -152,10 +152,10 @@ static bool cmd_if_generate
 	
 	/* Generate test condition */
 	test = sieve_ast_test_first(ctx->ast_node);
-	sieve_generate_test(generator, test, &jmplist, FALSE);
+	sieve_generate_test(cgenv, test, &jmplist, FALSE);
 		
 	/* Case true { } */
-	sieve_generate_block(generator, ctx->ast_node);
+	sieve_generate_block(cgenv, ctx->ast_node);
 	
 	/* Are we the final command in this if-elsif-else structure? */
 	if ( ctx_data->next != NULL ) {
@@ -181,16 +181,15 @@ static bool cmd_if_generate
 }
 
 static bool cmd_else_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx)
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 	struct cmd_if_context_data *ctx_data = (struct cmd_if_context_data *) ctx->data;
 	
 	/* Else */
-	sieve_generate_block(generator, ctx->ast_node);
+	sieve_generate_block(cgenv, ctx->ast_node);
 		
 	/* End: resolve all exit blocks */	
-	cmd_if_resolve_exit_jumps(sbin, ctx_data);
+	cmd_if_resolve_exit_jumps(cgenv->sbin, ctx_data);
 		
 	return TRUE;
 }

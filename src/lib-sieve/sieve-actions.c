@@ -213,7 +213,8 @@ const struct sieve_action act_store = {
 
 int sieve_act_store_add_to_result
 (const struct sieve_runtime_env *renv, 
-	struct sieve_side_effects_list *seffects, const char *folder)
+	struct sieve_side_effects_list *seffects, const char *folder,
+	const char *script, unsigned int source_line)
 {
 	pool_t pool;
 	struct act_store_context *act;
@@ -223,7 +224,8 @@ int sieve_act_store_add_to_result
 	act = p_new(pool, struct act_store_context, 1);
 	act->folder = p_strdup(pool, folder);
 
-	return sieve_result_add_action(renv, &act_store, seffects, (void *) act);
+	return sieve_result_add_action(renv, &act_store, seffects, 
+		script, source_line, (void *) act);
 }
 
 /* Store action implementation */

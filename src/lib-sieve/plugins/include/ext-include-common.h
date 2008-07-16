@@ -49,7 +49,7 @@ void ext_include_register_generator_context
 	(struct sieve_generator *gentr);
 
 bool ext_include_generate_include
-	(struct sieve_generator *gentr, struct sieve_command_context *cmd,
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd,
 		enum ext_include_script_location location, struct sieve_script *script, 
 		unsigned *blk_id_r);
 

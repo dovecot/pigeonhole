@@ -19,7 +19,7 @@ static bool tst_hasflag_registered
 static bool tst_hasflag_validate
 	(struct sieve_validator *validator,	struct sieve_command_context *ctx);
 static bool tst_hasflag_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 static bool tst_hasflag_operation_dump
 	(const struct sieve_operation *op,	
@@ -98,13 +98,13 @@ static bool tst_hasflag_validate
  */
 
 static bool tst_hasflag_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx)
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
 {
-	sieve_generator_emit_operation_ext
-		(generator, &hasflag_operation, ext_imapflags_my_id);
+	sieve_operation_emit_code
+		(cgenv->sbin, &hasflag_operation, ext_imapflags_my_id);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;	
 
 	return TRUE;

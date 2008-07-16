@@ -32,7 +32,7 @@ static bool cmd_include_pre_validate
 static bool cmd_include_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_include_generate
-	(struct sieve_generator *gentr,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 /* Include command 
  *	
@@ -206,9 +206,8 @@ static bool cmd_include_validate(struct sieve_validator *validator,
  */
  
 static bool cmd_include_generate
-	(struct sieve_generator *gentr,	struct sieve_command_context *cmd) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd) 
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
 	struct cmd_include_context_data *ctx_data = 
 		(struct cmd_include_context_data *) cmd->data;
 	unsigned int block_id;
@@ -217,12 +216,12 @@ static bool cmd_include_generate
 	 * This yields the id of the binary block containing the compiled byte code.  
 	 */
 	if ( !ext_include_generate_include
-		(gentr, cmd, ctx_data->location, ctx_data->script, &block_id) )
+		(cgenv, cmd, ctx_data->location, ctx_data->script, &block_id) )
  		return FALSE;
  		
- 	sieve_generator_emit_operation_ext	
-		(gentr, &include_operation, ext_include_my_id);
-	sieve_binary_emit_offset(sbin, block_id); 
+ 	sieve_operation_emit_code	
+		(cgenv->sbin, &include_operation, ext_include_my_id);
+	sieve_binary_emit_offset(cgenv->sbin, block_id); 
  	 		
 	return TRUE;
 }

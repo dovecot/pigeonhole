@@ -25,6 +25,9 @@ struct sieve_result_action {
 	void *tr_context;
 	bool success;
 	
+	const char *script;
+	unsigned int source_line;
+
 	struct sieve_side_effects_list *seffects;
 	
 	struct sieve_result_action *prev, *next; 
@@ -51,7 +54,7 @@ struct sieve_result_implicit_side_effects {
 struct sieve_result {
 	pool_t pool;
 	int refcount;
-	
+
 	/* Context data for extensions */
 	ARRAY_DEFINE(ext_contexts, void *); 
 
@@ -192,7 +195,7 @@ void sieve_result_add_implicit_side_effect
 int sieve_result_add_action
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
-	void *context)		
+	const char *script, unsigned int source_line, void *context)		
 {
 	int ret = 0;
 	struct sieve_result *result = renv->result;
@@ -232,7 +235,9 @@ int sieve_result_add_action
 	raction->tr_context = NULL;
 	raction->success = FALSE;
 	raction->seffects = seffects;
-	
+	raction->script = script;
+	raction->source_line = source_line;	
+
 	/* Add */
 	if ( result->first_action == NULL ) {
 		result->first_action = raction;

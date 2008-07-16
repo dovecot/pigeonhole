@@ -35,7 +35,7 @@ static bool cmd_set_pre_validate
 static bool cmd_set_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_set_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 /* Set command 
  *	
@@ -250,17 +250,17 @@ static bool cmd_set_validate(struct sieve_validator *validator,
  */
  
 static bool cmd_set_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
+	struct sieve_binary *sbin = cgenv->sbin;
 	struct cmd_set_context *sctx = (struct cmd_set_context *) ctx->data;
 	unsigned int i;	
 
-	sieve_generator_emit_operation_ext
-		(generator, &cmd_set_operation, ext_variables_my_id); 
+	sieve_operation_emit_code
+		(sbin, &cmd_set_operation, ext_variables_my_id); 
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;	
 		
 	/* Generate modifiers (already sorted during validation) */

@@ -25,7 +25,7 @@ struct sieve_argument {
 			struct sieve_command_context *context);
 		
 	bool (*generate)
-		(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+		(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 			struct sieve_command_context *context);
 };
 
@@ -58,9 +58,9 @@ struct sieve_command {
 	bool (*validate)
 		(struct sieve_validator *validator, struct sieve_command_context *context); 
 	bool (*generate) 
-		(struct sieve_generator *generator, struct sieve_command_context *ctx);
+		(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 	bool (*control_generate) 
-		(struct sieve_generator *generator, struct sieve_command_context *ctx,
+		(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx,
 		struct sieve_jumplist *jumps, bool jump_true);
 };
 
@@ -104,6 +104,9 @@ const char *sieve_command_type_name(const struct sieve_command *command);
 
 #define sieve_command_pool(context) \
 	sieve_ast_node_pool((context)->ast_node)
+
+#define sieve_command_source_line(context) \
+	(context)->ast_node->source_line
 
 #define sieve_command_first_argument(context) \
 	sieve_ast_argument_first((context)->ast_node)

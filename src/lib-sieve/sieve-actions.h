@@ -139,7 +139,8 @@ struct act_store_transaction {
 
 int sieve_act_store_add_to_result
 	(const struct sieve_runtime_env *renv, 
-		struct sieve_side_effects_list *seffects, const char *folder);
+		struct sieve_side_effects_list *seffects, const char *folder,
+		const char *script, unsigned int source_line);
 
 /* Message transmission */
 

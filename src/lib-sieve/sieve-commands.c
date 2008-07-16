@@ -12,16 +12,16 @@
 /* Default arguments implemented in this file */
 
 static bool arg_number_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 		struct sieve_command_context *context);
 static bool arg_string_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 		struct sieve_command_context *context);
 static bool arg_string_list_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *context);
 static bool arg_string_list_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 		struct sieve_command_context *context);
 
 const struct sieve_argument number_argument = { 
@@ -45,23 +45,19 @@ const struct sieve_argument string_list_argument = {
 };	
 
 static bool arg_number_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *context ATTR_UNUSED)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-	
-	sieve_opr_number_emit(sbin, sieve_ast_argument_number(arg));
+	sieve_opr_number_emit(cgenv->sbin, sieve_ast_argument_number(arg));
 
 	return TRUE;
 }
 
 static bool arg_string_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *context ATTR_UNUSED)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-
-	sieve_opr_string_emit(sbin, sieve_ast_argument_str(arg));
+	sieve_opr_string_emit(cgenv->sbin, sieve_ast_argument_str(arg));
   
 	return TRUE;
 }
@@ -84,45 +80,44 @@ static bool arg_string_list_validate
 }
 
 static bool emit_string_list_operand
-(struct sieve_generator *generator, const struct sieve_ast_argument *strlist,
+(const struct sieve_codegen_env *cgenv, const struct sieve_ast_argument *strlist,
 	struct sieve_command_context *context)
 {	
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 	void *list_context;
 	struct sieve_ast_argument *stritem;
    	
 	sieve_opr_stringlist_emit_start
-		(sbin, sieve_ast_strlist_count(strlist), &list_context);
+		(cgenv->sbin, sieve_ast_strlist_count(strlist), &list_context);
 
 	stritem = sieve_ast_strlist_first(strlist);
 	while ( stritem != NULL ) {
-		if ( !sieve_generate_argument(generator, stritem, context) )
+		if ( !sieve_generate_argument(cgenv, stritem, context) )
 			return FALSE;
 			
 		stritem = sieve_ast_strlist_next(stritem);
 	}
 
-	sieve_opr_stringlist_emit_end(sbin, list_context);
+	sieve_opr_stringlist_emit_end(cgenv->sbin, list_context);
 	
 	return TRUE;
 }
 
 static bool arg_string_list_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *context)
 {
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
-		return ( sieve_generate_argument(generator, arg, context) );
+		return ( sieve_generate_argument(cgenv, arg, context) );
 
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		bool result = TRUE;
 		
 		if ( sieve_ast_strlist_count(arg) == 1 ) 
 			return ( sieve_generate_argument
-				(generator, sieve_ast_strlist_first(arg), context) );
+				(cgenv, sieve_ast_strlist_first(arg), context) );
 		else {
 			T_BEGIN { 
-				result=emit_string_list_operand(generator, arg, context);
+				result=emit_string_list_operand(cgenv, arg, context);
 			} T_END;
 		}
 
@@ -135,11 +130,11 @@ static bool arg_string_list_generate
 /* Trivial tests implemented in this file */
 
 static bool tst_false_generate
-	(struct sieve_generator *generator, 
+	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command_context *context ATTR_UNUSED,
 		struct sieve_jumplist *jumps, bool jump_true);
 static bool tst_true_generate
-	(struct sieve_generator *generator, 
+	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command_context *ctx ATTR_UNUSED,
 		struct sieve_jumplist *jumps, bool jump_true);
 
@@ -162,7 +157,7 @@ static const struct sieve_command tst_true = {
 /* Trivial commands implemented in this file */
 
 static bool cmd_stop_generate
-	(struct sieve_generator *generator, 
+	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command_context *ctx ATTR_UNUSED);
 static bool cmd_stop_validate
 	(struct sieve_validator *validator, struct sieve_command_context *ctx);
@@ -336,8 +331,8 @@ static bool opc_stop_execute
 /* Code generation for trivial commands and tests */
 
 static bool cmd_stop_validate
-	(struct sieve_validator *validator ATTR_UNUSED, 
-		struct sieve_command_context *ctx)
+(struct sieve_validator *validator ATTR_UNUSED, 
+	struct sieve_command_context *ctx)
 {
 	sieve_command_exit_block_unconditionally(ctx);
 	
@@ -345,39 +340,34 @@ static bool cmd_stop_validate
 }
 
 static bool cmd_stop_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx ATTR_UNUSED) 
+(const struct sieve_codegen_env *cgenv, 
+	struct sieve_command_context *ctx ATTR_UNUSED) 
 {
-	sieve_operation_emit_code(
-		sieve_generator_get_binary(generator), &cmd_stop_operation, -1);
+	sieve_operation_emit_code(cgenv->sbin, &cmd_stop_operation, -1);
 	return TRUE;
 }
 
 static bool tst_false_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *context ATTR_UNUSED,
-		struct sieve_jumplist *jumps, bool jump_true)
+(const struct sieve_codegen_env *cgenv, 
+	struct sieve_command_context *context ATTR_UNUSED,
+	struct sieve_jumplist *jumps, bool jump_true)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-
 	if ( !jump_true ) {
-		sieve_operation_emit_code(sbin, &sieve_jmp_operation, -1);
-		sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
+		sieve_operation_emit_code(cgenv->sbin, &sieve_jmp_operation, -1);
+		sieve_jumplist_add(jumps, sieve_binary_emit_offset(cgenv->sbin, 0));
 	}
 	
 	return TRUE;
 }
 
 static bool tst_true_generate
-	(struct sieve_generator *generator, 
-		struct sieve_command_context *ctx ATTR_UNUSED,
-		struct sieve_jumplist *jumps, bool jump_true)
+(const struct sieve_codegen_env *cgenv, 
+	struct sieve_command_context *ctx ATTR_UNUSED,
+	struct sieve_jumplist *jumps, bool jump_true)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-
 	if ( jump_true ) {
-		sieve_operation_emit_code(sbin, &sieve_jmp_operation, -1);
-		sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
+		sieve_operation_emit_code(cgenv->sbin, &sieve_jmp_operation, -1);
+		sieve_jumplist_add(jumps, sieve_binary_emit_offset(cgenv->sbin, 0));
 	}
 	
 	return TRUE;

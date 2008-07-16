@@ -1,8 +1,10 @@
 #include "lib.h"
 
+#include "sieve-script.h"
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-code.h"
+#include "sieve-dump.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
@@ -12,9 +14,12 @@
 /* Forward declarations */
 
 static bool cmd_discard_generate
-	(struct sieve_generator *generator, 
+	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command_context *ctx ATTR_UNUSED); 
 
+static bool cmd_discard_operation_dump
+	(const struct sieve_operation *op,
+    	const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static bool cmd_discard_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
@@ -39,7 +44,7 @@ const struct sieve_operation cmd_discard_operation = {
 	"DISCARD",
 	NULL,
 	SIEVE_OPERATION_DISCARD,
-	NULL, 
+	cmd_discard_operation_dump, 
 	cmd_discard_operation_execute 
 };
 
@@ -68,12 +73,33 @@ const struct sieve_action act_discard = {
  */
  
 static bool cmd_discard_generate
-	(struct sieve_generator *generator, 
+	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command_context *ctx ATTR_UNUSED) 
 {
-	sieve_operation_emit_code(
-        sieve_generator_get_binary(generator), &cmd_discard_operation, -1);
+	sieve_operation_emit_code(cgenv->sbin, &cmd_discard_operation, -1);
+
+	/* Emit line number */
+    sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
+
 	return TRUE;
+}
+
+/* 
+ * Code dump
+ */
+
+static bool cmd_discard_operation_dump
+(const struct sieve_operation *op ATTR_UNUSED,
+    const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+    sieve_code_dumpf(denv, "DISCARD");
+    sieve_code_descend(denv);
+
+    /* Source line */
+    if ( !sieve_code_source_line_dump(denv, address) )
+        return FALSE;
+
+    return sieve_code_dumper_print_optional_operands(denv, address);
 }
 
 /*
@@ -85,9 +111,16 @@ static bool cmd_discard_operation_execute
 	const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {	
+	unsigned int source_line;
+
 	sieve_runtime_trace(renv, "DISCARD action");
 	
-	return ( sieve_result_add_action(renv, &act_discard, NULL, NULL) >= 0 );
+	/* Source line */
+    if ( !sieve_code_source_line_read(renv, address, &source_line) )
+        return FALSE;
+
+	return ( sieve_result_add_action(renv, &act_discard, NULL, 
+		sieve_script_name(renv->script), source_line, NULL) >= 0 );
 }
 
 /*
@@ -110,6 +143,6 @@ static bool act_discard_commit
 	void *tr_context ATTR_UNUSED, bool *keep)
 {
 	*keep = FALSE;
-  return TRUE;
+	return TRUE;
 }
 

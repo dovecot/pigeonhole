@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 
+#include "sieve-script.h"
 #include "sieve-extensions.h"
 #include "sieve-binary.h"
 #include "sieve-commands.h"
@@ -36,7 +37,7 @@ static bool ext_fileinto_operation_execute
 static bool cmd_fileinto_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_fileinto_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 /* Extension definitions */
 
@@ -112,12 +113,15 @@ static bool ext_fileinto_validator_load(struct sieve_validator *validator)
  */
  
 static bool cmd_fileinto_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_generator_emit_operation_ext(generator, &fileinto_operation, ext_my_id);
+	sieve_operation_emit_code(cgenv->sbin, &fileinto_operation, ext_my_id);
+
+	/* Emit line number */
+    sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;
 	
 	return TRUE;
@@ -133,6 +137,10 @@ static bool ext_fileinto_operation_dump
 {
 	sieve_code_dumpf(denv, "FILEINTO");
 	sieve_code_descend(denv);
+
+	/* Source line */
+    if ( !sieve_code_source_line_dump(denv, address) )
+        return FALSE;
 
 	if ( !sieve_code_dumper_print_optional_operands(denv, address) ) {
 		sieve_binary_corrupt(denv->sbin, 
@@ -158,7 +166,12 @@ static bool ext_fileinto_operation_execute
 {
 	struct sieve_side_effects_list *slist = NULL; 
 	string_t *folder;
+	unsigned int source_line;
 	int ret = 0;
+
+	/* Source line */
+    if ( !sieve_code_source_line_read(renv, address, &source_line) )
+        return FALSE;
 	
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;
@@ -173,7 +186,8 @@ static bool ext_fileinto_operation_execute
 
 	sieve_runtime_trace(renv, "FILEINTO action (\"%s\")", str_c(folder));
 
-	ret = sieve_act_store_add_to_result(renv, slist, str_c(folder));
+	ret = sieve_act_store_add_to_result(renv, slist, str_c(folder),
+		sieve_script_name(renv->script), source_line);
 
 	t_pop();
 	return ( ret >= 0 );

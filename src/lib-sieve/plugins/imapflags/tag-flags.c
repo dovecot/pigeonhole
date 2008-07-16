@@ -17,7 +17,7 @@ static bool tag_flags_validate
 	(struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
 static bool tag_flags_generate
-	(struct sieve_generator *generator, struct sieve_ast_argument *arg,
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
 		struct sieve_command_context *cmd);
 
 /* Tag */
@@ -98,26 +98,25 @@ static bool tag_flags_validate
 /* Tag generation */
 
 static bool tag_flags_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg,
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
 	struct sieve_command_context *cmd)
 {
 	struct sieve_ast_argument *param;
-  struct sieve_binary *sbin = sieve_generator_get_binary(generator);
 
-  if ( sieve_ast_argument_type(arg) != SAAT_TAG ) {
-      return FALSE;
-  }
+	if ( sieve_ast_argument_type(arg) != SAAT_TAG ) {
+		return FALSE;
+	}
 
-	sieve_opr_side_effect_emit(sbin, &flags_side_effect, ext_imapflags_my_id);
+	sieve_opr_side_effect_emit(cgenv->sbin, &flags_side_effect, ext_imapflags_my_id);
 	  
 	param = arg->parameters;
 
 	/* Call the generation function for the argument */ 
 	if ( param->argument != NULL && param->argument->generate != NULL && 
-		!param->argument->generate(generator, param, cmd) ) 
+		!param->argument->generate(cgenv, param, cmd) ) 
 		return FALSE;
 	
-  return TRUE;
+	return TRUE;
 }
 
 /* Side effect execution */

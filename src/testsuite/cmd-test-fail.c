@@ -21,7 +21,7 @@ static bool cmd_test_fail_operation_execute
 static bool cmd_test_fail_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_test_fail_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 /* Test_fail command
  *
@@ -73,20 +73,20 @@ static inline struct testsuite_generator_context *
 }
 
 static bool cmd_test_fail_generate
-	(struct sieve_generator *gentr, struct sieve_command_context *ctx)
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
 {
-	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
 	struct testsuite_generator_context *genctx = 
-		_get_generator_context(gentr);
+		_get_generator_context(cgenv->gentr);
 	
-	sieve_generator_emit_operation_ext(gentr, &test_fail_operation, 
+	sieve_operation_emit_code(cgenv->sbin, &test_fail_operation, 
 		ext_testsuite_my_id);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(gentr, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;
 		
-	sieve_jumplist_add(genctx->exit_jumps, sieve_binary_emit_offset(sbin, 0));			
+	sieve_jumplist_add(genctx->exit_jumps, 
+		sieve_binary_emit_offset(cgenv->sbin, 0));			
 	
 	return TRUE;
 }

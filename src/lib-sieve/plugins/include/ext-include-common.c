@@ -188,13 +188,14 @@ void ext_include_interpreter_context_init
  */
 
 bool ext_include_generate_include
-(struct sieve_generator *gentr, struct sieve_command_context *cmd,
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd,
 	enum ext_include_script_location location, struct sieve_script *script, 
 	unsigned *blk_id_r)
 {
 	bool result = TRUE;
 	struct sieve_ast *ast;
-	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
+	struct sieve_binary *sbin = cgenv->sbin;
+	struct sieve_generator *gentr = cgenv->gentr;
 	struct ext_include_binary_context *binctx;
 	struct sieve_generator *subgentr;
 	struct ext_include_generator_context *ctx =

@@ -97,16 +97,14 @@ static bool tag_copy_validate
 /* Tag generation */
 
 static bool tag_copy_generate
-(struct sieve_generator *generator, struct sieve_ast_argument *arg,
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
     struct sieve_command_context *context ATTR_UNUSED)
 {
-    struct sieve_binary *sbin = sieve_generator_get_binary(generator);
-
     if ( sieve_ast_argument_type(arg) != SAAT_TAG ) {
         return FALSE;
     }
 
-    sieve_opr_side_effect_emit(sbin, &copy_side_effect, ext_my_id);
+    sieve_opr_side_effect_emit(cgenv->sbin, &copy_side_effect, ext_my_id);
 
     return TRUE;
 }

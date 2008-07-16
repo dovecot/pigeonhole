@@ -11,7 +11,7 @@
 /* Forward declarations */
 
 static bool cmd_removeflag_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 static bool cmd_removeflag_operation_execute
 	(const struct sieve_operation *op,	
@@ -49,13 +49,13 @@ const struct sieve_operation removeflag_operation = {
  */
 
 static bool cmd_removeflag_generate
-	(struct sieve_generator *generator,	struct sieve_command_context *ctx)
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
 {
-	sieve_generator_emit_operation_ext
-		(generator, &removeflag_operation, ext_imapflags_my_id);
+	sieve_operation_emit_code
+		(cgenv->sbin, &removeflag_operation, ext_imapflags_my_id);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(generator, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;	
 
 	return TRUE;

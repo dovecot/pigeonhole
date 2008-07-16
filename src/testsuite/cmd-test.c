@@ -24,7 +24,7 @@ static bool cmd_test_finish_operation_execute
 static bool cmd_test_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_test_generate
-	(struct sieve_generator *generator, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 /* Test command
  *
@@ -92,25 +92,25 @@ static inline struct testsuite_generator_context *
 }
 
 static bool cmd_test_generate
-	(struct sieve_generator *gentr, struct sieve_command_context *ctx)
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
 {
 	struct testsuite_generator_context *genctx = 
-		_get_generator_context(gentr);
+		_get_generator_context(cgenv->gentr);
 	
-	sieve_generator_emit_operation_ext(gentr, &test_operation, 
+	sieve_operation_emit_code(cgenv->sbin, &test_operation, 
 		ext_testsuite_my_id);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(gentr, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;
 		
 	/* Prepare jumplist */
 	sieve_jumplist_reset(genctx->exit_jumps);
 		
 	/* Test body */
-	sieve_generate_block(gentr, ctx->ast_node);
+	sieve_generate_block(cgenv, ctx->ast_node);
 	
-	sieve_generator_emit_operation_ext(gentr, &test_finish_operation, 
+	sieve_operation_emit_code(cgenv->sbin, &test_finish_operation, 
 		ext_testsuite_my_id);
 	
 	/* Resolve exit jumps to this point */
