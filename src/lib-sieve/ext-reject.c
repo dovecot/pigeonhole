@@ -16,7 +16,6 @@
 #include "istream.h"
 #include "istream-header-filter.h"
 
-#include "sieve-script.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -95,10 +94,12 @@ struct sieve_operation reject_operation = {
 
 static int act_reject_check_duplicate
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action1,
-		void *context1, void *context2);
+		void *context1, void *context2, 
+		const char *location1, const char *location2);
 int act_reject_check_conflict
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action,
-    	const struct sieve_action *other_action, void *context);
+    	const struct sieve_action *other_action, void *context,
+		const char *location1, const char *location2);
 static void act_reject_print
 	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		void *context, bool *keep);	
@@ -226,8 +227,8 @@ static bool ext_reject_operation_execute
 	act = p_new(pool, struct act_reject_context, 1);
 	act->reason = p_strdup(pool, str_c(reason));
 	
-	ret = sieve_result_add_action(renv, &act_reject, slist, 
-		sieve_script_name(renv->script), source_line, (void *) act);
+	ret = sieve_result_add_action
+		(renv, &act_reject, slist, source_line, (void *) act);
 	
 	t_pop();
 	return ( ret >= 0 );
@@ -240,28 +241,34 @@ static bool ext_reject_operation_execute
 static int act_reject_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
 	const struct sieve_action *action1 ATTR_UNUSED,
-	void *context1 ATTR_UNUSED, void *context2 ATTR_UNUSED)
+	void *context1 ATTR_UNUSED, void *context2 ATTR_UNUSED,
+	const char *location1, const char *location2)
 {
-	sieve_runtime_error(renv, "duplicate 'reject' action not allowed");	
+	sieve_runtime_error(renv, location1, 
+		"duplicate reject action not allowed "
+		"(previously triggered one was here: %s)", location2);	
 	return -1;
 }
  
 int act_reject_check_conflict
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action *other_action, void *context ATTR_UNUSED)
+	const struct sieve_action *other_action, void *context ATTR_UNUSED,
+	const char *location1, const char *location2)
 {
 	if ( (other_action->flags & SIEVE_ACTFLAG_TRIES_DELIVER) > 0 ) {
-		sieve_runtime_error(renv, "'reject' action conflicts with other action: "
-			"'%s' action tries to deliver the message",
-			other_action->name);	
+		sieve_runtime_error(renv, location1, 
+			"reject action conflicts with earlier triggered action: "
+			"the %s action (%s) tries to deliver the message",
+			other_action->name, location2);	
 		return -1;
 	}
 
 	if ( (other_action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
-		sieve_runtime_error(renv, "'reject' action conflicts with other action: "
-			"'%s' sends a response to the sender",
-			other_action->name);	
+		sieve_runtime_error(renv, location1, 
+			"reject action conflicts with earlier triggered action: "
+			"the %s action (%s) also sends a response to the sender",
+			other_action->name, location2);	
 		return -1;
 	}
 	

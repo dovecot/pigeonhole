@@ -1,6 +1,5 @@
 #include "lib.h"
 
-#include "sieve-script.h"
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-code.h"
@@ -105,11 +104,11 @@ static bool cmd_keep_operation_execute
 		return FALSE;
 	
 	if ( renv->scriptenv != NULL && renv->scriptenv->inbox != NULL )
-		ret = sieve_act_store_add_to_result(renv, slist, renv->scriptenv->inbox, 
-			sieve_script_name(renv->script), source_line);
+		ret = sieve_act_store_add_to_result
+			(renv, slist, renv->scriptenv->inbox, source_line);
 	else
-		ret = sieve_act_store_add_to_result(renv, slist, "INBOX",
-			sieve_script_name(renv->script), source_line);
+		ret = sieve_act_store_add_to_result
+			(renv, slist, "INBOX", source_line);
 	
 	return ret >= 0;
 }

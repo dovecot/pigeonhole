@@ -58,15 +58,18 @@ bool sieve_interpreter_get_test_result
 	
 /* Error handling */
 
+/* This is not particularly user-friendly, so avoid using this.. */
+const char *sieve_runtime_location(const struct sieve_runtime_env *runenv);
+
 void sieve_runtime_error
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
-		ATTR_FORMAT(2, 3);
+	(const struct sieve_runtime_env *runenv, const char *location,
+		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_runtime_warning
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
-		ATTR_FORMAT(2, 3);
+	(const struct sieve_runtime_env *runenv, const char *location,
+		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_runtime_log
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
-		ATTR_FORMAT(2, 3);
+	(const struct sieve_runtime_env *runenv, const char *location, 
+		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 /* Runtime Trace */
 
@@ -76,9 +79,9 @@ void _sieve_runtime_trace
 	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
 		ATTR_FORMAT(2, 3);
 		
-# define sieve_runtime_trace(runenv, ...) STMT_START { \
+#	define sieve_runtime_trace(runenv, ...) STMT_START { \
 		if ( (runenv)->trace_stream != NULL ) \
-	  	_sieve_runtime_trace((runenv), __VA_ARGS__); \
+			_sieve_runtime_trace((runenv), __VA_ARGS__); \
 	} STMT_END
 	
 #else
@@ -93,8 +96,7 @@ void sieve_interpreter_extension_set_context
 	(struct sieve_interpreter *interp, int ext_id, void *context);
 const void *sieve_interpreter_extension_get_context
 	(struct sieve_interpreter *interp, int ext_id);
-	
-/* Opcodes and operands */
+	/* Opcodes and operands */
 	
 bool sieve_interpreter_handle_optional_operands
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,

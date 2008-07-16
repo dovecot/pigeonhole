@@ -10,7 +10,6 @@
 
 #include <stdio.h>
 
-#include "sieve-script.h"
 #include "sieve-extensions.h"
 #include "sieve-binary.h"
 #include "sieve-commands.h"
@@ -186,8 +185,8 @@ static bool ext_fileinto_operation_execute
 
 	sieve_runtime_trace(renv, "FILEINTO action (\"%s\")", str_c(folder));
 
-	ret = sieve_act_store_add_to_result(renv, slist, str_c(folder),
-		sieve_script_name(renv->script), source_line);
+	ret = sieve_act_store_add_to_result
+		(renv, slist, str_c(folder), source_line);
 
 	t_pop();
 	return ( ret >= 0 );

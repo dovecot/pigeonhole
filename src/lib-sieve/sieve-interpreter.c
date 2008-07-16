@@ -8,6 +8,7 @@
 #include "hash.h"
 #include "mail-storage.h"
 
+#include "sieve-script.h"
 #include "sieve-error.h"
 #include "sieve-extensions.h"
 #include "sieve-message.h"
@@ -127,48 +128,51 @@ struct sieve_error_handler *sieve_interpreter_get_error_handler
 
 /* Error handling */
 
-/* This is not particularly user friendly, so we might want to consider storing
- * the original line numbers of the script in the binary somewhere...
+/* This is not particularly user friendly, so avoid using this
  */
-static const char *_get_location(const struct sieve_runtime_env *runenv)
+const char *sieve_runtime_location(const struct sieve_runtime_env *runenv)
 {
 	const char *op = runenv->interp->current_op == NULL ?
 		"<<NOOP>>" : runenv->interp->current_op->mnemonic;
-	return t_strdup_printf("#%08x: %s", runenv->interp->current_op_addr, op);
+	return t_strdup_printf("%s: #%08x: %s", sieve_script_name(runenv->script),
+		runenv->interp->current_op_addr, op);
 }
 
 void sieve_runtime_error
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+(const struct sieve_runtime_env *runenv, const char *location,
+	const char *fmt, ...)
 {
 	va_list args;
 	
 	va_start(args, fmt);
 	T_BEGIN {
-		sieve_verror(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
+		sieve_verror(runenv->interp->ehandler, location, fmt, args); 
 	} T_END;
 	va_end(args);
 }
 
 void sieve_runtime_warning
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+(const struct sieve_runtime_env *runenv, const char *location,
+	const char *fmt, ...)
 {	
 	va_list args;
 	
 	va_start(args, fmt);
 	T_BEGIN {
-		sieve_vwarning(runenv->interp->ehandler, _get_location(runenv), fmt, args);
+		sieve_vwarning(runenv->interp->ehandler, location, fmt, args);
 	} T_END; 
 	va_end(args);
 }
 
 void sieve_runtime_log
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+(const struct sieve_runtime_env *runenv, const char *location,
+	const char *fmt, ...)
 {	
 	va_list args;
 	
 	va_start(args, fmt);
 	T_BEGIN {
-		sieve_vinfo(runenv->interp->ehandler, _get_location(runenv), fmt, args); 
+		sieve_vinfo(runenv->interp->ehandler, location, fmt, args); 
 	} T_END;
 	va_end(args);
 }

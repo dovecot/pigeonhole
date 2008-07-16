@@ -26,12 +26,12 @@ struct sieve_action {
 
 	int (*check_duplicate)	
 		(const struct sieve_runtime_env *renv,
-			const struct sieve_action *action, void *context1, void *context2);	
+			const struct sieve_action *action, void *context1, void *context2,
+			const char *location1, const char *location2);	
 	int (*check_conflict)
-		(const struct sieve_runtime_env *renv,
-			const struct sieve_action *action, 
-			const struct sieve_action *other_action,
-			void *context);
+		(const struct sieve_runtime_env *renv, const struct sieve_action *action, 
+			const struct sieve_action *other_action, void *context,
+			const char *location1, const char *location2);	
 
 	void (*print)
 		(const struct sieve_action *action, 
@@ -140,7 +140,7 @@ struct act_store_transaction {
 int sieve_act_store_add_to_result
 	(const struct sieve_runtime_env *renv, 
 		struct sieve_side_effects_list *seffects, const char *folder,
-		const char *script, unsigned int source_line);
+		unsigned int source_line);
 
 /* Message transmission */
 

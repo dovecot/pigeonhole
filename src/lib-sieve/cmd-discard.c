@@ -1,6 +1,5 @@
 #include "lib.h"
 
-#include "sieve-script.h"
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-code.h"
@@ -119,8 +118,8 @@ static bool cmd_discard_operation_execute
     if ( !sieve_code_source_line_read(renv, address, &source_line) )
         return FALSE;
 
-	return ( sieve_result_add_action(renv, &act_discard, NULL, 
-		sieve_script_name(renv->script), source_line, NULL) >= 0 );
+	return ( sieve_result_add_action
+		(renv, &act_discard, NULL, source_line, NULL) >= 0 );
 }
 
 /*

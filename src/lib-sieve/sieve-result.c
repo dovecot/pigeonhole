@@ -7,6 +7,7 @@
 #include "str-sanitize.h"
 
 #include "sieve-common.h"
+#include "sieve-script.h"
 #include "sieve-error.h"
 #include "sieve-interpreter.h"
 #include "sieve-actions.h"
@@ -25,8 +26,7 @@ struct sieve_result_action {
 	void *tr_context;
 	bool success;
 	
-	const char *script;
-	unsigned int source_line;
+	const char *location;
 
 	struct sieve_side_effects_list *seffects;
 	
@@ -195,11 +195,13 @@ void sieve_result_add_implicit_side_effect
 int sieve_result_add_action
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
-	const char *script, unsigned int source_line, void *context)		
+	unsigned int source_line, void *context)		
 {
 	int ret = 0;
 	struct sieve_result *result = renv->result;
 	struct sieve_result_action *raction;
+	const char *location = t_strdup_printf
+		("%s: %d", sieve_script_name(renv->script), source_line);
 		
 	/* First, check for duplicates or conflicts */
 	raction = result->first_action;
@@ -210,18 +212,21 @@ int sieve_result_add_action
 			/* Possible duplicate */
 			if ( action->check_duplicate != NULL ) {
 				if ( (ret=action->check_duplicate
-					(renv, action, raction->context, context)) != 0 )
+					(renv, action, context, raction->context,
+						location, raction->location)) != 0 )
 					return ret;
 			} else 
 				return 1; 
 		} else {
 			/* Check conflict */
 			if ( action->check_conflict != NULL &&
-				(ret=action->check_conflict(renv, action, oact, context)) != 0 ) 
+				(ret=action->check_conflict(renv, action, oact, context,
+					location, raction->location)) != 0 ) 
 				return ret;
 			
 			if ( oact->check_conflict != NULL &&
-				(ret=oact->check_conflict(renv, oact, action, raction->context)) != 0 )
+				(ret=oact->check_conflict(renv, oact, action, raction->context,
+					raction->location, location)) != 0 )
 				return ret;
 		}
 		raction = raction->next;
@@ -235,8 +240,7 @@ int sieve_result_add_action
 	raction->tr_context = NULL;
 	raction->success = FALSE;
 	raction->seffects = seffects;
-	raction->script = script;
-	raction->source_line = source_line;	
+	raction->location = p_strdup(result->pool, location);
 
 	/* Add */
 	if ( result->first_action == NULL ) {

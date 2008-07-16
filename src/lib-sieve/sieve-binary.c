@@ -169,6 +169,7 @@ static struct sieve_binary *sieve_binary_create(struct sieve_script *script)
 	sbin->pool = pool;
 	sbin->refcount = 1;
 	sbin->script = script;
+	sieve_script_ref(script);
 	
 	p_array_init(&sbin->linked_extensions, pool, 5);
 	p_array_init(&sbin->extensions, pool, 5);
@@ -232,6 +233,9 @@ void sieve_binary_unref(struct sieve_binary **sbin)
 	
 	if ( (*sbin)->file != NULL )
 		sieve_binary_file_close(&(*sbin)->file);
+
+	if ( (*sbin)->script != NULL )
+		sieve_script_unref(&(*sbin)->script);
 	
 	pool_unref(&((*sbin)->pool));
 	

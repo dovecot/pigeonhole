@@ -4,7 +4,6 @@
 #include "istream.h"
 #include "istream-header-filter.h"
 
-#include "sieve-script.h"
 #include "sieve-address.h"
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
@@ -66,7 +65,8 @@ const struct sieve_operation cmd_redirect_operation = {
 
 static int act_redirect_check_duplicate
 	(const struct sieve_runtime_env *renv,
-		const struct sieve_action *action1, void *context1, void *context2);
+		const struct sieve_action *action1, void *context1, void *context2,
+		const char *location1, const char *location2);
 static void act_redirect_print
 	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		void *context, bool *keep);	
@@ -205,8 +205,8 @@ static bool cmd_redirect_operation_execute
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = p_strdup(pool, str_c(redirect));
 	
-	ret = sieve_result_add_action(renv, &act_redirect, slist, 
-		sieve_script_name(renv->script), source_line, (void *) act);
+	ret = sieve_result_add_action
+		(renv, &act_redirect, slist, source_line, (void *) act);
 	
 	t_pop();
 	return (ret >= 0);
@@ -219,7 +219,8 @@ static bool cmd_redirect_operation_execute
 static int act_redirect_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
 	const struct sieve_action *action1 ATTR_UNUSED, 
-	void *context1, void *context2)
+	void *context1, void *context2,
+	const char *location1 ATTR_UNUSED, const char *location2 ATTR_UNUSED)
 {
 	struct act_redirect_context *ctx1 = (struct act_redirect_context *) context1;
 	struct act_redirect_context *ctx2 = (struct act_redirect_context *) context2;

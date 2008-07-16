@@ -9,7 +9,6 @@
 #include "sieve-common.h"
 
 #include "sieve-code.h"
-#include "sieve-script.h"
 #include "sieve-address.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
@@ -52,10 +51,12 @@ static bool cmd_vacation_generate
 
 static int act_vacation_check_duplicate
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action1,
-    	void *context1, void *context2);
+    	void *context1, void *context2, 
+		const char *location1, const char *location2);
 int act_vacation_check_conflict
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action,
-		const struct sieve_action *other_action, void *context);
+		const struct sieve_action *other_action, void *context,
+		const char *location1, const char *location2);
 static void act_vacation_print
 	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		void *context, bool *keep);	
@@ -457,8 +458,8 @@ static bool ext_vacation_operation_execute
 	if ( addresses != NULL )
 		sieve_coded_stringlist_read_all(addresses, pool, &(act->addresses));
 		
-	return ( sieve_result_add_action(renv, &act_vacation, slist, 
-		sieve_script_name(renv->script), source_line, (void *) act) >= 0 );
+	return ( sieve_result_add_action
+		(renv, &act_vacation, slist, source_line, (void *) act) >= 0 );
 }
 
 /*
@@ -468,21 +469,26 @@ static bool ext_vacation_operation_execute
 static int act_vacation_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
 	const struct sieve_action *action1 ATTR_UNUSED,
-	void *context1 ATTR_UNUSED, void *context2 ATTR_UNUSED)
+	void *context1 ATTR_UNUSED, void *context2 ATTR_UNUSED,
+	const char *location1, const char *location2)
 {
-	sieve_runtime_error(renv, "duplicate 'vacation' action not allowed");
+	sieve_runtime_error(renv, location1, 
+		"duplicate vacation action not allowed "
+		"(previously triggered one was here: %s)", location2);
 	return -1;
 }
 
 int act_vacation_check_conflict
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action ATTR_UNUSED,
-	const struct sieve_action *other_action, void *context ATTR_UNUSED)
+	const struct sieve_action *other_action, void *context ATTR_UNUSED,
+	const char *location1, const char *location2)
 {
 	if ( (other_action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
-		sieve_runtime_error(renv, "'vacation' action conflicts with other action: "
-			"'%s' action also sends a response back to the sender",	
-			other_action->name);
+		sieve_runtime_error(renv, location1, 
+			"vacation action conflicts with earlier triggered action: "
+			"the %s action (%s) also sends a response back to the sender",	
+			other_action->name, location2);
 		return -1;
 	}
 
