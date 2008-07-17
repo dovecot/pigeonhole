@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
+ 
 #include <stdio.h>
 
 #include "lib.h"
@@ -14,6 +17,22 @@
  * nesting levels, etc.
  */
 
+/*
+ * Forward declarations
+ */
+ 
+inline static void sieve_parser_error
+	(struct sieve_parser *parser, const char *fmt, ...) ATTR_FORMAT(2, 3);
+inline static void sieve_parser_warning
+	(struct sieve_parser *parser, const char *fmt, ...) ATTR_FORMAT(2, 3); 
+ 
+static bool sieve_parser_recover
+	(struct sieve_parser *parser, enum sieve_token_type end_token);
+
+/*
+ * Parser object
+ */
+
 struct sieve_parser {
 	pool_t pool;
 	
@@ -26,55 +45,6 @@ struct sieve_parser {
 	struct sieve_lexer *lexer;
 	struct sieve_ast *ast;
 };
-
-inline static void sieve_parser_error
-	(struct sieve_parser *parser, const char *fmt, ...) ATTR_FORMAT(2, 3);
-inline static void sieve_parser_warning
-	(struct sieve_parser *parser, const char *fmt, ...) ATTR_FORMAT(2, 3);
-
-inline static void sieve_parser_error
-	(struct sieve_parser *parser, const char *fmt, ...)
-{ 
-	va_list args;
-	va_start(args, fmt);
-
-	/* Don't report a parse error if the lexer complained already */ 
-	if ( sieve_lexer_current_token(parser->lexer) != STT_ERROR )  
-	{
-		T_BEGIN {
-			sieve_verror(parser->ehandler, 
-				t_strdup_printf("%s:%d", 
-				sieve_script_name(parser->script),
-				sieve_lexer_current_line(parser->lexer)),
-				fmt, args);
-		} T_END; 
-	}
-	
-	parser->valid = FALSE;
-	
-	va_end(args);
-}
-
-inline static void sieve_parser_warning
-	(struct sieve_parser *parser, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-
-	T_BEGIN	{
-		sieve_vwarning(parser->ehandler, 
-			t_strdup_printf("%s:%d", 
-			sieve_script_name(parser->script),
-			sieve_lexer_current_line(parser->lexer)),
-			fmt, args);
-	} T_END;
-		
-	va_end(args);
-} 
-
-/* Forward declarations */
-static bool sieve_parser_recover
-	(struct sieve_parser *parser, enum sieve_token_type end_token);
 
 struct sieve_parser *sieve_parser_create
 (struct sieve_script *script, struct sieve_error_handler *ehandler)
@@ -121,20 +91,73 @@ void sieve_parser_free(struct sieve_parser **parser)
 	*parser = NULL;
 }
 
-/* arguments = *argument [test / test-list]
- * argument = string-list / number / tag
- * string = quoted-string / multi-line   [[implicitly handled in lexer]]
- * string-list = "[" string *("," string) "]" / string         ;; if
- *   there is only a single string, the brackets are optional
- * test-list = "(" test *("," test) ")"
- * test = identifier arguments
+/*
+ * Internal error handling
+ */
+
+inline static void sieve_parser_error
+(struct sieve_parser *parser, const char *fmt, ...)
+{ 
+	va_list args;
+	va_start(args, fmt);
+
+	/* Don't report a parse error if the lexer complained already */ 
+	if ( sieve_lexer_current_token(parser->lexer) != STT_ERROR )  
+	{
+		T_BEGIN {
+			sieve_verror(parser->ehandler, 
+				t_strdup_printf("%s:%d", 
+				sieve_script_name(parser->script),
+				sieve_lexer_current_line(parser->lexer)),
+				fmt, args);
+		} T_END; 
+	}
+	
+	parser->valid = FALSE;
+	
+	va_end(args);
+}
+
+inline static void sieve_parser_warning
+(struct sieve_parser *parser, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	T_BEGIN	{
+		sieve_vwarning(parser->ehandler, 
+			t_strdup_printf("%s:%d", 
+			sieve_script_name(parser->script),
+			sieve_lexer_current_line(parser->lexer)),
+			fmt, args);
+	} T_END;
+		
+	va_end(args);
+} 
+
+/*
+ * Sieve grammar parsing
+ */
+
+/* sieve_parse_arguments():
+ *
+ * Parses both command arguments and sub-tests:
+ *   arguments = *argument [test / test-list]
+ *   argument = string-list / number / tag
+ *   string = quoted-string / multi-line   [[implicitly handled in lexer]]
+ *   string-list = "[" string *("," string) "]" / string         ;; if
+ *     there is only a single string, the brackets are optional
+ *   test-list = "(" test *("," test) ")"
+ *   test = identifier arguments
  */
 static bool sieve_parse_arguments
-	(struct sieve_parser *parser, struct sieve_ast_node *node) {
-	
+(struct sieve_parser *parser, struct sieve_ast_node *node) 
+{	
 	struct sieve_lexer *lexer = parser->lexer;
 	struct sieve_ast_node *test = NULL;
-	bool argument = TRUE, result = TRUE;
+	bool argument = TRUE;
+	bool result = TRUE; /* Indicates whether the parser is in a defined, not 
+	                       necessarily error-free state */
 	
 	/* Parse arguments */
 	while ( argument && result && 
@@ -145,25 +168,35 @@ static bool sieve_parse_arguments
 		
 		/* String list */
 		case STT_LSQUARE:
+			/* Create stinglist object */
 			arg = sieve_ast_argument_stringlist_create
 				(node, sieve_lexer_current_line(parser->lexer));
-			sieve_lexer_skip_token(lexer);
+				
+			sieve_lexer_skip_token(lexer);			
 			
 			if ( sieve_lexer_current_token(lexer) == STT_STRING ) {
+				/* Add the string to the list */
 				sieve_ast_stringlist_add
-					(arg, sieve_lexer_token_str(lexer), sieve_lexer_current_line(parser->lexer));
+					(arg, sieve_lexer_token_str(lexer), 
+						sieve_lexer_current_line(parser->lexer));
+				
 				sieve_lexer_skip_token(lexer);
 				 
 				while ( sieve_lexer_current_token(lexer) == STT_COMMA &&
 					(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
+			
 					sieve_lexer_skip_token(lexer);
 				
 					if ( sieve_lexer_current_token(lexer) == STT_STRING ) {
+						/* Add the string to the list */
 						sieve_ast_stringlist_add
-							(arg, sieve_lexer_token_str(lexer), sieve_lexer_current_line(parser->lexer));
+							(arg, sieve_lexer_token_str(lexer), 
+								sieve_lexer_current_line(parser->lexer));
+							
 						sieve_lexer_skip_token(lexer);
 					} else {
-						sieve_parser_error(parser, "expecting string after ',' in string list, but found %s",
+						sieve_parser_error(parser, 
+							"expecting string after ',' in string list, but found %s",
 							sieve_lexer_token_string(lexer));
 					
 						result = sieve_parser_recover(parser, STT_RSQUARE);
@@ -171,16 +204,19 @@ static bool sieve_parse_arguments
 					}
 				}
 			} else {
-				sieve_parser_error(parser, "expecting string after '[' in string list, but found %s",
+				sieve_parser_error(parser, 
+					"expecting string after '[' in string list, but found %s",
 					sieve_lexer_token_string(lexer));
 			
 				result = sieve_parser_recover(parser, STT_RSQUARE);
 			}
 		
+			/* Finish the string list */
 			if ( sieve_lexer_current_token(lexer) == STT_RSQUARE ) {
 				sieve_lexer_skip_token(lexer);
 			} else {
-				sieve_parser_error(parser, "expecting ',' or end of string list ']', but found %s",
+				sieve_parser_error(parser, 
+					"expecting ',' or end of string list ']', but found %s",
 					sieve_lexer_token_string(lexer));
 			
 				if ( (result=sieve_parser_recover(parser, STT_RSQUARE)) == TRUE ) 
@@ -192,21 +228,24 @@ static bool sieve_parse_arguments
 		/* Single string */
 		case STT_STRING: 
 			(void) sieve_ast_argument_string_create
-				(node, sieve_lexer_token_str(lexer), sieve_lexer_current_line(parser->lexer));
+				(node, sieve_lexer_token_str(lexer), 
+					sieve_lexer_current_line(parser->lexer));
 			sieve_lexer_skip_token(lexer);
 			break;
 		
 		/* Number */
 		case STT_NUMBER:
 			(void) sieve_ast_argument_number_create
-				(node, sieve_lexer_token_int(lexer), sieve_lexer_current_line(parser->lexer));
+				(node, sieve_lexer_token_int(lexer), 
+					sieve_lexer_current_line(parser->lexer));
 			sieve_lexer_skip_token(lexer);
 			break;
 			
 		/* Tag */
 		case STT_TAG:
 			(void) sieve_ast_argument_tag_create
-				(node, sieve_lexer_token_ident(lexer), sieve_lexer_current_line(parser->lexer));
+				(node, sieve_lexer_token_ident(lexer), 
+					sieve_lexer_current_line(parser->lexer));
 			sieve_lexer_skip_token(lexer);
 			break;
 			
@@ -228,7 +267,8 @@ static bool sieve_parse_arguments
 	/* Single test */
 	case STT_IDENTIFIER:
 		test = sieve_ast_test_create
-			(node, sieve_lexer_token_ident(lexer), sieve_lexer_current_line(parser->lexer));
+			(node, sieve_lexer_token_ident(lexer), 
+				sieve_lexer_current_line(parser->lexer));
 		sieve_lexer_skip_token(lexer);
 		
 		/* Parse test arguments, which may include more tests (recurse) */
@@ -247,7 +287,8 @@ static bool sieve_parse_arguments
 		/* Test starts with identifier */
 		if ( sieve_lexer_current_token(lexer) == STT_IDENTIFIER ) {
 			test = sieve_ast_test_create
-				(node, sieve_lexer_token_ident(lexer), sieve_lexer_current_line(parser->lexer));
+				(node, sieve_lexer_token_ident(lexer), 
+					sieve_lexer_current_line(parser->lexer));
 			sieve_lexer_skip_token(lexer);
 		
 			/* Parse test arguments, which may include more tests (recurse) */
@@ -261,7 +302,8 @@ static bool sieve_parse_arguments
 					/* Test starts with identifier */
 					if ( sieve_lexer_current_token(lexer) == STT_IDENTIFIER ) {
 						test = sieve_ast_test_create
-							(node, sieve_lexer_token_ident(lexer), sieve_lexer_current_line(parser->lexer));
+							(node, sieve_lexer_token_ident(lexer), 
+								sieve_lexer_current_line(parser->lexer));
 						sieve_lexer_skip_token(lexer);
 						
 						/* Parse test arguments, which may include more tests (recurse) */
@@ -270,7 +312,8 @@ static bool sieve_parse_arguments
 							break;
 						}
 					} else {
-						sieve_parser_error(parser, "expecting test identifier after ',' in test list, but found %s",
+						sieve_parser_error(parser, 
+							"expecting test identifier after ',' in test list, but found %s",
 							sieve_lexer_token_string(lexer));
 										
 						result = sieve_parser_recover(parser, STT_RBRACKET);
@@ -280,24 +323,26 @@ static bool sieve_parse_arguments
 			} else 
 				result = sieve_parser_recover(parser, STT_RBRACKET);
 		} else {
-			sieve_parser_error(parser, "expecting test identifier after '(' in test list, but found %s",
+			sieve_parser_error(parser, 
+				"expecting test identifier after '(' in test list, but found %s",
 				sieve_lexer_token_string(lexer));
 			
 			result = sieve_parser_recover(parser, STT_RBRACKET);
 		}
 		
 		/* The next token should be a ')', indicating the end of the test list
-		 *   --> privious sieve_parser_recover calls try to restore this situation after
-		 *       parse errors.  
+		 *   --> previous sieve_parser_recover calls try to restore this situation 
+		 *       after parse errors.  
 		 */
  		if ( sieve_lexer_current_token(lexer) == STT_RBRACKET ) {
 			sieve_lexer_skip_token(lexer);
 		} else {
-			sieve_parser_error(parser, "expecting ',' or end of test list ')', but found %s",
+			sieve_parser_error(parser, 
+				"expecting ',' or end of test list ')', but found %s",
 				sieve_lexer_token_string(lexer));
 			
-			/* Recover function tries to make next token equal to ')'. If it succeeds we need to 
-			 * skip it.
+			/* Recover function tries to make next token equal to ')'. If it succeeds 
+			 * we need to skip it.
 			 */
 			if ( (result = sieve_parser_recover(parser, STT_RBRACKET)) == TRUE ) 
 				sieve_lexer_skip_token(lexer);
@@ -319,8 +364,8 @@ static bool sieve_parse_arguments
  * block = "{" commands "}"
  */
 static bool sieve_parse_commands
-	(struct sieve_parser *parser, struct sieve_ast_node *block) { 
-
+(struct sieve_parser *parser, struct sieve_ast_node *block) 
+{ 
 	struct sieve_lexer *lexer = parser->lexer;
 	bool result = TRUE;
 
@@ -328,7 +373,8 @@ static bool sieve_parse_commands
 		(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
 		struct sieve_ast_node *command = 
 			sieve_ast_command_create
-				(block, sieve_lexer_token_ident(lexer), sieve_lexer_current_line(parser->lexer));
+				(block, sieve_lexer_token_ident(lexer), 
+					sieve_lexer_current_line(parser->lexer));
 	
 		/* Defined state */
 		result = TRUE;		
@@ -337,13 +383,17 @@ static bool sieve_parse_commands
 		
 		result = sieve_parse_arguments(parser, command);
 		
-		/* Check whether the command is properly terminated (i.e. with ; or a new block) */
+		/* Check whether the command is properly terminated 
+		 * (i.e. with ; or a new block) 
+		 */
 		if ( result &&
 			sieve_lexer_current_token(lexer) != STT_SEMICOLON &&
 			sieve_lexer_current_token(lexer) != STT_LCURLY ) {
 			
-			sieve_parser_error(parser, "expected end of command ';' or the beginning of a compound block '{', but found %s",
-					sieve_lexer_token_string(lexer));	
+			sieve_parser_error(parser, 
+				"expected end of command ';' or the beginning of a compound block '{', "
+				"but found %s",
+				sieve_lexer_token_string(lexer));	
 			result = FALSE;
 		}
 		
@@ -370,7 +420,8 @@ static bool sieve_parse_commands
 			if ( sieve_parse_commands(parser, command) ) {
 			
 				if ( sieve_lexer_current_token(lexer) != STT_RCURLY ) {
-					sieve_parser_error(parser, "expected end of compound block '}', but found %s",
+					sieve_parser_error(parser, 
+						"expected end of compound block '}', but found %s",
 						sieve_lexer_token_string(lexer));
 					result = sieve_parser_recover(parser, STT_RCURLY);				
 				} else 
@@ -390,11 +441,12 @@ static bool sieve_parse_commands
 }
 
 bool sieve_parser_run
-	(struct sieve_parser *parser, struct sieve_ast **ast) 
+(struct sieve_parser *parser, struct sieve_ast **ast) 
 {
 	if ( parser->ast != NULL )
 		sieve_ast_unref(&parser->ast);
 	
+	/* Create AST object if none is provided */
 	if ( *ast == NULL )
 		*ast = sieve_ast_create(parser->script);
 	else 
@@ -405,30 +457,33 @@ bool sieve_parser_run
 	/* Scan first token */
 	sieve_lexer_skip_token(parser->lexer);
 
-	if ( sieve_parse_commands(parser, sieve_ast_root(parser->ast)) ) { 
+	/* Parse */
+	if ( sieve_parse_commands(parser, sieve_ast_root(parser->ast)) && 
+		parser->valid ) {
+		 
+		/* Parsed right to EOF ? */
 		if ( sieve_lexer_current_token(parser->lexer) != STT_EOF ) { 
 			sieve_parser_error(parser, 
 				"unexpected %s found at (the presumed) end of file",
 				sieve_lexer_token_string(parser->lexer));
-	
-			parser->ast = NULL;
-			sieve_ast_unref(ast);
-			return FALSE;				
+			parser->valid = FALSE;
 		}
+	} else parser->valid = FALSE;
 	
-		return parser->valid;
-	} 
+	/* Clean up AST if parse failed */
+	if ( !parser->valid ) {
+		parser->ast = NULL;
+		sieve_ast_unref(ast);
+	}
 	
-	parser->ast = NULL;
-	sieve_ast_unref(ast);
-	return FALSE;
+	return parser->valid;
 }	
 
 /* Error recovery:
- *   To continue parsing after an error it is important to find the next parsible item in the 
- *   stream. The recover function skips over the remaining garbage after an error. It tries 
- *   to find the end of the failed syntax structure and takes nesting of structures into account.
- *   
+ *   To continue parsing after an error it is important to find the next 
+ *   parsible item in the stream. The recover function skips over the remaining 
+ *   garbage after an error. It tries  to find the end of the failed syntax 
+ *   structure and takes nesting of structures into account. 
  */
 
 /* Assign useful names to priorities for readability */ 
@@ -441,7 +496,9 @@ enum sieve_grammatical_prio {
 	SGP_OTHER = -1
 };
 
-static inline enum sieve_grammatical_prio __get_token_priority(enum sieve_token_type token) {
+static inline enum sieve_grammatical_prio __get_token_priority
+(enum sieve_token_type token) 
+{
 	switch ( token ) {
 	case STT_LCURLY:
 	case STT_RCURLY: 
@@ -461,7 +518,8 @@ static inline enum sieve_grammatical_prio __get_token_priority(enum sieve_token_
 	return SGP_OTHER;
 }
 
-static bool sieve_parser_recover(struct sieve_parser *parser, enum sieve_token_type end_token) 
+static bool sieve_parser_recover
+(struct sieve_parser *parser, enum sieve_token_type end_token) 
 {
 	/* The tokens that begin/end a specific block/command/list in order 
  	 * of ascending grammatical priority.
@@ -499,7 +557,8 @@ static bool sieve_parser_recover(struct sieve_parser *parser, enum sieve_token_t
 	}
 	
 	/* Special case: COMMAND */
-	if (end_token == STT_SEMICOLON && sieve_lexer_current_token(lexer) == STT_LCURLY)
+	if (end_token == STT_SEMICOLON && 
+		sieve_lexer_current_token(lexer) == STT_LCURLY)
 		return TRUE;
 	
 	/* End not found before eof or end of surrounding grammatical structure 

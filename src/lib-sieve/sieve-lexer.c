@@ -1,8 +1,12 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
+ 
 #include "lib.h"
 #include "compat.h"
 #include "str.h"
 #include "istream.h"
 
+#include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
 
@@ -15,10 +19,27 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+/* 
+ * Useful macros
+ */
+
 #define IS_DIGIT(c) ( c >= '0' && c <= '9' )
 #define DIGIT_VAL(c) ( c - '0' )
 #define IS_ALPHA(c) ( (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') )
 #define IS_QUANTIFIER(c) (c == 'K' || c == 'M' || c =='G') 
+
+/*
+ * Forward declarations
+ */
+ 
+inline static void sieve_lexer_error
+	(struct sieve_lexer *lexer, const char *fmt, ...) ATTR_FORMAT(2, 3);
+inline static void sieve_lexer_warning
+	(struct sieve_lexer *lexer, const char *fmt, ...) ATTR_FORMAT(2, 3);
+
+/*
+ * Lexer object
+ */
 
 struct sieve_lexer {
 	pool_t pool;
@@ -39,43 +60,6 @@ struct sieve_lexer {
 	size_t buffer_size;
 	size_t buffer_pos;
 };
-
-inline static void sieve_lexer_error
-	(struct sieve_lexer *lexer, const char *fmt, ...) ATTR_FORMAT(2, 3);
-inline static void sieve_lexer_warning
-	(struct sieve_lexer *lexer, const char *fmt, ...) ATTR_FORMAT(2, 3);
-
-inline static void sieve_lexer_error
-(struct sieve_lexer *lexer, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-
-	T_BEGIN {
-		sieve_verror(lexer->ehandler, 
-			t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
-				lexer->current_line),
-			fmt, args);
-	} T_END;
-		
-	va_end(args);
-}
-
-inline static void sieve_lexer_warning
-(struct sieve_lexer *lexer, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-
-	T_BEGIN { 
-		sieve_vwarning(lexer->ehandler, 
-			t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
-			lexer->current_line),
-			fmt, args);
-	} T_END;
-		
-	va_end(args);
-}
 
 struct sieve_lexer *sieve_lexer_create
 (struct sieve_script *script, struct sieve_error_handler *ehandler) 
@@ -127,31 +111,40 @@ void sieve_lexer_free(struct sieve_lexer **lexer)
 	*lexer = NULL;
 }
 
-static void sieve_lexer_shift(struct sieve_lexer *lexer) 
+/*
+ * Internal error handling
+ */
+
+inline static void sieve_lexer_error
+(struct sieve_lexer *lexer, const char *fmt, ...)
 {
-	if ( lexer->buffer != NULL && lexer->buffer[lexer->buffer_pos] == '\n' ) 
-		lexer->current_line++;	
-	
-	if ( lexer->buffer != NULL && lexer->buffer_pos + 1 < lexer->buffer_size )
-		lexer->buffer_pos++;
-	else {
-		if ( lexer->buffer != NULL )
-			i_stream_skip(lexer->input, lexer->buffer_size);
+	va_list args;
+	va_start(args, fmt);
+
+	T_BEGIN {
+		sieve_verror(lexer->ehandler, 
+			t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
+				lexer->current_line),
+			fmt, args);
+	} T_END;
 		
-		lexer->buffer = i_stream_get_data(lexer->input, &lexer->buffer_size);
-	  
-		if ( lexer->buffer == NULL && i_stream_read(lexer->input) > 0 )
-	  		lexer->buffer = i_stream_get_data(lexer->input, &lexer->buffer_size);
-	  	
-		lexer->buffer_pos = 0;
-	}
+	va_end(args);
 }
 
-static inline int sieve_lexer_curchar(struct sieve_lexer *lexer) {	
-	if ( lexer->buffer == NULL )
-		return -1;
-	
-	return lexer->buffer[lexer->buffer_pos];
+inline static void sieve_lexer_warning
+(struct sieve_lexer *lexer, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	T_BEGIN { 
+		sieve_vwarning(lexer->ehandler, 
+			t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
+			lexer->current_line),
+			fmt, args);
+	} T_END;
+		
+	va_end(args);
 }
 
 const char *sieve_lexer_token_string(struct sieve_lexer *lexer) 
@@ -185,6 +178,10 @@ const char *sieve_lexer_token_string(struct sieve_lexer *lexer)
 	return "unknown token (bug)";
 }
 	
+/* 
+ * Debug 
+ */
+ 
 void sieve_lexer_print_token(struct sieve_lexer *lexer) 
 {
 	switch ( lexer->token_type ) {
@@ -217,17 +214,24 @@ void sieve_lexer_print_token(struct sieve_lexer *lexer)
 	}
 }
 
-enum sieve_token_type sieve_lexer_current_token(struct sieve_lexer *lexer) {
+/*
+ * Token access
+ */ 
+
+enum sieve_token_type sieve_lexer_current_token(struct sieve_lexer *lexer) 
+{
 	return lexer->token_type;
 }
 
-const string_t *sieve_lexer_token_str(struct sieve_lexer *lexer) {
+const string_t *sieve_lexer_token_str(struct sieve_lexer *lexer) 
+{
 	i_assert(	lexer->token_type == STT_STRING );
 		
 	return lexer->token_str_value;
 }
 
-const char *sieve_lexer_token_ident(struct sieve_lexer *lexer) {
+const char *sieve_lexer_token_ident(struct sieve_lexer *lexer) 
+{
 	i_assert(
 		lexer->token_type == STT_TAG ||
 		lexer->token_type == STT_IDENTIFIER);
@@ -235,24 +239,59 @@ const char *sieve_lexer_token_ident(struct sieve_lexer *lexer) {
 	return str_c(lexer->token_str_value);
 }
 
-int sieve_lexer_token_int(struct sieve_lexer *lexer) {
+int sieve_lexer_token_int(struct sieve_lexer *lexer) 
+{
 	i_assert(lexer->token_type == STT_NUMBER);
 		
 	return lexer->token_int_value;
 }
 
-bool sieve_lexer_eof(struct sieve_lexer *lexer) {
+bool sieve_lexer_eof(struct sieve_lexer *lexer) 
+{
 	return lexer->token_type == STT_EOF;
 }
 
-int sieve_lexer_current_line(struct sieve_lexer *lexer) {
+int sieve_lexer_current_line(struct sieve_lexer *lexer) 
+{
 	return lexer->current_line;
+}
+
+/*
+ * Lexical scanning 
+ */
+
+static void sieve_lexer_shift(struct sieve_lexer *lexer) 
+{
+	if ( lexer->buffer != NULL && lexer->buffer[lexer->buffer_pos] == '\n' ) 
+		lexer->current_line++;	
+	
+	if ( lexer->buffer != NULL && lexer->buffer_pos + 1 < lexer->buffer_size )
+		lexer->buffer_pos++;
+	else {
+		if ( lexer->buffer != NULL )
+			i_stream_skip(lexer->input, lexer->buffer_size);
+		
+		lexer->buffer = i_stream_get_data(lexer->input, &lexer->buffer_size);
+	  
+		if ( lexer->buffer == NULL && i_stream_read(lexer->input) > 0 )
+	  		lexer->buffer = i_stream_get_data(lexer->input, &lexer->buffer_size);
+	  	
+		lexer->buffer_pos = 0;
+	}
+}
+
+static inline int sieve_lexer_curchar(struct sieve_lexer *lexer) 
+{	
+	if ( lexer->buffer == NULL )
+		return -1;
+	
+	return lexer->buffer[lexer->buffer_pos];
 }
 
 /* sieve_lexer_scan_raw_token:
  *   Scans valid tokens and whitespace 
  */
-bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer) 
+static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer) 
 {
 	int start_line;
 	string_t *str;
@@ -511,9 +550,11 @@ bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 					sieve_lexer_shift(lexer);
 				} else {
 					if ( sieve_lexer_curchar(lexer) == -1 ) {
-						sieve_lexer_error(lexer, "end of file before end of multi-line string");
+						sieve_lexer_error(lexer, 
+							"end of file before end of multi-line string");
 					} else {
- 						sieve_lexer_error(lexer, "invalid character '%c' after 'text:' in multiline string",
+ 						sieve_lexer_error(lexer, 
+ 							"invalid character '%c' after 'text:' in multiline string",
 							sieve_lexer_curchar(lexer));
 					}
 
@@ -546,7 +587,8 @@ bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 					/* Scan the rest of the line */
 					while ( sieve_lexer_curchar(lexer) != '\n' ) {
 						if ( sieve_lexer_curchar(lexer) == -1 ) {
-							sieve_lexer_error(lexer, "end of file before end of multi-line string");
+							sieve_lexer_error(lexer, 
+								"end of file before end of multi-line string");
  							lexer->token_type = STT_ERROR;
  							return FALSE;
  						}
@@ -569,7 +611,8 @@ bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 	
 		/* Error (unknown character and EOF handled already) */
 		if ( lexer->token_type != STT_GARBAGE ) 
-			sieve_lexer_error( lexer, "unexpected character(s) starting with '%c'", sieve_lexer_curchar(lexer) );
+			sieve_lexer_error(lexer, "unexpected character(s) starting with '%c'", 
+				sieve_lexer_curchar(lexer));
 		sieve_lexer_shift(lexer);
 		lexer->token_type = STT_GARBAGE;
 		return FALSE;

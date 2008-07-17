@@ -1,4 +1,5 @@
-/* Copyright (c) 2002-2007 Dovecot authors, see the included COPYING file */
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
 
 #include "lib.h"
 #include "home-expand.h"
@@ -90,8 +91,11 @@ static int lda_sieve_run
 	const char *scriptlog;
 	int ret = 0;
 
+	/* Create error handler */
 	scriptlog = t_strconcat(script_path, ".log", NULL);
 	ehandler = sieve_logfile_ehandler_create(scriptlog, LDA_SIEVE_MAX_ERRORS);
+
+	/* Open the script */
 
 	if ( debug )
 		i_info("sieve: Opening script %s", script_path);
@@ -117,6 +121,7 @@ static int lda_sieve_run
 	msgdata.auth_user = username;
 	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
 
+	/* Compose script execution environment */
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	scriptenv.inbox = mailbox;
 	scriptenv.namespaces = namespaces;
@@ -128,6 +133,8 @@ static int lda_sieve_run
 	scriptenv.duplicate_mark = duplicate_mark;
 	scriptenv.duplicate_check = duplicate_check;
 
+	/* Execute the script */	
+	
 	if ( debug )
 		i_info("sieve: Executing (in-memory) script %s", script_path);
 
@@ -136,6 +143,8 @@ static int lda_sieve_run
 	if ( ret < 0 )
 		i_error("sieve: Failed to execute script %s", script_path);
 
+	/* Clean up */
+	sieve_close(&sbin);
 	sieve_error_handler_unref(&ehandler);
 
 	return ret;
@@ -148,12 +157,16 @@ static int lda_sieve_deliver_mail
 	const char *script_path;
 	int ret;
 
+	/* Find the script to execute */
+	
 	script_path = lda_sieve_get_path();
 	if (script_path == NULL)
 		return 0;
 
 	if (getenv("DEBUG") != NULL)
 		i_info("sieve: Using sieve path: %s", script_path);
+
+	/* Run the script */
 
 	T_BEGIN { 
 		ret = lda_sieve_run(namespaces, mail, script_path, destaddr, 
@@ -165,15 +178,19 @@ static int lda_sieve_deliver_mail
 
 void sieve_plugin_init(void)
 {
+	/* Initialize Sieve engine */
 	sieve_init("");
 
+	/* Hook into the delivery process */
 	next_deliver_mail = deliver_mail;
 	deliver_mail = lda_sieve_deliver_mail;
 }
 
 void sieve_plugin_deinit(void)
 {
+	/* Remove hook */
 	deliver_mail = next_deliver_mail;
 
+	/* Deinitialize Sieve engine */
 	sieve_deinit();
 }
