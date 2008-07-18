@@ -299,10 +299,14 @@ bool sieve_comparator_tag_is
 const struct sieve_comparator *sieve_comparator_tag_get
 (struct sieve_ast_argument *tag)
 {
+	const struct sieve_comparator_context *cmpctx;
+	
 	if ( tag->argument != &comparator_tag ) 
 		return NULL;
+		
+	cmpctx = (const struct sieve_comparator_context *) tag->context;
 		 
-	return (const struct sieve_comparator *) tag->context;
+	return cmpctx->comparator;
 }
 
 /* Code generation */
