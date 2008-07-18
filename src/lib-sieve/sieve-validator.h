@@ -88,9 +88,10 @@ bool sieve_validator_argument_activate_super
 int sieve_validator_extension_load
 	(struct sieve_validator *validator, struct sieve_command_context *cmd, 
 		const char *ext_name); 
-inline void sieve_validator_extension_set_context
+
+void sieve_validator_extension_set_context
 	(struct sieve_validator *validator, int ext_id, void *context);
-inline const void *sieve_validator_extension_get_context
+const void *sieve_validator_extension_get_context
 	(struct sieve_validator *validator, int ext_id);
 
 #endif /* __SIEVE_VALIDATOR_H */
