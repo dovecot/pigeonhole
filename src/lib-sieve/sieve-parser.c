@@ -105,10 +105,9 @@ inline static void sieve_parser_error
 	if ( sieve_lexer_current_token(parser->lexer) != STT_ERROR )  
 	{
 		T_BEGIN {
-			sieve_verror(parser->ehandler, 
-				t_strdup_printf("%s:%d", 
-				sieve_script_name(parser->script),
-				sieve_lexer_current_line(parser->lexer)),
+			sieve_verror(parser->ehandler,
+				sieve_error_script_location(parser->script, 
+					sieve_lexer_current_line(parser->lexer)),
 				fmt, args);
 		} T_END; 
 	}
@@ -126,9 +125,8 @@ inline static void sieve_parser_warning
 
 	T_BEGIN	{
 		sieve_vwarning(parser->ehandler, 
-			t_strdup_printf("%s:%d", 
-			sieve_script_name(parser->script),
-			sieve_lexer_current_line(parser->lexer)),
+			sieve_error_script_location(parser->script, 
+				sieve_lexer_current_line(parser->lexer)),
 			fmt, args);
 	} T_END;
 		

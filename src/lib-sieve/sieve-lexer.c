@@ -123,8 +123,7 @@ inline static void sieve_lexer_error
 
 	T_BEGIN {
 		sieve_verror(lexer->ehandler, 
-			t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
-				lexer->current_line),
+			sieve_error_script_location(lexer->script, lexer->current_line),
 			fmt, args);
 	} T_END;
 		
@@ -139,8 +138,7 @@ inline static void sieve_lexer_warning
 
 	T_BEGIN { 
 		sieve_vwarning(lexer->ehandler, 
-			t_strdup_printf("%s:%d", sieve_script_name(lexer->script), 
-			lexer->current_line),
+			sieve_error_script_location(lexer->script, lexer->current_line),
 			fmt, args);
 	} T_END;
 		

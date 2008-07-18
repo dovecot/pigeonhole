@@ -5,6 +5,7 @@
 #include "str.h"
 
 #include "sieve-common.h"
+#include "sieve-error.h"
 
 /*
 	Abstract Syntax Tree (AST) structure:

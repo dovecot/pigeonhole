@@ -4,6 +4,8 @@
 #include "str.h"
 #include "ostream.h"
 
+#include "sieve-common.h"
+#include "sieve-script.h"
 #include "sieve-error-private.h"
 
 #include <sys/types.h>
@@ -16,14 +18,29 @@
 	"internal error occurred: refer to server log for more information."
 #define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
 
+const char *sieve_error_script_location
+(struct sieve_script *script, unsigned int source_line)
+{
+    const char *sname = sieve_script_name(script);
+
+    if ( sname == NULL || *sname == '\0' )
+        return t_strdup_printf("line %d", source_line);
+
+    return t_strdup_printf("%s: line %d", sname, source_line);
+}
+
 void sieve_verror
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args)
 {
 	if ( ehandler == NULL ) return;
 	
-	if ( ehandler->log_master )
-		i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	if ( ehandler->log_master ) {
+		if ( location == NULL || *location == '\0' )
+			i_error("sieve: %s", t_strdup_vprintf(fmt, args));
+		else
+			i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	}
 
 	if ( sieve_errors_more_allowed(ehandler) ) {
 		ehandler->verror(ehandler, location, fmt, args);
@@ -37,8 +54,12 @@ void sieve_vwarning
 {
 	if ( ehandler == NULL ) return;
 
-	if ( ehandler->log_master )
-		i_warning("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	if ( ehandler->log_master ) {
+		if ( location == NULL || *location == '\0' )
+			i_warning("sieve: %s", t_strdup_vprintf(fmt, args));
+		else
+			i_warning("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	}
 		
 	ehandler->vwarning(ehandler, location, fmt, args);
 	ehandler->warnings++;
@@ -50,8 +71,12 @@ void sieve_vinfo
 {
 	if ( ehandler == NULL ) return;
 
-	if ( ehandler->log_master )
-		i_info("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	if ( ehandler->log_master ) {
+		if ( location == NULL || *location == '\0' )
+			i_info("sieve: %s", t_strdup_vprintf(fmt, args));
+		else	
+			i_info("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	}
 	
 	if ( ehandler->log_info )	
 		ehandler->vinfo(ehandler, location, fmt, args);
@@ -66,8 +91,11 @@ void sieve_vcritical
 	
 	tm = localtime(&ioloop_time);
 	
-	i_error("sieve: error: %s: %s", location, t_strdup_vprintf(fmt, args));
-	
+	if ( location == NULL || *location == '\0' )
+		i_error("sieve: %s", t_strdup_vprintf(fmt, args));
+	else
+		i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+		
 	if ( ehandler == NULL ) return;
 	
 	sieve_error(ehandler, location, "%s", 
@@ -144,21 +172,30 @@ static void sieve_stderr_verror
 (struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
 	const char *fmt, va_list args) 
 {
-	fprintf(stderr, "%s: error: %s.\n", location, t_strdup_vprintf(fmt, args));
+	if ( location == NULL || *location == '\0' )
+		fprintf(stderr, "error: %s.\n", t_strdup_vprintf(fmt, args));
+	else
+		fprintf(stderr, "%s: error: %s.\n", location, t_strdup_vprintf(fmt, args));
 }
 
 static void sieve_stderr_vwarning
 (struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
 	const char *fmt, va_list args) 
 {
-	fprintf(stderr, "%s: warning: %s.\n", location, t_strdup_vprintf(fmt, args));
+	if ( location == NULL || *location == '\0' )
+		fprintf(stderr, "warning: %s.\n", t_strdup_vprintf(fmt, args));
+	else
+		fprintf(stderr, "%s: warning: %s.\n", location, t_strdup_vprintf(fmt, args));
 }
 
 static void sieve_stderr_vinfo
 (struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
 	const char *fmt, va_list args) 
 {
-	fprintf(stderr, "%s: info: %s.\n", location, t_strdup_vprintf(fmt, args));
+	if ( location == NULL || *location == '\0' )
+		fprintf(stderr, "info: %s.\n", t_strdup_vprintf(fmt, args));
+	else
+		fprintf(stderr, "%s: info: %s.\n", location, t_strdup_vprintf(fmt, args));
 }
 
 struct sieve_error_handler *sieve_stderr_ehandler_create
@@ -197,7 +234,9 @@ static void sieve_strbuf_verror
 	struct sieve_strbuf_ehandler *handler =
 		(struct sieve_strbuf_ehandler *) ehandler;
 
-	str_printfa(handler->errors, "%s: error: ", location);
+	if ( location != NULL && *location != '\0' )
+		str_printfa(handler->errors, "%s: ", location);
+	str_append(handler->errors, "error: ");
 	str_vprintfa(handler->errors, fmt, args);
 	str_append(handler->errors, ".\n");
 }
@@ -209,7 +248,9 @@ static void sieve_strbuf_vwarning
 	struct sieve_strbuf_ehandler *handler =
 		(struct sieve_strbuf_ehandler *) ehandler;
 
-	str_printfa(handler->errors, "%s: warning: ", location);
+	if ( location != NULL && *location != '\0' )
+		str_printfa(handler->errors, "%s: ", location);
+	str_printfa(handler->errors, "warning: ");
 	str_vprintfa(handler->errors, fmt, args);
 	str_append(handler->errors, ".\n");
 }
@@ -220,8 +261,10 @@ static void sieve_strbuf_vinfo
 {
 	struct sieve_strbuf_ehandler *handler =
 		(struct sieve_strbuf_ehandler *) ehandler;
-	
-	str_printfa(handler->errors, "%s: info: ", location);
+
+	if ( location != NULL && *location != '\0' )
+		str_printfa(handler->errors, "%s: ", location);	
+	str_printfa(handler->errors, "info: ");
 	str_vprintfa(handler->errors, fmt, args);
 	str_append(handler->errors, ".\n");
 }
@@ -266,7 +309,9 @@ static void sieve_logfile_vprintf
 	
 	T_BEGIN {
 		outbuf = t_str_new(256);
-		str_printfa(outbuf, "%s: %s: ", location, prefix);	
+		if ( location != NULL && *location != '\0' )
+			str_printfa(outbuf, "%s: ", location);
+		str_printfa(outbuf, "%s: ", prefix);	
 		str_vprintfa(outbuf, fmt, args);
 		str_append(outbuf, ".\n");
 	

@@ -1,10 +1,10 @@
 #ifndef __SIEVE_COMMON_H
 #define __SIEVE_COMMON_H
 
+#include "sieve-types.h"
+
 #include <sys/types.h>
 #include <stdint.h>
-
-#include "sieve.h"
 
 /* 
  * Types

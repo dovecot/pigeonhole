@@ -200,8 +200,8 @@ int sieve_result_add_action
 	int ret = 0;
 	struct sieve_result *result = renv->result;
 	struct sieve_result_action *raction;
-	const char *location = t_strdup_printf
-		("%s: %d", sieve_script_name(renv->script), source_line);
+	const char *location = sieve_error_script_location
+		(renv->script, source_line);
 		
 	/* First, check for duplicates or conflicts */
 	raction = result->first_action;

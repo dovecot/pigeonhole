@@ -15,6 +15,10 @@ typedef void (*sieve_error_vfunc_t)
 /* For these functions it is the responsibility of the caller to
  * manage the datastack.
  */
+
+const char *sieve_error_script_location
+	(struct sieve_script *script, unsigned int source_line);
+
 void sieve_verror
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args);

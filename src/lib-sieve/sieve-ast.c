@@ -157,9 +157,9 @@ void sieve_ast_error
 	struct sieve_script *script = node->ast->script;
 	
 	T_BEGIN {
-		vfunc(ehandler, 
-			t_strdup_printf("%s:%d", sieve_script_name(script),
-				sieve_ast_node_line(node)), fmt, args);
+		vfunc(ehandler,
+			sieve_error_script_location(script, sieve_ast_node_line(node)), 
+			fmt, args);
 	} T_END; 
 }
  

@@ -20,7 +20,7 @@ struct sieve_script *sieve_script_init
 	int ret;
 	pool_t pool;
 	struct stat st;
-	const char *filename, *dirpath;
+	const char *filename, *dirpath, *basename;
 
 	if ( exists_r != NULL )
 		*exists_r = FALSE;
@@ -42,24 +42,26 @@ struct sieve_script *sieve_script_init
 			/* Extract the script name */
 			ext = strrchr(filename, '.');
 			if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
-				name = filename;
+				basename = filename;
 			else
-				name = t_strdup_until(filename, ext);
-		} 
+				basename = t_strdup_until(filename, ext);
+		} else {
+			basename = name;
+		}
 			
 		/* First obtain stat data from the system */
 		
 		if ( (ret=stat(path, &st)) != 0 && (errno != ENOENT || exists_r == NULL) ) {
 			if ( errno == ENOENT ) 
-				sieve_error(ehandler, name, "sieve script does not exist");
+				sieve_error(ehandler, basename, "sieve script does not exist");
 			else
-				sieve_critical(ehandler, name, "failed to stat sieve script file '%s': %m", path);
+				sieve_critical(ehandler, basename, "failed to stat sieve script file '%s': %m", path);
 			script = NULL;
 		} else {
 			/* Only create/init the object if it stat()s without problems */
 
 			if ( ret == 0 && !S_ISREG(st.st_mode) ) {
-				sieve_critical(ehandler, name, 
+				sieve_critical(ehandler, basename, 
 					"sieve script file '%s' is not a regular file.", path);
 				script = NULL;
 			} else {
@@ -81,7 +83,11 @@ struct sieve_script *sieve_script_init
 				script->path = p_strdup(pool, path);
 				script->filename = p_strdup(pool, filename);
 				script->dirpath = p_strdup(pool, dirpath);
-				script->name = p_strdup(pool, name);
+				script->basename = p_strdup(pool, basename);
+				if ( name != NULL )
+					script->name = p_strdup(pool, name);
+				else
+					script->name = NULL;
 			}
 		}
 	} T_END;	
@@ -131,8 +137,8 @@ struct istream *sieve_script_open
 		if ( errno == ENOENT ) 
 			if ( deleted_r == NULL ) 
 				/* Not supposed to occur, create() does stat already */
-				sieve_error(script->ehandler, script->name, 
-					"sieve script '%s' does not exist", script->name);
+				sieve_error(script->ehandler, script->basename, 
+					"sieve script does not exist");
 			else 
 				*deleted_r = TRUE;
 		else
@@ -194,6 +200,6 @@ const char *sieve_script_path(struct sieve_script *script)
 
 const char *sieve_script_binpath(struct sieve_script *script)
 {
-	return t_strconcat(script->dirpath, "/", script->name, ".svbin", NULL);
+	return t_strconcat(script->dirpath, "/", script->basename, ".svbin", NULL);
 }
 

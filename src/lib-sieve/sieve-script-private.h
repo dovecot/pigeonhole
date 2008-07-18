@@ -13,6 +13,7 @@ struct sieve_script {
 
     /* Parameters */
     const char *name;
+	const char *basename;
     const char *filename;
     const char *dirpath;
     const char *path;
