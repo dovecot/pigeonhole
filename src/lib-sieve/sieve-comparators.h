@@ -3,6 +3,7 @@
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
+#include "sieve-code.h"
 
 enum sieve_comparator_code {
 	SIEVE_COMPARATOR_I_OCTET,
@@ -22,7 +23,7 @@ struct sieve_comparator {
 	
 	unsigned int flags;
 	
-	const struct sieve_comparator_extension *extension;
+	const struct sieve_operand *operand;
 	unsigned int code;
 	
 	/* Equality and ordering */
@@ -39,15 +40,6 @@ struct sieve_comparator {
 	bool (*char_skip)(const struct sieve_comparator *cmp, 
 		const char **val, const char *val_end);
 };
-
-struct sieve_comparator_extension {
-	const struct sieve_extension *extension;
-	
-	struct sieve_extension_obj_registry comparators;
-};
-
-#define SIEVE_EXT_DEFINE_COMPARATOR(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
-#define SIEVE_EXT_DEFINE_COMPARATORS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 struct sieve_comparator_context {
 	struct sieve_command_context *command_ctx;
@@ -75,14 +67,32 @@ void sieve_comparator_register
 const struct sieve_comparator *sieve_comparator_find
 	(struct sieve_validator *validator, const char *identifier,
 		int *ext_id);
+		
+/*
+ * Comparator operand
+ */
 
+struct sieve_comparator_operand_interface {
+	struct sieve_extension_obj_registry comparators;
+};
+
+#define SIEVE_EXT_DEFINE_COMPARATOR(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
+#define SIEVE_EXT_DEFINE_COMPARATORS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
+
+extern const struct sieve_operand_class sieve_comparator_operand_class;
+
+static inline bool sieve_operand_is_comparator
+(const struct sieve_operand *operand)
+{
+	return ( operand != NULL && 
+		operand->class == &sieve_comparator_operand_class );
+}
+
+void sieve_opr_comparator_emit
+	(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id);
 const struct sieve_comparator *sieve_opr_comparator_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+  (const struct sieve_runtime_env *renv, sieve_size_t *address);
 bool sieve_opr_comparator_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-
-void sieve_comparator_extension_set
-	(struct sieve_binary *sbin, int ext_id,
-		const struct sieve_comparator_extension *ext);
 
 #endif /* __SIEVE_COMPARATORS_H */

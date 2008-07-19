@@ -29,16 +29,10 @@ const struct sieve_comparator *sieve_core_comparators[] = {
 const unsigned int sieve_core_comparators_count =
 	N_ELEMENTS(sieve_core_comparators);
 
-static struct sieve_extension_obj_registry cmp_default_reg =
-	SIEVE_EXT_DEFINE_COMPARATORS(sieve_core_comparators);
-
 /* 
  * Forward declarations 
  */
  
-static void opr_comparator_emit
-	(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id);
-
 static int cmp_i_octet_compare
 	(const struct sieve_comparator *cmp,
 		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
@@ -63,15 +57,12 @@ static int ext_my_id = -1;
 
 static bool cmp_extension_load(int ext_id);
 static bool cmp_validator_load(struct sieve_validator *validator);
-static bool cmp_binary_load(struct sieve_binary *sbin);
 
 const struct sieve_extension comparator_extension = {
 	"@comparators",
 	cmp_extension_load,
 	cmp_validator_load,
-	NULL, NULL, NULL,
-	cmp_binary_load,
-	NULL,
+	NULL, NULL, NULL, NULL,	NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
@@ -169,46 +160,6 @@ bool cmp_validator_load(struct sieve_validator *validator)
 	return TRUE;
 }
 
-/*
- * Binary context
- */
-
-static inline const struct sieve_comparator_extension *
-	sieve_comparator_extension_get(struct sieve_binary *sbin, int ext_id)
-{
-	return (const struct sieve_comparator_extension *)
-		sieve_binary_registry_get_object(sbin, ext_my_id, ext_id);
-}
-
-void sieve_comparator_extension_set
-	(struct sieve_binary *sbin, int ext_id,
-		const struct sieve_comparator_extension *ext)
-{
-	sieve_binary_registry_set_object
-		(sbin, ext_my_id, ext_id, (const void *) ext);
-}
-
-static bool cmp_binary_load(struct sieve_binary *sbin)
-{
-	sieve_binary_registry_init(sbin, ext_my_id);
-	
-	return TRUE;
-}
-
-/*
- * Comparator operand
- */
- 
-struct sieve_operand_class comparator_class = 
-	{ "comparator" };
-
-struct sieve_operand comparator_operand = { 
-	"comparator", 
-	NULL, SIEVE_OPERAND_COMPARATOR, 
-	&comparator_class,
-	NULL
-};
-
 /* 
  * Comparator tag 
  */
@@ -278,9 +229,22 @@ static bool tag_comparator_validate
 	return TRUE;
 }
 
+static bool tag_comparator_generate
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
+	struct sieve_command_context *cmd ATTR_UNUSED)
+{
+	struct sieve_comparator_context *cmpctx = 
+		(struct sieve_comparator_context *) arg->context;
+	const struct sieve_comparator *cmp = cmpctx->comparator;
+	
+	sieve_opr_comparator_emit(cgenv->sbin, cmp, cmpctx->ext_id);
+		
+	return TRUE;
+}
+
 void sieve_comparators_link_tag
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,	
-		int id_code) 
+(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,	
+	int id_code) 
 {
 	sieve_validator_register_tag(validator, cmd_reg, &comparator_tag, id_code); 	
 }
@@ -309,39 +273,52 @@ const struct sieve_comparator *sieve_comparator_tag_get
 	return cmpctx->comparator;
 }
 
-/* Code generation */
+/*
+ * Comparator coding
+ */
+ 
+const struct sieve_operand_class sieve_comparator_operand_class = 
+	{ "comparator" };
+	
+static const struct sieve_comparator_operand_interface 
+	comparator_operand_intf = {
+	SIEVE_EXT_DEFINE_COMPARATORS(sieve_core_comparators)
+};
 
-static void opr_comparator_emit
+const struct sieve_operand comparator_operand = { 
+	"comparator", 
+	NULL,
+	SIEVE_OPERAND_COMPARATOR, 
+	&sieve_comparator_operand_class,
+	&comparator_operand_intf
+};
+
+void sieve_opr_comparator_emit
 	(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id)
 { 
-	(void) sieve_operand_emit_code(sbin, &comparator_operand, -1);	
-
-	(void) sieve_extension_emit_obj
-		(sbin, &cmp_default_reg, cmp, comparators, ext_id);
+	(void) sieve_operand_emit_code(sbin, cmp->operand, ext_id);	
+	(void) sieve_binary_emit_byte(sbin, cmp->code);
 }
 
-static const struct sieve_extension_obj_registry *
-	sieve_comparator_registry_get
-(struct sieve_binary *sbin, unsigned int ext_index)
+static const struct sieve_comparator *_sieve_opr_comparator_read_data
+  (struct sieve_binary *sbin, const struct sieve_operand *operand,
+  	sieve_size_t *address)
 {
-	int ext_id = -1; 
-	const struct sieve_comparator_extension *ext;
+	const struct sieve_comparator_operand_interface *intf;	
+	unsigned int obj_code; 
+
+	if ( !sieve_operand_is_comparator(operand) )
+		return NULL;
 	
-	if ( sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id) == NULL )
+	intf = operand->interface;
+	if ( intf == NULL ) 
+		return NULL;
+			
+	if ( !sieve_binary_read_byte(sbin, address, &obj_code) ) 
 		return NULL;
 
-	if ( (ext=sieve_comparator_extension_get(sbin, ext_id)) == NULL ) 
-		return NULL;
-		
-	return &(ext->comparators);
-}
-
-static inline const struct sieve_comparator *sieve_comparator_read
-  (struct sieve_binary *sbin, sieve_size_t *address)
-{
-	return sieve_extension_read_obj
-		(struct sieve_comparator, sbin, address, &cmp_default_reg, 
-			sieve_comparator_registry_get);
+	return sieve_extension_get_object
+		(struct sieve_comparator, intf->comparators, obj_code);
 }
 
 const struct sieve_comparator *sieve_opr_comparator_read
@@ -349,49 +326,25 @@ const struct sieve_comparator *sieve_opr_comparator_read
 {
 	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
 	
-	if ( operand == NULL || operand->class != &comparator_class ) 
-		return NULL;
-	
-	return sieve_comparator_read(renv->sbin, address);
+	return _sieve_opr_comparator_read_data(renv->sbin, operand, address);
 }
 
 bool sieve_opr_comparator_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	const struct sieve_operand *operand = sieve_operand_read(denv->sbin, address);
+	const struct sieve_operand *operand;
 	const struct sieve_comparator *cmp;
 	
-	if ( operand == NULL || operand->class != &comparator_class ) 
-		return NULL;
-
 	sieve_code_mark(denv);
-	cmp = sieve_comparator_read(denv->sbin, address);
+	
+	operand = sieve_operand_read(denv->sbin, address); 
+	cmp = _sieve_opr_comparator_read_data(denv->sbin, operand, address);
 	
 	if ( cmp == NULL )
 		return FALSE;
 		
 	sieve_code_dumpf(denv, "COMPARATOR: %s", cmp->identifier);
 	
-	return TRUE;
-}
-
-static bool tag_comparator_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
-{
-	struct sieve_comparator_context *cmpctx = 
-		(struct sieve_comparator_context *) arg->context;
-	const struct sieve_comparator *cmp = cmpctx->comparator;
-	
-	if ( cmp->extension == NULL ) {
-		if ( cmp->code < SIEVE_COMPARATOR_CUSTOM )
-			opr_comparator_emit(cgenv->sbin, cmp, -1);
-		else
-			return FALSE;
-	} else {
-		opr_comparator_emit(cgenv->sbin, cmp, cmpctx->ext_id);
-	} 
-		
 	return TRUE;
 }
 
@@ -403,7 +356,7 @@ const struct sieve_comparator i_octet_comparator = {
 	"i;octet",
 	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY |
 		SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH | SIEVE_COMPARATOR_FLAG_PREFIX_MATCH,
-	NULL,
+	&comparator_operand,
 	SIEVE_COMPARATOR_I_OCTET,
 	cmp_i_octet_compare,
 	cmp_i_octet_char_match,
@@ -414,7 +367,7 @@ const struct sieve_comparator i_ascii_casemap_comparator = {
 	"i;ascii-casemap",
 	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY |
 		SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH | SIEVE_COMPARATOR_FLAG_PREFIX_MATCH,
-	NULL,
+	&comparator_operand,
 	SIEVE_COMPARATOR_I_ASCII_CASEMAP,
 	cmp_i_ascii_casemap_compare,
 	cmp_i_ascii_casemap_char_match,

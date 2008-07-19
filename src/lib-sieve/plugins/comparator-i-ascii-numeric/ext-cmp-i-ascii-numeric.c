@@ -19,13 +19,19 @@
 
 #include <ctype.h>
 
-/* Forward declarations */
+/* 
+ * Forward declarations 
+ */
+
+static const struct sieve_operand my_comparator_operand;
+const struct sieve_comparator i_ascii_numeric_comparator;
 
 static bool ext_cmp_i_ascii_numeric_load(int ext_id);
 static bool ext_cmp_i_ascii_numeric_validator_load(struct sieve_validator *validator);
-static bool ext_cmp_i_ascii_numeric_binary_load(struct sieve_binary *sbin);
 
-/* Extension definitions */
+/* 
+ * Extension definitions 
+ */
 
 static int ext_my_id;
 
@@ -33,11 +39,9 @@ const struct sieve_extension comparator_i_ascii_numeric_extension = {
 	"comparator-i;ascii-numeric", 
 	ext_cmp_i_ascii_numeric_load,
 	ext_cmp_i_ascii_numeric_validator_load,
-	NULL, NULL, NULL,
-	ext_cmp_i_ascii_numeric_binary_load,  
-	NULL,
+	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	SIEVE_EXT_DEFINE_OPERAND(my_comparator_operand)
 };
 
 static bool ext_cmp_i_ascii_numeric_load(int ext_id)
@@ -55,21 +59,27 @@ static int cmp_i_ascii_numeric_compare
 	(const struct sieve_comparator *cmp, 
 		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
 
-extern const struct sieve_comparator_extension i_ascii_numeric_comparator_ext;
+static const struct sieve_comparator_operand_interface comparator_operand_intf =
+{
+	SIEVE_EXT_DEFINE_COMPARATOR(i_ascii_numeric_comparator)
+};
+
+static const struct sieve_operand my_comparator_operand = { 
+	"comparator-i;ascii-numeric", 
+	&comparator_i_ascii_numeric_extension,
+	0, 
+	&sieve_comparator_operand_class,
+	&comparator_operand_intf
+};
 
 const struct sieve_comparator i_ascii_numeric_comparator = { 
 	"i;ascii-numeric",
 	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY,
-	&i_ascii_numeric_comparator_ext,
+	&my_comparator_operand,
 	0,
 	cmp_i_ascii_numeric_compare,
 	NULL,
 	NULL
-};
-
-const struct sieve_comparator_extension i_ascii_numeric_comparator_ext = { 
-	&comparator_i_ascii_numeric_extension,
-	SIEVE_EXT_DEFINE_COMPARATOR(i_ascii_numeric_comparator)
 };
 
 /* Load extension into validator */
@@ -78,15 +88,6 @@ static bool ext_cmp_i_ascii_numeric_validator_load(struct sieve_validator *valid
 {
 	sieve_comparator_register
 		(validator, &i_ascii_numeric_comparator, ext_my_id);
-	return TRUE;
-}
-
-/* Load extension into binary */
-
-static bool ext_cmp_i_ascii_numeric_binary_load(struct sieve_binary *sbin)
-{
-	sieve_comparator_extension_set
-		(sbin, ext_my_id, &i_ascii_numeric_comparator_ext);
 	return TRUE;
 }
 
