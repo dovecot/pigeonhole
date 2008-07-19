@@ -23,8 +23,6 @@ static int cmp_i_octet_compare
 static bool cmp_i_octet_char_match
 	(const struct sieve_comparator *cmp, const char **val1, const char *val1_end, 
 		const char **val2, const char *val2_end);
-static bool cmp_i_octet_char_skip
-	(const struct sieve_comparator *cmp, const char **val, const char *val_end);
 
 /*
  * Comparator object

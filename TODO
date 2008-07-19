@@ -1,5 +1,5 @@
 Next (in order of descending priority/precedence):
-* Revise extension support for match-types, address-parts and side-effects. 
+* Revise extension support for address-parts and side-effects. 
   Current implementation emits redundant bytes and associated code is not very 
   neat.
 * Improve handling of old/corrupt binaries.

@@ -101,8 +101,6 @@ static inline bool sieve_operand_is_comparator
 		operand->class == &sieve_comparator_operand_class );
 }
 
-void sieve_opr_comparator_emit
-	(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id);
 const struct sieve_comparator *sieve_opr_comparator_read
   (const struct sieve_runtime_env *renv, sieve_size_t *address);
 bool sieve_opr_comparator_dump

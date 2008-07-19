@@ -65,6 +65,6 @@ extern const struct sieve_match_type rel_match_value_le;
 extern const struct sieve_match_type rel_match_value_eq;
 extern const struct sieve_match_type rel_match_value_ne;
 
-extern const struct sieve_match_type *rel_match_types[];
+extern const struct sieve_operand rel_match_type_operand;
 
 #endif

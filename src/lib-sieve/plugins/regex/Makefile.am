@@ -9,6 +9,7 @@ AM_CPPFLAGS = \
 
 libsieve_ext_regex_la_SOURCES = \
 	mcht-regex.c \
+	ext-regex-common.c \
 	ext-regex.c
 
 noinst_HEADERS = \

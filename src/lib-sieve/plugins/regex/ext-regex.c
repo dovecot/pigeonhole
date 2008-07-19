@@ -41,7 +41,6 @@
 
 static bool ext_regex_load(int ext_id);
 static bool ext_regex_validator_load(struct sieve_validator *validator);
-static bool ext_regex_binary_load(struct sieve_binary *sbin);
 
 /* Extension definitions */
 
@@ -51,9 +50,7 @@ const struct sieve_extension regex_extension = {
 	"regex", 
 	ext_regex_load,
 	ext_regex_validator_load,
-	NULL, NULL, NULL,
-	ext_regex_binary_load,
-	NULL,  
+	NULL, NULL, NULL, NULL, NULL,  
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
@@ -66,17 +63,6 @@ static bool ext_regex_load(int ext_id)
 }
 
 /* 
- * Extension access structures 
- */
-
-extern const struct sieve_match_type regex_match_type;
-
-const struct sieve_match_type_extension regex_match_extension = { 
-	&regex_extension,
-	SIEVE_EXT_DEFINE_MATCH_TYPE(regex_match_type)
-};
-
-/* 
  * Load extension into validator 
  */
 
@@ -84,18 +70,6 @@ static bool ext_regex_validator_load(struct sieve_validator *validator)
 {
 	sieve_match_type_register
 		(validator, &regex_match_type, ext_my_id); 
-
-	return TRUE;
-}
-
-/* 
- * Load extension into binary 
- */
-
-static bool ext_regex_binary_load(struct sieve_binary *sbin)
-{
-	sieve_match_type_extension_set
-		(sbin, ext_my_id, &regex_match_extension);
 
 	return TRUE;
 }

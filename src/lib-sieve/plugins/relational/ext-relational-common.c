@@ -23,6 +23,12 @@
 
 #include "ext-relational-common.h"
 
+/*
+ * Forward declarations
+ */
+
+const struct sieve_match_type *rel_match_types[];
+
 /* 
  * Validation 
  */
@@ -123,4 +129,27 @@ bool mcht_relational_validate
 	return TRUE;
 }
 
+/*
+ * Relational match-type operand
+ */
+
+const const struct sieve_match_type *rel_match_types[] = {
+    &rel_match_value_gt, &rel_match_value_ge, &rel_match_value_lt,
+    &rel_match_value_le, &rel_match_value_eq, &rel_match_value_ne,
+    &rel_match_count_gt, &rel_match_count_ge, &rel_match_count_lt,
+    &rel_match_count_le, &rel_match_count_eq, &rel_match_count_ne
+};
+
+static const struct sieve_match_type_operand_interface match_type_operand_intf =
+{
+    SIEVE_EXT_DEFINE_MATCH_TYPES(rel_match_types)
+};
+
+const struct sieve_operand rel_match_type_operand = {
+    "relational match",
+    &relational_extension,
+    0,
+    &sieve_match_type_operand_class,
+    &match_type_operand_intf
+};
 

@@ -24,7 +24,7 @@ static bool mcht_is_match
 
 const struct sieve_match_type is_match_type = {
 	"is", TRUE,
-	NULL,
+	&match_type_operand,
 	SIEVE_MATCH_TYPE_IS,
 	NULL, NULL, NULL,
 	mcht_is_match,

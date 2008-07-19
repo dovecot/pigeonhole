@@ -21,7 +21,7 @@
 
 const struct sieve_match_type value_match_type = {
 	"value", TRUE,
-	&relational_match_extension,
+	&rel_match_type_operand,
 	RELATIONAL_VALUE,
 	mcht_relational_validate,
 	NULL, NULL, NULL, NULL
@@ -30,7 +30,7 @@ const struct sieve_match_type value_match_type = {
 #define VALUE_MATCH_TYPE(name, rel_match)                   \
 const struct sieve_match_type rel_match_value_ ## name = {  \
 	"value-" #name, TRUE,                                   \
-	&relational_match_extension,                            \
+	&rel_match_type_operand,                                \
 	REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match),           \
 	NULL, NULL, NULL,                                       \
 	mcht_value_match,                                       \

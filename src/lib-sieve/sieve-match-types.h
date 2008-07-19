@@ -3,13 +3,26 @@
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
+#include "sieve-code.h"
 
+/*
+ * Core match types 
+ */
+ 
 enum sieve_match_type_code {
 	SIEVE_MATCH_TYPE_IS,
 	SIEVE_MATCH_TYPE_CONTAINS,
 	SIEVE_MATCH_TYPE_MATCHES,
 	SIEVE_MATCH_TYPE_CUSTOM
 };
+
+extern const struct sieve_match_type is_match_type;
+extern const struct sieve_match_type contains_match_type;
+extern const struct sieve_match_type matches_match_type;
+
+/*
+ * Matching context
+ */
 
 struct sieve_match_context {
 	struct sieve_interpreter *interp;
@@ -21,7 +34,6 @@ struct sieve_match_context {
 };
 
 struct sieve_match_type;
-struct sieve_match_type_extension;
 struct sieve_match_type_context;
 
 struct sieve_match_type {
@@ -32,7 +44,7 @@ struct sieve_match_type {
 	 */
 	bool is_iterative;
 	
-	const struct sieve_match_type_extension *extension;
+	const struct sieve_operand *operand;
 	unsigned int code;
 	
 	bool (*validate)
@@ -48,15 +60,6 @@ struct sieve_match_type {
 			const char *key, size_t key_size, int key_index);
 	bool (*match_deinit)(struct sieve_match_context *mctx);
 };
-
-struct sieve_match_type_extension {
-	const struct sieve_extension *extension;
-
-	struct sieve_extension_obj_registry match_types;
-};
-
-#define SIEVE_EXT_DEFINE_MATCH_TYPE(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
-#define SIEVE_EXT_DEFINE_MATCH_TYPES(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 struct sieve_match_type_context {
 	struct sieve_command_context *command_ctx;
@@ -106,18 +109,29 @@ void sieve_match_type_register
 const struct sieve_match_type *sieve_match_type_find
 	(struct sieve_validator *validator, const char *identifier,
 		int *ext_id);
-void sieve_match_type_extension_set
-	(struct sieve_binary *sbin, int ext_id,
-		const struct sieve_match_type_extension *ext);
 
 extern const struct sieve_argument match_type_tag;
 
-extern const struct sieve_match_type is_match_type;
-extern const struct sieve_match_type contains_match_type;
-extern const struct sieve_match_type matches_match_type;
+/*
+ * Match type operand
+ */
+ 
+const struct sieve_operand match_type_operand;
+struct sieve_operand_class sieve_match_type_operand_class;
 
-extern const struct sieve_match_type *sieve_core_match_types[];
-extern const unsigned int sieve_core_match_types_count;
+struct sieve_match_type_operand_interface {
+	struct sieve_extension_obj_registry match_types;
+};
+
+#define SIEVE_EXT_DEFINE_MATCH_TYPE(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
+#define SIEVE_EXT_DEFINE_MATCH_TYPES(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
+
+static inline bool sieve_operand_is_match_type
+(const struct sieve_operand *operand)
+{
+	return ( operand != NULL && 
+		operand->class == &sieve_match_type_operand_class );
+}
 
 const struct sieve_match_type *sieve_opr_match_type_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);

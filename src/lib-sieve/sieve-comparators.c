@@ -31,6 +31,13 @@ const struct sieve_comparator *sieve_core_comparators[] = {
 const unsigned int sieve_core_comparators_count =
 	N_ELEMENTS(sieve_core_comparators);
 
+/*
+ * Forward declarations
+ */
+ 
+static void sieve_opr_comparator_emit
+	(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id);
+
 /* 
  * Comparator 'extension' 
  */
@@ -288,7 +295,7 @@ const struct sieve_operand comparator_operand = {
 	&comparator_operand_intf
 };
 
-void sieve_opr_comparator_emit
+static void sieve_opr_comparator_emit
 	(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id)
 { 
 	(void) sieve_operand_emit_code(sbin, cmp->operand, ext_id);	
