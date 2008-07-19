@@ -8,7 +8,7 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-storage 
 
-tsts = \
+tests = \
 	tst-not.c \
 	tst-anyof.c \
 	tst-allof.c \
@@ -17,23 +17,27 @@ tsts = \
 	tst-exists.c \
 	tst-size.c
 
-cmds = \
+commands = \
 	cmd-if.c \
 	cmd-require.c \
 	cmd-redirect.c \
 	cmd-keep.c \
 	cmd-discard.c
 
-exts = \
+extensions = \
 	ext-fileinto.c \
 	ext-reject.c \
 	ext-envelope.c \
 	ext-encoded-character.c
 
-mchts = \
+match_types = \
 	mcht-is.c \
 	mcht-contains.c \
 	mcht-matches.c
+
+comparators = \
+	cmp-i-octet.c \
+	cmp-i-ascii-casemap.c
 
 # These are not actual plugins just yet...
 plugins = \
@@ -68,15 +72,16 @@ libsieve_la_SOURCES = \
 	sieve-error.c \
 	sieve-comparators.c \
 	sieve-match-types.c \
-	$(mchts) \
 	sieve-address-parts.c \
 	sieve-commands.c \
 	sieve-code.c \
 	sieve-actions.c \
-	$(tsts) \
-	$(cmds) \
 	sieve-extensions.c \
-	$(exts) \
+	$(comparators) \
+	$(match_types) \
+	$(tests) \
+	$(commands) \
+	$(extensions) \
 	sieve.c 
 
 noinst_HEADERS = \

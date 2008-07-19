@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
+
 #include "lib.h"
 #include "compat.h"
 #include "hash.h"
@@ -16,10 +19,9 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <ctype.h>
 
 /* 
- * Default comparators
+ * Core comparators
  */
  
 const struct sieve_comparator *sieve_core_comparators[] = {
@@ -28,26 +30,6 @@ const struct sieve_comparator *sieve_core_comparators[] = {
 
 const unsigned int sieve_core_comparators_count =
 	N_ELEMENTS(sieve_core_comparators);
-
-/* 
- * Forward declarations 
- */
- 
-static int cmp_i_octet_compare
-	(const struct sieve_comparator *cmp,
-		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
-static bool cmp_i_octet_char_match
-	(const struct sieve_comparator *cmp, const char **val1, const char *val1_end, 
-		const char **val2, const char *val2_end);
-static bool cmp_i_octet_char_skip
-	(const struct sieve_comparator *cmp, const char **val, const char *val_end);
-	
-static int cmp_i_ascii_casemap_compare
-	(const struct sieve_comparator *cmp,
-		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
-static bool cmp_i_ascii_casemap_char_match
-	(const struct sieve_comparator *cmp, const char **val1, const char *val1_end, 
-		const char **val2, const char *val2_end);
 
 /* 
  * Comparator 'extension' 
@@ -64,7 +46,7 @@ const struct sieve_extension comparator_extension = {
 	cmp_validator_load,
 	NULL, NULL, NULL, NULL,	NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	SIEVE_EXT_DEFINE_NO_OPERANDS    /* Defined as core operand */
 };
 	
 static bool cmp_extension_load(int ext_id) 
@@ -161,9 +143,20 @@ bool cmp_validator_load(struct sieve_validator *validator)
 }
 
 /* 
- * Comparator tag 
+ * Comparator tagged argument 
  */
  
+/* Context associated with ast argument */
+
+struct sieve_comparator_context {
+	struct sieve_command_context *command_ctx;
+	const struct sieve_comparator *comparator;
+	
+	int ext_id;
+};
+ 
+/* Comparator argument */
+
 static bool tag_comparator_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd);
@@ -241,6 +234,8 @@ static bool tag_comparator_generate
 		
 	return TRUE;
 }
+
+/* Functions to enable and evaluate comparator tag for commands */
 
 void sieve_comparators_link_tag
 (struct sieve_validator *validator, struct sieve_command_registration *cmd_reg,	
@@ -348,82 +343,11 @@ bool sieve_opr_comparator_dump
 	return TRUE;
 }
 
-/* 
- * Core comparators  
+/*
+ * Trivial/Common comparator method implementations
  */
 
-const struct sieve_comparator i_octet_comparator = {
-	"i;octet",
-	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY |
-		SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH | SIEVE_COMPARATOR_FLAG_PREFIX_MATCH,
-	&comparator_operand,
-	SIEVE_COMPARATOR_I_OCTET,
-	cmp_i_octet_compare,
-	cmp_i_octet_char_match,
-	cmp_i_octet_char_skip	
-};
-
-const struct sieve_comparator i_ascii_casemap_comparator = {
-	"i;ascii-casemap",
-	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY |
-		SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH | SIEVE_COMPARATOR_FLAG_PREFIX_MATCH,
-	&comparator_operand,
-	SIEVE_COMPARATOR_I_ASCII_CASEMAP,
-	cmp_i_ascii_casemap_compare,
-	cmp_i_ascii_casemap_char_match,
-	cmp_i_octet_char_skip
-};
-
-static int cmp_i_octet_compare(
-	const struct sieve_comparator *cmp ATTR_UNUSED,
-	const char *val1, size_t val1_size, const char *val2, size_t val2_size)
-{
-	int result;
-
-	if ( val1_size == val2_size ) {
-		return memcmp((void *) val1, (void *) val2, val1_size);
-	} 
-	
-	if ( val1_size > val2_size ) {
-		result = memcmp((void *) val1, (void *) val2, val2_size);
-		
-		if ( result == 0 ) return 1;
-		
-		return result;
-	} 
-
-	result = memcmp((void *) val1, (void *) val2, val1_size);
-		
-	if ( result == 0 ) return -1;
-		
-	return result;
-}
-
-static bool cmp_i_octet_char_match
-	(const struct sieve_comparator *cmp ATTR_UNUSED, 
-		const char **val, const char *val_end, 
-		const char **key, const char *key_end)
-{
-	const char *val_begin = *val;
-	const char *key_begin = *key;
-	
-	while ( **val == **key && *val < val_end && *key < key_end ) {
-		(*val)++;
-		(*key)++;
-	}
-	
-	if ( *key < key_end ) {
-		/* Reset */
-		*val = val_begin;
-		*key = key_begin;	
-	
-		return FALSE;
-	}
-	
-	return TRUE;
-}
-
-static bool cmp_i_octet_char_skip
+bool sieve_comparator_octet_skip
 	(const struct sieve_comparator *cmp ATTR_UNUSED, 
 		const char **val, const char *val_end)
 {
@@ -434,55 +358,3 @@ static bool cmp_i_octet_char_skip
 	
 	return FALSE;
 }
-	
-static int cmp_i_ascii_casemap_compare(
-	const struct sieve_comparator *cmp ATTR_UNUSED,
-	const char *val1, size_t val1_size, const char *val2, size_t val2_size)
-{
-	int result;
-
-	if ( val1_size == val2_size ) {
-		return strncasecmp(val1, val2, val1_size);
-	} 
-	
-	if ( val1_size > val2_size ) {
-		result = strncasecmp(val1, val2, val2_size);
-		
-		if ( result == 0 ) return 1;
-		
-		return result;
-	} 
-
-	result = strncasecmp(val1, val2, val1_size);
-		
-	if ( result == 0 ) return -1;
-		
-	return result;
-}
-
-static bool cmp_i_ascii_casemap_char_match
-	(const struct sieve_comparator *cmp ATTR_UNUSED, 
-		const char **val, const char *val_end, 
-		const char **key, const char *key_end)
-{
-	const char *val_begin = *val;
-	const char *key_begin = *key;
-	
-	while ( i_tolower(**val) == i_tolower(**key) &&
-		*val < val_end && *key < key_end ) {
-		(*val)++;
-		(*key)++;
-	}
-	
-	if ( *key < key_end ) {
-		/* Reset */
-		*val = val_begin;
-		*key = key_begin;	
-		
-		return FALSE;
-	}
-	
-	return TRUE;
-}
-
-
