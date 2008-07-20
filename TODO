@@ -1,7 +1,5 @@
 Next (in order of descending priority/precedence):
-* Revise extension support for address-parts and side-effects. 
-  Current implementation emits redundant bytes and associated code is not very 
-  neat.
+* Remove remaining code duplication among the different sieveobjects.
 * Improve handling of old/corrupt binaries.
 
 * Full standards compliance review for the engine and all fully implemented 
