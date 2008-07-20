@@ -107,7 +107,7 @@ static int cmp_i_ascii_numeric_compare
 		kp++;
 
 	while ( vp < vend && kp < kend ) {
-		if ( !isdigit(*vp) || !isdigit(*kp) ) 
+		if ( !i_isdigit(*vp) || !i_isdigit(*kp) ) 
 			break;
 
 		if ( *vp != *kp ) 
@@ -117,12 +117,12 @@ static int cmp_i_ascii_numeric_compare
 		kp++;	
 	}
 
-	if ( vp == vend || !isdigit(*vp) ) {
-		if ( kp == kend || !isdigit(*kp) ) 
+	if ( vp == vend || !i_isdigit(*vp) ) {
+		if ( kp == kend || !i_isdigit(*kp) ) 
 			return 0;
 		else	
 			return -1;
-	} else if ( kp == kend || !isdigit(*kp) )  
+	} else if ( kp == kend || !i_isdigit(*kp) )  
 		return 1;
 		
 	return (*vp > *kp);

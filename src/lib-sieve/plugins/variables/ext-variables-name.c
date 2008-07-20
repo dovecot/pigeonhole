@@ -32,23 +32,23 @@ int ext_variable_name_parse
 		}
 
 		/* Identifier */
-		if ( *p == '_' || isalpha(*p) ) {
+		if ( *p == '_' || i_isalpha(*p) ) {
 			cur_element->num_variable = -1;
 			str_truncate(cur_ident, 0);
 			str_append_c(cur_ident, *p);
 			p++;
 		
-			while ( p < strend && (*p == '_' || isalnum(*p)) ) {
+			while ( p < strend && (*p == '_' || i_isalnum(*p)) ) {
 				str_append_c(cur_ident, *p);
 				p++;
 			}
 		
 		/* Num-variable */
-		} else if ( isdigit(*p) ) {
+		} else if ( i_isdigit(*p) ) {
 			cur_element->num_variable = *p - '0';
 			p++;
 			
-			while ( p < strend && isdigit(*p) ) {
+			while ( p < strend && i_isdigit(*p) ) {
 				cur_element->num_variable = cur_element->num_variable*10 + (*p - '0');
 				p++;
 			} 
