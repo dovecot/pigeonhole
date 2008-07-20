@@ -59,24 +59,20 @@ static int cmp_i_ascii_numeric_compare
 	(const struct sieve_comparator *cmp, 
 		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
 
-static const struct sieve_comparator_operand_interface comparator_operand_intf =
-{
-	SIEVE_EXT_DEFINE_COMPARATOR(i_ascii_numeric_comparator)
-};
-
+static const struct sieve_extension_obj_registry ext_comparators =
+	SIEVE_EXT_DEFINE_COMPARATOR(i_ascii_numeric_comparator);
+	
 static const struct sieve_operand my_comparator_operand = { 
 	"comparator-i;ascii-numeric", 
 	&comparator_i_ascii_numeric_extension,
 	0, 
 	&sieve_comparator_operand_class,
-	&comparator_operand_intf
+	&ext_comparators
 };
 
 const struct sieve_comparator i_ascii_numeric_comparator = { 
-	"i;ascii-numeric",
+	SIEVE_OBJECT("i;ascii-numeric", &my_comparator_operand, 0),
 	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY,
-	&my_comparator_operand,
-	0,
 	cmp_i_ascii_numeric_compare,
 	NULL,
 	NULL

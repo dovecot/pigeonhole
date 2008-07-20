@@ -4,7 +4,23 @@
 #include "message-address.h"
 
 #include "sieve-common.h"
+#include "sieve-extensions.h"
+#include "sieve-objects.h"
 
+/*
+ * Address part object 
+ */
+
+struct sieve_address_part {
+	struct sieve_object object;		
+
+	const char *(*extract_from)(const struct message_address *address);
+};
+
+/*
+ * Core address parts
+ */
+ 
 enum sieve_address_part_code {
 	SIEVE_ADDRESS_PART_ALL,
 	SIEVE_ADDRESS_PART_LOCAL,
@@ -12,25 +28,15 @@ enum sieve_address_part_code {
 	SIEVE_ADDRESS_PART_CUSTOM
 };
 
-struct sieve_address_part_extension;
+extern const struct sieve_address_part all_address_part;
+extern const struct sieve_address_part local_address_part;
+extern const struct sieve_address_part domain_address_part;
 
-struct sieve_address_part {
-	const char *identifier;
-		
-	const struct sieve_address_part_extension *extension;
-	unsigned int code;
-
-	const char *(*extract_from)(const struct message_address *address);
-};
-
-struct sieve_address_part_extension {
-	const struct sieve_extension *extension;
-
-	struct sieve_extension_obj_registry address_parts;
-};
-
-#define SIEVE_EXT_DEFINE_ADDRESS_PART(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
-#define SIEVE_EXT_DEFINE_ADDRESS_PARTS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
+/*
+ * Address part tagged argument
+ */
+ 
+extern const struct sieve_argument address_part_tag;
 
 struct sieve_address_part_context {
 	struct sieve_command_context *command_ctx;
@@ -42,6 +48,10 @@ struct sieve_address_part_context {
 void sieve_address_parts_link_tags
 	(struct sieve_validator *validator, 
 		struct sieve_command_registration *cmd_reg, int id_code);
+
+/*
+ * Address part registry
+ */
 		
 void sieve_address_part_register
 	(struct sieve_validator *validator, 
@@ -50,23 +60,35 @@ const struct sieve_address_part *sieve_address_part_find
 	(struct sieve_validator *validator, const char *identifier,
 		int *ext_id);
 		
-void sieve_address_part_extension_set
-	(struct sieve_binary *sbin, int ext_id,
-		const struct sieve_address_part_extension *ext);
+/*
+ * Address part operand
+ */
 
-extern const struct sieve_argument address_part_tag;
+const struct sieve_operand address_part_operand;
+struct sieve_operand_class sieve_address_part_operand_class;
 
-extern const struct sieve_address_part all_address_part;
-extern const struct sieve_address_part local_address_part;
-extern const struct sieve_address_part domain_address_part;
+#define SIEVE_EXT_DEFINE_ADDRESS_PART(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
+#define SIEVE_EXT_DEFINE_ADDRESS_PARTS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
-extern const struct sieve_address_part *sieve_core_address_parts[];
-extern const unsigned int sieve_core_address_parts_count;
+static inline void sieve_opr_address_part_emit
+(struct sieve_binary *sbin, const struct sieve_address_part *addrp, int ext_id)
+{ 
+	sieve_opr_object_emit(sbin, &addrp->object, ext_id);
+}
 
-const struct sieve_address_part *sieve_opr_address_part_read
- 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
-bool sieve_opr_address_part_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static inline const struct sieve_address_part *sieve_opr_address_part_read
+  (const struct sieve_runtime_env *renv, sieve_size_t *address)
+{
+	return (const struct sieve_address_part *) sieve_opr_object_read
+		(renv, &sieve_address_part_operand_class, address);
+}
+
+static inline bool sieve_opr_address_part_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	return sieve_opr_object_dump
+		(denv, &sieve_address_part_operand_class, address);
+}
 
 /* Match utility */
 

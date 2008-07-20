@@ -30,11 +30,10 @@ static bool cmp_i_ascii_casemap_char_match
  */
  
 const struct sieve_comparator i_ascii_casemap_comparator = {
-	"i;ascii-casemap",
+	SIEVE_OBJECT
+		("i;ascii-casemap", &comparator_operand, SIEVE_COMPARATOR_I_ASCII_CASEMAP),
 	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY |
 		SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH | SIEVE_COMPARATOR_FLAG_PREFIX_MATCH,
-	&comparator_operand,
-	SIEVE_COMPARATOR_I_ASCII_CASEMAP,
 	cmp_i_ascii_casemap_compare,
 	cmp_i_ascii_casemap_char_match,
 	sieve_comparator_octet_skip

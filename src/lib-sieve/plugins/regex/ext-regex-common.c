@@ -7,16 +7,14 @@
  * Regex match type operand
  */
 
-static const struct sieve_match_type_operand_interface match_type_operand_intf =
-{
-    SIEVE_EXT_DEFINE_MATCH_TYPE(regex_match_type)
-};
+static const struct sieve_extension_obj_registry ext_match_types =
+    SIEVE_EXT_DEFINE_MATCH_TYPE(regex_match_type);
 
 const struct sieve_operand regex_match_type_operand = {
     "regex match",
     &regex_extension,
     0,
     &sieve_match_type_operand_class,
-    &match_type_operand_intf
+    &ext_match_types
 };
 

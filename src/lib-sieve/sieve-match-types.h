@@ -4,6 +4,7 @@
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 #include "sieve-code.h"
+#include "sieve-objects.h"
 
 /*
  * Core match types 
@@ -37,16 +38,13 @@ struct sieve_match_type;
 struct sieve_match_type_context;
 
 struct sieve_match_type {
-	const char *identifier;
+	struct sieve_object object;
 
 	/* Match function called for every key value or should it be called once
 	 * for every tested value? (TRUE = first alternative)
 	 */
 	bool is_iterative;
-	
-	const struct sieve_operand *operand;
-	unsigned int code;
-	
+		
 	bool (*validate)
 		(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 			struct sieve_match_type_context *ctx);
@@ -119,10 +117,6 @@ extern const struct sieve_argument match_type_tag;
 const struct sieve_operand match_type_operand;
 struct sieve_operand_class sieve_match_type_operand_class;
 
-struct sieve_match_type_operand_interface {
-	struct sieve_extension_obj_registry match_types;
-};
-
 #define SIEVE_EXT_DEFINE_MATCH_TYPE(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
 #define SIEVE_EXT_DEFINE_MATCH_TYPES(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
@@ -133,17 +127,32 @@ static inline bool sieve_operand_is_match_type
 		operand->class == &sieve_match_type_operand_class );
 }
 
-const struct sieve_match_type *sieve_opr_match_type_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
-bool sieve_opr_match_type_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static inline void sieve_opr_match_type_emit
+(struct sieve_binary *sbin, const struct sieve_match_type *mtch, int ext_id)
+{ 
+	sieve_opr_object_emit(sbin, &mtch->object, ext_id);
+}
+
+static inline const struct sieve_match_type *sieve_opr_match_type_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
+{
+	return (const struct sieve_match_type *) sieve_opr_object_read
+		(renv, &sieve_match_type_operand_class, address);
+}
+
+static inline bool sieve_opr_match_type_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	return sieve_opr_object_dump
+		(denv, &sieve_match_type_operand_class, address);
+}
+
+/* Match Utility */
 
 bool sieve_match_substring_validate_context
-	(struct sieve_validator *validator, struct sieve_ast_argument *arg,
-    	struct sieve_match_type_context *ctx,
-		struct sieve_ast_argument *key_arg);
-		
-/* Match Utility */
+(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+    struct sieve_match_type_context *ctx, 
+	struct sieve_ast_argument *key_arg);
 
 struct sieve_match_context *sieve_match_begin
 (struct sieve_interpreter *interp, 

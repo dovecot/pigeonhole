@@ -33,17 +33,6 @@ const struct sieve_address_part *sieve_core_address_parts[] = {
 const unsigned int sieve_core_address_parts_count = 
 	N_ELEMENTS(sieve_core_address_parts);
 
-static struct sieve_extension_obj_registry addrp_default_reg =
-	SIEVE_EXT_DEFINE_ADDRESS_PARTS(sieve_core_address_parts);
-
-/* 
- * Forward declarations 
- */
-  
-static void opr_address_part_emit
-	(struct sieve_binary *sbin, const struct sieve_address_part *addrp, 
-		int ext_id);
-
 /* 
  * Address-part 'extension' 
  */
@@ -52,17 +41,14 @@ static int ext_my_id = -1;
 
 static bool addrp_extension_load(int ext_id);
 static bool addrp_validator_load(struct sieve_validator *validator);
-static bool addrp_binary_load(struct sieve_binary *sbin);
 
 const struct sieve_extension address_part_extension = {
 	"@address-parts",
 	addrp_extension_load,
 	addrp_validator_load,
-	NULL, NULL, NULL, 
-	addrp_binary_load,
-	NULL,
+	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	SIEVE_EXT_DEFINE_NO_OPERANDS /* Defined as core operand */
 };
 	
 static bool addrp_extension_load(int ext_id) 
@@ -105,7 +91,8 @@ static void _sieve_address_part_register
 	reg->address_part = addrp;
 	reg->ext_id = ext_id;
 	
-	hash_insert(ctx->registrations, (void *) addrp->identifier, (void *) reg);
+	hash_insert
+		(ctx->registrations, (void *) addrp->object.identifier, (void *) reg);
 }
  
 void sieve_address_part_register
@@ -166,48 +153,8 @@ void sieve_address_parts_link_tags
 		(validator, cmd_reg, &address_part_tag, id_code); 	
 }
 
-/*
- * Binary context
- */
-
-static inline const struct sieve_address_part_extension *
-	sieve_address_part_extension_get(struct sieve_binary *sbin, int ext_id)
-{
-	return (const struct sieve_address_part_extension *)
-		sieve_binary_registry_get_object(sbin, ext_my_id, ext_id);
-}
-
-void sieve_address_part_extension_set
-	(struct sieve_binary *sbin, int ext_id,
-		const struct sieve_address_part_extension *ext)
-{
-	sieve_binary_registry_set_object
-		(sbin, ext_my_id, ext_id, (const void *) ext);
-}
-
-static bool addrp_binary_load(struct sieve_binary *sbin)
-{
-	sieve_binary_registry_init(sbin, ext_my_id);
-	
-	return TRUE;
-}
-
-/*
- * Address-part operand
- */
- 
-struct sieve_operand_class address_part_class = 
-	{ "address-part" };
-
-struct sieve_operand address_part_operand = { 
-	"address-part", 
-	NULL, SIEVE_OPERAND_ADDRESS_PART,
-	&address_part_class,
-	NULL
-};
-
 /* 
- * Address-part tag 
+ * Address-part tagged argument 
  */
   
 static bool tag_address_part_is_instance_of
@@ -250,93 +197,35 @@ static bool tag_address_part_validate
 	return TRUE;
 }
 
-/* 
- * Code generation 
- */
-
-static void opr_address_part_emit
-(struct sieve_binary *sbin, const struct sieve_address_part *addrp, int ext_id)
-{
-	(void) sieve_operand_emit_code(sbin, &address_part_operand, -1);	
-
-	(void) sieve_extension_emit_obj
-		(sbin, &addrp_default_reg, addrp, address_parts, ext_id);
-}
-
-static const struct sieve_extension_obj_registry *
-	sieve_address_part_registry_get
-(struct sieve_binary *sbin, unsigned int ext_index)
-{
-	int ext_id = -1; 
-	const struct sieve_address_part_extension *ext;
-	
-	if ( sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id) == NULL )
-		return NULL;
-
-	if ( (ext=sieve_address_part_extension_get(sbin, ext_id)) == NULL ) 
-		return NULL;
-		
-	return &(ext->address_parts);
-}
-
-static inline const struct sieve_address_part *sieve_address_part_read
-(struct sieve_binary *sbin, sieve_size_t *address)
-{
-	return sieve_extension_read_obj
-		(struct sieve_address_part, sbin, address, &addrp_default_reg, 
-			sieve_address_part_registry_get);
-}
-
-const struct sieve_address_part *sieve_opr_address_part_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
-{
-	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
-	
-	if ( operand == NULL || operand->class != &address_part_class ) 
-		return NULL;
-
-	return sieve_address_part_read(renv->sbin, address);
-}
-
-bool sieve_opr_address_part_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address)
-{
-	const struct sieve_operand *operand = sieve_operand_read(denv->sbin, address);
-	const struct sieve_address_part *addrp; 
-	
-	if ( operand == NULL || operand->class != &address_part_class ) 
-		return NULL;
-		
-	sieve_code_mark(denv);
-	addrp = sieve_address_part_read(denv->sbin, address);
-	
-	if ( addrp == NULL )
-		return FALSE;
-		
-	sieve_code_dumpf(denv, "ADDRESS-PART: %s", addrp->identifier);
-	
-	return TRUE;
-}
-
 static bool tag_address_part_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	struct sieve_address_part_context *adpctx =
 		(struct sieve_address_part_context *) arg->context;
-	const struct sieve_address_part *addrp = adpctx->address_part;	
-	
-	if ( addrp->extension == NULL ) {
-		if ( addrp->code < SIEVE_ADDRESS_PART_CUSTOM )
-			opr_address_part_emit(cgenv->sbin, addrp, -1);
-		else
-			return FALSE;
-	} else {
-		opr_address_part_emit(cgenv->sbin, addrp, adpctx->ext_id);
-	} 
+		
+	sieve_opr_address_part_emit
+		(cgenv->sbin, adpctx->address_part, adpctx->ext_id); 
 		
 	return TRUE;
 }
+
+/*
+ * Address-part operand
+ */
+ 
+struct sieve_operand_class sieve_address_part_operand_class = 
+	{ "ADDRESS-PART" };
+
+static const struct sieve_extension_obj_registry core_address_parts =
+	SIEVE_EXT_DEFINE_MATCH_TYPES(sieve_core_address_parts);
+
+const struct sieve_operand address_part_operand = { 
+	"address-part", 
+	NULL, SIEVE_OPERAND_ADDRESS_PART,
+	&sieve_address_part_operand_class,
+	&core_address_parts
+};
 
 /*
  * Address Matching
@@ -481,23 +370,17 @@ static const char *addrp_localpart_extract_from
 }
 
 const struct sieve_address_part all_address_part = {
-	"all",
-	NULL,
-	SIEVE_ADDRESS_PART_ALL,
+	SIEVE_OBJECT("all", &address_part_operand, SIEVE_ADDRESS_PART_ALL),
 	addrp_all_extract_from
 };
 
 const struct sieve_address_part local_address_part = {
-	"localpart",
-	NULL,
-	SIEVE_ADDRESS_PART_LOCAL,
+	SIEVE_OBJECT("localpart", &address_part_operand, SIEVE_ADDRESS_PART_LOCAL),
 	addrp_localpart_extract_from
 };
 
 const struct sieve_address_part domain_address_part = {
-	"domain",
-	NULL,
-	SIEVE_ADDRESS_PART_DOMAIN,
+	SIEVE_OBJECT("domain", &address_part_operand,	SIEVE_ADDRESS_PART_DOMAIN),
 	addrp_domain_extract_from
 };
 

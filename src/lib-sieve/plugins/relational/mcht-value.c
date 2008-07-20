@@ -20,21 +20,21 @@
  */
 
 const struct sieve_match_type value_match_type = {
-	"value", TRUE,
-	&rel_match_type_operand,
-	RELATIONAL_VALUE,
+	SIEVE_OBJECT("value", &rel_match_type_operand, RELATIONAL_VALUE), 
+	TRUE,
 	mcht_relational_validate,
 	NULL, NULL, NULL, NULL
 };
 
 #define VALUE_MATCH_TYPE(name, rel_match)                   \
 const struct sieve_match_type rel_match_value_ ## name = {  \
-	"value-" #name, TRUE,                                   \
-	&rel_match_type_operand,                                \
-	REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match),           \
-	NULL, NULL, NULL,                                       \
-	mcht_value_match,                                       \
-	NULL                                                    \
+	SIEVE_OBJECT(                                             \
+		"value-" #name, &rel_match_type_operand,                \
+		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match)),          \
+	TRUE,                                                     \
+	NULL, NULL, NULL,                                         \
+	mcht_value_match,                                         \
+	NULL                                                      \
 }
 
 VALUE_MATCH_TYPE(gt, REL_MATCH_GREATER);
@@ -53,7 +53,7 @@ bool mcht_value_match
 	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {
 	const struct sieve_match_type *mtch = mctx->match_type;
-	unsigned int rel_match = REL_MATCH(mtch->code);	
+	unsigned int rel_match = REL_MATCH(mtch->object.code);	
 	int cmp_result = mctx->comparator->
 		compare(mctx->comparator, val, val_size, key, key_size);
 

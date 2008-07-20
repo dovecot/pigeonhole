@@ -22,9 +22,8 @@ static bool mcht_contains_match
  */
 
 const struct sieve_match_type contains_match_type = {
-	"contains", TRUE,
-	&match_type_operand,
-	SIEVE_MATCH_TYPE_CONTAINS,
+	SIEVE_OBJECT("contains", &match_type_operand,	SIEVE_MATCH_TYPE_CONTAINS),
+	TRUE,
 	NULL,
 	sieve_match_substring_validate_context,
 	NULL,

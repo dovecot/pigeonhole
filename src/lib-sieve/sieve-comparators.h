@@ -5,6 +5,7 @@
 #define __SIEVE_COMPARATORS_H
 
 #include "sieve-common.h"
+#include "sieve-objects.h"
 #include "sieve-extensions.h"
 #include "sieve-code.h"
 
@@ -37,12 +38,9 @@ enum sieve_comparator_flags {
  */
 
 struct sieve_comparator {
-	const char *identifier;
-	
+	struct sieve_object object;	
+		
 	unsigned int flags;
-	
-	const struct sieve_operand *operand;
-	unsigned int code;
 	
 	/* Equality and ordering */
 
@@ -84,27 +82,31 @@ const struct sieve_comparator *sieve_comparator_find
  * Comparator operand
  */
 
-struct sieve_comparator_operand_interface {
-	struct sieve_extension_obj_registry comparators;
-};
-
 #define SIEVE_EXT_DEFINE_COMPARATOR(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
 #define SIEVE_EXT_DEFINE_COMPARATORS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 extern const struct sieve_operand_class sieve_comparator_operand_class;
 extern const struct sieve_operand comparator_operand;
 
-static inline bool sieve_operand_is_comparator
-(const struct sieve_operand *operand)
-{
-	return ( operand != NULL && 
-		operand->class == &sieve_comparator_operand_class );
+static inline void sieve_opr_comparator_emit
+(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id)
+{ 
+	sieve_opr_object_emit(sbin, &cmp->object, ext_id);
 }
 
-const struct sieve_comparator *sieve_opr_comparator_read
-  (const struct sieve_runtime_env *renv, sieve_size_t *address);
-bool sieve_opr_comparator_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static inline const struct sieve_comparator *sieve_opr_comparator_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
+{
+	return (const struct sieve_comparator *) sieve_opr_object_read
+		(renv, &sieve_comparator_operand_class, address);
+}
+
+static inline bool sieve_opr_comparator_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	return sieve_opr_object_dump
+		(denv, &sieve_comparator_operand_class, address);
+}
 	
 /*
  * Trivial/Common comparator method implementations

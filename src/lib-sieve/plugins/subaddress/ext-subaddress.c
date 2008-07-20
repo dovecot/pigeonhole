@@ -29,9 +29,10 @@
 
 /* Forward declarations */
 
+static struct sieve_operand subaddress_operand;
+
 static bool ext_subaddress_load(int ext_id);
 static bool ext_subaddress_validator_load(struct sieve_validator *validator);
-static bool ext_subaddress_binary_load(struct sieve_binary *sbin);
 
 /* Extension definitions */
 
@@ -41,11 +42,9 @@ const struct sieve_extension subaddress_extension = {
 	"subaddress", 
 	ext_subaddress_load,
 	ext_subaddress_validator_load,
-	NULL, NULL, NULL,
-	ext_subaddress_binary_load,
-	NULL,  
+	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	SIEVE_EXT_DEFINE_OPERAND(subaddress_operand)
 };
 
 static bool ext_subaddress_load(int ext_id)
@@ -84,19 +83,13 @@ enum ext_subaddress_address_part {
   SUBADDRESS_DETAIL
 };
 
-extern const struct sieve_address_part_extension subaddress_addrp_extension;
-
 const struct sieve_address_part user_address_part = {
-	"user",
-	&subaddress_addrp_extension,
-	SUBADDRESS_USER,
+	SIEVE_OBJECT("user", &subaddress_operand, SUBADDRESS_USER),
 	subaddress_user_extract_from
 };
 
 const struct sieve_address_part detail_address_part = {
-	"detail",
-	&subaddress_addrp_extension,
-	SUBADDRESS_DETAIL,
+	SIEVE_OBJECT("detail", &subaddress_operand, SUBADDRESS_DETAIL),
 	subaddress_detail_extract_from
 };
 
@@ -104,9 +97,14 @@ const struct sieve_address_part *ext_subaddress_parts[] = {
 	&user_address_part, &detail_address_part
 };
 
-const struct sieve_address_part_extension subaddress_addrp_extension = { 
-	&subaddress_extension,
-	SIEVE_EXT_DEFINE_ADDRESS_PARTS(ext_subaddress_parts)
+static const struct sieve_extension_obj_registry ext_address_parts =
+	SIEVE_EXT_DEFINE_ADDRESS_PARTS(ext_subaddress_parts);
+
+static struct sieve_operand subaddress_operand = { 
+	"address-part", 
+	&subaddress_extension, 0,
+	&sieve_address_part_operand_class,
+	&ext_address_parts
 };
 
 /* Load extension into validator */
@@ -117,16 +115,6 @@ static bool ext_subaddress_validator_load(struct sieve_validator *validator)
 		(validator, &user_address_part, ext_my_id); 
 	sieve_address_part_register
 		(validator, &detail_address_part, ext_my_id); 
-
-	return TRUE;
-}
-
-/* Load extension into binary */
-
-static bool ext_subaddress_binary_load(struct sieve_binary *sbin)
-{
-	sieve_address_part_extension_set
-		(sbin, ext_my_id, &subaddress_addrp_extension);
 
 	return TRUE;
 }

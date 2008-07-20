@@ -40,9 +40,8 @@ bool mcht_regex_validate_context
     struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg);
 
 const struct sieve_match_type regex_match_type = {
-	"regex", TRUE,
-	&regex_match_type_operand,
-	0,
+	SIEVE_OBJECT("regex", &regex_match_type_operand, 0),
+	TRUE,
 	NULL,
 	mcht_regex_validate_context,
 	mcht_regex_match_init,

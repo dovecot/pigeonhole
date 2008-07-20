@@ -70,6 +70,7 @@ libsieve_la_SOURCES = \
 	sieve-binary-dumper.c \
 	sieve-result.c \
 	sieve-error.c \
+	sieve-objects.c \
 	sieve-comparators.c \
 	sieve-match-types.c \
 	sieve-address-parts.c \

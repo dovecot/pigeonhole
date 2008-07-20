@@ -53,7 +53,7 @@ bool mcht_relational_validate
 			"the :%s match-type requires a constant string argument being "
 			"one of \"gt\", \"ge\", \"lt\", \"le\", \"eq\" or \"ne\", "
 			"but %s was found", 
-			ctx->match_type->identifier, sieve_ast_argument_name(*arg));
+			ctx->match_type->object.identifier, sieve_ast_argument_name(*arg));
 		return FALSE;
 	}
 	
@@ -112,7 +112,7 @@ bool mcht_relational_validate
 			"the :%s match-type requires a constant string argument being "
 			"one of \"gt\", \"ge\", \"lt\", \"le\", \"eq\" or \"ne\", "
 			"but \"%s\" was found", 
-			ctx->match_type->identifier, rel_match_id);
+			ctx->match_type->object.identifier, rel_match_id);
 		return FALSE;
 	}
 	
@@ -124,7 +124,7 @@ bool mcht_relational_validate
 
 	/* Override the actual match type with a parameter-specific one */
 	ctx->match_type = rel_match_types
-		[REL_MATCH_INDEX(ctx->match_type->code, rel_match)];
+		[REL_MATCH_INDEX(ctx->match_type->object.code, rel_match)];
 
 	return TRUE;
 }
@@ -140,16 +140,14 @@ const const struct sieve_match_type *rel_match_types[] = {
     &rel_match_count_le, &rel_match_count_eq, &rel_match_count_ne
 };
 
-static const struct sieve_match_type_operand_interface match_type_operand_intf =
-{
-    SIEVE_EXT_DEFINE_MATCH_TYPES(rel_match_types)
-};
+static const struct sieve_extension_obj_registry ext_match_types =
+	SIEVE_EXT_DEFINE_MATCH_TYPES(rel_match_types);
 
 const struct sieve_operand rel_match_type_operand = {
     "relational match",
     &relational_extension,
     0,
     &sieve_match_type_operand_class,
-    &match_type_operand_intf
+    &ext_match_types
 };
 

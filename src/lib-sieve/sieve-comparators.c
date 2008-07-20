@@ -96,7 +96,8 @@ static void _sieve_comparator_register
 	reg->comparator = cmp;
 	reg->ext_id = ext_id;
 	
-	hash_insert(ctx->registrations, (void *) cmp->identifier, (void *) reg);
+	hash_insert
+		(ctx->registrations, (void *) cmp->object.identifier, (void *) reg);
 }
  
 void sieve_comparator_register
@@ -280,75 +281,18 @@ const struct sieve_comparator *sieve_comparator_tag_get
  */
  
 const struct sieve_operand_class sieve_comparator_operand_class = 
-	{ "comparator" };
+	{ "COMPARATOR" };
 	
-static const struct sieve_comparator_operand_interface 
-	comparator_operand_intf = {
-	SIEVE_EXT_DEFINE_COMPARATORS(sieve_core_comparators)
-};
+static const struct sieve_extension_obj_registry core_comparators =
+	SIEVE_EXT_DEFINE_COMPARATORS(sieve_core_comparators);
 
 const struct sieve_operand comparator_operand = { 
 	"comparator", 
 	NULL,
 	SIEVE_OPERAND_COMPARATOR, 
 	&sieve_comparator_operand_class,
-	&comparator_operand_intf
+	&core_comparators
 };
-
-static void sieve_opr_comparator_emit
-	(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id)
-{ 
-	(void) sieve_operand_emit_code(sbin, cmp->operand, ext_id);	
-	(void) sieve_binary_emit_byte(sbin, cmp->code);
-}
-
-static const struct sieve_comparator *_sieve_opr_comparator_read_data
-  (struct sieve_binary *sbin, const struct sieve_operand *operand,
-  	sieve_size_t *address)
-{
-	const struct sieve_comparator_operand_interface *intf;	
-	unsigned int obj_code; 
-
-	if ( !sieve_operand_is_comparator(operand) )
-		return NULL;
-	
-	intf = operand->interface;
-	if ( intf == NULL ) 
-		return NULL;
-			
-	if ( !sieve_binary_read_byte(sbin, address, &obj_code) ) 
-		return NULL;
-
-	return sieve_extension_get_object
-		(struct sieve_comparator, intf->comparators, obj_code);
-}
-
-const struct sieve_comparator *sieve_opr_comparator_read
-  (const struct sieve_runtime_env *renv, sieve_size_t *address)
-{
-	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
-	
-	return _sieve_opr_comparator_read_data(renv->sbin, operand, address);
-}
-
-bool sieve_opr_comparator_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
-{
-	const struct sieve_operand *operand;
-	const struct sieve_comparator *cmp;
-	
-	sieve_code_mark(denv);
-	
-	operand = sieve_operand_read(denv->sbin, address); 
-	cmp = _sieve_opr_comparator_read_data(denv->sbin, operand, address);
-	
-	if ( cmp == NULL )
-		return FALSE;
-		
-	sieve_code_dumpf(denv, "COMPARATOR: %s", cmp->identifier);
-	
-	return TRUE;
-}
 
 /*
  * Trivial/Common comparator method implementations

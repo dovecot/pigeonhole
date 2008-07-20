@@ -33,22 +33,22 @@ static bool mcht_count_match_deinit(struct sieve_match_context *mctx);
  */
 
 const struct sieve_match_type count_match_type = {
-	"count", FALSE,
-	&rel_match_type_operand,
-	RELATIONAL_COUNT,
+	SIEVE_OBJECT("count", &rel_match_type_operand, RELATIONAL_COUNT),
+	FALSE,
 	mcht_relational_validate,
 	NULL, NULL, NULL, NULL
 };
 
 #define COUNT_MATCH_TYPE(name, rel_match)                   \
 const struct sieve_match_type rel_match_count_ ## name = {  \
-	"count-" #name, FALSE,                                  \
-	&rel_match_type_operand,                                \
-	REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match),           \
-	NULL, NULL,                                             \
-	mcht_count_match_init,                                  \
-	mcht_count_match,                                       \
-	mcht_count_match_deinit                                 \
+	SIEVE_OBJECT(                                             \
+		"count-" #name, &rel_match_type_operand,                \
+		REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match)),          \
+	FALSE,                                                    \
+	NULL, NULL,                                               \
+	mcht_count_match_init,                                    \
+	mcht_count_match,                                         \
+	mcht_count_match_deinit                                   \
 }
 	
 COUNT_MATCH_TYPE(gt, REL_MATCH_GREATER);

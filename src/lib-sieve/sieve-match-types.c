@@ -96,7 +96,8 @@ static void _sieve_match_type_register
 	reg->match_type = mtch;
 	reg->ext_id = ext_id;
 	
-	hash_insert(ctx->registrations, (void *) mtch->identifier, (void *) reg);
+	hash_insert(ctx->registrations, (void *) mtch->object.identifier, 
+		(void *) reg);
 }
  
 void sieve_match_type_register
@@ -436,75 +437,18 @@ void sieve_match_types_link_tags
  */
  
 struct sieve_operand_class sieve_match_type_operand_class = 
-	{ "match-type" };
+	{ "MATCH-TYPE" };
 	
-static const struct sieve_match_type_operand_interface 
-	match_type_operand_intf = {
-	SIEVE_EXT_DEFINE_MATCH_TYPES(sieve_core_match_types)
-};
+static const struct sieve_extension_obj_registry core_match_types =
+	SIEVE_EXT_DEFINE_MATCH_TYPES(sieve_core_match_types);
 
 const struct sieve_operand match_type_operand = { 
 	"match-type", 
 	NULL,
 	SIEVE_OPERAND_MATCH_TYPE,
 	&sieve_match_type_operand_class,
-	&match_type_operand_intf
+	&core_match_types
 };
-
-static void sieve_opr_match_type_emit
-	(struct sieve_binary *sbin, const struct sieve_match_type *mtch, int ext_id)
-{ 
-	(void) sieve_operand_emit_code(sbin, mtch->operand, ext_id);	
-	(void) sieve_binary_emit_byte(sbin, mtch->code);
-}
-
-static const struct sieve_match_type *_sieve_opr_match_type_read_data
-  (struct sieve_binary *sbin, const struct sieve_operand *operand,
-  	sieve_size_t *address)
-{
-	const struct sieve_match_type_operand_interface *intf;	
-	unsigned int obj_code; 
-
-	if ( !sieve_operand_is_match_type(operand) )
-		return NULL;
-	
-	intf = operand->interface;
-	if ( intf == NULL ) 
-		return NULL;
-			
-	if ( !sieve_binary_read_byte(sbin, address, &obj_code) ) 
-		return NULL;
-
-	return sieve_extension_get_object
-		(struct sieve_match_type, intf->match_types, obj_code);
-}
-
-const struct sieve_match_type *sieve_opr_match_type_read
-  (const struct sieve_runtime_env *renv, sieve_size_t *address)
-{
-	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
-	
-	return _sieve_opr_match_type_read_data(renv->sbin, operand, address);
-}
-
-bool sieve_opr_match_type_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
-{
-	const struct sieve_operand *operand;
-	const struct sieve_match_type *mtch;
-	
-	sieve_code_mark(denv);
-	
-	operand = sieve_operand_read(denv->sbin, address); 
-	mtch = _sieve_opr_match_type_read_data(denv->sbin, operand, address);
-	
-	if ( mtch == NULL )
-		return FALSE;
-		
-	sieve_code_dumpf(denv, "MATCH-TYPE: %s", mtch->identifier);
-	
-	return TRUE;
-}
 
 /* Match Utility */
 
@@ -592,7 +536,7 @@ bool sieve_match_substring_validate_context
 				sieve_command_validate_error(validator, ctx->command_ctx,
 					"the specified %s comparator does not support "
 					"sub-string matching as required by the :%s match type",
-					cmp->identifier, ctx->match_type->identifier );
+					cmp->object.identifier, ctx->match_type->object.identifier );
 
 				return FALSE;
 			}
