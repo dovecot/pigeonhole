@@ -60,87 +60,41 @@ static bool addrp_extension_load(int ext_id)
 /* 
  * Validator context:
  *   name-based address-part registry. 
- *
- * FIXME: This code will be duplicated across all extensions that introduce 
- * a registry of some kind in the validator. 
  */
- 
-struct addrp_validator_registration {
-	int ext_id;
-	const struct sieve_address_part *address_part;
-};
- 
-struct addrp_validator_context {
-	struct hash_table *registrations;
-};
-
-static inline struct addrp_validator_context *
-	get_validator_context(struct sieve_validator *validator)
-{
-	return (struct addrp_validator_context *) 
-		sieve_validator_extension_get_context(validator, ext_my_id);
-}
-
-static void _sieve_address_part_register
-	(pool_t pool, struct addrp_validator_context *ctx, 
-	const struct sieve_address_part *addrp, int ext_id) 
-{
-	struct addrp_validator_registration *reg;
-	
-	reg = p_new(pool, struct addrp_validator_registration, 1);
-	reg->address_part = addrp;
-	reg->ext_id = ext_id;
-	
-	hash_insert
-		(ctx->registrations, (void *) addrp->object.identifier, (void *) reg);
-}
  
 void sieve_address_part_register
 	(struct sieve_validator *validator, 
 	const struct sieve_address_part *addrp, int ext_id) 
 {
-	pool_t pool = sieve_validator_pool(validator);
-	struct addrp_validator_context *ctx = get_validator_context(validator);
-
-	_sieve_address_part_register(pool, ctx, addrp, ext_id);
+	struct sieve_validator_object_registry *regs = 
+		sieve_validator_object_registry_get(validator, ext_my_id);
+	
+	sieve_validator_object_registry_add(regs, &addrp->object, ext_id);
 }
 
 const struct sieve_address_part *sieve_address_part_find
 	(struct sieve_validator *validator, const char *identifier,
 		int *ext_id) 
 {
-	struct addrp_validator_context *ctx = get_validator_context(validator);
-	struct addrp_validator_registration *reg =
-		(struct addrp_validator_registration *) 
-			hash_lookup(ctx->registrations, identifier);
-			
-	if ( reg == NULL ) return NULL;
+	struct sieve_validator_object_registry *regs = 
+		sieve_validator_object_registry_get(validator, ext_my_id);
+	const struct sieve_object *object = 
+		sieve_validator_object_registry_find(regs, identifier, ext_id);
 
-	if ( ext_id != NULL ) *ext_id = reg->ext_id;
-
-  return reg->address_part;
+  return (const struct sieve_address_part *) object;
 }
 
 bool addrp_validator_load(struct sieve_validator *validator)
 {
+	struct sieve_validator_object_registry *regs = 
+		sieve_validator_object_registry_init(validator, ext_my_id);
 	unsigned int i;
-	pool_t pool = sieve_validator_pool(validator);
-	
-	struct addrp_validator_context *ctx = 
-		p_new(pool, struct addrp_validator_context, 1);
-	
-	/* Setup address-part registry */
-	ctx->registrations = hash_create
-		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 
 	/* Register core address-parts */
 	for ( i = 0; i < sieve_core_address_parts_count; i++ ) {
-		const struct sieve_address_part *addrp = sieve_core_address_parts[i];
-		
-		_sieve_address_part_register(pool, ctx, addrp, -1);
+		sieve_validator_object_registry_add
+			(regs, &(sieve_core_address_parts[i]->object), -1);
 	}
-
-	sieve_validator_extension_set_context(validator, ext_my_id, ctx);
 
 	return TRUE;
 }

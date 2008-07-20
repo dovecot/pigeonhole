@@ -52,7 +52,7 @@ const struct sieve_extension regex_extension = {
 	ext_regex_validator_load,
 	NULL, NULL, NULL, NULL, NULL,  
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	SIEVE_EXT_DEFINE_OPERAND(regex_match_type_operand)
 };
 
 static bool ext_regex_load(int ext_id)

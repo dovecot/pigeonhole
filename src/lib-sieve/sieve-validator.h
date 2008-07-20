@@ -94,4 +94,23 @@ void sieve_validator_extension_set_context
 const void *sieve_validator_extension_get_context
 	(struct sieve_validator *validator, int ext_id);
 
+/*
+ * Validator object registry
+ */
+
+struct sieve_validator_object_registry;
+
+struct sieve_validator_object_registry *sieve_validator_object_registry_get
+	(struct sieve_validator *validator, int ext_id);
+void sieve_validator_object_registry_add
+	(struct sieve_validator_object_registry *regs,
+		const struct sieve_object *object, int ext_id);
+const struct sieve_object *sieve_validator_object_registry_find
+	(struct sieve_validator_object_registry *regs, const char *identifier,
+		int *ext_id);
+struct sieve_validator_object_registry *sieve_validator_object_registry_create
+	(struct sieve_validator *validator);
+struct sieve_validator_object_registry *sieve_validator_object_registry_init
+	(struct sieve_validator *validator, int ext_id);
+
 #endif /* __SIEVE_VALIDATOR_H */

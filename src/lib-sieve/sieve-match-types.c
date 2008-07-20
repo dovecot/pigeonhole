@@ -65,87 +65,40 @@ static bool mtch_extension_load(int ext_id)
 /* 
  * Validator context:
  *   name-based match-type registry. 
- *
- * FIXME: This code will be duplicated across all extensions that introduce 
- * a registry of some kind in the validator. 
  */
  
-struct mtch_validator_registration {
-	int ext_id;
-	const struct sieve_match_type *match_type;
-};
- 
-struct mtch_validator_context {
-	struct hash_table *registrations;
-};
-
-static inline struct mtch_validator_context *
-	get_validator_context(struct sieve_validator *validator)
-{
-	return (struct mtch_validator_context *) 
-		sieve_validator_extension_get_context(validator, ext_my_id);
-}
-
-static void _sieve_match_type_register
-	(pool_t pool, struct mtch_validator_context *ctx, 
-	const struct sieve_match_type *mtch, int ext_id) 
-{
-	struct mtch_validator_registration *reg;
-	
-	reg = p_new(pool, struct mtch_validator_registration, 1);
-	reg->match_type = mtch;
-	reg->ext_id = ext_id;
-	
-	hash_insert(ctx->registrations, (void *) mtch->object.identifier, 
-		(void *) reg);
-}
- 
 void sieve_match_type_register
-	(struct sieve_validator *validator, 
-	const struct sieve_match_type *mtch, int ext_id) 
+(struct sieve_validator *validator, const struct sieve_match_type *mtch, 
+	int ext_id) 
 {
-	pool_t pool = sieve_validator_pool(validator);
-	struct mtch_validator_context *ctx = get_validator_context(validator);
-
-	_sieve_match_type_register(pool, ctx, mtch, ext_id);
+	struct sieve_validator_object_registry *regs = 
+		sieve_validator_object_registry_get(validator, ext_my_id);
+	
+	sieve_validator_object_registry_add(regs, &mtch->object, ext_id);
 }
 
 const struct sieve_match_type *sieve_match_type_find
-	(struct sieve_validator *validator, const char *identifier,
-		int *ext_id) 
+(struct sieve_validator *validator, const char *identifier, int *ext_id) 
 {
-	struct mtch_validator_context *ctx = get_validator_context(validator);
-	struct mtch_validator_registration *reg =
-		(struct mtch_validator_registration *) 
-			hash_lookup(ctx->registrations, identifier);
-			
-	if ( reg == NULL ) return NULL;
+	struct sieve_validator_object_registry *regs = 
+		sieve_validator_object_registry_get(validator, ext_my_id);
+	const struct sieve_object *object = 
+		sieve_validator_object_registry_find(regs, identifier, ext_id);
 
-	if ( ext_id != NULL ) *ext_id = reg->ext_id;
-
-  return reg->match_type;
+  return (const struct sieve_match_type *) object;
 }
 
 bool mtch_validator_load(struct sieve_validator *validator)
 {
+	struct sieve_validator_object_registry *regs = 
+		sieve_validator_object_registry_init(validator, ext_my_id);
 	unsigned int i;
-	pool_t pool = sieve_validator_pool(validator);
-	
-	struct mtch_validator_context *ctx = 
-		p_new(pool, struct mtch_validator_context, 1);
-	
-	/* Setup match-type registry */
-	ctx->registrations = hash_create
-		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 
 	/* Register core match-types */
 	for ( i = 0; i < sieve_core_match_types_count; i++ ) {
-		const struct sieve_match_type *mtch = sieve_core_match_types[i];
-		
-		_sieve_match_type_register(pool, ctx, mtch, -1);
+		sieve_validator_object_registry_add
+			(regs, &(sieve_core_match_types[i]->object), -1);
 	}
-
-	sieve_validator_extension_set_context(validator, ext_my_id, ctx);
 
 	return TRUE;
 }

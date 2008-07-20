@@ -947,5 +947,78 @@ bool sieve_validator_run(struct sieve_validator *validator) {
 	return sieve_validate_block(validator, sieve_ast_root(validator->ast));
 }
 
+/*
+ * Validator object registry
+ */
+
+struct sieve_validator_object_reg {
+	const struct sieve_object *object;
+	int ext_id;
+};
+ 
+struct sieve_validator_object_registry {
+	struct sieve_validator *validator;
+	struct hash_table *registrations;
+};
+
+struct sieve_validator_object_registry *sieve_validator_object_registry_get
+(struct sieve_validator *validator, int ext_id)
+{
+	return (struct sieve_validator_object_registry *) 
+		sieve_validator_extension_get_context(validator, ext_id);
+}
+
+void sieve_validator_object_registry_add
+(struct sieve_validator_object_registry *regs,
+	const struct sieve_object *object, int ext_id) 
+{
+	struct sieve_validator_object_reg *reg;
+	
+	reg = p_new(regs->validator->pool, struct sieve_validator_object_reg, 1);
+	reg->object = object;
+	reg->ext_id = ext_id;
+	
+	hash_insert
+		(regs->registrations, (void *) object->identifier, (void *) reg);
+}
+
+const struct sieve_object *sieve_validator_object_registry_find
+(struct sieve_validator_object_registry *regs, const char *identifier,
+		int *ext_id) 
+{
+	struct sieve_validator_object_reg *reg =(struct sieve_validator_object_reg *) 
+		hash_lookup(regs->registrations, identifier);
+			
+	if ( reg == NULL ) return NULL;
+
+	if ( ext_id != NULL ) *ext_id = reg->ext_id;
+
+  return reg->object;
+}
+
+struct sieve_validator_object_registry *sieve_validator_object_registry_create
+(struct sieve_validator *validator)
+{
+	pool_t pool = validator->pool;
+	struct sieve_validator_object_registry *regs = 
+		p_new(pool, struct sieve_validator_object_registry, 1);
+	
+	/* Setup comparator registry */
+	regs->registrations = hash_create
+		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
+	regs->validator = validator;
+
+	return regs;
+}
+
+struct sieve_validator_object_registry *sieve_validator_object_registry_init
+(struct sieve_validator *validator, int ext_id)
+{
+	struct sieve_validator_object_registry *regs = 
+		sieve_validator_object_registry_create(validator);
+	
+	sieve_validator_extension_set_context(validator, ext_id, regs);
+	return regs;
+}
 
 

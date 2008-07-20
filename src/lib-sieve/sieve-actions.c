@@ -35,7 +35,6 @@ const char *sieve_get_new_message_id
 static int ext_my_id = -1;
 
 static bool seffect_extension_load(int ext_id);
-static bool seffect_binary_load(struct sieve_binary *sbin);
 
 const struct sieve_extension side_effects_extension = {
 	"@side-effects",
