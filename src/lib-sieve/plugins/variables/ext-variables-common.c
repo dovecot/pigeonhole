@@ -8,6 +8,7 @@
 #include "sieve-ast.h"
 #include "sieve-binary.h"
 #include "sieve-code.h"
+#include "sieve-objects.h"
 #include "sieve-match-types.h"
 
 #include "sieve-commands.h"
@@ -18,6 +19,7 @@
 
 #include "ext-variables-common.h"
 #include "ext-variables-name.h"
+#include "ext-variables-modifiers.h"
 
 #include <ctype.h>
 
@@ -38,25 +40,6 @@ const struct ext_variables_set_modifier *default_set_modifiers[] = {
 const unsigned int default_set_modifiers_count = 
 	N_ELEMENTS(default_set_modifiers);
 	
-/*
- * Binary context
- */
-
-const struct sieve_variables_extension *
-	sieve_variables_extension_get(struct sieve_binary *sbin, int ext_id)
-{
-	return (const struct sieve_variables_extension *)
-		sieve_binary_registry_get_object(sbin, ext_variables_my_id, ext_id);
-}
-
-void sieve_variables_extension_set
-	(struct sieve_binary *sbin, int ext_id,
-		const struct sieve_variables_extension *ext)
-{
-	sieve_binary_registry_set_object
-		(sbin, ext_variables_my_id, ext_id, (const void *) ext);
-}
-
 /* Variable scope */
 
 struct sieve_variable_scope {
@@ -180,50 +163,31 @@ void sieve_variable_assign
 
 /* Validator context */
 
-struct ext_variables_validator_context {
-	struct hash_table *set_modifiers;
-	
-	struct sieve_variable_scope *main_scope;
-};
-
 static struct ext_variables_validator_context *
-ext_variables_validator_context_create(struct sieve_validator *validator)
+ext_variables_validator_context_create(struct sieve_validator *valdtr)
 {		
-	pool_t pool = sieve_validator_pool(validator);
+	pool_t pool = sieve_validator_pool(valdtr);
 	struct ext_variables_validator_context *ctx;
-	struct sieve_ast *ast = sieve_validator_ast(validator);
+	struct sieve_ast *ast = sieve_validator_ast(valdtr);
 	
 	ctx = p_new(pool, struct ext_variables_validator_context, 1);
-	ctx->set_modifiers = hash_create
-		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
+	ctx->modifiers = sieve_validator_object_registry_create(valdtr);
 	ctx->main_scope = sieve_variable_scope_create(sieve_ast_pool(ast), -1);
 
 	sieve_validator_extension_set_context
-		(validator, ext_variables_my_id, (void *) ctx);
+		(valdtr, ext_variables_my_id, (void *) ctx);
 
 	return ctx;
 }
 
 void ext_variables_validator_initialize(struct sieve_validator *validator)
 {
-	unsigned int i;
 	struct ext_variables_validator_context *ctx;
 	
 	/* Create our context */
 	ctx = ext_variables_validator_context_create(validator);
 	
-	for ( i = 0; i < default_set_modifiers_count; i++ ) {
-		const struct ext_variables_set_modifier *mod = default_set_modifiers[i];
-	
-		hash_insert(ctx->set_modifiers, (void *) mod->identifier, (void *) mod);
-	}
-}
-
-static inline struct ext_variables_validator_context *
-ext_variables_validator_context_get(struct sieve_validator *validator)
-{
-	return (struct ext_variables_validator_context *)
-		sieve_validator_extension_get_context(validator, ext_variables_my_id);
+	ext_variables_register_core_modifiers(ctx);
 }
 
 struct sieve_variable *ext_variables_validator_get_variable
@@ -331,16 +295,5 @@ void sieve_ext_variables_set_storage
 	array_idx_set(&ctx->ext_storages, (unsigned int) ext_id, &storage);
 }
 
-/* Set modifier registration */
-
-const struct ext_variables_set_modifier *ext_variables_set_modifier_find
-(struct sieve_validator *validator, const char *identifier)
-{
-	struct ext_variables_validator_context *ctx = 
-		ext_variables_validator_context_get(validator);
-		
-	return (const struct ext_variables_set_modifier *) 
-		hash_lookup(ctx->set_modifiers, identifier);
-}
 
 

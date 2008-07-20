@@ -7,6 +7,7 @@
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
+#include "sieve-objects.h"
 
 /*
  * Variable scope
@@ -46,23 +47,6 @@ void sieve_variable_assign
 	(struct sieve_variable_storage *storage, unsigned int index, 
 		const string_t *value);
 
-/* 
- * Variable extensions 
- */
-
-struct sieve_variables_extension {
-	const struct sieve_extension *extension;
-	
-	struct sieve_extension_obj_registry set_modifiers;
-};
-
-#define SIEVE_EXT_DEFINE_SET_MODIFIER(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
-#define SIEVE_EXT_DEFINE_SET_MODIFIERS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
-
-void sieve_variables_extension_set
-	(struct sieve_binary *sbin, int ext_id,
-		const struct sieve_variables_extension *ext);
-
 /*
  * Variables access
  */
@@ -101,5 +85,22 @@ static inline bool sieve_operand_is_variable
 {
 	return ( operand != NULL && operand == &variable_operand );
 }	
+
+/* Modifiers */
+
+struct sieve_variables_modifier {
+	struct sieve_object object;
+	
+	unsigned int precedence;
+	
+	bool (*modify)(string_t *in, string_t **result);
+};
+
+#define SIEVE_VARIABLES_DEFINE_MODIFIER(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
+#define SIEVE_VARIABLES_DEFINE_MODIFIERS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
+
+void sieve_variables_modifier_register
+(struct sieve_validator *valdtr, const struct sieve_variables_modifier *smodf, 
+	int ext_id);
 
 #endif /* __SIEVE_EXT_VARIABLES_H */

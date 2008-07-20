@@ -1,0 +1,187 @@
+require "vnd.dovecot.testsuite";
+require "variables";
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: test@example.com
+Subject: Variables test
+
+Testing variables...
+.
+;
+
+test "ASSIGNMENT-1" {
+	set "test" "Value";
+
+	if not string :is "${test}" "Value" {
+		test_fail "variable assignment failed";
+	}
+
+	if string :is "${test}" "value" {
+		test_fail "string test failed";
+	}
+}
+
+test "ASSIGNMENT-2" {
+	set "test" "Value";
+	set "test" "More";
+
+	if not string :is "${test}" "More" {
+		test_fail "variable assignment failed";
+	}
+
+	if string :is "${test}" "Value" {
+		test_fail "string test failed";
+	}
+}
+
+test "ASSIGNMENT-3" {
+	set "test" "Value";
+	set "test2" "More";
+
+	if not string :is "${test}" "Value" {
+		test_fail "variable assignment failed";
+	}
+
+	if string :is "${test}" "More" {
+		test_fail "string test failed";
+	}
+}
+
+test "MODIFIER-lower" {
+	set :lower "test" "VaLuE";
+
+	if not string :is "${test}" "value" {
+		test_fail "variable modified assignment failed";
+	}
+
+	if string :is "${test}" "VALUE" {
+		test_fail "string test failed";
+	}
+}
+
+test "MODIFIER-lower-upperfirst" {
+	set :lower :upperfirst "test" "vAlUe";
+
+	if not string :is "${test}" "Value" {
+		test_fail "variable modified assignment failed";
+	}
+
+	if string :is "${test}" "value" {
+		test_fail "string test failed";
+	}
+}
+
+test "MODIFIER-upper" {
+	set :upper "test" "vAlUe";
+
+	if not string :is "${test}" "VALUE" {
+		test_fail "variable modified assignment failed";
+	}
+
+	if string :is "${test}" "value" {
+		test_fail "string test failed";
+	}
+}
+
+test "MODIFIER-upper-lowerfirst" {
+	set :lowerfirst :upper "test" "VaLuE";
+
+	if not string :is "${test}" "vALUE" {
+		test_fail "variable modified assignment failed";
+	}
+
+	if string :is "${test}" "value" {
+		test_fail "string test failed";
+	}
+}
+
+test "MODIFIER-upper-lowerfirst" {
+	set :lowerfirst :upper "test" "VaLuE";
+
+	if not string :is "${test}" "vALUE" {
+		test_fail "variable modified assignment failed";
+	}
+
+	if string :is "${test}" "value" {
+		test_fail "string test failed";
+	}
+}
+
+test "MODIFIER-length-1" {
+	set :length "test" "VaLuE";
+
+	if not string :is "${test}" "5" {
+		test_fail "variable modified assignment failed";
+	}
+
+	if string :is "${test}" "value" {
+		test_fail "string test failed";
+	}
+}
+
+test "MODIFIER-length-2" {
+	set "a" "abcdefghijklmnopqrstuvwxyz";
+	set "b" "1234567890";
+	set :length "test" " ${a}:${b}  ";
+
+	if not string :is "${test}" "40" {
+		test_fail "variable modified assignment failed";
+	}
+
+	if string :is "${test}" "41" {
+		test_fail "string test failed";
+	}
+}
+
+test "MODIFIER-quotewildcard-1" {
+	set :quotewildcard "test" "^^***??**^^";
+
+	if not string :is "${test}" "^^\\*\\*\\*\\?\\?\\*\\*^^" {
+		test_fail "variable modified assignment failed";
+	}
+
+	if string :is "${test}" "^^***??**^^" {
+		test_fail "string test failed";
+	}
+}
+
+test "MODIFIER-quotewildcard-2" {
+	set :length :quotewildcard "test" "^^***??**^^";
+
+	if not string :is "${test}" "18" {
+		test_fail "variable modified assignment failed";
+	}
+
+	if string :is "${test}" "17" {
+		test_fail "string test failed";
+	}
+}
+
+test "MULTI-variable" {
+	set "a" "the monkey";
+	set "b" "a nut";
+	set "c" "the fish";
+	set "d" "on fire";
+	set "e" "eats";
+	set "f" "is";
+
+	if not string :is "${a} ${e} ${b}" "the monkey eats a nut" {
+		test_fail "variable composition failed (1)";
+	}
+
+	if not string :is "${c} ${f} ${d}" "the fish is on fire" {
+		test_fail "variable composition failed (2)";
+	}
+
+	if string :is "${a} ${f} ${c}" "the monkey eats a nut" {
+		test_fail "string test failed";
+	}
+
+	set :upperfirst "sentence" "${a} ${e} ${b}";
+
+	if not string :is "${sentence}" "The monkey eats a nut" {
+		test_fail "modified variable composition failed";
+	}	
+}
+

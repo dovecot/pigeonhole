@@ -16,6 +16,7 @@
 #include "sieve-dump.h"
 
 #include "ext-variables-common.h"
+#include "ext-variables-modifiers.h"
 
 #include <ctype.h>
 
@@ -53,7 +54,8 @@ const struct sieve_command cmd_set = {
 	NULL 
 };
 
-/* Set operation */
+/* Set operation 
+ */
 const struct sieve_operation cmd_set_operation = { 
 	"SET",
 	&variables_extension,
@@ -63,66 +65,34 @@ const struct sieve_operation cmd_set_operation = {
 };
 
 /* Compiler context */
-struct cmd_set_context {
-	ARRAY_DEFINE(modifiers, struct ext_variables_set_modifier *);
-	
+
+struct cmd_set_modifier_context {
+	const struct sieve_variables_modifier *modifier;
+	int ext_id;
 };
 
-/* Tag validation */
+struct cmd_set_context {
+	ARRAY_DEFINE(modifiers, struct cmd_set_modifier_context *);
+};
 
-/* [MODIFIER]:
+/* 
+ * Set modifier tag
+ *
+ * [MODIFIER]:
  *   ":lower" / ":upper" / ":lowerfirst" / ":upperfirst" /
  *             ":quotewildcard" / ":length"
- *
- * FIXME: Provide support to add further modifiers (as needed by notify) 
  */
+
+/* Forward declarations */
  
 static bool tag_modifier_is_instance_of
-(struct sieve_validator *validator ATTR_UNUSED, 
-	struct sieve_command_context *cmdctx ATTR_UNUSED,	
-	struct sieve_ast_argument *arg)
-{
-	arg->context = (void *) ext_variables_set_modifier_find
-		(validator, sieve_ast_argument_tag(arg));
-		
-	return arg->context != NULL;
-}
-
+	(struct sieve_validator *validator, struct sieve_command_context *cmdctx,	
+		struct sieve_ast_argument *arg);	
 static bool tag_modifier_validate
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
-{
-	unsigned int i;
-	bool inserted;
-	struct ext_variables_set_modifier *smodf = (*arg)->context;
-	struct cmd_set_context *sctx = (struct cmd_set_context *) cmd->data;
-	
-	inserted = FALSE;
-	for ( i = 0; i < array_count(&sctx->modifiers) && !inserted; i++ ) {
-		struct ext_variables_set_modifier * const * mdf =
-			array_idx(&sctx->modifiers, i);
-	
-		if ( (*mdf)->precedence == smodf->precedence ) {
-			sieve_command_validate_error(validator, cmd, 
-				"modifiers :%s and :%s specified for the set command conflict with "
-				"equal precedence", (*mdf)->identifier, smodf->identifier);
-			return FALSE;
-		}
-			
-		if ( (*mdf)->precedence < smodf->precedence ) {
-			array_insert(&sctx->modifiers, i, &smodf, 1);
-			inserted = TRUE;
-		}
-	}
-	
-	if ( !inserted )
-		array_append(&sctx->modifiers, &smodf, 1);
-	
-	/* Added to modifier list; self-destruct to prevent duplicate generation */
-	*arg = sieve_ast_arguments_detach(*arg, 1);
-	
-	return TRUE;
-}
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *cmd);
+
+/* Modifier tag object */
 
 const struct sieve_argument modifier_tag = { 
 	"MODIFIER",
@@ -131,69 +101,71 @@ const struct sieve_argument modifier_tag = {
 	tag_modifier_validate, 
 	NULL, NULL
 };
+ 
+/* Modifier tag implementation */ 
+ 
+static bool tag_modifier_is_instance_of
+(struct sieve_validator *validator ATTR_UNUSED, 
+	struct sieve_command_context *cmdctx,	
+	struct sieve_ast_argument *arg)
+{	
+	int ext_id;
+	const struct sieve_variables_modifier *modf = ext_variables_modifier_find
+		(validator, sieve_ast_argument_tag(arg), &ext_id);
+		
+	if ( modf != NULL ) {
+		pool_t pool = sieve_command_pool(cmdctx);
+		
+		struct cmd_set_modifier_context *ctx = 
+			p_new(pool, struct cmd_set_modifier_context, 1);
+		ctx->modifier = modf;
+		ctx->ext_id = ext_id;
+		
+		arg->context = ctx;
+		return TRUE;
+	}
+		
+	return FALSE;
+}
 
-/* Pre-defined modifiers */
-
-bool mod_lower_modify(string_t *in, string_t **result);
-bool mod_upper_modify(string_t *in, string_t **result);
-bool mod_lowerfirst_modify(string_t *in, string_t **result);
-bool mod_upperfirst_modify(string_t *in, string_t **result);
-bool mod_length_modify(string_t *in, string_t **result);
-bool mod_quotewildcard_modify(string_t *in, string_t **result);
-
-const struct ext_variables_set_modifier lower_modifier = {
-	"lower", 
-	EXT_VARIABLES_SET_MODIFIER_LOWER,
-	40,
-	mod_lower_modify
-};
-
-const struct ext_variables_set_modifier upper_modifier = {
-	"upper", 
-	EXT_VARIABLES_SET_MODIFIER_UPPER,
-	40,
-	mod_upper_modify
-};
-
-const struct ext_variables_set_modifier lowerfirst_modifier = {
-	"lowerfirst", 
-	EXT_VARIABLES_SET_MODIFIER_LOWERFIRST,
-	30,
-	mod_lowerfirst_modify
-};
-
-const struct ext_variables_set_modifier upperfirst_modifier = {
-	"upperfirst", 
-	EXT_VARIABLES_SET_MODIFIER_UPPERFIRST,
-	30,
-	mod_upperfirst_modify
-};
-
-const struct ext_variables_set_modifier quotewildcard_modifier = {
-	"quotewildcard",
-	EXT_VARIABLES_SET_MODIFIER_QUOTEWILDCARD,
-	20,
-	mod_quotewildcard_modify
-};
-
-const struct ext_variables_set_modifier length_modifier = {
-	"length", 
-	EXT_VARIABLES_SET_MODIFIER_LENGTH,
-	10,
-	mod_length_modify
-};
-
-const struct ext_variables_set_modifier *core_modifiers[] = {
-	&lower_modifier,
-	&upper_modifier,
-	&lowerfirst_modifier,
-	&upperfirst_modifier,
-	&quotewildcard_modifier,
-	&length_modifier
-};
-
-static struct sieve_extension_obj_registry setmodf_default_reg =
-	SIEVE_EXT_DEFINE_SET_MODIFIERS(core_modifiers);
+static bool tag_modifier_validate
+(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *cmd)
+{
+	unsigned int i;
+	bool inserted;
+	struct cmd_set_modifier_context *mctx = (*arg)->context;
+	const struct sieve_variables_modifier *modf = mctx->modifier;
+	struct cmd_set_context *sctx = (struct cmd_set_context *) cmd->data;
+	
+	inserted = FALSE;
+	for ( i = 0; i < array_count(&sctx->modifiers) && !inserted; i++ ) {
+		struct cmd_set_modifier_context * const *smctx =
+			array_idx(&sctx->modifiers, i);
+		const struct sieve_variables_modifier *smdf = (*smctx)->modifier;
+	
+		if ( smdf->precedence == modf->precedence ) {
+			sieve_command_validate_error(validator, cmd, 
+				"modifiers :%s and :%s specified for the set command conflict "
+				"having equal precedence", 
+				smdf->object.identifier, modf->object.identifier);
+			return FALSE;
+		}
+			
+		if ( smdf->precedence < modf->precedence ) {
+			array_insert(&sctx->modifiers, i, &mctx, 1);
+			inserted = TRUE;
+		}
+	}
+	
+	if ( !inserted )
+		array_append(&sctx->modifiers, &mctx, 1);
+	
+	/* Added to modifier list; self-destruct to prevent duplicate generation */
+	*arg = sieve_ast_arguments_detach(*arg, 1);
+	
+	return TRUE;
+}
 
 /* Command registration */
 
@@ -208,7 +180,8 @@ static bool cmd_set_registered
 /* Command validation */
 
 static bool cmd_set_pre_validate
-	(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd)
+(struct sieve_validator *validator ATTR_UNUSED, 
+	struct sieve_command_context *cmd)
 {
 	pool_t pool = sieve_command_pool(cmd);
 	struct cmd_set_context *sctx = p_new(pool, struct cmd_set_context, 1);
@@ -266,41 +239,13 @@ static bool cmd_set_generate
 	/* Generate modifiers (already sorted during validation) */
 	sieve_binary_emit_byte(sbin, array_count(&sctx->modifiers));
 	for ( i = 0; i < array_count(&sctx->modifiers); i++ ) {
-		struct ext_variables_set_modifier * const * smodf =
+		struct cmd_set_modifier_context * const * mctx =
 			array_idx(&sctx->modifiers, i);
 			
-		sieve_binary_emit_byte(sbin, (*smodf)->code);
+		ext_variables_opr_modifier_emit(sbin, (*mctx)->modifier, (*mctx)->ext_id);
 	}
 
 	return TRUE;
-}
-
-/* 
- * Modifier access
- */
- 
-static const struct sieve_extension_obj_registry *
-	cmd_set_modifier_registry_get
-(struct sieve_binary *sbin, unsigned int ext_index)
-{
-	int ext_id = -1; 
-	const struct sieve_variables_extension *ext;
-	
-	if ( sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id) == NULL )
-		return NULL;
-
-	if ( (ext=sieve_variables_extension_get(sbin, ext_id)) == NULL ) 
-		return NULL;
-		
-	return &(ext->set_modifiers);
-}
-
-static const struct ext_variables_set_modifier *cmd_set_modifier_read
-	(struct sieve_binary *sbin, sieve_size_t *address) 
-{
-	return sieve_extension_read_obj
-		(struct ext_variables_set_modifier, sbin, address, &setmodf_default_reg, 
-			cmd_set_modifier_registry_get);
 }
 
 /* 
@@ -327,13 +272,8 @@ static bool cmd_set_operation_dump
 	
 	/* Print all modifiers (sorted during code generation already) */
 	for ( i = 0; i < mdfs; i++ ) {
-		const struct ext_variables_set_modifier *modf =
-			cmd_set_modifier_read(denv->sbin, address);
-		
-		if ( modf == NULL )
+		if ( !ext_variables_opr_modifier_dump(denv, address) )
 			return FALSE;
-			
-		sieve_code_dumpf(denv, "MOD: %s", modf->identifier);
 	}
 	
 	return TRUE;
@@ -372,9 +312,9 @@ static bool cmd_set_operation_execute
 		if ( str_len(value) > 0 ) {
 			for ( i = 0; i < mdfs; i++ ) {
 				string_t *new_value;
-				const struct ext_variables_set_modifier *modf;
-				
-				modf = cmd_set_modifier_read(renv->sbin, address);
+				const struct sieve_variables_modifier *modf =
+					ext_variables_opr_modifier_read(renv, address);
+
 				if ( modf == NULL ) {
 					value = NULL;
 					break;
@@ -398,86 +338,6 @@ static bool cmd_set_operation_execute
 	} T_END;
 			
 	return ( value != NULL );
-}
-
-/* Pre-defined modifier implementations */
-
-bool mod_upperfirst_modify(string_t *in, string_t **result)
-{
-	char *content;
-	
-	*result = t_str_new(str_len(in));
-	str_append_str(*result, in);
-		
-	content = str_c_modifiable(*result);
-	content[0] = toupper(content[0]);
-
-	return TRUE;
-}
-
-bool mod_lowerfirst_modify(string_t *in, string_t **result)
-{
-	char *content;
-	
-	*result = t_str_new(str_len(in));
-	str_append_str(*result, in);
-		
-	content = str_c_modifiable(*result);
-	content[0] = i_tolower(content[0]);
-
-	return TRUE;
-}
-
-bool mod_upper_modify(string_t *in, string_t **result)
-{
-	char *content;
-	
-	*result = t_str_new(str_len(in));
-	str_append_str(*result, in);
-
-	content = str_c_modifiable(*result);
-	content = str_ucase(content);
-	
-	return TRUE;
-}
-
-bool mod_lower_modify(string_t *in, string_t **result)
-{
-	char *content;
-	
-	*result = t_str_new(str_len(in));
-	str_append_str(*result, in);
-
-	content = str_c_modifiable(*result);
-	content = str_lcase(content);
-
-	return TRUE;
-}
-
-bool mod_length_modify(string_t *in, string_t **result)
-{
-	*result = t_str_new(64);
-	str_printfa(*result, "%d", str_len(in));
-
-	return TRUE;
-}
-
-bool mod_quotewildcard_modify(string_t *in, string_t **result)
-{
-	unsigned int i;
-	const char *content;
-	
-	*result = t_str_new(str_len(in) * 2);
-	content = (const char *) str_data(in);
-	
-	for ( i = 0; i < str_len(in); i++ ) {
-		if ( content[i] == '*' || content[i] == '?' || content[i] == '\\' ) {
-			str_append_c(*result, '\\');
-		}
-		str_append_c(*result, content[i]);
-	}
-	
-	return TRUE;
 }
 
 
