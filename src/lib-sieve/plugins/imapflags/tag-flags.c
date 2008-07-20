@@ -50,11 +50,9 @@ static bool seff_flags_pre_execute
 		void **se_context, void *tr_context);
 
 const struct sieve_side_effect flags_side_effect = {
-	"flags",
+	SIEVE_OBJECT("flags", &flags_side_effect_operand, 0),
 	&act_store,
-	
-	&imapflags_seffect_extension,
-	0,
+
 	seff_flags_dump_context,
 	seff_flags_read_context,
 	seff_flags_print,
@@ -62,10 +60,15 @@ const struct sieve_side_effect flags_side_effect = {
 	NULL, NULL, NULL
 };
 
-const struct sieve_side_effect_extension imapflags_seffect_extension = {
-	&imapflags_extension,
+static const struct sieve_extension_obj_registry ext_side_effects =
+	SIEVE_EXT_DEFINE_SIDE_EFFECT(flags_side_effect);
 
-	SIEVE_EXT_DEFINE_SIDE_EFFECT(flags_side_effect)
+const struct sieve_operand flags_side_effect_operand = { 
+	"flags operand", 
+	&imapflags_extension,
+	0, 
+	&sieve_side_effect_operand_class,
+	&ext_side_effects
 };
 
 /* Tag validation */

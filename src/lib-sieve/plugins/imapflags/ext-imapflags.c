@@ -31,7 +31,6 @@ static bool ext_imapflags_load(int ext_id);
 static bool ext_imapflags_validator_load(struct sieve_validator *valdtr);
 static bool ext_imapflags_runtime_load
 	(const struct sieve_runtime_env *renv);
-static bool ext_imapflags_binary_load(struct sieve_binary *sbin);
 
 /* Commands */
 
@@ -51,6 +50,10 @@ extern const struct sieve_operation hasflag_operation;
 const struct sieve_operation *imapflags_operations[] = 
 	{ &setflag_operation, &addflag_operation, &removeflag_operation, &hasflag_operation };
 
+/* Operands */
+
+const struct sieve_operand flags_side_effect_operand;
+
 /* Extension definitions */
 
 int ext_imapflags_my_id;
@@ -61,10 +64,9 @@ const struct sieve_extension imapflags_extension = {
 	ext_imapflags_validator_load, 
 	NULL, NULL,
 	ext_imapflags_runtime_load, 
-	ext_imapflags_binary_load,
-	NULL,
+	NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(imapflags_operations), 
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	SIEVE_EXT_DEFINE_OPERAND(flags_side_effect_operand)
 };
 
 static bool ext_imapflags_load(int ext_id)
@@ -89,18 +91,6 @@ static bool ext_imapflags_validator_load
 	
 	ext_imapflags_attach_flags_tag(valdtr, "keep");
 	ext_imapflags_attach_flags_tag(valdtr, "fileinto");
-
-	return TRUE;
-}
-
-/*
- * Binary context
- */
-
-static bool ext_imapflags_binary_load(struct sieve_binary *sbin)
-{
-	sieve_side_effect_extension_set(sbin, ext_imapflags_my_id, 
-		&imapflags_seffect_extension);
 
 	return TRUE;
 }

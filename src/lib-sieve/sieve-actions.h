@@ -5,6 +5,7 @@
 #include "mail-storage.h"
 
 #include "sieve-common.h"
+#include "sieve-objects.h"
 #include "sieve-extensions.h"
 
 /* Sieve action */
@@ -57,11 +58,9 @@ struct sieve_action {
 struct sieve_side_effect_extension;
 
 struct sieve_side_effect {
-	const char *name;
-	const struct sieve_action *to_action;
+	struct sieve_object object;
 	
-	const struct sieve_side_effect_extension *extension;
-	unsigned int code;
+	const struct sieve_action *to_action;
 	
 	bool (*dump_context)
 		(const struct sieve_side_effect *seffect, 
@@ -93,29 +92,32 @@ struct sieve_side_effect {
 			void *tr_context, bool success);
 };
 
-struct sieve_side_effect_extension {
-	const struct sieve_extension *extension;
-
-	struct sieve_extension_obj_registry side_effects;
-};
-
-#define SIEVE_EXT_DEFINE_NO_SIDE_EFFECTS SIEVE_EXT_DEFINE_NO_OBJECTS
+/*
+ * Side effect operand
+ */
+ 
 #define SIEVE_EXT_DEFINE_SIDE_EFFECT(SEF) SIEVE_EXT_DEFINE_OBJECT(SEF)
 #define SIEVE_EXT_DEFINE_SIDE_EFFECTS(SEFS) SIEVE_EXT_DEFINE_OBJECTS(SEFS)
 
 #define SIEVE_OPT_SIDE_EFFECT -1
 
-void sieve_side_effect_extension_set
-	(struct sieve_binary *sbin, int ext_id,
-		const struct sieve_side_effect_extension *ext);
+extern const struct sieve_operand_class sieve_side_effect_operand_class;
 
-void sieve_opr_side_effect_emit
-	(struct sieve_binary *sbin, const struct sieve_side_effect *seffect, 
-		int ext_id);
+static inline void sieve_opr_side_effect_emit
+(struct sieve_binary *sbin, const struct sieve_side_effect *seff, int ext_id)
+{ 
+	sieve_opr_object_emit(sbin, &seff->object, ext_id);
+}
+
+static inline const struct sieve_side_effect *sieve_opr_side_effect_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
+{
+	return (const struct sieve_side_effect *) sieve_opr_object_read
+		(renv, &sieve_side_effect_operand_class, address);
+}
+
 bool sieve_opr_side_effect_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-const struct sieve_side_effect *sieve_opr_side_effect_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 /* Actions common to multiple commands */
 

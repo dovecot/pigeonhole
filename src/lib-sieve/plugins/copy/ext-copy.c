@@ -25,9 +25,10 @@
 
 static bool ext_copy_load(int ext_id);
 static bool ext_copy_validator_load(struct sieve_validator *validator);
-static bool ext_copy_binary_load(struct sieve_binary *sbin);
 
 /* Extension definitions */
+
+static const struct sieve_operand copy_side_effect_operand;
 
 static int ext_my_id;
 
@@ -35,11 +36,9 @@ const struct sieve_extension copy_extension = {
 	"copy", 
 	ext_copy_load,
 	ext_copy_validator_load, 
-	NULL, NULL, NULL,
-	ext_copy_binary_load, 
-	NULL, 
+	NULL, NULL, NULL, NULL, NULL, 
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	SIEVE_EXT_DEFINE_OPERAND(copy_side_effect_operand)
 };
 
 static bool ext_copy_load(int ext_id)
@@ -51,8 +50,6 @@ static bool ext_copy_load(int ext_id)
 
 /* Side effect */
 
-const struct sieve_side_effect_extension ext_copy_side_effect;
-
 static void seff_copy_print
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 		const struct sieve_result_print_env *rpenv, void *se_context, bool *keep);
@@ -62,10 +59,8 @@ static bool seff_copy_post_commit
 		void *tr_context, bool *keep);
 
 const struct sieve_side_effect copy_side_effect = {
-	"copy",
-	&act_store,	
-	&ext_copy_side_effect,
-	0,
+	SIEVE_OBJECT("copy", &copy_side_effect_operand, 0),
+	&act_store,
 	NULL, NULL,
 	seff_copy_print,
 	NULL, NULL,
@@ -73,10 +68,15 @@ const struct sieve_side_effect copy_side_effect = {
 	NULL
 };
 
-const struct sieve_side_effect_extension ext_copy_side_effect = {
-	&copy_extension,
+static const struct sieve_extension_obj_registry ext_side_effects =
+    SIEVE_EXT_DEFINE_SIDE_EFFECT(copy_side_effect);
 
-	SIEVE_EXT_DEFINE_SIDE_EFFECT(copy_side_effect)
+static const struct sieve_operand copy_side_effect_operand = {
+    "copy operand",
+    &copy_extension,
+    0,
+    &sieve_side_effect_operand_class,
+    &ext_side_effects
 };
 
 /* Tag validation */
@@ -155,11 +155,5 @@ static bool ext_copy_validator_load(struct sieve_validator *validator)
 	return TRUE;
 }
 
-static bool ext_copy_binary_load(struct sieve_binary *sbin)
-{
-	sieve_side_effect_extension_set(sbin, ext_my_id, &ext_copy_side_effect);
-
-	return TRUE;
-}
 
 

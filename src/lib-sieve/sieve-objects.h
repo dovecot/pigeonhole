@@ -23,7 +23,8 @@ const struct sieve_object *sieve_opr_object_read
 
 bool sieve_opr_object_dump
 	(const struct sieve_dumptime_env *denv, 
-		const struct sieve_operand_class *opclass, sieve_size_t *address);
+		const struct sieve_operand_class *opclass, sieve_size_t *address,
+		const struct sieve_object **object_r);
 
 
 #endif /* __SIEVE_OBJECTS_H */

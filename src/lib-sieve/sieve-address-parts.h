@@ -87,7 +87,7 @@ static inline bool sieve_opr_address_part_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	return sieve_opr_object_dump
-		(denv, &sieve_address_part_operand_class, address);
+		(denv, &sieve_address_part_operand_class, address, NULL);
 }
 
 /* Match utility */

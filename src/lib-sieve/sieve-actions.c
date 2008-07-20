@@ -14,9 +14,6 @@
 
 #include <ctype.h>
 
-static struct sieve_extension_obj_registry seff_default_reg =
-	SIEVE_EXT_DEFINE_NO_SIDE_EFFECTS;
-
 /*
  * Message transmission (FIXME: place this somewhere more appropriate)
  */
@@ -43,9 +40,7 @@ static bool seffect_binary_load(struct sieve_binary *sbin);
 const struct sieve_extension side_effects_extension = {
 	"@side-effects",
 	seffect_extension_load,
-	NULL, NULL, NULL, NULL,
-	seffect_binary_load,
-	NULL,
+	NULL, NULL, NULL, NULL, NULL,	NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, /* Opcode is hardcoded */
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
@@ -57,109 +52,23 @@ static bool seffect_extension_load(int ext_id)
 }
 
 /*
- * Binary context
- */
-
-static inline const struct sieve_side_effect_extension *
-	sieve_side_effect_extension_get(struct sieve_binary *sbin, int ext_id)
-{
-	return (const struct sieve_side_effect_extension *)
-		sieve_binary_registry_get_object(sbin, ext_my_id, ext_id);
-}
-
-void sieve_side_effect_extension_set
-
-	(struct sieve_binary *sbin, int ext_id,
-		const struct sieve_side_effect_extension *ext)
-{
-	sieve_binary_registry_set_object
-		(sbin, ext_my_id, ext_id, (const void *) ext);
-}
-
-static bool seffect_binary_load(struct sieve_binary *sbin)
-{
-	sieve_binary_registry_init(sbin, ext_my_id);
-	
-	return TRUE;
-}
-
-/*
  * Side-effect operand
  */
  
-static struct sieve_operand_class side_effect_class = 
-	{ "side-effect" };
-
-struct sieve_operand side_effect_operand = { 
-	"side-effect", 
-	NULL, SIEVE_OPERAND_SIDE_EFFECT,
-	&side_effect_class,
-	NULL
-};
-
-void sieve_opr_side_effect_emit
-	(struct sieve_binary *sbin, const struct sieve_side_effect *seffect, 
-		int ext_id)
-{ 
-	(void) sieve_operand_emit_code(sbin, &side_effect_operand, -1);
-
-	(void) sieve_extension_emit_obj
-		(sbin, &seff_default_reg, seffect, side_effects, ext_id);
-}
-
-static const struct sieve_extension_obj_registry *
-	sieve_side_effect_registry_get
-(struct sieve_binary *sbin, unsigned int ext_index)
-{
-	int ext_id = -1; 
-	const struct sieve_side_effect_extension *ext;
-	
-	if ( sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id) == NULL )
-		return NULL;
-
-	if ( (ext=sieve_side_effect_extension_get(sbin, ext_id)) == NULL ) 
-		return NULL;
-		
-	return &(ext->side_effects);
-}
-
-static inline const struct sieve_side_effect *sieve_side_effect_read
-(struct sieve_binary *sbin, sieve_size_t *address)
-{
-	return sieve_extension_read_obj
-		(struct sieve_side_effect, sbin, address, &seff_default_reg, 
-			sieve_side_effect_registry_get);
-}
-
-const struct sieve_side_effect *sieve_opr_side_effect_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
-{
-	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
-
-	if ( operand == NULL || operand->class != &side_effect_class ) 
-		return NULL;
-		
-	return sieve_side_effect_read(renv->sbin, address);
-}
+const struct sieve_operand_class sieve_side_effect_operand_class = 
+	{ "SIDE-EFFECT" };
 
 bool sieve_opr_side_effect_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	const struct sieve_operand *operand = sieve_operand_read(denv->sbin, address);
+	const struct sieve_object *obj;
 	const struct sieve_side_effect *seffect;
-
-	if ( operand == NULL || operand->class != &side_effect_class ) 
-		return NULL;
-
-	sieve_code_mark(denv);
-	seffect = sieve_side_effect_read(denv->sbin, address);
-
-	if ( seffect == NULL ) {
-		sieve_binary_corrupt(denv->sbin, "failed to read side effect");
+	
+	if ( !sieve_opr_object_dump
+		(denv, &sieve_side_effect_operand_class, address, &obj) )
 		return FALSE;
-	}
-
-	sieve_code_dumpf(denv, "SIDE-EFFECT: %s", seffect->name);
+	
+	seffect = (const struct sieve_side_effect *) obj;
 
 	if ( seffect->dump_context != NULL ) {
 		sieve_code_descend(denv);

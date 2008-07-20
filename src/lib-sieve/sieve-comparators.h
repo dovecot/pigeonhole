@@ -105,7 +105,7 @@ static inline bool sieve_opr_comparator_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	return sieve_opr_object_dump
-		(denv, &sieve_comparator_operand_class, address);
+		(denv, &sieve_comparator_operand_class, address, NULL);
 }
 	
 /*

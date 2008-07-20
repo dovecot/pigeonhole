@@ -35,6 +35,8 @@ bool ext_imapflags_command_operands_read
 void ext_imapflags_attach_flags_tag
 	(struct sieve_validator *valdtr, const char *command);
 
+const struct sieve_operand flags_side_effect_operand;
+
 /* Initialization */
 
 void ext_imapflags_runtime_init(const struct sieve_runtime_env *renv);

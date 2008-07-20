@@ -59,7 +59,8 @@ const struct sieve_object *sieve_opr_object_read
 
 bool sieve_opr_object_dump
 (const struct sieve_dumptime_env *denv, 
-	const struct sieve_operand_class *opclass, sieve_size_t *address)
+	const struct sieve_operand_class *opclass, sieve_size_t *address,
+	const struct sieve_object **object_r)
 {
 	const struct sieve_operand *operand;
 	const struct sieve_object *obj;
@@ -79,6 +80,9 @@ bool sieve_opr_object_dump
 		class = operand->class->name;
 			
 	sieve_code_dumpf(denv, "%s: %s", class, obj->identifier);
+	
+	if ( object_r != NULL )
+		*object_r = obj;
 	
 	return TRUE;
 }
