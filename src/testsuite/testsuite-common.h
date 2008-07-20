@@ -21,10 +21,12 @@ void testsuite_envelope_set_auth_user(const char *value);
 /* Testsuite validator context */
 
 struct testsuite_validator_context {
-	struct hash_table *object_registrations;
+	struct sieve_validator_object_registry *object_registrations;
 };
 
 bool testsuite_validator_context_initialize(struct sieve_validator *valdtr);
+struct testsuite_validator_context *testsuite_validator_context_get
+	(struct sieve_validator *valdtr);
 
 /* Testsuite generator context */
 

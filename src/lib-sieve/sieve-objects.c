@@ -27,7 +27,7 @@ const struct sieve_object *sieve_opr_object_read_data
 	const struct sieve_extension_obj_registry *reg;
 	unsigned int obj_code; 
 
-	if ( operand->class != opclass )
+	if ( operand == NULL || operand->class != opclass )
 		return NULL;
 	
 	reg = (struct sieve_extension_obj_registry *) operand->interface;

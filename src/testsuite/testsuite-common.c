@@ -134,14 +134,19 @@ bool testsuite_validator_context_initialize(struct sieve_validator *valdtr)
 		p_new(pool, struct testsuite_validator_context, 1);
 	
 	/* Setup object registry */
-	ctx->object_registrations = hash_create
-		(pool, pool, 0, str_hash, (hash_cmp_callback_t *) strcmp);
-
-	testsuite_register_core_objects(pool, ctx);
+	ctx->object_registrations = sieve_validator_object_registry_create(valdtr);
+	testsuite_register_core_objects(ctx);
 	
 	sieve_validator_extension_set_context(valdtr, ext_testsuite_my_id, ctx);
 
 	return TRUE;
+}
+
+struct testsuite_validator_context *testsuite_validator_context_get
+(struct sieve_validator *valdtr)
+{
+	return (struct testsuite_validator_context *)
+		sieve_validator_extension_get_context(valdtr, ext_testsuite_my_id);
 }
 
 /* 

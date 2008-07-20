@@ -216,7 +216,10 @@ static struct sieve_extension_obj_registry oprd_default_reg =
 
 sieve_size_t sieve_operand_emit_code
 	(struct sieve_binary *sbin, const struct sieve_operand *opr, int ext_id)
-{	
+{
+	/* A sanity check on the emitted operand */
+	i_assert( !((opr->extension != NULL) && (ext_id < 0)) );
+	
 	return sieve_extension_emit_obj
 		(sbin, &oprd_default_reg, opr, operands, ext_id);
 }
@@ -758,7 +761,10 @@ static struct sieve_extension_obj_registry oprt_default_reg =
 
 sieve_size_t sieve_operation_emit_code
 	(struct sieve_binary *sbin, const struct sieve_operation *op, int ext_id)
-{	
+{
+	/* A sanity check on the emitted operation */
+	i_assert( !((op->extension != NULL) && (ext_id < 0)) );
+		
 	return sieve_extension_emit_obj
 		(sbin, &oprt_default_reg, op, operations, ext_id);
 }

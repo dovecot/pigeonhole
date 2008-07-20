@@ -1,6 +1,9 @@
 #ifndef __TESTSUITE_OBJECTS_H
 #define __TESTSUITE_OBJECTS_H
 
+#include "sieve-common.h"
+#include "sieve-objects.h"
+
 #include "testsuite-common.h"
 
 /* Testsuite object operand */
@@ -14,9 +17,7 @@ extern const struct sieve_operand_class testsuite_object_oprclass;
 /* Testsuite object access */
 
 struct testsuite_object {
-	const char *identifier;
-	unsigned int code;
-	const struct sieve_operand *operand;
+	struct sieve_object object;
 	
 	int (*get_member_id)(const char *identifier);
 	const char *(*get_member_name)(int id);
@@ -29,10 +30,10 @@ struct testsuite_object {
 const struct testsuite_object *testsuite_object_find
 	(struct sieve_validator *valdtr, const char *identifier, int *ext_id);
 void testsuite_object_register
-	(struct sieve_validator *valdtr, const struct testsuite_object *obj, 
+	(struct sieve_validator *valdtr, const struct testsuite_object *tobj, 
 		int ext_id);		
 void testsuite_register_core_objects
-	(pool_t pool, struct testsuite_validator_context *ctx);
+	(struct testsuite_validator_context *ctx);
 		
 /* Testsuite object argument */		
 	
