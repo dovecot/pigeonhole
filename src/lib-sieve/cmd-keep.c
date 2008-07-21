@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 
 #include "sieve-commands.h"
@@ -10,24 +13,17 @@
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
 
-/* Forward declarations */
-
-static bool cmd_keep_operation_dump
-	(const struct sieve_operation *op,
-    	const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_keep_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+/* 
+ * Keep command 
+ *
+ * Syntax:
+ *   keep
+ */	
 
 static bool cmd_keep_generate
 	(const struct sieve_codegen_env *cgenv, 
-		struct sieve_command_context *ctx ATTR_UNUSED);
-		
-/* Keep command 
- * 
- * Syntax
- *   keep
- */	
+		struct sieve_command_context *ctx);
+
 const struct sieve_command cmd_keep = { 
 	"keep", 
 	SCT_COMMAND, 
@@ -37,7 +33,16 @@ const struct sieve_command cmd_keep = {
 	NULL
 };
 
-/* Keep operation */
+/* 
+ * Keep operation 
+ */
+
+static bool cmd_keep_operation_dump
+	(const struct sieve_operation *op,
+    	const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static bool cmd_keep_operation_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation cmd_keep_operation = { 
 	"KEEP",
@@ -48,13 +53,14 @@ const struct sieve_operation cmd_keep_operation = {
 };
 
 /*
- * Generation
+ * Code generation
  */
 
 static bool cmd_keep_generate
 (const struct sieve_codegen_env *cgenv, 
 	struct sieve_command_context *ctx ATTR_UNUSED) 
 {
+	/* Emit opcode */
 	sieve_operation_emit_code(cgenv->sbin, &cmd_keep_operation, -1);
 
 	/* Emit line number */
@@ -100,9 +106,11 @@ static bool cmd_keep_operation_execute
     if ( !sieve_code_source_line_read(renv, address, &source_line) )
         return FALSE;
 	
+	/* Optional operands (side effects only) */
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;
 	
+	/* Add store action (sieve-actions.h) to result */
 	if ( renv->scriptenv != NULL && renv->scriptenv->inbox != NULL )
 		ret = sieve_act_store_add_to_result
 			(renv, slist, renv->scriptenv->inbox, source_line);

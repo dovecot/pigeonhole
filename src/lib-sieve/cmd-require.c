@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 
 #include "sieve-commands.h"
@@ -6,14 +9,8 @@
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 
-/* Types */
-
-struct cmd_require_context_data {
-	struct sieve_ast_argument *arg;
-	struct sieve_extension *extension;
-};
-
-/* Require command
+/* 
+ * Require command
  *
  * Syntax 
  *   Syntax: require <capabilities: string-list>
@@ -34,7 +31,9 @@ const struct sieve_command cmd_require = {
 	NULL 
 };
 
-/* Command validation */
+/* 
+ * Validation 
+ */
 
 static bool cmd_require_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd) 
@@ -54,10 +53,10 @@ static bool cmd_require_validate
 			"at the beginning of the file");
 		return FALSE;
 	}
-		
-	arg = cmd->first_positional;
 	
 	/* Check argument and load specified extension(s) */
+
+	arg = cmd->first_positional;
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		/* Single string */
 		int ext_id = sieve_validator_extension_load
@@ -91,7 +90,9 @@ static bool cmd_require_validate
 	return result;
 }
 
-/* Command code generation */
+/* 
+ * Code generation 
+ */
 
 static bool cmd_require_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
@@ -99,6 +100,7 @@ static bool cmd_require_generate
 	struct sieve_ast_argument *arg = ctx->first_positional;
 	
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
+		/* Single string */
 		int ext_id = (int) arg->context;
 		
 		sieve_generator_link_extension(cgenv->gentr, ext_id);

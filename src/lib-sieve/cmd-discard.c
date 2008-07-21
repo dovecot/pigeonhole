@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 
 #include "sieve-commands.h"
@@ -10,24 +13,17 @@
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
 
-/* Forward declarations */
+/* 
+ * Discard command 
+ * 
+ * Syntax
+ *   discard
+ */	
 
 static bool cmd_discard_generate
 	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command_context *ctx ATTR_UNUSED); 
 
-static bool cmd_discard_operation_dump
-	(const struct sieve_operation *op,
-    	const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_discard_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
-		
-/* Discard command 
- * 
- * Syntax
- *   discard
- */	
 const struct sieve_command cmd_discard = { 
 	"discard", 
 	SCT_COMMAND, 
@@ -37,7 +33,16 @@ const struct sieve_command cmd_discard = {
 	NULL 
 };
 
-/* Discard operation */
+/*
+ * Discard operation
+ */
+
+static bool cmd_discard_operation_dump
+	(const struct sieve_operation *op,
+    	const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static bool cmd_discard_operation_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation cmd_discard_operation = { 
 	"DISCARD",
@@ -47,14 +52,16 @@ const struct sieve_operation cmd_discard_operation = {
 	cmd_discard_operation_execute 
 };
 
-/* discard action */
+/* 
+ * Discard actions
+ */
 
 static void act_discard_print
 	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		void *context, bool *keep);	
 static bool act_discard_commit
-(const struct sieve_action *action, 
-	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
+	(const struct sieve_action *action, 
+		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 		
 const struct sieve_action act_discard = {
 	"discard",
@@ -66,14 +73,13 @@ const struct sieve_action act_discard = {
 	NULL
 };
 
-
 /*
- * Generation
+ * Code generation
  */
  
 static bool cmd_discard_generate
-	(const struct sieve_codegen_env *cgenv, 
-		struct sieve_command_context *ctx ATTR_UNUSED) 
+(const struct sieve_codegen_env *cgenv, 
+	struct sieve_command_context *ctx ATTR_UNUSED) 
 {
 	sieve_operation_emit_code(cgenv->sbin, &cmd_discard_operation, -1);
 
@@ -123,7 +129,7 @@ static bool cmd_discard_operation_execute
 }
 
 /*
- * Action
+ * Action implementation
  */
  
 static void act_discard_print
