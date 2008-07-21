@@ -207,11 +207,11 @@ static int ext_envelope_get_fields
 	
  	t_array_init(&envelope_values, 2);
  	
-	if ( strncmp(field, "from", 4) == 0 )
+	if ( strcasecmp(field, "from") == 0 )
 		value = msgdata->return_path;
-	else if ( strncmp(field, "to", 2) == 0 )
+	else if ( strcasecmp(field, "to") == 0 )
 		value = msgdata->to_address;	
-	else if ( strncmp(field, "auth", 2) == 0 ) /* Non-standard */
+	else if ( strcasecmp(field, "auth") == 0 ) /* Non-standard */ 
 		value = msgdata->auth_user;
 		
 	if ( value != NULL )

@@ -1,4 +1,5 @@
 require "vnd.dovecot.testsuite";
+require "envelope";
 
 test "Message Environment" {
 	test_set "message" text:
@@ -9,7 +10,6 @@ Subject: Frop!
 Frop!
 .
 	;
-	test_set "envelope.from" "stephan@rename-it.nl";
 
 	if not header :contains "from" "rename-it.nl" {
 		test_fail "message data not set properly.";
@@ -23,7 +23,6 @@ Subject: Friep!
 Friep!
 .
 	;
-	test_set "envelope.from" "stephan@rename-it.nl";
 
 	if not header :is "from" "nico@vestingbar.nl" {
     	test_fail "message data not set properly.";
@@ -32,3 +31,40 @@ Friep!
 	keep;
 }
 
+test "Envelope Environment" {
+	test_set "envelope.from" "stephan@hutsefluts.nl";
+
+	if not envelope :is "from" "stephan@hutsefluts.nl" {
+        test_fail "envelope.from data not set properly.";
+    }
+
+	test_set "envelope.to" "news@rename-it.nl";
+
+	if not envelope :is "to" "news@rename-it.nl" {
+        test_fail "envelope.to data not set properly.";
+    }
+
+	test_set "envelope.auth" "sirius";
+
+    if not envelope :is "auth" "sirius@" {
+        test_fail "envelope.auth data not set properly.";
+    }
+
+	test_set "envelope.from" "stephan@rename-it.nl";
+
+	if not envelope :is "from" "stephan@rename-it.nl" {
+        test_fail "envelope.from data not reset properly.";
+    }
+
+	test_set "envelope.to" "past-news@rename-it.nl";
+
+	if not envelope :is "to" "past-news@rename-it.nl" {
+        test_fail "envelope.to data not reset properly.";
+    }
+
+	test_set "envelope.auth" "zilla";
+
+    if not envelope :is "auth" "zilla@" {
+        test_fail "envelope.auth data not reset properly.";
+    }
+}

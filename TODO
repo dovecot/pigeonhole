@@ -6,6 +6,7 @@ Next (in order of descending priority/precedence):
 * Test with dovecot --enable-debug for initial mempool allocation size
 * Full standards compliance review for the engine and all fully implemented 
   sieve extensions.
+    - Address test MUST restrict itself to headers that contain addresses.'
 * Code cleanup 
 * Make sure cmusieve can be replaced seamlessly with the new plugin.
 * Full security review. Enforce limits on number of created objects, script 
@@ -16,7 +17,7 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A FIRST RELEASE ##
 
-* Add normalize() method to comparators to normalize the string before mathing
+* Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
 * Verify outgoing mail addresses at runtime when necessary (e.g. after variables 
   substitution)

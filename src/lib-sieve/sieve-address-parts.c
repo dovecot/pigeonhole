@@ -198,17 +198,15 @@ bool sieve_address_match
 				strlen(data), 256, FALSE);
 	
 		while (!matched && addr != NULL) {
-			if (addr->domain != NULL) {
-				/* mailbox@domain */
-				const char *part;
+			/* mailbox@domain */
+			const char *part;
 			
-				i_assert(addr->mailbox != NULL);
+			i_assert(addr->mailbox != NULL);
 
-				part = addrp->extract_from(addr);
+			part = addrp->extract_from(addr);
 			
-				if ( part != NULL && sieve_match_value(mctx, part, strlen(part)) )
-					matched = TRUE;				
-			} 
+			if ( part != NULL && sieve_match_value(mctx, part, strlen(part)) )
+				matched = TRUE;				
 
 			addr = addr->next;
 		}
