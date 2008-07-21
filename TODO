@@ -37,6 +37,8 @@ Next (in order of descending priority/precedence):
 * Implement environment extension
 * Implement notify extension with sole support for mailto mechanism. 
 * Implement date and index extensions
+* Optimize code containing true/false tests to omit explicit JMP opcodes
+  (i.e. optimize the test away and any code that negatively depends on it)
 * Automate script tests; i.e. build a test suite.
 * Use lib/str-find.h for :contains and :matches match types  
 * Resolve code duplication introduced for handling address-parts and match-types

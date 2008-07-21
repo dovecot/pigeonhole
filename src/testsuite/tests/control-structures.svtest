@@ -71,6 +71,41 @@ test "ELSEIF-address-false" {
 	}
 }
 
+test "IF-nesting-static" {
+	if true {
+		if true {
+			if false {
+				test_fail "chose wrong outcome: true->true->false";
+			} else {
+			}
+		} else {
+			test_fail "chose wrong outcome: true->false";
+		}
+	} elsif true {
+		if false {
+			test_fail "chose wrong outcome: false->true->false";	
+		} elsif true {
+			test_fail "chose wrong outcome: false->true->true";
+		}
+	} else {
+		test_fail "chose wrong outcome: false->false";
+	}
+}
+
+test "ALLOF-ANYOF-static" {
+	if allof ( true, true, true, true, anyof (false, false, true, false) ) {
+		if anyof( allof(false, false), allof(false, true), allof(true, false) ) {
+			test_fail "chose wrong outcome: true->true";
+		} elsif allof( anyof(false, true), true, anyof(true, false), anyof(true, true)) {
+			
+		} else {
+			test_fail "chose wrong outcome: true->false->false";			
+		}
+	} else {
+		test_fail "chose wrong outcome: false";
+	}
+}
+
 test "STOP" {
 	stop;
 	test_fail "continued after stop";
