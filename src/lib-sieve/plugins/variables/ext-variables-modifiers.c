@@ -154,7 +154,7 @@ bool mod_upperfirst_modify(string_t *in, string_t **result)
 	str_append_str(*result, in);
 		
 	content = str_c_modifiable(*result);
-	content[0] = toupper(content[0]);
+	content[0] = i_toupper(content[0]);
 
 	return TRUE;
 }

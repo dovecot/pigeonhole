@@ -30,8 +30,6 @@
 #include "ext-variables-operands.h"
 #include "ext-variables-modifiers.h"
 
-#include <ctype.h>
-
 /* Forward declarations */
 
 static bool ext_variables_load(int ext_id);

@@ -18,8 +18,6 @@
 #include "ext-variables-common.h"
 #include "ext-variables-modifiers.h"
 
-#include <ctype.h>
-
 /* Forward declarations */
 
 static bool cmd_set_operation_dump

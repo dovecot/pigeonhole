@@ -32,8 +32,6 @@
 #include "sieve-common.h"
 
 #include "ext-variables-common.h"
-
-#include <ctype.h>
  
 struct ext_variable_name {
 	string_t *identifier;

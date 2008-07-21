@@ -8,7 +8,7 @@
 #include "ext-variables-name.h"
 
 #include <ctype.h>
-  
+
 int ext_variable_name_parse
 (ARRAY_TYPE(ext_variable_name) *vname, const char **str, const char *strend)
 {

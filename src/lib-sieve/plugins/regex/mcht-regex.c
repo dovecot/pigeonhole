@@ -17,8 +17,8 @@
 #include "ext-regex-common.h"
 
 #include <sys/types.h>
-#include <ctype.h>
 #include <regex.h>
+#include <ctype.h>
 
 /*
  * Configuration

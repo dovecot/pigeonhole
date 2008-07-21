@@ -21,8 +21,6 @@
 #include "ext-variables-name.h"
 #include "ext-variables-modifiers.h"
 
-#include <ctype.h>
-
 /* Forward declarations */
 
 extern const struct ext_variables_set_modifier lower_modifier;

@@ -12,8 +12,6 @@
 #include "sieve-result.h"
 #include "sieve-actions.h"
 
-#include <ctype.h>
-
 /*
  * Message transmission (FIXME: place this somewhere more appropriate)
  */
