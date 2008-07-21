@@ -7,6 +7,7 @@
 
 #include "sieve-script-private.h"
 
+#include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -129,6 +130,8 @@ struct istream *sieve_script_open
 (struct sieve_script *script, bool *deleted_r)
 {
 	int fd;
+	struct stat st;
+	struct istream *result;
 
 	if ( deleted_r != NULL )
 		*deleted_r = FALSE;
@@ -146,10 +149,34 @@ struct istream *sieve_script_open
 				"failed to open sieve script: %m");
 		return NULL;
 	}	
-
-	script->stream = i_stream_create_fd(fd, SIEVE_READ_BLOCK_SIZE, TRUE);
 	
-	return script->stream;
+	if ( fstat(fd, &st) != 0 ) {
+		sieve_critical(script->ehandler, script->path, 
+			"failed to fstat opened sieve script: %m");
+		result = NULL;
+	} else {
+		/* Re-check the file type just to be sure */
+		if ( !S_ISREG(st.st_mode) ) {
+			sieve_critical(script->ehandler, script->path,
+				"opened sieve script file is not a regular file");
+			result = NULL;
+		} else {
+			result = script->stream = 
+				i_stream_create_fd(fd, SIEVE_READ_BLOCK_SIZE, TRUE);
+			script->st = st;
+		}
+	}
+
+	if ( result == NULL ) {
+		/* Something went wrong, close the fd */
+		if ( close(fd) != 0 ) {
+			sieve_system_error(
+				"sieve_script_open: close(fd) failed for sieve script %s: %m", 
+				script->path);
+		}
+	}
+	
+	return result;
 }
 
 void sieve_script_close(struct sieve_script *script)

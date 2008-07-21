@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 
+struct sieve_script;
 struct sieve_error_handler;
 
 typedef void (*sieve_error_vfunc_t)
@@ -114,7 +115,18 @@ bool sieve_errors_more_allowed(struct sieve_error_handler *ehandler);
 void sieve_error_handler_ref(struct sieve_error_handler *ehandler);
 void sieve_error_handler_unref(struct sieve_error_handler **ehandler);
 
-/* Error handlers */
+/* 
+ * System errors
+ *   These are just macros for now
+ */
+
+#define sieve_system_error(...) i_error(__VA_ARGS__)
+#define sieve_system_warning(...) i_warning(__VA_ARGS__)
+#define sieve_system_info(...) i_info(__VA_ARGS__)
+
+/* 
+ * Error handlers 
+ */
 
 struct sieve_error_handler *sieve_stderr_ehandler_create
 	(unsigned int max_errors);

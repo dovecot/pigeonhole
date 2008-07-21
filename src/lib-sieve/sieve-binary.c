@@ -6,6 +6,7 @@
 #include "array.h"
 #include "ostream.h"
 
+#include "sieve-error.h"
 #include "sieve-extensions.h"
 #include "sieve-code.h"
 #include "sieve-script.h"
@@ -612,7 +613,7 @@ bool sieve_binary_save
 	o_stream_destroy(&stream);
  
 	if (close(fd) < 0)
-		i_error("sieve: close() failed for binary save: %m");
+		i_error("sieve: close(fd) failed for binary save: %m");
 
 	/* Replace any original binary atomically */
 	if (result && (rename(temp_path, path) < 0)) {
@@ -639,30 +640,34 @@ static bool sieve_binary_file_open
 	int fd;
 	struct stat st;
 	
-	if ( stat(path, &st) < 0 ) {
-		if ( errno != ENOENT ) {
-			i_error("sieve: binary stat(%s) failed: %m", path);
-		}
-		return FALSE;
-	}
-	
 	if ( (fd=open(path, O_RDONLY)) < 0 ) {
 		if ( errno != ENOENT ) {
 			i_error("sieve: binary open(%s) failed: %m", path);
 		}
 		return FALSE;
 	}
+
+	if ( fstat(fd, &st) < 0 ) {
+		if ( errno != ENOENT ) {
+			i_error("sieve: binary stat(%s) failed: %m", path);
+		}
+		return FALSE;
+	}
 	
 	file->fd = fd;
-	memcpy(&file->st, &st, sizeof(struct stat));
+	file->st = st;
 
 	return TRUE;
 }
 	
 static void sieve_binary_file_close(struct sieve_binary_file **file)
 {
-	if ( (*file)->fd != -1 )
-		close((*file)->fd);
+	if ( (*file)->fd != -1 ) {
+		if ( close((*file)->fd) < 0 ) {
+			sieve_system_error(
+				"sieve: binary close(fd) failed: %m");
+		}
+	}
 
 	pool_unref(&(*file)->pool);
 	

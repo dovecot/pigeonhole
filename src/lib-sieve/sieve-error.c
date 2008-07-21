@@ -416,8 +416,12 @@ static void sieve_logfile_free
 		
 	if ( handler->stream != NULL ) {
 		o_stream_destroy(&(handler->stream));
-		if ( handler->fd != STDERR_FILENO )
-			close(handler->fd);
+		if ( handler->fd != STDERR_FILENO ){
+			if ( close(handler->fd) < 0 ) {
+				i_error("sieve_logfile_free: close(fd) failed for logfile '%s': %m",
+					handler->logfile);
+			}
+		}
 	}
 }
 

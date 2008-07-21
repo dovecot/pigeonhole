@@ -1,7 +1,6 @@
 Next (in order of descending priority/precedence):
+* Make utility functions for handling sieve system errors.
 * Review sieve-address parsing implementation for past-end checks
-* Reverse stat() open() occurences; opening before stat is more atomic
-* Make sure errors from close() calls are logged.
 * Improve handling of old/corrupt binaries.
 * Distinguish between 1.2 and 1.1 and start using mailbox_keyword_is_valid()
   and new const str. 
