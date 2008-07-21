@@ -12,3 +12,5 @@ ChangeLog: .hg/dirstate
 	hg log --style=changelog > ChangeLog
 endif
 
+test:
+	$(MAKE) -C src/testsuite test

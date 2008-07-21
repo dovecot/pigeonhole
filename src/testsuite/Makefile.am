@@ -56,3 +56,21 @@ noinst_HEADERS = \
 	testsuite-objects.h \
 	namespaces.h \
 	mail-raw.h
+
+# Testsuite tests
+
+EXTRA_DIST = tests
+
+test_cases = \
+    tests/control-structures.svtest \
+    tests/testsuite.svtest\
+	tests/comparators/core.svtest \
+	tests/match-types/contains.svtest \
+	tests/match-types/matches.svtest \
+	tests/extensions/variables/basic.svtest
+
+$(test_cases): 
+	@$(TESTSUITE_BIN) $@
+.PHONY: $(test_cases)
+
+test: $(test_cases)

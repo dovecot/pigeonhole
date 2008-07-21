@@ -11,6 +11,8 @@
 #include "namespaces.h"
 #include "sieve.h"
 #include "sieve-extensions.h"
+#include "sieve-result.h"
+#include "sieve-interpreter.h"
 
 #include "testsuite-common.h"
 
@@ -134,6 +136,25 @@ static void print_help(void)
 	);
 }
 
+static int testsuite_run
+(struct sieve_binary *sbin, const struct sieve_script_env *scriptenv)
+{
+	struct sieve_error_handler *ehandler = sieve_stderr_ehandler_create(0);
+	struct sieve_result *sres = sieve_result_create(ehandler);
+	struct sieve_interpreter *interp =
+		sieve_interpreter_create(sbin, ehandler, NULL);
+	int ret = 0;
+
+    ret = sieve_interpreter_run(interp, &testsuite_msgdata, scriptenv, &sres);
+
+	sieve_interpreter_free(&interp);
+	sieve_result_unref(&sres);
+
+	sieve_error_handler_unref(&ehandler);
+
+	return ret;	
+}
+
 int main(int argc, char **argv) 
 {
 	const char *scriptfile, *dumpfile; 
@@ -142,8 +163,6 @@ int main(int argc, char **argv)
 	pool_t namespaces_pool;
 	struct sieve_binary *sbin;
 	struct sieve_script_env scriptenv;
-	struct sieve_error_handler *ehandler;
-	struct ostream *teststream;
 
 	testsuite_init();
 
@@ -168,6 +187,8 @@ int main(int argc, char **argv)
 		print_help();
 		i_fatal("Missing <scriptfile> argument");
 	}
+
+	printf("Test case: %s:\n\n", scriptfile);
 	
 	/* Compile sieve script */
 	sbin = _compile_sieve_script(scriptfile);
@@ -183,23 +204,15 @@ int main(int argc, char **argv)
 	scriptenv.inbox = "INBOX";
 	scriptenv.username = user;
 
-	ehandler = sieve_stderr_ehandler_create(0);	
-
-	teststream = o_stream_create_fd(1, 0, FALSE);
-	
 	/* Run the test */
-	(void) sieve_test
-		(sbin, &testsuite_msgdata, &scriptenv, teststream, ehandler, NULL);
-
-	o_stream_destroy(&teststream);
+	(void) testsuite_run(sbin, &scriptenv);
 
 	sieve_close(&sbin);
-	sieve_error_handler_unref(&ehandler);
 
 	testsuite_message_deinit();
 	namespaces_deinit();
 
 	testsuite_deinit();  
 
-	return 0;
+	return testsuite_testcase_result();
 }

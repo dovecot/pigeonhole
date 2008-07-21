@@ -54,6 +54,9 @@ AC_SUBST(MODULE_LIBS)
 AC_SUBST(dovecot_incdir)
 AC_SUBST(moduledir)
 
+TESTSUITE_BIN="\$(top_srcdir)/src/testsuite/testsuite"
+AC_SUBST(TESTSUITE_BIN)
+
 AC_CONFIG_FILES([
 Makefile
 src/Makefile

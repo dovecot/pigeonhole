@@ -30,6 +30,7 @@ struct sieve_message_data testsuite_msgdata;
 
 static string_t *test_name;
 unsigned int test_index;
+unsigned int test_failures;
 
 /* 
  * Testsuite message environment 
@@ -176,6 +177,7 @@ void testsuite_test_context_init(void)
 {
 	test_name = str_new(default_pool, 128);
 	test_index = 0;	
+	test_failures = 0;
 }
 
 void testsuite_test_start(string_t *name)
@@ -202,6 +204,8 @@ void testsuite_test_fail(string_t *reason)
 	}
 
 	str_truncate(test_name, 0);
+
+	test_failures++;
 }
 
 void testsuite_test_succeed(string_t *reason)
@@ -224,5 +228,16 @@ void testsuite_test_succeed(string_t *reason)
 void testsuite_test_context_deinit(void)
 {
 	//str_free(test_name);
+}
+
+int testsuite_testcase_result(void)
+{
+	if ( test_failures > 0 ) {
+		printf("\nFAIL: %d of %d tests failed.\n\n", test_failures, test_index);
+		return 1;
+	}
+
+	printf("\nPASS: %d tests succeeded.\n\n", test_index);
+	return 0;
 }
 
