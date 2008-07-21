@@ -67,6 +67,7 @@ test_cases = \
 	tests/comparators/core.svtest \
 	tests/match-types/contains.svtest \
 	tests/match-types/matches.svtest \
+	tests/address-parts/subaddress.svtest \
 	tests/extensions/variables/basic.svtest
 
 $(test_cases): 

@@ -46,6 +46,12 @@ static const char *_default_message_data =
 "\n"
 "Friep!\n";
 
+static string_t *envelope_from;
+static string_t *envelope_to;
+static string_t *envelope_auth;
+
+pool_t message_pool;
+
 static void _testsuite_message_set(string_t *message)
 {
 	struct mail *mail;
@@ -88,12 +94,18 @@ static void _testsuite_message_set(string_t *message)
 
 void testsuite_message_init(pool_t namespaces_pool, const char *user)
 {		
-	string_t *default_message = t_str_new(1024);
+	message_pool = pool_alloconly_create("testsuite_message", 6096);
+
+	string_t *default_message = str_new(message_pool, 1024);
 	str_append(default_message, _default_message_data);
 
 	testsuite_user = user;
 	mail_raw_init(namespaces_pool, user);
 	_testsuite_message_set(default_message);
+
+	envelope_to = str_new(message_pool, 256);
+	envelope_from = str_new(message_pool, 256);
+	envelope_auth = str_new(message_pool, 256);
 }
 
 void testsuite_message_set(string_t *message)
@@ -107,21 +119,29 @@ void testsuite_message_deinit(void)
 {
 	mail_raw_close(_raw_message);
 	mail_raw_deinit();
+
+	pool_unref(&message_pool);
 }
 
 void testsuite_envelope_set_sender(const char *value)
 {
-	testsuite_msgdata.return_path = value;
+	str_truncate(envelope_from, 0);
+	str_append(envelope_from, value);
+	testsuite_msgdata.return_path = str_c(envelope_from);
 }
 
 void testsuite_envelope_set_recipient(const char *value)
 {
-	testsuite_msgdata.to_address = value;
+	str_truncate(envelope_to, 0);
+	str_append(envelope_to, value);
+	testsuite_msgdata.to_address = str_c(envelope_to);
 }
 
 void testsuite_envelope_set_auth_user(const char *value)
 {
-	testsuite_msgdata.auth_user = value;
+	str_truncate(envelope_auth, 0);
+	str_append(envelope_auth, value);
+	testsuite_msgdata.auth_user = str_c(envelope_auth);
 }
 
 /* 
