@@ -5,8 +5,11 @@ Next (in order of descending priority/precedence):
 
 * Test with dovecot --enable-debug for initial mempool allocation size
 * Full standards compliance review for the engine and all fully implemented 
-  sieve extensions.
-    - Address test MUST restrict itself to headers that contain addresses.'
+  sieve extensions. Issues discovered so far:
+    - Address test MUST restrict itself to headers that contain addresses.
+	- Implementations SHOULD consider unknown envelope parts an error.
+	- The null reverse-path is matched against as the empty string, regardless 
+      of the ADDRESS-PART argument specified.
 * Code cleanup 
 * Make sure cmusieve can be replaced seamlessly with the new plugin.
 * Full security review. Enforce limits on number of created objects, script 

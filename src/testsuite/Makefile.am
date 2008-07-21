@@ -62,8 +62,9 @@ noinst_HEADERS = \
 EXTRA_DIST = tests
 
 test_cases = \
-    tests/control-structures.svtest \
     tests/testsuite.svtest\
+    tests/control-structures.svtest \
+	tests/exists.svtest \
 	tests/comparators/core.svtest \
 	tests/match-types/contains.svtest \
 	tests/match-types/matches.svtest \

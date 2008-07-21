@@ -325,7 +325,6 @@ static bool tsto_envelope_set_member(int id, string_t *value)
 		return TRUE;
 	case TESTSUITE_OBJECT_ENVELOPE_AUTH_USER: 
 		testsuite_envelope_set_auth_user(str_c(value));
-		printf("AUTH: %s\n", str_c(value));
 		return TRUE;
 	}
 	

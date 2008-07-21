@@ -114,17 +114,17 @@ static bool tst_exists_operation_execute
 	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL )
 		return FALSE;
 		
-	/* Iterate through all requested headers to match */
+	/* Iterate through all requested headers to match (must find all specified) */
 	hdr_item = NULL;
-	matched = FALSE;
-	while ( !matched && (result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
+	matched = TRUE;
+	while ( matched && (result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
 		&& hdr_item != NULL ) {
 		const char *const *headers;
 			
 		if ( mail_get_headers_utf8
-			(renv->msgdata->mail, str_c(hdr_item), &headers) >= 0 && 
-			headers[0] != NULL ) {	
-			matched = TRUE;				 
+			(renv->msgdata->mail, str_c(hdr_item), &headers) < 0 ||
+			headers[0] == NULL ) {	
+			matched = FALSE;				 
 		}
 	}
 	
