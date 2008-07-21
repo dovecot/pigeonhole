@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension fileinto 
  * ------------------
  *
@@ -7,8 +10,6 @@
  * Status: experimental, largely untested
  *
  */
-
-#include <stdio.h>
 
 #include "sieve-extensions.h"
 #include "sieve-binary.h"
@@ -21,28 +22,22 @@
 #include "sieve-dump.h"
 #include "sieve-result.h"
 
-/* Forward declarations */
+/* 
+ * Forward declarations 
+ */
 
-static bool ext_fileinto_load(int ext_id);
-static bool ext_fileinto_validator_load(struct sieve_validator *validator);
+static const struct sieve_command fileinto_command;
+const struct sieve_operation fileinto_operation;
+const struct sieve_extension fileinto_extension; 
 
-static bool ext_fileinto_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_fileinto_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address); 
-
-static bool cmd_fileinto_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
-static bool cmd_fileinto_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
-
-/* Extension definitions */
+/* 
+ * Extension
+ */
 
 static int ext_my_id;
 
-const struct sieve_operation fileinto_operation;
+static bool ext_fileinto_load(int ext_id);
+static bool ext_fileinto_validator_load(struct sieve_validator *validator);
 
 const struct sieve_extension fileinto_extension = { 
 	"fileinto", 
@@ -59,11 +54,26 @@ static bool ext_fileinto_load(int ext_id)
 	return TRUE;
 }
 
-/* Fileinto command
+static bool ext_fileinto_validator_load(struct sieve_validator *validator)
+{
+	/* Register new command */
+	sieve_validator_register_command(validator, &fileinto_command);
+
+	return TRUE;
+}
+
+/* 
+ * Fileinto command
  *
  * Syntax: 
  *   fileinto <folder: string>
  */
+
+static bool cmd_fileinto_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+static bool cmd_fileinto_generate
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+
 static const struct sieve_command fileinto_command = { 
 	"fileinto", 
 	SCT_COMMAND,
@@ -74,7 +84,16 @@ static const struct sieve_command fileinto_command = {
 	NULL 
 };
 
-/* Fileinto operation */
+/* 
+ * Fileinto operation 
+ */
+
+static bool ext_fileinto_operation_dump
+	(const struct sieve_operation *op, 
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static bool ext_fileinto_operation_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address); 
 
 const struct sieve_operation fileinto_operation = { 
 	"FILEINTO",
@@ -84,9 +103,12 @@ const struct sieve_operation fileinto_operation = {
 	ext_fileinto_operation_execute 
 };
 
-/* Validation */
+/* 
+ * Validation 
+ */
 
-static bool cmd_fileinto_validate(struct sieve_validator *validator, struct sieve_command_context *cmd) 
+static bool cmd_fileinto_validate
+(struct sieve_validator *validator, struct sieve_command_context *cmd) 
 { 	
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	
@@ -98,17 +120,8 @@ static bool cmd_fileinto_validate(struct sieve_validator *validator, struct siev
 	return sieve_validator_argument_activate(validator, cmd, arg, FALSE);
 }
 
-/* Load extension into validator */
-static bool ext_fileinto_validator_load(struct sieve_validator *validator)
-{
-	/* Register new command */
-	sieve_validator_register_command(validator, &fileinto_command);
-
-	return TRUE;
-}
-
 /*
- * Generation
+ * Code generation
  */
  
 static bool cmd_fileinto_generate
@@ -120,10 +133,7 @@ static bool cmd_fileinto_generate
     sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
-		return FALSE;
-	
-	return TRUE;
+	return sieve_generate_arguments(cgenv, ctx, NULL);
 }
 
 /* 
@@ -175,10 +185,7 @@ static bool ext_fileinto_operation_execute
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;
 
-	t_push();
-	
 	if ( !sieve_opr_string_read(renv, address, &folder) ) {
-		t_pop();
 		sieve_binary_corrupt(renv->sbin, "FILEINTO: failed to read string operand");
 		return FALSE;
 	}
@@ -188,9 +195,9 @@ static bool ext_fileinto_operation_execute
 	ret = sieve_act_store_add_to_result
 		(renv, slist, str_c(folder), source_line);
 
-	t_pop();
 	return ( ret >= 0 );
 }
+
 
 
 

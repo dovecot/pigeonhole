@@ -178,10 +178,12 @@ static bool cmd_if_generate
 	
 	/* Generate test condition */
 	test = sieve_ast_test_first(ctx->ast_node);
-	sieve_generate_test(cgenv, test, &jmplist, FALSE);
+	if ( !sieve_generate_test(cgenv, test, &jmplist, FALSE) )
+		return FALSE;
 		
 	/* Case true { */
-	sieve_generate_block(cgenv, ctx->ast_node);
+	if ( !sieve_generate_block(cgenv, ctx->ast_node) ) 
+		return FALSE;
 	
 	/* Are we the final command in this if-elsif-else structure? */
 	if ( ctx_data->next != NULL ) {
@@ -212,7 +214,8 @@ static bool cmd_else_generate
 	struct cmd_if_context_data *ctx_data = (struct cmd_if_context_data *) ctx->data;
 	
 	/* Else { */
-	sieve_generate_block(cgenv, ctx->ast_node);
+	if ( !sieve_generate_block(cgenv, ctx->ast_node) ) 
+		return FALSE;
 		
 	/* } End: resolve all exit blocks */	
 	cmd_if_resolve_exit_jumps(cgenv->sbin, ctx_data);

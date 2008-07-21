@@ -31,8 +31,7 @@ static bool tst_not_generate
 	
 	/* Validator verified the existance of the single test already */
 	test = sieve_ast_test_first(ctx->ast_node); 
-	sieve_generate_test(cgenv, test, jumps, !jump_true);
-		
-	return TRUE;
+	
+	return sieve_generate_test(cgenv, test, jumps, !jump_true);
 }
 

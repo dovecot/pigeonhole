@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 
 #include "sieve-code.h"
@@ -8,7 +11,8 @@
 #include "sieve-interpreter.h"
 #include "sieve-code-dumper.h"
 
-/* Size test 
+/* 
+ * Size test 
  *
  * Syntax:
  *    size <":over" / ":under"> <limit: number>
@@ -34,7 +38,9 @@ const struct sieve_command tst_size = {
 	NULL 
 };
 
-/* Operations */
+/* 
+ * Size operations 
+ */
 
 static bool tst_size_operation_dump
 	(const struct sieve_operation *op, 
@@ -59,7 +65,9 @@ const struct sieve_operation tst_size_under_operation = {
 	tst_size_operation_execute 
 };
 
-/* Context structures */
+/* 
+ * Context data
+ */
 
 struct tst_size_context_data {
 	enum { SIZE_UNASSIGNED, SIZE_UNDER, SIZE_OVER } type;
@@ -68,7 +76,9 @@ struct tst_size_context_data {
 #define TST_SIZE_ERROR_DUP_TAG \
 	"exactly one of the ':under' or ':over' tags must be specified for the size test, but more were found"
 
-/* Tag validation */
+/* 
+ * Tag validation 
+ */
 
 static bool tst_size_validate_over_tag
 (struct sieve_validator *validator, struct sieve_ast_argument **arg, 
@@ -108,7 +118,9 @@ static bool tst_size_validate_under_tag
 	return TRUE;
 }
 
-/* Test registration */
+/* 
+ * Test registration 
+ */
 
 static const struct sieve_argument size_over_tag = { 
 	"over", 
@@ -127,13 +139,16 @@ static const struct sieve_argument size_under_tag = {
 static bool tst_size_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
+	/* Register our tags */
 	sieve_validator_register_tag(validator, cmd_reg, &size_over_tag, 0); 	
 	sieve_validator_register_tag(validator, cmd_reg, &size_under_tag, 0); 	
 
 	return TRUE;
 }
 
-/* Test validation */
+/* 
+ * Test validation 
+ */
 
 static bool tst_size_pre_validate
 	(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *tst) 
@@ -168,7 +183,9 @@ static bool tst_size_validate
 	return sieve_validator_argument_activate(validator, tst, arg, FALSE);
 }
 
-/* Test generation */
+/* 
+ * Code generation 
+ */
 
 bool tst_size_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
@@ -187,7 +204,9 @@ bool tst_size_generate
 	return TRUE;
 }
 
-/* Code dump */
+/* 
+ * Code dump 
+ */
 
 static bool tst_size_operation_dump
 (const struct sieve_operation *op,
@@ -200,9 +219,11 @@ static bool tst_size_operation_dump
 		sieve_opr_number_dump(denv, address);
 }
 
-/* Code execution */
+/* 
+ * Code execution 
+ */
 
-static bool tst_size_get
+static inline bool tst_size_get
 (const struct sieve_runtime_env *renv, sieve_size_t *size) 
 {
 	uoff_t psize;
@@ -223,12 +244,15 @@ static bool tst_size_operation_execute
 	
 	sieve_runtime_trace(renv, "%s test", op->mnemonic);
 	
+	/* Read size limit */
 	if ( !sieve_opr_number_read(renv, address, &limit) ) 
 		return FALSE;	
 	
+	/* Get the size of the message */
 	if ( !tst_size_get(renv, &mail_size) )
 		return FALSE;
 	
+	/* Perform the test */
 	if ( op == &tst_size_over_operation )
 		sieve_interpreter_set_test_result(renv->interp, (mail_size > limit));
 	else

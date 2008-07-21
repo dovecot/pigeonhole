@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension encoded-character 
  * ---------------------------
  *
@@ -15,12 +18,14 @@
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 
-/* Forward declarations */
+#include <ctype.h>
+
+/* 
+ * Extension
+ */
 
 static bool ext_encoded_character_load(int ext_id);
 static bool ext_encoded_character_validator_load(struct sieve_validator *validator);
-
-/* Extension definitions */
 
 static int ext_my_id;
 	
@@ -39,7 +44,9 @@ static bool ext_encoded_character_load(int ext_id)
 	return TRUE;
 }
 
-/* New argument */
+/*
+ * Encoded string argument
+ */
 
 bool arg_encoded_string_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
@@ -175,6 +182,7 @@ bool arg_encoded_string_validate
 		strstart = p;
 		while ( result && p < strend ) {
 			switch ( state ) {
+			/* Normal string */
 			case ST_NONE:
 				if ( *p == '$' ) {
 					substart = p;
@@ -182,6 +190,7 @@ bool arg_encoded_string_validate
 				}
 				p++;
 				break;
+			/* Parsed '$' */
 			case ST_OPEN:
 				if ( *p == '{' ) {
 					state = ST_TYPE;
@@ -189,11 +198,13 @@ bool arg_encoded_string_validate
 				} else 
 					state = ST_NONE;
 				break;
+			/* Parsed '${' */
 			case ST_TYPE:
 				mark = p;
-				while ( p < strend && *p != ':' && *p != '$' && *p != '}' ) p++;
+				/* Scan for 'hex' or 'unicode' */
+				while ( p < strend && i_isalpha(*p) ) p++;
 					
-				if ( *p == '$' || *p == '}' ) {
+				if ( *p != ':' ) {
 					state = ST_NONE;
 					break;
 				}
@@ -202,6 +213,7 @@ bool arg_encoded_string_validate
 				
 				str_truncate(tmpstr, 0);
 				if ( strncasecmp(mark, "hex", p - mark) == 0 ) {
+					/* Hexadecimal */
 					p++;
 					ret = _decode_hex(&p, strend, tmpstr);
 					if ( ret <= 0 ) { 
@@ -209,6 +221,7 @@ bool arg_encoded_string_validate
 						if ( ret < 0 ) result = FALSE;
 					}
 				} else if ( strncasecmp(mark, "unicode", p - mark) == 0 ) {
+					/* Unicode */
 					p++;
 					ret = _decode_unicode(validator, cmd, &p, strend, tmpstr);
 					if ( ret <= 0 ) { 
@@ -216,6 +229,7 @@ bool arg_encoded_string_validate
 						if ( ret < 0 ) result = FALSE;
 					}
 				} else {	
+					/* Invalid encoding */
 					p++;
 					state = ST_NONE;
 				}
@@ -251,10 +265,12 @@ bool arg_encoded_string_validate
 		(validator, cmd, *arg, TRUE);
 }
 
-/* Load extension into validator */
+/* 
+ * Extension implementation
+ */
 
 static bool ext_encoded_character_validator_load
-	(struct sieve_validator *validator ATTR_UNUSED)
+(struct sieve_validator *validator ATTR_UNUSED)
 {
 	sieve_validator_argument_override(validator, SAT_CONST_STRING, 
 		&encoded_string_argument); 

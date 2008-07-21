@@ -1,4 +1,5 @@
-#include <stdio.h>
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
 
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
@@ -10,7 +11,8 @@
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
 
-/* Header test 
+/* 
+ * Header test 
  *
  * Syntax:
  *   header [COMPARATOR] [MATCH-TYPE]
@@ -35,7 +37,9 @@ const struct sieve_command tst_header = {
 	NULL 
 };
 
-/* Operation */
+/* 
+ * Header operation 
+ */
 
 static bool tst_header_operation_dump
 	(const struct sieve_operation *op, 
@@ -60,7 +64,9 @@ enum tst_header_optional {
 	OPT_MATCH_TYPE
 };
 
-/* Test registration */
+/* 
+ * Test registration 
+ */
 
 static bool tst_header_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
@@ -72,7 +78,9 @@ static bool tst_header_registered
 	return TRUE;
 }
 
-/* Test validation */
+/* 
+ * Validation 
+ */
 
 static bool tst_header_validate
 	(struct sieve_validator *validator, struct sieve_command_context *tst) 
@@ -101,7 +109,9 @@ static bool tst_header_validate
 	return sieve_match_type_validate(validator, tst, arg);
 }
 
-/* Test generation */
+/*
+ * Code generation 
+ */
 
 static bool tst_header_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
@@ -109,13 +119,12 @@ static bool tst_header_generate
 	sieve_operation_emit_code(cgenv->sbin, &tst_header_operation, -1);
 
  	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
-		return FALSE;
-	
-	return TRUE;
+	return sieve_generate_arguments(cgenv, ctx, NULL);
 }
 
-/* Code dump */
+/* 
+ * Code dump 
+ */
 
 static bool tst_header_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,
@@ -152,7 +161,9 @@ static bool tst_header_operation_dump
 		sieve_opr_stringlist_dump(denv, address);
 }
 
-/* Code execution */
+/* 
+ * Code execution 
+ */
 
 static bool tst_header_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED, 
@@ -190,21 +201,16 @@ static bool tst_header_operation_execute
 			}
 		}
 	}
-
-	t_push();
 		
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		t_pop();
+	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) 
 		return FALSE;
-	}
 	
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		t_pop();
+	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL )
 		return FALSE;
-	}
 
+	/* Initialize match */
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, key_list); 	
 
 	/* Iterate through all requested headers to match */
@@ -224,10 +230,10 @@ static bool tst_header_operation_execute
 		}
 	}
 
-	matched = sieve_match_end(mctx) || matched; 	
+	/* Finish match */
+	matched = sieve_match_end(mctx) || matched;
 	
-	t_pop();
-	
+	/* Set test result for subsequent conditional jump */
 	if ( result )
 		sieve_interpreter_set_test_result(renv->interp, matched);
 	

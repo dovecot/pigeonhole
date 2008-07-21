@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension envelope 
  * ------------------
  *
@@ -7,8 +10,6 @@
  * Status: experimental, largely untested
  *
  */
-
-#include <stdio.h>
 
 #include "lib.h"
 #include "array.h"
@@ -25,30 +26,22 @@
 #include "sieve-interpreter.h"
 #include "sieve-code-dumper.h"
 
-/* Forward declarations */
+/*
+ * Forward declarations
+ */
 
-static bool ext_envelope_load(int ext_id);
-static bool ext_envelope_validator_load(struct sieve_validator *validator);
+static const struct sieve_command envelope_test;
+const struct sieve_operation envelope_operation;
+const struct sieve_extension envelope_extension;
 
-static bool ext_envelope_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_envelope_operation_execute
-	(const struct sieve_operation *op,
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
-
-static bool tst_envelope_registered
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
-static bool tst_envelope_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst);
-static bool tst_envelope_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
-
-/* Extension definitions */
+/* 
+ * Extension 
+ */
 
 static int ext_my_id;
 
-const struct sieve_operation envelope_operation;
+static bool ext_envelope_load(int ext_id);
+static bool ext_envelope_validator_load(struct sieve_validator *validator);
 
 const struct sieve_extension envelope_extension = { 
 	"envelope", 
@@ -65,12 +58,29 @@ static bool ext_envelope_load(int ext_id)
 	return TRUE;
 }
 
-/* Envelope test 
+static bool ext_envelope_validator_load(struct sieve_validator *validator)
+{
+	/* Register new test */
+	sieve_validator_register_command(validator, &envelope_test);
+
+	return TRUE;
+}
+
+/* 
+ * Envelope test 
  *
  * Syntax
  *   envelope [COMPARATOR] [ADDRESS-PART] [MATCH-TYPE]
  *     <envelope-part: string-list> <key-list: string-list>   
  */
+
+static bool tst_envelope_registered
+	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+static bool tst_envelope_validate
+	(struct sieve_validator *validator, struct sieve_command_context *tst);
+static bool tst_envelope_generate
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+
 static const struct sieve_command envelope_test = { 
 	"envelope", 
 	SCT_TEST, 
@@ -82,7 +92,16 @@ static const struct sieve_command envelope_test = {
 	NULL 
 };
 
-/* Envelope operation */
+/* 
+ * Envelope operation 
+ */
+
+static bool ext_envelope_operation_dump
+	(const struct sieve_operation *op, 
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static bool ext_envelope_operation_execute
+	(const struct sieve_operation *op,
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation envelope_operation = { 
 	"ENVELOPE",
@@ -92,7 +111,10 @@ const struct sieve_operation envelope_operation = {
 	ext_envelope_operation_execute 
 };
 
-/* Command Registration */
+/* 
+ * Command Registration 
+ */
+
 static bool tst_envelope_registered
 (struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
@@ -135,17 +157,8 @@ static bool tst_envelope_validate
 	return sieve_match_type_validate(validator, tst, arg);
 }
 
-/* Load extension into validator */
-static bool ext_envelope_validator_load(struct sieve_validator *validator)
-{
-	/* Register new test */
-	sieve_validator_register_command(validator, &envelope_test);
-
-	return TRUE;
-}
-
 /*
- * Generation
+ * Code generation
  */
  
 static bool tst_envelope_generate
@@ -180,6 +193,10 @@ static bool ext_envelope_operation_dump
 		sieve_opr_stringlist_dump(denv, address) &&
 		sieve_opr_stringlist_dump(denv, address);
 }
+
+/*
+ * Interpretation
+ */
 
 static int ext_envelope_get_fields
 (const struct sieve_message_data *msgdata, const char *field, 
@@ -226,21 +243,15 @@ static bool ext_envelope_operation_execute
 		(renv, address, &addrp, &mtch, &cmp) )
 		return FALSE; 
 
-	t_push();
-		
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		t_pop();
+	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL )
 		return FALSE;
-	}
 
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		t_pop();
+	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) 
 		return FALSE;
-	}
 	
-	/* Initialize match context */
+	/* Initialize match */
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, key_list);
 	
 	/* Iterate through all requested headers to match */
@@ -260,12 +271,13 @@ static bool ext_envelope_operation_execute
 		}
 	}
 	
+	/* Finish match */
 	matched = sieve_match_end(mctx) || matched;
 
-	t_pop();
-	
+	/* Set test result for subsequent conditional jump */
 	if ( result )
 		sieve_interpreter_set_test_result(renv->interp, matched);
 	
 	return result;
 }
+

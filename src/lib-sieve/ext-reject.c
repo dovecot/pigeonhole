@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension reject 
  * ----------------
  *
@@ -27,28 +30,22 @@
 #include "sieve-dump.h"
 #include "sieve-result.h"
 
-/* Forward declarations */
+/* 
+ * Forward declarations 
+ */
 
-static bool ext_reject_load(int ext_id);
-static bool ext_reject_validator_load(struct sieve_validator *validator);
+static const struct sieve_command reject_command;
+struct sieve_operation reject_operation;
+struct sieve_extension reject_extension; 
 
-static bool cmd_reject_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
-static bool cmd_reject_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx); 
-
-static bool ext_reject_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_reject_operation_execute
-	(const struct sieve_operation *op,
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
-
-/* Extension definitions */
+/* 
+ * Extension
+ */
 
 static int ext_my_id;
 
-struct sieve_operation reject_operation;
+static bool ext_reject_load(int ext_id);
+static bool ext_reject_validator_load(struct sieve_validator *validator);
 	
 struct sieve_extension reject_extension = { 
 	"reject", 
@@ -65,11 +62,26 @@ static bool ext_reject_load(int ext_id)
 	return TRUE;
 }
 
-/* Reject command
+static bool ext_reject_validator_load(struct sieve_validator *validator)
+{
+	/* Register new command */
+	sieve_validator_register_command(validator, &reject_command);
+
+	return TRUE;
+}
+
+/* 
+ * Reject command
  * 
  * Syntax: 
  *   reject <reason: string>
  */
+
+static bool cmd_reject_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+static bool cmd_reject_generate
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx); 
+
 static const struct sieve_command reject_command = { 
 	"reject", 
 	SCT_COMMAND, 
@@ -80,7 +92,16 @@ static const struct sieve_command reject_command = {
 	NULL 
 };
 
-/* Reject operation */
+/* 
+ * Reject operation 
+ */
+
+static bool ext_reject_operation_dump
+	(const struct sieve_operation *op, 
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static bool ext_reject_operation_execute
+	(const struct sieve_operation *op,
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 struct sieve_operation reject_operation = { 
 	"REJECT",
@@ -90,7 +111,9 @@ struct sieve_operation reject_operation = {
 	ext_reject_operation_execute 
 };
 
-/* Reject action */
+/* 
+ * Reject action 
+ */
 
 static int act_reject_check_duplicate
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action1,
@@ -107,10 +130,6 @@ static bool act_reject_commit
 	(const struct sieve_action *action ATTR_UNUSED, 
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 		
-struct act_reject_context {
-	const char *reason;
-};
-
 const struct sieve_action act_reject = {
 	"reject",
 	SIEVE_ACTFLAG_SENDS_RESPONSE,
@@ -122,11 +141,16 @@ const struct sieve_action act_reject = {
 	NULL
 };
 
+struct act_reject_context {
+	const char *reason;
+};
+
 /* 
  * Validation 
  */
 
-static bool cmd_reject_validate(struct sieve_validator *validator, struct sieve_command_context *cmd) 
+static bool cmd_reject_validate
+(struct sieve_validator *validator, struct sieve_command_context *cmd) 
 { 	
 	struct sieve_ast_argument *arg = cmd->first_positional;
 		
@@ -138,17 +162,8 @@ static bool cmd_reject_validate(struct sieve_validator *validator, struct sieve_
 	return sieve_validator_argument_activate(validator, cmd, arg, FALSE);
 }
 
-/* Load extension into validator */
-static bool ext_reject_validator_load(struct sieve_validator *validator)
-{
-	/* Register new command */
-	sieve_validator_register_command(validator, &reject_command);
-
-	return TRUE;
-}
-
 /*
- * Generation
+ * Code generation
  */
  
 static bool cmd_reject_generate
@@ -161,10 +176,7 @@ static bool cmd_reject_generate
     sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
 
 	/* Generate arguments */
-    if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
-        return FALSE;
-	
-	return TRUE;
+    return sieve_generate_arguments(cgenv, ctx, NULL);
 }
 
 /* 
@@ -190,7 +202,7 @@ static bool ext_reject_operation_dump
 }
 
 /*
- * Execution
+ * Interpretation
  */
 
 static bool ext_reject_operation_execute
@@ -208,17 +220,13 @@ static bool ext_reject_operation_execute
     if ( !sieve_code_source_line_read(renv, address, &source_line) )
         return FALSE;
 	
-	t_push();
-
-	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) ) {
-		t_pop();
+	/* Optional operands (side effects) */
+	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;
-	}
 
-	if ( !sieve_opr_string_read(renv, address, &reason) ) {
-		t_pop();
+	/* Read rejection reason */
+	if ( !sieve_opr_string_read(renv, address, &reason) )
 		return FALSE;
-	}
 
 	sieve_runtime_trace(renv, "REJECT action (\"%s\")", str_c(reason));
 
@@ -230,12 +238,11 @@ static bool ext_reject_operation_execute
 	ret = sieve_result_add_action
 		(renv, &act_reject, slist, source_line, (void *) act);
 	
-	t_pop();
 	return ( ret >= 0 );
 }
 
 /*
- * Action
+ * Action implementation
  */
 
 static int act_reject_check_duplicate

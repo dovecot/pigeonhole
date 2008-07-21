@@ -320,13 +320,14 @@ bool sieve_interpreter_execute_operation
 	interp->current_op = op =
 		sieve_operation_read(interp->runenv.sbin, &(interp->pc));
 
-	if ( op != NULL ) {
-		if ( op->execute != NULL )
-			return op->execute(op, &(interp->runenv), &(interp->pc));
-		else
-			return FALSE;
+	if ( op != NULL && op->execute != NULL ) {
+		bool result;
 			
-		return TRUE;
+		T_BEGIN {
+			result = op->execute(op, &(interp->runenv), &(interp->pc));
+		} T_END;
+
+		return result;
 	}
 	
 	return FALSE;

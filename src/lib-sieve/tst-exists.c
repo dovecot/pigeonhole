@@ -1,4 +1,5 @@
-#include <stdio.h>
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
 
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
@@ -8,7 +9,8 @@
 #include "sieve-interpreter.h"
 #include "sieve-code-dumper.h"
 
-/* Exists test
+/* 
+ * Exists test
  *  
  * Syntax:
  *    exists <header-names: string-list>
@@ -30,7 +32,9 @@ const struct sieve_command tst_exists = {
 	NULL 
 };
 
-/* Operations */
+/* 
+ * Exists operation 
+ */
 
 static bool tst_exists_operation_dump
 	(const struct sieve_operation *op, 
@@ -47,7 +51,9 @@ const struct sieve_operation tst_exists_operation = {
 	tst_exists_operation_execute 
 };
 
-/* Test validation */
+/* 
+ * Validation 
+ */
 
 static bool tst_exists_validate
   (struct sieve_validator *validator, struct sieve_command_context *tst) 
@@ -62,7 +68,9 @@ static bool tst_exists_validate
 	return sieve_validator_argument_activate(validator, tst, arg, FALSE);
 }
 
-/* Test generation */
+/* 
+ * Code generation 
+ */
 
 static bool tst_exists_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
@@ -70,13 +78,12 @@ static bool tst_exists_generate
 	sieve_operation_emit_code(cgenv->sbin, &tst_exists_operation, -1);
 
  	/* Generate arguments */
-    if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
-        return FALSE;	
-	
-	return TRUE;
+    return sieve_generate_arguments(cgenv, ctx, NULL);
 }
 
-/* Code dump */
+/* 
+ * Code dump 
+ */
 
 static bool tst_exists_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED, 
@@ -85,11 +92,12 @@ static bool tst_exists_operation_dump
     sieve_code_dumpf(denv, "EXISTS");
 	sieve_code_descend(denv);
 
-	return
-    	sieve_opr_stringlist_dump(denv, address);
+	return sieve_opr_stringlist_dump(denv, address);
 }
 
-/* Code execution */
+/* 
+ * Code execution 
+ */
 
 static bool tst_exists_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED, 
@@ -102,13 +110,9 @@ static bool tst_exists_operation_execute
 	
 	sieve_runtime_trace(renv, "EXISTS test");
 
-	t_push();
-		
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		t_pop();
+	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL )
 		return FALSE;
-	}
 		
 	/* Iterate through all requested headers to match */
 	hdr_item = NULL;
@@ -124,8 +128,7 @@ static bool tst_exists_operation_execute
 		}
 	}
 	
-	t_pop();
-	
+	/* Set test result for subsequent conditional jump */
 	if ( result )
 		sieve_interpreter_set_test_result(renv->interp, matched);
 	

@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-validator.h"
@@ -6,7 +9,8 @@
 #include "sieve-code.h"
 #include "sieve-binary.h"
 
-/* Allof test 
+/* 
+ * Allof test 
  * 
  * Syntax 
  *   allof <tests: test-list>   
@@ -25,7 +29,9 @@ const struct sieve_command tst_allof = {
 	tst_allof_generate 
 };
 
-/* Code generation */
+/* 
+ * Code generation 
+ */
 
 static bool tst_allof_generate
 (const struct sieve_codegen_env *cgenv, 
@@ -43,16 +49,20 @@ static bool tst_allof_generate
 	
 	test = sieve_ast_test_first(ctx->ast_node);
 	while ( test != NULL ) {	
+		bool result; 
+
 		/* If this test list must jump on false, all sub-tests can simply add their jumps
 		 * to the caller's jump list, otherwise this test redirects all false jumps to the 
 		 * end of the currently generated code. This is just after a final jump to the true
 		 * case 
 		 */
 		if ( jump_true ) 
-			sieve_generate_test(cgenv, test, &false_jumps, FALSE);
+			result = sieve_generate_test(cgenv, test, &false_jumps, FALSE);
 		else
-			sieve_generate_test(cgenv, test, jumps, FALSE);
+			result = sieve_generate_test(cgenv, test, jumps, FALSE);
 		
+		if ( !result ) return FALSE;
+
 		test = sieve_ast_test_next(test);
 	}	
 	

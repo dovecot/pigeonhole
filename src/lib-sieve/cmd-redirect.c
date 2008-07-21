@@ -205,11 +205,8 @@ static bool cmd_redirect_operation_execute
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
 		return FALSE;
 
-	t_push();
-
 	/* Read the address */
 	if ( !sieve_opr_string_read(renv, address, &redirect) ) {
-		t_pop();
 		return FALSE;
 	}
 
@@ -227,7 +224,6 @@ static bool cmd_redirect_operation_execute
 	ret = sieve_result_add_action
 		(renv, &act_redirect, slist, source_line, (void *) act);
 	
-	t_pop();
 	return (ret >= 0);
 }
 

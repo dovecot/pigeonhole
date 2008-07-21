@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include <stdio.h>
 
 #include "sieve-commands.h"
@@ -13,7 +16,8 @@
 #include "sieve-interpreter.h"
 #include "sieve-code-dumper.h"
 
-/* Address test
+/* 
+ * Address test
  *
  * Syntax:
  *    address [ADDRESS-PART] [COMPARATOR] [MATCH-TYPE]
@@ -38,7 +42,9 @@ const struct sieve_command tst_address = {
 	NULL 
 };
 
-/* Operands */
+/* 
+ * Address operation 
+ */
 
 static bool tst_address_operation_dump
 	(const struct sieve_operation *op, 
@@ -55,7 +61,9 @@ const struct sieve_operation tst_address_operation = {
 	tst_address_operation_execute 
 };
 
-/* Test registration */
+/* 
+ * Test registration 
+ */
 
 static bool tst_address_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
@@ -68,7 +76,9 @@ static bool tst_address_registered
 	return TRUE;
 }
 
-/* Test validation */
+/* 
+ * Validation 
+ */
 
 static bool tst_address_validate
 	(struct sieve_validator *validator, struct sieve_command_context *tst) 
@@ -97,7 +107,9 @@ static bool tst_address_validate
 	return sieve_match_type_validate(validator, tst, arg);
 }
 
-/* Test generation */
+/* 
+ * Code generation 
+ */
 
 static bool tst_address_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
@@ -105,13 +117,12 @@ static bool tst_address_generate
 	sieve_operation_emit_code(cgenv->sbin, &tst_address_operation, -1);
 	
 	/* Generate arguments */  	
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
-		return FALSE;
-	
-	return TRUE;
+	return sieve_generate_arguments(cgenv, ctx, NULL);
 }
 
-/* Code dump */
+/* 
+ * Code dump 
+ */
 
 static bool tst_address_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,	
@@ -120,7 +131,7 @@ static bool tst_address_operation_dump
 	sieve_code_dumpf(denv, "ADDRESS");
 	sieve_code_descend(denv);
 	
-	//* Handle any optional arguments */
+	/* Handle any optional arguments */
 	if ( !sieve_addrmatch_default_dump_optionals(denv, address) )
 		return FALSE;
 
@@ -129,7 +140,9 @@ static bool tst_address_operation_dump
 		sieve_opr_stringlist_dump(denv, address);
 }
 
-/* Code execution */
+/* 
+ * Code execution 
+ */
 
 static bool tst_address_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED, 
@@ -147,23 +160,18 @@ static bool tst_address_operation_execute
 	
 	sieve_runtime_trace(renv, "ADDRESS test");
 
+	/* Read optional operands */
 	if ( !sieve_addrmatch_default_get_optionals
 		(renv, address, &addrp, &mtch, &cmp) )
 		return FALSE; 
-
-	t_push();
 		
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		t_pop();
+	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL )
 		return FALSE;
-	}
 	
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		t_pop();
+	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL )
 		return FALSE;
-	}
 
 	/* Initialize match context */
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, key_list);
@@ -185,10 +193,10 @@ static bool tst_address_operation_execute
 		}
 	}
 	
+	/* Finish match */
 	matched = sieve_match_end(mctx) || matched;
-
-	t_pop();
 	
+	/* Set test result for subsequent conditional jump */
 	if ( result )
 		sieve_interpreter_set_test_result(renv->interp, matched);
 	
