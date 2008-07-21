@@ -170,7 +170,8 @@ static struct sieve_binary *sieve_binary_create(struct sieve_script *script)
 	sbin->pool = pool;
 	sbin->refcount = 1;
 	sbin->script = script;
-	sieve_script_ref(script);
+	if ( script != NULL ) 
+		sieve_script_ref(script);
 	
 	p_array_init(&sbin->linked_extensions, pool, 5);
 	p_array_init(&sbin->extensions, pool, 5);
@@ -1168,7 +1169,7 @@ bool sieve_binary_up_to_date(struct sieve_binary *sbin)
 	
 	i_assert(sbin->file != NULL);
 
-	if ( !sieve_script_older(sbin->script, sbin->file->st.st_mtime) )
+	if ( sbin->script == NULL || !sieve_script_older(sbin->script, sbin->file->st.st_mtime) )
 		return FALSE;
 	
 	ext_count = array_count(&sbin->extensions);	
