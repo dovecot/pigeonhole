@@ -8,6 +8,8 @@ struct sieve_script {
     unsigned int refcount;
 
     struct stat st;
+	struct stat lnk_st;
+	time_t mtime;
 
     struct sieve_error_handler *ehandler;
 

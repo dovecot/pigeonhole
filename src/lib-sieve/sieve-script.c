@@ -21,6 +21,7 @@ struct sieve_script *sieve_script_init
 	int ret;
 	pool_t pool;
 	struct stat st;
+	struct stat lnk_st;
 	const char *filename, *dirpath, *basename;
 
 	if ( exists_r != NULL )
@@ -52,44 +53,62 @@ struct sieve_script *sieve_script_init
 			
 		/* First obtain stat data from the system */
 		
-		if ( (ret=stat(path, &st)) != 0 && (errno != ENOENT || exists_r == NULL) ) {
+		if ( (ret=lstat(path, &st)) < 0 && (errno != ENOENT || exists_r == NULL) ) {
 			if ( errno == ENOENT ) 
 				sieve_error(ehandler, basename, "sieve script does not exist");
 			else
-				sieve_critical(ehandler, basename, "failed to stat sieve script file '%s': %m", path);
+				sieve_critical(ehandler, basename, "failed to lstat sieve script file '%s': %m", path);
 			script = NULL;
+			ret = 1;
 		} else {
-			/* Only create/init the object if it stat()s without problems */
+			/* Record stat information from the symlink */
+			lnk_st = st;
 
+			/* Only create/init the object if it stat()s without problems */
+			if (S_ISLNK(st.st_mode)) {
+				if ( (ret=stat(path, &st)) < 0 && (errno != ENOENT || exists_r == NULL) ) {
+					if ( errno == ENOENT )
+                		sieve_error(ehandler, basename, "sieve script does not exist");
+		            else
+        		        sieve_critical(ehandler, basename, 
+							"failed to stat sieve script file '%s': %m", path);
+		            script = NULL;	
+					ret = 1;
+				}
+			}
 			if ( ret == 0 && !S_ISREG(st.st_mode) ) {
 				sieve_critical(ehandler, basename, 
 					"sieve script file '%s' is not a regular file.", path);
 				script = NULL;
-			} else {
-				if ( exists_r != NULL )
-					*exists_r = ( ret == 0 );
+				ret = 1;
+			} 
+		}
 
-				if ( script == NULL ) {
-					pool = pool_alloconly_create("sieve_script", 1024);
-					script = p_new(pool, struct sieve_script, 1);
-					script->pool = pool;
-				} else 
-					pool = script->pool;
+		if ( ret <= 0 ) {
+			if ( exists_r != NULL )
+				*exists_r = ( ret == 0 );
+
+			if ( script == NULL ) {
+				pool = pool_alloconly_create("sieve_script", 1024);
+				script = p_new(pool, struct sieve_script, 1);
+				script->pool = pool;
+			} else 
+				pool = script->pool;
 		
-				script->refcount = 1;
-				script->ehandler = ehandler;
-				sieve_error_handler_ref(ehandler);
+			script->refcount = 1;
+			script->ehandler = ehandler;
+			sieve_error_handler_ref(ehandler);
 		
-				script->st = st;
-				script->path = p_strdup(pool, path);
-				script->filename = p_strdup(pool, filename);
-				script->dirpath = p_strdup(pool, dirpath);
-				script->basename = p_strdup(pool, basename);
-				if ( name != NULL )
-					script->name = p_strdup(pool, name);
-				else
-					script->name = NULL;
-			}
+			script->st = st;
+			script->lnk_st = lnk_st;
+			script->path = p_strdup(pool, path);
+			script->filename = p_strdup(pool, filename);
+			script->dirpath = p_strdup(pool, dirpath);
+			script->basename = p_strdup(pool, basename);
+			if ( name != NULL )
+				script->name = p_strdup(pool, name);
+			else
+				script->name = NULL;
 		}
 	} T_END;	
 
@@ -163,7 +182,7 @@ struct istream *sieve_script_open
 		} else {
 			result = script->stream = 
 				i_stream_create_fd(fd, SIEVE_READ_BLOCK_SIZE, TRUE);
-			script->st = st;
+			script->st = script->lnk_st = st;
 		}
 	}
 
@@ -205,7 +224,7 @@ unsigned int sieve_script_hash(struct sieve_script *script)
 bool sieve_script_older
 (struct sieve_script *script, time_t time)
 {
-	return ( script->st.st_mtime < time );
+	return ( script->st.st_mtime < time && script->lnk_st.st_mtime < time );
 }
 
 /* Accessors */
