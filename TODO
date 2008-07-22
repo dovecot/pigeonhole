@@ -1,6 +1,7 @@
 Next (in order of descending priority/precedence):
 * Review sieve-address parsing implementation for past-end checks
 * Improve handling of old/corrupt binaries.
+* Move to 1.2 and start using mailbox_keyword_is_valid() and new const str. 
 
 * Test with dovecot --enable-debug for initial mempool allocation size
 * Full standards compliance review for the engine and all fully implemented 
@@ -15,8 +16,6 @@ Next (in order of descending priority/precedence):
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...
 * Make simple test suite for the base functionality
-* Distinguish between 1.2 and 1.1 and start using mailbox_keyword_is_valid()
-  and new const str. 
 
 * ## MAKE A FIRST RELEASE ##
 

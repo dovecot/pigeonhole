@@ -20,53 +20,12 @@ typedef void (*sieve_error_vfunc_t)
 /*
  * System errors
  *
- * FIXME: Low-level access to the Dovecot logging functions would be nice.
+ * FIXME: Low-level access to the Dovecot logging functions would be useful.
  */
 
-static inline void sieve_sys_verror(const char *fmt, va_list args)
-{
-	i_error("sieve: %s", t_strdup_vprintf(fmt, args));
-}
-
-static inline void sieve_sys_vwarning(const char *fmt, va_list args)
-{
-	i_warning("sieve: %s", t_strdup_vprintf(fmt, args));
-}
-
-static inline void sieve_sys_vinfo(const char *fmt, va_list args)
-{
-	i_info("sieve: %s", t_strdup_vprintf(fmt, args));
-}
-
-static inline void sieve_sys_error(const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	
-	T_BEGIN { sieve_sys_verror(fmt, args); } T_END;
-	
-	va_end(args);
-}
-
-static inline void sieve_sys_warning(const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	
-	T_BEGIN { sieve_sys_vwarning(fmt, args); } T_END;
-	
-	va_end(args);
-}
-
-static inline void sieve_sys_info(const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	
-	T_BEGIN { sieve_sys_vinfo(fmt, args); } T_END;
-	
-	va_end(args);
-}
+#define sieve_sys_error(...) i_error("sieve: " __VA_ARGS__ )
+#define sieve_sys_warning(...) i_warning("sieve: " __VA_ARGS__ )
+#define sieve_sys_info(...) i_info("sieve: " __VA_ARGS__ )
 
 /* For these functions it is the responsibility of the caller to
  * manage the datastack.

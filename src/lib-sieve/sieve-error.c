@@ -37,9 +37,9 @@ void sieve_verror
 	
 	if ( ehandler->log_master ) {
 		if ( location == NULL || *location == '\0' )
-			sieve_sys_verror(fmt, args);
+			sieve_sys_error("%s", t_strdup_vprintf(fmt, args));
 		else
-			sieve_sys_error("%s: %s", t_strdup_vprintf(fmt, args));
+			sieve_sys_error("%s: %s", location, t_strdup_vprintf(fmt, args));
 	}
 
 	if ( sieve_errors_more_allowed(ehandler) ) {
@@ -56,9 +56,9 @@ void sieve_vwarning
 
 	if ( ehandler->log_master ) {
 		if ( location == NULL || *location == '\0' )
-			sieve_sys_vwarning(fmt, args);
+			sieve_sys_warning("%s", t_strdup_vprintf(fmt, args));
 		else
-			sieve_sys_warning("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+			sieve_sys_warning("%s: %s", location, t_strdup_vprintf(fmt, args));
 	}
 		
 	ehandler->vwarning(ehandler, location, fmt, args);
@@ -73,7 +73,7 @@ void sieve_vinfo
 
 	if ( ehandler->log_master ) {
 		if ( location == NULL || *location == '\0' )
-			sieve_sys_vinfo(fmt, args);
+			sieve_sys_info("%s", t_strdup_vprintf(fmt, args));
 		else	
 			sieve_sys_info("%s: %s", location, t_strdup_vprintf(fmt, args));
 	}
@@ -92,7 +92,7 @@ void sieve_vcritical
 	tm = localtime(&ioloop_time);
 	
 	if ( location == NULL || *location == '\0' )
-		sieve_sys_verror(fmt, args);
+		sieve_sys_error("%s", t_strdup_vprintf(fmt, args));
 	else
 		sieve_sys_error("%s: %s", location, t_strdup_vprintf(fmt, args));
 		
