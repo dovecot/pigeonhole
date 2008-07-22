@@ -4,6 +4,7 @@
 #include "hash.h"
 #include "array.h"
 
+#include "sieve-error.h"
 #include "sieve-extensions-private.h"
 
 /* Static pre-declarations */
@@ -139,7 +140,7 @@ int sieve_extension_register(const struct sieve_extension *extension)
 	hash_insert(extension_index, (void *) extension->name, (void *) ereg);
 
 	if ( extension->load != NULL && !extension->load(ext_id) ) {
-		i_error("sieve: failed to load '%s' extension support.", extension->name);
+		sieve_sys_error("failed to load '%s' extension support.", extension->name);
 		return -1;
 	}
 

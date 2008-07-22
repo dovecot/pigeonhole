@@ -189,8 +189,8 @@ struct istream *sieve_script_open
 	if ( result == NULL ) {
 		/* Something went wrong, close the fd */
 		if ( close(fd) != 0 ) {
-			sieve_system_error(
-				"sieve_script_open: close(fd) failed for sieve script %s: %m", 
+			sieve_sys_error(
+				"close(fd) failed for sieve script %s: %m", 
 				script->path);
 		}
 	}

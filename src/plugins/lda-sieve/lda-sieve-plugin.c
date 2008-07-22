@@ -43,7 +43,7 @@ static const char *lda_sieve_get_path(void)
 		}
 	} else {
 		if (home == NULL) {
-			i_error("Per-user script path is unknown. See "
+			sieve_sys_error("per-user script path is unknown. See "
 				"http://wiki.dovecot.org/LDA/Sieve#location");
 			return NULL;
 		}
@@ -53,7 +53,7 @@ static const char *lda_sieve_get_path(void)
 
 	if (stat(script_path, &st) < 0) {
 		if (errno != ENOENT)
-			i_error("stat(%s) failed: %m", script_path);
+			sieve_sys_error("stat(%s) failed: %m", script_path);
 
 		/* use global script instead, if one exists */
 		script_path = getenv("SIEVE_GLOBAL_PATH");
@@ -98,11 +98,11 @@ static int lda_sieve_run
 	/* Open the script */
 
 	if ( debug )
-		i_info("sieve: Opening script %s", script_path);
+		sieve_sys_info("opening script %s", script_path);
 
 	if ( (sbin=sieve_open(script_path, ehandler)) == NULL ) {
-		i_error("sieve: Failed to open script %s. "
-			"Log should be available as %s", script_path, scriptlog);
+		sieve_sys_error("failed to open script %s; "
+			"log should be available as %s", script_path, scriptlog);
 
 		sieve_error_handler_unref(&ehandler);
 		return -1;
@@ -136,12 +136,12 @@ static int lda_sieve_run
 	/* Execute the script */	
 	
 	if ( debug )
-		i_info("sieve: Executing (in-memory) script %s", script_path);
+		sieve_sys_info("executing (in-memory) script %s", script_path);
 
 	ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler, NULL);
 
 	if ( ret < 0 )
-		i_error("sieve: Failed to execute script %s", script_path);
+		sieve_sys_error("failed to execute script %s", script_path);
 
 	/* Clean up */
 	sieve_close(&sbin);
@@ -164,7 +164,7 @@ static int lda_sieve_deliver_mail
 		return 0;
 
 	if (getenv("DEBUG") != NULL)
-		i_info("sieve: Using sieve path: %s", script_path);
+		sieve_sys_info("using sieve path: %s", script_path);
 
 	/* Run the script */
 

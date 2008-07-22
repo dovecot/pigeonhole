@@ -9,9 +9,64 @@
 struct sieve_script;
 struct sieve_error_handler;
 
+/*
+ * Types
+ */
+
 typedef void (*sieve_error_vfunc_t)
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args);
+
+/*
+ * System errors
+ *
+ * FIXME: Low-level access to the Dovecot logging functions would be nice.
+ */
+
+static inline void sieve_sys_verror(const char *fmt, va_list args)
+{
+	i_error("sieve: %s", t_strdup_vprintf(fmt, args));
+}
+
+static inline void sieve_sys_vwarning(const char *fmt, va_list args)
+{
+	i_warning("sieve: %s", t_strdup_vprintf(fmt, args));
+}
+
+static inline void sieve_sys_vinfo(const char *fmt, va_list args)
+{
+	i_info("sieve: %s", t_strdup_vprintf(fmt, args));
+}
+
+static inline void sieve_sys_error(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { sieve_sys_verror(fmt, args); } T_END;
+	
+	va_end(args);
+}
+
+static inline void sieve_sys_warning(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { sieve_sys_vwarning(fmt, args); } T_END;
+	
+	va_end(args);
+}
+
+static inline void sieve_sys_info(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { sieve_sys_vinfo(fmt, args); } T_END;
+	
+	va_end(args);
+}
 
 /* For these functions it is the responsibility of the caller to
  * manage the datastack.
@@ -53,9 +108,7 @@ inline static void sieve_error
 	va_list args;
 	va_start(args, fmt);
 	
-	T_BEGIN {
-		sieve_verror(ehandler, location, fmt, args);
-	} T_END;
+	T_BEGIN { sieve_verror(ehandler, location, fmt, args); } T_END;
 	
 	va_end(args);
 }
@@ -67,9 +120,7 @@ inline static void sieve_warning
 	va_list args;
 	va_start(args, fmt);
 	
-	T_BEGIN {
-		sieve_vwarning(ehandler, location, fmt, args);
-	} T_END;
+	T_BEGIN { sieve_vwarning(ehandler, location, fmt, args); } T_END;
 
 	va_end(args);
 }
@@ -81,9 +132,7 @@ inline static void sieve_info
 	va_list args;
 	va_start(args, fmt);
 	
-	T_BEGIN {
-		sieve_vinfo(ehandler, location, fmt, args);
-	} T_END;
+	T_BEGIN { sieve_vinfo(ehandler, location, fmt, args); } T_END;
 	
 	va_end(args);
 }
@@ -95,9 +144,7 @@ inline static void sieve_critical
 	va_list args;
 	va_start(args, fmt);
 	
-	T_BEGIN { 
-		sieve_vcritical(ehandler, location, fmt, args);
-	} T_END;
+	T_BEGIN { sieve_vcritical(ehandler, location, fmt, args); } T_END;
 	
 	va_end(args);
 }
@@ -114,15 +161,6 @@ bool sieve_errors_more_allowed(struct sieve_error_handler *ehandler);
 
 void sieve_error_handler_ref(struct sieve_error_handler *ehandler);
 void sieve_error_handler_unref(struct sieve_error_handler **ehandler);
-
-/* 
- * System errors
- *   These are just macros for now
- */
-
-#define sieve_system_error(...) i_error(__VA_ARGS__)
-#define sieve_system_warning(...) i_warning(__VA_ARGS__)
-#define sieve_system_info(...) i_info(__VA_ARGS__)
 
 /* 
  * Error handlers 

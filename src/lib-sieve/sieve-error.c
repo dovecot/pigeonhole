@@ -37,9 +37,9 @@ void sieve_verror
 	
 	if ( ehandler->log_master ) {
 		if ( location == NULL || *location == '\0' )
-			i_error("sieve: %s", t_strdup_vprintf(fmt, args));
+			sieve_sys_verror(fmt, args);
 		else
-			i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+			sieve_sys_error("%s: %s", t_strdup_vprintf(fmt, args));
 	}
 
 	if ( sieve_errors_more_allowed(ehandler) ) {
@@ -56,9 +56,9 @@ void sieve_vwarning
 
 	if ( ehandler->log_master ) {
 		if ( location == NULL || *location == '\0' )
-			i_warning("sieve: %s", t_strdup_vprintf(fmt, args));
+			sieve_sys_vwarning(fmt, args);
 		else
-			i_warning("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+			sieve_sys_warning("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
 	}
 		
 	ehandler->vwarning(ehandler, location, fmt, args);
@@ -73,9 +73,9 @@ void sieve_vinfo
 
 	if ( ehandler->log_master ) {
 		if ( location == NULL || *location == '\0' )
-			i_info("sieve: %s", t_strdup_vprintf(fmt, args));
+			sieve_sys_vinfo(fmt, args);
 		else	
-			i_info("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+			sieve_sys_info("%s: %s", location, t_strdup_vprintf(fmt, args));
 	}
 	
 	if ( ehandler->log_info )	
@@ -92,9 +92,9 @@ void sieve_vcritical
 	tm = localtime(&ioloop_time);
 	
 	if ( location == NULL || *location == '\0' )
-		i_error("sieve: %s", t_strdup_vprintf(fmt, args));
+		sieve_sys_verror(fmt, args);
 	else
-		i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+		sieve_sys_error("%s: %s", location, t_strdup_vprintf(fmt, args));
 		
 	if ( ehandler == NULL ) return;
 	
@@ -341,7 +341,7 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 
 	fd = open(ehandler->logfile, O_CREAT | O_APPEND | O_WRONLY, 0600);
 	if (fd == -1) {
-		i_error("sieve: Failed to open logfile %s (logging to STDERR): %m", 
+		sieve_sys_error("failed to open logfile %s (logging to STDERR): %m", 
 			ehandler->logfile);
 		fd = STDERR_FILENO;
 	}
@@ -351,9 +351,8 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 	ostream = o_stream_create_fd(fd, 0, FALSE);
 	if ( ostream == NULL ) {
 		/* Can't we do anything else in this most awkward situation? */
-		i_error("sieve: Failed to open log stream on open file %s. "
-			"Nothing will be logged.", 
-			ehandler->logfile);
+		sieve_sys_error("failed to open log stream on open file %s: "
+			"normal messages will not be logged!", ehandler->logfile);
 	} 
 
 	ehandler->fd = fd;
@@ -418,7 +417,7 @@ static void sieve_logfile_free
 		o_stream_destroy(&(handler->stream));
 		if ( handler->fd != STDERR_FILENO ){
 			if ( close(handler->fd) < 0 ) {
-				i_error("sieve_logfile_free: close(fd) failed for logfile '%s': %m",
+				sieve_sys_error("close(fd) failed for logfile '%s': %m",
 					handler->logfile);
 			}
 		}

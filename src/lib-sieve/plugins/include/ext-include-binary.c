@@ -177,7 +177,7 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 	offset = 0;	
 		
 	if ( !sieve_binary_read_integer(sbin, &offset, &depcount) ) {
-		i_error("sieve: include: failed to read include count "
+		sieve_sys_error("include: failed to read include count "
 			"for dependency block %d of binary %s", block, sieve_binary_path(sbin)); 
 		return FALSE;
 	}
@@ -197,14 +197,14 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 			!sieve_binary_read_byte(sbin, &offset, &location) ||
 			!sieve_binary_read_string(sbin, &offset, &script_name) ) {
 			/* Binary is corrupt, recompile */
-			i_error("sieve: include: failed to read included script "
+			sieve_sys_error("include: failed to read included script "
 				"from dependency block %d of binary %s", block, sieve_binary_path(sbin)); 
 			return FALSE;
 		}
 		
 		if ( location >= EXT_INCLUDE_LOCATION_INVALID ) {
 			/* Binary is corrupt, recompile */
-			i_error("sieve: include: dependency block %d of binary %s "
+			sieve_sys_error("include: dependency block %d of binary %s "
 				"reports invalid script location (id %d).", 
 				block, sieve_binary_path(sbin), location); 
 			return FALSE;

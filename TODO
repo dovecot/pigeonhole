@@ -1,5 +1,4 @@
 Next (in order of descending priority/precedence):
-* Make utility functions for handling sieve system errors.
 * Review sieve-address parsing implementation for past-end checks
 * Improve handling of old/corrupt binaries.
 
