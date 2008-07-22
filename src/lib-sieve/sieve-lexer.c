@@ -565,21 +565,33 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
   			
  				/* Parse literal lines */
 				while ( TRUE ) {
+					bool cr_shifted = FALSE;
+
 					/* Remove dot-stuffing or detect end of text */
 					if ( sieve_lexer_curchar(lexer) == '.' ) {
-						bool cr_shifted = FALSE;
 						sieve_lexer_shift(lexer);
   					
 						/* Check for CRLF */
-						if ( sieve_lexer_curchar(lexer) == '\r' ) 
+						if ( sieve_lexer_curchar(lexer) == '\r' ) {
 							sieve_lexer_shift(lexer);
+							cr_shifted = TRUE;
+						}
   				
 						if ( sieve_lexer_curchar(lexer) == '\n' ) {
 							sieve_lexer_shift(lexer);
 							lexer->token_type = STT_STRING;
 							return TRUE;
-						} else if ( cr_shifted ) 
-							str_append_c(str, '\r');  	
+						} else if ( cr_shifted ) {
+							sieve_lexer_error(lexer,
+                                "found CR without subsequent LF in multi-line string literal");
+                            lexer->token_type = STT_ERROR;
+                            return FALSE;
+						}
+
+						/* Handle dot-stuffing */
+						str_append_c(str, '.');
+						if ( sieve_lexer_curchar(lexer) == '.' ) 
+	                        sieve_lexer_shift(lexer);
 					}
   				
 					/* Scan the rest of the line */

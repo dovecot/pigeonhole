@@ -65,6 +65,7 @@ test_cases = \
     tests/testsuite.svtest\
     tests/control-structures.svtest \
 	tests/exists.svtest \
+	tests/lexer.svtest \
 	tests/comparators/core.svtest \
 	tests/match-types/contains.svtest \
 	tests/match-types/matches.svtest \
