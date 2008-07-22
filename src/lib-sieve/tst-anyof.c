@@ -39,39 +39,45 @@ static bool tst_anyof_generate
 	struct sieve_binary *sbin = cgenv->sbin;
 	struct sieve_ast_node *test;
 	struct sieve_jumplist true_jumps;
-	
-	if ( !jump_true ) {
-		/* Prepare jumplist */
-		sieve_jumplist_init_temp(&true_jumps, sbin);
-	}
-	
-	test = sieve_ast_test_first(ctx->ast_node);
-	while ( test != NULL ) {	
-		bool result;
 
-		/* If this test list must jump on true, all sub-tests can simply add their jumps
-		 * to the caller's jump list, otherwise this test redirects all true jumps to the 
-		 * end of the currently generated code. This is just after a final jump to the false
-		 * case 
-		 */
-		if ( !jump_true ) 
-			result = sieve_generate_test(cgenv, test, &true_jumps, TRUE);
-		else
-			result = sieve_generate_test(cgenv, test, jumps, TRUE);
-
-		if ( !result ) return FALSE;
-		
-		test = sieve_ast_test_next(test);
-	}	
+	if ( sieve_ast_test_count(ctx->ast_node) > 1 ) {	
+		if ( !jump_true ) {
+			/* Prepare jumplist */
+			sieve_jumplist_init_temp(&true_jumps, sbin);
+		}
 	
-	if ( !jump_true ) {
-		/* All tests failed, jump to case FALSE */
-		sieve_operation_emit_code(sbin, &sieve_jmp_operation, -1);
-		sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
+		test = sieve_ast_test_first(ctx->ast_node);
+		while ( test != NULL ) {	
+			bool result;
+
+			/* If this test list must jump on true, all sub-tests can simply add their jumps
+			 * to the caller's jump list, otherwise this test redirects all true jumps to the 
+			 * end of the currently generated code. This is just after a final jump to the false
+			 * case 
+			 */
+			if ( !jump_true ) 
+				result = sieve_generate_test(cgenv, test, &true_jumps, TRUE);
+			else
+				result = sieve_generate_test(cgenv, test, jumps, TRUE);
+
+			if ( !result ) return FALSE;
 		
-		/* All true exits jump here */
-		sieve_jumplist_resolve(&true_jumps);
-	}
+			test = sieve_ast_test_next(test);
+		}	
+	
+		if ( !jump_true ) {
+			/* All tests failed, jump to case FALSE */
+			sieve_operation_emit_code(sbin, &sieve_jmp_operation, -1);
+			sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
+			
+			/* All true exits jump here */
+			sieve_jumplist_resolve(&true_jumps);
+		}
+	} else {
+		/* Script author is being inefficient; we can optimize the allof test away */
+        test = sieve_ast_test_first(ctx->ast_node);
+        sieve_generate_test(cgenv, test, jumps, jump_true);
+    }		
 		
 	return TRUE;
 }

@@ -106,6 +106,42 @@ test "ALLOF-ANYOF-static" {
 	}
 }
 
+test "ALLOF-ANYOF-single" {
+	# Static 
+	if not allof ( true ) {
+		test_fail "allof ( true ) evaluates to false";
+	}
+
+	if allof ( false ) {
+		test_fail "allof ( false ) evaluates to true";
+	}
+
+	if not anyof ( true ) {
+		test_fail "anyof ( true ) evaluates to false";
+	}
+
+	if anyof ( false ) {
+		test_fail "anyof ( false ) evaluates to true";
+	}	
+
+	# Dynamic
+	if not allof ( exists "subject" ) {
+        test_fail "allof ( 'true' ) evaluates to false";
+    }
+
+    if allof ( exists "x-nonsense" ) {
+        test_fail "allof ( 'false' ) evaluates to true";
+    }
+
+    if not anyof ( exists "subject" ) {
+        test_fail "anyof ( 'true' ) evaluates to false";
+    }
+
+    if anyof ( exists "x-nonsense" ) {
+        test_fail "anyof ( 'false' ) evaluates to true";
+    }
+}
+
 test "STOP" {
 	stop;
 	test_fail "continued after stop";
