@@ -43,6 +43,12 @@ test "MATCH-similar-beginnings" {
 	}
 }
 
+test "MATCH-empty" {
+	if not header :contains "x-bullshit" "" {
+		test_fail "contains tests fails to match \"\"";
+	}
+}
+
 # Non-match tests
 
 test "NO-MATCH-full-typo" {

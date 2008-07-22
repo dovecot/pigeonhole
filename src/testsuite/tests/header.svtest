@@ -1,0 +1,49 @@
+require "vnd.dovecot.testsuite";
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: nico@vestingbar.nl
+Subject:         Help        
+X-A:     Text
+X-B: Text            
+
+Text
+
+.
+;
+
+test "STRIP-center" {
+	if not header :is "subject" "Help" {
+		test_fail "header test does not strip leading or trailing whitespace";
+	}
+}
+
+test "STRIP-lead" {
+    if not header :is "x-a" "Text" {
+        test_fail "header test does not strip leading whitespace";
+    }
+}
+
+test "STRIP-trail" {
+    if not header :is "x-b" "Text" {
+        test_fail "header test does not strip trailing whitespace";
+    }
+}
+
+test "CONTAINS-EMPTY-exist" {
+	if not header :contains "subject" "" {
+		test_fail "header test :contains match type fails to match \"\" on existing header";
+	}
+
+	if header :contains "subject" "a" {
+		test_fail "header test :contains match type matches nonsense";
+	}
+}
+
+test "CONTAINS-EMPTY-not-exist" {
+	if header :contains "x-nonsense" "" {
+		test_fail "header test :contains match type matches \"\" on non-existant header";
+	}
+}
+
+
