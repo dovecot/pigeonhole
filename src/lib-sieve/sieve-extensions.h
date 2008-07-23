@@ -71,8 +71,7 @@ void sieve_extensions_deinit(void);
 int sieve_extension_register(const struct sieve_extension *extension);
 int sieve_extensions_get_count(void);
 const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id);
-int sieve_extension_get_by_name(const char *name, const struct sieve_extension **ext);
-int sieve_extension_get_id(const struct sieve_extension *extension);
+const struct sieve_extension *sieve_extension_get_by_name(const char *name);
 
 const char *sieve_extensions_get_string(void);
 

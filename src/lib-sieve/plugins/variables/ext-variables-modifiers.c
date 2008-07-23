@@ -36,25 +36,22 @@ const unsigned int ext_variables_core_modifiers_count =
  */
 
 void sieve_variables_modifier_register
-(struct sieve_validator *valdtr, const struct sieve_variables_modifier *smodf, 
-	int ext_id) 
+(struct sieve_validator *valdtr, const struct sieve_variables_modifier *smodf) 
 {
 	struct ext_variables_validator_context *ctx = 
 		ext_variables_validator_context_get(valdtr);
 	
-	sieve_validator_object_registry_add
-		(ctx->modifiers, &smodf->object, ext_id);
+	sieve_validator_object_registry_add(ctx->modifiers, &smodf->object);
 }
 
 const struct sieve_variables_modifier *ext_variables_modifier_find
-(struct sieve_validator *valdtr, const char *identifier, int *ext_id_r)
+(struct sieve_validator *valdtr, const char *identifier)
 {
 	struct ext_variables_validator_context *ctx = 
 		ext_variables_validator_context_get(valdtr);
 		
 	const struct sieve_object *object = 
-		sieve_validator_object_registry_find
-			(ctx->modifiers, identifier, ext_id_r);
+		sieve_validator_object_registry_find(ctx->modifiers, identifier);
 
 	return (const struct sieve_variables_modifier *) object;
 }
@@ -64,11 +61,10 @@ void ext_variables_register_core_modifiers
 {
 	unsigned int i;
 	
-	/* Register core testsuite objects */
+	/* Register core modifiers*/
 	for ( i = 0; i < ext_variables_core_modifiers_count; i++ ) {
 		sieve_validator_object_registry_add
-			(ctx->modifiers, &(ext_variables_core_modifiers[i]->object), 
-				ext_variables_my_id);
+			(ctx->modifiers, &(ext_variables_core_modifiers[i]->object));
 	}
 }
 

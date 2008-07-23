@@ -81,7 +81,7 @@ static bool cmd_discard_generate
 (const struct sieve_codegen_env *cgenv, 
 	struct sieve_command_context *ctx ATTR_UNUSED) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &cmd_discard_operation, -1);
+	sieve_operation_emit_code(cgenv->sbin, &cmd_discard_operation);
 
 	/* Emit line number */
     sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));

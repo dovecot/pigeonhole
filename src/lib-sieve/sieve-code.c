@@ -215,23 +215,19 @@ static struct sieve_extension_obj_registry oprd_default_reg =
  */
 
 sieve_size_t sieve_operand_emit_code
-	(struct sieve_binary *sbin, const struct sieve_operand *opr, int ext_id)
+	(struct sieve_binary *sbin, const struct sieve_operand *opr)
 {
-	/* A sanity check on the emitted operand */
-	i_assert( !((opr->extension != NULL) && (ext_id < 0)) );
-	
 	return sieve_extension_emit_obj
-		(sbin, &oprd_default_reg, opr, operands, ext_id);
+		(sbin, &oprd_default_reg, opr, operands, opr->extension);
 }
 
 static const struct sieve_extension_obj_registry *
 	sieve_operand_registry_get
 (struct sieve_binary *sbin, unsigned int ext_index)
 {
-	int ext_id = -1; 
 	const struct sieve_extension *ext;
 	
-	if ( (ext=sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id)) 
+	if ( (ext=sieve_binary_extension_get_by_index(sbin, ext_index)) 
 		== NULL )
 		return NULL;
 		
@@ -351,7 +347,7 @@ const struct sieve_operand stringlist_operand =	{
 
 void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_size_t number) 
 {
-	(void) sieve_operand_emit_code(sbin, &number_operand, -1);
+	(void) sieve_operand_emit_code(sbin, &number_operand);
 	(void) sieve_binary_emit_integer(sbin, number);
 }
 
@@ -435,7 +431,7 @@ static bool opr_number_read
 
 void sieve_opr_string_emit(struct sieve_binary *sbin, string_t *str)
 {
-	(void) sieve_operand_emit_code(sbin, &string_operand, -1);
+	(void) sieve_operand_emit_code(sbin, &string_operand);
 	(void) sieve_binary_emit_string(sbin, str);
 }
 
@@ -531,7 +527,7 @@ void sieve_opr_stringlist_emit_start
 	sieve_size_t *end_offset = t_new(sieve_size_t, 1);
 
 	/* Emit byte identifying the type of operand */	  
-	(void) sieve_operand_emit_code(sbin, &stringlist_operand, -1);
+	(void) sieve_operand_emit_code(sbin, &stringlist_operand);
   
 	/* Give the interpreter an easy way to skip over this string list */
 	*end_offset = sieve_binary_emit_offset(sbin, 0);
@@ -760,23 +756,19 @@ static struct sieve_extension_obj_registry oprt_default_reg =
 /* Operation functions */
 
 sieve_size_t sieve_operation_emit_code
-	(struct sieve_binary *sbin, const struct sieve_operation *op, int ext_id)
+	(struct sieve_binary *sbin, const struct sieve_operation *op)
 {
-	/* A sanity check on the emitted operation */
-	i_assert( !((op->extension != NULL) && (ext_id < 0)) );
-		
 	return sieve_extension_emit_obj
-		(sbin, &oprt_default_reg, op, operations, ext_id);
+		(sbin, &oprt_default_reg, op, operations, op->extension);
 }
 
 static const struct sieve_extension_obj_registry *
 	sieve_operation_registry_get
 (struct sieve_binary *sbin, unsigned int ext_index)
 {
-	int ext_id = -1; 
 	const struct sieve_extension *ext;
 	
-	if ( (ext=sieve_binary_extension_get_by_index(sbin, ext_index, &ext_id)) 
+	if ( (ext=sieve_binary_extension_get_by_index(sbin, ext_index)) 
 		== NULL )
 		return NULL;
 		

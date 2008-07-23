@@ -62,25 +62,25 @@ struct sieve_binary_extension {
 };
  
 void sieve_binary_extension_set_context
-	(struct sieve_binary *sbin, int ext_id, void *context);
+	(struct sieve_binary *sbin, const struct sieve_extension *ext, void *context);
 const void *sieve_binary_extension_get_context
-	(struct sieve_binary *sbin, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_extension *ext);
 	
 void sieve_binary_extension_set
-	(struct sieve_binary *sbin, int ext_id, 
+	(struct sieve_binary *sbin, const struct sieve_extension *ext, 
 		const struct sieve_binary_extension *bext);
 
 unsigned int sieve_binary_extension_create_block
-	(struct sieve_binary *sbin, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_extension *ext);
 unsigned int sieve_binary_extension_get_block
-(struct sieve_binary *sbin, int ext_id);
+(struct sieve_binary *sbin, const struct sieve_extension *ext);
 
 int sieve_binary_extension_link
-	(struct sieve_binary *sbin, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_extension *ext);
 const struct sieve_extension *sieve_binary_extension_get_by_index
-	(struct sieve_binary *sbin, int index, int *ext_id);
+	(struct sieve_binary *sbin, int index);
 int sieve_binary_extension_get_index
-	(struct sieve_binary *sbin, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_extension *ext);
 int sieve_binary_extensions_count(struct sieve_binary *sbin);
 
 	
@@ -142,15 +142,5 @@ bool sieve_binary_read_integer
   (struct sieve_binary *binary, sieve_size_t *address, sieve_size_t *integer); 
 bool sieve_binary_read_string
   (struct sieve_binary *binary, sieve_size_t *address, string_t **str);
-
-/* 
- * Default registry context (used at various occasions)
- */
- 
-const void *sieve_binary_registry_get_object
-	(struct sieve_binary *sbin, int ext_id, int id);
-void sieve_binary_registry_set_object
-	(struct sieve_binary *sbin, int ext_id, int id, const void *object);
-void sieve_binary_registry_init(struct sieve_binary *sbin, int ext_id);
 
 #endif

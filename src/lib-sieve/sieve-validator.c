@@ -412,37 +412,37 @@ static const struct sieve_argument *sieve_validator_find_tag
 
 /* Extension support */
 
-int sieve_validator_extension_load
+const struct sieve_extension *sieve_validator_extension_load
 	(struct sieve_validator *validator, struct sieve_command_context *cmd, 
 		const char *ext_name) 
 {
-	const struct sieve_extension *ext;
-	int ext_id = sieve_extension_get_by_name(ext_name, &ext); 
+	const struct sieve_extension *ext = sieve_extension_get_by_name(ext_name); 
 	
-	if ( ext_id < 0 ) {
+	if ( ext == NULL ) {
 		sieve_command_validate_error(validator, cmd, 
 			"unsupported sieve capability '%s'", ext_name);
-		return -1;
+		return NULL;
 	}
 
 	if ( ext->validator_load != NULL && !ext->validator_load(validator) ) {
 		sieve_command_validate_error(validator, cmd, 
 			"failed to load sieve capability '%s'", ext->name);
-		return -1;
+		return NULL;
 	}
 	
-	return ext_id;
+	return ext;
 }
 
 void sieve_validator_extension_set_context
-	(struct sieve_validator *validator, int ext_id, void *context)
+(struct sieve_validator *validator, const struct sieve_extension *ext, void *context)
 {
-	array_idx_set(&validator->ext_contexts, (unsigned int) ext_id, &context);	
+	array_idx_set(&validator->ext_contexts, (unsigned int) *ext->id, &context);	
 }
 
 const void *sieve_validator_extension_get_context
-	(struct sieve_validator *validator, int ext_id) 
+(struct sieve_validator *validator, const struct sieve_extension *ext) 
 {
+	int ext_id = *ext->id;
 	void * const *ctx;
 
 	if  ( ext_id < 0 || ext_id >= (int) array_count(&validator->ext_contexts) )
@@ -951,49 +951,30 @@ bool sieve_validator_run(struct sieve_validator *validator) {
  * Validator object registry
  */
 
-struct sieve_validator_object_reg {
-	const struct sieve_object *object;
-	int ext_id;
-};
- 
 struct sieve_validator_object_registry {
 	struct sieve_validator *validator;
 	struct hash_table *registrations;
 };
 
 struct sieve_validator_object_registry *sieve_validator_object_registry_get
-(struct sieve_validator *validator, int ext_id)
+(struct sieve_validator *validator, const struct sieve_extension *ext)
 {
 	return (struct sieve_validator_object_registry *) 
-		sieve_validator_extension_get_context(validator, ext_id);
+		sieve_validator_extension_get_context(validator, ext);
 }
 
 void sieve_validator_object_registry_add
-(struct sieve_validator_object_registry *regs,
-	const struct sieve_object *object, int ext_id) 
+(struct sieve_validator_object_registry *regs, 
+	const struct sieve_object *object) 
 {
-	struct sieve_validator_object_reg *reg;
-	
-	reg = p_new(regs->validator->pool, struct sieve_validator_object_reg, 1);
-	reg->object = object;
-	reg->ext_id = ext_id;
-	
 	hash_insert
-		(regs->registrations, (void *) object->identifier, (void *) reg);
+		(regs->registrations, (void *) object->identifier, (void *) object);
 }
 
 const struct sieve_object *sieve_validator_object_registry_find
-(struct sieve_validator_object_registry *regs, const char *identifier,
-		int *ext_id) 
+(struct sieve_validator_object_registry *regs, const char *identifier) 
 {
-	struct sieve_validator_object_reg *reg =(struct sieve_validator_object_reg *) 
-		hash_lookup(regs->registrations, identifier);
-			
-	if ( reg == NULL ) return NULL;
-
-	if ( ext_id != NULL ) *ext_id = reg->ext_id;
-
-  return reg->object;
+	return (const struct sieve_object *) hash_lookup(regs->registrations, identifier);
 }
 
 struct sieve_validator_object_registry *sieve_validator_object_registry_create
@@ -1012,12 +993,12 @@ struct sieve_validator_object_registry *sieve_validator_object_registry_create
 }
 
 struct sieve_validator_object_registry *sieve_validator_object_registry_init
-(struct sieve_validator *validator, int ext_id)
+(struct sieve_validator *validator, const struct sieve_extension *ext)
 {
 	struct sieve_validator_object_registry *regs = 
 		sieve_validator_object_registry_create(validator);
 	
-	sieve_validator_extension_set_context(validator, ext_id, regs);
+	sieve_validator_extension_set_context(validator, ext, regs);
 	return regs;
 }
 

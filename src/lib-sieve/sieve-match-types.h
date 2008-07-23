@@ -63,8 +63,6 @@ struct sieve_match_type_context {
 	struct sieve_command_context *command_ctx;
 	const struct sieve_match_type *match_type;
 	
-	int ext_id;
-	
 	/* Context data could be used in the future to pass data between validator and
 	 * generator in match types that use extra parameters. Currently not 
 	 * necessary, not even for the relational extension.
@@ -103,10 +101,9 @@ bool sieve_match_type_validate
 		
 void sieve_match_type_register
 	(struct sieve_validator *validator, 
-	const struct sieve_match_type *addrp, int ext_id);
+	const struct sieve_match_type *addrp);
 const struct sieve_match_type *sieve_match_type_find
-	(struct sieve_validator *validator, const char *identifier,
-		int *ext_id);
+	(struct sieve_validator *validator, const char *identifier);
 
 extern const struct sieve_argument match_type_tag;
 
@@ -128,9 +125,9 @@ static inline bool sieve_operand_is_match_type
 }
 
 static inline void sieve_opr_match_type_emit
-(struct sieve_binary *sbin, const struct sieve_match_type *mtch, int ext_id)
+(struct sieve_binary *sbin, const struct sieve_match_type *mtch)
 { 
-	sieve_opr_object_emit(sbin, &mtch->object, ext_id);
+	sieve_opr_object_emit(sbin, &mtch->object);
 }
 
 static inline const struct sieve_match_type *sieve_opr_match_type_read

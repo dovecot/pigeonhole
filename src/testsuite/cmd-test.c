@@ -88,7 +88,7 @@ static inline struct testsuite_generator_context *
 	_get_generator_context(struct sieve_generator *gentr)
 {
 	return (struct testsuite_generator_context *) 
-		sieve_generator_extension_get_context(gentr, ext_testsuite_my_id);
+		sieve_generator_extension_get_context(gentr, &testsuite_extension);
 }
 
 static bool cmd_test_generate
@@ -97,8 +97,7 @@ static bool cmd_test_generate
 	struct testsuite_generator_context *genctx = 
 		_get_generator_context(cgenv->gentr);
 	
-	sieve_operation_emit_code(cgenv->sbin, &test_operation, 
-		ext_testsuite_my_id);
+	sieve_operation_emit_code(cgenv->sbin, &test_operation);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
@@ -110,8 +109,7 @@ static bool cmd_test_generate
 	/* Test body */
 	sieve_generate_block(cgenv, ctx->ast_node);
 	
-	sieve_operation_emit_code(cgenv->sbin, &test_finish_operation, 
-		ext_testsuite_my_id);
+	sieve_operation_emit_code(cgenv->sbin, &test_finish_operation);
 	
 	/* Resolve exit jumps to this point */
 	sieve_jumplist_resolve(genctx->exit_jumps); 

@@ -72,11 +72,9 @@ const struct sieve_comparator *sieve_comparator_tag_get
 	(struct sieve_ast_argument *tag);
 
 void sieve_comparator_register
-	(struct sieve_validator *validator, 
-	const struct sieve_comparator *cmp, int ext_id); 
+	(struct sieve_validator *validator, const struct sieve_comparator *cmp); 
 const struct sieve_comparator *sieve_comparator_find
-	(struct sieve_validator *validator, const char *identifier,
-		int *ext_id);
+	(struct sieve_validator *validator, const char *identifier);
 		
 /*
  * Comparator operand
@@ -89,9 +87,9 @@ extern const struct sieve_operand_class sieve_comparator_operand_class;
 extern const struct sieve_operand comparator_operand;
 
 static inline void sieve_opr_comparator_emit
-(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id)
+(struct sieve_binary *sbin, const struct sieve_comparator *cmp)
 { 
-	sieve_opr_object_emit(sbin, &cmp->object, ext_id);
+	sieve_opr_object_emit(sbin, &cmp->object);
 }
 
 static inline const struct sieve_comparator *sieve_opr_comparator_read

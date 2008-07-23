@@ -156,14 +156,9 @@ void sieve_generator_critical
 /* Extension support */
 
 bool sieve_generator_link_extension
-	(struct sieve_generator *gentr, int ext_id) 
+(struct sieve_generator *gentr, const struct sieve_extension *ext) 
 {
-	const struct sieve_extension *ext = sieve_extension_get_by_id(ext_id);
-	
-	(void)sieve_binary_extension_link(gentr->genenv.sbin, ext_id);
-	
-	if ( ext == NULL ) 
-		return FALSE;
+	(void)sieve_binary_extension_link(gentr->genenv.sbin, ext);
 	
 	if ( ext->generator_load != NULL )
 		return ext->generator_load(gentr);
@@ -172,14 +167,15 @@ bool sieve_generator_link_extension
 }
 
 void sieve_generator_extension_set_context
-	(struct sieve_generator *gentr, int ext_id, void *context)
+(struct sieve_generator *gentr, const struct sieve_extension *ext, void *context)
 {
-	array_idx_set(&gentr->ext_contexts, (unsigned int) ext_id, &context);	
+	array_idx_set(&gentr->ext_contexts, (unsigned int) *ext->id, &context);	
 }
 
 const void *sieve_generator_extension_get_context
-	(struct sieve_generator *gentr, int ext_id) 
+(struct sieve_generator *gentr, const struct sieve_extension *ext) 
 {
+	int ext_id = *ext->id;
 	void * const *ctx;
 
 	if  ( ext_id < 0 || ext_id >= (int) array_count(&gentr->ext_contexts) )
@@ -309,9 +305,9 @@ bool sieve_generate_test
 		if ( tst_node->context->command->generate(cgenv, tst_node->context) ) {
 			
 			if ( jump_true ) 
-				sieve_operation_emit_code(cgenv->sbin, &sieve_jmptrue_operation, -1);
+				sieve_operation_emit_code(cgenv->sbin, &sieve_jmptrue_operation);
 			else
-				sieve_operation_emit_code(cgenv->sbin, &sieve_jmpfalse_operation, -1);
+				sieve_operation_emit_code(cgenv->sbin, &sieve_jmpfalse_operation);
 			sieve_jumplist_add(jlist, sieve_binary_emit_offset(cgenv->sbin, 0));
 						
 			return TRUE;

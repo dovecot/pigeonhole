@@ -161,38 +161,20 @@ const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id)
 	return NULL;
 }
 
-int sieve_extension_get_by_name(const char *name, const struct sieve_extension **ext) 
+const struct sieve_extension *sieve_extension_get_by_name(const char *name) 
 {
   struct sieve_extension_registration *ereg;
 	
-	if ( ext != NULL )
-		*ext = NULL;
-		
 	if ( *name == '@' )
-		return -1;	
+		return NULL;	
 		
 	ereg = (struct sieve_extension_registration *) 
 		hash_lookup(extension_index, name);
 
 	if ( ereg == NULL )
-		return -1;
+		return NULL;
 		
-	if ( ext != NULL )    
-		*ext = ereg->extension;
-	
-	return ereg->id;
-}
-
-int sieve_extension_get_id(const struct sieve_extension *extension) 
-{
-	struct sieve_extension_registration *ereg = 
-		(struct sieve_extension_registration *) 
-			hash_lookup(extension_index, extension->name);
-
-	if ( ereg == NULL )
-		return -1;
-		    
-	return ereg->id;
+	return ereg->extension;
 }
 
 static bool _list_extension(const struct sieve_extension *ext)

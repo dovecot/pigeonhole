@@ -41,8 +41,6 @@ extern const struct sieve_argument address_part_tag;
 struct sieve_address_part_context {
 	struct sieve_command_context *command_ctx;
 	const struct sieve_address_part *address_part;
-	
-	int ext_id;
 };
 
 void sieve_address_parts_link_tags
@@ -55,10 +53,9 @@ void sieve_address_parts_link_tags
 		
 void sieve_address_part_register
 	(struct sieve_validator *validator, 
-		const struct sieve_address_part *addrp, int ext_id);
+		const struct sieve_address_part *addrp);
 const struct sieve_address_part *sieve_address_part_find
-	(struct sieve_validator *validator, const char *identifier,
-		int *ext_id);
+	(struct sieve_validator *validator, const char *identifier);
 		
 /*
  * Address part operand
@@ -71,9 +68,9 @@ struct sieve_operand_class sieve_address_part_operand_class;
 #define SIEVE_EXT_DEFINE_ADDRESS_PARTS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 static inline void sieve_opr_address_part_emit
-(struct sieve_binary *sbin, const struct sieve_address_part *addrp, int ext_id)
+(struct sieve_binary *sbin, const struct sieve_address_part *addrp)
 { 
-	sieve_opr_object_emit(sbin, &addrp->object, ext_id);
+	sieve_opr_object_emit(sbin, &addrp->object);
 }
 
 static inline const struct sieve_address_part *sieve_opr_address_part_read

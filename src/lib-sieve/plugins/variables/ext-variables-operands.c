@@ -44,16 +44,17 @@ const struct sieve_operand variable_operand = {
 void ext_variables_opr_variable_emit
 	(struct sieve_binary *sbin, struct sieve_variable *var) 
 {
-	if ( var->ext_id < 0 ) {
+	if ( var->ext == NULL ) {
 		/* Default variable storage */
-		(void) sieve_operand_emit_code(sbin, &variable_operand, ext_variables_my_id);
+		(void) sieve_operand_emit_code(sbin, &variable_operand);
 		(void) sieve_binary_emit_byte(sbin, 0);
 		(void) sieve_binary_emit_integer(sbin, var->index);
 		return;
 	} 
-	
-	(void) sieve_operand_emit_code(sbin, &variable_operand, ext_variables_my_id);
-	(void) sieve_binary_emit_byte(sbin, 1 +	var->ext_id);
+
+	/* FIXME: never directly emit *ext->id !! */
+	(void) sieve_operand_emit_code(sbin, &variable_operand);
+	(void) sieve_binary_emit_byte(sbin, 1 +	*var->ext->id);
 	(void) sieve_binary_emit_integer(sbin, var->index);
 }
 
@@ -68,6 +69,7 @@ static bool opr_variable_dump
 	if ( !sieve_binary_read_byte(denv->sbin, address, &code) ) {
 		return FALSE;
 	} 
+
 	ext_id = code - 1;
 	
 	if ( ext_id >= 0 && (ext = sieve_extension_get_by_id(ext_id)) == NULL ) {
@@ -90,6 +92,7 @@ static bool opr_variable_read_value
 { 
 	unsigned int code;
 	int ext_id;
+	const struct sieve_extension *ext = NULL;
 	struct sieve_variable_storage *storage;
 	sieve_size_t index = 0;
 	
@@ -98,7 +101,10 @@ static bool opr_variable_read_value
 	}
 	ext_id = code - 1;
 	
-	storage = sieve_ext_variables_get_storage(renv->interp, ext_id);
+	if ( ext_id >= 0 ) 
+		ext = sieve_extension_get_by_id(ext_id);
+
+	storage = sieve_ext_variables_get_storage(renv->interp, ext);
 	if ( storage == NULL ) return FALSE;
 	
 	if (sieve_binary_read_integer(renv->sbin, address, &index) ) {
@@ -123,6 +129,7 @@ bool sieve_variable_operand_read_data
 {
 	unsigned int code;
 	int ext_id;
+	const struct sieve_extension *ext = NULL;
 	sieve_size_t idx = 0;
 
 	if ( operand != &variable_operand ) {
@@ -133,8 +140,11 @@ bool sieve_variable_operand_read_data
 		return FALSE;
 	}
 	ext_id = code - 1;
+
+	if ( ext_id >= 0 )
+        ext = sieve_extension_get_by_id(ext_id);
 		
-	*storage = sieve_ext_variables_get_storage(renv->interp, ext_id);
+	*storage = sieve_ext_variables_get_storage(renv->interp, ext);
 	if ( *storage == NULL )	return FALSE;
 	
 	if (sieve_binary_read_integer(renv->sbin, address, &idx) ) {
@@ -181,8 +191,7 @@ const struct sieve_operand match_value_operand = {
 void ext_variables_opr_match_value_emit
 	(struct sieve_binary *sbin, unsigned int index) 
 {
-	(void) sieve_operand_emit_code
-		(sbin, &match_value_operand, ext_variables_my_id);
+	(void) sieve_operand_emit_code(sbin, &match_value_operand);
 	(void) sieve_binary_emit_integer(sbin, index);
 }
 
@@ -245,8 +254,7 @@ const struct sieve_operand variable_string_operand = {
 void ext_variables_opr_variable_string_emit
 	(struct sieve_binary *sbin, unsigned int elements) 
 {
-	(void) sieve_operand_emit_code
-		(sbin, &variable_string_operand, ext_variables_my_id);
+	(void) sieve_operand_emit_code(sbin, &variable_string_operand);
 	(void) sieve_binary_emit_integer(sbin, elements);
 }
 

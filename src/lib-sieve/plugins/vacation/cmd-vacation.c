@@ -311,8 +311,7 @@ static bool cmd_vacation_validate
 static bool cmd_vacation_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_operation_emit_code
-		(cgenv->sbin, &vacation_operation, ext_vacation_my_id);
+	sieve_operation_emit_code(cgenv->sbin, &vacation_operation);
 
 	/* Emit source line */
 	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));

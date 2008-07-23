@@ -31,16 +31,16 @@ struct ext_include_ast_context *ext_include_create_ast_context
 
 	pool_t pool = sieve_ast_pool(ast);
 	ctx = p_new(pool, struct ext_include_ast_context, 1);
-	ctx->import_vars = sieve_variable_scope_create(pool, ext_include_my_id);
+	ctx->import_vars = sieve_variable_scope_create(pool, &include_extension);
 	
 	if ( parent != NULL ) {
 		struct ext_include_ast_context *parent_ctx = 
 			(struct ext_include_ast_context *)
-			sieve_ast_extension_get_context(parent, ext_include_my_id);
+			sieve_ast_extension_get_context(parent, &include_extension);
 		ctx->global_vars = ( parent_ctx == NULL ? NULL : parent_ctx->global_vars );
 	}
 	
-	sieve_ast_extension_set_context(ast, ext_include_my_id, ctx);
+	sieve_ast_extension_set_context(ast, &include_extension, ctx);
 	
 	return ctx;
 }
@@ -49,7 +49,7 @@ static inline struct ext_include_ast_context *
 	ext_include_get_ast_context(struct sieve_ast *ast)
 {
 	struct ext_include_ast_context *ctx = (struct ext_include_ast_context *)
-		sieve_ast_extension_get_context(ast, ext_include_my_id);
+		sieve_ast_extension_get_context(ast, &include_extension);
 		
 	if ( ctx == NULL ) {
 		ctx = ext_include_create_ast_context(ast, NULL);	
@@ -81,7 +81,7 @@ bool ext_include_variable_import_global
 	
 		if ( ctx->global_vars == NULL ) {
 			pool_t pool = sieve_ast_pool(ast);
-			ctx->global_vars = sieve_variable_scope_create(pool, ext_include_my_id);
+			ctx->global_vars = sieve_variable_scope_create(pool, &include_extension);
 		}
 		
 		var = sieve_variable_scope_get_variable(ctx->global_vars, variable, TRUE);

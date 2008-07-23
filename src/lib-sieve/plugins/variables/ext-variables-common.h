@@ -37,7 +37,7 @@ static inline struct ext_variables_validator_context *
 ext_variables_validator_context_get(struct sieve_validator *valdtr)
 {
 	return (struct ext_variables_validator_context *)
-		sieve_validator_extension_get_context(valdtr, ext_variables_my_id);
+		sieve_validator_extension_get_context(valdtr, &variables_extension);
 }	
 	
 /* Variables */
@@ -61,6 +61,6 @@ struct sieve_variable *ext_variables_validator_get_variable
 (struct sieve_validator *validator, const char *variable, bool declare);
 
 struct sieve_variable_storage *ext_variables_interpreter_get_storage
-	(struct sieve_interpreter *interp, unsigned int ext_id);
+	(struct sieve_interpreter *interp, const struct sieve_extension *ext);
 	
 #endif /* __EXT_VARIABLES_COMMON_H */

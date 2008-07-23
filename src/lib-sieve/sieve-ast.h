@@ -170,9 +170,9 @@ const char *sieve_ast_type_name(enum sieve_ast_type ast_type);
 
 /* extension support */
 void sieve_ast_extension_set_context
-	(struct sieve_ast *ast, int ext_id, void *context);
+	(struct sieve_ast *ast, const struct sieve_extension *ext, void *context);
 const void *sieve_ast_extension_get_context
-	(struct sieve_ast *ast, int ext_id);
+	(struct sieve_ast *ast, const struct sieve_extension *ext);
 
 /* error reporting */
 void sieve_ast_error

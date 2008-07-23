@@ -35,12 +35,13 @@ void sieve_generator_critical
 /* Extension support */
 
 bool sieve_generator_link_extension
-	(struct sieve_generator *gentr, int ext_id);
+	(struct sieve_generator *gentr, const struct sieve_extension *ext);
 
 void sieve_generator_extension_set_context
-	(struct sieve_generator *gentr, int ext_id, void *context);
+	(struct sieve_generator *gentr, const struct sieve_extension *ext, 
+		void *context);
 const void *sieve_generator_extension_get_context
-	(struct sieve_generator *gentr, int ext_id);
+	(struct sieve_generator *gentr, const struct sieve_extension *ext);
     		
 /* Jump list */
 

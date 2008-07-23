@@ -158,7 +158,7 @@ bool testsuite_validator_context_initialize(struct sieve_validator *valdtr)
 	ctx->object_registrations = sieve_validator_object_registry_create(valdtr);
 	testsuite_register_core_objects(ctx);
 	
-	sieve_validator_extension_set_context(valdtr, ext_testsuite_my_id, ctx);
+	sieve_validator_extension_set_context(valdtr, &testsuite_extension, ctx);
 
 	return TRUE;
 }
@@ -167,7 +167,7 @@ struct testsuite_validator_context *testsuite_validator_context_get
 (struct sieve_validator *valdtr)
 {
 	return (struct testsuite_validator_context *)
-		sieve_validator_extension_get_context(valdtr, ext_testsuite_my_id);
+		sieve_validator_extension_get_context(valdtr, &testsuite_extension);
 }
 
 /* 
@@ -184,7 +184,7 @@ bool testsuite_generator_context_initialize(struct sieve_generator *gentr)
 	/* Setup exit jumplist */
 	ctx->exit_jumps = sieve_jumplist_create(pool, sbin);
 	
-	sieve_generator_extension_set_context(gentr, ext_testsuite_my_id, ctx);
+	sieve_generator_extension_set_context(gentr, &testsuite_extension, ctx);
 
 	return TRUE;
 }

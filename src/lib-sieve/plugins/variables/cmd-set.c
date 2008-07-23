@@ -64,13 +64,8 @@ const struct sieve_operation cmd_set_operation = {
 
 /* Compiler context */
 
-struct cmd_set_modifier_context {
-	const struct sieve_variables_modifier *modifier;
-	int ext_id;
-};
-
 struct cmd_set_context {
-	ARRAY_DEFINE(modifiers, struct cmd_set_modifier_context *);
+	ARRAY_DEFINE(modifiers, const struct sieve_variables_modifier *);
 };
 
 /* 
@@ -104,26 +99,15 @@ const struct sieve_argument modifier_tag = {
  
 static bool tag_modifier_is_instance_of
 (struct sieve_validator *validator ATTR_UNUSED, 
-	struct sieve_command_context *cmdctx,	
+	struct sieve_command_context *cmdctx ATTR_UNUSED,	
 	struct sieve_ast_argument *arg)
 {	
-	int ext_id;
 	const struct sieve_variables_modifier *modf = ext_variables_modifier_find
-		(validator, sieve_ast_argument_tag(arg), &ext_id);
+		(validator, sieve_ast_argument_tag(arg));
+
+	arg->context = (void *) modf;
 		
-	if ( modf != NULL ) {
-		pool_t pool = sieve_command_pool(cmdctx);
-		
-		struct cmd_set_modifier_context *ctx = 
-			p_new(pool, struct cmd_set_modifier_context, 1);
-		ctx->modifier = modf;
-		ctx->ext_id = ext_id;
-		
-		arg->context = ctx;
-		return TRUE;
-	}
-		
-	return FALSE;
+	return ( modf != NULL );
 }
 
 static bool tag_modifier_validate
@@ -132,32 +116,31 @@ static bool tag_modifier_validate
 {
 	unsigned int i;
 	bool inserted;
-	struct cmd_set_modifier_context *mctx = (*arg)->context;
-	const struct sieve_variables_modifier *modf = mctx->modifier;
+	const struct sieve_variables_modifier *modf = 
+		(const struct sieve_variables_modifier *) (*arg)->context;
 	struct cmd_set_context *sctx = (struct cmd_set_context *) cmd->data;
 	
 	inserted = FALSE;
 	for ( i = 0; i < array_count(&sctx->modifiers) && !inserted; i++ ) {
-		struct cmd_set_modifier_context * const *smctx =
+		const struct sieve_variables_modifier * const *smdf =
 			array_idx(&sctx->modifiers, i);
-		const struct sieve_variables_modifier *smdf = (*smctx)->modifier;
 	
-		if ( smdf->precedence == modf->precedence ) {
+		if ( (*smdf)->precedence == modf->precedence ) {
 			sieve_command_validate_error(validator, cmd, 
 				"modifiers :%s and :%s specified for the set command conflict "
 				"having equal precedence", 
-				smdf->object.identifier, modf->object.identifier);
+				(*smdf)->object.identifier, modf->object.identifier);
 			return FALSE;
 		}
 			
-		if ( smdf->precedence < modf->precedence ) {
-			array_insert(&sctx->modifiers, i, &mctx, 1);
+		if ( (*smdf)->precedence < modf->precedence ) {
+			array_insert(&sctx->modifiers, i, &modf, 1);
 			inserted = TRUE;
 		}
 	}
 	
 	if ( !inserted )
-		array_append(&sctx->modifiers, &mctx, 1);
+		array_append(&sctx->modifiers, &modf, 1);
 	
 	/* Added to modifier list; self-destruct to prevent duplicate generation */
 	*arg = sieve_ast_arguments_detach(*arg, 1);
@@ -227,8 +210,7 @@ static bool cmd_set_generate
 	struct cmd_set_context *sctx = (struct cmd_set_context *) ctx->data;
 	unsigned int i;	
 
-	sieve_operation_emit_code
-		(sbin, &cmd_set_operation, ext_variables_my_id); 
+	sieve_operation_emit_code(sbin, &cmd_set_operation); 
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
@@ -237,10 +219,10 @@ static bool cmd_set_generate
 	/* Generate modifiers (already sorted during validation) */
 	sieve_binary_emit_byte(sbin, array_count(&sctx->modifiers));
 	for ( i = 0; i < array_count(&sctx->modifiers); i++ ) {
-		struct cmd_set_modifier_context * const * mctx =
+		const struct sieve_variables_modifier * const * modf =
 			array_idx(&sctx->modifiers, i);
 			
-		ext_variables_opr_modifier_emit(sbin, (*mctx)->modifier, (*mctx)->ext_id);
+		ext_variables_opr_modifier_emit(sbin, *modf);
 	}
 
 	return TRUE;

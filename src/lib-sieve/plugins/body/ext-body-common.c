@@ -241,7 +241,7 @@ static struct ext_body_message_context *ext_body_get_context
 	struct ext_body_message_context *ctx;
 	
 	ctx = (struct ext_body_message_context *)
-		sieve_message_context_extension_get(msgctx, ext_body_my_id);
+		sieve_message_context_extension_get(msgctx, &body_extension);
 	
 	if ( ctx == NULL ) {
 		ctx = p_new(pool, struct ext_body_message_context, 1);	
@@ -251,7 +251,7 @@ static struct ext_body_message_context *ext_body_get_context
 		ctx->tmp_buffer = buffer_create_dynamic(pool, 1024*64);
 		
 		sieve_message_context_extension_set
-			(msgctx, ext_body_my_id, (void *) ctx);
+			(msgctx, &body_extension, (void *) ctx);
 	}
 	
 	return ctx;

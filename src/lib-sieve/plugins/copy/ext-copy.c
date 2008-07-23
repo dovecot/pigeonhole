@@ -105,7 +105,7 @@ static bool tag_copy_generate
         return FALSE;
     }
 
-    sieve_opr_side_effect_emit(cgenv->sbin, &copy_side_effect, ext_my_id);
+    sieve_opr_side_effect_emit(cgenv->sbin, &copy_side_effect);
 
     return TRUE;
 }

@@ -42,20 +42,20 @@ const unsigned int default_set_modifiers_count =
 
 struct sieve_variable_scope {
 	pool_t pool;
-  int ext_id;
+	const struct sieve_extension *ext;
 
 	unsigned int next_index;
 	struct hash_table *variables;
 };
 
 struct sieve_variable_scope *sieve_variable_scope_create
-	(pool_t pool, int ext_id) 
+	(pool_t pool, const struct sieve_extension *ext) 
 {
 	struct sieve_variable_scope *scope;
 	
 	scope = p_new(pool, struct sieve_variable_scope, 1);
 	scope->pool = pool;
-	scope->ext_id = ext_id;
+	scope->ext = ext;
 	scope->variables = hash_create
 		(pool, pool, 0, strcase_hash, (hash_cmp_callback_t *)strcasecmp);
 		
@@ -68,7 +68,7 @@ struct sieve_variable *sieve_variable_scope_declare
 	struct sieve_variable *new_var = p_new(scope->pool, struct sieve_variable, 1);
 	new_var->identifier = identifier;
 	new_var->index = scope->next_index++;
-	new_var->ext_id = scope->ext_id;
+	new_var->ext = scope->ext;
 		
 	hash_insert(scope->variables, (void *) identifier, (void *) new_var);
 	
@@ -170,10 +170,10 @@ ext_variables_validator_context_create(struct sieve_validator *valdtr)
 	
 	ctx = p_new(pool, struct ext_variables_validator_context, 1);
 	ctx->modifiers = sieve_validator_object_registry_create(valdtr);
-	ctx->main_scope = sieve_variable_scope_create(sieve_ast_pool(ast), -1);
+	ctx->main_scope = sieve_variable_scope_create(sieve_ast_pool(ast), NULL);
 
 	sieve_validator_extension_set_context
-		(valdtr, ext_variables_my_id, (void *) ctx);
+		(valdtr, &variables_extension, (void *) ctx);
 
 	return ctx;
 }
@@ -229,7 +229,7 @@ ext_variables_interpreter_context_create(struct sieve_interpreter *interp)
 	p_array_init(&ctx->ext_storages, pool, sieve_extensions_get_count());
 
 	sieve_interpreter_extension_set_context
-		(interp, ext_variables_my_id, (void *) ctx);
+		(interp, &variables_extension, (void *) ctx);
 
 	return ctx;
 }
@@ -249,19 +249,21 @@ static inline struct ext_variables_interpreter_context *
 ext_variables_interpreter_context_get(struct sieve_interpreter *interp)
 {
 	return (struct ext_variables_interpreter_context *)
-		sieve_interpreter_extension_get_context(interp, ext_variables_my_id);
+		sieve_interpreter_extension_get_context(interp, &variables_extension);
 }
 
 struct sieve_variable_storage *sieve_ext_variables_get_storage
-	(struct sieve_interpreter *interp, int ext_id)
+	(struct sieve_interpreter *interp, const struct sieve_extension *ext)
 {
 	struct ext_variables_interpreter_context *ctx = 
 		ext_variables_interpreter_context_get(interp);
 	struct sieve_variable_storage * const *storage;
+	int ext_id;
 		
-	if ( ext_id < 0 )
+	if ( ext == NULL )
 		return ctx->local_storage;
 
+	ext_id = *ext->id;
 	if ( ext_id >= (int) array_count(&ctx->ext_storages) ) {
 		storage = NULL;
 	} else {
@@ -282,15 +284,15 @@ struct sieve_variable_storage *sieve_ext_variables_get_storage
 
 void sieve_ext_variables_set_storage
 (struct sieve_interpreter *interp, struct sieve_variable_storage *storage,
-	int ext_id)
+	const struct sieve_extension *ext)
 {
 	struct ext_variables_interpreter_context *ctx = 
 		ext_variables_interpreter_context_get(interp);
 		
-	if ( ext_id < 0 || storage == NULL )
+	if ( ext == NULL || storage == NULL )
 		return;
 		
-	array_idx_set(&ctx->ext_storages, (unsigned int) ext_id, &storage);
+	array_idx_set(&ctx->ext_storages, (unsigned int) *ext->id, &storage);
 }
 
 

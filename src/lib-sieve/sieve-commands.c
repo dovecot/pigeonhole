@@ -343,7 +343,7 @@ static bool cmd_stop_generate
 (const struct sieve_codegen_env *cgenv, 
 	struct sieve_command_context *ctx ATTR_UNUSED) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &cmd_stop_operation, -1);
+	sieve_operation_emit_code(cgenv->sbin, &cmd_stop_operation);
 	return TRUE;
 }
 
@@ -353,7 +353,7 @@ static bool tst_false_generate
 	struct sieve_jumplist *jumps, bool jump_true)
 {
 	if ( !jump_true ) {
-		sieve_operation_emit_code(cgenv->sbin, &sieve_jmp_operation, -1);
+		sieve_operation_emit_code(cgenv->sbin, &sieve_jmp_operation);
 		sieve_jumplist_add(jumps, sieve_binary_emit_offset(cgenv->sbin, 0));
 	}
 	
@@ -366,7 +366,7 @@ static bool tst_true_generate
 	struct sieve_jumplist *jumps, bool jump_true)
 {
 	if ( jump_true ) {
-		sieve_operation_emit_code(cgenv->sbin, &sieve_jmp_operation, -1);
+		sieve_operation_emit_code(cgenv->sbin, &sieve_jmp_operation);
 		sieve_jumplist_add(jumps, sieve_binary_emit_offset(cgenv->sbin, 0));
 	}
 	

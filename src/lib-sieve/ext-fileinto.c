@@ -128,7 +128,7 @@ static bool cmd_fileinto_validate
 static bool cmd_fileinto_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &fileinto_operation, ext_my_id);
+	sieve_operation_emit_code(cgenv->sbin, &fileinto_operation);
 
 	/* Emit line number */
     sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));

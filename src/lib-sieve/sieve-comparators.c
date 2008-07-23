@@ -36,7 +36,7 @@ const unsigned int sieve_core_comparators_count =
  */
  
 static void sieve_opr_comparator_emit
-	(struct sieve_binary *sbin, const struct sieve_comparator *cmp, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_comparator *cmp);
 
 /* 
  * Comparator 'extension' 
@@ -56,6 +56,8 @@ const struct sieve_extension comparator_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,
 	SIEVE_EXT_DEFINE_NO_OPERANDS    /* Defined as core operand */
 };
+
+static const struct sieve_extension *ext_this = &comparator_extension;
 	
 static bool cmp_extension_load(int ext_id) 
 {
@@ -69,22 +71,21 @@ static bool cmp_extension_load(int ext_id)
  */
  
 void sieve_comparator_register
-(struct sieve_validator *validator, const struct sieve_comparator *cmp, 
-	int ext_id) 
+(struct sieve_validator *validator, const struct sieve_comparator *cmp) 
 {
 	struct sieve_validator_object_registry *regs = 
-		sieve_validator_object_registry_get(validator, ext_my_id);
+		sieve_validator_object_registry_get(validator, ext_this);
 	
-	sieve_validator_object_registry_add(regs, &cmp->object, ext_id);
+	sieve_validator_object_registry_add(regs, &cmp->object);
 }
 
 const struct sieve_comparator *sieve_comparator_find
-(struct sieve_validator *validator, const char *identifier, int *ext_id) 
+(struct sieve_validator *validator, const char *identifier) 
 {
 	struct sieve_validator_object_registry *regs = 
-		sieve_validator_object_registry_get(validator, ext_my_id);
+		sieve_validator_object_registry_get(validator, ext_this);
 	const struct sieve_object *object = 
-		sieve_validator_object_registry_find(regs, identifier, ext_id);
+		sieve_validator_object_registry_find(regs, identifier);
 
   return (const struct sieve_comparator *) object;
 }
@@ -92,13 +93,13 @@ const struct sieve_comparator *sieve_comparator_find
 bool cmp_validator_load(struct sieve_validator *validator)
 {
 	struct sieve_validator_object_registry *regs = 
-		sieve_validator_object_registry_init(validator, ext_my_id);
+		sieve_validator_object_registry_init(validator, ext_this);
 	unsigned int i;
 		
 	/* Register core comparators */
 	for ( i = 0; i < sieve_core_comparators_count; i++ ) {
 		sieve_validator_object_registry_add
-			(regs, &(sieve_core_comparators[i]->object), -1);
+			(regs, &(sieve_core_comparators[i]->object));
 	}
 
 	return TRUE;
@@ -113,8 +114,6 @@ bool cmp_validator_load(struct sieve_validator *validator)
 struct sieve_comparator_context {
 	struct sieve_command_context *command_ctx;
 	const struct sieve_comparator *comparator;
-	
-	int ext_id;
 };
  
 /* Comparator argument */
@@ -138,7 +137,6 @@ static bool tag_comparator_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd)
 {
-	int ext_id;
 	struct sieve_comparator_context *cmpctx;
 	struct sieve_ast_argument *tag = *arg;
 	const struct sieve_comparator *cmp;
@@ -157,8 +155,7 @@ static bool tag_comparator_validate
 	}
 	
 	/* Get comparator from registry */
-	cmp = sieve_comparator_find
-		(validator, sieve_ast_argument_strc(*arg), &ext_id);
+	cmp = sieve_comparator_find(validator, sieve_ast_argument_strc(*arg));
 	
 	if ( cmp == NULL ) {
 		sieve_command_validate_error(validator, cmd, 
@@ -176,7 +173,6 @@ static bool tag_comparator_validate
 	cmpctx = p_new(sieve_command_pool(cmd), struct sieve_comparator_context, 1);
 	cmpctx->command_ctx = cmd;
 	cmpctx->comparator = cmp;
-	cmpctx->ext_id = ext_id;
 
 	/* Store comparator in context */
 	tag->context = (void *) cmpctx;
@@ -192,7 +188,7 @@ static bool tag_comparator_generate
 		(struct sieve_comparator_context *) arg->context;
 	const struct sieve_comparator *cmp = cmpctx->comparator;
 	
-	sieve_opr_comparator_emit(cgenv->sbin, cmp, cmpctx->ext_id);
+	sieve_opr_comparator_emit(cgenv->sbin, cmp);
 		
 	return TRUE;
 }

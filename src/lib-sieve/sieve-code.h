@@ -100,7 +100,7 @@ extern const struct sieve_operand *sieve_operands[];
 extern const unsigned int sieve_operand_count;
 
 sieve_size_t sieve_operand_emit_code
-	(struct sieve_binary *sbin, const struct sieve_operand *opr, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_operand *opr);
 const struct sieve_operand *sieve_operand_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 
@@ -215,7 +215,7 @@ extern const struct sieve_operation sieve_jmptrue_operation;
 extern const struct sieve_operation sieve_jmpfalse_operation; 
 
 sieve_size_t sieve_operation_emit_code
-	(struct sieve_binary *sbin, const struct sieve_operation *op, int ext_id);	
+	(struct sieve_binary *sbin, const struct sieve_operation *op);	
 const struct sieve_operation *sieve_operation_read
 	(struct sieve_binary *sbin, sieve_size_t *address);
 const char *sieve_operation_read_string

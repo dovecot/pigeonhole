@@ -59,10 +59,8 @@ static bool ext_relational_load(int ext_id)
 
 static bool ext_relational_validator_load(struct sieve_validator *validator)
 {
-	sieve_match_type_register
-		(validator, &value_match_type, ext_relational_my_id); 
-	sieve_match_type_register
-		(validator, &count_match_type, ext_relational_my_id); 
+	sieve_match_type_register(validator, &value_match_type); 
+	sieve_match_type_register(validator, &count_match_type); 
 
 	return TRUE;
 }

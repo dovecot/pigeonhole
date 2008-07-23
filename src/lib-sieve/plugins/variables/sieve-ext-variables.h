@@ -16,13 +16,13 @@
 struct sieve_variable {
 	const char *identifier;
 	unsigned int index;
-	int ext_id;
+	const struct sieve_extension *ext;
 };
 
 struct sieve_variable_scope;
 
 struct sieve_variable_scope *sieve_variable_scope_create
-	(pool_t pool, int ext_id);
+	(pool_t pool, const struct sieve_extension *ext);
 struct sieve_variable *sieve_variable_scope_declare
 	(struct sieve_variable_scope *scope, const char *identifier);
 struct sieve_variable *sieve_variable_scope_import
@@ -57,10 +57,10 @@ struct sieve_variable_scope *sieve_ext_variables_get_main_scope
 	(struct sieve_validator *validator);
 	
 struct sieve_variable_storage *sieve_ext_variables_get_storage
-	(struct sieve_interpreter *interp, int ext_id);
+	(struct sieve_interpreter *interp, const struct sieve_extension *ext);
 void sieve_ext_variables_set_storage
 	(struct sieve_interpreter *interp, struct sieve_variable_storage *storage,
-		int ext_id);	
+		const struct sieve_extension *ext);	
 		
 /* Variable arguments */
 
@@ -100,7 +100,6 @@ struct sieve_variables_modifier {
 #define SIEVE_VARIABLES_DEFINE_MODIFIERS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 void sieve_variables_modifier_register
-(struct sieve_validator *valdtr, const struct sieve_variables_modifier *smodf, 
-	int ext_id);
+(struct sieve_validator *valdtr, const struct sieve_variables_modifier *smodf);
 
 #endif /* __SIEVE_EXT_VARIABLES_H */

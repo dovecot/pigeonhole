@@ -181,7 +181,7 @@ static inline struct ext_imapflags_result_context *
 {
 	struct ext_imapflags_result_context *rctx =
 		(struct ext_imapflags_result_context *) 
-		sieve_result_extension_get_context(result, ext_imapflags_my_id);
+		sieve_result_extension_get_context(result, &imapflags_extension);
 
 	if ( rctx == NULL ) {
 		pool_t pool = sieve_result_pool(result);
@@ -190,7 +190,7 @@ static inline struct ext_imapflags_result_context *
 		rctx->internal_flags = str_new(pool, 32);
 
 		sieve_result_extension_set_context
-			(result, ext_imapflags_my_id, rctx);
+			(result, &imapflags_extension, rctx);
 	}
 
 	return rctx;

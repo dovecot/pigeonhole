@@ -51,6 +51,8 @@ const struct sieve_extension address_part_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,
 	SIEVE_EXT_DEFINE_NO_OPERANDS /* Defined as core operand */
 };
+
+static const struct sieve_extension *ext_this = &address_part_extension;
 	
 static bool addrp_extension_load(int ext_id) 
 {
@@ -64,23 +66,21 @@ static bool addrp_extension_load(int ext_id)
  */
  
 void sieve_address_part_register
-	(struct sieve_validator *validator, 
-	const struct sieve_address_part *addrp, int ext_id) 
+(struct sieve_validator *validator, const struct sieve_address_part *addrp) 
 {
 	struct sieve_validator_object_registry *regs = 
-		sieve_validator_object_registry_get(validator, ext_my_id);
+		sieve_validator_object_registry_get(validator, ext_this);
 	
-	sieve_validator_object_registry_add(regs, &addrp->object, ext_id);
+	sieve_validator_object_registry_add(regs, &addrp->object);
 }
 
 const struct sieve_address_part *sieve_address_part_find
-	(struct sieve_validator *validator, const char *identifier,
-		int *ext_id) 
+(struct sieve_validator *validator, const char *identifier) 
 {
 	struct sieve_validator_object_registry *regs = 
-		sieve_validator_object_registry_get(validator, ext_my_id);
+		sieve_validator_object_registry_get(validator, ext_this);
 	const struct sieve_object *object = 
-		sieve_validator_object_registry_find(regs, identifier, ext_id);
+		sieve_validator_object_registry_find(regs, identifier);
 
   return (const struct sieve_address_part *) object;
 }
@@ -88,13 +88,13 @@ const struct sieve_address_part *sieve_address_part_find
 bool addrp_validator_load(struct sieve_validator *validator)
 {
 	struct sieve_validator_object_registry *regs = 
-		sieve_validator_object_registry_init(validator, ext_my_id);
+		sieve_validator_object_registry_init(validator, ext_this);
 	unsigned int i;
 
 	/* Register core address-parts */
 	for ( i = 0; i < sieve_core_address_parts_count; i++ ) {
 		sieve_validator_object_registry_add
-			(regs, &(sieve_core_address_parts[i]->object), -1);
+			(regs, &(sieve_core_address_parts[i]->object));
 	}
 
 	return TRUE;
@@ -116,17 +116,15 @@ static bool tag_address_part_is_instance_of
 (struct sieve_validator *validator, struct sieve_command_context *cmd,
 	struct sieve_ast_argument *arg)
 {
-	int ext_id;
 	struct sieve_address_part_context *adpctx;
 	const struct sieve_address_part *addrp = sieve_address_part_find
-		(validator, sieve_ast_argument_tag(arg), &ext_id);
+		(validator, sieve_ast_argument_tag(arg));
 
 	if ( addrp == NULL ) return FALSE;
 
 	adpctx = p_new(sieve_command_pool(cmd), struct sieve_address_part_context, 1);
 	adpctx->command_ctx = cmd;
 	adpctx->address_part = addrp;
-	adpctx->ext_id = ext_id;
 
 	/* Store address-part in context */
 	arg->context = (void *) adpctx;
@@ -159,8 +157,7 @@ static bool tag_address_part_generate
 	struct sieve_address_part_context *adpctx =
 		(struct sieve_address_part_context *) arg->context;
 		
-	sieve_opr_address_part_emit
-		(cgenv->sbin, adpctx->address_part, adpctx->ext_id); 
+	sieve_opr_address_part_emit(cgenv->sbin, adpctx->address_part); 
 		
 	return TRUE;
 }

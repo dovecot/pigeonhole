@@ -92,14 +92,14 @@ static inline struct ext_include_generator_context *
 (struct sieve_generator *gentr)
 {
 	return (struct ext_include_generator_context *)
-		sieve_generator_extension_get_context(gentr, ext_include_my_id);
+		sieve_generator_extension_get_context(gentr, &include_extension);
 }
 
 static inline void ext_include_initialize_generator_context
 (struct sieve_generator *gentr, struct ext_include_generator_context *parent, 
 	struct sieve_script *script)
 {
-	sieve_generator_extension_set_context(gentr, ext_include_my_id,
+	sieve_generator_extension_set_context(gentr, &include_extension,
 		ext_include_create_generator_context(gentr, parent, script));
 }
 
@@ -114,7 +114,7 @@ void ext_include_register_generator_context
 		ctx = ext_include_create_generator_context(gentr, NULL, script);
 		
 		sieve_generator_extension_set_context
-			(gentr, ext_include_my_id, (void *) ctx);		
+			(gentr, &include_extension, (void *) ctx);		
 	}
 }
 
@@ -150,7 +150,7 @@ static inline struct ext_include_interpreter_context *
 (struct sieve_interpreter *interp)
 {
 	return (struct ext_include_interpreter_context *)
-		sieve_interpreter_extension_get_context(interp, ext_include_my_id);
+		sieve_interpreter_extension_get_context(interp, &include_extension);
 }
 
 static inline struct ext_include_interpreter_context *
@@ -162,7 +162,7 @@ static inline struct ext_include_interpreter_context *
 	struct ext_include_interpreter_context *ctx = 
 		ext_include_create_interpreter_context(interp, parent, script, block_id);
 		
-	sieve_interpreter_extension_set_context(interp, ext_include_my_id, ctx);
+	sieve_interpreter_extension_set_context(interp, &include_extension, ctx);
 	
 	return ctx;
 }
@@ -179,7 +179,7 @@ void ext_include_interpreter_context_init
 			(interp, NULL, script, SBIN_SYSBLOCK_MAIN_PROGRAM);
 		
 		sieve_interpreter_extension_set_context
-			(interp, ext_include_my_id, (void *) ctx);		
+			(interp, &include_extension, (void *) ctx);		
 	}
 }
 
@@ -321,8 +321,8 @@ bool ext_include_execute_include
 			(subinterp, ctx, NULL, block_id);
 			
 		/* Create variable storage for global variables */
-		varstrg = sieve_ext_variables_get_storage(renv->interp, ext_include_my_id);
-		sieve_ext_variables_set_storage(subinterp, varstrg, ext_include_my_id);
+		varstrg = sieve_ext_variables_get_storage(renv->interp, &include_extension);
+		sieve_ext_variables_set_storage(subinterp, varstrg, &include_extension);
 	
 		/* Activate and start the top-level included script */
 		if ( sieve_binary_block_set_active(renv->sbin, block_id, &this_block_id) ) 			

@@ -83,8 +83,7 @@ const struct sieve_comparator i_ascii_numeric_comparator = {
 
 static bool ext_cmp_i_ascii_numeric_validator_load(struct sieve_validator *validator)
 {
-	sieve_comparator_register
-		(validator, &i_ascii_numeric_comparator, ext_my_id);
+	sieve_comparator_register(validator, &i_ascii_numeric_comparator);
 	return TRUE;
 }
 

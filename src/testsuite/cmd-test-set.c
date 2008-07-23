@@ -95,8 +95,7 @@ static bool cmd_test_set_validate
 static bool cmd_test_set_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &test_set_operation, 
-		ext_testsuite_my_id);
+	sieve_operation_emit_code(cgenv->sbin, &test_set_operation);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )

@@ -11,7 +11,7 @@ struct sieve_object {
 	{ identifier, operand, code }
 
 void sieve_opr_object_emit
-	(struct sieve_binary *sbin, const struct sieve_object *obj, int ext_id);
+	(struct sieve_binary *sbin, const struct sieve_object *obj);
 
 const struct sieve_object *sieve_opr_object_read_data
 	(struct sieve_binary *sbin, const struct sieve_operand *operand,

@@ -38,26 +38,25 @@ const unsigned int testsuite_core_objects_count =
  */
  
 void testsuite_object_register
-(struct sieve_validator *valdtr, const struct testsuite_object *tobj, 
-	int ext_id) 
+(struct sieve_validator *valdtr, const struct testsuite_object *tobj) 
 {
 	struct testsuite_validator_context *ctx = testsuite_validator_context_get
 		(valdtr);
 	
 	sieve_validator_object_registry_add
-		(ctx->object_registrations, &tobj->object, ext_id);
+		(ctx->object_registrations, &tobj->object);
 }
 
 const struct testsuite_object *testsuite_object_find
-(struct sieve_validator *valdtr, const char *identifier, int *ext_id) 
+(struct sieve_validator *valdtr, const char *identifier) 
 {
 	struct testsuite_validator_context *ctx = testsuite_validator_context_get
 		(valdtr);
 	const struct sieve_object *object = 
 		sieve_validator_object_registry_find
-			(ctx->object_registrations, identifier, ext_id);
+			(ctx->object_registrations, identifier);
 
-  return (const struct testsuite_object *) object;
+	return (const struct testsuite_object *) object;
 }
 
 void testsuite_register_core_objects
@@ -68,8 +67,7 @@ void testsuite_register_core_objects
 	/* Register core testsuite objects */
 	for ( i = 0; i < testsuite_core_objects_count; i++ ) {
 		sieve_validator_object_registry_add
-			(ctx->object_registrations, &(testsuite_core_objects[i]->object), 
-				ext_testsuite_my_id);
+			(ctx->object_registrations, &(testsuite_core_objects[i]->object));
 	}
 }
  
@@ -92,10 +90,10 @@ const struct sieve_operand testsuite_object_operand = {
 };
 
 static void testsuite_object_emit
-(struct sieve_binary *sbin, const struct testsuite_object *obj, int ext_id,
+(struct sieve_binary *sbin, const struct testsuite_object *obj,
 	int member_id)
 { 
-	sieve_opr_object_emit(sbin, &obj->object, ext_id);
+	sieve_opr_object_emit(sbin, &obj->object);
 	
 	if ( obj->get_member_id != NULL ) {
 		(void) sieve_binary_emit_byte(sbin, (unsigned char) member_id);
@@ -180,7 +178,6 @@ const struct sieve_argument testsuite_object_argument = {
  
 struct testsuite_object_argctx {
 	const struct testsuite_object *object;
-	int ext_id;
 	int member;
 };
 
@@ -190,7 +187,7 @@ bool testsuite_object_argument_activate
 {
 	const char *objname = sieve_ast_argument_strc(arg);
 	const struct testsuite_object *object;
-	int ext_id, member_id;
+	int member_id;
 	const char *member;
 	struct testsuite_object_argctx *ctx;
 	
@@ -204,7 +201,7 @@ bool testsuite_object_argument_activate
 	
 	/* Find the object */
 	
-	object = testsuite_object_find(valdtr, objname, &ext_id);
+	object = testsuite_object_find(valdtr, objname);
 	if ( object == NULL ) {
 		sieve_command_validate_error(valdtr, cmd, 
 			"unknown testsuite object '%s'", objname);
@@ -227,7 +224,6 @@ bool testsuite_object_argument_activate
 	
 	ctx = p_new(sieve_command_pool(cmd), struct testsuite_object_argctx, 1);
 	ctx->object = object;
-	ctx->ext_id = ext_id;
 	ctx->member = member_id;
 	
 	arg->argument = &testsuite_object_argument;
@@ -243,7 +239,7 @@ static bool arg_testsuite_object_generate
 	struct testsuite_object_argctx *ctx = 
 		(struct testsuite_object_argctx *) arg->context;
 	
-	testsuite_object_emit(cgenv->sbin, ctx->object, ctx->ext_id, ctx->member);
+	testsuite_object_emit(cgenv->sbin, ctx->object, ctx->member);
 		
 	return TRUE;
 }

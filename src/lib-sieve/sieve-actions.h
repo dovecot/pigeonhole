@@ -104,9 +104,9 @@ struct sieve_side_effect {
 extern const struct sieve_operand_class sieve_side_effect_operand_class;
 
 static inline void sieve_opr_side_effect_emit
-(struct sieve_binary *sbin, const struct sieve_side_effect *seff, int ext_id)
+(struct sieve_binary *sbin, const struct sieve_side_effect *seff)
 { 
-	sieve_opr_object_emit(sbin, &seff->object, ext_id);
+	sieve_opr_object_emit(sbin, &seff->object);
 }
 
 static inline const struct sieve_side_effect *sieve_opr_side_effect_read

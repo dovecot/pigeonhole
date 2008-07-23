@@ -59,22 +59,22 @@ static bool cmd_require_validate
 	arg = cmd->first_positional;
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		/* Single string */
-		int ext_id = sieve_validator_extension_load
+		const struct sieve_extension *ext = sieve_validator_extension_load
 			(validator, cmd, sieve_ast_argument_strc(arg));	
 
-		if ( ext_id < 0 ) result = FALSE;
-		arg->context = (void *) ext_id;
+		if ( ext == NULL ) result = FALSE;
+		arg->context = (void *) ext;
 
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		/* String list */
 		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
 		
 		while ( stritem != NULL ) {
-			int ext_id = sieve_validator_extension_load
+			const struct sieve_extension *ext = sieve_validator_extension_load
 				(validator, cmd, sieve_ast_strlist_strc(stritem));
 
-			if ( ext_id < 0 ) result = FALSE;
-			stritem->context = (void *) ext_id;
+			if ( ext == NULL ) result = FALSE;
+			stritem->context = (void *) ext;
 	
 			stritem = sieve_ast_strlist_next(stritem);
 		}
@@ -101,17 +101,19 @@ static bool cmd_require_generate
 	
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		/* Single string */
-		int ext_id = (int) arg->context;
+		const struct sieve_extension *ext = 
+			(const struct sieve_extension *) arg->context;
 		
-		sieve_generator_link_extension(cgenv->gentr, ext_id);
+		sieve_generator_link_extension(cgenv->gentr, ext);
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		/* String list */
 		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
 		
 		while ( stritem != NULL ) {
-			int ext_id = (int) stritem->context;
+			const struct sieve_extension *ext = 
+				(const struct sieve_extension *) stritem->context;
 		
-			sieve_generator_link_extension(cgenv->gentr, ext_id);
+			sieve_generator_link_extension(cgenv->gentr, ext);
 			
 			stritem = sieve_ast_strlist_next(stritem);
 		}

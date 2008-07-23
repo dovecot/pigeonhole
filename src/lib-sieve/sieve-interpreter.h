@@ -93,10 +93,12 @@ void _sieve_runtime_trace
 /* Extension support */
 
 void sieve_interpreter_extension_set_context
-	(struct sieve_interpreter *interp, int ext_id, void *context);
+	(struct sieve_interpreter *interp, const struct sieve_extension *ext,
+		void *context);
 const void *sieve_interpreter_extension_get_context
-	(struct sieve_interpreter *interp, int ext_id);
-	/* Opcodes and operands */
+	(struct sieve_interpreter *interp, const struct sieve_extension *ext);
+
+/* Opcodes and operands */
 	
 bool sieve_interpreter_handle_optional_operands
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,

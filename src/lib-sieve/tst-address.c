@@ -114,7 +114,7 @@ static bool tst_address_validate
 static bool tst_address_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &tst_address_operation, -1);
+	sieve_operation_emit_code(cgenv->sbin, &tst_address_operation);
 	
 	/* Generate arguments */  	
 	return sieve_generate_arguments(cgenv, ctx, NULL);

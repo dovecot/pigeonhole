@@ -14,9 +14,10 @@ void sieve_result_unref(struct sieve_result **result);
 pool_t sieve_result_pool(struct sieve_result *result);
 
 void sieve_result_extension_set_context
-	(struct sieve_result *result, int ext_id, void *context);
+	(struct sieve_result *result, const struct sieve_extension *ext,
+		void *context);
 const void *sieve_result_extension_get_context
-	(struct sieve_result *result, int ext_id); 
+	(struct sieve_result *result, const struct sieve_extension *ext); 
 
 /* Printing */
 

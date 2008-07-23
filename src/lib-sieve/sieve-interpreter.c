@@ -86,7 +86,7 @@ struct sieve_interpreter *sieve_interpreter_create
 	/* Load other extensions listed in the binary */
 	for ( idx = 0; idx < sieve_binary_extensions_count(sbin); idx++ ) {
 		const struct sieve_extension *ext = 
-			sieve_binary_extension_get_by_index(sbin, idx, NULL);
+			sieve_binary_extension_get_by_index(sbin, idx);
 		
 		if ( ext->interpreter_load != NULL )
 			ext->interpreter_load(interp);
@@ -200,14 +200,16 @@ void _sieve_runtime_trace
 /* Extension support */
 
 void sieve_interpreter_extension_set_context
-	(struct sieve_interpreter *interpreter, int ext_id, void *context)
+(struct sieve_interpreter *interpreter, const struct sieve_extension *ext, 
+	void *context)
 {
-	array_idx_set(&interpreter->ext_contexts, (unsigned int) ext_id, &context);	
+	array_idx_set(&interpreter->ext_contexts, (unsigned int) *ext->id, &context);	
 }
 
 const void *sieve_interpreter_extension_get_context
-	(struct sieve_interpreter *interpreter, int ext_id) 
+(struct sieve_interpreter *interpreter, const struct sieve_extension *ext) 
 {
+	int ext_id = *ext->id;
 	void * const *ctx;
 
 	if  ( ext_id < 0 || ext_id >= (int) array_count(&interpreter->ext_contexts) )
@@ -391,7 +393,7 @@ int sieve_interpreter_start
 	/* Load other extensions listed in the binary */
 	for ( idx = 0; idx < sieve_binary_extensions_count(sbin); idx++ ) {
 		const struct sieve_extension *ext = 
-			sieve_binary_extension_get_by_index(sbin, idx, NULL);
+			sieve_binary_extension_get_by_index(sbin, idx);
 		
 		if ( ext->runtime_load != NULL )
 			ext->runtime_load(&interp->runenv);

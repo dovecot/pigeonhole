@@ -72,11 +72,11 @@ static inline struct ext_include_binary_context *ext_include_binary_get_context
 (struct sieve_binary *sbin)
 {	
 	struct ext_include_binary_context *ctx = (struct ext_include_binary_context *)
-		sieve_binary_extension_get_context(sbin, ext_include_my_id);
+		sieve_binary_extension_get_context(sbin, &include_extension);
 	
 	if ( ctx == NULL ) {
 		ctx = ext_include_binary_create_context(sbin);
-		sieve_binary_extension_set_context(sbin, ext_include_my_id, ctx);
+		sieve_binary_extension_set_context(sbin, &include_extension, ctx);
 	};
 	
 	return ctx;
@@ -97,7 +97,7 @@ struct ext_include_binary_context *ext_include_binary_init
 	/* Create dependency block */
 	if ( ctx->dependency_block == 0 )
 		ctx->dependency_block = 
-			sieve_binary_extension_create_block(sbin, ext_include_my_id);
+			sieve_binary_extension_create_block(sbin, &include_extension);
 			
 	return ctx;
 }
@@ -169,7 +169,7 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 	unsigned int block, prvblk, depcount, i;
 	sieve_size_t offset;
 	
-	block = sieve_binary_extension_get_block(sbin, ext_include_my_id);
+	block = sieve_binary_extension_get_block(sbin, &include_extension);
 	
 	if ( !sieve_binary_block_set_active(sbin, block, &prvblk) )
 		return FALSE; 

@@ -50,8 +50,7 @@ static bool cmd_return_generate
 (const struct sieve_codegen_env *cgenv, 
 	struct sieve_command_context *ctx ATTR_UNUSED) 
 {
-	sieve_operation_emit_code	
-		(cgenv->sbin, &return_operation, ext_include_my_id);
+	sieve_operation_emit_code(cgenv->sbin, &return_operation);
 
 	return TRUE;
 }

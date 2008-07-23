@@ -110,7 +110,7 @@ static bool tag_flags_generate
 		return FALSE;
 	}
 
-	sieve_opr_side_effect_emit(cgenv->sbin, &flags_side_effect, ext_imapflags_my_id);
+	sieve_opr_side_effect_emit(cgenv->sbin, &flags_side_effect);
 	  
 	param = arg->parameters;
 

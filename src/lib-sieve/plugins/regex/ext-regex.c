@@ -68,8 +68,7 @@ static bool ext_regex_load(int ext_id)
 
 static bool ext_regex_validator_load(struct sieve_validator *validator)
 {
-	sieve_match_type_register
-		(validator, &regex_match_type, ext_my_id); 
+	sieve_match_type_register(validator, &regex_match_type); 
 
 	return TRUE;
 }

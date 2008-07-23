@@ -14,7 +14,7 @@ enum ext_variables_modifier_code {
 };
 
 const struct sieve_variables_modifier *ext_variables_modifier_find
-	(struct sieve_validator *validator, const char *identifier, int *ext_id_r);
+	(struct sieve_validator *validator, const char *identifier);
 
 void ext_variables_register_core_modifiers
 	(struct ext_variables_validator_context *ctx);
@@ -28,10 +28,9 @@ extern const struct sieve_operand_class
 extern const struct sieve_operand modifier_operand;
 
 static inline void ext_variables_opr_modifier_emit
-(struct sieve_binary *sbin, const struct sieve_variables_modifier *modf, 
-	int ext_id)
+(struct sieve_binary *sbin, const struct sieve_variables_modifier *modf)
 { 
-	sieve_opr_object_emit(sbin, &modf->object, ext_id);
+	sieve_opr_object_emit(sbin, &modf->object);
 }
 
 static inline const struct sieve_variables_modifier *

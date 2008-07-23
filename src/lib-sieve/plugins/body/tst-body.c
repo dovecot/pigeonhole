@@ -212,8 +212,7 @@ static bool tst_body_validate
 static bool tst_body_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	(void)sieve_operation_emit_code
-		(cgenv->sbin, &body_operation, ext_body_my_id);
+	(void)sieve_operation_emit_code(cgenv->sbin, &body_operation);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )

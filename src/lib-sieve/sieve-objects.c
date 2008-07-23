@@ -8,12 +8,12 @@
 #include "sieve-objects.h"
 
 void sieve_opr_object_emit
-(struct sieve_binary *sbin, const struct sieve_object *obj, int ext_id)
+(struct sieve_binary *sbin, const struct sieve_object *obj)
 {
 	struct sieve_extension_obj_registry *reg = 
 		(struct sieve_extension_obj_registry *) obj->operand->interface;
 		 
-	(void) sieve_operand_emit_code(sbin, obj->operand, ext_id);
+	(void) sieve_operand_emit_code(sbin, obj->operand);
 	
 	if ( reg->count > 1 ) {	
 		(void) sieve_binary_emit_byte(sbin, obj->code);

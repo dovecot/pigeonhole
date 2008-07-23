@@ -61,7 +61,7 @@ static bool cmd_keep_generate
 	struct sieve_command_context *ctx ATTR_UNUSED) 
 {
 	/* Emit opcode */
-	sieve_operation_emit_code(cgenv->sbin, &cmd_keep_operation, -1);
+	sieve_operation_emit_code(cgenv->sbin, &cmd_keep_operation);
 
 	/* Emit line number */
     sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));

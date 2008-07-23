@@ -49,8 +49,7 @@ const struct sieve_operation setflag_operation = {
 static bool cmd_setflag_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
 {
-	sieve_operation_emit_code
-		(cgenv->sbin, &setflag_operation, ext_imapflags_my_id);
+	sieve_operation_emit_code(cgenv->sbin, &setflag_operation);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )

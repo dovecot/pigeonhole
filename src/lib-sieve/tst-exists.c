@@ -75,7 +75,7 @@ static bool tst_exists_validate
 static bool tst_exists_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &tst_exists_operation, -1);
+	sieve_operation_emit_code(cgenv->sbin, &tst_exists_operation);
 
  	/* Generate arguments */
     return sieve_generate_arguments(cgenv, ctx, NULL);

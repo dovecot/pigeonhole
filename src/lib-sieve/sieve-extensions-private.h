@@ -29,12 +29,12 @@ static inline sieve_size_t _sieve_extension_emit_obj
 (struct sieve_binary *sbin, 
 	const struct sieve_extension_obj_registry *defreg,
 	const struct sieve_extension_obj_registry *reg,
-	unsigned int obj_code, int ext_id) 
+	unsigned int obj_code, const struct sieve_extension *ext) 
 { 
-	if ( ext_id >= 0 ) {
+	if ( ext != NULL ) {
 		sieve_size_t address; 
 		unsigned char code = defreg->count +
-			sieve_binary_extension_get_index(sbin, ext_id);
+			sieve_binary_extension_get_index(sbin, ext);
 
 		address = sieve_binary_emit_byte(sbin, code);
 		
@@ -46,9 +46,9 @@ static inline sieve_size_t _sieve_extension_emit_obj
 
 	return sieve_binary_emit_byte(sbin, obj_code);
 }
-#define sieve_extension_emit_obj(sbin, defreg, obj, reg, ext_id)\
+#define sieve_extension_emit_obj(sbin, defreg, obj, reg, ext)\
 	_sieve_extension_emit_obj\
-		(sbin, defreg, &obj->extension->reg, obj->code, ext_id)
+		(sbin, defreg, &obj->extension->reg, obj->code, ext)
 
 static inline const void *_sieve_extension_read_obj
 (struct sieve_binary *sbin, sieve_size_t *address, 

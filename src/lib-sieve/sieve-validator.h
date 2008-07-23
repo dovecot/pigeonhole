@@ -85,14 +85,15 @@ bool sieve_validator_argument_activate_super
 	struct sieve_ast_argument *arg, bool constant);
 
 /* Extensions */
-int sieve_validator_extension_load
+const struct sieve_extension *sieve_validator_extension_load
 	(struct sieve_validator *validator, struct sieve_command_context *cmd, 
 		const char *ext_name); 
 
 void sieve_validator_extension_set_context
-	(struct sieve_validator *validator, int ext_id, void *context);
+	(struct sieve_validator *validator, const struct sieve_extension *ext, 
+		void *context);
 const void *sieve_validator_extension_get_context
-	(struct sieve_validator *validator, int ext_id);
+	(struct sieve_validator *validator, const struct sieve_extension *ext);
 
 /*
  * Validator object registry
@@ -101,16 +102,15 @@ const void *sieve_validator_extension_get_context
 struct sieve_validator_object_registry;
 
 struct sieve_validator_object_registry *sieve_validator_object_registry_get
-	(struct sieve_validator *validator, int ext_id);
+	(struct sieve_validator *validator, const struct sieve_extension *ext);
 void sieve_validator_object_registry_add
 	(struct sieve_validator_object_registry *regs,
-		const struct sieve_object *object, int ext_id);
+		const struct sieve_object *object);
 const struct sieve_object *sieve_validator_object_registry_find
-	(struct sieve_validator_object_registry *regs, const char *identifier,
-		int *ext_id);
+	(struct sieve_validator_object_registry *regs, const char *identifier);
 struct sieve_validator_object_registry *sieve_validator_object_registry_create
 	(struct sieve_validator *validator);
 struct sieve_validator_object_registry *sieve_validator_object_registry_init
-	(struct sieve_validator *validator, int ext_id);
+	(struct sieve_validator *validator, const struct sieve_extension *ext);
 
 #endif /* __SIEVE_VALIDATOR_H */

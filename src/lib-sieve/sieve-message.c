@@ -4,6 +4,7 @@
 
 #include "sieve-common.h"
 #include "sieve-message.h"
+#include "sieve-extensions.h"
 
 /* 
  * Message context 
@@ -50,14 +51,16 @@ void sieve_message_context_unref(struct sieve_message_context **msgctx)
 }
 
 void sieve_message_context_extension_set
-	(struct sieve_message_context *msgctx, int ext_id, void *context)
+(struct sieve_message_context *msgctx, const struct sieve_extension *ext, 
+	void *context)
 {
-	array_idx_set(&msgctx->ext_contexts, (unsigned int) ext_id, &context);	
+	array_idx_set(&msgctx->ext_contexts, (unsigned int) *ext->id, &context);	
 }
 
 const void *sieve_message_context_extension_get
-	(struct sieve_message_context *msgctx, int ext_id) 
+(struct sieve_message_context *msgctx, const struct sieve_extension *ext) 
 {
+	int ext_id = *ext->id;
 	void * const *ctx;
 
 	if  ( ext_id < 0 || ext_id >= (int) array_count(&msgctx->ext_contexts) )

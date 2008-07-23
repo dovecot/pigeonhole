@@ -112,10 +112,8 @@ static struct sieve_operand subaddress_operand = {
 
 static bool ext_subaddress_validator_load(struct sieve_validator *validator)
 {
-	sieve_address_part_register
-		(validator, &user_address_part, ext_my_id); 
-	sieve_address_part_register
-		(validator, &detail_address_part, ext_my_id); 
+	sieve_address_part_register(validator, &user_address_part); 
+	sieve_address_part_register(validator, &detail_address_part); 
 
 	return TRUE;
 }

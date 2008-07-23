@@ -110,7 +110,7 @@ static bool ext_include_binary_load(struct sieve_binary *sbin)
 	 * opening or saving the binary. The implemententation of these hooks is found
 	 * in ext-include-binary.c
 	 */
-	sieve_binary_extension_set(sbin, ext_include_my_id, &include_binary_ext);
+	sieve_binary_extension_set(sbin, &include_extension, &include_binary_ext);
 	
 	return TRUE;
 }

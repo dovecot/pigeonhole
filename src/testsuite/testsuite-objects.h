@@ -28,10 +28,9 @@ struct testsuite_object {
 /* Testsuite object registration */
 
 const struct testsuite_object *testsuite_object_find
-	(struct sieve_validator *valdtr, const char *identifier, int *ext_id);
+	(struct sieve_validator *valdtr, const char *identifier);
 void testsuite_object_register
-	(struct sieve_validator *valdtr, const struct testsuite_object *tobj, 
-		int ext_id);		
+	(struct sieve_validator *valdtr, const struct testsuite_object *tobj);		
 void testsuite_register_core_objects
 	(struct testsuite_validator_context *ctx);
 		

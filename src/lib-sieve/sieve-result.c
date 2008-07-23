@@ -117,14 +117,15 @@ pool_t sieve_result_pool(struct sieve_result *result)
 }
 
 void sieve_result_extension_set_context
-	(struct sieve_result *result, int ext_id, void *context)
+(struct sieve_result *result, const struct sieve_extension *ext, void *context)
 {
-	array_idx_set(&result->ext_contexts, (unsigned int) ext_id, &context);	
+	array_idx_set(&result->ext_contexts, (unsigned int) *ext->id, &context);	
 }
 
 const void *sieve_result_extension_get_context
-	(struct sieve_result *result, int ext_id) 
+(struct sieve_result *result, const struct sieve_extension *ext) 
 {
+	int ext_id = *ext->id;
 	void * const *ctx;
 
 	if  ( ext_id < 0 || ext_id >= (int) array_count(&result->ext_contexts) )

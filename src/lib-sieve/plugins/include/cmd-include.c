@@ -219,8 +219,7 @@ static bool cmd_include_generate
 		(cgenv, cmd, ctx_data->location, ctx_data->script, &block_id) )
  		return FALSE;
  		
- 	sieve_operation_emit_code	
-		(cgenv->sbin, &include_operation, ext_include_my_id);
+ 	sieve_operation_emit_code(cgenv->sbin, &include_operation);
 	sieve_binary_emit_offset(cgenv->sbin, block_id); 
  	 		
 	return TRUE;

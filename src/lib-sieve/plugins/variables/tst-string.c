@@ -108,8 +108,7 @@ static bool tst_string_validate
 static bool tst_string_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
-	sieve_operation_emit_code
-		(cgenv->sbin, &tst_string_operation, ext_variables_my_id);
+	sieve_operation_emit_code(cgenv->sbin, &tst_string_operation);
 
  	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )

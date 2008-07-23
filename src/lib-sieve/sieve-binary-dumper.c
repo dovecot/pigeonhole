@@ -93,10 +93,9 @@ void sieve_binary_dumper_run
 		sieve_binary_dump_sectionf(denv, "Required extensions");
 	
 		for ( i = 0; i < count; i++ ) {
-			int ext_id;
 			const struct sieve_extension *ext = sieve_binary_extension_get_by_index
-				(sbin, i, &ext_id);
-			sieve_binary_dumpf(denv, "%d: %s (%d)\n", i, ext->name, ext_id);
+				(sbin, i);
+			sieve_binary_dumpf(denv, "%d: %s (%d)\n", i, ext->name, *ext->id);
 		}
 	}
 	
@@ -115,9 +114,8 @@ void sieve_binary_dumper_run
 	count = sieve_binary_extensions_count(sbin);
 	if ( count > 0 ) {	
 		for ( i = 0; i < count; i++ ) {
-			int ext_id;
 			const struct sieve_extension *ext = sieve_binary_extension_get_by_index
-				(sbin, i, &ext_id);
+				(sbin, i);
 	
 			if ( ext->binary_dump != NULL ) {	
 				if ( !ext->binary_dump(denv) ) break;
