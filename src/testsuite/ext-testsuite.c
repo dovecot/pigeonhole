@@ -59,6 +59,7 @@ int ext_testsuite_my_id;
 
 const struct sieve_extension testsuite_extension = { 
 	"vnd.dovecot.testsuite", 
+	&ext_testsuite_my_id,
 	ext_testsuite_load,
 	ext_testsuite_validator_load,
 	ext_testsuite_generator_load,

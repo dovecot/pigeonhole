@@ -64,6 +64,7 @@ static bool ext_body_validator_load(struct sieve_validator *validator);
 
 const struct sieve_extension body_extension = { 
 	"body", 
+	&ext_body_my_id,
 	ext_body_load,
 	ext_body_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,

@@ -44,6 +44,7 @@ static bool addrp_validator_load(struct sieve_validator *validator);
 
 const struct sieve_extension address_part_extension = {
 	"@address-parts",
+	&ext_my_id,
 	addrp_extension_load,
 	addrp_validator_load,
 	NULL, NULL, NULL, NULL, NULL,

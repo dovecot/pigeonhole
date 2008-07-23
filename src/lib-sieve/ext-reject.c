@@ -49,6 +49,7 @@ static bool ext_reject_validator_load(struct sieve_validator *validator);
 	
 struct sieve_extension reject_extension = { 
 	"reject", 
+	&ext_my_id,
 	ext_reject_load,
 	ext_reject_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,

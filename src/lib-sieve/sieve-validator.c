@@ -126,7 +126,7 @@ struct sieve_validator *sieve_validator_create
 		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
 		
 		if ( ext->validator_load != NULL )
-			(void)ext->validator_load(validator);		
+			(void)ext->validator_load(validator);
 	}
 	
 	return validator;

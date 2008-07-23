@@ -31,6 +31,7 @@ static int ext_my_id;
 	
 struct sieve_extension encoded_character_extension = { 
 	"encoded-character", 
+	&ext_my_id,
 	ext_encoded_character_load,
 	ext_encoded_character_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,

@@ -66,6 +66,7 @@ int ext_variables_my_id;
 	
 struct sieve_extension variables_extension = { 
 	"variables", 
+	&ext_variables_my_id,
 	ext_variables_load,
 	ext_variables_validator_load, 
 	NULL, 

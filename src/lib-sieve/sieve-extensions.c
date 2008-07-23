@@ -17,11 +17,9 @@ static void sieve_extensions_deinit_registry(void);
 extern const struct sieve_extension comparator_extension;
 extern const struct sieve_extension match_type_extension;
 extern const struct sieve_extension address_part_extension;
-extern const struct sieve_extension side_effects_extension;
 
 const struct sieve_extension *sieve_preloaded_extensions[] = {
-	&comparator_extension, &match_type_extension, &address_part_extension,
-	&side_effects_extension 
+	&comparator_extension, &match_type_extension, &address_part_extension
 };
 
 const unsigned int sieve_preloaded_extensions_count = 
@@ -30,15 +28,15 @@ const unsigned int sieve_preloaded_extensions_count =
 /* Dummy extensions */
 
 static const struct sieve_extension comparator_i_octet_extension = {
-	"comparator-i;octet",
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	"comparator-i;octet", 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static const struct sieve_extension comparator_i_ascii_casemap_extension = {
-	"comparator-i;ascii-casemap",
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	"comparator-i;ascii-casemap", 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
@@ -66,7 +64,6 @@ extern const struct sieve_extension variables_extension;
 const struct sieve_extension *sieve_core_extensions[] = {
 	/* Preloaded 'extensions' */
 	&comparator_extension, &match_type_extension, &address_part_extension,
-	&side_effects_extension,
 	
 	/* Dummy extensions */ 
 	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension, 
@@ -200,16 +197,7 @@ int sieve_extension_get_id(const struct sieve_extension *extension)
 
 static bool _list_extension(const struct sieve_extension *ext)
 {
-	if ( *ext->name == '@' ) return FALSE;
-
-	if ( ext->validator_load == NULL && ext->generator_load == NULL &&
-		ext->binary_load == NULL && ext->interpreter_load == NULL &&
-		ext->runtime_load == NULL && ext->load == NULL &&
-		ext->operations.count == 0 && ext->operands.count == 0 ) {
-		return FALSE;
-	}
-
-	return TRUE;
+	return ( ext->id != NULL && *ext->name != '@' );
 }
 
 const char *sieve_extensions_get_string(void)

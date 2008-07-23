@@ -38,6 +38,7 @@ int ext_relational_my_id;
 
 const struct sieve_extension relational_extension = { 
 	"relational", 
+	&ext_relational_my_id,
 	ext_relational_load,
 	ext_relational_validator_load,
 	NULL, NULL, NULL, NULL, NULL,

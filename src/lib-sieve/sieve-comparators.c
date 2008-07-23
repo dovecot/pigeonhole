@@ -49,6 +49,7 @@ static bool cmp_validator_load(struct sieve_validator *validator);
 
 const struct sieve_extension comparator_extension = {
 	"@comparators",
+	&ext_my_id,
 	cmp_extension_load,
 	cmp_validator_load,
 	NULL, NULL, NULL, NULL,	NULL,

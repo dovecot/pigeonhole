@@ -60,6 +60,7 @@ int ext_imapflags_my_id;
 
 const struct sieve_extension imapflags_extension = { 
 	"imap4flags", 
+	&ext_imapflags_my_id,
 	ext_imapflags_load,
 	ext_imapflags_validator_load, 
 	NULL, NULL,

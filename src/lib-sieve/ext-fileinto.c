@@ -41,6 +41,7 @@ static bool ext_fileinto_validator_load(struct sieve_validator *validator);
 
 const struct sieve_extension fileinto_extension = { 
 	"fileinto", 
+	&ext_my_id,
 	ext_fileinto_load,
 	ext_fileinto_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,

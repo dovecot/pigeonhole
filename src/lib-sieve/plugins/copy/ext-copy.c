@@ -34,6 +34,7 @@ static int ext_my_id;
 
 const struct sieve_extension copy_extension = { 
 	"copy", 
+	&ext_my_id,
 	ext_copy_load,
 	ext_copy_validator_load, 
 	NULL, NULL, NULL, NULL, NULL, 

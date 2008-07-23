@@ -45,6 +45,7 @@ static bool ext_envelope_validator_load(struct sieve_validator *validator);
 
 const struct sieve_extension envelope_extension = { 
 	"envelope", 
+	&ext_my_id,
 	ext_envelope_load,
 	ext_envelope_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,

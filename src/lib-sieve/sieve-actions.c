@@ -26,28 +26,6 @@ const char *sieve_get_new_message_id
     count++, senv->hostname);
 }
 
-/* 
- * Side-effects 'extension' 
- */
-
-static int ext_my_id = -1;
-
-static bool seffect_extension_load(int ext_id);
-
-const struct sieve_extension side_effects_extension = {
-	"@side-effects",
-	seffect_extension_load,
-	NULL, NULL, NULL, NULL, NULL,	NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS, /* Opcode is hardcoded */
-	SIEVE_EXT_DEFINE_NO_OPERANDS
-};
-	
-static bool seffect_extension_load(int ext_id) 
-{
-	ext_my_id = ext_id;
-	return TRUE;
-}
-
 /*
  * Side-effect operand
  */

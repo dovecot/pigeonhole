@@ -40,6 +40,7 @@ static int ext_my_id;
 
 const struct sieve_extension subaddress_extension = { 
 	"subaddress", 
+	&ext_my_id,
 	ext_subaddress_load,
 	ext_subaddress_validator_load,
 	NULL, NULL, NULL, NULL, NULL,

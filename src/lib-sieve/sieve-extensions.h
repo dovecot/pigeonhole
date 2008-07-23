@@ -15,6 +15,7 @@ struct sieve_extension_obj_registry {
 
 struct sieve_extension {
 	const char *name;
+	const int *id;
 	
 	bool (*load)(int ext_id);
 

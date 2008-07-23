@@ -36,7 +36,8 @@ static bool ext_vacation_validator_load(struct sieve_validator *validator);
 int ext_vacation_my_id;
 
 const struct sieve_extension vacation_extension = { 
-	"vacation", 
+	"vacation",
+	&ext_vacation_my_id,
 	ext_vacation_load,
 	ext_vacation_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
