@@ -115,18 +115,15 @@ sieve_size_t sieve_binary_emit_string
 sieve_size_t sieve_binary_emit_cstring
 	(struct sieve_binary *binary, const char *str);
 
-/* Operand emission */
+/* Extension emission functions */
 
-sieve_size_t sieve_binary_emit_operand_id
-	(struct sieve_binary *sbin, int operand);
-	
-/* Opcode emission */
+sieve_size_t sieve_binary_emit_extension
+	(struct sieve_binary *sbin, const struct sieve_extension *ext,
+		unsigned int offset);
+void sieve_binary_emit_extension_object
+	(struct sieve_binary *sbin, const struct sieve_extension_obj_registry *reg,
+    	unsigned int code);
 
-sieve_size_t sieve_binary_emit_opcode_id
-	(struct sieve_binary *sbin, int opcode);
-sieve_size_t sieve_binary_emit_ext_opcode_id
-	(struct sieve_binary *sbin, const struct sieve_extension *extension);
-	
 /* 
  * Code retrieval 
  */
@@ -142,5 +139,13 @@ bool sieve_binary_read_integer
   (struct sieve_binary *binary, sieve_size_t *address, sieve_size_t *integer); 
 bool sieve_binary_read_string
   (struct sieve_binary *binary, sieve_size_t *address, string_t **str);
+
+/* Extension */
+bool sieve_binary_read_extension
+	(struct sieve_binary *sbin, sieve_size_t *address, unsigned int *offset_r,
+		const struct sieve_extension **ext_r);
+const void *sieve_binary_read_extension_object
+	(struct sieve_binary *binary, sieve_size_t *address,
+    	const struct sieve_extension_obj_registry *reg);
 
 #endif

@@ -113,5 +113,4 @@ noinst_HEADERS = \
 	sieve-code.h \
 	sieve-actions.h \
 	sieve-extensions.h \
-	sieve-extensions-private.h \
 	sieve.h

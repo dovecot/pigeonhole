@@ -5,7 +5,7 @@
 #include "array.h"
 
 #include "sieve-error.h"
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 
 /* Static pre-declarations */
 

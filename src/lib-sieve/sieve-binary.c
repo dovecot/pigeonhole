@@ -240,9 +240,14 @@ void sieve_binary_unref(struct sieve_binary **sbin)
 	*sbin = NULL;
 }
 
+static inline sieve_size_t _sieve_binary_get_code_size(struct sieve_binary *sbin)
+{
+    return buffer_get_used_size(sbin->data);
+}
+
 sieve_size_t sieve_binary_get_code_size(struct sieve_binary *sbin)
 {
-	return buffer_get_used_size(sbin->data);
+	return _sieve_binary_get_code_size(sbin);
 }
 
 pool_t sieve_binary_pool(struct sieve_binary *sbin)
@@ -1203,21 +1208,6 @@ void sieve_binary_activate(struct sieve_binary *sbin)
  * Extension handling 
  */
 
-static inline struct sieve_binary_extension_reg *sieve_binary_extension_get_reg 
-(struct sieve_binary *sbin, const struct sieve_extension *ext) 
-{
-	int ext_id = *ext->id;
-
-	if ( ext_id >= 0 && ext_id < (int) array_count(&sbin->extension_index) ) {
-		struct sieve_binary_extension_reg * const *ereg = 
-			array_idx(&sbin->extension_index, (unsigned int) ext_id);
-		
-		return *ereg;
-	}
-	
-	return NULL;
-}
-
 static inline struct sieve_binary_extension_reg *
 	sieve_binary_extension_create_reg
 (struct sieve_binary *sbin, const struct sieve_extension *ext)
@@ -1236,16 +1226,31 @@ static inline struct sieve_binary_extension_reg *
 	return ereg;
 }
 
+static inline struct sieve_binary_extension_reg *sieve_binary_extension_get_reg 
+(struct sieve_binary *sbin, const struct sieve_extension *ext) 
+{
+	int ext_id = *ext->id;
+	struct sieve_binary_extension_reg *reg = NULL;
+
+	if ( ext_id >= 0 && ext_id < (int) array_count(&sbin->extension_index) ) {
+		struct sieve_binary_extension_reg * const *ereg = 
+			array_idx(&sbin->extension_index, (unsigned int) ext_id);
+		
+		reg = *ereg;
+	}
+
+	/* Register if not known */
+	if ( reg == NULL )
+		return sieve_binary_extension_create_reg(sbin, ext);
+
+	return reg;
+}
+
 void sieve_binary_extension_set_context
 (struct sieve_binary *sbin, const struct sieve_extension *ext, void *context)
 {
 	struct sieve_binary_extension_reg *ereg = 
 		sieve_binary_extension_get_reg(sbin, ext);
-	
-	if ( ereg == NULL ) {
-		/* Failsafe, this shouldn't happen */
-		ereg = sieve_binary_extension_create_reg(sbin, ext);
-	}
 	
 	ereg->context = context;
 }
@@ -1270,11 +1275,6 @@ void sieve_binary_extension_set
 	struct sieve_binary_extension_reg *ereg = 
 		sieve_binary_extension_get_reg(sbin, ext);
 	
-	if ( ereg == NULL ) {
-		/* Failsafe, this shouldn't happen */
-		ereg = sieve_binary_extension_create_reg(sbin, ext);
-	}
-	
 	ereg->binext = bext;
 }
 
@@ -1285,11 +1285,6 @@ unsigned int sieve_binary_extension_create_block
 	unsigned int block_id;
 	struct sieve_binary_extension_reg *ereg = 
 		sieve_binary_extension_get_reg(sbin, ext);
-	
-	if ( ereg == NULL ) {
-		/* Failsafe, this shouldn't happen */
-		ereg = sieve_binary_extension_create_reg(sbin, ext);
-	}
 	
 	block = p_new(sbin->pool, struct sieve_binary_block, 1);
 	block->buffer = buffer_create_dynamic(sbin->pool, 64);
@@ -1309,8 +1304,6 @@ unsigned int sieve_binary_extension_get_block
 	struct sieve_binary_extension_reg *ereg = 
 		sieve_binary_extension_get_reg(sbin, ext);
 		
-	if ( ereg == NULL ) return 0;
-	
 	return ereg->block_id;
 }
 
@@ -1337,8 +1330,8 @@ int sieve_binary_extension_link
 	return sieve_binary_extension_register(sbin, ext, NULL);
 }
 
-const struct sieve_extension *sieve_binary_extension_get_by_index
-	(struct sieve_binary *sbin, int index) 
+static inline const struct sieve_extension *_sieve_binary_extension_get_by_index
+(struct sieve_binary *sbin, int index) 
 {
 	struct sieve_binary_extension_reg * const *ext;
 	
@@ -1351,13 +1344,19 @@ const struct sieve_extension *sieve_binary_extension_get_by_index
 	return NULL;
 }
 
+const struct sieve_extension *sieve_binary_extension_get_by_index
+(struct sieve_binary *sbin, int index)
+{
+	return _sieve_binary_extension_get_by_index(sbin, index);
+}
+
 int sieve_binary_extension_get_index
 	(struct sieve_binary *sbin, const struct sieve_extension *ext) 
 {
 	struct sieve_binary_extension_reg *ereg =
 		sieve_binary_extension_get_reg(sbin, ext);
 	
-	return ( ereg != NULL ? ereg->index : -1 );
+	return ereg->index;
 }
 
 int sieve_binary_extensions_count(struct sieve_binary *sbin) 
@@ -1371,39 +1370,63 @@ int sieve_binary_extensions_count(struct sieve_binary *sbin)
 
 /* Low-level emission functions */
 
-sieve_size_t sieve_binary_emit_data
-(struct sieve_binary *binary, const void *data, sieve_size_t size) 
+static inline void _sieve_binary_emit_data
+(struct sieve_binary *sbin, const void *data, sieve_size_t size) 
+{	  
+	buffer_append(sbin->data, data, size);
+}
+
+static inline void _sieve_binary_emit_byte
+(struct sieve_binary *sbin, unsigned char byte)
 {
-	sieve_size_t address = buffer_get_used_size(binary->data);
-	  
-	buffer_append(binary->data, data, size);
-	
+    _sieve_binary_emit_data(sbin, &byte, 1);
+}
+
+static inline void _sieve_binary_update_data
+(struct sieve_binary *sbin, sieve_size_t address, const void *data, 
+	sieve_size_t size) 
+{
+	buffer_write(sbin->data, address, data, size);
+}
+
+sieve_size_t sieve_binary_emit_data
+(struct sieve_binary *sbin, const void *data, sieve_size_t size)
+{
+	sieve_size_t address = _sieve_binary_get_code_size(sbin);
+
+	_sieve_binary_emit_data(sbin, data, size);
+
 	return address;
 }
 
 sieve_size_t sieve_binary_emit_byte
-(struct sieve_binary *binary, unsigned char byte) 
+(struct sieve_binary *sbin, unsigned char byte) 
 {
-	return sieve_binary_emit_data(binary, &byte, 1);
+	sieve_size_t address = _sieve_binary_get_code_size(sbin);
+
+	_sieve_binary_emit_data(sbin, &byte, 1);
+	
+	return address;
 }
 
 void sieve_binary_update_data
-(struct sieve_binary *binary, sieve_size_t address, const void *data, 
+(struct sieve_binary *sbin, sieve_size_t address, const void *data, 
 	sieve_size_t size) 
 {
-	buffer_write(binary->data, address, data, size);
+	_sieve_binary_update_data(sbin, address, data, size);
 }
+
 
 /* Offset emission functions */
 
 sieve_size_t sieve_binary_emit_offset(struct sieve_binary *binary, int offset) 
 {
 	int i;
-	sieve_size_t address = sieve_binary_get_code_size(binary);
+	sieve_size_t address = _sieve_binary_get_code_size(binary);
 
 	for ( i = 3; i >= 0; i-- ) {
 		char c = (char) (offset >> (i * 8));
-		(void) sieve_binary_emit_data(binary, &c, 1);
+		_sieve_binary_emit_data(binary, &c, 1);
 	}
 	
 	return address;
@@ -1413,11 +1436,11 @@ void sieve_binary_resolve_offset
 	(struct sieve_binary *binary, sieve_size_t address) 
 {
 	int i;
-	int offset = sieve_binary_get_code_size(binary) - address; 
+	int offset = _sieve_binary_get_code_size(binary) - address; 
 	
 	for ( i = 3; i >= 0; i-- ) {
 		char c = (char) (offset >> (i * 8));	
-		(void) sieve_binary_update_data(binary, address + 3 - i, &c, 1);
+		_sieve_binary_update_data(binary, address + 3 - i, &c, 1);
 	}
 }
 
@@ -1426,6 +1449,7 @@ void sieve_binary_resolve_offset
 sieve_size_t sieve_binary_emit_integer
 (struct sieve_binary *binary, sieve_size_t integer)
 {
+	sieve_size_t address = _sieve_binary_get_code_size(binary);
 	int i;
 	char buffer[sizeof(sieve_size_t) + 1];
 	int bufpos = sizeof(buffer) - 1;
@@ -1446,14 +1470,17 @@ sieve_size_t sieve_binary_emit_integer
 		}
 	} 
   
-	return sieve_binary_emit_data(binary, buffer + bufpos, sizeof(buffer) - bufpos);
+	_sieve_binary_emit_data(binary, buffer + bufpos, sizeof(buffer) - bufpos);
+
+	return address;
 }
 
 static inline sieve_size_t sieve_binary_emit_dynamic_data
 	(struct sieve_binary *binary, const void *data, size_t size)
 {
 	sieve_size_t address = sieve_binary_emit_integer(binary, size);
-	(void) sieve_binary_emit_data(binary, data, size);
+
+	_sieve_binary_emit_data(binary, data, size);
   
 	return address;
 }
@@ -1463,7 +1490,7 @@ sieve_size_t sieve_binary_emit_cstring
 {
 	sieve_size_t address = sieve_binary_emit_dynamic_data
 		(binary, (void *) str, strlen(str));
-	sieve_binary_emit_byte(binary, 0);
+	_sieve_binary_emit_byte(binary, 0);
   
 	return address;
 }
@@ -1473,9 +1500,33 @@ sieve_size_t sieve_binary_emit_string
 {
 	sieve_size_t address = sieve_binary_emit_dynamic_data
 		(binary, (void *) str_data(str), str_len(str));
-	sieve_binary_emit_byte(binary, 0);
+	_sieve_binary_emit_byte(binary, 0);
 	
 	return address;
+}
+
+/*
+ * Extension emission
+ */
+
+sieve_size_t sieve_binary_emit_extension
+(struct sieve_binary *sbin, const struct sieve_extension *ext,
+	unsigned int offset)
+{
+	sieve_size_t address = _sieve_binary_get_code_size(sbin);
+	struct sieve_binary_extension_reg *ereg = 
+		sieve_binary_extension_get_reg(sbin, ext);
+
+   	_sieve_binary_emit_byte(sbin, offset + ereg->index);
+	return address;
+}
+
+void sieve_binary_emit_extension_object
+(struct sieve_binary *sbin, const struct sieve_extension_obj_registry *reg,
+	unsigned int code)
+{
+	if ( reg->count > 1 )
+		_sieve_binary_emit_byte(sbin, code);
 }
 
 /*
@@ -1582,7 +1633,7 @@ static string_t *t_str_const(const void *cdata, size_t size)
 }
 
 bool sieve_binary_read_string
-  (struct sieve_binary *binary, sieve_size_t *address, string_t **str) 
+(struct sieve_binary *binary, sieve_size_t *address, string_t **str) 
 {
 	sieve_size_t strlen = 0;
   
@@ -1604,4 +1655,52 @@ bool sieve_binary_read_string
 	return TRUE;
 }
 
+bool sieve_binary_read_extension
+(struct sieve_binary *sbin, sieve_size_t *address, unsigned int *offset_r,
+	const struct sieve_extension **ext_r)
+{
+	unsigned int code;
+	unsigned int offset = *offset_r;
+	const struct sieve_extension *ext = NULL;
 
+	if ( ADDR_BYTES_LEFT(sbin, address) <= 0 )
+		return FALSE;
+
+	(*offset_r) = code = ADDR_DATA_AT(sbin, address);
+	ADDR_JUMP(address, 1);
+
+	if ( code >= offset ) {
+		ext = _sieve_binary_extension_get_by_index(sbin, code - offset);
+		
+		if ( ext == NULL ) 
+			return FALSE;
+	}
+
+	(*ext_r) = ext;
+
+	return TRUE;
+}
+
+const void *sieve_binary_read_extension_object
+(struct sieve_binary *sbin, sieve_size_t *address, 
+	const struct sieve_extension_obj_registry *reg)
+{
+	unsigned int code;
+
+    if ( reg->count == 0 ) 
+        return NULL;
+
+    if ( reg->count == 1 )
+        return reg->objects;
+
+	if ( ADDR_BYTES_LEFT(sbin, address) <= 0 )
+		return NULL;
+
+	code = ADDR_DATA_AT(sbin, address);
+	ADDR_JUMP(address, 1);	
+
+    if ( code >= reg->count )
+		return NULL;
+
+    return ((const void *const *) reg->objects)[code];
+}

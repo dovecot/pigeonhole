@@ -62,6 +62,7 @@ struct sieve_code_dumper;
 
 /* sieve-extension.h */
 struct sieve_extension;
+struct sieve_extension_obj_registry;
 
 /* sieve-code.h */
 struct sieve_operand;

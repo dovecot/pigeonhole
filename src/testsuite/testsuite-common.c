@@ -10,7 +10,7 @@
 #include "sieve.h"
 #include "sieve-code.h"
 #include "sieve-commands.h"
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-dump.h"

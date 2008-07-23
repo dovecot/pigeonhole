@@ -138,7 +138,6 @@ static bool sieve_code_dumper_print_operation
 	const struct sieve_operation *op;
 	struct sieve_dumptime_env *denv = dumper->dumpenv;
 	sieve_size_t address;
-	const char *opcode_string;
 	
 	/* Mark start address of operation */
 	dumper->indent = 0;
@@ -160,12 +159,7 @@ static bool sieve_code_dumper_print_operation
 		return TRUE;
 	}		
 	
-	opcode_string = sieve_operation_read_string(denv->sbin, &address);
-
-	if ( opcode_string != NULL )
-		sieve_code_dumpf(denv, "Unknown opcode: %s", opcode_string);
-	else
-		sieve_code_dumpf(denv, "Failed to read opcode.");
+	sieve_code_dumpf(denv, "Failed to read opcode.");
 	return FALSE;
 }
 

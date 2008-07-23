@@ -3,7 +3,7 @@
 #include "str-sanitize.h"
 
 #include "sieve-common.h"
-#include "sieve-extensions-private.h"
+#include "sieve-extensions.h"
 #include "sieve-actions.h"
 #include "sieve-binary.h"
 #include "sieve-generator.h"
@@ -207,9 +207,6 @@ const struct sieve_operand *sieve_operands[] = {
 const unsigned int sieve_operand_count =
 	N_ELEMENTS(sieve_operands);
 
-static struct sieve_extension_obj_registry oprd_default_reg =
-	SIEVE_EXT_DEFINE_OPERANDS(sieve_operands);
-
 /* 
  * Operand functions 
  */
@@ -217,29 +214,35 @@ static struct sieve_extension_obj_registry oprd_default_reg =
 sieve_size_t sieve_operand_emit_code
 	(struct sieve_binary *sbin, const struct sieve_operand *opr)
 {
-	return sieve_extension_emit_obj
-		(sbin, &oprd_default_reg, opr, operands, opr->extension);
-}
+	sieve_size_t address;
 
-static const struct sieve_extension_obj_registry *
-	sieve_operand_registry_get
-(struct sieve_binary *sbin, unsigned int ext_index)
-{
-	const struct sieve_extension *ext;
+	if ( opr->extension != NULL ) {
+		address = sieve_binary_emit_extension
+			(sbin, opr->extension, sieve_operand_count);
 	
-	if ( (ext=sieve_binary_extension_get_by_index(sbin, ext_index)) 
-		== NULL )
-		return NULL;
-		
-	return &(ext->operands);
+		sieve_binary_emit_extension_object
+			(sbin, &opr->extension->operands, opr->code);
+
+		return address;
+	}
+
+	return  sieve_binary_emit_byte(sbin, opr->code);
 }
 
 const struct sieve_operand *sieve_operand_read
 	(struct sieve_binary *sbin, sieve_size_t *address) 
 {
-	return sieve_extension_read_obj
-		(struct sieve_operand, sbin, address, &oprd_default_reg, 
-			sieve_operand_registry_get);
+	const struct sieve_extension *ext;
+	unsigned int code = sieve_operand_count;
+
+	if ( !sieve_binary_read_extension(sbin, address, &code, &ext) )
+		return NULL;
+
+	if ( !ext )
+		return code < sieve_operand_count ? sieve_operands[code] : NULL;
+
+	return (const struct sieve_operand *) sieve_binary_read_extension_object
+		(sbin, address, &ext->operands);
 }
 
 bool sieve_operand_optional_present
@@ -747,48 +750,43 @@ const struct sieve_operation *sieve_operations[] = {
 	&tst_size_under_operation
 }; 
 
-const unsigned int sieve_operations_count =
+const unsigned int sieve_operation_count =
 	N_ELEMENTS(sieve_operations);
-
-static struct sieve_extension_obj_registry oprt_default_reg =
-	SIEVE_EXT_DEFINE_OPERATIONS(sieve_operations);
 
 /* Operation functions */
 
 sieve_size_t sieve_operation_emit_code
 	(struct sieve_binary *sbin, const struct sieve_operation *op)
 {
-	return sieve_extension_emit_obj
-		(sbin, &oprt_default_reg, op, operations, op->extension);
-}
+	sieve_size_t address;
 
-static const struct sieve_extension_obj_registry *
-	sieve_operation_registry_get
-(struct sieve_binary *sbin, unsigned int ext_index)
-{
-	const struct sieve_extension *ext;
-	
-	if ( (ext=sieve_binary_extension_get_by_index(sbin, ext_index)) 
-		== NULL )
-		return NULL;
-		
-	return &(ext->operations);
+    if ( op->extension != NULL ) {
+        address = sieve_binary_emit_extension
+            (sbin, op->extension, sieve_operation_count);
+
+        sieve_binary_emit_extension_object
+            (sbin, &op->extension->operations, op->code);
+
+        return address;
+    }
+
+    return  sieve_binary_emit_byte(sbin, op->code);
 }
 
 const struct sieve_operation *sieve_operation_read
 	(struct sieve_binary *sbin, sieve_size_t *address) 
 {
-	return sieve_extension_read_obj
-		(struct sieve_operation, sbin, address, &oprt_default_reg, 
-			sieve_operation_registry_get);
-}
+	const struct sieve_extension *ext;
+	unsigned int code = sieve_operation_count;
 
-const char *sieve_operation_read_string
-	(struct sieve_binary *sbin, sieve_size_t *address) 
-{
-	return sieve_extension_read_obj_string
-		(sbin, address, &oprt_default_reg, 
-			sieve_operation_registry_get);
+	if ( !sieve_binary_read_extension(sbin, address, &code, &ext) )
+		return NULL;
+
+	if ( !ext )
+		return code < sieve_operation_count ? sieve_operations[code] : NULL;
+
+    return (const struct sieve_operation *) sieve_binary_read_extension_object
+        (sbin, address, &ext->operations);
 }
 	
 /* Code dump for core commands */
