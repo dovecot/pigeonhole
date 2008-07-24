@@ -1622,15 +1622,10 @@ bool sieve_binary_read_integer
 	return TRUE;
 }
 
-/* FIXME: add this to lib/str. (now commented out) */
-static string_t *t_str_const(const void *cdata, size_t size)
+/* FIXME: add this to lib/str. */
+static string_t *t_str_new_const(const char *str, size_t len)
 {
-	string_t *result = t_str_new(size);
-	
-	str_append_n(result, cdata, size);
-	
-	return result;
-	//return buffer_create_const_data(pool_datastack_create(), cdata, size);
+	return str_new_const(pool_datastack_create(), str, len);
 }
 
 bool sieve_binary_read_string
@@ -1645,7 +1640,7 @@ bool sieve_binary_read_string
 		return FALSE;
  
  	if ( str != NULL )  
-		*str = t_str_const(&ADDR_CODE_AT(binary, address), strlen);
+		*str = t_str_new_const(&ADDR_CODE_AT(binary, address), strlen);
 	ADDR_JUMP(address, strlen);
 	
 	if ( ADDR_CODE_AT(binary, address) != 0 )

@@ -1,4 +1,4 @@
-AC_INIT([dovecot-sieve], [0.0.0], [dovecot@dovecot.org], [dovecot-1.1-sieve])
+AC_INIT([dovecot-sieve], [0.0.0], [dovecot@dovecot.org], [dovecot-1.2-sieve])
 AC_CONFIG_SRCDIR([src])
 
 AC_CONFIG_HEADERS([dsieve-config.h])
