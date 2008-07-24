@@ -112,8 +112,7 @@ struct sieve_validator *sieve_validator_create
 		argument = &string_list_argument;
 
 	/* Setup storage for extension contexts */		
-	array_create(&validator->ext_contexts, pool, sizeof(void *), 
-		sieve_extensions_get_count());
+	p_array_init(&validator->ext_contexts, pool, sieve_extensions_get_count());
 		
 	/* Setup command registry */
 	validator->commands = hash_create

@@ -84,8 +84,7 @@ struct sieve_generator *sieve_generator_create
 	sieve_ast_ref(ast);
 
 	/* Setup storage for extension contexts */		
-	array_create(&gentr->ext_contexts, pool, sizeof(void *), 
-		sieve_extensions_get_count());
+	p_array_init(&gentr->ext_contexts, pool, sieve_extensions_get_count());
 	
 	/* Pre-load core language features implemented as 'extensions' (none) */
 	/*for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
