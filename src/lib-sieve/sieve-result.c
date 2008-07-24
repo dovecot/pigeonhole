@@ -104,6 +104,9 @@ void sieve_result_unref(struct sieve_result **result)
 	if (--(*result)->refcount != 0)
 		return;
 
+	if ( (*result)->implicit_seffects != NULL )
+        hash_destroy(&(*result)->implicit_seffects);
+
 	sieve_error_handler_unref(&(*result)->ehandler);
 
 	pool_unref(&(*result)->pool);
@@ -174,7 +177,7 @@ void sieve_result_add_implicit_side_effect
 	
 	if ( result->implicit_seffects == NULL ) {
 		result->implicit_seffects = hash_create
-			(result->pool, result->pool, 0, NULL, NULL);
+			(default_pool, result->pool, 0, NULL, NULL);
 	} else {
 		implseff = (struct sieve_result_implicit_side_effects *) 
 			hash_lookup(result->implicit_seffects, to_action);

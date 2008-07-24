@@ -162,7 +162,7 @@ static struct sieve_binary *sieve_binary_create(struct sieve_script *script)
 	struct sieve_binary *sbin;
 	unsigned int i;
 	
-	pool = pool_alloconly_create("sieve_binary", 4096);	
+	pool = pool_alloconly_create("sieve_binary", 8192);	
 	sbin = p_new(pool, struct sieve_binary, 1);
 	sbin->pool = pool;
 	sbin->refcount = 1;
@@ -866,7 +866,7 @@ static struct sieve_binary_file *_file_lazy_open(const char *path)
 	pool_t pool;
 	struct sieve_binary_file *file;
 	
-	pool = pool_alloconly_create("sieve_binary_file_memory", 1024);
+	pool = pool_alloconly_create("sieve_binary_file_lazy", 1024);
 	file = p_new(pool, struct sieve_binary_file, 1);
 	file->pool = pool;
 	file->path = p_strdup(pool, path);

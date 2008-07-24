@@ -116,7 +116,7 @@ struct sieve_validator *sieve_validator_create
 		
 	/* Setup command registry */
 	validator->commands = hash_create
-		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
+		(default_pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 	sieve_validator_register_core_commands(validator);
 	sieve_validator_register_core_tests(validator);
 	
@@ -173,7 +173,7 @@ struct sieve_tag_registration;
 struct sieve_command_registration {
 	const struct sieve_command *command;
 	
-	struct hash_table *tags;
+	ARRAY_DEFINE(normal_tags, struct sieve_tag_registration *); 
 	ARRAY_DEFINE(instanced_tags, struct sieve_tag_registration *); 
 	ARRAY_DEFINE(persistent_tags, struct sieve_tag_registration *); 
 };
@@ -213,7 +213,7 @@ static void sieve_validator_register_core_commands(struct sieve_validator *valid
 static struct sieve_command_registration *sieve_validator_find_command_registration
 		(struct sieve_validator *validator, const char *command) 
 {
-  return 	(struct sieve_command_registration *) hash_lookup(validator->commands, command);
+	return (struct sieve_command_registration *) hash_lookup(validator->commands, command);
 }
 
 static struct sieve_command_registration *_sieve_validator_register_command
@@ -223,7 +223,6 @@ static struct sieve_command_registration *_sieve_validator_register_command
 	struct sieve_command_registration *record = 
 		p_new(validator->pool, struct sieve_command_registration, 1);
 	record->command = command;
-	record->tags = NULL;
 	hash_insert(validator->commands, (void *) identifier, (void *) record);
 		
 	return record;
@@ -264,7 +263,7 @@ const struct sieve_command *sieve_validator_find_command
 
 struct sieve_tag_registration {
 	const struct sieve_argument *tag;
-	
+	const char *identifier;	
 	int id_code;
 };
 
@@ -293,13 +292,15 @@ static void _sieve_validator_register_tag
 	reg = p_new(validator->pool, struct sieve_tag_registration, 1);
 	reg->tag = tag;
 	reg->id_code = id_code;
+	if ( identifier == NULL )
+		reg->identifier = tag->identifier;
+	else
+		reg->identifier = p_strdup(validator->pool, identifier);
 	
-	if ( cmd_reg->tags == NULL ) {
-		cmd_reg->tags = hash_create
-			(validator->pool, validator->pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
-	}
-	
-	hash_insert(cmd_reg->tags, (void *) identifier, (void *) reg);
+	if ( !array_is_created(&cmd_reg->normal_tags) )
+		p_array_init(&cmd_reg->normal_tags, validator->pool, 4);
+
+	array_append(&cmd_reg->normal_tags, &reg, 1);
 }
 
 void sieve_validator_register_persistent_tag
@@ -321,7 +322,7 @@ void sieve_validator_register_persistent_tag
 	/* Add the tag to the persistent tags list if necessary */
 	if ( tag->validate_persistent != NULL ) {
 		if ( !array_is_created(&cmd_reg->persistent_tags) ) 
-			p_array_init(&cmd_reg->persistent_tags, validator->pool, 1);
+			p_array_init(&cmd_reg->persistent_tags, validator->pool, 4);
 				
 		array_append(&cmd_reg->persistent_tags, &reg, 1);
 	}
@@ -339,7 +340,7 @@ void sieve_validator_register_external_tag
 	}
 	
 	_sieve_validator_register_tag
-		(validator, cmd_reg, tag, tag->identifier, id_code);
+		(validator, cmd_reg, tag, NULL, id_code);
 }
 
 void sieve_validator_register_tag
@@ -347,7 +348,7 @@ void sieve_validator_register_tag
 	const struct sieve_argument *tag, int id_code) 
 {
 	if ( tag->is_instance_of == NULL )
-		_sieve_validator_register_tag(validator, cmd_reg, tag, tag->identifier, id_code);
+		_sieve_validator_register_tag(validator, cmd_reg, tag, NULL, id_code);
 	else {
 		struct sieve_tag_registration *reg = 
 			p_new(validator->pool, struct sieve_tag_registration, 1);
@@ -355,7 +356,7 @@ void sieve_validator_register_tag
 		reg->id_code = id_code;
 
 		if ( !array_is_created(&cmd_reg->instanced_tags) ) 
-				p_array_init(&cmd_reg->instanced_tags, validator->pool, 1);
+				p_array_init(&cmd_reg->instanced_tags, validator->pool, 4);
 				
 		array_append(&cmd_reg->instanced_tags, &reg, 1);
 	}
@@ -375,35 +376,37 @@ static const struct sieve_argument *sieve_validator_find_tag
 	const char *tag;
 	unsigned int i;
 	struct sieve_command_registration *cmd_reg = cmd->cmd_reg;
-	const struct sieve_tag_registration *reg;
 		
 	tag = sieve_ast_argument_tag(arg);
 	
 	*id_code = 0;
 	
-	if ( cmd_reg->tags != NULL ) {
-		reg = (const struct sieve_tag_registration *) 
-			hash_lookup(cmd_reg->tags, tag);
-	
-		if ( reg != NULL ) {
-			*id_code = reg->id_code;
-  		return reg->tag; 
-  	}
-  }
+	/* First check normal tags */
+	if ( array_is_created(&cmd_reg->normal_tags) ) {
+		for ( i = 0; i < array_count(&cmd_reg->normal_tags); i++ ) {
+			struct sieve_tag_registration * const *reg =
+				array_idx(&cmd_reg->normal_tags, i);
+
+			if ( (*reg)->tag != NULL && strcasecmp((*reg)->identifier,tag) == 0) {
+				*id_code = (*reg)->id_code;
+				return (*reg)->tag;
+			}
+		}
+	}	
   
-  /* Not found so far, try the instanced tags */
-  if ( array_is_created(&cmd_reg->instanced_tags) ) {
-	  for ( i = 0; i < array_count(&cmd_reg->instanced_tags); i++ ) {
-	  	struct sieve_tag_registration * const *reg = 
-	  		array_idx(&cmd_reg->instanced_tags, i);
+	/* Not found so far, try the instanced tags */
+	if ( array_is_created(&cmd_reg->instanced_tags) ) {
+		for ( i = 0; i < array_count(&cmd_reg->instanced_tags); i++ ) {
+			struct sieve_tag_registration * const *reg = 
+				array_idx(&cmd_reg->instanced_tags, i);
   	
-	  	if ( (*reg)->tag != NULL && 
-	  		(*reg)->tag->is_instance_of(validator, cmd, arg) ) 
-	  	{
-	  		*id_code = (*reg)->id_code;
-	  		return (*reg)->tag;
-	  	}
-	  }
+			if ( (*reg)->tag != NULL && 
+				(*reg)->tag->is_instance_of(validator, cmd, arg) ) 
+			{
+				*id_code = (*reg)->id_code;
+				return (*reg)->tag;
+			}
+		}
 	}
 	
 	return NULL;
@@ -952,7 +955,7 @@ bool sieve_validator_run(struct sieve_validator *validator) {
 
 struct sieve_validator_object_registry {
 	struct sieve_validator *validator;
-	struct hash_table *registrations;
+	ARRAY_DEFINE(registrations, const struct sieve_object *);
 };
 
 struct sieve_validator_object_registry *sieve_validator_object_registry_get
@@ -966,14 +969,22 @@ void sieve_validator_object_registry_add
 (struct sieve_validator_object_registry *regs, 
 	const struct sieve_object *object) 
 {
-	hash_insert
-		(regs->registrations, (void *) object->identifier, (void *) object);
+    array_append(&regs->registrations, &object, 1);
 }
 
 const struct sieve_object *sieve_validator_object_registry_find
 (struct sieve_validator_object_registry *regs, const char *identifier) 
 {
-	return (const struct sieve_object *) hash_lookup(regs->registrations, identifier);
+	unsigned int i;
+
+	for ( i = 0; i < array_count(&regs->registrations); i++ ) {
+		const struct sieve_object * const *obj = array_idx(&regs->registrations, i);
+
+		if ( strcmp((*obj)->identifier, identifier) == 0)
+			return *obj;
+	}
+
+	return NULL;
 }
 
 struct sieve_validator_object_registry *sieve_validator_object_registry_create
@@ -983,9 +994,9 @@ struct sieve_validator_object_registry *sieve_validator_object_registry_create
 	struct sieve_validator_object_registry *regs = 
 		p_new(pool, struct sieve_validator_object_registry, 1);
 	
-	/* Setup comparator registry */
-	regs->registrations = hash_create
-		(pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
+	/* Setup registry */        
+	p_array_init(&regs->registrations, validator->pool, 4);
+
 	regs->validator = validator;
 
 	return regs;

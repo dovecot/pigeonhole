@@ -70,10 +70,9 @@ struct sieve_interpreter *sieve_interpreter_create
 	interp->runenv.script = sieve_binary_script(sbin);
 	sieve_binary_ref(sbin);
 	
-	
 	interp->pc = 0;
 
-	p_array_init(&interp->ext_contexts, pool, 4);
+	p_array_init(&interp->ext_contexts, pool, sieve_extensions_get_count());
 
 	/* Pre-load core language features implemented as 'extensions' */
 	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {

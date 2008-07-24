@@ -398,8 +398,13 @@ bool ext_include_execute_include
 		
 		/* Free any sub-interpreters that might still be active */
 		while ( curctx != NULL && curctx->parent != NULL ) {
+			struct ext_include_interpreter_context *nextctx	= curctx->parent;
+
+			/* This kills curctx too */
 			sieve_interpreter_free(&curctx->interp);
-			curctx = curctx->parent;
+
+			/* Luckily we recorded the parent earlier */
+			curctx = nextctx;
 		}
 
 		/* Return to our own block */

@@ -61,7 +61,7 @@ static struct ext_include_binary_context *ext_include_binary_create_context
 		p_new(pool, struct ext_include_binary_context, 1);
 	
 	ctx->binary = sbin;			
-	ctx->included_scripts = hash_create(pool, pool, 0, 
+	ctx->included_scripts = hash_create(default_pool, pool, 0, 
 		(hash_callback_t *) sieve_script_hash, 
 		(hash_cmp_callback_t *) sieve_script_cmp);
 	
@@ -267,6 +267,8 @@ static void ext_include_binary_free(struct sieve_binary *sbin)
 		sieve_script_unref(&incscript->script);
 	}
 	hash_iterate_deinit(&hctx);
+
+	hash_destroy(&binctx->included_scripts);
 }
 
 inline static const char *_script_location
