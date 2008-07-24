@@ -1,4 +1,4 @@
-require "imapflags";
+require "imap4flags";
 require "fileinto";
 
 setflag;
@@ -16,3 +16,5 @@ if hasflag 3 {
 if hasflag "flagvar" ["$MDNRequired", "\\Seen"] {
     removeflag "$MDNRequired";
 }
+
+removeflag "\\frop";

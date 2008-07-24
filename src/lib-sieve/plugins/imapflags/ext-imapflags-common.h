@@ -18,6 +18,14 @@ enum ext_imapflags_opcode {
 	EXT_IMAPFLAGS_OPERATION_HASFLAG
 };
 
+/* Commands */
+
+extern const struct sieve_command cmd_setflag;
+extern const struct sieve_command cmd_addflag;
+extern const struct sieve_command cmd_removeflag;
+
+extern const struct sieve_command tst_hasflag;
+
 bool ext_imapflags_command_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 

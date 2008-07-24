@@ -76,21 +76,15 @@ static bool cmd_removeflag_operation_execute
 	
 	sieve_runtime_trace(renv, "REMOVEFLAG command");
 	
-	t_push();
-	
 	if ( !ext_imapflags_command_operands_read
-		(renv, address, &flag_list, &storage, &var_index) ) {
-		t_pop();
+		(renv, address, &flag_list, &storage, &var_index) )
 		return FALSE;
-	}
 	
 	/* Iterate through all flags to remove */
 	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flag_item)) && 
 		flag_item != NULL ) {
 		ext_imapflags_remove_flags(renv, storage, var_index, flag_item);
 	}
-
-	t_pop();
 	
 	return result;
 }

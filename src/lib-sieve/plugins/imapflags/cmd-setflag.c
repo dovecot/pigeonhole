@@ -74,13 +74,9 @@ static bool cmd_setflag_operation_execute
 	
 	sieve_runtime_trace(renv, "SETFLAG command");
 	
-	t_push();
-	
 	if ( !ext_imapflags_command_operands_read
-		(renv, address, &flag_list, &storage, &var_index) ) {
-		t_pop();
+		(renv, address, &flag_list, &storage, &var_index) ) 
 		return FALSE;
-	}
 			
 	/* Iterate through all flags to set */
 	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flag_item)) && 
@@ -88,8 +84,6 @@ static bool cmd_setflag_operation_execute
 		ext_imapflags_set_flags(renv, storage, var_index, flag_item);
 	}
 
-	t_pop();
-	
 	return result;
 }
 

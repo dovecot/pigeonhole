@@ -13,6 +13,8 @@
 
 #include "ext-imapflags-common.h"
 
+#include <ctype.h>
+
 static bool tag_flags_validate
 	(struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
@@ -274,7 +276,7 @@ static void seff_flags_print
 				str_printfa(flags, " %s", *keyword);
 			}
 
-			sieve_result_seffect_printf(rpenv, "add flags:%s", str_c(flags));
+			sieve_result_seffect_printf(rpenv, "add IMAP flags:%s", str_c(flags));
 		} T_END;
 	}
 }
@@ -296,12 +298,32 @@ static bool seff_flags_pre_execute
 
 	/* Assign mail keywords for subsequent mailbox_copy() */
 	if ( array_count(&ctx->keywords) > 0 ) {
+		unsigned int i;
+
 		if ( !array_is_created(&trans->keywords) ) {
 			pool_t pool = sieve_result_pool(aenv->result); 
 			p_array_init(&trans->keywords, pool, 2);
 		}
 		
-		array_append_array(&trans->keywords, &ctx->keywords);
+		for ( i = 0; i < array_count(&ctx->keywords); i++ ) {		
+			const char *const *keyword = array_idx(&ctx->keywords, i);
+			const char *kw_error;
+
+			if ( trans->box != NULL && 
+				mailbox_keyword_is_valid(trans->box, *keyword, &kw_error) )
+				array_append(&trans->keywords, keyword, 1);
+			else {
+				char *error = "";
+				if ( kw_error != NULL && *kw_error != '\0' ) {
+					error = t_strdup_noconst(kw_error);
+					error[0] = i_tolower(error[0]);
+				}
+				
+				sieve_result_warning(aenv, 
+					"specified IMAP keyword '%s' is invalid (ignored): %s", 
+					*keyword, error);
+			}
+		}
 	}
 
 	/* Assign mail flags for subsequent mailbox_copy() */

@@ -157,6 +157,16 @@ void sieve_result_error
 	va_end(args);
 }
 
+void sieve_result_warning
+	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+{
+	va_list args;
+	
+	va_start(args, fmt);	
+	sieve_vwarning(aenv->result->ehandler, _get_location(aenv), fmt, args); 
+	va_end(args);
+}
+
 void sieve_result_log
 	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 {

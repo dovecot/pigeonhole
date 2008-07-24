@@ -32,14 +32,6 @@ static bool ext_imapflags_validator_load(struct sieve_validator *valdtr);
 static bool ext_imapflags_runtime_load
 	(const struct sieve_runtime_env *renv);
 
-/* Commands */
-
-extern const struct sieve_command cmd_setflag;
-extern const struct sieve_command cmd_addflag;
-extern const struct sieve_command cmd_removeflag;
-
-extern const struct sieve_command tst_hasflag;
-
 /* Operations */
 
 extern const struct sieve_operation setflag_operation;

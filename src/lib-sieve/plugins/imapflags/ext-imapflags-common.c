@@ -18,6 +18,12 @@
 extern const struct sieve_argument tag_flags;
 extern const struct sieve_argument tag_flags_implicit;
 
+/*
+ * Forward declarations
+ */
+
+static bool flag_is_valid(const char *flag);
+
 /* Common functions */
 
 bool ext_imapflags_command_validate
@@ -77,7 +83,7 @@ bool ext_imapflags_command_validate
 			sieve_ast_argument_type(arg2) != SAAT_STRING_LIST ) 
 		{
 			sieve_command_validate_error(validator, cmd, 
-				"the %s %s command expects a string list (list of flags) as "
+				"the %s %s expects a string list (list of flags) as "
 				"second argument when two arguments are specified, "
 				"but %s was found",
 				cmd->command->identifier, sieve_command_type_name(cmd->command),
@@ -87,7 +93,28 @@ bool ext_imapflags_command_validate
 	} else
 		arg2 = arg;
 
-	return sieve_validator_argument_activate(validator, cmd, arg2, FALSE);	
+	if ( !sieve_validator_argument_activate(validator, cmd, arg2, FALSE) )
+		return FALSE;
+
+	if ( cmd->command != &tst_hasflag && sieve_argument_is_string_literal(arg2) ) {
+		struct ext_imapflags_iter fiter;
+		const char *flag;
+		
+		/* Warn the user about validity of verifiable flags */
+		ext_imapflags_iter_init(&fiter, sieve_ast_argument_str(arg));
+
+		while ( (flag=ext_imapflags_iter_get_flag(&fiter)) != NULL ) {
+			if ( !flag_is_valid(flag) ) {
+				sieve_command_validate_warning(validator, cmd,
+                	"IMAP flag '%s' specified for the %s command is invalid "
+					"and will be ignored (only first invalid is reported)",					
+					flag, cmd->command->identifier);
+				break;
+			}
+		}
+	}
+
+	return TRUE;
 }
 
 bool ext_imapflags_command_operands_dump
@@ -231,7 +258,13 @@ static bool flag_is_valid(const char *flag)
     	return FALSE;
     }
 	} else {
-		/* Custom keyword: currently nothing to validate */					
+		/* Custom keyword:
+		 *
+		 * The validity of the keyword cannot be validated until the 
+		 * target mailbox for the message is known. Meaning that the 
+		 * verfication of keyword can only be performed when the
+		 * action side effect is about to be executed.
+		 */					
 	}
 
 	return TRUE;  

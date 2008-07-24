@@ -188,14 +188,9 @@ static bool tst_hasflag_operation_execute
 		}
 	}
 
-	t_push();
-		
 	if ( !ext_imapflags_command_operands_read
-		(renv, address, &flag_list, &storage, &var_index) ) {
-		t_pop();
+		(renv, address, &flag_list, &storage, &var_index) )
 		return FALSE;
-	}
-
 
 	matched = FALSE;
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, flag_list); 	
@@ -208,8 +203,6 @@ static bool tst_hasflag_operation_execute
 	}
 
 	matched = sieve_match_end(mctx) || matched; 	
-	
-	t_pop();
 	
 	sieve_interpreter_set_test_result(renv->interp, matched);
 	

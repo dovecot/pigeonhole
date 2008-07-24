@@ -118,7 +118,7 @@ static bool cmd_redirect_validate
 
 	/* We can only assess the validity of the outgoing address when it is 
 	 * a string literal. For runtime-generated strings this needs to be 
-	 * done at runtime 
+	 * done at runtime (FIXME!)
      */
 	if ( sieve_argument_is_string_literal(arg) ) {
 		string_t *address = sieve_ast_argument_str(arg);

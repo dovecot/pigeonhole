@@ -40,6 +40,9 @@ bool sieve_result_print(struct sieve_result *result, struct ostream *stream);
 void sieve_result_log
 	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 		ATTR_FORMAT(2, 3);
+void sieve_result_warning
+	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 void sieve_result_error
 	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 		ATTR_FORMAT(2, 3);
