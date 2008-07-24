@@ -91,7 +91,7 @@ struct sieve_lexer *sieve_lexer_create
 	
 	lexer->current_line = 1;	
 	lexer->token_type = STT_NONE;
-	lexer->token_str_value = NULL;
+	lexer->token_str_value = str_new(pool, 256);
 	lexer->token_int_value = 0;
 		
 	return lexer;
@@ -391,8 +391,8 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 	case '"':
 		start_line = lexer->current_line;
 		sieve_lexer_shift(lexer);
-		str = str_new(lexer->pool, 16);
-		lexer->token_str_value = str;
+		str_truncate(lexer->token_str_value, 0);
+		str = lexer->token_str_value;
 		
 		while ( sieve_lexer_curchar(lexer) != '"' ) {
 			if ( sieve_lexer_curchar(lexer) == -1 ) {
@@ -493,8 +493,8 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 			sieve_lexer_curchar(lexer) == ':' ) {
   		
 			enum sieve_token_type type = STT_IDENTIFIER;
-			str = str_new(lexer->pool, 16);
-			lexer->token_str_value = str;
+			str_truncate(lexer->token_str_value,0);
+			str = lexer->token_str_value;
   		
 			/* If it starts with a ':' it is a tag and not an identifier */
  			if ( sieve_lexer_curchar(lexer) == ':' ) {
@@ -631,12 +631,6 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 
 bool sieve_lexer_skip_token(struct sieve_lexer *lexer) 
 {
-	/* Free any previously allocated string value */
-	if ( lexer->token_str_value != NULL ) {
-		str_free(&lexer->token_str_value);
-		lexer->token_str_value = NULL;
-	}
-	
 	/* Scan token */
 	if ( !sieve_lexer_scan_raw_token(lexer) ) return FALSE;
 	
