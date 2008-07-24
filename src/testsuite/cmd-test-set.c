@@ -19,25 +19,17 @@
 
 #include <stdio.h>
 
-/* Forward declarations */
-
-static bool cmd_test_set_operation_dump
-	(const struct sieve_operation *op,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_test_set_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+/* 
+ * Test_set command 
+ * 
+ * Syntax
+ *   redirect <address: string>
+ */
 
 static bool cmd_test_set_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_test_set_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
-
-/* Test_set command 
- * 
- * Syntax
- *   redirect <address: string>
- */
 
 const struct sieve_command cmd_test_set = { 
 	"test_set", 
@@ -49,7 +41,16 @@ const struct sieve_command cmd_test_set = {
 	NULL 
 };
 
-/* Test_set operation */
+/* 
+ * Test_set operation 
+ */
+
+static bool cmd_test_set_operation_dump
+	(const struct sieve_operation *op,
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static bool cmd_test_set_operation_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation test_set_operation = { 
 	"TEST_SET",
@@ -93,15 +94,12 @@ static bool cmd_test_set_validate
  */
  
 static bool cmd_test_set_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
 	sieve_operation_emit_code(cgenv->sbin, &test_set_operation);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
-		return FALSE;
-	
-	return TRUE;
+	return sieve_generate_arguments(cgenv, ctx, NULL);
 }
 
 /* 
@@ -132,31 +130,20 @@ static bool cmd_test_set_operation_execute
 	string_t *value;
 	int member_id;
 
-	t_push();
-	
 	if ( (object=testsuite_object_read_member(renv->sbin, address, &member_id)) 
-		== NULL ) {
-		t_pop();
+		== NULL )
 		return FALSE;
-	}
 
-	if ( !sieve_opr_string_read(renv, address, &value) ) {
-		t_pop();
+	if ( !sieve_opr_string_read(renv, address, &value) )
 		return FALSE;
-	}
 
 	sieve_runtime_trace(renv, "TEST SET command (%s = \"%s\")", 
 		testsuite_object_member_name(object, member_id), str_c(value));
 	
-	if ( object->set_member == NULL ) {
-		t_pop();
+	if ( object->set_member == NULL )
 		return FALSE;
-	}
 		
-	object->set_member(member_id, value);
-	
-	t_pop();
-	
+	object->set_member(member_id, value);	
 	return TRUE;
 }
 

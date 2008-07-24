@@ -39,13 +39,18 @@ extern const struct sieve_command cmd_test;
 extern const struct sieve_command cmd_test_fail;
 extern const struct sieve_command cmd_test_set;
 
+/* Tests */
+
+extern const struct sieve_command tst_test_compile;
+
 /* Operations */
 
 const struct sieve_operation *testsuite_operations[] = { 
 	&test_operation, 
 	&test_finish_operation,
 	&test_fail_operation, 
-	&test_set_operation 
+	&test_set_operation,
+	&test_compile_operation
 };
 
 /* Operands */
@@ -84,6 +89,8 @@ static bool ext_testsuite_validator_load(struct sieve_validator *valdtr)
 	sieve_validator_register_command(valdtr, &cmd_test);
 	sieve_validator_register_command(valdtr, &cmd_test_fail);
 	sieve_validator_register_command(valdtr, &cmd_test_set);
+
+	sieve_validator_register_command(valdtr, &tst_test_compile);
 	
 	return testsuite_validator_context_initialize(valdtr);
 }

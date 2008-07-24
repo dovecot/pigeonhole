@@ -37,17 +37,21 @@ ldadd = \
 testsuite_LDADD = $(ldadd)
 testsuite_DEPENDENCIES = $(libs)
 
-cmds = \
+commands = \
 	cmd-test.c \
 	cmd-test-fail.c \
 	cmd-test-set.c
+
+tests = \
+	tst-test-compile.c
 
 testsuite_SOURCES = \
 	namespaces.c \
 	mail-raw.c \
 	testsuite-common.c \
 	testsuite-objects.c \
-	$(cmds) \
+	$(commands) \
+	$(tests) \
 	ext-testsuite.c \
 	testsuite.c
 
@@ -70,7 +74,9 @@ test_cases = \
 	tests/match-types/contains.svtest \
 	tests/match-types/matches.svtest \
 	tests/address-parts/subaddress.svtest \
-	tests/extensions/variables/basic.svtest
+	tests/extensions/variables/basic.svtest \
+	tests/compile/compile.svtest \
+	tests/compile/compile-examples.svtest
 
 $(test_cases): 
 	@$(TESTSUITE_BIN) $@

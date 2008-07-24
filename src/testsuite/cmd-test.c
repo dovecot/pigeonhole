@@ -9,28 +9,18 @@
 
 #include "testsuite-common.h"
 
-/* Predeclarations */
-
-static bool cmd_test_operation_dump
-	(const struct sieve_operation *op,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_test_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
-static bool cmd_test_finish_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+/*
+ * Test command
+ *
+ * Syntax:   
+ *   test <test-name: string> <block>
+ */
 
 static bool cmd_test_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_test_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
-/* Test command
- *
- * Syntax:   
- *   test <test-name: string> <block>
- */
 const struct sieve_command cmd_test = { 
 	"test", 
 	SCT_COMMAND, 
@@ -41,7 +31,18 @@ const struct sieve_command cmd_test = {
 	NULL 
 };
 
+/* 
+ * Test operations 
+ */
+
 /* Test operation */
+
+static bool cmd_test_operation_dump
+	(const struct sieve_operation *op,
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static bool cmd_test_operation_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation test_operation = { 
 	"TEST",
@@ -51,6 +52,12 @@ const struct sieve_operation test_operation = {
 	cmd_test_operation_execute 
 };
 
+/* Test_finish operation */
+
+static bool cmd_test_finish_operation_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
+
 const struct sieve_operation test_finish_operation = { 
 	"TEST-FINISH",
 	&testsuite_extension, 
@@ -59,7 +66,9 @@ const struct sieve_operation test_finish_operation = {
 	cmd_test_finish_operation_execute 
 };
 
-/* Validation */
+/* 
+ * Validation 
+ */
 
 static bool cmd_test_validate
 (struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command_context *cmd) 
@@ -82,7 +91,9 @@ static bool cmd_test_validate
 	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
-/* Code generation */
+/* 
+ * Code generation 
+ */
 
 static inline struct testsuite_generator_context *
 	_get_generator_context(struct sieve_generator *gentr)
@@ -142,19 +153,12 @@ static bool cmd_test_operation_execute
 {
 	string_t *test_name;
 
-	t_push();
-
-	if ( !sieve_opr_string_read(renv, address, &test_name) ) {
-		t_pop();
+	if ( !sieve_opr_string_read(renv, address, &test_name) )
 		return FALSE;
-	}
 	
-	testsuite_test_start(test_name);
-
 	sieve_runtime_trace(renv, "TEST \"%s\"", str_c(test_name));
-	
-	t_pop();
-	
+
+	testsuite_test_start(test_name);
 	return TRUE;
 }
 
@@ -166,7 +170,6 @@ static bool cmd_test_finish_operation_execute
 	sieve_runtime_trace(renv, "TEST FINISHED");
 	
 	testsuite_test_succeed(NULL);
-	
 	return TRUE;
 }
 

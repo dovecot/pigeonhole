@@ -244,6 +244,11 @@ const char *sieve_script_path(struct sieve_script *script)
 	return script->path;
 }
 
+const char *sieve_script_dirpath(struct sieve_script *script)
+{
+	return script->dirpath;
+}
+
 const char *sieve_script_binpath(struct sieve_script *script)
 {
 	return t_strconcat(script->dirpath, "/", script->basename, ".svbin", NULL);

@@ -9,25 +9,18 @@
 
 #include "testsuite-common.h"
 
-/* Predeclarations */
-
-static bool cmd_test_fail_operation_dump
-	(const struct sieve_operation *op,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_test_fail_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+/* 
+ * Test_fail command
+ *
+ * Syntax:   
+ *   test <reason: string>
+ */
 
 static bool cmd_test_fail_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_test_fail_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
-/* Test_fail command
- *
- * Syntax:   
- *   test <reason: string>
- */
 const struct sieve_command cmd_test_fail = { 
 	"test_fail", 
 	SCT_COMMAND, 
@@ -38,7 +31,16 @@ const struct sieve_command cmd_test_fail = {
 	NULL 
 };
 
-/* Test operation */
+/* 
+ * Test operation 
+ */
+
+static bool cmd_test_fail_operation_dump
+	(const struct sieve_operation *op,
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static bool cmd_test_fail_operation_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation test_fail_operation = { 
 	"TEST_FAIL",
@@ -48,7 +50,9 @@ const struct sieve_operation test_fail_operation = {
 	cmd_test_fail_operation_execute 
 };
 
-/* Validation */
+/* 
+ * Validation 
+ */
 
 static bool cmd_test_fail_validate
 (struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command_context *cmd) 
@@ -63,7 +67,9 @@ static bool cmd_test_fail_validate
 	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
-/* Code generation */
+/* 
+ * Code generation 
+ */
 
 static inline struct testsuite_generator_context *
 	_get_generator_context(struct sieve_generator *gentr)
@@ -99,7 +105,7 @@ static bool cmd_test_fail_operation_dump
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	unsigned int pc;
-  int offset;
+	int offset;
     
 	sieve_code_dumpf(denv, "TEST_FAIL:");
 	sieve_code_descend(denv);
@@ -127,17 +133,11 @@ static bool cmd_test_fail_operation_execute
 {
 	string_t *reason;
 
-	t_push();
-
-	if ( !sieve_opr_string_read(renv, address, &reason) ) {
-		t_pop();
+	if ( !sieve_opr_string_read(renv, address, &reason) ) 
 		return FALSE;
-	}
 
 	sieve_runtime_trace(renv, "TEST FAIL");
 	testsuite_test_fail(reason);
-	
-	t_pop();
 	
 	return sieve_interpreter_program_jump(renv->interp, TRUE);
 }
