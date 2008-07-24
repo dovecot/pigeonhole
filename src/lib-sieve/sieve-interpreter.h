@@ -8,9 +8,6 @@
 
 #include "sieve-common.h"
 
-/* FIXME: make execution dumps use some interpreter function */
-#include <stdio.h>
-
 /* Interpreter */
 
 struct sieve_interpreter;

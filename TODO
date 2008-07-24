@@ -6,12 +6,13 @@ Next (in order of descending priority/precedence):
 * Full standards compliance review for the engine and all fully implemented 
   sieve extensions. Issues discovered so far:
     - Address test MUST restrict itself to headers that contain addresses.
-	- Implementations SHOULD consider unknown envelope parts an error.
-	- The null reverse-path is matched against as the empty string, regardless 
+    - Implementations SHOULD consider unknown envelope parts an error.
+    - The null reverse-path is matched against as the empty string, regardless 
       of the ADDRESS-PART argument specified.
-	- Header test does not strip trailing whitespace
+    - Header test does not strip trailing whitespace
 * Code cleanup 
-* Make sure cmusieve can be replaced seamlessly with the new plugin.
+* Make sure cmusieve can be replaced seamlessly with the new plugin. Issues:
+    - Include: global and personal script directories are still hardcoded.  
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...
 * Make simple test suite for the base functionality
