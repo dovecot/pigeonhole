@@ -10,6 +10,87 @@ Sieve implementation for Dovecot (1.2)
   
 ################################################################################
 
+Features
+--------
+
+* Well-structured 3-stage compiler: uses dovecot framework and avoids using
+  lex/yucc. Compiler doesn't bail on first error, but tries to find more. 
+  Produced errors are aimed to be useful and generally user-comprehensible.  
+  Things like 'Generic error' are a nuisance of the past. 
+* Highly extendable with new sieve capabilities: This keeps the possibility of 
+  plugins in mind. It should eventually provide the necessary infrastructure for 
+  at least all currently known (proposed) extensions. The goal is to keep the
+  extension interface provided by sieve engine as generic as possible, i.e. 
+  without explicit support for specific extensions. New similar extensions can
+  then use the same interface methods without changes to the sieve engine code.
+  If an extension is not loaded using the require command, the compiler truly 
+  does not know of its existance. 
+* The interpreter produces a result containing a set of actions to execute.
+  Duplicate actions can be avoided and conflicts can be detected. Multiple 
+  scripts could be executed in succession on the result object although no 
+  support to do so is currently available. 
+* Supports all extensions provided by the original CMUSieve plugin (currently
+  except notify) and in addition to that it has support for the new and very
+  useful variables extension (see list below). 
+* Compiled binary code can be saved to and loaded back from disk. The binary 
+  is structured as a set of data blocks, which can contain extension-dependent
+  extra data. For example, the include extension uses this to store the 
+  compiled included scripts (no external inclusion of binaries supported yet).
+* This sieve implementation is available as an alternative plugin to  
+  dovecot's deliver. 
+
+Implementation Status
+---------------------
+
+Base tests:
+  false, true: trivial, full
+  address: full
+  header: full 
+  exists: full
+  size: full 	 
+  not, anyof, allof: full
+
+Base commands:
+  require: full
+  if,elsif,else: full
+  discard: full
+  keep: full
+  redirect: full 
+  stop: trivial, full
+	
+Extensions:
+
+  Base specification (RFC5228):
+    fileinto: full
+    reject: full
+    envelope: full
+    encoded-character: full
+
+  Other RFCs/drafts:
+    subaddress: mostly full; not configurable
+    comparator-i;ascii-numeric: full
+    relational: full 
+    copy: full
+    regex: mostly full; but suboptimal and no UTF-8
+    body: full, but text body-transform implementation is simple
+    include: mostly full; needs some more work (no external binaries)
+    vacation: mostly full; no support for required References header
+    imapflags: full
+    variables: mostly full; currently no support for future namespaces 
+
+  Next in order of descending priority:
+	environment: planned
+    notify: planned, first mailto only 
+	date,index: planned
+    editheader: planned, needs additional support from Dovecot though.
+    mimeloop: planned
+
+All implemented extensions are like the engine itself currently very much 
+experimental. A status of 'full' does not mean that the extension is bug-free 
+or even fully RFC-compliant. Other extensions will be added as soon as the 
+necessary infrastructure is available. Extensions already supported by cmusieve
+have priority.
+
 Compiling and Configuring
 -------------------------
 
@@ -89,89 +170,6 @@ Authors
 -------
 
 Refer to AUTHORS file.
-
-Features
---------
-
-* Well-structured 3-stage compiler: uses dovecot framework and avoids using
-  lex/yucc. Compiler doesn't bail on first error, but tries to find more.
-* Highly extendable with new sieve capabilities: This keeps the possibility of 
-  plugins in mind. It should eventually provide the necessary infrastructure for 
-  at least all currently known (proposed) extensions. The goal is to keep the
-  extension interface provided by sieve engine as generic as possible, i.e. 
-  without explicit support for specific extensions. New similar extensions can
-  then use the same interface methods without changes to the sieve engine code.
-
-What works:
-* Scripts can be parsed, the grammar is fully supported. 
-* Script validation (contextual analysis) works.
-* Script code generation works for all core commands. Comparators, match-types 
-  and address-part modifiers work as required.
-* Interpreter runs core commands and tests. Comparators, match-types and 
-  address-part modifiers have the desired effect. 
-* The interpreter produces a result containing a set of actions to execute.
-  Duplicate actions can be avoided and conflicts can be detected. Multiple 
-  scripts could be executed in succession on the result object although no 
-  support to do so is currently available. Runtime errors are a bit obscure 
-  though; these should provide line numbers.
-* Execution of the result is supported for all core action commands and all
-  fully implemented extensions (see list below).  
-* Compiled binary code can be saved to and loaded back from disk. The binary 
-  is structured as a set of data blocks, which can contain extension-dependent
-  extra data. For example, the include extension uses this to store the 
-  compiled included scripts (no external inclusion of binaries supported yet).
-* This sieve implementation is available as an alternative plugin to  
-  dovecot's deliver. It is not completely useful yet, but hopefully this will 
-  soon be able to replace the current cmusieve implementation.
-
-Base tests and their implementation status:
-  false, true: trivial, full
-  address: full
-  header: full 
-  exists: full
-  size: full 	 
-  not, anyof, allof: full
-
-Base commands and their implementation status:
-  require: full
-  if,elsif,else: full
-  discard: full
-  keep: full
-  redirect: full 
-  stop: trivial, full
-	
-Extensions and their implementation status:
-
-  Base specification (RFC5228):
-    fileinto: full
-    reject: full
-    envelope: full
-    encoded-character: full
-
-  Other RFCs/drafts:
-    subaddress: mostly full; not configurable
-    comparator-i;ascii-numeric: full
-    relational: full 
-    copy: full
-    regex: mostly full; but suboptimal and no UTF-8
-    body: full, but text body-transform implementation is simple
-    include: mostly full; needs some more work (no external binaries)
-    vacation: mostly full; no support for required References header
-    imapflags: full
-    variables: mostly full; currently no support for future namespaces 
-
-  Next in order of descending priority:
-	environment: planned
-    notify: planned, first mailto only 
-	date,index: planned
-    editheader: planned, needs additional support from Dovecot though.
-    mimeloop: planned
-
-All implemented extensions are like the engine itself currently very much 
-experimental. A status of 'full' does not mean that the extension is bug-free 
-or even fully RFC-compliant. Other extensions will be added as soon as the 
-necessary infrastructure is available. Extensions already supported by cmusieve
-have priority.
 
 Contact Info
 ------------

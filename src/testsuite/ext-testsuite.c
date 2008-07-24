@@ -4,12 +4,29 @@
  * Authors: Stephan Bosch
  * Specification: vendor-specific 
  *   (FIXME: provide specification for test authors)
- * Implementation: skeleton
+ * Implementation: very basic
  * Status: under development
- * Purpose: This custom extension is used to add sieve commands that act
- *   on the test suite. This provides the ability to specify and change the 
- *   input message inside the script and to fail validation, code generation and 
- *   execution based on predicates.
+ * Purpose: This custom extension is used to add sieve commands and tests that 
+ *          act the Sieve engine and on the test suite itself. This practically 
+ *          provides the means to completely control and thereby test the Sieve 
+ *          compiler and interpreter. This extension transforms the basic Sieve 
+ *          language into something much more powerful and suitable to perform 
+ *          complex self-test operations. Of course, this extension is only 
+ *          available (as vnd.dovecot.testsuite) when the sieve engine is used
+ *          from within the testsuite commandline tool. Test scripts have the
+ *          extension .svtest by convention to distinguish them from any normal
+ *          sieve scripts that may reside in the same directory. 
+ *
+ * WARNING: Although this code can serve as an example on how to write extensions 
+ *          to the Sieve interpreter, it is generally _NOT_ to be used as a source 
+ *          for ideas on new Sieve extensions. Many of the commands and tests that 
+ *          this extension introduces conflict with the goal and the implied 
+ *          restrictions of the Sieve language. These restrictions were put in 
+ *          place with good reason. Therefore, do _NOT_ export functionality 
+ *          provided by this testsuite extension to your custom extensions that are 
+ *          to be put to general use. 
+ *
+ *          Thank you.
  */
 
 #include <stdio.h>
