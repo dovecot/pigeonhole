@@ -70,14 +70,14 @@ static inline void sieve_address_error
 {
 	va_list args;
 	
-	str_truncate(ctx->error, 0);
-
-	va_start(args, fmt);
-	str_vprintfa(ctx->error, fmt, args);
-	va_end(args);
+	if ( str_len(ctx->error) == 0 ) {
+		va_start(args, fmt);
+		str_vprintfa(ctx->error, fmt, args);
+		va_end(args);
+	}
 }
 	
-static bool parse_local_part(struct sieve_address_parser_context *ctx)
+static int parse_local_part(struct sieve_address_parser_context *ctx)
 {
 	int ret;
 
@@ -85,89 +85,102 @@ static bool parse_local_part(struct sieve_address_parser_context *ctx)
 	   local-part      = dot-atom / quoted-string / obs-local-part
 	   obs-local-part  = word *("." word)
 	*/
+	if (ctx->parser.data == ctx->parser.end) {
+		sieve_address_error(ctx, "empty local part");
+		return -1;
+	}
+
 	str_truncate(ctx->local_part, 0);
-
-	if (ctx->parser.data < ctx->parser.end) {
-		if (*ctx->parser.data == '"')
-			ret = rfc822_parse_quoted_string(&ctx->parser, ctx->local_part);
-		else
-			ret = rfc822_parse_dot_atom(&ctx->parser, ctx->local_part);
-	
-		if (ret < 0) {
-			sieve_address_error(ctx, "invalid local part");
-			return FALSE;
-		}
+	if (*ctx->parser.data == '"')
+		ret = rfc822_parse_quoted_string(&ctx->parser, ctx->local_part);
+	else
+		ret = rfc822_parse_dot_atom(&ctx->parser, ctx->local_part);
+		
+	if (ret < 0) {
+		sieve_address_error(ctx, "invalid local part");
+		return -1;
 	}
 
-	if ( str_len(ctx->local_part) == 0 ) {
-		sieve_address_error(ctx, "missing local part");
-		return FALSE;
-	}
-	
-	return TRUE;
+	return ret;
 }
 
-static bool parse_domain(struct sieve_address_parser_context *ctx)
+static int parse_domain(struct sieve_address_parser_context *ctx)
 {
 	int ret;
 
 	str_truncate(ctx->domain, 0);
-	if ((ret = rfc822_parse_domain(&ctx->parser, ctx->domain)) < 0 ||
-		str_len(ctx->domain) == 0 ) {
+	if ((ret = rfc822_parse_domain(&ctx->parser, ctx->domain)) < 0) {
 		sieve_address_error(ctx, "invalid or missing domain");
-		
-		return FALSE;
+		return -1;
 	}
-	
-	return TRUE;
+
+	return ret;
 }
 
-static bool parse_addr_spec(struct sieve_address_parser_context *ctx)
+static int parse_addr_spec(struct sieve_address_parser_context *ctx)
 {
 	/* addr-spec       = local-part "@" domain */
+	int ret;
 
-	if ( !parse_local_part(ctx) )
-		return FALSE;
+	if ((ret = parse_local_part(ctx)) < 0)
+		return ret;
+	
+	if ( ret > 0 && *ctx->parser.data == '@') {
+		return parse_domain(ctx);
+	} 
 
-	if ( *ctx->parser.data != '@') { 
-		sieve_address_error(ctx, "expecting '@' after local part");
-		return FALSE;
-	}
-		
-	return parse_domain(ctx);
+	sieve_address_error(ctx, "invalid or lonely local part '%s' (expecting '@')", 
+		str_c(ctx->local_part));
+	return -1;
 }
 
 static int parse_name_addr(struct sieve_address_parser_context *ctx)
 {
-	/* phrase "<" addr-spec ">" ; name & addr-spec */
-	   
+	int ret;
+	const unsigned char *start;
+	
+	/* sieve-address   =       addr-spec                  ; simple address
+   *                         / phrase "<" addr-spec ">" ; name & addr-spec
+   */
+ 
+  /* Record parser state in case we fail at our first attempt */
+  start = ctx->parser.data;   
+ 
+	/* First try: phrase "<" addr-spec ">" ; name & addr-spec */	
 	str_truncate(ctx->str, 0);
-	if ( rfc822_parse_phrase(&ctx->parser, ctx->str) <= 0 ||
-		*ctx->parser.data != '<' )
-		return -1;
-		
+	if (rfc822_parse_phrase(&ctx->parser, ctx->str) <= 0 ||
+	    *ctx->parser.data != '<') {
+	  /* Failed; try just bare addr-spec */
+	  ctx->parser.data = start;
+	  return parse_addr_spec(ctx);
+	} 
+	
+	/* "<" addr-spec ">" */
 	ctx->parser.data++;
 
-	/* "<" local-part "@" domain ">" */
-	
-	if ( !parse_addr_spec(ctx) )
-		return FALSE;
-			
+	if ((ret = rfc822_skip_lwsp(&ctx->parser)) <= 0 ) {
+		if ( ret < 0 )	
+			sieve_address_error(ctx, "invalid characters after <");		
+		return ret;
+	} 
+
+	if ((ret = parse_addr_spec(ctx)) < 0)
+		return -1;
+
 	if (*ctx->parser.data != '>') {
 		sieve_address_error(ctx, "missing '>'");
-		return FALSE;
+		return -1;
 	}
 	ctx->parser.data++;
 
-	if (rfc822_skip_lwsp(&ctx->parser) < 0)
-		return FALSE;
-
-	return TRUE;
+	if ( (ret=rfc822_skip_lwsp(&ctx->parser)) < 0 )
+		sieve_address_error(ctx, "address ends with invalid characters");
+		
+	return ret;
 }
 
 static bool parse_sieve_address(struct sieve_address_parser_context *ctx)
 {
-	const unsigned char *start;
 	int ret;
 	
 	/* Initialize parser */
@@ -184,19 +197,21 @@ static bool parse_sieve_address(struct sieve_address_parser_context *ctx)
 		return FALSE;
 	}
 	
-	/* sieve-address   =       addr-spec                  ; simple address
-   *                         / phrase "<" addr-spec ">" ; name & addr-spec
-   */
- 
-	start = ctx->parser.data;
-	ret = parse_name_addr(ctx);
-	
-	if ( ret < 0 ) {
-		ctx->parser.data = start;
-		return parse_addr_spec(ctx);
+	if ((ret = parse_name_addr(ctx)) < 0) {
+		return FALSE;
+	}
+			
+	if ( str_len(ctx->domain) == 0 ) {
+		/* Not gonna happen */
+		sieve_address_error(ctx, "missing domain");
+		return FALSE;
+	}
+	if ( str_len(ctx->local_part) == 0 ) {
+		sieve_address_error(ctx, "missing local part");
+		return FALSE;
 	}
 
-	return ret > 0;
+	return TRUE;
 }
 
 const char *sieve_address_normalize

@@ -1,16 +1,23 @@
 require "vacation";
 
-redirect "@example.com";
-redirect "test";
-redirect "test@";
-redirect "Stephan Bosch stephan@rename-it.nl";
-redirect "Stephan Bosch <stephan@rename-it.nl";
+redirect "@wrong.example.com";
+redirect "error";
+redirect "error@";
+redirect "Stephan Bosch error@rename-it.nl";
+redirect "Stephan Bosch <error@rename-it.nl";
+redirect " more error @  example.com  ";
+redirect "@";
+redirect "<>";
+redirect "Error <";
+redirect "Error <stephan";
+redirect "Error <stephan@";
 
-vacation :from "Test" "Ik ben er niet.";
+vacation :from "Error" "Ik ben er niet.";
 
 # Ok
 
-redirect "Stephan Bosch <stephan@rename-it.nl>";
-redirect "hufter@example.com";
+redirect "Ok Good <stephan@rename-it.nl>";
+redirect "ok@example.com";
+redirect " more  @  example.com  ";
 
-vacation :from "tukker@voorbeeld.nl" "Ik ben weg!";
+vacation :from "good@voorbeeld.nl" "Ik ben weg!";

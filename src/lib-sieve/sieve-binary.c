@@ -1,4 +1,5 @@
 #include "lib.h"
+#include "str.h"
 
 #include "mempool.h"
 #include "buffer.h"
