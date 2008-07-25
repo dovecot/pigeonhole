@@ -33,6 +33,8 @@ Next (in order of descending priority/precedence):
   (e.g. spam, mailing lists etc.)
 * Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
   Character Sets). 
+* Implement executing an arbitrary number of scripts sequentially, acting on the 
+  same set of result actions.
 * Implement comparator-i;unicode-casemap
 * Implement environment extension
 * Implement notify extension with sole support for mailto mechanism. 
