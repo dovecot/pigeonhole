@@ -1,5 +1,4 @@
 #include "lib.h"
-
 #include "sieve-common.h"
 
 #include "sieve-script.h"
@@ -14,14 +13,15 @@
 
 #include "ext-include-common.h"
 
-/* Forward declarations */
-
-static bool opc_include_dump
-	(const struct sieve_operation *op,	
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool opc_include_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+/* 
+ * Include command 
+ *	
+ * Syntax: 
+ *   include [LOCATION] <value: string>
+ *
+ * [LOCATION]:      
+ *   ":personal" / ":global"
+ */
 
 static bool cmd_include_registered
 	(struct sieve_validator *validator, 
@@ -34,14 +34,6 @@ static bool cmd_include_validate
 static bool cmd_include_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
-/* Include command 
- *	
- * Syntax: 
- *   include [LOCATION] <value: string>
- *
- * [LOCATION]:      
- *   ":personal" / ":global"
- */
 const struct sieve_command cmd_include = { 
 	"include",
 	SCT_COMMAND, 
@@ -53,7 +45,16 @@ const struct sieve_command cmd_include = {
 	NULL 
 };
 
-/* Include operation */
+/* 
+ * Include operation 
+ */
+
+static bool opc_include_dump
+	(const struct sieve_operation *op,	
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static int opc_include_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation include_operation = { 
 	"include",
@@ -63,7 +64,9 @@ const struct sieve_operation include_operation = {
 	opc_include_execute
 };
 
-/* Context structures */
+/* 
+ * Context structures 
+ */
 
 struct cmd_include_context_data {
 	enum ext_include_script_location location;
@@ -71,7 +74,9 @@ struct cmd_include_context_data {
 	struct sieve_script *script;
 };   
 
-/* Tags */
+/* 
+ * Tags 
+ */
 
 static bool cmd_include_validate_location_tag
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
@@ -91,7 +96,9 @@ static const struct sieve_argument include_global_tag = {
 	NULL, NULL 
 };
 
-/* Tag validation */
+/* 
+ * Tag validation 
+ */
 
 static bool cmd_include_validate_location_tag
 (struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
@@ -122,7 +129,9 @@ static bool cmd_include_validate_location_tag
 	return TRUE;
 }
 
-/* Command registration */
+/* 
+ * Command registration 
+ */
 
 static bool cmd_include_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
@@ -253,17 +262,19 @@ static bool opc_include_dump
 }
 
 /* 
- * Code execution
+ * Execution
  */
  
-static bool opc_include_execute
+static int opc_include_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	int block;
 		
-	if ( !sieve_binary_read_offset(renv->sbin, address, &block) )
-		return FALSE;
+	if ( !sieve_binary_read_offset(renv->sbin, address, &block) ) {
+		sieve_runtime_trace_error(renv, "invalid block operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 	
 	sieve_runtime_trace(renv, "INCLUDE command (BLOCK: %d)", block);
 	

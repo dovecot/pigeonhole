@@ -407,7 +407,7 @@ bool sieve_result_print
 	return TRUE;
 }
 
-static bool sieve_result_implicit_keep
+bool sieve_result_implicit_keep
 	(struct sieve_result *result, bool rollback)
 {	
 	bool success = TRUE;
@@ -611,13 +611,15 @@ int sieve_result_execute
 	 */
 	if ( !commit_ok || implicit_keep ) {		
 		if ( !sieve_result_implicit_keep(result, !commit_ok) ) 
-			return -1;
+			return SIEVE_EXEC_KEEP_FAILED;
 			
-		return ( commit_ok ? 1 /* Success */ : 0 /* Implicit keep executed */ );
+		return ( commit_ok ? 
+			SIEVE_EXEC_OK            /* Success */ :
+			SIEVE_EXEC_FAILURE       /* Implicit keep executed */ );
 	}
 	
 	/* Unconditional success */
-	return 1;
+	return SIEVE_EXEC_OK;
 }
 
 /*

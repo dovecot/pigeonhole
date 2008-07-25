@@ -40,7 +40,7 @@ const struct sieve_command cmd_keep = {
 static bool cmd_keep_operation_dump
 	(const struct sieve_operation *op,
     	const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_keep_operation_execute
+static int cmd_keep_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -91,7 +91,7 @@ static bool cmd_keep_operation_dump
  * Interpretation
  */
 
-static bool cmd_keep_operation_execute
+static int cmd_keep_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
@@ -100,15 +100,19 @@ static bool cmd_keep_operation_execute
 	unsigned int source_line;
 	int ret = 0;	
 
-	sieve_runtime_trace(renv, "KEEP action");
-
 	/* Source line */
-    if ( !sieve_code_source_line_read(renv, address, &source_line) )
-        return FALSE;
+    if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
+		sieve_runtime_trace_error(renv, "invalid source line");
+        return SIEVE_EXEC_BIN_CORRUPT;
+	}
 	
 	/* Optional operands (side effects only) */
-	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
-		return FALSE;
+	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) ) {
+		sieve_runtime_trace_error(renv, "invalid optional operands");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	sieve_runtime_trace(renv, "KEEP action");
 	
 	/* Add store action (sieve-actions.h) to result */
 	if ( renv->scriptenv != NULL && renv->scriptenv->inbox != NULL )
@@ -118,7 +122,7 @@ static bool cmd_keep_operation_execute
 		ret = sieve_act_store_add_to_result
 			(renv, slist, "INBOX", source_line);
 	
-	return ret >= 0;
+	return ( ret >= 0 );
 }
 
 

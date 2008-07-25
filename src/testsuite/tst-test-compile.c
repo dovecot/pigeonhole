@@ -39,7 +39,7 @@ const struct sieve_command tst_test_compile = {
 static bool tst_test_compile_operation_dump
 	(const struct sieve_operation *op,
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool tst_test_compile_operation_execute
+static int tst_test_compile_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -105,7 +105,7 @@ static bool tst_test_compile_operation_dump
  * Intepretation
  */
 
-static bool tst_test_compile_operation_execute
+static int tst_test_compile_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -116,14 +116,24 @@ static bool tst_test_compile_operation_execute
 	const char *script_path;
 	bool result = TRUE;
 
-	if ( !sieve_opr_string_read(renv, address, &script_name) )
-		return FALSE;
+	/*
+	 * Read operands
+	 */
+
+	if ( !sieve_opr_string_read(renv, address, &script_name) ) {
+		sieve_runtime_trace_error(renv, "invalid script name operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	/*
+	 * Perform operation
+	 */
 
 	sieve_runtime_trace(renv, "TEST COMPILE: %s", str_c(script_name));
 
 	script_path = sieve_script_dirpath(renv->script);
 	if ( script_path == NULL ) 
-		return FALSE;
+		return SIEVE_EXEC_FAILURE;
 
 	script_path = t_strconcat(script_path, "/", str_c(script_name), NULL);
 
@@ -144,7 +154,7 @@ static bool tst_test_compile_operation_execute
 	/* Set result */
 	sieve_interpreter_set_test_result(renv->interp, result);
 
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 

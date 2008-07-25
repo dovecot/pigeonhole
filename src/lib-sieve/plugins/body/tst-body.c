@@ -13,16 +13,23 @@
 
 #include "ext-body-common.h"
 
-/* 
- * Forward declarations 
+/*
+ * Types
  */
 
-static bool ext_body_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_body_operation_execute
-	(const struct sieve_operation *op,
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+enum tst_body_transform {
+	TST_BODY_TRANSFORM_RAW,
+	TST_BODY_TRANSFORM_CONTENT,
+	TST_BODY_TRANSFORM_TEXT
+};
+
+/* 
+ * Body test 
+ *
+ * Syntax
+ *   body [COMPARATOR] [MATCH-TYPE] [BODY-TRANSFORM]
+ *     <key-list: string-list>
+ */
 
 static bool tst_body_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
@@ -31,12 +38,6 @@ static bool tst_body_validate
 static bool tst_body_generate
 	(const struct sieve_codegen_env *cgenv,	struct sieve_command_context *ctx);
 
-/* body test 
- *
- * Syntax
- *   body [COMPARATOR] [MATCH-TYPE] [BODY-TRANSFORM]
- *     <key-list: string-list>
- */
 const struct sieve_command body_test = { 
 	"body", 
 	SCT_TEST, 
@@ -50,6 +51,13 @@ const struct sieve_command body_test = {
 
 /* Body operation */
 
+static bool ext_body_operation_dump
+	(const struct sieve_operation *op, 
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static int ext_body_operation_execute
+	(const struct sieve_operation *op,
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
+
 const struct sieve_operation body_operation = { 
 	"body",
 	&body_extension,
@@ -58,17 +66,15 @@ const struct sieve_operation body_operation = {
 	ext_body_operation_execute 
 };
 
+/*
+ * Optional operands
+ */
+
 enum tst_body_optional {	
 	OPT_END,
 	OPT_COMPARATOR,
 	OPT_MATCH_TYPE,
 	OPT_BODY_TRANSFORM
-};
-
-enum tst_body_transform {
-	TST_BODY_TRANSFORM_RAW,
-	TST_BODY_TRANSFORM_CONTENT,
-	TST_BODY_TRANSFORM_TEXT
 };
 
 /* 
@@ -115,9 +121,9 @@ static bool tag_body_transform_validate
 
 	/* BODY-TRANSFORM:
 	 *   :raw
-   *     / :content <content-types: string-list>
-   *     / :text
-   */
+	 *     / :content <content-types: string-list>
+	 *     / :text
+	 */
 	if ( (bool) cmd->data ) {
 		sieve_command_validate_error(validator, cmd, 
 			"the :raw, :content and :text arguments for the body test are mutually "
@@ -167,6 +173,7 @@ static bool tag_body_transform_validate
 /* 
  * Command Registration 
  */
+
 static bool tst_body_registered
 (struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
@@ -206,7 +213,7 @@ static bool tst_body_validate
 }
 
 /*
- * Generation
+ * Code generation
  */
  
 static bool tst_body_generate
@@ -295,11 +302,14 @@ static bool ext_body_operation_dump
 		sieve_opr_stringlist_dump(denv, address);
 }
 
-static bool ext_body_operation_execute
+/*
+ * Interpretation
+ */
+
+static int ext_body_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	bool result = TRUE;
 	int opt_code = 1;
 	const struct sieve_comparator *cmp = &i_octet_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
@@ -309,14 +319,18 @@ static bool ext_body_operation_execute
 	const char * const *content_types = { NULL };
 	struct ext_body_part *body_parts;
 	bool matched;
-	
-	sieve_runtime_trace(renv, "BODY action");
 
+	/*
+	 * Read operands
+	 */
+	
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) )
-				return FALSE;
+			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
+				sieve_runtime_trace_error(renv, "invalid optional operand");
+				return SIEVE_EXEC_BIN_CORRUPT;
+			}
 
 			switch ( opt_code ) {
 			case 0: 
@@ -329,41 +343,50 @@ static bool ext_body_operation_execute
 				break;
 			case OPT_BODY_TRANSFORM:
 				if ( !sieve_binary_read_byte(renv->sbin, address, &transform) ||
-					transform > TST_BODY_TRANSFORM_TEXT )
-					return FALSE;
+					transform > TST_BODY_TRANSFORM_TEXT ) {
+					sieve_runtime_trace_error(renv, "invalid body transform type");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
 				
 				if ( transform == TST_BODY_TRANSFORM_CONTENT ) {				
 					if ( (ctype_list=sieve_opr_stringlist_read(renv, address)) 
-						== NULL )
-						return FALSE;
+						== NULL ) {
+						sieve_runtime_trace_error(renv, 
+							"invalid content transform operand");
+						return SIEVE_EXEC_BIN_CORRUPT;
+					}
 				}
 				break;
 
 			default:
+				sieve_runtime_trace_error(renv, "unknown optional operand");
 				return FALSE;
 			}
 		}
 	}
-
-	t_push();
 		
 	/* Read key-list */
 	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		t_pop();
-		return FALSE;
+		sieve_runtime_trace_error(renv, "invalid key-list operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
 	if ( ctype_list != NULL && !sieve_coded_stringlist_read_all
-    (ctype_list, pool_datastack_create(), &content_types) ) {
-  	t_pop();
-  	return FALSE;
-  }
+		(ctype_list, pool_datastack_create(), &content_types) ) {
+		sieve_runtime_trace_error(renv, "invalid content-type-list operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	if ( !ext_body_get_content
 		(renv, content_types, transform == TST_BODY_TRANSFORM_RAW, &body_parts) ) {
-		t_pop();
-		return FALSE;
+		return SIEVE_EXEC_FAILURE;
 	}
+
+	/*
+	 * Perform operation
+	 */
+
+	sieve_runtime_trace(renv, "BODY action");
 
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, key_list); 	
 
@@ -377,10 +400,8 @@ static bool ext_body_operation_execute
 
 	matched = sieve_match_end(mctx) || matched; 	
 	
-	t_pop();
-	
-	if ( result )
-		sieve_interpreter_set_test_result(renv->interp, matched);
-	
-	return result;
+	/* Set test result */	
+	sieve_interpreter_set_test_result(renv->interp, matched);
+
+	return SIEVE_EXEC_OK;
 }

@@ -52,4 +52,15 @@ struct sieve_script_env {
                     const char *user, time_t time);
 };	
 
+/*
+ * Execution exit codes
+ */
+
+enum sieve_execution_exitcode {
+    SIEVE_EXEC_OK          = 1,
+    SIEVE_EXEC_FAILURE     = 0,
+    SIEVE_EXEC_BIN_CORRUPT = -1,
+	SIEVE_EXEC_KEEP_FAILED = -2
+};
+
 #endif /* __SIEVE_TYPES_H */

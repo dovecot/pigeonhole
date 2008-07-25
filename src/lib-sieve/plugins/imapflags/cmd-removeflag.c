@@ -8,20 +8,15 @@
 
 #include "ext-imapflags-common.h"
 
-/* Forward declarations */
-
-static bool cmd_removeflag_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
-
-static bool cmd_removeflag_operation_execute
-	(const struct sieve_operation *op,	
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
-
-/* Removeflag command 
+/* 
+ * Removeflag command 
  *
  * Syntax:
  *   removeflag [<variablename: string>] <list-of-flags: string-list>
  */
+
+static bool cmd_removeflag_generate
+	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
  
 const struct sieve_command cmd_removeflag = { 
 	"removeflag", 
@@ -34,7 +29,13 @@ const struct sieve_command cmd_removeflag = {
 	NULL 
 };
 
-/* Removeflag operation */
+/* 
+ * Removeflag operation 
+ */
+
+static int cmd_removeflag_operation_execute
+	(const struct sieve_operation *op,	
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation removeflag_operation = { 
 	"REMOVEFLAG",
@@ -64,7 +65,7 @@ static bool cmd_removeflag_generate
  * Execution
  */
 
-static bool cmd_removeflag_operation_execute
+static int cmd_removeflag_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -73,18 +74,24 @@ static bool cmd_removeflag_operation_execute
 	struct sieve_coded_stringlist *flag_list;
 	struct sieve_variable_storage *storage;
 	unsigned int var_index;
+	int ret;
+		
+	if ( (ret=ext_imapflags_command_operands_read
+		(renv, address, &flag_list, &storage, &var_index)) <= 0 )
+		return ret;
 	
 	sieve_runtime_trace(renv, "REMOVEFLAG command");
-	
-	if ( !ext_imapflags_command_operands_read
-		(renv, address, &flag_list, &storage, &var_index) )
-		return FALSE;
-	
+
 	/* Iterate through all flags to remove */
 	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flag_item)) && 
 		flag_item != NULL ) {
 		ext_imapflags_remove_flags(renv, storage, var_index, flag_item);
 	}
-	
-	return result;
+
+	if ( !result ) {	
+		sieve_runtime_trace_error(renv, "invalid flag-list item");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	return SIEVE_EXEC_OK;
 }

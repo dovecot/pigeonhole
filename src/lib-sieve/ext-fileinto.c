@@ -92,7 +92,7 @@ static const struct sieve_command fileinto_command = {
 static bool ext_fileinto_operation_dump
 	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_fileinto_operation_execute
+static int ext_fileinto_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address); 
 
@@ -170,7 +170,7 @@ static bool ext_fileinto_operation_dump
  * Execution
  */
 
-static bool ext_fileinto_operation_execute
+static int ext_fileinto_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -181,14 +181,14 @@ static bool ext_fileinto_operation_execute
 
 	/* Source line */
     if ( !sieve_code_source_line_read(renv, address, &source_line) )
-        return FALSE;
+        return SIEVE_EXEC_BIN_CORRUPT;
 	
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
-		return FALSE;
+		return SIEVE_EXEC_BIN_CORRUPT;
 
 	if ( !sieve_opr_string_read(renv, address, &folder) ) {
 		sieve_binary_corrupt(renv->sbin, "FILEINTO: failed to read string operand");
-		return FALSE;
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
 	sieve_runtime_trace(renv, "FILEINTO action (\"%s\")", str_c(folder));

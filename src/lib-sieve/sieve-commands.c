@@ -303,7 +303,7 @@ bool sieve_command_block_exits_unconditionally
 
 /* Operations */
 
-static bool opc_stop_execute
+static int opc_stop_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -315,7 +315,7 @@ const struct sieve_operation cmd_stop_operation = {
 	opc_stop_execute 
 };
 
-static bool opc_stop_execute
+static int opc_stop_execute
 (const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv,  
 	sieve_size_t *address ATTR_UNUSED)
@@ -323,8 +323,7 @@ static bool opc_stop_execute
 	sieve_runtime_trace(renv, "STOP");
 	
 	sieve_interpreter_interrupt(renv->interp);
-
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 

@@ -1,6 +1,7 @@
 /* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
  */
 
+#include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
 #include "sieve-code.h"
@@ -39,7 +40,7 @@ const struct sieve_command tst_exists = {
 static bool tst_exists_operation_dump
 	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool tst_exists_operation_execute
+static int tst_exists_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -99,7 +100,7 @@ static bool tst_exists_operation_dump
  * Code execution 
  */
 
-static bool tst_exists_operation_execute
+static int tst_exists_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -108,11 +109,13 @@ static bool tst_exists_operation_execute
 	string_t *hdr_item;
 	bool matched;
 	
-	sieve_runtime_trace(renv, "EXISTS test");
-
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL )
-		return FALSE;
+	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
+		sieve_runtime_trace_error(renv, "invalid header-list operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	sieve_runtime_trace(renv, "EXISTS test");
 		
 	/* Iterate through all requested headers to match (must find all specified) */
 	hdr_item = NULL;
@@ -129,8 +132,11 @@ static bool tst_exists_operation_execute
 	}
 	
 	/* Set test result for subsequent conditional jump */
-	if ( result )
+	if ( result ) {
 		sieve_interpreter_set_test_result(renv->interp, matched);
+		return SIEVE_EXEC_OK;
+	}
 	
-	return result;
+	sieve_runtime_trace_error(renv, "invalid header-list item");
+	return SIEVE_EXEC_BIN_CORRUPT;
 }

@@ -55,7 +55,7 @@ const struct sieve_command cmd_redirect = {
 static bool cmd_redirect_operation_dump
 	(const struct sieve_operation *op,
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_redirect_operation_execute
+static int cmd_redirect_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -186,7 +186,7 @@ static bool cmd_redirect_operation_dump
  * Intepretation
  */
 
-static bool cmd_redirect_operation_execute
+static int cmd_redirect_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -198,16 +198,21 @@ static bool cmd_redirect_operation_execute
 	int ret = 0;
 
 	/* Source line */
-    if ( !sieve_code_source_line_read(renv, address, &source_line) )
-        return FALSE;
+    if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
+		sieve_runtime_trace_error(renv, "invalid source line");
+        return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	/* Optional operands (side effects) */
-	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
-		return FALSE;
+	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) ) {
+		sieve_runtime_trace_error(renv, "invalid optional operands");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	/* Read the address */
 	if ( !sieve_opr_string_read(renv, address, &redirect) ) {
-		return FALSE;
+		sieve_runtime_trace_error(renv, "invalid address string");
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
 	/* FIXME: perform address normalization if the string is not a string literal
@@ -224,7 +229,7 @@ static bool cmd_redirect_operation_execute
 	ret = sieve_result_add_action
 		(renv, &act_redirect, slist, source_line, (void *) act);
 	
-	return (ret >= 0);
+	return ( ret >= 0 );
 }
 
 /*

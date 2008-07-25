@@ -185,14 +185,27 @@ void _sieve_runtime_trace
 	
 	va_start(args, fmt);	
 	str_printfa(outbuf, "%08x: ", runenv->interp->current_op_addr); 
-	T_BEGIN {
-		str_vprintfa(outbuf, fmt, args); 
-	} T_END;
+	str_vprintfa(outbuf, fmt, args); 
 	str_append_c(outbuf, '\n');
-
 	va_end(args);
 	
 	o_stream_send(runenv->trace_stream, str_data(outbuf), str_len(outbuf));	
+}
+
+void _sieve_runtime_trace_error
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+{
+	string_t *outbuf = t_str_new(128);
+	va_list args;
+
+	va_start(args, fmt);
+	str_printfa(outbuf, "%08x: %s: ", runenv->interp->pc
+		, runenv->interp->current_op->mnemonic);
+	str_vprintfa(outbuf, fmt, args);
+    str_append_c(outbuf, '\n');
+	va_end(args);
+
+	o_stream_send(runenv->trace_stream, str_data(outbuf), str_len(outbuf));
 }
 #endif
 
@@ -240,25 +253,30 @@ sieve_size_t sieve_interpreter_program_counter(struct sieve_interpreter *interp)
 	return interp->pc;
 }
 
-bool sieve_interpreter_program_jump
-	(struct sieve_interpreter *interp, bool jump)
+int sieve_interpreter_program_jump
+(struct sieve_interpreter *interp, bool jump)
 {
+	const struct sieve_runtime_env *renv = &interp->runenv;
 	sieve_size_t pc = interp->pc;
 	int offset;
 	
-	if ( !sieve_binary_read_offset(interp->runenv.sbin, &(interp->pc), &offset) )
-		return FALSE;
+	if ( !sieve_binary_read_offset(renv->sbin, &(interp->pc), &offset) )
+	{
+		sieve_runtime_trace_error(renv, "invalid jump offset"); 
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
-	if ( pc + offset <= sieve_binary_get_code_size(interp->runenv.sbin) && 
+	if ( pc + offset <= sieve_binary_get_code_size(renv->sbin) && 
 		pc + offset > 0 ) 
 	{	
 		if ( jump )
 			interp->pc = pc + offset;
 		
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 	
-	return FALSE;
+	sieve_runtime_trace_error(renv, "jump offset out of range");
+	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
 void sieve_interpreter_set_test_result
@@ -312,7 +330,7 @@ bool sieve_interpreter_handle_optional_operands
  
 /* Code execute */
 
-bool sieve_interpreter_execute_operation
+static int sieve_interpreter_execute_operation
 	(struct sieve_interpreter *interp) 
 {
 	const struct sieve_operation *op;
@@ -321,23 +339,28 @@ bool sieve_interpreter_execute_operation
 	interp->current_op = op =
 		sieve_operation_read(interp->runenv.sbin, &(interp->pc));
 
-	if ( op != NULL && op->execute != NULL ) {
-		bool result;
-			
-		T_BEGIN {
-			result = op->execute(op, &(interp->runenv), &(interp->pc));
-		} T_END;
+	if ( op != NULL ) {
+		int result = SIEVE_EXEC_OK;
+
+		if ( op->execute != NULL ) { /* Noop ? */
+			T_BEGIN {
+				result = op->execute(op, &(interp->runenv), &(interp->pc));
+			} T_END;
+		} else {
+			sieve_runtime_trace(&interp->runenv, "OP: %s (NOOP)", op->mnemonic);
+		}
 
 		return result;
 	}
 	
-	return FALSE;
+	sieve_runtime_trace(&interp->runenv, "Encountered invalid operation");	
+	return SIEVE_EXEC_BIN_CORRUPT;
 }		
 
 int sieve_interpreter_continue
 (struct sieve_interpreter *interp, bool *interrupted) 
 {
-	int ret = 1;
+	int ret = SIEVE_EXEC_OK;
 	
 	sieve_result_ref(interp->runenv.result);
 	interp->interrupted = FALSE;
@@ -345,10 +368,12 @@ int sieve_interpreter_continue
 	if ( interrupted != NULL )
 		*interrupted = FALSE;
 	
-	while ( ret >= 0 && !interp->interrupted && 
+	while ( ret == SIEVE_EXEC_OK && !interp->interrupted && 
 		interp->pc < sieve_binary_get_code_size(interp->runenv.sbin) ) {
 		
-		if ( !sieve_interpreter_execute_operation(interp) ) {
+		ret = sieve_interpreter_execute_operation(interp);
+
+		if ( ret != SIEVE_EXEC_OK ) {
 			sieve_runtime_trace(&interp->runenv, "[[EXECUTION ABORTED]]");
 			ret = -1;
 		}
@@ -418,7 +443,12 @@ int sieve_interpreter_run
 	ret = sieve_interpreter_start(interp, msgdata, senv, NULL, *result, NULL);
 
 	if ( ret >= 0 && is_topmost ) {
-		ret = sieve_result_execute(*result, msgdata, senv);
+		if ( ret > 0 ) 
+			ret = sieve_result_execute(*result, msgdata, senv);
+		else {
+			if ( !sieve_result_implicit_keep(*result, TRUE) )
+	            return SIEVE_EXEC_KEEP_FAILED;
+		}
 	}
 	
 	sieve_result_unref(result);

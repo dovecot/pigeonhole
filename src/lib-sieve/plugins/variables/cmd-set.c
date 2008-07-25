@@ -18,14 +18,12 @@
 #include "ext-variables-common.h"
 #include "ext-variables-modifiers.h"
 
-/* Forward declarations */
-
-static bool cmd_set_operation_dump
-	(const struct sieve_operation *op,	
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_set_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+/* 
+ * Set command 
+ *	
+ * Syntax: 
+ *    set [MODIFIER] <name: string> <value: string>
+ */
 
 static bool cmd_set_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
@@ -36,11 +34,6 @@ static bool cmd_set_validate
 static bool cmd_set_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
-/* Set command 
- *	
- * Syntax: 
- *    set [MODIFIER] <name: string> <value: string>
- */
 const struct sieve_command cmd_set = { 
 	"set",
 	SCT_COMMAND, 
@@ -52,8 +45,17 @@ const struct sieve_command cmd_set = {
 	NULL 
 };
 
-/* Set operation 
+/* 
+ * Set operation 
  */
+
+static bool cmd_set_operation_dump
+	(const struct sieve_operation *op,	
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static int cmd_set_operation_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
+
 const struct sieve_operation cmd_set_operation = { 
 	"SET",
 	&variables_extension,
@@ -62,7 +64,9 @@ const struct sieve_operation cmd_set_operation = {
 	cmd_set_operation_execute
 };
 
-/* Compiler context */
+/* 
+ * Compiler context 
+ */
 
 struct cmd_set_context {
 	ARRAY_DEFINE(modifiers, const struct sieve_variables_modifier *);
@@ -158,7 +162,9 @@ static bool cmd_set_registered
 	return TRUE;
 }
 
-/* Command validation */
+/* 
+ * Command validation 
+ */
 
 static bool cmd_set_pre_validate
 (struct sieve_validator *validator ATTR_UNUSED, 
@@ -200,7 +206,7 @@ static bool cmd_set_validate(struct sieve_validator *validator,
 }
 
 /*
- * Generation
+ * Code generation
  */
  
 static bool cmd_set_generate
@@ -263,30 +269,44 @@ static bool cmd_set_operation_dump
  * Code execution
  */
  
-static bool cmd_set_operation_execute
+static int cmd_set_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	struct sieve_variable_storage *storage;
 	unsigned int var_index, mdfs, i;
 	string_t *value;
-	
-	sieve_runtime_trace(renv, "SET action");
-	
+	int ret = SIEVE_EXEC_OK;
+
+	/*
+	 * Read the normal operands
+	 */
+		
 	/* Read the variable */
 	if ( !sieve_variable_operand_read
-		(renv, address, &storage, &var_index) )
-		return FALSE;
+		(renv, address, &storage, &var_index) ) {
+		sieve_runtime_trace_error(renv, "invalid variable operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 		
 	/* Read the raw string value */
-	if ( !sieve_opr_string_read(renv, address, &value) )
-		return FALSE;
+	if ( !sieve_opr_string_read(renv, address, &value) ) {
+		sieve_runtime_trace_error(renv, "invalid string operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 		
 	/* Read the number of modifiers used */
-	if ( !sieve_binary_read_byte(renv->sbin, address, &mdfs) ) 
-		return FALSE;
+	if ( !sieve_binary_read_byte(renv->sbin, address, &mdfs) ) {
+		sieve_runtime_trace_error(renv, "invalid modifier count");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 	
-	/* Determine and assign the value */
+	/* 
+	 * Determine and assign the value 
+	 */
+
+	sieve_runtime_trace(renv, "SET action");
+
 	T_BEGIN {
 		/* Apply modifiers if necessary (sorted during code generation already) */
 		if ( str_len(value) > 0 ) {
@@ -297,16 +317,22 @@ static bool cmd_set_operation_execute
 
 				if ( modf == NULL ) {
 					value = NULL;
+
+					sieve_runtime_trace_error(renv, "invalid modifier operand");
+					ret = SIEVE_EXEC_BIN_CORRUPT;
 					break;
 				}
 				
 				if ( modf->modify != NULL ) {
 					if ( !modf->modify(value, &new_value) ) {
 						value = NULL;
+						ret = SIEVE_EXEC_FAILURE;
 						break;
-					}
-				
+					}				
+
 					value = new_value;
+					if ( value == NULL )
+						break;
 				}
 			}
 		}	
@@ -317,6 +343,9 @@ static bool cmd_set_operation_execute
 		}	
 	} T_END;
 			
+	if ( ret <= 0 ) 
+		return ret;		
+
 	return ( value != NULL );
 }
 

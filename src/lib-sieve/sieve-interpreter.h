@@ -45,7 +45,8 @@ void sieve_interpreter_interrupt
 	(struct sieve_interpreter *interp);
 sieve_size_t sieve_interpreter_program_counter
 	(struct sieve_interpreter *interp);
-bool sieve_interpreter_program_jump
+
+int sieve_interpreter_program_jump
 	(struct sieve_interpreter *interp, bool jump);
 	
 void sieve_interpreter_set_test_result
@@ -75,17 +76,24 @@ void sieve_runtime_log
 void _sieve_runtime_trace
 	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
 		ATTR_FORMAT(2, 3);
+void _sieve_runtime_trace_error
+	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 		
-#	define sieve_runtime_trace(runenv, ...) STMT_START { \
+# define sieve_runtime_trace(runenv, ...) STMT_START { \
 		if ( (runenv)->trace_stream != NULL ) \
 			_sieve_runtime_trace((runenv), __VA_ARGS__); \
 	} STMT_END
-	
+# define sieve_runtime_trace_error(runenv, ...) STMT_START { \
+		if ( (runenv)->trace_stream != NULL ) \
+			_sieve_runtime_trace_error((runenv), __VA_ARGS__); \
+		} STMT_END	
+
 #else
-
 # define sieve_runtime_trace(runenv, ...)
-
+# define sieve_runtime_trace_error(runenv, ...)
 #endif
+
 
 /* Extension support */
 
@@ -102,8 +110,6 @@ bool sieve_interpreter_handle_optional_operands
 		struct sieve_side_effects_list **list);
 
 /* Code execute */
-
-bool sieve_interpreter_execute_operation(struct sieve_interpreter *interp); 
 
 int sieve_interpreter_continue
 	(struct sieve_interpreter *interp, bool *interrupted);

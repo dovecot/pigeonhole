@@ -40,7 +40,7 @@ const struct sieve_command cmd_test = {
 static bool cmd_test_operation_dump
 	(const struct sieve_operation *op,
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_test_operation_execute
+static int cmd_test_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -54,7 +54,7 @@ const struct sieve_operation test_operation = {
 
 /* Test_finish operation */
 
-static bool cmd_test_finish_operation_execute
+static int cmd_test_finish_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -147,22 +147,24 @@ static bool cmd_test_operation_dump
  * Intepretation
  */
 
-static bool cmd_test_operation_execute
+static int cmd_test_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *test_name;
 
-	if ( !sieve_opr_string_read(renv, address, &test_name) )
-		return FALSE;
+	if ( !sieve_opr_string_read(renv, address, &test_name) ) {
+		sieve_runtime_trace_error(renv, "invalid test name operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 	
 	sieve_runtime_trace(renv, "TEST \"%s\"", str_c(test_name));
 
 	testsuite_test_start(test_name);
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
-static bool cmd_test_finish_operation_execute
+static int cmd_test_finish_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
@@ -170,7 +172,7 @@ static bool cmd_test_finish_operation_execute
 	sieve_runtime_trace(renv, "TEST FINISHED");
 	
 	testsuite_test_succeed(NULL);
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 

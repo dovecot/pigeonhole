@@ -11,7 +11,13 @@
 
 #include "ext-imapflags-common.h"
 
-/* Forward declarations */
+/*
+ * Hasflag test
+ *
+ * Syntax: 
+ *   hasflag [MATCH-TYPE] [COMPARATOR] [<variable-list: string-list>]
+ *       <list-of-flags: string-list>
+ */
 
 static bool tst_hasflag_registered
 	(struct sieve_validator *validator,
@@ -20,20 +26,6 @@ static bool tst_hasflag_validate
 	(struct sieve_validator *validator,	struct sieve_command_context *ctx);
 static bool tst_hasflag_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
-
-static bool tst_hasflag_operation_dump
-	(const struct sieve_operation *op,	
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool tst_hasflag_operation_execute
-	(const struct sieve_operation *op,	
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
-
-/* Hasflag test
- *
- * Syntax: 
- *   hasflag [MATCH-TYPE] [COMPARATOR] [<variable-list: string-list>]
- *       <list-of-flags: string-list>
- */
  
 const struct sieve_command tst_hasflag = { 
 	"hasflag", 
@@ -47,7 +39,16 @@ const struct sieve_command tst_hasflag = {
 	NULL 
 };
 
-/* Hasflag operation */
+/* 
+ * Hasflag operation 
+ */
+
+static bool tst_hasflag_operation_dump
+	(const struct sieve_operation *op,	
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static int tst_hasflag_operation_execute
+	(const struct sieve_operation *op,	
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation hasflag_operation = { 
 	"HASFLAG",
@@ -57,16 +58,19 @@ const struct sieve_operation hasflag_operation = {
 	tst_hasflag_operation_execute
 };
 
-/* Optional arguments */
-#include "sieve-comparators.h"
-#include "sieve-match-types.h"
+/* 
+ * Optional arguments 
+ */
+
 enum tst_hasflag_optional {	
 	OPT_END,
 	OPT_COMPARATOR,
 	OPT_MATCH_TYPE
 };
 
-/* Tag registration */
+/* 
+ * Tag registration 
+ */
 
 static bool tst_hasflag_registered
 (struct sieve_validator *validator, 
@@ -79,7 +83,9 @@ static bool tst_hasflag_registered
 	return TRUE;
 }
 
-/* Validation */
+/* 
+ * Validation 
+ */
 
 static bool tst_hasflag_validate
 	(struct sieve_validator *validator,	struct sieve_command_context *tst)
@@ -147,10 +153,10 @@ static bool tst_hasflag_operation_dump
 }
 
 /*
- * Execution
+ * Interpretation
  */
 
-static bool tst_hasflag_operation_execute
+static int tst_hasflag_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -164,14 +170,19 @@ static bool tst_hasflag_operation_execute
 	struct ext_imapflags_iter iter;
 	const char *flag;
 	bool matched;
+	int ret;
 	
-	sieve_runtime_trace(renv, "HASFLAG test");
+	/*
+	 * Read operands
+	 */
 
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) )
-				return FALSE;
+			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
+				sieve_runtime_trace_error(renv, "invalid optional operand");
+				return SIEVE_EXEC_BIN_CORRUPT;
+			}
 
 			switch ( opt_code ) {
 			case 0:
@@ -183,14 +194,21 @@ static bool tst_hasflag_operation_execute
 				mtch = sieve_opr_match_type_read(renv, address);
 				break;
 			default:
-				return FALSE;
+				sieve_runtime_trace_error(renv, "unknown optional operand");
+				return SIEVE_EXEC_BIN_CORRUPT;
 			}
 		}
 	}
 
-	if ( !ext_imapflags_command_operands_read
-		(renv, address, &flag_list, &storage, &var_index) )
-		return FALSE;
+	if ( (ret=ext_imapflags_command_operands_read
+		(renv, address, &flag_list, &storage, &var_index)) <= 0 )
+		return ret;
+
+	/*
+	 * Perform operation
+	 */
+
+	sieve_runtime_trace(renv, "HASFLAG test");
 
 	matched = FALSE;
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, flag_list); 	
@@ -204,9 +222,10 @@ static bool tst_hasflag_operation_execute
 
 	matched = sieve_match_end(mctx) || matched; 	
 	
+	/* Assign test result */
 	sieve_interpreter_set_test_result(renv->interp, matched);
 	
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 

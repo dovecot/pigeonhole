@@ -202,7 +202,7 @@ struct sieve_operation {
 	bool (*dump)
 		(const struct sieve_operation *op, 
 			const struct sieve_dumptime_env *denv, sieve_size_t *address);
-	bool (*execute)
+	int (*execute)
 		(const struct sieve_operation *op, 
 			const struct sieve_runtime_env *renv, sieve_size_t *address);
 };

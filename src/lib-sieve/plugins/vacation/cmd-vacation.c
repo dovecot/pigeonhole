@@ -34,12 +34,14 @@ static const struct sieve_argument vacation_addresses_tag;
 static const struct sieve_argument vacation_mime_tag;
 static const struct sieve_argument vacation_handle_tag;
 
-static bool ext_vacation_operation_dump
-	(const struct sieve_operation *op,	
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_vacation_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+/* 
+ * Vacation command 
+ *	
+ * Syntax: 
+ *    vacation [":days" number] [":subject" string]
+ *                 [":from" string] [":addresses" string-list]
+ *                 [":mime"] [":handle" string] <reason: string>
+ */
 
 static bool cmd_vacation_registered
 	(struct sieve_validator *validator, 
@@ -48,6 +50,40 @@ static bool cmd_vacation_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_vacation_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+
+const struct sieve_command vacation_command = { 
+	"vacation",
+	SCT_COMMAND, 
+	1, 0, FALSE, FALSE, 
+	cmd_vacation_registered,
+	NULL,  
+	cmd_vacation_validate, 
+	cmd_vacation_generate, 
+	NULL 
+};
+
+/* 
+ * Vacation operation 
+ */
+
+static bool ext_vacation_operation_dump
+	(const struct sieve_operation *op,	
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static int ext_vacation_operation_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
+
+const struct sieve_operation vacation_operation = { 
+	"VACATION",
+	&vacation_extension,
+	0,
+	ext_vacation_operation_dump, 
+	ext_vacation_operation_execute
+};
+
+/* 
+ * Vacation action 
+ */
 
 static int act_vacation_check_duplicate
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action1,
@@ -64,38 +100,16 @@ static bool act_vacation_commit
 	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv, 
 		void *tr_context, bool *keep);
 
-/* Vacation command 
- *	
- * Syntax: 
- *    vacation [":days" number] [":subject" string]
- *                 [":from" string] [":addresses" string-list]
- *                 [":mime"] [":handle" string] <reason: string>
- */
-const struct sieve_command vacation_command = { 
+const struct sieve_action act_vacation = {
 	"vacation",
-	SCT_COMMAND, 
-	1, 0, FALSE, FALSE, 
-	cmd_vacation_registered,
-	NULL,  
-	cmd_vacation_validate, 
-	cmd_vacation_generate, 
-	NULL 
+	SIEVE_ACTFLAG_SENDS_RESPONSE,
+	act_vacation_check_duplicate, 
+	act_vacation_check_conflict,
+	act_vacation_print,
+	NULL, NULL,
+	act_vacation_commit,
+	NULL
 };
-
-/* 
- * Vacation operation 
- */
-const struct sieve_operation vacation_operation = { 
-	"VACATION",
-	&vacation_extension,
-	0,
-	ext_vacation_operation_dump, 
-	ext_vacation_operation_execute
-};
-
-/* 
- * Vacation action 
- */
 		
 struct act_vacation_context {
 	const char *reason;
@@ -106,17 +120,6 @@ struct act_vacation_context {
 	bool mime;
 	const char *from;
 	const char *const *addresses;
-};
-
-const struct sieve_action act_vacation = {
-	"vacation",
-	SIEVE_ACTFLAG_SENDS_RESPONSE,
-	act_vacation_check_duplicate, 
-	act_vacation_check_conflict,
-	act_vacation_print,
-	NULL, NULL,
-	act_vacation_commit,
-	NULL
 };
 
 /* 
@@ -381,7 +384,7 @@ static bool ext_vacation_operation_dump
  * Code execution
  */
  
-static bool ext_vacation_operation_execute
+static int ext_vacation_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
@@ -394,54 +397,87 @@ static bool ext_vacation_operation_execute
 	struct sieve_coded_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
 	unsigned int source_line;
-		
-	sieve_runtime_trace(renv, "VACATION action");	
 
-	/* Source line */
-	if ( !sieve_code_source_line_read(renv, address, &source_line) ) 
-		return FALSE;
+	/*
+	 * Read operands
+	 */
 		
+	/* Source line */
+	if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
+		sieve_runtime_trace_error(renv, "invalid source line");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+	
+	/* Optional operands */	
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) 
-				return FALSE;
+			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
+				sieve_runtime_trace_error(renv, "invalid optional operand");
+				return SIEVE_EXEC_BIN_CORRUPT;
+			}
 
 			switch ( opt_code ) {
 			case 0:
 				break;
 			case OPT_DAYS:
-				if ( !sieve_opr_number_read(renv, address, &days) ) 
-					return FALSE;
+				if ( !sieve_opr_number_read(renv, address, &days) ) {
+					sieve_runtime_trace_error(renv, 
+						"invalid days operand");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
 				break;
 			case OPT_SUBJECT:
-				if ( !sieve_opr_string_read(renv, address, &subject) ) 
-					return FALSE;
+				if ( !sieve_opr_string_read(renv, address, &subject) ) {
+					sieve_runtime_trace_error(renv, 
+						"invalid subject operand");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
 				break;
 			case OPT_FROM:
-				if ( !sieve_opr_string_read(renv, address, &from) ) 
-					return FALSE;
+				if ( !sieve_opr_string_read(renv, address, &from) ) {
+					sieve_runtime_trace_error(renv, 
+						"invalid from address operand");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
 				break;
 			case OPT_HANDLE: 
-				if ( !sieve_opr_string_read(renv, address, &handle) ) 	
-					return FALSE;
+				if ( !sieve_opr_string_read(renv, address, &handle) ) {
+					sieve_runtime_trace_error(renv, 
+						"invalid handle operand");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
 				break;
 			case OPT_ADDRESSES:
-				if ( (addresses=sieve_opr_stringlist_read(renv, address)) 
-					== NULL ) 
-					return FALSE;
+				if ( (addresses=sieve_opr_stringlist_read(renv, address))
+					== NULL ) {
+					sieve_runtime_trace_error(renv, 
+						"invalid addresses operand");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
 				break;
 			case OPT_MIME:
 				mime = TRUE;
 				break;
 			default:
-				return FALSE;
+				sieve_runtime_trace_error(renv, 
+					"unknown optional operand");
+				return SIEVE_EXEC_BIN_CORRUPT;
 			}
 		}
 	}
 	
-	if ( !sieve_opr_string_read(renv, address, &reason) ) 
-		return FALSE;
+	/* Reason operand */
+	if ( !sieve_opr_string_read(renv, address, &reason) ) {
+		sieve_runtime_trace_error(renv, "invalid reason operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 	
+	/*
+	 * Perform operation
+	 */
+
+	sieve_runtime_trace(renv, "VACATION action");	
+
 	/* Add vacation action to the result */
 	pool = sieve_result_pool(renv->result);
 	act = p_new(pool, struct act_vacation_context, 1);

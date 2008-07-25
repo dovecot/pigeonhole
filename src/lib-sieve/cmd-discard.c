@@ -40,7 +40,7 @@ const struct sieve_command cmd_discard = {
 static bool cmd_discard_operation_dump
 	(const struct sieve_operation *op,
     	const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_discard_operation_execute
+static int cmd_discard_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -111,18 +111,20 @@ static bool cmd_discard_operation_dump
  * Interpretation
  */
 
-static bool cmd_discard_operation_execute
+static int cmd_discard_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {	
 	unsigned int source_line;
-
-	sieve_runtime_trace(renv, "DISCARD action");
 	
 	/* Source line */
-    if ( !sieve_code_source_line_read(renv, address, &source_line) )
-        return FALSE;
+    if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
+		sieve_runtime_trace_error(renv, "failed to read source line");
+        return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	sieve_runtime_trace(renv, "DISCARD action");
 
 	return ( sieve_result_add_action
 		(renv, &act_discard, NULL, source_line, NULL) >= 0 );
@@ -148,6 +150,7 @@ static bool act_discard_commit
 	void *tr_context ATTR_UNUSED, bool *keep)
 {
 	*keep = FALSE;
+
 	return TRUE;
 }
 

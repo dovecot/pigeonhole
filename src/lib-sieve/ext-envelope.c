@@ -100,7 +100,7 @@ static const struct sieve_command envelope_test = {
 static bool ext_envelope_operation_dump
 	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_envelope_operation_execute
+static int ext_envelope_operation_execute
 	(const struct sieve_operation *op,
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -223,7 +223,7 @@ static int ext_envelope_get_fields
 	return 0;
 }
 
-static bool ext_envelope_operation_execute
+static int ext_envelope_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -241,15 +241,15 @@ static bool ext_envelope_operation_execute
 
 	if ( !sieve_addrmatch_default_get_optionals
 		(renv, address, &addrp, &mtch, &cmp) )
-		return FALSE; 
+		return SIEVE_EXEC_BIN_CORRUPT; 
 
 	/* Read header-list */
 	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL )
-		return FALSE;
+		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Read key-list */
 	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) 
-		return FALSE;
+		return SIEVE_EXEC_BIN_CORRUPT;
 	
 	/* Initialize match */
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, key_list);
@@ -274,10 +274,12 @@ static bool ext_envelope_operation_execute
 	/* Finish match */
 	matched = sieve_match_end(mctx) || matched;
 
-	/* Set test result for subsequent conditional jump */
-	if ( result )
+	if ( result ) {
+		/* Set test result for subsequent conditional jump */
 		sieve_interpreter_set_test_result(renv->interp, matched);
+		return SIEVE_EXEC_OK;
+	}
 	
-	return result;
+	return SIEVE_EXEC_BIN_CORRUPT;
 }
 

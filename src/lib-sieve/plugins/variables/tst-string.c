@@ -12,7 +12,8 @@
 
 #include "ext-variables-common.h"
 
-/* String test 
+/* 
+ * String test 
  *
  * Syntax:
  *   string [COMPARATOR] [MATCH-TYPE]
@@ -37,12 +38,14 @@ const struct sieve_command tst_string = {
 	NULL 
 };
 
-/* Operations */
+/* 
+ * String operation
+ */
 
 static bool tst_string_operation_dump
 	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool tst_string_operation_execute
+static int tst_string_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -54,7 +57,9 @@ const struct sieve_operation tst_string_operation = {
 	tst_string_operation_execute 
 };
 
-/* Optional arguments */
+/* 
+ * Optional arguments 
+ */
 
 enum tst_string_optional {	
 	OPT_END,
@@ -62,7 +67,9 @@ enum tst_string_optional {
 	OPT_MATCH_TYPE
 };
 
-/* Test registration */
+/* 
+ * Test registration 
+ */
 
 static bool tst_string_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
@@ -74,7 +81,9 @@ static bool tst_string_registered
 	return TRUE;
 }
 
-/* Test validation */
+/* 
+ * Test validation 
+ */
 
 static bool tst_string_validate
 	(struct sieve_validator *validator, struct sieve_command_context *tst) 
@@ -103,7 +112,9 @@ static bool tst_string_validate
 	return sieve_match_type_validate(validator, tst, arg);
 }
 
-/* Test generation */
+/* 
+ * Test generation 
+ */
 
 static bool tst_string_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
@@ -117,7 +128,9 @@ static bool tst_string_generate
 	return TRUE;
 }
 
-/* Code dump */
+/* 
+ * Code dump 
+ */
 
 static bool tst_string_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,
@@ -154,9 +167,11 @@ static bool tst_string_operation_dump
 		sieve_opr_stringlist_dump(denv, address);
 }
 
-/* Code execution */
+/* 
+ * Code execution 
+ */
 
-static bool tst_string_operation_execute
+static int tst_string_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -169,43 +184,58 @@ static bool tst_string_operation_execute
 	struct sieve_coded_stringlist *key_list;
 	string_t *src_item;
 	bool matched;
-	
-	sieve_runtime_trace(renv, "STRING test");
 
+	/*
+	 * Read operands 
+	 */
+	
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) )
-				return FALSE;
+			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
+				sieve_runtime_trace_error(renv, "invalid optional operand");
+				return SIEVE_EXEC_BIN_CORRUPT;
+			}
 
 			switch ( opt_code ) {
 			case 0: 
 				break;
 			case OPT_COMPARATOR:
-				cmp = sieve_opr_comparator_read(renv, address);
+				if ( (cmp = sieve_opr_comparator_read(renv, address)) == NULL ) {
+					sieve_runtime_trace_error(renv, "invalid comparator operand");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
 				break;
 			case OPT_MATCH_TYPE:
-				mtch = sieve_opr_match_type_read(renv, address);
+				if ( (mtch = sieve_opr_match_type_read(renv, address)) == NULL ) {
+					sieve_runtime_trace_error(renv, "invalid match type operand");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
 				break;
 			default:
-				return FALSE;
+				sieve_runtime_trace_error(renv, "unknown optional operand");
+				return SIEVE_EXEC_BIN_CORRUPT;
 			}
 		}
 	}
 
-	t_push();
-		
-	/* Read string-list */
+	/* Read source */
 	if ( (source=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		t_pop();
-		return FALSE;
+		sieve_runtime_trace_error(renv, "invalid source operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
 	/* Read key-list */
 	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		t_pop();
-		return FALSE;
+		sieve_runtime_trace_error(renv, "invalid key-list operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
+
+	/*
+	 * Perform operation
+	 */
+
+	sieve_runtime_trace(renv, "STRING test");
 
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, key_list); 	
 
@@ -222,10 +252,11 @@ static bool tst_string_operation_execute
 
 	matched = sieve_match_end(mctx) || matched; 	
 	
-	t_pop();
-	
-	if ( result )
+	if ( result ) {
 		sieve_interpreter_set_test_result(renv->interp, matched);
+		return SIEVE_EXEC_OK;
+	}
 	
-	return result;
+	sieve_runtime_trace_error(renv, "invalid key-list item");
+	return SIEVE_EXEC_BIN_CORRUPT;
 }

@@ -8,21 +8,17 @@
 
 #include "ext-include-common.h"
 
-/* Forward declarations */
-
-static bool opc_return_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+/* 
+ * Return command 
+ * 
+ * Syntax
+ *   return
+ */
 
 static bool cmd_return_generate
 	(const struct sieve_codegen_env *cgenv, 
 		struct sieve_command_context *ctx ATTR_UNUSED);
-		
-/* Return command 
- * 
- * Syntax
- *   return
- */	
+	
 const struct sieve_command cmd_return = { 
 	"return", 
 	SCT_COMMAND, 
@@ -32,7 +28,13 @@ const struct sieve_command cmd_return = {
 	NULL
 };
 
-/* Return operation */
+/* 
+ * Return operation 
+ */
+
+static int opc_return_execute
+	(const struct sieve_operation *op, 
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation return_operation = { 
 	"return",
@@ -43,7 +45,7 @@ const struct sieve_operation return_operation = {
 };
 
 /*
- * Generation
+ * Code generation
  */
 
 static bool cmd_return_generate
@@ -56,10 +58,10 @@ static bool cmd_return_generate
 }
 
 /*
- * Interpretation
+ * Execution
  */
 
-static bool opc_return_execute
+static int opc_return_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, 
 	sieve_size_t *address ATTR_UNUSED)
@@ -67,8 +69,7 @@ static bool opc_return_execute
 	sieve_runtime_trace(renv, "RETURN command");
 
 	ext_include_execute_return(renv);
-
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 

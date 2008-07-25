@@ -48,7 +48,7 @@ const struct sieve_command cmd_test_set = {
 static bool cmd_test_set_operation_dump
 	(const struct sieve_operation *op,
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool cmd_test_set_operation_execute
+static int cmd_test_set_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -122,7 +122,7 @@ static bool cmd_test_set_operation_dump
  * Intepretation
  */
 
-static bool cmd_test_set_operation_execute
+static int cmd_test_set_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -131,20 +131,26 @@ static bool cmd_test_set_operation_execute
 	int member_id;
 
 	if ( (object=testsuite_object_read_member(renv->sbin, address, &member_id)) 
-		== NULL )
-		return FALSE;
+		== NULL ) {
+		sieve_runtime_trace_error(renv, "invalid testsuite object member");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
-	if ( !sieve_opr_string_read(renv, address, &value) )
-		return FALSE;
+	if ( !sieve_opr_string_read(renv, address, &value) ) {
+		sieve_runtime_trace_error(renv, "invalid string operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	sieve_runtime_trace(renv, "TEST SET command (%s = \"%s\")", 
 		testsuite_object_member_name(object, member_id), str_c(value));
 	
-	if ( object->set_member == NULL )
-		return FALSE;
+	if ( object->set_member == NULL ) {
+		sieve_runtime_trace_error(renv, "unimplemented testsuite object");
+		return SIEVE_EXEC_FAILURE;
+	}
 		
 	object->set_member(member_id, value);	
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 

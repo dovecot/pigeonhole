@@ -100,7 +100,7 @@ static const struct sieve_command reject_command = {
 static bool ext_reject_operation_dump
 	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static bool ext_reject_operation_execute
+static int ext_reject_operation_execute
 	(const struct sieve_operation *op,
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -205,7 +205,7 @@ static bool ext_reject_operation_dump
  * Interpretation
  */
 
-static bool ext_reject_operation_execute
+static int ext_reject_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -218,15 +218,15 @@ static bool ext_reject_operation_execute
 
 	/* Source line */
     if ( !sieve_code_source_line_read(renv, address, &source_line) )
-        return FALSE;
+        return SIEVE_EXEC_BIN_CORRUPT;
 	
 	/* Optional operands (side effects) */
 	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
-		return FALSE;
+		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Read rejection reason */
 	if ( !sieve_opr_string_read(renv, address, &reason) )
-		return FALSE;
+		return SIEVE_EXEC_BIN_CORRUPT;
 
 	sieve_runtime_trace(renv, "REJECT action (\"%s\")", str_c(reason));
 

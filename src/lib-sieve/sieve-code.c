@@ -686,13 +686,13 @@ static bool opc_jmp_dump
 	(const struct sieve_operation *op, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
-static bool opc_jmp_execute
+static int opc_jmp_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
-static bool opc_jmptrue_execute
+static int opc_jmptrue_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
-static bool opc_jmpfalse_execute
+static int opc_jmpfalse_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -821,19 +821,16 @@ bool sieve_operation_string_dump
 
 /* Code execution for core commands */
 
-static bool opc_jmp_execute
+static int opc_jmp_execute
 (const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED) 
 {
 	sieve_runtime_trace(renv, "JMP");
 	
-	if ( !sieve_interpreter_program_jump(renv->interp, TRUE) )
-		return FALSE;
-	
-	return TRUE;
+	return sieve_interpreter_program_jump(renv->interp, TRUE);
 }	
 		
-static bool opc_jmptrue_execute
+static int opc_jmptrue_execute
 (const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {	
@@ -841,13 +838,10 @@ static bool opc_jmptrue_execute
 	
 	sieve_runtime_trace(renv, "JMPTRUE (%s)", result ? "true" : "false");
 	
-	if ( !sieve_interpreter_program_jump(renv->interp, result) )
-		return FALSE;
-	
-	return TRUE;
+	return sieve_interpreter_program_jump(renv->interp, result);
 }
 
-static bool opc_jmpfalse_execute
+static int opc_jmpfalse_execute
 (const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {	
@@ -855,8 +849,5 @@ static bool opc_jmpfalse_execute
 	
 	sieve_runtime_trace(renv, "JMPFALSE (%s)", result ? "true" : "false" );
 	
-	if ( !sieve_interpreter_program_jump(renv->interp, !result) )
-		return FALSE;
-			
-	return TRUE;
+	return sieve_interpreter_program_jump(renv->interp, !result);
 }	

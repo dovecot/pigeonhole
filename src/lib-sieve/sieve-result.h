@@ -56,7 +56,8 @@ int sieve_result_add_action
 	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
 	unsigned int source_line, void *context);
 
-void sieve_result_cancel_implicit_keep(struct sieve_result *result);
+bool sieve_result_implicit_keep
+    (struct sieve_result *result, bool rollback);
 
 int sieve_result_execute
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,

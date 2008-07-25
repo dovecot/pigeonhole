@@ -1,6 +1,8 @@
 Next (in order of descending priority/precedence):
 * Improve handling of old/corrupt binaries.
 * Resolve problems in variables extension: scope uses hash the wrong way.
+* Resolve errors and code duplication in operation implementations that
+  read optional operands.
 
 * Full standards compliance review for the engine and all fully implemented 
   sieve extensions. Issues discovered so far:
@@ -17,6 +19,8 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A FIRST RELEASE ##
 
+* Imapflags: merge execution of setflags, removeflags and addflags into one 
+  common implementation. 
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
 * Verify outgoing mail addresses at runtime when necessary (e.g. after variables 
@@ -42,8 +46,6 @@ Next (in order of descending priority/precedence):
 * Automate script tests; i.e. build a test suite.
 
 * Use lib/str-find.h for :contains and :matches match types  
-* Resolve code duplication introduced for handling address-parts and match-types
-  in different command implementations.
 * Add development documentation, i.e. comment on library functions and document
   the binary and byte-code format. 
 * Make the engine and its extensions much more configurable. Possibly this can 
