@@ -153,13 +153,10 @@ static bool ext_fileinto_operation_dump
         return FALSE;
 
 	if ( !sieve_code_dumper_print_optional_operands(denv, address) ) {
-		sieve_binary_corrupt(denv->sbin, 
-			"FILEINTO: failed to dump optional operands");
 		return FALSE;
 	}
 
 	if ( !sieve_opr_string_dump(denv, address) ) {
-		sieve_binary_corrupt(denv->sbin, "FILEINTO: failed to dump string operand");
 		return FALSE;
 	}
 	
@@ -180,14 +177,16 @@ static int ext_fileinto_operation_execute
 	int ret = 0;
 
 	/* Source line */
-    if ( !sieve_code_source_line_read(renv, address, &source_line) )
+    if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
+		sieve_runtime_trace_error(renv, "invalid source line");
         return SIEVE_EXEC_BIN_CORRUPT;
+	}
 	
-	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_interpreter_handle_optional_operands(renv, address, &slist)) <= 0 )
+		return ret;
 
 	if ( !sieve_opr_string_read(renv, address, &folder) ) {
-		sieve_binary_corrupt(renv->sbin, "FILEINTO: failed to read string operand");
+		sieve_runtime_trace_error(renv, "invalid folder operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 

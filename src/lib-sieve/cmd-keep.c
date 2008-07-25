@@ -107,10 +107,9 @@ static int cmd_keep_operation_execute
 	}
 	
 	/* Optional operands (side effects only) */
-	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) ) {
-		sieve_runtime_trace_error(renv, "invalid optional operands");
-		return SIEVE_EXEC_BIN_CORRUPT;
-	}
+	if ( (ret=sieve_interpreter_handle_optional_operands
+		(renv, address, &slist)) <= 0 ) 
+		return ret;
 
 	sieve_runtime_trace(renv, "KEEP action");
 	

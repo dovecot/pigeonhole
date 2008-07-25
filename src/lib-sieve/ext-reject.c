@@ -217,16 +217,21 @@ static int ext_reject_operation_execute
 	int ret;
 
 	/* Source line */
-    if ( !sieve_code_source_line_read(renv, address, &source_line) )
+    if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
+		sieve_runtime_trace_error(renv, "invalid source line");
         return SIEVE_EXEC_BIN_CORRUPT;
+	}
 	
 	/* Optional operands (side effects) */
-	if ( !sieve_interpreter_handle_optional_operands(renv, address, &slist) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_interpreter_handle_optional_operands
+		(renv, address, &slist)) <= 0 )
+		return ret;
 
 	/* Read rejection reason */
-	if ( !sieve_opr_string_read(renv, address, &reason) )
+	if ( !sieve_opr_string_read(renv, address, &reason) ) {
+		sieve_runtime_trace_error(renv, "invalid reason operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	sieve_runtime_trace(renv, "REJECT action (\"%s\")", str_c(reason));
 

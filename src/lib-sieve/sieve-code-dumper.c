@@ -117,7 +117,6 @@ bool sieve_code_dumper_print_optional_operands
 		
 		while ( opt_code != 0 ) {			
 			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) {
-				sieve_binary_corrupt(denv->sbin, "failed to read optional operand");
 				return FALSE;
 			}
 

@@ -105,7 +105,7 @@ const void *sieve_interpreter_extension_get_context
 
 /* Opcodes and operands */
 	
-bool sieve_interpreter_handle_optional_operands
+int sieve_interpreter_handle_optional_operands
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,
 		struct sieve_side_effects_list **list);
 

@@ -274,15 +274,6 @@ bool sieve_binary_script_older
 	return ( sieve_script_older(script, sbin->file->st.st_mtime) );
 }
 
-void sieve_binary_corrupt(struct sieve_binary *sbin, const char *fmt, ...)
-{
-	va_list args;
-	
-	va_start(args, fmt);
-	printf("BINARY CORRUPT: %s.\n", t_strdup_vprintf(fmt, args));
-	va_end(args);
-}
-
 /* 
  * Block management 
  */

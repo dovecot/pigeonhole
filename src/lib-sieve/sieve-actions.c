@@ -48,7 +48,6 @@ bool sieve_opr_side_effect_dump
 	if ( seffect->dump_context != NULL ) {
 		sieve_code_descend(denv);
 		if ( !seffect->dump_context(seffect, denv, address) ) {
-			sieve_binary_corrupt(denv->sbin, "failed to read side effect context");
 			return FALSE;	
 		}
 		sieve_code_ascend(denv);

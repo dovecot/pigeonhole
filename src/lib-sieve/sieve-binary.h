@@ -18,8 +18,6 @@ const char *sieve_binary_path(struct sieve_binary *sbin);
 bool sieve_binary_script_older
 	(struct sieve_binary *sbin, struct sieve_script *script);
 
-void sieve_binary_corrupt(struct sieve_binary *sbin, const char *fmt, ...);
-
 void sieve_binary_activate(struct sieve_binary *sbin);
 
 bool sieve_binary_save

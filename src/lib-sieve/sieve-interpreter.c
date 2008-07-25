@@ -293,7 +293,7 @@ bool sieve_interpreter_get_test_result
 
 /* Operations and operands */
 
-bool sieve_interpreter_handle_optional_operands
+int sieve_interpreter_handle_optional_operands
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,
 		struct sieve_side_effects_list **list)
 {
@@ -301,8 +301,10 @@ bool sieve_interpreter_handle_optional_operands
 	
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) )
-				return FALSE;
+			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
+				sieve_runtime_trace_error(renv, "invalid optional operand");
+				return SIEVE_EXEC_BIN_CORRUPT;
+			}
 
 			if ( opt_code == SIEVE_OPT_SIDE_EFFECT ) {
 				void *context = NULL;
@@ -313,12 +315,17 @@ bool sieve_interpreter_handle_optional_operands
 				const struct sieve_side_effect *seffect = 
 					sieve_opr_side_effect_read(renv, address);
 
-				if ( seffect == NULL ) return FALSE;
+				if ( seffect == NULL ) {
+					sieve_runtime_trace_error(renv, "invalid side effect operand");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
 			
 				if ( list != NULL ) {
 					if ( seffect->read_context != NULL && !seffect->read_context
-						(seffect, renv, address, &context) )
-						return FALSE;
+						(seffect, renv, address, &context) ) {
+						sieve_runtime_trace_error(renv, "invalid side effect context");
+						return SIEVE_EXEC_BIN_CORRUPT;
+					}
 				
 					sieve_side_effects_list_add(*list, seffect, context);
 				}
