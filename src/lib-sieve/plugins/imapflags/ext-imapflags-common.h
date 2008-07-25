@@ -35,7 +35,7 @@ bool ext_imapflags_command_operation_dump
 (const struct sieve_operation *op,	
 	const struct sieve_dumptime_env *denv, sieve_size_t *address);
 	
-bool ext_imapflags_command_operands_read
+int ext_imapflags_command_operands_read
 (	const struct sieve_runtime_env *renv, sieve_size_t *address,
 	struct sieve_coded_stringlist **flag_list, 
 	struct sieve_variable_storage **storage, unsigned int *var_index);

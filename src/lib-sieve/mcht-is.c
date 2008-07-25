@@ -6,6 +6,7 @@
 
 #include "sieve-match-types.h"
 #include "sieve-comparators.h"
+#include "sieve-match.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -14,7 +15,7 @@
  * Forward declarations 
  */
 
-static bool mcht_is_match
+static int mcht_is_match
 	(struct sieve_match_context *mctx, const char *val1, size_t val1_size, 
 		const char *key, size_t key_size, int key_index);
 
@@ -34,7 +35,7 @@ const struct sieve_match_type is_match_type = {
  * Match-type implementation
  */
 
-static bool mcht_is_match
+static int mcht_is_match
 (struct sieve_match_context *mctx ATTR_UNUSED, 
 	const char *val1, size_t val1_size, 
 	const char *key, size_t key_size, int key_index ATTR_UNUSED)

@@ -24,7 +24,8 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
-#include "sieve-code-dumper.h"
+#include "sieve-dump.h"
+#include "sieve-match.h"
 
 /*
  * Forward declarations
@@ -236,20 +237,29 @@ static int ext_envelope_operation_execute
 	struct sieve_coded_stringlist *key_list;
 	string_t *hdr_item;
 	bool matched;
+	int ret;
+
+	/*
+	 * Read operands
+	 */
 	
 	sieve_runtime_trace(renv, "ENVELOPE test");
 
-	if ( !sieve_addrmatch_default_get_optionals
-		(renv, address, &addrp, &mtch, &cmp) )
-		return SIEVE_EXEC_BIN_CORRUPT; 
+	if ( (ret=sieve_addrmatch_default_get_optionals
+		(renv, address, &addrp, &mtch, &cmp)) <= 0 )
+		return ret; 
 
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL )
+	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
+		sieve_runtime_trace_error(renv, "invalid header-list operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) 
+	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
+		sieve_runtime_trace_error(renv, "invalid key-list operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 	
 	/* Initialize match */
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, key_list);
@@ -257,7 +267,8 @@ static int ext_envelope_operation_execute
 	/* Iterate through all requested headers to match */
 	hdr_item = NULL;
 	matched = FALSE;
-	while ( !matched && (result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
+	while ( result && !matched && 
+		(result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
 		&& hdr_item != NULL ) {
 		const char *const *fields;
 			
@@ -265,14 +276,21 @@ static int ext_envelope_operation_execute
 			
 			int i;
 			for ( i = 0; !matched && fields[i] != NULL; i++ ) {
-				if ( sieve_address_match(addrp, mctx, fields[i]) )
-					matched = TRUE;				
+				if ( (ret=sieve_address_match(addrp, mctx, fields[i])) < 0 ) {
+					result = FALSE;
+					break;
+				}
+			
+				matched = ret > 0;				
 			} 
 		}
 	}
 	
 	/* Finish match */
-	matched = sieve_match_end(mctx) || matched;
+	if ( (ret=sieve_match_end(mctx)) < 0 ) 
+		result = FALSE;
+	else
+		matched = ( ret > 0 || matched );
 
 	if ( result ) {
 		/* Set test result for subsequent conditional jump */
@@ -280,6 +298,7 @@ static int ext_envelope_operation_execute
 		return SIEVE_EXEC_OK;
 	}
 	
+	sieve_runtime_trace_error(renv, "invalid string-list item");	
 	return SIEVE_EXEC_BIN_CORRUPT;
 }
 

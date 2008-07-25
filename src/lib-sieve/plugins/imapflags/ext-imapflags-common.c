@@ -145,26 +145,31 @@ bool ext_imapflags_command_operation_dump
 	return ext_imapflags_command_operands_dump(denv, address); 
 }
 
-bool ext_imapflags_command_operands_read
-(	const struct sieve_runtime_env *renv, sieve_size_t *address,
+int ext_imapflags_command_operands_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
 	struct sieve_coded_stringlist **flag_list, 
 	struct sieve_variable_storage **storage, unsigned int *var_index)
 {
 	sieve_size_t op_address = *address;
 	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
 
-	if ( operand == NULL ) 
-		return FALSE;
+	if ( operand == NULL ) {
+		sieve_runtime_trace_error(renv, "invalid operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 		
 	if ( sieve_operand_is_variable(operand) ) {		
 		/* Read the variable operand */
 		if ( !sieve_variable_operand_read_data
-			(renv, operand, address, storage, var_index) )
-			return FALSE;
+			(renv, operand, address, storage, var_index) ) {
+			sieve_runtime_trace_error(renv, "invalid variable operand");
+			return SIEVE_EXEC_BIN_CORRUPT;
+		}
 		
 		/* Read flag list */
 		if ( (*flag_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-			return FALSE;
+			sieve_runtime_trace_error(renv, "invalid flag-list operand");
+			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 	} else if ( sieve_operand_is_stringlist(operand) ) {	
 		*storage = NULL;
@@ -173,13 +178,16 @@ bool ext_imapflags_command_operands_read
 		/* Read flag list */
 		if ( (*flag_list=sieve_opr_stringlist_read_data
 			(renv, operand, op_address, address)) == NULL ) {
-			return FALSE;
+			sieve_runtime_trace_error(renv, "invalid flag-list operand");
+			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 	} else {
-		return FALSE;
+		sieve_runtime_trace_error(renv, "unexpected operand '%s'", 
+			operand->name);
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 /* Flags tag registration */

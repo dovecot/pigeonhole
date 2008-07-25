@@ -212,14 +212,14 @@ void testsuite_test_fail(string_t *reason)
 {	
 	if ( str_len(test_name) == 0 ) {
 		if ( reason == NULL || str_len(reason) == 0 )
-			printf("%d: Test FAILED\n", test_index);
+			printf("%2d: Test FAILED\n", test_index);
 		else
-			printf("%d: Test FAILED: %s\n", test_index, str_c(reason));
+			printf("%2d: Test FAILED: %s\n", test_index, str_c(reason));
 	} else {
 		if ( reason == NULL || str_len(reason) == 0 )
-			printf("%d: Test '%s' FAILED\n", test_index, str_c(test_name));
+			printf("%2d: Test '%s' FAILED\n", test_index, str_c(test_name));
 		else
-			printf("%d: Test '%s' FAILED: %s\n", test_index, 
+			printf("%2d: Test '%s' FAILED: %s\n", test_index, 
 				str_c(test_name), str_c(reason));
 	}
 
@@ -228,18 +228,28 @@ void testsuite_test_fail(string_t *reason)
 	test_failures++;
 }
 
+void testsuite_testcase_fail(const char *reason)
+{	
+	if ( reason == NULL || *reason == '\0' )
+		printf("XX: Test CASE FAILED\n");
+	else
+		printf("XX: Test CASE FAILED: %s\n", reason);
+
+	test_failures++;
+}
+
 void testsuite_test_succeed(string_t *reason)
 {
 	if ( str_len(test_name) == 0 ) {
 		if ( reason == NULL || str_len(reason) == 0 )
-			printf("%d: Test SUCCEEDED\n", test_index);
+			printf("%2d: Test SUCCEEDED\n", test_index);
 		else
-			printf("%d: Test SUCCEEDED: %s\n", test_index, str_c(reason));
+			printf("%2d: Test SUCCEEDED: %s\n", test_index, str_c(reason));
 	} else {
 		if ( reason == NULL || str_len(reason) == 0 )
-			printf("%d: Test '%s' SUCCEEDED\n", test_index, str_c(test_name));
+			printf("%2d: Test '%s' SUCCEEDED\n", test_index, str_c(test_name));
 		else
-			printf("%d: Test '%s' SUCCEEDED: %s\n", test_index, 
+			printf("%2d: Test '%s' SUCCEEDED: %s\n", test_index, 
 				str_c(test_name), str_c(reason));
 	}
 	str_truncate(test_name, 0);

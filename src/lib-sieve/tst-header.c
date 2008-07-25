@@ -10,6 +10,7 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
+#include "sieve-match.h"
 
 /* 
  * Header test 
@@ -178,6 +179,7 @@ static int tst_header_operation_execute
 	struct sieve_coded_stringlist *key_list;
 	string_t *hdr_item;
 	bool matched;
+	int ret;
 	
 	/* Handle any optional arguments */
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
@@ -231,22 +233,30 @@ static int tst_header_operation_execute
 	/* Iterate through all requested headers to match */
 	hdr_item = NULL;
 	matched = FALSE;
-	while ( !matched && (result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
+	while ( result && !matched && 
+		(result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
 		&& hdr_item != NULL ) {
 		const char *const *headers;
 			
 		if ( mail_get_headers_utf8(renv->msgdata->mail, str_c(hdr_item), &headers) >= 0 ) {	
-			
 			int i;
+
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
-				if ( sieve_match_value(mctx, headers[i], strlen(headers[i])) )
-					matched = TRUE;				
+				if ( (ret=sieve_match_value(mctx, headers[i], strlen(headers[i]))) < 0 ) {
+					result = FALSE;
+					break;
+				}
+
+				matched = ret > 0;				
 			} 
 		}
 	}
 
 	/* Finish match */
-	matched = sieve_match_end(mctx) || matched;
+	if ( (ret=sieve_match_end(mctx)) < 0 ) 
+		result = FALSE;
+	else
+		matched = ( ret > 0 || matched );
 	
 	/* Set test result for subsequent conditional jump */
 	if ( result ) {
@@ -254,6 +264,6 @@ static int tst_header_operation_execute
 		return SIEVE_EXEC_OK;
 	}	
 
-	sieve_runtime_trace_error(renv, "invalid header-list item");
+	sieve_runtime_trace_error(renv, "invalid string-list item");
 	return SIEVE_EXEC_BIN_CORRUPT;
 }

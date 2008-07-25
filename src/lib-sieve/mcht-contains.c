@@ -5,6 +5,7 @@
 
 #include "sieve-match-types.h"
 #include "sieve-comparators.h"
+#include "sieve-match.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -13,7 +14,7 @@
  * Forward declarations
  */ 
 
-static bool mcht_contains_match
+static int mcht_contains_match
 	(struct sieve_match_context *mctx, const char *val, size_t val_size, 
 		const char *key, size_t key_size, int key_index);
 
@@ -38,7 +39,7 @@ const struct sieve_match_type contains_match_type = {
 /* FIXME: Naive substring match implementation. Should switch to more 
  * efficient algorithm if large values need to be searched (e.g. message body).
  */
-static bool mcht_contains_match
+static int mcht_contains_match
 (struct sieve_match_context *mctx, const char *val, size_t val_size, 
 	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {

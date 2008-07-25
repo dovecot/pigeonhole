@@ -8,6 +8,7 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
+#include "sieve-match.h"
 
 #include "ext-imapflags-common.h"
 
@@ -160,6 +161,8 @@ static int tst_hasflag_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	int ret = SIEVE_EXEC_OK;
+	int mret;
 	int opt_code = 1;
 	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
@@ -170,7 +173,6 @@ static int tst_hasflag_operation_execute
 	struct ext_imapflags_iter iter;
 	const char *flag;
 	bool matched;
-	int ret;
 	
 	/*
 	 * Read operands
@@ -215,17 +217,27 @@ static int tst_hasflag_operation_execute
 
 	ext_imapflags_get_flags_init(&iter, renv, storage, var_index);
 	
-	while ( (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
-		if ( sieve_match_value(mctx, flag, strlen(flag)) )
-			matched = TRUE; 	
+	while ( !matched && (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
+		if ( (mret=sieve_match_value(mctx, flag, strlen(flag))) < 0 ) {
+			sieve_runtime_trace_error(renv, "invalid string list item");
+			ret = SIEVE_EXEC_BIN_CORRUPT;
+			break;
+		}
+
+		matched = ( mret > 0 ); 	
 	}
 
-	matched = sieve_match_end(mctx) || matched; 	
+	if ( (mret=sieve_match_end(mctx)) < 0 ) {
+		sieve_runtime_trace_error(renv, "invalid string list item");
+		ret = SIEVE_EXEC_BIN_CORRUPT;
+	} else
+		matched = ( mret > 0 || matched ); 	
 	
 	/* Assign test result */
-	sieve_interpreter_set_test_result(renv->interp, matched);
+	if ( ret == SIEVE_EXEC_OK )
+		sieve_interpreter_set_test_result(renv->interp, matched);
 	
-	return SIEVE_EXEC_OK;
+	return ret;
 }
 
 

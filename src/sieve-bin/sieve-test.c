@@ -47,11 +47,8 @@ int main(int argc, char **argv)
 	struct ostream *teststream;
 	bool force_compile = FALSE;
 	int ret;
-
-#ifdef SIEVE_RUNTIME_TRACE
 	bool trace = FALSE;
 	struct ostream *trace_stream = FALSE;
-#endif
 
 	bin_init();
 
@@ -151,12 +148,10 @@ int main(int argc, char **argv)
 
 	teststream = o_stream_create_fd(1, 0, FALSE);	
 
-#ifdef SIEVE_RUNTIME_TRACE
 	if ( trace )
 		trace_stream = teststream;
 	else
 		trace_stream = NULL;
-#endif
 
 	/* Run the test */
 	ret = sieve_test

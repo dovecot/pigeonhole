@@ -73,6 +73,7 @@ test_cases = \
 	tests/comparators/core.svtest \
 	tests/match-types/contains.svtest \
 	tests/match-types/matches.svtest \
+	tests/match-types/relational.svtest \
 	tests/address-parts/subaddress.svtest \
 	tests/extensions/variables/basic.svtest \
 	tests/extensions/include/variables.svtest \

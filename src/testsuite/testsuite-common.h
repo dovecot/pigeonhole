@@ -68,6 +68,7 @@ void testsuite_test_fail(string_t *reason);
 void testsuite_test_succeed(string_t *reason);
 void testsuite_test_context_deinit(void);
 
+void testsuite_testcase_fail(const char *reason);
 int testsuite_testcase_result(void);
 
 #endif /* __TESTSUITE_COMMON_H */

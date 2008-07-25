@@ -10,6 +10,7 @@
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
+#include "sieve-match.h"
 
 #include "ext-body-common.h"
 
@@ -310,6 +311,8 @@ static int ext_body_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	int ret = SIEVE_EXEC_OK;
+	int mret;
 	int opt_code = 1;
 	const struct sieve_comparator *cmp = &i_octet_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
@@ -393,15 +396,26 @@ static int ext_body_operation_execute
 	/* Iterate through all requested body parts to match */
 	matched = FALSE;
 	while ( !matched && body_parts->content != NULL ) {
-		if ( sieve_match_value(mctx, body_parts->content, body_parts->size) )
-			matched = TRUE;			
+		if ( (mret=sieve_match_value(mctx, body_parts->content, body_parts->size)) ) 
+		{
+			sieve_runtime_trace_error(renv, "invalid string list item");
+			ret = SIEVE_EXEC_BIN_CORRUPT;
+			break;
+		}
+		
+		matched = ( mret > 0 );			
 		body_parts++;	
 	}
 
-	matched = sieve_match_end(mctx) || matched; 	
+	if ( (mret=sieve_match_end(mctx)) < 0 ) {
+		sieve_runtime_trace_error(renv, "invalid string list item");
+		ret = SIEVE_EXEC_BIN_CORRUPT;
+	} else	
+		matched = ( mret > 0 || matched ); 	
 	
 	/* Set test result */	
-	sieve_interpreter_set_test_result(renv->interp, matched);
+	if ( ret == SIEVE_EXEC_OK )
+		sieve_interpreter_set_test_result(renv->interp, matched);
 
-	return SIEVE_EXEC_OK;
+	return ret;
 }

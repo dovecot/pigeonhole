@@ -12,6 +12,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-match.h"
 
 #include "ext-relational-common.h"
 
@@ -28,13 +29,13 @@ const struct sieve_match_type value_match_type = {
 
 #define VALUE_MATCH_TYPE(name, rel_match)                   \
 const struct sieve_match_type rel_match_value_ ## name = {  \
-	SIEVE_OBJECT(                                             \
-		"value-" #name, &rel_match_type_operand,                \
-		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match)),          \
-	TRUE,                                                     \
-	NULL, NULL, NULL,                                         \
-	mcht_value_match,                                         \
-	NULL                                                      \
+	SIEVE_OBJECT(                                           \
+		"value-" #name, &rel_match_type_operand,            \
+		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match)),      \
+	TRUE,                                                   \
+	NULL, NULL, NULL,                                       \
+	mcht_value_match,                                       \
+	NULL                                                    \
 }
 
 VALUE_MATCH_TYPE(gt, REL_MATCH_GREATER);
@@ -48,7 +49,7 @@ VALUE_MATCH_TYPE(ne, REL_MATCH_NOT_EQUAL);
  * Match-type implementation 
  */
 
-bool mcht_value_match
+int mcht_value_match
 (struct sieve_match_context *mctx, const char *val, size_t val_size, 
 	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {

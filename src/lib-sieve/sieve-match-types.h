@@ -21,19 +21,6 @@ extern const struct sieve_match_type is_match_type;
 extern const struct sieve_match_type contains_match_type;
 extern const struct sieve_match_type matches_match_type;
 
-/*
- * Matching context
- */
-
-struct sieve_match_context {
-	struct sieve_interpreter *interp;
-	const struct sieve_match_type *match_type;
-	const struct sieve_comparator *comparator;
-	struct sieve_coded_stringlist *key_list;
-
-	void *data;
-};
-
 struct sieve_match_type;
 struct sieve_match_type_context;
 
@@ -53,10 +40,10 @@ struct sieve_match_type {
 			struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg);
 			
 	void (*match_init)(struct sieve_match_context *mctx);
-	bool (*match)
+	int (*match)
 		(struct sieve_match_context *mctx, const char *val, size_t val_size, 
 			const char *key, size_t key_size, int key_index);
-	bool (*match_deinit)(struct sieve_match_context *mctx);
+	int (*match_deinit)(struct sieve_match_context *mctx);
 };
 
 struct sieve_match_type_context {
@@ -151,12 +138,4 @@ bool sieve_match_substring_validate_context
     struct sieve_match_type_context *ctx, 
 	struct sieve_ast_argument *key_arg);
 
-struct sieve_match_context *sieve_match_begin
-(struct sieve_interpreter *interp, 
-	const struct sieve_match_type *mtch, const struct sieve_comparator *cmp,
-	struct sieve_coded_stringlist *key_list);
-bool sieve_match_value
-    (struct sieve_match_context *mctx, const char *value, size_t val_size);
-bool sieve_match_end(struct sieve_match_context *mctx);
-		
 #endif /* __SIEVE_MATCH_TYPES_H */

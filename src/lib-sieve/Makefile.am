@@ -74,6 +74,7 @@ libsieve_la_SOURCES = \
 	sieve-comparators.c \
 	sieve-match-types.c \
 	sieve-address-parts.c \
+	sieve-match.c \
 	sieve-commands.c \
 	sieve-code.c \
 	sieve-actions.c \
@@ -105,6 +106,7 @@ noinst_HEADERS = \
 	sieve-result.h \
 	sieve-error.h \
 	sieve-error-private.h \
+	sieve-match.h \
 	sieve-comparators.h \
 	sieve-match-types.h \
 	sieve-address-parts.h \

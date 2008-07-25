@@ -15,6 +15,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-match.h"
 
 #include "ext-relational-common.h"
 
@@ -23,10 +24,10 @@
  */
 
 static void mcht_count_match_init(struct sieve_match_context *mctx);
-static bool mcht_count_match
+static int mcht_count_match
 	(struct sieve_match_context *mctx, const char *val, size_t val_size, 
 		const char *key, size_t key_size, int key_index);
-static bool mcht_count_match_deinit(struct sieve_match_context *mctx);
+static int mcht_count_match_deinit(struct sieve_match_context *mctx);
 
 /* 
  * Match-type objects
@@ -39,11 +40,11 @@ const struct sieve_match_type count_match_type = {
 	NULL, NULL, NULL, NULL
 };
 
-#define COUNT_MATCH_TYPE(name, rel_match)                   \
-const struct sieve_match_type rel_match_count_ ## name = {  \
+#define COUNT_MATCH_TYPE(name, rel_match)                     \
+const struct sieve_match_type rel_match_count_ ## name = {    \
 	SIEVE_OBJECT(                                             \
-		"count-" #name, &rel_match_type_operand,                \
-		REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match)),          \
+		"count-" #name, &rel_match_type_operand,              \
+		REL_MATCH_INDEX(RELATIONAL_COUNT, rel_match)),        \
 	FALSE,                                                    \
 	NULL, NULL,                                               \
 	mcht_count_match_init,                                    \
@@ -67,29 +68,27 @@ static void mcht_count_match_init(struct sieve_match_context *mctx)
 	mctx->data = (void *) 0;
 }
 
-static bool mcht_count_match
+static int mcht_count_match
 (struct sieve_match_context *mctx, 
 	const char *val ATTR_UNUSED, size_t val_size ATTR_UNUSED, 
 	const char *key ATTR_UNUSED, size_t key_size ATTR_UNUSED,
-	 int key_index) 
+	int key_index) 
 {
-	unsigned int val_count = (unsigned int) mctx->data;
-
 	/* Count values */
 	if ( key_index == -1 ) {
-		val_count++;
-		mctx->data = (void *) val_count;	
+		mctx->data = (void *) (((int) mctx->data) + 1);
 	}
 
 	return FALSE;
 }
 
-static bool mcht_count_match_deinit(struct sieve_match_context *mctx)
+static int mcht_count_match_deinit(struct sieve_match_context *mctx)
 {
 	unsigned int val_count = (unsigned int) mctx->data;
 	int key_index;
 	string_t *key_item;
     sieve_coded_stringlist_reset(mctx->key_list);
+	bool ok = TRUE;
 
 	string_t *value = t_str_new(20);
 	str_printfa(value, "%d", val_count);
@@ -97,8 +96,8 @@ static bool mcht_count_match_deinit(struct sieve_match_context *mctx)
     /* Match to all key values */
     key_index = 0;
     key_item = NULL;
-    while ( sieve_coded_stringlist_next_item(mctx->key_list, &key_item) &&
-        key_item != NULL )
+    while ( (ok=sieve_coded_stringlist_next_item(mctx->key_list, &key_item)) 
+		&& key_item != NULL )
     {
         if ( mcht_value_match
 			(mctx, str_c(value), str_len(value), str_c(key_item), 
@@ -108,7 +107,7 @@ static bool mcht_count_match_deinit(struct sieve_match_context *mctx)
         key_index++;
     }
 
-	return FALSE;
+	return ( ok ? FALSE : -1 );
 }
 
 

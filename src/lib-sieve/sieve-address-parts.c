@@ -17,6 +17,7 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
+#include "sieve-match.h"
 
 #include "sieve-address-parts.h"
 
@@ -183,11 +184,11 @@ const struct sieve_operand address_part_operand = {
  * Address Matching
  */
  
-bool sieve_address_match
+int sieve_address_match
 (const struct sieve_address_part *addrp, struct sieve_match_context *mctx, 		
 	const char *data)
 {
-	bool matched = FALSE;
+	int result = FALSE;
 	const struct message_address *addr;
 
 	T_BEGIN {
@@ -195,7 +196,7 @@ bool sieve_address_match
 			(pool_datastack_create(), (const unsigned char *) data, 
 				strlen(data), 256, FALSE);
 	
-		while (!matched && addr != NULL) {
+		while ( result == 0 && addr != NULL) {
 			/* mailbox@domain */
 			const char *part;
 			
@@ -203,14 +204,14 @@ bool sieve_address_match
 
 			part = addrp->extract_from(addr);
 			
-			if ( part != NULL && sieve_match_value(mctx, part, strlen(part)) )
-				matched = TRUE;				
+			if ( part != NULL )
+				result=sieve_match_value(mctx, part, strlen(part));
 
 			addr = addr->next;
 		}
 	} T_END;
 	
-	return matched;
+	return result;
 }
 
 /* 

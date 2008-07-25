@@ -9,6 +9,7 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
+#include "sieve-match.h"
 
 #include "ext-variables-common.h"
 
@@ -175,6 +176,7 @@ static int tst_string_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	int mret;
 	bool result = TRUE;
 	int opt_code = 1;
 	const struct sieve_comparator *cmp = &i_octet_comparator;
@@ -242,21 +244,29 @@ static int tst_string_operation_execute
 	/* Iterate through all requested strings to match */
 	src_item = NULL;
 	matched = FALSE;
-	while ( !matched && 
+	while ( result && !matched && 
 		(result=sieve_coded_stringlist_next_item(source, &src_item)) 
 		&& src_item != NULL ) {
-			
-		if ( sieve_match_value(mctx, str_c(src_item), str_len(src_item)) )
-			matched = TRUE;				
+
+		if ( (mret=sieve_match_value
+			(mctx, str_c(src_item), str_len(src_item))) < 0 ) {
+			result = FALSE;
+			break;
+		}
+		
+		matched = ( mret > 0 );				
 	}
 
-	matched = sieve_match_end(mctx) || matched; 	
+	if ( (mret=sieve_match_end(mctx)) < 0 ) 
+		result = FALSE;
+	else
+		matched = ( mret > 0 || matched ); 	
 	
 	if ( result ) {
 		sieve_interpreter_set_test_result(renv->interp, matched);
 		return SIEVE_EXEC_OK;
 	}
 	
-	sieve_runtime_trace_error(renv, "invalid key-list item");
+	sieve_runtime_trace_error(renv, "invalid string list item");
 	return SIEVE_EXEC_BIN_CORRUPT;
 }

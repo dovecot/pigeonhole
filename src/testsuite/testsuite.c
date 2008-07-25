@@ -141,15 +141,27 @@ static void print_help(void)
 }
 
 static int testsuite_run
-(struct sieve_binary *sbin, const struct sieve_script_env *scriptenv)
+(struct sieve_binary *sbin, const struct sieve_script_env *scriptenv,
+	bool trace)
 {
 	struct sieve_error_handler *ehandler = sieve_stderr_ehandler_create(0);
-	struct sieve_result *sres = sieve_result_create(ehandler);
-	struct sieve_interpreter *interp =
-		sieve_interpreter_create(sbin, ehandler, NULL);
+	struct sieve_result *sres = sieve_result_create(ehandler);	
+	struct sieve_interpreter *interp;
 	int ret = 0;
 
-    ret = sieve_interpreter_run(interp, &testsuite_msgdata, scriptenv, &sres);
+	if ( trace ) {
+		struct ostream *tstream = o_stream_create_fd(1, 0, FALSE);
+		
+		interp=sieve_interpreter_create(sbin, ehandler, tstream);
+		
+	    ret = sieve_interpreter_run(interp, &testsuite_msgdata, scriptenv, &sres);
+	
+		o_stream_destroy(&tstream);
+	} else {
+		interp=sieve_interpreter_create(sbin, ehandler, NULL);
+
+	    ret = sieve_interpreter_run(interp, &testsuite_msgdata, scriptenv, &sres);
+	}
 
 	sieve_interpreter_free(&interp);
 	sieve_result_unref(&sres);
@@ -163,11 +175,12 @@ int main(int argc, char **argv)
 {
 	const char *scriptfile, *dumpfile; 
 	const char *user;
-	int i;
+	int i, ret;
 	pool_t namespaces_pool;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
 	struct sieve_script_env scriptenv;
+	bool trace = FALSE;
 
 	testsuite_init();
 
@@ -180,6 +193,11 @@ int main(int argc, char **argv)
 			if (i == argc)
 				i_fatal("Missing -d argument");
 			dumpfile = argv[i];
+#ifdef SIEVE_RUNTIME_TRACE
+		} else if (strcmp(argv[i], "-t") == 0) {
+			/* runtime trace */
+			trace = TRUE;
+#endif
 		} else if ( scriptfile == NULL ) {
 			scriptfile = argv[i];
 		} else {
@@ -219,7 +237,21 @@ int main(int argc, char **argv)
 	scriptenv.username = user;
 
 	/* Run the test */
-	(void) testsuite_run(sbin, &scriptenv);
+	ret = testsuite_run(sbin, &scriptenv, trace);
+
+	switch ( ret ) {
+	case SIEVE_EXEC_OK:
+		break;
+	case SIEVE_EXEC_FAILURE:
+	case SIEVE_EXEC_KEEP_FAILED:
+		testsuite_testcase_fail("execution aborted");
+		break;
+	case SIEVE_EXEC_BIN_CORRUPT:
+        testsuite_testcase_fail("binary corrupt");
+		break;
+	default:
+		testsuite_testcase_fail("unknown execution exit code");
+	}
 
 	sieve_close(&sbin);
 

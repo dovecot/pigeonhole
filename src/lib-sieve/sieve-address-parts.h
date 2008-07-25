@@ -89,7 +89,7 @@ static inline bool sieve_opr_address_part_dump
 
 /* Match utility */
 
-bool sieve_address_match
+int sieve_address_match
 (const struct sieve_address_part *addrp, struct sieve_match_context *mctx,
     const char *data);
 

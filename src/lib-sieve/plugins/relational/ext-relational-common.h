@@ -44,7 +44,7 @@ extern const struct sieve_match_type_extension relational_match_extension;
 bool mcht_relational_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_match_type_context *ctx);
-bool mcht_value_match
+int mcht_value_match
     (struct sieve_match_context *mctx, const char *val, size_t val_size,
         const char *key, size_t key_size, int key_index);
 

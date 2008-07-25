@@ -13,6 +13,7 @@
 #include "sieve-validator.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
+#include "sieve-match.h"
 
 #include "ext-regex-common.h"
 
@@ -29,11 +30,11 @@
  * Forward declarations 
  */
 
-void mcht_regex_match_init(struct sieve_match_context *mctx);
-static bool mcht_regex_match
+static void mcht_regex_match_init(struct sieve_match_context *mctx);
+static int mcht_regex_match
 	(struct sieve_match_context *mctx, const char *val, size_t val_size,
     	const char *key, size_t key_size, int key_index);
-bool mcht_regex_match_deinit(struct sieve_match_context *mctx);
+static int mcht_regex_match_deinit(struct sieve_match_context *mctx);
 
 bool mcht_regex_validate_context
 (struct sieve_validator *validator, struct sieve_ast_argument *arg,
@@ -165,7 +166,7 @@ struct mcht_regex_context {
 	size_t nmatch;
 };
 
-void mcht_regex_match_init
+static void mcht_regex_match_init
 	(struct sieve_match_context *mctx)
 {
 	struct mcht_regex_context *ctx = 
@@ -222,7 +223,7 @@ static regex_t *mcht_regex_get
 	return *rxp;
 }
 
-static bool mcht_regex_match
+static int mcht_regex_match
 (struct sieve_match_context *mctx, 
 	const char *val, size_t val_size ATTR_UNUSED, 
 	const char *key, size_t key_size ATTR_UNUSED, int key_index)
@@ -260,7 +261,7 @@ static bool mcht_regex_match
 	return FALSE;
 }
 
-bool mcht_regex_match_deinit
+int mcht_regex_match_deinit
 	(struct sieve_match_context *mctx)
 {
 	struct mcht_regex_context *ctx = (struct mcht_regex_context *) mctx->data;
