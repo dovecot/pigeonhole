@@ -75,6 +75,7 @@ test_cases = \
 	tests/match-types/matches.svtest \
 	tests/address-parts/subaddress.svtest \
 	tests/extensions/variables/basic.svtest \
+	tests/extensions/include/variables.svtest \
 	tests/compile/compile.svtest \
 	tests/compile/compile-examples.svtest
 

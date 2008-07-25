@@ -40,7 +40,7 @@ enum ext_include_script_location {
 
 /* Script access */
 
-const char *ext_include_get_script_path
+const char *ext_include_get_script_directory
 	(enum ext_include_script_location location, const char *script_name);
 
 /* Generator */

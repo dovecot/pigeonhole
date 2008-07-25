@@ -174,22 +174,31 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	struct cmd_include_context_data *ctx_data = 
 		(struct cmd_include_context_data *) cmd->data;
 	struct sieve_script *script;
-	const char *script_path, *script_name;
+	const char *script_dir, *script_name;
 	
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "value", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-		
+
 	/* Find the script */
+
 	script_name = sieve_ast_argument_strc(arg);
-	script_path = ext_include_get_script_path(ctx_data->location, script_name);
-	if ( script_path == NULL )
+		
+	script_dir = ext_include_get_script_directory
+		(ctx_data->location, script_name);
+	if ( script_dir == NULL ) {
+		 sieve_command_validate_error(validator, cmd,
+            "specified location for included script '%s' is unavalable "
+			"(system logs should provide more information)",
+			script_name);
 		return FALSE;
+	}
 	
 	/* Create script object */
-	if ( (script = sieve_script_create(script_path, script_name, 
-		sieve_validator_error_handler(validator), NULL)) == NULL ) 
+	script = sieve_script_create_in_directory(script_dir, script_name, 
+		sieve_validator_error_handler(validator), NULL);
+	if ( script == NULL ) 
 		return FALSE;	
 		
 	sieve_ast_link_object(cmd->ast_node, &cmd_include_ast_object);

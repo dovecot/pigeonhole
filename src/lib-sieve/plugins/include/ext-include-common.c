@@ -1,3 +1,6 @@
+#include "lib.h"
+#include "str-sanitize.h"
+
 #include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
@@ -10,6 +13,8 @@
 #include "ext-include-common.h"
 #include "ext-include-binary.h"
 #include "ext-include-variables.h"
+
+#include <stdlib.h>
 
 /*
  * Forward declarations
@@ -44,23 +49,37 @@ struct ext_include_interpreter_context {
  * Script access 
  */
 
-#define HARDCODED_PERSONAL_DIR "src/lib-sieve/plugins/include/"
-#define HARDCODED_GLOBAL_DIR "src/lib-sieve/plugins/include/"
-
-const char *ext_include_get_script_path
+const char *ext_include_get_script_directory
 (enum ext_include_script_location location, const char *script_name)
 {
-	/* FIXME: Hardcoded */	
+	const char *sieve_dir;
+
 	switch ( location ) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
-		return t_strconcat(HARDCODED_PERSONAL_DIR, script_name, ".sieve", NULL);
-	case EXT_INCLUDE_LOCATION_GLOBAL:
-		return t_strconcat(HARDCODED_GLOBAL_DIR, script_name, ".sieve", NULL);
-	default:
+        sieve_dir = getenv("SIEVE_DIR");
+
+        if (sieve_dir == NULL)
+            sieve_dir = getenv("HOME");
+        if (sieve_dir == NULL) {
+            sieve_sys_error("include: sieve_dir and home not set "
+                   "(wanted script %s)", str_sanitize(script_name, 80));
+            return NULL;
+        }
 		break;
+   	case EXT_INCLUDE_LOCATION_GLOBAL:
+		sieve_dir = getenv("SIEVE_GLOBAL_DIR");
+
+        if (sieve_dir == NULL) {
+            sieve_sys_warning("include: sieve_global_dir not set "
+                   "(wanted script %s)", str_sanitize(script_name, 80));
+            return NULL;
+        }
+		break;
+	default:
+		return NULL;
 	}
-	
-	return NULL;
+
+	return sieve_dir;
 }
 
 /* 

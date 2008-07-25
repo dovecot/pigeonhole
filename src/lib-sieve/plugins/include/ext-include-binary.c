@@ -189,7 +189,7 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 		unsigned int block_id;
 		enum ext_include_script_location location;
 		string_t *script_name;
-		const char *script_path;
+		const char *script_dir;
 		struct sieve_script *script;
 		
 		if ( 
@@ -211,9 +211,10 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 		}		
 		
 		/* Can we find/open the script dependency ? */
-		script_path = ext_include_get_script_path(location, str_c(script_name));		
-		if ( script_path == NULL || 
-			!(script=sieve_script_create(script_path, str_c(script_name), NULL, NULL)) ) {
+		script_dir = ext_include_get_script_directory(location, str_c(script_name));		
+		if ( script_dir == NULL || 
+			!(script=sieve_script_create_in_directory
+				(script_dir, str_c(script_name), NULL, NULL)) ) {
 			/* No, recompile */
 			return FALSE;
 		}

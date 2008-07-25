@@ -9,6 +9,10 @@ struct sieve_script *sieve_script_create
 	(const char *path, const char *name, 
 		struct sieve_error_handler *ehandler, bool *exists_r);
 
+struct sieve_script *sieve_script_create_in_directory
+	(const char *dirpath, const char *name,
+    	struct sieve_error_handler *ehandler, bool *exists_r);
+
 void sieve_script_ref(struct sieve_script *script);
 void sieve_script_unref(struct sieve_script **script);
 

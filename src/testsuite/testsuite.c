@@ -6,11 +6,15 @@
 #include "ostream.h"
 #include "hostpid.h"
 #include "mail-storage.h"
+#include "env-util.h"
 
 #include "mail-raw.h"
 #include "namespaces.h"
+
 #include "sieve.h"
 #include "sieve-extensions.h"
+#include "sieve-script.h"
+#include "sieve-binary.h"
 #include "sieve-result.h"
 #include "sieve-interpreter.h"
 
@@ -92,7 +96,7 @@ static struct sieve_binary *_compile_sieve_script(const char *filename)
 
 	if ( (sbin = sieve_compile(filename, ehandler)) == NULL ) {
 		sieve_error_handler_unref(&ehandler);
-		i_fatal("Failed to compile sieve script\n");
+		i_fatal("Failed to compile test script %s\n", filename);
 	}
 
 	sieve_error_handler_unref(&ehandler);
@@ -162,6 +166,7 @@ int main(int argc, char **argv)
 	int i;
 	pool_t namespaces_pool;
 	struct sieve_binary *sbin;
+	const char *sieve_dir;
 	struct sieve_script_env scriptenv;
 
 	testsuite_init();
@@ -189,6 +194,15 @@ int main(int argc, char **argv)
 	}
 
 	printf("Test case: %s:\n\n", scriptfile);
+
+	/* Initialize environment */
+	sieve_dir = strrchr(scriptfile, '/');
+    if ( sieve_dir == NULL )
+        sieve_dir="./";
+	else
+		sieve_dir = t_strdup_until(scriptfile, sieve_dir);
+
+	env_put(t_strconcat("SIEVE_DIR=", sieve_dir, NULL));
 	
 	/* Compile sieve script */
 	sbin = _compile_sieve_script(scriptfile);

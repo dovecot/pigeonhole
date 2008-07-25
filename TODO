@@ -1,7 +1,6 @@
 Next (in order of descending priority/precedence):
 * Improve handling of old/corrupt binaries.
-* Resolve problems in variables extension: scope uses hash the wrong way and
-  extension ids are emitted directly.
+* Resolve problems in variables extension: scope uses hash the wrong way.
 
 * Full standards compliance review for the engine and all fully implemented 
   sieve extensions. Issues discovered so far:
@@ -12,7 +11,6 @@ Next (in order of descending priority/precedence):
     - Header test does not strip trailing whitespace
 * Code cleanup 
 * Make sure cmusieve can be replaced seamlessly with the new plugin. Issues:
-    - Include: global and personal script directories are still hardcoded.  
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...
 * Make simple test suite for the base functionality

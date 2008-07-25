@@ -13,6 +13,30 @@
 
 #define SIEVE_READ_BLOCK_SIZE (1024*8)
 
+static inline const char *_sieve_scriptfile_get_basename(const char *filename)
+{
+	const char *ext;
+
+	/* Extract the script name */
+	ext = strrchr(filename, '.');
+	if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
+		return filename;
+	
+	return t_strdup_until(filename, ext);	
+}
+
+static inline const char *_sieve_scriptfile_from_name(const char *name)
+{
+    const char *ext;
+
+    /* See if it ends in .sieve already */
+    ext = strrchr(name, '.');
+    if ( ext == NULL || ext == name || strncmp(ext,".sieve",6) != 0 )
+        return t_strconcat(name, ".sieve", NULL);
+
+    return name;
+}
+
 /* Script object */
 struct sieve_script *sieve_script_init
 (struct sieve_script *script, const char *path, const char *name, 
@@ -39,14 +63,7 @@ struct sieve_script *sieve_script_init
 		}
 		
 		if ( name == NULL || *name == '\0' ) {
-			const char *ext;
-			
-			/* Extract the script name */
-			ext = strrchr(filename, '.');
-			if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
-				basename = filename;
-			else
-				basename = t_strdup_until(filename, ext);
+			basename = _sieve_scriptfile_get_basename(filename);
 		} else {
 			basename = name;
 		}
@@ -115,10 +132,27 @@ struct sieve_script *sieve_script_init
 	return script;
 }
 
-struct sieve_script *sieve_script_create(const char *path, const char *name,
-    struct sieve_error_handler *ehandler, bool *exists_r)
+struct sieve_script *sieve_script_create
+(const char *path, const char *name, 
+	struct sieve_error_handler *ehandler, bool *exists_r)
 {
 	return sieve_script_init(NULL, path, name, ehandler, exists_r);
+}
+
+struct sieve_script *sieve_script_create_in_directory
+(const char *dirpath, const char *name,
+    struct sieve_error_handler *ehandler, bool *exists_r)
+{
+	const char *path;
+
+	if ( dirpath[strlen(dirpath)-1] == '/' )
+		path = t_strconcat(dirpath, 
+			_sieve_scriptfile_from_name(name), NULL);
+	else
+		path = t_strconcat(dirpath, "/",
+			_sieve_scriptfile_from_name(name), NULL);
+
+    return sieve_script_init(NULL, path, name, ehandler, exists_r);
 }
 
 void sieve_script_ref(struct sieve_script *script)
