@@ -97,6 +97,7 @@ static int cmp_i_ascii_numeric_compare
 	const char *kend = key + key_size;
 	const char *vp = val;
 	const char *kp = key;
+	int digits, i;
 	
 	/* Ignore leading zeros */
 
@@ -106,25 +107,41 @@ static int cmp_i_ascii_numeric_compare
 	while ( *kp == '0' && kp < kend )  
 		kp++;
 
-	while ( vp < vend && kp < kend ) {
-		if ( !i_isdigit(*vp) || !i_isdigit(*kp) ) 
-			break;
+	/* Check whether both numbers are equally long in terms of digits */
 
-		if ( *vp != *kp ) 
-			break;
-
+	digits = 0;
+	while ( vp < vend && kp < kend && i_isdigit(*vp) && i_isdigit(*kp) ) {
 		vp++;
-		kp++;	
+		kp++;
+		digits++;	
 	}
 
 	if ( vp == vend || !i_isdigit(*vp) ) {
-		if ( kp == kend || !i_isdigit(*kp) ) 
-			return 0;
-		else	
+		if ( kp != kend && i_isdigit(*kp) ) {
+			/* Value is less */
 			return -1;
-	} else if ( kp == kend || !i_isdigit(*kp) )  
+		}
+	} else {
+		/* Value is greater */	
 		return 1;
+	}
+
+	/* Equally long: compare digits */
+
+	vp -= digits;
+	kp -= digits;
+	i = 0;
+	while ( i < digits ) {
+		if ( *vp > *kp )
+			return 1;
+		else if ( *vp < *kp )
+			return -1;
+
+		kp++;
+		vp++;
+		i++;
+	}
 		
-	return (*vp > *kp);
+	return 0;
 }
 
