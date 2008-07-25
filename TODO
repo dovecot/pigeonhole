@@ -10,7 +10,7 @@ Next (in order of descending priority/precedence):
       of the ADDRESS-PART argument specified.
     - Header test does not strip trailing whitespace
 * Code cleanup 
-* Make sure cmusieve can be replaced seamlessly with the new plugin. Issues:
+* Make sure cmusieve can be replaced seamlessly with the new plugin.
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...
 * Make simple test suite for the base functionality
