@@ -604,6 +604,16 @@ bool sieve_binary_save
 	struct ostream *stream;
 	int fd;
 	
+	/* Use default path if none is specified */
+	if ( path == NULL ) {
+		if ( sbin->script == NULL ) {
+			sieve_sys_error("cannot determine default binary save path "
+				"with missing script object");
+        	return FALSE;
+		}
+		path = sieve_script_binpath(sbin->script);
+	}
+
 	/* Open it as temp file first, as not to overwrite an existing just yet */
 	temp_path = t_strconcat(path, ".tmp", NULL);
 	fd = open(temp_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
@@ -629,6 +639,10 @@ bool sieve_binary_save
 	if ( !result ) {
 		/* Get rid of temp output (if any) */
 		(void) unlink(temp_path);
+	} else {
+		if ( sbin->path == NULL || strcmp(sbin->path, path) != 0 ) {
+			sbin->path = p_strdup(sbin->pool, path);
+		}
 	}
 	
 	return result;

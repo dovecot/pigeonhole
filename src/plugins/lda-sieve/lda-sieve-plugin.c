@@ -136,12 +136,55 @@ static int lda_sieve_run
 	/* Execute the script */	
 	
 	if ( debug )
-		sieve_sys_info("executing (in-memory) script %s", script_path);
+		sieve_sys_info("executing compiled script %s", script_path);
 
 	ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler, NULL);
 
-	if ( ret < 0 )
-		sieve_sys_error("failed to execute script %s", script_path);
+	if ( ret == SIEVE_EXEC_BIN_CORRUPT ) {
+		sieve_sys_warning("encountered corrupt binary: recompiling script %s", 
+			script_path);
+
+		/* 
+		 * Try again; possibly author forgot to increase binary version number 
+		 */
+
+		/* Close corrupt script */
+		sieve_close(&sbin);
+
+		/* Recompile */	
+	
+		sieve_error_handler_copy_masterlog(ehandler, FALSE);
+	
+		if ( (sbin=sieve_compile(script_path, ehandler)) == NULL ) {
+        	sieve_sys_error("failed to compile script %s; "
+            	"log should be available as %s", script_path, scriptlog);
+
+	        sieve_error_handler_unref(&ehandler);
+    	    return -1;
+    	}
+
+		sieve_error_handler_copy_masterlog(ehandler, TRUE);
+
+		/* Execute again */
+	
+		ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler, NULL);
+	}
+
+	switch ( ret ) {
+	case SIEVE_EXEC_FAILURE:
+		sieve_sys_error("execution of script %s failed, but implicit keep was successful", 
+			script_path);
+		break;
+	case SIEVE_EXEC_BIN_CORRUPT:		
+   	    sieve_sys_error("!!BUG!!: binary compiled from %s is still corrupt; bailing out", 
+			script_path);
+		break;
+	case SIEVE_EXEC_KEEP_FAILED:
+		sieve_sys_error("script %s failed with unsuccessful implicit keep", script_path);
+        break;
+	default:
+		break;
+	}
 
 	/* Clean up */
 	sieve_close(&sbin);

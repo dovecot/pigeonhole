@@ -10,6 +10,7 @@
 #include "mail-raw.h"
 #include "namespaces.h"
 #include "sieve.h"
+#include "sieve-binary.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -191,17 +192,19 @@ int main(int argc, char **argv)
 	/* Run */
 	switch ( sieve_execute(sbin, &msgdata, &scriptenv, ehandler, NULL) ) {
 	case SIEVE_EXEC_OK:
-		i_info("Final result: success\n");
+		i_info("Final result: success");
 		break;
 	case SIEVE_EXEC_FAILURE:
-		i_info("Final result: failed; resolved with successful implicit keep\n");
+		i_info("Final result: failed; resolved with successful implicit keep");
 		break;
 	case SIEVE_EXEC_BIN_CORRUPT:
+		i_info("Corrupt binary deleted.");
+		(void) unlink(sieve_binary_path(sbin));
 	case SIEVE_EXEC_KEEP_FAILED:
-		i_info("Final result: utter failure (caller please handle implicit keep!)\n");
+		i_info("Final result: utter failure (caller please handle implicit keep!)");
 		break;
 	default:
-		i_info("Final result: unrecognized return value?!\n");	
+		i_info("Final result: unrecognized return value?!");	
 	}
 
 	sieve_close(&sbin);

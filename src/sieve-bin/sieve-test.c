@@ -8,6 +8,7 @@
 #include "mail-raw.h"
 #include "namespaces.h"
 #include "sieve.h"
+#include "sieve-binary.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,6 +46,7 @@ int main(int argc, char **argv)
 	struct sieve_error_handler *ehandler;
 	struct ostream *teststream;
 	bool force_compile = FALSE;
+	int ret;
 
 #ifdef SIEVE_RUNTIME_TRACE
 	bool trace = FALSE;
@@ -114,6 +116,7 @@ int main(int argc, char **argv)
 	/* Compile sieve script */
 	if ( force_compile ) {
 		sbin = bin_compile_sieve_script(scriptfile);
+		(void) sieve_save(sbin, NULL);
 	} else {
 		sbin = bin_open_sieve_script(scriptfile);
 	}
@@ -156,8 +159,13 @@ int main(int argc, char **argv)
 #endif
 
 	/* Run the test */
-	(void) sieve_test
+	ret = sieve_test
 		(sbin, &msgdata, &scriptenv, teststream, ehandler, trace_stream);
+
+	if ( ret == SIEVE_EXEC_BIN_CORRUPT ) {
+		i_info("Corrupt binary deleted.");
+		(void) unlink(sieve_binary_path(sbin));		
+	}
 
 	o_stream_destroy(&teststream);
 

@@ -199,10 +199,10 @@ void _sieve_runtime_trace_error
 	va_list args;
 
 	va_start(args, fmt);
-	str_printfa(outbuf, "%08x: %s: ", runenv->interp->pc
+	str_printfa(outbuf, "%08x: [[ERROR: %s: ", runenv->interp->pc
 		, runenv->interp->current_op->mnemonic);
 	str_vprintfa(outbuf, fmt, args);
-    str_append_c(outbuf, '\n');
+    str_append(outbuf, "]]\n");
 	va_end(args);
 
 	o_stream_send(runenv->trace_stream, str_data(outbuf), str_len(outbuf));
