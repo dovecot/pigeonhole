@@ -168,6 +168,11 @@ static int lda_sieve_run
 		/* Execute again */
 	
 		ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler, NULL);
+
+		/* Save new version */
+		
+		if ( ret != SIEVE_EXEC_BIN_CORRUPT )
+			sieve_save(sbin, NULL);
 	}
 
 	switch ( ret ) {
