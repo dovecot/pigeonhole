@@ -3,8 +3,6 @@ Next (in order of descending priority/precedence):
 
 * Full standards compliance review for the engine and all fully implemented 
   sieve extensions. Issues discovered so far:
-    - The null reverse-path is matched against as the empty string, regardless 
-      of the ADDRESS-PART argument specified.
     - Header test does not strip trailing whitespace
 	- Fix/Report issues listed in 'doc/rfc/RFC Controversy.txt'
 * Code cleanup 

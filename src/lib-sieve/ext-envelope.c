@@ -275,9 +275,9 @@ static int ext_envelope_operation_execute
 	const struct sieve_match_type *mtch = &is_match_type;
 	const struct sieve_address_part *addrp = &all_address_part;
 	struct sieve_match_context *mctx;
-	struct sieve_coded_stringlist *hdr_list;
+	struct sieve_coded_stringlist *envp_list;
 	struct sieve_coded_stringlist *key_list;
-	string_t *hdr_item;
+	string_t *envp_item;
 	bool matched;
 	int ret;
 
@@ -291,9 +291,9 @@ static int ext_envelope_operation_execute
 		(renv, address, &addrp, &mtch, &cmp)) <= 0 )
 		return ret; 
 
-	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid header-list operand");
+	/* Read envelope-part */
+	if ( (envp_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
+		sieve_runtime_trace_error(renv, "invalid envelope-part operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
@@ -307,23 +307,38 @@ static int ext_envelope_operation_execute
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list);
 	
 	/* Iterate through all requested headers to match */
-	hdr_item = NULL;
+	envp_item = NULL;
 	matched = FALSE;
 	while ( result && !matched && 
-		(result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
-		&& hdr_item != NULL ) {
+		(result=sieve_coded_stringlist_next_item(envp_list, &envp_item)) 
+		&& envp_item != NULL ) {
+		const char *epart = str_c(envp_item);
 		const char *const *fields;
 			
-		if ( ext_envelope_get_fields(renv->msgdata, str_c(hdr_item), &fields) >= 0 ) {	
-			
-			int i;
-			for ( i = 0; !matched && fields[i] != NULL; i++ ) {
-				if ( (ret=sieve_address_match(addrp, mctx, fields[i])) < 0 ) {
+		if ( ext_envelope_get_fields(renv->msgdata, epart, &fields) >= 0 ) {	
+			/* From RFC 5228: 5.4.  Test envelope :
+			 *   The null reverse-path is matched against as the empty string, 
+			 *   regardless of the ADDRESS-PART argument specified.
+			 */
+			if ( strcmp(epart, "from") == 0 && 
+				(fields[0] == NULL || **fields == '\0') ) {
+				
+				if ( (ret=sieve_match_value(mctx, "", 0)) < 0 ) {
 					result = FALSE;
 					break;
 				}
 			
-				matched = ret > 0;				
+				matched = ret > 0;
+			} else {
+				int i;
+				for ( i = 0; !matched && fields[i] != NULL; i++ ) {
+					if ( (ret=sieve_address_match(addrp, mctx, fields[i])) < 0 ) {
+						result = FALSE;
+						break;
+					}
+			
+					matched = ret > 0;				
+				}
 			} 
 		}
 	}

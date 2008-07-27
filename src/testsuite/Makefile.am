@@ -75,6 +75,7 @@ test_cases = \
 	tests/match-types/matches.svtest \
 	tests/match-types/relational.svtest \
 	tests/address-parts/subaddress.svtest \
+	tests/extensions/envelope.svtest \
 	tests/extensions/variables/basic.svtest \
 	tests/extensions/include/variables.svtest \
 	tests/extensions/imapflags/basic.svtest \
