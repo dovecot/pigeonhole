@@ -25,7 +25,8 @@
  */
 
 static bool ext_encoded_character_load(int ext_id);
-static bool ext_encoded_character_validator_load(struct sieve_validator *validator);
+static bool ext_encoded_character_validator_load
+	(struct sieve_validator *validator);
 
 static int ext_my_id;
 	
@@ -60,6 +61,8 @@ const struct sieve_argument encoded_string_argument = {
 	NULL, NULL 
 };
 
+/* Parsing */
+
 static bool _skip_whitespace
 	(const char **in, const char *inend)
 {
@@ -87,11 +90,11 @@ static bool _parse_hexint
 	int digit = 0;
 	*result = 0;
 		
-	while ( *in < inend && digit < max_digits ) {
+	while ( *in < inend && (max_digits == 0 || digit < max_digits) ) {
 	
 		if ( (**in) >= '0' && (**in) <= '9' ) 
 			*result = ((*result) << 4) + (**in) - ((unsigned int) '0');
-		/* Lower-case version is not allowed by RFC 
+		/* REPORTME: Lower-case version is not allowed by RFC 
 		else if ( (**in) >= 'a' && (**in) <= 'f' )
 			*result = ((*result) << 4) + (**in) - ((unsigned int) 'a') + 0x0a;*/
 		else if ( (**in) >= 'A' && (**in) <= 'F' )
@@ -143,9 +146,9 @@ static int _decode_unicode
 	for (;;) {
 		unsigned int unicode_hex;
 		
-		if ( !_skip_whitespace(in, inend) ) return FALSE;
+		if ( !_skip_whitespace(in, inend) ) return 0;
 		
-		if ( !_parse_hexint(in, inend, 6, &unicode_hex) ) break;
+		if ( !_parse_hexint(in, inend, 0, &unicode_hex) ) break;
 
 		if ( (unicode_hex <= 0xD7FF) || 
 			(unicode_hex >= 0xE000 && unicode_hex <= 0x10FFFF)	) 
@@ -248,9 +251,10 @@ bool arg_encoded_string_validate
 					
 					strstart = p + 1;
 					substart = strstart;
-				}
+					
+					p++;	
+				} 
 				state = ST_NONE;
-				p++;	
 			}
 		}
 	} T_END;
@@ -262,6 +266,7 @@ bool arg_encoded_string_validate
 		sieve_ast_argument_string_set(*arg, newstr);
 	}
 	
+	/* Pass the processed string to a (possible) next layer of processing */
 	return sieve_validator_argument_activate_super
 		(validator, cmd, *arg, TRUE);
 }
@@ -273,7 +278,9 @@ bool arg_encoded_string_validate
 static bool ext_encoded_character_validator_load
 (struct sieve_validator *validator ATTR_UNUSED)
 {
+	/* Override the constant string argument with our own */
 	sieve_validator_argument_override(validator, SAT_CONST_STRING, 
 		&encoded_string_argument); 
+	
 	return TRUE;
 }
