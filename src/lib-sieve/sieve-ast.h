@@ -237,11 +237,24 @@ struct sieve_ast_node *sieve_ast_test_create
 struct sieve_ast_node *sieve_ast_command_create
 	(struct sieve_ast_node *parent, const char *identifier, 
 		unsigned int source_line);
+		
+/* 
+ * Utility
+ */
+
+int sieve_ast_stringlist_map
+	(struct sieve_ast_argument **listitem, void *context,
+		int (*map_function)(void *context, struct sieve_ast_argument *arg));
 	
-/* Debug */
+/* 
+ * Debug 
+ */
+
 void sieve_ast_unparse(struct sieve_ast *ast);
 
-/* AST access macros */
+/* 
+ * AST access macros 
+ */
 
 /* Generic list access macros */
 #define __AST_LIST_FIRST(list) \

@@ -107,24 +107,31 @@ static const char * const _allowed_headers[] = {
 	NULL  
 };
 
-static bool _header_is_allowed(const char *header)
+static int _header_is_allowed
+(void *context ATTR_UNUSED, struct sieve_ast_argument *arg)
 {
-	const char * const *hdsp = _allowed_headers;
-	while ( *hdsp != NULL ) {
-		if ( strcasecmp( *hdsp, header ) == 0 ) 
-			return TRUE;
+	if ( sieve_argument_is_string_literal(arg) ) {
+		const char *header = sieve_ast_strlist_strc(arg);
 
-		hdsp++;
+		const char * const *hdsp = _allowed_headers;
+		while ( *hdsp != NULL ) {
+			if ( strcasecmp( *hdsp, header ) == 0 ) 
+				return TRUE;
+
+			hdsp++;
+		}
+		
+		return FALSE;
 	}
 	
-	return FALSE;
+	return TRUE;
 }
 
 static bool tst_address_validate
 	(struct sieve_validator *validator, struct sieve_command_context *tst) 
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
-	const char *not_allowed = NULL;
+	struct sieve_ast_argument *header;
 		
 	if ( !sieve_validate_positional_argument
 		(validator, tst, arg, "header list", 1, SAAT_STRING_LIST) ) {
@@ -138,33 +145,11 @@ static bool tst_address_validate
 	/* Check if supplied header names are allowed
 	 *   FIXME: verify dynamic header names at runtime 
 	 */
-	 
-	if ( sieve_argument_is_string_literal(arg) ) {
-		const char *header = sieve_ast_argument_strc(arg);
-	
-		/* Single string */
-		if ( !_header_is_allowed(header) )
-			not_allowed = header;
-			
-	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
-		/* String list */
-		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
-			
-		while ( not_allowed == NULL && stritem != NULL ) {
-			if ( sieve_argument_is_string_literal(stritem) ) {
-				const char *header = sieve_ast_strlist_strc(stritem);
-				
-				if ( !_header_is_allowed(header) )
-					not_allowed = header;
-					
-				stritem = sieve_ast_strlist_next(stritem);
-			}
-		}
-	}
-	
-	if ( not_allowed != NULL ) {
+	header = arg;
+	if ( !sieve_ast_stringlist_map(&header, NULL, _header_is_allowed) ) {		
 		sieve_command_validate_error(validator, tst, 
-			"specified header '%s' is not allowed for the address test", not_allowed);
+			"specified header '%s' is not allowed for the address test", 
+			sieve_ast_strlist_strc(header));
 		return FALSE;
 	}
 

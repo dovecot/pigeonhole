@@ -1,5 +1,5 @@
 # Example Sieve Script
-#   Author: Matthew Elvey
+#   Author: Matthew Elvey (Slightly modified to remove syntax and context errors)
 #   URL: http://www.elvey.com/it/sieve/SieveScript.txt
 
 # Initial version completed and put in place 4/1/02 by Matthew Elvey  (firstname@lastname.com ; I've checked and it's not a valid address.); Copyright (C).and.current as of 5/19/2002 
@@ -87,7 +87,7 @@ keep;		#this one is important - don't want to miss any bounce messages!
 # LINE 106.
 
 
-} elsif anyof (envelope :all :is ["To", "CC", "BCC"] "Firstname.lastname@fastmail.fm",    #a couple people send to this, but I have have all their addrs in whitelist so OK.
+} elsif anyof (address :all :is ["To", "CC", "BCC"] "Firstname.lastname@fastmail.fm",    #a couple people send to this, but I have have all their addrs in whitelist so OK.
            header :matches "X-Spam-score"  ["9.?" , "10.?", "9", "10", "11.?", "12.?" ,"13.?", "14.?", "11", "12","13", "14", "15.?", "16.?", "17.?" ,"18.?", "19.?", "15", "16", "17" ,"18", "19", "2?.?", "2?", "3?.?" , "3?", "40"]) { 		 #"5.?", "6.?", "5", "6" "7.?" , "8.?" , "7", "8"
   reject text: 
   Hello.  The server content filter/spam detector I use has bounced your message. It appears to be spam. 

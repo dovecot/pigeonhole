@@ -564,6 +564,39 @@ struct sieve_ast_node *sieve_ast_command_create
 	return command;
 }
 
+/*
+ * Utility
+ */
+
+int sieve_ast_stringlist_map
+(struct sieve_ast_argument **listitem, void *context,
+	int (*map_function)(void *context, struct sieve_ast_argument *arg))
+{
+	if ( sieve_ast_argument_type(*listitem) == SAAT_STRING ) {
+		/* Single string */
+		return map_function(context, *listitem);
+	} else if ( sieve_ast_argument_type(*listitem) == SAAT_STRING_LIST ) {
+		int ret = 0; 
+		
+		/* String list */
+		*listitem = sieve_ast_strlist_first(*listitem);
+		
+		while ( *listitem != NULL ) {
+			
+			if ( (ret=map_function(context, *listitem)) <= 0 )
+				return ret;
+			
+			*listitem = sieve_ast_strlist_next(*listitem);
+		}
+		
+		return ret;
+	} 
+	
+	i_unreached();
+	return -1;
+}
+
+
 
 /* Debug */
 

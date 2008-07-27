@@ -132,10 +132,41 @@ static bool tst_envelope_registered
  * Validation 
  */
  
+static const char * const _supported_envelope_parts[] = {
+	/* Required */
+	"from", "to", 
+	
+	/* Non-standard */
+	"auth", 
+	
+	NULL  
+};
+
+static int _envelope_part_is_supported
+(void *context ATTR_UNUSED, struct sieve_ast_argument *arg)
+{
+	if ( sieve_argument_is_string_literal(arg) ) {
+		const char *epart = sieve_ast_strlist_strc(arg);
+
+		const char * const *epsp = _supported_envelope_parts;
+		while ( *epsp != NULL ) {
+			if ( strcasecmp( *epsp, epart ) == 0 ) 
+				return TRUE;
+
+			epsp++;
+		}
+		
+		return FALSE;
+	} 
+	
+	return TRUE;
+}
+
 static bool tst_envelope_validate
 (struct sieve_validator *validator, struct sieve_command_context *tst) 
 { 		
 	struct sieve_ast_argument *arg = tst->first_positional;
+	struct sieve_ast_argument *epart;
 				
 	if ( !sieve_validate_positional_argument
 		(validator, tst, arg, "envelope part", 1, SAAT_STRING_LIST) ) {
@@ -144,6 +175,14 @@ static bool tst_envelope_validate
 	
 	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
 		return FALSE;
+		
+	epart = arg;
+	if ( !sieve_ast_stringlist_map(&epart, NULL, _envelope_part_is_supported) ) {		
+		sieve_command_validate_error(validator, tst, 
+			"specified envelope part '%s' is not supported by the envelope test", 
+				sieve_ast_strlist_strc(epart));
+		return FALSE;
+	}
 	
 	arg = sieve_ast_argument_next(arg);
 	
