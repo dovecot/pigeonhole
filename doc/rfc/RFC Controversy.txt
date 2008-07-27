@@ -29,3 +29,6 @@ these issues by my implementation is displayed inside [ ... ].
 	- Are envelope parts required to be addresses? And if not, what becomes the 
 	  meaning of the ADDRESS-PART modifiers? [not handled (FIXME); will first be: 
 	  if none specified full string match and trigger validation error otherwise]
+    - Given the variables extension, sometimes the envelope parts aren't known until
+      runtime. Will invalid ones abort the script? 
+      [not checked (FIXME); will first be: ignore envelope part]
