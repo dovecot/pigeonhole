@@ -65,7 +65,7 @@ int sieve_match_value
 		{	
 			int ret;
 			
-			if ( mctx->kextract != NULL ) {
+			if ( mctx->kextract != NULL && mtch->allow_key_extract ) {
 				const struct sieve_match_key_extractor *kext = mctx->kextract;
 				void *kctx;
 				
