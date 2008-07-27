@@ -144,6 +144,20 @@ static bool tst_header_operation_dump
  * Code execution 
  */
 
+static inline string_t *_header_right_trim(const char *raw) 
+{
+	string_t *result;
+	int i;
+	
+	for ( i = strlen(raw)-1; i >= 0; i-- ) {
+		if ( raw[i] != ' ' && raw[i] != '\t' ) break;
+	}
+	
+	result = t_str_new(i+1);
+	str_append_n(result, raw, i + 1);
+	return result;
+}
+
 static int tst_header_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
@@ -200,7 +214,10 @@ static int tst_header_operation_execute
 			int i;
 
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
-				if ( (ret=sieve_match_value(mctx, headers[i], strlen(headers[i]))) < 0 ) 
+				string_t *theader = _header_right_trim(headers[i]);
+			
+				if ( (ret=sieve_match_value(mctx, str_c(theader), str_len(theader))) 
+					< 0 ) 
 				{
 					result = FALSE;
 					break;
