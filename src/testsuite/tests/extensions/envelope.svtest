@@ -1,0 +1,29 @@
+require "vnd.dovecot.testsuite";
+
+require "envelope";
+
+test_set "envelope.from" "";
+test_set "envelope.to" "stephan@rename-it.nl";
+
+test "Envelope - from empty" {
+	if not envelope :all :is "from" "" {
+		test_fail "failed to :all :is match <> return path";
+	}
+
+	if not envelope :all :contains "from" "" {
+		test_fail "failed to :all :contains match <> return path";
+	}
+
+	if not envelope :domain :is "from" "" {
+		test_fail "failed to :domain :is match <> return path";
+	}
+
+	if not envelope :domain :contains "from" "" {
+		test_fail "failed to :domain :contains match <> return path";
+	}
+
+	if envelope :all :is "from" "nico@vestingbar.nl" {
+		test_fail "envelope test matches nonsense";
+	}
+}
+
