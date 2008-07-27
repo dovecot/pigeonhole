@@ -32,10 +32,27 @@ if address :is :comparator "i;ascii-numeric" :localpart {
 	discard;
 }
 
-if address :localpart :is :comparator "i;ascii-casemap" "frop" ["frop", "frop"] {
+if address :localpart :is :comparator "i;ascii-casemap" "from" ["frop", "frop"] {
 	discard;
 }
 
 if address :localpart :hufter :is :comparator "i;ascii-casemap" "frop" ["frop", "frop"] {
         discard;
 }
+
+if address :is "frop" "frml" {
+	keep;
+}
+
+if address :is "reply-to" "frml" {
+	keep;
+}
+
+if address :is ["to", "frop"] "frml" {
+	keep;
+}
+
+if address :is ["to", "reply-to"] "frml" {
+	keep;
+}
+

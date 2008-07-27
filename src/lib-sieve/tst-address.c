@@ -80,20 +80,96 @@ static bool tst_address_registered
 /* 
  * Validation 
  */
+ 
+/* List of valid headers:
+ *   Implementations MUST restrict the address test to headers that
+ *   contain addresses, but MUST include at least From, To, Cc, Bcc,
+ *   Sender, Resent-From, and Resent-To, and it SHOULD include any other
+ *   header that utilizes an "address-list" structured header body.
+ *
+ * This list explicitly does not contain the envelope-to and return-path 
+ * headers. The envelope test must be used to test against these addresses.
+ */
+static const char * const _allowed_headers[] = {
+	/* Required */
+	"from", "to", "cc", "bcc", "sender", "resent-from", "resent-to",
+
+	/* Additional (RFC 2822) */
+	"reply-to", "resent-reply-to", 
+	
+	/* Non-standard (draft-palme-mailext-headers-08.txt) */
+	"for-approval", "for-handling", "for-comment", "apparently-to", "errors-to", 
+	"delivered-to", "return-receipt-to", "x-admin", "read-receipt-to", 
+	"x-confirm-reading-to", "return-receipt-requested", 
+	"registered-mail-reply-requested-by", "mail-followup-to", "mail-reply-to",
+	"abuse-reports-to", "x-complaints-to", "x-report-abuse-to",
+	
+	NULL  
+};
+
+static bool _header_is_allowed(const char *header)
+{
+	const char * const *hdsp = _allowed_headers;
+	while ( *hdsp != NULL ) {
+		if ( strcasecmp( *hdsp, header ) == 0 ) 
+			return TRUE;
+
+		hdsp++;
+	}
+	
+	return FALSE;
+}
 
 static bool tst_address_validate
 	(struct sieve_validator *validator, struct sieve_command_context *tst) 
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
+	const char *not_allowed = NULL;
 		
 	if ( !sieve_validate_positional_argument
 		(validator, tst, arg, "header list", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
+	/* FIXME: Are header names supposed to be const ? */
 	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
 		return FALSE;
 
+	/* Check if supplied header names are allowed
+	 *   FIXME: verify dynamic header names at runtime 
+	 */
+	 
+	if ( sieve_argument_is_string_literal(arg) ) {
+		const char *header = sieve_ast_argument_strc(arg);
+	
+		/* Single string */
+		if ( !_header_is_allowed(header) )
+			not_allowed = header;
+			
+	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
+		/* String list */
+		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
+			
+		while ( not_allowed == NULL && stritem != NULL ) {
+			if ( sieve_argument_is_string_literal(stritem) ) {
+				const char *header = sieve_ast_strlist_strc(stritem);
+				
+				if ( !_header_is_allowed(header) )
+					not_allowed = header;
+					
+				stritem = sieve_ast_strlist_next(stritem);
+			}
+		}
+	}
+	
+	if ( not_allowed != NULL ) {
+		sieve_command_validate_error(validator, tst, 
+			"specified header '%s' is not allowed for the address test", not_allowed);
+		return FALSE;
+	}
+
+	/* Check key list */
+	
 	arg = sieve_ast_argument_next(arg);
 	
 	if ( !sieve_validate_positional_argument
