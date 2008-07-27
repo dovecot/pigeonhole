@@ -468,8 +468,13 @@ void ext_imapflags_get_flags_init
 {
 	string_t *cur_flags;
 	
-	if ( storage != NULL ) 
-		sieve_variable_get_modifiable(storage, var_index, &cur_flags);
+	if ( storage != NULL ) {
+		string_t *raw_flags;
+		cur_flags = t_str_new(256);
+		
+		sieve_variable_get_modifiable(storage, var_index, &raw_flags);
+		flags_list_set_flags(cur_flags, raw_flags);
+	}
 	else
 		cur_flags = _get_flags_string(renv->result);
 	

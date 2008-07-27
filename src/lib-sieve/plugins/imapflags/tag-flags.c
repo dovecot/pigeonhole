@@ -174,6 +174,7 @@ static bool seff_flags_read_context
 				/* keyword */
 				const char *keyword = p_strdup(pool, flag);
 
+				/* FIXME: should check for duplicates (cannot trust variables) */
 				array_append(&ctx->keywords, &keyword, 1);
 
 			} else {

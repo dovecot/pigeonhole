@@ -92,17 +92,22 @@ static int mcht_count_match_deinit(struct sieve_match_context *mctx)
 
 	string_t *value = t_str_new(20);
 	str_printfa(value, "%d", val_count);
-	
+
     /* Match to all key values */
     key_index = 0;
     key_item = NULL;
     while ( (ok=sieve_coded_stringlist_next_item(mctx->key_list, &key_item)) 
 		&& key_item != NULL )
     {
-        if ( mcht_value_match
+		int ret = mcht_value_match
 			(mctx, str_c(value), str_len(value), str_c(key_item), 
-			str_len(key_item), key_index) )
-            return TRUE;
+				str_len(key_item), key_index);
+        
+		if ( ret > 0 )   
+			return TRUE;
+	
+		if ( ret < 0 )
+			return ret;
 
         key_index++;
     }
