@@ -72,10 +72,7 @@ const struct sieve_operation body_operation = {
  */
 
 enum tst_body_optional {	
-	OPT_END,
-	OPT_COMPARATOR,
-	OPT_MATCH_TYPE,
-	OPT_BODY_TRANSFORM
+	OPT_BODY_TRANSFORM = SIEVE_MATCH_OPT_LAST
 };
 
 /* 
@@ -179,8 +176,8 @@ static bool tst_body_registered
 (struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR);
-	sieve_match_types_link_tags(validator, cmd_reg, OPT_MATCH_TYPE);
+	sieve_comparators_link_tag(validator, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
+	sieve_match_types_link_tags(validator, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
 	
 	sieve_validator_register_tag
 		(validator, cmd_reg, &body_raw_tag, OPT_BODY_TRANSFORM); 	
@@ -249,58 +246,50 @@ static bool ext_body_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	int opt_code = 1;
 	enum tst_body_transform transform;
+	int opt_code = 0;
 
 	sieve_code_dumpf(denv, "BODY");
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(denv->sbin, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 
-				return FALSE;
+	do {
+		
+		if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
+			return FALSE;
 
-			switch ( opt_code ) {
-			case 0:
+		switch ( opt_code ) {
+		case SIEVE_MATCH_OPT_END:
+			break;
+		case OPT_BODY_TRANSFORM:
+			if ( !sieve_binary_read_byte(denv->sbin, address, &transform) )
+				return FALSE;
+			
+			switch ( transform ) {
+			case TST_BODY_TRANSFORM_RAW:
+				sieve_code_dumpf(denv, "BODY-TRANSFORM: RAW");
 				break;
-			case OPT_COMPARATOR:
-				sieve_opr_comparator_dump(denv, address);
+			case TST_BODY_TRANSFORM_TEXT:
+				sieve_code_dumpf(denv, "BODY-TRANSFORM: TEXT");
 				break;
-			case OPT_MATCH_TYPE:
-				sieve_opr_match_type_dump(denv, address);
-				break;
-			case OPT_BODY_TRANSFORM:
-				if ( !sieve_binary_read_byte(denv->sbin, address, &transform) )
-					return FALSE;
+			case TST_BODY_TRANSFORM_CONTENT:
+				sieve_code_dumpf(denv, "BODY-TRANSFORM: CONTENT");
 				
-				switch ( transform ) {
-				case TST_BODY_TRANSFORM_RAW:
-					sieve_code_dumpf(denv, "BODY-TRANSFORM: RAW");
-					break;
-				case TST_BODY_TRANSFORM_TEXT:
-					sieve_code_dumpf(denv, "BODY-TRANSFORM: TEXT");
-					break;
-				case TST_BODY_TRANSFORM_CONTENT:
-					sieve_code_dumpf(denv, "BODY-TRANSFORM: CONTENT");
-					
-					sieve_code_descend(denv);
-					if ( !sieve_opr_stringlist_dump(denv, address) )
-						return FALSE;
-					sieve_code_ascend(denv);
-					break;
-				default:
+				sieve_code_descend(denv);
+				if ( !sieve_opr_stringlist_dump(denv, address) )
 					return FALSE;
-				}
+				sieve_code_ascend(denv);
 				break;
-			default: 
+			default:
 				return FALSE;
 			}
- 		}
-	}
+			break;
+		default: 
+			return FALSE;
+		}
+	} while ( opt_code != SIEVE_MATCH_OPT_END );
 
-	return
-		sieve_opr_stringlist_dump(denv, address);
+	return sieve_opr_stringlist_dump(denv, address);
 }
 
 /*
@@ -312,8 +301,8 @@ static int ext_body_operation_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	int ret = SIEVE_EXEC_OK;
+	int opt_code = 0;
 	int mret;
-	int opt_code = 1;
 	const struct sieve_comparator *cmp = &i_octet_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
 	enum tst_body_transform transform;
@@ -327,46 +316,36 @@ static int ext_body_operation_execute
 	 * Read operands
 	 */
 	
-	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(renv->sbin, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
-				sieve_runtime_trace_error(renv, "invalid optional operand");
+	/* Handle any optional operands */
+	do {
+		if ( (ret=sieve_match_read_optional_operands
+			(renv, address, &opt_code, &cmp, &mtch)) <= 0 )
+			return ret;
+			
+		switch ( opt_code ) {
+		case SIEVE_MATCH_OPT_END: 
+			break;
+		case OPT_BODY_TRANSFORM:
+			if ( !sieve_binary_read_byte(renv->sbin, address, &transform) ||
+				transform > TST_BODY_TRANSFORM_TEXT ) {
+				sieve_runtime_trace_error(renv, "invalid body transform type");
 				return SIEVE_EXEC_BIN_CORRUPT;
 			}
-
-			switch ( opt_code ) {
-			case 0: 
-				break;
-			case OPT_COMPARATOR:
-				cmp = sieve_opr_comparator_read(renv, address);
-				break;
-			case OPT_MATCH_TYPE:
-				mtch = sieve_opr_match_type_read(renv, address);
-				break;
-			case OPT_BODY_TRANSFORM:
-				if ( !sieve_binary_read_byte(renv->sbin, address, &transform) ||
-					transform > TST_BODY_TRANSFORM_TEXT ) {
-					sieve_runtime_trace_error(renv, "invalid body transform type");
+			
+			if ( transform == TST_BODY_TRANSFORM_CONTENT ) {				
+				if ( (ctype_list=sieve_opr_stringlist_read(renv, address)) 
+					== NULL ) {
+					sieve_runtime_trace_error(renv, "invalid body transform operand");
 					return SIEVE_EXEC_BIN_CORRUPT;
 				}
-				
-				if ( transform == TST_BODY_TRANSFORM_CONTENT ) {				
-					if ( (ctype_list=sieve_opr_stringlist_read(renv, address)) 
-						== NULL ) {
-						sieve_runtime_trace_error(renv, 
-							"invalid content transform operand");
-						return SIEVE_EXEC_BIN_CORRUPT;
-					}
-				}
-				break;
-
-			default:
-				sieve_runtime_trace_error(renv, "unknown optional operand");
-				return FALSE;
 			}
+			break;
+
+		default:
+			sieve_runtime_trace_error(renv, "unknown optional operand");
+			return FALSE;
 		}
-	}
+	} while ( opt_code != SIEVE_MATCH_OPT_END );
 		
 	/* Read key-list */
 	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
@@ -396,7 +375,8 @@ static int ext_body_operation_execute
 	/* Iterate through all requested body parts to match */
 	matched = FALSE;
 	while ( !matched && body_parts->content != NULL ) {
-		if ( (mret=sieve_match_value(mctx, body_parts->content, body_parts->size)) ) 
+		if ( (mret=sieve_match_value(mctx, body_parts->content, body_parts->size)) 	
+			< 0) 
 		{
 			sieve_runtime_trace_error(renv, "invalid string list item");
 			ret = SIEVE_EXEC_BIN_CORRUPT;

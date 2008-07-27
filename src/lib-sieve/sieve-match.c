@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "mempool.h"
 #include "hash.h"
@@ -15,6 +18,10 @@
 #include "sieve-match-types.h"
 
 #include "sieve-match.h"
+
+/*
+ * Matching implementation
+ */
 
 struct sieve_match_context *sieve_match_begin
 (struct sieve_interpreter *interp, const struct sieve_match_type *mtch, 
@@ -83,5 +90,75 @@ int sieve_match_end(struct sieve_match_context *mctx)
 	}
 
 	return FALSE;
+}
+
+/*
+ * Reading match operands
+ */
+ 
+bool sieve_match_dump_optional_operands
+(const struct sieve_dumptime_env *denv, sieve_size_t *address, int *opt_code)
+{
+	if ( *opt_code != SIEVE_MATCH_OPT_END || 
+		sieve_operand_optional_present(denv->sbin, address) ) {
+		do {
+			if ( !sieve_operand_optional_read(denv->sbin, address, opt_code) ) 
+				return FALSE;
+
+			switch ( *opt_code ) {
+			case SIEVE_MATCH_OPT_END:
+				break;
+			case SIEVE_MATCH_OPT_COMPARATOR:
+				if ( !sieve_opr_comparator_dump(denv, address) )
+					return FALSE;
+				break;
+			case SIEVE_MATCH_OPT_MATCH_TYPE:
+				if ( !sieve_opr_match_type_dump(denv, address) )
+					return FALSE;
+				break;
+			default: 
+				return TRUE;
+			}
+ 		} while ( *opt_code != SIEVE_MATCH_OPT_END );
+	}
+	
+	return TRUE;
+}
+
+int sieve_match_read_optional_operands
+(const struct sieve_runtime_env *renv, sieve_size_t *address, int *opt_code,
+	const struct sieve_comparator **cmp_r, const struct sieve_match_type **mtch_r)
+{	 
+	/* Handle any optional arguments */
+	if ( *opt_code != SIEVE_MATCH_OPT_END || 
+		sieve_operand_optional_present(renv->sbin, address) ) {
+		do {
+			if ( !sieve_operand_optional_read(renv->sbin, address, opt_code) ) {
+				sieve_runtime_trace_error(renv, "invalid optional operand");
+				return SIEVE_EXEC_BIN_CORRUPT;
+			}
+
+			switch ( *opt_code ) {
+			case SIEVE_MATCH_OPT_END: 
+				break;
+			case SIEVE_MATCH_OPT_COMPARATOR:
+				if ( (*cmp_r = sieve_opr_comparator_read(renv, address)) == NULL ) {
+					sieve_runtime_trace_error(renv, "invalid comparator operand");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
+				break;
+			case SIEVE_MATCH_OPT_MATCH_TYPE:
+				if ( (*mtch_r = sieve_opr_match_type_read(renv, address)) == NULL ) {
+					sieve_runtime_trace_error(renv, "invalid match type operand");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
+				break;
+			default:
+				return SIEVE_EXEC_OK;
+			}
+		} while ( *opt_code != SIEVE_MATCH_OPT_END );
+	}
+	
+	return SIEVE_EXEC_OK;
 }
 

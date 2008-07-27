@@ -124,31 +124,17 @@ static bool tst_hasflag_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,	
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	int opt_code = 1;
+	int opt_code = 0;
 
 	sieve_code_dumpf(denv, "HASFLAG");
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(denv->sbin, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 
-				return FALSE;
+	if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
+		return FALSE;
 
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case OPT_COMPARATOR:
-				sieve_opr_comparator_dump(denv, address);
-				break;
-			case OPT_MATCH_TYPE:
-				sieve_opr_match_type_dump(denv, address);
-				break;
-			default: 
-				return FALSE;
-			}
- 		}
-	}
+	if ( opt_code != SIEVE_MATCH_OPT_END )
+		return FALSE;
 
 	return ext_imapflags_command_operands_dump(denv, address); 
 }
@@ -163,7 +149,7 @@ static int tst_hasflag_operation_execute
 {
 	int ret = SIEVE_EXEC_OK;
 	int mret;
-	int opt_code = 1;
+	int opt_code = 0;
 	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
 	struct sieve_match_context *mctx;
@@ -178,30 +164,18 @@ static int tst_hasflag_operation_execute
 	 * Read operands
 	 */
 
-	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(renv->sbin, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
-				sieve_runtime_trace_error(renv, "invalid optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
-
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case OPT_COMPARATOR:
-				cmp = sieve_opr_comparator_read(renv, address);
-				break;
-			case OPT_MATCH_TYPE:
-				mtch = sieve_opr_match_type_read(renv, address);
-				break;
-			default:
-				sieve_runtime_trace_error(renv, "unknown optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
-		}
+	/* Handle match-type and comparator operands */
+	if ( (ret=sieve_match_read_optional_operands
+		(renv, address, &opt_code, &cmp, &mtch)) <= 0 )
+		return ret;
+	
+	/* Check whether we neatly finished the list of optional operands*/
+	if ( opt_code != SIEVE_MATCH_OPT_END) {
+		sieve_runtime_trace_error(renv, "invalid optional operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
+	/* Read the common imap4flags command operands [variable] <flag-list> */
 	if ( (ret=ext_imapflags_command_operands_read
 		(renv, address, &flag_list, &storage, &var_index)) <= 0 )
 		return ret;

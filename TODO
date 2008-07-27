@@ -1,7 +1,8 @@
 Next (in order of descending priority/precedence):
 * Resolve problems in variables extension: scope uses hash the wrong way.
-* Resolve code duplication in operation implementations that read optional 
-  operands.
+* Resolve problems in imapflags extension: hasflag does not handle string
+  representation of multiple flags and variables should not be trusted to 
+  contain a valid flags list.
 
 * Full standards compliance review for the engine and all fully implemented 
   sieve extensions. Issues discovered so far:

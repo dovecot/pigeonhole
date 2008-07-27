@@ -57,14 +57,6 @@ const struct sieve_operation tst_header_operation = {
 	tst_header_operation_execute 
 };
 
-/* Optional arguments */
-
-enum tst_header_optional {	
-	OPT_END,
-	OPT_COMPARATOR,
-	OPT_MATCH_TYPE
-};
-
 /* 
  * Test registration 
  */
@@ -73,8 +65,8 @@ static bool tst_header_registered
 	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR);
-	sieve_match_types_link_tags(validator, cmd_reg, OPT_MATCH_TYPE);
+	sieve_comparators_link_tag(validator, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
+	sieve_match_types_link_tags(validator, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
 
 	return TRUE;
 }
@@ -131,32 +123,18 @@ static bool tst_header_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	int opt_code = 1;
+	int opt_code = 0;
 
 	sieve_code_dumpf(denv, "HEADER");
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(denv->sbin, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 
-				return FALSE;
+	if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
+		return FALSE;
 
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case OPT_COMPARATOR:
-				sieve_opr_comparator_dump(denv, address);
-				break;
-			case OPT_MATCH_TYPE:
-				sieve_opr_match_type_dump(denv, address);
-				break;
-			default: 
-				return FALSE;
-			}
- 		}
-	}
-
+	if ( opt_code != SIEVE_MATCH_OPT_END )
+		return FALSE;
+	
 	return
 		sieve_opr_stringlist_dump(denv, address) &&
 		sieve_opr_stringlist_dump(denv, address);
@@ -171,7 +149,7 @@ static int tst_header_operation_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	bool result = TRUE;
-	int opt_code = 1;
+	int opt_code = 0;
 	const struct sieve_comparator *cmp = &i_octet_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
 	struct sieve_match_context *mctx;
@@ -181,36 +159,15 @@ static int tst_header_operation_execute
 	bool matched;
 	int ret;
 	
-	/* Handle any optional arguments */
-	if ( sieve_operand_optional_present(renv->sbin, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
-				sieve_runtime_trace_error(renv, "invalid optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
-
-			switch ( opt_code ) {
-			case 0: 
-				break;
-			case OPT_COMPARATOR:
-				if ( (cmp = sieve_opr_comparator_read(renv, address)) == NULL ) {
-					sieve_runtime_trace_error(renv, 
-						"invalid comparator operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			case OPT_MATCH_TYPE:
-				if ( (mtch = sieve_opr_match_type_read(renv, address)) == NULL ) {
-					sieve_runtime_trace_error(renv,
-                        "invalid match type operand");
-                    return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			default:
-				sieve_runtime_trace_error(renv, "unknown optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
-		}
+	/* Handle match-type and comparator operands */
+	if ( (ret=sieve_match_read_optional_operands
+		(renv, address, &opt_code, &cmp, &mtch)) <= 0 )
+		return ret;
+	
+	/* Check whether we neatly finished the list of optional operands*/
+	if ( opt_code != SIEVE_MATCH_OPT_END) {
+		sieve_runtime_trace_error(renv, "invalid optional operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 		
 	/* Read header-list */
@@ -238,11 +195,13 @@ static int tst_header_operation_execute
 		&& hdr_item != NULL ) {
 		const char *const *headers;
 			
-		if ( mail_get_headers_utf8(renv->msgdata->mail, str_c(hdr_item), &headers) >= 0 ) {	
+		if ( mail_get_headers_utf8
+			(renv->msgdata->mail, str_c(hdr_item), &headers) >= 0 ) {	
 			int i;
 
 			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
-				if ( (ret=sieve_match_value(mctx, headers[i], strlen(headers[i]))) < 0 ) {
+				if ( (ret=sieve_match_value(mctx, headers[i], strlen(headers[i]))) < 0 ) 
+				{
 					result = FALSE;
 					break;
 				}
