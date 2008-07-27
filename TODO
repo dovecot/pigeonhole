@@ -3,11 +3,17 @@ Next (in order of descending priority/precedence):
 
 * Full standards compliance review for the engine and all fully implemented 
   sieve extensions. Issues discovered so far:
-    - Header test does not strip trailing whitespace
+	- Header test does not strip trailing whitespace
 	- Fix/Report issues listed in 'doc/rfc/RFC Controversy.txt'
 * Code cleanup 
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...
+	- Limit the string size
+	- Limit the string list size
+	- Limit the depth of the AST, i.e. command block and test list
+	  nesting.
+	- Limit the maximum number of included scripts
+	- Make (configurable) limit on the number of redirects
 	- Malicious/Broken binary can allocate large variable storage
 * Finish the test suite for the base functionality
 * Make sure cmusieve can be replaced seamlessly with the new plugin.
