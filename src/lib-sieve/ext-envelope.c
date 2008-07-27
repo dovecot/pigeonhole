@@ -176,6 +176,9 @@ static bool tst_envelope_validate
 	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
 		return FALSE;
 		
+	/* Check whether supplied envelope parts are supported
+	 *   FIXME: verify dynamic envelope parts at runtime 
+	 */
 	epart = arg;
 	if ( !sieve_ast_stringlist_map(&epart, NULL, _envelope_part_is_supported) ) {		
 		sieve_command_validate_error(validator, tst, 

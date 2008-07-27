@@ -138,7 +138,6 @@ static bool tst_address_validate
 		return FALSE;
 	}
 	
-	/* FIXME: Are header names supposed to be const ? */
 	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
 		return FALSE;
 
