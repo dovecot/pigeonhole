@@ -1,0 +1,31 @@
+RFC Controversy
+---------------
+
+This file lists all matters that I found to be unclear in their respective RFC
+specifications. When the conpliance review finishes the contents of this file 
+will be offered to the RFC editors to obtain clarification. Current handling of 
+these issues by my implementation is displayed inside [ ... ].
+
+* RFC 5228 (Sieve) : 5.1.  Test address
+  "Implementations MUST restrict the address test to headers that
+   contain addresses, but MUST include at least From, To, Cc, Bcc,
+   Sender, Resent-From, and Resent-To, and it SHOULD include any other
+   header that utilizes an "address-list" structured header body."
+   
+  - Will this cause a fatal script validation error, or are the disallowed 
+    headers simply ignored? [fatal validation error]
+  - Given the variables extension, sometimes the header names aren't known until
+    runtime. If previous answer was to cause a fatal error, will this abort the
+    script? [not checked (FIXME); will be: ignore header]
+    
+* RFC 5228 (Sieve) : 5.4.  Test envelope
+	"The "envelope" test is true if the specified part of the [SMTP] (or
+   equivalent) envelope matches the specified key.  This specification
+   defines the interpretation of the (case insensitive) "from" and "to"
+   envelope-parts.  Additional envelope-parts may be defined by other
+   extensions; implementations SHOULD consider unknown envelope parts an
+   error."
+   
+	- Are envelope parts required to be addresses? And if not, what becomes the 
+	  meaning of the ADDRESS-PART modifiers? [not handled (FIXME); will be: if 
+	  none specified full string match and test validation error otherwise]
