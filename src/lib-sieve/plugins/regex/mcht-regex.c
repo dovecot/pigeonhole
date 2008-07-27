@@ -42,7 +42,7 @@ bool mcht_regex_validate_context
 
 const struct sieve_match_type regex_match_type = {
 	SIEVE_OBJECT("regex", &regex_match_type_operand, 0),
-	TRUE,
+	TRUE, FALSE,
 	NULL,
 	mcht_regex_validate_context,
 	mcht_regex_match_init,

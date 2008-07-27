@@ -43,10 +43,9 @@ test "RFC hasflag example - :is" {
 		test_fail "list representation did not match";
 	}
  
-/*	FIXME: test fails
 	if not hasflag :is "b A" {
 		test_fail "string representation did not match";
-	}*/
+	}
 }
 
 test "RFC hasflag example - :contains variable" {
@@ -68,7 +67,6 @@ test "RFC hasflag example - :contains variable" {
 		test_fail "failed true example 4";
 	}
 
-/* FIXME: test fails  
 	if not hasflag :contains "MyVar" "junk forward" {
 		test_fail "failed true example 4 (rewrite 1)";
 	}
@@ -76,7 +74,6 @@ test "RFC hasflag example - :contains variable" {
     if not hasflag :contains "MyVar" "forward junk" {
 		test_fail "failed true example 4 (rewrite 2)";
 	}
-*/
 
 	if hasflag :contains "MyVar" "label" {
 		test_fail "failed false example 1";

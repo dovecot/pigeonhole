@@ -31,6 +31,11 @@ struct sieve_match_type {
 	 * for every tested value? (TRUE = first alternative)
 	 */
 	bool is_iterative;
+	
+	/* Is the key value allowed to contain formatting to extract multiple keys
+	 * out of the same string?
+	 */
+	bool allow_key_extract;
 		
 	bool (*validate)
 		(struct sieve_validator *validator, struct sieve_ast_argument **arg, 

@@ -142,6 +142,36 @@ static bool tst_hasflag_operation_dump
 /*
  * Interpretation
  */
+ 
+static int _flag_key_extract_init
+(void **context, string_t *raw_key)
+{
+	struct ext_imapflags_iter *iter = t_new(struct ext_imapflags_iter, 1);
+	
+	ext_imapflags_iter_init(iter, raw_key);
+	
+	*context = iter; 
+	
+	return TRUE;
+}
+
+static int _flag_key_extract
+(void *context, const char **key, size_t *size)
+{
+	struct ext_imapflags_iter *iter = (struct ext_imapflags_iter *) context;
+	
+	if ( (*key = ext_imapflags_iter_get_flag(iter)) != NULL ) {
+		*size = strlen(*key); 
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+static const struct sieve_match_key_extractor _flag_extractor = {
+	_flag_key_extract_init,
+	_flag_key_extract
+};
 
 static int tst_hasflag_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
@@ -187,7 +217,8 @@ static int tst_hasflag_operation_execute
 	sieve_runtime_trace(renv, "HASFLAG test");
 
 	matched = FALSE;
-	mctx = sieve_match_begin(renv->interp, mtch, cmp, flag_list); 	
+	mctx = sieve_match_begin
+		(renv->interp, mtch, cmp, &_flag_extractor, flag_list); 	
 
 	ext_imapflags_get_flags_init(&iter, renv, storage, var_index);
 	

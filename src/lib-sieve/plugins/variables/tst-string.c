@@ -206,7 +206,7 @@ static int tst_string_operation_execute
 
 	sieve_runtime_trace(renv, "STRING test");
 
-	mctx = sieve_match_begin(renv->interp, mtch, cmp, key_list); 	
+	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
 
 	/* Iterate through all requested strings to match */
 	src_item = NULL;

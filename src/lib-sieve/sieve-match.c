@@ -25,13 +25,16 @@
 
 struct sieve_match_context *sieve_match_begin
 (struct sieve_interpreter *interp, const struct sieve_match_type *mtch, 
-	const struct sieve_comparator *cmp, struct sieve_coded_stringlist *key_list)
+	const struct sieve_comparator *cmp, 
+	const struct sieve_match_key_extractor *kextract,
+	struct sieve_coded_stringlist *key_list)
 {
 	struct sieve_match_context *mctx = t_new(struct sieve_match_context, 1);  
 
 	mctx->interp = interp;
 	mctx->match_type = mtch;
 	mctx->comparator = cmp;
+	mctx->kextract = kextract;
 	mctx->key_list = key_list;
 
 	if ( mtch->match_init != NULL ) {
@@ -59,14 +62,33 @@ int sieve_match_value
 	
 		while ( (ok=sieve_coded_stringlist_next_item(mctx->key_list, &key_item)) && 
 			key_item != NULL ) 
-		{
-			int ret = mtch->match(mctx, value, val_size, str_c(key_item), 
-				str_len(key_item), key_index);
-
-			if ( ret < 0 ) return ret;
+		{	
+			int ret;
+			
+			if ( mctx->kextract != NULL ) {
+				const struct sieve_match_key_extractor *kext = mctx->kextract;
+				void *kctx;
+				
+				if ( (ret=kext->init(&kctx, key_item)) > 0 ) {
+					const char *key;
+					size_t key_size;
+					 			
+					while ( (ret=kext->extract_key(kctx, &key, &key_size)) > 0 ) {				
+						ret = mtch->match(mctx, value, val_size, key, key_size, key_index);
+						
+						if ( ret != 0 ) break;
+					}
+				}  
+			} else {
+				ret = mtch->match(mctx, value, val_size, str_c(key_item), 
+						str_len(key_item), key_index);
+			}
+			
+			if ( ret < 0 ) 
+				return ret;
 
 			if ( ret > 0 )
-				return TRUE;  
+				return TRUE;
 	
 			key_index++;
 		}

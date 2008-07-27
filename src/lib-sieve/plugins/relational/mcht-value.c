@@ -22,7 +22,7 @@
 
 const struct sieve_match_type value_match_type = {
 	SIEVE_OBJECT("value", &rel_match_type_operand, RELATIONAL_VALUE), 
-	TRUE,
+	TRUE, TRUE,
 	mcht_relational_validate,
 	NULL, NULL, NULL, NULL
 };
@@ -32,7 +32,7 @@ const struct sieve_match_type rel_match_value_ ## name = {  \
 	SIEVE_OBJECT(                                           \
 		"value-" #name, &rel_match_type_operand,            \
 		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match)),      \
-	TRUE,                                                   \
+	TRUE, TRUE,                                             \
 	NULL, NULL, NULL,                                       \
 	mcht_value_match,                                       \
 	NULL                                                    \
