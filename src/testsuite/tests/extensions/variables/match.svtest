@@ -1,0 +1,167 @@
+require "vnd.dovecot.testsuite";
+
+require "variables";
+
+set "match1" "Test of general stupidity";
+
+test "Begin" {
+	if not string :matches "${match1}" "Test of *" {
+		test_fail "should have matched";
+	} 
+
+	if not string :is "${1}" "general stupidity" {
+		test_fail "match value incorrect";
+	}
+}
+
+test "Begin no match" {
+	if string :matches "${match1}" "of *" {
+		test_fail "should not have matched";
+	}
+}
+
+set "match2" "toptoptop";
+
+test "End" {
+	if not string :matches "${match2}" "*top" {
+		test_fail "should have matched";
+	}
+
+	if not string :is "${1}" "toptop" {
+		test_fail "match value incorrect";
+	}
+}
+
+set "match3" "ik ben een tukker met grote oren en een lelijke broek.";
+
+test "Multiple" {
+	if not string :matches "${match3}" "ik ben * met * en *." {
+		test_fail "should have matched";
+	} 
+
+	set "line" "Hij is ${1} met ${2} en ${3}!";
+
+	if not string :is "${line}"
+		"Hij is een tukker met grote oren en een lelijke broek!" {
+		test_fail "match values incorrect: ${line}";
+	}
+}
+
+set "match4" "beter van niet?";
+
+test "Escape" {
+	if not string :matches "${match4}" "*\\?" {
+		test_fail "should have matched";
+	} 
+
+	if not string :is "${1}" "beter van niet" {
+		test_fail "match value incorrect: ${1}";
+	}
+}
+
+set "match5" "The quick brown fox jumps over the lazy dog.";
+
+test "Alphabet ?" {
+	if not string :matches "${match5}" "T?? ????? ????? ?o? ?u??? o?er ?he ???? ?o?." {
+		test_fail "should have matched";
+	} 
+
+	set "alphabet" "${22}${8}${6}${25}${2}${13}${26}${1}${5}${15}${7}${21}${16}${12}${10}${17}${3}${9}${18}${20}${4}${19}${11}${14}${24}${23}";
+
+	if not string :is "${alphabet}" "abcdefghijklmnopqrstuvwxyz" {
+		test_fail "match values incorrect: ${alphabet}";
+	}
+
+	if string :matches "${match5}" "T?? ????? ?w??? ?o? ?u??? o?er ?he ???? ?o?." {
+		test_fail "should not have matched";
+	}
+}
+
+set "match6" "zero:one:zero|three;one;zero/five";
+
+test "Words sep ?" {
+
+	if not string :matches "${match6}" "*one?zero?five" {
+		test_fail "should have matched";
+	}
+
+	if not string :is "${1}${2}${3}" "zero:one:zero|three;;/" {
+		test_fail "incorrect match values: ${1} ${2} ${3}";
+	}
+}
+
+set "match7" "frop";
+
+test "Letters begin ?" {
+	if not string :matches "${match7}" "??op" {
+		test_fail "should have matched";
+	}
+		
+	set "val" "${0}:${1}:${2}:${3}:";
+	
+	if not string :is "${val}" "frop:f:r::" {
+		test_fail "incorrect match values: ${val}";
+	}
+}
+
+test "Letters end ?" {
+    if not string :matches "${match7}" "fr??" {
+        test_fail "should have matched";
+    }
+
+    set "val" "${0}:${1}:${2}:${3}:";
+
+    if not string :is "${val}" "frop:o:p::" {
+        test_fail "incorrect match values: ${val}";
+    }
+}
+
+set "match8" "klopfropstroptop";
+
+test "Letters words *? - 1" {
+	if not string :matches "${match8}" "*fr??*top" {
+		test_fail "should have matched";
+	}
+
+	set "val" ":${0}:${1}:${2}:${3}:${4}:${5}:";
+	
+	if not string :is "${val}" ":klopfropstroptop:klop:o:p:strop::" {
+		test_fail "incorrect match values: ${val}";
+	}
+}
+
+test "Letters words *? - 2" {
+	if not string :matches "${match8}" "?*fr??*top" {
+		test_fail "should have matched";
+	}
+	
+	set "val" ":${0}:${1}:${2}:${3}:${4}:${5}:${6}:";
+
+	if not string :is "${val}" ":klopfropstroptop:k:lop:o:p:strop::" {
+		test_fail "incorrect match values: ${val}";
+	}
+}
+
+test "Letters words *? backtrack" {
+	if not string :matches "${match8}" "*?op" {
+		test_fail "should have matched";
+	}
+
+	set "val" ":${0}:${1}:${2}:${3}:${4}:";
+	
+	if not string :is "${val}" ":klopfropstroptop:klopfropstrop:t:::" {
+		test_fail "incorrect match values: ${val}";
+	}
+}
+
+test "Letters words *? first" {
+	if not string :matches "${match8}" "*?op*" {
+		test_fail "failed to match";
+	}
+
+	set "val" ":${0}:${1}:${2}:${3}:${4}:";
+
+	if not string :is "${val}" ":klopfropstroptop:k:l:fropstroptop::" {
+		test_fail "incorrect match values: ${val}";
+	}
+}

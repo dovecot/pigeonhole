@@ -70,6 +70,8 @@ bool sieve_match_values_set_enabled
 	(struct sieve_interpreter *interp, bool enable);
 struct sieve_match_values *sieve_match_values_start
 	(struct sieve_interpreter *interp);
+void sieve_match_values_set
+	(struct sieve_match_values *mvalues, unsigned int index, string_t *value);
 void sieve_match_values_add
 	(struct sieve_match_values *mvalues, string_t *value);
 void sieve_match_values_add_char

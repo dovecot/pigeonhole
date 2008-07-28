@@ -194,6 +194,20 @@ static string_t *sieve_match_values_add_entry
 
 	return entry;
 }
+
+void sieve_match_values_set
+(struct sieve_match_values *mvalues, unsigned int index, string_t *value)
+{
+	if ( mvalues != NULL ) {
+		string_t * const *ep = array_idx(&mvalues->values, index);
+    	string_t *entry = *ep;
+
+	    if ( entry != NULL && value != NULL ) {
+			str_truncate(entry, 0);
+        	str_append_str(entry, value);
+		}
+	}
+}
 	
 void sieve_match_values_add
 	(struct sieve_match_values *mvalues, string_t *value) 

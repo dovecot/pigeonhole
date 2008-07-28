@@ -40,7 +40,7 @@ const struct sieve_match_type matches_match_type = {
 /* Quick 'n dirty debug */
 //#define MATCH_DEBUG
 #ifdef MATCH_DEBUG
-#define debug_printf(...) printf (__VA_ARGS__)
+#define debug_printf(...) printf ("match debug: " __VA_ARGS__)
 #else
 #define debug_printf(...) 
 #endif
@@ -116,8 +116,9 @@ static int mcht_matches_match
 	 * Escape sequences \? and \* need special attention. 
 	 */
 	 
-	debug_printf("MATCH key: %s\n", t_strdup_until(key, kend));
-	debug_printf("MATCH val: %s\n", t_strdup_until(val, vend));
+	debug_printf("=== Start ===\n");
+	debug_printf("  key:   %s\n", t_strdup_until(key, kend));
+	debug_printf("  value: %s\n", t_strdup_until(val, vend));
 
 	/* Loop until either key or value ends */
 	while (kp < kend && vp < vend && j < 40) {
@@ -145,29 +146,32 @@ static int mcht_matches_match
 				key_offset++;
 			}
 			
-			debug_printf("MATCH found wildcard '%c' at pos [%d]\n", 
+			debug_printf("found wildcard '%c' at pos [%d]\n", 
 				next_wcard, (int) (wp-key));
 				
 			str_truncate(mvalue, 0);
-		} else
+		} else {
+			debug_printf("backtracked");
 			backtrack = FALSE;
+		}
 		
 		needle = str_c(section);
 		nend = PTR_OFFSET(needle, str_len(section));		
 		 
-		debug_printf("MATCH sneedle: '%s'\n", t_strdup_until(needle, nend));
-		debug_printf("MATCH skey: '%s'\n", t_strdup_until(kp, kend));
-		debug_printf("MATCH swp: '%s'\n", t_strdup_until(wp, kend));
-		debug_printf("MATCH sval: '%s'\n", t_strdup_until(vp, vend));
+		debug_printf("  section needle:  '%s'\n", t_strdup_until(needle, nend));
+		debug_printf("  section key:     '%s'\n", t_strdup_until(kp, kend));
+		debug_printf("  section remnant: '%s'\n", t_strdup_until(wp, kend));
+		debug_printf("  value remnant:   '%s'\n", t_strdup_until(vp, vend));
 		
 		pvp = vp;
 		if ( next_wcard == '\0' ) {			
 			const char *qp, *qend;
 			
-			debug_printf("MATCH find end.\n");				 
+			debug_printf("next_wcard = NUL; must find needle at end\n");				 
 			
 			/* Find substring at the end of string */
 			if ( vend - str_len(section) < vp ) {
+				debug_printf("  wont match: value is too short\n");
 				break;
 			}
 
@@ -177,7 +181,7 @@ static int mcht_matches_match
 			str_append_n(mvalue, pvp, qp-pvp);
 					
 			if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
-				debug_printf("MATCH failed end\n");				 
+				debug_printf("  match at end failed\n");				 
 				break;
 			}
 			
@@ -187,32 +191,35 @@ static int mcht_matches_match
 
 			kp = kend;
 			vp = vend;
+			debug_printf("  matched end of value\n");
 			break;
 		} else {
 			const char *prv = NULL;
 			const char *prk = NULL;
 			const char *prw = NULL;
 			const char *chars;
-			debug_printf("MATCH find.\n");
 		
 			str_truncate(mchars, 0);
 							
 			if ( wcard == '\0' ) {
 				/* Match needs to happen right at the beginning */
-				debug_printf("MATCH bkey: '%s'\n", t_strdup_until(needle, nend));
-				debug_printf("MATCH bval: '%s'\n", t_strdup_until(vp, vend));
+				debug_printf("wcard = NUL; needle should be found at the beginning.\n");
+				debug_printf("  begin needle: '%s'\n", t_strdup_until(needle, nend));
+				debug_printf("  begin value:  '%s'\n", t_strdup_until(vp, vend));
 
 				if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
-					debug_printf("MATCH failed begin\n");				 
+					debug_printf("  failed to find needle at begin\n");				 
 					break;
 				}
 
 			} else {
 				const char *qp, *qend;
+
+				debug_printf("wcard != NUL; must find needle at an offset.\n");
 				
 				/* Match may happen at any offset: find substring */
 				if ( !_string_find(cmp, &vp, vend, &needle, nend)	) {
-					debug_printf("MATCH failed find\n"); 
+					debug_printf("  failed to find needle at an offset\n"); 
 					break;
 				}
 			
@@ -225,31 +232,32 @@ static int mcht_matches_match
 				str_append_n(mvalue, pvp, qp-pvp);
 				for ( ; qp < qend; qp++ )
 					str_append_c(mchars, *qp);
-				debug_printf("MATCH :: %s\n", str_c(mvalue));
 			}
 			
 			if ( wp < kend ) wp++;
 			kp = wp;
 		
 			while ( next_wcard == '?' ) {
-				debug_printf("MATCH ?\n");
+				debug_printf("next_wcard = '?'; need to match arbitrary character\n");
 				
 				/* Add match value */ 
 				str_append_c(mchars, *vp);
 				vp++;
 				
 				next_wcard = _scan_key_section(subsection, &wp, kend);
-				debug_printf("MATCH found next wildcard '%c' at pos [%d]\n", 
+				debug_printf("found next wildcard '%c' at pos [%d] (fixed match)\n", 
 					next_wcard, (int) (wp-key));
 					
 				needle = str_c(subsection);
 				nend = PTR_OFFSET(needle, str_len(subsection));
 
-				debug_printf("MATCH fkey: '%s'\n", t_strdup_until(needle, nend));
-				debug_printf("MATCH fval: '%s'\n", t_strdup_until(vp, vend));
+				debug_printf("  sub key:       '%s'\n", t_strdup_until(needle, nend));
+				debug_printf("  value remnant: '%s'\n", vp <= vend ? t_strdup_until(vp, vend) : "");
 
-				if ( (needle == nend && vp < vend ) || 
+				if ( (needle == nend && next_wcard == '\0' && vp < vend ) || 
 					!cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
+					debug_printf("  failed fixed match\n");
+
 					if ( prv != NULL && prv + 1 < vend ) {
 						vp = prv;
 						kp = prk;
@@ -262,13 +270,8 @@ static int mcht_matches_match
 						next_wcard = '?';
 				
 						backtrack = TRUE;				 
-						debug_printf("MATCH backtrack\n");
-					} else {
-						/* We are sure to have failed */
-						return FALSE;
+						debug_printf("  BACKTRACK\n");
 					}
-					
-					debug_printf("MATCH failed fixed\n");
 					break;
 				}
 				
@@ -279,8 +282,8 @@ static int mcht_matches_match
 			if ( !backtrack ) {
 				unsigned int i;
 				
-				if ( next_wcard != '*' && next_wcard != '\0' ) {
-					debug_printf("MATCH failed '?'\n");	
+				if ( next_wcard == '?' ) {
+					debug_printf("failed to match '?'\n");	
 					break;
 				}
 				
@@ -289,6 +292,11 @@ static int mcht_matches_match
 				chars = (const char *) str_data(mchars);
 				for ( i = 0; i < str_len(mchars); i++ ) {
 					sieve_match_values_add_char(mvalues, chars[i]);
+				}
+
+				if ( next_wcard != '*' ) {
+					debug_printf("failed to match at end of string\n");
+					break;
 				}
 			}
 		}
@@ -302,18 +310,27 @@ static int mcht_matches_match
 			sieve_match_values_add(mvalues, mvalue);
 			kp = kend;
 			vp = vend;
+			debug_printf("key ends with '*'\n");
 			break;
 		}			
 					
-		debug_printf("MATCH loop\n");
+		debug_printf("== Loop ==\n");
 		j++;
 	}
 	
-	debug_printf("MATCH loop ended\n");
+	debug_printf("=== Finish ===\n");
+	debug_printf("  result: %s\n", (kp == kend && vp == vend) ? "true" : "false");
 	
 	/* By definition, the match is only successful if both value and key pattern
 	 * are exhausted.
 	 */
-	return (kp == kend && vp == vend);
+	if (kp == kend && vp == vend) {
+		string_t *matched = str_new_const(pool_datastack_create(), val, val_size);
+		sieve_match_values_set(mvalues, 0, matched);
+
+		return TRUE;
+	}
+
+	return FALSE;
 }
 			 
