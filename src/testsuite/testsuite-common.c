@@ -335,6 +335,8 @@ static void testsuite_script_clear_messages(void)
         ("testsuite_script_messages", 8192);
 	
 	p_array_init(&_testsuite_script_errors, _testsuite_scriptmsg_pool, 128);	
+
+	sieve_error_handler_reset(test_script_ehandler);
 }
 
 void testsuite_script_get_error_init(void)
@@ -359,10 +361,10 @@ const char *testsuite_script_get_error_next(bool location)
 
 static void testsuite_script_init(void)
 {
-	testsuite_script_clear_messages();
-	
 	test_script_ehandler = _testsuite_script_ehandler_create(); 	
     sieve_error_handler_accept_infolog(test_script_ehandler, TRUE);
+
+	testsuite_script_clear_messages();
 }
 
 bool testsuite_script_compile(const char *script_path)

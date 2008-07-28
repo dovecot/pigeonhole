@@ -121,6 +121,8 @@ bool sieve_errors_more_allowed(struct sieve_error_handler *ehandler);
 void sieve_error_handler_ref(struct sieve_error_handler *ehandler);
 void sieve_error_handler_unref(struct sieve_error_handler **ehandler);
 
+void sieve_error_handler_reset(struct sieve_error_handler *ehandler);
+
 /* 
  * Error handlers 
  */

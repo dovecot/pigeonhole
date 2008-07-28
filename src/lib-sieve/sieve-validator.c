@@ -826,6 +826,7 @@ static bool sieve_validate_command
 	enum sieve_ast_type ast_type = sieve_ast_node_type(cmd_node);
 	bool result = TRUE;
 	struct sieve_command_registration *cmd_reg;
+	const struct sieve_command *command = NULL;
 	
 	i_assert( ast_type == SAT_TEST || ast_type == SAT_COMMAND );
 	
@@ -835,7 +836,7 @@ static bool sieve_validate_command
 		(valdtr, cmd_node->identifier);
 	
 	if ( cmd_reg != NULL && cmd_reg->command != NULL ) {
-		const struct sieve_command *command = cmd_reg->command;
+		command = cmd_reg->command;
 
 		/* Identifier = "" when the command was previously marked as unknown */
 		if ( *(command->identifier) != '\0' ) {
@@ -899,14 +900,17 @@ static bool sieve_validate_command
 	 * Descend further into the AST 
 	 */
 	
-	/* Tests */
-	if ( result || sieve_errors_more_allowed(valdtr->ehandler) )
-		result = sieve_validate_test_list(valdtr, cmd_node) && result;
+	if ( command != NULL ) {
+		/* Tests */
+		if ( command->subtests > 0 && 
+			(result || sieve_errors_more_allowed(valdtr->ehandler)) )
+			result = sieve_validate_test_list(valdtr, cmd_node) && result;
 
-	/* Command block */
-	if ( ast_type == SAT_COMMAND && 
-		(result || sieve_errors_more_allowed(valdtr->ehandler)) )
-		result = sieve_validate_block(valdtr, cmd_node) && result;
+		/* Command block */
+		if ( command->block_allowed && ast_type == SAT_COMMAND && 
+			(result || sieve_errors_more_allowed(valdtr->ehandler)) )
+			result = sieve_validate_block(valdtr, cmd_node) && result;
+	}
 	
 	return result;
 }

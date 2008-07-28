@@ -1,44 +1,57 @@
 require "comparator-i;ascii-numeric";
 
-if header :isnot :comparator "i;ascii-casemap" "From" "nico" {
-	discard;
+/*
+ * Compile errors for the header test
+ *
+ * Total errors: 9 (+1 validation failed msg = 10)
+ */
+
+# Unknown tagged argument
+if header :all :comparator "i;ascii-casemap" "From" "nico" {
+	keep;
 }
 
-if header :is :comparator 45 "From" "nico" {
-	discard;
+# Wrong first argument
+if header :is :comparator "i;ascii-numeric" 45 "nico" {
+	keep;
 }
 
-if header :all :comparator "i;ascii-numeric" {
-  	keep;
-}
-
+# Wrong second argument
 if header :is :comparator "i;ascii-numeric" "From" 45 {
 	discard;
 }
 
-if header :is :comparator "i;ascii-numeric" 45 "nico" {
-	discard;
-}
-
+# Wrong second argument
 if header :is :comparator "i;ascii-numeric" "From" :tag {
-	discard;
+	stop;
 }
 
+# Missing second argument
 if header :is :comparator "i;ascii-numeric" "From" {
-	discard;
+	stop;
 }
 
+# Missing arguments
 if header :is :comparator "i;ascii-numeric" {
-	discard;
+	keep;
 }
 
+# Not an error
 if header :is :comparator "i;ascii-casemap" "frop" ["frop", "frop"] {
 	discard;
 }
 
-if header :hufter :is :comparator "i;ascii-casemap" "frop" ["frop", "frop"] {
-        discard;
+# Spurious sub-test
+if header "frop" "frop" true {
+	discard;
 }
 
-if header "frop" "frop" true {
+# Test used as command with block
+header "frop" "frop" {
+    discard;
 }
+
+# Test used as command
+header "frop" "frop";
+
+

@@ -168,6 +168,12 @@ void sieve_error_handler_unref(struct sieve_error_handler **ehandler)
 	*ehandler = NULL;
 }
 
+void sieve_error_handler_reset(struct sieve_error_handler *ehandler)
+{
+    ehandler->errors = 0;
+    ehandler->warnings = 0;
+}
+
 /* Output errors directly to stderror (merge this with logfile below?) */
 
 static void sieve_stderr_verror

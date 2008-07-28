@@ -3,64 +3,157 @@ require "vnd.dovecot.testsuite";
 require "relational";
 require "comparator-i;ascii-numeric";
 
+/*
+ * Errors triggered in the compiled scripts are pretty reduntant over the
+ * tested commands, but we want to be thorough. 
+ */
+
+/*
+ * Header test
+ */
+
 test "Header errors" {
 	if test_compile "errors/header.sieve" {
 		test_fail "compile should have failed.";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "11" {
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "10" {
 		test_fail "wrong number of errors reported";
 	}
 
 	if not test_error :index 1 :matches 
-		"unknown * ':isnot' for * header test *" {
+		"unknown * ':all' for * header test *" {
 		test_fail "error 1 is invalid";
 	}
 
-	if not test_error :index 2 :matches
-		":comparator * requires one string argument, * number *" {
+	if not test_error :index 2 :matches 
+		"*header test * string list * 1 (header names), but * number *" {
 		test_fail "error 2 is invalid";
 	}
 
 	if not test_error :index 3 :matches
-		"unknown tagged argument ':all' * header test *" {
-		test_fail "error 3 is invalid";
-	}	
-
-	if not test_error :index 4 :matches
 		"*header test * string list * 2 (key list), * number *" {
+		test_fail "error 3 is invalid";
+	}
+
+	if not test_error :index 4 :matches 
+		"* unexpected tagged argument ':tag' while *" {
 		test_fail "error 4 is invalid";
 	}
 
 	if not test_error :index 5 :matches 
-		"*header test expects * string list * 1 (header names), but * number *" {
+		"* header test requires 2 *, but 1 *" {
 		test_fail "error 5 is invalid";
 	}
 
 	if not test_error :index 6 :matches 
-		"* unexpected tagged argument ':tag' while *" {
+		"* header test requires 2 *, but 0 *" {
 		test_fail "error 6 is invalid";
 	}
 
 	if not test_error :index 7 :matches 
-		"* header test requires 2 *, but 1 *" {
+		"*header test accepts no sub-tests* are specified*" {
 		test_fail "error 7 is invalid";
 	}
 
 	if not test_error :index 8 :matches 
-		"* header test requires 2 *, but 0 *" {
+		"* use test 'header' * command*" {
 		test_fail "error 8 is invalid";
 	}
 
 	if not test_error :index 9 :matches 
-		"*unknown * ':hufter' * header test *" {
+		"* use test 'header' * command*" {
 		test_fail "error 9 is invalid";
 	}
 
-	if not test_error :index 10 :matches 
-		"*header test accepts no sub-tests, but tests * anyway" {
-		test_fail "error 10 is invalid";
+	if test_error :index 4 :contains "radish" {
+		test_fail "error test matched nonsense";
 	}
 }	
 
+/*
+ * Address test
+ */
 
+
+test "Address errors" {
+	if test_compile "errors/address.sieve" {
+		test_fail "compile should have failed.";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "9" {
+		test_fail "wrong number of errors reported";
+	}	
+
+	if not test_error :index 1 :matches
+		"*unknown * ':nonsense' * address test*" {
+		test_fail "error 1 is invalid";
+	}
+
+	if not test_error :index 2 :matches
+		"*address test expects *string list * 1 (header list),* number * found*" {
+		test_fail "error 2 is invalid";
+	}
+
+	if not test_error :index 3 :matches
+		"*address test expects *string list * 2 (key list),* number * found*" {
+		test_fail "error 3 is invalid";
+	}
+
+	if not test_error :index 4 :matches
+		"*unexpected *':is' * address test*" {
+		test_fail "error 4 is invalid";
+	}
+
+	if not test_error :index 5 :matches
+		"*address test * 2 positional arg*, but 1*" {
+		test_fail "error 5 is invalid";
+	}
+
+	if not test_error :index 6 :matches
+		"*address test * 2 positional arg*, but 0*" {
+		test_fail "error 6 is invalid";
+	}
+
+	if not test_error :index 7 :matches
+		"*'frop' *not allowed *address test*" {
+		test_fail "error 7 is invalid";
+	}
+
+	if not test_error :index 8 :matches
+		"*'frop' *not allowed *address test*" {
+		test_fail "error 8 is invalid";
+	}
+
+	if test_error :index 23 :contains "radish" {
+		test_fail "error test matched nonsense";
+	}
+}
+
+/*
+ * If command
+ */
+
+test "If errors (FIXME: count only)" {
+	if test_compile "errors/if.sieve" {
+		test_fail "compile should have failed.";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "12" {
+		test_fail "wrong number of errors reported";
+	}	
+}
+
+/*
+ * Require command
+ */
+
+test "Require errors (FIXME: count only)" {
+	if test_compile "errors/require.sieve" {
+		test_fail "compile should have failed.";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "12" {
+		test_fail "wrong number of errors reported";
+	}	
+}
