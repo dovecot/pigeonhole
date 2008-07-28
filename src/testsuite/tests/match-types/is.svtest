@@ -1,0 +1,17 @@
+require "vnd.dovecot.testsuite";
+
+test_set "message" text:
+From: Stephan Bosch <stephan@rename-it.nl>
+To: nico@vestingbar.nl
+Subject: Test message
+
+Test!
+
+.
+;
+
+test "Empty key" {
+	if header :is "from" "" {
+		test_fail "erroneously matched empty key"; 
+	}
+}

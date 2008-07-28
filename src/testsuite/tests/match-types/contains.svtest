@@ -13,51 +13,61 @@ Test!
 
 # Match tests
 
-test "MATCH-full" {
-	if not address :contains "from" "stephan@rename-it.nl" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-begin" {
-	if not address :contains "from" "stephan" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-end" {
-	if not address :contains "from" "rename-it.nl" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-middle" {
-	if not address :contains "from" "@" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-similar-beginnings" {
-	if not header :contains "x-bullshit" "frobnitzn" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-empty" {
+test "Match empty" {
 	if not header :contains "x-bullshit" "" {
 		test_fail "contains tests fails to match \"\"";
 	}
 }
 
+test "Match full" {
+	if not address :contains "from" "stephan@rename-it.nl" {
+		test_fail "should have matched";
+	}
+}
+
+test "Match begin" {
+	if not address :contains "from" "stephan" {
+		test_fail "should have matched";
+	}
+}
+
+test "Match end" {
+	if not address :contains "from" "rename-it.nl" {
+		test_fail "should have matched";
+	}
+}
+
+test "Match middle" {
+	if not address :contains "from" "@" {
+		test_fail "should have matched";
+	}
+}
+
+test "Match similar beginnings" {
+	if not header :contains "x-bullshit" "frobnitzn" {
+		test_fail "should have matched";
+	}
+}
+
+test "Match case-insensitive" {
+	if not address :contains :comparator "i;ascii-casemap" "from" "RENAME-IT" {
+		test_fail "match fails to apply correct comparator";	
+	}
+
+	if address :contains "from" "RENAME-IT" {
+        test_fail "default comparator is wrong";
+    }
+}
+
 # Non-match tests
 
-test "NO-MATCH-full-typo" {
+test "No match full (typo)" {
 	if address :contains "to" "frob@example.com" {
 		test_fail "should not have matched";
 	}
 }
 
-test "NO-MATCH-end-typo" {
+test "No match end (typo)" {
 	if header :contains "x-bullshit" "frobnitzm" {
 		test_fail "should not have matched";
 	}

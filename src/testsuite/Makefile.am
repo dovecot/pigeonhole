@@ -71,6 +71,7 @@ test_cases = \
 	tests/exists.svtest \
 	tests/lexer.svtest \
 	tests/comparators/core.svtest \
+	tests/match-types/is.svtest \
 	tests/match-types/contains.svtest \
 	tests/match-types/matches.svtest \
 	tests/match-types/relational.svtest \
