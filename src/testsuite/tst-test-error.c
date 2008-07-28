@@ -214,7 +214,8 @@ static int tst_test_error_operation_execute
 	struct sieve_match_context *mctx;
 	struct sieve_coded_stringlist *key_list;
 	bool matched;
-	int index = 0;
+	const char *error;
+	int cur_index = 0, index = 0;
 	int ret;
 
 	/*
@@ -255,7 +256,37 @@ static int tst_test_error_operation_execute
 	 * Perform operation
 	 */
 	
-	matched = TRUE;
+	sieve_runtime_trace(renv, "TEST_ERROR test (index: %d)", index);
+
+	testsuite_script_get_error_init();
+
+    /* Initialize match */
+    mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list);
+
+    /* Iterate through all errors to match */
+	error = NULL;
+	matched = FALSE;
+	cur_index = 1;
+	ret = 0;
+	while ( result && !matched &&
+		(error=testsuite_script_get_error_next(FALSE)) != NULL ) {
+		
+		if ( index == 0 || index == cur_index ) {
+			if ( (ret=sieve_match_value(mctx, error, strlen(error))) < 0 ) {
+				result = FALSE;
+				break;
+			}
+		}
+
+		matched = ret > 0;
+		cur_index++;
+    }
+
+    /* Finish match */
+    if ( (ret=sieve_match_end(mctx)) < 0 )
+        result = FALSE;
+    else
+        matched = ( ret > 0 || matched );
 
 	/* Set test result for subsequent conditional jump */
     if ( result ) {

@@ -109,9 +109,6 @@ static int tst_test_compile_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	struct sieve_error_handler *ehandler;
-    struct sieve_binary *sbin;
-
 	string_t *script_name;
 	const char *script_path;
 	bool result = TRUE;
@@ -139,17 +136,7 @@ static int tst_test_compile_operation_execute
 
 	/* Attempt script compile */
 
-	ehandler = sieve_stderr_ehandler_create(0);
-    sieve_error_handler_accept_infolog(ehandler, TRUE);
-
-    if ( (sbin = sieve_compile(script_path, ehandler)) == NULL ) {
-        sieve_error_handler_unref(&ehandler);
-		result = FALSE;
-    } else {
-		sieve_close(&sbin);
-	}
-
-    sieve_error_handler_unref(&ehandler);
+	result = testsuite_script_compile(script_path);
 
 	/* Set result */
 	sieve_interpreter_set_test_result(renv->interp, result);

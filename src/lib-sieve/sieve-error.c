@@ -43,7 +43,8 @@ void sieve_verror
 	}
 
 	if ( sieve_errors_more_allowed(ehandler) ) {
-		ehandler->verror(ehandler, location, fmt, args);
+		if ( ehandler->verror != NULL )
+			ehandler->verror(ehandler, location, fmt, args);
 		ehandler->errors++;
 	}
 }
@@ -60,8 +61,9 @@ void sieve_vwarning
 		else
 			sieve_sys_warning("%s: %s", location, t_strdup_vprintf(fmt, args));
 	}
-		
-	ehandler->vwarning(ehandler, location, fmt, args);
+	
+	if ( ehandler->vwarning != NULL )	
+		ehandler->vwarning(ehandler, location, fmt, args);
 	ehandler->warnings++;
 }
 
@@ -78,7 +80,7 @@ void sieve_vinfo
 			sieve_sys_info("%s: %s", location, t_strdup_vprintf(fmt, args));
 	}
 	
-	if ( ehandler->log_info )	
+	if ( ehandler->log_info && ehandler->vinfo != NULL )	
 		ehandler->vinfo(ehandler, location, fmt, args);
 }
 

@@ -43,7 +43,7 @@ static void sig_die(int signo, void *context ATTR_UNUSED)
 	exit(1);
 }
 
-static void testsuite_init(void) 
+static void testsuite_bin_init(void) 
 {
 	lib_init();
 	ioloop = io_loop_create();
@@ -59,12 +59,12 @@ static void testsuite_init(void)
 
 	(void) sieve_extension_register(&testsuite_extension);
 	
-	testsuite_test_context_init();
+	testsuite_init();
 }
 
-static void testsuite_deinit(void)
+static void testsuite_bin_deinit(void)
 {
-	testsuite_test_context_deinit();
+	testsuite_deinit();
 	
 	sieve_deinit();
 	
@@ -182,7 +182,7 @@ int main(int argc, char **argv)
 	struct sieve_script_env scriptenv;
 	bool trace = FALSE;
 
-	testsuite_init();
+	testsuite_bin_init();
 
 	/* Parse arguments */
 	scriptfile = dumpfile =  NULL;
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
 	testsuite_message_deinit();
 	namespaces_deinit();
 
-	testsuite_deinit();  
+	testsuite_bin_deinit();  
 
 	return testsuite_testcase_result();
 }

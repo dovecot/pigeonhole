@@ -64,13 +64,23 @@ enum testsuite_operand_code {
 
 /* Test context */
 
-void testsuite_test_context_init(void);
 void testsuite_test_start(string_t *name);
 void testsuite_test_fail(string_t *reason);
 void testsuite_test_succeed(string_t *reason);
-void testsuite_test_context_deinit(void);
 
 void testsuite_testcase_fail(const char *reason);
 int testsuite_testcase_result(void);
+
+/* Tested script environment */
+
+bool testsuite_script_compile(const char *script_path);
+
+void testsuite_script_get_error_init(void);
+const char *testsuite_script_get_error_next(bool location);
+
+/* Testsuite init/deinit */
+
+void testsuite_init(void);
+void testsuite_deinit(void);
 
 #endif /* __TESTSUITE_COMMON_H */

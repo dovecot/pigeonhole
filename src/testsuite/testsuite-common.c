@@ -8,6 +8,7 @@
 #include "mail-raw.h"
 #include "namespaces.h"
 #include "sieve.h"
+#include "sieve-error-private.h"
 #include "sieve-code.h"
 #include "sieve-commands.h"
 #include "sieve-extensions.h"
@@ -31,6 +32,10 @@ struct sieve_message_data testsuite_msgdata;
 static string_t *test_name;
 unsigned int test_index;
 unsigned int test_failures;
+
+/* Tested script context */
+
+static struct sieve_error_handler *test_script_ehandler;
 
 /* 
  * Testsuite message environment 
@@ -193,7 +198,7 @@ bool testsuite_generator_context_initialize(struct sieve_generator *gentr)
  * Test context
  */
  
-void testsuite_test_context_init(void)
+static void testsuite_test_context_init(void)
 {
 	test_name = str_new(default_pool, 128);
 	test_index = 0;	
@@ -255,7 +260,7 @@ void testsuite_test_succeed(string_t *reason)
 	str_truncate(test_name, 0);
 }
 
-void testsuite_test_context_deinit(void)
+static void testsuite_test_context_deinit(void)
 {
 	//str_free(test_name);
 }
@@ -269,5 +274,131 @@ int testsuite_testcase_result(void)
 
 	printf("\nPASS: %d tests succeeded.\n\n", test_index);
 	return 0;
+}
+
+/*
+ * Tested script environment
+ */ 
+
+/* Special error handler */
+
+struct _testsuite_script_message {
+	const char *location;
+	const char *message;
+};
+
+unsigned int _testsuite_script_error_index = 0;
+
+static pool_t _testsuite_scriptmsg_pool = NULL;
+ARRAY_DEFINE(_testsuite_script_errors, struct _testsuite_script_message);
+
+static void _testsuite_script_verror
+(struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location,
+    const char *fmt, va_list args)
+{
+	pool_t pool = _testsuite_scriptmsg_pool;
+	struct _testsuite_script_message msg;
+
+	msg.location = p_strdup(pool, location);
+	msg.message = p_strdup_vprintf(pool, fmt, args);
+	
+	array_append(&_testsuite_script_errors, &msg, 1);	
+}
+
+static struct sieve_error_handler *_testsuite_script_ehandler_create(void)
+{
+    pool_t pool;
+    struct sieve_error_handler *ehandler;
+
+    /* Pool is not strictly necessary, but other handler types will need a pool,
+     * so this one will have one too.
+     */
+    pool = pool_alloconly_create
+        ("testsuite_script_error_handler", sizeof(struct sieve_error_handler));
+    ehandler = p_new(pool, struct sieve_error_handler, 1);
+    sieve_error_handler_init(ehandler, pool, 0);
+
+    ehandler->verror = _testsuite_script_verror;
+
+    return ehandler;
+}
+
+static void testsuite_script_clear_messages(void)
+{
+	if ( _testsuite_scriptmsg_pool != NULL ) {
+		if ( array_count(&_testsuite_script_errors) == 0 )
+			return;
+		pool_unref(&_testsuite_scriptmsg_pool);
+	}
+
+	 _testsuite_scriptmsg_pool = pool_alloconly_create
+        ("testsuite_script_messages", 8192);
+	
+	p_array_init(&_testsuite_script_errors, _testsuite_scriptmsg_pool, 128);	
+}
+
+void testsuite_script_get_error_init(void)
+{
+	_testsuite_script_error_index = 0;
+}
+
+const char *testsuite_script_get_error_next(bool location)
+{
+	const struct _testsuite_script_message *msg;
+
+	if ( _testsuite_script_error_index >= array_count(&_testsuite_script_errors) )
+		return NULL;
+
+	msg = array_idx(&_testsuite_script_errors, _testsuite_script_error_index++);
+
+	if ( location ) 
+		return msg->location;
+
+	return msg->message;		
+}
+
+static void testsuite_script_init(void)
+{
+	testsuite_script_clear_messages();
+	
+	test_script_ehandler = _testsuite_script_ehandler_create(); 	
+    sieve_error_handler_accept_infolog(test_script_ehandler, TRUE);
+}
+
+bool testsuite_script_compile(const char *script_path)
+{
+	struct sieve_binary *sbin;
+
+	testsuite_script_clear_messages();
+
+    if ( (sbin = sieve_compile(script_path, test_script_ehandler)) == NULL )
+        return FALSE;
+
+    sieve_close(&sbin);
+	return TRUE;
+}
+
+static void testsuite_script_deinit(void)
+{
+	sieve_error_handler_unref(&test_script_ehandler);
+
+	pool_unref(&_testsuite_scriptmsg_pool);
+	//str_free(test_script_error_buf);
+}
+
+/*
+ * Main testsuite init/deinit
+ */
+
+void testsuite_init(void)
+{
+	testsuite_test_context_init();
+	testsuite_script_init();
+}
+
+void testsuite_deinit(void)
+{
+	testsuite_script_deinit();
+	testsuite_test_context_deinit();
 }
 

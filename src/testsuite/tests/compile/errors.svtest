@@ -4,7 +4,7 @@ require "relational";
 require "comparator-i;ascii-numeric";
 
 test "Header errors" {
-	if test_compile "header-errors.sieve" {
+	if test_compile "errors/header.sieve" {
 		test_fail "compile should have failed.";
 	}
 
@@ -25,7 +25,7 @@ test "Header errors" {
 	if not test_error :index 3 :matches
 		"unknown tagged argument ':all' * header test *" {
 		test_fail "error 3 is invalid";
-	}
+	}	
 
 	if not test_error :index 4 :matches
 		"*header test * string list * 2 (key list), * number *" {

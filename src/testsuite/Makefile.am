@@ -85,7 +85,8 @@ test_cases = \
 	tests/extensions/imapflags/basic.svtest \
 	tests/extensions/imapflags/rfc.svtest \
 	tests/compile/compile.svtest \
-	tests/compile/compile-examples.svtest
+	tests/compile/compile-examples.svtest \
+	tests/compile/errors.svtest 
 
 $(test_cases): 
 	@$(TESTSUITE_BIN) $@

@@ -125,10 +125,15 @@ void sieve_error_handler_unref(struct sieve_error_handler **ehandler);
  * Error handlers 
  */
 
+/* Write errors to stderr */
 struct sieve_error_handler *sieve_stderr_ehandler_create
 	(unsigned int max_errors);
+
+/* Write errors into a string buffer */
 struct sieve_error_handler *sieve_strbuf_ehandler_create
 	(string_t *strbuf, unsigned int max_errors);
+
+/* Write errors to a logfile */
 struct sieve_error_handler *sieve_logfile_ehandler_create
 	(const char *logfile, unsigned int max_errors);  
 
