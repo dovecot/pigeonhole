@@ -13,7 +13,7 @@
  * Test_fail command
  *
  * Syntax:   
- *   test <reason: string>
+ *   test_fail <reason: string>
  */
 
 static bool cmd_test_fail_validate

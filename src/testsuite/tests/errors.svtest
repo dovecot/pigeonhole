@@ -1,0 +1,66 @@
+require "vnd.dovecot.testsuite";
+
+require "relational";
+require "comparator-i;ascii-numeric";
+
+test "Header errors" {
+	if test_compile "header-errors.sieve" {
+		test_fail "compile should have failed.";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "11" {
+		test_fail "wrong number of errors reported";
+	}
+
+	if not test_error :index 1 :matches 
+		"unknown * ':isnot' for * header test *" {
+		test_fail "error 1 is invalid";
+	}
+
+	if not test_error :index 2 :matches
+		":comparator * requires one string argument, * number *" {
+		test_fail "error 2 is invalid";
+	}
+
+	if not test_error :index 3 :matches
+		"unknown tagged argument ':all' * header test *" {
+		test_fail "error 3 is invalid";
+	}
+
+	if not test_error :index 4 :matches
+		"*header test * string list * 2 (key list), * number *" {
+		test_fail "error 4 is invalid";
+	}
+
+	if not test_error :index 5 :matches 
+		"*header test expects * string list * 1 (header names), but * number *" {
+		test_fail "error 5 is invalid";
+	}
+
+	if not test_error :index 6 :matches 
+		"* unexpected tagged argument ':tag' while *" {
+		test_fail "error 6 is invalid";
+	}
+
+	if not test_error :index 7 :matches 
+		"* header test requires 2 *, but 1 *" {
+		test_fail "error 7 is invalid";
+	}
+
+	if not test_error :index 8 :matches 
+		"* header test requires 2 *, but 0 *" {
+		test_fail "error 8 is invalid";
+	}
+
+	if not test_error :index 9 :matches 
+		"*unknown * ':hufter' * header test *" {
+		test_fail "error 9 is invalid";
+	}
+
+	if not test_error :index 10 :matches 
+		"*header test accepts no sub-tests, but tests * anyway" {
+		test_fail "error 10 is invalid";
+	}
+}	
+
+

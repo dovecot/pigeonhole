@@ -16,7 +16,7 @@
  * Test_compile command
  *
  * Syntax:   
- *   test <reason: string>
+ *   test_compile <scriptpath: string>
  */
 
 static bool tst_test_compile_validate

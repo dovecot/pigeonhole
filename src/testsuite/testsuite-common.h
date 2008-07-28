@@ -43,7 +43,8 @@ enum testsuite_operation_code {
 	TESTSUITE_OPERATION_TEST_FINISH,
 	TESTSUITE_OPERATION_TEST_FAIL,
 	TESTSUITE_OPERATION_TEST_SET,
-	TESTSUITE_OPERATION_TEST_COMPILE
+	TESTSUITE_OPERATION_TEST_COMPILE,
+	TESTSUITE_OPERATION_TEST_ERROR,
 };
 
 extern const struct sieve_operation test_operation;
@@ -51,6 +52,7 @@ extern const struct sieve_operation test_finish_operation;
 extern const struct sieve_operation test_fail_operation;
 extern const struct sieve_operation test_set_operation;
 extern const struct sieve_operation test_compile_operation;
+extern const struct sieve_operation test_error_operation;
 
 /* Testsuite operands */
 

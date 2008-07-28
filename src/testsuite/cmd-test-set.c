@@ -23,7 +23,7 @@
  * Test_set command 
  * 
  * Syntax
- *   redirect <address: string>
+ *   test_set <testsuite object (member): string> <value: string>
  */
 
 static bool cmd_test_set_validate

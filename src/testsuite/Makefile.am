@@ -43,7 +43,8 @@ commands = \
 	cmd-test-set.c
 
 tests = \
-	tst-test-compile.c
+	tst-test-compile.c \
+	tst-test-error.c
 
 testsuite_SOURCES = \
 	namespaces.c \
