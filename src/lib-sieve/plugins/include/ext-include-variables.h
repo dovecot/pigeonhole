@@ -7,13 +7,6 @@
 #include "ext-include-common.h"
 
 /* 
- * AST Context
- */
- 
-struct ext_include_ast_context *ext_include_create_ast_context
-	(struct sieve_ast *ast, struct sieve_ast *parent);
-
-/* 
  * Variable import-export
  */
  

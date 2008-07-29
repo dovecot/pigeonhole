@@ -148,20 +148,6 @@ static bool cmd_include_registered
  * Command validation 
  */
 
-static void cmd_include_ast_destroy
-(struct sieve_ast *ast ATTR_UNUSED, struct sieve_ast_node *node)
-{
-	struct sieve_command_context *cmd = node->context;
-	struct cmd_include_context_data *ctx_data = 
-		(struct cmd_include_context_data *) cmd->data;
-		
-	sieve_script_unref(&ctx_data->script);
-}
-
-static const struct sieve_ast_node_object cmd_include_ast_object = {
-	cmd_include_ast_destroy
-};
-
 static bool cmd_include_pre_validate
 	(struct sieve_validator *validator ATTR_UNUSED, 
 		struct sieve_command_context *cmd)
@@ -209,10 +195,9 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 		sieve_validator_error_handler(validator), NULL);
 	if ( script == NULL ) 
 		return FALSE;	
-		
-	sieve_ast_link_object(cmd->ast_node, &cmd_include_ast_object);
+
+	ext_include_ast_link_included_script(cmd->ast_node->ast, script);		
 	ctx_data->script = script;
-	sieve_script_ref(script);	
 		
 	arg = sieve_ast_arguments_detach(arg, 1);
 	

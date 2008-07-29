@@ -16,11 +16,11 @@ static struct sieve_ast_node *sieve_ast_node_create
 	(struct sieve_ast *ast, struct sieve_ast_node *parent, 
 		enum sieve_ast_type type, unsigned int source_line);
 
-/* Links to other objects (notified if AST is destroyed) */
+/* Extensions to the AST */
 
-struct sieve_ast_node_link {
-	struct sieve_ast_node *node;
-	const struct sieve_ast_node_object *object;
+struct sieve_ast_extension_reg {
+	const struct sieve_ast_extension *ast_ext;
+	void *context;
 };
 
 /* The AST object */
@@ -33,9 +33,7 @@ struct sieve_ast {
 		
 	struct sieve_ast_node *root;
 	
-	ARRAY_DEFINE(ext_contexts, void *);
-
-	ARRAY_DEFINE(node_links, struct sieve_ast_node_link);
+	ARRAY_DEFINE(extensions, struct sieve_ast_extension_reg);
 };
 
 struct sieve_ast *sieve_ast_create(struct sieve_script *script) 
@@ -54,20 +52,9 @@ struct sieve_ast *sieve_ast_create(struct sieve_script *script)
 	ast->root = sieve_ast_node_create(ast, NULL, SAT_ROOT, 0);
 	ast->root->identifier = "ROOT";
 	
-	p_array_init(&ast->node_links, pool, 4);
-	p_array_init(&ast->ext_contexts, pool, sieve_extensions_get_count());
+	p_array_init(&ast->extensions, pool, sieve_extensions_get_count());
 	
 	return ast;
-}
-
-void sieve_ast_link_object
-(struct sieve_ast_node *node, const struct sieve_ast_node_object *obj)
-{
-	struct sieve_ast_node_link link;
-	
-	link.node = node;
-	link.object = obj;
-	array_append(&node->ast->node_links, &link, 1);
 }
 
 void sieve_ast_ref(struct sieve_ast *ast) 
@@ -77,8 +64,8 @@ void sieve_ast_ref(struct sieve_ast *ast)
 
 void sieve_ast_unref(struct sieve_ast **ast) 
 {
-	unsigned int i, lcount;
-	const struct sieve_ast_node_link *node_links;
+	unsigned int i, ext_count;
+	const struct sieve_ast_extension_reg *extrs;
 	
 	i_assert((*ast)->refcount > 0);
 
@@ -88,12 +75,14 @@ void sieve_ast_unref(struct sieve_ast **ast)
 	/* Release script reference */
 	sieve_script_unref(&(*ast)->script);
 	
-	/* Signal linked objects that the AST is being destroyed */
-	node_links = array_get(&(*ast)->node_links, &lcount);
-	for ( i = 0; i < lcount; i++ ) {
-		node_links[i].object->ast_destroy(*ast, node_links[i].node);
+	/* Signal registered extensions that the AST is being destroyed */
+	extrs = array_get(&(*ast)->extensions, &ext_count);
+	for ( i = 0; i < ext_count; i++ ) {
+		if ( extrs[i].ast_ext != NULL && 
+			extrs[i].ast_ext->free != NULL )
+			extrs[i].ast_ext->free(*ast, extrs[i].context);
 	}
-	
+
 	/* Destroy AST */
 	pool_unref(&(*ast)->pool);
 	
@@ -129,24 +118,32 @@ const char *sieve_ast_type_name(enum sieve_ast_type ast_type) {
 
 /* Extension support */
 
-void sieve_ast_extension_set_context
-(struct sieve_ast *ast, const struct sieve_extension *ext, void *context)
+void sieve_ast_extension_register
+(struct sieve_ast *ast, const struct sieve_ast_extension *ast_ext, void *context)
 {
-	array_idx_set(&ast->ext_contexts, (unsigned int) *ext->id, &context);	
+	struct sieve_ast_extension_reg reg;
+	int ext_id = *ast_ext->ext->id;
+
+	if ( ext_id < 0 ) return;
+
+	reg.ast_ext = ast_ext;
+	reg.context = context;
+	
+	array_idx_set(&ast->extensions, (unsigned int) ext_id, &reg);	
 }
 
-const void *sieve_ast_extension_get_context
+void *sieve_ast_extension_get_context
 (struct sieve_ast *ast, const struct sieve_extension *ext) 
 {
 	int ext_id = *ext->id;
-	void * const *ctx;
+	const struct sieve_ast_extension_reg *reg;
 
-	if  ( ext_id < 0 || ext_id >= (int) array_count(&ast->ext_contexts) )
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&ast->extensions) )
 		return NULL;
 	
-	ctx = array_idx(&ast->ext_contexts, (unsigned int) ext_id);		
+	reg = array_idx(&ast->extensions, (unsigned int) ext_id);		
 
-	return *ctx;
+	return reg->context;
 }
 
 /* AST-based error reporting */

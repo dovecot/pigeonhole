@@ -19,7 +19,7 @@
 /*
  * Forward declarations
  */
- 
+
 /* Generator context */
 
 struct ext_include_generator_context {
@@ -80,6 +80,70 @@ const char *ext_include_get_script_directory
 	}
 
 	return sieve_dir;
+}
+
+/*
+ * AST context management
+ */
+
+static void ext_include_ast_free
+(struct sieve_ast *ast ATTR_UNUSED, void *context)
+{
+	struct ext_include_ast_context *actx = 
+		(struct ext_include_ast_context *) context;
+	struct sieve_script **scripts;
+	unsigned int count, i;
+
+	scripts = array_get_modifiable(&actx->included_scripts, &count);
+    for ( i = 0; i < count; i++ ) {
+		sieve_script_unref(&scripts[i]);
+    }	
+}
+
+static const struct sieve_ast_extension include_ast_extension = {
+	&include_extension,
+	ext_include_ast_free
+};
+
+struct ext_include_ast_context *ext_include_create_ast_context
+(struct sieve_ast *ast, struct sieve_ast *parent)
+{
+    struct ext_include_ast_context *actx;
+
+    pool_t pool = sieve_ast_pool(ast);
+    actx = p_new(pool, struct ext_include_ast_context, 1);
+   	actx->import_vars = sieve_variable_scope_create(pool, &include_extension);
+	p_array_init(&actx->included_scripts, pool, 32);
+
+    if ( parent != NULL ) {
+        struct ext_include_ast_context *parent_ctx =
+            (struct ext_include_ast_context *)
+            sieve_ast_extension_get_context(parent, &include_extension);
+        actx->global_vars = ( parent_ctx == NULL ? NULL : parent_ctx->global_vars );
+    }
+
+	sieve_ast_extension_register(ast, &include_ast_extension, (void *) actx);
+
+    return actx;
+}
+
+struct ext_include_ast_context *ext_include_get_ast_context
+(struct sieve_ast *ast)
+{
+	struct ext_include_ast_context *actx = (struct ext_include_ast_context *)
+        sieve_ast_extension_get_context(ast, &include_extension);
+
+	if ( actx != NULL ) return actx;
+
+	return ext_include_create_ast_context(ast, NULL);
+}
+
+void ext_include_ast_link_included_script
+(struct sieve_ast *ast, struct sieve_script *script) 
+{
+	struct ext_include_ast_context *actx = ext_include_get_ast_context(ast);
+
+	array_append(&actx->included_scripts, &script, 1);
 }
 
 /* 

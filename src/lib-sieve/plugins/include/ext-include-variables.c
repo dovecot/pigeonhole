@@ -10,54 +10,6 @@
 #include "ext-include-common.h"
 #include "ext-include-variables.h"
 
-/*
- * Forward declarations
- */
- 
- 
-/* 
- * AST context 
- */
-
-struct ext_include_ast_context {
-	struct sieve_variable_scope *import_vars;
-	struct sieve_variable_scope *global_vars;
-};
-
-struct ext_include_ast_context *ext_include_create_ast_context
-(struct sieve_ast *ast, struct sieve_ast *parent)
-{	
-	struct ext_include_ast_context *ctx;
-
-	pool_t pool = sieve_ast_pool(ast);
-	ctx = p_new(pool, struct ext_include_ast_context, 1);
-	ctx->import_vars = sieve_variable_scope_create(pool, &include_extension);
-	
-	if ( parent != NULL ) {
-		struct ext_include_ast_context *parent_ctx = 
-			(struct ext_include_ast_context *)
-			sieve_ast_extension_get_context(parent, &include_extension);
-		ctx->global_vars = ( parent_ctx == NULL ? NULL : parent_ctx->global_vars );
-	}
-	
-	sieve_ast_extension_set_context(ast, &include_extension, ctx);
-	
-	return ctx;
-}
-
-static inline struct ext_include_ast_context *
-	ext_include_get_ast_context(struct sieve_ast *ast)
-{
-	struct ext_include_ast_context *ctx = (struct ext_include_ast_context *)
-		sieve_ast_extension_get_context(ast, &include_extension);
-		
-	if ( ctx == NULL ) {
-		ctx = ext_include_create_ast_context(ast, NULL);	
-	}
-	
-	return ctx;
-}
-
 /* 
  * Variable import-export
  */

@@ -148,8 +148,10 @@ struct sieve_ast_node {
 	struct sieve_command_context *context;	
 };
 
-struct sieve_ast_node_object {
-	void (*ast_destroy)(struct sieve_ast *ast, struct sieve_ast_node *node);
+struct sieve_ast_extension {
+	const struct sieve_extension *ext;	
+
+	void (*free)(struct sieve_ast *ast, void *context);
 };
 
 struct sieve_ast;
@@ -159,9 +161,6 @@ struct sieve_ast *sieve_ast_create(struct sieve_script *script);
 void sieve_ast_ref(struct sieve_ast *ast);
 void sieve_ast_unref(struct sieve_ast **ast);
 
-void sieve_ast_link_object
-	(struct sieve_ast_node *node, const struct sieve_ast_node_object *obj);
-
 struct sieve_ast_node *sieve_ast_root(struct sieve_ast *ast);
 pool_t sieve_ast_pool(struct sieve_ast *ast);
 struct sieve_script *sieve_ast_script(struct sieve_ast *ast);
@@ -169,9 +168,10 @@ struct sieve_script *sieve_ast_script(struct sieve_ast *ast);
 const char *sieve_ast_type_name(enum sieve_ast_type ast_type);
 
 /* extension support */
-void sieve_ast_extension_set_context
-	(struct sieve_ast *ast, const struct sieve_extension *ext, void *context);
-const void *sieve_ast_extension_get_context
+void sieve_ast_extension_register
+	(struct sieve_ast *ast, const struct sieve_ast_extension *ast_ext, 
+		void *context);
+void *sieve_ast_extension_get_context
 	(struct sieve_ast *ast, const struct sieve_extension *ext);
 
 /* error reporting */

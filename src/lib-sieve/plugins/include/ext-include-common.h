@@ -43,7 +43,30 @@ enum ext_include_script_location {
 const char *ext_include_get_script_directory
 	(enum ext_include_script_location location, const char *script_name);
 
-/* Generator */
+/* 
+ * AST Context 
+ */
+
+/* AST context */
+
+struct ext_include_ast_context {
+    struct sieve_variable_scope *import_vars;
+    struct sieve_variable_scope *global_vars;
+
+    ARRAY_DEFINE(included_scripts, struct sieve_script *);
+};
+
+struct ext_include_ast_context *ext_include_create_ast_context
+	(struct sieve_ast *ast, struct sieve_ast *parent);
+struct ext_include_ast_context *ext_include_get_ast_context
+	(struct sieve_ast *ast);
+
+void ext_include_ast_link_included_script
+	(struct sieve_ast *ast, struct sieve_script *script);
+
+/* 
+ * Generator context
+ */
 
 void ext_include_register_generator_context
 	(struct sieve_generator *gentr);
@@ -53,7 +76,9 @@ bool ext_include_generate_include
 		enum ext_include_script_location location, struct sieve_script *script, 
 		unsigned *blk_id_r);
 
-/* Interpreter */
+/* 
+ * Interpreter context
+ */
 
 void ext_include_interpreter_context_init(struct sieve_interpreter *interp);
 
