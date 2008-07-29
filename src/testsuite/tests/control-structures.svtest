@@ -8,7 +8,7 @@ Subject: Test
 Test!
 .
 ;
-/*
+
 test "IF-true" {
 	if true {
 	} else {
@@ -38,7 +38,7 @@ test "ELSEIF-false" {
 		test_fail "executed wrong alternative (elsif)";	
 	} else {
 	}
-}*/
+}
 
 test "IF-address-true" {
 	if address :is "from" "stephan@rename-it.nl" {
@@ -47,7 +47,6 @@ test "IF-address-true" {
 	}
 }
 
-/*
 test "IF-address-false" {
 	if address :is "from" "tss@iki.fi" {
 		test_fail "executed wrong alternative";
@@ -147,4 +146,4 @@ test "STOP" {
 	stop;
 	test_fail "continued after stop";
 }
-*/
+

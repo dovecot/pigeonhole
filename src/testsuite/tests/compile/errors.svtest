@@ -157,3 +157,88 @@ test "Require errors (FIXME: count only)" {
 		test_fail "wrong number of errors reported";
 	}	
 }
+
+/*
+ * Size test
+ */
+
+test "Size errors (FIXME: count only)" {
+    if test_compile "errors/size.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "7" {
+        test_fail "wrong number of errors reported";
+    }
+}
+
+/*
+ * Envelope test
+ */
+
+test "Envelope errors (FIXME: count only)" {
+    if test_compile "errors/envelope.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+        test_fail "wrong number of errors reported";
+    }
+}
+
+/*
+ * Stop command
+ */
+
+test "Stop errors (FIXME: count only)" {
+    if test_compile "errors/stop.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "8" {
+        test_fail "wrong number of errors reported";
+    }
+}
+
+/*
+ * Keep command
+ */
+
+test "Keep errors (FIXME: count only)" {
+    if test_compile "errors/keep.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+        test_fail "wrong number of errors reported";
+    }
+}
+
+/*
+ * ADDRESS-PART errors
+ */
+
+test "ADDRESS-PART errors (FIXME: count only)" {
+    if test_compile "errors/address-part.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+        test_fail "wrong number of errors reported";
+    }
+}
+
+/*
+ * Encoded-character errors
+ */
+
+test "Encoded-character errors (FIXME: count only)" {
+    if test_compile "errors/encoded-character.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+        test_fail "wrong number of errors reported";
+    }
+}
+

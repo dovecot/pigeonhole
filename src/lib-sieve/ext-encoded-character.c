@@ -258,6 +258,8 @@ bool arg_encoded_string_validate
 			}
 		}
 	} T_END;
+
+	if ( !result ) return FALSE;
 	
 	if ( newstr != NULL ) {
 		if ( strstart != strend )
