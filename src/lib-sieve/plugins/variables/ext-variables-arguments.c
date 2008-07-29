@@ -299,11 +299,12 @@ static bool arg_variable_string_validate
 				
 				strstart = p + 1;
 				substart = strstart;
+
+				p++;	
 			}
 		
 			/* Finished, reset for the next substitution */	
 			state = ST_NONE;
-			p++;	
 		}
 	}
 
