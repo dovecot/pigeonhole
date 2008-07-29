@@ -10,7 +10,11 @@ Testing variables...
 .
 ;
 
-test "ASSIGNMENT-1" {
+/*
+ * Variable assignments
+ */
+
+test "Basic assignment" {
 	set "test" "Value";
 
 	if not string :is "${test}" "Value" {
@@ -22,7 +26,7 @@ test "ASSIGNMENT-1" {
 	}
 }
 
-test "ASSIGNMENT-2" {
+test "Assignment overwritten" {
 	set "test" "Value";
 	set "test" "More";
 
@@ -31,11 +35,15 @@ test "ASSIGNMENT-2" {
 	}
 
 	if string :is "${test}" "Value" {
+		test_fail "value not overwritten";
+	}
+
+	if string :is "${test}" "nonsense" {
 		test_fail "string test failed";
 	}
 }
 
-test "ASSIGNMENT-3" {
+test "Two assignments" {
 	set "test" "Value";
 	set "test2" "More";
 
@@ -44,121 +52,125 @@ test "ASSIGNMENT-3" {
 	}
 
 	if string :is "${test}" "More" {
+		test_fail "assignments to different variables overlap";
+	}
+
+	if string :is "${test}" "nonsense" {
 		test_fail "string test failed";
 	}
 }
 
-test "MODIFIER-lower" {
+/*
+ * Modifiers
+ */
+
+test "Modifier :lower" {
 	set :lower "test" "VaLuE";
 
 	if not string :is "${test}" "value" {
-		test_fail "variable modified assignment failed";
-	}
-
-	if string :is "${test}" "VALUE" {
-		test_fail "string test failed";
+		test_fail "modified variable assignment failed";
 	}
 }
 
-test "MODIFIER-lower-upperfirst" {
+test "Modifiers :lower :upperfirst" {
 	set :lower :upperfirst "test" "vAlUe";
 
-	if not string :is "${test}" "Value" {
-		test_fail "variable modified assignment failed";
+	if string :is "${test}" "value" {
+		test_fail "modifiers applied with wrong precedence";
 	}
 
-	if string :is "${test}" "value" {
-		test_fail "string test failed";
+	if not string :is "${test}" "Value" {
+		test_fail "modified variable assignment failed";
 	}
 }
 
-test "MODIFIER-upper" {
+test "Modifiers :upperfirst :lower" {
+	set :upperfirst :lower "test" "vAlUe";
+
+	if string :is "${test}" "value" {
+		test_fail "modifiers applied with wrong precedence";
+	}
+
+	if not string :is "${test}" "Value" {
+		test_fail "modified variable assignment failed";
+	}
+}
+
+test "Modifier :upper" {
 	set :upper "test" "vAlUe";
 
 	if not string :is "${test}" "VALUE" {
-		test_fail "variable modified assignment failed";
-	}
-
-	if string :is "${test}" "value" {
-		test_fail "string test failed";
+		test_fail "modified variable assignment failed";
 	}
 }
 
-test "MODIFIER-upper-lowerfirst" {
-	set :lowerfirst :upper "test" "VaLuE";
+test "Modifiers :upper :lowerfirst" {
+	set :upper :lowerfirst "test" "VaLuE";
+
+	if string :is "${test}" "VALUE" {
+		test_fail "modifiers applied with wrong precedence";
+	}
 
 	if not string :is "${test}" "vALUE" {
-		test_fail "variable modified assignment failed";
-	}
-
-	if string :is "${test}" "value" {
-		test_fail "string test failed";
+		test_fail "modified variable assignment failed";
 	}
 }
 
-test "MODIFIER-upper-lowerfirst" {
+test "Modifiers :lowerfirst :upper" {
 	set :lowerfirst :upper "test" "VaLuE";
 
-	if not string :is "${test}" "vALUE" {
-		test_fail "variable modified assignment failed";
+	if string :is "${test}" "VALUE" {
+		test_fail "modifiers applied with wrong precedence";
 	}
 
-	if string :is "${test}" "value" {
-		test_fail "string test failed";
+	if not string :is "${test}" "vALUE" {
+		test_fail "modified variable assignment failed";
 	}
 }
 
-test "MODIFIER-length-1" {
+test "Modifier :length" {
 	set :length "test" "VaLuE";
 
 	if not string :is "${test}" "5" {
-		test_fail "variable modified assignment failed";
-	}
-
-	if string :is "${test}" "value" {
-		test_fail "string test failed";
+		test_fail "modified variable assignment failed";
 	}
 }
 
-test "MODIFIER-length-2" {
+test "Modifier :length (elaborate)" {
 	set "a" "abcdefghijklmnopqrstuvwxyz";
 	set "b" "1234567890";
 	set :length "test" " ${a}:${b}  ";
 
 	if not string :is "${test}" "40" {
-		test_fail "variable modified assignment failed";
-	}
-
-	if string :is "${test}" "41" {
-		test_fail "string test failed";
+		test_fail "modified variable assignment failed";
 	}
 }
 
-test "MODIFIER-quotewildcard-1" {
+test "Modifier :quotewildcard" {
 	set :quotewildcard "test" "^^***??**^^";
 
 	if not string :is "${test}" "^^\\*\\*\\*\\?\\?\\*\\*^^" {
-		test_fail "variable modified assignment failed";
-	}
-
-	if string :is "${test}" "^^***??**^^" {
-		test_fail "string test failed";
+		test_fail "modified variable assignment failed";
 	}
 }
 
-test "MODIFIER-quotewildcard-2" {
+test "Modifier :length :quotewildcard" {
 	set :length :quotewildcard "test" "^^***??**^^";
 
-	if not string :is "${test}" "18" {
-		test_fail "variable modified assignment failed";
+	if string :is "${test}" "11" {
+		test_fail "modifiers applied with wrong precedence";
 	}
 
-	if string :is "${test}" "17" {
-		test_fail "string test failed";
+	if not string :is "${test}" "18" {
+		test_fail "modified variable assignment failed";
 	}
 }
 
-test "MULTI-variable" {
+/*
+ * Variable substitution
+ */
+
+test "Multiple substitutions" {
 	set "a" "the monkey";
 	set "b" "a nut";
 	set "c" "the fish";
@@ -167,21 +179,19 @@ test "MULTI-variable" {
 	set "f" "is";
 
 	if not string :is "${a} ${e} ${b}" "the monkey eats a nut" {
-		test_fail "variable composition failed (1)";
+		test_fail "variable substitution failed (1)";
 	}
 
 	if not string :is "${c} ${f} ${d}" "the fish is on fire" {
-		test_fail "variable composition failed (2)";
-	}
-
-	if string :is "${a} ${f} ${c}" "the monkey eats a nut" {
-		test_fail "string test failed";
+		test_fail "variable substitution failed (2)";
 	}
 
 	set :upperfirst "sentence" "${a} ${e} ${b}";
 
 	if not string :is "${sentence}" "The monkey eats a nut" {
-		test_fail "modified variable composition failed";
+		test_fail "modified variable substitution failed";
 	}	
 }
+
+
 
