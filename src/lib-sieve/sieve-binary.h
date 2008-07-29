@@ -2,7 +2,6 @@
 #define __SIEVE_BINARY_H
 
 #include "lib.h"
-#include "str.h"
 
 #include "sieve-common.h"
 
