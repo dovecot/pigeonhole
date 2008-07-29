@@ -83,6 +83,48 @@ test "HEX equality braindead" {
 	}
 }
 
+test "Syntax errors" {
+	if anyof( not string "$" "${hex:24}", not string "$ " "${hex:24} ", not string " $" " ${hex:24}" ) {
+        test_fail "loose $ handled inappropriately";
+    }
+
+	if anyof( not string "${" "${hex:24}{", not string "a${" "a${hex:24}{", not string "${a" "${hex:24}{a" ) {
+        test_fail "loose ${ handled inappropriately";
+    }
+
+	if anyof( not string "${}" "${hex:24}{}", not string "b${}" "b${hex:24}{}", not string "${}b" "${hex:24}{}b" ) {
+		test_fail "entirely missing content handled inappropriately";
+	}
+		
+	if not string "${:}" "${hex:24}{:}" {
+        test_fail "missing content handled inappropriately";
+    }
+	
+	if not string "${hex:}" "${hex:24}{hex:}" {
+        test_fail "missing hex content handled inappropriately";
+    }
+
+	if not string "${unicode:}" "${hex:24}{unicode:}" {
+        test_fail "missing unicode content handled inappropriately";
+    }
+
+	if not string "${hex:sss}" "${hex:24}{hex:sss}" {
+        test_fail "erroneous hex content handled inappropriately";
+    }
+
+    if not string "${unicode:ttt}" "${hex:24}{unicode:ttt}" {
+        test_fail "erroneous unicode content handled inappropriately";
+    }
+	
+	if not string "${hex:aa aa" "${hex:24}{hex:aa aa" {
+        test_fail "unterminated hex content handled inappropriately";
+    }
+
+    if not string "${unicode: aaaa aaaa" "${hex:24}{unicode: aaaa aaaa" {
+        test_fail "unterminated unicode content handled inappropriately";
+    }
+}
+
 /*
  * RFC Examples
  */

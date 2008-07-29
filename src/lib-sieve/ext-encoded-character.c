@@ -118,12 +118,12 @@ static bool _parse_hexint
 	return ( digit > 0 );
 }
 
-static int _decode_hex
+static bool _decode_hex
 (const char **in, const char *inend, string_t *result) 
 {
 	int values = 0;
 	
-	for (;;) {
+	while ( *in < inend ) {
 		unsigned int hexpair;
 		
 		if ( !_skip_whitespace(in, inend) ) return FALSE;
@@ -134,19 +134,19 @@ static int _decode_hex
 		values++;
 	}
 	
-	return ( values > 0 ? 1 : 0 );
+	return ( values > 0 );
 }
 
 static int _decode_unicode
-(struct sieve_validator *validator, struct sieve_command_context *cmd, 
-	const char **in, const char *inend, string_t *result) 
+(const char **in, const char *inend, string_t *result, unsigned int *error_hex) 
 {
 	int values = 0;
+	bool valid = TRUE;
 	
-	for (;;) {
+	while ( *in < inend ) {
 		unsigned int unicode_hex;
 		
-		if ( !_skip_whitespace(in, inend) ) return 0;
+		if ( !_skip_whitespace(in, inend) ) return FALSE;
 		
 		if ( !_parse_hexint(in, inend, 0, &unicode_hex) ) break;
 
@@ -154,15 +154,13 @@ static int _decode_unicode
 			(unicode_hex >= 0xE000 && unicode_hex <= 0x10FFFF)	) 
 			uni_ucs4_to_utf8_c((unichar_t) unicode_hex, result);
 		else {
-			sieve_command_validate_error(validator, cmd, 
-				"invalid unicode character 0x%08x in encoded character substitution",
-					unicode_hex);
-			return -1;
+			if ( valid ) *error_hex = unicode_hex;
+			valid = FALSE;
 		}	
 		values++;
 	}
 	
-	return ( values > 0 ? 1 : 0 );
+	return ( values > 0 );
 }
 
 bool arg_encoded_string_validate
@@ -170,7 +168,6 @@ bool arg_encoded_string_validate
 		struct sieve_command_context *cmd)
 {
 	bool result = TRUE;
-	int ret;
 	enum { ST_NONE, ST_OPEN, ST_TYPE, ST_CLOSE } 
 		state = ST_NONE;
 	string_t *str = sieve_ast_argument_str(*arg);
@@ -178,6 +175,7 @@ bool arg_encoded_string_validate
 	const char *p, *mark, *strstart, *substart = NULL;
 	const char *strval = (const char *) str_data(str);
 	const char *strend = strval + str_len(str);
+	unsigned int error_hex = 0;
 
 	T_BEGIN {		
 		tmpstr = t_str_new(32);	
@@ -219,19 +217,13 @@ bool arg_encoded_string_validate
 				if ( strncasecmp(mark, "hex", p - mark) == 0 ) {
 					/* Hexadecimal */
 					p++;
-					ret = _decode_hex(&p, strend, tmpstr);
-					if ( ret <= 0 ) { 
+					if ( !_decode_hex(&p, strend, tmpstr) )
 						state = ST_NONE;
-						if ( ret < 0 ) result = FALSE;
-					}
 				} else if ( strncasecmp(mark, "unicode", p - mark) == 0 ) {
 					/* Unicode */
 					p++;
-					ret = _decode_unicode(validator, cmd, &p, strend, tmpstr);
-					if ( ret <= 0 ) { 
+					if ( !_decode_unicode(&p, strend, tmpstr, &error_hex) )
 						state = ST_NONE;
-						if ( ret < 0 ) result = FALSE;
-					}
 				} else {	
 					/* Invalid encoding */
 					p++;
@@ -241,6 +233,14 @@ bool arg_encoded_string_validate
 			case ST_CLOSE:
 				if ( *p == '}' ) {				
 					/* We now know that the substitution is valid */	
+
+					if ( error_hex != 0 ) {
+						sieve_command_validate_error(validator, cmd, 
+							"invalid unicode character 0x%08x in encoded character substitution",
+							error_hex);
+						result = FALSE;
+						break;
+					}
 					
 					if ( newstr == NULL ) {
 						newstr = str_new(sieve_ast_pool((*arg)->ast), str_len(str)*2);

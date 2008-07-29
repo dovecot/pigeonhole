@@ -11,13 +11,13 @@ require "fileinto";
 fileinto "INBOX.${unicode:200000}";
 
 # Not an error
-#fileinto "INBOX.${unicode:200000";
+fileinto "INBOX.${unicode:200000";
 
 # Invalid unicode character (2)
 fileinto "INBOX.${Unicode:DF01}";
 
 # Not an error
-#fileinto "INBOX.${Unicode:DF01";
+fileinto "INBOX.${Unicode:DF01";
 
 
 
