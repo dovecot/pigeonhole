@@ -19,35 +19,39 @@ Next (in order of descending priority/precedence):
 * Finish the test suite for the base functionality
 * Make sure cmusieve can be replaced seamlessly with the new plugin.
 
-* ## MAKE A FIRST RELEASE ##
+* ## MAKE A FIRST RELEASE (0.1.x) ##
 
 * Imapflags: merge execution of setflags, removeflags and addflags into one 
   common implementation. 
-* Add normalize() method to comparators to normalize the string before matching
-  (for efficiency).
 * Verify outgoing mail addresses at runtime when necessary (e.g. after variables 
   substitution)
 * Warn about the use of syntactically invalid header names. 
 * Implement notify extension with sole support for mailto mechanism. 
 * Implement dropping errors in the user's mailbox as a mail message.
-* Provide a solution for mail_get_headers_utf8 reparsing the whole message each
-  time it is called (header and address test; Timo might provide solution from
-  within Dovecot)
-* Build a sieve tool to filter an entire existing mailbox through a sieve script.
-* Build a server with test mail accounts that processes lots and lots of mail 
-  (e.g. spam, mailing lists etc.)
+* Add normalize() method to comparators to normalize the string before matching
+  (for efficiency).
 * Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
   Character Sets). 
 * Implement executing an arbitrary number of scripts sequentially, acting on the 
-  same set of result actions.
+  same set of result actions (multiscript).
 * Implement comparator-i;unicode-casemap
 * Implement environment extension
+* Make testsuite much more exhaustive and add support for testing the actual
+  result.
+* Build a sieve tool to filter an entire existing mailbox through a sieve script.
+* Build a server with test mail accounts that processes lots and lots of mail 
+  (e.g. spam, mailing lists etc.)
+
+* ## MAKE A SECOND RELEASE (0.2.x) ##
+
+* Provide a solution for mail_get_headers_utf8 reparsing the whole message each
+  time it is called (header and address test; Timo might provide solution from
+  within Dovecot)
 * Implement date and index extensions
 * Optimize code containing true/false tests to omit explicit JMP opcodes
   (i.e. optimize the test away and any code that negatively depends on it)
-* Automate script tests; i.e. build a test suite.
-
 * Use lib/str-find.h for :contains and :matches match types  
+
 * Add development documentation, i.e. comment on library functions and document
   the binary and byte-code format. 
 * Make the engine and its extensions much more configurable. Possibly this can 
