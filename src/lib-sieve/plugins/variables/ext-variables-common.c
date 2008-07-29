@@ -86,11 +86,11 @@ struct sieve_variable *sieve_variable_scope_declare
 (struct sieve_variable_scope *scope, const char *identifier)
 {
 	struct sieve_variable *new_var = p_new(scope->pool, struct sieve_variable, 1);
-	new_var->identifier = identifier;
+	new_var->identifier = p_strdup(scope->pool, identifier);
 	new_var->index = scope->next_index++;
 	new_var->ext = scope->ext;
-		
-	hash_insert(scope->variables, (void *) identifier, (void *) new_var);
+
+	hash_insert(scope->variables, (void *) new_var->identifier, (void *) new_var);
 	
 	return new_var;
 }
@@ -100,10 +100,12 @@ struct sieve_variable *sieve_variable_scope_get_variable
 {
 	struct sieve_variable *var = 
 		(struct sieve_variable *) hash_lookup(scope->variables, identifier);
+
 	
-	if ( var == NULL && declare )
+	if ( var == NULL && declare ) {
 		var = sieve_variable_scope_declare(scope, identifier);
-	
+	}
+
 	return var;
 }
 

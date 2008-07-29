@@ -11,6 +11,50 @@ Testing variables...
 ;
 
 /*
+ * Substitution syntax
+ */
+
+test "Unknown variables" {
+	set "q" "a";
+	set "qw" "bb";
+	set "qwe" "ccc";
+	set "qwer" "dddd";
+	set "qwert" "ccc";
+
+	if not string "[${qwerty}]" "[]" {
+		test_fail "unknown variable not substituted with empty string";
+	}
+}
+
+test "One pass" {
+	set "something" "value";
+	set "s" "$";
+	
+	if string "${s}{something}" "value" {
+		test_fail "somehow variable string is scanned multiple times";
+	}
+
+	if not string :matches "${s}{something}" "?{something}" {
+		test_fail "unexpected result";
+	}
+}
+
+test "Syntax errors" {
+	set "s" "$";
+	set "variable" "nonsense";
+
+	if anyof ( 
+		not string "$" "${s}",
+		not string "${" "${s}{",
+		not string "${a" "${s}{a",
+		not string "${$}" "${s}{$}",
+		not string "${%%%%}" "${s}{%%%%}" )
+	{
+		test_fail "variables substitution changed substring not matching variable-ref";
+	}	
+}
+
+/*
  * Variable assignments
  */
 
@@ -57,6 +101,18 @@ test "Two assignments" {
 
 	if string :is "${test}" "nonsense" {
 		test_fail "string test failed";
+	}
+}
+
+test "Variables case-insensitive" {
+	set "VeRyElAboRATeVaRIABLeName" "interesting value";
+
+	if not string "${veryelaboratevariablename}" "interesting value" {
+		test_fail "variable names are case sensitive (lower case try)";
+	}
+
+	if not string "${VERYELABORATEVARIABLENAME}" "interesting value" {
+		test_fail "variable names are case sensitive (upper case try)";
 	}
 }
 
@@ -170,6 +226,31 @@ test "Modifier :length :quotewildcard" {
  * Variable substitution
  */
 
+test "Multi-line string substitution" {
+	set "name" "Stephan Bosch";
+	set "address" "stephan@rename-it.nl";
+	set "subject" "Test message";
+	
+	set "message" text: # Message with substitutions
+From: ${name} <${address}>
+To: Bertus van Asseldonk <b.vanasseldonk@hetkennet.nl>
+Subject: ${subject}
+
+This is a test message.
+.
+;
+	if not string :is "${message}" text:
+From: Stephan Bosch <stephan@rename-it.nl>
+To: Bertus van Asseldonk <b.vanasseldonk@hetkennet.nl>
+Subject: Test message
+
+This is a test message.
+.
+	{
+		test_fail "variable substitution failed";
+	}
+}
+
 test "Multiple substitutions" {
 	set "a" "the monkey";
 	set "b" "a nut";
@@ -192,6 +273,5 @@ test "Multiple substitutions" {
 		test_fail "modified variable substitution failed";
 	}	
 }
-
 
 
