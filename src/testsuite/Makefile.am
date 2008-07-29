@@ -62,34 +62,3 @@ noinst_HEADERS = \
 	namespaces.h \
 	mail-raw.h
 
-# Testsuite tests
-
-EXTRA_DIST = tests
-
-test_cases = \
-    tests/testsuite.svtest\
-    tests/control-structures.svtest \
-	tests/exists.svtest \
-	tests/lexer.svtest \
-	tests/comparators/core.svtest \
-	tests/match-types/is.svtest \
-	tests/match-types/contains.svtest \
-	tests/match-types/matches.svtest \
-	tests/match-types/relational.svtest \
-	tests/address-parts/subaddress.svtest \
-	tests/extensions/encoded-character.svtest \
-	tests/extensions/envelope.svtest \
-	tests/extensions/variables/basic.svtest \
-	tests/extensions/variables/match.svtest \
-	tests/extensions/include/variables.svtest \
-	tests/extensions/imapflags/basic.svtest \
-	tests/extensions/imapflags/rfc.svtest \
-	tests/compile/compile.svtest \
-	tests/compile/compile-examples.svtest \
-	tests/compile/errors.svtest 
-
-$(test_cases): 
-	@$(TESTSUITE_BIN) $@
-.PHONY: $(test_cases)
-
-test: $(test_cases)

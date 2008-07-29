@@ -3,49 +3,49 @@ require "vnd.dovecot.testsuite";
 # Compile all example scripts
 
 test "Elvey example" {
-	if not test_compile "../../../../sieve/examples/elvey.sieve" {
+	if not test_compile "../../sieve/examples/elvey.sieve" {
 		test_fail "could not compile";
 	}
 }
 
 test "M. Johnson example" {
-	if not test_compile "../../../../sieve/examples/mjohnson.sieve" {
+	if not test_compile "../../sieve/examples/mjohnson.sieve" {
 		test_fail "could not compile";
 	}
 }
 
 test "RFC 3028 example" {
-	if not test_compile "../../../../sieve/examples/rfc3028.sieve" {
+	if not test_compile "../../sieve/examples/rfc3028.sieve" {
 		test_fail "could not compile";
 	}
 }
 
 test "Sieve examples" {
-	if not test_compile "../../../../sieve/examples/sieve_examples.sieve" {
+	if not test_compile "../../sieve/examples/sieve_examples.sieve" {
 		test_fail "could not compile";
 	}
 }
 
 test "Vivil example" {
-	if not test_compile "../../../../sieve/examples/vivil.sieve" {
+	if not test_compile "../../sieve/examples/vivil.sieve" {
 		test_fail "could not compile";
 	}
 }
 
 test "Jerry example" {
-	if not test_compile "../../../../sieve/examples/jerry.sieve" {
+	if not test_compile "../../sieve/examples/jerry.sieve" {
 		test_fail "could not compile";
 	}
 }
 
 test "M. Klose example" {
-	if not test_compile "../../../../sieve/examples/mklose.sieve" {
+	if not test_compile "../../sieve/examples/mklose.sieve" {
 		test_fail "could not compile";
 	}
 }
 
 test "Sanjay example" {
-	if not test_compile "../../../../sieve/examples/sanjay.sieve" {
+	if not test_compile "../../sieve/examples/sanjay.sieve" {
 		test_fail "could not compile";
 	}
 }
