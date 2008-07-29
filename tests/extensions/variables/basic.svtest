@@ -23,11 +23,7 @@ test "Unknown variables" {
 
 	if anyof (
 		not string "[${qwerty}]" "[]",
-		not string "[${5000}]" "[]",
-		not string "[${qwerty.asdf}]" "[]", 
-		not string "[${qwerty.asdf.0.1.34.5}]" "[]",
-		not string "[${qwerty.asdf.hokey.pokey}]" "[]", 
-		not string "[${qwerty.asdf.0.frop}]" "[]"
+		not string "[${5000}]" "[]"
 	) {
 		test_fail "unknown variable not substituted with empty string";
 	}

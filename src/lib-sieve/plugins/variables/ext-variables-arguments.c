@@ -53,60 +53,64 @@ bool sieve_variable_argument_activate
 (struct sieve_validator *validator, struct sieve_command_context *cmd, 
 	struct sieve_ast_argument *arg, bool assignment)
 {
+	bool result = FALSE;
 	struct sieve_variable *var;
 	string_t *variable;
 	const char *varstr, *varend;
 	ARRAY_TYPE(ext_variable_name) vname;	
 	int nelements = 0;
 
-	t_array_init(&vname, 2);			
+	T_BEGIN {
+		t_array_init(&vname, 2);			
 	
-	variable = sieve_ast_argument_str(arg);
-	varstr = str_c(variable);
-	varend = PTR_OFFSET(varstr, str_len(variable));
-	nelements = ext_variable_name_parse(&vname, &varstr, varend);
+		variable = sieve_ast_argument_str(arg);
+		varstr = str_c(variable);
+		varend = PTR_OFFSET(varstr, str_len(variable));
+		nelements = ext_variable_name_parse(&vname, &varstr, varend);
 	
-	if ( nelements < 0 || varstr != varend ) {
-		sieve_command_validate_error(validator, cmd, 
-			"invalid variable name '%s'", varstr);
-		return FALSE;
-	}
-	
-	if ( nelements == 1 ) {
-		const struct ext_variable_name *cur_element = 
-			array_idx(&vname, 0);
+		if ( nelements < 0 || varstr != varend ) {
+			sieve_command_validate_error(validator, cmd, 
+				"invalid variable name '%s'", varstr);
+		} else if ( nelements == 1 ) {
+			const struct ext_variable_name *cur_element = 
+				array_idx(&vname, 0);
 
-		if ( cur_element->num_variable == -1 ) {
-			var = ext_variables_validator_get_variable
-				(validator, str_c(cur_element->identifier), TRUE);
+			if ( cur_element->num_variable == -1 ) {
+				var = ext_variables_validator_get_variable
+					(validator, str_c(cur_element->identifier), TRUE);
 
-			arg->argument = &variable_argument;
-			arg->context = (void *) var;
-			
-			return TRUE;
-		} else {
-			if ( assignment ) {
-				arg->argument = &match_value_argument;
-				arg->context = (void *) cur_element->num_variable;
+				arg->argument = &variable_argument;
+				arg->context = (void *) var;
 				
-				return TRUE;
-			} else {		
-				sieve_command_validate_error(validator, cmd, 
-					"cannot assign to match variable");
+				result = TRUE;
+			} else {
+				if ( assignment ) {
+					arg->argument = &match_value_argument;
+					arg->context = (void *) cur_element->num_variable;
 				
-				return FALSE;
+					result = TRUE;
+				} else {		
+					sieve_command_validate_error(validator, cmd, 
+						"cannot assign to match variable");
+				}
 			}
-		}
-	} else {
-		const struct ext_variable_name *cur_element = 
-			array_idx(&vname, 0);
+		} else {
+			const struct ext_variable_name *cur_element = 
+				array_idx(&vname, 0);
 
-		/* FIXME: Variable namespaces unsupported. */
-		sieve_command_validate_error(validator, cmd, 
+			/* FIXME: Variable namespaces unsupported. */
+	
+			/* References to namespaces without a prior require statement for 
+			 * the relevant extension MUST cause an error.
+			 */
+
+			sieve_command_validate_error(validator, cmd, 
 				"cannot assign to variable in unknown namespace '%s'", 
 				str_c(cur_element->identifier));
-	}
-	return FALSE;
+		}
+	} T_END;
+
+	return result;
 }
 
 static bool arg_variable_generate
@@ -210,105 +214,119 @@ static bool arg_variable_string_validate
 	ARRAY_TYPE(ext_variable_name) substitution;	
 	int nelements = 0;
 	
-	t_push();
+	T_BEGIN {
+		/* Initialize substitution structure */
+		t_array_init(&substitution, 2);		
 	
-	/* Initialize substitution structure */
-	t_array_init(&substitution, 2);		
-	
-	p = strval;
-	strstart = p;
-	while ( result && p < strend ) {
-		switch ( state ) {
-		/* Nothing found yet */
-		case ST_NONE:
-			if ( *p == '$' ) {
-				substart = p;
-				state = ST_OPEN;
-			}
-			p++;
-			break;
-		/* Got '$' */
-		case ST_OPEN:
-			if ( *p == '{' ) {
-				state = ST_VARIABLE;
+		p = strval;
+		strstart = p;
+		while ( result && p < strend ) {
+			switch ( state ) {
+			/* Nothing found yet */
+			case ST_NONE:
+				if ( *p == '$' ) {
+					substart = p;
+					state = ST_OPEN;
+				}
 				p++;
-			} else 
-				state = ST_NONE;
-			break;
-		/* Got '${' */ 
-		case ST_VARIABLE:
-			nelements = ext_variable_name_parse(&substitution, &p, strend);
+				break;
+			/* Got '$' */
+			case ST_OPEN:
+				if ( *p == '{' ) {
+					state = ST_VARIABLE;
+					p++;
+				} else 
+					state = ST_NONE;
+				break;
+			/* Got '${' */ 
+			case ST_VARIABLE:
+				nelements = ext_variable_name_parse(&substitution, &p, strend);
 			
-			if ( nelements < 0 )
-				state = ST_NONE;
-			else 
-				state = ST_CLOSE;
+				if ( nelements < 0 )
+					state = ST_NONE;
+				else 
+					state = ST_CLOSE;
 			
-			break;
-		case ST_CLOSE:
-			if ( *p == '}' ) {				
-				struct sieve_ast_argument *strarg;
+				break;
+			case ST_CLOSE:
+				if ( *p == '}' ) {				
+					struct sieve_ast_argument *strarg;
 				
-				/* We now know that the substitution is valid */	
-				
-				if ( arglist == NULL ) {
-					arglist = sieve_ast_arg_list_create(pool);
-				}
-				
-				/* Add the substring that is before the substitution to the 
-				 * variable-string AST.
-				 *
-				 * FIXME: For efficiency, if the variable is not found we should 
-				 * coalesce this substring with the one after the substitution.
-				 */
-				if ( substart > strstart ) {
-					strarg = _add_string_element(arglist, *arg);
-					strarg->_value.str = str_new(pool, substart - strstart);
-					str_append_n(strarg->_value.str, strstart, substart - strstart); 
+					/* We now know that the substitution is valid */	
 					
-					/* Give other substitution extensions a chance to do their work */
-					if ( !sieve_validator_argument_activate_super
-						(validator, cmd, strarg, FALSE) )
-						return FALSE;
-				}
-				
-				/* Find the variable */
-				if ( nelements == 1 ) {
-					const struct ext_variable_name *cur_element = 
-						array_idx(&substitution, 0);
-						
-					if ( cur_element->num_variable == -1 ) {
-						/* Add variable argument '${identifier}' */
-						string_t *cur_ident = cur_element->identifier; 
-						
-						strarg = ext_variables_variable_argument_create
-							(validator, (*arg)->ast, (*arg)->source_line, str_c(cur_ident));
-						if ( strarg != NULL )
-							sieve_ast_arg_list_add(arglist, strarg);
-					} else {
-						/* Add match value argument '${000}' */
-						strarg = ext_variables_match_value_argument_create
-							(validator, (*arg)->ast, (*arg)->source_line, 
-							cur_element->num_variable);
-						if ( strarg != NULL )
-							sieve_ast_arg_list_add(arglist, strarg);
+					if ( arglist == NULL ) {
+						arglist = sieve_ast_arg_list_create(pool);
 					}
-				} else {
-					/* FIXME: Namespaces are not supported. */
-				}
 				
-				strstart = p + 1;
-				substart = strstart;
+					/* Add the substring that is before the substitution to the 
+					 * variable-string AST.
+					 *
+					 * FIXME: For efficiency, if the variable is not found we should 
+					 * coalesce this substring with the one after the substitution.
+					 */
+					if ( substart > strstart ) {
+						strarg = _add_string_element(arglist, *arg);
+						strarg->_value.str = str_new(pool, substart - strstart);
+						str_append_n(strarg->_value.str, strstart, substart - strstart); 
+					
+						/* Give other substitution extensions a chance to do their work */
+						if ( !sieve_validator_argument_activate_super
+							(validator, cmd, strarg, FALSE) ) {
+							result = FALSE;
+							break;
+						}
+					}
+				
+					/* Find the variable */
+					if ( nelements == 1 ) {
+						const struct ext_variable_name *cur_element = 
+							array_idx(&substitution, 0);
+						
+						if ( cur_element->num_variable == -1 ) {
+							/* Add variable argument '${identifier}' */
+							string_t *cur_ident = cur_element->identifier; 
+						
+							strarg = ext_variables_variable_argument_create
+								(validator, (*arg)->ast, (*arg)->source_line, str_c(cur_ident));
+							if ( strarg != NULL )
+								sieve_ast_arg_list_add(arglist, strarg);
+						} else {
+							/* Add match value argument '${000}' */
+							strarg = ext_variables_match_value_argument_create
+								(validator, (*arg)->ast, (*arg)->source_line, 
+								cur_element->num_variable);
+							if ( strarg != NULL )
+								sieve_ast_arg_list_add(arglist, strarg);
+						}
+					} else {
+						const struct ext_variable_name *cur_element = 
+							array_idx(&substitution, 0);
 
-				p++;	
-			}
+						/* FIXME: Namespaces are not supported. */
+
+						/* References to namespaces without a prior require 
+						 * statement for thecrelevant extension MUST cause an error.
+					 	 */
+						sieve_command_validate_error(validator, cmd, 
+							"referring to variable in unknown namespace '%s'", 
+							str_c(cur_element->identifier));
+						result = FALSE;
+						break;
+					}
+				
+					strstart = p + 1;
+					substart = strstart;
+
+					p++;	
+				}
 		
-			/* Finished, reset for the next substitution */	
-			state = ST_NONE;
+				/* Finished, reset for the next substitution */	
+				state = ST_NONE;
+			}
 		}
-	}
+	} T_END;
 
-	t_pop();
+	if ( !result ) return FALSE;
 	
 	if ( arglist == NULL ) {
 		/* No substitutions in this string, pass it on to any other substution
