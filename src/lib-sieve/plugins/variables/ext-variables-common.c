@@ -42,6 +42,8 @@ const unsigned int default_set_modifiers_count =
 
 struct sieve_variable_scope {
 	pool_t pool;
+	int refcount;
+
 	const struct sieve_extension *ext;
 
 	unsigned int next_index;
@@ -55,11 +57,29 @@ struct sieve_variable_scope *sieve_variable_scope_create
 	
 	scope = p_new(pool, struct sieve_variable_scope, 1);
 	scope->pool = pool;
+	scope->refcount = 1;
+
 	scope->ext = ext;
 	scope->variables = hash_create
-		(pool, pool, 0, strcase_hash, (hash_cmp_callback_t *)strcasecmp);
+		(default_pool, pool, 0, strcase_hash, (hash_cmp_callback_t *)strcasecmp);
 		
 	return scope;
+}
+
+void sieve_variable_scope_ref(struct sieve_variable_scope *scope)
+{
+    scope->refcount++;
+}
+
+void sieve_variable_scope_unref(struct sieve_variable_scope **scope)
+{
+    i_assert((*scope)->refcount > 0);
+
+    if (--(*scope)->refcount != 0)
+        return;
+
+	hash_destroy(&(*scope)->variables);
+    *scope = NULL;
 }
 
 struct sieve_variable *sieve_variable_scope_declare
@@ -159,7 +179,41 @@ void sieve_variable_assign
 	str_append_str(varval, value);
 }
 
-/* Validator context */
+/*
+ * AST Context
+ */
+
+static void ext_variables_ast_free
+(struct sieve_ast *ast ATTR_UNUSED, void *context)
+{
+	struct sieve_variable_scope *main_scope =
+		(struct sieve_variable_scope *) context;
+
+    /* Unreference main variable scope */
+    sieve_variable_scope_unref(&main_scope);
+}
+
+static const struct sieve_ast_extension variables_ast_extension = {
+    &variables_extension,
+    ext_variables_ast_free
+};
+
+static struct sieve_variable_scope *ext_variables_create_main_scope
+(struct sieve_ast *ast)
+{
+    struct sieve_variable_scope *scope;
+    pool_t pool = sieve_ast_pool(ast);
+
+	scope = sieve_variable_scope_create(pool, NULL);
+
+    sieve_ast_extension_register(ast, &variables_ast_extension, (void *) scope);
+
+    return scope;
+}
+
+/*
+ * Validator context 
+ */
 
 static struct ext_variables_validator_context *
 ext_variables_validator_context_create(struct sieve_validator *valdtr)
@@ -170,7 +224,7 @@ ext_variables_validator_context_create(struct sieve_validator *valdtr)
 	
 	ctx = p_new(pool, struct ext_variables_validator_context, 1);
 	ctx->modifiers = sieve_validator_object_registry_create(valdtr);
-	ctx->main_scope = sieve_variable_scope_create(sieve_ast_pool(ast), NULL);
+	ctx->main_scope = ext_variables_create_main_scope(ast);
 
 	sieve_validator_extension_set_context
 		(valdtr, &variables_extension, (void *) ctx);

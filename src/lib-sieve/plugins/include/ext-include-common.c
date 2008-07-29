@@ -94,10 +94,16 @@ static void ext_include_ast_free
 	struct sieve_script **scripts;
 	unsigned int count, i;
 
+	/* Unreference included scripts */
 	scripts = array_get_modifiable(&actx->included_scripts, &count);
     for ( i = 0; i < count; i++ ) {
 		sieve_script_unref(&scripts[i]);
     }	
+
+	/* Unreference variable scopes */
+	sieve_variable_scope_unref(&actx->import_vars);
+	if ( actx->global_vars != NULL )
+		sieve_variable_scope_unref(&actx->global_vars);
 }
 
 static const struct sieve_ast_extension include_ast_extension = {
@@ -120,6 +126,9 @@ struct ext_include_ast_context *ext_include_create_ast_context
             (struct ext_include_ast_context *)
             sieve_ast_extension_get_context(parent, &include_extension);
         actx->global_vars = ( parent_ctx == NULL ? NULL : parent_ctx->global_vars );
+
+		if ( actx->global_vars != NULL )
+	        sieve_variable_scope_ref(actx->global_vars);
     }
 
 	sieve_ast_extension_register(ast, &include_ast_extension, (void *) actx);

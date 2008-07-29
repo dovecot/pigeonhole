@@ -23,6 +23,11 @@ struct sieve_variable_scope;
 
 struct sieve_variable_scope *sieve_variable_scope_create
 	(pool_t pool, const struct sieve_extension *ext);
+void sieve_variable_scope_ref
+	(struct sieve_variable_scope *scope);
+void sieve_variable_scope_unref
+	(struct sieve_variable_scope **scope);
+
 struct sieve_variable *sieve_variable_scope_declare
 	(struct sieve_variable_scope *scope, const char *identifier);
 struct sieve_variable *sieve_variable_scope_import
