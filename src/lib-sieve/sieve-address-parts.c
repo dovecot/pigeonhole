@@ -9,6 +9,7 @@
 
 #include "sieve-extensions.h"
 #include "sieve-code.h"
+#include "sieve-address.h"
 #include "sieve-commands.h"
 #include "sieve-binary.h"
 #include "sieve-comparators.h"
@@ -198,11 +199,13 @@ int sieve_address_match
 	
 		while ( result == 0 && addr != NULL) {
 			/* mailbox@domain */
+			struct sieve_address address;
 			const char *part;
 			
-			i_assert(addr->mailbox != NULL);
+			address.local_part = addr->mailbox;
+			address.domain = addr->domain;
 
-			part = addrp->extract_from(addr);
+			part = addrp->extract_from(&address);
 			
 			if ( part != NULL )
 				result=sieve_match_value(mctx, part, strlen(part));
@@ -303,21 +306,21 @@ const struct sieve_argument address_part_tag = {
 };
  
 static const char *addrp_all_extract_from
-	(const struct message_address *address)
+	(const struct sieve_address *address)
 {
-	return t_strconcat(address->mailbox, "@", address->domain, NULL);
+	return t_strconcat(address->local_part, "@", address->domain, NULL);
 }
 
 static const char *addrp_domain_extract_from
-	(const struct message_address *address)
+	(const struct sieve_address *address)
 {
 	return address->domain;
 }
 
 static const char *addrp_localpart_extract_from
-	(const struct message_address *address)
+	(const struct sieve_address *address)
 {
-	return address->mailbox;
+	return address->local_part;
 }
 
 const struct sieve_address_part all_address_part = {

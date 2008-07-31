@@ -35,36 +35,36 @@ test "Envelope Environment" {
 	test_set "envelope.from" "stephan@hutsefluts.nl";
 
 	if not envelope :is "from" "stephan@hutsefluts.nl" {
-        test_fail "envelope.from data not set properly.";
+        test_fail "envelope.from data not set properly (1).";
     }
 
 	test_set "envelope.to" "news@rename-it.nl";
 
 	if not envelope :is "to" "news@rename-it.nl" {
-        test_fail "envelope.to data not set properly.";
+        test_fail "envelope.to data not set properly (1).";
     }
 
 	test_set "envelope.auth" "sirius";
 
-    if not envelope :is "auth" "sirius@" {
-        test_fail "envelope.auth data not set properly.";
+    if not envelope :is "auth" "sirius" {
+        test_fail "envelope.auth data not set properly (1).";
     }
 
 	test_set "envelope.from" "stephan@rename-it.nl";
 
 	if not envelope :is "from" "stephan@rename-it.nl" {
-        test_fail "envelope.from data not reset properly.";
+        test_fail "envelope.from data not reset properly (2).";
     }
 
 	test_set "envelope.to" "past-news@rename-it.nl";
 
 	if not envelope :is "to" "past-news@rename-it.nl" {
-        test_fail "envelope.to data not reset properly.";
+        test_fail "envelope.to data not reset properly (2).";
     }
 
 	test_set "envelope.auth" "zilla";
 
-    if not envelope :is "auth" "zilla@" {
-        test_fail "envelope.auth data not reset properly.";
+    if not envelope :is "auth" "zilla" {
+        test_fail "envelope.auth data not reset properly (2).";
     }
 }

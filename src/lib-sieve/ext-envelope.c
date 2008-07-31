@@ -17,6 +17,7 @@
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
+#include "sieve-address.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
 #include "sieve-address-parts.h"
@@ -113,6 +114,71 @@ const struct sieve_operation envelope_operation = {
 	ext_envelope_operation_execute 
 };
 
+/*
+ * Envelope parts
+ *
+ * FIXME: not available to extensions
+ */
+
+struct sieve_envelope_part {
+	const char *identifier;
+
+	const struct sieve_address *const *(*get_addresses)
+		(const struct sieve_runtime_env *renv);
+	const char * const *(*get_values)
+		(const struct sieve_runtime_env *renv);
+};
+
+const struct sieve_address *const *_from_part_get_addresses
+	(const struct sieve_runtime_env *renv);
+const struct sieve_address *const *_to_part_get_addresses
+	(const struct sieve_runtime_env *renv);
+const char *const *_auth_part_get_values
+	(const struct sieve_runtime_env *renv);
+
+static const struct sieve_envelope_part _from_part = {
+	"from",
+	_from_part_get_addresses,
+	NULL
+};
+
+static const struct sieve_envelope_part _to_part = {
+	"to",
+	_to_part_get_addresses,
+	NULL
+};	
+
+static const struct sieve_envelope_part _auth_part = {
+	"auth",
+	NULL,
+	_auth_part_get_values,
+};	
+
+static const struct sieve_envelope_part *_envelope_parts[] = {
+	/* Required */
+	&_from_part, &_to_part, 
+
+	/* Non-standard */
+	&_auth_part
+};
+
+static unsigned int _envelope_part_count = N_ELEMENTS(_envelope_parts);
+
+static const struct sieve_envelope_part *_envelope_part_find
+(const char *identifier)
+{
+	unsigned int i;
+
+	for ( i = 0; i < _envelope_part_count; i++ ) {
+		if ( strcasecmp( _envelope_parts[i]->identifier, identifier ) == 0 ) {
+			return _envelope_parts[i];
+        }
+	}
+	
+	return NULL;
+}
+
+
 /* 
  * Command Registration 
  */
@@ -132,34 +198,28 @@ static bool tst_envelope_registered
  * Validation 
  */
  
-static const char * const _supported_envelope_parts[] = {
-	/* Required */
-	"from", "to", 
-	
-	/* Non-standard */
-	"auth", 
-	
-	NULL  
-};
-
 static int _envelope_part_is_supported
-(void *context ATTR_UNUSED, struct sieve_ast_argument *arg)
+(void *context, struct sieve_ast_argument *arg)
 {
+	const struct sieve_envelope_part **not_address =
+		(const struct sieve_envelope_part **) context;
+
 	if ( sieve_argument_is_string_literal(arg) ) {
-		const char *epart = sieve_ast_strlist_strc(arg);
+		const struct sieve_envelope_part *epart;
 
-		const char * const *epsp = _supported_envelope_parts;
-		while ( *epsp != NULL ) {
-			if ( strcasecmp( *epsp, epart ) == 0 ) 
-				return TRUE;
-
-			epsp++;
+		if ( (epart=_envelope_part_find(sieve_ast_strlist_strc(arg))) != NULL ) {
+			if ( epart->get_addresses == NULL ) {
+				if ( *not_address == NULL )
+					*not_address = epart;
+			}
+					
+			return TRUE;
 		}
 		
 		return FALSE;
 	} 
 	
-	return TRUE;
+	return TRUE; /* Can't check at compile time */
 }
 
 static bool tst_envelope_validate
@@ -167,6 +227,7 @@ static bool tst_envelope_validate
 { 		
 	struct sieve_ast_argument *arg = tst->first_positional;
 	struct sieve_ast_argument *epart;
+	const struct sieve_envelope_part *not_address = NULL;
 				
 	if ( !sieve_validate_positional_argument
 		(validator, tst, arg, "envelope part", 1, SAAT_STRING_LIST) ) {
@@ -180,11 +241,26 @@ static bool tst_envelope_validate
 	 *   FIXME: verify dynamic envelope parts at runtime 
 	 */
 	epart = arg;
-	if ( !sieve_ast_stringlist_map(&epart, NULL, _envelope_part_is_supported) ) {		
+	if ( !sieve_ast_stringlist_map(&epart, (void *) &not_address, 
+		_envelope_part_is_supported) ) {		
+		
 		sieve_command_validate_error(validator, tst, 
 			"specified envelope part '%s' is not supported by the envelope test", 
 				sieve_ast_strlist_strc(epart));
 		return FALSE;
+	}
+
+	if ( not_address != NULL ) {
+		struct sieve_ast_argument *addrp_arg = 
+			sieve_command_find_argument(tst, &address_part_tag);
+
+		if ( addrp_arg != NULL ) {
+			sieve_command_validate_error(validator, tst,
+				"address part ':%s' specified while non-address envelope part '%s' "
+				"is tested with the envelope test",
+                sieve_ast_argument_tag(addrp_arg), not_address->identifier);
+	        return FALSE;
+		}
 	}
 	
 	arg = sieve_ast_argument_next(arg);
@@ -241,29 +317,53 @@ static bool ext_envelope_operation_dump
  * Interpretation
  */
 
-static int ext_envelope_get_fields
-(const struct sieve_message_data *msgdata, const char *field, 
-	const char *const **value_r) 
+const struct sieve_address *const *_from_part_get_addresses
+(const struct sieve_runtime_env *renv)
 {
-	const char *value;
-	ARRAY_DEFINE(envelope_values, const char *);
+	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
+	const struct sieve_address *address =
+		sieve_address_parse_envelope_path(renv->msgdata->return_path);
 	
- 	t_array_init(&envelope_values, 2);
- 	
-	if ( strcasecmp(field, "from") == 0 )
-		value = msgdata->return_path;
-	else if ( strcasecmp(field, "to") == 0 )
-		value = msgdata->to_address;	
-	else if ( strcasecmp(field, "auth") == 0 ) /* Non-standard */ 
-		value = msgdata->auth_user;
-		
-	if ( value != NULL )
-		array_append(&envelope_values, &value, 1);
-	
-	(void)array_append_space(&envelope_values);
-	*value_r = array_idx(&envelope_values, 0);
+	t_array_init(&envelope_values, 2);
 
-	return 0;
+	if ( address != NULL ) {
+        array_append(&envelope_values, &address, 1);
+	}
+
+    (void)array_append_space(&envelope_values);
+    return array_idx(&envelope_values, 0);
+}
+
+const struct sieve_address *const *_to_part_get_addresses
+( const struct sieve_runtime_env *renv)
+{
+	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
+	const struct sieve_address *address = 
+		sieve_address_parse_envelope_path(renv->msgdata->to_address);	
+	
+	t_array_init(&envelope_values, 2);
+
+	if ( address != NULL && address->local_part != NULL ) {
+        array_append(&envelope_values, &address, 1);
+	}
+
+    (void)array_append_space(&envelope_values);
+    return array_idx(&envelope_values, 0);
+}
+
+const char *const *_auth_part_get_values
+( const struct sieve_runtime_env *renv)
+{
+	ARRAY_DEFINE(envelope_values, const char *);
+
+	t_array_init(&envelope_values, 2);
+
+	if ( renv->msgdata->auth_user != NULL )
+        array_append(&envelope_values, &renv->msgdata->auth_user, 1);
+
+	(void)array_append_space(&envelope_values);
+
+	return array_idx(&envelope_values, 0);
 }
 
 static int ext_envelope_operation_execute
@@ -312,34 +412,55 @@ static int ext_envelope_operation_execute
 	while ( result && !matched && 
 		(result=sieve_coded_stringlist_next_item(envp_list, &envp_item)) 
 		&& envp_item != NULL ) {
-		const char *epart = str_c(envp_item);
-		const char *const *fields;
+		const struct sieve_envelope_part *epart;
 			
-		if ( ext_envelope_get_fields(renv->msgdata, epart, &fields) >= 0 ) {	
-			/* From RFC 5228: 5.4.  Test envelope :
-			 *   The null reverse-path is matched against as the empty string, 
-			 *   regardless of the ADDRESS-PART argument specified.
-			 */
-			if ( strcmp(epart, "from") == 0 && 
-				(fields[0] == NULL || **fields == '\0') ) {
-				
-				if ( (ret=sieve_match_value(mctx, "", 0)) < 0 ) {
-					result = FALSE;
-					break;
-				}
-			
-				matched = ret > 0;
-			} else {
-				int i;
-				for ( i = 0; !matched && fields[i] != NULL; i++ ) {
-					if ( (ret=sieve_address_match(addrp, mctx, fields[i])) < 0 ) {
-						result = FALSE;
-						break;
+		if ( (epart=_envelope_part_find(str_c(envp_item))) != NULL ) {
+			const struct sieve_address * const *addresses = NULL;
+			int i;
+
+			if ( epart->get_addresses != NULL ) {
+				/* Field contains addresses */
+				addresses = epart->get_addresses(renv);
+
+				if ( addresses != NULL ) {
+					for ( i = 0; !matched && addresses[i] != NULL; i++ ) {
+						if ( addresses[i]->local_part == NULL ) {
+							/* Null path <> */
+							ret = sieve_match_value(mctx, "", 0);
+						} else {
+							const char *part = addrp->extract_from(addresses[i]);
+							if ( part != NULL ) 
+								ret = sieve_match_value(mctx, part, strlen(part));
+						}
+
+						if ( ret < 0 ) {
+							result = FALSE;
+							break;
+						}
+
+       	        		matched = ret > 0;
 					}
+				}
+			} 
+
+			if ( epart->get_values != NULL && addresses == NULL && 
+				addrp == &all_address_part ) {
+				/* Field contains something else */
+				const char *const *values = epart->get_values(renv);
+
+				if ( values == NULL ) continue;
+	
+				for ( i = 0; !matched && values[i] != NULL; i++ ) {				
+
+					if ( (ret=sieve_match_value
+						(mctx, values[i], strlen(values[i]))) < 0 ) {
+	                    result = FALSE;
+    	                break;
+        	        }
 			
 					matched = ret > 0;				
 				}
-			} 
+			}
 		}
 	}
 	

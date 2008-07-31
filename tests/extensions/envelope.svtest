@@ -2,24 +2,47 @@ require "vnd.dovecot.testsuite";
 
 require "envelope";
 
-test_set "envelope.from" "";
 test_set "envelope.to" "stephan@rename-it.nl";
 
 test "Envelope - from empty" {
+	/* Return_path: "" */
+
+	test_set "envelope.from" "";
+
 	if not envelope :all :is "from" "" {
-		test_fail "failed to :all :is match <> return path";
+		test_fail "failed to (:all :is)-match a \"\" return path";
 	}
 
 	if not envelope :all :contains "from" "" {
-		test_fail "failed to :all :contains match <> return path";
+		test_fail "failed to (:all :contains)-match a \"\" return path";
 	}
 
 	if not envelope :domain :is "from" "" {
-		test_fail "failed to :domain :is match <> return path";
+		test_fail "failed to (:domain :is)-match a \"\" return path";
 	}
 
 	if not envelope :domain :contains "from" "" {
-		test_fail "failed to :domain :contains match <> return path";
+		test_fail "failed to (:domain :contains)-match a \"\" return path";
+	}
+
+	/* Return path: <> */
+
+	test_set "envelope.from" "<>";
+
+	if not envelope :all :is "from" "" {
+		test_fail "failed to (:all :is)-match a <> return path";
+	}
+
+	if not envelope :all :contains "from" "" {
+		test_fail "failed to (:all :contains)-match a <> return path";
+	}
+
+	if not envelope :domain :is "from" "" {
+		test_fail "failed to (:domain :is)-match a <> return path";
+	}
+
+	if not envelope :domain :contains "from" "" {
+		test_fail "failed to (:domain :contains)-match a <> return path";
 	}
 
 	if envelope :all :is "from" "nico@vestingbar.nl" {

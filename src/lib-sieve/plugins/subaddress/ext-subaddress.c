@@ -14,6 +14,7 @@
 #include "sieve-common.h"
 
 #include "sieve-code.h"
+#include "sieve-address.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-address-parts.h"
@@ -58,19 +59,19 @@ static bool ext_subaddress_load(int ext_id)
 /* Actual extension implementation */
 
 static const char *subaddress_user_extract_from
-	(const struct message_address *address)
+	(const struct sieve_address *address)
 {
-	const char *sep = strchr(address->mailbox, SUBADDRESS_DEFAULT_SEP_CHAR);
+	const char *sep = strchr(address->local_part, SUBADDRESS_DEFAULT_SEP_CHAR);
 	
-	if ( sep == NULL ) return address->mailbox;
+	if ( sep == NULL ) return address->local_part;
 	
-	return t_strdup_until(address->mailbox, sep);
+	return t_strdup_until(address->local_part, sep);
 }
 
 static const char *subaddress_detail_extract_from
-	(const struct message_address *address)
+	(const struct sieve_address *address)
 {
-	const char *sep = strchr(address->mailbox, SUBADDRESS_DEFAULT_SEP_CHAR);
+	const char *sep = strchr(address->local_part, SUBADDRESS_DEFAULT_SEP_CHAR);
 
 	if ( sep == NULL ) return NULL;
 		

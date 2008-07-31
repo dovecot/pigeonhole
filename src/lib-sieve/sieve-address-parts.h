@@ -14,7 +14,7 @@
 struct sieve_address_part {
 	struct sieve_object object;		
 
-	const char *(*extract_from)(const struct message_address *address);
+	const char *(*extract_from)(const struct sieve_address *address);
 };
 
 /*

@@ -86,6 +86,9 @@ struct sieve_match_type;
 /* sieve-match.h */
 struct sieve_match_context;
 
+/* sieve-address.h */
+struct sieve_address;
+
 /* sieve-address-parts.h */
 struct sieve_address_part;
 

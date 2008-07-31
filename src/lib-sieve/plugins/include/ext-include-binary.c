@@ -1,3 +1,6 @@
+#include "lib.h"
+#include "str.h"
+
 #include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
