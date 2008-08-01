@@ -412,7 +412,7 @@ static int ext_envelope_operation_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	bool result = TRUE;
-	const struct sieve_comparator *cmp = &i_octet_comparator;
+	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
 	const struct sieve_address_part *addrp = &all_address_part;
 	struct sieve_match_context *mctx;

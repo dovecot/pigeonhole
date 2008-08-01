@@ -2,6 +2,143 @@ require "vnd.dovecot.testsuite";
 
 require "variables";
 
+
+/*
+ * RFC compliance
+ */
+
+# Test acceptance of leading zeroes
+test "RFC - leading zeroes" {
+	if not string :matches "frop:frup:frop" "*:*:*" {
+		test_fail "failed to match";
+	}
+
+	if not string :is "${0000002}" "frup" {
+		test_fail "incorrect match value (0000002): ${0000002}";
+	}
+}
+
+# Test non-greedyness
+test "RFC - not greedy" {
+	if not string :matches "frop.......frop.........frop...." "?*frop*" {
+		test_fail "failed to match";
+	}
+
+	if not string :is "${1}${2}${3}" "frop................frop...." {
+		test_fail "incorrect match values: ${1}${2}${3}";
+	}
+}
+
+# Index out of range
+test "RFC - index out of range" {
+	if not string :matches "test" "*" {
+		test_fail "failed to match (impossible)";
+	}
+
+	if not string :is "${2}" "" {
+		test_fail "incorrect match value: '${2}'";
+	}
+}
+
+# Index 0
+test "RFC - index 0" {
+	if not string :matches "a b c d e f g" "? ? ? ? ? ? ?" {
+		test_fail "failed to match";
+	}
+
+	if not string :is "${0}" "a b c d e f g" {
+        test_fail "incorrect match value: ${0}";
+    }
+}
+
+# Test short-circuit
+test "RFC - test short-circuit" {
+	if not anyof (
+		string :matches "a b c d e f g" "? ?",
+		string :matches "puk pok puk pok" "pu*ok",
+		string :matches "snot kip snot" "snot*snot"
+	) {
+		test_fail "failed to match any";
+	}
+
+	if string :is "${1}" " kip " {
+		test_fail "did not short-circuit test execution or intented test failed.";
+	}
+
+	if not string :is "${1}" "k pok puk p" {
+		test_fail "incorrect match value: ${1}";
+	}
+}
+
+test "RFC - example" {
+	test_set "message" text:
+Subject: [acme-users] [fwd] version 1.0 is out
+List-Id: Dovecot Mailing List <dovecot@dovecot.org>     
+To: coyote@ACME.Example.COM
+Fom: stephan@rename-it.nl
+
+Test message.
+.
+;
+	if header :matches "List-ID" "*<*@*" {	
+		if not string "INBOX.lists.${2}" "INBOX.lists.dovecot" {
+			test_fail "incorrect match value: INBOX.lists.${2}";
+		}
+	} else {
+		test_fail "failed to match list header";
+	}
+
+	# Imagine the header
+	# Subject: [acme-users] [fwd] version 1.0 is out
+	if header :matches "Subject" "[*] *" {
+		# ${1} will hold "acme-users",
+		# ${2} will hold "[fwd] version 1.0 is out"
+
+		if anyof (
+			not string "${1}" "acme-users",
+			not string "${2}" "[fwd] version 1.0 is out"
+		) {
+			test_fail "invalid match values: ${1} ${2}";
+		}
+	} else {
+		test_fail "failed to match subject";
+	}
+
+	# Imagine the header
+	# To: coyote@ACME.Example.COM
+	if address :matches ["To", "Cc"] ["coyote@**.com", 
+		"wile@**.com"] {
+		# ${0} is the matching address
+		# ${1} is always the empty string
+		# ${2} is part of the domain name ("ACME.Example")
+
+		if anyof (
+			not string "${0}" "coyote@ACME.Example.COM",
+			not string "${1}" "",
+			not string "${2}" "ACME.Example"
+		) {
+			test_fail "invalid match values: ${0}, ${1}, ${2}";
+		}      
+	} else {
+		# Control wouldn't reach this block if any match was
+		# successful, so no match variables are set at this
+ 		# point.
+
+		test_fail "failed to match to address";
+ 	}
+
+	if anyof (true, address :domain :matches "To" "*.com") {
+		# The second test is never evaluated, so there are
+		# still no match variables set.
+		
+		/* FIXME: not compliant */
+	}
+}
+
+/*
+ * Generic tests
+ */
+
 set "match1" "Test of general stupidity";
 
 test "Begin" {
@@ -165,3 +302,4 @@ test "Letters words *? first" {
 		test_fail "incorrect match values: ${val}";
 	}
 }
+

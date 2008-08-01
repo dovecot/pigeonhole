@@ -32,6 +32,8 @@ test_cases = \
 	tests/extensions/envelope.svtest \
 	tests/extensions/variables/basic.svtest \
 	tests/extensions/variables/match.svtest \
+	tests/extensions/variables/modifiers.svtest \
+	tests/extensions/variables/quoting.svtest \
 	tests/extensions/include/variables.svtest \
 	tests/extensions/imapflags/basic.svtest \
 	tests/extensions/imapflags/rfc.svtest \

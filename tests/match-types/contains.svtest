@@ -54,7 +54,7 @@ test "Match case-insensitive" {
 		test_fail "match fails to apply correct comparator";	
 	}
 
-	if address :contains "from" "RENAME-IT" {
+	if not address :contains "from" "RENAME-IT" {
         test_fail "default comparator is wrong";
     }
 }

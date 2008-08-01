@@ -164,7 +164,7 @@ static int tst_header_operation_execute
 {
 	bool result = TRUE;
 	int opt_code = 0;
-	const struct sieve_comparator *cmp = &i_octet_comparator;
+	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
 	struct sieve_match_context *mctx;
 	struct sieve_coded_stringlist *hdr_list;
