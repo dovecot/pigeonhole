@@ -106,6 +106,7 @@ noinst_HEADERS = \
 	sieve-result.h \
 	sieve-error.h \
 	sieve-error-private.h \
+	sieve-objects.h \
 	sieve-match.h \
 	sieve-comparators.h \
 	sieve-match-types.h \

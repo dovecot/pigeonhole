@@ -4,7 +4,7 @@
  * Authors: Stephan Bosch
  * Specification: RFC 5229
  * Implementation: mostly full; no support for future namespaces
- * Status: experimental, largely untested
+ * Status: experimental, not thoroughly tested
  *
  */
  
