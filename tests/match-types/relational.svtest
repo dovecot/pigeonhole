@@ -43,10 +43,29 @@ X-Count: x
 X-Count: y
 X-Count: z
 Subject: Test
+Comment:                                    
 
 Test!
 .
 ;
+
+/*
+ * Empty strings
+ */
+
+test "Value \"\" eq 40 (vs)" {
+	if header :value "eq" :comparator "i;ascii-numeric" "comment" "40" {
+		test_fail ":value matched empty string with i;ascii-numeric";
+	}
+
+	if header :value "gt" :comparator "i;ascii-numeric" "x-spam-score" "" {
+		test_fail ":value 300 exceeded empty string with i;ascii-numeric";
+	}
+
+	if header :value "gt" :comparator "i;ascii-numeric" "x-spam-score" "" {
+        test_fail ":count exceeded empty string with i;ascii-numeric";
+    }
+}
 
 /* 
  * Match type :value

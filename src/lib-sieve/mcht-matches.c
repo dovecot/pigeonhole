@@ -92,7 +92,6 @@ static int mcht_matches_match
 	char wcard = '\0';      /* Current wildcard */
 	char next_wcard = '\0'; /* Next  widlcard */
 	unsigned int key_offset = 0;
-	unsigned int j = 0;
 
 	if ( val == NULL ) {
 		val = "";
@@ -127,7 +126,7 @@ static int mcht_matches_match
 	debug_printf("  value: %s\n", t_strdup_until(val, vend));
 
 	/* Loop until either key or value ends */
-	while (kp < kend && vp < vend && j < 40) {
+	while (kp < kend && vp < vend ) {
 		const char *needle, *nend;
 		
 		if ( !backtrack ) {
@@ -321,11 +320,15 @@ static int mcht_matches_match
 		}			
 					
 		debug_printf("== Loop ==\n");
-		j++;
 	}
 	
 	debug_printf("=== Finish ===\n");
 	debug_printf("  result: %s\n", (kp == kend && vp == vend) ? "true" : "false");
+
+	/* Eat away a trailing series of *rs */
+	if ( vp == vend ) {
+		while ( kp < kend && *kp == '*' ) kp++;
+	}
 	
 	/* By definition, the match is only successful if both value and key pattern
 	 * are exhausted.

@@ -98,6 +98,21 @@ static int cmp_i_ascii_numeric_compare
 	const char *vp = val;
 	const char *kp = key;
 	int digits, i;
+
+	/* RFC 4790: All input is valid; strings that do not start with a digit represent 
+	 * positive infinity.
+	 */
+	if ( !i_isdigit(*vp) ) {
+		if ( i_isdigit(*kp) ) {
+			/* Value is greater */
+			return -1;
+		}
+	} else {
+		if ( !i_isdigit(*kp) ) {
+            /* Value is less */
+            return -1;
+        }
+	}
 	
 	/* Ignore leading zeros */
 

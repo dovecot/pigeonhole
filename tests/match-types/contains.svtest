@@ -6,6 +6,7 @@ Cc: frop@example.com
 To: test@dovecot.org
 X-Bullshit: f fr fro frop frob frobn frobnitzn
 Subject: Test Message
+Comment:                                 
 
 Test!
 .
@@ -15,8 +16,12 @@ Test!
 
 test "Match empty" {
 	if not header :contains "x-bullshit" "" {
-		test_fail "contains tests fails to match \"\"";
+		test_fail "contains tests fails to match \"\" against non-empty string";
 	}
+
+	if not header :contains "comment" "" {
+        test_fail "contains tests fails to match \"\" against empty string";
+    }
 }
 
 test "Match full" {

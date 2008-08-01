@@ -11,12 +11,32 @@ Subject: make your money very fast!!!
 X-Spam-Score: **********
 X-Bullshit: 33333???a
 Message-ID: <90a02fe01fc25e131d0e9c4c45975894@example.com>
+Comment:                                            
 
 Het werkt!
 .
 ;
 
-# Matching tests
+/*
+ * Matching tests
+ */
+
+# Empty string
+test "Empty string" {
+	if not header :matches "comment" "" {
+		test_fail "failed to match \"\" against \"\"";
+	}
+
+	if not header :matches "comment" "*" {
+		test_fail "failed to match \"\" against \"*\"";
+	}
+
+	if header :matches "comment" "?" {
+		test_fail "inappropriately matched \"\" against \"?\"";
+	}
+}
+
+stop;
 
 test "MATCH-A" {
 	if not address :matches "from" "*@d*ksn*ers.com" {
