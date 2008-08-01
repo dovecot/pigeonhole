@@ -2,6 +2,7 @@ Next (in order of descending priority/precedence):
 * Full standards compliance review for the engine and all fully implemented 
   sieve extensions. Issues discovered so far:
 	- :matches : match values must only be changed when the test matches.
+	- string test must not :count empty strings
 	- If an address is not syntactically valid, then it will not be matched
 	  by tests specifying ":localpart" or ":domain".
 	- Allow for the existance of dynamic comparators 

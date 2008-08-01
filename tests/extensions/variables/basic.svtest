@@ -150,6 +150,24 @@ test "Variables case-insensitive" {
 	}
 }
 
+test "RFC set command example" {
+	set "honorific"  "Mr";
+	set "first_name" "Wile";
+	set "last_name"  "Coyote";
+	set "vacation" text:
+Dear ${HONORIFIC} ${last_name},
+I'm out, please leave a message after the meep.
+.
+;
+	if not string :is :comparator "i;octet" "${VAcaTION}" text:
+Dear Mr Coyote,
+I'm out, please leave a message after the meep.
+.
+	{
+		test_fail "failed to set variable correctly: ${VAcaTION}";
+	}
+}
+
 /*
  * Variable substitution
  */
