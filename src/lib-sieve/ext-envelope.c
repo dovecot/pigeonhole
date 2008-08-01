@@ -129,23 +129,27 @@ struct sieve_envelope_part {
 		(const struct sieve_runtime_env *renv);
 };
 
-const struct sieve_address *const *_from_part_get_addresses
+static const struct sieve_address *const *_from_part_get_addresses
 	(const struct sieve_runtime_env *renv);
-const struct sieve_address *const *_to_part_get_addresses
+static const char *const *_from_part_get_values
 	(const struct sieve_runtime_env *renv);
-const char *const *_auth_part_get_values
+static const struct sieve_address *const *_to_part_get_addresses
+	(const struct sieve_runtime_env *renv);
+static const char *const *_to_part_get_values
+	(const struct sieve_runtime_env *renv);
+static const char *const *_auth_part_get_values
 	(const struct sieve_runtime_env *renv);
 
 static const struct sieve_envelope_part _from_part = {
 	"from",
 	_from_part_get_addresses,
-	NULL
+	_from_part_get_values,
 };
 
 static const struct sieve_envelope_part _to_part = {
 	"to",
 	_to_part_get_addresses,
-	NULL
+	_to_part_get_values,
 };	
 
 static const struct sieve_envelope_part _auth_part = {
@@ -317,42 +321,83 @@ static bool ext_envelope_operation_dump
  * Interpretation
  */
 
-const struct sieve_address *const *_from_part_get_addresses
+static const struct sieve_address *const *_from_part_get_addresses
 (const struct sieve_runtime_env *renv)
 {
 	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
 	const struct sieve_address *address =
 		sieve_address_parse_envelope_path(renv->msgdata->return_path);
 	
-	t_array_init(&envelope_values, 2);
-
 	if ( address != NULL ) {
-        array_append(&envelope_values, &address, 1);
-	}
+		t_array_init(&envelope_values, 2);
 
-    (void)array_append_space(&envelope_values);
-    return array_idx(&envelope_values, 0);
+		printf("FROM: %s@%s\n", address->local_part, address->domain);
+
+        array_append(&envelope_values, &address, 1);
+
+	    (void)array_append_space(&envelope_values);
+    	return array_idx(&envelope_values, 0);
+	} 
+
+	return NULL;
 }
 
-const struct sieve_address *const *_to_part_get_addresses
-( const struct sieve_runtime_env *renv)
+static const char *const *_from_part_get_values
+(const struct sieve_runtime_env *renv)
+{
+	ARRAY_DEFINE(envelope_values, const char *);
+
+	t_array_init(&envelope_values, 2);
+
+	if ( renv->msgdata->return_path != NULL ) {
+		printf("FROM: %s\n", renv->msgdata->return_path);
+        array_append(&envelope_values, &renv->msgdata->return_path, 1);
+	}
+
+	(void)array_append_space(&envelope_values);
+
+	return array_idx(&envelope_values, 0);
+}
+
+static const struct sieve_address *const *_to_part_get_addresses
+(const struct sieve_runtime_env *renv)
 {
 	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
 	const struct sieve_address *address = 
 		sieve_address_parse_envelope_path(renv->msgdata->to_address);	
-	
-	t_array_init(&envelope_values, 2);
 
 	if ( address != NULL && address->local_part != NULL ) {
+		t_array_init(&envelope_values, 2);
+
+		printf("TO: %s@%s\n", address->local_part, address->domain);
+
         array_append(&envelope_values, &address, 1);
+
+	    (void)array_append_space(&envelope_values);
+    	return array_idx(&envelope_values, 0);
 	}
 
-    (void)array_append_space(&envelope_values);
-    return array_idx(&envelope_values, 0);
+	return NULL;
 }
 
-const char *const *_auth_part_get_values
-( const struct sieve_runtime_env *renv)
+static const char *const *_to_part_get_values
+(const struct sieve_runtime_env *renv)
+{
+	ARRAY_DEFINE(envelope_values, const char *);
+
+	t_array_init(&envelope_values, 2);
+
+	if ( renv->msgdata->to_address != NULL )
+        array_append(&envelope_values, &renv->msgdata->to_address, 1);
+
+	(void)array_append_space(&envelope_values);
+
+	return array_idx(&envelope_values, 0);
+}
+
+
+static const char *const *_auth_part_get_values
+(const struct sieve_runtime_env *renv)
 {
 	ARRAY_DEFINE(envelope_values, const char *);
 

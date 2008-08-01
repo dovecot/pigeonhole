@@ -2,8 +2,6 @@ require "vnd.dovecot.testsuite";
 
 require "envelope";
 
-test_set "envelope.to" "stephan@rename-it.nl";
-
 test "Envelope - from empty" {
 	/* Return_path: "" */
 
@@ -48,5 +46,44 @@ test "Envelope - from empty" {
 	if envelope :all :is "from" "nico@vestingbar.nl" {
 		test_fail "envelope test matches nonsense";
 	}
+
+	/* Forward path: <> */
+
+    test_set "envelope.to" "<>";
+
+    if envelope :all :is "to" "" {
+        test_fail "successfully matched a <> forward path, which is wrong";
+    }
+}
+
+test "Envelope - invalid paths" {
+    /* Return_path: "hutsefluts" */
+
+	test_set "envelope.from" "hutsefluts";
+	test_set "envelope.to" "knurft";
+
+	if not envelope :all :is "from" "hutsefluts" {
+		test_fail ":all address part mangled syntactically incorrect reverse path";
+	}
+
+	if envelope :localpart :is "from" "hutsefluts" {
+        test_fail ":localpart address part matched syntactically incorrect reverse path";
+    }
+
+	if envelope :domain :is "from" "hutsefluts" {
+        test_fail ":domain address part matched syntactically incorrect reverse path";
+    }
+
+	if not envelope :all :is "to" "knurft" {
+		test_fail ":all address part mangled syntactically incorrect forward path";
+	}
+
+	if envelope :localpart :is "to" "knurft" {
+        test_fail ":localpart address part matched syntactically incorrect forward path";
+    }
+
+	if envelope :domain :is "to" "knurft" {
+        test_fail ":domain address part matched syntactically incorrect forward path";
+    }
 }
 

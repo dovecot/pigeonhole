@@ -569,7 +569,7 @@ static int path_parse_mailbox(struct sieve_envelope_address_parser *parser)
 	/* Mailbox = Local-part "@" Domain */
 	
 	if ( (ret=path_parse_local_part(parser)) <= 0 )
-        return ret;
+        return -1;
 
 	if ( (ret=path_skip_white_space(parser)) <= 0 )
         return -1;
@@ -578,7 +578,7 @@ static int path_parse_mailbox(struct sieve_envelope_address_parser *parser)
 		return -1;
 	parser->data++;
 
-	 if ( (ret=path_skip_white_space(parser)) <= 0 )
+	if ( (ret=path_skip_white_space(parser)) <= 0 )
         return -1;
 
 	return path_parse_domain(parser, FALSE);
