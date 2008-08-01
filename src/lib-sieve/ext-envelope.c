@@ -331,8 +331,6 @@ static const struct sieve_address *const *_from_part_get_addresses
 	if ( address != NULL ) {
 		t_array_init(&envelope_values, 2);
 
-		printf("FROM: %s@%s\n", address->local_part, address->domain);
-
         array_append(&envelope_values, &address, 1);
 
 	    (void)array_append_space(&envelope_values);
@@ -350,7 +348,6 @@ static const char *const *_from_part_get_values
 	t_array_init(&envelope_values, 2);
 
 	if ( renv->msgdata->return_path != NULL ) {
-		printf("FROM: %s\n", renv->msgdata->return_path);
         array_append(&envelope_values, &renv->msgdata->return_path, 1);
 	}
 
@@ -369,8 +366,6 @@ static const struct sieve_address *const *_to_part_get_addresses
 	if ( address != NULL && address->local_part != NULL ) {
 		t_array_init(&envelope_values, 2);
 
-		printf("TO: %s@%s\n", address->local_part, address->domain);
-
         array_append(&envelope_values, &address, 1);
 
 	    (void)array_append_space(&envelope_values);
@@ -387,8 +382,9 @@ static const char *const *_to_part_get_values
 
 	t_array_init(&envelope_values, 2);
 
-	if ( renv->msgdata->to_address != NULL )
+	if ( renv->msgdata->to_address != NULL ) {
         array_append(&envelope_values, &renv->msgdata->to_address, 1);
+	}
 
 	(void)array_append_space(&envelope_values);
 

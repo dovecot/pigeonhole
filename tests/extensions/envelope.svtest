@@ -2,6 +2,10 @@ require "vnd.dovecot.testsuite";
 
 require "envelope";
 
+/*
+ * Empty envelope addresses
+ */
+
 test "Envelope - from empty" {
 	/* Return_path: "" */
 
@@ -56,6 +60,10 @@ test "Envelope - from empty" {
     }
 }
 
+/*
+ * Invalid envelope addresses
+ */
+
 test "Envelope - invalid paths" {
     /* Return_path: "hutsefluts" */
 
@@ -70,7 +78,7 @@ test "Envelope - invalid paths" {
         test_fail ":localpart address part matched syntactically incorrect reverse path";
     }
 
-	if envelope :domain :is "from" "hutsefluts" {
+	if envelope :domain :contains "from" "" {
         test_fail ":domain address part matched syntactically incorrect reverse path";
     }
 
@@ -82,8 +90,129 @@ test "Envelope - invalid paths" {
         test_fail ":localpart address part matched syntactically incorrect forward path";
     }
 
-	if envelope :domain :is "to" "knurft" {
+	if envelope :domain :contains "to" "" {
         test_fail ":domain address part matched syntactically incorrect forward path";
     }
 }
 
+/*
+ * Syntax errors 
+ */
+
+test "Envelope - syntax errors" {
+	/* Control */
+	test_set "envelope.from" "<stephan@rename-it.nl>";
+	if not envelope :all :is "from" "stephan@rename-it.nl" {
+		test_fail "correct control test failed";
+	}
+
+	# Duplicate <
+	test_set "envelope.from" "<<stephan@rename-it.nl>";
+    if envelope :all :is "from" "stephan@rename-it.nl" {
+        test_fail "failed to recognize syntax error";
+    }
+
+	# Spurious >
+	test_set "envelope.from" "stephan@rename-it.nl>";
+    if envelope :all :is "from" "stephan@rename-it.nl" {
+        test_fail "failed to recognize syntax error";
+    }
+
+	# Missing >
+	test_set "envelope.from" "<stephan@rename-it.nl";
+    if envelope :all :is "from" "stephan@rename-it.nl" {
+        test_fail "failed to recognize syntax error";
+    }
+	
+	# No @
+	test_set "envelope.from" "<stephan rename-it.nl>";
+    if envelope :domain :contains "from" "" {
+        test_fail "failed to recognize syntax error";
+    }
+
+	# Duplicate @
+	test_set "envelope.from" "<stephan@@rename-it.nl>";
+    if envelope :domain :contains "from" "" {
+        test_fail "failed to recognize syntax error";
+    }
+}
+
+/*
+ * Ignoring source routes
+ */
+
+test "Envelope - source route" {
+	/* Single */
+	test_set "envelope.from" "<@cola.rename-it.nl:stephan@rename-it.nl>";
+	if not envelope :localpart :is "from" "stephan" {
+		test_fail "parsing path with source route (single) failed";
+
+	}
+
+	/* Dual */
+	test_set "envelope.from" "<@cola.rename-it.nl,@mx.utwente.nl:stephan@rename-it.nl>";
+	if not envelope :localpart :is "from" "stephan" {
+		test_fail "parsing path with source route (dual) failed";
+
+	}
+	
+	/* Multiple */
+	test_set "envelope.from" "<@cola.rename-it.nl,@mx.utwente.nl,@smtp.iki.fi:stephan@rename-it.nl>";
+	if not envelope :localpart :is "from" "stephan" {
+		test_fail "parsing path with source route (multiple) failed";
+
+	}
+
+	/* Bare */
+	test_set "envelope.from" "@cola.rename-it.nl,@mx.utwente.nl,@smtp.iki.fi:stephan@rename-it.nl";
+	if not envelope :domain :is "from" "rename-it.nl" {
+		test_fail "parsing path with source route (bare) failed";
+	}	
+
+	/* Whitespace */
+	test_set "envelope.from" "   < @ cola . rename-it . nl , @ mx . utwente .   nl , 	@ smtp  .  iki  . fi	:   stephan		@     rename-it   .		nl >  ";
+    if not envelope :domain :is "from" "rename-it.nl" {
+        test_fail "parsing path with source route (whitespace) failed";
+    }
+}
+
+test "Envelope - source route errors" {
+	test_set "envelope.to" "<cola.rename-it.nl:stephan@rename-it.nl>";
+	if envelope :domain :contains "to" "" {
+		test_fail "parsing syntactically incorrect path should have failed (1)";
+	}
+
+	test_set "envelope.to" "<@.rename-it.nl:stephan@rename-it.nl>";
+	if envelope :domain :contains "to" "" {
+		test_fail "parsing syntactically incorrect path should have failed (2)";
+	}
+
+	test_set "envelope.to" "<@cola..nl:stephan@rename-it.nl>";
+	if envelope :domain :contains "to" "" {
+		test_fail "parsing syntactically incorrect path should have failed (3)";
+	}
+
+	test_set "envelope.to" "<@cola.rename-it.nlstephan@rename-it.nl>";
+	if envelope :domain :contains "to" "" {
+		test_fail "parsing syntactically incorrect path should have failed (4)";
+	}
+
+	test_set "envelope.to" "<@cola.rename-it.nl@mx.utwente.nl:stephan@rename-it.nl>";
+	if envelope :domain :contains "to" "" {
+		test_fail "parsing syntactically incorrect path should have failed (5)";
+	}
+
+	test_set "envelope.to" "<@cola.rename-it.nl,mx.utwente.nl:stephan@rename-it.nl>";
+	if envelope :domain :contains "to" "" {
+		test_fail "parsing syntactically incorrect path should have failed (6)";
+	}
+
+	test_set "envelope.to" "<@cola.rename-it.nl,@mx.utwente.nl,stephan@rename-it.nl>";
+	if envelope :domain :contains "to" "" {
+		test_fail "parsing syntactically incorrect path should have failed (7)";
+	}
+
+	if not envelope :all :is "to" "<@cola.rename-it.nl,@mx.utwente.nl,stephan@rename-it.nl>" {
+		test_fail ":all address part mangled syntactically incorrect path";
+	}
+}

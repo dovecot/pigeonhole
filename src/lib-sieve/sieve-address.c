@@ -265,6 +265,10 @@ bool sieve_address_validate
 /*
  * Envelope address parsing
  *   RFC 2821
+ *
+ * FIXME: Quite a bit of this will overlap with the rfc822 parser
+ * dovecot already has and the rfc2821 parser that it probably will
+ * have once it implements LMTP. For now we implement things separately. 
  */
 
 #define AB (1<<0)
@@ -453,7 +457,8 @@ static int path_skip_source_route(struct sieve_envelope_address_parser *parser)
 {
 	int ret;
 
-	/* A-d-l = At-domain *( "," A-d-l )
+	/* Source-route = [ A-d-l ":" ] 
+	 * A-d-l = At-domain *( "," A-d-l )
 	 * At-domain = "@" domain
 	 */
 
@@ -482,9 +487,13 @@ static int path_skip_source_route(struct sieve_envelope_address_parser *parser)
 				return -1;
 			parser->data++;
 		}
+
+		if ( *parser->data != ':' )
+			return -1;
+		parser->data++;
 	}
 
-	return parser->data < parser->end;
+	return path_skip_white_space(parser);
 }
 
 static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
@@ -589,6 +598,8 @@ static int path_parse(struct sieve_envelope_address_parser *parser)
 	int ret;
 	bool brackets = FALSE;
 
+	/* Path = "<" [ A-d-l ":" ] Mailbox ">" */
+
 	if ( (ret=path_skip_white_space(parser)) <= 0 ) 
 		return ret;
 	
@@ -608,7 +619,6 @@ static int path_parse(struct sieve_envelope_address_parser *parser)
 	}
 
 	/*  [ A-d-l ":" ] Mailbox */
-
 	if ( (ret=path_skip_source_route(parser)) <= 0 )
 		return -1;
 
