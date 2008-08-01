@@ -214,9 +214,10 @@ static int tst_string_operation_execute
 	while ( result && !matched && 
 		(result=sieve_coded_stringlist_next_item(source, &src_item)) 
 		&& src_item != NULL ) {
+		const char *src = str_len(src_item) > 0 ? str_c(src_item) : NULL;
 
 		if ( (mret=sieve_match_value
-			(mctx, str_c(src_item), str_len(src_item))) < 0 ) {
+			(mctx, src, str_len(src_item))) < 0 ) {
 			result = FALSE;
 			break;
 		}

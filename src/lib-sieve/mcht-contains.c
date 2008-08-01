@@ -49,6 +49,9 @@ static int mcht_contains_match
 	const char *vp = val;
 	const char *kp = key;
 
+	if ( val == NULL || val_size == 0 ) 
+		return ( key_size == 0 );
+
 	if ( mctx->comparator->char_match == NULL ) 
 		return FALSE;
 

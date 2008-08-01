@@ -16,3 +16,13 @@ test "String - :count \"\"" {
 		test_fail "string test failed :count match";
 	}
 }
+
+test "RFC example" {
+	set "state" "${state} pending";
+
+	if not string :matches " ${state} " "* pending *" {
+    	# the above test always succeeds
+		
+		test_fail "test should have matched: \" ${state} \"";
+	}
+}

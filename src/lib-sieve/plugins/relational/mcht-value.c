@@ -55,7 +55,14 @@ int mcht_value_match
 {
 	const struct sieve_match_type *mtch = mctx->match_type;
 	unsigned int rel_match = REL_MATCH(mtch->object.code);	
-	int cmp_result = mctx->comparator->
+	int cmp_result;
+
+	if ( val == NULL ) {
+		val = "";
+		val_size = 0;
+	}
+
+	cmp_result = mctx->comparator->
 		compare(mctx->comparator, val, val_size, key, key_size);
 
 	switch ( rel_match ) {

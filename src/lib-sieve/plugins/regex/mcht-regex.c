@@ -231,6 +231,11 @@ static int mcht_regex_match
 	struct mcht_regex_context *ctx = (struct mcht_regex_context *) mctx->data;
 	regex_t *regexp;
 
+	if ( val == NULL ) {
+		val = "";
+		val_size = 0;
+	}
+
 	if ( key_index < 0 ) return FALSE;
 
 	if ( key_index == 0 ) ctx->value_index++;

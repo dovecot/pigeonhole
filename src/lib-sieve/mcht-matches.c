@@ -86,24 +86,30 @@ static int mcht_matches_match
 {
 	const struct sieve_comparator *cmp = mctx->comparator;
 	struct sieve_match_values *mvalues;
-	
-	string_t *mvalue = t_str_new(32);     /* Match value (*) */
-	string_t *mchars = t_str_new(32);     /* Match characters (.?..?.??) */
-	string_t *section = t_str_new(32);    /* Section (after beginning or *) */
-	string_t *subsection = t_str_new(32); /* Sub-section (after ?) */
-	
-	const char *vend = (const char *) val + val_size;
-	const char *kend = (const char *) key + key_size;
-	const char *vp = val;   /* Value pointer */
-	const char *kp = key;   /* Key pointer */
-	const char *wp = key;   /* Wildcard (key) pointer */
-	const char *pvp = val;  /* Previous value Pointer */
-	
+	string_t *mvalue, *mchars, *section, *subsection;
+	const char *vend, *kend, *vp, *kp, *wp, *pvp;
 	bool backtrack = FALSE; /* TRUE: match of '?'-connected sections failed */
 	char wcard = '\0';      /* Current wildcard */
 	char next_wcard = '\0'; /* Next  widlcard */
 	unsigned int key_offset = 0;
 	unsigned int j = 0;
+
+	if ( val == NULL ) {
+		val = "";
+		val_size = 0;
+	}
+	
+	mvalue = t_str_new(32);     /* Match value (*) */
+	mchars = t_str_new(32);     /* Match characters (.?..?.??) */
+	section = t_str_new(32);    /* Section (after beginning or *) */
+	subsection = t_str_new(32); /* Sub-section (after ?) */
+	
+	vend = (const char *) val + val_size;
+	kend = (const char *) key + key_size;
+	vp = val;                   /* Value pointer */
+	kp = key;                   /* Key pointer */
+	wp = key;                   /* Wildcard (key) pointer */
+	pvp = val;                  /* Previous value Pointer */
 	
 	/* Reset match values list */
 	mvalues = sieve_match_values_start(mctx->interp);

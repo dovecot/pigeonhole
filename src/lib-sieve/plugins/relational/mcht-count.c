@@ -74,6 +74,9 @@ static int mcht_count_match
 	const char *key ATTR_UNUSED, size_t key_size ATTR_UNUSED,
 	int key_index) 
 {
+	if ( val == NULL )
+		return FALSE;
+
 	/* Count values */
 	if ( key_index == -1 ) {
 		mctx->data = (void *) (((int) mctx->data) + 1);

@@ -16,7 +16,7 @@
  */
 
 static int mcht_is_match
-	(struct sieve_match_context *mctx, const char *val1, size_t val1_size, 
+	(struct sieve_match_context *mctx, const char *val, size_t val_size, 
 		const char *key, size_t key_size, int key_index);
 
 /* 
@@ -37,12 +37,15 @@ const struct sieve_match_type is_match_type = {
 
 static int mcht_is_match
 (struct sieve_match_context *mctx ATTR_UNUSED, 
-	const char *val1, size_t val1_size, 
+	const char *val, size_t val_size, 
 	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {
+	if ( (val == NULL || val_size == 0) ) 
+		return ( key_size == 0 );
+	
 	if ( mctx->comparator->compare != NULL )
 		return (mctx->comparator->compare(mctx->comparator, 
-			val1, val1_size, key, key_size) == 0);
+			val, val_size, key, key_size) == 0);
 
 	return FALSE;
 }

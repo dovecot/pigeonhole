@@ -97,7 +97,7 @@ int sieve_match_value
 			return -1;
 
 	} else {
-		return mtch->match(mctx, value, strlen(value), NULL, 0, -1);
+		return mtch->match(mctx, value, val_size, NULL, 0, -1);
 	}
 
 	return FALSE;

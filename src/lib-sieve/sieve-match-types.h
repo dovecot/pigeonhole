@@ -44,7 +44,18 @@ struct sieve_match_type {
 		(struct sieve_validator *validator, struct sieve_ast_argument *arg, 
 			struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg);
 			
+	/*
+	 * Matching
+ 	 */
+
 	void (*match_init)(struct sieve_match_context *mctx);
+
+	/* WARNING: some tests may pass a val == NULL parameter indicating that the passed
+	 * value has no significance. For string-type matches this should map to the empty
+	 * string "", but for match types that consider the passed values as objects rather
+	 * than strings (e.g. :count) this means that the passed value should be skipped.
+	 * This is currently only used by string test of the variables extension.
+	 */
 	int (*match)
 		(struct sieve_match_context *mctx, const char *val, size_t val_size, 
 			const char *key, size_t key_size, int key_index);
