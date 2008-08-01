@@ -39,8 +39,11 @@ struct sieve_validator {
 	
 	/* This is currently a wee bit ugly and needs more thought */
 	struct sieve_default_argument default_arguments[SAT_COUNT];
+
+	/* Default argument processing state (FIXME: ugly) */
 	struct sieve_default_argument *current_defarg;
 	enum sieve_argument_type current_defarg_type;
+	bool current_defarg_constant;
 };
 
 /* Predeclared statics */
@@ -106,6 +109,8 @@ struct sieve_validator *sieve_validator_create
 	/* Setup default arguments */
 	validator->default_arguments[SAT_NUMBER].
 		argument = &number_argument;
+	validator->default_arguments[SAT_VAR_STRING].
+		argument = &string_argument;
 	validator->default_arguments[SAT_CONST_STRING].
 		argument = &string_argument;
 	validator->default_arguments[SAT_STRING_LIST].
@@ -497,27 +502,26 @@ bool sieve_validator_argument_activate_super
 	struct sieve_ast_argument *arg, bool constant ATTR_UNUSED)
 {
 	struct sieve_default_argument *defarg;
-	
-	if ( validator->current_defarg == NULL )
+
+	if ( validator->current_defarg == NULL ||	
+		validator->current_defarg->overrides == NULL )
 		return FALSE;
 	
-	if ( validator->current_defarg->overrides == NULL ) {
-		enum sieve_argument_type prev_type = validator->current_defarg_type;
-		
-		switch ( validator->current_defarg_type ) {
-		case SAT_NUMBER:
+	if ( validator->current_defarg->overrides->argument == &string_argument ) {
+		switch ( validator->current_defarg_type) {
 		case SAT_CONST_STRING:
-		case SAT_STRING_LIST:
-			return FALSE;
-		case SAT_VAR_STRING:
-			validator->current_defarg_type = SAT_CONST_STRING;
-			defarg = &validator->default_arguments[validator->current_defarg_type];
+			if ( !validator->current_defarg_constant ) {
+				validator->current_defarg_type = SAT_VAR_STRING;
+				defarg = &validator->default_arguments[SAT_VAR_STRING];
+			} else
+				defarg = validator->current_defarg->overrides;
 			break;
-		default: 
+		case SAT_VAR_STRING:
+			defarg = validator->current_defarg->overrides;
+			break;
+		default:
 			return FALSE;
 		}
-		
-		validator->current_defarg_type = prev_type;
 	} else
 		defarg = validator->current_defarg->overrides;
 	
@@ -536,11 +540,7 @@ bool sieve_validator_argument_activate
 		validator->current_defarg_type = SAT_NUMBER;
 		break;
 	case SAAT_STRING:
-		if ( constant || 
-			validator->default_arguments[SAT_VAR_STRING].argument == NULL )
-			validator->current_defarg_type = SAT_CONST_STRING;
-		else
-			validator->current_defarg_type = SAT_VAR_STRING;
+		validator->current_defarg_type = SAT_CONST_STRING;
 		break;
 	case SAAT_STRING_LIST:
 		validator->current_defarg_type = SAT_STRING_LIST;
@@ -548,8 +548,14 @@ bool sieve_validator_argument_activate
 	default:
 		return FALSE;
 	}
-	
+
+	validator->current_defarg_constant = constant;
 	defarg = &validator->default_arguments[validator->current_defarg_type];
+
+	if ( !constant && defarg->argument == &string_argument ) {
+		validator->current_defarg_type = SAT_VAR_STRING;
+		defarg = &validator->default_arguments[SAT_VAR_STRING];
+	}
 	
 	return sieve_validator_argument_default_activate(validator, cmd, defarg, arg);
 }

@@ -210,7 +210,7 @@ static bool arg_variable_string_validate
 	const char *strend = strval + str_len(str);
 	struct _variable_string_data *strdata;
 	bool result = TRUE;
-	
+
 	ARRAY_TYPE(ext_variable_name) substitution;	
 	int nelements = 0;
 	

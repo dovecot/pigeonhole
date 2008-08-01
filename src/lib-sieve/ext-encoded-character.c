@@ -94,9 +94,8 @@ static bool _parse_hexint
 	
 		if ( (**in) >= '0' && (**in) <= '9' ) 
 			*result = ((*result) << 4) + (**in) - ((unsigned int) '0');
-		/* REPORTME: Lower-case version is not allowed by RFC 
 		else if ( (**in) >= 'a' && (**in) <= 'f' )
-			*result = ((*result) << 4) + (**in) - ((unsigned int) 'a') + 0x0a;*/
+			*result = ((*result) << 4) + (**in) - ((unsigned int) 'a') + 0x0a;
 		else if ( (**in) >= 'A' && (**in) <= 'F' )
 			*result = ((*result) << 4) + (**in) - ((unsigned int) 'A') + 0x0a;
 		else
