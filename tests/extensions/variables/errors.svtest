@@ -1,0 +1,24 @@
+require "vnd.dovecot.testsuite";
+
+require "comparator-i;ascii-numeric";
+require "relational";
+
+test "Invalid namespaces (FIXME: count only)" {
+	if test_compile "errors/namespace.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "5" {
+		test_fail "wrong number of errors reported";
+	}
+}
+
+test "Invalid set command invocations (FIXME: count only)" {
+	if test_compile "errors/set.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "5" {
+		test_fail "wrong number of errors reported";
+	}
+}

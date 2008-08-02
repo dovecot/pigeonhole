@@ -31,7 +31,7 @@ const struct sieve_argument variable_argument = {
 
 static struct sieve_ast_argument *ext_variables_variable_argument_create
 (struct sieve_validator *validator, struct sieve_ast *ast, 
-	unsigned int source_line,	const char *variable)
+	unsigned int source_line, const char *variable)
 {
 	struct sieve_variable *var;
 	struct sieve_ast_argument *arg;
@@ -70,7 +70,7 @@ bool sieve_variable_argument_activate
 	
 		if ( nelements < 0 || varstr != varend ) {
 			sieve_command_validate_error(validator, cmd, 
-				"invalid variable name '%s'", varstr);
+				"invalid variable name '%s'", str_c(variable));
 		} else if ( nelements == 1 ) {
 			const struct ext_variable_name *cur_element = 
 				array_idx(&vname, 0);
@@ -84,7 +84,7 @@ bool sieve_variable_argument_activate
 				
 				result = TRUE;
 			} else {
-				if ( assignment ) {
+				if ( !assignment ) {
 					arg->argument = &match_value_argument;
 					arg->context = (void *) cur_element->num_variable;
 				
@@ -105,8 +105,8 @@ bool sieve_variable_argument_activate
 			 */
 
 			sieve_command_validate_error(validator, cmd, 
-				"cannot assign to variable in unknown namespace '%s'", 
-				str_c(cur_element->identifier));
+				"cannot %s to variable in unknown namespace '%s'", 
+				assignment ? "assign" : "refer", str_c(cur_element->identifier));
 		}
 	} T_END;
 
