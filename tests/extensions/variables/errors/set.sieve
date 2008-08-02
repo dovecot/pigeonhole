@@ -14,3 +14,6 @@ set "0" "frop";
 
 # Not an error
 set :UPPER "name" "frop";
+
+# Invalid tag
+set :inner "name" "frop";

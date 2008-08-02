@@ -26,3 +26,12 @@ test "RFC example" {
 		test_fail "test should have matched: \" ${state} \"";
 	}
 }
+
+test "No whitespace stripping" {
+	set "vara" "      value       ";
+	set "varb" "value";
+
+	if not string :is :comparator "i;octet" "${vara}" "      ${varb}       " {
+		test_fail "string test seems to have stripped white space";
+	}
+}
