@@ -1,0 +1,32 @@
+require "vnd.dovecot.testsuite";
+
+require "relational";
+require "comparator-i;ascii-numeric";
+
+/*
+ * Using import/export without variables required
+ */
+
+test "Variables inactive" {
+	if test_compile "errors/variables-inactive.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+		test_fail "wrong number of errors reported";
+	}
+}
+
+/*
+ * Generic variables errors
+ */
+
+test "Variables" {
+	if test_compile "errors/variables.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "5" {
+		test_fail "wrong number of errors reported";
+	}
+}
