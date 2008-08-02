@@ -26,7 +26,6 @@
 #define IS_DIGIT(c) ( c >= '0' && c <= '9' )
 #define DIGIT_VAL(c) ( c - '0' )
 #define IS_ALPHA(c) ( (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') )
-#define IS_QUANTIFIER(c) (c == 'K' || c == 'M' || c =='G') 
 
 /*
  * Forward declarations
@@ -466,14 +465,17 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
  			}
   		
 			switch ( sieve_lexer_curchar(lexer) ) { 
+			case 'k':
 			case 'K': /* Kilo */
 				value *= 1024;
 				sieve_lexer_shift(lexer);
-				break; 
+				break;
+			case 'm': 
 			case 'M': /* Mega */
 				value *= 1024*1024;
 				sieve_lexer_shift(lexer);
 				break;
+			case 'g':
 			case 'G': /* Giga */
 				value *= 1024*1024*1024;
 				sieve_lexer_shift(lexer);

@@ -121,7 +121,7 @@ struct sieve_validator *sieve_validator_create
 		
 	/* Setup command registry */
 	validator->commands = hash_create
-		(default_pool, pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
+		(default_pool, pool, 0, strcase_hash, (hash_cmp_callback_t *)strcasecmp);
 	sieve_validator_register_core_commands(validator);
 	sieve_validator_register_core_tests(validator);
 	
@@ -990,7 +990,7 @@ const struct sieve_object *sieve_validator_object_registry_find
 	for ( i = 0; i < array_count(&regs->registrations); i++ ) {
 		const struct sieve_object * const *obj = array_idx(&regs->registrations, i);
 
-		if ( strcmp((*obj)->identifier, identifier) == 0)
+		if ( strcasecmp((*obj)->identifier, identifier) == 0)
 			return *obj;
 	}
 
