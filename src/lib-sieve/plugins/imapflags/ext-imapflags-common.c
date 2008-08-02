@@ -58,12 +58,22 @@ bool ext_imapflags_command_validate
 				
 		if ( sieve_ast_argument_type(arg) != SAAT_STRING ) 
 		{
-			sieve_command_validate_error(validator, cmd, 
-				"if a second argument is specified for the %s %s, the first "
-				"must be a string (variable name), but %s was found",
-				cmd->command->identifier, sieve_command_type_name(cmd->command), 
-				sieve_ast_argument_name(arg));
-			return FALSE; 
+			if ( cmd->command == &tst_hasflag ) {
+				if ( sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
+					sieve_command_validate_error(validator, cmd, 
+						"if a second argument is specified for the hasflag, the first "
+						"must be a string-list (variable-list), but %s was found",
+						sieve_ast_argument_name(arg));
+					return FALSE;
+				}
+			} else {
+				sieve_command_validate_error(validator, cmd, 
+					"if a second argument is specified for the %s %s, the first "
+					"must be a string (variable name), but %s was found",
+					cmd->command->identifier, sieve_command_type_name(cmd->command), 
+					sieve_ast_argument_name(arg));
+				return FALSE; 
+			}
 		}
 		
 		/* Then, check whether the second argument is permitted */
@@ -76,7 +86,8 @@ bool ext_imapflags_command_validate
 			return FALSE;
 		}		
 		
-		if ( !sieve_variable_argument_activate(validator, cmd, arg, TRUE) )
+		if ( !sieve_variable_argument_activate(validator, cmd, arg, 
+			cmd->command != &tst_hasflag ) )
 			return FALSE;
 		
 		if ( sieve_ast_argument_type(arg2) != SAAT_STRING && 
@@ -464,16 +475,14 @@ const char *ext_imapflags_get_flags_string
 
 void ext_imapflags_get_flags_init
 (struct ext_imapflags_iter *iter, const struct sieve_runtime_env *renv,
-	struct sieve_variable_storage *storage, unsigned int var_index)
+	string_t *flags_list)
 {
 	string_t *cur_flags;
 	
-	if ( storage != NULL ) {
-		string_t *raw_flags;
+	if ( flags_list != NULL ) {
 		cur_flags = t_str_new(256);
 		
-		sieve_variable_get_modifiable(storage, var_index, &raw_flags);
-		flags_list_set_flags(cur_flags, raw_flags);
+		flags_list_set_flags(cur_flags, flags_list);
 	}
 	else
 		cur_flags = _get_flags_string(renv->result);

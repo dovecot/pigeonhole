@@ -225,7 +225,7 @@ bool sieve_generate_arguments(const struct sieve_codegen_env *cgenv,
 			else {
 				/* Mark start of optional operands with 0 operand identifier */
 				sieve_binary_emit_byte(cgenv->sbin, SIEVE_OPERAND_OPTIONAL);
-				
+								
 				/* Emit argument id for optional operand */
 				sieve_binary_emit_byte(cgenv->sbin, (unsigned char) arg->arg_id_code);
 

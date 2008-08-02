@@ -64,9 +64,7 @@ const struct sieve_operation hasflag_operation = {
  */
 
 enum tst_hasflag_optional {	
-	OPT_END,
-	OPT_COMPARATOR,
-	OPT_MATCH_TYPE
+	OPT_VARIABLES = SIEVE_MATCH_OPT_LAST,
 };
 
 /* 
@@ -78,8 +76,8 @@ static bool tst_hasflag_registered
 	struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR);
-	sieve_match_types_link_tags(validator, cmd_reg, OPT_MATCH_TYPE);
+	sieve_comparators_link_tag(validator, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
+	sieve_match_types_link_tags(validator, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
 
 	return TRUE;
 }
@@ -91,13 +89,21 @@ static bool tst_hasflag_registered
 static bool tst_hasflag_validate
 	(struct sieve_validator *validator,	struct sieve_command_context *tst)
 {
+	struct sieve_ast_argument *vars = tst->first_positional;
+	struct sieve_ast_argument *keys = sieve_ast_argument_next(vars);
+		
 	if ( !ext_imapflags_command_validate(validator, tst) )
 		return FALSE;
-		
-	/* Validate the key argument to a specified match type */
 	
-	return sieve_match_type_validate(validator, tst, 
-		sieve_ast_argument_next(tst->first_positional));
+	if ( keys == NULL ) {
+		keys = vars;
+		vars = NULL;
+	} else {
+		vars->arg_id_code = OPT_VARIABLES;
+	}
+	
+	/* Validate the key argument to a specified match type */
+	return sieve_match_type_validate(validator, tst, keys);
 }
 
 /*
@@ -130,13 +136,23 @@ static bool tst_hasflag_operation_dump
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
-		return FALSE;
+	do {
+		if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
+			return FALSE;
 
-	if ( opt_code != SIEVE_MATCH_OPT_END )
-		return FALSE;
-
-	return ext_imapflags_command_operands_dump(denv, address); 
+		switch ( opt_code ) {
+		case SIEVE_MATCH_OPT_END:
+			break;
+		case OPT_VARIABLES:
+			sieve_opr_stringlist_dump(denv, address);
+			break;
+		default:
+			return FALSE;
+		}
+	} while ( opt_code != SIEVE_MATCH_OPT_END );
+			
+	return 
+			sieve_opr_stringlist_dump(denv, address);
 }
 
 /*
@@ -177,15 +193,13 @@ static int tst_hasflag_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	int ret = SIEVE_EXEC_OK;
-	int mret;
+	int ret, mret;
+	bool result = TRUE;
 	int opt_code = 0;
 	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
 	struct sieve_match_context *mctx;
-	struct sieve_coded_stringlist *flag_list;
-	struct sieve_variable_storage *storage;
-	unsigned int var_index;
+	struct sieve_coded_stringlist *flag_list, *variables_list = NULL;
 	struct ext_imapflags_iter iter;
 	const char *flag;
 	bool matched;
@@ -195,20 +209,32 @@ static int tst_hasflag_operation_execute
 	 */
 
 	/* Handle match-type and comparator operands */
-	if ( (ret=sieve_match_read_optional_operands
-		(renv, address, &opt_code, &cmp, &mtch)) <= 0 )
-		return ret;
+	do {
+		if ( (ret=sieve_match_read_optional_operands
+			(renv, address, &opt_code, &cmp, &mtch)) <= 0 )
+			return ret;
 	
-	/* Check whether we neatly finished the list of optional operands*/
-	if ( opt_code != SIEVE_MATCH_OPT_END) {
-		sieve_runtime_trace_error(renv, "invalid optional operand");
+		/* Check whether we neatly finished the list of optional operands*/
+		switch ( opt_code ) { 
+		case SIEVE_MATCH_OPT_END:
+			break;
+		case OPT_VARIABLES:
+			if ( (variables_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
+					sieve_runtime_trace_error(renv, "invalid variables-list operand");
+				return SIEVE_EXEC_BIN_CORRUPT;
+			}
+			break;
+		default:
+			sieve_runtime_trace_error(renv, "invalid optional operand");
+			return SIEVE_EXEC_BIN_CORRUPT;
+		}
+	} while ( opt_code != SIEVE_MATCH_OPT_END );
+		
+	/* Read flag list */
+	if ( (flag_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
+		sieve_runtime_trace_error(renv, "invalid flag-list operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
-
-	/* Read the common imap4flags command operands [variable] <flag-list> */
-	if ( (ret=ext_imapflags_command_operands_read
-		(renv, address, &flag_list, &storage, &var_index)) <= 0 )
-		return ret;
 
 	/*
 	 * Perform operation
@@ -220,29 +246,51 @@ static int tst_hasflag_operation_execute
 	mctx = sieve_match_begin
 		(renv->interp, mtch, cmp, &_flag_extractor, flag_list); 	
 
-	ext_imapflags_get_flags_init(&iter, renv, storage, var_index);
-	
-	while ( !matched && (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
-		if ( (mret=sieve_match_value(mctx, flag, strlen(flag))) < 0 ) {
-			sieve_runtime_trace_error(renv, "invalid string list item");
-			ret = SIEVE_EXEC_BIN_CORRUPT;
-			break;
-		}
+	matched = FALSE;
 
-		matched = ( mret > 0 ); 	
+	if ( variables_list != NULL ) {
+		string_t *var_item = NULL;
+		
+		/* Iterate through all requested variables to match */
+		while ( result && !matched && 
+			(result=sieve_coded_stringlist_next_item(variables_list, &var_item)) 
+			&& var_item != NULL ) {
+		
+			ext_imapflags_get_flags_init(&iter, renv, var_item);	
+			while ( !matched && (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
+				if ( (mret=sieve_match_value(mctx, flag, strlen(flag))) < 0 ) {
+					result = FALSE;
+					break;
+				}
+
+				matched = ( mret > 0 ); 	
+			}
+		}
+	} else {
+		ext_imapflags_get_flags_init(&iter, renv, NULL);	
+		while ( !matched && (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
+			if ( (mret=sieve_match_value(mctx, flag, strlen(flag))) < 0 ) {
+				result = FALSE;
+				break;
+			}
+
+			matched = ( mret > 0 ); 	
+		}
 	}
 
 	if ( (mret=sieve_match_end(mctx)) < 0 ) {
-		sieve_runtime_trace_error(renv, "invalid string list item");
-		ret = SIEVE_EXEC_BIN_CORRUPT;
+		result = FALSE;
 	} else
 		matched = ( mret > 0 || matched ); 	
 	
 	/* Assign test result */
-	if ( ret == SIEVE_EXEC_OK )
+	if ( result ) {
 		sieve_interpreter_set_test_result(renv->interp, matched);
+		return SIEVE_EXEC_OK;
+	}
 	
-	return ret;
+	sieve_runtime_trace_error(renv, "invalid string list item");
+	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
 

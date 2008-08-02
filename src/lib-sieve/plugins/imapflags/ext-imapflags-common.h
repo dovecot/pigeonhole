@@ -79,7 +79,7 @@ void ext_imapflags_remove_flags
 
 void ext_imapflags_get_flags_init
 	(struct ext_imapflags_iter *iter, const struct sieve_runtime_env *renv,
-		struct sieve_variable_storage *storage, unsigned int var_index);
+		string_t *flags_list);
 void ext_imapflags_get_implicit_flags_init
 	(struct ext_imapflags_iter *iter, struct sieve_result *result);
 

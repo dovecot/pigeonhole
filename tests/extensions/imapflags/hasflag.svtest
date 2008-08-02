@@ -6,9 +6,34 @@ require "variables";
 require "comparator-i;ascii-numeric";
 
 /*
+ * Generic tests
+ */
+
+test "Ignoring \"\"" {
+	setflag "";
+
+	if hasflag "" {
+		test_fail "hasflag fails to ignore empty string";
+	}
+}
+
+/*
+ * Variables
+ */
+
+test "Multiple variables" {
+	setflag "A" "Aflag";
+	setflag "B" "Bflag";
+	setflag "C" "Cflag";
+
+	if not hasflag ["a", "b", "c"] ["Bflag"] {
+		test_fail "hasflag failed to match multiple flags variables";
+	}
+}
+
+/*
  * RFC examples
  */ 
-
 
 test "RFC hasflag example - :is" {
 	setflag "A B";

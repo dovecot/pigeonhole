@@ -49,7 +49,7 @@ static struct sieve_ast_argument *ext_variables_variable_argument_create
 	return arg;
 }
 
-bool sieve_variable_argument_activate
+static bool _sieve_variable_argument_activate
 (struct sieve_validator *validator, struct sieve_command_context *cmd, 
 	struct sieve_ast_argument *arg, bool assignment)
 {
@@ -111,6 +111,37 @@ bool sieve_variable_argument_activate
 	} T_END;
 
 	return result;
+}
+
+bool sieve_variable_argument_activate
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	struct sieve_ast_argument *arg, bool assignment)
+{
+	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
+		/* Single string */
+		return _sieve_variable_argument_activate(validator, cmd, arg, assignment);
+		
+	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
+		/* String list */
+		struct sieve_ast_argument *stritem;
+		
+		i_assert ( !assignment );
+		
+		stritem = sieve_ast_strlist_first(arg);
+		while ( stritem != NULL ) {
+			if ( !_sieve_variable_argument_activate
+				(validator, cmd, stritem, assignment) )
+				return FALSE;
+			
+			stritem = sieve_ast_strlist_next(stritem);
+		}
+		
+		arg->argument = &string_list_argument;
+		
+		return TRUE;
+	} 
+	
+	return FALSE;
 }
 
 static bool arg_variable_generate

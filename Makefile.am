@@ -38,7 +38,7 @@ test_cases = \
 	tests/extensions/variables/errors.svtest \
 	tests/extensions/include/variables.svtest \
 	tests/extensions/imapflags/basic.svtest \
-	tests/extensions/imapflags/rfc.svtest \
+	tests/extensions/imapflags/hasflag.svtest \
 	tests/compile/compile.svtest \
 	tests/compile/compile-examples.svtest \
 	tests/compile/errors.svtest
