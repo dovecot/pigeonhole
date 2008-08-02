@@ -4,6 +4,20 @@ require "relational";
 require "comparator-i;ascii-numeric";
 
 /*
+ * Generic include errors
+ */
+
+test "Generic" {
+	if test_compile "errors/generic.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+		test_fail "wrong number of errors reported";
+	}
+}
+
+/*
  * Using import/export without variables required
  */
 

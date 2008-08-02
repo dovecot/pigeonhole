@@ -1,3 +1,0 @@
-require "include";
-
-discard;
