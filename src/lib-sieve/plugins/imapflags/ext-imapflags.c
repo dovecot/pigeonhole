@@ -1,10 +1,10 @@
-/* Extension imapflags
- * ------------------
+/* Extension imap4flags
+ * --------------------
  *
  * Authors: Stephan Bosch
- * Specification: draft-ietf-sieve-imapflags-05
+ * Specification: RFC 5232
  * Implementation: full 
- * Status: experimental, largely untested
+ * Status: experimental, roughly tested
  *
  */
  
