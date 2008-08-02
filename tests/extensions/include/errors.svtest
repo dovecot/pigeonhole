@@ -17,6 +17,36 @@ test "Generic" {
 	}
 }
 
+test "Circular - direct" {
+	if test_compile "errors/circular-1.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+		test_fail "wrong number of errors reported";
+	}
+}
+
+test "Circular - one intermittent" {
+	if test_compile "errors/circular-2.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "4" {
+		test_fail "wrong number of errors reported";
+	}
+}
+
+test "Circular - two intermittent" {
+	if test_compile "errors/circular-3.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "5" {
+		test_fail "wrong number of errors reported";
+	}
+}
+
 /*
  * Using import/export without variables required
  */

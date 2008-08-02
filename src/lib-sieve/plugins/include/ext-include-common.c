@@ -60,24 +60,21 @@ const char *ext_include_get_script_directory
 
         if (sieve_dir == NULL)
             sieve_dir = getenv("HOME");
-        if (sieve_dir == NULL) {
-            sieve_sys_error("include: sieve_dir and home not set "
-                   "(wanted script %s)", str_sanitize(script_name, 80));
-            return NULL;
-        }
 		break;
    	case EXT_INCLUDE_LOCATION_GLOBAL:
 		sieve_dir = getenv("SIEVE_GLOBAL_DIR");
-
-        if (sieve_dir == NULL) {
-            sieve_sys_warning("include: sieve_global_dir not set "
-                   "(wanted script %s)", str_sanitize(script_name, 80));
-            return NULL;
-        }
 		break;
 	default:
 		return NULL;
 	}
+
+	if (sieve_dir == NULL) {
+		sieve_sys_error("include: sieve_dir and home not set "	
+			"(wanted script %s)", str_sanitize(script_name, 80));
+		return NULL;
+	}
+
+	printf("SIEVE DIR: %s\n", sieve_dir);
 
 	return sieve_dir;
 }

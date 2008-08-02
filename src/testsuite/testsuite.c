@@ -61,7 +61,6 @@ static void testsuite_bin_init(void)
 	
 	testsuite_init();
 }
-
 static void testsuite_bin_deinit(void)
 {
 	testsuite_deinit();
@@ -216,11 +215,13 @@ int main(int argc, char **argv)
 	/* Initialize environment */
 	sieve_dir = strrchr(scriptfile, '/');
     if ( sieve_dir == NULL )
-        sieve_dir="./";
+        sieve_dir= "./";
 	else
-		sieve_dir = t_strdup_until(scriptfile, sieve_dir);
+		sieve_dir = t_strdup_until(scriptfile, sieve_dir+1);
 
-	env_put(t_strconcat("SIEVE_DIR=", sieve_dir, NULL));
+	/* Currently needed for include (FIXME) */
+	env_put(t_strconcat("SIEVE_DIR=", sieve_dir, "included", NULL));
+	env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
 	
 	/* Compile sieve script */
 	sbin = _compile_sieve_script(scriptfile);

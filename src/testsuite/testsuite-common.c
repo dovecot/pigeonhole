@@ -4,6 +4,7 @@
 #include "ostream.h"
 #include "hash.h"
 #include "mail-storage.h"
+#include "env-util.h"
 
 #include "mail-raw.h"
 #include "namespaces.h"
@@ -301,6 +302,8 @@ static void _testsuite_script_verror
 
 	msg.location = p_strdup(pool, location);
 	msg.message = p_strdup_vprintf(pool, fmt, args);
+
+//	printf("error: %s: %s.\n", location, t_strdup_vprintf(fmt, args));
 	
 	array_append(&_testsuite_script_errors, &msg, 1);	
 }
@@ -370,8 +373,20 @@ static void testsuite_script_init(void)
 bool testsuite_script_compile(const char *script_path)
 {
 	struct sieve_binary *sbin;
+	const char *sieve_dir;
 
 	testsuite_script_clear_messages();
+
+	    /* Initialize environment */
+    sieve_dir = strrchr(script_path, '/');
+    if ( sieve_dir == NULL )
+        sieve_dir= "./";
+    else
+        sieve_dir = t_strdup_until(script_path, sieve_dir+1);
+
+    /* Currently needed for include (FIXME) */
+    env_put(t_strconcat("SIEVE_DIR=", sieve_dir, "included", NULL));
+    env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
 
     if ( (sbin = sieve_compile(script_path, test_script_ehandler)) == NULL )
         return FALSE;
