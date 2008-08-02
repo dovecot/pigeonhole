@@ -353,7 +353,7 @@ static int path_skip_white_space(struct sieve_envelope_address_parser *parser)
 static int path_skip_address_literal
 (struct sieve_envelope_address_parser *parser)
 {
-	int count;
+	int count = 0;
 
 	/* Currently we are oblivious to address syntax:
 	 * address-literal = "[" 1*dcontent "]"
