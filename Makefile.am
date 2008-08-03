@@ -27,6 +27,7 @@ test_cases = \
 	tests/match-types/contains.svtest \
 	tests/match-types/matches.svtest \
 	tests/match-types/relational.svtest \
+	tests/match-types/regex.svtest \
 	tests/address-parts/subaddress.svtest \
 	tests/extensions/encoded-character.svtest \
 	tests/extensions/envelope.svtest \
