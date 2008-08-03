@@ -336,10 +336,11 @@ static int mcht_matches_match
 	if (kp == kend && vp == vend) {
 		string_t *matched = str_new_const(pool_datastack_create(), val, val_size);
 		sieve_match_values_set(mvalues, 0, matched);
-
+		sieve_match_values_commit(mctx->interp, &mvalues);
 		return TRUE;
 	}
 
+	sieve_match_values_abort(&mvalues);
 	return FALSE;
 }
 			 

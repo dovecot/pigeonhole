@@ -18,10 +18,9 @@ Het werkt!
 ;
 
 /*
- * Matching tests
+ * General conformance testing
  */
 
-# Empty string
 test "Empty string" {
 	if not header :matches "comment" "" {
 		test_fail "failed to match \"\" against \"\"";
@@ -36,7 +35,9 @@ test "Empty string" {
 	}
 }
 
-stop;
+/*
+ * Matching tests
+ */
 
 test "MATCH-A" {
 	if not address :matches "from" "*@d*ksn*ers.com" {

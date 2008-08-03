@@ -161,9 +161,9 @@ bool mcht_regex_validate_context
 struct mcht_regex_context {
 	ARRAY_DEFINE(reg_expressions, regex_t *);
 	int value_index;
-	struct sieve_match_values *mvalues;
 	regmatch_t *pmatch;
 	size_t nmatch;
+	bool with_match_values;
 };
 
 static void mcht_regex_match_init
@@ -175,8 +175,8 @@ static void mcht_regex_match_init
 	t_array_init(&ctx->reg_expressions, 4);
 
 	ctx->value_index = -1;
-	ctx->mvalues = sieve_match_values_start(mctx->interp);
-	if ( ctx->mvalues != NULL ) {
+	ctx->with_match_values = sieve_match_values_are_enabled(mctx->interp);
+	if ( ctx->with_match_values ) {
 		ctx->pmatch = t_new(regmatch_t, MCHT_REGEX_MAX_SUBSTITUTIONS);
 		ctx->nmatch = MCHT_REGEX_MAX_SUBSTITUTIONS;
 	} else {
@@ -207,7 +207,7 @@ static regex_t *mcht_regex_get
 		else
 			return NULL;
 			
-		if ( ctx->mvalues == NULL ) cflags |= REG_NOSUB;
+		if ( !ctx->with_match_values ) cflags |= REG_NOSUB;
 
 		if ( (ret=regcomp(regexp, key, cflags)) != 0 ) {
 			/* FIXME: Do something useful, i.e. report error somewhere */
@@ -246,20 +246,22 @@ static int mcht_regex_match
 		size_t i;
 		int skipped = 0;
 		string_t *subst = t_str_new(32);
+		struct sieve_match_values *mvalues = sieve_match_values_start(mctx->interp);
 		
 		for ( i = 0; i < ctx->nmatch; i++ ) {
 			str_truncate(subst, 0);
 			
 			if ( ctx->pmatch[i].rm_so != -1 ) {
 				if ( skipped > 0 )
-					sieve_match_values_skip(ctx->mvalues, skipped);
+					sieve_match_values_skip(mvalues, skipped);
 					
 				str_append_n(subst, val + ctx->pmatch[i].rm_so, 
 					ctx->pmatch[i].rm_eo - ctx->pmatch[i].rm_so);
-				sieve_match_values_add(ctx->mvalues, subst);
+				sieve_match_values_add(mvalues, subst);
 			} else 
 				skipped++;
 		}
+		sieve_match_values_commit(mctx->interp, &mvalues);
 		return TRUE;
 	}
 	

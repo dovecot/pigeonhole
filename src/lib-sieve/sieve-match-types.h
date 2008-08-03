@@ -79,6 +79,9 @@ struct sieve_match_values;
 
 bool sieve_match_values_set_enabled
 	(struct sieve_interpreter *interp, bool enable);
+bool sieve_match_values_are_enabled
+	(struct sieve_interpreter *interp);	
+	
 struct sieve_match_values *sieve_match_values_start
 	(struct sieve_interpreter *interp);
 void sieve_match_values_set
@@ -89,6 +92,13 @@ void sieve_match_values_add_char
 	(struct sieve_match_values *mvalues, char c);	
 void sieve_match_values_skip
 	(struct sieve_match_values *mvalues, int num);
+	
+void sieve_match_values_commit
+	(struct sieve_interpreter *interp, struct sieve_match_values **mvalues);
+void sieve_match_values_abort
+	(struct sieve_match_values **mvalues);
+	
+	
 void sieve_match_values_get
 	(struct sieve_interpreter *interp, unsigned int index, string_t **value_r);
 

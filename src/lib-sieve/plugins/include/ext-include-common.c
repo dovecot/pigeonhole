@@ -74,8 +74,6 @@ const char *ext_include_get_script_directory
 		return NULL;
 	}
 
-	printf("SIEVE DIR: %s\n", sieve_dir);
-
 	return sieve_dir;
 }
 

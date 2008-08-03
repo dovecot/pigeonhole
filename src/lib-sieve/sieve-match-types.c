@@ -20,6 +20,16 @@
 
 #include <string.h>
 
+/*
+ * Types
+ */
+ 
+struct sieve_match_values {
+	pool_t pool;
+	ARRAY_DEFINE(values, string_t *);
+	unsigned count;
+};
+
 /* 
  * Default match types
  */ 
@@ -107,6 +117,22 @@ struct mtch_interpreter_context {
 	bool match_values_enabled;
 };
 
+static void mtch_interpreter_free
+(struct sieve_interpreter *interp ATTR_UNUSED, void *context)
+{
+	struct mtch_interpreter_context *mctx = 
+		(struct mtch_interpreter_context *) context;
+	
+	if ( mctx->match_values != NULL ) {
+		pool_unref(&mctx->match_values->pool);
+	}
+}
+
+struct sieve_interpreter_extension mtch_interpreter_extension = {
+	&match_type_extension,
+	mtch_interpreter_free
+};
+
 static inline struct mtch_interpreter_context *
 get_interpreter_context(struct sieve_interpreter *interp)
 {
@@ -122,8 +148,8 @@ mtch_interpreter_context_init(struct sieve_interpreter *interp)
 	
 	ctx = p_new(pool, struct mtch_interpreter_context, 1);
 
-	sieve_interpreter_extension_set_context
-		(interp, ext_this, (void *) ctx);
+	sieve_interpreter_extension_register
+		(interp, &mtch_interpreter_extension, (void *) ctx);
 
 	return ctx;
 }
@@ -131,12 +157,6 @@ mtch_interpreter_context_init(struct sieve_interpreter *interp)
 /*
  * Match values
  */
- 
-struct sieve_match_values {
-	pool_t pool;
-	ARRAY_DEFINE(values, string_t *);
-	unsigned count;
-};
 
 bool sieve_match_values_set_enabled
 (struct sieve_interpreter *interp, bool enable)
@@ -153,29 +173,36 @@ bool sieve_match_values_set_enabled
 	return previous;
 }
 
+bool sieve_match_values_are_enabled
+(struct sieve_interpreter *interp)
+{
+	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
+		
+	return ctx->match_values_enabled;
+}
+
 struct sieve_match_values *sieve_match_values_start
 (struct sieve_interpreter *interp)
 {
 	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
+	struct sieve_match_values *match_values;
 	
 	if ( ctx == NULL || !ctx->match_values_enabled )
 		return NULL;
-		
-	if ( ctx->match_values == NULL ) {
-		pool_t pool = sieve_interpreter_pool(interp);
-		
-		ctx->match_values = p_new(pool, struct sieve_match_values, 1);
-		ctx->match_values->pool = pool;
-		p_array_init(&ctx->match_values->values, pool, 4);
-	}
 	
-	ctx->match_values->count = 0;
+	pool_t pool = pool_alloconly_create("sieve_match_values", 1024);
+		
+	match_values = p_new(pool, struct sieve_match_values, 1);
+	match_values->pool = pool;
+	match_values->count = 0;
 	
-	return ctx->match_values;
+	p_array_init(&match_values->values, pool, 4);
+
+	return match_values;
 }
 
 static string_t *sieve_match_values_add_entry
-	(struct sieve_match_values *mvalues) 
+(struct sieve_match_values *mvalues) 
 {
 	string_t *entry;
 	
@@ -210,7 +237,7 @@ void sieve_match_values_set
 }
 	
 void sieve_match_values_add
-	(struct sieve_match_values *mvalues, string_t *value) 
+(struct sieve_match_values *mvalues, string_t *value) 
 {
 	string_t *entry = sieve_match_values_add_entry(mvalues); 
 
@@ -219,7 +246,7 @@ void sieve_match_values_add
 }
 
 void sieve_match_values_add_char
-	(struct sieve_match_values *mvalues, char c) 
+(struct sieve_match_values *mvalues, char c) 
 {
 	string_t *entry = sieve_match_values_add_entry(mvalues); 
 
@@ -228,7 +255,7 @@ void sieve_match_values_add_char
 }
 
 void sieve_match_values_skip
-	(struct sieve_match_values *mvalues, int num) 
+(struct sieve_match_values *mvalues, int num) 
 {
 	int i;
 	
@@ -236,8 +263,37 @@ void sieve_match_values_skip
 		(void) sieve_match_values_add_entry(mvalues); 
 }
 
+void sieve_match_values_commit
+(struct sieve_interpreter *interp, struct sieve_match_values **mvalues)
+{
+	struct mtch_interpreter_context *ctx;
+	
+	if ( (*mvalues) == NULL ) return;
+	
+	ctx = get_interpreter_context(interp);
+	if ( ctx == NULL || !ctx->match_values_enabled )
+		return;	
+		
+	if ( ctx->match_values != NULL ) {
+		pool_unref(&ctx->match_values->pool);
+		ctx->match_values = NULL;
+	}
+
+	ctx->match_values = *mvalues;
+	*mvalues = NULL;
+}
+
+void sieve_match_values_abort
+(struct sieve_match_values **mvalues)
+{		
+	if ( (*mvalues) == NULL ) return;
+	
+	pool_unref(&(*mvalues)->pool);
+	*mvalues = NULL;
+}
+
 void sieve_match_values_get
-	(struct sieve_interpreter *interp, unsigned int index, string_t **value_r) 
+(struct sieve_interpreter *interp, unsigned int index, string_t **value_r) 
 {
 	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
 	struct sieve_match_values *mvalues;
