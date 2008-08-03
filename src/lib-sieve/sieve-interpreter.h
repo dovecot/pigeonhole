@@ -97,11 +97,20 @@ void _sieve_runtime_trace_error
 
 /* Extension support */
 
+struct sieve_interpreter_extension {
+	const struct sieve_extension *ext;	
+
+	void (*free)(struct sieve_interpreter *interp, void *context);
+};
+
+void sieve_interpreter_extension_register
+	(struct sieve_interpreter *interp, 
+		const struct sieve_interpreter_extension *int_ext, void *context);
 void sieve_interpreter_extension_set_context
-	(struct sieve_interpreter *interp, const struct sieve_extension *ext,
+	(struct sieve_interpreter *interp, const struct sieve_extension *ext, 
 		void *context);
-const void *sieve_interpreter_extension_get_context
-	(struct sieve_interpreter *interp, const struct sieve_extension *ext);
+void *sieve_interpreter_extension_get_context
+	(struct sieve_interpreter *interp, const struct sieve_extension *ext); 
 
 /* Opcodes and operands */
 	

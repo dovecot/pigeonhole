@@ -22,6 +22,13 @@
 
 #include "sieve-interpreter.h"
 
+/* Extensions to the interpreter */
+
+struct sieve_interpreter_extension_reg {
+	const struct sieve_interpreter_extension *int_ext;
+	void *context;
+};
+
 /* 
  * Interpreter 
  */
@@ -32,7 +39,7 @@ struct sieve_interpreter {
 	struct sieve_error_handler *ehandler;
 
 	/* Runtime data for extensions */
-	ARRAY_DEFINE(ext_contexts, void *); 
+	ARRAY_DEFINE(extensions, struct sieve_interpreter_extension_reg); 
 		
 	/* Execution status */
 	
@@ -72,7 +79,7 @@ struct sieve_interpreter *sieve_interpreter_create
 	
 	interp->pc = 0;
 
-	p_array_init(&interp->ext_contexts, pool, sieve_extensions_get_count());
+	p_array_init(&interp->extensions, pool, sieve_extensions_get_count());
 
 	/* Pre-load core language features implemented as 'extensions' */
 	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
@@ -211,25 +218,42 @@ void _sieve_runtime_trace_error
 
 /* Extension support */
 
-void sieve_interpreter_extension_set_context
-(struct sieve_interpreter *interpreter, const struct sieve_extension *ext, 
-	void *context)
+void sieve_interpreter_extension_register
+(struct sieve_interpreter *interp, 
+	const struct sieve_interpreter_extension *int_ext, void *context)
 {
-	array_idx_set(&interpreter->ext_contexts, (unsigned int) *ext->id, &context);	
+	struct sieve_interpreter_extension_reg reg = { int_ext, context };
+	int ext_id = *int_ext->ext->id;
+
+	if ( ext_id < 0 ) return;
+	
+	array_idx_set(&interp->extensions, (unsigned int) ext_id, &reg);	
 }
 
-const void *sieve_interpreter_extension_get_context
-(struct sieve_interpreter *interpreter, const struct sieve_extension *ext) 
+void sieve_interpreter_extension_set_context
+(struct sieve_interpreter *interp, const struct sieve_extension *ext, 
+	void *context)
+{
+	struct sieve_interpreter_extension_reg reg = { NULL, context };
+	int ext_id = *ext->id;
+
+	if ( ext_id < 0 ) return;
+	
+	array_idx_set(&interp->extensions, (unsigned int) ext_id, &reg);	
+}
+
+void *sieve_interpreter_extension_get_context
+(struct sieve_interpreter *interp, const struct sieve_extension *ext) 
 {
 	int ext_id = *ext->id;
-	void * const *ctx;
+	const struct sieve_interpreter_extension_reg *reg;
 
-	if  ( ext_id < 0 || ext_id >= (int) array_count(&interpreter->ext_contexts) )
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&interp->extensions) )
 		return NULL;
 	
-	ctx = array_idx(&interpreter->ext_contexts, (unsigned int) ext_id);		
+	reg = array_idx(&interp->extensions, (unsigned int) ext_id);		
 
-	return *ctx;
+	return reg->context;
 }
 
 /* Program counter */

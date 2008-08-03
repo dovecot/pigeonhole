@@ -19,6 +19,13 @@ struct sieve_default_argument {
 	struct sieve_default_argument *overrides;
 };
 
+/* Extensions to the validator */
+
+struct sieve_validator_extension_reg {
+	const struct sieve_validator_extension *val_ext;
+	void *context;
+};
+
 /* 
  * Context/Semantics checker implementation 
  */
@@ -35,7 +42,7 @@ struct sieve_validator {
 	
 	struct hash_table *commands;
 	
-	ARRAY_DEFINE(ext_contexts, void *);
+	ARRAY_DEFINE(extensions, struct sieve_validator_extension_reg);
 	
 	/* This is currently a wee bit ugly and needs more thought */
 	struct sieve_default_argument default_arguments[SAT_COUNT];
@@ -117,7 +124,7 @@ struct sieve_validator *sieve_validator_create
 		argument = &string_list_argument;
 
 	/* Setup storage for extension contexts */		
-	p_array_init(&validator->ext_contexts, pool, sieve_extensions_get_count());
+	p_array_init(&validator->extensions, pool, sieve_extensions_get_count());
 		
 	/* Setup command registry */
 	validator->commands = hash_create
@@ -440,24 +447,42 @@ const struct sieve_extension *sieve_validator_extension_load
 	return ext;
 }
 
-void sieve_validator_extension_set_context
-(struct sieve_validator *validator, const struct sieve_extension *ext, void *context)
+void sieve_validator_extension_register
+(struct sieve_validator *valdtr, 
+	const struct sieve_validator_extension *val_ext, void *context)
 {
-	array_idx_set(&validator->ext_contexts, (unsigned int) *ext->id, &context);	
+	struct sieve_validator_extension_reg reg = { val_ext, context };
+	int ext_id = *val_ext->ext->id;
+
+	if ( ext_id < 0 ) return;
+	
+	array_idx_set(&valdtr->extensions, (unsigned int) ext_id, &reg);	
 }
 
-const void *sieve_validator_extension_get_context
-(struct sieve_validator *validator, const struct sieve_extension *ext) 
+void sieve_validator_extension_set_context
+(struct sieve_validator *valdtr, const struct sieve_extension *ext, 
+	void *context)
+{
+	struct sieve_validator_extension_reg reg = { NULL, context };
+	int ext_id = *ext->id;
+
+	if ( ext_id < 0 ) return;
+	
+	array_idx_set(&valdtr->extensions, (unsigned int) ext_id, &reg);	
+}
+
+void *sieve_validator_extension_get_context
+(struct sieve_validator *valdtr, const struct sieve_extension *ext) 
 {
 	int ext_id = *ext->id;
-	void * const *ctx;
+	const struct sieve_validator_extension_reg *reg;
 
-	if  ( ext_id < 0 || ext_id >= (int) array_count(&validator->ext_contexts) )
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&valdtr->extensions) )
 		return NULL;
 	
-	ctx = array_idx(&validator->ext_contexts, (unsigned int) ext_id);		
+	reg = array_idx(&valdtr->extensions, (unsigned int) ext_id);		
 
-	return *ctx;
+	return reg->context;
 }
 
 /* Argument Validation API */

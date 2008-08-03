@@ -84,16 +84,28 @@ bool sieve_validator_argument_activate_super
 (struct sieve_validator *validator, struct sieve_command_context *cmd, 
 	struct sieve_ast_argument *arg, bool constant);
 
-/* Extensions */
+/* 
+ * Extension support
+ */
+
+struct sieve_validator_extension {
+	const struct sieve_extension *ext;	
+
+	void (*free)(struct sieve_validator *valdtr, void *context);
+};
+
 const struct sieve_extension *sieve_validator_extension_load
 	(struct sieve_validator *validator, struct sieve_command_context *cmd, 
 		const char *ext_name); 
 
+void sieve_validator_extension_register
+	(struct sieve_validator *valdtr, 
+		const struct sieve_validator_extension *val_ext, void *context);
 void sieve_validator_extension_set_context
-	(struct sieve_validator *validator, const struct sieve_extension *ext, 
-		void *context);
-const void *sieve_validator_extension_get_context
-	(struct sieve_validator *validator, const struct sieve_extension *ext);
+(struct sieve_validator *valdtr, const struct sieve_extension *ext, 
+	void *context);
+void *sieve_validator_extension_get_context
+(struct sieve_validator *valdtr, const struct sieve_extension *ext);
 
 /*
  * Validator object registry
