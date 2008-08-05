@@ -141,7 +141,7 @@ Otherwise, the dump is printed to stdout.
 -- 
 
 sieve-test [-r <recipient address>][-s <envelope sender>]
-           [-m <mailbox>][-d <dump filename>][-c] <scriptfile> <mailfile>
+           [-m <mailbox>][-d <dump filename>][-c][-t] <scriptfile> <mailfile>
 
 Reads mail message from the specified mailfile and executes the specified sieve 
 script to produce a verdict. This prints an execution dump with the instructions 
@@ -155,6 +155,8 @@ Options:
   -d  causes a dump of the generated code to be written to the specified
       file. Using - as filename causes the dump to be written to stdout
   -c  force compilation (ignore any existing binary)
+  -t  enable trace debugging; prints all encountered byte code instructions on
+      stdout. 
 
 --
 
