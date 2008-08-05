@@ -16,17 +16,21 @@
 struct sieve_variable {
 	const char *identifier;
 	unsigned int index;
+
 	const struct sieve_extension *ext;
+	void *context;
 };
 
 struct sieve_variable_scope;
 
 struct sieve_variable_scope *sieve_variable_scope_create
-	(pool_t pool, const struct sieve_extension *ext);
+	(const struct sieve_extension *ext);
 void sieve_variable_scope_ref
 	(struct sieve_variable_scope *scope);
 void sieve_variable_scope_unref
 	(struct sieve_variable_scope **scope);
+pool_t sieve_variable_scope_pool
+	(struct sieve_variable_scope *scope);
 
 struct sieve_variable *sieve_variable_scope_declare
 	(struct sieve_variable_scope *scope, const char *identifier);
@@ -34,7 +38,31 @@ struct sieve_variable *sieve_variable_scope_import
 	(struct sieve_variable_scope *scope, struct sieve_variable *var);
 struct sieve_variable *sieve_variable_scope_get_variable
 	(struct sieve_variable_scope *scope, const char *identifier, bool create);
-	
+
+/* Iteration over all declared variables */
+
+struct sieve_variable_scope_iter;
+
+struct sieve_variable_scope_iter *sieve_variable_scope_iterate_init
+	(struct sieve_variable_scope *scope);
+bool sieve_variable_scope_iterate
+	(struct sieve_variable_scope_iter *iter, struct sieve_variable **var_r);
+void sieve_variable_scope_iterate_deinit
+	(struct sieve_variable_scope_iter **iter);
+
+/* Statistics */
+
+unsigned int sieve_variable_scope_declarations
+	(struct sieve_variable_scope *scope);
+unsigned int sieve_variable_scope_size
+	(struct sieve_variable_scope *scope);
+
+/* Get all native variables */
+
+struct sieve_variable * const *sieve_variable_scope_get_variables
+	(struct sieve_variable_scope *scope, unsigned int *size_r);
+
+
 /* 
  * Variable storage
  */	

@@ -22,7 +22,7 @@ void sieve_binary_dump_sectionf
 
 /* Dumper execution */
 
-void sieve_binary_dumper_run
+bool sieve_binary_dumper_run
 	(struct sieve_binary_dumper *dumper, struct ostream *stream);
 
 

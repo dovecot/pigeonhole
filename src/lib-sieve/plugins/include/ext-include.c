@@ -31,7 +31,7 @@
 
 static bool ext_include_load(int ext_id);
 static bool ext_include_validator_load(struct sieve_validator *validator);
-static bool ext_include_generator_load(struct sieve_generator *gentr);
+static bool ext_include_generator_load(const struct sieve_codegen_env *cgenv);
 static bool ext_include_binary_load(struct sieve_binary *sbin);
 static bool ext_include_interpreter_load(struct sieve_interpreter *interp);
 
@@ -85,9 +85,9 @@ static bool ext_include_validator_load(struct sieve_validator *validator)
 
 /* Load extension into generator */
 
-static bool ext_include_generator_load(struct sieve_generator *gentr)
+static bool ext_include_generator_load(const struct sieve_codegen_env *cgenv)
 {
-	ext_include_register_generator_context(gentr);
+	ext_include_register_generator_context(cgenv);
 
 	return TRUE;
 }

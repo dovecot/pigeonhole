@@ -9,7 +9,10 @@
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
 
+#include "sieve-ext-variables.h"
+
 #include "ext-include-common.h"
+#include "ext-include-variables.h"
 #include "ext-include-binary.h"
 
 /*
@@ -28,6 +31,7 @@ struct ext_include_binary_context {
 	unsigned int dependency_block;
 	
 	struct hash_table *included_scripts;
+	struct sieve_variable_scope *global_vars;
 };
 
 /*
@@ -90,8 +94,10 @@ static inline struct ext_include_binary_context *ext_include_binary_get_context
  */
  
 struct ext_include_binary_context *ext_include_binary_init
-(struct sieve_binary *sbin)
+(struct sieve_binary *sbin, struct sieve_ast *ast)
 {
+	struct ext_include_ast_context *ast_ctx =
+		ext_include_get_ast_context(ast);
 	struct ext_include_binary_context *ctx;
 	
 	/* Get/create our context from the binary we are working on */
@@ -101,6 +107,11 @@ struct ext_include_binary_context *ext_include_binary_init
 	if ( ctx->dependency_block == 0 )
 		ctx->dependency_block = 
 			sieve_binary_extension_create_block(sbin, &include_extension);
+
+	if ( ctx->global_vars == NULL ) {
+		ctx->global_vars = ast_ctx->global_vars;
+		sieve_variable_scope_ref(ctx->global_vars);
+	}
 			
 	return ctx;
 }
@@ -145,6 +156,7 @@ static bool ext_include_binary_save(struct sieve_binary *sbin)
 		hash_iterate_init(binctx->included_scripts);
 	void *key, *value;
 	unsigned int prvblk;
+	bool result = TRUE;
 	
 	sieve_binary_block_clear(sbin, binctx->dependency_block);
 	if ( !sieve_binary_block_set_active(sbin, binctx->dependency_block, &prvblk) )	
@@ -158,12 +170,14 @@ static bool ext_include_binary_save(struct sieve_binary *sbin)
 		sieve_binary_emit_byte(sbin, incscript->location);
 		sieve_binary_emit_cstring(sbin, sieve_script_name(incscript->script));
 	}
+
+	result = ext_include_variables_save(sbin, binctx->global_vars);
 	
 	(void) sieve_binary_block_set_active(sbin, prvblk, NULL);
 
 	hash_iterate_deinit(&hctx);
 	
-	return TRUE;
+	return result;
 }
 
 static bool ext_include_binary_open(struct sieve_binary *sbin)
@@ -226,6 +240,9 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 				
 		sieve_script_unref(&script);
 	}
+
+	if ( !ext_include_variables_load(sbin, &offset, block, &binctx->global_vars) )
+		return FALSE;
 	
 	/* Restore previously active block */
 	(void)sieve_binary_block_set_active(sbin, prvblk, NULL);
@@ -273,6 +290,10 @@ static void ext_include_binary_free(struct sieve_binary *sbin)
 	hash_iterate_deinit(&hctx);
 
 	hash_destroy(&binctx->included_scripts);
+
+	if ( binctx->global_vars != NULL ) 
+		sieve_variable_scope_unref(&binctx->global_vars);
+
 }
 
 inline static const char *_script_location
@@ -295,11 +316,14 @@ bool ext_include_binary_dump(struct sieve_dumptime_env *denv)
 	struct sieve_binary *sbin = denv->sbin;
 	struct ext_include_binary_context *binctx = 
 		ext_include_binary_get_context(sbin);
-	struct hash_iterate_context *hctx = 
-		hash_iterate_init(binctx->included_scripts);
+	struct hash_iterate_context *hctx;
 	void *key, *value;
 	unsigned int prvblk = 0;
-				
+
+	if ( !ext_include_variables_dump(denv, binctx->global_vars) )
+		return FALSE;
+
+	hctx = hash_iterate_init(binctx->included_scripts);		
 	while ( hash_iterate(hctx, &key, &value) ) {
 		struct _included_script *incscript = (struct _included_script *) value;
 
@@ -325,6 +349,6 @@ bool ext_include_binary_dump(struct sieve_dumptime_env *denv)
 	
 	hash_iterate_deinit(&hctx);
 	
-	return TRUE;	
+	return TRUE;
 }
 

@@ -20,7 +20,7 @@ struct sieve_extension {
 	bool (*load)(int ext_id);
 
 	bool (*validator_load)(struct sieve_validator *validator);	
-	bool (*generator_load)(struct sieve_generator *generator);
+	bool (*generator_load)(const struct sieve_codegen_env *cgenv);
 	bool (*interpreter_load)(struct sieve_interpreter *interpreter);
 	
 	bool (*runtime_load)(const struct sieve_runtime_env *renv);

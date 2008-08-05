@@ -113,18 +113,20 @@ struct ext_include_ast_context *ext_include_create_ast_context
 
     pool_t pool = sieve_ast_pool(ast);
     actx = p_new(pool, struct ext_include_ast_context, 1);
-   	actx->import_vars = sieve_variable_scope_create(pool, &include_extension);
+   	actx->import_vars = sieve_variable_scope_create(&include_extension);
 	p_array_init(&actx->included_scripts, pool, 32);
 
     if ( parent != NULL ) {
         struct ext_include_ast_context *parent_ctx =
             (struct ext_include_ast_context *)
             sieve_ast_extension_get_context(parent, &include_extension);
-        actx->global_vars = ( parent_ctx == NULL ? NULL : parent_ctx->global_vars );
+        actx->global_vars = parent_ctx->global_vars;
 
-		if ( actx->global_vars != NULL )
-	        sieve_variable_scope_ref(actx->global_vars);
-    }
+		i_assert( actx->global_vars != NULL );
+
+        sieve_variable_scope_ref(actx->global_vars);
+	} else
+		actx->global_vars = sieve_variable_scope_create(&include_extension);			
 
 	sieve_ast_extension_register(ast, &include_ast_extension, (void *) actx);
 
@@ -191,18 +193,23 @@ static inline void ext_include_initialize_generator_context
 }
 
 void ext_include_register_generator_context
-(struct sieve_generator *gentr)
+(const struct sieve_codegen_env *cgenv)
 {
 	struct ext_include_generator_context *ctx = 
-		ext_include_get_generator_context(gentr);
-	struct sieve_script *script = sieve_generator_script(gentr);
+		ext_include_get_generator_context(cgenv->gentr);
 	
+	/* Initialize generator context if necessary */
 	if ( ctx == NULL ) {
-		ctx = ext_include_create_generator_context(gentr, NULL, script);
+		ctx = ext_include_create_generator_context(
+			cgenv->gentr, NULL, cgenv->script);
 		
 		sieve_generator_extension_set_context
-			(gentr, &include_extension, (void *) ctx);		
+			(cgenv->gentr, &include_extension, (void *) ctx);		
 	}
+
+	/* Initialize ast context if necessary */
+	(void)ext_include_get_ast_context(cgenv->ast);
+	(void)ext_include_binary_init(cgenv->sbin, cgenv->ast);
 }
 
 
@@ -319,8 +326,8 @@ bool ext_include_generate_include
 		pctx = pctx->parent;
 	}	
 
-	/* Initialize binary context */
-	binctx = ext_include_binary_init(sbin);
+	/* Get binary context */
+	binctx = ext_include_binary_init(sbin, cgenv->ast);
 
 	/* Is the script already compiled into the current binary? */
 	if ( !ext_include_binary_script_is_included(binctx, script, &inc_block_id) )	
@@ -364,8 +371,9 @@ bool ext_include_generate_include
 					"failed to generate code for included script '%s'", script_name);
 		 		result = FALSE;
 			}
-					
-			(void) sieve_binary_block_set_active(sbin, this_block_id, NULL); 	
+			
+			if ( sbin != NULL )		
+				(void) sieve_binary_block_set_active(sbin, this_block_id, NULL); 	
 			sieve_generator_free(&subgentr);
 		} else result = FALSE;
 		

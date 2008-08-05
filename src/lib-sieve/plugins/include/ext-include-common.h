@@ -69,7 +69,7 @@ void ext_include_ast_link_included_script
  */
 
 void ext_include_register_generator_context
-	(struct sieve_generator *gentr);
+	(const struct sieve_codegen_env *cgenv);
 
 bool ext_include_generate_include
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd,

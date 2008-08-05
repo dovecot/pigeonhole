@@ -6,7 +6,8 @@
 struct ext_include_binary_context;
 
 struct ext_include_binary_context *ext_include_binary_init
-	(struct sieve_binary *sbin);
+	(struct sieve_binary *sbin, struct sieve_ast *ast);
+
 void ext_include_binary_script_include
 	(struct ext_include_binary_context *binctx, struct sieve_script *script,
 		enum ext_include_script_location location, unsigned int block_id);

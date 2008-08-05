@@ -160,7 +160,7 @@ bool sieve_generator_link_extension
 	(void)sieve_binary_extension_link(gentr->genenv.sbin, ext);
 	
 	if ( ext->generator_load != NULL )
-		return ext->generator_load(gentr);
+		return ext->generator_load(&gentr->genenv);
 	
 	return TRUE;
 }

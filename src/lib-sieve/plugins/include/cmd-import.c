@@ -54,7 +54,7 @@ static bool cmd_import_validate
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct sieve_command_context *prev_context = 
 		sieve_command_prev_context(cmd);
-		
+
 	/* Check valid command placement */
 	if ( !sieve_command_is_toplevel(cmd) ||
 		( !sieve_command_is_first(cmd) && prev_context != NULL &&

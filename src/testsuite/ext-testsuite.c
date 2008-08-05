@@ -47,7 +47,7 @@
 
 static bool ext_testsuite_load(int ext_id);
 static bool ext_testsuite_validator_load(struct sieve_validator *valdtr);
-static bool ext_testsuite_generator_load(struct sieve_generator *gentr);
+static bool ext_testsuite_generator_load(const struct sieve_codegen_env *cgenv);
 static bool ext_testsuite_binary_load(struct sieve_binary *sbin);
 
 /* Commands */
@@ -117,9 +117,9 @@ static bool ext_testsuite_validator_load(struct sieve_validator *valdtr)
 
 /* Load extension into generator */
 
-static bool ext_testsuite_generator_load(struct sieve_generator *gentr)
+static bool ext_testsuite_generator_load(const struct sieve_codegen_env *cgenv)
 {
-	return testsuite_generator_context_initialize(gentr);
+	return testsuite_generator_context_initialize(cgenv->gentr);
 }
 
 /* Load extension into binary */

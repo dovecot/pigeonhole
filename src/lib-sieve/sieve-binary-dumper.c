@@ -77,7 +77,7 @@ void sieve_binary_dump_sectionf
 
 /* Dumper execution */
 
-void sieve_binary_dumper_run
+bool sieve_binary_dumper_run
 	(struct sieve_binary_dumper *dumper, struct ostream *stream) 
 {	
 	struct sieve_binary *sbin = dumper->dumpenv.sbin;
@@ -95,20 +95,10 @@ void sieve_binary_dumper_run
 		for ( i = 0; i < count; i++ ) {
 			const struct sieve_extension *ext = sieve_binary_extension_get_by_index
 				(sbin, i);
-			sieve_binary_dumpf(denv, "%d: %s (%d)\n", i, ext->name, *ext->id);
+			sieve_binary_dumpf(denv, "%3d: %s (%d)\n", i, ext->name, *ext->id);
 		}
 	}
-	
-	/* Dump main program */
-	
-	sieve_binary_dump_sectionf(denv, "Main program");
-	
-	dumper->dumpenv.cdumper = sieve_code_dumper_create(&(dumper->dumpenv));
 
-	sieve_code_dumper_run(dumper->dumpenv.cdumper);
-		
-	sieve_code_dumper_free(&dumper->dumpenv.cdumper);	
-	
 	/* Dump extension-specific elements of the binary */
 	
 	count = sieve_binary_extensions_count(sbin);
@@ -118,11 +108,28 @@ void sieve_binary_dumper_run
 				(sbin, i);
 	
 			if ( ext->binary_dump != NULL ) {	
-				if ( !ext->binary_dump(denv) ) break;
+				if ( !ext->binary_dump(denv) )
+					return FALSE;
 			}
 		}
 	}
 	
+	/* Dump main program */
+	
+	sieve_binary_dump_sectionf(denv, "Main program");
+
+	if ( !sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM, NULL) ) {
+        return FALSE;
+	}
+
+	dumper->dumpenv.cdumper = sieve_code_dumper_create(&(dumper->dumpenv));
+
+	sieve_code_dumper_run(dumper->dumpenv.cdumper);
+		
+	sieve_code_dumper_free(&dumper->dumpenv.cdumper);	
+	
 	/* Finish with empty line */
 	sieve_binary_dumpf(denv, "\n");
+
+	return TRUE;
 }
