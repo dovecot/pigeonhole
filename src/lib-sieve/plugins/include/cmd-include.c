@@ -12,6 +12,7 @@
 #include "sieve-dump.h"
 
 #include "ext-include-common.h"
+#include "ext-include-binary.h"
 
 /* 
  * Include command 
@@ -213,17 +214,17 @@ static bool cmd_include_generate
 {
 	struct cmd_include_context_data *ctx_data = 
 		(struct cmd_include_context_data *) cmd->data;
-	unsigned int block_id;
+	const struct ext_include_script_info *included;
 
 	/* Compile (if necessary) and include the script into the binary.
 	 * This yields the id of the binary block containing the compiled byte code.  
 	 */
 	if ( !ext_include_generate_include
-		(cgenv, cmd, ctx_data->location, ctx_data->script, &block_id) )
+		(cgenv, cmd, ctx_data->location, ctx_data->script, &included) )
  		return FALSE;
  		
  	sieve_operation_emit_code(cgenv->sbin, &include_operation);
-	sieve_binary_emit_offset(cgenv->sbin, block_id); 
+	sieve_binary_emit_offset(cgenv->sbin, included->id); 
  	 		
 	return TRUE;
 }
@@ -236,12 +237,18 @@ static bool opc_include_dump
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	int block;
+	const struct ext_include_script_info *included;
+	int include_id;
 	
-	if ( !sieve_binary_read_offset(denv->sbin, address, &block) )
+	if ( !sieve_binary_read_offset(denv->sbin, address, &include_id) )
+		return FALSE;
+
+	included = ext_include_binary_script_get_included(denv->sbin, include_id);
+	if ( included == NULL )
 		return FALSE;
 		
-	sieve_code_dumpf(denv, "INCLUDE [BLOCK: %d]", block);
+	sieve_code_dumpf(denv, "INCLUDE %s [ID: %d, BLOCK: %d]", 
+		sieve_script_name(included->script), include_id, included->block_id);
 	 
 	return TRUE;
 }
@@ -254,16 +261,14 @@ static int opc_include_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	int block;
+	int include_id;
 		
-	if ( !sieve_binary_read_offset(renv->sbin, address, &block) ) {
-		sieve_runtime_trace_error(renv, "invalid block operand");
+	if ( !sieve_binary_read_offset(renv->sbin, address, &include_id) ) {
+		sieve_runtime_trace_error(renv, "invalid include-id operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
-	sieve_runtime_trace(renv, "INCLUDE command (BLOCK: %d)", block);
-	
-	return ext_include_execute_include(renv, (unsigned int) block);
+	return ext_include_execute_include(renv, (unsigned int) include_id);
 }
 
 

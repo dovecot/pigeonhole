@@ -10,6 +10,12 @@
 
 #define EXT_INCLUDE_MAX_NESTING_LEVEL 10
 
+/* 
+ * Forward declarations
+ */
+
+struct ext_include_script_info;
+
 /* Extension */
 
 extern int ext_include_my_id;
@@ -74,7 +80,7 @@ void ext_include_register_generator_context
 bool ext_include_generate_include
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd,
 		enum ext_include_script_location location, struct sieve_script *script, 
-		unsigned *blk_id_r);
+		const struct ext_include_script_info **included_r);
 
 /* 
  * Interpreter context

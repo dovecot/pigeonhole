@@ -284,7 +284,7 @@ void ext_include_interpreter_context_init
 bool ext_include_generate_include
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd,
 	enum ext_include_script_location location, struct sieve_script *script, 
-	unsigned *blk_id_r)
+	const struct ext_include_script_info **included_r)
 {
 	bool result = TRUE;
 	struct sieve_ast *ast;
@@ -296,9 +296,9 @@ bool ext_include_generate_include
 		ext_include_get_generator_context(gentr);
 	struct ext_include_generator_context *pctx;
 	struct sieve_error_handler *ehandler = sieve_generator_error_handler(gentr);
-	unsigned this_block_id, inc_block_id; 
+	const struct ext_include_script_info *included;
 		
-	*blk_id_r = 0;
+	*included_r = NULL;
 
 	/* Just to be sure: do not include more scripts when errors have occured 
 	 * already. 
@@ -330,14 +330,16 @@ bool ext_include_generate_include
 	binctx = ext_include_binary_init(sbin, cgenv->ast);
 
 	/* Is the script already compiled into the current binary? */
-	if ( !ext_include_binary_script_is_included(binctx, script, &inc_block_id) )	
+	if ( !ext_include_binary_script_is_included(binctx, script, &included) )	
 	{	
+		unsigned int inc_block_id, this_block_id;
 		const char *script_name = sieve_script_name(script);
 		
 		/* No, allocate a new block in the binary and mark the script as included.
 		 */
 		inc_block_id = sieve_binary_block_create(sbin);
-		ext_include_binary_script_include(binctx, script, location, inc_block_id);
+		included = ext_include_binary_script_include
+			(binctx, script, location, inc_block_id);
 		
 		/* Parse */
 		if ( (ast = sieve_parse(script, ehandler)) == NULL ) {
@@ -381,7 +383,7 @@ bool ext_include_generate_include
 		sieve_ast_unref(&ast);		
 	} 
 
-	if ( result ) *blk_id_r = inc_block_id;
+	if ( result ) *included_r = included;
 	
 	return result;
 }
@@ -391,11 +393,25 @@ bool ext_include_generate_include
  */
 
 bool ext_include_execute_include
-	(const struct sieve_runtime_env *renv, unsigned int block_id)
+	(const struct sieve_runtime_env *renv, unsigned int include_id)
 {
 	int result = TRUE;
-	struct ext_include_interpreter_context *ctx =
-		ext_include_get_interpreter_context(renv->interp);
+	struct ext_include_interpreter_context *ctx;
+	const struct ext_include_script_info *included;
+	unsigned int block_id;
+
+	/* Check for invalid include id (== corrupt binary) */
+	included = ext_include_binary_script_get_included(renv->sbin, include_id);
+	if ( included == NULL ) {
+		sieve_runtime_trace_error(renv, "invalid include id: %d", include_id);
+        return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	ctx = ext_include_get_interpreter_context(renv->interp);
+	block_id = included->block_id;
+
+	sieve_runtime_trace(renv, "INCLUDE command (id: %d, script: %s, block: %d)", 
+		include_id, sieve_script_name(included->script), block_id);
 
 	if ( ctx->parent == NULL ) {
 		struct ext_include_interpreter_context *curctx;
@@ -424,15 +440,17 @@ bool ext_include_execute_include
 			result = ( sieve_interpreter_start
 				(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx, renv->result, 
 					&interrupted) == 1 );
-		else
-			result = FALSE;
+		else {
+			sieve_runtime_trace_error(renv, "invalid block id: %d", block_id);
+			result = SIEVE_EXEC_BIN_CORRUPT;
+		}
 		
 		/* Included scripts can have includes of their own. This is not implemented
 		 * recursively. Rather, the sub-interpreter interrupts and defers the 
 		 * include to the top-level interpreter, which is here.
 		 */
-		if ( result && interrupted && !curctx->returned ) {
-			while ( result ) {
+		if ( result > 0 && interrupted && !curctx->returned ) {
+			while ( result > 0 ) {
 				if ( ( (interrupted && curctx->returned) || (!interrupted) ) && 
 					curctx->parent != NULL ) {
 					
@@ -477,8 +495,10 @@ bool ext_include_execute_include
 							result = ( sieve_interpreter_start
 								(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx,
 									renv->result, &interrupted) == 1 );		 	
-						} else 
-							result = FALSE;
+						} else {
+							sieve_runtime_trace_error(renv, "invalid block id: %d", curctx->block_id);
+					        result = SIEVE_EXEC_BIN_CORRUPT;
+						}
 					} else {
 						/* Sub-interpreter was interrupted outside this extension, probably
 						 * stop command was executed. Generate an interrupt ourselves, 
