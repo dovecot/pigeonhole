@@ -110,6 +110,7 @@ bool ext_include_variables_save
 	struct sieve_variable_scope *global_vars)
 {
 	unsigned int count = sieve_variable_scope_size(global_vars);
+	struct sieve_script *main_script = sieve_binary_script(sbin);
 
 	sieve_binary_emit_integer(sbin, count);
 
@@ -121,18 +122,22 @@ bool ext_include_variables_save
 		for ( i = 0; i < size; i++ ) {
 			struct ext_include_variable *varctx =
 				(struct ext_include_variable *) vars[i]->context;
-			const struct ext_include_script_info *included;
+			unsigned int include_id = 0;
 
 			i_assert( varctx != NULL );
 
-			included = ext_include_binary_script_get(binctx, varctx->script);
+			if ( varctx->script != main_script ) {
+				const struct ext_include_script_info *included = 
+					ext_include_binary_script_get(binctx, varctx->script);
 
-			i_assert( included != NULL );
+				i_assert( included != NULL );
+
+				include_id = included->id;
+			}
 			
-
     	    sieve_binary_emit_byte(sbin, varctx->type);
 			sieve_binary_emit_integer(sbin, varctx->source_line);			
-			sieve_binary_emit_integer(sbin, included->id);
+			sieve_binary_emit_integer(sbin, include_id);
 			sieve_binary_emit_cstring(sbin, vars[i]->identifier);
 		}
     }
@@ -145,6 +150,7 @@ bool ext_include_variables_load
 	sieve_size_t *offset, unsigned int block,
 	struct sieve_variable_scope **global_vars_r)
 {
+	struct sieve_script *main_script = sieve_binary_script(sbin);
 	sieve_size_t count = 0;
 	unsigned int i;
 	pool_t pool;
@@ -163,7 +169,7 @@ bool ext_include_variables_load
 
     /* Read global variable scope */
     for ( i = 0; i < count; i++ ) {
-		const struct ext_include_script_info *included;
+		struct sieve_script *script;
 		struct sieve_variable *var;
         struct ext_include_variable *varctx;
 		enum ext_include_variable_type type;
@@ -189,13 +195,27 @@ bool ext_include_variables_load
             return FALSE;
         }
 
-		included = ext_include_binary_script_get_included(binctx, include_id);
+		if ( include_id != 0 ) {
+			const struct ext_include_script_info *included = 
+				ext_include_binary_script_get_included(binctx, include_id);
 
+			if ( included == NULL ) {
+				sieve_sys_error("include: dependency block %d of binary %s "
+                	"has invalid global variable script reference (id %d).",
+                block, sieve_binary_path(sbin), include_id);
+	            return FALSE;
+			}
+
+			script = included->script;
+		} else {
+			script = main_script;
+		}
+		
         var = sieve_variable_scope_declare(*global_vars_r, str_c(identifier));
         varctx = p_new(pool, struct ext_include_variable, 1);
         varctx->type = type;
         varctx->source_line = source_line;
-		varctx->script = included->script;
+		varctx->script = script;
         var->context = varctx;
 
 		i_assert(var->index == i);
@@ -225,7 +245,8 @@ bool ext_include_variables_dump
 
 			sieve_binary_dumpf(denv, "%3d: %s '%s' (%s:%d)\n", i, 
 				varctx->type == EXT_INCLUDE_VAR_EXPORTED ? "export" : "import", 
-				vars[i]->identifier, sieve_script_filename(varctx->script), 
+				vars[i]->identifier, 
+				varctx->script == NULL ? "<main>" : sieve_script_filename(varctx->script), 
 				varctx->source_line);
 		}	
 	}

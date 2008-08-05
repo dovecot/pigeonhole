@@ -124,7 +124,7 @@ const struct ext_include_script_info *ext_include_binary_script_include
 	struct ext_include_script_info *incscript;
 	
 	incscript = p_new(pool, struct ext_include_script_info, 1);
-	incscript->id = array_count(&binctx->include_index);
+	incscript->id = array_count(&binctx->include_index)+1;
 	incscript->script = script;
 	incscript->location = location;
 	incscript->block_id = block_id;
@@ -155,9 +155,9 @@ bool ext_include_binary_script_is_included
 const struct ext_include_script_info *ext_include_binary_script_get_included
 (struct ext_include_binary_context *binctx, unsigned int include_id)
 {		
-	if ( include_id < array_count(&binctx->include_index) ) {
+	if ( include_id > 0 && (include_id - 1) < array_count(&binctx->include_index) ) {
 		struct ext_include_script_info *const *sinfo =
-			array_idx(&binctx->include_index, include_id);
+			array_idx(&binctx->include_index, include_id - 1);
 
 		return *sinfo;
 	}
