@@ -238,17 +238,19 @@ static bool opc_include_dump
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	const struct ext_include_script_info *included;
+	struct ext_include_binary_context *binctx;
 	int include_id;
 	
 	if ( !sieve_binary_read_offset(denv->sbin, address, &include_id) )
 		return FALSE;
 
-	included = ext_include_binary_script_get_included(denv->sbin, include_id);
+	binctx = ext_include_binary_get_context(denv->sbin);
+	included = ext_include_binary_script_get_included(binctx, include_id);
 	if ( included == NULL )
 		return FALSE;
 		
 	sieve_code_dumpf(denv, "INCLUDE %s [ID: %d, BLOCK: %d]", 
-		sieve_script_name(included->script), include_id, included->block_id);
+		sieve_script_filename(included->script), include_id, included->block_id);
 	 
 	return TRUE;
 }

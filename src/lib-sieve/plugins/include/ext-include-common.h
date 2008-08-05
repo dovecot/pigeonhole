@@ -15,6 +15,7 @@
  */
 
 struct ext_include_script_info;
+struct ext_include_binary_context;
 
 /* Extension */
 

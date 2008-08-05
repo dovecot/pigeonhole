@@ -71,7 +71,7 @@ static struct ext_include_binary_context *ext_include_binary_create_context
 	return ctx;
 }
 
-static inline struct ext_include_binary_context *ext_include_binary_get_context
+struct ext_include_binary_context *ext_include_binary_get_context
 (struct sieve_binary *sbin)
 {	
 	struct ext_include_binary_context *ctx = (struct ext_include_binary_context *)
@@ -145,7 +145,7 @@ bool ext_include_binary_script_is_included
 	struct ext_include_script_info *incscript = (struct ext_include_script_info *)
 		hash_lookup(binctx->included_scripts, script);
 		
-	if ( incscript == 0 )
+	if ( incscript == NULL )
 		return FALSE;
 				
 	*script_info_r = incscript;
@@ -153,11 +153,8 @@ bool ext_include_binary_script_is_included
 }
 
 const struct ext_include_script_info *ext_include_binary_script_get_included
-(struct sieve_binary *sbin, unsigned int include_id)
-{
-	struct ext_include_binary_context *binctx = 
-		ext_include_binary_get_context(sbin);
-		
+(struct ext_include_binary_context *binctx, unsigned int include_id)
+{		
 	if ( include_id < array_count(&binctx->include_index) ) {
 		struct ext_include_script_info *const *sinfo =
 			array_idx(&binctx->include_index, include_id);
@@ -166,6 +163,13 @@ const struct ext_include_script_info *ext_include_binary_script_get_included
 	}
 
 	return NULL;
+}
+
+const struct ext_include_script_info *ext_include_binary_script_get
+(struct ext_include_binary_context *binctx, struct sieve_script *script)
+{
+	return (struct ext_include_script_info *)
+		hash_lookup(binctx->included_scripts, script);
 }
 
 /*
@@ -197,7 +201,7 @@ static bool ext_include_binary_save(struct sieve_binary *sbin)
 		sieve_binary_emit_cstring(sbin, sieve_script_name(incscript->script));
 	}
 
-	result = ext_include_variables_save(sbin, binctx->global_vars);
+	result = ext_include_variables_save(sbin, binctx, binctx->global_vars);
 	
 	(void) sieve_binary_block_set_active(sbin, prvblk, NULL);
 
@@ -265,7 +269,7 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 		sieve_script_unref(&script);
 	}
 
-	if ( !ext_include_variables_load(sbin, &offset, block, &binctx->global_vars) )
+	if ( !ext_include_variables_load(sbin, binctx, &offset, block, &binctx->global_vars) )
 		return FALSE;
 	
 	/* Restore previously active block */

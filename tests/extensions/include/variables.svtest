@@ -5,7 +5,6 @@ require "variables";
 
 export ["value1", "value2"];
 export ["value3", "value4"];
-export ["result1", "result2"];
 export "result";
 
 set "value1" "Works";

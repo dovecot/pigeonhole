@@ -399,9 +399,11 @@ bool ext_include_execute_include
 	struct ext_include_interpreter_context *ctx;
 	const struct ext_include_script_info *included;
 	unsigned int block_id;
+	struct ext_include_binary_context *binctx = 
+		ext_include_binary_get_context(renv->sbin);
 
 	/* Check for invalid include id (== corrupt binary) */
-	included = ext_include_binary_script_get_included(renv->sbin, include_id);
+	included = ext_include_binary_script_get_included(binctx, include_id);
 	if ( included == NULL ) {
 		sieve_runtime_trace_error(renv, "invalid include id: %d", include_id);
         return SIEVE_EXEC_BIN_CORRUPT;
