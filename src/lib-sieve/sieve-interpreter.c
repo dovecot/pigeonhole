@@ -103,15 +103,24 @@ struct sieve_interpreter *sieve_interpreter_create
 
 void sieve_interpreter_free(struct sieve_interpreter **interp) 
 {
+	const struct sieve_interpreter_extension_reg *extrs;
+	unsigned int ext_count, i;
+
 	sieve_binary_unref(&(*interp)->runenv.sbin);
 
 	if ( (*interp)->runenv.msgctx != NULL )
 		 sieve_message_context_unref(&(*interp)->runenv.msgctx);
 
 	sieve_error_handler_unref(&(*interp)->ehandler);
+
+	/* Signal registered extensions that the validator is being destroyed */
+	extrs = array_get(&(*interp)->extensions, &ext_count);
+	for ( i = 0; i < ext_count; i++ ) {
+		if ( extrs[i].int_ext != NULL && extrs[i].int_ext->free != NULL )
+			extrs[i].int_ext->free(*interp, extrs[i].context);
+	}
 		 
-	pool_unref(&((*interp)->pool));
-	
+	pool_unref(&((*interp)->pool));	
 	*interp = NULL;
 }
 

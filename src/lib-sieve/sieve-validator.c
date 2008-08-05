@@ -145,10 +145,20 @@ struct sieve_validator *sieve_validator_create
 
 void sieve_validator_free(struct sieve_validator **validator) 
 {
+	const struct sieve_validator_extension_reg *extrs;
+	unsigned int ext_count, i;
+
 	hash_destroy(&(*validator)->commands);
 	sieve_ast_unref(&(*validator)->ast);
 
 	sieve_error_handler_unref(&(*validator)->ehandler);
+
+	/* Signal registered extensions that the validator is being destroyed */
+	extrs = array_get(&(*validator)->extensions, &ext_count);
+	for ( i = 0; i < ext_count; i++ ) {
+		if ( extrs[i].val_ext != NULL && extrs[i].val_ext->free != NULL )
+			extrs[i].val_ext->free(*validator, extrs[i].context);
+	}
 
 	pool_unref(&(*validator)->pool);
 
