@@ -20,14 +20,13 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <ctype.h>
 
 /* 
  * Useful macros
  */
 
-#define IS_DIGIT(c) ( c >= '0' && c <= '9' )
 #define DIGIT_VAL(c) ( c - '0' )
-#define IS_ALPHA(c) ( (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') )
 
 /*
  * Forward declarations
@@ -469,13 +468,13 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 		
 	default: 
 		/* number */
-		if ( IS_DIGIT(sieve_lexer_curchar(lexer)) ) {
+		if ( i_isdigit(sieve_lexer_curchar(lexer)) ) {
 			sieve_number_t value = DIGIT_VAL(sieve_lexer_curchar(lexer));
 			bool overflow = FALSE;
 
 			sieve_lexer_shift(lexer);
   		
-			while ( IS_DIGIT(sieve_lexer_curchar(lexer)) ) {
+			while ( i_isdigit(sieve_lexer_curchar(lexer)) ) {
 				sieve_number_t valnew = 
 					value * 10 + DIGIT_VAL(sieve_lexer_curchar(lexer));
 			
@@ -531,7 +530,7 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 			return TRUE;	
   		
 		/* identifier / tag */	
-		} else if ( IS_ALPHA(sieve_lexer_curchar(lexer)) ||
+		} else if ( i_isalpha(sieve_lexer_curchar(lexer)) ||
 			sieve_lexer_curchar(lexer) == '_' || 
 			sieve_lexer_curchar(lexer) == ':' ) {
   		
@@ -545,7 +544,7 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 				type = STT_TAG;
   			
 				/* First character still can't be a DIGIT */
- 				if ( IS_ALPHA(sieve_lexer_curchar(lexer)) ||
+ 				if ( i_isalpha(sieve_lexer_curchar(lexer)) ||
 					sieve_lexer_curchar(lexer) == '_' ) { 
 					str_append_c(str, sieve_lexer_curchar(lexer));
 					sieve_lexer_shift(lexer);
@@ -560,8 +559,7 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 			}
   		
 			/* Scan the rest of the identifier */
-			while ( IS_ALPHA(sieve_lexer_curchar(lexer)) ||
-				IS_DIGIT(sieve_lexer_curchar(lexer)) ||
+			while ( i_isalnum(sieve_lexer_curchar(lexer)) ||
 				sieve_lexer_curchar(lexer) == '_' ) {
 
 				if ( str_len(str) <= SIEVE_MAX_IDENTIFIER_LEN ) {
