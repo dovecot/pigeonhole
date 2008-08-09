@@ -7,6 +7,8 @@
 #include "istream.h"
 #include "failures.h"
 
+#include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-script.h"
 #include "sieve-lexer.h"
 #include "sieve-parser.h"
@@ -272,9 +274,15 @@ static int sieve_parse_arguments
 				"failed to accept more arguments for command '%s'", node->identifier);
 			return -1;
 		}
+
+		if ( sieve_ast_argument_count(node) > SIEVE_MAX_COMMAND_ARGUMENTS ) {
+			sieve_parser_error(parser, 
+				"too many arguments for command '%s'", node->identifier);
+			return FALSE;
+		}
 	}
 	
-	if ( !result ) return FALSE; /* Defer recovery to caller */
+	if ( result <= 0 ) return result; /* Defer recovery to caller */
 	
 	/* --> [ test / test-list ] 
  	 * test-list = "(" test *("," test) ")"

@@ -23,6 +23,20 @@ test "Lexer errors (FIXME: count only)" {
 }
 
 /*
+ * Parser errors
+ */
+
+test "Parser errors (FIXME: count only)" {
+    if test_compile "errors/parser.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "4" {
+        test_fail "wrong number of errors reported";
+    }
+}
+
+/*
  * Header test
  */
 
