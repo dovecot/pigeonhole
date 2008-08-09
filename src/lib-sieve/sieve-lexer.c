@@ -7,6 +7,7 @@
 #include "istream.h"
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
 
@@ -290,7 +291,7 @@ static inline int sieve_lexer_curchar(struct sieve_lexer *lexer)
  */
 static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer) 
 {
-	int start_line;
+	sieve_number_t start_line;
 	string_t *str;
 
 	/* Read first character */
@@ -405,12 +406,24 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 			if ( sieve_lexer_curchar(lexer) == '\\' ) {
 				sieve_lexer_shift(lexer);
 			}
-		
-			str_append_c(str, sieve_lexer_curchar(lexer));	
+
+			if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
+				str_append_c(str, sieve_lexer_curchar(lexer));
+
 			sieve_lexer_shift(lexer);
 		}
-		
+
 		sieve_lexer_shift(lexer);
+
+		if ( str_len(str) > SIEVE_MAX_STRING_LEN ) {
+			sieve_lexer_error(lexer, 
+				"quoted string started at line %d is too long "
+				"(longer than %llu bytes)", start_line,
+				(long long) SIEVE_MAX_STRING_LEN);
+			lexer->token_type = STT_ERROR;
+			return FALSE;
+		}
+		
 		lexer->token_type = STT_STRING;
 		return TRUE;
 		
@@ -456,33 +469,60 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 	default: 
 		/* number */
 		if ( IS_DIGIT(sieve_lexer_curchar(lexer)) ) {
-			int value = DIGIT_VAL(sieve_lexer_curchar(lexer));
+			sieve_number_t value = DIGIT_VAL(sieve_lexer_curchar(lexer));
+			bool overflow = FALSE;
+
 			sieve_lexer_shift(lexer);
   		
 			while ( IS_DIGIT(sieve_lexer_curchar(lexer)) ) {
-				value = value * 10 + DIGIT_VAL(sieve_lexer_curchar(lexer));
+				sieve_number_t valnew = 
+					value * 10 + DIGIT_VAL(sieve_lexer_curchar(lexer));
+			
+				/* Check for integer wrap */
+				if ( valnew < value )
+					overflow = TRUE;
+
+				value = valnew;
 				sieve_lexer_shift(lexer);
  			}
   		
 			switch ( sieve_lexer_curchar(lexer) ) { 
 			case 'k':
 			case 'K': /* Kilo */
-				value *= 1024;
+				if ( value > (SIEVE_MAX_NUMBER >> 10) )
+					overflow = TRUE;
+				else
+					value = value << 10;
 				sieve_lexer_shift(lexer);
 				break;
 			case 'm': 
 			case 'M': /* Mega */
-				value *= 1024*1024;
+				if ( value > (SIEVE_MAX_NUMBER >> 20) )
+					overflow = TRUE;
+				else
+					value = value << 20;
 				sieve_lexer_shift(lexer);
 				break;
 			case 'g':
 			case 'G': /* Giga */
-				value *= 1024*1024*1024;
+				if ( value > (SIEVE_MAX_NUMBER >> 30) )
+					overflow = TRUE;
+				else
+					value = value << 30;
 				sieve_lexer_shift(lexer);
 				break;
 			default:
 				/* Next token */
 				break;
+			}
+
+			/* Check for integer wrap */
+			if ( overflow ) {
+				sieve_lexer_error(lexer,
+					"number exceeds integer limits (max %llu)",
+					(long long) SIEVE_MAX_NUMBER);
+				lexer->token_type = STT_ERROR;
+				return FALSE;
 			}
   	
 			lexer->token_type = STT_NUMBER;
@@ -531,6 +571,8 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 				type == STT_IDENTIFIER && str_len(str) == 4 &&
 				strncasecmp(str_c(str), "text", 4) == 0 ) {
 				sieve_lexer_shift(lexer); // discard colon
+
+				start_line = lexer->current_line;
   			
 				/* Discard SP and HTAB whitespace */
 				while ( sieve_lexer_curchar(lexer) == ' ' || 
@@ -581,6 +623,16 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
   				
 						if ( sieve_lexer_curchar(lexer) == '\n' ) {
 							sieve_lexer_shift(lexer);
+
+							if ( str_len(str) > SIEVE_MAX_STRING_LEN ) {
+								sieve_lexer_error(lexer, 
+									"literal string started at line %d is too long "
+									"(longer than %llu bytes)", start_line,
+									(long long) SIEVE_MAX_STRING_LEN);
+									lexer->token_type = STT_ERROR;
+									return FALSE;
+							}
+
 							lexer->token_type = STT_STRING;
 							return TRUE;
 						} else if ( cr_shifted ) {
@@ -591,7 +643,8 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 						}
 
 						/* Handle dot-stuffing */
-						str_append_c(str, '.');
+						if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
+							str_append_c(str, '.');
 						if ( sieve_lexer_curchar(lexer) == '.' ) 
 	                        sieve_lexer_shift(lexer);
 					}
@@ -604,11 +657,16 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
  							lexer->token_type = STT_ERROR;
  							return FALSE;
  						}
-  					
-						str_append_c(str, sieve_lexer_curchar(lexer));
+						
+						if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
+  							str_append_c(str, sieve_lexer_curchar(lexer));
+
 						sieve_lexer_shift(lexer);
 					}
-					str_append_c(str, '\n');
+
+					if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
+						str_append_c(str, '\n');
+
 					sieve_lexer_shift(lexer);
 				}
   			

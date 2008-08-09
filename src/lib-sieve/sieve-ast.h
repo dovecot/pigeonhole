@@ -185,9 +185,9 @@ struct sieve_ast_argument *sieve_ast_argument_create
 	(struct sieve_ast *ast, unsigned int source_line);
 
 struct sieve_ast_arg_list *sieve_ast_arg_list_create(pool_t pool);	
-void sieve_ast_arg_list_add
+bool sieve_ast_arg_list_add
 	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument);
-void sieve_ast_arg_list_insert
+bool sieve_ast_arg_list_insert
 	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *before,
 		struct sieve_ast_argument *argument);
 void sieve_ast_arg_list_substitute
@@ -221,10 +221,10 @@ const char *sieve_ast_argument_type_name(enum sieve_ast_argument_type arg_type);
 #define sieve_ast_argument_name(argument) \
 	sieve_ast_argument_type_name((argument)->type)
 
-void sieve_ast_stringlist_add
+bool sieve_ast_stringlist_add
 	(struct sieve_ast_argument *list, const string_t *str, 
 		unsigned int source_line);
-void sieve_ast_stringlist_add_strc
+bool sieve_ast_stringlist_add_strc
 	(struct sieve_ast_argument *list, const char *str, 
 		unsigned int source_line);
 

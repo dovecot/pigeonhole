@@ -415,7 +415,7 @@ static bool opr_number_dump
 	sieve_size_t number = 0;
 	
 	if (sieve_binary_read_integer(denv->sbin, address, &number) ) {
-		sieve_code_dumpf(denv, "NUM: %ld", (long) number);
+		sieve_code_dumpf(denv, "NUM: %llu", (long long) number);
 
 		return TRUE;
 	}

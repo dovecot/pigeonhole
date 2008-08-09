@@ -173,6 +173,9 @@ void sieve_ast_error
 	}
 
 #define __LIST_ADD(list, node) { \
+		if ( list->len + 1 < list->len ) \
+			return FALSE; \
+		\
 		node->next = NULL; \
 		if ( list->head == NULL ) { \
 			node->prev = NULL; \
@@ -185,9 +188,13 @@ void sieve_ast_error
 		} \
 		list->len++; \
 		node->list = list; \
+		return TRUE; \
 	}	 
 	
 #define __LIST_INSERT(list, before, node) { \
+		if ( list->len + 1 < list->len ) \
+			return FALSE; \
+		\
 		node->next = before; \
 		if ( list->head == before ) { \
 			node->prev = NULL; \
@@ -199,6 +206,8 @@ void sieve_ast_error
 		before->prev = node; \
 		list->len++; \
 		node->list = list; \
+		\
+		return TRUE; \
 	}	 
 
 	
@@ -206,7 +215,7 @@ void sieve_ast_error
 static struct sieve_ast_list *sieve_ast_list_create(pool_t pool) 
 	__LIST_CREATE(pool, struct sieve_ast_list)
 
-static void sieve_ast_list_add
+static bool sieve_ast_list_add
 (struct sieve_ast_list *list, struct sieve_ast_node *node) 
 	__LIST_ADD(list, node)
 
@@ -214,11 +223,11 @@ static void sieve_ast_list_add
 struct sieve_ast_arg_list *sieve_ast_arg_list_create(pool_t pool) 
 	__LIST_CREATE(pool, struct sieve_ast_arg_list)
 	
-void sieve_ast_arg_list_add
+bool sieve_ast_arg_list_add
 	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument)
 	__LIST_ADD(list, argument)
 
-void sieve_ast_arg_list_insert
+bool sieve_ast_arg_list_insert
 	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *before,
 	struct sieve_ast_argument *argument)
 	__LIST_INSERT(list, before, argument)
@@ -313,34 +322,34 @@ static struct sieve_ast_node *sieve_ast_node_create
 	return node;
 }
 
-static void sieve_ast_node_add_command
+static bool sieve_ast_node_add_command
 	(struct sieve_ast_node *node, struct sieve_ast_node *command) 
 {
 	i_assert( command->type == SAT_COMMAND && (node->type == SAT_ROOT || node->type == SAT_COMMAND) );
 	
 	if (node->commands == NULL) node->commands = sieve_ast_list_create(node->ast->pool);
 	
-	sieve_ast_list_add(node->commands, command);
+	return sieve_ast_list_add(node->commands, command);
 }
 
-static void sieve_ast_node_add_test
+static bool sieve_ast_node_add_test
 	(struct sieve_ast_node *node, struct sieve_ast_node *test) 
 {
 	i_assert( test->type == SAT_TEST && (node->type == SAT_TEST || node->type == SAT_COMMAND) );
 	
 	if (node->tests == NULL) node->tests = sieve_ast_list_create(node->ast->pool);
 	
-	sieve_ast_list_add(node->tests, test);
+	return sieve_ast_list_add(node->tests, test);
 }
 
-static void sieve_ast_node_add_argument
+static bool sieve_ast_node_add_argument
 	(struct sieve_ast_node *node, struct sieve_ast_argument *argument) 
 {
 	i_assert( node->type == SAT_TEST || node->type == SAT_COMMAND );
 	
 	if (node->arguments == NULL) node->arguments = sieve_ast_arg_list_create(node->ast->pool);
 	
-	sieve_ast_arg_list_add(node->arguments, argument);
+	return sieve_ast_arg_list_add(node->arguments, argument);
 }
 
 static void sieve_ast_argument_substitute
@@ -431,7 +440,7 @@ struct sieve_ast_argument *sieve_ast_argument_stringlist_substitute
 	return argument;
 }
 
-static void _sieve_ast_stringlist_add
+static bool _sieve_ast_stringlist_add
 	(struct sieve_ast_argument *list, string_t *str, unsigned int source_line) 
 {
 	struct sieve_ast_argument *stritem;
@@ -448,25 +457,25 @@ static void _sieve_ast_stringlist_add
 	/* Clone string */
 	stritem->_value.str = str;
 
-	sieve_ast_arg_list_add(list->_value.strlist, stritem);
+	return sieve_ast_arg_list_add(list->_value.strlist, stritem);
 }
 
-void sieve_ast_stringlist_add
+bool sieve_ast_stringlist_add
 	(struct sieve_ast_argument *list, const string_t *str, unsigned int source_line) 
 {
 	string_t *copied_str = str_new(list->ast->pool, str_len(str));
 	str_append_str(copied_str, str);
 
-	_sieve_ast_stringlist_add(list, copied_str, source_line);
+	return _sieve_ast_stringlist_add(list, copied_str, source_line);
 }
 
-void sieve_ast_stringlist_add_strc
+bool sieve_ast_stringlist_add_strc
 	(struct sieve_ast_argument *list, const char *str, unsigned int source_line) 
 {
 	string_t *copied_str = str_new(list->ast->pool, strlen(str));
 	str_append(copied_str, str);
 	
-	_sieve_ast_stringlist_add(list, copied_str, source_line);
+	return _sieve_ast_stringlist_add(list, copied_str, source_line);
 }
 
 struct sieve_ast_argument *sieve_ast_argument_tag_create
@@ -478,7 +487,8 @@ struct sieve_ast_argument *sieve_ast_argument_tag_create
 	argument->type = SAAT_TAG;
 	argument->_value.tag = p_strdup(node->ast->pool, tag);
 
-	sieve_ast_node_add_argument(node, argument);
+	if ( !sieve_ast_node_add_argument(node, argument) )
+		return NULL;
 
 	return argument;
 }
@@ -492,7 +502,8 @@ struct sieve_ast_argument *sieve_ast_argument_tag_insert
 	argument->type = SAAT_TAG;
 	argument->_value.tag = p_strdup(before->ast->pool, tag);
 
-	sieve_ast_arg_list_insert(before->list, before, argument);
+	if ( !sieve_ast_arg_list_insert(before->list, before, argument) )
+		return NULL;
 	
 	return argument;
 }
@@ -507,7 +518,8 @@ struct sieve_ast_argument *sieve_ast_argument_number_create
 	argument->type = SAAT_NUMBER;
 	argument->_value.number = number;
 	
-	sieve_ast_node_add_argument(node, argument);
+	if ( !sieve_ast_node_add_argument(node, argument) )
+		return NULL;
 	
 	return argument;
 }
@@ -541,7 +553,8 @@ struct sieve_ast_node *sieve_ast_test_create
 		
 	test->identifier = p_strdup(parent->ast->pool, identifier);
 	
-	sieve_ast_node_add_test(parent, test);
+	if ( !sieve_ast_node_add_test(parent, test) )
+		return NULL;
 	
 	return test;
 }
@@ -556,7 +569,8 @@ struct sieve_ast_node *sieve_ast_command_create
 	
 	command->identifier = p_strdup(parent->ast->pool, identifier);
 	
-	sieve_ast_node_add_command(parent, command);
+	if ( !sieve_ast_node_add_command(parent, command) )
+		return NULL;
 	
 	return command;
 }

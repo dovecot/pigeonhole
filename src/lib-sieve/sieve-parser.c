@@ -26,7 +26,7 @@ inline static void sieve_parser_error
 inline static void sieve_parser_warning
 	(struct sieve_parser *parser, const char *fmt, ...) ATTR_FORMAT(2, 3); 
  
-static bool sieve_parser_recover
+static int sieve_parser_recover
 	(struct sieve_parser *parser, enum sieve_token_type end_token);
 
 /*
@@ -148,17 +148,18 @@ inline static void sieve_parser_warning
  *   test-list = "(" test *("," test) ")"
  *   test = identifier arguments
  */
-static bool sieve_parse_arguments
+static int sieve_parse_arguments
 (struct sieve_parser *parser, struct sieve_ast_node *node) 
 {	
 	struct sieve_lexer *lexer = parser->lexer;
 	struct sieve_ast_node *test = NULL;
-	bool argument = TRUE;
-	bool result = TRUE; /* Indicates whether the parser is in a defined, not 
+	bool test_present = TRUE;
+	bool arg_present = TRUE;
+	int result = TRUE; /* Indicates whether the parser is in a defined, not 
 	                       necessarily error-free state */
 	
 	/* Parse arguments */
-	while ( argument && result && 
+	while ( arg_present && result > 0 && 
 		(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
 		struct sieve_ast_argument *arg;
 		
@@ -169,27 +170,33 @@ static bool sieve_parse_arguments
 			/* Create stinglist object */
 			arg = sieve_ast_argument_stringlist_create
 				(node, sieve_lexer_current_line(parser->lexer));
+
+			if ( arg == NULL ) break;
 				
 			sieve_lexer_skip_token(lexer);			
 			
 			if ( sieve_lexer_current_token(lexer) == STT_STRING ) {
+				bool add_failed = FALSE;
+
 				/* Add the string to the list */
-				sieve_ast_stringlist_add
+				if ( !sieve_ast_stringlist_add
 					(arg, sieve_lexer_token_str(lexer), 
-						sieve_lexer_current_line(parser->lexer));
+						sieve_lexer_current_line(parser->lexer)) )
+					add_failed = TRUE;
 				
 				sieve_lexer_skip_token(lexer);
 				 
-				while ( sieve_lexer_current_token(lexer) == STT_COMMA &&
+				while ( !add_failed && sieve_lexer_current_token(lexer) == STT_COMMA &&
 					(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
 			
 					sieve_lexer_skip_token(lexer);
 				
 					if ( sieve_lexer_current_token(lexer) == STT_STRING ) {
 						/* Add the string to the list */
-						sieve_ast_stringlist_add
+						if ( !sieve_ast_stringlist_add
 							(arg, sieve_lexer_token_str(lexer), 
-								sieve_lexer_current_line(parser->lexer));
+								sieve_lexer_current_line(parser->lexer)) )
+							add_failed = TRUE;
 							
 						sieve_lexer_skip_token(lexer);
 					} else {
@@ -200,6 +207,12 @@ static bool sieve_parse_arguments
 						result = sieve_parser_recover(parser, STT_RSQUARE);
 						break;
 					}
+				}
+				
+				if ( add_failed ) {
+					sieve_parser_error(parser, 
+						"failed to accept more items in string list");
+					return -1;
 				}
 			} else {
 				sieve_parser_error(parser, 
@@ -225,15 +238,16 @@ static bool sieve_parse_arguments
 			
 		/* Single string */
 		case STT_STRING: 
-			(void) sieve_ast_argument_string_create
+			arg = sieve_ast_argument_string_create
 				(node, sieve_lexer_token_str(lexer), 
 					sieve_lexer_current_line(parser->lexer));
+
 			sieve_lexer_skip_token(lexer);
 			break;
 		
 		/* Number */
 		case STT_NUMBER:
-			(void) sieve_ast_argument_number_create
+			arg = sieve_ast_argument_number_create
 				(node, sieve_lexer_token_int(lexer), 
 					sieve_lexer_current_line(parser->lexer));
 			sieve_lexer_skip_token(lexer);
@@ -241,7 +255,7 @@ static bool sieve_parse_arguments
 			
 		/* Tag */
 		case STT_TAG:
-			(void) sieve_ast_argument_tag_create
+			arg = sieve_ast_argument_tag_create
 				(node, sieve_lexer_token_ident(lexer), 
 					sieve_lexer_current_line(parser->lexer));
 			sieve_lexer_skip_token(lexer);
@@ -249,8 +263,14 @@ static bool sieve_parse_arguments
 			
 		/* End of argument list, continue with tests */
 		default:
-			argument = FALSE;
+			arg_present = FALSE;
 			break;
+		}
+
+		if ( arg_present && arg == NULL ) {
+			sieve_parser_error(parser, 
+				"failed to accept more arguments for command '%s'", node->identifier);
+			return -1;
 		}
 	}
 	
@@ -269,6 +289,9 @@ static bool sieve_parse_arguments
 				sieve_lexer_current_line(parser->lexer));
 		sieve_lexer_skip_token(lexer);
 		
+		/* Theoretically, test can be NULL */
+		if ( test == NULL ) break;
+
 		/* Parse test arguments, which may include more tests (recurse) */
 		if ( !sieve_parse_arguments(parser, test) ) {
 			return FALSE; /* Defer recovery to caller */
@@ -289,8 +312,10 @@ static bool sieve_parse_arguments
 					sieve_lexer_current_line(parser->lexer));
 			sieve_lexer_skip_token(lexer);
 		
+			if ( test == NULL ) break;
+
 			/* Parse test arguments, which may include more tests (recurse) */
-			if ( sieve_parse_arguments(parser, test) ) {
+			if ( (result=sieve_parse_arguments(parser, test)) > 0 ) {
 			
 				/* More tests ? */
 				while ( sieve_lexer_current_token(lexer) == STT_COMMA && 
@@ -303,9 +328,13 @@ static bool sieve_parse_arguments
 							(node, sieve_lexer_token_ident(lexer), 
 								sieve_lexer_current_line(parser->lexer));
 						sieve_lexer_skip_token(lexer);
+
+						if ( test == NULL ) break;
 						
 						/* Parse test arguments, which may include more tests (recurse) */
-						if ( !sieve_parse_arguments(parser, test) ) {
+						if ( (result=sieve_parse_arguments(parser, test)) <= 0 ) {
+							if ( result < 0 ) return result;
+
 							result = sieve_parser_recover(parser, STT_RBRACKET);
 							break;
 						}
@@ -318,8 +347,13 @@ static bool sieve_parse_arguments
 						break;
 					}
 				}
-			} else 
+
+				if ( test == NULL ) break;
+			} else { 
+				if ( result < 0 ) return result;
+
 				result = sieve_parser_recover(parser, STT_RBRACKET);
+			}
 		} else {
 			sieve_parser_error(parser, 
 				"expecting test identifier after '(' in test list, but found %s",
@@ -342,7 +376,7 @@ static bool sieve_parse_arguments
 			/* Recover function tries to make next token equal to ')'. If it succeeds 
 			 * we need to skip it.
 			 */
-			if ( (result = sieve_parser_recover(parser, STT_RBRACKET)) == TRUE ) 
+			if ( (result=sieve_parser_recover(parser, STT_RBRACKET)) == TRUE ) 
 				sieve_lexer_skip_token(lexer);
 		}
 		break;
@@ -351,8 +385,15 @@ static bool sieve_parse_arguments
 		/* Not an error: test / test-list is optional
 		 *   --> any errors are detected by the caller  
 		 */
+		test_present = FALSE;
 		break;
-	} 
+	}
+
+	if ( test_present && test == NULL ) {
+		sieve_parser_error(parser, 
+			"failed to accept more tests for command '%s'", node->identifier);
+		return -1;
+	}			
 	
 	return result;
 }
@@ -361,11 +402,11 @@ static bool sieve_parse_arguments
  * command = identifier arguments ( ";" / block )
  * block = "{" commands "}"
  */
-static bool sieve_parse_commands
+static int sieve_parse_commands
 (struct sieve_parser *parser, struct sieve_ast_node *block) 
 { 
 	struct sieve_lexer *lexer = parser->lexer;
-	bool result = TRUE;
+	int result = TRUE;
 
 	while ( sieve_lexer_current_token(lexer) == STT_IDENTIFIER && 
 		(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
@@ -374,6 +415,13 @@ static bool sieve_parse_commands
 				(block, sieve_lexer_token_ident(lexer), 
 					sieve_lexer_current_line(parser->lexer));
 	
+		if ( command == NULL ) {
+			sieve_parser_error(parser, 
+				"failed to accept more commands inside block of command '%s'", 
+				block->identifier);
+			return -1;
+		}
+
 		/* Defined state */
 		result = TRUE;		
 		
@@ -384,7 +432,7 @@ static bool sieve_parse_commands
 		/* Check whether the command is properly terminated 
 		 * (i.e. with ; or a new block) 
 		 */
-		if ( result &&
+		if ( result > 0 &&
 			sieve_lexer_current_token(lexer) != STT_SEMICOLON &&
 			sieve_lexer_current_token(lexer) != STT_LCURLY ) {
 			
@@ -396,12 +444,12 @@ static bool sieve_parse_commands
 		}
 		
 		/* Try to recover from parse errors to reacquire a defined state */
-		if ( !result ) {
+		if ( result == 0 ) {
 			result = sieve_parser_recover(parser, STT_SEMICOLON);
 		}
 		
 		/* Don't bother to continue if we are not in a defined state */
-		if ( !result ) return FALSE;
+		if ( result <= 0 ) return result;
 			
 		switch ( sieve_lexer_current_token(lexer) ) {
 		
@@ -415,7 +463,7 @@ static bool sieve_parse_commands
 			
 			command->block = TRUE;
 			
-			if ( sieve_parse_commands(parser, command) ) {
+			if ( (result=sieve_parse_commands(parser, command)) > 0 ) {
 			
 				if ( sieve_lexer_current_token(lexer) != STT_RCURLY ) {
 					sieve_parser_error(parser, 
@@ -424,8 +472,12 @@ static bool sieve_parse_commands
 					result = sieve_parser_recover(parser, STT_RCURLY);				
 				} else 
 					sieve_lexer_skip_token(lexer);
-			} else 	if ( (result = sieve_parser_recover(parser, STT_RCURLY)) == TRUE ) 
-				sieve_lexer_skip_token(lexer);
+			} else {
+				if ( result < 0 ) return result;
+
+				if ( (result=sieve_parser_recover(parser, STT_RCURLY)) == 0 ) 
+					sieve_lexer_skip_token(lexer);
+			}
 
 			break;
 			
@@ -456,7 +508,7 @@ bool sieve_parser_run
 	sieve_lexer_skip_token(parser->lexer);
 
 	/* Parse */
-	if ( sieve_parse_commands(parser, sieve_ast_root(parser->ast)) && 
+	if ( sieve_parse_commands(parser, sieve_ast_root(parser->ast)) > 0 && 
 		parser->valid ) {
 		 
 		/* Parsed right to EOF ? */
@@ -516,7 +568,7 @@ static inline enum sieve_grammatical_prio __get_token_priority
 	return SGP_OTHER;
 }
 
-static bool sieve_parser_recover
+static int sieve_parser_recover
 (struct sieve_parser *parser, enum sieve_token_type end_token) 
 {
 	/* The tokens that begin/end a specific block/command/list in order 

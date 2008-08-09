@@ -132,7 +132,7 @@ static bool cmd_redirect_validate
 			if ( norm_address == NULL ) {
 				sieve_command_validate_error(validator, cmd, 
 					"specified redirect address '%s' is invalid: %s",
-					str_c(address), error);
+					str_sanitize(str_c(address),256), error);
 			} else {
 				/* Replace string literal in AST */
 				sieve_ast_argument_string_setc(arg, norm_address);

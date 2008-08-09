@@ -89,6 +89,7 @@ libsieve_la_SOURCES = \
 noinst_HEADERS = \
 	sieve-types.h \
 	sieve-common.h \
+	sieve-limits.h \
 	sieve-message.h \
 	sieve-lexer.h \
 	sieve-script.h \

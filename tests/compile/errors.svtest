@@ -9,6 +9,20 @@ require "comparator-i;ascii-numeric";
  */
 
 /*
+ * Lexer errors
+ */
+
+test "Lexer errors (FIXME: count only)" {
+    if test_compile "errors/lexer.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "8" {
+        test_fail "wrong number of errors reported";
+    }
+}
+
+/*
  * Header test
  */
 

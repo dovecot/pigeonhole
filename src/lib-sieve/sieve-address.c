@@ -1,5 +1,6 @@
 #include "lib.h"
 #include "str.h"
+#include "str-sanitize.h"
 #include "rfc822-parser.h"
 
 #include "sieve-common.h"
@@ -132,7 +133,7 @@ static int parse_addr_spec(struct sieve_message_address_parser *ctx)
 	} 
 
 	sieve_address_error(ctx, "invalid or lonely local part '%s' (expecting '@')", 
-		str_c(ctx->local_part));
+		str_sanitize(str_c(ctx->local_part), 80));
 	return -1;
 }
 

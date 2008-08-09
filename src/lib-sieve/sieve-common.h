@@ -9,8 +9,12 @@
 /* 
  * Types
  */
- 
-typedef uint64_t sieve_number_t;
+
+typedef size_t        sieve_size_t; 
+typedef uint32_t      sieve_offset_t;
+typedef uint32_t      sieve_number_t;
+
+#define SIEVE_MAX_NUMBER ((sieve_number_t) -1)
 
 /*
  * Predeclarations
@@ -71,7 +75,6 @@ struct sieve_operation;
 struct sieve_coded_stringlist;
 
 /* sieve-binary.h */
-typedef size_t sieve_size_t;
 struct sieve_binary;
 
 /* sieve-objects.h */
