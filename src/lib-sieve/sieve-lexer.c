@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "compat.h"
 #include "str.h"
+#include "str-sanitize.h"
 #include "istream.h"
 
 #include "sieve-common.h"
@@ -560,12 +561,15 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
   		
 			/* Scan the rest of the identifier */
 			while ( IS_ALPHA(sieve_lexer_curchar(lexer)) ||
-				IS_ALPHA(sieve_lexer_curchar(lexer)) ||
+				IS_DIGIT(sieve_lexer_curchar(lexer)) ||
 				sieve_lexer_curchar(lexer) == '_' ) {
- 				str_append_c(str, sieve_lexer_curchar(lexer));
+
+				if ( str_len(str) <= SIEVE_MAX_IDENTIFIER_LEN ) {
+	 				str_append_c(str, sieve_lexer_curchar(lexer));
+				}
 				sieve_lexer_shift(lexer);
 			}
-  			
+
 			/* Is this in fact a multiline text string ? */
 			if ( sieve_lexer_curchar(lexer) == ':' &&
 				type == STT_IDENTIFIER && str_len(str) == 4 &&
@@ -671,6 +675,15 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 				}
   			
  				i_unreached();
+				lexer->token_type = STT_ERROR;
+				return FALSE;
+			}
+
+			if ( str_len(str) > SIEVE_MAX_IDENTIFIER_LEN ) {
+				sieve_lexer_error(lexer, 
+					"encountered impossibly long %s%s'",
+					(type == STT_TAG ? "tag identifier ':" : "identifier '"), 
+					str_sanitize(str_c(str), SIEVE_MAX_IDENTIFIER_LEN));
 				lexer->token_type = STT_ERROR;
 				return FALSE;
 			}

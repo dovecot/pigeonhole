@@ -2,7 +2,12 @@
  * Lexer tests
  *
  * Total errors: 7 (+1 = 8)
- */ 
+ */
+
+/*
+ * Number limits
+ */
+ 
 # Number too large
 if size :under 4294967300 {
 	stop;
@@ -50,5 +55,17 @@ if size :under 4294967294 {
 
 # Not an error
 if size :under 1G {
+	stop;
+}
+
+/*
+ * Identifier limits
+ */
+
+if this_is_a_rediculously_long_test_name {
+	stop;
+}
+
+if test :this_is_an_even_more_rediculously_long_tagged_argument_name {
 	stop;
 }

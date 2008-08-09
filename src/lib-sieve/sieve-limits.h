@@ -6,6 +6,7 @@
  */
 
 #define SIEVE_MAX_STRING_LEN        (1 << 20)
+#define SIEVE_MAX_IDENTIFIER_LEN    32
 
 /*
  * AST
