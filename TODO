@@ -12,8 +12,6 @@ Next (in order of descending priority/precedence):
 * Code cleanup 
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...
-	- Limit the depth of the AST, i.e. command block and test list
-	  nesting.
 	- Make sure error messages don't print large erroneous values.
 	- Limit the maximum number of included scripts
 	- Make (configurable) limit on the number of redirects

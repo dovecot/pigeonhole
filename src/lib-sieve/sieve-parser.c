@@ -151,7 +151,7 @@ inline static void sieve_parser_warning
  *   test = identifier arguments
  */
 static int sieve_parse_arguments
-(struct sieve_parser *parser, struct sieve_ast_node *node) 
+(struct sieve_parser *parser, struct sieve_ast_node *node, unsigned int depth) 
 {	
 	struct sieve_lexer *lexer = parser->lexer;
 	struct sieve_ast_node *test = NULL;
@@ -159,7 +159,7 @@ static int sieve_parse_arguments
 	bool arg_present = TRUE;
 	int result = TRUE; /* Indicates whether the parser is in a defined, not 
 	                       necessarily error-free state */
-	
+
 	/* Parse arguments */
 	while ( arg_present && result > 0 && 
 		(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
@@ -292,6 +292,13 @@ static int sieve_parse_arguments
 
 	/* Single test */
 	case STT_IDENTIFIER:
+		if ( depth+1 > SIEVE_MAX_TEST_NESTING ) {
+			sieve_parser_error(parser, 
+				"cannot nest tests deeper than %u levels",
+				SIEVE_MAX_TEST_NESTING);
+			return FALSE;
+		}
+
 		test = sieve_ast_test_create
 			(node, sieve_lexer_token_ident(lexer), 
 				sieve_lexer_current_line(parser->lexer));
@@ -301,7 +308,7 @@ static int sieve_parse_arguments
 		if ( test == NULL ) break;
 
 		/* Parse test arguments, which may include more tests (recurse) */
-		if ( !sieve_parse_arguments(parser, test) ) {
+		if ( !sieve_parse_arguments(parser, test, depth+1) ) {
 			return FALSE; /* Defer recovery to caller */
 		}
 		
@@ -310,7 +317,17 @@ static int sieve_parse_arguments
 	/* Test list */
 	case STT_LBRACKET:	
 		sieve_lexer_skip_token(lexer);
-		
+
+		if ( depth+1 > SIEVE_MAX_TEST_NESTING ) {
+			sieve_parser_error(parser, 
+				"cannot nest tests deeper than %u levels",
+				SIEVE_MAX_TEST_NESTING);
+			result = sieve_parser_recover(parser, STT_RBRACKET);
+
+			if ( result ) sieve_lexer_skip_token(lexer);
+			return result;
+		}
+
 		node->test_list = TRUE;
 		
 		/* Test starts with identifier */
@@ -323,7 +340,7 @@ static int sieve_parse_arguments
 			if ( test == NULL ) break;
 
 			/* Parse test arguments, which may include more tests (recurse) */
-			if ( (result=sieve_parse_arguments(parser, test)) > 0 ) {
+			if ( (result=sieve_parse_arguments(parser, test, depth+1)) > 0 ) {
 			
 				/* More tests ? */
 				while ( sieve_lexer_current_token(lexer) == STT_COMMA && 
@@ -340,7 +357,7 @@ static int sieve_parse_arguments
 						if ( test == NULL ) break;
 						
 						/* Parse test arguments, which may include more tests (recurse) */
-						if ( (result=sieve_parse_arguments(parser, test)) <= 0 ) {
+						if ( (result=sieve_parse_arguments(parser, test, depth+1)) <= 0 ) {
 							if ( result < 0 ) return result;
 
 							result = sieve_parser_recover(parser, STT_RBRACKET);
@@ -411,12 +428,13 @@ static int sieve_parse_arguments
  * block = "{" commands "}"
  */
 static int sieve_parse_commands
-(struct sieve_parser *parser, struct sieve_ast_node *block) 
+(struct sieve_parser *parser, struct sieve_ast_node *block, unsigned int depth) 
 { 
 	struct sieve_lexer *lexer = parser->lexer;
 	int result = TRUE;
 
-	while ( sieve_lexer_current_token(lexer) == STT_IDENTIFIER && 
+	while ( result > 0 && 
+		sieve_lexer_current_token(lexer) == STT_IDENTIFIER && 
 		(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
 		struct sieve_ast_node *command = 
 			sieve_ast_command_create
@@ -425,7 +443,7 @@ static int sieve_parse_commands
 	
 		if ( command == NULL ) {
 			sieve_parser_error(parser, 
-				"failed to accept more commands inside block of command '%s'", 
+				"failed to accept more commands inside the block of command '%s'", 
 				block->identifier);
 			return -1;
 		}
@@ -435,8 +453,8 @@ static int sieve_parse_commands
 		
 		sieve_lexer_skip_token(lexer);
 		
-		result = sieve_parse_arguments(parser, command);
-		
+		result = sieve_parse_arguments(parser, command, 1);
+
 		/* Check whether the command is properly terminated 
 		 * (i.e. with ; or a new block) 
 		 */
@@ -455,7 +473,7 @@ static int sieve_parse_commands
 		if ( result == 0 ) {
 			result = sieve_parser_recover(parser, STT_SEMICOLON);
 		}
-		
+
 		/* Don't bother to continue if we are not in a defined state */
 		if ( result <= 0 ) return result;
 			
@@ -465,13 +483,26 @@ static int sieve_parse_commands
 		case STT_SEMICOLON:
 			sieve_lexer_skip_token(lexer);
 			break;
-		
+
+		/* Command has a block {...} */		
 		case STT_LCURLY:
 			sieve_lexer_skip_token(lexer);
 			
+			/* Check current depth first */
+			if ( depth+1 > SIEVE_MAX_BLOCK_NESTING ) {
+				sieve_parser_error(parser, 
+					"cannot nest command blocks deeper than %u levels",
+					SIEVE_MAX_BLOCK_NESTING);
+				result = sieve_parser_recover(parser, STT_RCURLY);
+
+				if ( result > 0 )
+					sieve_lexer_skip_token(lexer);
+				break;
+			}
+
 			command->block = TRUE;
 			
-			if ( (result=sieve_parse_commands(parser, command)) > 0 ) {
+			if ( (result=sieve_parse_commands(parser, command, depth+1)) > 0 ) {
 			
 				if ( sieve_lexer_current_token(lexer) != STT_RCURLY ) {
 					sieve_parser_error(parser, 
@@ -494,7 +525,7 @@ static int sieve_parse_commands
 			i_unreached();
 		}
 	}
-		
+
 	return result;
 }
 
@@ -516,7 +547,7 @@ bool sieve_parser_run
 	sieve_lexer_skip_token(parser->lexer);
 
 	/* Parse */
-	if ( sieve_parse_commands(parser, sieve_ast_root(parser->ast)) > 0 && 
+	if ( sieve_parse_commands(parser, sieve_ast_root(parser->ast), 1) > 0 && 
 		parser->valid ) {
 		 
 		/* Parsed right to EOF ? */
@@ -597,14 +628,14 @@ static int sieve_parser_recover
 		__get_token_priority(sieve_lexer_current_token(lexer)) <= end_priority ) {
 			
 		if ( sieve_lexer_current_token(lexer) == begin_tokens[end_priority] ) {
-			nesting++;	
+			nesting++;
 			sieve_lexer_skip_token(lexer);
 			continue;
 		}
 		
 		if ( sieve_lexer_current_token(lexer) == end_tokens[end_priority] ) {
 			nesting--;
-			
+
 			if ( nesting == 0 ) {
 				/* Next character is the end */
 				return TRUE; 
