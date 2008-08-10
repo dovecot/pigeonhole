@@ -182,7 +182,8 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	script_name = sieve_ast_argument_strc(arg);
 
 	if ( strchr(script_name, '/') != NULL ) {
- 		i_info("include: '/' not allowed in script name (%s)",
+ 		sieve_command_validate_error(validator, cmd,
+			"include: '/' not allowed in script name (%s)",
 			str_sanitize(script_name, 80));
 		return FALSE;
     }
@@ -190,7 +191,7 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	script_dir = ext_include_get_script_directory
 		(ctx_data->location, script_name);
 	if ( script_dir == NULL ) {
-		 sieve_command_validate_error(validator, cmd,
+		sieve_command_validate_error(validator, cmd,
             "include: specified location for included script '%s' is unavailable "
 			"(system logs should provide more information)",
 			str_sanitize(script_name, 80));
