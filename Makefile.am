@@ -41,6 +41,7 @@ test_cases = \
 	tests/extensions/include/errors.svtest \
 	tests/extensions/imapflags/basic.svtest \
 	tests/extensions/imapflags/hasflag.svtest \
+	tests/extensions/body/basic.svtest \
 	tests/compile/compile.svtest \
 	tests/compile/compile-examples.svtest \
 	tests/compile/errors.svtest

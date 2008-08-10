@@ -300,6 +300,8 @@ static int ext_body_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	static const char * const _no_content_types[] = { "", NULL };
+	
 	int ret = SIEVE_EXEC_OK;
 	int opt_code = 0;
 	int mret;
@@ -308,7 +310,7 @@ static int ext_body_operation_execute
 	enum tst_body_transform transform;
 	struct sieve_coded_stringlist *key_list, *ctype_list = NULL;
 	struct sieve_match_context *mctx;
-	const char * const *content_types = { NULL };
+	const char * const *content_types = _no_content_types;
 	struct ext_body_part *body_parts;
 	bool matched;
 
@@ -335,7 +337,8 @@ static int ext_body_operation_execute
 			if ( transform == TST_BODY_TRANSFORM_CONTENT ) {				
 				if ( (ctype_list=sieve_opr_stringlist_read(renv, address)) 
 					== NULL ) {
-					sieve_runtime_trace_error(renv, "invalid body transform operand");
+					sieve_runtime_trace_error(renv, 
+						"invalid :content body transform operand");
 					return SIEVE_EXEC_BIN_CORRUPT;
 				}
 			}
@@ -360,7 +363,7 @@ static int ext_body_operation_execute
 	}
 
 	if ( !ext_body_get_content
-		(renv, content_types, transform == TST_BODY_TRANSFORM_RAW, &body_parts) ) {
+		(renv, content_types, transform != TST_BODY_TRANSFORM_RAW, &body_parts) ) {
 		return SIEVE_EXEC_FAILURE;
 	}
 
