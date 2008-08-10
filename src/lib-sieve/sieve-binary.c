@@ -1,5 +1,6 @@
 #include "lib.h"
 #include "str.h"
+#include "str-sanitize.h"
 
 #include "mempool.h"
 #include "buffer.h"
@@ -922,7 +923,7 @@ static struct sieve_binary_block *_load_block
 	
 	block->buffer = sbin->file->load_buffer(sbin->file, offset, header->size);
 	if ( block->buffer == NULL ) {
-		sieve_sys_error("block %d of loaded binary %s has invalid size %d", 
+		sieve_sys_error("block %d of loaded binary %s has invalid size %d",
 			id, sbin->path, header->size);
 		return NULL;
 	}
@@ -994,7 +995,7 @@ static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 			
 				if ( ext == NULL ) { 
 					sieve_sys_error("loaded binary %s requires unknown extension '%s'", 
-						sbin->path, str_c(extension));
+						sbin->path, str_sanitize(str_c(extension), 128));
 					result = FALSE;					
 				} else {
 					struct sieve_binary_extension_reg *ereg = NULL;

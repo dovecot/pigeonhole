@@ -1,5 +1,6 @@
 #include "lib.h"
 #include "str.h"
+#include "str-sanitize.h"
 
 #include "sieve-commands-private.h"
 #include "sieve-code.h"
@@ -119,7 +120,7 @@ bool ext_imapflags_command_validate
 				sieve_command_validate_warning(validator, cmd,
                 	"IMAP flag '%s' specified for the %s command is invalid "
 					"and will be ignored (only first invalid is reported)",					
-					flag, cmd->command->identifier);
+					str_sanitize(flag, 64), cmd->command->identifier);
 				break;
 			}
 		}

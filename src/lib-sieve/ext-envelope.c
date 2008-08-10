@@ -12,8 +12,10 @@
  */
 
 #include "lib.h"
+#include "str-sanitize.h"
 #include "array.h"
 
+#include "sieve-common.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -250,7 +252,7 @@ static bool tst_envelope_validate
 		
 		sieve_command_validate_error(validator, tst, 
 			"specified envelope part '%s' is not supported by the envelope test", 
-				sieve_ast_strlist_strc(epart));
+				str_sanitize(sieve_ast_strlist_strc(epart), 64));
 		return FALSE;
 	}
 

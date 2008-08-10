@@ -1,4 +1,6 @@
 #include "lib.h"
+#include "str.h"
+#include "str-sanitize.h"
 #include "array.h"
 #include "buffer.h"
 #include "mempool.h"
@@ -438,13 +440,23 @@ static const struct sieve_argument *sieve_validator_find_tag
 
 const struct sieve_extension *sieve_validator_extension_load
 	(struct sieve_validator *validator, struct sieve_command_context *cmd, 
-		const char *ext_name) 
+		string_t *ext_name) 
 {
-	const struct sieve_extension *ext = sieve_extension_get_by_name(ext_name); 
+	const struct sieve_extension *ext;
+	const char *name = str_c(ext_name);
+
+	if ( str_len(ext_name) > 128 ) {
+		sieve_command_validate_error(validator, cmd, 
+			"unsupported sieve capability '%s' (name is impossibly long)", 
+			str_sanitize(name, 128));
+		return NULL;
+	}
+
+	ext = sieve_extension_get_by_name(name); 
 	
 	if ( ext == NULL ) {
 		sieve_command_validate_error(validator, cmd, 
-			"unsupported sieve capability '%s'", ext_name);
+			"unsupported sieve capability '%s'", name);
 		return NULL;
 	}
 
@@ -886,7 +898,7 @@ static bool sieve_validate_command
 			{
 				sieve_validator_error(
 					valdtr, cmd_node, "attempted to use %s '%s' as %s", 
-					sieve_command_type_name(command),	cmd_node->identifier,
+					sieve_command_type_name(command), cmd_node->identifier,
 					sieve_ast_type_name(ast_type));
 			
 			 	return FALSE;

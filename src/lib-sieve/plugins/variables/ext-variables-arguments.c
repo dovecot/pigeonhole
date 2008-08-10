@@ -1,5 +1,6 @@
 #include "lib.h"
 #include "str.h"
+#include "str-sanitize.h"
 #include "array.h"
 
 #include "sieve-common.h"
@@ -70,7 +71,7 @@ static bool _sieve_variable_argument_activate
 	
 		if ( nelements < 0 || varstr != varend ) {
 			sieve_command_validate_error(validator, cmd, 
-				"invalid variable name '%s'", str_c(variable));
+				"invalid variable name '%s'", str_sanitize(str_c(variable),80));
 		} else if ( nelements == 1 ) {
 			const struct ext_variable_name *cur_element = 
 				array_idx(&vname, 0);

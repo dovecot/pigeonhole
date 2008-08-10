@@ -1,7 +1,8 @@
 /* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
  */
 
-#include <stdio.h>
+#include "lib.h"
+#include "str-sanitize.h"
 
 #include "sieve-commands.h"
 #include "sieve-commands-private.h"
@@ -16,6 +17,8 @@
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
 #include "sieve-match.h"
+
+#include <stdio.h>
 
 /* 
  * Address test
@@ -148,7 +151,7 @@ static bool tst_address_validate
 	if ( !sieve_ast_stringlist_map(&header, NULL, _header_is_allowed) ) {		
 		sieve_command_validate_error(validator, tst, 
 			"specified header '%s' is not allowed for the address test", 
-			sieve_ast_strlist_strc(header));
+			str_sanitize(sieve_ast_strlist_strc(header), 64));
 		return FALSE;
 	}
 

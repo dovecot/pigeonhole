@@ -1,6 +1,7 @@
 #include "lib.h"
-#include "sieve-common.h"
+#include "str-sanitize.h"
 
+#include "sieve-common.h"
 #include "sieve-script.h"
 #include "sieve-code.h"
 #include "sieve-extensions.h"
@@ -187,7 +188,7 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 		 sieve_command_validate_error(validator, cmd,
             "specified location for included script '%s' is unavalable "
 			"(system logs should provide more information)",
-			script_name);
+			str_sanitize(script_name, 80));
 		return FALSE;
 	}
 	

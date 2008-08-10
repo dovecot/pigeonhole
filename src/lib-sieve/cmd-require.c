@@ -60,7 +60,7 @@ static bool cmd_require_validate
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		/* Single string */
 		const struct sieve_extension *ext = sieve_validator_extension_load
-			(validator, cmd, sieve_ast_argument_strc(arg));	
+			(validator, cmd, sieve_ast_argument_str(arg));	
 
 		if ( ext == NULL ) result = FALSE;
 		arg->context = (void *) ext;
@@ -71,7 +71,7 @@ static bool cmd_require_validate
 		
 		while ( stritem != NULL ) {
 			const struct sieve_extension *ext = sieve_validator_extension_load
-				(validator, cmd, sieve_ast_strlist_strc(stritem));
+				(validator, cmd, sieve_ast_strlist_str(stritem));
 
 			if ( ext == NULL ) result = FALSE;
 			stritem->context = (void *) ext;

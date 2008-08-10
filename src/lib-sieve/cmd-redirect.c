@@ -132,7 +132,7 @@ static bool cmd_redirect_validate
 			if ( norm_address == NULL ) {
 				sieve_command_validate_error(validator, cmd, 
 					"specified redirect address '%s' is invalid: %s",
-					str_sanitize(str_c(address),256), error);
+					str_sanitize(str_c(address),128), error);
 			} else {
 				/* Replace string literal in AST */
 				sieve_ast_argument_string_setc(arg, norm_address);
@@ -217,7 +217,7 @@ static int cmd_redirect_operation_execute
 	/* FIXME: perform address normalization if the string is not a string literal
 	 */
 
-	sieve_runtime_trace(renv, "REDIRECT action (\"%s\")", str_c(redirect));
+	sieve_runtime_trace(renv, "REDIRECT action (\"%s\")", str_sanitize(str_c(redirect), 64));
 	
 	/* Add redirect action to the result */
 
@@ -257,7 +257,8 @@ static void act_redirect_print
 {
 	struct act_redirect_context *ctx = (struct act_redirect_context *) context;
 	
-	sieve_result_action_printf(rpenv, "redirect message to: %s", ctx->to_address);
+	sieve_result_action_printf(rpenv, "redirect message to: %s", 
+		str_sanitize(ctx->to_address, 128));
 	
 	*keep = FALSE;
 }
@@ -319,7 +320,7 @@ static bool act_redirect_commit
 		/* Check whether we've seen this message before */
   		if (senv->duplicate_check(dupeid, strlen(dupeid), senv->username)) {
 			sieve_result_log(aenv, "discarded duplicate forward to <%s>",
-				str_sanitize(ctx->to_address, 80));
+				str_sanitize(ctx->to_address, 128));
 			return TRUE;
 		}
 	}
@@ -334,7 +335,7 @@ static bool act_redirect_commit
 		}
 	
 		sieve_result_log(aenv, "forwarded to <%s>", 
-			str_sanitize(ctx->to_address, 80));	
+			str_sanitize(ctx->to_address, 128));	
 
 		/* Cancel implicit keep */
 		*keep = FALSE;

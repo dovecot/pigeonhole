@@ -11,6 +11,10 @@
  *
  */
 
+#include "lib.h"
+#include "str-sanitize.h"
+
+#include "sieve-common.h"
 #include "sieve-extensions.h"
 #include "sieve-binary.h"
 #include "sieve-commands.h"
@@ -190,7 +194,7 @@ static int ext_fileinto_operation_execute
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	sieve_runtime_trace(renv, "FILEINTO action (\"%s\")", str_c(folder));
+	sieve_runtime_trace(renv, "FILEINTO action (\"%s\")", str_sanitize(str_c(folder), 64));
 
 	ret = sieve_act_store_add_to_result
 		(renv, slist, str_c(folder), source_line);

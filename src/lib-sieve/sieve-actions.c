@@ -138,7 +138,8 @@ static void act_store_print
 {
 	struct act_store_context *ctx = (struct act_store_context *) context;
 	
-	sieve_result_action_printf(rpenv, "store message in folder: %s", ctx->folder);
+	sieve_result_action_printf(rpenv, "store message in folder: %s", 
+		str_sanitize(ctx->folder, 128));
 	
 	*keep = FALSE;
 }
@@ -241,9 +242,9 @@ static void act_store_log_status
 	const char *mailbox_name;
 	
 	if ( trans->box == NULL )
-		mailbox_name = str_sanitize(trans->context->folder, 80);
+		mailbox_name = str_sanitize(trans->context->folder, 128);
 	else
-		mailbox_name = str_sanitize(mailbox_get_name(trans->box), 80);
+		mailbox_name = str_sanitize(mailbox_get_name(trans->box), 128);
 
 	if ( trans->namespace == NULL ) {
 		sieve_result_log(aenv, "store into mailbox '%s' not performed", mailbox_name);

@@ -8,9 +8,9 @@
 
 #include "lib.h"
 #include "str.h"
+#include "str-sanitize.h"
 
 #include "sieve-common.h"
-
 #include "sieve-ast.h"
 #include "sieve-code.h"
 #include "sieve-extensions.h"
@@ -38,7 +38,7 @@ bool mcht_relational_validate
 	struct sieve_match_type_context *ctx)
 {	
 	enum relational_match rel_match = REL_MATCH_INVALID;
-	const char *rel_match_id;
+	string_t *rel_match_ident;
 
 	/* Check syntax:
 	 *   relational-match = DQUOTE ( "gt" / "ge" / "lt"	
@@ -59,52 +59,55 @@ bool mcht_relational_validate
 	
 	/* Check the relational match id */
 	
-	rel_match_id = sieve_ast_argument_strc(*arg);
-	switch ( rel_match_id[0] ) {
-	/* "gt" or "ge" */
-	case 'g':
-		switch ( rel_match_id[1] ) {
-		case 't': 
-			rel_match = REL_MATCH_GREATER; 
+	rel_match_ident = sieve_ast_argument_str(*arg);
+	if ( str_len(rel_match_ident) == 2 ) {
+		const char *rel_match_id = str_c(rel_match_ident);
+
+		switch ( rel_match_id[0] ) {
+		/* "gt" or "ge" */
+		case 'g':
+			switch ( rel_match_id[1] ) {
+			case 't': 
+				rel_match = REL_MATCH_GREATER; 
+				break;
+			case 'e': 
+				rel_match = REL_MATCH_GREATER_EQUAL; 
+				break;
+			default: 
+				rel_match = REL_MATCH_INVALID;
+			}
 			break;
-		case 'e': 
-			rel_match = REL_MATCH_GREATER_EQUAL; 
+		/* "lt" or "le" */
+		case 'l':
+			switch ( rel_match_id[1] ) {
+			case 't': 
+				rel_match = REL_MATCH_LESS; 
+				break;
+			case 'e': 
+				rel_match = REL_MATCH_LESS_EQUAL; 
+				break;
+			default: 
+				rel_match = REL_MATCH_INVALID;
+			}
 			break;
-		default: 
+		/* "eq" */
+		case 'e':
+			if ( rel_match_id[1] == 'q' )
+				rel_match = REL_MATCH_EQUAL;
+			else	
+				rel_match = REL_MATCH_INVALID;		
+			break;
+		/* "ne" */
+		case 'n':
+			if ( rel_match_id[1] == 'e' )
+				rel_match = REL_MATCH_NOT_EQUAL;
+			else	
+				rel_match = REL_MATCH_INVALID;
+			break;
+		/* invalid */
+		default:
 			rel_match = REL_MATCH_INVALID;
 		}
-		break;
-	/* "lt" or "le" */
-	case 'l':
-		switch ( rel_match_id[1] ) {
-		case 't': 
-			rel_match = REL_MATCH_LESS; 
-			break;
-		case 'e': 
-			rel_match = REL_MATCH_LESS_EQUAL; 
-			break;
-		default: 
-			rel_match = REL_MATCH_INVALID;
-		}
-		break;
-	/* "eq" */
-	case 'e':
-		if ( rel_match_id[1] == 'q' )
-			rel_match = REL_MATCH_EQUAL;
-		else	
-			rel_match = REL_MATCH_INVALID;
-			
-		break;
-	/* "ne" */
-	case 'n':
-		if ( rel_match_id[1] == 'e' )
-			rel_match = REL_MATCH_NOT_EQUAL;
-		else	
-			rel_match = REL_MATCH_INVALID;
-		break;
-	/* invalid */
-	default:
-		rel_match = REL_MATCH_INVALID;
 	}
 	
 	if ( rel_match >= REL_MATCH_INVALID ) {
@@ -112,7 +115,8 @@ bool mcht_relational_validate
 			"the :%s match-type requires a constant string argument being "
 			"one of \"gt\", \"ge\", \"lt\", \"le\", \"eq\" or \"ne\", "
 			"but \"%s\" was found", 
-			ctx->match_type->object.identifier, rel_match_id);
+			ctx->match_type->object.identifier, 
+			str_sanitize(str_c(rel_match_ident), 32));
 		return FALSE;
 	}
 	

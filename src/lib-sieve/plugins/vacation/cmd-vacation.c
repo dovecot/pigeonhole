@@ -180,7 +180,7 @@ static bool cmd_vacation_validate_string_tag
 			if ( !result ) {
 				sieve_command_validate_error(validator, cmd, 
 					"specified :from address '%s' is invalid for vacation action: %s", 
-					str_c(address), error);
+					str_sanitize(str_c(address), 128), error);
 			}
 		} T_END;
 		
@@ -719,15 +719,15 @@ static bool act_vacation_commit
 	 */
 	if ( msgdata->return_path == NULL || *(msgdata->return_path) == '\0' ) {
 		sieve_result_log(aenv, "discarded vacation reply to <>");
-  	return TRUE;
-  }    
+		return TRUE;
+	}    
 	
 	/* Are we perhaps trying to respond to ourselves ? 
 	 * (FIXME: verify this to :addresses as well?)
 	 */
 	if ( strcmp(msgdata->return_path, msgdata->to_address) == 0 ) {
-		sieve_result_log(aenv, "discarded vacation reply to own address");
-  	return TRUE;
+		sieve_result_log(aenv, "discarded vacation reply to own address");	
+		return TRUE;
 	}
 	
 	/* Did whe respond to this user before? */
@@ -735,7 +735,7 @@ static bool act_vacation_commit
 	if (senv->duplicate_check(dupl_hash, sizeof(dupl_hash), senv->username)) 
 	{
 		sieve_result_log(aenv, "discarded duplicate vacation response to <%s>",
-			str_sanitize(msgdata->return_path, 80));
+			str_sanitize(msgdata->return_path, 128));
 		return TRUE;
 	}
 	
@@ -747,7 +747,7 @@ static bool act_vacation_commit
 			/* Yes, bail out */
 			sieve_result_log(aenv, 
 				"discarding vacation response to mailinglist recipient <%s>", 
-				msgdata->return_path);	
+				str_sanitize(msgdata->return_path, 128));	
 			return TRUE;				 
 		}
 		hdsp++;
@@ -762,7 +762,7 @@ static bool act_vacation_commit
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
 				sieve_result_log(aenv, 
 					"discardig vacation response to auto-submitted message from <%s>", 
-					msgdata->return_path);	
+					str_sanitize(msgdata->return_path, 128));	
 					return TRUE;				 
 			}
 			hdsp++;
@@ -779,7 +779,7 @@ static bool act_vacation_commit
 				strcasecmp(*hdsp, "list") == 0 ) {
 				sieve_result_log(aenv, 
 					"discarding vacation response to precedence=%s message from <%s>", 
-					*hdsp, msgdata->return_path);	
+					*hdsp, str_sanitize(msgdata->return_path, 128));	
 					return TRUE;				 
 			}
 			hdsp++;
@@ -790,7 +790,7 @@ static bool act_vacation_commit
 	if ( _is_system_address(msgdata->return_path) ) {
 		sieve_result_log(aenv, 
 			"not sending vacation response to system address <%s>", 
-			msgdata->return_path);	
+			str_sanitize(msgdata->return_path, 128));	
 		return TRUE;				
 	} 
 	
@@ -842,7 +842,7 @@ static bool act_vacation_commit
 	
 	if ( act_vacation_send(aenv, ctx) ) {
 		sieve_result_log(aenv, "sent vacation response to <%s>", 
-			str_sanitize(msgdata->return_path, 80));	
+			str_sanitize(msgdata->return_path, 128));	
 
 		senv->duplicate_mark(dupl_hash, sizeof(dupl_hash), senv->username,
 			ioloop_time + ctx->days * (24 * 60 * 60));
@@ -851,7 +851,7 @@ static bool act_vacation_commit
   }
 
 	sieve_result_error(aenv, "failed to send vacation response to <%s>", 
-		str_sanitize(msgdata->return_path, 80));	
+		str_sanitize(msgdata->return_path, 128));	
 	return FALSE;
 }
 

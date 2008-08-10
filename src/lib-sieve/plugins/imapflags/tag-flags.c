@@ -1,4 +1,5 @@
 #include "lib.h"
+#include "str-sanitize.h"
 #include "array.h"
 #include "mail-storage.h"
 
@@ -274,7 +275,7 @@ static void seff_flags_print
 
 			for ( i = 0; i < array_count(&ctx->keywords); i++ ) {
 				const char *const *keyword = array_idx(&ctx->keywords, i);
-				str_printfa(flags, " %s", *keyword);
+				str_printfa(flags, " %s", str_sanitize(*keyword, 64));
 			}
 
 			sieve_result_seffect_printf(rpenv, "add IMAP flags:%s", str_c(flags));
@@ -322,7 +323,7 @@ static bool seff_flags_pre_execute
 				
 				sieve_result_warning(aenv, 
 					"specified IMAP keyword '%s' is invalid (ignored): %s", 
-					*keyword, error);
+					str_sanitize(*keyword, 64), error);
 			}
 		}
 	}

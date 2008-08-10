@@ -2,7 +2,7 @@
  */
 
 #include "lib.h"
-#include "compat.h"
+#include "str-sanitize.h"
 #include "hash.h"
 #include "array.h"
 
@@ -159,7 +159,8 @@ static bool tag_comparator_validate
 	
 	if ( cmp == NULL ) {
 		sieve_command_validate_error(validator, cmd, 
-			"unknown comparator '%s'", sieve_ast_argument_strc(*arg));
+			"unknown comparator '%s'", 
+			str_sanitize(sieve_ast_argument_strc(*arg),80));
 
 		return FALSE;
 	}

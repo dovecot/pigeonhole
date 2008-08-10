@@ -14,11 +14,13 @@
 #include "lib.h"
 #include "ioloop.h"
 #include "hostpid.h"
+#include "str-sanitize.h"
 #include "message-date.h"
 #include "message-size.h"
 #include "istream.h"
 #include "istream-header-filter.h"
 
+#include "sieve-common.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -233,7 +235,7 @@ static int ext_reject_operation_execute
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	sieve_runtime_trace(renv, "REJECT action (\"%s\")", str_c(reason));
+	sieve_runtime_trace(renv, "REJECT action (\"%s\")", str_sanitize(str_c(reason), 64));
 
 	/* Add reject action to the result */
 	pool = sieve_result_pool(renv->result);
@@ -293,7 +295,8 @@ static void act_reject_print
 {
 	struct act_reject_context *ctx = (struct act_reject_context *) context;
 	
-	sieve_result_action_printf(rpenv, "reject message with reason: %s", ctx->reason);
+	sieve_result_action_printf(rpenv, "reject message with reason: %s", 
+		str_sanitize(ctx->reason, 128));
 	
 	*keep = FALSE;
 }

@@ -344,7 +344,7 @@ bool ext_include_generate_include
 		/* Parse */
 		if ( (ast = sieve_parse(script, ehandler)) == NULL ) {
 	 		sieve_command_generate_error(gentr, cmd, 
-	 			"failed to parse included script '%s'", script_name);
+	 			"failed to parse included script '%s'", str_sanitize(script_name, 80));
 	 		return FALSE;
 		}
 		
@@ -354,7 +354,7 @@ bool ext_include_generate_include
 		/* Validate */
 		if ( !sieve_validate(ast, ehandler) ) {
 			sieve_command_generate_error(gentr, cmd, 
-				"failed to validate included script '%s'", script_name);
+				"failed to validate included script '%s'", str_sanitize(script_name, 80));
 	 		sieve_ast_unref(&ast);
 	 		return FALSE;
 	 	}
@@ -370,7 +370,8 @@ bool ext_include_generate_include
 				
 			if ( !sieve_generator_run(subgentr, &sbin) ) {
 				sieve_command_generate_error(gentr, cmd, 
-					"failed to generate code for included script '%s'", script_name);
+					"failed to generate code for included script '%s'", 
+					str_sanitize(script_name, 80));
 		 		result = FALSE;
 			}
 			
