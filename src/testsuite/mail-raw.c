@@ -56,8 +56,8 @@ struct mail_raw *mail_raw_open(string_t *mail_data)
 	mailr = p_new(pool, struct mail_raw, 1);
 	mailr->pool = pool;
 
-	mailr->input = i_stream_create_crlf(i_stream_create_from_data
-		(str_data(mail_data), str_len(mail_data)));
+	mailr->input = i_stream_create_from_data
+		(str_data(mail_data), str_len(mail_data));
 
 	mailr->box = mailbox_open(raw_ns->storage, 
 		"Dovecot Raw Mail", mailr->input, MAILBOX_OPEN_NO_INDEX_FILES);

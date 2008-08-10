@@ -286,6 +286,14 @@ static inline int sieve_lexer_curchar(struct sieve_lexer *lexer)
 	return lexer->buffer[lexer->buffer_pos];
 }
 
+static inline const char *_char_sanitize(int ch)
+{
+	if ( ch > 31 && ch < 127 )
+		return t_strdup_printf("'%c'", ch);
+	
+	return t_strdup_printf("0x%02x", ch);
+}
+
 /* sieve_lexer_scan_raw_token:
  *   Scans valid tokens and whitespace 
  */
@@ -308,13 +316,24 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 	case '#': 
 		sieve_lexer_shift(lexer);
 		while ( sieve_lexer_curchar(lexer) != '\n' ) {
-			if ( sieve_lexer_curchar(lexer) == -1 ) {
-			  sieve_lexer_error(lexer, "end of file before end of hash comment");
-			  lexer->token_type = STT_ERROR;
+			switch( sieve_lexer_curchar(lexer) ) {
+			case -1:
+				sieve_lexer_error(lexer, "end of file before end of hash comment");
+				lexer->token_type = STT_ERROR;
 				return FALSE;
+			case '\0':
+				sieve_lexer_error(lexer, "encountered NUL character in hash comment");
+				lexer->token_type = STT_ERROR;
+				return FALSE;				
+			default:
+				break;
 			}
+						
+			/* Stray CR is ignored */
+			
 			sieve_lexer_shift(lexer);
 		} 
+
 		sieve_lexer_shift(lexer);
 		
 		lexer->token_type = STT_WHITESPACE;
@@ -333,7 +352,14 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 			sieve_lexer_shift(lexer);
 			
 			while ( TRUE ) {
-				if ( sieve_lexer_curchar(lexer) == '*' ) {
+				switch ( sieve_lexer_curchar(lexer) ) {
+				case -1:
+					sieve_lexer_error(lexer, 
+						"end of file before end of bracket comment ('/* ... */') "
+						"started at line %d", start_line);
+					lexer->token_type = STT_ERROR;
+					return FALSE;
+				case '*':
 					sieve_lexer_shift(lexer);
 					
 					if ( sieve_lexer_curchar(lexer) == '/' ) {
@@ -349,16 +375,15 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 						lexer->token_type = STT_ERROR;
 						return FALSE;
 					}
-
-				} else if ( sieve_lexer_curchar(lexer) == -1 ) {
+					break;
+				case '\0':
 					sieve_lexer_error(lexer, 
-						"end of file before end of bracket comment ('/* ... */') "
-						"started at line %d", start_line);
+						"encountered NUL character in bracket comment");
 					lexer->token_type = STT_ERROR;
-					return FALSE;
-					
-				} else 
-					sieve_lexer_shift(lexer);					
+					return FALSE;				
+				default:
+					sieve_lexer_shift(lexer);
+				}
 			}
 			
 			i_unreached();
@@ -395,22 +420,57 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 		str = lexer->token_str_value;
 		
 		while ( sieve_lexer_curchar(lexer) != '"' ) {
-			if ( sieve_lexer_curchar(lexer) == -1 ) {
+			if ( sieve_lexer_curchar(lexer) == '\\' ) {
+				sieve_lexer_shift(lexer);
+			}
+
+			switch ( sieve_lexer_curchar(lexer) ) {
+		
+			/* End of file */			
+			case -1:
 				sieve_lexer_error(lexer, 
 					"end of file before end of quoted string "
 					"started at line %d", start_line);
 				lexer->token_type = STT_ERROR;
 				return FALSE;
-			}
-			
-			if ( sieve_lexer_curchar(lexer) == '\\' ) {
+
+			/* NUL character */
+			case '\0':
+				sieve_lexer_error(lexer,
+					"encountered NUL character in quoted string "
+					"started at line %d", start_line);
+				lexer->token_type = STT_ERROR;
+				return FALSE;
+
+			/* CR .. check for LF */
+			case '\r':
 				sieve_lexer_shift(lexer);
+
+				if ( sieve_lexer_curchar(lexer) != '\n' ) {
+					sieve_lexer_error(lexer, 
+						"found stray carriage-return (CR) character "
+						"in quoted string started at line %d", start_line);
+					lexer->token_type = STT_ERROR;
+					return FALSE;
+				}
+
+				if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
+					str_append(str, "\r\n");
+				break;
+
+			/* Loose LF is allowed (non-standard) and converted to CRLF */
+			case '\n':
+				if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
+					str_append(str, "\r\n");
+				break;
+
+			/* Other characters */
+			default:
+				if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
+					str_append_c(str, sieve_lexer_curchar(lexer));
 			}
 
-			if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
-				str_append_c(str, sieve_lexer_curchar(lexer));
-
-			sieve_lexer_shift(lexer);
+			sieve_lexer_shift(lexer);							
 		}
 
 		sieve_lexer_shift(lexer);
@@ -582,26 +642,30 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
  					sieve_lexer_shift(lexer);
   				
 				/* Discard hash comment or handle single CRLF */
-				if ( sieve_lexer_curchar(lexer) == '#' ) {
+				switch ( sieve_lexer_curchar(lexer) ) {
+				case '#':
 					while ( sieve_lexer_curchar(lexer) != '\n' )
 						sieve_lexer_shift(lexer);
-				} else if ( sieve_lexer_curchar(lexer) == '\r' ) {
+					break;
+				case '\r':
 					sieve_lexer_shift(lexer);
+					break;
 				}
   			
 				/* Terminating LF required */
- 				if ( sieve_lexer_curchar(lexer) == '\n' ) {
+ 				switch ( sieve_lexer_curchar(lexer) ) {
+				case '\n':
 					sieve_lexer_shift(lexer);
-				} else {
-					if ( sieve_lexer_curchar(lexer) == -1 ) {
-						sieve_lexer_error(lexer, 
-							"end of file before end of multi-line string");
-					} else {
- 						sieve_lexer_error(lexer, 
- 							"invalid character '%c' after 'text:' in multiline string",
-							sieve_lexer_curchar(lexer));
-					}
-
+					break;
+				case -1:
+					sieve_lexer_error(lexer, 
+						"end of file before end of multi-line string");
+					lexer->token_type = STT_ERROR;
+					return FALSE;
+				default: 
+ 					sieve_lexer_error(lexer, 
+ 						"invalid character %s after 'text:' in multiline string",
+						_char_sanitize(sieve_lexer_curchar(lexer)));
 					lexer->token_type = STT_ERROR;
 					return FALSE;
 				}
@@ -617,18 +681,20 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 					if ( sieve_lexer_curchar(lexer) == '.' ) {
 						sieve_lexer_shift(lexer);
   					
-						/* Check for CRLF */
+						/* Check for CR.. */
 						if ( sieve_lexer_curchar(lexer) == '\r' ) {
 							sieve_lexer_shift(lexer);
 							cr_shifted = TRUE;
 						}
   				
+						/* ..LF */
 						if ( sieve_lexer_curchar(lexer) == '\n' ) {
 							sieve_lexer_shift(lexer);
 
+							/* Check whether length limit was violated */
 							if ( str_len(str) > SIEVE_MAX_STRING_LEN ) {
 								sieve_lexer_error(lexer, 
-									"literal string started at line %d is too long "
+									"multi-line string started at line %d is too long "
 									"(longer than %llu bytes)", start_line,
 									(long long) SIEVE_MAX_STRING_LEN);
 									lexer->token_type = STT_ERROR;
@@ -638,8 +704,10 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 							lexer->token_type = STT_STRING;
 							return TRUE;
 						} else if ( cr_shifted ) {
-							sieve_lexer_error(lexer,
-                                "found CR without subsequent LF in multi-line string literal");
+							/* Seen CR, but no LF */
+							sieve_lexer_error(lexer, 
+								"found stray carriage-return (CR) character "
+								"in multi-line string started at line %d", start_line);
                             lexer->token_type = STT_ERROR;
                             return FALSE;
 						}
@@ -652,22 +720,45 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 					}
   				
 					/* Scan the rest of the line */
-					while ( sieve_lexer_curchar(lexer) != '\n' ) {
-						if ( sieve_lexer_curchar(lexer) == -1 ) {
+					while ( sieve_lexer_curchar(lexer) != '\n' &&
+						sieve_lexer_curchar(lexer) != '\r' ) {
+
+						switch ( sieve_lexer_curchar(lexer) ) {
+						case -1:
 							sieve_lexer_error(lexer, 
 								"end of file before end of multi-line string");
  							lexer->token_type = STT_ERROR;
  							return FALSE;
- 						}
-						
-						if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
-  							str_append_c(str, sieve_lexer_curchar(lexer));
+						case '\0':
+							sieve_lexer_error(lexer,
+								"encountered NUL character in quoted string "
+								"started at line %d", start_line);
+							lexer->token_type = STT_ERROR;
+							return FALSE;
+						default:
+							if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
+  								str_append_c(str, sieve_lexer_curchar(lexer));
+						}
 
 						sieve_lexer_shift(lexer);
 					}
 
+					/* If exited loop due to CR, skip it */
+					if ( sieve_lexer_curchar(lexer) == '\r' ) {
+						sieve_lexer_shift(lexer);
+					}
+
+					/* Now we must see an LF */
+					if ( sieve_lexer_curchar(lexer) != '\n' ) {					
+						sieve_lexer_error(lexer, 
+							"found stray carriage-return (CR) character "
+							"in multi-line string started at line %d", start_line);
+ 						lexer->token_type = STT_ERROR;
+ 						return FALSE;
+					}
+						
 					if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
-						str_append_c(str, '\n');
+						str_append(str, "\r\n");
 
 					sieve_lexer_shift(lexer);
 				}
@@ -692,8 +783,8 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 	
 		/* Error (unknown character and EOF handled already) */
 		if ( lexer->token_type != STT_GARBAGE ) 
-			sieve_lexer_error(lexer, "unexpected character(s) starting with '%c'", 
-				sieve_lexer_curchar(lexer));
+			sieve_lexer_error(lexer, "unexpected character(s) starting with %s", 
+				_char_sanitize(sieve_lexer_curchar(lexer)));
 		sieve_lexer_shift(lexer);
 		lexer->token_type = STT_GARBAGE;
 		return FALSE;
