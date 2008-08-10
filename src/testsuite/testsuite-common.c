@@ -11,10 +11,12 @@
 #include "sieve.h"
 #include "sieve-error-private.h"
 #include "sieve-code.h"
+#include "sieve-message.h"
 #include "sieve-commands.h"
 #include "sieve-extensions.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
+#include "sieve-interpreter.h"
 #include "sieve-dump.h"
 
 #include "testsuite-objects.h"
@@ -114,11 +116,14 @@ void testsuite_message_init(pool_t namespaces_pool, const char *user)
 	envelope_auth = str_new(message_pool, 256);
 }
 
-void testsuite_message_set(string_t *message)
+void testsuite_message_set
+(const struct sieve_runtime_env *renv, string_t *message)
 {
 	mail_raw_close(_raw_message);
 
 	_testsuite_message_set(message);	
+
+	sieve_message_context_flush(renv->msgctx);
 }
 
 void testsuite_message_deinit(void)

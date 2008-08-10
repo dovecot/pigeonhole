@@ -9,6 +9,8 @@ struct sieve_message_context *sieve_message_context_create(void);
 void sieve_message_context_ref(struct sieve_message_context *msgctx);
 void sieve_message_context_unref(struct sieve_message_context **msgctx);
 
+void sieve_message_context_flush(struct sieve_message_context *msgctx);
+
 void sieve_message_context_extension_set
 	(struct sieve_message_context *msgctx, const struct sieve_extension *ext, 
 		void *context);

@@ -249,11 +249,13 @@ static bool arg_testsuite_object_generate
  * Testsuite core object implementation
  */
  
-static bool tsto_message_set_member(int id, string_t *value);
+static bool tsto_message_set_member
+	(const struct sieve_runtime_env *renv, int id, string_t *value);
 
 static int tsto_envelope_get_member_id(const char *identifier);
 static const char *tsto_envelope_get_member_name(int id);
-static bool tsto_envelope_set_member(int id, string_t *value);
+static bool tsto_envelope_set_member
+	(const struct sieve_runtime_env *renv, int id, string_t *value);
 
 const struct testsuite_object message_testsuite_object = { 
 	SIEVE_OBJECT("message",	&testsuite_object_operand, TESTSUITE_OBJECT_MESSAGE),
@@ -276,11 +278,12 @@ enum testsuite_object_envelope_field {
 	TESTSUITE_OBJECT_ENVELOPE_AUTH_USER
 };
 
-static bool tsto_message_set_member(int id, string_t *value) 
+static bool tsto_message_set_member
+(const struct sieve_runtime_env *renv, int id, string_t *value) 
 {
 	if ( id != -1 ) return FALSE;
 	
-	testsuite_message_set(value);
+	testsuite_message_set(renv, value);
 	
 	return TRUE;
 }
@@ -311,7 +314,8 @@ static const char *tsto_envelope_get_member_name(int id)
 	return NULL;
 }
 
-static bool tsto_envelope_set_member(int id, string_t *value)
+static bool tsto_envelope_set_member
+(const struct sieve_runtime_env *renv ATTR_UNUSED, int id, string_t *value)
 {
 	switch ( id ) {
 	case TESTSUITE_OBJECT_ENVELOPE_FROM: 

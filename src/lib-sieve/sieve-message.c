@@ -20,16 +20,13 @@ struct sieve_message_context {
 
 struct sieve_message_context *sieve_message_context_create(void)
 {
-	pool_t pool;
 	struct sieve_message_context *msgctx;
 	
-	pool = pool_alloconly_create("sieve_message_context", 1024);
-	msgctx = p_new(pool, struct sieve_message_context, 1);
-	msgctx->pool = pool;
+	msgctx = i_new(struct sieve_message_context, 1);
 	msgctx->refcount = 1;
-	
-	p_array_init(&msgctx->ext_contexts, pool, 4);
-	
+		
+	sieve_message_context_flush(msgctx);
+
 	return msgctx;
 }
 
@@ -46,8 +43,23 @@ void sieve_message_context_unref(struct sieve_message_context **msgctx)
 		return;
 	
 	pool_unref(&((*msgctx)->pool));
-	
+		
+	i_free(*msgctx);
 	*msgctx = NULL;
+}
+
+void sieve_message_context_flush(struct sieve_message_context *msgctx)
+{
+	pool_t pool;
+
+	if ( msgctx->pool != NULL ) {
+		pool_unref(&msgctx->pool);
+	}
+
+	pool = pool_alloconly_create("sieve_message_context", 1024);
+	msgctx->pool = pool;
+
+	p_array_init(&msgctx->ext_contexts, pool, sieve_extensions_get_count());
 }
 
 void sieve_message_context_extension_set

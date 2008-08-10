@@ -149,7 +149,7 @@ static int cmd_test_set_operation_execute
 		return SIEVE_EXEC_FAILURE;
 	}
 		
-	object->set_member(member_id, value);	
+	object->set_member(renv, member_id, value);	
 	return SIEVE_EXEC_OK;
 }
 

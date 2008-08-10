@@ -12,7 +12,8 @@ extern struct sieve_message_data testsuite_msgdata;
 void testsuite_message_init(pool_t namespaces_pool, const char *user);
 void testsuite_message_deinit(void);
 
-void testsuite_message_set(string_t *message);
+void testsuite_message_set
+	(const struct sieve_runtime_env *renv, string_t *message);
 
 void testsuite_envelope_set_sender(const char *value);
 void testsuite_envelope_set_recipient(const char *value);
