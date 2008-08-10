@@ -305,7 +305,7 @@ static int ext_body_operation_execute
 	int ret = SIEVE_EXEC_OK;
 	int opt_code = 0;
 	int mret;
-	const struct sieve_comparator *cmp = &i_octet_comparator;
+	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
 	enum tst_body_transform transform;
 	struct sieve_coded_stringlist *key_list, *ctype_list = NULL;
