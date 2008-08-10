@@ -1,6 +1,8 @@
 Next (in order of descending priority/precedence):
 * Full standards compliance review for the engine and all fully implemented 
   sieve extensions. Issues discovered so far:
+	- Body: contains various bugs that need to be resolved for standards
+	  compliance.
 	- Include: import command must only trigger an error about unknown 
 	  exported variables at runtime, otherwise managesieve upload is 
 	  impossible.

@@ -1,4 +1,6 @@
 require "vnd.dovecot.testsuite";
+require "relational";
+require "comparator-i;ascii-numeric";
 
 require "body";
 
@@ -93,3 +95,94 @@ test "No body" {
 		test_fail "matched against non-existant body (:matches \"*\")";
 	}
 }
+
+/*
+ *
+ */
+
+test_set "message" text:
+From: Whomever <whomever@domain.dom>
+To: Someone <someone@domain.com>
+Date: Fri, 08 Aug 2008 10:14:34 -0700
+Subject: whatever
+Content-Type: multipart/mixed; boundary=outer
+
+This is a multi-part message in MIME format.
+
+--outer
+Content-Type: multipart/alternative; boundary=inner
+
+This is a nested multi-part message in MIME format.
+
+--inner
+Content-Type: text/plain; charset="us-ascii"
+
+Hello
+
+--inner
+Content-Type: text/html; charset="us-ascii"
+
+<html><body>Hello</body></html>
+
+--inner--
+
+This is the end of the inner MIME multipart.
+
+--outer
+Content-Type: message/rfc822
+From: Someone Else <someone.else@domain.dom>
+Subject: hello request
+
+Please say Hello
+
+--outer--
+
+This is the end of the outer MIME multipart.
+.
+;
+
+test "RFC nested example - :content \"text\"" {
+	if not body :content "text" :contains "html" {
+		test_fail "failed to acquire nested MIME body part (1)";	
+	}
+
+	if not body :content "text/html" :contains "hello" {
+		test_fail "failed to acquire nested MIME body part (2)";	
+	}
+	
+	if not body :content "text/plain" :contains "hello" {
+        test_fail "failed to acquire nested MIME body part (3)";
+    }
+
+	if not body :content "text" :contains "hello" {
+        test_fail "failed to acquire nested MIME body part (4)";
+    }
+
+/* FIXME: fails
+	if not body :content "text" :count "eq" :comparator "i;ascii-numeric" "2" {
+		test_fail "matched wrong number of \"text/*\" body parts";
+	}*/
+}
+
+/* FIXME: fails
+test "RFC nested example - :content \"multipart\"" {
+	if not body :content "multipart" :contains
+		"This is a multi-part message in MIME format" {
+		test_fail "missed first multipart body part";
+	}
+
+	if not body :content "multipart" :contains
+		"This is a nested multi-part message in MIME format" {
+		test_fail "missed second multipart body part";
+	}
+	
+	if not body :content "multipart" :contains
+		"This is the end of the inner MIME multipart" {
+		test_fail "missed third multipart body part";
+	}
+
+	if not body :content "multipart" :contains
+		"This is the end of the outer MIME multipart." {
+		test_fail "missed fourth multipart body part";
+	}	
+}*/
