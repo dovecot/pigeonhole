@@ -16,7 +16,7 @@ struct sieve_script *sieve_script_create_in_directory
 void sieve_script_ref(struct sieve_script *script);
 void sieve_script_unref(struct sieve_script **script);
 
-/* Stream manageement */
+/* Stream management */
 
 struct istream *sieve_script_open(struct sieve_script *script, bool *deleted_r);
 void sieve_script_close(struct sieve_script *script);

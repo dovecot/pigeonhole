@@ -89,6 +89,7 @@ static int lda_sieve_run
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 	const char *scriptlog;
+	bool exists = TRUE;
 	int ret = 0;
 
 	/* Create error handler */
@@ -100,12 +101,19 @@ static int lda_sieve_run
 	if ( debug )
 		sieve_sys_info("opening script %s", script_path);
 
-	if ( (sbin=sieve_open(script_path, ehandler)) == NULL ) {
-		sieve_sys_error("failed to open script %s; "
-			"log should be available as %s", script_path, scriptlog);
+	if ( (sbin=sieve_open(script_path, ehandler, &exists)) == NULL ) {
+
+		ret = sieve_get_errors(ehandler) > 0 ? -1 : 0;
+
+		if ( debug ) {
+			if ( !exists && ret == 0 ) 
+				sieve_sys_info("script file %s is missing; ending sieve processing", script_path);
+			else
+				sieve_sys_info("failed to openscript file %s; ending sieve processing", script_path);
+		}
 
 		sieve_error_handler_unref(&ehandler);
-		return -1;
+		return ret;
 	}
 
 	/* Log the messages to the system error handlers as well from this moment
@@ -179,6 +187,7 @@ static int lda_sieve_run
 	case SIEVE_EXEC_FAILURE:
 		sieve_sys_error("execution of script %s failed, but implicit keep was successful", 
 			script_path);
+		ret = SIEVE_EXEC_OK;
 		break;
 	case SIEVE_EXEC_BIN_CORRUPT:		
    	    sieve_sys_error("!!BUG!!: binary compiled from %s is still corrupt; bailing out", 
