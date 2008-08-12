@@ -12,6 +12,7 @@
 #include "sieve-ext-variables.h"
 
 #include "ext-include-common.h"
+#include "ext-include-limits.h"
 #include "ext-include-variables.h"
 #include "ext-include-binary.h"
 
@@ -122,7 +123,7 @@ const struct ext_include_script_info *ext_include_binary_script_include
 {
 	pool_t pool = sieve_binary_pool(binctx->binary);
 	struct ext_include_script_info *incscript;
-	
+
 	incscript = p_new(pool, struct ext_include_script_info, 1);
 	incscript->id = array_count(&binctx->include_index)+1;
 	incscript->script = script;
@@ -170,6 +171,12 @@ const struct ext_include_script_info *ext_include_binary_script_get
 {
 	return (struct ext_include_script_info *)
 		hash_lookup(binctx->included_scripts, script);
+}
+
+unsigned int ext_include_binary_script_get_count
+(struct ext_include_binary_context *binctx)
+{
+	return array_count(&binctx->include_index);
 }
 
 /*
@@ -228,7 +235,14 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 	}
 	
 	binctx = ext_include_binary_get_context(sbin);
-		
+
+	/* Check include limit */	
+	if ( depcount > EXT_INCLUDE_MAX_INCLUDES ) {
+		sieve_sys_error("include: binary %s includes too many scripts (%u > %u)",
+			sieve_binary_path(sbin), depcount, EXT_INCLUDE_MAX_INCLUDES); 
+		return FALSE;
+	}
+	
 	/* Read dependencies */
 	for ( i = 0; i < depcount; i++ ) {
 		unsigned int block_id;
@@ -250,7 +264,7 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 		if ( location >= EXT_INCLUDE_LOCATION_INVALID ) {
 			/* Binary is corrupt, recompile */
 			sieve_sys_error("include: dependency block %d of binary %s "
-				"reports invalid script location (id %d).", 
+				"reports invalid script location (id %d)", 
 				block, sieve_binary_path(sbin), location); 
 			return FALSE;
 		}		

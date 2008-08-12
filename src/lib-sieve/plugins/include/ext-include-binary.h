@@ -34,6 +34,8 @@ const struct ext_include_script_info *ext_include_binary_script_get_included
 	(struct ext_include_binary_context *binctx, unsigned int include_id);
 const struct ext_include_script_info *ext_include_binary_script_get
 	(struct ext_include_binary_context *binctx, struct sieve_script *script);
+unsigned int ext_include_binary_script_get_count
+	(struct ext_include_binary_context *binctx);
 
 bool ext_include_binary_dump(struct sieve_dumptime_env *denv);
 		

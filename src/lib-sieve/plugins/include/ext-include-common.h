@@ -6,10 +6,6 @@
 
 #include "sieve-common.h"
 
-/* Configuration */
-
-#define EXT_INCLUDE_MAX_NESTING_LEVEL 10
-
 /* 
  * Forward declarations
  */

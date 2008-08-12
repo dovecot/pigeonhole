@@ -11,6 +11,7 @@
 #include "sieve-interpreter.h"
 
 #include "ext-include-common.h"
+#include "ext-include-limits.h"
 #include "ext-include-binary.h"
 #include "ext-include-variables.h"
 
@@ -334,13 +335,22 @@ bool ext_include_generate_include
 	{	
 		unsigned int inc_block_id, this_block_id;
 		const char *script_name = sieve_script_name(script);
+
+		/* Check whether include limit is exceeded */
+		if ( ext_include_binary_script_get_count(binctx) >= 
+			EXT_INCLUDE_MAX_INCLUDES ) {
+	 		sieve_command_generate_error(gentr, cmd, 
+	 			"failed to include script '%s': no more than %u includes allowed", 
+				str_sanitize(script_name, 80), EXT_INCLUDE_MAX_INCLUDES);
+	 		return FALSE;			
+		}
 		
 		/* No, allocate a new block in the binary and mark the script as included.
 		 */
 		inc_block_id = sieve_binary_block_create(sbin);
 		included = ext_include_binary_script_include
 			(binctx, script, location, inc_block_id);
-		
+
 		/* Parse */
 		if ( (ast = sieve_parse(script, ehandler)) == NULL ) {
 	 		sieve_command_generate_error(gentr, cmd, 
