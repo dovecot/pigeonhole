@@ -240,6 +240,26 @@ static inline bool sieve_variable_valid
 	return ( index < array_count(&storage->scope->variable_index) );
 }
 
+bool sieve_variable_get_identifier
+(struct sieve_variable_storage *storage, unsigned int index, const char **identifier)
+{
+	struct sieve_variable * const *var;
+	*identifier = NULL;
+
+	if ( storage->scope == NULL ) return TRUE;
+
+	/* FIXME: direct invasion of the scope object is a bit ugly */
+	if ( index >= array_count(&storage->scope->variable_index) )
+		return FALSE;
+
+	var = array_idx(&storage->scope->variable_index, index);
+
+	if ( *var != NULL )
+		*identifier = (*var)->identifier;
+
+	return TRUE;
+}
+
 bool sieve_variable_get
 (struct sieve_variable_storage *storage, unsigned int index, string_t **value)
 {

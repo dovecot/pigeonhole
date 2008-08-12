@@ -82,6 +82,9 @@ bool sieve_variable_get_modifiable
 bool sieve_variable_assign
 	(struct sieve_variable_storage *storage, unsigned int index, 
 		const string_t *value);
+bool sieve_variable_get_identifier
+	(struct sieve_variable_storage *storage, unsigned int index, 
+		const char **identifier);
 
 /*
  * Variables access
