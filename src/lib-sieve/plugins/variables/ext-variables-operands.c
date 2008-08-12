@@ -88,7 +88,7 @@ static bool opr_variable_read_value
 	if ( !sieve_binary_read_extension(renv->sbin, address, &code, &ext) )
 		return FALSE;
 
-	storage = sieve_ext_variables_get_storage(renv->interp, ext);
+	storage = sieve_ext_variables_get_storage(renv->interp, ext, FALSE);
 	if ( storage == NULL ) 
 		return FALSE;
 	
@@ -123,7 +123,7 @@ bool sieve_variable_operand_read_data
 	if ( !sieve_binary_read_extension(renv->sbin, address, &code, &ext) )
         return FALSE;
 		
-	*storage = sieve_ext_variables_get_storage(renv->interp, ext);
+	*storage = sieve_ext_variables_get_storage(renv->interp, ext, FALSE);
 	if ( *storage == NULL )	
 		return FALSE;
 	

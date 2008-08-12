@@ -25,14 +25,17 @@
 #include "ext-imapflags-common.h"
 
 
-/* Forward declarations */
+/* 
+ * Forward declarations 
+ */
 
 static bool ext_imapflags_load(int ext_id);
 static bool ext_imapflags_validator_load(struct sieve_validator *valdtr);
-static bool ext_imapflags_runtime_load
-	(const struct sieve_runtime_env *renv);
+static bool ext_imapflags_interpreter_load(struct sieve_interpreter *interp);
 
-/* Operations */
+/* 
+ * Operations 
+ */
 
 extern const struct sieve_operation setflag_operation;
 extern const struct sieve_operation addflag_operation;
@@ -42,11 +45,16 @@ extern const struct sieve_operation hasflag_operation;
 const struct sieve_operation *imapflags_operations[] = 
 	{ &setflag_operation, &addflag_operation, &removeflag_operation, &hasflag_operation };
 
-/* Operands */
+/* 
+ * Operands 
+ */
 
-const struct sieve_operand flags_side_effect_operand;
+extern const struct sieve_operand flags_side_effect_operand;
 
 /* Extension definitions */
+
+extern const struct sieve_interpreter_extension 
+	imapflags_interpreter_extension;
 
 int ext_imapflags_my_id;
 
@@ -55,9 +63,9 @@ const struct sieve_extension imapflags_extension = {
 	&ext_imapflags_my_id,
 	ext_imapflags_load,
 	ext_imapflags_validator_load, 
-	NULL, NULL,
-	ext_imapflags_runtime_load, 
-	NULL, NULL,
+	NULL, 
+	ext_imapflags_interpreter_load, 
+	NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(imapflags_operations), 
 	SIEVE_EXT_DEFINE_OPERAND(flags_side_effect_operand)
 };
@@ -92,11 +100,12 @@ static bool ext_imapflags_validator_load
  * Interpreter context
  */
 
-static bool ext_imapflags_runtime_load
-	(const struct sieve_runtime_env *renv)
+static bool ext_imapflags_interpreter_load
+(struct sieve_interpreter *interp)
 {
-	ext_imapflags_runtime_init(renv);
-	
+	sieve_interpreter_extension_register
+        (interp, &imapflags_interpreter_extension, NULL);
+
 	return TRUE;
 }
 

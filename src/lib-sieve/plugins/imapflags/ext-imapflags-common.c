@@ -254,11 +254,18 @@ static string_t *_get_flags_string
 
 /* Initialization */
 
-void ext_imapflags_runtime_init(const struct sieve_runtime_env *renv)
+static void ext_imapflags_runtime_init
+	(const struct sieve_runtime_env *renv, void *context ATTR_UNUSED)
 {	
 	sieve_result_add_implicit_side_effect
 		(renv->result, &act_store, &flags_side_effect, NULL);
 }
+
+struct sieve_interpreter_extension imapflags_interpreter_extension = {
+    &imapflags_extension,
+	ext_imapflags_runtime_init,
+    NULL,
+};
 
 /* Flag operations */
 

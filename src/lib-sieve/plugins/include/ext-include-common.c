@@ -44,6 +44,8 @@ struct ext_include_interpreter_context {
 	unsigned int inc_block_id;
 	bool returned;
 	struct ext_include_interpreter_context *parent;
+
+	struct sieve_variable_storage *global_variables;
 };
 
 /* 
@@ -218,8 +220,24 @@ void ext_include_register_generator_context
  * Interpreter context management 
  */
 
+static void ext_include_runtime_init
+    (const struct sieve_runtime_env *renv, void *context)
+{
+	struct ext_include_interpreter_context *ctx = 
+		(struct ext_include_interpreter_context *) context;
+
+	sieve_ext_variables_set_storage
+		(renv->interp, ctx->global_variables, &include_extension);	
+}
+
+static struct sieve_interpreter_extension include_interpreter_extension = {
+    &include_extension,
+    ext_include_runtime_init,
+    NULL,
+};
+
 static struct ext_include_interpreter_context *
-	ext_include_create_interpreter_context
+	ext_include_interpreter_context_create
 (struct sieve_interpreter *interp, 
 	struct ext_include_interpreter_context *parent, 
 	struct sieve_script *script, unsigned int block_id)
@@ -232,11 +250,15 @@ static struct ext_include_interpreter_context *
 	ctx->interp = interp;
 	ctx->script = script;
 	ctx->block_id = block_id;
-	if ( parent == NULL ) 
+
+	if ( parent == NULL ) {
 		ctx->nesting_level = 0;
-	else
+		ctx->global_variables = sieve_variable_storage_create(pool, NULL);
+	} else {
 		ctx->nesting_level = parent->nesting_level + 1;
-	
+		ctx->global_variables = parent->global_variables;
+	}
+
 	return ctx;
 }
 
@@ -249,15 +271,16 @@ static inline struct ext_include_interpreter_context *
 }
 
 static inline struct ext_include_interpreter_context *
-	ext_include_initialize_interpreter_context
+	ext_include_interpreter_context_init_child
 (struct sieve_interpreter *interp, 
 	struct ext_include_interpreter_context *parent, 
 	struct sieve_script *script, unsigned int block_id)
 {
 	struct ext_include_interpreter_context *ctx = 
-		ext_include_create_interpreter_context(interp, parent, script, block_id);
+		ext_include_interpreter_context_create(interp, parent, script, block_id);
 		
-	sieve_interpreter_extension_set_context(interp, &include_extension, ctx);
+	sieve_interpreter_extension_register
+		(interp, &include_interpreter_extension, ctx);
 	
 	return ctx;
 }
@@ -267,14 +290,18 @@ void ext_include_interpreter_context_init
 {
 	struct ext_include_interpreter_context *ctx = 
 		ext_include_get_interpreter_context(interp);
-	struct sieve_script *script = sieve_interpreter_script(interp);
-	
+
+	/* Is this is the top-level interpreter ? */	
 	if ( ctx == NULL ) {
-		ctx = ext_include_create_interpreter_context
+		struct sieve_script *script;
+
+		/* Initialize top context */
+		script = sieve_interpreter_script(interp);
+		ctx = ext_include_interpreter_context_create
 			(interp, NULL, script, SBIN_SYSBLOCK_MAIN_PROGRAM);
 		
-		sieve_interpreter_extension_set_context
-			(interp, &include_extension, (void *) ctx);		
+		sieve_interpreter_extension_register
+			(interp, &include_interpreter_extension, (void *) ctx);			
 	}
 }
 
@@ -431,7 +458,6 @@ bool ext_include_execute_include
 		struct sieve_error_handler *ehandler = 
 			sieve_interpreter_get_error_handler(renv->interp);
 		struct sieve_interpreter *subinterp;
-		struct sieve_variable_storage *varstrg;
 		unsigned int this_block_id;
 		bool interrupted = FALSE;	
 
@@ -441,13 +467,9 @@ bool ext_include_execute_include
 		 */
 		subinterp = sieve_interpreter_create
 			(renv->sbin, ehandler, renv->trace_stream);			
-		curctx = ext_include_initialize_interpreter_context
+		curctx = ext_include_interpreter_context_init_child
 			(subinterp, ctx, NULL, block_id);
-			
-		/* Create variable storage for global variables */
-		varstrg = sieve_ext_variables_get_storage(renv->interp, &include_extension);
-		sieve_ext_variables_set_storage(subinterp, varstrg, &include_extension);
-	
+				
 		/* Activate and start the top-level included script */
 		if ( sieve_binary_block_set_active(renv->sbin, block_id, &this_block_id) ) 			
 			result = ( sieve_interpreter_start
@@ -496,7 +518,7 @@ bool ext_include_execute_include
 						/* Create sub-interpreter */
 						subinterp = sieve_interpreter_create
 							(renv->sbin, ehandler, renv->trace_stream);			
-						curctx = ext_include_initialize_interpreter_context
+						curctx = ext_include_interpreter_context_init_child
 							(subinterp, curctx, NULL, curctx->inc_block_id);
 													
 						/* Activate the sub-include's block */

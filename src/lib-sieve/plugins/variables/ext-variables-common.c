@@ -214,15 +214,18 @@ struct sieve_variable * const *sieve_variable_scope_get_variables
 
 struct sieve_variable_storage {
 	pool_t pool;
+	struct sieve_variable_scope *scope;
 	ARRAY_DEFINE(var_values, string_t *); 
 };
 
-struct sieve_variable_storage *sieve_variable_storage_create(pool_t pool)
+struct sieve_variable_storage *sieve_variable_storage_create
+(pool_t pool, struct sieve_variable_scope *scope)
 {
 	struct sieve_variable_storage *storage;
 	
 	storage = p_new(pool, struct sieve_variable_storage, 1);
 	storage->pool = pool;
+	storage->scope = scope;
 		
 	p_array_init(&storage->var_values, pool, 4);
 
@@ -374,7 +377,7 @@ ext_variables_interpreter_context_create(struct sieve_interpreter *interp)
 	struct ext_variables_interpreter_context *ctx;
 	
 	ctx = p_new(pool, struct ext_variables_interpreter_context, 1);
-	ctx->local_storage = sieve_variable_storage_create(pool);
+	ctx->local_storage = sieve_variable_storage_create(pool, NULL);
 	p_array_init(&ctx->ext_storages, pool, sieve_extensions_get_count());
 
 	sieve_interpreter_extension_set_context
@@ -402,7 +405,8 @@ ext_variables_interpreter_context_get(struct sieve_interpreter *interp)
 }
 
 struct sieve_variable_storage *sieve_ext_variables_get_storage
-	(struct sieve_interpreter *interp, const struct sieve_extension *ext)
+(struct sieve_interpreter *interp, const struct sieve_extension *ext, 
+	bool create)
 {
 	struct ext_variables_interpreter_context *ctx = 
 		ext_variables_interpreter_context_get(interp);
@@ -420,12 +424,17 @@ struct sieve_variable_storage *sieve_ext_variables_get_storage
 	}
 	
 	if ( storage == NULL || *storage == NULL ) {
-		pool_t pool = sieve_interpreter_pool(interp);
-		struct sieve_variable_storage *strg = sieve_variable_storage_create(pool);
+		if ( create ) {
+			pool_t pool = sieve_interpreter_pool(interp);
+			struct sieve_variable_storage *strg = 
+				sieve_variable_storage_create(pool, NULL);
 		
-		array_idx_set(&ctx->ext_storages, (unsigned int) ext_id, &strg);
+			array_idx_set(&ctx->ext_storages, (unsigned int) ext_id, &strg);
 		
-		return strg;		
+			return strg;		
+		}
+
+		return NULL;
 	}
 	
 	return *storage;

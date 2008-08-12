@@ -113,7 +113,7 @@ void sieve_interpreter_free(struct sieve_interpreter **interp)
 
 	sieve_error_handler_unref(&(*interp)->ehandler);
 
-	/* Signal registered extensions that the validator is being destroyed */
+	/* Signal registered extensions that the interpreter is being destroyed */
 	extrs = array_get(&(*interp)->extensions, &ext_count);
 	for ( i = 0; i < ext_count; i++ ) {
 		if ( extrs[i].int_ext != NULL && extrs[i].int_ext->free != NULL )
@@ -431,9 +431,8 @@ int sieve_interpreter_start
 	const struct sieve_script_env *senv, struct sieve_message_context *msgctx, 
 	struct sieve_result *result, bool *interrupted) 
 {
-	struct sieve_binary *sbin = interp->runenv.sbin;
-	unsigned int i;
-	int idx;
+    const struct sieve_interpreter_extension_reg *extrs;
+    unsigned int ext_count, i;
 	
 	interp->runenv.msgdata = msgdata;
 	interp->runenv.result = result;		
@@ -445,23 +444,13 @@ int sieve_interpreter_start
 		interp->runenv.msgctx = msgctx;
 		sieve_message_context_ref(msgctx);
 	}
-	
-	/* Pre-load core language features implemented as 'extensions' */
-	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
-		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
-		
-		if ( ext->runtime_load != NULL )
-			(void)ext->runtime_load(&interp->runenv);		
-	}
 
-	/* Load other extensions listed in the binary */
-	for ( idx = 0; idx < sieve_binary_extensions_count(sbin); idx++ ) {
-		const struct sieve_extension *ext = 
-			sieve_binary_extension_get_by_index(sbin, idx);
-		
-		if ( ext->runtime_load != NULL )
-			ext->runtime_load(&interp->runenv);
-	}
+    /* Signal registered extensions that the interpreter is being run */
+    extrs = array_get(&interp->extensions, &ext_count);
+    for ( i = 0; i < ext_count; i++ ) {
+        if ( extrs[i].int_ext != NULL && extrs[i].int_ext->run != NULL )
+            extrs[i].int_ext->run(&interp->runenv, extrs[i].context);
+    }
 
 	return sieve_interpreter_continue(interp, interrupted); 
 }

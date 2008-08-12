@@ -45,10 +45,6 @@ void ext_imapflags_attach_flags_tag
 
 const struct sieve_operand flags_side_effect_operand;
 
-/* Initialization */
-
-void ext_imapflags_runtime_init(const struct sieve_runtime_env *renv);
-
 /* Flag registration */
 
 struct ext_imapflags_iter {

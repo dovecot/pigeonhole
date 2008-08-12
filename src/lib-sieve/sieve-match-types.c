@@ -132,6 +132,7 @@ static void mtch_interpreter_free
 
 struct sieve_interpreter_extension mtch_interpreter_extension = {
 	&match_type_extension,
+	NULL,
 	mtch_interpreter_free
 };
 

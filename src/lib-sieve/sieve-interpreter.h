@@ -100,6 +100,7 @@ void _sieve_runtime_trace_error
 struct sieve_interpreter_extension {
 	const struct sieve_extension *ext;	
 
+	void (*run)(const struct sieve_runtime_env *renv, void *context);
 	void (*free)(struct sieve_interpreter *interp, void *context);
 };
 
