@@ -428,66 +428,78 @@ static void flags_list_set_flags
 
 /* Flag registration */
 
-void ext_imapflags_set_flags
+int ext_imapflags_set_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 	unsigned int var_index, string_t *flags)
 {
 	string_t *cur_flags;
 	
-	if ( storage != NULL ) 
-		sieve_variable_get_modifiable(storage, var_index, &cur_flags);
-	else
+	if ( storage != NULL ) {
+		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
+			return SIEVE_EXEC_BIN_CORRUPT;
+	} else
 		cur_flags = _get_flags_string(renv->result);
 
 	if ( cur_flags != NULL )
 		flags_list_set_flags(cur_flags, flags);		
+
+	return SIEVE_EXEC_OK;
 }
 
-void ext_imapflags_add_flags
+int ext_imapflags_add_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 	unsigned int var_index, string_t *flags)
 {
 	string_t *cur_flags;
 	
-	if ( storage != NULL ) 
-		sieve_variable_get_modifiable(storage, var_index, &cur_flags);
-	else
+	if ( storage != NULL ) {
+		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
+			return SIEVE_EXEC_BIN_CORRUPT;
+	} else
 		cur_flags = _get_flags_string(renv->result);
 	
 	if ( cur_flags != NULL )
-		flags_list_add_flags(cur_flags, flags);		
+		flags_list_add_flags(cur_flags, flags);
+	
+	return SIEVE_EXEC_OK;	
 }
 
-void ext_imapflags_remove_flags
+int ext_imapflags_remove_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 	unsigned int var_index, string_t *flags)
 {
 	string_t *cur_flags;
 	
-	if ( storage != NULL ) 
-		sieve_variable_get_modifiable(storage, var_index, &cur_flags);
-	else
+	if ( storage != NULL ) {
+		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
+			return SIEVE_EXEC_BIN_CORRUPT;
+	} else
 		cur_flags = _get_flags_string(renv->result);
 	
 	if ( cur_flags != NULL )
 		flags_list_remove_flags(cur_flags, flags);		
+
+	return SIEVE_EXEC_OK;
 }
 
-const char *ext_imapflags_get_flags_string
+int ext_imapflags_get_flags_string
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
-	unsigned int var_index)
+	unsigned int var_index, const char **flags)
 {
 	string_t *cur_flags;
 	
-	if ( storage != NULL ) 
-		sieve_variable_get_modifiable(storage, var_index, &cur_flags);
-	else
+	if ( storage != NULL ) {
+		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
+			return SIEVE_EXEC_BIN_CORRUPT;
+	} else
 		cur_flags = _get_flags_string(renv->result);
 	
 	if ( cur_flags == NULL )
-		return "";
+		*flags = "";
+	else 
+		*flags = str_c(cur_flags);
 
-	return str_c(cur_flags);
+	return SIEVE_EXEC_OK;
 }
 
 void ext_imapflags_get_flags_init

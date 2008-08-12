@@ -83,7 +83,9 @@ static int cmd_setflag_operation_execute
 	/* Iterate through all flags to set */
 	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flag_item)) && 
 		flag_item != NULL ) {
-		ext_imapflags_set_flags(renv, storage, var_index, flag_item);
+
+		if ( (ret=ext_imapflags_set_flags(renv, storage, var_index, flag_item)) <= 0)
+			return ret;
 	}
 
 	if ( !result ) {

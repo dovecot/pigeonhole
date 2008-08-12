@@ -59,17 +59,17 @@ void ext_imapflags_iter_init
 const char *ext_imapflags_iter_get_flag
 	(struct ext_imapflags_iter *iter);
 
-const char *ext_imapflags_get_flags_string
+int ext_imapflags_get_flags_string
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
-	unsigned int var_index);
+	unsigned int var_index, const char **flags);
 
-void ext_imapflags_set_flags
+int ext_imapflags_set_flags
 	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 		unsigned int var_index, string_t *flags);
-void ext_imapflags_add_flags
+int ext_imapflags_add_flags
 	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 		unsigned int var_index, string_t *flags);
-void ext_imapflags_remove_flags
+int ext_imapflags_remove_flags
 	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 		unsigned int var_index, string_t *flags);
 

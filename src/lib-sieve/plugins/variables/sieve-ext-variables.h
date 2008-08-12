@@ -73,13 +73,13 @@ struct sieve_variable_storage;
 
 struct sieve_variable_storage *sieve_variable_storage_create
 	(pool_t pool, struct sieve_variable_scope *scope);
-void sieve_variable_get
+bool sieve_variable_get
 	(struct sieve_variable_storage *storage, unsigned int index, 
 		string_t **value);
-void sieve_variable_get_modifiable
+bool sieve_variable_get_modifiable
 	(struct sieve_variable_storage *storage, unsigned int index, 
 		string_t **value);
-void sieve_variable_assign
+bool sieve_variable_assign
 	(struct sieve_variable_storage *storage, unsigned int index, 
 		const string_t *value);
 

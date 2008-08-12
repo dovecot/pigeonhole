@@ -85,7 +85,9 @@ static int cmd_removeflag_operation_execute
 	/* Iterate through all flags to remove */
 	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flag_item)) && 
 		flag_item != NULL ) {
-		ext_imapflags_remove_flags(renv, storage, var_index, flag_item);
+
+		if ( (ret=ext_imapflags_remove_flags(renv, storage, var_index, flag_item)) <= 0)
+			return ret;
 	}
 
 	if ( !result ) {	

@@ -347,7 +347,8 @@ static int cmd_set_operation_execute
 		
 		/* Actually assign the value if all is well */
 		if ( value != NULL ) {
-			sieve_variable_assign(storage, var_index, value);
+			if ( !sieve_variable_assign(storage, var_index, value) )
+				ret = SIEVE_EXEC_BIN_CORRUPT;
 		}	
 	} T_END;
 			

@@ -97,7 +97,8 @@ static bool opr_variable_read_value
 		 * actually read the argument.
 		 */
 		if ( str != NULL ) {
-			sieve_variable_get(storage, index, str);
+			if ( !sieve_variable_get(storage, index, str) )
+				return FALSE;
 		
 			if ( *str == NULL ) *str = t_str_new(0);
 		}

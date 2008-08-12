@@ -237,12 +237,10 @@ static inline bool sieve_variable_valid
 {
 	if ( storage->scope == NULL ) return TRUE;
 
-	printf( "VALID %d\n", index);
-
 	return ( index < array_count(&storage->scope->variable_index) );
 }
 
-void sieve_variable_get
+bool sieve_variable_get
 (struct sieve_variable_storage *storage, unsigned int index, string_t **value)
 {
 	*value = NULL;
@@ -253,32 +251,36 @@ void sieve_variable_get
 		varent = array_idx(&storage->var_values, index);
 		
 		*value = *varent;
-	}
+	} else if ( !sieve_variable_valid(storage, index) )
+		return FALSE;
+
+	return TRUE;
 } 
 
-void sieve_variable_get_modifiable
+bool sieve_variable_get_modifiable
 (struct sieve_variable_storage *storage, unsigned int index, string_t **value)
 {
-	sieve_variable_get(storage, index, value);
+	if ( !sieve_variable_get(storage, index, value) )
+		return FALSE;
 	
-	if ( *value == NULL && sieve_variable_valid(storage, index) ) {
+	if ( *value == NULL ) {
 		*value = str_new(storage->pool, 256);
 		array_idx_set(&storage->var_values, index, value);	
-	} 
+	}
+
+	return TRUE; 
 }
 
-void sieve_variable_assign
+bool sieve_variable_assign
 (struct sieve_variable_storage *storage, unsigned int index, 
 	const string_t *value)
 {
 	string_t *varval;
 	
-	sieve_variable_get(storage, index, &varval);
+	if ( !sieve_variable_get(storage, index, &varval) ) 
+		return FALSE;
 
 	if ( varval == NULL )  {
-		if ( !sieve_variable_valid(storage, index) )
-			return;
-
 		varval = str_new(storage->pool, str_len(value));
 		array_idx_set(&storage->var_values, index, &varval);	
 	} 
@@ -289,6 +291,8 @@ void sieve_variable_assign
 	/* Just a precaution, caller should prevent this in the first place */
 	if ( str_len(varval) > SIEVE_VARIABLES_MAX_VARIABLE_SIZE )
 		str_truncate(varval, SIEVE_VARIABLES_MAX_VARIABLE_SIZE);
+
+	return TRUE;
 }
 
 /*
