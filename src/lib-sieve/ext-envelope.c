@@ -52,7 +52,7 @@ const struct sieve_extension envelope_extension = {
 	&ext_my_id,
 	ext_envelope_load,
 	ext_envelope_validator_load, 
-	NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATION(envelope_operation), 
 	SIEVE_EXT_DEFINE_NO_OPERANDS 
 };

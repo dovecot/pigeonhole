@@ -69,9 +69,9 @@ struct sieve_extension variables_extension = {
 	&ext_variables_my_id,
 	ext_variables_load,
 	ext_variables_validator_load, 
-	NULL, 
+	NULL,
 	ext_variables_interpreter_load,
-	NULL, NULL, NULL,
+	NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_variables_operations), 
 	SIEVE_EXT_DEFINE_OPERANDS(ext_variables_operands)
 };

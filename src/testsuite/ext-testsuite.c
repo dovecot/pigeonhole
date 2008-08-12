@@ -87,7 +87,7 @@ const struct sieve_extension testsuite_extension = {
 	ext_testsuite_load,
 	ext_testsuite_validator_load,
 	ext_testsuite_generator_load,
-	NULL, NULL,
+	NULL,
 	ext_testsuite_binary_load, 
 	NULL, 
 	SIEVE_EXT_DEFINE_OPERATIONS(testsuite_operations),
