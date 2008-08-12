@@ -21,7 +21,11 @@
 #include "ext-variables-name.h"
 #include "ext-variables-modifiers.h"
 
-/* Forward declarations */
+/* 
+ * Forward declarations 
+ */
+
+/* Core modifiers */
 
 extern const struct ext_variables_set_modifier lower_modifier;
 extern const struct ext_variables_set_modifier upper_modifier;
@@ -37,12 +41,16 @@ const struct ext_variables_set_modifier *default_set_modifiers[] = {
 
 const unsigned int default_set_modifiers_count = 
 	N_ELEMENTS(default_set_modifiers);
-	
-/* Variable scope */
+
+/*
+ * Variable scope 
+ */
 
 struct sieve_variable_scope {
 	pool_t pool;
 	int refcount;
+
+	struct sieve_variable *error_var;
 
 	const struct sieve_extension *ext;
 
@@ -100,10 +108,25 @@ pool_t sieve_variable_scope_pool(struct sieve_variable_scope *scope)
 struct sieve_variable *sieve_variable_scope_declare
 (struct sieve_variable_scope *scope, const char *identifier)
 {
-	struct sieve_variable *new_var = p_new(scope->pool, struct sieve_variable, 1);
+	struct sieve_variable *new_var;
+
+	new_var = p_new(scope->pool, struct sieve_variable, 1);
+	new_var->ext = scope->ext;
+
+	if ( array_count(&scope->variable_index) >= SIEVE_VARIABLES_MAX_SCOPE_SIZE ) {
+		if ( scope->error_var == NULL ) {
+			new_var->identifier = "@ERROR@";
+			new_var->index = 0;
+			
+			scope->error_var = new_var;
+			return NULL;
+		}
+
+		return scope->error_var;
+	}
+	
 	new_var->identifier = p_strdup(scope->pool, identifier);
 	new_var->index = array_count(&scope->variable_index);
-	new_var->ext = scope->ext;
 
 	hash_insert(scope->variables, (void *) new_var->identifier, (void *) new_var);
 	array_append(&scope->variable_index, &new_var, 1);
@@ -117,7 +140,6 @@ struct sieve_variable *sieve_variable_scope_get_variable
 	struct sieve_variable *var = 
 		(struct sieve_variable *) hash_lookup(scope->variables, identifier);
 
-	
 	if ( var == NULL && declare ) {
 		var = sieve_variable_scope_declare(scope, identifier);
 	}
@@ -133,7 +155,9 @@ struct sieve_variable *sieve_variable_scope_import
 		
 	hash_insert(scope->variables, (void *) new_var->identifier, (void *) new_var);
 	
-	/* Not entered into the index because it is an external variable */
+	/* Not entered into the index because it is an external variable 
+	 * (This can be done unlimited; only limited by the size of the external scope)
+	 */
 
 	return new_var;
 }
@@ -216,7 +240,7 @@ void sieve_variable_get
 		varent = array_idx(&storage->var_values, index);
 		
 		*value = *varent;
-	};
+	}
 } 
 
 void sieve_variable_get_modifiable
@@ -245,6 +269,10 @@ void sieve_variable_assign
 
 	str_truncate(varval, 0);
 	str_append_str(varval, value);
+
+	/* Just a precaution, caller should prevent this in the first place */
+	if ( str_len(varval) > SIEVE_VARIABLES_MAX_VARIABLE_SIZE )
+		str_truncate(varval, SIEVE_VARIABLES_MAX_VARIABLE_SIZE);
 }
 
 /*

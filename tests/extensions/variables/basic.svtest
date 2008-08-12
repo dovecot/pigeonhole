@@ -23,7 +23,7 @@ test "Unknown variables" {
 
 	if anyof (
 		not string "[${qwerty}]" "[]",
-		not string "[${5000}]" "[]"
+		not string "[${20}]" "[]"
 	) {
 		test_fail "unknown variable not substituted with empty string";
 	}

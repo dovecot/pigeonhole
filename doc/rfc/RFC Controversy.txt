@@ -19,7 +19,7 @@ these issues by my implementation is displayed inside [ ... ].
     script? [not checked (FIXME); will first be: ignore header]
     
 * RFC 5228 (Sieve) : 5.4.  Test envelope
-	"The "envelope" test is true if the specified part of the [SMTP] (or
+  "The "envelope" test is true if the specified part of the [SMTP] (or
    equivalent) envelope matches the specified key.  This specification
    defines the interpretation of the (case insensitive) "from" and "to"
    envelope-parts.  Additional envelope-parts may be defined by other
@@ -29,3 +29,23 @@ these issues by my implementation is displayed inside [ ... ].
     - Given the variables extension, sometimes the envelope parts aren't known until
       runtime. Will invalid ones abort the script? 
       [not checked (FIXME); will first be: ignore envelope part]
+
+* RFC5229 (Variables): 6.  Implementation Limits
+  "An implementation of this document MUST support at least 128 distinct
+   variables. [...] Each variable MUST be able to hold at least 4000
+   characters.  Attempts to set the variable to a value larger than what
+   the implementation supports SHOULD be reported as an error at
+   compile-time if possible.  If the attempt is discovered during run-
+   time, the value SHOULD be truncated, and it MUST NOT be treated as an
+   error."
+    
+    - Given the include extension, multiple scripts can be active at the same time. 
+      If these limits on variables are interpreted on a per-script basis, the total 
+      amount of memory a single user can claim greatly depends on the maximum depth 
+      of the include tree. Should an overall global variables limit be inforced
+      explicitly? How to resolve this at runtime? A fatal error with implicit keep?
+      [currently not checked; my opinion is that this should be limited explicitly]
+
+* RFC 5232 (Imapflags):
+	This document does not mention how limits should be imposed on the maximum 
+	number of set flags and the maximum length of a flag name. 

@@ -199,7 +199,10 @@ static bool opr_match_value_read
 		if ( str != NULL ) {
 			sieve_match_values_get(renv->interp, (unsigned int) index, str);
 		
-			if ( *str == NULL ) *str = t_str_new(0);
+			if ( *str == NULL ) 
+				*str = t_str_new(0);
+			else if ( str_len(*str) > SIEVE_VARIABLES_MAX_VARIABLE_SIZE ) 
+				str_truncate(*str, SIEVE_VARIABLES_MAX_VARIABLE_SIZE);
 		}
 		return TRUE;
 	}
@@ -274,14 +277,23 @@ static bool opr_variable_string_read
 				return FALSE;
 		}
 	} else {
+		string_t *strelm;
+		string_t **elm = &strelm;
+
 		*str = t_str_new(128);
 		for ( i = 0; i < (unsigned int) elements; i++ ) {
-			string_t *strelm;
 		
-			if ( !sieve_opr_string_read(renv, address, &strelm) ) 
+			if ( !sieve_opr_string_read(renv, address, elm) ) 
 				return FALSE;
 		
-			str_append_str(*str, strelm);
+			if ( elm != NULL ) {
+				str_append_str(*str, strelm);
+
+				if ( str_len(*str) > SIEVE_VARIABLES_MAX_VARIABLE_SIZE ) {
+					str_truncate(*str, SIEVE_VARIABLES_MAX_VARIABLE_SIZE);
+					elm = NULL;
+				}
+			}
 		}
 	}
 

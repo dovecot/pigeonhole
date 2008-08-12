@@ -262,6 +262,9 @@ void ext_imapflags_runtime_init(const struct sieve_runtime_env *renv)
 
 /* Flag operations */
 
+/* FIXME: This currently accepts a potentially unlimited number of 
+ * flags, making the internal or variable flag list indefinitely long
+ */
 static bool flag_is_valid(const char *flag)
 {	
 	if (*flag == '\\') {

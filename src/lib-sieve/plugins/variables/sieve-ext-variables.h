@@ -9,6 +9,8 @@
 #include "sieve-extensions.h"
 #include "sieve-objects.h"
 
+#include "ext-variables-limits.h"
+
 /*
  * Variable scope
  */

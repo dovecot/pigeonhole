@@ -307,6 +307,10 @@ static int cmd_set_operation_execute
 
 	sieve_runtime_trace(renv, "SET action");
 
+	/* Hold value within limits */
+	if ( str_len(value) > SIEVE_VARIABLES_MAX_VARIABLE_SIZE )
+		str_truncate(value, SIEVE_VARIABLES_MAX_VARIABLE_SIZE);
+
 	T_BEGIN {
 		/* Apply modifiers if necessary (sorted during code generation already) */
 		if ( str_len(value) > 0 ) {
@@ -328,11 +332,15 @@ static int cmd_set_operation_execute
 						value = NULL;
 						ret = SIEVE_EXEC_FAILURE;
 						break;
-					}				
+					}
 
 					value = new_value;
 					if ( value == NULL )
 						break;
+
+					/* Hold value within limits */
+					if ( str_len(value) > SIEVE_VARIABLES_MAX_VARIABLE_SIZE )
+						str_truncate(value, SIEVE_VARIABLES_MAX_VARIABLE_SIZE);
 				}
 			}
 		}	

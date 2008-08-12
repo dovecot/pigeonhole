@@ -71,6 +71,14 @@ bool ext_include_variable_import_global
 	/* Get/Declare the variable in the global scope */
 	var = sieve_variable_scope_get_variable(ctx->global_vars, variable, TRUE);
 
+	/* Check whether scope is over its size limit */
+	if ( var == NULL ) {
+		sieve_command_validate_error(valdtr, cmd,
+			"declaration of new global variable '%s' exceeds the limit "
+			"(max variables: %u)", 
+			variable, SIEVE_VARIABLES_MAX_SCOPE_SIZE);
+	}
+
 	/* Assign context for creation of symbol block during code generation */
 	if ( var->context == NULL ) {
 		pool_t pool = sieve_variable_scope_pool(ctx->global_vars);
@@ -94,7 +102,10 @@ bool ext_include_variable_import_global
 		pool_t pool = sieve_variable_scope_pool(ctx->import_vars);
 		struct ext_include_variable *varctx;
 
-		impvar = sieve_variable_scope_declare(ctx->import_vars, variable);		
+		impvar = sieve_variable_scope_declare(ctx->import_vars, variable);
+
+		i_assert( impvar != NULL );
+
 		varctx = p_new(pool, struct ext_include_variable, 1);
         varctx->type = EXT_INCLUDE_VAR_IMPORTED;
         varctx->source_line = cmd->ast_node->source_line;
@@ -164,6 +175,13 @@ bool ext_include_variables_load
         return FALSE;
     }
 
+	if ( count > SIEVE_VARIABLES_MAX_SCOPE_SIZE ) {
+        sieve_sys_error("include: global variable scope size of binary %s "
+			"exceeds the limit (%u > %u)", sieve_binary_path(sbin),
+			count, SIEVE_VARIABLES_MAX_SCOPE_SIZE );
+        return FALSE;
+    }
+
 	*global_vars_r = sieve_variable_scope_create(&include_extension);
 	pool = sieve_variable_scope_pool(*global_vars_r);
 
@@ -212,6 +230,9 @@ bool ext_include_variables_load
 		}
 		
         var = sieve_variable_scope_declare(*global_vars_r, str_c(identifier));
+
+		i_assert( var != NULL );
+
         varctx = p_new(pool, struct ext_include_variable, 1);
         varctx->type = type;
         varctx->source_line = source_line;

@@ -22,3 +22,13 @@ test "Invalid set command invocations (FIXME: count only)" {
 		test_fail "wrong number of errors reported";
 	}
 }
+
+test "Limits (FIXME: count only)" {
+	if test_compile "errors/limits.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "6" {
+		test_fail "wrong number of errors reported";
+	}
+}

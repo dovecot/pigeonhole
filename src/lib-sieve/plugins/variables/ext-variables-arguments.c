@@ -13,8 +13,32 @@
 #include "sieve-dump.h"
 
 #include "ext-variables-common.h"
+#include "ext-variables-limits.h"
 #include "ext-variables-name.h"
 #include "ext-variables-arguments.h"
+
+/*
+ * Common error messages
+ */
+
+static inline void _ext_variables_scope_size_eror
+(struct sieve_validator *valdtr, struct sieve_command_context *cmd,
+	const char *variable)
+{
+	sieve_command_validate_error(valdtr, cmd, 
+		"(implicit) declaration of new variable '%s' exceeds the limit "
+		"(max variables: %u)", variable, 
+		SIEVE_VARIABLES_MAX_SCOPE_SIZE);
+}
+
+static inline void _ext_variables_match_index_error
+(struct sieve_validator *valdtr, struct sieve_command_context *cmd,
+	unsigned int variable_index)
+{
+	sieve_command_validate_error(valdtr, cmd, 
+		"match value index %u out of range (max: %u)", variable_index, 
+		SIEVE_VARIABLES_MAX_MATCH_INDEX);
+}
 
 /* 
  * Variable argument 
@@ -76,20 +100,30 @@ static bool _sieve_variable_argument_activate
 			const struct ext_variable_name *cur_element = 
 				array_idx(&vname, 0);
 
-			if ( cur_element->num_variable == -1 ) {
+			if ( cur_element->num_variable < 0 ) {
 				var = ext_variables_validator_get_variable
 					(validator, str_c(cur_element->identifier), TRUE);
 
-				arg->argument = &variable_argument;
-				arg->context = (void *) var;
-				
-				result = TRUE;
-			} else {
-				if ( !assignment ) {
-					arg->argument = &match_value_argument;
-					arg->context = (void *) cur_element->num_variable;
+				if ( var == NULL ) {
+					_ext_variables_scope_size_eror
+						(validator, cmd, str_c(cur_element->identifier));
+				} else {
+					arg->argument = &variable_argument;
+					arg->context = (void *) var;
 				
 					result = TRUE;
+				}
+			} else {
+				if ( !assignment ) {
+					if ( cur_element->num_variable > SIEVE_VARIABLES_MAX_MATCH_INDEX ) {
+						_ext_variables_match_index_error
+							(validator, cmd, cur_element->num_variable);
+					} else {
+						arg->argument = &match_value_argument;
+						arg->context = (void *) cur_element->num_variable;
+										
+						result = TRUE;
+					}
 				} else {		
 					sieve_command_validate_error(validator, cmd, 
 						"cannot assign to match variable");
@@ -322,8 +356,21 @@ static bool arg_variable_string_validate
 								(validator, (*arg)->ast, (*arg)->source_line, str_c(cur_ident));
 							if ( strarg != NULL )
 								sieve_ast_arg_list_add(arglist, strarg);
+							else {
+								_ext_variables_scope_size_eror
+									(validator, cmd, str_c(cur_element->identifier));
+								result = FALSE;
+								break;
+							}
 						} else {
 							/* Add match value argument '${000}' */
+							if ( cur_element->num_variable > SIEVE_VARIABLES_MAX_MATCH_INDEX ) {
+								_ext_variables_match_index_error
+									(validator, cmd, cur_element->num_variable);
+								result = FALSE;
+								break;
+							}
+
 							strarg = ext_variables_match_value_argument_create
 								(validator, (*arg)->ast, (*arg)->source_line, 
 								cur_element->num_variable);
