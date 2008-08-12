@@ -49,7 +49,7 @@ struct sieve_script *sieve_script_init
 	const char *filename, *dirpath, *basename;
 
 	if ( exists_r != NULL )
-		*exists_r = FALSE;
+		*exists_r = TRUE;
 
 	T_BEGIN {
 		/* Extract filename from path */
@@ -71,9 +71,11 @@ struct sieve_script *sieve_script_init
 		/* First obtain stat data from the system */
 		
 		if ( (ret=lstat(path, &st)) < 0 && (errno != ENOENT || exists_r == NULL) ) {
-			if ( errno == ENOENT ) 
+			if ( errno == ENOENT ) {
 				sieve_error(ehandler, basename, "sieve script does not exist");
-			else
+				if ( exists_r != NULL )
+					*exists_r = FALSE;
+			} else
 				sieve_critical(ehandler, basename, "failed to lstat sieve script file '%s': %m", path);
 			script = NULL;
 			ret = 1;
@@ -84,9 +86,11 @@ struct sieve_script *sieve_script_init
 			/* Only create/init the object if it stat()s without problems */
 			if (S_ISLNK(st.st_mode)) {
 				if ( (ret=stat(path, &st)) < 0 && (errno != ENOENT || exists_r == NULL) ) {
-					if ( errno == ENOENT )
+					if ( errno == ENOENT ) {
                 		sieve_error(ehandler, basename, "sieve script does not exist");
-		            else
+						if ( exists_r != NULL )
+							*exists_r = FALSE;
+					} else
         		        sieve_critical(ehandler, basename, 
 							"failed to stat sieve script file '%s': %m", path);
 		            script = NULL;	
@@ -102,9 +106,6 @@ struct sieve_script *sieve_script_init
 		}
 
 		if ( ret <= 0 ) {
-			if ( exists_r != NULL )
-				*exists_r = ( ret == 0 );
-
 			if ( script == NULL ) {
 				pool = pool_alloconly_create("sieve_script", 1024);
 				script = p_new(pool, struct sieve_script, 1);

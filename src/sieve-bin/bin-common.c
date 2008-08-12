@@ -93,7 +93,7 @@ struct sieve_binary *bin_open_sieve_script(const char *filename)
 	ehandler = sieve_stderr_ehandler_create(0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
-	if ( (sbin = sieve_open(filename, ehandler)) == NULL ) {
+	if ( (sbin = sieve_open(filename, ehandler, NULL)) == NULL ) {
 		sieve_error_handler_unref(&ehandler);
 		i_fatal("Failed to compile sieve script\n");
 	}

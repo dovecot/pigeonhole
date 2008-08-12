@@ -21,8 +21,9 @@ struct testsuite_object {
 	
 	int (*get_member_id)(const char *identifier);
 	const char *(*get_member_name)(int id);
-	bool (*set_member)(int id, string_t *value);
-	string_t *(*get_member)(int id);
+
+	bool (*set_member)(const struct sieve_runtime_env *renv, int id, string_t *value);
+	string_t *(*get_member)(const struct sieve_runtime_env *renv, int id);
 };
 
 /* Testsuite object registration */
