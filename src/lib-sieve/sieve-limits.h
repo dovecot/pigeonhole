@@ -17,6 +17,12 @@
 #define SIEVE_MAX_TEST_NESTING      32
 
 /*
+ * Runtime
+ */
+
+#define SIEVE_MAX_MATCH_VALUES      32
+
+/*
  * Actions
  */
 

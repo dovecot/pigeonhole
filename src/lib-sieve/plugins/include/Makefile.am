@@ -22,5 +22,6 @@ libsieve_ext_include_la_SOURCES = \
 
 noinst_HEADERS = \
 	ext-include-common.h \
+	ext-include-limits.h \
 	ext-include-binary.h \
 	ext-include-variables.h

@@ -86,7 +86,8 @@ static int mcht_matches_match
 {
 	const struct sieve_comparator *cmp = mctx->comparator;
 	struct sieve_match_values *mvalues;
-	string_t *mvalue, *mchars, *section, *subsection;
+	string_t *mvalue = NULL, *mchars = NULL;
+	string_t *section, *subsection;
 	const char *vend, *kend, *vp, *kp, *wp, *pvp;
 	bool backtrack = FALSE; /* TRUE: match of '?'-connected sections failed */
 	char wcard = '\0';      /* Current wildcard */
@@ -98,8 +99,6 @@ static int mcht_matches_match
 		val_size = 0;
 	}
 	
-	mvalue = t_str_new(32);     /* Match value (*) */
-	mchars = t_str_new(32);     /* Match characters (.?..?.??) */
 	section = t_str_new(32);    /* Section (after beginning or *) */
 	subsection = t_str_new(32); /* Sub-section (after ?) */
 	
@@ -109,11 +108,15 @@ static int mcht_matches_match
 	kp = key;                   /* Key pointer */
 	wp = key;                   /* Wildcard (key) pointer */
 	pvp = val;                  /* Previous value Pointer */
-	
-	/* Reset match values list */
-	mvalues = sieve_match_values_start(mctx->interp);
-	sieve_match_values_add(mvalues, NULL);
 
+	/* Start new match values list */
+	if ( (mvalues = sieve_match_values_start(mctx->interp)) != NULL ) {
+		sieve_match_values_add(mvalues, NULL);
+
+		mvalue = t_str_new(32);     /* Match value (*) */
+		mchars = t_str_new(32);     /* Match characters (.?..?.??) */
+	}
+	
 	/* Match the pattern: 
 	 *   <pattern> = <section>*<section>*<section>....
 	 *   <section> = [text]?[text]?[text].... 
@@ -153,8 +156,9 @@ static int mcht_matches_match
 			
 			debug_printf("found wildcard '%c' at pos [%d]\n", 
 				next_wcard, (int) (wp-key));
-				
-			str_truncate(mvalue, 0);
+	
+			if ( mvalues != NULL )			
+				str_truncate(mvalue, 0);
 		} else {
 			debug_printf("backtracked");
 			backtrack = FALSE;
@@ -183,16 +187,20 @@ static int mcht_matches_match
 			vp = PTR_OFFSET(vend, -str_len(section));
 			qend = vp;
 			qp = vp - key_offset;
-			str_append_n(mvalue, pvp, qp-pvp);
+		
+			if ( mvalues != NULL )
+				str_append_n(mvalue, pvp, qp-pvp);
 					
 			if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
 				debug_printf("  match at end failed\n");				 
 				break;
 			}
 			
-			sieve_match_values_add(mvalues, mvalue);
-			for ( ; qp < qend; qp++ )
-				sieve_match_values_add_char(mvalues, *qp); 
+			if ( mvalues != NULL ) {
+				sieve_match_values_add(mvalues, mvalue);
+				for ( ; qp < qend; qp++ )
+					sieve_match_values_add_char(mvalues, *qp); 
+			}
 
 			kp = kend;
 			vp = vend;
@@ -203,8 +211,9 @@ static int mcht_matches_match
 			const char *prk = NULL;
 			const char *prw = NULL;
 			const char *chars;
-		
-			str_truncate(mchars, 0);
+
+			if ( mvalues != NULL )		
+				str_truncate(mchars, 0);
 							
 			if ( wcard == '\0' ) {
 				/* Match needs to happen right at the beginning */
@@ -234,9 +243,12 @@ static int mcht_matches_match
 				
 				qend = vp - str_len(section);
 				qp = qend - key_offset;
-				str_append_n(mvalue, pvp, qp-pvp);
-				for ( ; qp < qend; qp++ )
-					str_append_c(mchars, *qp);
+
+				if ( mvalues != NULL ) {
+					str_append_n(mvalue, pvp, qp-pvp);
+					for ( ; qp < qend; qp++ )
+						str_append_c(mchars, *qp);
+				}
 			}
 			
 			if ( wp < kend ) wp++;
@@ -246,7 +258,8 @@ static int mcht_matches_match
 				debug_printf("next_wcard = '?'; need to match arbitrary character\n");
 				
 				/* Add match value */ 
-				str_append_c(mchars, *vp);
+				if ( mvalues != NULL )
+					str_append_c(mchars, *vp);
 				vp++;
 				
 				next_wcard = _scan_key_section(subsection, &wp, kend);
@@ -268,7 +281,8 @@ static int mcht_matches_match
 						kp = prk;
 						wp = prw;
 				
-						str_append_c(mvalue, *vp);
+						if ( mvalues != NULL )
+							str_append_c(mvalue, *vp);
 						vp++;
 				
 						wcard = '*';
@@ -292,11 +306,13 @@ static int mcht_matches_match
 					break;
 				}
 				
-				if ( prv != NULL )
-					sieve_match_values_add(mvalues, mvalue);
-				chars = (const char *) str_data(mchars);
-				for ( i = 0; i < str_len(mchars); i++ ) {
-					sieve_match_values_add_char(mvalues, chars[i]);
+				if ( mvalues != NULL ) {
+					if ( prv != NULL )
+						sieve_match_values_add(mvalues, mvalue);
+					chars = (const char *) str_data(mchars);
+					for ( i = 0; i < str_len(mchars); i++ ) {
+						sieve_match_values_add_char(mvalues, chars[i]);
+					}
 				}
 
 				if ( next_wcard != '*' ) {
@@ -310,11 +326,15 @@ static int mcht_matches_match
 		 * (avoid scanning the rest of the string)
 		 */
 		if ( kp == kend && next_wcard == '*' ) {
-			str_truncate(mvalue, 0);
-			str_append_n(mvalue, vp, vend-vp);
-			sieve_match_values_add(mvalues, mvalue);
+			if ( mvalues != NULL ) {
+				str_truncate(mvalue, 0);
+				str_append_n(mvalue, vp, vend-vp);
+				sieve_match_values_add(mvalues, mvalue);
+			}
+		
 			kp = kend;
 			vp = vend;
+		
 			debug_printf("key ends with '*'\n");
 			break;
 		}			
@@ -325,7 +345,7 @@ static int mcht_matches_match
 	debug_printf("=== Finish ===\n");
 	debug_printf("  result: %s\n", (kp == kend && vp == vend) ? "true" : "false");
 
-	/* Eat away a trailing series of *rs */
+	/* Eat away a trailing series of *s */
 	if ( vp == vend ) {
 		while ( kp < kend && *kp == '*' ) kp++;
 	}
@@ -334,9 +354,11 @@ static int mcht_matches_match
 	 * are exhausted.
 	 */
 	if (kp == kend && vp == vend) {
-		string_t *matched = str_new_const(pool_datastack_create(), val, val_size);
-		sieve_match_values_set(mvalues, 0, matched);
-		sieve_match_values_commit(mctx->interp, &mvalues);
+		if ( mvalues != NULL ) {
+			string_t *matched = str_new_const(pool_datastack_create(), val, val_size);
+			sieve_match_values_set(mvalues, 0, matched);
+			sieve_match_values_commit(mctx->interp, &mvalues);
+		}
 		return TRUE;
 	}
 

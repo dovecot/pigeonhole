@@ -8,6 +8,7 @@
 #include "str.h"
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-ast.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
@@ -25,7 +26,7 @@
  * Configuration
  */
 
-#define MCHT_REGEX_MAX_SUBSTITUTIONS 64
+#define MCHT_REGEX_MAX_SUBSTITUTIONS SIEVE_MAX_MATCH_VALUES
 /* 
  * Forward declarations 
  */
@@ -240,14 +241,17 @@ static int mcht_regex_match
 
 	if ( key_index == 0 ) ctx->value_index++;
 
-	regexp = mcht_regex_get(ctx, mctx->comparator, key, key_index);
-	 
+	if ( (regexp=mcht_regex_get(ctx, mctx->comparator, key, key_index)) == NULL )
+		return FALSE;
+
 	if ( regexec(regexp, val, ctx->nmatch, ctx->pmatch, 0) == 0 ) {
 		size_t i;
 		int skipped = 0;
 		string_t *subst = t_str_new(32);
 		struct sieve_match_values *mvalues = sieve_match_values_start(mctx->interp);
-		
+
+		i_assert( mvalues != NULL );
+
 		for ( i = 0; i < ctx->nmatch; i++ ) {
 			str_truncate(subst, 0);
 			
@@ -261,6 +265,7 @@ static int mcht_regex_match
 			} else 
 				skipped++;
 		}
+
 		sieve_match_values_commit(mctx->interp, &mvalues);
 		return TRUE;
 	}

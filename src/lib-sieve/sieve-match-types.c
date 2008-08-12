@@ -6,6 +6,8 @@
 #include "hash.h"
 #include "array.h"
 
+#include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -207,6 +209,8 @@ static string_t *sieve_match_values_add_entry
 	string_t *entry;
 	
 	if ( mvalues == NULL ) return NULL;	
+
+	if ( mvalues->count >= SIEVE_MAX_MATCH_VALUES ) return NULL;
 		
 	if ( mvalues->count >= array_count(&mvalues->values) ) {
 		entry = str_new(mvalues->pool, 64);
@@ -225,7 +229,7 @@ static string_t *sieve_match_values_add_entry
 void sieve_match_values_set
 (struct sieve_match_values *mvalues, unsigned int index, string_t *value)
 {
-	if ( mvalues != NULL ) {
+	if ( mvalues != NULL && index < array_count(&mvalues->values) ) {
 		string_t * const *ep = array_idx(&mvalues->values, index);
     	string_t *entry = *ep;
 

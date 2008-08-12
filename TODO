@@ -9,8 +9,8 @@ Next (in order of descending priority/precedence):
 	- Imapflags: when keep/fileinto is used multiple times in a script and
 	  duplicate message elimination is performed, the last flag list value
 	  MUST win.
-	- If an address is not syntactically valid, then it will not be matched
-	  by tests specifying ":localpart" or ":domain".
+	- 'If an address is not syntactically valid, then it will not be matched
+	  by tests specifying ":localpart" or ":domain"'.
 * Code cleanup 
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...
