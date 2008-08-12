@@ -232,6 +232,16 @@ struct sieve_variable_storage *sieve_variable_storage_create
 	return storage;
 }
 
+static inline bool sieve_variable_valid
+(struct sieve_variable_storage *storage, unsigned int index)
+{
+	if ( storage->scope == NULL ) return TRUE;
+
+	printf( "VALID %d\n", index);
+
+	return ( index < array_count(&storage->scope->variable_index) );
+}
+
 void sieve_variable_get
 (struct sieve_variable_storage *storage, unsigned int index, string_t **value)
 {
@@ -251,7 +261,7 @@ void sieve_variable_get_modifiable
 {
 	sieve_variable_get(storage, index, value);
 	
-	if ( *value == NULL ) {
+	if ( *value == NULL && sieve_variable_valid(storage, index) ) {
 		*value = str_new(storage->pool, 256);
 		array_idx_set(&storage->var_values, index, value);	
 	} 
@@ -263,9 +273,12 @@ void sieve_variable_assign
 {
 	string_t *varval;
 	
-	sieve_variable_get_modifiable(storage, index, &varval);
+	sieve_variable_get(storage, index, &varval);
 
-	if ( varval == NULL ) {
+	if ( varval == NULL )  {
+		if ( !sieve_variable_valid(storage, index) )
+			return;
+
 		varval = str_new(storage->pool, str_len(value));
 		array_idx_set(&storage->var_values, index, &varval);	
 	} 

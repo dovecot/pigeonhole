@@ -180,6 +180,19 @@ unsigned int ext_include_binary_script_get_count
 }
 
 /*
+ * Variables 
+ */
+
+struct sieve_variable_scope *ext_include_binary_get_global_scope
+(struct sieve_binary *sbin)
+{
+	struct ext_include_binary_context *binctx = 
+		ext_include_binary_get_context(sbin);
+
+	return binctx->global_vars;
+}
+
+/*
  * Binary extension
  */
 

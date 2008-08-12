@@ -3,12 +3,23 @@
 
 #include "sieve-common.h"
 
+/*
+ * Binary context management
+ */
+
 struct ext_include_binary_context;
 
 struct ext_include_binary_context *ext_include_binary_init
 	(struct sieve_binary *sbin, struct sieve_ast *ast);
 struct ext_include_binary_context *ext_include_binary_get_context
 	(struct sieve_binary *sbin);
+
+/*
+ * Variables
+ */
+
+struct sieve_variable_scope *ext_include_binary_get_global_scope
+    (struct sieve_binary *sbin);
 
 /*
  * Including scripts

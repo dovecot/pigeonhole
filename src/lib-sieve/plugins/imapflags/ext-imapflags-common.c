@@ -439,7 +439,8 @@ void ext_imapflags_set_flags
 	else
 		cur_flags = _get_flags_string(renv->result);
 
-	flags_list_set_flags(cur_flags, flags);		
+	if ( cur_flags != NULL )
+		flags_list_set_flags(cur_flags, flags);		
 }
 
 void ext_imapflags_add_flags
@@ -453,7 +454,8 @@ void ext_imapflags_add_flags
 	else
 		cur_flags = _get_flags_string(renv->result);
 	
-	flags_list_add_flags(cur_flags, flags);		
+	if ( cur_flags != NULL )
+		flags_list_add_flags(cur_flags, flags);		
 }
 
 void ext_imapflags_remove_flags
@@ -467,7 +469,8 @@ void ext_imapflags_remove_flags
 	else
 		cur_flags = _get_flags_string(renv->result);
 	
-	flags_list_remove_flags(cur_flags, flags);		
+	if ( cur_flags != NULL )
+		flags_list_remove_flags(cur_flags, flags);		
 }
 
 const char *ext_imapflags_get_flags_string
@@ -480,6 +483,9 @@ const char *ext_imapflags_get_flags_string
 		sieve_variable_get_modifiable(storage, var_index, &cur_flags);
 	else
 		cur_flags = _get_flags_string(renv->result);
+	
+	if ( cur_flags == NULL )
+		return "";
 
 	return str_c(cur_flags);
 }

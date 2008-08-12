@@ -36,16 +36,19 @@ static inline struct ext_include_generator_context *
 /* Interpreter context */
 
 struct ext_include_interpreter_context {
+	struct ext_include_interpreter_context *parent;
+
 	struct sieve_interpreter *interp;
+	pool_t pool;
+
+	struct sieve_variable_storage *global_variables;
+
 	unsigned int nesting_level;
 	struct sieve_script *script;
 	unsigned int block_id;
 	
 	unsigned int inc_block_id;
 	bool returned;
-	struct ext_include_interpreter_context *parent;
-
-	struct sieve_variable_storage *global_variables;
 };
 
 /* 
@@ -215,9 +218,8 @@ void ext_include_register_generator_context
 	(void)ext_include_binary_init(cgenv->sbin, cgenv->ast);
 }
 
-
-/* 
- * Interpreter context management 
+/*
+ * Runtime initialization
  */
 
 static void ext_include_runtime_init
@@ -225,6 +227,13 @@ static void ext_include_runtime_init
 {
 	struct ext_include_interpreter_context *ctx = 
 		(struct ext_include_interpreter_context *) context;
+
+	if ( ctx->parent == NULL ) {
+		ctx->global_variables = sieve_variable_storage_create
+			(ctx->pool, ext_include_binary_get_global_scope(renv->sbin));
+	} else {
+		ctx->global_variables = ctx->parent->global_variables;
+	}
 
 	sieve_ext_variables_set_storage
 		(renv->interp, ctx->global_variables, &include_extension);	
@@ -236,6 +245,10 @@ static struct sieve_interpreter_extension include_interpreter_extension = {
     NULL,
 };
 
+/* 
+ * Interpreter context management 
+ */
+
 static struct ext_include_interpreter_context *
 	ext_include_interpreter_context_create
 (struct sieve_interpreter *interp, 
@@ -246,6 +259,7 @@ static struct ext_include_interpreter_context *
 
 	pool_t pool = sieve_interpreter_pool(interp);
 	ctx = p_new(pool, struct ext_include_interpreter_context, 1);
+	ctx->pool = pool;
 	ctx->parent = parent;
 	ctx->interp = interp;
 	ctx->script = script;
@@ -253,10 +267,8 @@ static struct ext_include_interpreter_context *
 
 	if ( parent == NULL ) {
 		ctx->nesting_level = 0;
-		ctx->global_variables = sieve_variable_storage_create(pool, NULL);
 	} else {
 		ctx->nesting_level = parent->nesting_level + 1;
-		ctx->global_variables = parent->global_variables;
 	}
 
 	return ctx;
