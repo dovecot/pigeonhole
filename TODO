@@ -22,7 +22,7 @@ Next (in order of descending priority/precedence):
 * Improve byte code dumping and trace functionality to be a little more 
   user-friendly
 * Make sure cmusieve can be replaced seamlessly with the new plugin.
-- Fix/Report issues listed in 'doc/rfc/RFC Controversy.txt'
+* Fix/Report issues listed in 'doc/rfc/RFC Controversy.txt'
 
 * ## MAKE A FIRST RELEASE (0.1.x) ##
 
@@ -32,10 +32,10 @@ Next (in order of descending priority/precedence):
 	- Allow for dynamic includes (i.e. specified by variables).
 	- Allow for :regex matching with variable key.
 	- Detect assignment of too large constant values to variables at runtime.
+	- Verify outgoing mail addresses at runtime when necessary
+	  (e.g. after variables substitution)
 * Imapflags: merge execution of setflags, removeflags and addflags into one 
   common implementation. 
-* Verify outgoing mail addresses at runtime when necessary (e.g. after variables 
-  substitution)
 * Warn about the use of syntactically invalid header names. 
 * Implement notify extension with sole support for mailto mechanism. 
 * Implement dropping errors in the user's mailbox as a mail message.
@@ -43,9 +43,9 @@ Next (in order of descending priority/precedence):
   (for efficiency).
 * Make this implementation conform section 2.7.2 of RFC3028 (Comparisons Across
   Character Sets). 
+* Implement comparator-i;unicode-casemap
 * Implement executing an arbitrary number of scripts sequentially, acting on the 
   same set of result actions (multiscript).
-* Implement comparator-i;unicode-casemap
 * Implement environment extension
 * Make testsuite much more exhaustive and add support for testing the actual
   result.
