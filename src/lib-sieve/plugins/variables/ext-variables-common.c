@@ -280,6 +280,10 @@ bool sieve_variable_get
 bool sieve_variable_get_modifiable
 (struct sieve_variable_storage *storage, unsigned int index, string_t **value)
 {
+	string_t *dummy;
+	
+	if ( value == NULL ) value = &dummy;
+	
 	if ( !sieve_variable_get(storage, index, value) )
 		return FALSE;
 	
@@ -297,13 +301,8 @@ bool sieve_variable_assign
 {
 	string_t *varval;
 	
-	if ( !sieve_variable_get(storage, index, &varval) ) 
+	if ( !sieve_variable_get_modifiable(storage, index, &varval) ) 
 		return FALSE;
-
-	if ( varval == NULL )  {
-		varval = str_new(storage->pool, str_len(value));
-		array_idx_set(&storage->var_values, index, &varval);	
-	} 
 
 	str_truncate(varval, 0);
 	str_append_str(varval, value);
@@ -314,6 +313,8 @@ bool sieve_variable_assign
 
 	return TRUE;
 }
+
+
 
 /*
  * AST Context

@@ -227,10 +227,9 @@ static bool opc_import_dump
 (const struct sieve_operation *op,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	unsigned int count, i;
+	unsigned int count, i, var_count;
 	struct sieve_variable_scope *scope;
 	struct sieve_variable * const *vars;
-	unsigned var_count;
 	
 	if ( !sieve_binary_read_integer(denv->sbin, address, &count) )
 		return FALSE;
@@ -277,12 +276,19 @@ static int opc_import_execute
 (const struct sieve_operation *op,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	unsigned int count, i;
+	struct sieve_variable_scope *scope;	
+	struct sieve_variable_storage *storage;
+	struct sieve_variable * const *vars;
+	unsigned int var_count, count, i;
 		
 	if ( !sieve_binary_read_integer(renv->sbin, address, &count) ) {
 		sieve_runtime_trace_error(renv, "invalid count operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
+	
+	scope = ext_include_binary_get_global_scope(renv->sbin);
+	vars = sieve_variable_scope_get_variables(scope, &var_count);
+	storage = ext_include_interpreter_get_global_variables(renv->interp);
 
 	for ( i = 0; i < count; i++ ) {
 		unsigned int index, source_line;
@@ -292,13 +298,33 @@ static int opc_import_execute
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 		
-		if ( op == &import_operation &&
-			!sieve_code_source_line_read(renv, address, &source_line) ) {
-			sieve_runtime_trace_error(renv, "invalid source line operand");
+		if ( index >= var_count ) {
+			sieve_runtime_trace_error(renv, "invalid global variable index");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 		
-		/* FIXME: do something */
+		if ( op == &import_operation ) {
+			string_t *varval;
+			
+			if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
+				sieve_runtime_trace_error(renv, "invalid source line operand");
+				return SIEVE_EXEC_BIN_CORRUPT;
+			}
+			
+			/* Verify variables initialization */
+			(void)sieve_variable_get(storage, index, &varval);
+			
+			if ( varval == NULL ) {
+				sieve_runtime_error(renv,
+					sieve_error_script_location(renv->script, source_line),
+        	"include: imported variable '%s' not previously exported", 
+        		vars[index]->identifier);
+        return SIEVE_EXEC_FAILURE;
+			}
+		}	else {
+			/* Make sure variable is initialized (export) */
+			(void)sieve_variable_get_modifiable(storage, index, NULL); 
+		}	
 	}
 
 	return SIEVE_EXEC_OK;

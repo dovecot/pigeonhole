@@ -101,4 +101,7 @@ bool ext_include_execute_include
 	(const struct sieve_runtime_env *renv, unsigned int block_id);
 void ext_include_execute_return(const struct sieve_runtime_env *renv);
 
+struct sieve_variable_storage *ext_include_interpreter_get_global_variables
+	(struct sieve_interpreter *interp);
+
 #endif /* __EXT_INCLUDE_COMMON_H */

@@ -317,6 +317,15 @@ void ext_include_interpreter_context_init
 	}
 }
 
+struct sieve_variable_storage *ext_include_interpreter_get_global_variables
+(struct sieve_interpreter *interp)
+{
+	struct ext_include_interpreter_context *ctx =
+		ext_include_get_interpreter_context(interp);
+		
+	return ctx->global_variables;
+}
+
 /* 
  * Including a script during generation 
  */
