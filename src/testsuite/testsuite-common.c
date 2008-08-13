@@ -100,7 +100,7 @@ static void _testsuite_message_set(string_t *message)
 	(void)mail_get_first_header(mail, "Message-ID", &testsuite_msgdata.id);
 }
 
-void testsuite_message_init(pool_t namespaces_pool, const char *user)
+void testsuite_message_init(const char *user)
 {		
 	message_pool = pool_alloconly_create("testsuite_message", 6096);
 
@@ -108,7 +108,7 @@ void testsuite_message_init(pool_t namespaces_pool, const char *user)
 	str_append(default_message, _default_message_data);
 
 	testsuite_user = user;
-	mail_raw_init(namespaces_pool, user);
+	mail_raw_init(user);
 	_testsuite_message_set(default_message);
 
 	envelope_to = str_new(message_pool, 256);

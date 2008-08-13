@@ -78,14 +78,17 @@ static struct istream *create_raw_stream(int fd)
 
 static struct mail_namespace *raw_ns;
 
-void mail_raw_init(pool_t namespaces_pool, const char *user) 
+void mail_raw_init(const char *user) 
 {
 	const char *error;
+	struct mail_user *raw_mail_user;
 
-	raw_ns = mail_namespaces_init_empty(namespaces_pool);
-	raw_ns->flags |= NAMESPACE_FLAG_INTERNAL;
-	if (mail_storage_create(raw_ns, "raw", "/tmp", user,
-				0, FILE_LOCK_METHOD_FCNTL, &error) < 0)
+	raw_mail_user = mail_user_init(user, NULL);
+    raw_ns = mail_namespaces_init_empty(raw_mail_user);
+    raw_ns->flags |= NAMESPACE_FLAG_INTERNAL;
+	if (mail_storage_create(raw_ns, "raw", "/tmp",
+		MAIL_STORAGE_FLAG_FULL_FS_ACCESS,
+		FILE_LOCK_METHOD_FCNTL, &error) < 0)
 		i_fatal("Couldn't create internal raw storage: %s", error);	
 }	
 	

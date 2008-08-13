@@ -68,11 +68,10 @@ int main(int argc, char **argv)
 {
 	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile;
 	const char *mailloc; 
-	const char *user;
+	const char *user, *home;
 	int i, mfd;
-	pool_t namespaces_pool;
-	struct mail_namespace *ns;
 	struct mail_raw *mailr;
+	struct mail_namespace *ns;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
@@ -144,22 +143,29 @@ int main(int argc, char **argv)
 	bin_dump_sieve_binary_to(sbin, dumpfile);
 	
 	user = bin_get_user();
-	namespaces_pool = namespaces_init();
+	home = getenv("HOME");
+
+	namespaces_init();
 
 	if ( mailloc != NULL ) {
+		struct mail_user *mail_user;
+
 		env_put(t_strdup_printf("NAMESPACE_1=%s", mailloc));
 		env_put("NAMESPACE_1_INBOX=1");
 		env_put("NAMESPACE_1_LIST=1");
 		env_put("NAMESPACE_1_SEP=.");
 		env_put("NAMESPACE_1_SUBSCRIPTIONS=1");
-	
-		if (mail_namespaces_init(namespaces_pool, user, &ns) < 0)
-			i_fatal("Namespace initialization failed");
+
+		mail_user = mail_user_init(user, home);
+	    if (mail_namespaces_init(mail_user) < 0)
+    	    i_fatal("Namespace initialization failed");	
+
+		ns = mail_user->namespaces;
 	} else {
 		ns = NULL;
 	}
 
-	mail_raw_init(namespaces_pool, user);
+	mail_raw_init(user);
 	mailr = mail_raw_open(mfd);
 
 	bin_fill_in_envelope(mailr->mail, &recipient, &sender);

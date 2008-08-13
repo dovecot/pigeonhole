@@ -43,22 +43,15 @@ mailbox_list_register(&fs_mailbox_list);
 index_mailbox_list_init();
 }
 
-static pool_t namespaces_pool;
-
-pool_t namespaces_init(void) 
+void namespaces_init(void) 
 {
 	mail_storage_init();
 	mail_storage_register_all();
 	mailbox_list_register_all();
-
-	namespaces_pool = pool_alloconly_create("namespaces", 1024);
-
-	return namespaces_pool;
 }	
 	
 void namespaces_deinit(void)
 {
 	mail_storage_deinit();
-	pool_unref(&namespaces_pool);
 }
 

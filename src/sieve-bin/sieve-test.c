@@ -38,7 +38,6 @@ int main(int argc, char **argv)
 	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile; 
 	const char *user;
 	int i, mfd;
-	pool_t namespaces_pool;
 	struct mail_raw *mailr;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
@@ -123,8 +122,8 @@ int main(int argc, char **argv)
 	
 	user = bin_get_user();
 
-	namespaces_pool = namespaces_init();
-	mail_raw_init(namespaces_pool, user);
+	namespaces_init();
+	mail_raw_init(user);
 	mailr = mail_raw_open(mfd);
 
 	bin_fill_in_envelope(mailr->mail, &recipient, &sender);

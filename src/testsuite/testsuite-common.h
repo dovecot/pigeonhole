@@ -9,7 +9,7 @@ extern int ext_testsuite_my_id;
 
 extern struct sieve_message_data testsuite_msgdata;
 
-void testsuite_message_init(pool_t namespaces_pool, const char *user);
+void testsuite_message_init(const char *user);
 void testsuite_message_deinit(void);
 
 void testsuite_message_set

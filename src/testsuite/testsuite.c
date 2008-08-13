@@ -175,7 +175,6 @@ int main(int argc, char **argv)
 	const char *scriptfile, *dumpfile; 
 	const char *user;
 	int i, ret;
-	pool_t namespaces_pool;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
 	struct sieve_script_env scriptenv;
@@ -229,9 +228,9 @@ int main(int argc, char **argv)
 	/* Dump script */
 	_dump_sieve_binary_to(sbin, dumpfile);
 	
-	namespaces_pool = namespaces_init();
+	namespaces_init();
 	user = _get_user();
-	testsuite_message_init(namespaces_pool, user);
+	testsuite_message_init(user);
 
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	scriptenv.inbox = "INBOX";

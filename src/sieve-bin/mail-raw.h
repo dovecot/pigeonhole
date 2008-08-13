@@ -10,7 +10,7 @@ struct mail_raw {
     struct mailbox_transaction_context *trans;
 };
 
-void mail_raw_init(pool_t namespaces_pool, const char *user);
+void mail_raw_init(const char *user);
 struct mail_raw *mail_raw_open(int fd);
 void mail_raw_close(struct mail_raw *mailr);
 void mail_raw_deinit(void);
