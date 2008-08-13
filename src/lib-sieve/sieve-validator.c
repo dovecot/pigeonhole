@@ -988,14 +988,16 @@ static bool sieve_validate_block
 (struct sieve_validator *valdtr, struct sieve_ast_node *block) 
 {
 	bool result = TRUE;
-	struct sieve_ast_node *command;
+	struct sieve_ast_node *command, *next;
 
 	T_BEGIN {	
 		command = sieve_ast_command_first(block);
 		while ( command != NULL && (result || 
 			sieve_errors_more_allowed(valdtr->ehandler)) ) {	
+			
+			next = sieve_ast_command_next(command);
 			result = sieve_validate_command(valdtr, command) && result;	
-			command = sieve_ast_command_next(command);
+			command = next;
 		}		
 	} T_END;
 	

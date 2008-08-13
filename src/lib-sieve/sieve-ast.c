@@ -161,8 +161,8 @@ void sieve_ast_error
 	} T_END; 
 }
  
-
 /* Very simplistic linked list implementation
+ * FIXME: Move to separate file
  */
 #define __LIST_CREATE(pool, type) { \
 		type *list = p_new(pool, type, 1); \
@@ -208,9 +208,66 @@ void sieve_ast_error
 		node->list = list; \
 		\
 		return TRUE; \
+	}
+
+#define __LIST_JOIN(list, items) { \
+		typeof(items->head) node; \
+		\
+		if ( list->len + items->len < list->len ) \
+			return FALSE; \
+		\
+		if ( items->len == 0 ) return TRUE; \
+		\
+		if ( list->head == NULL ) { \
+			list->head = items->head; \
+			list->tail = items->tail; \
+		} else { \
+			list->tail->next = items->head; \
+			items->head->prev = list->tail; \
+			list->tail = items->tail; \
+		} \
+		list->len += items->len; \
+		\
+		node = items->head; \
+		while ( node != NULL ) { \
+			node->list = list; \
+			node = node->next; \
+		} \
+		return TRUE; \
 	}	 
 
-	
+#define __LIST_DETACH(first, count) { \
+		typeof(*first) *last, *result; \
+		unsigned int left; \
+		\
+		i_assert(first->list != NULL); \
+		\
+		left = count - 1; \
+		last = first; \
+		while ( left > 0 && last->next != NULL ) { \
+			left--; \
+			last = last->next; \
+		} \
+		\
+		if ( first->list->head == first ) \
+			first->list->head = last->next; \
+		if ( first->list->tail == last ) \
+			first->list->tail = first->prev; \
+		\
+		if ( first->prev != NULL ) \
+			first->prev->next = last->next;	\
+		if ( last->next != NULL ) \
+			last->next->prev = first->prev; \
+		\
+		first->list->len -= count - left; \
+		\
+		result = last->next; \
+		first->prev = NULL; \
+		last->next = NULL; \
+		\
+		return result; \
+	}
+
 /* List of AST nodes */
 static struct sieve_ast_list *sieve_ast_list_create(pool_t pool) 
 	__LIST_CREATE(pool, struct sieve_ast_list)
@@ -218,6 +275,10 @@ static struct sieve_ast_list *sieve_ast_list_create(pool_t pool)
 static bool sieve_ast_list_add
 (struct sieve_ast_list *list, struct sieve_ast_node *node) 
 	__LIST_ADD(list, node)
+
+static struct sieve_ast_node *sieve_ast_list_detach
+(struct sieve_ast_node *first, unsigned int count) 
+	__LIST_DETACH(first, count)
 
 /* List of argument AST nodes */
 struct sieve_ast_arg_list *sieve_ast_arg_list_create(pool_t pool) 
@@ -231,6 +292,14 @@ bool sieve_ast_arg_list_insert
 	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *before,
 	struct sieve_ast_argument *argument)
 	__LIST_INSERT(list, before, argument)
+
+static bool sieve_ast_arg_list_join
+(struct sieve_ast_arg_list *list, struct sieve_ast_arg_list *items)
+	__LIST_JOIN(list, items)
+
+static struct sieve_ast_argument *sieve_ast_arg_list_detach
+	(struct sieve_ast_argument *first, const unsigned int count)
+	__LIST_DETACH(first, count)
 
 void sieve_ast_arg_list_substitute
 (struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument, 
@@ -253,48 +322,7 @@ void sieve_ast_arg_list_substitute
 	argument->next = NULL;
 	argument->prev = NULL;
 }
-
-static struct sieve_ast_argument *sieve_ast_arg_list_detach
-	(struct sieve_ast_argument *first, const unsigned int count)
-{
-	struct sieve_ast_argument *last, *result;
-	unsigned int left;
 	
-	i_assert(first->list != NULL);
-	
-	/* Find the last of the deleted arguments */
-	left = count - 1;
-	last = first;
-	while ( left > 0 && last->next != NULL ) {
-		left--;
-		last = last->next;
-	}
-
-	/* Perform substitution */
-		
-	if ( first->list->head == first ) 
-		first->list->head = last->next;
-
-	if ( first->list->tail == last )
-		first->list->tail = first->prev;
-		
-	if ( first->prev != NULL )
-		first->prev->next = last->next;
-		
-	if ( last->next != NULL )
-		last->next->prev = first->prev;
-		
-	first->list->len -= count - left;
-	
-	result = last->next;
-	first->prev = NULL;
-	last->next = NULL;
-	
-	/* Detached objects will eventually freed along with AST pool */
-	
-	return result;
-}
-
 /* AST Node */
 
 static struct sieve_ast_node *sieve_ast_node_create
@@ -352,10 +380,10 @@ static bool sieve_ast_node_add_argument
 	return sieve_ast_arg_list_add(node->arguments, argument);
 }
 
-static void sieve_ast_argument_substitute
-	(struct sieve_ast_argument *argument, struct sieve_ast_argument *replacement) 
-{
-	sieve_ast_arg_list_substitute(argument->list, argument, replacement);
+struct sieve_ast_node *sieve_ast_node_detach
+	(struct sieve_ast_node *first) 
+{	
+	return sieve_ast_list_detach(first, 1);
 }
 
 /* Argument AST node */
@@ -377,6 +405,12 @@ struct sieve_ast_argument *sieve_ast_argument_create
 	arg->arg_id_code = 0;
 			
 	return arg;
+}
+
+static void sieve_ast_argument_substitute
+	(struct sieve_ast_argument *argument, struct sieve_ast_argument *replacement) 
+{
+	sieve_ast_arg_list_substitute(argument->list, argument, replacement);
 }
 
 struct sieve_ast_argument *sieve_ast_argument_string_create
@@ -440,24 +474,39 @@ struct sieve_ast_argument *sieve_ast_argument_stringlist_substitute
 	return argument;
 }
 
-static bool _sieve_ast_stringlist_add
-	(struct sieve_ast_argument *list, string_t *str, unsigned int source_line) 
+static inline bool _sieve_ast_stringlist_add_item
+(struct sieve_ast_argument *list, struct sieve_ast_argument *item) 
 {
-	struct sieve_ast_argument *stritem;
-	
 	i_assert( list->type == SAAT_STRING_LIST );
 	
 	if ( list->_value.strlist == NULL ) 
 		list->_value.strlist = sieve_ast_arg_list_create(list->ast->pool);
 	
-	stritem = sieve_ast_argument_create(list->ast, source_line);
-		
-	stritem->type = SAAT_STRING;
+	return sieve_ast_arg_list_add(list->_value.strlist, item);
+}
+
+static bool sieve_ast_stringlist_add_stringlist
+(struct sieve_ast_argument *list, struct sieve_ast_argument *items) 
+{
+	i_assert( list->type == SAAT_STRING_LIST );
+	i_assert( items->type == SAAT_STRING_LIST );
+
+	if ( list->_value.strlist == NULL ) 
+		list->_value.strlist = sieve_ast_arg_list_create(list->ast->pool);
 	
-	/* Clone string */
+	return sieve_ast_arg_list_join(list->_value.strlist, items->_value.strlist);
+}
+
+static bool _sieve_ast_stringlist_add_str
+(struct sieve_ast_argument *list, string_t *str, unsigned int source_line) 
+{
+	struct sieve_ast_argument *stritem;
+	
+	stritem = sieve_ast_argument_create(list->ast, source_line);		
+	stritem->type = SAAT_STRING;
 	stritem->_value.str = str;
 
-	return sieve_ast_arg_list_add(list->_value.strlist, stritem);
+	return _sieve_ast_stringlist_add_item(list, stritem);
 }
 
 bool sieve_ast_stringlist_add
@@ -466,7 +515,7 @@ bool sieve_ast_stringlist_add
 	string_t *copied_str = str_new(list->ast->pool, str_len(str));
 	str_append_str(copied_str, str);
 
-	return _sieve_ast_stringlist_add(list, copied_str, source_line);
+	return _sieve_ast_stringlist_add_str(list, copied_str, source_line);
 }
 
 bool sieve_ast_stringlist_add_strc
@@ -475,7 +524,7 @@ bool sieve_ast_stringlist_add_strc
 	string_t *copied_str = str_new(list->ast->pool, strlen(str));
 	str_append(copied_str, str);
 	
-	return _sieve_ast_stringlist_add(list, copied_str, source_line);
+	return _sieve_ast_stringlist_add_str(list, copied_str, source_line);
 }
 
 struct sieve_ast_argument *sieve_ast_argument_tag_create
@@ -607,6 +656,82 @@ int sieve_ast_stringlist_map
 	return -1;
 }
 
+struct sieve_ast_argument *sieve_ast_stringlist_join
+(struct sieve_ast_argument *list, struct sieve_ast_argument *items)
+{
+	enum sieve_ast_argument_type list_type, items_type;
+	struct sieve_ast_argument *newlist;
+	
+	list_type = sieve_ast_argument_type(list);
+	items_type = sieve_ast_argument_type(items);
+	
+	switch ( list_type ) {
+	
+	case SAAT_STRING:
+		switch ( items_type ) {
+		
+		case SAAT_STRING:
+			newlist = 
+				sieve_ast_argument_create(list->ast, list->source_line);
+			newlist->type = SAAT_STRING_LIST;
+			newlist->_value.strlist = NULL;
+			
+			sieve_ast_argument_substitute(list, newlist);
+			sieve_ast_arguments_detach(items, 1);
+			
+			if ( !_sieve_ast_stringlist_add_item(newlist, list) ||
+				!_sieve_ast_stringlist_add_item(newlist, items) ) {
+				return NULL;
+			}
+			
+			return newlist;
+			
+		case SAAT_STRING_LIST:
+			/* Adding stringlist to string; make them swith places and add one to the
+			 * other.
+			 */
+			sieve_ast_arguments_detach(items, 1);
+			sieve_ast_argument_substitute(list, items);
+			if ( !_sieve_ast_stringlist_add_item(items, list) ) 
+				return NULL;
+			
+			return list;
+			
+		default:
+			i_unreached();
+		}
+		break;
+		
+	case SAAT_STRING_LIST:
+		switch ( items_type ) {
+		
+		case SAAT_STRING:
+			/* Adding string to stringlist; straightforward add */
+			sieve_ast_arguments_detach(items, 1);
+			if ( !_sieve_ast_stringlist_add_item(list, items) )
+				return NULL;
+			
+			return list;
+			
+		case SAAT_STRING_LIST:
+			/* Adding stringlist to stringlist; perform actual join */
+			sieve_ast_arguments_detach(items, 1);
+			if ( !sieve_ast_stringlist_add_stringlist(list, items) )
+				return NULL;
+			
+			return list;
+			
+		default:
+			i_unreached();
+		}
+		
+		break;
+	default:
+		i_unreached();
+	}
+	
+	return NULL;
+}
 
 
 /* Debug */

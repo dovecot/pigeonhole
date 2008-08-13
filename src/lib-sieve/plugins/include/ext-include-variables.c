@@ -28,14 +28,13 @@ enum ext_include_variable_type {
 struct ext_include_variable {
 	enum ext_include_variable_type type;
 	unsigned int source_line;
-	struct sieve_script *script;
 };
 
 /* 
  * Variable import-export
  */
  
-bool ext_include_variable_import_global
+struct sieve_variable *ext_include_variable_import_global
 (struct sieve_validator *valdtr, struct sieve_command_context *cmd, 
 	const char *variable, bool export)
 {
@@ -52,7 +51,7 @@ bool ext_include_variable_import_global
 			/* Yes, and now export is attempted. ERROR */
 			sieve_command_validate_error(valdtr, cmd, 
 				"cannot export imported variable '%s'", variable);
-			return FALSE;
+			return NULL;
 		} else {
 			/* Yes, and it is imported again. Warn the user */
 			if ( impvar->context != NULL ) {
@@ -88,7 +87,6 @@ bool ext_include_variable_import_global
 		varctx = p_new(pool, struct ext_include_variable, 1);
 		varctx->type = export ? 
 			EXT_INCLUDE_VAR_EXPORTED : EXT_INCLUDE_VAR_IMPORTED;
-		varctx->script = sieve_validator_script(valdtr);
 		varctx->source_line = cmd->ast_node->source_line;
 		var->context = varctx;
 	}
@@ -107,21 +105,19 @@ bool ext_include_variable_import_global
 		i_assert( impvar != NULL );
 
 		varctx = p_new(pool, struct ext_include_variable, 1);
-        varctx->type = EXT_INCLUDE_VAR_IMPORTED;
-        varctx->source_line = cmd->ast_node->source_line;
-        impvar->context = varctx;
+		varctx->type = EXT_INCLUDE_VAR_IMPORTED;
+		varctx->source_line = cmd->ast_node->source_line;
+		impvar->context = varctx;
 	}
 
-	return TRUE;	
+	return var;	
 }
 
 
 bool ext_include_variables_save
-(struct sieve_binary *sbin, struct ext_include_binary_context *binctx,
-	struct sieve_variable_scope *global_vars)
+(struct sieve_binary *sbin, struct sieve_variable_scope *global_vars)
 {
 	unsigned int count = sieve_variable_scope_size(global_vars);
-	struct sieve_script *main_script = sieve_binary_script(sbin);
 
 	sieve_binary_emit_integer(sbin, count);
 
@@ -133,35 +129,21 @@ bool ext_include_variables_save
 		for ( i = 0; i < size; i++ ) {
 			struct ext_include_variable *varctx =
 				(struct ext_include_variable *) vars[i]->context;
-			unsigned int include_id = 0;
 
 			i_assert( varctx != NULL );
-
-			if ( varctx->script != main_script ) {
-				const struct ext_include_script_info *included = 
-					ext_include_binary_script_get(binctx, varctx->script);
-
-				i_assert( included != NULL );
-
-				include_id = included->id;
-			}
 			
-    	    sieve_binary_emit_byte(sbin, varctx->type);
-			sieve_binary_emit_integer(sbin, varctx->source_line);			
-			sieve_binary_emit_integer(sbin, include_id);
+			sieve_binary_emit_byte(sbin, varctx->type);
 			sieve_binary_emit_cstring(sbin, vars[i]->identifier);
 		}
-    }
+	}
 
 	return TRUE;
 }
 
 bool ext_include_variables_load
-(struct sieve_binary *sbin, struct ext_include_binary_context *binctx,
-	sieve_size_t *offset, unsigned int block,
+(struct sieve_binary *sbin, sieve_size_t *offset, unsigned int block,
 	struct sieve_variable_scope **global_vars_r)
 {
-	struct sieve_script *main_script = sieve_binary_script(sbin);
 	sieve_size_t count = 0;
 	unsigned int i;
 	pool_t pool;
@@ -170,79 +152,57 @@ bool ext_include_variables_load
 	i_assert( *global_vars_r == NULL );
 
 	if ( !sieve_binary_read_integer(sbin, offset, &count) ) {
-        sieve_sys_error("include: failed to read global variables count "
-            "from dependency block %d of binary %s", block, sieve_binary_path(sbin));
-        return FALSE;
-    }
+		sieve_sys_error("include: failed to read global variables count "
+			"from dependency block %d of binary %s", block, sieve_binary_path(sbin));
+		return FALSE;
+	}
 
 	if ( count > SIEVE_VARIABLES_MAX_SCOPE_SIZE ) {
-        sieve_sys_error("include: global variable scope size of binary %s "
+		sieve_sys_error("include: global variable scope size of binary %s "
 			"exceeds the limit (%u > %u)", sieve_binary_path(sbin),
 			count, SIEVE_VARIABLES_MAX_SCOPE_SIZE );
-        return FALSE;
-    }
+		return FALSE;
+	}
 
 	*global_vars_r = sieve_variable_scope_create(&include_extension);
 	pool = sieve_variable_scope_pool(*global_vars_r);
 
-    /* Read global variable scope */
-    for ( i = 0; i < count; i++ ) {
-		struct sieve_script *script;
+	/* Read global variable scope */
+	for ( i = 0; i < count; i++ ) {
 		struct sieve_variable *var;
-        struct ext_include_variable *varctx;
+		struct ext_include_variable *varctx;
 		enum ext_include_variable_type type;
-		sieve_size_t source_line, include_id;
 		string_t *identifier;
 
-        if (
-            !sieve_binary_read_byte(sbin, offset, &type) ||
-            !sieve_binary_read_integer(sbin, offset, &source_line) ||
-            !sieve_binary_read_integer(sbin, offset, &include_id) ||
-            !sieve_binary_read_string(sbin, offset, &identifier) ) {
-            /* Binary is corrupt, recompile */
-            sieve_sys_error("include: failed to read global variable specification "
-                "from dependency block %d of binary %s", block, sieve_binary_path(sbin));
-            return FALSE;
-        }
+		if (
+			!sieve_binary_read_byte(sbin, offset, &type) ||
+			!sieve_binary_read_string(sbin, offset, &identifier) ) {
+			/* Binary is corrupt, recompile */
+			sieve_sys_error("include: failed to read global variable specification "
+				"from dependency block %d of binary %s", block, sieve_binary_path(sbin));
+			return FALSE;
+		}
 
-        if ( type >= EXT_INCLUDE_VAR_INVALID ) {
-            /* Binary is corrupt, recompile */
-            sieve_sys_error("include: dependency block %d of binary %s "
-                "reports invalid global variable type (id %d).",
-                block, sieve_binary_path(sbin), type);
-            return FALSE;
-        }
-
-		if ( include_id != 0 ) {
-			const struct ext_include_script_info *included = 
-				ext_include_binary_script_get_included(binctx, include_id);
-
-			if ( included == NULL ) {
-				sieve_sys_error("include: dependency block %d of binary %s "
-                	"has invalid global variable script reference (id %d).",
-                block, sieve_binary_path(sbin), include_id);
-	            return FALSE;
-			}
-
-			script = included->script;
-		} else {
-			script = main_script;
+		if ( type >= EXT_INCLUDE_VAR_INVALID ) {
+			/* Binary is corrupt, recompile */
+			sieve_sys_error("include: dependency block %d of binary %s "
+				"reports invalid global variable type (id %d).",
+				block, sieve_binary_path(sbin), type);
+			return FALSE;
 		}
 		
-        var = sieve_variable_scope_declare(*global_vars_r, str_c(identifier));
+		var = sieve_variable_scope_declare(*global_vars_r, str_c(identifier));
 
 		i_assert( var != NULL );
 
-        varctx = p_new(pool, struct ext_include_variable, 1);
-        varctx->type = type;
-        varctx->source_line = source_line;
-		varctx->script = script;
-        var->context = varctx;
+		varctx = p_new(pool, struct ext_include_variable, 1);
+		varctx->type = type;
+		var->context = varctx;
 
 		i_assert(var->index == i);
-    }
+	}
 	
-    return TRUE;
+	return TRUE;
 }
 
 bool ext_include_variables_dump
@@ -264,11 +224,9 @@ bool ext_include_variables_dump
 			struct ext_include_variable *varctx =
 				(struct ext_include_variable *) vars[i]->context;
 
-			sieve_binary_dumpf(denv, "%3d: %s '%s' (%s:%d)\n", i, 
+			sieve_binary_dumpf(denv, "%3d: %s '%s' \n", i, 
 				varctx->type == EXT_INCLUDE_VAR_EXPORTED ? "export" : "import", 
-				vars[i]->identifier, 
-				varctx->script == NULL ? "<main>" : sieve_script_filename(varctx->script), 
-				varctx->source_line);
+				vars[i]->identifier);
 		}	
 	}
 

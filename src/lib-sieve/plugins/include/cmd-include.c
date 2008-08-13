@@ -230,8 +230,8 @@ static bool cmd_include_generate
 		(cgenv, cmd, ctx_data->location, ctx_data->script, &included) )
  		return FALSE;
  		
- 	sieve_operation_emit_code(cgenv->sbin, &include_operation);
-	sieve_binary_emit_offset(cgenv->sbin, included->id); 
+ 	(void)sieve_operation_emit_code(cgenv->sbin, &include_operation);
+	(void)sieve_binary_emit_integer(cgenv->sbin, included->id); 
  	 		
 	return TRUE;
 }
@@ -246,9 +246,12 @@ static bool opc_include_dump
 {
 	const struct ext_include_script_info *included;
 	struct ext_include_binary_context *binctx;
-	int include_id;
+	unsigned int include_id;
+
+	sieve_code_dumpf(denv, "INCLUDE:");
 	
-	if ( !sieve_binary_read_offset(denv->sbin, address, &include_id) )
+	sieve_code_mark(denv);
+	if ( !sieve_binary_read_integer(denv->sbin, address, &include_id) )
 		return FALSE;
 
 	binctx = ext_include_binary_get_context(denv->sbin);
@@ -256,7 +259,8 @@ static bool opc_include_dump
 	if ( included == NULL )
 		return FALSE;
 		
-	sieve_code_dumpf(denv, "INCLUDE %s [ID: %d, BLOCK: %d]", 
+	sieve_code_descend(denv);
+	sieve_code_dumpf(denv, "SCRIPT: %s [ID: %d, BLOCK: %d]", 
 		sieve_script_filename(included->script), include_id, included->block_id);
 	 
 	return TRUE;
@@ -270,14 +274,14 @@ static int opc_include_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	int include_id;
+	unsigned int include_id;
 		
-	if ( !sieve_binary_read_offset(renv->sbin, address, &include_id) ) {
+	if ( !sieve_binary_read_integer(renv->sbin, address, &include_id) ) {
 		sieve_runtime_trace_error(renv, "invalid include-id operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
-	return ext_include_execute_include(renv, (unsigned int) include_id);
+	return ext_include_execute_include(renv, include_id);
 }
 
 

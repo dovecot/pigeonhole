@@ -179,6 +179,11 @@ void sieve_ast_error
 (struct sieve_error_handler *ehandler, sieve_error_vfunc_t vfunc, 
 	struct sieve_ast_node *node, const char *fmt, va_list args);
 	
+/* sieve_ast_node */
+
+struct sieve_ast_node *sieve_ast_node_detach
+	(struct sieve_ast_node *first);
+	
 /* sieve_ast_argument */
 
 struct sieve_ast_argument *sieve_ast_argument_create
@@ -245,6 +250,8 @@ struct sieve_ast_node *sieve_ast_command_create
 int sieve_ast_stringlist_map
 	(struct sieve_ast_argument **listitem, void *context,
 		int (*map_function)(void *context, struct sieve_ast_argument *arg));
+struct sieve_ast_argument *sieve_ast_stringlist_join
+	(struct sieve_ast_argument *list, struct sieve_ast_argument *items);
 	
 /* 
  * Debug 

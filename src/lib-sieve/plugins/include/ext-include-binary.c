@@ -221,7 +221,7 @@ static bool ext_include_binary_save(struct sieve_binary *sbin)
 		sieve_binary_emit_cstring(sbin, sieve_script_name(incscript->script));
 	}
 
-	result = ext_include_variables_save(sbin, binctx, binctx->global_vars);
+	result = ext_include_variables_save(sbin, binctx->global_vars);
 	
 	(void) sieve_binary_block_set_active(sbin, prvblk, NULL);
 
@@ -296,7 +296,7 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 		sieve_script_unref(&script);
 	}
 
-	if ( !ext_include_variables_load(sbin, binctx, &offset, block, &binctx->global_vars) )
+	if ( !ext_include_variables_load(sbin, &offset, block, &binctx->global_vars) )
 		return FALSE;
 	
 	/* Restore previously active block */

@@ -37,21 +37,20 @@ static bool ext_include_interpreter_load(struct sieve_interpreter *interp);
 
 /* Operations */
 
-extern const struct sieve_operation include_operation;
-extern const struct sieve_operation return_operation;
-
 static const struct sieve_operation *ext_include_operations[] = { 
 	&include_operation, 
-	&return_operation
+	&return_operation,
+	&import_operation,
+	&export_operation
 };
 
 /* Extension definitions */
 
-int ext_include_my_id;
+static int ext_my_id;
 
 const struct sieve_extension include_extension = { 
 	"include", 
-	&ext_include_my_id,
+	&ext_my_id,
 	ext_include_load,
 	ext_include_validator_load, 
 	ext_include_generator_load,
@@ -64,7 +63,7 @@ const struct sieve_extension include_extension = {
 
 static bool ext_include_load(int ext_id)
 {
-	ext_include_my_id = ext_id;
+	ext_my_id = ext_id;
 
 	return TRUE;
 }
