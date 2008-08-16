@@ -181,7 +181,7 @@ bool sieve_match_values_are_enabled
 {
 	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
 		
-	return ctx->match_values_enabled;
+	return ( ctx == NULL ? FALSE : ctx->match_values_enabled );
 }
 
 struct sieve_match_values *sieve_match_values_start
