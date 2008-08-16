@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
+ 
 #ifndef __SIEVE_ADDRESS_PARTS_H
 #define __SIEVE_ADDRESS_PARTS_H
 
@@ -87,7 +90,9 @@ static inline bool sieve_opr_address_part_dump
 		(denv, &sieve_address_part_operand_class, address, NULL);
 }
 
-/* Match utility */
+/* 
+ * Match utility 
+ */
 
 int sieve_address_match
 (const struct sieve_address_part *addrp, struct sieve_match_context *mctx,
@@ -102,6 +107,7 @@ enum sieve_addrmatch_opt_operand {
 
 bool sieve_addrmatch_default_dump_optionals
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+
 bool sieve_addrmatch_default_get_optionals
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
 		const struct sieve_address_part **addp, 

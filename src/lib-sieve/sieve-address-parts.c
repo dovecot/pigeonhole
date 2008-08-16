@@ -1,4 +1,5 @@
-#include <stdio.h>
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
 
 #include "lib.h"
 #include "compat.h"
@@ -113,6 +114,31 @@ void sieve_address_parts_link_tags
 /* 
  * Address-part tagged argument 
  */
+ 
+/* Forward declarations */
+
+static bool tag_address_part_is_instance_of
+	(struct sieve_validator *validator, struct sieve_command_context *cmd,
+		struct sieve_ast_argument *arg);
+static bool tag_address_part_validate
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *cmd);
+static bool tag_address_part_generate
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
+		struct sieve_command_context *cmd);
+
+/* Argument object */
+
+const struct sieve_argument address_part_tag = { 
+	"ADDRESS-PART",
+	tag_address_part_is_instance_of, 
+	NULL,
+	tag_address_part_validate,
+	NULL, 
+	tag_address_part_generate 
+};
+
+/* Argument implementation */
   
 static bool tag_address_part_is_instance_of
 (struct sieve_validator *validator, struct sieve_command_context *cmd,
@@ -295,15 +321,6 @@ bool sieve_addrmatch_default_get_optionals
 /* 
  * Core address-part modifiers
  */
-
-const struct sieve_argument address_part_tag = { 
-	"ADDRESS-PART",
-	tag_address_part_is_instance_of, 
-	NULL,
-	tag_address_part_validate,
-	NULL, 
-	tag_address_part_generate 
-};
  
 static const char *addrp_all_extract_from
 	(const struct sieve_address *address)

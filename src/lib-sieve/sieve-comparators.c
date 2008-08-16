@@ -109,14 +109,14 @@ bool cmp_validator_load(struct sieve_validator *validator)
  * Comparator tagged argument 
  */
  
-/* Context associated with ast argument */
+/* Context data */
 
 struct sieve_comparator_context {
 	struct sieve_command_context *command_ctx;
 	const struct sieve_comparator *comparator;
 };
  
-/* Comparator argument */
+/* Forward declarations */
 
 static bool tag_comparator_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
@@ -125,6 +125,8 @@ static bool tag_comparator_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *cmd);
 
+/* Argument object */
+
 const struct sieve_argument comparator_tag = { 
 	"comparator", 
 	NULL, NULL,
@@ -132,6 +134,8 @@ const struct sieve_argument comparator_tag = {
 	NULL,
 	tag_comparator_generate 
 };
+
+/* Argument implementation */
 
 static bool tag_comparator_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
