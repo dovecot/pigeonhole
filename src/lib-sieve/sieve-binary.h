@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_BINARY_H
 #define __SIEVE_BINARY_H
 
@@ -5,6 +8,10 @@
 
 #include "sieve-common.h"
 
+/*
+ * Binary object
+ */
+ 
 struct sieve_binary;
 
 struct sieve_binary *sieve_binary_create_new(struct sieve_script *script);
@@ -17,10 +24,22 @@ const char *sieve_binary_path(struct sieve_binary *sbin);
 bool sieve_binary_script_older
 	(struct sieve_binary *sbin, struct sieve_script *script);
 
+/*
+ * Activation after code generation
+ */ 
+ 
 void sieve_binary_activate(struct sieve_binary *sbin);
 
+/* 
+ * Saving the binary
+ */
+ 
 bool sieve_binary_save
 	(struct sieve_binary *sbin, const char *path);
+	
+/* 
+ * Loading the binary
+ */ 
 	
 struct sieve_binary *sieve_binary_open
 	(const char *path, struct sieve_script *script);

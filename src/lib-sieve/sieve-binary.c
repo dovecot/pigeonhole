@@ -1,7 +1,9 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "str.h"
 #include "str-sanitize.h"
-
 #include "mempool.h"
 #include "buffer.h"
 #include "hash.h"
@@ -97,6 +99,8 @@ struct sieve_binary_block {
 	
 	uoff_t offset;
 };
+
+/* File */
 
 /* FIXME: In essence this is an unbuffered stream implementation. Maybe this 
  * can be merged with the generic dovecot istream interface.
@@ -243,9 +247,10 @@ void sieve_binary_unref(struct sieve_binary **sbin)
 	*sbin = NULL;
 }
 
-static inline sieve_size_t _sieve_binary_get_code_size(struct sieve_binary *sbin)
+static inline sieve_size_t _sieve_binary_get_code_size
+(struct sieve_binary *sbin)
 {
-    return buffer_get_used_size(sbin->data);
+	return buffer_get_used_size(sbin->data);
 }
 
 sieve_size_t sieve_binary_get_code_size(struct sieve_binary *sbin)
@@ -280,7 +285,7 @@ bool sieve_binary_script_older
  */
 
 static inline struct sieve_binary_block *sieve_binary_block_get
-	(struct sieve_binary *sbin, unsigned int id) 
+(struct sieve_binary *sbin, unsigned int id) 
 {
 	struct sieve_binary_block * const *block;
 
@@ -293,7 +298,7 @@ static inline struct sieve_binary_block *sieve_binary_block_get
 }
 
 static inline unsigned int sieve_binary_block_add
-	(struct sieve_binary *sbin, struct sieve_binary_block *block)
+(struct sieve_binary *sbin, struct sieve_binary_block *block)
 {
 	unsigned int id = array_count(&sbin->blocks);
 	
@@ -302,13 +307,13 @@ static inline unsigned int sieve_binary_block_add
 }
 
 static inline unsigned int sieve_binary_block_count
-	(struct sieve_binary *sbin)
+(struct sieve_binary *sbin)
 {
 	return array_count(&sbin->blocks);
 }
 
 void sieve_binary_block_clear
-	(struct sieve_binary *sbin, unsigned int id)
+(struct sieve_binary *sbin, unsigned int id)
 {
 	struct sieve_binary_block *block = sieve_binary_block_get(sbin, id);
 	
@@ -316,7 +321,7 @@ void sieve_binary_block_clear
 }
 
 bool sieve_binary_block_set_active
-	(struct sieve_binary *sbin, unsigned int id, unsigned *old_id_r)
+(struct sieve_binary *sbin, unsigned int id, unsigned *old_id_r)
 {
 	struct sieve_binary_block *block = sieve_binary_block_get(sbin, id);
 			
@@ -357,7 +362,7 @@ unsigned int sieve_binary_block_create(struct sieve_binary *sbin)
 }
 
 static struct sieve_binary_block *sieve_binary_block_create_id
-	(struct sieve_binary *sbin, unsigned int id)
+(struct sieve_binary *sbin, unsigned int id)
 {
 	struct sieve_binary_block *block;
 	
@@ -407,7 +412,7 @@ static inline bool _save_skip(struct ostream *stream, size_t size)
 }
 
 static inline bool _save_skip_aligned
-	(struct ostream *stream, size_t size, uoff_t *offset)
+(struct ostream *stream, size_t size, uoff_t *offset)
 {
 	uoff_t aligned_offset = SIEVE_BINARY_ALIGN(stream->offset);
 	
@@ -440,7 +445,7 @@ static bool _save_full(struct ostream *stream, const void *data, size_t size)
 }
 
 static bool _save_aligned
-	(struct ostream *stream, const void *data, size_t size, uoff_t *offset)
+(struct ostream *stream, const void *data, size_t size, uoff_t *offset)
 {	
 	uoff_t aligned_offset = SIEVE_BINARY_ALIGN(stream->offset);
 
@@ -512,7 +517,7 @@ static bool _save_block_index_record
 }
 
 static bool _sieve_binary_save
-	(struct sieve_binary *sbin, struct ostream *stream)
+(struct sieve_binary *sbin, struct ostream *stream)
 {
 	struct sieve_binary_header header;
 	unsigned int ext_count, blk_count, i;
@@ -551,8 +556,7 @@ static bool _sieve_binary_save
 		return FALSE;
 	
 	/* Create block containing all used extensions 
-	 *   FIXME: Per-extension this should also store binary version numbers and 
-	 *   the id of its first extension-specific block (if any)
+	 *   FIXME: Per-extension this should also store binary version numbers.
 	 */
 	if ( !sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_EXTENSIONS, NULL) )
 		return FALSE;
@@ -589,7 +593,7 @@ static bool _sieve_binary_save
 } 
 
 bool sieve_binary_save
-	(struct sieve_binary *sbin, const char *path)
+(struct sieve_binary *sbin, const char *path)
 {
 	bool result = TRUE;
 	const char *temp_path;
@@ -844,7 +848,7 @@ static bool _file_lazy_read
 }
 
 static const void *_file_lazy_load_data
-	(struct sieve_binary_file *file, off_t *offset, size_t size)
+(struct sieve_binary_file *file, off_t *offset, size_t size)
 {	
 	void *data = t_malloc(size);
 
@@ -856,7 +860,7 @@ static const void *_file_lazy_load_data
 }
 
 static buffer_t *_file_lazy_load_buffer
-	(struct sieve_binary_file *file, off_t *offset, size_t size)
+(struct sieve_binary_file *file, off_t *offset, size_t size)
 {			
 	buffer_t *buffer = buffer_create_static_hard(file->pool, size);
 	
@@ -896,7 +900,7 @@ static struct sieve_binary_file *_file_lazy_open(const char *path)
 	(header *) sbin->file->load_data(sbin->file, offset, sizeof(header))
 
 static struct sieve_binary_block *_load_block
-	(struct sieve_binary *sbin, off_t *offset, unsigned int id)
+(struct sieve_binary *sbin, off_t *offset, unsigned int id)
 {
 	const struct sieve_binary_block_header *header = 
 		LOAD_HEADER(sbin, offset, const struct sieve_binary_block_header);
@@ -932,7 +936,7 @@ static struct sieve_binary_block *_load_block
 }
 
 static struct sieve_binary_block *sieve_binary_load_block
-	(struct sieve_binary *sbin, unsigned int id)
+(struct sieve_binary *sbin, unsigned int id)
 {
 	struct sieve_binary_block *block;
 	off_t offset;
@@ -947,7 +951,7 @@ static struct sieve_binary_block *sieve_binary_load_block
 }
 
 static bool _load_block_index_record
-	(struct sieve_binary *sbin, off_t *offset, unsigned int id)
+(struct sieve_binary *sbin, off_t *offset, unsigned int id)
 {
 	const struct sieve_binary_block_index *record = 
 		LOAD_HEADER(sbin, offset, const struct sieve_binary_block_index);
@@ -1028,19 +1032,24 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 			sieve_sys_error("opened binary %s is not even large enough "
 				"to contain a header.", sbin->path);
 			result = FALSE;
+
 		} else if ( header->magic != SIEVE_BINARY_MAGIC ) {
 			if ( header->magic != SIEVE_BINARY_MAGIC_OTHER_ENDIAN ) 
 				sieve_sys_error("opened binary %s has corrupted header (0x%08x)", 
 					sbin->path, header->magic);
 			result = FALSE;
+
 		} else if ( result && (
 		  header->version_major != SIEVE_BINARY_VERSION_MAJOR || 
 			header->version_minor != SIEVE_BINARY_VERSION_MINOR ) ) {
+
 			/* Binary is of different version. Caller will have to recompile */
 			result = FALSE;
+
 		} else if ( result && header->blocks == 0 ) {
 			sieve_sys_error("opened binary %s contains no blocks", sbin->path);
 			result = FALSE; 
+
 		} else {
 			blk_count = header->blocks;
 		}
@@ -1169,7 +1178,7 @@ bool sieve_binary_load(struct sieve_binary *sbin)
 }
 
 /*
- *
+ * Up-to-date checking
  */
 
 bool sieve_binary_up_to_date(struct sieve_binary *sbin)
@@ -1178,7 +1187,8 @@ bool sieve_binary_up_to_date(struct sieve_binary *sbin)
 	
 	i_assert(sbin->file != NULL);
 
-	if ( sbin->script == NULL || !sieve_script_older(sbin->script, sbin->file->st.st_mtime) )
+	if ( sbin->script == NULL || !sieve_script_older
+		(sbin->script, sbin->file->st.st_mtime) )
 		return FALSE;
 	
 	ext_count = array_count(&sbin->extensions);	
@@ -1195,6 +1205,10 @@ bool sieve_binary_up_to_date(struct sieve_binary *sbin)
 	return TRUE;
 }
 
+/*
+ * Activate the binary (after code generation)
+ */
+ 
 void sieve_binary_activate(struct sieve_binary *sbin)
 {
 	unsigned int i;
@@ -1333,7 +1347,7 @@ static inline int sieve_binary_extension_register
 }
 
 int sieve_binary_extension_link
-	(struct sieve_binary *sbin, const struct sieve_extension *ext) 
+(struct sieve_binary *sbin, const struct sieve_extension *ext) 
 {	
 	return sieve_binary_extension_register(sbin, ext, NULL);
 }
@@ -1424,7 +1438,6 @@ void sieve_binary_update_data
 	_sieve_binary_update_data(sbin, address, data, size);
 }
 
-
 /* Offset emission functions */
 
 sieve_size_t sieve_binary_emit_offset(struct sieve_binary *binary, int offset) 
@@ -1453,6 +1466,9 @@ void sieve_binary_resolve_offset
 }
 
 /* Literal emission */
+
+/* FIXME: this integer format is compact, but it might be too slow. 
+ */
 
 sieve_size_t sieve_binary_emit_integer
 (struct sieve_binary *binary, sieve_size_t integer)
