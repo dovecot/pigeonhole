@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
+
 #include "lib.h"
 #include "ioloop.h"
 #include "str-sanitize.h"
@@ -57,10 +60,10 @@ bool sieve_opr_side_effect_dump
 }
 
 /*
- * Actions common to multiple core commands 
+ * Store action
  */
  
-/* Store action */
+/* Forward declarations */
 
 static int act_store_check_duplicate
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action1, 
@@ -83,6 +86,8 @@ static void act_store_rollback
 	(const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool success);
 		
+/* Action object */
+
 const struct sieve_action act_store = {
 	"store",
 	SIEVE_ACTFLAG_TRIES_DELIVER,
@@ -94,6 +99,8 @@ const struct sieve_action act_store = {
 	act_store_commit,
 	act_store_rollback,
 };
+
+/* API */
 
 int sieve_act_store_add_to_result
 (const struct sieve_runtime_env *renv, 
@@ -112,7 +119,7 @@ int sieve_act_store_add_to_result
 		source_line, (void *) act);
 }
 
-/* Store action implementation */
+/* Result verification */
 
 static int act_store_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
@@ -132,6 +139,8 @@ static int act_store_check_duplicate
 	); 
 }
 
+/* Result printing */
+
 static void act_store_print
 (const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_result_print_env *rpenv, void *context, bool *keep)	
@@ -144,7 +153,7 @@ static void act_store_print
 	*keep = FALSE;
 }
 
-/* Store transaction */
+/* Action implementation */
 
 static void act_store_get_storage_error
 (const struct sieve_action_exec_env *aenv, struct act_store_transaction *trans)
@@ -166,6 +175,7 @@ static bool act_store_start
 	struct mailbox *box = NULL;
 	pool_t pool;
 
+	/* Open the requested mailbox */
 	if ( aenv->scriptenv->namespaces != NULL ) {
 		ns = mail_namespace_find(aenv->scriptenv->namespaces, &ctx->folder);
 		if (ns == NULL) 
@@ -180,6 +190,7 @@ static bool act_store_start
 		}
 	}
 				
+	/* Create transaction context */
 	pool = sieve_result_pool(aenv->result);
 	trans = p_new(pool, struct act_store_transaction, 1);
 	trans->context = ctx;
@@ -206,11 +217,14 @@ static bool act_store_execute
 	if ( trans == NULL || trans->namespace == NULL || trans->box == NULL ) 
 		return FALSE;
 	
+	/* Start mail transaction */
 	trans->mail_trans = mailbox_transaction_begin
 		(trans->box, MAILBOX_TRANSACTION_FLAG_EXTERNAL);
 
+	/* Create mail object for stored message */
 	trans->dest_mail = mail_alloc(trans->mail_trans, 0, NULL);
 
+	/* Collect keywords added by side-effects */
 	if ( array_is_created(&trans->keywords) && array_count(&trans->keywords) > 0 ) 
 	{
 		const char *const *kwds;
@@ -226,6 +240,7 @@ static bool act_store_execute
 		}
 	}
 	
+	/* Store the message */
 	if (mailbox_copy(trans->mail_trans, aenv->msgdata->mail, trans->flags, 
 		keywords, trans->dest_mail) < 0) {
 		act_store_get_storage_error(aenv, trans);
@@ -276,17 +291,23 @@ static bool act_store_commit
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
 	bool status = TRUE;
-
+	
 	if ( trans->namespace != NULL ) {
+		/* Free mail object for stored message */
 		if ( trans->dest_mail != NULL ) 
 			mail_free(&trans->dest_mail);	
 
+		/* Commit mailbox transaction */	
 		status = mailbox_transaction_commit(&trans->mail_trans) == 0;
 	} 
 	
+	/* Log our status */
 	act_store_log_status(trans, aenv, FALSE, status);
+	
+	/* Cancel implicit keep if all went well */
 	*keep = !status;
-		
+	
+	/* Close mailbox */	
 	if ( trans->box != NULL )
 		mailbox_close(&trans->box);
 
@@ -300,14 +321,18 @@ static void act_store_rollback
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
 
+	/* Log status */
 	act_store_log_status(trans, aenv, TRUE, success);
 
+	/* Free mailobject for stored message */
 	if ( trans->dest_mail != NULL ) 
 		mail_free(&trans->dest_mail);	
 
+	/* Rollback mailbox transaction */
 	if ( trans->mail_trans != NULL )
 	  mailbox_transaction_rollback(&trans->mail_trans);
   
+  /* Close the mailbox */
 	if ( trans->box != NULL )  
 	  mailbox_close(&trans->box);
 }

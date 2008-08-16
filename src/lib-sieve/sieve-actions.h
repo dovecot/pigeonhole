@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
+
 #ifndef __SIEVE_ACTIONS_H
 #define __SIEVE_ACTIONS_H
 
@@ -8,7 +11,9 @@
 #include "sieve-objects.h"
 #include "sieve-extensions.h"
 
-/* Sieve action */
+/*
+ * Action execution environment
+ */
 
 struct sieve_action_exec_env { 
 	struct sieve_result *result;
@@ -16,15 +21,25 @@ struct sieve_action_exec_env {
 	const struct sieve_script_env *scriptenv;
 };
 
+/*
+ * Action flags
+ */
+
 enum sieve_action_flags {
 	SIEVE_ACTFLAG_TRIES_DELIVER = (1 << 0),
 	SIEVE_ACTFLAG_SENDS_RESPONSE = (1 << 1)
 };
 
+/* 
+ * Action object
+ */
+
 struct sieve_action {
 	const char *name;
 	unsigned int flags;
 
+	/* Result verification */
+	
 	int (*check_duplicate)	
 		(const struct sieve_runtime_env *renv,
 			const struct sieve_action *action, void *context1, void *context2,
@@ -34,9 +49,13 @@ struct sieve_action {
 			const struct sieve_action *other_action, void *context,
 			const char *location1, const char *location2);	
 
+	/* Result printing */
+	
 	void (*print)
 		(const struct sieve_action *action, 
 			const struct sieve_result_print_env *penv, void *context, bool *keep);	
+		
+	/* Result execution */	
 		
 	bool (*start)
 		(const struct sieve_action *action, 
@@ -53,14 +72,19 @@ struct sieve_action {
 			const struct sieve_action_exec_env *aenv, void *tr_context, bool success);
 };
 
-/* Action side effects */
+/* 
+ * Action side effects 
+ */
 
-struct sieve_side_effect_extension;
+/* Side effect object */
 
 struct sieve_side_effect {
 	struct sieve_object object;
 	
+	/* The action it is supposed to link to */
 	const struct sieve_action *to_action;
+	
+	/* Context coding */
 	
 	bool (*dump_context)
 		(const struct sieve_side_effect *seffect, 
@@ -69,10 +93,18 @@ struct sieve_side_effect {
 		(const struct sieve_side_effect *seffect, 
 			const struct sieve_runtime_env *renv, sieve_size_t *address,
 			void **se_context);
+		
+	/* Result verification */
+	
+	/* ... */
+	
+	/* Result printing */	
 			
 	void (*print)
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 			const struct sieve_result_print_env *penv, void *se_context, bool *keep);
+
+	/* Result execution */
 
 	bool (*pre_execute)
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
@@ -119,7 +151,9 @@ static inline const struct sieve_side_effect *sieve_opr_side_effect_read
 bool sieve_opr_side_effect_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
-/* Actions common to multiple commands */
+/* 
+ * Store action
+ */
 
 const struct sieve_action act_store;
 
@@ -149,5 +183,4 @@ int sieve_act_store_add_to_result
 const char *sieve_get_new_message_id
 	(const struct sieve_script_env *senv);
 
-		
 #endif /* __SIEVE_ACTIONS_H */
