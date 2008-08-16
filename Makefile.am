@@ -42,6 +42,7 @@ test_cases = \
 	tests/extensions/imapflags/basic.svtest \
 	tests/extensions/imapflags/hasflag.svtest \
 	tests/extensions/body/basic.svtest \
+	tests/extensions/body/match-values.svtest \
 	tests/extensions/regex/basic.svtest \
 	tests/extensions/regex/errors.svtest \
 	tests/compile/compile.svtest \
