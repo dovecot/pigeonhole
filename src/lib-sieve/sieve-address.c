@@ -1,13 +1,19 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
+ 
 #include "lib.h"
 #include "str.h"
 #include "str-sanitize.h"
 #include "rfc822-parser.h"
 
 #include "sieve-common.h"
-
 #include "sieve-address.h"
 
 #include <ctype.h>
+
+/*
+ * RFC 2822 addresses
+ */
 
 /* Mail message address according to RFC 2822 and implemented in the Dovecot 
  * message address parser:
@@ -264,10 +270,10 @@ bool sieve_address_validate
 }
 
 /*
- * Envelope address parsing
- *   RFC 2821
- *
- * FIXME: Quite a bit of this will overlap with the rfc822 parser
+ * RFC 2821 addresses (envelope paths)
+ */
+ 
+/* FIXME: Quite a bit of this will overlap with the rfc822 parser
  * dovecot already has and the rfc2821 parser that it probably will
  * have once it implements LMTP. For now we implement things separately. 
  */
@@ -296,7 +302,7 @@ bool sieve_address_validate
 static unsigned char rfc2821_chars[256] = {
 	   DB,    DB,    DB,    DB,    DB,    DB,    DB,    DB, // 0
 	   DB,    QB,    QB,    DB,    DB,    QB,    DB,    DB, // 8
-       DB,    DB,    DB,    DB,    DB,    DB,    DB,    DB, // 16
+     DB,    DB,    DB,    DB,    DB,    DB,    DB,    DB, // 16
 	   DB,    DB,    DB,    DB,    DB,    DB,    DB,    DB, // 24
 	   QB, DB|AB, QB|DB, DB|AB, DB|AB, DB|AB, DB|AB, DB|AB, // 32
 	   DB,    DB, DB|AB, DB|AB,    DB, DB|AB,    DB, DB|AB, // 40
@@ -435,16 +441,16 @@ static int path_parse_domain
 				return -1;
 			
 			if ( (ret=path_skip_white_space(parser)) < 0 )
-	            return ret;
+				return ret;
 
 			if ( *parser->data != '.' )
-                break;
+				break;
 
 			str_append_c(parser->str, *parser->data);
-            parser->data++;
+			parser->data++;
 
 			if ( (ret=path_skip_white_space(parser)) <= 0 )
-	            return -1;
+				return -1;
 		}
 	}
 
@@ -501,37 +507,37 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 {
 	int ret;
 	/* Local-part = Dot-string / Quoted-string
-     * Dot-string = Atom *("." Atom)
-     * Atom = 1*atext
-     * Quoted-string = DQUOTE *qcontent DQUOTE
-     * qcontent = qtext / quoted-pair
-     * quoted-pair  =   ("\" text)
-     */
+	 * Dot-string = Atom *("." Atom)
+	 * Atom = 1*atext
+	 * Quoted-string = DQUOTE *qcontent DQUOTE
+	 * qcontent = qtext / quoted-pair
+	 * quoted-pair  =   ("\" text)
+	 */
 
 	str_truncate(parser->str, 0);
-    if ( *parser->data == '"' ) {
+	if ( *parser->data == '"' ) {
 		str_append_c(parser->str, *parser->data);
         parser->data++;
 
 		while ( parser->data < parser->end ) {
 			if ( *parser->data == '\\' ) {
-                str_append_c(parser->str, *parser->data);
-                parser->data++;
+				str_append_c(parser->str, *parser->data);
+				parser->data++;
 
-                if ( parser->data < parser->end ) {
-                    if ( !IS_TEXT(*parser->data) )
-                        return -1;
+				if ( parser->data < parser->end ) {
+					if ( !IS_TEXT(*parser->data) )
+						return -1;
 
-                    str_append_c(parser->str, *parser->data);
-                    parser->data++;
-                } else return -1;
-            } else {
-                if ( !IS_QTEXT(*parser->data) )
-                	break;
+					str_append_c(parser->str, *parser->data);
+					parser->data++;
+				} else return -1;
+			} else {
+				if ( !IS_QTEXT(*parser->data) )
+					break;
 
-                str_append_c(parser->str, *parser->data);
-                parser->data++;
-            }
+				str_append_c(parser->str, *parser->data);
+				parser->data++;
+			}
 		}
 		
 		if ( *parser->data != '"' )
@@ -555,18 +561,18 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 			}
 			
 			if ( (ret=path_skip_white_space(parser)) < 0 )
-		        return ret;
+				return ret;
 
 			if ( *parser->data != '.' )
 				break;
 
 			str_append_c(parser->str, *parser->data);
-   	        parser->data++;
+				parser->data++;
 	
 			if ( (ret=path_skip_white_space(parser)) <= 0 )
-		        return -1;
+				return -1;
 		}
-    }
+	}
 
 	parser->address->local_part = t_strdup(str_c(parser->str));
 	return parser->data < parser->end;
@@ -579,17 +585,17 @@ static int path_parse_mailbox(struct sieve_envelope_address_parser *parser)
 	/* Mailbox = Local-part "@" Domain */
 	
 	if ( (ret=path_parse_local_part(parser)) <= 0 )
-        return -1;
+		return -1;
 
 	if ( (ret=path_skip_white_space(parser)) <= 0 )
-        return -1;
+		return -1;
 
 	if ( *parser->data != '@' )
 		return -1;
 	parser->data++;
 
 	if ( (ret=path_skip_white_space(parser)) <= 0 )
-        return -1;
+		return -1;
 
 	return path_parse_domain(parser, FALSE);
 }
@@ -647,7 +653,7 @@ const struct sieve_address *sieve_address_parse_envelope_path
 	int ret;
 
 	parser.data = (const unsigned char *) field_value;
-    parser.end = (const unsigned char *) field_value + strlen(field_value);
+	parser.end = (const unsigned char *) field_value + strlen(field_value);
 	parser.address = t_new(struct sieve_address, 1);
 	parser.str = t_str_new(256);
 
