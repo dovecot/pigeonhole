@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "str.h"
 #include "ostream.h"
@@ -8,6 +11,10 @@
 
 #include "sieve-dump.h"
 
+/*
+ * Binary dumper object
+ */ 
+ 
 struct sieve_binary_dumper {
 	pool_t pool;
 	
@@ -45,7 +52,9 @@ pool_t sieve_binary_dumper_pool(struct sieve_binary_dumper *dumper)
 	return dumper->pool;
 }
 
-/* Formatted output */
+/* 
+ * Formatted output 
+ */
 
 void sieve_binary_dumpf
 (const struct sieve_dumptime_env *denv, const char *fmt, ...)
@@ -75,10 +84,12 @@ void sieve_binary_dump_sectionf
 	o_stream_send(denv->stream, str_data(outbuf), str_len(outbuf));
 }
 
-/* Dumper execution */
+/* 
+ * Dumping the binary
+ */
 
 bool sieve_binary_dumper_run
-	(struct sieve_binary_dumper *dumper, struct ostream *stream) 
+(struct sieve_binary_dumper *dumper, struct ostream *stream) 
 {	
 	struct sieve_binary *sbin = dumper->dumpenv.sbin;
 	struct sieve_dumptime_env *denv = &(dumper->dumpenv);
