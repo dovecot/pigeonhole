@@ -257,6 +257,20 @@ test "ADDRESS-PART errors (FIXME: count only)" {
 }
 
 /*
+ * MATCH-TYPE errors
+ */
+
+test "MATCH-TYPE errors (FIXME: count only)" {
+    if test_compile "errors/match-type.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+        test_fail "wrong number of errors reported";
+    }
+}
+
+/*
  * Encoded-character errors
  */
 

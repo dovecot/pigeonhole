@@ -103,7 +103,8 @@ static bool tst_hasflag_validate
 	}
 	
 	/* Validate the key argument to a specified match type */
-	return sieve_match_type_validate(validator, tst, keys);
+	return sieve_match_type_validate
+		(validator, tst, keys, &is_match_type, &i_ascii_casemap_comparator);
 }
 
 /*

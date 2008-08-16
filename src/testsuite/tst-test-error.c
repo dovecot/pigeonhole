@@ -143,7 +143,8 @@ static bool tst_test_error_validate
         return FALSE;
 
     /* Validate the key argument to a specified match type */
-    return sieve_match_type_validate(valdtr, tst, arg);
+    return sieve_match_type_validate
+		(valdtr, tst, arg, &is_match_type, &i_octet_comparator);
 }
 
 /* 

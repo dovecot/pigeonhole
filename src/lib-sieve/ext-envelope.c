@@ -280,7 +280,8 @@ static bool tst_envelope_validate
 		return FALSE;
 
 	/* Validate the key argument to a specified match type */
-	return sieve_match_type_validate(validator, tst, arg);
+	return sieve_match_type_validate
+		(validator, tst, arg, &is_match_type, &i_ascii_casemap_comparator);
 }
 
 /*

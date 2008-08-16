@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+ 
 #include <stdio.h>
 
 #include "lib.h"
@@ -362,6 +365,7 @@ static bool tag_match_type_is_instance_of
 	mtctx = p_new(sieve_command_pool(cmd), struct sieve_match_type_context, 1);
 	mtctx->match_type = mtch;
 	mtctx->command_ctx = cmd;
+	mtctx->comparator = NULL; /* Can be filled in later */
 	
 	arg->context = (void *) mtctx;
 	
@@ -406,50 +410,67 @@ static bool tag_match_type_generate
 	return TRUE;
 }
 
-bool sieve_match_type_validate_argument
-(struct sieve_validator *validator, struct sieve_ast_argument *arg,
-	struct sieve_ast_argument *key_arg )
-{
-	struct sieve_match_type_context *mtctx = 
-		(struct sieve_match_type_context *) arg->context;
-
-	i_assert(arg->argument == &match_type_tag);
-
-	/* Check whether this match type requires additional validation. 
-	 * Additional validation can override the match type recorded in the context 
-	 * for later code generation. 
-	 */
-	if ( mtctx != NULL && mtctx->match_type != NULL &&
-		mtctx->match_type->validate_context != NULL ) {
-		return mtctx->match_type->validate_context(validator, arg, mtctx, key_arg);
-	}
-	
-	return TRUE;
-}
-
-bool sieve_match_type_validate
-(struct sieve_validator *validator, struct sieve_command_context *cmd,
-	struct sieve_ast_argument *key_arg )
-{
-	struct sieve_ast_argument *arg = sieve_command_first_argument(cmd);
-
-	while ( arg != NULL && arg != cmd->first_positional ) {
-		if ( arg->argument == &match_type_tag ) {
-			if ( !sieve_match_type_validate_argument(validator, arg, key_arg) ) 
-				return FALSE;
-		}
-		arg = sieve_ast_argument_next(arg);
-	}
-
-	return TRUE;	
-}
-
 void sieve_match_types_link_tags
 	(struct sieve_validator *validator, 
 		struct sieve_command_registration *cmd_reg, int id_code) 
 {	
 	sieve_validator_register_tag
 		(validator, cmd_reg, &match_type_tag, id_code); 	
+}
+
+/*
+ * Validation
+ */
+
+bool sieve_match_type_validate
+(struct sieve_validator *validator, struct sieve_command_context *cmd,
+	struct sieve_ast_argument *key_arg, 
+	const struct sieve_match_type *mcht_default, 
+	const struct sieve_comparator *cmp_default)
+{
+	struct sieve_ast_argument *arg = sieve_command_first_argument(cmd);
+	struct sieve_ast_argument *mt_arg = NULL;
+	struct sieve_match_type_context *mtctx;
+	const struct sieve_match_type *mcht = NULL;
+	const struct sieve_comparator *cmp = NULL;
+
+	/* Find match type and comparator among the arguments */
+	while ( arg != NULL && arg != cmd->first_positional ) {
+		if ( sieve_argument_is_comparator(arg) ) {
+			cmp = sieve_comparator_tag_get(arg);
+			if ( mt_arg != NULL ) break;
+		}
+
+		if ( sieve_argument_is_match_type(arg) ) {
+			mt_arg = arg;
+			if ( cmp != NULL ) break;
+		}
+		arg = sieve_ast_argument_next(arg);
+	}
+	
+	/* Verify using the default comparator if none is specified explicitly */
+	if ( cmp == NULL )
+		cmp = cmp_default;
+	
+	/* Verify the default match type if none is specified explicitly */
+	if ( mt_arg == NULL || mt_arg->context == NULL ) {
+		mtctx = NULL;
+		mcht = mcht_default;
+	} else {
+		mtctx = (struct sieve_match_type_context *) mt_arg->context;
+		mcht = mtctx->match_type;
+		mtctx->comparator = cmp;
+	}
+
+	/* Check whether this match type requires additional validation. 
+	 * Additional validation can override the match type recorded in the context 
+	 * for later code generation. 
+	 */
+	if ( mcht != NULL && mcht->validate_context != NULL ) {
+		return mcht->validate_context(validator, mt_arg, mtctx, key_arg);
+	}
+	
+	return TRUE;	
 }
 
 /*
@@ -471,35 +492,27 @@ const struct sieve_operand match_type_operand = {
 };
 
 /*
- * Matching
+ * Common validation implementation
  */
 
 bool sieve_match_substring_validate_context
-(struct sieve_validator *validator, struct sieve_ast_argument *arg,
-    struct sieve_match_type_context *ctx, 
+(struct sieve_validator *validator, struct sieve_ast_argument *arg ATTR_UNUSED,
+	struct sieve_match_type_context *ctx,
 	struct sieve_ast_argument *key_arg ATTR_UNUSED)
 {
-	struct sieve_ast_argument *carg =
-		sieve_command_first_argument(ctx->command_ctx);
-
-    while ( carg != NULL && carg != ctx->command_ctx->first_positional ) {
-		if ( carg != arg && carg->argument == &comparator_tag ) {
-			const struct sieve_comparator *cmp =
-				sieve_comparator_tag_get(carg);
+	const struct sieve_comparator *cmp = ctx->comparator;
+		
+	if ( cmp == NULL )
+		return TRUE;
 			
-			if ( (cmp->flags & SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH) == 0 ) {
-				sieve_command_validate_error(validator, ctx->command_ctx,
-					"the specified %s comparator does not support "
-					"sub-string matching as required by the :%s match type",
-					cmp->object.identifier, ctx->match_type->object.identifier );
+	if ( (cmp->flags & SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH) == 0 ) {
+		sieve_command_validate_error(validator, ctx->command_ctx,
+			"the specified %s comparator does not support "
+			"sub-string matching as required by the :%s match type",
+			cmp->object.identifier, ctx->match_type->object.identifier );
 
-				return FALSE;
-			}
-			return TRUE;
-		}
-
-		carg = sieve_ast_argument_next(carg);
+		return FALSE;
 	}
-
+	
 	return TRUE;
 } 

@@ -127,18 +127,15 @@ bool mcht_regex_validate_context
 (struct sieve_validator *validator, struct sieve_ast_argument *arg ATTR_UNUSED,
 	struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg)
 {
+	const struct sieve_comparator *cmp = ctx->comparator;
 	int cflags = REG_EXTENDED | REG_NOSUB;
 	struct _regex_key_context keyctx;
-	struct sieve_ast_argument *cmp_arg;
 	struct sieve_ast_argument *kitem;
 
-	cmp_arg = sieve_command_find_argument(ctx->command_ctx, &comparator_tag);	
-	if ( cmp_arg != NULL ) { 
-		/* FIXME: new commands might use incompatible default comparator */
-		
-		if ( sieve_comparator_tag_is(cmp_arg, &i_ascii_casemap_comparator) )
+	if ( cmp != NULL ) { 
+		if ( cmp == &i_ascii_casemap_comparator )
 			cflags =  REG_EXTENDED | REG_NOSUB | REG_ICASE;
-		else if ( sieve_comparator_tag_is(cmp_arg, &i_octet_comparator) )
+		else if ( cmp == &i_octet_comparator )
 			cflags =  REG_EXTENDED | REG_NOSUB;
 		else {
 			sieve_command_validate_error(validator, ctx->command_ctx, 
@@ -150,14 +147,14 @@ bool mcht_regex_validate_context
 
 	/* Validate regular expression keys */
 
-    keyctx.valdtr = validator;
+	keyctx.valdtr = validator;
 	keyctx.mctx = ctx;
 	keyctx.cflags = cflags;
 
 	kitem = key_arg;
-    if ( !sieve_ast_stringlist_map(&kitem, (void *) &keyctx,
+	if ( !sieve_ast_stringlist_map(&kitem, (void *) &keyctx,
 		mcht_regex_validate_key_argument) )
-        return FALSE;
+		return FALSE;
 
 	return TRUE;
 }

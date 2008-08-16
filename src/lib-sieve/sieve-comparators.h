@@ -5,8 +5,9 @@
 #define __SIEVE_COMPARATORS_H
 
 #include "sieve-common.h"
-#include "sieve-objects.h"
 #include "sieve-extensions.h"
+#include "sieve-commands.h"
+#include "sieve-objects.h"
 #include "sieve-code.h"
 
 /* 
@@ -62,6 +63,12 @@ struct sieve_comparator {
  */
  
 extern const struct sieve_argument comparator_tag;
+
+static inline bool sieve_argument_is_comparator
+	(struct sieve_ast_argument *arg) 
+{
+	return arg->argument == &comparator_tag;
+}
 
 void sieve_comparators_link_tag
 	(struct sieve_validator *validator, 

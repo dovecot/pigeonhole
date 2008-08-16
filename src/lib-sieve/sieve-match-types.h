@@ -1,10 +1,20 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+ 
 #ifndef __SIEVE_MATCH_TYPES_H
 #define __SIEVE_MATCH_TYPES_H
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
+#include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-objects.h"
+
+/*
+ * Types
+ */
+
+struct sieve_match_type_context;
 
 /*
  * Core match types 
@@ -21,9 +31,10 @@ extern const struct sieve_match_type is_match_type;
 extern const struct sieve_match_type contains_match_type;
 extern const struct sieve_match_type matches_match_type;
 
-struct sieve_match_type;
-struct sieve_match_type_context;
-
+/*
+ * Match type object
+ */
+ 
 struct sieve_match_type {
 	struct sieve_object object;
 
@@ -50,11 +61,11 @@ struct sieve_match_type {
 
 	void (*match_init)(struct sieve_match_context *mctx);
 
-	/* WARNING: some tests may pass a val == NULL parameter indicating that the passed
-	 * value has no significance. For string-type matches this should map to the empty
-	 * string "", but for match types that consider the passed values as objects rather
-	 * than strings (e.g. :count) this means that the passed value should be skipped.
-	 * This is currently only used by string test of the variables extension.
+	/* WARNING: some tests may pass a val == NULL parameter indicating that the 
+	 * passed value has no significance. For string-type matches this should map 
+	 * to the empty string "", but for match types that consider the passed values 
+	 * as objects rather than strings (e.g. :count) this means that the passed 
+	 * value should be skipped. 
 	 */
 	int (*match)
 		(struct sieve_match_context *mctx, const char *val, size_t val_size, 
@@ -66,6 +77,9 @@ struct sieve_match_type_context {
 	struct sieve_command_context *command_ctx;
 	const struct sieve_match_type *match_type;
 	
+	/* Only filled in when match_type->validate_context() is called */
+	const struct sieve_comparator *comparator;
+	
 	/* Context data could be used in the future to pass data between validator and
 	 * generator in match types that use extra parameters. Currently not 
 	 * necessary, not even for the relational extension.
@@ -73,7 +87,18 @@ struct sieve_match_type_context {
 	void *ctx_data;
 };
 
-/* Match values */
+/*
+ * Match type registration
+ */
+
+void sieve_match_type_register
+	(struct sieve_validator *validator, const struct sieve_match_type *mcht);
+const struct sieve_match_type *sieve_match_type_find
+	(struct sieve_validator *validator, const char *identifier);
+
+/* 
+ * Match values 
+ */
 
 struct sieve_match_values;
 
@@ -98,29 +123,34 @@ void sieve_match_values_commit
 void sieve_match_values_abort
 	(struct sieve_match_values **mvalues);
 	
-	
 void sieve_match_values_get
 	(struct sieve_interpreter *interp, unsigned int index, string_t **value_r);
 
-/* ... */
+/*
+ * Match type tagged argument 
+ */
+
+extern const struct sieve_argument match_type_tag;
+
+static inline bool sieve_argument_is_match_type
+	(struct sieve_ast_argument *arg)
+{
+	return ( arg->argument == &match_type_tag );
+}
 
 void sieve_match_types_link_tags
 	(struct sieve_validator *validator, 
 		struct sieve_command_registration *cmd_reg, int id_code);
-bool sieve_match_type_validate_argument
-(struct sieve_validator *validator, struct sieve_ast_argument *arg,
-	struct sieve_ast_argument *key_arg);
-bool sieve_match_type_validate
-(struct sieve_validator *validator, struct sieve_command_context *cmd,
-	struct sieve_ast_argument *key_arg);
-		
-void sieve_match_type_register
-	(struct sieve_validator *validator, 
-	const struct sieve_match_type *addrp);
-const struct sieve_match_type *sieve_match_type_find
-	(struct sieve_validator *validator, const char *identifier);
 
-extern const struct sieve_argument match_type_tag;
+/*
+ * Validation
+ */
+
+bool sieve_match_type_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd,
+		struct sieve_ast_argument *key_arg, 
+		const struct sieve_match_type *mcht_default, 
+		const struct sieve_comparator *cmp_default);
 
 /*
  * Match type operand
@@ -159,11 +189,11 @@ static inline bool sieve_opr_match_type_dump
 		(denv, &sieve_match_type_operand_class, address, NULL);
 }
 
-/* Match Utility */
+/* Common validation implementation */
 
 bool sieve_match_substring_validate_context
-(struct sieve_validator *validator, struct sieve_ast_argument *arg,
-    struct sieve_match_type_context *ctx, 
-	struct sieve_ast_argument *key_arg);
+	(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+		struct sieve_match_type_context *ctx, 
+		struct sieve_ast_argument *key_arg);
 
 #endif /* __SIEVE_MATCH_TYPES_H */
