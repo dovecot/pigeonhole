@@ -27,6 +27,7 @@
  */
 
 #define MCHT_REGEX_MAX_SUBSTITUTIONS SIEVE_MAX_MATCH_VALUES
+
 /* 
  * Forward declarations 
  */
@@ -80,7 +81,7 @@ static const char *_regexp_error(regex_t *regexp, int errorcode)
 	return "";
 }
 
-static bool mcht_regex_validate_regexp
+static int mcht_regex_validate_regexp
 (struct sieve_validator *validator, struct sieve_match_type_context *ctx,
 	struct sieve_ast_argument *key, int cflags) 
 {
@@ -99,58 +100,64 @@ static bool mcht_regex_validate_regexp
 	regfree(&regexp);
 	return TRUE;
 }
+
+struct _regex_key_context {
+	struct sieve_validator *valdtr;
+	struct sieve_match_type_context *mctx;
+	int cflags;
+};
+
+static int mcht_regex_validate_key_argument
+(void *context, struct sieve_ast_argument *key)
+{
+	struct _regex_key_context *keyctx = (struct _regex_key_context *) context;
+
+	if ( !sieve_argument_is_string_literal(key) ) {
+		sieve_command_validate_error(keyctx->valdtr, keyctx->mctx->command_ctx,
+			"this sieve implementation currently does not accept variable strings "
+			"as regular expression");
+		return FALSE;
+	}
+
+	return mcht_regex_validate_regexp
+		(keyctx->valdtr, keyctx->mctx, key, keyctx->cflags);
+}
 	
 bool mcht_regex_validate_context
-(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+(struct sieve_validator *validator, struct sieve_ast_argument *arg ATTR_UNUSED,
 	struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg)
 {
-	int cflags;
-	struct sieve_ast_argument *carg = 
-		sieve_command_first_argument(ctx->command_ctx);
-	
-	cflags =  REG_EXTENDED | REG_NOSUB;
-	while ( carg != NULL ) {
-		if ( carg != arg && carg->argument == &comparator_tag ) {
-			if ( sieve_comparator_tag_is(carg, &i_ascii_casemap_comparator) )
-				cflags =  REG_EXTENDED | REG_NOSUB | REG_ICASE;
-			else if ( sieve_comparator_tag_is(carg, &i_octet_comparator) )
-				cflags =  REG_EXTENDED | REG_NOSUB;
-			else {
-				sieve_command_validate_error(validator, ctx->command_ctx, 
-					"regex match type only supports "
-					"i;octet and i;ascii-casemap comparators" );
-				return FALSE;	
-			}
+	int cflags = REG_EXTENDED | REG_NOSUB;
+	struct _regex_key_context keyctx;
+	struct sieve_ast_argument *cmp_arg;
+	struct sieve_ast_argument *kitem;
 
-			return TRUE;
-		}
-	
-		carg = sieve_ast_argument_next(carg);
-	}
+	cmp_arg = sieve_command_find_argument(ctx->command_ctx, &comparator_tag);	
+	if ( cmp_arg != NULL ) { 
+		/* FIXME: new commands might use incompatible default comparator */
 		
-	/* Validate regular expression(s) */
-	if ( sieve_ast_argument_type(key_arg) == SAAT_STRING ) {
-		/* Single string */	
-		if ( !mcht_regex_validate_regexp(validator, ctx, key_arg, cflags) )
-			return FALSE;
-
-	} else if ( sieve_ast_argument_type(key_arg) == SAAT_STRING_LIST ) {
-		/* String list */
-		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(key_arg);
-
-		while ( stritem != NULL ) {
-			if ( !mcht_regex_validate_regexp(validator, ctx, stritem, cflags) )
-				return FALSE;
-
-			stritem = sieve_ast_strlist_next(stritem);
+		if ( sieve_comparator_tag_is(cmp_arg, &i_ascii_casemap_comparator) )
+			cflags =  REG_EXTENDED | REG_NOSUB | REG_ICASE;
+		else if ( sieve_comparator_tag_is(cmp_arg, &i_octet_comparator) )
+			cflags =  REG_EXTENDED | REG_NOSUB;
+		else {
+			sieve_command_validate_error(validator, ctx->command_ctx, 
+				"regex match type only supports "
+				"i;octet and i;ascii-casemap comparators" );
+			return FALSE;	
 		}
-	} else {
-		/* ??? */ 
-		sieve_command_validate_error(validator, ctx->command_ctx, 
-			"!!BUG!!: mcht_regex_validate_context: invalid ast argument type(%s)",
-			sieve_ast_argument_type_name(sieve_ast_argument_type(key_arg)) );
-		return FALSE;
-	} 
+	}
+
+	/* Validate regular expression keys */
+
+    keyctx.valdtr = validator;
+	keyctx.mctx = ctx;
+	keyctx.cflags = cflags;
+
+	kitem = key_arg;
+    if ( !sieve_ast_stringlist_map(&kitem, (void *) &keyctx,
+		mcht_regex_validate_key_argument) )
+        return FALSE;
 
 	return TRUE;
 }
