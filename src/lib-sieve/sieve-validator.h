@@ -1,9 +1,16 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
+ 
 #ifndef __SIEVE_VALIDATOR_H
 #define __SIEVE_VALIDATOR_H
 
 #include "lib.h"
 
 #include "sieve-common.h"
+
+/*
+ * Types
+ */
 
 enum sieve_argument_type {
 	SAT_NUMBER,
@@ -14,14 +21,25 @@ enum sieve_argument_type {
 	SAT_COUNT
 };
 
-struct sieve_validator;
 struct sieve_command_registration;
+
+/*
+ * Validator
+ */
+ 
+struct sieve_validator;
 
 struct sieve_validator *sieve_validator_create
 	(struct sieve_ast *ast, struct sieve_error_handler *ehandler);
 void sieve_validator_free(struct sieve_validator **validator);
 pool_t sieve_validator_pool(struct sieve_validator *validator);
 
+bool sieve_validator_run(struct sieve_validator *validator);
+
+/*
+ * Accessors
+ */
+ 
 struct sieve_error_handler *sieve_validator_error_handler
 	(struct sieve_validator *validator);
 struct sieve_ast *sieve_validator_ast
@@ -29,7 +47,9 @@ struct sieve_ast *sieve_validator_ast
 struct sieve_script *sieve_validator_script
 	(struct sieve_validator *validator);
 
-bool sieve_validator_run(struct sieve_validator *validator);
+/*
+ * Error handling
+ */
 
 void sieve_validator_warning
 	(struct sieve_validator *validator, struct sieve_ast_node *node, 
@@ -41,9 +61,10 @@ void sieve_validator_critical
 	(struct sieve_validator *validator, struct sieve_ast_node *node, 
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 		
-/* Command Programmers Interface */
-
-/* Command/Test registration */
+/* 
+ * Command/Test registry
+ */
+ 
 void sieve_validator_register_command
 	(struct sieve_validator *validator, const struct sieve_command *command);
 const struct sieve_command *sieve_validator_find_command
@@ -53,7 +74,10 @@ void sieve_validator_register_external_tag
 	(struct sieve_validator *validator, const struct sieve_argument *tag, 
 		const char *command, int id_code);
 
-/* Argument registration */
+/* 
+ * Per-command tagged argument registry
+ */
+
 void sieve_validator_register_tag
 	(struct sieve_validator *validator, 
 		struct sieve_command_registration *cmd_reg, 
@@ -61,8 +85,21 @@ void sieve_validator_register_tag
 void sieve_validator_register_persistent_tag
 	(struct sieve_validator *validator, const struct sieve_argument *tag, 
 		const char *command);
+	
+/*
+ * Overriding the default literal arguments
+ */	
+ 
+void sieve_validator_argument_override
+(struct sieve_validator *validator, enum sieve_argument_type type, 
+	const struct sieve_argument *argument);
+bool sieve_validator_argument_activate_super
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	struct sieve_ast_argument *arg, bool constant);
 		
-/* Argument validation */
+/* 
+ * Argument validation API
+ */
 
 bool sieve_validate_positional_argument
 	(struct sieve_validator *validator, struct sieve_command_context *cmd,
@@ -77,13 +114,6 @@ bool sieve_validate_tag_parameter
 	struct sieve_ast_argument *tag, struct sieve_ast_argument *param,
 	enum sieve_ast_argument_type req_type);
 	
-void sieve_validator_argument_override
-(struct sieve_validator *validator, enum sieve_argument_type type, 
-	const struct sieve_argument *argument);
-bool sieve_validator_argument_activate_super
-(struct sieve_validator *validator, struct sieve_command_context *cmd, 
-	struct sieve_ast_argument *arg, bool constant);
-
 /* 
  * Extension support
  */

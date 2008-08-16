@@ -1,5 +1,7 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
+ 
 /* Match-type ':is': 
- *
  */
 
 #include "lib.h"

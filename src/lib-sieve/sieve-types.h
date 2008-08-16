@@ -14,10 +14,18 @@
 /* Enable runtime trace functionality */
 #define SIEVE_RUNTIME_TRACE
 
+/*
+ * Forward declarations
+ */
+
 struct sieve_script;
 struct sieve_binary;
 
-/* The mail message + envelope data */
+/* 
+ * Message data
+ *
+ * - The mail message + envelope data 
+ */
 
 struct sieve_message_data {
 	struct mail *mail;
@@ -27,7 +35,11 @@ struct sieve_message_data {
 	const char *id;
 };
 
-/* Environment for currently executing script */
+/* 
+ * Script environment
+ *
+ * - Environment for currently executing script 
+ */
 
 struct sieve_script_env {
 	/* Mail-related */
@@ -47,9 +59,10 @@ struct sieve_script_env {
 	bool (*smtp_close)(void *handle);
 	
 	/* Interface for marking and checking duplicates */
-	int (*duplicate_check)(const void *id, size_t id_size, const char *user);
-	void (*duplicate_mark)(const void *id, size_t id_size,
-                    const char *user, time_t time);
+	int (*duplicate_check)
+		(const void *id, size_t id_size, const char *user);
+	void (*duplicate_mark)
+		(const void *id, size_t id_size, const char *user, time_t time);
 };	
 
 /*

@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "compat.h"
 #include "istream.h"
@@ -11,7 +14,15 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+/*
+ * Configuration
+ */
+ 
 #define SIEVE_READ_BLOCK_SIZE (1024*8)
+
+/*
+ * Filename to name/name to filename
+ */
 
 static inline const char *_sieve_scriptfile_get_basename(const char *filename)
 {
@@ -37,7 +48,10 @@ static inline const char *_sieve_scriptfile_from_name(const char *name)
     return name;
 }
 
-/* Script object */
+/* 
+ * Script object 
+ */
+ 
 struct sieve_script *sieve_script_init
 (struct sieve_script *script, const char *path, const char *name, 
 	struct sieve_error_handler *ehandler, bool *exists_r)
@@ -178,7 +192,38 @@ void sieve_script_unref(struct sieve_script **script)
 	*script = NULL;
 }
 
-/* Stream manageement */
+/* 
+ * Accessors 
+ */
+
+const char *sieve_script_name(struct sieve_script *script)
+{
+	return script->name;
+}
+
+const char *sieve_script_filename(struct sieve_script *script)
+{
+	return script->filename;
+}
+
+const char *sieve_script_path(struct sieve_script *script)
+{
+	return script->path;
+}
+
+const char *sieve_script_dirpath(struct sieve_script *script)
+{
+	return script->dirpath;
+}
+
+const char *sieve_script_binpath(struct sieve_script *script)
+{
+	return t_strconcat(script->dirpath, "/", script->basename, ".svbin", NULL);
+}
+
+/* 
+ * Stream manageement 
+ */
 
 struct istream *sieve_script_open
 (struct sieve_script *script, bool *deleted_r)
@@ -243,7 +288,9 @@ uoff_t sieve_script_get_size(struct sieve_script *script)
 	return script->st.st_size;
 }
 
-/* Comparison */
+/* 
+ * Comparison 
+ */
 
 int sieve_script_cmp
 (struct sieve_script *script1, struct sieve_script *script2)
@@ -261,31 +308,3 @@ bool sieve_script_older
 {
 	return ( script->st.st_mtime < time && script->lnk_st.st_mtime < time );
 }
-
-/* Accessors */
-
-const char *sieve_script_name(struct sieve_script *script)
-{
-	return script->name;
-}
-
-const char *sieve_script_filename(struct sieve_script *script)
-{
-	return script->filename;
-}
-
-const char *sieve_script_path(struct sieve_script *script)
-{
-	return script->path;
-}
-
-const char *sieve_script_dirpath(struct sieve_script *script)
-{
-	return script->dirpath;
-}
-
-const char *sieve_script_binpath(struct sieve_script *script)
-{
-	return t_strconcat(script->dirpath, "/", script->basename, ".svbin", NULL);
-}
-

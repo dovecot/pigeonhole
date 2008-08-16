@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+ 
 #include "lib.h"
 #include "mempool.h"
 #include "ostream.h"
@@ -16,7 +19,7 @@
 #include <stdio.h>
 
 /*
- *
+ * Types
  */
 
 struct sieve_result_action {
@@ -50,6 +53,10 @@ struct sieve_result_implicit_side_effects {
 	const struct sieve_action *action;
 	struct sieve_side_effects_list *seffects;
 };
+
+/*
+ * Result object
+ */
 
 struct sieve_result {
 	pool_t pool;
@@ -119,6 +126,10 @@ pool_t sieve_result_pool(struct sieve_result *result)
 	return result->pool;
 }
 
+/*
+ * Extension support
+ */
+
 void sieve_result_extension_set_context
 (struct sieve_result *result, const struct sieve_extension *ext, void *context)
 {
@@ -139,7 +150,9 @@ const void *sieve_result_extension_get_context
 	return *ctx;
 }
 
-/* Logging of result */
+/* 
+ * Error handling 
+ */
 
 static const char *_get_location(const struct sieve_action_exec_env *aenv)
 {
@@ -177,7 +190,9 @@ void sieve_result_log
 	va_end(args);
 }
 
-/* Result composition */
+/* 
+ * Result composition 
+ */
 
 void sieve_result_add_implicit_side_effect
 (struct sieve_result *result, const struct sieve_action *to_action, 
@@ -407,6 +422,10 @@ bool sieve_result_print
 	return TRUE;
 }
 
+/*
+ * Result execution
+ */
+
 bool sieve_result_implicit_keep
 	(struct sieve_result *result, bool rollback)
 {	
@@ -492,8 +511,8 @@ int sieve_result_execute
 	result->action_env.scriptenv = senv;
 	
 	/* 
-     * Transaction start 
-     */
+	 * Transaction start 
+   */
 	
 	rac = result->first_action;
 	while ( success && rac != NULL ) {
@@ -508,8 +527,8 @@ int sieve_result_execute
 	}
 	
 	/* 
-     * Transaction execute 
-     */
+	 * Transaction execute 
+	 */
 	
 	last_attempted = rac;
 	rac = result->first_action;
@@ -550,8 +569,8 @@ int sieve_result_execute
 	}
 	
 	/* 
-     * Transaction commit/rollback 
-     */
+	 * Transaction commit/rollback 
+	 */
 
 	commit_ok = success;
 	rac = result->first_action;
@@ -625,6 +644,7 @@ int sieve_result_execute
 /*
  * Side effects list
  */
+ 
 struct sieve_side_effects_list *sieve_side_effects_list_create
 	(struct sieve_result *result)
 {

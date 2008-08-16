@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
+ */
+
 #include "lib.h"
 #include "str.h"
 #include "str-sanitize.h"
@@ -16,12 +19,47 @@
 #include "sieve-comparators.h"
 #include "sieve-address-parts.h"
 
+/*
+ * Forward declarations
+ */
+ 
+static void sieve_validator_register_core_commands
+	(struct sieve_validator *validator);
+static void sieve_validator_register_core_tests
+	(struct sieve_validator *validator);
+	
+/*
+ * Types
+ */
+ 
+/* Tag registration */
+
+struct sieve_tag_registration {
+	const struct sieve_argument *tag;
+	const char *identifier;	
+	int id_code;
+};
+
+/* Command registration */
+
+struct sieve_command_registration {
+	const struct sieve_command *command;
+	
+	ARRAY_DEFINE(normal_tags, struct sieve_tag_registration *); 
+	ARRAY_DEFINE(instanced_tags, struct sieve_tag_registration *); 
+	ARRAY_DEFINE(persistent_tags, struct sieve_tag_registration *); 
+};
+ 
+/* Default (literal) arguments */
+
 struct sieve_default_argument {
 	const struct sieve_argument *argument;
 	struct sieve_default_argument *overrides;
 };
 
-/* Extensions to the validator */
+/* 
+ * Validator extension
+ */
 
 struct sieve_validator_extension_reg {
 	const struct sieve_validator_extension *val_ext;
@@ -29,7 +67,7 @@ struct sieve_validator_extension_reg {
 };
 
 /* 
- * Context/Semantics checker implementation 
+ * Validator
  */
 
 struct sieve_validator {
@@ -55,12 +93,9 @@ struct sieve_validator {
 	bool current_defarg_constant;
 };
 
-/* Predeclared statics */
-
-static void sieve_validator_register_core_commands(struct sieve_validator *validator);
-static void sieve_validator_register_core_tests(struct sieve_validator *validator);
-
-/* Error management */
+/* 
+ * Error handling 
+ */
 
 void sieve_validator_warning
 (struct sieve_validator *validator, struct sieve_ast_node *node, 
@@ -95,10 +130,12 @@ void sieve_validator_critical
 	va_end(args);
 }
 
-/* Validator object */
+/* 
+ * Validator object 
+ */
 
 struct sieve_validator *sieve_validator_create
-	(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
+(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
 {
 	unsigned int i;
 	pool_t pool;
@@ -167,44 +204,41 @@ void sieve_validator_free(struct sieve_validator **validator)
 	*validator = NULL;
 }
 
+/*
+ * Accessors
+ */
+
 pool_t sieve_validator_pool(struct sieve_validator *validator)
 {
 	return validator->pool;
 }
 
 struct sieve_error_handler *sieve_validator_error_handler
-	(struct sieve_validator *validator)
+(struct sieve_validator *validator)
 {
 	return validator->ehandler;
 }
 
 struct sieve_ast *sieve_validator_ast
-	(struct sieve_validator *validator)
+(struct sieve_validator *validator)
 {
 	return validator->ast;
 }
 
 struct sieve_script *sieve_validator_script
-	(struct sieve_validator *validator)
+(struct sieve_validator *validator)
 {
 	return validator->script;
 }
 
-/* Command registry */
+/* 
+ * Command registry 
+ */
 
-struct sieve_tag_registration;
+/* Dummy command object to mark unknown commands in the registry */
 
-struct sieve_command_registration {
-	const struct sieve_command *command;
-	
-	ARRAY_DEFINE(normal_tags, struct sieve_tag_registration *); 
-	ARRAY_DEFINE(instanced_tags, struct sieve_tag_registration *); 
-	ARRAY_DEFINE(persistent_tags, struct sieve_tag_registration *); 
-};
-
-/* Dummy function */
 static bool _cmd_unknown_validate
-	(struct sieve_validator *validator ATTR_UNUSED, 
+(struct sieve_validator *validator ATTR_UNUSED, 
 	struct sieve_command_context *cmd ATTR_UNUSED) 
 {
 	i_unreached();
@@ -216,7 +250,10 @@ static const struct sieve_command unknown_command = {
 	NULL, NULL, _cmd_unknown_validate, NULL, NULL 
 };
 
-static void sieve_validator_register_core_tests(struct sieve_validator *validator) 
+/* Registration of the core commands of the language */
+
+static void sieve_validator_register_core_tests
+(struct sieve_validator *validator) 
 {
 	unsigned int i;
 	
@@ -225,7 +262,8 @@ static void sieve_validator_register_core_tests(struct sieve_validator *validato
 	}
 }
 
-static void sieve_validator_register_core_commands(struct sieve_validator *validator) 
+static void sieve_validator_register_core_commands
+(struct sieve_validator *validator) 
 {
 	unsigned int i;
 	
@@ -234,14 +272,18 @@ static void sieve_validator_register_core_commands(struct sieve_validator *valid
 	}
 }
 
-static struct sieve_command_registration *sieve_validator_find_command_registration
-		(struct sieve_validator *validator, const char *command) 
+/* Registry functions */
+
+static struct sieve_command_registration *
+sieve_validator_find_command_registration
+(struct sieve_validator *validator, const char *command) 
 {
-	return (struct sieve_command_registration *) hash_lookup(validator->commands, command);
+	return (struct sieve_command_registration *) 
+		hash_lookup(validator->commands, command);
 }
 
 static struct sieve_command_registration *_sieve_validator_register_command
-	(struct sieve_validator *validator, const struct sieve_command *command,
+(struct sieve_validator *validator, const struct sieve_command *command,
 	const char *identifier) 
 {
 	struct sieve_command_registration *record = 
@@ -253,7 +295,7 @@ static struct sieve_command_registration *_sieve_validator_register_command
 }
 
 void sieve_validator_register_command
-	(struct sieve_validator *validator, const struct sieve_command *command) 
+(struct sieve_validator *validator, const struct sieve_command *command) 
 {
 	struct sieve_command_registration *cmd_reg =
 		sieve_validator_find_command_registration(validator, command->identifier);
@@ -269,7 +311,7 @@ void sieve_validator_register_command
 }
 
 static void sieve_validator_register_unknown_command
-	(struct sieve_validator *validator, const char *command) 
+(struct sieve_validator *validator, const char *command) 
 {
 	(void)_sieve_validator_register_command(validator, &unknown_command, command);		
 }
@@ -283,16 +325,14 @@ const struct sieve_command *sieve_validator_find_command
   return ( record == NULL ? NULL : record->command );
 }
 
-/* Per-command tag/argument registry */
+/* 
+ * Per-command tagged argument registry 
+ */
 
-struct sieve_tag_registration {
-	const struct sieve_argument *tag;
-	const char *identifier;	
-	int id_code;
-};
+/* Dummy argument object to mark unknown arguments in the registry */
 
 static bool _unknown_tag_validate
-	(struct sieve_validator *validator ATTR_UNUSED, 
+(struct sieve_validator *validator ATTR_UNUSED, 
 	struct sieve_ast_argument **arg ATTR_UNUSED, 
 	struct sieve_command_context *tst ATTR_UNUSED)
 {
@@ -306,6 +346,8 @@ static const struct sieve_argument _unknown_tag = {
 	_unknown_tag_validate, 
 	NULL, NULL 
 };
+
+/* Registry functions */
 
 static void _sieve_validator_register_tag
 (struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
@@ -368,7 +410,7 @@ void sieve_validator_register_external_tag
 }
 
 void sieve_validator_register_tag
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
+(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg, 
 	const struct sieve_argument *tag, int id_code) 
 {
 	if ( tag->is_instance_of == NULL )
@@ -436,11 +478,13 @@ static const struct sieve_argument *sieve_validator_find_tag
 	return NULL;
 }
 
-/* Extension support */
+/* 
+ * Extension support 
+ */
 
 const struct sieve_extension *sieve_validator_extension_load
-	(struct sieve_validator *validator, struct sieve_command_context *cmd, 
-		string_t *ext_name) 
+(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+	string_t *ext_name) 
 {
 	const struct sieve_extension *ext;
 	const char *name = str_c(ext_name);
@@ -507,7 +551,9 @@ void *sieve_validator_extension_get_context
 	return reg->context;
 }
 
-/* Argument Validation API */
+/* 
+ * Overriding the default literal arguments
+ */
 
 void sieve_validator_argument_override
 (struct sieve_validator *validator, enum sieve_argument_type type, 
@@ -576,6 +622,10 @@ bool sieve_validator_argument_activate_super
 		(validator, cmd, defarg, arg);
 }
 
+/* 
+ * Argument Validation API 
+ */
+
 bool sieve_validator_argument_activate
 (struct sieve_validator *validator, struct sieve_command_context *cmd, 
 	struct sieve_ast_argument *arg, bool constant)
@@ -608,7 +658,7 @@ bool sieve_validator_argument_activate
 }
 
 bool sieve_validate_positional_argument
-	(struct sieve_validator *validator, struct sieve_command_context *cmd,
+(struct sieve_validator *validator, struct sieve_command_context *cmd,
 	struct sieve_ast_argument *arg, const char *arg_name, unsigned int arg_pos,
 	enum sieve_ast_argument_type req_type)
 {
@@ -628,7 +678,7 @@ bool sieve_validate_positional_argument
 }
 
 bool sieve_validate_tag_parameter
-	(struct sieve_validator *validator, struct sieve_command_context *cmd,
+(struct sieve_validator *validator, struct sieve_command_context *cmd,
 	struct sieve_ast_argument *tag, struct sieve_ast_argument *param,
 	enum sieve_ast_argument_type req_type)
 {
@@ -649,7 +699,9 @@ bool sieve_validate_tag_parameter
 	return sieve_validator_argument_activate(validator, cmd, param, FALSE);
 }
 
-/* Test validation API */
+/* 
+ * Command argument validation 
+ */
 
 static bool sieve_validate_command_arguments
 (struct sieve_validator *validator, struct sieve_command_context *cmd) 
@@ -791,7 +843,9 @@ static bool sieve_validate_arguments_context
 	return TRUE;
 }
  
-/* Command Validation API */ 
+/* 
+ * Command Validation API 
+ */ 
                  
 static bool sieve_validate_command_subtests
 (struct sieve_validator *validator, struct sieve_command_context *cmd, 
@@ -801,36 +855,48 @@ static bool sieve_validate_command_subtests
 	
 	case 0:
 	 	if ( sieve_ast_test_count(cmd->ast_node) > 0 ) {
-			sieve_command_validate_error
-				( validator, cmd, "the %s %s accepts no sub-tests, but tests are specified anyway", 
-					cmd->command->identifier, sieve_command_type_name(cmd->command) );
+			sieve_command_validate_error(validator, cmd, 
+				"the %s %s accepts no sub-tests, but tests are specified anyway", 
+				cmd->command->identifier, sieve_command_type_name(cmd->command));
+			
 			return FALSE;
 		}
 		break;
 	case 1:
 		if ( sieve_ast_test_count(cmd->ast_node) == 0 ) {
-			sieve_command_validate_error
-				( validator, cmd, "the %s %s requires one sub-test, but none is specified", 
-					cmd->command->identifier, sieve_command_type_name(cmd->command) );
+			sieve_command_validate_error(validator, cmd, 
+				"the %s %s requires one sub-test, but none is specified", 
+				cmd->command->identifier, sieve_command_type_name(cmd->command));
+				
 			return FALSE;
-		} else if ( sieve_ast_test_count(cmd->ast_node) > 1 || cmd->ast_node->test_list ) {
-			sieve_command_validate_error
-				( validator, cmd, "the %s %s requires one sub-test, but a list of tests is specified", 
-					cmd->command->identifier, sieve_command_type_name(cmd->command) );
+			
+		} else if ( sieve_ast_test_count(cmd->ast_node) > 1 || 
+			cmd->ast_node->test_list ) {
+			
+			sieve_command_validate_error(validator, cmd, 
+				"the %s %s requires one sub-test, but a list of tests is specified", 
+				cmd->command->identifier, sieve_command_type_name(cmd->command));
+				
 			return FALSE;
 		}
 		break;
 		
 	default:
 		if ( sieve_ast_test_count(cmd->ast_node) == 0 ) {
-			sieve_command_validate_error
-				( validator, cmd, "the %s %s requires a list of sub-tests, but none is specified", 
-					cmd->command->identifier, sieve_command_type_name(cmd->command) );
+			sieve_command_validate_error(validator, cmd, 
+				"the %s %s requires a list of sub-tests, but none is specified", 
+				cmd->command->identifier, sieve_command_type_name(cmd->command));
+			
 			return FALSE;
-		} else if ( sieve_ast_test_count(cmd->ast_node) == 1 && !cmd->ast_node->test_list ) {
-			sieve_command_validate_error
-				( validator, cmd, "the %s %s requires a list of sub-tests, but a single test is specified", 
-					cmd->command->identifier, sieve_command_type_name(cmd->command) );
+			
+		} else if ( sieve_ast_test_count(cmd->ast_node) == 1 && 
+			!cmd->ast_node->test_list ) {
+			
+			sieve_command_validate_error(validator, cmd, 
+				"the %s %s requires a list of sub-tests, "
+				"but a single test is specified", 
+				cmd->command->identifier, sieve_command_type_name(cmd->command) );
+			
 			return FALSE;
 		}
 		break;		
@@ -847,24 +913,27 @@ static bool sieve_validate_command_block
 	
 	if ( block_required ) {
 		if ( !cmd->ast_node->block ) {
-			sieve_command_validate_error
-				( validator, cmd, 
-					"the %s command requires a command block, but it is missing", 
-					cmd->command->identifier );
+			sieve_command_validate_error(validator, cmd, 
+				"the %s command requires a command block, but it is missing", 
+				cmd->command->identifier);
+			
 			return FALSE;
 		}
 	} else if ( !block_allowed && cmd->ast_node->block ) {
-		sieve_command_validate_error
-				( validator, cmd, 
-					"the %s command does not accept a command block, but one is specified anyway", 
-					cmd->command->identifier );
+		sieve_command_validate_error(validator, cmd, 
+			"the %s command does not accept a command block, "
+			"but one is specified anyway", 
+			cmd->command->identifier );
+		
 		return FALSE;
 	}
 	
 	return TRUE;
 } 
 
-/* AST Validation */
+/* 
+ * AST Validation 
+ */
 
 static bool sieve_validate_test_list
 	(struct sieve_validator *validator, struct sieve_ast_node *test_list); 
@@ -874,7 +943,7 @@ static bool sieve_validate_command
 	(struct sieve_validator *validator, struct sieve_ast_node *cmd_node);
 	
 static bool sieve_validate_command
-	(struct sieve_validator *valdtr, struct sieve_ast_node *cmd_node) 
+(struct sieve_validator *valdtr, struct sieve_ast_node *cmd_node) 
 {
 	enum sieve_ast_type ast_type = sieve_ast_node_type(cmd_node);
 	bool result = TRUE;
@@ -969,7 +1038,7 @@ static bool sieve_validate_command
 }
 
 static bool sieve_validate_test_list
-	(struct sieve_validator *valdtr, struct sieve_ast_node *test_list) 
+(struct sieve_validator *valdtr, struct sieve_ast_node *test_list) 
 {
 	bool result = TRUE;
 	struct sieve_ast_node *test;
