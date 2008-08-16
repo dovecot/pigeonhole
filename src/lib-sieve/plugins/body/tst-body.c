@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+ 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -50,7 +53,9 @@ const struct sieve_command body_test = {
 	NULL 
 };
 
-/* Body operation */
+/* 
+ * Body operation 
+ */
 
 static bool ext_body_operation_dump
 	(const struct sieve_operation *op, 
@@ -76,8 +81,10 @@ enum tst_body_optional {
 };
 
 /* 
- * Custom command tags 
+ * Tagged arguments 
  */
+
+/* Forward declarations */
 
 static bool tag_body_transform_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
@@ -85,6 +92,8 @@ static bool tag_body_transform_validate
 static bool tag_body_transform_generate	
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 		struct sieve_command_context *cmd);
+
+/* Argument objects */
  
 static const struct sieve_argument body_raw_tag = { 
 	"raw", 
@@ -109,6 +118,8 @@ static const struct sieve_argument body_text_tag = {
 	NULL, 
 	tag_body_transform_generate
 };
+
+/* Argument implementation */
  
 static bool tag_body_transform_validate
 (struct sieve_validator *validator, struct sieve_ast_argument **arg, 
@@ -221,10 +232,7 @@ static bool tst_body_generate
 	(void)sieve_operation_emit_code(cgenv->sbin, &body_operation);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
-		return FALSE;
-
-	return TRUE;
+	return sieve_generate_arguments(cgenv, ctx, NULL);
 }
 
 static bool tag_body_transform_generate
@@ -313,6 +321,7 @@ static int ext_body_operation_execute
 	struct sieve_match_context *mctx;
 	const char * const *content_types = _no_content_types;
 	struct ext_body_part *body_parts;
+	bool mvalues_active;
 	bool matched;
 
 	/*
@@ -362,22 +371,28 @@ static int ext_body_operation_execute
 		sieve_runtime_trace_error(renv, "invalid content-type-list operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
-
-	if ( !ext_body_get_content
-		(renv, content_types, transform != TST_BODY_TRANSFORM_RAW, &body_parts) ) {
-		return SIEVE_EXEC_FAILURE;
-	}
-
+	
 	/*
 	 * Perform operation
 	 */
 
 	sieve_runtime_trace(renv, "BODY action");
+	
+	/* Extract requested parts */
+	
+	if ( !ext_body_get_content
+		(renv, content_types, transform != TST_BODY_TRANSFORM_RAW, &body_parts) ) {
+		return SIEVE_EXEC_FAILURE;
+	}
 
-	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
+	/* Disable match values processing as required by RFC */
+		
+	mvalues_active = sieve_match_values_set_enabled(renv->interp, FALSE);
 
 	/* Iterate through all requested body parts to match */
-	matched = FALSE;
+
+	matched = FALSE;	
+	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
 	while ( !matched && body_parts->content != NULL ) {
 		if ( (mret=sieve_match_value(mctx, body_parts->content, body_parts->size)) 	
 			< 0) 
@@ -397,7 +412,12 @@ static int ext_body_operation_execute
 	} else	
 		matched = ( mret > 0 || matched ); 	
 	
+	/* Restore match values processing */ 
+	
+	(void)sieve_match_values_set_enabled(renv->interp, mvalues_active);
+	
 	/* Set test result */	
+	
 	if ( ret == SIEVE_EXEC_OK )
 		sieve_interpreter_set_test_result(renv->interp, matched);
 

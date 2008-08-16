@@ -167,16 +167,19 @@ mtch_interpreter_context_init(struct sieve_interpreter *interp)
 bool sieve_match_values_set_enabled
 (struct sieve_interpreter *interp, bool enable)
 {
-	bool previous;
 	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
 	
 	if ( ctx == NULL && enable ) 
 		ctx = mtch_interpreter_context_init(interp);
 	
-	previous = ctx->match_values_enabled;
-	ctx->match_values_enabled = enable;
+	if ( ctx != NULL ) {
+		bool previous = ctx->match_values_enabled;
+		
+		ctx->match_values_enabled = enable;
+		return previous;
+	}
 	
-	return previous;
+	return FALSE;
 }
 
 bool sieve_match_values_are_enabled

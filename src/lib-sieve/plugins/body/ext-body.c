@@ -1,7 +1,10 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension body 
  * ------------------
  *
- * Authors: Stephan Bosch
+ * Authors: Stephan Bosch, original CMUSieve implementation by Timo Sirainen
  * Specification: RFC 5173
  * Implementation: full, but text body-transform implementation is simple
  * Status: experimental, largely untested
@@ -42,19 +45,7 @@
 #include "ext-body-common.h"
 
 /* 
- * Commands
- */
-
-extern const struct sieve_command body_test;
- 
-/*
- * Operations
- */
-
-extern const struct sieve_operation body_operation;
-
-/* 
- * Extension definitions 
+ * Extension 
  */
 
 int ext_body_my_id;
@@ -77,8 +68,6 @@ static bool ext_body_load(int ext_id)
 	ext_body_my_id = ext_id;
 	return TRUE;
 }
-
-/* Load extension into validator */
 
 static bool ext_body_validator_load(struct sieve_validator *validator)
 {
