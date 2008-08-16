@@ -1,5 +1,6 @@
-#include <stdio.h>
-
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+ 
 #include "lib.h"
 #include "str.h"
 #include "ostream.h"
@@ -13,10 +14,19 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
+
+/*
+ * Definitions
+ */
 
 #define CRITICAL_MSG \
 	"internal error occurred: refer to server log for more information."
 #define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
+
+/*
+ * Utility
+ */
 
 const char *sieve_error_script_location
 (struct sieve_script *script, unsigned int source_line)
@@ -28,6 +38,10 @@ const char *sieve_error_script_location
 
     return t_strdup_printf("%s: line %d", sname, source_line);
 }
+
+/*
+ * Main error functions
+ */
 
 void sieve_verror
 	(struct sieve_error_handler *ehandler, const char *location, 
@@ -105,6 +119,10 @@ void sieve_vcritical
 			str : CRITICAL_MSG );	
 }
 
+/*
+ * Error statistics
+ */
+
 unsigned int sieve_get_errors(struct sieve_error_handler *ehandler) {
 	if ( ehandler == NULL ) return 0;
 	
@@ -121,6 +139,10 @@ bool sieve_errors_more_allowed(struct sieve_error_handler *ehandler) {
 	return ehandler->max_errors == 0 || ehandler->errors < ehandler->max_errors;
 }
 
+/*
+ * Error handler configuration
+ */
+
 void sieve_error_handler_accept_infolog
 	(struct sieve_error_handler *ehandler, bool enable)
 {
@@ -132,6 +154,10 @@ void sieve_error_handler_copy_masterlog
 {
 	ehandler->log_master = enable;
 }
+
+/*
+ * Error handler init
+ */
 
 void sieve_error_handler_init
 	(struct sieve_error_handler *ehandler, pool_t pool, unsigned int max_errors)
@@ -174,7 +200,11 @@ void sieve_error_handler_reset(struct sieve_error_handler *ehandler)
     ehandler->warnings = 0;
 }
 
-/* Output errors directly to stderror (merge this with logfile below?) */
+/* 
+ * STDERR error handler
+ *
+ * - Output errors directly to stderror 
+ */
 
 static void sieve_stderr_verror
 (struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
@@ -227,7 +257,10 @@ struct sieve_error_handler *sieve_stderr_ehandler_create
 	return ehandler;	
 }
 
-/* Output errors to a string buffer */
+/* String buffer error handler
+ *
+ * - Output errors to a string buffer 
+ */
 
 struct sieve_strbuf_ehandler {
 	struct sieve_error_handler handler;
@@ -296,7 +329,11 @@ struct sieve_error_handler *sieve_strbuf_ehandler_create
 	return &(ehandler->handler);
 }
 
-/* Output errors to a log file */
+/* 
+ * Logfile error handler
+ * 
+ * - Output errors to a log file 
+ */
 
 struct sieve_logfile_ehandler {
 	struct sieve_error_handler handler;
@@ -413,7 +450,6 @@ static void sieve_logfile_vinfo
 
 	sieve_logfile_vprintf(handler, location, "info", fmt, args);
 }
-
 
 static void sieve_logfile_free
 (struct sieve_error_handler *ehandler)

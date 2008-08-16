@@ -1,5 +1,5 @@
-#include <stdio.h>
-#include <string.h>
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
 
 #include "lib.h"
 #include "ostream.h"
@@ -23,7 +23,11 @@
 
 #include "sieve-interpreter.h"
 
-/* Extensions to the interpreter */
+#include <string.h>
+
+/* 
+ * Interpreter extension 
+ */
 
 struct sieve_interpreter_extension_reg {
 	const struct sieve_interpreter_extension *int_ext;
@@ -48,8 +52,11 @@ struct sieve_interpreter {
 	bool interrupted;         /* Interpreter interrupt requested */
 	bool test_result;         /* Result of previous test command */
 
-	const struct sieve_operation *current_op; /* Current operation */ 
-	sieve_size_t current_op_addr;             /* Start address of current operation */
+	/* Current operation */ 
+	const struct sieve_operation *current_op;
+	
+	/* Start address of current operation */
+	sieve_size_t current_op_addr;             
 	
 	/* Runtime environment environment */
 	struct sieve_runtime_env runenv; 
@@ -125,24 +132,30 @@ void sieve_interpreter_free(struct sieve_interpreter **interp)
 	*interp = NULL;
 }
 
+/*
+ * Accessors
+ */
+
 pool_t sieve_interpreter_pool(struct sieve_interpreter *interp)
 {
 	return interp->pool;
 }
 
 struct sieve_script *sieve_interpreter_script
-	(struct sieve_interpreter *interp)
+(struct sieve_interpreter *interp)
 {
 	return interp->runenv.script;
 }
 
 struct sieve_error_handler *sieve_interpreter_get_error_handler
-	(struct sieve_interpreter *interp)
+(struct sieve_interpreter *interp)
 {
 	return interp->ehandler;
 }
 
-/* Error handling */
+/* 
+ * Error handling 
+ */
 
 /* This is not particularly user friendly, so avoid using this
  */
@@ -193,9 +206,13 @@ void sieve_runtime_log
 	va_end(args);
 }
 
+/*
+ * Runtime trace
+ */
+
 #ifdef SIEVE_RUNTIME_TRACE
 void _sieve_runtime_trace
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+(const struct sieve_runtime_env *runenv, const char *fmt, ...)
 {	
 	string_t *outbuf = t_str_new(128);
 	va_list args;
@@ -210,7 +227,7 @@ void _sieve_runtime_trace
 }
 
 void _sieve_runtime_trace_error
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+(const struct sieve_runtime_env *runenv, const char *fmt, ...)
 {
 	string_t *outbuf = t_str_new(128);
 	va_list args;
@@ -226,7 +243,9 @@ void _sieve_runtime_trace_error
 }
 #endif
 
-/* Extension support */
+/* 
+ * Extension support 
+ */
 
 void sieve_interpreter_extension_register
 (struct sieve_interpreter *interp, 
@@ -266,7 +285,9 @@ void *sieve_interpreter_extension_get_context
 	return reg->context;
 }
 
-/* Program counter */
+/* 
+ * Program flow 
+ */
 
 void sieve_interpreter_reset(struct sieve_interpreter *interp) 
 {
@@ -313,23 +334,29 @@ int sieve_interpreter_program_jump
 	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
+/*
+ * Test results
+ */
+
 void sieve_interpreter_set_test_result
-	(struct sieve_interpreter *interp, bool result)
+(struct sieve_interpreter *interp, bool result)
 {
 	interp->test_result = result;
 }
 
 bool sieve_interpreter_get_test_result
-	(struct sieve_interpreter *interp)
+(struct sieve_interpreter *interp)
 {
 	return interp->test_result;
 }
 
-/* Operations and operands */
+/* 
+ * Operations and operands 
+ */
 
 int sieve_interpreter_handle_optional_operands
-	(const struct sieve_runtime_env *renv, sieve_size_t *address,
-		struct sieve_side_effects_list **list)
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	struct sieve_side_effects_list **list)
 {
 	int opt_code = -1;
 	
@@ -369,10 +396,12 @@ int sieve_interpreter_handle_optional_operands
 	return TRUE;
 }
  
-/* Code execute */
+/* 
+ * Code execute 
+ */
 
 static int sieve_interpreter_execute_operation
-	(struct sieve_interpreter *interp) 
+(struct sieve_interpreter *interp) 
 {
 	const struct sieve_operation *op;
 

@@ -1,7 +1,14 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_GENERATOR_H
 #define __SIEVE_GENERATOR_H
 
 #include "sieve-common.h"
+
+/*
+ * Code generator
+ */
 
 struct sieve_generator;
 
@@ -17,10 +24,21 @@ struct sieve_generator *sieve_generator_create
 	(struct sieve_ast *ast, struct sieve_error_handler *ehandler);
 void sieve_generator_free(struct sieve_generator **generator);
 
-struct sieve_script *sieve_generator_get_script
+/* 
+ * Accessors 
+ */
+
+struct sieve_error_handler *sieve_generator_error_handler
+	(struct sieve_generator *gentr);
+pool_t sieve_generator_pool(struct sieve_generator *gentr);
+struct sieve_script *sieve_generator_script
+	(struct sieve_generator *gentr);
+struct sieve_binary *sieve_generator_get_binary
 	(struct sieve_generator *gentr);
 
-/* Error handling */
+/* 
+ * Error handling 
+ */
 
 void sieve_generator_warning
 (struct sieve_generator *gentr, struct sieve_ast_node *node, 
@@ -32,7 +50,9 @@ void sieve_generator_critical
 (struct sieve_generator *gentr, struct sieve_ast_node *node, 
 	const char *fmt, ...) ATTR_FORMAT(3, 4); 
 
-/* Extension support */
+/* 
+ * Extension support 
+ */
 
 bool sieve_generator_link_extension
 	(struct sieve_generator *gentr, const struct sieve_extension *ext);
@@ -43,7 +63,9 @@ void sieve_generator_extension_set_context
 const void *sieve_generator_extension_get_context
 	(struct sieve_generator *gentr, const struct sieve_extension *ext);
     		
-/* Jump list */
+/* 
+ * Jump list 
+ */
 
 struct sieve_jumplist {
 	pool_t pool;
@@ -61,7 +83,9 @@ void sieve_jumplist_add
 	(struct sieve_jumplist *jlist, sieve_size_t jump);
 void sieve_jumplist_resolve(struct sieve_jumplist *jlist);
 
-/* API */
+/* 
+ * Code generation API 
+ */
 
 bool sieve_generate_argument
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
@@ -80,17 +104,6 @@ bool sieve_generate_test
 		struct sieve_jumplist *jlist, bool jump_true);
 bool sieve_generator_run
 	(struct sieve_generator *generator, struct sieve_binary **sbin);
-
-/* Accessors */
-
-struct sieve_error_handler *sieve_generator_error_handler
-	(struct sieve_generator *gentr);
-pool_t sieve_generator_pool(struct sieve_generator *gentr);
-struct sieve_script *sieve_generator_script
-	(struct sieve_generator *gentr);
-struct sieve_binary *sieve_generator_get_binary
-	(struct sieve_generator *gentr);
-
 
 #endif /* __SIEVE_GENERATOR_H */
 

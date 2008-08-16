@@ -1,4 +1,5 @@
-#include <stdio.h>
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
 
 #include "lib.h"
 #include "mempool.h"
@@ -11,7 +12,10 @@
 
 #include "sieve-generator.h"
 
-/* Jump list */
+/* 
+ * Jump list 
+ */
+
 struct sieve_jumplist *sieve_jumplist_create
 	(pool_t pool, struct sieve_binary *sbin)
 {
@@ -53,7 +57,9 @@ void sieve_jumplist_resolve(struct sieve_jumplist *jlist)
 	}
 }
 
-/* Generator */
+/* 
+ * Code Generator 
+ */
 
 struct sieve_generator {
 	pool_t pool;
@@ -85,15 +91,7 @@ struct sieve_generator *sieve_generator_create
 
 	/* Setup storage for extension contexts */		
 	p_array_init(&gentr->ext_contexts, pool, sieve_extensions_get_count());
-	
-	/* Pre-load core language features implemented as 'extensions' (none) */
-	/*for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
-		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
 		
-		if ( ext->generator_load != NULL )
-			(void)ext->generator_load(gentr);		
-	}*/
-	
 	return gentr;
 }
 
@@ -111,13 +109,36 @@ void sieve_generator_free(struct sieve_generator **generator)
 	*generator = NULL;
 }
 
-struct sieve_script *sieve_generator_get_script
-	(struct sieve_generator *gentr)
+/* 
+ * Accessors 
+ */
+
+struct sieve_error_handler *sieve_generator_error_handler
+(struct sieve_generator *gentr)
+{
+	return gentr->ehandler;
+}
+
+pool_t sieve_generator_pool(struct sieve_generator *gentr)
+{
+	return gentr->pool;
+}
+
+struct sieve_script *sieve_generator_script
+(struct sieve_generator *gentr)
 {
 	return gentr->genenv.script;
 }
 
-/* Error handling */
+struct sieve_binary *sieve_generator_get_binary
+	(struct sieve_generator *gentr)
+{
+	return gentr->genenv.sbin;
+}
+
+/* 
+ * Error handling 
+ */
 
 void sieve_generator_warning
 (struct sieve_generator *gentr, struct sieve_ast_node *node, 
@@ -152,7 +173,9 @@ void sieve_generator_critical
 	va_end(args);
 }
 
-/* Extension support */
+/* 
+ * Extension support 
+ */
 
 bool sieve_generator_link_extension
 (struct sieve_generator *gentr, const struct sieve_extension *ext) 
@@ -185,15 +208,9 @@ const void *sieve_generator_extension_get_context
 	return *ctx;
 }
 
-/* Binary access */
-
-struct sieve_binary *sieve_generator_get_binary
-	(struct sieve_generator *gentr)
-{
-	return gentr->genenv.sbin;
-}
-
-/* Generator functions */
+/* 
+ * Code generation API
+ */
 
 bool sieve_generate_argument
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
@@ -207,8 +224,9 @@ bool sieve_generate_argument
 		argument->generate(cgenv, arg, cmd) );
 }
 
-bool sieve_generate_arguments(const struct sieve_codegen_env *cgenv, 
-	struct sieve_command_context *cmd, struct sieve_ast_argument **last_arg)
+bool sieve_generate_arguments
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd, 
+	struct sieve_ast_argument **last_arg)
 {
 	enum { ARG_START, ARG_OPTIONAL, ARG_POSITIONAL } state = ARG_START;
 	struct sieve_ast_argument *arg = sieve_ast_argument_first(cmd->ast_node);
@@ -284,7 +302,6 @@ bool sieve_generate_argument_parameters
 	return TRUE;
 }
 
-
 bool sieve_generate_test
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_node *tst_node,
 	struct sieve_jumplist *jlist, bool jump_true) 
@@ -348,7 +365,7 @@ bool sieve_generate_block
 }
 
 bool sieve_generator_run
-	(struct sieve_generator *generator, struct sieve_binary **sbin) 
+(struct sieve_generator *generator, struct sieve_binary **sbin) 
 {
 	bool topmost = ( *sbin == NULL );
 	bool result = TRUE;
@@ -374,25 +391,6 @@ bool sieve_generator_run
 	}
 	
 	return result;
-}
-
-/* Accessors */
-
-struct sieve_error_handler *sieve_generator_error_handler
-(struct sieve_generator *gentr)
-{
-	return gentr->ehandler;
-}
-
-pool_t sieve_generator_pool(struct sieve_generator *gentr)
-{
-	return gentr->pool;
-}
-
-struct sieve_script *sieve_generator_script
-(struct sieve_generator *gentr)
-{
-	return gentr->genenv.script;
 }
 
 

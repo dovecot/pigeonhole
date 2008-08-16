@@ -1,5 +1,12 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_OBJECTS_H
 #define __SIEVE_OBJECTS_H
+
+/*
+ * Object
+ */
 
 struct sieve_object {
 	const char *identifier;
@@ -10,6 +17,10 @@ struct sieve_object {
 #define SIEVE_OBJECT(identifier, operand, code) \
 	{ identifier, operand, code }
 
+/*
+ * Object coding
+ */
+ 
 void sieve_opr_object_emit
 	(struct sieve_binary *sbin, const struct sieve_object *obj);
 

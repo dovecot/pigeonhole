@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_DUMP_H
 #define __SIEVE_DUMP_H
 
@@ -5,6 +8,10 @@
 
 #include "sieve-binary-dumper.h"
 #include "sieve-code-dumper.h"
+
+/*
+ * Dumptime environment
+ */
 
 struct sieve_dumptime_env {
 	struct sieve_binary_dumper *dumper;

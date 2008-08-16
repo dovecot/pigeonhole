@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_ERROR_H
 #define __SIEVE_ERROR_H
 
@@ -5,6 +8,10 @@
 #include "compat.h"
 
 #include <stdarg.h>
+
+/*
+ * Forward declarations
+ */
 
 struct sieve_script;
 struct sieve_error_handler;
@@ -26,6 +33,10 @@ typedef void (*sieve_error_vfunc_t)
 #define sieve_sys_error(...) i_error("sieve: " __VA_ARGS__ )
 #define sieve_sys_warning(...) i_warning("sieve: " __VA_ARGS__ )
 #define sieve_sys_info(...) i_info("sieve: " __VA_ARGS__ )
+
+/*
+ * Main error functions
+ */
 
 /* For these functions it is the responsibility of the caller to
  * manage the datastack.
@@ -108,15 +119,27 @@ inline static void sieve_critical
 	va_end(args);
 }
 
+/*
+ * Error handler configuration
+ */
+
 void sieve_error_handler_accept_infolog
 	(struct sieve_error_handler *ehandler, bool enable);
 void sieve_error_handler_copy_masterlog
 	(struct sieve_error_handler *ehandler, bool enable);
 
+/*
+ * Error handler statistics
+ */
+
 unsigned int sieve_get_errors(struct sieve_error_handler *ehandler);
 unsigned int sieve_get_warnings(struct sieve_error_handler *ehandler);
 
 bool sieve_errors_more_allowed(struct sieve_error_handler *ehandler);
+
+/*
+ * Error handler object
+ */
 
 void sieve_error_handler_ref(struct sieve_error_handler *ehandler);
 void sieve_error_handler_unref(struct sieve_error_handler **ehandler);

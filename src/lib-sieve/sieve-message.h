@@ -1,7 +1,12 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_MESSAGE_H
 #define __SIEVE_MESSAGE_H
 
-/* Message context */
+/* 
+ * Message context 
+ */
 
 struct sieve_message_context;
 
@@ -11,12 +16,17 @@ void sieve_message_context_unref(struct sieve_message_context **msgctx);
 
 void sieve_message_context_flush(struct sieve_message_context *msgctx);
 
+pool_t sieve_message_context_pool
+	(struct sieve_message_context *msgctx);
+
+/*
+ * Extension support
+ */
+
 void sieve_message_context_extension_set
 	(struct sieve_message_context *msgctx, const struct sieve_extension *ext, 
 		void *context);
 const void *sieve_message_context_extension_get
 	(struct sieve_message_context *msgctx, const struct sieve_extension *ext);
-pool_t sieve_message_context_pool
-	(struct sieve_message_context *msgctx);
 	
-#endif
+#endif /* __SIEVE_MESSAGE_H */

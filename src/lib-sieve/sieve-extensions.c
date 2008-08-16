@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "str.h"
 #include "mempool.h"
@@ -7,12 +10,16 @@
 #include "sieve-error.h"
 #include "sieve-extensions.h"
 
-/* Static pre-declarations */
+/*
+ * Forward declarations 
+ */
 
 static void sieve_extensions_init_registry(void);
 static void sieve_extensions_deinit_registry(void);
 
-/* Pre-loaded extensions */
+/* 
+ * Pre-loaded 'extensions' 
+ */
 
 extern const struct sieve_extension comparator_extension;
 extern const struct sieve_extension match_type_extension;
@@ -25,7 +32,9 @@ const struct sieve_extension *sieve_preloaded_extensions[] = {
 const unsigned int sieve_preloaded_extensions_count = 
 	N_ELEMENTS(sieve_preloaded_extensions);
 
-/* Dummy extensions */
+/* 
+ * Dummy extensions 
+ */
 
 static const struct sieve_extension comparator_i_octet_extension = {
 	"comparator-i;octet", 
@@ -41,14 +50,18 @@ static const struct sieve_extension comparator_i_ascii_casemap_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
-/* Base extensions */
+/* 
+ * Core extensions 
+ */
 
 extern const struct sieve_extension fileinto_extension;
 extern const struct sieve_extension reject_extension;
 extern const struct sieve_extension envelope_extension;
 extern const struct sieve_extension encoded_character_extension;
 
-/* Plugins (FIXME: make this dynamic) */
+/* 
+ * Native 'plugin' extensions 
+ */
 
 extern const struct sieve_extension vacation_extension;
 extern const struct sieve_extension subaddress_extension;
@@ -68,7 +81,7 @@ const struct sieve_extension *sieve_core_extensions[] = {
 	/* Dummy extensions */ 
 	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension, 
 	
-	/* Base extensions */
+	/* Core extensions */
 	&fileinto_extension, &reject_extension, &envelope_extension, 
 	&encoded_character_extension,
 	
@@ -83,7 +96,9 @@ const struct sieve_extension *sieve_core_extensions[] = {
 const unsigned int sieve_core_extensions_count =
 	N_ELEMENTS(sieve_core_extensions);
 
-/* Extension state */
+/* 
+ * Extensions init/deinit
+ */
 
 bool sieve_extensions_init(const char *sieve_plugins ATTR_UNUSED) 
 {
@@ -106,7 +121,9 @@ void sieve_extensions_deinit(void)
 	sieve_extensions_deinit_registry();
 }
 
-/* Extension registry */
+/* 
+ * Extension registry
+ */
 
 struct sieve_extension_registration {
 	const struct sieve_extension *extension;
@@ -231,3 +248,5 @@ static void sieve_extensions_deinit_registry(void)
 	array_free(&extensions);
 	hash_destroy(&extension_index);
 }
+
+

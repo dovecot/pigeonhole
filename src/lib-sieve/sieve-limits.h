@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_LIMITS_H
 #define __SIEVE_LIMITS_H
 
@@ -29,4 +32,4 @@
 #define SIEVE_DEFAULT_MAX_REDIRECTS 4
 #define SIEVE_DEFAULT_MAX_ACTIONS   32
 
-#endif
+#endif /* __SIEVE_LIMITS_H */

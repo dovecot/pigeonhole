@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 #include "sieve-code.h"
@@ -6,6 +9,10 @@
 #include "sieve-interpreter.h"
 
 #include "sieve-objects.h"
+
+/*
+ * Object coding
+ */
 
 void sieve_opr_object_emit
 (struct sieve_binary *sbin, const struct sieve_object *obj)

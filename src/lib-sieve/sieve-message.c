@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "mempool.h"
 #include "array.h"
@@ -62,6 +65,15 @@ void sieve_message_context_flush(struct sieve_message_context *msgctx)
 	p_array_init(&msgctx->ext_contexts, pool, sieve_extensions_get_count());
 }
 
+pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
+{
+	return msgctx->pool;
+}
+
+/*
+ * Extension support
+ */
+
 void sieve_message_context_extension_set
 (struct sieve_message_context *msgctx, const struct sieve_extension *ext, 
 	void *context)
@@ -81,10 +93,5 @@ const void *sieve_message_context_extension_get
 	ctx = array_idx(&msgctx->ext_contexts, (unsigned int) ext_id);		
 
 	return *ctx;
-}
-
-pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
-{
-	return msgctx->pool;
 }
 

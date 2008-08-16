@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_INTERPRETER_H
 #define __SIEVE_INTERPRETER_H
 
@@ -8,9 +11,15 @@
 
 #include "sieve-common.h"
 
-/* Interpreter */
-
+/*
+ * Forward declarations
+ */
+ 
 struct sieve_interpreter;
+
+/*
+ * Runtime environment
+ */
 
 struct sieve_runtime_env {
 	struct sieve_interpreter *interp;
@@ -27,10 +36,18 @@ struct sieve_runtime_env {
 	struct ostream *trace_stream;
 };
 
+/* 
+ * Interpreter 
+ */
+
 struct sieve_interpreter *sieve_interpreter_create
 	(struct sieve_binary *sbin, struct sieve_error_handler *ehandler,
 		struct ostream *trace_stream);
 void sieve_interpreter_free(struct sieve_interpreter **interp);
+
+/*
+ * Accessors
+ */
 
 pool_t sieve_interpreter_pool
 	(struct sieve_interpreter *interp);
@@ -38,6 +55,10 @@ struct sieve_script *sieve_interpreter_script
 	(struct sieve_interpreter *interp);
 struct sieve_error_handler *sieve_interpreter_get_error_handler
 	(struct sieve_interpreter *interp);
+
+/*
+ * Program flow
+ */
 
 void sieve_interpreter_reset
 	(struct sieve_interpreter *interp);
@@ -49,12 +70,18 @@ sieve_size_t sieve_interpreter_program_counter
 int sieve_interpreter_program_jump
 	(struct sieve_interpreter *interp, bool jump);
 	
+/*
+ * Test results
+ */	
+	
 void sieve_interpreter_set_test_result
 	(struct sieve_interpreter *interp, bool result);
 bool sieve_interpreter_get_test_result
 	(struct sieve_interpreter *interp);
 	
-/* Error handling */
+/* 
+ * Error handling 
+ */
 
 /* This is not particularly user-friendly, so avoid using this.. */
 const char *sieve_runtime_location(const struct sieve_runtime_env *runenv);
@@ -69,7 +96,9 @@ void sieve_runtime_log
 	(const struct sieve_runtime_env *runenv, const char *location, 
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
-/* Runtime Trace */
+/* 
+ * Runtime Trace 
+ */
 
 #ifdef SIEVE_RUNTIME_TRACE
 		
@@ -94,8 +123,9 @@ void _sieve_runtime_trace_error
 # define sieve_runtime_trace_error(runenv, ...)
 #endif
 
-
-/* Extension support */
+/* 
+ * Extension support 
+ */
 
 struct sieve_interpreter_extension {
 	const struct sieve_extension *ext;	
@@ -113,13 +143,17 @@ void sieve_interpreter_extension_set_context
 void *sieve_interpreter_extension_get_context
 	(struct sieve_interpreter *interp, const struct sieve_extension *ext); 
 
-/* Opcodes and operands */
+/* 
+ * Opcodes and operands 
+ */
 	
 int sieve_interpreter_handle_optional_operands
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,
 		struct sieve_side_effects_list **list);
 
-/* Code execute */
+/* 
+ * Code execute 
+ */
 
 int sieve_interpreter_continue
 	(struct sieve_interpreter *interp, bool *interrupted);

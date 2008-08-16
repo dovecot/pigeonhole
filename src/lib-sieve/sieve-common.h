@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_COMMON_H
 #define __SIEVE_COMMON_H
 
@@ -17,7 +20,7 @@ typedef uint32_t      sieve_number_t;
 #define SIEVE_MAX_NUMBER ((sieve_number_t) -1)
 
 /*
- * Predeclarations
+ * Forward declarations
  */
 
 /* sieve-error.h */

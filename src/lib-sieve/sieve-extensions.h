@@ -1,17 +1,24 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_EXTENSIONS_H
 #define __SIEVE_EXTENSIONS_H
 
 #include "lib.h"
 #include "sieve-common.h"
 
-/* Per-extension object registry */
+/* 
+ * Per-extension object registry 
+ */
 
 struct sieve_extension_obj_registry {
 	const void *objects;
 	unsigned int count;
 };
 
-/* Extension object */
+/* 
+ * Extension object 
+ */
 
 struct sieve_extension {
 	const char *name;
@@ -40,7 +47,9 @@ struct sieve_extension {
 #define SIEVE_EXT_GET_OBJECTS_COUNT(ext, field) \
 	ext->field->count;
 
-/* Opcodes and operands */
+/* 
+ * Defining opcodes and operands 
+ */
 
 #define SIEVE_EXT_DEFINE_NO_OPERATIONS SIEVE_EXT_DEFINE_NO_OBJECTS
 #define SIEVE_EXT_DEFINE_OPERATION(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
@@ -50,21 +59,23 @@ struct sieve_extension {
 #define SIEVE_EXT_DEFINE_OPERAND(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
 #define SIEVE_EXT_DEFINE_OPERANDS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
-/* Pre-loaded extensions */
+/* 
+ * Pre-loaded extensions 
+ */
 
 extern const struct sieve_extension *sieve_preloaded_extensions[];
 extern const unsigned int sieve_preloaded_extensions_count;
 
-
-const struct sieve_extension *sieve_extension_acquire(const char *extension);
-
-/* Extensions state */
+/*  
+ * Extensions init/deinit 
+ */
 
 bool sieve_extensions_init(const char *sieve_plugins ATTR_UNUSED);
-const int *sieve_extensions_get_preloaded_ext_ids(void);
 void sieve_extensions_deinit(void);
 
-/* Extension registry */
+/* 
+ * Extension registry 
+ */
 
 int sieve_extension_register(const struct sieve_extension *extension);
 int sieve_extensions_get_count(void);

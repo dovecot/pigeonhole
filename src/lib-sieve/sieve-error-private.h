@@ -1,7 +1,14 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_ERROR_PRIVATE_H
 #define __SIEVE_ERROR_PRIVATE_H
 
 #include "sieve-error.h"
+
+/*
+ * Error handler object
+ */
 
 struct sieve_error_handler {
 	pool_t pool;
