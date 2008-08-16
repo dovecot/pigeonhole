@@ -1,7 +1,6 @@
 #include "sieve-common.h"
 #include "sieve-script.h"
 #include "sieve-commands.h"
-#include "sieve-commands-private.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"

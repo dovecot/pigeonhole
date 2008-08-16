@@ -6,8 +6,9 @@
 #include "mempool.h"
 #include "ostream.h"
 
+#include "sieve-common.h"
 #include "sieve-extensions.h"
-#include "sieve-commands-private.h"
+#include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-actions.h"
 #include "sieve-generator.h"

@@ -8,11 +8,12 @@
 #include "hash.h"
 #include "mail-storage.h"
 
+#include "sieve-common.h"
 #include "sieve-script.h"
 #include "sieve-error.h"
 #include "sieve-extensions.h"
 #include "sieve-message.h"
-#include "sieve-commands-private.h"
+#include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-actions.h"
 #include "sieve-generator.h"

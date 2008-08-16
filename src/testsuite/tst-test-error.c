@@ -2,7 +2,6 @@
 #include "sieve-error.h"
 #include "sieve-script.h"
 #include "sieve-commands.h"
-#include "sieve-commands-private.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
 #include "sieve-validator.h"

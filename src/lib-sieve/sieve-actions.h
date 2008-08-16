@@ -152,10 +152,16 @@ bool sieve_opr_side_effect_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
 /* 
- * Store action
+ * Core actions 
  */
 
-const struct sieve_action act_store;
+extern const struct sieve_action act_redirect;
+extern const struct sieve_action act_store;
+extern const struct sieve_action act_discard;
+
+/* 
+ * Store action
+ */
 
 struct act_store_context {
 	const char *folder;
@@ -178,7 +184,9 @@ int sieve_act_store_add_to_result
 		struct sieve_side_effects_list *seffects, const char *folder,
 		unsigned int source_line);
 
-/* Message transmission */
+/* 
+ * Message transmission (FIXME: put this somewhere else)
+ */
 
 const char *sieve_get_new_message_id
 	(const struct sieve_script_env *senv);

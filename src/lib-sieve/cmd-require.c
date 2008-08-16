@@ -3,8 +3,8 @@
 
 #include "lib.h"
 
+#include "sieve-common.h"
 #include "sieve-commands.h"
-#include "sieve-commands-private.h"
 #include "sieve-extensions.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"

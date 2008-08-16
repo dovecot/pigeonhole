@@ -2,8 +2,10 @@
 #include "str.h"
 #include "str-sanitize.h"
 
-#include "sieve-commands-private.h"
+#include "sieve-common.h"
+#include "sieve-commands.h"
 #include "sieve-code.h"
+#include "sieve-actions.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"

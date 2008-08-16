@@ -18,10 +18,11 @@ tests = \
 	tst-size.c
 
 commands = \
-	cmd-if.c \
 	cmd-require.c \
-	cmd-redirect.c \
+	cmd-stop.c \
+	cmd-if.c \
 	cmd-keep.c \
+	cmd-redirect.c \
 	cmd-discard.c
 
 extensions = \
@@ -113,7 +114,6 @@ noinst_HEADERS = \
 	sieve-match-types.h \
 	sieve-address-parts.h \
 	sieve-commands.h \
-	sieve-commands-private.h \
 	sieve-code.h \
 	sieve-actions.h \
 	sieve-extensions.h \

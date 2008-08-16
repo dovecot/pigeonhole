@@ -1,8 +1,8 @@
 /* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
  */
 
+#include "sieve-common.h"
 #include "sieve-commands.h"
-#include "sieve-commands-private.h"
 #include "sieve-code.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"

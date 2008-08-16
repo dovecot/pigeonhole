@@ -1,8 +1,8 @@
 /* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
  */
 
+#include "sieve-common.h"
 #include "sieve-commands.h"
-#include "sieve-commands-private.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-binary.h"

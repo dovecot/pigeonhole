@@ -6,7 +6,9 @@
 #include "sieve-common.h"
 #include "sieve-ast.h"
 
-/* Argument */
+/* 
+ * Argument object
+ */
 
 struct sieve_argument {
 	const char *identifier;
@@ -29,11 +31,15 @@ struct sieve_argument {
 			struct sieve_command_context *context);
 };
 
+/* Literal arguments */
+
 extern const struct sieve_argument number_argument;
 extern const struct sieve_argument string_argument;
 extern const struct sieve_argument string_list_argument;
 
-/* Command */
+/* 
+ * Command object
+ */
 
 enum sieve_command_type {
 	SCT_NONE,
@@ -52,7 +58,8 @@ struct sieve_command {
 	bool block_required;
 	
 	bool (*registered)
-		(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg); 
+		(struct sieve_validator *validator, 
+			struct sieve_command_registration *cmd_reg); 
 	bool (*pre_validate)
 		(struct sieve_validator *validator, struct sieve_command_context *context); 
 	bool (*validate)
@@ -63,6 +70,10 @@ struct sieve_command {
 		(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx,
 		struct sieve_jumplist *jumps, bool jump_true);
 };
+
+/*
+ * Command context
+ */
 
 struct sieve_command_context {
 	const struct sieve_command *command;
@@ -133,5 +144,38 @@ void sieve_command_exit_block_unconditionally
 	(struct sieve_command_context *cmd);
 bool sieve_command_block_exits_unconditionally
 	(struct sieve_command_context *cmd);
+	
+/*
+ * Core commands
+ */
+ 
+extern const struct sieve_command cmd_require;
+extern const struct sieve_command cmd_stop;
+extern const struct sieve_command cmd_if;
+extern const struct sieve_command cmd_elsif;
+extern const struct sieve_command cmd_else;
+extern const struct sieve_command cmd_redirect;
+extern const struct sieve_command cmd_keep;
+extern const struct sieve_command cmd_discard;
+
+extern const struct sieve_command *sieve_core_commands[];
+extern const unsigned int sieve_core_commands_count;
+
+/* 
+ * Core tests 
+ */
+
+extern const struct sieve_command tst_true;
+extern const struct sieve_command tst_false;
+extern const struct sieve_command tst_not;
+extern const struct sieve_command tst_anyof;
+extern const struct sieve_command tst_allof;
+extern const struct sieve_command tst_address;
+extern const struct sieve_command tst_header;
+extern const struct sieve_command tst_exists;
+extern const struct sieve_command tst_size;
+
+extern const struct sieve_command *sieve_core_tests[];
+extern const unsigned int sieve_core_tests_count;
 
 #endif /* __SIEVE_COMMANDS_H */

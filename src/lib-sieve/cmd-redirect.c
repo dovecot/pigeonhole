@@ -7,9 +7,9 @@
 #include "istream.h"
 #include "istream-header-filter.h"
 
+#include "sieve-common.h"
 #include "sieve-address.h"
 #include "sieve-commands.h"
-#include "sieve-commands-private.h"
 #include "sieve-code.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h" 

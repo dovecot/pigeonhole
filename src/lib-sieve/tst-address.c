@@ -4,14 +4,12 @@
 #include "lib.h"
 #include "str-sanitize.h"
 
+#include "sieve-common.h"
 #include "sieve-commands.h"
-#include "sieve-commands-private.h"
 #include "sieve-code.h"
-
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
 #include "sieve-address-parts.h"
-
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"

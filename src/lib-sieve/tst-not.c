@@ -1,9 +1,13 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
+#include "sieve-common.h"
 #include "sieve-commands.h"
-#include "sieve-commands-private.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 
-/* Not test 
+/* 
+ * Not test 
  *
  * Syntax:
  *   not <tests: test-list>   
@@ -21,7 +25,9 @@ const struct sieve_command tst_not = {
 	tst_not_generate 
 };
 
-/* Code generation */
+/* 
+ * Code generation 
+ */
 
 static bool tst_not_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx,
