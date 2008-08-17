@@ -50,8 +50,14 @@ test "Sanjay example" {
 	}
 }
 
-test "Relational extension (RFC5231) example" {
+test "Relational (RFC5231) example" {
 	if not test_compile "../../sieve/examples/relational.rfc5231.sieve" {
+		test_fail "could not compile";
+	}
+}
+
+test "Subaddress (RFC5233) example" {
+	if not test_compile "../../sieve/examples/subaddress.rfc5233.sieve" {
 		test_fail "could not compile";
 	}
 }
