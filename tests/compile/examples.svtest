@@ -49,3 +49,9 @@ test "Sanjay example" {
 		test_fail "could not compile";
 	}
 }
+
+test "Relational extension (RFC5231) example" {
+	if not test_compile "../../sieve/examples/relational.rfc5231.sieve" {
+		test_fail "could not compile";
+	}
+}

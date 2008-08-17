@@ -26,7 +26,6 @@ test_cases = \
 	tests/match-types/is.svtest \
 	tests/match-types/contains.svtest \
 	tests/match-types/matches.svtest \
-	tests/match-types/relational.svtest \
 	tests/address-parts/subaddress.svtest \
 	tests/extensions/encoded-character.svtest \
 	tests/extensions/envelope.svtest \
@@ -45,8 +44,11 @@ test_cases = \
 	tests/extensions/body/match-values.svtest \
 	tests/extensions/regex/basic.svtest \
 	tests/extensions/regex/errors.svtest \
+	tests/extensions/relational/basic.svtest \
+	tests/extensions/relational/rfc.svtest \
+	tests/extensions/relational/errors.svtest \
 	tests/compile/compile.svtest \
-	tests/compile/compile-examples.svtest \
+	tests/compile/examples.svtest \
 	tests/compile/errors.svtest
 
 $(test_cases):
