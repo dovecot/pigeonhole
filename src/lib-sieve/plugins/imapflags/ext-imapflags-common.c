@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "str.h"
 #include "str-sanitize.h"
@@ -16,21 +19,25 @@
 
 #include "ext-imapflags-common.h"
 
-/* Tagged arguments */
-
-extern const struct sieve_argument tag_flags;
-extern const struct sieve_argument tag_flags_implicit;
-
 /*
  * Forward declarations
  */
 
 static bool flag_is_valid(const char *flag);
 
-/* Common functions */
+/* 
+ * Tagged arguments 
+ */
+
+extern const struct sieve_argument tag_flags;
+extern const struct sieve_argument tag_flags_implicit;
+
+/* 
+ * Common command functions 
+ */
 
 bool ext_imapflags_command_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd)
+(struct sieve_validator *validator, struct sieve_command_context *cmd)
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct sieve_ast_argument *arg2;
@@ -204,7 +211,9 @@ int ext_imapflags_command_operands_read
 	return SIEVE_EXEC_OK;
 }
 
-/* Flags tag registration */
+/* 
+ * Flags tag registration 
+ */
 
 void ext_imapflags_attach_flags_tag
 (struct sieve_validator *valdtr, const char *command)
@@ -215,18 +224,19 @@ void ext_imapflags_attach_flags_tag
 	 */
 	 
 	/* Tag specified by user */
-	sieve_validator_register_external_tag
-		(valdtr, &tag_flags, command, -1);
+	sieve_validator_register_external_tag(valdtr, &tag_flags, command, -1);
 }
 
-/* Context access */
+/* 
+ * Result context 
+ */
 
 struct ext_imapflags_result_context {
     string_t *internal_flags;
 };
 
-static inline struct ext_imapflags_result_context *
-	_get_result_context(struct sieve_result *result)
+static inline struct ext_imapflags_result_context *_get_result_context
+(struct sieve_result *result)
 {
 	struct ext_imapflags_result_context *rctx =
 		(struct ext_imapflags_result_context *) 
@@ -246,7 +256,7 @@ static inline struct ext_imapflags_result_context *
 }
 
 static string_t *_get_flags_string
-	(struct sieve_result *result)
+(struct sieve_result *result)
 {
 	struct ext_imapflags_result_context *ctx = 
 		_get_result_context(result);
@@ -254,22 +264,26 @@ static string_t *_get_flags_string
 	return ctx->internal_flags;
 }
 
-/* Initialization */
+/* 
+ * Runtime initialization 
+ */
 
 static void ext_imapflags_runtime_init
-	(const struct sieve_runtime_env *renv, void *context ATTR_UNUSED)
+(const struct sieve_runtime_env *renv, void *context ATTR_UNUSED)
 {	
 	sieve_result_add_implicit_side_effect
 		(renv->result, &act_store, &flags_side_effect, NULL);
 }
 
-struct sieve_interpreter_extension imapflags_interpreter_extension = {
-    &imapflags_extension,
+const struct sieve_interpreter_extension imapflags_interpreter_extension = {
+	&imapflags_extension,
 	ext_imapflags_runtime_init,
-    NULL,
+	NULL,
 };
 
-/* Flag operations */
+/* 
+ * Flag operations 
+ */
 
 /* FIXME: This currently accepts a potentially unlimited number of 
  * flags, making the internal or variable flag list indefinitely long
@@ -303,7 +317,7 @@ static bool flag_is_valid(const char *flag)
 }
 
 void ext_imapflags_iter_init
-	(struct ext_imapflags_iter *iter, string_t *flags_list) 
+(struct ext_imapflags_iter *iter, string_t *flags_list) 
 {
 	iter->flags_list = flags_list;
 	iter->offset = 0;
@@ -311,7 +325,7 @@ void ext_imapflags_iter_init
 }
 
 const char *ext_imapflags_iter_get_flag
-	(struct ext_imapflags_iter *iter) 
+(struct ext_imapflags_iter *iter) 
 {
 	unsigned int len = str_len(iter->flags_list);
 	const unsigned char *fp;
@@ -349,7 +363,7 @@ const char *ext_imapflags_iter_get_flag
 }
 
 static void ext_imapflags_iter_delete_last
-	(struct ext_imapflags_iter *iter) 
+(struct ext_imapflags_iter *iter) 
 {
 	iter->offset++;
 	if ( iter->offset > str_len(iter->flags_list) )
@@ -362,7 +376,8 @@ static void ext_imapflags_iter_delete_last
 	iter->offset = iter->last;
 }
 
-static bool flags_list_flag_exists(string_t *flags_list, const char *flag)
+static bool flags_list_flag_exists
+(string_t *flags_list, const char *flag)
 {
 	const char *flg;
 	struct ext_imapflags_iter flit;
@@ -377,7 +392,8 @@ static bool flags_list_flag_exists(string_t *flags_list, const char *flag)
 	return FALSE;
 }
 
-static void flags_list_flag_delete(string_t *flags_list, const char *flag)
+static void flags_list_flag_delete
+(string_t *flags_list, const char *flag)
 {
 	const char *flg;
 	struct ext_imapflags_iter flit;
@@ -392,7 +408,7 @@ static void flags_list_flag_delete(string_t *flags_list, const char *flag)
 }
  			
 static void flags_list_add_flags
-	(string_t *flags_list, string_t *flags)
+(string_t *flags_list, string_t *flags)
 {	
 	const char *flg;
 	struct ext_imapflags_iter flit;
@@ -409,7 +425,7 @@ static void flags_list_add_flags
 }
 
 static void flags_list_remove_flags
-	(string_t *flags_list, string_t *flags)
+(string_t *flags_list, string_t *flags)
 {	
 	const char *flg;
 	struct ext_imapflags_iter flit;
@@ -422,13 +438,15 @@ static void flags_list_remove_flags
 }
 
 static void flags_list_set_flags
-	(string_t *flags_list, string_t *flags)
+(string_t *flags_list, string_t *flags)
 {
 	str_truncate(flags_list, 0);
 	flags_list_add_flags(flags_list, flags);
 }
 
-/* Flag registration */
+/* 
+ * Flag registration 
+ */
 
 int ext_imapflags_set_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,

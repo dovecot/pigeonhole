@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "str-sanitize.h"
 #include "array.h"
@@ -16,14 +19,16 @@
 
 #include <ctype.h>
 
+/* 
+ * Flags tagged argument
+ */
+
 static bool tag_flags_validate
 	(struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
 static bool tag_flags_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
 		struct sieve_command_context *cmd);
-
-/* Tag */
 
 const struct sieve_argument tag_flags = { 
 	"flags", 
@@ -33,9 +38,9 @@ const struct sieve_argument tag_flags = {
 	tag_flags_generate 
 };
 
-/* Side effect */
-
-extern const struct sieve_side_effect_extension imapflags_seffect_extension;
+/* 
+ * Side effect 
+ */
 
 static bool seff_flags_dump_context
 	(const struct sieve_side_effect *seffect,
@@ -63,6 +68,10 @@ const struct sieve_side_effect flags_side_effect = {
 	NULL, NULL, NULL
 };
 
+/*
+ * Operand
+ */
+
 static const struct sieve_extension_obj_registry ext_side_effects =
 	SIEVE_EXT_DEFINE_SIDE_EFFECT(flags_side_effect);
 
@@ -74,7 +83,9 @@ const struct sieve_operand flags_side_effect_operand = {
 	&ext_side_effects
 };
 
-/* Tag validation */
+/* 
+ * Tag validation 
+ */
 
 static bool tag_flags_validate
 (struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
@@ -101,7 +112,9 @@ static bool tag_flags_validate
 	return TRUE;
 }
 
-/* Tag generation */
+/* 
+ * Code generation 
+ */
 
 static bool tag_flags_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
@@ -125,12 +138,18 @@ static bool tag_flags_generate
 	return TRUE;
 }
 
-/* Side effect execution */
+/* 
+ * Side effect implementation
+ */
+ 
+/* Context data */
 
 struct seff_flags_context {
 	ARRAY_DEFINE(keywords, const char *);
 	enum mail_flags flags;
 };
+
+/* Context coding */
 
 static bool seff_flags_dump_context
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
@@ -241,6 +260,8 @@ static struct seff_flags_context *seff_flags_get_implicit_context
 	return ctx;
 }
 
+/* Result printing */
+
 static void seff_flags_print
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_action *action ATTR_UNUSED, 
@@ -282,6 +303,8 @@ static void seff_flags_print
 		} T_END;
 	}
 }
+
+/* Result execution */
 
 static bool seff_flags_pre_execute
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 

@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 
 #include "sieve-commands.h"
@@ -45,7 +48,9 @@ const struct sieve_operation setflag_operation = {
 	cmd_setflag_operation_execute
 };
 
-/* Code generation */
+/* 
+ * Code generation 
+ */
 
 static bool cmd_setflag_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)

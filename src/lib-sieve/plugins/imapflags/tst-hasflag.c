@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+ 
 #include "lib.h"
 
 #include "sieve-commands.h"
@@ -87,7 +90,7 @@ static bool tst_hasflag_registered
  */
 
 static bool tst_hasflag_validate
-	(struct sieve_validator *validator,	struct sieve_command_context *tst)
+(struct sieve_validator *validator,	struct sieve_command_context *tst)
 {
 	struct sieve_ast_argument *vars = tst->first_positional;
 	struct sieve_ast_argument *keys = sieve_ast_argument_next(vars);
@@ -112,7 +115,7 @@ static bool tst_hasflag_validate
  */
 
 static bool tst_hasflag_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
+(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
 {
 	sieve_operation_emit_code(cgenv->sbin, &hasflag_operation);
 
