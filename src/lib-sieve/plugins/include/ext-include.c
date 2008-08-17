@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension include
  * -----------------
  *
@@ -27,15 +30,9 @@
 #include "ext-include-common.h"
 #include "ext-include-binary.h"
 
-/* Forward declarations */
-
-static bool ext_include_load(int ext_id);
-static bool ext_include_validator_load(struct sieve_validator *validator);
-static bool ext_include_generator_load(const struct sieve_codegen_env *cgenv);
-static bool ext_include_binary_load(struct sieve_binary *sbin);
-static bool ext_include_interpreter_load(struct sieve_interpreter *interp);
-
-/* Operations */
+/* 
+ * Operations 
+ */
 
 static const struct sieve_operation *ext_include_operations[] = { 
 	&include_operation, 
@@ -44,7 +41,19 @@ static const struct sieve_operation *ext_include_operations[] = {
 	&export_operation
 };
 
-/* Extension definitions */
+/* 
+ * Extension
+ */
+ 
+/* Forward declaration */
+
+static bool ext_include_load(int ext_id);
+static bool ext_include_validator_load(struct sieve_validator *validator);
+static bool ext_include_generator_load(const struct sieve_codegen_env *cgenv);
+static bool ext_include_binary_load(struct sieve_binary *sbin);
+static bool ext_include_interpreter_load(struct sieve_interpreter *interp);
+
+/* Extension objects */
 
 static int ext_my_id;
 
@@ -61,14 +70,14 @@ const struct sieve_extension include_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
+/* Extension hooks */
+
 static bool ext_include_load(int ext_id)
 {
 	ext_my_id = ext_id;
 
 	return TRUE;
 }
-
-/* Load extension into validator */
 
 static bool ext_include_validator_load(struct sieve_validator *validator)
 {
@@ -81,16 +90,12 @@ static bool ext_include_validator_load(struct sieve_validator *validator)
 	return TRUE;
 }	
 
-/* Load extension into generator */
-
 static bool ext_include_generator_load(const struct sieve_codegen_env *cgenv)
 {
 	ext_include_register_generator_context(cgenv);
 
 	return TRUE;
 }
-
-/* Load extension into interpreter */
 
 static bool ext_include_interpreter_load
 (struct sieve_interpreter *interp)
@@ -99,8 +104,6 @@ static bool ext_include_interpreter_load
 	
 	return TRUE;
 }
-
-/* Load extension into binary */
 
 static bool ext_include_binary_load(struct sieve_binary *sbin)
 {

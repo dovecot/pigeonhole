@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "str.h"
 
@@ -15,20 +18,6 @@
 #include "ext-include-limits.h"
 #include "ext-include-variables.h"
 #include "ext-include-binary.h"
-
-/*
- * Types
- */
- 
-struct ext_include_binary_context {
-	struct sieve_binary *binary;
-	unsigned int dependency_block;
-	
-	struct hash_table *included_scripts;
-	ARRAY_DEFINE(include_index, struct ext_include_script_info *);
-
-	struct sieve_variable_scope *global_vars;
-};
 
 /*
  * Forward declarations
@@ -54,6 +43,17 @@ const struct sieve_binary_extension include_binary_ext = {
 /*
  * Binary context management
  */
+ 
+struct ext_include_binary_context {
+	struct sieve_binary *binary;
+	unsigned int dependency_block;
+	
+	struct hash_table *included_scripts;
+	ARRAY_DEFINE(include_index, struct ext_include_script_info *);
+
+	struct sieve_variable_scope *global_vars;
+};
+
  
 static struct ext_include_binary_context *ext_include_binary_create_context
 (struct sieve_binary *sbin)
@@ -85,10 +85,6 @@ struct ext_include_binary_context *ext_include_binary_get_context
 	
 	return ctx;
 }
-
-/* 
- * Binary include implementation 
- */
  
 struct ext_include_binary_context *ext_include_binary_init
 (struct sieve_binary *sbin, struct sieve_ast *ast)
@@ -350,6 +346,10 @@ static void ext_include_binary_free(struct sieve_binary *sbin)
 		sieve_variable_scope_unref(&binctx->global_vars);
 
 }
+
+/*
+ * Dumping the binary 
+ */
 
 inline static const char *_script_location
 (enum ext_include_script_location loc)

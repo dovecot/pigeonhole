@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __EXT_INCLUDE_BINARY_H
 #define __EXT_INCLUDE_BINARY_H
 
@@ -47,6 +50,10 @@ const struct ext_include_script_info *ext_include_binary_script_get
 	(struct ext_include_binary_context *binctx, struct sieve_script *script);
 unsigned int ext_include_binary_script_get_count
 	(struct ext_include_binary_context *binctx);
+
+/*
+ * Dumping the binary
+ */
 
 bool ext_include_binary_dump(struct sieve_dumptime_env *denv);
 		

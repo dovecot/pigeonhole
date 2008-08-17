@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
@@ -106,14 +109,16 @@ struct sieve_variable *ext_include_variable_import_global
 
 		varctx = p_new(pool, struct ext_include_variable, 1);
 		varctx->type = EXT_INCLUDE_VAR_IMPORTED;
-		varctx->source_line = cmd->ast_node->source_line;
 		impvar->context = varctx;
 	}
 
 	return var;	
 }
 
-
+/*
+ * Binary symbol table
+ */
+ 
 bool ext_include_variables_save
 (struct sieve_binary *sbin, struct sieve_variable_scope *global_vars)
 {

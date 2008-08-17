@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "str-sanitize.h"
 
@@ -327,7 +330,7 @@ struct sieve_variable_storage *ext_include_interpreter_get_global_variables
 }
 
 /* 
- * Including a script during generation 
+ * Including a script during code generation 
  */
 
 bool ext_include_generate_include

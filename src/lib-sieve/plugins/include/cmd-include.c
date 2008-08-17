@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "str-sanitize.h"
 
@@ -77,7 +80,7 @@ struct cmd_include_context_data {
 };   
 
 /* 
- * Tags 
+ * Tagged arguments
  */
 
 static bool cmd_include_validate_location_tag
@@ -111,7 +114,8 @@ static bool cmd_include_validate_location_tag
 	
 	if ( ctx_data->location_assigned) {
 		sieve_command_validate_error(validator, cmd, 
-			"include: cannot use location tags ':personal' and ':global' multiple times");
+			"include: cannot use location tags ':personal' and ':global' "
+			"multiple times");
 		return FALSE;
 	}
 	
@@ -186,13 +190,13 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 			"include: '/' not allowed in script name (%s)",
 			str_sanitize(script_name, 80));
 		return FALSE;
-    }
+	}
 		
 	script_dir = ext_include_get_script_directory
 		(ctx_data->location, script_name);
 	if ( script_dir == NULL ) {
 		sieve_command_validate_error(validator, cmd,
-            "include: specified location for included script '%s' is unavailable "
+			"include: specified location for included script '%s' is unavailable "
 			"(system logs should provide more information)",
 			str_sanitize(script_name, 80));
 		return FALSE;
