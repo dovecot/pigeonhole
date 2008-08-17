@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+ 
 #ifndef __EXT_RELATIONAL_COMMON_H
 #define __EXT_RELATIONAL_COMMON_H
 
@@ -41,15 +44,16 @@ int ext_relational_my_id;
 extern const struct sieve_extension relational_extension;
 extern const struct sieve_match_type_extension relational_match_extension;
 
-bool mcht_relational_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_match_type_context *ctx);
-int mcht_value_match
-    (struct sieve_match_context *mctx, const char *val, size_t val_size,
-        const char *key, size_t key_size, int key_index);
+/*
+ * Match types
+ */
+ 
+/* Registered for validation */ 
 
 extern const struct sieve_match_type value_match_type;
 extern const struct sieve_match_type count_match_type;
+
+/* Used in byte code */
 
 extern const struct sieve_match_type rel_match_count_gt;
 extern const struct sieve_match_type rel_match_count_ge;
@@ -65,6 +69,28 @@ extern const struct sieve_match_type rel_match_value_le;
 extern const struct sieve_match_type rel_match_value_eq;
 extern const struct sieve_match_type rel_match_value_ne;
 
+/*
+ * Operand
+ */
+ 
 extern const struct sieve_operand rel_match_type_operand;
 
-#endif
+
+/*
+ * Match type validation
+ */
+
+bool mcht_relational_validate
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_match_type_context *ctx);
+		
+/*
+ * Value match function (also used by :count)
+ */
+ 
+int mcht_value_match
+    (struct sieve_match_context *mctx, const char *val, size_t val_size,
+        const char *key, size_t key_size, int key_index);
+
+
+#endif /* __EXT_RELATIONAL_COMMON_H */

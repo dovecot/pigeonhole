@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension relational 
  * --------------------
  *
@@ -26,13 +29,11 @@
 #include "ext-relational-common.h"
 
 /* 
- * Forward declarations 
+ * Extension
  */
 
 static bool ext_relational_load(int ext_id);
 static bool ext_relational_validator_load(struct sieve_validator *validator);
-
-/* Extension definitions */
 
 int ext_relational_my_id;
 
@@ -52,10 +53,6 @@ static bool ext_relational_load(int ext_id)
 
 	return TRUE;
 }
-
-/* 
- * Load extension into validator 
- */
 
 static bool ext_relational_validator_load(struct sieve_validator *validator)
 {

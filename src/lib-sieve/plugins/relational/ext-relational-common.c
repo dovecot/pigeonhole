@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Syntax:
  *   MATCH-TYPE =/ COUNT / VALUE
  *   COUNT = ":count" relational-match

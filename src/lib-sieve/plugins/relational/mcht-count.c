@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+ 
 /* Match-type ':count' 
  */
 
@@ -5,7 +8,6 @@
 #include "str.h"
 
 #include "sieve-common.h"
-
 #include "sieve-ast.h"
 #include "sieve-code.h"
 #include "sieve-extensions.h"
@@ -32,7 +34,7 @@ static int mcht_count_match_deinit(struct sieve_match_context *mctx);
 /* 
  * Match-type objects
  */
-
+ 
 const struct sieve_match_type count_match_type = {
 	SIEVE_OBJECT("count", &rel_match_type_operand, RELATIONAL_COUNT),
 	FALSE, FALSE,
