@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension copy
  * ------------------
  *
@@ -21,14 +24,19 @@
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
 
-/* Forward declarations */
+/* 
+ * Forward declarations 
+ */
+
+static const struct sieve_argument copy_tag;
+static const struct sieve_operand copy_side_effect_operand;
+
+/* 
+ * Extension
+ */
 
 static bool ext_copy_load(int ext_id);
 static bool ext_copy_validator_load(struct sieve_validator *validator);
-
-/* Extension definitions */
-
-static const struct sieve_operand copy_side_effect_operand;
 
 static int ext_my_id;
 
@@ -49,7 +57,21 @@ static bool ext_copy_load(int ext_id)
 	return TRUE;
 }
 
-/* Side effect */
+static bool ext_copy_validator_load(struct sieve_validator *validator)
+{
+	/* Register copy tag with redirect and fileinto commands and we don't care
+	 * whether these commands are registered or even whether they will be
+	 * registered at all. The validator handles either situation gracefully 
+	 */
+	sieve_validator_register_external_tag(validator, &copy_tag, "redirect", -1);
+	sieve_validator_register_external_tag(validator, &copy_tag, "fileinto", -1);
+
+	return TRUE;
+}
+
+/*
+ * Side effect 
+ */
 
 static void seff_copy_print
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
@@ -69,48 +91,16 @@ const struct sieve_side_effect copy_side_effect = {
 	NULL
 };
 
-static const struct sieve_extension_obj_registry ext_side_effects =
-    SIEVE_EXT_DEFINE_SIDE_EFFECT(copy_side_effect);
-
-static const struct sieve_operand copy_side_effect_operand = {
-    "copy operand",
-    &copy_extension,
-    0,
-    &sieve_side_effect_operand_class,
-    &ext_side_effects
-};
-
-/* Tag validation */
+/* 
+ * Tagged argument 
+ */
 
 static bool tag_copy_validate
-	(struct sieve_validator *validator ATTR_UNUSED, 
-	struct sieve_ast_argument **arg ATTR_UNUSED, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
-{
-	/* FIXME: currently not generated * /
-	*arg = sieve_ast_arguments_detach(*arg,1);
-	*/	
-	*arg = sieve_ast_argument_next(*arg);
-
-	return TRUE;
-}
-
-/* Tag generation */
-
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *cmd);
 static bool tag_copy_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-    struct sieve_command_context *context ATTR_UNUSED)
-{
-    if ( sieve_ast_argument_type(arg) != SAAT_TAG ) {
-        return FALSE;
-    }
-
-    sieve_opr_side_effect_emit(cgenv->sbin, &copy_side_effect);
-
-    return TRUE;
-}
-
-/* Tag */
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
+    struct sieve_command_context *context);
 
 static const struct sieve_argument copy_tag = { 
 	"copy", 
@@ -120,7 +110,55 @@ static const struct sieve_argument copy_tag = {
 	tag_copy_generate
 };
 
-/* Side effect execution */
+/*
+ * Operand
+ */
+
+static const struct sieve_extension_obj_registry ext_side_effects =
+	SIEVE_EXT_DEFINE_SIDE_EFFECT(copy_side_effect);
+
+static const struct sieve_operand copy_side_effect_operand = {
+	"copy operand",
+	&copy_extension,
+	0,
+	&sieve_side_effect_operand_class,
+	&ext_side_effects
+};
+
+/* 
+ * Tag validation 
+ */
+
+static bool tag_copy_validate
+	(struct sieve_validator *validator ATTR_UNUSED, 
+	struct sieve_ast_argument **arg ATTR_UNUSED, 
+	struct sieve_command_context *cmd ATTR_UNUSED)
+{
+	*arg = sieve_ast_argument_next(*arg);
+
+	return TRUE;
+}
+
+/*
+ * Code generation 
+ */
+
+static bool tag_copy_generate
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
+    struct sieve_command_context *context ATTR_UNUSED)
+{
+	if ( sieve_ast_argument_type(arg) != SAAT_TAG ) {
+		return FALSE;
+	}
+
+	sieve_opr_side_effect_emit(cgenv->sbin, &copy_side_effect);
+
+	return TRUE;
+}
+
+/* 
+ * Side effect implementation
+ */
 
 static void seff_copy_print
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
@@ -142,19 +180,5 @@ static bool seff_copy_post_commit
 	*keep = TRUE;
 	return TRUE;
 }
-
-/* Load extension into validator */
-static bool ext_copy_validator_load(struct sieve_validator *validator)
-{
-	/* Register copy tag with redirect and fileinto commands and we don't care
-	 * whether these commands are registered or even whether they will be
-	 * registered at all. The validator handles either situation gracefully 
-	 */
-	sieve_validator_register_external_tag(validator, &copy_tag, "redirect", -1);
-	sieve_validator_register_external_tag(validator, &copy_tag, "fileinto", -1);
-
-	return TRUE;
-}
-
 
 
