@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */ 
+
 /* Extension comparator-i;ascii-numeric
  * ------------------------------------
  *
@@ -24,13 +27,16 @@
  */
 
 static const struct sieve_operand my_comparator_operand;
+
 const struct sieve_comparator i_ascii_numeric_comparator;
 
-static bool ext_cmp_i_ascii_numeric_load(int ext_id);
-static bool ext_cmp_i_ascii_numeric_validator_load(struct sieve_validator *validator);
+static bool ext_cmp_i_ascii_numeric_load
+	(int ext_id);
+static bool ext_cmp_i_ascii_numeric_validator_load
+	(struct sieve_validator *validator);
 
 /* 
- * Extension definitions 
+ * Extension
  */
 
 static int ext_my_id;
@@ -45,20 +51,24 @@ const struct sieve_extension comparator_i_ascii_numeric_extension = {
 	SIEVE_EXT_DEFINE_OPERAND(my_comparator_operand)
 };
 
-static bool ext_cmp_i_ascii_numeric_load(int ext_id)
+static bool ext_cmp_i_ascii_numeric_load
+	(int ext_id)
 {
 	ext_my_id = ext_id;
 
 	return TRUE;
 }
 
-/* Actual extension implementation */
+static bool ext_cmp_i_ascii_numeric_validator_load
+	(struct sieve_validator *validator)
+{
+	sieve_comparator_register(validator, &i_ascii_numeric_comparator);
+	return TRUE;
+}
 
-/* Extension access structures */
-
-static int cmp_i_ascii_numeric_compare
-	(const struct sieve_comparator *cmp, 
-		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
+/*
+ * Operand
+ */
 
 static const struct sieve_extension_obj_registry ext_comparators =
 	SIEVE_EXT_DEFINE_COMPARATOR(i_ascii_numeric_comparator);
@@ -71,6 +81,18 @@ static const struct sieve_operand my_comparator_operand = {
 	&ext_comparators
 };
 
+/*
+ * Comparator
+ */
+
+/* Forward declarations */
+ 
+static int cmp_i_ascii_numeric_compare
+	(const struct sieve_comparator *cmp, 
+		const char *val1, size_t val1_size, const char *val2, size_t val2_size);
+
+/* Comparator object */
+
 const struct sieve_comparator i_ascii_numeric_comparator = { 
 	SIEVE_OBJECT("i;ascii-numeric", &my_comparator_operand, 0),
 	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY,
@@ -79,15 +101,7 @@ const struct sieve_comparator i_ascii_numeric_comparator = {
 	NULL
 };
 
-/* Load extension into validator */
-
-static bool ext_cmp_i_ascii_numeric_validator_load(struct sieve_validator *validator)
-{
-	sieve_comparator_register(validator, &i_ascii_numeric_comparator);
-	return TRUE;
-}
-
-/* Implementation */
+/* Comparator implementation */
 
 static int cmp_i_ascii_numeric_compare
 	(const struct sieve_comparator *cmp ATTR_UNUSED, 
@@ -99,8 +113,8 @@ static int cmp_i_ascii_numeric_compare
 	const char *kp = key;
 	int digits, i;
 
-	/* RFC 4790: All input is valid; strings that do not start with a digit represent 
-	 * positive infinity.
+	/* RFC 4790: All input is valid; strings that do not start with a digit 
+	 * represent positive infinity.
 	 */
 	if ( !i_isdigit(*vp) ) {
 		if ( i_isdigit(*kp) ) {
