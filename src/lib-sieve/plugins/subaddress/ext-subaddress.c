@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension subaddress 
  * --------------------
  *
@@ -24,18 +27,27 @@
 
 #include <string.h>
 
-/* Config */
+/* 
+ * Configuration 
+ */
 
 #define SUBADDRESS_DEFAULT_SEP_CHAR '+'
 
-/* Forward declarations */
+/*
+ * Forward declarations 
+ */
+
+const struct sieve_address_part user_address_part;
+const struct sieve_address_part detail_address_part;
 
 static struct sieve_operand subaddress_operand;
 
+/*
+ * Extension
+ */
+
 static bool ext_subaddress_load(int ext_id);
 static bool ext_subaddress_validator_load(struct sieve_validator *validator);
-
-/* Extension definitions */
 
 static int ext_my_id;
 
@@ -56,7 +68,44 @@ static bool ext_subaddress_load(int ext_id)
 	return TRUE;
 }
 
-/* Actual extension implementation */
+static bool ext_subaddress_validator_load(struct sieve_validator *validator)
+{
+	sieve_address_part_register(validator, &user_address_part); 
+	sieve_address_part_register(validator, &detail_address_part); 
+
+	return TRUE;
+}
+
+/*
+ * Address parts
+ */
+ 
+enum ext_subaddress_address_part {
+  SUBADDRESS_USER,
+  SUBADDRESS_DETAIL
+};
+
+/* Forward declarations */
+
+static const char *subaddress_user_extract_from
+	(const struct sieve_address *address);
+static const char *subaddress_detail_extract_from
+	(const struct sieve_address *address);
+
+
+/* Address part objects */	
+
+const struct sieve_address_part user_address_part = {
+	SIEVE_OBJECT("user", &subaddress_operand, SUBADDRESS_USER),
+	subaddress_user_extract_from
+};
+
+const struct sieve_address_part detail_address_part = {
+	SIEVE_OBJECT("detail", &subaddress_operand, SUBADDRESS_DETAIL),
+	subaddress_detail_extract_from
+};
+
+/* Address part implementation */
 
 static const char *subaddress_user_extract_from
 	(const struct sieve_address *address)
@@ -78,22 +127,9 @@ static const char *subaddress_detail_extract_from
 	return sep+1;
 }
 
-/* Extension access structures */
-
-enum ext_subaddress_address_part {
-  SUBADDRESS_USER,
-  SUBADDRESS_DETAIL
-};
-
-const struct sieve_address_part user_address_part = {
-	SIEVE_OBJECT("user", &subaddress_operand, SUBADDRESS_USER),
-	subaddress_user_extract_from
-};
-
-const struct sieve_address_part detail_address_part = {
-	SIEVE_OBJECT("detail", &subaddress_operand, SUBADDRESS_DETAIL),
-	subaddress_detail_extract_from
-};
+/*
+ * Operand 
+ */
 
 const struct sieve_address_part *ext_subaddress_parts[] = {
 	&user_address_part, &detail_address_part
@@ -108,15 +144,4 @@ static struct sieve_operand subaddress_operand = {
 	&sieve_address_part_operand_class,
 	&ext_address_parts
 };
-
-/* Load extension into validator */
-
-static bool ext_subaddress_validator_load(struct sieve_validator *validator)
-{
-	sieve_address_part_register(validator, &user_address_part); 
-	sieve_address_part_register(validator, &detail_address_part); 
-
-	return TRUE;
-}
-
 
