@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Match-type ':regex'
  */
 
@@ -29,18 +32,18 @@
 #define MCHT_REGEX_MAX_SUBSTITUTIONS SIEVE_MAX_MATCH_VALUES
 
 /* 
- * Forward declarations 
+ * Match type
  */
+ 
+bool mcht_regex_validate_context
+(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+    struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg);
 
 static void mcht_regex_match_init(struct sieve_match_context *mctx);
 static int mcht_regex_match
 	(struct sieve_match_context *mctx, const char *val, size_t val_size,
     	const char *key, size_t key_size, int key_index);
 static int mcht_regex_match_deinit(struct sieve_match_context *mctx);
-
-bool mcht_regex_validate_context
-(struct sieve_validator *validator, struct sieve_ast_argument *arg,
-    struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg);
 
 const struct sieve_match_type regex_match_type = {
 	SIEVE_OBJECT("regex", &regex_match_type_operand, 0),
@@ -53,7 +56,7 @@ const struct sieve_match_type regex_match_type = {
 };
 
 /* 
- * Match-type validation 
+ * Match type validation 
  */
 
 /* Wrapper around the regerror function for easy access */
@@ -160,7 +163,7 @@ bool mcht_regex_validate_context
 }
 
 /* 
- * Match-type implementation 
+ * Match type implementation 
  */
 
 struct mcht_regex_context {

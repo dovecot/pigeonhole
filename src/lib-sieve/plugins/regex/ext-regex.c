@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension regex 
  * ---------------
  *
@@ -36,12 +39,12 @@
 #include <sys/types.h>
 #include <regex.h>
 
-/* Forward declarations */
+/* 
+ * Extension
+ */
 
 static bool ext_regex_load(int ext_id);
 static bool ext_regex_validator_load(struct sieve_validator *validator);
-
-/* Extension definitions */
 
 static int ext_my_id;
 
@@ -61,10 +64,6 @@ static bool ext_regex_load(int ext_id)
 
 	return TRUE;
 }
-
-/* 
- * Load extension into validator 
- */
 
 static bool ext_regex_validator_load(struct sieve_validator *validator)
 {
