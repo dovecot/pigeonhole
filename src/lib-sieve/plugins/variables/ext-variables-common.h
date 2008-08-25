@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __EXT_VARIABLES_COMMON_H
 #define __EXT_VARIABLES_COMMON_H
 
@@ -6,14 +9,35 @@
 
 #include "sieve-ext-variables.h"
 
-extern int ext_variables_my_id;
+/*
+ * Extension
+ */
 
 extern struct sieve_extension variables_extension;
+
+/* 
+ * Commands 
+ */
+
+extern const struct sieve_command cmd_set;
+extern const struct sieve_command tst_string;
+
+/*
+ * Operations
+ */
+
+extern const struct sieve_operation cmd_set_operation;
+extern const struct sieve_operation tst_string_operation;
 
 enum ext_variables_opcode {
 	EXT_VARIABLES_OPERATION_SET,
 	EXT_VARIABLES_OPERATION_STRING
 };
+
+/* 
+ * Operands
+ */
+
 
 enum ext_variables_operand {
 	EXT_VARIABLES_OPERAND_VARIABLE,
@@ -22,7 +46,9 @@ enum ext_variables_operand {
 	EXT_VARIABLES_OPERAND_MODIFIER
 };
 
-/* Context */
+/* 
+ * Validator context 
+ */
 
 struct ext_variables_validator_context {
 	struct sieve_validator_object_registry *modifiers;
@@ -31,16 +57,26 @@ struct ext_variables_validator_context {
 };
 
 void ext_variables_validator_initialize(struct sieve_validator *validator);
-void ext_variables_interpreter_initialize(struct sieve_interpreter *interp);
 	
 static inline struct ext_variables_validator_context *
 ext_variables_validator_context_get(struct sieve_validator *valdtr)
 {
 	return (struct ext_variables_validator_context *)
 		sieve_validator_extension_get_context(valdtr, &variables_extension);
-}	
-	
-/* Variables */
+}
+
+struct sieve_variable *ext_variables_validator_get_variable
+	(struct sieve_validator *validator, const char *variable, bool declare);
+
+/*
+ * Interpreter context
+ */	
+
+void ext_variables_interpreter_initialize(struct sieve_interpreter *interp);
+
+/* 
+ * Variable coding 
+ */
 
 void ext_variables_opr_variable_emit
 	(struct sieve_binary *sbin, struct sieve_variable *var);
@@ -56,11 +92,5 @@ void ext_variables_opr_variable_string_emit
 bool ext_variables_variable_assignment_activate
 (struct sieve_validator *validator, struct sieve_ast_argument *arg,
 	struct sieve_command_context *cmd);
-
-struct sieve_variable *ext_variables_validator_get_variable
-(struct sieve_validator *validator, const char *variable, bool declare);
-
-struct sieve_variable_storage *ext_variables_interpreter_get_storage
-	(struct sieve_interpreter *interp, const struct sieve_extension *ext);
 	
 #endif /* __EXT_VARIABLES_COMMON_H */

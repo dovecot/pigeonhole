@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __EXT_VARIABLES_OPERANDS_H
 #define __EXT_VARIABLES_OPERANDS_H
 

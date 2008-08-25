@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -19,6 +22,15 @@ extern const struct sieve_variables_modifier upperfirst_modifier;
 extern const struct sieve_variables_modifier quotewildcard_modifier;
 extern const struct sieve_variables_modifier length_modifier;
 
+enum ext_variables_modifier_code {
+    EXT_VARIABLES_MODIFIER_LOWER,
+    EXT_VARIABLES_MODIFIER_UPPER,
+    EXT_VARIABLES_MODIFIER_LOWERFIRST,
+    EXT_VARIABLES_MODIFIER_UPPERFIRST,
+    EXT_VARIABLES_MODIFIER_QUOTEWILDCARD,
+    EXT_VARIABLES_MODIFIER_LENGTH
+};
+
 const struct sieve_variables_modifier *ext_variables_core_modifiers[] = {
 	&lower_modifier,
 	&upper_modifier,
@@ -32,7 +44,7 @@ const unsigned int ext_variables_core_modifiers_count =
     N_ELEMENTS(ext_variables_core_modifiers);
 
 /*
- * Set modifier registry
+ * Modifier registry
  */
 
 void sieve_variables_modifier_register
@@ -69,7 +81,7 @@ void ext_variables_register_core_modifiers
 }
 
 /*
- * Set modifier coding
+ * Modifier coding
  */
  
 const struct sieve_operand_class ext_variables_modifier_operand_class = 

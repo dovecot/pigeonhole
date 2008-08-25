@@ -1,17 +1,15 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __EXT_VARIABLES_MODIFIERS_H
 #define __EXT_VARIABLES_MODIFIERS_H
 
 #include "ext-variables-common.h"
 #include "sieve-ext-variables.h"
 
-enum ext_variables_modifier_code {
-	EXT_VARIABLES_MODIFIER_LOWER,
-	EXT_VARIABLES_MODIFIER_UPPER,
-	EXT_VARIABLES_MODIFIER_LOWERFIRST,
-	EXT_VARIABLES_MODIFIER_UPPERFIRST,
-	EXT_VARIABLES_MODIFIER_QUOTEWILDCARD,
-	EXT_VARIABLES_MODIFIER_LENGTH
-};
+/*
+ * Modifier registry
+ */
 
 const struct sieve_variables_modifier *ext_variables_modifier_find
 	(struct sieve_validator *validator, const char *identifier);

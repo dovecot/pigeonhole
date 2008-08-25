@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "str.h"
 #include "str-sanitize.h"
@@ -92,15 +95,20 @@ static bool _sieve_variable_argument_activate
 		varstr = str_c(variable);
 		varend = PTR_OFFSET(varstr, str_len(variable));
 		nelements = ext_variable_name_parse(&vname, &varstr, varend);
-	
+
+		/* Check whether name parsing succeeded */	
 		if ( nelements < 0 || varstr != varend ) {
+			/* Parse failed */
 			sieve_command_validate_error(validator, cmd, 
 				"invalid variable name '%s'", str_sanitize(str_c(variable),80));
 		} else if ( nelements == 1 ) {
+			/* Normal (match) variable */
+
 			const struct ext_variable_name *cur_element = 
 				array_idx(&vname, 0);
 
 			if ( cur_element->num_variable < 0 ) {
+				/* Variable */
 				var = ext_variables_validator_get_variable
 					(validator, str_c(cur_element->identifier), TRUE);
 
@@ -114,6 +122,7 @@ static bool _sieve_variable_argument_activate
 					result = TRUE;
 				}
 			} else {
+				/* Match value */
 				if ( !assignment ) {
 					if ( cur_element->num_variable > SIEVE_VARIABLES_MAX_MATCH_INDEX ) {
 						_ext_variables_match_index_error
@@ -130,6 +139,8 @@ static bool _sieve_variable_argument_activate
 				}
 			}
 		} else {
+			/* Namespace variable */
+
 			const struct ext_variable_name *cur_element = 
 				array_idx(&vname, 0);
 
@@ -288,6 +299,7 @@ static bool arg_variable_string_validate
 		strstart = p;
 		while ( result && p < strend ) {
 			switch ( state ) {
+
 			/* Nothing found yet */
 			case ST_NONE:
 				if ( *p == '$' ) {
@@ -296,6 +308,7 @@ static bool arg_variable_string_validate
 				}
 				p++;
 				break;
+
 			/* Got '$' */
 			case ST_OPEN:
 				if ( *p == '{' ) {
@@ -304,6 +317,7 @@ static bool arg_variable_string_validate
 				} else 
 					state = ST_NONE;
 				break;
+
 			/* Got '${' */ 
 			case ST_VARIABLE:
 				nelements = ext_variable_name_parse(&substitution, &p, strend);
@@ -314,6 +328,8 @@ static bool arg_variable_string_validate
 					state = ST_CLOSE;
 			
 				break;
+
+			/* Finished parsing name, expecting '}' */
 			case ST_CLOSE:
 				if ( *p == '}' ) {				
 					struct sieve_ast_argument *strarg;
@@ -405,8 +421,10 @@ static bool arg_variable_string_validate
 		}
 	} T_END;
 
+	/* Bail out early if substitution is invalid */
 	if ( !result ) return FALSE;
 	
+	/* Check whether any substitutions were found */
 	if ( arglist == NULL ) {
 		/* No substitutions in this string, pass it on to any other substution
 		 * extension.

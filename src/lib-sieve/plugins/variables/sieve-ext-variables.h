@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* 
  * Public interface for other extensions to use 
  */
@@ -64,7 +67,6 @@ unsigned int sieve_variable_scope_size
 struct sieve_variable * const *sieve_variable_scope_get_variables
 	(struct sieve_variable_scope *scope, unsigned int *size_r);
 
-
 /* 
  * Variable storage
  */	
@@ -102,13 +104,17 @@ void sieve_ext_variables_set_storage
 	(struct sieve_interpreter *interp, struct sieve_variable_storage *storage,
 		const struct sieve_extension *ext);	
 		
-/* Variable arguments */
+/* 
+ * Variable arguments 
+ */
 
 bool sieve_variable_argument_activate
 (struct sieve_validator *validator, struct sieve_command_context *cmd, 
 	struct sieve_ast_argument *arg, bool assignment);
 	
-/* Variable operands */
+/* 
+ * Variable operands 
+ */
 
 extern const struct sieve_operand variable_operand;
 
@@ -126,7 +132,9 @@ static inline bool sieve_operand_is_variable
 	return ( operand != NULL && operand == &variable_operand );
 }	
 
-/* Modifiers */
+/* 
+ * Modifiers 
+ */
 
 struct sieve_variables_modifier {
 	struct sieve_object object;
@@ -140,6 +148,6 @@ struct sieve_variables_modifier {
 #define SIEVE_VARIABLES_DEFINE_MODIFIERS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 void sieve_variables_modifier_register
-(struct sieve_validator *valdtr, const struct sieve_variables_modifier *smodf);
+	(struct sieve_validator *valdtr, const struct sieve_variables_modifier *smodf);
 
 #endif /* __SIEVE_EXT_VARIABLES_H */

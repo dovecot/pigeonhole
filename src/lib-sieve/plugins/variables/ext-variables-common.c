@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "hash.h"
 #include "str.h"
@@ -20,27 +23,6 @@
 #include "ext-variables-common.h"
 #include "ext-variables-name.h"
 #include "ext-variables-modifiers.h"
-
-/* 
- * Forward declarations 
- */
-
-/* Core modifiers */
-
-extern const struct ext_variables_set_modifier lower_modifier;
-extern const struct ext_variables_set_modifier upper_modifier;
-extern const struct ext_variables_set_modifier lowerfirst_modifier;
-extern const struct ext_variables_set_modifier upperfirst_modifier;
-extern const struct ext_variables_set_modifier quotewildcard_modifier;
-extern const struct ext_variables_set_modifier length_modifier;
-
-const struct ext_variables_set_modifier *default_set_modifiers[] = { 
-	&lower_modifier, &upper_modifier, &lowerfirst_modifier, &upperfirst_modifier,
-	&quotewildcard_modifier, &length_modifier
-};
-
-const unsigned int default_set_modifiers_count = 
-	N_ELEMENTS(default_set_modifiers);
 
 /*
  * Variable scope 
@@ -209,8 +191,9 @@ struct sieve_variable * const *sieve_variable_scope_get_variables
 	return array_get(&scope->variable_index, size_r);
 }
 
-
-/* Variable storage */
+/* 
+ * Variable storage 
+ */
 
 struct sieve_variable_storage {
 	pool_t pool;
@@ -314,8 +297,6 @@ bool sieve_variable_assign
 	return TRUE;
 }
 
-
-
 /*
  * AST Context
  */
@@ -401,7 +382,9 @@ bool sieve_ext_variables_is_active(struct sieve_validator *valdtr)
 	return ( ext_variables_validator_context_get(valdtr) != NULL );
 }
 
-/* Interpreter context */
+/* 
+ * Interpreter context 
+ */
 
 struct ext_variables_interpreter_context {
 	struct sieve_variable_storage *local_storage;

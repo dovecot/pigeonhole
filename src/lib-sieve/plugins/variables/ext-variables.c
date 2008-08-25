@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension variables 
  * -------------------
  *
@@ -30,28 +33,18 @@
 #include "ext-variables-operands.h"
 #include "ext-variables-modifiers.h"
 
-/* Forward declarations */
-
-static bool ext_variables_load(int ext_id);
-static bool ext_variables_validator_load(struct sieve_validator *validator);
-static bool ext_variables_interpreter_load(struct sieve_interpreter *interp);
-
-/* Commands */
-
-extern const struct sieve_command cmd_set;
-extern const struct sieve_command tst_string;
-
-/* Operations */
-
-extern const struct sieve_operation cmd_set_operation;
-extern const struct sieve_operation tst_string_operation;
+/* 
+ * Operations 
+ */
 
 const struct sieve_operation *ext_variables_operations[] = {
 	&cmd_set_operation, 
 	&tst_string_operation
 };
 
-/* Operands */
+/* 
+ * Operands 
+ */
 
 const struct sieve_operand *ext_variables_operands[] = {
 	&variable_operand, 
@@ -60,13 +53,19 @@ const struct sieve_operand *ext_variables_operands[] = {
 	&modifier_operand
 };
 
-/* Extension definitions */
+/* 
+ * Extension 
+ */
 
-int ext_variables_my_id;
+static bool ext_variables_load(int ext_id);
+static bool ext_variables_validator_load(struct sieve_validator *validator);
+static bool ext_variables_interpreter_load(struct sieve_interpreter *interp);
+
+static int ext_my_id;
 	
 struct sieve_extension variables_extension = { 
 	"variables", 
-	&ext_variables_my_id,
+	&ext_my_id,
 	ext_variables_load,
 	ext_variables_validator_load, 
 	NULL,
@@ -78,11 +77,9 @@ struct sieve_extension variables_extension = {
 
 static bool ext_variables_load(int ext_id) 
 {
-	ext_variables_my_id = ext_id;
+	ext_my_id = ext_id;
 	return TRUE;
 }
-
-/* Load extension into validator */
 
 static bool ext_variables_validator_load
 	(struct sieve_validator *validator)
@@ -97,8 +94,6 @@ static bool ext_variables_validator_load
 
 	return TRUE;
 }
-
-/* Load extension into interpreter */
 
 static bool ext_variables_interpreter_load
 	(struct sieve_interpreter *interp)
