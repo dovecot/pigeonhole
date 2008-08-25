@@ -20,6 +20,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-result.h"
 #include "sieve-dump.h"
 
 #include "testsuite-objects.h"
@@ -301,6 +302,8 @@ unsigned int _testsuite_script_error_index = 0;
 static pool_t _testsuite_scriptmsg_pool = NULL;
 ARRAY_DEFINE(_testsuite_script_errors, struct _testsuite_script_message);
 
+struct sieve_binary *_testsuite_compiled_script;
+
 static void _testsuite_script_verror
 (struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location,
     const char *fmt, va_list args)
@@ -376,6 +379,8 @@ static void testsuite_script_init(void)
     sieve_error_handler_accept_infolog(test_script_ehandler, TRUE);
 
 	testsuite_script_clear_messages();
+
+	_testsuite_compiled_script = NULL;
 }
 
 bool testsuite_script_compile(const char *script_path)
@@ -399,13 +404,61 @@ bool testsuite_script_compile(const char *script_path)
     if ( (sbin = sieve_compile(script_path, test_script_ehandler)) == NULL )
         return FALSE;
 
-    sieve_close(&sbin);
+	if ( _testsuite_compiled_script != NULL ) {
+	    sieve_close(&_testsuite_compiled_script);
+	}
+
+	_testsuite_compiled_script = sbin;
+
 	return TRUE;
+}
+
+bool testsuite_script_execute(const struct sieve_runtime_env *renv)
+{
+	struct sieve_script_env scriptenv;
+	struct sieve_result *result;
+	struct sieve_interpreter *interp;
+	int ret;
+
+	if ( _testsuite_compiled_script == NULL ) {
+		sieve_runtime_error(renv, sieve_error_script_location(renv->script,0),
+			"testsuite: no script compiled yet");
+		return FALSE;
+	}
+
+	testsuite_script_clear_messages();
+
+	/* Compose script execution environment */
+	memset(&scriptenv, 0, sizeof(scriptenv));
+	scriptenv.inbox = "INBOX";
+	scriptenv.namespaces = NULL;
+	scriptenv.username = "user";
+	scriptenv.hostname = "host.example.com";
+	scriptenv.postmaster_address = "postmaster@example.com";
+	scriptenv.smtp_open = NULL;
+	scriptenv.smtp_close = NULL;
+	scriptenv.duplicate_mark = NULL;
+	scriptenv.duplicate_check = NULL;
+	
+	result = sieve_result_create(test_script_ehandler);
+
+	/* Execute the script */
+	interp=sieve_interpreter_create(_testsuite_compiled_script, test_script_ehandler, NULL);
+	
+	ret = sieve_interpreter_run(interp, renv->msgdata, &scriptenv, &result);
+
+	sieve_interpreter_free(&interp);
+	
+	return ( ret > 0 );
 }
 
 static void testsuite_script_deinit(void)
 {
 	sieve_error_handler_unref(&test_script_ehandler);
+
+	if ( _testsuite_compiled_script != NULL ) {
+        sieve_close(&_testsuite_compiled_script);
+    }
 
 	pool_unref(&_testsuite_scriptmsg_pool);
 	//str_free(test_script_error_buf);

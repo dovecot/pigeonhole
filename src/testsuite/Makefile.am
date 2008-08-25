@@ -44,6 +44,7 @@ commands = \
 
 tests = \
 	tst-test-compile.c \
+	tst-test-execute.c \
 	tst-test-error.c
 
 testsuite_SOURCES = \

@@ -445,7 +445,6 @@ int sieve_interpreter_continue
 
 		if ( ret != SIEVE_EXEC_OK ) {
 			sieve_runtime_trace(&interp->runenv, "[[EXECUTION ABORTED]]");
-			ret = -1;
 		}
 	}
 	

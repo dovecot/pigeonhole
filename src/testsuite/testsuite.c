@@ -66,6 +66,7 @@ static void testsuite_bin_init(void)
 	
 	testsuite_init();
 }
+
 static void testsuite_bin_deinit(void)
 {
 	testsuite_deinit();
