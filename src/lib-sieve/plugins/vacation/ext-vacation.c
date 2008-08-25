@@ -5,7 +5,7 @@
  * ------------------
  *
  * Authors: Stephan Bosch <stephan@rename-it.nl>
- * Specification: draft-ietf-sieve-vacation-07
+ * Specification: RFC 5230
  * Implementation: almost complete; the required sopport for Refences header 
  *   is missing.
  * Status: experimental, largely untested
