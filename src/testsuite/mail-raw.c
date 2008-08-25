@@ -1,10 +1,10 @@
-/* Copyright (c) 2005-2007 Dovecot authors, see the included COPYING file */
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
 
 /* This file was gratefully stolen from dovecot/src/deliver/deliver.c and altered
  * to suit our needs. So, this contains lots and lots of duplicated code. 
- * The sieve_test program needs to read an email message from stdin and it needs 
- * to build a struct mail (to be fed to the sieve library). Deliver does something
- * similar already, so that source was a basis for this test binary. 
+ * FIXME: As a matter of fact a similar file is located at src/sieve-bin/mail-raw.c
+ *        These must be merged.
  */
 
 #include "lib.h"
@@ -27,11 +27,19 @@
 #include <fcntl.h>
 #include <pwd.h>
 
+/*
+ * Configuration
+ */
+
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
 /* After buffer grows larger than this, create a temporary file to /tmp
    where to read the mail. */
 #define MAIL_MAX_MEMORY_BUFFER (1024*128)
+
+/*
+ * Implementation
+ */
 
 static struct mail_namespace *raw_ns;
 

@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __TESTSUITE_OBJECTS_H
 #define __TESTSUITE_OBJECTS_H
 
@@ -6,7 +9,9 @@
 
 #include "testsuite-common.h"
 
-/* Testsuite object operand */
+/* 
+ * Testsuite object operand 
+ */
 
 struct testsuite_object_operand_interface {
 	struct sieve_extension_obj_registry testsuite_objects;
@@ -14,7 +19,9 @@ struct testsuite_object_operand_interface {
 
 extern const struct sieve_operand_class testsuite_object_oprclass;
 
-/* Testsuite object access */
+/* 
+ * Testsuite object access 
+ */
 
 struct testsuite_object {
 	struct sieve_object object;
@@ -26,7 +33,9 @@ struct testsuite_object {
 	string_t *(*get_member)(const struct sieve_runtime_env *renv, int id);
 };
 
-/* Testsuite object registration */
+/* 
+ * Testsuite object registration 
+ */
 
 const struct testsuite_object *testsuite_object_find
 	(struct sieve_validator *valdtr, const char *identifier);
@@ -35,13 +44,17 @@ void testsuite_object_register
 void testsuite_register_core_objects
 	(struct testsuite_validator_context *ctx);
 		
-/* Testsuite object argument */		
+/* 
+ * Testsuite object argument 
+ */		
 	
 bool testsuite_object_argument_activate
 	(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
 		struct sieve_command_context *cmd);		
 		
-/* Testsuite object code */
+/* 
+ * Testsuite object code 
+ */
 
 const struct testsuite_object *testsuite_object_read
   (struct sieve_binary *sbin, sieve_size_t *address);
@@ -52,7 +65,9 @@ const char *testsuite_object_member_name
 bool testsuite_object_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
-/* Testsuite core objects */
+/* 
+ * Testsuite core objects 
+ */
 
 extern const struct testsuite_object message_testsuite_object;
 extern const struct testsuite_object envelope_testsuite_object;

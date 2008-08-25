@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "sieve-common.h"
 #include "sieve-script.h"
 #include "sieve-commands.h"
@@ -33,7 +36,9 @@ const struct sieve_command tst_test_compile = {
 	NULL 
 };
 
-/* Test_compile operation */
+/* 
+ * Operation 
+ */
 
 static bool tst_test_compile_operation_dump
 	(const struct sieve_operation *op,
@@ -50,7 +55,9 @@ const struct sieve_operation test_compile_operation = {
 	tst_test_compile_operation_execute 
 };
 
-/* Validation */
+/* 
+ * Validation 
+ */
 
 static bool tst_test_compile_validate
 (struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command_context *tst) 
@@ -65,7 +72,9 @@ static bool tst_test_compile_validate
 	return sieve_validator_argument_activate(valdtr, tst, arg, FALSE);
 }
 
-/* Code generation */
+/* 
+ * Code generation 
+ */
 
 static inline struct testsuite_generator_context *
 	_get_generator_context(struct sieve_generator *gentr)

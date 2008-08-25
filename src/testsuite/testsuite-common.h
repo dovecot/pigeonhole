@@ -1,11 +1,18 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __TESTSUITE_COMMON_H
 #define __TESTSUITE_COMMON_H
 
+/*
+ * Extension
+ */
+
 extern const struct sieve_extension testsuite_extension;
 
-extern int ext_testsuite_my_id;
-
-/* Testsuite message environment */
+/* 
+ * Testsuite message environment 
+ */
 
 extern struct sieve_message_data testsuite_msgdata;
 
@@ -19,7 +26,9 @@ void testsuite_envelope_set_sender(const char *value);
 void testsuite_envelope_set_recipient(const char *value);
 void testsuite_envelope_set_auth_user(const char *value);
 
-/* Testsuite validator context */
+/* 
+ * Validator context 
+ */
 
 struct testsuite_validator_context {
 	struct sieve_validator_object_registry *object_registrations;
@@ -29,7 +38,9 @@ bool testsuite_validator_context_initialize(struct sieve_validator *valdtr);
 struct testsuite_validator_context *testsuite_validator_context_get
 	(struct sieve_validator *valdtr);
 
-/* Testsuite generator context */
+/* 
+ * Generator context 
+ */
 
 struct testsuite_generator_context {
 	struct sieve_jumplist *exit_jumps;
@@ -37,7 +48,24 @@ struct testsuite_generator_context {
 
 bool testsuite_generator_context_initialize(struct sieve_generator *gentr);
 
-/* Testsuite operations */
+/*
+ * Commands
+ */
+
+extern const struct sieve_command cmd_test;
+extern const struct sieve_command cmd_test_fail;
+extern const struct sieve_command cmd_test_set;
+
+/*
+ * Tests
+ */
+
+extern const struct sieve_command tst_test_compile;
+extern const struct sieve_command tst_test_error;
+
+/* 
+ * Operations 
+ */
 
 enum testsuite_operation_code {
 	TESTSUITE_OPERATION_TEST,
@@ -55,7 +83,9 @@ extern const struct sieve_operation test_set_operation;
 extern const struct sieve_operation test_compile_operation;
 extern const struct sieve_operation test_error_operation;
 
-/* Testsuite operands */
+/* 
+ * Operands 
+ */
 
 extern const struct sieve_operand testsuite_object_operand;
 
@@ -63,7 +93,9 @@ enum testsuite_operand_code {
 	TESTSUITE_OPERAND_OBJECT
 };
 
-/* Test context */
+/* 
+ * Test context 
+ */
 
 void testsuite_test_start(string_t *name);
 void testsuite_test_fail(string_t *reason);
@@ -72,14 +104,18 @@ void testsuite_test_succeed(string_t *reason);
 void testsuite_testcase_fail(const char *reason);
 int testsuite_testcase_result(void);
 
-/* Tested script environment */
+/* 
+ * Tested script environment 
+ */
 
 bool testsuite_script_compile(const char *script_path);
 
 void testsuite_script_get_error_init(void);
 const char *testsuite_script_get_error_next(bool location);
 
-/* Testsuite init/deinit */
+/* 
+ * Testsuite init/deinit 
+ */
 
 void testsuite_init(void);
 void testsuite_deinit(void);

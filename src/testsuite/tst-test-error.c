@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
@@ -39,7 +42,9 @@ const struct sieve_command tst_test_error = {
 	NULL 
 };
 
-/* Test_error operation */
+/* 
+ * Operation 
+ */
 
 static bool tst_test_error_operation_dump
 	(const struct sieve_operation *op,

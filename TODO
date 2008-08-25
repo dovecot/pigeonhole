@@ -8,7 +8,6 @@ Next (in order of descending priority/precedence):
 	  MUST win.
 	- 'If an address is not syntactically valid, then it will not be matched
 	  by tests specifying ":localpart" or ":domain"'.
-* Code cleanup 
 * Full security review. Enforce limits on number of created objects, script 
   size, execution time, etc...
 	- Make (configurable) limit on the number of redirects

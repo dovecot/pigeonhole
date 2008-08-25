@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension testsuite
  * -------------------
  *
@@ -43,25 +46,9 @@
 
 #include "testsuite-common.h"
 
-/* Forward declarations */
-
-static bool ext_testsuite_load(int ext_id);
-static bool ext_testsuite_validator_load(struct sieve_validator *valdtr);
-static bool ext_testsuite_generator_load(const struct sieve_codegen_env *cgenv);
-static bool ext_testsuite_binary_load(struct sieve_binary *sbin);
-
-/* Commands */
-
-extern const struct sieve_command cmd_test;
-extern const struct sieve_command cmd_test_fail;
-extern const struct sieve_command cmd_test_set;
-
-/* Tests */
-
-extern const struct sieve_command tst_test_compile;
-extern const struct sieve_command tst_test_error;
-
-/* Operations */
+/* 
+ * Operations 
+ */
 
 const struct sieve_operation *testsuite_operations[] = { 
 	&test_operation, 
@@ -72,18 +59,31 @@ const struct sieve_operation *testsuite_operations[] = {
 	&test_error_operation
 };
 
-/* Operands */
+/* 
+ * Operands 
+ */
 
 const struct sieve_operand *testsuite_operands[] =
     { &testsuite_object_operand };
     
-/* Extension definitions */
+/* 
+ * Extension
+ */
 
-int ext_testsuite_my_id;
+/* Forward declarations */
+
+static bool ext_testsuite_load(int ext_id);
+static bool ext_testsuite_validator_load(struct sieve_validator *valdtr);
+static bool ext_testsuite_generator_load(const struct sieve_codegen_env *cgenv);
+static bool ext_testsuite_binary_load(struct sieve_binary *sbin);
+
+/* Extension object */
+
+static int ext_my_id;
 
 const struct sieve_extension testsuite_extension = { 
 	"vnd.dovecot.testsuite", 
-	&ext_testsuite_my_id,
+	&ext_my_id,
 	ext_testsuite_load,
 	ext_testsuite_validator_load,
 	ext_testsuite_generator_load,
@@ -94,14 +94,14 @@ const struct sieve_extension testsuite_extension = {
 	SIEVE_EXT_DEFINE_OPERAND(testsuite_object_operand)
 };
 
+/* Extension implementation */
+
 static bool ext_testsuite_load(int ext_id)
 {
-	ext_testsuite_my_id = ext_id;
+	ext_my_id = ext_id;
 
 	return TRUE;
 }
-
-/* Load extension into validator */
 
 static bool ext_testsuite_validator_load(struct sieve_validator *valdtr)
 {
@@ -115,14 +115,10 @@ static bool ext_testsuite_validator_load(struct sieve_validator *valdtr)
 	return testsuite_validator_context_initialize(valdtr);
 }
 
-/* Load extension into generator */
-
 static bool ext_testsuite_generator_load(const struct sieve_codegen_env *cgenv)
 {
 	return testsuite_generator_context_initialize(cgenv->gentr);
 }
-
-/* Load extension into binary */
 
 static bool ext_testsuite_binary_load(struct sieve_binary *sbin ATTR_UNUSED)
 {
