@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 /* Extension vacation
  * ------------------
  *
@@ -23,21 +26,17 @@
 #include "ext-vacation-common.h"
 
 /* 
- * Forward declarations 
+ * Extension
  */
 
 static bool ext_vacation_load(int ext_id);
 static bool ext_vacation_validator_load(struct sieve_validator *validator);
 
-/* 
- * Extension definitions 
- */
-
-int ext_vacation_my_id;
+static int ext_my_id;
 
 const struct sieve_extension vacation_extension = { 
 	"vacation",
-	&ext_vacation_my_id,
+	&ext_my_id,
 	ext_vacation_load,
 	ext_vacation_validator_load, 
 	NULL, NULL, NULL, NULL,
@@ -47,12 +46,10 @@ const struct sieve_extension vacation_extension = {
 
 static bool ext_vacation_load(int ext_id)
 {
-	ext_vacation_my_id = ext_id;
+	ext_my_id = ext_id;
 
 	return TRUE;
 }
-
-/* Load extension into validator */
 
 static bool ext_vacation_validator_load(struct sieve_validator *validator)
 {

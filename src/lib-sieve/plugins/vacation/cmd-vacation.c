@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "md5.h"
 #include "hostpid.h"
@@ -7,7 +10,6 @@
 #include "ioloop.h"
 
 #include "sieve-common.h"
-
 #include "sieve-code.h"
 #include "sieve-address.h"
 #include "sieve-extensions.h"
@@ -62,6 +64,76 @@ const struct sieve_command vacation_command = {
 	NULL 
 };
 
+/*
+ * Vacation command tags
+ */
+
+/* Forward declarations */
+
+static bool cmd_vacation_validate_number_tag
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *cmd);
+static bool cmd_vacation_validate_string_tag
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *cmd);
+static bool cmd_vacation_validate_stringlist_tag
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *cmd);
+
+/* Argument objects */
+
+static const struct sieve_argument vacation_days_tag = { 
+	"days", 
+	NULL, NULL,
+	cmd_vacation_validate_number_tag, 
+	NULL, NULL 
+};
+
+static const struct sieve_argument vacation_subject_tag = { 
+	"subject", 
+	NULL, NULL,
+	cmd_vacation_validate_string_tag, 
+	NULL, NULL 
+};
+
+static const struct sieve_argument vacation_from_tag = { 
+	"from", 
+	NULL, NULL,
+	cmd_vacation_validate_string_tag, 
+	NULL, NULL 
+};
+
+static const struct sieve_argument vacation_addresses_tag = { 
+	"addresses", 
+	NULL, NULL,
+	cmd_vacation_validate_stringlist_tag, 
+	NULL, NULL 
+};
+
+static const struct sieve_argument vacation_mime_tag = { 
+	"mime",	
+	NULL, NULL, NULL, NULL, NULL /* Only generate opt_code */ 
+};
+
+static const struct sieve_argument vacation_handle_tag = { 
+	"handle", 
+	NULL, NULL, 
+	cmd_vacation_validate_string_tag, 
+	NULL, NULL 
+};
+
+/* Codes for optional arguments */
+
+enum cmd_vacation_optional {
+	OPT_END,
+	OPT_DAYS,
+	OPT_SUBJECT,
+	OPT_FROM,
+	OPT_ADDRESSES,
+	OPT_MIME,
+	OPT_HANDLE
+};
+
 /* 
  * Vacation operation 
  */
@@ -85,6 +157,8 @@ const struct sieve_operation vacation_operation = {
  * Vacation action 
  */
 
+/* Forward declarations */
+
 static int act_vacation_check_duplicate
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action1,
     	void *context1, void *context2, 
@@ -100,6 +174,8 @@ static bool act_vacation_commit
 	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv, 
 		void *tr_context, bool *keep);
 
+/* Action object */
+
 const struct sieve_action act_vacation = {
 	"vacation",
 	SIEVE_ACTFLAG_SENDS_RESPONSE,
@@ -110,6 +186,8 @@ const struct sieve_action act_vacation = {
 	act_vacation_commit,
 	NULL
 };
+
+/* Action context information */
 		
 struct act_vacation_context {
 	const char *reason;
@@ -221,56 +299,6 @@ static bool cmd_vacation_validate_stringlist_tag
  * Command registration 
  */
 
-static const struct sieve_argument vacation_days_tag = { 
-	"days", 
-	NULL, NULL,
-	cmd_vacation_validate_number_tag, 
-	NULL, NULL 
-};
-
-static const struct sieve_argument vacation_subject_tag = { 
-	"subject", 
-	NULL, NULL,
-	cmd_vacation_validate_string_tag, 
-	NULL, NULL 
-};
-
-static const struct sieve_argument vacation_from_tag = { 
-	"from", 
-	NULL, NULL,
-	cmd_vacation_validate_string_tag, 
-	NULL, NULL 
-};
-
-static const struct sieve_argument vacation_addresses_tag = { 
-	"addresses", 
-	NULL, NULL,
-	cmd_vacation_validate_stringlist_tag, 
-	NULL, NULL 
-};
-
-static const struct sieve_argument vacation_mime_tag = { 
-	"mime",	
-	NULL, NULL, NULL, NULL, NULL /* Only generate opt_code */ 
-};
-
-static const struct sieve_argument vacation_handle_tag = { 
-	"handle", 
-	NULL, NULL, 
-	cmd_vacation_validate_string_tag, 
-	NULL, NULL 
-};
-
-enum cmd_vacation_optional {
-	OPT_END,
-	OPT_DAYS,
-	OPT_SUBJECT,
-	OPT_FROM,
-	OPT_ADDRESSES,
-	OPT_MIME,
-	OPT_HANDLE
-};
-
 static bool cmd_vacation_registered
 (struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
 {
@@ -343,6 +371,7 @@ static bool ext_vacation_operation_dump
 	if ( !sieve_code_source_line_dump(denv, address) )
 		return FALSE;
 
+	/* Dump optional operands */
 	if ( sieve_operand_optional_present(denv->sbin, address) ) {
 		while ( opt_code != 0 ) {
 			sieve_code_mark(denv);
@@ -377,6 +406,7 @@ static bool ext_vacation_operation_dump
 		}
 	}
 	
+	/* Dump reason operand */
 	return sieve_opr_string_dump(denv, address);
 }
 
@@ -479,6 +509,7 @@ static int ext_vacation_operation_execute
 	sieve_runtime_trace(renv, "VACATION action");	
 
 	/* Add vacation action to the result */
+
 	pool = sieve_result_pool(renv->result);
 	act = p_new(pool, struct act_vacation_context, 1);
 	act->reason = p_strdup(pool, str_c(reason));
@@ -500,6 +531,8 @@ static int ext_vacation_operation_execute
 /*
  * Action
  */
+
+/* Runtime verification */
 
 static int act_vacation_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
@@ -529,6 +562,8 @@ int act_vacation_check_conflict
 
 	return 0;
 }
+
+/* Result printing */
  
 static void act_vacation_print
 (const struct sieve_action *action ATTR_UNUSED, 
@@ -548,6 +583,10 @@ static void act_vacation_print
 	sieve_result_printf(rpenv, "\nSTART MESSAGE\n%s\nEND MESSAGE\n", ctx->reason);
 }
 
+/* Result execution */
+
+/* Headers known to be associated with mailing lists 
+ */
 static const char * const _list_headers[] = {
 	"list-id",
 	"list-owner",
@@ -559,6 +598,8 @@ static const char * const _list_headers[] = {
 	NULL
 };
 
+/* Headers that should be searched for the user's own mail address(es) 
+ */
 static const char * const _my_address_headers[] = {
 	"to",
 	"cc",
@@ -593,36 +634,36 @@ static inline bool _contains_my_address
 	(const char * const *headers, const char *my_address)
 {
 	const char *const *hdsp = headers;
+	bool result = FALSE;
 	
-	while ( *hdsp != NULL ) {
+	while ( *hdsp != NULL && !result ) {
 		const struct message_address *addr;
 
-		t_push();
+		T_BEGIN {
 	
-		addr = message_address_parse
-			(pool_datastack_create(), (const unsigned char *) *hdsp, 
-				strlen(*hdsp), 256, FALSE);
+			addr = message_address_parse
+				(pool_datastack_create(), (const unsigned char *) *hdsp, 
+					strlen(*hdsp), 256, FALSE);
 
-		while ( addr != NULL ) {
-			if (addr->domain != NULL) {
-				i_assert(addr->mailbox != NULL);
+			while ( addr != NULL && !result ) {
+				if (addr->domain != NULL) {
+					i_assert(addr->mailbox != NULL);
 
-				if ( strcmp(t_strconcat(addr->mailbox, "@", addr->domain, NULL),
-					my_address) == 0 ) {
-					t_pop();
-					return TRUE;
+					if ( strcmp(t_strconcat(addr->mailbox, "@", addr->domain, NULL),
+						my_address) == 0 ) {
+						result = TRUE;
+						break;
+					}
 				}
+
+				addr = addr->next;
 			}
-
-			addr = addr->next;
-		}
-
-		t_pop();
+		} T_END;
 		
 		hdsp++;
 	}
 	
-	return FALSE;
+	return result;
 }
 
 static bool act_vacation_send	
@@ -634,14 +675,19 @@ static bool act_vacation_send
 	FILE *f;
  	const char *outmsgid;
 
-	/* Just to be sure */
+	/* Check smpt functions just to be sure */
+
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
 		sieve_result_error(aenv, "vacation action has no means to send mail.");
 		return FALSE;
 	}
 
+	/* Open smtp session */
+
 	smtp_handle = senv->smtp_open(msgdata->return_path, NULL, &f);
 	outmsgid = sieve_get_new_message_id(senv);
+
+	/* Produce a proper reply */
     
 	fprintf(f, "Message-ID: %s\r\n", outmsgid);
 	fprintf(f, "Date: %s\r\n", message_date_create(ioloop_time));
@@ -653,7 +699,6 @@ static bool act_vacation_send
 	fprintf(f, "To: <%s>\r\n", msgdata->return_path);
 	fprintf(f, "Subject: %s\r\n", str_sanitize(ctx->subject, 80));
 	
-	/* Produce a proper reply */
 	if ( msgdata->id != NULL ) {
 		fprintf(f, "In-Reply-To: %s\r\n", msgdata->id);
 		
@@ -673,7 +718,8 @@ static bool act_vacation_send
 	}
 
 	fprintf(f, "%s\r\n", ctx->reason);
-    
+
+	/* Close smtp session */    
 	if ( senv->smtp_close(smtp_handle) ) {
 		/*senv->duplicate_mark(outmsgid, strlen(outmsgid),          WHY?!
 		  senv->username, ioloop_time + DUPLICATE_DEFAULT_KEEP);*/
@@ -844,14 +890,17 @@ static bool act_vacation_commit
 		sieve_result_log(aenv, "sent vacation response to <%s>", 
 			str_sanitize(msgdata->return_path, 128));	
 
+		/* Mark as replied */
 		senv->duplicate_mark(dupl_hash, sizeof(dupl_hash), senv->username,
 			ioloop_time + ctx->days * (24 * 60 * 60));
 
-  	return TRUE;
-  }
+		return TRUE;
+	}
 
+	/* Failure message; should be preceded by a more informative error */
 	sieve_result_error(aenv, "failed to send vacation response to <%s>", 
 		str_sanitize(msgdata->return_path, 128));	
+
 	return FALSE;
 }
 

@@ -1,19 +1,25 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __EXT_VACATION_COMMON_H
 #define __EXT_VACATION_COMMON_H
 
 #include "sieve-common.h"
 
-/* Commands */
+/* 
+ * Commands 
+ */
 
 extern const struct sieve_command vacation_command;
 
-/* Operations */
+/* 
+ * Operations 
+ */
 
 extern const struct sieve_operation vacation_operation;
 
 /* Extension */
 
-extern int ext_vacation_my_id;
 extern const struct sieve_extension vacation_extension;
 
 #endif /* __EXT_VACATION_COMMON_H */
