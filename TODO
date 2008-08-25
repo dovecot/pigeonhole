@@ -7,6 +7,13 @@ Next (in order of descending priority/precedence):
 	  MUST win.
 	- 'If an address is not syntactically valid, then it will not be matched
 	  by tests specifying ":localpart" or ":domain"'.
+	- Vacation: If the Sieve variables extension is used, the arguments 
+	  MUST NOT have undergone variable expansion prior to their use in response 
+	  tracking.
+	- Vacation: The ":subject" parameter specifies a subject line to attach to 
+	  any vacation response that is generated. UTF-8 characters can be used in
+	  the string argument; implementations MUST convert the string to [RFC2047] 
+	  encoded words if and only if non-ASCII characters are present.
 * Fix security issues:
 	- Make (configurable) limit on the number of redirects
 	- Impose limitations on the imapflags extension regarding the number of

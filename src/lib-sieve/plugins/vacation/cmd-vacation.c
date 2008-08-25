@@ -221,6 +221,11 @@ static bool cmd_vacation_validate_number_tag
 		return FALSE;
 	}
 
+	/* Enforce :days > 0 */
+	if ( sieve_ast_argument_number(*arg) == 0 ) {
+		sieve_ast_argument_number_set(*arg, 1);
+	}
+
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
 	
@@ -455,6 +460,10 @@ static int ext_vacation_operation_execute
 						"invalid days operand");
 					return SIEVE_EXEC_BIN_CORRUPT;
 				}
+	
+				/* Enforce days > 0 (just to be sure) */
+				if ( days == 0 )
+					days = 1;
 				break;
 			case OPT_SUBJECT:
 				if ( !sieve_opr_string_read(renv, address, &subject) ) {
@@ -738,7 +747,22 @@ static void act_vacation_hash
 	if ( vctx->handle != NULL && *(vctx->handle) != '\0' ) 
 		md5_update(&ctx, vctx->handle, strlen(vctx->handle));
 	else {
-		md5_update(&ctx, msgdata->to_address, strlen(msgdata->to_address));
+		const char *from;
+		const char *mime;
+
+		if ( vctx->from != NULL && *(vctx->from) != '\0' )
+			from = vctx->from;
+		else
+			from = msgdata->to_address;
+
+		if ( vctx->mime )
+			mime = "MIME";
+		else
+			mime = "NOMIME";
+
+		md5_update(&ctx, vctx->subject, strlen(vctx->subject));
+		md5_update(&ctx, from, strlen(from));
+		md5_update(&ctx, mime, strlen(mime));
 		md5_update(&ctx, vctx->reason, strlen(vctx->reason));
 	}
 

@@ -593,7 +593,7 @@ struct sieve_ast_argument *sieve_ast_argument_tag_insert
 }
 
 struct sieve_ast_argument *sieve_ast_argument_number_create
-(struct sieve_ast_node *node, int number, unsigned int source_line) 
+(struct sieve_ast_node *node, unsigned int number, unsigned int source_line) 
 {
 	
 	struct sieve_ast_argument *argument = 
@@ -607,6 +607,14 @@ struct sieve_ast_argument *sieve_ast_argument_number_create
 	
 	return argument;
 }
+
+void sieve_ast_argument_number_set
+(struct sieve_ast_argument *argument, unsigned int newnum)
+{
+	i_assert( argument->type == SAAT_NUMBER );
+	argument->_value.number = newnum;
+}
+
 
 struct sieve_ast_argument *sieve_ast_arguments_detach
 (struct sieve_ast_argument *first, unsigned int count) 
