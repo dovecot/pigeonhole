@@ -1,4 +1,5 @@
-/* Copyright (c) 2005-2007 Dovecot authors, see the included COPYING file */
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
 
 #include "lib.h"
 #include "ostream.h"
@@ -16,8 +17,16 @@
 #include <fcntl.h>
 #include <pwd.h>
 
+/* 
+ * Configuration
+ */
+
 #define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
+
+/*
+ * Print help
+ */
 
 static void print_help(void)
 {
@@ -32,6 +41,10 @@ static void print_help(void)
 "                  <scriptfile> <mailfile>\n"
 	);
 }
+
+/*
+ * Tool implementation
+ */
 
 int main(int argc, char **argv) 
 {

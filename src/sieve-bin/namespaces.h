@@ -4,4 +4,4 @@
 void namespaces_init(void);
 void namespaces_deinit(void);
 
-#endif /* __MAIL_RAW_H */
+#endif /* __NAMESPACES_H */

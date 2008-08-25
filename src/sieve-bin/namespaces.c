@@ -1,4 +1,5 @@
-/* Copyright (c) 2005-2007 Dovecot authors, see the included COPYING file */
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
 
 #include "lib.h"
 #include "istream.h"
@@ -23,7 +24,9 @@
 
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
-/* Hideous .... */
+/* Initialization of available mail storage and mailbox list
+ * formats. 
+ */
 
 extern struct mail_storage raw_storage;
 extern struct mail_storage maildir_storage;
@@ -38,9 +41,9 @@ extern struct mailbox_list maildir_mailbox_list;
 extern struct mailbox_list fs_mailbox_list;
 void index_mailbox_list_init(void);
 void mailbox_list_register_all(void) {
-mailbox_list_register(&maildir_mailbox_list);
-mailbox_list_register(&fs_mailbox_list);
-index_mailbox_list_init();
+	mailbox_list_register(&maildir_mailbox_list);
+	mailbox_list_register(&fs_mailbox_list);
+	index_mailbox_list_init();
 }
 
 void namespaces_init(void) 

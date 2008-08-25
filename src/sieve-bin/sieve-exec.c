@@ -1,4 +1,5 @@
-/* Copyright (c) 2005-2007 Dovecot authors, see the included COPYING file */
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
 
 #include "lib.h"
 #include "ostream.h"
@@ -18,9 +19,12 @@
 #include <fcntl.h>
 #include <pwd.h>
 
-
 #define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
+
+/*
+ * Dummy SMTP session
+ */
 
 static void *sieve_smtp_open(const char *destination,
 	const char *return_path, FILE **file_r)
@@ -41,6 +45,10 @@ static bool sieve_smtp_close(void *handle ATTR_UNUSED)
 	return TRUE;
 }
 
+/*
+ * Dummy duplicate check implementation
+ */
+
 static int duplicate_check(const void *id ATTR_UNUSED, size_t id_size ATTR_UNUSED, 
 	const char *user)
 {
@@ -55,6 +63,10 @@ static void duplicate_mark
 	i_info("marked duplicate for user %s.\n", user);
 }
 
+/*
+ * Print help 
+ */
+
 static void print_help(void)
 {
 	printf(
@@ -63,6 +75,10 @@ static void print_help(void)
 "                  <scriptfile> <mailfile>\n"
 	);
 }
+
+/*
+ * Tool implementation
+ */
 
 int main(int argc, char **argv) 
 {
@@ -147,6 +163,7 @@ int main(int argc, char **argv)
 
 	namespaces_init();
 
+	/* Obtain mail namespaces from -l argument */
 	if ( mailloc != NULL ) {
 		struct mail_user *mail_user;
 
@@ -165,6 +182,7 @@ int main(int argc, char **argv)
 		ns = NULL;
 	}
 
+	/* Open text file as mail message */
 	mail_raw_init(user);
 	mailr = mail_raw_open(mfd);
 

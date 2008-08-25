@@ -1,4 +1,5 @@
-/* Copyright (c) 2002-2007 Dovecot authors, see the included COPYING file */
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -14,12 +15,20 @@
 
 #include "bin-common.h"
 
+/*
+ * Print help
+ */
+
 static void print_help(void)
 {
 	printf(
 "Usage: sieved <binfile> [<outfile>]\n"
 	);
 }
+
+/*
+ * Tool implementation
+ */
 
 int main(int argc, char **argv) {
 	int i;

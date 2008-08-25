@@ -1,9 +1,12 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __BIN_COMMON_H
 #define __BIN_COMMON_H
 
 #include "sieve.h"
 
-/* Functionality common to all sieve test binaries */
+/* Functionality common to all sieve test tools */
 
 void bin_init(void);
 void bin_deinit(void);
