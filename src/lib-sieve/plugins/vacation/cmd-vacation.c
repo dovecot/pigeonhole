@@ -720,11 +720,8 @@ static bool act_vacation_send
 	fprintf(f, "%s\r\n", ctx->reason);
 
 	/* Close smtp session */    
-	if ( senv->smtp_close(smtp_handle) ) {
-		/*senv->duplicate_mark(outmsgid, strlen(outmsgid),          WHY?!
-		  senv->username, ioloop_time + DUPLICATE_DEFAULT_KEEP);*/
+	if ( senv->smtp_close(smtp_handle) )
 		return TRUE;
-	}
 	
 	return FALSE;
 }
