@@ -13,11 +13,40 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+/*
+ * Configuration
+ */
+
 #define SIEVE_SCRIPT_PATH "~/.dovecot.sieve"
 
 #define LDA_SIEVE_MAX_ERRORS 10
 
+/*
+ * Global variables 
+ */
+
 static deliver_mail_func_t *next_deliver_mail;
+
+/*
+ * Mail transmission
+ */
+
+static void *lda_sieve_smtp_open(const char *destination,
+	const char *return_path, FILE **file_r)
+{
+	return (void *) smtp_client_open(destination, return_path, file_r);
+}
+
+static bool lda_sieve_smtp_close(void *handle)
+{
+	struct smtp_client *smtp_client = (struct smtp_client *) handle;
+
+	return ( smtp_client_close(smtp_client) >= 0 );
+}
+
+/*
+ * Plugin implementation
+ */
 
 static const char *lda_sieve_get_path(void)
 {
@@ -64,19 +93,6 @@ static const char *lda_sieve_get_path(void)
 	}
 
 	return script_path;
-}
-
-static void *lda_sieve_smtp_open(const char *destination,
-	const char *return_path, FILE **file_r)
-{
-	return (void *) smtp_client_open(destination, return_path, file_r);
-}
-
-static bool lda_sieve_smtp_close(void *handle)
-{
-	struct smtp_client *smtp_client = (struct smtp_client *) handle;
-
-	return ( smtp_client_close(smtp_client) >= 0 );
 }
 
 static int lda_sieve_run
@@ -232,6 +248,10 @@ static int lda_sieve_deliver_mail
 
 	return ( ret >= 0 ? 1 : -1 ); 
 }
+
+/*
+ * Plugin interface
+ */
 
 void sieve_plugin_init(void)
 {
