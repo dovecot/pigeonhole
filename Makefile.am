@@ -48,6 +48,7 @@ test_cases = \
 	tests/extensions/relational/errors.svtest \
 	tests/extensions/subaddress/basic.svtest \
 	tests/extensions/subaddress/rfc.svtest \
+	tests/extensions/vacation/errors.svtest \
 	tests/compile/compile.svtest \
 	tests/compile/examples.svtest \
 	tests/compile/errors.svtest \
