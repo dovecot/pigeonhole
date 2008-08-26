@@ -310,6 +310,9 @@ static bool flag_is_valid(const char *flag)
 		 * target mailbox for the message is known. Meaning that the 
 		 * verfication of keyword can only be performed when the
 		 * action side effect is about to be executed.
+		 *
+		 * FIXME: technically this is nonsense, since we can simply parse
+		 * using the flag-keyword grammar provided by imap.
 		 */					
 	}
 
