@@ -243,7 +243,7 @@ static int ext_reject_operation_execute
 	act->reason = p_strdup(pool, str_c(reason));
 	
 	ret = sieve_result_add_action
-		(renv, &act_reject, slist, source_line, (void *) act);
+		(renv, &act_reject, slist, source_line, (void *) act, 0);
 	
 	return ( ret >= 0 );
 }

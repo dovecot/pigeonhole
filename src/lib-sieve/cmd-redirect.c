@@ -8,6 +8,7 @@
 #include "istream-header-filter.h"
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-address.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -226,7 +227,7 @@ static int cmd_redirect_operation_execute
 	act->to_address = p_strdup(pool, str_c(redirect));
 	
 	ret = sieve_result_add_action
-		(renv, &act_redirect, slist, source_line, (void *) act);
+		(renv, &act_redirect, slist, source_line, (void *) act, sieve_max_redirects);
 	
 	return ( ret >= 0 );
 }

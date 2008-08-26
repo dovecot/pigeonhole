@@ -77,7 +77,7 @@ void sieve_result_add_implicit_side_effect
 int sieve_result_add_action
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
-	unsigned int source_line, void *context);
+	unsigned int source_line, void *context, unsigned int instance_limit);
 
 /*
  * Result execution

@@ -127,7 +127,7 @@ static int cmd_discard_operation_execute
 	sieve_runtime_trace(renv, "DISCARD action");
 
 	return ( sieve_result_add_action
-		(renv, &act_discard, NULL, source_line, NULL) >= 0 );
+		(renv, &act_discard, NULL, source_line, NULL, 0) >= 0 );
 }
 
 /*

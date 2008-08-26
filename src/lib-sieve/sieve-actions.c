@@ -116,7 +116,7 @@ int sieve_act_store_add_to_result
 	act->folder = p_strdup(pool, folder);
 
 	return sieve_result_add_action(renv, &act_store, seffects, 
-		source_line, (void *) act);
+		source_line, (void *) act, 0);
 }
 
 /* Result verification */

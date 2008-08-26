@@ -534,7 +534,7 @@ static int ext_vacation_operation_execute
 		sieve_coded_stringlist_read_all(addresses, pool, &(act->addresses));
 		
 	return ( sieve_result_add_action
-		(renv, &act_vacation, slist, source_line, (void *) act) >= 0 );
+		(renv, &act_vacation, slist, source_line, (void *) act, 0) >= 0 );
 }
 
 /*

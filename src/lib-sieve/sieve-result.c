@@ -228,9 +228,10 @@ void sieve_result_add_implicit_side_effect
 int sieve_result_add_action
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
-	unsigned int source_line, void *context)		
+	unsigned int source_line, void *context, unsigned int instance_limit)		
 {
 	int ret = 0;
+	unsigned int instance_count = 0;
 	struct sieve_result *result = renv->result;
 	struct sieve_result_action *raction;
 	const char *location = sieve_error_script_location
@@ -242,6 +243,8 @@ int sieve_result_add_action
 		const struct sieve_action *oact = raction->action;
 		
 		if ( raction->action == action ) {
+			instance_count++;
+
 			/* Possible duplicate */
 			if ( action->check_duplicate != NULL ) {
 				if ( (ret=action->check_duplicate
@@ -265,11 +268,18 @@ int sieve_result_add_action
 		raction = raction->next;
 	}
 
-	/* Check policy limit on number of actions */
-	if ( result->action_count >= sieve_max_actions ) {
-		sieve_runtime_error(renv, location, "number of actions exceeds policy limit");
+	/* Check policy limit on total number of actions */
+	if ( sieve_max_actions > 0 && result->action_count >= sieve_max_actions ) {
+		sieve_runtime_error(renv, location, "total number of actions exceeds policy limit");
 		return -1;
 	}
+
+	/* Check policy limit on number of this class of actions */
+	if ( instance_limit > 0 && instance_count >= instance_limit ) {
+		sieve_runtime_error(renv, location, "number of %s actions exceeds policy limit",
+			action->name);
+		return -1;
+	}	
 		
 	/* Create new action object */
 	raction = p_new(result->pool, struct sieve_result_action, 1);
