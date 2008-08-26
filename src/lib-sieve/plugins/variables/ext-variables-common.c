@@ -468,7 +468,7 @@ void sieve_ext_variables_set_storage
 	struct ext_variables_interpreter_context *ctx = 
 		ext_variables_interpreter_context_get(interp);
 		
-	if ( ext == NULL || storage == NULL )
+	if ( ctx == NULL || ext == NULL || storage == NULL )
 		return;
 		
 	array_idx_set(&ctx->ext_storages, (unsigned int) *ext->id, &storage);
