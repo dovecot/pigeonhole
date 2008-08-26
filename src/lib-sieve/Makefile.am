@@ -57,6 +57,7 @@ libsieve_la_DEPENDENCIES = $(plugins)
 libsieve_la_LIBADD = $(plugins)
 
 libsieve_la_SOURCES = \
+	sieve-limits.c \
 	sieve-message.c \
 	sieve-lexer.c \
 	sieve-script.c \

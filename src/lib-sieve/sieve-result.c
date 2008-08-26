@@ -10,6 +10,7 @@
 #include "str-sanitize.h"
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-script.h"
 #include "sieve-error.h"
 #include "sieve-interpreter.h"
@@ -49,7 +50,7 @@ struct sieve_result_side_effect {
 	struct sieve_result_side_effect *prev, *next; 
 };
 
-struct sieve_result_implicit_side_effects {
+struct sieve_result_action_context {
 	const struct sieve_action *action;
 	struct sieve_side_effects_list *seffects;
 };
@@ -68,10 +69,12 @@ struct sieve_result {
 	struct sieve_error_handler *ehandler;
 		
 	struct sieve_action_exec_env action_env;
+
+	unsigned int action_count;
 	struct sieve_result_action *first_action;
 	struct sieve_result_action *last_action;
 	
-	struct hash_table *implicit_seffects;
+	struct hash_table *action_contexts;
 };
 
 struct sieve_result *sieve_result_create
@@ -92,10 +95,11 @@ struct sieve_result *sieve_result_create
 
 	result->action_env.result = result;
 		
+	result->action_count = 0;
 	result->first_action = NULL;
 	result->last_action = NULL;
 
-	result->implicit_seffects = NULL;
+	result->action_contexts = NULL;
 	return result;
 }
 
@@ -111,8 +115,8 @@ void sieve_result_unref(struct sieve_result **result)
 	if (--(*result)->refcount != 0)
 		return;
 
-	if ( (*result)->implicit_seffects != NULL )
-        hash_destroy(&(*result)->implicit_seffects);
+	if ( (*result)->action_contexts != NULL )
+        hash_destroy(&(*result)->action_contexts);
 
 	sieve_error_handler_unref(&(*result)->ehandler);
 
@@ -198,27 +202,27 @@ void sieve_result_add_implicit_side_effect
 (struct sieve_result *result, const struct sieve_action *to_action, 
 	const struct sieve_side_effect *seffect, void *context)
 {
-	struct sieve_result_implicit_side_effects *implseff = NULL;
+	struct sieve_result_action_context *actctx = NULL;
 	
-	if ( result->implicit_seffects == NULL ) {
-		result->implicit_seffects = hash_create
+	if ( result->action_contexts == NULL ) {
+		result->action_contexts = hash_create
 			(default_pool, result->pool, 0, NULL, NULL);
 	} else {
-		implseff = (struct sieve_result_implicit_side_effects *) 
-			hash_lookup(result->implicit_seffects, to_action);
+		actctx = (struct sieve_result_action_context *) 
+			hash_lookup(result->action_contexts, to_action);
 	}
 
-	if ( implseff == NULL ) {
-		implseff = p_new
-			(result->pool, struct sieve_result_implicit_side_effects, 1);
-		implseff->action = to_action;
-		implseff->seffects = sieve_side_effects_list_create(result);
+	if ( actctx == NULL ) {
+		actctx = p_new
+			(result->pool, struct sieve_result_action_context, 1);
+		actctx->action = to_action;
+		actctx->seffects = sieve_side_effects_list_create(result);
 		
-		hash_insert(result->implicit_seffects, (void *) to_action, 
-			(void *) implseff);
+		hash_insert(result->action_contexts, (void *) to_action, 
+			(void *) actctx);
 	}	
 	
-	sieve_side_effects_list_add(implseff->seffects, seffect, context);
+	sieve_side_effects_list_add(actctx->seffects, seffect, context);
 }
 
 int sieve_result_add_action
@@ -260,6 +264,12 @@ int sieve_result_add_action
 		}
 		raction = raction->next;
 	}
+
+	/* Check policy limit on number of actions */
+	if ( result->action_count >= sieve_max_actions ) {
+		sieve_runtime_error(renv, location, "number of actions exceeds policy limit");
+		return -1;
+	}
 		
 	/* Create new action object */
 	raction = p_new(result->pool, struct sieve_result_action, 1);
@@ -282,23 +292,24 @@ int sieve_result_add_action
 		raction->prev = result->last_action;
 		result->last_action = raction;
 		raction->next = NULL;
-	}	
+	}
+	result->action_count++;
 	
 	/* Apply any implicit side effects */
-	if ( result->implicit_seffects != NULL ) {
-		struct sieve_result_implicit_side_effects *implseff;
+	if ( result->action_contexts != NULL ) {
+		struct sieve_result_action_context *actctx;
 		
 		/* Check for implicit side effects to this particular action */
-		implseff = (struct sieve_result_implicit_side_effects *) 
-				hash_lookup(result->implicit_seffects, action);
+		actctx = (struct sieve_result_action_context *) 
+				hash_lookup(result->action_contexts, action);
 		
-		if ( implseff != NULL ) {
+		if ( actctx != NULL ) {
 			struct sieve_result_side_effect *iseff;
 			
 			/* Iterate through all implicit side effects and add those that are 
 			 * missing.
 			 */
-			iseff = implseff->seffects->first_effect;
+			iseff = actctx->seffects->first_effect;
 			while ( iseff != NULL ) {
 				struct sieve_result_side_effect *seff;
 				bool exists = FALSE;
@@ -438,20 +449,19 @@ bool sieve_result_implicit_keep
 	ctx.folder = result->action_env.scriptenv->inbox;
 	
 	/* Also apply any implicit side effects if applicable */
-	if ( !rollback && result->implicit_seffects != NULL ) {
-		struct sieve_result_implicit_side_effects *implseff;
+	if ( !rollback && result->action_contexts != NULL ) {
+		struct sieve_result_action_context *actctx;
 		
 		/* Check for implicit side effects to store action */
-		implseff = (struct sieve_result_implicit_side_effects *) 
-				hash_lookup(result->implicit_seffects, &act_store);
+		actctx = (struct sieve_result_action_context *) 
+				hash_lookup(result->action_contexts, &act_store);
 		
-		if ( implseff != NULL && implseff->seffects != NULL ) 
-			rsef_first = implseff->seffects->first_effect;
+		if ( actctx != NULL && actctx->seffects != NULL ) 
+			rsef_first = actctx->seffects->first_effect;
 		
 	}
 	
-	success = act_store.start
-		(&act_store, &result->action_env, (void *) &ctx, &tr_context);
+	success = act_store.start(&act_store, &result->action_env, (void *) &ctx, &tr_context);
 
 	rsef = rsef_first;
 	while ( rsef != NULL ) {
@@ -512,7 +522,7 @@ int sieve_result_execute
 	
 	/* 
 	 * Transaction start 
-   */
+	 */
 	
 	rac = result->first_action;
 	while ( success && rac != NULL ) {

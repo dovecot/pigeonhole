@@ -44,3 +44,21 @@ test "Action conflicts: reject <-> redirect" {
 		test_fail "too many runtime errors reported";
 	}
 }
+
+test "Action limits" {
+	if not test_compile "errors/actions-limit.sieve" {
+		test_fail "compile failed";
+	}
+
+	if test_execute {
+		test_fail "execution should have failed";
+	}
+
+	if test_error :count "gt" :comparator "i;ascii-numeric" "1" {
+		test_fail "too many runtime errors reported";
+	}
+	
+	if not test_error :index 1 :contains "number of actions exceeds policy limit"{
+		test_fail "unexpected error reported";
+	}
+}

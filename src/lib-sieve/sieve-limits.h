@@ -29,7 +29,10 @@
  * Actions
  */
 
-#define SIEVE_DEFAULT_MAX_REDIRECTS 4
 #define SIEVE_DEFAULT_MAX_ACTIONS   32
+#define SIEVE_DEFAULT_MAX_REDIRECTS 4
+
+extern unsigned int sieve_max_actions;
+extern unsigned int sieve_max_redirects;
 
 #endif /* __SIEVE_LIMITS_H */
