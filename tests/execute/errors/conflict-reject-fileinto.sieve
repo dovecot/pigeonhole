@@ -1,5 +1,5 @@
 require "reject";
-require "vacation";
+require "fileinto";
 
 reject "No nonsense in my mailbox.";
-vacation "I am gone for a while.";
+fileinto "Spam";

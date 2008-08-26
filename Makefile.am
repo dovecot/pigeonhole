@@ -50,7 +50,8 @@ test_cases = \
 	tests/extensions/subaddress/rfc.svtest \
 	tests/compile/compile.svtest \
 	tests/compile/examples.svtest \
-	tests/compile/errors.svtest
+	tests/compile/errors.svtest \
+	tests/execute/errors.svtest
 
 $(test_cases):
 	@$(TESTSUITE_BIN) $@

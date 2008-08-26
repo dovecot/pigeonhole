@@ -1,0 +1,46 @@
+require "vnd.dovecot.testsuite";
+
+require "relational";
+require "comparator-i;ascii-numeric";
+
+test "Action conflicts: reject <-> fileinto" {
+	if not test_compile "errors/conflict-reject-fileinto.sieve" {
+		test_fail "compile failed";
+	}
+
+	if test_execute {
+		test_fail "execution should have failed";
+	}
+
+	if test_error :count "gt" :comparator "i;ascii-numeric" "1" {
+		test_fail "too many runtime errors reported";
+	}
+}
+
+test "Action conflicts: reject <-> keep" {
+	if not test_compile "errors/conflict-reject-keep.sieve" {
+		test_fail "compile failed";
+	}
+
+	if test_execute {
+		test_fail "execution should have failed";
+	}
+
+	if test_error :count "gt" :comparator "i;ascii-numeric" "1" {
+		test_fail "too many runtime errors reported";
+	}
+}
+
+test "Action conflicts: reject <-> redirect" {
+	if not test_compile "errors/conflict-reject-redirect.sieve" {
+		test_fail "compile failed";
+	}
+
+	if test_execute {
+		test_fail "execution should have failed";
+	}
+
+	if test_error :count "gt" :comparator "i;ascii-numeric" "1" {
+		test_fail "too many runtime errors reported";
+	}
+}
