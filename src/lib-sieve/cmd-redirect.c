@@ -267,10 +267,11 @@ static void act_redirect_print
 static bool act_redirect_send	
 (const struct sieve_action_exec_env *aenv, struct act_redirect_context *ctx)
 {
+	static const char *hide_headers[] = { "Return-Path" };
+
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct istream *input;
-	static const char *hide_headers[] = { "Return-Path" };
 	void *smtp_handle;
 	FILE *f;
 	const unsigned char *data;
@@ -300,6 +301,7 @@ static bool act_redirect_send
 			break;
 		i_stream_skip(input, size);
 	}
+	i_stream_unref(&input);
 
 	/* Close SMTP transport */
 	return senv->smtp_close(smtp_handle);
@@ -316,10 +318,10 @@ static bool act_redirect_commit
 	
 	/* Prevent mail loops if possible */
 	dupeid = msgdata->id == NULL ? 
-  		NULL : t_strdup_printf("%s-%s", msgdata->id, ctx->to_address);
+		NULL : t_strdup_printf("%s-%s", msgdata->id, ctx->to_address);
 	if (dupeid != NULL) {
 		/* Check whether we've seen this message before */
-  		if (senv->duplicate_check(dupeid, strlen(dupeid), senv->username)) {
+		if (senv->duplicate_check(dupeid, strlen(dupeid), senv->username)) {
 			sieve_result_log(aenv, "discarded duplicate forward to <%s>",
 				str_sanitize(ctx->to_address, 128));
 			return TRUE;
@@ -341,8 +343,8 @@ static bool act_redirect_commit
 		/* Cancel implicit keep */
 		*keep = FALSE;
 
-  		return TRUE;
-  	}
+		return TRUE;
+	}
   
 	return FALSE;
 }
