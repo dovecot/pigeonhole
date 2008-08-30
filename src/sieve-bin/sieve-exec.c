@@ -85,9 +85,10 @@ int main(int argc, char **argv)
 	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile;
 	const char *mailloc; 
 	const char *user, *home;
-	int i, mfd;
+	int i;
 	struct mail_raw *mailr;
-	struct mail_namespace *ns;
+	struct mail_namespace *ns = NULL;
+	struct mail_user *mail_user = NULL;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
@@ -148,9 +149,6 @@ int main(int argc, char **argv)
 		print_help();
 		i_fatal("Missing <mailfile> argument");
 	}
-
-	/* Open the mail file */
-	mfd = bin_open_mail_file(mailfile);
 	
 	/* Compile sieve script */
 	sbin = bin_open_sieve_script(scriptfile);
@@ -165,8 +163,6 @@ int main(int argc, char **argv)
 
 	/* Obtain mail namespaces from -l argument */
 	if ( mailloc != NULL ) {
-		struct mail_user *mail_user;
-
 		env_put(t_strdup_printf("NAMESPACE_1=%s", mailloc));
 		env_put("NAMESPACE_1_INBOX=1");
 		env_put("NAMESPACE_1_LIST=1");
@@ -178,13 +174,11 @@ int main(int argc, char **argv)
     	    i_fatal("Namespace initialization failed");	
 
 		ns = mail_user->namespaces;
-	} else {
-		ns = NULL;
-	}
+	} 
 
 	/* Open text file as mail message */
 	mail_raw_init(user);
-	mailr = mail_raw_open(mfd);
+	mailr = mail_raw_open(mailfile);
 
 	bin_fill_in_envelope(mailr->mail, &recipient, &sender);
 
@@ -234,9 +228,12 @@ int main(int argc, char **argv)
 	sieve_close(&sbin);
 	sieve_error_handler_unref(&ehandler);
 
-	bin_close_mail_file(mfd);
 	mail_raw_close(mailr);
 	mail_raw_deinit();
+
+	if ( mail_user != NULL )
+		mail_user_deinit(&mail_user);
+
 	namespaces_deinit();
 
 	bin_deinit();  

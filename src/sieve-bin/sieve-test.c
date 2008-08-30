@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 {
 	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile; 
 	const char *user;
-	int i, mfd;
+	int i;
 	struct mail_raw *mailr;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
@@ -118,9 +118,6 @@ int main(int argc, char **argv)
 		print_help();
 		i_fatal("Missing <mailfile> argument");
 	}
-
-	/* Open the mail file */
-	mfd = bin_open_mail_file(mailfile);
 	
 	/* Compile sieve script */
 	if ( force_compile ) {
@@ -137,7 +134,7 @@ int main(int argc, char **argv)
 
 	namespaces_init();
 	mail_raw_init(user);
-	mailr = mail_raw_open(mfd);
+	mailr = mail_raw_open(mailfile);
 
 	bin_fill_in_envelope(mailr->mail, &recipient, &sender);
 
@@ -179,8 +176,6 @@ int main(int argc, char **argv)
 	sieve_close(&sbin);
 	sieve_error_handler_unref(&ehandler);
 
-	bin_close_mail_file(mfd);
-	
 	mail_raw_close(mailr);
 	mail_raw_deinit();
 	namespaces_deinit();
