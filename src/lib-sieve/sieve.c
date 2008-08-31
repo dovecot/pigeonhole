@@ -241,7 +241,10 @@ int sieve_test
 	struct sieve_interpreter *interp = 
 		sieve_interpreter_create(sbin, ehandler, trace_stream);			
 	int ret = 0;
-							
+		
+	if ( interp == NULL )
+		return SIEVE_EXEC_BIN_CORRUPT;
+					
 	ret = sieve_interpreter_run(interp, msgdata, senv, &sres);
 	
 	if ( ret > 0 ) 
@@ -265,6 +268,9 @@ int sieve_execute
 	struct sieve_interpreter *interp = 
 		sieve_interpreter_create(sbin, ehandler, trace_stream);			
 	int ret = 0;
+
+	if ( interp == NULL )
+		return SIEVE_EXEC_BIN_CORRUPT;
 							
 	ret = sieve_interpreter_run(interp, msgdata, senv, &sres);
 				

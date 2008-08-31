@@ -445,6 +445,9 @@ bool testsuite_script_execute(const struct sieve_runtime_env *renv)
 	/* Execute the script */
 	interp=sieve_interpreter_create(_testsuite_compiled_script, test_script_ehandler, NULL);
 	
+	if ( interp == NULL )
+		return SIEVE_EXEC_BIN_CORRUPT;
+		
 	ret = sieve_interpreter_run(interp, renv->msgdata, &scriptenv, &result);
 
 	sieve_interpreter_free(&interp);

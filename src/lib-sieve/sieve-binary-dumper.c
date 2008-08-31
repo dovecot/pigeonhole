@@ -135,9 +135,11 @@ bool sieve_binary_dumper_run
 
 	dumper->dumpenv.cdumper = sieve_code_dumper_create(&(dumper->dumpenv));
 
-	sieve_code_dumper_run(dumper->dumpenv.cdumper);
+	if ( dumper->dumpenv.cdumper != NULL ) {
+		sieve_code_dumper_run(dumper->dumpenv.cdumper);
 		
-	sieve_code_dumper_free(&dumper->dumpenv.cdumper);	
+		sieve_code_dumper_free(&dumper->dumpenv.cdumper);
+	}
 	
 	/* Finish with empty line */
 	sieve_binary_dumpf(denv, "\n");

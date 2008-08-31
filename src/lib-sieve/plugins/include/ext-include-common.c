@@ -478,7 +478,7 @@ bool ext_include_execute_include
 		include_id, sieve_script_name(included->script), block_id);
 
 	if ( ctx->parent == NULL ) {
-		struct ext_include_interpreter_context *curctx;
+		struct ext_include_interpreter_context *curctx = NULL;
 		struct sieve_error_handler *ehandler = 
 			sieve_interpreter_get_error_handler(renv->interp);
 		struct sieve_interpreter *subinterp;
@@ -487,21 +487,28 @@ bool ext_include_execute_include
 
 		/* We are the top-level interpreter instance */	
 
-		/* Create interpreter for top-level included script (first sub-interpreter) 
-		 */
-		subinterp = sieve_interpreter_create
-			(renv->sbin, ehandler, renv->trace_stream);			
-		curctx = ext_include_interpreter_context_init_child
-			(subinterp, ctx, NULL, block_id);
-				
-		/* Activate and start the top-level included script */
-		if ( sieve_binary_block_set_active(renv->sbin, block_id, &this_block_id) ) 			
-			result = ( sieve_interpreter_start
-				(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx, renv->result, 
-					&interrupted) == 1 );
-		else {
+		/* Activate block for included script */
+		if ( !sieve_binary_block_set_active(renv->sbin, block_id, &this_block_id) ) {			
 			sieve_runtime_trace_error(renv, "invalid block id: %d", block_id);
 			result = SIEVE_EXEC_BIN_CORRUPT;
+		}
+
+		if ( result > 0 ) {
+			/* Create interpreter for top-level included script (first sub-interpreter) 
+			 */
+			subinterp = sieve_interpreter_create
+				(renv->sbin, ehandler, renv->trace_stream);
+
+			if ( subinterp != NULL ) {			
+				curctx = ext_include_interpreter_context_init_child
+					(subinterp, ctx, NULL, block_id);
+
+				/* Activate and start the top-level included script */
+				result = ( sieve_interpreter_start
+					(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx, renv->result, 
+						&interrupted) == 1 );
+			} else
+				result = SIEVE_EXEC_BIN_CORRUPT;
 		}
 		
 		/* Included scripts can have includes of their own. This is not implemented
@@ -538,25 +545,31 @@ bool ext_include_execute_include
 						/* FIXME: Check circular include during interpretation as well. 
 						 * Let's not trust user-owned binaries.
 						 */
-						
-						/* Create sub-interpreter */
-						subinterp = sieve_interpreter_create
-							(renv->sbin, ehandler, renv->trace_stream);			
-						curctx = ext_include_interpreter_context_init_child
-							(subinterp, curctx, NULL, curctx->inc_block_id);
 													
 						/* Activate the sub-include's block */
-						if ( sieve_binary_block_set_active
+						if ( !sieve_binary_block_set_active
 							(renv->sbin, curctx->block_id, NULL) ) {
-							/* Start the sub-include's interpreter */
-							curctx->inc_block_id = 0;
-							curctx->returned = FALSE;
-							result = ( sieve_interpreter_start
-								(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx,
-									renv->result, &interrupted) == 1 );		 	
-						} else {
 							sieve_runtime_trace_error(renv, "invalid block id: %d", curctx->block_id);
-					        result = SIEVE_EXEC_BIN_CORRUPT;
+							result = SIEVE_EXEC_BIN_CORRUPT;
+						}
+						
+						if ( result > 0 ) {
+							/* Create sub-interpreter */
+							subinterp = sieve_interpreter_create
+								(renv->sbin, ehandler, renv->trace_stream);			
+
+							if ( subinterp != NULL ) {
+								curctx = ext_include_interpreter_context_init_child
+									(subinterp, curctx, NULL, curctx->inc_block_id);
+
+								/* Start the sub-include's interpreter */
+								curctx->inc_block_id = 0;
+								curctx->returned = FALSE;
+								result = ( sieve_interpreter_start
+									(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx,
+										renv->result, &interrupted) == 1 );		 	
+							} else
+								result = SIEVE_EXEC_BIN_CORRUPT;
 						}
 					} else {
 						/* Sub-interpreter was interrupted outside this extension, probably

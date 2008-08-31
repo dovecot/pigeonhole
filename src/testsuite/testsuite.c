@@ -159,18 +159,23 @@ static int testsuite_run
 		
 		interp=sieve_interpreter_create(sbin, ehandler, tstream);
 		
-	    ret = sieve_interpreter_run(interp, &testsuite_msgdata, scriptenv, &sres);
+		if ( interp != NULL ) 
+		    ret = sieve_interpreter_run(interp, &testsuite_msgdata, scriptenv, &sres);
 	
 		o_stream_destroy(&tstream);
 	} else {
 		interp=sieve_interpreter_create(sbin, ehandler, NULL);
 
-	    ret = sieve_interpreter_run(interp, &testsuite_msgdata, scriptenv, &sres);
+		if ( interp != NULL ) 
+		    ret = sieve_interpreter_run(interp, &testsuite_msgdata, scriptenv, &sres);
 	}
 
-	sieve_interpreter_free(&interp);
-	sieve_result_unref(&sres);
+	if ( interp != NULL )
+		sieve_interpreter_free(&interp);
+	else
+		ret = SIEVE_EXEC_BIN_CORRUPT;
 
+	sieve_result_unref(&sres);
 	sieve_error_handler_unref(&ehandler);
 
 	return ret;	

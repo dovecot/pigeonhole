@@ -395,6 +395,10 @@ bool ext_include_binary_dump(struct sieve_dumptime_env *denv)
 		}
 				
 		denv->cdumper = sieve_code_dumper_create(denv);
+
+		if ( denv->cdumper == NULL )
+			return FALSE;
+
 		sieve_code_dumper_run(denv->cdumper);
 		sieve_code_dumper_free(&(denv->cdumper));
 	}

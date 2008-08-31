@@ -126,9 +126,19 @@ void sieve_ast_extension_link
 (struct sieve_ast *ast, const struct sieve_extension *ext)
 {
 	int ext_id = *ext->id;
-
+	unsigned int i, ext_count;
+	const struct sieve_extension *const *extensions;
+	
 	if ( ext_id < 0 ) return;
+	 
+	/* Prevent duplicates */
+	extensions = array_get(&ast->linked_extensions, &ext_count);
+	for ( i = 0; i < ext_count; i++ ) {
+		if ( extensions[i] == ext )
+			return;
+	}
 
+	/* Add extension */
 	array_append(&ast->linked_extensions, &ext, 1);	
 }
 

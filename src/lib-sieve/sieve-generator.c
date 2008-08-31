@@ -374,13 +374,17 @@ bool sieve_generator_run
 		
 	gentr->genenv.sbin = *sbin;
 		
-	/* Load extensions linked to the AST */
+	/* Load extensions linked to the AST and emit a list in code */
 	extensions = sieve_ast_extensions_get(gentr->genenv.ast, &ext_count);
+	(void) sieve_binary_emit_integer(*sbin, ext_count);
 	for ( i = 0; i < ext_count; i++ ) {
 		const struct sieve_extension *ext = extensions[i];
 
 		/* Link to binary */
 		(void)sieve_binary_extension_link(*sbin, ext);
+	
+		/* Emit */
+		sieve_binary_emit_extension(*sbin, ext, 0);
 	
 		/* Load */
 		if ( ext->generator_load != NULL && !ext->generator_load(&gentr->genenv) )

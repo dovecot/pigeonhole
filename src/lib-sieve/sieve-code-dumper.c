@@ -165,9 +165,47 @@ static bool sieve_code_dumper_print_operation
 
 void sieve_code_dumper_run(struct sieve_code_dumper *dumper) 
 {
-	struct sieve_binary *sbin = dumper->dumpenv->sbin;
-	
+	const struct sieve_dumptime_env *denv = dumper->dumpenv;
+	struct sieve_binary *sbin = denv->sbin;
+	unsigned int ext_count;
+	bool success = TRUE;
+
 	dumper->pc = 0;
+	
+	/* Load and dump extensions listed in code */
+	sieve_code_mark(denv);
+	
+	if ( sieve_binary_read_integer(sbin, &dumper->pc, &ext_count) ) {
+		unsigned int i;
+		
+		sieve_code_dumpf(denv, "EXTENSIONS (%d):", ext_count);
+		sieve_code_descend(denv);
+		
+		for ( i = 0; i < ext_count; i++ ) {
+			unsigned int code = 0;
+			const struct sieve_extension *ext;
+			
+			sieve_code_mark(denv);
+			
+			if ( !sieve_binary_read_extension(sbin, &dumper->pc, &code, &ext) ) 
+			{
+        success = FALSE;
+        break;
+      }
+      	
+      sieve_code_dumpf(denv, "%s", ext->name);
+      
+			/* Load ? */ 
+		}
+		
+		sieve_code_ascend(denv);
+	}	else
+		success = FALSE;
+		
+	if ( !success ) {
+		sieve_code_dumpf(denv, "Binary code header is corrupt.");
+		return;
+	}
 	
 	while ( dumper->pc < 
 		sieve_binary_get_code_size(sbin) ) {

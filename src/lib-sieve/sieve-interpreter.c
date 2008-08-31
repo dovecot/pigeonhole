@@ -45,6 +45,8 @@ struct sieve_interpreter {
 
 	/* Runtime data for extensions */
 	ARRAY_DEFINE(extensions, struct sieve_interpreter_extension_reg); 
+	
+	sieve_size_t reset_vector;	
 		
 	/* Execution status */
 	
@@ -66,8 +68,8 @@ struct sieve_interpreter *sieve_interpreter_create
 (struct sieve_binary *sbin, struct sieve_error_handler *ehandler,
 	struct ostream *trace_stream) 
 {
-	unsigned int i;
-	int idx;
+	unsigned int i, ext_count;
+	bool success = TRUE;
 
 	pool_t pool;
 	struct sieve_interpreter *interp;
@@ -97,13 +99,29 @@ struct sieve_interpreter *sieve_interpreter_create
 			(void)ext->interpreter_load(interp);		
 	}
 
-	/* Load other extensions listed in the binary */
-	for ( idx = 0; idx < sieve_binary_extensions_count(sbin); idx++ ) {
-		const struct sieve_extension *ext = 
-			sieve_binary_extension_get_by_index(sbin, idx);
-		
-		if ( ext->interpreter_load != NULL )
-			ext->interpreter_load(interp);
+	/* Load other extensions listed in code */
+	if ( sieve_binary_read_integer(sbin, &interp->pc, &ext_count) ) {
+		for ( i = 0; i < ext_count; i++ ) {
+			unsigned int code = 0;
+			const struct sieve_extension *ext;
+			
+			if ( !sieve_binary_read_extension(sbin, &interp->pc, &code, &ext) ) {
+        success = FALSE;
+        break;
+      }
+ 
+			if ( ext->interpreter_load != NULL && !ext->interpreter_load(interp) ) {
+				success = FALSE;
+				break;
+			}
+		}
+	}	else
+		success = FALSE;
+	
+	if ( !success ) {
+		sieve_interpreter_free(&interp);
+	} else {
+		interp->reset_vector = interp->pc;
 	}
 	
 	return interp;
@@ -291,7 +309,7 @@ void *sieve_interpreter_extension_get_context
 
 void sieve_interpreter_reset(struct sieve_interpreter *interp) 
 {
-	interp->pc = 0;
+	interp->pc = interp->reset_vector;
 	interp->interrupted = FALSE;
 	interp->test_result = FALSE;
 	interp->runenv.msgdata = NULL;
@@ -460,8 +478,8 @@ int sieve_interpreter_start
 	const struct sieve_script_env *senv, struct sieve_message_context *msgctx, 
 	struct sieve_result *result, bool *interrupted) 
 {
-    const struct sieve_interpreter_extension_reg *extrs;
-    unsigned int ext_count, i;
+	const struct sieve_interpreter_extension_reg *extrs;
+	unsigned int ext_count, i;
 	
 	interp->runenv.msgdata = msgdata;
 	interp->runenv.result = result;		
