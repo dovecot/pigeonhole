@@ -1,0 +1,11 @@
+require "vnd.dovecot.testsuite";
+
+test "No :handle specified" {
+	if not test_compile "execute/no-handle.sieve" {
+		test_fail "script compile failed";
+	}
+
+	if not test_execute {
+		test_fail "script execute failed";
+	}
+}

@@ -48,6 +48,8 @@ static const struct sieve_argument vacation_handle_tag;
 static bool cmd_vacation_registered
 	(struct sieve_validator *validator, 
 		struct sieve_command_registration *cmd_reg);
+static bool cmd_vacation_pre_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd); 
 static bool cmd_vacation_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_vacation_generate
@@ -58,7 +60,7 @@ const struct sieve_command vacation_command = {
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE, 
 	cmd_vacation_registered,
-	NULL,  
+	cmd_vacation_pre_validate, 
 	cmd_vacation_validate, 
 	cmd_vacation_generate, 
 	NULL 
@@ -77,6 +79,9 @@ static bool cmd_vacation_validate_string_tag
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
 static bool cmd_vacation_validate_stringlist_tag
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *cmd);
+static bool cmd_vacation_validate_mime_tag
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
 
@@ -112,7 +117,9 @@ static const struct sieve_argument vacation_addresses_tag = {
 
 static const struct sieve_argument vacation_mime_tag = { 
 	"mime",	
-	NULL, NULL, NULL, NULL, NULL /* Only generate opt_code */ 
+	NULL, NULL, 
+	cmd_vacation_validate_mime_tag,
+	NULL, NULL
 };
 
 static const struct sieve_argument vacation_handle_tag = { 
@@ -130,8 +137,7 @@ enum cmd_vacation_optional {
 	OPT_SUBJECT,
 	OPT_FROM,
 	OPT_ADDRESSES,
-	OPT_MIME,
-	OPT_HANDLE
+	OPT_MIME
 };
 
 /* 
@@ -200,6 +206,19 @@ struct act_vacation_context {
 	const char *const *addresses;
 };
 
+/*
+ * Command validation context
+ */
+ 
+struct cmd_vacation_context_data {
+	string_t *from;
+	string_t *subject;
+	
+	bool mime;
+	
+	string_t *handle;
+};
+
 /* 
  * Tag validation 
  */
@@ -237,6 +256,8 @@ static bool cmd_vacation_validate_string_tag
 	struct sieve_command_context *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
+	struct cmd_vacation_context_data *ctx_data = 
+		(struct cmd_vacation_context_data *) cmd->data; 
 
 	/* Detach the tag itself */
 	*arg = sieve_ast_arguments_detach(*arg,1);
@@ -251,29 +272,44 @@ static bool cmd_vacation_validate_string_tag
 		return FALSE;
 	}
 
-	if ( tag->argument == &vacation_from_tag && 
-		sieve_argument_is_string_literal(*arg) ) {
-		string_t *address = sieve_ast_argument_str(*arg);
-		const char *error;
- 		bool result;
- 		
- 		T_BEGIN {
- 			result = sieve_address_validate(address, &error);
- 
-			if ( !result ) {
-				sieve_command_validate_error(validator, cmd, 
-					"specified :from address '%s' is invalid for vacation action: %s", 
-					str_sanitize(str_c(address), 128), error);
-			}
-		} T_END;
+	if ( tag->argument == &vacation_from_tag ) {
+		if ( sieve_argument_is_string_literal(*arg) ) {
+			string_t *address = sieve_ast_argument_str(*arg);
+			const char *error;
+	 		bool result;
+	 		
+	 		T_BEGIN {
+	 			result = sieve_address_validate(address, &error);
+	 
+				if ( !result ) {
+					sieve_command_validate_error(validator, cmd, 
+						"specified :from address '%s' is invalid for vacation action: %s", 
+						str_sanitize(str_c(address), 128), error);
+				}
+			} T_END;
 		
-		if ( !result )
-			return FALSE;
+			if ( !result )
+				return FALSE;
+		}
+		
+		ctx_data->from = sieve_ast_argument_str(*arg);
+		
+		/* Skip parameter */
+		*arg = sieve_ast_argument_next(*arg);
+		
+	} else if ( tag->argument == &vacation_subject_tag ) {
+		ctx_data->subject = sieve_ast_argument_str(*arg);
+		
+		/* Skip parameter */
+		*arg = sieve_ast_argument_next(*arg);
+		
+	} else if ( tag->argument == &vacation_handle_tag ) {
+		ctx_data->handle = sieve_ast_argument_str(*arg);
+		
+		/* Detach optional argument (emitted as mandatory) */
+		*arg = sieve_ast_arguments_detach(*arg,1);
 	}
-		
-	/* Skip parameter */
-	*arg = sieve_ast_argument_next(*arg);
-
+			
 	return TRUE;
 }
 
@@ -300,6 +336,21 @@ static bool cmd_vacation_validate_stringlist_tag
 	return TRUE;
 }
 
+static bool cmd_vacation_validate_mime_tag
+(struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *cmd)
+{
+	struct cmd_vacation_context_data *ctx_data = 
+		(struct cmd_vacation_context_data *) cmd->data; 
+
+	ctx_data->mime = TRUE;
+
+	/* Skip tag */
+	*arg = sieve_ast_argument_next(*arg);
+	
+	return TRUE;
+}
+
 /* 
  * Command registration 
  */
@@ -318,7 +369,7 @@ static bool cmd_vacation_registered
 	sieve_validator_register_tag
 		(validator, cmd_reg, &vacation_mime_tag, OPT_MIME); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &vacation_handle_tag, OPT_HANDLE); 	
+		(validator, cmd_reg, &vacation_handle_tag, 0); 	
 
 	return TRUE;
 }
@@ -326,18 +377,73 @@ static bool cmd_vacation_registered
 /* 
  * Command validation 
  */
+ 
+static bool cmd_vacation_pre_validate
+(struct sieve_validator *validator ATTR_UNUSED, 
+	struct sieve_command_context *cmd) 
+{
+	struct cmd_vacation_context_data *ctx_data;
+	
+	/* Assign context */
+	ctx_data = p_new(sieve_command_pool(cmd), 
+		struct cmd_vacation_context_data, 1);
+	cmd->data = ctx_data;
+
+	return TRUE;
+}
+
+static const char _handle_empty_subject[] = "<default-subject>";
+static const char _handle_empty_from[] = "<default-from>";
+static const char _handle_mime_enabled[] = "<MIME>";
+static const char _handle_mime_disabled[] = "<NO-MIME>";
 
 static bool cmd_vacation_validate
 (struct sieve_validator *validator, struct sieve_command_context *cmd) 
 { 	
 	struct sieve_ast_argument *arg = cmd->first_positional;
+	struct cmd_vacation_context_data *ctx_data = 
+		(struct cmd_vacation_context_data *) cmd->data; 
 
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
 	
-	return sieve_validator_argument_activate(validator, cmd, arg, FALSE);	
+	if ( !sieve_validator_argument_activate(validator, cmd, arg, FALSE) )
+		return FALSE;
+		
+	/* Construct handle if not set explicitly */
+	if ( ctx_data->handle == NULL ) {
+		string_t *reason = sieve_ast_argument_str(arg);
+		unsigned int size = str_len(reason);
+		
+		/* Precalculate the size of it all */
+		size += ctx_data->subject == NULL ? 
+			sizeof(_handle_empty_subject) - 1 : str_len(ctx_data->subject);
+		size += ctx_data->from == NULL ? 
+			sizeof(_handle_empty_from) - 1 : str_len(ctx_data->from); 
+		size += ctx_data->mime ? 
+			sizeof(_handle_mime_enabled) - 1 : sizeof(_handle_mime_disabled) - 1; 
+			
+		/* Construct the string */
+		ctx_data->handle = str_new(sieve_command_pool(cmd), size);
+		str_append_str(ctx_data->handle, reason);
+		
+		if ( ctx_data->subject != NULL )
+			str_append_str(ctx_data->handle, ctx_data->subject);
+		else
+			str_append(ctx_data->handle, _handle_empty_subject);
+		
+		if ( ctx_data->from != NULL )
+			str_append_str(ctx_data->handle, ctx_data->from);
+		else
+			str_append(ctx_data->handle, _handle_empty_from);
+			
+		str_append(ctx_data->handle, 
+			ctx_data->mime ? _handle_mime_enabled : _handle_mime_disabled );
+	}
+	
+	return TRUE;
 }
 
 /*
@@ -347,6 +453,9 @@ static bool cmd_vacation_validate
 static bool cmd_vacation_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
 {
+	struct cmd_vacation_context_data *ctx_data = 
+		(struct cmd_vacation_context_data *) ctx->data;
+		 
 	sieve_operation_emit_code(cgenv->sbin, &vacation_operation);
 
 	/* Emit source line */
@@ -356,6 +465,8 @@ static bool cmd_vacation_generate
 	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;	
 
+	sieve_opr_string_emit(cgenv->sbin, ctx_data->handle);
+		
 	return TRUE;
 }
 
@@ -393,7 +504,6 @@ static bool ext_vacation_operation_dump
 				break;
 			case OPT_SUBJECT:
 			case OPT_FROM:
-			case OPT_HANDLE: 
 				if ( !sieve_opr_string_dump(denv, address) )
 					return FALSE;
 				break;
@@ -411,8 +521,10 @@ static bool ext_vacation_operation_dump
 		}
 	}
 	
-	/* Dump reason operand */
-	return sieve_opr_string_dump(denv, address);
+	/* Dump reason and handle operands */
+	return 
+		sieve_opr_string_dump(denv, address) &&
+		sieve_opr_string_dump(denv, address);
 }
 
 /* 
@@ -479,13 +591,6 @@ static int ext_vacation_operation_execute
 					return SIEVE_EXEC_BIN_CORRUPT;
 				}
 				break;
-			case OPT_HANDLE: 
-				if ( !sieve_opr_string_read(renv, address, &handle) ) {
-					sieve_runtime_trace_error(renv, 
-						"invalid handle operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
 			case OPT_ADDRESSES:
 				if ( (addresses=sieve_opr_stringlist_read(renv, address))
 					== NULL ) {
@@ -511,6 +616,12 @@ static int ext_vacation_operation_execute
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
+	/* Handle operand */
+	if ( !sieve_opr_string_read(renv, address, &handle) ) {
+		sieve_runtime_trace_error(renv, "invalid handle operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+	
 	/*
 	 * Perform operation
 	 */
@@ -522,14 +633,13 @@ static int ext_vacation_operation_execute
 	pool = sieve_result_pool(renv->result);
 	act = p_new(pool, struct act_vacation_context, 1);
 	act->reason = p_strdup(pool, str_c(reason));
+	act->handle = p_strdup(pool, str_c(handle));
 	act->days = days;
 	act->mime = mime;
 	if ( subject != NULL )
 		act->subject = p_strdup(pool, str_c(subject));
 	if ( from != NULL )
 		act->from = p_strdup(pool, str_c(from));
-	if ( handle != NULL )
-		act->handle = p_strdup(pool, str_c(handle));
 	if ( addresses != NULL )
 		sieve_coded_stringlist_read_all(addresses, pool, &(act->addresses));
 		
@@ -744,28 +854,8 @@ static void act_vacation_hash
 	md5_init(&ctx);
 	md5_update(&ctx, msgdata->return_path, strlen(msgdata->return_path));
 
-	if ( vctx->handle != NULL && *(vctx->handle) != '\0' ) 
-		md5_update(&ctx, vctx->handle, strlen(vctx->handle));
-	else {
-		const char *from;
-		const char *mime;
-
-		if ( vctx->from != NULL && *(vctx->from) != '\0' )
-			from = vctx->from;
-		else
-			from = msgdata->to_address;
-
-		if ( vctx->mime )
-			mime = "MIME";
-		else
-			mime = "NOMIME";
-
-		md5_update(&ctx, vctx->subject, strlen(vctx->subject));
-		md5_update(&ctx, from, strlen(from));
-		md5_update(&ctx, mime, strlen(mime));
-		md5_update(&ctx, vctx->reason, strlen(vctx->reason));
-	}
-
+	md5_update(&ctx, vctx->handle, strlen(vctx->handle));
+	
 	md5_final(&ctx, hash_r);
 }
 
