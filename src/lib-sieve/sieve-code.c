@@ -470,6 +470,19 @@ bool sieve_opr_string_dump
 	return sieve_opr_string_dump_data(denv, operand, address);
 }
 
+bool sieve_opr_string_dump_ex
+(const struct sieve_dumptime_env *denv, sieve_size_t *address, bool *literal)
+{
+	const struct sieve_operand *operand;
+	
+	sieve_code_mark(denv);
+	operand = sieve_operand_read(denv->sbin, address);
+
+	*literal = ( operand == &string_operand );	
+
+	return sieve_opr_string_dump_data(denv, operand, address);
+} 
+
 bool sieve_opr_string_read_data
 (const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
 	sieve_size_t *address, string_t **str)
@@ -491,6 +504,17 @@ bool sieve_opr_string_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
 {
 	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
+
+	return sieve_opr_string_read_data(renv, operand, address, str);
+}
+
+bool sieve_opr_string_read_ex
+(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str,
+	bool *literal)
+{
+	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
+
+	*literal = ( operand == &string_operand );
 
 	return sieve_opr_string_read_data(renv, operand, address, str);
 }

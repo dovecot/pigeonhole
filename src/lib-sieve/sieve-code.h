@@ -163,11 +163,16 @@ bool sieve_opr_string_dump_data
 		sieve_size_t *address); 
 bool sieve_opr_string_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address); 
+bool sieve_opr_string_dump_ex
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address, bool *literal); 
 bool sieve_opr_string_read_data
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
 		sieve_size_t *address, string_t **str);
 bool sieve_opr_string_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
+bool sieve_opr_string_read_ex
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str,
+		bool *literal);
 
 static inline bool sieve_operand_is_string
 (const struct sieve_operand *operand)
