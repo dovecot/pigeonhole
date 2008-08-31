@@ -503,6 +503,8 @@ const struct sieve_extension *sieve_validator_extension_load
 			"unsupported sieve capability '%s'", name);
 		return NULL;
 	}
+	
+	sieve_ast_extension_link(validator->ast, ext);
 
 	if ( ext->validator_load != NULL && !ext->validator_load(validator) ) {
 		sieve_command_validate_error(validator, cmd, 

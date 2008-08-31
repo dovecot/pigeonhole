@@ -177,17 +177,6 @@ void sieve_generator_critical
  * Extension support 
  */
 
-bool sieve_generator_link_extension
-(struct sieve_generator *gentr, const struct sieve_extension *ext) 
-{
-	(void)sieve_binary_extension_link(gentr->genenv.sbin, ext);
-	
-	if ( ext->generator_load != NULL )
-		return ext->generator_load(&gentr->genenv);
-	
-	return TRUE;
-}
-
 void sieve_generator_extension_set_context
 (struct sieve_generator *gentr, const struct sieve_extension *ext, void *context)
 {
@@ -369,24 +358,46 @@ bool sieve_generate_block
 }
 
 bool sieve_generator_run
-(struct sieve_generator *generator, struct sieve_binary **sbin) 
+(struct sieve_generator *gentr, struct sieve_binary **sbin) 
 {
 	bool topmost = ( *sbin == NULL );
 	bool result = TRUE;
+	const struct sieve_extension *const *extensions;
+	unsigned int i, ext_count;
+	
+	/* Initialize */
 	
 	if ( topmost )
-		*sbin = sieve_binary_create_new(sieve_ast_script(generator->genenv.ast));
+		*sbin = sieve_binary_create_new(sieve_ast_script(gentr->genenv.ast));
 	
 	sieve_binary_ref(*sbin);
 		
-	generator->genenv.sbin = *sbin;
+	gentr->genenv.sbin = *sbin;
+		
+	/* Load extensions linked to the AST */
+	extensions = sieve_ast_extensions_get(gentr->genenv.ast, &ext_count);
+	for ( i = 0; i < ext_count; i++ ) {
+		const struct sieve_extension *ext = extensions[i];
+
+		/* Link to binary */
+		(void)sieve_binary_extension_link(*sbin, ext);
 	
-	if ( !sieve_generate_block(&generator->genenv, sieve_ast_root(generator->genenv.ast))) 
+		/* Load */
+		if ( ext->generator_load != NULL && !ext->generator_load(&gentr->genenv) )
+			return FALSE;
+	}
+
+	/* Generate code */
+	
+	if ( !sieve_generate_block
+		(&gentr->genenv, sieve_ast_root(gentr->genenv.ast))) 
 		result = FALSE;
 	else if ( topmost ) 
 		sieve_binary_activate(*sbin);
-	
-	generator->genenv.sbin = NULL;
+
+	/* Cleanup */
+		
+	gentr->genenv.sbin = NULL;
 	sieve_binary_unref(sbin);
 
 	if ( topmost && !result ) {

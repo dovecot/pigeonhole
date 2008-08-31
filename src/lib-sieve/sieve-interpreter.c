@@ -474,12 +474,12 @@ int sieve_interpreter_start
 		sieve_message_context_ref(msgctx);
 	}
 
-    /* Signal registered extensions that the interpreter is being run */
-    extrs = array_get(&interp->extensions, &ext_count);
-    for ( i = 0; i < ext_count; i++ ) {
-        if ( extrs[i].int_ext != NULL && extrs[i].int_ext->run != NULL )
-            extrs[i].int_ext->run(&interp->runenv, extrs[i].context);
-    }
+	/* Signal registered extensions that the interpreter is being run */
+	extrs = array_get(&interp->extensions, &ext_count);
+	for ( i = 0; i < ext_count; i++ ) {
+		if ( extrs[i].int_ext != NULL && extrs[i].int_ext->run != NULL )
+			extrs[i].int_ext->run(&interp->runenv, extrs[i].context);
+	}
 
 	return sieve_interpreter_continue(interp, interrupted); 
 }

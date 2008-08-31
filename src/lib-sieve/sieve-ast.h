@@ -189,6 +189,11 @@ struct sieve_ast_extension {
 	void (*free)(struct sieve_ast *ast, void *context);
 };
 
+void sieve_ast_extension_link
+	(struct sieve_ast *ast, const struct sieve_extension *ext);
+const struct sieve_extension * const *sieve_ast_extensions_get
+	(struct sieve_ast *ast, unsigned int *count_r);
+
 void sieve_ast_extension_register
 	(struct sieve_ast *ast, const struct sieve_ast_extension *ast_ext, 
 		void *context);

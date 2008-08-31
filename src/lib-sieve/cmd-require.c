@@ -18,8 +18,6 @@
 
 static bool cmd_require_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
-static bool cmd_require_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
 const struct sieve_command cmd_require = { 
 	"require", 
@@ -27,10 +25,9 @@ const struct sieve_command cmd_require = {
 	1, 0, FALSE, FALSE,
 	NULL, NULL, 
 	cmd_require_validate, 
-	cmd_require_generate, 
-	NULL 
+	NULL, NULL
 };
-
+ 
 /* 
  * Validation 
  */
@@ -63,8 +60,7 @@ static bool cmd_require_validate
 			(validator, cmd, sieve_ast_argument_str(arg));	
 
 		if ( ext == NULL ) result = FALSE;
-		arg->context = (void *) ext;
-
+		
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		/* String list */
 		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
@@ -74,7 +70,6 @@ static bool cmd_require_validate
 				(validator, cmd, sieve_ast_strlist_str(stritem));
 
 			if ( ext == NULL ) result = FALSE;
-			stritem->context = (void *) ext;
 	
 			stritem = sieve_ast_strlist_next(stritem);
 		}
@@ -88,38 +83,4 @@ static bool cmd_require_validate
 	}
 	 
 	return result;
-}
-
-/* 
- * Code generation 
- */
-
-static bool cmd_require_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
-{
-	struct sieve_ast_argument *arg = ctx->first_positional;
-	
-	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
-		/* Single string */
-		const struct sieve_extension *ext = 
-			(const struct sieve_extension *) arg->context;
-		
-		sieve_generator_link_extension(cgenv->gentr, ext);
-	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
-		/* String list */
-		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
-		
-		while ( stritem != NULL ) {
-			const struct sieve_extension *ext = 
-				(const struct sieve_extension *) stritem->context;
-		
-			sieve_generator_link_extension(cgenv->gentr, ext);
-			
-			stritem = sieve_ast_strlist_next(stritem);
-		}
-	} else {
-		i_unreached();
-	}
-	
-	return TRUE;
 }

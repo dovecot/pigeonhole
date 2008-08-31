@@ -54,9 +54,6 @@ void sieve_generator_critical
  * Extension support 
  */
 
-bool sieve_generator_link_extension
-	(struct sieve_generator *gentr, const struct sieve_extension *ext);
-
 void sieve_generator_extension_set_context
 	(struct sieve_generator *gentr, const struct sieve_extension *ext, 
 		void *context);
@@ -103,7 +100,7 @@ bool sieve_generate_test
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_node *tst_node, 
 		struct sieve_jumplist *jlist, bool jump_true);
 bool sieve_generator_run
-	(struct sieve_generator *generator, struct sieve_binary **sbin);
+	(struct sieve_generator *gentr, struct sieve_binary **sbin);
 
 #endif /* __SIEVE_GENERATOR_H */
 
