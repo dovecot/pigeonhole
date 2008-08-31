@@ -272,6 +272,10 @@ bool sieve_generate_arguments
 
 		arg = sieve_ast_argument_next(arg);
 	}
+
+	/* Mark end of optional list if it is still open */
+	if ( state == ARG_OPTIONAL )
+		sieve_binary_emit_byte(cgenv->sbin, 0);
 	
 	if ( last_arg != NULL )
 		*last_arg = arg;

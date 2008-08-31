@@ -225,6 +225,87 @@ void sieve_result_add_implicit_side_effect
 	sieve_side_effects_list_add(actctx->seffects, seffect, context);
 }
 
+static int sieve_result_side_effects_merge
+(const struct sieve_runtime_env *renv, const struct sieve_action *action, 
+	struct sieve_side_effects_list *old_seffects,
+	struct sieve_side_effects_list *new_seffects)
+{
+	int ret;
+	struct sieve_result_side_effect *rsef, *nrsef;
+
+	/* Allow side-effects to merge with existing copy */
+		
+	/* Merge existing side effects */
+	rsef = old_seffects != NULL ? old_seffects->first_effect : NULL;
+	while ( rsef != NULL ) {
+		const struct sieve_side_effect *seffect = rsef->seffect;
+		bool found = FALSE;
+		
+		if ( seffect->merge != NULL ) {
+
+			/* Try to find it among the new */
+			nrsef = new_seffects != NULL ? new_seffects->first_effect : NULL;
+			while ( nrsef != NULL ) {
+				if ( nrsef->seffect == seffect ) {
+					if ( seffect->merge
+						(renv, action, seffect, &rsef->context, nrsef->context) < 0 )
+						return -1;
+			
+					found = TRUE;
+					break;
+				}
+		
+				nrsef = nrsef->next;
+			}
+	
+			/* Not found? */
+			if ( !found && seffect->merge
+				(renv, action, seffect, &rsef->context, NULL) < 0 )
+				return -1;
+		}
+	
+		rsef = rsef->next;
+	}
+
+	/* Merge new Side effects */
+	nrsef = new_seffects != NULL ? new_seffects->first_effect : NULL;
+	while ( nrsef != NULL ) {
+		const struct sieve_side_effect *seffect = nrsef->seffect;
+		bool found = FALSE;
+		
+		if ( seffect->merge != NULL ) {
+		
+			/* Try to find it in among the exising */
+			rsef = old_seffects != NULL ? old_seffects->first_effect : NULL;
+			while ( rsef != NULL ) {
+				if ( rsef->seffect == seffect ) {
+					found = TRUE;
+					break;
+				}
+				rsef = rsef->next;
+			}
+	
+			/* Not found? */
+			if ( !found ) {
+				void *new_context = NULL; 
+		
+				if ( (ret=seffect->merge
+					(renv, action, seffect, &new_context, nrsef->context)) < 0 ) 
+					return -1;
+					
+				if ( ret != 0 ) {
+					/* Add side effect */
+					sieve_side_effects_list_add(new_seffects, seffect, new_context);
+				}
+			}
+		}
+	
+		nrsef = nrsef->next;
+	}
+	
+	return 1;
+}
+
 int sieve_result_add_action
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
@@ -249,10 +330,15 @@ int sieve_result_add_action
 			if ( action->check_duplicate != NULL ) {
 				if ( (ret=action->check_duplicate
 					(renv, action, context, raction->context,
-						location, raction->location)) != 0 )
+						location, raction->location)) < 0 )
 					return ret;
-			} else 
-				return 1; 
+				
+				/* Duplicate */	
+				if ( ret == 1 ) {
+					return sieve_result_side_effects_merge
+						(renv, action, raction->seffects, seffects);
+				}
+			}
 		} else {
 			/* Check conflict */
 			if ( action->check_conflict != NULL &&
@@ -270,14 +356,15 @@ int sieve_result_add_action
 
 	/* Check policy limit on total number of actions */
 	if ( sieve_max_actions > 0 && result->action_count >= sieve_max_actions ) {
-		sieve_runtime_error(renv, location, "total number of actions exceeds policy limit");
+		sieve_runtime_error(renv, location, 
+			"total number of actions exceeds policy limit");
 		return -1;
 	}
 
 	/* Check policy limit on number of this class of actions */
 	if ( instance_limit > 0 && instance_count >= instance_limit ) {
-		sieve_runtime_error(renv, location, "number of %s actions exceeds policy limit",
-			action->name);
+		sieve_runtime_error(renv, location, 
+			"number of %s actions exceeds policy limit", action->name);
 		return -1;
 	}	
 		

@@ -82,8 +82,9 @@ struct sieve_side_effect {
 	struct sieve_object object;
 	
 	/* The action it is supposed to link to */
-	const struct sieve_action *to_action;
 	
+	const struct sieve_action *to_action;
+		
 	/* Context coding */
 	
 	bool (*dump_context)
@@ -96,8 +97,11 @@ struct sieve_side_effect {
 		
 	/* Result verification */
 	
-	/* ... */
-	
+	int (*merge)
+		(const struct sieve_runtime_env *renv, const struct sieve_action *action, 
+			const struct sieve_side_effect *seffect, 
+			void **old_context, void *new_context);
+
 	/* Result printing */	
 			
 	void (*print)

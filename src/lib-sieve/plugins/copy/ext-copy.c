@@ -84,7 +84,7 @@ static bool seff_copy_post_commit
 const struct sieve_side_effect copy_side_effect = {
 	SIEVE_OBJECT("copy", &copy_side_effect_operand, 0),
 	&act_store,
-	NULL, NULL,
+	NULL, NULL, NULL,
 	seff_copy_print,
 	NULL, NULL,
 	seff_copy_post_commit, 

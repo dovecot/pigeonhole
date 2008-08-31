@@ -66,7 +66,8 @@ static bool cmd_keep_generate
 	/* Emit line number */
     sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
 
-	return TRUE;
+	/* Generate arguments */
+	return sieve_generate_arguments(cgenv, ctx, NULL);
 }
 
 /* 

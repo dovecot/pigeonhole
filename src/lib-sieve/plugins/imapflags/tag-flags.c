@@ -49,6 +49,10 @@ static bool seff_flags_read_context
 	(const struct sieve_side_effect *seffect, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address,
 		void **se_context);
+static int seff_flags_merge
+	(const struct sieve_runtime_env *renv, const struct sieve_action *action, 
+		const struct sieve_side_effect *seffect, 
+		void **old_context, void *new_context);
 static void seff_flags_print
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, void *se_context, bool *keep);
@@ -63,6 +67,7 @@ const struct sieve_side_effect flags_side_effect = {
 
 	seff_flags_dump_context,
 	seff_flags_read_context,
+	seff_flags_merge,
 	seff_flags_print,
 	seff_flags_pre_execute, 
 	NULL, NULL, NULL
@@ -258,6 +263,19 @@ static struct seff_flags_context *seff_flags_get_implicit_context
 	t_pop();
 	
 	return ctx;
+}
+
+/* Result verification */
+
+static int seff_flags_merge
+(const struct sieve_runtime_env *renv ATTR_UNUSED, 
+	const struct sieve_action *action ATTR_UNUSED, 
+	const struct sieve_side_effect *seffect ATTR_UNUSED, 
+	void **old_context, void *new_context)
+{
+	*old_context = new_context;
+	
+	return 1;
 }
 
 /* Result printing */
