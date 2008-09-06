@@ -1,14 +1,7 @@
 Sieve implementation for Dovecot (1.2)
 
-################################################################################
-                                 !! WARNING !!
-  
- This sieve implementation is highly experimental. In addition to the usual GPL 
-   disclaimer you are advised not to use this for any important mail just yet!
-     
-      	The current status of this project is outlined in the TODO file.
-  
-################################################################################
+WARNING: This sieve implementation is still experimental since it needs thorough
+testing. The current status of this project is outlined in the TODO file.
 
 Features
 --------
