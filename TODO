@@ -1,7 +1,5 @@
 Next (in order of descending priority/precedence):
 * Fix standards compliance issues:
-	- Body: contains various bugs that need to be resolved for standards
-	  compliance.
 	- 'If an address is not syntactically valid, then it will not be matched
 	  by tests specifying ":localpart" or ":domain"'.
 * Fix security issues:
@@ -18,12 +16,13 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A FIRST RELEASE (0.1.x) ##
 
-* Fix remaining (mostly variables-related) RFC deviations:
+* Fix remaining RFC deviations:
 	- Allow for the existance of dynamic comparators (i.e. specified by 
 	  variables). 
 	- Allow for dynamic includes (i.e. specified by variables).
 	- Allow for :regex matching with variable key.
-	- Detect assignment of too large constant values to variables at runtime.
+	- Detect assignment of too large constant values to variables at compile
+	  time.
 	- Verify outgoing mail addresses at runtime when necessary
 	  (e.g. after variables substitution)
 	- Vacation: the ":subject" parameter specifies a subject line to attach to 
@@ -32,6 +31,9 @@ Next (in order of descending priority/precedence):
  	  encoded words if and only if non-ASCII characters are present.
 	- Vacation: properly implement construction of a References header from
 	  the original message.
+	- Body: contains various issues that need to be resolved for standards
+	  compliance. Body test support currently matches but barely exceeds the
+	  original CMU Sieve implentation in terms of standards compliance.
 * Imapflags: merge execution of setflags, removeflags and addflags into one 
   common implementation. 
 * Warn about the use of syntactically invalid header names. 
