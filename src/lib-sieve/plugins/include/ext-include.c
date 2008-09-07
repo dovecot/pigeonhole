@@ -100,7 +100,7 @@ static bool ext_include_generator_load(const struct sieve_codegen_env *cgenv)
 }
 
 static bool ext_include_interpreter_load
-(const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {
 	ext_include_interpreter_context_init(renv->interp);
 	

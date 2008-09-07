@@ -307,8 +307,8 @@ static void ext_variables_ast_free
 	struct sieve_variable_scope *main_scope =
 		(struct sieve_variable_scope *) context;
 
-    /* Unreference main variable scope */
-    sieve_variable_scope_unref(&main_scope);
+	/* Unreference main variable scope */
+	sieve_variable_scope_unref(&main_scope);
 }
 
 static const struct sieve_ast_extension variables_ast_extension = {
@@ -319,13 +319,23 @@ static const struct sieve_ast_extension variables_ast_extension = {
 static struct sieve_variable_scope *ext_variables_create_main_scope
 (struct sieve_ast *ast)
 {
-    struct sieve_variable_scope *scope;
+	struct sieve_variable_scope *scope;
 
 	scope = sieve_variable_scope_create(NULL);
 
-    sieve_ast_extension_register(ast, &variables_ast_extension, (void *) scope);
+	sieve_ast_extension_register(ast, &variables_ast_extension, (void *) scope);
 
-    return scope;
+	return scope;
+}
+
+static struct sieve_variable_scope *ext_variables_ast_get_main_scope
+(struct sieve_ast *ast)
+{
+	struct sieve_variable_scope *main_scope =
+		(struct sieve_variable_scope *) sieve_ast_extension_get_context
+		(ast, &variables_extension);
+	
+	return main_scope;
 }
 
 /*
@@ -388,8 +398,27 @@ bool sieve_ext_variables_is_active(struct sieve_validator *valdtr)
  
 bool ext_variables_generator_load(const struct sieve_codegen_env *cgenv)
 {
-	(void) sieve_binary_emit_integer(cgenv->sbin, 0);
+	struct sieve_variable_scope *main_scope = 
+		ext_variables_ast_get_main_scope(cgenv->ast);
+	unsigned int count = sieve_variable_scope_size(main_scope);
+	sieve_size_t jump;
+
+	sieve_binary_emit_integer(cgenv->sbin, count);
+
+	jump = sieve_binary_emit_offset(cgenv->sbin, 0);
+
+	if ( count > 0 ) {
+		unsigned int size, i;
+		struct sieve_variable *const *vars = 
+			sieve_variable_scope_get_variables(main_scope, &size);
+
+		for ( i = 0; i < size; i++ ) {			
+			sieve_binary_emit_cstring(cgenv->sbin, vars[i]->identifier);
+		}
+	}
 	
+	sieve_binary_resolve_offset(cgenv->sbin, jump);
+		
 	return TRUE;
 }
 
@@ -400,12 +429,33 @@ bool ext_variables_generator_load(const struct sieve_codegen_env *cgenv)
 bool ext_variables_code_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	unsigned int scope_size;
-
-	if ( sieve_binary_read_integer(denv->sbin, address, &scope_size) ) {
-		sieve_code_dumpf(denv, "SCOPE (size: %d)", scope_size);
-	}
+	unsigned int i, scope_size;
+	sieve_size_t pc;
+	int end_offset;
 	
+	sieve_code_mark(denv);
+	if ( !sieve_binary_read_integer(denv->sbin, address, &scope_size) )
+		return FALSE;
+		
+	pc = *address;	
+	if ( !sieve_binary_read_offset(denv->sbin, address, &end_offset) )
+		return FALSE;
+	
+	sieve_code_dumpf(denv, "SCOPE (size: %d, end: %08x)", 
+		scope_size, pc + end_offset);
+	
+	/* Read global variable scope */
+	for ( i = 0; i < scope_size; i++ ) {
+		string_t *identifier;
+
+		sieve_code_mark(denv);
+		if (!sieve_binary_read_string(denv->sbin, address, &identifier) ) {
+			return FALSE;
+		}
+		
+		sieve_code_dumpf(denv, "%3d: '%s'", i, str_c(identifier));
+	}
+
 	return TRUE;
 }
 
@@ -438,15 +488,32 @@ bool ext_variables_interpreter_load
 	(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct ext_variables_interpreter_context *ctx;
-	unsigned int var_count;
+	struct sieve_variable_scope *main_scope;
+	unsigned int scope_size;
+	sieve_size_t pc;
+	int end_offset;
+		
+	if ( !sieve_binary_read_integer(renv->sbin, address, &scope_size) ) {
+		sieve_sys_error("variables: failed to read main scope size");
+		return FALSE;
+	}
+
+	if ( scope_size > SIEVE_VARIABLES_MAX_SCOPE_SIZE ) {
+		sieve_sys_error("variables: scope size exceeds the limit (%u > %u)", 
+			scope_size, SIEVE_VARIABLES_MAX_SCOPE_SIZE );
+		return FALSE;
+	}
+
+	main_scope = sieve_variable_scope_create(NULL);
+	
+	pc = *address;
+	if ( !sieve_binary_read_offset(renv->sbin, address, &end_offset) )
+		return NULL;
+	*address = pc + end_offset;
 	
 	/* Create our context */
 	ctx = ext_variables_interpreter_context_create(renv->interp);
-	
-	if ( sieve_binary_read_integer(renv->sbin, address, &var_count) ) {
-		
-	}
-	
+
 	/* Enable support for match values */
 	(void) sieve_match_values_set_enabled(renv->interp, TRUE);
 	
