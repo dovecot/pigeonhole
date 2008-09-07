@@ -74,7 +74,7 @@ struct sieve_variable * const *sieve_variable_scope_get_variables
 struct sieve_variable_storage;
 
 struct sieve_variable_storage *sieve_variable_storage_create
-	(pool_t pool, struct sieve_variable_scope *scope);
+	(pool_t pool, struct sieve_variable_scope *scope, unsigned int max_size);
 bool sieve_variable_get
 	(struct sieve_variable_storage *storage, unsigned int index, 
 		string_t **value);
@@ -98,8 +98,7 @@ struct sieve_variable_scope *sieve_ext_variables_get_main_scope
 	(struct sieve_validator *validator);
 	
 struct sieve_variable_storage *sieve_ext_variables_get_storage
-	(struct sieve_interpreter *interp, const struct sieve_extension *ext,
-		bool create);
+	(struct sieve_interpreter *interp, const struct sieve_extension *ext);
 void sieve_ext_variables_set_storage
 	(struct sieve_interpreter *interp, struct sieve_variable_storage *storage,
 		const struct sieve_extension *ext);	

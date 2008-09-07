@@ -198,17 +198,23 @@ struct sieve_variable * const *sieve_variable_scope_get_variables
 struct sieve_variable_storage {
 	pool_t pool;
 	struct sieve_variable_scope *scope;
+	unsigned int max_size;
 	ARRAY_DEFINE(var_values, string_t *); 
 };
 
 struct sieve_variable_storage *sieve_variable_storage_create
-(pool_t pool, struct sieve_variable_scope *scope)
+(pool_t pool, struct sieve_variable_scope *scope, unsigned int max_size)
 {
 	struct sieve_variable_storage *storage;
 	
 	storage = p_new(pool, struct sieve_variable_storage, 1);
 	storage->pool = pool;
 	storage->scope = scope;
+	
+	if ( scope != NULL )
+		storage->max_size = sieve_variable_scope_size(scope);
+	else
+		storage->max_size = max_size;
 		
 	p_array_init(&storage->var_values, pool, 4);
 
@@ -220,7 +226,7 @@ static inline bool sieve_variable_valid
 {
 	if ( storage->scope == NULL ) return TRUE;
 
-	return ( index < array_count(&storage->scope->variable_index) );
+	return ( index < storage->max_size );
 }
 
 bool sieve_variable_get_identifier
@@ -469,13 +475,14 @@ struct ext_variables_interpreter_context {
 };
 
 static struct ext_variables_interpreter_context *
-ext_variables_interpreter_context_create(struct sieve_interpreter *interp)
+ext_variables_interpreter_context_create
+(struct sieve_interpreter *interp, unsigned int max_size)
 {		
 	pool_t pool = sieve_interpreter_pool(interp);
 	struct ext_variables_interpreter_context *ctx;
 	
 	ctx = p_new(pool, struct ext_variables_interpreter_context, 1);
-	ctx->local_storage = sieve_variable_storage_create(pool, NULL);
+	ctx->local_storage = sieve_variable_storage_create(pool, NULL, max_size);
 	p_array_init(&ctx->ext_storages, pool, sieve_extensions_get_count());
 
 	sieve_interpreter_extension_set_context
@@ -512,7 +519,7 @@ bool ext_variables_interpreter_load
 	*address = pc + end_offset;
 	
 	/* Create our context */
-	ctx = ext_variables_interpreter_context_create(renv->interp);
+	ctx = ext_variables_interpreter_context_create(renv->interp, scope_size);
 
 	/* Enable support for match values */
 	(void) sieve_match_values_set_enabled(renv->interp, TRUE);
@@ -528,8 +535,7 @@ ext_variables_interpreter_context_get(struct sieve_interpreter *interp)
 }
 
 struct sieve_variable_storage *sieve_ext_variables_get_storage
-(struct sieve_interpreter *interp, const struct sieve_extension *ext, 
-	bool create)
+(struct sieve_interpreter *interp, const struct sieve_extension *ext)
 {
 	struct ext_variables_interpreter_context *ctx = 
 		ext_variables_interpreter_context_get(interp);
@@ -546,19 +552,8 @@ struct sieve_variable_storage *sieve_ext_variables_get_storage
 		storage = array_idx(&ctx->ext_storages, ext_id);
 	}
 	
-	if ( storage == NULL || *storage == NULL ) {
-		if ( create ) {
-			pool_t pool = sieve_interpreter_pool(interp);
-			struct sieve_variable_storage *strg = 
-				sieve_variable_storage_create(pool, NULL);
-		
-			array_idx_set(&ctx->ext_storages, (unsigned int) ext_id, &strg);
-		
-			return strg;		
-		}
-
+	if ( storage == NULL || *storage == NULL ) 
 		return NULL;
-	}
 	
 	return *storage;
 }

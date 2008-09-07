@@ -5,7 +5,6 @@ Next (in order of descending priority/precedence):
 * Fix security issues:
 	- Impose limitations on the imapflags extension regarding the number of
 	  set flags and the length of each flag name.
-	- Malicious/Broken binary can allocate large variable storage
 * Finish the test suite for the base functionality
 * Improve debugging and error handling:
 	- Improve byte code dumping and trace functionality to be a little more 

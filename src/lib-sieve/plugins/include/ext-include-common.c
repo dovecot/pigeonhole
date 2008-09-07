@@ -233,7 +233,7 @@ static void ext_include_runtime_init
 
 	if ( ctx->parent == NULL ) {
 		ctx->global_variables = sieve_variable_storage_create
-			(ctx->pool, ext_include_binary_get_global_scope(renv->sbin));
+			(ctx->pool, ext_include_binary_get_global_scope(renv->sbin), 0);
 	} else {
 		ctx->global_variables = ctx->parent->global_variables;
 	}
