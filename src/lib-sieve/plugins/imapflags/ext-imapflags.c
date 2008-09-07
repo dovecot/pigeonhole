@@ -44,7 +44,8 @@ const struct sieve_operation *imapflags_operations[] = {
 
 static bool ext_imapflags_load(int ext_id);
 static bool ext_imapflags_validator_load(struct sieve_validator *valdtr);
-static bool ext_imapflags_interpreter_load(struct sieve_interpreter *interp);
+static bool ext_imapflags_interpreter_load
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 int ext_imapflags_my_id;
 
@@ -55,7 +56,7 @@ const struct sieve_extension imapflags_extension = {
 	ext_imapflags_validator_load, 
 	NULL, 
 	ext_imapflags_interpreter_load, 
-	NULL, NULL,
+	NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(imapflags_operations), 
 	SIEVE_EXT_DEFINE_OPERAND(flags_side_effect_operand)
 };
@@ -84,10 +85,10 @@ static bool ext_imapflags_validator_load
 }
 
 static bool ext_imapflags_interpreter_load
-(struct sieve_interpreter *interp)
+(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {
 	sieve_interpreter_extension_register
-        (interp, &imapflags_interpreter_extension, NULL);
+        (renv->interp, &imapflags_interpreter_extension, NULL);
 
 	return TRUE;
 }

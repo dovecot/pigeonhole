@@ -96,7 +96,7 @@ struct sieve_interpreter *sieve_interpreter_create
 		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
 		
 		if ( ext->interpreter_load != NULL )
-			(void)ext->interpreter_load(interp);		
+			(void)ext->interpreter_load(&interp->runenv, &interp->pc);		
 	}
 
 	/* Load other extensions listed in code */
@@ -110,7 +110,8 @@ struct sieve_interpreter *sieve_interpreter_create
         break;
       }
  
-			if ( ext->interpreter_load != NULL && !ext->interpreter_load(interp) ) {
+			if ( ext->interpreter_load != NULL && 
+				!ext->interpreter_load(&interp->runenv, &interp->pc) ) {
 				success = FALSE;
 				break;
 			}

@@ -382,6 +382,33 @@ bool sieve_ext_variables_is_active(struct sieve_validator *valdtr)
 	return ( ext_variables_validator_context_get(valdtr) != NULL );
 }
 
+/*
+ * Code generation
+ */
+ 
+bool ext_variables_generator_load(const struct sieve_codegen_env *cgenv)
+{
+	(void) sieve_binary_emit_integer(cgenv->sbin, 0);
+	
+	return TRUE;
+}
+
+/*
+ * Code dump
+ */
+ 
+bool ext_variables_code_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	unsigned int scope_size;
+
+	if ( sieve_binary_read_integer(denv->sbin, address, &scope_size) ) {
+		sieve_code_dumpf(denv, "SCOPE (size: %d)", scope_size);
+	}
+	
+	return TRUE;
+}
+
 /* 
  * Interpreter context 
  */
@@ -407,15 +434,23 @@ ext_variables_interpreter_context_create(struct sieve_interpreter *interp)
 	return ctx;
 }
 
-void ext_variables_interpreter_initialize(struct sieve_interpreter *interp)
+bool ext_variables_interpreter_load
+	(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct ext_variables_interpreter_context *ctx;
+	unsigned int var_count;
 	
 	/* Create our context */
-	ctx = ext_variables_interpreter_context_create(interp);
+	ctx = ext_variables_interpreter_context_create(renv->interp);
+	
+	if ( sieve_binary_read_integer(renv->sbin, address, &var_count) ) {
+		
+	}
 	
 	/* Enable support for match values */
-	(void) sieve_match_values_set_enabled(interp, TRUE);
+	(void) sieve_match_values_set_enabled(renv->interp, TRUE);
+	
+	return TRUE;
 }
 
 static inline struct ext_variables_interpreter_context *

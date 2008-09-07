@@ -26,12 +26,19 @@ struct sieve_extension {
 	
 	bool (*load)(int ext_id);
 
-	bool (*validator_load)(struct sieve_validator *validator);	
-	bool (*generator_load)(const struct sieve_codegen_env *cgenv);
-	bool (*interpreter_load)(struct sieve_interpreter *interpreter);
+	bool (*validator_load)
+		(struct sieve_validator *validator);	
+	bool (*generator_load)
+		(const struct sieve_codegen_env *cgenv);
+	bool (*interpreter_load)
+		(const struct sieve_runtime_env *renv, sieve_size_t *address);
+	bool (*binary_load)
+		(struct sieve_binary *binary);
 	
-	bool (*binary_load)(struct sieve_binary *binary);
-	bool (*binary_dump)(struct sieve_dumptime_env *denv);
+	bool (*binary_dump)
+		(struct sieve_dumptime_env *denv);
+	bool (*code_dump)
+		(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
 	struct sieve_extension_obj_registry operations;
 	struct sieve_extension_obj_registry operands;

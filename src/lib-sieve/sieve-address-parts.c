@@ -50,7 +50,7 @@ const struct sieve_extension address_part_extension = {
 	&ext_my_id,
 	addrp_extension_load,
 	addrp_validator_load,
-	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,
 	SIEVE_EXT_DEFINE_NO_OPERANDS /* Defined as core operand */
 };

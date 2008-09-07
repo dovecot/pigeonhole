@@ -69,10 +69,25 @@ struct sieve_variable *ext_variables_validator_get_variable
 	(struct sieve_validator *validator, const char *variable, bool declare);
 
 /*
+ * Code generation
+ */
+ 
+bool ext_variables_generator_load
+	(const struct sieve_codegen_env *cgenv);
+
+/*
+ * Code dump
+ */
+ 
+bool ext_variables_code_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+
+/*
  * Interpreter context
  */	
 
-void ext_variables_interpreter_initialize(struct sieve_interpreter *interp);
+bool ext_variables_interpreter_load
+(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 /* 
  * Variable coding 

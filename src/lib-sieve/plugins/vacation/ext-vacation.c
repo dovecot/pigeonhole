@@ -39,7 +39,7 @@ const struct sieve_extension vacation_extension = {
 	&ext_my_id,
 	ext_vacation_load,
 	ext_vacation_validator_load, 
-	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATION(vacation_operation),
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };

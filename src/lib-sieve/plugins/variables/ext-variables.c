@@ -59,7 +59,6 @@ const struct sieve_operand *ext_variables_operands[] = {
 
 static bool ext_variables_load(int ext_id);
 static bool ext_variables_validator_load(struct sieve_validator *validator);
-static bool ext_variables_interpreter_load(struct sieve_interpreter *interp);
 
 static int ext_my_id;
 	
@@ -68,9 +67,10 @@ struct sieve_extension variables_extension = {
 	&ext_my_id,
 	ext_variables_load,
 	ext_variables_validator_load, 
-	NULL,
+	ext_variables_generator_load,
 	ext_variables_interpreter_load,
-	NULL, NULL,
+	NULL, NULL, 
+	ext_variables_code_dump,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_variables_operations), 
 	SIEVE_EXT_DEFINE_OPERANDS(ext_variables_operands)
 };
@@ -95,10 +95,3 @@ static bool ext_variables_validator_load
 	return TRUE;
 }
 
-static bool ext_variables_interpreter_load
-	(struct sieve_interpreter *interp)
-{
-	ext_variables_interpreter_initialize(interp);
-
-	return TRUE;
-}

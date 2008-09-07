@@ -24,7 +24,7 @@
  * Common error messages
  */
 
-static inline void _ext_variables_scope_size_eror
+static inline void _ext_variables_scope_size_error
 (struct sieve_validator *valdtr, struct sieve_command_context *cmd,
 	const char *variable)
 {
@@ -113,7 +113,7 @@ static bool _sieve_variable_argument_activate
 					(validator, str_c(cur_element->identifier), TRUE);
 
 				if ( var == NULL ) {
-					_ext_variables_scope_size_eror
+					_ext_variables_scope_size_error
 						(validator, cmd, str_c(cur_element->identifier));
 				} else {
 					arg->argument = &variable_argument;
@@ -373,7 +373,7 @@ static bool arg_variable_string_validate
 							if ( strarg != NULL )
 								sieve_ast_arg_list_add(arglist, strarg);
 							else {
-								_ext_variables_scope_size_eror
+								_ext_variables_scope_size_error
 									(validator, cmd, str_c(cur_element->identifier));
 								result = FALSE;
 								break;

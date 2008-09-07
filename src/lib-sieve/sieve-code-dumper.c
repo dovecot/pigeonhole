@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include <stdio.h>
 #include <string.h>
 
@@ -187,15 +190,21 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
 			
 			sieve_code_mark(denv);
 			
-			if ( !sieve_binary_read_extension(sbin, &dumper->pc, &code, &ext) ) 
-			{
-        success = FALSE;
-        break;
-      }
+			if ( !sieve_binary_read_extension(sbin, &dumper->pc, &code, &ext) ) {
+				success = FALSE;
+				break;
+			}
       	
-      sieve_code_dumpf(denv, "%s", ext->name);
+			sieve_code_dumpf(denv, "%s", ext->name);
       
-			/* Load ? */ 
+			if ( ext->code_dump != NULL ) {
+				sieve_code_descend(denv);
+				if ( !ext->code_dump(denv, &dumper->pc) ) {
+					success = FALSE;
+					break;
+				}
+				sieve_code_ascend(denv);
+			}
 		}
 		
 		sieve_code_ascend(denv);
