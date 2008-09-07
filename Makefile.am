@@ -21,6 +21,8 @@ test_cases = \
 	tests/testsuite.svtest\
 	tests/control-structures.svtest \
 	tests/exists.svtest \
+	tests/header.svtest \
+	tests/address.svtest \
 	tests/lexer.svtest \
 	tests/comparators/core.svtest \
 	tests/match-types/is.svtest \

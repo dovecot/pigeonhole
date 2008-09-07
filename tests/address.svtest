@@ -1,0 +1,60 @@
+require "vnd.dovecot.testsuite";
+
+/*
+ * If an address is not syntactically valid, then it will not be matched
+ * by tests specifying ":localpart" or ":domain".
+ */
+
+test_set "message" text:
+From: stephan@
+To: @rename-it.nl
+Cc: nonsense
+Resent-To:
+Subject: Invalid addresses
+
+Test.
+.
+;
+
+test "Invalid single addresses" {
+	if address :localpart "from" "stephan" {
+		test_fail ":localpart matched invalid address";
+	}	
+
+	if address :domain "to" "rename-it.nl" {
+		test_fail ":domain matched invalid address";
+	}	
+
+	if not address :is :all "resent-to" "" {
+		test_fail ":all failed to match empty address";
+	}	
+
+	if not address :is :all "cc" "nonsense" {
+		test_fail ":all failed to match invalid address";
+	}
+}
+
+/*
+ * Errors in address lists
+ */ 
+
+test_set "message" text:
+From: stephan@
+To: nico@vestingbar.nl, @rename-it.nl
+Cc: stephan@rename-it.nl, nonsense
+Subject: Invalid addresses
+
+Test.
+.
+;
+
+test "Invalid address list" {
+	if address :is :localpart "to" "" {
+		test_fail ":localpart matched invalid address";
+	}	
+
+	if address :is :domain "to" "rename-it.nl" {
+		test_fail ":domain matched invalid address";
+	}	
+}
+

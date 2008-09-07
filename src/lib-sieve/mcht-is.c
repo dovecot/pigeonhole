@@ -44,6 +44,8 @@ static int mcht_is_match
 {
 	if ( (val == NULL || val_size == 0) ) 
 		return ( key_size == 0 );
+
+	printf ("VAL '%s' KEY '%s'\n", val, key);
 	
 	if ( mctx->comparator->compare != NULL )
 		return (mctx->comparator->compare(mctx->comparator, 

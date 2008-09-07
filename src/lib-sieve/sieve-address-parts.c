@@ -219,24 +219,46 @@ int sieve_address_match
 	const struct message_address *addr;
 
 	T_BEGIN {
+		bool valid = TRUE;
+		const struct message_address *aitem;
+
 		addr = message_address_parse
 			(pool_datastack_create(), (const unsigned char *) data, 
 				strlen(data), 256, FALSE);
-	
-		while ( result == 0 && addr != NULL) {
-			/* mailbox@domain */
-			struct sieve_address address;
-			const char *part;
-			
-			address.local_part = addr->mailbox;
-			address.domain = addr->domain;
 
-			part = addrp->extract_from(&address);
-			
-			if ( part != NULL )
-				result=sieve_match_value(mctx, part, strlen(part));
+		/* Check validity of all addresses simultaneously. Unfortunately,
+		 * errorneous addresses cannot be extracted from the address list
+		 * and therefore :all will match against the whole header value
+		 * which is not entirely standard.
+		 */
+		aitem = addr;
+		while ( aitem != NULL) {
+			if ( aitem->invalid_syntax )
+				valid = FALSE;
+			aitem = aitem->next;
+		}
 
-			addr = addr->next;
+		if ( !valid || addr == NULL ) {
+			if ( addrp == &all_address_part )
+				result = sieve_match_value(mctx, data, strlen(data));
+			else 
+				result = FALSE;
+		} else {
+			while ( result == 0 && addr != NULL) {
+				/* mailbox@domain */
+				struct sieve_address address;
+				const char *part;
+			
+				address.local_part = addr->mailbox;
+				address.domain = addr->domain;
+
+				part = addrp->extract_from(&address);
+			
+				if ( part != NULL )
+					result = sieve_match_value(mctx, part, strlen(part));
+
+				addr = addr->next;
+			}
 		}
 	} T_END;
 	
