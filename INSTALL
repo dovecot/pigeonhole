@@ -5,12 +5,12 @@ testing. The current status of this project is outlined in the TODO file.
 Compiling
 ---------
 
-First of all you'll need to have built Dovecot 1.1 sources available. It's also
+First of all you'll need to have built Dovecot 1.2 sources available. It's also
 not a good idea to build the plugin against self-compiled Dovecot sources, but 
 then actually use a prebuilt binary package of Dovecot. That might work if the 
 Dovecot versions are the same, but it's not guaranteed.
 
-./configure --with-dovecot=../dovecot-1.1
+./configure --with-dovecot=../dovecot-1.2
 make
 sudo make install
 

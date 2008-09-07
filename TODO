@@ -1,4 +1,5 @@
 Next (in order of descending priority/precedence):
+
 * Finish the test suite for the base functionality
 * Improve debugging and error handling:
 	- Improve byte code dumping and trace functionality to be a little more 

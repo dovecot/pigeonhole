@@ -65,9 +65,11 @@ Extensions:
     relational: full 
     copy: full
     regex: mostly full; but suboptimal and no UTF-8
-    body: full, but text body-transform implementation is simple
+    body: mostly full, but text body-transform implementation is simple
+	      and some issues make it still not RFC incompliant. 
     include: mostly full; needs some more work (no external binaries)
-    vacation: mostly full; no support for required References header
+    vacation: mostly full; no support for required References header and
+	          and handling of utf-8 in headers is non-existant
     imapflags: full
     variables: mostly full; currently no support for future namespaces 
 
@@ -78,9 +80,9 @@ Extensions:
     editheader: planned, needs additional support from Dovecot though.
     mimeloop: planned
 
-All implemented extensions are like the engine itself currently very much 
-experimental. A status of 'full' does not mean that the extension is bug-free 
-or even fully RFC-compliant. Other extensions will be added as soon as the 
+All implemented extensions are like the engine itself currently experimental. 
+A status of 'full' does not necessarily mean that the extension is bug-free or 
+even fully RFC-compliant. Other extensions will be added as soon as the 
 necessary infrastructure is available. Extensions already supported by cmusieve
 have priority.
 
