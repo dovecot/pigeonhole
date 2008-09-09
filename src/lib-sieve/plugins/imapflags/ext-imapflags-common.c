@@ -148,12 +148,15 @@ bool ext_imapflags_command_operands_dump
 
 	if ( sieve_operand_is_variable(operand) ) {	
 		return 
-			sieve_opr_string_dump_data(denv, operand, address) &&
-			sieve_opr_stringlist_dump(denv, address);
+			sieve_opr_string_dump_data(denv, operand, address, 
+				"variable name") &&
+			sieve_opr_stringlist_dump(denv, address, 
+				"list of flags");
 	}
 	
 	return 
-			sieve_opr_stringlist_dump_data(denv, operand, address);
+		sieve_opr_stringlist_dump_data(denv, operand, address,
+			"list of flags");
 }
 
 bool ext_imapflags_command_operation_dump

@@ -447,7 +447,7 @@ bool ext_variables_code_dump
 	if ( !sieve_binary_read_offset(denv->sbin, address, &end_offset) )
 		return FALSE;
 	
-	sieve_code_dumpf(denv, "SCOPE (size: %d, end: %08x)", 
+	sieve_code_dumpf(denv, "SCOPE [%d] (end: %08x)", 
 		scope_size, pc + end_offset);
 	
 	/* Read global variable scope */

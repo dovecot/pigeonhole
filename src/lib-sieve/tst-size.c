@@ -216,7 +216,7 @@ static bool tst_size_operation_dump
 	sieve_code_descend(denv);
 	
 	return 
-		sieve_opr_number_dump(denv, address);
+		sieve_opr_number_dump(denv, address, "limit");
 }
 
 /* 

@@ -316,8 +316,8 @@ static bool ext_envelope_operation_dump
 		return FALSE;
 
 	return
-		sieve_opr_stringlist_dump(denv, address) &&
-		sieve_opr_stringlist_dump(denv, address);
+		sieve_opr_stringlist_dump(denv, address, "envelope part") &&
+		sieve_opr_stringlist_dump(denv, address, "key list");
 }
 
 /*

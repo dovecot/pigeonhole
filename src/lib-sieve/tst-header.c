@@ -137,8 +137,8 @@ static bool tst_header_operation_dump
 		return FALSE;
 	
 	return
-		sieve_opr_stringlist_dump(denv, address) &&
-		sieve_opr_stringlist_dump(denv, address);
+		sieve_opr_stringlist_dump(denv, address, "header names") &&
+		sieve_opr_stringlist_dump(denv, address, "key list");
 }
 
 /* 

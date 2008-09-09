@@ -251,8 +251,8 @@ static bool cmd_set_operation_dump
 	sieve_code_descend(denv);
 	
 	/* Print both variable name and string value */
-	if ( !sieve_opr_string_dump(denv, address) ||
-		!sieve_opr_string_dump(denv, address) )
+	if ( !sieve_opr_string_dump(denv, address, "variable") ||
+		!sieve_opr_string_dump(denv, address, "value") )
 		return FALSE;
 	
 	/* Read the number of applied modifiers we need to read */

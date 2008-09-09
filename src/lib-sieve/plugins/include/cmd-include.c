@@ -264,7 +264,7 @@ static bool opc_include_dump
 		return FALSE;
 		
 	sieve_code_descend(denv);
-	sieve_code_dumpf(denv, "SCRIPT: %s [ID: %d, BLOCK: %d]", 
+	sieve_code_dumpf(denv, "script: %s [ID: %d, BLOCK: %d]", 
 		sieve_script_filename(included->script), include_id, included->block_id);
 	 
 	return TRUE;

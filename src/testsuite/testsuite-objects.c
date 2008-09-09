@@ -80,7 +80,7 @@ void testsuite_register_core_objects
  */ 
  
 const struct sieve_operand_class sieve_testsuite_object_operand_class = 
-	{ "TESTSUITE-OBJECT" };
+	{ "testsuite object" };
 
 static const struct sieve_extension_obj_registry core_testsuite_objects =
 	SIEVE_EXT_DEFINE_OBJECTS(testsuite_core_objects);

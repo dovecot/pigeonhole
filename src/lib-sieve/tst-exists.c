@@ -92,7 +92,7 @@ static bool tst_exists_operation_dump
     sieve_code_dumpf(denv, "EXISTS");
 	sieve_code_descend(denv);
 
-	return sieve_opr_stringlist_dump(denv, address);
+	return sieve_opr_stringlist_dump(denv, address, "header names");
 }
 
 /* 

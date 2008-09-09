@@ -148,7 +148,7 @@ static bool tst_hasflag_operation_dump
 		case SIEVE_MATCH_OPT_END:
 			break;
 		case OPT_VARIABLES:
-			sieve_opr_stringlist_dump(denv, address);
+			sieve_opr_stringlist_dump(denv, address, "variables");
 			break;
 		default:
 			return FALSE;
@@ -156,7 +156,7 @@ static bool tst_hasflag_operation_dump
 	} while ( opt_code != SIEVE_MATCH_OPT_END );
 			
 	return 
-			sieve_opr_stringlist_dump(denv, address);
+		sieve_opr_stringlist_dump(denv, address, "list of flags");
 }
 
 /*

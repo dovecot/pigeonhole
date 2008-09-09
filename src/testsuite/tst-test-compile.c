@@ -103,7 +103,7 @@ static bool tst_test_compile_operation_dump
 	sieve_code_dumpf(denv, "TEST_COMPILE:");
 	sieve_code_descend(denv);
 
-	if ( !sieve_opr_string_dump(denv, address) ) 
+	if ( !sieve_opr_string_dump(denv, address, "script") ) 
 		return FALSE;
 
 	return TRUE;

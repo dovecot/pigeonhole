@@ -221,8 +221,7 @@ static string_t *sieve_match_values_add_entry
 		
 	if ( mvalues->count >= array_count(&mvalues->values) ) {
 		entry = str_new(mvalues->pool, 64);
-		array_append(&mvalues->values, &entry, 1);
-	} else {
+		array_append(&mvalues->values, &entry, 1);	} else {
 		string_t * const *ep = array_idx(&mvalues->values, mvalues->count);
 		entry = *ep;
 		str_truncate(entry, 0);
@@ -481,7 +480,7 @@ bool sieve_match_type_validate
  */
  
 struct sieve_operand_class sieve_match_type_operand_class = 
-	{ "MATCH-TYPE" };
+	{ "match type" };
 	
 static const struct sieve_extension_obj_registry core_match_types =
 	SIEVE_EXT_DEFINE_MATCH_TYPES(sieve_core_match_types);

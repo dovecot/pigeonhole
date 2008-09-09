@@ -285,7 +285,7 @@ static bool ext_body_operation_dump
 				sieve_code_dumpf(denv, "BODY-TRANSFORM: CONTENT");
 				
 				sieve_code_descend(denv);
-				if ( !sieve_opr_stringlist_dump(denv, address) )
+				if ( !sieve_opr_stringlist_dump(denv, address, "content types") )
 					return FALSE;
 				sieve_code_ascend(denv);
 				break;
@@ -298,7 +298,7 @@ static bool ext_body_operation_dump
 		}
 	} while ( opt_code != SIEVE_MATCH_OPT_END );
 
-	return sieve_opr_stringlist_dump(denv, address);
+	return sieve_opr_stringlist_dump(denv, address, "key list");
 }
 
 /*

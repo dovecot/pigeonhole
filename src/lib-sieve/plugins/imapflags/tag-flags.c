@@ -160,7 +160,7 @@ static bool seff_flags_dump_context
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	return sieve_opr_stringlist_dump(denv, address);
+	return sieve_opr_stringlist_dump(denv, address, "flags");
 }
 
 static bool seff_flags_read_context

@@ -29,7 +29,8 @@
 static bool opr_variable_read_value
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
 static bool opr_variable_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address, 
+		const char *field_name);
 
 const struct sieve_opr_string_interface variable_interface = { 
 	opr_variable_dump,
@@ -61,7 +62,8 @@ void ext_variables_opr_variable_emit
 }
 
 static bool opr_variable_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
+(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+	const char *field_name) 
 {
 	sieve_size_t index = 0;
 	const struct sieve_extension *ext;
@@ -73,15 +75,24 @@ static bool opr_variable_dump
 	if ( !sieve_binary_read_integer(denv->sbin, address, &index) )
 		return FALSE;
 		
-	if ( ext == NULL )
-		sieve_code_dumpf(denv, "VAR: %ld", (long) index);
-	else
-		sieve_code_dumpf(denv, "VAR: [%d:%s] %ld", *ext->id, ext->name, (long) index);
+	if ( ext == NULL ) {
+		if ( field_name != NULL ) 
+			sieve_code_dumpf(denv, "%s: VAR %ld", field_name, (long) index);
+		else
+			sieve_code_dumpf(denv, "VAR %ld", (long) index);
+	} else {
+		if ( field_name != NULL ) 
+			sieve_code_dumpf(denv, "%s: VAR [%s] %ld", 
+				field_name, ext->name, (long) index);
+		else
+			sieve_code_dumpf(denv, "VAR [%s] %ld", 
+				ext->name, (long) index);
+	}
 	return TRUE;
 }
 
 static bool opr_variable_read_value
-  (const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
+(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
 { 
 	const struct sieve_extension *ext;
 	unsigned int code = 1; /* Initially set to offset value */
@@ -155,7 +166,8 @@ bool sieve_variable_operand_read
 static bool opr_match_value_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
 static bool opr_match_value_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address, 
+		const char *field_name);
 
 const struct sieve_opr_string_interface match_value_interface = { 
 	opr_match_value_dump,
@@ -171,19 +183,23 @@ const struct sieve_operand match_value_operand = {
 };	
 
 void ext_variables_opr_match_value_emit
-	(struct sieve_binary *sbin, unsigned int index) 
+(struct sieve_binary *sbin, unsigned int index) 
 {
 	(void) sieve_operand_emit_code(sbin, &match_value_operand);
 	(void) sieve_binary_emit_integer(sbin, index);
 }
 
 static bool opr_match_value_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
+(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+	const char *field_name) 
 {
 	sieve_size_t index = 0;
 	
 	if (sieve_binary_read_integer(denv->sbin, address, &index) ) {
-		sieve_code_dumpf(denv, "MVALUE: %ld", (long) index);
+		if ( field_name != NULL )
+			sieve_code_dumpf(denv, "%s: MATCHVAL %ld", field_name, (long) index);
+		else
+			sieve_code_dumpf(denv, "MATCHVAL %ld", (long) index);
 
 		return TRUE;
 	}
@@ -192,7 +208,7 @@ static bool opr_match_value_dump
 }
 
 static bool opr_match_value_read
-  (const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
+(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
 { 
 	sieve_size_t index = 0;
 			
@@ -221,7 +237,8 @@ static bool opr_match_value_read
 static bool opr_variable_string_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
 static bool opr_variable_string_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+		const char *field_name);
 
 const struct sieve_opr_string_interface variable_string_interface = { 
 	opr_variable_string_dump,
@@ -237,14 +254,15 @@ const struct sieve_operand variable_string_operand = {
 };	
 
 void ext_variables_opr_variable_string_emit
-	(struct sieve_binary *sbin, unsigned int elements) 
+(struct sieve_binary *sbin, unsigned int elements) 
 {
 	(void) sieve_operand_emit_code(sbin, &variable_string_operand);
 	(void) sieve_binary_emit_integer(sbin, elements);
 }
 
 static bool opr_variable_string_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
+(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+	const char *field_name) 
 {
 	sieve_size_t elements = 0;
 	unsigned int i;
@@ -252,11 +270,15 @@ static bool opr_variable_string_dump
 	if (!sieve_binary_read_integer(denv->sbin, address, &elements) )
 		return FALSE;
 	
-	sieve_code_dumpf(denv, "VARSTR [%ld]:", (long) elements);
+	if ( field_name != NULL ) 
+		sieve_code_dumpf(denv, "%s: VARSTR [%ld]:", 
+			field_name, (long) elements);
+	else
+		sieve_code_dumpf(denv, "VARSTR [%ld]:", (long) elements);
 
 	sieve_code_descend(denv);
 	for ( i = 0; i < (unsigned int) elements; i++ ) {
-		sieve_opr_string_dump(denv, address);
+		sieve_opr_string_dump(denv, address, NULL);
 	}
 	sieve_code_ascend(denv);
 	
@@ -264,7 +286,7 @@ static bool opr_variable_string_dump
 }
 
 static bool opr_variable_string_read
-  (const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
+(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
 { 
 	sieve_size_t elements = 0;
 	unsigned int i;

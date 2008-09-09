@@ -200,7 +200,7 @@ static bool ext_reject_operation_dump
         return FALSE;
 	
 	return
-		sieve_opr_string_dump(denv, address);
+		sieve_opr_string_dump(denv, address, "reason");
 }
 
 /*

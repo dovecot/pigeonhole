@@ -143,7 +143,7 @@ static bool cmd_test_operation_dump
 	sieve_code_descend(denv);
 
 	return 
-		sieve_opr_string_dump(denv, address);
+		sieve_opr_string_dump(denv, address, "test name");
 }
 
 /*

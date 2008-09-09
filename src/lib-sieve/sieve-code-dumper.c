@@ -181,7 +181,7 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
 	if ( sieve_binary_read_integer(sbin, &dumper->pc, &ext_count) ) {
 		unsigned int i;
 		
-		sieve_code_dumpf(denv, "EXTENSIONS (count: %d):", ext_count);
+		sieve_code_dumpf(denv, "EXTENSIONS [%d]:", ext_count);
 		sieve_code_descend(denv);
 		
 		for ( i = 0; i < ext_count; i++ ) {

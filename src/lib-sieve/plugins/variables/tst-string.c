@@ -154,8 +154,8 @@ static bool tst_string_operation_dump
 		return FALSE;
 		
 	return
-		sieve_opr_stringlist_dump(denv, address) &&
-		sieve_opr_stringlist_dump(denv, address);
+		sieve_opr_stringlist_dump(denv, address, "source") &&
+		sieve_opr_stringlist_dump(denv, address, "key list");
 }
 
 /* 

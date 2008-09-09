@@ -193,7 +193,7 @@ static bool tst_test_error_operation_dump
 		case SIEVE_MATCH_OPT_END:
 			break;
 		case OPT_INDEX:
-			if ( !sieve_opr_number_dump(denv, address) )
+			if ( !sieve_opr_number_dump(denv, address, "index") )
 				return FALSE;
 			break;
 		default:
@@ -201,7 +201,7 @@ static bool tst_test_error_operation_dump
 		}
 	} while ( opt_code != SIEVE_MATCH_OPT_END );
 
-	return sieve_opr_stringlist_dump(denv, address);
+	return sieve_opr_stringlist_dump(denv, address, "key list");
 }
 
 /*

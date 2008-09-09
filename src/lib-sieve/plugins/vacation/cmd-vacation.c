@@ -499,20 +499,23 @@ static bool ext_vacation_operation_dump
 			case 0:
 				break;
 			case OPT_DAYS:
-				if ( !sieve_opr_number_dump(denv, address) )
+				if ( !sieve_opr_number_dump(denv, address, "days") )
 					return FALSE;
 				break;
 			case OPT_SUBJECT:
+				if ( !sieve_opr_string_dump(denv, address, "subject") )
+					return FALSE;
+				break;
 			case OPT_FROM:
-				if ( !sieve_opr_string_dump(denv, address) )
+				if ( !sieve_opr_string_dump(denv, address, "from") )
 					return FALSE;
 				break;
 			case OPT_ADDRESSES:
-				if ( !sieve_opr_stringlist_dump(denv, address) )
+				if ( !sieve_opr_stringlist_dump(denv, address, "addresses") )
 					return FALSE;
 				break;
 			case OPT_MIME:
-				sieve_code_dumpf(denv, "MIME");	
+				sieve_code_dumpf(denv, "mime");	
 				break;
 			
 			default:
@@ -523,8 +526,8 @@ static bool ext_vacation_operation_dump
 	
 	/* Dump reason and handle operands */
 	return 
-		sieve_opr_string_dump(denv, address) &&
-		sieve_opr_string_dump(denv, address);
+		sieve_opr_string_dump(denv, address, "reason") &&
+		sieve_opr_string_dump(denv, address, "handle");
 }
 
 /* 

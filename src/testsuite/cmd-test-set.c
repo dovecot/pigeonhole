@@ -93,7 +93,7 @@ static bool cmd_test_set_validate
 }
 
 /*
- * Generation
+ * Code generation
  */
  
 static bool cmd_test_set_generate
@@ -118,7 +118,7 @@ static bool cmd_test_set_operation_dump
 
 	return 
 		testsuite_object_dump(denv, address) &&
-		sieve_opr_string_dump(denv, address);
+		sieve_opr_string_dump(denv, address, "value");
 }
 
 /*

@@ -160,11 +160,7 @@ static bool ext_fileinto_operation_dump
 		return FALSE;
 	}
 
-	if ( !sieve_opr_string_dump(denv, address) ) {
-		return FALSE;
-	}
-	
-	return TRUE;
+	return sieve_opr_string_dump(denv, address, "folder");
 }
 
 /*

@@ -113,13 +113,13 @@ static bool cmd_test_fail_operation_dump
 	sieve_code_dumpf(denv, "TEST_FAIL:");
 	sieve_code_descend(denv);
 
-	if ( !sieve_opr_string_dump(denv, address) ) 
+	if ( !sieve_opr_string_dump(denv, address, "reason") ) 
 		return FALSE;
 
 	sieve_code_mark(denv);
 	pc = *address;
 	if ( sieve_binary_read_offset(denv->sbin, address, &offset) )
-		sieve_code_dumpf(denv, "OFFSET: %d [%08x]", offset, pc + offset);
+		sieve_code_dumpf(denv, "offset: %d [%08x]", offset, pc + offset);
 	else
 		return FALSE;
 
