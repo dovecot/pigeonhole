@@ -5,7 +5,6 @@ Next (in order of descending priority/precedence):
 	- Variables: dump variable identifiers in stead of storage indexes
 	- Improve argument errors
 * Make sure cmusieve can be replaced seamlessly with the new plugin.
-	- Add simple log rotation to script error log.
 * Fix/Report issues listed in 'doc/rfc/RFC Controversy.txt'
 
 * ## MAKE A FIRST RELEASE (0.1.x) ##

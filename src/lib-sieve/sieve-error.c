@@ -24,6 +24,9 @@
 	"internal error occurred: refer to server log for more information."
 #define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
 
+/* Logfile error handler will rotate log when it exceeds 10k bytes */
+#define LOGFILE_MAX_SIZE (10 * 1024)
+
 /*
  * Utility
  */
@@ -380,24 +383,68 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 {
 	int fd;
 	struct ostream *ostream = NULL;
+	struct stat st;
 	struct tm *tm;
 	char buf[256];
 	time_t now;
+
+	/* Open the logfile */
 
 	fd = open(ehandler->logfile, O_CREAT | O_APPEND | O_WRONLY, 0600);
 	if (fd == -1) {
 		sieve_sys_error("failed to open logfile %s (logging to STDERR): %m", 
 			ehandler->logfile);
 		fd = STDERR_FILENO;
+	} else {
+		/* fd_close_on_exec(fd, TRUE); Necessary? */
+
+		/* Stat the log file to obtain size information */
+		if ( fstat(fd, &st) != 0 ) {
+			sieve_sys_error(
+				"failed to fstat opened logfile %s (logging to STDERR): %m", 
+				ehandler->logfile);
+			
+			if ( close(fd) < 0 ) {
+				sieve_sys_error("close(fd) failed for logfile '%s': %m",
+					ehandler->logfile);
+			}
+
+			fd = STDERR_FILENO;
+		}
+		
+		/* Rotate log when it has grown too large */
+		if ( st.st_size >= LOGFILE_MAX_SIZE ) {
+			const char *rotated;
+			
+			/* Close open file */
+			if ( close(fd) < 0 ) {
+				sieve_sys_error("close(fd) failed for logfile '%s': %m",
+					ehandler->logfile);
+			}
+			
+			/* Rotate logfile */
+			rotated = t_strconcat(ehandler->logfile, ".0", NULL);
+			if ( rename(ehandler->logfile, rotated) < 0 ) {
+				sieve_sys_error(
+					"failed to rename logfile %s to %s: %m", 
+					ehandler->logfile, rotated);
+			}
+			
+			/* Open clean logfile (overwrites existing if rename() failed earlier) */
+			fd = open(ehandler->logfile, O_CREAT | O_WRONLY, 0600);
+			if (fd == -1) {
+				sieve_sys_error("failed to open logfile %s (logging to STDERR): %m", 
+					ehandler->logfile);
+				fd = STDERR_FILENO;
+			}
+		}
 	}
-	/* else
-		fd_close_on_exec(fd, TRUE); Necessary? */
 
 	ostream = o_stream_create_fd(fd, 0, FALSE);
 	if ( ostream == NULL ) {
 		/* Can't we do anything else in this most awkward situation? */
 		sieve_sys_error("failed to open log stream on open file %s: "
-			"normal messages will not be logged!", ehandler->logfile);
+			"non-critical messages will not be logged!", ehandler->logfile);
 	} 
 
 	ehandler->fd = fd;
