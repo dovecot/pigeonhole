@@ -2,6 +2,7 @@ Next (in order of descending priority/precedence):
 
 * Finish the test suite for the base functionality
 * Improve debugging and error handling:
+	- Variables: dump variable identifiers in stead of storage indexes
 	- Improve argument errors
 * Make sure cmusieve can be replaced seamlessly with the new plugin.
 	- Add simple log rotation to script error log.
