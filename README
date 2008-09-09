@@ -98,11 +98,10 @@ The main purpose of this package is to replace the existing cmusieve plugin that
 is currently available for Dovecot's deliver. With this respect it is currently 
 not very different from the cmusieve plugin implementation. 
 
-Unlike cmusieve, this sieve module logs runtime errors to <scriptfile>.log if it 
-can and not '<scriptfile>.err'. It appends new timestamped log entries to the 
-end of the logfile. I currently didn't bother to implement log rotation, so keep 
-this in mind. Some development-related debug output is sent to stderr/stdout at 
-all times, this will be removed when this project matures. 
+Unlike cmusieve, this sieve module logs runtime errors to <scriptfile>.log if 
+it can and not <scriptfile>.err. It appends new timestamped log entries to the 
+end of the logfile. If the log grows too large (currently > 10kB), the logfile 
+is rotated to <scriptfile>.log.0 and <scriptfile>.log starts empty again. 
 
 The cmusieve plugin compiled the script into a file with an appended c, e.g. 
 'test.sievec'. This new implementation recognizes scripts to have the .sieve 
