@@ -409,7 +409,7 @@ bool ext_variables_generator_load(const struct sieve_codegen_env *cgenv)
 	unsigned int count = sieve_variable_scope_size(main_scope);
 	sieve_size_t jump;
 
-	sieve_binary_emit_integer(cgenv->sbin, count);
+	sieve_binary_emit_unsigned(cgenv->sbin, count);
 
 	jump = sieve_binary_emit_offset(cgenv->sbin, 0);
 
@@ -440,15 +440,15 @@ bool ext_variables_code_dump
 	int end_offset;
 	
 	sieve_code_mark(denv);
-	if ( !sieve_binary_read_integer(denv->sbin, address, &scope_size) )
+	if ( !sieve_binary_read_unsigned(denv->sbin, address, &scope_size) )
 		return FALSE;
 		
 	pc = *address;	
 	if ( !sieve_binary_read_offset(denv->sbin, address, &end_offset) )
 		return FALSE;
 	
-	sieve_code_dumpf(denv, "SCOPE [%d] (end: %08x)", 
-		scope_size, pc + end_offset);
+	sieve_code_dumpf(denv, "SCOPE [%u] (end: %08x)", 
+		scope_size, (unsigned int) (pc + end_offset));
 	
 	/* Read global variable scope */
 	for ( i = 0; i < scope_size; i++ ) {
@@ -500,7 +500,7 @@ bool ext_variables_interpreter_load
 	sieve_size_t pc;
 	int end_offset;
 		
-	if ( !sieve_binary_read_integer(renv->sbin, address, &scope_size) ) {
+	if ( !sieve_binary_read_unsigned(renv->sbin, address, &scope_size) ) {
 		sieve_sys_error("variables: failed to read main scope size");
 		return FALSE;
 	}

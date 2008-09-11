@@ -18,14 +18,14 @@
 struct sieve_coded_stringlist;
 
 bool sieve_coded_stringlist_next_item
-	(struct sieve_coded_stringlist *strlist, string_t **str);
+	(struct sieve_coded_stringlist *strlist, string_t **str_r);
 void sieve_coded_stringlist_reset
 	(struct sieve_coded_stringlist *strlist);
 bool sieve_coded_stringlist_read_all
 	(struct sieve_coded_stringlist *strlist, pool_t pool,
 		const char * const **list_r);
 
-int sieve_coded_stringlist_get_length
+unsigned int sieve_coded_stringlist_get_length
 	(struct sieve_coded_stringlist *strlist);
 sieve_size_t sieve_coded_stringlist_get_end_address
 	(struct sieve_coded_stringlist *strlist);
@@ -42,7 +42,7 @@ bool sieve_code_source_line_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 bool sieve_code_source_line_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-    	unsigned int *source_line);
+    	unsigned int *source_line_r);
 
 /* 
  * Operand object
@@ -113,7 +113,7 @@ struct sieve_opr_number_interface {
 			const char *field_name);
 	bool (*read)
 	  (const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	  	sieve_size_t *number);
+	  	sieve_size_t *number_r);
 };
 
 struct sieve_opr_string_interface {
@@ -122,7 +122,7 @@ struct sieve_opr_string_interface {
 			const char *field_name);
 	bool (*read)
 		(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-			string_t **str);
+			string_t **str_r);
 };
 
 struct sieve_opr_stringlist_interface {
@@ -148,10 +148,10 @@ bool sieve_opr_number_dump
 		const char *field_name); 
 bool sieve_opr_number_read_data
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-		sieve_size_t *address, sieve_size_t *number);
+		sieve_size_t *address, sieve_size_t *number_r);
 bool sieve_opr_number_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-		sieve_size_t *number);
+		sieve_size_t *number_r);
 
 static inline bool sieve_operand_is_number
 (const struct sieve_operand *operand)
@@ -170,15 +170,15 @@ bool sieve_opr_string_dump
 		const char *field_name); 
 bool sieve_opr_string_dump_ex
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address, 
-		const char *field_name, bool *literal); 
+		const char *field_name, bool *literal_r); 
 bool sieve_opr_string_read_data
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-		sieve_size_t *address, string_t **str);
+		sieve_size_t *address, string_t **str_r);
 bool sieve_opr_string_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str_r);
 bool sieve_opr_string_read_ex
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str,
-		bool *literal);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str_r,
+		bool *literal_r);
 
 static inline bool sieve_operand_is_string
 (const struct sieve_operand *operand)

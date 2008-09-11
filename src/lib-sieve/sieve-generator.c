@@ -376,7 +376,7 @@ bool sieve_generator_run
 		
 	/* Load extensions linked to the AST and emit a list in code */
 	extensions = sieve_ast_extensions_get(gentr->genenv.ast, &ext_count);
-	(void) sieve_binary_emit_integer(*sbin, ext_count);
+	(void) sieve_binary_emit_unsigned(*sbin, ext_count);
 	for ( i = 0; i < ext_count; i++ ) {
 		const struct sieve_extension *ext = extensions[i];
 

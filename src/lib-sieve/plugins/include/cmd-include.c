@@ -235,7 +235,7 @@ static bool cmd_include_generate
  		return FALSE;
  		
  	(void)sieve_operation_emit_code(cgenv->sbin, &include_operation);
-	(void)sieve_binary_emit_integer(cgenv->sbin, included->id); 
+	(void)sieve_binary_emit_unsigned(cgenv->sbin, included->id); 
  	 		
 	return TRUE;
 }
@@ -255,7 +255,7 @@ static bool opc_include_dump
 	sieve_code_dumpf(denv, "INCLUDE:");
 	
 	sieve_code_mark(denv);
-	if ( !sieve_binary_read_integer(denv->sbin, address, &include_id) )
+	if ( !sieve_binary_read_unsigned(denv->sbin, address, &include_id) )
 		return FALSE;
 
 	binctx = ext_include_binary_get_context(denv->sbin);
@@ -280,7 +280,7 @@ static int opc_include_execute
 {
 	unsigned int include_id;
 		
-	if ( !sieve_binary_read_integer(renv->sbin, address, &include_id) ) {
+	if ( !sieve_binary_read_unsigned(renv->sbin, address, &include_id) ) {
 		sieve_runtime_trace_error(renv, "invalid include-id operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}

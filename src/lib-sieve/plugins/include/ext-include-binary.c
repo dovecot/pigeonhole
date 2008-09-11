@@ -207,12 +207,12 @@ static bool ext_include_binary_save(struct sieve_binary *sbin)
 
 	scripts = array_get(&binctx->include_index, &script_count);
 
-	sieve_binary_emit_integer(sbin, script_count);
+	sieve_binary_emit_unsigned(sbin, script_count);
 
 	for ( i = 0; i < script_count; i++ ) {
 		struct ext_include_script_info *incscript = scripts[i];
 
-		sieve_binary_emit_integer(sbin, incscript->block_id);
+		sieve_binary_emit_unsigned(sbin, incscript->block_id);
 		sieve_binary_emit_byte(sbin, incscript->location);
 		sieve_binary_emit_cstring(sbin, sieve_script_name(incscript->script));
 	}
@@ -237,7 +237,7 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 		
 	offset = 0;	
 		
-	if ( !sieve_binary_read_integer(sbin, &offset, &depcount) ) {
+	if ( !sieve_binary_read_unsigned(sbin, &offset, &depcount) ) {
 		sieve_sys_error("include: failed to read include count "
 			"for dependency block %d of binary %s", block, sieve_binary_path(sbin)); 
 		return FALSE;
@@ -261,7 +261,7 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 		struct sieve_script *script;
 		
 		if ( 
-			!sieve_binary_read_integer(sbin, &offset, &block_id) ||
+			!sieve_binary_read_unsigned(sbin, &offset, &block_id) ||
 			!sieve_binary_read_byte(sbin, &offset, &location) ||
 			!sieve_binary_read_string(sbin, &offset, &script_name) ) {
 			/* Binary is corrupt, recompile */

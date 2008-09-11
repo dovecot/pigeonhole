@@ -209,7 +209,7 @@ bool mod_lower_modify(string_t *in, string_t **result)
 bool mod_length_modify(string_t *in, string_t **result)
 {
 	*result = t_str_new(64);
-	str_printfa(*result, "%d", str_len(in));
+	str_printfa(*result, "%llu", (unsigned long long) str_len(in));
 
 	return TRUE;
 }

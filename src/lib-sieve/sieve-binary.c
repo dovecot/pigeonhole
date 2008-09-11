@@ -562,14 +562,14 @@ static bool _sieve_binary_save
 		return FALSE;
 		
 	ext_count = array_count(&sbin->linked_extensions);
-	sieve_binary_emit_integer(sbin, ext_count);
+	sieve_binary_emit_unsigned(sbin, ext_count);
 	
 	for ( i = 0; i < ext_count; i++ ) {
 		struct sieve_binary_extension_reg * const *ext
 			= array_idx(&sbin->linked_extensions, i);
 		
 		sieve_binary_emit_cstring(sbin, (*ext)->extension->name);
-		sieve_binary_emit_integer(sbin, (*ext)->block_id);
+		sieve_binary_emit_unsigned(sbin, (*ext)->block_id);
 	}
 	
 	if ( !sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM, NULL) )
@@ -979,14 +979,13 @@ static bool _load_block_index_record
 static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 {
 	sieve_size_t offset = 0;
-	sieve_size_t count = 0;
+	unsigned int i, count;
 	bool result = TRUE;
-	unsigned int i;
 	
 	if ( !sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_EXTENSIONS, NULL) ) 
 		return FALSE;
 
-	if ( !sieve_binary_read_integer(sbin, &offset, &count) )
+	if ( !sieve_binary_read_unsigned(sbin, &offset, &count) )
 		return FALSE;
 	
 	for ( i = 0; result && i < count; i++ ) {
@@ -1005,7 +1004,7 @@ static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 					struct sieve_binary_extension_reg *ereg = NULL;
 					
 					(void) sieve_binary_extension_register(sbin, ext, &ereg);
-					if ( !sieve_binary_read_integer(sbin, &offset, &ereg->block_id) )
+					if ( !sieve_binary_read_unsigned(sbin, &offset, &ereg->block_id) )
 						result = FALSE;
 				}
 			}	else
@@ -1471,11 +1470,11 @@ void sieve_binary_resolve_offset
  */
 
 sieve_size_t sieve_binary_emit_integer
-(struct sieve_binary *binary, sieve_size_t integer)
+(struct sieve_binary *binary, sieve_number_t integer)
 {
 	sieve_size_t address = _sieve_binary_get_code_size(binary);
 	int i;
-	char buffer[sizeof(sieve_size_t) + 1];
+	char buffer[sizeof(sieve_number_t) + 1];
 	int bufpos = sizeof(buffer) - 1;
   
 	buffer[bufpos] = integer & 0x7F;
@@ -1500,9 +1499,9 @@ sieve_size_t sieve_binary_emit_integer
 }
 
 static inline sieve_size_t sieve_binary_emit_dynamic_data
-	(struct sieve_binary *binary, const void *data, size_t size)
+	(struct sieve_binary *binary, const void *data, sieve_size_t size)
 {
-	sieve_size_t address = sieve_binary_emit_integer(binary, size);
+	sieve_size_t address = sieve_binary_emit_integer(binary, (sieve_number_t) size);
 
 	_sieve_binary_emit_data(binary, data, size);
   
@@ -1513,7 +1512,7 @@ sieve_size_t sieve_binary_emit_cstring
 	(struct sieve_binary *binary, const char *str)
 {
 	sieve_size_t address = sieve_binary_emit_dynamic_data
-		(binary, (void *) str, strlen(str));
+		(binary, (void *) str, (sieve_size_t) strlen(str));
 	_sieve_binary_emit_byte(binary, 0);
   
 	return address;
@@ -1523,7 +1522,7 @@ sieve_size_t sieve_binary_emit_string
 	(struct sieve_binary *binary, const string_t *str)
 {
 	sieve_size_t address = sieve_binary_emit_dynamic_data
-		(binary, (void *) str_data(str), str_len(str));
+		(binary, (void *) str_data(str), (sieve_size_t) str_len(str));
 	_sieve_binary_emit_byte(binary, 0);
 	
 	return address;
@@ -1565,38 +1564,38 @@ void sieve_binary_emit_extension_object
 /* Literals */
 
 bool sieve_binary_read_byte
-	(struct sieve_binary *binary, sieve_size_t *address, unsigned int *byte_val) 
+	(struct sieve_binary *binary, sieve_size_t *address, unsigned int *byte_r) 
 {	
 	if ( ADDR_BYTES_LEFT(binary, address) >= 1 ) {
-		if ( byte_val != NULL )
-			*byte_val = ADDR_DATA_AT(binary, address);
+		if ( byte_r != NULL )
+			*byte_r = ADDR_DATA_AT(binary, address);
 		ADDR_JUMP(address, 1);
 			
 		return TRUE;
 	}
 	
-	*byte_val = 0;
+	*byte_r = 0;
 	return FALSE;
 }
 
 bool sieve_binary_read_code
-	(struct sieve_binary *binary, sieve_size_t *address, int *code) 
+	(struct sieve_binary *binary, sieve_size_t *address, int *code_r) 
 {	
 	if ( ADDR_BYTES_LEFT(binary, address) >= 1 ) {
-		if ( code != NULL )
-			*code = ADDR_CODE_AT(binary, address);
+		if ( code_r != NULL )
+			*code_r = ADDR_CODE_AT(binary, address);
 		ADDR_JUMP(address, 1);
 			
 		return TRUE;
 	}
 	
-	*code = 0;
+	*code_r = 0;
 	return FALSE;
 }
 
 
 bool sieve_binary_read_offset
-	(struct sieve_binary *binary, sieve_size_t *address, int *offset) 
+	(struct sieve_binary *binary, sieve_size_t *address, int *offset_r) 
 {
 	uint32_t offs = 0;
 	
@@ -1608,8 +1607,8 @@ bool sieve_binary_read_offset
 			ADDR_JUMP(address, 1);
 		}
 	  
-		if ( offset != NULL )
-			*offset = (int) offs;
+		if ( offset_r != NULL )
+			*offset_r = (int) offs;
 			
 		return TRUE;
 	}
@@ -1617,21 +1616,22 @@ bool sieve_binary_read_offset
 	return FALSE;
 }
 
+/* FIXME: might need negative numbers in the future */
 bool sieve_binary_read_integer
-  (struct sieve_binary *binary, sieve_size_t *address, sieve_size_t *integer) 
+  (struct sieve_binary *binary, sieve_size_t *address, sieve_number_t *int_r) 
 {
-	int bits = sizeof(sieve_size_t) * 8;
-	*integer = 0;
+	int bits = sizeof(sieve_number_t) * 8;
+	*int_r = 0;
   
 	if ( ADDR_BYTES_LEFT(binary, address) == 0 )
 		return FALSE;
   
 	while ( (ADDR_DATA_AT(binary, address) & 0x80) > 0 ) {
 		if ( ADDR_BYTES_LEFT(binary, address) > 0 && bits > 0) {
-			*integer |= ADDR_DATA_AT(binary, address) & 0x7F;
+			*int_r |= ADDR_DATA_AT(binary, address) & 0x7F;
 			ADDR_JUMP(address, 1);
     
-			*integer <<= 7;
+			*int_r <<= 7;
 			bits -= 7;
 		} else {
 			/* This is an error */
@@ -1639,7 +1639,7 @@ bool sieve_binary_read_integer
 		}
 	}
   
-	*integer |= ADDR_DATA_AT(binary, address) & 0x7F;
+	*int_r |= ADDR_DATA_AT(binary, address) & 0x7F;
 	ADDR_JUMP(address, 1);
   
 	return TRUE;
@@ -1652,18 +1652,18 @@ static string_t *t_str_new_const(const char *str, size_t len)
 }
 
 bool sieve_binary_read_string
-(struct sieve_binary *binary, sieve_size_t *address, string_t **str) 
+(struct sieve_binary *binary, sieve_size_t *address, string_t **str_r) 
 {
-	sieve_size_t strlen = 0;
+	unsigned int strlen = 0;
   
-	if ( !sieve_binary_read_integer(binary, address, &strlen) ) 
+	if ( !sieve_binary_read_unsigned(binary, address, &strlen) ) 
 		return FALSE;
     	  
 	if ( strlen > ADDR_BYTES_LEFT(binary, address) ) 
 		return FALSE;
  
- 	if ( str != NULL )  
-		*str = t_str_new_const(&ADDR_CODE_AT(binary, address), strlen);
+ 	if ( str_r != NULL )  
+		*str_r = t_str_new_const(&ADDR_CODE_AT(binary, address), strlen);
 	ADDR_JUMP(address, strlen);
 	
 	if ( ADDR_CODE_AT(binary, address) != 0 )

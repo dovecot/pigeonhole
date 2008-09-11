@@ -26,13 +26,13 @@ struct sieve_coded_stringlist {
 	sieve_size_t start_address;
 	sieve_size_t end_address;
 	sieve_size_t current_offset;
-	int length;
-	int index;
+	unsigned int length;
+	unsigned int index;
 };
 
 static struct sieve_coded_stringlist *sieve_coded_stringlist_create
 (const struct sieve_runtime_env *renv, 
-	 sieve_size_t start_address, sieve_size_t length, sieve_size_t end)
+	 sieve_size_t start_address, unsigned int length, sieve_size_t end)
 {
 	struct sieve_coded_stringlist *strlist;
 	
@@ -51,17 +51,17 @@ static struct sieve_coded_stringlist *sieve_coded_stringlist_create
 }
 
 bool sieve_coded_stringlist_next_item
-(struct sieve_coded_stringlist *strlist, string_t **str) 
+(struct sieve_coded_stringlist *strlist, string_t **str_r) 
 {
 	sieve_size_t address;
-	*str = NULL;
+	*str_r = NULL;
   
 	if ( strlist->index >= strlist->length ) 
 		return TRUE;
 	else {
 		address = strlist->current_offset;
   	
-		if ( sieve_opr_string_read(strlist->runenv, &address, str) ) {
+		if ( sieve_opr_string_read(strlist->runenv, &address, str_r) ) {
 			strlist->index++;
 			strlist->current_offset = address;
 			return TRUE;
@@ -77,7 +77,7 @@ void sieve_coded_stringlist_reset(struct sieve_coded_stringlist *strlist)
 	strlist->index = 0;
 }
 
-int sieve_coded_stringlist_get_length
+unsigned int sieve_coded_stringlist_get_length
 (struct sieve_coded_stringlist *strlist)
 {
 	return strlist->length;
@@ -123,18 +123,19 @@ bool sieve_coded_stringlist_read_all
 
 static bool sieve_coded_stringlist_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address, 
-	sieve_size_t length, sieve_size_t end, const char *field_name)
+	unsigned int length, sieve_size_t end, const char *field_name)
 {
 	unsigned int i;
 	
 	if ( end > sieve_binary_get_code_size(denv->sbin) ) 
   		return FALSE;
     
-  if ( field_name != NULL )
-		sieve_code_dumpf(denv, "%s: STRLIST [%d] (end: %08x)", 
-			field_name, length, end);
+	if ( field_name != NULL )
+		sieve_code_dumpf(denv, "%s: STRLIST [%u] (end: %08llx)", 
+			field_name, length, (unsigned long long) end);
 	else
-		sieve_code_dumpf(denv, "STRLIST [%d] (end: %08x)", length, end);
+		sieve_code_dumpf(denv, "STRLIST [%u] (end: %08llx)", 
+			length, (unsigned long long) end);
 	
 	sieve_code_descend(denv);
 	
@@ -160,17 +161,17 @@ static bool sieve_coded_stringlist_dump
 void sieve_code_source_line_emit
 (struct sieve_binary *sbin, unsigned int source_line)
 {
-    (void)sieve_binary_emit_integer(sbin, source_line);
+    (void)sieve_binary_emit_unsigned(sbin, source_line);
 }
 
 bool sieve_code_source_line_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-    sieve_size_t number = 0;
+    unsigned int number = 0;
 
 	sieve_code_mark(denv);
-    if (sieve_binary_read_integer(denv->sbin, address, &number) ) {
-        sieve_code_dumpf(denv, "(source line: %ld)", (long) number);
+    if (sieve_binary_read_unsigned(denv->sbin, address, &number) ) {
+        sieve_code_dumpf(denv, "(source line: %lu)", (unsigned long) number);
 
         return TRUE;
     }
@@ -180,15 +181,9 @@ bool sieve_code_source_line_dump
 
 bool sieve_code_source_line_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address,
-	unsigned int *source_line)
+	unsigned int *source_line_r)
 {
-	sieve_size_t number;
-
-	if ( !sieve_binary_read_integer(renv->sbin, address, &number) )
-		return FALSE;
-
-	*source_line = number;
-	return TRUE;
+	return sieve_binary_read_unsigned(renv->sbin, address, source_line_r);
 }
 
 /*
@@ -291,7 +286,7 @@ static bool opr_number_dump
 		const char *field_name);
 static bool opr_number_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-		sieve_size_t *number);
+		sieve_size_t *number_r);
 
 const struct sieve_opr_number_interface number_interface = { 
 	opr_number_dump, 
@@ -314,7 +309,7 @@ static bool opr_string_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
 		const char *field_name);
 static bool opr_string_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str_r);
 
 const struct sieve_opr_string_interface string_interface ={ 
 	opr_string_dump,
@@ -360,7 +355,7 @@ const struct sieve_operand stringlist_operand =	{
  
 /* Number */
 
-void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_size_t number) 
+void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_number_t number) 
 {
 	(void) sieve_operand_emit_code(sbin, &number_operand);
 	(void) sieve_binary_emit_integer(sbin, number);
@@ -398,7 +393,7 @@ bool sieve_opr_number_dump
 
 bool sieve_opr_number_read_data
 (const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-	sieve_size_t *address, sieve_size_t *number)
+	sieve_size_t *address, sieve_size_t *number_r)
 {
 	const struct sieve_opr_number_interface *intf;
 		
@@ -410,29 +405,29 @@ bool sieve_opr_number_read_data
 	if ( intf->read == NULL )
 		return FALSE;
 
-	return intf->read(renv, address, number);  
+	return intf->read(renv, address, number_r);  
 }
 
 bool sieve_opr_number_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	sieve_size_t *number)
+	sieve_size_t *number_r)
 {
 	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
 		
-	return sieve_opr_number_read_data(renv, operand, address, number);
+	return sieve_opr_number_read_data(renv, operand, address, number_r);
 }
 
 static bool opr_number_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address,
 	const char *field_name) 
 {
-	sieve_size_t number = 0;
+	sieve_number_t number = 0;
 	
 	if (sieve_binary_read_integer(denv->sbin, address, &number) ) {
 		if ( field_name != NULL ) 
-			sieve_code_dumpf(denv, "%s: NUM %llu", field_name, (long long) number);
+			sieve_code_dumpf(denv, "%s: NUM %llu", field_name, (unsigned long long) number);
 		else
-			sieve_code_dumpf(denv, "NUM %llu", (long long) number);
+			sieve_code_dumpf(denv, "NUM %llu", (unsigned long long) number);
 
 		return TRUE;
 	}
@@ -442,9 +437,9 @@ static bool opr_number_dump
 
 static bool opr_number_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	sieve_size_t *number)
+	sieve_size_t *number_r)
 { 
-	return sieve_binary_read_integer(renv->sbin, address, number);
+	return sieve_binary_read_integer(renv->sbin, address, number_r);
 }
 
 /* String */
@@ -486,21 +481,21 @@ bool sieve_opr_string_dump
 
 bool sieve_opr_string_dump_ex
 (const struct sieve_dumptime_env *denv, sieve_size_t *address, 
-	const char *field_name, bool *literal)
+	const char *field_name, bool *literal_r)
 {
 	const struct sieve_operand *operand;
 	
 	sieve_code_mark(denv);
 	operand = sieve_operand_read(denv->sbin, address);
 
-	*literal = ( operand == &string_operand );	
+	*literal_r = ( operand == &string_operand );	
 
 	return sieve_opr_string_dump_data(denv, operand, address, field_name);
 } 
 
 bool sieve_opr_string_read_data
 (const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-	sieve_size_t *address, string_t **str)
+	sieve_size_t *address, string_t **str_r)
 {
 	const struct sieve_opr_string_interface *intf;
 	
@@ -512,26 +507,26 @@ bool sieve_opr_string_read_data
 	if ( intf->read == NULL )
 		return FALSE;
 
-	return intf->read(renv, address, str);  
+	return intf->read(renv, address, str_r);  
 }
 
 bool sieve_opr_string_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
+(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str_r)
 {
 	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
 
-	return sieve_opr_string_read_data(renv, operand, address, str);
+	return sieve_opr_string_read_data(renv, operand, address, str_r);
 }
 
 bool sieve_opr_string_read_ex
-(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str,
-	bool *literal)
+(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str_r,
+	bool *literal_r)
 {
 	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
 
-	*literal = ( operand == &string_operand );
+	*literal_r = ( operand == &string_operand );
 
-	return sieve_opr_string_read_data(renv, operand, address, str);
+	return sieve_opr_string_read_data(renv, operand, address, str_r);
 }
 
 static void _dump_string
@@ -571,9 +566,9 @@ bool opr_string_dump
 }
 
 static bool opr_string_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
+(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str_r)
 { 	
-	return sieve_binary_read_string(renv->sbin, address, str);
+	return sieve_binary_read_string(renv->sbin, address, str_r);
 }
 
 /* String list */
@@ -591,7 +586,7 @@ void sieve_opr_stringlist_emit_start
 	*context = (void *) end_offset;
 
 	/* Emit the length of the list */
-	(void) sieve_binary_emit_integer(sbin, (int) listlen);
+	(void) sieve_binary_emit_unsigned(sbin, listlen);
 }
 
 void sieve_opr_stringlist_emit_item
@@ -693,7 +688,7 @@ static bool opr_stringlist_dump
 {
 	sieve_size_t pc = *address;
 	sieve_size_t end; 
-	sieve_size_t length = 0; 
+	unsigned int length = 0; 
  	int end_offset;
 
 	if ( !sieve_binary_read_offset(denv->sbin, address, &end_offset) )
@@ -701,7 +696,7 @@ static bool opr_stringlist_dump
 
 	end = pc + end_offset;
 
-	if ( !sieve_binary_read_integer(denv->sbin, address, &length) ) 
+	if ( !sieve_binary_read_unsigned(denv->sbin, address, &length) ) 
 		return FALSE;	
   	
 	return sieve_coded_stringlist_dump(denv, address, length, end, field_name); 
@@ -713,7 +708,7 @@ static struct sieve_coded_stringlist *opr_stringlist_read
 	struct sieve_coded_stringlist *strlist;
 	sieve_size_t pc = *address;
 	sieve_size_t end; 
-	sieve_size_t length = 0;  
+	unsigned int length = 0;  
 	int end_offset;
 	
 	if ( !sieve_binary_read_offset(renv->sbin, address, &end_offset) )
@@ -721,10 +716,10 @@ static struct sieve_coded_stringlist *opr_stringlist_read
 
 	end = pc + end_offset;
 
-	if ( !sieve_binary_read_integer(renv->sbin, address, &length) ) 
-  	return NULL;	
+	if ( !sieve_binary_read_unsigned(renv->sbin, address, &length) ) 
+	  	return NULL;	
   	
-	strlist = sieve_coded_stringlist_create(renv, *address, length, end); 
+	strlist = sieve_coded_stringlist_create(renv, *address, (unsigned int) length, end); 
 
 	/* Skip over the string list for now */
 	*address = end;

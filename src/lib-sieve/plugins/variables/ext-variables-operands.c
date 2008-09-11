@@ -52,27 +52,27 @@ void ext_variables_opr_variable_emit
 		/* Default variable storage */
 		(void) sieve_operand_emit_code(sbin, &variable_operand);
 		(void) sieve_binary_emit_byte(sbin, 0);
-		(void) sieve_binary_emit_integer(sbin, var->index);
+		(void) sieve_binary_emit_unsigned(sbin, var->index);
 		return;
 	} 
 
 	(void) sieve_operand_emit_code(sbin, &variable_operand);
 	(void) sieve_binary_emit_extension(sbin, var->ext, 1);
-	(void) sieve_binary_emit_integer(sbin, var->index);
+	(void) sieve_binary_emit_unsigned(sbin, var->index);
 }
 
 static bool opr_variable_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address,
 	const char *field_name) 
 {
-	sieve_size_t index = 0;
+	unsigned int index = 0;
 	const struct sieve_extension *ext;
 	unsigned int code = 1; /* Initially set to offset value */
 
 	if ( !sieve_binary_read_extension(denv->sbin, address, &code, &ext) )
 		return FALSE;
 	
-	if ( !sieve_binary_read_integer(denv->sbin, address, &index) )
+	if ( !sieve_binary_read_unsigned(denv->sbin, address, &index) )
 		return FALSE;
 		
 	if ( ext == NULL ) {
@@ -97,7 +97,7 @@ static bool opr_variable_read_value
 	const struct sieve_extension *ext;
 	unsigned int code = 1; /* Initially set to offset value */
 	struct sieve_variable_storage *storage;
-	sieve_size_t index = 0;
+	unsigned int index = 0;
 	
 	if ( !sieve_binary_read_extension(renv->sbin, address, &code, &ext) )
 		return FALSE;
@@ -106,7 +106,7 @@ static bool opr_variable_read_value
 	if ( storage == NULL ) 
 		return FALSE;
 	
-	if (sieve_binary_read_integer(renv->sbin, address, &index) ) {
+	if (sieve_binary_read_unsigned(renv->sbin, address, &index) ) {
 		/* Parameter str can be NULL if we are requested to only skip and not 
 		 * actually read the argument.
 		 */
@@ -129,7 +129,7 @@ bool sieve_variable_operand_read_data
 {
 	const struct sieve_extension *ext;
 	unsigned int code = 1; /* Initially set to offset value */
-	sieve_size_t idx = 0;
+	unsigned int idx = 0;
 
 	if ( operand != &variable_operand ) {
 		return FALSE;
@@ -142,7 +142,7 @@ bool sieve_variable_operand_read_data
 	if ( *storage == NULL )	
 		return FALSE;
 	
-	if ( !sieve_binary_read_integer(renv->sbin, address, &idx) )
+	if ( !sieve_binary_read_unsigned(renv->sbin, address, &idx) )
 		return FALSE;		
 
 	*var_index = idx;
@@ -186,20 +186,20 @@ void ext_variables_opr_match_value_emit
 (struct sieve_binary *sbin, unsigned int index) 
 {
 	(void) sieve_operand_emit_code(sbin, &match_value_operand);
-	(void) sieve_binary_emit_integer(sbin, index);
+	(void) sieve_binary_emit_unsigned(sbin, index);
 }
 
 static bool opr_match_value_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address,
 	const char *field_name) 
 {
-	sieve_size_t index = 0;
+	unsigned int index = 0;
 	
-	if (sieve_binary_read_integer(denv->sbin, address, &index) ) {
+	if (sieve_binary_read_unsigned(denv->sbin, address, &index) ) {
 		if ( field_name != NULL )
-			sieve_code_dumpf(denv, "%s: MATCHVAL %ld", field_name, (long) index);
+			sieve_code_dumpf(denv, "%s: MATCHVAL %lu", field_name, (unsigned long) index);
 		else
-			sieve_code_dumpf(denv, "MATCHVAL %ld", (long) index);
+			sieve_code_dumpf(denv, "MATCHVAL %lu", (unsigned long) index);
 
 		return TRUE;
 	}
@@ -210,14 +210,14 @@ static bool opr_match_value_dump
 static bool opr_match_value_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
 { 
-	sieve_size_t index = 0;
+	unsigned int index = 0;
 			
-	if (sieve_binary_read_integer(renv->sbin, address, &index) ) {
+	if (sieve_binary_read_unsigned(renv->sbin, address, &index) ) {
 		/* Parameter str can be NULL if we are requested to only skip and not 
 		 * actually read the argument.
 		 	*/
 		if ( str != NULL ) {
-			sieve_match_values_get(renv->interp, (unsigned int) index, str);
+			sieve_match_values_get(renv->interp, index, str);
 		
 			if ( *str == NULL ) 
 				*str = t_str_new(0);
@@ -257,17 +257,17 @@ void ext_variables_opr_variable_string_emit
 (struct sieve_binary *sbin, unsigned int elements) 
 {
 	(void) sieve_operand_emit_code(sbin, &variable_string_operand);
-	(void) sieve_binary_emit_integer(sbin, elements);
+	(void) sieve_binary_emit_unsigned(sbin, elements);
 }
 
 static bool opr_variable_string_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address,
 	const char *field_name) 
 {
-	sieve_size_t elements = 0;
+	unsigned int elements = 0;
 	unsigned int i;
 	
-	if (!sieve_binary_read_integer(denv->sbin, address, &elements) )
+	if (!sieve_binary_read_unsigned(denv->sbin, address, &elements) )
 		return FALSE;
 	
 	if ( field_name != NULL ) 
@@ -288,10 +288,10 @@ static bool opr_variable_string_dump
 static bool opr_variable_string_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
 { 
-	sieve_size_t elements = 0;
+	unsigned int elements = 0;
 	unsigned int i;
 		
-	if ( !sieve_binary_read_integer(renv->sbin, address, &elements) )
+	if ( !sieve_binary_read_unsigned(renv->sbin, address, &elements) )
 		return FALSE;
 
 	/* Parameter str can be NULL if we are requested to only skip and not 
