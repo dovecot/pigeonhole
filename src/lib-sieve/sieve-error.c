@@ -431,7 +431,7 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 			}
 			
 			/* Open clean logfile (overwrites existing if rename() failed earlier) */
-			fd = open(ehandler->logfile, O_CREAT | O_WRONLY, 0600);
+			fd = open(ehandler->logfile, O_CREAT | O_WRONLY | O_TRUNC, 0600);
 			if (fd == -1) {
 				sieve_sys_error("failed to open logfile %s (logging to STDERR): %m", 
 					ehandler->logfile);
