@@ -65,9 +65,16 @@ COUNT_MATCH_TYPE(ne, REL_MATCH_NOT_EQUAL);
  * Match-type implementation 
  */
 
+struct mcht_count_context {
+	unsigned int count;
+};
+
 static void mcht_count_match_init(struct sieve_match_context *mctx)
 {
-	mctx->data = (void *) 0;
+	struct mcht_count_context *cctx = t_new(struct mcht_count_context, 1);
+
+	cctx->count = 0;
+	mctx->data = (void *) cctx;
 }
 
 static int mcht_count_match
@@ -81,7 +88,10 @@ static int mcht_count_match
 
 	/* Count values */
 	if ( key_index == -1 ) {
-		mctx->data = (void *) (((int) mctx->data) + 1);
+		struct mcht_count_context *cctx = 
+			(struct mcht_count_context *) mctx->data;
+
+		cctx->count++;
 	}
 
 	return FALSE;
@@ -89,14 +99,15 @@ static int mcht_count_match
 
 static int mcht_count_match_deinit(struct sieve_match_context *mctx)
 {
-	unsigned int val_count = (unsigned int) mctx->data;
+	struct mcht_count_context *cctx =
+            (struct mcht_count_context *) mctx->data;
 	int key_index;
 	string_t *key_item;
     sieve_coded_stringlist_reset(mctx->key_list);
 	bool ok = TRUE;
 
 	string_t *value = t_str_new(20);
-	str_printfa(value, "%d", val_count);
+	str_printfa(value, "%d", cctx->count);
 
     /* Match to all key values */
     key_index = 0;
