@@ -302,7 +302,8 @@ static int opc_import_execute
 		}
 		
 		if ( index >= var_count ) {
-			sieve_runtime_trace_error(renv, "invalid global variable index");
+			sieve_runtime_trace_error(renv, "invalid global variable index (%u > %u)",
+				index, var_count);
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 		
