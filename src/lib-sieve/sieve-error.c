@@ -352,6 +352,8 @@ static void sieve_logfile_vprintf
 	const char *prefix,	const char *fmt, va_list args) 
 {
 	string_t *outbuf;
+	ssize_t ret = 0, remain;
+	const char *data;
 	
 	if ( ehandler->stream == NULL ) return;
 	
@@ -363,8 +365,22 @@ static void sieve_logfile_vprintf
 		str_vprintfa(outbuf, fmt, args);
 		str_append(outbuf, ".\n");
 	
-		o_stream_send(ehandler->stream, str_data(outbuf), str_len(outbuf));
+		remain = str_len(outbuf);
+		data = (const char *) str_data(outbuf);
+
+		while ( remain > 0 ) { 
+			if ( (ret=o_stream_send(ehandler->stream, data, remain)) < 0 )
+				break;
+
+			remain -= ret;
+			data = PTR_OFFSET(data, ret);
+		}
 	} T_END;
+
+	if ( ret < 0 ) {
+		sieve_sys_error(
+			"o_stream_send() failed on logfile %s: %m",	ehandler->logfile);		
+	}
 }
 
 inline static void sieve_logfile_printf
