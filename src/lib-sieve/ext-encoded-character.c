@@ -234,7 +234,7 @@ bool arg_encoded_string_validate
 					/* We now know that the substitution is valid */	
 
 					if ( error_hex != 0 ) {
-						sieve_command_validate_error(validator, cmd, 
+						sieve_argument_validate_error(validator, *arg, 
 							"invalid unicode character 0x%08x in encoded character substitution",
 							error_hex);
 						result = FALSE;

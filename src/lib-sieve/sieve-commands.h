@@ -36,6 +36,13 @@ struct sieve_argument {
 #define sieve_argument_is_string_literal(arg) \
 	( (arg)->argument == &string_argument )
 
+/* Error handling */
+
+#define sieve_argument_validate_error(validator, arg_node, ...) \
+	sieve_validator_error(validator, (arg_node)->source_line, __VA_ARGS__)
+#define sieve_argument_validate_warning(validator, arg_node, ...) \
+	sieve_validator_warning(validator, (arg_node)->source_line, __VA_ARGS__)
+
 /* Literal arguments */
 
 extern const struct sieve_argument number_argument;

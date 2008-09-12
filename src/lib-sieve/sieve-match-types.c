@@ -366,6 +366,7 @@ static bool tag_match_type_is_instance_of
 	/* Create context */
 	mtctx = p_new(sieve_command_pool(cmd), struct sieve_match_type_context, 1);
 	mtctx->match_type = mtch;
+	mtctx->match_type_arg = arg;
 	mtctx->command_ctx = cmd;
 	mtctx->comparator = NULL; /* Can be filled in later */
 	
@@ -498,7 +499,7 @@ const struct sieve_operand match_type_operand = {
  */
 
 bool sieve_match_substring_validate_context
-(struct sieve_validator *validator, struct sieve_ast_argument *arg ATTR_UNUSED,
+(struct sieve_validator *validator, struct sieve_ast_argument *arg,
 	struct sieve_match_type_context *ctx,
 	struct sieve_ast_argument *key_arg ATTR_UNUSED)
 {
@@ -508,7 +509,7 @@ bool sieve_match_substring_validate_context
 		return TRUE;
 			
 	if ( (cmp->flags & SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH) == 0 ) {
-		sieve_command_validate_error(validator, ctx->command_ctx,
+		sieve_argument_validate_error(validator, arg,
 			"the specified %s comparator does not support "
 			"sub-string matching as required by the :%s match type",
 			cmp->object.identifier, ctx->match_type->object.identifier );

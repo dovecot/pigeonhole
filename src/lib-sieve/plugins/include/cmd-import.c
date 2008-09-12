@@ -150,7 +150,7 @@ static bool cmd_import_validate
 		}
 	} else {
 		/* Something else */
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(validator, arg, 
 			"the %s command accepts a single string or string list argument, "
 			"but %s was found", cmd->command->identifier,
 			sieve_ast_argument_name(arg));
@@ -164,6 +164,7 @@ static bool cmd_import_validate
 			(prev_context->first_positional, cmd->first_positional);
 		
 		if ( prev_context->first_positional == NULL ) {
+			/* Not going to happen unless MAXINT stringlist items are specified */
 			sieve_command_validate_error(validator, cmd, 
 				"compiler reached AST limit (script too complex)");
 			return FALSE;

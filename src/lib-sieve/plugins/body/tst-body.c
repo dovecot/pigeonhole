@@ -134,7 +134,7 @@ static bool tag_body_transform_validate
 	 *     / :text
 	 */
 	if ( (bool) cmd->data ) {
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(validator, *arg, 
 			"the :raw, :content and :text arguments for the body test are mutually "
 			"exclusive, but more than one was specified");
 		return FALSE;

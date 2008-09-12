@@ -54,7 +54,7 @@ bool ext_imapflags_command_validate
 	if ( sieve_ast_argument_type(arg) != SAAT_STRING && 
 		sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) 
 	{
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(validator, arg, 
 			"the %s %s expects either a string (variable name) or "
 			"a string-list (list of flags) as first argument, but %s was found", 
 			cmd->command->identifier, sieve_command_type_name(cmd->command),
@@ -70,14 +70,14 @@ bool ext_imapflags_command_validate
 		{
 			if ( cmd->command == &tst_hasflag ) {
 				if ( sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
-					sieve_command_validate_error(validator, cmd, 
+					sieve_argument_validate_error(validator, arg, 
 						"if a second argument is specified for the hasflag, the first "
 						"must be a string-list (variable-list), but %s was found",
 						sieve_ast_argument_name(arg));
 					return FALSE;
 				}
 			} else {
-				sieve_command_validate_error(validator, cmd, 
+				sieve_argument_validate_error(validator, arg, 
 					"if a second argument is specified for the %s %s, the first "
 					"must be a string (variable name), but %s was found",
 					cmd->command->identifier, sieve_command_type_name(cmd->command), 
@@ -89,7 +89,7 @@ bool ext_imapflags_command_validate
 		/* Then, check whether the second argument is permitted */
 		
 		if ( !sieve_ext_variables_is_active(validator) )	{
-			sieve_command_validate_error(validator, cmd, 
+			sieve_argument_validate_error(validator,arg, 
 				"the %s %s only allows for the specification of a "
 				"variable name when the variables extension is active",
 				cmd->command->identifier, sieve_command_type_name(cmd->command));
@@ -103,7 +103,7 @@ bool ext_imapflags_command_validate
 		if ( sieve_ast_argument_type(arg2) != SAAT_STRING && 
 			sieve_ast_argument_type(arg2) != SAAT_STRING_LIST ) 
 		{
-			sieve_command_validate_error(validator, cmd, 
+			sieve_argument_validate_error(validator, arg2, 
 				"the %s %s expects a string list (list of flags) as "
 				"second argument when two arguments are specified, "
 				"but %s was found",
@@ -126,7 +126,7 @@ bool ext_imapflags_command_validate
 
 		while ( (flag=ext_imapflags_iter_get_flag(&fiter)) != NULL ) {
 			if ( !flag_is_valid(flag) ) {
-				sieve_command_validate_warning(validator, cmd,
+				sieve_argument_validate_warning(validator, arg,
                 	"IMAP flag '%s' specified for the %s command is invalid "
 					"and will be ignored (only first invalid is reported)",					
 					str_sanitize(flag, 64), cmd->command->identifier);

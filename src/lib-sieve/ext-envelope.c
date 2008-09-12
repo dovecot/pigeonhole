@@ -250,7 +250,7 @@ static bool tst_envelope_validate
 	if ( !sieve_ast_stringlist_map(&epart, (void *) &not_address, 
 		_envelope_part_is_supported) ) {		
 		
-		sieve_command_validate_error(validator, tst, 
+		sieve_argument_validate_error(validator, epart, 
 			"specified envelope part '%s' is not supported by the envelope test", 
 				str_sanitize(sieve_ast_strlist_strc(epart), 64));
 		return FALSE;
@@ -261,7 +261,7 @@ static bool tst_envelope_validate
 			sieve_command_find_argument(tst, &address_part_tag);
 
 		if ( addrp_arg != NULL ) {
-			sieve_command_validate_error(validator, tst,
+			sieve_argument_validate_error(validator, addrp_arg,
 				"address part ':%s' specified while non-address envelope part '%s' "
 				"is tested with the envelope test",
                 sieve_ast_argument_tag(addrp_arg), not_address->identifier);

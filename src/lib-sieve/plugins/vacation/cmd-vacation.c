@@ -282,7 +282,7 @@ static bool cmd_vacation_validate_string_tag
 	 			result = sieve_address_validate(address, &error);
 	 
 				if ( !result ) {
-					sieve_command_validate_error(validator, cmd, 
+					sieve_argument_validate_error(validator, *arg, 
 						"specified :from address '%s' is invalid for vacation action: %s", 
 						str_sanitize(str_c(address), 128), error);
 				}

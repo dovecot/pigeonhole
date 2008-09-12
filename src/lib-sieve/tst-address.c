@@ -147,7 +147,7 @@ static bool tst_address_validate
 	 */
 	header = arg;
 	if ( !sieve_ast_stringlist_map(&header, NULL, _header_is_allowed) ) {		
-		sieve_command_validate_error(validator, tst, 
+		sieve_argument_validate_error(validator, header, 
 			"specified header '%s' is not allowed for the address test", 
 			str_sanitize(sieve_ast_strlist_strc(header), 64));
 		return FALSE;

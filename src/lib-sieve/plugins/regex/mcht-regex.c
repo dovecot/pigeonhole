@@ -85,14 +85,15 @@ static const char *_regexp_error(regex_t *regexp, int errorcode)
 }
 
 static int mcht_regex_validate_regexp
-(struct sieve_validator *validator, struct sieve_match_type_context *ctx,
+(struct sieve_validator *validator, 
+	struct sieve_match_type_context *ctx ATTR_UNUSED,
 	struct sieve_ast_argument *key, int cflags) 
 {
 	int ret;
 	regex_t regexp;
 
 	if ( (ret=regcomp(&regexp, sieve_ast_argument_strc(key), cflags)) != 0 ) {
-		sieve_command_validate_error(validator, ctx->command_ctx,
+		sieve_argument_validate_error(validator, key,
 			"invalid regular expression for regex match: %s", 
 			_regexp_error(&regexp, ret));
 
@@ -116,7 +117,7 @@ static int mcht_regex_validate_key_argument
 	struct _regex_key_context *keyctx = (struct _regex_key_context *) context;
 
 	if ( !sieve_argument_is_string_literal(key) ) {
-		sieve_command_validate_error(keyctx->valdtr, keyctx->mctx->command_ctx,
+		sieve_argument_validate_error(keyctx->valdtr, key,
 			"this sieve implementation currently does not accept variable strings "
 			"as regular expression");
 		return FALSE;
@@ -141,7 +142,7 @@ bool mcht_regex_validate_context
 		else if ( cmp == &i_octet_comparator )
 			cflags =  REG_EXTENDED | REG_NOSUB;
 		else {
-			sieve_command_validate_error(validator, ctx->command_ctx, 
+			sieve_argument_validate_error(validator, ctx->match_type_arg, 
 				"regex match type only supports "
 				"i;octet and i;ascii-casemap comparators" );
 			return FALSE;	

@@ -207,7 +207,7 @@ bool testsuite_object_argument_activate
 	
 	object = testsuite_object_find(valdtr, objname);
 	if ( object == NULL ) {
-		sieve_command_validate_error(valdtr, cmd, 
+		sieve_argument_validate_error(valdtr, arg, 
 			"unknown testsuite object '%s'", objname);
 		return FALSE;
 	}
@@ -218,7 +218,7 @@ bool testsuite_object_argument_activate
 	if ( member != NULL ) {
 		if ( object->get_member_id == NULL || 
 			(member_id=object->get_member_id(member)) == -1 ) {
-			sieve_command_validate_error(valdtr, cmd, 
+			sieve_argument_validate_error(valdtr, arg, 
 				"member '%s' does not exist for testsuite object '%s'", member, objname);
 			return FALSE;
 		}

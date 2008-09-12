@@ -133,7 +133,7 @@ static bool tag_modifier_validate
 			array_idx(&sctx->modifiers, i);
 	
 		if ( (*smdf)->precedence == modf->precedence ) {
-			sieve_command_validate_error(validator, cmd, 
+			sieve_argument_validate_error(validator, *arg, 
 				"modifiers :%s and :%s specified for the set command conflict "
 				"having equal precedence", 
 				(*smdf)->object.identifier, modf->object.identifier);

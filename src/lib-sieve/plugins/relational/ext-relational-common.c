@@ -52,7 +52,7 @@ bool mcht_relational_validate
 	 
 	/* Did we get a string in the first place ? */ 
 	if ( (*arg)->type != SAAT_STRING ) {
-		sieve_command_validate_error(validator, ctx->command_ctx, 
+		sieve_argument_validate_error(validator, *arg, 
 			"the :%s match-type requires a constant string argument being "
 			"one of \"gt\", \"ge\", \"lt\", \"le\", \"eq\" or \"ne\", "
 			"but %s was found", 
@@ -114,7 +114,7 @@ bool mcht_relational_validate
 	}
 	
 	if ( rel_match >= REL_MATCH_INVALID ) {
-		sieve_command_validate_error(validator, ctx->command_ctx, 
+		sieve_argument_validate_error(validator, *arg, 
 			"the :%s match-type requires a constant string argument being "
 			"one of \"gt\", \"ge\", \"lt\", \"le\", \"eq\" or \"ne\", "
 			"but \"%s\" was found", 

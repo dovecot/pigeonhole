@@ -113,7 +113,7 @@ static bool cmd_include_validate_location_tag
 		(struct cmd_include_context_data *) cmd->data;
 	
 	if ( ctx_data->location_assigned) {
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(validator, *arg, 
 			"include: cannot use location tags ':personal' and ':global' "
 			"multiple times");
 		return FALSE;
@@ -186,7 +186,7 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	script_name = sieve_ast_argument_strc(arg);
 
 	if ( strchr(script_name, '/') != NULL ) {
- 		sieve_command_validate_error(validator, cmd,
+ 		sieve_argument_validate_error(validator, arg,
 			"include: '/' not allowed in script name (%s)",
 			str_sanitize(script_name, 80));
 		return FALSE;
@@ -195,7 +195,7 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	script_dir = ext_include_get_script_directory
 		(ctx_data->location, script_name);
 	if ( script_dir == NULL ) {
-		sieve_command_validate_error(validator, cmd,
+		sieve_argument_validate_error(validator, arg,
 			"include: specified location for included script '%s' is unavailable "
 			"(system logs should provide more information)",
 			str_sanitize(script_name, 80));

@@ -87,7 +87,7 @@ static bool tst_size_validate_over_tag
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) tst->data;	
 	
 	if ( ctx_data->type != SIZE_UNASSIGNED ) {
-		sieve_command_validate_error(validator, tst, TST_SIZE_ERROR_DUP_TAG);
+		sieve_argument_validate_error(validator, *arg, TST_SIZE_ERROR_DUP_TAG);
 		return FALSE;		
 	}
 	
@@ -106,7 +106,7 @@ static bool tst_size_validate_under_tag
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) tst->data;	
 	
 	if ( ctx_data->type != SIZE_UNASSIGNED ) {
-		sieve_command_validate_error(validator, tst, TST_SIZE_ERROR_DUP_TAG);
+		sieve_argument_validate_error(validator, *arg, TST_SIZE_ERROR_DUP_TAG);
 		return FALSE;		
 	}
 	
