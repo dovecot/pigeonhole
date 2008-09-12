@@ -229,7 +229,7 @@ static int tst_test_error_operation_execute
 
 	/* Handle optional operands */
 	do {
-		sieve_size_t number; 
+		sieve_number_t number; 
 
 		if ( (ret=sieve_match_read_optional_operands
 			(renv, address, &opt_code, &cmp, &mtch)) <= 0 )

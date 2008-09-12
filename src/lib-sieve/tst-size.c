@@ -224,7 +224,7 @@ static bool tst_size_operation_dump
  */
 
 static inline bool tst_size_get
-(const struct sieve_runtime_env *renv, sieve_size_t *size) 
+(const struct sieve_runtime_env *renv, sieve_number_t *size) 
 {
 	uoff_t psize;
 
@@ -240,7 +240,7 @@ static int tst_size_operation_execute
 (const struct sieve_operation *op,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	sieve_size_t mail_size, limit;
+	sieve_number_t mail_size, limit;
 		
 	/* Read size limit */
 	if ( !sieve_opr_number_read(renv, address, &limit) ) {

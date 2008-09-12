@@ -198,7 +198,7 @@ const struct sieve_action act_vacation = {
 struct act_vacation_context {
 	const char *reason;
 
-	sieve_size_t days;
+	sieve_number_t days;
 	const char *subject;
 	const char *handle;
 	bool mime;
@@ -542,7 +542,7 @@ static int ext_vacation_operation_execute
 	struct act_vacation_context *act;
 	pool_t pool;
 	int opt_code = 1;
-	sieve_size_t days = 7;
+	sieve_number_t days = 7;
 	bool mime = FALSE;
 	struct sieve_coded_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
