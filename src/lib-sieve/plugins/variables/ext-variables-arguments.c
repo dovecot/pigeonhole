@@ -129,7 +129,7 @@ static bool _sieve_variable_argument_activate
 							(validator, cmd, cur_element->num_variable);
 					} else {
 						arg->argument = &match_value_argument;
-						arg->context = (void *) cur_element->num_variable;
+						arg->context = POINTER_CAST(cur_element->num_variable);
 										
 						result = TRUE;
 					}
@@ -180,6 +180,7 @@ bool sieve_variable_argument_activate
 				return FALSE;
 			
 			stritem = sieve_ast_strlist_next(stritem);
+
 		}
 		
 		arg->argument = &string_list_argument;
@@ -224,7 +225,7 @@ static struct sieve_ast_argument *ext_variables_match_value_argument_create
 	arg = sieve_ast_argument_create(ast, source_line);
 	arg->type = SAAT_STRING;
 	arg->argument = &match_value_argument;
-	arg->context = (void *) index;
+	arg->context = POINTER_CAST(index);
 	
 	return arg;
 }
@@ -233,7 +234,7 @@ static bool arg_match_value_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *context ATTR_UNUSED)
 {
-	unsigned int index = (unsigned int) arg->context;
+	unsigned int index = POINTER_CAST_TO(arg->context, unsigned int);
 	
 	ext_variables_opr_match_value_emit(cgenv->sbin, index);
 
