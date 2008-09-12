@@ -139,7 +139,7 @@ struct sieve_opr_stringlist_interface {
 
 /* Number */
 
-void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_size_t number);
+void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_number_t number);
 bool sieve_opr_number_dump_data	
 	(const struct sieve_dumptime_env *denv, const struct sieve_operand *operand,
 		sieve_size_t *address, const char *field_name); 

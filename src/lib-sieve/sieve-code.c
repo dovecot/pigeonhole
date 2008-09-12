@@ -286,7 +286,7 @@ static bool opr_number_dump
 		const char *field_name);
 static bool opr_number_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-		sieve_size_t *number_r);
+		sieve_number_t *number_r);
 
 const struct sieve_opr_number_interface number_interface = { 
 	opr_number_dump, 
@@ -437,7 +437,7 @@ static bool opr_number_dump
 
 static bool opr_number_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	sieve_size_t *number_r)
+	sieve_number_t *number_r)
 { 
 	return sieve_binary_read_integer(renv->sbin, address, number_r);
 }
