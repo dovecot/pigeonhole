@@ -113,7 +113,7 @@ struct sieve_opr_number_interface {
 			const char *field_name);
 	bool (*read)
 	  (const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	  	sieve_size_t *number_r);
+	  	sieve_number_t *number_r);
 };
 
 struct sieve_opr_string_interface {
