@@ -148,10 +148,10 @@ bool sieve_opr_number_dump
 		const char *field_name); 
 bool sieve_opr_number_read_data
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-		sieve_size_t *address, sieve_size_t *number_r);
+		sieve_size_t *address, sieve_number_t *number_r);
 bool sieve_opr_number_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-		sieve_size_t *number_r);
+		sieve_number_t *number_r);
 
 static inline bool sieve_operand_is_number
 (const struct sieve_operand *operand)

@@ -393,7 +393,7 @@ bool sieve_opr_number_dump
 
 bool sieve_opr_number_read_data
 (const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-	sieve_size_t *address, sieve_size_t *number_r)
+	sieve_size_t *address, sieve_number_t *number_r)
 {
 	const struct sieve_opr_number_interface *intf;
 		
@@ -410,7 +410,7 @@ bool sieve_opr_number_read_data
 
 bool sieve_opr_number_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	sieve_size_t *number_r)
+	sieve_number_t *number_r)
 {
 	const struct sieve_operand *operand = sieve_operand_read(renv->sbin, address);
 		
