@@ -52,13 +52,13 @@ struct sieve_script *sieve_validator_script
  */
 
 void sieve_validator_warning
-	(struct sieve_validator *validator, struct sieve_ast_node *node, 
+	(struct sieve_validator *validator, unsigned int source_line, 
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_validator_error
-	(struct sieve_validator *validator, struct sieve_ast_node *node, 
+	(struct sieve_validator *validator, unsigned int source_line, 
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_validator_critical
-	(struct sieve_validator *validator, struct sieve_ast_node *node, 
+	(struct sieve_validator *validator, unsigned int source_line, 
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 		
 /* 

@@ -98,35 +98,42 @@ struct sieve_validator {
  */
 
 void sieve_validator_warning
-(struct sieve_validator *validator, struct sieve_ast_node *node, 
+(struct sieve_validator *validator, unsigned int source_line, 
 	const char *fmt, ...) 
 { 
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_ast_error(validator->ehandler, sieve_vwarning, node, fmt, args);
+	sieve_vwarning(validator->ehandler, 
+		sieve_error_script_location(validator->script, source_line),
+		fmt, args);
 	va_end(args);
+	
 }
  
 void sieve_validator_error
-(struct sieve_validator *validator, struct sieve_ast_node *node, 
+(struct sieve_validator *validator, unsigned int source_line, 
 	const char *fmt, ...) 
 {
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_ast_error(validator->ehandler, sieve_verror, node, fmt, args);
+	sieve_verror(validator->ehandler, 
+		sieve_error_script_location(validator->script, source_line),
+		fmt, args);
 	va_end(args);
 }
 
 void sieve_validator_critical
-(struct sieve_validator *validator, struct sieve_ast_node *node, 
+(struct sieve_validator *validator, unsigned int source_line, 
 	const char *fmt, ...) 
 {
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_ast_error(validator->ehandler, sieve_vcritical, node, fmt, args);
+	sieve_vcritical(validator->ehandler, 
+		sieve_error_script_location(validator->script, source_line),
+		fmt, args);
 	va_end(args);
 }
 
@@ -968,7 +975,7 @@ static bool sieve_validate_command
 				(command->type == SCT_TEST && ast_type == SAT_COMMAND) ) 
 			{
 				sieve_validator_error(
-					valdtr, cmd_node, "attempted to use %s '%s' as %s", 
+					valdtr, cmd_node->source_line, "attempted to use %s '%s' as %s", 
 					sieve_command_type_name(command), cmd_node->identifier,
 					sieve_ast_type_name(ast_type));
 			
@@ -1011,7 +1018,7 @@ static bool sieve_validate_command
 				
 	} else {
 		sieve_validator_error(
-			valdtr, cmd_node, 
+			valdtr, cmd_node->source_line, 
 			"unknown %s '%s' (only reported once at first occurence)", 
 			sieve_ast_type_name(ast_type), cmd_node->identifier);
 			

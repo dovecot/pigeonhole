@@ -200,12 +200,6 @@ void sieve_ast_extension_register
 void *sieve_ast_extension_get_context
 	(struct sieve_ast *ast, const struct sieve_extension *ext);
 
-/* Error reporting */
-
-void sieve_ast_error
-(struct sieve_error_handler *ehandler, sieve_error_vfunc_t vfunc, 
-	struct sieve_ast_node *node, const char *fmt, va_list args);
-	
 /* 
  * AST node manipulation
  */
