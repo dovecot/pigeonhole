@@ -373,7 +373,7 @@ static void sieve_logfile_vprintf
 				break;
 
 			remain -= ret;
-			data = PTR_OFFSET(data, ret);
+			data += ret;
 		}
 	} T_END;
 
