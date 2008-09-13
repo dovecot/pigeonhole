@@ -284,3 +284,32 @@ test "Encoded-character errors (FIXME: count only)" {
     }
 }
 
+/*
+ * Outgoing address errors
+ */
+
+test "Outgoing address errors (FIXME: count only)" {
+    if test_compile "errors/out-address.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "13" {
+        test_fail "wrong number of errors reported";
+    }
+}
+
+
+/*
+ * Tagged argument errors
+ */
+
+test "Tagged argument errors (FIXME: count only)" {
+    if test_compile "errors/tag.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+        test_fail "wrong number of errors reported";
+    }
+}
+
