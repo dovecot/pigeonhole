@@ -1,13 +1,33 @@
-Sieve implementation for Dovecot (1.2)
+Sieve implementation for Dovecot v1.2
 
 WARNING: This sieve implementation is still experimental since it needs thorough
 testing. The current status of this project is outlined in the TODO file.
+
+Introduction
+------------
+
+Sieve is computer language specifically tailored for internet message filtering.
+This package compiles into a Sieve plugin for the Dovecot local delivery agent 
+called Deliver. The plugin adds Sieve filtering support to the delivery process.  
+
+Previously, the same functionality was provided by the cmusieve plugin for 
+Dovecot. This old plugin is based on the CMU Sieve implementation included with
+the Cyrus project. This new package provides a complete rewrite of the Sieve 
+engine integrating it tightly with Dovecot. The actual execution of the Sieve 
+actions is based on the original cmusieve plugin, but only on the code added to 
+interface the CMU Sieve implementation to Dovocot. 
+
+The main reason for rewriting the Sieve engine is to provide more reliable 
+script execution and to provide better error messages to users and system 
+administrators. Also, since the Sieve language evolves quickly with new language 
+extensions published every year, the aim is to provide support for quickly 
+extending the engine with new features. 
 
 Features
 --------
 
 * Well-structured 3-stage compiler: uses dovecot framework and avoids using
-  lex/yucc. Compiler doesn't bail on first error, but tries to find more. 
+  lex/yacc. Compiler doesn't bail on first error, but tries to find more. 
   Produced errors are aimed to be useful and generally user-comprehensible.  
   Things like 'Generic error' are a nuisance of the past. 
 * Highly extendable with new sieve capabilities: This keeps the possibility of 
@@ -18,44 +38,23 @@ Features
   then use the same interface methods without changes to the sieve engine code.
   If an extension is not loaded using the require command, the compiler truly 
   does not know of its existance. 
-* The interpreter produces a result containing a set of actions to execute.
-  Duplicate actions can be avoided and conflicts can be detected. Multiple 
-  scripts could be executed in succession on the result object although no 
-  support to do so is currently available. 
-* Supports all extensions provided by the original CMUSieve plugin (currently
-  except notify) and in addition to that it has support for the new and very
-  useful variables extension (see list below). 
-* Compiled binary code can be saved to and loaded back from disk. The binary 
-  is structured as a set of data blocks, which can contain extension-dependent
-  extra data. For example, the include extension uses this to store the 
-  compiled included scripts (no external inclusion of binaries supported yet).
-* This sieve implementation is available as an alternative plugin to  
-  dovecot's deliver. 
+* Supports almost all extensions provided by the original CMUSieve plugin 
+  (currently except notify) and in addition to that it has support for the new 
+  and very useful variables extension (see list below).
+* This Sieve implementation is supported by the ManageSieve implementation for 
+  Dovecot v1.2. Therefore, ManageSieve support can be added to Dovecot for the 
+  new Sieve plugin just as for the cmusieve plugin.  
 
 Implementation Status
 ---------------------
 
-Base tests:
-  false, true: trivial, full
-  address: full
-  header: full 
-  exists: full
-  size: full 	 
-  not, anyof, allof: full
-
-Base commands:
-  require: full
-  if,elsif,else: full
-  discard: full
-  keep: full
-  redirect: full 
-  stop: trivial, full
+The the core of the language (as specified in RFC 5228) is fully supported. In 
+addition to that, this Sieve implementation features various extensions. The 
+following list outlines the implementation status of each supported extension:
 	
-Extensions:
-
   Base specification (RFC5228):
     fileinto: full
-    reject: full
+    reject: full (without Dovecot LMTP currently no refuse support)
     envelope: full
     encoded-character: full
 
@@ -73,18 +72,23 @@ Extensions:
     imapflags: full
     variables: mostly full; currently no support for future namespaces 
 
-  Next in order of descending priority:
-	environment: planned
+All implemented extensions are like the engine itself currently experimental. 
+A status of 'full' does not necessarily mean that the extension is bug-free or 
+even fully RFC-compliant.
+ 
+Many more extensions to the language exist. Not all of these extensions are 
+useful for Dovecot in particular, but many of them are. Currently, the author 
+has taken notice of the following extensions:
+
     notify: planned, first mailto only 
-	date,index: planned
+		environment: planned
+		date,index: planned
     editheader: planned, needs additional support from Dovecot though.
     mimeloop: planned
 
-All implemented extensions are like the engine itself currently experimental. 
-A status of 'full' does not necessarily mean that the extension is bug-free or 
-even fully RFC-compliant. Other extensions will be added as soon as the 
-necessary infrastructure is available. Extensions already supported by cmusieve
-have priority.
+These extensions will be added as soon as the necessary infrastructure is 
+available. Extensions already supported by cmusieve have priority, meaning that 
+notify is next in line.
 
 Compiling and Configuring
 -------------------------
@@ -101,7 +105,7 @@ not very different from the cmusieve plugin implementation.
 Unlike cmusieve, this sieve module logs runtime errors to <scriptfile>.log if 
 it can and not <scriptfile>.err. It appends new timestamped log entries to the 
 end of the logfile. If the log grows too large (currently > 10kB), the logfile 
-is rotated to <scriptfile>.log.0 and <scriptfile>.log starts empty again. 
+is rotated to <scriptfile>.log.0 and <scriptfile>.log starts out empty again. 
 
 The cmusieve plugin compiled the script into a file with an appended c, e.g. 
 'test.sievec'. This new implementation recognizes scripts to have the .sieve 
@@ -138,8 +142,7 @@ sieve-test [-r <recipient address>][-s <envelope sender>]
            [-m <mailbox>][-d <dump filename>][-c][-t] <scriptfile> <mailfile>
 
 Reads mail message from the specified mailfile and executes the specified sieve 
-script to produce a verdict. This prints an execution dump with the instructions 
-encountered during execution and finally it prints a list of actions that would 
+script to produce a verdict. This prints a list of actions that would 
 have been performed on this message.
 
 Options:
@@ -149,8 +152,8 @@ Options:
   -d  causes a dump of the generated code to be written to the specified
       file. Using - as filename causes the dump to be written to stdout
   -c  force compilation (ignore any existing binary)
-  -t  enable trace debugging; prints all encountered byte code instructions on
-      stdout. 
+  -t  enable trace simple debugging; prints all encountered byte code
+      instructions on stdout. 
 
 --
 
