@@ -5,7 +5,6 @@ EXTRA_DIST = \
 	sieve/* \
 	doc/* \
     COPYING.LGPL \
-	DESIGN \
     ChangeLog
 
 if MAINTAINER_MODE
