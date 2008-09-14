@@ -46,6 +46,7 @@ test_cases = \
 	tests/extensions/body/match-values.svtest \
 	tests/extensions/regex/basic.svtest \
 	tests/extensions/regex/errors.svtest \
+	tests/extensions/reject/execute.svtest \
 	tests/extensions/relational/basic.svtest \
 	tests/extensions/relational/rfc.svtest \
 	tests/extensions/relational/errors.svtest \

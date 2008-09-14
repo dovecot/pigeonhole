@@ -1,0 +1,11 @@
+require "vnd.dovecot.testsuite";
+
+test "Execute" {
+	if not test_compile "execute/basic.sieve" {
+		test_fail "compile failed";
+	}
+
+	if not test_execute {
+		test_fail "execute failed";
+	}
+}
