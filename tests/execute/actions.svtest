@@ -9,8 +9,8 @@ Test.
 .
 ;
 
-test "Execute" {
-	if not test_compile "execute/basic.sieve" {
+test "Fileinto" {
+	if not test_compile "actions/fileinto.sieve" {
 		test_fail "compile failed";
 	}
 
@@ -18,3 +18,14 @@ test "Execute" {
 		test_fail "execute failed";
 	}
 }
+
+test "Redirect" {
+	if not test_compile "actions/redirect.sieve" {
+		test_fail "compile failed";
+	}
+
+	if not test_execute {
+		test_fail "execute failed";
+	}
+}
+

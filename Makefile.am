@@ -20,6 +20,11 @@ TESTSUITE_BIN = $(top_srcdir)/src/testsuite/testsuite
 test_cases = \
 	tests/testsuite.svtest\
 	tests/control-structures.svtest \
+	tests/compile/compile.svtest \
+	tests/compile/examples.svtest \
+	tests/compile/errors.svtest \
+	tests/execute/errors.svtest \
+	tests/execute/actions.svtest \
 	tests/exists.svtest \
 	tests/header.svtest \
 	tests/address.svtest \
@@ -53,11 +58,7 @@ test_cases = \
 	tests/extensions/subaddress/basic.svtest \
 	tests/extensions/subaddress/rfc.svtest \
 	tests/extensions/vacation/errors.svtest \
-	tests/extensions/vacation/execute.svtest \
-	tests/compile/compile.svtest \
-	tests/compile/examples.svtest \
-	tests/compile/errors.svtest \
-	tests/execute/errors.svtest
+	tests/extensions/vacation/execute.svtest
 
 $(test_cases):
 	@$(TESTSUITE_BIN) $@
