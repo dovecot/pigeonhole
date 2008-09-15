@@ -141,35 +141,41 @@ struct sieve_binary *sieve_generator_get_binary
  */
 
 void sieve_generator_warning
-(struct sieve_generator *gentr, struct sieve_ast_node *node, 
+(struct sieve_generator *gentr, unsigned int source_line, 
 	const char *fmt, ...) 
 { 
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_ast_error(gentr->ehandler, sieve_vwarning, node, fmt, args);
+	sieve_vwarning(gentr->ehandler,
+        sieve_error_script_location(gentr->genenv.script, source_line),
+        fmt, args);
 	va_end(args);
 }
  
 void sieve_generator_error
-(struct sieve_generator *gentr, struct sieve_ast_node *node, 
+(struct sieve_generator *gentr, unsigned int source_line, 
 	const char *fmt, ...) 
 {
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_ast_error(gentr->ehandler, sieve_verror, node, fmt, args);
+	sieve_verror(gentr->ehandler,
+        sieve_error_script_location(gentr->genenv.script, source_line),
+        fmt, args);
 	va_end(args);
 }
 
 void sieve_generator_critical
-(struct sieve_generator *gentr, struct sieve_ast_node *node, 
+(struct sieve_generator *gentr, unsigned int source_line, 
 	const char *fmt, ...) 
 {
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_ast_error(gentr->ehandler, sieve_vcritical, node, fmt, args);
+	sieve_vwarning(gentr->ehandler,
+        sieve_error_script_location(gentr->genenv.script, source_line),
+        fmt, args);
 	va_end(args);
 }
 
@@ -376,7 +382,7 @@ bool sieve_generator_run
 		
 	/* Load extensions linked to the AST and emit a list in code */
 	extensions = sieve_ast_extensions_get(gentr->genenv.ast, &ext_count);
-	(void) sieve_binary_emit_integer(*sbin, ext_count);
+	(void) sieve_binary_emit_unsigned(*sbin, ext_count);
 	for ( i = 0; i < ext_count; i++ ) {
 		const struct sieve_extension *ext = extensions[i];
 

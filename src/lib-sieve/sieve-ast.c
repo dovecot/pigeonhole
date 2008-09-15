@@ -177,23 +177,6 @@ void *sieve_ast_extension_get_context
 	return reg->context;
 }
 
-/* 
- * Error reporting 
- */
-
-void sieve_ast_error
-(struct sieve_error_handler *ehandler, sieve_error_vfunc_t vfunc, 
-	struct sieve_ast_node *node, const char *fmt, va_list args) 
-{ 
-	struct sieve_script *script = node->ast->script;
-	
-	T_BEGIN {
-		vfunc(ehandler,
-			sieve_error_script_location(script, sieve_ast_node_line(node)), 
-			fmt, args);
-	} T_END; 
-}
-
 /*
  * AST list implementations
  */

@@ -124,7 +124,7 @@ bool ext_include_variables_save
 {
 	unsigned int count = sieve_variable_scope_size(global_vars);
 
-	sieve_binary_emit_integer(sbin, count);
+	sieve_binary_emit_unsigned(sbin, count);
 
 	if ( count > 0 ) {
 		unsigned int size, i;
@@ -149,14 +149,14 @@ bool ext_include_variables_load
 (struct sieve_binary *sbin, sieve_size_t *offset, unsigned int block,
 	struct sieve_variable_scope **global_vars_r)
 {
-	sieve_size_t count = 0;
+	unsigned int count = 0;
 	unsigned int i;
 	pool_t pool;
 
 	/* Sanity assert */
 	i_assert( *global_vars_r == NULL );
 
-	if ( !sieve_binary_read_integer(sbin, offset, &count) ) {
+	if ( !sieve_binary_read_unsigned(sbin, offset, &count) ) {
 		sieve_sys_error("include: failed to read global variables count "
 			"from dependency block %d of binary %s", block, sieve_binary_path(sbin));
 		return FALSE;

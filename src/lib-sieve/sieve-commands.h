@@ -31,6 +31,18 @@ struct sieve_argument {
 			struct sieve_command_context *context);
 };
 
+/* Utility macros */
+
+#define sieve_argument_is_string_literal(arg) \
+	( (arg)->argument == &string_argument )
+
+/* Error handling */
+
+#define sieve_argument_validate_error(validator, arg_node, ...) \
+	sieve_validator_error(validator, (arg_node)->source_line, __VA_ARGS__)
+#define sieve_argument_validate_warning(validator, arg_node, ...) \
+	sieve_validator_warning(validator, (arg_node)->source_line, __VA_ARGS__)
+
 /* Literal arguments */
 
 extern const struct sieve_argument number_argument;
@@ -94,40 +106,13 @@ struct sieve_command_context {
 	void *data;
 };
 
+/* Context API */
+
 struct sieve_command_context *sieve_command_context_create
 	(struct sieve_ast_node *cmd_node, const struct sieve_command *command,
 		struct sieve_command_registration *reg);
 		
 const char *sieve_command_type_name(const struct sieve_command *command);		
-
-#define sieve_argument_is_string_literal(arg) \
-	( (arg)->argument == &string_argument )
-		
-#define sieve_command_validate_error(validator, context, ...) \
-	sieve_validator_error(validator, (context)->ast_node, __VA_ARGS__)
-#define sieve_command_validate_warning(validator, context, ...) \
-	sieve_validator_warning(validator, (context)->ast_node, __VA_ARGS__)
-#define sieve_command_validate_critical(validator, context, ...) \
-	sieve_validator_critical(validator, (context)->ast_node, __VA_ARGS__)
-
-#define sieve_command_generate_error(gentr, context, ...) \
-	sieve_generator_error(gentr, (context)->ast_node, __VA_ARGS__)
-#define sieve_command_generate_critical(gentr, context, ...) \
-	sieve_generator_critical(gentr, (context)->ast_node, __VA_ARGS__)
-
-#define sieve_command_pool(context) \
-	sieve_ast_node_pool((context)->ast_node)
-
-#define sieve_command_source_line(context) \
-	(context)->ast_node->source_line
-
-#define sieve_command_first_argument(context) \
-	sieve_ast_argument_first((context)->ast_node)
-	
-#define sieve_command_is_toplevel(context) \
-	( sieve_ast_node_type(sieve_ast_node_parent((context)->ast_node)) == SAT_ROOT )
-#define sieve_command_is_first(context) \
-	( sieve_ast_node_prev((context)->ast_node) == NULL )	
 
 struct sieve_command_context *sieve_command_prev_context	
 	(struct sieve_command_context *context); 
@@ -145,6 +130,36 @@ void sieve_command_exit_block_unconditionally
 bool sieve_command_block_exits_unconditionally
 	(struct sieve_command_context *cmd);
 	
+/* Error handling */
+		
+#define sieve_command_validate_error(validator, context, ...) \
+	sieve_validator_error(validator, (context)->ast_node->source_line, __VA_ARGS__)
+#define sieve_command_validate_warning(validator, context, ...) \
+	sieve_validator_warning(validator, (context)->ast_node->source_line, __VA_ARGS__)
+#define sieve_command_validate_critical(validator, context, ...) \
+	sieve_validator_critical(validator, (context)->ast_node->source_line, __VA_ARGS__)
+
+#define sieve_command_generate_error(gentr, context, ...) \
+	sieve_generator_error(gentr, (context)->ast_node->source_line, __VA_ARGS__)
+#define sieve_command_generate_critical(gentr, context, ...) \
+	sieve_generator_critical(gentr, (context)->ast_node->source_line, __VA_ARGS__)
+
+/* Utility macros */
+
+#define sieve_command_pool(context) \
+	sieve_ast_node_pool((context)->ast_node)
+
+#define sieve_command_source_line(context) \
+	(context)->ast_node->source_line
+
+#define sieve_command_first_argument(context) \
+	sieve_ast_argument_first((context)->ast_node)
+	
+#define sieve_command_is_toplevel(context) \
+	( sieve_ast_node_type(sieve_ast_node_parent((context)->ast_node)) == SAT_ROOT )
+#define sieve_command_is_first(context) \
+	( sieve_ast_node_prev((context)->ast_node) == NULL )	
+
 /*
  * Core commands
  */

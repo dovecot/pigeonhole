@@ -125,11 +125,18 @@ void sieve_binary_resolve_offset
 /* Literal emission functions */
 
 sieve_size_t sieve_binary_emit_integer
-	(struct sieve_binary *binary, sieve_size_t integer);
+	(struct sieve_binary *binary, sieve_number_t integer);
 sieve_size_t sieve_binary_emit_string
 	(struct sieve_binary *binary, const string_t *str);
 sieve_size_t sieve_binary_emit_cstring
 	(struct sieve_binary *binary, const char *str);
+
+static inline sieve_size_t sieve_binary_emit_unsigned
+	(struct sieve_binary *binary, unsigned int count)
+{
+	return sieve_binary_emit_integer(binary, count);
+}
+
 
 /* Extension emission functions */
 
@@ -146,15 +153,28 @@ void sieve_binary_emit_extension_object
 
 /* Literals */
 bool sieve_binary_read_byte
-	(struct sieve_binary *binary, sieve_size_t *address, unsigned int *byte_val);
+	(struct sieve_binary *binary, sieve_size_t *address, unsigned int *byte_r);
 bool sieve_binary_read_code
-	(struct sieve_binary *binary, sieve_size_t *address, int *code);
+	(struct sieve_binary *binary, sieve_size_t *address, int *code_r);
 bool sieve_binary_read_offset
-	(struct sieve_binary *binary, sieve_size_t *address, int *offset);
+	(struct sieve_binary *binary, sieve_size_t *address, int *offset_r);
 bool sieve_binary_read_integer
-  (struct sieve_binary *binary, sieve_size_t *address, sieve_size_t *integer); 
+  (struct sieve_binary *binary, sieve_size_t *address, sieve_number_t *int_r); 
 bool sieve_binary_read_string
-  (struct sieve_binary *binary, sieve_size_t *address, string_t **str);
+  (struct sieve_binary *binary, sieve_size_t *address, string_t **str_r);
+
+static inline bool sieve_binary_read_unsigned
+  (struct sieve_binary *binary, sieve_size_t *address, unsigned int *count_r)
+{
+	sieve_number_t integer;
+
+	if ( !sieve_binary_read_integer(binary, address, &integer) )
+		return FALSE;
+
+	*count_r = integer;
+
+	return TRUE;
+}
 
 /* Extension */
 bool sieve_binary_read_extension

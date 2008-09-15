@@ -25,20 +25,20 @@
  */
 
 static inline void _ext_variables_scope_size_error
-(struct sieve_validator *valdtr, struct sieve_command_context *cmd,
+(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
 	const char *variable)
 {
-	sieve_command_validate_error(valdtr, cmd, 
+	sieve_argument_validate_error(valdtr, arg, 
 		"(implicit) declaration of new variable '%s' exceeds the limit "
 		"(max variables: %u)", variable, 
 		SIEVE_VARIABLES_MAX_SCOPE_SIZE);
 }
 
 static inline void _ext_variables_match_index_error
-(struct sieve_validator *valdtr, struct sieve_command_context *cmd,
+(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
 	unsigned int variable_index)
 {
-	sieve_command_validate_error(valdtr, cmd, 
+	sieve_argument_validate_error(valdtr, arg, 
 		"match value index %u out of range (max: %u)", variable_index, 
 		SIEVE_VARIABLES_MAX_MATCH_INDEX);
 }
@@ -78,7 +78,7 @@ static struct sieve_ast_argument *ext_variables_variable_argument_create
 }
 
 static bool _sieve_variable_argument_activate
-(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+(struct sieve_validator *validator, struct sieve_command_context *cmd ATTR_UNUSED, 
 	struct sieve_ast_argument *arg, bool assignment)
 {
 	bool result = FALSE;
@@ -99,7 +99,7 @@ static bool _sieve_variable_argument_activate
 		/* Check whether name parsing succeeded */	
 		if ( nelements < 0 || varstr != varend ) {
 			/* Parse failed */
-			sieve_command_validate_error(validator, cmd, 
+			sieve_argument_validate_error(validator, arg, 
 				"invalid variable name '%s'", str_sanitize(str_c(variable),80));
 		} else if ( nelements == 1 ) {
 			/* Normal (match) variable */
@@ -114,7 +114,7 @@ static bool _sieve_variable_argument_activate
 
 				if ( var == NULL ) {
 					_ext_variables_scope_size_error
-						(validator, cmd, str_c(cur_element->identifier));
+						(validator, arg, str_c(cur_element->identifier));
 				} else {
 					arg->argument = &variable_argument;
 					arg->context = (void *) var;
@@ -126,15 +126,15 @@ static bool _sieve_variable_argument_activate
 				if ( !assignment ) {
 					if ( cur_element->num_variable > SIEVE_VARIABLES_MAX_MATCH_INDEX ) {
 						_ext_variables_match_index_error
-							(validator, cmd, cur_element->num_variable);
+							(validator, arg, cur_element->num_variable);
 					} else {
 						arg->argument = &match_value_argument;
-						arg->context = (void *) cur_element->num_variable;
+						arg->context = POINTER_CAST(cur_element->num_variable);
 										
 						result = TRUE;
 					}
 				} else {		
-					sieve_command_validate_error(validator, cmd, 
+					sieve_argument_validate_error(validator, arg, 
 						"cannot assign to match variable");
 				}
 			}
@@ -150,7 +150,7 @@ static bool _sieve_variable_argument_activate
 			 * the relevant extension MUST cause an error.
 			 */
 
-			sieve_command_validate_error(validator, cmd, 
+			sieve_argument_validate_error(validator, arg, 
 				"cannot %s to variable in unknown namespace '%s'", 
 				assignment ? "assign" : "refer", str_c(cur_element->identifier));
 		}
@@ -180,6 +180,7 @@ bool sieve_variable_argument_activate
 				return FALSE;
 			
 			stritem = sieve_ast_strlist_next(stritem);
+
 		}
 		
 		arg->argument = &string_list_argument;
@@ -224,7 +225,7 @@ static struct sieve_ast_argument *ext_variables_match_value_argument_create
 	arg = sieve_ast_argument_create(ast, source_line);
 	arg->type = SAAT_STRING;
 	arg->argument = &match_value_argument;
-	arg->context = (void *) index;
+	arg->context = POINTER_CAST(index);
 	
 	return arg;
 }
@@ -233,7 +234,7 @@ static bool arg_match_value_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command_context *context ATTR_UNUSED)
 {
-	unsigned int index = (unsigned int) arg->context;
+	unsigned int index = POINTER_CAST_TO(arg->context, unsigned int);
 	
 	ext_variables_opr_match_value_emit(cgenv->sbin, index);
 
@@ -374,7 +375,7 @@ static bool arg_variable_string_validate
 								sieve_ast_arg_list_add(arglist, strarg);
 							else {
 								_ext_variables_scope_size_error
-									(validator, cmd, str_c(cur_element->identifier));
+									(validator, *arg, str_c(cur_element->identifier));
 								result = FALSE;
 								break;
 							}
@@ -382,7 +383,7 @@ static bool arg_variable_string_validate
 							/* Add match value argument '${000}' */
 							if ( cur_element->num_variable > SIEVE_VARIABLES_MAX_MATCH_INDEX ) {
 								_ext_variables_match_index_error
-									(validator, cmd, cur_element->num_variable);
+									(validator, *arg, cur_element->num_variable);
 								result = FALSE;
 								break;
 							}
@@ -402,7 +403,7 @@ static bool arg_variable_string_validate
 						/* References to namespaces without a prior require 
 						 * statement for thecrelevant extension MUST cause an error.
 					 	 */
-						sieve_command_validate_error(validator, cmd, 
+						sieve_argument_validate_error(validator, *arg, 
 							"referring to variable in unknown namespace '%s'", 
 							str_c(cur_element->identifier));
 						result = FALSE;

@@ -75,6 +75,8 @@ struct sieve_match_type {
 
 struct sieve_match_type_context {
 	struct sieve_command_context *command_ctx;
+	struct sieve_ast_argument *match_type_arg;
+
 	const struct sieve_match_type *match_type;
 	
 	/* Only filled in when match_type->validate_context() is called */

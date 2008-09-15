@@ -75,7 +75,7 @@ static bool cmd_require_validate
 		}
 	} else {
 		/* Something else */
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(validator, arg, 
 			"the require command accepts a single string or string list argument, "
 			"but %s was found", 
 			sieve_ast_argument_name(arg));

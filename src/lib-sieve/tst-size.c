@@ -87,7 +87,7 @@ static bool tst_size_validate_over_tag
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) tst->data;	
 	
 	if ( ctx_data->type != SIZE_UNASSIGNED ) {
-		sieve_command_validate_error(validator, tst, TST_SIZE_ERROR_DUP_TAG);
+		sieve_argument_validate_error(validator, *arg, TST_SIZE_ERROR_DUP_TAG);
 		return FALSE;		
 	}
 	
@@ -106,7 +106,7 @@ static bool tst_size_validate_under_tag
 	struct tst_size_context_data *ctx_data = (struct tst_size_context_data *) tst->data;	
 	
 	if ( ctx_data->type != SIZE_UNASSIGNED ) {
-		sieve_command_validate_error(validator, tst, TST_SIZE_ERROR_DUP_TAG);
+		sieve_argument_validate_error(validator, *arg, TST_SIZE_ERROR_DUP_TAG);
 		return FALSE;		
 	}
 	
@@ -224,7 +224,7 @@ static bool tst_size_operation_dump
  */
 
 static inline bool tst_size_get
-(const struct sieve_runtime_env *renv, sieve_size_t *size) 
+(const struct sieve_runtime_env *renv, sieve_number_t *size) 
 {
 	uoff_t psize;
 
@@ -240,7 +240,7 @@ static int tst_size_operation_execute
 (const struct sieve_operation *op,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	sieve_size_t mail_size, limit;
+	sieve_number_t mail_size, limit;
 		
 	/* Read size limit */
 	if ( !sieve_opr_number_read(renv, address, &limit) ) {

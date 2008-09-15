@@ -98,35 +98,42 @@ struct sieve_validator {
  */
 
 void sieve_validator_warning
-(struct sieve_validator *validator, struct sieve_ast_node *node, 
+(struct sieve_validator *validator, unsigned int source_line, 
 	const char *fmt, ...) 
 { 
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_ast_error(validator->ehandler, sieve_vwarning, node, fmt, args);
+	sieve_vwarning(validator->ehandler, 
+		sieve_error_script_location(validator->script, source_line),
+		fmt, args);
 	va_end(args);
+	
 }
  
 void sieve_validator_error
-(struct sieve_validator *validator, struct sieve_ast_node *node, 
+(struct sieve_validator *validator, unsigned int source_line, 
 	const char *fmt, ...) 
 {
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_ast_error(validator->ehandler, sieve_verror, node, fmt, args);
+	sieve_verror(validator->ehandler, 
+		sieve_error_script_location(validator->script, source_line),
+		fmt, args);
 	va_end(args);
 }
 
 void sieve_validator_critical
-(struct sieve_validator *validator, struct sieve_ast_node *node, 
+(struct sieve_validator *validator, unsigned int source_line, 
 	const char *fmt, ...) 
 {
 	va_list args;
 	
 	va_start(args, fmt);
-	sieve_ast_error(validator->ehandler, sieve_vcritical, node, fmt, args);
+	sieve_vcritical(validator->ehandler, 
+		sieve_error_script_location(validator->script, source_line),
+		fmt, args);
 	va_end(args);
 }
 
@@ -668,7 +675,7 @@ bool sieve_validate_positional_argument
 		(sieve_ast_argument_type(arg) != SAAT_STRING || 
 			req_type != SAAT_STRING_LIST) ) 
 	{
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(validator, arg, 
 			"the %s %s expects %s as argument %d (%s), but %s was found", 
 			cmd->command->identifier, sieve_command_type_name(cmd->command), 
 			sieve_ast_argument_type_name(req_type),
@@ -688,7 +695,7 @@ bool sieve_validate_tag_parameter
 		(sieve_ast_argument_type(param) != SAAT_STRING || 
 			req_type != SAAT_STRING_LIST) ) 
 	{
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(validator, param, 
 			"the :%s tag for the %s %s requires %s as parameter, "
 			"but %s was found", sieve_ast_argument_tag(tag), 
 			cmd->command->identifier, sieve_command_type_name(cmd->command),
@@ -724,7 +731,7 @@ static bool sieve_validate_command_arguments
 			sieve_validator_find_tag(validator, cmd, arg, &id_code);
 		
 		if ( tag == NULL ) {
-			sieve_command_validate_error(validator, cmd, 
+			sieve_argument_validate_error(validator, arg, 
 				"unknown tagged argument ':%s' for the %s %s "
 				"(reported only once at first occurence)",
 				sieve_ast_argument_tag(arg), cmd->command->identifier, 
@@ -756,7 +763,7 @@ static bool sieve_validate_command_arguments
 					t_strdup_printf("%s argument (:%s)", tag->identifier, tag_id) : 
 					t_strdup_printf(":%s argument", tag->identifier); 	 
 				
-				sieve_command_validate_error(validator, cmd, 
+				sieve_argument_validate_error(validator, arg, 
 					"encountered duplicate %s for the %s %s",
 					tag_desc, cmd->command->identifier, 
 					sieve_command_type_name(cmd->command));
@@ -784,7 +791,7 @@ static bool sieve_validate_command_arguments
 	
 	while ( arg != NULL ) {
 		if ( sieve_ast_argument_type(arg) == SAAT_TAG ) {
-			sieve_command_validate_error(validator, cmd, 
+			sieve_argument_validate_error(validator, arg, 
 				"encountered an unexpected tagged argument ':%s' "
 				"while validating positional arguments for the %s %s",
 				sieve_ast_argument_tag(arg), cmd->command->identifier, 
@@ -858,7 +865,8 @@ static bool sieve_validate_command_subtests
 	case 0:
 	 	if ( sieve_ast_test_count(cmd->ast_node) > 0 ) {
 			sieve_command_validate_error(validator, cmd, 
-				"the %s %s accepts no sub-tests, but tests are specified anyway", 
+				"the %s %s accepts no sub-tests, but tests are specified anyway "
+				"(forgot semicolon?)", 
 				cmd->command->identifier, sieve_command_type_name(cmd->command));
 			
 			return FALSE;
@@ -968,7 +976,7 @@ static bool sieve_validate_command
 				(command->type == SCT_TEST && ast_type == SAT_COMMAND) ) 
 			{
 				sieve_validator_error(
-					valdtr, cmd_node, "attempted to use %s '%s' as %s", 
+					valdtr, cmd_node->source_line, "attempted to use %s '%s' as %s", 
 					sieve_command_type_name(command), cmd_node->identifier,
 					sieve_ast_type_name(ast_type));
 			
@@ -1011,7 +1019,7 @@ static bool sieve_validate_command
 				
 	} else {
 		sieve_validator_error(
-			valdtr, cmd_node, 
+			valdtr, cmd_node->source_line, 
 			"unknown %s '%s' (only reported once at first occurence)", 
 			sieve_ast_type_name(ast_type), cmd_node->identifier);
 			

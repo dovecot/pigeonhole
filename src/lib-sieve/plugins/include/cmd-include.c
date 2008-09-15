@@ -113,7 +113,7 @@ static bool cmd_include_validate_location_tag
 		(struct cmd_include_context_data *) cmd->data;
 	
 	if ( ctx_data->location_assigned) {
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(validator, *arg, 
 			"include: cannot use location tags ':personal' and ':global' "
 			"multiple times");
 		return FALSE;
@@ -186,7 +186,7 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	script_name = sieve_ast_argument_strc(arg);
 
 	if ( strchr(script_name, '/') != NULL ) {
- 		sieve_command_validate_error(validator, cmd,
+ 		sieve_argument_validate_error(validator, arg,
 			"include: '/' not allowed in script name (%s)",
 			str_sanitize(script_name, 80));
 		return FALSE;
@@ -195,7 +195,7 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	script_dir = ext_include_get_script_directory
 		(ctx_data->location, script_name);
 	if ( script_dir == NULL ) {
-		sieve_command_validate_error(validator, cmd,
+		sieve_argument_validate_error(validator, arg,
 			"include: specified location for included script '%s' is unavailable "
 			"(system logs should provide more information)",
 			str_sanitize(script_name, 80));
@@ -235,7 +235,7 @@ static bool cmd_include_generate
  		return FALSE;
  		
  	(void)sieve_operation_emit_code(cgenv->sbin, &include_operation);
-	(void)sieve_binary_emit_integer(cgenv->sbin, included->id); 
+	(void)sieve_binary_emit_unsigned(cgenv->sbin, included->id); 
  	 		
 	return TRUE;
 }
@@ -255,7 +255,7 @@ static bool opc_include_dump
 	sieve_code_dumpf(denv, "INCLUDE:");
 	
 	sieve_code_mark(denv);
-	if ( !sieve_binary_read_integer(denv->sbin, address, &include_id) )
+	if ( !sieve_binary_read_unsigned(denv->sbin, address, &include_id) )
 		return FALSE;
 
 	binctx = ext_include_binary_get_context(denv->sbin);
@@ -280,7 +280,7 @@ static int opc_include_execute
 {
 	unsigned int include_id;
 		
-	if ( !sieve_binary_read_integer(renv->sbin, address, &include_id) ) {
+	if ( !sieve_binary_read_unsigned(renv->sbin, address, &include_id) ) {
 		sieve_runtime_trace_error(renv, "invalid include-id operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}

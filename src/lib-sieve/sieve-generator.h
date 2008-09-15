@@ -41,13 +41,13 @@ struct sieve_binary *sieve_generator_get_binary
  */
 
 void sieve_generator_warning
-(struct sieve_generator *gentr, struct sieve_ast_node *node, 
+(struct sieve_generator *gentr, unsigned int source_line, 
 	const char *fmt, ...) ATTR_FORMAT(3, 4);; 
 void sieve_generator_error
-(struct sieve_generator *gentr, struct sieve_ast_node *node, 
+(struct sieve_generator *gentr, unsigned int source_line, 
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_generator_critical
-(struct sieve_generator *gentr, struct sieve_ast_node *node, 
+(struct sieve_generator *gentr, unsigned int source_line, 
 	const char *fmt, ...) ATTR_FORMAT(3, 4); 
 
 /* 

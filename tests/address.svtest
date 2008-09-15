@@ -58,3 +58,29 @@ test "Invalid address list" {
 	}	
 }
 
+/*
+ * Strange
+ */
+
+test_set "message" text:
+From: SPAM@MYDOMAIN
+To: stephan@renane-it.nl
+Subject: Spam
+
+Spam!
+.
+;
+
+test "Questionable address" {
+	if address :domain :is "from" "MYDOMAIN" {
+		if address :localpart :is "from" "SPAM" {
+			
+		} elsif header :contains "subject" "Cron" {
+			test_fail "message erroneously recognized as cron";
+		} else {
+			test_fail "message erroneously recognized as normal";
+		}
+	} else {
+		test_fail "message domain not recognized";
+	}
+}

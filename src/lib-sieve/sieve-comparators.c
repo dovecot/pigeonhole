@@ -152,7 +152,7 @@ static bool tag_comparator_validate
 	 *   ":comparator" <comparator-name: string>
 	 */
 	if ( (*arg)->type != SAAT_STRING ) {
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(validator, *arg, 
 			":comparator tag requires one string argument, but %s was found", 
 			sieve_ast_argument_name(*arg) );
 		return FALSE;
@@ -162,7 +162,7 @@ static bool tag_comparator_validate
 	cmp = sieve_comparator_find(validator, sieve_ast_argument_strc(*arg));
 	
 	if ( cmp == NULL ) {
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(validator, *arg, 
 			"unknown comparator '%s'", 
 			str_sanitize(sieve_ast_argument_strc(*arg),80));
 

@@ -74,7 +74,7 @@ void sieve_code_dumpf
 	va_list args;
 	
 	va_start(args, fmt);	
-	str_printfa(outbuf, "%08x: ", cdumper->mark_address);
+	str_printfa(outbuf, "%08llx: ", (unsigned long long) cdumper->mark_address);
 	
 	while ( tab > 0 )	{
 		str_append(outbuf, "  ");
@@ -178,7 +178,7 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
 	/* Load and dump extensions listed in code */
 	sieve_code_mark(denv);
 	
-	if ( sieve_binary_read_integer(sbin, &dumper->pc, &ext_count) ) {
+	if ( sieve_binary_read_unsigned(sbin, &dumper->pc, &ext_count) ) {
 		unsigned int i;
 		
 		sieve_code_dumpf(denv, "EXTENSIONS [%d]:", ext_count);

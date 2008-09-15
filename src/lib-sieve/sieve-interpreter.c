@@ -100,15 +100,15 @@ struct sieve_interpreter *sieve_interpreter_create
 	}
 
 	/* Load other extensions listed in code */
-	if ( sieve_binary_read_integer(sbin, &interp->pc, &ext_count) ) {
+	if ( sieve_binary_read_unsigned(sbin, &interp->pc, &ext_count) ) {
 		for ( i = 0; i < ext_count; i++ ) {
 			unsigned int code = 0;
 			const struct sieve_extension *ext;
 			
 			if ( !sieve_binary_read_extension(sbin, &interp->pc, &code, &ext) ) {
-        success = FALSE;
-        break;
-      }
+				success = FALSE;
+				break;
+			}
  
 			if ( ext->interpreter_load != NULL && 
 				!ext->interpreter_load(&interp->runenv, &interp->pc) ) {
@@ -182,8 +182,8 @@ const char *sieve_runtime_location(const struct sieve_runtime_env *runenv)
 {
 	const char *op = runenv->interp->current_op == NULL ?
 		"<<NOOP>>" : runenv->interp->current_op->mnemonic;
-	return t_strdup_printf("%s: #%08x: %s", sieve_script_name(runenv->script),
-		runenv->interp->current_op_addr, op);
+	return t_strdup_printf("%s: #%08llx: %s", sieve_script_name(runenv->script),
+		(unsigned long long) runenv->interp->current_op_addr, op);
 }
 
 void sieve_runtime_error
@@ -237,7 +237,7 @@ void _sieve_runtime_trace
 	va_list args;
 	
 	va_start(args, fmt);	
-	str_printfa(outbuf, "%08x: ", runenv->interp->current_op_addr); 
+	str_printfa(outbuf, "%08llx: ", (unsigned long long) runenv->interp->current_op_addr); 
 	str_vprintfa(outbuf, fmt, args); 
 	str_append_c(outbuf, '\n');
 	va_end(args);
@@ -252,8 +252,9 @@ void _sieve_runtime_trace_error
 	va_list args;
 
 	va_start(args, fmt);
-	str_printfa(outbuf, "%08x: [[ERROR: %s: ", runenv->interp->pc
-		, runenv->interp->current_op->mnemonic);
+	str_printfa(outbuf, "%08llx: [[ERROR: %s: ", 
+		(unsigned long long) runenv->interp->pc, 
+		runenv->interp->current_op->mnemonic);
 	str_vprintfa(outbuf, fmt, args);
     str_append(outbuf, "]]\n");
 	va_end(args);
