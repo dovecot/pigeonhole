@@ -76,13 +76,6 @@ bool ext_variables_generator_load
 	(const struct sieve_codegen_env *cgenv);
 
 /*
- * Code dump
- */
- 
-bool ext_variables_code_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-
-/*
  * Interpreter context
  */	
 

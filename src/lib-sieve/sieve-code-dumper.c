@@ -33,6 +33,8 @@ struct sieve_code_dumper {
 	
 	/* Dump environment */
 	struct sieve_dumptime_env *dumpenv; 
+	
+	ARRAY_DEFINE(ext_contexts, void *);
 };
 
 struct sieve_code_dumper *sieve_code_dumper_create
@@ -47,6 +49,9 @@ struct sieve_code_dumper *sieve_code_dumper_create
 	dumper->dumpenv = denv;
 	dumper->pc = 0;
 	
+	/* Setup storage for extension contexts */		
+	p_array_init(&dumper->ext_contexts, pool, sieve_extensions_get_count());
+	
 	return dumper;
 }
 
@@ -60,6 +65,29 @@ void sieve_code_dumper_free(struct sieve_code_dumper **dumper)
 pool_t sieve_code_dumper_pool(struct sieve_code_dumper *dumper)
 {
 	return dumper->pool;
+}
+
+/* EXtension support */
+
+void sieve_dump_extension_set_context
+(struct sieve_code_dumper *dumper, const struct sieve_extension *ext, 
+	void *context)
+{
+	array_idx_set(&dumper->ext_contexts, (unsigned int) *ext->id, &context);	
+}
+
+const void *sieve_dump_extension_get_context
+(struct sieve_code_dumper *dumper, const struct sieve_extension *ext) 
+{
+	int ext_id = *ext->id;
+	void * const *ctx;
+
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&dumper->ext_contexts) )
+		return NULL;
+	
+	ctx = array_idx(&dumper->ext_contexts, (unsigned int) ext_id);		
+
+	return *ctx;
 }
 
 /* Dump functions */

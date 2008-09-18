@@ -19,6 +19,7 @@ libsieve_ext_variables_la_SOURCES = \
 	ext-variables-arguments.c \
 	ext-variables-operands.c \
 	ext-variables-modifiers.c \
+	ext-variables-dump.c \
 	$(cmds) \
 	$(tsts) \
 	ext-variables.c
@@ -30,6 +31,7 @@ noinst_HEADERS = \
 	ext-variables-arguments.h \
 	ext-variables-operands.h \
 	ext-variables-modifiers.h \
+	ext-variables-dump.h \
 	sieve-ext-variables.h 
 
 EXTRA_DIST = *.sieve

@@ -12,7 +12,15 @@ void sieve_code_dumper_free
 pool_t sieve_code_dumper_pool
 	(struct sieve_code_dumper *dumper);
 	
-/*  */	
+/* EXtension support */
+
+void sieve_dump_extension_set_context
+	(struct sieve_code_dumper *dumper, const struct sieve_extension *ext, 
+		void *context);
+const void *sieve_dump_extension_get_context
+	(struct sieve_code_dumper *dumper, const struct sieve_extension *ext); 
+	
+/* Dump functions */	
 	
 void sieve_code_dumpf
 	(const struct sieve_dumptime_env *denv, const char *fmt, ...)

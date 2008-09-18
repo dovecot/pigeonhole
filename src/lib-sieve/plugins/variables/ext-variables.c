@@ -32,6 +32,7 @@
 #include "ext-variables-arguments.h"
 #include "ext-variables-operands.h"
 #include "ext-variables-modifiers.h"
+#include "ext-variables-dump.h"
 
 /* 
  * Operations 
