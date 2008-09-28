@@ -43,6 +43,8 @@ struct sieve_variable *sieve_variable_scope_import
 	(struct sieve_variable_scope *scope, struct sieve_variable *var);
 struct sieve_variable *sieve_variable_scope_get_variable
 	(struct sieve_variable_scope *scope, const char *identifier, bool create);
+struct sieve_variable *sieve_variable_scope_get_indexed
+	(struct sieve_variable_scope *scope, unsigned int index);
 
 /* Iteration over all declared variables */
 

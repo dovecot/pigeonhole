@@ -66,15 +66,15 @@ struct sieve_variable_scope *sieve_variable_scope_create
 
 void sieve_variable_scope_ref(struct sieve_variable_scope *scope)
 {
-    scope->refcount++;
+	scope->refcount++;
 }
 
 void sieve_variable_scope_unref(struct sieve_variable_scope **scope)
 {
-    i_assert((*scope)->refcount > 0);
+	i_assert((*scope)->refcount > 0);
 
-    if (--(*scope)->refcount != 0)
-        return;
+	if (--(*scope)->refcount != 0)
+		return;
 
 	hash_destroy(&(*scope)->variables);
 
@@ -182,13 +182,26 @@ unsigned int sieve_variable_scope_declarations
 unsigned int sieve_variable_scope_size
 (struct sieve_variable_scope *scope)
 {
-    return array_count(&scope->variable_index);
+	return array_count(&scope->variable_index);
 }
 
 struct sieve_variable * const *sieve_variable_scope_get_variables
 (struct sieve_variable_scope *scope, unsigned int *size_r)
 {
 	return array_get(&scope->variable_index, size_r);
+}
+
+struct sieve_variable *sieve_variable_scope_get_indexed
+(struct sieve_variable_scope *scope, unsigned int index)
+{
+	struct sieve_variable * const *var;
+	
+	if ( index >= array_count(&scope->variable_index) ) 
+		return NULL;
+		
+	var = array_idx(&scope->variable_index, index); 
+	
+	return *var;
 }
 
 /* 

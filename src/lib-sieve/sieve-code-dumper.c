@@ -76,7 +76,7 @@ void sieve_dump_extension_set_context
 	array_idx_set(&dumper->ext_contexts, (unsigned int) *ext->id, &context);	
 }
 
-const void *sieve_dump_extension_get_context
+void *sieve_dump_extension_get_context
 (struct sieve_code_dumper *dumper, const struct sieve_extension *ext) 
 {
 	int ext_id = *ext->id;

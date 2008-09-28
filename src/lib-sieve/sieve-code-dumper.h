@@ -17,7 +17,7 @@ pool_t sieve_code_dumper_pool
 void sieve_dump_extension_set_context
 	(struct sieve_code_dumper *dumper, const struct sieve_extension *ext, 
 		void *context);
-const void *sieve_dump_extension_get_context
+void *sieve_dump_extension_get_context
 	(struct sieve_code_dumper *dumper, const struct sieve_extension *ext); 
 	
 /* Dump functions */	

@@ -21,6 +21,7 @@
 
 #include "ext-variables-common.h"
 #include "ext-variables-name.h"
+#include "ext-variables-dump.h"
 
 /* 
  * Variable operand 
@@ -68,6 +69,7 @@ static bool opr_variable_dump
 	unsigned int index = 0;
 	const struct sieve_extension *ext;
 	unsigned int code = 1; /* Initially set to offset value */
+	const char *identifier;
 
 	if ( !sieve_binary_read_extension(denv->sbin, address, &code, &ext) )
 		return FALSE;
@@ -75,18 +77,23 @@ static bool opr_variable_dump
 	if ( !sieve_binary_read_unsigned(denv->sbin, address, &index) )
 		return FALSE;
 		
-	if ( ext == NULL ) {
+	identifier = ext_variables_dump_get_identifier(denv, ext, index);
+	identifier = identifier == NULL ? "??" : identifier;
+
+	if ( ext == NULL ) {		
 		if ( field_name != NULL ) 
-			sieve_code_dumpf(denv, "%s: VAR %ld", field_name, (long) index);
+			sieve_code_dumpf(denv, "%s: VAR ${%s} (%ld)", 
+				field_name, identifier, (long) index);
 		else
-			sieve_code_dumpf(denv, "VAR %ld", (long) index);
+			sieve_code_dumpf(denv, "VAR ${%s} (%ld)", 
+				identifier, (long) index);
 	} else {
 		if ( field_name != NULL ) 
-			sieve_code_dumpf(denv, "%s: VAR [%s] %ld", 
-				field_name, ext->name, (long) index);
+			sieve_code_dumpf(denv, "%s: VAR [%s] ${%s} (%ld)", 
+				field_name, ext->name, identifier, (long) index);
 		else
-			sieve_code_dumpf(denv, "VAR [%s] %ld", 
-				ext->name, (long) index);
+			sieve_code_dumpf(denv, "VAR [%s] ${%s} (%ld)", 
+				ext->name, identifier, (long) index);
 	}
 	return TRUE;
 }

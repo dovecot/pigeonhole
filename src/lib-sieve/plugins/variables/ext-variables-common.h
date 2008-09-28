@@ -13,7 +13,7 @@
  * Extension
  */
 
-extern struct sieve_extension variables_extension;
+extern const struct sieve_extension variables_extension;
 
 /* 
  * Commands 

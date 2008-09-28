@@ -63,7 +63,7 @@ static bool ext_variables_validator_load(struct sieve_validator *validator);
 
 static int ext_my_id;
 	
-struct sieve_extension variables_extension = { 
+const struct sieve_extension variables_extension = { 
 	"variables", 
 	&ext_my_id,
 	ext_variables_load,
