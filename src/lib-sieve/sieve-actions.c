@@ -165,6 +165,46 @@ static void act_store_get_storage_error
 		mail_storage_get_last_error(trans->namespace->storage, &error));
 }
 
+static struct mailbox *act_store_mailbox_open
+(const struct sieve_action_exec_env *aenv, struct mail_namespace *ns, const char *folder)
+{
+	struct mailbox *box;
+
+	box = mailbox_open
+		(ns->storage, folder, NULL, MAILBOX_OPEN_FAST |MAILBOX_OPEN_KEEP_RECENT);
+		
+	if ( box == NULL && aenv->scriptenv->mailbox_autocreate ) {
+		enum mail_error error;
+	
+		(void)mail_storage_get_last_error(ns->storage, &error);
+		if ( error != MAIL_ERROR_NOTFOUND )
+			return NULL;
+
+		/* Try creating it */
+		if ( mail_storage_mailbox_create(ns->storage, folder, FALSE) < 0 )
+			return NULL;
+   
+		if ( aenv->scriptenv->mailbox_autosubscribe ) {
+			/* Subscribe to it */
+			(void)mailbox_list_set_subscribed(ns->list, folder, TRUE);
+		}
+
+		/* Try opening again */
+		box = mailbox_open
+			(ns->storage, folder, NULL, MAILBOX_OPEN_FAST | MAILBOX_OPEN_KEEP_RECENT);
+    
+		if (box == NULL)
+			return NULL;
+
+		if (mailbox_sync(box, 0, 0, NULL) < 0) {
+			mailbox_close(&box);
+			return NULL;
+		}
+	}
+
+	return box;
+}
+
 static bool act_store_start
 (const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv, void *context, void **tr_context)
@@ -181,13 +221,7 @@ static bool act_store_start
 		if (ns == NULL) 
 			return FALSE;
 		
-		box = mailbox_open(ns->storage, ctx->folder, NULL, MAILBOX_OPEN_FAST |
-			MAILBOX_OPEN_KEEP_RECENT);
-	
-		if (box != NULL && mailbox_sync(box, 0, 0, NULL) < 0) {
-			mailbox_close(&box);
-			box = NULL;
-		}
+		box = act_store_mailbox_open(aenv, ns, ctx->folder);
 	}
 				
 	/* Create transaction context */
