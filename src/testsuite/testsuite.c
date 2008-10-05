@@ -149,6 +149,7 @@ static int testsuite_run
 (struct sieve_binary *sbin, const struct sieve_script_env *scriptenv,
 	bool trace)
 {
+	struct sieve_exec_status estatus;
 	struct sieve_error_handler *ehandler = sieve_stderr_ehandler_create(0);
 	struct sieve_result *sres = sieve_result_create(ehandler);	
 	struct sieve_interpreter *interp;
@@ -160,14 +161,16 @@ static int testsuite_run
 		interp=sieve_interpreter_create(sbin, ehandler, tstream);
 		
 		if ( interp != NULL ) 
-		    ret = sieve_interpreter_run(interp, &testsuite_msgdata, scriptenv, &sres);
+		    ret = sieve_interpreter_run
+				(interp, &testsuite_msgdata, scriptenv, &sres, &estatus);
 	
 		o_stream_destroy(&tstream);
 	} else {
 		interp=sieve_interpreter_create(sbin, ehandler, NULL);
 
 		if ( interp != NULL ) 
-		    ret = sieve_interpreter_run(interp, &testsuite_msgdata, scriptenv, &sres);
+		    ret = sieve_interpreter_run
+				(interp, &testsuite_msgdata, scriptenv, &sres, &estatus);
 	}
 
 	if ( interp != NULL )
@@ -244,7 +247,7 @@ int main(int argc, char **argv)
 	testsuite_message_init(user);
 
 	memset(&scriptenv, 0, sizeof(scriptenv));
-	scriptenv.inbox = "INBOX";
+	scriptenv.default_mailbox = "INBOX";
 	scriptenv.username = user;
 
 	/* Run the test */

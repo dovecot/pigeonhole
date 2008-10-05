@@ -92,8 +92,9 @@ void sieve_dump(struct sieve_binary *sbin, struct ostream *stream);
  */ 
 int sieve_test
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata, 
-		const struct sieve_script_env *senv, struct ostream *stream,
-		struct sieve_error_handler *ehandler, struct ostream *trace_stream);
+		const struct sieve_script_env *senv, struct sieve_exec_status *estatus,
+		struct ostream *stream, struct sieve_error_handler *ehandler, 
+		struct ostream *trace_stream);
 
 /*
  * Script execution
@@ -105,7 +106,7 @@ int sieve_test
  */
 int sieve_execute
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-		struct ostream *trace_stream);
+		const struct sieve_script_env *senv, struct sieve_exec_status *estatus,
+		struct sieve_error_handler *ehandler, struct ostream *trace_stream);
 
 #endif

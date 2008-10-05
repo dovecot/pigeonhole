@@ -102,6 +102,7 @@ static int lda_sieve_run
 	bool debug = ( getenv("DEBUG") != NULL );
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
+	struct sieve_exec_status estatus;
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
 	const char *scriptlog;
@@ -147,7 +148,9 @@ static int lda_sieve_run
 
 	/* Compose script execution environment */
 	memset(&scriptenv, 0, sizeof(scriptenv));
-	scriptenv.inbox = mailbox;
+	scriptenv.default_mailbox = mailbox;
+	scriptenv.mailbox_autocreate = deliver_set->mailbox_autocreate;
+	scriptenv.mailbox_autosubscribe = deliver_set->mailbox_autosubscribe;
 	scriptenv.namespaces = namespaces;
 	scriptenv.username = username;
 	scriptenv.hostname = deliver_set->hostname;
@@ -162,7 +165,13 @@ static int lda_sieve_run
 	if ( debug )
 		sieve_sys_info("executing compiled script %s", script_path);
 
-	ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler, NULL);
+	ret = sieve_execute(sbin, &msgdata, &scriptenv, &estatus, ehandler, NULL);
+
+	/* Record status */
+
+	tried_default_save = estatus.tried_default_save;
+
+	/* Evaluate result */
 
 	if ( ret == SIEVE_EXEC_BIN_CORRUPT ) {
 		sieve_sys_warning("encountered corrupt binary: recompiling script %s", 
@@ -191,7 +200,11 @@ static int lda_sieve_run
 
 		/* Execute again */
 	
-		ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler, NULL);
+		ret = sieve_execute(sbin, &msgdata, &scriptenv, &estatus, ehandler, NULL);
+
+		/* Record status */
+
+		tried_default_save = estatus.tried_default_save;
 
 		/* Save new version */
 		

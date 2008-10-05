@@ -115,12 +115,8 @@ static int cmd_keep_operation_execute
 	sieve_runtime_trace(renv, "KEEP action");
 	
 	/* Add store action (sieve-actions.h) to result */
-	if ( renv->scriptenv != NULL && renv->scriptenv->inbox != NULL )
-		ret = sieve_act_store_add_to_result
-			(renv, slist, renv->scriptenv->inbox, source_line);
-	else
-		ret = sieve_act_store_add_to_result
-			(renv, slist, "INBOX", source_line);
+	ret = sieve_act_store_add_to_result
+		(renv, slist, SIEVE_SCRIPT_DEFAULT_MAILBOX(renv->scriptenv), source_line);
 	
 	return ( ret >= 0 );
 }

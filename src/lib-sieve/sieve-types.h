@@ -43,8 +43,10 @@ struct sieve_message_data {
 
 struct sieve_script_env {
 	/* Mail-related */
-	const char *inbox;
 	struct mail_namespace *namespaces;
+	const char *default_mailbox;
+	bool mailbox_autocreate;
+	bool mailbox_autosubscribe;
 	
 	/* System-related */
 	const char *username;
@@ -63,7 +65,20 @@ struct sieve_script_env {
 		(const void *id, size_t id_size, const char *user);
 	void (*duplicate_mark)
 		(const void *id, size_t id_size, const char *user, time_t time);
-};	
+};
+
+#define SIEVE_SCRIPT_DEFAULT_MAILBOX(senv) \
+	(senv->default_mailbox == NULL ? "INBOX" : senv->default_mailbox )
+
+/*
+ * Script executionstatus
+ */	
+
+struct sieve_exec_status {
+	bool message_saved;
+	bool message_forwarded;
+	bool tried_default_save;
+};
 
 /*
  * Execution exit codes

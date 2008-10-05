@@ -506,7 +506,7 @@ bool ext_include_execute_include
 				/* Activate and start the top-level included script */
 				result = ( sieve_interpreter_start
 					(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx, renv->result, 
-						&interrupted) == 1 );
+						renv->estatus, &interrupted) == 1 );
 			} else
 				result = SIEVE_EXEC_BIN_CORRUPT;
 		}
@@ -567,7 +567,7 @@ bool ext_include_execute_include
 								curctx->returned = FALSE;
 								result = ( sieve_interpreter_start
 									(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx,
-										renv->result, &interrupted) == 1 );		 	
+										renv->result, renv->estatus, &interrupted) == 1 );		 	
 							} else
 								result = SIEVE_EXEC_BIN_CORRUPT;
 						}

@@ -534,7 +534,7 @@ bool sieve_result_print
  * Result execution
  */
 
-bool sieve_result_implicit_keep
+static bool _sieve_result_implicit_keep
 	(struct sieve_result *result, bool rollback)
 {	
 	bool success = TRUE;
@@ -543,7 +543,7 @@ bool sieve_result_implicit_keep
 	struct sieve_result_side_effect *rsef, *rsef_first = NULL;
 	void *tr_context;
 	
-	ctx.folder = result->action_env.scriptenv->inbox;
+	ctx.folder = result->action_env.scriptenv->default_mailbox;
 	
 	/* Also apply any implicit side effects if applicable */
 	if ( !rollback && result->action_contexts != NULL ) {
@@ -605,9 +605,20 @@ bool sieve_result_implicit_keep
 	return FALSE;
 }
 
+bool sieve_result_implicit_keep
+(struct sieve_result *result, const struct sieve_message_data *msgdata,
+	const struct sieve_script_env *senv, struct sieve_exec_status *estatus)
+{
+	result->action_env.msgdata = msgdata;
+	result->action_env.scriptenv = senv;
+	result->action_env.estatus = estatus;
+
+	return _sieve_result_implicit_keep(result, TRUE);	
+}
+
 int sieve_result_execute
-	(struct sieve_result *result, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv)
+(struct sieve_result *result, const struct sieve_message_data *msgdata,
+	const struct sieve_script_env *senv, struct sieve_exec_status *estatus)
 { 
 	bool implicit_keep = TRUE;
 	bool success = TRUE, commit_ok;
@@ -616,6 +627,7 @@ int sieve_result_execute
 
 	result->action_env.msgdata = msgdata;
 	result->action_env.scriptenv = senv;
+	result->action_env.estatus = estatus;
 	
 	/* 
 	 * Transaction start 
@@ -736,7 +748,7 @@ int sieve_result_execute
 	 * was not canceled during transaction. 
 	 */
 	if ( !commit_ok || implicit_keep ) {		
-		if ( !sieve_result_implicit_keep(result, !commit_ok) ) 
+		if ( !_sieve_result_implicit_keep(result, !commit_ok) ) 
 			return SIEVE_EXEC_KEEP_FAILED;
 			
 		return ( commit_ok ? 

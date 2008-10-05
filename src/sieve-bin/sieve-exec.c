@@ -92,6 +92,7 @@ int main(int argc, char **argv)
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
+	struct sieve_exec_status estatus;
 	struct sieve_error_handler *ehandler;
 
 	bin_init();
@@ -194,7 +195,7 @@ int main(int argc, char **argv)
 	(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
 	
 	memset(&scriptenv, 0, sizeof(scriptenv));
-	scriptenv.inbox = "INBOX";
+	scriptenv.default_mailbox = "INBOX";
 	scriptenv.namespaces = ns;
 	scriptenv.username = user;
 	scriptenv.hostname = "host.example.com";
@@ -208,7 +209,7 @@ int main(int argc, char **argv)
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	/* Run */
-	switch ( sieve_execute(sbin, &msgdata, &scriptenv, ehandler, NULL) ) {
+	switch ( sieve_execute(sbin, &msgdata, &scriptenv, &estatus, ehandler, NULL) ) {
 	case SIEVE_EXEC_OK:
 		i_info("Final result: success");
 		break;

@@ -416,6 +416,7 @@ bool testsuite_script_compile(const char *script_path)
 bool testsuite_script_execute(const struct sieve_runtime_env *renv)
 {
 	struct sieve_script_env scriptenv;
+	struct sieve_exec_status estatus;
 	struct sieve_result *result;
 	struct sieve_interpreter *interp;
 	int ret;
@@ -430,7 +431,7 @@ bool testsuite_script_execute(const struct sieve_runtime_env *renv)
 
 	/* Compose script execution environment */
 	memset(&scriptenv, 0, sizeof(scriptenv));
-	scriptenv.inbox = "INBOX";
+	scriptenv.default_mailbox = "INBOX";
 	scriptenv.namespaces = NULL;
 	scriptenv.username = "user";
 	scriptenv.hostname = "host.example.com";
@@ -448,7 +449,7 @@ bool testsuite_script_execute(const struct sieve_runtime_env *renv)
 	if ( interp == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 		
-	ret = sieve_interpreter_run(interp, renv->msgdata, &scriptenv, &result);
+	ret = sieve_interpreter_run(interp, renv->msgdata, &scriptenv, &result, &estatus);
 
 	sieve_interpreter_free(&interp);
 	

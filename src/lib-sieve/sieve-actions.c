@@ -216,6 +216,11 @@ static bool act_store_execute
 	
 	if ( trans == NULL || trans->namespace == NULL || trans->box == NULL ) 
 		return FALSE;
+
+	/* Mark attempt to store in default mailbox */
+	if ( strcmp(trans->context->folder, 
+		SIEVE_SCRIPT_DEFAULT_MAILBOX(aenv->scriptenv)) == 0 ) 
+		aenv->estatus->tried_default_save = TRUE;
 	
 	/* Start mail transaction */
 	trans->mail_trans = mailbox_transaction_begin
@@ -299,6 +304,9 @@ static bool act_store_commit
 
 		/* Commit mailbox transaction */	
 		status = mailbox_transaction_commit(&trans->mail_trans) == 0;
+
+		if ( status )
+			aenv->estatus->message_saved = TRUE;
 	} 
 	
 	/* Log our status */

@@ -84,11 +84,12 @@ int sieve_result_add_action
  */
  
 bool sieve_result_implicit_keep
-    (struct sieve_result *result, bool rollback);
+	(struct sieve_result *result, const struct sieve_message_data *msgdata,
+		const struct sieve_script_env *senv, struct sieve_exec_status *estatus);
 
 int sieve_result_execute
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv);
+		const struct sieve_script_env *senv, struct sieve_exec_status *estatus);
 		
 /*
  * Side effects list

@@ -340,6 +340,9 @@ static bool act_redirect_commit
 		sieve_result_log(aenv, "forwarded to <%s>", 
 			str_sanitize(ctx->to_address, 128));	
 
+		/* Indicate that message was successfully forwarded */
+		aenv->estatus->message_forwarded = TRUE;
+
 		/* Cancel implicit keep */
 		*keep = FALSE;
 

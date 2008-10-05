@@ -55,6 +55,7 @@ int main(int argc, char **argv)
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
+	struct sieve_exec_status estatus;
 	struct sieve_error_handler *ehandler;
 	struct ostream *teststream;
 	bool force_compile = FALSE;
@@ -150,7 +151,7 @@ int main(int argc, char **argv)
 	(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
 
 	memset(&scriptenv, 0, sizeof(scriptenv));
-	scriptenv.inbox = "INBOX";
+	scriptenv.default_mailbox = "INBOX";
 	scriptenv.username = user;
 
 	ehandler = sieve_stderr_ehandler_create(0);	
@@ -164,7 +165,7 @@ int main(int argc, char **argv)
 
 	/* Run the test */
 	ret = sieve_test
-		(sbin, &msgdata, &scriptenv, teststream, ehandler, trace_stream);
+		(sbin, &msgdata, &scriptenv, &estatus, teststream, ehandler, trace_stream);
 
 	if ( ret == SIEVE_EXEC_BIN_CORRUPT ) {
 		i_info("Corrupt binary deleted.");

@@ -234,8 +234,9 @@ void sieve_dump(struct sieve_binary *sbin, struct ostream *stream)
 
 int sieve_test
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct ostream *stream,
-	struct sieve_error_handler *ehandler, struct ostream *trace_stream) 	
+	const struct sieve_script_env *senv, struct sieve_exec_status *estatus, 
+	struct ostream *stream, struct sieve_error_handler *ehandler, 
+	struct ostream *trace_stream) 	
 {
 	struct sieve_result *sres = sieve_result_create(ehandler);
 	struct sieve_interpreter *interp = 
@@ -244,8 +245,11 @@ int sieve_test
 		
 	if ( interp == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
+
+	/* Reset execution status */
+    memset(estatus, 0, sizeof(*estatus));
 					
-	ret = sieve_interpreter_run(interp, msgdata, senv, &sres);
+	ret = sieve_interpreter_run(interp, msgdata, senv, &sres, estatus);
 	
 	if ( ret > 0 ) 
 		ret = sieve_result_print(sres, stream);
@@ -261,8 +265,8 @@ int sieve_test
 
 int sieve_execute
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler, 
-	struct ostream *trace_stream) 	
+	const struct sieve_script_env *senv, struct sieve_exec_status *estatus,
+	struct sieve_error_handler *ehandler, struct ostream *trace_stream) 	
 {
 	struct sieve_result *sres = NULL;
 	struct sieve_interpreter *interp = 
@@ -271,8 +275,11 @@ int sieve_execute
 
 	if ( interp == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
+
+	/* Reset execution status */
+    memset(estatus, 0, sizeof(*estatus));
 							
-	ret = sieve_interpreter_run(interp, msgdata, senv, &sres);
+	ret = sieve_interpreter_run(interp, msgdata, senv, &sres, estatus);
 				
 	sieve_interpreter_free(&interp);
 	return ret;

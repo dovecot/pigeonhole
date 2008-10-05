@@ -478,7 +478,8 @@ int sieve_interpreter_continue
 int sieve_interpreter_start
 (struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
 	const struct sieve_script_env *senv, struct sieve_message_context *msgctx, 
-	struct sieve_result *result, bool *interrupted) 
+	struct sieve_result *result, struct sieve_exec_status *estatus,
+	bool *interrupted) 
 {
 	const struct sieve_interpreter_extension_reg *extrs;
 	unsigned int ext_count, i;
@@ -486,6 +487,7 @@ int sieve_interpreter_start
 	interp->runenv.msgdata = msgdata;
 	interp->runenv.result = result;		
 	interp->runenv.scriptenv = senv;
+	interp->runenv.estatus = estatus;
 	
 	if ( msgctx == NULL )
 		interp->runenv.msgctx = sieve_message_context_create();
@@ -506,11 +508,16 @@ int sieve_interpreter_start
 
 int sieve_interpreter_run
 (struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_result **result) 
+	const struct sieve_script_env *senv, struct sieve_result **result,
+	struct sieve_exec_status *estatus)
 {
 	bool is_topmost = ( *result == NULL );
 	int ret = 0;
+
 	sieve_interpreter_reset(interp);
+
+	/* Reset execution status */
+    memset(estatus, 0, sizeof(*estatus));
 	
 	if ( is_topmost )
 		*result = sieve_result_create(interp->ehandler);
@@ -518,13 +525,14 @@ int sieve_interpreter_run
 		sieve_result_ref(*result);
 	}
 	
-	ret = sieve_interpreter_start(interp, msgdata, senv, NULL, *result, NULL);
+	ret = sieve_interpreter_start
+		(interp, msgdata, senv, NULL, *result, estatus, NULL);
 
 	if ( ret >= 0 && is_topmost ) {
 		if ( ret > 0 ) 
-			ret = sieve_result_execute(*result, msgdata, senv);
+			ret = sieve_result_execute(*result, msgdata, senv, estatus);
 		else {
-			if ( !sieve_result_implicit_keep(*result, TRUE) )
+			if ( !sieve_result_implicit_keep(*result, msgdata, senv, estatus) )
 	            return SIEVE_EXEC_KEEP_FAILED;
 		}
 	}
