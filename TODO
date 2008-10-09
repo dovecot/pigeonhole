@@ -5,7 +5,6 @@ Next (in order of descending priority/precedence):
 	- Variables: dump variable identifiers in stead of storage indexes
 * Make sure cmusieve can be replaced seamlessly with the new plugin.
 * Final issues:
-	- Fix amd64 logging segfault
 	- Fix/Report issues listed in 'doc/rfc/RFC Controversy.txt'
 
 
