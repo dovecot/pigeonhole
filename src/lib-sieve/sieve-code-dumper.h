@@ -12,8 +12,19 @@ void sieve_code_dumper_free
 pool_t sieve_code_dumper_pool
 	(struct sieve_code_dumper *dumper);
 	
-/* EXtension support */
+/* 
+ * Extension support
+ */
 
+struct sieve_code_dumper_extension {
+	const struct sieve_extension *ext;	
+
+	void (*free)(struct sieve_code_dumper *dumper, void *context);
+};
+
+void sieve_dump_extension_register
+(struct sieve_code_dumper *dumper, 
+	const struct sieve_code_dumper_extension *dump_ext, void *context);
 void sieve_dump_extension_set_context
 	(struct sieve_code_dumper *dumper, const struct sieve_extension *ext, 
 		void *context);

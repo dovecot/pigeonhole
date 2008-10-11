@@ -21,6 +21,15 @@
 
 #include "sieve-dump.h"
 
+/* 
+ * Code dumper extension
+ */
+
+struct sieve_code_dumper_extension_reg {
+	const struct sieve_code_dumper_extension *val_ext;
+	void *context;
+};
+
 struct sieve_code_dumper {
 	pool_t pool;
 					
@@ -34,7 +43,7 @@ struct sieve_code_dumper {
 	/* Dump environment */
 	struct sieve_dumptime_env *dumpenv; 
 	
-	ARRAY_DEFINE(ext_contexts, void *);
+	ARRAY_DEFINE(extensions, struct sieve_code_dumper_extension_reg);
 };
 
 struct sieve_code_dumper *sieve_code_dumper_create
@@ -50,8 +59,8 @@ struct sieve_code_dumper *sieve_code_dumper_create
 	dumper->pc = 0;
 	
 	/* Setup storage for extension contexts */		
-	p_array_init(&dumper->ext_contexts, pool, sieve_extensions_get_count());
-	
+	p_array_init(&dumper->extensions, pool, sieve_extensions_get_count());
+
 	return dumper;
 }
 
@@ -69,25 +78,42 @@ pool_t sieve_code_dumper_pool(struct sieve_code_dumper *dumper)
 
 /* EXtension support */
 
+void sieve_dump_extension_register
+(struct sieve_code_dumper *dumper, 
+	const struct sieve_code_dumper_extension *dump_ext, void *context)
+{
+	struct sieve_code_dumper_extension_reg reg = { dump_ext, context };
+	int ext_id = *dump_ext->ext->id;
+
+	if ( ext_id < 0 ) return;
+	
+	array_idx_set(&dumper->extensions, (unsigned int) ext_id, &reg);	
+}
+
 void sieve_dump_extension_set_context
 (struct sieve_code_dumper *dumper, const struct sieve_extension *ext, 
 	void *context)
 {
-	array_idx_set(&dumper->ext_contexts, (unsigned int) *ext->id, &context);	
+	struct sieve_code_dumper_extension_reg reg = { NULL, context };
+	int ext_id = *ext->id;
+
+	if ( ext_id < 0 ) return;
+	
+	array_idx_set(&dumper->extensions, (unsigned int) ext_id, &reg);	
 }
 
 void *sieve_dump_extension_get_context
 (struct sieve_code_dumper *dumper, const struct sieve_extension *ext) 
 {
 	int ext_id = *ext->id;
-	void * const *ctx;
+	const struct sieve_code_dumper_extension_reg *reg;
 
-	if  ( ext_id < 0 || ext_id >= (int) array_count(&dumper->ext_contexts) )
+	if  ( ext_id < 0 || ext_id >= (int) array_count(&dumper->extensions) )
 		return NULL;
 	
-	ctx = array_idx(&dumper->ext_contexts, (unsigned int) ext_id);		
+	reg = array_idx(&dumper->extensions, (unsigned int) ext_id);		
 
-	return *ctx;
+	return reg->context;
 }
 
 /* Dump functions */
