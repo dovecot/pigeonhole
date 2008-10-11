@@ -304,8 +304,8 @@ static bool flag_is_valid(const char *flag)
 			(strcmp(atom, "\\SEEN") != 0) &&
 			(strcmp(atom, "\\DRAFT") != 0) )  
 		{           
-    	return FALSE;
-    }
+			return FALSE;
+		}
 	} else {
 		/* Custom keyword:
 		 *

@@ -15,10 +15,6 @@
 #include "sieve-error.h"
 #include "sieve-ast.h"
 
-/* FIXME: Enforce maximums on the number of arguments, tests, commands, 
- * nesting levels, etc.
- */
-
 /*
  * Forward declarations
  */

@@ -745,7 +745,6 @@ static bool _file_memory_load(struct sieve_binary_file *file)
 	i_assert(file->fd > 0);
 		
 	/* Allocate memory buffer
-	 * FIXME: provide mmap support 
 	 */
 	indata = p_malloc(file->pool, file->st.st_size);
 	size = file->st.st_size; 
@@ -1706,11 +1705,11 @@ const void *sieve_binary_read_extension_object
 {
 	unsigned int code;
 
-    if ( reg->count == 0 ) 
-        return NULL;
+	if ( reg->count == 0 ) 
+		return NULL;
 
-    if ( reg->count == 1 )
-        return reg->objects;
+	if ( reg->count == 1 )
+		return reg->objects;
 
 	if ( ADDR_BYTES_LEFT(sbin, address) <= 0 )
 		return NULL;
@@ -1718,8 +1717,8 @@ const void *sieve_binary_read_extension_object
 	code = ADDR_DATA_AT(sbin, address);
 	ADDR_JUMP(address, 1);	
 
-    if ( code >= reg->count )
+	if ( code >= reg->count )
 		return NULL;
 
-    return ((const void *const *) reg->objects)[code];
+	return ((const void *const *) reg->objects)[code];
 }
