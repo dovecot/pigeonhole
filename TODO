@@ -4,7 +4,6 @@ Next (in order of descending priority/precedence):
 * Make sure cmusieve can be replaced seamlessly with the new plugin.
 * Final issues:
 	- FIXME hunting
-	- Fix amd64 logging segfault
 	- Fix/Report issues listed in 'doc/rfc/RFC Controversy.txt'
 
 

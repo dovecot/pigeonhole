@@ -53,10 +53,14 @@ void sieve_verror
 	if ( ehandler == NULL ) return;
 	
 	if ( ehandler->log_master ) {
+		va_list args_copy;
+
+		VA_COPY(args_copy, args);
+
 		if ( location == NULL || *location == '\0' )
-			sieve_sys_error("%s", t_strdup_vprintf(fmt, args));
+			sieve_sys_error("%s", t_strdup_vprintf(fmt, args_copy));
 		else
-			sieve_sys_error("%s: %s", location, t_strdup_vprintf(fmt, args));
+			sieve_sys_error("%s: %s", location, t_strdup_vprintf(fmt, args_copy));
 	}
 
 	if ( sieve_errors_more_allowed(ehandler) ) {
@@ -73,10 +77,14 @@ void sieve_vwarning
 	if ( ehandler == NULL ) return;
 
 	if ( ehandler->log_master ) {
+		va_list args_copy;
+
+		VA_COPY(args_copy, args);
+
 		if ( location == NULL || *location == '\0' )
-			sieve_sys_warning("%s", t_strdup_vprintf(fmt, args));
+			sieve_sys_warning("%s", t_strdup_vprintf(fmt, args_copy));
 		else
-			sieve_sys_warning("%s: %s", location, t_strdup_vprintf(fmt, args));
+			sieve_sys_warning("%s: %s", location, t_strdup_vprintf(fmt, args_copy));
 	}
 	
 	if ( ehandler->vwarning != NULL )	
@@ -91,10 +99,15 @@ void sieve_vinfo
 	if ( ehandler == NULL ) return;
 
 	if ( ehandler->log_master ) {
+		va_list args_copy;
+
+		VA_COPY(args_copy, args);
+
+
 		if ( location == NULL || *location == '\0' )
-			sieve_sys_info("%s", t_strdup_vprintf(fmt, args));
+			sieve_sys_info("%s", t_strdup_vprintf(fmt, args_copy));
 		else	
-			sieve_sys_info("%s: %s", location, t_strdup_vprintf(fmt, args));
+			sieve_sys_info("%s: %s", location, t_strdup_vprintf(fmt, args_copy));
 	}
 	
 	if ( ehandler->log_info && ehandler->vinfo != NULL )	
@@ -349,7 +362,7 @@ struct sieve_logfile_ehandler {
 
 static void sieve_logfile_vprintf
 (struct sieve_logfile_ehandler *ehandler, const char *location, 
-	const char *prefix,	const char *fmt, va_list args) 
+	const char *prefix, const char *fmt, va_list args) 
 {
 	string_t *outbuf;
 	ssize_t ret = 0, remain;
@@ -379,7 +392,7 @@ static void sieve_logfile_vprintf
 
 	if ( ret < 0 ) {
 		sieve_sys_error(
-			"o_stream_send() failed on logfile %s: %m",	ehandler->logfile);		
+			"o_stream_send() failed on logfile %s: %m", ehandler->logfile);		
 	}
 }
 
