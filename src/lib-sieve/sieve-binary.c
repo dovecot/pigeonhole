@@ -1644,12 +1644,6 @@ bool sieve_binary_read_integer
 	return TRUE;
 }
 
-/* FIXME: add this to lib/str. */
-static string_t *t_str_new_const(const char *str, size_t len)
-{
-	return str_new_const(pool_datastack_create(), str, len);
-}
-
 bool sieve_binary_read_string
 (struct sieve_binary *binary, sieve_size_t *address, string_t **str_r) 
 {
