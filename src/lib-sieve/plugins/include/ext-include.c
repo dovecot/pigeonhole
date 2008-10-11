@@ -67,7 +67,7 @@ const struct sieve_extension include_extension = {
 	ext_include_interpreter_load,
 	ext_include_binary_load, 
 	ext_include_binary_dump,
-	NULL,
+	ext_include_code_dump,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_include_operations),
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };

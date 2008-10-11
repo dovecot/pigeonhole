@@ -411,3 +411,16 @@ bool ext_include_binary_dump(struct sieve_dumptime_env *denv)
 	return TRUE;
 }
 
+bool ext_include_code_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address ATTR_UNUSED)
+{
+	struct sieve_binary *sbin = denv->sbin;
+	struct ext_include_binary_context *binctx = 
+		ext_include_binary_get_context(sbin);
+	
+	sieve_ext_variables_dump_set_scope(denv, &include_extension, binctx->global_vars);
+
+	return TRUE;
+}
+
+

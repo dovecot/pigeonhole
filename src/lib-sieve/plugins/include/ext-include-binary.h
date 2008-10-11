@@ -56,6 +56,8 @@ unsigned int ext_include_binary_script_get_count
  */
 
 bool ext_include_binary_dump(struct sieve_dumptime_env *denv);
+bool ext_include_code_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address ATTR_UNUSED);
 		
 #endif /* __EXT_INCLUDE_BINARY_H */
 

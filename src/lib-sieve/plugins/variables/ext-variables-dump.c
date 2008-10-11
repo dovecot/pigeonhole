@@ -18,7 +18,28 @@
  
 struct ext_variables_dump_context {
 	struct sieve_variable_scope *main_scope;
-}; 
+	ARRAY_DEFINE(ext_scopes, struct sieve_variable_scope *);
+};
+
+static struct ext_variables_dump_context *ext_variables_dump_get_context
+	(const struct sieve_dumptime_env *denv)
+{
+	struct sieve_code_dumper *dumper = denv->cdumper;
+	struct ext_variables_dump_context *dctx = sieve_dump_extension_get_context
+		(dumper, &variables_extension);
+	pool_t pool;
+
+	if ( dctx == NULL ) {
+		/* Create dumper context */
+		pool = sieve_code_dumper_pool(dumper);
+		dctx = p_new(pool, struct ext_variables_dump_context, 1);
+		p_array_init(&dctx->ext_scopes, pool, sieve_extensions_get_count());
+	
+		sieve_dump_extension_set_context(dumper, &variables_extension, dctx);
+	}
+
+	return dctx;
+} 
  
 bool ext_variables_code_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
@@ -59,14 +80,23 @@ bool ext_variables_code_dump
 		(void) sieve_variable_scope_declare(main_scope, str_c(identifier));
 	}
 	
-	/* Create dumper context */
-	dctx = p_new(sieve_code_dumper_pool(dumper), 
-		struct ext_variables_dump_context, 1);
+	dctx = ext_variables_dump_get_context(denv);
 	dctx->main_scope = main_scope;
 	
-	sieve_dump_extension_set_context(dumper, &variables_extension, dctx);
-	
 	return TRUE;
+}
+
+/*
+ * Scope registry
+ */
+
+void sieve_ext_variables_dump_set_scope
+(const struct sieve_dumptime_env *denv, const struct sieve_extension *ext, 
+	struct sieve_variable_scope *scope)
+{
+	struct ext_variables_dump_context *dctx = ext_variables_dump_get_context(denv);
+
+	array_idx_set(&dctx->ext_scopes, (unsigned int) *ext->id, &scope);	
 }
 
 /*
@@ -77,15 +107,27 @@ const char *ext_variables_dump_get_identifier
 (const struct sieve_dumptime_env *denv, const struct sieve_extension *ext,
 	unsigned int index)
 {
-	struct sieve_code_dumper *dumper = denv->cdumper;
-	struct ext_variables_dump_context *dctx = sieve_dump_extension_get_context
-		(dumper, &variables_extension);
+	struct ext_variables_dump_context *dctx = ext_variables_dump_get_context(denv);	
+	struct sieve_variable_scope *scope;
 	struct sieve_variable *var;
 
-	if ( ext != NULL )
+	if ( ext == NULL )
+		scope = dctx->main_scope;
+	else {
+		struct sieve_variable_scope *const *ext_scope;
+		int ext_id = *ext->id;
+
+		if  ( ext_id < 0 || ext_id >= (int) array_count(&dctx->ext_scopes) )
+			return NULL;
+	
+		ext_scope = array_idx(&dctx->ext_scopes, (unsigned int) ext_id);
+		scope = *ext_scope;			
+	}
+
+	if ( scope == NULL )
 		return NULL;
 			
-	var = sieve_variable_scope_get_indexed(dctx->main_scope, index);
+	var = sieve_variable_scope_get_indexed(scope, index);
 	
 	return var->identifier;
 }

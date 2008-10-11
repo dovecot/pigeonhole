@@ -151,4 +151,12 @@ struct sieve_variables_modifier {
 void sieve_variables_modifier_register
 	(struct sieve_validator *valdtr, const struct sieve_variables_modifier *smodf);
 
+/*
+ * Code dumping
+ */
+
+void sieve_ext_variables_dump_set_scope
+(const struct sieve_dumptime_env *denv, const struct sieve_extension *ext, 
+	struct sieve_variable_scope *scope);
+
 #endif /* __SIEVE_EXT_VARIABLES_H */
