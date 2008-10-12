@@ -2,9 +2,7 @@ Next (in order of descending priority/precedence):
 
 * Finish the test suite for the base functionality
 * Final issues:
-	- FIXME hunting
 	- Fix/Report issues listed in 'doc/rfc/RFC Controversy.txt'
-
 
 * ## MAKE A FIRST RELEASE (0.1.x) ##
 

@@ -13,6 +13,18 @@
 #include "ext-variables-dump.h"
 
 /*
+ * Code dumper extension
+ */
+
+static void ext_variables_code_dumper_free
+	(struct sieve_code_dumper *dumper, void *context);
+
+const struct sieve_code_dumper_extension variables_dump_extension = {
+	&variables_extension,
+	ext_variables_code_dumper_free
+};
+
+/*
  * Code dump context
  */
  
@@ -20,6 +32,18 @@ struct ext_variables_dump_context {
 	struct sieve_variable_scope *main_scope;
 	ARRAY_DEFINE(ext_scopes, struct sieve_variable_scope *);
 };
+
+static void ext_variables_code_dumper_free
+(struct sieve_code_dumper *dumper ATTR_UNUSED, void *context)
+{
+	struct ext_variables_dump_context *dctx = 
+		(struct ext_variables_dump_context *) context;
+
+	if ( dctx == NULL || dctx->main_scope == NULL )
+		return;
+
+	sieve_variable_scope_unref(&dctx->main_scope);
+}
 
 static struct ext_variables_dump_context *ext_variables_dump_get_context
 	(const struct sieve_dumptime_env *denv)
@@ -44,7 +68,6 @@ static struct ext_variables_dump_context *ext_variables_dump_get_context
 bool ext_variables_code_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	struct sieve_code_dumper *dumper = denv->cdumper;
 	struct ext_variables_dump_context *dctx;
 	struct sieve_variable_scope *main_scope;
 	unsigned int i, scope_size;
@@ -59,7 +82,6 @@ bool ext_variables_code_dump
 	if ( !sieve_binary_read_offset(denv->sbin, address, &end_offset) )
 		return FALSE;
 	
-	/* FIXME: MEMLEAK!! Scope is never unreferenced */
 	main_scope = sieve_variable_scope_create(NULL);
 	
 	sieve_code_dumpf(denv, "SCOPE [%u] (end: %08x)", 
