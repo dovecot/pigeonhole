@@ -1,6 +1,7 @@
 Next (in order of descending priority/precedence):
 
 * Finish the test suite for the base functionality
+	- Add capability to test the result.
 * Final issues:
 	- Fix/Report issues listed in 'doc/rfc/RFC Controversy.txt'
 
