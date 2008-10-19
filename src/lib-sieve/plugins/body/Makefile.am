@@ -17,5 +17,3 @@ libsieve_ext_body_la_SOURCES = \
 
 noinst_HEADERS = \
 	ext-body-common.h
-
-EXTRA_DIST = *.txt *.sieve

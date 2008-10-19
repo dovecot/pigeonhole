@@ -62,7 +62,7 @@ testsuite_SOURCES = \
 noinst_HEADERS = \
 	testsuite-common.h \
 	testsuite-objects.h \
-	testsuite-result.c \
+	testsuite-result.h \
 	namespaces.h \
 	mail-raw.h
 

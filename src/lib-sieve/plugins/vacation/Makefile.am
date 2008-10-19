@@ -17,4 +17,3 @@ libsieve_ext_vacation_la_SOURCES = \
 noinst_HEADERS = \
 	ext-vacation-common.h
 
-EXTRA_DIST = *.txt *.sieve

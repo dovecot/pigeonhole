@@ -2,10 +2,10 @@ SUBDIRS = src
 
 EXTRA_DIST = \
 	tests \
-	sieve/* \
+	examples/* \
 	doc/* \
-    COPYING.LGPL \
-    ChangeLog
+	COPYING.LGPL \
+	ChangeLog
 
 if MAINTAINER_MODE
 ChangeLog: .hg/dirstate

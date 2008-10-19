@@ -15,5 +15,3 @@ libsieve_ext_relational_la_SOURCES = \
 
 noinst_HEADERS = \
 	ext-relational-common.h
-
-EXTRA_DIST = *.txt *.sieve
