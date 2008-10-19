@@ -76,3 +76,5 @@ src/testsuite/Makefile
 stamp.h])
 
 AC_OUTPUT
+
+echo "NOTE: This is the UNSTABLE development branch."
