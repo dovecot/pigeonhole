@@ -80,7 +80,7 @@ test "Header errors" {
 	}
 
 	if not test_error :index 7 :matches 
-		"*header test accepts no sub-tests* is specified*" {
+		"*header test accepts no sub-tests* specified*" {
 		test_fail "error 7 is invalid";
 	}
 
@@ -332,7 +332,7 @@ test "Typos" {
 	}
 
 	if not test_error :index 2 :matches
-		"*fileinto command * no *tests* one is specified*" {
+		"*fileinto command * no *tests* specified*" {
 		test_fail "error 2 is invalid";
 	}
 
