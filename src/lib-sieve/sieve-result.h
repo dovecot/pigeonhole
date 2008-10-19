@@ -90,7 +90,18 @@ bool sieve_result_implicit_keep
 int sieve_result_execute
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,
 		const struct sieve_script_env *senv, struct sieve_exec_status *estatus);
-		
+
+/*
+ * Result evaluation
+ */
+
+struct sieve_result_iterate_context;
+
+struct sieve_result_iterate_context *sieve_result_iterate_init
+	(struct sieve_result *result);
+const struct sieve_action *sieve_result_iterate_next
+	(struct sieve_result_iterate_context *rictx, void **context);
+	
 /*
  * Side effects list
  */

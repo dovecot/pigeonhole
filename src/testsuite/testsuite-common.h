@@ -63,6 +63,7 @@ extern const struct sieve_command cmd_test_set;
 extern const struct sieve_command tst_test_compile;
 extern const struct sieve_command tst_test_execute;
 extern const struct sieve_command tst_test_error;
+extern const struct sieve_command tst_test_result;
 
 /* 
  * Operations 
@@ -76,6 +77,7 @@ enum testsuite_operation_code {
 	TESTSUITE_OPERATION_TEST_COMPILE,
 	TESTSUITE_OPERATION_TEST_EXECUTE,
 	TESTSUITE_OPERATION_TEST_ERROR,
+	TESTSUITE_OPERATION_TEST_RESULT
 };
 
 extern const struct sieve_operation test_operation;
@@ -85,6 +87,7 @@ extern const struct sieve_operation test_set_operation;
 extern const struct sieve_operation test_compile_operation;
 extern const struct sieve_operation test_execute_operation;
 extern const struct sieve_operation test_error_operation;
+extern const struct sieve_operation test_result_operation;
 
 /* 
  * Operands 

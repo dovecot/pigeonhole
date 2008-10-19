@@ -761,6 +761,48 @@ int sieve_result_execute
 }
 
 /*
+ * Result evaluation
+ */
+
+struct sieve_result_iterate_context {
+	struct sieve_result *result;
+	struct sieve_result_action *action;
+};
+
+struct sieve_result_iterate_context *sieve_result_iterate_init
+(struct sieve_result *result)
+{
+	struct sieve_result_iterate_context *rictx = 
+		t_new(struct sieve_result_iterate_context, 1);
+	
+	rictx->result = result;
+	rictx->action = result->first_action;
+
+	return rictx;
+}
+
+const struct sieve_action *sieve_result_iterate_next
+	(struct sieve_result_iterate_context *rictx, void **context)
+{
+	struct sieve_result_action *act;
+
+	if ( rictx == NULL )
+		return  NULL;
+
+	act = rictx->action;
+	if ( act != NULL ) {
+		rictx->action = act->next;
+
+		if ( context != NULL )
+			*context = act->context;
+	
+		return act->action;
+	}
+
+	return NULL;
+}
+
+/*
  * Side effects list
  */
  

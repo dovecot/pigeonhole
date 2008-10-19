@@ -23,8 +23,9 @@
 #include "sieve-result.h"
 #include "sieve-dump.h"
 
-#include "testsuite-objects.h"
 #include "testsuite-common.h"
+#include "testsuite-objects.h"
+#include "testsuite-result.h"
 
 /*
  * Global data
@@ -96,7 +97,8 @@ static void _testsuite_message_set(string_t *message)
 	if ( sender == NULL ) 
 		sender = "sender@example.com";
 
-	memset(&testsuite_msgdata, 0, sizeof(testsuite_msgdata));	testsuite_msgdata.mail = mail;
+	memset(&testsuite_msgdata, 0, sizeof(testsuite_msgdata));	
+	testsuite_msgdata.mail = mail;
 	testsuite_msgdata.auth_user = testsuite_user;
 	testsuite_msgdata.return_path = sender;
 	testsuite_msgdata.to_address = recipient;
@@ -321,20 +323,20 @@ static void _testsuite_script_verror
 
 static struct sieve_error_handler *_testsuite_script_ehandler_create(void)
 {
-    pool_t pool;
-    struct sieve_error_handler *ehandler;
+	pool_t pool;
+	struct sieve_error_handler *ehandler;
 
-    /* Pool is not strictly necessary, but other handler types will need a pool,
-     * so this one will have one too.
-     */
-    pool = pool_alloconly_create
-        ("testsuite_script_error_handler", sizeof(struct sieve_error_handler));
-    ehandler = p_new(pool, struct sieve_error_handler, 1);
-    sieve_error_handler_init(ehandler, pool, 0);
+	/* Pool is not strictly necessary, but other handler types will need a pool,
+	 * so this one will have one too.
+	 */
+	pool = pool_alloconly_create
+		("testsuite_script_error_handler", sizeof(struct sieve_error_handler));
+	ehandler = p_new(pool, struct sieve_error_handler, 1);
+	sieve_error_handler_init(ehandler, pool, 0);
 
-    ehandler->verror = _testsuite_script_verror;
+	ehandler->verror = _testsuite_script_verror;
 
-    return ehandler;
+	return ehandler;
 }
 
 static void testsuite_script_clear_messages(void)
@@ -345,8 +347,8 @@ static void testsuite_script_clear_messages(void)
 		pool_unref(&_testsuite_scriptmsg_pool);
 	}
 
-	 _testsuite_scriptmsg_pool = pool_alloconly_create
-        ("testsuite_script_messages", 8192);
+	_testsuite_scriptmsg_pool = pool_alloconly_create
+		("testsuite_script_messages", 8192);
 	
 	p_array_init(&_testsuite_script_errors, _testsuite_scriptmsg_pool, 128);	
 
@@ -376,7 +378,7 @@ const char *testsuite_script_get_error_next(bool location)
 static void testsuite_script_init(void)
 {
 	test_script_ehandler = _testsuite_script_ehandler_create(); 	
-    sieve_error_handler_accept_infolog(test_script_ehandler, TRUE);
+	sieve_error_handler_accept_infolog(test_script_ehandler, TRUE);
 
 	testsuite_script_clear_messages();
 
@@ -390,22 +392,22 @@ bool testsuite_script_compile(const char *script_path)
 
 	testsuite_script_clear_messages();
 
-	    /* Initialize environment */
-    sieve_dir = strrchr(script_path, '/');
-    if ( sieve_dir == NULL )
-        sieve_dir= "./";
-    else
-        sieve_dir = t_strdup_until(script_path, sieve_dir+1);
+	/* Initialize environment */
+	sieve_dir = strrchr(script_path, '/');
+	if ( sieve_dir == NULL )
+		sieve_dir= "./";
+	else
+		sieve_dir = t_strdup_until(script_path, sieve_dir+1);
 
-    /* Currently needed for include (FIXME) */
-    env_put(t_strconcat("SIEVE_DIR=", sieve_dir, "included", NULL));
-    env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
+	/* Currently needed for include (FIXME) */
+	env_put(t_strconcat("SIEVE_DIR=", sieve_dir, "included", NULL));
+	env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
 
-    if ( (sbin = sieve_compile(script_path, test_script_ehandler)) == NULL )
-        return FALSE;
+	if ( (sbin = sieve_compile(script_path, test_script_ehandler)) == NULL )
+		return FALSE;
 
 	if ( _testsuite_compiled_script != NULL ) {
-	    sieve_close(&_testsuite_compiled_script);
+		sieve_close(&_testsuite_compiled_script);
 	}
 
 	_testsuite_compiled_script = sbin;
@@ -452,6 +454,8 @@ bool testsuite_script_execute(const struct sieve_runtime_env *renv)
 	ret = sieve_interpreter_run(interp, renv->msgdata, &scriptenv, &result, &estatus);
 
 	sieve_interpreter_free(&interp);
+
+	testsuite_result_assign(result);
 	
 	return ( ret > 0 );
 }
@@ -461,8 +465,8 @@ static void testsuite_script_deinit(void)
 	sieve_error_handler_unref(&test_script_ehandler);
 
 	if ( _testsuite_compiled_script != NULL ) {
-        sieve_close(&_testsuite_compiled_script);
-    }
+		sieve_close(&_testsuite_compiled_script);
+	}
 
 	pool_unref(&_testsuite_scriptmsg_pool);
 	//str_free(test_script_error_buf);
@@ -476,10 +480,12 @@ void testsuite_init(void)
 {
 	testsuite_test_context_init();
 	testsuite_script_init();
+	testsuite_result_init();
 }
 
 void testsuite_deinit(void)
 {
+	testsuite_result_deinit();
 	testsuite_script_deinit();
 	testsuite_test_context_deinit();
 }

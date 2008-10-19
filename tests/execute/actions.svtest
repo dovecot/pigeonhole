@@ -1,4 +1,6 @@
 require "vnd.dovecot.testsuite";
+require "relational";
+require "comparator-i;ascii-numeric";
 
 test_set "message" text:
 To: nico@vestingbar.nl
@@ -17,6 +19,22 @@ test "Fileinto" {
 	if not test_execute {
 		test_fail "execute failed";
 	}
+
+	if not test_result :count "eq" :comparator "i;ascii-numeric" "3" {
+		test_fail "wrong number of actions in result";
+	} 
+
+	if not test_result :index 1 "store" {
+		test_fail "first action is not 'store'";
+	} 
+
+	if not test_result :index 2 "store" {
+		test_fail "second action is not 'store'";
+	} 
+
+	if not test_result :index 3 "store" {
+		test_fail "third action is not 'store'";
+	} 
 }
 
 test "Redirect" {
@@ -27,5 +45,25 @@ test "Redirect" {
 	if not test_execute {
 		test_fail "execute failed";
 	}
+
+	if not test_result :count "eq" :comparator "i;ascii-numeric" "4" {
+		test_fail "wrong number of actions in result";
+	} 
+
+	if not test_result :index 1 "redirect" {
+		test_fail "first action is not 'redirect'";
+	} 
+
+	if not test_result :index 2 "store" {
+		test_fail "second action is not 'store'";
+	} 
+
+	if not test_result :index 3 "redirect" {
+		test_fail "third action is not 'redirect'";
+	} 
+
+	if not test_result :index 4 "redirect" {
+		test_fail "fourth action is not 'redirect'";
+	} 
 }
 

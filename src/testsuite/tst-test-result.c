@@ -1,10 +1,16 @@
 /* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
  */
 
+/* FIXME: this file is very similar to tst-test-error.c. Maybe it is best to 
+ * implement errors and actions as testsuite-objects and implement a common
+ * interface to test these.
+ */
+
 #include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
 #include "sieve-commands.h"
+#include "sieve-actions.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
 #include "sieve-validator.h"
@@ -12,33 +18,35 @@
 #include "sieve-interpreter.h"
 #include "sieve-code.h"
 #include "sieve-binary.h"
+#include "sieve-result.h"
 #include "sieve-dump.h"
 #include "sieve-match.h"
 
 #include "testsuite-common.h"
+#include "testsuite-result.h"
 
 /*
- * Test_error command
+ * test_result command
  *
  * Syntax:   
  *   test [MATCH-TYPE] [COMPARATOR] [:index number] <key-list: string-list>
  */
 
-static bool tst_test_error_registered
+static bool tst_test_result_registered
     (struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
-static bool tst_test_error_validate
+static bool tst_test_result_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
-static bool tst_test_error_generate
+static bool tst_test_result_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
-const struct sieve_command tst_test_error = { 
-	"test_error", 
+const struct sieve_command tst_test_result = { 
+	"test_result", 
 	SCT_TEST, 
 	1, 0, FALSE, FALSE,
-	tst_test_error_registered, 
+	tst_test_result_registered, 
 	NULL,
-	tst_test_error_validate, 
-	tst_test_error_generate, 
+	tst_test_result_validate, 
+	tst_test_result_generate, 
 	NULL 
 };
 
@@ -46,19 +54,19 @@ const struct sieve_command tst_test_error = {
  * Operation 
  */
 
-static bool tst_test_error_operation_dump
+static bool tst_test_result_operation_dump
 	(const struct sieve_operation *op,
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int tst_test_error_operation_execute
+static int tst_test_result_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation test_error_operation = { 
-	"TEST_ERROR",
+const struct sieve_operation test_result_operation = { 
+	"test_result",
 	&testsuite_extension, 
-	TESTSUITE_OPERATION_TEST_ERROR,
-	tst_test_error_operation_dump, 
-	tst_test_error_operation_execute 
+	TESTSUITE_OPERATION_TEST_RESULT,
+	tst_test_result_operation_dump, 
+	tst_test_result_operation_execute 
 };
 
 /*
@@ -69,27 +77,28 @@ const struct sieve_operation test_error_operation = {
  * implemented.
  */
 
-static bool tst_test_error_validate_index_tag
+/* FIXME: at least merge this with the test_error version of this tag */
+
+static bool tst_test_result_validate_index_tag
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg,
 		struct sieve_command_context *cmd);
 
-static const struct sieve_argument test_error_index_tag = {
-	"index",
-	NULL, NULL,
-	tst_test_error_validate_index_tag,
-	NULL, NULL
+static const struct sieve_argument test_result_index_tag = {
+    "index",
+    NULL, NULL,
+    tst_test_result_validate_index_tag,
+    NULL, NULL
 };
 
-enum tst_test_error_optional {
+enum tst_test_result_optional {
 	OPT_INDEX = SIEVE_MATCH_OPT_LAST,
 };
-
 
 /*
  * Argument implementation
  */
 
-static bool tst_test_error_validate_index_tag
+static bool tst_test_result_validate_index_tag
 (struct sieve_validator *validator, struct sieve_ast_argument **arg,
 	struct sieve_command_context *cmd)
 {
@@ -116,7 +125,7 @@ static bool tst_test_error_validate_index_tag
  * Command registration
  */
 
-static bool tst_test_error_registered
+static bool tst_test_result_registered
 (struct sieve_validator *validator, struct sieve_command_registration *cmd_reg)
 {
 	/* The order of these is not significant */
@@ -124,7 +133,7 @@ static bool tst_test_error_registered
 	sieve_match_types_link_tags(validator, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
 
 	sieve_validator_register_tag
-		(validator, cmd_reg, &test_error_index_tag, OPT_INDEX);
+		(validator, cmd_reg, &test_result_index_tag, OPT_INDEX);
 
 	return TRUE;
 }
@@ -133,7 +142,7 @@ static bool tst_test_error_registered
  * Validation 
  */
 
-static bool tst_test_error_validate
+static bool tst_test_result_validate
 (struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command_context *tst) 
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
@@ -162,10 +171,10 @@ _get_generator_context(struct sieve_generator *gentr)
 		sieve_generator_extension_get_context(gentr, &testsuite_extension);
 }
 
-static bool tst_test_error_generate
+static bool tst_test_result_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *tst)
 {
-	sieve_operation_emit_code(cgenv->sbin, &test_error_operation);
+	sieve_operation_emit_code(cgenv->sbin, &test_result_operation);
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, tst, NULL);
@@ -175,13 +184,13 @@ static bool tst_test_error_generate
  * Code dump
  */
  
-static bool tst_test_error_operation_dump
+static bool tst_test_result_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int opt_code = 0;
 
-	sieve_code_dumpf(denv, "TEST_ERROR:");
+	sieve_code_dumpf(denv, "TEST_RESULT:");
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
@@ -208,7 +217,7 @@ static bool tst_test_error_operation_dump
  * Intepretation
  */
 
-static int tst_test_error_operation_execute
+static int tst_test_result_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
@@ -219,7 +228,8 @@ static int tst_test_error_operation_execute
 	struct sieve_match_context *mctx;
 	struct sieve_coded_stringlist *key_list;
 	bool matched;
-	const char *error;
+	struct sieve_result_iterate_context *rictx;
+	const struct sieve_action *action;
 	int cur_index = 0, index = 0;
 	int ret;
 
@@ -261,23 +271,23 @@ static int tst_test_error_operation_execute
 	 * Perform operation
 	 */
 	
-	sieve_runtime_trace(renv, "TEST_ERROR test (index: %d)", index);
+	sieve_runtime_trace(renv, "TEST_RESULT test (index: %d)", index);
 
-	testsuite_script_get_error_init();
+	rictx = testsuite_result_iterate_init();
 
-	/* Initialize match */
-	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list);
+  /* Initialize match */
+  mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list);
 
-	/* Iterate through all errors to match */
-	error = NULL;
+  /* Iterate through all errors to match */
 	matched = FALSE;
 	cur_index = 1;
 	ret = 0;
 	while ( result && !matched &&
-		(error=testsuite_script_get_error_next(FALSE)) != NULL ) {
-		
+		(action=sieve_result_iterate_next(rictx, NULL)) != NULL ) {
+		const char *act_name = action->name;
+
 		if ( index == 0 || index == cur_index ) {
-			if ( (ret=sieve_match_value(mctx, error, strlen(error))) < 0 ) {
+			if ( (ret=sieve_match_value(mctx, act_name, strlen(act_name))) < 0 ) {
 				result = FALSE;
 				break;
 			}

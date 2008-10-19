@@ -20,19 +20,19 @@ libs = \
 	$(dovecot_incdir)/src/lib-storage/index/raw/libstorage_raw.a \
 	$(dovecot_incdir)/src/lib-storage/index/maildir/libstorage_maildir.a \
 	$(dovecot_incdir)/src/lib-storage/index/mbox/libstorage_mbox.a \
-    $(dovecot_incdir)/src/lib-storage/index/libstorage_index.a \
-    $(dovecot_incdir)/src/lib-storage/libstorage.a \
-    $(dovecot_incdir)/src/lib-index/libindex.a \
-    $(dovecot_incdir)/src/lib-imap/libimap.a \
-    $(dovecot_incdir)/src/lib-mail/libmail.a \
-    $(dovecot_incdir)/src/lib-charset/libcharset.a \
+	$(dovecot_incdir)/src/lib-storage/index/libstorage_index.a \
+	$(dovecot_incdir)/src/lib-storage/libstorage.a \
+	$(dovecot_incdir)/src/lib-index/libindex.a \
+	$(dovecot_incdir)/src/lib-imap/libimap.a \
+	$(dovecot_incdir)/src/lib-mail/libmail.a \
+	$(dovecot_incdir)/src/lib-charset/libcharset.a \
 	$(dovecot_incdir)/src/lib/liblib.a
 
 ldadd = \
 	$(libs) \
  	$(LIBICONV) \
-    $(RAND_LIBS) \
-    $(MODULE_LIBS)
+	$(RAND_LIBS) \
+	$(MODULE_LIBS)
 
 testsuite_LDADD = $(ldadd)
 testsuite_DEPENDENCIES = $(libs)
@@ -45,13 +45,15 @@ commands = \
 tests = \
 	tst-test-compile.c \
 	tst-test-execute.c \
-	tst-test-error.c
+	tst-test-error.c \
+	tst-test-result.c
 
 testsuite_SOURCES = \
 	namespaces.c \
 	mail-raw.c \
 	testsuite-common.c \
 	testsuite-objects.c \
+	testsuite-result.c \
 	$(commands) \
 	$(tests) \
 	ext-testsuite.c \
@@ -60,6 +62,7 @@ testsuite_SOURCES = \
 noinst_HEADERS = \
 	testsuite-common.h \
 	testsuite-objects.h \
+	testsuite-result.c \
 	namespaces.h \
 	mail-raw.h
 

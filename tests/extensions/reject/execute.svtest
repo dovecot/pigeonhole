@@ -1,4 +1,6 @@
 require "vnd.dovecot.testsuite";
+require "relational";
+require "comparator-i;ascii-numeric";
 
 test_set "message" text:
 To: nico@vestingbar.nl
@@ -16,5 +18,13 @@ test "Execute" {
 
 	if not test_execute {
 		test_fail "execute failed";
+	}
+
+	if not test_result :count "eq" :comparator "i;ascii-numeric" "1" {
+		test_fail "invalid number of actions in result";
+	}
+
+	if not test_result :index 1 "reject" {
+		test_fail "reject action missing from result";
 	}
 }
