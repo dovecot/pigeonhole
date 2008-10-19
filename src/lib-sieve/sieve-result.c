@@ -670,7 +670,7 @@ int sieve_result_execute
 	
 		/* Execute the action itself */
 		if ( act->execute != NULL ) {
-			rac->success = act->execute(act, &result->action_env, context);
+			rac->success = act->execute(act, &result->action_env, rac->tr_context);
 			success = success && rac->success;
 		}
 		
@@ -704,7 +704,7 @@ int sieve_result_execute
 			bool keep = TRUE;
 		
 			if ( act->commit != NULL ) 
-				commit_ok = act->commit(act, &result->action_env, context, &keep) && 
+				commit_ok = act->commit(act, &result->action_env, rac->tr_context, &keep) && 
 					commit_ok;
 	
 			/* Execute post_commit event of side effects */
@@ -721,7 +721,7 @@ int sieve_result_execute
 			implicit_keep = implicit_keep && keep;
 		} else {
 			if ( act->rollback != NULL ) 
-				act->rollback(act, &result->action_env, context, rac->success);
+				act->rollback(act, &result->action_env, rac->tr_context, rac->success);
 				
 			/* Rollback side effects */
 			rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
