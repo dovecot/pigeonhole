@@ -857,24 +857,44 @@ static bool sieve_validate_arguments_context
  */ 
                  
 static bool sieve_validate_command_subtests
-(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+(struct sieve_validator *valdtr, struct sieve_command_context *cmd, 
 	const unsigned int count) 
 {
 	switch ( count ) {
 	
 	case 0:
 	 	if ( sieve_ast_test_count(cmd->ast_node) > 0 ) {
-			sieve_command_validate_error(validator, cmd, 
-				"the %s %s accepts no sub-tests, but tests are specified anyway "
-				"(forgot semicolon?)", 
-				cmd->command->identifier, sieve_command_type_name(cmd->command));
-			
+			/* Unexpected command specified */
+			enum sieve_command_type ctype = SCT_NONE;
+			struct sieve_command_registration *cmd_reg;
+			struct sieve_ast_node *test = sieve_ast_test_first(cmd->ast_node);
+
+			cmd_reg = sieve_validator_find_command_registration
+				(valdtr, test->identifier);
+	
+			/* First check what we are dealing with */
+			if ( cmd_reg != NULL && cmd_reg->command != NULL )
+				ctype = cmd_reg->command->type;
+
+			switch ( ctype ) {
+			case SCT_TEST:
+				sieve_command_validate_error(valdtr, cmd, 
+					"the %s %s accepts no sub-tests, but one is specified anyway", 
+					cmd->command->identifier, sieve_command_type_name(cmd->command));
+				break;
+			case SCT_NONE:
+			case SCT_COMMAND:
+				sieve_command_validate_error(valdtr, cmd, 
+					"missing semicolon ';' after %s %s", 
+					cmd->command->identifier, sieve_command_type_name(cmd->command));
+				break;
+			}
 			return FALSE;
 		}
 		break;
 	case 1:
 		if ( sieve_ast_test_count(cmd->ast_node) == 0 ) {
-			sieve_command_validate_error(validator, cmd, 
+			sieve_command_validate_error(valdtr, cmd, 
 				"the %s %s requires one sub-test, but none is specified", 
 				cmd->command->identifier, sieve_command_type_name(cmd->command));
 				
@@ -883,7 +903,7 @@ static bool sieve_validate_command_subtests
 		} else if ( sieve_ast_test_count(cmd->ast_node) > 1 || 
 			cmd->ast_node->test_list ) {
 			
-			sieve_command_validate_error(validator, cmd, 
+			sieve_command_validate_error(valdtr, cmd, 
 				"the %s %s requires one sub-test, but a list of tests is specified", 
 				cmd->command->identifier, sieve_command_type_name(cmd->command));
 				
@@ -893,7 +913,7 @@ static bool sieve_validate_command_subtests
 		
 	default:
 		if ( sieve_ast_test_count(cmd->ast_node) == 0 ) {
-			sieve_command_validate_error(validator, cmd, 
+			sieve_command_validate_error(valdtr, cmd, 
 				"the %s %s requires a list of sub-tests, but none is specified", 
 				cmd->command->identifier, sieve_command_type_name(cmd->command));
 			
@@ -902,7 +922,7 @@ static bool sieve_validate_command_subtests
 		} else if ( sieve_ast_test_count(cmd->ast_node) == 1 && 
 			!cmd->ast_node->test_list ) {
 			
-			sieve_command_validate_error(validator, cmd, 
+			sieve_command_validate_error(valdtr, cmd, 
 				"the %s %s requires a list of sub-tests, "
 				"but a single test is specified", 
 				cmd->command->identifier, sieve_command_type_name(cmd->command) );

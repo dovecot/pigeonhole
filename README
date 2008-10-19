@@ -182,6 +182,15 @@ Currently undocumented (will be merged with sieve-test).
 
 Various example scripts are bundled in the directory 'examples'. 
 
+Known issues
+------------
+
+Most open issues are outlined in the TODO file. The more generic ones are (re-)
+listed here:
+
+- Compile errors are sometimes a bit obscure and long. This needs work. 
+  Suggestions for improvement are welcome. 
+
 Authors
 -------
 

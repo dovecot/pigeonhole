@@ -80,7 +80,7 @@ test "Header errors" {
 	}
 
 	if not test_error :index 7 :matches 
-		"*header test accepts no sub-tests* are specified*" {
+		"*header test accepts no sub-tests* is specified*" {
 		test_fail "error 7 is invalid";
 	}
 
@@ -314,6 +314,36 @@ test "Tagged argument errors (FIXME: count only)" {
 }
 
 /*
+ * Typos
+ */
+
+test "Typos" {
+	if test_compile "errors/typos.sieve" {
+		test_fail "compile should have failed.";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "4" {
+		test_fail "wrong number of errors reported";
+	}
+
+	if not test_error :index 1 :matches
+		"missing semicolon * fileinto *" {
+		test_fail "error 1 is invalid";
+	}
+
+	if not test_error :index 2 :matches
+		"*fileinto command * no *tests* one is specified*" {
+		test_fail "error 2 is invalid";
+	}
+
+	if not test_error :index 3 :matches
+		"missing semicolon * fileinto *" {
+		test_fail "error 3 is invalid";
+	}
+}
+
+
+/*
  * Unsupported language features
  */
 
@@ -326,4 +356,3 @@ test "Unsupported language features (FIXME: count only)" {
         test_fail "wrong number of errors reported";
     }
 }
-
