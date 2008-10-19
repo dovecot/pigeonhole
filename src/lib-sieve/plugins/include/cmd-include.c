@@ -176,8 +176,22 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	struct sieve_script *script;
 	const char *script_dir, *script_name;
 	
+	/* Check argument */
 	if ( !sieve_validate_positional_argument
 		(validator, cmd, arg, "value", 1, SAAT_STRING) ) {
+		return FALSE;
+	}
+
+	if ( !sieve_validator_argument_activate(validator, cmd, arg, FALSE) )
+		return FALSE;
+
+	/* FIXME: We can currently only handle string literal argument, so
+	 * variables are not allowed.
+	 */
+	if ( !sieve_argument_is_string_literal(arg) ) {
+		sieve_argument_validate_error(validator, arg, 
+			"this Sieve implementation currently only supports "
+			"a literal string argument for the include command");
 		return FALSE;
 	}
 

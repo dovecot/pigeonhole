@@ -116,10 +116,13 @@ static int mcht_regex_validate_key_argument
 {
 	struct _regex_key_context *keyctx = (struct _regex_key_context *) context;
 
+	/* FIXME: We can currently only handle string literal argument, so
+	 * variables are not allowed.
+	 */
 	if ( !sieve_argument_is_string_literal(key) ) {
 		sieve_argument_validate_error(keyctx->valdtr, key,
-			"this sieve implementation currently does not accept variable strings "
-			"as regular expression");
+			"this Sieve implementation currently only accepts a literal string "
+			"for a regular expression");
 		return FALSE;
 	}
 

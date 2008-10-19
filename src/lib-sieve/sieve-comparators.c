@@ -157,6 +157,19 @@ static bool tag_comparator_validate
 			sieve_ast_argument_name(*arg) );
 		return FALSE;
 	}
+
+	if ( !sieve_validator_argument_activate(validator, cmd, *arg, FALSE) )
+		return FALSE;
+
+	/* FIXME: We can currently only handle string literal argument, so
+	 * variables are not allowed.
+	 */
+	if ( !sieve_argument_is_string_literal(*arg) ) {
+		sieve_argument_validate_error(validator, *arg, 
+			"this Sieve implementation currently only supports "
+			"a literal string argument for the :comparator tag");
+		return FALSE;
+	}
 	
 	/* Get comparator from registry */
 	cmp = sieve_comparator_find(validator, sieve_ast_argument_strc(*arg));

@@ -313,3 +313,17 @@ test "Tagged argument errors (FIXME: count only)" {
     }
 }
 
+/*
+ * Unsupported language features
+ */
+
+test "Unsupported language features (FIXME: count only)" {
+    if test_compile "errors/unsupported.sieve" {
+        test_fail "compile should have failed.";
+    }
+
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "4" {
+        test_fail "wrong number of errors reported";
+    }
+}
+
