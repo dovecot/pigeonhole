@@ -223,7 +223,7 @@ test "Stop errors (FIXME: count only)" {
         test_fail "compile should have failed.";
     }
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "8" {
+    if not test_error :count "eq" :comparator "i;ascii-numeric" "9" {
         test_fail "wrong number of errors reported";
     }
 }
@@ -322,7 +322,7 @@ test "Typos" {
 		test_fail "compile should have failed.";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "4" {
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "6" {
 		test_fail "wrong number of errors reported";
 	}
 
@@ -339,6 +339,16 @@ test "Typos" {
 	if not test_error :index 3 :matches
 		"missing semicolon * fileinto *" {
 		test_fail "error 3 is invalid";
+	}
+
+	if not test_error :index 4 :matches
+		"*address test requires 2 * 0 * specified" {
+		test_fail "error 4 is invalid";
+	}
+
+	if not test_error :index 5 :matches
+		"missing colon *matches* tag * address test" {
+		test_fail "error 5 is invalid";
 	}
 }
 

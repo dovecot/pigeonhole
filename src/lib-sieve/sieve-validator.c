@@ -443,16 +443,15 @@ static void sieve_validator_register_unknown_tag
 }
 
 static const struct sieve_argument *sieve_validator_find_tag
-(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+(struct sieve_validator *valdtr, struct sieve_command_context *cmd, 
 	struct sieve_ast_argument *arg, int *id_code) 
 {
-	const char *tag;
-	unsigned int i;
 	struct sieve_command_registration *cmd_reg = cmd->cmd_reg;
-		
-	tag = sieve_ast_argument_tag(arg);
-	
-	*id_code = 0;
+	const char *tag = sieve_ast_argument_tag(arg);
+	unsigned int i;
+			
+	if ( id_code != NULL )
+		*id_code = 0;
 	
 	/* First check normal tags */
 	if ( array_is_created(&cmd_reg->normal_tags) ) {
@@ -461,7 +460,9 @@ static const struct sieve_argument *sieve_validator_find_tag
 				array_idx(&cmd_reg->normal_tags, i);
 
 			if ( (*reg)->tag != NULL && strcasecmp((*reg)->identifier,tag) == 0) {
-				*id_code = (*reg)->id_code;
+				if ( id_code != NULL )				
+					*id_code = (*reg)->id_code;
+
 				return (*reg)->tag;
 			}
 		}
@@ -474,15 +475,30 @@ static const struct sieve_argument *sieve_validator_find_tag
 				array_idx(&cmd_reg->instanced_tags, i);
   	
 			if ( (*reg)->tag != NULL && 
-				(*reg)->tag->is_instance_of(validator, cmd, arg) ) 
-			{
-				*id_code = (*reg)->id_code;
+				(*reg)->tag->is_instance_of(valdtr, cmd, arg) ) {
+				if ( id_code != NULL )
+					*id_code = (*reg)->id_code;
+				
 				return (*reg)->tag;
 			}
 		}
 	}
 	
 	return NULL;
+}
+
+static const struct sieve_argument *sieve_validator_find_tag_by_identifier
+(struct sieve_validator *valdtr, struct sieve_command_context *cmd, 
+	const char *tag) 
+{
+	struct sieve_ast_argument *arg;
+
+	/* Construct dummy argument */
+	arg = t_new(struct sieve_ast_argument, 1);
+	arg->type = SAAT_TAG;
+	arg->_value.tag = tag; 
+
+	return sieve_validator_find_tag(valdtr, cmd, arg, NULL);  
 }
 
 /* 
@@ -877,12 +893,24 @@ static bool sieve_validate_command_subtests
 				ctype = cmd_reg->command->type;
 
 			switch ( ctype ) {
-			case SCT_TEST:
+			case SCT_TEST: /* Spurious test */
 				sieve_command_validate_error(valdtr, cmd, 
 					"the %s %s accepts no sub-tests, but tests are specified", 
 					cmd->command->identifier, sieve_command_type_name(cmd->command));
 				break;
-			case SCT_NONE:
+
+			case SCT_NONE: /* Unknown command */
+
+				/* Is it perhaps a tag for which the ':' was omitted ? */
+				if ( 	sieve_validator_find_tag_by_identifier
+					(valdtr, cmd, test->identifier) != NULL ) {
+					sieve_command_validate_error(valdtr, cmd, 
+						"missing colon ':' before ':%s' tag in %s %s", test->identifier, 
+						cmd->command->identifier, sieve_command_type_name(cmd->command));
+					break;
+				} 
+				/* Fall through */
+			
 			case SCT_COMMAND:
 				sieve_command_validate_error(valdtr, cmd, 
 					"missing semicolon ';' after %s %s", 
@@ -1015,14 +1043,20 @@ static bool sieve_validate_command
 				command->pre_validate(valdtr, ctx) ) {
 		
 				/* Check syntax */
-				if ( 
-					!sieve_validate_command_arguments(valdtr, ctx) ||
- 					!sieve_validate_command_subtests
+				if ( !sieve_validate_command_arguments(valdtr, ctx) ) {
+					result = FALSE;
+
+					/* A missing ':' causes a tag to become a test. This can be the cause
+					 * of the arguments validation failing. Therefore we must produce an
+					 * error for the sub-tests as well if appropriate.
+					 */
+					(void)sieve_validate_command_subtests(valdtr, ctx, command->subtests);
+				} else if (
+					!sieve_validate_command_subtests
  						(valdtr, ctx, command->subtests) || 
  					(ast_type == SAT_COMMAND && !sieve_validate_command_block
  						(valdtr, ctx, command->block_allowed, 
- 							command->block_required)) ) 
- 				{
+ 							command->block_required)) ) {
  					result = FALSE;
  				} else {
 					/* Call command validation function if specified */
