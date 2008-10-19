@@ -2,12 +2,11 @@ Next (in order of descending priority/precedence):
 
 * Finish the test suite for the base functionality
 	- Add capability to test the result.
-* Final issues:
-	- Fix/Report issues listed in 'doc/rfc/RFC Controversy.txt'
 
 * ## MAKE A FIRST RELEASE (0.1.x) ##
 
 * Fix remaining RFC deviations:
+	- Fix issues listed in doc/rfc/RFC-questions.txt when answers arrive
 	- Allow for the existance of dynamic comparators (i.e. specified by 
 	  variables). 
 	- Allow for dynamic includes (i.e. specified by variables).
