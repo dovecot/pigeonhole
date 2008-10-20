@@ -541,7 +541,7 @@ static bool _sieve_result_implicit_keep
 	bool dummy = TRUE;
 	struct act_store_context ctx;
 	struct sieve_result_side_effect *rsef, *rsef_first = NULL;
-	void *tr_context;
+	void *tr_context = NULL;
 	
 	ctx.folder = result->action_env.scriptenv->default_mailbox;
 	

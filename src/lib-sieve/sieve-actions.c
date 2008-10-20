@@ -218,10 +218,9 @@ static bool act_store_start
 	/* Open the requested mailbox */
 	if ( aenv->scriptenv->namespaces != NULL ) {
 		ns = mail_namespace_find(aenv->scriptenv->namespaces, &ctx->folder);
-		if (ns == NULL) 
-			return FALSE;
-		
-		box = act_store_mailbox_open(aenv, ns, ctx->folder);
+
+		if ( ns != NULL )		
+			box = act_store_mailbox_open(aenv, ns, ctx->folder);
 	}
 				
 	/* Create transaction context */
@@ -301,7 +300,10 @@ static void act_store_log_status
 		mailbox_name = str_sanitize(mailbox_get_name(trans->box), 128);
 
 	if ( trans->namespace == NULL ) {
-		sieve_result_log(aenv, "store into mailbox '%s' not performed", mailbox_name);
+		if ( aenv->scriptenv->namespaces == NULL )
+			sieve_result_log(aenv, "store into mailbox '%s' skipped", mailbox_name);
+		else
+			sieve_result_error(aenv, "failed to find namespace to store into mailbox '%s'", mailbox_name);
 	} else {	
 		if ( !rolled_back && status ) {
 			sieve_result_log(aenv, "stored mail into mailbox '%s'", mailbox_name);
@@ -374,7 +376,7 @@ static void act_store_rollback
 	if ( trans->mail_trans != NULL )
 	  mailbox_transaction_rollback(&trans->mail_trans);
   
-  /* Close the mailbox */
+	/* Close the mailbox */
 	if ( trans->box != NULL )  
 	  mailbox_close(&trans->box);
 }
