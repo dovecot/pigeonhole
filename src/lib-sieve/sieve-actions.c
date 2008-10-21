@@ -219,8 +219,11 @@ static bool act_store_start
 	if ( aenv->scriptenv->namespaces != NULL ) {
 		ns = mail_namespace_find(aenv->scriptenv->namespaces, &ctx->folder);
 
-		if ( ns != NULL )		
+		if ( ns != NULL ) {		
 			box = act_store_mailbox_open(aenv, ns, ctx->folder);
+		
+			aenv->estatus->last_storage = ns->storage;
+		}
 	}
 				
 	/* Create transaction context */

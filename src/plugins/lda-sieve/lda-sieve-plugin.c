@@ -97,7 +97,8 @@ static const char *lda_sieve_get_path(void)
 
 static int lda_sieve_run
 (struct mail_namespace *namespaces, struct mail *mail, const char *script_path,
-	const char *destaddr, const char *username, const char *mailbox)
+	const char *destaddr, const char *username, const char *mailbox,
+	struct mail_storage **storage_r)
 {
 	bool debug = ( getenv("DEBUG") != NULL );
 	struct sieve_message_data msgdata;
@@ -108,6 +109,8 @@ static int lda_sieve_run
 	const char *scriptlog;
 	bool exists = TRUE;
 	int ret = 0;
+
+	*storage_r = NULL;
 
 	/* Create error handler */
 	scriptlog = t_strconcat(script_path, ".log", NULL);
@@ -170,6 +173,7 @@ static int lda_sieve_run
 	/* Record status */
 
 	tried_default_save = estatus.tried_default_save;
+	*storage_r = estatus.last_storage;
 
 	/* Evaluate result */
 
@@ -189,12 +193,11 @@ static int lda_sieve_run
 		sieve_error_handler_copy_masterlog(ehandler, FALSE);
 	
 		if ( (sbin=sieve_compile(script_path, ehandler)) == NULL ) {
-        	sieve_sys_error("failed to compile script %s; "
-            	"log should be available as %s", script_path, scriptlog);
-
-	        sieve_error_handler_unref(&ehandler);
-    	    return -1;
-    	}
+			sieve_sys_error("failed to compile script %s; "
+            			"log should be available as %s", script_path, scriptlog);
+			sieve_error_handler_unref(&ehandler);
+			return -1;
+		}
 
 		sieve_error_handler_copy_masterlog(ehandler, TRUE);
 
@@ -205,6 +208,7 @@ static int lda_sieve_run
 		/* Record status */
 
 		tried_default_save = estatus.tried_default_save;
+		*storage_r = estatus.last_storage;
 
 		/* Save new version */
 		
@@ -237,7 +241,7 @@ static int lda_sieve_run
 }
 
 static int lda_sieve_deliver_mail
-(struct mail_namespace *namespaces, struct mail_storage **storage_r ATTR_UNUSED, 
+(struct mail_namespace *namespaces, struct mail_storage **storage_r, 
 	struct mail *mail, const char *destaddr, const char *mailbox)
 {
 	const char *script_path;
@@ -255,8 +259,9 @@ static int lda_sieve_deliver_mail
 	/* Run the script */
 
 	T_BEGIN { 
-		ret = lda_sieve_run(namespaces, mail, script_path, destaddr, 
-			getenv("USER"), mailbox);
+		ret = lda_sieve_run
+			(namespaces, mail, script_path, destaddr, getenv("USER"), mailbox,
+				storage_r);
 	} T_END;
 
 	return ( ret >= 0 ? 1 : -1 ); 

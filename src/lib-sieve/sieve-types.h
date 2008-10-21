@@ -78,6 +78,7 @@ struct sieve_exec_status {
 	bool message_saved;
 	bool message_forwarded;
 	bool tried_default_save;
+	struct sieve_storage *last_storage;
 };
 
 /*
@@ -85,9 +86,9 @@ struct sieve_exec_status {
  */
 
 enum sieve_execution_exitcode {
-    SIEVE_EXEC_OK          = 1,
-    SIEVE_EXEC_FAILURE     = 0,
-    SIEVE_EXEC_BIN_CORRUPT = -1,
+	SIEVE_EXEC_OK          = 1,
+	SIEVE_EXEC_FAILURE     = 0,
+	SIEVE_EXEC_BIN_CORRUPT = -1,
 	SIEVE_EXEC_KEEP_FAILED = -2
 };
 
