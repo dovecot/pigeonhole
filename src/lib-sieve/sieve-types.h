@@ -78,7 +78,7 @@ struct sieve_exec_status {
 	bool message_saved;
 	bool message_forwarded;
 	bool tried_default_save;
-	struct sieve_storage *last_storage;
+	struct mail_storage *last_storage;
 };
 
 /*
