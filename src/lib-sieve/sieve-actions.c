@@ -216,6 +216,10 @@ static bool act_store_start
 	pool_t pool;
 
 	/* Open the requested mailbox */
+
+	/* NOTE: The caller of the sieve library is allowed to leave namespaces set 
+	 * to NULL. This implementation will then skip actually storing the message.
+	 */
 	if ( aenv->scriptenv->namespaces != NULL ) {
 		ns = mail_namespace_find(aenv->scriptenv->namespaces, &ctx->folder);
 
@@ -239,7 +243,7 @@ static bool act_store_start
 	
 	*tr_context = (void *)trans;
 
-	return TRUE;
+	return ( aenv->scriptenv->namespaces == NULL || (box != NULL) );
 }
 
 static bool act_store_execute
@@ -257,6 +261,11 @@ static bool act_store_execute
 	if ( strcmp(trans->context->folder, 
 		SIEVE_SCRIPT_DEFAULT_MAILBOX(aenv->scriptenv)) == 0 ) 
 		aenv->estatus->tried_default_save = TRUE;
+
+	/* Mark attempt to use storage. Can only get here when all previous actions
+	 * succeeded. 
+	 */
+	aenv->estatus->last_storage = trans->namespace->storage;
 	
 	/* Start mail transaction */
 	trans->mail_trans = mailbox_transaction_begin
@@ -306,7 +315,7 @@ static void act_store_log_status
 		if ( aenv->scriptenv->namespaces == NULL )
 			sieve_result_log(aenv, "store into mailbox '%s' skipped", mailbox_name);
 		else
-			sieve_result_error(aenv, "failed to find namespace to store into mailbox '%s'", mailbox_name);
+			sieve_result_error(aenv, "failed to find namespace for mailbox '%s'", mailbox_name);
 	} else {	
 		if ( !rolled_back && status ) {
 			sieve_result_log(aenv, "stored mail into mailbox '%s'", mailbox_name);
@@ -332,21 +341,27 @@ static bool act_store_commit
 (const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
 {  
-	struct act_store_transaction *trans = 
-		(struct act_store_transaction *) tr_context;
+	struct act_store_transaction *trans = (struct act_store_transaction *) tr_context;
 	bool status = TRUE;
-	
-	if ( trans->namespace != NULL ) {
-		/* Free mail object for stored message */
-		if ( trans->dest_mail != NULL ) 
-			mail_free(&trans->dest_mail);	
 
-		/* Commit mailbox transaction */	
-		status = mailbox_transaction_commit(&trans->mail_trans) == 0;
+	if ( trans == NULL || trans->namespace == NULL || trans->box == NULL ) 
+		return FALSE;
 
-		if ( status )
-			aenv->estatus->message_saved = TRUE;
-	} 
+	/* Mark attempt to use storage. Can only get here when all previous actions
+	 * succeeded. 
+	 */
+        aenv->estatus->last_storage = trans->namespace->storage;
+
+	/* Free mail object for stored message */
+	if ( trans->dest_mail != NULL ) 
+		mail_free(&trans->dest_mail);	
+
+	/* Commit mailbox transaction */	
+	status = mailbox_transaction_commit(&trans->mail_trans) == 0;
+
+	/* Note the fact that the message was stored at least once */
+	if ( status )
+		aenv->estatus->message_saved = TRUE;
 	
 	/* Log our status */
 	act_store_log_status(trans, aenv, FALSE, status);
@@ -377,11 +392,11 @@ static void act_store_rollback
 
 	/* Rollback mailbox transaction */
 	if ( trans->mail_trans != NULL )
-	  mailbox_transaction_rollback(&trans->mail_trans);
+		mailbox_transaction_rollback(&trans->mail_trans);
   
 	/* Close the mailbox */
 	if ( trans->box != NULL )  
-	  mailbox_close(&trans->box);
+		mailbox_close(&trans->box);
 }
 
 
