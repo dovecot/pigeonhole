@@ -33,7 +33,7 @@ Features
   and generally user-comprehensible. Things like 'Generic error' are a nuisance 
   of the past. 
 
-* Highly extendable with new sieve capabilities: 
+* Highly extendable with new Sieve capabilities: 
 
   This keeps the possibility of plugins in mind. It should eventually provide 
   the necessary infrastructure for at least all currently known (proposed) 
@@ -180,7 +180,9 @@ Currently undocumented (will be merged with sieve-test).
 
 --
 
-Various example scripts are bundled in the directory 'examples'. 
+Various example scripts are bundled in the directory 'examples'. These scripts
+were downloaded from various locations. View the top comment in the scripts for 
+url and author information.
 
 Known issues
 ------------
@@ -190,6 +192,8 @@ listed here:
 
 - Compile errors are sometimes a bit obscure and long. This needs work. 
   Suggestions for improvement are welcome. 
+- The documentation needs work. The wiki needs to be updated with the newly 
+  supported extensions and manpages are needed for the commandline tools.
 
 Authors
 -------
