@@ -40,6 +40,22 @@ else
 fi
 AM_CONDITIONAL(HAVE_DOVECOT_LIBS, test "$have_dovecot_libs" = "yes")
 
+# Extensions under development
+#
+
+AC_ARG_WITH(enotify,
+[AC_HELP_STRING([--with-enotify], [Build enotify extension (under development) [default=no]])],
+        if test x$withval = xno || test x$withval = xauto; then
+                want_enotify=$withval
+        else
+                want_enotify=yes
+        fi,
+        want_enotify=no)
+AM_CONDITIONAL(BUILD_ENOTIFY, test "$want_enotify" = "yes")
+
+#
+#
+
 dnl replace relative ../ paths in the file with full paths
 eval `cat $dovecotdir/dovecot-config|sed 's,\$(top_builddir)/,$dovecotdir/,g'`
 
@@ -69,6 +85,7 @@ src/lib-sieve/plugins/copy/Makefile
 src/lib-sieve/plugins/include/Makefile
 src/lib-sieve/plugins/body/Makefile
 src/lib-sieve/plugins/variables/Makefile
+src/lib-sieve/plugins/enotify/Makefile
 src/plugins/Makefile
 src/plugins/lda-sieve/Makefile
 src/sieve-bin/Makefile
