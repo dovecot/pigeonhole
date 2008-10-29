@@ -116,7 +116,7 @@ void bin_dump_sieve_binary_to(struct sieve_binary *sbin, const char *filename)
 	if ( strcmp(filename, "-") == 0 ) 
 		dumpstream = o_stream_create_fd(1, 0, FALSE);
 	else {
-		if ( (dfd = open(filename, O_WRONLY | O_CREAT)) < 0 ) {
+		if ( (dfd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0600)) < 0 ) {
 			i_fatal("Failed to open dump-file for writing: %m");
 			exit(1);
 		}
