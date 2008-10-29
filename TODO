@@ -1,5 +1,6 @@
 Next (in order of descending priority/precedence):
 
+* Fix code duplication between command line tools and the testsuite. 
 * Fix remaining RFC deviations:
 	- Fix issues listed in doc/rfc/RFC-questions.txt when answers arrive
 	- Allow for the existance of dynamic comparators (i.e. specified by 
