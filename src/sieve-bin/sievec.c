@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 
 	if ( sbin != NULL ) {
 		if ( dump ) 
-			bin_dump_sieve_binary_to(sbin, "-");
+			bin_dump_sieve_binary_to(sbin, outfile);
 		else {
 			sieve_save(sbin, outfile);
 		}
