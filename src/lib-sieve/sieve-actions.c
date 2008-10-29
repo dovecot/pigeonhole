@@ -306,10 +306,7 @@ static void act_store_log_status
 {
 	const char *mailbox_name;
 	
-	if ( trans->box == NULL )
-		mailbox_name = str_sanitize(trans->context->folder, 128);
-	else
-		mailbox_name = str_sanitize(mailbox_get_name(trans->box), 128);
+	mailbox_name = str_sanitize(trans->context->folder, 128);
 
 	if ( trans->namespace == NULL ) {
 		if ( aenv->scriptenv->namespaces == NULL )
