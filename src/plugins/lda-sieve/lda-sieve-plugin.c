@@ -60,6 +60,8 @@ static const char *lda_sieve_get_path(void)
 	if (script_path != NULL) {
 		if (*script_path == '\0') {
 			/* disabled */
+			if (getenv("DEBUG") != NULL)
+                sieve_sys_info("empty script path, disabled");
 			return NULL;
 		}
 
@@ -82,7 +84,11 @@ static const char *lda_sieve_get_path(void)
 
 	if (stat(script_path, &st) < 0) {
 		if (errno != ENOENT)
-			sieve_sys_error("stat(%s) failed: %m", script_path);
+			sieve_sys_error("stat(%s) failed: %m "
+				"(using global script path in stead)", script_path);
+		else if (getenv("DEBUG") != NULL)
+            sieve_sys_info("local script path %s doesn't exist "
+				"(using global script path in stead)", script_path);
 
 		/* use global script instead, if one exists */
 		script_path = getenv("SIEVE_GLOBAL_PATH");
@@ -250,8 +256,13 @@ static int lda_sieve_deliver_mail
 	/* Find the script to execute */
 	
 	script_path = lda_sieve_get_path();
-	if (script_path == NULL)
+	if (script_path == NULL) {
+		if (getenv("DEBUG") != NULL)
+			sieve_sys_info("no valid sieve script path specified: "
+				"reverting to default delivery.");
+
 		return 0;
+	}
 
 	if (getenv("DEBUG") != NULL)
 		sieve_sys_info("using sieve path: %s", script_path);
