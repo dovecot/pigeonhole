@@ -133,9 +133,15 @@ static int lda_sieve_run
 
 		if ( debug ) {
 			if ( !exists && ret == 0 ) 
-				sieve_sys_info("script file %s is missing; ending sieve processing", script_path);
+				sieve_sys_info
+					("script file %s is missing; reverting to default delivery", 
+						script_path);
 			else
-				sieve_sys_info("failed to openscript file %s; ending sieve processing", script_path);
+				sieve_sys_info
+					("failed to open script %s "
+						"(view logfile %s for more information); "
+						"reverting to default delivery", 
+						script_path, scriptlog);
 		}
 
 		sieve_error_handler_unref(&ehandler);
@@ -199,8 +205,11 @@ static int lda_sieve_run
 		sieve_error_handler_copy_masterlog(ehandler, FALSE);
 	
 		if ( (sbin=sieve_compile(script_path, ehandler)) == NULL ) {
-			sieve_sys_error("failed to compile script %s; "
-            			"log should be available as %s", script_path, scriptlog);
+			sieve_sys_error
+					("failed to compile script %s "
+						"(view logfile %s for more information); "
+						"reverting to default delivery", 
+						script_path, scriptlog);
 			sieve_error_handler_unref(&ehandler);
 			return -1;
 		}
@@ -224,17 +233,21 @@ static int lda_sieve_run
 
 	switch ( ret ) {
 	case SIEVE_EXEC_FAILURE:
-		sieve_sys_error("execution of script %s failed, but implicit keep was successful", 
-			script_path);
+		sieve_sys_error
+			("execution of script %s failed, but implicit keep was successful", 
+				script_path);
 		ret = SIEVE_EXEC_OK;
 		break;
 	case SIEVE_EXEC_BIN_CORRUPT:		
-   	    sieve_sys_error("!!BUG!!: binary compiled from %s is still corrupt; bailing out", 
-			script_path);
+		sieve_sys_error
+			("!!BUG!!: binary compiled from %s is still corrupt; "
+				"bailing out and reverting to default delivery", 
+				script_path);
 		break;
 	case SIEVE_EXEC_KEEP_FAILED:
-		sieve_sys_error("script %s failed with unsuccessful implicit keep", script_path);
-        break;
+		sieve_sys_error
+			("script %s failed with unsuccessful implicit keep", script_path);
+		break;
 	default:
 		break;
 	}

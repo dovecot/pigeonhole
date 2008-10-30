@@ -66,7 +66,9 @@ struct sieve_script *sieve_script_init
 		*exists_r = TRUE;
 
 	T_BEGIN {
+
 		/* Extract filename from path */
+
 		filename = strrchr(path, '/');
 		if ( filename == NULL ) {
 			dirpath = "";
@@ -90,27 +92,34 @@ struct sieve_script *sieve_script_init
 				if ( exists_r != NULL )
 					*exists_r = FALSE;
 			} else
-				sieve_critical(ehandler, basename, "failed to lstat sieve script file '%s': %m", path);
+				sieve_critical(ehandler, basename, 
+					"failed to lstat sieve script file '%s': %m", path);
+
 			script = NULL;
 			ret = 1;
+
 		} else {
 			/* Record stat information from the symlink */
 			lnk_st = st;
 
 			/* Only create/init the object if it stat()s without problems */
 			if (S_ISLNK(st.st_mode)) {
-				if ( (ret=stat(path, &st)) < 0 && (errno != ENOENT || exists_r == NULL) ) {
+				if ( (ret=stat(path, &st)) < 0 && 
+					(errno != ENOENT || exists_r == NULL) ) {
+
 					if ( errno == ENOENT ) {
-                		sieve_error(ehandler, basename, "sieve script does not exist");
+						sieve_error(ehandler, basename, "sieve script does not exist");
 						if ( exists_r != NULL )
 							*exists_r = FALSE;
 					} else
-        		        sieve_critical(ehandler, basename, 
+						sieve_critical(ehandler, basename, 
 							"failed to stat sieve script file '%s': %m", path);
-		            script = NULL;	
+
+					script = NULL;	
 					ret = 1;
 				}
 			}
+
 			if ( ret == 0 && !S_ISREG(st.st_mode) ) {
 				sieve_critical(ehandler, basename, 
 					"sieve script file '%s' is not a regular file.", path);
@@ -137,6 +146,7 @@ struct sieve_script *sieve_script_init
 			script->filename = p_strdup(pool, filename);
 			script->dirpath = p_strdup(pool, dirpath);
 			script->basename = p_strdup(pool, basename);
+
 			if ( name != NULL )
 				script->name = p_strdup(pool, name);
 			else
