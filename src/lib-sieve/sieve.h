@@ -61,8 +61,8 @@ struct sieve_binary *sieve_compile
  *
  */
 struct sieve_binary *sieve_open
-	(const char *scriptpath, struct sieve_error_handler *ehandler,
-		bool *exists_r);
+	(const char *scriptpath, const char *script_name, 
+		struct sieve_error_handler *ehandler, bool *exists_r);
 
 /* sieve_save:
  *  Saves the binary as the file indicated by the path parameter.

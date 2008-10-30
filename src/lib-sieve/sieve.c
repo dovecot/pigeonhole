@@ -156,14 +156,15 @@ struct sieve_binary *sieve_compile
  */
 
 struct sieve_binary *sieve_open
-(const char *script_path, struct sieve_error_handler *ehandler, bool *exists_r)
+(const char *script_path, const char *script_name,
+	struct sieve_error_handler *ehandler, bool *exists_r)
 {
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
 	const char *binpath;
 	
 	/* First open the scriptfile itself */
-	script = sieve_script_create(script_path, NULL, ehandler, exists_r);
+	script = sieve_script_create(script_path, script_name, ehandler, exists_r);
 
 	if ( script == NULL ) {
 		/* Failed */

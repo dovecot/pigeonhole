@@ -127,7 +127,7 @@ static int lda_sieve_run
 	if ( debug )
 		sieve_sys_info("opening script %s", script_path);
 
-	if ( (sbin=sieve_open(script_path, ehandler, &exists)) == NULL ) {
+	if ( (sbin=sieve_open(script_path, "main script", ehandler, &exists)) == NULL ) {
 
 		ret = sieve_get_errors(ehandler) > 0 ? -1 : 0;
 
