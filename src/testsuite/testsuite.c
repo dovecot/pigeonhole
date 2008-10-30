@@ -10,7 +10,6 @@
 #include "env-util.h"
 
 #include "mail-raw.h"
-#include "namespaces.h"
 
 #include "sieve.h"
 #include "sieve-extensions.h"
@@ -48,6 +47,10 @@ static void sig_die(int signo, void *context ATTR_UNUSED)
 	exit(1);
 }
 
+/*
+ * Testsuite initialization 
+ */
+
 static void testsuite_bin_init(void) 
 {
 	lib_init();
@@ -78,6 +81,10 @@ static void testsuite_bin_deinit(void)
 	io_loop_destroy(&ioloop);
 	lib_deinit();
 }
+
+/*
+ * Testsuite execution
+ */
 
 static const char *_get_user(void)
 {
@@ -194,6 +201,7 @@ int main(int argc, char **argv)
 	struct sieve_script_env scriptenv;
 	bool trace = FALSE;
 
+	/* Initialize testsuite */
 	testsuite_bin_init();
 
 	/* Parse arguments */
@@ -242,7 +250,12 @@ int main(int argc, char **argv)
 	/* Dump script */
 	_dump_sieve_binary_to(sbin, dumpfile);
 	
-	namespaces_init();
+	/* Initialize mail storages */
+	mail_storage_init();
+	mail_storage_register_all();
+	mailbox_list_register_all();
+
+	/* Initialize message environment */
 	user = _get_user();
 	testsuite_message_init(user);
 
@@ -269,9 +282,13 @@ int main(int argc, char **argv)
 
 	sieve_close(&sbin);
 
+	/* De-initialize message environment */
 	testsuite_message_deinit();
-	namespaces_deinit();
 
+	/* De-initialize mail storages */
+	mail_storage_deinit();
+
+	/* De-initialize testsuite */
 	testsuite_bin_deinit();  
 
 	return testsuite_testcase_result();

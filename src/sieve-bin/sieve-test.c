@@ -7,7 +7,6 @@
 
 #include "bin-common.h"
 #include "mail-raw.h"
-#include "namespaces.h"
 #include "sieve.h"
 #include "sieve-binary.h"
 
@@ -133,7 +132,12 @@ int main(int argc, char **argv)
 	
 	user = bin_get_user();
 
-	namespaces_init();
+	/* Initialize mail storages */
+	mail_storage_init();
+	mail_storage_register_all();
+	mailbox_list_register_all();
+
+	/* Initialize raw mail object */
 	mail_raw_init(user);
 	mailr = mail_raw_open_file(mailfile);
 
@@ -177,9 +181,12 @@ int main(int argc, char **argv)
 	sieve_close(&sbin);
 	sieve_error_handler_unref(&ehandler);
 
+	/* De-initialize raw mail object */
 	mail_raw_close(mailr);
 	mail_raw_deinit();
-	namespaces_deinit();
+
+	/* De-initialize mail storages */
+	mail_storage_deinit();
 
 	bin_deinit();  
 	return 0;

@@ -10,7 +10,7 @@
 #include "env-util.h"
 
 #include "mail-raw.h"
-#include "namespaces.h"
+
 #include "sieve.h"
 #include "sieve-error-private.h"
 #include "sieve-code.h"

@@ -47,8 +47,7 @@ sieve_test_DEPENDENCIES = $(libs)
 sieve_exec_DEPENDENCIES = $(libs)
 
 common_sources = \
-	bin-common.c \
-	namespaces.c
+	bin-common.c
 
 sievec_SOURCES = \
 	$(common_sources) \
@@ -67,5 +66,4 @@ sieve_exec_SOURCES = \
 	sieve-exec.c 
 
 noinst_HEADERS = \
-	bin-common.h \
-	namespaces.h
+	bin-common.h

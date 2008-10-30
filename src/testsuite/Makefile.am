@@ -45,7 +45,6 @@ tests = \
 	tst-test-result.c
 
 testsuite_SOURCES = \
-	namespaces.c \
 	testsuite-common.c \
 	testsuite-objects.c \
 	testsuite-result.c \
@@ -57,6 +56,5 @@ testsuite_SOURCES = \
 noinst_HEADERS = \
 	testsuite-common.h \
 	testsuite-objects.h \
-	testsuite-result.h \
-	namespaces.h
+	testsuite-result.h
 

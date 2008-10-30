@@ -7,8 +7,6 @@
 #include "hash.h"
 #include "mail-storage.h"
 
-#include "mail-raw.h"
-#include "namespaces.h"
 #include "sieve.h"
 #include "sieve-code.h"
 #include "sieve-commands.h"
