@@ -2,6 +2,7 @@ noinst_PROGRAMS = testsuite
 
 AM_CPPFLAGS = \
 	-I../lib-sieve \
+	-I../lib-util \
 	-I$(dovecot_incdir) \
 	-I$(dovecot_incdir)/src/lib \
 	-I$(dovecot_incdir)/src/lib-mail \
@@ -10,12 +11,13 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-storage/index \
 	-I$(dovecot_incdir)/src/lib-storage/index/raw \
 	-I$(dovecot_incdir)/src/lib-storage/index/mbox \
-	-I$(dovecot_incdir)/src/lib-storage/index/maildir
+	-I$(dovecot_incdir)/src/lib-storage/index/maildir 
 
 testsuite_LDFLAGS = -export-dynamic -Wl,--start-group 
 
 libs = \
 	$(top_srcdir)/src/lib-sieve/libsieve.la \
+	$(top_srcdir)/src/lib-util/libutil.la \
 	$(dovecot_incdir)/src/lib-storage/list/libstorage_list.a \
 	$(dovecot_incdir)/src/lib-storage/index/raw/libstorage_raw.a \
 	$(dovecot_incdir)/src/lib-storage/index/maildir/libstorage_maildir.a \
@@ -50,7 +52,6 @@ tests = \
 
 testsuite_SOURCES = \
 	namespaces.c \
-	mail-raw.c \
 	testsuite-common.c \
 	testsuite-objects.c \
 	testsuite-result.c \
@@ -63,6 +64,5 @@ noinst_HEADERS = \
 	testsuite-common.h \
 	testsuite-objects.h \
 	testsuite-result.h \
-	namespaces.h \
-	mail-raw.h
+	namespaces.h
 

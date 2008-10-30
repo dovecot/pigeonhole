@@ -14,8 +14,11 @@ struct mail_raw {
 };
 
 void mail_raw_init(const char *user);
-struct mail_raw *mail_raw_open(const char *path);
-void mail_raw_close(struct mail_raw *mailr);
 void mail_raw_deinit(void);
+
+struct mail_raw *mail_raw_open_file(const char *path);
+struct mail_raw *mail_raw_open_data(string_t *mail_data);
+void mail_raw_close(struct mail_raw *mailr);
+
 
 #endif /* __MAIL_RAW_H */

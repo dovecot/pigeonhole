@@ -135,19 +135,6 @@ void bin_dump_sieve_binary_to(struct sieve_binary *sbin, const char *filename)
 		close(dfd);
 }
 
-int bin_open_mail_file(const char *filename)
-{
-	int mfd;
-	
-	if ( strcmp(filename, "-") == 0 )
-		return 0;
-
-	if ( (mfd = open(filename, O_RDONLY)) < 0 ) 
-		i_fatal("Failed to open mail file: %m");			
-	
-	return mfd;
-}
-
 void bin_close_mail_file(int mfd)
 {
 	if ( mfd != 0 )

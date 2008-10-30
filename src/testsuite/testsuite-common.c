@@ -74,7 +74,7 @@ static void _testsuite_message_set(string_t *message)
 	 * Open message as mail struct
 	 */
 	 
-	_raw_message = mail_raw_open(message);
+	_raw_message = mail_raw_open_data(message);
 	mail = _raw_message->mail;
 
 	/* 

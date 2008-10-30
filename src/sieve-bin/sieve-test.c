@@ -135,7 +135,7 @@ int main(int argc, char **argv)
 
 	namespaces_init();
 	mail_raw_init(user);
-	mailr = mail_raw_open(mailfile);
+	mailr = mail_raw_open_file(mailfile);
 
 	bin_fill_in_envelope(mailr->mail, &recipient, &sender);
 
