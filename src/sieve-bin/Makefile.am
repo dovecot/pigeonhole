@@ -10,10 +10,6 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-index \
 	-I$(dovecot_incdir)/src/lib-storage \
-	-I$(dovecot_incdir)/src/lib-storage/index \
-	-I$(dovecot_incdir)/src/lib-storage/index/raw \
-	-I$(dovecot_incdir)/src/lib-storage/index/mbox \
-	-I$(dovecot_incdir)/src/lib-storage/index/maildir \
 	-I$(dovecot_incdir)/src/deliver
 
 sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
@@ -25,10 +21,8 @@ libs = \
 	$(top_srcdir)/src/lib-sieve/libsieve.la \
 	$(top_srcdir)/src/lib-util/libutil.la \
 	$(dovecot_incdir)/src/lib-storage/list/libstorage_list.a \
-	$(dovecot_incdir)/src/lib-storage/index/raw/libstorage_raw.a \
-	$(dovecot_incdir)/src/lib-storage/index/maildir/libstorage_maildir.a \
-	$(dovecot_incdir)/src/lib-storage/index/mbox/libstorage_mbox.a \
-	$(dovecot_incdir)/src/lib-storage/index/libstorage_index.a \
+	$(dovecot_incdir)/src/lib-storage/register/libstorage-register.a \
+        $(STORAGE_LIBS) \
 	$(dovecot_incdir)/src/lib-storage/libstorage.a \
 	$(dovecot_incdir)/src/lib-index/libindex.a \
 	$(dovecot_incdir)/src/lib-imap/libimap.a \
