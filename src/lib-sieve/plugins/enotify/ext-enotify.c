@@ -10,7 +10,7 @@
  * Status: under development
  * 
  */
-
+	
 #include <stdio.h>
 
 #include "sieve-common.h"
@@ -23,6 +23,8 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
+
+#include "ext-enotify-common.h"
 
 /* 
  * Extension
@@ -52,6 +54,9 @@ static bool ext_enotify_load(int ext_id)
 
 static bool ext_enotify_validator_load(struct sieve_validator *validator)
 {
+	/* Register new commands */
+	sieve_validator_register_command(validator, &notify_command);
+	
 	return TRUE;
 }
 

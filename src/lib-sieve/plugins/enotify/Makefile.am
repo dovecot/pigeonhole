@@ -7,5 +7,13 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-storage 
 
+commands = \
+	cmd-notify.c
+
 libsieve_ext_enotify_la_SOURCES = \
-	ext-enotify.c
+	ext-enotify.c \
+	$(commands)
+
+noinst_HEADERS = \
+	ext-enotify-common.h
+
