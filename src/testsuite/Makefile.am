@@ -2,7 +2,7 @@ noinst_PROGRAMS = testsuite
 
 AM_CPPFLAGS = \
 	-I../lib-sieve \
-	-I../lib-util \
+	-I../lib-sieve-tool \
 	-I$(dovecot_incdir) \
 	-I$(dovecot_incdir)/src/lib \
 	-I$(dovecot_incdir)/src/lib-mail \
@@ -13,7 +13,7 @@ testsuite_LDFLAGS = -export-dynamic -Wl,--start-group
 
 libs = \
 	$(top_srcdir)/src/lib-sieve/libsieve.la \
-	$(top_srcdir)/src/lib-util/libutil.la \
+	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la \
 	$(dovecot_incdir)/src/lib-storage/list/libstorage_list.a \
 	$(dovecot_incdir)/src/lib-storage/register/libstorage-register.a \
 	$(STORAGE_LIBS) \

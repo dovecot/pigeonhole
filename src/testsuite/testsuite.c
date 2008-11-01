@@ -9,14 +9,15 @@
 #include "mail-storage.h"
 #include "env-util.h"
 
-#include "mail-raw.h"
-
 #include "sieve.h"
 #include "sieve-extensions.h"
 #include "sieve-script.h"
 #include "sieve-binary.h"
 #include "sieve-result.h"
 #include "sieve-interpreter.h"
+
+#include "mail-raw.h"
+#include "sieve-tool.h"
 
 #include "testsuite-common.h"
 
@@ -33,117 +34,29 @@
 #define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
-/* FIXME: this file is currently very messy */
-
-static struct ioloop *ioloop;
-
-static void sig_die(int signo, void *context ATTR_UNUSED)
-{
-	/* warn about being killed because of some signal, except SIGINT (^C)
-	   which is too common at least while testing :) */
-	if (signo != SIGINT)
-		i_warning("Killed with signal %d", signo);
-	// io_loop_stop(ioloop); We are not running an ioloop
-	exit(1);
-}
-
 /*
  * Testsuite initialization 
  */
 
-static void testsuite_bin_init(void) 
+static void testsuite_tool_init(void) 
 {
-	lib_init();
-	ioloop = io_loop_create();
-
-	lib_signals_init();
-	lib_signals_set_handler(SIGINT, TRUE, sig_die, NULL);
-	lib_signals_set_handler(SIGTERM, TRUE, sig_die, NULL);
-	lib_signals_ignore(SIGPIPE, TRUE);
-	lib_signals_ignore(SIGALRM, FALSE);
-
-	if ( !sieve_init("") ) 
-		i_fatal("Failed to initialize sieve implementation\n");
+	sieve_tool_init();
 
 	(void) sieve_extension_register(&testsuite_extension);
 	
 	testsuite_init();
 }
 
-static void testsuite_bin_deinit(void)
+static void testsuite_tool_deinit(void)
 {
 	testsuite_deinit();
 	
-	sieve_deinit();
-	
-	lib_signals_deinit();
-
-	io_loop_destroy(&ioloop);
-	lib_deinit();
+	sieve_tool_deinit();
 }
 
 /*
  * Testsuite execution
  */
-
-static const char *_get_user(void)
-{
-	uid_t process_euid = geteuid();
-	struct passwd *pw = getpwuid(process_euid);
-	if (pw != NULL) {
-		return t_strdup(pw->pw_name);
-	} 
-		
-	i_fatal("Couldn't lookup our username (uid=%s)", dec2str(process_euid));
-	return NULL;
-}
-
-static struct sieve_binary *_compile_sieve_script(const char *filename)
-{
-	struct sieve_error_handler *ehandler;
-	struct sieve_binary *sbin;
-	
-	ehandler = sieve_stderr_ehandler_create(0);
-	sieve_error_handler_accept_infolog(ehandler, TRUE);
-
-	if ( (sbin = sieve_compile(filename, ehandler)) == NULL ) {
-		sieve_error_handler_unref(&ehandler);
-		i_fatal("Failed to compile test script %s\n", filename);
-	}
-
-	sieve_error_handler_unref(&ehandler);
-		
-	return sbin;
-}
-		
-static void _dump_sieve_binary_to(struct sieve_binary *sbin, const char *filename)	
-{
-	int dfd = -1;
-	struct ostream *dumpstream;
-	
-	if ( filename == NULL ) return;
-	
-	if ( strcmp(filename, "-") == 0 ) 
-		dumpstream = o_stream_create_fd(1, 0, FALSE);
-	else {
-		if ( (dfd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0600)) < 0 ) {
-			i_fatal("Failed to open dump-file for writing: %m");
-			exit(1);
-		}
-		
-		dumpstream = o_stream_create_fd(dfd, 0, FALSE);
-	}
-	
-	if ( dumpstream != NULL ) {
-		(void) sieve_dump(sbin, dumpstream);
-		o_stream_destroy(&dumpstream);
-	} else {
-		i_fatal("Failed to create stream for sieve code dump.");
-	}
-	
-	if ( dfd != -1 )
-		close(dfd);
-}
 
 static void print_help(void)
 {
@@ -165,7 +78,7 @@ static int testsuite_run
 	if ( trace ) {
 		struct ostream *tstream = o_stream_create_fd(1, 0, FALSE);
 		
-		interp=sieve_interpreter_create(sbin, ehandler, tstream);
+		interp = sieve_interpreter_create(sbin, ehandler, tstream);
 		
 		if ( interp != NULL ) 
 		    ret = sieve_interpreter_run
@@ -201,9 +114,6 @@ int main(int argc, char **argv)
 	struct sieve_script_env scriptenv;
 	bool trace = FALSE;
 
-	/* Initialize testsuite */
-	testsuite_bin_init();
-
 	/* Parse arguments */
 	scriptfile = dumpfile =  NULL;
 	for (i = 1; i < argc; i++) {
@@ -233,10 +143,13 @@ int main(int argc, char **argv)
 
 	printf("Test case: %s:\n\n", scriptfile);
 
+	/* Initialize testsuite */
+	testsuite_tool_init();
+
 	/* Initialize environment */
 	sieve_dir = strrchr(scriptfile, '/');
-    if ( sieve_dir == NULL )
-        sieve_dir= "./";
+	if ( sieve_dir == NULL )
+		sieve_dir= "./";
 	else
 		sieve_dir = t_strdup_until(scriptfile, sieve_dir+1);
 
@@ -245,10 +158,10 @@ int main(int argc, char **argv)
 	env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
 	
 	/* Compile sieve script */
-	sbin = _compile_sieve_script(scriptfile);
+	sbin = sieve_tool_script_compile(scriptfile);
 
 	/* Dump script */
-	_dump_sieve_binary_to(sbin, dumpfile);
+	sieve_tool_dump_binary_to(sbin, dumpfile);
 	
 	/* Initialize mail storages */
 	mail_storage_init();
@@ -256,7 +169,7 @@ int main(int argc, char **argv)
 	mailbox_list_register_all();
 
 	/* Initialize message environment */
-	user = _get_user();
+	user = sieve_tool_get_user();
 	testsuite_message_init(user);
 
 	memset(&scriptenv, 0, sizeof(scriptenv));
@@ -289,7 +202,7 @@ int main(int argc, char **argv)
 	mail_storage_deinit();
 
 	/* De-initialize testsuite */
-	testsuite_bin_deinit();  
+	testsuite_tool_deinit();  
 
 	return testsuite_testcase_result();
 }

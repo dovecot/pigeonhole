@@ -86,10 +86,10 @@ src/lib-sieve/plugins/include/Makefile
 src/lib-sieve/plugins/body/Makefile
 src/lib-sieve/plugins/variables/Makefile
 src/lib-sieve/plugins/enotify/Makefile
-src/lib-util/Makefile
+src/lib-sieve-tool/Makefile
 src/plugins/Makefile
 src/plugins/lda-sieve/Makefile
-src/sieve-bin/Makefile
+src/sieve-tools/Makefile
 src/testsuite/Makefile
 stamp.h])
 

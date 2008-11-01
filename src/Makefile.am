@@ -1,2 +1,2 @@
-SUBDIRS = lib-sieve lib-util sieve-bin plugins testsuite
+SUBDIRS = lib-sieve lib-sieve-tool sieve-tools plugins testsuite
 

@@ -56,7 +56,7 @@ Features
 
 * Testsuite included:
 	
-	This package includes a testsuite to automatically asses whether the compiled 
+  This package includes a testsuite to automatically asses whether the compiled 
   sieve engine works correctly. The testsuite is an extension to the Sieve 
   language and is therefore easily extended with new tests. Currently, the 
   testsuite is limited to testing script processing. The performed actions are 
@@ -133,7 +133,7 @@ that no other files are written and no permission to do so is necessary for the
 global script directories. 
 
 To test the sieve engine outside deliver it is useful to execute the binaries 
-that exist in the src/sieve-bin/ directory of this package. After installation, 
+that exist in the src/sieve-tools/ directory of this package. After installation, 
 these scripts are available in the dovecot lib directory. The following commands
 are available:
 
@@ -176,7 +176,8 @@ Options:
 
 sieve-exec
 
-Currently undocumented (will be merged with sieve-test).
+Currently undocumented (will evolve into sieve-filter which can process existing
+mail stores).
 
 --
 
