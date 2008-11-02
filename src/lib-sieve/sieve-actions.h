@@ -169,7 +169,8 @@ extern const struct sieve_action act_discard;
  */
 
 struct act_store_context {
-	const char *folder;
+	/* Folder name represented in modified utf-7 */
+	const char *folder; 
 };
 
 struct act_store_transaction {

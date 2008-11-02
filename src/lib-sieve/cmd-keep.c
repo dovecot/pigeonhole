@@ -114,7 +114,10 @@ static int cmd_keep_operation_execute
 
 	sieve_runtime_trace(renv, "KEEP action");
 	
-	/* Add store action (sieve-actions.h) to result */
+	/* Add store action (sieve-actions.h) to result
+	 *   ==> Default mailbox is expected to be represented in modified utf-7
+	 *       already. 
+	 */
 	ret = sieve_act_store_add_to_result
 		(renv, slist, SIEVE_SCRIPT_DEFAULT_MAILBOX(renv->scriptenv), source_line);
 	

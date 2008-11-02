@@ -13,6 +13,7 @@
 
 #include "lib.h"
 #include "str-sanitize.h"
+#include "imap-utf7.h"
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
@@ -172,28 +173,52 @@ static int ext_fileinto_operation_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_side_effects_list *slist = NULL; 
-	string_t *folder;
+	string_t *folder, *folder_utf7;
+	const char *mailbox;
 	unsigned int source_line;
 	int ret = 0;
+	
+	/*
+	 * Read operands
+	 */
 
 	/* Source line */
-    if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
+	if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
 		sieve_runtime_trace_error(renv, "invalid source line");
-        return SIEVE_EXEC_BIN_CORRUPT;
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
-	if ( (ret=sieve_interpreter_handle_optional_operands(renv, address, &slist)) <= 0 )
+	/* Optional operands */
+	if ( (ret=sieve_interpreter_handle_optional_operands(renv, address, &slist)) 
+		<= 0 )
 		return ret;
 
+	/* Folder operand */
 	if ( !sieve_opr_string_read(renv, address, &folder) ) {
 		sieve_runtime_trace_error(renv, "invalid folder operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
+	
+	/*
+	 * Perform operation
+	 */
 
-	sieve_runtime_trace(renv, "FILEINTO action (\"%s\")", str_sanitize(str_c(folder), 64));
-
+	mailbox = str_sanitize(str_c(folder), 64);
+	sieve_runtime_trace(renv, "FILEINTO action (\"%s\")", mailbox);
+		
+	/* Convert utf-8 folder name to utf-7
+	 *   FIXME: perform this at compile time when possible.
+	 */
+	folder_utf7 = t_str_new(256);
+	if ( imap_utf8_to_utf7(str_c(folder), folder_utf7) < 0 ) {
+		sieve_runtime_error
+			(renv, sieve_error_script_location(renv->script, source_line),
+				"mailbox name not utf-8: %s", mailbox);
+	}	
+		
+	/* Add action to result */	
 	ret = sieve_act_store_add_to_result
-		(renv, slist, str_c(folder), source_line);
+		(renv, slist, str_c(folder_utf7), source_line);
 
 	return ( ret >= 0 );
 }
