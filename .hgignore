@@ -3,8 +3,9 @@ aclocal.m4
 autom4te.cache
 config.cache
 config.guess
+dummy-config.h
+dummy-config.h.in
 dsieve-config.h
-dsieve-config.h.in
 config.log
 config.status
 config.sub

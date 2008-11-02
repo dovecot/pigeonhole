@@ -8,9 +8,6 @@
 
 #include <stdio.h>
 
-#define SIEVE_VERSION "0.0.1"
-#define SIEVE_IMPLEMENTATION "Dovecot Sieve " SIEVE_VERSION
-
 /* Enable runtime trace functionality */
 #define SIEVE_RUNTIME_TRACE
 

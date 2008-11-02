@@ -9,6 +9,7 @@
 struct sieve_script;
 struct sieve_binary;
 
+#include "sieve-config.h"
 #include "sieve-types.h"
 #include "sieve-error.h"
 

@@ -1,0 +1,9 @@
+
+/* Define to the full name of this Sieve implementation. */
+#undef SIEVE_NAME
+
+/* Define to the version of this Sieve implementation. */
+#undef SIEVE_VERSION
+
+/* Define to make Sieve enotify extension available to users. */
+#undef HAVE_SIEVE_ENOTIFY

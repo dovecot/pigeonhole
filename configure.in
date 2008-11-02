@@ -1,14 +1,22 @@
 AC_INIT([Dovecot Sieve], [0.1.0], [dovecot@dovecot.org], [dovecot-1.2-sieve])
 AC_CONFIG_SRCDIR([src])
 
-AC_CONFIG_HEADERS([dsieve-config.h])
-AM_INIT_AUTOMAKE
+# Autoheader is not needed and does more harm than good for this package. However, it is 
+# tightly integrated in autoconf/automake and therefore it is difficult not to use it. As 
+# a workaround we give autoheader a dummy config header to chew on and we handle the 
+# real config header ourselves.
+AC_CONFIG_HEADERS([dummy-config.h dsieve-config.h])
+
+AC_DEFINE(SIEVE_NAME, [PACKAGE_NAME], [Define to the full name of this Sieve implementation.])
+AC_DEFINE(SIEVE_VERSION, [PACKAGE_VERSION], [Define to the version of this Sieve implementation.])
+
+AM_INIT_AUTOMAKE(no-define)
 
 AM_MAINTAINER_MODE
 
 AC_PROG_CC
 AC_PROG_CPP
-AM_PROG_LIBTOOL
+AC_PROG_LIBTOOL
 
 AC_ARG_WITH(dovecot,
 [AC_HELP_STRING([--with-dovecot=DIR], [Dovecot base directory [../dovecot]])],
@@ -52,6 +60,10 @@ AC_ARG_WITH(enotify,
         fi,
         want_enotify=no)
 AM_CONDITIONAL(BUILD_ENOTIFY, test "$want_enotify" = "yes")
+
+if test "$want_enotify" = "yes"; then
+	AC_DEFINE(HAVE_SIEVE_ENOTIFY,,[Define to make Sieve enotify extension available to users.])
+fi
 
 #
 #

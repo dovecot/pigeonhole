@@ -4,6 +4,7 @@
 #ifndef __SIEVE_COMMON_H
 #define __SIEVE_COMMON_H
 
+#include "sieve-config.h"
 #include "sieve-types.h"
 
 #include <sys/types.h>
