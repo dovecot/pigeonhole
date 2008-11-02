@@ -74,6 +74,18 @@ extern const struct sieve_extension include_extension;
 extern const struct sieve_extension body_extension;
 extern const struct sieve_extension variables_extension;
 
+/*
+ * Extensions under development
+ */
+
+#ifdef HAVE_SIEVE_ENOTIFY
+extern const struct sieve_extension enotify_extension;
+#endif
+
+/*
+ * List of native extensions
+ */
+
 const struct sieve_extension *sieve_core_extensions[] = {
 	/* Preloaded 'extensions' */
 	&comparator_extension, &match_type_extension, &address_part_extension,
@@ -84,6 +96,11 @@ const struct sieve_extension *sieve_core_extensions[] = {
 	/* Core extensions */
 	&fileinto_extension, &reject_extension, &envelope_extension, 
 	&encoded_character_extension,
+
+	/* Extensions under development */
+#ifdef HAVE_SIEVE_ENOTIFY
+	&enotify_extension,
+#endif
 	
 	/* 'Plugins' */
 	&vacation_extension, &subaddress_extension, 

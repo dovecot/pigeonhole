@@ -41,18 +41,23 @@ comparators = \
 	cmp-i-octet.c \
 	cmp-i-ascii-casemap.c
 
+if BUILD_ENOTIFY
+PLUGIN_ENOTIFY = ./plugins/enotify/libsieve_ext_enotify.la
+endif
+
 # These are not actual plugins just yet...
 plugins = \
-    ./plugins/vacation/libsieve_ext_vacation.la \
-    ./plugins/subaddress/libsieve_ext_subaddress.la \
-    ./plugins/comparator-i-ascii-numeric/libsieve_ext_comparator-i-ascii-numeric.la \
-    ./plugins/relational/libsieve_ext_relational.la \
-    ./plugins/regex/libsieve_ext_regex.la \
-    ./plugins/copy/libsieve_ext_copy.la \
-    ./plugins/imapflags/libsieve_ext_imapflags.la \
-    ./plugins/include/libsieve_ext_include.la \
-    ./plugins/body/libsieve_ext_body.la \
-    ./plugins/variables/libsieve_ext_variables.la
+	./plugins/vacation/libsieve_ext_vacation.la \
+	./plugins/subaddress/libsieve_ext_subaddress.la \
+ 	./plugins/comparator-i-ascii-numeric/libsieve_ext_comparator-i-ascii-numeric.la \
+	./plugins/relational/libsieve_ext_relational.la \
+	./plugins/regex/libsieve_ext_regex.la \
+	./plugins/copy/libsieve_ext_copy.la \
+	./plugins/imapflags/libsieve_ext_imapflags.la \
+	./plugins/include/libsieve_ext_include.la \
+	./plugins/body/libsieve_ext_body.la \
+	./plugins/variables/libsieve_ext_variables.la \
+	$(PLUGIN_ENOTIFY)
 
 libsieve_la_DEPENDENCIES = $(plugins)
 libsieve_la_LIBADD = $(plugins)
