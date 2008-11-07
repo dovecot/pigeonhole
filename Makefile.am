@@ -14,6 +14,11 @@ endif
 
 # Testsuite tests
 
+if BUILD_ENOTIFY
+ENOTIFY_TESTS = \
+	tests/extensions/enotify/basic.svtest
+endif
+
 TESTSUITE_BIN = $(top_srcdir)/src/testsuite/testsuite
 
 test_cases = \
@@ -57,7 +62,8 @@ test_cases = \
 	tests/extensions/subaddress/basic.svtest \
 	tests/extensions/subaddress/rfc.svtest \
 	tests/extensions/vacation/errors.svtest \
-	tests/extensions/vacation/execute.svtest
+	tests/extensions/vacation/execute.svtest \
+	$(ENOTIFY_TESTS)
 
 $(test_cases):
 	@$(TESTSUITE_BIN) $@

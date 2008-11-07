@@ -246,7 +246,9 @@ void sieve_ast_argument_string_setc
 	(struct sieve_ast_argument *argument, const char *newstr);
 
 void sieve_ast_argument_number_set
-    (struct sieve_ast_argument *argument, unsigned int newnum);
+	(struct sieve_ast_argument *argument, unsigned int newnum);
+void sieve_ast_argument_number_substitute
+	(struct sieve_ast_argument *argument, unsigned int number);
 
 struct sieve_ast_argument *sieve_ast_argument_tag_insert
 (struct sieve_ast_argument *before, const char *tag, unsigned int source_line); 

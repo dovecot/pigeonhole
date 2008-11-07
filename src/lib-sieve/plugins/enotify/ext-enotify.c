@@ -26,6 +26,14 @@
 
 #include "ext-enotify-common.h"
 
+/*
+ * Operations
+ */
+
+const struct sieve_operation *ext_enotify_operations[] = {
+	&notify_operation
+};
+
 /* 
  * Extension
  */
@@ -41,7 +49,7 @@ const struct sieve_extension enotify_extension = {
 	ext_enotify_load,
 	ext_enotify_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS,
+	SIEVE_EXT_DEFINE_OPERATION(notify_operation),
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 

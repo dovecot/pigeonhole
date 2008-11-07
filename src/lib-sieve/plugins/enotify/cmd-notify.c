@@ -67,15 +67,11 @@ static bool cmd_notify_validate_string_tag
 static bool cmd_notify_validate_stringlist_tag
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
+static bool cmd_notify_validate_importance_tag
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *cmd);
 
 /* Argument objects */
-
-static const struct sieve_argument notify_importance_tag = { 
-	"importance", 
-	NULL, NULL,
-	cmd_notify_validate_string_tag, 
-	NULL, NULL 
-};
 
 static const struct sieve_argument notify_from_tag = { 
 	"from", 
@@ -98,33 +94,40 @@ static const struct sieve_argument notify_message_tag = {
 	NULL, NULL 
 };
 
+static const struct sieve_argument notify_importance_tag = { 
+	"importance", 
+	NULL, NULL,
+	cmd_notify_validate_importance_tag, 
+	NULL, NULL 
+};
+
 /* Codes for optional arguments */
 
 enum cmd_notify_optional {
 	OPT_END,
-	OPT_IMPORTANCE,
 	OPT_FROM,
 	OPT_OPTIONS,
-	OPT_MESSAGE
+	OPT_MESSAGE,
+	OPT_IMPORTANCE
 };
 
 /* 
  * Notify operation 
  */
 
-static bool ext_notify_operation_dump
+static bool cmd_notify_operation_dump
 	(const struct sieve_operation *op,	
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int ext_notify_operation_execute
+static int cmd_notify_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation notify_operation = { 
-	"notify",
+	"NOTIFY",
 	&enotify_extension,
-	0,
-	ext_notify_operation_dump, 
-	ext_notify_operation_execute
+	EXT_ENOTIFY_OPERATION_NOTIFY,
+	cmd_notify_operation_dump, 
+	cmd_notify_operation_execute
 };
 
 /* 
@@ -183,7 +186,6 @@ static bool cmd_notify_validate_string_tag
 	
 	/* Check syntax:
 	 *   :from <string>
-	 *   :importance <"1" / "2" / "3">
 	 *   :message <string>
 	 */
 	if ( !sieve_validate_tag_parameter
@@ -196,7 +198,7 @@ static bool cmd_notify_validate_string_tag
 		*arg = sieve_ast_argument_next(*arg);
 		
 	} else if ( tag->argument == &notify_message_tag ) {
-		/* Detach optional argument (emitted as mandatory) */
+		/* Skip parameter */
 		*arg = sieve_ast_argument_next(*arg);	
 	}
 			
@@ -225,6 +227,48 @@ static bool cmd_notify_validate_stringlist_tag
 
 	return TRUE;
 }
+
+static bool cmd_notify_validate_importance_tag
+(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *cmd ATTR_UNUSED)
+{
+	const struct sieve_ast_argument *tag = *arg;
+	const char *impstr;
+
+	/* Detach the tag itself */
+	*arg = sieve_ast_arguments_detach(*arg,1);
+
+	/* Check syntax: 
+	 *   :importance <"1" / "2" / "3">
+	 */
+
+	if ( sieve_ast_argument_type(*arg) != SAAT_STRING ) {
+		/* Not a string */
+		sieve_argument_validate_error(validator, *arg, 
+			"the :importance tag for the notify command requires a string parameter, "
+			"but %s was found", sieve_ast_argument_name(*arg));
+		return FALSE;
+	}
+
+	impstr = sieve_ast_argument_strc(*arg);
+
+	if ( impstr[0] < '1' || impstr[0]  > '3' || impstr[1] != '\0' ) {
+		/* Invalid importance */
+		sieve_argument_validate_error(validator, *arg, 
+			"invalid :importance value for notify command: %s", impstr);
+		return FALSE;
+	} 
+
+	sieve_ast_argument_number_substitute(*arg, impstr[0] - '0');
+	(*arg)->arg_id_code = tag->arg_id_code;
+	(*arg)->argument = &number_argument;
+
+	/* Skip parameter */
+	*arg = sieve_ast_argument_next(*arg);
+			
+	return TRUE;
+}
+
 
 /* 
  * Command registration 
@@ -282,7 +326,7 @@ static bool cmd_notify_generate
  * Code dump
  */
  
-static bool ext_notify_operation_dump
+static bool cmd_notify_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
@@ -337,7 +381,7 @@ static bool ext_notify_operation_dump
  * Code execution
  */
  
-static int ext_notify_operation_execute
+static int cmd_notify_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
@@ -378,11 +422,19 @@ static int ext_notify_operation_execute
 				}
 	
 				/* Enforce 0 < importance < 4 (just to be sure) */
-				if ( importance < 1 || importance > 3 )
+				if ( importance < 1 ) 
 					importance = 1;
+				else if ( importance > 3 )
+					importance = 3;
 				break;
 			case OPT_FROM:
 				if ( !sieve_opr_string_read(renv, address, &from) ) {
+					sieve_runtime_trace_error(renv, "invalid from operand");
+					return SIEVE_EXEC_BIN_CORRUPT;
+				}
+				break;
+			case OPT_MESSAGE:
+				if ( !sieve_opr_string_read(renv, address, &message) ) {
 					sieve_runtime_trace_error(renv, "invalid from operand");
 					return SIEVE_EXEC_BIN_CORRUPT;
 				}
@@ -394,7 +446,8 @@ static int ext_notify_operation_execute
 				}
 				break;
 			default:
-				sieve_runtime_trace_error(renv, "unknown optional operand");
+				sieve_runtime_trace_error(renv, "unknown optional operand: %d", 
+					opt_code);
 				return SIEVE_EXEC_BIN_CORRUPT;
 			}
 		}

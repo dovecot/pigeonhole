@@ -492,6 +492,13 @@ void sieve_ast_argument_string_setc
 	str_append(argument->_value.str, newstr);
 }
 
+void sieve_ast_argument_number_substitute
+(struct sieve_ast_argument *argument, unsigned int number)
+{
+	argument->type = SAAT_NUMBER;
+	argument->_value.number = number;
+}
+
 struct sieve_ast_argument *sieve_ast_argument_stringlist_create
 (struct sieve_ast_node *node, unsigned int source_line) 
 {
