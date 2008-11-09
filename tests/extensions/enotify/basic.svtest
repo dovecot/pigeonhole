@@ -1,7 +1,13 @@
 require "vnd.dovecot.testsuite";
 require "enotify";
 
-test "Valid notification" {
+test "Execute" {
+	/* Test to catch runtime segfaults */
+	if valid_notify_method 
+		"mailto:alm@example.com" {
+		stop;
+	}
+
 	/* Test to catch runtime segfaults */
 	notify 
 		:message "This is probably very important"

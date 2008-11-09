@@ -10,9 +10,13 @@ AM_CPPFLAGS = \
 commands = \
 	cmd-notify.c
 
+tests = \
+	tst-valid-notify-method.c
+
 libsieve_ext_enotify_la_SOURCES = \
 	ext-enotify.c \
-	$(commands)
+	$(commands) \
+	$(tests)
 
 noinst_HEADERS = \
 	ext-enotify-common.h

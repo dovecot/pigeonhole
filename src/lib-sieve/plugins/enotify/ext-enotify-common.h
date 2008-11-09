@@ -17,13 +17,21 @@ extern const struct sieve_extension enotify_extension;
 extern const struct sieve_command notify_command;
 
 /*
+ * Tests
+ */
+
+extern const struct sieve_command valid_notify_method_test;
+
+/*
  * Operands
  */
 
 extern const struct sieve_operation notify_operation;
+extern const struct sieve_operation valid_notify_method_operation;
 
 enum ext_variables_opcode {
-	EXT_ENOTIFY_OPERATION_NOTIFY
+	EXT_ENOTIFY_OPERATION_NOTIFY,
+	EXT_ENOTIFY_OPERATION_VALID_NOTIFY_METHOD
 };
 
 #endif /* __EXT_ENOTIFY_COMMON_H */

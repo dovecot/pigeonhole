@@ -31,7 +31,8 @@
  */
 
 const struct sieve_operation *ext_enotify_operations[] = {
-	&notify_operation
+	&notify_operation,
+	&valid_notify_method_operation
 };
 
 /* 
@@ -49,7 +50,7 @@ const struct sieve_extension enotify_extension = {
 	ext_enotify_load,
 	ext_enotify_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATION(notify_operation),
+	SIEVE_EXT_DEFINE_OPERATIONS(ext_enotify_operations),
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
@@ -64,6 +65,7 @@ static bool ext_enotify_validator_load(struct sieve_validator *validator)
 {
 	/* Register new commands */
 	sieve_validator_register_command(validator, &notify_command);
+	sieve_validator_register_command(validator, &valid_notify_method_test);
 	
 	return TRUE;
 }
