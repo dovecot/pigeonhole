@@ -11,7 +11,8 @@ commands = \
 	cmd-notify.c
 
 tests = \
-	tst-valid-notify-method.c
+	tst-valid-notify-method.c \
+	tst-notify-method-capability.c
 
 libsieve_ext_enotify_la_SOURCES = \
 	ext-enotify.c \
