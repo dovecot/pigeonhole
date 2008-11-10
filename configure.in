@@ -42,9 +42,10 @@ if test -d "$dovecotdir/src"; then
   have_dovecot_libs=yes
 else
   # compiling against installed headers
-  echo 
-  echo "Cannot compile against the installed headers only."
-  AC_MSG_ERROR([dovecot-source not found]);
+  echo "WARNING: Cannot build Sieve commandline tools without the compiled"
+  echo "         Dovecot sources. Compiling against headers will only build"
+  echo "         the Sieve plugin." 
+  have_dovecot_libs=no
 fi
 AM_CONDITIONAL(HAVE_DOVECOT_LIBS, test "$have_dovecot_libs" = "yes")
 
