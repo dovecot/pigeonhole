@@ -95,6 +95,7 @@ libsieve_la_SOURCES = \
 	sieve.c 
 
 noinst_HEADERS = \
+	sieve-config.h \
 	sieve-types.h \
 	sieve-common.h \
 	sieve-limits.h \
