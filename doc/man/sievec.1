@@ -1,0 +1,55 @@
+.TH "SIEVEC" "1" "11 November 2008"
+.SH NAME
+sievec \- Sieve script compiler for the Dovecot secure IMAP server
+.SH SYNOPSIS
+sievec [\fB-d\fR] \fIsieve-script\fR \fIoutfile\fR
+.br
+.SH DESCRIPTION
+.PP
+The \fBsievec\fP command is part of the Sieve implementation for the Dovecot secure 
+IMAP server. Sieve (RFC 5228) is a simple and highly extensible language for filtering 
+e-mail messages. It can be implemented for any type of mail access protocol, mail 
+architecture and operating system. The language cannot execute external programs and in 
+its basic form it does not provide the means to cause infinite loops, making it suitable 
+for running securely on mail servers where mail users have no permission run arbitrary programs.
+.PP
+Using the \fBsievec\fP command, Sieve scripts can be compiled into a binary representation. 
+The resulting binary can be used directly to process e-mail messages during the delivery process. 
+The delivery of mail messages and therefore also the execution of Sieve scripts is  
+performed by Dovecot's local delivery agent (LDA) called \fBdeliver\fP. Usually, it is not 
+necessary to compile the Sieve script manually using \fBsievec\fP, because \fBdeliver\fP will do 
+this automatically if the binary is missing. However, in some cases \fBdeliver\fP does not have 
+permission to write the compiled binary to disk, forcing it to recompile the script every time it 
+is executed. Using the \fBsievec\fP tool, this can be performed manually by an authorized user to 
+increase performance.
+.PP
+The \fBsievec\fP command has two mandatory arguments: the \fIsieve-script\fP argument specifies 
+the script to be compiled and the \fIoutfile\fR argument specifies where the (binary) output is 
+to be written. This Sieve implementation reconizes files with a \fB.sieve\fP extension as Sieve 
+scripts and corresponding files with a \fB.svbin\fP extension as the associated compiled binary. 
+This means for example that Dovecot's deliver process will look for a binary file 'dovecot.svbin' 
+when it needs to execute 'dovecot.sieve'.
+.PP
+The \fBsievec\fP command is also useful to verify Sieve scripts before using. Additionally, with 
+the \fB-d\fP option it can output a textual (and thus human-readable) dump of the generated Sieve
+code to the specified file in stead of the binary. The output is then identical to what the 
+.BR sieved (1)
+command produces for a stored binary file. This output is mainly useful to find bugs in the 
+compiler that yield corrupt binaries.
+.SH OPTIONS
+.TP 
+\fB-d\fP 
+Don't write the binary to \fIoutfile\fP, but write a textual dump of the binary in 
+stead. In this context, the \fIoutfile\fP value '-' has special meaning: it causes the the textual 
+dump to be written to \fBstdout\fP. The output is identical to what the 
+.BR sieved (1) 
+command produces for a compiled Sieve binary file. 
+.SH AUTHOR
+.PP
+The Sieve implementation for Dovecot was written by Stephan Bosch <stephan@rename-it.nl>.
+.PP
+Dovecot was written by Timo Sirainen <tss@iki.fi>.
+.SH "SEE ALSO"
+.BR sieved (1),
+.BR sieve-test (1)
+
