@@ -3,9 +3,13 @@ SUBDIRS = src
 EXTRA_DIST = \
 	tests \
 	examples/* \
-	doc/* \
+	doc/rfc \
+	doc/devel \
 	COPYING.LGPL \
 	ChangeLog
+
+dist_man_MANS = \
+	doc/man/sievec.1
 
 if MAINTAINER_MODE
 ChangeLog: .hg/dirstate
