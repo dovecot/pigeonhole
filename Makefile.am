@@ -65,6 +65,8 @@ test_cases = \
 	tests/extensions/vacation/execute.svtest \
 	$(ENOTIFY_TESTS)
 
+if HAVE_DOVECOT_LIBS
+
 $(test_cases):
 	@$(TESTSUITE_BIN) $@
 
@@ -72,3 +74,9 @@ $(test_cases):
 
 test: $(test_cases)
 
+else
+
+test:
+	@echo "Cannot compile or execute the testsuite without the Dovecot sources."
+
+endif	
