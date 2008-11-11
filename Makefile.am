@@ -10,7 +10,8 @@ EXTRA_DIST = \
 
 dist_man_MANS = \
 	doc/man/sievec.1 \
-	doc/man/sieved.1
+	doc/man/sieved.1 \
+	doc/man/sieve-test.1
 
 if MAINTAINER_MODE
 ChangeLog: .hg/dirstate

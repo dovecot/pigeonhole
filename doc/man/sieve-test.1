@@ -1,0 +1,61 @@
+.TH "SIEVE-TEST" "1" "11 November 2008"
+.SH NAME
+sieve-test \- Sieve script tester for the Dovecot secure IMAP server
+.SH SYNOPSIS
+.TP
+sieve-test [\fB-r\fR \fIrecipient-address\fR][\fB-s\fR \fIenvelope-sender\fR]
+[\fB-m\fR \fImailbox\fR][\fB-d\fR \fIdump-file\fR][\fB-c\fR][\fB-t\fR]
+\fIscript-file\fR \fImail-file\fR
+.br
+.SH DESCRIPTION
+.PP
+The \fBsieve-test\fP command is part of the Sieve implementation for the Dovecot secure 
+IMAP server. Sieve (RFC 5228) is a simple and highly extensible language for filtering 
+e-mail messages. It can be implemented for any type of mail access protocol, mail 
+architecture and operating system. The language cannot execute external programs and in 
+its basic form it does not provide the means to cause infinite loops, making it suitable 
+for running securely on mail servers where mail users have no permission run arbitrary programs.
+.PP
+Using the \fBsieve-test\fR command, the execution of Sieve scripts can be tested. This evaluates
+the script for the provided message, but it does not store or forward the message anywere. 
+In stead, it prints what actions would normally take place. This is a very useful tool to 
+debug the execution of Sieve scripts. 
+.PP
+The command has two mandatory arguments: the \fIscript-file\fR argument, which specifies the 
+script to (compile and) execute, and the \fImail-file\fR argument, which specifies the file containing
+the e-mail message to filter. 
+.SH OPTIONS
+.TP 
+\fB-r\fP \fIrecipient-address\fP
+The envelope recipient address. This is what Sieve's envelope test will compare to when the "to"
+envelope part is requested.
+.TP
+\fB-s\fP \fIenvelope-sender\fP
+The envelope sender. This is what Sieve's envelope test will compare to when the "from" envelope
+part is requested.
+.TP
+\fB-m\fP \fImailbox\fP
+The mailbox where the keep action would store. This is "INBOX" by default.
+.TP
+\fB-d\fP \fIdump-file\fP
+Causes a dump of the generated code to be written to the specified file. This is identical to the
+dump produced by \fBsieved\fR(1). Using '-' as filename causes the dump to be written to \fBstdout\fP.
+.TP
+\fB-c\fP
+Force compilation. By default, the compiled binary is stored on disk. When this binary is found
+during the next execution of \fBsieve-test\fP and its modification time is more recent than the
+script file, it is used and the script is not compiled again. This option forces the script to be
+compiled, thus ignoring any present binary. Refer to \fBsievec\fP(1) for more information about 
+Sieve compilation.
+.TP
+\fB-t\fP
+Enable simple trace debugging; prints all encountered byte code instructions on \fBstdout\fP.
+.SH AUTHOR
+.PP
+The Sieve implementation for Dovecot was written by Stephan Bosch <stephan@rename-it.nl>.
+.PP
+Dovecot was written by Timo Sirainen <tss@iki.fi>.
+.SH "SEE ALSO"
+.BR sievec (1),
+.BR sieved (1)
+
