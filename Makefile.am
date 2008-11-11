@@ -9,7 +9,8 @@ EXTRA_DIST = \
 	ChangeLog
 
 dist_man_MANS = \
-	doc/man/sievec.1
+	doc/man/sievec.1 \
+	doc/man/sieved.1
 
 if MAINTAINER_MODE
 ChangeLog: .hg/dirstate
