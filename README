@@ -187,7 +187,7 @@ listed here:
 - Compile errors are sometimes a bit obscure and long. This needs work. 
   Suggestions for improvement are welcome. 
 - The documentation needs work. The wiki needs to be updated with the newly 
-  supported extensions and manpages are needed for the commandline tools.
+  supported extensions.
 
 Authors
 -------
