@@ -1,3 +1,7 @@
+Current:
+
+* Implement notify extension with sole support for mailto mechanism. 
+
 Next (in order of descending priority/precedence):
 
 * Fix remaining RFC deviations:
@@ -23,7 +27,6 @@ Next (in order of descending priority/precedence):
 * Imapflags: merge execution of setflags, removeflags and addflags into one 
   common implementation. 
 * Warn about the use of syntactically invalid header names. 
-* Implement notify extension with sole support for mailto mechanism. 
 * Implement dropping errors in the user's mailbox as a mail message.
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
