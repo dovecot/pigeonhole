@@ -830,19 +830,19 @@ static bool sieve_validate_command_arguments
 	}
 	
 	/* Call initial validation for persistent arguments */
-  if ( array_is_created(&cmd_reg->persistent_tags) ) {
-  	unsigned int i;
+	if ( array_is_created(&cmd_reg->persistent_tags) ) {
+  		unsigned int i;
   	
-	  for ( i = 0; i < array_count(&cmd_reg->persistent_tags); i++ ) {
-	  	struct sieve_tag_registration * const *reg = 
-	  		array_idx(&cmd_reg->persistent_tags, i);
+		for ( i = 0; i < array_count(&cmd_reg->persistent_tags); i++ ) {
+			struct sieve_tag_registration * const *reg = 
+	  			array_idx(&cmd_reg->persistent_tags, i);
 			const struct sieve_argument *tag = (*reg)->tag;
-  	
-	  	if ( tag != NULL && tag->validate_persistent != NULL ) { /* To be sure */
-	  		if ( !tag->validate_persistent(validator, cmd) )
-	  			return FALSE;
-	  	}
-	  }
+  
+			if ( tag != NULL && tag->validate_persistent != NULL ) { /* To be sure */
+				if ( !tag->validate_persistent(validator, cmd) )
+	  				return FALSE;
+			}
+		}
 	}
 
 	return TRUE;

@@ -98,6 +98,7 @@ const struct sieve_operand_class stringlist_class;
 
 /* Operand objects */
 
+extern const struct sieve_operand omitted_operand;
 extern const struct sieve_operand number_operand;
 extern const struct sieve_operand string_operand;
 extern const struct sieve_operand stringlist_operand;
@@ -136,6 +137,16 @@ struct sieve_opr_stringlist_interface {
 /* 
  * Core operand functions 
  */
+
+/* Omitted */
+
+void sieve_opr_omitted_emit(struct sieve_binary *sbin);
+
+static inline bool sieve_operand_is_omitted
+(const struct sieve_operand *operand)
+{
+	return ( operand != NULL && operand == &omitted_operand );
+}
 
 /* Number */
 

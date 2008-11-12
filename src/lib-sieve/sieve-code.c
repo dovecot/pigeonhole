@@ -190,16 +190,12 @@ bool sieve_code_source_line_read
  * Core operands
  */
  
-const struct sieve_operand number_operand;
-const struct sieve_operand string_operand;
-const struct sieve_operand stringlist_operand;
-
 extern const struct sieve_operand comparator_operand;
 extern const struct sieve_operand match_type_operand;
 extern const struct sieve_operand address_part_operand;
 
 const struct sieve_operand *sieve_operands[] = {
-	NULL, /* SIEVE_OPERAND_OPTIONAL */
+	&omitted_operand, /* SIEVE_OPERAND_OPTIONAL */
 	&number_operand,
 	&string_operand,
 	&stringlist_operand,
@@ -278,6 +274,17 @@ bool sieve_operand_optional_read
 /* 
  * Operand definitions
  */
+
+/* Omitted */
+
+const struct sieve_operand_class omitted_class =
+    { "OMITTED" };
+
+const struct sieve_operand omitted_operand = {
+	"@OMITTED",
+	NULL, SIEVE_OPERAND_OPTIONAL,	
+	&omitted_class, NULL
+};
  
 /* Number */
 
@@ -352,6 +359,13 @@ const struct sieve_operand stringlist_operand =	{
 /* 
  * Operand implementations 
  */
+
+/* Omitted */
+
+void sieve_opr_omitted_emit(struct sieve_binary *sbin)
+{
+    (void) sieve_operand_emit_code(sbin, &omitted_operand);
+}
  
 /* Number */
 

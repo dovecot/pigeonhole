@@ -14,6 +14,7 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-actions.h"
+#include "sieve-dump.h"
 
 #include "ext-imapflags-common.h"
 
@@ -26,6 +27,8 @@
 static bool tag_flags_validate
 	(struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
+static bool tag_flags_validate_persistent
+	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool tag_flags_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
 		struct sieve_command_context *cmd);
@@ -36,6 +39,14 @@ const struct sieve_argument tag_flags = {
 	tag_flags_validate, 
 	NULL, 
 	tag_flags_generate 
+};
+
+const struct sieve_argument tag_flags_implicit = { 
+	"flags-implicit", 
+	NULL,
+	tag_flags_validate_persistent, 
+	NULL, NULL,
+	tag_flags_generate
 };
 
 /* 
@@ -49,6 +60,7 @@ static bool seff_flags_read_context
 	(const struct sieve_side_effect *seffect, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address,
 		void **se_context);
+
 static int seff_flags_merge
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action, 
 		const struct sieve_side_effect *seffect, 
@@ -92,6 +104,16 @@ const struct sieve_operand flags_side_effect_operand = {
  * Tag validation 
  */
 
+static bool tag_flags_validate_persistent
+(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd)
+{
+	if ( sieve_command_find_argument(cmd, &tag_flags) == NULL ) {
+		sieve_command_add_dynamic_tag(cmd, &tag_flags_implicit, -1);
+	}
+	
+	return TRUE;
+}
+
 static bool tag_flags_validate
 (struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd)
@@ -132,13 +154,24 @@ static bool tag_flags_generate
 	}
 
 	sieve_opr_side_effect_emit(cgenv->sbin, &flags_side_effect);
-	  
-	param = arg->parameters;
 
-	/* Call the generation function for the argument */ 
-	if ( param->argument != NULL && param->argument->generate != NULL && 
-		!param->argument->generate(cgenv, param, cmd) ) 
-		return FALSE;
+	if ( arg->argument == &tag_flags ) {
+		/* Explicit :flags tag */
+		param = arg->parameters;
+
+		/* Call the generation function for the argument */ 
+		if ( param->argument != NULL && param->argument->generate != NULL && 
+			!param->argument->generate(cgenv, param, cmd) ) 
+			return FALSE;
+
+	} else if ( arg->argument == &tag_flags_implicit ) {
+		/* Implicit flags */
+		sieve_opr_omitted_emit(cgenv->sbin);
+	
+	} else {
+		/* Something else?! */
+		i_unreached();
+	}
 	
 	return TRUE;
 }
@@ -160,7 +193,57 @@ static bool seff_flags_dump_context
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	return sieve_opr_stringlist_dump(denv, address, "flags");
+    const struct sieve_operand *operand;
+
+    operand = sieve_operand_read(denv->sbin, address);
+
+    if ( sieve_operand_is_omitted(operand) ) {
+		sieve_code_dumpf(denv, "flags: INTERNAL");
+		return TRUE;
+    }
+
+    return sieve_opr_stringlist_dump_data(denv, operand, address,
+            "flags");
+}
+
+static struct seff_flags_context *seff_flags_get_implicit_context
+(struct sieve_result *result)
+{
+	pool_t pool = sieve_result_pool(result);
+	struct seff_flags_context *ctx;
+	const char *flag;
+	struct ext_imapflags_iter flit;
+	
+	ctx = p_new(pool, struct seff_flags_context, 1);
+	p_array_init(&ctx->keywords, pool, 2);
+	
+	t_push();
+		
+	/* Unpack */
+	ext_imapflags_get_implicit_flags_init(&flit, result);
+	while ( (flag=ext_imapflags_iter_get_flag(&flit)) != NULL ) {		
+		if (flag != NULL && *flag != '\\') {
+			/* keyword */
+			const char *keyword = p_strdup(pool, flag);
+			array_append(&ctx->keywords, &keyword, 1);
+		} else {
+			/* system flag */
+			if (flag == NULL || strcasecmp(flag, "\\flagged") == 0)
+				ctx->flags |= MAIL_FLAGGED;
+			else if (strcasecmp(flag, "\\answered") == 0)
+				ctx->flags |= MAIL_ANSWERED;
+			else if (strcasecmp(flag, "\\deleted") == 0)
+				ctx->flags |= MAIL_DELETED;
+			else if (strcasecmp(flag, "\\seen") == 0)
+				ctx->flags |= MAIL_SEEN;
+			else if (strcasecmp(flag, "\\draft") == 0)
+				ctx->flags |= MAIL_DRAFT;
+		}
+	}
+
+	t_pop();
+	
+	return ctx;
 }
 
 static bool seff_flags_read_context
@@ -169,6 +252,8 @@ static bool seff_flags_read_context
 	void **se_context)
 {
 	bool result = TRUE;
+	sieve_size_t op_address = *address;
+	const struct sieve_operand *operand;
 	pool_t pool = sieve_result_pool(renv->result);
 	struct seff_flags_context *ctx;
 	string_t *flags_item;
@@ -178,9 +263,28 @@ static bool seff_flags_read_context
 	p_array_init(&ctx->keywords, pool, 2);
 	
 	t_push();
+
+	/* Check whether explicit flag list operand is present */
+	operand = sieve_operand_read(renv->sbin, address);
+
+    if ( operand == NULL ) {
+        sieve_runtime_trace_error(renv, "invalid operand");
+		t_pop();
+        return FALSE;
+    }
+
+    if ( sieve_operand_is_omitted(operand) ) {
+		/* Flag list is omitted, use current value of internal 
+		 * variable to construct side effect context.
+		 */
+		*se_context = seff_flags_get_implicit_context(renv->result);
+		t_pop();
+		return TRUE;
+	}
 	
 	/* Read flag-list */
-	if ( (flag_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
+	if ( (flag_list=sieve_opr_stringlist_read_data
+		(renv, operand, op_address, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}
@@ -223,46 +327,6 @@ static bool seff_flags_read_context
 	t_pop();
 	
 	return result;
-}
-
-static struct seff_flags_context *seff_flags_get_implicit_context
-(struct sieve_result *result)
-{
-	pool_t pool = sieve_result_pool(result);
-	struct seff_flags_context *ctx;
-	const char *flag;
-	struct ext_imapflags_iter flit;
-	
-	ctx = p_new(pool, struct seff_flags_context, 1);
-	p_array_init(&ctx->keywords, pool, 2);
-	
-	t_push();
-		
-	/* Unpack */
-	ext_imapflags_get_implicit_flags_init(&flit, result);
-	while ( (flag=ext_imapflags_iter_get_flag(&flit)) != NULL ) {		
-		if (flag != NULL && *flag != '\\') {
-			/* keyword */
-			const char *keyword = p_strdup(pool, flag);
-			array_append(&ctx->keywords, &keyword, 1);
-		} else {
-			/* system flag */
-			if (flag == NULL || strcasecmp(flag, "\\flagged") == 0)
-				ctx->flags |= MAIL_FLAGGED;
-			else if (strcasecmp(flag, "\\answered") == 0)
-				ctx->flags |= MAIL_ANSWERED;
-			else if (strcasecmp(flag, "\\deleted") == 0)
-				ctx->flags |= MAIL_DELETED;
-			else if (strcasecmp(flag, "\\seen") == 0)
-				ctx->flags |= MAIL_SEEN;
-			else if (strcasecmp(flag, "\\draft") == 0)
-				ctx->flags |= MAIL_DRAFT;
-		}
-	}
-
-	t_pop();
-	
-	return ctx;
 }
 
 /* Result verification */
