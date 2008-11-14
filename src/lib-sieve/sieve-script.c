@@ -38,14 +38,14 @@ static inline const char *_sieve_scriptfile_get_basename(const char *filename)
 
 static inline const char *_sieve_scriptfile_from_name(const char *name)
 {
-    const char *ext;
+ 	const char *ext;
 
-    /* See if it ends in .sieve already */
-    ext = strrchr(name, '.');
-    if ( ext == NULL || ext == name || strncmp(ext,".sieve",6) != 0 )
-        return t_strconcat(name, ".sieve", NULL);
+ 	/* See if it ends in .sieve already */
+	ext = strrchr(name, '.');
+	if ( ext == NULL || ext == name || strncmp(ext,".sieve",6) != 0 )
+		return t_strconcat(name, ".sieve", NULL);
 
-    return name;
+	return name;
 }
 
 /* 
@@ -86,10 +86,11 @@ struct sieve_script *sieve_script_init
 			
 		/* First obtain stat data from the system */
 		
-		if ( (ret=lstat(path, &st)) < 0 && (errno != ENOENT || exists_r == NULL) ) {
+		if ( (ret=lstat(path, &st)) < 0 ) {
 			if ( errno == ENOENT ) {
-				sieve_error(ehandler, basename, "sieve script does not exist");
-				if ( exists_r != NULL )
+				if ( exists_r == NULL ) 
+					sieve_error(ehandler, basename, "sieve script does not exist");
+				else
 					*exists_r = FALSE;
 			} else
 				sieve_critical(ehandler, basename, 
@@ -104,12 +105,11 @@ struct sieve_script *sieve_script_init
 
 			/* Only create/init the object if it stat()s without problems */
 			if (S_ISLNK(st.st_mode)) {
-				if ( (ret=stat(path, &st)) < 0 && 
-					(errno != ENOENT || exists_r == NULL) ) {
-
+				if ( (ret=stat(path, &st)) < 0 ) { 
 					if ( errno == ENOENT ) {
-						sieve_error(ehandler, basename, "sieve script does not exist");
-						if ( exists_r != NULL )
+						if ( exists_r == NULL )
+							sieve_error(ehandler, basename, "sieve script does not exist");
+						else
 							*exists_r = FALSE;
 					} else
 						sieve_critical(ehandler, basename, 
