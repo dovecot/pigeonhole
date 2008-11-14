@@ -61,7 +61,7 @@ struct sieve_variable *ext_include_variable_import_global
 				struct ext_include_variable *varctx = 
 					(struct ext_include_variable *) impvar->context;
 				sieve_command_validate_warning(valdtr, cmd,
-	                "variable '%s' already imported earlier at line %d", variable, 
+					"variable '%s' already imported earlier at line %d", variable, 
 					varctx->source_line);
 			}
 		}
