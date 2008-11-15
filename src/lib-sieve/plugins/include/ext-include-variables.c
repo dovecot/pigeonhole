@@ -47,8 +47,7 @@ struct sieve_variable *ext_include_variable_import_global
 	struct sieve_variable *var = NULL, *impvar = NULL;
 
 	/* Check if the requested variable was imported already */
-	if ( export && 
-		(impvar=sieve_variable_scope_get_variable(ctx->import_vars, variable, FALSE))
+	if ( (impvar=sieve_variable_scope_get_variable(ctx->import_vars, variable, FALSE))
 		!= NULL ) {
 		if ( export ) {
 			/* Yes, and now export is attempted. ERROR */
@@ -94,22 +93,25 @@ struct sieve_variable *ext_include_variable_import_global
 		var->context = varctx;
 	}
 	
-	/* Import the global variable into the local script scope */	
-	main_scope = sieve_ext_variables_get_main_scope(valdtr);
-	(void)sieve_variable_scope_import(main_scope, var);
+	/* Import the global variable into the local script scope */
+	if ( impvar == NULL ) {
+		main_scope = sieve_ext_variables_get_main_scope(valdtr);
+		(void)sieve_variable_scope_import(main_scope, var);
 
-	/* If this is an import it needs to be registered to detect duplicates */
-	if ( !export && impvar == NULL ) { 
-		pool_t pool = sieve_variable_scope_pool(ctx->import_vars);
-		struct ext_include_variable *varctx;
+		/* If this is an import it needs to be registered to detect duplicates */
+		if ( !export ) { 
+			pool_t pool = sieve_variable_scope_pool(ctx->import_vars);
+			struct ext_include_variable *varctx;
 
-		impvar = sieve_variable_scope_declare(ctx->import_vars, variable);
+			impvar = sieve_variable_scope_declare(ctx->import_vars, variable);
 
-		i_assert( impvar != NULL );
+			i_assert( impvar != NULL );
 
-		varctx = p_new(pool, struct ext_include_variable, 1);
-		varctx->type = EXT_INCLUDE_VAR_IMPORTED;
-		impvar->context = varctx;
+			varctx = p_new(pool, struct ext_include_variable, 1);
+			varctx->type = EXT_INCLUDE_VAR_IMPORTED;
+			varctx->source_line = cmd->ast_node->source_line;
+			impvar->context = varctx;
+		}
 	}
 
 	return var;	
