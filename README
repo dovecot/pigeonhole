@@ -54,12 +54,12 @@ Features
   Dovecot v1.2. Therefore, ManageSieve support can be added to Dovecot for the
   new Sieve plugin just as for the cmusieve plugin.
 
-* Testsuite included:
+* Test suite included:
 	
-  This package includes a testsuite to automatically asses whether the compiled 
-  sieve engine works correctly. The testsuite is an extension to the Sieve 
+  This package includes a test suite to automatically asses whether the compiled 
+  sieve engine works correctly. The test suite is an extension to the Sieve 
   language and is therefore easily extended with new tests. Currently, the 
-  testsuite is limited to testing script processing. The performed actions are 
+  test suite is limited to testing script processing. The performed actions are 
   not tested automatically yet. 
 
 Implementation Status
@@ -133,9 +133,9 @@ that no other files are written and no permission to do so is necessary for the
 global script directories. 
 
 To test the sieve engine outside deliver it is useful to execute the commands
-that exist in the src/sieve-tools/ directory of this package. After installation, 
-these are available at your $prefix/bin directory. The following commands are 
-installed:
+that exist in the src/sieve-tools/ directory of this package. After 
+installation, these are available at your $prefix/bin directory. The following 
+commands are installed:
 
 --
 

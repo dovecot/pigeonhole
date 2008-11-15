@@ -4,11 +4,24 @@ Compiling
 First of all you'll need to have pre-built Dovecot 1.2 sources available. It's 
 also not a good idea to build the plugin against self-compiled Dovecot sources, 
 but then actually use a prebuilt binary package of Dovecot. That might work if 
-the Dovecot versions are the same, but it's not guaranteed.
+the Dovecot versions are the same, but it's not guaranteed. You can also use 
+installed Dovecot headers to compile this package, but then command line tools 
+like sievec and sieved will not be compiled. This is also true for the test 
+suite. 
+
+This package is compiled and configured as follows:
 
 ./configure --with-dovecot=../dovecot-1.2
 make
 sudo make install
+
+The --with-dovecot parameter points to your Dovecot sources or, in case you are 
+compiling against the headers, to the directory where the dovecot-config file is 
+installed.
+
+If you downloaded this package through Mercurial, you need to execute 
+./autogen.sh first to build the automake/autoconf structure. This requires
+autotools and libtool to be installed. 
 
 Configuring
 -----------
@@ -18,3 +31,15 @@ however, and not 'cmusieve'. For a detailed description on installing the
 cmusieve plugin for deliver refer to the dovecot wiki:
 
 http://wiki.dovecot.org/LDA/Sieve
+
+Test Suite
+----------
+
+This package includes a test suite to verify the basic processing of the Sieve
+interpreter on your particular platform. Note that the test suite is not 
+available when this package is compiled against the Dovecot headers. The test 
+suite executes a list of test cases and halts when one of them fails. If it 
+executes all test cases successfully, the test suite finishes. You can execute 
+the test suite using `make test`.
+
+

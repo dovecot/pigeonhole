@@ -1,3 +1,26 @@
+v0.1.1 14-11-2008  Stephan Bosch <stephan@rename-it.nl>
+
+	* Re-enabled support for compiling against dovecot headers. Much like 
+	  cmusieve, command line tools like sievec and sieved are not compiled in this 
+	  case.
+
+	+ Improved logging of errors at specific occasions and added debug messages to
+	  find script execution problems quicker. 
+	+ Removed code duplication between command line tools and the test suite. 
+	  Also restructured the sources of the tools.
+	+ Added UTF-8 to UTF-7 folder name conversion for compatibility with IMAP.
+	+ Created man pages for the command line tools. These are automatically 
+	  installed upon 'make install' 
+	- Fixed compile error surfacing for gcc3.4. Forgot mask argument for the 
+	  open() system call when the O_CREAT flag is specified. Bug found by 
+	  Sergey Ivanov.
+	- Fixed bug in the sievec tool. -d output was always written to stdout.
+	- Fixed important bug in the imap4flags extension. When no :flags argument is 
+	  specified, the previous version would always use the final value of the
+	  internal variable to set the flags. This means that modifications to the 
+	  internal variable also affected the bare fileinto/keep actions executed 
+	  earlier. This does not comply to the RFC. 
+
 v0.1.0 23-10-2008  Stephan Bosch <stephan@rename-it.nl>
 
 	* Initial release
