@@ -22,7 +22,8 @@ endif
 
 if BUILD_ENOTIFY
 ENOTIFY_TESTS = \
-	tests/extensions/enotify/basic.svtest
+	tests/extensions/enotify/basic.svtest \
+	tests/extensions/enotify/execute.svtest
 endif
 
 TESTSUITE_BIN = $(top_srcdir)/src/testsuite/testsuite
