@@ -24,6 +24,8 @@
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
 
+#include "sieve-ext-variables.h"
+
 #include "ext-enotify-common.h"
 
 /*
@@ -41,7 +43,7 @@ const struct sieve_operation *ext_enotify_operations[] = {
  */
 
 static bool ext_enotify_load(int ext_id);
-static bool ext_enotify_validator_load(struct sieve_validator *validator);
+static bool ext_enotify_validator_load(struct sieve_validator *valdtr);
 
 static int ext_my_id;
 
@@ -52,7 +54,7 @@ const struct sieve_extension enotify_extension = {
 	ext_enotify_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_enotify_operations),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	SIEVE_EXT_DEFINE_OPERAND(encodeurl_operand)
 };
 
 static bool ext_enotify_load(int ext_id)
@@ -62,12 +64,15 @@ static bool ext_enotify_load(int ext_id)
 	return TRUE;
 }
 
-static bool ext_enotify_validator_load(struct sieve_validator *validator)
+static bool ext_enotify_validator_load(struct sieve_validator *valdtr)
 {
 	/* Register new commands */
-	sieve_validator_register_command(validator, &notify_command);
-	sieve_validator_register_command(validator, &valid_notify_method_test);
-	sieve_validator_register_command(validator, &notify_method_capability_test);
+	sieve_validator_register_command(valdtr, &notify_command);
+	sieve_validator_register_command(valdtr, &valid_notify_method_test);
+	sieve_validator_register_command(valdtr, &notify_method_capability_test);
+	
+	/* Register new set modifier for variables extension */
+	sieve_variables_modifier_register(valdtr, &encodeurl_modifier);
 	
 	return TRUE;
 }

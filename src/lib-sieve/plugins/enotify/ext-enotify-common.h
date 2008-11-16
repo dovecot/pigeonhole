@@ -4,6 +4,8 @@
 #ifndef __EXT_ENOTIFY_COMMON_H
 #define __EXT_ENOTIFY_COMMON_H
 
+#include "sieve-ext-variables.h"
+
 /*
  * Extension
  */
@@ -24,7 +26,7 @@ extern const struct sieve_command valid_notify_method_test;
 extern const struct sieve_command notify_method_capability_test;
 
 /*
- * Operands
+ * Operations
  */
 
 extern const struct sieve_operation notify_operation;
@@ -36,5 +38,17 @@ enum ext_variables_opcode {
 	EXT_ENOTIFY_OPERATION_VALID_NOTIFY_METHOD,
 	EXT_ENOTIFY_OPERATION_NOTIFY_METHOD_CAPABILITY
 };
+
+/*
+ * Operands
+ */
+ 
+extern const struct sieve_operand encodeurl_operand;
+
+/*
+ * Modifiers
+ */
+
+const struct sieve_variables_modifier encodeurl_modifier;
 
 #endif /* __EXT_ENOTIFY_COMMON_H */

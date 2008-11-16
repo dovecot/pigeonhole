@@ -51,6 +51,8 @@ enum ext_variables_operand {
  */
 
 struct ext_variables_validator_context {
+	bool active;
+	
 	struct sieve_validator_object_registry *modifiers;
 	
 	struct sieve_variable_scope *main_scope;
@@ -58,12 +60,8 @@ struct ext_variables_validator_context {
 
 void ext_variables_validator_initialize(struct sieve_validator *validator);
 	
-static inline struct ext_variables_validator_context *
-ext_variables_validator_context_get(struct sieve_validator *valdtr)
-{
-	return (struct ext_variables_validator_context *)
-		sieve_validator_extension_get_context(valdtr, &variables_extension);
-}
+struct ext_variables_validator_context *ext_variables_validator_context_get
+	(struct sieve_validator *valdtr);
 
 struct sieve_variable *ext_variables_validator_get_variable
 	(struct sieve_validator *validator, const char *variable, bool declare);

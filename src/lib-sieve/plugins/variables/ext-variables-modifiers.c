@@ -84,7 +84,7 @@ void ext_variables_register_core_modifiers
  * Modifier coding
  */
  
-const struct sieve_operand_class ext_variables_modifier_operand_class = 
+const struct sieve_operand_class sieve_variables_modifier_operand_class = 
 	{ "modifier" };
 	
 static const struct sieve_extension_obj_registry core_modifiers =
@@ -94,7 +94,7 @@ const struct sieve_operand modifier_operand = {
 	"modifier", 
 	&variables_extension,
 	EXT_VARIABLES_OPERAND_MODIFIER, 
-	&ext_variables_modifier_operand_class,
+	&sieve_variables_modifier_operand_class,
 	&core_modifiers
 };
 

@@ -21,8 +21,6 @@ void ext_variables_register_core_modifiers
  * Modifier operand
  */
 
-extern const struct sieve_operand_class 
-	ext_variables_modifier_operand_class;
 extern const struct sieve_operand modifier_operand;
 
 static inline void ext_variables_opr_modifier_emit
@@ -36,14 +34,14 @@ static inline const struct sieve_variables_modifier *
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	return (const struct sieve_variables_modifier *) sieve_opr_object_read
-		(renv, &ext_variables_modifier_operand_class, address);
+		(renv, &sieve_variables_modifier_operand_class, address);
 }
 
 static inline bool ext_variables_opr_modifier_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	return sieve_opr_object_dump
-		(denv, &ext_variables_modifier_operand_class, address, NULL);
+		(denv, &sieve_variables_modifier_operand_class, address, NULL);
 }
 	
 #endif /* __EXT_VARIABLES_MODIFIERS_H */

@@ -145,6 +145,8 @@ struct sieve_variables_modifier {
 	bool (*modify)(string_t *in, string_t **result);
 };
 
+extern const struct sieve_operand_class sieve_variables_modifier_operand_class;
+
 #define SIEVE_VARIABLES_DEFINE_MODIFIER(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
 #define SIEVE_VARIABLES_DEFINE_MODIFIERS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 

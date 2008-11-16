@@ -378,14 +378,30 @@ ext_variables_validator_context_create(struct sieve_validator *valdtr)
 	return ctx;
 }
 
+struct ext_variables_validator_context *ext_variables_validator_context_get
+(struct sieve_validator *valdtr)
+{
+	struct ext_variables_validator_context *ctx = 
+		(struct ext_variables_validator_context *)
+		sieve_validator_extension_get_context(valdtr, &variables_extension);
+	
+	if ( ctx == NULL ) {
+		ctx = ext_variables_validator_context_create(valdtr);
+	}
+	
+	return ctx;
+}
+
 void ext_variables_validator_initialize(struct sieve_validator *validator)
 {
 	struct ext_variables_validator_context *ctx;
 	
 	/* Create our context */
-	ctx = ext_variables_validator_context_create(validator);
+	ctx = ext_variables_validator_context_get(validator);
 	
 	ext_variables_register_core_modifiers(ctx);
+	
+	ctx->active = TRUE;
 }
 
 struct sieve_variable *ext_variables_validator_get_variable
@@ -408,7 +424,10 @@ struct sieve_variable_scope *sieve_ext_variables_get_main_scope
 
 bool sieve_ext_variables_is_active(struct sieve_validator *valdtr)
 {
-	return ( ext_variables_validator_context_get(valdtr) != NULL );
+	struct ext_variables_validator_context *ctx = 
+		ext_variables_validator_context_get(valdtr);
+		
+	return ( ctx != NULL && ctx->active );
 }
 
 /*
