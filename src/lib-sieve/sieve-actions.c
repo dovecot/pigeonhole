@@ -173,7 +173,7 @@ static struct mailbox *act_store_mailbox_open
 		MAILBOX_OPEN_SAVEONLY | MAILBOX_OPEN_POST_SESSION;
 	struct mailbox *box;
 
-	if (strcasecmp(name, "INBOX") == 0) {
+	if (strcasecmp(folder, "INBOX") == 0) {
         /* Deliveries to INBOX must always succeed, regardless of ACLs */
         open_flags |= MAILBOX_OPEN_IGNORE_ACLS;
     }
