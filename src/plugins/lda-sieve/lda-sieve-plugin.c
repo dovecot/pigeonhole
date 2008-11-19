@@ -41,7 +41,7 @@ static bool lda_sieve_smtp_close(void *handle)
 {
 	struct smtp_client *smtp_client = (struct smtp_client *) handle;
 
-	return ( smtp_client_close(smtp_client) >= 0 );
+	return ( smtp_client_close(smtp_client) == 0 );
 }
 
 /*

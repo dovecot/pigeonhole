@@ -318,8 +318,8 @@ static bool act_reject_send
 
 	/* Just to be sure */
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
-		sieve_result_error(aenv, "reject action has no means to send mail.");
-		return FALSE;
+		sieve_result_warning(aenv, "reject action has no means to send mail.");
+		return TRUE;
 	}
 
 	smtp_handle = senv->smtp_open(msgdata->return_path, NULL, &f);
@@ -395,7 +395,15 @@ static bool act_reject_send
 
 	fprintf(f, "\r\n\r\n--%s--\r\n", boundary);
 
-	return senv->smtp_close(smtp_handle);
+	if ( !senv->smtp_close(smtp_handle) ) {
+		sieve_result_error(aenv, 
+			"failed to send rejection message to <%s> "
+			"(refer to server log for more information)",
+			str_sanitize(msgdata->return_path, 80));
+		return FALSE;
+	}
+	
+	return TRUE;
 }
 
 static bool act_reject_commit
@@ -411,14 +419,14 @@ static bool act_reject_commit
 		*keep = FALSE;
 		return TRUE;
 	}
-	
+		
 	if ( act_reject_send(aenv, ctx) ) {
 		sieve_result_log(aenv, "rejected");	
 
 		*keep = FALSE;
 		return TRUE;
 	}
-  
+	  
 	return FALSE;
 }
 

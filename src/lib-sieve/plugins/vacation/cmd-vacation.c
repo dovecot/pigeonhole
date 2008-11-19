@@ -800,8 +800,8 @@ static bool act_vacation_send
 	/* Check smpt functions just to be sure */
 
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
-		sieve_result_error(aenv, "vacation action has no means to send mail.");
-		return FALSE;
+		sieve_result_warning(aenv, "vacation action has no means to send mail.");
+		return TRUE;
 	}
 
 	/* Open smtp session */
@@ -842,10 +842,15 @@ static bool act_vacation_send
 	fprintf(f, "%s\r\n", ctx->reason);
 
 	/* Close smtp session */    
-	if ( senv->smtp_close(smtp_handle) )
+	if ( !senv->smtp_close(smtp_handle) ) {
+		sieve_result_error(aenv, 
+			"failed to send vacation response to <%s> "
+			"(refer to server log for more information)", 
+			str_sanitize(msgdata->return_path, 128));	
 		return TRUE;
+	}
 	
-	return FALSE;
+	return TRUE;
 }
 
 static void act_vacation_hash
@@ -1010,10 +1015,6 @@ static bool act_vacation_commit
 
 		return TRUE;
 	}
-
-	/* Failure message; should be preceded by a more informative error */
-	sieve_result_error(aenv, "failed to send vacation response to <%s>", 
-		str_sanitize(msgdata->return_path, 128));	
 
 	return FALSE;
 }

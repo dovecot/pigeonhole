@@ -280,12 +280,12 @@ static bool act_redirect_send
 	
 	/* Just to be sure */
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
-		sieve_result_error(aenv, "redirect action has no means to send mail.");
+		sieve_result_warning(aenv, "redirect action has no means to send mail.");
 		return FALSE;
 	}
 	
 	if (mail_get_stream(msgdata->mail, NULL, NULL, &input) < 0)
-		return -1;
+		return FALSE;
 		
 	/* Open SMTP transport */
 	smtp_handle = senv->smtp_open(ctx->to_address, msgdata->return_path, &f);
@@ -304,7 +304,15 @@ static bool act_redirect_send
 	i_stream_unref(&input);
 
 	/* Close SMTP transport */
-	return senv->smtp_close(smtp_handle);
+	if ( !senv->smtp_close(smtp_handle) ) {
+		sieve_result_error(aenv, 
+			"failed to redirect message to <%s> "
+			"(refer to server log for more information)",
+			str_sanitize(ctx->to_address, 80));
+		return FALSE;
+	}
+	
+	return TRUE;
 }
 
 static bool act_redirect_commit
