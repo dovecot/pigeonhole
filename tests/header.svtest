@@ -6,31 +6,34 @@ To: nico@vestingbar.nl
 Subject:         Help        
 X-A:     Text
 X-B: Text            
+X-Multiline: This is a multi-line
+ header body, which should be
+ unfolded correctly.
 
 Text
 
 .
 ;
 
-test "STRIP-center" {
+test "Strip center" {
 	if not header :is "subject" "Help" {
 		test_fail "header test does not strip leading or trailing whitespace";
 	}
 }
 
-test "STRIP-lead" {
+test "Strip lead" {
     if not header :is "x-a" "Text" {
         test_fail "header test does not strip leading whitespace";
     }
 }
 
-test "STRIP-trail" {
+test "Strip trail" {
     if not header :is "x-b" "Text" {
         test_fail "header test does not strip trailing whitespace";
     }
 }
 
-test "CONTAINS-EMPTY-exist" {
+test "Contains empty - exist" {
 	if not header :contains "subject" "" {
 		test_fail "header test :contains match type fails to match \"\" on existing header";
 	}
@@ -40,10 +43,15 @@ test "CONTAINS-EMPTY-exist" {
 	}
 }
 
-test "CONTAINS-EMPTY-not-exist" {
+test "Contains empty - not exist" {
 	if header :contains "x-nonsense" "" {
 		test_fail "header test :contains match type matches \"\" on non-existant header";
 	}
 }
 
-
+test "Folded - equals" {
+	if not header :is "x-multiline" 
+		"This is a multi-line header body, which should be unfolded correctly." {
+		test_fail "failed to properly unfold folded header.";
+	}
+}
