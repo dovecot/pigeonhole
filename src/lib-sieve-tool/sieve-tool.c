@@ -75,14 +75,25 @@ void sieve_tool_deinit(void)
 
 const char *sieve_tool_get_user(void)
 {
-	uid_t process_euid = geteuid();
-	struct passwd *pw = getpwuid(process_euid);
-	if (pw != NULL) {
-		return t_strdup(pw->pw_name);
-	} 
-		
-	i_fatal("couldn't lookup our username (uid=%s)", dec2str(process_euid));
-	return NULL;
+	const char *user;
+	uid_t process_euid;
+	struct passwd *pw;
+
+	user = getenv("USER");
+
+	if ( user == NULL || *user == '\0' ) {
+		process_euid = geteuid();
+
+		if ((pw = getpwuid(process_euid)) != NULL) {
+            user = t_strdup(pw->pw_name);
+        }
+	}
+
+	if ( user == NULL || *user == '\0' ) {
+		i_fatal("couldn't lookup our username (uid=%s)", dec2str(process_euid));
+	}
+	
+	return user;
 }
 
 void sieve_tool_get_envelope_data
