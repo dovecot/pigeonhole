@@ -68,7 +68,9 @@ static struct ext_include_binary_context *ext_include_binary_create_context
 		(hash_callback_t *) sieve_script_hash, 
 		(hash_cmp_callback_t *) sieve_script_cmp);
 	p_array_init(&ctx->include_index, pool, 128);
-	
+
+	sieve_binary_extension_set(sbin, &include_binary_ext, ctx);
+
 	return ctx;
 }
 
@@ -78,10 +80,8 @@ struct ext_include_binary_context *ext_include_binary_get_context
 	struct ext_include_binary_context *ctx = (struct ext_include_binary_context *)
 		sieve_binary_extension_get_context(sbin, &include_extension);
 	
-	if ( ctx == NULL ) {
+	if ( ctx == NULL )
 		ctx = ext_include_binary_create_context(sbin);
-		sieve_binary_extension_set_context(sbin, &include_extension, ctx);
-	};
 	
 	return ctx;
 }
@@ -344,7 +344,6 @@ static void ext_include_binary_free(struct sieve_binary *sbin)
 
 	if ( binctx->global_vars != NULL ) 
 		sieve_variable_scope_unref(&binctx->global_vars);
-
 }
 
 /*

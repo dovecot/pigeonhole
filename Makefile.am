@@ -28,6 +28,12 @@ endif
 
 TESTSUITE_BIN = $(top_srcdir)/src/testsuite/testsuite
 
+if TESTSUITE_VALGRIND
+TEST_BIN = valgrind -q --error-exitcode=1 --leak-check=full $(TESTSUITE_BIN) 
+else
+TEST_BIN = $(TESTSUITE_BIN)
+endif
+
 test_cases = \
 	tests/testsuite.svtest\
 	tests/control-structures.svtest \
@@ -53,8 +59,8 @@ test_cases = \
 	tests/extensions/variables/string.svtest \
 	tests/extensions/variables/errors.svtest \
 	tests/extensions/variables/regex.svtest \
-	tests/extensions/include/variables.svtest \
 	tests/extensions/include/errors.svtest \
+	tests/extensions/include/variables.svtest \
 	tests/extensions/imapflags/basic.svtest \
 	tests/extensions/imapflags/hasflag.svtest \
 	tests/extensions/imapflags/execute.svtest \
@@ -75,7 +81,7 @@ test_cases = \
 if HAVE_DOVECOT_LIBS
 
 $(test_cases):
-	@$(TESTSUITE_BIN) $@
+	@$(TEST_BIN) $@
 
 .PHONY: $(test_cases)
 
