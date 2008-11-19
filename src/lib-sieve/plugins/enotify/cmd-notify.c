@@ -171,7 +171,7 @@ struct act_notify_context {
 	const char *const *options;
 };
 
- /* 
+/* 
  * Tag validation 
  */
 

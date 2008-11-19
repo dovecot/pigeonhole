@@ -18,11 +18,15 @@ tests = \
 var_modifiers = \
 	vmodf-encodeurl.c
 
+notify_methods = \
+	ntfy-mailto.c
+
 libsieve_ext_enotify_la_SOURCES = \
 	ext-enotify.c \
 	$(commands) \
 	$(tests) \
-	$(var_modifiers)
+	$(var_modifiers) \
+	$(notify_methods)
 
 noinst_HEADERS = \
 	ext-enotify-common.h

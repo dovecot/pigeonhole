@@ -42,14 +42,14 @@ const struct sieve_operand encodeurl_operand = {
  * Modifier implementation
  */
 
+static const char uri_reserved_lookup[256] = {
+};
+
 bool mod_encodeurl_modify(string_t *in, string_t **result)
-{
-	char *content;
+{	
+	*result = t_str_new(2*str_len(in));
 	
-	*result = t_str_new(str_len(in));
-	str_append_str(*result, in);
-		
-	content = str_c_modifiable(*result);
+	
 
 	return TRUE;
 }
