@@ -69,6 +69,16 @@ fi
 #
 #
 
+AC_ARG_ENABLE(valgrind,
+[AC_HELP_STRING([--enable-valgrind], [Enable Valgrind memory leak checks in testsuite [default=no]])],
+    if test x$enableval = xno || test x$enableval = xauto; then
+        want_valgrind=$enableval
+    else
+        want_valgrind=yes
+    fi,
+    want_valgrind=no)
+AM_CONDITIONAL(TESTSUITE_VALGRIND, test "$want_valgrind" = "yes")
+
 dnl replace relative ../ paths in the file with full paths
 eval `cat $dovecotdir/dovecot-config|sed 's,\$(top_builddir)/,$dovecotdir/,g'`
 

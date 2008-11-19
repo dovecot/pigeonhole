@@ -1289,13 +1289,16 @@ const void *sieve_binary_extension_get_context
 }
 
 void sieve_binary_extension_set
-(struct sieve_binary *sbin, const struct sieve_extension *ext, 
-	const struct sieve_binary_extension *bext)
+(struct sieve_binary *sbin, const struct sieve_binary_extension *bext,
+	void *context)
 {
 	struct sieve_binary_extension_reg *ereg = 
-		sieve_binary_extension_get_reg(sbin, ext, TRUE);
+		sieve_binary_extension_get_reg(sbin, bext->extension, TRUE);
 	
 	ereg->binext = bext;
+
+	if ( context != NULL )
+		ereg->context = context;
 }
 
 unsigned int sieve_binary_extension_create_block

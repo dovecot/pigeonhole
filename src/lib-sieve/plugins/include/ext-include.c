@@ -50,7 +50,6 @@ static const struct sieve_operation *ext_include_operations[] = {
 static bool ext_include_load(int ext_id);
 static bool ext_include_validator_load(struct sieve_validator *validator);
 static bool ext_include_generator_load(const struct sieve_codegen_env *cgenv);
-static bool ext_include_binary_load(struct sieve_binary *sbin);
 static bool ext_include_interpreter_load
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
@@ -65,7 +64,7 @@ const struct sieve_extension include_extension = {
 	ext_include_validator_load, 
 	ext_include_generator_load,
 	ext_include_interpreter_load,
-	ext_include_binary_load, 
+	NULL,
 	ext_include_binary_dump,
 	ext_include_code_dump,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_include_operations),
@@ -107,13 +106,3 @@ static bool ext_include_interpreter_load
 	return TRUE;
 }
 
-static bool ext_include_binary_load(struct sieve_binary *sbin)
-{
-	/* Register extension to the binary object to get notified of events like 
-	 * opening or saving the binary. The implemententation of these hooks is found
-	 * in ext-include-binary.c
-	 */
-	sieve_binary_extension_set(sbin, &include_extension, &include_binary_ext);
-	
-	return TRUE;
-}

@@ -83,8 +83,8 @@ const void *sieve_binary_extension_get_context
 	(struct sieve_binary *sbin, const struct sieve_extension *ext);
 	
 void sieve_binary_extension_set
-	(struct sieve_binary *sbin, const struct sieve_extension *ext, 
-		const struct sieve_binary_extension *bext);
+	(struct sieve_binary *sbin, const struct sieve_binary_extension *bext,
+		void *context);
 
 unsigned int sieve_binary_extension_create_block
 	(struct sieve_binary *sbin, const struct sieve_extension *ext);
