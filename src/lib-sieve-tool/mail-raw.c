@@ -127,7 +127,6 @@ void mail_raw_init(const char *user)
 void mail_raw_deinit(void)
 {
 	mail_user_deinit(&raw_mail_user);
-	mail_namespaces_deinit(&raw_ns);
 }
 	
 /*
