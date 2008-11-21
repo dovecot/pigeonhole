@@ -52,7 +52,8 @@ Next (in order of descending priority/precedence):
 * Implement date and index extensions
 * Optimize code containing true/false tests to omit explicit JMP opcodes
   (i.e. optimize the test away and any code that negatively depends on it)
-* Use lib/str-find.h for :contains and :matches match types  
+* Use lib/str-find.h for :contains and :matches match types 
+* Warn during compile if using non-existent folders.
 
 * Import ManageSieve into this package and provide support for alternate types
   of script storage like LDAP or SQL database.
