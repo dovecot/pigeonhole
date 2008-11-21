@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "ostream.h"
+#include "mail-namespace.h"
 #include "mail-storage.h"
 
 #include "sieve.h"
@@ -134,6 +135,7 @@ int main(int argc, char **argv)
 	user = sieve_tool_get_user();
 
 	/* Initialize mail storages */
+	mail_users_init(getenv("AUTH_SOCKET_PATH"), getenv("DEBUG") != NULL);
 	mail_storage_init();
 	mail_storage_register_all();
 	mailbox_list_register_all();
@@ -188,6 +190,7 @@ int main(int argc, char **argv)
 
 	/* De-initialize mail storages */
 	mail_storage_deinit();
+	mail_users_deinit();
 
 	sieve_tool_deinit();  
 	return 0;

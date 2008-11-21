@@ -3,8 +3,8 @@
 
 #include "lib.h"
 #include "ostream.h"
-#include "mail-storage.h"
 #include "mail-namespace.h"
+#include "mail-storage.h"
 #include "env-util.h"
 
 #include "sieve.h"
@@ -161,6 +161,7 @@ int main(int argc, char **argv)
 	home = getenv("HOME");
 
 	/* Initialize mail storages */
+	mail_users_init(getenv("AUTH_SOCKET_PATH"), getenv("DEBUG") != NULL);
 	mail_storage_init();
 	mail_storage_register_all();
 	mailbox_list_register_all();
@@ -173,9 +174,10 @@ int main(int argc, char **argv)
 		env_put("NAMESPACE_1_SEP=.");
 		env_put("NAMESPACE_1_SUBSCRIPTIONS=1");
 
-		mail_user = mail_user_init(user, home);
-	    if (mail_namespaces_init(mail_user) < 0)
-    	    i_fatal("Namespace initialization failed");	
+		mail_user = mail_user_init(user);
+		mail_user_set_home(mail_user, home);
+		if (mail_namespaces_init(mail_user) < 0)
+			i_fatal("Namespace initialization failed");	
 
 		ns = mail_user->namespaces;
 	} 
@@ -238,10 +240,11 @@ int main(int argc, char **argv)
 
 	/* De-initialize mail user object */
 	if ( mail_user != NULL )
-		mail_user_deinit(&mail_user);
+		mail_user_unref(&mail_user);
 
 	/* De-intialize mail storages */
 	mail_storage_deinit();
+	mail_users_deinit();
 
 	sieve_tool_deinit();  
 	

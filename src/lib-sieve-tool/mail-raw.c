@@ -113,7 +113,8 @@ void mail_raw_init(const char *user)
 {
 	const char *error;
 
-	raw_mail_user = mail_user_init(user, NULL);
+	raw_mail_user = mail_user_init(user);
+	mail_user_set_home(raw_mail_user, NULL);
 	raw_ns = mail_namespaces_init_empty(raw_mail_user);
 	raw_ns->flags |= NAMESPACE_FLAG_INTERNAL;
 	
@@ -126,9 +127,9 @@ void mail_raw_init(const char *user)
 
 void mail_raw_deinit(void)
 {
-	mail_user_deinit(&raw_mail_user);
+	mail_user_unref(&raw_mail_user);
 }
-	
+
 /*
  * Open raw mail data
  */
@@ -146,11 +147,11 @@ static struct mail_raw *mail_raw_create
 	mailr->pool = pool;
 
 	if ( mailfile == NULL ) {
-		mailr->box = mailbox_open(raw_ns->storage, "Dovecot Raw Mail",
+		mailr->box = mailbox_open(&raw_ns->storage, "Dovecot Raw Mail",
 				   input, MAILBOX_OPEN_NO_INDEX_FILES);
 	} else {
 		mtime = (time_t)-1;
-		mailr->box = mailbox_open(raw_ns->storage, mailfile, NULL,
+		mailr->box = mailbox_open(&raw_ns->storage, mailfile, NULL,
 				   MAILBOX_OPEN_NO_INDEX_FILES);
 	}
 

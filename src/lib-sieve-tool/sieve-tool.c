@@ -85,12 +85,12 @@ const char *sieve_tool_get_user(void)
 		process_euid = geteuid();
 
 		if ((pw = getpwuid(process_euid)) != NULL) {
-            user = t_strdup(pw->pw_name);
-        }
-	}
+			user = t_strdup(pw->pw_name);
+		}
 
-	if ( user == NULL || *user == '\0' ) {
-		i_fatal("couldn't lookup our username (uid=%s)", dec2str(process_euid));
+		if ( user == NULL || *user == '\0' ) {
+			i_fatal("couldn't lookup our username (uid=%s)", dec2str(process_euid));
+		}
 	}
 	
 	return user;

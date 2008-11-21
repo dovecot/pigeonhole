@@ -7,6 +7,7 @@
 #include "ostream.h"
 #include "hostpid.h"
 #include "mail-storage.h"
+#include "mail-namespace.h"
 #include "env-util.h"
 
 #include "sieve.h"
@@ -164,6 +165,7 @@ int main(int argc, char **argv)
 	sieve_tool_dump_binary_to(sbin, dumpfile);
 	
 	/* Initialize mail storages */
+	mail_users_init(getenv("AUTH_SOCKET_PATH"), getenv("DEBUG") != NULL);
 	mail_storage_init();
 	mail_storage_register_all();
 	mailbox_list_register_all();
@@ -200,6 +202,7 @@ int main(int argc, char **argv)
 
 	/* De-initialize mail storages */
 	mail_storage_deinit();
+	mail_users_deinit();
 
 	/* De-initialize testsuite */
 	testsuite_tool_deinit();  

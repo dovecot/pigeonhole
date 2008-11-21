@@ -168,28 +168,30 @@ static void act_store_get_storage_error
 static struct mailbox *act_store_mailbox_open
 (const struct sieve_action_exec_env *aenv, struct mail_namespace *ns, const char *folder)
 {
+	struct mail_storage **storage = &(aenv->estatus->last_storage);
 	enum mailbox_open_flags open_flags = 
 		MAILBOX_OPEN_FAST | MAILBOX_OPEN_KEEP_RECENT | 
 		MAILBOX_OPEN_SAVEONLY | MAILBOX_OPEN_POST_SESSION;
 	struct mailbox *box;
 
 	if (strcasecmp(folder, "INBOX") == 0) {
-        /* Deliveries to INBOX must always succeed, regardless of ACLs */
-        open_flags |= MAILBOX_OPEN_IGNORE_ACLS;
-    }
+		/* Deliveries to INBOX must always succeed, regardless of ACLs */
+		open_flags |= MAILBOX_OPEN_IGNORE_ACLS;
+	}
 
-	box = mailbox_open
-		(ns->storage, folder, NULL, open_flags);
+	*storage = ns->storage;
+
+	box = mailbox_open(storage, folder, NULL, open_flags);
 		
 	if ( box == NULL && aenv->scriptenv->mailbox_autocreate ) {
 		enum mail_error error;
 	
-		(void)mail_storage_get_last_error(ns->storage, &error);
+		(void)mail_storage_get_last_error(*storage, &error);
 		if ( error != MAIL_ERROR_NOTFOUND )
 			return NULL;
 
 		/* Try creating it */
-		if ( mail_storage_mailbox_create(ns->storage, folder, FALSE) < 0 )
+		if ( mail_storage_mailbox_create(*storage, folder, FALSE) < 0 )
 			return NULL;
    
 		if ( aenv->scriptenv->mailbox_autosubscribe ) {
@@ -198,8 +200,7 @@ static struct mailbox *act_store_mailbox_open
 		}
 
 		/* Try opening again */
-		box = mailbox_open
-			(ns->storage, folder, NULL, open_flags);
+		box = mailbox_open(storage, folder, NULL, open_flags);
     
 		if (box == NULL)
 			return NULL;
@@ -233,8 +234,6 @@ static bool act_store_start
 
 		if ( ns != NULL ) {		
 			box = act_store_mailbox_open(aenv, ns, ctx->folder);
-		
-			aenv->estatus->last_storage = ns->storage;
 		}
 	}
 				
