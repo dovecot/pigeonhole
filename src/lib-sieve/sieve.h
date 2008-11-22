@@ -31,7 +31,7 @@ void sieve_deinit(void);
 /* sieve_get_capabilities:
  *
  */
-const char *sieve_get_capabilities(void);
+const char *sieve_get_capabilities(const char *name);
 
 /*
  * Script compilation

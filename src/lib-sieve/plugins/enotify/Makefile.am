@@ -23,11 +23,13 @@ notify_methods = \
 
 libsieve_ext_enotify_la_SOURCES = \
 	ext-enotify.c \
+	ext-enotify-common.c \
 	$(commands) \
 	$(tests) \
 	$(var_modifiers) \
 	$(notify_methods)
 
 noinst_HEADERS = \
+	sieve-ext-enotify.h \
 	ext-enotify-common.h
 

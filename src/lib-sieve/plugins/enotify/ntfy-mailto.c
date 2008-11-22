@@ -35,6 +35,10 @@ static bool ntfy_mailto_parse_uri
 {
 	*recipient_r = "stephan@rename-it.nl";
 	*headers = NULL;
+
+	/* Scheme already parsed, starting parse after colon */
+
+	/* First parse e-mail address */
 }
 
 /*

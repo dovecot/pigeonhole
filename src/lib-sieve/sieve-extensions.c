@@ -17,6 +17,9 @@
 static void sieve_extensions_init_registry(void);
 static void sieve_extensions_deinit_registry(void);
 
+static void sieve_extensions_init_capabilities(void);
+static void sieve_extensions_deinit_capabilities(void);
+
 /* 
  * Pre-loaded 'extensions' 
  */
@@ -122,6 +125,7 @@ bool sieve_extensions_init(const char *sieve_plugins ATTR_UNUSED)
 	unsigned int i;
 	
 	sieve_extensions_init_registry();
+	sieve_extensions_init_capabilities();
 	
 	/* Pre-load core extensions */
 	for ( i = 0; i < sieve_core_extensions_count; i++ ) {
@@ -135,6 +139,7 @@ bool sieve_extensions_init(const char *sieve_plugins ATTR_UNUSED)
 
 void sieve_extensions_deinit(void)
 {	
+	sieve_extensions_deinit_capabilities();
 	sieve_extensions_deinit_registry();
 }
 
@@ -211,7 +216,7 @@ const struct sieve_extension *sieve_extension_get_by_name(const char *name)
 	return ereg->extension;
 }
 
-static bool _list_extension(const struct sieve_extension *ext)
+static inline bool _list_extension(const struct sieve_extension *ext)
 {
 	return ( ext->id != NULL && *ext->name != '@' );
 }
@@ -265,5 +270,44 @@ static void sieve_extensions_deinit_registry(void)
 	array_free(&extensions);
 	hash_destroy(&extension_index);
 }
+
+/*
+ * Extension capabilities
+ */
+
+static struct hash_table *capabilities_index; 
+
+static void sieve_extensions_init_capabilities(void)
+{	
+	capabilities_index = hash_create
+		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
+}
+
+static void sieve_extensions_deinit_capabilities(void) 
+{
+	hash_destroy(&capabilities_index);
+}
+
+void sieve_extension_capabilities_register
+	(const struct sieve_extension_capabilities *cap) 
+{	
+	hash_insert
+		(capabilities_index, (void *) cap->name, (void *) cap);
+}
+
+const char *sieve_extension_capabilities_get_string
+	(const char *cap_name) 
+{
+  const struct sieve_extension_capabilities *cap = 
+		(const struct sieve_extension_capabilities *) 
+			hash_lookup(capabilities_index, cap_name);
+
+	if ( cap == NULL || cap->get_string == NULL )
+		return NULL;
+		
+	return cap->get_string();
+}
+
+
 
 

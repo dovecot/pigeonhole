@@ -17,6 +17,8 @@ struct sieve_address {
  * RFC 2822 addresses
  */ 
 
+bool sieve_validate_rfc2822_mailbox(const char *address, const char **error_r);
+
 const char *sieve_address_normalize
 	(string_t *address, const char **error_r);
 bool sieve_address_validate

@@ -6,11 +6,14 @@
 
 #include "sieve-ext-variables.h"
 
+#include "sieve-ext-enotify.h"
+
 /*
  * Extension
  */
 
 extern const struct sieve_extension enotify_extension;
+extern const struct sieve_extension_capabilities notify_capabilities;
 
 /*
  * Commands

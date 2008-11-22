@@ -43,9 +43,12 @@ void sieve_deinit(void)
 	sieve_extensions_deinit();
 }
 
-const char *sieve_get_capabilities(void) 
+const char *sieve_get_capabilities(const char *name) 
 {
-	return sieve_extensions_get_string();
+	if ( name == NULL || *name == '\0' )
+		return sieve_extensions_get_string();
+	
+	return sieve_extension_capabilities_get_string(name);
 }
 
 /*

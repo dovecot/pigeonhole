@@ -61,6 +61,8 @@ static bool ext_enotify_load(int ext_id)
 {
 	ext_my_id = ext_id;
 
+	sieve_extension_capabilities_register(&notify_capabilities);
+
 	return TRUE;
 }
 

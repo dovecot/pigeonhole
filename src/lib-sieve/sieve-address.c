@@ -55,13 +55,18 @@
  * Message address specification as allowed bij the RFC 5228 SIEVE 
  * specification:
  *   sieve-address   =       addr-spec                  ; simple address
- *                           / phrase "<" addr-spec ">" ; name & addr-spec
+ *                           / phrase "<" addr-spec ">" ; name & addr-spec\
+ *
+ * Which concisely is about equal to:
+ *   sieve-address   =       mailbox
  */ 
+
+/*
+ * Address parse context
+ */
  
 struct sieve_message_address_parser {
 	struct rfc822_parser_context parser;
-
-	string_t *address;
 
 	string_t *str;
 	string_t *local_part;
@@ -69,6 +74,10 @@ struct sieve_message_address_parser {
 	
 	string_t *error;
 };
+
+/*
+ * Error handling
+ */
 
 static inline void sieve_address_error
 	(struct sieve_message_address_parser *ctx, const char *fmt, ...) 
@@ -85,6 +94,14 @@ static inline void sieve_address_error
 		va_end(args);
 	}
 }
+
+/*
+ * Partial RFC 2822 address parser
+ *
+ *   FIXME: lots of overlap with dovecot/src/lib-mail/message-parser.c
+ *          --> this implementation adds textual error reporting
+ *          MERGE!
+ */
 	
 static int parse_local_part(struct sieve_message_address_parser *ctx)
 {
@@ -143,7 +160,7 @@ static int parse_addr_spec(struct sieve_message_address_parser *ctx)
 	return -1;
 }
 
-static int parse_name_addr(struct sieve_message_address_parser *ctx)
+static int parse_mailbox(struct sieve_message_address_parser *ctx)
 {
 	int ret;
 	const unsigned char *start;
@@ -188,14 +205,15 @@ static int parse_name_addr(struct sieve_message_address_parser *ctx)
 	return ret;
 }
 
-static bool parse_sieve_address(struct sieve_message_address_parser *ctx)
+static bool parse_mailbox_address
+(struct sieve_message_address_parser *ctx, const unsigned char *address, 
+	unsigned int addr_size)
 {
 	int ret;
 	
 	/* Initialize parser */
 	
-	rfc822_parser_init(&ctx->parser, str_data(ctx->address), str_len(ctx->address), 
-		t_str_new(128));
+	rfc822_parser_init(&ctx->parser, address, addr_size, NULL);
 
 	/* Parse */
 	
@@ -206,7 +224,7 @@ static bool parse_sieve_address(struct sieve_message_address_parser *ctx)
 		return FALSE;
 	}
 	
-	if ((ret = parse_name_addr(ctx)) < 0) {
+	if ((ret = parse_mailbox(ctx)) < 0) {
 		return FALSE;
 	}
 			
@@ -215,6 +233,7 @@ static bool parse_sieve_address(struct sieve_message_address_parser *ctx)
 		sieve_address_error(ctx, "missing domain");
 		return FALSE;
 	}
+
 	if ( str_len(ctx->local_part) == 0 ) {
 		sieve_address_error(ctx, "missing local part");
 		return FALSE;
@@ -223,20 +242,48 @@ static bool parse_sieve_address(struct sieve_message_address_parser *ctx)
 	return TRUE;
 }
 
-const char *sieve_address_normalize
-(string_t *address, const char **error_r)
+bool sieve_validate_rfc2822_mailbox(const char *address, const char **error_r)
 {
 	struct sieve_message_address_parser ctx;
 
 	memset(&ctx, 0, sizeof(ctx));
-	ctx.address = address;
 	
 	ctx.local_part = t_str_new(128);
 	ctx.domain = t_str_new(128);
 	ctx.str = t_str_new(128);
 	ctx.error = t_str_new(128);
 
-	if ( !parse_sieve_address(&ctx) )
+	if ( !parse_mailbox_address(&ctx, (const unsigned char *) address, 
+		strlen(address)) ) {
+		if ( error_r != NULL )	
+			*error_r = str_c(ctx.error);
+		return FALSE;
+	}
+
+	if ( error_r != NULL )
+		*error_r = NULL;
+
+	return TRUE;
+}
+
+
+/*
+ * Sieve address
+ */
+
+const char *sieve_address_normalize
+(string_t *address, const char **error_r)
+{
+	struct sieve_message_address_parser ctx;
+
+	memset(&ctx, 0, sizeof(ctx));
+	
+	ctx.local_part = t_str_new(128);
+	ctx.domain = t_str_new(128);
+	ctx.str = t_str_new(128);
+	ctx.error = t_str_new(128);
+
+	if ( !parse_mailbox_address(&ctx, str_data(address), str_len(address)) )
 	{
 		*error_r = str_c(ctx.error);
 		return NULL;
@@ -254,12 +301,11 @@ bool sieve_address_validate
 	struct sieve_message_address_parser ctx;
 
 	memset(&ctx, 0, sizeof(ctx));
-	ctx.address = address;
 
 	ctx.local_part = ctx.domain = ctx.str = t_str_new(128);
 	ctx.error = t_str_new(128);
 
-	if ( !parse_sieve_address(&ctx) )
+	if ( !parse_mailbox_address(&ctx, str_data(address), str_len(address)) )
 	{
 		*error_r = str_c(ctx.error);
 		return FALSE;
@@ -411,7 +457,7 @@ static int path_parse_domain
 	int ret;
 
 	/* Domain = (sub-domain 1*("." sub-domain)) / address-literal
-     * sub-domain = Let-dig [Ldh-str]
+	 * sub-domain = Let-dig [Ldh-str]
 	 * Let-dig = ALPHA / DIGIT
 	 * Ldh-str = *( ALPHA / DIGIT / "-" ) Let-dig
 	 */
@@ -474,13 +520,13 @@ static int path_skip_source_route(struct sieve_envelope_address_parser *parser)
 	
 		for (;;) {
 			if ( (ret=path_skip_white_space(parser)) <= 0 )
-		        return -1;	
+				return -1;	
 
 			if ( (ret=path_parse_domain(parser, TRUE)) <= 0 )
-		        return -1;	
+				return -1;	
 
 			if ( (ret=path_skip_white_space(parser)) <= 0 )
-            	return ret;
+				return ret;
 
 			/* Next? */
 			if ( *parser->data != ',' )
@@ -488,7 +534,7 @@ static int path_skip_source_route(struct sieve_envelope_address_parser *parser)
 			parser->data++;
 
 			if ( (ret=path_skip_white_space(parser)) <= 0 )
-        	    return -1;
+				return -1;
 
 			if ( *parser->data != '@' )
 				return -1;
@@ -517,7 +563,7 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 	str_truncate(parser->str, 0);
 	if ( *parser->data == '"' ) {
 		str_append_c(parser->str, *parser->data);
-        parser->data++;
+		parser->data++;
 
 		while ( parser->data < parser->end ) {
 			if ( *parser->data == '\\' ) {
@@ -544,12 +590,12 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 			return -1;
 
 		str_append_c(parser->str, *parser->data);
-        parser->data++;
+		parser->data++;
 		
 		if ( (ret=path_skip_white_space(parser)) < 0 )
 			return ret;
-    } else {
-       for (;;) {
+	} else {
+		for (;;) {
 			if ( !IS_ATEXT(*parser->data) ) 
 				return -1;
 			str_append_c(parser->str, *parser->data);
@@ -610,9 +656,9 @@ static int path_parse(struct sieve_envelope_address_parser *parser)
 	if ( (ret=path_skip_white_space(parser)) <= 0 ) 
 		return ret;
 	
-    /* We allow angle brackets to be missing */
-    if ( *parser->data == '<' ) {
-        parser->data++;
+	/* We allow angle brackets to be missing */
+	if ( *parser->data == '<' ) {
+		parser->data++;
 		brackets = TRUE;
 
 		if ( (ret=path_skip_white_space(parser)) <= 0 ) 

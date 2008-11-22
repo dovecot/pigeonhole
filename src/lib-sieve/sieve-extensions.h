@@ -91,4 +91,19 @@ const struct sieve_extension *sieve_extension_get_by_name(const char *name);
 
 const char *sieve_extensions_get_string(void);
 
+/*
+ * Capability registries
+ */
+
+struct sieve_extension_capabilities {
+	const char *name;
+
+	const char *(*get_string)(void);	
+};
+
+void sieve_extension_capabilities_register
+	(const struct sieve_extension_capabilities *cap);
+const char *sieve_extension_capabilities_get_string
+	(const char *cap_name);
+
 #endif /* __SIEVE_EXTENSIONS_H */
