@@ -3,6 +3,10 @@ v0.1.1 14-11-2008  Stephan Bosch <stephan@rename-it.nl>
 	* Re-enabled support for compiling against dovecot headers. Much like 
 	  cmusieve, command line tools like sievec and sieved are not compiled in this 
 	  case.
+	* Started implementation of enotify extension. Not anywhere near finished
+	  though. 
+	* Adapted to changes in Dovecot on various occasions, making this release
+	  dependent on Dovecot >= v1.2.alpa4.
 
 	+ Improved logging of errors at specific occasions and added debug messages to
 	  find script execution problems quicker. 
@@ -10,7 +14,9 @@ v0.1.1 14-11-2008  Stephan Bosch <stephan@rename-it.nl>
 	  Also restructured the sources of the tools.
 	+ Added UTF-8 to UTF-7 folder name conversion for compatibility with IMAP.
 	+ Created man pages for the command line tools. These are automatically 
-	  installed upon 'make install' 
+	  installed upon 'make install'
+	+ Incorporated Valgrind support into the testsuite and fixed a few memory
+	  leaks in the process.
 	- Fixed compile error surfacing for gcc3.4. Forgot mask argument for the 
 	  open() system call when the O_CREAT flag is specified. Bug found by 
 	  Sergey Ivanov.
@@ -20,6 +26,13 @@ v0.1.1 14-11-2008  Stephan Bosch <stephan@rename-it.nl>
 	  internal variable to set the flags. This means that modifications to the 
 	  internal variable also affected the bare fileinto/keep actions executed 
 	  earlier. This does not comply to the RFC. 
+	- Fixed bug in the include extension's import/export commands. Duplicate
+	  import/exports caused problems.
+	- Fixed bug in the handling of non-existent scripts. Errors were sometimes 
+	  ignored. 
+	- Dovecot omitted unfolding multi-line headers. This was added to the cmusieve
+	  plugin after the code was incorporated into the new implementation. This is
+	  now mplicitly fixed by concurrent change in Dovecot. 
 
 v0.1.0 23-10-2008  Stephan Bosch <stephan@rename-it.nl>
 
