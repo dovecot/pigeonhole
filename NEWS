@@ -1,4 +1,11 @@
-v0.1.1 14-11-2008  Stephan Bosch <stephan@rename-it.nl>
+v0.1.2 26-11-2008  Stephan Bosch <stephan@rename-it.nl>
+
+	- Fixed important bug in the redirect action (and probably other actions like
+	  reject and vacation that only send messages). This was a bug in the handling
+	  of context information during the exection of actions. It caused the sieve 
+	  interpreter to crash with a segfault when redirect was executed. 
+
+v0.1.1 24-11-2008  Stephan Bosch <stephan@rename-it.nl>
 
 	* Re-enabled support for compiling against dovecot headers. Much like 
 	  cmusieve, command line tools like sievec and sieved are not compiled in this 
