@@ -641,7 +641,10 @@ int sieve_result_execute
 			rac->success = act->start(act, &result->action_env, rac->context, 
 				&rac->tr_context);
 			success = success && rac->success;
-		} 
+		} else {
+			rac->tr_context = rac->context;
+		}
+ 
 		rac = rac->next;	
 	}
 	
@@ -655,8 +658,6 @@ int sieve_result_execute
 		const struct sieve_action *act = rac->action;
 		struct sieve_result_side_effect *rsef;
 		const struct sieve_side_effect *sef;
-		void *context = rac->tr_context == NULL ? 
-				rac->context : rac->tr_context;
 		
 		/* Execute pre-execute event of side effects */
 		rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
@@ -664,7 +665,7 @@ int sieve_result_execute
 			sef = rsef->seffect;
 			if ( sef->pre_execute != NULL ) 
 				success = success & sef->pre_execute
-					(sef, act, &result->action_env, &rsef->context, context);
+					(sef, act, &result->action_env, &rsef->context, rac->tr_context);
 			rsef = rsef->next;
 		}
 	
@@ -680,7 +681,7 @@ int sieve_result_execute
 			sef = rsef->seffect;
 			if ( sef->post_execute != NULL ) 
 				success = success && sef->post_execute
-					(sef, act, &result->action_env, rsef->context, context);
+					(sef, act, &result->action_env, rsef->context, rac->tr_context);
 			rsef = rsef->next;
 		}
 		 
@@ -697,8 +698,6 @@ int sieve_result_execute
 		const struct sieve_action *act = rac->action;
 		struct sieve_result_side_effect *rsef;
 		const struct sieve_side_effect *sef;
-		void *context = rac->tr_context == NULL ? 
-				rac->context : rac->tr_context;
 		
 		if ( success ) {
 			bool keep = TRUE;
@@ -713,7 +712,7 @@ int sieve_result_execute
 				sef = rsef->seffect;
 				if ( sef->post_commit != NULL ) 
 					sef->post_commit
-						(sef, act, &result->action_env, rsef->context, context, 
+						(sef, act, &result->action_env, rsef->context, rac->tr_context, 
 							&keep);
 				rsef = rsef->next;
 			}
@@ -729,7 +728,7 @@ int sieve_result_execute
 				sef = rsef->seffect;
 				if ( sef->rollback != NULL ) 
 					sef->rollback
-						(sef, act, &result->action_env, rsef->context, context, 
+						(sef, act, &result->action_env, rsef->context, rac->tr_context, 
 						rac->success);
 				rsef = rsef->next;
 			}
