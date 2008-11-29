@@ -57,6 +57,7 @@ const struct sieve_extension body_extension = {
 	"body", 
 	&ext_body_my_id,
 	ext_body_load,
+	NULL,
 	ext_body_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATION(body_operation), 

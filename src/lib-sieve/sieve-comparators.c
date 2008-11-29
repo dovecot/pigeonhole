@@ -51,6 +51,7 @@ const struct sieve_extension comparator_extension = {
 	"@comparators",
 	&ext_my_id,
 	cmp_extension_load,
+	NULL,
 	cmp_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,

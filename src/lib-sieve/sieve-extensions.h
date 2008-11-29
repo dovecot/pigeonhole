@@ -25,6 +25,7 @@ struct sieve_extension {
 	const int *id;
 	
 	bool (*load)(int ext_id);
+	void (*unload)(void);
 
 	bool (*validator_load)
 		(struct sieve_validator *validator);	

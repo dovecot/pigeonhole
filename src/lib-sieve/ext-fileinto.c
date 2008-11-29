@@ -48,6 +48,7 @@ const struct sieve_extension fileinto_extension = {
 	"fileinto", 
 	&ext_my_id,
 	ext_fileinto_load,
+	NULL,
 	ext_fileinto_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATION(fileinto_operation), 

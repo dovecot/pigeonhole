@@ -61,6 +61,7 @@ const struct sieve_extension include_extension = {
 	"include", 
 	&ext_my_id,
 	ext_include_load,
+	NULL, 
 	ext_include_validator_load, 
 	ext_include_generator_load,
 	ext_include_interpreter_load,

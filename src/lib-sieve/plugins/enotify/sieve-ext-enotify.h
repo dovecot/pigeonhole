@@ -8,7 +8,7 @@
 
 #include "sieve-common.h"
 
-struct sieve_notify_context {
+struct sieve_enotify_context {
 	const char *method_uri;
 
 	sieve_number_t importance;
@@ -17,7 +17,11 @@ struct sieve_notify_context {
 	const char *const *options;
 };
 
-struct sieve_notify_method {
+/*
+ * Notify methods
+ */ 
+
+struct sieve_enotify_method {
 	const char *identifier;
 	
 	/* Validation */
@@ -27,8 +31,11 @@ struct sieve_notify_method {
 			
 	/* Execution */
 	bool (*execute)
-		(const struct sieve_action_exec_env *aenv, const struct sieve_notify_context *nctx);
+		(const struct sieve_action_exec_env *aenv, 
+			const struct sieve_enotify_context *nctx);
 };
+
+void sieve_enotify_method_register(const struct sieve_enotify_method *method);
 
 #endif /* __SIEVE_EXT_ENOTIFY_H */
 

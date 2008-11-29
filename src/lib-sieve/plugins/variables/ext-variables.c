@@ -67,6 +67,7 @@ const struct sieve_extension variables_extension = {
 	"variables", 
 	&ext_my_id,
 	ext_variables_load,
+	NULL,
 	ext_variables_validator_load, 
 	ext_variables_generator_load,
 	ext_variables_interpreter_load,

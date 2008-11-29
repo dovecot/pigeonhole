@@ -38,17 +38,19 @@ const unsigned int sieve_preloaded_extensions_count =
 /* 
  * Dummy extensions 
  */
+ 
+/* FIXME: This is stupid. Define a comparator-* extension and be done with it */
 
 static const struct sieve_extension comparator_i_octet_extension = {
 	"comparator-i;octet", 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static const struct sieve_extension comparator_i_ascii_casemap_extension = {
 	"comparator-i;ascii-casemap", 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };

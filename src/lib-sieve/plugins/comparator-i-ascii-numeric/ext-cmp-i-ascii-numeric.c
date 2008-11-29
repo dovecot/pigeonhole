@@ -45,6 +45,7 @@ const struct sieve_extension comparator_i_ascii_numeric_extension = {
 	"comparator-i;ascii-numeric", 
 	&ext_my_id,
 	ext_cmp_i_ascii_numeric_load,
+	NULL,
 	ext_cmp_i_ascii_numeric_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 

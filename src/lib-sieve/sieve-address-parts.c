@@ -49,6 +49,7 @@ const struct sieve_extension address_part_extension = {
 	"@address-parts",
 	&ext_my_id,
 	addrp_extension_load,
+	NULL,
 	addrp_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,

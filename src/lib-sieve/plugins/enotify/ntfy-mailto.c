@@ -19,7 +19,7 @@ static bool ntfy_mailto_validate_uri
 	(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
 		const char *uri);
 
-const struct sieve_notify_method mailto_notify = {
+const struct sieve_enotify_method mailto_notify = {
 	"mailto",
 	ntfy_mailto_validate_uri,
 	NULL
@@ -70,7 +70,7 @@ static bool _contains_8bit(const char *msg)
  
 static bool ntfy_mailto_execute
 (const struct sieve_action_exec_env *aenv, 
-	const struct sieve_notify_context *nctx)
+	const struct sieve_enotify_context *nctx)
 { 
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;

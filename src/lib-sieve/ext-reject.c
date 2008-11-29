@@ -53,6 +53,7 @@ struct sieve_extension reject_extension = {
 	"reject", 
 	&ext_my_id,
 	ext_reject_load,
+	NULL,
 	ext_reject_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATION(reject_operation), 

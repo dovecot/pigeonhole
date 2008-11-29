@@ -51,6 +51,7 @@ const struct sieve_extension enotify_extension = {
 	"enotify", 
 	&ext_my_id,
 	ext_enotify_load,
+	NULL,
 	ext_enotify_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_enotify_operations),
