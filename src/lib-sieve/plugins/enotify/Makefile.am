@@ -31,5 +31,6 @@ libsieve_ext_enotify_la_SOURCES = \
 
 noinst_HEADERS = \
 	sieve-ext-enotify.h \
+	ext-enotify-limits.h \
 	ext-enotify-common.h
 

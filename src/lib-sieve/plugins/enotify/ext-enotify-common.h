@@ -52,6 +52,25 @@ extern const struct sieve_operand encodeurl_operand;
  * Modifiers
  */
 
-const struct sieve_variables_modifier encodeurl_modifier;
+extern const struct sieve_variables_modifier encodeurl_modifier;
+
+/*
+ * Notify methods
+ */
+ 
+extern const struct sieve_enotify_method mailto_notify;
+ 
+void ext_enotify_methods_init(void);
+void ext_enotify_methods_deinit(void);
+
+const struct sieve_enotify_method *ext_enotify_method_find
+	(const char *identifier);
+	
+/*
+ * URI validation
+ */
+ 
+bool ext_enotify_uri_validate
+	(struct sieve_validator *valdtr, struct sieve_ast_argument *arg);
 
 #endif /* __EXT_ENOTIFY_COMMON_H */

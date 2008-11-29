@@ -7,6 +7,9 @@
 #include "message-date.h"
 
 #include "sieve-common.h"
+#include "sieve-ast.h"
+#include "sieve-commands.h"
+#include "sieve-validator.h"
 #include "sieve-actions.h"
 #include "sieve-result.h"
 
@@ -17,12 +20,15 @@
  */
 static bool ntfy_mailto_validate_uri
 	(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
-		const char *uri);
+		const char *uri_body);
+static bool ntfy_mailto_execute
+	(const struct sieve_action_exec_env *aenv, 
+		const struct sieve_enotify_context *nctx);
 
 const struct sieve_enotify_method mailto_notify = {
 	"mailto",
 	ntfy_mailto_validate_uri,
-	NULL
+	ntfy_mailto_execute
 };
 
 /*
@@ -30,15 +36,20 @@ const struct sieve_enotify_method mailto_notify = {
  */
 
 static bool ntfy_mailto_parse_uri
-(const char *uri, unsigned int len, const char **recipient_r, 
-	const char ***headers)
+(const char *uri_body, const char **recipient_r, const char ***headers_r,
+	const char **error_r)
 {
-	*recipient_r = "stephan@rename-it.nl";
-	*headers = NULL;
-
+	if ( recipient_r != NULL )
+		*recipient_r = "stephan@rename-it.nl";
+		
+	if ( headers_r != NULL )
+		*headers_r = NULL;
+	
 	/* Scheme already parsed, starting parse after colon */
 
 	/* First parse e-mail address */
+	
+	return TRUE;
 }
 
 /*
@@ -47,8 +58,17 @@ static bool ntfy_mailto_parse_uri
 
 static bool ntfy_mailto_validate_uri
 (struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
-	const char *uri)
-{
+	const char *uri_body)
+{	
+	const char *error;
+	
+	if ( !ntfy_mailto_parse_uri(uri_body, NULL, NULL, &error) ) {
+		sieve_argument_validate_error(valdtr, arg, 
+			"invalid mailto URI '%s': %s", 
+			str_sanitize(sieve_ast_argument_strc(arg), 80), error);
+		return FALSE;
+	}
+	
 	return TRUE;
 }
 
@@ -128,7 +148,7 @@ static bool ntfy_mailto_execute
 			"sent mail notification to <%s>", str_sanitize(recipient, 80));
 	} else {
 		sieve_result_error(aenv,
-			"failed to send mail notification to <%s> ",
+			"failed to send mail notification to <%s> "
 			"(refer to system log for more information)", 
 			str_sanitize(recipient, 80));
 	}

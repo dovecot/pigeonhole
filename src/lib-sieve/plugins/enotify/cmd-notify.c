@@ -37,10 +37,10 @@ static const struct sieve_argument notify_message_tag;
  */
 
 static bool cmd_notify_registered
-	(struct sieve_validator *validator, 
+	(struct sieve_validator *valdtr, 
 		struct sieve_command_registration *cmd_reg);
 static bool cmd_notify_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command_context *cmd);
 static bool cmd_notify_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
@@ -62,13 +62,13 @@ const struct sieve_command notify_command = {
 /* Forward declarations */
 
 static bool cmd_notify_validate_string_tag
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
 static bool cmd_notify_validate_stringlist_tag
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
 static bool cmd_notify_validate_importance_tag
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
 
 /* Argument objects */
@@ -176,7 +176,7 @@ struct act_notify_context {
  */
 
 static bool cmd_notify_validate_string_tag
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
@@ -188,10 +188,8 @@ static bool cmd_notify_validate_string_tag
 	 *   :from <string>
 	 *   :message <string>
 	 */
-	if ( !sieve_validate_tag_parameter
-		(validator, cmd, tag, *arg, SAAT_STRING) ) {
+	if ( !sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, SAAT_STRING) )
 		return FALSE;
-	}
 
 	if ( tag->argument == &notify_from_tag ) {		
 		/* Skip parameter */
@@ -206,7 +204,7 @@ static bool cmd_notify_validate_string_tag
 }
 
 static bool cmd_notify_validate_stringlist_tag
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
@@ -217,10 +215,8 @@ static bool cmd_notify_validate_stringlist_tag
 	/* Check syntax:
 	 *   :options string-list
 	 */
-	if ( !sieve_validate_tag_parameter
-		(validator, cmd, tag, *arg, SAAT_STRING_LIST) ) {
+	if ( !sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, SAAT_STRING_LIST) ) 
 		return FALSE;
-	}
 	
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
@@ -229,7 +225,7 @@ static bool cmd_notify_validate_stringlist_tag
 }
 
 static bool cmd_notify_validate_importance_tag
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
 	struct sieve_command_context *cmd ATTR_UNUSED)
 {
 	const struct sieve_ast_argument *tag = *arg;
@@ -244,7 +240,7 @@ static bool cmd_notify_validate_importance_tag
 
 	if ( sieve_ast_argument_type(*arg) != SAAT_STRING ) {
 		/* Not a string */
-		sieve_argument_validate_error(validator, *arg, 
+		sieve_argument_validate_error(valdtr, *arg, 
 			"the :importance tag for the notify command requires a string parameter, "
 			"but %s was found", sieve_ast_argument_name(*arg));
 		return FALSE;
@@ -254,7 +250,7 @@ static bool cmd_notify_validate_importance_tag
 
 	if ( impstr[0] < '1' || impstr[0]  > '3' || impstr[1] != '\0' ) {
 		/* Invalid importance */
-		sieve_argument_validate_error(validator, *arg, 
+		sieve_argument_validate_error(valdtr, *arg, 
 			"invalid :importance value for notify command: %s", impstr);
 		return FALSE;
 	} 
@@ -275,16 +271,16 @@ static bool cmd_notify_validate_importance_tag
  */
 
 static bool cmd_notify_registered
-(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg) 
 {
 	sieve_validator_register_tag
-		(validator, cmd_reg, &notify_importance_tag, OPT_IMPORTANCE); 	
+		(valdtr, cmd_reg, &notify_importance_tag, OPT_IMPORTANCE); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &notify_from_tag, OPT_FROM); 	
+		(valdtr, cmd_reg, &notify_from_tag, OPT_FROM); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &notify_options_tag, OPT_OPTIONS); 	
+		(valdtr, cmd_reg, &notify_options_tag, OPT_OPTIONS); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &notify_message_tag, OPT_MESSAGE); 	
+		(valdtr, cmd_reg, &notify_message_tag, OPT_MESSAGE); 	
 
 	return TRUE;
 }
@@ -294,16 +290,22 @@ static bool cmd_notify_registered
  */
  
 static bool cmd_notify_validate
-(struct sieve_validator *validator, struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr, struct sieve_command_context *cmd) 
 { 	
 	struct sieve_ast_argument *arg = cmd->first_positional;
 
 	if ( !sieve_validate_positional_argument
-		(validator, cmd, arg, "method", 1, SAAT_STRING) ) {
+		(valdtr, cmd, arg, "method", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
 	
-	return sieve_validator_argument_activate(validator, cmd, arg, FALSE);
+	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
+		return FALSE;
+		
+	if ( sieve_argument_is_string_literal(arg) )
+		return ext_enotify_uri_validate(valdtr, arg);
+	
+	return TRUE;
 }
 
 /*

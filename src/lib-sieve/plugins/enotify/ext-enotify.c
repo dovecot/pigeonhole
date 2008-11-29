@@ -43,6 +43,7 @@ const struct sieve_operation *ext_enotify_operations[] = {
  */
 
 static bool ext_enotify_load(int ext_id);
+static void ext_enotify_unload(void);
 static bool ext_enotify_validator_load(struct sieve_validator *valdtr);
 
 static int ext_my_id;
@@ -51,7 +52,7 @@ const struct sieve_extension enotify_extension = {
 	"enotify", 
 	&ext_my_id,
 	ext_enotify_load,
-	NULL,
+	ext_enotify_unload,
 	ext_enotify_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_enotify_operations),
@@ -62,9 +63,16 @@ static bool ext_enotify_load(int ext_id)
 {
 	ext_my_id = ext_id;
 
+	ext_enotify_methods_init();
+
 	sieve_extension_capabilities_register(&notify_capabilities);
 
 	return TRUE;
+}
+
+static void ext_enotify_unload(void)
+{
+	ext_enotify_methods_deinit();
 }
 
 static bool ext_enotify_validator_load(struct sieve_validator *valdtr)

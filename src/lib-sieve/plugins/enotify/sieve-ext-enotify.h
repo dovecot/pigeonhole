@@ -27,7 +27,7 @@ struct sieve_enotify_method {
 	/* Validation */
 	bool (*validate_uri)
 		(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
-			const char *uri);
+			const char *uri_body);
 			
 	/* Execution */
 	bool (*execute)
