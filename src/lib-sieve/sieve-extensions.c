@@ -225,31 +225,30 @@ static inline bool _list_extension(const struct sieve_extension *ext)
 
 const char *sieve_extensions_get_string(void)
 {
-	unsigned int i = 0, ext_count = array_count(&extensions);
+	unsigned int i, ext_count;
+	const struct sieve_extension *const *exts;
 	string_t *extstr = t_str_new(256);
 
+	exts = array_get(&extensions, &ext_count);
+
 	if ( ext_count > 0 ) {
-		const struct sieve_extension * const *ext =
-			array_idx(&extensions, i);
-
-		while ( !_list_extension(*ext) ) {
-			if ( i < ext_count ) 
-				ext = array_idx(&extensions, i);
-			else
-				break;
+		i = 0;
+		
+		/* Find first listable extension */
+		while ( i < ext_count && !_list_extension(exts[i]) )
 			i++;
-		}
 
-		str_append(extstr, (*ext)->name);
- 
-		while ( i < ext_count ) {
-			ext = array_idx(&extensions, i);
-
-			if ( _list_extension(*ext) ) {
-				str_append_c(extstr, ' ');
-				str_append(extstr, (*ext)->name);
+		if ( i < ext_count ) {
+			/* Add first to string */
+			str_append(extstr, exts[i]->name);
+	 
+	 		/* Add others */
+			for ( ; i < ext_count; i++ ) {
+				if ( _list_extension(exts[i]) ) {
+					str_append_c(extstr, ' ');
+					str_append(extstr, exts[i]->name);
+				}
 			}
-			i++;
 		}
 	}
 
@@ -264,6 +263,12 @@ static void sieve_extensions_deinit_registry(void)
 	void *ereg;
 	
 	while ( hash_iterate(itx, &key, &ereg) ) {
+		const struct sieve_extension *ext = 
+			((struct sieve_extension_registration *) ereg)->extension;
+		
+		if ( ext->unload != NULL )
+			ext->unload();
+			
 		p_free(default_pool, ereg);
 	}
 
