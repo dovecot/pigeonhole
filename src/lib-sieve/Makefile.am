@@ -63,6 +63,7 @@ libsieve_la_DEPENDENCIES = $(plugins)
 libsieve_la_LIBADD = $(plugins)
 
 libsieve_la_SOURCES = \
+	rfc2822.c \
 	sieve-limits.c \
 	sieve-message.c \
 	sieve-lexer.c \
@@ -95,6 +96,7 @@ libsieve_la_SOURCES = \
 	sieve.c 
 
 noinst_HEADERS = \
+	rfc2822.h \
 	sieve-config.h \
 	sieve-types.h \
 	sieve-common.h \
