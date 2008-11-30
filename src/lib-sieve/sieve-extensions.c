@@ -241,7 +241,8 @@ const char *sieve_extensions_get_string(void)
 		if ( i < ext_count ) {
 			/* Add first to string */
 			str_append(extstr, exts[i]->name);
-	 
+			i++;	 
+
 	 		/* Add others */
 			for ( ; i < ext_count; i++ ) {
 				if ( _list_extension(exts[i]) ) {
