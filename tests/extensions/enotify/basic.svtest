@@ -4,7 +4,7 @@ require "enotify";
 test "Execute" {
 	/* Test to catch runtime segfaults */
 	if valid_notify_method 
-		"mailto:alm@example.com" {
+		"mailto:stephan@example.com" {
 		stop;
 	}
 
@@ -12,5 +12,5 @@ test "Execute" {
 	notify 
 		:message "This is probably very important"
 		:importance "1" 
-		"mailto:alm@example.com";
+		"mailto:stephan@example.com%2cstephan@rename-it.nl?subject=Important%20message%20received";
 }
