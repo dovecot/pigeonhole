@@ -2,9 +2,13 @@
  */
  
 #include "lib.h"
+#include "array.h"
+#include "str.h"
 #include "ioloop.h"
 #include "str-sanitize.h"
 #include "message-date.h"
+
+#include "rfc2822.h"
 
 #include "sieve-common.h"
 #include "sieve-ast.h"
@@ -15,9 +19,16 @@
 
 #include "sieve-ext-enotify.h"
 
+/*
+ * Configuration
+ */
+ 
+#define NTFY_MAILTO_MAX_RECIPIENTS 4
+
 /* 
  * Mailto notification method
  */
+ 
 static bool ntfy_mailto_validate_uri
 	(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
 		const char *uri_body);
@@ -71,44 +82,156 @@ static bool _parse_hex_value(const char **in, char *out)
 
 	*out |= value;
 	(*in)++;
-	return TRUE;	
+	return (*out != '\0');	
 }
 
-static bool uri_extract_part
-(const char **uri_p, char delim, string_t *part, const char **error_r)
+static bool _uri_parse_recipients
+(const char **uri_p, const char *const **recipients_r, const char **error_r)
 {
+	ARRAY_DEFINE(recipients, const char *);
+	string_t *to = t_str_new(128);
+	const char *recipient;
 	const char *p = *uri_p;
 	
-	while ( *p != '\0' && *p != delim ) {
+	if ( recipients_r != NULL )
+		t_array_init(&recipients, NTFY_MAILTO_MAX_RECIPIENTS);
+	
+	while ( *p != '\0' && *p != '?' ) {
 		if ( *p == '%' ) {
+			/* % encoded character */
 			char ch;
 			
 			p++;
 			
+			/* Parse 2-digit hex value */
 			if ( !_parse_hex_value(&p, &ch) ) {
 				*error_r = "invalid % encoding";
 				return FALSE;
 			}
+
+			/* Check for delimiter */
+			if ( ch == ',' ) {
+				recipient = str_c(to);
+				
+				/* Verify recipient */
+				
+				/* Add recipient to the list */
+				if ( recipients_r != NULL ) {
+					recipient = t_strdup(recipient);
+					array_append(&recipients, &recipient, 1);
+				}
 			
-			str_append_c(part, ch);
+				/* Reset for next recipient */
+				str_truncate(to, 0);
+			}	else {
+				/* Content character */
+				str_append_c(to, ch);
+			}
 		} else {
-			str_append_c(part, *p);
+			/* Content character */
+			str_append_c(to, *p);
 			p++;
 		}
+	}	
+	
+	/* Skip '?' */
+	if ( *p != '\0' ) p++;
+	
+	recipient = str_c(to);
+	
+	/* Verify recipient */
+
+	// ....
+		
+	if ( recipients_r != NULL ) {
+		/* Add recipient to the list */
+		recipient = t_strdup(recipient);
+		array_append(&recipients, &recipient, 1);
+	
+		/* Return recipients */
+		(void)array_append_space(&recipients);
+		*recipients_r = array_idx(&recipients, 0);
 	}
 	
-	p++;
+	*uri_p = p;
+	return TRUE;
+}
+
+struct _header_field {
+	const char *name;
+	const char *body;
+};
+
+static bool _uri_parse_headers
+(const char **uri_p, struct _header_field *const *headers_r, 
+	const char **error_r)
+{
+	ARRAY_DEFINE(headers, struct _header_field);
+	string_t *field = t_str_new(128);
+	const char *p = *uri_p;
+	
+	if ( headers_r != NULL )
+		t_array_init(&headers, NTFY_MAILTO_MAX_RECIPIENTS);
+	
+	while ( *p != '\0' ) {
+		struct _header_field *hdrf;
+		
+		/* Parse field name */
+		while ( *p != '\0' && *p != '=' ) {
+			char ch = *p;
+			p++;
+			
+			if ( ch == '%' ) {
+				/* Encoded, parse 2-digit hex value */
+				if ( !_parse_hex_value(&p, &ch) ) {
+					*error_r = "invalid % encoding";
+					return FALSE;
+				}
+			}
+			str_append_c(field, ch);
+		}
+		if ( *p != '\0' ) p++;
+
+		if ( headers_r != NULL ) {
+			hdrf = array_append_space(&headers);
+			hdrf->name = t_strdup(str_c(field));
+		}
+		
+		str_truncate(field, 0);
+		
+		/* Parse field body */		
+		while ( *p != '\0' && *p != '&' ) {
+			char ch = *p;
+			p++;
+			
+			if ( ch == '%' ) {
+				/* Encoded, parse 2-digit hex value */
+				if ( !_parse_hex_value(&p, &ch) ) {
+					*error_r = "invalid % encoding";
+					return FALSE;
+				}
+			}
+			str_append_c(field, ch);
+		}
+		if ( *p != '\0' ) p++;
+		
+		if ( headers_r != NULL ) {
+			hdrf->body = t_strdup(str_c(field));
+			str_truncate(field, 0);
+		}
+	}	
+	
+	/* Skip '&' */
+	if ( *p != '\0' ) p++;
+
 	*uri_p = p;
 	return TRUE;
 }
 
 static bool ntfy_mailto_parse_uri
-(const char *uri_body, const char ***recipients_r, const char ***headers_r,
-	const char **error_r)
+(const char *uri_body, const char *const **recipients_r, 
+	struct _header_field *const *headers_r, const char **error_r)
 {
-	string_t *to = t_str_new(128);
-	string_t *hfield = t_str_new(128);
-
 	const char *p = uri_body;
 	
 	/* 
@@ -130,26 +253,15 @@ static bool ntfy_mailto_parse_uri
 	/* First extract to-part by searching for '?' and decoding % items
 	 */
 
-	if ( !uri_extract_part(&p, '?', to, error_r) )
+	if ( !_uri_parse_recipients(&p, recipients_r, error_r) )
 		return FALSE;	
 
-	/* Parse to part */
-	
-	// ....
-	
 	/* Extract hfield items */	
 	
 	while ( *p != '\0' ) {		
 		/* Extract hfield item by searching for '&' and decoding '%' items */
-		if ( !uri_extract_part(&p, '&', hfield, error_r) )
+		if ( !_uri_parse_headers(&p, headers_r, error_r) )
 			return FALSE;		
-			
-		/* Add header to list */
-	
-		// ....
-		
-		/* Reset for next header */
-		str_truncate(hfield, 0);
 	}
 	
 	return TRUE;
