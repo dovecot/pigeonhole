@@ -28,7 +28,6 @@ Next (in order of descending priority/precedence):
   common implementation. 
 * Implement executing an arbitrary number of scripts sequentially, acting on the 
   same set of result actions (multiscript).
-* Warn about the use of syntactically invalid header names. 
 * Implement dropping errors in the user's mailbox as a mail message.
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).

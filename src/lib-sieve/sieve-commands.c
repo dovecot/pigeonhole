@@ -1,11 +1,17 @@
 /* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
  */
 
+#include "lib.h"
+#include "str.h"
+#include "str-sanitize.h"
+
+#include "rfc2822.h"
+
+#include "sieve-common.h"
 #include "sieve-ast.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-binary.h"
-
 #include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-interpreter.h"
@@ -266,4 +272,35 @@ bool sieve_command_block_exits_unconditionally
 	(struct sieve_command_context *cmd)
 {
 	return ( cmd->block_exit_command != NULL );
+}
+
+/*
+ * Command utility functions
+ */
+
+/* NOTE: this may be moved */
+
+static int _verify_header_name_item
+(void *context, struct sieve_ast_argument *header)
+{
+	struct sieve_validator *valdtr = (struct sieve_validator *) context;
+	string_t *name = sieve_ast_argument_str(header);
+
+	if ( sieve_argument_is_string_literal(header) &&
+		!rfc2822_header_field_name_verify(str_c(name), str_len(name)) ) {
+		sieve_argument_validate_warning
+			(valdtr, header, "specified header field name '%s' is invalid",
+				str_sanitize(str_c(name), 80));
+
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+bool sieve_command_verify_headers_argument
+(struct sieve_validator *valdtr, struct sieve_ast_argument *headers)
+{	
+	return ( sieve_ast_stringlist_map
+		(&headers, (void *) valdtr, _verify_header_name_item) >= 0 );
 }

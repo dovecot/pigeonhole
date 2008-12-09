@@ -196,4 +196,11 @@ extern const struct sieve_command tst_size;
 extern const struct sieve_command *sieve_core_tests[];
 extern const unsigned int sieve_core_tests_count;
 
+/*
+ * Command utility functions
+ */
+
+bool sieve_command_verify_headers_argument
+(struct sieve_validator *valdtr, struct sieve_ast_argument *headers);
+
 #endif /* __SIEVE_COMMANDS_H */

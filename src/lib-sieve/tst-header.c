@@ -21,9 +21,9 @@
  */
 
 static bool tst_header_registered
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+	(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg);
 static bool tst_header_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command_context *tst);
 static bool tst_header_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
@@ -62,11 +62,11 @@ const struct sieve_operation tst_header_operation = {
  */
 
 static bool tst_header_registered
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+	(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(validator, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
-	sieve_match_types_link_tags(validator, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
+	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
+	sieve_match_types_link_tags(valdtr, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
 
 	return TRUE;
 }
@@ -74,33 +74,36 @@ static bool tst_header_registered
 /* 
  * Validation 
  */
-
+ 
 static bool tst_header_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst) 
+	(struct sieve_validator *valdtr, struct sieve_command_context *tst) 
 { 		
 	struct sieve_ast_argument *arg = tst->first_positional;
 	
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
-	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+		return FALSE;
+
+	if ( !sieve_command_verify_headers_argument(valdtr, arg) )
 		return FALSE;
 	
 	arg = sieve_ast_argument_next(arg);
 
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
-	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
 
 	/* Validate the key argument to a specified match type */
 	return sieve_match_type_validate
-		(validator, tst, arg, &is_match_type, &i_ascii_casemap_comparator);
+		(valdtr, tst, arg, &is_match_type, &i_ascii_casemap_comparator);
 }
 
 /*

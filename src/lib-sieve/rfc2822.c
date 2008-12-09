@@ -17,13 +17,15 @@ bool rfc2822_header_field_name_verify
 
 	/* field-name   =   1*ftext
 	 * ftext        =   %d33-57 /               ; Any character except
-   *                  %d59-126                ;  controls, SP, and
-   *                                          ;  ":".
+	 *                  %d59-126                ;  controls, SP, and
+	 *                                          ;  ":".
 	 */
 	 
 	while ( p < pend ) {
 		if ( *p < 33 || *p == ':' )
 			return FALSE;
+
+		p++;
 	}	
 	
 	return TRUE;

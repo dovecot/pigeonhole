@@ -27,9 +27,9 @@
  */
 
 static bool tst_address_registered
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+	(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg);
 static bool tst_address_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command_context *tst);
 static bool tst_address_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
@@ -68,12 +68,12 @@ const struct sieve_operation tst_address_operation = {
  */
 
 static bool tst_address_registered
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+	(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(validator, cmd_reg, SIEVE_AM_OPT_COMPARATOR );
-	sieve_address_parts_link_tags(validator, cmd_reg, SIEVE_AM_OPT_ADDRESS_PART);
-	sieve_match_types_link_tags(validator, cmd_reg, SIEVE_AM_OPT_MATCH_TYPE);
+	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_AM_OPT_COMPARATOR );
+	sieve_address_parts_link_tags(valdtr, cmd_reg, SIEVE_AM_OPT_ADDRESS_PART);
+	sieve_match_types_link_tags(valdtr, cmd_reg, SIEVE_AM_OPT_MATCH_TYPE);
 
 	return TRUE;
 }
@@ -129,25 +129,28 @@ static int _header_is_allowed
 }
 
 static bool tst_address_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst) 
+	(struct sieve_validator *valdtr, struct sieve_command_context *tst) 
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
 	struct sieve_ast_argument *header;
 		
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "header list", 1, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "header list", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
-	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
+
+	if ( !sieve_command_verify_headers_argument(valdtr, arg) )
+        return FALSE;
 
 	/* Check if supplied header names are allowed
 	 *   FIXME: verify dynamic header names at runtime 
 	 */
 	header = arg;
 	if ( !sieve_ast_stringlist_map(&header, NULL, _header_is_allowed) ) {		
-		sieve_argument_validate_error(validator, header, 
+		sieve_argument_validate_error(valdtr, header, 
 			"specified header '%s' is not allowed for the address test", 
 			str_sanitize(sieve_ast_strlist_strc(header), 64));
 		return FALSE;
@@ -158,16 +161,16 @@ static bool tst_address_validate
 	arg = sieve_ast_argument_next(arg);
 	
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 
-	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
 	
 	/* Validate the key argument to a specified match type */
 	return sieve_match_type_validate
-		(validator, tst, arg, &is_match_type, &i_ascii_casemap_comparator); 
+		(valdtr, tst, arg, &is_match_type, &i_ascii_casemap_comparator); 
 }
 
 /* 

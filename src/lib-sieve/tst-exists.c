@@ -17,7 +17,7 @@
  */
 
 static bool tst_exists_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command_context *tst);
 static bool tst_exists_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
@@ -56,16 +56,19 @@ const struct sieve_operation tst_exists_operation = {
  */
 
 static bool tst_exists_validate
-  (struct sieve_validator *validator, struct sieve_command_context *tst) 
+  (struct sieve_validator *valdtr, struct sieve_command_context *tst) 
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
 		
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
-	return sieve_validator_argument_activate(validator, tst, arg, FALSE);
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+		return FALSE;
+
+	return sieve_command_verify_headers_argument(valdtr, arg);
 }
 
 /* 
