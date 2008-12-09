@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_COMMANDS_H
 #define __SIEVE_COMMANDS_H
 

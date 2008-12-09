@@ -10,6 +10,7 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-imap
 
 tests = \
+	tst-truefalse.c \
 	tst-not.c \
 	tst-anyof.c \
 	tst-allof.c \
