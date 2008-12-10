@@ -319,7 +319,7 @@ static bool act_reject_send
 
 	/* Just to be sure */
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
-		sieve_result_warning(aenv, "reject action has no means to send mail.");
+		sieve_result_warning(aenv, "reject action has no means to send mail");
 		return TRUE;
 	}
 
@@ -422,7 +422,8 @@ static bool act_reject_commit
 	}
 		
 	if ( act_reject_send(aenv, ctx) ) {
-		sieve_result_log(aenv, "rejected");	
+		sieve_result_log(aenv, "rejected message from <%s>",
+			str_sanitize(msgdata->return_path, 80));	
 
 		*keep = FALSE;
 		return TRUE;
