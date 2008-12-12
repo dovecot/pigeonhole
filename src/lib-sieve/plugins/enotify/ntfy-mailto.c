@@ -49,7 +49,7 @@ const struct sieve_enotify_method mailto_notify = {
 /* FIXME: much of this implementation will be common to other URI schemes. This
  *        should be merged into a common implementation.
  */
-
+ 
 static inline int _decode_hex_digit(char digit)
 {
 	switch ( digit ) {
@@ -114,6 +114,8 @@ static bool _uri_parse_recipients
 				recipient = str_c(to);
 				
 				/* Verify recipient */
+			
+				// FIXME ....
 				
 				/* Add recipient to the list */
 				if ( recipients_r != NULL ) {
@@ -141,7 +143,7 @@ static bool _uri_parse_recipients
 	
 	/* Verify recipient */
 
-	// ....
+	// FIXME ....
 		
 	if ( recipients_r != NULL ) {
 		/* Add recipient to the list */
@@ -192,11 +194,19 @@ static bool _uri_parse_headers
 		}
 		if ( *p != '\0' ) p++;
 
+		/* Verify field name */
+		if ( !rfc2822_header_field_name_verify(str_c(field), str_len(field)) ) {
+			*error_r = "invalid header field name";
+			return FALSE;
+		}
+
+		/* Add new header field to array and assign its name */
 		if ( headers_r != NULL ) {
 			hdrf = array_append_space(&headers);
 			hdrf->name = t_strdup(str_c(field));
 		}
 		
+		/* Reset for body */
 		str_truncate(field, 0);
 		
 		/* Parse field body */		
@@ -214,6 +224,12 @@ static bool _uri_parse_headers
 			str_append_c(field, ch);
 		}
 		if ( *p != '\0' ) p++;
+		
+		/* Verify field body */
+		
+		// FIXME ....
+		
+		/* Assign field body */
 		
 		if ( headers_r != NULL ) {
 			hdrf->body = t_strdup(str_c(field));

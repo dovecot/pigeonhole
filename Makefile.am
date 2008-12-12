@@ -24,6 +24,7 @@ if BUILD_ENOTIFY
 ENOTIFY_TESTS = \
 	tests/extensions/enotify/basic.svtest \
 	tests/extensions/enotify/encodeurl.svtest \
+	tests/extensions/enotify/errors.svtest \
 	tests/extensions/enotify/execute.svtest
 endif
 
