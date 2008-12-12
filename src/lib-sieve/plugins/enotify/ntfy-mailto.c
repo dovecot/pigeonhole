@@ -50,6 +50,18 @@ const struct sieve_enotify_method mailto_notify = {
  *        should be merged into a common implementation.
  */
  
+/* Types */
+
+struct _header_field {
+	const char *name;
+	const char *body;
+};
+
+ARRAY_DEFINE_TYPE(recipients, const char *);
+ARRAY_DEFINE_TYPE(headers, struct _header_field);
+
+/* Parsing */ 
+ 
 static inline int _decode_hex_digit(char digit)
 {
 	switch ( digit ) {
@@ -86,16 +98,12 @@ static bool _parse_hex_value(const char **in, char *out)
 }
 
 static bool _uri_parse_recipients
-(const char **uri_p, const char *const **recipients_r, const char **error_r)
+(const char **uri_p, ARRAY_TYPE(recipients) *recipients_r, const char **error_r)
 {
-	ARRAY_DEFINE(recipients, const char *);
 	string_t *to = t_str_new(128);
 	const char *recipient;
 	const char *p = *uri_p;
-	
-	if ( recipients_r != NULL )
-		t_array_init(&recipients, NTFY_MAILTO_MAX_RECIPIENTS);
-	
+		
 	while ( *p != '\0' && *p != '?' ) {
 		if ( *p == '%' ) {
 			/* % encoded character */
@@ -120,7 +128,7 @@ static bool _uri_parse_recipients
 				/* Add recipient to the list */
 				if ( recipients_r != NULL ) {
 					recipient = t_strdup(recipient);
-					array_append(&recipients, &recipient, 1);
+					array_append(recipients_r, &recipient, 1);
 				}
 			
 				/* Reset for next recipient */
@@ -148,33 +156,19 @@ static bool _uri_parse_recipients
 	if ( recipients_r != NULL ) {
 		/* Add recipient to the list */
 		recipient = t_strdup(recipient);
-		array_append(&recipients, &recipient, 1);
-	
-		/* Return recipients */
-		(void)array_append_space(&recipients);
-		*recipients_r = array_idx(&recipients, 0);
+		array_append(recipients_r, &recipient, 1);
 	}
 	
 	*uri_p = p;
 	return TRUE;
 }
 
-struct _header_field {
-	const char *name;
-	const char *body;
-};
-
 static bool _uri_parse_headers
-(const char **uri_p, struct _header_field *const *headers_r, 
-	const char **error_r)
+(const char **uri_p, ARRAY_TYPE(headers) *headers_r, const char **error_r)
 {
-	ARRAY_DEFINE(headers, struct _header_field);
 	string_t *field = t_str_new(128);
 	const char *p = *uri_p;
-	
-	if ( headers_r != NULL )
-		t_array_init(&headers, NTFY_MAILTO_MAX_RECIPIENTS);
-	
+		
 	while ( *p != '\0' ) {
 		struct _header_field *hdrf;
 		
@@ -202,7 +196,7 @@ static bool _uri_parse_headers
 
 		/* Add new header field to array and assign its name */
 		if ( headers_r != NULL ) {
-			hdrf = array_append_space(&headers);
+			hdrf = array_append_space(headers_r);
 			hdrf->name = t_strdup(str_c(field));
 		}
 		
@@ -245,8 +239,8 @@ static bool _uri_parse_headers
 }
 
 static bool ntfy_mailto_parse_uri
-(const char *uri_body, const char *const **recipients_r, 
-	struct _header_field *const *headers_r, const char **error_r)
+(const char *uri_body, ARRAY_TYPE(recipients) *recipients_r, 
+	ARRAY_TYPE(headers) *headers_r, const char **error_r)
 {
 	const char *p = uri_body;
 	
