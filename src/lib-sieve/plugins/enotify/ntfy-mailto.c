@@ -14,6 +14,7 @@
 #include "sieve-ast.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
+#include "sieve-interpreter.h"
 #include "sieve-actions.h"
 #include "sieve-result.h"
 
@@ -24,6 +25,19 @@
  */
  
 #define NTFY_MAILTO_MAX_RECIPIENTS 4
+#define NTFY_MAILTO_MAX_HEADERS 16
+
+/* 
+ * Types 
+ */
+
+struct ntfy_mailto_header_field {
+	const char *name;
+	const char *body;
+};
+
+ARRAY_DEFINE_TYPE(recipients, const char *);
+ARRAY_DEFINE_TYPE(headers, struct ntfy_mailto_header_field);
 
 /* 
  * Mailto notification method
@@ -32,6 +46,10 @@
 static bool ntfy_mailto_validate_uri
 	(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
 		const char *uri_body);
+static bool ntfy_mailto_runtime_check_operands
+	(const struct sieve_runtime_env *renv, unsigned int source_line, 
+		const char *uri, const char *uri_body, const char *message, 
+		const char *from, void **context);
 static bool ntfy_mailto_execute
 	(const struct sieve_action_exec_env *aenv, 
 		const struct sieve_enotify_context *nctx);
@@ -39,7 +57,17 @@ static bool ntfy_mailto_execute
 const struct sieve_enotify_method mailto_notify = {
 	"mailto",
 	ntfy_mailto_validate_uri,
+	ntfy_mailto_runtime_check_operands,
 	ntfy_mailto_execute
+};
+
+/*
+ * Method context data
+ */
+ 
+struct ntfy_mailto_context {
+	ARRAY_TYPE(recipients) recipients;
+	ARRAY_TYPE(headers) headers;
 };
 
 /*
@@ -49,19 +77,7 @@ const struct sieve_enotify_method mailto_notify = {
 /* FIXME: much of this implementation will be common to other URI schemes. This
  *        should be merged into a common implementation.
  */
- 
-/* Types */
-
-struct _header_field {
-	const char *name;
-	const char *body;
-};
-
-ARRAY_DEFINE_TYPE(recipients, const char *);
-ARRAY_DEFINE_TYPE(headers, struct _header_field);
-
-/* Parsing */ 
- 
+  
 static inline int _decode_hex_digit(char digit)
 {
 	switch ( digit ) {
@@ -73,7 +89,7 @@ static inline int _decode_hex_digit(char digit)
 		return (int) digit - 'a' + 0x0a;
 		
 	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-		return (int) digit - 'a' + 0x0A;
+		return (int) digit - 'A' + 0x0A;
 	}
 	
 	return -1;
@@ -97,12 +113,23 @@ static bool _parse_hex_value(const char **in, char *out)
 	return (*out != '\0');	
 }
 
+static inline pool_t array_get_pool_i(struct array *array)
+{
+	return buffer_get_pool(array->buffer);
+}
+#define array_get_pool(array) \
+	array_get_pool_i(&(array)->arr)
+
 static bool _uri_parse_recipients
 (const char **uri_p, ARRAY_TYPE(recipients) *recipients_r, const char **error_r)
 {
 	string_t *to = t_str_new(128);
 	const char *recipient;
 	const char *p = *uri_p;
+	pool_t pool = NULL;
+	
+	if ( recipients_r != NULL )
+		pool = array_get_pool(recipients_r);
 		
 	while ( *p != '\0' && *p != '?' ) {
 		if ( *p == '%' ) {
@@ -127,7 +154,7 @@ static bool _uri_parse_recipients
 				
 				/* Add recipient to the list */
 				if ( recipients_r != NULL ) {
-					recipient = t_strdup(recipient);
+					recipient = p_strdup(pool, recipient);
 					array_append(recipients_r, &recipient, 1);
 				}
 			
@@ -155,7 +182,7 @@ static bool _uri_parse_recipients
 		
 	if ( recipients_r != NULL ) {
 		/* Add recipient to the list */
-		recipient = t_strdup(recipient);
+		recipient = p_strdup(pool, recipient);
 		array_append(recipients_r, &recipient, 1);
 	}
 	
@@ -168,9 +195,13 @@ static bool _uri_parse_headers
 {
 	string_t *field = t_str_new(128);
 	const char *p = *uri_p;
+	pool_t pool = NULL;
+	
+	if ( headers_r != NULL )
+		pool = array_get_pool(headers_r);
 		
 	while ( *p != '\0' ) {
-		struct _header_field *hdrf;
+		struct ntfy_mailto_header_field *hdrf = NULL;
 		
 		/* Parse field name */
 		while ( *p != '\0' && *p != '=' ) {
@@ -180,6 +211,7 @@ static bool _uri_parse_headers
 			if ( ch == '%' ) {
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
+					printf("F: %s\n", p);
 					*error_r = "invalid % encoding";
 					return FALSE;
 				}
@@ -197,7 +229,7 @@ static bool _uri_parse_headers
 		/* Add new header field to array and assign its name */
 		if ( headers_r != NULL ) {
 			hdrf = array_append_space(headers_r);
-			hdrf->name = t_strdup(str_c(field));
+			hdrf->name = p_strdup(pool, str_c(field));
 		}
 		
 		/* Reset for body */
@@ -211,6 +243,7 @@ static bool _uri_parse_headers
 			if ( ch == '%' ) {
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
+					printf("F: %s\n", p);
 					*error_r = "invalid % encoding";
 					return FALSE;
 				}
@@ -226,9 +259,11 @@ static bool _uri_parse_headers
 		/* Assign field body */
 		
 		if ( headers_r != NULL ) {
-			hdrf->body = t_strdup(str_c(field));
-			str_truncate(field, 0);
+			hdrf->body = p_strdup(pool, str_c(field));
 		}
+		
+		/* Reset for next name */
+		str_truncate(field, 0);
 	}	
 	
 	/* Skip '&' */
@@ -298,7 +333,40 @@ static bool ntfy_mailto_validate_uri
 }
 
 /*
- * Execution
+ * Runtime
+ */
+ 
+static bool ntfy_mailto_runtime_check_operands
+(const struct sieve_runtime_env *renv, unsigned int source_line, 
+  const char *mailto_uri, const char *uri_body, 
+  const char *message ATTR_UNUSED, const char *from ATTR_UNUSED, 
+  void **context)
+{
+	pool_t pool;
+	struct ntfy_mailto_context *nctx;
+	const char *error;
+	
+	/* Need to create context before validation to have arrays present */
+	pool = sieve_result_pool(renv->result);
+	nctx = p_new(pool, struct ntfy_mailto_context, 1);
+	p_array_init(&nctx->recipients, pool, NTFY_MAILTO_MAX_RECIPIENTS);
+	p_array_init(&nctx->headers, pool, NTFY_MAILTO_MAX_HEADERS);
+
+	if ( !ntfy_mailto_parse_uri
+		(uri_body, &nctx->recipients, &nctx->headers, &error) ) {
+		sieve_runtime_error
+			(renv, sieve_error_script_location(renv->script, source_line),
+				"invalid mailto URI '%s': %s", str_sanitize(mailto_uri, 80), error);
+		return FALSE;
+	}
+	
+	*context = (void *) nctx;
+
+	return TRUE;	
+}
+
+/*
+ * Action execution
  */
 
 static bool _contains_8bit(const char *msg)

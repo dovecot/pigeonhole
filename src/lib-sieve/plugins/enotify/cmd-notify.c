@@ -160,17 +160,6 @@ const struct sieve_action act_notify = {
 	NULL
 };
 
-/* Action context information */
-		
-struct act_notify_context {
-	const char *method;
-
-	sieve_number_t importance;
-	const char *message;
-	const char *from;
-	const char *const *options;
-};
-
 /* 
  * Tag validation 
  */
@@ -388,12 +377,14 @@ static int cmd_notify_operation_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	struct sieve_side_effects_list *slist = NULL;
-	struct act_notify_context *act;
+	struct sieve_enotify_context *act;
+	void *method_context;
 	pool_t pool;
 	int opt_code = 1;
 	sieve_number_t importance = 1;
 	struct sieve_coded_stringlist *options = NULL;
-	string_t *method, *message = NULL, *from = NULL; 
+	const struct sieve_enotify_method *method;
+	string_t *method_uri, *message = NULL, *from = NULL; 
 	unsigned int source_line;
 
 	/*
@@ -456,7 +447,7 @@ static int cmd_notify_operation_execute
 	}
 	
 	/* Reason operand */
-	if ( !sieve_opr_string_read(renv, address, &method) ) {
+	if ( !sieve_opr_string_read(renv, address, &method_uri) ) {
 		sieve_runtime_trace_error(renv, "invalid method operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
@@ -467,18 +458,27 @@ static int cmd_notify_operation_execute
 
 	sieve_runtime_trace(renv, "NOTIFY action");	
 
+	/* Check operands */
+
+	if ( (method=ext_enotify_runtime_check_operands
+		(renv, source_line, str_c(method_uri), 
+			message == NULL ? NULL : str_c(message), 
+			from == NULL ? NULL : str_c(from), 
+			&method_context)) == NULL ){
+		return SIEVE_EXEC_FAILURE;
+  }
+  
 	/* Add notify action to the result */
 
 	pool = sieve_result_pool(renv->result);
-	act = p_new(pool, struct act_notify_context, 1);
-	act->method = p_strdup(pool, str_c(method));
+	act = p_new(pool, struct sieve_enotify_context, 1);
+	act->method = method;
+	act->method_context = method_context;
 	act->importance = importance;
 	if ( message != NULL )
 		act->message = p_strdup(pool, str_c(message));
 	if ( from != NULL )
 		act->from = p_strdup(pool, str_c(from));
-	if ( options != NULL )
-		sieve_coded_stringlist_read_all(options, pool, &(act->options));
 		
 	return ( sieve_result_add_action
 		(renv, &act_notify, slist, source_line, (void *) act, 0) >= 0 );
@@ -507,7 +507,7 @@ static void act_notify_print
 	const struct sieve_result_print_env *rpenv, void *context, 
 	bool *keep ATTR_UNUSED)	
 {
-	struct act_notify_context *ctx = (struct act_notify_context *) context;
+	struct sieve_enotify_context *ctx = (struct sieve_enotify_context  *) context;
 	
 	sieve_result_action_printf( rpenv, "send notification with method %s:", 
 		ctx->method);
