@@ -464,24 +464,25 @@ static int cmd_notify_operation_execute
 		(renv, source_line, str_c(method_uri), 
 			message == NULL ? NULL : str_c(message), 
 			from == NULL ? NULL : str_c(from), 
-			&method_context)) == NULL ){
-		return SIEVE_EXEC_FAILURE;
-  }
-  
-	/* Add notify action to the result */
+			&method_context)) != NULL ) {
+		/* Add notify action to the result */
 
-	pool = sieve_result_pool(renv->result);
-	act = p_new(pool, struct sieve_enotify_context, 1);
-	act->method = method;
-	act->method_context = method_context;
-	act->importance = importance;
-	if ( message != NULL )
-		act->message = p_strdup(pool, str_c(message));
-	if ( from != NULL )
-		act->from = p_strdup(pool, str_c(from));
+		pool = sieve_result_pool(renv->result);
+		act = p_new(pool, struct sieve_enotify_context, 1);
+		act->method = method;
+		act->method_context = method_context;
+		act->importance = importance;
+		if ( message != NULL )
+			act->message = p_strdup(pool, str_c(message));
+		if ( from != NULL )
+			act->from = p_strdup(pool, str_c(from));
 		
-	return ( sieve_result_add_action
-		(renv, &act_notify, slist, source_line, (void *) act, 0) >= 0 );
+		return ( sieve_result_add_action
+			(renv, &act_notify, slist, source_line, (void *) act, 0) >= 0 );
+	}
+	
+	/* Erroneous notify action is no reason to kill the script */
+	return SIEVE_EXEC_OK;
 }
 
 /*
@@ -524,7 +525,13 @@ static bool act_notify_commit
 	const struct sieve_action_exec_env *aenv, void *tr_context, 
 	bool *keep ATTR_UNUSED)
 {
-	return FALSE;
+	const struct sieve_enotify_context *nctx = 
+		(const struct sieve_enotify_context *) tr_context;
+
+	if ( nctx->method->action_execute != NULL )
+		return nctx->method->action_execute(aenv, nctx);
+			
+	return TRUE;
 }
 
 

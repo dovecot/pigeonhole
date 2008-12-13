@@ -425,64 +425,76 @@ static bool ntfy_mailto_action_execute
 { 
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
+	struct ntfy_mailto_context *mtctx = 
+		(struct ntfy_mailto_context *) nctx->method_context;	
+	const char *const *recipients;
 	void *smtp_handle;
+	unsigned int count, i;
 	FILE *f;
 	const char *outmsgid;
-	const char *recipient = "BOGUS";
-	
+
 	/* Just to be sure */
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
 		sieve_result_warning(aenv, 
 			"notify mailto method has no means to send mail.");
 		return FALSE;
 	}
+
+	recipients = array_get(&mtctx->recipients, &count);
+	for ( i = 0; i < count; i++ ) {
+		smtp_handle = senv->smtp_open(recipients[i], NULL, &f);
+		outmsgid = sieve_get_new_message_id(senv);
 	
-	smtp_handle = senv->smtp_open(msgdata->return_path, NULL, &f);
-	outmsgid = sieve_get_new_message_id(senv);
+		fprintf(f, "Message-ID: %s\r\n", outmsgid);
+		fprintf(f, "Date: %s\r\n", message_date_create(ioloop_time));
+		fprintf(f, "X-Sieve: %s\r\n", SIEVE_IMPLEMENTATION);
 	
-	fprintf(f, "Message-ID: %s\r\n", outmsgid);
-	fprintf(f, "Date: %s\r\n", message_date_create(ioloop_time));
-	fprintf(f, "X-Sieve: %s\r\n", SIEVE_IMPLEMENTATION);
+		switch ( nctx->importance ) {
+		case 1:
+			fprintf(f, "X-Priority: 1 (Highest)\r\n");
+			fprintf(f, "Importance: High\r\n");
+			break;
+		case 3:
+		  fprintf(f, "X-Priority: 5 (Lowest)\r\n");
+		  fprintf(f, "Importance: Low\r\n");
+		  break;
+		case 2:
+		default:
+			fprintf(f, "X-Priority: 3 (Normal)\r\n");
+			fprintf(f, "Importance: Normal\r\n");
+			break;
+		}
+		 
+		fprintf(f, "From: Postmaster <%s>\r\n", senv->postmaster_address);
+		fprintf(f, "To: <%s>\r\n", recipients[i]);
+		fprintf(f, "Subject: [SIEVE] New mail notification\r\n");
+		fprintf(f, "Auto-Submitted: auto-generated (notify)\r\n");
+		fprintf(f, "Precedence: bulk\r\n");
 	
-	switch ( nctx->importance ) {
-	case 1:
-		fprintf(f, "X-Priority: 1 (Highest)\r\n");
-		fprintf(f, "Importance: High\r\n");
-		break;
-	case 3:
-    fprintf(f, "X-Priority: 5 (Lowest)\r\n");
-    fprintf(f, "Importance: Low\r\n");
-    break;
-	case 2:
-	default:
-		fprintf(f, "X-Priority: 3 (Normal)\r\n");
-		fprintf(f, "Importance: Normal\r\n");
-		break;
-	}
-	 
-	fprintf(f, "From: Postmaster <%s>\r\n", senv->postmaster_address);
-	fprintf(f, "To: <%s>\r\n", recipient);
-	fprintf(f, "Subject: [SIEVE] New mail notification\r\n");
-	fprintf(f, "Auto-Submitted: auto-generated (notify)\r\n");
-	fprintf(f, "Precedence: bulk\r\n");
+		if ( nctx->message != NULL ) {
+			if (_contains_8bit(nctx->message)) {
+					fprintf(f, "MIME-Version: 1.0\r\n");
+					fprintf(f, "Content-Type: text/plain; charset=UTF-8\r\n");
+					fprintf(f, "Content-Transfer-Encoding: 8bit\r\n");
+			}
+			fprintf(f, "\r\n");
+			fprintf(f, "%s\r\n", nctx->message);
+		} else {
+			fprintf(f, "\r\n");
+			fprintf(f, "Notification of new message.\r\n");
+		}
 	
-	if (_contains_8bit(nctx->message)) {
-			fprintf(f, "MIME-Version: 1.0\r\n");
-	    fprintf(f, "Content-Type: text/plain; charset=UTF-8\r\n");
-	    fprintf(f, "Content-Transfer-Encoding: 8bit\r\n");
-	}
-	fprintf(f, "\r\n");
-	fprintf(f, "%s\r\n", nctx->message);
-	
-	if ( senv->smtp_close(smtp_handle) ) {
-		sieve_result_log(aenv, 
-			"sent mail notification to <%s>", str_sanitize(recipient, 80));
-	} else {
-		sieve_result_error(aenv,
-			"failed to send mail notification to <%s> "
-			"(refer to system log for more information)", 
-			str_sanitize(recipient, 80));
+		if ( senv->smtp_close(smtp_handle) ) {
+			sieve_result_log(aenv, 
+				"sent mail notification to <%s>", str_sanitize(recipients[i], 80));
+		} else {
+			sieve_result_error(aenv,
+				"failed to send mail notification to <%s> "
+				"(refer to system log for more information)", 
+				str_sanitize(recipients[i], 80));
+		}
 	}
 
 	return TRUE;
 }
+
