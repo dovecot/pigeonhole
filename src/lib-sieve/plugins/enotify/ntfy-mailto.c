@@ -50,7 +50,10 @@ static bool ntfy_mailto_runtime_check_operands
 	(const struct sieve_runtime_env *renv, unsigned int source_line, 
 		const char *uri, const char *uri_body, const char *message, 
 		const char *from, void **context);
-static bool ntfy_mailto_execute
+static void ntfy_mailto_action_print
+	(const struct sieve_result_print_env *rpenv, 
+		const struct sieve_enotify_context *nctx);	
+static bool ntfy_mailto_action_execute
 	(const struct sieve_action_exec_env *aenv, 
 		const struct sieve_enotify_context *nctx);
 
@@ -58,7 +61,8 @@ const struct sieve_enotify_method mailto_notify = {
 	"mailto",
 	ntfy_mailto_validate_uri,
 	ntfy_mailto_runtime_check_operands,
-	ntfy_mailto_execute
+	ntfy_mailto_action_print,
+	ntfy_mailto_action_execute
 };
 
 /*
@@ -366,6 +370,40 @@ static bool ntfy_mailto_runtime_check_operands
 }
 
 /*
+ * Action printing
+ */
+ 
+static void ntfy_mailto_action_print
+(const struct sieve_result_print_env *rpenv, 
+	const struct sieve_enotify_context *nctx)
+{
+	unsigned int count, i;
+	const char *const *recipients;
+	const struct ntfy_mailto_header_field *headers;
+	struct ntfy_mailto_context *mtctx = 
+		(struct ntfy_mailto_context *) nctx->method_context;
+	
+	sieve_result_printf(rpenv,   "    => importance   : %d\n", nctx->importance);
+	if ( nctx->message != NULL )
+		sieve_result_printf(rpenv, "    => message      : \n%s\n", nctx->message);
+	if ( nctx->from != NULL )
+		sieve_result_printf(rpenv, "    => from         : %s\n", nctx->from);
+
+	sieve_result_printf(rpenv,   "    => recipients   :\n" );
+	recipients = array_get(&mtctx->recipients, &count);
+	for ( i = 0; i < count; i++ ) {
+		sieve_result_printf(rpenv,   "       + %s\n", recipients[i]);
+	}
+	
+	sieve_result_printf(rpenv,   "    => headers      :\n" );
+	headers = array_get(&mtctx->headers, &count);
+	for ( i = 0; i < count; i++ ) {
+		sieve_result_printf(rpenv,   "       + %s: %s\n", 
+			headers[i].name, headers[i].body);
+	}
+}
+
+/*
  * Action execution
  */
 
@@ -381,7 +419,7 @@ static bool _contains_8bit(const char *msg)
 	return FALSE;
 }
  
-static bool ntfy_mailto_execute
+static bool ntfy_mailto_action_execute
 (const struct sieve_action_exec_env *aenv, 
 	const struct sieve_enotify_context *nctx)
 { 

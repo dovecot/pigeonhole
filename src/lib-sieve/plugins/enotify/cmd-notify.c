@@ -507,17 +507,14 @@ static void act_notify_print
 	const struct sieve_result_print_env *rpenv, void *context, 
 	bool *keep ATTR_UNUSED)	
 {
-	struct sieve_enotify_context *ctx = (struct sieve_enotify_context  *) context;
-	
-	sieve_result_action_printf( rpenv, "send notification with method %s:", 
-		ctx->method);
-	sieve_result_printf(rpenv,   "    => importance   : %d\n", ctx->importance);
-	if ( ctx->message != NULL )
-		sieve_result_printf(rpenv, "    => message: \n%s\n", ctx->message);
-	if ( ctx->from != NULL )
-		sieve_result_printf(rpenv, "    => from   : %s\n", ctx->from);
+	const struct sieve_enotify_context *nctx = 
+		(const struct sieve_enotify_context *) context;
+
+	sieve_result_action_printf
+		( rpenv, "send notification with method '%s:':", nctx->method->identifier);
 		
-	/* FIXME: list options */
+	if ( nctx->method->action_print != NULL )
+		nctx->method->action_print(rpenv, nctx);
 }
 
 /* Result execution */

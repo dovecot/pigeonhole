@@ -32,8 +32,13 @@ struct sieve_enotify_method {
 			const char *uri, const char *uri_body, const char *message, 
 			const char *from, void **context);
 			
+	/* Action print */
+	void (*action_print)
+		(const struct sieve_result_print_env *rpenv, 
+			const struct sieve_enotify_context *nctx);	
+			
 	/* Action execution */
-	bool (*execute)
+	bool (*action_execute)
 		(const struct sieve_action_exec_env *aenv, 
 			const struct sieve_enotify_context *nctx);
 };
