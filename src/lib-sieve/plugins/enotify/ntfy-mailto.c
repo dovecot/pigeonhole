@@ -423,7 +423,6 @@ static bool ntfy_mailto_action_execute
 (const struct sieve_action_exec_env *aenv, 
 	const struct sieve_enotify_context *nctx)
 { 
-	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct ntfy_mailto_context *mtctx = 
 		(struct ntfy_mailto_context *) nctx->method_context;	

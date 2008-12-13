@@ -78,6 +78,7 @@ test_cases = \
 	tests/extensions/subaddress/rfc.svtest \
 	tests/extensions/vacation/errors.svtest \
 	tests/extensions/vacation/execute.svtest \
+	tests/extensions/vacation/references.svtest \
 	$(ENOTIFY_TESTS)
 
 if HAVE_DOVECOT_LIBS

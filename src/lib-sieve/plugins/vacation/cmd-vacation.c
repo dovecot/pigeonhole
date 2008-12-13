@@ -2,12 +2,16 @@
  */
 
 #include "lib.h"
+#include "str.h"
+#include "strfuncs.h"
 #include "md5.h"
 #include "hostpid.h"
 #include "str-sanitize.h"
 #include "message-address.h"
 #include "message-date.h"
 #include "ioloop.h"
+
+#include "rfc2822.h"
 
 #include "sieve-common.h"
 #include "sieve-code.h"
@@ -796,6 +800,9 @@ static bool act_vacation_send
 	void *smtp_handle;
 	FILE *f;
  	const char *outmsgid;
+ 	const char *const *headers;
+	string_t *out = t_str_new(256);
+	int references;
 
 	/* Check smpt functions just to be sure */
 
@@ -820,12 +827,25 @@ static bool act_vacation_send
 		
 	fprintf(f, "To: <%s>\r\n", msgdata->return_path);
 	fprintf(f, "Subject: %s\r\n", str_sanitize(ctx->subject, 80));
-	
+
+	references = mail_get_headers_utf8
+		(aenv->msgdata->mail, "references", &headers);
+			
 	if ( msgdata->id != NULL ) {
 		fprintf(f, "In-Reply-To: %s\r\n", msgdata->id);
-		
-		/* FIXME: Update References header */
+	
+		if ( references >= 0 )
+			rfc2822_header_add_folded
+				(out, "References", t_strconcat(headers[0], " ", msgdata->id, NULL));
+		else
+			rfc2822_header_add_folded(out, "References", msgdata->id);
+			
+		fwrite(str_c(out), str_len(out), 1, f);
+	} else if ( references > 0 ) {
+		rfc2822_header_add_folded(out, "References", headers[0]);
+		fwrite(str_c(out), str_len(out), 1, f);
 	}
+			
 	fprintf(f, "Auto-Submitted: auto-replied (vacation)\r\n");
 
 	fprintf(f, "X-Sieve: %s\r\n", SIEVE_IMPLEMENTATION);
