@@ -423,6 +423,7 @@ static bool ntfy_mailto_action_execute
 (const struct sieve_action_exec_env *aenv, 
 	const struct sieve_enotify_context *nctx)
 { 
+	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct ntfy_mailto_context *mtctx = 
 		(struct ntfy_mailto_context *) nctx->method_context;	
@@ -431,6 +432,7 @@ static bool ntfy_mailto_action_execute
 	unsigned int count, i;
 	FILE *f;
 	const char *outmsgid;
+	const char *from = NULL, *subject = NULL, *body = NULL;
 
 	/* Just to be sure */
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
@@ -438,26 +440,51 @@ static bool ntfy_mailto_action_execute
 			"notify mailto method has no means to send mail.");
 		return FALSE;
 	}
+	
+	/* Determine from address */
+	if ( msgdata->return_path != NULL ) {
+		if ( nctx->from == NULL )
+			from = senv->postmaster_address;
+		else
+			/* FIXME: validate */
+			from = nctx->from;
+	}
+	
+	/* Determine subject */
+	if ( nctx->message != NULL ) {
+		/* FIXME: handle UTF-8 */
+		subject = str_sanitize(nctx->message, 256);
+	} else {
+		const char *const *hsubject;
+		
+		/* Fetch subject from original message */
+		if ( mail_get_headers_utf8
+			(aenv->msgdata->mail, "subject", &hsubject) >= 0 )
+			subject = t_strdup_printf("Notification: %s", hsubject[0]);
+		else
+			subject = "Notification: (no subject)";
+	}
 
+	/* Send message to all recipients */
 	recipients = array_get(&mtctx->recipients, &count);
 	for ( i = 0; i < count; i++ ) {
-		smtp_handle = senv->smtp_open(recipients[i], NULL, &f);
+		unsigned int h, hcount;
+		const struct ntfy_mailto_header_field *headers;
+		
+		smtp_handle = senv->smtp_open(recipients[i], from, &f);
 		outmsgid = sieve_get_new_message_id(senv);
 	
 		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
 		rfc2822_header_field_write(f, "Message-ID", outmsgid);
 		rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
-			 
-		rfc2822_header_field_printf
-			(f, "From", "Postmaster <%s>", senv->postmaster_address);
-		rfc2822_header_field_printf
-			(f, "To", "<%s>", recipients[i]);
-		rfc2822_header_field_write
-			(f, "Subject", "[SIEVE] New mail notification");
-
-		rfc2822_header_field_write(f, "Auto-Submitted", "auto-generated (notify)");
+		rfc2822_header_field_printf(f, "From", "<%s>", from);
+		rfc2822_header_field_printf(f, "To", "<%s>", recipients[i]);
+		rfc2822_header_field_write(f, "Subject", subject);
+			
+		rfc2822_header_field_write(f, "Auto-Submitted", "auto-notified");
 		rfc2822_header_field_write(f, "Precedence", "bulk");
 
+		/* Set importance */
 		switch ( nctx->importance ) {
 		case 1:
 			rfc2822_header_field_write(f, "X-Priority", "1 (Highest)");
@@ -473,8 +500,21 @@ static bool ntfy_mailto_action_execute
 			rfc2822_header_field_write(f, "Importance", "Normal");
 			break;
 		}
+		
+		/* Add custom headers */
+		
+		/* FIXME: ignore from and auto-submitted and recognize body, subject, to and
+		 * cc.
+		 */
+		headers = array_get(&mtctx->headers, &hcount);
+		for ( h = 0; h < hcount; h++ ) {
+			const char *name = rfc2822_header_field_name_sanitize(headers[h].name);
+		
+			rfc2822_header_field_write(f, name, headers[h].body);
+		}
 			
-		if ( nctx->message != NULL ) {
+		/* Generate message body */
+		if ( body != NULL ) {
 			if (_contains_8bit(nctx->message)) {
 				rfc2822_header_field_write(f, "MIME-Version", "1.0");
 				rfc2822_header_field_write
@@ -483,7 +523,7 @@ static bool ntfy_mailto_action_execute
 			}
 			
 			fprintf(f, "\r\n");
-			fprintf(f, "%s\r\n", nctx->message);
+			fprintf(f, "%s\r\n", body);
 			
 		} else {
 			fprintf(f, "\r\n");
