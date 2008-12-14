@@ -6,6 +6,7 @@
 
 #include "rfc2822.h"
 
+#include <stdio.h>
 #include <ctype.h>
 
 /* NOTE: much of the functionality implemented here should eventually appear
@@ -34,21 +35,58 @@ bool rfc2822_header_field_name_verify
 	return TRUE;
 }
 
-void rfc2822_header_add_folded
-(string_t *out, const char *name, const char *body)
+/*
+ *
+ */
+
+const char *rfc2822_header_field_name_sanitize(const char *name)
+{
+	char *result = t_strdup_noconst(name);
+	char *p;
+	
+	/* Make the whole name lower case ... */
+	result = str_lcase(result);
+
+	/* ... except for the first letter and those that follow '-' */
+	p = result;
+	*p = i_toupper(*p);
+	while ( *p != '\0' ) {
+		if ( *p == '-' ) {
+			p++;
+			
+			if ( *p != '\0' )
+				*p = i_toupper(*p);
+			
+			continue;
+		}
+		
+		p++;
+	}
+	
+	return result;
+}
+
+/*
+ * Message construction
+ */
+ 
+/* FIXME: This should be collected into a Dovecot API for composing internet
+ * mail messages. These functions now use FILE * output streams, but this should
+ * be changed to proper dovecot streams.
+ */
+
+void rfc2822_header_field_write
+(FILE *f, const char *name, const char *body)
 {
 	const char *sp = body, *bp = body, *wp;
-	unsigned int len = str_len(out); 
+	unsigned int len = strlen(name);
 	
-	/* Add properly formatted header field name first */
-	str_append_c(out, i_toupper(name[0]));
-	str_append(out, t_str_lcase(name+1));
-	
-	/* Add separating colon */
-	str_append(out, ": ");
-	
+	/* Write header field name first */
+	fwrite(name, len, 1, f);
+	fwrite(": ", 2, 1, f);
+		
 	/* Add folded field body */
-	len = str_len(out) - len;
+	len +=  2;
 	while ( *bp != '\0' ) {
 		while ( *bp != '\0' && (wp == NULL || len < 80) ) {
 			if ( *bp == ' ' || *bp == '\t' ) 
@@ -59,15 +97,28 @@ void rfc2822_header_add_folded
 		
 		if ( *bp == '\0' ) break;
 		
-		str_append_n(out, sp, wp-sp);
-		str_append(out, "\r\n"); 
+		fwrite(sp, wp-sp, 1, f);
+		fwrite("\r\n", 2, 1, f);
 
 		len = bp - wp;
 		sp = wp;		
 		wp = NULL;
 	}
 	
-	str_append_n(out, sp, bp-sp);
-	str_append(out, "\r\n"); 
+	fwrite(sp, bp-sp, 1, f);
+	fwrite("\r\n", 2, 1, f);
+}
+
+void rfc2822_header_field_printf
+(FILE *f, const char *name, const char *body_fmt, ...)
+{
+	string_t *body = t_str_new(256);
+	va_list args;
+
+	va_start(args, body_fmt);
+	str_vprintfa(body, body_fmt, args);
+	va_end(args);
+	
+	rfc2822_header_field_write(f, name, str_c(body));
 }
 
