@@ -444,40 +444,47 @@ static bool ntfy_mailto_action_execute
 		smtp_handle = senv->smtp_open(recipients[i], NULL, &f);
 		outmsgid = sieve_get_new_message_id(senv);
 	
-		fprintf(f, "Message-ID: %s\r\n", outmsgid);
-		fprintf(f, "Date: %s\r\n", message_date_create(ioloop_time));
-		fprintf(f, "X-Sieve: %s\r\n", SIEVE_IMPLEMENTATION);
-	
+		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
+		rfc2822_header_field_write(f, "Message-ID", outmsgid);
+		rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
+			 
+		rfc2822_header_field_printf
+			(f, "From", "Postmaster <%s>", senv->postmaster_address);
+		rfc2822_header_field_printf
+			(f, "To", "<%s>", recipients[i]);
+		rfc2822_header_field_write
+			(f, "Subject", "[SIEVE] New mail notification");
+
+		rfc2822_header_field_write(f, "Auto-Submitted", "auto-generated (notify)");
+		rfc2822_header_field_write(f, "Precedence", "bulk");
+
 		switch ( nctx->importance ) {
 		case 1:
-			fprintf(f, "X-Priority: 1 (Highest)\r\n");
-			fprintf(f, "Importance: High\r\n");
+			rfc2822_header_field_write(f, "X-Priority", "1 (Highest)");
+			rfc2822_header_field_write(f, "Importance", "High");
 			break;
 		case 3:
-		  fprintf(f, "X-Priority: 5 (Lowest)\r\n");
-		  fprintf(f, "Importance: Low\r\n");
+		  rfc2822_header_field_write(f, "X-Priority", "5 (Lowest)");
+		  rfc2822_header_field_write(f, "Importance", "Low");
 		  break;
 		case 2:
 		default:
-			fprintf(f, "X-Priority: 3 (Normal)\r\n");
-			fprintf(f, "Importance: Normal\r\n");
+			rfc2822_header_field_write(f, "X-Priority", "3 (Normal)");
+			rfc2822_header_field_write(f, "Importance", "Normal");
 			break;
 		}
-		 
-		fprintf(f, "From: Postmaster <%s>\r\n", senv->postmaster_address);
-		fprintf(f, "To: <%s>\r\n", recipients[i]);
-		fprintf(f, "Subject: [SIEVE] New mail notification\r\n");
-		fprintf(f, "Auto-Submitted: auto-generated (notify)\r\n");
-		fprintf(f, "Precedence: bulk\r\n");
-	
+			
 		if ( nctx->message != NULL ) {
 			if (_contains_8bit(nctx->message)) {
-					fprintf(f, "MIME-Version: 1.0\r\n");
-					fprintf(f, "Content-Type: text/plain; charset=UTF-8\r\n");
-					fprintf(f, "Content-Transfer-Encoding: 8bit\r\n");
+				rfc2822_header_field_write(f, "MIME-Version", "1.0");
+				rfc2822_header_field_write
+					(f, "Content-Type", "text/plain; charset=UTF-8");
+				rfc2822_header_field_write(f, "Content-Transfer-Encoding", "8bit");
 			}
+			
 			fprintf(f, "\r\n");
 			fprintf(f, "%s\r\n", nctx->message);
+			
 		} else {
 			fprintf(f, "\r\n");
 			fprintf(f, "Notification of new message.\r\n");
