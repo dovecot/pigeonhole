@@ -78,31 +78,58 @@ const char *rfc2822_header_field_name_sanitize(const char *name)
 void rfc2822_header_field_write
 (FILE *f, const char *name, const char *body)
 {
-	const char *sp = body, *bp = body, *wp;
+	static const unsigned int max_line = 80;
+	
+	const char *bp = body;  /* Pointer */ 
+	const char *sp = body;  /* Start pointer */
+	const char *wp = NULL;  /* Whitespace pointer */ 
+	const char *nlp = NULL; /* New-line pointer */
 	unsigned int len = strlen(name);
 	
 	/* Write header field name first */
 	fwrite(name, len, 1, f);
 	fwrite(": ", 2, 1, f);
 		
-	/* Add folded field body */
+	/* Add field body; fold it if necessary and account for existing folding */
 	len +=  2;
 	while ( *bp != '\0' ) {
-		while ( *bp != '\0' && (wp == NULL || len < 80) ) {
-			if ( *bp == ' ' || *bp == '\t' ) 
-			 	wp = bp;		
+		while ( *bp != '\0' && nlp == NULL && (wp == NULL || len < max_line) ) {
+			if ( *bp == ' ' || *bp == '\t' ) {
+			 	wp = bp;
+			} else if ( *bp == '\r' || *bp == '\n' ) {
+				nlp = bp;			
+				break;
+			}
 
 			bp++; len++;
-		} 
+		}
 		
 		if ( *bp == '\0' ) break;
 		
-		fwrite(sp, wp-sp, 1, f);
-		fwrite("\r\n", 2, 1, f);
-
-		len = bp - wp;
-		sp = wp;		
+		/* Existing newline ? */
+		if ( nlp != NULL ) {
+			/* Replace any sort of newline with proper CRLF */
+			while ( *bp == '\r' || *bp == '\n' )
+				bp++;
+			
+			fwrite(sp, nlp-sp, 1, f);
+			
+			if ( *bp != '\0' && *bp != ' ' && *bp != '\t' )
+				fwrite("\r\n\t", 3, 1, f);
+			else
+				fwrite("\r\n", 2, 1, f);
+				
+			sp = bp;
+		} else {
+			/* Insert newline at last whitespace within the max_line limit */
+			fwrite(sp, wp-sp, 1, f);
+			fwrite("\r\n", 2, 1, f);
+			sp = wp;
+		}
+		
+		len = bp - sp;		
 		wp = NULL;
+		nlp = NULL;
 	}
 	
 	fwrite(sp, bp-sp, 1, f);
