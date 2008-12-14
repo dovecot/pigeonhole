@@ -7,8 +7,8 @@ AC_CONFIG_SRCDIR([src])
 # real config header ourselves.
 AC_CONFIG_HEADERS([dummy-config.h dsieve-config.h])
 
-AC_DEFINE(SIEVE_NAME, [PACKAGE_NAME], [Define to the full name of this Sieve implementation.])
-AC_DEFINE(SIEVE_VERSION, [PACKAGE_VERSION], [Define to the version of this Sieve implementation.])
+AC_DEFINE(SIEVE_NAME, AC_PACKAGE_NAME, [Define to the full name of this Sieve implementation.])
+AC_DEFINE(SIEVE_VERSION, AC_PACKAGE_VERSION, [Define to the version of this Sieve implementation.])
 
 AM_INIT_AUTOMAKE(no-define)
 
