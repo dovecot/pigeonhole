@@ -3,13 +3,13 @@
 
 Sieve Working Group                                             B. Leiba
 Internet-Draft                           IBM T.J. Watson Research Center
-Intended status: Standards Track                               M. Haardt
-Expires: April 4, 2009                                        freenet AG
-                                                         October 1, 2008
+Updates: 3834 (if approved)                                    M. Haardt
+Intended status: Standards Track                         freenet.de GmbH
+Expires: June 7, 2009                                   December 4, 2008
 
 
                   Sieve Notification Mechanism: mailto
-                   draft-ietf-sieve-notify-mailto-09
+                   draft-ietf-sieve-notify-mailto-10
 
 Status of this Memo
 
@@ -34,7 +34,7 @@ Status of this Memo
    The list of Internet-Draft Shadow Directories can be accessed at
    http://www.ietf.org/shadow.html.
 
-   This Internet-Draft will expire on April 4, 2009.
+   This Internet-Draft will expire on June 7, 2009.
 
 
 
@@ -52,9 +52,9 @@ Status of this Memo
 
 
 
-Leiba & Haardt            Expires April 4, 2009                 [Page 1]
+Leiba & Haardt            Expires June 7, 2009                  [Page 1]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
 Abstract
@@ -85,20 +85,18 @@ Table of Contents
 
    5.      Security Considerations  . . . . . . . . . . . . . . . . . 11
 
-   6.      IANA Considerations  . . . . . . . . . . . . . . . . . . . 12
-   6.1.    Registration of notification mechanism . . . . . . . . . . 12
-   6.2.    New registry for Auto-Submitted header field keywords  . . 12
+   6.      IANA Considerations  . . . . . . . . . . . . . . . . . . . 13
+   6.1.    Registration of notification mechanism . . . . . . . . . . 13
+   6.2.    New registry for Auto-Submitted header field keywords  . . 13
    6.3.    Initial registration of Auto-Submitted header field
-           keywords . . . . . . . . . . . . . . . . . . . . . . . . . 12
+           keywords . . . . . . . . . . . . . . . . . . . . . . . . . 13
 
-   7.      References . . . . . . . . . . . . . . . . . . . . . . . . 14
-   7.1.    Normative References . . . . . . . . . . . . . . . . . . . 14
-   7.2.    Non-Normative References . . . . . . . . . . . . . . . . . 14
+   7.      References . . . . . . . . . . . . . . . . . . . . . . . . 15
+   7.1.    Normative References . . . . . . . . . . . . . . . . . . . 15
+   7.2.    Non-Normative References . . . . . . . . . . . . . . . . . 15
 
-           Authors' Addresses . . . . . . . . . . . . . . . . . . . . 15
-           Intellectual Property and Copyright Statements . . . . . . 16
-
-
+           Authors' Addresses . . . . . . . . . . . . . . . . . . . . 16
+           Intellectual Property and Copyright Statements . . . . . . 17
 
 
 
@@ -108,9 +106,11 @@ Table of Contents
 
 
 
-Leiba & Haardt            Expires April 4, 2009                 [Page 2]
+
+
+Leiba & Haardt            Expires June 7, 2009                  [Page 2]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
 1.  Introduction
@@ -164,9 +164,9 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
 
 
 
-Leiba & Haardt            Expires April 4, 2009                 [Page 3]
+Leiba & Haardt            Expires June 7, 2009                  [Page 3]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
 2.  Definition
@@ -178,7 +178,9 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
 2.1.  Notify parameter "method"
 
    The mailto notification mechanism uses standard mailto URIs as
-   specified in [mailto].
+   specified in [mailto]. mailto URIs may contain header fields
+   consisting of a header name and value.  These header fields are
+   called "URI headers" to distinguish them from "message headers".
 
 2.2.  Test notify_method_capability
 
@@ -191,9 +193,9 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
 2.3.  Notify tag ":from"
 
    The :from tag overrides the default sender of the notification
-   message.  "Sender", here, refers to the value used in the [RFC2822]
+   message.  "Sender", here, refers to the value used in the [RFC5322]
    "From" header.  Implementations MAY also use this value in the
-   [RFC2821] "MAIL FROM" command (the "envelope sender"), or they may
+   [RFC5321] "MAIL FROM" command (the "envelope sender"), or they may
    prefer to establish a mailbox that receives bounces from notification
    messages.
 
@@ -215,15 +217,16 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
    The value of this tag, if it is present, is used as the subject of
    the notification message, and overrides all other mechanisms for
    determining the subject (as described below).  Its value SHOULD NOT
+
+
+
+Leiba & Haardt            Expires June 7, 2009                  [Page 4]
+
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
+
+
    normally be truncated, though it may be sensible to truncate an
    excessively long value.
-
-
-
-Leiba & Haardt            Expires April 4, 2009                 [Page 4]
-
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
-
 
 2.7.  Other Definitions
 
@@ -250,7 +253,7 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
    danger of message loops.
 
    The overall notification message is composed using the following
-   guidelines (see [RFC2822] for references to message header fields):
+   guidelines (see [RFC5322] for references to message header fields):
 
    o  If the envelope sender of the triggering message is empty, the
       envelope sender of the notification message MUST be empty as well,
@@ -263,24 +266,24 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
       the notification message SHOULD be set either to the envelope "to"
       field from the triggering message, as used by Sieve, or to an
       email address associated with the notification system, at the
-      discretion of the implementation.  This MAY NOT be overridden by a
-      "from" URI header, and any such URI header MUST be ignored.
+      discretion of the implementation.  This MUST NOT be overridden by
+      a "from" URI header, and any such URI header MUST be ignored.
 
    o  The envelope recipient(s) of the notification message SHOULD be
       set to the address(es) specified in the URI (including any URI
       headers where the hname is "to" or "cc").
 
+
+
+
+Leiba & Haardt            Expires June 7, 2009                  [Page 5]
+
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
+
+
    o  The header field "Auto-Submitted: auto-notified" MUST be included
       in the notification message (see Section 2.7.1).  This is to
       reduce the likelihood of message loops, by tagging this as an
-
-
-
-Leiba & Haardt            Expires April 4, 2009                 [Page 5]
-
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
-
-
       automatically generated message.  Among other results, it will
       inform other notification systems not to generate further
       notifications. mailto URI headers with hname "auto-submitted" are
@@ -295,7 +298,7 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
       either to the envelope "to" field from the triggering message, as
       used by Sieve, or to an email address associated with the
       notification system, at the discretion of the implementation.
-      This MAY NOT be overridden by a "from" URI header, and any such
+      This MUST NOT be overridden by a "from" URI header, and any such
       URI header MUST be ignored.
 
    o  The "To:" header field of the notification message SHOULD be set
@@ -326,17 +329,17 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
       MUST be placed above these (see Section 2.7.1).  URI headers with
       hname "received" are considered unsafe, and MUST be ignored.
 
+
+
+
+Leiba & Haardt            Expires June 7, 2009                  [Page 6]
+
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
+
+
    o  Other header fields of the notification message that are normally
       related to an individual new message (such as "Message-ID" and
       "Date") are generated for the notification message in the normal
-
-
-
-Leiba & Haardt            Expires April 4, 2009                 [Page 6]
-
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
-
-
       manner, and MUST NOT be copied from the triggering message.  Any
       URI headers with those names MUST be ignored.  Further, the "Date"
       header serves as the notification timestamp defined in [Notify].
@@ -354,21 +357,21 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
    The header field "Auto-Submitted: auto-notified" MUST be included in
    the notification message (see [RFC3834]).  The "Auto-Submitted"
    header field is considered a "trace field", similar to "Received"
-   header fields (see [RFC2821]).  If the implementation retains the
+   header fields (see [RFC5321]).  If the implementation retains the
    "Received" fields from the triggering message (see above), the "Auto-
    Submitted" field MUST be placed above those "Received" fields,
    serving as a boundary between the ones from the triggering message
    and those that will be part of the notification message.
 
-   The auto-notified Auto-Submitted field MAY include one or both of the
-   following OPTIONAL parameters:
+   The auto-notified Auto-Submitted field MUST include one or both of
+   the following parameters:
 
    o  owner-email - specifies an email address of the owner of the Sieve
       script that generated this notification.  If specified, it might
       be used to identify or contact the script's owner.  The parameter
       attribute is "owner-email", and the parameter value is a quoted
       string containing an email address, as defined by "addr-spec" in
-      [RFC2822].  Example:
+      [RFC5322].  Example:
         Auto-Submitted: auto-notified; owner-email="me@example.com"
 
    o  owner-token - specifies an opaque token that the administrative
@@ -379,18 +382,15 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
       parameter value is as defined by "token" in [RFC3834].  Example:
         Auto-Submitted: auto-notified; owner-token=af3NN2pK5dDXI0W
 
+   See Section 5 for discussion of possible uses of these parameters.
 
 
 
 
 
-
-
-
-
-Leiba & Haardt            Expires April 4, 2009                 [Page 7]
+Leiba & Haardt            Expires June 7, 2009                  [Page 7]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
 3.  Examples
@@ -444,9 +444,9 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
 
 
 
-Leiba & Haardt            Expires April 4, 2009                 [Page 8]
+Leiba & Haardt            Expires June 7, 2009                  [Page 8]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
    Note that:
@@ -500,9 +500,9 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
 
 
 
-Leiba & Haardt            Expires April 4, 2009                 [Page 9]
+Leiba & Haardt            Expires June 7, 2009                  [Page 9]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
 4.  Internationalization Considerations
@@ -556,9 +556,9 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
 
 
 
-Leiba & Haardt            Expires April 4, 2009                [Page 10]
+Leiba & Haardt            Expires June 7, 2009                 [Page 10]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
 5.  Security Considerations
@@ -587,6 +587,44 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
    radar.  Administrative mechanisms MUST be available to handle these
    sorts of situations.
 
+   Email addresses specified as recipients of notifications might not be
+   owned by the entity that owns the Sieve script.  As a result, a
+   notification recipient could wind up as the target of unwanted
+   notifications, either through intent (using scripts to mount a mail-
+   bomb attack) or by accident (an address was mistyped or has been
+   reassigned).  The situation is arguably no worse than any other in
+   which a recipient gets unwanted email, and some of the same
+   mechanisms can be used in this case.  But those deploying this
+   extension have to be aware of the potential extra problems here,
+   where scripts might be created through means that do not adequately
+   validate email addresses, and such scripts might then be forgotten
+   and left to run indefinitely.
+
+   In particular, note that the Auto-Submitted header field is required
+   to include a value that a recipient can use when contacting the
+   source domain of the notification message (see Section 2.7.1).  That
+   value will allow the domain to track down the script's owner and have
+   the script corrected or disabled.  Domains that enable this extension
+   MUST be prepared to respond to such complaints, in order to limit the
+   damage caused by a faulty script.
+
+   Problems can also show up if notification messages are sent to a
+
+
+
+Leiba & Haardt            Expires June 7, 2009                 [Page 11]
+
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
+
+
+   gateway into another service, such as SMS.  Information from the
+   email message is often lost in the gateway translation, and in this
+   case critical information needed to avoid loops, to contact the
+   script owner, and to resolve other problems might be lost.
+   Developers of email gateways should consider these issues, and try to
+   preseve as much information as possible, including what appears in
+   email trace headers and Auto-Submitted.
+
    Additional security considerations are discussed in [Sieve] and in
    [Notify].
 
@@ -612,9 +650,27 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
 
 
 
-Leiba & Haardt            Expires April 4, 2009                [Page 11]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Leiba & Haardt            Expires June 7, 2009                 [Page 12]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
 6.  IANA Considerations
@@ -668,9 +724,9 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
 
 
 
-Leiba & Haardt            Expires April 4, 2009                [Page 12]
+Leiba & Haardt            Expires June 7, 2009                 [Page 13]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
    Description: Indicates that a message was NOT automatically
@@ -724,14 +780,18 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
 
 
 
-Leiba & Haardt            Expires April 4, 2009                [Page 13]
+Leiba & Haardt            Expires June 7, 2009                 [Page 14]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
 7.  References
 
 7.1.  Normative References
+
+   [IANA]     Narten, T. and H. Alvestrand, "Guidelines for Writing an
+              IANA Considerations Section in RFCs", BCP 26, RFC 5226,
+              May 2008.
 
    [Kwds]     Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", RFC 2119, March 1997.
@@ -740,11 +800,11 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
               Martin, "Sieve Extension: Notifications", work in
               progress, draft-ietf-sieve-notify, December 2007.
 
-   [RFC2822]  Resnick, P., Ed., "Internet Message Format", RFC 2822,
-              April 2001.
-
    [RFC3834]  Moore, K., "Recommendations for Automatic Responses to
               Electronic Mail", RFC 3834, August 2004.
+
+   [RFC5322]  Resnick, P., Ed., "Internet Message Format", RFC 5322,
+              October 2008.
 
    [Sieve]    Guenther, P., Ed. and T. Showalter, Ed., "Sieve: An Email
               Filtering Language", RFC 5228, January 2008.
@@ -754,12 +814,8 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
 
 7.2.  Non-Normative References
 
-   [IANA]     Narten, T. and H. Alvestrand, "Guidelines for Writing an
-              IANA Considerations Section in RFCs", BCP 26, RFC 2434,
-              October 1998.
-
-   [RFC2821]  Klensin, J., Ed., "Simple Mail Transfer Protocol",
-              RFC 2821, April 2001.
+   [RFC5321]  Klensin, J., Ed., "Simple Mail Transfer Protocol",
+              RFC 5321, October 2008.
 
    [Variables]
               Homme, K., "Sieve Extension: Variables", RFC 5229,
@@ -780,9 +836,9 @@ Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
 
 
 
-Leiba & Haardt            Expires April 4, 2009                [Page 14]
+Leiba & Haardt            Expires June 7, 2009                 [Page 15]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
 Authors' Addresses
@@ -798,7 +854,7 @@ Authors' Addresses
 
 
    Michael Haardt
-   freenet AG
+   freenet.de GmbH
    Willstaetter Str. 13
    Duesseldorf, NRW  40549
    Germany
@@ -836,9 +892,9 @@ Authors' Addresses
 
 
 
-Leiba & Haardt            Expires April 4, 2009                [Page 15]
+Leiba & Haardt            Expires June 7, 2009                 [Page 16]
 
-Internet-Draft    Sieve Notification Mechanism: mailto      October 2008
+Internet-Draft    Sieve Notification Mechanism: mailto     December 2008
 
 
 Full Copyright Statement
@@ -892,5 +948,5 @@ Intellectual Property
 
 
 
-Leiba & Haardt            Expires April 4, 2009                [Page 16]
+Leiba & Haardt            Expires June 7, 2009                 [Page 17]
 
