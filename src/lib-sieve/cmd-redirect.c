@@ -7,6 +7,8 @@
 #include "istream.h"
 #include "istream-header-filter.h"
 
+#include "rfc2822.h"
+
 #include "sieve-common.h"
 #include "sieve-limits.h"
 #include "sieve-address.h"
@@ -267,7 +269,7 @@ static void act_redirect_print
 static bool act_redirect_send	
 (const struct sieve_action_exec_env *aenv, struct act_redirect_context *ctx)
 {
-	static const char *hide_headers[] = { "Return-Path" };
+	static const char *hide_headers[] = { "Return-Path", "X-Sieve" };
 
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
@@ -294,6 +296,9 @@ static bool act_redirect_send
 	input = i_stream_create_header_filter
 		(input, HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR, hide_headers,
 			N_ELEMENTS(hide_headers), null_header_filter_callback, NULL);
+
+	/* Prepend sieve version header (should not affect signatures) */
+	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
 
 	/* Pipe the message to the outgoing SMTP transport */
 	while ((ret = i_stream_read_data(input, &data, &size, 0)) > 0) {	

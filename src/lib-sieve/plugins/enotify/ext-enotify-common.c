@@ -10,6 +10,7 @@
 #include "sieve-ast.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
+#include "sieve-interpreter.h"
 
 #include "ext-enotify-limits.h"
 #include "ext-enotify-common.h"
@@ -154,5 +155,40 @@ bool ext_enotify_uri_validate
 		return method->validate_uri(valdtr, arg, uri);
 		
 	return TRUE;
+}
+
+const struct sieve_enotify_method *ext_enotify_runtime_check_operands
+(const struct sieve_runtime_env *renv, unsigned int source_line,
+	const char *method_uri,	const char *message, const char *from, void **context)
+{
+	const char *uri = method_uri;
+	const char *scheme;
+	const struct sieve_enotify_method *method;
+	
+	if ( (scheme=ext_enotify_uri_scheme_parse(&uri)) == NULL ) {
+		sieve_runtime_error
+			(renv, sieve_error_script_location(renv->script, source_line),
+				"invalid scheme part for method URI '%s'", 
+				str_sanitize(method_uri, 80));
+		return NULL;
+	}
+	
+	if ( (method=ext_enotify_method_find(scheme)) == NULL ) {
+		sieve_runtime_error
+			(renv, sieve_error_script_location(renv->script, source_line),
+				"invalid notify method '%s'", scheme);
+		return NULL;
+	}
+
+	if ( method->runtime_check_operands != NULL ) {
+		if ( method->runtime_check_operands
+			(renv, source_line, method_uri, uri, message, from, context) )
+			return method;
+		
+		return NULL;
+	}
+
+	*context = NULL;	
+	return method;
 }
 

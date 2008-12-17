@@ -2,12 +2,16 @@
  */
 
 #include "lib.h"
+#include "str.h"
+#include "strfuncs.h"
 #include "md5.h"
 #include "hostpid.h"
 #include "str-sanitize.h"
 #include "message-address.h"
 #include "message-date.h"
 #include "ioloop.h"
+
+#include "rfc2822.h"
 
 #include "sieve-common.h"
 #include "sieve-code.h"
@@ -796,6 +800,8 @@ static bool act_vacation_send
 	void *smtp_handle;
 	FILE *f;
  	const char *outmsgid;
+ 	const char *const *headers;
+	int references;
 
 	/* Check smpt functions just to be sure */
 
@@ -811,31 +817,40 @@ static bool act_vacation_send
 
 	/* Produce a proper reply */
     
-	fprintf(f, "Message-ID: %s\r\n", outmsgid);
-	fprintf(f, "Date: %s\r\n", message_date_create(ioloop_time));
+	rfc2822_header_field_write(f, "Message-ID", outmsgid);
+	rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
 	if ( ctx->from != NULL && *(ctx->from) != '\0' )
-		fprintf(f, "From: <%s>\r\n", ctx->from);
+		rfc2822_header_field_printf(f, "From", "<%s>", ctx->from);
 	else
-		fprintf(f, "From: <%s>\r\n", msgdata->to_address);
+		rfc2822_header_field_printf(f, "From", "<%s>", msgdata->to_address);
 		
-	fprintf(f, "To: <%s>\r\n", msgdata->return_path);
-	fprintf(f, "Subject: %s\r\n", str_sanitize(ctx->subject, 80));
-	
+	rfc2822_header_field_printf(f, "To", "<%s>", msgdata->return_path);
+	rfc2822_header_field_printf(f, "Subject", "%s", 
+		str_sanitize(ctx->subject, 256));
+
+	references = mail_get_headers_utf8
+		(aenv->msgdata->mail, "references", &headers);
+			
 	if ( msgdata->id != NULL ) {
-		fprintf(f, "In-Reply-To: %s\r\n", msgdata->id);
-		
-		/* FIXME: Update References header */
+		rfc2822_header_field_write(f, "In-Reply-To", msgdata->id);
+	
+		if ( references >= 0 )
+			rfc2822_header_field_write
+				(f, "References", t_strconcat(headers[0], " ", msgdata->id, NULL));
+		else
+			rfc2822_header_field_write(f, "References", msgdata->id);
+	} else if ( references > 0 ) {
+		rfc2822_header_field_write(f, "References", headers[0]);
 	}
-	fprintf(f, "Auto-Submitted: auto-replied (vacation)\r\n");
-
-	fprintf(f, "X-Sieve: %s\r\n", SIEVE_IMPLEMENTATION);
-
-	fprintf(f, "Precedence: bulk\r\n");
-	fprintf(f, "MIME-Version: 1.0\r\n");
+			
+	rfc2822_header_field_write(f, "Auto-Submitted", "auto-replied (vacation)");
+	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
+	rfc2822_header_field_write(f, "Precedence", "bulk");
+	rfc2822_header_field_write(f, "MIME-Version", "1.0");
     
 	if ( !ctx->mime ) {
-		fprintf(f, "Content-Type: text/plain; charset=utf-8\r\n");
-		fprintf(f, "Content-Transfer-Encoding: 8bit\r\n");
+		rfc2822_header_field_write(f, "Content-Type", "text/plain; charset=utf-8");
+		rfc2822_header_field_write(f, "Content-Transfer-Encoding", "8bit");
 		fprintf(f, "\r\n");
 	}
 

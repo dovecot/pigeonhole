@@ -20,6 +20,8 @@
 #include "istream.h"
 #include "istream-header-filter.h"
 
+#include "rfc2822.h"
+
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
@@ -125,7 +127,7 @@ static int act_reject_check_duplicate
 		const char *location1, const char *location2);
 int act_reject_check_conflict
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action,
-    	const struct sieve_action *other_action, void *context,
+		const struct sieve_action *other_action, void *context,
 		const char *location1, const char *location2);
 static void act_reject_print
 	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
@@ -176,10 +178,10 @@ static bool cmd_reject_generate
 	sieve_operation_emit_code(cgenv->sbin, &reject_operation);
 
 	/* Emit line number */
-    sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
+	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
 
 	/* Generate arguments */
-    return sieve_generate_arguments(cgenv, ctx, NULL);
+	return sieve_generate_arguments(cgenv, ctx, NULL);
 }
 
 /* 
@@ -194,11 +196,11 @@ static bool ext_reject_operation_dump
 	sieve_code_descend(denv);
 	
 	/* Source line */
-    if ( !sieve_code_source_line_dump(denv, address) )
-        return FALSE;
+	if ( !sieve_code_source_line_dump(denv, address) )
+		return FALSE;
 
 	if ( !sieve_code_dumper_print_optional_operands(denv, address) )
-        return FALSE;
+		return FALSE;
 	
 	return
 		sieve_opr_string_dump(denv, address, "reason");
@@ -220,9 +222,9 @@ static int ext_reject_operation_execute
 	int ret;
 
 	/* Source line */
-    if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
+	if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
 		sieve_runtime_trace_error(renv, "invalid source line");
-        return SIEVE_EXEC_BIN_CORRUPT;
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
 	/* Optional operands (side effects) */
@@ -328,18 +330,21 @@ static bool act_reject_send
 	new_msgid = sieve_get_new_message_id(senv);
 	boundary = t_strdup_printf("%s/%s", my_pid, senv->hostname);
 
-	fprintf(f, "Message-ID: %s\r\n", new_msgid);
-	fprintf(f, "Date: %s\r\n", message_date_create(ioloop_time));
-	fprintf(f, "From: Mail Delivery Subsystem <%s>\r\n",
+	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
+	rfc2822_header_field_write(f, "Message-ID", new_msgid);
+	rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
+	rfc2822_header_field_printf(f, "From", "Mail Delivery Subsystem <%s>",
 		senv->postmaster_address);
-	fprintf(f, "To: <%s>\r\n", msgdata->return_path);
-	fprintf(f, "MIME-Version: 1.0\r\n");
-	fprintf(f, "Content-Type: "
-		"multipart/report; report-type=disposition-notification;\r\n"
-		"\tboundary=\"%s\"\r\n", boundary);
-	fprintf(f, "Subject: Automatically rejected mail\r\n");
-	fprintf(f, "Auto-Submitted: auto-replied (rejected)\r\n");
-	fprintf(f, "Precedence: bulk\r\n");
+	rfc2822_header_field_printf(f, "To", "<%s>", msgdata->return_path);
+	rfc2822_header_field_write(f, "Subject", "Automatically rejected mail");
+	rfc2822_header_field_write(f, "Auto-Submitted", "auto-replied (rejected)");
+	rfc2822_header_field_write(f, "Precedence", "bulk");
+	
+	rfc2822_header_field_write(f, "MIME-Version", "1.0");
+	rfc2822_header_field_printf(f, "Content-Type", 
+		"multipart/report; report-type=disposition-notification;\n"
+		"boundary=\"%s\"", boundary);
+	
 	fprintf(f, "\r\nThis is a MIME-encapsulated message\r\n\r\n");
 
 	/* Human readable status report */

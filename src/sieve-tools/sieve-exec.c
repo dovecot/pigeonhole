@@ -29,7 +29,7 @@
 static void *sieve_smtp_open(const char *destination,
 	const char *return_path, FILE **file_r)
 {
-	i_info("sending mesage from <%s> to <%s>:",
+	i_info("sending message from <%s> to <%s>:",
 		return_path == NULL || *return_path == '\0' ? "" : return_path, 
 		destination);
 	printf("\nSTART MESSAGE:\n");

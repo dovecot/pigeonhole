@@ -67,10 +67,19 @@ const struct sieve_enotify_method *ext_enotify_method_find
 	(const char *identifier);
 	
 /*
- * URI validation
+ * Validation
  */
  
 bool ext_enotify_uri_validate
 	(struct sieve_validator *valdtr, struct sieve_ast_argument *arg);
+
+/*
+ * Runtime
+ */
+
+const struct sieve_enotify_method *ext_enotify_runtime_check_operands
+	(const struct sieve_runtime_env *renv, unsigned int source_line,
+		const char *method_uri,	const char *message, const char *from, 
+		void **context);
 
 #endif /* __EXT_ENOTIFY_COMMON_H */

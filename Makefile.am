@@ -24,6 +24,7 @@ if BUILD_ENOTIFY
 ENOTIFY_TESTS = \
 	tests/extensions/enotify/basic.svtest \
 	tests/extensions/enotify/encodeurl.svtest \
+	tests/extensions/enotify/errors.svtest \
 	tests/extensions/enotify/execute.svtest
 endif
 
@@ -77,6 +78,7 @@ test_cases = \
 	tests/extensions/subaddress/rfc.svtest \
 	tests/extensions/vacation/errors.svtest \
 	tests/extensions/vacation/execute.svtest \
+	tests/extensions/vacation/references.svtest \
 	$(ENOTIFY_TESTS)
 
 if HAVE_DOVECOT_LIBS

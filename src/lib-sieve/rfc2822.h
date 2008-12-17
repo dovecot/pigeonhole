@@ -6,7 +6,29 @@
 
 #include "lib.h"
 
+#include <stdio.h>
+
+/*
+ * Verification
+ */ 
+ 
 bool rfc2822_header_field_name_verify
 	(const char *field_name, unsigned int len);
+
+/*
+ *
+ */
+
+const char *rfc2822_header_field_name_sanitize(const char *name);
+
+/*
+ * Message composition
+ */
+
+void rfc2822_header_field_write
+	(FILE *f, const char *name, const char *body);
+	
+void rfc2822_header_field_printf
+	(FILE *f, const char *name, const char *body_fmt, ...) ATTR_FORMAT(3, 4);
 
 #endif /* __RFC2822_H */
