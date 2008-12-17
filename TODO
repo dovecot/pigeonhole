@@ -1,6 +1,23 @@
 Current:
 
-* Implement notify extension with sole support for mailto mechanism. 
+* Implement enotify extension:
+	- Implement valid_notify_method test (currently skeleton)
+	- Implement notify_method_capability test (currently skeleton)
+	- Implement parsing :options argument
+	- Check whether handling of error conditions matches the standard
+	- Limit the number of notifications generated (on a per-method basis)
+* Implement mailto method for the enotify extension:
+	- Implement verification of recipient addresses in mailto uris.
+	- Implement verification of (unstructured) header field bodies in 
+	  in mailto uris.
+	- Add addresses contained in to to and cc URI headers to the 
+	  recipients. Conversely, the generated To header must include the
+	  URI recipients apart from those stated explicitly in the To URI
+	  header.
+	- Avoid sending notifications on Auto-submitted: messages
+	- Add owner-email to the Auto-submitted field
+	- Implement checking the :from argument for validity and policy 
+	  violations.
 
 Next (in order of descending priority/precedence):
 
