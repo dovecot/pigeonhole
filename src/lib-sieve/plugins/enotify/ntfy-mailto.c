@@ -616,7 +616,7 @@ static bool ntfy_mailto_action_execute
 	const char *const *headers;
 
 	/* Is the message an automatic reply ? */
-	if ( mail_get_headers_utf8
+	if ( mail_get_headers
 		(msgdata->mail, "auto-submitted", &headers) >= 0 ) {
 		const char *const *hdsp = headers;
 

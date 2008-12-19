@@ -828,7 +828,7 @@ static bool act_vacation_send
 	rfc2822_header_field_printf(f, "Subject", "%s", 
 		str_sanitize(ctx->subject, 256));
 
-	references = mail_get_headers_utf8
+	references = mail_get_headers
 		(aenv->msgdata->mail, "references", &headers);
 			
 	if ( msgdata->id != NULL ) {
@@ -922,7 +922,7 @@ static bool act_vacation_commit
 	/* Are we trying to respond to a mailing list ? */
 	hdsp = _list_headers;
 	while ( *hdsp != NULL ) {
-		if ( mail_get_headers_utf8
+		if ( mail_get_headers
 			(msgdata->mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
 			/* Yes, bail out */
 			sieve_result_log(aenv, 
@@ -934,7 +934,7 @@ static bool act_vacation_commit
 	}
 	
 	/* Is the message that we are replying to an automatic reply ? */
-	if ( mail_get_headers_utf8
+	if ( mail_get_headers
 		(msgdata->mail, "auto-submitted", &headers) >= 0 ) {
 		/* Theoretically multiple headers could exist, so lets make sure */
 		hdsp = headers;
@@ -949,8 +949,8 @@ static bool act_vacation_commit
 		}
 	}
 	
-	/* Check for non-standard precedence header */
-	if ( mail_get_headers_utf8
+	/* Check for the non-standard precedence header */
+	if ( mail_get_headers
 		(msgdata->mail, "precedence", &headers) >= 0 ) {
 		/* Theoretically multiple headers could exist, so lets make sure */
 		hdsp = headers;

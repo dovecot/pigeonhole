@@ -122,11 +122,12 @@ static int tst_exists_operation_execute
 	/* Iterate through all requested headers to match (must find all specified) */
 	hdr_item = NULL;
 	matched = TRUE;
-	while ( matched && (result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
+	while ( matched &&
+		(result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
 		&& hdr_item != NULL ) {
 		const char *const *headers;
 			
-		if ( mail_get_headers_utf8
+		if ( mail_get_headers
 			(renv->msgdata->mail, str_c(hdr_item), &headers) < 0 ||
 			headers[0] == NULL ) {	
 			matched = FALSE;				 
