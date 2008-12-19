@@ -160,7 +160,7 @@ static struct hash_table *extension_index;
 static void sieve_extensions_init_registry(void)
 {	
 	p_array_init(&extensions, default_pool, 4);
-	extension_index = hash_create
+	extension_index = hash_table_create
 		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 }
 
@@ -175,7 +175,7 @@ int sieve_extension_register(const struct sieve_extension *extension)
 	ereg->extension = extension;
 	ereg->id = ext_id;
 	
-	hash_insert(extension_index, (void *) extension->name, (void *) ereg);
+	hash_table_insert(extension_index, (void *) extension->name, (void *) ereg);
 
 	if ( extension->load != NULL && !extension->load(ext_id) ) {
 		sieve_sys_error("failed to load '%s' extension support.", extension->name);
@@ -210,7 +210,7 @@ const struct sieve_extension *sieve_extension_get_by_name(const char *name)
 		return NULL;	
 		
 	ereg = (struct sieve_extension_registration *) 
-		hash_lookup(extension_index, name);
+		hash_table_lookup(extension_index, name);
 
 	if ( ereg == NULL )
 		return NULL;
@@ -259,11 +259,11 @@ const char *sieve_extensions_get_string(void)
 static void sieve_extensions_deinit_registry(void) 
 {
 	struct hash_iterate_context *itx = 
-		hash_iterate_init(extension_index);
+		hash_table_iterate_init(extension_index);
 	void *key; 
 	void *ereg;
 	
-	while ( hash_iterate(itx, &key, &ereg) ) {
+	while ( hash_table_iterate(itx, &key, &ereg) ) {
 		const struct sieve_extension *ext = 
 			((struct sieve_extension_registration *) ereg)->extension;
 		
@@ -273,10 +273,10 @@ static void sieve_extensions_deinit_registry(void)
 		p_free(default_pool, ereg);
 	}
 
-	hash_iterate_deinit(&itx); 	
+	hash_table_iterate_deinit(&itx); 	
 
 	array_free(&extensions);
-	hash_destroy(&extension_index);
+	hash_table_destroy(&extension_index);
 }
 
 /*
@@ -287,19 +287,19 @@ static struct hash_table *capabilities_index;
 
 static void sieve_extensions_init_capabilities(void)
 {	
-	capabilities_index = hash_create
+	capabilities_index = hash_table_create
 		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 }
 
 static void sieve_extensions_deinit_capabilities(void) 
 {
-	hash_destroy(&capabilities_index);
+	hash_table_destroy(&capabilities_index);
 }
 
 void sieve_extension_capabilities_register
 	(const struct sieve_extension_capabilities *cap) 
 {	
-	hash_insert
+	hash_table_insert
 		(capabilities_index, (void *) cap->name, (void *) cap);
 }
 
@@ -308,7 +308,7 @@ const char *sieve_extension_capabilities_get_string
 {
   const struct sieve_extension_capabilities *cap = 
 		(const struct sieve_extension_capabilities *) 
-			hash_lookup(capabilities_index, cap_name);
+			hash_table_lookup(capabilities_index, cap_name);
 
 	if ( cap == NULL || cap->get_string == NULL )
 		return NULL;

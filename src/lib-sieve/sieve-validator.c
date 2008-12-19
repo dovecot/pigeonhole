@@ -173,7 +173,7 @@ struct sieve_validator *sieve_validator_create
 	p_array_init(&validator->extensions, pool, sieve_extensions_get_count());
 		
 	/* Setup command registry */
-	validator->commands = hash_create
+	validator->commands = hash_table_create
 		(default_pool, pool, 0, strcase_hash, (hash_cmp_callback_t *)strcasecmp);
 	sieve_validator_register_core_commands(validator);
 	sieve_validator_register_core_tests(validator);
@@ -194,7 +194,7 @@ void sieve_validator_free(struct sieve_validator **validator)
 	const struct sieve_validator_extension_reg *extrs;
 	unsigned int ext_count, i;
 
-	hash_destroy(&(*validator)->commands);
+	hash_table_destroy(&(*validator)->commands);
 	sieve_ast_unref(&(*validator)->ast);
 
 	sieve_error_handler_unref(&(*validator)->ehandler);
@@ -286,7 +286,7 @@ sieve_validator_find_command_registration
 (struct sieve_validator *validator, const char *command) 
 {
 	return (struct sieve_command_registration *) 
-		hash_lookup(validator->commands, command);
+		hash_table_lookup(validator->commands, command);
 }
 
 static struct sieve_command_registration *_sieve_validator_register_command
@@ -296,7 +296,7 @@ static struct sieve_command_registration *_sieve_validator_register_command
 	struct sieve_command_registration *record = 
 		p_new(validator->pool, struct sieve_command_registration, 1);
 	record->command = command;
-	hash_insert(validator->commands, (void *) identifier, (void *) record);
+	hash_table_insert(validator->commands, (void *) identifier, (void *) record);
 		
 	return record;
 }

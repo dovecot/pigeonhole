@@ -116,7 +116,7 @@ void sieve_result_unref(struct sieve_result **result)
 		return;
 
 	if ( (*result)->action_contexts != NULL )
-        hash_destroy(&(*result)->action_contexts);
+        hash_table_destroy(&(*result)->action_contexts);
 
 	sieve_error_handler_unref(&(*result)->ehandler);
 
@@ -205,11 +205,11 @@ void sieve_result_add_implicit_side_effect
 	struct sieve_result_action_context *actctx = NULL;
 	
 	if ( result->action_contexts == NULL ) {
-		result->action_contexts = hash_create
+		result->action_contexts = hash_table_create
 			(default_pool, result->pool, 0, NULL, NULL);
 	} else {
 		actctx = (struct sieve_result_action_context *) 
-			hash_lookup(result->action_contexts, to_action);
+			hash_table_lookup(result->action_contexts, to_action);
 	}
 
 	if ( actctx == NULL ) {
@@ -218,7 +218,7 @@ void sieve_result_add_implicit_side_effect
 		actctx->action = to_action;
 		actctx->seffects = sieve_side_effects_list_create(result);
 		
-		hash_insert(result->action_contexts, (void *) to_action, 
+		hash_table_insert(result->action_contexts, (void *) to_action, 
 			(void *) actctx);
 	}	
 	
@@ -398,7 +398,7 @@ int sieve_result_add_action
 		
 		/* Check for implicit side effects to this particular action */
 		actctx = (struct sieve_result_action_context *) 
-				hash_lookup(result->action_contexts, action);
+				hash_table_lookup(result->action_contexts, action);
 		
 		if ( actctx != NULL ) {
 			struct sieve_result_side_effect *iseff;
@@ -551,7 +551,7 @@ static bool _sieve_result_implicit_keep
 		
 		/* Check for implicit side effects to store action */
 		actctx = (struct sieve_result_action_context *) 
-				hash_lookup(result->action_contexts, &act_store);
+				hash_table_lookup(result->action_contexts, &act_store);
 		
 		if ( actctx != NULL && actctx->seffects != NULL ) 
 			rsef_first = actctx->seffects->first_effect;
