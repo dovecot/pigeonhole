@@ -691,6 +691,8 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 						if ( sieve_lexer_curchar(lexer) == '\n' ) {
 							sieve_lexer_shift(lexer);
 
+							/* End of multi-line string */
+
 							/* Check whether length limit was violated */
 							if ( str_len(str) > SIEVE_MAX_STRING_LEN ) {
 								sieve_lexer_error(lexer, 
@@ -708,15 +710,15 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 							sieve_lexer_error(lexer, 
 								"found stray carriage-return (CR) character "
 								"in multi-line string started at line %d", start_line);
-                            lexer->token_type = STT_ERROR;
-                            return FALSE;
+							lexer->token_type = STT_ERROR;
+							return FALSE;
 						}
 
 						/* Handle dot-stuffing */
 						if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
 							str_append_c(str, '.');
-						if ( sieve_lexer_curchar(lexer) == '.' ) 
-	                        sieve_lexer_shift(lexer);
+						if ( sieve_lexer_curchar(lexer) == '.' )
+							sieve_lexer_shift(lexer);
 					}
   				
 					/* Scan the rest of the line */
