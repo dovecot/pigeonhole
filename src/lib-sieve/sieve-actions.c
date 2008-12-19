@@ -261,8 +261,16 @@ static bool act_store_execute
 		(struct act_store_transaction *) tr_context;
 	struct mail_keywords *keywords = NULL;
 	
-	if ( trans == NULL || trans->namespace == NULL || trans->box == NULL ) 
+	/* Verify transaction */
+	if ( trans == NULL ) return FALSE;
+
+	/* Exit early if namespace is not available */
+	if ( trans->namespace == NULL ) {
+		if ( aenv->scriptenv->namespaces == NULL )
+			return TRUE;
+
 		return FALSE;
+	} else if ( trans->box == NULL ) return FALSE;
 
 	/* Mark attempt to store in default mailbox */
 	if ( strcmp(trans->context->folder, 
@@ -319,7 +327,8 @@ static void act_store_log_status
 		if ( aenv->scriptenv->namespaces == NULL )
 			sieve_result_log(aenv, "store into mailbox '%s' skipped", mailbox_name);
 		else
-			sieve_result_error(aenv, "failed to find namespace for mailbox '%s'", mailbox_name);
+			sieve_result_error
+				(aenv, "failed to find namespace for mailbox '%s'", mailbox_name);
 	} else {	
 		if ( !rolled_back && status ) {
 			sieve_result_log(aenv, "stored mail into mailbox '%s'", mailbox_name);
@@ -345,16 +354,27 @@ static bool act_store_commit
 (const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
 {  
-	struct act_store_transaction *trans = (struct act_store_transaction *) tr_context;
+	struct act_store_transaction *trans = 
+		(struct act_store_transaction *) tr_context;
 	bool status = TRUE;
 
-	if ( trans == NULL || trans->namespace == NULL || trans->box == NULL ) 
+	/* Verify transaction */
+	if ( trans == NULL ) return FALSE;
+
+	/* Exit early if namespace is not available */
+	if ( trans->namespace == NULL ) {
+		if ( aenv->scriptenv->namespaces == NULL ) {
+			act_store_log_status(trans, aenv, FALSE, status);
+			return TRUE;
+		}
+
 		return FALSE;
+	} else if ( trans->box == NULL ) return FALSE;
 
 	/* Mark attempt to use storage. Can only get here when all previous actions
 	 * succeeded. 
 	 */
-        aenv->estatus->last_storage = trans->namespace->storage;
+	aenv->estatus->last_storage = trans->namespace->storage;
 
 	/* Free mail object for stored message */
 	if ( trans->dest_mail != NULL ) 

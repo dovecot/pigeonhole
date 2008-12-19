@@ -560,25 +560,27 @@ static bool _sieve_result_implicit_keep
 	
 	success = act_store.start(&act_store, &result->action_env, (void *) &ctx, &tr_context);
 
-	rsef = rsef_first;
-	while ( rsef != NULL ) {
-		const struct sieve_side_effect *sef = rsef->seffect;
-		if ( sef->pre_execute != NULL ) 
-			success = success & sef->pre_execute
-				(sef, &act_store, &result->action_env, &rsef->context, tr_context);
-		rsef = rsef->next;
-	}
+	if ( success ) {
+		rsef = rsef_first;
+		while ( success && rsef != NULL ) {
+			const struct sieve_side_effect *sef = rsef->seffect;
+			if ( sef->pre_execute != NULL ) 
+				success = success && sef->pre_execute
+					(sef, &act_store, &result->action_env, &rsef->context, tr_context);
+			rsef = rsef->next;
+		}
 
-	success = success && act_store.execute
+		success = success && act_store.execute
 			(&act_store, &result->action_env, tr_context);
-			
-	rsef = rsef_first;
-	while ( rsef != NULL ) {
-		const struct sieve_side_effect *sef = rsef->seffect;
-		if ( sef->post_execute != NULL ) 
-			success = success && sef->post_execute
-				(sef, &act_store, &result->action_env, rsef->context, tr_context);
-		rsef = rsef->next;
+
+		rsef = rsef_first;
+		while ( success && rsef != NULL ) {
+			const struct sieve_side_effect *sef = rsef->seffect;
+			if ( sef->post_execute != NULL ) 
+				success = success && sef->post_execute
+					(sef, &act_store, &result->action_env, rsef->context, tr_context);
+			rsef = rsef->next;
+		}
 	}
 	
 	if ( success ) {	
@@ -661,7 +663,7 @@ int sieve_result_execute
 		
 		/* Execute pre-execute event of side effects */
 		rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
-		while ( rsef != NULL ) {
+		while ( success && rsef != NULL ) {
 			sef = rsef->seffect;
 			if ( sef->pre_execute != NULL ) 
 				success = success & sef->pre_execute
@@ -670,14 +672,14 @@ int sieve_result_execute
 		}
 	
 		/* Execute the action itself */
-		if ( act->execute != NULL ) {
+		if ( success && act->execute != NULL ) {
 			rac->success = act->execute(act, &result->action_env, rac->tr_context);
 			success = success && rac->success;
 		}
 		
 		/* Execute post-execute event of side effects */
 		rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
-		while ( rsef != NULL ) {
+		while ( success && rsef != NULL ) {
 			sef = rsef->seffect;
 			if ( sef->post_execute != NULL ) 
 				success = success && sef->post_execute

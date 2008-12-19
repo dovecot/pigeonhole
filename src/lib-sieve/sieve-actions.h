@@ -119,7 +119,7 @@ struct sieve_side_effect {
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 			const struct sieve_action_exec_env *aenv, void *se_context, 
 			void *tr_context);
-	bool (*post_commit)
+	void (*post_commit)
 		(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 			const struct sieve_action_exec_env *aenv, void *se_context,
 			void *tr_context, bool *keep);

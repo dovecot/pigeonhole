@@ -283,7 +283,7 @@ static bool act_redirect_send
 	/* Just to be sure */
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
 		sieve_result_warning(aenv, "redirect action has no means to send mail.");
-		return FALSE;
+		return TRUE;
 	}
 	
 	if (mail_get_stream(msgdata->mail, NULL, NULL, &input) < 0)
