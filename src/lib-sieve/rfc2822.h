@@ -14,6 +14,8 @@
  
 bool rfc2822_header_field_name_verify
 	(const char *field_name, unsigned int len);
+bool rfc2822_header_field_body_verify
+(const char *field_body, unsigned int len);
 
 /*
  *

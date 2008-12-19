@@ -109,6 +109,31 @@ static inline bool _ntfy_mailto_header_allowed(const char *field_name)
 /* FIXME: much of this implementation will be common to other URI schemes. This
  *        should be merged into a common implementation.
  */
+
+static const char _qchar_lookup[256] = {
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 00
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 10
+	0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0,  // 20
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,  // 30
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  // 40
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1,  // 50
+	0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  // 60
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0,  // 70
+
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 80
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 90
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // A0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // B0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // C0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // D0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // E0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // F0
+};
+
+static inline bool _is_qchar(unsigned char c)
+{
+	return _qchar_lookup[c];
+}
   
 static inline int _decode_hex_digit(char digit)
 {
@@ -251,7 +276,12 @@ static bool _uri_parse_headers
 					*error_r = "invalid % encoding";
 					return FALSE;
 				}
+			} else if ( ch != '=' && !_is_qchar(ch) ) {
+				*error_r = t_strdup_printf
+					("invalid character '%c' in header field name part", *p);
+				return FALSE;
 			}
+
 			str_append_c(field, ch);
 		}
 		if ( *p != '\0' ) p++;
@@ -292,14 +322,20 @@ static bool _uri_parse_headers
 					*error_r = "invalid % encoding";
 					return FALSE;
 				}
+			} else if ( ch != '=' && !_is_qchar(ch) ) {
+				*error_r = t_strdup_printf
+					("invalid character '%c' in header field value part", *p);
+				return FALSE;
 			}
 			str_append_c(field, ch);
 		}
 		if ( *p != '\0' ) p++;
 		
 		/* Verify field body */
-		
-		// FIXME ....
+		if ( !rfc2822_header_field_body_verify(str_c(field), str_len(field)) ) {
+			*error_r = "invalid header field body";
+			return FALSE;
+		}
 		
 		/* Assign field body */
 

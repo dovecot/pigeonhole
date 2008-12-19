@@ -1,6 +1,10 @@
 /* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
  */
 
+/* NOTE: much of the functionality implemented here should eventually appear
+ * somewhere in Dovecot itself.
+ */
+
 #include "lib.h"
 #include "str.h"
 
@@ -8,10 +12,6 @@
 
 #include <stdio.h>
 #include <ctype.h>
-
-/* NOTE: much of the functionality implemented here should eventually appear
- * somewhere in Dovecot itself.
- */
  
 bool rfc2822_header_field_name_verify
 (const char *field_name, unsigned int len) 
@@ -27,6 +27,40 @@ bool rfc2822_header_field_name_verify
 	 
 	while ( p < pend ) {
 		if ( *p < 33 || *p == ':' )
+			return FALSE;
+
+		p++;
+	}	
+	
+	return TRUE;
+}
+
+bool rfc2822_header_field_body_verify
+(const char *field_body, unsigned int len) 
+{
+	const char *p = field_body;
+	const char *pend = p + len;
+
+	/* unstructured    =       *([FWS] utext) [FWS]
+	 * FWS             =       ([*WSP CRLF] 1*WSP) /   ; Folding white space
+	 *                         obs-FWS
+	 * utext           =       NO-WS-CTL /     ; Non white space controls
+	 *                         %d33-126 /      ; The rest of US-ASCII
+	 *                         obs-utext
+	 * NO-WS-CTL       =       %d1-8 /         ; US-ASCII control characters
+	 *                         %d11 /          ;  that do not include the
+	 *                         %d12 /          ;  carriage return, line feed,
+	 *                         %d14-31 /       ;  and white space characters
+	 *                         %d127
+	 * WSP             =  SP / HTAB
+	 */
+
+	/* This verification does not allow content to be folded. This should done
+	 * automatically upon message composition.
+	 */
+
+	while ( p < pend ) {
+		if ( *p == '\0' || *p == '\r' || *p == '\n' || *p > 127 )
 			return FALSE;
 
 		p++;
