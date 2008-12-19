@@ -481,7 +481,7 @@ static bool _contains_8bit(const char *msg)
 	return FALSE;
 }
 
-static bool ntfy_mailto_action_execute
+static bool ntfy_mailto_send
 (const struct sieve_action_exec_env *aenv, 
 	const struct sieve_enotify_context *nctx)
 { 
@@ -502,7 +502,7 @@ static bool ntfy_mailto_action_execute
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
 		sieve_result_warning(aenv, 
 			"notify mailto method has no means to send mail.");
-		return FALSE;
+		return TRUE;
 	}
 	
 	/* Determine from address */
@@ -607,4 +607,33 @@ static bool ntfy_mailto_action_execute
 
 	return TRUE;
 }
+
+static bool ntfy_mailto_action_execute
+(const struct sieve_action_exec_env *aenv, 
+	const struct sieve_enotify_context *nctx)
+{
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const char *const *headers;
+
+	/* Is the message an automatic reply ? */
+	if ( mail_get_headers_utf8
+		(msgdata->mail, "auto-submitted", &headers) >= 0 ) {
+		const char *const *hdsp = headers;
+
+		/* Theoretically multiple headers could exist, so lets make sure */
+		while ( *hdsp != NULL ) {
+			if ( strcasecmp(*hdsp, "no") != 0 ) {
+				sieve_result_log(aenv, 
+					"not sending notification for auto-submitted message from <%s>", 
+					str_sanitize(msgdata->return_path, 128));	
+					return TRUE;				 
+			}
+			hdsp++;
+		}
+	}
+
+	return ntfy_mailto_send(aenv, nctx);
+}
+
+
 

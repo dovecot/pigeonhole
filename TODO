@@ -14,7 +14,6 @@ Current:
 	  recipients. Conversely, the generated To header must include the
 	  URI recipients apart from those stated explicitly in the To URI
 	  header.
-	- Avoid sending notifications on Auto-submitted: messages
 	- Add owner-email to the Auto-submitted field
 	- Implement checking the :from argument for validity and policy 
 	  violations.
