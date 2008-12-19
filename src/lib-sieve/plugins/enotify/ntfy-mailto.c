@@ -332,9 +332,13 @@ static bool _uri_parse_headers
 		if ( *p != '\0' ) p++;
 		
 		/* Verify field body */
-		if ( !rfc2822_header_field_body_verify(str_c(field), str_len(field)) ) {
-			*error_r = "invalid header field body";
-			return FALSE;
+		if ( hname_type == _HNAME_BODY ) {
+			// FIXME: verify body ... 
+		} else {
+			if ( !rfc2822_header_field_body_verify(str_c(field), str_len(field)) ) {
+				*error_r = "invalid header field body";
+				return FALSE;
+			}
 		}
 		
 		/* Assign field body */
