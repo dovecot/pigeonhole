@@ -12,7 +12,6 @@ Current:
 	  recipients. Conversely, the generated To header must include the
 	  URI recipients apart from those stated explicitly in the To URI
 	  header.
-	- Add owner-email to the Auto-submitted field
 	- Implement checking the :from argument for validity and policy 
 	  violations.
 * Implement means to configure which extensions to provide and incorporate

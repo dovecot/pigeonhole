@@ -585,7 +585,8 @@ static bool ntfy_mailto_send
 		rfc2822_header_field_printf(f, "To", "<%s>", recipients[i]);
 		rfc2822_header_field_write(f, "Subject", subject);
 			
-		rfc2822_header_field_write(f, "Auto-Submitted", "auto-notified");
+		rfc2822_header_field_printf(f, "Auto-Submitted", 
+			"auto-notified; owner-email=\"%s\"", msgdata->to_address);
 		rfc2822_header_field_write(f, "Precedence", "bulk");
 
 		/* Set importance */
@@ -607,9 +608,6 @@ static bool ntfy_mailto_send
 		
 		/* Add custom headers */
 		
-		/* FIXME: ignore from and auto-submitted and recognize body, subject, to and
-		 * cc.
-		 */
 		headers = array_get(&mtctx->headers, &hcount);
 		for ( h = 0; h < hcount; h++ ) {
 			const char *name = rfc2822_header_field_name_sanitize(headers[h].name);
