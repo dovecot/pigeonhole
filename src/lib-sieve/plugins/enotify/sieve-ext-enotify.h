@@ -15,7 +15,7 @@
  * Forward declarations
  */
 
-struct sieve_enotify_log_context;
+struct sieve_enotify_log;
 struct sieve_enotify_context; 
 struct sieve_enotify_action;
 struct sieve_enotify_exec_env;
@@ -44,12 +44,12 @@ struct sieve_enotify_method {
 	
 	/* Validation */
 	bool (*validate_uri)
-		(const struct sieve_enotify_log_context *nctx, const char *uri, 
+		(const struct sieve_enotify_log *nctx, const char *uri, 
 			const char *uri_body);
 
 	/* Runtime */
 	bool (*runtime_check_operands)
-		(const struct sieve_enotify_log_context *nctx, const char *uri, 
+		(const struct sieve_enotify_log *nctx, const char *uri, 
 			const char *uri_body, const char *message, const char *from, 
 			pool_t context_pool, void **context);
 			
@@ -80,7 +80,7 @@ struct sieve_enotify_action {
 };
 
 struct sieve_enotify_exec_env {
-	const struct sieve_enotify_log_context *logctx;
+	const struct sieve_enotify_log *notify_log;
 
 	const struct sieve_script_env *scriptenv;
 	const struct sieve_message_data *msgdata;
@@ -91,13 +91,13 @@ struct sieve_enotify_exec_env {
  */
 
 void sieve_enotify_error
-	(const struct sieve_enotify_log_context *nlctx, const char *fmt, ...) 
+	(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
 		ATTR_FORMAT(2, 3);
 void sieve_enotify_warning
-	(const struct sieve_enotify_log_context *nlctx, const char *fmt, ...) 
+	(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
 		ATTR_FORMAT(2, 3);
 void sieve_enotify_log
-	(const struct sieve_enotify_log_context *nlctx, const char *fmt, ...) 
+	(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
 		ATTR_FORMAT(2, 3);
 
 #endif /* __SIEVE_EXT_ENOTIFY_H */

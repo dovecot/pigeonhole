@@ -44,10 +44,10 @@ ARRAY_DEFINE_TYPE(headers, struct ntfy_mailto_header_field);
  */
  
 static bool ntfy_mailto_validate_uri
-	(const struct sieve_enotify_log_context *nlctx, const char *uri, 
+	(const struct sieve_enotify_log *nlog, const char *uri, 
 		const char *uri_body);
 static bool ntfy_mailto_runtime_check_operands
-	(const struct sieve_enotify_log_context *nlctx, const char *uri,
+	(const struct sieve_enotify_log *nlog, const char *uri,
 		const char *uri_body, const char *message, const char *from, 
 		pool_t context_pool, void **context);
 static void ntfy_mailto_action_print
@@ -178,7 +178,7 @@ static inline pool_t array_get_pool_i(struct array *array)
 	array_get_pool_i(&(array)->arr)
 
 static bool _uri_parse_recipients
-(const struct sieve_enotify_log_context *nlctx, const char **uri_p, 
+(const struct sieve_enotify_log *nlog, const char **uri_p, 
 	ARRAY_TYPE(recipients) *recipients_r)
 {
 	string_t *to = t_str_new(128);
@@ -198,7 +198,7 @@ static bool _uri_parse_recipients
 			
 			/* Parse 2-digit hex value */
 			if ( !_parse_hex_value(&p, &ch) ) {
-				sieve_enotify_error(nlctx, "invalid mailto URI: invalid %% encoding");
+				sieve_enotify_error(nlog, "invalid mailto URI: invalid %% encoding");
 				return FALSE;
 			}
 
@@ -249,7 +249,7 @@ static bool _uri_parse_recipients
 }
 
 static bool _uri_parse_headers
-(const struct sieve_enotify_log_context *nlctx, const char **uri_p, 
+(const struct sieve_enotify_log *nlog, const char **uri_p, 
 	ARRAY_TYPE(headers) *headers_r, const char **body, const char **subject)
 {
 	string_t *field = t_str_new(128);
@@ -274,11 +274,11 @@ static bool _uri_parse_headers
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
 					printf("F: %s\n", p);
-					sieve_enotify_error(nlctx, "invalid mailto URI: invalid %% encoding");
+					sieve_enotify_error(nlog, "invalid mailto URI: invalid %% encoding");
 					return FALSE;
 				}
 			} else if ( ch != '=' && !_is_qchar(ch) ) {
-				sieve_enotify_error(nlctx, 
+				sieve_enotify_error(nlog, 
 					"invalid mailto URI: "
 					"invalid character '%c' in header field name part", *p);
 				return FALSE;
@@ -290,7 +290,7 @@ static bool _uri_parse_headers
 
 		/* Verify field name */
 		if ( !rfc2822_header_field_name_verify(str_c(field), str_len(field)) ) {
-			sieve_enotify_error(nlctx, 
+			sieve_enotify_error(nlog, 
 				"invalid mailto URI: invalid header field name");
 			return FALSE;
 		}
@@ -321,11 +321,11 @@ static bool _uri_parse_headers
 			if ( ch == '%' ) {
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
-					sieve_enotify_error(nlctx, "invalid mailto URI: invalid %% encoding");
+					sieve_enotify_error(nlog, "invalid mailto URI: invalid %% encoding");
 					return FALSE;
 				}
 			} else if ( ch != '=' && !_is_qchar(ch) ) {
-				sieve_enotify_error(nlctx, 
+				sieve_enotify_error(nlog, 
 					"invalid mailto URI: "
 					"invalid character '%c' in header field value part", *p);
 				return FALSE;
@@ -339,7 +339,7 @@ static bool _uri_parse_headers
 			// FIXME: verify body ... 
 		} else {
 			if ( !rfc2822_header_field_body_verify(str_c(field), str_len(field)) ) {
-				sieve_enotify_error(nlctx, 
+				sieve_enotify_error(nlog, 
 					"invalid mailto URI: invalid header field body");
 				return FALSE;
 			}
@@ -376,7 +376,7 @@ static bool _uri_parse_headers
 }
 
 static bool ntfy_mailto_parse_uri
-(const struct sieve_enotify_log_context *nlctx, const char *uri_body, 
+(const struct sieve_enotify_log *nlog, const char *uri_body, 
 	ARRAY_TYPE(recipients) *recipients_r, ARRAY_TYPE(headers) *headers_r, 
 	const char **body, const char **subject)
 {
@@ -401,14 +401,14 @@ static bool ntfy_mailto_parse_uri
 	/* First extract to-part by searching for '?' and decoding % items
 	 */
 
-	if ( !_uri_parse_recipients(nlctx, &p, recipients_r) )
+	if ( !_uri_parse_recipients(nlog, &p, recipients_r) )
 		return FALSE;	
 
 	/* Extract hfield items */	
 	
 	while ( *p != '\0' ) {		
 		/* Extract hfield item by searching for '&' and decoding '%' items */
-		if ( !_uri_parse_headers(nlctx, &p, headers_r, body, subject) )
+		if ( !_uri_parse_headers(nlog, &p, headers_r, body, subject) )
 			return FALSE;		
 	}
 	
@@ -420,14 +420,14 @@ static bool ntfy_mailto_parse_uri
  */
 
 static bool ntfy_mailto_validate_uri
-(const struct sieve_enotify_log_context *nlctx, const char *uri,
+(const struct sieve_enotify_log *nlog, const char *uri,
 	const char *uri_body)
 {	
-	return ntfy_mailto_parse_uri(nlctx, uri_body, NULL, NULL, NULL, NULL);
+	return ntfy_mailto_parse_uri(nlog, uri_body, NULL, NULL, NULL, NULL);
 }
 
 static bool ntfy_mailto_validate_from
-(const struct sieve_enotify_log_context *nlctx, string_t *from)
+(const struct sieve_enotify_log *nlog, string_t *from)
 {
 	const char *error;
 	bool result;
@@ -436,7 +436,7 @@ static bool ntfy_mailto_validate_from
 		result = sieve_address_validate(from, &error);
 
 		if ( !result ) {
-			sieve_enotify_error(nlctx,
+			sieve_enotify_error(nlog,
 				"specified :from address '%s' is invalid for "
 				"the mailto method: %s",
 				str_sanitize(str_c(from), 128), error);
@@ -451,7 +451,7 @@ static bool ntfy_mailto_validate_from
  */
  
 static bool ntfy_mailto_runtime_check_operands
-(const struct sieve_enotify_log_context *nlctx, const char *uri, 
+(const struct sieve_enotify_log *nlog, const char *uri, 
 	const char *uri_body, const char *message ATTR_UNUSED, 
 	const char *from ATTR_UNUSED, pool_t context_pool, void **context)
 {
@@ -463,7 +463,7 @@ static bool ntfy_mailto_runtime_check_operands
 	p_array_init(&mtctx->headers, context_pool, NTFY_MAILTO_MAX_HEADERS);
 
 	if ( !ntfy_mailto_parse_uri
-		(nlctx, uri_body, &mtctx->recipients, &mtctx->headers, &mtctx->body, 
+		(nlog, uri_body, &mtctx->recipients, &mtctx->headers, &mtctx->body, 
 			&mtctx->subject) ) {
 		return FALSE;
 	}
@@ -533,7 +533,7 @@ static bool ntfy_mailto_send
 (const struct sieve_enotify_exec_env *nenv, 
 	const struct sieve_enotify_action *act)
 { 
-	const struct sieve_enotify_log_context *nlctx = nenv->logctx;
+	const struct sieve_enotify_log *nlog = nenv->notify_log;
 	const struct sieve_message_data *msgdata = nenv->msgdata;
 	const struct sieve_script_env *senv = nenv->scriptenv;
 	struct ntfy_mailto_context *mtctx = 
@@ -549,7 +549,7 @@ static bool ntfy_mailto_send
 
 	/* Just to be sure */
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
-		sieve_enotify_warning(nlctx, 
+		sieve_enotify_warning(nlog, 
 			"notify mailto method has no means to send mail.");
 		return TRUE;
 	}
@@ -642,10 +642,10 @@ static bool ntfy_mailto_send
 		}
 	
 		if ( senv->smtp_close(smtp_handle) ) {
-			sieve_enotify_log(nlctx, 
+			sieve_enotify_log(nlog, 
 				"sent mail notification to <%s>", str_sanitize(recipients[i], 80));
 		} else {
-			sieve_enotify_error(nlctx,
+			sieve_enotify_error(nlog,
 				"failed to send mail notification to <%s> "
 				"(refer to system log for more information)", 
 				str_sanitize(recipients[i], 80));
@@ -670,7 +670,7 @@ static bool ntfy_mailto_action_execute
 		/* Theoretically multiple headers could exist, so lets make sure */
 		while ( *hdsp != NULL ) {
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
-				sieve_enotify_log(nenv->logctx, 
+				sieve_enotify_log(nenv->notify_log, 
 					"not sending notification for auto-submitted message from <%s>", 
 					str_sanitize(msgdata->return_path, 128));	
 					return TRUE;				 

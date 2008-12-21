@@ -529,15 +529,15 @@ static bool act_notify_commit
 	const struct sieve_enotify_action *act = 
 		(const struct sieve_enotify_action *) tr_context;
 	struct sieve_enotify_exec_env nenv;
-	struct sieve_enotify_log_context nlctx;
+	struct sieve_enotify_log nlog;
 		
-	memset(&nlctx, 0, sizeof(nlctx));
-	nlctx.location = sieve_action_get_location(aenv);
-	nlctx.ehandler = sieve_result_get_error_handler(aenv->result);
+	memset(&nlog, 0, sizeof(nlog));
+	nlog.location = sieve_action_get_location(aenv);
+	nlog.ehandler = sieve_result_get_error_handler(aenv->result);
 
 	nenv.scriptenv = aenv->scriptenv;
 	nenv.msgdata = aenv->msgdata;
-	nenv.logctx = &nlctx;
+	nenv.notify_log = &nlog;
 
 	if ( act->method->action_execute != NULL )
 		return act->method->action_execute(&nenv, act);

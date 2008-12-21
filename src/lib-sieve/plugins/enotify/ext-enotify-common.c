@@ -153,15 +153,15 @@ bool ext_enotify_uri_validate
 	}
 	
 	if ( method->validate_uri != NULL ) {
-		struct sieve_enotify_log_context nlctx;
+		struct sieve_enotify_log nlog;
 		
-		memset(&nlctx, 0, sizeof(nlctx));
-		nlctx.location = sieve_error_script_location
+		memset(&nlog, 0, sizeof(nlog));
+		nlog.location = sieve_error_script_location
 			(sieve_validator_script(valdtr), arg->source_line);
-		nlctx.ehandler = sieve_validator_error_handler(valdtr);
-		nlctx.prefix = "notify command";
+		nlog.ehandler = sieve_validator_error_handler(valdtr);
+		nlog.prefix = "notify command";
 
-		return method->validate_uri(&nlctx, sieve_ast_argument_strc(arg), uri);
+		return method->validate_uri(&nlog, sieve_ast_argument_strc(arg), uri);
 	}
 	
 	return TRUE;
@@ -195,15 +195,15 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 	}
 
 	if ( method->runtime_check_operands != NULL ) {
-		struct sieve_enotify_log_context nlctx;
+		struct sieve_enotify_log nlog;
 		
-		memset(&nlctx, 0, sizeof(nlctx));
-		nlctx.location = sieve_error_script_location(renv->script, source_line);
-		nlctx.ehandler = sieve_interpreter_get_error_handler(renv->interp);
-		nlctx.prefix = "notify action";
+		memset(&nlog, 0, sizeof(nlog));
+		nlog.location = sieve_error_script_location(renv->script, source_line);
+		nlog.ehandler = sieve_interpreter_get_error_handler(renv->interp);
+		nlog.prefix = "notify action";
 
 		if ( method->runtime_check_operands
-			(&nlctx, method_uri, uri, message, from, sieve_result_pool(renv->result), 
+			(&nlog, method_uri, uri, message, from, sieve_result_pool(renv->result), 
 			context) )
 			return method;
 		
@@ -219,16 +219,16 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
  */
 
 void sieve_enotify_error
-(const struct sieve_enotify_log_context *nlctx, const char *fmt, ...) 
+(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
 {
 	va_list args;
 	va_start(args, fmt);
 	
 	T_BEGIN {
-		if ( nlctx->prefix == NULL )
-			sieve_verror(nlctx->ehandler, nlctx->location, fmt, args);
+		if ( nlog->prefix == NULL )
+			sieve_verror(nlog->ehandler, nlog->location, fmt, args);
 		else
-			sieve_error(nlctx->ehandler, nlctx->location, "%s: %s", nlctx->prefix, 
+			sieve_error(nlog->ehandler, nlog->location, "%s: %s", nlog->prefix, 
 				t_strdup_vprintf(fmt, args));
 	} T_END;
 	
@@ -236,16 +236,16 @@ void sieve_enotify_error
 }
 
 void sieve_enotify_warning
-(const struct sieve_enotify_log_context *nlctx, const char *fmt, ...) 
+(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
 {
 	va_list args;
 	va_start(args, fmt);
 	
 	T_BEGIN { 
-		if ( nlctx->prefix == NULL )
-			sieve_vwarning(nlctx->ehandler, nlctx->location, fmt, args);
+		if ( nlog->prefix == NULL )
+			sieve_vwarning(nlog->ehandler, nlog->location, fmt, args);
 		else			
-			sieve_warning(nlctx->ehandler, nlctx->location, "%s: %s", nlctx->prefix, 
+			sieve_warning(nlog->ehandler, nlog->location, "%s: %s", nlog->prefix, 
 				t_strdup_vprintf(fmt, args));
 	} T_END;
 	
@@ -253,16 +253,16 @@ void sieve_enotify_warning
 }
 
 void sieve_enotify_log
-(const struct sieve_enotify_log_context *nlctx, const char *fmt, ...) 
+(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
 {
 	va_list args;
 	va_start(args, fmt);
 	
 	T_BEGIN { 
-		if ( nlctx->prefix == NULL )
-			sieve_vinfo(nlctx->ehandler, nlctx->location, fmt, args);
+		if ( nlog->prefix == NULL )
+			sieve_vinfo(nlog->ehandler, nlog->location, fmt, args);
 		else
-			sieve_info(nlctx->ehandler, nlctx->location, "%s: %s", nlctx->prefix, 
+			sieve_info(nlog->ehandler, nlog->location, "%s: %s", nlog->prefix, 
 				t_strdup_vprintf(fmt, args));	
 	} T_END;
 	

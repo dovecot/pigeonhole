@@ -86,7 +86,7 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
  * Method logging
  */ 
 
-struct sieve_enotify_log_context {
+struct sieve_enotify_log {
 	struct sieve_error_handler *ehandler;
 	
 	const char *location;
