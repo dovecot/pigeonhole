@@ -36,7 +36,13 @@ struct ntfy_mailto_header_field {
 	const char *body;
 };
 
-ARRAY_DEFINE_TYPE(recipients, const char *);
+struct ntfy_mailto_recipient {
+	const char *full;
+	const char *normalized;
+	bool carbon_copy;
+};
+
+ARRAY_DEFINE_TYPE(recipients, struct ntfy_mailto_recipient);
 ARRAY_DEFINE_TYPE(headers, struct ntfy_mailto_header_field);
 
 /* 
@@ -89,6 +95,7 @@ static const char *_reserved_headers[] = {
 	"received",
 	"message-id",
 	"data",
+	"bcc",
 	NULL
 };
 
@@ -110,6 +117,18 @@ static inline bool _ntfy_mailto_header_allowed(const char *field_name)
  * Mailto URI parsing
  */
  
+/* Util functions */
+
+static inline pool_t array_get_pool_i(struct array *array)
+{
+	return buffer_get_pool(array->buffer);
+}
+#define array_get_pool(array) \
+	array_get_pool_i(&(array)->arr)
+
+#define _uri_parse_error(LOG, ...) \
+	sieve_enotify_error(LOG, "invalid mailto URI: " __VA_ARGS__ )
+
 /* FIXME: much of this implementation will be common to other URI schemes. This
  *        should be merged into a common implementation.
  */
@@ -174,24 +193,40 @@ static bool _parse_hex_value(const char **in, char *out)
 	return (*out != '\0');	
 }
 
-static inline pool_t array_get_pool_i(struct array *array)
+static bool _uri_add_valid_recipient
+(const struct sieve_enotify_log *nlog, ARRAY_TYPE(recipients) *recipients_r, 
+	string_t *recipient, bool cc)
 {
-	return buffer_get_pool(array->buffer);
+	const char *error;
+	const char *normalized;
+	 
+	/* Verify recipient */
+	if ( (normalized=sieve_address_normalize(recipient, &error)) == NULL ) {
+		_uri_parse_error(nlog, "invalid recipient '%s': %s",
+			str_sanitize(str_c(recipient), 80), error);
+		return FALSE;
+	}
+				
+	/* Add recipient to the list */
+	if ( recipients_r != NULL ) {
+		pool_t pool = array_get_pool(recipients_r);
+		struct ntfy_mailto_recipient *new_recipient;
+
+		new_recipient = array_append_space(recipients_r);
+		new_recipient->carbon_copy = cc;
+		new_recipient->full = p_strdup(pool, str_c(recipient));
+		new_recipient->normalized = p_strdup(pool, normalized);
+	}
+
+	return TRUE;
 }
-#define array_get_pool(array) \
-	array_get_pool_i(&(array)->arr)
 
 static bool _uri_parse_recipients
 (const struct sieve_enotify_log *nlog, const char **uri_p, 
 	ARRAY_TYPE(recipients) *recipients_r)
 {
 	string_t *to = t_str_new(128);
-	const char *recipient;
 	const char *p = *uri_p;
-	pool_t pool = NULL;
-	
-	if ( recipients_r != NULL )
-		pool = array_get_pool(recipients_r);
 		
 	while ( *p != '\0' && *p != '?' ) {
 		if ( *p == '%' ) {
@@ -202,23 +237,15 @@ static bool _uri_parse_recipients
 			
 			/* Parse 2-digit hex value */
 			if ( !_parse_hex_value(&p, &ch) ) {
-				sieve_enotify_error(nlog, "invalid mailto URI: invalid %% encoding");
+				_uri_parse_error(nlog, "invalid %% encoding");
 				return FALSE;
 			}
 
 			/* Check for delimiter */
 			if ( ch == ',' ) {
-				recipient = str_c(to);
-				
-				/* Verify recipient */
-			
-				// FIXME ....
-				
-				/* Add recipient to the list */
-				if ( recipients_r != NULL ) {
-					recipient = p_strdup(pool, recipient);
-					array_append(recipients_r, &recipient, 1);
-				}
+				/* Verify and add recipient */
+				if ( !_uri_add_valid_recipient(nlog, recipients_r, to, FALSE) )
+					return FALSE;
 			
 				/* Reset for next recipient */
 				str_truncate(to, 0);
@@ -236,25 +263,48 @@ static bool _uri_parse_recipients
 	/* Skip '?' */
 	if ( *p != '\0' ) p++;
 	
-	recipient = str_c(to);
-	
-	/* Verify recipient */
+	/* Verify and add recipient */
+	if ( !_uri_add_valid_recipient(nlog, recipients_r, to, FALSE) )
+		return FALSE;
 
-	// FIXME ....
-		
-	if ( recipients_r != NULL ) {
-		/* Add recipient to the list */
-		recipient = p_strdup(pool, recipient);
-		array_append(recipients_r, &recipient, 1);
-	}
-	
 	*uri_p = p;
 	return TRUE;
 }
 
+static bool _uri_parse_header_recipients
+(const struct sieve_enotify_log *nlog, string_t *rcpt_header, 
+	ARRAY_TYPE(recipients) *recipients_r, bool cc)
+{
+	string_t *to = t_str_new(128);
+	const char *p = (const char *) str_data(rcpt_header);
+	const char *pend = p + str_len(rcpt_header);
+		
+	while ( p < pend ) {
+		if ( *p == ',' ) {
+			/* Verify and add recipient */
+			if ( !_uri_add_valid_recipient(nlog, recipients_r, to, cc) )
+				return FALSE;
+			
+			/* Reset for next recipient */
+			str_truncate(to, 0);
+		} else {
+			/* Content character */
+			str_append_c(to, *p);
+		}
+		p++;
+	}	
+	
+	/* Verify and add recipient */
+	if ( !_uri_add_valid_recipient(nlog, recipients_r, to, cc) )
+		return FALSE;
+
+	return TRUE;	
+}
+
 static bool _uri_parse_headers
 (const struct sieve_enotify_log *nlog, const char **uri_p, 
-	ARRAY_TYPE(headers) *headers_r, const char **body, const char **subject)
+	ARRAY_TYPE(headers) *headers_r, ARRAY_TYPE(recipients) *recipients_r,
+	const char **body, const char **subject)
 {
 	string_t *field = t_str_new(128);
 	const char *p = *uri_p;
@@ -264,8 +314,13 @@ static bool _uri_parse_headers
 		pool = array_get_pool(headers_r);
 		
 	while ( *p != '\0' ) {
-		enum { _HNAME_GENERIC, _HNAME_SUBJECT, _HNAME_BODY } hname_type = 
-			_HNAME_GENERIC;
+		enum { 
+			_HNAME_GENERIC,
+			_HNAME_TO,
+			_HNAME_CC,
+			_HNAME_SUBJECT, 
+			_HNAME_BODY 
+		} hname_type = _HNAME_GENERIC;
 		struct ntfy_mailto_header_field *hdrf = NULL;
 		const char *field_name;
 		
@@ -277,14 +332,12 @@ static bool _uri_parse_headers
 			if ( ch == '%' ) {
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
-					printf("F: %s\n", p);
-					sieve_enotify_error(nlog, "invalid mailto URI: invalid %% encoding");
+					_uri_parse_error(nlog, "invalid %% encoding");
 					return FALSE;
 				}
 			} else if ( ch != '=' && !_is_qchar(ch) ) {
-				sieve_enotify_error(nlog, 
-					"invalid mailto URI: "
-					"invalid character '%c' in header field name part", *p);
+				_uri_parse_error
+					(nlog, "invalid character '%c' in header field name part", ch);
 				return FALSE;
 			}
 
@@ -294,14 +347,17 @@ static bool _uri_parse_headers
 
 		/* Verify field name */
 		if ( !rfc2822_header_field_name_verify(str_c(field), str_len(field)) ) {
-			sieve_enotify_error(nlog, 
-				"invalid mailto URI: invalid header field name");
+			_uri_parse_error(nlog, "invalid header field name");
 			return FALSE;
 		}
 
 		/* Add new header field to array and assign its name */
 		field_name = str_c(field);
-		if ( strcasecmp(field_name, "subject") == 0 )
+		if ( strcasecmp(field_name, "to") == 0 )
+			hname_type = _HNAME_TO;
+		else if ( strcasecmp(field_name, "cc") == 0 )
+			hname_type = _HNAME_CC;
+		else if ( strcasecmp(field_name, "subject") == 0 )
 			hname_type = _HNAME_SUBJECT;
 		else if ( strcasecmp(field_name, "body") == 0 )
 			hname_type = _HNAME_BODY;
@@ -309,7 +365,8 @@ static bool _uri_parse_headers
 			if ( headers_r != NULL ) {
 				hdrf = array_append_space(headers_r);
 				hdrf->name = p_strdup(pool, field_name);
-			}
+			} else 
+				hdrf = NULL;
 		} else {
 			hdrf = NULL;
 		}
@@ -325,13 +382,12 @@ static bool _uri_parse_headers
 			if ( ch == '%' ) {
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
-					sieve_enotify_error(nlog, "invalid mailto URI: invalid %% encoding");
+					_uri_parse_error(nlog, "invalid %% encoding");
 					return FALSE;
 				}
 			} else if ( ch != '=' && !_is_qchar(ch) ) {
-				sieve_enotify_error(nlog, 
-					"invalid mailto URI: "
-					"invalid character '%c' in header field value part", *p);
+				_uri_parse_error
+					(nlog, "invalid character '%c' in header field value part", ch);
 				return FALSE;
 			}
 			str_append_c(field, ch);
@@ -343,29 +399,35 @@ static bool _uri_parse_headers
 			// FIXME: verify body ... 
 		} else {
 			if ( !rfc2822_header_field_body_verify(str_c(field), str_len(field)) ) {
-				sieve_enotify_error(nlog, 
-					"invalid mailto URI: invalid header field body");
+				_uri_parse_error
+					(nlog, "invalid header field body");
 				return FALSE;
 			}
 		}
 		
 		/* Assign field body */
 
-		if ( headers_r != NULL ) {
-			switch ( hname_type ) {
-			case _HNAME_SUBJECT:
-				if ( subject != NULL )
-					*subject = p_strdup(pool, str_c(field));
-				break;
-			case _HNAME_BODY:
-				if ( subject != NULL )
-					*body = p_strdup(pool, str_c(field));
-				break;
-			case _HNAME_GENERIC:
-				if ( hdrf != NULL ) 
-					hdrf->body = p_strdup(pool, str_c(field));
-				break;
-			}
+		switch ( hname_type ) {
+		case _HNAME_TO:
+			if ( !_uri_parse_header_recipients(nlog, field, recipients_r, FALSE) )
+				return FALSE;
+			break;
+		case _HNAME_CC:
+			if ( !_uri_parse_header_recipients(nlog, field, recipients_r, TRUE) )
+				return FALSE;
+			break;
+		case _HNAME_SUBJECT:
+			if ( subject != NULL )
+				*subject = p_strdup(pool, str_c(field));
+			break;
+		case _HNAME_BODY:
+			if ( subject != NULL )
+				*body = p_strdup(pool, str_c(field));
+			break;
+		case _HNAME_GENERIC:
+			if ( hdrf != NULL ) 
+				hdrf->body = p_strdup(pool, str_c(field));
+			break;
 		}
 			
 		/* Reset for next name */
@@ -413,7 +475,7 @@ static bool ntfy_mailto_parse_uri
 	
 	while ( *p != '\0' ) {		
 		/* Extract hfield item by searching for '&' and decoding '%' items */
-		if ( !_uri_parse_headers(nlog, &p, headers_r, body, subject) )
+		if ( !_uri_parse_headers(nlog, &p, headers_r, recipients_r, body, subject) )
 			return FALSE;		
 	}
 	
@@ -435,7 +497,7 @@ static bool ntfy_mailto_compile_check_from
 	(const struct sieve_enotify_log *nlog, string_t *from)
 {
 	const char *error;
-	bool result;
+	bool result = FALSE;
 
 	T_BEGIN {
 		result = sieve_address_validate(from, &error);
@@ -487,7 +549,7 @@ static void ntfy_mailto_action_print
 	const struct sieve_enotify_action *act)
 {
 	unsigned int count, i;
-	const char *const *recipients;
+	const struct ntfy_mailto_recipient *recipients;
 	const struct ntfy_mailto_header_field *headers;
 	struct ntfy_mailto_context *mtctx = 
 		(struct ntfy_mailto_context *) act->method_context;
@@ -503,7 +565,10 @@ static void ntfy_mailto_action_print
 	sieve_result_printf(rpenv,   "    => recipients   :\n" );
 	recipients = array_get(&mtctx->recipients, &count);
 	for ( i = 0; i < count; i++ ) {
-		sieve_result_printf(rpenv,   "       + %s\n", recipients[i]);
+		if ( recipients[i].carbon_copy )
+			sieve_result_printf(rpenv,   "       + Cc: %s\n", recipients[i].full);
+		else
+			sieve_result_printf(rpenv,   "       + To: %s\n", recipients[i].full);
 	}
 	
 	sieve_result_printf(rpenv,   "    => headers      :\n" );
@@ -546,7 +611,8 @@ static bool ntfy_mailto_send
 	const char *from = NULL; 
 	const char *subject = mtctx->subject;
 	const char *body = mtctx->body;
-	const char *const *recipients;
+	string_t *to, *cc;
+	const struct ntfy_mailto_recipient *recipients;
 	void *smtp_handle;
 	unsigned int count, i;
 	FILE *f;
@@ -562,7 +628,7 @@ static bool ntfy_mailto_send
 	/* Determine from address */
 	if ( msgdata->return_path != NULL ) {
 		if ( act->from == NULL )
-			from = senv->postmaster_address;
+			from = t_strdup_printf("Postmaster <%s>", senv->postmaster_address);
 		else
 			/* FIXME: validate */
 			from = act->from;
@@ -583,21 +649,51 @@ static bool ntfy_mailto_send
 			subject = "Notification: (no subject)";
 	}
 
-	/* Send message to all recipients */
 	recipients = array_get(&mtctx->recipients, &count);
+
+	/* Compose To and Cc headers */
+	to = NULL;
+	cc = NULL;
+	for ( i = 0; i < count; i++ ) {
+		if ( recipients[i].carbon_copy ) {
+			if ( cc == NULL ) {
+				cc = t_str_new(256);
+				str_append(cc, recipients[i].full);
+			} else {
+				str_append(cc, ", ");
+				str_append(cc, recipients[i].full);
+			}
+		} else {
+			if ( to == NULL ) {
+				to = t_str_new(256);
+				str_append(to, recipients[i].full);
+			} else {
+				str_append(to, ", ");
+				str_append(to, recipients[i].full);
+			}
+		}
+	}
+
+	/* Send message to all recipients */
 	for ( i = 0; i < count; i++ ) {
 		const struct ntfy_mailto_header_field *headers;
 		unsigned int h, hcount;
 
-		smtp_handle = senv->smtp_open(recipients[i], from, &f);
+		smtp_handle = senv->smtp_open(recipients[i].normalized, from, &f);
 		outmsgid = sieve_get_new_message_id(senv);
 	
 		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
 		rfc2822_header_field_write(f, "Message-ID", outmsgid);
 		rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
-		rfc2822_header_field_printf(f, "From", "<%s>", from);
-		rfc2822_header_field_printf(f, "To", "<%s>", recipients[i]);
 		rfc2822_header_field_write(f, "Subject", subject);
+
+		rfc2822_header_field_printf(f, "From", "%s", from);
+
+		if ( to != NULL )
+			rfc2822_header_field_printf(f, "To", "%s", str_c(to));
+		
+		if ( cc != NULL )
+			rfc2822_header_field_printf(f, "Cc", "%s", str_c(cc));
 			
 		rfc2822_header_field_printf(f, "Auto-Submitted", 
 			"auto-notified; owner-email=\"%s\"", msgdata->to_address);
@@ -648,12 +744,13 @@ static bool ntfy_mailto_send
 	
 		if ( senv->smtp_close(smtp_handle) ) {
 			sieve_enotify_log(nlog, 
-				"sent mail notification to <%s>", str_sanitize(recipients[i], 80));
+				"sent mail notification to <%s>", 
+				str_sanitize(recipients[i].normalized, 80));
 		} else {
 			sieve_enotify_error(nlog,
 				"failed to send mail notification to <%s> "
 				"(refer to system log for more information)", 
-				str_sanitize(recipients[i], 80));
+				str_sanitize(recipients[i].normalized, 80));
 		}
 	}
 

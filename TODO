@@ -7,11 +7,7 @@ Current:
 	- Check whether handling of error conditions matches the standard
 	- Limit the number of notifications generated (on a per-method basis)
 * Implement mailto method for the enotify extension:
-	- Implement verification of recipient addresses in mailto uris.
-	- Add addresses contained in to to and cc URI headers to the 
-	  recipients. Conversely, the generated To header must include the
-	  URI recipients apart from those stated explicitly in the To URI
-	  header.
+	- Check that URI headers are not duplicated if not allowed.
 * Implement means to configure which extensions to provide and incorporate
   enotify extension into default compile.  
 
