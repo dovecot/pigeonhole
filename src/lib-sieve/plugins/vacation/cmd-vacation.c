@@ -207,6 +207,7 @@ struct act_vacation_context {
 	const char *handle;
 	bool mime;
 	const char *from;
+	const char *from_normalized;	
 	const char *const *addresses;
 };
 
@@ -551,6 +552,7 @@ static int ext_vacation_operation_execute
 	struct sieve_coded_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
 	unsigned int source_line;
+	const char *from_normalized = NULL;
 
 	/*
 	 * Read operands
@@ -635,6 +637,20 @@ static int ext_vacation_operation_execute
 
 	sieve_runtime_trace(renv, "VACATION action");	
 
+	/* Check and normalize :from address */
+	if ( from != NULL ) {
+		const char *error;
+
+		from_normalized = sieve_address_normalize(from, &error);
+	
+		if ( from_normalized == NULL) {
+			sieve_runtime_error(renv, 
+				sieve_error_script_location(renv->script, source_line),
+				"specified :from address '%s' is invalid for vacation action: %s",
+				str_sanitize(str_c(from), 128), error);
+   		}
+	}
+
 	/* Add vacation action to the result */
 
 	pool = sieve_result_pool(renv->result);
@@ -645,8 +661,11 @@ static int ext_vacation_operation_execute
 	act->mime = mime;
 	if ( subject != NULL )
 		act->subject = p_strdup(pool, str_c(subject));
-	if ( from != NULL )
+	if ( from != NULL ) {
 		act->from = p_strdup(pool, str_c(from));
+		act->from_normalized = p_strdup(pool, from_normalized);
+	}
+
 	if ( addresses != NULL )
 		sieve_coded_stringlist_read_all(addresses, pool, &(act->addresses));
 		
@@ -819,12 +838,17 @@ static bool act_vacation_send
     
 	rfc2822_header_field_write(f, "Message-ID", outmsgid);
 	rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
-	if ( ctx->from != NULL && *(ctx->from) != '\0' )
-		rfc2822_header_field_printf(f, "From", "<%s>", ctx->from);
+
+	if ( ctx->from_normalized != NULL && *(ctx->from_normalized) != '\0' )
+		rfc2822_header_field_printf(f, "From", "%s", ctx->from_normalized);
 	else
 		rfc2822_header_field_printf(f, "From", "<%s>", msgdata->to_address);
 		
+	/* FIXME: If From header of message has same address, we should use that in 
+	 * stead properly include the phrase part.
+	 */
 	rfc2822_header_field_printf(f, "To", "<%s>", msgdata->return_path);
+
 	rfc2822_header_field_printf(f, "Subject", "%s", 
 		str_sanitize(ctx->subject, 256));
 
