@@ -60,7 +60,7 @@ bool rfc2822_header_field_body_verify
 	 */
 
 	while ( p < pend ) {
-		if ( *p == '\0' || *p == '\r' || *p == '\n' || *p > 127 )
+		if ( *p == '\0' || *p == '\r' || *p == '\n' || ((unsigned char)*p) > 127 )
 			return FALSE;
 
 		p++;
