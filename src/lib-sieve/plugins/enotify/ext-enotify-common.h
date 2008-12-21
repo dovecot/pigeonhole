@@ -82,4 +82,15 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 		const char *method_uri,	const char *message, const char *from, 
 		void **context);
 
+/*
+ * Method logging
+ */ 
+
+struct sieve_enotify_log_context {
+	struct sieve_error_handler *ehandler;
+	
+	/* Script location */
+	const char *location;
+};
+
 #endif /* __EXT_ENOTIFY_COMMON_H */

@@ -32,7 +32,7 @@
  */
 
 const char *sieve_error_script_location
-(struct sieve_script *script, unsigned int source_line)
+(const struct sieve_script *script, unsigned int source_line)
 {
     const char *sname = sieve_script_name(script);
 

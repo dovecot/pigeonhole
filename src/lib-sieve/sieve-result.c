@@ -130,6 +130,11 @@ pool_t sieve_result_pool(struct sieve_result *result)
 	return result->pool;
 }
 
+struct sieve_error_handler *sieve_result_get_error_handler(struct sieve_result *result)
+{
+	return result->ehandler;
+}
+
 /*
  * Extension support
  */
@@ -158,19 +163,13 @@ const void *sieve_result_extension_get_context
  * Error handling 
  */
 
-static const char *_get_location(const struct sieve_action_exec_env *aenv)
-{
-	return t_strdup_printf("msgid=%s", aenv->msgdata->id == NULL ? 
-		"unspecified" : str_sanitize(aenv->msgdata->id, 80));
-}
-
 void sieve_result_error
 	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 {
 	va_list args;
 	
 	va_start(args, fmt);	
-	sieve_verror(aenv->result->ehandler, _get_location(aenv), fmt, args); 
+	sieve_verror(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, args); 
 	va_end(args);
 }
 
@@ -180,7 +179,7 @@ void sieve_result_warning
 	va_list args;
 	
 	va_start(args, fmt);	
-	sieve_vwarning(aenv->result->ehandler, _get_location(aenv), fmt, args); 
+	sieve_vwarning(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, args); 
 	va_end(args);
 }
 
@@ -190,7 +189,7 @@ void sieve_result_log
 	va_list args;
 	
 	va_start(args, fmt);	
-	sieve_vinfo(aenv->result->ehandler, _get_location(aenv), fmt, args); 
+	sieve_vinfo(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, args); 
 	va_end(args);
 }
 

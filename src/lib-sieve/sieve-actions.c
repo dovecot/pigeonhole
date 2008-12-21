@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "strfuncs.h"
 #include "ioloop.h"
 #include "str-sanitize.h"
 #include "mail-storage.h"
@@ -27,6 +28,16 @@ const char *sieve_get_new_message_id
 	return t_strdup_printf("<dovecot-sieve-%s-%s-%d@%s>",
 		dec2str(ioloop_timeval.tv_sec), dec2str(ioloop_timeval.tv_usec),
     count++, senv->hostname);
+}
+
+/*
+ * Action execution environment
+ */
+
+const char *sieve_action_get_location(const struct sieve_action_exec_env *aenv)
+{
+	return t_strdup_printf("msgid=%s", aenv->msgdata->id == NULL ?
+		"unspecified" : str_sanitize(aenv->msgdata->id, 80));
 }
 
 /*

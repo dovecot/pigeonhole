@@ -22,6 +22,8 @@ struct sieve_action_exec_env {
 	struct sieve_exec_status *estatus;
 };
 
+const char *sieve_action_get_location(const struct sieve_action_exec_env *aenv);
+
 /*
  * Action flags
  */

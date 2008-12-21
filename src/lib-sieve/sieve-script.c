@@ -206,27 +206,27 @@ void sieve_script_unref(struct sieve_script **script)
  * Accessors 
  */
 
-const char *sieve_script_name(struct sieve_script *script)
+const char *sieve_script_name(const struct sieve_script *script)
 {
 	return script->name;
 }
 
-const char *sieve_script_filename(struct sieve_script *script)
+const char *sieve_script_filename(const struct sieve_script *script)
 {
 	return script->filename;
 }
 
-const char *sieve_script_path(struct sieve_script *script)
+const char *sieve_script_path(const struct sieve_script *script)
 {
 	return script->path;
 }
 
-const char *sieve_script_dirpath(struct sieve_script *script)
+const char *sieve_script_dirpath(const struct sieve_script *script)
 {
 	return script->dirpath;
 }
 
-const char *sieve_script_binpath(struct sieve_script *script)
+const char *sieve_script_binpath(const struct sieve_script *script)
 {
 	return t_strconcat(script->dirpath, "/", script->basename, ".svbin", NULL);
 }
@@ -293,7 +293,7 @@ void sieve_script_close(struct sieve_script *script)
 	i_stream_destroy(&script->stream);
 }
 
-uoff_t sieve_script_get_size(struct sieve_script *script)
+uoff_t sieve_script_get_size(const struct sieve_script *script)
 {
 	return script->st.st_size;
 }
@@ -303,18 +303,18 @@ uoff_t sieve_script_get_size(struct sieve_script *script)
  */
 
 int sieve_script_cmp
-(struct sieve_script *script1, struct sieve_script *script2)
+(const struct sieve_script *script1, const struct sieve_script *script2)
 {	
 	return ( script1->st.st_ino == script2->st.st_ino ) ? 0 : -1;
 }
 
-unsigned int sieve_script_hash(struct sieve_script *script)
+unsigned int sieve_script_hash(const struct sieve_script *script)
 {	
 	return (unsigned int) script->st.st_ino;
 }
 
 bool sieve_script_older
-(struct sieve_script *script, time_t time)
+(const struct sieve_script *script, time_t time)
 {
 	return ( script->st.st_mtime < time && script->lnk_st.st_mtime < time );
 }

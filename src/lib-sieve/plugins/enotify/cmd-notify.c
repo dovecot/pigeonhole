@@ -291,8 +291,9 @@ static bool cmd_notify_validate
 	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
 		return FALSE;
 		
-	if ( sieve_argument_is_string_literal(arg) )
+	if ( sieve_argument_is_string_literal(arg) ) {
 		return ext_enotify_uri_validate(valdtr, arg);
+	}
 	
 	return TRUE;
 }
@@ -377,7 +378,7 @@ static int cmd_notify_operation_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	struct sieve_side_effects_list *slist = NULL;
-	struct sieve_enotify_context *act;
+	struct sieve_enotify_action *act;
 	void *method_context;
 	pool_t pool;
 	int opt_code = 1;
@@ -468,7 +469,7 @@ static int cmd_notify_operation_execute
 		/* Add notify action to the result */
 
 		pool = sieve_result_pool(renv->result);
-		act = p_new(pool, struct sieve_enotify_context, 1);
+		act = p_new(pool, struct sieve_enotify_action, 1);
 		act->method = method;
 		act->method_context = method_context;
 		act->importance = importance;
@@ -508,14 +509,14 @@ static void act_notify_print
 	const struct sieve_result_print_env *rpenv, void *context, 
 	bool *keep ATTR_UNUSED)	
 {
-	const struct sieve_enotify_context *nctx = 
-		(const struct sieve_enotify_context *) context;
+	const struct sieve_enotify_action *act = 
+		(const struct sieve_enotify_action *) context;
 
 	sieve_result_action_printf
-		( rpenv, "send notification with method '%s:':", nctx->method->identifier);
+		( rpenv, "send notification with method '%s:':", act->method->identifier);
 		
-	if ( nctx->method->action_print != NULL )
-		nctx->method->action_print(rpenv, nctx);
+	if ( act->method->action_print != NULL )
+		act->method->action_print(rpenv, act);
 }
 
 /* Result execution */
@@ -525,11 +526,21 @@ static bool act_notify_commit
 	const struct sieve_action_exec_env *aenv, void *tr_context, 
 	bool *keep ATTR_UNUSED)
 {
-	const struct sieve_enotify_context *nctx = 
-		(const struct sieve_enotify_context *) tr_context;
+	const struct sieve_enotify_action *act = 
+		(const struct sieve_enotify_action *) tr_context;
+	struct sieve_enotify_exec_env nenv;
+	struct sieve_enotify_log_context nlctx;
+		
+	memset(&nlctx, 0, sizeof(nlctx));
+	nlctx.location = sieve_action_get_location(aenv);
+	nlctx.ehandler = sieve_result_get_error_handler(aenv->result);
 
-	if ( nctx->method->action_execute != NULL )
-		return nctx->method->action_execute(aenv, nctx);
+	nenv.scriptenv = aenv->scriptenv;
+	nenv.msgdata = aenv->msgdata;
+	nenv.logctx = &nlctx;
+
+	if ( act->method->action_execute != NULL )
+		return act->method->action_execute(&nenv, act);
 			
 	return TRUE;
 }

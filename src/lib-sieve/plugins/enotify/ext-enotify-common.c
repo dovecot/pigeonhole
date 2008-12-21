@@ -11,6 +11,7 @@
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 #include "sieve-interpreter.h"
+#include "sieve-result.h"
 
 #include "ext-enotify-limits.h"
 #include "ext-enotify-common.h"
@@ -91,7 +92,7 @@ static const char *ext_notify_get_methods_string(void)
 }
 
 /*
- * URI validation
+ * Compile-time argument validation
  */
  
 static const char *ext_enotify_uri_scheme_parse(const char **uri_p)
@@ -151,11 +152,23 @@ bool ext_enotify_uri_validate
 		return FALSE;
 	}
 	
-	if ( method->validate_uri != NULL )
-		return method->validate_uri(valdtr, arg, uri);
+	if ( method->validate_uri != NULL ) {
+		struct sieve_enotify_log_context nlctx;
 		
+		memset(&nlctx, 0, sizeof(nlctx));
+		nlctx.location = sieve_error_script_location
+			(sieve_validator_script(valdtr), arg->source_line);
+		nlctx.ehandler = sieve_validator_error_handler(valdtr);
+
+		return method->validate_uri(&nlctx, sieve_ast_argument_strc(arg), uri);
+	}
+	
 	return TRUE;
 }
+
+/*
+ * Runtime operand checking
+ */
 
 const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 (const struct sieve_runtime_env *renv, unsigned int source_line,
@@ -181,8 +194,15 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 	}
 
 	if ( method->runtime_check_operands != NULL ) {
+		struct sieve_enotify_log_context nlctx;
+		
+		memset(&nlctx, 0, sizeof(nlctx));
+		nlctx.location = sieve_error_script_location(renv->script, source_line);
+		nlctx.ehandler = sieve_interpreter_get_error_handler(renv->interp);
+
 		if ( method->runtime_check_operands
-			(renv, source_line, method_uri, uri, message, from, context) )
+			(&nlctx, method_uri, uri, message, from, sieve_result_pool(renv->result), 
+			context) )
 			return method;
 		
 		return NULL;
@@ -191,4 +211,48 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 	*context = NULL;	
 	return method;
 }
+
+/*
+ * Method logging
+ */
+
+void sieve_enotify_error
+(const struct sieve_enotify_log_context *nlctx, const char *fmt, ...) 
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { 
+		sieve_verror(nlctx->ehandler, nlctx->location, fmt, args); 
+	} T_END;
+	
+	va_end(args);
+}
+
+void sieve_enotify_warning
+(const struct sieve_enotify_log_context *nlctx, const char *fmt, ...) 
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { 
+		sieve_vwarning(nlctx->ehandler, nlctx->location, fmt, args); 
+	} T_END;
+	
+	va_end(args);
+}
+
+void sieve_enotify_log
+(const struct sieve_enotify_log_context *nlctx, const char *fmt, ...) 
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { 
+		sieve_vinfo(nlctx->ehandler, nlctx->location, fmt, args); 
+	} T_END;
+	
+	va_end(args);
+}
+
 

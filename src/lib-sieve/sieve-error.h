@@ -43,7 +43,7 @@ typedef void (*sieve_error_vfunc_t)
  */
 
 const char *sieve_error_script_location
-	(struct sieve_script *script, unsigned int source_line);
+	(const struct sieve_script *script, unsigned int source_line);
 
 void sieve_verror
 	(struct sieve_error_handler *ehandler, const char *location, 

@@ -23,6 +23,7 @@ struct sieve_result *sieve_result_create
 void sieve_result_ref(struct sieve_result *result); 
 void sieve_result_unref(struct sieve_result **result); 
 pool_t sieve_result_pool(struct sieve_result *result);
+struct sieve_error_handler *sieve_result_get_error_handler(struct sieve_result *result);
 
 /*
  * Extension support

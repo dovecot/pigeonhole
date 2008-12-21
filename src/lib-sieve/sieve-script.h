@@ -27,11 +27,11 @@ void sieve_script_unref(struct sieve_script **script);
  * Accessors
  */
  
-const char *sieve_script_name(struct sieve_script *script);
-const char *sieve_script_filename(struct sieve_script *script);
-const char *sieve_script_path(struct sieve_script *script);
-const char *sieve_script_binpath(struct sieve_script *script);
-const char *sieve_script_dirpath(struct sieve_script *script);
+const char *sieve_script_name(const struct sieve_script *script);
+const char *sieve_script_filename(const struct sieve_script *script);
+const char *sieve_script_path(const struct sieve_script *script);
+const char *sieve_script_binpath(const struct sieve_script *script);
+const char *sieve_script_dirpath(const struct sieve_script *script);
 
 /* 
  * Stream management 
@@ -40,19 +40,19 @@ const char *sieve_script_dirpath(struct sieve_script *script);
 struct istream *sieve_script_open(struct sieve_script *script, bool *deleted_r);
 void sieve_script_close(struct sieve_script *script);
 
-uoff_t sieve_script_get_size(struct sieve_script *script);
+uoff_t sieve_script_get_size(const struct sieve_script *script);
 
 /*
  * Comparison
  */
  
 int sieve_script_cmp
-	(struct sieve_script *script1, struct sieve_script *script2);
-unsigned int sieve_script_hash(struct sieve_script *script);
-bool sieve_script_older(struct sieve_script *script, time_t time);
+	(const struct sieve_script *script1, const struct sieve_script *script2);
+unsigned int sieve_script_hash(const struct sieve_script *script);
+bool sieve_script_older(const struct sieve_script *script, time_t time);
 
 static inline bool sieve_script_equals
-	(struct sieve_script *script1, struct sieve_script *script2)
+	(const struct sieve_script *script1, const struct sieve_script *script2)
 {
 	return ( sieve_script_cmp(script1, script2) == 0 );
 }

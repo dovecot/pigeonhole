@@ -44,18 +44,18 @@ ARRAY_DEFINE_TYPE(headers, struct ntfy_mailto_header_field);
  */
  
 static bool ntfy_mailto_validate_uri
-	(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
+	(const struct sieve_enotify_log_context *nlctx, const char *uri, 
 		const char *uri_body);
 static bool ntfy_mailto_runtime_check_operands
-	(const struct sieve_runtime_env *renv, unsigned int source_line, 
-		const char *uri, const char *uri_body, const char *message, 
-		const char *from, void **context);
+	(const struct sieve_enotify_log_context *nlctx, const char *uri,
+		const char *uri_body, const char *message, const char *from, 
+		pool_t context_pool, void **context);
 static void ntfy_mailto_action_print
 	(const struct sieve_result_print_env *rpenv, 
-		const struct sieve_enotify_context *nctx);	
+		const struct sieve_enotify_action *act);	
 static bool ntfy_mailto_action_execute
-	(const struct sieve_action_exec_env *aenv, 
-		const struct sieve_enotify_context *nctx);
+	(const struct sieve_enotify_exec_env *nenv, 
+		const struct sieve_enotify_action *act);
 
 const struct sieve_enotify_method mailto_notify = {
 	"mailto",
@@ -416,15 +416,14 @@ static bool ntfy_mailto_parse_uri
  */
 
 static bool ntfy_mailto_validate_uri
-(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
+(const struct sieve_enotify_log_context *nlctx, const char *uri,
 	const char *uri_body)
 {	
 	const char *error;
 	
 	if ( !ntfy_mailto_parse_uri(uri_body, NULL, NULL, NULL, NULL, &error) ) {
-		sieve_argument_validate_error(valdtr, arg, 
-			"invalid mailto URI '%s': %s", 
-			str_sanitize(sieve_ast_argument_strc(arg), 80), error);
+		sieve_enotify_error
+			(nlctx,  "invalid mailto URI '%s': %s", str_sanitize(uri, 80), error);
 		return FALSE;
 	}
 	
@@ -436,31 +435,27 @@ static bool ntfy_mailto_validate_uri
  */
  
 static bool ntfy_mailto_runtime_check_operands
-(const struct sieve_runtime_env *renv, unsigned int source_line, 
-  const char *mailto_uri, const char *uri_body, 
-  const char *message ATTR_UNUSED, const char *from ATTR_UNUSED, 
-  void **context)
+(const struct sieve_enotify_log_context *nlctx, const char *uri, 
+	const char *uri_body, const char *message ATTR_UNUSED, 
+	const char *from ATTR_UNUSED, pool_t context_pool, void **context)
 {
-	pool_t pool;
-	struct ntfy_mailto_context *nctx;
+	struct ntfy_mailto_context *mtctx;
 	const char *error;
 	
 	/* Need to create context before validation to have arrays present */
-	pool = sieve_result_pool(renv->result);
-	nctx = p_new(pool, struct ntfy_mailto_context, 1);
-	p_array_init(&nctx->recipients, pool, NTFY_MAILTO_MAX_RECIPIENTS);
-	p_array_init(&nctx->headers, pool, NTFY_MAILTO_MAX_HEADERS);
+	mtctx = p_new(context_pool, struct ntfy_mailto_context, 1);
+	p_array_init(&mtctx->recipients, context_pool, NTFY_MAILTO_MAX_RECIPIENTS);
+	p_array_init(&mtctx->headers, context_pool, NTFY_MAILTO_MAX_HEADERS);
 
 	if ( !ntfy_mailto_parse_uri
-		(uri_body, &nctx->recipients, &nctx->headers, &nctx->body, &nctx->subject, 
-			&error) ) {
-		sieve_runtime_error
-			(renv, sieve_error_script_location(renv->script, source_line),
-				"invalid mailto URI '%s': %s", str_sanitize(mailto_uri, 80), error);
+		(uri_body, &mtctx->recipients, &mtctx->headers, &mtctx->body, 
+			&mtctx->subject, &error) ) {
+		sieve_enotify_error
+			(nlctx, "invalid mailto URI '%s': %s", str_sanitize(uri, 80), error);
 		return FALSE;
 	}
 	
-	*context = (void *) nctx;
+	*context = (void *) mtctx;
 
 	return TRUE;	
 }
@@ -471,21 +466,21 @@ static bool ntfy_mailto_runtime_check_operands
  
 static void ntfy_mailto_action_print
 (const struct sieve_result_print_env *rpenv, 
-	const struct sieve_enotify_context *nctx)
+	const struct sieve_enotify_action *act)
 {
 	unsigned int count, i;
 	const char *const *recipients;
 	const struct ntfy_mailto_header_field *headers;
 	struct ntfy_mailto_context *mtctx = 
-		(struct ntfy_mailto_context *) nctx->method_context;
+		(struct ntfy_mailto_context *) act->method_context;
 	
-	sieve_result_printf(rpenv,   "    => importance   : %d\n", nctx->importance);
-	if ( nctx->message != NULL )
-		sieve_result_printf(rpenv, "    => subject      : %s\n", nctx->message);
+	sieve_result_printf(rpenv,   "    => importance   : %d\n", act->importance);
+	if ( act->message != NULL )
+		sieve_result_printf(rpenv, "    => subject      : %s\n", act->message);
 	else if ( mtctx->subject != NULL )
 		sieve_result_printf(rpenv, "    => subject      : %s\n", mtctx->subject);
-	if ( nctx->from != NULL )
-		sieve_result_printf(rpenv, "    => from         : %s\n", nctx->from);
+	if ( act->from != NULL )
+		sieve_result_printf(rpenv, "    => from         : %s\n", act->from);
 
 	sieve_result_printf(rpenv,   "    => recipients   :\n" );
 	recipients = array_get(&mtctx->recipients, &count);
@@ -522,13 +517,14 @@ static bool _contains_8bit(const char *msg)
 }
 
 static bool ntfy_mailto_send
-(const struct sieve_action_exec_env *aenv, 
-	const struct sieve_enotify_context *nctx)
+(const struct sieve_enotify_exec_env *nenv, 
+	const struct sieve_enotify_action *act)
 { 
-	const struct sieve_message_data *msgdata = aenv->msgdata;
-	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_enotify_log_context *nlctx = nenv->logctx;
+	const struct sieve_message_data *msgdata = nenv->msgdata;
+	const struct sieve_script_env *senv = nenv->scriptenv;
 	struct ntfy_mailto_context *mtctx = 
-		(struct ntfy_mailto_context *) nctx->method_context;	
+		(struct ntfy_mailto_context *) act->method_context;	
 	const char *from = NULL; 
 	const char *subject = mtctx->subject;
 	const char *body = mtctx->body;
@@ -540,30 +536,30 @@ static bool ntfy_mailto_send
 
 	/* Just to be sure */
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
-		sieve_result_warning(aenv, 
+		sieve_enotify_warning(nlctx, 
 			"notify mailto method has no means to send mail.");
 		return TRUE;
 	}
 	
 	/* Determine from address */
 	if ( msgdata->return_path != NULL ) {
-		if ( nctx->from == NULL )
+		if ( act->from == NULL )
 			from = senv->postmaster_address;
 		else
 			/* FIXME: validate */
-			from = nctx->from;
+			from = act->from;
 	}
 	
 	/* Determine subject */
-	if ( nctx->message != NULL ) {
+	if ( act->message != NULL ) {
 		/* FIXME: handle UTF-8 */
-		subject = str_sanitize(nctx->message, 256);
+		subject = str_sanitize(act->message, 256);
 	} else if ( subject == NULL ) {
 		const char *const *hsubject;
 		
 		/* Fetch subject from original message */
 		if ( mail_get_headers_utf8
-			(aenv->msgdata->mail, "subject", &hsubject) >= 0 )
+			(msgdata->mail, "subject", &hsubject) >= 0 )
 			subject = t_strdup_printf("Notification: %s", hsubject[0]);
 		else
 			subject = "Notification: (no subject)";
@@ -590,7 +586,7 @@ static bool ntfy_mailto_send
 		rfc2822_header_field_write(f, "Precedence", "bulk");
 
 		/* Set importance */
-		switch ( nctx->importance ) {
+		switch ( act->importance ) {
 		case 1:
 			rfc2822_header_field_write(f, "X-Priority", "1 (Highest)");
 			rfc2822_header_field_write(f, "Importance", "High");
@@ -633,10 +629,10 @@ static bool ntfy_mailto_send
 		}
 	
 		if ( senv->smtp_close(smtp_handle) ) {
-			sieve_result_log(aenv, 
+			sieve_enotify_log(nlctx, 
 				"sent mail notification to <%s>", str_sanitize(recipients[i], 80));
 		} else {
-			sieve_result_error(aenv,
+			sieve_enotify_error(nlctx,
 				"failed to send mail notification to <%s> "
 				"(refer to system log for more information)", 
 				str_sanitize(recipients[i], 80));
@@ -647,10 +643,10 @@ static bool ntfy_mailto_send
 }
 
 static bool ntfy_mailto_action_execute
-(const struct sieve_action_exec_env *aenv, 
-	const struct sieve_enotify_context *nctx)
+(const struct sieve_enotify_exec_env *nenv, 
+	const struct sieve_enotify_action *act)
 {
-	const struct sieve_message_data *msgdata = aenv->msgdata;
+	const struct sieve_message_data *msgdata = nenv->msgdata;
 	const char *const *headers;
 
 	/* Is the message an automatic reply ? */
@@ -661,7 +657,7 @@ static bool ntfy_mailto_action_execute
 		/* Theoretically multiple headers could exist, so lets make sure */
 		while ( *hdsp != NULL ) {
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
-				sieve_result_log(aenv, 
+				sieve_enotify_log(nenv->logctx, 
 					"not sending notification for auto-submitted message from <%s>", 
 					str_sanitize(msgdata->return_path, 128));	
 					return TRUE;				 
@@ -670,7 +666,7 @@ static bool ntfy_mailto_action_execute
 		}
 	}
 
-	return ntfy_mailto_send(aenv, nctx);
+	return ntfy_mailto_send(nenv, act);
 }
 
 
