@@ -55,7 +55,7 @@ void sieve_tool_init(void)
 	lib_signals_ignore(SIGPIPE, TRUE);
 	lib_signals_ignore(SIGALRM, FALSE);
 
-	if ( !sieve_init("") ) 
+	if ( !sieve_init() ) 
 		i_fatal("failed to initialize sieve implementation\n");
 }
 

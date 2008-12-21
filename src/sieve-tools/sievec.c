@@ -21,7 +21,7 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sievec [-d] <scriptfile> <outfile>\n"
+"Usage: sievec [-d] [-x <extensions>] <scriptfile> <outfile>\n"
 	);
 }
 
@@ -33,15 +33,19 @@ int main(int argc, char **argv) {
 	int i;
 	struct sieve_binary *sbin;
 	bool dump = FALSE;
-	const char *scriptfile, *outfile;
-	
-	sieve_tool_init();
-	
-	scriptfile = outfile = NULL;
+	const char *scriptfile, *outfile, *extensions;
+		
+	scriptfile = outfile = extensions = NULL;
 	for (i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-d") == 0) {
 			/* dump file */
 			dump = TRUE;
+		} else if (strcmp(argv[i], "-x") == 0) {
+			/* extensions */
+			i++;
+			if (i == argc)
+				i_fatal("Missing -x argument");
+			extensions = argv[i];
 		} else if ( scriptfile == NULL ) {
 			scriptfile = argv[i];
 		} else if ( outfile == NULL ) {
@@ -58,8 +62,17 @@ int main(int argc, char **argv) {
 	}
 	
 	if ( outfile == NULL ) {
-		print_help();
-		i_fatal("Missing <outfile> argument");
+		if ( !dump ) {
+			print_help();
+			i_fatal("The <outfile> argument is mandatory without -d");
+		}
+		outfile = "-";
+	}
+
+	sieve_tool_init();
+
+	if ( extensions != NULL ) {
+		sieve_set_extensions(extensions);
 	}
 
 	sbin = sieve_tool_script_compile(scriptfile);

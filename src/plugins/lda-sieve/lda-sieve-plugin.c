@@ -297,8 +297,15 @@ static int lda_sieve_deliver_mail
 
 void sieve_plugin_init(void)
 {
+	const char *extensions = NULL;
+
 	/* Initialize Sieve engine */
-	sieve_init("");
+	sieve_init();
+
+	extensions = getenv("SIEVE_EXTENSIONS");
+	if ( extensions != NULL ) {
+		sieve_set_extensions(extensions);
+	}
 
 	/* Hook into the delivery process */
 	next_deliver_mail = deliver_mail;

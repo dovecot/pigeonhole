@@ -21,17 +21,22 @@ struct sieve_binary;
  *   Initializes the sieve engine. Must be called before any sieve functionality
  *   is used.
  */
-bool sieve_init(const char *plugins);
+bool sieve_init(void);
 
 /* sieve_deinit():
  *   Frees all memory allocated by the sieve engine. 
  */
 void sieve_deinit(void);
 
-/* sieve_get_capabilities:
+/* sieve_get_capabilities():
  *
  */
 const char *sieve_get_capabilities(const char *name);
+
+/* sieve_set_extensions():
+ *
+ */
+void sieve_set_extensions(const char *extensions);
 
 /*
  * Script compilation

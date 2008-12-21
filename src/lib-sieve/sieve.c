@@ -33,14 +33,19 @@
  * Main Sieve library interface
  */
 
-bool sieve_init(const char *plugins)
+bool sieve_init(void)
 {
-	return sieve_extensions_init(plugins);
+	return sieve_extensions_init();
 }
 
 void sieve_deinit(void)
 {
 	sieve_extensions_deinit();
+}
+
+void sieve_set_extensions(const char *extensions)
+{
+	sieve_extensions_set_string(extensions);
 }
 
 const char *sieve_get_capabilities(const char *name) 

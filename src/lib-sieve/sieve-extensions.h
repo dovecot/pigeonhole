@@ -78,7 +78,7 @@ extern const unsigned int sieve_preloaded_extensions_count;
  * Extensions init/deinit 
  */
 
-bool sieve_extensions_init(const char *sieve_plugins ATTR_UNUSED);
+bool sieve_extensions_init(void);
 void sieve_extensions_deinit(void);
 
 /* 
@@ -91,6 +91,7 @@ const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id);
 const struct sieve_extension *sieve_extension_get_by_name(const char *name);
 
 const char *sieve_extensions_get_string(void);
+void sieve_extensions_set_string(const char *ext_string);
 
 /*
  * Capability registries

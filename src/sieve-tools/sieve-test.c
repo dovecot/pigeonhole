@@ -32,14 +32,14 @@
 static void print_help(void)
 {
 #ifdef SIEVE_RUNTIME_TRACE
-#  define SVTRACE "[-t]"
+#  define SVTRACE " [-t]"
 #else
 #  define SVTRACE
 #endif
 	printf(
-"Usage: sieve-test [-r <recipient address>][-s <envelope sender>]\n"
-"                  [-m <mailbox>][-d <dump filename>][-c]" SVTRACE "\n"
-"                  <scriptfile> <mailfile>\n"
+"Usage: sieve-test [-r <recipient address>] [-s <envelope sender>]\n"
+"                  [-m <mailbox>] [-d <dump filename>] [-x <extensions>]\n"
+"                  [-c]"SVTRACE" <scriptfile> <mailfile>\n"
 	);
 }
 
@@ -49,7 +49,8 @@ static void print_help(void)
 
 int main(int argc, char **argv) 
 {
-	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile; 
+	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile,
+		*extensions; 
 	const char *user;
 	int i;
 	struct mail_raw *mailr;
@@ -65,7 +66,8 @@ int main(int argc, char **argv)
 	struct ostream *trace_stream = FALSE;
 
 	/* Parse arguments */
-	scriptfile = recipient = sender = mailbox = dumpfile = mailfile = NULL;
+	scriptfile = recipient = sender = mailbox = dumpfile = mailfile = 
+		extensions = NULL;
 	for (i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-r") == 0) {
 			/* recipient address */
@@ -91,6 +93,12 @@ int main(int argc, char **argv)
 			if (i == argc)
 				i_fatal("Missing -d argument");
 			dumpfile = argv[i];
+		} else if (strcmp(argv[i], "-x") == 0) {
+			/* extensions */
+			i++;
+			if (i == argc)
+				i_fatal("Missing -x argument");
+			extensions = argv[i];
 		} else if (strcmp(argv[i], "-c") == 0) {
             /* force compile */
 			force_compile = TRUE;
@@ -120,6 +128,10 @@ int main(int argc, char **argv)
 	}
 
 	sieve_tool_init();
+
+	if ( extensions != NULL ) {
+		sieve_set_extensions(extensions);
+	}
 	
 	/* Compile sieve script */
 	if ( force_compile ) {

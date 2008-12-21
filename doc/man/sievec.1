@@ -1,9 +1,8 @@
-.TH "SIEVEC" "1" "11 November 2008"
+.TH "SIEVEC" "1" "21 December 2008"
 .SH NAME
 sievec \- Sieve script compiler for the Dovecot secure IMAP server
 .SH SYNOPSIS
-sievec [\fB-d\fR] \fIsieve-script\fR \fIoutfile\fR
-.br
+sievec [\fB-d\fR] [\fB-x\fR "\fIextension extension ...\fR"] \fIsieve-script\fR \fIoutfile\fR
 .SH DESCRIPTION
 .PP
 The \fBsievec\fP command is part of the Sieve implementation for the Dovecot secure 
@@ -41,9 +40,14 @@ compiler that yield corrupt binaries.
 \fB-d\fP 
 Don't write the binary to \fIoutfile\fP, but write a textual dump of the binary in 
 stead. In this context, the \fIoutfile\fP value '-' has special meaning: it causes the the textual 
-dump to be written to \fBstdout\fP. The output is identical to what the 
+dump to be written to \fBstdout\fP. The \fIoutfile\fP argument may also be omitted when this option 
+is active, which has the same effect as '-'. The output is identical to what the 
 .BR sieved (1) 
 command produces for a compiled Sieve binary file. 
+.TP
+\fB-x\fP "\fIextension extension ...\fP"
+Set the available extensions. The \fIextensions\fP parameter is a space-separated list of the 
+active extensions. Unknown extensions are ignored, but a warning is produced.
 .SH AUTHOR
 .PP
 The Sieve implementation for Dovecot was written by Stephan Bosch <stephan@rename-it.nl>.

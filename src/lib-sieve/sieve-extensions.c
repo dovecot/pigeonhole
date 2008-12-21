@@ -122,7 +122,7 @@ const unsigned int sieve_core_extensions_count =
  * Extensions init/deinit
  */
 
-bool sieve_extensions_init(const char *sieve_plugins ATTR_UNUSED) 
+bool sieve_extensions_init(void) 
 {
 	unsigned int i;
 	
@@ -152,14 +152,15 @@ void sieve_extensions_deinit(void)
 struct sieve_extension_registration {
 	const struct sieve_extension *extension;
 	int id;
+	bool disabled;
 };
 
-static ARRAY_DEFINE(extensions, const struct sieve_extension *); 
+static ARRAY_DEFINE(extensions, struct sieve_extension_registration); 
 static struct hash_table *extension_index; 
 
 static void sieve_extensions_init_registry(void)
 {	
-	p_array_init(&extensions, default_pool, 4);
+	p_array_init(&extensions, default_pool, 30);
 	extension_index = hash_table_create
 		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 }
@@ -169,11 +170,11 @@ int sieve_extension_register(const struct sieve_extension *extension)
 	int ext_id = array_count(&extensions); 
 	struct sieve_extension_registration *ereg;
 	
-	array_append(&extensions, &extension, 1);
+	ereg = array_append_space(&extensions);
 	
-	ereg = p_new(default_pool, struct sieve_extension_registration, 1);
 	ereg->extension = extension;
 	ereg->id = ext_id;
+	ereg->disabled = FALSE;
 	
 	hash_table_insert(extension_index, (void *) extension->name, (void *) ereg);
 
@@ -192,11 +193,13 @@ int sieve_extensions_get_count(void)
 
 const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id) 
 {
-	const struct sieve_extension * const *ext;
+	const struct sieve_extension_registration *ereg;
 	
 	if ( ext_id < array_count(&extensions) ) {
-		ext = array_idx(&extensions, ext_id);
-		return *ext;
+		ereg = array_idx(&extensions, ext_id);
+
+		if ( !ereg->disabled ) 
+			return ereg->extension;
 	}
 	
 	return NULL;
@@ -212,48 +215,122 @@ const struct sieve_extension *sieve_extension_get_by_name(const char *name)
 	ereg = (struct sieve_extension_registration *) 
 		hash_table_lookup(extension_index, name);
 
-	if ( ereg == NULL )
+	if ( ereg == NULL || ereg->disabled )
 		return NULL;
 		
 	return ereg->extension;
 }
 
-static inline bool _list_extension(const struct sieve_extension *ext)
+static inline bool _list_extension
+	(const struct sieve_extension_registration *ereg)
 {
-	return ( ext->id != NULL && *ext->name != '@' );
+	return ( !ereg->disabled && ereg->extension->id != NULL && 
+		*(ereg->extension->name) != '@' );
 }
 
 const char *sieve_extensions_get_string(void)
 {
 	unsigned int i, ext_count;
-	const struct sieve_extension *const *exts;
+	const struct sieve_extension_registration *eregs;
 	string_t *extstr = t_str_new(256);
 
-	exts = array_get(&extensions, &ext_count);
+	eregs = array_get(&extensions, &ext_count);
 
 	if ( ext_count > 0 ) {
 		i = 0;
 		
 		/* Find first listable extension */
-		while ( i < ext_count && !_list_extension(exts[i]) )
+		while ( i < ext_count && !_list_extension(&eregs[i]) )
 			i++;
 
 		if ( i < ext_count ) {
 			/* Add first to string */
-			str_append(extstr, exts[i]->name);
+			str_append(extstr, eregs[i].extension->name);
 			i++;	 
 
 	 		/* Add others */
 			for ( ; i < ext_count; i++ ) {
-				if ( _list_extension(exts[i]) ) {
+				if ( _list_extension(&eregs[i]) ) {
 					str_append_c(extstr, ' ');
-					str_append(extstr, exts[i]->name);
+					str_append(extstr, eregs[i].extension->name);
 				}
 			}
 		}
 	}
 
 	return str_c(extstr);
+}
+
+void sieve_extensions_set_string(const char *ext_string)
+{
+	ARRAY_DEFINE(enabled_extensions, const struct sieve_extension_registration *);
+	const struct sieve_extension_registration *const *ena_eregs;
+	struct sieve_extension_registration *eregs;
+	const char *bp = ext_string;
+	const char *ep = bp;
+	unsigned int i, ext_count, ena_count;
+
+	if ( ext_string == NULL ) {
+		/* Enable all */
+		eregs = array_get_modifiable(&extensions, &ext_count);
+		
+		for ( i = 0; i < ext_count; i++ ) {
+			eregs[i].disabled = FALSE;
+		}
+
+		return;	
+	}
+
+	t_array_init(&enabled_extensions, array_count(&extensions));
+
+	do {
+		const char *name;
+
+		ep = strchr(bp, ' ');
+		if ( ep == NULL ) 
+			name = bp;
+		else { 
+			name = t_strdup_until(bp, ep);
+			bp = ep + 1;
+		}
+
+		if ( *name != '\0' ) {
+			const struct sieve_extension_registration *ereg;
+	
+			if ( *name == '@' )
+				ereg = NULL;
+			else
+				ereg = (const struct sieve_extension_registration *) 
+					hash_table_lookup(extension_index, name);
+
+			if ( ereg == NULL ) {
+				sieve_sys_warning("ignored unknown extension '%s' while configuring "
+					"available extensions", name);
+				continue;
+			}
+
+			array_append(&enabled_extensions, &ereg, 1);
+		}
+
+	} while ( *bp == '\0' || ep != NULL );
+
+	eregs = array_get_modifiable(&extensions, &ext_count);
+	ena_eregs = array_get(&enabled_extensions, &ena_count);
+
+	/* Set new extension status */
+	for ( i = 0; i < ext_count; i++ ) {
+		unsigned int j;
+		bool disabled = TRUE;
+
+		for ( j = 0; j < ena_count; j++ ) {
+			if ( ena_eregs[j] == &eregs[i] ) {
+				disabled = FALSE;
+				break;
+			}		
+		}
+
+		eregs[i].disabled = disabled;
+	}
 }
 
 static void sieve_extensions_deinit_registry(void) 
@@ -269,8 +346,6 @@ static void sieve_extensions_deinit_registry(void)
 		
 		if ( ext->unload != NULL )
 			ext->unload();
-			
-		p_free(default_pool, ereg);
 	}
 
 	hash_table_iterate_deinit(&itx); 	

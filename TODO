@@ -8,8 +8,7 @@ Current:
 	- Limit the number of notifications generated (on a per-method basis)
 * Implement mailto method for the enotify extension:
 	- Check that URI headers are not duplicated if not allowed.
-* Implement means to configure which extensions to provide and incorporate
-  enotify extension into default compile.  
+* Incorporate enotify extension into default compile.  
 
 Next (in order of descending priority/precedence):
 

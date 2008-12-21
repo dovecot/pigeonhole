@@ -1,12 +1,9 @@
-.TH "SIEVE-TEST" "1" "11 November 2008"
+.TH "SIEVE-TEST" "1" "21 December 2008"
 .SH NAME
 sieve-test \- Sieve script tester for the Dovecot secure IMAP server
 .SH SYNOPSIS
-.TP
-sieve-test [\fB-r\fR \fIrecipient-address\fR][\fB-s\fR \fIenvelope-sender\fR]
-[\fB-m\fR \fImailbox\fR][\fB-d\fR \fIdump-file\fR][\fB-c\fR][\fB-t\fR]
-\fIscript-file\fR \fImail-file\fR
-.br
+sieve-test [\fB-r\fR \fIrecipient-address\fR] [\fB-s\fR \fIenvelope-sender\fR] [\fB-m\fR \fImailbox\fR] [\fB-d\fR \fIdump-file\fR] [\fB-c\fR] [\fB-t\fR]
+[\fB-x\fR "\fIextension extension ...\fR"] \fIscript-file\fR \fImail-file\fR
 .SH DESCRIPTION
 .PP
 The \fBsieve-test\fP command is part of the Sieve implementation for the Dovecot secure 
@@ -50,6 +47,10 @@ Sieve compilation.
 .TP
 \fB-t\fP
 Enable simple trace debugging; prints all encountered byte code instructions on \fBstdout\fP.
+.TP
+\fB-x\fP "\fIextension extension ...\fP"
+Set the available extensions. The parameter is a space-separated list of the active extensions. 
+Unknown extensions are ignored, but a warning is produced.
 .SH AUTHOR
 .PP
 The Sieve implementation for Dovecot was written by Stephan Bosch <stephan@rename-it.nl>.
