@@ -7,14 +7,14 @@
 #include "ioloop.h"
 #include "str-sanitize.h"
 #include "message-date.h"
+#include "mail-storage.h"
 
 #include "rfc2822.h"
 
 #include "sieve-common.h"
-#include "sieve-ast.h"
-#include "sieve-commands.h"
-#include "sieve-validator.h"
-#include "sieve-interpreter.h"
+#include "sieve-address.h"
+
+/* To be removed */
 #include "sieve-actions.h"
 #include "sieve-result.h"
 
@@ -198,7 +198,7 @@ static bool _uri_parse_recipients
 			
 			/* Parse 2-digit hex value */
 			if ( !_parse_hex_value(&p, &ch) ) {
-				sieve_enotify_error(nlctx, "invalid % encoding");
+				sieve_enotify_error(nlctx, "invalid mailto URI: invalid %% encoding");
 				return FALSE;
 			}
 
@@ -274,12 +274,13 @@ static bool _uri_parse_headers
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
 					printf("F: %s\n", p);
-					sieve_enotify_error(nlctx, "invalid % encoding");
+					sieve_enotify_error(nlctx, "invalid mailto URI: invalid %% encoding");
 					return FALSE;
 				}
 			} else if ( ch != '=' && !_is_qchar(ch) ) {
-				sieve_enotify_error
-					(nlctx, "invalid character '%c' in header field name part", *p);
+				sieve_enotify_error(nlctx, 
+					"invalid mailto URI: "
+					"invalid character '%c' in header field name part", *p);
 				return FALSE;
 			}
 
@@ -289,7 +290,8 @@ static bool _uri_parse_headers
 
 		/* Verify field name */
 		if ( !rfc2822_header_field_name_verify(str_c(field), str_len(field)) ) {
-			sieve_enotify_error(nlctx, "invalid header field name");
+			sieve_enotify_error(nlctx, 
+				"invalid mailto URI: invalid header field name");
 			return FALSE;
 		}
 
@@ -319,12 +321,13 @@ static bool _uri_parse_headers
 			if ( ch == '%' ) {
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
-					sieve_enotify_error(nlctx, "invalid % encoding");
+					sieve_enotify_error(nlctx, "invalid mailto URI: invalid %% encoding");
 					return FALSE;
 				}
 			} else if ( ch != '=' && !_is_qchar(ch) ) {
-				sieve_enotify_error
-					(nlctx, "invalid character '%c' in header field value part", *p);
+				sieve_enotify_error(nlctx, 
+					"invalid mailto URI: "
+					"invalid character '%c' in header field value part", *p);
 				return FALSE;
 			}
 			str_append_c(field, ch);
@@ -336,7 +339,8 @@ static bool _uri_parse_headers
 			// FIXME: verify body ... 
 		} else {
 			if ( !rfc2822_header_field_body_verify(str_c(field), str_len(field)) ) {
-				sieve_enotify_error(nlctx, "invalid header field body");
+				sieve_enotify_error(nlctx, 
+					"invalid mailto URI: invalid header field body");
 				return FALSE;
 			}
 		}
@@ -420,6 +424,26 @@ static bool ntfy_mailto_validate_uri
 	const char *uri_body)
 {	
 	return ntfy_mailto_parse_uri(nlctx, uri_body, NULL, NULL, NULL, NULL);
+}
+
+static bool ntfy_mailto_validate_from
+(const struct sieve_enotify_log_context *nlctx, string_t *from)
+{
+	const char *error;
+	bool result;
+
+	T_BEGIN {
+		result = sieve_address_validate(from, &error);
+
+		if ( !result ) {
+			sieve_enotify_error(nlctx,
+				"specified :from address '%s' is invalid for "
+				"the mailto method: %s",
+				str_sanitize(str_c(from), 128), error);
+		}
+	} T_END;
+
+	return result;
 }
 
 /*

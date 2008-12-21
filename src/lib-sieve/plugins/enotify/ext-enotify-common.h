@@ -89,8 +89,8 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 struct sieve_enotify_log_context {
 	struct sieve_error_handler *ehandler;
 	
-	/* Script location */
 	const char *location;
+	const char *prefix;
 };
 
 #endif /* __EXT_ENOTIFY_COMMON_H */

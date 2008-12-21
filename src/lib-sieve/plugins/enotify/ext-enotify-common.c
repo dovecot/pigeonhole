@@ -141,14 +141,14 @@ bool ext_enotify_uri_validate
 	
 	if ( (scheme=ext_enotify_uri_scheme_parse(&uri)) == NULL ) {
 		sieve_argument_validate_error(valdtr, arg, 
-			"invalid scheme part for method URI '%s'", 
+			"notify command: invalid scheme part for method URI '%s'", 
 			str_sanitize(sieve_ast_argument_strc(arg), 80));
 		return FALSE;
 	}
 	
 	if ( (method=ext_enotify_method_find(scheme)) == NULL ) {
 		sieve_argument_validate_error(valdtr, arg, 
-			"invalid notify method '%s'", scheme);
+			"notify command: invalid method '%s'", scheme);
 		return FALSE;
 	}
 	
@@ -159,6 +159,7 @@ bool ext_enotify_uri_validate
 		nlctx.location = sieve_error_script_location
 			(sieve_validator_script(valdtr), arg->source_line);
 		nlctx.ehandler = sieve_validator_error_handler(valdtr);
+		nlctx.prefix = "notify command";
 
 		return method->validate_uri(&nlctx, sieve_ast_argument_strc(arg), uri);
 	}
@@ -199,6 +200,7 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 		memset(&nlctx, 0, sizeof(nlctx));
 		nlctx.location = sieve_error_script_location(renv->script, source_line);
 		nlctx.ehandler = sieve_interpreter_get_error_handler(renv->interp);
+		nlctx.prefix = "notify action";
 
 		if ( method->runtime_check_operands
 			(&nlctx, method_uri, uri, message, from, sieve_result_pool(renv->result), 
@@ -222,8 +224,12 @@ void sieve_enotify_error
 	va_list args;
 	va_start(args, fmt);
 	
-	T_BEGIN { 
-		sieve_verror(nlctx->ehandler, nlctx->location, fmt, args); 
+	T_BEGIN {
+		if ( nlctx->prefix == NULL )
+			sieve_verror(nlctx->ehandler, nlctx->location, fmt, args);
+		else
+			sieve_error(nlctx->ehandler, nlctx->location, "%s: %s", nlctx->prefix, 
+				t_strdup_vprintf(fmt, args));
 	} T_END;
 	
 	va_end(args);
@@ -236,7 +242,11 @@ void sieve_enotify_warning
 	va_start(args, fmt);
 	
 	T_BEGIN { 
-		sieve_vwarning(nlctx->ehandler, nlctx->location, fmt, args); 
+		if ( nlctx->prefix == NULL )
+			sieve_vwarning(nlctx->ehandler, nlctx->location, fmt, args);
+		else			
+			sieve_warning(nlctx->ehandler, nlctx->location, "%s: %s", nlctx->prefix, 
+				t_strdup_vprintf(fmt, args));
 	} T_END;
 	
 	va_end(args);
@@ -249,7 +259,11 @@ void sieve_enotify_log
 	va_start(args, fmt);
 	
 	T_BEGIN { 
-		sieve_vinfo(nlctx->ehandler, nlctx->location, fmt, args); 
+		if ( nlctx->prefix == NULL )
+			sieve_vinfo(nlctx->ehandler, nlctx->location, fmt, args);
+		else
+			sieve_info(nlctx->ehandler, nlctx->location, "%s: %s", nlctx->prefix, 
+				t_strdup_vprintf(fmt, args));	
 	} T_END;
 	
 	va_end(args);
