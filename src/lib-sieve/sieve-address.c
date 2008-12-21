@@ -324,30 +324,7 @@ bool sieve_address_validate
 {
 	struct sieve_message_address_parser ctx;
 
-	memset(&ctx, 0, sizeof(ctx));bool sieve_validate_rfc2822_mailbox(const char *address, const char **error_r)
-{
-	struct sieve_message_address_parser ctx;
-
 	memset(&ctx, 0, sizeof(ctx));
-	
-	ctx.local_part = t_str_new(128);
-	ctx.domain = t_str_new(128);
-	ctx.str = t_str_new(128);
-	ctx.error = t_str_new(128);
-
-	if ( !parse_mailbox_address(&ctx, (const unsigned char *) address, 
-		strlen(address)) ) {
-		if ( error_r != NULL )	
-			*error_r = str_c(ctx.error);
-		return FALSE;
-	}
-
-	if ( error_r != NULL )
-		*error_r = NULL;
-
-	return TRUE;
-}
-
 
 	ctx.local_part = ctx.domain = ctx.str = t_str_new(128);
 	ctx.error = t_str_new(128);
