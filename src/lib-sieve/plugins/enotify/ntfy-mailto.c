@@ -178,7 +178,8 @@ static inline pool_t array_get_pool_i(struct array *array)
 	array_get_pool_i(&(array)->arr)
 
 static bool _uri_parse_recipients
-(const char **uri_p, ARRAY_TYPE(recipients) *recipients_r, const char **error_r)
+(const struct sieve_enotify_log_context *nlctx, const char **uri_p, 
+	ARRAY_TYPE(recipients) *recipients_r)
 {
 	string_t *to = t_str_new(128);
 	const char *recipient;
@@ -197,7 +198,7 @@ static bool _uri_parse_recipients
 			
 			/* Parse 2-digit hex value */
 			if ( !_parse_hex_value(&p, &ch) ) {
-				*error_r = "invalid % encoding";
+				sieve_enotify_error(nlctx, "invalid % encoding");
 				return FALSE;
 			}
 
@@ -248,8 +249,8 @@ static bool _uri_parse_recipients
 }
 
 static bool _uri_parse_headers
-(const char **uri_p, ARRAY_TYPE(headers) *headers_r, const char **body, 
-	const char **subject, const char **error_r)
+(const struct sieve_enotify_log_context *nlctx, const char **uri_p, 
+	ARRAY_TYPE(headers) *headers_r, const char **body, const char **subject)
 {
 	string_t *field = t_str_new(128);
 	const char *p = *uri_p;
@@ -273,12 +274,12 @@ static bool _uri_parse_headers
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
 					printf("F: %s\n", p);
-					*error_r = "invalid % encoding";
+					sieve_enotify_error(nlctx, "invalid % encoding");
 					return FALSE;
 				}
 			} else if ( ch != '=' && !_is_qchar(ch) ) {
-				*error_r = t_strdup_printf
-					("invalid character '%c' in header field name part", *p);
+				sieve_enotify_error
+					(nlctx, "invalid character '%c' in header field name part", *p);
 				return FALSE;
 			}
 
@@ -288,7 +289,7 @@ static bool _uri_parse_headers
 
 		/* Verify field name */
 		if ( !rfc2822_header_field_name_verify(str_c(field), str_len(field)) ) {
-			*error_r = "invalid header field name";
+			sieve_enotify_error(nlctx, "invalid header field name");
 			return FALSE;
 		}
 
@@ -318,13 +319,12 @@ static bool _uri_parse_headers
 			if ( ch == '%' ) {
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
-					printf("F: %s\n", p);
-					*error_r = "invalid % encoding";
+					sieve_enotify_error(nlctx, "invalid % encoding");
 					return FALSE;
 				}
 			} else if ( ch != '=' && !_is_qchar(ch) ) {
-				*error_r = t_strdup_printf
-					("invalid character '%c' in header field value part", *p);
+				sieve_enotify_error
+					(nlctx, "invalid character '%c' in header field value part", *p);
 				return FALSE;
 			}
 			str_append_c(field, ch);
@@ -336,7 +336,7 @@ static bool _uri_parse_headers
 			// FIXME: verify body ... 
 		} else {
 			if ( !rfc2822_header_field_body_verify(str_c(field), str_len(field)) ) {
-				*error_r = "invalid header field body";
+				sieve_enotify_error(nlctx, "invalid header field body");
 				return FALSE;
 			}
 		}
@@ -372,9 +372,9 @@ static bool _uri_parse_headers
 }
 
 static bool ntfy_mailto_parse_uri
-(const char *uri_body, ARRAY_TYPE(recipients) *recipients_r, 
-	ARRAY_TYPE(headers) *headers_r, const char **body, const char **subject,
-	const char **error_r)
+(const struct sieve_enotify_log_context *nlctx, const char *uri_body, 
+	ARRAY_TYPE(recipients) *recipients_r, ARRAY_TYPE(headers) *headers_r, 
+	const char **body, const char **subject)
 {
 	const char *p = uri_body;
 	
@@ -397,14 +397,14 @@ static bool ntfy_mailto_parse_uri
 	/* First extract to-part by searching for '?' and decoding % items
 	 */
 
-	if ( !_uri_parse_recipients(&p, recipients_r, error_r) )
+	if ( !_uri_parse_recipients(nlctx, &p, recipients_r) )
 		return FALSE;	
 
 	/* Extract hfield items */	
 	
 	while ( *p != '\0' ) {		
 		/* Extract hfield item by searching for '&' and decoding '%' items */
-		if ( !_uri_parse_headers(&p, headers_r, body, subject, error_r) )
+		if ( !_uri_parse_headers(nlctx, &p, headers_r, body, subject) )
 			return FALSE;		
 	}
 	
@@ -419,15 +419,7 @@ static bool ntfy_mailto_validate_uri
 (const struct sieve_enotify_log_context *nlctx, const char *uri,
 	const char *uri_body)
 {	
-	const char *error;
-	
-	if ( !ntfy_mailto_parse_uri(uri_body, NULL, NULL, NULL, NULL, &error) ) {
-		sieve_enotify_error
-			(nlctx,  "invalid mailto URI '%s': %s", str_sanitize(uri, 80), error);
-		return FALSE;
-	}
-	
-	return TRUE;
+	return ntfy_mailto_parse_uri(nlctx, uri_body, NULL, NULL, NULL, NULL);
 }
 
 /*
@@ -440,7 +432,6 @@ static bool ntfy_mailto_runtime_check_operands
 	const char *from ATTR_UNUSED, pool_t context_pool, void **context)
 {
 	struct ntfy_mailto_context *mtctx;
-	const char *error;
 	
 	/* Need to create context before validation to have arrays present */
 	mtctx = p_new(context_pool, struct ntfy_mailto_context, 1);
@@ -448,10 +439,8 @@ static bool ntfy_mailto_runtime_check_operands
 	p_array_init(&mtctx->headers, context_pool, NTFY_MAILTO_MAX_HEADERS);
 
 	if ( !ntfy_mailto_parse_uri
-		(uri_body, &mtctx->recipients, &mtctx->headers, &mtctx->body, 
-			&mtctx->subject, &error) ) {
-		sieve_enotify_error
-			(nlctx, "invalid mailto URI '%s': %s", str_sanitize(uri, 80), error);
+		(nlctx, uri_body, &mtctx->recipients, &mtctx->headers, &mtctx->body, 
+			&mtctx->subject) ) {
 		return FALSE;
 	}
 	
