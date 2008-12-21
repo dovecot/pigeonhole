@@ -835,7 +835,8 @@ static bool act_vacation_send
 	outmsgid = sieve_get_new_message_id(senv);
 
 	/* Produce a proper reply */
-    
+
+	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);    
 	rfc2822_header_field_write(f, "Message-ID", outmsgid);
 	rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
 
@@ -868,7 +869,6 @@ static bool act_vacation_send
 	}
 			
 	rfc2822_header_field_write(f, "Auto-Submitted", "auto-replied (vacation)");
-	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
 	rfc2822_header_field_write(f, "Precedence", "bulk");
 	rfc2822_header_field_write(f, "MIME-Version", "1.0");
     
