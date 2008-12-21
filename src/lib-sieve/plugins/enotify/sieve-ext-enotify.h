@@ -43,14 +43,18 @@ struct sieve_enotify_method {
 	const char *identifier;
 	
 	/* Validation */
-	bool (*validate_uri)
-		(const struct sieve_enotify_log *nctx, const char *uri, 
-			const char *uri_body);
+	bool (*compile_check_uri)
+		(const struct sieve_enotify_log *nlog, const char *uri,
+		const char *uri_body);
+	bool (*compile_check_message)
+		(const struct sieve_enotify_log *nlog, string_t *message);
+	bool (*compile_check_from)
+		(const struct sieve_enotify_log *nlog, string_t *from);
 
 	/* Runtime */
 	bool (*runtime_check_operands)
-		(const struct sieve_enotify_log *nctx, const char *uri, 
-			const char *uri_body, const char *message, const char *from, 
+		(const struct sieve_enotify_log *nlog, const char *uri, 
+			const char *uri_body, string_t *message, string_t *from, 
 			pool_t context_pool, void **context);
 			
 	/* Action print */

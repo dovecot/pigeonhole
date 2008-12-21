@@ -70,8 +70,9 @@ const struct sieve_enotify_method *ext_enotify_method_find
  * Validation
  */
  
-bool ext_enotify_uri_validate
-	(struct sieve_validator *valdtr, struct sieve_ast_argument *arg);
+bool ext_enotify_compile_check_arguments
+(struct sieve_validator *valdtr, struct sieve_ast_argument *uri_arg,
+	struct sieve_ast_argument *msg_arg, struct sieve_ast_argument *from_arg);
 
 /*
  * Runtime
@@ -79,7 +80,7 @@ bool ext_enotify_uri_validate
 
 const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 	(const struct sieve_runtime_env *renv, unsigned int source_line,
-		const char *method_uri,	const char *message, const char *from, 
+		string_t *method_uri, string_t *message, string_t *from, 
 		void **context);
 
 /*

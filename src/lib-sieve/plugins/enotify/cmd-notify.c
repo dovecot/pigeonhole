@@ -39,6 +39,8 @@ static const struct sieve_argument notify_message_tag;
 static bool cmd_notify_registered
 	(struct sieve_validator *valdtr, 
 		struct sieve_command_registration *cmd_reg);
+static bool cmd_notify_pre_validate
+	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 static bool cmd_notify_validate
 	(struct sieve_validator *valdtr, struct sieve_command_context *cmd);
 static bool cmd_notify_generate
@@ -49,7 +51,7 @@ const struct sieve_command notify_command = {
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE, 
 	cmd_notify_registered,
-	NULL,
+	cmd_notify_pre_validate,
 	cmd_notify_validate, 
 	cmd_notify_generate, 
 	NULL 
@@ -160,6 +162,15 @@ const struct sieve_action act_notify = {
 	NULL
 };
 
+/*
+ * Command validation context
+ */
+ 
+struct cmd_notify_context_data {
+	struct sieve_ast_argument *from;
+	struct sieve_ast_argument *message;
+};
+
 /* 
  * Tag validation 
  */
@@ -169,6 +180,8 @@ static bool cmd_notify_validate_string_tag
 	struct sieve_command_context *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
+	struct cmd_notify_context_data *ctx_data = 
+		(struct cmd_notify_context_data *) cmd->data; 
 
 	/* Detach the tag itself */
 	*arg = sieve_ast_arguments_detach(*arg,1);
@@ -180,11 +193,15 @@ static bool cmd_notify_validate_string_tag
 	if ( !sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, SAAT_STRING) )
 		return FALSE;
 
-	if ( tag->argument == &notify_from_tag ) {		
+	if ( tag->argument == &notify_from_tag ) {
+		ctx_data->from = *arg;
+		
 		/* Skip parameter */
 		*arg = sieve_ast_argument_next(*arg);
 		
 	} else if ( tag->argument == &notify_message_tag ) {
+		ctx_data->message = *arg;
+
 		/* Skip parameter */
 		*arg = sieve_ast_argument_next(*arg);	
 	}
@@ -277,11 +294,27 @@ static bool cmd_notify_registered
 /* 
  * Command validation 
  */
+
+static bool cmd_notify_pre_validate
+(struct sieve_validator *validator ATTR_UNUSED, 
+	struct sieve_command_context *cmd) 
+{
+	struct cmd_notify_context_data *ctx_data;
+	
+	/* Assign context */
+	ctx_data = p_new(sieve_command_pool(cmd), 
+		struct cmd_notify_context_data, 1);
+	cmd->data = ctx_data;
+
+	return TRUE;
+}
  
 static bool cmd_notify_validate
 (struct sieve_validator *valdtr, struct sieve_command_context *cmd) 
 { 	
 	struct sieve_ast_argument *arg = cmd->first_positional;
+	struct cmd_notify_context_data *ctx_data = 
+		(struct cmd_notify_context_data *) cmd->data; 
 
 	if ( !sieve_validate_positional_argument
 		(valdtr, cmd, arg, "method", 1, SAAT_STRING) ) {
@@ -291,11 +324,8 @@ static bool cmd_notify_validate
 	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
 		return FALSE;
 		
-	if ( sieve_argument_is_string_literal(arg) ) {
-		return ext_enotify_uri_validate(valdtr, arg);
-	}
-	
-	return TRUE;
+	return ext_enotify_compile_check_arguments
+		(valdtr, arg, ctx_data->message, ctx_data->from);
 }
 
 /*
@@ -462,10 +492,9 @@ static int cmd_notify_operation_execute
 	/* Check operands */
 
 	if ( (method=ext_enotify_runtime_check_operands
-		(renv, source_line, str_c(method_uri), 
-			message == NULL ? NULL : str_c(message), 
-			from == NULL ? NULL : str_c(from), 
-			&method_context)) != NULL ) {
+		(renv, source_line, method_uri, message, from, &method_context)) 
+			!= NULL ) {
+
 		/* Add notify action to the result */
 
 		pool = sieve_result_pool(renv->result);

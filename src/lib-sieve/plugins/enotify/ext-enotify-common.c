@@ -132,36 +132,61 @@ static const char *ext_enotify_uri_scheme_parse(const char **uri_p)
 	return str_c(scheme);
 }
 
-bool ext_enotify_uri_validate
-	(struct sieve_validator *valdtr, struct sieve_ast_argument *arg)
+bool ext_enotify_compile_check_arguments
+(struct sieve_validator *valdtr, struct sieve_ast_argument *uri_arg,
+	struct sieve_ast_argument *msg_arg, struct sieve_ast_argument *from_arg)
 {
-	const char *uri = sieve_ast_argument_strc(arg);
+	const char *uri = sieve_ast_argument_strc(uri_arg);
 	const char *scheme;
 	const struct sieve_enotify_method *method;
+	struct sieve_enotify_log nlog;
+
+	if ( !sieve_argument_is_string_literal(uri_arg) )
+		return TRUE;
 	
 	if ( (scheme=ext_enotify_uri_scheme_parse(&uri)) == NULL ) {
-		sieve_argument_validate_error(valdtr, arg, 
+		sieve_argument_validate_error(valdtr, uri_arg, 
 			"notify command: invalid scheme part for method URI '%s'", 
-			str_sanitize(sieve_ast_argument_strc(arg), 80));
+			str_sanitize(sieve_ast_argument_strc(uri_arg), 80));
 		return FALSE;
 	}
 	
 	if ( (method=ext_enotify_method_find(scheme)) == NULL ) {
-		sieve_argument_validate_error(valdtr, arg, 
+		sieve_argument_validate_error(valdtr, uri_arg, 
 			"notify command: invalid method '%s'", scheme);
 		return FALSE;
 	}
-	
-	if ( method->validate_uri != NULL ) {
-		struct sieve_enotify_log nlog;
-		
-		memset(&nlog, 0, sizeof(nlog));
-		nlog.location = sieve_error_script_location
-			(sieve_validator_script(valdtr), arg->source_line);
-		nlog.ehandler = sieve_validator_error_handler(valdtr);
-		nlog.prefix = "notify command";
 
-		return method->validate_uri(&nlog, sieve_ast_argument_strc(arg), uri);
+	memset(&nlog, 0, sizeof(nlog));
+	nlog.ehandler = sieve_validator_error_handler(valdtr);
+	nlog.prefix = "notify command";
+	
+	if ( method->compile_check_uri != NULL ) {
+		nlog.location = sieve_error_script_location
+			(sieve_validator_script(valdtr), uri_arg->source_line);
+
+		if ( !method->compile_check_uri
+			(&nlog, sieve_ast_argument_strc(uri_arg), uri) )
+			return FALSE;
+	}
+
+	if ( msg_arg != NULL && sieve_argument_is_string_literal(msg_arg) && 
+		method->compile_check_message != NULL ) {
+		nlog.location = sieve_error_script_location
+			(sieve_validator_script(valdtr), msg_arg->source_line);
+
+		if ( !method->compile_check_message
+			(&nlog, sieve_ast_argument_str(msg_arg)) )
+			return FALSE;
+	}
+
+	if ( from_arg != NULL && sieve_argument_is_string_literal(from_arg) &&
+		method->compile_check_from != NULL ) {
+		nlog.location = sieve_error_script_location
+			(sieve_validator_script(valdtr), from_arg->source_line);
+
+		if ( !method->compile_check_from(&nlog, sieve_ast_argument_str(from_arg)) )
+			return FALSE;
 	}
 	
 	return TRUE;
@@ -173,9 +198,9 @@ bool ext_enotify_uri_validate
 
 const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 (const struct sieve_runtime_env *renv, unsigned int source_line,
-	const char *method_uri,	const char *message, const char *from, void **context)
+	string_t *method_uri, string_t *message, string_t *from, void **context)
 {
-	const char *uri = method_uri;
+	const char *uri = str_c(method_uri);
 	const char *scheme;
 	const struct sieve_enotify_method *method;
 	
@@ -183,7 +208,7 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 		sieve_runtime_error
 			(renv, sieve_error_script_location(renv->script, source_line),
 				"invalid scheme part for method URI '%s'", 
-				str_sanitize(method_uri, 80));
+				str_sanitize(str_c(method_uri), 80));
 		return NULL;
 	}
 	
@@ -202,9 +227,8 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 		nlog.ehandler = sieve_interpreter_get_error_handler(renv->interp);
 		nlog.prefix = "notify action";
 
-		if ( method->runtime_check_operands
-			(&nlog, method_uri, uri, message, from, sieve_result_pool(renv->result), 
-			context) )
+		if ( method->runtime_check_operands(&nlog, str_c(method_uri), uri, message, 
+			from, sieve_result_pool(renv->result), context) )
 			return method;
 		
 		return NULL;

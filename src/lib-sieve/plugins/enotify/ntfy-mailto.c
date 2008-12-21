@@ -43,12 +43,14 @@ ARRAY_DEFINE_TYPE(headers, struct ntfy_mailto_header_field);
  * Mailto notification method
  */
  
-static bool ntfy_mailto_validate_uri
-	(const struct sieve_enotify_log *nlog, const char *uri, 
+static bool ntfy_mailto_compile_check_uri
+	(const struct sieve_enotify_log *nlog, const char *uri,
 		const char *uri_body);
+static bool ntfy_mailto_compile_check_from
+	(const struct sieve_enotify_log *nlog, string_t *from);
 static bool ntfy_mailto_runtime_check_operands
 	(const struct sieve_enotify_log *nlog, const char *uri,
-		const char *uri_body, const char *message, const char *from, 
+		const char *uri_body, string_t *message, string_t *from, 
 		pool_t context_pool, void **context);
 static void ntfy_mailto_action_print
 	(const struct sieve_result_print_env *rpenv, 
@@ -59,7 +61,9 @@ static bool ntfy_mailto_action_execute
 
 const struct sieve_enotify_method mailto_notify = {
 	"mailto",
-	ntfy_mailto_validate_uri,
+	ntfy_mailto_compile_check_uri,
+	NULL,
+	ntfy_mailto_compile_check_from,
 	ntfy_mailto_runtime_check_operands,
 	ntfy_mailto_action_print,
 	ntfy_mailto_action_execute
@@ -379,6 +383,7 @@ static bool ntfy_mailto_parse_uri
 (const struct sieve_enotify_log *nlog, const char *uri_body, 
 	ARRAY_TYPE(recipients) *recipients_r, ARRAY_TYPE(headers) *headers_r, 
 	const char **body, const char **subject)
+
 {
 	const char *p = uri_body;
 	
@@ -419,15 +424,15 @@ static bool ntfy_mailto_parse_uri
  * Validation
  */
 
-static bool ntfy_mailto_validate_uri
-(const struct sieve_enotify_log *nlog, const char *uri,
-	const char *uri_body)
+static bool ntfy_mailto_compile_check_uri
+	(const struct sieve_enotify_log *nlog, const char *uri,
+		const char *uri_body)
 {	
 	return ntfy_mailto_parse_uri(nlog, uri_body, NULL, NULL, NULL, NULL);
 }
 
-static bool ntfy_mailto_validate_from
-(const struct sieve_enotify_log *nlog, string_t *from)
+static bool ntfy_mailto_compile_check_from
+	(const struct sieve_enotify_log *nlog, string_t *from)
 {
 	const char *error;
 	bool result;
@@ -451,9 +456,9 @@ static bool ntfy_mailto_validate_from
  */
  
 static bool ntfy_mailto_runtime_check_operands
-(const struct sieve_enotify_log *nlog, const char *uri, 
-	const char *uri_body, const char *message ATTR_UNUSED, 
-	const char *from ATTR_UNUSED, pool_t context_pool, void **context)
+	(const struct sieve_enotify_log *nlog, const char *uri,
+		const char *uri_body, string_t *message, string_t *from, 
+		pool_t context_pool, void **context)
 {
 	struct ntfy_mailto_context *mtctx;
 	
