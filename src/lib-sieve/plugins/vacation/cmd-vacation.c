@@ -839,8 +839,8 @@ static bool act_vacation_send
 	rfc2822_header_field_write(f, "Message-ID", outmsgid);
 	rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
 
-	if ( ctx->from_normalized != NULL && *(ctx->from_normalized) != '\0' )
-		rfc2822_header_field_printf(f, "From", "%s", ctx->from_normalized);
+	if ( ctx->from != NULL && *(ctx->from) != '\0' )
+		rfc2822_header_field_printf(f, "From", "%s", ctx->from);
 	else
 		rfc2822_header_field_printf(f, "From", "<%s>", msgdata->to_address);
 		
