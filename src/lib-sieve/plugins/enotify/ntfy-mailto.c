@@ -54,10 +54,12 @@ static bool ntfy_mailto_compile_check_uri
 		const char *uri_body);
 static bool ntfy_mailto_compile_check_from
 	(const struct sieve_enotify_log *nlog, string_t *from);
+static const char *ntfy_mailto_runtime_get_notify_capability
+	(const struct sieve_enotify_log *nlog, const char *uri, const char *uri_body, 
+		const char *capability);
 static bool ntfy_mailto_runtime_check_operands
-	(const struct sieve_enotify_log *nlog, const char *uri,
-		const char *uri_body, string_t *message, string_t *from, 
-		pool_t context_pool, void **context);
+	(const struct sieve_enotify_log *nlog, const char *uri,const char *uri_body, 
+		string_t *message, string_t *from, pool_t context_pool, void **context);
 static void ntfy_mailto_action_print
 	(const struct sieve_result_print_env *rpenv, 
 		const struct sieve_enotify_action *act);	
@@ -70,6 +72,7 @@ const struct sieve_enotify_method mailto_notify = {
 	ntfy_mailto_compile_check_uri,
 	NULL,
 	ntfy_mailto_compile_check_from,
+	ntfy_mailto_runtime_get_notify_capability,
 	ntfy_mailto_runtime_check_operands,
 	ntfy_mailto_action_print,
 	ntfy_mailto_action_execute
@@ -517,6 +520,20 @@ static bool ntfy_mailto_compile_check_from
 /*
  * Runtime
  */
+ 
+static const char *ntfy_mailto_runtime_get_notify_capability
+(const struct sieve_enotify_log *nlog ATTR_UNUSED, const char *uri ATTR_UNUSED, 
+	const char *uri_body, const char *capability)
+{
+	if ( !ntfy_mailto_parse_uri(NULL, uri_body, NULL, NULL, NULL, NULL) ) {
+		return NULL;
+	}
+	
+	if ( strcasecmp(capability, "online") == 0 ) 
+		return "maybe";
+	
+	return NULL;
+}
  
 static bool ntfy_mailto_runtime_check_operands
 	(const struct sieve_enotify_log *nlog, const char *uri ATTR_UNUSED,

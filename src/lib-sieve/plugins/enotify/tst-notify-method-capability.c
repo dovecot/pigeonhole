@@ -184,6 +184,7 @@ static int tst_notifymc_operation_execute
 	struct sieve_match_context *mctx;
 	string_t *notify_uri, *notify_capability;
 	struct sieve_coded_stringlist *key_list;
+	const char *cap_value;
 	bool matched;
 
 	/*
@@ -225,28 +226,22 @@ static int tst_notifymc_operation_execute
 
 	sieve_runtime_trace(renv, "NOTIFY_METHOD_CAPABILITY test");
 
-	/*mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
+	cap_value = ext_enotify_runtime_get_method_capability
+		(renv, 0 /* FIXME */, notify_uri, str_c(notify_capability));
 
-	/* Iterate through all requested strings to match * /
-	matched = FALSE;
-	while ( result && !matched && 
-		(result=sieve_coded_stringlist_next_item(source, &src_item)) 
-		&& src_item != NULL ) {
-		const char *src = str_len(src_item) > 0 ? str_c(src_item) : NULL;
+	if ( cap_value != NULL ) {
+		mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
 
-		if ( (mret=sieve_match_value
-			(mctx, src, str_len(src_item))) < 0 ) {
+		if ( (mret=sieve_match_value(mctx, cap_value, strlen(cap_value))) < 0 )
 			result = FALSE;
-			break;
-		}
-		
-		matched = ( mret > 0 );				
-	}
+		matched = ( mret > 0 );		
 
-	if ( (mret=sieve_match_end(mctx)) < 0 ) 
-		result = FALSE;
-	else
-		matched = ( mret > 0 || matched ); 	
+		if ( (mret=sieve_match_end(mctx)) < 0 ) 
+			result = FALSE;
+		matched = ( mret > 0 ) || matched;		
+	} else {
+		matched = FALSE;
+	}
 	
 	if ( result ) {
 		sieve_interpreter_set_test_result(renv->interp, matched);
@@ -254,7 +249,5 @@ static int tst_notifymc_operation_execute
 	}
 	
 	sieve_runtime_trace_error(renv, "invalid string list item");
-	return SIEVE_EXEC_BIN_CORRUPT;*/
-	
-	return SIEVE_EXEC_OK;
+	return SIEVE_EXEC_BIN_CORRUPT;
 }

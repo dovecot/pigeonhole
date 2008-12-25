@@ -52,6 +52,9 @@ struct sieve_enotify_method {
 		(const struct sieve_enotify_log *nlog, string_t *from);
 
 	/* Runtime */
+	const char *(*runtime_get_method_capability)
+		(const struct sieve_enotify_log *nlog, const char *uri, 
+			const char *uri_body, const char *capability);
 	bool (*runtime_check_operands)
 		(const struct sieve_enotify_log *nlog, const char *uri, 
 			const char *uri_body, string_t *message, string_t *from, 
