@@ -148,11 +148,10 @@ void sieve_extensions_deinit(void)
 /* 
  * Extension registry
  */
-
+ 
 struct sieve_extension_registration {
 	const struct sieve_extension *extension;
 	int id;
-	bool disabled;
 };
 
 static ARRAY_DEFINE(extensions, struct sieve_extension_registration); 
@@ -174,13 +173,20 @@ int sieve_extension_register(const struct sieve_extension *extension)
 	
 	ereg->extension = extension;
 	ereg->id = ext_id;
-	ereg->disabled = FALSE;
 	
 	hash_table_insert(extension_index, (void *) extension->name, (void *) ereg);
+	
+	/* Assign ID */
+	
+	if ( extension->_id != NULL ) {
+		i_assert( *(extension->_id) == -1 ); 
+		*(extension->_id) = ext_id;
 
-	if ( extension->load != NULL && !extension->load(ext_id) ) {
-		sieve_sys_error("failed to load '%s' extension support.", extension->name);
-		return -1;
+		if ( extension->load != NULL && !extension->load() ) {
+			sieve_sys_error("failed to load '%s' extension support.", 
+				extension->name);
+			return -1;
+		}
 	}
 
 	return ext_id;
@@ -198,7 +204,7 @@ const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id)
 	if ( ext_id < array_count(&extensions) ) {
 		ereg = array_idx(&extensions, ext_id);
 
-		if ( !ereg->disabled ) 
+		if ( SIEVE_EXT_ENABLED(ereg->extension) )
 			return ereg->extension;
 	}
 	
@@ -215,7 +221,7 @@ const struct sieve_extension *sieve_extension_get_by_name(const char *name)
 	ereg = (struct sieve_extension_registration *) 
 		hash_table_lookup(extension_index, name);
 
-	if ( ereg == NULL || ereg->disabled )
+	if ( ereg == NULL || !SIEVE_EXT_ENABLED(ereg->extension) )
 		return NULL;
 		
 	return ereg->extension;
@@ -224,8 +230,9 @@ const struct sieve_extension *sieve_extension_get_by_name(const char *name)
 static inline bool _list_extension
 	(const struct sieve_extension_registration *ereg)
 {
-	return ( !ereg->disabled && ereg->extension->id != NULL && 
-		*(ereg->extension->name) != '@' );
+	return 
+		( SIEVE_EXT_ENABLED(ereg->extension) && 
+			*(ereg->extension->name) != '@' );
 }
 
 const char *sieve_extensions_get_string(void)
@@ -275,7 +282,7 @@ void sieve_extensions_set_string(const char *ext_string)
 		eregs = array_get_modifiable(&extensions, &ext_count);
 		
 		for ( i = 0; i < ext_count; i++ ) {
-			eregs[i].disabled = FALSE;
+			*(eregs[i].extension->_id) = eregs[i].id;
 		}
 
 		return;	
@@ -329,7 +336,11 @@ void sieve_extensions_set_string(const char *ext_string)
 			}		
 		}
 
-		eregs[i].disabled = disabled;
+		if ( disabled ) {
+			*(eregs[i].extension->_id) = -1;
+		} else {
+			*(eregs[i].extension->_id) = eregs[i].id;
+		}
 	}
 }
 
@@ -385,7 +396,8 @@ const char *sieve_extension_capabilities_get_string
 		(const struct sieve_extension_capabilities *) 
 			hash_table_lookup(capabilities_index, cap_name);
 
-	if ( cap == NULL || cap->get_string == NULL )
+	if ( cap == NULL || cap->get_string == NULL || 
+		!SIEVE_EXT_ENABLED(cap->extension) )
 		return NULL;
 		
 	return cap->get_string();

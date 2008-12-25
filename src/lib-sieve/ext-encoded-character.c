@@ -24,28 +24,20 @@
  * Extension
  */
 
-static bool ext_encoded_character_load(int ext_id);
 static bool ext_encoded_character_validator_load
 	(struct sieve_validator *validator);
 
-static int ext_my_id;
+static int ext_my_id = -1;
 	
 struct sieve_extension encoded_character_extension = { 
 	"encoded-character", 
 	&ext_my_id,
-	ext_encoded_character_load,
-	NULL,
+	NULL, NULL,
 	ext_encoded_character_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
-
-static bool ext_encoded_character_load(int ext_id) 
-{
-	ext_my_id = ext_id;
-	return TRUE;
-}
 
 /*
  * Encoded string argument

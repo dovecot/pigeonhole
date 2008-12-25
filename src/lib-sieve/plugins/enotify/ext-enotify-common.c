@@ -26,6 +26,7 @@ static const char *ext_notify_get_methods_string(void);
 
 const struct sieve_extension_capabilities notify_capabilities = {
 	"notify",
+	&enotify_extension,
 	ext_notify_get_methods_string
 };
 

@@ -29,28 +29,19 @@
  * Extension
  */
 
-static bool ext_vacation_load(int ext_id);
 static bool ext_vacation_validator_load(struct sieve_validator *validator);
 
-static int ext_my_id;
+static int ext_my_id = -1;
 
 const struct sieve_extension vacation_extension = { 
 	"vacation",
 	&ext_my_id,
-	ext_vacation_load,
-	NULL,
+	NULL, NULL,
 	ext_vacation_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATION(vacation_operation),
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
-
-static bool ext_vacation_load(int ext_id)
-{
-	ext_my_id = ext_id;
-
-	return TRUE;
-}
 
 static bool ext_vacation_validator_load(struct sieve_validator *validator)
 {

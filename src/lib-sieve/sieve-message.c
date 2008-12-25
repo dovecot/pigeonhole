@@ -78,13 +78,13 @@ void sieve_message_context_extension_set
 (struct sieve_message_context *msgctx, const struct sieve_extension *ext, 
 	void *context)
 {
-	array_idx_set(&msgctx->ext_contexts, (unsigned int) *ext->id, &context);	
+	array_idx_set(&msgctx->ext_contexts, (unsigned int) SIEVE_EXT_ID(ext), &context);	
 }
 
 const void *sieve_message_context_extension_get
 (struct sieve_message_context *msgctx, const struct sieve_extension *ext) 
 {
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 	void * const *ctx;
 
 	if  ( ext_id < 0 || ext_id >= (int) array_count(&msgctx->ext_contexts) )

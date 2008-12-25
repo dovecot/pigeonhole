@@ -106,7 +106,7 @@ bool sieve_binary_dumper_run
 		for ( i = 0; i < count; i++ ) {
 			const struct sieve_extension *ext = sieve_binary_extension_get_by_index
 				(sbin, i);
-			sieve_binary_dumpf(denv, "%3d: %s (%d)\n", i, ext->name, *ext->id);
+			sieve_binary_dumpf(denv, "%3d: %s (%d)\n", i, ext->name, SIEVE_EXT_ID(ext));
 		}
 	}
 

@@ -50,16 +50,14 @@ const unsigned int sieve_core_match_types_count =
  * Match-type 'extension' 
  */
 
-static int ext_my_id = -1;
-
-static bool mtch_extension_load(int ext_id);
 static bool mtch_validator_load(struct sieve_validator *validator);
+
+static int ext_my_id = -1;
 
 const struct sieve_extension match_type_extension = {
 	"@match-types",
 	&ext_my_id,
-	mtch_extension_load,
-	NULL,
+	NULL, NULL,
 	mtch_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,
@@ -68,12 +66,6 @@ const struct sieve_extension match_type_extension = {
 
 static const struct sieve_extension *ext_this = &match_type_extension;
 	
-static bool mtch_extension_load(int ext_id) 
-{
-	ext_my_id = ext_id;
-	return TRUE;
-}
-
 /* 
  * Validator context:
  *   name-based match-type registry. 

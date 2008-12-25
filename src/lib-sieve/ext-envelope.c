@@ -42,27 +42,19 @@ const struct sieve_extension envelope_extension;
  * Extension 
  */
 
-static int ext_my_id;
-
-static bool ext_envelope_load(int ext_id);
 static bool ext_envelope_validator_load(struct sieve_validator *validator);
+
+static int ext_my_id = -1;
 
 const struct sieve_extension envelope_extension = { 
 	"envelope", 
 	&ext_my_id,
-	ext_envelope_load,
-	NULL,
+	NULL, NULL,
 	ext_envelope_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATION(envelope_operation), 
 	SIEVE_EXT_DEFINE_NO_OPERANDS 
 };
-
-static bool ext_envelope_load(int ext_id) 
-{
-	ext_my_id = ext_id;
-	return TRUE;
-}
 
 static bool ext_envelope_validator_load(struct sieve_validator *validator)
 {

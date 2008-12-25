@@ -142,13 +142,13 @@ struct sieve_error_handler *sieve_result_get_error_handler(struct sieve_result *
 void sieve_result_extension_set_context
 (struct sieve_result *result, const struct sieve_extension *ext, void *context)
 {
-	array_idx_set(&result->ext_contexts, (unsigned int) *ext->id, &context);	
+	array_idx_set(&result->ext_contexts, (unsigned int) SIEVE_EXT_ID(ext), &context);	
 }
 
 const void *sieve_result_extension_get_context
 (struct sieve_result *result, const struct sieve_extension *ext) 
 {
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 	void * const *ctx;
 
 	if  ( ext_id < 0 || ext_id >= (int) array_count(&result->ext_contexts) )

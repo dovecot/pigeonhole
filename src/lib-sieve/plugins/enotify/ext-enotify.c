@@ -42,11 +42,11 @@ const struct sieve_operation *ext_enotify_operations[] = {
  * Extension
  */
 
-static bool ext_enotify_load(int ext_id);
+static bool ext_enotify_load(void);
 static void ext_enotify_unload(void);
 static bool ext_enotify_validator_load(struct sieve_validator *valdtr);
 
-static int ext_my_id;
+static int ext_my_id = -1;
 
 const struct sieve_extension enotify_extension = { 
 	"enotify", 
@@ -59,10 +59,8 @@ const struct sieve_extension enotify_extension = {
 	SIEVE_EXT_DEFINE_OPERAND(encodeurl_operand)
 };
 
-static bool ext_enotify_load(int ext_id)
+static bool ext_enotify_load(void)
 {
-	ext_my_id = ext_id;
-
 	ext_enotify_methods_init();
 
 	sieve_extension_capabilities_register(&notify_capabilities);

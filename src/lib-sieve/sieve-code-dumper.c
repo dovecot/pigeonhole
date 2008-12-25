@@ -83,7 +83,7 @@ void sieve_dump_extension_register
 	const struct sieve_code_dumper_extension *dump_ext, void *context)
 {
 	struct sieve_code_dumper_extension_reg reg = { dump_ext, context };
-	int ext_id = *dump_ext->ext->id;
+	int ext_id = SIEVE_EXT_ID(dump_ext->ext);
 
 	if ( ext_id < 0 ) return;
 	
@@ -95,7 +95,7 @@ void sieve_dump_extension_set_context
 	void *context)
 {
 	struct sieve_code_dumper_extension_reg reg = { NULL, context };
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 
 	if ( ext_id < 0 ) return;
 	
@@ -105,7 +105,7 @@ void sieve_dump_extension_set_context
 void *sieve_dump_extension_get_context
 (struct sieve_code_dumper *dumper, const struct sieve_extension *ext) 
 {
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 	const struct sieve_code_dumper_extension_reg *reg;
 
 	if  ( ext_id < 0 || ext_id >= (int) array_count(&dumper->extensions) )

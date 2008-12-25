@@ -272,7 +272,7 @@ void sieve_interpreter_extension_register
 	const struct sieve_interpreter_extension *int_ext, void *context)
 {
 	struct sieve_interpreter_extension_reg reg = { int_ext, context };
-	int ext_id = *int_ext->ext->id;
+	int ext_id = SIEVE_EXT_ID(int_ext->ext);
 
 	if ( ext_id < 0 ) return;
 	
@@ -284,7 +284,7 @@ void sieve_interpreter_extension_set_context
 	void *context)
 {
 	struct sieve_interpreter_extension_reg reg = { NULL, context };
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 
 	if ( ext_id < 0 ) return;
 	
@@ -294,7 +294,7 @@ void sieve_interpreter_extension_set_context
 void *sieve_interpreter_extension_get_context
 (struct sieve_interpreter *interp, const struct sieve_extension *ext) 
 {
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 	const struct sieve_interpreter_extension_reg *reg;
 
 	if  ( ext_id < 0 || ext_id >= (int) array_count(&interp->extensions) )

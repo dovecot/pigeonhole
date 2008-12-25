@@ -118,7 +118,7 @@ void sieve_ext_variables_dump_set_scope
 {
 	struct ext_variables_dump_context *dctx = ext_variables_dump_get_context(denv);
 
-	array_idx_set(&dctx->ext_scopes, (unsigned int) *ext->id, &scope);	
+	array_idx_set(&dctx->ext_scopes, (unsigned int) SIEVE_EXT_ID(ext), &scope);	
 }
 
 /*
@@ -137,7 +137,7 @@ const char *ext_variables_dump_get_identifier
 		scope = dctx->main_scope;
 	else {
 		struct sieve_variable_scope *const *ext_scope;
-		int ext_id = *ext->id;
+		int ext_id = SIEVE_EXT_ID(ext);
 
 		if  ( ext_id < 0 || ext_id >= (int) array_count(&dctx->ext_scopes) )
 			return NULL;

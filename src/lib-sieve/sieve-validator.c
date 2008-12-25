@@ -543,7 +543,7 @@ void sieve_validator_extension_register
 	const struct sieve_validator_extension *val_ext, void *context)
 {
 	struct sieve_validator_extension_reg reg = { val_ext, context };
-	int ext_id = *val_ext->ext->id;
+	int ext_id = SIEVE_EXT_ID(val_ext->ext);
 
 	if ( ext_id < 0 ) return;
 	
@@ -555,7 +555,7 @@ void sieve_validator_extension_set_context
 	void *context)
 {
 	struct sieve_validator_extension_reg reg = { NULL, context };
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 
 	if ( ext_id < 0 ) return;
 	
@@ -565,7 +565,7 @@ void sieve_validator_extension_set_context
 void *sieve_validator_extension_get_context
 (struct sieve_validator *valdtr, const struct sieve_extension *ext) 
 {
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 	const struct sieve_validator_extension_reg *reg;
 
 	if  ( ext_id < 0 || ext_id >= (int) array_count(&valdtr->extensions) )

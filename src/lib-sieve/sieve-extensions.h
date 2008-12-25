@@ -22,9 +22,10 @@ struct sieve_extension_objects {
 
 struct sieve_extension {
 	const char *name;
-	const int *id;
-	
-	bool (*load)(int ext_id);
+
+	int *const _id;
+		
+	bool (*load)(void);
 	void (*unload)(void);
 
 	bool (*validator_load)
@@ -44,6 +45,9 @@ struct sieve_extension {
 	struct sieve_extension_objects operations;
 	struct sieve_extension_objects operands;
 };
+
+#define SIEVE_EXT_ID(EXT) (*((EXT)->_id))
+#define SIEVE_EXT_ENABLED(EXT) (((EXT)->_id != NULL) && (*((EXT)->_id) >= 0))
 
 #define SIEVE_EXT_DEFINE_NO_OBJECTS \
 	{ NULL, 0 }
@@ -99,6 +103,8 @@ void sieve_extensions_set_string(const char *ext_string);
 
 struct sieve_extension_capabilities {
 	const char *name;
+
+	const struct sieve_extension *extension;
 
 	const char *(*get_string)(void);	
 };

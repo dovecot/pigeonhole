@@ -125,7 +125,7 @@ struct sieve_script *sieve_ast_script(struct sieve_ast *ast)
 void sieve_ast_extension_link
 (struct sieve_ast *ast, const struct sieve_extension *ext)
 {
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 	unsigned int i, ext_count;
 	const struct sieve_extension *const *extensions;
 	
@@ -152,7 +152,7 @@ void sieve_ast_extension_register
 (struct sieve_ast *ast, const struct sieve_ast_extension *ast_ext, 
 	void *context)
 {
-	int ext_id = *ast_ext->ext->id;
+	int ext_id = SIEVE_EXT_ID(ast_ext->ext);
 	struct sieve_ast_extension_reg reg;
 
 	if ( ext_id < 0 ) return;
@@ -166,7 +166,7 @@ void sieve_ast_extension_register
 void *sieve_ast_extension_get_context
 (struct sieve_ast *ast, const struct sieve_extension *ext) 
 {
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 	const struct sieve_ast_extension_reg *reg;
 
 	if  ( ext_id < 0 || ext_id >= (int) array_count(&ast->extensions) )

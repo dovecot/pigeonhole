@@ -1232,7 +1232,7 @@ static inline struct sieve_binary_extension_reg *
 	sieve_binary_extension_create_reg
 (struct sieve_binary *sbin, const struct sieve_extension *ext)
 {
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 	int index = array_count(&sbin->extensions);
 	struct sieve_binary_extension_reg *ereg;
 
@@ -1249,7 +1249,7 @@ static inline struct sieve_binary_extension_reg *
 static inline struct sieve_binary_extension_reg *sieve_binary_extension_get_reg 
 (struct sieve_binary *sbin, const struct sieve_extension *ext, bool create) 
 {
-	int ext_id = *ext->id;
+	int ext_id = SIEVE_EXT_ID(ext);
 	struct sieve_binary_extension_reg *reg = NULL;
 
 	if ( ext_id >= 0 && ext_id < (int) array_count(&sbin->extension_index) ) {

@@ -47,7 +47,6 @@ static const struct sieve_operation *ext_include_operations[] = {
  
 /* Forward declaration */
 
-static bool ext_include_load(int ext_id);
 static bool ext_include_validator_load(struct sieve_validator *validator);
 static bool ext_include_generator_load(const struct sieve_codegen_env *cgenv);
 static bool ext_include_interpreter_load
@@ -55,13 +54,12 @@ static bool ext_include_interpreter_load
 
 /* Extension objects */
 
-static int ext_my_id;
+static int ext_my_id = -1;
 
 const struct sieve_extension include_extension = { 
 	"include", 
 	&ext_my_id,
-	ext_include_load,
-	NULL, 
+	NULL, NULL,
 	ext_include_validator_load, 
 	ext_include_generator_load,
 	ext_include_interpreter_load,
@@ -73,13 +71,6 @@ const struct sieve_extension include_extension = {
 };
 
 /* Extension hooks */
-
-static bool ext_include_load(int ext_id)
-{
-	ext_my_id = ext_id;
-
-	return TRUE;
-}
 
 static bool ext_include_validator_load(struct sieve_validator *validator)
 {

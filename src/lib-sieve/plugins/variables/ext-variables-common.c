@@ -537,7 +537,7 @@ struct sieve_variable_storage *sieve_ext_variables_get_storage
 	if ( ext == NULL )
 		return ctx->local_storage;
 
-	ext_id = *ext->id;
+	ext_id = SIEVE_EXT_ID(ext);
 	if ( ext_id >= (int) array_count(&ctx->ext_storages) ) {
 		storage = NULL;
 	} else {
@@ -560,7 +560,7 @@ void sieve_ext_variables_set_storage
 	if ( ctx == NULL || ext == NULL || storage == NULL )
 		return;
 		
-	array_idx_set(&ctx->ext_storages, (unsigned int) *ext->id, &storage);
+	array_idx_set(&ctx->ext_storages, (unsigned int) SIEVE_EXT_ID(ext), &storage);
 }
 
 

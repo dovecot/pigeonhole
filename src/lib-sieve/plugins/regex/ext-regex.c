@@ -43,28 +43,19 @@
  * Extension
  */
 
-static bool ext_regex_load(int ext_id);
 static bool ext_regex_validator_load(struct sieve_validator *validator);
 
-static int ext_my_id;
+static int ext_my_id = -1;
 
 const struct sieve_extension regex_extension = { 
 	"regex", 
 	&ext_my_id,
-	ext_regex_load,
-	NULL,
+	NULL, NULL,
 	ext_regex_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_OPERAND(regex_match_type_operand)
 };
-
-static bool ext_regex_load(int ext_id)
-{
-	ext_my_id = ext_id;
-
-	return TRUE;
-}
 
 static bool ext_regex_validator_load(struct sieve_validator *validator)
 {

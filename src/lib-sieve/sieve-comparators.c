@@ -44,14 +44,12 @@ static void sieve_opr_comparator_emit
 
 static int ext_my_id = -1;
 
-static bool cmp_extension_load(int ext_id);
 static bool cmp_validator_load(struct sieve_validator *validator);
 
 const struct sieve_extension comparator_extension = {
 	"@comparators",
 	&ext_my_id,
-	cmp_extension_load,
-	NULL,
+	NULL, NULL,
 	cmp_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,
@@ -60,12 +58,6 @@ const struct sieve_extension comparator_extension = {
 
 static const struct sieve_extension *ext_this = &comparator_extension;
 	
-static bool cmp_extension_load(int ext_id) 
-{
-	ext_my_id = ext_id;
-	return TRUE;
-}
-
 /* 
  * Validator context:
  *   name-based comparator registry. 
