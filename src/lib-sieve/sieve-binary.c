@@ -1547,10 +1547,10 @@ sieve_size_t sieve_binary_emit_extension
 }
 
 void sieve_binary_emit_extension_object
-(struct sieve_binary *sbin, const struct sieve_extension_obj_registry *reg,
+(struct sieve_binary *sbin, const struct sieve_extension_objects *objs,
 	unsigned int code)
 {
-	if ( reg->count > 1 )
+	if ( objs->count > 1 )
 		_sieve_binary_emit_byte(sbin, code);
 }
 
@@ -1698,15 +1698,15 @@ bool sieve_binary_read_extension
 
 const void *sieve_binary_read_extension_object
 (struct sieve_binary *sbin, sieve_size_t *address, 
-	const struct sieve_extension_obj_registry *reg)
+	const struct sieve_extension_objects *objs)
 {
 	unsigned int code;
 
-	if ( reg->count == 0 ) 
+	if ( objs->count == 0 ) 
 		return NULL;
 
-	if ( reg->count == 1 )
-		return reg->objects;
+	if ( objs->count == 1 )
+		return objs->objects;
 
 	if ( ADDR_BYTES_LEFT(sbin, address) <= 0 )
 		return NULL;
@@ -1714,8 +1714,8 @@ const void *sieve_binary_read_extension_object
 	code = ADDR_DATA_AT(sbin, address);
 	ADDR_JUMP(address, 1);	
 
-	if ( code >= reg->count )
+	if ( code >= objs->count )
 		return NULL;
 
-	return ((const void *const *) reg->objects)[code];
+	return ((const void *const *) objs->objects)[code];
 }

@@ -89,7 +89,7 @@ const struct sieve_side_effect flags_side_effect = {
  * Operand
  */
 
-static const struct sieve_extension_obj_registry ext_side_effects =
+static const struct sieve_extension_objects ext_side_effects =
 	SIEVE_EXT_DEFINE_SIDE_EFFECT(flags_side_effect);
 
 const struct sieve_operand flags_side_effect_operand = { 

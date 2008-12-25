@@ -71,7 +71,7 @@ static bool ext_cmp_i_ascii_numeric_validator_load
  * Operand
  */
 
-static const struct sieve_extension_obj_registry ext_comparators =
+static const struct sieve_extension_objects ext_comparators =
 	SIEVE_EXT_DEFINE_COMPARATOR(i_ascii_numeric_comparator);
 	
 static const struct sieve_operand my_comparator_operand = { 

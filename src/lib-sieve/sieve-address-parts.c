@@ -198,7 +198,7 @@ static bool tag_address_part_generate
 struct sieve_operand_class sieve_address_part_operand_class = 
 	{ "address part" };
 
-static const struct sieve_extension_obj_registry core_address_parts =
+static const struct sieve_extension_objects core_address_parts =
 	SIEVE_EXT_DEFINE_MATCH_TYPES(sieve_core_address_parts);
 
 const struct sieve_operand address_part_operand = { 

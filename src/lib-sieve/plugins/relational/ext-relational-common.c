@@ -147,7 +147,7 @@ const const struct sieve_match_type *rel_match_types[] = {
     &rel_match_count_le, &rel_match_count_eq, &rel_match_count_ne
 };
 
-static const struct sieve_extension_obj_registry ext_match_types =
+static const struct sieve_extension_objects ext_match_types =
 	SIEVE_EXT_DEFINE_MATCH_TYPES(rel_match_types);
 
 const struct sieve_operand rel_match_type_operand = {

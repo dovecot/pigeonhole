@@ -11,7 +11,7 @@
  * Per-extension object registry 
  */
 
-struct sieve_extension_obj_registry {
+struct sieve_extension_objects {
 	const void *objects;
 	unsigned int count;
 };
@@ -41,8 +41,8 @@ struct sieve_extension {
 	bool (*code_dump)
 		(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 
-	struct sieve_extension_obj_registry operations;
-	struct sieve_extension_obj_registry operands;
+	struct sieve_extension_objects operations;
+	struct sieve_extension_objects operands;
 };
 
 #define SIEVE_EXT_DEFINE_NO_OBJECTS \

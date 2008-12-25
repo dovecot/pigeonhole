@@ -14,7 +14,7 @@
  */
 
 struct testsuite_object_operand_interface {
-	struct sieve_extension_obj_registry testsuite_objects;
+	struct sieve_extension_objects testsuite_objects;
 };
 
 extern const struct sieve_operand_class testsuite_object_oprclass;

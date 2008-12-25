@@ -136,7 +136,7 @@ const struct sieve_address_part *ext_subaddress_parts[] = {
 	&user_address_part, &detail_address_part
 };
 
-static const struct sieve_extension_obj_registry ext_address_parts =
+static const struct sieve_extension_objects ext_address_parts =
 	SIEVE_EXT_DEFINE_ADDRESS_PARTS(ext_subaddress_parts);
 
 static struct sieve_operand subaddress_operand = { 

@@ -27,7 +27,7 @@ const struct sieve_variables_modifier encodeurl_modifier = {
  * Modifier operand
  */
 
-static const struct sieve_extension_obj_registry ext_enotify_modifiers =
+static const struct sieve_extension_objects ext_enotify_modifiers =
 	SIEVE_VARIABLES_DEFINE_MODIFIER(encodeurl_modifier);
 
 const struct sieve_operand encodeurl_operand = { 

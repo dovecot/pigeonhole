@@ -144,7 +144,7 @@ sieve_size_t sieve_binary_emit_extension
 	(struct sieve_binary *sbin, const struct sieve_extension *ext,
 		unsigned int offset);
 void sieve_binary_emit_extension_object
-	(struct sieve_binary *sbin, const struct sieve_extension_obj_registry *reg,
+	(struct sieve_binary *sbin, const struct sieve_extension_objects *objs,
     	unsigned int code);
 
 /* 
@@ -182,6 +182,6 @@ bool sieve_binary_read_extension
 		const struct sieve_extension **ext_r);
 const void *sieve_binary_read_extension_object
 	(struct sieve_binary *binary, sieve_size_t *address,
-    	const struct sieve_extension_obj_registry *reg);
+    	const struct sieve_extension_objects *objs);
 
 #endif

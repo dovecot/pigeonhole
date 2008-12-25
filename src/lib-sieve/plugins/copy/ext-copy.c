@@ -115,7 +115,7 @@ static const struct sieve_argument copy_tag = {
  * Operand
  */
 
-static const struct sieve_extension_obj_registry ext_side_effects =
+static const struct sieve_extension_objects ext_side_effects =
 	SIEVE_EXT_DEFINE_SIDE_EFFECT(copy_side_effect);
 
 static const struct sieve_operand copy_side_effect_operand = {

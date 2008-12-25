@@ -10,7 +10,7 @@
  * Regex match type operand
  */
 
-static const struct sieve_extension_obj_registry ext_match_types =
+static const struct sieve_extension_objects ext_match_types =
     SIEVE_EXT_DEFINE_MATCH_TYPE(regex_match_type);
 
 const struct sieve_operand regex_match_type_operand = {

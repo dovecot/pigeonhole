@@ -252,7 +252,7 @@ const struct sieve_comparator *sieve_comparator_tag_get
 const struct sieve_operand_class sieve_comparator_operand_class = 
 	{ "comparator" };
 	
-static const struct sieve_extension_obj_registry core_comparators =
+static const struct sieve_extension_objects core_comparators =
 	SIEVE_EXT_DEFINE_COMPARATORS(sieve_core_comparators);
 
 const struct sieve_operand comparator_operand = { 
