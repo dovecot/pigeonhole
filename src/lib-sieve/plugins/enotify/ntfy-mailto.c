@@ -84,6 +84,7 @@ struct ntfy_mailto_context {
 	ARRAY_TYPE(headers) headers;
 	const char *subject;
 	const char *body;
+	const char *from_normalized;
 };
 
 /*
@@ -518,24 +519,47 @@ static bool ntfy_mailto_compile_check_from
  */
  
 static bool ntfy_mailto_runtime_check_operands
-	(const struct sieve_enotify_log *nlog, const char *uri,
-		const char *uri_body, string_t *message, string_t *from, 
+	(const struct sieve_enotify_log *nlog, const char *uri ATTR_UNUSED,
+		const char *uri_body, string_t *message ATTR_UNUSED, string_t *from, 
 		pool_t context_pool, void **context)
 {
 	struct ntfy_mailto_context *mtctx;
-	
-	/* Need to create context before validation to have arrays present */
-	mtctx = p_new(context_pool, struct ntfy_mailto_context, 1);
-	p_array_init(&mtctx->recipients, context_pool, NTFY_MAILTO_MAX_RECIPIENTS);
-	p_array_init(&mtctx->headers, context_pool, NTFY_MAILTO_MAX_HEADERS);
+	const char *error, *normalized;
 
-	if ( !ntfy_mailto_parse_uri
-		(nlog, uri_body, &mtctx->recipients, &mtctx->headers, &mtctx->body, 
-			&mtctx->subject) ) {
-		return FALSE;
-	}
+	if ( context_pool != NULL && context != NULL ) {
+		/* Need to create context before validation to have arrays present */
+		mtctx = p_new(context_pool, struct ntfy_mailto_context, 1);
 	
-	*context = (void *) mtctx;
+		/* Validate :from */
+		if ( from != NULL ) {
+			T_BEGIN {
+				normalized = sieve_address_normalize(from, &error);
+
+				if ( normalized == NULL ) {
+					sieve_enotify_error(nlog,
+						"specified :from address '%s' is invalid for "
+						"the mailto method: %s",
+						str_sanitize(str_c(from), 128), error);
+				} else 
+					mtctx->from_normalized = p_strdup(context_pool, normalized);
+			} T_END;
+	
+			if ( !normalized ) return FALSE;
+		}
+
+		p_array_init(&mtctx->recipients, context_pool, NTFY_MAILTO_MAX_RECIPIENTS);
+		p_array_init(&mtctx->headers, context_pool, NTFY_MAILTO_MAX_HEADERS);
+
+		if ( !ntfy_mailto_parse_uri
+			(nlog, uri_body, &mtctx->recipients, &mtctx->headers, &mtctx->body, 
+				&mtctx->subject) ) {
+			return FALSE;
+		}
+	
+		*context = (void *) mtctx;
+	} else {
+		return ntfy_mailto_parse_uri(NULL, uri_body, NULL, NULL, NULL, NULL);
+	}
 
 	return TRUE;	
 }

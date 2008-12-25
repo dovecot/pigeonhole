@@ -83,6 +83,10 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 		string_t *method_uri, string_t *message, string_t *from, 
 		void **context);
 
+bool ext_enotify_runtime_method_validate
+	(const struct sieve_runtime_env *renv, unsigned int source_line,
+		string_t *method_uri);
+
 /*
  * Method logging
  */ 

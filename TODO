@@ -1,7 +1,6 @@
 Current:
 
 * Implement enotify extension:
-	- Implement valid_notify_method test (currently skeleton)
 	- Implement notify_method_capability test (currently skeleton)
 	- Implement parsing :options argument
 	- Check whether handling of error conditions matches the standard

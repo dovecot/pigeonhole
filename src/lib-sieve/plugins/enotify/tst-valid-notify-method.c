@@ -111,6 +111,8 @@ static int tst_vnotifym_operation_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_coded_stringlist *notify_uris;
+	string_t *uri_item;
+	bool result = TRUE, all_valid = TRUE;
 
 	/*
 	 * Read operands 
@@ -128,6 +130,21 @@ static int tst_vnotifym_operation_execute
 
 	sieve_runtime_trace(renv, "VALID_NOTIFY_METHOD test");
 
-	sieve_interpreter_set_test_result(renv->interp, FALSE);
+	uri_item = NULL;
+	while ( (result=sieve_coded_stringlist_next_item(notify_uris, &uri_item)) 
+		&& uri_item != NULL ) {
+		
+		if ( !ext_enotify_runtime_method_validate(renv, 0 /* FIXME */, uri_item) ) {
+			all_valid = FALSE;
+			break;
+		}
+	}
+	
+	if ( !result ) {
+		sieve_runtime_trace_error(renv, "invalid method uri item");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+	
+	sieve_interpreter_set_test_result(renv->interp, all_valid);
 	return SIEVE_EXEC_OK;
 }

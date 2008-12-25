@@ -201,9 +201,9 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 (const struct sieve_runtime_env *renv, unsigned int source_line,
 	string_t *method_uri, string_t *message, string_t *from, void **context)
 {
+	const struct sieve_enotify_method *method;
 	const char *uri = str_c(method_uri);
 	const char *scheme;
-	const struct sieve_enotify_method *method;
 	
 	if ( (scheme=ext_enotify_uri_scheme_parse(&uri)) == NULL ) {
 		sieve_runtime_error
@@ -219,7 +219,7 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 				"invalid notify method '%s'", scheme);
 		return NULL;
 	}
-
+	
 	if ( method->runtime_check_operands != NULL ) {
 		struct sieve_enotify_log nlog;
 		
@@ -239,6 +239,39 @@ const struct sieve_enotify_method *ext_enotify_runtime_check_operands
 	return method;
 }
 
+bool ext_enotify_runtime_method_validate
+(const struct sieve_runtime_env *renv, unsigned int source_line,
+	string_t *method_uri)
+{
+	const struct sieve_enotify_method *method;
+	const char *uri = str_c(method_uri);
+	const char *scheme;
+	
+	if ( (scheme=ext_enotify_uri_scheme_parse(&uri)) == NULL )
+		return FALSE;
+	
+	if ( (method=ext_enotify_method_find(scheme)) == NULL )
+		return FALSE;
+	
+	if ( method->runtime_check_operands != NULL ) {
+		struct sieve_enotify_log nlog;
+		
+		memset(&nlog, 0, sizeof(nlog));
+		nlog.location = sieve_error_script_location(renv->script, source_line);
+		nlog.ehandler = sieve_interpreter_get_error_handler(renv->interp);
+		nlog.prefix = NULL;
+
+		if ( method->runtime_check_operands
+			(&nlog, str_c(method_uri), uri, NULL, NULL, NULL, NULL) )
+			return TRUE;
+		
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
 /*
  * Method logging
  */
@@ -248,6 +281,8 @@ void sieve_enotify_error
 {
 	va_list args;
 	va_start(args, fmt);
+	
+	if ( nlog == NULL ) return;
 	
 	T_BEGIN {
 		if ( nlog->prefix == NULL )
@@ -266,6 +301,8 @@ void sieve_enotify_warning
 	va_list args;
 	va_start(args, fmt);
 	
+	if ( nlog == NULL ) return;
+	
 	T_BEGIN { 
 		if ( nlog->prefix == NULL )
 			sieve_vwarning(nlog->ehandler, nlog->location, fmt, args);
@@ -282,6 +319,8 @@ void sieve_enotify_log
 {
 	va_list args;
 	va_start(args, fmt);
+
+	if ( nlog == NULL ) return;
 	
 	T_BEGIN { 
 		if ( nlog->prefix == NULL )

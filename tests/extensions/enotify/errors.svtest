@@ -6,7 +6,7 @@ require "enotify";
 
 
 test "Invalid URL (FIXME: count only)" {
-	if test_compile "errors/url.sieve" {
+	if test_compile "errors/uri.sieve" {
 		test_fail "compile should have failed";
 	}
 
@@ -16,7 +16,7 @@ test "Invalid URL (FIXME: count only)" {
 }
 
 test "Invalid mailto URL (FIXME: count only)" {
-	if test_compile "errors/url-mailto.sieve" {
+	if test_compile "errors/uri-mailto.sieve" {
 		test_fail "compile should have failed";
 	}
 
