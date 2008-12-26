@@ -6,7 +6,7 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-notify-12.txt
- * Implementation: skeleton
+ * Implementation: almost full, mailto method only
  * Status: under development
  * 
  */

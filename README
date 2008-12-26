@@ -88,6 +88,7 @@ following list outlines the implementation status of each supported extension:
           and handling of utf-8 in headers is non-existant
     imapflags: full
     variables: mostly full; currently no support for future namespaces 
+    notify: almost complete, mailto support only
 
 All implemented extensions are like the engine itself currently experimental. 
 A status of 'full' does not necessarily mean that the extension is bug-free or 
@@ -97,7 +98,6 @@ Many more extensions to the language exist. Not all of these extensions are
 useful for Dovecot in particular, but many of them are. Currently, the author 
 has taken notice of the following extensions:
 
-    notify: planned, first mailto only 
     environment: planned
     date,index: planned
     editheader: planned, needs additional support from Dovecot though.
