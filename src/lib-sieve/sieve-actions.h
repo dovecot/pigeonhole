@@ -191,12 +191,5 @@ int sieve_act_store_add_to_result
 	(const struct sieve_runtime_env *renv, 
 		struct sieve_side_effects_list *seffects, const char *folder,
 		unsigned int source_line);
-
-/* 
- * Message transmission (FIXME: put this somewhere else)
- */
-
-const char *sieve_get_new_message_id
-	(const struct sieve_script_env *senv);
-
+		
 #endif /* __SIEVE_ACTIONS_H */

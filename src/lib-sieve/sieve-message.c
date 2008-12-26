@@ -2,12 +2,27 @@
  */
 
 #include "lib.h"
+#include "ioloop.h"
 #include "mempool.h"
 #include "array.h"
 
 #include "sieve-common.h"
 #include "sieve-message.h"
 #include "sieve-extensions.h"
+
+/*
+ * Message transmission
+ */
+ 
+const char *sieve_message_get_new_id
+(const struct sieve_script_env *senv)
+{
+	static int count = 0;
+	
+	return t_strdup_printf("<dovecot-sieve-%s-%s-%d@%s>",
+		dec2str(ioloop_timeval.tv_sec), dec2str(ioloop_timeval.tv_usec),
+    count++, senv->hostname);
+}
 
 /* 
  * Message context 
@@ -70,9 +85,7 @@ pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
 	return msgctx->pool;
 }
 
-/*
- * Extension support
- */
+/* Extension support */
 
 void sieve_message_context_extension_set
 (struct sieve_message_context *msgctx, const struct sieve_extension *ext, 

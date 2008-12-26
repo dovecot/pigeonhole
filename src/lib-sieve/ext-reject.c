@@ -33,6 +33,7 @@
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
 #include "sieve-result.h"
+#include "sieve-message.h"
 
 /* 
  * Forward declarations 
@@ -319,7 +320,7 @@ static bool act_reject_send
 
 	smtp_handle = senv->smtp_open(msgdata->return_path, NULL, &f);
 
-	new_msgid = sieve_get_new_message_id(senv);
+	new_msgid = sieve_message_get_new_id(senv);
 	boundary = t_strdup_printf("%s/%s", my_pid, senv->hostname);
 
 	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);

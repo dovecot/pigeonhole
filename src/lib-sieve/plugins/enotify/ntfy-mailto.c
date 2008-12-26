@@ -1,6 +1,16 @@
 /* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file 
  */
  
+/* Notify method mailto
+ * --------------------
+ *
+ * Authors: Stephan Bosch
+ * Specification: draft-ietf-sieve-notify-mailto-10.txt
+ * Implementation: almost full
+ * Status: under development
+ * 
+ */
+ 
 #include "lib.h"
 #include "array.h"
 #include "str.h"
@@ -11,14 +21,12 @@
 
 #include "rfc2822.h"
 
-#include "sieve-common.h"
+#include "sieve-ext-enotify.h"
 #include "sieve-address.h"
+#include "sieve-message.h"
 
 /* To be removed */
-#include "sieve-actions.h"
 #include "sieve-result.h"
-
-#include "sieve-ext-enotify.h"
 
 /*
  * Configuration
@@ -449,7 +457,6 @@ static bool ntfy_mailto_parse_uri
 (const struct sieve_enotify_log *nlog, const char *uri_body, 
 	ARRAY_TYPE(recipients) *recipients_r, ARRAY_TYPE(headers) *headers_r, 
 	const char **body, const char **subject)
-
 {
 	const char *p = uri_body;
 	
@@ -491,14 +498,14 @@ static bool ntfy_mailto_parse_uri
  */
 
 static bool ntfy_mailto_compile_check_uri
-	(const struct sieve_enotify_log *nlog, const char *uri,
-		const char *uri_body)
+(const struct sieve_enotify_log *nlog, const char *uri ATTR_UNUSED,
+	const char *uri_body)
 {	
 	return ntfy_mailto_parse_uri(nlog, uri_body, NULL, NULL, NULL, NULL);
 }
 
 static bool ntfy_mailto_compile_check_from
-	(const struct sieve_enotify_log *nlog, string_t *from)
+(const struct sieve_enotify_log *nlog, string_t *from)
 {
 	const char *error;
 	bool result = FALSE;
@@ -721,7 +728,7 @@ static bool ntfy_mailto_send
 		unsigned int h, hcount;
 
 		smtp_handle = senv->smtp_open(recipients[i].normalized, from, &f);
-		outmsgid = sieve_get_new_message_id(senv);
+		outmsgid = sieve_message_get_new_id(senv);
 	
 		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
 		rfc2822_header_field_write(f, "Message-ID", outmsgid);

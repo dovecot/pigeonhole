@@ -24,6 +24,7 @@
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
 #include "sieve-result.h"
+#include "sieve-message.h"
 
 #include "ext-vacation-common.h"
 
@@ -832,7 +833,7 @@ static bool act_vacation_send
 	/* Open smtp session */
 
 	smtp_handle = senv->smtp_open(msgdata->return_path, NULL, &f);
-	outmsgid = sieve_get_new_message_id(senv);
+	outmsgid = sieve_message_get_new_id(senv);
 
 	/* Produce a proper reply */
 

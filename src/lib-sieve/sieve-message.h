@@ -5,6 +5,13 @@
 #define __SIEVE_MESSAGE_H
 
 /* 
+ * Message transmission
+ */
+
+const char *sieve_message_get_new_id
+	(const struct sieve_script_env *senv);
+
+/* 
  * Message context 
  */
 
@@ -19,9 +26,7 @@ void sieve_message_context_flush(struct sieve_message_context *msgctx);
 pool_t sieve_message_context_pool
 	(struct sieve_message_context *msgctx);
 
-/*
- * Extension support
- */
+/* Extension support */
 
 void sieve_message_context_extension_set
 	(struct sieve_message_context *msgctx, const struct sieve_extension *ext, 

@@ -3,7 +3,6 @@
 
 #include "lib.h"
 #include "strfuncs.h"
-#include "ioloop.h"
 #include "str-sanitize.h"
 #include "mail-storage.h"
 #include "mail-namespace.h"
@@ -15,20 +14,6 @@
 #include "sieve-dump.h"
 #include "sieve-result.h"
 #include "sieve-actions.h"
-
-/*
- * Message transmission (FIXME: place this somewhere more appropriate)
- */
- 
-const char *sieve_get_new_message_id
-	(const struct sieve_script_env *senv)
-{
-	static int count = 0;
-	
-	return t_strdup_printf("<dovecot-sieve-%s-%s-%d@%s>",
-		dec2str(ioloop_timeval.tv_sec), dec2str(ioloop_timeval.tv_usec),
-    count++, senv->hostname);
-}
 
 /*
  * Action execution environment
