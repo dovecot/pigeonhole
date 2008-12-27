@@ -4,7 +4,6 @@ Current:
 	- Limit the number of notifications generated (on a per-method basis)
 * Implement mailto method for the enotify extension:
 	- Finish URI validation to properly recognize invalid characters.
-	- Check that URI headers are not duplicated if not allowed.
 * Incorporate enotify extension into default compile.  
 
 Next (in order of descending priority/precedence):

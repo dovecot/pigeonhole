@@ -113,6 +113,21 @@ static const char *_reserved_headers[] = {
 	"message-id",
 	"data",
 	"bcc",
+	"in-reply-to",
+	"references",
+	"resent-date",
+  "resent-from",
+  "resent-sender",
+  "resent-to",
+  "resent-cc",
+  "resent-bcc",
+  "resent-msg-id",
+  "sender",
+	NULL
+};
+
+static const char *_unique_headers[] = {
+	"reply-to",
 	NULL
 };
 
@@ -121,6 +136,20 @@ static inline bool _ntfy_mailto_header_allowed(const char *field_name)
 	const char **rhdr = _reserved_headers;
 
 	/* Check whether it is reserved */
+	while ( *rhdr != NULL ) {
+		if ( strcasecmp(field_name, *rhdr) == 0 )
+			return FALSE;
+		rhdr++;
+	}
+
+	return TRUE;
+}
+
+static inline bool _ntfy_mailto_header_unique(const char *field_name)
+{
+	const char **rhdr = _unique_headers;
+
+	/* Check whether it is supposed to be unique */
 	while ( *rhdr != NULL ) {
 		if ( strcasecmp(field_name, *rhdr) == 0 )
 			return FALSE;
@@ -145,6 +174,9 @@ static inline pool_t array_get_pool_i(struct array *array)
 
 #define _uri_parse_error(LOG, ...) \
 	sieve_enotify_error(LOG, "invalid mailto URI: " __VA_ARGS__ )
+	
+#define _uri_parse_warning(LOG, ...) \
+	sieve_enotify_error(LOG, "mailto URI: " __VA_ARGS__ )
 
 /* FIXME: much of this implementation will be common to other URI schemes. This
  *        should be merged into a common implementation.
@@ -238,8 +270,7 @@ static bool _uri_add_valid_recipient
 				/* Upgrade existing Cc: recipient to a To: recipient if possible */
 				rcpts[i].carbon_copy = ( rcpts[i].carbon_copy && cc );
 				
-				sieve_enotify_warning(nlog, 
-					"mailto URI: ignored duplicate recipient '%s'",
+				_uri_parse_warning(nlog, "ignored duplicate recipient '%s'",
 					str_sanitize(str_c(recipient), 80));
 				return TRUE;
 			} 
@@ -339,6 +370,23 @@ static bool _uri_parse_header_recipients
 	return TRUE;	
 }
 
+static bool _uri_header_duplicate
+(ARRAY_TYPE(headers) *headers, const char *field_name)
+{	
+	if ( _ntfy_mailto_header_unique(field_name) ) {
+		const struct ntfy_mailto_header_field *hdrs;
+		unsigned int count, i;
+
+		hdrs = array_get(headers, &count);	
+		for ( i = 0; i < count; i++ ) {
+			if ( strcasecmp(hdrs[i].name, field_name) == 0 ) 
+				return TRUE;
+		}
+	}
+	
+	return FALSE;
+}
+
 static bool _uri_parse_headers
 (const struct sieve_enotify_log *nlog, const char **uri_p, 
 	ARRAY_TYPE(headers) *headers_r, ARRAY_TYPE(recipients) *recipients_r,
@@ -347,7 +395,13 @@ static bool _uri_parse_headers
 	string_t *field = t_str_new(128);
 	const char *p = *uri_p;
 	pool_t pool = NULL;
-	
+
+	if ( body != NULL )
+		*body = NULL;
+		
+	if ( subject != NULL )
+		*subject = NULL;
+			
 	if ( headers_r != NULL )
 		pool = array_get_pool(headers_r);
 		
@@ -401,11 +455,20 @@ static bool _uri_parse_headers
 			hname_type = _HNAME_BODY;
 		else if ( _ntfy_mailto_header_allowed(field_name) ) {
 			if ( headers_r != NULL ) {
-				hdrf = array_append_space(headers_r);
-				hdrf->name = p_strdup(pool, field_name);
-			} else 
+				if ( !_uri_header_duplicate(headers_r, field_name) ) {
+					hdrf = array_append_space(headers_r);
+					hdrf->name = p_strdup(pool, field_name);
+				} else {
+					_uri_parse_warning(nlog, 
+						"ignored duplicate for unique header field '%s'",
+						str_sanitize(field_name, 32));
+					hdrf = NULL;
+				}
+			} else
 				hdrf = NULL;
 		} else {
+			_uri_parse_warning(nlog, "ignored reserved header field '%s'",
+				str_sanitize(field_name, 32));
 			hdrf = NULL;
 		}
 		
@@ -447,20 +510,32 @@ static bool _uri_parse_headers
 
 		switch ( hname_type ) {
 		case _HNAME_TO:
+			/* Gracefully allow duplicate To fields */
 			if ( !_uri_parse_header_recipients(nlog, field, recipients_r, FALSE) )
 				return FALSE;
 			break;
 		case _HNAME_CC:
+			/* Gracefully allow duplicate Cc fields */
 			if ( !_uri_parse_header_recipients(nlog, field, recipients_r, TRUE) )
 				return FALSE;
 			break;
 		case _HNAME_SUBJECT:
-			if ( subject != NULL )
-				*subject = p_strdup(pool, str_c(field));
+			if ( subject != NULL ) {
+				/* Igore duplicate subject field */
+				if ( *subject == NULL )
+					*subject = p_strdup(pool, str_c(field));
+				else
+					_uri_parse_warning(nlog, "ignored duplicate subject field");
+			}
 			break;
 		case _HNAME_BODY:
-			if ( subject != NULL )
-				*body = p_strdup(pool, str_c(field));
+			if ( subject != NULL ) {
+				/* Igore duplicate body field */
+				if ( *body == NULL )
+					*body = p_strdup(pool, str_c(field));
+				else 
+					_uri_parse_warning(nlog, "ignored duplicate body field");
+			}				
 			break;
 		case _HNAME_GENERIC:
 			if ( hdrf != NULL ) 
@@ -528,10 +603,13 @@ static bool ntfy_mailto_compile_check_uri
 	const char *uri_body)
 {	
 	ARRAY_TYPE(recipients) recipients;
+	ARRAY_TYPE(headers) headers;
+
+	t_array_init(&recipients, 16);
+	t_array_init(&headers, 16);
 	
-	t_array_init(&recipients, 4);
-	
-	if ( !ntfy_mailto_parse_uri(nlog, uri_body, &recipients, NULL, NULL, NULL) )
+	if ( !ntfy_mailto_parse_uri
+		(nlog, uri_body, &recipients, &headers, NULL, NULL) )
 		return FALSE;
 		
 	if ( array_count(&recipients) == 0 )
