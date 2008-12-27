@@ -152,11 +152,11 @@ static inline bool _ntfy_mailto_header_unique(const char *field_name)
 	/* Check whether it is supposed to be unique */
 	while ( *rhdr != NULL ) {
 		if ( strcasecmp(field_name, *rhdr) == 0 )
-			return FALSE;
+			return TRUE;
 		rhdr++;
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 /*
@@ -176,7 +176,7 @@ static inline pool_t array_get_pool_i(struct array *array)
 	sieve_enotify_error(LOG, "invalid mailto URI: " __VA_ARGS__ )
 	
 #define _uri_parse_warning(LOG, ...) \
-	sieve_enotify_error(LOG, "mailto URI: " __VA_ARGS__ )
+	sieve_enotify_warning(LOG, "mailto URI: " __VA_ARGS__ )
 
 /* FIXME: much of this implementation will be common to other URI schemes. This
  *        should be merged into a common implementation.
@@ -529,7 +529,7 @@ static bool _uri_parse_headers
 			}
 			break;
 		case _HNAME_BODY:
-			if ( subject != NULL ) {
+			if ( body != NULL ) {
 				/* Igore duplicate body field */
 				if ( *body == NULL )
 					*body = p_strdup(pool, str_c(field));
@@ -604,12 +604,13 @@ static bool ntfy_mailto_compile_check_uri
 {	
 	ARRAY_TYPE(recipients) recipients;
 	ARRAY_TYPE(headers) headers;
+	const char *body = NULL, *subject = NULL;
 
 	t_array_init(&recipients, 16);
 	t_array_init(&headers, 16);
 	
 	if ( !ntfy_mailto_parse_uri
-		(nlog, uri_body, &recipients, &headers, NULL, NULL) )
+		(nlog, uri_body, &recipients, &headers, &body, &subject) )
 		return FALSE;
 		
 	if ( array_count(&recipients) == 0 )
