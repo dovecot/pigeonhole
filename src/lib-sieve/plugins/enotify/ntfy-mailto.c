@@ -214,8 +214,6 @@ static bool _uri_add_valid_recipient
 (const struct sieve_enotify_log *nlog, ARRAY_TYPE(recipients) *recipients, 
 	string_t *recipient, bool cc)
 {
-	const struct ntfy_mailto_recipient *rcpts;
-	unsigned int count, i;
 	const char *error;
 	const char *normalized;
 	 
@@ -228,13 +226,18 @@ static bool _uri_add_valid_recipient
 					
 	/* Add recipient to the list */
 	if ( recipients != NULL ) {
-		pool_t pool;
 		struct ntfy_mailto_recipient *new_recipient;
+		struct ntfy_mailto_recipient *rcpts;
+		unsigned int count, i;
+		pool_t pool;
 		
 		/* Check for duplicate first */
-		rcpts = array_get(recipients, &count);
+		rcpts = array_get_modifiable(recipients, &count);
 		for ( i = 0; i < count; i++ ) {
 			if ( strcmp(rcpts[i].normalized, normalized) == 0 ) {
+				/* Upgrade existing Cc: recipient to a To: recipient if possible */
+				rcpts[i].carbon_copy = ( rcpts[i].carbon_copy && cc );
+				
 				sieve_enotify_warning(nlog, 
 					"mailto URI: ignored duplicate recipient '%s'",
 					str_sanitize(str_c(recipient), 80));
