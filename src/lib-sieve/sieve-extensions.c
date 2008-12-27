@@ -282,7 +282,7 @@ void sieve_extensions_set_string(const char *ext_string)
 		eregs = array_get_modifiable(&extensions, &ext_count);
 		
 		for ( i = 0; i < ext_count; i++ ) {
-			if ( eregs[i].extension->_id == NULL )
+			if ( eregs[i].extension->_id != NULL )
 				*(eregs[i].extension->_id) = eregs[i].id;
 		}
 
