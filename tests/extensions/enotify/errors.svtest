@@ -34,3 +34,13 @@ test "Invalid mailto :from address (FIXME: count only)" {
 		test_fail "wrong number of errors reported";
 	}
 }
+
+test "Invalid :options argument (FIXME: count only)" {
+	if test_compile "errors/options.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "6" {
+		test_fail "wrong number of errors reported";
+	}
+}

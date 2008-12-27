@@ -133,9 +133,107 @@ static const char *ext_enotify_uri_scheme_parse(const char **uri_p)
 	return str_c(scheme);
 }
 
+static bool ext_enotify_option_parse
+(struct sieve_enotify_log *nlog, const char *option, bool name_only,
+	const char **opt_name, const char **opt_value)
+{
+	const char *p = option;
+				
+	/* 
+	 * Parse option name 
+	 */
+	
+	if ( *p == '\0' ) {
+		sieve_enotify_error(nlog, "empty option specified");
+		return FALSE;
+	}
+	
+	if ( i_isalnum(*p) ) {
+		p++;
+	
+		while ( i_isalnum(*p) || *p == '.' || *p == '-' || *p == '_' )
+			p++;
+	}
+	
+	if ( *p != '=' || p == option ) {
+		sieve_enotify_error(nlog, "invalid option name specified in option '%s'",
+				str_sanitize(option, 80));
+		return FALSE;
+	}
+	
+	if ( opt_name != NULL ) 
+		*opt_name = t_strdup_until(option, p);
+	p++;
+	
+	if ( name_only )
+		return TRUE;
+			
+	/* 
+	 * Parse option value
+	 */
+	 
+	while ( *p != '\0' && *p != 0x0A && *p != 0x0D )
+		p++;
+		
+	if ( *p != '\0' ) {
+		sieve_enotify_error(nlog, 
+			"notify command: invalid option value specified in option '%s'",
+				str_sanitize(option, 80));
+		return FALSE;
+	}
+	
+	if ( opt_value != NULL )
+		*opt_value = p;
+		
+	return TRUE;
+} 
+
+struct _ext_enotify_option_check_context {
+	struct sieve_validator *valdtr;
+	const struct sieve_enotify_method *method;
+};
+
+static int _ext_enotify_option_check
+(void *context, struct sieve_ast_argument *arg)
+{
+	struct _ext_enotify_option_check_context *optn_context = 
+		(struct _ext_enotify_option_check_context *) context;
+	struct sieve_validator *valdtr = optn_context->valdtr;
+	const struct sieve_enotify_method *method = optn_context->method;
+	struct sieve_enotify_log nlog;
+	const char *option = sieve_ast_argument_strc(arg);
+	const char *opt_name = NULL, *opt_value = NULL;
+	bool literal = sieve_argument_is_string_literal(arg);
+	
+	memset(&nlog, 0, sizeof(nlog));
+	nlog.ehandler = sieve_validator_error_handler(valdtr);
+	nlog.prefix = "notify command";
+	nlog.location = sieve_error_script_location
+		(sieve_validator_script(valdtr), arg->source_line);
+		
+	/* Parse option */
+	
+	if ( !literal ) {
+		if ( !ext_enotify_option_parse(NULL, option, TRUE, &opt_name, &opt_value) )
+			return TRUE;
+	} else {
+		if ( !ext_enotify_option_parse
+			(&nlog, option, FALSE, &opt_name, &opt_value) )
+			return FALSE;
+	}
+	
+	/* Check option */
+	
+	if ( method->compile_check_option != NULL ) 
+		return method->compile_check_option(&nlog, opt_name, opt_value); 
+	
+	return TRUE;
+}
+
 bool ext_enotify_compile_check_arguments
 (struct sieve_validator *valdtr, struct sieve_ast_argument *uri_arg,
-	struct sieve_ast_argument *msg_arg, struct sieve_ast_argument *from_arg)
+	struct sieve_ast_argument *msg_arg, struct sieve_ast_argument *from_arg,
+	struct sieve_ast_argument *options_arg)
 {
 	const char *uri = sieve_ast_argument_strc(uri_arg);
 	const char *scheme;
@@ -188,6 +286,22 @@ bool ext_enotify_compile_check_arguments
 
 		if ( !method->compile_check_from(&nlog, sieve_ast_argument_str(from_arg)) )
 			return FALSE;
+	}
+	
+	if ( options_arg != NULL ) {
+		struct sieve_ast_argument *option = options_arg;
+		struct _ext_enotify_option_check_context optn_context = { valdtr, method };
+		
+		if ( sieve_ast_stringlist_map
+			(&option, (void *) &optn_context, _ext_enotify_option_check) <= 0 )
+			return FALSE;
+			
+		/* Discard argument if options are not accepted by method */
+		if ( method->compile_check_option == NULL ) {
+			sieve_argument_validate_warning(valdtr, options_arg, 
+				"notify command: method '%s' accepts no options", scheme);
+			(void)sieve_ast_arguments_detach(options_arg,1);
+		}
 	}
 	
 	return TRUE;

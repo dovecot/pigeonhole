@@ -50,6 +50,9 @@ struct sieve_enotify_method {
 		(const struct sieve_enotify_log *nlog, string_t *message);
 	bool (*compile_check_from)
 		(const struct sieve_enotify_log *nlog, string_t *from);
+	bool (*compile_check_option)
+		(const struct sieve_enotify_log *nlog, const char *option, 
+			const char *value);
 
 	/* Runtime */
 	const char *(*runtime_get_method_capability)
@@ -74,7 +77,18 @@ struct sieve_enotify_method {
 void sieve_enotify_method_register(const struct sieve_enotify_method *method);
 
 /*
- * Action context
+ * Notify execution environment
+ */
+
+struct sieve_enotify_exec_env {
+	const struct sieve_enotify_log *notify_log;
+
+	const struct sieve_script_env *scriptenv;
+	const struct sieve_message_data *msgdata;
+};
+
+/*
+ * Notify action
  */
  
 struct sieve_enotify_action {
@@ -84,13 +98,6 @@ struct sieve_enotify_action {
 	sieve_number_t importance;
 	const char *message;
 	const char *from;
-};
-
-struct sieve_enotify_exec_env {
-	const struct sieve_enotify_log *notify_log;
-
-	const struct sieve_script_env *scriptenv;
-	const struct sieve_message_data *msgdata;
 };
 
 /*

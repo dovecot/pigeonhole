@@ -80,6 +80,7 @@ const struct sieve_enotify_method mailto_notify = {
 	ntfy_mailto_compile_check_uri,
 	NULL,
 	ntfy_mailto_compile_check_from,
+	NULL,
 	ntfy_mailto_runtime_get_notify_capability,
 	ntfy_mailto_runtime_check_operands,
 	ntfy_mailto_action_print,
@@ -239,6 +240,9 @@ static bool _uri_parse_recipients
 {
 	string_t *to = t_str_new(128);
 	const char *p = *uri_p;
+	
+	if ( *p == '\0' || *p == '?' )
+		return TRUE;
 		
 	while ( *p != '\0' && *p != '?' ) {
 		if ( *p == '%' ) {
@@ -455,7 +459,7 @@ static bool _uri_parse_headers
 
 static bool ntfy_mailto_parse_uri
 (const struct sieve_enotify_log *nlog, const char *uri_body, 
-	ARRAY_TYPE(recipients) *recipients_r, ARRAY_TYPE(headers) *headers_r, 
+	ARRAY_TYPE(recipients) *recipients_r, ARRAY_TYPE(headers) *headers_r,
 	const char **body, const char **subject)
 {
 	const char *p = uri_body;
@@ -501,7 +505,17 @@ static bool ntfy_mailto_compile_check_uri
 (const struct sieve_enotify_log *nlog, const char *uri ATTR_UNUSED,
 	const char *uri_body)
 {	
-	return ntfy_mailto_parse_uri(nlog, uri_body, NULL, NULL, NULL, NULL);
+	ARRAY_TYPE(recipients) recipients;
+	
+	t_array_init(&recipients, 4);
+	
+	if ( !ntfy_mailto_parse_uri(nlog, uri_body, &recipients, NULL, NULL, NULL) )
+		return FALSE;
+		
+	if ( array_count(&recipients) == 0 )
+		sieve_enotify_warning(nlog, "notification URI specifies no recipients");
+	
+	return TRUE;
 }
 
 static bool ntfy_mailto_compile_check_from
@@ -611,19 +625,26 @@ static void ntfy_mailto_action_print
 		sieve_result_printf(rpenv, "    => from         : %s\n", act->from);
 
 	sieve_result_printf(rpenv,   "    => recipients   :\n" );
+
 	recipients = array_get(&mtctx->recipients, &count);
-	for ( i = 0; i < count; i++ ) {
-		if ( recipients[i].carbon_copy )
-			sieve_result_printf(rpenv,   "       + Cc: %s\n", recipients[i].full);
-		else
-			sieve_result_printf(rpenv,   "       + To: %s\n", recipients[i].full);
+	if ( count == 0 ) {
+		sieve_result_printf(rpenv,   "       NONE, action has no effect\n");
+	} else {
+		for ( i = 0; i < count; i++ ) {
+			if ( recipients[i].carbon_copy )
+				sieve_result_printf(rpenv,   "       + Cc: %s\n", recipients[i].full);
+			else
+				sieve_result_printf(rpenv,   "       + To: %s\n", recipients[i].full);
+		}
 	}
 	
-	sieve_result_printf(rpenv,   "    => headers      :\n" );
 	headers = array_get(&mtctx->headers, &count);
-	for ( i = 0; i < count; i++ ) {
-		sieve_result_printf(rpenv,   "       + %s: %s\n", 
-			headers[i].name, headers[i].body);
+	if ( count > 0 ) {
+		sieve_result_printf(rpenv,   "    => headers      :\n" );	
+		for ( i = 0; i < count; i++ ) {
+			sieve_result_printf(rpenv,   "       + %s: %s\n", 
+				headers[i].name, headers[i].body);
+		}
 	}
 	
 	if ( mtctx->body != NULL )
@@ -666,6 +687,14 @@ static bool ntfy_mailto_send
 	FILE *f;
 	const char *outmsgid;
 
+	/* Get recipients */
+	recipients = array_get(&mtctx->recipients, &count);
+	if ( count == 0  ) {
+		sieve_enotify_warning(nlog, 
+			"notify mailto uri specifies no recipients; action has no effect.");
+		return TRUE;
+	}
+
 	/* Just to be sure */
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
 		sieve_enotify_warning(nlog, 
@@ -696,8 +725,6 @@ static bool ntfy_mailto_send
 		else
 			subject = "Notification: (no subject)";
 	}
-
-	recipients = array_get(&mtctx->recipients, &count);
 
 	/* Compose To and Cc headers */
 	to = NULL;

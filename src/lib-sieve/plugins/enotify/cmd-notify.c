@@ -169,6 +169,7 @@ const struct sieve_action act_notify = {
 struct cmd_notify_context_data {
 	struct sieve_ast_argument *from;
 	struct sieve_ast_argument *message;
+	struct sieve_ast_argument *options;
 };
 
 /* 
@@ -214,6 +215,8 @@ static bool cmd_notify_validate_stringlist_tag
 	struct sieve_command_context *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
+	struct cmd_notify_context_data *ctx_data = 
+		(struct cmd_notify_context_data *) cmd->data; 
 
 	/* Detach the tag itself */
 	*arg = sieve_ast_arguments_detach(*arg,1);
@@ -223,6 +226,9 @@ static bool cmd_notify_validate_stringlist_tag
 	 */
 	if ( !sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, SAAT_STRING_LIST) ) 
 		return FALSE;
+		
+	/* Assign context */
+	ctx_data->options = *arg;	
 	
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
@@ -325,7 +331,7 @@ static bool cmd_notify_validate
 		return FALSE;
 		
 	return ext_enotify_compile_check_arguments
-		(valdtr, arg, ctx_data->message, ctx_data->from);
+		(valdtr, arg, ctx_data->message, ctx_data->from, ctx_data->options);
 }
 
 /*

@@ -72,7 +72,8 @@ const struct sieve_enotify_method *ext_enotify_method_find
  
 bool ext_enotify_compile_check_arguments
 (struct sieve_validator *valdtr, struct sieve_ast_argument *uri_arg,
-	struct sieve_ast_argument *msg_arg, struct sieve_ast_argument *from_arg);
+	struct sieve_ast_argument *msg_arg, struct sieve_ast_argument *from_arg,
+	struct sieve_ast_argument *options_arg);
 
 /*
  * Runtime

@@ -1,7 +1,6 @@
 Current:
 
 * Implement enotify extension:
-	- Implement parsing :options argument (not used for now however)
 	- Check whether handling of error conditions matches the standard
 	- Limit the number of notifications generated (on a per-method basis)
 * Implement mailto method for the enotify extension:
