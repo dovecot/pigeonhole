@@ -1,7 +1,6 @@
 Current:
 
 * Implement enotify extension:
-	- Check whether handling of error conditions matches the standard
 	- Limit the number of notifications generated (on a per-method basis)
 * Implement mailto method for the enotify extension:
 	- Finish URI validation to properly recognize invalid characters.
@@ -61,14 +60,17 @@ Next (in order of descending priority/precedence):
 * Use lib/str-find.h for :contains and :matches match types 
 * Warn during compile if using non-existent folders.
 
+* Implement editheader extension
+* Implement mimeloop extension
+* Variables extension: implement compile time evaluation of contant values
+* Enotify extension: detect use of variable values extracted from the message 
+  that are used in the method argument. RFC reports this as a security issue.
 * Import ManageSieve into this package and provide support for alternate types
   of script storage like LDAP or SQL database.
 * Make the engine and its extensions much more configurable. Possibly this can 
   be merged with Dovecot's new master config implementation.
 * Add development documentation, i.e. comment on library functions and document
   the binary and byte-code format. 
-* Implement editheader extension
-* Implement mimeloop extension
 * Give the byte code format some more thought, it is currently quite rough and
   to the point. 
 * Try to implement proposed notify mechanisms other than mailto. Currently: xmpp
