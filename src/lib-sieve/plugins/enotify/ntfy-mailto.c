@@ -211,9 +211,11 @@ static bool _parse_hex_value(const char **in, char *out)
 }
 
 static bool _uri_add_valid_recipient
-(const struct sieve_enotify_log *nlog, ARRAY_TYPE(recipients) *recipients_r, 
+(const struct sieve_enotify_log *nlog, ARRAY_TYPE(recipients) *recipients, 
 	string_t *recipient, bool cc)
 {
+	const struct ntfy_mailto_recipient *rcpts;
+	unsigned int count, i;
 	const char *error;
 	const char *normalized;
 	 
@@ -223,13 +225,26 @@ static bool _uri_add_valid_recipient
 			str_sanitize(str_c(recipient), 80), error);
 		return FALSE;
 	}
-				
+					
 	/* Add recipient to the list */
-	if ( recipients_r != NULL ) {
-		pool_t pool = array_get_pool(recipients_r);
+	if ( recipients != NULL ) {
+		pool_t pool;
 		struct ntfy_mailto_recipient *new_recipient;
+		
+		/* Check for duplicate first */
+		rcpts = array_get(recipients, &count);
+		for ( i = 0; i < count; i++ ) {
+			if ( strcmp(rcpts[i].normalized, normalized) == 0 ) {
+				sieve_enotify_warning(nlog, 
+					"mailto URI: ignored duplicate recipient '%s'",
+					str_sanitize(str_c(recipient), 80));
+				return TRUE;
+			} 
+		}			
 
-		new_recipient = array_append_space(recipients_r);
+		/* Add */
+		pool = array_get_pool(recipients);
+		new_recipient = array_append_space(recipients);
 		new_recipient->carbon_copy = cc;
 		new_recipient->full = p_strdup(pool, str_c(recipient));
 		new_recipient->normalized = p_strdup(pool, normalized);
