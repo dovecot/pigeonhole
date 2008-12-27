@@ -282,7 +282,8 @@ void sieve_extensions_set_string(const char *ext_string)
 		eregs = array_get_modifiable(&extensions, &ext_count);
 		
 		for ( i = 0; i < ext_count; i++ ) {
-			*(eregs[i].extension->_id) = eregs[i].id;
+			if ( eregs[i].extension->_id == NULL )
+				*(eregs[i].extension->_id) = eregs[i].id;
 		}
 
 		return;	
@@ -336,10 +337,13 @@ void sieve_extensions_set_string(const char *ext_string)
 			}		
 		}
 
-		if ( disabled ) {
-			*(eregs[i].extension->_id) = -1;
-		} else {
-			*(eregs[i].extension->_id) = eregs[i].id;
+		if ( eregs[i].extension->_id != NULL && 
+			*(eregs[i].extension->name) != '@' ) {
+			if ( disabled ) {
+				*(eregs[i].extension->_id) = -1;
+			} else {
+				*(eregs[i].extension->_id) = eregs[i].id;
+			}
 		}
 	}
 }
