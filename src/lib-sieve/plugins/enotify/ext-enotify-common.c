@@ -19,6 +19,26 @@
 
 #include <ctype.h>
 
+/* FIXME: (from draft RFC)
+ *
+ * Header/envelope tests [Sieve] together with Sieve variables can be
+ * used to extract the list of users to receive notifications from the
+ * incoming email message or its envelope.  This is potentially quite
+ * dangerous, as this can be used for Deny Of Service attacks on
+ * recipients controlled by the message sender.  For this reason
+ * implementations SHOULD NOT allow use of variables containing values
+ * extracted from the email message in the method parameter to the
+ * notify action.  Note that violation of this SHOULD NOT may result in
+ * the creation of an open relay, i.e. any sender would be able to
+ * create specially crafted email messages that would result in
+ * notifications delivered to recipients under the control of the
+ * sender.  In worst case this might result in financial loss by user
+ * controlling the Sieve script and/or by recipients of notifications
+ * (e.g. if a notification is an SMS message).
+ *
+ * --> This is currently not possible to check.
+ */
+
 /*
  * Notify capability
  */
