@@ -58,16 +58,18 @@ ARRAY_DEFINE_TYPE(headers, struct ntfy_mailto_header_field);
  */
  
 static bool ntfy_mailto_compile_check_uri
-	(const struct sieve_enotify_log *nlog, const char *uri,
-		const char *uri_body);
+	(const struct sieve_enotify_log *nlog, const char *uri, const char *uri_body);
 static bool ntfy_mailto_compile_check_from
 	(const struct sieve_enotify_log *nlog, string_t *from);
 static const char *ntfy_mailto_runtime_get_notify_capability
 	(const struct sieve_enotify_log *nlog, const char *uri, const char *uri_body, 
 		const char *capability);
+static bool ntfy_mailto_runtime_check_uri
+	(const struct sieve_enotify_log *nlog, const char *uri, const char *uri_body);
 static bool ntfy_mailto_runtime_check_operands
 	(const struct sieve_enotify_log *nlog, const char *uri,const char *uri_body, 
-		string_t *message, string_t *from, pool_t context_pool, void **context);
+		string_t *message, string_t *from, pool_t context_pool, 
+		void **method_context);
 static void ntfy_mailto_action_print
 	(const struct sieve_result_print_env *rpenv, 
 		const struct sieve_enotify_action *act);	
@@ -81,8 +83,10 @@ const struct sieve_enotify_method mailto_notify = {
 	NULL,
 	ntfy_mailto_compile_check_from,
 	NULL,
+	ntfy_mailto_runtime_check_uri,
 	ntfy_mailto_runtime_get_notify_capability,
 	ntfy_mailto_runtime_check_operands,
+	NULL,
 	ntfy_mailto_action_print,
 	ntfy_mailto_action_execute
 };
@@ -555,50 +559,52 @@ static const char *ntfy_mailto_runtime_get_notify_capability
 	
 	return NULL;
 }
+
+static bool ntfy_mailto_runtime_check_uri
+(const struct sieve_enotify_log *nlog ATTR_UNUSED, const char *uri ATTR_UNUSED,
+	const char *uri_body)
+{
+	return ntfy_mailto_parse_uri(NULL, uri_body, NULL, NULL, NULL, NULL);
+}
  
 static bool ntfy_mailto_runtime_check_operands
-	(const struct sieve_enotify_log *nlog, const char *uri ATTR_UNUSED,
-		const char *uri_body, string_t *message ATTR_UNUSED, string_t *from, 
-		pool_t context_pool, void **context)
+(const struct sieve_enotify_log *nlog, const char *uri ATTR_UNUSED,
+	const char *uri_body, string_t *message ATTR_UNUSED, string_t *from, 
+	pool_t context_pool, void **method_context)
 {
 	struct ntfy_mailto_context *mtctx;
 	const char *error, *normalized;
 
-	if ( context_pool != NULL && context != NULL ) {
-		/* Need to create context before validation to have arrays present */
-		mtctx = p_new(context_pool, struct ntfy_mailto_context, 1);
-	
-		/* Validate :from */
-		if ( from != NULL ) {
-			T_BEGIN {
-				normalized = sieve_address_normalize(from, &error);
+	/* Need to create context before validation to have arrays present */
+	mtctx = p_new(context_pool, struct ntfy_mailto_context, 1);
 
-				if ( normalized == NULL ) {
-					sieve_enotify_error(nlog,
-						"specified :from address '%s' is invalid for "
-						"the mailto method: %s",
-						str_sanitize(str_c(from), 128), error);
-				} else 
-					mtctx->from_normalized = p_strdup(context_pool, normalized);
-			} T_END;
-	
-			if ( !normalized ) return FALSE;
-		}
+	/* Validate :from */
+	if ( from != NULL ) {
+		T_BEGIN {
+			normalized = sieve_address_normalize(from, &error);
 
-		p_array_init(&mtctx->recipients, context_pool, NTFY_MAILTO_MAX_RECIPIENTS);
-		p_array_init(&mtctx->headers, context_pool, NTFY_MAILTO_MAX_HEADERS);
+			if ( normalized == NULL ) {
+				sieve_enotify_error(nlog,
+					"specified :from address '%s' is invalid for "
+					"the mailto method: %s",
+					str_sanitize(str_c(from), 128), error);
+			} else 
+				mtctx->from_normalized = p_strdup(context_pool, normalized);
+		} T_END;
 
-		if ( !ntfy_mailto_parse_uri
-			(nlog, uri_body, &mtctx->recipients, &mtctx->headers, &mtctx->body, 
-				&mtctx->subject) ) {
-			return FALSE;
-		}
-	
-		*context = (void *) mtctx;
-	} else {
-		return ntfy_mailto_parse_uri(NULL, uri_body, NULL, NULL, NULL, NULL);
+		if ( !normalized ) return FALSE;
 	}
 
+	p_array_init(&mtctx->recipients, context_pool, NTFY_MAILTO_MAX_RECIPIENTS);
+	p_array_init(&mtctx->headers, context_pool, NTFY_MAILTO_MAX_HEADERS);
+
+	if ( !ntfy_mailto_parse_uri
+		(nlog, uri_body, &mtctx->recipients, &mtctx->headers, &mtctx->body, 
+			&mtctx->subject) ) {
+		return FALSE;
+	}
+
+	*method_context = (void *) mtctx;
 	return TRUE;	
 }
 

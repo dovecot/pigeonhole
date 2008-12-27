@@ -45,7 +45,7 @@ struct sieve_enotify_method {
 	/* Validation */
 	bool (*compile_check_uri)
 		(const struct sieve_enotify_log *nlog, const char *uri,
-		const char *uri_body);
+			const char *uri_body);
 	bool (*compile_check_message)
 		(const struct sieve_enotify_log *nlog, string_t *message);
 	bool (*compile_check_from)
@@ -55,14 +55,20 @@ struct sieve_enotify_method {
 			const char *value);
 
 	/* Runtime */
+	bool (*runtime_check_uri)
+		(const struct sieve_enotify_log *nlog, const char *uri,
+			const char *uri_body);
 	const char *(*runtime_get_method_capability)
 		(const struct sieve_enotify_log *nlog, const char *uri, 
 			const char *uri_body, const char *capability);
 	bool (*runtime_check_operands)
 		(const struct sieve_enotify_log *nlog, const char *uri, 
 			const char *uri_body, string_t *message, string_t *from, 
-			pool_t context_pool, void **context);
-			
+			pool_t context_pool, void **method_context);
+	bool (*runtime_set_option)
+		(const struct sieve_enotify_log *nlog, void *method_context,
+			const char *option, const char *value);
+		
 	/* Action print */
 	void (*action_print)
 		(const struct sieve_result_print_env *rpenv, 

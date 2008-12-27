@@ -417,7 +417,7 @@ static int cmd_notify_operation_execute
 	struct sieve_enotify_action *act;
 	void *method_context;
 	pool_t pool;
-	int opt_code = 1;
+	int opt_code = 1, result = SIEVE_EXEC_OK;
 	sieve_number_t importance = 1;
 	struct sieve_coded_stringlist *options = NULL;
 	const struct sieve_enotify_method *method;
@@ -497,10 +497,10 @@ static int cmd_notify_operation_execute
 
 	/* Check operands */
 
-	if ( (method=ext_enotify_runtime_check_operands
-		(renv, source_line, method_uri, message, from, &method_context)) 
-			!= NULL ) {
-
+	if ( (result=ext_enotify_runtime_check_operands
+		(renv, source_line, method_uri, message, from, options, &method, 
+			&method_context)) ) 
+	{
 		/* Add notify action to the result */
 
 		pool = sieve_result_pool(renv->result);
@@ -517,8 +517,7 @@ static int cmd_notify_operation_execute
 			(renv, &act_notify, slist, source_line, (void *) act, 0) >= 0 );
 	}
 	
-	/* Erroneous notify action is no reason to kill the script */
-	return SIEVE_EXEC_OK;
+	return result;
 }
 
 /*

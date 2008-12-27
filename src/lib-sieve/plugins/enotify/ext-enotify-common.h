@@ -79,19 +79,20 @@ bool ext_enotify_compile_check_arguments
  * Runtime
  */
  
+bool ext_enotify_runtime_method_validate
+	(const struct sieve_runtime_env *renv, unsigned int source_line,
+		string_t *method_uri);
+ 
 const char *ext_enotify_runtime_get_method_capability
 	(const struct sieve_runtime_env *renv, unsigned int source_line,
 		string_t *method_uri, const char *capability);
 
-const struct sieve_enotify_method *ext_enotify_runtime_check_operands
+int ext_enotify_runtime_check_operands
 	(const struct sieve_runtime_env *renv, unsigned int source_line,
 		string_t *method_uri, string_t *message, string_t *from, 
-		void **context);
-
-bool ext_enotify_runtime_method_validate
-	(const struct sieve_runtime_env *renv, unsigned int source_line,
-		string_t *method_uri);
-
+		struct sieve_coded_stringlist *options, 
+		const struct sieve_enotify_method **method_r, void **method_context);
+		
 /*
  * Method logging
  */ 
