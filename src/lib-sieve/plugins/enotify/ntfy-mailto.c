@@ -11,6 +11,13 @@
  * 
  */
  
+/* FIXME: URI syntax conforms to something somewhere in between RFC 2368 and
+ *   draft-duerst-mailto-bis-05.txt. Should fully migrate to new specification
+ *   when it matures. This requires modifications to the address parser (no
+ *   whitespace allowed within the address itself) and UTF-8 support will be
+ *   required in the URL.
+ */
+ 
 #include "lib.h"
 #include "array.h"
 #include "str.h"
@@ -323,6 +330,12 @@ static bool _uri_parse_recipients
 				str_append_c(to, ch);
 			}
 		} else {
+			if ( *p == ':' || *p == ';' || !_is_qchar(*p) ) {
+				_uri_parse_error
+					(nlog, "invalid character '%c' in 'to' part", *p);
+				return FALSE;
+			}
+
 			/* Content character */
 			str_append_c(to, *p);
 			p++;
@@ -574,6 +587,9 @@ static bool ntfy_mailto_parse_uri
    * some-delims = "!" / "$" / "'" / "(" / ")" / "*"
    *               / "+" / "," / ";" / ":" / "@"
    *
+	 * to         ~= *tqchar
+	 * tqchar     ~= <qchar> without ";" and ":" 
+   * 
 	 * Scheme 'mailto:' already parsed, starting parse after colon
 	 */
 
