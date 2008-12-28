@@ -15,24 +15,24 @@
 #include "testsuite-common.h"
 
 /*
- * Test_compile command
+ * Test_script_compile command
  *
  * Syntax:   
- *   test_compile <scriptpath: string>
+ *   test_script_compile <scriptpath: string>
  */
 
-static bool tst_test_compile_validate
+static bool tst_test_script_compile_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
-static bool tst_test_compile_generate
+static bool tst_test_script_compile_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
-const struct sieve_command tst_test_compile = { 
-	"test_compile", 
+const struct sieve_command tst_test_script_compile = { 
+	"test_script_compile", 
 	SCT_TEST, 
 	1, 0, FALSE, FALSE,
 	NULL, NULL,
-	tst_test_compile_validate, 
-	tst_test_compile_generate, 
+	tst_test_script_compile_validate, 
+	tst_test_script_compile_generate, 
 	NULL 
 };
 
@@ -40,26 +40,26 @@ const struct sieve_command tst_test_compile = {
  * Operation 
  */
 
-static bool tst_test_compile_operation_dump
+static bool tst_test_script_compile_operation_dump
 	(const struct sieve_operation *op,
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int tst_test_compile_operation_execute
+static int tst_test_script_compile_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation test_compile_operation = { 
-	"TEST_COMPILE",
+const struct sieve_operation test_script_compile_operation = { 
+	"test_script_compile",
 	&testsuite_extension, 
-	TESTSUITE_OPERATION_TEST_COMPILE,
-	tst_test_compile_operation_dump, 
-	tst_test_compile_operation_execute 
+	TESTSUITE_OPERATION_TEST_SCRIPT_COMPILE,
+	tst_test_script_compile_operation_dump, 
+	tst_test_script_compile_operation_execute 
 };
 
 /* 
  * Validation 
  */
 
-static bool tst_test_compile_validate
+static bool tst_test_script_compile_validate
 (struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command_context *tst) 
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
@@ -83,10 +83,10 @@ static inline struct testsuite_generator_context *
 		sieve_generator_extension_get_context(gentr, &testsuite_extension);
 }
 
-static bool tst_test_compile_generate
+static bool tst_test_script_compile_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *tst)
 {
-	sieve_operation_emit_code(cgenv->sbin, &test_compile_operation);
+	sieve_operation_emit_code(cgenv->sbin, &test_script_compile_operation);
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, tst, NULL);
@@ -96,11 +96,11 @@ static bool tst_test_compile_generate
  * Code dump
  */
  
-static bool tst_test_compile_operation_dump
+static bool tst_test_script_compile_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_code_dumpf(denv, "TEST_COMPILE:");
+	sieve_code_dumpf(denv, "test_script_compile:");
 	sieve_code_descend(denv);
 
 	if ( !sieve_opr_string_dump(denv, address, "script") ) 
@@ -113,7 +113,7 @@ static bool tst_test_compile_operation_dump
  * Intepretation
  */
 
-static int tst_test_compile_operation_execute
+static int tst_test_script_compile_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
