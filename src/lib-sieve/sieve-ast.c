@@ -459,18 +459,35 @@ static void sieve_ast_argument_substitute
 	sieve_ast_arg_list_substitute(argument->list, argument, replacement);
 }
 
+struct sieve_ast_argument *sieve_ast_argument_string_create_raw
+(struct sieve_ast *ast, string_t *str, unsigned int source_line) 
+{
+	struct sieve_ast_argument *argument = sieve_ast_argument_create
+		(ast, source_line);
+		
+	argument->type = SAAT_STRING;
+	argument->_value.str = str;
+
+	return argument;
+}
+
 struct sieve_ast_argument *sieve_ast_argument_string_create
 (struct sieve_ast_node *node, const string_t *str, unsigned int source_line) 
 {	
-	struct sieve_ast_argument *argument = sieve_ast_argument_create
-		(node->ast, source_line);
-		
-	argument->type = SAAT_STRING;
+	struct sieve_ast_argument *argument;
+	string_t *newstr;
+	
+	/* Allocate new internal string buffer */
+	newstr = str_new(node->ast->pool, str_len(str));
 	
 	/* Clone string */
-	argument->_value.str = str_new(node->ast->pool, str_len(str));
-	str_append_str(argument->_value.str, str);
+	str_append_str(newstr, str);
+	 
+	/* Create string argument */
+	argument = sieve_ast_argument_string_create_raw
+		(node->ast, newstr, source_line);
 
+	/* Add argument to command/test node */
 	sieve_ast_node_add_argument(node, argument);
 
 	return argument;

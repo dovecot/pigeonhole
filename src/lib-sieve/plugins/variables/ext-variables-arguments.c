@@ -247,32 +247,14 @@ static bool arg_match_value_generate
 static bool arg_variable_string_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *context);
-static bool arg_variable_string_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context);
 
 const struct sieve_argument variable_string_argument = { 
 	"@variable-string", 
 	NULL, NULL,
 	arg_variable_string_validate, 
 	NULL, 
-	arg_variable_string_generate,
+	sieve_arg_catenated_string_generate,
 };
-
-struct _variable_string_data {
-	struct sieve_ast_arg_list *str_parts;
-};
-
-inline static struct sieve_ast_argument *_add_string_element
-(struct sieve_ast_arg_list *list, struct sieve_ast_argument *arg)
-{
-	struct sieve_ast_argument *strarg = 
-		sieve_ast_argument_create(arg->ast, arg->source_line);
-	sieve_ast_arg_list_add(list, strarg);
-	strarg->type = SAAT_STRING;
-
-	return strarg;
-}
 
 static bool arg_variable_string_validate
 (struct sieve_validator *validator, struct sieve_ast_argument **arg, 
@@ -280,12 +262,11 @@ static bool arg_variable_string_validate
 {
 	enum { ST_NONE, ST_OPEN, ST_VARIABLE, ST_CLOSE } state = ST_NONE;
 	pool_t pool = sieve_ast_pool((*arg)->ast);
-	struct sieve_ast_arg_list *arglist = NULL;
+	struct sieve_arg_catenated_string *catstr = NULL;
 	string_t *str = sieve_ast_argument_str(*arg);
 	const char *p, *strstart, *substart = NULL;
 	const char *strval = (const char *) str_data(str);
 	const char *strend = strval + str_len(str);
-	struct _variable_string_data *strdata;
 	bool result = TRUE;
 
 	ARRAY_TYPE(ext_variable_name) substitution;	
@@ -336,8 +317,8 @@ static bool arg_variable_string_validate
 				
 					/* We now know that the substitution is valid */	
 					
-					if ( arglist == NULL ) {
-						arglist = sieve_ast_arg_list_create(pool);
+					if ( catstr == NULL ) {
+						catstr = sieve_arg_catenated_string_create(*arg);
 					}
 				
 					/* Add the substring that is before the substitution to the 
@@ -347,9 +328,12 @@ static bool arg_variable_string_validate
 					 * coalesce this substring with the one after the substitution.
 					 */
 					if ( substart > strstart ) {
-						strarg = _add_string_element(arglist, *arg);
-						strarg->_value.str = str_new(pool, substart - strstart);
-						str_append_n(strarg->_value.str, strstart, substart - strstart); 
+						string_t *newstr = str_new(pool, substart - strstart);
+						str_append_n(newstr, strstart, substart - strstart); 
+						
+						strarg = sieve_ast_argument_string_create_raw
+							((*arg)->ast, newstr, (*arg)->source_line);
+						sieve_arg_catenated_string_add_element(catstr, strarg);
 					
 						/* Give other substitution extensions a chance to do their work */
 						if ( !sieve_validator_argument_activate_super
@@ -371,7 +355,7 @@ static bool arg_variable_string_validate
 							strarg = ext_variables_variable_argument_create
 								(validator, (*arg)->ast, (*arg)->source_line, str_c(cur_ident));
 							if ( strarg != NULL )
-								sieve_ast_arg_list_add(arglist, strarg);
+								sieve_arg_catenated_string_add_element(catstr, strarg);
 							else {
 								_ext_variables_scope_size_error
 									(validator, *arg, str_c(cur_element->identifier));
@@ -391,7 +375,7 @@ static bool arg_variable_string_validate
 								(validator, (*arg)->ast, (*arg)->source_line, 
 								cur_element->num_variable);
 							if ( strarg != NULL )
-								sieve_ast_arg_list_add(arglist, strarg);
+								sieve_arg_catenated_string_add_element(catstr, strarg);
 						}
 					} else {
 						const struct ext_variable_name *cur_element = 
@@ -425,62 +409,30 @@ static bool arg_variable_string_validate
 	if ( !result ) return FALSE;
 	
 	/* Check whether any substitutions were found */
-	if ( arglist == NULL ) {
+	if ( catstr == NULL ) {
 		/* No substitutions in this string, pass it on to any other substution
 		 * extension.
 		 */
-		return sieve_validator_argument_activate_super
-			(validator, cmd, *arg, TRUE);
+		return sieve_validator_argument_activate_super(validator, cmd, *arg, TRUE);
 	}
 	
 	/* Add the final substring that comes after the last substitution to the 
 	 * variable-string AST.
 	 */
 	if ( strend > strstart ) {
-		struct sieve_ast_argument *strarg = _add_string_element(arglist, *arg);
-		strarg->_value.str = str_new(pool, strend - strstart);
-		str_append_n(strarg->_value.str, strstart, strend - strstart); 
-	
+		struct sieve_ast_argument *strarg;
+		string_t *newstr = str_new(pool, strend - strstart);
+		str_append_n(newstr, strstart, strend - strstart); 
+
+		strarg = sieve_ast_argument_string_create_raw
+			((*arg)->ast, newstr, (*arg)->source_line);
+		sieve_arg_catenated_string_add_element(catstr, strarg);
+			
 		/* Give other substitution extensions a chance to do their work */	
 		if ( !sieve_validator_argument_activate_super
 			(validator, cmd, strarg, FALSE) )
 			return FALSE;
 	}	
-	
-	/* Assign the constructed variable-string AST-branch to the actual AST */
-	strdata = p_new(pool, struct _variable_string_data, 1);
-	strdata->str_parts = arglist;
-	(*arg)->context = (void *) strdata;
-
-	return TRUE;
-}
-
-#define _string_data_first(data) __AST_LIST_FIRST((data)->str_parts)
-#define _string_data_count(data) __AST_LIST_COUNT((data)->str_parts)
-#define _string_data_next(item) __AST_LIST_NEXT(item)
-
-static bool arg_variable_string_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *cmd) 
-{
-	struct sieve_binary *sbin = cgenv->sbin;
-	struct _variable_string_data *strdata = 
-		(struct _variable_string_data *) arg->context;
-	struct sieve_ast_argument *strpart;
-	
-	if ( _string_data_count(strdata) == 1 )
-		sieve_generate_argument(cgenv, _string_data_first(strdata), cmd);
-	else {
-		sieve_opr_catenated_string_emit(sbin, _string_data_count(strdata));
-
-		strpart = _string_data_first(strdata);
-		while ( strpart != NULL ) {
-			if ( !sieve_generate_argument(cgenv, strpart, cmd) )
-				return FALSE;
-			
-			strpart = _string_data_next(strpart);
-		}
-	}
 	
 	return TRUE;
 }

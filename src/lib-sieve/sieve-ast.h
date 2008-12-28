@@ -230,13 +230,17 @@ bool sieve_ast_arg_list_insert
 	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *before,
 		struct sieve_ast_argument *argument);
 void sieve_ast_arg_list_substitute
-(struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument, 
-	struct sieve_ast_argument *replacement);
+	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument, 
+		struct sieve_ast_argument *replacement);
 
+struct sieve_ast_argument *sieve_ast_argument_string_create_raw
+	(struct sieve_ast *ast, string_t *str, unsigned int source_line);
 struct sieve_ast_argument *sieve_ast_argument_string_create
 	(struct sieve_ast_node *node, const string_t *str, unsigned int source_line);
+	
 struct sieve_ast_argument *sieve_ast_argument_tag_create
 	(struct sieve_ast_node *node, const char *tag, unsigned int source_line);
+
 struct sieve_ast_argument *sieve_ast_argument_number_create
 	(struct sieve_ast_node *node, unsigned int number, unsigned int source_line);
 

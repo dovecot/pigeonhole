@@ -52,6 +52,20 @@ extern const struct sieve_argument number_argument;
 extern const struct sieve_argument string_argument;
 extern const struct sieve_argument string_list_argument;
 
+/* Catenated string argument */
+
+bool sieve_arg_catenated_string_generate
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
+		struct sieve_command_context *context);
+
+struct sieve_arg_catenated_string;		
+
+struct sieve_arg_catenated_string *sieve_arg_catenated_string_create
+	(struct sieve_ast_argument *orig_arg);
+void sieve_arg_catenated_string_add_element
+	(struct sieve_arg_catenated_string *strdata, 
+		struct sieve_ast_argument *element);
+
 /* 
  * Command object
  */
