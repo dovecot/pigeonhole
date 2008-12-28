@@ -339,7 +339,7 @@ static struct sieve_error_handler *_testsuite_script_ehandler_create(void)
 	return ehandler;
 }
 
-static void testsuite_script_clear_messages(void)
+void testsuite_script_clear_messages(void)
 {
 	if ( _testsuite_scriptmsg_pool != NULL ) {
 		if ( array_count(&_testsuite_script_errors) == 0 )

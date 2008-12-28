@@ -11,4 +11,6 @@ void testsuite_result_assign(struct sieve_result *result);
 
 struct sieve_result_iterate_context *testsuite_result_iterate_init(void);
 
+bool testsuite_result_execute(const struct sieve_runtime_env *renv);
+
 #endif /* __TESTSUITE_RESULT_H */

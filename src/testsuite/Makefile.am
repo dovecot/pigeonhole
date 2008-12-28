@@ -42,7 +42,8 @@ tests = \
 	tst-test-script-compile.c \
 	tst-test-script-run.c \
 	tst-test-error.c \
-	tst-test-result.c
+	tst-test-result.c \
+	tst-test-result-execute.c
 
 testsuite_SOURCES = \
 	testsuite-common.c \
