@@ -39,8 +39,8 @@ commands = \
 	cmd-test-set.c
 
 tests = \
-	tst-test-compile.c \
-	tst-test-execute.c \
+	tst-test-script-compile.c \
+	tst-test-script-run.c \
 	tst-test-error.c \
 	tst-test-result.c
 

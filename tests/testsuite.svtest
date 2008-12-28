@@ -73,8 +73,3 @@ test "Envelope Environment" {
     }
 }
 
-/* Test substitutions */
-
-test "Substitutions" {
-	test_fail "file substitution failed: %{file:frop}.";
-}

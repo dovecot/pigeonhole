@@ -60,8 +60,8 @@ extern const struct sieve_command cmd_test_set;
  * Tests
  */
 
-extern const struct sieve_command tst_test_compile;
-extern const struct sieve_command tst_test_execute;
+extern const struct sieve_command tst_test_script_compile;
+extern const struct sieve_command tst_test_script_run;
 extern const struct sieve_command tst_test_error;
 extern const struct sieve_command tst_test_result;
 
@@ -74,8 +74,8 @@ enum testsuite_operation_code {
 	TESTSUITE_OPERATION_TEST_FINISH,
 	TESTSUITE_OPERATION_TEST_FAIL,
 	TESTSUITE_OPERATION_TEST_SET,
-	TESTSUITE_OPERATION_TEST_COMPILE,
-	TESTSUITE_OPERATION_TEST_EXECUTE,
+	TESTSUITE_OPERATION_TEST_SCRIPT_COMPILE,
+	TESTSUITE_OPERATION_TEST_SCRIPT_RUN,
 	TESTSUITE_OPERATION_TEST_ERROR,
 	TESTSUITE_OPERATION_TEST_RESULT
 };
@@ -84,8 +84,8 @@ extern const struct sieve_operation test_operation;
 extern const struct sieve_operation test_finish_operation;
 extern const struct sieve_operation test_fail_operation;
 extern const struct sieve_operation test_set_operation;
-extern const struct sieve_operation test_compile_operation;
-extern const struct sieve_operation test_execute_operation;
+extern const struct sieve_operation test_script_compile_operation;
+extern const struct sieve_operation test_script_run_operation;
 extern const struct sieve_operation test_error_operation;
 extern const struct sieve_operation test_result_operation;
 
@@ -117,7 +117,7 @@ int testsuite_testcase_result(void);
  */
 
 bool testsuite_script_compile(const char *script_path);
-bool testsuite_script_execute(const struct sieve_runtime_env *renv);
+bool testsuite_script_run(const struct sieve_runtime_env *renv);
 
 void testsuite_script_get_error_init(void);
 const char *testsuite_script_get_error_next(bool location);

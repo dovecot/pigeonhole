@@ -13,7 +13,7 @@ require "comparator-i;ascii-numeric";
  */
 
 test "Lexer errors (FIXME: count only)" {
-    if test_compile "errors/lexer.sieve" {
+    if test_script_compile "errors/lexer.sieve" {
         test_fail "compile should have failed.";
     }
 
@@ -27,7 +27,7 @@ test "Lexer errors (FIXME: count only)" {
  */
 
 test "Parser errors (FIXME: count only)" {
-    if test_compile "errors/parser.sieve" {
+    if test_script_compile "errors/parser.sieve" {
         test_fail "compile should have failed.";
     }
 
@@ -41,7 +41,7 @@ test "Parser errors (FIXME: count only)" {
  */
 
 test "Header errors" {
-	if test_compile "errors/header.sieve" {
+	if test_script_compile "errors/header.sieve" {
 		test_fail "compile should have failed.";
 	}
 
@@ -105,7 +105,7 @@ test "Header errors" {
 
 
 test "Address errors" {
-	if test_compile "errors/address.sieve" {
+	if test_script_compile "errors/address.sieve" {
 		test_fail "compile should have failed.";
 	}
 
@@ -163,7 +163,7 @@ test "Address errors" {
  */
 
 test "If errors (FIXME: count only)" {
-	if test_compile "errors/if.sieve" {
+	if test_script_compile "errors/if.sieve" {
 		test_fail "compile should have failed.";
 	}
 
@@ -177,7 +177,7 @@ test "If errors (FIXME: count only)" {
  */
 
 test "Require errors (FIXME: count only)" {
-	if test_compile "errors/require.sieve" {
+	if test_script_compile "errors/require.sieve" {
 		test_fail "compile should have failed.";
 	}
 
@@ -191,7 +191,7 @@ test "Require errors (FIXME: count only)" {
  */
 
 test "Size errors (FIXME: count only)" {
-    if test_compile "errors/size.sieve" {
+    if test_script_compile "errors/size.sieve" {
         test_fail "compile should have failed.";
     }
 
@@ -205,7 +205,7 @@ test "Size errors (FIXME: count only)" {
  */
 
 test "Envelope errors (FIXME: count only)" {
-    if test_compile "errors/envelope.sieve" {
+    if test_script_compile "errors/envelope.sieve" {
         test_fail "compile should have failed.";
     }
 
@@ -219,7 +219,7 @@ test "Envelope errors (FIXME: count only)" {
  */
 
 test "Stop errors (FIXME: count only)" {
-    if test_compile "errors/stop.sieve" {
+    if test_script_compile "errors/stop.sieve" {
         test_fail "compile should have failed.";
     }
 
@@ -233,7 +233,7 @@ test "Stop errors (FIXME: count only)" {
  */
 
 test "Keep errors (FIXME: count only)" {
-    if test_compile "errors/keep.sieve" {
+    if test_script_compile "errors/keep.sieve" {
         test_fail "compile should have failed.";
     }
 
@@ -247,7 +247,7 @@ test "Keep errors (FIXME: count only)" {
  */
 
 test "ADDRESS-PART errors (FIXME: count only)" {
-    if test_compile "errors/address-part.sieve" {
+    if test_script_compile "errors/address-part.sieve" {
         test_fail "compile should have failed.";
     }
 
@@ -261,7 +261,7 @@ test "ADDRESS-PART errors (FIXME: count only)" {
  */
 
 test "MATCH-TYPE errors (FIXME: count only)" {
-    if test_compile "errors/match-type.sieve" {
+    if test_script_compile "errors/match-type.sieve" {
         test_fail "compile should have failed.";
     }
 
@@ -275,7 +275,7 @@ test "MATCH-TYPE errors (FIXME: count only)" {
  */
 
 test "Encoded-character errors (FIXME: count only)" {
-    if test_compile "errors/encoded-character.sieve" {
+    if test_script_compile "errors/encoded-character.sieve" {
         test_fail "compile should have failed.";
     }
 
@@ -289,7 +289,7 @@ test "Encoded-character errors (FIXME: count only)" {
  */
 
 test "Outgoing address errors (FIXME: count only)" {
-    if test_compile "errors/out-address.sieve" {
+    if test_script_compile "errors/out-address.sieve" {
         test_fail "compile should have failed.";
     }
 
@@ -304,7 +304,7 @@ test "Outgoing address errors (FIXME: count only)" {
  */
 
 test "Tagged argument errors (FIXME: count only)" {
-    if test_compile "errors/tag.sieve" {
+    if test_script_compile "errors/tag.sieve" {
         test_fail "compile should have failed.";
     }
 
@@ -318,7 +318,7 @@ test "Tagged argument errors (FIXME: count only)" {
  */
 
 test "Typos" {
-	if test_compile "errors/typos.sieve" {
+	if test_script_compile "errors/typos.sieve" {
 		test_fail "compile should have failed.";
 	}
 
@@ -358,7 +358,7 @@ test "Typos" {
  */
 
 test "Unsupported language features (FIXME: count only)" {
-    if test_compile "errors/unsupported.sieve" {
+    if test_script_compile "errors/unsupported.sieve" {
         test_fail "compile should have failed.";
     }
 

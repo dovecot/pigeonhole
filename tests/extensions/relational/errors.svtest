@@ -5,7 +5,7 @@ require "relational";
 require "comparator-i;ascii-numeric";
 
 test "Validation errors" {
-	if test_compile "errors/validation.sieve" {
+	if test_script_compile "errors/validation.sieve" {
 		test_fail "compile should have failed";
 	}
 

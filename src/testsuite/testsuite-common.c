@@ -415,7 +415,7 @@ bool testsuite_script_compile(const char *script_path)
 	return TRUE;
 }
 
-bool testsuite_script_execute(const struct sieve_runtime_env *renv)
+bool testsuite_script_run(const struct sieve_runtime_env *renv)
 {
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;

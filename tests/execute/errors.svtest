@@ -4,11 +4,11 @@ require "relational";
 require "comparator-i;ascii-numeric";
 
 test "Action conflicts: reject <-> fileinto" {
-	if not test_compile "errors/conflict-reject-fileinto.sieve" {
+	if not test_script_compile "errors/conflict-reject-fileinto.sieve" {
 		test_fail "compile failed";
 	}
 
-	if test_execute {
+	if test_script_run {
 		test_fail "execution should have failed";
 	}
 
@@ -18,11 +18,11 @@ test "Action conflicts: reject <-> fileinto" {
 }
 
 test "Action conflicts: reject <-> keep" {
-	if not test_compile "errors/conflict-reject-keep.sieve" {
+	if not test_script_compile "errors/conflict-reject-keep.sieve" {
 		test_fail "compile failed";
 	}
 
-	if test_execute {
+	if test_script_run {
 		test_fail "execution should have failed";
 	}
 
@@ -32,11 +32,11 @@ test "Action conflicts: reject <-> keep" {
 }
 
 test "Action conflicts: reject <-> redirect" {
-	if not test_compile "errors/conflict-reject-redirect.sieve" {
+	if not test_script_compile "errors/conflict-reject-redirect.sieve" {
 		test_fail "compile failed";
 	}
 
-	if test_execute {
+	if test_script_run {
 		test_fail "execution should have failed";
 	}
 
@@ -46,11 +46,11 @@ test "Action conflicts: reject <-> redirect" {
 }
 
 test "Action limit" {
-	if not test_compile "errors/actions-limit.sieve" {
+	if not test_script_compile "errors/actions-limit.sieve" {
 		test_fail "compile failed";
 	}
 
-	if test_execute {
+	if test_script_run {
 		test_fail "execution should have failed";
 	}
 
@@ -64,11 +64,11 @@ test "Action limit" {
 }
 
 test "Redirect limit" {
-	if not test_compile "errors/redirect-limit.sieve" {
+	if not test_script_compile "errors/redirect-limit.sieve" {
 		test_fail "compile failed";
 	}
 
-	if test_execute {
+	if test_script_run {
 		test_fail "execution should have failed";
 	}
 

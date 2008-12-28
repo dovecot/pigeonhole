@@ -29,7 +29,8 @@
  * test_result command
  *
  * Syntax:   
- *   test [MATCH-TYPE] [COMPARATOR] [:index number] <key-list: string-list>
+ *   test_result [MATCH-TYPE] [COMPARATOR] [:index number] 
+ *     <key-list: string-list>
  */
 
 static bool tst_test_result_registered

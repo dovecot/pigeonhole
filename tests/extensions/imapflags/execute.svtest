@@ -5,11 +5,11 @@ require "vnd.dovecot.testsuite";
  */
 
 test "Flags Side Effect" {
-	if not test_compile "execute/flags-side-effect.sieve" {
+	if not test_script_compile "execute/flags-side-effect.sieve" {
 		test_fail "script compile failed";
 	}
 
-	if not test_execute {
+	if not test_script_run {
 		test_fail "script execute failed";
 	}
 }

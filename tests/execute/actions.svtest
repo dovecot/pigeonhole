@@ -12,11 +12,11 @@ Test.
 ;
 
 test "Fileinto" {
-	if not test_compile "actions/fileinto.sieve" {
+	if not test_script_compile "actions/fileinto.sieve" {
 		test_fail "compile failed";
 	}
 
-	if not test_execute {
+	if not test_script_run {
 		test_fail "execute failed";
 	}
 
@@ -38,11 +38,11 @@ test "Fileinto" {
 }
 
 test "Redirect" {
-	if not test_compile "actions/redirect.sieve" {
+	if not test_script_compile "actions/redirect.sieve" {
 		test_fail "compile failed";
 	}
 
-	if not test_execute {
+	if not test_script_run {
 		test_fail "execute failed";
 	}
 

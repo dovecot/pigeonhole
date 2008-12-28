@@ -5,7 +5,7 @@ require "relational";
 require "enotify";
 
 test "Invalid URI (FIXME: count only)" {
-	if test_compile "errors/uri.sieve" {
+	if test_script_compile "errors/uri.sieve" {
 		test_fail "compile should have failed";
 	}
 
@@ -15,7 +15,7 @@ test "Invalid URI (FIXME: count only)" {
 }
 
 test "Invalid mailto URI (FIXME: count only)" {
-	if test_compile "errors/uri-mailto.sieve" {
+	if test_script_compile "errors/uri-mailto.sieve" {
 		test_fail "compile should have failed";
 	}
 
@@ -25,7 +25,7 @@ test "Invalid mailto URI (FIXME: count only)" {
 }
 
 test "Invalid mailto :from address (FIXME: count only)" {
-	if test_compile "errors/from-mailto.sieve" {
+	if test_script_compile "errors/from-mailto.sieve" {
 		test_fail "compile should have failed";
 	}
 
@@ -35,7 +35,7 @@ test "Invalid mailto :from address (FIXME: count only)" {
 }
 
 test "Invalid :options argument (FIXME: count only)" {
-	if test_compile "errors/options.sieve" {
+	if test_script_compile "errors/options.sieve" {
 		test_fail "compile should have failed";
 	}
 

@@ -8,7 +8,7 @@ require "comparator-i;ascii-numeric";
  */
 
 test "Generic" {
-	if test_compile "errors/generic.sieve" {
+	if test_script_compile "errors/generic.sieve" {
 		test_fail "compile should have failed";
 	}
 
@@ -18,7 +18,7 @@ test "Generic" {
 }
 
 test "Circular - direct" {
-	if test_compile "errors/circular-1.sieve" {
+	if test_script_compile "errors/circular-1.sieve" {
 		test_fail "compile should have failed";
 	}
 
@@ -28,7 +28,7 @@ test "Circular - direct" {
 }
 
 test "Circular - one intermittent" {
-	if test_compile "errors/circular-2.sieve" {
+	if test_script_compile "errors/circular-2.sieve" {
 		test_fail "compile should have failed";
 	}
 
@@ -38,7 +38,7 @@ test "Circular - one intermittent" {
 }
 
 test "Circular - two intermittent" {
-	if test_compile "errors/circular-3.sieve" {
+	if test_script_compile "errors/circular-3.sieve" {
 		test_fail "compile should have failed";
 	}
 
@@ -52,7 +52,7 @@ test "Circular - two intermittent" {
  */
 
 test "Variables inactive" {
-	if test_compile "errors/variables-inactive.sieve" {
+	if test_script_compile "errors/variables-inactive.sieve" {
 		test_fail "compile should have failed";
 	}
 
@@ -66,7 +66,7 @@ test "Variables inactive" {
  */
 
 test "Variables" {
-	if test_compile "errors/variables.sieve" {
+	if test_script_compile "errors/variables.sieve" {
 		test_fail "compile should have failed";
 	}
 
@@ -80,11 +80,11 @@ test "Variables" {
  */
 
 test "Import runtime" {
-	if not test_compile "errors/import-runtime.sieve" {
+	if not test_script_compile "errors/import-runtime.sieve" {
 		test_fail "compile failed";
 	}
 
-	if test_execute {
+	if test_script_run {
 		test_fail "execution should have failed";
 	}
 

@@ -5,32 +5,32 @@ require "vnd.dovecot.testsuite";
  */
 
 test "RFC Example 1" {
-	if not test_compile "execute/draft-rfc-ex1.sieve" {
+	if not test_script_compile "execute/draft-rfc-ex1.sieve" {
 		test_fail "script compile failed";
 	}
 
-	if not test_execute {
+	if not test_script_run {
 		test_fail "script execute failed";
 	}
 }
 
 test "RFC Example 2" {
-	if not test_compile "execute/draft-rfc-ex2.sieve" {
+	if not test_script_compile "execute/draft-rfc-ex2.sieve" {
 		test_fail "script compile failed";
 	}
 
-	if not test_execute {
+	if not test_script_run {
 		test_fail "script execute failed";
 	}
 }
 
 /* tel: not supported
 test "RFC Example 3" {
-	if not test_compile "execute/draft-rfc-ex3.sieve" {
+	if not test_script_compile "execute/draft-rfc-ex3.sieve" {
 		test_fail "script compile failed";
 	}
 
-	if not test_execute {
+	if not test_script_run {
 		test_fail "script execute failed";
 	}
 }
@@ -38,22 +38,22 @@ test "RFC Example 3" {
 
 /* tel: and xmmp: not supported
 test "RFC Example 5" {
-	if not test_compile "execute/draft-rfc-ex5.sieve" {
+	if not test_script_compile "execute/draft-rfc-ex5.sieve" {
 		test_fail "script compile failed";
 	}
 
-	if not test_execute {
+	if not test_script_run {
 		test_fail "script execute failed";
 	}
 }
 */
 
 test "RFC Example 6" {
-	if not test_compile "execute/draft-rfc-ex6.sieve" {
+	if not test_script_compile "execute/draft-rfc-ex6.sieve" {
 		test_fail "script compile failed";
 	}
 
-	if not test_execute {
+	if not test_script_run {
 		test_fail "script execute failed";
 	}
 }
