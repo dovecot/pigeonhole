@@ -42,10 +42,6 @@ comparators = \
 	cmp-i-octet.c \
 	cmp-i-ascii-casemap.c
 
-if BUILD_ENOTIFY
-PLUGIN_ENOTIFY = ./plugins/enotify/libsieve_ext_enotify.la
-endif
-
 # These are not actual plugins just yet...
 plugins = \
 	./plugins/vacation/libsieve_ext_vacation.la \
@@ -58,7 +54,7 @@ plugins = \
 	./plugins/include/libsieve_ext_include.la \
 	./plugins/body/libsieve_ext_body.la \
 	./plugins/variables/libsieve_ext_variables.la \
-	$(PLUGIN_ENOTIFY)
+	./plugins/enotify/libsieve_ext_enotify.la
 
 libsieve_la_DEPENDENCIES = $(plugins)
 libsieve_la_LIBADD = $(plugins)

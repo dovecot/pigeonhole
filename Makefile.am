@@ -20,16 +20,6 @@ endif
 
 # Testsuite tests
 
-if BUILD_ENOTIFY
-ENOTIFY_TESTS = \
-	tests/extensions/enotify/basic.svtest \
-	tests/extensions/enotify/encodeurl.svtest \
-	tests/extensions/enotify/valid_notify_method.svtest \
-	tests/extensions/enotify/notify_method_capability.svtest \
-	tests/extensions/enotify/errors.svtest \
-	tests/extensions/enotify/execute.svtest
-endif
-
 TESTSUITE_BIN = $(top_srcdir)/src/testsuite/testsuite
 
 if TESTSUITE_VALGRIND
@@ -81,7 +71,12 @@ test_cases = \
 	tests/extensions/vacation/errors.svtest \
 	tests/extensions/vacation/execute.svtest \
 	tests/extensions/vacation/references.svtest \
-	$(ENOTIFY_TESTS)
+	tests/extensions/enotify/basic.svtest \
+	tests/extensions/enotify/encodeurl.svtest \
+	tests/extensions/enotify/valid_notify_method.svtest \
+	tests/extensions/enotify/notify_method_capability.svtest \
+	tests/extensions/enotify/errors.svtest \
+	tests/extensions/enotify/execute.svtest
 
 if HAVE_DOVECOT_LIBS
 

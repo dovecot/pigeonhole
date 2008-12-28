@@ -1,7 +1,3 @@
-if BUILD_ENOTIFY
-ENOTIFY = enotify
-endif
-
 SUBDIRS = \
 	vacation \
 	subaddress \
@@ -13,5 +9,5 @@ SUBDIRS = \
 	include \
 	body \
 	variables \
-	$(ENOTIFY)
+	enotify
 

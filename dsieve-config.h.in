@@ -6,4 +6,4 @@
 #undef SIEVE_VERSION
 
 /* Define to make Sieve enotify extension available to users. */
-#undef HAVE_SIEVE_ENOTIFY
+#undef HAVE_SIEVE_UNFINISHED

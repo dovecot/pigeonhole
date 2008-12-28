@@ -54,18 +54,20 @@ AM_CONDITIONAL(HAVE_DOVECOT_LIBS, test "$have_dovecot_libs" = "yes")
 # Extensions under development
 #
 
-AC_ARG_WITH(enotify,
-[AC_HELP_STRING([--with-enotify], [Build enotify extension (under development) [default=no]])],
+AC_ARG_WITH(unfinished-features,
+[AC_HELP_STRING([--with-unfinished-features], 
+	[Build unfinished new features/extensions [default=no]])],
         if test x$withval = xno || test x$withval = xauto; then
-                want_enotify=$withval
+                want_unfinished_features=$withval
         else
-                want_enotify=yes
+                want_unfinished_features=yes
         fi,
         want_enotify=no)
-AM_CONDITIONAL(BUILD_ENOTIFY, test "$want_enotify" = "yes")
+AM_CONDITIONAL(BUILD_UNFINISHED, test "$want_unfinished_features" = "yes")
 
-if test "$want_enotify" = "yes"; then
-	AC_DEFINE(HAVE_SIEVE_ENOTIFY,,[Define to make Sieve enotify extension available to users.])
+if test "$want_unfinished_features" = "yes"; then
+	AC_DEFINE(HAVE_SIEVE_UNFINISHED,,
+		[Define to build Sieve unfinished features/extensions.])
 fi
 
 #
