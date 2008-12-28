@@ -1,5 +1,7 @@
 Current:
 
+* Add result testing to the testsuite. 
+
 Next (in order of descending priority/precedence):
 
 * Fix remaining RFC deviations:
