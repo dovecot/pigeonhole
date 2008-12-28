@@ -13,11 +13,11 @@ Test.
 
 test "Execute" {
 	if not test_script_compile "execute/basic.sieve" {
-		test_fail "compile failed";
+		test_fail "script compile failed";
 	}
 
 	if not test_script_run {
-		test_fail "execute failed";
+		test_fail "script run failed";
 	}
 
 	if not test_result :count "eq" :comparator "i;ascii-numeric" "1" {
@@ -26,5 +26,9 @@ test "Execute" {
 
 	if not test_result :index 1 "reject" {
 		test_fail "reject action missing from result";
+	}
+
+	if not test_result_execute {
+		test_fail "result execute failed";
 	}
 }

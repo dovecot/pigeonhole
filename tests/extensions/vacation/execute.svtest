@@ -8,7 +8,7 @@ test "Action" {
 	}
 
 	if not test_script_run {
-		test_fail "script execute failed";
+		test_fail "script run failed";
 	}
 
 	if not test_result :count "eq" :comparator "i;ascii-numeric" "2" {
@@ -22,6 +22,10 @@ test "Action" {
 	if not test_result :index 2 "store" {
 		test_fail "store action is missing in result";
 	}
+
+	if not test_result_execute {
+		test_fail "result execute failed";
+	}
 }
 
 test "No :handle specified" {
@@ -31,5 +35,9 @@ test "No :handle specified" {
 
 	if not test_script_run {
 		test_fail "script execute failed";
+	}
+
+	if not test_result_execute {
+		test_fail "result execute failed";
 	}
 }

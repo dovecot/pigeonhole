@@ -10,13 +10,11 @@
 #include "testsuite-common.h"
 #include "testsuite-result.h"
 
-unsigned int _testsuite_result_index; /* Yuck */
 static struct sieve_result *_testsuite_result;
 
 void testsuite_result_init(void)
 {
 	_testsuite_result = NULL;
-	_testsuite_result_index = 0;
 }
 
 void testsuite_result_deinit(void)

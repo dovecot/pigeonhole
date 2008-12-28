@@ -361,6 +361,7 @@ static bool act_store_commit
 	if ( trans->namespace == NULL ) {
 		if ( aenv->scriptenv->namespaces == NULL ) {
 			act_store_log_status(trans, aenv, FALSE, status);
+			*keep = FALSE;
 			return TRUE;
 		}
 

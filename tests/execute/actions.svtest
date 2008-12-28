@@ -13,11 +13,11 @@ Test.
 
 test "Fileinto" {
 	if not test_script_compile "actions/fileinto.sieve" {
-		test_fail "compile failed";
+		test_fail "script compile failed";
 	}
 
 	if not test_script_run {
-		test_fail "execute failed";
+		test_fail "script run failed";
 	}
 
 	if not test_result :count "eq" :comparator "i;ascii-numeric" "3" {
@@ -35,6 +35,10 @@ test "Fileinto" {
 	if not test_result :index 3 "store" {
 		test_fail "third action is not 'store'";
 	} 
+
+	if not test_result_execute {
+		test_fail "result execute failed";
+	}
 }
 
 test "Redirect" {
@@ -65,5 +69,9 @@ test "Redirect" {
 	if not test_result :index 4 "redirect" {
 		test_fail "fourth action is not 'redirect'";
 	} 
+
+	if not test_result_execute {
+		test_fail "result execute failed";
+	}
 }
 

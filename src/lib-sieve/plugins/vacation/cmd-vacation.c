@@ -821,7 +821,7 @@ static bool act_vacation_send
 	FILE *f;
  	const char *outmsgid;
  	const char *const *headers;
-	int references;
+	int ret;
 
 	/* Check smpt functions just to be sure */
 
@@ -854,23 +854,26 @@ static bool act_vacation_send
 	rfc2822_header_field_printf(f, "Subject", "%s", 
 		str_sanitize(ctx->subject, 256));
 
-	references = mail_get_headers
+	/* Compose proper in-reply-to and references headers */
+	
+	ret = mail_get_headers
 		(aenv->msgdata->mail, "references", &headers);
 			
 	if ( msgdata->id != NULL ) {
 		rfc2822_header_field_write(f, "In-Reply-To", msgdata->id);
 	
-		if ( references >= 0 )
+		if ( ret >= 0 && headers[0] != NULL )
 			rfc2822_header_field_write
 				(f, "References", t_strconcat(headers[0], " ", msgdata->id, NULL));
 		else
 			rfc2822_header_field_write(f, "References", msgdata->id);
-	} else if ( references > 0 ) {
+	} else if ( ret >= 0 && headers[0] != NULL ) {
 		rfc2822_header_field_write(f, "References", headers[0]);
 	}
 			
 	rfc2822_header_field_write(f, "Auto-Submitted", "auto-replied (vacation)");
 	rfc2822_header_field_write(f, "Precedence", "bulk");
+	
 	rfc2822_header_field_write(f, "MIME-Version", "1.0");
     
 	if ( !ctx->mime ) {
@@ -936,12 +939,15 @@ static bool act_vacation_commit
 	}
 	
 	/* Did whe respond to this user before? */
-	act_vacation_hash(msgdata, ctx, dupl_hash);
-	if (senv->duplicate_check(dupl_hash, sizeof(dupl_hash), senv->username)) 
-	{
-		sieve_result_log(aenv, "discarded duplicate vacation response to <%s>",
-			str_sanitize(msgdata->return_path, 128));
-		return TRUE;
+	if ( senv->duplicate_check != NULL ) {
+		act_vacation_hash(msgdata, ctx, dupl_hash);
+	
+		if ( senv->duplicate_check(dupl_hash, sizeof(dupl_hash), senv->username) ) 
+		{
+			sieve_result_log(aenv, "discarded duplicate vacation response to <%s>",
+				str_sanitize(msgdata->return_path, 128));
+			return TRUE;
+		}
 	}
 	
 	/* Are we trying to respond to a mailing list ? */
@@ -1051,8 +1057,9 @@ static bool act_vacation_commit
 			str_sanitize(msgdata->return_path, 128));	
 
 		/* Mark as replied */
-		senv->duplicate_mark(dupl_hash, sizeof(dupl_hash), senv->username,
-			ioloop_time + ctx->days * (24 * 60 * 60));
+		if ( senv->duplicate_mark != NULL )
+			senv->duplicate_mark(dupl_hash, sizeof(dupl_hash), senv->username,
+				ioloop_time + ctx->days * (24 * 60 * 60));
 
 		return TRUE;
 	}

@@ -704,8 +704,8 @@ int sieve_result_execute
 			bool keep = TRUE;
 		
 			if ( act->commit != NULL ) 
-				commit_ok = act->commit(act, &result->action_env, rac->tr_context, &keep) && 
-					commit_ok;
+				commit_ok = act->commit
+					(act, &result->action_env, rac->tr_context, &keep) && commit_ok;
 	
 			/* Execute post_commit event of side effects */
 			rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;

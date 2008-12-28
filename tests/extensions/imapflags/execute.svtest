@@ -12,4 +12,8 @@ test "Flags Side Effect" {
 	if not test_script_run {
 		test_fail "script execute failed";
 	}
+
+	if not test_result_execute {
+		test_fail "result execute failed";	
+	}
 }
