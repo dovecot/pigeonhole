@@ -6,6 +6,7 @@
 #include "str-sanitize.h"
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-extensions.h"
 #include "sieve-actions.h"
 #include "sieve-binary.h"
@@ -202,6 +203,7 @@ const struct sieve_operand *sieve_operands[] = {
 	&comparator_operand,
 	&match_type_operand,
 	&address_part_operand,
+	&catenated_string_operand
 }; 
 
 const unsigned int sieve_operand_count =
@@ -278,7 +280,7 @@ bool sieve_operand_optional_read
 /* Omitted */
 
 const struct sieve_operand_class omitted_class =
-    { "OMITTED" };
+	{ "OMITTED" };
 
 const struct sieve_operand omitted_operand = {
 	"@OMITTED",
@@ -355,6 +357,26 @@ const struct sieve_operand stringlist_operand =	{
 	&stringlist_class, 
 	&stringlist_interface
 };
+
+/* Catenated String */
+
+static bool opr_catenated_string_read
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str);
+static bool opr_catenated_string_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+		const char *field_name);
+
+const struct sieve_opr_string_interface catenated_string_interface = { 
+	opr_catenated_string_dump,
+	opr_catenated_string_read
+};
+		
+const struct sieve_operand catenated_string_operand = { 
+	"@catenated-string", 
+	NULL, SIEVE_OPERAND_CATENATED_STRING,
+	&string_class,
+	&catenated_string_interface
+};	
 	
 /* 
  * Operand implementations 
@@ -740,6 +762,81 @@ static struct sieve_coded_stringlist *opr_stringlist_read
   
 	return strlist;
 }  
+
+/* Catenated String */
+
+void sieve_opr_catenated_string_emit
+(struct sieve_binary *sbin, unsigned int elements) 
+{
+	(void) sieve_operand_emit_code(sbin, &catenated_string_operand);
+	(void) sieve_binary_emit_unsigned(sbin, elements);
+}
+
+static bool opr_catenated_string_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+	const char *field_name) 
+{
+	unsigned int elements = 0;
+	unsigned int i;
+	
+	if (!sieve_binary_read_unsigned(denv->sbin, address, &elements) )
+		return FALSE;
+	
+	if ( field_name != NULL ) 
+		sieve_code_dumpf(denv, "%s: CAT-STR [%ld]:", 
+			field_name, (long) elements);
+	else
+		sieve_code_dumpf(denv, "CAT-STR [%ld]:", (long) elements);
+
+	sieve_code_descend(denv);
+	for ( i = 0; i < (unsigned int) elements; i++ ) {
+		sieve_opr_string_dump(denv, address, NULL);
+	}
+	sieve_code_ascend(denv);
+	
+	return TRUE;
+}
+
+static bool opr_catenated_string_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str)
+{ 
+	unsigned int elements = 0;
+	unsigned int i;
+		
+	if ( !sieve_binary_read_unsigned(renv->sbin, address, &elements) )
+		return FALSE;
+
+	/* Parameter str can be NULL if we are requested to only skip and not 
+	 * actually read the argument.
+	 */
+	if ( str == NULL ) {
+		for ( i = 0; i < (unsigned int) elements; i++ ) {		
+			if ( !sieve_opr_string_read(renv, address, NULL) ) 
+				return FALSE;
+		}
+	} else {
+		string_t *strelm;
+		string_t **elm = &strelm;
+
+		*str = t_str_new(128);
+		for ( i = 0; i < (unsigned int) elements; i++ ) {
+		
+			if ( !sieve_opr_string_read(renv, address, elm) ) 
+				return FALSE;
+		
+			if ( elm != NULL ) {
+				str_append_str(*str, strelm);
+
+				if ( str_len(*str) > SIEVE_MAX_STRING_LEN ) {
+					str_truncate(*str, SIEVE_MAX_STRING_LEN);
+					elm = NULL;
+				}
+			}
+		}
+	}
+
+	return TRUE;
+}
 
 /* 
  * Core operations

@@ -29,15 +29,6 @@ extern const struct sieve_operand match_value_operand;
 
 void ext_variables_opr_match_value_emit
 	(struct sieve_binary *sbin, unsigned int index);
-
-/* 
- * Variable string operand 
- */
-
-extern const struct sieve_operand variable_string_operand;	
-
-void ext_variables_opr_variable_string_emit
-	(struct sieve_binary *sbin, unsigned int elements);
 	
 #endif /* __EXT_VARIABLES_OPERANDS_H */
 

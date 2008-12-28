@@ -22,6 +22,16 @@ extern const struct sieve_extension variables_extension;
 extern const struct sieve_command cmd_set;
 extern const struct sieve_command tst_string;
 
+/* 
+ * Operands
+ */
+
+enum ext_variables_operand {
+	EXT_VARIABLES_OPERAND_VARIABLE,
+	EXT_VARIABLES_OPERAND_MATCH_VALUE,
+	EXT_VARIABLES_OPERAND_MODIFIER
+};
+
 /*
  * Operations
  */
@@ -32,18 +42,6 @@ extern const struct sieve_operation tst_string_operation;
 enum ext_variables_opcode {
 	EXT_VARIABLES_OPERATION_SET,
 	EXT_VARIABLES_OPERATION_STRING
-};
-
-/* 
- * Operands
- */
-
-
-enum ext_variables_operand {
-	EXT_VARIABLES_OPERAND_VARIABLE,
-	EXT_VARIABLES_OPERAND_MATCH_VALUE,
-	EXT_VARIABLES_OPERAND_VARIABLE_STRING,
-	EXT_VARIABLES_OPERAND_MODIFIER
 };
 
 /* 

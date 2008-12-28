@@ -7,10 +7,9 @@
 #include "array.h"
 
 #include "sieve-common.h"
-
 #include "sieve-ast.h"
-
 #include "sieve-commands.h"
+#include "sieve-code.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-dump.h"
@@ -472,7 +471,7 @@ static bool arg_variable_string_generate
 	if ( _string_data_count(strdata) == 1 )
 		sieve_generate_argument(cgenv, _string_data_first(strdata), cmd);
 	else {
-		ext_variables_opr_variable_string_emit(sbin, _string_data_count(strdata));
+		sieve_opr_catenated_string_emit(sbin, _string_data_count(strdata));
 
 		strpart = _string_data_first(strdata);
 		while ( strpart != NULL ) {

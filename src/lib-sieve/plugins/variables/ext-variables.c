@@ -50,7 +50,6 @@ const struct sieve_operation *ext_variables_operations[] = {
 const struct sieve_operand *ext_variables_operands[] = {
 	&variable_operand, 
 	&match_value_operand,
-	&variable_string_operand,
 	&modifier_operand
 };
 

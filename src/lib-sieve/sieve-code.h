@@ -86,6 +86,7 @@ enum sieve_core_operand {
 	SIEVE_OPERAND_COMPARATOR,
 	SIEVE_OPERAND_MATCH_TYPE,
 	SIEVE_OPERAND_ADDRESS_PART,
+	SIEVE_OPERAND_CATENATED_STRING,
 
 	SIEVE_OPERAND_CUSTOM
 };
@@ -102,6 +103,7 @@ extern const struct sieve_operand omitted_operand;
 extern const struct sieve_operand number_operand;
 extern const struct sieve_operand string_operand;
 extern const struct sieve_operand stringlist_operand;
+extern const struct sieve_operand catenated_string_operand;
 
 extern const struct sieve_operand *sieve_operands[];
 extern const unsigned int sieve_operand_count;
@@ -224,6 +226,11 @@ static inline bool sieve_operand_is_stringlist
 		(operand->class == &stringlist_class || operand->class == &string_class) );
 }
 
+/* Catenated string */
+
+void sieve_opr_catenated_string_emit
+	(struct sieve_binary *sbin, unsigned int elements);
+	
 /*
  * Operation object
  */
