@@ -130,6 +130,7 @@ static const char *_reserved_headers[] = {
   "resent-cc",
   "resent-bcc",
   "resent-msg-id",
+  "from",
   "sender",
 	NULL
 };
