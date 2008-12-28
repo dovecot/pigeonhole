@@ -1,7 +1,5 @@
 Current:
 
-* Implement enotify extension:
-	- Limit the number of notifications generated (on a per-method basis)
 * Incorporate enotify extension into default compile.  
 
 Next (in order of descending priority/precedence):

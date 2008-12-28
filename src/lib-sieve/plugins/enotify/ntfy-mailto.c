@@ -39,8 +39,9 @@
  * Configuration
  */
  
-#define NTFY_MAILTO_MAX_RECIPIENTS 4
-#define NTFY_MAILTO_MAX_HEADERS 16
+#define NTFY_MAILTO_MAX_RECIPIENTS  4
+#define NTFY_MAILTO_MAX_HEADERS     16
+#define NTFY_MAILTO_MAX_SUBJECT     256
 
 /* 
  * Types 
@@ -269,9 +270,20 @@ static bool _uri_add_valid_recipient
 		struct ntfy_mailto_recipient *rcpts;
 		unsigned int count, i;
 		pool_t pool;
+
+		rcpts = array_get_modifiable(recipients, &count);
+		
+		/* Enforce limits */
+		if ( count >= NTFY_MAILTO_MAX_RECIPIENTS ) {
+			if ( count == NTFY_MAILTO_MAX_RECIPIENTS ) {
+				_uri_parse_warning(nlog, 
+					"more than the maximum %u recipients specified; "
+					"rest is discarded", NTFY_MAILTO_MAX_RECIPIENTS);
+			}
+			return TRUE;	
+		}
 		
 		/* Check for duplicate first */
-		rcpts = array_get_modifiable(recipients, &count);
 		for ( i = 0; i < count; i++ ) {
 			if ( strcmp(rcpts[i].normalized, normalized) == 0 ) {
 				/* Upgrade existing Cc: recipient to a To: recipient if possible */
@@ -383,7 +395,7 @@ static bool _uri_parse_header_recipients
 	return TRUE;	
 }
 
-static bool _uri_header_duplicate
+static bool _uri_header_is_duplicate
 (ARRAY_TYPE(headers) *headers, const char *field_name)
 {	
 	if ( _ntfy_mailto_header_unique(field_name) ) {
@@ -405,6 +417,7 @@ static bool _uri_parse_headers
 	ARRAY_TYPE(headers) *headers_r, ARRAY_TYPE(recipients) *recipients_r,
 	const char **body, const char **subject)
 {
+	unsigned int header_count = 0;
 	string_t *field = t_str_new(128);
 	const char *p = *uri_p;
 	pool_t pool = NULL;
@@ -419,7 +432,8 @@ static bool _uri_parse_headers
 		pool = array_get_pool(headers_r);
 		
 	while ( *p != '\0' ) {
-		enum { 
+		enum {
+			_HNAME_IGNORED, 
 			_HNAME_GENERIC,
 			_HNAME_TO,
 			_HNAME_CC,
@@ -456,35 +470,49 @@ static bool _uri_parse_headers
 			return FALSE;
 		}
 
-		/* Add new header field to array and assign its name */
-		field_name = str_c(field);
-		if ( strcasecmp(field_name, "to") == 0 )
-			hname_type = _HNAME_TO;
-		else if ( strcasecmp(field_name, "cc") == 0 )
-			hname_type = _HNAME_CC;
-		else if ( strcasecmp(field_name, "subject") == 0 )
-			hname_type = _HNAME_SUBJECT;
-		else if ( strcasecmp(field_name, "body") == 0 )
-			hname_type = _HNAME_BODY;
-		else if ( _ntfy_mailto_header_allowed(field_name) ) {
-			if ( headers_r != NULL ) {
-				if ( !_uri_header_duplicate(headers_r, field_name) ) {
-					hdrf = array_append_space(headers_r);
-					hdrf->name = p_strdup(pool, field_name);
-				} else {
-					_uri_parse_warning(nlog, 
-						"ignored duplicate for unique header field '%s'",
-						str_sanitize(field_name, 32));
-					hdrf = NULL;
-				}
-			} else
-				hdrf = NULL;
+		if ( header_count >= NTFY_MAILTO_MAX_HEADERS ) {
+			/* Refuse to accept more headers than allowed by policy */
+			if ( header_count == NTFY_MAILTO_MAX_HEADERS ) {
+				_uri_parse_warning(nlog, "more than the maximum %u headers specified; "
+					"rest is discarded", NTFY_MAILTO_MAX_HEADERS);
+			}
+			
+			hname_type = _HNAME_IGNORED;
 		} else {
-			_uri_parse_warning(nlog, "ignored reserved header field '%s'",
-				str_sanitize(field_name, 32));
-			hdrf = NULL;
+			/* Add new header field to array and assign its name */
+			
+			field_name = str_c(field);
+			if ( strcasecmp(field_name, "to") == 0 )
+				hname_type = _HNAME_TO;
+			else if ( strcasecmp(field_name, "cc") == 0 )
+				hname_type = _HNAME_CC;
+			else if ( strcasecmp(field_name, "subject") == 0 )
+				hname_type = _HNAME_SUBJECT;
+			else if ( strcasecmp(field_name, "body") == 0 )
+				hname_type = _HNAME_BODY;
+			else if ( _ntfy_mailto_header_allowed(field_name) ) {
+				if ( headers_r != NULL ) {
+					if ( !_uri_header_is_duplicate(headers_r, field_name) ) {
+						hdrf = array_append_space(headers_r);
+						hdrf->name = p_strdup(pool, field_name);
+					} else {
+						_uri_parse_warning(nlog, 
+							"ignored duplicate for unique header field '%s'",
+							str_sanitize(field_name, 32));
+						hname_type = _HNAME_IGNORED;
+					}
+				} else {
+					hname_type = _HNAME_IGNORED;
+				}
+			} else {
+				_uri_parse_warning(nlog, "ignored reserved header field '%s'",
+					str_sanitize(field_name, 32));
+				hname_type = _HNAME_IGNORED;
+			}
 		}
 		
+		header_count++;
+			
 		/* Reset for field body */
 		str_truncate(field, 0);
 		
@@ -522,6 +550,8 @@ static bool _uri_parse_headers
 		/* Assign field body */
 
 		switch ( hname_type ) {
+		case _HNAME_IGNORED:
+			break;
 		case _HNAME_TO:
 			/* Gracefully allow duplicate To fields */
 			if ( !_uri_parse_header_recipients(nlog, field, recipients_r, FALSE) )
@@ -622,8 +652,8 @@ static bool ntfy_mailto_compile_check_uri
 	ARRAY_TYPE(headers) headers;
 	const char *body = NULL, *subject = NULL;
 
-	t_array_init(&recipients, 16);
-	t_array_init(&headers, 16);
+	t_array_init(&recipients, NTFY_MAILTO_MAX_RECIPIENTS);
+	t_array_init(&headers, NTFY_MAILTO_MAX_HEADERS);
 	
 	if ( !ntfy_mailto_parse_uri
 		(nlog, uri_body, &recipients, &headers, &body, &subject) )
@@ -833,14 +863,15 @@ static bool ntfy_mailto_send
 	/* Determine subject */
 	if ( act->message != NULL ) {
 		/* FIXME: handle UTF-8 */
-		subject = str_sanitize(act->message, 256);
+		subject = str_sanitize(act->message, NTFY_MAILTO_MAX_SUBJECT);
 	} else if ( subject == NULL ) {
 		const char *const *hsubject;
 		
 		/* Fetch subject from original message */
 		if ( mail_get_headers_utf8
 			(msgdata->mail, "subject", &hsubject) >= 0 )
-			subject = t_strdup_printf("Notification: %s", hsubject[0]);
+			subject = str_sanitize(t_strdup_printf("Notification: %s", hsubject[0]), 
+				NTFY_MAILTO_MAX_SUBJECT);
 		else
 			subject = "Notification: (no subject)";
 	}
