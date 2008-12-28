@@ -94,9 +94,11 @@ extern const struct sieve_operation test_result_operation;
  */
 
 extern const struct sieve_operand testsuite_object_operand;
+extern const struct sieve_operand testsuite_substitution_operand;
 
 enum testsuite_operand_code {
-	TESTSUITE_OPERAND_OBJECT
+	TESTSUITE_OPERAND_OBJECT,
+	TESTSUITE_OPERAND_SUBSTITUTION
 };
 
 /* 

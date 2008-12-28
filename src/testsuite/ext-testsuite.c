@@ -45,6 +45,7 @@
 #include "sieve-result.h"
 
 #include "testsuite-common.h"
+#include "testsuite-arguments.h"
 
 /* 
  * Operations 
@@ -65,8 +66,10 @@ const struct sieve_operation *testsuite_operations[] = {
  * Operands 
  */
 
-const struct sieve_operand *testsuite_operands[] =
-    { &testsuite_object_operand };
+const struct sieve_operand *testsuite_operands[] = { 
+	&testsuite_object_operand,
+	&testsuite_substitution_operand
+};
     
 /* 
  * Extension
@@ -92,7 +95,7 @@ const struct sieve_extension testsuite_extension = {
 	ext_testsuite_binary_load, 
 	NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(testsuite_operations),
-	SIEVE_EXT_DEFINE_OPERAND(testsuite_object_operand)
+	SIEVE_EXT_DEFINE_OPERANDS(testsuite_operands)
 };
 
 /* Extension implementation */
@@ -107,6 +110,9 @@ static bool ext_testsuite_validator_load(struct sieve_validator *valdtr)
 	sieve_validator_register_command(valdtr, &tst_test_execute);
 	sieve_validator_register_command(valdtr, &tst_test_error);
 	sieve_validator_register_command(valdtr, &tst_test_result);	
+
+	sieve_validator_argument_override(valdtr, SAT_VAR_STRING,
+		&testsuite_string_argument);
 
 	return testsuite_validator_context_initialize(valdtr);
 }

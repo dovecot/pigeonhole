@@ -492,13 +492,17 @@ bool sieve_opr_string_dump_data
 {
 	const struct sieve_opr_string_interface *intf;
 	
-	if ( !sieve_operand_is_string(operand) ) 
+	if ( !sieve_operand_is_string(operand) ) {
+		sieve_code_dumpf(denv, "ERROR: INVALID STRING OPERAND %s", operand->name);
 		return FALSE;
+	}
 		
 	intf = (const struct sieve_opr_string_interface *) operand->interface; 
 	
-	if ( intf->dump == NULL ) 
+	if ( intf->dump == NULL ) {
+		sieve_code_dumpf(denv, "ERROR: DUMP STRING OPERAND");
 		return FALSE;
+	}
 
 	return intf->dump(denv, address, field_name);  
 }
@@ -511,6 +515,11 @@ bool sieve_opr_string_dump
 	
 	sieve_code_mark(denv);
 	operand = sieve_operand_read(denv->sbin, address);
+	
+	if ( operand == NULL ) {
+		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
+		return FALSE;
+	}
 
 	return sieve_opr_string_dump_data(denv, operand, address, field_name);
 }
@@ -790,7 +799,8 @@ static bool opr_catenated_string_dump
 
 	sieve_code_descend(denv);
 	for ( i = 0; i < (unsigned int) elements; i++ ) {
-		sieve_opr_string_dump(denv, address, NULL);
+		if ( !sieve_opr_string_dump(denv, address, NULL) )
+			return FALSE;
 	}
 	sieve_code_ascend(denv);
 	

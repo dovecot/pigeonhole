@@ -47,6 +47,8 @@ tests = \
 testsuite_SOURCES = \
 	testsuite-common.c \
 	testsuite-objects.c \
+	testsuite-substitutions.c \
+	testsuite-arguments.c \
 	testsuite-result.c \
 	$(commands) \
 	$(tests) \
@@ -56,5 +58,7 @@ testsuite_SOURCES = \
 noinst_HEADERS = \
 	testsuite-common.h \
 	testsuite-objects.h \
+	testsuite-substitutions.h \
+	testsuite-arguments.h \
 	testsuite-result.h
 
