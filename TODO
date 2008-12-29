@@ -1,8 +1,5 @@
 Current:
 
-* Add result testing to the testsuite. 
-* Implement more extensive testing of new enotify extension.
-
 Next (in order of descending priority/precedence):
 
 * Fix remaining RFC deviations:
@@ -37,8 +34,13 @@ Next (in order of descending priority/precedence):
 	- Verify validity of utf8 where necessary.
 	- Implement comparator-i;unicode-casemap.
 * Implement environment extension
-* Make testsuite much more exhaustive and add support for testing the actual
-  result.
+* Make testsuite much more exhaustive:
+	- add support for testing delivered and outgoing smtp messages by looping 
+	  these back as the active mail message
+	- add support for testing the content of result actions
+	- test as many error/warning/info conditions as possible. 
+	- review the specification documents and check whether the given conditions
+	  are tested at least once. 
 
 * Build a sieve tool to filter an entire existing mailbox through a sieve 
   script.
