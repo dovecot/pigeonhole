@@ -685,10 +685,15 @@ static int act_vacation_check_duplicate
 	const struct sieve_action_data *act, 
 	const struct sieve_action_data *act_other)
 {
-	sieve_runtime_error(renv, act->location, 
-		"duplicate vacation action not allowed "
-		"(previously triggered one was here: %s)", act_other->location);
-	return -1;
+	if ( !act_other->executed ) {
+		sieve_runtime_error(renv, act->location, 
+			"duplicate vacation action not allowed "
+			"(previously triggered one was here: %s)", act_other->location);
+		return -1;
+	}
+
+	/* Not an error if executed in preceeding script */
+	return 1;
 }
 
 int act_vacation_check_conflict
@@ -697,11 +702,16 @@ int act_vacation_check_conflict
 	const struct sieve_action_data *act_other)
 {
 	if ( (act_other->action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
-		sieve_runtime_error(renv, act->location, 
-			"vacation action conflicts with earlier triggered action: "
-			"the %s action (%s) also sends a response back to the sender",	
-			act_other->action->name, act_other->location);
-		return -1;
+		if ( !act_other->executed ) {
+			sieve_runtime_error(renv, act->location, 
+				"vacation action conflicts with earlier triggered action: "
+				"the %s action (%s) also sends a response back to the sender",	
+				act_other->action->name, act_other->location);
+			return -1;
+		} else {
+			/* Not an error if executed in preceeding script */
+			return 1;
+		}
 	}
 
 	return 0;

@@ -335,7 +335,11 @@ static int _sieve_result_add_action
 		const struct sieve_action *oact = raction->data.action;
 		
 		if ( keep && raction->keep ) {
+		
+			/* Duplicate keep */
 			if ( raction->data.executed ) {
+				/* Keep action from preceeding execution */
+			
 				kaction = raction;
 			
 				/* Detach existing keep action */
@@ -352,7 +356,10 @@ static int _sieve_result_add_action
 						(renv, action, seffects, kaction->seffects)) <= 0 )	 
 						return ret;
 				}
+				
 			} else {
+				/* True duplicate */
+				
 				return sieve_result_side_effects_merge
 					(renv, action, raction->seffects, seffects);
 			}
@@ -374,11 +381,13 @@ static int _sieve_result_add_action
 						 * into a keep.
 						 */
 						if ( (ret=sieve_result_side_effects_merge
-							(renv, action, raction->seffects, seffects)) <= 0 ) 
+							(renv, action, raction->seffects, seffects)) < 0 ) 
 							return ret;
 						raction->keep = TRUE;
 						raction->data.context = NULL;
 						raction->data.location = p_strdup(result->pool, act_data.location);
+						
+						return 1;
 					} else {
 						/* Merge side-effects, but don't add new action */
 						return sieve_result_side_effects_merge
