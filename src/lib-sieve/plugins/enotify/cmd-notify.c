@@ -139,9 +139,9 @@ const struct sieve_operation notify_operation = {
 /* Forward declarations */
 
 static int act_notify_check_duplicate
-	(const struct sieve_runtime_env *renv, const struct sieve_action *action1,
-    	void *context1, void *context2, 
-		const char *location1, const char *location2);
+	(const struct sieve_runtime_env *renv, 
+		const struct sieve_action_data *act,
+		const struct sieve_action_data *act_other);
 static void act_notify_print
 	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		void *context, bool *keep);	
@@ -527,13 +527,12 @@ static int cmd_notify_operation_execute
 /* Runtime verification */
 
 static int act_notify_check_duplicate
-(const struct sieve_runtime_env *renv ATTR_UNUSED,
-	const struct sieve_action *action1 ATTR_UNUSED,
-	void *context1 ATTR_UNUSED, void *context2 ATTR_UNUSED,
-	const char *location1 ATTR_UNUSED, const char *location2 ATTR_UNUSED)
+(const struct sieve_runtime_env *renv ATTR_UNUSED, 
+	const struct sieve_action_data *act ATTR_UNUSED,
+	const struct sieve_action_data *act_other ATTR_UNUSED)
 {
 	/* No problems yet */
-	return 1;
+	return 0;
 }
 
 /* Result printing */
