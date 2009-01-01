@@ -231,6 +231,7 @@ static int tst_test_result_operation_execute
 	bool matched;
 	struct sieve_result_iterate_context *rictx;
 	const struct sieve_action *action;
+	bool keep;
 	int cur_index = 0, index = 0;
 	int ret;
 
@@ -284,8 +285,13 @@ static int tst_test_result_operation_execute
 	cur_index = 1;
 	ret = 0;
 	while ( result && !matched &&
-		(action=sieve_result_iterate_next(rictx, NULL)) != NULL ) {
-		const char *act_name = action->name;
+		(action=sieve_result_iterate_next(rictx, &keep, NULL)) != NULL ) {
+		const char *act_name;
+		
+		if ( keep ) 
+			act_name = "keep";
+		else
+			act_name = ( action == NULL || action->name == NULL ) ? "" : action->name;
 
 		if ( index == 0 || index == cur_index ) {
 			if ( (ret=sieve_match_value(mctx, act_name, strlen(act_name))) < 0 ) {

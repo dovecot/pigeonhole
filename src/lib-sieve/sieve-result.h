@@ -81,9 +81,12 @@ void sieve_result_add_implicit_side_effect
 	const struct sieve_side_effect *seffect, void *context);
 	
 int sieve_result_add_action
-(const struct sieve_runtime_env *renv,
-	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
-	unsigned int source_line, void *context, unsigned int instance_limit);
+	(const struct sieve_runtime_env *renv, const struct sieve_action *action, 
+		struct sieve_side_effects_list *seffects, unsigned int source_line, 
+		void *context, unsigned int instance_limit);
+int sieve_result_add_keep
+	(const struct sieve_runtime_env *renv, 
+		struct sieve_side_effects_list *seffects, unsigned int source_line);
 
 /*
  * Result execution
@@ -106,7 +109,7 @@ struct sieve_result_iterate_context;
 struct sieve_result_iterate_context *sieve_result_iterate_init
 	(struct sieve_result *result);
 const struct sieve_action *sieve_result_iterate_next
-	(struct sieve_result_iterate_context *rictx, void **context);
+	(struct sieve_result_iterate_context *rictx, bool *keep, void **context);
 	
 /*
  * Side effects list

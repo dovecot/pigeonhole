@@ -19,8 +19,8 @@ test "Action" {
 		test_fail "vacation action is not present as first item in result";
 	}
 	
-	if not test_result :index 2 "store" {
-		test_fail "store action is missing in result";
+	if not test_result :index 2 "keep" {
+		test_fail "keep action is missing in result";
 	}
 
 	if not test_result_execute {

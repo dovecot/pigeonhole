@@ -32,8 +32,8 @@ test "Fileinto" {
 		test_fail "second action is not 'store'";
 	} 
 
-	if not test_result :index 3 "store" {
-		test_fail "third action is not 'store'";
+	if not test_result :index 3 "keep" {
+		test_fail "third action is not 'keep'";
 	} 
 
 	if not test_result_execute {
@@ -58,8 +58,8 @@ test "Redirect" {
 		test_fail "first action is not 'redirect'";
 	} 
 
-	if not test_result :index 2 "store" {
-		test_fail "second action is not 'store'";
+	if not test_result :index 2 "keep" {
+		test_fail "second action is not 'keep'";
 	} 
 
 	if not test_result :index 3 "redirect" {

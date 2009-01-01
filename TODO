@@ -1,5 +1,8 @@
 Current:
 
+* Implement executing an arbitrary number of scripts sequentially, acting on the 
+  same set of result actions (multiscript).
+
 Next (in order of descending priority/precedence):
 
 * Fix remaining RFC deviations:
@@ -22,8 +25,6 @@ Next (in order of descending priority/precedence):
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
 * Imapflags: merge execution of setflags, removeflags and addflags into one 
   common implementation. 
-* Implement executing an arbitrary number of scripts sequentially, acting on the 
-  same set of result actions (multiscript).
 * Implement dropping errors in the user's mailbox as a mail message.
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).

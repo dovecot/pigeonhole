@@ -118,21 +118,28 @@ int sieve_act_store_add_to_result
 /* Result verification */
 
 static int act_store_check_duplicate
-(const struct sieve_runtime_env *renv ATTR_UNUSED,
+(const struct sieve_runtime_env *renv,
 	const struct sieve_action *action1 ATTR_UNUSED, 
 	void *context1, void *context2,
 	const char *location1 ATTR_UNUSED, const char *location2 ATTR_UNUSED)
 {
 	struct act_store_context *ctx1 = (struct act_store_context *) context1;
 	struct act_store_context *ctx2 = (struct act_store_context *) context2;
+	const char *folder1, *folder2;
 	
-	if ( strcmp(ctx1->folder, ctx2->folder) == 0 ) 
+	if ( ctx1 == NULL && ctx2 == NULL )
 		return 1;
 		
-	return ( 
-		strcasecmp(ctx1->folder, "INBOX") == 0 && 
-		strcasecmp(ctx2->folder, "INBOX") == 0 
-	); 
+	folder1 = ctx1 == NULL ? 
+		SIEVE_SCRIPT_DEFAULT_MAILBOX(renv->scriptenv) : ctx1->folder;
+	folder2 = ctx2 == NULL ? 
+		SIEVE_SCRIPT_DEFAULT_MAILBOX(renv->scriptenv) : ctx2->folder;
+	
+	if ( strcmp(folder1, folder2) == 0 ) 
+		return 1;
+		
+	return 
+		( strcasecmp(folder1, "INBOX") == 0 && strcasecmp(folder2, "INBOX") == 0 ); 
 }
 
 /* Result printing */
@@ -218,7 +225,13 @@ static bool act_store_start
 	struct act_store_transaction *trans;
 	struct mail_namespace *ns = NULL;
 	struct mailbox *box = NULL;
-	pool_t pool;
+	pool_t pool = sieve_result_pool(aenv->result);
+
+	/* If context is NULL, the store action is the result of (implicit) keep */	
+	if ( ctx == NULL ) {
+		ctx = p_new(pool, struct act_store_context, 1);
+		ctx->folder = p_strdup(pool, SIEVE_SCRIPT_DEFAULT_MAILBOX(aenv->scriptenv));
+	}
 
 	/* Open the requested mailbox */
 
@@ -234,7 +247,6 @@ static bool act_store_start
 	}
 				
 	/* Create transaction context */
-	pool = sieve_result_pool(aenv->result);
 	trans = p_new(pool, struct act_store_transaction, 1);
 	trans->context = ctx;
 	trans->namespace = ns;

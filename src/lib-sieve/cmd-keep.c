@@ -102,7 +102,7 @@ static int cmd_keep_operation_execute
 	int ret = 0;	
 
 	/* Source line */
-    if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
+	if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
 		sieve_runtime_trace_error(renv, "invalid source line");
         return SIEVE_EXEC_BIN_CORRUPT;
 	}
@@ -114,12 +114,9 @@ static int cmd_keep_operation_execute
 
 	sieve_runtime_trace(renv, "KEEP action");
 	
-	/* Add store action (sieve-actions.h) to result
-	 *   ==> Default mailbox is expected to be represented in modified utf-7
-	 *       already. 
+	/* Add keep action to result. 
 	 */
-	ret = sieve_act_store_add_to_result
-		(renv, slist, SIEVE_SCRIPT_DEFAULT_MAILBOX(renv->scriptenv), source_line);
+	ret = sieve_result_add_keep(renv, slist, source_line);
 	
 	return ( ret >= 0 );
 }

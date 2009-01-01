@@ -22,14 +22,16 @@
 /*
  * Types
  */
-
+ 
 struct sieve_result_action {
 	struct sieve_result *result;
 	const struct sieve_action *action;
 	void *context;
 	void *tr_context;
 	bool success;
-	
+	bool executed;
+	bool keep;
+		
 	const char *location;
 
 	struct sieve_side_effects_list *seffects;
@@ -69,10 +71,14 @@ struct sieve_result {
 	struct sieve_error_handler *ehandler;
 		
 	struct sieve_action_exec_env action_env;
+	
+	const struct sieve_action *keep_action;
 
 	unsigned int action_count;
 	struct sieve_result_action *first_action;
 	struct sieve_result_action *last_action;
+	
+	struct sieve_result_action *last_attempted_action;
 	
 	struct hash_table *action_contexts;
 };
@@ -95,6 +101,7 @@ struct sieve_result *sieve_result_create
 
 	result->action_env.result = result;
 		
+	result->keep_action = &act_store;
 	result->action_count = 0;
 	result->first_action = NULL;
 	result->last_action = NULL;
@@ -130,7 +137,8 @@ pool_t sieve_result_pool(struct sieve_result *result)
 	return result->pool;
 }
 
-struct sieve_error_handler *sieve_result_get_error_handler(struct sieve_result *result)
+struct sieve_error_handler *sieve_result_get_error_handler
+(struct sieve_result *result)
 {
 	return result->ehandler;
 }
@@ -142,7 +150,8 @@ struct sieve_error_handler *sieve_result_get_error_handler(struct sieve_result *
 void sieve_result_extension_set_context
 (struct sieve_result *result, const struct sieve_extension *ext, void *context)
 {
-	array_idx_set(&result->ext_contexts, (unsigned int) SIEVE_EXT_ID(ext), &context);	
+	array_idx_set(&result->ext_contexts, (unsigned int) SIEVE_EXT_ID(ext), 
+		&context);	
 }
 
 const void *sieve_result_extension_get_context
@@ -274,7 +283,7 @@ static int sieve_result_side_effects_merge
 		
 		if ( seffect->merge != NULL ) {
 		
-			/* Try to find it in among the exising */
+			/* Try to find it among the exising */
 			rsef = old_seffects != NULL ? old_seffects->first_effect : NULL;
 			while ( rsef != NULL ) {
 				if ( rsef->seffect == seffect ) {
@@ -294,7 +303,7 @@ static int sieve_result_side_effects_merge
 					
 				if ( ret != 0 ) {
 					/* Add side effect */
-					sieve_side_effects_list_add(new_seffects, seffect, new_context);
+					sieve_side_effects_list_add(old_seffects, seffect, new_context);
 				}
 			}
 		}
@@ -305,15 +314,16 @@ static int sieve_result_side_effects_merge
 	return 1;
 }
 
-int sieve_result_add_action
+static int _sieve_result_add_action
 (const struct sieve_runtime_env *renv,
 	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
-	unsigned int source_line, void *context, unsigned int instance_limit)		
+	unsigned int source_line, void *context, unsigned int instance_limit, 
+	bool keep)		
 {
 	int ret = 0;
 	unsigned int instance_count = 0;
 	struct sieve_result *result = renv->result;
-	struct sieve_result_action *raction;
+	struct sieve_result_action *raction = NULL, *kaction = NULL;
 	const char *location = sieve_error_script_location
 		(renv->script, source_line);
 		
@@ -322,7 +332,30 @@ int sieve_result_add_action
 	while ( raction != NULL ) {
 		const struct sieve_action *oact = raction->action;
 		
-		if ( raction->action == action ) {
+		if ( keep && raction->keep ) {
+			if ( raction->executed ) {
+				kaction = raction;
+			
+				/* Detach existing keep action */
+				if ( result->first_action == kaction ) 
+					result->first_action = kaction->next;
+				if ( result->last_action == kaction ) 
+					result->last_action = kaction->prev;
+				if ( kaction->next != NULL ) kaction->next->prev = kaction->prev;
+				if ( kaction->prev != NULL ) kaction->prev->next = kaction->next;
+			
+				/* Merge existing side-effects with new keep action */
+				if ( raction->action == NULL ) {
+					if ( (ret=sieve_result_side_effects_merge
+						(renv, action, seffects, kaction->seffects)) <= 0 )	 
+						return ret;
+				}
+			} else {
+				return sieve_result_side_effects_merge
+					(renv, action, raction->seffects, seffects);
+			}
+			
+		} if ( raction->action == action ) {
 			instance_count++;
 
 			/* Possible duplicate */
@@ -334,8 +367,22 @@ int sieve_result_add_action
 				
 				/* Duplicate */	
 				if ( ret == 1 ) {
-					return sieve_result_side_effects_merge
-						(renv, action, raction->seffects, seffects);
+					if ( keep && !raction->keep ) {
+						/* New keep has higher precedence than existing duplicate non-keep 
+						 * action. So, take over the result action object and transform it
+						 * into a keep.
+						 */
+						if ( (ret=sieve_result_side_effects_merge
+							(renv, action, raction->seffects, seffects)) <= 0 ) 
+							return ret;
+						raction->keep = TRUE;
+						raction->context = NULL;
+						raction->location = p_strdup(result->pool, location);
+					} else {
+						/* Merge side-effects, but don't add new action */
+						return sieve_result_side_effects_merge
+							(renv, action, raction->seffects, seffects);
+					}
 				}
 			}
 		} else {
@@ -367,13 +414,21 @@ int sieve_result_add_action
 		return -1;
 	}	
 		
-	/* Create new action object */
-	raction = p_new(result->pool, struct sieve_result_action, 1);
+	if ( kaction != NULL )
+		/* Use existing keep action to define new one */
+		raction = kaction;
+	else {
+		/* Create new action object */
+		raction = p_new(result->pool, struct sieve_result_action, 1);
+	}
+	
 	raction->result = result;
 	raction->action = action;
 	raction->context = context;
 	raction->tr_context = NULL;
 	raction->success = FALSE;
+	raction->executed = FALSE;
+	raction->keep = keep;
 	raction->seffects = seffects;
 	raction->location = p_strdup(result->pool, location);
 
@@ -438,6 +493,23 @@ int sieve_result_add_action
 	return 0;
 }
 
+int sieve_result_add_action
+(const struct sieve_runtime_env *renv,
+	const struct sieve_action *action, struct sieve_side_effects_list *seffects,
+	unsigned int source_line, void *context, unsigned int instance_limit)
+{
+	return _sieve_result_add_action
+		(renv, action, seffects, source_line, context, instance_limit, FALSE);
+}
+
+int sieve_result_add_keep
+(const struct sieve_runtime_env *renv, struct sieve_side_effects_list *seffects,
+	unsigned int source_line)
+{
+	return _sieve_result_add_action
+		(renv, renv->result->keep_action, seffects, source_line, NULL, 0, TRUE);
+}
+
 /*
  * Result printing
  */
@@ -499,14 +571,19 @@ bool sieve_result_print
 	rac = result->first_action;
 	while ( rac != NULL ) {		
 		bool keep = TRUE;
-		const struct sieve_action *act = rac->action;
 		struct sieve_result_side_effect *rsef;
 		const struct sieve_side_effect *sef;
 
-		if ( act->print != NULL ) {
-			act->print(act, &penv, rac->context, &keep);
+		if ( !rac->keep ) {
+			const struct sieve_action *act = rac->action;
+
+			if ( act->print != NULL )
+				act->print(act, &penv, rac->context, &keep);
+			else
+				sieve_result_action_printf(&penv, act->name); 
 		} else {
-			sieve_result_action_printf(&penv, act->name); 
+			sieve_result_action_printf(&penv, "keep");
+			keep = FALSE; 
 		}
 	
 		/* Print side effects */
@@ -514,8 +591,7 @@ bool sieve_result_print
 		while ( rsef != NULL ) {
 			sef = rsef->seffect;
 			if ( sef->print != NULL ) 
-				sef->print
-					(sef, act, &penv, rsef->context, &keep);
+				sef->print(sef, rac->action, &penv, rsef->context, &keep);
 			rsef = rsef->next;
 		}
 			
@@ -538,53 +614,60 @@ static bool _sieve_result_implicit_keep
 {	
 	bool success = TRUE;
 	bool dummy = TRUE;
-	struct act_store_context ctx;
 	struct sieve_result_side_effect *rsef, *rsef_first = NULL;
 	void *tr_context = NULL;
+	const struct sieve_action *act_keep = result->keep_action;
 	
-	ctx.folder = result->action_env.scriptenv->default_mailbox;
-	
-	/* Also apply any implicit side effects if applicable */
+	/* If keep is a non-action, return right away */
+	if ( act_keep == NULL ) return TRUE; 
+		
+	/* Apply any implicit side effects if applicable */
 	if ( !rollback && result->action_contexts != NULL ) {
 		struct sieve_result_action_context *actctx;
 		
-		/* Check for implicit side effects to store action */
+		/* Check for implicit side effects to keep action */
 		actctx = (struct sieve_result_action_context *) 
-				hash_table_lookup(result->action_contexts, &act_store);
+				hash_table_lookup(result->action_contexts, act_keep);
 		
 		if ( actctx != NULL && actctx->seffects != NULL ) 
 			rsef_first = actctx->seffects->first_effect;
-		
 	}
 	
-	success = act_store.start(&act_store, &result->action_env, (void *) &ctx, &tr_context);
+	/* Start keep action */
+	if ( act_keep->start != NULL ) 
+		success = act_keep->start
+			(act_keep, &result->action_env, NULL, &tr_context);
 
+	/* Execute keep action */
 	if ( success ) {
 		rsef = rsef_first;
 		while ( success && rsef != NULL ) {
 			const struct sieve_side_effect *sef = rsef->seffect;
 			if ( sef->pre_execute != NULL ) 
 				success = success && sef->pre_execute
-					(sef, &act_store, &result->action_env, &rsef->context, tr_context);
+					(sef, act_keep, &result->action_env, &rsef->context, tr_context);
 			rsef = rsef->next;
 		}
 
-		success = success && act_store.execute
-			(&act_store, &result->action_env, tr_context);
+		if ( act_keep->execute != NULL )
+			success = success && act_keep->execute
+				(act_keep, &result->action_env, tr_context);
 
 		rsef = rsef_first;
 		while ( success && rsef != NULL ) {
 			const struct sieve_side_effect *sef = rsef->seffect;
 			if ( sef->post_execute != NULL ) 
 				success = success && sef->post_execute
-					(sef, &act_store, &result->action_env, rsef->context, tr_context);
+					(sef, act_keep, &result->action_env, rsef->context, tr_context);
 			rsef = rsef->next;
 		}
 	}
 	
-	if ( success ) {	
-		success = act_store.commit
-			(&act_store, &result->action_env, tr_context, &dummy);
+	/* Finish keep action */
+	if ( success ) {
+		if ( act_keep->commit != NULL ) 
+			success = act_keep->commit
+				(act_keep, &result->action_env, tr_context, &dummy);
 
 		rsef = rsef_first;
 		while ( rsef != NULL ) {
@@ -593,15 +676,17 @@ static bool _sieve_result_implicit_keep
 			
 			if ( sef->post_commit != NULL ) 
 				sef->post_commit
-					(sef, &act_store, &result->action_env, rsef->context, tr_context, 
+					(sef, act_keep, &result->action_env, rsef->context, tr_context, 
 						&keep);
 			rsef = rsef->next;
 		}
 			
 		return success; 
 	}
-		
-	act_store.rollback(&act_store, &result->action_env, tr_context, success);
+	
+	/* Failed, rollback */
+	if ( act_keep->rollback != NULL )
+		act_keep->rollback(act_keep, &result->action_env, tr_context, success);
 
 	return FALSE;
 }
@@ -623,20 +708,31 @@ int sieve_result_execute
 { 
 	bool implicit_keep = TRUE;
 	bool success = TRUE, commit_ok;
-	struct sieve_result_action *rac;
+	struct sieve_result_action *rac, *first_action;
 	struct sieve_result_action *last_attempted;
+
+	/* Prepare environment */
 
 	result->action_env.msgdata = msgdata;
 	result->action_env.scriptenv = senv;
 	result->action_env.estatus = estatus;
 	
+	/* Make notice of this attempt */
+	
+	first_action = ( result->last_attempted_action == NULL ?
+		result->first_action : result->last_attempted_action );
+	result->last_attempted_action = result->last_action;
+	
 	/* 
 	 * Transaction start 
 	 */
 	
-	rac = result->first_action;
+	rac = first_action;
 	while ( success && rac != NULL ) {
 		const struct sieve_action *act = rac->action;
+	
+		/* Skip non-action (inactive keep) */
+		if ( act == NULL ) continue;
 	
 		if ( act->start != NULL ) {
 			rac->success = act->start(act, &result->action_env, rac->context, 
@@ -654,11 +750,14 @@ int sieve_result_execute
 	 */
 	
 	last_attempted = rac;
-	rac = result->first_action;
+	rac = first_action;
 	while ( success && rac != NULL ) {
 		const struct sieve_action *act = rac->action;
 		struct sieve_result_side_effect *rsef;
 		const struct sieve_side_effect *sef;
+		
+		/* Skip non-action (inactive keep) */
+		if ( act == NULL ) continue;
 		
 		/* Execute pre-execute event of side effects */
 		rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
@@ -694,7 +793,7 @@ int sieve_result_execute
 	 */
 
 	commit_ok = success;
-	rac = result->first_action;
+	rac = first_action;
 	while ( rac != NULL && rac != last_attempted ) {
 		const struct sieve_action *act = rac->action;
 		struct sieve_result_side_effect *rsef;
@@ -702,6 +801,11 @@ int sieve_result_execute
 		
 		if ( success ) {
 			bool keep = TRUE;
+			
+			rac->executed = TRUE;
+			
+			/* Skip non-action (inactive keep) */
+			if ( act == NULL ) continue;
 		
 			if ( act->commit != NULL ) 
 				commit_ok = act->commit
@@ -720,6 +824,9 @@ int sieve_result_execute
 			
 			implicit_keep = implicit_keep && keep;
 		} else {
+			/* Skip non-action (inactive keep) */
+			if ( act == NULL ) continue;
+		
 			if ( act->rollback != NULL ) 
 				act->rollback(act, &result->action_env, rac->tr_context, rac->success);
 				
@@ -782,21 +889,24 @@ struct sieve_result_iterate_context *sieve_result_iterate_init
 }
 
 const struct sieve_action *sieve_result_iterate_next
-	(struct sieve_result_iterate_context *rictx, void **context)
+	(struct sieve_result_iterate_context *rictx, bool *keep, void **context)
 {
-	struct sieve_result_action *act;
+	struct sieve_result_action *rac;
 
 	if ( rictx == NULL )
 		return  NULL;
 
-	act = rictx->action;
-	if ( act != NULL ) {
-		rictx->action = act->next;
+	rac = rictx->action;
+	if ( rac != NULL ) {
+		rictx->action = rac->next;
+		
+		if ( keep != NULL )
+			*keep = rac->keep;
 
 		if ( context != NULL )
-			*context = act->context;
+			*context = rac->context;
 	
-		return act->action;
+		return rac->action;
 	}
 
 	return NULL;
