@@ -62,12 +62,12 @@ bool sieve_opr_side_effect_dump
 /* Forward declarations */
 
 static int act_store_check_duplicate
-	(const struct sieve_runtime_env *renv, const struct sieve_action *action1, 
-		void *context1, void *context2, 
-		const char *location1, const char *location2);
+	(const struct sieve_runtime_env *renv, 
+		const struct sieve_action_data *act, 
+		const struct sieve_action_data *act_other);
 static void act_store_print
-	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
-		void *context, bool *keep);
+	(const struct sieve_action *action, 
+		const struct sieve_result_print_env *rpenv, void *context, bool *keep);
 
 static bool act_store_start
 	(const struct sieve_action *action,
@@ -119,12 +119,13 @@ int sieve_act_store_add_to_result
 
 static int act_store_check_duplicate
 (const struct sieve_runtime_env *renv,
-	const struct sieve_action *action1 ATTR_UNUSED, 
-	void *context1, void *context2,
-	const char *location1 ATTR_UNUSED, const char *location2 ATTR_UNUSED)
+	const struct sieve_action_data *act, 
+	const struct sieve_action_data *act_other)
 {
-	struct act_store_context *ctx1 = (struct act_store_context *) context1;
-	struct act_store_context *ctx2 = (struct act_store_context *) context2;
+	struct act_store_context *ctx1 = 
+		(struct act_store_context *) act->context;
+	struct act_store_context *ctx2 = 
+		(struct act_store_context *) act_other->context;
 	const char *folder1, *folder2;
 	
 	if ( ctx1 == NULL && ctx2 == NULL )

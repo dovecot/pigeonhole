@@ -33,6 +33,17 @@ enum sieve_action_flags {
 	SIEVE_ACTFLAG_SENDS_RESPONSE = (1 << 1)
 };
 
+/*
+ *
+ */
+ 
+struct sieve_action_data {
+	const struct sieve_action *action;
+	const char *location;
+	void *context;
+	bool executed;
+};
+
 /* 
  * Action object
  */
@@ -45,12 +56,12 @@ struct sieve_action {
 	
 	int (*check_duplicate)	
 		(const struct sieve_runtime_env *renv,
-			const struct sieve_action *action, void *context1, void *context2,
-			const char *location1, const char *location2);	
+			const struct sieve_action_data *act, 
+			const struct sieve_action_data *act_other);	
 	int (*check_conflict)
-		(const struct sieve_runtime_env *renv, const struct sieve_action *action, 
-			const struct sieve_action *other_action, void *context,
-			const char *location1, const char *location2);	
+		(const struct sieve_runtime_env *renv, 
+			const struct sieve_action_data *act, 
+			const struct sieve_action_data *act_other);	
 
 	/* Result printing */
 	

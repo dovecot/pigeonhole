@@ -115,13 +115,13 @@ struct sieve_operation reject_operation = {
  */
 
 static int act_reject_check_duplicate
-	(const struct sieve_runtime_env *renv, const struct sieve_action *action1,
-		void *context1, void *context2, 
-		const char *location1, const char *location2);
+	(const struct sieve_runtime_env *renv, 
+		const struct sieve_action_data *act, 
+		const struct sieve_action_data *act_other);
 int act_reject_check_conflict
-	(const struct sieve_runtime_env *renv, const struct sieve_action *action,
-		const struct sieve_action *other_action, void *context,
-		const char *location1, const char *location2);
+	(const struct sieve_runtime_env *renv, 
+		const struct sieve_action_data *act, 
+		const struct sieve_action_data *act_other);
 static void act_reject_print
 	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		void *context, bool *keep);	
@@ -250,35 +250,33 @@ static int ext_reject_operation_execute
 
 static int act_reject_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
-	const struct sieve_action *action1 ATTR_UNUSED,
-	void *context1 ATTR_UNUSED, void *context2 ATTR_UNUSED,
-	const char *location1, const char *location2)
+	const struct sieve_action_data *act, 
+	const struct sieve_action_data *act_other)
 {
-	sieve_runtime_error(renv, location1, 
+	sieve_runtime_error(renv, act->location, 
 		"duplicate reject action not allowed "
-		"(previously triggered one was here: %s)", location2);	
+		"(previously triggered one was here: %s)", act_other->location);	
 	return -1;
 }
  
 int act_reject_check_conflict
 (const struct sieve_runtime_env *renv,
-	const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action *other_action, void *context ATTR_UNUSED,
-	const char *location1, const char *location2)
+	const struct sieve_action_data *act, 
+	const struct sieve_action_data *act_other)
 {
-	if ( (other_action->flags & SIEVE_ACTFLAG_TRIES_DELIVER) > 0 ) {
-		sieve_runtime_error(renv, location1, 
+	if ( (act_other->action->flags & SIEVE_ACTFLAG_TRIES_DELIVER) > 0 ) {
+		sieve_runtime_error(renv, act->location, 
 			"reject action conflicts with earlier triggered action: "
 			"the %s action (%s) tries to deliver the message",
-			other_action->name, location2);	
+			act_other->action->name, act_other->location);	
 		return -1;
 	}
 
-	if ( (other_action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
-		sieve_runtime_error(renv, location1, 
+	if ( (act_other->action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
+		sieve_runtime_error(renv, act->location, 
 			"reject action conflicts with earlier triggered action: "
 			"the %s action (%s) also sends a response to the sender",
-			other_action->name, location2);	
+			act_other->action->name, act_other->location);	
 		return -1;
 	}
 	
