@@ -1,6 +1,9 @@
 /* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
  */
 
+#include "lib.h"
+#include "ostream.h"
+
 #include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-actions.h"
@@ -15,7 +18,7 @@ static struct sieve_result *_testsuite_result;
 
 void testsuite_result_init(void)
 {
-	_testsuite_result = NULL;
+	_testsuite_result = sieve_result_create(testsuite_log_ehandler);
 }
 
 void testsuite_result_deinit(void)
@@ -25,13 +28,18 @@ void testsuite_result_deinit(void)
 	}
 }
 
-void testsuite_result_assign(struct sieve_result *result)
+void testsuite_result_reset(void)
 {
 	if ( _testsuite_result != NULL ) {
 		sieve_result_unref(&_testsuite_result);
 	}
 
-	_testsuite_result = result;
+	_testsuite_result = sieve_result_create(testsuite_log_ehandler);;
+}
+
+struct sieve_result *testsuite_result_get(void)
+{
+	return _testsuite_result;
 }
 
 struct sieve_result_iterate_context *testsuite_result_iterate_init(void)
@@ -73,6 +81,18 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 		(_testsuite_result, renv->msgdata, &scriptenv, &estatus);
 	
 	return ( ret > 0 );
+}
+
+void testsuite_result_print
+(const struct sieve_runtime_env *renv ATTR_UNUSED)
+{
+	struct ostream *out;
+	
+	out = o_stream_create_fd(1, 0, FALSE);	
+
+	sieve_result_print(_testsuite_result, out);
+
+	o_stream_destroy(&out);	
 }
 
 

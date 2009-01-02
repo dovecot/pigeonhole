@@ -271,7 +271,7 @@ int act_reject_check_conflict
 	if ( (act_other->action->flags & SIEVE_ACTFLAG_TRIES_DELIVER) > 0 ) {
 		if ( !act_other->executed ) {
 			sieve_runtime_error(renv, act->location, 
-			"reject action conflicts with earlier triggered action: "
+			"reject action conflicts with other action: "
 			"the %s action (%s) tries to deliver the message",
 			act_other->action->name, act_other->location);	
 			return -1;
@@ -283,7 +283,7 @@ int act_reject_check_conflict
 	if ( (act_other->action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
 		if ( !act_other->executed ) {
 			sieve_runtime_error(renv, act->location, 
-				"reject action conflicts with earlier triggered action: "
+				"reject action conflicts with other action: "
 				"the %s action (%s) also sends a response to the sender",
 				act_other->action->name, act_other->location);	
 			return -1;

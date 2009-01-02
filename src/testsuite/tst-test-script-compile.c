@@ -48,7 +48,7 @@ static int tst_test_script_compile_operation_execute
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation test_script_compile_operation = { 
-	"test_script_compile",
+	"TEST_SCRIPT_COMPILE",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_SCRIPT_COMPILE,
 	tst_test_script_compile_operation_dump, 
@@ -100,7 +100,7 @@ static bool tst_test_script_compile_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_code_dumpf(denv, "test_script_compile:");
+	sieve_code_dumpf(denv, "TEST_SCRIPT_COMPILE:");
 	sieve_code_descend(denv);
 
 	if ( !sieve_opr_string_dump(denv, address, "script") ) 

@@ -704,7 +704,7 @@ int act_vacation_check_conflict
 	if ( (act_other->action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
 		if ( !act_other->executed ) {
 			sieve_runtime_error(renv, act->location, 
-				"vacation action conflicts with earlier triggered action: "
+				"vacation action conflicts with other action: "
 				"the %s action (%s) also sends a response back to the sender",	
 				act_other->action->name, act_other->location);
 			return -1;

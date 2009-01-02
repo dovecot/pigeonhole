@@ -17,7 +17,7 @@ struct _testsuite_log_message {
 	const char *message;
 };
 
-bool _testsuite_log_stdout = TRUE;
+bool _testsuite_log_stdout = FALSE;
 
 unsigned int _testsuite_log_error_index = 0;
 

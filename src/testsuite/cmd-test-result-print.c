@@ -22,15 +22,15 @@
  *   test_result_execute
  */
 
-static bool tst_test_result_execute_generate
+static bool cmd_test_result_print_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
 
-const struct sieve_command tst_test_result_execute = { 
-	"test_result_execute", 
-	SCT_TEST, 
+const struct sieve_command cmd_test_result_print = { 
+	"test_result_print", 
+	SCT_COMMAND, 
 	0, 0, FALSE, FALSE,
 	NULL, NULL, NULL,
-	tst_test_result_execute_generate, 
+	cmd_test_result_print_generate, 
 	NULL 
 };
 
@@ -38,27 +38,27 @@ const struct sieve_command tst_test_result_execute = {
  * Operation 
  */
 
-static int tst_test_result_execute_operation_execute
+static int cmd_test_result_print_operation_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation test_result_execute_operation = { 
-	"TEST_RESULT_EXECUTE",
+const struct sieve_operation test_result_print_operation = { 
+	"TEST_RESULT_PRINT",
 	&testsuite_extension, 
-	TESTSUITE_OPERATION_TEST_RESULT_EXECUTE,
+	TESTSUITE_OPERATION_TEST_RESULT_PRINT,
 	NULL, 
-	tst_test_result_execute_operation_execute 
+	cmd_test_result_print_operation_execute 
 };
 
 /* 
  * Code generation 
  */
 
-static bool tst_test_result_execute_generate
+static bool cmd_test_result_print_generate
 (const struct sieve_codegen_env *cgenv, 
 	struct sieve_command_context *tst ATTR_UNUSED)
 {
-	sieve_operation_emit_code(cgenv->sbin, &test_result_execute_operation);
+	sieve_operation_emit_code(cgenv->sbin, &test_result_print_operation);
 
 	return TRUE;
 }
@@ -67,21 +67,12 @@ static bool tst_test_result_execute_generate
  * Intepretation
  */
 
-static int tst_test_result_execute_operation_execute
+static int cmd_test_result_print_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, 
 	sieve_size_t *address ATTR_UNUSED)
 {
-	bool result = TRUE;
-
-	/*
-	 * Perform operation
-	 */
-
-	result = testsuite_result_execute(renv);
-
-	/* Set result */
-	sieve_interpreter_set_test_result(renv->interp, result);
+	testsuite_result_print(renv);
 
 	return SIEVE_EXEC_OK;
 }

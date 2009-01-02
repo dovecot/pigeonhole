@@ -36,7 +36,8 @@ testsuite_DEPENDENCIES = $(libs)
 commands = \
 	cmd-test.c \
 	cmd-test-fail.c \
-	cmd-test-set.c
+	cmd-test-set.c \
+	cmd-test-result-print.c
 
 tests = \
 	tst-test-script-compile.c \
