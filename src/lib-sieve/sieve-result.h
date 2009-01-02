@@ -114,6 +114,8 @@ struct sieve_result_iterate_context *sieve_result_iterate_init
 const struct sieve_action *sieve_result_iterate_next
 	(struct sieve_result_iterate_context *rictx, bool *keep, void **context);
 	
+bool sieve_result_keep(struct sieve_result *result);
+
 /*
  * Side effects list
  */

@@ -71,6 +71,7 @@ struct sieve_result {
 	struct sieve_action_exec_env action_env;
 	
 	const struct sieve_action *keep_action;
+	bool keep;
 
 	unsigned int action_count;
 	struct sieve_result_action *first_action;
@@ -100,6 +101,8 @@ struct sieve_result *sieve_result_create
 	result->action_env.result = result;
 		
 	result->keep_action = &act_store;
+	result->keep = FALSE;
+	
 	result->action_count = 0;
 	result->first_action = NULL;
 	result->last_action = NULL;
@@ -740,6 +743,7 @@ int sieve_result_execute
 	first_action = ( result->last_attempted_action == NULL ?
 		result->first_action : result->last_attempted_action );
 	result->last_attempted_action = result->last_action;
+	result->keep = FALSE;
 	
 	/* 
 	 * Transaction start 
@@ -821,6 +825,7 @@ int sieve_result_execute
 			bool keep = TRUE;
 			
 			rac->data.executed = TRUE;
+			if ( rac->keep ) result->keep = TRUE;
 			
 			/* Skip non-action (inactive keep) */
 			if ( act == NULL ) continue;
@@ -862,6 +867,8 @@ int sieve_result_execute
 		
 		rac = rac->next;	
 	}
+	
+	if ( implicit_keep ) result->keep = TRUE;
 	
 	/* Return value indicates whether the caller should attempt an implicit keep 
 	 * of its own. So, if the above transaction fails, but the implicit keep below
@@ -928,6 +935,11 @@ const struct sieve_action *sieve_result_iterate_next
 	}
 
 	return NULL;
+}
+
+bool sieve_result_keep(struct sieve_result *result)
+{
+	return result->keep;
 }
 
 /*
