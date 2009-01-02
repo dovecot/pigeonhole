@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2009 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "mempool.h"
 #include "buffer.h"

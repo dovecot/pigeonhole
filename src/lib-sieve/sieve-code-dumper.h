@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2009 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_CODE_DUMPER_H
 #define __SIEVE_CODE_DUMPER_H
 

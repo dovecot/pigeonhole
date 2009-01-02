@@ -1,7 +1,5 @@
-/* Copyright (c) 2002-2008 Dovecot Sieve authors, see the included COPYING file
+/* Copyright (c) 2002-2009 Dovecot Sieve authors, see the included COPYING file
  */
-
-#include <stdio.h>
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
