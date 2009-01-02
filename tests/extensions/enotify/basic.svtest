@@ -5,12 +5,11 @@ test "Execute" {
 	/* Test to catch runtime segfaults */
 	if valid_notify_method 
 		"mailto:stephan@example.com" {
-		stop;
-	}
 
-	/* Test to catch runtime segfaults */
-	notify 
-		:message "This is probably very important"
-		:importance "1" 
-		"mailto:stephan@example.com%2cstephan@rename-it.nl?subject=Important%20message%20received";
+		/* Test to catch runtime segfaults */
+		notify 
+			:message "This is probably very important"
+			:importance "1" 
+			"mailto:stephan@example.com%2cstephan@rename-it.nl?subject=Important%20message%20received";
+	}
 }

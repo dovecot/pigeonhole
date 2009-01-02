@@ -8,6 +8,7 @@
 #include "sieve-result.h"
 
 #include "testsuite-common.h"
+#include "testsuite-log.h"
 #include "testsuite-result.h"
 
 static struct sieve_result *_testsuite_result;
@@ -53,7 +54,7 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 		return FALSE;
 	}
 
-	testsuite_script_clear_messages();
+	testsuite_log_clear_messages();
 
 	/* Compose script execution environment */
 	memset(&scriptenv, 0, sizeof(scriptenv));

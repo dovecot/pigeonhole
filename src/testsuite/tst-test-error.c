@@ -16,6 +16,7 @@
 #include "sieve-match.h"
 
 #include "testsuite-common.h"
+#include "testsuite-log.h"
 
 /*
  * Test_error command
@@ -263,7 +264,7 @@ static int tst_test_error_operation_execute
 	
 	sieve_runtime_trace(renv, "TEST_ERROR test (index: %d)", index);
 
-	testsuite_script_get_error_init();
+	testsuite_log_get_error_init();
 
 	/* Initialize match */
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list);
@@ -274,7 +275,7 @@ static int tst_test_error_operation_execute
 	cur_index = 1;
 	ret = 0;
 	while ( result && !matched &&
-		(error=testsuite_script_get_error_next(FALSE)) != NULL ) {
+		(error=testsuite_log_get_error_next(FALSE)) != NULL ) {
 		
 		if ( index == 0 || index == cur_index ) {
 			if ( (ret=sieve_match_value(mctx, error, strlen(error))) < 0 ) {
