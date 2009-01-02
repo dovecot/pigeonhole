@@ -84,13 +84,15 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 }
 
 void testsuite_result_print
-(const struct sieve_runtime_env *renv ATTR_UNUSED)
+(const struct sieve_runtime_env *renv)
 {
 	struct ostream *out;
 	
 	out = o_stream_create_fd(1, 0, FALSE);	
 
-	sieve_result_print(_testsuite_result, out);
+	o_stream_send_str(out, "\n--");
+	sieve_result_print(_testsuite_result, renv->scriptenv, out);
+	o_stream_send_str(out, "--\n\n");
 
 	o_stream_destroy(&out);	
 }

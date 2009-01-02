@@ -383,9 +383,14 @@ static int _sieve_result_add_action
 						if ( (ret=sieve_result_side_effects_merge
 							(renv, action, raction->seffects, seffects)) < 0 ) 
 							return ret;
+							
 						raction->keep = TRUE;
 						raction->data.context = NULL;
 						raction->data.location = p_strdup(result->pool, act_data.location);
+						
+						/* Note that existing execution status is retained, making sure that
+						 * keep is not executed multiple times.
+						 */
 						
 						return 1;
 					} else {
@@ -566,7 +571,8 @@ void sieve_result_seffect_printf
 }
 
 bool sieve_result_print
-(struct sieve_result *result, struct ostream *stream)
+(struct sieve_result *result, const struct sieve_script_env *senv, 
+	struct ostream *stream)
 {
 	struct sieve_result_print_env penv;
 	bool implicit_keep = TRUE;
@@ -574,6 +580,7 @@ bool sieve_result_print
 	
 	penv.result = result;
 	penv.stream = stream;
+	penv.scriptenv = senv;
 	
 	sieve_result_printf(&penv, "\nPerformed actions:\n\n");
 	rac = result->first_action;
@@ -581,17 +588,20 @@ bool sieve_result_print
 		bool keep = TRUE;
 		struct sieve_result_side_effect *rsef;
 		const struct sieve_side_effect *sef;
+		const struct sieve_action *act = rac->data.action;
 
-		if ( !rac->keep ) {
-			const struct sieve_action *act = rac->data.action;
-
+		if ( act != NULL ) {
 			if ( act->print != NULL )
 				act->print(act, &penv, rac->data.context, &keep);
 			else
 				sieve_result_action_printf(&penv, act->name); 
 		} else {
-			sieve_result_action_printf(&penv, "keep");
-			keep = FALSE; 
+			if ( rac->keep ) {
+				sieve_result_action_printf(&penv, "keep");
+				keep = FALSE;
+			} else {
+				sieve_result_action_printf(&penv, "[NULL]");
+			}
 		}
 	
 		/* Print side effects */

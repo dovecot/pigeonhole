@@ -150,9 +150,13 @@ static void act_store_print
 	const struct sieve_result_print_env *rpenv, void *context, bool *keep)	
 {
 	struct act_store_context *ctx = (struct act_store_context *) context;
-	
+	const char *folder;
+
+	folder = ( ctx == NULL ? 
+		SIEVE_SCRIPT_DEFAULT_MAILBOX(rpenv->scriptenv) : ctx->folder );	
+
 	sieve_result_action_printf(rpenv, "store message in folder: %s", 
-		str_sanitize(ctx->folder, 128));
+		str_sanitize(folder, 128));
 	
 	*keep = FALSE;
 }

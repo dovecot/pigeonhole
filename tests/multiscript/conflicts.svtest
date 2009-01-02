@@ -49,3 +49,46 @@ test "Graceful Conflicts" {
 		test_fail "reject action not discarded";
 	}
 }
+
+test "Duplicates" {
+	if not allof (
+		test_script_compile "fileinto-inbox.sieve",
+		test_script_run ){
+		test_fail "failed to compile and run first script";
+	}
+
+	if not test_result_execute {
+		test_fail "result execute failed after first script";
+	}
+
+	if not allof ( 
+		test_script_compile "fileinto-inbox.sieve",
+		test_script_run :append_result ) {
+		test_fail "failed to compile and run second script";
+	}
+
+	if not test_result_execute {
+		test_fail "result execute failed after second script";
+	}
+
+	if not allof ( 
+		test_script_compile "keep.sieve",
+		test_script_run :append_result ) {
+		test_fail "failed to compile and run third script";
+	}
+
+	if not test_result_execute {
+		test_fail "result execute failed after third script";
+	}
+
+	test_result_print;
+
+	if not test_result :index 1 "keep" {
+		test_fail "first action is not 'keep'";
+	}
+
+	if test_result :index 2 "store" {
+		test_fail "fileinto action not discarded";
+	}
+}
+

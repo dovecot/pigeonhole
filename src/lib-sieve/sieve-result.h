@@ -46,6 +46,7 @@ const void *sieve_result_extension_get_context
 
 struct sieve_result_print_env {
 	struct sieve_result *result;
+	const struct sieve_script_env *scriptenv;
 	struct ostream *stream;
 };
 
@@ -56,7 +57,9 @@ void sieve_result_action_printf
 void sieve_result_seffect_printf
 	(const struct sieve_result_print_env *penv, const char *fmt, ...);
 
-bool sieve_result_print(struct sieve_result *result, struct ostream *stream);
+bool sieve_result_print
+	(struct sieve_result *result, const struct sieve_script_env *senv, 
+		struct ostream *stream);
 
 /* 
  * Error handling 

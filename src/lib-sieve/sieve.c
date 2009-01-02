@@ -261,7 +261,7 @@ int sieve_test
 	ret = sieve_interpreter_run(interp, msgdata, senv, &sres, estatus);
 	
 	if ( ret > 0 ) 
-		ret = sieve_result_print(sres, stream);
+		ret = sieve_result_print(sres, senv, stream);
 	
 	sieve_interpreter_free(&interp);
 	sieve_result_unref(&sres);
