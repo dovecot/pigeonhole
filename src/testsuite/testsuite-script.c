@@ -67,7 +67,6 @@ bool testsuite_script_compile(const char *script_path)
 bool testsuite_script_run(const struct sieve_runtime_env *renv)
 {
 	struct sieve_script_env scriptenv;
-	struct sieve_exec_status estatus;
 	struct sieve_result *result;
 	struct sieve_interpreter *interp;
 	int ret;
@@ -96,13 +95,13 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 
 	/* Execute the script */
 	interp=sieve_interpreter_create
-		(_testsuite_compiled_script, testsuite_log_ehandler, NULL);
+		(_testsuite_compiled_script, testsuite_log_ehandler);
 	
 	if ( interp == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 		
 	ret = sieve_interpreter_run
-		(interp, renv->msgdata, &scriptenv, &result, &estatus);
+		(interp, renv->msgdata, &scriptenv, result);
 
 	sieve_interpreter_free(&interp);
 

@@ -174,13 +174,14 @@ static int lda_sieve_run
 	scriptenv.smtp_close = lda_sieve_smtp_close;
 	scriptenv.duplicate_mark = duplicate_mark;
 	scriptenv.duplicate_check = duplicate_check;
+	scriptenv.exec_status = &estatus;
 
 	/* Execute the script */	
 	
 	if ( debug )
 		sieve_sys_info("executing compiled script %s", script_path);
 
-	ret = sieve_execute(sbin, &msgdata, &scriptenv, &estatus, ehandler, NULL);
+	ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler);
 
 	/* Record status */
 
@@ -218,7 +219,7 @@ static int lda_sieve_run
 
 		/* Execute again */
 	
-		ret = sieve_execute(sbin, &msgdata, &scriptenv, &estatus, ehandler, NULL);
+		ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler);
 
 		/* Record status */
 

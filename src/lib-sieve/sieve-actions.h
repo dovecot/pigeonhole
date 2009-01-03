@@ -19,7 +19,7 @@ struct sieve_action_exec_env {
 	struct sieve_result *result;
 	const struct sieve_message_data *msgdata;
 	const struct sieve_script_env *scriptenv;
-	struct sieve_exec_status *estatus;
+	struct sieve_exec_status *exec_status;
 };
 
 const char *sieve_action_get_location(const struct sieve_action_exec_env *aenv);

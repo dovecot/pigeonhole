@@ -243,28 +243,37 @@ void sieve_dump(struct sieve_binary *sbin, struct ostream *stream)
 
 int sieve_test
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_exec_status *estatus, 
-	struct ostream *stream, struct sieve_error_handler *ehandler, 
-	struct ostream *trace_stream) 	
+	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
+	struct ostream *stream) 	
 {
-	struct sieve_result *sres = sieve_result_create(ehandler);
-	struct sieve_interpreter *interp = 
-		sieve_interpreter_create(sbin, ehandler, trace_stream);			
+	struct sieve_result *result;
+	struct sieve_interpreter *interp; 
 	int ret = 0;
 		
-	if ( interp == NULL )
+	/* Create interpreter */
+	if ( (interp=sieve_interpreter_create(sbin, ehandler)) == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Reset execution status */
-    memset(estatus, 0, sizeof(*estatus));
-					
-	ret = sieve_interpreter_run(interp, msgdata, senv, &sres, estatus);
+	if ( senv->exec_status != NULL )
+		memset(senv->exec_status, 0, sizeof(*senv->exec_status));
 	
-	if ( ret > 0 ) 
-		ret = sieve_result_print(sres, senv, stream);
-	
+	/* Create result object */	
+	result = sieve_result_create(ehandler);	
+				
+	/* Run interpreter */				
+	ret = sieve_interpreter_run(interp, msgdata, senv, result);
+
+	/* Free interpreter */
 	sieve_interpreter_free(&interp);
-	sieve_result_unref(&sres);
+		
+	/* Print result if successful */
+	if ( ret > 0 ) 
+		ret = sieve_result_print(result, senv, stream, NULL);
+	
+	/* Cleanup */
+	sieve_result_unref(&result);
+	
 	return ret;
 }
 
@@ -274,22 +283,47 @@ int sieve_test
 
 int sieve_execute
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_exec_status *estatus,
-	struct sieve_error_handler *ehandler, struct ostream *trace_stream) 	
+	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler) 	
 {
-	struct sieve_result *sres = NULL;
-	struct sieve_interpreter *interp = 
-		sieve_interpreter_create(sbin, ehandler, trace_stream);			
+	struct sieve_result *result;
+	struct sieve_interpreter *interp;
 	int ret = 0;
 
-	if ( interp == NULL )
+	/* Create the interpreter */
+	if ( (interp=sieve_interpreter_create(sbin, ehandler)) == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Reset execution status */
-    memset(estatus, 0, sizeof(*estatus));
+	if ( senv->exec_status != NULL )
+		memset(senv->exec_status, 0, sizeof(*senv->exec_status));
+	
+	/* Create result object */	
+	result = sieve_result_create(ehandler);	
 							
-	ret = sieve_interpreter_run(interp, msgdata, senv, &sres, estatus);
-				
+	/* Run the interpreter */
+	ret = sieve_interpreter_run(interp, msgdata, senv, result);
+	
+	/* Free the interpreter */
 	sieve_interpreter_free(&interp);
+	
+	/* Evaluate status and execute the result:
+	 *   Strange situations, e.g. currupt binaries, must be handled by the caller. 
+	 *   In that case no implicit keep is attempted, because the situation may be 
+	 *   resolved.
+	 */
+	if ( ret >= 0 ) {
+		if ( ret > 0 ) 
+			/* Execute result */
+			ret = sieve_result_execute(result, msgdata, senv, NULL);
+		else {
+			/* Perform implicit keep if script failed with a normal runtime error */
+			if ( !sieve_result_implicit_keep(result, msgdata, senv) )
+				ret = SIEVE_EXEC_KEEP_FAILED;
+		}
+	}
+	
+	/* Cleanup */
+	sieve_result_unref(&result);
+
 	return ret;
 }

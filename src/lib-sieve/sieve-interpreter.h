@@ -32,9 +32,8 @@ struct sieve_runtime_env {
 
 	struct sieve_binary *sbin;
 	struct sieve_result *result;
-
-	struct sieve_exec_status *estatus;
-
+	
+	struct sieve_exec_status *exec_status;
 	struct ostream *trace_stream;
 };
 
@@ -43,8 +42,7 @@ struct sieve_runtime_env {
  */
 
 struct sieve_interpreter *sieve_interpreter_create
-	(struct sieve_binary *sbin, struct sieve_error_handler *ehandler,
-		struct ostream *trace_stream);
+	(struct sieve_binary *sbin, struct sieve_error_handler *ehandler);
 void sieve_interpreter_free(struct sieve_interpreter **interp);
 
 /*
@@ -162,11 +160,9 @@ int sieve_interpreter_continue
 int sieve_interpreter_start
 	(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
 		const struct sieve_script_env *senv, struct sieve_message_context *msgctx, 
-		struct sieve_result *result, struct sieve_exec_status *estatus,
-		bool *interrupted);
+		struct sieve_result *result, bool *interrupted);
 int sieve_interpreter_run
 	(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, struct sieve_result **result,
-		struct sieve_exec_status *estatus);
+		const struct sieve_script_env *senv, struct sieve_result *result);
 
 #endif /* __SIEVE_INTERPRETER_H */

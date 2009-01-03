@@ -62,6 +62,12 @@ struct sieve_script_env {
 		(const void *id, size_t id_size, const char *user);
 	void (*duplicate_mark)
 		(const void *id, size_t id_size, const char *user, time_t time);
+	
+	/* Execution status record */	
+	struct sieve_exec_status *exec_status;
+		
+	/* Trace stream */
+	struct ostream *trace_stream;
 };
 
 #define SIEVE_SCRIPT_DEFAULT_MAILBOX(senv) \

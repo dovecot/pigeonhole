@@ -2,8 +2,8 @@
 .SH NAME
 sieve-test \- Sieve script tester for the Dovecot secure IMAP server
 .SH SYNOPSIS
-sieve-test [\fB-r\fR \fIrecipient-address\fR] [\fB-s\fR \fIenvelope-sender\fR] [\fB-m\fR \fImailbox\fR] [\fB-d\fR \fIdump-file\fR] [\fB-c\fR] [\fB-t\fR]
-[\fB-x\fR "\fIextension extension ...\fR"] \fIscript-file\fR \fImail-file\fR
+sieve-test [\fB-r\fR \fIrecipient-address\fR] [\fB-f\fR \fIenvelope-sender\fR] [\fB-m\fR \fImailbox\fR] [\fB-d\fR \fIdump-file\fR] [\fB-c\fR] [\fB-t\fR] [\fB-x\fR "\fIextension extension ...\fR"] [\fB-s\fR \fIscript-file\fR]  
+\fIscript-file\fR \fImail-file\fR
 .SH DESCRIPTION
 .PP
 The \fBsieve-test\fP command is part of the Sieve implementation for the Dovecot secure 
@@ -27,7 +27,7 @@ the e-mail message to filter.
 The envelope recipient address. This is what Sieve's envelope test will compare to when the "to"
 envelope part is requested.
 .TP
-\fB-s\fP \fIenvelope-sender\fP
+\fB-f\fP \fIenvelope-sender\fP
 The envelope sender. This is what Sieve's envelope test will compare to when the "from" envelope
 part is requested.
 .TP
@@ -51,6 +51,11 @@ Enable simple trace debugging; prints all encountered byte code instructions on 
 \fB-x\fP "\fIextension extension ...\fP"
 Set the available extensions. The parameter is a space-separated list of the active extensions. 
 Unknown extensions are ignored, but a warning is produced.
+.TP
+\fB-s\fP \fIscript-file\fP (not implemented)
+Specify additional scripts to be executed before the main script. Multiple \fB-s\fP arguments are
+allowed and the specified scripts are executed sequentially in the order specified at the command
+line.
 .SH AUTHOR
 .PP
 The Sieve implementation for Dovecot was written by Stephan Bosch <stephan@rename-it.nl>.

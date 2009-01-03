@@ -71,7 +71,6 @@ struct sieve_result {
 	struct sieve_action_exec_env action_env;
 	
 	const struct sieve_action *keep_action;
-	bool keep;
 
 	unsigned int action_count;
 	struct sieve_result_action *first_action;
@@ -101,7 +100,6 @@ struct sieve_result *sieve_result_create
 	result->action_env.result = result;
 		
 	result->keep_action = &act_store;
-	result->keep = FALSE;
 	
 	result->action_count = 0;
 	result->first_action = NULL;
@@ -179,7 +177,8 @@ void sieve_result_error
 	va_list args;
 	
 	va_start(args, fmt);	
-	sieve_verror(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, args); 
+	sieve_verror(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, 
+		args); 
 	va_end(args);
 }
 
@@ -189,7 +188,8 @@ void sieve_result_warning
 	va_list args;
 	
 	va_start(args, fmt);	
-	sieve_vwarning(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, args); 
+	sieve_vwarning(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, 
+		args); 
 	va_end(args);
 }
 
@@ -199,7 +199,8 @@ void sieve_result_log
 	va_list args;
 	
 	va_start(args, fmt);	
-	sieve_vinfo(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, args); 
+	sieve_vinfo(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, 
+		args); 
 	va_end(args);
 }
 
@@ -575,11 +576,15 @@ void sieve_result_seffect_printf
 
 bool sieve_result_print
 (struct sieve_result *result, const struct sieve_script_env *senv, 
-	struct ostream *stream)
+	struct ostream *stream, bool *keep)
 {
 	struct sieve_result_print_env penv;
 	bool implicit_keep = TRUE;
 	struct sieve_result_action *rac;
+	
+	if ( keep != NULL ) *keep = FALSE;
+	
+	/* Prepare environment */
 	
 	penv.result = result;
 	penv.stream = stream;
@@ -588,14 +593,16 @@ bool sieve_result_print
 	sieve_result_printf(&penv, "\nPerformed actions:\n\n");
 	rac = result->first_action;
 	while ( rac != NULL ) {		
-		bool keep = TRUE;
+		bool impl_keep = TRUE;
 		struct sieve_result_side_effect *rsef;
 		const struct sieve_side_effect *sef;
 		const struct sieve_action *act = rac->data.action;
 
+		if ( rac->keep && keep != NULL ) *keep = TRUE;
+
 		if ( act != NULL ) {
 			if ( act->print != NULL )
-				act->print(act, &penv, rac->data.context, &keep);
+				act->print(act, &penv, rac->data.context, &impl_keep);
 			else
 				sieve_result_action_printf(&penv, act->name); 
 		} else {
@@ -612,13 +619,16 @@ bool sieve_result_print
 		while ( rsef != NULL ) {
 			sef = rsef->seffect;
 			if ( sef->print != NULL ) 
-				sef->print(sef, rac->data.action, &penv, rsef->context, &keep);
+				sef->print(sef, rac->data.action, &penv, rsef->context, &impl_keep);
 			rsef = rsef->next;
 		}
 			
-		implicit_keep = implicit_keep && keep;		
+		implicit_keep = implicit_keep && impl_keep;		
+		
 		rac = rac->next;	
 	}
+	
+	if ( implicit_keep && keep != NULL ) *keep = TRUE;
 	
 	sieve_result_printf
 		(&penv, "\nImplicit keep: %s\n", implicit_keep ? "yes" : "no");
@@ -714,37 +724,59 @@ static bool _sieve_result_implicit_keep
 
 bool sieve_result_implicit_keep
 (struct sieve_result *result, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_exec_status *estatus)
+	const struct sieve_script_env *senv)
 {
+	struct sieve_exec_status dummy_status;
+
 	result->action_env.msgdata = msgdata;
 	result->action_env.scriptenv = senv;
-	result->action_env.estatus = estatus;
+	result->action_env.exec_status = 
+		( senv->exec_status == NULL ? &dummy_status : senv->exec_status );
 
 	return _sieve_result_implicit_keep(result, TRUE);	
 }
 
+void sieve_result_mark_executed(struct sieve_result *result)
+{
+	struct sieve_result_action *first_action, *rac;
+	
+	first_action = ( result->last_attempted_action == NULL ?
+		result->first_action : result->last_attempted_action );
+	result->last_attempted_action = result->last_action;
+
+	rac = first_action;
+	while ( rac != NULL ) {
+ 		rac->data.executed = TRUE;
+ 		
+		rac = rac->next;	
+	}
+}
+
 int sieve_result_execute
 (struct sieve_result *result, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_exec_status *estatus)
-{ 
+	const struct sieve_script_env *senv, bool *keep)
+{
+	struct sieve_exec_status dummy_status;
 	bool implicit_keep = TRUE;
 	bool success = TRUE, commit_ok;
 	struct sieve_result_action *rac, *first_action;
 	struct sieve_result_action *last_attempted;
 
+	if ( keep != NULL ) *keep = FALSE;
+
 	/* Prepare environment */
 
 	result->action_env.msgdata = msgdata;
 	result->action_env.scriptenv = senv;
-	result->action_env.estatus = estatus;
+	result->action_env.exec_status = 
+		( senv->exec_status == NULL ? &dummy_status : senv->exec_status );
 	
 	/* Make notice of this attempt */
 	
 	first_action = ( result->last_attempted_action == NULL ?
 		result->first_action : result->last_attempted_action );
 	result->last_attempted_action = result->last_action;
-	result->keep = FALSE;
-	
+		
 	/* 
 	 * Transaction start 
 	 */
@@ -822,17 +854,17 @@ int sieve_result_execute
 		const struct sieve_side_effect *sef;
 		
 		if ( success ) {
-			bool keep = TRUE;
+			bool impl_keep = TRUE;
 			
 			rac->data.executed = TRUE;
-			if ( rac->keep ) result->keep = TRUE;
+			if ( rac->keep && keep != NULL ) *keep = TRUE;
 			
 			/* Skip non-action (inactive keep) */
 			if ( act == NULL ) continue;
 		
 			if ( act->commit != NULL ) 
 				commit_ok = act->commit
-					(act, &result->action_env, rac->tr_context, &keep) && commit_ok;
+					(act, &result->action_env, rac->tr_context, &impl_keep) && commit_ok;
 	
 			/* Execute post_commit event of side effects */
 			rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
@@ -841,11 +873,11 @@ int sieve_result_execute
 				if ( sef->post_commit != NULL ) 
 					sef->post_commit
 						(sef, act, &result->action_env, rsef->context, rac->tr_context, 
-							&keep);
+							&impl_keep);
 				rsef = rsef->next;
 			}
 			
-			implicit_keep = implicit_keep && keep;
+			implicit_keep = implicit_keep && impl_keep;
 		} else {
 			/* Skip non-action (inactive keep) */
 			if ( act == NULL ) continue;
@@ -868,7 +900,7 @@ int sieve_result_execute
 		rac = rac->next;	
 	}
 	
-	if ( implicit_keep ) result->keep = TRUE;
+	if ( implicit_keep && keep != NULL ) *keep = TRUE;
 	
 	/* Return value indicates whether the caller should attempt an implicit keep 
 	 * of its own. So, if the above transaction fails, but the implicit keep below
@@ -935,11 +967,6 @@ const struct sieve_action *sieve_result_iterate_next
 	}
 
 	return NULL;
-}
-
-bool sieve_result_keep(struct sieve_result *result)
-{
-	return result->keep;
 }
 
 /*

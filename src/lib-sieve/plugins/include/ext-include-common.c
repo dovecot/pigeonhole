@@ -496,8 +496,7 @@ bool ext_include_execute_include
 		if ( result > 0 ) {
 			/* Create interpreter for top-level included script (first sub-interpreter) 
 			 */
-			subinterp = sieve_interpreter_create
-				(renv->sbin, ehandler, renv->trace_stream);
+			subinterp = sieve_interpreter_create(renv->sbin, ehandler);
 
 			if ( subinterp != NULL ) {			
 				curctx = ext_include_interpreter_context_init_child
@@ -506,7 +505,7 @@ bool ext_include_execute_include
 				/* Activate and start the top-level included script */
 				result = ( sieve_interpreter_start
 					(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx, renv->result, 
-						renv->estatus, &interrupted) == 1 );
+						&interrupted) == 1 );
 			} else
 				result = SIEVE_EXEC_BIN_CORRUPT;
 		}
@@ -555,8 +554,7 @@ bool ext_include_execute_include
 						
 						if ( result > 0 ) {
 							/* Create sub-interpreter */
-							subinterp = sieve_interpreter_create
-								(renv->sbin, ehandler, renv->trace_stream);			
+							subinterp = sieve_interpreter_create(renv->sbin, ehandler);			
 
 							if ( subinterp != NULL ) {
 								curctx = ext_include_interpreter_context_init_child
@@ -567,7 +565,7 @@ bool ext_include_execute_include
 								curctx->returned = FALSE;
 								result = ( sieve_interpreter_start
 									(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx,
-										renv->result, renv->estatus, &interrupted) == 1 );		 	
+										renv->result, &interrupted) == 1 );		 	
 							} else
 								result = SIEVE_EXEC_BIN_CORRUPT;
 						}

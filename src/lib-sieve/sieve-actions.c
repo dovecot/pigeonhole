@@ -176,7 +176,7 @@ static void act_store_get_storage_error
 static struct mailbox *act_store_mailbox_open
 (const struct sieve_action_exec_env *aenv, struct mail_namespace *ns, const char *folder)
 {
-	struct mail_storage **storage = &(aenv->estatus->last_storage);
+	struct mail_storage **storage = &(aenv->exec_status->last_storage);
 	enum mailbox_open_flags open_flags = 
 		MAILBOX_OPEN_FAST | MAILBOX_OPEN_KEEP_RECENT | 
 		MAILBOX_OPEN_SAVEONLY | MAILBOX_OPEN_POST_SESSION;
@@ -288,12 +288,12 @@ static bool act_store_execute
 	/* Mark attempt to store in default mailbox */
 	if ( strcmp(trans->context->folder, 
 		SIEVE_SCRIPT_DEFAULT_MAILBOX(aenv->scriptenv)) == 0 ) 
-		aenv->estatus->tried_default_save = TRUE;
+		aenv->exec_status->tried_default_save = TRUE;
 
 	/* Mark attempt to use storage. Can only get here when all previous actions
 	 * succeeded. 
 	 */
-	aenv->estatus->last_storage = trans->namespace->storage;
+	aenv->exec_status->last_storage = trans->namespace->storage;
 	
 	/* Start mail transaction */
 	trans->mail_trans = mailbox_transaction_begin
@@ -388,7 +388,7 @@ static bool act_store_commit
 	/* Mark attempt to use storage. Can only get here when all previous actions
 	 * succeeded. 
 	 */
-	aenv->estatus->last_storage = trans->namespace->storage;
+	aenv->exec_status->last_storage = trans->namespace->storage;
 
 	/* Free mail object for stored message */
 	if ( trans->dest_mail != NULL ) 
@@ -399,7 +399,7 @@ static bool act_store_commit
 
 	/* Note the fact that the message was stored at least once */
 	if ( status )
-		aenv->estatus->message_saved = TRUE;
+		aenv->exec_status->message_saved = TRUE;
 	
 	/* Log our status */
 	act_store_log_status(trans, aenv, FALSE, status);

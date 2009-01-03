@@ -66,45 +66,6 @@ static void print_help(void)
 	);
 }
 
-static int testsuite_run
-(struct sieve_binary *sbin, const struct sieve_script_env *scriptenv,
-	bool trace)
-{
-	struct sieve_exec_status estatus;
-	struct sieve_error_handler *ehandler = sieve_stderr_ehandler_create(0);
-	struct sieve_result *sres = sieve_result_create(ehandler);	
-	struct sieve_interpreter *interp;
-	int ret = 0;
-
-	if ( trace ) {
-		struct ostream *tstream = o_stream_create_fd(1, 0, FALSE);
-		
-		interp = sieve_interpreter_create(sbin, ehandler, tstream);
-		
-		if ( interp != NULL ) 
-		    ret = sieve_interpreter_run
-				(interp, &testsuite_msgdata, scriptenv, &sres, &estatus);
-	
-		o_stream_destroy(&tstream);
-	} else {
-		interp=sieve_interpreter_create(sbin, ehandler, NULL);
-
-		if ( interp != NULL ) 
-		    ret = sieve_interpreter_run
-				(interp, &testsuite_msgdata, scriptenv, &sres, &estatus);
-	}
-
-	if ( interp != NULL )
-		sieve_interpreter_free(&interp);
-	else
-		ret = SIEVE_EXEC_BIN_CORRUPT;
-
-	sieve_result_unref(&sres);
-	sieve_error_handler_unref(&ehandler);
-
-	return ret;	
-}
-
 int main(int argc, char **argv) 
 {
 	const char *scriptfile, *dumpfile; 
@@ -113,6 +74,7 @@ int main(int argc, char **argv)
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
 	struct sieve_script_env scriptenv;
+	struct sieve_error_handler *ehandler;
 	bool trace = FALSE;
 
 	/* Parse arguments */
@@ -177,9 +139,11 @@ int main(int argc, char **argv)
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	scriptenv.default_mailbox = "INBOX";
 	scriptenv.username = user;
+	scriptenv.trace_stream = ( trace ? o_stream_create_fd(1, 0, FALSE) : NULL );
 
 	/* Run the test */
-	ret = testsuite_run(sbin, &scriptenv, trace);
+	ehandler = sieve_stderr_ehandler_create(0);
+	ret = sieve_execute(sbin, &testsuite_msgdata, &scriptenv, ehandler);
 
 	switch ( ret ) {
 	case SIEVE_EXEC_OK:
@@ -196,6 +160,10 @@ int main(int argc, char **argv)
 	}
 
 	sieve_close(&sbin);
+	sieve_error_handler_unref(&ehandler);
+
+	if ( scriptenv.trace_stream != NULL )
+		o_stream_unref(&scriptenv.trace_stream);
 
 	/* De-initialize message environment */
 	testsuite_message_deinit();

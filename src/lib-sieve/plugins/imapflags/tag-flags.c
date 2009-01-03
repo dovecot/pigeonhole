@@ -217,31 +217,31 @@ static struct seff_flags_context *seff_flags_get_implicit_context
 	ctx = p_new(pool, struct seff_flags_context, 1);
 	p_array_init(&ctx->keywords, pool, 2);
 	
-	t_push();
+	T_BEGIN {
 		
-	/* Unpack */
-	ext_imapflags_get_implicit_flags_init(&flit, result);
-	while ( (flag=ext_imapflags_iter_get_flag(&flit)) != NULL ) {		
-		if (flag != NULL && *flag != '\\') {
-			/* keyword */
-			const char *keyword = p_strdup(pool, flag);
-			array_append(&ctx->keywords, &keyword, 1);
-		} else {
-			/* system flag */
-			if (flag == NULL || strcasecmp(flag, "\\flagged") == 0)
-				ctx->flags |= MAIL_FLAGGED;
-			else if (strcasecmp(flag, "\\answered") == 0)
-				ctx->flags |= MAIL_ANSWERED;
-			else if (strcasecmp(flag, "\\deleted") == 0)
-				ctx->flags |= MAIL_DELETED;
-			else if (strcasecmp(flag, "\\seen") == 0)
-				ctx->flags |= MAIL_SEEN;
-			else if (strcasecmp(flag, "\\draft") == 0)
-				ctx->flags |= MAIL_DRAFT;
+		/* Unpack */
+		ext_imapflags_get_implicit_flags_init(&flit, result);
+		while ( (flag=ext_imapflags_iter_get_flag(&flit)) != NULL ) {		
+			if (flag != NULL && *flag != '\\') {
+				/* keyword */
+				const char *keyword = p_strdup(pool, flag);
+				array_append(&ctx->keywords, &keyword, 1);
+			} else {
+				/* system flag */
+				if (flag == NULL || strcasecmp(flag, "\\flagged") == 0)
+					ctx->flags |= MAIL_FLAGGED;
+				else if (strcasecmp(flag, "\\answered") == 0)
+					ctx->flags |= MAIL_ANSWERED;
+				else if (strcasecmp(flag, "\\deleted") == 0)
+					ctx->flags |= MAIL_DELETED;
+				else if (strcasecmp(flag, "\\seen") == 0)
+					ctx->flags |= MAIL_SEEN;
+				else if (strcasecmp(flag, "\\draft") == 0)
+					ctx->flags |= MAIL_DRAFT;
+			}
 		}
-	}
 
-	t_pop();
+	} T_END;
 	
 	return ctx;
 }

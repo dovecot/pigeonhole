@@ -59,7 +59,7 @@ void sieve_result_seffect_printf
 
 bool sieve_result_print
 	(struct sieve_result *result, const struct sieve_script_env *senv, 
-		struct ostream *stream);
+		struct ostream *stream, bool *keep);
 
 /* 
  * Error handling 
@@ -97,11 +97,13 @@ int sieve_result_add_keep
  
 bool sieve_result_implicit_keep
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, struct sieve_exec_status *estatus);
+		const struct sieve_script_env *senv);
+
+void sieve_result_mark_executed(struct sieve_result *result);
 
 int sieve_result_execute
 	(struct sieve_result *result, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, struct sieve_exec_status *estatus);
+		const struct sieve_script_env *senv, bool *keep);
 
 /*
  * Result evaluation
@@ -114,8 +116,6 @@ struct sieve_result_iterate_context *sieve_result_iterate_init
 const struct sieve_action *sieve_result_iterate_next
 	(struct sieve_result_iterate_context *rictx, bool *keep, void **context);
 	
-bool sieve_result_keep(struct sieve_result *result);
-
 /*
  * Side effects list
  */

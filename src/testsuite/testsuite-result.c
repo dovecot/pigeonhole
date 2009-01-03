@@ -53,7 +53,6 @@ struct sieve_result_iterate_context *testsuite_result_iterate_init(void)
 bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 {
 	struct sieve_script_env scriptenv;
-	struct sieve_exec_status estatus;
 	int ret;
 
 	if ( _testsuite_result == NULL ) {
@@ -78,7 +77,7 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 	
 	/* Execute the result */	
 	ret=sieve_result_execute
-		(_testsuite_result, renv->msgdata, &scriptenv, &estatus);
+		(_testsuite_result, renv->msgdata, &scriptenv, NULL);
 	
 	return ( ret > 0 );
 }
@@ -91,7 +90,7 @@ void testsuite_result_print
 	out = o_stream_create_fd(1, 0, FALSE);	
 
 	o_stream_send_str(out, "\n--");
-	sieve_result_print(_testsuite_result, renv->scriptenv, out);
+	sieve_result_print(_testsuite_result, renv->scriptenv, out, NULL);
 	o_stream_send_str(out, "--\n\n");
 
 	o_stream_destroy(&out);	

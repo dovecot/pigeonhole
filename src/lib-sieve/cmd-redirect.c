@@ -355,7 +355,7 @@ static bool act_redirect_commit
 			str_sanitize(ctx->to_address, 128));	
 
 		/* Indicate that message was successfully forwarded */
-		aenv->estatus->message_forwarded = TRUE;
+		aenv->exec_status->message_forwarded = TRUE;
 
 		/* Cancel implicit keep */
 		*keep = FALSE;

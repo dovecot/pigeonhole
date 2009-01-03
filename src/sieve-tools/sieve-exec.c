@@ -70,7 +70,7 @@ static void duplicate_mark
 static void print_help(void)
 {
 	printf(
-"Usage: sieve-exec [-r <recipient address>][-s <envelope sender>]\n"
+"Usage: sieve-exec [-r <recipient address>][-f <envelope sender>]\n"
 "                  [-m <mailbox>][-d <dump filename>][-l <mail location>]\n"
 "                  <scriptfile> <mailfile>\n"
 	);
@@ -105,11 +105,11 @@ int main(int argc, char **argv)
 			if (i == argc)
 				i_fatal("Missing -r argument");
 			recipient = argv[i];
-		} else if (strcmp(argv[i], "-s") == 0) {
+		} else if (strcmp(argv[i], "-f") == 0) {
 			/* envelope sender */
 			i++;
 			if (i == argc)
-				i_fatal("Missing -s argument");
+				i_fatal("Missing -f argument");
 			sender = argv[i];
 		} else if (strcmp(argv[i], "-m") == 0) {
 			/* default mailbox (keep box) */
@@ -209,12 +209,13 @@ int main(int argc, char **argv)
 	scriptenv.smtp_close = sieve_smtp_close;
 	scriptenv.duplicate_mark = duplicate_mark;
 	scriptenv.duplicate_check = duplicate_check;
+	scriptenv.exec_status = &estatus;
 	
 	ehandler = sieve_stderr_ehandler_create(0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	/* Run */
-	switch ( sieve_execute(sbin, &msgdata, &scriptenv, &estatus, ehandler, NULL) ) {
+	switch ( sieve_execute(sbin, &msgdata, &scriptenv, ehandler) ) {
 	case SIEVE_EXEC_OK:
 		i_info("final result: success");
 		break;
