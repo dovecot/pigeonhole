@@ -160,6 +160,41 @@ struct sieve_binary *sieve_compile
 }
 
 /*
+ * Sieve runtime
+ */
+
+static int sieve_run
+(struct sieve_binary *sbin, struct sieve_result **result, 
+	const struct sieve_message_data *msgdata, const struct sieve_script_env *senv, 
+	struct sieve_error_handler *ehandler)
+{
+	struct sieve_interpreter *interp;
+	int ret = 0;
+
+	/* Create the interpreter */
+	if ( (interp=sieve_interpreter_create(sbin, ehandler)) == NULL )
+		return SIEVE_EXEC_BIN_CORRUPT;
+
+	/* Reset execution status */
+	if ( senv->exec_status != NULL )
+		memset(senv->exec_status, 0, sizeof(*senv->exec_status));
+	
+	/* Create result object */
+	if ( *result == NULL )
+		*result = sieve_result_create(ehandler);
+	else
+		sieve_result_ref(*result);
+							
+	/* Run the interpreter */
+	ret = sieve_interpreter_run(interp, msgdata, senv, *result);
+	
+	/* Free the interpreter */
+	sieve_interpreter_free(&interp);
+
+	return ret;
+}
+
+/*
  * Reading/writing sieve binaries
  */
 
@@ -246,27 +281,12 @@ int sieve_test
 	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
 	struct ostream *stream) 	
 {
-	struct sieve_result *result;
-	struct sieve_interpreter *interp; 
-	int ret = 0;
-		
-	/* Create interpreter */
-	if ( (interp=sieve_interpreter_create(sbin, ehandler)) == NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
-
-	/* Reset execution status */
-	if ( senv->exec_status != NULL )
-		memset(senv->exec_status, 0, sizeof(*senv->exec_status));
+	struct sieve_result *result = NULL;
+	int ret;
 	
-	/* Create result object */	
-	result = sieve_result_create(ehandler);	
+	/* Run the script */
+	ret = sieve_run(sbin, &result, msgdata, senv, ehandler);
 				
-	/* Run interpreter */				
-	ret = sieve_interpreter_run(interp, msgdata, senv, result);
-
-	/* Free interpreter */
-	sieve_interpreter_free(&interp);
-		
 	/* Print result if successful */
 	if ( ret > 0 ) 
 		ret = sieve_result_print(result, senv, stream, NULL);
@@ -283,29 +303,14 @@ int sieve_test
 
 int sieve_execute
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler) 	
+	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler)
 {
-	struct sieve_result *result;
-	struct sieve_interpreter *interp;
-	int ret = 0;
-
-	/* Create the interpreter */
-	if ( (interp=sieve_interpreter_create(sbin, ehandler)) == NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
-
-	/* Reset execution status */
-	if ( senv->exec_status != NULL )
-		memset(senv->exec_status, 0, sizeof(*senv->exec_status));
+	struct sieve_result *result = NULL;
+	int ret;
 	
-	/* Create result object */	
-	result = sieve_result_create(ehandler);	
-							
-	/* Run the interpreter */
-	ret = sieve_interpreter_run(interp, msgdata, senv, result);
-	
-	/* Free the interpreter */
-	sieve_interpreter_free(&interp);
-	
+	/* Run the script */
+	ret = sieve_run(sbin, &result, msgdata, senv, ehandler);
+		
 	/* Evaluate status and execute the result:
 	 *   Strange situations, e.g. currupt binaries, must be handled by the caller. 
 	 *   In that case no implicit keep is attempted, because the situation may be 
@@ -327,3 +332,86 @@ int sieve_execute
 
 	return ret;
 }
+
+/*
+ * Multiscript support
+ */
+ 
+struct sieve_multiscript {
+	struct sieve_result *result;
+	const struct sieve_message_data *msgdata;
+	const struct sieve_script_env *scriptenv;
+	struct sieve_error_handler *ehandler;
+	int status;
+};
+ 
+struct sieve_multiscript *sieve_multiscript_start
+(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
+	struct sieve_error_handler *ehandler)
+{
+	pool_t pool;
+	struct sieve_result *result;
+	struct sieve_multiscript *mscript;
+	
+	result = sieve_result_create(ehandler);
+	pool = sieve_result_pool(result);
+	
+	mscript = p_new(pool, struct sieve_multiscript, 1);
+	mscript->result = result;
+	mscript->msgdata = msgdata;
+	mscript->scriptenv = senv;
+	mscript->ehandler = ehandler;
+	mscript->status = SIEVE_EXEC_OK;
+	
+	return mscript;
+}
+
+int sieve_multiscript_test
+(struct sieve_multiscript *mscript, struct sieve_binary *sbin, 
+	struct ostream *stream)
+{	
+	/* Run the script */
+	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata, 
+		mscript->scriptenv, mscript->ehandler);
+				
+	/* Print result if successful */
+	if ( mscript->status > 0 ) 
+		mscript->status = sieve_result_print
+			(mscript->result, mscript->scriptenv, stream, NULL);
+	
+	return mscript->status;
+}
+
+int sieve_multiscript_execute
+(struct sieve_multiscript *mscript, struct sieve_binary *sbin)
+{
+	if ( mscript->status <= 0 )
+		return mscript->status;
+
+	/* Run the script */
+	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata, 
+		mscript->scriptenv, mscript->ehandler);
+		
+	if ( mscript->status >= 0 ) {
+		if ( mscript->status > 0 )
+			mscript->status = sieve_result_execute
+				(mscript->result, mscript->msgdata, mscript->scriptenv, NULL);
+		else {
+			if ( !sieve_result_implicit_keep
+				(mscript->result, mscript->msgdata, mscript->scriptenv) )
+				mscript->status = SIEVE_EXEC_KEEP_FAILED;
+		}
+	}
+
+	return mscript->status;
+}
+
+void sieve_multiscript_finish(struct sieve_multiscript **mscript)
+{
+	struct sieve_result *result = (*mscript)->result;
+	 
+	/* Cleanup */
+	sieve_result_unref(&result);
+	*mscript = NULL;
+}	
+

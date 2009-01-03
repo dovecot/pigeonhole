@@ -112,5 +112,23 @@ int sieve_test
 int sieve_execute
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
 		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler);
+		
+/*
+ * Multiscript support
+ */
+ 
+struct sieve_multiscript;
+ 
+struct sieve_multiscript *sieve_multiscript_start
+	(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
+		struct sieve_error_handler *ehandler);
+		
+int sieve_multiscript_test
+	(struct sieve_multiscript *mscript, struct sieve_binary *sbin, 
+		struct ostream *stream);
+int sieve_multiscript_execute
+	(struct sieve_multiscript *mscript, struct sieve_binary *sbin);
+	
+void sieve_multiscript_finish(struct sieve_multiscript **mscript);
 
 #endif
