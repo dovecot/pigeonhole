@@ -123,12 +123,12 @@ struct sieve_multiscript *sieve_multiscript_start
 	(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
 		struct sieve_error_handler *ehandler);
 		
-int sieve_multiscript_test
+bool sieve_multiscript_test
 	(struct sieve_multiscript *mscript, struct sieve_binary *sbin, 
 		struct ostream *stream);
-int sieve_multiscript_execute
+bool sieve_multiscript_execute
 	(struct sieve_multiscript *mscript, struct sieve_binary *sbin);
 	
-void sieve_multiscript_finish(struct sieve_multiscript **mscript);
+int sieve_multiscript_finish(struct sieve_multiscript **mscript);
 
 #endif

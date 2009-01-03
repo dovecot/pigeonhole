@@ -271,16 +271,16 @@ int act_reject_check_conflict
 	if ( (act_other->action->flags & SIEVE_ACTFLAG_TRIES_DELIVER) > 0 ) {
 		if ( !act_other->executed ) {
 			sieve_runtime_error(renv, act->location, 
-			"reject action conflicts with other action: "
-			"the %s action (%s) tries to deliver the message",
-			act_other->action->name, act_other->location);	
+				"reject action conflicts with other action: "
+				"the %s action (%s) tries to deliver the message",
+				act_other->action->name, act_other->location);	
 			return -1;
 		}
-		
-		return 1;
 	}
 
 	if ( (act_other->action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
+		struct act_reject_context *rj_ctx;
+
 		if ( !act_other->executed ) {
 			sieve_runtime_error(renv, act->location, 
 				"reject action conflicts with other action: "
@@ -288,10 +288,11 @@ int act_reject_check_conflict
 				act_other->action->name, act_other->location);	
 			return -1;
 		}
-		
-		return 1;
+
+		rj_ctx = (struct act_reject_context *) act->context;
+		rj_ctx->reason = NULL;
 	}
-	
+
 	return 0;
 }
  
@@ -299,10 +300,14 @@ static void act_reject_print
 (const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_result_print_env *rpenv, void *context, bool *keep)	
 {
-	struct act_reject_context *ctx = (struct act_reject_context *) context;
+	struct act_reject_context *rj_ctx = (struct act_reject_context *) context;
 	
-	sieve_result_action_printf(rpenv, "reject message with reason: %s", 
-		str_sanitize(ctx->reason, 128));
+	if ( rj_ctx->reason != NULL ) {
+		sieve_result_action_printf(rpenv, "reject message with reason: %s", 
+			str_sanitize(rj_ctx->reason, 128));
+	} else {
+		sieve_result_action_printf(rpenv, "reject message without sending a response (discard)"); 		
+	}
 	
 	*keep = FALSE;
 }
@@ -420,8 +425,15 @@ static bool act_reject_commit
 	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
-	struct act_reject_context *ctx = (struct act_reject_context *) tr_context;
+	struct act_reject_context *rj_ctx = (struct act_reject_context *) tr_context;
 	
+	if ( rj_ctx->reason == NULL ) {
+		sieve_result_log(aenv, "discarded reject (would cause second response to sender)");
+    
+		*keep = FALSE;
+		return TRUE;
+	}
+
 	if ( msgdata->return_path == NULL || *(msgdata->return_path) == '\0' ) {
 		sieve_result_log(aenv, "discarded reject to <>");
     
@@ -429,7 +441,7 @@ static bool act_reject_commit
 		return TRUE;
 	}
 		
-	if ( act_reject_send(aenv, ctx) ) {
+	if ( act_reject_send(aenv, rj_ctx) ) {
 		sieve_result_log(aenv, "rejected message from <%s>",
 			str_sanitize(msgdata->return_path, 80));	
 

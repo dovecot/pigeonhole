@@ -343,6 +343,7 @@ struct sieve_multiscript {
 	const struct sieve_script_env *scriptenv;
 	struct sieve_error_handler *ehandler;
 	int status;
+	bool active;
 };
  
 struct sieve_multiscript *sieve_multiscript_start
@@ -362,56 +363,82 @@ struct sieve_multiscript *sieve_multiscript_start
 	mscript->scriptenv = senv;
 	mscript->ehandler = ehandler;
 	mscript->status = SIEVE_EXEC_OK;
+	mscript->active = TRUE;
 	
 	return mscript;
 }
 
-int sieve_multiscript_test
+bool sieve_multiscript_test
 (struct sieve_multiscript *mscript, struct sieve_binary *sbin, 
 	struct ostream *stream)
-{	
+{		
+	if ( !mscript->active ) return FALSE;
+
 	/* Run the script */
 	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata, 
 		mscript->scriptenv, mscript->ehandler);
 				
 	/* Print result if successful */
-	if ( mscript->status > 0 ) 
+	if ( mscript->status > 0 ) {
+		bool keep = FALSE;
+
 		mscript->status = sieve_result_print
-			(mscript->result, mscript->scriptenv, stream, NULL);
+			(mscript->result, mscript->scriptenv, stream, &keep);
+			
+		mscript->active = ( mscript->active && keep );
+	}
 	
-	return mscript->status;
+	if ( mscript->status <= 0 ) {
+		mscript->active = FALSE;
+		return FALSE;
+	}
+	
+	sieve_result_mark_executed(mscript->result);
+	
+	return mscript->active;
 }
 
-int sieve_multiscript_execute
+bool sieve_multiscript_execute
 (struct sieve_multiscript *mscript, struct sieve_binary *sbin)
 {
-	if ( mscript->status <= 0 )
-		return mscript->status;
+	if ( !mscript->active ) return FALSE;
 
 	/* Run the script */
 	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata, 
 		mscript->scriptenv, mscript->ehandler);
 		
 	if ( mscript->status >= 0 ) {
+		bool keep = FALSE;
+		
 		if ( mscript->status > 0 )
 			mscript->status = sieve_result_execute
-				(mscript->result, mscript->msgdata, mscript->scriptenv, NULL);
+				(mscript->result, mscript->msgdata, mscript->scriptenv, &keep);
 		else {
 			if ( !sieve_result_implicit_keep
 				(mscript->result, mscript->msgdata, mscript->scriptenv) )
 				mscript->status = SIEVE_EXEC_KEEP_FAILED;
 		}
+		
+		mscript->active = ( mscript->active && keep );
 	}
 
-	return mscript->status;
+	if ( mscript->status <= 0 ) {
+		mscript->active = FALSE;
+		return FALSE;
+	}
+	
+	return mscript->active;
 }
 
-void sieve_multiscript_finish(struct sieve_multiscript **mscript)
+int sieve_multiscript_finish(struct sieve_multiscript **mscript)
 {
 	struct sieve_result *result = (*mscript)->result;
-	 
+	int ret = (*mscript)->status;
+	
 	/* Cleanup */
 	sieve_result_unref(&result);
 	*mscript = NULL;
+	
+	return ret;
 }	
 

@@ -702,7 +702,7 @@ int act_vacation_check_conflict
 	const struct sieve_action_data *act_other)
 {
 	if ( (act_other->action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
-		if ( !act_other->executed ) {
+		if ( !act_other->executed && !act->executed) {
 			sieve_runtime_error(renv, act->location, 
 				"vacation action conflicts with other action: "
 				"the %s action (%s) also sends a response back to the sender",	

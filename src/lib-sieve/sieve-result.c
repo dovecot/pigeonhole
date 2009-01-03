@@ -410,7 +410,7 @@ static int _sieve_result_add_action
 				(ret=action->check_conflict(renv, &act_data, &raction->data)) != 0 ) 
 				return ret;
 			
-			if ( oact->check_conflict != NULL &&
+			if ( !raction->data.executed && oact->check_conflict != NULL &&
 				(ret=oact->check_conflict(renv, &raction->data, &act_data)) != 0 )
 				return ret;
 		}
@@ -437,13 +437,13 @@ static int _sieve_result_add_action
 	else {
 		/* Create new action object */
 		raction = p_new(result->pool, struct sieve_result_action, 1);
+		raction->data.executed = FALSE;
 	}
 	
 	raction->result = result;
 	raction->data.context =	context;
 	raction->data.action = action;
 	raction->data.location = p_strdup(result->pool, act_data.location);
-	raction->data.executed = FALSE;
 	raction->tr_context = NULL;
 	raction->success = FALSE;
 	raction->keep = keep;
@@ -580,7 +580,10 @@ bool sieve_result_print
 {
 	struct sieve_result_print_env penv;
 	bool implicit_keep = TRUE;
-	struct sieve_result_action *rac;
+	struct sieve_result_action *rac, *first_action;
+	
+	first_action = ( result->last_attempted_action == NULL ?
+		result->first_action : result->last_attempted_action->next );
 	
 	if ( keep != NULL ) *keep = FALSE;
 	
@@ -591,41 +594,46 @@ bool sieve_result_print
 	penv.scriptenv = senv;
 	
 	sieve_result_printf(&penv, "\nPerformed actions:\n\n");
-	rac = result->first_action;
-	while ( rac != NULL ) {		
-		bool impl_keep = TRUE;
-		struct sieve_result_side_effect *rsef;
-		const struct sieve_side_effect *sef;
-		const struct sieve_action *act = rac->data.action;
-
-		if ( rac->keep && keep != NULL ) *keep = TRUE;
-
-		if ( act != NULL ) {
-			if ( act->print != NULL )
-				act->print(act, &penv, rac->data.context, &impl_keep);
-			else
-				sieve_result_action_printf(&penv, act->name); 
-		} else {
-			if ( rac->keep ) {
-				sieve_result_action_printf(&penv, "keep");
-				keep = FALSE;
-			} else {
-				sieve_result_action_printf(&penv, "[NULL]");
-			}
-		}
 	
-		/* Print side effects */
-		rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
-		while ( rsef != NULL ) {
-			sef = rsef->seffect;
-			if ( sef->print != NULL ) 
-				sef->print(sef, rac->data.action, &penv, rsef->context, &impl_keep);
-			rsef = rsef->next;
-		}
+	if ( first_action == NULL ) {
+		sieve_result_printf(&penv, "  (none)\n");
+	} else {		
+		rac = first_action;
+		while ( rac != NULL ) {		
+			bool impl_keep = TRUE;
+			struct sieve_result_side_effect *rsef;
+			const struct sieve_side_effect *sef;
+			const struct sieve_action *act = rac->data.action;
+
+			if ( rac->keep && keep != NULL ) *keep = TRUE;
+
+			if ( act != NULL ) {
+				if ( act->print != NULL )
+					act->print(act, &penv, rac->data.context, &impl_keep);
+				else
+					sieve_result_action_printf(&penv, act->name); 
+			} else {
+				if ( rac->keep ) {
+					sieve_result_action_printf(&penv, "keep");
+					keep = FALSE;
+				} else {
+					sieve_result_action_printf(&penv, "[NULL]");
+				}
+			}
+	
+			/* Print side effects */
+			rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
+			while ( rsef != NULL ) {
+				sef = rsef->seffect;
+				if ( sef->print != NULL ) 
+					sef->print(sef, rac->data.action, &penv, rsef->context, &impl_keep);
+				rsef = rsef->next;
+			}
 			
-		implicit_keep = implicit_keep && impl_keep;		
+			implicit_keep = implicit_keep && impl_keep;		
 		
-		rac = rac->next;	
+			rac = rac->next;	
+		}
 	}
 	
 	if ( implicit_keep && keep != NULL ) *keep = TRUE;
@@ -741,7 +749,7 @@ void sieve_result_mark_executed(struct sieve_result *result)
 	struct sieve_result_action *first_action, *rac;
 	
 	first_action = ( result->last_attempted_action == NULL ?
-		result->first_action : result->last_attempted_action );
+		result->first_action : result->last_attempted_action->next );
 	result->last_attempted_action = result->last_action;
 
 	rac = first_action;
@@ -774,7 +782,7 @@ int sieve_result_execute
 	/* Make notice of this attempt */
 	
 	first_action = ( result->last_attempted_action == NULL ?
-		result->first_action : result->last_attempted_action );
+		result->first_action : result->last_attempted_action->next );
 	result->last_attempted_action = result->last_action;
 		
 	/* 
@@ -785,8 +793,11 @@ int sieve_result_execute
 	while ( success && rac != NULL ) {
 		const struct sieve_action *act = rac->data.action;
 	
-		/* Skip non-action (inactive keep) */
-		if ( act == NULL ) continue;
+		/* Skip non-actions (inactive keep) and executed ones */
+		if ( act == NULL || rac->data.executed ) {
+			rac = rac->next;	
+			continue;
+		}
 	
 		if ( act->start != NULL ) {
 			rac->success = act->start(act, &result->action_env, rac->data.context, 
@@ -810,9 +821,12 @@ int sieve_result_execute
 		struct sieve_result_side_effect *rsef;
 		const struct sieve_side_effect *sef;
 		
-		/* Skip non-action (inactive keep) */
-		if ( act == NULL ) continue;
-		
+		/* Skip non-actions (inactive keep) and executed ones */
+		if ( act == NULL || rac->data.executed ) {
+			rac = rac->next;	
+			continue;
+		}
+				
 		/* Execute pre-execute event of side effects */
 		rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
 		while ( success && rsef != NULL ) {
@@ -856,12 +870,22 @@ int sieve_result_execute
 		if ( success ) {
 			bool impl_keep = TRUE;
 			
-			rac->data.executed = TRUE;
 			if ( rac->keep && keep != NULL ) *keep = TRUE;
+
+			/* Skip executed actions */
+			if ( rac->data.executed ) {
+				rac = rac->next;	
+				continue;
+			}
 			
-			/* Skip non-action (inactive keep) */
-			if ( act == NULL ) continue;
-		
+			rac->data.executed = TRUE;
+			
+			/* Skip non-actions (inactive keep) */
+			if ( act == NULL ) {
+				rac = rac->next;	
+				continue;
+			}
+			
 			if ( act->commit != NULL ) 
 				commit_ok = act->commit
 					(act, &result->action_env, rac->tr_context, &impl_keep) && commit_ok;
@@ -879,8 +903,11 @@ int sieve_result_execute
 			
 			implicit_keep = implicit_keep && impl_keep;
 		} else {
-			/* Skip non-action (inactive keep) */
-			if ( act == NULL ) continue;
+			/* Skip non-actions (inactive keep) and executed ones */
+			if ( act == NULL || rac->data.executed ) {
+				rac = rac->next;	
+				continue;
+			}
 		
 			if ( act->rollback != NULL ) 
 				act->rollback(act, &result->action_env, rac->tr_context, rac->success);

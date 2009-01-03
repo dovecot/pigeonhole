@@ -207,7 +207,56 @@ int main(int argc, char **argv)
 			(void) unlink(sieve_binary_path(main_sbin));		
 		}
 	} else {
-	
+		struct sieve_binary *sbin;
+		const char *const *sfiles;
+		unsigned int i, count;
+		struct sieve_multiscript *mscript = sieve_multiscript_start
+			(&msgdata, &scriptenv, ehandler);
+		int result = 1; 
+		
+		sfiles = array_get(&scriptfiles, &count); 
+		for ( i = 0; i < count && result > 0; i++ ) {
+			o_stream_send_str(teststream, 
+				t_strdup_printf("\n## Executing script: %s\n", sfiles[i]));
+		
+			/* Compile sieve script */
+			if ( force_compile ) {
+				sbin = sieve_tool_script_compile(sfiles[i]);
+				(void) sieve_save(sbin, NULL);
+			} else {
+				sbin = sieve_tool_script_open(sfiles[i]);
+			}
+			
+			if ( sbin == NULL ) {
+				result = -1;
+				break;
+			}
+
+			/* Dump script */
+			sieve_tool_dump_binary_to(sbin, dumpfile);
+			
+			/* Test script */
+			result = ( sieve_multiscript_test(mscript, sbin, teststream) ? 1 : 0 );
+			
+			/* Close script */
+			sieve_close(&sbin);
+		}
+		
+		if ( result > 0 )	{
+			o_stream_send_str(teststream, 
+				t_strdup_printf("\n## Executing script: %s\n", scriptfile));
+				
+			sbin = main_sbin;
+			(void)sieve_multiscript_test(mscript, main_sbin, teststream);
+			ret = sieve_multiscript_finish(&mscript);
+		} else {
+			ret = SIEVE_EXEC_FAILURE;
+		}
+		
+		if ( ret == SIEVE_EXEC_BIN_CORRUPT ) {
+			i_info("Corrupt binary deleted.");
+			(void) unlink(sieve_binary_path(sbin));		
+		}
 	}
 
 	o_stream_destroy(&teststream);
