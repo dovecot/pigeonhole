@@ -125,9 +125,10 @@ struct sieve_multiscript *sieve_multiscript_start
 		
 bool sieve_multiscript_test
 	(struct sieve_multiscript *mscript, struct sieve_binary *sbin, 
-		struct ostream *stream);
+		bool final, struct ostream *stream);
 bool sieve_multiscript_execute
-	(struct sieve_multiscript *mscript, struct sieve_binary *sbin);
+	(struct sieve_multiscript *mscript, struct sieve_binary *sbin,
+		bool final);
 	
 int sieve_multiscript_finish(struct sieve_multiscript **mscript);
 

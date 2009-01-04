@@ -51,6 +51,9 @@ struct sieve_action_data {
 struct sieve_action {
 	const char *name;
 	unsigned int flags;
+	
+	bool (*equals)
+		(const struct sieve_script_env *senv, const void *ctx1, const void *ctx2);
 
 	/* Result verification */
 	

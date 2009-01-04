@@ -154,6 +154,7 @@ static bool act_notify_commit
 const struct sieve_action act_notify = {
 	"notify",
 	0,
+	NULL,
 	act_notify_check_duplicate, 
 	NULL,
 	act_notify_print,

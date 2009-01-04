@@ -190,6 +190,7 @@ static bool act_vacation_commit
 const struct sieve_action act_vacation = {
 	"vacation",
 	SIEVE_ACTFLAG_SENDS_RESPONSE,
+	NULL,
 	act_vacation_check_duplicate, 
 	act_vacation_check_conflict,
 	act_vacation_print,

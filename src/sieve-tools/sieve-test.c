@@ -236,7 +236,8 @@ int main(int argc, char **argv)
 			sieve_tool_dump_binary_to(sbin, dumpfile);
 			
 			/* Test script */
-			result = ( sieve_multiscript_test(mscript, sbin, teststream) ? 1 : 0 );
+			result = ( sieve_multiscript_test(mscript, sbin, FALSE, teststream) ? 
+				1 : 0 );
 			
 			/* Close script */
 			sieve_close(&sbin);
@@ -247,7 +248,7 @@ int main(int argc, char **argv)
 				t_strdup_printf("\n## Executing script: %s\n", scriptfile));
 				
 			sbin = main_sbin;
-			(void)sieve_multiscript_test(mscript, main_sbin, teststream);
+			(void)sieve_multiscript_test(mscript, main_sbin, TRUE, teststream);
 			ret = sieve_multiscript_finish(&mscript);
 		} else {
 			ret = SIEVE_EXEC_FAILURE;

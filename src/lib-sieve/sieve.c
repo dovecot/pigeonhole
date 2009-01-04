@@ -11,6 +11,7 @@
 #include "sieve-script.h"
 #include "sieve-ast.h"
 #include "sieve-binary.h"
+#include "sieve-actions.h"
 #include "sieve-result.h"
 
 #include "sieve-parser.h"
@@ -357,6 +358,8 @@ struct sieve_multiscript *sieve_multiscript_start
 	result = sieve_result_create(ehandler);
 	pool = sieve_result_pool(result);
 	
+	sieve_result_set_keep_action(result, NULL);
+	
 	mscript = p_new(pool, struct sieve_multiscript, 1);
 	mscript->result = result;
 	mscript->msgdata = msgdata;
@@ -370,9 +373,12 @@ struct sieve_multiscript *sieve_multiscript_start
 
 bool sieve_multiscript_test
 (struct sieve_multiscript *mscript, struct sieve_binary *sbin, 
-	struct ostream *stream)
+	bool final, struct ostream *stream)
 {		
 	if ( !mscript->active ) return FALSE;
+	
+	if ( final )
+		sieve_result_set_keep_action(mscript->result, &act_store);
 
 	/* Run the script */
 	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata, 
@@ -399,9 +405,13 @@ bool sieve_multiscript_test
 }
 
 bool sieve_multiscript_execute
-(struct sieve_multiscript *mscript, struct sieve_binary *sbin)
+(struct sieve_multiscript *mscript, struct sieve_binary *sbin,
+	bool final)
 {
 	if ( !mscript->active ) return FALSE;
+	
+	if ( final )
+		sieve_result_set_keep_action(mscript->result, &act_store);
 
 	/* Run the script */
 	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata, 

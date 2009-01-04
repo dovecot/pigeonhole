@@ -74,6 +74,8 @@ const struct sieve_operation cmd_redirect_operation = {
  * Redirect action 
  */
 
+static bool act_redirect_equals
+	(const struct sieve_script_env *senv, const void *ctx1, const void *ctx2);
 static int act_redirect_check_duplicate
 	(const struct sieve_runtime_env *renv,
 		const struct sieve_action_data *act, 
@@ -88,6 +90,7 @@ static bool act_redirect_commit
 const struct sieve_action act_redirect = {
 	"redirect",
 	SIEVE_ACTFLAG_TRIES_DELIVER,
+	act_redirect_equals,
 	act_redirect_check_duplicate, 
 	NULL,
 	act_redirect_print,
@@ -237,22 +240,27 @@ static int cmd_redirect_operation_execute
 /*
  * Action implementation
  */
+
+static bool act_redirect_equals
+(const struct sieve_script_env *senv ATTR_UNUSED, 
+	const void *ctx1, const void *ctx2)
+{
+	struct act_redirect_context *rd_ctx1 = 
+		(struct act_redirect_context *) ctx1;
+	struct act_redirect_context *rd_ctx2 = 
+		(struct act_redirect_context *) ctx2;
+
+	/* Address is already normalized, strcmp suffices to assess duplicates */
+	return ( strcmp(rd_ctx1->to_address, rd_ctx2->to_address) == 0 );
+}
  
 static int act_redirect_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
 	const struct sieve_action_data *act, 
 	const struct sieve_action_data *act_other)
 {
-	struct act_redirect_context *ctx1 = 
-		(struct act_redirect_context *) act->context;
-	struct act_redirect_context *ctx2 = 
-		(struct act_redirect_context *) act_other->context;
-	
-	/* Address is already normalized, strcmp suffices to assess duplicates */
-	if ( strcmp(ctx1->to_address, ctx2->to_address) == 0 ) 
-		return 1;
-		
-	return 0;
+	return ( act_redirect_equals
+		(renv->scriptenv, act->context, act_other->context) ? 1 : 0 );
 }
 
 static void act_redirect_print

@@ -61,6 +61,9 @@ bool sieve_opr_side_effect_dump
  
 /* Forward declarations */
 
+static bool act_store_equals
+	(const struct sieve_script_env *senv, const void *ctx1, const void *ctx2);
+	
 static int act_store_check_duplicate
 	(const struct sieve_runtime_env *renv, 
 		const struct sieve_action_data *act, 
@@ -87,6 +90,7 @@ static void act_store_rollback
 const struct sieve_action act_store = {
 	"store",
 	SIEVE_ACTFLAG_TRIES_DELIVER,
+	act_store_equals,
 	act_store_check_duplicate, 
 	NULL, 
 	act_store_print,
@@ -115,6 +119,31 @@ int sieve_act_store_add_to_result
 		source_line, (void *) act, 0);
 }
 
+/* Equality */
+
+static bool act_store_equals
+(const struct sieve_script_env *senv, const void *ctx1, const void *ctx2)
+{
+	struct act_store_context *st_ctx1 = (struct act_store_context *) ctx1;
+	struct act_store_context *st_ctx2 = (struct act_store_context *) ctx2;
+	const char *folder1, *folder2;
+	
+	if ( st_ctx1 == NULL && st_ctx2 == NULL )
+		return TRUE;
+		
+	folder1 = ( st_ctx1 == NULL ? 
+		SIEVE_SCRIPT_DEFAULT_MAILBOX(senv) : st_ctx1->folder );
+	folder2 = ( st_ctx2 == NULL ? 
+		SIEVE_SCRIPT_DEFAULT_MAILBOX(senv) : st_ctx2->folder );
+	
+	if ( strcmp(folder1, folder2) == 0 ) 
+		return TRUE;
+		
+	return 
+		( strcasecmp(folder1, "INBOX") == 0 && strcasecmp(folder2, "INBOX") == 0 ); 
+
+}
+
 /* Result verification */
 
 static int act_store_check_duplicate
@@ -122,25 +151,8 @@ static int act_store_check_duplicate
 	const struct sieve_action_data *act, 
 	const struct sieve_action_data *act_other)
 {
-	struct act_store_context *ctx1 = 
-		(struct act_store_context *) act->context;
-	struct act_store_context *ctx2 = 
-		(struct act_store_context *) act_other->context;
-	const char *folder1, *folder2;
-	
-	if ( ctx1 == NULL && ctx2 == NULL )
-		return 1;
-		
-	folder1 = ctx1 == NULL ? 
-		SIEVE_SCRIPT_DEFAULT_MAILBOX(renv->scriptenv) : ctx1->folder;
-	folder2 = ctx2 == NULL ? 
-		SIEVE_SCRIPT_DEFAULT_MAILBOX(renv->scriptenv) : ctx2->folder;
-	
-	if ( strcmp(folder1, folder2) == 0 ) 
-		return 1;
-		
-	return 
-		( strcasecmp(folder1, "INBOX") == 0 && strcasecmp(folder2, "INBOX") == 0 ); 
+	return ( act_store_equals(renv->scriptenv, act->context, act_other->context)
+		? 1 : 0 );
 }
 
 /* Result printing */

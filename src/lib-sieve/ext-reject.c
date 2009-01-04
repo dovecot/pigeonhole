@@ -132,6 +132,7 @@ static bool act_reject_commit
 const struct sieve_action act_reject = {
 	"reject",
 	SIEVE_ACTFLAG_SENDS_RESPONSE,
+	NULL,
 	act_reject_check_duplicate, 
 	act_reject_check_conflict,
 	act_reject_print,

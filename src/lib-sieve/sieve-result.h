@@ -91,6 +91,9 @@ int sieve_result_add_keep
 	(const struct sieve_runtime_env *renv, 
 		struct sieve_side_effects_list *seffects, unsigned int source_line);
 
+void sieve_result_set_keep_action
+	(struct sieve_result *result, const struct sieve_action *action);
+
 /*
  * Result execution
  */
