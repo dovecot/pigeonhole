@@ -200,24 +200,35 @@ int main(int argc, char **argv)
 	/* Run the test */
 	
 	if ( array_count(&scriptfiles) == 0 ) {
+		/* Single script */
+	
+		/* Test script */
 		ret = sieve_test(main_sbin, &msgdata, &scriptenv, ehandler, teststream);
 
 		if ( ret == SIEVE_EXEC_BIN_CORRUPT ) {
 			i_info("Corrupt binary deleted.");
 			(void) unlink(sieve_binary_path(main_sbin));		
 		}
+		
 	} else {
-		struct sieve_binary *sbin;
+		/* Multiple scripts */
+		
+		struct sieve_binary *sbin = NULL;
 		const char *const *sfiles;
 		unsigned int i, count;
 		struct sieve_multiscript *mscript = sieve_multiscript_start
 			(&msgdata, &scriptenv, ehandler);
 		int result = 1; 
 		
+		/* Execute scripts sequentially */
 		sfiles = array_get(&scriptfiles, &count); 
 		for ( i = 0; i < count && result > 0; i++ ) {
 			o_stream_send_str(teststream, 
 				t_strdup_printf("\n## Executing script: %s\n", sfiles[i]));
+
+			/* Close previous script */
+			if ( sbin != NULL )						
+				sieve_close(&sbin);
 		
 			/* Compile sieve script */
 			if ( force_compile ) {
@@ -238,14 +249,16 @@ int main(int argc, char **argv)
 			/* Test script */
 			result = ( sieve_multiscript_test(mscript, sbin, FALSE, teststream) ? 
 				1 : 0 );
-			
-			/* Close script */
-			sieve_close(&sbin);
 		}
 		
+		/* Execute main script */
 		if ( result > 0 )	{
 			o_stream_send_str(teststream, 
 				t_strdup_printf("## Executing script: %s\n", scriptfile));
+				
+			/* Close previous script */
+			if ( sbin != NULL )						
+				sieve_close(&sbin);	
 				
 			sbin = main_sbin;
 			(void)sieve_multiscript_test(mscript, main_sbin, TRUE, teststream);
