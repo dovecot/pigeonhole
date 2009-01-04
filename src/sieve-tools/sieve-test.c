@@ -245,7 +245,7 @@ int main(int argc, char **argv)
 		
 		if ( result > 0 )	{
 			o_stream_send_str(teststream, 
-				t_strdup_printf("\n## Executing script: %s\n", scriptfile));
+				t_strdup_printf("## Executing script: %s\n", scriptfile));
 				
 			sbin = main_sbin;
 			(void)sieve_multiscript_test(mscript, main_sbin, TRUE, teststream);

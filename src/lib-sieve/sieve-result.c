@@ -665,7 +665,7 @@ bool sieve_result_print
 			} else {
 				if ( rac->keep ) {
 					sieve_result_action_printf(&penv, "keep");
-					keep = FALSE;
+					impl_keep = FALSE;
 				} else {
 					sieve_result_action_printf(&penv, "[NULL]");
 				}
@@ -725,6 +725,8 @@ bool sieve_result_print
 		}
 	} else 
 		sieve_result_printf(&penv, "  (none)\n");
+	
+	sieve_result_printf(&penv, "\n");
 	
 	return TRUE;
 }
