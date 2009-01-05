@@ -667,6 +667,11 @@ static bool sieve_binary_file_open
 		}
 		return FALSE;
 	}
+
+	if ( !S_ISREG(st.st_mode) ) {
+		sieve_sys_error("binary %s is not a regular file", path);
+		return FALSE;		
+	}
 	
 	file->fd = fd;
 	file->st = st;
