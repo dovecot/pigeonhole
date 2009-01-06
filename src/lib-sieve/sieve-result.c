@@ -71,6 +71,7 @@ struct sieve_result {
 	struct sieve_action_exec_env action_env;
 	
 	const struct sieve_action *keep_action;
+	const struct sieve_action *failure_action;
 
 	unsigned int action_count;
 	struct sieve_result_action *first_action;
@@ -100,6 +101,7 @@ struct sieve_result *sieve_result_create
 	result->action_env.result = result;
 		
 	result->keep_action = &act_store;
+	result->failure_action = &act_store;
 	
 	result->action_count = 0;
 	result->first_action = NULL;
@@ -561,6 +563,12 @@ void sieve_result_set_keep_action
 	result->keep_action = action;
 }
 
+void sieve_result_set_failure_action
+(struct sieve_result *result, const struct sieve_action *action)
+{
+	result->failure_action = action;
+}
+
 /*
  * Result printing
  */
@@ -743,7 +751,12 @@ static bool _sieve_result_implicit_keep
 	bool dummy = TRUE;
 	struct sieve_result_side_effect *rsef, *rsef_first = NULL;
 	void *tr_context = NULL;
-	const struct sieve_action *act_keep = result->keep_action;
+	const struct sieve_action *act_keep;
+	
+	if ( rollback )
+		act_keep = result->failure_action;
+	else 
+		act_keep = result->keep_action;
 	
 	/* If keep is a non-action, return right away */
 	if ( act_keep == NULL ) return TRUE; 

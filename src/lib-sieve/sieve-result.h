@@ -93,6 +93,8 @@ int sieve_result_add_keep
 
 void sieve_result_set_keep_action
 	(struct sieve_result *result, const struct sieve_action *action);
+void sieve_result_set_failure_action
+	(struct sieve_result *result, const struct sieve_action *action);
 
 /*
  * Result execution

@@ -419,7 +419,7 @@ bool sieve_multiscript_execute
 		
 	if ( mscript->status >= 0 ) {
 		bool keep = FALSE;
-		
+				
 		if ( mscript->status > 0 )
 			mscript->status = sieve_result_execute
 				(mscript->result, mscript->msgdata, mscript->scriptenv, &keep);

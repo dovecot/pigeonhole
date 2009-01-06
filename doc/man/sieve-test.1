@@ -1,8 +1,18 @@
-.TH "SIEVE-TEST" "1" "21 December 2008"
+.TH "SIEVE-TEST" "1" "6 Januari 2009"
 .SH NAME
 sieve-test \- Sieve script tester for the Dovecot secure IMAP server
 .SH SYNOPSIS
-sieve-test [\fB-r\fR \fIrecipient-address\fR] [\fB-f\fR \fIenvelope-sender\fR] [\fB-m\fR \fImailbox\fR] [\fB-d\fR \fIdump-file\fR] [\fB-c\fR] [\fB-t\fR] [\fB-x\fR "\fIextension extension ...\fR"] [\fB-s\fR \fIscript-file\fR]  
+sieve-test
+[\fB-c\fR] 
+[\fB-d\fR \fIdump-file\fR]
+[\fB-e\fR]
+[\fB-f\fR \fIenvelope-sender\fR]
+[\fB-l\fR \fImail-location\fR]
+[\fB-m\fR \fIdefault-mailbox\fR]
+[\fB-r\fR \fIrecipient-address\fR]
+[\fB-s\fR \fIscript-file\fR]
+[\fB-t\fR]
+[\fB-x\fR "\fIextension extension ...\fR"]
 \fIscript-file\fR \fImail-file\fR
 .SH DESCRIPTION
 .PP
@@ -13,31 +23,26 @@ architecture and operating system. The language cannot execute external programs
 its basic form it does not provide the means to cause infinite loops, making it suitable 
 for running securely on mail servers where mail users have no permission run arbitrary programs.
 .PP
-Using the \fBsieve-test\fR command, the execution of Sieve scripts can be tested. This evaluates
-the script for the provided message, but it does not store or forward the message anywere. 
-In stead, it prints what actions would normally take place. This is a very useful tool to 
-debug the execution of Sieve scripts. 
+Using the \fBsieve-test\fP command, the execution of Sieve scripts can be tested. This evaluates
+the script for the provided message, yielding a set of Sieve actions. Unless the \fB-e\fP option is 
+specified, it does not actually execute these actions, meaning that it does not store or forward the 
+message anywere. In stead, it prints a detailed list of what actions would normally take place. 
+Note that, even when \fB-e\fP is specified, no messages are never transmitted to remote SMTP 
+recipients. The outgoing messages are printed to \fBstdout\fP in stead. 
 .PP
-The command has two mandatory arguments: the \fIscript-file\fR argument, which specifies the 
-script to (compile and) execute, and the \fImail-file\fR argument, which specifies the file containing
-the e-mail message to filter. 
+This is a very useful tool to debug the execution of Sieve scripts. It can be used to verify
+newly installed scripts for the intended behaviour and it can provide more detailed information
+about script execution problems that are reported by the Sieve plugin.
+.PP
+The command has two mandatory arguments: the \fIscript-file\fP argument, which specifies the
+script to (compile and) execute, and the \fImail-file\fP argument, which specifies the file 
+containing the e-mail message to filter. 
+
+Note that this tool looks for a pre-compiled binary file with a \fI.svbin\fP extension and 
+with basename and path identical to the specified script. Use the \fB-c\fP option to disable this
+behavior by forcing the script to be compiled into a new binary.  
 .SH OPTIONS
 .TP 
-\fB-r\fP \fIrecipient-address\fP
-The envelope recipient address. This is what Sieve's envelope test will compare to when the "to"
-envelope part is requested.
-.TP
-\fB-f\fP \fIenvelope-sender\fP
-The envelope sender. This is what Sieve's envelope test will compare to when the "from" envelope
-part is requested.
-.TP
-\fB-m\fP \fImailbox\fP
-The mailbox where the keep action would store. This is "INBOX" by default.
-.TP
-\fB-d\fP \fIdump-file\fP
-Causes a dump of the generated code to be written to the specified file. This is identical to the
-dump produced by \fBsieved\fR(1). Using '-' as filename causes the dump to be written to \fBstdout\fP.
-.TP
 \fB-c\fP
 Force compilation. By default, the compiled binary is stored on disk. When this binary is found
 during the next execution of \fBsieve-test\fP and its modification time is more recent than the
@@ -45,17 +50,45 @@ script file, it is used and the script is not compiled again. This option forces
 compiled, thus ignoring any present binary. Refer to \fBsievec\fP(1) for more information about 
 Sieve compilation.
 .TP
-\fB-t\fP
-Enable simple trace debugging; prints all encountered byte code instructions on \fBstdout\fP.
+\fB-d\fP \fIdump-file\fP
+Causes a dump of the generated code to be written to the specified file. This is identical to the
+dump produced by \fBsieved\fR(1). Using '-' as filename causes the dump to be written to \fBstdout\fP.
 .TP
-\fB-x\fP "\fIextension extension ...\fP"
-Set the available extensions. The parameter is a space-separated list of the active extensions. 
-Unknown extensions are ignored, but a warning is produced.
+\fB-e\fP
+Turns on true execution of the set of actions that results from running the script. In combination
+with the \fB-l\fP parameter, the actual delivery of messages can be tested. Note that this will
+not transmit any messages to remote SMTP recipients. Such actions only print the outgoing message
+to \fBstdout\fP.
 .TP
-\fB-s\fP \fIscript-file\fP (not implemented)
+\fB-f\fP \fIenvelope-sender\fP
+The envelope sender or return path. This is what Sieve's envelope test will compare to when the 
+"from" envelope part is requested. Also, this is where response messages are sent to. 
+.TP
+\fB-l\fP \fImail-location\fP
+The location of the user's mail store. The syntax of this option's \fImail-location\fP parameter 
+is identical to what is used for the mail_location setting in the Dovecot config file. This 
+parameter is typically used in combination with \fB-e\fP to test the actual delivery of messages. 
+If \fB-l\fP is omitted when \fB-e\fP is specified, mail store actions like fileinto and keep are 
+skipped.
+.TP
+\fB-m\fP \fIdefault-mailbox\fP
+The mailbox where the keep action stores the message. This is "INBOX" by default.
+.TP
+\fB-r\fP \fIrecipient-address\fP
+The envelope recipient address. This is what Sieve's envelope test will compare to when the "to"
+envelope part is requested. Some tests and actions will also use this as the owner's e-mail address.
+.TP
+\fB-s\fP \fIscript-file\fP
 Specify additional scripts to be executed before the main script. Multiple \fB-s\fP arguments are
 allowed and the specified scripts are executed sequentially in the order specified at the command
 line.
+.TP
+\fB-t\fP
+Enable simple trace debugging; prints all encountered byte code instructions to \fBstdout\fP.
+.TP
+\fB-x\fP "\fIextension extension ...\fP"
+Set the available extensions. The option's parameter is a space-separated list of the active 
+extensions. Unknown extensions are ignored, but a warning is produced.
 .SH AUTHOR
 .PP
 The Sieve implementation for Dovecot was written by Stephan Bosch <stephan@rename-it.nl>.

@@ -66,7 +66,7 @@ static bool act_discard_commit
 const struct sieve_action act_discard = {
 	"discard",
 	0,
-	NULL, NULL,
+	NULL, NULL, NULL,
 	act_discard_print,
 	NULL, NULL,
 	act_discard_commit,
