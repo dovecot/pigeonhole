@@ -836,7 +836,7 @@ static bool act_vacation_send
 	/* Check smpt functions just to be sure */
 
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
-		sieve_result_warning(aenv, "vacation action has no means to send mail.");
+		sieve_result_warning(aenv, "vacation action has no means to send mail");
 		return TRUE;
 	}
 

@@ -841,14 +841,14 @@ static bool ntfy_mailto_send
 	recipients = array_get(&mtctx->recipients, &count);
 	if ( count == 0  ) {
 		sieve_enotify_warning(nlog, 
-			"notify mailto uri specifies no recipients; action has no effect.");
+			"notify mailto uri specifies no recipients; action has no effect");
 		return TRUE;
 	}
 
 	/* Just to be sure */
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
 		sieve_enotify_warning(nlog, 
-			"notify mailto method has no means to send mail.");
+			"notify mailto method has no means to send mail");
 		return TRUE;
 	}
 	
@@ -1009,6 +1009,7 @@ static bool ntfy_mailto_action_execute
 
 	return ntfy_mailto_send(nenv, act);
 }
+
 
 
 

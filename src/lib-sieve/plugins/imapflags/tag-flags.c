@@ -416,19 +416,20 @@ static bool seff_flags_pre_execute
 			const char *const *keyword = array_idx(&ctx->keywords, i);
 			const char *kw_error;
 
-			if ( trans->box != NULL && 
-				mailbox_keyword_is_valid(trans->box, *keyword, &kw_error) )
-				array_append(&trans->keywords, keyword, 1);
-			else {
-				char *error = "";
-				if ( kw_error != NULL && *kw_error != '\0' ) {
-					error = t_strdup_noconst(kw_error);
-					error[0] = i_tolower(error[0]);
-				}
+			if ( trans->box != NULL ) {
+				if ( mailbox_keyword_is_valid(trans->box, *keyword, &kw_error) )
+					array_append(&trans->keywords, keyword, 1);
+				else {
+					char *error = "";
+					if ( kw_error != NULL && *kw_error != '\0' ) {
+						error = t_strdup_noconst(kw_error);
+						error[0] = i_tolower(error[0]);
+					}
 				
-				sieve_result_warning(aenv, 
-					"specified IMAP keyword '%s' is invalid (ignored): %s", 
-					str_sanitize(*keyword, 64), error);
+					sieve_result_warning(aenv, 
+						"specified IMAP keyword '%s' is invalid (ignored): %s", 
+						str_sanitize(*keyword, 64), error);
+				}
 			}
 		}
 	}
