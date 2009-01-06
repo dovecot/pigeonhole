@@ -164,13 +164,6 @@ have been performed on this message.
 
 --
 
-sieve-exec
-
-Currently undocumented (will evolve into sieve-filter which can process existing
-mail stores).
-
---
-
 When installed, man pages are also available for these commands. In this package
 the man pages are present in doc/man and can be viewed using man -l <file>. 
 
