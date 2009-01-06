@@ -2,7 +2,7 @@
 .SH NAME
 sievec \- Sieve script compiler for the Dovecot secure IMAP server
 .SH SYNOPSIS
-sievec [\fB-d\fR] [\fB-x\fR "\fIextension extension ...\fR"] \fIsieve-script\fR \fIoutfile\fR
+sievec [\fB-d\fR] [\fB-x\fR "\fIextension extension ...\fR"] \fIsieve-script\fR [\fIoutfile\fR]
 .SH DESCRIPTION
 .PP
 The \fBsievec\fP command is part of the Sieve implementation for the Dovecot secure 
@@ -27,7 +27,8 @@ the script to be compiled and the \fIoutfile\fR argument specifies where the (bi
 to be written. This Sieve implementation reconizes files with a \fB.sieve\fP extension as Sieve 
 scripts and corresponding files with a \fB.svbin\fP extension as the associated compiled binary. 
 This means for example that Dovecot's deliver process will look for a binary file 'dovecot.svbin' 
-when it needs to execute 'dovecot.sieve'.
+when it needs to execute 'dovecot.sieve'. This filename for the binary is chosen automatically
+when the outfile argument is missing. 
 .PP
 The \fBsievec\fP command is also useful to verify Sieve scripts before using. Additionally, with 
 the \fB-d\fP option it can output a textual (and thus human-readable) dump of the generated Sieve
@@ -40,8 +41,8 @@ compiler that yield corrupt binaries.
 \fB-d\fP 
 Don't write the binary to \fIoutfile\fP, but write a textual dump of the binary in 
 stead. In this context, the \fIoutfile\fP value '-' has special meaning: it causes the the textual 
-dump to be written to \fBstdout\fP. The \fIoutfile\fP argument may also be omitted when this option 
-is active, which has the same effect as '-'. The output is identical to what the 
+dump to be written to \fBstdout\fP. The \fIoutfile\fP argument may also be omitted, which has 
+the same effect as '-'. The output is identical to what the 
 .BR sieved (1) 
 command produces for a compiled Sieve binary file. 
 .TP

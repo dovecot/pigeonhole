@@ -21,7 +21,7 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sievec [-d] [-x <extensions>] <scriptfile> <outfile>\n"
+"Usage: sievec [-d] [-x <extensions>] <scriptfile> [<outfile>]\n"
 	);
 }
 
@@ -61,13 +61,8 @@ int main(int argc, char **argv) {
 		i_fatal("Missing <scriptfile> argument");
 	}
 	
-	if ( outfile == NULL ) {
-		if ( !dump ) {
-			print_help();
-			i_fatal("The <outfile> argument is mandatory without -d");
-		}
+	if ( outfile == NULL && dump )
 		outfile = "-";
-	}
 
 	sieve_tool_init();
 
