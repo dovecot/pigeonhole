@@ -145,12 +145,14 @@ struct sieve_binary *sieve_compile_script
 }
 
 struct sieve_binary *sieve_compile
-(const char *script_path, struct sieve_error_handler *ehandler)
+(const char *script_path, const char *script_name, 
+	struct sieve_error_handler *ehandler)
 {
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
 
-	if ( (script = sieve_script_create(script_path, NULL, ehandler, NULL)) == NULL )
+	if ( (script = sieve_script_create
+		(script_path, script_name, ehandler, NULL)) == NULL )
 		return NULL;
 	
 	sbin = sieve_compile_script(script, ehandler);

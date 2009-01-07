@@ -22,29 +22,34 @@ permission to write the compiled binary to disk, forcing it to recompile the scr
 is executed. Using the \fBsievec\fP tool, this can be performed manually by an authorized user to 
 increase performance.
 .PP
-The \fBsievec\fP command has two mandatory arguments: the \fIsieve-script\fP argument specifies 
-the script to be compiled and the \fIoutfile\fR argument specifies where the (binary) output is 
-to be written. This Sieve implementation reconizes files with a \fB.sieve\fP extension as Sieve 
+The \fBsievec\fP command accepts two arguments: the \fIsieve-script\fP argument specifies the 
+script to be compiled and the \fIoutfile\fR argument specifies where the (binary) output is to
+be written. This Sieve implementation reconizes files with a \fB.sieve\fP extension as Sieve 
 scripts and corresponding files with a \fB.svbin\fP extension as the associated compiled binary. 
 This means for example that Dovecot's deliver process will look for a binary file 'dovecot.svbin' 
-when it needs to execute 'dovecot.sieve'. This filename for the binary is chosen automatically
-when the outfile argument is missing. 
+when it needs to execute 'dovecot.sieve'. Such filename is chosen automatically for the binary output
+when the outfile argument is missing.
+.PP
+If the \fIscriptfile\fP  argument is a directory, all files in that directory with a \fI.sieve\fP 
+extension are compiled into a corresponding \fI.svbin\fP binary file. The compilation is not halted 
+upon errors; it attempts to compile as many scripts in the directory as possible. Note that the 
+\fB-d\fP option and the \fIoutfile\fP argument are not allowed when the \fIscriptfile\fP argument 
+is a directory.
 .PP
 The \fBsievec\fP command is also useful to verify Sieve scripts before using. Additionally, with 
 the \fB-d\fP option it can output a textual (and thus human-readable) dump of the generated Sieve
 code to the specified file in stead of the binary. The output is then identical to what the 
-.BR sieved (1)
-command produces for a stored binary file. This output is mainly useful to find bugs in the 
-compiler that yield corrupt binaries.
+\fBsieved\fP(1) command produces for a stored binary file. This output is mainly useful to find 
+bugs in the compiler that yield corrupt binaries.
 .SH OPTIONS
 .TP 
 \fB-d\fP 
 Don't write the binary to \fIoutfile\fP, but write a textual dump of the binary in 
 stead. In this context, the \fIoutfile\fP value '-' has special meaning: it causes the the textual 
 dump to be written to \fBstdout\fP. The \fIoutfile\fP argument may also be omitted, which has 
-the same effect as '-'. The output is identical to what the 
-.BR sieved (1) 
-command produces for a compiled Sieve binary file. 
+the same effect as '-'. The output is identical to what the \fBsieved\fP(1) command produces for 
+a compiled Sieve binary file. Note that this option is not allowed when the \fIscriptfile\fP argument
+is a directory.
 .TP
 \fB-x\fP "\fIextension extension ...\fP"
 Set the available extensions. The \fIextensions\fP parameter is a space-separated list of the 

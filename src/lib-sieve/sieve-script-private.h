@@ -24,8 +24,9 @@ struct sieve_script {
 	const char *name;
 	const char *basename;
 	const char *filename;
-	const char *dirpath;
 	const char *path;
+	const char *dirpath;
+	const char *binpath;
 
 	/* Stream */
 	int fd; /* FIXME: we could use the stream's autoclose facility */

@@ -52,7 +52,8 @@ struct sieve_binary *sieve_compile_script
  *   Compiles the script into a binary.
  */
 struct sieve_binary *sieve_compile
-	(const char *scriptpath, struct sieve_error_handler *ehandler);
+	(const char *script_path, const char *script_name, 
+		struct sieve_error_handler *ehandler);
 
 /* 
  * Reading/writing Sieve binaries

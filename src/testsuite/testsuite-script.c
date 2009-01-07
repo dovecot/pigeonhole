@@ -52,7 +52,7 @@ bool testsuite_script_compile(const char *script_path)
 	env_put(t_strconcat("SIEVE_DIR=", sieve_dir, "included", NULL));
 	env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
 
-	if ( (sbin = sieve_compile(script_path, testsuite_log_ehandler)) == NULL )
+	if ( (sbin = sieve_compile(script_path, NULL, testsuite_log_ehandler)) == NULL )
 		return FALSE;
 
 	if ( _testsuite_compiled_script != NULL ) {

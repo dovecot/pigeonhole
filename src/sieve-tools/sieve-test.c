@@ -202,197 +202,199 @@ int main(int argc, char **argv)
 	
 	/* Compile main sieve script */
 	if ( force_compile ) {
-		main_sbin = sieve_tool_script_compile(scriptfile);
+		main_sbin = sieve_tool_script_compile(scriptfile, NULL);
 		(void) sieve_save(main_sbin, NULL);
 	} else {
 		main_sbin = sieve_tool_script_open(scriptfile);
 	}
 
-	/* Dump script */
-	sieve_tool_dump_binary_to(main_sbin, dumpfile);
+	if ( main_sbin != NULL ) {
+		/* Dump script */
+		sieve_tool_dump_binary_to(main_sbin, dumpfile);
 	
-	user = sieve_tool_get_user();
-	home = getenv("HOME");
+		user = sieve_tool_get_user();
+		home = getenv("HOME");
 
-	/* Initialize mail storages */
-	mail_users_init(getenv("AUTH_SOCKET_PATH"), getenv("DEBUG") != NULL);
-	mail_storage_init();
-	mail_storage_register_all();
-	mailbox_list_register_all();
+		/* Initialize mail storages */
+		mail_users_init(getenv("AUTH_SOCKET_PATH"), getenv("DEBUG") != NULL);
+		mail_storage_init();
+		mail_storage_register_all();
+		mailbox_list_register_all();
 	
-	/* Obtain mail namespaces from -l argument */
-	if ( mailloc != NULL ) {
-		env_put(t_strdup_printf("NAMESPACE_1=%s", mailloc));
-		env_put("NAMESPACE_1_INBOX=1");
-		env_put("NAMESPACE_1_LIST=1");
-		env_put("NAMESPACE_1_SEP=.");
-		env_put("NAMESPACE_1_SUBSCRIPTIONS=1");
+		/* Obtain mail namespaces from -l argument */
+		if ( mailloc != NULL ) {
+			env_put(t_strdup_printf("NAMESPACE_1=%s", mailloc));
+			env_put("NAMESPACE_1_INBOX=1");
+			env_put("NAMESPACE_1_LIST=1");
+			env_put("NAMESPACE_1_SEP=.");
+			env_put("NAMESPACE_1_SUBSCRIPTIONS=1");
 
-		mail_user = mail_user_init(user);
-		mail_user_set_home(mail_user, home);
-		if (mail_namespaces_init(mail_user) < 0)
-			i_fatal("Namespace initialization failed");	
+			mail_user = mail_user_init(user);
+			mail_user_set_home(mail_user, home);
+			if (mail_namespaces_init(mail_user) < 0)
+				i_fatal("Namespace initialization failed");	
 
-		ns = mail_user->namespaces;
-	}
-
-	/* Initialize raw mail object */
-	mail_raw_init(user);
-	mailr = mail_raw_open_file(mailfile);
-
-	sieve_tool_get_envelope_data(mailr->mail, &recipient, &sender);
-
-	if ( mailbox == NULL )
-		mailbox = "INBOX";
-
-	/* Collect necessary message data */
-	memset(&msgdata, 0, sizeof(msgdata));
-	msgdata.mail = mailr->mail;
-	msgdata.return_path = sender;
-	msgdata.to_address = recipient;
-	msgdata.auth_user = user;
-	(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
-
-	/* Create stream for test and trace output */
-	if ( !execute || trace )
-		teststream = o_stream_create_fd(1, 0, FALSE);	
-		
-	/* Compose script environment */
-	memset(&scriptenv, 0, sizeof(scriptenv));
-	scriptenv.default_mailbox = "INBOX";
-	scriptenv.namespaces = ns;
-	scriptenv.username = user;
-	scriptenv.hostname = "host.example.com";
-	scriptenv.postmaster_address = "postmaster@example.com";
-	scriptenv.smtp_open = sieve_smtp_open;
-	scriptenv.smtp_close = sieve_smtp_close;
-	scriptenv.duplicate_mark = duplicate_mark;
-	scriptenv.duplicate_check = duplicate_check;
-	scriptenv.trace_stream = ( trace ? teststream : NULL );
-	scriptenv.exec_status = &estatus;
-	
-	/* Create error handler */
-	ehandler = sieve_stderr_ehandler_create(0);	
-	sieve_error_handler_accept_infolog(ehandler, TRUE);
-
-	/* Run the test */
-	
-	if ( array_count(&scriptfiles) == 0 ) {
-		/* Single script */
-		sbin = main_sbin;
-		main_sbin = NULL;
-	
-		/* Execute/Test script */
-		if ( execute )
-			ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler);
-		else
-			ret = sieve_test(sbin, &msgdata, &scriptenv, ehandler, teststream);				
-	} else {
-		/* Multiple scripts */
-		const char *const *sfiles;
-		unsigned int i, count;
-		struct sieve_multiscript *mscript = sieve_multiscript_start
-			(&msgdata, &scriptenv, ehandler);
-		int result = 1; 
-		
-		/* Execute scripts sequentially */
-		sfiles = array_get(&scriptfiles, &count); 
-		for ( i = 0; i < count && result > 0; i++ ) {
-			if ( teststream != NULL ) 
-				o_stream_send_str(teststream, 
-					t_strdup_printf("\n## Executing script: %s\n", sfiles[i]));
-			
-			/* Close previous script */
-			if ( sbin != NULL )						
-				sieve_close(&sbin);
-		
-			/* Compile sieve script */
-			if ( force_compile ) {
-				sbin = sieve_tool_script_compile(sfiles[i]);
-				(void) sieve_save(sbin, NULL);
-			} else {
-				sbin = sieve_tool_script_open(sfiles[i]);
-			}
-			
-			if ( sbin == NULL ) {
-				result = -1;
-				break;
-			}
-			
-			/* Execute/Test script */
-			if ( execute )
-				result = sieve_multiscript_execute(mscript, sbin, FALSE);
-			else
-				result = sieve_multiscript_test(mscript, sbin, FALSE, teststream);
+			ns = mail_user->namespaces;
 		}
+
+		/* Initialize raw mail object */
+		mail_raw_init(user);
+		mailr = mail_raw_open_file(mailfile);
+
+		sieve_tool_get_envelope_data(mailr->mail, &recipient, &sender);
+
+		if ( mailbox == NULL )
+			mailbox = "INBOX";
+
+		/* Collect necessary message data */
+		memset(&msgdata, 0, sizeof(msgdata));
+		msgdata.mail = mailr->mail;
+		msgdata.return_path = sender;
+		msgdata.to_address = recipient;
+		msgdata.auth_user = user;
+		(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
+
+		/* Create stream for test and trace output */
+		if ( !execute || trace )
+			teststream = o_stream_create_fd(1, 0, FALSE);	
 		
-		/* Execute/Test main script */
-		switch ( result )	{
-		case TRUE:
-			if ( teststream != NULL ) 
-				o_stream_send_str(teststream, 
-					t_strdup_printf("## Executing script: %s\n", scriptfile));
-				
-			/* Close previous script */
-			if ( sbin != NULL )						
-				sieve_close(&sbin);	
-				
+		/* Compose script environment */
+		memset(&scriptenv, 0, sizeof(scriptenv));
+		scriptenv.default_mailbox = "INBOX";
+		scriptenv.namespaces = ns;
+		scriptenv.username = user;
+		scriptenv.hostname = "host.example.com";
+		scriptenv.postmaster_address = "postmaster@example.com";
+		scriptenv.smtp_open = sieve_smtp_open;
+		scriptenv.smtp_close = sieve_smtp_close;
+		scriptenv.duplicate_mark = duplicate_mark;
+		scriptenv.duplicate_check = duplicate_check;
+		scriptenv.trace_stream = ( trace ? teststream : NULL );
+		scriptenv.exec_status = &estatus;
+	
+		/* Create error handler */
+		ehandler = sieve_stderr_ehandler_create(0);	
+		sieve_error_handler_accept_infolog(ehandler, TRUE);
+
+		/* Run the test */
+	
+		if ( array_count(&scriptfiles) == 0 ) {
+			/* Single script */
 			sbin = main_sbin;
 			main_sbin = NULL;
-			
+	
+			/* Execute/Test script */
 			if ( execute )
-				(void)sieve_multiscript_execute(mscript, sbin, TRUE);
-			else 
-				(void)sieve_multiscript_test(mscript, sbin, TRUE, teststream);
-				
-		case FALSE:	
-			ret = sieve_multiscript_finish(&mscript);
-			break;
+				ret = sieve_execute(sbin, &msgdata, &scriptenv, ehandler);
+			else
+				ret = sieve_test(sbin, &msgdata, &scriptenv, ehandler, teststream);				
+		} else {
+			/* Multiple scripts */
+			const char *const *sfiles;
+			unsigned int i, count;
+			struct sieve_multiscript *mscript = sieve_multiscript_start
+				(&msgdata, &scriptenv, ehandler);
+			int result = 1; 
 		
-		default:
-			ret = SIEVE_EXEC_FAILURE;
+			/* Execute scripts sequentially */
+			sfiles = array_get(&scriptfiles, &count); 
+			for ( i = 0; i < count && result > 0; i++ ) {
+				if ( teststream != NULL ) 
+					o_stream_send_str(teststream, 
+						t_strdup_printf("\n## Executing script: %s\n", sfiles[i]));
+			
+				/* Close previous script */
+				if ( sbin != NULL )						
+					sieve_close(&sbin);
+		
+				/* Compile sieve script */
+				if ( force_compile ) {
+					sbin = sieve_tool_script_compile(sfiles[i], sfiles[i]);
+					(void) sieve_save(sbin, NULL);
+				} else {
+					sbin = sieve_tool_script_open(sfiles[i]);
+				}
+			
+				if ( sbin == NULL ) {
+					result = -1;
+					break;
+				}
+			
+				/* Execute/Test script */
+				if ( execute )
+					result = sieve_multiscript_execute(mscript, sbin, FALSE);
+				else
+					result = sieve_multiscript_test(mscript, sbin, FALSE, teststream);
+			}
+		
+			/* Execute/Test main script */
+			switch ( result )	{
+			case TRUE:
+				if ( teststream != NULL ) 
+					o_stream_send_str(teststream, 
+						t_strdup_printf("## Executing script: %s\n", scriptfile));
+				
+				/* Close previous script */
+				if ( sbin != NULL )						
+					sieve_close(&sbin);	
+				
+				sbin = main_sbin;
+				main_sbin = NULL;
+			
+				if ( execute )
+					(void)sieve_multiscript_execute(mscript, sbin, TRUE);
+				else 
+					(void)sieve_multiscript_test(mscript, sbin, TRUE, teststream);
+				
+			case FALSE:	
+				ret = sieve_multiscript_finish(&mscript);
+				break;
+		
+			default:
+				ret = SIEVE_EXEC_FAILURE;
+			}
 		}
-	}
 	
-	/* Run */
-	switch ( ret ) {
-	case SIEVE_EXEC_OK:
-		i_info("final result: success");
-		break;
-	case SIEVE_EXEC_BIN_CORRUPT:
-		i_info("corrupt binary deleted.");
-		(void) unlink(sieve_binary_path(sbin));
-	case SIEVE_EXEC_FAILURE:
-		i_info("final result: failed; resolved with successful implicit keep");
-		break;
-	case SIEVE_EXEC_KEEP_FAILED:
-		i_info("final result: utter failure");
-		break;
-	default:
-		i_info("final result: unrecognized return value?!");	
+		/* Run */
+		switch ( ret ) {
+		case SIEVE_EXEC_OK:
+			i_info("final result: success");
+			break;
+		case SIEVE_EXEC_BIN_CORRUPT:
+			i_info("corrupt binary deleted.");
+			(void) unlink(sieve_binary_path(sbin));
+		case SIEVE_EXEC_FAILURE:
+			i_info("final result: failed; resolved with successful implicit keep");
+			break;
+		case SIEVE_EXEC_KEEP_FAILED:
+			i_info("final result: utter failure");
+			break;
+		default:
+			i_info("final result: unrecognized return value?!");	
+		}
+
+		if ( teststream != NULL )
+			o_stream_destroy(&teststream);
+
+		/* Cleanup remaining binaries */
+		sieve_close(&sbin);
+		if ( main_sbin != NULL ) sieve_close(&main_sbin);
+		
+		/* Cleanup error handler */
+		sieve_error_handler_unref(&ehandler);
+
+		/* De-initialize raw mail object */
+		mail_raw_close(mailr);
+		mail_raw_deinit();
+
+		/* De-initialize mail user object */
+		if ( mail_user != NULL )
+			mail_user_unref(&mail_user);
+
+		/* De-initialize mail storages */
+		mail_storage_deinit();
+		mail_users_deinit();
 	}
-
-	if ( teststream != NULL )
-		o_stream_destroy(&teststream);
-
-	/* Cleanup remaining binaries */
-	sieve_close(&sbin);
-	if ( main_sbin != NULL ) sieve_close(&main_sbin);
-	
-	/* Cleanup error handler */
-	sieve_error_handler_unref(&ehandler);
-
-	/* De-initialize raw mail object */
-	mail_raw_close(mailr);
-	mail_raw_deinit();
-
-	/* De-initialize mail user object */
-	if ( mail_user != NULL )
-		mail_user_unref(&mail_user);
-
-	/* De-initialize mail storages */
-	mail_storage_deinit();
-	mail_users_deinit();
 
 	sieve_tool_deinit();
 	

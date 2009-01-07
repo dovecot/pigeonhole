@@ -26,7 +26,8 @@ void sieve_tool_get_envelope_data
  * Sieve script handling
  */
 
-struct sieve_binary *sieve_tool_script_compile(const char *filename);
+struct sieve_binary *sieve_tool_script_compile
+	(const char *filename, const char *name);
 struct sieve_binary *sieve_tool_script_open(const char *filename);
 void sieve_tool_dump_binary_to(struct sieve_binary *sbin, const char *filename);
 

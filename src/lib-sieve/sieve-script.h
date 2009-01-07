@@ -24,6 +24,12 @@ void sieve_script_ref(struct sieve_script *script);
 void sieve_script_unref(struct sieve_script **script);
 
 /*
+ * Filename filter
+ */
+ 
+bool sieve_script_file_has_extension(const char *filename);
+
+/*
  * Accessors
  */
  

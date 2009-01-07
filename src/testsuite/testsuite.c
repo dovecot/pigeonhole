@@ -121,45 +121,47 @@ int main(int argc, char **argv)
 	env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
 	
 	/* Compile sieve script */
-	sbin = sieve_tool_script_compile(scriptfile);
+	if ( (sbin = sieve_tool_script_compile(scriptfile, NULL)) != NULL ) {
 
-	/* Dump script */
-	sieve_tool_dump_binary_to(sbin, dumpfile);
+		/* Dump script */
+		sieve_tool_dump_binary_to(sbin, dumpfile);
 	
-	/* Initialize mail storages */
-	mail_users_init(getenv("AUTH_SOCKET_PATH"), getenv("DEBUG") != NULL);
-	mail_storage_init();
-	mail_storage_register_all();
-	mailbox_list_register_all();
+		/* Initialize mail storages */
+		mail_users_init(getenv("AUTH_SOCKET_PATH"), getenv("DEBUG") != NULL);
+		mail_storage_init();
+		mail_storage_register_all();
+		mailbox_list_register_all();
 
-	/* Initialize message environment */
-	user = sieve_tool_get_user();
-	testsuite_message_init(user);
+		/* Initialize message environment */
+		user = sieve_tool_get_user();
+		testsuite_message_init(user);
 
-	memset(&scriptenv, 0, sizeof(scriptenv));
-	scriptenv.default_mailbox = "INBOX";
-	scriptenv.username = user;
-	scriptenv.trace_stream = ( trace ? o_stream_create_fd(1, 0, FALSE) : NULL );
+		memset(&scriptenv, 0, sizeof(scriptenv));
+		scriptenv.default_mailbox = "INBOX";
+		scriptenv.username = user;
+		scriptenv.trace_stream = ( trace ? o_stream_create_fd(1, 0, FALSE) : NULL );
 
-	/* Run the test */
-	ehandler = sieve_stderr_ehandler_create(0);
-	ret = sieve_execute(sbin, &testsuite_msgdata, &scriptenv, ehandler);
+		/* Run the test */
+		ehandler = sieve_stderr_ehandler_create(0);
+		ret = sieve_execute(sbin, &testsuite_msgdata, &scriptenv, ehandler);
 
-	switch ( ret ) {
-	case SIEVE_EXEC_OK:
-		break;
-	case SIEVE_EXEC_FAILURE:
-	case SIEVE_EXEC_KEEP_FAILED:
-		testsuite_testcase_fail("execution aborted");
-		break;
-	case SIEVE_EXEC_BIN_CORRUPT:
-        testsuite_testcase_fail("binary corrupt");
-		break;
-	default:
-		testsuite_testcase_fail("unknown execution exit code");
+		switch ( ret ) {
+		case SIEVE_EXEC_OK:
+			break;
+		case SIEVE_EXEC_FAILURE:
+		case SIEVE_EXEC_KEEP_FAILED:
+			testsuite_testcase_fail("execution aborted");
+			break;
+		case SIEVE_EXEC_BIN_CORRUPT:
+    	    testsuite_testcase_fail("binary corrupt");
+			break;
+		default:
+			testsuite_testcase_fail("unknown execution exit code");
+		}
+
+		sieve_close(&sbin);
 	}
 
-	sieve_close(&sbin);
 	sieve_error_handler_unref(&ehandler);
 
 	if ( scriptenv.trace_stream != NULL )

@@ -36,17 +36,26 @@ static inline const char *_sieve_scriptfile_get_basename(const char *filename)
 	return t_strdup_until(filename, ext);	
 }
 
-static inline const char *_sieve_scriptfile_from_name(const char *name)
+bool sieve_script_file_has_extension(const char *filename)
 {
- 	const char *ext;
+	const char *ext;
 
  	/* See if it ends in .sieve already */
-	ext = strrchr(name, '.');
-	if ( ext == NULL || ext == name || strncmp(ext,".sieve",6) != 0 )
+	ext = strrchr(filename, '.');
+	if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
+		return FALSE;
+
+	return TRUE;
+}
+
+static inline const char *_sieve_scriptfile_from_name(const char *name)
+{
+	if ( !sieve_script_file_has_extension(name) )
 		return t_strconcat(name, ".sieve", NULL);
 
 	return name;
 }
+
 
 /* 
  * Script object 
@@ -60,7 +69,7 @@ struct sieve_script *sieve_script_init
 	pool_t pool;
 	struct stat st;
 	struct stat lnk_st;
-	const char *filename, *dirpath, *basename;
+	const char *filename, *dirpath, *basename, *binpath;
 
 	if ( exists_r != NULL )
 		*exists_r = TRUE;
@@ -77,10 +86,11 @@ struct sieve_script *sieve_script_init
 			dirpath = t_strdup_until(path, filename);
 			filename++;
 		}
-		
-		if ( name == NULL || *name == '\0' ) {
-			basename = _sieve_scriptfile_get_basename(filename);
-		} else {
+
+		basename = _sieve_scriptfile_get_basename(filename);
+		binpath = t_strconcat(dirpath, "/", basename, ".svbin", NULL);
+				
+		if ( name != NULL && *name != '\0' ) {
 			basename = name;
 		}
 			
@@ -145,6 +155,7 @@ struct sieve_script *sieve_script_init
 			script->path = p_strdup(pool, path);
 			script->filename = p_strdup(pool, filename);
 			script->dirpath = p_strdup(pool, dirpath);
+			script->binpath = p_strdup(pool, binpath);
 			script->basename = p_strdup(pool, basename);
 
 			if ( name != NULL )
@@ -177,7 +188,7 @@ struct sieve_script *sieve_script_create_in_directory
 		path = t_strconcat(dirpath, "/",
 			_sieve_scriptfile_from_name(name), NULL);
 
-    return sieve_script_init(NULL, path, name, ehandler, exists_r);
+	return sieve_script_init(NULL, path, name, ehandler, exists_r);
 }
 
 void sieve_script_ref(struct sieve_script *script)
@@ -228,7 +239,7 @@ const char *sieve_script_dirpath(const struct sieve_script *script)
 
 const char *sieve_script_binpath(const struct sieve_script *script)
 {
-	return t_strconcat(script->dirpath, "/", script->basename, ".svbin", NULL);
+	return script->binpath;
 }
 
 /* 

@@ -205,7 +205,7 @@ static int lda_sieve_run
 	
 		sieve_error_handler_copy_masterlog(ehandler, FALSE);
 	
-		if ( (sbin=sieve_compile(script_path, ehandler)) == NULL ) {
+		if ( (sbin=sieve_compile(script_path, NULL, ehandler)) == NULL ) {
 			sieve_sys_error
 					("failed to compile script %s "
 						"(view logfile %s for more information); "
