@@ -67,7 +67,7 @@ static void print_help(void)
 	);
 }
 
-int testsuite_run
+static int testsuite_run
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata, 
 	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler)
 {
