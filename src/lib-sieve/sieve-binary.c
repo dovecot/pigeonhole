@@ -280,6 +280,21 @@ bool sieve_binary_script_older
 	return ( sieve_script_older(script, sbin->file->st.st_mtime) );
 }
 
+const char *sieve_binary_script_name(struct sieve_binary *sbin)
+{
+	struct sieve_script *script = sieve_binary_script(sbin);
+
+	return ( script == NULL ? NULL : sieve_script_name(script) );
+}
+
+const char *sieve_binary_script_path(struct sieve_binary *sbin)
+{
+	struct sieve_script *script = sieve_binary_script(sbin);
+
+	return ( script == NULL ? NULL : sieve_script_path(script) );
+}
+
+
 /* 
  * Block management 
  */

@@ -18,11 +18,18 @@ struct sieve_binary *sieve_binary_create_new(struct sieve_script *script);
 void sieve_binary_ref(struct sieve_binary *sbin);
 void sieve_binary_unref(struct sieve_binary **sbin);
 
+/*
+ * Accessors
+ */
+
 pool_t sieve_binary_pool(struct sieve_binary *sbin);
 struct sieve_script *sieve_binary_script(struct sieve_binary *sbin);
 const char *sieve_binary_path(struct sieve_binary *sbin);
 bool sieve_binary_script_older
 	(struct sieve_binary *sbin, struct sieve_script *script);
+
+const char *sieve_binary_script_name(struct sieve_binary *sbin);
+const char *sieve_binary_script_path(struct sieve_binary *sbin);
 
 /*
  * Activation after code generation
