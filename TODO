@@ -2,7 +2,6 @@ Current:
 
 * Implement executing an arbitrary number of scripts sequentially, acting on the 
   same set of result actions (multiscript):
-	- Implement multiscript support in sieve-exec tool
 	- Implement multiscript support in lda sieve plugin
 	- Rigorous testing
 * Finish enotify extension:
