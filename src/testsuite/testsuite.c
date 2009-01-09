@@ -21,6 +21,7 @@
 #include "sieve-tool.h"
 
 #include "testsuite-common.h"
+#include "testsuite-result.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +65,34 @@ static void print_help(void)
 	printf(
 "Usage: testsuite [-d <dump filename>] <scriptfile>\n"
 	);
+}
+
+int testsuite_run
+(struct sieve_binary *sbin, const struct sieve_message_data *msgdata, 
+	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler)
+{
+        struct sieve_interpreter *interp;
+	struct sieve_result *result;
+        int ret = 0;
+
+        /* Create the interpreter */
+        if ( (interp=sieve_interpreter_create(sbin, ehandler)) == NULL )
+                return SIEVE_EXEC_BIN_CORRUPT;
+
+        /* Reset execution status */
+        if ( senv->exec_status != NULL )
+                memset(senv->exec_status, 0, sizeof(*senv->exec_status));
+
+        /* Run the interpreter */
+	result = testsuite_result_get();
+	sieve_result_ref(result);
+        ret = sieve_interpreter_run(interp, msgdata, senv, result);
+	sieve_result_unref(&result);
+
+        /* Free the interpreter */
+        sieve_interpreter_free(&interp);
+
+        return ret;
 }
 
 int main(int argc, char **argv) 
@@ -143,7 +172,7 @@ int main(int argc, char **argv)
 
 		/* Run the test */
 		ehandler = sieve_stderr_ehandler_create(0);
-		ret = sieve_execute(sbin, &testsuite_msgdata, &scriptenv, ehandler);
+		ret = testsuite_run(sbin, &testsuite_msgdata, &scriptenv, ehandler);
 
 		switch ( ret ) {
 		case SIEVE_EXEC_OK:
@@ -153,7 +182,7 @@ int main(int argc, char **argv)
 			testsuite_testcase_fail("execution aborted");
 			break;
 		case SIEVE_EXEC_BIN_CORRUPT:
-    	    testsuite_testcase_fail("binary corrupt");
+			testsuite_testcase_fail("binary corrupt");
 			break;
 		default:
 			testsuite_testcase_fail("unknown execution exit code");
