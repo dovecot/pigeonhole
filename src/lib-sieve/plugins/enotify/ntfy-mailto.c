@@ -124,14 +124,14 @@ static const char *_reserved_headers[] = {
 	"in-reply-to",
 	"references",
 	"resent-date",
-  "resent-from",
-  "resent-sender",
-  "resent-to",
-  "resent-cc",
-  "resent-bcc",
-  "resent-msg-id",
-  "from",
-  "sender",
+	"resent-from",
+	"resent-sender",
+	"resent-to",
+	"resent-cc",
+ 	"resent-bcc",
+	"resent-msg-id",
+	"from",
+	"sender",
 	NULL
 };
 
@@ -606,21 +606,21 @@ static bool ntfy_mailto_parse_uri
 	const char *p = uri_body;
 	
 	/* 
-   * mailtoURI   = "mailto:" [ to ] [ hfields ]
-   * to          = [ addr-spec *("%2C" addr-spec ) ]
-   * hfields     = "?" hfield *( "&" hfield )
-   * hfield      = hfname "=" hfvalue
-   * hfname      = *qchar
-   * hfvalue     = *qchar
-   * addr-spec   = local-part "@" domain
-   * local-part  = dot-atom / quoted-string
-   * qchar       = unreserved / pct-encoded / some-delims
-   * some-delims = "!" / "$" / "'" / "(" / ")" / "*"
-   *               / "+" / "," / ";" / ":" / "@"
-   *
+	 * mailtoURI   = "mailto:" [ to ] [ hfields ]
+	 * to          = [ addr-spec *("%2C" addr-spec ) ]
+	 * hfields     = "?" hfield *( "&" hfield )
+	 * hfield      = hfname "=" hfvalue
+	 * hfname      = *qchar
+	 * hfvalue     = *qchar
+	 * addr-spec   = local-part "@" domain
+	 * local-part  = dot-atom / quoted-string
+	 * qchar       = unreserved / pct-encoded / some-delims
+	 * some-delims = "!" / "$" / "'" / "(" / ")" / "*"
+	 *               / "+" / "," / ";" / ":" / "@"
+	 *
 	 * to         ~= *tqchar
 	 * tqchar     ~= <qchar> without ";" and ":" 
-   * 
+	 * 
 	 * Scheme 'mailto:' already parsed, starting parse after colon
 	 */
 
