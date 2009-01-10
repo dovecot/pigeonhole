@@ -90,10 +90,9 @@ following list outlines the implementation status of each supported extension:
     copy: full
     regex: mostly full; but suboptimal and no UTF-8
     body: mostly full, but text body-transform implementation is simple
-          and some issues make it still not RFC incompliant. 
+          and some issues make it still not completely RFC incompliant. 
     include: mostly full; needs some more work (no external binaries)
-    vacation: mostly full; no support for required References header and
-          and handling of utf-8 in headers is non-existant
+    vacation: mostly full; handling of utf-8 in headers is non-existant
     imapflags: full
     variables: mostly full; currently no support for future namespaces 
     notify: almost complete, mailto support only
