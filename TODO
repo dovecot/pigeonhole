@@ -3,8 +3,7 @@ Current:
 * Finish enotify extension:
 	- Mailto: prevent multiple notifications to a single recipient
 	- Regorous testing
-* Finish and test new multiscript support
-	- Sort multiscript directories for lda plugin.
+* Test new multiscript support
 
 Next (in order of descending priority/precedence):
 

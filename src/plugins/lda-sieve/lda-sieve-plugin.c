@@ -284,7 +284,21 @@ static void lda_sieve_multiscript_get_scriptfiles
 		const char *file;
 
 		while ( (file=sieve_directory_get_scriptfile(sdir)) != NULL ) {
-			array_append(scriptfiles, &file, 1);
+			const char *const *scripts;
+			unsigned int count, i;
+
+			/* Insert into sorted array */
+
+			scripts = array_get(scriptfiles, &count);
+			for ( i = 0; i < count; i++ ) {
+				if ( strcmp(file, scripts[i]) < 0 )
+					break;			
+			}
+	
+			if ( i == count ) 
+				array_append(scriptfiles, &file, 1);
+			else
+				array_insert(scriptfiles, i, &file, 1);
 		}
 
 		sieve_directory_close(&sdir);
