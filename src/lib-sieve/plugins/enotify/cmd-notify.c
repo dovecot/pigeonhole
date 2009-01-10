@@ -532,8 +532,24 @@ static int act_notify_check_duplicate
 	const struct sieve_action_data *act ATTR_UNUSED,
 	const struct sieve_action_data *act_other ATTR_UNUSED)
 {
-	/* No problems yet */
-	return 0;
+	const struct sieve_enotify_action *nact1, *nact2;
+	struct sieve_enotify_log nlog;
+		
+	if ( act->context == NULL || act_other->context == NULL )
+		return 0;
+
+	nact1 = (const struct sieve_enotify_action *) act->context;
+	nact2 = (const struct sieve_enotify_action *) act_other->context;
+
+	if ( nact1->method == NULL || nact1->method->action_check_duplicates == NULL )
+		return 0;
+
+	memset(&nlog, 0, sizeof(nlog));
+	nlog.location = act->location;
+	nlog.ehandler = sieve_result_get_error_handler(renv->result);
+
+	return nact1->method->action_check_duplicates
+		(&nlog, nact1->method_context, nact2->method_context, act_other->location);
 }
 
 /* Result printing */

@@ -68,6 +68,11 @@ struct sieve_enotify_method {
 	bool (*runtime_set_option)
 		(const struct sieve_enotify_log *nlog, void *method_context,
 			const char *option, const char *value);
+
+	/* Action duplicates */
+	int (*action_check_duplicates)
+		(const struct sieve_enotify_log *nlog, void *method_ctx1, 
+			void *method_ctx2, const char *dupl_location);
 		
 	/* Action print */
 	void (*action_print)

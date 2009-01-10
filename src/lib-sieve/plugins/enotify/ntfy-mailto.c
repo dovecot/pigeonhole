@@ -32,7 +32,7 @@
 #include "sieve-address.h"
 #include "sieve-message.h"
 
-/* To be removed */
+/* FIXME: notify API: methods should not need to include sieve-result.h */
 #include "sieve-result.h"
 
 /*
@@ -69,6 +69,7 @@ static bool ntfy_mailto_compile_check_uri
 	(const struct sieve_enotify_log *nlog, const char *uri, const char *uri_body);
 static bool ntfy_mailto_compile_check_from
 	(const struct sieve_enotify_log *nlog, string_t *from);
+
 static const char *ntfy_mailto_runtime_get_notify_capability
 	(const struct sieve_enotify_log *nlog, const char *uri, const char *uri_body, 
 		const char *capability);
@@ -78,9 +79,15 @@ static bool ntfy_mailto_runtime_check_operands
 	(const struct sieve_enotify_log *nlog, const char *uri,const char *uri_body, 
 		string_t *message, string_t *from, pool_t context_pool, 
 		void **method_context);
+
+static int ntfy_mailto_action_check_duplicates
+	(const struct sieve_enotify_log *nlog, void *method_ctx1, void *method_ctx2,
+		const char *dupl_location);
+
 static void ntfy_mailto_action_print
 	(const struct sieve_result_print_env *rpenv, 
 		const struct sieve_enotify_action *act);	
+
 static bool ntfy_mailto_action_execute
 	(const struct sieve_enotify_exec_env *nenv, 
 		const struct sieve_enotify_action *act);
@@ -95,6 +102,7 @@ const struct sieve_enotify_method mailto_notify = {
 	ntfy_mailto_runtime_get_notify_capability,
 	ntfy_mailto_runtime_check_operands,
 	NULL,
+	ntfy_mailto_action_check_duplicates,
 	ntfy_mailto_action_print,
 	ntfy_mailto_action_execute
 };
@@ -743,6 +751,19 @@ static bool ntfy_mailto_runtime_check_operands
 
 	*method_context = (void *) mtctx;
 	return TRUE;	
+}
+
+/*
+ * Action duplicates
+ */
+
+static int ntfy_mailto_action_check_duplicates
+(const struct sieve_enotify_log *nlog, void *method_ctx1, void *method_ctx2,
+	const char *dupl_location)
+{
+	/* FIXME: kill duplicate recipients */
+
+	return 0;
 }
 
 /*

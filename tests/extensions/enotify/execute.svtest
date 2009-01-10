@@ -77,3 +77,17 @@ test "RFC Example 6" {
 		test_fail "result execute failed";
 	}
 }
+
+test "Duplicate recipients" {
+	if not test_script_compile "execute/duplicates.sieve" {
+		test_fail "script compile failed";
+	}
+
+	if not test_script_run {
+		test_fail "script execute failed";
+	}
+
+	if not test_result_execute {
+		test_fail "result execute failed";
+	}
+}
