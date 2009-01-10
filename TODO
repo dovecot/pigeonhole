@@ -1,14 +1,17 @@
 Current:
 
-* Implement executing an arbitrary number of scripts sequentially, acting on the 
-  same set of result actions (multiscript):
-	- Rigorous testing
 * Finish enotify extension:
 	- Mailto: prevent multiple notifications to a single recipient
 	- Regorous testing
+* Test new multiscript support
 
 Next (in order of descending priority/precedence):
 
+* Improve error handling. Now it is not very consistent, especially for the sieve
+  command line tools and multiscript. 
+* Imapflags: merge execution of setflags, removeflags and addflags into one 
+  common implementation. 
+* Implement dropping errors in the user's mailbox as a mail message.
 * Fix remaining RFC deviations:
 	- Fix issues listed in doc/rfc/RFC-questions.txt based on answers
 	- Allow for the existance of dynamic comparators (i.e. specified by 
@@ -27,10 +30,7 @@ Next (in order of descending priority/precedence):
 	  compliance. Body test support currently matches but barely exceeds the
 	  original CMU Sieve implentation in terms of standards compliance.
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
-* Imapflags: merge execution of setflags, removeflags and addflags into one 
-  common implementation. 
 * Implement environment extension
-* Implement dropping errors in the user's mailbox as a mail message.
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
 * Properly implement Sieve internationalization support (utf-8 handling), currently
