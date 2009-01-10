@@ -26,11 +26,58 @@ autotools and libtool to be installed.
 Configuring
 -----------
 
-Currently identical to cmusieve module. The name of the module is 'sieve', 
-however, and not 'cmusieve'. For a detailed description on installing the 
-cmusieve plugin for deliver refer to the dovecot wiki:
+Configuration is currently mostly identical to the cmusieve module. However, the 
+name of the module is 'sieve' and not 'cmusieve'. For a detailed description on 
+installing the cmusieve plugin for deliver refer to the dovecot wiki:
 
 http://wiki.dovecot.org/LDA/Sieve
+
+The following options for the plugin section of the Dovecot config file are new
+with respect to the old CMU Sieve:
+
+  sieve_extensions = 
+
+    Use this setting to specify which Sieve language extensions are available 
+    to users. By default, all supported extensions are available.
+
+  sieve_before = 
+  sieve_after =
+
+    This Sieve implementation allows executing multiple Sieve scripts 
+    sequentially. These two options are used to specify what scripts need to
+    be executed before and after the user's script (as specified by the sieve
+    option). These settings allow specifying only one path each, but if the 
+    path leads to a directory all the Sieve scripts contained therein are 
+    executed. The order of execution is determined by the file names, using 
+    a normal 8bit per-character comparison.
+
+For example:
+
+# ...
+
+protocol lda {
+  postmaster_address = postmaster@example.com
+
+  mail_plugins = sieve
+
+  # ... 
+}
+
+plugin {
+   # The user's own script
+   sieve = ~/.dovecot.sieve
+
+   # Global script if user has none
+   #   If this is omitted Sieve processing is skipped when the user has no 
+   #   script of his own.
+   sieve_global_path = /etc/dovecot/sieve.global/default.sieve
+
+   # E.g. handling messages marked as dangerous
+   sieve_before = /etc/dovecot/sieve.global/discard-virusses.sieve
+
+   # E.g. default mail filing rules. 
+   sieve_after = /etc/dovecot/sieve.d/
+}
 
 Test Suite
 ----------
@@ -40,6 +87,8 @@ interpreter on your particular platform. Note that the test suite is not
 available when this package is compiled against the Dovecot headers. The test 
 suite executes a list of test cases and halts when one of them fails. If it 
 executes all test cases successfully, the test suite finishes. You can execute 
-the test suite using `make test`.
+the test suite using `make test`. 
+
+A failing test case is always a bug and a report is greatly appreciated.
 
 

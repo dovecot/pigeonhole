@@ -48,6 +48,14 @@ Features
   In addition, it has support for the new and very useful variables extension
   (see next section).
 
+* Supports executing multiple scrips sequentially.
+  
+  Using this feature it is possible to execute administrator-controlled Sieve
+  scripts before and after the user's Sieve script is executed. As long as the
+  verdict is at least (implicit) keep, the execution will continue with the next
+  script. Multiple scripts can be executed before or after the user's script by 
+  specifying directories containing sieve files.
+
 * Supported by ManageSieve service:
 
   This Sieve implementation is supported by the ManageSieve implementation for 
@@ -92,7 +100,7 @@ following list outlines the implementation status of each supported extension:
 
 All implemented extensions are like the engine itself currently experimental. 
 A status of 'full' does not necessarily mean that the extension is bug-free or 
-even fully RFC-compliant.
+even fully RFC-compliant. Check the TODO file for open issues.
  
 Many more extensions to the language exist. Not all of these extensions are 
 useful for Dovecot in particular, but many of them are. Currently, the author 
@@ -132,40 +140,28 @@ Included scripts are currently always compiled into the main binary, meaning
 that no other files are written and no permission to do so is necessary for the 
 global script directories. 
 
-To test the sieve engine outside deliver it is useful to execute the commands
-that exist in the src/sieve-tools/ directory of this package. After 
-installation, these are available at your $prefix/bin directory. The following 
-commands are installed:
+To test the sieve engine outside deliver, it is useful to try the commands that 
+exist in the src/sieve-tools/ directory of this package. After installation, 
+these are available at your $prefix/bin directory. The following commands are 
+installed:
 
---
+sievec     - Compiles sieve scripts into a binary representation for later 
+             execution.
 
-sievec [-d] <sieve-file> <out-file>
+sieved     - Dumps the content of a Sieve binary file for (development) 
+             debugging purposes.
 
-Compiles the script and produces a sieve binary. However, when the -d option is
-provided, a code dump is written to the output file. When the output file is '-'
-the dump output is written to stdout (only if -d is specified). 
-
---
-
-sieved <bin-file> [<dump-file>]
-
-Reads a sieve binary and produces a code dump. The optional dump-file parameter
-provides the means to specify a file to which the dump is to be written. 
-Otherwise, the dump is printed to stdout. 
-
--- 
-
-sieve-test [-r <recipient address>][-s <envelope sender>]
-           [-m <mailbox>][-d <dump filename>][-c][-t] <scriptfile> <mailfile>
-
-Reads mail message from the specified mailfile and executes the specified sieve 
-script to produce a verdict. This prints a list of actions that would 
-have been performed on this message.
-
---
+sieve-test - This is a universal Sieve test tool for testing the effect of a
+             Sieve script on a particular message.. It allows compiling, running 
+             and testing Sieve scripts. It can either be used to display the
+             actions that would be performed on the provided test message or it
+             can be used to test the actual delivery of one message and show the
+             messages that would normally be sent through SMTP.
 
 When installed, man pages are also available for these commands. In this package
-the man pages are present in doc/man and can be viewed using man -l <file>. 
+the man pages are present in doc/man and can be viewed before install using e.g.: 
+
+man -l doc/man/sieve-test.1
 
 Various example scripts are bundled in the directory 'examples'. These scripts
 were downloaded from various locations. View the top comment in the scripts for 
@@ -196,5 +192,3 @@ IRC: Freenode, #dovecot, S[r]us
 Please use the Dovecot mailing list <dovecot at dovecot.org> for questions about 
 this package. You can post to the list without subscribing, the mail then waits 
 in a moderator queue for a while. See http://dovecot.org/mailinglists.html
-
-

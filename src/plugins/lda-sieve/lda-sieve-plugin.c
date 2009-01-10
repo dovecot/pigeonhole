@@ -92,7 +92,7 @@ static const char *lda_sieve_get_path(void)
 			sieve_sys_error("stat(%s) failed: %m "
 				"(using global script path in stead)", script_path);
 		else if (getenv("DEBUG") != NULL)
-            sieve_sys_info("local script path %s doesn't exist "
+			sieve_sys_info("local script path %s doesn't exist "
 				"(using global script path in stead)", script_path);
 
 		/* use global script instead, if one exists */
