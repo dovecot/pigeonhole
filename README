@@ -43,10 +43,10 @@ Features
   without changes to the sieve engine code. If an extension is not loaded using 
   the require command, the compiler truly does not know of its existance. 
 
-* Supports almost all extensions provided by the original CMUSieve plugin:
+* Supports all extensions provided by the original CMUSieve plugin:
  
-  Currently only the notify extension is missing. In addition, it has support 
-  for the new and very useful variables extension (see next section).
+  In addition, it has support for the new and very useful variables extension
+  (see next section).
 
 * Supported by ManageSieve service:
 
@@ -59,8 +59,8 @@ Features
   This package includes a test suite to automatically asses whether the compiled 
   sieve engine works correctly. The test suite is an extension to the Sieve 
   language and is therefore easily extended with new tests. Currently, the 
-  test suite is limited to testing script processing. The performed actions are 
-  not tested automatically yet. 
+  test suite is mostly limited to testing script processing. The performed actions 
+  are not tested fully yet. 
 
 Implementation Status
 ---------------------
