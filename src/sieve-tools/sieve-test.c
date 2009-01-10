@@ -277,7 +277,7 @@ int main(int argc, char **argv)
 		sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 		/* Run the test */
-	
+		ret = 1;
 		if ( array_count(&scriptfiles) == 0 ) {
 			/* Single script */
 			sbin = main_sbin;
@@ -292,13 +292,20 @@ int main(int argc, char **argv)
 			/* Multiple scripts */
 			const char *const *sfiles;
 			unsigned int i, count;
-			struct sieve_multiscript *mscript = sieve_multiscript_start
-				(&msgdata, &scriptenv, ehandler);
-			int result = 1; 
+			struct sieve_multiscript *mscript;
+			bool more = TRUE;
+			int result;
+
+			if ( execute )
+				mscript = sieve_multiscript_start_execute
+					(&msgdata, &scriptenv, ehandler);
+			else
+				mscript = sieve_multiscript_start_test
+					(&msgdata, &scriptenv, ehandler, teststream);
 		
 			/* Execute scripts sequentially */
 			sfiles = array_get(&scriptfiles, &count); 
-			for ( i = 0; i < count && result > 0; i++ ) {
+			for ( i = 0; i < count && more; i++ ) {
 				if ( teststream != NULL ) 
 					o_stream_send_str(teststream, 
 						t_strdup_printf("\n## Executing script: %s\n", sfiles[i]));
@@ -316,20 +323,16 @@ int main(int argc, char **argv)
 				}
 			
 				if ( sbin == NULL ) {
-					result = -1;
+					ret = SIEVE_EXEC_FAILURE;
 					break;
 				}
 			
 				/* Execute/Test script */
-				if ( execute )
-					result = sieve_multiscript_execute(mscript, sbin, FALSE);
-				else
-					result = sieve_multiscript_test(mscript, sbin, FALSE, teststream);
+				more = sieve_multiscript_run(mscript, sbin, FALSE);
 			}
 		
 			/* Execute/Test main script */
-			switch ( result )	{
-			case TRUE:
+			if ( more && ret > 0 ) {
 				if ( teststream != NULL ) 
 					o_stream_send_str(teststream, 
 						t_strdup_printf("## Executing script: %s\n", scriptfile));
@@ -341,18 +344,12 @@ int main(int argc, char **argv)
 				sbin = main_sbin;
 				main_sbin = NULL;
 			
-				if ( execute )
-					(void)sieve_multiscript_execute(mscript, sbin, TRUE);
-				else 
-					(void)sieve_multiscript_test(mscript, sbin, TRUE, teststream);
-				
-			case FALSE:	
-				ret = sieve_multiscript_finish(&mscript);
-				break;
-		
-			default:
-				ret = SIEVE_EXEC_FAILURE;
+				sieve_multiscript_run(mscript, sbin, TRUE);
 			}
+			
+			result = sieve_multiscript_finish(&mscript);
+			
+			ret = ret > 0 ? result : ret;
 		}
 	
 		/* Run */

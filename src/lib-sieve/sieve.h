@@ -120,17 +120,28 @@ int sieve_execute
  
 struct sieve_multiscript;
  
-struct sieve_multiscript *sieve_multiscript_start
+struct sieve_multiscript *sieve_multiscript_start_execute
 	(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
 		struct sieve_error_handler *ehandler);
-		
-bool sieve_multiscript_test
-	(struct sieve_multiscript *mscript, struct sieve_binary *sbin, 
-		bool final, struct ostream *stream);
-bool sieve_multiscript_execute
-	(struct sieve_multiscript *mscript, struct sieve_binary *sbin,
-		bool final);
-	
+struct sieve_multiscript *sieve_multiscript_start_test
+	(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
+		struct sieve_error_handler *ehandler, struct ostream *stream);
+
+bool sieve_multiscript_run
+	(struct sieve_multiscript *mscript, struct sieve_binary *sbin, bool final);
+
+int sieve_multiscript_status(struct sieve_multiscript *mscript);
+
 int sieve_multiscript_finish(struct sieve_multiscript **mscript);
+
+/*
+ * Script directory
+ */
+
+struct sieve_directory;
+
+struct sieve_directory *sieve_directory_open(const char *path);
+const char *sieve_directory_get_scriptfile(struct sieve_directory *sdir);
+void sieve_directory_close(struct sieve_directory **sdir);
 
 #endif

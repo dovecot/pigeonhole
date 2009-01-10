@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <dirent.h>
 
 /* 
  * Main Sieve library interface
@@ -345,11 +346,15 @@ struct sieve_multiscript {
 	const struct sieve_message_data *msgdata;
 	const struct sieve_script_env *scriptenv;
 	struct sieve_error_handler *ehandler;
+
 	int status;
 	bool active;
+	bool ended;
+
+	struct ostream *teststream;
 };
  
-struct sieve_multiscript *sieve_multiscript_start
+struct sieve_multiscript *sieve_multiscript_start_execute
 (const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
 	struct sieve_error_handler *ehandler)
 {
@@ -373,40 +378,49 @@ struct sieve_multiscript *sieve_multiscript_start
 	return mscript;
 }
 
-bool sieve_multiscript_test
-(struct sieve_multiscript *mscript, struct sieve_binary *sbin, 
-	bool final, struct ostream *stream)
-{		
-	if ( !mscript->active ) return FALSE;
+struct sieve_multiscript *sieve_multiscript_start_test
+(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
+	struct sieve_error_handler *ehandler, struct ostream *stream)
+{
+	struct sieve_multiscript *mscript = 
+		sieve_multiscript_start_execute(msgdata, senv, ehandler);
 	
-	if ( final )
-		sieve_result_set_keep_action(mscript->result, &act_store);
+	mscript->teststream = stream;
 
-	/* Run the script */
-	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata, 
-		mscript->scriptenv, mscript->ehandler);
-				
-	/* Print result if successful */
-	if ( mscript->status > 0 ) {
-		bool keep = FALSE;
-
-		mscript->status = sieve_result_print
-			(mscript->result, mscript->scriptenv, stream, &keep);
-			
-		mscript->active = ( mscript->active && keep );
-	}
-	
-	if ( mscript->status <= 0 ) {
-		mscript->active = FALSE;
-		return FALSE;
-	}
-	
-	sieve_result_mark_executed(mscript->result);
-	
-	return mscript->active;
+	return mscript;
 }
 
-bool sieve_multiscript_execute
+static void sieve_multiscript_test
+(struct sieve_multiscript *mscript)
+{						
+	bool keep = FALSE;
+
+	mscript->status = sieve_result_print
+		(mscript->result, mscript->scriptenv, mscript->teststream, &keep);
+		
+	mscript->active = ( mscript->active && keep );
+
+	sieve_result_mark_executed(mscript->result);
+}
+
+static void sieve_multiscript_execute
+(struct sieve_multiscript *mscript)
+{
+	bool keep = FALSE;
+			
+	if ( mscript->status > 0 )
+		mscript->status = sieve_result_execute
+			(mscript->result, mscript->msgdata, mscript->scriptenv, &keep);
+	else {
+		if ( !sieve_result_implicit_keep
+			(mscript->result, mscript->msgdata, mscript->scriptenv) )
+			mscript->status = SIEVE_EXEC_KEEP_FAILED;
+	}
+	
+	mscript->active = ( mscript->active && keep );
+}
+
+bool sieve_multiscript_run
 (struct sieve_multiscript *mscript, struct sieve_binary *sbin,
 	bool final)
 {
@@ -414,43 +428,142 @@ bool sieve_multiscript_execute
 	
 	if ( final )
 		sieve_result_set_keep_action(mscript->result, &act_store);
-
+	
 	/* Run the script */
 	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata, 
 		mscript->scriptenv, mscript->ehandler);
-		
-	if ( mscript->status >= 0 ) {
-		bool keep = FALSE;
-				
-		if ( mscript->status > 0 )
-			mscript->status = sieve_result_execute
-				(mscript->result, mscript->msgdata, mscript->scriptenv, &keep);
-		else {
-			if ( !sieve_result_implicit_keep
-				(mscript->result, mscript->msgdata, mscript->scriptenv) )
-				mscript->status = SIEVE_EXEC_KEEP_FAILED;
-		}
-		
-		mscript->active = ( mscript->active && keep );
-	}
 
-	if ( mscript->status <= 0 ) {
-		mscript->active = FALSE;
+	if ( mscript->status >= 0 ) {
+		if ( mscript->teststream != NULL ) 
+			sieve_multiscript_test(mscript);
+		else
+			sieve_multiscript_execute(mscript);
+
+		if ( final ) mscript->active = FALSE;
+	}	
+
+	if ( mscript->status <= 0 )
 		return FALSE;
-	}
-	
+
 	return mscript->active;
+}
+
+int sieve_multiscript_status(struct sieve_multiscript *mscript)
+{
+	return mscript->status;
 }
 
 int sieve_multiscript_finish(struct sieve_multiscript **mscript)
 {
 	struct sieve_result *result = (*mscript)->result;
 	int ret = (*mscript)->status;
+
+	if ( (*mscript)->active ) {
+		ret = SIEVE_EXEC_FAILURE;
+
+		if ( (*mscript)->teststream ) {
+		} else {
+			if ( !sieve_result_implicit_keep
+				((*mscript)->result, (*mscript)->msgdata, (*mscript)->scriptenv) )
+				ret = SIEVE_EXEC_KEEP_FAILED;
+		}
+	}
 	
 	/* Cleanup */
 	sieve_result_unref(&result);
 	*mscript = NULL;
 	
 	return ret;
-}	
+}
+
+/*
+ * Script directory
+ */
+
+struct sieve_directory {
+		DIR *dirp;
+
+		const char *path;
+};
+
+struct sieve_directory *sieve_directory_open(const char *path)
+{ 
+	struct sieve_directory *sdir = NULL;
+	DIR *dirp;
+	struct stat st;
+
+	/* Specified path can either be a regular file or a directory */
+	if ( stat(path, &st) != 0 )
+		return NULL;
+
+	if ( S_ISDIR(st.st_mode) ) {
+	 	
+		/* Open the directory */
+		if ( (dirp = opendir(path)) == NULL ) {
+			sieve_sys_error("opendir(%s) failed: %m", path);
+			return NULL;		
+		}
+	
+		/* Create object */
+		sdir = t_new(struct sieve_directory, 1);
+		sdir->path = path;
+		sdir->dirp = dirp;
+	} else {
+		sdir = t_new(struct sieve_directory, 1);
+		sdir->path = path;
+		sdir->dirp = NULL;
+	}
+
+	return sdir;
+}
+
+const char *sieve_directory_get_scriptfile(struct sieve_directory *sdir)
+{
+	const char *script = NULL;
+	struct dirent *dp;
+	
+	if ( sdir->dirp != NULL ) {
+		while ( script == NULL ) {
+			const char *file;
+			struct stat st;
+
+			errno = 0;
+			if ( (dp = readdir(sdir->dirp)) == NULL ) {
+				if ( errno != 0 ) { 
+					sieve_sys_error("readdir(%s) failed: %m", sdir->path);
+					continue;
+				} else 
+					return NULL;
+			}
+
+			if ( !sieve_script_file_has_extension(dp->d_name) )
+				continue;
+
+			if ( sdir->path[strlen(sdir->path)-1] == '/' )
+				file = t_strconcat(sdir->path, dp->d_name, NULL);
+			else
+				file = t_strconcat(sdir->path, "/", dp->d_name, NULL);
+
+			if ( stat(file, &st) != 0 || !S_ISREG(st.st_mode) )
+				continue;
+
+			script = file;
+		}
+	} else {
+		script = sdir->path;
+		sdir->path = NULL;		
+	}
+							
+	return script;
+}
+
+void sieve_directory_close(struct sieve_directory **sdir)
+{
+	/* Close the directory */
+	if ( (*sdir)->dirp != NULL && closedir((*sdir)->dirp) < 0 ) 
+		sieve_sys_error("closedir(%s) failed: %m", (*sdir)->path);
+		
+	*sdir = NULL;
+}
+
 
