@@ -174,13 +174,6 @@ static inline bool _ntfy_mailto_header_unique(const char *field_name)
  
 /* Util functions */
 
-static inline pool_t array_get_pool_i(struct array *array)
-{
-	return buffer_get_pool(array->buffer);
-}
-#define array_get_pool(array) \
-	array_get_pool_i(&(array)->arr)
-
 #define _uri_parse_error(LOG, ...) \
 	sieve_enotify_error(LOG, "invalid mailto URI: " __VA_ARGS__ )
 	
