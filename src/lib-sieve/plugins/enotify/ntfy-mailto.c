@@ -827,7 +827,7 @@ static bool ntfy_mailto_send
 	const struct sieve_script_env *senv = nenv->scriptenv;
 	struct ntfy_mailto_context *mtctx = 
 		(struct ntfy_mailto_context *) act->method_context;	
-	const char *from = NULL; 
+	const char *from = NULL, *from_smtp = NULL; 
 	const char *subject = mtctx->subject;
 	const char *body = mtctx->body;
 	string_t *to, *cc;
@@ -852,13 +852,20 @@ static bool ntfy_mailto_send
 		return TRUE;
 	}
 	
-	/* Determine from address */
+	/* Determine message from address */
+	if ( act->from == NULL ) {
+		from = t_strdup_printf("Postmaster <%s>", senv->postmaster_address);
+	} else {
+		from = act->from;
+	}
+
+	/* Determine SMTP from address */
 	if ( msgdata->return_path != NULL ) {
-		if ( act->from == NULL )
-			from = t_strdup_printf("Postmaster <%s>", senv->postmaster_address);
-		else
-			/* FIXME: validate */
-			from = act->from;
+		if ( mtctx->from_normalized == NULL ) {
+			from_smtp = senv->postmaster_address;
+		} else {
+			from_smtp = mtctx->from_normalized;
+		}
 	}
 	
 	/* Determine subject */
@@ -905,7 +912,7 @@ static bool ntfy_mailto_send
 		const struct ntfy_mailto_header_field *headers;
 		unsigned int h, hcount;
 
-		smtp_handle = senv->smtp_open(recipients[i].normalized, from, &f);
+		smtp_handle = senv->smtp_open(recipients[i].normalized, from_smtp, &f);
 		outmsgid = sieve_message_get_new_id(senv);
 	
 		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
@@ -932,9 +939,9 @@ static bool ntfy_mailto_send
 			rfc2822_header_field_write(f, "Importance", "High");
 			break;
 		case 3:
-		  rfc2822_header_field_write(f, "X-Priority", "5 (Lowest)");
-		  rfc2822_header_field_write(f, "Importance", "Low");
-		  break;
+			rfc2822_header_field_write(f, "X-Priority", "5 (Lowest)");
+			rfc2822_header_field_write(f, "Importance", "Low");
+			break;
 		case 2:
 		default:
 			rfc2822_header_field_write(f, "X-Priority", "3 (Normal)");
