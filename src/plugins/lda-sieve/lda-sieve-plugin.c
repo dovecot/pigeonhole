@@ -429,10 +429,10 @@ static int lda_sieve_run
 	sieve_before = getenv("SIEVE_BEFORE");
 	sieve_after = getenv("SIEVE_AFTER");
 
-	if ( sieve_before != NULL || *sieve_before != '\0' )
+	if ( sieve_before != NULL && *sieve_before != '\0' )
 		lda_sieve_multiscript_get_scriptfiles(sieve_before, &scripts_before);
 
-	if ( sieve_after != NULL || *sieve_after != '\0' )
+	if ( sieve_after != NULL && *sieve_after != '\0' )
 		lda_sieve_multiscript_get_scriptfiles(sieve_after, &scripts_after);
 
 	if ( array_count(&scripts_before) == 0 && array_count(&scripts_after) == 0 )
