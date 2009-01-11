@@ -1,7 +1,6 @@
 Current:
 
 * Finish enotify extension:
-	- Mailto: prevent multiple notifications to a single recipient
 	- Cleanup method API.
 	- Regorous testing
 * Test new multiscript support extensively. 

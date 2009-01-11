@@ -1,4 +1,6 @@
 require "vnd.dovecot.testsuite";
+require "relational";
+
 
 /*
  * Execution testing (currently just meant to trigger any segfaults)
@@ -85,6 +87,10 @@ test "Duplicate recipients" {
 
 	if not test_script_run {
 		test_fail "script execute failed";
+	}
+
+	if test_result :count "ne" "2" {
+		test_fail "second notify action was discarded entirely";
 	}
 
 	if not test_result_execute {

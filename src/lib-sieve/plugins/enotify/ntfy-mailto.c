@@ -39,7 +39,7 @@
  * Configuration
  */
  
-#define NTFY_MAILTO_MAX_RECIPIENTS  4
+#define NTFY_MAILTO_MAX_RECIPIENTS  8
 #define NTFY_MAILTO_MAX_HEADERS     16
 #define NTFY_MAILTO_MAX_SUBJECT     256
 
@@ -344,7 +344,7 @@ static bool _uri_parse_recipients
 				str_append_c(to, ch);
 			}
 		} else {
-			if ( *p == ':' || *p == ';' || !_is_qchar(*p) ) {
+			if ( *p == ':' || *p == ';' || *p == ',' || !_is_qchar(*p) ) {
 				_uri_parse_error
 					(nlog, "invalid character '%c' in 'to' part", *p);
 				return FALSE;
@@ -758,12 +758,52 @@ static bool ntfy_mailto_runtime_check_operands
  */
 
 static int ntfy_mailto_action_check_duplicates
-(const struct sieve_enotify_log *nlog, void *method_ctx1, void *method_ctx2,
-	const char *dupl_location)
+(const struct sieve_enotify_log *nlog ATTR_UNUSED, 
+	void *method_ctx1, void *method_ctx2,
+	const char *dupl_location ATTR_UNUSED)
 {
-	/* FIXME: kill duplicate recipients */
+	struct ntfy_mailto_context *mt_new = 
+		(struct ntfy_mailto_context *) method_ctx1;
+	struct ntfy_mailto_context *mt_old = 
+		(struct ntfy_mailto_context *) method_ctx2;
+	const struct ntfy_mailto_recipient *new_rcpts, *old_rcpts;
+	unsigned int new_count, old_count, i, j;
+	unsigned int del_start = 0, del_len = 0;
 
-	return 0;
+	new_rcpts = array_get(&mt_new->recipients, &new_count);
+	old_rcpts = array_get(&mt_old->recipients, &old_count);
+
+	for ( i = 0; i < new_count; i++ ) {
+		for ( j = 0; j < old_count; j++ ) {
+			if ( strcmp(new_rcpts[i].normalized, old_rcpts[j].normalized) == 0 )
+				 break;				
+		}
+
+		if ( j == old_count ) {
+			/* Not duplicate */
+			if ( del_len > 0 ) {
+				/* Perform pending deletion */
+				array_delete(&mt_new->recipients, del_start, del_len);
+
+				/* Make sure the loop integrity is maintained */
+				i -= del_len;
+				new_rcpts = array_get(&mt_new->recipients, &new_count);
+			}
+			del_len = 0;		
+		} else {
+			/* Mark deletion */
+			if ( del_len == 0 )
+				del_start = i;
+			del_len++;
+		}
+	}
+
+	/* Perform pernding deletion */
+	if ( del_len > 0 ) {
+		array_delete(&mt_new->recipients, del_start, del_len);			
+	}
+
+	return ( array_count(&mt_new->recipients) > 0 ? 0 : 1 );
 }
 
 /*
@@ -814,6 +854,8 @@ static void ntfy_mailto_action_print
 	if ( mtctx->body != NULL )
 		sieve_result_printf(rpenv, "    => body         : \n--\n%s\n--\n\n", 
 			mtctx->body);
+
+	sieve_result_printf(rpenv,   "\n");
 }
 
 /*
