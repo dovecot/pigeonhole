@@ -102,8 +102,6 @@ int main(int argc, char **argv)
 	int i, ret;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
-	struct sieve_script_env scriptenv;
-	struct sieve_error_handler *ehandler;
 	bool trace = FALSE;
 
 	/* Parse arguments */
@@ -151,6 +149,8 @@ int main(int argc, char **argv)
 	
 	/* Compile sieve script */
 	if ( (sbin = sieve_tool_script_compile(scriptfile, NULL)) != NULL ) {
+		struct sieve_script_env scriptenv;
+		struct sieve_error_handler *ehandler;
 
 		/* Dump script */
 		sieve_tool_dump_binary_to(sbin, dumpfile);
@@ -173,6 +173,7 @@ int main(int argc, char **argv)
 		/* Run the test */
 		ehandler = sieve_stderr_ehandler_create(0);
 		ret = testsuite_run(sbin, &testsuite_msgdata, &scriptenv, ehandler);
+		sieve_error_handler_unref(&ehandler);
 
 		switch ( ret ) {
 		case SIEVE_EXEC_OK:
@@ -189,19 +190,19 @@ int main(int argc, char **argv)
 		}
 
 		sieve_close(&sbin);
+
+		if ( scriptenv.trace_stream != NULL )
+			o_stream_unref(&scriptenv.trace_stream);
+
+		/* De-initialize message environment */
+		testsuite_message_deinit();
+
+		/* De-initialize mail storages */
+		mail_storage_deinit();
+		mail_users_deinit();
+	} else {
+		testsuite_testcase_fail("failed to compile testcase script");
 	}
-
-	sieve_error_handler_unref(&ehandler);
-
-	if ( scriptenv.trace_stream != NULL )
-		o_stream_unref(&scriptenv.trace_stream);
-
-	/* De-initialize message environment */
-	testsuite_message_deinit();
-
-	/* De-initialize mail storages */
-	mail_storage_deinit();
-	mail_users_deinit();
 
 	/* De-initialize testsuite */
 	testsuite_tool_deinit();  
