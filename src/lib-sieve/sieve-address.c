@@ -166,11 +166,11 @@ static int parse_mailbox(struct sieve_message_address_parser *ctx)
 	const unsigned char *start;
 	
 	/* sieve-address   =       addr-spec                  ; simple address
-   *                         / phrase "<" addr-spec ">" ; name & addr-spec
-   */
+	 *                         / phrase "<" addr-spec ">" ; name & addr-spec
+	 */
  
-  /* Record parser state in case we fail at our first attempt */
-  start = ctx->parser.data;   
+	/* Record parser state in case we fail at our first attempt */
+	start = ctx->parser.data;   
  
 	/* First try: phrase "<" addr-spec ">" ; name & addr-spec */	
 	str_truncate(ctx->str, 0);
@@ -225,6 +225,14 @@ static bool parse_mailbox_address
 	}
 	
 	if ((ret = parse_mailbox(ctx)) < 0) {
+		return FALSE;
+	}
+
+	if (ctx->parser.data != ctx->parser.end) {
+		if ( *ctx->parser.data == ',' ) 
+			sieve_address_error(ctx, "not a single addres (found ',')");
+		else
+			sieve_address_error(ctx, "address ends in invalid characters");
 		return FALSE;
 	}
 			
@@ -315,7 +323,7 @@ const char *sieve_address_normalize
 	
 	*error_r = NULL;
 	(void)str_lcase(str_c_modifiable(ctx.domain));
-	
+
 	return t_strconcat(str_c(ctx.local_part), "@", str_c(ctx.domain), NULL);
 }
 

@@ -1,5 +1,7 @@
 require "vacation";
 
+# Error 
+
 redirect "@wrong.example.com";
 redirect "error";
 redirect "error@";
@@ -11,6 +13,8 @@ redirect "<>";
 redirect "Error <";
 redirect "Error <stephan";
 redirect "Error <stephan@";
+redirect "stephan@rename-it.nl,tss@iki.fi";
+redirect "stephan@rename-it.nl,%&^&!!~";
 
 vacation :from "Error" "Ik ben er niet.";
 
