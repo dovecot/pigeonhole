@@ -54,7 +54,7 @@ test "RFC hasflag example - :contains variable" {
 		test_fail "failed true example 1";
 	}
 
-    if not hasflag :contains "MyVar" "forward" {
+	if not hasflag :contains "MyVar" "forward" {
 		test_fail "failed true example 2";
 	}
       
@@ -70,7 +70,7 @@ test "RFC hasflag example - :contains variable" {
 		test_fail "failed true example 4 (rewrite 1)";
 	}
 
-    if not hasflag :contains "MyVar" "forward junk" {
+	if not hasflag :contains "MyVar" "forward junk" {
 		test_fail "failed true example 4 (rewrite 2)";
 	}
 

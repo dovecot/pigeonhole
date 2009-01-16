@@ -39,10 +39,55 @@ test "Hasflag; duplicates" {
 	set "Flags" "A B C D E F A B C D E F";
 
 	if hasflag :comparator "i;ascii-numeric" :count "gt" "Flags" "6" {
-		test_fail "hasflag ignores duplicates";
+		test_fail "hasflag must ignore duplicates";
 	}
 
 	if not hasflag :comparator "i;ascii-numeric" :count "eq" "Flags" "6" {
 		test_fail "hasflag :count gives strange results";
 	}
 }
+
+test "Flag operations" {
+	setflag "A";
+
+	if not hasflag "A" {
+		test_fail "hasflag misses set flag";
+	}
+
+	if hasflag :comparator "i;ascii-numeric" :count "gt" "1" {
+		test_fail "hasflag sees more than one flag";
+	}
+
+	addflag "B";
+
+	if not hasflag "B" {
+		test_fail "flag \"B\" not added";
+	}
+	
+	if not hasflag "A" {
+		test_fail "flag \"A\" not retained";
+	}
+
+	if hasflag :comparator "i;ascii-numeric" :count "gt" "2" {
+                test_fail "hasflag sees more than two flags";
+        }
+
+	addflag ["C", "D", "E F"];	
+
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "6" {
+                test_fail "hasflag sees more than two flags";
+        }
+
+	removeflag ["D"];
+
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "5" {
+                test_fail "hasflag sees more than two flags";
+        }	
+	
+	if hasflag "D" {
+		test_fail "removed flag still present";
+	}
+}
+
+
+
