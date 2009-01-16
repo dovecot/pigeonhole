@@ -8,12 +8,10 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-storage 
 
-cmds = \
-	cmd-setflag.c \
-	cmd-addflag.c \
-	cmd-removeflag.c 
+commands = \
+	cmd-flag.c
 
-tsts = \
+tests = \
 	tst-hasflag.c
 
 tags = \
@@ -21,8 +19,8 @@ tags = \
 
 libsieve_ext_imapflags_la_SOURCES = \
 	ext-imapflags-common.c \
-	$(cmds) \
-	$(tsts) \
+	$(commands) \
+	$(tests) \
 	$(tags) \
 	ext-imapflags.c
 

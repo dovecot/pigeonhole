@@ -62,17 +62,6 @@ extern const struct sieve_command tst_hasflag;
 bool ext_imapflags_command_validate
 	(struct sieve_validator *validator, struct sieve_command_context *cmd);
 
-bool ext_imapflags_command_operands_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address);
-bool ext_imapflags_command_operation_dump
-(const struct sieve_operation *op,	
-	const struct sieve_dumptime_env *denv, sieve_size_t *address);
-	
-int ext_imapflags_command_operands_read
-(	const struct sieve_runtime_env *renv, sieve_size_t *address,
-	struct sieve_coded_stringlist **flag_list, 
-	struct sieve_variable_storage **storage, unsigned int *var_index);
-
 /*
  * Flags tagged argument
  */	
@@ -95,6 +84,10 @@ void ext_imapflags_iter_init
 	
 const char *ext_imapflags_iter_get_flag
 	(struct ext_imapflags_iter *iter);
+
+typedef int (*ext_imapflag_flag_operation_t)
+	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
+		unsigned int var_index, string_t *flags);
 
 int ext_imapflags_set_flags
 	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
