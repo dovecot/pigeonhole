@@ -25,13 +25,16 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 /* 
  * Configuration 
  */
 
-#define SUBADDRESS_DEFAULT_SEP_CHAR '+'
+#define SUBADDRESS_DEFAULT_SEP "+"
+
+static const char *sieve_subaddress_sep = SUBADDRESS_DEFAULT_SEP;
 
 /*
  * Forward declarations 
@@ -46,6 +49,7 @@ static struct sieve_operand subaddress_operand;
  * Extension
  */
 
+static bool ext_subaddress_load(void);
 static bool ext_subaddress_validator_load(struct sieve_validator *validator);
 
 static int ext_my_id = -1;
@@ -53,12 +57,23 @@ static int ext_my_id = -1;
 const struct sieve_extension subaddress_extension = { 
 	"subaddress", 
 	&ext_my_id,
-	NULL, NULL,
+	ext_subaddress_load, 
+	NULL,
 	ext_subaddress_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_OPERAND(subaddress_operand)
 };
+
+static bool ext_subaddress_load(void)
+{
+	sieve_subaddress_sep = getenv("SIEVE_SUBADDRESS_SEP");
+
+	if ( sieve_subaddress_sep == NULL )
+		sieve_subaddress_sep = SUBADDRESS_DEFAULT_SEP;
+
+	return TRUE;
+}
 
 static bool ext_subaddress_validator_load(struct sieve_validator *validator)
 {
@@ -102,7 +117,7 @@ const struct sieve_address_part detail_address_part = {
 static const char *subaddress_user_extract_from
 	(const struct sieve_address *address)
 {
-	const char *sep = strchr(address->local_part, SUBADDRESS_DEFAULT_SEP_CHAR);
+	const char *sep = strstr(address->local_part, sieve_subaddress_sep);
 	
 	if ( sep == NULL ) return address->local_part;
 	
@@ -112,11 +127,17 @@ static const char *subaddress_user_extract_from
 static const char *subaddress_detail_extract_from
 	(const struct sieve_address *address)
 {
-	const char *sep = strchr(address->local_part, SUBADDRESS_DEFAULT_SEP_CHAR);
+	const char *sep = strstr(address->local_part, sieve_subaddress_sep);
 
-	if ( sep == NULL ) return NULL;
-		
-	return sep+1;
+	if ( sep == NULL ) return NULL; 
+
+	sep += strlen(sieve_subaddress_sep);
+
+	/* Just to be sure */
+	if ( sep > (address->local_part + strlen(address->local_part)) ) 
+		return NULL;
+
+	return sep;
 }
 
 /*

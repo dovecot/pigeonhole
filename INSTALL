@@ -51,6 +51,15 @@ with respect to the old CMU Sieve:
     executed. The order of execution is determined by the file names, using 
     a normal 8bit per-character comparison.
 
+  sieve_subaddress_sep = +
+
+    This setting specifies what separator is used between the :user and :detail 
+    address parts introduced by the subaddress extension. This may also be a 
+    sequence of characters (e.g. '--'). The current implementation looks for
+    the separator from the left of the localpart and uses the first one 
+    encountered. The :user part is left of the separator and the :detail part 
+    is right. 
+    
 For example:
 
 # ...
