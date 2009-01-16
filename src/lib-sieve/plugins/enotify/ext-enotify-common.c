@@ -552,6 +552,20 @@ int ext_enotify_runtime_check_operands
 }
 
 /*
+ * Notify method printing
+ */
+
+void sieve_enotify_method_printf
+(const struct sieve_enotify_print_env *penv, const char *fmt, ...)
+{
+	va_list args;
+	
+	va_start(args, fmt);	
+	sieve_result_vprintf(penv->result_penv, fmt, args);
+	va_end(args);	 
+}
+
+/*
  * Method logging
  */
 

@@ -32,9 +32,6 @@
 #include "sieve-address.h"
 #include "sieve-message.h"
 
-/* FIXME: notify API: methods should not need to include sieve-result.h */
-#include "sieve-result.h"
-
 /*
  * Configuration
  */
@@ -85,7 +82,7 @@ static int ntfy_mailto_action_check_duplicates
 		const char *dupl_location);
 
 static void ntfy_mailto_action_print
-	(const struct sieve_result_print_env *rpenv, 
+	(const struct sieve_enotify_print_env *penv, 
 		const struct sieve_enotify_action *act);	
 
 static bool ntfy_mailto_action_execute
@@ -798,7 +795,7 @@ static int ntfy_mailto_action_check_duplicates
 		}
 	}
 
-	/* Perform pernding deletion */
+	/* Perform pending deletion */
 	if ( del_len > 0 ) {
 		array_delete(&mt_new->recipients, del_start, del_len);			
 	}
@@ -811,7 +808,7 @@ static int ntfy_mailto_action_check_duplicates
  */
  
 static void ntfy_mailto_action_print
-(const struct sieve_result_print_env *rpenv, 
+(const struct sieve_enotify_print_env *penv, 
 	const struct sieve_enotify_action *act)
 {
 	unsigned int count, i;
@@ -820,42 +817,60 @@ static void ntfy_mailto_action_print
 	struct ntfy_mailto_context *mtctx = 
 		(struct ntfy_mailto_context *) act->method_context;
 	
-	sieve_result_printf(rpenv,   "    => importance   : %d\n", act->importance);
-	if ( act->message != NULL )
-		sieve_result_printf(rpenv, "    => subject      : %s\n", act->message);
-	else if ( mtctx->subject != NULL )
-		sieve_result_printf(rpenv, "    => subject      : %s\n", mtctx->subject);
-	if ( act->from != NULL )
-		sieve_result_printf(rpenv, "    => from         : %s\n", act->from);
+	/* Print main method parameters */
 
-	sieve_result_printf(rpenv,   "    => recipients   :\n" );
+	sieve_enotify_method_printf
+		(penv,   "    => importance   : %d\n", act->importance);
+
+	if ( act->message != NULL )
+		sieve_enotify_method_printf
+			(penv, "    => subject      : %s\n", act->message);
+	else if ( mtctx->subject != NULL )
+		sieve_enotify_method_printf
+			(penv, "    => subject      : %s\n", mtctx->subject);
+
+	if ( act->from != NULL )
+		sieve_enotify_method_printf
+			(penv, "    => from         : %s\n", act->from);
+
+	/* Print mailto: recipients */
+
+	sieve_enotify_method_printf(penv,   "    => recipients   :\n" );
 
 	recipients = array_get(&mtctx->recipients, &count);
 	if ( count == 0 ) {
-		sieve_result_printf(rpenv,   "       NONE, action has no effect\n");
+		sieve_enotify_method_printf(penv,   "       NONE, action has no effect\n");
 	} else {
 		for ( i = 0; i < count; i++ ) {
 			if ( recipients[i].carbon_copy )
-				sieve_result_printf(rpenv,   "       + Cc: %s\n", recipients[i].full);
+				sieve_enotify_method_printf
+					(penv,   "       + Cc: %s\n", recipients[i].full);
 			else
-				sieve_result_printf(rpenv,   "       + To: %s\n", recipients[i].full);
+				sieve_enotify_method_printf
+					(penv,   "       + To: %s\n", recipients[i].full);
 		}
 	}
+
+	/* Print accepted headers for notification message */
 	
 	headers = array_get(&mtctx->headers, &count);
 	if ( count > 0 ) {
-		sieve_result_printf(rpenv,   "    => headers      :\n" );	
+		sieve_enotify_method_printf(penv,   "    => headers      :\n" );	
 		for ( i = 0; i < count; i++ ) {
-			sieve_result_printf(rpenv,   "       + %s: %s\n", 
+			sieve_enotify_method_printf(penv,   "       + %s: %s\n", 
 				headers[i].name, headers[i].body);
 		}
 	}
+
+	/* Print body for notification message */
 	
 	if ( mtctx->body != NULL )
-		sieve_result_printf(rpenv, "    => body         : \n--\n%s\n--\n\n", 
-			mtctx->body);
+		sieve_enotify_method_printf
+			(penv, "    => body         : \n--\n%s\n--\n", mtctx->body);
 
-	sieve_result_printf(rpenv,   "\n");
+	/* Finish output with an empty line */
+
+	sieve_enotify_method_printf(penv,   "\n");
 }
 
 /*

@@ -565,8 +565,14 @@ static void act_notify_print
 	sieve_result_action_printf
 		( rpenv, "send notification with method '%s:':", act->method->identifier);
 		
-	if ( act->method->action_print != NULL )
-		act->method->action_print(rpenv, act);
+	if ( act->method->action_print != NULL ) {
+		struct sieve_enotify_print_env penv;
+
+		memset(&penv, 0, sizeof(penv));
+		penv.result_penv = rpenv;
+
+		act->method->action_print(&penv, act);
+	}
 }
 
 /* Result execution */

@@ -18,6 +18,7 @@
 struct sieve_enotify_log;
 struct sieve_enotify_context; 
 struct sieve_enotify_action;
+struct sieve_enotify_print_env;
 struct sieve_enotify_exec_env;
 
 /*
@@ -76,7 +77,7 @@ struct sieve_enotify_method {
 		
 	/* Action print */
 	void (*action_print)
-		(const struct sieve_result_print_env *rpenv, 
+		(const struct sieve_enotify_print_env *penv, 
 			const struct sieve_enotify_action *act);	
 			
 	/* Action execution */
@@ -86,6 +87,14 @@ struct sieve_enotify_method {
 };
 
 void sieve_enotify_method_register(const struct sieve_enotify_method *method);
+
+/*
+ * Notify method printing
+ */
+
+void sieve_enotify_method_printf
+	(const struct sieve_enotify_print_env *penv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 
 /*
  * Notify execution environment

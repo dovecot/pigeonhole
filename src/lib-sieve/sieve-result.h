@@ -50,12 +50,17 @@ struct sieve_result_print_env {
 	struct ostream *stream;
 };
 
+void sieve_result_vprintf
+	(const struct sieve_result_print_env *penv, const char *fmt, va_list args);
 void sieve_result_printf
-	(const struct sieve_result_print_env *penv, const char *fmt, ...);
+	(const struct sieve_result_print_env *penv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 void sieve_result_action_printf
-	(const struct sieve_result_print_env *penv, const char *fmt, ...);
+	(const struct sieve_result_print_env *penv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 void sieve_result_seffect_printf
-	(const struct sieve_result_print_env *penv, const char *fmt, ...);
+	(const struct sieve_result_print_env *penv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 
 bool sieve_result_print
 	(struct sieve_result *result, const struct sieve_script_env *senv, 

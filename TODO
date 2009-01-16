@@ -1,8 +1,6 @@
 Current:
 
-* Finish enotify extension:
-	- Cleanup method API.
-	- Regorous testing
+* Test new enotify extension extensively.
 * Test new multiscript support extensively. 
 
 Next (in order of descending priority/precedence):
@@ -63,7 +61,7 @@ Next (in order of descending priority/precedence):
 
 * Implement editheader extension
 * Implement mimeloop extension
-* Variables extension: implement compile time evaluation of contant values
+* Variables extension: implement compile time evaluation of constant values
 * Enotify extension: detect use of variable values extracted from the message 
   that are used in the method argument. RFC reports this as a security issue.
 * Import ManageSieve into this package and provide support for alternate types

@@ -94,6 +94,14 @@ int ext_enotify_runtime_check_operands
 		const struct sieve_enotify_method **method_r, void **method_context);
 		
 /*
+ * Method printing
+ */
+
+struct sieve_enotify_print_env {
+	const struct sieve_result_print_env *result_penv;
+};
+
+/*
  * Method logging
  */ 
 

@@ -573,17 +573,24 @@ void sieve_result_set_failure_action
  * Result printing
  */
 
+void sieve_result_vprintf
+(const struct sieve_result_print_env *penv, const char *fmt, va_list args)
+{	
+	string_t *outbuf = t_str_new(128);
+
+	str_vprintfa(outbuf, fmt, args);
+	
+	o_stream_send(penv->stream, str_data(outbuf), str_len(outbuf));
+}
+
 void sieve_result_printf
 (const struct sieve_result_print_env *penv, const char *fmt, ...)
 {	
-	string_t *outbuf = t_str_new(128);
 	va_list args;
 	
 	va_start(args, fmt);	
-	str_vprintfa(outbuf, fmt, args);
-	va_end(args);
-	
-	o_stream_send(penv->stream, str_data(outbuf), str_len(outbuf));
+	sieve_result_vprintf(penv, fmt, args);
+	va_end(args);	
 }
 
 void sieve_result_action_printf
@@ -669,7 +676,7 @@ bool sieve_result_print
 				if ( act->print != NULL )
 					act->print(act, &penv, rac->data.context, &impl_keep);
 				else
-					sieve_result_action_printf(&penv, act->name); 
+					sieve_result_action_printf(&penv, "%s", act->name); 
 			} else {
 				if ( rac->keep ) {
 					sieve_result_action_printf(&penv, "keep");
