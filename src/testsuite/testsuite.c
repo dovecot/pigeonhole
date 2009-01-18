@@ -22,6 +22,7 @@
 
 #include "testsuite-common.h"
 #include "testsuite-result.h"
+#include "testsuite-message.h"
 
 #include <stdio.h>
 #include <stdlib.h>

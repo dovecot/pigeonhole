@@ -51,6 +51,7 @@ testsuite_SOURCES = \
 	testsuite-objects.c \
 	testsuite-substitutions.c \
 	testsuite-arguments.c \
+	testsuite-message.c \
 	testsuite-log.c \
 	testsuite-script.c \
 	testsuite-result.c \
@@ -64,6 +65,7 @@ noinst_HEADERS = \
 	testsuite-objects.h \
 	testsuite-substitutions.h \
 	testsuite-arguments.h \
+	testsuite-message.h \
 	testsuite-log.h \
 	testsuite-script.h \
 	testsuite-result.h

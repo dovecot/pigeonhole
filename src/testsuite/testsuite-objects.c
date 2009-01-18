@@ -18,6 +18,7 @@
 
 #include "testsuite-common.h"
 #include "testsuite-objects.h"
+#include "testsuite-message.h"
  
 /* 
  * Testsuite core objects
