@@ -104,16 +104,11 @@ void testsuite_test_succeed(string_t *reason);
 void testsuite_testcase_fail(const char *reason);
 int testsuite_testcase_result(void);
 
-/* 
- * Tested script environment 
+/*
+ * Testsuite temporary directory
  */
-
-bool testsuite_script_compile(const char *script_path);
-bool testsuite_script_run(const struct sieve_runtime_env *renv);
-
-void testsuite_script_clear_messages(void);
-void testsuite_script_get_error_init(void);
-const char *testsuite_script_get_error_next(bool location);
+ 
+const char *testsuite_tmp_dir_get(void);
 
 /* 
  * Testsuite init/deinit 

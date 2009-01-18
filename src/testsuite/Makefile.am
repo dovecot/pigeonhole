@@ -55,6 +55,7 @@ testsuite_SOURCES = \
 	testsuite-log.c \
 	testsuite-script.c \
 	testsuite-result.c \
+	testsuite-smtp.c \
 	$(commands) \
 	$(tests) \
 	ext-testsuite.c \
@@ -68,5 +69,6 @@ noinst_HEADERS = \
 	testsuite-message.h \
 	testsuite-log.h \
 	testsuite-script.h \
-	testsuite-result.h
+	testsuite-result.h \
+	testsuite-smtp.h
 

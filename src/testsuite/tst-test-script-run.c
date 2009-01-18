@@ -13,6 +13,7 @@
 #include "sieve.h"
 
 #include "testsuite-common.h"
+#include "testsuite-script.h"
 #include "testsuite-result.h"
 
 /*

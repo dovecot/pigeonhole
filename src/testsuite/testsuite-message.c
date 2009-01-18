@@ -130,4 +130,5 @@ void testsuite_envelope_set_auth_user(const char *value)
 	str_truncate(envelope_auth, 0);
 	str_append(envelope_auth, value);
 	testsuite_msgdata.auth_user = str_c(envelope_auth);
-}
+} 
+ 

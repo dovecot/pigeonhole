@@ -23,6 +23,7 @@
 #include "testsuite-common.h"
 #include "testsuite-result.h"
 #include "testsuite-message.h"
+#include "testsuite-smtp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,28 +73,28 @@ static int testsuite_run
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata, 
 	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler)
 {
-        struct sieve_interpreter *interp;
+	struct sieve_interpreter *interp;
 	struct sieve_result *result;
-        int ret = 0;
+	int ret = 0;
 
-        /* Create the interpreter */
-        if ( (interp=sieve_interpreter_create(sbin, ehandler)) == NULL )
-                return SIEVE_EXEC_BIN_CORRUPT;
+	/* Create the interpreter */
+	if ( (interp=sieve_interpreter_create(sbin, ehandler)) == NULL )
+		return SIEVE_EXEC_BIN_CORRUPT;
 
-        /* Reset execution status */
-        if ( senv->exec_status != NULL )
-                memset(senv->exec_status, 0, sizeof(*senv->exec_status));
+	/* Reset execution status */
+	if ( senv->exec_status != NULL )
+		memset(senv->exec_status, 0, sizeof(*senv->exec_status));
 
-        /* Run the interpreter */
+	/* Run the interpreter */
 	result = testsuite_result_get();
 	sieve_result_ref(result);
-        ret = sieve_interpreter_run(interp, msgdata, senv, result);
+	ret = sieve_interpreter_run(interp, msgdata, senv, result);
 	sieve_result_unref(&result);
 
-        /* Free the interpreter */
-        sieve_interpreter_free(&interp);
+	/* Free the interpreter */
+	sieve_interpreter_free(&interp);
 
-        return ret;
+	return ret;
 }
 
 int main(int argc, char **argv) 
@@ -169,6 +170,8 @@ int main(int argc, char **argv)
 		memset(&scriptenv, 0, sizeof(scriptenv));
 		scriptenv.default_mailbox = "INBOX";
 		scriptenv.username = user;
+		scriptenv.smtp_open = testsuite_smtp_open;
+        scriptenv.smtp_close = testsuite_smtp_close;
 		scriptenv.trace_stream = ( trace ? o_stream_create_fd(1, 0, FALSE) : NULL );
 
 		/* Run the test */

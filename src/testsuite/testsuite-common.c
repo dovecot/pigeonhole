@@ -8,6 +8,7 @@
 #include "hash.h"
 #include "mail-storage.h"
 #include "env-util.h"
+#include "unlink-directory.h"
 
 #include "mail-raw.h"
 
@@ -27,6 +28,15 @@
 #include "testsuite-log.h"
 #include "testsuite-script.h"
 #include "testsuite-result.h"
+#include "testsuite-smtp.h"
+
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 /*
  * Global data
@@ -165,6 +175,36 @@ int testsuite_testcase_result(void)
 	return 0;
 }
 
+/*
+ * Testsuite temporary directory
+ */
+
+static char *testsuite_tmp_dir;
+
+static void testsuite_tmp_dir_init(void)
+{
+	testsuite_tmp_dir = i_strdup_printf
+		("/tmp/dsieve-testsuite.%s.%s", dec2str(time(NULL)), dec2str(getpid()));
+
+	if ( mkdir(testsuite_tmp_dir, 0700) < 0 ) {
+		i_fatal("failed to create temporary directory '%s': %m.", 
+			testsuite_tmp_dir);		
+	}
+}
+
+static void testsuite_tmp_dir_deinit(void)
+{
+	if ( unlink_directory(testsuite_tmp_dir, TRUE) < 0 )
+		i_warning("failed to remove temporary directory '%s': %m.",
+			testsuite_tmp_dir);
+
+	i_free(testsuite_tmp_dir);
+}
+
+const char *testsuite_tmp_dir_get(void)
+{
+	return testsuite_tmp_dir;
+}
 
 /*
  * Main testsuite init/deinit
@@ -174,14 +214,20 @@ void testsuite_init(void)
 {
 	testsuite_test_context_init();
 	testsuite_log_init();
+	testsuite_tmp_dir_init();
+	
 	testsuite_script_init();
 	testsuite_result_init();
+	testsuite_smtp_init();
 }
 
 void testsuite_deinit(void)
 {
+	testsuite_smtp_deinit();
 	testsuite_result_deinit();
 	testsuite_script_deinit();
+	
+	testsuite_tmp_dir_deinit();
 	testsuite_log_deinit();
 	testsuite_test_context_deinit();
 }
