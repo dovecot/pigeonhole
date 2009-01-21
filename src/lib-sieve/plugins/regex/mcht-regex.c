@@ -268,8 +268,10 @@ static int mcht_regex_match
 				str_truncate(subst, 0);
 			
 				if ( ctx->pmatch[i].rm_so != -1 ) {
-					if ( skipped > 0 )
+					if ( skipped > 0 ) {
 						sieve_match_values_skip(mvalues, skipped);
+						skipped = 0;
+					}
 					
 					str_append_n(subst, val + ctx->pmatch[i].rm_so, 
 						ctx->pmatch[i].rm_eo - ctx->pmatch[i].rm_so);
