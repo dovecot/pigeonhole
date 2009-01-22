@@ -33,12 +33,13 @@ installing the cmusieve plugin for deliver refer to the dovecot wiki:
 http://wiki.dovecot.org/LDA/Sieve
 
 The following options for the plugin section of the Dovecot config file are new
-with respect to the old CMU Sieve:
+when compared to the old CMU Sieve:
 
   sieve_extensions = 
 
     Use this setting to specify which Sieve language extensions are available 
-    to users. By default, all supported extensions are available.
+    to users. By default, all supported extensions are available, but some 
+    system administrators may want to disable certain Sieve extensions. 
 
   sieve_before = 
   sieve_after =
@@ -46,10 +47,29 @@ with respect to the old CMU Sieve:
     This Sieve implementation allows executing multiple Sieve scripts 
     sequentially. These two options are used to specify what scripts need to
     be executed before and after the user's script (as specified by the sieve
-    option). These settings allow specifying only one path each, but if the 
-    path leads to a directory all the Sieve scripts contained therein are 
+    option). These settings allow specifying only one path each. However, if 
+    the path leads to a directory, all the Sieve scripts contained therein are 
     executed. The order of execution is determined by the file names, using 
     a normal 8bit per-character comparison.
+
+    After one script terminates, the next script is executed if an implicit or 
+    explicit "keep" is in effect. Thus, to end all script execution, a script 
+    must not execute keep and it must cancel the implicit keep, e.g. by
+    executing `discard; stop;'. Keep in mind that `fileinto "INBOX"' is not 
+    the same as a keep action in this context (only for the last script).
+
+    Just as for executing a single script the normal way, this implementation 
+    takes care never to duplicate deliveries, forwards or responses. When 
+    vacation actions are executed multiple times in different scripts, the 
+    usual error is not triggered: the subsequent duplicate vacation actions 
+    are simply discarded.
+
+    Apart from the keep action, all actions triggered in a script in the
+    sequence are executed before continuing to the next script. This means 
+    that when a script in the sequence encounters an error, actions from
+    preceeding scripts are not affected. The sequence is broken however, 
+    meaning that the script execution of the offending script is aborted and
+    no further scripts are executed. An implicit keep is executed in stead.
 
   sieve_subaddress_sep = +
 
@@ -77,14 +97,16 @@ plugin {
    sieve = ~/.dovecot.sieve
 
    # Global script if user has none
-   #   If this is omitted Sieve processing is skipped when the user has no 
-   #   script of his own.
+   #   If this is omitted, Sieve processing is skipped when the user has no 
+   #   script of his own. This includes multiscript
    sieve_global_path = /etc/dovecot/sieve.global/default.sieve
 
-   # E.g. handling messages marked as dangerous
+   # Scripts executed before the user's script.
+   #   E.g. handling messages marked as dangerous
    sieve_before = /etc/dovecot/sieve.global/discard-virusses.sieve
 
-   # E.g. default mail filing rules. 
+   # Scripts executed after the user's script (if keep is still in effect)
+   #   E.g. default mail filing rules.  
    sieve_after = /etc/dovecot/sieve.d/
 }
 
@@ -93,8 +115,8 @@ Test Suite
 
 This package includes a test suite to verify the basic processing of the Sieve
 interpreter on your particular platform. Note that the test suite is not 
-available when this package is compiled against the Dovecot headers. The test 
-suite executes a list of test cases and halts when one of them fails. If it 
+available when this package is compiled against the Dovecot headers only. The 
+test suite executes a list of test cases and halts when one of them fails. If it 
 executes all test cases successfully, the test suite finishes. You can execute 
 the test suite using `make test`. 
 
