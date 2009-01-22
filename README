@@ -95,7 +95,7 @@ following list outlines the implementation status of each supported extension:
     vacation: mostly full; handling of utf-8 in headers is non-existant
     imapflags: full
     variables: mostly full; currently no support for future namespaces 
-    notify: almost complete, mailto support only
+    notify: full, mailto support only; needs to be tested more
 
 All implemented extensions are like the engine itself currently experimental. 
 A status of 'full' does not necessarily mean that the extension is bug-free or 
@@ -111,8 +111,7 @@ has taken notice of the following extensions:
     mimeloop: planned
 
 These extensions will be added as soon as the necessary infrastructure is 
-available. Extensions already supported by cmusieve have priority, meaning that 
-notify is next in line.
+available. 
 
 Compiling and Configuring
 -------------------------
@@ -124,14 +123,14 @@ Using
 
 The main purpose of this package is to replace the existing cmusieve plugin that 
 is currently available for Dovecot's deliver. With this respect it is currently 
-not very different from the cmusieve plugin implementation. 
+not very different from the cmusieve plugin implementation.
 
 Unlike cmusieve, this sieve module logs runtime errors to <scriptfile>.log if 
 it can and not <scriptfile>.err. It appends new timestamped log entries to the 
 end of the logfile. If the log grows too large (currently > 10kB), the logfile 
 is rotated to <scriptfile>.log.0 and <scriptfile>.log starts out empty again. 
 
-The cmusieve plugin compiled the script into a file with an appended c, e.g. 
+The cmusieve plugin compiled the script into a file with an appended 'c', e.g. 
 'test.sievec'. This new implementation recognizes scripts to have the .sieve 
 extension. The binary is (by default) written to a file with extension .svbin. 
 This means that the default .dovecot.sieve is compiled into .dovecot.svbin. 
@@ -147,15 +146,15 @@ installed:
 sievec     - Compiles sieve scripts into a binary representation for later 
              execution.
 
-sieved     - Dumps the content of a Sieve binary file for (development) 
-             debugging purposes.
-
 sieve-test - This is a universal Sieve test tool for testing the effect of a
-             Sieve script on a particular message.. It allows compiling, running 
+             Sieve script on a particular message. It allows compiling, running 
              and testing Sieve scripts. It can either be used to display the
              actions that would be performed on the provided test message or it
-             can be used to test the actual delivery of one message and show the
+             can be used to test the actual delivery of the message and show the
              messages that would normally be sent through SMTP.
+
+sieved     - Dumps the content of a Sieve binary file for (development) 
+             debugging purposes.
 
 When installed, man pages are also available for these commands. In this package
 the man pages are present in doc/man and can be viewed before install using e.g.: 
@@ -175,7 +174,7 @@ listed here:
 - Compile errors are sometimes a bit obscure and long. This needs work. 
   Suggestions for improvement are welcome. 
 - The documentation needs work. The wiki needs to be updated with the newly 
-  supported extensions.
+  supported features and extensions.
 
 Authors
 -------
