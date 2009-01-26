@@ -896,7 +896,7 @@ static struct sieve_binary_file *_file_lazy_open(const char *path)
 	pool_t pool;
 	struct sieve_binary_file *file;
 	
-	pool = pool_alloconly_create("sieve_binary_file_lazy", 1024);
+	pool = pool_alloconly_create("sieve_binary_file_lazy", 4096);
 	file = p_new(pool, struct sieve_binary_file, 1);
 	file->pool = pool;
 	file->path = p_strdup(pool, path);
