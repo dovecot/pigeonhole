@@ -13,6 +13,7 @@
 #include "sieve.h"
 
 #include "testsuite-common.h"
+#include "testsuite-script.h"
 
 /*
  * Test_script_compile command
