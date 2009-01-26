@@ -115,13 +115,18 @@ bool sieve_binary_dumper_run
 	count = sieve_binary_extensions_count(sbin);
 	if ( count > 0 ) {	
 		for ( i = 0; i < count; i++ ) {
-			const struct sieve_extension *ext = sieve_binary_extension_get_by_index
-				(sbin, i);
+			bool success = TRUE;
+
+			T_BEGIN { 
+				const struct sieve_extension *ext = sieve_binary_extension_get_by_index
+					(sbin, i);
 	
-			if ( ext->binary_dump != NULL ) {	
-				if ( !ext->binary_dump(denv) )
-					return FALSE;
-			}
+				if ( ext->binary_dump != NULL ) {	
+					success = ext->binary_dump(denv);
+				}
+			} T_END;
+
+			if ( !success ) return FALSE;
 		}
 	}
 	

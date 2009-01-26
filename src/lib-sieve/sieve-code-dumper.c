@@ -242,23 +242,25 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
 			unsigned int code = 0;
 			const struct sieve_extension *ext;
 			
-			sieve_code_mark(denv);
+			T_BEGIN {
+				sieve_code_mark(denv);
 			
-			if ( !sieve_binary_read_extension(sbin, &dumper->pc, &code, &ext) ) {
-				success = FALSE;
-				break;
-			}
-      	
-			sieve_code_dumpf(denv, "%s", ext->name);
-      
-			if ( ext->code_dump != NULL ) {
-				sieve_code_descend(denv);
-				if ( !ext->code_dump(denv, &dumper->pc) ) {
+				if ( !sieve_binary_read_extension(sbin, &dumper->pc, &code, &ext) ) {
 					success = FALSE;
 					break;
 				}
-				sieve_code_ascend(denv);
-			}
+      	
+				sieve_code_dumpf(denv, "%s", ext->name);
+      
+				if ( ext->code_dump != NULL ) {
+					sieve_code_descend(denv);
+					if ( !ext->code_dump(denv, &dumper->pc) ) {
+						success = FALSE;
+						break;
+					}
+					sieve_code_ascend(denv);
+				}
+			} T_END;
 		}
 		
 		sieve_code_ascend(denv);
@@ -272,7 +274,12 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
 	
 	while ( dumper->pc < 
 		sieve_binary_get_code_size(sbin) ) {
-		if ( !sieve_code_dumper_print_operation(dumper) ) {
+
+		T_BEGIN {
+			success = sieve_code_dumper_print_operation(dumper);
+		} T_END;
+
+		if ( !success ) {
 			sieve_code_dumpf(dumper->dumpenv, "Binary is corrupt.");
 			return;
 		}

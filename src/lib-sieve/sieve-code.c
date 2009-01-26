@@ -141,10 +141,13 @@ static bool sieve_coded_stringlist_dump
 	sieve_code_descend(denv);
 	
 	for ( i = 0; i < length; i++ ) {
-		if ( !sieve_opr_string_dump(denv, address, NULL) ) 
-			return FALSE;
+		bool success = TRUE;
 
-		if ( *address > end ) 
+		T_BEGIN { 		
+			success = sieve_opr_string_dump(denv, address, NULL);
+		} T_END;
+
+		if ( !success || *address > end ) 
 			return FALSE;
 	}
 
