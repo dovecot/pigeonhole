@@ -148,7 +148,7 @@ struct sieve_validator *sieve_validator_create
 	pool_t pool;
 	struct sieve_validator *validator;
 	
-	pool = pool_alloconly_create("sieve_validator", 4096);	
+	pool = pool_alloconly_create("sieve_validator", 8192);	
 	validator = p_new(pool, struct sieve_validator, 1);
 	validator->pool = pool;
 	

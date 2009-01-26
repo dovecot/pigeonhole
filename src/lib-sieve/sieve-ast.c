@@ -54,7 +54,7 @@ struct sieve_ast *sieve_ast_create(struct sieve_script *script)
 	pool_t pool;
 	struct sieve_ast *ast;
 	
-	pool = pool_alloconly_create("sieve_ast", 8192);	
+	pool = pool_alloconly_create("sieve_ast", 16384);	
 	ast = p_new(pool, struct sieve_ast, 1);
 	ast->pool = pool;
 	ast->refcount = 1;
