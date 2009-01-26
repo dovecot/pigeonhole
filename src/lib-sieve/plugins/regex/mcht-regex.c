@@ -171,7 +171,7 @@ bool mcht_regex_validate_context
  */
 
 struct mcht_regex_context {
-	ARRAY_DEFINE(reg_expressions, regex_t *);
+	ARRAY_DEFINE(reg_expressions, regex_t);
 	int value_index;
 	regmatch_t *pmatch;
 	size_t nmatch;
@@ -202,13 +202,13 @@ static regex_t *mcht_regex_get
 	const struct sieve_comparator *cmp, 
 	const char *key, unsigned int key_index)
 {
-	regex_t *regexp = NULL;
-	regex_t * const *rxp = &regexp;
 	int ret;
 	int cflags;
+	regex_t *regexp;
 	
 	if ( ctx->value_index <= 0 ) {
-		regexp = t_new(regex_t, 1);
+		array_idx_clear(&ctx->reg_expressions, key_index);
+		regexp = array_idx_modifiable(&ctx->reg_expressions, key_index);
 
 		if ( cmp == &i_octet_comparator ) 
 			cflags =  REG_EXTENDED;
@@ -223,14 +223,11 @@ static regex_t *mcht_regex_get
 			/* FIXME: Do something useful, i.e. report error somewhere */
 			return NULL;
 		}
-
-		array_idx_set(&ctx->reg_expressions, key_index, &regexp);
-		rxp = &regexp;
 	} else {
-		rxp = array_idx(&ctx->reg_expressions, key_index);
+		regexp = array_idx_modifiable(&ctx->reg_expressions, key_index);
 	}
 
-	return *rxp;
+	return regexp;
 }
 
 static int mcht_regex_match
@@ -293,12 +290,12 @@ int mcht_regex_match_deinit
 	(struct sieve_match_context *mctx)
 {
 	struct mcht_regex_context *ctx = (struct mcht_regex_context *) mctx->data;
-	unsigned int i;
+	regex_t *regexps;
+	unsigned int count, i;
 
-	for ( i = 0; i < array_count(&ctx->reg_expressions); i++ ) {
-		regex_t * const *regexp = array_idx(&ctx->reg_expressions, i);
-
-		regfree(*regexp);
+	regexps = array_get_modifiable(&ctx->reg_expressions, &count);
+	for ( i = 0; i < count; i++ ) {
+		regfree(&regexps[i]);
 	}
 
 	return FALSE;
