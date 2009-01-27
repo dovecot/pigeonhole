@@ -149,15 +149,15 @@ void rfc2822_header_field_write
 			fwrite(sp, nlp-sp, 1, f);
 			
 			if ( *bp != '\0' && *bp != ' ' && *bp != '\t' )
-				fwrite("\n\t", 2, 1, f);
+				fwrite("\r\n\t", 3, 1, f);
 			else
-				fwrite("\n", 1, 1, f);
+				fwrite("\r\n", 2, 1, f);
 				
 			sp = bp;
 		} else {
 			/* Insert newline at last whitespace within the max_line limit */
 			fwrite(sp, wp-sp, 1, f);
-			fwrite("\n", 1, 1, f);
+			fwrite("\r\n", 2, 1, f);
 			sp = wp;
 		}
 		
@@ -168,7 +168,7 @@ void rfc2822_header_field_write
 	
 	if ( bp != sp ) {
 		fwrite(sp, bp-sp, 1, f);
-		fwrite("\n", 1, 1, f);
+		fwrite("\r\n", 2, 1, f);
 	}
 }
 

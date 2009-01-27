@@ -282,7 +282,7 @@ static bool act_redirect_send
 
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
-	struct istream *input;
+	struct istream *input, *crlf_input;
 	void *smtp_handle;
 	FILE *f;
 	const unsigned char *data;
@@ -303,18 +303,23 @@ static bool act_redirect_send
 
 	/* Remove unwanted headers */
 	input = i_stream_create_header_filter
-		(input, HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR, hide_headers,
+		(input, HEADER_FILTER_EXCLUDE, hide_headers,
 			N_ELEMENTS(hide_headers), null_header_filter_callback, NULL);
+	
+	/* Make sure the message contains CRLF consistently */
+	crlf_input = i_stream_create_crlf(input);
 
 	/* Prepend sieve version header (should not affect signatures) */
 	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
 
 	/* Pipe the message to the outgoing SMTP transport */
-	while ((ret = i_stream_read_data(input, &data, &size, 0)) > 0) {	
+	while ((ret = i_stream_read_data(crlf_input, &data, &size, 0)) > 0) {	
 		if (fwrite(data, size, 1, f) == 0)
 			break;
-		i_stream_skip(input, size);
+		i_stream_skip(crlf_input, size);
 	}
+
+	i_stream_unref(&crlf_input);
 	i_stream_unref(&input);
 
 	/* Close SMTP transport */
