@@ -22,6 +22,7 @@ Het werkt!
  * General conformance testing
  */
 
+/*
 test "Empty string" {
 	if not header :matches "comment" "" {
 		test_fail "failed to match \"\" against \"\"";
@@ -187,14 +188,22 @@ test "Put '*' directly before '?'" {
 		test_fail "should not have matched";
 	}
 
+	if not header :matches "x-subject" "Log for *?????????? build of *" {
+		test_fail "should have matched";
+	}
+
 	if not header :matches "x-subject" "Log for *? build of *" {
 		test_fail "should have matched";
 	}
-}
+}*/
 
 test "Put '?' directly before '*'" {
 	if header :matches "x-subject" "Log for ???????????* build of *" {
 		test_fail "should not have matched";
+	}
+
+	if not header :matches "x-subject" "Log for ??????????* build of *" {
+		test_fail "should have matched";
 	}
 
 	if not header :matches "x-subject" "Log for ?* build of *" {

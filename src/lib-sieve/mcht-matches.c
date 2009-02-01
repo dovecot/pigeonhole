@@ -97,23 +97,29 @@ static int mcht_matches_match
 	char next_wcard = '\0'; /* Next  widlcard */
 	unsigned int key_offset = 0;
 
+	/* Value may be NULL, parse empty string in stead */
 	if ( val == NULL ) {
 		val = "";
 		val_size = 0;
 	}
 	
+	/* Key sections */
 	section = t_str_new(32);    /* Section (after beginning or *) */
 	subsection = t_str_new(32); /* Sub-section (after ?) */
 	
+	/* Mark end of value and key */
 	vend = (const char *) val + val_size;
 	kend = (const char *) key + key_size;
+
+	/* Initialize pointers */
 	vp = val;                   /* Value pointer */
 	kp = key;                   /* Key pointer */
 	wp = key;                   /* Wildcard (key) pointer */
 	pvp = val;                  /* Previous value Pointer */
 
-	/* Start new match values list */
+	/* Start match values list if requested */
 	if ( (mvalues = sieve_match_values_start(mctx->interp)) != NULL ) {
+		/* Skip ${0} for now; added when match succeeds */
 		sieve_match_values_add(mvalues, NULL);
 
 		mvalue = t_str_new(32);     /* Match value (*) */
@@ -121,8 +127,8 @@ static int mcht_matches_match
 	}
 	
 	/* Match the pattern: 
-	 *   <pattern> = <section>*<section>*<section>....
-	 *   <section> = [text]?[text]?[text].... 
+	 *   <pattern> = <section>*<section>*<section>...
+	 *   <section> = <sub-section>?<sub-section>?<sub-section>...
 	 *
 	 * Escape sequences \? and \* need special attention. 
 	 */
@@ -136,6 +142,8 @@ static int mcht_matches_match
 		const char *needle, *nend;
 		
 		if ( !backtrack ) {
+			/* Search the next '*' wildcard in the key string */
+
 			wcard = next_wcard;
 			
 			/* Find the needle to look for in the string */	
@@ -163,10 +171,12 @@ static int mcht_matches_match
 			if ( mvalues != NULL )			
 				str_truncate(mvalue, 0);
 		} else {
+			/* Backtracked; '*' wildcard is retained */
 			debug_printf("backtracked");
 			backtrack = FALSE;
 		}
 		
+		/* Determine what we are looking for */
 		needle = str_c(section);
 		nend = PTR_OFFSET(needle, str_len(section));		
 		 
@@ -177,62 +187,76 @@ static int mcht_matches_match
 		debug_printf("  key offset:      %d\n", key_offset);
 		
 		pvp = vp;
-		if ( next_wcard == '\0' ) {			
+		if ( next_wcard == '\0' ) {
+			/* No more wildcards; find the needle substring at the end of string */
+	
 			const char *qp, *qend;
 			
 			debug_printf("next_wcard = NUL; must find needle at end\n");				 
-			
-			/* Find substring at the end of string */
+
+			/* Check if the value is still large enough */			
 			if ( vend - str_len(section) < vp ) {
 				debug_printf("  wont match: value is too short\n");
 				break;
 			}
 
+			/* Move value pointer to where the needle should be */
 			vp = PTR_OFFSET(vend, -str_len(section));
+
+			/* Record match values */
 			qend = vp;
 			qp = vp - key_offset;
 		
 			if ( mvalues != NULL )
 				str_append_n(mvalue, pvp, qp-pvp);
 					
+			/* Compare needle to end of value string */
 			if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
 				debug_printf("  match at end failed\n");				 
 				break;
 			}
 			
+			/* Add match values */
 			if ( mvalues != NULL ) {
+				/* Append '*' match value */
 				sieve_match_values_add(mvalues, mvalue);
+
+				/* Append any initial '?' match values */
 				for ( ; qp < qend; qp++ )
 					sieve_match_values_add_char(mvalues, *qp); 
 			}
 
+			/* Finish match */
 			kp = kend;
 			vp = vend;
+
 			debug_printf("  matched end of value\n");
 			break;
 		} else {
+			/* Next wildcard found; match needle before next wildcard */
+
 			const char *prv = NULL; /* Stored value pointer for backtrack */
 			const char *prk = NULL; /* Stored key pointer for backtrack */
 			const char *prw = NULL; /* Stored wildcard pointer for backtrack */
 			const char *chars;
 
+			/* Reset '?' match values */
 			if ( mvalues != NULL )		
 				str_truncate(mchars, 0);
 							
 			if ( wcard == '\0' ) {
-				/* Match needs to happen right at the beginning */
+				/* No current wildcard; match needs to happen right at the beginning */
 				debug_printf("wcard = NUL; needle should be found at the beginning.\n");
 				debug_printf("  begin needle: '%s'\n", t_strdup_until(needle, nend));
 				debug_printf("  begin value:  '%s'\n", t_strdup_until(vp, vend));
 
 				if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
-					debug_printf("  failed to find needle at begin\n");				 
+					debug_printf("  failed to find needle at beginning\n");				 
 					break;
 				}
 
 			} else {
-				const char *qp, *qend;
-
+				/* Current wildcard present; match needle between current and next wildcard */
 				debug_printf("wcard != NUL; must find needle at an offset (>= %d).\n",
 					key_offset);
 
@@ -247,11 +271,11 @@ static int mcht_matches_match
 				prk = kp;
 				prw = wp;		
 	
-				qend = vp - str_len(section);
-				qp = qend - key_offset;
-
 				/* Append match values */
 				if ( mvalues != NULL ) {
+					const char *qend = vp - str_len(section);
+					const char *qp = qend - key_offset;
+
 					/* Append '*' match value */
 					str_append_n(mvalue, pvp, qp-pvp);
 
@@ -263,49 +287,69 @@ static int mcht_matches_match
 				}
 			}
 			
+			/* Update wildcard and key pointers for next wildcard scan */
 			if ( wp < kend ) wp++;
 			kp = wp;
 		
+			/* Scan successive '?' wildcards */
 			while ( next_wcard == '?' ) {
 				debug_printf("next_wcard = '?'; need to match arbitrary character\n");
 				
 				/* Add match value */ 
 				if ( mvalues != NULL )
 					str_append_c(mchars, *vp);
+
 				vp++;
-				
+
+				/* Scan for next '?' wildcard */				
 				next_wcard = _scan_key_section(subsection, &wp, kend);
 				debug_printf("found next wildcard '%c' at pos [%d] (fixed match)\n", 
 					next_wcard, (int) (wp-key));
 					
+				/* Determine what we are looking for */
 				needle = str_c(subsection);
 				nend = PTR_OFFSET(needle, str_len(subsection));
 
 				debug_printf("  sub key:       '%s'\n", t_strdup_until(needle, nend));
 				debug_printf("  value remnant: '%s'\n", vp <= vend ? t_strdup_until(vp, vend) : "");
 
+				/* Try matching the needle at fixed position */
 				if ( (needle == nend && next_wcard == '\0' && vp < vend ) || 
 					!cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
-					debug_printf("  failed fixed match\n");
+					
+					/* Match failed: now we have a problem. We need to backtrack to the previous
+					 * '*' wildcard occurence and start scanning for the next possible match.
+					 */
 
+					debug_printf("  failed fixed match\n");
+					
+					/* Start backtrack */
 					if ( prv != NULL && prv + 1 < vend ) {
+						/* Restore pointers */
 						vp = prv;
 						kp = prk;
 						wp = prw;
 				
+						/* Skip forward one value character to scan the next possible match */
 						if ( mvalues != NULL )
 							str_append_c(mvalue, *vp);
 						vp++;
 				
+						/* Set wildcard state appropriately */
 						wcard = '*';
 						next_wcard = '?';
 				
+						/* Backtrack */
 						backtrack = TRUE;				 
+
 						debug_printf("  BACKTRACK\n");
 					}
+
+					/* Break '?' wildcard scanning loop */
 					break;
 				}
 				
+				/* Update wildcard and key pointers for next wildcard scan */
 				if ( wp < kend ) wp++;
 				kp = wp;
 			}
@@ -321,7 +365,9 @@ static int mcht_matches_match
 				if ( mvalues != NULL ) {
 					if ( prv != NULL )
 						sieve_match_values_add(mvalues, mvalue);
+
 					chars = (const char *) str_data(mchars);
+
 					for ( i = 0; i < str_len(mchars); i++ ) {
 						sieve_match_values_add_char(mvalues, chars[i]);
 					}
@@ -338,12 +384,14 @@ static int mcht_matches_match
 		 * (avoid scanning the rest of the string)
 		 */
 		if ( kp == kend && next_wcard == '*' ) {
+			/* Add the rest of the string as match value */
 			if ( mvalues != NULL ) {
 				str_truncate(mvalue, 0);
 				str_append_n(mvalue, vp, vend-vp);
 				sieve_match_values_add(mvalues, mvalue);
 			}
 		
+			/* Finish match */
 			kp = kend;
 			vp = vend;
 		
@@ -353,27 +401,33 @@ static int mcht_matches_match
 					
 		debug_printf("== Loop ==\n");
 	}
-	
-	debug_printf("=== Finish ===\n");
-	debug_printf("  result: %s\n", (kp == kend && vp == vend) ? "true" : "false");
 
 	/* Eat away a trailing series of *s */
 	if ( vp == vend ) {
 		while ( kp < kend && *kp == '*' ) kp++;
 	}
-	
+
 	/* By definition, the match is only successful if both value and key pattern
 	 * are exhausted.
 	 */
+	
+	debug_printf("=== Finish ===\n");
+	debug_printf("  result: %s\n", (kp == kend && vp == vend) ? "true" : "false");
+	
 	if (kp == kend && vp == vend) {
+		/* Activate new match values after successful match */
 		if ( mvalues != NULL ) {
+			/* Set ${0} */
 			string_t *matched = str_new_const(pool_datastack_create(), val, val_size);
 			sieve_match_values_set(mvalues, 0, matched);
+
+			/* Commit new match values */
 			sieve_match_values_commit(mctx->interp, &mvalues);
 		}
 		return TRUE;
 	}
 
+	/* No match; drop collected match values */
 	sieve_match_values_abort(&mvalues);
 	return FALSE;
 }
