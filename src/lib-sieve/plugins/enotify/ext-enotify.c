@@ -5,9 +5,9 @@
  * ------------------
  *
  * Authors: Stephan Bosch
- * Specification: draft-ietf-sieve-notify-12.txt
- * Implementation: almost full, mailto method only
- * Status: under development
+ * Specification: RFC 5435
+ * Implementation: full
+ * Status: testing
  * 
  */
 	
