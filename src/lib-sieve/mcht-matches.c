@@ -174,6 +174,7 @@ static int mcht_matches_match
 		debug_printf("  section key:     '%s'\n", t_strdup_until(kp, kend));
 		debug_printf("  section remnant: '%s'\n", t_strdup_until(wp, kend));
 		debug_printf("  value remnant:   '%s'\n", t_strdup_until(vp, vend));
+		debug_printf("  key offset:      %d\n", key_offset);
 		
 		pvp = vp;
 		if ( next_wcard == '\0' ) {			
@@ -210,9 +211,9 @@ static int mcht_matches_match
 			debug_printf("  matched end of value\n");
 			break;
 		} else {
-			const char *prv = NULL;
-			const char *prk = NULL;
-			const char *prw = NULL;
+			const char *prv = NULL; /* Stored value pointer for backtrack */
+			const char *prk = NULL; /* Stored key pointer for backtrack */
+			const char *prw = NULL; /* Stored wildcard pointer for backtrack */
 			const char *chars;
 
 			if ( mvalues != NULL )		
@@ -232,23 +233,31 @@ static int mcht_matches_match
 			} else {
 				const char *qp, *qend;
 
-				debug_printf("wcard != NUL; must find needle at an offset.\n");
-				
-				/* Match may happen at any offset: find substring */
-				if ( !_string_find(cmp, &vp, vend, &needle, nend)	) {
+				debug_printf("wcard != NUL; must find needle at an offset (>= %d).\n",
+					key_offset);
+
+				/* Match may happen at any offset (>= key offset): find substring */				
+				vp += key_offset;
+				if ( (vp >= vend) || !_string_find(cmp, &vp, vend, &needle, nend) ) {
 					debug_printf("  failed to find needle at an offset\n"); 
 					break;
 				}
-			
+
 				prv = vp - str_len(section);
 				prk = kp;
-				prw = wp;
-				
+				prw = wp;		
+	
 				qend = vp - str_len(section);
 				qp = qend - key_offset;
 
+				/* Append match values */
 				if ( mvalues != NULL ) {
+					/* Append '*' match value */
 					str_append_n(mvalue, pvp, qp-pvp);
+
+					/* Append any initial '?' match values (those that caused the key
+					 * offset.
+					 */
 					for ( ; qp < qend; qp++ )
 						str_append_c(mchars, *qp);
 				}

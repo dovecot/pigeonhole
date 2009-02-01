@@ -12,6 +12,7 @@ X-Spam-Score: **********
 X-Bullshit: 33333???a
 Message-ID: <90a02fe01fc25e131d0e9c4c45975894@example.com>
 Comment:                                            
+X-Subject: Log for successful build of Dovecot.
 
 Het werkt!
 .
@@ -35,179 +36,169 @@ test "Empty string" {
 	}
 }
 
-/*
- * Matching tests
- */
-
-test "MATCH-A" {
+test "Multiple '*'" {
 	if not address :matches "from" "*@d*ksn*ers.com" {
 		test_fail "should have matched";
 	}
-}
 
-test "MATCH-B" {
-	if not address :matches "from" "stephan+sieve@drunksnipers.*" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-C" {
-	if not address :matches "from" "*+sieve@drunksnipers.com" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-D" {
-	if not address :matches "from" "stephan+sieve?drunksnipers.com" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-E" {
-	if not address :matches "from" "?tephan+sieve@drunksnipers.com" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-F" {
-	if not address :matches "from" "stephan+sieve@drunksnipers.co?" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-G" {
-	if not address :matches "from" "?t?phan?sieve?drunksnip?rs.co?" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-H" {
-	if not header :matches "x-bullshit" "33333\\?\\?\\??" {
-		test_fail "should have matched";
-	}
-}
-
-
-test "MATCH-I" {
-	if not header :matches "x-bullshit" "33333*\\?\\??" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-J" {
-	if not header :matches "X-Bullshit" "*\\?\\?\\?a" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-K" {
-	if not header :matches "x-bullshit" "*3333\\?\\?\\?a" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-L" {
-	if not header :matches "x-spam-score" "\\*\\*\\*\\*\\**" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-M" {
-	if not header :matches "x-spam-score" "\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-N" {
-	if not header :matches "x-spam-score" "\\*\\*\\***\\*\\*" {
-		test_fail "should have matched";
-	}
-}
-
-test "MATCH-O" {
-	if not header :matches "x-spam-score" "\\*?\\*?\\*?\\*?\\*?" {
-		test_fail "should have matched";
-	}
-}
-
-# Non-matching tests
-
-test "NO-MATCH-A" {
 	if address :matches "from" "*@d*kn*ers.com" {
 		test_fail "should not have matched";
 	}
 }
 
-test "NO-MATCH-B" {
+test "End '*'" {
+	if not address :matches "from" "stephan+sieve@drunksnipers.*" {
+		test_fail "should have matched";
+	}
+
 	if address :matches "from" "stepan+sieve@drunksnipers.*" {
 		test_fail "should not have matched";
 	}
 }
 
-test "NO-MATCH-C" {
+test "Begin '*'" {
+	if not address :matches "from" "*+sieve@drunksnipers.com" {
+		test_fail "should have matched";
+	}
+
 	if address :matches "from" "*+sieve@drunksnipers.om" {
 		test_fail "should not have matched";
 	}
 }
 
-test "NO-MATCH-D" {
+test "Middle '?'" {
+	if not address :matches "from" "stephan+sieve?drunksnipers.com" {
+		test_fail "should have matched";
+	}
+
 	if address :matches "from" "stephan+sieve?drunksipers.com" {
 		test_fail "should not have matched";
 	}
 }
 
-test "NO-MATCH-E" {
+test "Begin '?'" {
+	if not address :matches "from" "?tephan+sieve@drunksnipers.com" {
+		test_fail "should have matched";
+	}
+
 	if address :matches "from" "?tephan+sievedrunksnipers.com" {
 		test_fail "should not have matched";
 	}
 }
 
-test "NO-MATCH-F" {
+test "End '?'" {
+	if not address :matches "from" "stephan+sieve@drunksnipers.co?" {
+		test_fail "should have matched";
+	}
+
 	if address :matches "from" "sephan+sieve@drunksnipers.co?" {
 		test_fail "should not have matched";
 	}
 }
 
-test "NO-MATCH-G" {
+test "Multiple '?'" {
+	if not address :matches "from" "?t?phan?sieve?drunksnip?rs.co?" {
+		test_fail "should have matched";
+	}
+
 	if address :matches "from" "?t?phan?sieve?dunksnip?rs.co?" {
 		test_fail "should not have matched";
 	}
 }
 
-test "NO-MATCH-H" {
+test "Escaped '?'" {
+	if not header :matches "x-bullshit" "33333\\?\\?\\??" {
+		test_fail "should have matched";
+	}
+
 	if header :matches "x-bullshit" "33333\\?\\?\\?" {
 		test_fail "should not have matched";
 	}
 }
 
-test "NO-MATCH-I" {
-	if header :matches "x-bullshit" "33333\\?\\?\\?aa" {
-		test_fail "should not have matched";
+test "Escaped '?' following '*'" {
+	if not header :matches "x-bullshit" "33333*\\?\\??" {
+		test_fail "should have matched";
+	}
+
+}
+
+test "Escaped '?' directly following initial '*'" {
+	if not header :matches "X-Bullshit" "*\\?\\?\\?a" {
+		test_fail "should have matched";
 	}
 }
 
-test "NO-MATCH-J" {
-	if header :matches "x-bullshit" "\\*3333\\?\\?\\?a" {
-		test_fail "should not have matched";
+test "Escaped '?' following initial '*'" {
+	if not header :matches "x-bullshit" "*3333\\?\\?\\?a" {
+		test_fail "should have matched";
 	}
 }
 
-test "NO-MATCH-K" {
-	if header :matches "x-bullshit" "\\f3333\\?\\?\\?a" {
-		test_fail "should not have matched";
+test "Escaped '*' with active '*' at the end" {
+	if not header :matches "x-spam-score" "\\*\\*\\*\\*\\**" {
+		test_fail "should have matched";
 	}
 }
 
-test "NO-MATCH-L" {
+test "All escaped '*'" {
+	if not header :matches "x-spam-score" "\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*" {
+		test_fail "should have matched";
+	}
+
 	if header :matches "x-spam-score" "\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*\\*" {
 		test_fail "should not have matched";
 	}
 }
 
+test "Middle not escaped '*'" {
+	if not header :matches "x-spam-score" "\\*\\*\\***\\*\\*" {
+		test_fail "should have matched";
+	}
+}
 
-test "NO-MATCH-M" {
+test "Escaped '*' alternating with '?'" {
+	if not header :matches "x-spam-score" "\\*?\\*?\\*?\\*?\\*?" {
+		test_fail "should have matched";
+	}
+
 	if header :matches "x-spam-score" "\\*?\\*?\\*?\\*?\\*??" {
 		test_fail "should not have matched";
+	}
+}
+
+test "All escaped" {
+	if header :matches "x-bullshit" "\\*3333\\?\\?\\?a" {
+		test_fail "should not have matched";
+	}
+
+
+	if header :matches "x-bullshit" "33333\\?\\?\\?aa" {
+		test_fail "should not have matched";
+	}
+
+	if header :matches "x-bullshit" "\\f3333\\?\\?\\?a" {
+		test_fail "should not have matched";
+	}
+}
+
+test "Put '*' directly before '?'" {
+	if header :matches "x-subject" "Log for *??????????? build of *" {
+		test_fail "should not have matched";
+	}
+
+	if not header :matches "x-subject" "Log for *? build of *" {
+		test_fail "should have matched";
+	}
+}
+
+test "Put '?' directly before '*'" {
+	if header :matches "x-subject" "Log for ???????????* build of *" {
+		test_fail "should not have matched";
+	}
+
+	if not header :matches "x-subject" "Log for ?* build of *" {
+		test_fail "should have matched";
 	}
 }
 
