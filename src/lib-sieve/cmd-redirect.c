@@ -5,6 +5,7 @@
 #include "ioloop.h"
 #include "str-sanitize.h"
 #include "istream.h"
+#include "istream-crlf.h"
 #include "istream-header-filter.h"
 
 #include "rfc2822.h"
