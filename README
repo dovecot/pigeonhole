@@ -46,7 +46,11 @@ Features
 * Supports all extensions provided by the original CMUSieve plugin:
  
   In addition, it has support for the new and very useful variables extension
-  (see next section).
+  (see next section). 
+
+  NOTE: The original CMUSieve plugin is based on old specifications of the 
+  imap4flags and enotify extension. Among other subtle differences, these 
+  extensions were known as 'imapflags' and 'notify' for the CMU Sieve plugin.
 
 * Supports executing multiple scrips sequentially.
   
@@ -84,7 +88,7 @@ following list outlines the implementation status of each supported extension:
     encoded-character: full
 
   Other RFCs/drafts:
-    subaddress: mostly full; not configurable
+    subaddress: full (limited configurability)
     comparator-i;ascii-numeric: full
     relational: full 
     copy: full
@@ -93,7 +97,7 @@ following list outlines the implementation status of each supported extension:
           and some issues make it still not completely RFC incompliant. 
     include: mostly full; needs some more work (no external binaries)
     vacation: mostly full; handling of utf-8 in headers is non-existant
-    imapflags: full
+    imap4flags: full
     variables: mostly full; currently no support for future namespaces 
     notify: full, mailto support only; needs to be tested more
 
