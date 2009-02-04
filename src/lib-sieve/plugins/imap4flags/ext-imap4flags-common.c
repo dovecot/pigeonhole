@@ -36,7 +36,7 @@ extern const struct sieve_argument tag_flags_implicit;
  * Common command functions 
  */
 
-bool ext_imapflags_command_validate
+bool ext_imap4flags_command_validate
 (struct sieve_validator *validator, struct sieve_command_context *cmd)
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
@@ -118,13 +118,13 @@ bool ext_imapflags_command_validate
 		return FALSE;
 
 	if ( cmd->command != &tst_hasflag && sieve_argument_is_string_literal(arg2) ) {
-		struct ext_imapflags_iter fiter;
+		struct ext_imap4flags_iter fiter;
 		const char *flag;
 		
 		/* Warn the user about validity of verifiable flags */
-		ext_imapflags_iter_init(&fiter, sieve_ast_argument_str(arg));
+		ext_imap4flags_iter_init(&fiter, sieve_ast_argument_str(arg));
 
-		while ( (flag=ext_imapflags_iter_get_flag(&fiter)) != NULL ) {
+		while ( (flag=ext_imap4flags_iter_get_flag(&fiter)) != NULL ) {
 			if ( !flag_is_valid(flag) ) {
 				sieve_argument_validate_warning(validator, arg,
                 	"IMAP flag '%s' specified for the %s command is invalid "
@@ -142,7 +142,7 @@ bool ext_imapflags_command_validate
  * Flags tag registration 
  */
 
-void ext_imapflags_attach_flags_tag
+void ext_imap4flags_attach_flags_tag
 (struct sieve_validator *valdtr, const char *command)
 {
 	/* Register :flags tag with the command and we don't care whether it is 
@@ -163,21 +163,21 @@ void ext_imapflags_attach_flags_tag
  * Result context 
  */
 
-struct ext_imapflags_result_context {
+struct ext_imap4flags_result_context {
     string_t *internal_flags;
 };
 
-static inline struct ext_imapflags_result_context *_get_result_context
+static inline struct ext_imap4flags_result_context *_get_result_context
 (struct sieve_result *result)
 {
-	struct ext_imapflags_result_context *rctx =
-		(struct ext_imapflags_result_context *) 
+	struct ext_imap4flags_result_context *rctx =
+		(struct ext_imap4flags_result_context *) 
 		sieve_result_extension_get_context(result, &imapflags_extension);
 
 	if ( rctx == NULL ) {
 		pool_t pool = sieve_result_pool(result);
 
-		rctx =p_new(pool, struct ext_imapflags_result_context, 1);
+		rctx =p_new(pool, struct ext_imap4flags_result_context, 1);
 		rctx->internal_flags = str_new(pool, 32);
 
 		sieve_result_extension_set_context
@@ -190,7 +190,7 @@ static inline struct ext_imapflags_result_context *_get_result_context
 static string_t *_get_flags_string
 (struct sieve_result *result)
 {
-	struct ext_imapflags_result_context *ctx = 
+	struct ext_imap4flags_result_context *ctx = 
 		_get_result_context(result);
 		
 	return ctx->internal_flags;
@@ -200,7 +200,7 @@ static string_t *_get_flags_string
  * Runtime initialization 
  */
 
-static void ext_imapflags_runtime_init
+static void ext_imap4flags_runtime_init
 (const struct sieve_runtime_env *renv, void *context ATTR_UNUSED)
 {	
 	sieve_result_add_implicit_side_effect
@@ -209,7 +209,7 @@ static void ext_imapflags_runtime_init
 
 const struct sieve_interpreter_extension imapflags_interpreter_extension = {
 	&imapflags_extension,
-	ext_imapflags_runtime_init,
+	ext_imap4flags_runtime_init,
 	NULL,
 };
 
@@ -251,16 +251,16 @@ static bool flag_is_valid(const char *flag)
 	return TRUE;  
 }
 
-void ext_imapflags_iter_init
-(struct ext_imapflags_iter *iter, string_t *flags_list) 
+void ext_imap4flags_iter_init
+(struct ext_imap4flags_iter *iter, string_t *flags_list) 
 {
 	iter->flags_list = flags_list;
 	iter->offset = 0;
 	iter->last = 0;
 }
 
-const char *ext_imapflags_iter_get_flag
-(struct ext_imapflags_iter *iter) 
+const char *ext_imap4flags_iter_get_flag
+(struct ext_imap4flags_iter *iter) 
 {
 	unsigned int len = str_len(iter->flags_list);
 	const unsigned char *fp;
@@ -297,8 +297,8 @@ const char *ext_imapflags_iter_get_flag
 	return NULL;
 }
 
-static void ext_imapflags_iter_delete_last
-(struct ext_imapflags_iter *iter) 
+static void ext_imap4flags_iter_delete_last
+(struct ext_imap4flags_iter *iter) 
 {
 	iter->offset++;
 	if ( iter->offset > str_len(iter->flags_list) )
@@ -315,11 +315,11 @@ static bool flags_list_flag_exists
 (string_t *flags_list, const char *flag)
 {
 	const char *flg;
-	struct ext_imapflags_iter flit;
+	struct ext_imap4flags_iter flit;
 		
-	ext_imapflags_iter_init(&flit, flags_list);
+	ext_imap4flags_iter_init(&flit, flags_list);
 	
-	while ( (flg=ext_imapflags_iter_get_flag(&flit)) != NULL ) {
+	while ( (flg=ext_imap4flags_iter_get_flag(&flit)) != NULL ) {
 		if ( strcasecmp(flg, flag) == 0 ) 
 			return TRUE; 	
 	}
@@ -331,13 +331,13 @@ static void flags_list_flag_delete
 (string_t *flags_list, const char *flag)
 {
 	const char *flg;
-	struct ext_imapflags_iter flit;
+	struct ext_imap4flags_iter flit;
 		
-	ext_imapflags_iter_init(&flit, flags_list);
+	ext_imap4flags_iter_init(&flit, flags_list);
 	
-	while ( (flg=ext_imapflags_iter_get_flag(&flit)) != NULL ) {
+	while ( (flg=ext_imap4flags_iter_get_flag(&flit)) != NULL ) {
 		if ( strcasecmp(flg, flag) == 0 ) {
-			ext_imapflags_iter_delete_last(&flit);
+			ext_imap4flags_iter_delete_last(&flit);
 		} 	
 	}
 }
@@ -346,11 +346,11 @@ static void flags_list_add_flags
 (string_t *flags_list, string_t *flags)
 {	
 	const char *flg;
-	struct ext_imapflags_iter flit;
+	struct ext_imap4flags_iter flit;
 		
-	ext_imapflags_iter_init(&flit, flags);
+	ext_imap4flags_iter_init(&flit, flags);
 	
-	while ( (flg=ext_imapflags_iter_get_flag(&flit)) != NULL ) {
+	while ( (flg=ext_imap4flags_iter_get_flag(&flit)) != NULL ) {
 		if ( flag_is_valid(flg) && !flags_list_flag_exists(flags_list, flg) ) {
 			if ( str_len(flags_list) != 0 ) 
 				str_append_c(flags_list, ' '); 
@@ -363,11 +363,11 @@ static void flags_list_remove_flags
 (string_t *flags_list, string_t *flags)
 {	
 	const char *flg;
-	struct ext_imapflags_iter flit;
+	struct ext_imap4flags_iter flit;
 		
-	ext_imapflags_iter_init(&flit, flags);
+	ext_imap4flags_iter_init(&flit, flags);
 	
-	while ( (flg=ext_imapflags_iter_get_flag(&flit)) != NULL ) {
+	while ( (flg=ext_imap4flags_iter_get_flag(&flit)) != NULL ) {
 		flags_list_flag_delete(flags_list, flg); 	
 	}
 }
@@ -383,7 +383,7 @@ static void flags_list_set_flags
  * Flag registration 
  */
 
-int ext_imapflags_set_flags
+int ext_imap4flags_set_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 	unsigned int var_index, string_t *flags)
 {
@@ -401,7 +401,7 @@ int ext_imapflags_set_flags
 	return SIEVE_EXEC_OK;
 }
 
-int ext_imapflags_add_flags
+int ext_imap4flags_add_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 	unsigned int var_index, string_t *flags)
 {
@@ -419,7 +419,7 @@ int ext_imapflags_add_flags
 	return SIEVE_EXEC_OK;	
 }
 
-int ext_imapflags_remove_flags
+int ext_imap4flags_remove_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 	unsigned int var_index, string_t *flags)
 {
@@ -437,7 +437,7 @@ int ext_imapflags_remove_flags
 	return SIEVE_EXEC_OK;
 }
 
-int ext_imapflags_get_flags_string
+int ext_imap4flags_get_flags_string
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
 	unsigned int var_index, const char **flags)
 {
@@ -457,8 +457,8 @@ int ext_imapflags_get_flags_string
 	return SIEVE_EXEC_OK;
 }
 
-void ext_imapflags_get_flags_init
-(struct ext_imapflags_iter *iter, const struct sieve_runtime_env *renv,
+void ext_imap4flags_get_flags_init
+(struct ext_imap4flags_iter *iter, const struct sieve_runtime_env *renv,
 	string_t *flags_list)
 {
 	string_t *cur_flags;
@@ -471,15 +471,15 @@ void ext_imapflags_get_flags_init
 	else
 		cur_flags = _get_flags_string(renv->result);
 	
-	ext_imapflags_iter_init(iter, cur_flags);		
+	ext_imap4flags_iter_init(iter, cur_flags);		
 }
 
-void ext_imapflags_get_implicit_flags_init
-(struct ext_imapflags_iter *iter, struct sieve_result *result)
+void ext_imap4flags_get_implicit_flags_init
+(struct ext_imap4flags_iter *iter, struct sieve_result *result)
 {
 	string_t *cur_flags = _get_flags_string(result);
 	
-	ext_imapflags_iter_init(iter, cur_flags);		
+	ext_imap4flags_iter_init(iter, cur_flags);		
 }
 
 

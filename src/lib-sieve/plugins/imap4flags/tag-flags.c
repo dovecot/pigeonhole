@@ -212,7 +212,7 @@ static struct seff_flags_context *seff_flags_get_implicit_context
 	pool_t pool = sieve_result_pool(result);
 	struct seff_flags_context *ctx;
 	const char *flag;
-	struct ext_imapflags_iter flit;
+	struct ext_imap4flags_iter flit;
 	
 	ctx = p_new(pool, struct seff_flags_context, 1);
 	p_array_init(&ctx->keywords, pool, 2);
@@ -220,8 +220,8 @@ static struct seff_flags_context *seff_flags_get_implicit_context
 	T_BEGIN {
 		
 		/* Unpack */
-		ext_imapflags_get_implicit_flags_init(&flit, result);
-		while ( (flag=ext_imapflags_iter_get_flag(&flit)) != NULL ) {		
+		ext_imap4flags_get_implicit_flags_init(&flit, result);
+		while ( (flag=ext_imap4flags_iter_get_flag(&flit)) != NULL ) {		
 			if (flag != NULL && *flag != '\\') {
 				/* keyword */
 				const char *keyword = p_strdup(pool, flag);
@@ -294,11 +294,11 @@ static bool seff_flags_read_context
 	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flags_item)) && 
 		flags_item != NULL ) {
 		const char *flag;
-		struct ext_imapflags_iter flit;
+		struct ext_imap4flags_iter flit;
 
-		ext_imapflags_iter_init(&flit, flags_item);
+		ext_imap4flags_iter_init(&flit, flags_item);
 	
-		while ( (flag=ext_imapflags_iter_get_flag(&flit)) != NULL ) {		
+		while ( (flag=ext_imap4flags_iter_get_flag(&flit)) != NULL ) {		
 			if (flag != NULL && *flag != '\\') {
 				/* keyword */
 				const char *keyword = p_strdup(pool, flag);

@@ -57,7 +57,7 @@ static int tst_hasflag_operation_execute
 const struct sieve_operation hasflag_operation = { 
 	"HASFLAG",
 	&imapflags_extension,
-	EXT_IMAPFLAGS_OPERATION_HASFLAG,
+	ext_imap4flags_OPERATION_HASFLAG,
 	tst_hasflag_operation_dump,
 	tst_hasflag_operation_execute
 };
@@ -95,7 +95,7 @@ static bool tst_hasflag_validate
 	struct sieve_ast_argument *vars = tst->first_positional;
 	struct sieve_ast_argument *keys = sieve_ast_argument_next(vars);
 		
-	if ( !ext_imapflags_command_validate(validator, tst) )
+	if ( !ext_imap4flags_command_validate(validator, tst) )
 		return FALSE;
 	
 	if ( keys == NULL ) {
@@ -166,9 +166,9 @@ static bool tst_hasflag_operation_dump
 static int _flag_key_extract_init
 (void **context, string_t *raw_key)
 {
-	struct ext_imapflags_iter *iter = t_new(struct ext_imapflags_iter, 1);
+	struct ext_imap4flags_iter *iter = t_new(struct ext_imap4flags_iter, 1);
 	
-	ext_imapflags_iter_init(iter, raw_key);
+	ext_imap4flags_iter_init(iter, raw_key);
 	
 	*context = iter; 
 	
@@ -178,9 +178,9 @@ static int _flag_key_extract_init
 static int _flag_key_extract
 (void *context, const char **key, size_t *size)
 {
-	struct ext_imapflags_iter *iter = (struct ext_imapflags_iter *) context;
+	struct ext_imap4flags_iter *iter = (struct ext_imap4flags_iter *) context;
 	
-	if ( (*key = ext_imapflags_iter_get_flag(iter)) != NULL ) {
+	if ( (*key = ext_imap4flags_iter_get_flag(iter)) != NULL ) {
 		*size = strlen(*key); 
 		return TRUE;
 	}
@@ -204,7 +204,7 @@ static int tst_hasflag_operation_execute
 	const struct sieve_match_type *mtch = &is_match_type;
 	struct sieve_match_context *mctx;
 	struct sieve_coded_stringlist *flag_list, *variables_list = NULL;
-	struct ext_imapflags_iter iter;
+	struct ext_imap4flags_iter iter;
 	const char *flag;
 	bool matched;
 	
@@ -260,8 +260,8 @@ static int tst_hasflag_operation_execute
 			(result=sieve_coded_stringlist_next_item(variables_list, &var_item)) 
 			&& var_item != NULL ) {
 		
-			ext_imapflags_get_flags_init(&iter, renv, var_item);	
-			while ( !matched && (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
+			ext_imap4flags_get_flags_init(&iter, renv, var_item);	
+			while ( !matched && (flag=ext_imap4flags_iter_get_flag(&iter)) != NULL ) {
 				if ( (mret=sieve_match_value(mctx, flag, strlen(flag))) < 0 ) {
 					result = FALSE;
 					break;
@@ -271,8 +271,8 @@ static int tst_hasflag_operation_execute
 			}
 		}
 	} else {
-		ext_imapflags_get_flags_init(&iter, renv, NULL);	
-		while ( !matched && (flag=ext_imapflags_iter_get_flag(&iter)) != NULL ) {
+		ext_imap4flags_get_flags_init(&iter, renv, NULL);	
+		while ( !matched && (flag=ext_imap4flags_iter_get_flag(&iter)) != NULL ) {
 			if ( (mret=sieve_match_value(mctx, flag, strlen(flag))) < 0 ) {
 				result = FALSE;
 				break;

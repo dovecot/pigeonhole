@@ -33,7 +33,7 @@ const struct sieve_command cmd_setflag = {
 	-1, /* We check positional arguments ourselves */
 	0, FALSE, FALSE, 
 	NULL, NULL,
-	ext_imapflags_command_validate, 
+	ext_imap4flags_command_validate, 
 	cmd_flag_generate, 
 	NULL 
 };
@@ -50,7 +50,7 @@ const struct sieve_command cmd_addflag = {
 	-1, /* We check positional arguments ourselves */
 	0, FALSE, FALSE, 
 	NULL, NULL,
-	ext_imapflags_command_validate, 
+	ext_imap4flags_command_validate, 
 	cmd_flag_generate, 
 	NULL 
 };
@@ -68,7 +68,7 @@ const struct sieve_command cmd_removeflag = {
 	-1, /* We check positional arguments ourselves */
 	0, FALSE, FALSE, 
 	NULL, NULL,
-	ext_imapflags_command_validate, 
+	ext_imap4flags_command_validate, 
 	cmd_flag_generate, 
 	NULL 
 };
@@ -91,7 +91,7 @@ static int cmd_flag_operation_execute
 const struct sieve_operation setflag_operation = { 
 	"SETFLAG",
 	&imapflags_extension,
-	EXT_IMAPFLAGS_OPERATION_SETFLAG,
+	ext_imap4flags_OPERATION_SETFLAG,
 	cmd_flag_operation_dump,
 	cmd_flag_operation_execute
 };
@@ -101,7 +101,7 @@ const struct sieve_operation setflag_operation = {
 const struct sieve_operation addflag_operation = { 
 	"ADDFLAG",
 	&imapflags_extension,
-	EXT_IMAPFLAGS_OPERATION_ADDFLAG,
+	ext_imap4flags_OPERATION_ADDFLAG,
 	cmd_flag_operation_dump,	
 	cmd_flag_operation_execute
 };
@@ -111,7 +111,7 @@ const struct sieve_operation addflag_operation = {
 const struct sieve_operation removeflag_operation = { 
 	"REMOVEFLAG",
 	&imapflags_extension,
-	EXT_IMAPFLAGS_OPERATION_REMOVEFLAG,
+	ext_imap4flags_OPERATION_REMOVEFLAG,
 	cmd_flag_operation_dump, 
 	cmd_flag_operation_execute 
 };
@@ -238,11 +238,11 @@ static int cmd_flag_operation_execute
 	/* Determine what to do */
 
 	if ( op == &setflag_operation )
-		flag_op = ext_imapflags_set_flags;
+		flag_op = ext_imap4flags_set_flags;
 	else if ( op == &addflag_operation )
-		flag_op = ext_imapflags_add_flags;
+		flag_op = ext_imap4flags_add_flags;
 	else if ( op == &removeflag_operation )
-		flag_op = ext_imapflags_remove_flags;
+		flag_op = ext_imap4flags_remove_flags;
 	else
 		i_unreached();
 

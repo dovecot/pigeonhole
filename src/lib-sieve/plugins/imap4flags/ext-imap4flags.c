@@ -42,25 +42,25 @@ const struct sieve_operation *imapflags_operations[] = {
  * Extension
  */
 
-static bool ext_imapflags_validator_load(struct sieve_validator *valdtr);
-static bool ext_imapflags_interpreter_load
+static bool ext_imap4flags_validator_load(struct sieve_validator *valdtr);
+static bool ext_imap4flags_interpreter_load
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-int ext_imapflags_my_id = -1;
+int ext_imap4flags_my_id = -1;
 
 const struct sieve_extension imapflags_extension = { 
 	"imap4flags", 
-	&ext_imapflags_my_id,
+	&ext_imap4flags_my_id,
 	NULL, NULL,
-	ext_imapflags_validator_load, 
+	ext_imap4flags_validator_load, 
 	NULL, 
-	ext_imapflags_interpreter_load, 
+	ext_imap4flags_interpreter_load, 
 	NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(imapflags_operations), 
 	SIEVE_EXT_DEFINE_OPERAND(flags_side_effect_operand)
 };
 
-static bool ext_imapflags_validator_load
+static bool ext_imap4flags_validator_load
 (struct sieve_validator *valdtr)
 {
 	/* Register commands */
@@ -69,13 +69,13 @@ static bool ext_imapflags_validator_load
 	sieve_validator_register_command(valdtr, &cmd_removeflag);
 	sieve_validator_register_command(valdtr, &tst_hasflag);
 	
-	ext_imapflags_attach_flags_tag(valdtr, "keep");
-	ext_imapflags_attach_flags_tag(valdtr, "fileinto");
+	ext_imap4flags_attach_flags_tag(valdtr, "keep");
+	ext_imap4flags_attach_flags_tag(valdtr, "fileinto");
 
 	return TRUE;
 }
 
-static bool ext_imapflags_interpreter_load
+static bool ext_imap4flags_interpreter_load
 (const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {
 	sieve_interpreter_extension_register
