@@ -4,3 +4,4 @@ mark;
 unmark;
 mark;
 
+addflag "$label1";

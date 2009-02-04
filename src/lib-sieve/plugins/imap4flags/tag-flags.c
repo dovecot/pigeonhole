@@ -362,7 +362,7 @@ static void seff_flags_print
 			string_t *flags = t_str_new(128);
  
 			if ( (ctx->flags & MAIL_FLAGGED) > 0 )
-				str_printfa(flags, " \\flagged\n");
+				str_printfa(flags, " \\flagged");
 
 			if ( (ctx->flags & MAIL_ANSWERED) > 0 )
 				str_printfa(flags, " \\answered");
