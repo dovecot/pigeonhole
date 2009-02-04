@@ -13,9 +13,9 @@
  * Extension
  */
  
-extern const struct sieve_extension imapflags_extension;
+extern const struct sieve_extension imap4flags_extension;
 extern const struct sieve_interpreter_extension 
-	imapflags_interpreter_extension;
+	imap4flags_interpreter_extension;
 
 /*
  * Side effect

@@ -56,7 +56,7 @@ static int tst_hasflag_operation_execute
 
 const struct sieve_operation hasflag_operation = { 
 	"HASFLAG",
-	&imapflags_extension,
+	&imap4flags_extension,
 	ext_imap4flags_OPERATION_HASFLAG,
 	tst_hasflag_operation_dump,
 	tst_hasflag_operation_execute

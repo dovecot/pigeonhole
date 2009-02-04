@@ -172,7 +172,7 @@ static inline struct ext_imap4flags_result_context *_get_result_context
 {
 	struct ext_imap4flags_result_context *rctx =
 		(struct ext_imap4flags_result_context *) 
-		sieve_result_extension_get_context(result, &imapflags_extension);
+		sieve_result_extension_get_context(result, &imap4flags_extension);
 
 	if ( rctx == NULL ) {
 		pool_t pool = sieve_result_pool(result);
@@ -181,7 +181,7 @@ static inline struct ext_imap4flags_result_context *_get_result_context
 		rctx->internal_flags = str_new(pool, 32);
 
 		sieve_result_extension_set_context
-			(result, &imapflags_extension, rctx);
+			(result, &imap4flags_extension, rctx);
 	}
 
 	return rctx;
@@ -207,8 +207,8 @@ static void ext_imap4flags_runtime_init
 		(renv->result, &act_store, &flags_side_effect, NULL);
 }
 
-const struct sieve_interpreter_extension imapflags_interpreter_extension = {
-	&imapflags_extension,
+const struct sieve_interpreter_extension imap4flags_interpreter_extension = {
+	&imap4flags_extension,
 	ext_imap4flags_runtime_init,
 	NULL,
 };

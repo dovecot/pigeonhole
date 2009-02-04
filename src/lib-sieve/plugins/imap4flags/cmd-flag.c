@@ -90,7 +90,7 @@ static int cmd_flag_operation_execute
 
 const struct sieve_operation setflag_operation = { 
 	"SETFLAG",
-	&imapflags_extension,
+	&imap4flags_extension,
 	ext_imap4flags_OPERATION_SETFLAG,
 	cmd_flag_operation_dump,
 	cmd_flag_operation_execute
@@ -100,7 +100,7 @@ const struct sieve_operation setflag_operation = {
 
 const struct sieve_operation addflag_operation = { 
 	"ADDFLAG",
-	&imapflags_extension,
+	&imap4flags_extension,
 	ext_imap4flags_OPERATION_ADDFLAG,
 	cmd_flag_operation_dump,	
 	cmd_flag_operation_execute
@@ -110,7 +110,7 @@ const struct sieve_operation addflag_operation = {
 
 const struct sieve_operation removeflag_operation = { 
 	"REMOVEFLAG",
-	&imapflags_extension,
+	&imap4flags_extension,
 	ext_imap4flags_OPERATION_REMOVEFLAG,
 	cmd_flag_operation_dump, 
 	cmd_flag_operation_execute 

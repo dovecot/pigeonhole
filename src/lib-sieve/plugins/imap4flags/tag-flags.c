@@ -94,7 +94,7 @@ static const struct sieve_extension_objects ext_side_effects =
 
 const struct sieve_operand flags_side_effect_operand = { 
 	"flags operand", 
-	&imapflags_extension,
+	&imap4flags_extension,
 	0, 
 	&sieve_side_effect_operand_class,
 	&ext_side_effects

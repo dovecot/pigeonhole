@@ -73,7 +73,7 @@ extern const struct sieve_extension subaddress_extension;
 extern const struct sieve_extension comparator_i_ascii_numeric_extension;
 extern const struct sieve_extension relational_extension;
 extern const struct sieve_extension regex_extension;
-extern const struct sieve_extension imapflags_extension;
+extern const struct sieve_extension imap4flags_extension;
 extern const struct sieve_extension copy_extension;
 extern const struct sieve_extension include_extension;
 extern const struct sieve_extension body_extension;
@@ -106,7 +106,7 @@ const struct sieve_extension *sieve_core_extensions[] = {
 	/* 'Plugins' */
 	&vacation_extension, &subaddress_extension, 
 	&comparator_i_ascii_numeric_extension, 
-	&relational_extension, &regex_extension, &imapflags_extension,
+	&relational_extension, &regex_extension, &imap4flags_extension,
 	&copy_extension, &include_extension, &body_extension,
 	&variables_extension, &enotify_extension
 };
