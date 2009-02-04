@@ -46,7 +46,9 @@ static void testsuite_tool_init(void)
 {
 	sieve_tool_init();
 
-	(void) sieve_extension_register(&testsuite_extension);
+	sieve_extensions_set_string(NULL);
+
+	(void) sieve_extension_register(&testsuite_extension, TRUE);
 	
 	testsuite_init();
 }

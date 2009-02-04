@@ -22,7 +22,9 @@ libsieve_ext_imap4flags_la_SOURCES = \
 	$(commands) \
 	$(tests) \
 	$(tags) \
-	ext-imap4flags.c
+	ext-imap4flags.c \
+	ext-imapflags.c
+	
 
 noinst_HEADERS = \
 	ext-imap4flags-common.h

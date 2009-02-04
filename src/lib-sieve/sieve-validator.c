@@ -80,6 +80,8 @@ struct sieve_validator {
 	struct sieve_script *script;
 	
 	struct sieve_error_handler *ehandler;
+
+	bool finished_require;
 	
 	/* Registries */
 	
@@ -1108,12 +1110,32 @@ static bool sieve_validate_command
 		
 		result = FALSE;
 	}
-	
-	/*  
-	 * Descend further into the AST 
-	 */
-	
+		
 	if ( command != NULL ) {
+		/* Check if this is the first non-require command */
+
+		if ( !valdtr->finished_require && command != &cmd_require ) {
+			const struct sieve_validator_extension_reg *extrs;
+		    unsigned int ext_count, i;
+
+		    /* Validate all 'require'd extensions */
+
+		    extrs = array_get(&valdtr->extensions, &ext_count);
+		    for ( i = 0; i < ext_count; i++ ) {
+        	if ( extrs[i].val_ext != NULL && extrs[i].val_ext->validate != NULL ) {
+        		if ( !extrs[i].val_ext->validate
+					(valdtr, extrs[i].context, extrs[i].arg) )
+					return FALSE;
+				} 
+			}
+
+			valdtr->finished_require = TRUE;
+		}
+
+		/*  
+		 * Descend further into the AST 
+	 	*/
+
 		/* Tests */
 		if ( command->subtests > 0 && 
 			(result || sieve_errors_more_allowed(valdtr->ehandler)) )
@@ -1164,19 +1186,8 @@ static bool sieve_validate_block
 	return result;
 }
 
-bool sieve_validator_run(struct sieve_validator *validator) {	
-	const struct sieve_validator_extension_reg *extrs;
-    unsigned int ext_count, i;
-
-    /* Validate registered extensions */
-    extrs = array_get(&validator->extensions, &ext_count);
-    for ( i = 0; i < ext_count; i++ ) {
-        if ( extrs[i].val_ext != NULL && extrs[i].val_ext->validate != NULL ) {
-        	if ( !extrs[i].val_ext->validate(validator, extrs[i].context, extrs[i].arg) )
-				return FALSE;
-		} 
-	}
-
+bool sieve_validator_run(struct sieve_validator *validator) 
+{	
 	return sieve_validate_block(validator, sieve_ast_root(validator->ast));
 }
 

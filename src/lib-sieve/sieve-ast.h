@@ -237,6 +237,8 @@ struct sieve_ast_argument *sieve_ast_argument_string_create_raw
 	(struct sieve_ast *ast, string_t *str, unsigned int source_line);
 struct sieve_ast_argument *sieve_ast_argument_string_create
 	(struct sieve_ast_node *node, const string_t *str, unsigned int source_line);
+struct sieve_ast_argument *sieve_ast_argument_cstring_create
+	(struct sieve_ast_node *node, const char *str, unsigned int source_line);
 	
 struct sieve_ast_argument *sieve_ast_argument_tag_create
 	(struct sieve_ast_node *node, const char *tag, unsigned int source_line);

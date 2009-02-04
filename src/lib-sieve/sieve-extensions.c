@@ -114,6 +114,20 @@ const struct sieve_extension *sieve_core_extensions[] = {
 const unsigned int sieve_core_extensions_count =
 	N_ELEMENTS(sieve_core_extensions);
 
+/*
+ * Depricated extensions
+ */
+
+extern const struct sieve_extension imapflags_extension;
+
+const struct sieve_extension *sieve_depricated_extensions[] = {
+	/* Depricated extensions */
+	&imapflags_extension
+};
+
+const unsigned int sieve_depricated_extensions_count =
+	N_ELEMENTS(sieve_depricated_extensions);
+
 /* 
  * Extensions init/deinit
  */
@@ -127,7 +141,12 @@ bool sieve_extensions_init(void)
 	
 	/* Pre-load core extensions */
 	for ( i = 0; i < sieve_core_extensions_count; i++ ) {
-		(void) sieve_extension_register(sieve_core_extensions[i]);
+		(void)sieve_extension_register(sieve_core_extensions[i], TRUE);
+	}
+
+	/* Pre-load core extensions */
+	for ( i = 0; i < sieve_depricated_extensions_count; i++ ) {
+		(void)sieve_extension_register(sieve_depricated_extensions[i], TRUE);
 	}
 	
 	/* More extensions can be added through plugins */
@@ -149,6 +168,7 @@ struct sieve_extension_registration {
 	const struct sieve_extension *extension;
 	int id;
 	bool required;
+	bool loaded;
 };
 
 static ARRAY_DEFINE(extensions, struct sieve_extension_registration); 
@@ -161,8 +181,21 @@ static void sieve_extensions_init_registry(void)
 		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 }
 
-static struct sieve_extension_registration *_sieve_extension_register
+static bool _sieve_extension_load
 (const struct sieve_extension *extension)
+{
+	/* Call load handler */
+	if ( extension->load != NULL && !extension->load() ) {
+		sieve_sys_error("failed to load '%s' extension support.", 
+			extension->name);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static struct sieve_extension_registration *_sieve_extension_register
+(const struct sieve_extension *extension, bool load)
 {
 	struct sieve_extension_registration *ereg = (struct sieve_extension_registration *)
         hash_table_lookup(extension_index, extension->name);
@@ -181,18 +214,17 @@ static struct sieve_extension_registration *_sieve_extension_register
 
 	/* Enable extension */
 	if ( ereg->extension == NULL && extension != NULL ) {
-		if ( extension->_id != NULL ) {
-			int ext_id = *(extension->_id);
-
+		if ( extension->_id != NULL && load ) {
 			/* Make sure extension is enabled */
 			*(extension->_id) = ereg->id;
 
-			/* Call load handler if extension was not enabled */
-			if ( ext_id == -1 && extension->load != NULL && !extension->load() ) {
-				sieve_sys_error("failed to load '%s' extension support.", 
-					extension->name);
-				return NULL;
+			/* Call load handler if extension was not loaded already */
+			if ( !ereg->loaded ) {
+				if ( !_sieve_extension_load(extension) )
+					return NULL;
 			}
+
+			ereg->loaded = TRUE;
 		}
 
 		ereg->extension = extension;
@@ -201,12 +233,13 @@ static struct sieve_extension_registration *_sieve_extension_register
 	return ereg;
 }
 
-int sieve_extension_register(const struct sieve_extension *extension) 
+int sieve_extension_register
+(const struct sieve_extension *extension, bool load) 
 {
 	struct sieve_extension_registration *ereg;
 
 	/* Register the extension */
-	if ( (ereg=_sieve_extension_register(extension)) == NULL ) {
+	if ( (ereg=_sieve_extension_register(extension, load)) == NULL ) {
 		return -1;
 	}
 
@@ -218,7 +251,7 @@ int sieve_extension_require(const struct sieve_extension *extension)
 	struct sieve_extension_registration *ereg;
 
 	/* Register (possibly unknown) extension */
-    if ( (ereg=_sieve_extension_register(extension)) == NULL ) {
+    if ( (ereg=_sieve_extension_register(extension, TRUE)) == NULL ) {
         return -1;
     }
 
@@ -302,6 +335,25 @@ const char *sieve_extensions_get_string(void)
 	return str_c(extstr);
 }
 
+static void sieve_extension_enable(struct sieve_extension_registration *ereg)
+{
+	if ( ereg->extension->_id != NULL ) {
+		*(ereg->extension->_id) = ereg->id;
+	
+		if ( !ereg->loaded ) {
+			(void)_sieve_extension_load(ereg->extension);
+		}
+	}
+
+	ereg->loaded = TRUE;
+}
+
+static void sieve_extension_disable(struct sieve_extension_registration *ereg)
+{
+	if ( ereg->extension->_id != NULL )
+		*(ereg->extension->_id) = -1;	
+}
+
 void sieve_extensions_set_string(const char *ext_string)
 {
 	ARRAY_DEFINE(enabled_extensions, const struct sieve_extension_registration *);
@@ -315,10 +367,8 @@ void sieve_extensions_set_string(const char *ext_string)
 		/* Enable all */
 		eregs = array_get_modifiable(&extensions, &ext_count);
 		
-		for ( i = 0; i < ext_count; i++ ) {
-			if ( eregs[i].extension->_id != NULL )
-				*(eregs[i].extension->_id) = eregs[i].id;
-		}
+		for ( i = 0; i < ext_count; i++ )
+			sieve_extension_enable(&eregs[i]);
 
 		return;	
 	}
@@ -373,11 +423,10 @@ void sieve_extensions_set_string(const char *ext_string)
 
 		if ( eregs[i].extension->_id != NULL && 
 			*(eregs[i].extension->name) != '@' ) {
-			if ( disabled && !eregs[i].required ) {
-				*(eregs[i].extension->_id) = -1;
-			} else {
-				*(eregs[i].extension->_id) = eregs[i].id;
-			}
+			if ( disabled && !eregs[i].required )
+				sieve_extension_disable(&eregs[i]);
+			else
+				sieve_extension_enable(&eregs[i]);
 		}
 	}
 }

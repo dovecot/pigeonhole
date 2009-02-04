@@ -493,6 +493,28 @@ struct sieve_ast_argument *sieve_ast_argument_string_create
 	return argument;
 }
 
+struct sieve_ast_argument *sieve_ast_argument_cstring_create
+(struct sieve_ast_node *node, const char *str, unsigned int source_line) 
+{	
+	struct sieve_ast_argument *argument;
+	string_t *newstr;
+	
+	/* Allocate new internal string buffer */
+	newstr = str_new(node->ast->pool, strlen(str));
+	
+	/* Clone string */
+	str_append(newstr, str);
+	 
+	/* Create string argument */
+	argument = sieve_ast_argument_string_create_raw
+		(node->ast, newstr, source_line);
+
+	/* Add argument to command/test node */
+	sieve_ast_node_add_argument(node, argument);
+
+	return argument;
+}
+
 void sieve_ast_argument_string_set
 (struct sieve_ast_argument *argument, string_t *newstr)
 {
