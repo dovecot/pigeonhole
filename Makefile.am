@@ -55,9 +55,9 @@ test_cases = \
 	tests/extensions/variables/regex.svtest \
 	tests/extensions/include/errors.svtest \
 	tests/extensions/include/variables.svtest \
-	tests/extensions/imapflags/basic.svtest \
-	tests/extensions/imapflags/hasflag.svtest \
-	tests/extensions/imapflags/execute.svtest \
+	tests/extensions/imap4flags/basic.svtest \
+	tests/extensions/imap4flags/hasflag.svtest \
+	tests/extensions/imap4flags/execute.svtest \
 	tests/extensions/body/basic.svtest \
 	tests/extensions/body/match-values.svtest \
 	tests/extensions/regex/basic.svtest \
