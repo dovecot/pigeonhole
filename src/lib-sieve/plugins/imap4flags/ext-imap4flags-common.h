@@ -1,8 +1,8 @@
 /* Copyright (c) 2002-2009 Dovecot Sieve authors, see the included COPYING file
  */
 
-#ifndef __EXT_IMAPFLAGS_COMMON_H
-#define __EXT_IMAPFLAGS_COMMON_H
+#ifndef __EXT_IMAP4FLAGS_COMMON_H
+#define __EXT_IMAP4FLAGS_COMMON_H
 
 #include "lib.h"
 

@@ -16,7 +16,7 @@
 #include "sieve-actions.h"
 #include "sieve-dump.h"
 
-#include "ext-imapflags-common.h"
+#include "ext-imap4flags-common.h"
 
 #include <ctype.h>
 

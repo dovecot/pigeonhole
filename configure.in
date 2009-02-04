@@ -107,7 +107,7 @@ src/lib-sieve/plugins/subaddress/Makefile
 src/lib-sieve/plugins/comparator-i-ascii-numeric/Makefile
 src/lib-sieve/plugins/relational/Makefile
 src/lib-sieve/plugins/regex/Makefile
-src/lib-sieve/plugins/imapflags/Makefile
+src/lib-sieve/plugins/imap4flags/Makefile
 src/lib-sieve/plugins/copy/Makefile
 src/lib-sieve/plugins/include/Makefile
 src/lib-sieve/plugins/body/Makefile

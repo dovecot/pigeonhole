@@ -25,7 +25,7 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 
-#include "ext-imapflags-common.h"
+#include "ext-imap4flags-common.h"
 
 /* 
  * Operations 

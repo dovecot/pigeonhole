@@ -1,4 +1,4 @@
-noinst_LTLIBRARIES = libsieve_ext_imapflags.la
+noinst_LTLIBRARIES = libsieve_ext_imap4flags.la
 
 AM_CPPFLAGS = \
 	-I../../ \
@@ -17,12 +17,12 @@ tests = \
 tags = \
 	tag-flags.c
 
-libsieve_ext_imapflags_la_SOURCES = \
-	ext-imapflags-common.c \
+libsieve_ext_imap4flags_la_SOURCES = \
+	ext-imap4flags-common.c \
 	$(commands) \
 	$(tests) \
 	$(tags) \
-	ext-imapflags.c
+	ext-imap4flags.c
 
 noinst_HEADERS = \
-	ext-imapflags-common.h
+	ext-imap4flags-common.h

@@ -13,7 +13,7 @@
 #include "sieve-dump.h"
 #include "sieve-match.h"
 
-#include "ext-imapflags-common.h"
+#include "ext-imap4flags-common.h"
 
 /*
  * Hasflag test

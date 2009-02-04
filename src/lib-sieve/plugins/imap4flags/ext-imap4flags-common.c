@@ -17,7 +17,7 @@
 
 #include "sieve-ext-variables.h"
 
-#include "ext-imapflags-common.h"
+#include "ext-imap4flags-common.h"
 
 /*
  * Forward declarations

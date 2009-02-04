@@ -4,7 +4,7 @@ SUBDIRS = \
 	comparator-i-ascii-numeric \
 	relational \
 	regex \
-	imapflags \
+	imap4flags \
 	copy \
 	include \
 	body \
