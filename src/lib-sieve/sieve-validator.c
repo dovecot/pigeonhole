@@ -63,6 +63,7 @@ struct sieve_default_argument {
 
 struct sieve_validator_extension_reg {
 	const struct sieve_validator_extension *val_ext;
+	struct sieve_ast_argument *arg;
 	void *context;
 };
 
@@ -506,14 +507,16 @@ static const struct sieve_argument *sieve_validator_find_tag_by_identifier
  */
 
 const struct sieve_extension *sieve_validator_extension_load
-(struct sieve_validator *validator, struct sieve_command_context *cmd, 
+(struct sieve_validator *valdtr, struct sieve_ast_argument *ext_arg, 
 	string_t *ext_name) 
 {
+	int ext_id;
+	struct sieve_validator_extension_reg *reg;
 	const struct sieve_extension *ext;
 	const char *name = str_c(ext_name);
 
 	if ( str_len(ext_name) > 128 ) {
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(valdtr, ext_arg, 
 			"unsupported sieve capability '%s' (name is impossibly long)", 
 			str_sanitize(name, 128));
 		return NULL;
@@ -522,19 +525,26 @@ const struct sieve_extension *sieve_validator_extension_load
 	ext = sieve_extension_get_by_name(name); 
 	
 	if ( ext == NULL ) {
-		sieve_command_validate_error(validator, cmd, 
+		sieve_argument_validate_error(valdtr, ext_arg, 
 			"unsupported sieve capability '%s'", name);
 		return NULL;
 	}
 	
-	sieve_ast_extension_link(validator->ast, ext);
+	sieve_ast_extension_link(valdtr->ast, ext);
 
-	if ( ext->validator_load != NULL && !ext->validator_load(validator) ) {
-		sieve_command_validate_error(validator, cmd, 
+	if ( ext->validator_load != NULL && !ext->validator_load(valdtr) ) {
+		sieve_argument_validate_error(valdtr, ext_arg, 
 			"failed to load sieve capability '%s'", ext->name);
 		return NULL;
 	}
-	
+
+	/* Register extension no matter what and store the AST argument registering it */
+	ext_id = SIEVE_EXT_ID(ext);
+	if ( ext_id >= 0 ) {
+		reg = array_idx_modifiable(&valdtr->extensions, (unsigned int) ext_id);
+		reg->arg = ext_arg;
+	}
+
 	return ext;
 }
 
@@ -542,24 +552,27 @@ void sieve_validator_extension_register
 (struct sieve_validator *valdtr, 
 	const struct sieve_validator_extension *val_ext, void *context)
 {
-	struct sieve_validator_extension_reg reg = { val_ext, context };
+	struct sieve_validator_extension_reg *reg;
 	int ext_id = SIEVE_EXT_ID(val_ext->ext);
 
 	if ( ext_id < 0 ) return;
 	
-	array_idx_set(&valdtr->extensions, (unsigned int) ext_id, &reg);	
+	reg = array_idx_modifiable(&valdtr->extensions, (unsigned int) ext_id);
+	reg->val_ext = val_ext;
+	reg->context = context;
 }
 
 void sieve_validator_extension_set_context
 (struct sieve_validator *valdtr, const struct sieve_extension *ext, 
 	void *context)
 {
-	struct sieve_validator_extension_reg reg = { NULL, context };
+	struct sieve_validator_extension_reg *reg;
 	int ext_id = SIEVE_EXT_ID(ext);
 
 	if ( ext_id < 0 ) return;
 	
-	array_idx_set(&valdtr->extensions, (unsigned int) ext_id, &reg);	
+	reg = array_idx_modifiable(&valdtr->extensions, (unsigned int) ext_id);
+	reg->context = context;
 }
 
 void *sieve_validator_extension_get_context
@@ -1138,6 +1151,18 @@ static bool sieve_validate_block
 }
 
 bool sieve_validator_run(struct sieve_validator *validator) {	
+	const struct sieve_validator_extension_reg *extrs;
+    unsigned int ext_count, i;
+
+    /* Validate registered extensions */
+    extrs = array_get(&validator->extensions, &ext_count);
+    for ( i = 0; i < ext_count; i++ ) {
+        if ( extrs[i].val_ext != NULL && extrs[i].val_ext->validate != NULL ) {
+        	if ( !extrs[i].val_ext->validate(validator, extrs[i].context, extrs[i].arg) )
+				return FALSE;
+		} 
+	}
+
 	return sieve_validate_block(validator, sieve_ast_root(validator->ast));
 }
 

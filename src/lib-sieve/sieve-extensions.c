@@ -148,6 +148,7 @@ void sieve_extensions_deinit(void)
 struct sieve_extension_registration {
 	const struct sieve_extension *extension;
 	int id;
+	bool required;
 };
 
 static ARRAY_DEFINE(extensions, struct sieve_extension_registration); 
@@ -155,37 +156,74 @@ static struct hash_table *extension_index;
 
 static void sieve_extensions_init_registry(void)
 {	
-	p_array_init(&extensions, default_pool, 30);
+	i_array_init(&extensions, 30);
 	extension_index = hash_table_create
 		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 }
 
-int sieve_extension_register(const struct sieve_extension *extension) 
+static struct sieve_extension_registration *_sieve_extension_register
+(const struct sieve_extension *extension)
 {
-	int ext_id = array_count(&extensions); 
-	struct sieve_extension_registration *ereg;
-	
-	ereg = array_append_space(&extensions);
-	
-	ereg->extension = extension;
-	ereg->id = ext_id;
-	
-	hash_table_insert(extension_index, (void *) extension->name, (void *) ereg);
-	
-	/* Assign ID */
-	
-	if ( extension->_id != NULL ) {
-		i_assert( *(extension->_id) == -1 ); 
-		*(extension->_id) = ext_id;
+	struct sieve_extension_registration *ereg = (struct sieve_extension_registration *)
+        hash_table_lookup(extension_index, extension->name);
 
-		if ( extension->load != NULL && !extension->load() ) {
-			sieve_sys_error("failed to load '%s' extension support.", 
-				extension->name);
-			return -1;
+	/* Register extension if it is not registered already */
+    if ( ereg == NULL ) {
+		int ext_id = array_count(&extensions);
+
+        /* Add extension to the registry */
+
+        ereg = array_append_space(&extensions);
+        ereg->id = ext_id;
+
+        hash_table_insert(extension_index, (void *) extension->name, (void *) ereg);
+    }
+
+	/* Enable extension */
+	if ( ereg->extension == NULL && extension != NULL ) {
+		if ( extension->_id != NULL ) {
+			int ext_id = *(extension->_id);
+
+			/* Make sure extension is enabled */
+			*(extension->_id) = ereg->id;
+
+			/* Call load handler if extension was not enabled */
+			if ( ext_id == -1 && extension->load != NULL && !extension->load() ) {
+				sieve_sys_error("failed to load '%s' extension support.", 
+					extension->name);
+				return NULL;
+			}
 		}
+
+		ereg->extension = extension;
 	}
 
-	return ext_id;
+	return ereg;
+}
+
+int sieve_extension_register(const struct sieve_extension *extension) 
+{
+	struct sieve_extension_registration *ereg;
+
+	/* Register the extension */
+	if ( (ereg=_sieve_extension_register(extension)) == NULL ) {
+		return -1;
+	}
+
+	return ereg->id;
+}
+
+int sieve_extension_require(const struct sieve_extension *extension)
+{
+	struct sieve_extension_registration *ereg;
+
+	/* Register (possibly unknown) extension */
+    if ( (ereg=_sieve_extension_register(extension)) == NULL ) {
+        return -1;
+    }
+
+	ereg->required = TRUE;
+	return ereg->id;
 }
 
 int sieve_extensions_get_count(void)
@@ -209,7 +247,7 @@ const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id)
 
 const struct sieve_extension *sieve_extension_get_by_name(const char *name) 
 {
-  struct sieve_extension_registration *ereg;
+	struct sieve_extension_registration *ereg;
 	
 	if ( *name == '@' )
 		return NULL;	
@@ -335,7 +373,7 @@ void sieve_extensions_set_string(const char *ext_string)
 
 		if ( eregs[i].extension->_id != NULL && 
 			*(eregs[i].extension->name) != '@' ) {
-			if ( disabled ) {
+			if ( disabled && !eregs[i].required ) {
 				*(eregs[i].extension->_id) = -1;
 			} else {
 				*(eregs[i].extension->_id) = eregs[i].id;
@@ -349,11 +387,12 @@ static void sieve_extensions_deinit_registry(void)
 	struct hash_iterate_context *itx = 
 		hash_table_iterate_init(extension_index);
 	void *key; 
-	void *ereg;
+	void *value;
 	
-	while ( hash_table_iterate(itx, &key, &ereg) ) {
-		const struct sieve_extension *ext = 
-			((struct sieve_extension_registration *) ereg)->extension;
+	while ( hash_table_iterate(itx, &key, &value) ) {
+		struct sieve_extension_registration *ereg =
+			(struct sieve_extension_registration *) value;
+		const struct sieve_extension *ext = ereg->extension;
 		
 		if ( ext->unload != NULL )
 			ext->unload();

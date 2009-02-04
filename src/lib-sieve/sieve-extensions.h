@@ -90,6 +90,7 @@ void sieve_extensions_deinit(void);
  */
 
 int sieve_extension_register(const struct sieve_extension *extension);
+int sieve_extension_require(const struct sieve_extension *extension);
 int sieve_extensions_get_count(void);
 const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id);
 const struct sieve_extension *sieve_extension_get_by_name(const char *name);
