@@ -134,6 +134,9 @@ const struct sieve_extension *sieve_validator_extension_load
 void sieve_validator_extension_register
 	(struct sieve_validator *valdtr, 
 		const struct sieve_validator_extension *val_ext, void *context);
+bool sieve_validator_extension_loaded
+    (struct sieve_validator *valdtr, const struct sieve_extension *ext);
+
 void sieve_validator_extension_set_context
 (struct sieve_validator *valdtr, const struct sieve_extension *ext, 
 	void *context);

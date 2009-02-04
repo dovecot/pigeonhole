@@ -65,6 +65,8 @@ struct sieve_validator_extension_reg {
 	const struct sieve_validator_extension *val_ext;
 	struct sieve_ast_argument *arg;
 	void *context;
+
+	bool loaded;
 };
 
 /* 
@@ -543,6 +545,7 @@ const struct sieve_extension *sieve_validator_extension_load
 	if ( ext_id >= 0 ) {
 		reg = array_idx_modifiable(&valdtr->extensions, (unsigned int) ext_id);
 		reg->arg = ext_arg;
+		reg->loaded = TRUE;
 	}
 
 	return ext;
@@ -560,6 +563,17 @@ void sieve_validator_extension_register
 	reg = array_idx_modifiable(&valdtr->extensions, (unsigned int) ext_id);
 	reg->val_ext = val_ext;
 	reg->context = context;
+}
+
+bool sieve_validator_extension_loaded
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext)
+{
+	int ext_id = SIEVE_EXT_ID(ext);
+	const struct sieve_validator_extension_reg *reg;
+
+	reg = array_idx(&valdtr->extensions, (unsigned int) ext_id);
+
+	return ( reg->loaded );
 }
 
 void sieve_validator_extension_set_context
