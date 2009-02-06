@@ -186,7 +186,8 @@ static void act_store_get_storage_error
 }
 
 static struct mailbox *act_store_mailbox_open
-(const struct sieve_action_exec_env *aenv, struct mail_namespace *ns, const char *folder)
+(const struct sieve_action_exec_env *aenv, struct mail_namespace *ns, 
+	const char *folder)
 {
 	struct mail_storage **storage = &(aenv->exec_status->last_storage);
 	enum mailbox_open_flags open_flags = 
@@ -285,6 +286,7 @@ static bool act_store_execute
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
 	struct mail_keywords *keywords = NULL;
+	struct mail_save_context *save_ctx;
 	
 	/* Verify transaction */
 	if ( trans == NULL ) return FALSE;
@@ -331,10 +333,16 @@ static bool act_store_execute
 	}
 	
 	/* Store the message */
-	if (mailbox_copy(trans->mail_trans, aenv->msgdata->mail, trans->flags, 
-		keywords, trans->dest_mail) < 0) {
+	save_ctx = mailbox_save_alloc(trans->mail_trans);
+	mailbox_save_set_flags(save_ctx, trans->flags, keywords);
+	mailbox_save_set_dest_mail(save_ctx, trans->dest_mail);
+	if ( mailbox_copy(&save_ctx, aenv->msgdata->mail) < 0 ) {
 		act_store_get_storage_error(aenv, trans);
  		return FALSE;
+ 	}
+ 	
+ 	if ( keywords != NULL ) {
+ 		mailbox_keywords_free(trans->box, &keywords);
  	}
  		 	
 	return TRUE;
