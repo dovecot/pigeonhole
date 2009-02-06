@@ -180,7 +180,7 @@ static int parse_mailbox(struct sieve_message_address_parser *ctx)
 	  ctx->parser.data = start;
 	  return parse_addr_spec(ctx);
 	} 
-	
+
 	/* "<" addr-spec ">" */
 	ctx->parser.data++;
 
@@ -250,6 +250,7 @@ static bool parse_mailbox_address
 	return TRUE;
 }
 
+/* FIXME: change the names of these functions */
 bool sieve_rfc2822_mailbox_validate(const char *address, const char **error_r)
 {
 	struct sieve_message_address_parser ctx;
@@ -295,6 +296,8 @@ const char *sieve_rfc2822_mailbox_normalize
 
 	if ( error_r != NULL )
 		*error_r = NULL;
+		
+	(void)str_lcase(str_c_modifiable(ctx.domain));
 
 	return t_strconcat(str_c(ctx.local_part), "@", str_c(ctx.domain), NULL);
 }

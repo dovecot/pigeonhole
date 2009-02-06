@@ -1,4 +1,4 @@
 require "vacation";
 
-vacation "I am not at home today";
+vacation :addresses "stephan@rename-it.nl" "I am not at home today";
 keep;

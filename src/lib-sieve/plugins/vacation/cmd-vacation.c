@@ -668,8 +668,39 @@ static int ext_vacation_operation_execute
 		act->from_normalized = p_strdup(pool, from_normalized);
 	}
 
-	if ( addresses != NULL )
-		sieve_coded_stringlist_read_all(addresses, pool, &(act->addresses));
+	/* Normalize all addresses */
+	if ( addresses != NULL ) {
+		ARRAY_DEFINE(norm_addresses, const char *);
+		string_t *raw_address;
+		bool result = FALSE;
+		
+		sieve_coded_stringlist_reset(addresses);
+			
+		p_array_init(&norm_addresses, pool, 4);
+		
+		raw_address = NULL;
+		while ( (result=sieve_coded_stringlist_next_item(addresses, &raw_address))
+			&& raw_address != NULL ) {
+			const char *error;
+			const char *addr_norm = sieve_address_normalize(raw_address, &error);
+			
+			if ( addr_norm != NULL ) {
+				addr_norm = p_strdup(pool, addr_norm);
+		
+				array_append(&norm_addresses, &addr_norm, 1);			
+			} else {
+				/* FIXME: report proper warning */
+			}
+		}
+		
+		if ( !result ) {
+			sieve_runtime_trace_error(renv, "invalid addresses stringlist");
+			return SIEVE_EXEC_BIN_CORRUPT;
+		}
+		
+		(void)array_append_space(&norm_addresses);
+		act->addresses = array_idx(&norm_addresses, 0);
+	}	
 		
 	return ( sieve_result_add_action
 		(renv, &act_vacation, slist, source_line, (void *) act, 0) >= 0 );
@@ -805,7 +836,7 @@ static inline bool _contains_my_address
 				if (addr->domain != NULL) {
 					i_assert(addr->mailbox != NULL);
 
-					if ( strcmp(t_strconcat(addr->mailbox, "@", addr->domain, NULL),
+					if ( strcasecmp(t_strconcat(addr->mailbox, "@", addr->domain, NULL),
 						my_address) == 0 ) {
 						result = TRUE;
 						break;
@@ -910,10 +941,11 @@ static void act_vacation_hash
 (const struct sieve_message_data *msgdata, struct act_vacation_context *vctx, 
 	unsigned char hash_r[])
 {
+	const char *rpath = t_str_lcase(msgdata->return_path);
 	struct md5_context ctx;
 
 	md5_init(&ctx);
-	md5_update(&ctx, msgdata->return_path, strlen(msgdata->return_path));
+	md5_update(&ctx, rpath, strlen(rpath));
 
 	md5_update(&ctx, vctx->handle, strlen(vctx->handle));
 	
@@ -943,7 +975,7 @@ static bool act_vacation_commit
 	/* Are we perhaps trying to respond to ourselves ? 
 	 * (FIXME: verify this to :addresses as well?)
 	 */
-	if ( strcmp(msgdata->return_path, msgdata->to_address) == 0 ) {
+	if ( strcasecmp(msgdata->return_path, msgdata->to_address) == 0 ) {
 		sieve_result_log(aenv, "discarded vacation reply to own address");	
 		return TRUE;
 	}
@@ -990,7 +1022,7 @@ static bool act_vacation_commit
 		}
 	}
 	
-	/* Check for the non-standard precedence header */
+	/* Check for the (non-standard) precedence header */
 	if ( mail_get_headers
 		(msgdata->mail, "precedence", &headers) >= 0 ) {
 		/* Theoretically multiple headers could exist, so lets make sure */
