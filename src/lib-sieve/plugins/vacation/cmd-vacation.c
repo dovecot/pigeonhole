@@ -834,10 +834,12 @@ static inline bool _contains_my_address
 
 			while ( addr != NULL && !result ) {
 				if (addr->domain != NULL) {
+					const char *hdr_address; 
+					
 					i_assert(addr->mailbox != NULL);
 
-					if ( strcasecmp(t_strconcat(addr->mailbox, "@", addr->domain, NULL),
-						my_address) == 0 ) {
+					hdr_address = t_strconcat(addr->mailbox, "@", addr->domain, NULL);
+					if ( sieve_address_compare(hdr_address, my_address, TRUE) == 0 ) {
 						result = TRUE;
 						break;
 					}
@@ -975,7 +977,8 @@ static bool act_vacation_commit
 	/* Are we perhaps trying to respond to ourselves ? 
 	 * (FIXME: verify this to :addresses as well?)
 	 */
-	if ( strcasecmp(msgdata->return_path, msgdata->to_address) == 0 ) {
+	if ( sieve_address_compare(msgdata->return_path, msgdata->to_address, TRUE) 
+		== 0 ) {
 		sieve_result_log(aenv, "discarded vacation reply to own address");	
 		return TRUE;
 	}

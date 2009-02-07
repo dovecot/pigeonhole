@@ -350,6 +350,21 @@ bool sieve_address_validate
 	return TRUE;
 }
 
+int sieve_address_compare
+(const char *address1, const char *address2, bool normalized ATTR_UNUSED)
+{
+	/* NOTE: this deviates from RFC specification in that it compares the local 
+	 * part of the address case-insensitively. This however conforms to the 
+	 * consensus in mail software.
+	 */
+	 
+	/* FIXME: provided addresses are currently assumed to be normalized to 
+	 * local_part@domain
+	 */
+	 
+	return strcasecmp(address1, address2);
+}
+
 /*
  * RFC 2821 addresses (envelope paths)
  */

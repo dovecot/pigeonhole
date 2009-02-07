@@ -284,7 +284,8 @@ static bool _uri_add_valid_recipient
 		
 		/* Check for duplicate first */
 		for ( i = 0; i < count; i++ ) {
-			if ( strcmp(rcpts[i].normalized, normalized) == 0 ) {
+			if ( sieve_address_compare(rcpts[i].normalized, normalized, TRUE) == 0 ) 
+				{
 				/* Upgrade existing Cc: recipient to a To: recipient if possible */
 				rcpts[i].carbon_copy = ( rcpts[i].carbon_copy && cc );
 				
@@ -772,8 +773,9 @@ static int ntfy_mailto_action_check_duplicates
 
 	for ( i = 0; i < new_count; i++ ) {
 		for ( j = 0; j < old_count; j++ ) {
-			if ( strcmp(new_rcpts[i].normalized, old_rcpts[j].normalized) == 0 )
-				 break;				
+			if ( sieve_address_compare
+				(new_rcpts[i].normalized, old_rcpts[j].normalized, TRUE) == 0 )
+				break;				
 		}
 
 		if ( j == old_count ) {

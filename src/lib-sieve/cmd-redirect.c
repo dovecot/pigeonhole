@@ -251,8 +251,9 @@ static bool act_redirect_equals
 	struct act_redirect_context *rd_ctx2 = 
 		(struct act_redirect_context *) ctx2;
 
-	/* Address is already normalized, strcmp suffices to assess duplicates */
-	return ( strcmp(rd_ctx1->to_address, rd_ctx2->to_address) == 0 );
+	/* Address is already normalized */
+	return ( sieve_address_compare
+		(rd_ctx1->to_address, rd_ctx2->to_address, TRUE) == 0 );
 }
  
 static int act_redirect_check_duplicate

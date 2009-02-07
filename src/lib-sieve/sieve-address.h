@@ -27,6 +27,9 @@ const char *sieve_address_normalize
 	(string_t *address, const char **error_r);
 bool sieve_address_validate
 	(string_t *address, const char **error_r);
+	
+int sieve_address_compare
+	(const char *address1, const char *address2, bool normalized);
 
 /*
  * RFC 2821 addresses (paths)
