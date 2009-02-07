@@ -79,6 +79,7 @@ test_cases = \
 	tests/extensions/enotify/notify_method_capability.svtest \
 	tests/extensions/enotify/errors.svtest \
 	tests/extensions/enotify/execute.svtest \
+	tests/extensions/enotify/mailto.svtest \
 	tests/multiscript/basic.svtest
 
 if HAVE_DOVECOT_LIBS

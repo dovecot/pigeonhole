@@ -285,7 +285,7 @@ static bool tsto_message_set_member
 {
 	if ( id != -1 ) return FALSE;
 	
-	testsuite_message_set(renv, value);
+	testsuite_message_set_string(renv, value);
 	
 	return TRUE;
 }

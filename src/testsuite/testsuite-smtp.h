@@ -16,4 +16,11 @@ void *testsuite_smtp_open
 	(const char *destination, const char *return_path, FILE **file_r);
 bool testsuite_smtp_close(void *handle);
 
+/*
+ * Access
+ */
+
+int testsuite_smtp_get
+	(const struct sieve_runtime_env *renv, unsigned int index);
+
 #endif /* __TESTSUITE_SMTP_H */

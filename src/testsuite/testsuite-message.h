@@ -11,8 +11,10 @@ extern struct sieve_message_data testsuite_msgdata;
 void testsuite_message_init(const char *user);
 void testsuite_message_deinit(void);
 
-void testsuite_message_set
+void testsuite_message_set_string
 	(const struct sieve_runtime_env *renv, string_t *message);
+void testsuite_message_set_file
+	(const struct sieve_runtime_env *renv, const char *file_path);
 
 void testsuite_envelope_set_sender(const char *value);
 void testsuite_envelope_set_recipient(const char *value);

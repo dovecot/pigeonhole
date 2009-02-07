@@ -41,8 +41,8 @@ Next (in order of descending priority/precedence):
 	- Verify validity of utf8 where necessary.
 	- Implement comparator-i;unicode-casemap.
 * Make testsuite much more exhaustive:
-	- add support for testing delivered and outgoing smtp messages by looping 
-	  these back as the active mail message
+	- add support for testing delivered messages by looping these back as the 
+	  tested mail message
 	- add support for testing the content of result actions
 	- test as many error/warning/info conditions as possible. 
 	- review the specification documents and check whether the given conditions

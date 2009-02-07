@@ -472,6 +472,7 @@ static bool cmd_vacation_generate
 	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
 		return FALSE;	
 
+	/* FIXME: this will not allow the handle to be a variable */
 	sieve_opr_string_emit(cgenv->sbin, ctx_data->handle);
 		
 	return TRUE;

@@ -322,9 +322,9 @@ static int opc_import_execute
 			if ( varval == NULL ) {
 				sieve_runtime_error(renv,
 					sieve_error_script_location(renv->script, source_line),
-        	"include: imported variable '%s' not previously exported", 
-        		vars[index]->identifier);
-        return SIEVE_EXEC_FAILURE;
+					"include: imported variable '%s' not previously exported", 
+					vars[index]->identifier);
+				return SIEVE_EXEC_FAILURE;
 			}
 		}	else {
 			/* Make sure variable is initialized (export) */

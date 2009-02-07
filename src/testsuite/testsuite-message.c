@@ -36,18 +36,10 @@ static string_t *envelope_auth;
 
 pool_t message_pool;
 
-static void _testsuite_message_set(string_t *message)
+static void _testsuite_message_set_data(struct mail *mail)
 {
-	struct mail *mail;
 	const char *recipient = NULL, *sender = NULL;
 	
-	/*
-	 * Open message as mail struct
-	 */
-	 
-	_raw_message = mail_raw_open_data(message);
-	mail = _raw_message->mail;
-
 	/* 
 	 * Collect necessary message data 
 	 */
@@ -86,23 +78,38 @@ void testsuite_message_init(const char *user)
 
 	testsuite_user = user;
 	mail_raw_init(user);
-	_testsuite_message_set(default_message);
+	_raw_message = mail_raw_open_data(default_message);
+	_testsuite_message_set_data(_raw_message->mail);
 
 	envelope_to = str_new(message_pool, 256);
 	envelope_from = str_new(message_pool, 256);
 	envelope_auth = str_new(message_pool, 256);
 }
 
-void testsuite_message_set
+void testsuite_message_set_string
 (const struct sieve_runtime_env *renv, string_t *message)
 {
 	mail_raw_close(_raw_message);
 
-	_testsuite_message_set(message);	
+	_raw_message = mail_raw_open_data(message);
+
+	_testsuite_message_set_data(_raw_message->mail);
 
 	sieve_message_context_flush(renv->msgctx);
 }
 
+void testsuite_message_set_file
+(const struct sieve_runtime_env *renv, const char *file_path)
+{
+	mail_raw_close(_raw_message);
+	 
+	_raw_message = mail_raw_open_file(file_path);
+
+	_testsuite_message_set_data(_raw_message->mail);
+
+	sieve_message_context_flush(renv->msgctx);
+}
+	
 void testsuite_message_deinit(void)
 {
 	mail_raw_close(_raw_message);
@@ -114,21 +121,30 @@ void testsuite_message_deinit(void)
 void testsuite_envelope_set_sender(const char *value)
 {
 	str_truncate(envelope_from, 0);
-	str_append(envelope_from, value);
+
+	if ( value != NULL )
+		str_append(envelope_from, value);
+
 	testsuite_msgdata.return_path = str_c(envelope_from);
 }
 
 void testsuite_envelope_set_recipient(const char *value)
 {
 	str_truncate(envelope_to, 0);
-	str_append(envelope_to, value);
+
+	if ( value != NULL )
+		str_append(envelope_to, value);
+
 	testsuite_msgdata.to_address = str_c(envelope_to);
 }
 
 void testsuite_envelope_set_auth_user(const char *value)
 {
 	str_truncate(envelope_auth, 0);
-	str_append(envelope_auth, value);
+
+	if ( value != NULL )
+		str_append(envelope_auth, value);
+
 	testsuite_msgdata.auth_user = str_c(envelope_auth);
 } 
  

@@ -37,7 +37,8 @@ commands = \
 	cmd-test.c \
 	cmd-test-fail.c \
 	cmd-test-set.c \
-	cmd-test-result-print.c
+	cmd-test-result-print.c \
+	cmd-test-message.c
 
 tests = \
 	tst-test-script-compile.c \

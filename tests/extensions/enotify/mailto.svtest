@@ -1,0 +1,26 @@
+require "vnd.dovecot.testsuite";
+require "enotify";
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: nico@vestingbar.nl
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test "Simple" {
+	notify "mailto:stephan@rename-it.nl";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not header :matches "Auto-Submitted" "auto-notified*" {
+		test_fail "auto-submitted header set inappropriately";
+	}
+}
+

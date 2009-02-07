@@ -78,6 +78,8 @@ static int tst_test_result_execute_operation_execute
 	 * Perform operation
 	 */
 
+	sieve_runtime_trace(renv, "TEST_RESULT_EXECUTE test");
+
 	result = testsuite_result_execute(renv);
 
 	/* Set result */
