@@ -170,6 +170,17 @@ struct sieve_error_handler *sieve_interpreter_get_error_handler
 	return interp->ehandler;
 }
 
+/* Do not use this function for normal sieve extensions. This is intended for
+ * the testsuite only.
+ */
+void sieve_interpreter_set_result
+(struct sieve_interpreter *interp, struct sieve_result *result)
+{
+	sieve_result_unref(&interp->runenv.result);
+	interp->runenv.result = result;
+	sieve_result_ref(result);
+}
+
 /* 
  * Error handling 
  */

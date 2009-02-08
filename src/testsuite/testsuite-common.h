@@ -41,6 +41,7 @@ bool testsuite_generator_context_initialize(struct sieve_generator *gentr);
 extern const struct sieve_command cmd_test;
 extern const struct sieve_command cmd_test_fail;
 extern const struct sieve_command cmd_test_set;
+extern const struct sieve_command cmd_test_result_reset;
 extern const struct sieve_command cmd_test_result_print;
 extern const struct sieve_command cmd_test_message;
 
@@ -68,6 +69,7 @@ enum testsuite_operation_code {
 	TESTSUITE_OPERATION_TEST_ERROR,
 	TESTSUITE_OPERATION_TEST_RESULT,
 	TESTSUITE_OPERATION_TEST_RESULT_EXECUTE,
+	TESTSUITE_OPERATION_TEST_RESULT_RESET,
 	TESTSUITE_OPERATION_TEST_RESULT_PRINT,
 	TESTSUITE_OPERATION_TEST_MESSAGE_SMTP,
 	TESTSUITE_OPERATION_TEST_MESSAGE_MAILBOX
@@ -82,6 +84,7 @@ extern const struct sieve_operation test_script_run_operation;
 extern const struct sieve_operation test_error_operation;
 extern const struct sieve_operation test_result_operation;
 extern const struct sieve_operation test_result_execute_operation;
+extern const struct sieve_operation test_result_reset_operation;
 extern const struct sieve_operation test_result_print_operation;
 extern const struct sieve_operation test_message_smtp_operation;
 extern const struct sieve_operation test_message_mailbox_operation;

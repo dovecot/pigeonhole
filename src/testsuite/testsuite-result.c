@@ -28,13 +28,15 @@ void testsuite_result_deinit(void)
 	}
 }
 
-void testsuite_result_reset(void)
+void testsuite_result_reset
+(const struct sieve_runtime_env *renv)
 {
 	if ( _testsuite_result != NULL ) {
 		sieve_result_unref(&_testsuite_result);
 	}
 
-	_testsuite_result = sieve_result_create(testsuite_log_ehandler);;
+	_testsuite_result = sieve_result_create(testsuite_log_ehandler);
+	sieve_interpreter_set_result(renv->interp, _testsuite_result);
 }
 
 struct sieve_result *testsuite_result_get(void)
@@ -52,7 +54,6 @@ struct sieve_result_iterate_context *testsuite_result_iterate_init(void)
 
 bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 {
-	struct sieve_script_env scriptenv;
 	int ret;
 
 	if ( _testsuite_result == NULL ) {
@@ -63,18 +64,6 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 
 	testsuite_log_clear_messages();
 
-	/* Compose script execution environment * /
-	memset(&scriptenv, 0, sizeof(scriptenv));
-	scriptenv.default_mailbox = "INBOX";
-	scriptenv.namespaces = NULL;
-	scriptenv.username = "user";
-	scriptenv.hostname = "host.example.com";
-	scriptenv.postmaster_address = "postmaster@example.com";
-	scriptenv.smtp_open = NULL;
-	scriptenv.smtp_close = NULL;
-	scriptenv.duplicate_mark = NULL;
-	scriptenv.duplicate_check = NULL;*/
-	
 	/* Execute the result */	
 	ret=sieve_result_execute
 		(_testsuite_result, renv->msgdata, renv->scriptenv, NULL);

@@ -181,7 +181,7 @@ static int tst_test_script_run_operation_execute
 
 	/* Reset result object */
 	if ( !append_result ) 
-		testsuite_result_reset();
+		testsuite_result_reset(renv);
 
 	/* Run script */
 	result = testsuite_script_run(renv);

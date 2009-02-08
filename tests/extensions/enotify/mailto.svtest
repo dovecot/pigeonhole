@@ -38,6 +38,8 @@ test "Simple" {
  * Multiple recipients
  */
 
+test_result_reset;
+
 test_set "message" text:
 From: stephan@rename-it.nl
 To: nico@vestingbar.nl
@@ -54,7 +56,7 @@ test "Multiple recipients" {
 		test_fail "failed to execute notify";
 	}
 
-	test_message :smtp 1;
+	test_message :smtp 0;
 
 	if not address :is "to" "timo@example.com" {
 		test_fail "first To address missing";
@@ -80,13 +82,13 @@ test "Multiple recipients" {
 		test_fail "subject header set incorrectly";
 	}
 
-	test_message :smtp 2;
+	test_message :smtp 1;
 
 	if not header :matches "Auto-Submitted" "auto-notified*" {
 		test_fail "auto-submitted header not found for second message";
 	}
 
-	test_message :smtp 3;
+	test_message :smtp 2;
 
 	if not header :matches "Auto-Submitted" "auto-notified*" {
 		test_fail "auto-submitted header not found for third message";
