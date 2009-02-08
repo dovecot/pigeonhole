@@ -72,7 +72,7 @@ test_cases = \
 	tests/extensions/subaddress/rfc.svtest \
 	tests/extensions/vacation/errors.svtest \
 	tests/extensions/vacation/execute.svtest \
-	tests/extensions/vacation/references.svtest \
+	tests/extensions/vacation/message.svtest \
 	tests/extensions/enotify/basic.svtest \
 	tests/extensions/enotify/encodeurl.svtest \
 	tests/extensions/enotify/valid_notify_method.svtest \
