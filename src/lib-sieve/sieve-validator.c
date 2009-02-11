@@ -573,6 +573,9 @@ bool sieve_validator_extension_loaded
 	int ext_id = SIEVE_EXT_ID(ext);
 	const struct sieve_validator_extension_reg *reg;
 
+	if ( ext_id < 0 || ext_id >= (int) array_count(&valdtr->extensions))
+		return FALSE;
+
 	reg = array_idx(&valdtr->extensions, (unsigned int) ext_id);
 
 	return ( reg->loaded );
