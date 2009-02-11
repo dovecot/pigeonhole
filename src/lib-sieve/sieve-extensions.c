@@ -144,11 +144,11 @@ bool sieve_extensions_init(void)
 		(void)sieve_extension_register(sieve_core_extensions[i], TRUE);
 	}
 
-	/* Pre-load core extensions */
+	/* Register depricated extensions */
 	for ( i = 0; i < sieve_depricated_extensions_count; i++ ) {
-		(void)sieve_extension_register(sieve_depricated_extensions[i], TRUE);
+		(void)sieve_extension_register(sieve_depricated_extensions[i], FALSE);
 	}
-	
+
 	/* More extensions can be added through plugins */
 	
 	return TRUE;
