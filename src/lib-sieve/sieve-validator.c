@@ -1110,32 +1110,12 @@ static bool sieve_validate_command
 		
 		result = FALSE;
 	}
-		
+
+	/*  
+	 * Descend further into the AST 
+	 */
+	
 	if ( command != NULL ) {
-		/* Check if this is the first non-require command */
-
-		if ( !valdtr->finished_require && command != &cmd_require ) {
-			const struct sieve_validator_extension_reg *extrs;
-		    unsigned int ext_count, i;
-
-		    /* Validate all 'require'd extensions */
-
-		    extrs = array_get(&valdtr->extensions, &ext_count);
-		    for ( i = 0; i < ext_count; i++ ) {
-        	if ( extrs[i].val_ext != NULL && extrs[i].val_ext->validate != NULL ) {
-        		if ( !extrs[i].val_ext->validate
-					(valdtr, extrs[i].context, extrs[i].arg) )
-					return FALSE;
-				} 
-			}
-
-			valdtr->finished_require = TRUE;
-		}
-
-		/*  
-		 * Descend further into the AST 
-	 	*/
-
 		/* Tests */
 		if ( command->subtests > 0 && 
 			(result || sieve_errors_more_allowed(valdtr->ehandler)) )
@@ -1176,9 +1156,32 @@ static bool sieve_validate_block
 		command = sieve_ast_command_first(block);
 		while ( command != NULL && (result || 
 			sieve_errors_more_allowed(valdtr->ehandler)) ) {	
-			
+
 			next = sieve_ast_command_next(command);
 			result = sieve_validate_command(valdtr, command) && result;	
+
+			/* Check if this is the first non-require command */
+	
+			if ( result && !valdtr->finished_require && command->context != NULL &&
+				command->context->command != &cmd_require ) {
+				const struct sieve_validator_extension_reg *extrs;
+			    unsigned int ext_count, i;
+	
+				valdtr->finished_require = TRUE;
+	
+			    /* Validate all 'require'd extensions */
+
+			    extrs = array_get(&valdtr->extensions, &ext_count);
+			    for ( i = 0; i < ext_count; i++ ) {
+					if ( extrs[i].val_ext != NULL && extrs[i].val_ext->validate != NULL ) {
+						if ( !extrs[i].val_ext->validate
+							(valdtr, extrs[i].context, extrs[i].arg) )
+						result = FALSE;
+						break;
+					} 
+				}
+			}
+
 			command = next;
 		}		
 	} T_END;
