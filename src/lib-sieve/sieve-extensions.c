@@ -213,22 +213,20 @@ static struct sieve_extension_registration *_sieve_extension_register
     }
 
 	/* Enable extension */
-	if ( ereg->extension == NULL && extension != NULL ) {
-		if ( extension->_id != NULL && load ) {
-			/* Make sure extension is enabled */
-			*(extension->_id) = ereg->id;
+	if ( extension->_id != NULL && load ) {
+		/* Make sure extension is enabled */
+		*(extension->_id) = ereg->id;
 
-			/* Call load handler if extension was not loaded already */
-			if ( !ereg->loaded ) {
-				if ( !_sieve_extension_load(extension) )
-					return NULL;
-			}
-
-			ereg->loaded = TRUE;
+		/* Call load handler if extension was not loaded already */
+		if ( !ereg->loaded ) {
+			if ( !_sieve_extension_load(extension) )
+				return NULL;
 		}
 
-		ereg->extension = extension;
+		ereg->loaded = TRUE;
 	}
+
+	ereg->extension = extension;
 
 	return ereg;
 }
