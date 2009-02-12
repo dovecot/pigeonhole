@@ -34,6 +34,8 @@ Next (in order of descending priority/precedence):
 * Implement environment extension
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
+* Implement mechanism for implicitly including an account's aliases in the vacation
+  command's :addresses list.
 * Properly implement Sieve internationalization support (utf-8 handling), currently
   it is not complete:
 	- Make this implementation conform section 2.7.2 of RFC5228 (Comparisons 
@@ -66,6 +68,10 @@ Next (in order of descending priority/precedence):
 * Use lib/str-find.h for :contains and :matches match types 
 * Warn during compile if using non-existent folders.
 
+* Implement IMAP plugin for IMAPSieve support:
+	- This may include support for manually running a script on a set of messages
+	  through IMAP (no specification for something like this is available; we will 
+	  have to provide our own)
 * Implement editheader extension
 * Implement mimeloop extension
 * Variables extension: implement compile time evaluation of constant values
