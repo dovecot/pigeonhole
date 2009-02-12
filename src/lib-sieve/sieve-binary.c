@@ -614,6 +614,7 @@ bool sieve_binary_save
 	const char *temp_path;
 	struct ostream *stream;
 	int fd;
+	mode_t save_mode = sbin->script == NULL ? 0600 : sieve_script_permissions(sbin->script);
 	
 	/* Use default path if none is specified */
 	if ( path == NULL ) {
@@ -627,7 +628,7 @@ bool sieve_binary_save
 
 	/* Open it as temp file first, as not to overwrite an existing just yet */
 	temp_path = t_strconcat(path, ".tmp", NULL);
-	fd = open(temp_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+	fd = open(temp_path, O_CREAT | O_TRUNC | O_WRONLY, save_mode);
 	if ( fd < 0 ) {
 		sieve_sys_error("open(%s) failed for binary save: %m", temp_path);
 		return FALSE;

@@ -6,6 +6,8 @@
 
 #include "sieve-common.h"
 
+#include <sys/types.h>
+
 /*
  * Sieve script object
  */
@@ -38,6 +40,8 @@ const char *sieve_script_filename(const struct sieve_script *script);
 const char *sieve_script_path(const struct sieve_script *script);
 const char *sieve_script_binpath(const struct sieve_script *script);
 const char *sieve_script_dirpath(const struct sieve_script *script);
+
+mode_t sieve_script_permissions(const struct sieve_script *script);
 
 /* 
  * Stream management 

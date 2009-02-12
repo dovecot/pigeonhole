@@ -242,6 +242,11 @@ const char *sieve_script_binpath(const struct sieve_script *script)
 	return script->binpath;
 }
 
+mode_t sieve_script_permissions(const struct sieve_script *script)
+{
+	return script->st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+}
+
 /* 
  * Stream manageement 
  */
