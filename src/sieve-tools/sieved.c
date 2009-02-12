@@ -33,11 +33,19 @@ static void print_help(void)
 int main(int argc, char **argv) {
 	int i;
 	struct sieve_binary *sbin;
-	const char *binfile, *outfile;
-		
-	binfile = outfile = NULL;
+	const char *binfile, *outfile, *extensions;
+	
+	sieve_tool_init();
+	
+	binfile = outfile = extensions = NULL;
 	for (i = 1; i < argc; i++) {
-		if ( binfile == NULL ) {
+		if (strcmp(argv[i], "-x") == 0) {
+			/* extensions */
+			i++;
+			if (i == argc)
+				i_fatal("Missing -x argument");
+			extensions = argv[i];
+		} else if ( binfile == NULL ) {
 			binfile = argv[i];
 		} else if ( outfile == NULL ) {
 			outfile = argv[i];
@@ -51,9 +59,11 @@ int main(int argc, char **argv) {
 		print_help();
 		i_fatal("missing <binfile> argument");
 	}
-	
-	sieve_tool_init();
-	
+
+	if ( extensions != NULL ) {
+		sieve_set_extensions(extensions);
+	}
+		
 	sbin = sieve_binary_open(binfile, NULL);
 
 	if ( sbin != NULL && !sieve_binary_load(sbin) ) {
