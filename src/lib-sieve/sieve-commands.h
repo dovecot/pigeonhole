@@ -73,7 +73,8 @@ void sieve_arg_catenated_string_add_element
 enum sieve_command_type {
 	SCT_NONE,
 	SCT_COMMAND,
-	SCT_TEST
+	SCT_TEST,
+	SCT_HYBRID
 };
 
 struct sieve_command {

@@ -113,18 +113,33 @@ void testsuite_test_start(string_t *name)
 }
 
 void testsuite_test_fail(string_t *reason)
+{
+	testsuite_test_fail_cstr(str_c(reason));
+}
+
+void testsuite_test_failf(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	testsuite_test_fail_cstr(t_strdup_vprintf(fmt, args));
+
+	va_end(args);
+}
+
+void testsuite_test_fail_cstr(const char *reason)
 {	
 	if ( str_len(test_name) == 0 ) {
-		if ( reason == NULL || str_len(reason) == 0 )
+		if ( reason == NULL || *reason == '\0' )
 			printf("%2d: Test FAILED\n", test_index);
 		else
-			printf("%2d: Test FAILED: %s\n", test_index, str_c(reason));
+			printf("%2d: Test FAILED: %s\n", test_index, reason);
 	} else {
-		if ( reason == NULL || str_len(reason) == 0 )
+		if ( reason == NULL || *reason == '\0' )
 			printf("%2d: Test '%s' FAILED\n", test_index, str_c(test_name));
 		else
 			printf("%2d: Test '%s' FAILED: %s\n", test_index, 
-				str_c(test_name), str_c(reason));
+				str_c(test_name), reason);
 	}
 
 	str_truncate(test_name, 0);

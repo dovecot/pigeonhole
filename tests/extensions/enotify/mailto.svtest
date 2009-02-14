@@ -95,5 +95,68 @@ test "Multiple recipients" {
 	}
 }
 
+/*
+ * Duplicate recipients
+ */
 
+test_result_reset;
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: nico@vestingbar.nl
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test "Duplicate recipients" {
+	notify "mailto:timo@example.com%2cstephan@dovecot.org?cc=stephan@dovecot.org";
+	notify "mailto:stephan@rename-it.nl?cc=timo@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if address "Cc" "stephan@dovecot.org" {
+		test_fail "duplicate recipient not removed from first message";
+	}
+
+	test_message :smtp 1;
+
+	if address "Cc" "timo@example.com" {
+		test_fail "duplicate recipient not removed from second message";
+	}
+}
+
+
+/*
+ * Notifying on automated messages
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: nico@vestingbar.nl
+Auto-submitted: auto-notify
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test "Notifying on automated messages" {
+	notify "mailto:stephan@rename-it.nl?cc=timo@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	if test_message :smtp 0 {
+		test_fail "notified of auto-submitted message";
+	}
+}
 

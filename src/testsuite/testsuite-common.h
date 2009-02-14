@@ -107,6 +107,9 @@ enum testsuite_operand_code {
 
 void testsuite_test_start(string_t *name);
 void testsuite_test_fail(string_t *reason);
+void testsuite_test_failf(const char *fmt, ...) ATTR_FORMAT(1, 2);
+void testsuite_test_fail_cstr(const char *reason);
+
 void testsuite_test_succeed(string_t *reason);
 
 void testsuite_testcase_fail(const char *reason);

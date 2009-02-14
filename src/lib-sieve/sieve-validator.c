@@ -926,6 +926,7 @@ static bool sieve_validate_command_subtests
 
 			switch ( ctype ) {
 			case SCT_TEST: /* Spurious test */
+			case SCT_HYBRID:
 				sieve_command_validate_error(valdtr, cmd, 
 					"the %s %s accepts no sub-tests, but tests are specified", 
 					cmd->command->identifier, sieve_command_type_name(cmd->command));

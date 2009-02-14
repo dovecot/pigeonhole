@@ -110,17 +110,13 @@ bool testsuite_smtp_close(void *handle)
  * Access
  */
 
-int testsuite_smtp_get
+bool testsuite_smtp_get
 (const struct sieve_runtime_env *renv, unsigned int index)
 {
 	const struct testsuite_smtp_message *smtp_msg;
 
-	if ( index >= array_count(&testsuite_smtp_messages) ) {
-		sieve_runtime_error(renv,
-			sieve_error_script_location(renv->script, 0),
-			"no outgoing smtp message with index %d", index);
-		return SIEVE_EXEC_FAILURE;
-	}
+	if ( index >= array_count(&testsuite_smtp_messages) )
+		return FALSE;
 
 	smtp_msg = array_idx(&testsuite_smtp_messages, index);
 
@@ -128,5 +124,5 @@ int testsuite_smtp_get
 	testsuite_envelope_set_sender(smtp_msg->envelope_from);
 	testsuite_envelope_set_recipient(smtp_msg->envelope_to);
 
-	return SIEVE_EXEC_OK;
+	return TRUE;
 }

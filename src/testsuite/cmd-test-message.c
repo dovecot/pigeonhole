@@ -30,7 +30,7 @@ static bool cmd_test_message_generate
 
 const struct sieve_command cmd_test_message = { 
 	"test_message", 
-	SCT_COMMAND, 
+	SCT_HYBRID, 
 	1, 0, FALSE, FALSE,
 	cmd_test_message_registered, 
 	NULL,
@@ -239,11 +239,14 @@ static bool cmd_test_message_generate
 	/* Emit operation */
 	sieve_operation_emit_code(cgenv->sbin, 
 		test_message_operations[ctx_data->msg_source]);
-	
+
+	/* Emit is_test flag */
+	sieve_binary_emit_byte(cgenv->sbin, ( cmd->ast_node->type == SAT_TEST ));
+	  	
  	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;
-	  
+
 	return TRUE;
 }
 
@@ -255,7 +258,13 @@ static bool cmd_test_message_smtp_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_code_dumpf(denv, "TEST_MESSAGE_SMTP:");
+	unsigned int is_test;
+
+    if ( !sieve_binary_read_byte(denv->sbin, address, &is_test) )
+		return FALSE;
+
+	sieve_code_dumpf(denv, "TEST_MESSAGE_SMTP (%s):", 
+		( is_test ? "TEST" : "COMMAND" ));
 	
 	sieve_code_descend(denv);
 	
@@ -266,7 +275,13 @@ static bool cmd_test_message_mailbox_operation_dump
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_code_dumpf(denv, "TEST_MESSAGE_MAILBOX:");
+	unsigned int is_test;
+
+    if ( !sieve_binary_read_byte(denv->sbin, address, &is_test) )
+		return FALSE;
+
+	sieve_code_dumpf(denv, "TEST_MESSAGE_MAILBOX (%s):",
+		( is_test ? "TEST" : "COMMAND" ));
 	
 	sieve_code_descend(denv);
 
@@ -284,16 +299,45 @@ static int cmd_test_message_smtp_operation_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	sieve_number_t msg_index;
+    unsigned int is_test = -1;
+	bool result;
+
+	/* 
+	 * Read operands 
+	 */
+
+	/* Is test */
+
+    if ( !sieve_binary_read_byte(renv->sbin, address, &is_test) ) {
+		sieve_runtime_trace_error(renv, "invalid is_test flag");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	/* Index */
+
 	if ( !sieve_opr_number_read(renv, address, &msg_index) ) {
 		sieve_runtime_trace_error(renv, "invalid index operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
-		
-	sieve_runtime_trace(renv, "TEST_MESSAGE_SMTP [%d]", msg_index);
 
-	return testsuite_smtp_get(renv, msg_index);
+	/*
+	 * Perform operation
+	 */
+		
+	sieve_runtime_trace(renv, "TEST_MESSAGE_SMTP (%s) [%d]", 
+		( is_test ? "TEST" : "COMMAND" ), msg_index);
+
+	result = testsuite_smtp_get(renv, msg_index);
+
+	if ( is_test ) {
+		sieve_interpreter_set_test_result(renv->interp, result);
+		return SIEVE_EXEC_OK;
+	}
+
+	if ( !result )
+		testsuite_test_failf("no outgoing SMTP message with index %d", msg_index);
+
+	return SIEVE_EXEC_OK;
 }
 
 static int cmd_test_message_mailbox_operation_execute
@@ -302,6 +346,17 @@ static int cmd_test_message_mailbox_operation_execute
 {
 	string_t *folder;
 	sieve_number_t msg_index;
+    unsigned int is_test = -1;
+
+	/*
+	 * Read operands
+	 */
+
+	/* Is test */
+    if ( !sieve_binary_read_byte(renv->sbin, address, &is_test) ) {
+		sieve_runtime_trace_error(renv, "invalid is_test flag");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	/* Folder */
 	if ( !sieve_opr_string_read(renv, address, &folder) ) {
@@ -314,9 +369,13 @@ static int cmd_test_message_mailbox_operation_execute
 		sieve_runtime_trace_error(renv, "invalid index operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
+
+	/*
+	 * Perform operation
+	 */
 		
-	sieve_runtime_trace(renv, "TEST_MESSAGE_MAILBOX \"%s\" [%d]", 
-		str_c(folder), msg_index);
+	sieve_runtime_trace(renv, "TEST_MESSAGE_MAILBOX (%s) \"%s\" [%d]", 
+		( is_test ? "TEST" : "COMMAND" ), str_c(folder), msg_index);
 
 	/* FIXME: to be implemented */
 
