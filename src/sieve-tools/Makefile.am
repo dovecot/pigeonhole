@@ -1,6 +1,6 @@
 pkglibexecdir = $(libexecdir)/dovecot
 
-bin_PROGRAMS = sievec sieved sieve-test
+bin_PROGRAMS = sievec sieved sieve-test sieve-filter
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
@@ -12,22 +12,17 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-storage \
 	-I$(dovecot_incdir)/src/deliver
 
-sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
-sieved_LDFLAGS = -export-dynamic -Wl,--start-group 
-sieve_test_LDFLAGS = -export-dynamic -Wl,--start-group
+#sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
+#sieved_LDFLAGS = -export-dynamic -Wl,--start-group 
+#sieve_test_LDFLAGS = -export-dynamic -Wl,--start-group
+#sieve_filter_LDFLAGS = -export-dynamic -Wl,--start-group
 
 libs = \
 	$(top_srcdir)/src/lib-sieve/libsieve.la \
 	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la \
 	$(dovecot_incdir)/src/lib-storage/list/libstorage_list.a \
 	$(dovecot_incdir)/src/lib-storage/register/libstorage-register.a \
-	$(STORAGE_LIBS) \
-	$(dovecot_incdir)/src/lib-storage/libstorage.a \
-	$(dovecot_incdir)/src/lib-index/libindex.a \
-	$(dovecot_incdir)/src/lib-imap/libimap.a \
-	$(dovecot_incdir)/src/lib-mail/libmail.a \
-	$(dovecot_incdir)/src/lib-charset/libcharset.a \
-	$(dovecot_incdir)/src/lib/liblib.a
+	$(STORAGE_LIBS) 
 
 ldadd = \
 	$(libs) \
@@ -38,10 +33,12 @@ ldadd = \
 sievec_LDADD = $(ldadd)
 sieved_LDADD = $(ldadd)
 sieve_test_LDADD = $(ldadd)
+sieve_filter_LDADD = $(ldadd)
 
 sievec_DEPENDENCIES = $(libs)
 sieved_DEPENDENCIES = $(libs)
 sieve_test_DEPENDENCIES = $(libs)
+sieve_filter_DEPENDENCIES = $(libs)
 
 sievec_SOURCES = \
 	sievec.c 
@@ -51,5 +48,8 @@ sieved_SOURCES = \
 
 sieve_test_SOURCES = \
 	sieve-test.c 
+
+sieve_filter_SOURCES = \
+	sieve-filter.c 
 
 noinst_HEADERS =

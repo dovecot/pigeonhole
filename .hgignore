@@ -51,6 +51,6 @@ Makefile.in
 src/sieve-tools/sievec
 src/sieve-tools/sieved
 src/sieve-tools/sieve-test
-src/sieve-tools/sieve-exec
+src/sieve-tools/sieve-filter
 
 src/testsuite/testsuite
