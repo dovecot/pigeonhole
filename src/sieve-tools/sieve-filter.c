@@ -38,41 +38,52 @@ static int filter_mailbox(struct mailbox *box)
 {
 	struct mail_search_args *search_args;
 	struct mailbox_transaction_context *t;
-	struct mail_search_context *ctx;
-	struct mailbox_status status;
+	struct mail_search_context *search_ctx;
 	struct mail *mail;
 
 	search_args = mail_search_build_init();
 	mail_search_build_add_all(search_args);
 
-	if (mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ, STATUS_UIDVALIDITY, 
-		&status) < 0) {
+	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FAST, 0, NULL) < 0 ) {
 		i_fatal("sync failed");
 	}
 		
 	t = mailbox_transaction_begin(box, 0);
-	ctx = mailbox_search_init(t, search_args, NULL);
+	search_ctx = mailbox_search_init(t, search_args, NULL);
+	mail_search_args_unref(&search_args);
 
-	mail = mail_alloc(t, MAIL_FETCH_VIRTUAL_SIZE, NULL);
-	while ( mailbox_search_next(ctx, mail) > 0 ) {
+	mail = mail_alloc(t, 0, NULL);
+	while ( mailbox_search_next(search_ctx, mail) > 0 ) {
 		const char *subject, *date;
+		uoff_t size = 0;
+		
+		if ( mail->expunged )
+			continue;
+			
+		if ( mail_get_virtual_size(mail, &size) < 0 )
+			i_fatal("failed to get size");
 		
 		(void)mail_get_first_header(mail, "date", &date);
 		(void)mail_get_first_header(mail, "subject", &subject);
 		
-		printf("MAIL: [%s] %s\n", date, subject);
-	}
+		printf("MAIL: [%s; %"PRIuUOFF_T" bytes] %s\n", date, size, subject);
 	
+		/* FIXME: apply Sieve filter here */
+	}
 	mail_free(&mail);
 	
-	if ( mailbox_search_deinit(&ctx) < 0 ) {
+	if ( mailbox_search_deinit(&search_ctx) < 0 ) {
 		i_error("failed to deinit search");
 	}
 
-	(void)mailbox_transaction_commit(&t);
+	if ( mailbox_transaction_commit(&t) < 0 ) {
+		i_fatal("failed to commit transaction");
+	}
 	
-	mail_search_args_unref(&search_args);
-
+	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FAST, 0, NULL) < 0 ) {
+		i_fatal("sync failed");
+	}
+	
 	return FALSE;
 }
 
@@ -91,8 +102,7 @@ int main(int argc, char **argv)
 	struct mailbox *box;
 	enum mail_error error;
 	enum mailbox_open_flags open_flags = 
-		MAILBOX_OPEN_FAST | MAILBOX_OPEN_KEEP_RECENT | 
-		MAILBOX_OPEN_POST_SESSION;
+		MAILBOX_OPEN_KEEP_RECENT | MAILBOX_OPEN_IGNORE_ACLS;
 	const char *user, *home;
 	int i;
 
