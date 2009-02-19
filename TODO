@@ -6,12 +6,17 @@ Next (in order of descending priority/precedence):
 
 * Improve error handling. Now it is not very consistent, especially for the Sieve
   command line tools and multiscript. 
+* Improve debugging support in the sieve-test tool:
+	- Add dovecot-specific debug print extension
+	- Improve trace debugging towards something more intuitively readable.
+	- Give trace debugging multiple levels of verbosity (e.g. to include more messy
+	  output like value matching).
 * Implement dropping errors in the user's mailbox as a mail message.
 * Implement a better way to encode source line numbers into a binary for reporting 
   errors at runtime. Currently, this is done explicitly for each command that adds 
   actions to the result. However, some tests, match types etc. will also need this 
   when the variables extension is active. Many of the RFC deviations listed below 
-  depend on this.
+  depend on this. Also trace debugging will benefit.
 * Fix remaining RFC deviations:
 	- Fix issues listed in doc/rfc/RFC-questions.txt based on answers
 	- Allow for the existance of dynamic comparators (i.e. specified by 
