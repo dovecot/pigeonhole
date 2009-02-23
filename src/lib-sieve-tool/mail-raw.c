@@ -142,6 +142,19 @@ static struct mail_raw *mail_raw_create
 	pool_t pool;
 	struct raw_mailbox *raw_box;
 	struct mail_raw *mailr;
+	enum mail_error error;
+
+	if ( mailfile != NULL ) {
+		if ( *mailfile != '/') {
+			char cwd[PATH_MAX];
+
+			/* Expand relative paths */
+			if (getcwd(cwd, sizeof(cwd)) == NULL)
+				i_fatal("getcwd() failed: %m");
+
+			mailfile = t_strconcat(cwd, "/", mailfile, NULL);		
+		} 
+	}
 
 	pool = pool_alloconly_create("mail_raw", 1024);
 	mailr = p_new(pool, struct mail_raw, 1);
@@ -156,8 +169,10 @@ static struct mail_raw *mail_raw_create
 				   MAILBOX_OPEN_NO_INDEX_FILES);
 	}
 
-	if ( mailr->box == NULL )
-		i_fatal("Can't open mail stream as raw");
+	if ( mailr->box == NULL ) {
+		i_fatal("Can't open mail stream as raw: %s",
+			mail_storage_get_last_error(raw_ns->storage, &error));
+	}
 
 	if ( mailbox_sync(mailr->box, 0, 0, NULL ) < 0) {
 		enum mail_error error;
