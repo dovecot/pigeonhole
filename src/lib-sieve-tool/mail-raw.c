@@ -1,7 +1,7 @@
 /* Copyright (c) 2002-2009 Dovecot Sieve authors, see the included COPYING file
  */
 
-/* This file was gratefully stolen from dovecot/src/deliver/deliver.c and 
+/* FIXME: This file was gratefully stolen from dovecot/src/deliver/deliver.c and 
  * altered to suit our needs. So, this contains lots and lots of duplicated 
  * code. 
  */
@@ -100,7 +100,7 @@ static struct istream *create_raw_stream
 
 	input_list[0] = input2; input_list[1] = NULL;
 	input = i_stream_create_seekable(input_list, MAIL_MAX_MEMORY_BUFFER,
-					 "/tmp/dovecot.deliver.");
+					 "/tmp/dovecot.sieve-tool.");
 	i_stream_unref(&input2);
 	return input;
 }
@@ -129,6 +129,7 @@ void mail_raw_deinit(void)
 {
 	mail_user_unref(&raw_mail_user);
 }
+
 
 /*
  * Open raw mail data
