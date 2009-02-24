@@ -93,9 +93,9 @@ enum sieve_core_operand {
 
 /* Operand classes */
 
-const struct sieve_operand_class number_class;
-const struct sieve_operand_class string_class;
-const struct sieve_operand_class stringlist_class;
+extern const struct sieve_operand_class number_class;
+extern const struct sieve_operand_class string_class;
+extern const struct sieve_operand_class stringlist_class;
 
 /* Operand objects */
 

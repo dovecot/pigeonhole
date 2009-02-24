@@ -158,8 +158,8 @@ bool sieve_match_type_validate
  * Match type operand
  */
  
-const struct sieve_operand match_type_operand;
-struct sieve_operand_class sieve_match_type_operand_class;
+extern const struct sieve_operand match_type_operand;
+extern const struct sieve_operand_class sieve_match_type_operand_class;
 
 #define SIEVE_EXT_DEFINE_MATCH_TYPE(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
 #define SIEVE_EXT_DEFINE_MATCH_TYPES(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)

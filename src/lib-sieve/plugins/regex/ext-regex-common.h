@@ -8,13 +8,13 @@
  * Extension
  */
 
-const struct sieve_extension regex_extension;
+extern const struct sieve_extension regex_extension;
 
 /*
  * Operand
  */
 
-const struct sieve_operand regex_match_type_operand;
+extern const struct sieve_operand regex_match_type_operand;
 
 /*
  * Match type

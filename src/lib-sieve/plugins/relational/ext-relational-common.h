@@ -39,7 +39,7 @@ enum relational_match {
  * Extension definitions 
  */
 
-int ext_relational_my_id;
+extern int ext_relational_my_id;
 
 extern const struct sieve_extension relational_extension;
 extern const struct sieve_match_type_extension relational_match_extension;

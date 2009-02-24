@@ -473,7 +473,7 @@ bool sieve_match_type_validate
  * Match-type operand
  */
  
-struct sieve_operand_class sieve_match_type_operand_class = 
+const struct sieve_operand_class sieve_match_type_operand_class = 
 	{ "match type" };
 	
 static const struct sieve_extension_objects core_match_types =

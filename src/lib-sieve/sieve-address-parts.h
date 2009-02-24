@@ -64,8 +64,8 @@ const struct sieve_address_part *sieve_address_part_find
  * Address part operand
  */
 
-const struct sieve_operand address_part_operand;
-struct sieve_operand_class sieve_address_part_operand_class;
+extern const struct sieve_operand address_part_operand;
+extern const struct sieve_operand_class sieve_address_part_operand_class;
 
 #define SIEVE_EXT_DEFINE_ADDRESS_PART(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
 #define SIEVE_EXT_DEFINE_ADDRESS_PARTS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)

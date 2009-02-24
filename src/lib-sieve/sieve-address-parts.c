@@ -187,7 +187,7 @@ static bool tag_address_part_generate
  * Address-part operand
  */
  
-struct sieve_operand_class sieve_address_part_operand_class = 
+const struct sieve_operand_class sieve_address_part_operand_class = 
 	{ "address part" };
 
 static const struct sieve_extension_objects core_address_parts =
