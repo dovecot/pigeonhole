@@ -12,10 +12,10 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-storage \
 	-I$(dovecot_incdir)/src/deliver
 
-#sievec_LDFLAGS = -export-dynamic -Wl,--start-group 
-#sieved_LDFLAGS = -export-dynamic -Wl,--start-group 
-#sieve_test_LDFLAGS = -export-dynamic -Wl,--start-group
-#sieve_filter_LDFLAGS = -export-dynamic -Wl,--start-group
+sievec_LDFLAGS = -export-dynamic 
+sieved_LDFLAGS = -export-dynamic 
+sieve_test_LDFLAGS = -export-dynamic
+sieve_filter_LDFLAGS = -export-dynamic
 
 libs = \
 	$(top_srcdir)/src/lib-sieve/libsieve.la \

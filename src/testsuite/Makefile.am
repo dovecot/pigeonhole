@@ -9,20 +9,14 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-index \
 	-I$(dovecot_incdir)/src/lib-storage
 
-testsuite_LDFLAGS = -export-dynamic -Wl,--start-group 
+testsuite_LDFLAGS = -export-dynamic
 
 libs = \
 	$(top_srcdir)/src/lib-sieve/libsieve.la \
 	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la \
 	$(dovecot_incdir)/src/lib-storage/list/libstorage_list.a \
 	$(dovecot_incdir)/src/lib-storage/register/libstorage-register.a \
-	$(STORAGE_LIBS) \
-	$(dovecot_incdir)/src/lib-storage/libstorage.a \
-	$(dovecot_incdir)/src/lib-index/libindex.a \
-	$(dovecot_incdir)/src/lib-imap/libimap.a \
-	$(dovecot_incdir)/src/lib-mail/libmail.a \
-	$(dovecot_incdir)/src/lib-charset/libcharset.a \
-	$(dovecot_incdir)/src/lib/liblib.a
+	$(STORAGE_LIBS)
 
 ldadd = \
 	$(libs) \
