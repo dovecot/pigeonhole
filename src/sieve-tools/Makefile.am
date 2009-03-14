@@ -1,10 +1,13 @@
 pkglibexecdir = $(libexecdir)/dovecot
 
+SUBDIRS = debug
+
 bin_PROGRAMS = sievec sieved sieve-test sieve-filter
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
 	-I$(top_srcdir)/src/lib-sieve-tool \
+	-I./debug \
 	-I$(dovecot_incdir) \
 	-I$(dovecot_incdir)/src/lib \
 	-I$(dovecot_incdir)/src/lib-mail \
@@ -22,6 +25,7 @@ libs = \
 	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la \
 	$(dovecot_incdir)/src/lib-storage/list/libstorage_list.a \
 	$(dovecot_incdir)/src/lib-storage/register/libstorage-register.a \
+	./debug/libsieve_ext_debug.la \
 	$(STORAGE_LIBS) 
 
 ldadd = \

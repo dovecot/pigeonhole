@@ -10,9 +10,12 @@
 
 #include "sieve.h"
 #include "sieve-binary.h"
+#include "sieve-extensions.h"
 
 #include "mail-raw.h"
 #include "sieve-tool.h"
+
+#include "sieve-ext-debug.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -199,6 +202,9 @@ int main(int argc, char **argv)
 	if ( extensions != NULL ) {
 		sieve_set_extensions(extensions);
 	}
+
+	/* Register tool-specific extensions */
+	(void) sieve_extension_register(&debug_extension, TRUE);
 	
 	/* Compile main sieve script */
 	if ( force_compile ) {

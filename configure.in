@@ -117,6 +117,7 @@ src/lib-sieve-tool/Makefile
 src/plugins/Makefile
 src/plugins/lda-sieve/Makefile
 src/sieve-tools/Makefile
+src/sieve-tools/debug/Makefile
 src/testsuite/Makefile
 stamp.h])
 
