@@ -34,12 +34,43 @@ static void print_help(void)
 	);
 }
 
-static int filter_mailbox(struct mailbox *box)
+static int filter_message
+(struct mail *mail, struct sieve_binary *main_sbin, 
+	struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
+	const char *user)
+{
+	struct sieve_binary *sbin;
+	struct sieve_message_data msgdata;
+	const char *recipient, *sender;
+
+	sieve_tool_get_envelope_data(mail, &recipient, &sender);
+
+	/* Collect necessary message data */
+	memset(&msgdata, 0, sizeof(msgdata));
+	msgdata.mail = mail;
+	msgdata.return_path = sender;
+	msgdata.to_address = recipient;
+	msgdata.auth_user = user;
+	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
+
+	/* Single script */
+	sbin = main_sbin;
+	main_sbin = NULL;
+
+	/* Execute script */
+	return sieve_execute(sbin, &msgdata, senv, ehandler);
+}
+
+static int filter_mailbox
+(struct mailbox *box, struct sieve_binary *main_sbin, 
+	struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
+	const char *user)
 {
 	struct mail_search_args *search_args;
 	struct mailbox_transaction_context *t;
 	struct mail_search_context *search_ctx;
 	struct mail *mail;
+	int ret = 1;
 
 	search_args = mail_search_build_init();
 	mail_search_build_add_all(search_args);
@@ -53,7 +84,7 @@ static int filter_mailbox(struct mailbox *box)
 	mail_search_args_unref(&search_args);
 
 	mail = mail_alloc(t, 0, NULL);
-	while ( mailbox_search_next(search_ctx, mail) > 0 ) {
+	while ( ret > 0 && mailbox_search_next(search_ctx, mail) > 0 ) {
 		const char *subject, *date;
 		uoff_t size = 0;
 		
@@ -68,7 +99,7 @@ static int filter_mailbox(struct mailbox *box)
 		
 		printf("MAIL: [%s; %"PRIuUOFF_T" bytes] %s\n", date, size, subject);
 	
-		/* FIXME: apply Sieve filter here */
+		ret = filter_message(mail, main_sbin, senv, ehandler, user);
 	}
 	mail_free(&mail);
 	
@@ -98,6 +129,10 @@ int main(int argc, char **argv)
 	bool force_compile;
 	struct mail_namespace *ns = NULL;
 	struct mail_user *mail_user = NULL;
+	struct sieve_binary *main_sbin;
+	struct sieve_script_env scriptenv;
+	struct sieve_exec_status estatus;
+	struct sieve_error_handler *ehandler;
 	struct mail_storage *storage;
 	struct mailbox *box;
 	enum mail_error error;
@@ -145,11 +180,19 @@ int main(int argc, char **argv)
 	
 	if ( mailstore == NULL ) {
 		print_help();
-		i_fatal("Missing <mailfile> argument");
+		i_fatal("Missing <mailstore> argument");
 	}
 
 	if ( extensions != NULL ) {
 		sieve_set_extensions(extensions);
+	}
+
+	/* Compile main sieve script */
+	if ( force_compile ) {
+		main_sbin = sieve_tool_script_compile(scriptfile, NULL);
+		(void) sieve_save(main_sbin, NULL);
+	} else {
+		main_sbin = sieve_tool_script_open(scriptfile);
 	}
 	
 	user = sieve_tool_get_user();
@@ -179,14 +222,41 @@ int main(int argc, char **argv)
 
 	storage = ns->storage;
 
+	/* Open the mailbox */	
 	box = mailbox_open(&storage, mailbox, NULL, open_flags);
 	if ( box == NULL ) {
 		i_fatal("Couldn't open mailbox '%s': %s", 
 				mailbox, mail_storage_get_last_error(storage, &error));
 	}
 
-	filter_mailbox(box);
+	if ( mailbox == NULL )
+		mailbox = "INBOX";
+
+	/* Compose script environment */
+	memset(&scriptenv, 0, sizeof(scriptenv));
+	scriptenv.default_mailbox = "INBOX";
+	scriptenv.namespaces = ns;
+	scriptenv.username = user;
+	scriptenv.hostname = "host.example.com";
+	scriptenv.postmaster_address = "postmaster@example.com";
+	scriptenv.smtp_open = NULL;
+	scriptenv.smtp_close = NULL;
+	scriptenv.duplicate_mark = NULL;
+	scriptenv.duplicate_check = NULL;
+	scriptenv.trace_stream = NULL;
+	scriptenv.exec_status = &estatus;
+
+	/* Create error handler */
+	ehandler = sieve_stderr_ehandler_create(0);	
+	sieve_error_handler_accept_infolog(ehandler, TRUE);
+
+	/* Apply Sieve filter to all messages found */
+	filter_mailbox(box, main_sbin, &scriptenv, ehandler, user);
 	
+	/* Cleanup error handler */
+	sieve_error_handler_unref(&ehandler);
+
+  /* Close the mailbox */
 	if ( box != NULL )
 		mailbox_close(&box);
 
