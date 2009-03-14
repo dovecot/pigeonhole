@@ -1,7 +1,7 @@
 v0.1.3 12-2-2009  Stephan Bosch <stephan@rename-it.nl>
 
 	* Adapted to changes in Dovecot, making this release dependent on Dovecot
-      >= 1.2.beta1
+	  >= 1.2.beta1
 	* Made mail address comparison fully case-insensitive. This is particularly
 	  noticeable for the :addresses argument of the vacation command. 
 	+ Finished enotify extension. Currently, only the mailto notification method
@@ -34,8 +34,8 @@ v0.1.3 12-2-2009  Stephan Bosch <stephan@rename-it.nl>
 	- Plugged a theoretical security hole occuring when a directory is opened as a 
 	  Sieve binary.
 	- Cleaned up and fixed various log messages.
-	- Fixed bug in the outgoing address verification. Addresses ending in ',' 
-	  were erroneously accepted.
+	- Fixed bug in the outgoing address verification. Addresses ending in ',' were 
+	  erroneously accepted.
 
 v0.1.2 26-11-2008  Stephan Bosch <stephan@rename-it.nl>
 

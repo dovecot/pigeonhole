@@ -66,7 +66,9 @@ void sieve_verror
 	if ( sieve_errors_more_allowed(ehandler) ) {
 		if ( ehandler->verror != NULL )
 			ehandler->verror(ehandler, location, fmt, args);
-		ehandler->errors++;
+		
+		if ( ehandler->pool != NULL )
+			ehandler->errors++;
 	}
 }
 
@@ -89,7 +91,9 @@ void sieve_vwarning
 	
 	if ( ehandler->vwarning != NULL )	
 		ehandler->vwarning(ehandler, location, fmt, args);
-	ehandler->warnings++;
+
+	if ( ehandler->pool != NULL )
+		ehandler->warnings++;
 }
 
 void sieve_vinfo
@@ -139,19 +143,25 @@ void sieve_vcritical
  * Error statistics
  */
 
-unsigned int sieve_get_errors(struct sieve_error_handler *ehandler) {
-	if ( ehandler == NULL ) return 0;
+unsigned int sieve_get_errors(struct sieve_error_handler *ehandler) 
+{
+	if ( ehandler == NULL || ehandler->pool == NULL ) return 0;
 	
 	return ehandler->errors;
 }
 
-unsigned int sieve_get_warnings(struct sieve_error_handler *ehandler) {
-	if ( ehandler == NULL ) return 0;
+unsigned int sieve_get_warnings(struct sieve_error_handler *ehandler) 
+{
+	if ( ehandler == NULL || ehandler->pool == NULL ) return 0;
 
 	return ehandler->errors;
 }
 
-bool sieve_errors_more_allowed(struct sieve_error_handler *ehandler) {
+bool sieve_errors_more_allowed(struct sieve_error_handler *ehandler) 
+{
+	if ( ehandler == NULL || ehandler->pool == NULL ) 
+		return TRUE;
+
 	return ehandler->max_errors == 0 || ehandler->errors < ehandler->max_errors;
 }
 
@@ -188,19 +198,19 @@ void sieve_error_handler_init
 
 void sieve_error_handler_ref(struct sieve_error_handler *ehandler)
 {
-	if ( ehandler == NULL ) return;
+	if ( ehandler == NULL || ehandler->pool == NULL ) return;
 
 	ehandler->refcount++;
 }
 
 void sieve_error_handler_unref(struct sieve_error_handler **ehandler)
 {
-	if ( *ehandler == NULL ) return;
+	if ( *ehandler == NULL || (*ehandler)->pool == NULL ) return;
 
-    i_assert((*ehandler)->refcount > 0);
+	i_assert((*ehandler)->refcount > 0);
 
-    if (--(*ehandler)->refcount != 0)
-        return;
+	if (--(*ehandler)->refcount != 0)
+        	return;
 
 	if ( (*ehandler)->free != NULL )
 		(*ehandler)->free(*ehandler);
@@ -212,9 +222,80 @@ void sieve_error_handler_unref(struct sieve_error_handler **ehandler)
 
 void sieve_error_handler_reset(struct sieve_error_handler *ehandler)
 {
-    ehandler->errors = 0;
-    ehandler->warnings = 0;
+	if ( ehandler == NULL || ehandler->pool == NULL ) return;
+
+	ehandler->errors = 0;
+	ehandler->warnings = 0;
 }
+
+/* 
+ * Master/System error handler
+ *
+ * - Output errors directly to Dovecot master log
+ */
+
+static void sieve_master_verror
+(struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
+	const char *fmt, va_list args) 
+{
+	if ( location == NULL || *location == '\0' )
+		i_error("sieve: %s", t_strdup_vprintf(fmt, args));
+	else
+		i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+}
+
+static void sieve_master_vwarning
+(struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
+	const char *fmt, va_list args) 
+{
+	if ( location == NULL || *location == '\0' )
+		i_warning("sieve: %s", t_strdup_vprintf(fmt, args));
+	else
+		i_warning("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+}
+
+static void sieve_master_vinfo
+(struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
+	const char *fmt, va_list args) 
+{
+	if ( location == NULL || *location == '\0' )
+		i_info("sieve: %s", t_strdup_vprintf(fmt, args));
+	else
+		i_info("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+}
+
+struct sieve_error_handler *sieve_master_ehandler_create
+(unsigned int max_errors) 
+{
+	pool_t pool;
+	struct sieve_error_handler *ehandler;
+	
+	/* Pool is not strictly necessary, but other handler types will need a pool,
+	 * so this one will have one too.
+	 */
+	pool = pool_alloconly_create
+		("master_error_handler", sizeof(struct sieve_error_handler));
+	ehandler = p_new(pool, struct sieve_error_handler, 1);
+	sieve_error_handler_init(ehandler, pool, max_errors);
+
+	ehandler->verror = sieve_master_verror;
+	ehandler->vwarning = sieve_master_vwarning;
+	ehandler->vinfo = sieve_master_vinfo;
+	
+	return ehandler;	
+}
+
+struct sieve_error_handler _sieve_system_ehandler = {
+        NULL, 0, 0, 0, 0,
+	FALSE,
+	TRUE,
+	sieve_master_verror,
+	sieve_master_vwarning,
+	sieve_master_vinfo,
+	NULL
+};
+
+struct sieve_error_handler *sieve_system_ehandler = &_sieve_system_ehandler;
 
 /* 
  * STDERR error handler

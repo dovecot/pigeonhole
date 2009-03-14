@@ -26,13 +26,13 @@ typedef void (*sieve_error_vfunc_t)
 
 /*
  * System errors
- *
- * FIXME: Low-level access to the Dovecot logging functions would be useful.
  */
 
-#define sieve_sys_error(...) i_error("sieve: " __VA_ARGS__ )
-#define sieve_sys_warning(...) i_warning("sieve: " __VA_ARGS__ )
-#define sieve_sys_info(...) i_info("sieve: " __VA_ARGS__ )
+extern struct sieve_error_handler *sieve_system_ehandler;
+
+#define sieve_sys_error(...) sieve_error(sieve_system_ehandler, NULL, __VA_ARGS__ )
+#define sieve_sys_warning(...) sieve_warning(sieve_system_ehandler, NULL, __VA_ARGS__ )
+#define sieve_sys_info(...) sieve_info(sieve_system_ehandler, NULL, __VA_ARGS__ )
 
 /*
  * Main error functions
@@ -149,6 +149,10 @@ void sieve_error_handler_reset(struct sieve_error_handler *ehandler);
 /* 
  * Error handlers 
  */
+
+/* Write errors to dovecot master log */
+struct sieve_error_handler *sieve_master_ehandler_create
+	(unsigned int max_errors);
 
 /* Write errors to stderr */
 struct sieve_error_handler *sieve_stderr_ehandler_create
