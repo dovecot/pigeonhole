@@ -4,8 +4,11 @@
 #include "lib.h"
 
 #include "sieve.h"
+#include "sieve-extensions.h"
 #include "sieve-script.h"
 #include "sieve-tool.h"
+
+#include "sieve-ext-debug.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -73,6 +76,9 @@ int main(int argc, char **argv) {
 		sieve_set_extensions(extensions);
 	}
 
+	/* Register tool-specific extensions */
+	(void) sieve_extension_register(&debug_extension, TRUE);
+
 	if ( stat(scriptfile, &st) == 0 && S_ISDIR(st.st_mode) ) {
 		/* Script directory */
 		DIR *dirp;
@@ -119,7 +125,7 @@ int main(int argc, char **argv) {
 			}
 		}
    
-   	/* Close the directory */
+		/* Close the directory */
 		if ( closedir(dirp) < 0 ) 
 			i_fatal("closedir(%s) failed: %m", scriptfile);
  	

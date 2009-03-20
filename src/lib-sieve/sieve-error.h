@@ -28,11 +28,14 @@ typedef void (*sieve_error_vfunc_t)
  * System errors
  */
 
-extern struct sieve_error_handler *sieve_system_ehandler;
+extern struct sieve_error_handler *_sieve_system_ehandler;
 
-#define sieve_sys_error(...) sieve_error(sieve_system_ehandler, NULL, __VA_ARGS__ )
-#define sieve_sys_warning(...) sieve_warning(sieve_system_ehandler, NULL, __VA_ARGS__ )
-#define sieve_sys_info(...) sieve_info(sieve_system_ehandler, NULL, __VA_ARGS__ )
+#define sieve_sys_error(...) sieve_error(_sieve_system_ehandler, NULL, __VA_ARGS__ )
+#define sieve_sys_warning(...) sieve_warning(_sieve_system_ehandler, NULL, __VA_ARGS__ )
+#define sieve_sys_info(...) sieve_info(_sieve_system_ehandler, NULL, __VA_ARGS__ )
+
+void sieve_system_ehandler_set(struct sieve_error_handler *ehandler);
+void sieve_system_ehandler_reset(void);
 
 /*
  * Main error functions

@@ -10,10 +10,13 @@
 #include "env-util.h"
 
 #include "sieve.h"
+#include "sieve-extensions.h"
 #include "sieve-binary.h"
 
 #include "mail-raw.h"
 #include "sieve-tool.h"
+
+#include "sieve-ext-debug.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -187,6 +190,14 @@ int main(int argc, char **argv)
 		sieve_set_extensions(extensions);
 	}
 
+	/* Register tool-specific extensions */
+	(void) sieve_extension_register(&debug_extension, TRUE);
+
+	/* Create error handler */
+	ehandler = sieve_stderr_ehandler_create(0);
+	sieve_system_ehandler_set(ehandler);
+	sieve_error_handler_accept_infolog(ehandler, TRUE);
+
 	/* Compile main sieve script */
 	if ( force_compile ) {
 		main_sbin = sieve_tool_script_compile(scriptfile, NULL);
@@ -226,7 +237,7 @@ int main(int argc, char **argv)
 	box = mailbox_open(&storage, mailbox, NULL, open_flags);
 	if ( box == NULL ) {
 		i_fatal("Couldn't open mailbox '%s': %s", 
-				mailbox, mail_storage_get_last_error(storage, &error));
+			mailbox, mail_storage_get_last_error(storage, &error));
 	}
 
 	if ( mailbox == NULL )
@@ -246,19 +257,16 @@ int main(int argc, char **argv)
 	scriptenv.trace_stream = NULL;
 	scriptenv.exec_status = &estatus;
 
-	/* Create error handler */
-	ehandler = sieve_stderr_ehandler_create(0);	
-	sieve_error_handler_accept_infolog(ehandler, TRUE);
-
 	/* Apply Sieve filter to all messages found */
 	filter_mailbox(box, main_sbin, &scriptenv, ehandler, user);
 	
-	/* Cleanup error handler */
-	sieve_error_handler_unref(&ehandler);
-
-  /* Close the mailbox */
+	/* Close the mailbox */
 	if ( box != NULL )
 		mailbox_close(&box);
+
+	/* Cleanup error handler */
+	sieve_error_handler_unref(&ehandler);
+	sieve_system_ehandler_reset();	
 
 	/* De-initialize mail user object */
 	if ( mail_user != NULL )

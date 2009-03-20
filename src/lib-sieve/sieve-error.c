@@ -285,7 +285,7 @@ struct sieve_error_handler *sieve_master_ehandler_create
 	return ehandler;	
 }
 
-struct sieve_error_handler _sieve_system_ehandler = {
+struct sieve_error_handler _sieve_system_ehandler_object = {
         NULL, 0, 0, 0, 0,
 	FALSE,
 	TRUE,
@@ -295,7 +295,20 @@ struct sieve_error_handler _sieve_system_ehandler = {
 	NULL
 };
 
-struct sieve_error_handler *sieve_system_ehandler = &_sieve_system_ehandler;
+struct sieve_error_handler *_sieve_system_ehandler = &_sieve_system_ehandler_object;
+
+void sieve_system_ehandler_set(struct sieve_error_handler *ehandler)
+{
+	sieve_error_handler_unref(&_sieve_system_ehandler);
+	_sieve_system_ehandler = ehandler;
+	sieve_error_handler_ref(_sieve_system_ehandler);
+}
+
+void sieve_system_ehandler_reset(void)
+{
+	sieve_error_handler_unref(&_sieve_system_ehandler);
+	_sieve_system_ehandler = &_sieve_system_ehandler_object;	
+}
 
 /* 
  * STDERR error handler

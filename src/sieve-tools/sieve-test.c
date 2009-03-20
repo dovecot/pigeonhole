@@ -206,6 +206,11 @@ int main(int argc, char **argv)
 	/* Register tool-specific extensions */
 	(void) sieve_extension_register(&debug_extension, TRUE);
 	
+	/* Create error handler */
+	ehandler = sieve_stderr_ehandler_create(0);
+	sieve_system_ehandler_set(ehandler);
+	sieve_error_handler_accept_infolog(ehandler, TRUE);
+
 	/* Compile main sieve script */
 	if ( force_compile ) {
 		main_sbin = sieve_tool_script_compile(scriptfile, NULL);
@@ -278,10 +283,6 @@ int main(int argc, char **argv)
 		scriptenv.trace_stream = ( trace ? teststream : NULL );
 		scriptenv.exec_status = &estatus;
 	
-		/* Create error handler */
-		ehandler = sieve_stderr_ehandler_create(0);	
-		sieve_error_handler_accept_infolog(ehandler, TRUE);
-
 		/* Run the test */
 		ret = 1;
 		if ( array_count(&scriptfiles) == 0 ) {
@@ -383,9 +384,6 @@ int main(int argc, char **argv)
 		sieve_close(&sbin);
 		if ( main_sbin != NULL ) sieve_close(&main_sbin);
 		
-		/* Cleanup error handler */
-		sieve_error_handler_unref(&ehandler);
-
 		/* De-initialize raw mail object */
 		mail_raw_close(mailr);
 		mail_raw_deinit();
@@ -398,6 +396,10 @@ int main(int argc, char **argv)
 		mail_storage_deinit();
 		mail_users_deinit();
 	}
+
+	/* Cleanup error handler */
+	sieve_error_handler_unref(&ehandler);
+	sieve_system_ehandler_reset();
 
 	sieve_tool_deinit();
 	

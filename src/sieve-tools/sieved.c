@@ -4,8 +4,11 @@
 #include "lib.h"
 
 #include "sieve.h"
+#include "sieve-extensions.h"
 #include "sieve-binary.h"
 #include "sieve-tool.h"
+
+#include "sieve-ext-debug.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -63,6 +66,9 @@ int main(int argc, char **argv) {
 	if ( extensions != NULL ) {
 		sieve_set_extensions(extensions);
 	}
+
+	/* Register tool-specific extensions */
+	(void) sieve_extension_register(&debug_extension, TRUE);
 		
 	sbin = sieve_binary_open(binfile, NULL);
 
