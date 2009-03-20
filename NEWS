@@ -1,3 +1,16 @@
+v0.1.4 xx-3-2009  Stephan Bosch <stephan@rename-it.nl>
+	* Started work on the sieve-filter tool. With this command lin tool it will be 
+	  possible to (re-)apply Sieve filters on a mail folder.
+	+ Added custom debug extension that adds the possibility to print debug 
+	  messages from the Sieve tools.
+	- Fixed issue with opening relative paths as a mail file. Bug reported by Ian
+	  P. Christian.
+	- Fixed MAC OSX compile problem. Turns out the extern modifier was missing at
+	  multiple places. Bug reported by Edgar Fuss.
+	- Fixed Solaris compile problem: removed unecessary and unportable linker flags 
+	  that caused compile to fail. Bug reported by Andrés Yacopino.
+	
+
 v0.1.3 12-2-2009  Stephan Bosch <stephan@rename-it.nl>
 
 	* Adapted to changes in Dovecot, making this release dependent on Dovecot
