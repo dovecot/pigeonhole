@@ -89,6 +89,28 @@ Enable simple trace debugging; prints all encountered byte code instructions to 
 \fB-x\fP "\fIextension extension ...\fP"
 Set the available extensions. The option's parameter is a space-separated list of the active 
 extensions. Unknown extensions are ignored, but a warning is produced.
+.SH DEBUG SUPPORT
+.PP
+To improve script debugging, the Sieve command line tools such as \fBsieve-test\fP support a custom
+Sieve language extension called 'vnd.dovecot.debug'. It adds the \fBdebug_print\fP command that allows
+printing debug messages to \fBstdout\fP. 
+.PP
+Example:
+.PP
+require "vnd.dovecot.debug";
+.PP
+if header :contains "subject" "hello" {
+.PP
+  debug_print "Subject header contains hello!";
+.PP
+}
+.PP
+Other tools like \fBsievec\fP and \fBsieved\fP also recognize the vnd.dovecot.debug extension. In contrast,
+the actual Sieve plugin for Deliver does not allow the use of the debug extension. So, keep in mind that 
+scripts and compiled binaries that refer to de debug extension will fail to be run by the Sieve plugin itself.
+.PP
+Note that it is not necessary to enable nor possible to disable the availability of the debug extension with 
+the \fB-x\fP option.
 .SH AUTHOR
 .PP
 The Sieve implementation for Dovecot was written by Stephan Bosch <stephan@rename-it.nl>.
