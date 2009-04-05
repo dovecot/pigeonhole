@@ -340,7 +340,10 @@ bool sieve_addrmatch_default_get_optionals
 static const char *addrp_all_extract_from
 	(const struct sieve_address *address)
 {
-	return t_strconcat(address->local_part, "@", address->domain, NULL);
+	const char *local_part = address->local_part == NULL ? "" : address->local_part;
+	const char *domain = address->domain == NULL ? "" : address->domain;
+
+	return t_strconcat(local_part, "@", domain, NULL);
 }
 
 static const char *addrp_domain_extract_from
