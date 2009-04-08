@@ -510,8 +510,11 @@ static int lda_sieve_deliver_mail
 			if ( lda_sieve_debug ) {
 				const char *const *scripts;
 				unsigned int count, i;
-			
-				sieve_sys_info("using sieve path for user's script: %s", script_path);
+
+				if ( script_path == NULL )			
+					sieve_sys_info("user has no valid personal script");
+				else
+					sieve_sys_info("using sieve path for user's script: %s", script_path);
 
 				scripts = array_get(&scripts_before, &count);
 				for ( i = 0; i < count; i ++ ) {
