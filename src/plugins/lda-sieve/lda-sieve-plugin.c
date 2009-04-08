@@ -307,7 +307,8 @@ static void lda_sieve_multiscript_get_scriptfiles
 
 static int lda_sieve_multiscript_execute_scripts
 (struct sieve_multiscript *mscript, ARRAY_TYPE(const_string) *scripts, 
-	bool final, struct sieve_error_handler *ehandler, const char *scriptlog)
+	bool final, struct sieve_error_handler *ehandler, const char *scriptlog, 
+	const char **last_script_r)
 {
 	const char *const *scriptfiles;
 	unsigned int count, i;
@@ -315,6 +316,8 @@ static int lda_sieve_multiscript_execute_scripts
 		 
 	scriptfiles = array_get(scripts, &count);
 	for ( i = 0; i < count; i++ ) {
+		*last_script_r = scriptfiles[i];
+
 		if ( (ret=lda_sieve_multiscript_execute_script
 			(mscript, scriptfiles[i], ( final && i == count - 1 ), ehandler, 
 				scriptlog)) <= 0 )
@@ -329,20 +332,24 @@ static int lda_sieve_multiscript_execute
 	ARRAY_TYPE (const_string) *scripts_before, 
 	ARRAY_TYPE (const_string) *scripts_after, 
 	const struct sieve_message_data *msgdata, const struct sieve_script_env *senv, 
-	struct sieve_error_handler *ehandler,const char *scriptlog)
+	struct sieve_error_handler *ehandler, const char *scriptlog)
 {
 	/* Multiple scripts */
 	struct sieve_multiscript *mscript = sieve_multiscript_start_execute
 		(msgdata, senv, ehandler);
+	bool final = (*main_sbin == NULL ) && ( array_count(scripts_after) == 0 ); 
+	const char *last_script = NULL;
 	int ret = 1; 
 
 	/* Execute scripts before main script */
 	ret = lda_sieve_multiscript_execute_scripts
-		(mscript, scripts_before, FALSE, ehandler, scriptlog);
+		(mscript, scripts_before, final, ehandler, scriptlog, &last_script);
 
 	/* Execute main script */
-	if ( ret > 0 ) {
-		bool final = ( array_count(scripts_after) == 0 );
+	if ( *main_sbin != NULL && ret > 0 ) {
+		final = ( array_count(scripts_after) == 0 );
+
+		last_script = script_path;
 
 		if ( !(ret=sieve_multiscript_run(mscript, *main_sbin, final)) ) {
 
@@ -372,16 +379,18 @@ static int lda_sieve_multiscript_execute
 	/* Execute scripts after main script */
 	if ( ret > 0 )
 		ret = lda_sieve_multiscript_execute_scripts
-			(mscript, scripts_after, TRUE, ehandler, scriptlog); 
+			(mscript, scripts_after, TRUE, ehandler, scriptlog, &last_script); 
 
 	/* Finish execution */
 	ret = sieve_multiscript_finish(&mscript);
 
-	return lda_sieve_handle_exec_status(script_path, ret);
+	return lda_sieve_handle_exec_status(last_script, ret);
 }
 
 static int lda_sieve_run
 (struct mail_namespace *namespaces, struct mail *mail, const char *script_path,
+    ARRAY_TYPE (const_string) *scripts_before,
+	ARRAY_TYPE (const_string) *scripts_after,
 	const char *destaddr, const char *username, const char *mailbox,
 	struct mail_storage **storage_r)
 {
@@ -390,9 +399,7 @@ static int lda_sieve_run
 	struct sieve_exec_status estatus;
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin = NULL;
-	const char *scriptlog, *sieve_before, *sieve_after;
-	ARRAY_TYPE (const_string) scripts_before;
-	ARRAY_TYPE (const_string) scripts_after;
+	const char *scriptlog;
 	int ret = 0;
 
 	*storage_r = NULL;
@@ -404,8 +411,10 @@ static int lda_sieve_run
 
 	/* Open the script */
 
-	if ( (ret=lda_sieve_open(script_path, ehandler, scriptlog, &sbin)) <= 0 )
-		return ret;
+	if ( script_path != NULL ) {
+		if ( (ret=lda_sieve_open(script_path, ehandler, scriptlog, &sbin)) <= 0 )
+			return ret;
+	}
 	
 	/* Log the messages to the system error handlers as well from this moment
 	 * on.
@@ -435,26 +444,12 @@ static int lda_sieve_run
 	scriptenv.duplicate_check = duplicate_check;
 	scriptenv.exec_status = &estatus;
 
-	/* Check for multiscript */
-
-	t_array_init(&scripts_after, 16);
-	t_array_init(&scripts_before, 16);
-
-	sieve_before = getenv("SIEVE_BEFORE");
-	sieve_after = getenv("SIEVE_AFTER");
-
-	if ( sieve_before != NULL && *sieve_before != '\0' )
-		lda_sieve_multiscript_get_scriptfiles(sieve_before, &scripts_before);
-
-	if ( sieve_after != NULL && *sieve_after != '\0' )
-		lda_sieve_multiscript_get_scriptfiles(sieve_after, &scripts_after);
-
-	if ( array_count(&scripts_before) == 0 && array_count(&scripts_after) == 0 )
+	if ( array_count(scripts_before) == 0 && array_count(scripts_after) == 0 )
 		ret = lda_sieve_singlescript_execute
 			(script_path, &sbin, &msgdata, &scriptenv, ehandler, scriptlog);
 	else
 		ret = lda_sieve_multiscript_execute
-			(script_path, &sbin, &scripts_before, &scripts_after, &msgdata, 
+			(script_path, &sbin, scripts_before, scripts_after, &msgdata, 
 				&scriptenv, ehandler, scriptlog);	
 
 	/* Record status */
@@ -474,29 +469,68 @@ static int lda_sieve_deliver_mail
 (struct mail_namespace *namespaces, struct mail_storage **storage_r, 
 	struct mail *mail, const char *destaddr, const char *mailbox)
 {
-	const char *script_path;
-	int ret;
-
-	/* Find the script to execute */
-	
-	script_path = lda_sieve_get_path();
-	if (script_path == NULL) {
-		if ( lda_sieve_debug )
-			sieve_sys_info("no valid sieve script path specified: "
-				"reverting to default delivery.");
-
-		return 0;
-	}
-
-	if ( lda_sieve_debug )
-		sieve_sys_info("using sieve path: %s", script_path);
-
-	/* Run the script */
+	const char *script_path, *sieve_before, *sieve_after;
+	ARRAY_TYPE (const_string) scripts_before;
+	ARRAY_TYPE (const_string) scripts_after;
+	int ret = 0;
 
 	T_BEGIN { 
-		ret = lda_sieve_run
-			(namespaces, mail, script_path, destaddr, getenv("USER"), mailbox,
-				storage_r);
+
+		/* Find the personal script to execute */
+	
+		script_path = lda_sieve_get_path();
+
+		/* Check for multiscript */
+
+		t_array_init(&scripts_after, 16);
+		t_array_init(&scripts_before, 16);
+
+		sieve_before = getenv("SIEVE_BEFORE");
+		sieve_after = getenv("SIEVE_AFTER");
+
+		if ( sieve_before != NULL && *sieve_before != '\0' )
+			lda_sieve_multiscript_get_scriptfiles(sieve_before, &scripts_before);
+
+		if ( sieve_after != NULL && *sieve_after != '\0' )
+			lda_sieve_multiscript_get_scriptfiles(sieve_after, &scripts_after);
+	
+		/* Check whether there are any scripts to execute */
+
+		if ( script_path == NULL && array_count(&scripts_before) == 0 && 
+			array_count(&scripts_after) == 0 ) {
+
+			if ( lda_sieve_debug )
+				sieve_sys_info("no scripts to execute: reverting to default delivery.");
+
+			ret = 0;
+		} else {
+
+			/* Show configuration */
+
+			if ( lda_sieve_debug ) {
+				const char *const *scripts;
+				unsigned int count, i;
+			
+				sieve_sys_info("using sieve path for user's script: %s", script_path);
+
+				scripts = array_get(&scripts_before, &count);
+				for ( i = 0; i < count; i ++ ) {
+					sieve_sys_info("executed before user's script(%d): %s", i+1, scripts[i]);				
+				}
+
+				scripts = array_get(&scripts_after, &count);
+				for ( i = 0; i < count; i ++ ) {
+					sieve_sys_info("executed after user's script(%d): %s", i+1, scripts[i]);				
+				}
+			}
+	
+			/* Run the script(s) */
+	
+			ret = lda_sieve_run
+				(namespaces, mail, script_path, &scripts_before, &scripts_after, destaddr, 
+					getenv("USER"), mailbox, storage_r);
+		}
+
 	} T_END;
 
 	return ( ret >= 0 ? 1 : -1 ); 
