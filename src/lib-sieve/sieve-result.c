@@ -94,9 +94,10 @@ struct sieve_result *sieve_result_create
 	result->pool = pool;
 	
 	p_array_init(&result->ext_contexts, pool, 4);
-	
+
+	if ( ehandler != NULL )
+		sieve_error_handler_ref(ehandler);	
 	result->ehandler = ehandler;
-	sieve_error_handler_ref(ehandler);
 
 	result->action_env.result = result;
 		
@@ -126,7 +127,8 @@ void sieve_result_unref(struct sieve_result **result)
 	if ( (*result)->action_contexts != NULL )
         hash_table_destroy(&(*result)->action_contexts);
 
-	sieve_error_handler_unref(&(*result)->ehandler);
+	if ( (*result)->ehandler != NULL )
+		sieve_error_handler_unref(&(*result)->ehandler);
 
 	pool_unref(&(*result)->pool);
 
@@ -142,6 +144,16 @@ struct sieve_error_handler *sieve_result_get_error_handler
 (struct sieve_result *result)
 {
 	return result->ehandler;
+}
+
+void sieve_result_set_error_handler
+(struct sieve_result *result, struct sieve_error_handler *ehandler)
+{
+	if ( result->ehandler != ehandler ) {
+		sieve_error_handler_ref(ehandler);
+		sieve_error_handler_unref(&result->ehandler);
+		result->ehandler = ehandler;
+	}
 }
 
 /*
@@ -178,6 +190,8 @@ void sieve_result_error
 {
 	va_list args;
 	
+	if ( aenv->result->ehandler == NULL ) return;
+
 	va_start(args, fmt);	
 	sieve_verror(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, 
 		args); 
@@ -188,6 +202,8 @@ void sieve_result_warning
 	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 {
 	va_list args;
+
+	if ( aenv->result->ehandler == NULL ) return;
 	
 	va_start(args, fmt);	
 	sieve_vwarning(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, 
@@ -200,6 +216,8 @@ void sieve_result_log
 {
 	va_list args;
 	
+	if ( aenv->result->ehandler == NULL ) return;
+
 	va_start(args, fmt);	
 	sieve_vinfo(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, 
 		args); 

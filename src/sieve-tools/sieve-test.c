@@ -305,10 +305,10 @@ int main(int argc, char **argv)
 
 			if ( execute )
 				mscript = sieve_multiscript_start_execute
-					(&msgdata, &scriptenv, ehandler);
+					(&msgdata, &scriptenv);
 			else
 				mscript = sieve_multiscript_start_test
-					(&msgdata, &scriptenv, ehandler, teststream);
+					(&msgdata, &scriptenv, teststream);
 		
 			/* Execute scripts sequentially */
 			sfiles = array_get(&scriptfiles, &count); 
@@ -335,7 +335,7 @@ int main(int argc, char **argv)
 				}
 			
 				/* Execute/Test script */
-				more = sieve_multiscript_run(mscript, sbin, FALSE);
+				more = sieve_multiscript_run(mscript, sbin, ehandler, FALSE);
 			}
 		
 			/* Execute/Test main script */
@@ -351,10 +351,10 @@ int main(int argc, char **argv)
 				sbin = main_sbin;
 				main_sbin = NULL;
 			
-				sieve_multiscript_run(mscript, sbin, TRUE);
+				sieve_multiscript_run(mscript, sbin, ehandler, TRUE);
 			}
 			
-			result = sieve_multiscript_finish(&mscript);
+			result = sieve_multiscript_finish(&mscript, ehandler);
 			
 			ret = ret > 0 ? result : ret;
 		}

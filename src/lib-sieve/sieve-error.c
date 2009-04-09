@@ -235,9 +235,11 @@ void sieve_error_handler_reset(struct sieve_error_handler *ehandler)
  */
 
 static void sieve_master_verror
-(struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
+(struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, va_list args) 
 {
+	if ( ehandler->log_master ) return;
+
 	if ( location == NULL || *location == '\0' )
 		i_error("sieve: %s", t_strdup_vprintf(fmt, args));
 	else
@@ -248,6 +250,8 @@ static void sieve_master_vwarning
 (struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
 	const char *fmt, va_list args) 
 {
+	if ( ehandler->log_master ) return;
+
 	if ( location == NULL || *location == '\0' )
 		i_warning("sieve: %s", t_strdup_vprintf(fmt, args));
 	else
@@ -258,6 +262,8 @@ static void sieve_master_vinfo
 (struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location, 
 	const char *fmt, va_list args) 
 {
+	if ( ehandler->log_master ) return;
+
 	if ( location == NULL || *location == '\0' )
 		i_info("sieve: %s", t_strdup_vprintf(fmt, args));
 	else
@@ -286,7 +292,7 @@ struct sieve_error_handler *sieve_master_ehandler_create
 }
 
 struct sieve_error_handler _sieve_system_ehandler_object = {
-        NULL, 0, 0, 0, 0,
+	NULL, 0, 0, 0, 0,
 	FALSE,
 	TRUE,
 	sieve_master_verror,

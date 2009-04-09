@@ -13,7 +13,7 @@
 struct sieve_error_handler {
 	pool_t pool;
 	int refcount;
-	
+
 	unsigned int max_errors;
 
 	unsigned int errors;

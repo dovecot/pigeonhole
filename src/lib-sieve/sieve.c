@@ -186,8 +186,10 @@ static int sieve_run
 	/* Create result object */
 	if ( *result == NULL )
 		*result = sieve_result_create(ehandler);
-	else
+	else {
 		sieve_result_ref(*result);
+		sieve_result_set_error_handler(*result, ehandler);
+	}
 							
 	/* Run the interpreter */
 	ret = sieve_interpreter_run(interp, msgdata, senv, *result);
@@ -345,7 +347,6 @@ struct sieve_multiscript {
 	struct sieve_result *result;
 	const struct sieve_message_data *msgdata;
 	const struct sieve_script_env *scriptenv;
-	struct sieve_error_handler *ehandler;
 
 	int status;
 	bool active;
@@ -355,14 +356,13 @@ struct sieve_multiscript {
 };
  
 struct sieve_multiscript *sieve_multiscript_start_execute
-(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
-	struct sieve_error_handler *ehandler)
+(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv)
 {
 	pool_t pool;
 	struct sieve_result *result;
 	struct sieve_multiscript *mscript;
 	
-	result = sieve_result_create(ehandler);
+	result = sieve_result_create(NULL);
 	pool = sieve_result_pool(result);
 	
 	sieve_result_set_keep_action(result, NULL);
@@ -371,7 +371,6 @@ struct sieve_multiscript *sieve_multiscript_start_execute
 	mscript->result = result;
 	mscript->msgdata = msgdata;
 	mscript->scriptenv = senv;
-	mscript->ehandler = ehandler;
 	mscript->status = SIEVE_EXEC_OK;
 	mscript->active = TRUE;
 	
@@ -380,10 +379,10 @@ struct sieve_multiscript *sieve_multiscript_start_execute
 
 struct sieve_multiscript *sieve_multiscript_start_test
 (const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
-	struct sieve_error_handler *ehandler, struct ostream *stream)
+	struct ostream *stream)
 {
 	struct sieve_multiscript *mscript = 
-		sieve_multiscript_start_execute(msgdata, senv, ehandler);
+		sieve_multiscript_start_execute(msgdata, senv);
 	
 	mscript->teststream = stream;
 
@@ -391,9 +390,11 @@ struct sieve_multiscript *sieve_multiscript_start_test
 }
 
 static void sieve_multiscript_test
-(struct sieve_multiscript *mscript)
+(struct sieve_multiscript *mscript, struct sieve_error_handler *ehandler)
 {						
 	bool keep = FALSE;
+
+	sieve_result_set_error_handler(mscript->result, ehandler);
 
 	mscript->status = sieve_result_print
 		(mscript->result, mscript->scriptenv, mscript->teststream, &keep);
@@ -404,10 +405,12 @@ static void sieve_multiscript_test
 }
 
 static void sieve_multiscript_execute
-(struct sieve_multiscript *mscript)
+(struct sieve_multiscript *mscript, struct sieve_error_handler *ehandler)
 {
 	bool keep = FALSE;
 			
+	sieve_result_set_error_handler(mscript->result, ehandler);
+
 	if ( mscript->status > 0 )
 		mscript->status = sieve_result_execute
 			(mscript->result, mscript->msgdata, mscript->scriptenv, &keep);
@@ -422,7 +425,7 @@ static void sieve_multiscript_execute
 
 bool sieve_multiscript_run
 (struct sieve_multiscript *mscript, struct sieve_binary *sbin,
-	bool final)
+	struct sieve_error_handler *ehandler, bool final)
 {
 	if ( !mscript->active ) return FALSE;
 	
@@ -431,13 +434,13 @@ bool sieve_multiscript_run
 	
 	/* Run the script */
 	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata, 
-		mscript->scriptenv, mscript->ehandler);
+		mscript->scriptenv, ehandler);
 
 	if ( mscript->status >= 0 ) {
 		if ( mscript->teststream != NULL ) 
-			sieve_multiscript_test(mscript);
+			sieve_multiscript_test(mscript, ehandler);
 		else
-			sieve_multiscript_execute(mscript);
+			sieve_multiscript_execute(mscript, ehandler);
 
 		if ( final ) mscript->active = FALSE;
 	}	
@@ -453,10 +456,14 @@ int sieve_multiscript_status(struct sieve_multiscript *mscript)
 	return mscript->status;
 }
 
-int sieve_multiscript_finish(struct sieve_multiscript **mscript)
+int sieve_multiscript_finish(struct sieve_multiscript **mscript, 
+	struct sieve_error_handler *ehandler)
 {
 	struct sieve_result *result = (*mscript)->result;
 	int ret = (*mscript)->status;
+
+	if ( ehandler != NULL )
+		sieve_result_set_error_handler((*mscript)->result, ehandler);	
 
 	if ( (*mscript)->active ) {
 		ret = SIEVE_EXEC_FAILURE;

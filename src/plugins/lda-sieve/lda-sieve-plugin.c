@@ -22,7 +22,8 @@
 
 #define SIEVE_SCRIPT_PATH "~/.dovecot.sieve"
 
-#define LDA_SIEVE_MAX_ERRORS 10
+#define LDA_SIEVE_MAX_USER_ERRORS 10
+#define LDA_SIEVE_MAX_SYSTEM_ERRORS 100
 
 /*
  * Global variables 
@@ -52,6 +53,20 @@ static bool lda_sieve_smtp_close(void *handle)
 /*
  * Plugin implementation
  */
+
+struct lda_sieve_run_context {
+	const char *const *script_files;
+	unsigned int script_count;
+
+	const char *user_script;
+
+	const struct sieve_message_data *msgdata;
+	const struct sieve_script_env *scriptenv;
+
+	struct sieve_error_handler *user_ehandler;
+	struct sieve_error_handler *master_ehandler;
+	const char *userlog;
+};
 
 static const char *lda_sieve_get_path(void)
 {
@@ -106,35 +121,77 @@ static const char *lda_sieve_get_path(void)
 	return script_path;
 }
 
-static int lda_sieve_open
-(const char *script_path, struct sieve_error_handler *ehandler, 
-	const char *scriptlog, struct sieve_binary **sbin)
+static void lda_sieve_multiscript_get_scriptfiles
+(const char *script_path, ARRAY_TYPE(const_string) *scriptfiles)
 {
+	struct sieve_directory *sdir = sieve_directory_open(script_path);
+
+	if ( sdir != NULL ) {
+		const char *file;
+
+		while ( (file=sieve_directory_get_scriptfile(sdir)) != NULL ) {
+			const char *const *scripts;
+			unsigned int count, i;
+
+			/* Insert into sorted array */
+
+			scripts = array_get(scriptfiles, &count);
+			for ( i = 0; i < count; i++ ) {
+				if ( strcmp(file, scripts[i]) < 0 )
+					break;			
+			}
+	
+			if ( i == count ) 
+				array_append(scriptfiles, &file, 1);
+			else
+				array_insert(scriptfiles, i, &file, 1);
+		}
+
+		sieve_directory_close(&sdir);
+	} 
+}
+
+static int lda_sieve_open
+(struct lda_sieve_run_context *srctx, unsigned int script_index,
+	struct sieve_binary **sbin)
+{
+	const char *script_path = srctx->script_files[script_index];
+	struct sieve_error_handler *ehandler;
+	bool user_script = ( script_path == srctx->user_script );
 	bool exists = TRUE;
 	int ret = 0;
 
-	if ( lda_sieve_debug )
-		sieve_sys_info("opening script %s", script_path);
+	if ( user_script )
+		ehandler = srctx->user_ehandler;
+	else
+		ehandler = srctx->master_ehandler;
 
-	if ( (*sbin=sieve_open(script_path, "main script", ehandler, &exists)) 
+	if ( lda_sieve_debug )
+		sieve_sys_info("opening script %s", script_path);		
+
+	sieve_error_handler_reset(ehandler);
+
+	if ( (*sbin=sieve_open(script_path, user_script ? "main script" : NULL, ehandler, &exists)) 
 		== NULL ) {
 
 		ret = sieve_get_errors(ehandler) > 0 ? -1 : 0;
 
-		if ( lda_sieve_debug ) {
-			if ( !exists && ret == 0 ) 
-				sieve_sys_info
-					("script file %s is missing; reverting to default delivery", 
-						script_path);
-			else
-				sieve_sys_info
+		if ( !exists && ret == 0 ) {
+			if ( lda_sieve_debug )
+				sieve_sys_info("script file %s is missing", script_path);
+		} else {
+			if ( user_script && srctx->userlog != NULL ) {
+				sieve_sys_error
 					("failed to open script %s "
-						"(view logfile %s for more information); "
-						"reverting to default delivery", 
-						script_path, scriptlog);
+						"(view logfile %s for more information)", 
+						script_path, srctx->userlog);
+			} else {
+				sieve_sys_error
+					("failed to open script %s", 
+						script_path);
+			}
 		}
 
-		sieve_error_handler_unref(&ehandler);
 		return ret;
 	}
 
@@ -142,30 +199,40 @@ static int lda_sieve_open
 }
 
 static struct sieve_binary *lda_sieve_recompile
-(const char *script_path, struct sieve_error_handler *ehandler, 
-	const char *scriptlog)
+(struct lda_sieve_run_context *srctx, unsigned int script_index)
 {
+	const char *script_path = srctx->script_files[script_index];
+    struct sieve_error_handler *ehandler;
+    bool user_script = ( script_path == srctx->user_script );
 	struct sieve_binary *sbin;
 
 	/* Warn */
+
 	sieve_sys_warning("encountered corrupt binary: recompiling script %s", 
 		script_path);
 
 	/* Recompile */	
 
-	sieve_error_handler_copy_masterlog(ehandler, FALSE);
+	if ( user_script )
+		ehandler = srctx->user_ehandler;
+	else
+		ehandler = srctx->master_ehandler;
 
-	if ( (sbin=sieve_compile(script_path, NULL, ehandler)) == NULL ) {
-		sieve_sys_error
-				("failed to compile script %s "
-					"(view logfile %s for more information); "
-					"reverting to default delivery", 
-					script_path, scriptlog);
-		sieve_error_handler_unref(&ehandler);
+	if ( (sbin=sieve_compile(script_path,
+		user_script ? "main script" : NULL, ehandler)) == NULL ) {
+
+		if ( user_script && srctx->userlog != NULL ) {
+			sieve_sys_error
+				("failed to re-compile script %s "
+					"(view logfile %s for more information)",
+					script_path, srctx->userlog);
+		} else {
+			sieve_sys_error
+				("failed to re-compile script %s", script_path);
+		}
+
 		return NULL;
 	}
-
-	sieve_error_handler_copy_masterlog(ehandler, TRUE);
 
 	return sbin;
 }
@@ -202,235 +269,220 @@ static int lda_sieve_handle_exec_status(const char *script_path, int status)
 }
 
 static int lda_sieve_singlescript_execute
-(const char *script_path, struct sieve_binary **sbin, 
-	const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
-	struct sieve_error_handler *ehandler, const char *scriptlog)
+(struct lda_sieve_run_context *srctx)
 {
+	const char *script_file = srctx->script_files[0];
+    bool user_script = ( script_file == srctx->user_script );
+	struct sieve_error_handler *ehandler;
+	struct sieve_binary *sbin;
 	int ret;
 
-	if ( lda_sieve_debug )
-		sieve_sys_info("executing compiled script %s", script_path);
+	/* Open the script */
+
+	if ( (ret=lda_sieve_open(srctx, 0, &sbin)) <= 0 )
+		return ret;
 
 	/* Execute */
 
-	ret = sieve_execute(*sbin, msgdata, senv, ehandler);
+	if ( lda_sieve_debug )
+		sieve_sys_info("executing compiled script %s", script_file);
 
-	/* Recompile corrupt binary */
+	if ( user_script ) {
+		ehandler = srctx->user_ehandler;
+		sieve_error_handler_copy_masterlog(ehandler, TRUE);	
+	} else {
+		ehandler = srctx->master_ehandler;
+	}
+
+	ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv, ehandler);
+
+	sieve_error_handler_copy_masterlog(ehandler, FALSE);	
+
+	/* Recompile if corrupt binary */
 
 	if ( ret == SIEVE_EXEC_BIN_CORRUPT ) {
 		/* Close corrupt script */
-		sieve_close(sbin);
+
+		sieve_close(&sbin);
 
 		/* Recompile */
-		if ( (*sbin=lda_sieve_recompile(script_path, ehandler, scriptlog)) == NULL )
+
+		if ( (sbin=lda_sieve_recompile(srctx, 0)) == NULL ) {
 			return -1;
+		}
 
 		/* Execute again */
-	
-		ret = sieve_execute(*sbin, msgdata, senv, ehandler);
+
+		if ( user_script )
+        	sieve_error_handler_copy_masterlog(ehandler, TRUE);
+
+		ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv, ehandler);
+
+		sieve_error_handler_copy_masterlog(ehandler, FALSE);
 
 		/* Save new version */
-		
+
 		if ( ret != SIEVE_EXEC_BIN_CORRUPT )
-			sieve_save(*sbin, NULL);
+			sieve_save(sbin, NULL);
 	}
+
+	sieve_close(&sbin);
 
 	/* Report status */
-
-	return lda_sieve_handle_exec_status(script_path, ret);
-}
-
-static int lda_sieve_multiscript_execute_script
-(struct sieve_multiscript *mscript, const char *script, bool final, 
-	struct sieve_error_handler *ehandler, const char *scriptlog)
-{
-	struct sieve_binary *sbin = NULL;
-	bool more = FALSE;
-
-	if ( lda_sieve_open(script, ehandler, scriptlog, &sbin) <= 0 )
-		return -1;
-
-	if ( !(more=sieve_multiscript_run(mscript, sbin, final)) ) {
-		if ( sieve_multiscript_status(mscript) == SIEVE_EXEC_BIN_CORRUPT ) {
-			/* Close corrupt script */
-			sieve_close(&sbin);
-
-			/* Recompile */
-
-			if ( (sbin=lda_sieve_recompile(script, ehandler, scriptlog)) == NULL )
-				return -1;
-
-			/* Execute again */
-
-			more = sieve_multiscript_run(mscript, sbin, final);
-
-			/* Save new version */
-	
-			if ( more && 
-				sieve_multiscript_status(mscript) != SIEVE_EXEC_BIN_CORRUPT )
-				sieve_save(sbin, NULL);
-		}
-	}
-
-	return (int) more;
-}
-
-static void lda_sieve_multiscript_get_scriptfiles
-(const char *script_path, ARRAY_TYPE(const_string) *scriptfiles)
-{
-	struct sieve_directory *sdir = sieve_directory_open(script_path);
-
-	if ( sdir != NULL ) {
-		const char *file;
-
-		while ( (file=sieve_directory_get_scriptfile(sdir)) != NULL ) {
-			const char *const *scripts;
-			unsigned int count, i;
-
-			/* Insert into sorted array */
-
-			scripts = array_get(scriptfiles, &count);
-			for ( i = 0; i < count; i++ ) {
-				if ( strcmp(file, scripts[i]) < 0 )
-					break;			
-			}
-	
-			if ( i == count ) 
-				array_append(scriptfiles, &file, 1);
-			else
-				array_insert(scriptfiles, i, &file, 1);
-		}
-
-		sieve_directory_close(&sdir);
-	} 
-}
-
-static int lda_sieve_multiscript_execute_scripts
-(struct sieve_multiscript *mscript, ARRAY_TYPE(const_string) *scripts, 
-	bool final, struct sieve_error_handler *ehandler, const char *scriptlog, 
-	const char **last_script_r)
-{
-	const char *const *scriptfiles;
-	unsigned int count, i;
-	int ret = 0;
-		 
-	scriptfiles = array_get(scripts, &count);
-	for ( i = 0; i < count; i++ ) {
-		*last_script_r = scriptfiles[i];
-
-		if ( (ret=lda_sieve_multiscript_execute_script
-			(mscript, scriptfiles[i], ( final && i == count - 1 ), ehandler, 
-				scriptlog)) <= 0 )
-			return ret;
-	}
-
-	return 1;
+	return lda_sieve_handle_exec_status(script_file, ret);
 }
 
 static int lda_sieve_multiscript_execute
-(const char *script_path, struct sieve_binary **main_sbin,
-	ARRAY_TYPE (const_string) *scripts_before, 
-	ARRAY_TYPE (const_string) *scripts_after, 
-	const struct sieve_message_data *msgdata, const struct sieve_script_env *senv, 
-	struct sieve_error_handler *ehandler, const char *scriptlog)
+(struct lda_sieve_run_context *srctx)
 {
-	/* Multiple scripts */
-	struct sieve_multiscript *mscript = sieve_multiscript_start_execute
-		(msgdata, senv, ehandler);
-	bool final = (*main_sbin == NULL ) && ( array_count(scripts_after) == 0 ); 
-	const char *last_script = NULL;
+	const char *const *scripts = srctx->script_files;
+	unsigned int count = srctx->script_count;
+	struct sieve_multiscript *mscript;
+	struct sieve_error_handler *ehandler;
+	const char *last_script;
+	bool user_script = FALSE;
+	unsigned int i;
 	int ret = 1; 
+	bool more = TRUE;
+
+	/* Start execution */
+
+	mscript = sieve_multiscript_start_execute(srctx->msgdata, srctx->scriptenv);
 
 	/* Execute scripts before main script */
-	ret = lda_sieve_multiscript_execute_scripts
-		(mscript, scripts_before, final, ehandler, scriptlog, &last_script);
 
-	/* Execute main script */
-	if ( *main_sbin != NULL && ret > 0 ) {
-		final = ( array_count(scripts_after) == 0 );
+	for ( i = 0; i < count && more; i++ ) {
+		struct sieve_binary *sbin = NULL;
+		const char *script_file = scripts[i];
+		bool final = ( i == count - 1 );
 
-		last_script = script_path;
+		user_script = ( script_file == srctx->user_script );
+		last_script = script_file;		
 
-		if ( !(ret=sieve_multiscript_run(mscript, *main_sbin, final)) ) {
+		if ( user_script )
+			ehandler = srctx->user_ehandler;
+		else
+			ehandler = srctx->master_ehandler;
 
+		/* Open */
+	
+		if ( (ret=lda_sieve_open(srctx, i, &sbin)) <= 0 )
+			break;
+
+		/* Execute */
+
+		if ( user_script )	
+			sieve_error_handler_copy_masterlog(ehandler, TRUE);
+
+		more = sieve_multiscript_run(mscript, sbin, ehandler, final);
+
+		sieve_error_handler_copy_masterlog(ehandler, FALSE);
+
+		if ( !more ) {
 			if ( sieve_multiscript_status(mscript) == SIEVE_EXEC_BIN_CORRUPT ) {
 				/* Close corrupt script */
-				sieve_close(main_sbin);
+
+				sieve_close(&sbin);
 
 				/* Recompile */
-				if ( (*main_sbin=lda_sieve_recompile(script_path, ehandler, scriptlog))
+
+				if ( (sbin=lda_sieve_recompile(srctx, i))
 					== NULL ) {
 					ret = -1;
-				} else {
-
-					/* Execute again */
-	
-					ret = sieve_multiscript_run(mscript, *main_sbin, final);
-
-					/* Save new version */
-		
-					if ( sieve_multiscript_status(mscript) != SIEVE_EXEC_BIN_CORRUPT )
-						sieve_save(*main_sbin, NULL);
+					break;
 				}
+
+				/* Execute again */
+
+				if ( user_script )
+		            sieve_error_handler_copy_masterlog(ehandler, TRUE);
+
+				more = sieve_multiscript_run(mscript, sbin, ehandler, final);
+
+				sieve_error_handler_copy_masterlog(ehandler, FALSE);
+
+				/* Save new version */
+
+				if ( more && 
+					sieve_multiscript_status(mscript) != SIEVE_EXEC_BIN_CORRUPT )
+					sieve_save(sbin, NULL);
 			}
 		}
+
+		sieve_close(&sbin);
 	}
 
-	/* Execute scripts after main script */
-	if ( ret > 0 )
-		ret = lda_sieve_multiscript_execute_scripts
-			(mscript, scripts_after, TRUE, ehandler, scriptlog, &last_script); 
-
 	/* Finish execution */
-	ret = sieve_multiscript_finish(&mscript);
+
+	if ( user_script )	
+		sieve_error_handler_copy_masterlog(ehandler, TRUE);
+
+	ret = sieve_multiscript_finish(&mscript, ehandler);
+
+	sieve_error_handler_copy_masterlog(ehandler, FALSE);
 
 	return lda_sieve_handle_exec_status(last_script, ret);
 }
 
 static int lda_sieve_run
-(struct mail_namespace *namespaces, struct mail *mail, const char *script_path,
-    ARRAY_TYPE (const_string) *scripts_before,
-	ARRAY_TYPE (const_string) *scripts_after,
-	const char *destaddr, const char *username, const char *mailbox,
+(struct mail_namespace *namespaces, struct mail *mail, const char *user_script,
+	const ARRAY_TYPE (const_string) *scripts_before, 
+	const ARRAY_TYPE (const_string) *scripts_after, 
+	const char *destaddr, const char *username, const char *mailbox, 
 	struct mail_storage **storage_r)
 {
+	ARRAY_TYPE (const_string) scripts;
+
+	struct lda_sieve_run_context srctx;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
-	struct sieve_error_handler *ehandler;
-	struct sieve_binary *sbin = NULL;
-	const char *scriptlog;
 	int ret = 0;
 
 	*storage_r = NULL;
 
-	/* Create error handler */
+	/* Initialize */
 
-	scriptlog = t_strconcat(script_path, ".log", NULL);
-	ehandler = sieve_logfile_ehandler_create(scriptlog, LDA_SIEVE_MAX_ERRORS);
+	memset(&srctx, 0, sizeof(srctx));
 
-	/* Open the script */
+	/* Compose execution sequence */
 
-	if ( script_path != NULL ) {
-		if ( (ret=lda_sieve_open(script_path, ehandler, scriptlog, &sbin)) <= 0 )
-			return ret;
+	t_array_init(&scripts, 32);
+
+	array_append_array(&scripts, scripts_before);
+
+	if ( user_script != NULL )
+		array_append(&scripts, &user_script, 1);
+	srctx.user_script = user_script;
+
+	array_append_array(&scripts, scripts_after);
+
+	/* Create error handlers */
+
+	if ( user_script != NULL ) {
+		srctx.userlog = t_strconcat(user_script, ".log", NULL);
+		srctx.user_ehandler = sieve_logfile_ehandler_create(srctx.userlog, LDA_SIEVE_MAX_USER_ERRORS);
 	}
-	
-	/* Log the messages to the system error handlers as well from this moment
-	 * on.
-	 */
-	sieve_error_handler_copy_masterlog(ehandler, TRUE);
+
+	srctx.master_ehandler = sieve_master_ehandler_create(LDA_SIEVE_MAX_SYSTEM_ERRORS);
+	sieve_error_handler_accept_infolog(srctx.master_ehandler, TRUE);
 
 	/* Collect necessary message data */
+
 	memset(&msgdata, 0, sizeof(msgdata));
+
 	msgdata.mail = mail;
 	msgdata.return_path = deliver_get_return_address(mail);
 	msgdata.to_address = destaddr;
 	msgdata.auth_user = username;
 	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
 
+	srctx.msgdata = &msgdata;
+
 	/* Compose script execution environment */
+
 	memset(&scriptenv, 0, sizeof(scriptenv));
+
 	scriptenv.default_mailbox = mailbox;
 	scriptenv.mailbox_autocreate = deliver_set->mailbox_autocreate;
 	scriptenv.mailbox_autosubscribe = deliver_set->mailbox_autosubscribe;
@@ -444,13 +496,18 @@ static int lda_sieve_run
 	scriptenv.duplicate_check = duplicate_check;
 	scriptenv.exec_status = &estatus;
 
-	if ( array_count(scripts_before) == 0 && array_count(scripts_after) == 0 )
-		ret = lda_sieve_singlescript_execute
-			(script_path, &sbin, &msgdata, &scriptenv, ehandler, scriptlog);
+	srctx.scriptenv = &scriptenv;
+
+	/* Assign script sequence */
+
+	srctx.script_files = array_get(&scripts, &srctx.script_count);
+
+	/* Execute script(s) */
+
+	if ( srctx.script_count == 1 )
+		ret = lda_sieve_singlescript_execute(&srctx);
 	else
-		ret = lda_sieve_multiscript_execute
-			(script_path, &sbin, scripts_before, scripts_after, &msgdata, 
-				&scriptenv, ehandler, scriptlog);	
+		ret = lda_sieve_multiscript_execute(&srctx);	
 
 	/* Record status */
 
@@ -458,9 +515,10 @@ static int lda_sieve_run
 	*storage_r = estatus.last_storage;
 
 	/* Clean up */
-	if ( sbin != NULL )
-		sieve_close(&sbin);
-	sieve_error_handler_unref(&ehandler);
+
+	if ( srctx.user_ehandler != NULL )
+		sieve_error_handler_unref(&srctx.user_ehandler);
+	sieve_error_handler_unref(&srctx.master_ehandler);
 
 	return ret;
 }
@@ -469,7 +527,7 @@ static int lda_sieve_deliver_mail
 (struct mail_namespace *namespaces, struct mail_storage **storage_r, 
 	struct mail *mail, const char *destaddr, const char *mailbox)
 {
-	const char *script_path, *sieve_before, *sieve_after;
+	const char *user_script, *sieve_before, *sieve_after;
 	ARRAY_TYPE (const_string) scripts_before;
 	ARRAY_TYPE (const_string) scripts_after;
 	int ret = 0;
@@ -478,59 +536,59 @@ static int lda_sieve_deliver_mail
 
 		/* Find the personal script to execute */
 	
-		script_path = lda_sieve_get_path();
+		user_script = lda_sieve_get_path();
+
+		if ( lda_sieve_debug ) {
+			if ( user_script == NULL )			
+				sieve_sys_info("user has no valid personal script");
+			else
+				sieve_sys_info("using sieve path for user's script: %s", user_script);
+		}
 
 		/* Check for multiscript */
 
-		t_array_init(&scripts_after, 16);
 		t_array_init(&scripts_before, 16);
+		t_array_init(&scripts_after, 16);
 
 		sieve_before = getenv("SIEVE_BEFORE");
 		sieve_after = getenv("SIEVE_AFTER");
 
-		if ( sieve_before != NULL && *sieve_before != '\0' )
+		if ( sieve_before != NULL && *sieve_before != '\0' ) {
 			lda_sieve_multiscript_get_scriptfiles(sieve_before, &scripts_before);
+		}
 
-		if ( sieve_after != NULL && *sieve_after != '\0' )
+		if ( sieve_after != NULL && *sieve_after != '\0' ) {
 			lda_sieve_multiscript_get_scriptfiles(sieve_after, &scripts_after);
+		}
+
+		if ( lda_sieve_debug ) {
+			const char *const *scriptfiles;
+			unsigned int count, i;
+
+			scriptfiles = array_get(&scripts_before, &count);
+			for ( i = 0; i < count; i ++ ) {
+				sieve_sys_info("executed before user's script(%d): %s", i+1, scriptfiles[i]);				
+			}
+
+			scriptfiles = array_get(&scripts_after, &count);
+			for ( i = 0; i < count; i ++ ) {
+				sieve_sys_info("executed after user's script(%d): %s", i+1, scriptfiles[i]);				
+			}
+		}
 	
 		/* Check whether there are any scripts to execute */
 
-		if ( script_path == NULL && array_count(&scripts_before) == 0 && 
-			array_count(&scripts_after) == 0 ) {
-
+		if ( array_count(&scripts_before) == 0 && array_count(&scripts_before) == 0 &&
+			user_script == NULL ) {
 			if ( lda_sieve_debug )
 				sieve_sys_info("no scripts to execute: reverting to default delivery.");
 
 			ret = 0;
 		} else {
-
-			/* Show configuration */
-
-			if ( lda_sieve_debug ) {
-				const char *const *scripts;
-				unsigned int count, i;
-
-				if ( script_path == NULL )			
-					sieve_sys_info("user has no valid personal script");
-				else
-					sieve_sys_info("using sieve path for user's script: %s", script_path);
-
-				scripts = array_get(&scripts_before, &count);
-				for ( i = 0; i < count; i ++ ) {
-					sieve_sys_info("executed before user's script(%d): %s", i+1, scripts[i]);				
-				}
-
-				scripts = array_get(&scripts_after, &count);
-				for ( i = 0; i < count; i ++ ) {
-					sieve_sys_info("executed after user's script(%d): %s", i+1, scripts[i]);				
-				}
-			}
-	
 			/* Run the script(s) */
-	
+				
 			ret = lda_sieve_run
-				(namespaces, mail, script_path, &scripts_before, &scripts_after, destaddr, 
+				(namespaces, mail, user_script, &scripts_before, &scripts_after, destaddr,
 					getenv("USER"), mailbox, storage_r);
 		}
 

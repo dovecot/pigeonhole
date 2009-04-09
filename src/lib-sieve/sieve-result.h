@@ -29,6 +29,8 @@ pool_t sieve_result_pool(struct sieve_result *result);
 
 struct sieve_error_handler *sieve_result_get_error_handler
 	(struct sieve_result *result);
+void sieve_result_set_error_handler
+	(struct sieve_result *result, struct sieve_error_handler *ehandler);
 
 /*
  * Extension support

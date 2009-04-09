@@ -90,7 +90,11 @@ struct sieve_script *sieve_script_init
 		basename = _sieve_scriptfile_get_basename(filename);
 		binpath = t_strconcat(dirpath, "/", basename, ".svbin", NULL);
 				
-		if ( name != NULL && *name != '\0' ) {
+		if ( name == NULL ) {
+			name = basename; 
+		} else if ( *name == '\0' ) {
+			name = NULL;
+		} else {
 			basename = name;
 		}
 			
