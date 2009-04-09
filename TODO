@@ -6,8 +6,11 @@ Current:
 
 Next (in order of descending priority/precedence):
 
+* Upgrade include extension to latest draft specification.
+* Implement namespace support for variables extension (to complete include 
+  extension)
 * Improve error handling. Now it is not very consistent, especially for the Sieve
-  command line tools and multiscript. 
+  command line tools. 
 * Improve debugging support in the sieve-test tool:
 	- Improve trace debugging towards something more intuitively readable.
 	- Give trace debugging multiple levels of verbosity (e.g. to include more messy
@@ -90,6 +93,4 @@ Next (in order of descending priority/precedence):
   to the point. 
 * Try to implement proposed notify mechanisms other than mailto. Currently: xmpp
   and sip
-* Implement namespace support for variables extension 
-  (possibly needed by test suite; in that case priority is much higher)
 
