@@ -545,8 +545,8 @@ bool ext_include_execute_include
 													
 						/* Activate the sub-include's block */
 						if ( !sieve_binary_block_set_active
-							(renv->sbin, curctx->block_id, NULL) ) {
-							sieve_runtime_trace_error(renv, "invalid block id: %d", curctx->block_id);
+							(renv->sbin, curctx->inc_block_id, NULL) ) {
+							sieve_runtime_trace_error(renv, "invalid block id: %d", curctx->inc_block_id);
 							result = SIEVE_EXEC_BIN_CORRUPT;
 						}
 						
