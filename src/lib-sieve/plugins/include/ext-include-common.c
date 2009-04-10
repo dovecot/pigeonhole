@@ -472,7 +472,8 @@ bool ext_include_execute_include
 	ctx = ext_include_get_interpreter_context(renv->interp);
 	block_id = included->block_id;
 
-	sieve_runtime_trace(renv, "INCLUDE command (script: %s, id: %d block: %d) START::", 
+	sieve_runtime_trace(renv, 
+		"INCLUDE command (script: %s, id: %d block: %d) START::", 
 		sieve_script_name(included->script), include_id, block_id);
 
 	if ( ctx->parent == NULL ) {
@@ -486,13 +487,15 @@ bool ext_include_execute_include
 		/* We are the top-level interpreter instance */	
 
 		/* Activate block for included script */
-		if ( !sieve_binary_block_set_active(renv->sbin, block_id, &this_block_id) ) {			
+		if ( !sieve_binary_block_set_active(renv->sbin, block_id, &this_block_id) ) 
+			{			
 			sieve_runtime_trace_error(renv, "invalid block id: %d", block_id);
 			result = SIEVE_EXEC_BIN_CORRUPT;
 		}
 
 		if ( result > 0 ) {
-			/* Create interpreter for top-level included script (first sub-interpreter) 
+			/* Create interpreter for top-level included script
+			 * (first sub-interpreter) 
 			 */
 			subinterp = sieve_interpreter_create(renv->sbin, ehandler);
 
@@ -502,8 +505,8 @@ bool ext_include_execute_include
 
 				/* Activate and start the top-level included script */
 				result = ( sieve_interpreter_start
-					(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx, renv->result, 
-						&interrupted) == 1 );
+					(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx, 
+						renv->result, &interrupted) == 1 );
 			} else
 				result = SIEVE_EXEC_BIN_CORRUPT;
 		}
@@ -542,16 +545,29 @@ bool ext_include_execute_include
 					result = ( sieve_interpreter_continue(subinterp, &interrupted) == 1 );
 				} else {
 					if ( curctx->inc_block_id >= SBIN_SYSBLOCK_LAST ) {
+						struct ext_include_interpreter_context *pctx;
+
 						/* Sub-include requested */
 				
-						/* FIXME: Check circular include during interpretation as well. 
-						 * Let's not trust user-owned binaries.
+						/* Check circular include during interpretation as well. 
+						 * Let's not trust binaries.
 						 */
+						pctx = curctx;
+						while ( result > 0 && pctx != NULL ) {
+							if ( curctx->inc_block_id == pctx->block_id ) {
+								sieve_runtime_trace_error(renv, 
+									"circular include for block id: %d", 
+									curctx->inc_block_id);
+								result = SIEVE_EXEC_BIN_CORRUPT;
+							}
+							pctx = pctx->parent;
+						}
 													
 						/* Activate the sub-include's block */
-						if ( !sieve_binary_block_set_active
+						if ( result > 0 && !sieve_binary_block_set_active
 							(renv->sbin, curctx->inc_block_id, NULL) ) {
-							sieve_runtime_trace_error(renv, "invalid block id: %d", curctx->inc_block_id);
+							sieve_runtime_trace_error(renv, "invalid block id: %d", 
+								curctx->inc_block_id);
 							result = SIEVE_EXEC_BIN_CORRUPT;
 						}
 						
@@ -583,7 +599,8 @@ bool ext_include_execute_include
 				}
 			}
 		} else 
-			sieve_runtime_trace(renv, "INCLUDE command (block: %d) END ::", curctx->block_id);
+			sieve_runtime_trace(renv, "INCLUDE command (block: %d) END ::", 
+				curctx->block_id);
 
 		/* Free any sub-interpreters that might still be active */
 		while ( curctx != NULL && curctx->parent != NULL ) {
