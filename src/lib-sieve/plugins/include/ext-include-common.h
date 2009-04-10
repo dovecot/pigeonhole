@@ -101,7 +101,7 @@ bool ext_include_generate_include
 void ext_include_interpreter_context_init(struct sieve_interpreter *interp);
 
 bool ext_include_execute_include
-	(const struct sieve_runtime_env *renv, unsigned int block_id);
+	(const struct sieve_runtime_env *renv, unsigned int block_id, bool once);
 void ext_include_execute_return(const struct sieve_runtime_env *renv);
 
 struct sieve_variable_storage *ext_include_interpreter_get_global_variables

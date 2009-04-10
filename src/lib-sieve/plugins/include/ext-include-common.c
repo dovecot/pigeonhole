@@ -453,7 +453,7 @@ bool ext_include_generate_include
  */
 
 bool ext_include_execute_include
-	(const struct sieve_runtime_env *renv, unsigned int include_id)
+(const struct sieve_runtime_env *renv, unsigned int include_id, bool once)
 {
 	int result = TRUE;
 	struct ext_include_interpreter_context *ctx;
@@ -472,8 +472,8 @@ bool ext_include_execute_include
 	ctx = ext_include_get_interpreter_context(renv->interp);
 	block_id = included->block_id;
 
-	sieve_runtime_trace(renv, "INCLUDE command (id: %d, script: %s, block: %d)", 
-		include_id, sieve_script_name(included->script), block_id);
+	sieve_runtime_trace(renv, "INCLUDE command (script: %s, id: %d block: %d) START::", 
+		sieve_script_name(included->script), include_id, block_id);
 
 	if ( ctx->parent == NULL ) {
 		struct ext_include_interpreter_context *curctx = NULL;
@@ -514,11 +514,15 @@ bool ext_include_execute_include
 		 */
 		if ( result > 0 && interrupted && !curctx->returned ) {
 			while ( result > 0 ) {
+
 				if ( ( (interrupted && curctx->returned) || (!interrupted) ) && 
 					curctx->parent != NULL ) {
 					
 					/* Sub-interpreter ended or executed return */
 					
+					sieve_runtime_trace(renv, "INCLUDE command (block: %d) END ::", 
+						curctx->block_id);
+
 					/* Ascend interpreter stack */
 					curctx = curctx->parent;
 					sieve_interpreter_free(&subinterp);
@@ -534,6 +538,7 @@ bool ext_include_execute_include
 					/* Continue parent */
 					curctx->inc_block_id = 0;
 					curctx->returned = FALSE;
+
 					result = ( sieve_interpreter_continue(subinterp, &interrupted) == 1 );
 				} else {
 					if ( curctx->inc_block_id >= SBIN_SYSBLOCK_LAST ) {
@@ -577,8 +582,9 @@ bool ext_include_execute_include
 					}
 				}
 			}
-		}
-		
+		} else 
+			sieve_runtime_trace(renv, "INCLUDE command (block: %d) END ::", curctx->block_id);
+
 		/* Free any sub-interpreters that might still be active */
 		while ( curctx != NULL && curctx->parent != NULL ) {
 			struct ext_include_interpreter_context *nextctx	= curctx->parent;

@@ -132,7 +132,7 @@ bool sieve_binary_dumper_run
 	
 	/* Dump main program */
 	
-	sieve_binary_dump_sectionf(denv, "Main program");
+	sieve_binary_dump_sectionf(denv, "Main program (block: %d)", SBIN_SYSBLOCK_MAIN_PROGRAM);
 
 	if ( !sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM, NULL) ) {
         return FALSE;

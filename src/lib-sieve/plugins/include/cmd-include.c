@@ -76,6 +76,9 @@ const struct sieve_operation include_operation = {
 struct cmd_include_context_data {
 	enum ext_include_script_location location;
 	bool location_assigned;
+	
+	bool include_once;
+	
 	struct sieve_script *script;
 };   
 
@@ -98,6 +101,17 @@ static const struct sieve_argument include_global_tag = {
 	"global", 
 	NULL, NULL,
 	cmd_include_validate_location_tag, 
+	NULL, NULL 
+};
+
+static bool cmd_include_validate_once_tag
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+		struct sieve_command_context *cmd);
+
+static const struct sieve_argument include_once_tag = { 
+	"once", 
+	NULL, NULL,
+	cmd_include_validate_once_tag, 
 	NULL, NULL 
 };
 
@@ -134,6 +148,21 @@ static bool cmd_include_validate_location_tag
 	return TRUE;
 }
 
+static bool cmd_include_validate_once_tag
+(struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast_argument **arg, 
+	struct sieve_command_context *cmd)
+{    
+	struct cmd_include_context_data *ctx_data = 
+		(struct cmd_include_context_data *) cmd->data;
+
+	ctx_data->include_once = TRUE;
+	
+	/* Delete this tag (for now) */
+	*arg = sieve_ast_arguments_detach(*arg, 1);
+
+	return TRUE;
+}
+
 /* 
  * Command registration 
  */
@@ -145,6 +174,8 @@ static bool cmd_include_registered
 		(validator, cmd_reg, &include_personal_tag, 0); 	
 	sieve_validator_register_tag
 		(validator, cmd_reg, &include_global_tag, 0); 	
+	sieve_validator_register_tag
+		(validator, cmd_reg, &include_once_tag, 0); 	
 
 	return TRUE;
 }
@@ -240,6 +271,7 @@ static bool cmd_include_generate
 	struct cmd_include_context_data *ctx_data = 
 		(struct cmd_include_context_data *) cmd->data;
 	const struct ext_include_script_info *included;
+	unsigned int flags = ctx_data->include_once;
 
 	/* Compile (if necessary) and include the script into the binary.
 	 * This yields the id of the binary block containing the compiled byte code.  
@@ -250,6 +282,7 @@ static bool cmd_include_generate
  		
  	(void)sieve_operation_emit_code(cgenv->sbin, &include_operation);
 	(void)sieve_binary_emit_unsigned(cgenv->sbin, included->id); 
+	(void)sieve_binary_emit_byte(cgenv->sbin, flags); 
  	 		
 	return TRUE;
 }
@@ -264,12 +297,15 @@ static bool opc_include_dump
 {
 	const struct ext_include_script_info *included;
 	struct ext_include_binary_context *binctx;
-	unsigned int include_id;
+	unsigned int include_id, flags;
 
 	sieve_code_dumpf(denv, "INCLUDE:");
 	
 	sieve_code_mark(denv);
 	if ( !sieve_binary_read_unsigned(denv->sbin, address, &include_id) )
+		return FALSE;
+
+	if ( !sieve_binary_read_byte(denv->sbin, address, &flags) )
 		return FALSE;
 
 	binctx = ext_include_binary_get_context(denv->sbin);
@@ -278,9 +314,10 @@ static bool opc_include_dump
 		return FALSE;
 		
 	sieve_code_descend(denv);
-	sieve_code_dumpf(denv, "script: %s [ID: %d, BLOCK: %d]", 
-		sieve_script_filename(included->script), include_id, included->block_id);
-	 
+	sieve_code_dumpf(denv, "script: %s %s[ID: %d, BLOCK: %d]", 
+		sieve_script_filename(included->script), (flags & 0x01 ? "(once) " : ""),
+		include_id, included->block_id);
+
 	return TRUE;
 }
 
@@ -292,14 +329,19 @@ static int opc_include_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	unsigned int include_id;
+	unsigned int include_id, flags;
 		
 	if ( !sieve_binary_read_unsigned(renv->sbin, address, &include_id) ) {
 		sieve_runtime_trace_error(renv, "invalid include-id operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
+
+	if ( !sieve_binary_read_unsigned(renv->sbin, address, &flags) ) {
+		sieve_runtime_trace_error(renv, "invalid flags operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 	
-	return ext_include_execute_include(renv, include_id);
+	return ext_include_execute_include(renv, include_id, flags & 0x01);
 }
 
 
