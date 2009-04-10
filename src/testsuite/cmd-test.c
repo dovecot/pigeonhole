@@ -121,7 +121,8 @@ static bool cmd_test_generate
 	sieve_jumplist_reset(genctx->exit_jumps);
 		
 	/* Test body */
-	sieve_generate_block(cgenv, ctx->ast_node);
+	if ( !sieve_generate_block(cgenv, ctx->ast_node) )
+		return FALSE;
 	
 	sieve_operation_emit_code(cgenv->sbin, &test_finish_operation);
 	
