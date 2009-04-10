@@ -105,7 +105,6 @@ static void ext_include_ast_free
     }	
 
 	/* Unreference variable scopes */
-	sieve_variable_scope_unref(&actx->import_vars);
 	if ( actx->global_vars != NULL )
 		sieve_variable_scope_unref(&actx->global_vars);
 }
@@ -122,7 +121,6 @@ struct ext_include_ast_context *ext_include_create_ast_context
 
     pool_t pool = sieve_ast_pool(ast);
     actx = p_new(pool, struct ext_include_ast_context, 1);
-   	actx->import_vars = sieve_variable_scope_create(&include_extension);
 	p_array_init(&actx->included_scripts, pool, 32);
 
     if ( parent != NULL ) {

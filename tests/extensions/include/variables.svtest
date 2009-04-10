@@ -3,10 +3,9 @@ require "vnd.dovecot.testsuite";
 require "include";
 require "variables";
 
-#export ["value1", "value2", "value3", "value4","result"];
-export ["value1", "value2"];
-export ["value3", "value4"];
-export "result";
+global ["value1", "value2"];
+global ["value3", "value4"];
+global "result";
 
 set "value1" "Works";
 set "value2" "fine.";

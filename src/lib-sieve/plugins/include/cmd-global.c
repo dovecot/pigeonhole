@@ -22,10 +22,23 @@
  * Commands 
  */
 
-static bool cmd_import_validate
+static bool cmd_global_validate
   (struct sieve_validator *validator, struct sieve_command_context *cmd);
-static bool cmd_import_generate
+static bool cmd_global_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd);
+
+const struct sieve_command cmd_global = {
+    "global",
+    SCT_COMMAND,
+    1, 0, FALSE, FALSE,
+    NULL, NULL,
+    cmd_global_validate,
+    cmd_global_generate,
+    NULL
+};
+
+/* DEPRICATED:
+ */
 		
 /* Import command 
  * 
@@ -37,8 +50,8 @@ const struct sieve_command cmd_import = {
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
 	NULL, NULL,
-	cmd_import_validate, 
-	cmd_import_generate, 
+	cmd_global_validate, 
+	cmd_global_generate, 
 	NULL
 };
 
@@ -52,8 +65,8 @@ const struct sieve_command cmd_export = {
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
 	NULL, NULL, 
-	cmd_import_validate, 
-	cmd_import_generate, 
+	cmd_global_validate, 
+	cmd_global_generate, 
 	NULL
 };
 
@@ -61,38 +74,28 @@ const struct sieve_command cmd_export = {
  * Operations
  */
 
-static bool opc_import_dump
+static bool opc_global_dump
 	(const struct sieve_operation *op,	
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
-static int opc_import_execute
+static int opc_global_execute
 	(const struct sieve_operation *op, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-/* Import operation */
+/* Global operation */
 
-const struct sieve_operation import_operation = { 
-	"import",
+const struct sieve_operation global_operation = { 
+	"global",
 	&include_extension,
-	EXT_INCLUDE_OPERATION_IMPORT,
-	opc_import_dump, 
-	opc_import_execute
+	EXT_INCLUDE_OPERATION_GLOBAL,
+	opc_global_dump, 
+	opc_global_execute
 };
 
-/* Export operation */
-
-const struct sieve_operation export_operation = { 
-	"export",
-	&include_extension,
-	EXT_INCLUDE_OPERATION_EXPORT,
-	opc_import_dump, 
-	opc_import_execute
-};
- 
 /*
  * Validation
  */
 
-static bool cmd_import_validate
+static bool cmd_global_validate
   (struct sieve_validator *validator, struct sieve_command_context *cmd) 
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
@@ -102,17 +105,27 @@ static bool cmd_import_validate
 	/* Check valid command placement */
 	if ( !sieve_command_is_toplevel(cmd) ||
 		( !sieve_command_is_first(cmd) && prev_context != NULL &&
-			prev_context->command != &cmd_require && 
-			prev_context->command != &cmd_import &&
-			(cmd->command != &cmd_export || prev_context->command != &cmd_export) ) ) 
-	{	
-		sieve_command_validate_error(validator, cmd, 
-			"%s commands can only be placed at top level "
-			"at the beginning of the file after any require %scommands",
-			cmd->command->identifier, cmd->command == &cmd_export ? "or import " : "");
-		return FALSE;
+			prev_context->command != &cmd_require ) ) {
+
+		if ( cmd->command == &cmd_global ) {
+			if ( prev_context->command != &cmd_global ) {
+				sieve_command_validate_error(validator, cmd, 
+					"a global command can only be placed at top level "
+					"at the beginning of the file after any require or other global commands");
+				return FALSE;
+			}
+		} else {
+			if ( prev_context->command != &cmd_import && prev_context->command != &cmd_export ) {
+                sieve_command_validate_error(validator, cmd,
+                    "the DEPRICATED %s command can only be placed at top level "
+                    "at the beginning of the file after any require or import/export commands",
+					cmd->command->identifier);
+                return FALSE;
+            }
+		}
 	}
-	
+
+	/* Check for use of variables extension */	
 	if ( !sieve_ext_variables_is_active(validator) ) {
 		sieve_command_validate_error(validator, cmd, 
 			"%s command requires that variables extension is active",
@@ -120,14 +133,14 @@ static bool cmd_import_validate
 		return FALSE;
 	}
 		
-	/* Register imported variable */
+	/* Register global variable */
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		/* Single string */
 		const char *identifier = sieve_ast_argument_strc(arg);
 		struct sieve_variable *var;
 		
 		if ( (var=ext_include_variable_import_global
-			(validator, cmd, identifier, cmd->command == &cmd_export)) == NULL )
+			(validator, cmd, identifier)) == NULL )
 			return FALSE;
 			
 		arg->context = (void *) var;
@@ -141,7 +154,7 @@ static bool cmd_import_validate
 			struct sieve_variable *var;
 			
 			if ( (var=ext_include_variable_import_global
-				(validator, cmd, identifier, cmd->command == &cmd_export)) == NULL )
+				(validator, cmd, identifier)) == NULL )
 				return FALSE;
 
 			stritem->context = (void *) var;
@@ -157,7 +170,7 @@ static bool cmd_import_validate
 		return FALSE;
 	}
 	
-	/* Join emport and export commands with predecessors if possible */
+	/* Join global commands with predecessors if possible */
 	if ( prev_context->command == cmd->command ) {
 		/* Join this command's string list with the previous one */
 		prev_context->first_positional = sieve_ast_stringlist_join
@@ -181,15 +194,12 @@ static bool cmd_import_validate
  * Code generation
  */
  
-static bool cmd_import_generate
+static bool cmd_global_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd) 
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 
-	if ( cmd->command == &cmd_import )
-		sieve_operation_emit_code(cgenv->sbin, &import_operation);
-	else
-		sieve_operation_emit_code(cgenv->sbin, &export_operation);
+	sieve_operation_emit_code(cgenv->sbin, &global_operation);
  	 			
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		/* Single string */
@@ -197,8 +207,6 @@ static bool cmd_import_generate
 		
 		(void)sieve_binary_emit_unsigned(cgenv->sbin, 1);
 		(void)sieve_binary_emit_unsigned(cgenv->sbin, var->index);
-		if ( cmd->command == &cmd_import )
-			(void)sieve_code_source_line_emit(cgenv->sbin, arg->source_line);
 		
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		/* String list */
@@ -211,9 +219,6 @@ static bool cmd_import_generate
 			
 			(void)sieve_binary_emit_unsigned(cgenv->sbin, var->index);
 			
-			if ( cmd->command == &cmd_import )
-				(void)sieve_code_source_line_emit(cgenv->sbin, stritem->source_line);
-
 			stritem = sieve_ast_strlist_next(stritem);
 		}
 	} else {
@@ -227,8 +232,8 @@ static bool cmd_import_generate
  * Code dump
  */
  
-static bool opc_import_dump
-(const struct sieve_operation *op,
+static bool opc_global_dump
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	unsigned int count, i, var_count;
@@ -238,10 +243,7 @@ static bool opc_import_dump
 	if ( !sieve_binary_read_unsigned(denv->sbin, address, &count) )
 		return FALSE;
 
-	if ( op == &import_operation )
-		sieve_code_dumpf(denv, "IMPORT (count: %u):", count);
-	else
-		sieve_code_dumpf(denv, "EXPORT (count: %u):", count);
+	sieve_code_dumpf(denv, "GLOBAL (count: %u):", count);
 
 	scope = ext_include_binary_get_global_scope(denv->sbin);
 	vars = sieve_variable_scope_get_variables(scope, &var_count);
@@ -256,17 +258,7 @@ static bool opc_import_dump
 			index >= var_count )
 			return FALSE;
 			
-		sieve_code_dumpf(denv, "GLOBAL VAR[%d]: '%s'", 
-			index, vars[index]->identifier); 
-		
-		if ( op == &import_operation ) {
-			sieve_code_descend(denv);
-
-			if ( !sieve_code_source_line_dump(denv, address) )
-				return FALSE;
-				
-			sieve_code_ascend(denv);
-		}
+		sieve_code_dumpf(denv, "VAR[%d]: '%s'", index, vars[index]->identifier); 
 	}
 	 
 	return TRUE;
@@ -276,8 +268,8 @@ static bool opc_import_dump
  * Execution
  */
  
-static int opc_import_execute
-(const struct sieve_operation *op,
+static int opc_global_execute
+(const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_variable_scope *scope;	
@@ -295,7 +287,7 @@ static int opc_import_execute
 	storage = ext_include_interpreter_get_global_variables(renv->interp);
 
 	for ( i = 0; i < count; i++ ) {
-		unsigned int index, source_line;
+		unsigned int index;
 		
 		if ( !sieve_binary_read_unsigned(renv->sbin, address, &index) ) {
 			sieve_runtime_trace_error(renv, "invalid global variable operand");
@@ -308,28 +300,8 @@ static int opc_import_execute
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 		
-		if ( op == &import_operation ) {
-			string_t *varval;
-			
-			if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
-				sieve_runtime_trace_error(renv, "invalid source line operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
-			
-			/* Verify variables initialization */
-			(void)sieve_variable_get(storage, index, &varval);
-			
-			if ( varval == NULL ) {
-				sieve_runtime_error(renv,
-					sieve_error_script_location(renv->script, source_line),
-					"include: imported variable '%s' not previously exported", 
-					vars[index]->identifier);
-				return SIEVE_EXEC_FAILURE;
-			}
-		}	else {
-			/* Make sure variable is initialized (export) */
-			(void)sieve_variable_get_modifiable(storage, index, NULL); 
-		}	
+		/* Make sure variable is initialized (export) */
+		(void)sieve_variable_get_modifiable(storage, index, NULL); 
 	}
 
 	return SIEVE_EXEC_OK;

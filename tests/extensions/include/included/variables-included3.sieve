@@ -1,8 +1,8 @@
 require "include";
 require "variables";
 
-import "result1";
-import "result2";
-export "result";
+global "result1";
+global "result2";
+global "result";
 
 set "result" "${result1} ${result2}";

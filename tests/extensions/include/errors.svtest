@@ -48,7 +48,7 @@ test "Circular - two intermittent" {
 }
 
 /*
- * Using import/export without variables required
+ * Using global without variables required
  */
 
 test "Variables inactive" {
@@ -70,25 +70,8 @@ test "Variables" {
 		test_fail "compile should have failed";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "4" {
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
 		test_fail "wrong number of errors reported";
 	}
 }
 
-/*
- * Runtime errors
- */
-
-test "Import runtime" {
-	if not test_script_compile "errors/import-runtime.sieve" {
-		test_fail "compile failed";
-	}
-
-	if test_script_run {
-		test_fail "execution should have failed";
-	}
-
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
-		test_fail "wrong number of errors reported";
-	}
-}

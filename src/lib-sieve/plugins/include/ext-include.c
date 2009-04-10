@@ -37,8 +37,7 @@
 static const struct sieve_operation *ext_include_operations[] = { 
 	&include_operation, 
 	&return_operation,
-	&import_operation,
-	&export_operation
+	&global_operation
 };
 
 /* 
@@ -77,6 +76,9 @@ static bool ext_include_validator_load(struct sieve_validator *validator)
 	/* Register new commands */
 	sieve_validator_register_command(validator, &cmd_include);
 	sieve_validator_register_command(validator, &cmd_return);
+	sieve_validator_register_command(validator, &cmd_global);
+
+	/* DEPRICATED */
 	sieve_validator_register_command(validator, &cmd_import);
 	sieve_validator_register_command(validator, &cmd_export);
 

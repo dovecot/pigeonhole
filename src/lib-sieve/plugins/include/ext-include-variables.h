@@ -16,7 +16,7 @@
  
 struct sieve_variable *ext_include_variable_import_global
 	(struct sieve_validator *valdtr, struct sieve_command_context *cmd, 
-		const char *variable, bool export);
+		const char *variable);
 
 /*
  * Binary symbol table

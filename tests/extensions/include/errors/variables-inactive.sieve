@@ -1,7 +1,7 @@
 require "include";
 require "fileinto";
 
-import "friep";
-export "frop";
+global "friep";
+global "frop";
 
 fileinto "Frop";

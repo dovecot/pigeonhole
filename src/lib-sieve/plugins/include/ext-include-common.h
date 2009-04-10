@@ -39,6 +39,9 @@ extern const struct sieve_binary_extension include_binary_ext;
 
 extern const struct sieve_command cmd_include;
 extern const struct sieve_command cmd_return;
+extern const struct sieve_command cmd_global;
+
+/* DEPRICATED */ 
 extern const struct sieve_command cmd_import;
 extern const struct sieve_command cmd_export;
 
@@ -49,14 +52,12 @@ extern const struct sieve_command cmd_export;
 enum ext_include_opcode {
 	EXT_INCLUDE_OPERATION_INCLUDE,
 	EXT_INCLUDE_OPERATION_RETURN,
-	EXT_INCLUDE_OPERATION_IMPORT,
-	EXT_INCLUDE_OPERATION_EXPORT
+	EXT_INCLUDE_OPERATION_GLOBAL
 };
  
 extern const struct sieve_operation include_operation;
 extern const struct sieve_operation return_operation;
-extern const struct sieve_operation import_operation;
-extern const struct sieve_operation export_operation;
+extern const struct sieve_operation global_operation;
 
 /* 
  * Script access 
@@ -72,7 +73,6 @@ const char *ext_include_get_script_directory
 /* AST Context */
 
 struct ext_include_ast_context {
-    struct sieve_variable_scope *import_vars;
     struct sieve_variable_scope *global_vars;
 
     ARRAY_DEFINE(included_scripts, struct sieve_script *);
