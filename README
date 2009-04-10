@@ -96,7 +96,7 @@ following list outlines the implementation status of each supported extension:
     regex: mostly full; but suboptimal and no UTF-8
     body: mostly full, but text body-transform implementation is simple
         and some issues make it still not completely RFC incompliant. 
-    include: mostly full; needs some more work (no external binaries)
+    include: almost full; new specification requires changes.
     vacation: mostly full; handling of utf-8 in headers is non-existant
     imap4flags: full (old imapflags supported for backwards compatibility)
     variables: mostly full; currently no support for future namespaces 

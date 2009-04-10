@@ -5,9 +5,9 @@
  * -----------------
  *
  * Authors: Stephan Bosch
- * Specification: draft-daboo-sieve-include-05
- * Implementation: full, but needs some more work 
- * Status: experimental, largely untested
+ * Specification: draft-ietf-sieve-include-01
+ * Implementation: almost full; :once modifier and global namespace are missing. 
+ * Status: experimental
  * 
  */
  
