@@ -47,10 +47,11 @@ struct ext_include_interpreter_context {
 	struct sieve_variable_storage *global_variables;
 
 	unsigned int nesting_level;
+
 	struct sieve_script *script;
-	unsigned int block_id;
+	const struct ext_include_script_info *script_info;
 	
-	unsigned int inc_block_id;
+	const struct ext_include_script_info *include;
 	bool returned;
 };
 
@@ -254,7 +255,7 @@ static struct ext_include_interpreter_context *
 	ext_include_interpreter_context_create
 (struct sieve_interpreter *interp, 
 	struct ext_include_interpreter_context *parent, 
-	struct sieve_script *script, unsigned int block_id)
+	struct sieve_script *script, const struct ext_include_script_info *sinfo)
 {	
 	struct ext_include_interpreter_context *ctx;
 
@@ -264,7 +265,7 @@ static struct ext_include_interpreter_context *
 	ctx->parent = parent;
 	ctx->interp = interp;
 	ctx->script = script;
-	ctx->block_id = block_id;
+	ctx->script_info = sinfo;
 
 	if ( parent == NULL ) {
 		ctx->nesting_level = 0;
@@ -287,10 +288,10 @@ static inline struct ext_include_interpreter_context *
 	ext_include_interpreter_context_init_child
 (struct sieve_interpreter *interp, 
 	struct ext_include_interpreter_context *parent, 
-	struct sieve_script *script, unsigned int block_id)
+	struct sieve_script *script, const struct ext_include_script_info *sinfo)
 {
 	struct ext_include_interpreter_context *ctx = 
-		ext_include_interpreter_context_create(interp, parent, script, block_id);
+		ext_include_interpreter_context_create(interp, parent, script, sinfo);
 		
 	sieve_interpreter_extension_register
 		(interp, &include_interpreter_extension, ctx);
@@ -311,7 +312,7 @@ void ext_include_interpreter_context_init
 		/* Initialize top context */
 		script = sieve_interpreter_script(interp);
 		ctx = ext_include_interpreter_context_create
-			(interp, NULL, script, SBIN_SYSBLOCK_MAIN_PROGRAM);
+			(interp, NULL, script, NULL);
 		
 		sieve_interpreter_extension_register
 			(interp, &include_interpreter_extension, (void *) ctx);			
@@ -452,13 +453,36 @@ bool ext_include_generate_include
  * Executing an included script during interpretation 
  */
 
+static int ext_include_runtime_check_circular
+(const struct sieve_runtime_env *renv, 
+	struct ext_include_interpreter_context *ctx,
+	const struct ext_include_script_info *include)
+{
+	struct ext_include_interpreter_context *pctx;
+	int result = SIEVE_EXEC_OK;
+
+	pctx = ctx;
+	while ( result > 0 && pctx != NULL ) {
+
+		if ( sieve_script_equals(include->script, pctx->script) ) {
+			sieve_runtime_trace_error(renv, 
+				"circular include for script: %s [%d]", 
+				sieve_script_name(include->script), include->block_id);
+			result = SIEVE_EXEC_BIN_CORRUPT;
+		}
+
+		pctx = pctx->parent;
+	}
+
+	return result;
+}
+
 bool ext_include_execute_include
 (const struct sieve_runtime_env *renv, unsigned int include_id, bool once)
 {
 	int result = TRUE;
 	struct ext_include_interpreter_context *ctx;
 	const struct ext_include_script_info *included;
-	unsigned int block_id;
 	struct ext_include_binary_context *binctx = 
 		ext_include_binary_get_context(renv->sbin);
 
@@ -470,11 +494,10 @@ bool ext_include_execute_include
 	}
 
 	ctx = ext_include_get_interpreter_context(renv->interp);
-	block_id = included->block_id;
-
+	
 	sieve_runtime_trace(renv, 
 		"INCLUDE command (script: %s, id: %d block: %d) START::", 
-		sieve_script_name(included->script), include_id, block_id);
+		sieve_script_name(included->script), include_id, included->block_id);
 
 	if ( ctx->parent == NULL ) {
 		struct ext_include_interpreter_context *curctx = NULL;
@@ -487,9 +510,10 @@ bool ext_include_execute_include
 		/* We are the top-level interpreter instance */	
 
 		/* Activate block for included script */
-		if ( !sieve_binary_block_set_active(renv->sbin, block_id, &this_block_id) ) 
-			{			
-			sieve_runtime_trace_error(renv, "invalid block id: %d", block_id);
+		if ( !sieve_binary_block_set_active
+			(renv->sbin, included->block_id, &this_block_id) ) {			
+			sieve_runtime_trace_error(renv, "invalid block id: %d", 
+				included->block_id);
 			result = SIEVE_EXEC_BIN_CORRUPT;
 		}
 
@@ -501,7 +525,7 @@ bool ext_include_execute_include
 
 			if ( subinterp != NULL ) {			
 				curctx = ext_include_interpreter_context_init_child
-					(subinterp, ctx, NULL, block_id);
+					(subinterp, ctx, included->script, included);
 
 				/* Activate and start the top-level included script */
 				result = ( sieve_interpreter_start
@@ -524,7 +548,7 @@ bool ext_include_execute_include
 					/* Sub-interpreter ended or executed return */
 					
 					sieve_runtime_trace(renv, "INCLUDE command (block: %d) END ::", 
-						curctx->block_id);
+						curctx->script_info->block_id);
 
 					/* Ascend interpreter stack */
 					curctx = curctx->parent;
@@ -535,39 +559,30 @@ bool ext_include_execute_include
 					
 					/* Reactivate parent */
 					(void) sieve_binary_block_set_active
-						(renv->sbin, curctx->block_id, NULL);
+						(renv->sbin, curctx->script_info->block_id, NULL);
 					subinterp = curctx->interp; 	
 					
 					/* Continue parent */
-					curctx->inc_block_id = 0;
+					curctx->include = NULL;
 					curctx->returned = FALSE;
 
 					result = ( sieve_interpreter_continue(subinterp, &interrupted) == 1 );
 				} else {
-					if ( curctx->inc_block_id >= SBIN_SYSBLOCK_LAST ) {
-						struct ext_include_interpreter_context *pctx;
+					if ( curctx->include != NULL ) {
 
 						/* Sub-include requested */
 				
 						/* Check circular include during interpretation as well. 
 						 * Let's not trust binaries.
 						 */
-						pctx = curctx;
-						while ( result > 0 && pctx != NULL ) {
-							if ( curctx->inc_block_id == pctx->block_id ) {
-								sieve_runtime_trace_error(renv, 
-									"circular include for block id: %d", 
-									curctx->inc_block_id);
-								result = SIEVE_EXEC_BIN_CORRUPT;
-							}
-							pctx = pctx->parent;
-						}
+						result = ext_include_runtime_check_circular
+							(renv, curctx, curctx->include);
 													
 						/* Activate the sub-include's block */
 						if ( result > 0 && !sieve_binary_block_set_active
-							(renv->sbin, curctx->inc_block_id, NULL) ) {
+							(renv->sbin, curctx->include->block_id, NULL) ) {
 							sieve_runtime_trace_error(renv, "invalid block id: %d", 
-								curctx->inc_block_id);
+								curctx->include->block_id);
 							result = SIEVE_EXEC_BIN_CORRUPT;
 						}
 						
@@ -577,10 +592,10 @@ bool ext_include_execute_include
 
 							if ( subinterp != NULL ) {
 								curctx = ext_include_interpreter_context_init_child
-									(subinterp, curctx, NULL, curctx->inc_block_id);
+									(subinterp, curctx, curctx->include->script, curctx->include);
 
 								/* Start the sub-include's interpreter */
-								curctx->inc_block_id = 0;
+								curctx->include = NULL;
 								curctx->returned = FALSE;
 								result = ( sieve_interpreter_start
 									(subinterp, renv->msgdata, renv->scriptenv, renv->msgctx,
@@ -600,7 +615,7 @@ bool ext_include_execute_include
 			}
 		} else 
 			sieve_runtime_trace(renv, "INCLUDE command (block: %d) END ::", 
-				curctx->block_id);
+				curctx->script_info->block_id);
 
 		/* Free any sub-interpreters that might still be active */
 		while ( curctx != NULL && curctx->parent != NULL ) {
@@ -618,7 +633,7 @@ bool ext_include_execute_include
 		(void) sieve_binary_block_set_active(renv->sbin, this_block_id, NULL); 	
 	} else {
 		/* We are an included script already, defer inclusion to main interpreter */
-		ctx->inc_block_id = block_id;
+		ctx->include = included;
 		sieve_interpreter_interrupt(renv->interp);	
 	}
 	
