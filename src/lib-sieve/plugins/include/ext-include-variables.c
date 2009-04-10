@@ -69,11 +69,6 @@ bool ext_include_variables_save
 			sieve_variable_scope_get_variables(global_vars, &size);
 
 		for ( i = 0; i < size; i++ ) {
-			struct ext_include_variable *varctx =
-				(struct ext_include_variable *) vars[i]->context;
-
-			i_assert( varctx != NULL );
-			
 			sieve_binary_emit_cstring(sbin, vars[i]->identifier);
 		}
 	}
