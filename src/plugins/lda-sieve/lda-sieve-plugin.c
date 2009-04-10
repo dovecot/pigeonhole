@@ -338,8 +338,8 @@ static int lda_sieve_multiscript_execute
 	const char *const *scripts = srctx->script_files;
 	unsigned int count = srctx->script_count;
 	struct sieve_multiscript *mscript;
-	struct sieve_error_handler *ehandler;
-	const char *last_script;
+	struct sieve_error_handler *ehandler = srctx->master_ehandler;
+	const char *last_script = NULL;
 	bool user_script = FALSE;
 	unsigned int i;
 	int ret = 1; 
@@ -395,7 +395,7 @@ static int lda_sieve_multiscript_execute
 				/* Execute again */
 
 				if ( user_script )
-		            sieve_error_handler_copy_masterlog(ehandler, TRUE);
+					sieve_error_handler_copy_masterlog(ehandler, TRUE);
 
 				more = sieve_multiscript_run(mscript, sbin, ehandler, final);
 
