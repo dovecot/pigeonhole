@@ -6,7 +6,7 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-include-01
- * Implementation: almost full; :once modifier and global namespace are missing. 
+ * Implementation: almost full; global namespace is missing. 
  * Status: experimental
  * 
  */

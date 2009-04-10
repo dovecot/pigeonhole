@@ -277,7 +277,8 @@ static bool cmd_include_generate
 	 * This yields the id of the binary block containing the compiled byte code.  
 	 */
 	if ( !ext_include_generate_include
-		(cgenv, cmd, ctx_data->location, ctx_data->script, &included) )
+		(cgenv, cmd, ctx_data->location, ctx_data->script, &included,
+			ctx_data->include_once) )
  		return FALSE;
  		
  	(void)sieve_operation_emit_code(cgenv->sbin, &include_operation);

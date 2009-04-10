@@ -18,3 +18,7 @@ test "Included Once" {
 		test_fail "unexpected result value: ${result}";
 	}
 }
+
+test "Included Once recursive" {
+	include "once-3";
+}
