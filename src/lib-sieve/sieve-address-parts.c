@@ -242,14 +242,15 @@ int sieve_address_match
 				struct sieve_address address;
 				const char *part;
 			
-				address.local_part = addr->mailbox;
-				address.domain = addr->domain;
+				if ( addr->domain != NULL ) {
+					address.local_part = addr->mailbox;
+					address.domain = addr->domain;
+	
+					part = addrp->extract_from(&address);
 
-				part = addrp->extract_from(&address);
-			
-				if ( part != NULL )
-					result = sieve_match_value(mctx, part, strlen(part));
-
+					if ( part != NULL )
+						result = sieve_match_value(mctx, part, strlen(part));
+				}
 				addr = addr->next;
 			}
 		}
@@ -340,8 +341,8 @@ bool sieve_addrmatch_default_get_optionals
 static const char *addrp_all_extract_from
 	(const struct sieve_address *address)
 {
-	const char *local_part = address->local_part == NULL ? "" : address->local_part;
-	const char *domain = address->domain == NULL ? "" : address->domain;
+	const char *local_part = address->local_part;
+	const char *domain = address->domain;
 
 	return t_strconcat(local_part, "@", domain, NULL);
 }

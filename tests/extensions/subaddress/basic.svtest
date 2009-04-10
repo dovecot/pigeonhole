@@ -14,7 +14,7 @@ Test!
 test_set "envelope.to" "friep+frop@dovecot.org";
 test_set "envelope.from" "list+request@lists.dovecot.org";
 
-test "USER-message-from" {
+test "Address from :user" {
 	if not address :is :user "from" "stephan" {
 		test_fail "wrong user part extracted";
 	}
@@ -24,7 +24,7 @@ test "USER-message-from" {
 	}
 }
 
-test "DETAIL-message-from" {
+test "Address from :detail" {
 	if not address :is :detail "from" "sieve" {
 		test_fail "wrong user part extracted";
 	}
@@ -34,7 +34,7 @@ test "DETAIL-message-from" {
 	}
 }
 
-test "USER-message-to" {
+test "Address to :user" {
 	if not address :contains :user "to" "est" {
 		test_fail "wrong user part extracted";
 	}
@@ -44,7 +44,7 @@ test "USER-message-to" {
 	}
 }
 
-test "DETAIL-message-to" {
+test "Address to :detail" {
 	if not address :contains :detail "to" "fai" {
 		test_fail "wrong user part extracted";
 	}
@@ -55,7 +55,7 @@ test "DETAIL-message-to" {
 }
 
 
-test "ENVELOPE-to" {
+test "Envelope :user" {
     if not envelope :is :user "to" "friep" {
         test_fail "wrong user part extracted 1";
     }
@@ -69,7 +69,7 @@ test "ENVELOPE-to" {
     }
 }
 
-test "ENVELOPE-from" {
+test "Envelope :detail" {
     if not envelope :comparator "i;ascii-casemap" :contains :detail "from" "QUES" {
         test_fail "wrong user part extracted";
     }
@@ -77,4 +77,23 @@ test "ENVELOPE-from" {
     if envelope :comparator "i;ascii-casemap" :contains :detail "from" "LIS" {
         test_fail "address test failed";
     }
+}
+
+test_set "message" text:
+From: frop@examples.com
+To: undisclosed-recipients:;
+Subject: subaddress test
+
+Test!
+.
+;
+
+test "Undisclosed-recipients" {
+	if address :detail :contains "to" "undisclosed-recipients" {
+		test_fail ":detail matched group name";
+	}
+
+	if address :user :contains "to" "undisclosed-recipients" {
+		test_fail ":user matched group name";
+	}
 }

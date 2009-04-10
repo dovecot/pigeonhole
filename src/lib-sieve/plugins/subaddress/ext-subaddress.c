@@ -119,8 +119,6 @@ static const char *subaddress_user_extract_from
 {
 	const char *sep;
 
-	if ( address->local_part == NULL ) return NULL;
-
 	sep = strstr(address->local_part, sieve_subaddress_sep);
 	
 	if ( sep == NULL ) return address->local_part;
@@ -132,8 +130,6 @@ static const char *subaddress_detail_extract_from
 	(const struct sieve_address *address)
 {
 	const char *sep;
-
-	if ( address->local_part == NULL ) return NULL;
 
 	if ( (sep=strstr(address->local_part, sieve_subaddress_sep)) == NULL )
 		return NULL; 

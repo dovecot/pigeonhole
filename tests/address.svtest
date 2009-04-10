@@ -59,6 +59,29 @@ test "Invalid address list" {
 }
 
 /*
+ * Undisclosed recipients
+ */
+
+test_set "message" text:
+From: stephan@
+To: undisclosed-recipients:;
+Subject: Invalid addresses
+
+Test.
+.
+;
+
+test "Undisclosed recipients" {
+    if address :is :domain "to" "undisclosed-recipients:;" {
+        test_fail ":domain matched group name";
+    }
+
+    if address :is :localpart "to" "undisclosed-recipients:;" {
+        test_fail ":localpart matched group name";
+    }
+}
+
+/*
  * Strange
  */
 
@@ -84,3 +107,5 @@ test "Questionable address" {
 		test_fail "message domain not recognized";
 	}
 }
+
+
