@@ -117,34 +117,34 @@ static const struct sieve_ast_extension include_ast_extension = {
 struct ext_include_ast_context *ext_include_create_ast_context
 (struct sieve_ast *ast, struct sieve_ast *parent)
 {
-    struct ext_include_ast_context *actx;
+	struct ext_include_ast_context *actx;
 
-    pool_t pool = sieve_ast_pool(ast);
-    actx = p_new(pool, struct ext_include_ast_context, 1);
+	pool_t pool = sieve_ast_pool(ast);
+	actx = p_new(pool, struct ext_include_ast_context, 1);
 	p_array_init(&actx->included_scripts, pool, 32);
 
-    if ( parent != NULL ) {
-        struct ext_include_ast_context *parent_ctx =
-            (struct ext_include_ast_context *)
-            sieve_ast_extension_get_context(parent, &include_extension);
-        actx->global_vars = parent_ctx->global_vars;
+	if ( parent != NULL ) {
+		struct ext_include_ast_context *parent_ctx =
+			(struct ext_include_ast_context *)
+				sieve_ast_extension_get_context(parent, &include_extension);
+		actx->global_vars = parent_ctx->global_vars;
 
 		i_assert( actx->global_vars != NULL );
 
-        sieve_variable_scope_ref(actx->global_vars);
+		sieve_variable_scope_ref(actx->global_vars);
 	} else
 		actx->global_vars = sieve_variable_scope_create(&include_extension);			
 
 	sieve_ast_extension_register(ast, &include_ast_extension, (void *) actx);
 
-    return actx;
+	return actx;
 }
 
 struct ext_include_ast_context *ext_include_get_ast_context
 (struct sieve_ast *ast)
 {
 	struct ext_include_ast_context *actx = (struct ext_include_ast_context *)
-        sieve_ast_extension_get_context(ast, &include_extension);
+		sieve_ast_extension_get_context(ast, &include_extension);
 
 	if ( actx != NULL ) return actx;
 
@@ -241,9 +241,9 @@ static void ext_include_runtime_init
 }
 
 static struct sieve_interpreter_extension include_interpreter_extension = {
-    &include_extension,
-    ext_include_runtime_init,
-    NULL,
+	&include_extension,
+	ext_include_runtime_init,
+	NULL,
 };
 
 /* 
