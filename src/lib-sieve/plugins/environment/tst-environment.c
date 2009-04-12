@@ -200,18 +200,21 @@ static int tst_environment_operation_execute
 
 	env_item = ext_environment_item_get_value(str_c(name), renv->scriptenv);
 
-	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
+	if ( env_item != NULL ) {
+		mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
 
-	if ( (mret=sieve_match_value(mctx, env_item, strlen(env_item))) < 0 ) {
-		result = FALSE;
-	} else {
-		matched = ( mret > 0 );				
+		if ( (mret=sieve_match_value(mctx, strlen(env_item) == 0 ? NULL : env_item, 
+			strlen(env_item))) < 0 ) {
+			result = FALSE;
+		} else {
+			matched = ( mret > 0 );				
+		}
+
+		if ( (mret=sieve_match_end(mctx)) < 0 )
+			result = FALSE;
+		else
+			matched = ( mret > 0 || matched );
 	}
-
-	if ( (mret=sieve_match_end(mctx)) < 0 )
-		result = FALSE;
-	else
-		matched = ( mret > 0 || matched ); 	
 	
 	if ( result ) {
 		sieve_interpreter_set_test_result(renv->interp, matched);
