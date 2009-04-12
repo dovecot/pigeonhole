@@ -98,10 +98,15 @@ const struct sieve_environment_item domain_env_item = {
  *   executing.
  */
 
+const char *envit_host_get_value(const struct sieve_script_env *senv)
+{
+	return senv->hostname;
+}
+
 const struct sieve_environment_item host_env_item = {
 	"host",
 	NULL,
-	NULL,
+	envit_host_get_value,
 };
 
 /* "location":

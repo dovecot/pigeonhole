@@ -1,6 +1,8 @@
 #ifndef __SIEVE_EXT_ENVIRONMENT_H
 #define __SIEVE_EXT_ENVIRONMENT_H
 
+#include "sieve-common.h"
+
 struct sieve_environment_item {
 	const char *name;
 	

@@ -19,3 +19,8 @@ test "Name" {
 	}
 }
 
+test "Host" {
+	if not environment "host" "testsuite.example.com" {
+		test_fail "wrong testsuite hostname";
+	}
+}
