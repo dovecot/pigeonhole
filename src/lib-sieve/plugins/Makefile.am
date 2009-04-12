@@ -9,5 +9,6 @@ SUBDIRS = \
 	include \
 	body \
 	variables \
-	enotify
+	enotify \
+	environment
 

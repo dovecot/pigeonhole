@@ -79,6 +79,7 @@ extern const struct sieve_extension include_extension;
 extern const struct sieve_extension body_extension;
 extern const struct sieve_extension variables_extension;
 extern const struct sieve_extension enotify_extension;
+extern const struct sieve_extension environment_extension;
 
 /*
  * Extensions under development
@@ -108,7 +109,7 @@ const struct sieve_extension *sieve_core_extensions[] = {
 	&comparator_i_ascii_numeric_extension, 
 	&relational_extension, &regex_extension, &imap4flags_extension,
 	&copy_extension, &include_extension, &body_extension,
-	&variables_extension, &enotify_extension
+	&variables_extension, &enotify_extension, &environment_extension
 };
 
 const unsigned int sieve_core_extensions_count =
@@ -197,20 +198,21 @@ static bool _sieve_extension_load
 static struct sieve_extension_registration *_sieve_extension_register
 (const struct sieve_extension *extension, bool load)
 {
-	struct sieve_extension_registration *ereg = (struct sieve_extension_registration *)
-        hash_table_lookup(extension_index, extension->name);
+	struct sieve_extension_registration *ereg = 
+		(struct sieve_extension_registration *)	
+		hash_table_lookup(extension_index, extension->name);
 
 	/* Register extension if it is not registered already */
-    if ( ereg == NULL ) {
+	if ( ereg == NULL ) {
 		int ext_id = array_count(&extensions);
 
-        /* Add extension to the registry */
+		/* Add extension to the registry */
 
-        ereg = array_append_space(&extensions);
-        ereg->id = ext_id;
+		ereg = array_append_space(&extensions);
+		ereg->id = ext_id;
 
-        hash_table_insert(extension_index, (void *) extension->name, (void *) ereg);
-    }
+		hash_table_insert(extension_index, (void *) extension->name, (void *) ereg);
+	}
 
 	/* Enable extension */
 	if ( extension->_id != NULL && load ) {

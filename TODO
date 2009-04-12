@@ -38,7 +38,6 @@ Next (in order of descending priority/precedence):
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
 * Implement namespace support for variables extension (to complete include 
   extension)
-* Implement environment extension
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
 * Implement mechanism for implicitly including an account's aliases in the vacation

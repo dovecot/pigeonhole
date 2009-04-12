@@ -1,0 +1,14 @@
+#ifndef __SIEVE_EXT_ENVIRONMENT_H
+#define __SIEVE_EXT_ENVIRONMENT_H
+
+struct sieve_environment_item {
+	const char *name;
+	
+	const char *value;
+	const char *(*get_value)(const struct sieve_script_env *senv);
+};
+
+void sieve_ext_environment_item_register
+	(const struct sieve_environment_item *item);
+
+#endif

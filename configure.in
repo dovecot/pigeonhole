@@ -113,6 +113,7 @@ src/lib-sieve/plugins/include/Makefile
 src/lib-sieve/plugins/body/Makefile
 src/lib-sieve/plugins/variables/Makefile
 src/lib-sieve/plugins/enotify/Makefile
+src/lib-sieve/plugins/environment/Makefile
 src/lib-sieve-tool/Makefile
 src/plugins/Makefile
 src/plugins/lda-sieve/Makefile
