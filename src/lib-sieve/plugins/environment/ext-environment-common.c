@@ -98,7 +98,7 @@ const struct sieve_environment_item domain_env_item = {
  *   executing.
  */
 
-const char *envit_host_get_value(const struct sieve_script_env *senv)
+static const char *envit_host_get_value(const struct sieve_script_env *senv)
 {
 	return senv->hostname != NULL ? senv->hostname : "";
 }
