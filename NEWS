@@ -1,6 +1,27 @@
+v0.1.5 --2009  Stephan Bosch <stephan@rename-it.nl>
+	* Ported the implementation of the Sieve include extension to the latest 
+	  draft. This means that the import and export commands are replaced by a new 
+	  command called global. The import and export commands are now DEPRICATED and
+	  are mere aliases for the global command. The new specification also adds the
+	  :once modifier to the include command. The also newly specified global.* 
+	  variable namespace is not implemented yet as support for variable namespaces
+	  is currently missing.
+	* Did a major rework of the multiscript support for better error handling and
+	  made sure that persistent global scripts (sieve_before/sieve_after) are
+	  always executed, even when the user does not have a script of his own and 
+	  a global default is missing. 
+	+ Provided basic support for the environment extension. Currenly, the name,
+	  version and host items are useful. Others are pending.
+	- Fixed bug in includes at levels deeper than one.
+	- Fixed bug in address matching that was caused by the failure to handle group 
+	  specifications. In dovecot, these are marked by address items with NULL 
+	  elements, which causes a segfault if not considered. The group 'undisclosed-
+	  recipients:;' in particular triggered this bug. Bug reported by Bernhard
+	  Schmidt. 	  
+
 v0.1.4 21-3-2009  Stephan Bosch <stephan@rename-it.nl>
-	* Started work on the sieve-filter tool. With this command line tool it will be 
-	  possible to (re-)apply Sieve filters on a mail folder. It is currently
+	* Started work on the sieve-filter tool. With this command line tool it will 
+	  be possible to (re-)apply Sieve filters on a mail folder. It is currently
 	  undocumented and far from functional.
 	+ Added a custom debug extension that provides the possibility to print debug 
 	  messages from scripts executed by the Sieve tools.
@@ -8,8 +29,8 @@ v0.1.4 21-3-2009  Stephan Bosch <stephan@rename-it.nl>
 	  P. Christian.
 	- Fixed MAC OSX compile problem. Turns out the extern modifier was missing at
 	  multiple places. Bug reported by Edgar Fuss.
-	- Fixed Solaris compile problem: removed unecessary and unportable linker flags 
-	  that caused compile to fail. Bug reported by Andrés Yacopino.
+	- Fixed Solaris compile problem: removed unecessary and unportable linker
+	  flags that caused compile to fail. Bug reported by Andrés Yacopino.
 
 v0.1.3 12-2-2009  Stephan Bosch <stephan@rename-it.nl>
 
@@ -31,8 +52,8 @@ v0.1.3 12-2-2009  Stephan Bosch <stephan@rename-it.nl>
 	  address tests.
 	+ Vacation extension now properly generates a References header for the 
 	  response message.
-	+ Added testing of basic result execution to the test suite. Also added support
-	  for testing the outgoing messages produced by the Sieve interpreter. 
+	+ Added testing of basic result execution to the test suite. Also added 
+	  supportfor testing the outgoing messages produced by the Sieve interpreter. 
 	+ Included execution of the actual result in the sieve-test command line tool.
 	  The undocumented sieve-exec tool that existed for this is now removed as 
 	  planned.
