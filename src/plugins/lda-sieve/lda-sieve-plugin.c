@@ -583,7 +583,12 @@ static int lda_sieve_deliver_mail
 			if ( lda_sieve_debug )
 				sieve_sys_info("no scripts to execute: reverting to default delivery.");
 
-			ret = 0;
+			/* No error, but no delivery by this plugin either. A return value of <= 0 for a 
+			 * deliver plugin is is considered a failure. In deliver itself, saved_mail and 
+			 * tried_default_save remain unset, meaning that deliver will then attempt the 
+			 * default delivery. We return 0 to signify the lack of a real error. 
+			 */
+			ret = 0; 
 		} else {
 			/* Run the script(s) */
 				
@@ -594,7 +599,7 @@ static int lda_sieve_deliver_mail
 
 	} T_END;
 
-	return ( ret >= 0 ? 1 : -1 ); 
+	return ret; 
 }
 
 /*
