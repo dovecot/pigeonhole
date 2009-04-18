@@ -181,7 +181,7 @@ test "Require errors (FIXME: count only)" {
 		test_fail "compile should have failed.";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "12" {
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "15" {
 		test_fail "wrong number of errors reported";
 	}	
 }

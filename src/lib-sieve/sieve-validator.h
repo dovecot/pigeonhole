@@ -128,8 +128,8 @@ struct sieve_validator_extension {
 };
 
 const struct sieve_extension *sieve_validator_extension_load
-	(struct sieve_validator *validator, struct sieve_ast_argument *ext_arg, 
-		string_t *ext_name); 
+	(struct sieve_validator *validator, struct sieve_command_context *cmd,
+		struct sieve_ast_argument *ext_arg, string_t *ext_name); 
 
 void sieve_validator_extension_register
 	(struct sieve_validator *valdtr, 

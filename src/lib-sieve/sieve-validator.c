@@ -511,8 +511,8 @@ static const struct sieve_argument *sieve_validator_find_tag_by_identifier
  */
 
 const struct sieve_extension *sieve_validator_extension_load
-(struct sieve_validator *valdtr, struct sieve_ast_argument *ext_arg, 
-	string_t *ext_name) 
+(struct sieve_validator *valdtr, struct sieve_command_context *cmd,
+	struct sieve_ast_argument *ext_arg, string_t *ext_name) 
 {
 	int ext_id;
 	struct sieve_validator_extension_reg *reg;
@@ -521,7 +521,8 @@ const struct sieve_extension *sieve_validator_extension_load
 
 	if ( str_len(ext_name) > 128 ) {
 		sieve_argument_validate_error(valdtr, ext_arg, 
-			"unsupported sieve capability '%s' (name is impossibly long)", 
+			"%s %s: unknown Sieve capability '%s' (name is impossibly long)",
+			cmd->command->identifier, sieve_command_type_name(cmd->command),
 			str_sanitize(name, 128));
 		return NULL;
 	}
@@ -529,8 +530,32 @@ const struct sieve_extension *sieve_validator_extension_load
 	ext = sieve_extension_get_by_name(name); 
 	
 	if ( ext == NULL ) {
-		sieve_argument_validate_error(valdtr, ext_arg, 
-			"unsupported sieve capability '%s'", name);
+		unsigned int i;
+		bool core_test = FALSE;
+		bool core_command = FALSE;
+
+		for ( i = 0; !core_command && i < sieve_core_commands_count; i++ ) {
+			if ( strcasecmp(sieve_core_commands[i]->identifier, name) == 0 )
+				core_command = TRUE;
+		}
+
+		for ( i = 0; !core_test && i < sieve_core_tests_count; i++ ) {
+			if ( strcasecmp(sieve_core_tests[i]->identifier, name) == 0 )
+				core_test = TRUE;
+		}
+
+		if ( core_test || core_command ) {
+			sieve_argument_validate_error(valdtr, ext_arg,
+                "%s %s: '%s' is not known as a Sieve capability, "
+				"but it is known as a Sieve %s that is always available",
+                cmd->command->identifier, sieve_command_type_name(cmd->command),
+                name, ( core_test ? "test" : "command" ));
+		} else {
+			sieve_argument_validate_error(valdtr, ext_arg,
+				"%s %s: unknown Sieve capability '%s'", 
+				cmd->command->identifier, sieve_command_type_name(cmd->command),
+				name);
+		}
 		return NULL;
 	}
 	
@@ -538,7 +563,9 @@ const struct sieve_extension *sieve_validator_extension_load
 
 	if ( ext->validator_load != NULL && !ext->validator_load(valdtr) ) {
 		sieve_argument_validate_error(valdtr, ext_arg, 
-			"failed to load sieve capability '%s'", ext->name);
+			"%s %s: failed to load Sieve capability '%s'",
+			cmd->command->identifier, sieve_command_type_name(cmd->command),
+			ext->name);
 		return NULL;
 	}
 
