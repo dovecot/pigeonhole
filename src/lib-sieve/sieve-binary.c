@@ -28,7 +28,7 @@
  */
  
 #define SIEVE_BINARY_VERSION_MAJOR     0
-#define SIEVE_BINARY_VERSION_MINOR     0
+#define SIEVE_BINARY_VERSION_MINOR     1
 
 /*
  * Macros
