@@ -74,8 +74,11 @@ const char *ext_include_get_script_directory
 	case EXT_INCLUDE_LOCATION_PERSONAL:
 		sieve_dir = getenv("SIEVE_DIR");
 
-		if (sieve_dir == NULL)
-			sieve_dir = getenv("HOME");
+		if (sieve_dir == NULL) {
+			const char *home = getenv("HOME");
+			
+			sieve_dir = home_expand_tilde("~/sieve", home);	
+		}
 		break;
    	case EXT_INCLUDE_LOCATION_GLOBAL:
 		sieve_dir = getenv("SIEVE_GLOBAL_DIR");
