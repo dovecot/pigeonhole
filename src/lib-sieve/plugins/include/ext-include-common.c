@@ -72,10 +72,10 @@ const char *ext_include_get_script_directory
 
 	switch ( location ) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
-        sieve_dir = getenv("SIEVE_DIR");
+		sieve_dir = getenv("SIEVE_DIR");
 
-        if (sieve_dir == NULL)
-            sieve_dir = getenv("HOME");
+		if (sieve_dir == NULL)
+			sieve_dir = getenv("HOME");
 		break;
    	case EXT_INCLUDE_LOCATION_GLOBAL:
 		sieve_dir = getenv("SIEVE_GLOBAL_DIR");
@@ -107,9 +107,9 @@ static void ext_include_ast_free
 
 	/* Unreference included scripts */
 	scripts = array_get_modifiable(&actx->included_scripts, &count);
-    for ( i = 0; i < count; i++ ) {
+	for ( i = 0; i < count; i++ ) {
 		sieve_script_unref(&scripts[i]);
-    }	
+	}	
 
 	/* Unreference variable scopes */
 	if ( actx->global_vars != NULL )
