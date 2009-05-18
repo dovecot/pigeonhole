@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "array.h"
 #include "str-sanitize.h"
+#include "home-expand.h"
 
 #include "sieve-common.h"
 #include "sieve-error.h"
