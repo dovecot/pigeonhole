@@ -32,31 +32,38 @@ static void sig_die(const siginfo_t *si, void *context ATTR_UNUSED)
 	/* warn about being killed because of some signal, except SIGINT (^C)
 	 * which is too common at least while testing :) 
 	 */
-        if (si->si_signo != SIGINT) {
-		/* FIMXE: strange error for a command line tool */
+	if (si->si_signo != SIGINT) {
+		/* FIXME: strange error for a command line tool */
 		i_warning("Killed with signal %d (by pid=%s uid=%s code=%s)",
  			si->si_signo, dec2str(si->si_pid),
 			dec2str(si->si_uid),
 			lib_signal_code_to_str(si->si_signo, si->si_code));
-        }
-        io_loop_stop(current_ioloop);
+	}
+	io_loop_stop(current_ioloop);
 }
 
 /*
  * Initialization
  */
 
-void sieve_tool_init(void) 
+/* HACK */
+static bool _init_lib = FALSE;
+
+void sieve_tool_init(bool init_lib) 
 {
-	lib_init();
+	_init_lib = init_lib;
 
-	ioloop = io_loop_create();
+	if ( _init_lib ) {
+		lib_init();
 
-	lib_signals_init();
-	lib_signals_set_handler(SIGINT, TRUE, sig_die, NULL);
-	lib_signals_set_handler(SIGTERM, TRUE, sig_die, NULL);
-	lib_signals_ignore(SIGPIPE, TRUE);
-	lib_signals_ignore(SIGALRM, FALSE);
+		ioloop = io_loop_create();
+
+		lib_signals_init();
+		lib_signals_set_handler(SIGINT, TRUE, sig_die, NULL);
+		lib_signals_set_handler(SIGTERM, TRUE, sig_die, NULL);
+		lib_signals_ignore(SIGPIPE, TRUE);
+		lib_signals_ignore(SIGALRM, FALSE);
+	}
 
 	if ( !sieve_init() ) 
 		i_fatal("failed to initialize sieve implementation\n");
@@ -65,12 +72,16 @@ void sieve_tool_init(void)
 void sieve_tool_deinit(void)
 {
 	sieve_deinit();
-	
-	lib_signals_deinit();
 
-	io_loop_destroy(&ioloop);
-	lib_deinit();
+	if ( _init_lib ) {
+		lib_signals_deinit();
+	
+		io_loop_destroy(&ioloop);
+
+		lib_deinit();
+	}
 }
+
 
 /*
  * Commonly needed functionality

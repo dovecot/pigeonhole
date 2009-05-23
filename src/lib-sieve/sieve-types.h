@@ -50,18 +50,24 @@ struct sieve_script_env {
 	const char *hostname;
 	const char *postmaster_address;
 		
+	/* External context data */
+
+	void *script_context;
+
 	/* Callbacks */
 	
 	/* Interface for sending mail */
 	void *(*smtp_open)
-		(const char *destination, const char *return_path, FILE **file_r);
-	bool (*smtp_close)(void *handle);
+		(void *script_ctx, const char *destination, 
+			const char *return_path, FILE **file_r);
+	bool (*smtp_close)(void *script_ctx, void *handle);
 	
 	/* Interface for marking and checking duplicates */
 	int (*duplicate_check)
 		(const void *id, size_t id_size, const char *user);
 	void (*duplicate_mark)
-		(const void *id, size_t id_size, const char *user, time_t time);
+		(const void *id, size_t id_size, const char *user, 
+			time_t time);
 	
 	/* Execution status record */	
 	struct sieve_exec_status *exec_status;

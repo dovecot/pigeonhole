@@ -13,8 +13,10 @@ void testsuite_smtp_reset(void);
  */
  
 void *testsuite_smtp_open
-	(const char *destination, const char *return_path, FILE **file_r);
-bool testsuite_smtp_close(void *handle);
+	(void *script_ctx, const char *destination, const char *return_path, 
+		FILE **file_r);
+bool testsuite_smtp_close
+	(void *script_ctx, void *handle);
 
 /*
  * Access

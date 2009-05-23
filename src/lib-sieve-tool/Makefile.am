@@ -5,6 +5,8 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir) \
 	-I$(dovecot_incdir)/src/lib \
 	-I$(dovecot_incdir)/src/lib-mail \
+	-I$(dovecot_incdir)/src/lib-master \
+	-I$(dovecot_incdir)/src/lib-settings \
 	-I$(dovecot_incdir)/src/lib-index \
 	-I$(dovecot_incdir)/src/lib-storage \
 	-I$(dovecot_incdir)/src/lib-storage/index \

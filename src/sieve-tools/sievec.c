@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 	bool dump = FALSE;
 	const char *scriptfile, *outfile, *extensions;
 		
-	sieve_tool_init();	
+	sieve_tool_init(TRUE);	
 		
 	scriptfile = outfile = extensions = NULL;
 	for (i = 1; i < argc; i++) {

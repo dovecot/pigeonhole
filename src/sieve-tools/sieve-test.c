@@ -2,11 +2,17 @@
  */
 
 #include "lib.h"
+#include "lib-signals.h"
+#include "ioloop.h"
+#include "env-util.h"
+#include "str.h"
 #include "ostream.h"
 #include "array.h"
 #include "mail-namespace.h"
 #include "mail-storage.h"
-#include "env-util.h"
+#include "master-service.h"
+#include "master-service-settings.h"
+#include "mail-storage-service.h"
 
 #include "sieve.h"
 #include "sieve-binary.h"
@@ -22,6 +28,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <sysexits.h>
+
 
 /* 
  * Configuration
@@ -53,7 +61,8 @@ static void print_help(void)
  * Dummy SMTP session
  */
 
-static void *sieve_smtp_open(const char *destination,
+static void *sieve_smtp_open
+(void *script_ctx ATTR_UNUSED, const char *destination,
 	const char *return_path, FILE **file_r)
 {
 	i_info("sending message from <%s> to <%s>:",
@@ -66,7 +75,8 @@ static void *sieve_smtp_open(const char *destination,
 	return NULL;	
 }
 
-static bool sieve_smtp_close(void *handle ATTR_UNUSED)
+static bool sieve_smtp_close
+(void *script_ctx ATTR_UNUSED, void *handle ATTR_UNUSED)
 {
 	printf("END MESSAGE\n\n");
 	return TRUE;
@@ -96,14 +106,17 @@ static void duplicate_mark
 
 int main(int argc, char **argv) 
 {
+	enum mail_storage_service_flags service_flags = 0;
+    struct master_service *service;
+    const char *getopt_str;
+    int c;
 	ARRAY_DEFINE(scriptfiles, const char *);
 	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile, 
 		*mailloc, *extensions; 
 	const char *user, *home;
-	int i;
 	struct mail_raw *mailr;
+	struct mail_namespace_settings ns_set;
 	struct mail_namespace *ns = NULL;
-	struct mail_user *mail_user = NULL;
 	struct sieve_binary *main_sbin, *sbin = NULL;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
@@ -114,89 +127,93 @@ int main(int argc, char **argv)
 	bool trace = FALSE;
 	int ret;
 
-	sieve_tool_init();
-	
+	service = master_service_init("sieve-test",
+                      MASTER_SERVICE_FLAG_STANDALONE,
+                      argc, argv);
+
+	sieve_tool_init(FALSE);
+
 	t_array_init(&scriptfiles, 16);
 
+    user = getenv("USER");
+	
 	/* Parse arguments */
 	scriptfile = recipient = sender = mailbox = dumpfile = mailfile = mailloc = 
 		extensions = NULL;
-	for (i = 1; i < argc; i++) {
-		if (strcmp(argv[i], "-r") == 0) {
-			/* recipient address */
-			i++;
-			if (i == argc)
-				i_fatal("Missing -r argument");
-			recipient = argv[i];
-		} else if (strcmp(argv[i], "-f") == 0) {
-			/* envelope sender */
-			i++;
-			if (i == argc)
-				i_fatal("Missing -f argument");
-			sender = argv[i];
-		} else if (strcmp(argv[i], "-m") == 0) {
+	getopt_str = t_strconcat("r:f:m:d:l:x:s:ect",
+                 master_service_getopt_string(), NULL);
+	while ((c = getopt(argc, argv, getopt_str)) > 0) {
+		switch (c) {
+		case 'r':
+			/* destination address */
+			recipient = optarg;
+			break;
+		case 'f':
+			/* envelope sender address */
+			sender = optarg;
+			break;
+		case 'm':
 			/* default mailbox (keep box) */
-			i++;
-			if (i == argc) 
-				i_fatal("Missing -m argument");
-			mailbox = argv[i];
-		} else if (strcmp(argv[i], "-d") == 0) {
+			mailbox = optarg;
+			break;
+		case 'd':
 			/* dump file */
-			i++;
-			if (i == argc)
-				i_fatal("Missing -d argument");
-			dumpfile = argv[i];
-		} else if (strcmp(argv[i], "-l") == 0) {
+			dumpfile = optarg;
+			break;
+        case 'l':
 			/* mail location */
-			i++;
-			if (i == argc)
-				i_fatal("Missing -l argument");
-			mailloc = argv[i];
-		} else if (strcmp(argv[i], "-x") == 0) {
-			/* extensions */
-			i++;
-			if (i == argc)
-				i_fatal("Missing -x argument");
-			extensions = argv[i];
-		} else if (strcmp(argv[i], "-s") == 0) {
-			const char *file;
-			
+			mailloc = optarg;
+			break;
+        case 'x':
+			/* mail location */
+			extensions = optarg;
+			break;
+        case 's': 
 			/* scriptfile executed before main script */
-			i++;
-			if (i == argc)
-				i_fatal("Missing -s argument");
-				
-			file = t_strdup(argv[i]);
-			array_append(&scriptfiles, &file, 1);
-		} else if (strcmp(argv[i], "-c") == 0) {
-			/* force compile */
-			force_compile = TRUE;
-		} else if (strcmp(argv[i], "-e") == 0) {
-			/* execute */
-			execute = TRUE;
-#ifdef SIEVE_RUNTIME_TRACE
-		} else if (strcmp(argv[i], "-t") == 0) {
-			/* runtime trace */
-			trace = TRUE;
-#endif
-		} else if ( scriptfile == NULL ) {
-			scriptfile = argv[i];
-		} else if ( mailfile == NULL ) {
-			mailfile = argv[i];
-		} else {
-			print_help();
-			i_fatal("Unknown argument: %s", argv[i]);
-		}
+			{
+				const char *file;			
+
+				file = t_strdup(optarg);
+				array_append(&scriptfiles, &file, 1);
+			}
+            break;
+
+        case 'e':
+            execute = TRUE;
+            break;
+        case 'c':
+            force_compile = TRUE;
+            break;
+        case 't':
+            trace = TRUE;
+            break;
+        default:
+            if (!master_service_parse_option(service, c, optarg)) {
+                print_help();
+                i_fatal_status(EX_USAGE,
+                           "Unknown argument: %c", c);
+            }
+            break;
+        }
+    }
+
+	if ( optind < argc ) {
+		scriptfile = t_strdup(argv[optind++]);
+	} else { 
+		print_help();
+		i_fatal_status(EX_USAGE, "Missing <scriptfile> argument");
 	}
 	
-	if ( scriptfile == NULL ) {
+	if ( optind < argc ) {
+		mailfile = t_strdup(argv[optind++]);
+	} else { 
 		print_help();
-		i_fatal("Missing <scriptfile> argument");
+		i_fatal_status(EX_USAGE, "Missing <mailfile> argument");
 	}
 	
-	if ( mailfile == NULL ) {
+	if (optind != argc) {
 		print_help();
-		i_fatal("Missing <mailfile> argument");
+		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
 	}
 
 	if ( extensions != NULL ) {
@@ -220,6 +237,10 @@ int main(int argc, char **argv)
 	}
 
 	if ( main_sbin != NULL ) {
+		struct mail_user *mail_user_dovecot = NULL;
+		struct mail_user *mail_user = NULL;
+		struct mail_storage_service_input input;
+
 		/* Dump script */
 		sieve_tool_dump_binary_to(main_sbin, dumpfile);
 	
@@ -227,29 +248,38 @@ int main(int argc, char **argv)
 		home = getenv("HOME");
 
 		/* Initialize mail storages */
-		mail_users_init(getenv("AUTH_SOCKET_PATH"), getenv("DEBUG") != NULL);
-		mail_storage_init();
-		mail_storage_register_all();
-		mailbox_list_register_all();
+		//env_remove("HOME");
+		env_put("DOVECONF_ENV=1");
+		env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s", user));
+
+		memset(&input, 0, sizeof(input));
+		input.username = user;
+		mail_user_dovecot = mail_storage_service_init_user(service, &input,
+                NULL, service_flags);
 	
 		/* Obtain mail namespaces from -l argument */
 		if ( mailloc != NULL ) {
-			env_put(t_strdup_printf("NAMESPACE_1=%s", mailloc));
-			env_put("NAMESPACE_1_INBOX=1");
-			env_put("NAMESPACE_1_LIST=1");
-			env_put("NAMESPACE_1_SEP=.");
-			env_put("NAMESPACE_1_SUBSCRIPTIONS=1");
+			const char *errstr;
 
-			mail_user = mail_user_init(user);
+			mail_user = mail_user_alloc(user, mail_user_dovecot->unexpanded_set);
 			mail_user_set_home(mail_user, home);
-			if (mail_namespaces_init(mail_user) < 0)
-				i_fatal("Namespace initialization failed");	
 
-			ns = mail_user->namespaces;
+			if (mail_user_init(mail_user, &errstr) < 0)
+        		i_fatal("Test user initialization failed: %s", errstr);
+
+			memset(&ns_set, 0, sizeof(ns_set));
+    		ns_set.location = mailloc;
+
+    		ns = mail_namespaces_init_empty(mail_user);
+    		ns->flags |= NAMESPACE_FLAG_INTERNAL;
+    		ns->set = &ns_set;
 		}
 
+		if (master_service_set(service, "mail_full_filesystem_access=yes") < 0)
+			i_unreached(); 
+
 		/* Initialize raw mail object */
-		mail_raw_init(user);
+		mail_raw_init(service, user, mail_user_dovecot);
 		mailr = mail_raw_open_file(mailfile);
 
 		sieve_tool_get_envelope_data(mailr->mail, &recipient, &sender);
@@ -388,13 +418,14 @@ int main(int argc, char **argv)
 		mail_raw_close(mailr);
 		mail_raw_deinit();
 
-		/* De-initialize mail user object */
+		/* De-initialize mail user objects */
 		if ( mail_user != NULL )
 			mail_user_unref(&mail_user);
 
-		/* De-initialize mail storages */
-		mail_storage_deinit();
-		mail_users_deinit();
+		if ( mail_user_dovecot != NULL )
+			mail_user_unref(&mail_user_dovecot);
+	
+		mail_storage_service_deinit_user();
 	}
 
 	/* Cleanup error handler */
@@ -402,6 +433,8 @@ int main(int argc, char **argv)
 	sieve_system_ehandler_reset();
 
 	sieve_tool_deinit();
+
+    master_service_deinit(&service);
 	
 	return 0;
 }

@@ -5,7 +5,8 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-dict \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-storage \
-	-I$(dovecot_incdir)/src/deliver
+	-I$(dovecot_incdir)/src/lib-lda \
+	-I$(dovecot_incdir)/src/lda
 
 lda_moduledir = $(moduledir)/lda
 

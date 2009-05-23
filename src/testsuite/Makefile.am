@@ -1,30 +1,28 @@
 noinst_PROGRAMS = testsuite
 
 AM_CPPFLAGS = \
-	-I../lib-sieve \
-	-I../lib-sieve-tool \
+	-I$(top_srcdir)/src/lib-sieve \
+	-I$(top_srcdir)/src/lib-sieve-tool \
 	-I$(dovecot_incdir) \
 	-I$(dovecot_incdir)/src/lib \
+	-I$(dovecot_incdir)/src/lib-settings \
 	-I$(dovecot_incdir)/src/lib-mail \
+	-I$(dovecot_incdir)/src/lib-imap \
 	-I$(dovecot_incdir)/src/lib-index \
-	-I$(dovecot_incdir)/src/lib-storage
+	-I$(dovecot_incdir)/src/lib-master \
+	-I$(dovecot_incdir)/src/lib-storage \
+	-I$(dovecot_incdir)/src/lib-storage/index \
+	-I$(dovecot_incdir)/src/lib-storage/index/raw
 
 testsuite_LDFLAGS = -export-dynamic
 
 libs = \
 	$(top_srcdir)/src/lib-sieve/libsieve.la \
 	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la \
-	$(dovecot_incdir)/src/lib-storage/list/libstorage_list.a \
-	$(dovecot_incdir)/src/lib-storage/register/libstorage-register.a \
-	$(STORAGE_LIBS)
+	$(dovecot_incdir)/src/lib-storage/libdovecot-storage.la \
+	$(dovecot_incdir)/src/lib-dovecot/libdovecot.la
 
-ldadd = \
-	$(libs) \
- 	$(LIBICONV) \
-	$(RAND_LIBS) \
-	$(MODULE_LIBS)
-
-testsuite_LDADD = $(ldadd)
+testsuite_LDADD = $(libs)
 testsuite_DEPENDENCIES = $(libs)
 
 commands = \

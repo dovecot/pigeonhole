@@ -457,6 +457,35 @@ static void act_store_rollback
 		mailbox_close(&trans->box);
 }
 
+/*
+ * Action utility functions
+ */
 
+bool sieve_action_duplicate_check_available
+(const struct sieve_script_env *senv)
+{
+	return ( senv->duplicate_check != NULL && senv->duplicate_mark != NULL );
+}
 
+int sieve_action_duplicate_check
+(const struct sieve_script_env *senv, const void *id, size_t id_size)
+{
+	if ( senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
+		return 0;
+
+	return senv->duplicate_check
+		(id, id_size, senv->username); 
+}
+
+void sieve_action_duplicate_mark
+(const struct sieve_script_env *senv, const void *id, size_t id_size,
+	time_t time)
+{
+	if ( senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
+		return;
+
+	senv->duplicate_mark
+		(id, id_size, senv->username, time);
+}
+	
 

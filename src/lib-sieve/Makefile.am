@@ -64,6 +64,7 @@ libsieve_la_SOURCES = \
 	rfc2822.c \
 	sieve-limits.c \
 	sieve-message.c \
+	sieve-smtp.c \
 	sieve-lexer.c \
 	sieve-script.c \
 	sieve-ast.c \
@@ -100,6 +101,7 @@ noinst_HEADERS = \
 	sieve-common.h \
 	sieve-limits.h \
 	sieve-message.h \
+	sieve-smtp.h \
 	sieve-lexer.h \
 	sieve-script.h \
 	sieve-script-private.h \

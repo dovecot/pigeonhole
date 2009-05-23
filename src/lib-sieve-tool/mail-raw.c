@@ -17,7 +17,9 @@
 #include "mbox-from.h"
 #include "raw-storage.h"
 #include "mail-namespace.h"
-
+#include "master-service.h"
+#include "master-service-settings.h"
+#include "settings-parser.h"
 #include "mail-raw.h"
 
 #include <stdio.h>
@@ -46,20 +48,23 @@ static const char *wanted_headers[] = {
  */
 
 static struct mail_namespace *raw_ns;
+static struct mail_namespace_settings raw_ns_set;
 static struct mail_user *raw_mail_user;
+
+char *raw_tmp_prefix;
 
 /*
  * Raw mail implementation
  */
 
 static struct istream *create_raw_stream
-	(int fd, time_t *mtime_r, const char **sender)
+(int fd, time_t *mtime_r, const char **sender)
 {
 	struct istream *input, *input2, *input_list[2];
 	const unsigned char *data;
 	size_t i, size;
 	int ret, tz;
-	char *env_sender;
+	char *env_sender = NULL;
 
 	*mtime_r = (time_t)-1;
 	fd_set_nonblock(fd, FALSE);
@@ -85,7 +90,7 @@ static struct istream *create_raw_stream
 		}
 	}
 
-	if (sender != NULL) {
+	if (env_sender != NULL && sender != NULL) {
 		*sender = t_strdup(env_sender);
 	}
 	i_free(env_sender);
@@ -99,8 +104,8 @@ static struct istream *create_raw_stream
 	i_stream_unref(&input);
 
 	input_list[0] = input2; input_list[1] = NULL;
-	input = i_stream_create_seekable(input_list, MAIL_MAX_MEMORY_BUFFER,
-					 "/tmp/dovecot.sieve-tool.");
+	input = i_stream_create_seekable
+		(input_list, MAIL_MAX_MEMORY_BUFFER, raw_tmp_prefix);
 	i_stream_unref(&input2);
 	return input;
 }
@@ -109,27 +114,40 @@ static struct istream *create_raw_stream
  * Init/Deinit
  */
 
-void mail_raw_init(const char *user) 
+void mail_raw_init
+(struct master_service *service, const char *user,
+	struct mail_user *mail_user) 
 {
-	const char *error;
+	const char *errstr;
+	void **sets;
+	
+	sets = master_service_settings_get_others(service);
 
-	raw_mail_user = mail_user_init(user);
-	mail_user_set_home(raw_mail_user, NULL);
+	raw_mail_user = mail_user_alloc(user, sets[0]); 
+	mail_user_set_home(raw_mail_user, "/");
+   
+	if (mail_user_init(raw_mail_user, &errstr) < 0)
+		i_fatal("Raw user initialization failed: %s", errstr);
+
+	memset(&raw_ns_set, 0, sizeof(raw_ns_set));
+	raw_ns_set.location = "/tmp";
+
 	raw_ns = mail_namespaces_init_empty(raw_mail_user);
 	raw_ns->flags |= NAMESPACE_FLAG_INTERNAL;
-	
-	if ( mail_storage_create(raw_ns, "raw", "/tmp",
-		MAIL_STORAGE_FLAG_FULL_FS_ACCESS,
-		FILE_LOCK_METHOD_FCNTL, &error) < 0 ) {
- 		i_fatal("Couldn't create internal raw storage: %s", error);
-	}
+	raw_ns->set = &raw_ns_set;
+    
+	if (mail_storage_create(raw_ns, "raw", 0, &errstr) < 0)
+		i_fatal("Couldn't create internal raw storage: %s", errstr);
+
+	raw_tmp_prefix = i_strdup(mail_user_get_temp_prefix(mail_user));
 }
 
 void mail_raw_deinit(void)
 {
+	i_free(raw_tmp_prefix);
+
 	mail_user_unref(&raw_mail_user);
 }
-
 
 /*
  * Open raw mail data
@@ -175,8 +193,6 @@ static struct mail_raw *mail_raw_create
 	}
 
 	if ( mailbox_sync(mailr->box, 0, 0, NULL ) < 0) {
-		enum mail_error error;
-
 		i_fatal("Can't sync delivery mail: %s",
 			mail_storage_get_last_error(raw_ns->storage, &error));
 	}

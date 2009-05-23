@@ -4,9 +4,12 @@
 #include "lib.h"
 #include "array.h"
 #include "home-expand.h"
-#include "deliver.h"
+#include "mail-storage.h"
+#include "mail-deliver.h"
+#include "mail-user.h"
 #include "duplicate.h"
 #include "smtp-client.h"
+#include "lda-settings.h"
 
 #include "sieve.h"
 
@@ -37,13 +40,17 @@ static bool lda_sieve_debug = FALSE;
  * Mail transmission
  */
 
-static void *lda_sieve_smtp_open(const char *destination,
+static void *lda_sieve_smtp_open
+(void *script_ctx, const char *destination,
 	const char *return_path, FILE **file_r)
 {
-	return (void *) smtp_client_open(destination, return_path, file_r);
+	return (void *) smtp_client_open
+		((struct mail_deliver_context *) script_ctx, destination, 
+			return_path, file_r);
 }
 
-static bool lda_sieve_smtp_close(void *handle)
+static bool lda_sieve_smtp_close
+(void *script_ctx ATTR_UNUSED, void *handle)
 {
 	struct smtp_client *smtp_client = (struct smtp_client *) handle;
 
@@ -425,10 +432,9 @@ static int lda_sieve_multiscript_execute
 }
 
 static int lda_sieve_run
-(struct mail_namespace *namespaces, struct mail *mail, const char *user_script,
-	const ARRAY_TYPE (const_string) *scripts_before, 
-	const ARRAY_TYPE (const_string) *scripts_after, 
-	const char *destaddr, const char *username, const char *mailbox, 
+(struct mail_deliver_context *mdctx, const char *user_script,
+	const ARRAY_TYPE (const_string) *scripts_before,
+	const ARRAY_TYPE (const_string) *scripts_after,
 	struct mail_storage **storage_r)
 {
 	ARRAY_TYPE (const_string) scripts;
@@ -471,11 +477,11 @@ static int lda_sieve_run
 
 	memset(&msgdata, 0, sizeof(msgdata));
 
-	msgdata.mail = mail;
-	msgdata.return_path = deliver_get_return_address(mail);
-	msgdata.to_address = destaddr;
-	msgdata.auth_user = username;
-	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
+	msgdata.mail = mdctx->src_mail;
+	msgdata.return_path = mail_deliver_get_return_address(mdctx);
+    msgdata.to_address = mdctx->dest_addr;
+	msgdata.auth_user = mdctx->dest_user->username;
+	(void)mail_get_first_header(msgdata.mail, "Message-ID", &msgdata.id);
 
 	srctx.msgdata = &msgdata;
 
@@ -483,17 +489,18 @@ static int lda_sieve_run
 
 	memset(&scriptenv, 0, sizeof(scriptenv));
 
-	scriptenv.default_mailbox = mailbox;
-	scriptenv.mailbox_autocreate = deliver_set->mailbox_autocreate;
-	scriptenv.mailbox_autosubscribe = deliver_set->mailbox_autosubscribe;
-	scriptenv.namespaces = namespaces;
-	scriptenv.username = username;
-	scriptenv.hostname = deliver_set->hostname;
-	scriptenv.postmaster_address = deliver_set->postmaster_address;
+	scriptenv.default_mailbox = mdctx->dest_mailbox_name;
+	scriptenv.mailbox_autocreate = mdctx->set->lda_mailbox_autocreate;
+	scriptenv.mailbox_autosubscribe = mdctx->set->lda_mailbox_autosubscribe;
+	scriptenv.namespaces = mdctx->dest_user->namespaces;
+	scriptenv.username = mdctx->dest_user->username;
+	scriptenv.hostname = mdctx->set->hostname;
+	scriptenv.postmaster_address = mdctx->set->postmaster_address;
 	scriptenv.smtp_open = lda_sieve_smtp_open;
 	scriptenv.smtp_close = lda_sieve_smtp_close;
 	scriptenv.duplicate_mark = duplicate_mark;
 	scriptenv.duplicate_check = duplicate_check;
+	scriptenv.script_context = (void *) mdctx;
 	scriptenv.exec_status = &estatus;
 
 	srctx.scriptenv = &scriptenv;
@@ -511,7 +518,7 @@ static int lda_sieve_run
 
 	/* Record status */
 
-	tried_default_save = estatus.tried_default_save;
+	mdctx->tried_default_save = estatus.tried_default_save;
 	*storage_r = estatus.last_storage;
 
 	/* Clean up */
@@ -524,8 +531,7 @@ static int lda_sieve_run
 }
 
 static int lda_sieve_deliver_mail
-(struct mail_namespace *namespaces, struct mail_storage **storage_r, 
-	struct mail *mail, const char *destaddr, const char *mailbox)
+(struct mail_deliver_context *mdctx, struct mail_storage **storage_r)
 {
 	const char *user_script, *sieve_before, *sieve_after;
 	ARRAY_TYPE (const_string) scripts_before;
@@ -593,8 +599,7 @@ static int lda_sieve_deliver_mail
 			/* Run the script(s) */
 				
 			ret = lda_sieve_run
-				(namespaces, mail, user_script, &scripts_before, &scripts_after, destaddr,
-					getenv("USER"), mailbox, storage_r);
+                (mdctx, user_script, &scripts_before, &scripts_after, storage_r);
 		}
 
 	} T_END;

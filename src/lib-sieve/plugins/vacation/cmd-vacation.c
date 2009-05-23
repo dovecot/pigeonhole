@@ -25,6 +25,7 @@
 #include "sieve-dump.h"
 #include "sieve-result.h"
 #include "sieve-message.h"
+#include "sieve-smtp.h"
 
 #include "ext-vacation-common.h"
 
@@ -869,14 +870,14 @@ static bool act_vacation_send
 
 	/* Check smpt functions just to be sure */
 
-	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
+	if ( !sieve_smtp_available(senv) ) {
 		sieve_result_warning(aenv, "vacation action has no means to send mail");
 		return TRUE;
 	}
 
 	/* Open smtp session */
 
-	smtp_handle = senv->smtp_open(msgdata->return_path, NULL, &f);
+	smtp_handle = sieve_smtp_open(senv, msgdata->return_path, NULL, &f);
 	outmsgid = sieve_message_get_new_id(senv);
 
 	/* Produce a proper reply */
@@ -929,7 +930,7 @@ static bool act_vacation_send
 	fprintf(f, "%s\r\n", ctx->reason);
 
 	/* Close smtp session */    
-	if ( !senv->smtp_close(smtp_handle) ) {
+	if ( !sieve_smtp_close(senv, smtp_handle) ) {
 		sieve_result_error(aenv, 
 			"failed to send vacation response to <%s> "
 			"(refer to server log for more information)", 
@@ -985,10 +986,10 @@ static bool act_vacation_commit
 	}
 	
 	/* Did whe respond to this user before? */
-	if ( senv->duplicate_check != NULL ) {
+	if ( sieve_action_duplicate_check_available(senv) ) {
 		act_vacation_hash(msgdata, ctx, dupl_hash);
 	
-		if ( senv->duplicate_check(dupl_hash, sizeof(dupl_hash), senv->username) ) 
+		if ( sieve_action_duplicate_check(senv, dupl_hash, sizeof(dupl_hash)) ) 
 		{
 			sieve_result_log(aenv, "discarded duplicate vacation response to <%s>",
 				str_sanitize(msgdata->return_path, 128));
@@ -1103,8 +1104,8 @@ static bool act_vacation_commit
 			str_sanitize(msgdata->return_path, 128));	
 
 		/* Mark as replied */
-		if ( senv->duplicate_mark != NULL )
-			senv->duplicate_mark(dupl_hash, sizeof(dupl_hash), senv->username,
+		sieve_action_duplicate_mark
+			(senv, dupl_hash, sizeof(dupl_hash),
 				ioloop_time + ctx->days * (24 * 60 * 60));
 
 		return TRUE;

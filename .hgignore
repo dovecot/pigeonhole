@@ -47,6 +47,7 @@ Makefile.in
 *.svbin
 **/Makefile
 **/Makefile.in
+**/.libs
 
 src/sieve-tools/sievec
 src/sieve-tools/sieved

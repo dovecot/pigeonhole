@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "str.h"
 #include "mail-storage.h"
+#include "master-service.h"
 
 #include "mail-raw.h"
 
@@ -69,7 +70,8 @@ static void _testsuite_message_set_data(struct mail *mail)
 	(void)mail_get_first_header(mail, "Message-ID", &testsuite_msgdata.id);
 }
 
-void testsuite_message_init(const char *user)
+void testsuite_message_init
+(struct master_service *service, const char *user, struct mail_user *mail_user)
 {		
 	message_pool = pool_alloconly_create("testsuite_message", 6096);
 
@@ -77,7 +79,7 @@ void testsuite_message_init(const char *user)
 	str_append(default_message, _default_message_data);
 
 	testsuite_user = user;
-	mail_raw_init(user);
+	mail_raw_init(service, user, mail_user);
 	_raw_message = mail_raw_open_data(default_message);
 	_testsuite_message_set_data(_raw_message->mail);
 

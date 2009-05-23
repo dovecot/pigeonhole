@@ -4,11 +4,14 @@
 #include "lib.h"
 #include "lib-signals.h"
 #include "ioloop.h"
+#include "env-util.h"
 #include "ostream.h"
 #include "hostpid.h"
 #include "mail-storage.h"
 #include "mail-namespace.h"
-#include "env-util.h"
+#include "master-service.h"
+#include "master-service-settings.h"
+#include "mail-storage-service.h"
 
 #include "sieve.h"
 #include "sieve-extensions.h"
@@ -30,6 +33,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <sysexits.h>
 
 /*
  * Configuration
@@ -44,7 +48,7 @@
 
 static void testsuite_tool_init(void) 
 {
-	sieve_tool_init();
+	sieve_tool_init(FALSE);
 
 	sieve_extensions_set_string(NULL);
 
@@ -99,46 +103,76 @@ static int testsuite_run
 	return ret;
 }
 
+/* IEW.. YUCK.. and so forth.. */
+static const char *_get_cwd(void)
+{
+	static char cwd[PATH_MAX];
+	const char *result;
+
+	result = t_strdup(getcwd(cwd, sizeof(cwd)));
+
+	return result;
+}
+
 int main(int argc, char **argv) 
 {
+	enum mail_storage_service_flags service_flags = 0;
+	struct master_service *service;
+	const char *getopt_str;
+	int c;
 	const char *scriptfile, *dumpfile; 
 	const char *user;
-	int i, ret;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
 	bool trace = FALSE;
+	int ret;
 
-	/* Parse arguments */
-	scriptfile = dumpfile =  NULL;
-	for (i = 1; i < argc; i++) {
-		if (strcmp(argv[i], "-d") == 0) {
-			/* dump file */
-			i++;
-			if (i == argc)
-				i_fatal("Missing -d argument");
-			dumpfile = argv[i];
-#ifdef SIEVE_RUNTIME_TRACE
-		} else if (strcmp(argv[i], "-t") == 0) {
-			/* runtime trace */
-			trace = TRUE;
-#endif
-		} else if ( scriptfile == NULL ) {
-			scriptfile = argv[i];
-		} else {
-			print_help();
-			i_fatal("Unknown argument: %s", argv[i]);
-		}
-	}
-	
-	if ( scriptfile == NULL ) {
-		print_help();
-		i_fatal("Missing <scriptfile> argument");
-	}
-
-	printf("Test case: %s:\n\n", scriptfile);
+	service = master_service_init("testsuite",
+                      MASTER_SERVICE_FLAG_STANDALONE,
+                      argc, argv);
 
 	/* Initialize testsuite */
 	testsuite_tool_init();
+
+    user = getenv("USER");
+
+	/* Parse arguments */
+	scriptfile = dumpfile =  NULL;
+
+	getopt_str = t_strconcat("d:t",
+                 master_service_getopt_string(), NULL);
+	while ((c = getopt(argc, argv, getopt_str)) > 0) {
+		switch (c) {
+		case 'd':
+			/* destination address */
+			dumpfile = optarg;
+			break;
+		case 't':
+			trace = TRUE;
+			break;
+		default:
+			if (!master_service_parse_option(service, c, optarg)) {
+				print_help();
+				i_fatal_status(EX_USAGE,
+					"Unknown argument: %c", c);
+			}
+			break;
+		}
+	}
+
+	if ( optind < argc ) {
+		scriptfile = t_strdup(argv[optind++]);
+	} else {
+		print_help();
+		i_fatal_status(EX_USAGE, "Missing <scriptfile> argument");
+	}
+	
+	if (optind != argc) {
+        print_help();
+        i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
+    }
+
+	printf("Test case: %s:\n\n", scriptfile);
 
 	/* Initialize environment */
 	sieve_dir = strrchr(scriptfile, '/');
@@ -153,21 +187,29 @@ int main(int argc, char **argv)
 	
 	/* Compile sieve script */
 	if ( (sbin = sieve_tool_script_compile(scriptfile, NULL)) != NULL ) {
+	    struct mail_storage_service_input input;
 		struct sieve_script_env scriptenv;
 		struct sieve_error_handler *ehandler;
+		struct mail_user *mail_user;
 
 		/* Dump script */
 		sieve_tool_dump_binary_to(sbin, dumpfile);
 	
-		/* Initialize mail storages */
-		mail_users_init(getenv("AUTH_SOCKET_PATH"), getenv("DEBUG") != NULL);
-		mail_storage_init();
-		mail_storage_register_all();
-		mailbox_list_register_all();
-
-		/* Initialize message environment */
+		/* Initialize mail user */
 		user = sieve_tool_get_user();
-		testsuite_message_init(user);
+		env_put("DOVECONF_ENV=1");
+		env_put(t_strdup_printf("HOME=%s", _get_cwd()));
+		env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s", user));
+
+	    memset(&input, 0, sizeof(input));
+	    input.username = user;
+		mail_user = mail_storage_service_init_user
+			(service, &input, NULL, service_flags);
+
+		if (master_service_set(service, "mail_full_filesystem_access=yes") < 0)
+			i_unreached(); 
+
+		testsuite_message_init(service, user, mail_user);
 
 		memset(&scriptenv, 0, sizeof(scriptenv));
 		scriptenv.default_mailbox = "INBOX";
@@ -204,15 +246,19 @@ int main(int argc, char **argv)
 		/* De-initialize message environment */
 		testsuite_message_deinit();
 
-		/* De-initialize mail storages */
-		mail_storage_deinit();
-		mail_users_deinit();
+		/* De-initialize mail user */
+		if ( mail_user != NULL )
+            mail_user_unref(&mail_user);
+
+        mail_storage_service_deinit_user();
 	} else {
 		testsuite_testcase_fail("failed to compile testcase script");
 	}
 
 	/* De-initialize testsuite */
 	testsuite_tool_deinit();  
+
+	master_service_deinit(&service);
 
 	return testsuite_testcase_result();
 }

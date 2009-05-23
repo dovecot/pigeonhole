@@ -21,6 +21,7 @@
 #include "sieve-interpreter.h"
 #include "sieve-code-dumper.h"
 #include "sieve-result.h"
+#include "sieve-smtp.h"
 
 #include <stdio.h>
 
@@ -292,7 +293,7 @@ static bool act_redirect_send
 	int ret;
 	
 	/* Just to be sure */
-	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
+	if ( !sieve_smtp_available(senv) ) {
 		sieve_result_warning(aenv, "redirect action has no means to send mail.");
 		return TRUE;
 	}
@@ -301,7 +302,7 @@ static bool act_redirect_send
 		return FALSE;
 		
 	/* Open SMTP transport */
-	smtp_handle = senv->smtp_open(ctx->to_address, msgdata->return_path, &f);
+	smtp_handle = sieve_smtp_open(senv, ctx->to_address, msgdata->return_path, &f);
 
 	/* Remove unwanted headers */
 	input = i_stream_create_header_filter
@@ -325,7 +326,7 @@ static bool act_redirect_send
 	i_stream_unref(&input);
 
 	/* Close SMTP transport */
-	if ( !senv->smtp_close(smtp_handle) ) {
+	if ( !sieve_smtp_close(senv, smtp_handle) ) {
 		sieve_result_error(aenv, 
 			"failed to redirect message to <%s> "
 			"(refer to server log for more information)",
@@ -350,7 +351,7 @@ static bool act_redirect_commit
 		NULL : t_strdup_printf("%s-%s", msgdata->id, ctx->to_address);
 	if (dupeid != NULL) {
 		/* Check whether we've seen this message before */
-		if (senv->duplicate_check(dupeid, strlen(dupeid), senv->username)) {
+		if (sieve_action_duplicate_check(senv, dupeid, strlen(dupeid))) {
 			sieve_result_log(aenv, "discarded duplicate forward to <%s>",
 				str_sanitize(ctx->to_address, 128));
 			return TRUE;
@@ -362,7 +363,7 @@ static bool act_redirect_commit
 	
 		/* Mark this message id as forwarded to the specified destination */
 		if (dupeid != NULL) {
-			senv->duplicate_mark(dupeid, strlen(dupeid), senv->username,
+			sieve_action_duplicate_mark(senv, dupeid, strlen(dupeid),
 				ioloop_time + CMD_REDIRECT_DUPLICATE_KEEP);
 		}
 	

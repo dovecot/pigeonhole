@@ -4,6 +4,9 @@
 #ifndef __MAIL_RAW_H
 #define __MAIL_RAW_H
 
+#include "lib.h"
+#include "master-service.h"
+
 struct mail_raw {
 	pool_t pool;
 	struct mail *mail;
@@ -13,7 +16,9 @@ struct mail_raw {
 	struct mailbox_transaction_context *trans;
 };
 
-void mail_raw_init(const char *user);
+void mail_raw_init
+(struct master_service *service, const char *user, 
+	struct mail_user *mail_user);
 void mail_raw_deinit(void);
 
 struct mail_raw *mail_raw_open_file(const char *path);

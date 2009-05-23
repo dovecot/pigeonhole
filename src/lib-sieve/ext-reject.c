@@ -34,6 +34,7 @@
 #include "sieve-dump.h"
 #include "sieve-result.h"
 #include "sieve-message.h"
+#include "sieve-smtp.h"
 
 /* 
  * Forward declarations 
@@ -329,12 +330,12 @@ static bool act_reject_send
 	int ret;
 
 	/* Just to be sure */
-	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
+	if ( !sieve_smtp_available(senv) ) {
 		sieve_result_warning(aenv, "reject action has no means to send mail");
 		return TRUE;
 	}
 
-	smtp_handle = senv->smtp_open(msgdata->return_path, NULL, &f);
+	smtp_handle = sieve_smtp_open(senv, msgdata->return_path, NULL, &f);
 
 	new_msgid = sieve_message_get_new_id(senv);
 	boundary = t_strdup_printf("%s/%s", my_pid, senv->hostname);
@@ -410,7 +411,7 @@ static bool act_reject_send
 
 	fprintf(f, "\r\n\r\n--%s--\r\n", boundary);
 
-	if ( !senv->smtp_close(smtp_handle) ) {
+	if ( !sieve_smtp_close(senv, smtp_handle) ) {
 		sieve_result_error(aenv, 
 			"failed to send rejection message to <%s> "
 			"(refer to server log for more information)",

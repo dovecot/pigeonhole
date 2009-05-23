@@ -10,7 +10,7 @@
  * Initialization
  */
 
-void sieve_tool_init(void);
+void sieve_tool_init(bool init_lib);
 void sieve_tool_deinit(void);
 
 /*

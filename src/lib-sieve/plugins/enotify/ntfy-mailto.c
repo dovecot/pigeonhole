@@ -31,6 +31,7 @@
 #include "sieve-ext-enotify.h"
 #include "sieve-address.h"
 #include "sieve-message.h"
+#include "sieve-smtp.h"
 
 /*
  * Configuration
@@ -919,7 +920,7 @@ static bool ntfy_mailto_send
 	}
 
 	/* Just to be sure */
-	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
+	if ( !sieve_smtp_available(senv) ) {
 		sieve_enotify_warning(nlog, 
 			"notify mailto method has no means to send mail");
 		return TRUE;
@@ -985,7 +986,8 @@ static bool ntfy_mailto_send
 		const struct ntfy_mailto_header_field *headers;
 		unsigned int h, hcount;
 
-		smtp_handle = senv->smtp_open(recipients[i].normalized, from_smtp, &f);
+		smtp_handle = sieve_smtp_open
+			(senv, recipients[i].normalized, from_smtp, &f);
 		outmsgid = sieve_message_get_new_id(senv);
 	
 		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
@@ -1048,7 +1050,7 @@ static bool ntfy_mailto_send
 			fprintf(f, "Notification of new message.\r\n");
 		}
 	
-		if ( senv->smtp_close(smtp_handle) ) {
+		if ( sieve_smtp_close(senv, smtp_handle) ) {
 			sieve_enotify_log(nlog, 
 				"sent mail notification to <%s>", 
 				str_sanitize(recipients[i].normalized, 80));

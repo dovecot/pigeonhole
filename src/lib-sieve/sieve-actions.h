@@ -205,5 +205,17 @@ int sieve_act_store_add_to_result
 	(const struct sieve_runtime_env *renv, 
 		struct sieve_side_effects_list *seffects, const char *folder,
 		unsigned int source_line);
-		
+
+/*		
+ * Action utility functions
+ */
+
+bool sieve_action_duplicate_check_available
+	(const struct sieve_script_env *senv);
+int sieve_action_duplicate_check
+	(const struct sieve_script_env *senv, const void *id, size_t id_size);
+void sieve_action_duplicate_mark
+	(const struct sieve_script_env *senv, const void *id, size_t id_size,
+		time_t time);
+
 #endif /* __SIEVE_ACTIONS_H */

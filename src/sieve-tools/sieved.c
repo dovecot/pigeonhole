@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
 	struct sieve_binary *sbin;
 	const char *binfile, *outfile, *extensions;
 	
-	sieve_tool_init();
+	sieve_tool_init(TRUE);
 	
 	binfile = outfile = extensions = NULL;
 	for (i = 1; i < argc; i++) {
