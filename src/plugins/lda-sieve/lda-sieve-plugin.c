@@ -23,7 +23,7 @@
  * Configuration
  */
 
-#define SIEVE_SCRIPT_PATH "~/.dovecot.sieve"
+#define SIEVE_DEFAULT_PATH "~/.dovecot.sieve"
 
 #define LDA_SIEVE_MAX_USER_ERRORS 10
 #define LDA_SIEVE_MAX_SYSTEM_ERRORS 100
@@ -33,8 +33,6 @@
  */
 
 static deliver_mail_func_t *next_deliver_mail;
-
-static bool lda_sieve_debug = FALSE;
 
 /*
  * Mail transmission
@@ -62,6 +60,8 @@ static bool lda_sieve_smtp_close
  */
 
 struct lda_sieve_run_context {
+	struct mail_deliver_context *mdctx;
+	
 	const char *const *script_files;
 	unsigned int script_count;
 
@@ -75,19 +75,21 @@ struct lda_sieve_run_context {
 	const char *userlog;
 };
 
-static const char *lda_sieve_get_path(void)
+static const char *lda_sieve_get_path(struct mail_user *user)
 {
 	const char *script_path, *home;
 	struct stat st;
 
-	home = getenv("HOME");
+	if ( mail_user_get_home(user, &home) <= 0 )
+        home = NULL;
+
+    script_path = mail_user_plugin_getenv(user, "sieve");
 
 	/* userdb may specify Sieve path */
-	script_path = getenv("SIEVE");
 	if (script_path != NULL) {
 		if (*script_path == '\0') {
 			/* disabled */
-			if ( lda_sieve_debug )
+			if ( user->mail_debug )
 				sieve_sys_info("empty script path, disabled");
 			return NULL;
 		}
@@ -96,32 +98,38 @@ static const char *lda_sieve_get_path(void)
 
 		if (*script_path != '/' && *script_path != '\0') {
 			/* relative path. change to absolute. */
-			script_path = t_strconcat(getenv("HOME"), "/",
-						  script_path, NULL);
+
+			if ( home == NULL || *home == '\0' ) {
+				if ( user->mail_debug )
+					sieve_sys_info("relative script path, but empty home dir");
+				return NULL;
+			}
+
+			script_path = t_strconcat(home, "/", script_path, NULL);
 		}
 	} else {
-		if (home == NULL) {
+		if ( home == NULL || *home == '\0' ) {
 			sieve_sys_error("per-user script path is unknown. See "
 				"http://wiki.dovecot.org/LDA/Sieve#location");
 			return NULL;
 		}
 
-		script_path = home_expand(SIEVE_SCRIPT_PATH);
+		script_path = home_expand(SIEVE_DEFAULT_PATH);
 	}
 
 	if (stat(script_path, &st) < 0) {
 		if (errno != ENOENT)
 			sieve_sys_error("stat(%s) failed: %m "
 				"(using global script path in stead)", script_path);
-		else if (getenv("DEBUG") != NULL)
+		else if ( user->mail_debug )
 			sieve_sys_info("local script path %s doesn't exist "
 				"(using global script path in stead)", script_path);
 
 		/* use global script instead, if one exists */
-		script_path = getenv("SIEVE_GLOBAL_PATH");
+		script_path = mail_user_plugin_getenv(user, "sieve_global_path");
 		if (script_path == NULL) {
 			/* for backwards compatibility */
-			script_path = getenv("GLOBAL_SCRIPT_PATH");
+			script_path = mail_user_plugin_getenv(user, "global_script_path");
 		}
 	}
 
@@ -166,6 +174,7 @@ static int lda_sieve_open
 	struct sieve_error_handler *ehandler;
 	bool user_script = ( script_path == srctx->user_script );
 	bool exists = TRUE;
+	bool debug = srctx->mdctx->dest_user->mail_debug;
 	int ret = 0;
 
 	if ( user_script )
@@ -173,7 +182,7 @@ static int lda_sieve_open
 	else
 		ehandler = srctx->master_ehandler;
 
-	if ( lda_sieve_debug )
+	if ( debug )
 		sieve_sys_info("opening script %s", script_path);		
 
 	sieve_error_handler_reset(ehandler);
@@ -184,7 +193,7 @@ static int lda_sieve_open
 		ret = sieve_get_errors(ehandler) > 0 ? -1 : 0;
 
 		if ( !exists && ret == 0 ) {
-			if ( lda_sieve_debug )
+			if ( debug )
 				sieve_sys_info("script file %s is missing", script_path);
 		} else {
 			if ( user_script && srctx->userlog != NULL ) {
@@ -282,6 +291,7 @@ static int lda_sieve_singlescript_execute
     bool user_script = ( script_file == srctx->user_script );
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
+	bool debug = srctx->mdctx->dest_user->mail_debug;
 	int ret;
 
 	/* Open the script */
@@ -291,7 +301,7 @@ static int lda_sieve_singlescript_execute
 
 	/* Execute */
 
-	if ( lda_sieve_debug )
+	if ( debug )
 		sieve_sys_info("executing compiled script %s", script_file);
 
 	if ( user_script ) {
@@ -438,7 +448,6 @@ static int lda_sieve_run
 	struct mail_storage **storage_r)
 {
 	ARRAY_TYPE (const_string) scripts;
-
 	struct lda_sieve_run_context srctx;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
@@ -450,6 +459,7 @@ static int lda_sieve_run
 	/* Initialize */
 
 	memset(&srctx, 0, sizeof(srctx));
+	srctx.mdctx = mdctx;
 
 	/* Compose execution sequence */
 
@@ -536,15 +546,16 @@ static int lda_sieve_deliver_mail
 	const char *user_script, *sieve_before, *sieve_after;
 	ARRAY_TYPE (const_string) scripts_before;
 	ARRAY_TYPE (const_string) scripts_after;
+	bool debug = mdctx->dest_user->mail_debug;
 	int ret = 0;
 
 	T_BEGIN { 
 
 		/* Find the personal script to execute */
 	
-		user_script = lda_sieve_get_path();
+		user_script = lda_sieve_get_path(mdctx->dest_user);
 
-		if ( lda_sieve_debug ) {
+		if ( debug ) {
 			if ( user_script == NULL )			
 				sieve_sys_info("user has no valid personal script");
 			else
@@ -556,8 +567,8 @@ static int lda_sieve_deliver_mail
 		t_array_init(&scripts_before, 16);
 		t_array_init(&scripts_after, 16);
 
-		sieve_before = getenv("SIEVE_BEFORE");
-		sieve_after = getenv("SIEVE_AFTER");
+		sieve_before = mail_user_plugin_getenv(mdctx->dest_user, "sieve_before");
+		sieve_after = mail_user_plugin_getenv(mdctx->dest_user, "sieve_after");
 
 		if ( sieve_before != NULL && *sieve_before != '\0' ) {
 			lda_sieve_multiscript_get_scriptfiles(sieve_before, &scripts_before);
@@ -567,7 +578,7 @@ static int lda_sieve_deliver_mail
 			lda_sieve_multiscript_get_scriptfiles(sieve_after, &scripts_after);
 		}
 
-		if ( lda_sieve_debug ) {
+		if ( debug ) {
 			const char *const *scriptfiles;
 			unsigned int count, i;
 
@@ -586,7 +597,7 @@ static int lda_sieve_deliver_mail
 
 		if ( array_count(&scripts_before) == 0 && array_count(&scripts_before) == 0 &&
 			user_script == NULL ) {
-			if ( lda_sieve_debug )
+			if ( debug )
 				sieve_sys_info("no scripts to execute: reverting to default delivery.");
 
 			/* No error, but no delivery by this plugin either. A return value of <= 0 for a 
@@ -622,9 +633,6 @@ void sieve_plugin_init(void)
 	if ( extensions != NULL ) {
 		sieve_set_extensions(extensions);
 	}
-
-	/* Debug mode */
-	lda_sieve_debug = getenv("DEBUG");
 
 	/* Hook into the delivery process */
 	next_deliver_mail = deliver_mail;
