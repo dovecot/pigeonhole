@@ -271,7 +271,7 @@ int main(int argc, char **argv)
     		ns_set.location = mailloc;
 
     		ns = mail_namespaces_init_empty(mail_user);
-    		ns->flags |= NAMESPACE_FLAG_INTERNAL;
+    		ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
     		ns->set = &ns_set;
 		}
 

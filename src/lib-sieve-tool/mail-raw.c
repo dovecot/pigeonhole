@@ -13,6 +13,9 @@
 #include "str.h"
 #include "str-sanitize.h"
 #include "strescape.h"
+#include "safe-mkstemp.h"
+#include "close-keep-errno.h"
+#include "mkdir-parents.h"
 #include "message-address.h"
 #include "mbox-from.h"
 #include "raw-storage.h"
@@ -56,6 +59,46 @@ char *raw_tmp_prefix;
 /*
  * Raw mail implementation
  */
+
+static int seekable_fd_callback
+(const char **path_r, void *context ATTR_UNUSED)
+{
+	const char *dir, *p;
+	string_t *path;
+	int fd;
+
+ 	path = t_str_new(128);
+ 	str_append(path, "/tmp/dovecot.sieve-tool.");
+	fd = safe_mkstemp(path, 0600, (uid_t)-1, (gid_t)-1);
+	if (fd == -1 && errno == ENOENT) {
+		dir = str_c(path);
+		p = strrchr(dir, '/');
+		if (p != NULL) {
+			dir = t_strdup_until(dir, p);
+			if ( mkdir_parents(dir, 0600) < 0 ) {
+				i_error("mkdir_parents(%s) failed: %m", dir);
+				return -1;
+			}
+			fd = safe_mkstemp(path, 0600, (uid_t)-1, (gid_t)-1);
+		}
+	}
+
+	if (fd == -1) {
+		i_error("safe_mkstemp(%s) failed: %m", str_c(path));
+		return -1;
+	}
+
+	/* we just want the fd, unlink it */
+	if (unlink(str_c(path)) < 0) {
+		/* shouldn't happen.. */
+		i_error("unlink(%s) failed: %m", str_c(path));
+		close_keep_errno(fd);
+		return -1;
+	}
+
+	*path_r = str_c(path);
+	return fd;
+}
 
 static struct istream *create_raw_stream
 (int fd, time_t *mtime_r, const char **sender)
@@ -104,8 +147,8 @@ static struct istream *create_raw_stream
 	i_stream_unref(&input);
 
 	input_list[0] = input2; input_list[1] = NULL;
-	input = i_stream_create_seekable
-		(input_list, MAIL_MAX_MEMORY_BUFFER, raw_tmp_prefix);
+	input = i_stream_create_seekable(input_list, MAIL_MAX_MEMORY_BUFFER,
+		seekable_fd_callback, raw_mail_user);
 	i_stream_unref(&input2);
 	return input;
 }
@@ -133,7 +176,7 @@ void mail_raw_init
 	raw_ns_set.location = "/tmp";
 
 	raw_ns = mail_namespaces_init_empty(raw_mail_user);
-	raw_ns->flags |= NAMESPACE_FLAG_INTERNAL;
+	raw_ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
 	raw_ns->set = &raw_ns_set;
     
 	if (mail_storage_create(raw_ns, "raw", 0, &errstr) < 0)
@@ -154,7 +197,7 @@ void mail_raw_deinit(void)
  */
 
 static struct mail_raw *mail_raw_create
-(struct istream *input, const char *mailfile, const char *sender, 
+(struct istream *input, const char *mailfile, const char *sender,
 	time_t mtime)
 {
 	pool_t pool;
