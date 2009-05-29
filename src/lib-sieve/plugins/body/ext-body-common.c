@@ -204,7 +204,8 @@ static bool ext_body_parts_add_missing
 	/* Initialize body decoder */
 	decoder = decode_to_plain ? message_decoder_init(FALSE) : NULL;
 	
-	parser = message_parser_init_from_parts(parts, input, 0, 0);
+	parser = message_parser_init_from_parts
+		(parts, input, 0, MESSAGE_PARSER_FLAG_SKIP_BODY_BLOCK);
 	while ( (ret = message_parser_parse_next_block(parser, &block)) > 0 ) {
 		if ( block.part != prev_part ) {
 			/* Save previous body part */
