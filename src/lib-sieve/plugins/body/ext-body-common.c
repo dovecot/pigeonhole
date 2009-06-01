@@ -130,20 +130,26 @@ static void ext_body_part_save
 	struct ext_body_part_cached *body_part, bool decoded)
 {
 	buffer_t *buf = ctx->tmp_buffer;
+	char *part_data;
+	size_t part_size;
 
 	/* Add terminating NUL to the body part buffer */
 	buffer_append_c(buf, '\0');
+
+	part_data = p_malloc(ctx->pool, buf->used);
+	memcpy(part_data, buf->data, buf->used);
+	part_size = buf->used - 1;
 	
 	/* Depending on whether the part is decoded or not store message body in the
 	 * appropriate cache location.
 	 */
 	if ( !decoded ) {
-		body_part->raw_body = p_strdup(ctx->pool, buf->data);
-		body_part->raw_body_size = buf->used - 1;
+		body_part->raw_body = part_data;
+		body_part->raw_body_size = part_size;
 		i_assert(buf->used - 1 == part->body_size.physical_size);
 	} else {
-		body_part->decoded_body = p_strdup(ctx->pool, buf->data);
-		body_part->decoded_body_size = buf->used - 1;
+		body_part->decoded_body = part_data;
+		body_part->decoded_body_size = part_size;
 	}
 	
 	/* Clear buffer */
