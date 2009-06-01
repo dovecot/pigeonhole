@@ -175,7 +175,6 @@ static bool ext_body_parts_add_missing
 	struct message_parser_ctx *parser;
 	struct message_decoder_context *decoder;
 	struct message_block block, decoded;
-	const struct message_part *const_parts;
 	struct message_part *parts, *prev_part = NULL;
 	struct istream *input;
 	unsigned int idx = 0;
@@ -192,20 +191,13 @@ static bool ext_body_parts_add_missing
 	if ( mail_get_stream(msgdata->mail, NULL, NULL, &input) < 0 )
 		return FALSE;
 		
-	/* ? */
-	if ( mail_get_parts(msgdata->mail, &const_parts) < 0 )
-		return FALSE;
-		
-	/* FIXME: this looks ugly and scary */
-	parts = (struct message_part *)const_parts;
-
 	buffer_set_used_size(ctx->tmp_buffer, 0);
 	
 	/* Initialize body decoder */
 	decoder = decode_to_plain ? message_decoder_init(FALSE) : NULL;
 	
-	parser = message_parser_init_from_parts
-		(parts, input, 0, MESSAGE_PARSER_FLAG_SKIP_BODY_BLOCK);
+	parser = message_parser_init
+		(ctx->pool, input, 0, MESSAGE_PARSER_FLAG_SKIP_BODY_BLOCK);
 	while ( (ret = message_parser_parse_next_block(parser, &block)) > 0 ) {
 		if ( block.part != prev_part ) {
 			/* Save previous body part */
