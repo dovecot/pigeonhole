@@ -204,6 +204,7 @@ static struct mail_raw *mail_raw_create
 	struct raw_mailbox *raw_box;
 	struct mail_raw *mailr;
 	enum mail_error error;
+	struct mailbox_header_lookup_ctx *headers_ctx;
 
 	if ( mailfile != NULL ) {
 		if ( *mailfile != '/') {
@@ -222,31 +223,31 @@ static struct mail_raw *mail_raw_create
 	mailr->pool = pool;
 
 	if ( mailfile == NULL ) {
-		mailr->box = mailbox_open(&raw_ns->storage, "Dovecot Raw Mail",
-				   input, MAILBOX_OPEN_NO_INDEX_FILES);
+		mailr->box = mailbox_alloc(raw_ns->list, "Dovecot Delivery Mail",
+			input, MAILBOX_FLAG_NO_INDEX_FILES);
 	} else {
 		mtime = (time_t)-1;
-		mailr->box = mailbox_open(&raw_ns->storage, mailfile, NULL,
-				   MAILBOX_OPEN_NO_INDEX_FILES);
+		mailr->box = mailbox_alloc(raw_ns->list, mailfile, NULL,
+			MAILBOX_FLAG_NO_INDEX_FILES);
 	}
 
-	if ( mailr->box == NULL ) {
-		i_fatal("Can't open mail stream as raw: %s",
-			mail_storage_get_last_error(raw_ns->storage, &error));
-	}
-
-	if ( mailbox_sync(mailr->box, 0, 0, NULL ) < 0) {
-		i_fatal("Can't sync delivery mail: %s",
-			mail_storage_get_last_error(raw_ns->storage, &error));
-	}
+	if ( mailbox_open(mailr->box) < 0 ) {
+        i_fatal("Can't open mail stream as raw: %s",
+            mail_storage_get_last_error(raw_ns->storage, &error));
+    }
+    if ( mailbox_sync(mailr->box, 0, 0, NULL) < 0 ) {
+        i_fatal("Can't sync delivery mail: %s",
+            mail_storage_get_last_error(raw_ns->storage, &error));
+    }
 
 	raw_box = (struct raw_mailbox *)mailr->box;
 	raw_box->envelope_sender = sender != NULL ? sender : DEFAULT_ENVELOPE_SENDER;
 	raw_box->mtime = mtime;
 
 	mailr->trans = mailbox_transaction_begin(mailr->box, 0);
-	mailr->headers_ctx = mailbox_header_lookup_init(mailr->box, wanted_headers);
-	mailr->mail = mail_alloc(mailr->trans, 0, mailr->headers_ctx);
+	headers_ctx = mailbox_header_lookup_init(mailr->box, wanted_headers);
+	mailr->mail = mail_alloc(mailr->trans, 0, headers_ctx);
+    mailbox_header_lookup_unref(&headers_ctx);
 	mail_set_seq(mailr->mail, 1);
 
 	return mailr;
@@ -288,8 +289,6 @@ struct mail_raw *mail_raw_open_file(const char *path)
 
 void mail_raw_close(struct mail_raw *mailr) 
 {
-	mailbox_header_lookup_unref(&mailr->headers_ctx);
-
 	mail_free(&mailr->mail);
 	mailbox_transaction_rollback(&mailr->trans);
 	mailbox_close(&mailr->box);

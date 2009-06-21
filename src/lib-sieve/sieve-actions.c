@@ -186,50 +186,61 @@ static void act_store_get_storage_error
 }
 
 static struct mailbox *act_store_mailbox_open
-(const struct sieve_action_exec_env *aenv, struct mail_namespace *ns, 
-	const char *folder)
+(const struct sieve_action_exec_env *aenv, struct mail_namespace *ns,
+	const char *folder, const char **error_r)
 {
 	struct mail_storage **storage = &(aenv->exec_status->last_storage);
-	enum mailbox_open_flags open_flags = 
-		MAILBOX_OPEN_FAST | MAILBOX_OPEN_KEEP_RECENT | 
-		MAILBOX_OPEN_SAVEONLY | MAILBOX_OPEN_POST_SESSION;
+	enum mailbox_flags flags =
+		MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_SAVEONLY |
+		MAILBOX_FLAG_POST_SESSION;
 	struct mailbox *box;
+	enum mail_error error;
+
+	*error_r = NULL;
 
 	if (strcasecmp(folder, "INBOX") == 0) {
 		/* Deliveries to INBOX must always succeed, regardless of ACLs */
-		open_flags |= MAILBOX_OPEN_IGNORE_ACLS;
+		flags |= MAILBOX_FLAG_IGNORE_ACLS;
 	}
 
-	*storage = ns->storage;
+	/* First attempt at opening the box */
+	box = mailbox_alloc(ns->list, folder, NULL, flags);
+	if ( mailbox_open(box) == 0 ) {
+		/* Success */
+		return box;
+	}
 
-	box = mailbox_open(storage, folder, NULL, open_flags);
-		
-	if ( box == NULL && aenv->scriptenv->mailbox_autocreate ) {
-		enum mail_error error;
+	/* Failed */
+
+	*storage = mailbox_get_storage(box);
+	*error_r = mail_storage_get_last_error(*storage, &error);
+	mailbox_close(&box);
 	
-		(void)mail_storage_get_last_error(*storage, &error);
-		if ( error != MAIL_ERROR_NOTFOUND )
-			return NULL;
+	/* Only continue when the mailbox is missing and when we are allowed to
+	 * create it.
+	 */
+	if ( !aenv->scriptenv->mailbox_autocreate || error != MAIL_ERROR_NOTFOUND )
+		return NULL;
 
-		/* Try creating it */
-		if ( mail_storage_mailbox_create(*storage, folder, FALSE) < 0 )
-			return NULL;
-   
-		if ( aenv->scriptenv->mailbox_autosubscribe ) {
-			/* Subscribe to it */
-			(void)mailbox_list_set_subscribed(ns->list, folder, TRUE);
-		}
+	/* Try creating it. */
+	if ( mail_storage_mailbox_create(*storage, ns, folder, FALSE) < 0 ) {
+		*error_r = mail_storage_get_last_error(*storage, &error);
+		return NULL;
+	}
 
-		/* Try opening again */
-		box = mailbox_open(storage, folder, NULL, open_flags);
-    
-		if (box == NULL)
-			return NULL;
+	/* Subscribe to it if required */
+	if ( aenv->scriptenv->mailbox_autosubscribe ) {
+		(void)mailbox_list_set_subscribed(ns->list, folder, TRUE);
+	}
 
-		if (mailbox_sync(box, 0, 0, NULL) < 0) {
-			mailbox_close(&box);
-			return NULL;
-		}
+	/* Try opening again */
+	box = mailbox_alloc(ns->list, folder, NULL, flags);
+	*storage = mailbox_get_storage(box);
+	if ( mailbox_open(box) < 0 || mailbox_sync(box, 0, 0, NULL) < 0 ) {
+		/* Failed definitively */
+		*error_r = mail_storage_get_last_error(*storage, &error);
+		mailbox_close(&box);
+		return NULL;
 	}
 
 	return box;
@@ -244,6 +255,7 @@ static bool act_store_start
 	struct mail_namespace *ns = NULL;
 	struct mailbox *box = NULL;
 	pool_t pool = sieve_result_pool(aenv->result);
+	const char *open_error = NULL;
 
 	/* If context is NULL, the store action is the result of (implicit) keep */	
 	if ( ctx == NULL ) {
@@ -260,7 +272,7 @@ static bool act_store_start
 		ns = mail_namespace_find(aenv->scriptenv->namespaces, &ctx->folder);
 
 		if ( ns != NULL ) {		
-			box = act_store_mailbox_open(aenv, ns, ctx->folder);
+			box = act_store_mailbox_open(aenv, ns, ctx->folder, &open_error);
 		}
 	}
 				
@@ -270,13 +282,11 @@ static bool act_store_start
 	trans->namespace = ns;
 	trans->box = box;
 	trans->flags = 0;
-		
-	if ( ns != NULL && box == NULL ) 
-		act_store_get_storage_error(aenv, trans);	
+	trans->error = open_error;		
 	
 	*tr_context = (void *)trans;
 
-	return ( aenv->scriptenv->namespaces == NULL || (box != NULL) );
+	return ( (aenv->scriptenv->namespaces == NULL) || (box != NULL) );
 }
 
 static bool act_store_execute
@@ -307,7 +317,7 @@ static bool act_store_execute
 	/* Mark attempt to use storage. Can only get here when all previous actions
 	 * succeeded. 
 	 */
-	aenv->exec_status->last_storage = trans->namespace->storage;
+	aenv->exec_status->last_storage = mailbox_get_storage(trans->box);
 	
 	/* Start mail transaction */
 	trans->mail_trans = mailbox_transaction_begin

@@ -12,7 +12,6 @@ struct mail_raw {
 	struct mail *mail;
 
 	struct mailbox *box;
-	struct mailbox_header_lookup_ctx *headers_ctx;
 	struct mailbox_transaction_context *trans;
 };
 
