@@ -382,6 +382,7 @@ struct sieve_strbuf_ehandler {
 	struct sieve_error_handler handler;
 
 	string_t *errors;
+	bool crlf;
 };
 
 static void sieve_strbuf_verror
@@ -395,7 +396,11 @@ static void sieve_strbuf_verror
 		str_printfa(handler->errors, "%s: ", location);
 	str_append(handler->errors, "error: ");
 	str_vprintfa(handler->errors, fmt, args);
-	str_append(handler->errors, ".\n");
+
+	if ( !handler->crlf )
+		str_append(handler->errors, ".\n");
+	else
+		str_append(handler->errors, ".\r\n");
 }
 
 static void sieve_strbuf_vwarning
@@ -409,7 +414,11 @@ static void sieve_strbuf_vwarning
 		str_printfa(handler->errors, "%s: ", location);
 	str_printfa(handler->errors, "warning: ");
 	str_vprintfa(handler->errors, fmt, args);
-	str_append(handler->errors, ".\n");
+
+	if ( !handler->crlf )
+		str_append(handler->errors, ".\n");
+	else
+		str_append(handler->errors, ".\r\n");
 }
 
 static void sieve_strbuf_vinfo
@@ -423,11 +432,15 @@ static void sieve_strbuf_vinfo
 		str_printfa(handler->errors, "%s: ", location);	
 	str_printfa(handler->errors, "info: ");
 	str_vprintfa(handler->errors, fmt, args);
-	str_append(handler->errors, ".\n");
+
+	if ( !handler->crlf )
+		str_append(handler->errors, ".\n");
+	else
+		str_append(handler->errors, ".\r\n");
 }
 
 struct sieve_error_handler *sieve_strbuf_ehandler_create
-(string_t *strbuf, unsigned int max_errors)
+(string_t *strbuf, bool crlf, unsigned int max_errors)
 {
 	pool_t pool;
 	struct sieve_strbuf_ehandler *ehandler;
@@ -441,6 +454,8 @@ struct sieve_error_handler *sieve_strbuf_ehandler_create
 	ehandler->handler.verror = sieve_strbuf_verror;
 	ehandler->handler.vwarning = sieve_strbuf_vwarning;
 	ehandler->handler.vinfo = sieve_strbuf_vinfo;
+
+	ehandler->crlf = crlf;
 
 	return &(ehandler->handler);
 }

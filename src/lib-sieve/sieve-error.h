@@ -163,7 +163,7 @@ struct sieve_error_handler *sieve_stderr_ehandler_create
 
 /* Write errors into a string buffer */
 struct sieve_error_handler *sieve_strbuf_ehandler_create
-	(string_t *strbuf, unsigned int max_errors);
+	(string_t *strbuf, bool crlf, unsigned int max_errors);
 
 /* Write errors to a logfile */
 struct sieve_error_handler *sieve_logfile_ehandler_create
