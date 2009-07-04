@@ -507,6 +507,7 @@ static int lda_sieve_run
 	/* Compose script execution environment */
 
 	memset(&scriptenv, 0, sizeof(scriptenv));
+	memset(&estatus, 0, sizeof(estatus));
 
 	scriptenv.default_mailbox = mdctx->dest_mailbox_name;
 	scriptenv.mailbox_autocreate = mdctx->set->lda_mailbox_autocreate;
@@ -557,6 +558,8 @@ static int lda_sieve_deliver_mail
 	ARRAY_TYPE (const_string) scripts_after;
 	bool debug = mdctx->dest_user->mail_debug;
 	int ret = 0;
+
+	*storage_r = NULL;
 
 	T_BEGIN { 
 		struct stat st;
