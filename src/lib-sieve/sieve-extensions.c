@@ -356,12 +356,14 @@ static void sieve_extension_disable(struct sieve_extension_registration *ereg)
 
 void sieve_extensions_set_string(const char *ext_string)
 {
-	ARRAY_DEFINE(enabled_extensions, const struct sieve_extension_registration *);
-	const struct sieve_extension_registration *const *ena_eregs;
+	ARRAY_DEFINE(enabled_extensions, const struct sieve_extension *);
+	ARRAY_DEFINE(disabled_extensions, const struct sieve_extension *);
+	const struct sieve_extension *const *ext_enabled;
+	const struct sieve_extension *const *ext_disabled;
 	struct sieve_extension_registration *eregs;
-	const char *bp = ext_string;
-	const char *ep = bp;
-	unsigned int i, ext_count, ena_count;
+	const char **ext_names;
+	unsigned int i, ext_count, ena_count, dis_count;
+	bool relative = FALSE;
 
 	if ( ext_string == NULL ) {
 		/* Enable all */
@@ -373,62 +375,99 @@ void sieve_extensions_set_string(const char *ext_string)
 		return;	
 	}
 
-	t_array_init(&enabled_extensions, array_count(&extensions));
+	T_BEGIN {
+		t_array_init(&enabled_extensions, array_count(&extensions));
+		t_array_init(&disabled_extensions, array_count(&extensions));
 
-	do {
-		const char *name;
+		ext_names = t_strsplit_spaces(ext_string, " \t");
 
-		ep = strchr(bp, ' ');
-		if ( ep == NULL ) 
-			name = bp;
-		else { 
-			name = t_strdup_until(bp, ep);
-			bp = ep + 1;
+		while ( *ext_names != NULL ) {
+			const char *name = *ext_names;
+
+			ext_names++;
+
+			if ( *name != '\0' ) {
+				const struct sieve_extension_registration *ereg;
+				char op = '\0'; /* No add/remove operation */
+	
+				if ( *name == '+' 		/* Add to existing config */
+					|| *name == '-' ) {	/* Remove from existing config */
+				 	op = *name++;
+				 	relative = TRUE;
+				}
+
+				if ( *name == '@' )
+					ereg = NULL;
+				else
+					ereg = (const struct sieve_extension_registration *) 
+						hash_table_lookup(extension_index, name);
+	
+				if ( ereg == NULL ) {
+					sieve_sys_warning(
+						"ignored unknown extension '%s' while configuring "
+						"available extensions", name);
+					continue;
+				}
+
+				if ( op == '-' )
+					array_append(&disabled_extensions, &ereg->extension, 1);
+				else
+					array_append(&enabled_extensions, &ereg->extension, 1);
+			}
 		}
 
-		if ( *name != '\0' ) {
-			const struct sieve_extension_registration *ereg;
-	
-			if ( *name == '@' )
-				ereg = NULL;
-			else
-				ereg = (const struct sieve_extension_registration *) 
-					hash_table_lookup(extension_index, name);
+		eregs = array_get_modifiable(&extensions, &ext_count);
+		ext_enabled = array_get(&enabled_extensions, &ena_count);
+		ext_disabled = array_get(&disabled_extensions, &dis_count);
 
-			if ( ereg == NULL ) {
-				sieve_sys_warning("ignored unknown extension '%s' while configuring "
-					"available extensions", name);
-				continue;
+		/* Set new extension status */
+
+		for ( i = 0; i < ext_count; i++ ) {
+			unsigned int j;
+			bool disabled = TRUE;
+
+			/* If extensions are specified relative to the default set,
+			 * we first need to check which ones are disabled 
+			 */
+
+			if ( relative ) {
+				/* Enable if core extension */
+				for ( j = 0; j < sieve_core_extensions_count; j++ ) {
+					if ( sieve_core_extensions[j] == eregs[i].extension ) {
+						disabled = FALSE;
+						break;
+					}
+    			}
+
+				/* Disable if explicitly disabled */
+				for ( j = 0; j < dis_count; j++ ) {
+					if ( ext_disabled[j] == eregs[i].extension ) {
+						disabled = TRUE;
+						break;
+					}
+				}
+			} 
+
+			/* Enable if listed with '+' or no prefix */
+	
+			for ( j = 0; j < ena_count; j++ ) {
+				if ( ext_enabled[j] == eregs[i].extension ) {
+					disabled = FALSE;
+					break;
+				}		
 			}
 
-			array_append(&enabled_extensions, &ereg, 1);
+			/* Perform actual activation/deactivation */
+
+			if ( eregs[i].extension->_id != NULL && 
+				*(eregs[i].extension->name) != '@' ) {
+				if ( disabled && !eregs[i].required )
+					sieve_extension_disable(&eregs[i]);
+				else
+					sieve_extension_enable(&eregs[i]);
+			}
 		}
-
-	} while ( *bp == '\0' || ep != NULL );
-
-	eregs = array_get_modifiable(&extensions, &ext_count);
-	ena_eregs = array_get(&enabled_extensions, &ena_count);
-
-	/* Set new extension status */
-	for ( i = 0; i < ext_count; i++ ) {
-		unsigned int j;
-		bool disabled = TRUE;
-
-		for ( j = 0; j < ena_count; j++ ) {
-			if ( ena_eregs[j] == &eregs[i] ) {
-				disabled = FALSE;
-				break;
-			}		
-		}
-
-		if ( eregs[i].extension->_id != NULL && 
-			*(eregs[i].extension->name) != '@' ) {
-			if ( disabled && !eregs[i].required )
-				sieve_extension_disable(&eregs[i]);
-			else
-				sieve_extension_enable(&eregs[i]);
-		}
-	}
+	} T_END;
 }
 
 static void sieve_extensions_deinit_registry(void) 
