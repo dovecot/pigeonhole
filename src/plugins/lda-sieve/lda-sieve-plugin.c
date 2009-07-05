@@ -66,6 +66,7 @@ struct lda_sieve_run_context {
 	unsigned int script_count;
 
 	const char *user_script;
+	const char *main_script;
 
 	const struct sieve_message_data *msgdata;
 	const struct sieve_script_env *scriptenv;
@@ -75,10 +76,9 @@ struct lda_sieve_run_context {
 	const char *userlog;
 };
 
-static const char *lda_sieve_get_path(struct mail_user *user)
+static const char *lda_sieve_get_personal_path(struct mail_user *user)
 {
 	const char *script_path, *home;
-	struct stat st;
 
 	if ( mail_user_get_home(user, &home) <= 0 )
         home = NULL;
@@ -117,20 +117,18 @@ static const char *lda_sieve_get_path(struct mail_user *user)
 		script_path = home_expand(SIEVE_DEFAULT_PATH);
 	}
 
-	if (stat(script_path, &st) < 0) {
-		if (errno != ENOENT)
-			sieve_sys_error("stat(%s) failed: %m "
-				"(using global script path in stead)", script_path);
-		else if ( user->mail_debug )
-			sieve_sys_info("local script path %s doesn't exist "
-				"(using global script path in stead)", script_path);
+	return script_path;
+}
 
-		/* use global script instead, if one exists */
-		script_path = mail_user_plugin_getenv(user, "sieve_global_path");
-		if (script_path == NULL) {
-			/* for backwards compatibility */
-			script_path = mail_user_plugin_getenv(user, "global_script_path");
-		}
+static const char *lda_sieve_get_default_path(struct mail_user *user)
+{
+	const char *script_path;
+
+	/* Use global script path, if one exists */
+	script_path = mail_user_plugin_getenv(user, "sieve_global_path");
+	if (script_path == NULL) {
+		/* For backwards compatibility */
+		script_path = mail_user_plugin_getenv(user, "global_script_path");
 	}
 
 	return script_path;
@@ -171,13 +169,14 @@ static int lda_sieve_open
 	struct sieve_binary **sbin)
 {
 	const char *script_path = srctx->script_files[script_index];
+	const char *script_name =
+		( script_path == srctx->main_script ? "main_script" : NULL );
 	struct sieve_error_handler *ehandler;
-	bool user_script = ( script_path == srctx->user_script );
 	bool exists = TRUE;
 	bool debug = srctx->mdctx->dest_user->mail_debug;
 	int ret = 0;
 
-	if ( user_script )
+	if ( script_path == srctx->user_script )
 		ehandler = srctx->user_ehandler;
 	else
 		ehandler = srctx->master_ehandler;
@@ -187,7 +186,7 @@ static int lda_sieve_open
 
 	sieve_error_handler_reset(ehandler);
 
-	if ( (*sbin=sieve_open(script_path, user_script ? "main script" : NULL, ehandler, &exists)) 
+	if ( (*sbin=sieve_open(script_path, script_name, ehandler, &exists)) 
 		== NULL ) {
 
 		ret = sieve_get_errors(ehandler) > 0 ? -1 : 0;
@@ -196,7 +195,7 @@ static int lda_sieve_open
 			if ( debug )
 				sieve_sys_info("script file %s is missing", script_path);
 		} else {
-			if ( user_script && srctx->userlog != NULL ) {
+			if ( script_path == srctx->user_script && srctx->userlog != NULL ) {
 				sieve_sys_error
 					("failed to open script %s "
 						"(view logfile %s for more information)", 
@@ -218,8 +217,9 @@ static struct sieve_binary *lda_sieve_recompile
 (struct lda_sieve_run_context *srctx, unsigned int script_index)
 {
 	const char *script_path = srctx->script_files[script_index];
+	const char *script_name =
+		( script_path == srctx->main_script ? "main_script" : NULL );
     struct sieve_error_handler *ehandler;
-    bool user_script = ( script_path == srctx->user_script );
 	struct sieve_binary *sbin;
 
 	/* Warn */
@@ -229,15 +229,14 @@ static struct sieve_binary *lda_sieve_recompile
 
 	/* Recompile */	
 
-	if ( user_script )
+	if ( script_path == srctx->user_script )
 		ehandler = srctx->user_ehandler;
 	else
 		ehandler = srctx->master_ehandler;
 
-	if ( (sbin=sieve_compile(script_path,
-		user_script ? "main script" : NULL, ehandler)) == NULL ) {
+	if ( (sbin=sieve_compile(script_path, script_name, ehandler)) == NULL ) {
 
-		if ( user_script && srctx->userlog != NULL ) {
+		if ( script_path == srctx->user_script && srctx->userlog != NULL ) {
 			sieve_sys_error
 				("failed to re-compile script %s "
 					"(view logfile %s for more information)",
@@ -442,7 +441,8 @@ static int lda_sieve_multiscript_execute
 }
 
 static int lda_sieve_run
-(struct mail_deliver_context *mdctx, const char *user_script,
+(struct mail_deliver_context *mdctx, 
+	const char *user_script, const char *default_script,
 	const ARRAY_TYPE (const_string) *scripts_before,
 	const ARRAY_TYPE (const_string) *scripts_after,
 	struct mail_storage **storage_r)
@@ -467,9 +467,18 @@ static int lda_sieve_run
 
 	array_append_array(&scripts, scripts_before);
 
-	if ( user_script != NULL )
-		array_append(&scripts, &user_script, 1);
-	srctx.user_script = user_script;
+	if ( user_script != NULL ) {
+        array_append(&scripts, &user_script, 1);
+        srctx.user_script = user_script;
+        srctx.main_script = user_script;
+    } else if ( default_script != NULL ) {
+        array_append(&scripts, &default_script, 1);
+        srctx.user_script = NULL;
+        srctx.main_script = default_script;
+    } else {
+        srctx.user_script = NULL;
+        srctx.main_script = NULL;
+    }
 
 	array_append_array(&scripts, scripts_after);
 
@@ -543,23 +552,40 @@ static int lda_sieve_run
 static int lda_sieve_deliver_mail
 (struct mail_deliver_context *mdctx, struct mail_storage **storage_r)
 {
-	const char *user_script, *sieve_before, *sieve_after;
+	const char *user_script, *default_script, *sieve_before, *sieve_after;
 	ARRAY_TYPE (const_string) scripts_before;
 	ARRAY_TYPE (const_string) scripts_after;
 	bool debug = mdctx->dest_user->mail_debug;
 	int ret = 0;
 
 	T_BEGIN { 
+		struct stat st;
 
 		/* Find the personal script to execute */
 	
-		user_script = lda_sieve_get_path(mdctx->dest_user);
+		user_script = lda_sieve_get_personal_path(mdctx->dest_user);
+		default_script = lda_sieve_get_default_path(mdctx->dest_user);
+
+		if ( stat(user_script, &st) < 0 ) {
+
+			if (errno != ENOENT)
+				sieve_sys_error("stat(%s) failed: %m "
+					"(using global script path in stead)", user_script);
+			else if ( debug )
+				sieve_sys_info("local script path %s doesn't exist "
+					"(using global script path in stead)", user_script);
+
+			user_script = NULL;
+		}
+
 
 		if ( debug ) {
-			if ( user_script == NULL )			
+			const char *script = user_script == NULL ? default_script : user_script;
+
+			if ( script == NULL )			
 				sieve_sys_info("user has no valid personal script");
 			else
-				sieve_sys_info("using sieve path for user's script: %s", user_script);
+				sieve_sys_info("using sieve path for user's script: %s", script);
 		}
 
 		/* Check for multiscript */
@@ -596,7 +622,7 @@ static int lda_sieve_deliver_mail
 		/* Check whether there are any scripts to execute */
 
 		if ( array_count(&scripts_before) == 0 && array_count(&scripts_before) == 0 &&
-			user_script == NULL ) {
+			user_script == NULL && default_script == NULL ) {
 			if ( debug )
 				sieve_sys_info("no scripts to execute: reverting to default delivery.");
 
@@ -610,7 +636,8 @@ static int lda_sieve_deliver_mail
 			/* Run the script(s) */
 				
 			ret = lda_sieve_run
-                (mdctx, user_script, &scripts_before, &scripts_after, storage_r);
+                (mdctx, user_script, default_script, &scripts_before, &scripts_after, 
+					storage_r);
 		}
 
 	} T_END;
