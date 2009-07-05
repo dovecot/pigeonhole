@@ -1,8 +1,8 @@
-.TH "SIEVED" "1" "6 January 2009"
+.TH "SIEVED" "1" "4 July 2009"
 .SH NAME
 sieved \- Sieve script binary dump tool for the Dovecot secure IMAP server
 .SH SYNOPSIS
-sieved [\fB-x\fR "\fIextension extension ...\fR"] \fIsieve-binary\fR [\fIoutfile\fR]
+sieved [\fB-x\fR "\fIextension extension ...\fR"] \fIsieve-binary\fR [\fIout-file\fR]
 .br
 .SH DESCRIPTION
 .PP
@@ -14,12 +14,14 @@ its basic form it does not provide the means to cause infinite loops, making it 
 for running securely on mail servers where mail users have no permission run arbitrary programs.
 .PP
 Using the \fBsieved\fP command, Sieve binaries, which are produced for instance by
-\fBsievec\fP(1), can be transformed into a human-readable textual representation. This can provide valuable
-insight in how the Sieve script is executed. This is also particularly useful to view corrupt 
-binaries that can result from bugs in the Sieve implementation.
+\fBsievec\fP(1), can be transformed into a human-readable textual representation. This can 
+provide valuable insight in how the Sieve script is executed. This is also particularly useful 
+to view corrupt binaries that can result from bugs in the Sieve implementation. This tool is 
+intended mainly for development purposes, so normally system administrators and users will not 
+need to use this tool.
 .PP
 The \fIsieve-binary\fR argument specifies the Sieve binary file that needs to be dumped. The
-optional \fIoutfile\fR argument specifies where the output must be written. If omitted, the
+optional \fIout-file\fR argument specifies where the output must be written. If omitted, the
 output is written to \fBstdout\fR.
 .PP
 The format of the output is not explained here in detail, but it should be relatively easy

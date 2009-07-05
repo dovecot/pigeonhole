@@ -25,7 +25,7 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sieved <binfile> [<outfile>]\n"
+"Usage: sieved [-x <extensions>] <sieve-binary> [<out-file>]\n"
 	);
 }
 
@@ -45,8 +45,10 @@ int main(int argc, char **argv) {
 		if (strcmp(argv[i], "-x") == 0) {
 			/* extensions */
 			i++;
-			if (i == argc)
+			if (i == argc) {
+				print_help();
 				i_fatal("Missing -x argument");
+			}
 			extensions = argv[i];
 		} else if ( binfile == NULL ) {
 			binfile = argv[i];
@@ -60,7 +62,7 @@ int main(int argc, char **argv) {
 	
 	if ( binfile == NULL ) {
 		print_help();
-		i_fatal("missing <binfile> argument");
+		i_fatal("missing <sieve-binary> argument");
 	}
 
 	if ( extensions != NULL ) {

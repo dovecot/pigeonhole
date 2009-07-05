@@ -32,8 +32,8 @@ static void print_help(void)
 {
 	printf(
 "Usage: sieve-filter [-m <mailbox>] [-x <extensions>]\n"
-"                    [-s <scriptfile>] [-c]\n"
-"                    <scriptfile> <mailstore>\n"
+"                    [-s <script-file>] [-c]\n"
+"                    <script-file> <mail-store>\n"
 	);
 }
 

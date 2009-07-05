@@ -44,16 +44,11 @@
 
 static void print_help(void)
 {
-#ifdef SIEVE_RUNTIME_TRACE
-#  define SVTRACE " [-t]"
-#else
-#  define SVTRACE
-#endif
 	printf(
-"Usage: sieve-test [-r <recipient address>] [-f <envelope sender>]\n"
-"                  [-m <mailbox>] [-d <dump filename>] [-x <extensions>]\n"
-"                  [-s <scriptfile>] [-c]"SVTRACE"\n"
-"                  <scriptfile> <mailfile>\n"
+"Usage: sieve-test [-c] [-d <dump-filename>] [-e] [-f <envelope-sender>]\n"
+"                  [-l <mail-location>] [-m <default-mailbox>]\n" 
+"                  [-r <recipient-address>] [-s <script-file>]\n"
+"                  [-t] [-x <extensions>] <script-file> <mail-file>\n"
 	);
 }
 
@@ -201,14 +196,14 @@ int main(int argc, char **argv)
 		scriptfile = t_strdup(argv[optind++]);
 	} else { 
 		print_help();
-		i_fatal_status(EX_USAGE, "Missing <scriptfile> argument");
+		i_fatal_status(EX_USAGE, "Missing <script-file> argument");
 	}
 	
 	if ( optind < argc ) {
 		mailfile = t_strdup(argv[optind++]);
 	} else { 
 		print_help();
-		i_fatal_status(EX_USAGE, "Missing <mailfile> argument");
+		i_fatal_status(EX_USAGE, "Missing <mail-file> argument");
 	}
 	
 	if (optind != argc) {

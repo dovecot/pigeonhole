@@ -26,7 +26,7 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sievec [-d] [-x <extensions>] <scriptfile> [<outfile>]\n"
+"Usage: sievec [-d] [-x <extensions>] <script-file> [<out-file>]\n"
 	);
 }
 
@@ -51,8 +51,10 @@ int main(int argc, char **argv) {
 		} else if (strcmp(argv[i], "-x") == 0) {
 			/* extensions */
 			i++;
-			if (i == argc)
+			if (i == argc) {
+				print_help();
 				i_fatal("Missing -x argument");
+			}
 			extensions = argv[i];
 		} else if ( scriptfile == NULL ) {
 			scriptfile = argv[i];
@@ -66,7 +68,7 @@ int main(int argc, char **argv) {
 	
 	if ( scriptfile == NULL ) {
 		print_help();
-		i_fatal("Missing <scriptfile> argument");
+		i_fatal("Missing <script-file> argument");
 	}
 	
 	if ( outfile == NULL && dump )
