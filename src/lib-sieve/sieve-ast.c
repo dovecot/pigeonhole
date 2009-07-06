@@ -230,8 +230,8 @@ void *sieve_ast_extension_get_context
 		return TRUE; \
 	}
 
-#define __LIST_JOIN(list, items) { \
-		typeof(items->head) node; \
+#define __LIST_JOIN(list, node_type, items) { \
+		node_type *node; \
 		\
 		if ( list->len + items->len < list->len ) \
 			return FALSE; \
@@ -256,8 +256,8 @@ void *sieve_ast_extension_get_context
 		return TRUE; \
 	}	 
 
-#define __LIST_DETACH(first, count) { \
-		typeof(*first) *last, *result; \
+#define __LIST_DETACH(first, node_type, count) { \
+		node_type *last, *result; \
 		unsigned int left; \
 		\
 		i_assert(first->list != NULL); \
@@ -299,7 +299,7 @@ static bool sieve_ast_list_add
 
 static struct sieve_ast_node *sieve_ast_list_detach
 (struct sieve_ast_node *first, unsigned int count) 
-	__LIST_DETACH(first, count)
+	__LIST_DETACH(first, struct sieve_ast_node, count)
 
 /* List of argument AST nodes */
 
@@ -317,11 +317,11 @@ bool sieve_ast_arg_list_insert
 
 static bool sieve_ast_arg_list_join
 (struct sieve_ast_arg_list *list, struct sieve_ast_arg_list *items)
-	__LIST_JOIN(list, items)
+	__LIST_JOIN(list, struct sieve_ast_argument, items)
 
 static struct sieve_ast_argument *sieve_ast_arg_list_detach
 (struct sieve_ast_argument *first, const unsigned int count)
-	__LIST_DETACH(first, count)
+	__LIST_DETACH(first, struct sieve_ast_argument, count)
 
 void sieve_ast_arg_list_substitute
 (struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument, 
