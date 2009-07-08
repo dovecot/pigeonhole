@@ -103,16 +103,6 @@ static const struct sieve_argument notify_importance_tag = {
 	NULL, NULL 
 };
 
-/* Codes for optional arguments */
-
-enum cmd_notify_optional {
-	OPT_END,
-	OPT_FROM,
-	OPT_OPTIONS,
-	OPT_MESSAGE,
-	OPT_IMPORTANCE
-};
-
 /* 
  * Notify operation 
  */
@@ -287,13 +277,13 @@ static bool cmd_notify_registered
 (struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg) 
 {
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &notify_importance_tag, OPT_IMPORTANCE); 	
+		(valdtr, cmd_reg, &notify_importance_tag, CMD_NOTIFY_OPT_IMPORTANCE); 	
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &notify_from_tag, OPT_FROM); 	
+		(valdtr, cmd_reg, &notify_from_tag, CMD_NOTIFY_OPT_FROM); 	
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &notify_options_tag, OPT_OPTIONS); 	
+		(valdtr, cmd_reg, &notify_options_tag, CMD_NOTIFY_OPT_OPTIONS); 	
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &notify_message_tag, OPT_MESSAGE); 	
+		(valdtr, cmd_reg, &notify_message_tag, CMD_NOTIFY_OPT_MESSAGE); 	
 
 	return TRUE;
 }
@@ -379,19 +369,19 @@ static bool cmd_notify_operation_dump
 			switch ( opt_code ) {
 			case 0:
 				break;
-			case OPT_IMPORTANCE:
+			case CMD_NOTIFY_OPT_IMPORTANCE:
 				if ( !sieve_opr_number_dump(denv, address, "importance") )
 					return FALSE;
 				break;
-			case OPT_FROM:
+			case CMD_NOTIFY_OPT_FROM:
 				if ( !sieve_opr_string_dump(denv, address, "from") )
 					return FALSE;
 				break;
-			case OPT_OPTIONS:
+			case CMD_NOTIFY_OPT_OPTIONS:
 				if ( !sieve_opr_stringlist_dump(denv, address, "options") )
 					return FALSE;
 				break;
-			case OPT_MESSAGE:
+			case CMD_NOTIFY_OPT_MESSAGE:
 				if ( !sieve_opr_string_dump(denv, address, "message") )
 					return FALSE;
 				break;
@@ -446,7 +436,7 @@ static int cmd_notify_operation_execute
 			switch ( opt_code ) {
 			case 0:
 				break;
-			case OPT_IMPORTANCE:
+			case CMD_NOTIFY_OPT_IMPORTANCE:
 				if ( !sieve_opr_number_read(renv, address, &importance) ) {
 					sieve_runtime_trace_error(renv, "invalid importance operand");
 					return SIEVE_EXEC_BIN_CORRUPT;
@@ -458,19 +448,19 @@ static int cmd_notify_operation_execute
 				else if ( importance > 3 )
 					importance = 3;
 				break;
-			case OPT_FROM:
+			case CMD_NOTIFY_OPT_FROM:
 				if ( !sieve_opr_string_read(renv, address, &from) ) {
 					sieve_runtime_trace_error(renv, "invalid from operand");
 					return SIEVE_EXEC_BIN_CORRUPT;
 				}
 				break;
-			case OPT_MESSAGE:
+			case CMD_NOTIFY_OPT_MESSAGE:
 				if ( !sieve_opr_string_read(renv, address, &message) ) {
 					sieve_runtime_trace_error(renv, "invalid from operand");
 					return SIEVE_EXEC_BIN_CORRUPT;
 				}
 				break;
-			case OPT_OPTIONS:
+			case CMD_NOTIFY_OPT_OPTIONS:
 				if ( (options=sieve_opr_stringlist_read(renv, address)) == NULL ) {
 					sieve_runtime_trace_error(renv, "invalid options operand");
 					return SIEVE_EXEC_BIN_CORRUPT;

@@ -13,6 +13,7 @@
  */
 
 extern const struct sieve_extension enotify_extension;
+extern const struct sieve_extension notify_extension;
 extern const struct sieve_extension_capabilities notify_capabilities;
 
 /*
@@ -20,6 +21,16 @@ extern const struct sieve_extension_capabilities notify_capabilities;
  */
 
 extern const struct sieve_command notify_command;
+
+/* Codes for optional arguments */
+
+enum cmd_notify_optional {
+    CMD_NOTIFY_OPT_END,
+    CMD_NOTIFY_OPT_FROM,
+    CMD_NOTIFY_OPT_OPTIONS,
+    CMD_NOTIFY_OPT_MESSAGE,
+    CMD_NOTIFY_OPT_IMPORTANCE
+};
 
 /*
  * Tests

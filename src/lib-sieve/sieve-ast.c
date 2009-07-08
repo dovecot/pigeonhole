@@ -679,6 +679,12 @@ struct sieve_ast_argument *sieve_ast_arguments_detach
 	return sieve_ast_arg_list_detach(first, count);
 }
 
+bool sieve_ast_argument_attach
+(struct sieve_ast_node *node, struct sieve_ast_argument *argument)
+{
+	return sieve_ast_node_add_argument(node, argument);
+}
+
 const char *sieve_ast_argument_type_name
 (enum sieve_ast_argument_type arg_type) 
 {

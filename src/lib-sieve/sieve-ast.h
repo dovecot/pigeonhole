@@ -266,6 +266,8 @@ struct sieve_ast_argument *sieve_ast_argument_stringlist_substitute
 
 struct sieve_ast_argument *sieve_ast_arguments_detach
 	(struct sieve_ast_argument *first, unsigned int count);
+bool sieve_ast_argument_attach
+	(struct sieve_ast_node *node, struct sieve_ast_argument *argument);
 	
 const char *sieve_ast_argument_type_name(enum sieve_ast_argument_type arg_type);
 #define sieve_ast_argument_name(argument) \

@@ -120,10 +120,12 @@ const unsigned int sieve_core_extensions_count =
  */
 
 extern const struct sieve_extension imapflags_extension;
+extern const struct sieve_extension notify_extension;
 
 const struct sieve_extension *sieve_deprecated_extensions[] = {
 	/* Deprecated extensions */
-	&imapflags_extension
+	&imapflags_extension,
+	&notify_extension
 };
 
 const unsigned int sieve_deprecated_extensions_count =
