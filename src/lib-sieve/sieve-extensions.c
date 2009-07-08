@@ -116,18 +116,18 @@ const unsigned int sieve_core_extensions_count =
 	N_ELEMENTS(sieve_core_extensions);
 
 /*
- * Depricated extensions
+ * Deprecated extensions
  */
 
 extern const struct sieve_extension imapflags_extension;
 
-const struct sieve_extension *sieve_depricated_extensions[] = {
-	/* Depricated extensions */
+const struct sieve_extension *sieve_deprecated_extensions[] = {
+	/* Deprecated extensions */
 	&imapflags_extension
 };
 
-const unsigned int sieve_depricated_extensions_count =
-	N_ELEMENTS(sieve_depricated_extensions);
+const unsigned int sieve_deprecated_extensions_count =
+	N_ELEMENTS(sieve_deprecated_extensions);
 
 /* 
  * Extensions init/deinit
@@ -145,9 +145,9 @@ bool sieve_extensions_init(void)
 		(void)sieve_extension_register(sieve_core_extensions[i], TRUE);
 	}
 
-	/* Register depricated extensions */
-	for ( i = 0; i < sieve_depricated_extensions_count; i++ ) {
-		(void)sieve_extension_register(sieve_depricated_extensions[i], FALSE);
+	/* Register deprecated extensions */
+	for ( i = 0; i < sieve_deprecated_extensions_count; i++ ) {
+		(void)sieve_extension_register(sieve_deprecated_extensions[i], FALSE);
 	}
 
 	/* More extensions can be added through plugins */

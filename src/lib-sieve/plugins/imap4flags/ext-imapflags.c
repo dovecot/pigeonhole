@@ -6,8 +6,8 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-melnikov-sieve-imapflags-03.txt
- * Implementation: depricated; provided for backwards compatibility
- * Status: depricated
+ * Implementation: deprecated; provided for backwards compatibility
+ * Status: deprecated
  *
  */
  
@@ -132,7 +132,7 @@ static bool ext_imapflags_validator_extension_validate
 {
 	if ( sieve_validator_extension_loaded(valdtr, &imap4flags_extension) ) {
 		sieve_argument_validate_error(valdtr, require_arg,
-			"the (depricated) imapflags extension cannot be used "
+			"the (deprecated) imapflags extension cannot be used "
 			"together with the imap4flags extension");
 		return FALSE;
 	}
