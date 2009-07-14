@@ -214,19 +214,21 @@ static struct mailbox *act_store_mailbox_open
 
 	*storage = mailbox_get_storage(box);
 	*error_r = mail_storage_get_last_error(*storage, &error);
-	mailbox_close(&box);
 	
 	/* Only continue when the mailbox is missing and when we are allowed to
 	 * create it.
 	 */
-	if ( !aenv->scriptenv->mailbox_autocreate || error != MAIL_ERROR_NOTFOUND )
-		return NULL;
-
-	/* Try creating it. */
-	if ( mail_storage_mailbox_create(*storage, ns, folder, FALSE) < 0 ) {
-		*error_r = mail_storage_get_last_error(*storage, &error);
+	if ( !aenv->scriptenv->mailbox_autocreate || error != MAIL_ERROR_NOTFOUND ) {
+		mailbox_close(&box);
 		return NULL;
 	}
+
+	/* Try creating it. */
+    if ( mailbox_create(box, NULL, FALSE) < 0 ) {
+        *error_r = mail_storage_get_last_error(*storage, &error);
+        mailbox_close(&box);
+        return NULL;
+    }
 
 	/* Subscribe to it if required */
 	if ( aenv->scriptenv->mailbox_autosubscribe ) {
@@ -234,8 +236,6 @@ static struct mailbox *act_store_mailbox_open
 	}
 
 	/* Try opening again */
-	box = mailbox_alloc(ns->list, folder, NULL, flags);
-	*storage = mailbox_get_storage(box);
 	if ( mailbox_open(box) < 0 || mailbox_sync(box, 0, 0, NULL) < 0 ) {
 		/* Failed definitively */
 		*error_r = mail_storage_get_last_error(*storage, &error);
@@ -352,7 +352,7 @@ static bool act_store_execute
  	}
  	
  	if ( keywords != NULL ) {
- 		mailbox_keywords_free(trans->box, &keywords);
+ 		mailbox_keywords_unref(trans->box, &keywords);
  	}
  		 	
 	return TRUE;
