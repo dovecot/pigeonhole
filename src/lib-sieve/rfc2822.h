@@ -27,10 +27,10 @@ const char *rfc2822_header_field_name_sanitize(const char *name);
  * Message composition
  */
 
-void rfc2822_header_field_write
+int rfc2822_header_field_write
 	(FILE *f, const char *name, const char *body);
 	
-void rfc2822_header_field_printf
+int rfc2822_header_field_printf
 	(FILE *f, const char *name, const char *body_fmt, ...) ATTR_FORMAT(3, 4);
 
 #endif /* __RFC2822_H */

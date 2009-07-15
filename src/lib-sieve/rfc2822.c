@@ -109,7 +109,12 @@ const char *rfc2822_header_field_name_sanitize(const char *name)
  * be changed to proper dovecot streams.
  */
 
-void rfc2822_header_field_write
+static inline bool rfc2822_write(FILE *f, const char *data, size_t len)
+{
+	return ( fwrite(data, len, 1, f) == 1 );
+}
+
+int rfc2822_header_field_write
 (FILE *f, const char *name, const char *body)
 {
 	static const unsigned int max_line = 80;
@@ -118,16 +123,19 @@ void rfc2822_header_field_write
 	const char *sp = body;  /* Start pointer */
 	const char *wp = NULL;  /* Whitespace pointer */ 
 	const char *nlp = NULL; /* New-line pointer */
-	unsigned int len = strlen(name);
+	unsigned int line_len = strlen(name);
+	int len = 0;
 	
 	/* Write header field name first */
-	fwrite(name, len, 1, f);
-	fwrite(": ", 2, 1, f);
+	if ( !rfc2822_write(f, name, line_len) || !rfc2822_write(f, ": ", 2) )
+		return -1;
+
+	line_len +=  2;
+	len += line_len;
 		
 	/* Add field body; fold it if necessary and account for existing folding */
-	len +=  2;
 	while ( *bp != '\0' ) {
-		while ( *bp != '\0' && nlp == NULL && (wp == NULL || len < max_line) ) {
+		while ( *bp != '\0' && nlp == NULL && (wp == NULL || line_len < max_line) ) {
 			if ( *bp == ' ' || *bp == '\t' ) {
 			 	wp = bp;
 			} else if ( *bp == '\r' || *bp == '\n' ) {
@@ -135,7 +143,7 @@ void rfc2822_header_field_write
 				break;
 			}
 
-			bp++; len++;
+			bp++; line_len++;
 		}
 		
 		if ( *bp == '\0' ) break;
@@ -146,33 +154,45 @@ void rfc2822_header_field_write
 			while ( *bp == '\r' || *bp == '\n' )
 				bp++;
 			
-			fwrite(sp, nlp-sp, 1, f);
+			if ( !rfc2822_write(f, sp, nlp-sp) )
+				return -1;
+			len += nlp-sp;
 			
-			if ( *bp != '\0' && *bp != ' ' && *bp != '\t' )
-				fwrite("\r\n\t", 3, 1, f);
-			else
-				fwrite("\r\n", 2, 1, f);
-				
+			if ( *bp != '\0' && *bp != ' ' && *bp != '\t' ) {
+				if ( !rfc2822_write(f, "\r\n\t", 3) )
+					return -1;
+				len += 3;
+			} else {
+				if ( !rfc2822_write(f, "\r\n", 2) )
+					return -1;
+				len += 2;
+			}
+
 			sp = bp;
 		} else {
 			/* Insert newline at last whitespace within the max_line limit */
-			fwrite(sp, wp-sp, 1, f);
-			fwrite("\r\n", 2, 1, f);
+			if ( !rfc2822_write(f, sp, wp-sp) || !rfc2822_write(f, "\r\n", 2) )
+				return -1;
+			len += (wp-sp) + 2;
+		
 			sp = wp;
 		}
 		
-		len = bp - sp;		
+		line_len = bp - sp;		
 		wp = NULL;
 		nlp = NULL;
 	}
 	
 	if ( bp != sp ) {
-		fwrite(sp, bp-sp, 1, f);
-		fwrite("\r\n", 2, 1, f);
+		if ( !rfc2822_write(f, sp, bp-sp) || !rfc2822_write(f, "\r\n", 2) )
+			return -1;
+		len += (bp-sp) + 2;
 	}
+
+	return len;
 }
 
-void rfc2822_header_field_printf
+int rfc2822_header_field_printf
 (FILE *f, const char *name, const char *body_fmt, ...)
 {
 	string_t *body = t_str_new(256);
@@ -182,6 +202,6 @@ void rfc2822_header_field_printf
 	str_vprintfa(body, body_fmt, args);
 	va_end(args);
 	
-	rfc2822_header_field_write(f, name, str_c(body));
+	return rfc2822_header_field_write(f, name, str_c(body));
 }
 
