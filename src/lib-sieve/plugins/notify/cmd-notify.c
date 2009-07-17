@@ -649,18 +649,40 @@ static int cmd_notify_operation_execute
 			const char *error;
 			const char *addr_norm = sieve_address_normalize(raw_address, &error);
 			
+			/* Add if valid address */
 			if ( addr_norm != NULL ) {
-				struct ext_notify_recipient recipient;
+				const struct ext_notify_recipient *rcpts;
+				unsigned int rcpt_count, i;
 
-				recipient.full = p_strdup(pool, str_c(raw_address));
-				recipient.normalized = p_strdup(pool, addr_norm);
+				/* Prevent duplicates */
+				rcpts = array_get(&act->recipients, &rcpt_count);
+				
+				for ( i = 0; i < rcpt_count; i++ ) {
+					if ( sieve_address_compare
+						(rcpts[i].normalized, addr_norm, TRUE) == 0 )
+						break;
+				}
+	
+				/* Add only if unique */
+				if ( i != rcpt_count ) {
+					sieve_runtime_warning(renv, 
+						sieve_error_script_location(renv->script, source_line),
+						"duplicate recipient '%s' specified in the :options argument of "
+						"the deprecated notify command", 
+						str_sanitize(str_c(raw_address), 128));
+				}	else {						
+					struct ext_notify_recipient recipient;			
+
+					recipient.full = p_strdup(pool, str_c(raw_address));
+					recipient.normalized = p_strdup(pool, addr_norm);
 		
-				array_append(&act->recipients, &recipient, 1);			
+					array_append(&act->recipients, &recipient, 1);
+				}		
 			} else {
 				sieve_runtime_error(renv, 
 					sieve_error_script_location(renv->script, source_line),
 					"specified :options address '%s' is invalid for "
-					"the mailto notify method: %s", 
+					"the deprecated notify command: %s", 
 					str_sanitize(str_c(raw_address), 128), error);
 				return SIEVE_EXEC_FAILURE;
 			}
