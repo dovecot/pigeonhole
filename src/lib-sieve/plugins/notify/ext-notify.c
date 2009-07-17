@@ -11,6 +11,12 @@
  * Status: deprecated
  * 
  */
+
+/* FIXME: Currently the following CMUSieve features are not supported:
+ * 
+ * 1) The denotify command is not supported and causes a compile error when used.
+ * 2) The $text$ substitution is not available for the :message argument.
+ */
 	
 #include <stdio.h>
 
