@@ -29,7 +29,7 @@ test "Invalid mailto :from address (FIXME: count only)" {
 		test_fail "compile should have failed";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
 		test_fail "wrong number of errors reported";
 	}
 }
