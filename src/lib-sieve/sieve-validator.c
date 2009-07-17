@@ -1060,13 +1060,11 @@ static bool sieve_validate_block
 static bool sieve_validate_command
 	(struct sieve_validator *validator, struct sieve_ast_node *cmd_node);
 	
-static bool sieve_validate_command
+static bool sieve_validate_command_context
 (struct sieve_validator *valdtr, struct sieve_ast_node *cmd_node) 
 {
 	enum sieve_ast_type ast_type = sieve_ast_node_type(cmd_node);
-	bool result = TRUE;
 	struct sieve_command_registration *cmd_reg;
-	const struct sieve_command *command = NULL;
 	
 	i_assert( ast_type == SAT_TEST || ast_type == SAT_COMMAND );
 	
@@ -1076,13 +1074,12 @@ static bool sieve_validate_command
 		(valdtr, cmd_node->identifier);
 	
 	if ( cmd_reg != NULL && cmd_reg->command != NULL ) {
-		command = cmd_reg->command;
+		const struct sieve_command *command = cmd_reg->command;
 
 		/* Identifier = "" when the command was previously marked as unknown */
 		if ( *(command->identifier) != '\0' ) {
-			if ( (command->type == SCT_COMMAND && ast_type == SAT_TEST) || 
-				(command->type == SCT_TEST && ast_type == SAT_COMMAND) ) 
-			{
+			if ( (command->type == SCT_COMMAND && ast_type == SAT_TEST)
+				|| (command->type == SCT_TEST && ast_type == SAT_COMMAND) ) {
 				sieve_validator_error(
 					valdtr, cmd_node->source_line, "attempted to use %s '%s' as %s", 
 					sieve_command_type_name(command), cmd_node->identifier,
@@ -1094,44 +1091,12 @@ static bool sieve_validate_command
 			struct sieve_command_context *ctx = 
 				sieve_command_context_create(cmd_node, command, cmd_reg); 
 			cmd_node->context = ctx;
-		
-			/* If pre-validation fails, don't bother to validate further 
-			 * as context might be missing and doing so is not very useful for 
-			 * further error reporting anyway
-			 */
-			if ( command->pre_validate == NULL || 
-				command->pre_validate(valdtr, ctx) ) {
-		
-				/* Check syntax */
-				if ( !sieve_validate_command_arguments(valdtr, ctx) ) {
-					result = FALSE;
 
-					/* A missing ':' causes a tag to become a test. This can be the cause
-					 * of the arguments validation failing. Therefore we must produce an
-					 * error for the sub-tests as well if appropriate.
-					 */
-					(void)sieve_validate_command_subtests(valdtr, ctx, command->subtests);
-				} else if (
-					!sieve_validate_command_subtests
- 						(valdtr, ctx, command->subtests) || 
- 					(ast_type == SAT_COMMAND && !sieve_validate_command_block
- 						(valdtr, ctx, command->block_allowed, 
- 							command->block_required)) ) {
- 					result = FALSE;
- 				} else {
-					/* Call command validation function if specified */
-					if ( command->validate != NULL )
-						result = command->validate(valdtr, ctx) && result;
-				}
-			} else
-				result = FALSE;
-				
-			result = result && sieve_validate_arguments_context(valdtr, ctx);
-				
-		} else 
-			result = FALSE;
-				
-	} else {
+		} else {
+			return FALSE;
+		}
+
+	}	else {
 		sieve_validator_error(
 			valdtr, cmd_node->source_line, 
 			"unknown %s '%s' (only reported once at first occurence)", 
@@ -1139,7 +1104,59 @@ static bool sieve_validate_command
 			
 		sieve_validator_register_unknown_command(valdtr, cmd_node->identifier);
 		
-		result = FALSE;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static bool sieve_validate_command
+(struct sieve_validator *valdtr, struct sieve_ast_node *cmd_node) 
+{
+	enum sieve_ast_type ast_type = sieve_ast_node_type(cmd_node);
+	struct sieve_command_context *ctx = cmd_node->context;
+	const struct sieve_command *command = ( ctx != NULL ? ctx->command : NULL );
+	bool result = TRUE;
+	
+	i_assert( ast_type == SAT_TEST || ast_type == SAT_COMMAND );
+
+	if ( command != NULL && *(command->identifier) != '\0' ) {
+		
+		if ( command->pre_validate == NULL 
+			|| command->pre_validate(valdtr, ctx) ) {
+	
+			/* Check argument syntax */
+			if ( !sieve_validate_command_arguments(valdtr, ctx) ) {
+				result = FALSE;
+
+				/* A missing ':' causes a tag to become a test. This can be the cause
+				 * of the arguments validation failing. Therefore we must produce an
+				 * error for the sub-tests as well if appropriate.
+				 */
+				(void)sieve_validate_command_subtests(valdtr, ctx, command->subtests);
+
+			} else if (
+				!sieve_validate_command_subtests(valdtr, ctx, command->subtests) || 
+				(ast_type == SAT_COMMAND && !sieve_validate_command_block
+					(valdtr, ctx, command->block_allowed, command->block_required)) ) {
+
+				result = FALSE;
+
+			} else {
+				/* Call command validation function if specified */
+				if ( command->validate != NULL )
+					result = command->validate(valdtr, ctx) && result;
+			}
+		} else {
+			/* If pre-validation fails, don't bother to validate further 
+			 * as context might be missing and doing so is not very useful for 
+			 * further error reporting anyway
+			 */
+			return FALSE;
+		}
+			
+		result = result && sieve_validate_arguments_context(valdtr, ctx);
+								
 	}
 
 	/*  
@@ -1168,9 +1185,14 @@ static bool sieve_validate_test_list
 	struct sieve_ast_node *test;
 
 	test = sieve_ast_test_first(test_list);
-	while ( test != NULL && (result || 
-		sieve_errors_more_allowed(valdtr->ehandler))) {	
-		result = sieve_validate_command(valdtr, test) && result;	
+	while ( test != NULL 
+		&& (result || sieve_errors_more_allowed(valdtr->ehandler)) ) {
+	
+		result = 
+			sieve_validate_command_context(valdtr, test) && 
+			sieve_validate_command(valdtr, test) &&
+			result;	
+		
 		test = sieve_ast_test_next(test);
 	}		
 	
@@ -1180,44 +1202,49 @@ static bool sieve_validate_test_list
 static bool sieve_validate_block
 (struct sieve_validator *valdtr, struct sieve_ast_node *block) 
 {
-	bool result = TRUE;
+	bool result = TRUE, fatal = FALSE;
 	struct sieve_ast_node *command, *next;
 
 	T_BEGIN {	
 		command = sieve_ast_command_first(block);
-		while ( command != NULL && (result || 
-			sieve_errors_more_allowed(valdtr->ehandler)) ) {	
+		while ( !fatal &&  command != NULL
+			&& (result || sieve_errors_more_allowed(valdtr->ehandler)) ) {	
+			bool command_success;
 
 			next = sieve_ast_command_next(command);
-			result = sieve_validate_command(valdtr, command) && result;	
+			command_success = sieve_validate_command_context(valdtr, command);
+			result = command_success && result;	
 
-			/* Check if this is the first non-require command */
-	
-			if ( result && !valdtr->finished_require && command->context != NULL &&
-				command->context->command != &cmd_require ) {
+	 		/* Check if this is the first non-require command */
+			if ( command_success && sieve_ast_node_type(block) == SAT_ROOT
+				&& !valdtr->finished_require && command->context != NULL
+				&& command->context->command != &cmd_require ) {
 				const struct sieve_validator_extension_reg *extrs;
-			    unsigned int ext_count, i;
-	
-				valdtr->finished_require = TRUE;
-	
-			    /* Validate all 'require'd extensions */
+				unsigned int ext_count, i;
 
-			    extrs = array_get(&valdtr->extensions, &ext_count);
-			    for ( i = 0; i < ext_count; i++ ) {
-					if ( extrs[i].val_ext != NULL && extrs[i].val_ext->validate != NULL ) {
+				valdtr->finished_require = TRUE;
+
+				/* Validate all 'require'd extensions */
+				extrs = array_get(&valdtr->extensions, &ext_count);
+				for ( i = 0; i < ext_count; i++ ) {
+					if ( extrs[i].val_ext != NULL 
+						&& extrs[i].val_ext->validate != NULL ) {
+
 						if ( !extrs[i].val_ext->validate
 							(valdtr, extrs[i].context, extrs[i].arg) )
-						result = FALSE;
+						fatal = TRUE;
 						break;
 					} 
 				}
 			}
 
+			result = !fatal && sieve_validate_command(valdtr, command) && result;
+			
 			command = next;
 		}		
 	} T_END;
 	
-	return result;
+	return result && !fatal;
 }
 
 bool sieve_validator_run(struct sieve_validator *validator) 
