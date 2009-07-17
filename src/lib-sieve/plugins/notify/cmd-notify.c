@@ -670,7 +670,17 @@ static int cmd_notify_operation_execute
 						"duplicate recipient '%s' specified in the :options argument of "
 						"the deprecated notify command", 
 						str_sanitize(str_c(raw_address), 128));
-				}	else {						
+
+				}	else if 
+					( array_count(&act->recipients) >= EXT_NOTIFY_MAX_RECIPIENTS ) {
+					sieve_runtime_warning(renv, 
+						sieve_error_script_location(renv->script, source_line),
+						"more than the maximum %u recipients are specified "
+						"for the deprecated notify command; "
+						"the rest is discarded", EXT_NOTIFY_MAX_RECIPIENTS);
+					break;
+
+				} else {						
 					struct ext_notify_recipient recipient;			
 
 					recipient.full = p_strdup(pool, str_c(raw_address));
