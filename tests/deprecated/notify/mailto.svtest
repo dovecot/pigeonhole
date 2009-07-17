@@ -1,0 +1,155 @@
+require "vnd.dovecot.testsuite";
+require "notify";
+require "relational";
+require "comparator-i;ascii-numeric";
+
+/*
+ * Simple test
+ */
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: nico@vestingbar.nl
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test "Simple" {
+	notify :method "mailto" :options "stephan@rename-it.nl";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not header :matches "Auto-Submitted" "auto-generated*" {
+		test_fail "auto-submitted header set inappropriately";
+	}
+
+	if not exists "X-Sieve" {
+		test_fail "x-sieve header missing from outgoing message";
+	}
+}
+
+/*
+ * Multiple recipients
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: nico@vestingbar.nl
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test "Multiple recipients" {
+	notify :options ["timo@example.com","stephan@dovecot.org","postmaster@vestingbar.nl"];
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not address :is "to" "timo@example.com" {
+		test_fail "first To address missing";
+	}
+
+	test_message :smtp 1;
+
+	if not address :is "to" "stephan@dovecot.org" {
+		test_fail "second To address missing";
+	}
+
+	if not header :matches "Auto-Submitted" "auto-generated*" {
+		test_fail "auto-submitted header not found for second message";
+	}
+
+	test_message :smtp 2;
+
+	if not address :is "to" "postmaster@vestingbar.nl" {
+		test_fail "third To address missing";
+	}
+
+	if not header :matches "Auto-Submitted" "auto-generated*" {
+		test_fail "auto-submitted header not found for third message";
+	}
+
+	if not address :count "eq" :comparator "i;ascii-numeric" "to" "1" {
+		test_fail "too many recipients in To header";
+	} 
+
+	if not address :count "eq" :comparator "i;ascii-numeric" "cc" "0" {
+		test_fail "too many recipients in Cc header";
+	} 
+}
+
+/*
+ * Duplicate recipients
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: nico@vestingbar.nl
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test "Duplicate recipients" {
+	notify :options ["timo@example.com", "stephan@dovecot.org", "stephan@dovecot.org"];
+	notify :options ["timo@example.com", "stephan@rename-it.nl"];
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 2;
+
+	if address "To" "stephan@dovecot.org" {
+		test_fail "duplicate recipient not removed from first message";
+	}
+
+	if address "To" "timo@example.com" {
+		test_fail "duplicate recipient not removed from second message";
+	}
+}
+
+/*
+ * Notifying on automated messages
+ */
+
+test_result_reset;
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: nico@vestingbar.nl
+Auto-submitted: auto-notify
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test "Notifying on automated messages" {
+	notify :options "stephan@rename-it.nl";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	if test_message :smtp 0 {
+		test_fail "notified of auto-submitted message";
+	}
+}
+

@@ -85,7 +85,11 @@ test_cases = \
 	tests/extensions/enotify/mailto.svtest \
 	tests/extensions/environment/basic.svtest \
 	tests/extensions/environment/rfc.svtest \
-	tests/multiscript/basic.svtest
+	tests/multiscript/basic.svtest \
+	tests/deprecated/notify/basic.svtest \
+	tests/deprecated/notify/mailto.svtest \
+	tests/deprecated/notify/errors.svtest \
+	tests/deprecated/notify/execute.svtest
 
 if HAVE_DOVECOT_LIBS
 
