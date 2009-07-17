@@ -10,5 +10,6 @@ SUBDIRS = \
 	body \
 	variables \
 	enotify \
+	notify \
 	environment
 

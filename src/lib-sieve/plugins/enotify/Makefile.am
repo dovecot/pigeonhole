@@ -23,7 +23,6 @@ notify_methods = \
 
 libsieve_ext_enotify_la_SOURCES = \
 	ext-enotify.c \
-	ext-notify.c \
 	ext-enotify-common.c \
 	$(commands) \
 	$(tests) \
