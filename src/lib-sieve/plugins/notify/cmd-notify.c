@@ -383,7 +383,7 @@ static bool cmd_notify_validate
 		
 		/* Parse and check options */
 		if ( sieve_ast_stringlist_map
-			(&option, (void *) &valdtr, cmd_notify_address_validate) <= 0 ) {
+			(&option, (void *) valdtr, cmd_notify_address_validate) <= 0 ) {
 			return FALSE;
 		}
 	} else {
@@ -646,7 +646,7 @@ static int cmd_notify_operation_execute
 		raw_address = NULL;
 		while ( (result=sieve_coded_stringlist_next_item(options, &raw_address))
 			&& raw_address != NULL ) {
-			const char *error;
+			const char *error = NULL;
 			const char *addr_norm = sieve_address_normalize(raw_address, &error);
 			
 			/* Add if valid address */
