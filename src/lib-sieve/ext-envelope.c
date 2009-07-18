@@ -466,8 +466,11 @@ static int ext_envelope_operation_execute
 							ret = sieve_match_value(mctx, "", 0);
 						} else {
 							const char *part = addrp->extract_from(addresses[i]);
+
 							if ( part != NULL ) 
 								ret = sieve_match_value(mctx, part, strlen(part));
+							else
+								ret = 0;
 						}
 
 						if ( ret < 0 ) {
