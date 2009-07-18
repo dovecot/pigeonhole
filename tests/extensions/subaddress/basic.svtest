@@ -97,3 +97,15 @@ test "Undisclosed-recipients" {
 		test_fail ":user matched group name";
 	}
 }
+
+test_set "envelope.to" "frop@sieve.nl";
+
+test "No detail" {
+	if envelope :detail "to" "virus" {
+		test_fail ":detail matched non-existant detail element in envelope (separator is missing)";
+	}
+
+	if address :detail "from" "virus" {
+		test_fail ":detail matched non-existant detail element in from header (separator is missing)";		
+	}
+}
