@@ -90,20 +90,27 @@ static bool tst_address_registered
  *
  * This list explicitly does not contain the envelope-to and return-path 
  * headers. The envelope test must be used to test against these addresses.
+ *
+ * FIXME: this restriction is somewhat odd. Sieve list advises to allow 
+ *        any other header as long as its content matches the address-list
+ *        grammar.
  */
 static const char * const _allowed_headers[] = {
 	/* Required */
 	"from", "to", "cc", "bcc", "sender", "resent-from", "resent-to",
 
-	/* Additional (RFC 2822) */
-	"reply-to", "resent-reply-to", 
-	
-	/* Non-standard (draft-palme-mailext-headers-08.txt) */
+	/* Additional (RFC 822 / RFC 2822) */
+	"reply-to", "resent-reply-to", "resent-sender", "resent-cc", "resent-bcc",  
+
+	/* Non-standard (RFC 2076, draft-palme-mailext-headers-08.txt) */
 	"for-approval", "for-handling", "for-comment", "apparently-to", "errors-to", 
 	"delivered-to", "return-receipt-to", "x-admin", "read-receipt-to", 
 	"x-confirm-reading-to", "return-receipt-requested", 
 	"registered-mail-reply-requested-by", "mail-followup-to", "mail-reply-to",
 	"abuse-reports-to", "x-complaints-to", "x-report-abuse-to",
+	
+	/* Undocumented */
+	"x-beenthere",
 	
 	NULL  
 };
