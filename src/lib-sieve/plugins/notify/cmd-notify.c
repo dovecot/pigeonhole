@@ -23,6 +23,7 @@
 #include "sieve-result.h"
 #include "sieve-address.h"
 #include "sieve-message.h"
+#include "sieve-smtp.h"
 
 #include "ext-notify-common.h"
 #include "ext-notify-limits.h"
@@ -863,10 +864,11 @@ static bool act_notify_send
 	for ( i = 0; i < count; i++ ) {
 
 		if ( msgdata->return_path != NULL )
-			smtp_handle = senv->smtp_open(recipients[i].normalized, 
-				senv->postmaster_address, &f);
+			smtp_handle = sieve_smtp_open
+				(senv, recipients[i].normalized, senv->postmaster_address, &f);
 		else		
-			smtp_handle = senv->smtp_open(recipients[i].normalized, NULL, &f);
+			smtp_handle = sieve_smtp_open
+				(senv, recipients[i].normalized, NULL, &f);
 
 		outmsgid = sieve_message_get_new_id(senv);
 	
@@ -912,7 +914,7 @@ static bool act_notify_send
 		fprintf(f, "\r\n");
 		fprintf(f, "%s\r\n", act->message);
 			
-		if ( senv->smtp_close(smtp_handle) ) {
+		if ( sieve_smtp_close(senv, smtp_handle) ) {
 			sieve_result_log(aenv, 
 				"sent mail notification to <%s>", 
 				str_sanitize(recipients[i].normalized, 80));
