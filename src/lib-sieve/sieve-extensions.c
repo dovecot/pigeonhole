@@ -85,7 +85,11 @@ extern const struct sieve_extension environment_extension;
  * Extensions under development
  */
 
-// None
+#ifdef HAVE_SIEVE_UNFINISHED
+
+extern const struct sieve_extension ereject_extension;
+
+#endif
 
 /*
  * List of native extensions
@@ -103,6 +107,10 @@ const struct sieve_extension *sieve_core_extensions[] = {
 	&encoded_character_extension,
 
 	/* Extensions under development */
+
+#ifdef HAVE_SIEVE_UNFINISHED
+	&ereject_extension,
+#endif
 	
 	/* 'Plugins' */
 	&vacation_extension, &subaddress_extension, 
