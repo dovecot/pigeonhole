@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "compat.h"
 #include "istream.h"
+#include "eacces-error.h"
 
 #include "sieve-common.h"
 #include "sieve-error.h"
@@ -108,7 +109,7 @@ struct sieve_script *sieve_script_init
 					*exists_r = FALSE;
 			} else
 				sieve_critical(ehandler, basename, 
-					"failed to lstat sieve script file '%s': %m", path);
+					"failed to stat sieve script: lstat(%s) failed: %m", path);
 
 			script = NULL;
 			ret = 1;
@@ -127,7 +128,7 @@ struct sieve_script *sieve_script_init
 							*exists_r = FALSE;
 					} else
 						sieve_critical(ehandler, basename, 
-							"failed to stat sieve script file '%s': %m", path);
+							"failed to stat sieve script: stat(%s) failed: %m", path);
 
 					script = NULL;	
 					ret = 1;
@@ -266,28 +267,33 @@ struct istream *sieve_script_open
 		*deleted_r = FALSE;
 
 	if ( (fd=open(script->path, O_RDONLY)) < 0 ) {
-		if ( errno == ENOENT ) 
+		if ( errno == ENOENT ) {
 			if ( deleted_r == NULL ) 
 				/* Not supposed to occur, create() does stat already */
 				sieve_error(script->ehandler, script->basename, 
 					"sieve script does not exist");
 			else 
 				*deleted_r = TRUE;
-		else
+		} else if ( errno == EACCES ) {
+			sieve_critical(script->ehandler, script->path,
+				"failed to open sieve script: %s",
+				eacces_error_get("open", script->path));
+		} else {
 			sieve_critical(script->ehandler, script->path, 
-				"failed to open sieve script: %m");
+				"failed to open sieve script: open(%s) failed: %m", script->path);
+		}
 		return NULL;
 	}	
 	
 	if ( fstat(fd, &st) != 0 ) {
 		sieve_critical(script->ehandler, script->path, 
-			"failed to fstat opened sieve script: %m");
+			"failed to open sieve script: fstat(fd=%s) failed: %m", script->path);
 		result = NULL;
 	} else {
 		/* Re-check the file type just to be sure */
 		if ( !S_ISREG(st.st_mode) ) {
 			sieve_critical(script->ehandler, script->path,
-				"opened sieve script file is not a regular file");
+				"sieve script file '%s' is not a regular file", script->path);
 			result = NULL;
 		} else {
 			result = script->stream = 
@@ -300,7 +306,7 @@ struct istream *sieve_script_open
 		/* Something went wrong, close the fd */
 		if ( close(fd) != 0 ) {
 			sieve_sys_error(
-				"close(fd) failed for sieve script %s: %m", 
+				"failed to close sieve script: close(fd=%s) failed: %m", 
 				script->path);
 		}
 	}

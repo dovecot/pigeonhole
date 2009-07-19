@@ -9,6 +9,7 @@
 #include "hash.h"
 #include "array.h"
 #include "ostream.h"
+#include "eacces-error.h"	
 
 #include "sieve-error.h"
 #include "sieve-extensions.h"
@@ -630,7 +631,13 @@ bool sieve_binary_save
 	temp_path = t_strconcat(path, ".tmp", NULL);
 	fd = open(temp_path, O_CREAT | O_TRUNC | O_WRONLY, save_mode);
 	if ( fd < 0 ) {
-		sieve_sys_error("open(%s) failed for binary save: %m", temp_path);
+		if ( errno == EACCES ) {
+			sieve_sys_error("failed to save binary: %s",
+				eacces_error_get_creating("open", temp_path));
+		} else {
+			sieve_sys_error("failed to save binary: open(%s) failed: %m", 
+				temp_path);
+		}
 		return FALSE;
 	}
 
@@ -639,12 +646,18 @@ bool sieve_binary_save
 	o_stream_destroy(&stream);
  
 	if (close(fd) < 0)
-		sieve_sys_error("close(fd) failed for binary save: %m");
+		sieve_sys_error("failed to close saved binary temporary file: "
+			"close(fd=%s) failed: %m", temp_path);
 
 	/* Replace any original binary atomically */
 	if (result && (rename(temp_path, path) < 0)) {
-		sieve_sys_error("rename(%s, %s) failed for binary save: %m",
-			temp_path, path);
+		if ( errno == EACCES ) {
+			sieve_sys_error("failed to replace existing binary: %s", 
+				eacces_error_get_creating("rename", path));			
+		} else { 		
+			sieve_sys_error("failed to replace existing binary: "
+				"rename(%s, %s) failed: %m", temp_path, path);
+		}
 		result = FALSE;
 	}
 
@@ -672,14 +685,21 @@ static bool sieve_binary_file_open
 	
 	if ( (fd=open(path, O_RDONLY)) < 0 ) {
 		if ( errno != ENOENT ) {
-			sieve_sys_error("binary open(%s) failed: %m", path);
+			if ( errno == EACCES ) {
+				sieve_sys_error("failed to open binary: %s", 
+					eacces_error_get("open", path));			
+			} else {
+				sieve_sys_error("failed to open binary: "
+					"open(%s) failed: %m", path);
+			}
 		}
 		return FALSE;
 	}
 
 	if ( fstat(fd, &st) < 0 ) {
 		if ( errno != ENOENT ) {
-			sieve_sys_error("binary stat(%s) failed: %m", path);
+			sieve_sys_error("failed to open binary: "
+				"fstat(fd=%s) failed: %m", path);
 		}
 		return FALSE;
 	}
@@ -699,7 +719,8 @@ static void sieve_binary_file_close(struct sieve_binary_file **file)
 {
 	if ( (*file)->fd != -1 ) {
 		if ( close((*file)->fd) < 0 ) {
-			sieve_sys_error("binary close(fd) failed: %m");
+			sieve_sys_error("failed to close opened binary: "
+				"close(fd=%s) failed: %m", (*file)->path);
 		}
 	}
 

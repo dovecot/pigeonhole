@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "str.h"
 #include "ostream.h"
+#include "eacces-error.h"
 
 #include "sieve-common.h"
 #include "sieve-script.h"
@@ -536,21 +537,25 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 
 	fd = open(ehandler->logfile, O_CREAT | O_APPEND | O_WRONLY, 0600);
 	if (fd == -1) {
-		sieve_sys_error("failed to open logfile %s (logging to STDERR): %m", 
-			ehandler->logfile);
+		if ( errno == EACCES ) {
+			sieve_sys_error("failed to open logfile (LOGGING TO STDERR): %s",
+				eacces_error_get_creating("open", ehandler->logfile));
+		} else {
+			sieve_sys_error("failed to open logfile (LOGGING TO STDERR): "
+				"open(%s) failed: %m", ehandler->logfile);
+		}
 		fd = STDERR_FILENO;
 	} else {
 		/* fd_close_on_exec(fd, TRUE); Necessary? */
 
 		/* Stat the log file to obtain size information */
 		if ( fstat(fd, &st) != 0 ) {
-			sieve_sys_error(
-				"failed to fstat opened logfile %s (logging to STDERR): %m", 
-				ehandler->logfile);
+			sieve_sys_error("failed to stat logfile (logging to STDERR): "
+				"fstat(fd=%s) failed: %m", ehandler->logfile);
 			
 			if ( close(fd) < 0 ) {
-				sieve_sys_error("close(fd) failed for logfile '%s': %m",
-					ehandler->logfile);
+				sieve_sys_error("failed to close logfile after error: "
+					"close(fd=%s) failed: %m", ehandler->logfile);
 			}
 
 			fd = STDERR_FILENO;
@@ -562,23 +567,27 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 			
 			/* Close open file */
 			if ( close(fd) < 0 ) {
-				sieve_sys_error("close(fd) failed for logfile '%s': %m",
+				sieve_sys_error("failed to close logfile: close(fd=%s) failed: %m",
 					ehandler->logfile);
 			}
 			
 			/* Rotate logfile */
 			rotated = t_strconcat(ehandler->logfile, ".0", NULL);
 			if ( rename(ehandler->logfile, rotated) < 0 ) {
-				sieve_sys_error(
-					"failed to rename logfile %s to %s: %m", 
+				sieve_sys_error("failed to rotate logfile: rename(%s, %s) failed: %m", 
 					ehandler->logfile, rotated);
 			}
 			
 			/* Open clean logfile (overwrites existing if rename() failed earlier) */
 			fd = open(ehandler->logfile, O_CREAT | O_WRONLY | O_TRUNC, 0600);
 			if (fd == -1) {
-				sieve_sys_error("failed to open logfile %s (logging to STDERR): %m", 
-					ehandler->logfile);
+				if ( errno == EACCES ) {
+					sieve_sys_error("failed to open logfile (LOGGING TO STDERR): %s",
+						eacces_error_get_creating("open", ehandler->logfile));
+				} else {
+					sieve_sys_error("failed to open logfile (LOGGING TO STDERR): "
+						"open(%s) failed: %m", ehandler->logfile);
+				}
 				fd = STDERR_FILENO;
 			}
 		}
@@ -587,8 +596,9 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 	ostream = o_stream_create_fd(fd, 0, FALSE);
 	if ( ostream == NULL ) {
 		/* Can't we do anything else in this most awkward situation? */
-		sieve_sys_error("failed to open log stream on open file %s: "
-			"non-critical messages will not be logged!", ehandler->logfile);
+		sieve_sys_error("failed to open log stream on open file: "
+			"o_stream_create_fd(fd=%s) failed "
+			"(non-critical messages are not logged!)", ehandler->logfile);
 	} 
 
 	ehandler->fd = fd;
@@ -652,8 +662,8 @@ static void sieve_logfile_free
 		o_stream_destroy(&(handler->stream));
 		if ( handler->fd != STDERR_FILENO ){
 			if ( close(handler->fd) < 0 ) {
-				sieve_sys_error("close(fd) failed for logfile '%s': %m",
-					handler->logfile);
+				sieve_sys_error("failed to close logfile: "
+					"close(fd=%s) failed: %m", handler->logfile);
 			}
 		}
 	}
