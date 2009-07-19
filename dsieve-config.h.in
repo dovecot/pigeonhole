@@ -5,5 +5,5 @@
 /* Define to the version of this Sieve implementation. */
 #undef SIEVE_VERSION
 
-/* Define to make Sieve enotify extension available to users. */
+/* Define to build Sieve unfinished features/extensions. */
 #undef HAVE_SIEVE_UNFINISHED

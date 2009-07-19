@@ -62,7 +62,7 @@ AC_ARG_WITH(unfinished-features,
         else
                 want_unfinished_features=yes
         fi,
-        want_enotify=no)
+        want_unfinished_features=no)
 AM_CONDITIONAL(BUILD_UNFINISHED, test "$want_unfinished_features" = "yes")
 
 if test "$want_unfinished_features" = "yes"; then
