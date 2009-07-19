@@ -46,11 +46,11 @@
  * Testsuite initialization 
  */
 
-static void testsuite_tool_init(void) 
+static void testsuite_tool_init(const char *extensions) 
 {
 	sieve_tool_init(FALSE);
 
-	sieve_extensions_set_string(NULL);
+	sieve_extensions_set_string(extensions);
 
 	(void) sieve_extension_register(&testsuite_extension, TRUE);
 	
@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 	struct master_service *service;
 	const char *getopt_str;
 	int c;
-	const char *scriptfile, *dumpfile; 
+	const char *scriptfile, *dumpfile, *extensions; 
 	const char *user;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
@@ -131,15 +131,12 @@ int main(int argc, char **argv)
                       MASTER_SERVICE_FLAG_STANDALONE,
                       argc, argv);
 
-	/* Initialize testsuite */
-	testsuite_tool_init();
-
     user = getenv("USER");
 
 	/* Parse arguments */
-	scriptfile = dumpfile =  NULL;
+	scriptfile = dumpfile = extensions = NULL;
 
-	getopt_str = t_strconcat("d:t",
+	getopt_str = t_strconcat("d:x:t",
                  master_service_getopt_string(), NULL);
 	while ((c = getopt(argc, argv, getopt_str)) > 0) {
 		switch (c) {
@@ -147,6 +144,10 @@ int main(int argc, char **argv)
 			/* destination address */
 			dumpfile = optarg;
 			break;
+		case 'x':
+            /* destination address */
+            extensions = optarg;
+            break;
 		case 't':
 			trace = TRUE;
 			break;
@@ -171,6 +172,9 @@ int main(int argc, char **argv)
         print_help();
         i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
     }
+
+	/* Initialize testsuite */
+	testsuite_tool_init(extensions);
 
 	printf("Test case: %s:\n\n", scriptfile);
 
