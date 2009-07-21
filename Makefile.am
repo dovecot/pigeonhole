@@ -36,6 +36,7 @@ test_cases = \
 	tests/compile/errors.svtest \
 	tests/execute/errors.svtest \
 	tests/execute/actions.svtest \
+	tests/execute/smtp.svtest \
 	tests/exists.svtest \
 	tests/header.svtest \
 	tests/address.svtest \
@@ -68,6 +69,7 @@ test_cases = \
 	tests/extensions/regex/match-values.svtest \
 	tests/extensions/regex/errors.svtest \
 	tests/extensions/reject/execute.svtest \
+	tests/extensions/reject/smtp.svtest \
 	tests/extensions/relational/basic.svtest \
 	tests/extensions/relational/rfc.svtest \
 	tests/extensions/relational/errors.svtest \
@@ -76,6 +78,7 @@ test_cases = \
 	tests/extensions/vacation/errors.svtest \
 	tests/extensions/vacation/execute.svtest \
 	tests/extensions/vacation/message.svtest \
+	tests/extensions/vacation/smtp.svtest \
 	tests/extensions/enotify/basic.svtest \
 	tests/extensions/enotify/encodeurl.svtest \
 	tests/extensions/enotify/valid_notify_method.svtest \

@@ -1,6 +1,7 @@
 require "vnd.dovecot.testsuite";
 require "enotify";
 require "relational";
+require "envelope";
 require "comparator-i;ascii-numeric";
 
 /*
@@ -160,3 +161,142 @@ test "Notifying on automated messages" {
 	}
 }
 
+/*
+ * Envelope
+ */
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: nico@vestingbar.nl
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test_result_reset;
+
+test_set "envelope.from" "sirius@rename-it.nl";
+test_set "envelope.to" "bertus@vestingbar.nl";
+
+test "Envelope" {
+	notify "mailto:stephan@rename-it.nl?cc=timo@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not envelope :localpart :is "from" "postmaster" {
+		test_fail "envelope sender set incorrectly";
+	}
+
+	if not envelope :is "to" "stephan@rename-it.nl" {
+		test_fail "envelope sender set incorrectly";
+	}
+
+	test_message :smtp 1;
+
+	if not envelope :localpart :is "from" "postmaster" {
+		test_fail "envelope sender set incorrectly";
+	}
+
+	if not envelope :is "to" "timo@example.com" {
+		test_fail "envelope sender set incorrectly";
+	}	
+}
+
+/* 
+ * Envelope :from 
+ */
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: nico@vestingbar.nl
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test_set "envelope.from" "sirius@rename-it.nl";
+test_set "envelope.to" "bertus@vestingbar.nl";
+
+test_result_reset;
+
+test "Envelope :from" {
+	notify :from "nico@vestingbar.nl"
+		"mailto:stephan@rename-it.nl?cc=timo@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not envelope :is "from" "nico@vestingbar.nl" {
+		test_fail "envelope sender set incorrectly";
+	}
+
+	if not envelope :is "to" "stephan@rename-it.nl" {
+		test_fail "envelope sender set incorrectly";
+	}
+
+	test_message :smtp 1;
+
+	if not envelope :is "from" "nico@vestingbar.nl" {
+		test_fail "envelope sender set incorrectly";
+	}
+
+	if not envelope :is "to" "timo@example.com" {
+		test_fail "envelope sender set incorrectly";
+	}	
+}
+
+/* 
+ * Envelope <> 
+ */
+
+test_set "message" text:
+From: stephan@rename-it.nl
+To: nico@vestingbar.nl
+Subject: Frop!
+
+Klutsefluts.
+.
+;
+
+test_set "envelope.from" "<>";
+test_set "envelope.to" "bertus@vestingbar.nl";
+
+test_result_reset;
+
+test "Envelope <>" {
+	notify :from "nico@vestingbar.nl"
+		"mailto:stephan@rename-it.nl?cc=timo@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not envelope :is "from" "" {
+		test_fail "envelope sender set incorrectly";
+	}
+
+	if not envelope :is "to" "stephan@rename-it.nl" {
+		test_fail "envelope sender set incorrectly";
+	}
+
+	test_message :smtp 1;
+
+	if not envelope :is "from" "" {
+		test_fail "envelope sender set incorrectly";
+	}
+
+	if not envelope :is "to" "timo@example.com" {
+		test_fail "envelope sender set incorrectly";
+	}	
+}

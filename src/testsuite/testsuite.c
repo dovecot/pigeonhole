@@ -220,6 +220,7 @@ int main(int argc, char **argv)
 		memset(&scriptenv, 0, sizeof(scriptenv));
 		scriptenv.default_mailbox = "INBOX";
 		scriptenv.hostname = "testsuite.example.com";
+		scriptenv.postmaster_address = "postmaster@example.com";
 		scriptenv.username = user;
 		scriptenv.smtp_open = testsuite_smtp_open;
 		scriptenv.smtp_close = testsuite_smtp_close;
