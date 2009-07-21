@@ -766,6 +766,15 @@ bool sieve_validate_tag_parameter
 	struct sieve_ast_argument *tag, struct sieve_ast_argument *param,
 	enum sieve_ast_argument_type req_type)
 {
+	if ( param == NULL ) {
+		sieve_argument_validate_error(validator, tag, 
+			"the :%s tag for the %s %s requires %s as parameter, "
+			"but no more arguments were found", sieve_ast_argument_tag(tag), 
+			cmd->command->identifier, sieve_command_type_name(cmd->command),
+			sieve_ast_argument_type_name(req_type));
+		return FALSE;	
+	}
+
 	if ( sieve_ast_argument_type(param) != req_type && 
 		(sieve_ast_argument_type(param) != SAAT_STRING || 
 			req_type != SAAT_STRING_LIST) ) 
