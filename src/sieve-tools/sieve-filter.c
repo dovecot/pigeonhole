@@ -60,7 +60,7 @@ static int filter_message
 	main_sbin = NULL;
 
 	/* Execute script */
-	return sieve_execute(sbin, &msgdata, senv, ehandler);
+	return sieve_execute(sbin, &msgdata, senv, ehandler, NULL);
 }
 
 static int filter_mailbox

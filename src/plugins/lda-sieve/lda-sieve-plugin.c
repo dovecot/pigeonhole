@@ -310,7 +310,7 @@ static int lda_sieve_singlescript_execute
 		ehandler = srctx->master_ehandler;
 	}
 
-	ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv, ehandler);
+	ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv, ehandler, NULL);
 
 	sieve_error_handler_copy_masterlog(ehandler, FALSE);	
 
@@ -332,7 +332,7 @@ static int lda_sieve_singlescript_execute
 		if ( user_script )
         	sieve_error_handler_copy_masterlog(ehandler, TRUE);
 
-		ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv, ehandler);
+		ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv, ehandler, NULL);
 
 		sieve_error_handler_copy_masterlog(ehandler, FALSE);
 
@@ -433,7 +433,7 @@ static int lda_sieve_multiscript_execute
 	if ( user_script )	
 		sieve_error_handler_copy_masterlog(ehandler, TRUE);
 
-	ret = sieve_multiscript_finish(&mscript, ehandler);
+	ret = sieve_multiscript_finish(&mscript, ehandler, NULL);
 
 	sieve_error_handler_copy_masterlog(ehandler, FALSE);
 

@@ -285,17 +285,22 @@ void sieve_dump(struct sieve_binary *sbin, struct ostream *stream)
 int sieve_test
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
 	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-	struct ostream *stream) 	
+	struct ostream *stream, bool *keep) 	
 {
 	struct sieve_result *result = NULL;
 	int ret;
+
+	if ( keep != NULL ) *keep = FALSE;
 	
 	/* Run the script */
 	ret = sieve_run(sbin, &result, msgdata, senv, ehandler);
 				
 	/* Print result if successful */
-	if ( ret > 0 ) 
-		ret = sieve_result_print(result, senv, stream, NULL);
+	if ( ret > 0 ) {
+		ret = sieve_result_print(result, senv, stream, keep);
+	} else if ( ret == 0 ) {
+		if ( keep != NULL ) *keep = TRUE;
+	}
 	
 	/* Cleanup */
 	sieve_result_unref(&result);
@@ -309,10 +314,13 @@ int sieve_test
 
 int sieve_execute
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler)
+	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
+	bool *keep)
 {
 	struct sieve_result *result = NULL;
 	int ret;
+
+	if ( keep != NULL ) *keep = FALSE;
 	
 	/* Run the script */
 	ret = sieve_run(sbin, &result, msgdata, senv, ehandler);
@@ -322,14 +330,15 @@ int sieve_execute
 	 *   In that case no implicit keep is attempted, because the situation may be 
 	 *   resolved.
 	 */
-	if ( ret >= 0 ) {
-		if ( ret > 0 ) 
-			/* Execute result */
-			ret = sieve_result_execute(result, NULL);
-		else {
-			/* Perform implicit keep if script failed with a normal runtime error */
-			if ( !sieve_result_implicit_keep(result) )
-				ret = SIEVE_EXEC_KEEP_FAILED;
+	if ( ret > 0 ) {
+		/* Execute result */
+		ret = sieve_result_execute(result, keep);
+	} else if ( ret == 0 ) {
+		/* Perform implicit keep if script failed with a normal runtime error */
+		if ( !sieve_result_implicit_keep(result) ) {
+			ret = SIEVE_EXEC_KEEP_FAILED;
+		} else {
+			if ( keep != NULL ) *keep = TRUE;
 		}
 	}
 	
@@ -351,6 +360,7 @@ struct sieve_multiscript {
 	int status;
 	bool active;
 	bool ended;
+	bool keep;
 
 	struct ostream *teststream;
 };
@@ -373,6 +383,7 @@ struct sieve_multiscript *sieve_multiscript_start_execute
 	mscript->scriptenv = senv;
 	mscript->status = SIEVE_EXEC_OK;
 	mscript->active = TRUE;
+	mscript->keep = TRUE;
 	
 	return mscript;
 }
@@ -390,35 +401,39 @@ struct sieve_multiscript *sieve_multiscript_start_test
 }
 
 static void sieve_multiscript_test
-(struct sieve_multiscript *mscript, struct sieve_error_handler *ehandler)
+(struct sieve_multiscript *mscript, struct sieve_error_handler *ehandler,
+	bool *keep)
 {						
-	bool keep = FALSE;
-
 	sieve_result_set_error_handler(mscript->result, ehandler);
 
-	mscript->status = sieve_result_print
-		(mscript->result, mscript->scriptenv, mscript->teststream, &keep);
+	if ( mscript->status > 0 ) {
+		mscript->status = sieve_result_print
+			(mscript->result, mscript->scriptenv, mscript->teststream, keep);
+	} else {
+		if ( keep != NULL ) *keep = TRUE;
+	}
 		
-	mscript->active = ( mscript->active && keep );
+	mscript->active = ( mscript->active && *keep );
 
 	sieve_result_mark_executed(mscript->result);
 }
 
 static void sieve_multiscript_execute
-(struct sieve_multiscript *mscript, struct sieve_error_handler *ehandler)
+(struct sieve_multiscript *mscript, struct sieve_error_handler *ehandler,
+	bool *keep)
 {
-	bool keep = FALSE;
-			
 	sieve_result_set_error_handler(mscript->result, ehandler);
 
-	if ( mscript->status > 0 )
-		mscript->status = sieve_result_execute(mscript->result, &keep);
-	else {
+	if ( mscript->status > 0 ) {
+		mscript->status = sieve_result_execute(mscript->result, keep);
+	} else {
 		if ( !sieve_result_implicit_keep(mscript->result) )
 			mscript->status = SIEVE_EXEC_KEEP_FAILED;
+		else
+			if ( keep != NULL ) *keep = TRUE;			
 	}
 	
-	mscript->active = ( mscript->active && keep );
+	mscript->active = ( mscript->active && *keep );
 }
 
 bool sieve_multiscript_run
@@ -435,10 +450,12 @@ bool sieve_multiscript_run
 		mscript->scriptenv, ehandler);
 
 	if ( mscript->status >= 0 ) {
+		mscript->keep = FALSE;
+
 		if ( mscript->teststream != NULL ) 
-			sieve_multiscript_test(mscript, ehandler);
+			sieve_multiscript_test(mscript, ehandler, &mscript->keep);
 		else
-			sieve_multiscript_execute(mscript, ehandler);
+			sieve_multiscript_execute(mscript, ehandler, &mscript->keep);
 
 		if ( final ) mscript->active = FALSE;
 	}	
@@ -455,7 +472,7 @@ int sieve_multiscript_status(struct sieve_multiscript *mscript)
 }
 
 int sieve_multiscript_finish(struct sieve_multiscript **mscript, 
-	struct sieve_error_handler *ehandler)
+	struct sieve_error_handler *ehandler, bool *keep)
 {
 	struct sieve_result *result = (*mscript)->result;
 	int ret = (*mscript)->status;
@@ -467,11 +484,16 @@ int sieve_multiscript_finish(struct sieve_multiscript **mscript,
 		ret = SIEVE_EXEC_FAILURE;
 
 		if ( (*mscript)->teststream ) {
+			(*mscript)->keep = TRUE;
 		} else {
 			if ( !sieve_result_implicit_keep((*mscript)->result) )
 				ret = SIEVE_EXEC_KEEP_FAILED;
+			else
+				(*mscript)->keep = TRUE;
 		}
 	}
+
+	if ( keep != NULL ) *keep = (*mscript)->keep;
 	
 	/* Cleanup */
 	sieve_result_unref(&result);
