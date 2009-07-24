@@ -89,17 +89,22 @@ static int filter_mailbox
 	while ( ret > 0 && mailbox_search_next(search_ctx, mail) > 0 ) {
 		const char *subject, *date;
 		uoff_t size = 0;
-		
-		if ( mail->expunged )
-			continue;
+					
+
+		if ( mail_get_virtual_size(mail, &size) < 0 ) {
+			if ( mail->expunged )
+				continue;
 			
-		if ( mail_get_virtual_size(mail, &size) < 0 )
-			i_fatal("failed to get size");
-		
+			i_fatal("failed to obtain message size");
+		}
+
 		(void)mail_get_first_header(mail, "date", &date);
 		(void)mail_get_first_header(mail, "subject", &subject);
+
+		if ( subject == NULL ) subject = "";
+		if ( date == NULL ) date = "";
 		
-		printf("MAIL: [%s; %"PRIuUOFF_T" bytes] %s\n", date, size, subject);
+		i_info("filering: [%s; %"PRIuUOFF_T" bytes] %s\n", date, size, subject);
 	
 		ret = filter_message(mail, main_sbin, senv, ehandler, user);
 	}
