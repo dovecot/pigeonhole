@@ -220,6 +220,8 @@ static struct mailbox *act_store_mailbox_open
 			*storage = NULL;
 			return NULL;
 		}
+
+		*storage = (*ns_r)->storage;
 	}
 
 	/* First attempt at opening the box */
