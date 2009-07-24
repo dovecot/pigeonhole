@@ -31,9 +31,8 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sieve-filter [-m <mailbox>] [-x <extensions>]\n"
-"                    [-s <script-file>] [-c]\n"
-"                    <script-file> <mail-store>\n"
+"Usage: sieve-filter [-m <mailbox>] [-x <extensions>] [-s <script-file>] [-c]\n"
+"                    <script-file> <src-mail-store> [<dest-mail-store>]\n"
 	);
 }
 
@@ -127,28 +126,29 @@ static int filter_mailbox
 
 int main(int argc, char **argv) 
 {
-	const char *scriptfile, *recipient, *sender, *mailbox, *mailstore, 
-		*extensions;
+	const char *scriptfile, *recipient, *sender, *extensions,
+		*src_mailbox, *dst_mailbox, *src_mailstore, *dst_mailstore; 
 	bool force_compile;
-	struct mail_namespace *ns = NULL;
+	struct mail_namespace *src_ns = NULL, *dst_ns = NULL;
 	struct mail_user *mail_user = NULL;
 	struct sieve_binary *main_sbin;
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
 	struct sieve_error_handler *ehandler;
-	struct mail_storage *storage;
-	struct mailbox *box;
+	struct mail_storage *dst_storage, *src_storage;
+	struct mailbox *src_box;
 	enum mail_error error;
 	enum mailbox_open_flags open_flags = 
 		MAILBOX_OPEN_KEEP_RECENT | MAILBOX_OPEN_IGNORE_ACLS;
-	const char *user, *home;
+	const char *user, *home, *folder;
 	int i;
 
 	sieve_tool_init();
 	
 	/* Parse arguments */
-	scriptfile = recipient = sender = mailstore = extensions = NULL;
-	mailbox = "INBOX";
+	scriptfile = recipient = sender = extensions = src_mailstore = dst_mailstore 
+		= NULL;
+	src_mailbox = dst_mailbox = "INBOX";
 	force_compile = FALSE;
 	for (i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-m") == 0) {
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
 			i++;
 			if (i == argc) 
 				i_fatal("Missing -m argument");
-			mailbox = argv[i];
+			dst_mailbox = argv[i];
 		} else if (strcmp(argv[i], "-x") == 0) {
 			/* extensions */
 			i++;
@@ -168,8 +168,10 @@ int main(int argc, char **argv)
 			force_compile = TRUE;
 		} else if ( scriptfile == NULL ) {
 			scriptfile = argv[i];
-		} else if ( mailstore == NULL ) {
-			mailstore = argv[i];
+		} else if ( src_mailstore == NULL ) {
+			src_mailstore = argv[i];
+		} else if ( dst_mailstore == NULL ) {
+			dst_mailstore = argv[i];
 		} else {
 			print_help();
 			i_fatal("Unknown argument: %s", argv[i]);
@@ -181,7 +183,7 @@ int main(int argc, char **argv)
 		i_fatal("Missing <scriptfile> argument");
 	}
 	
-	if ( mailstore == NULL ) {
+	if ( src_mailstore == NULL ) {
 		print_help();
 		i_fatal("Missing <mailstore> argument");
 	}
@@ -215,38 +217,53 @@ int main(int argc, char **argv)
 	mail_storage_register_all();
 	mailbox_list_register_all();
 
-	/* Obtain mail namespaces from -l argument */
-	if ( mailstore != NULL ) {
-		env_put(t_strdup_printf("NAMESPACE_1=%s", mailstore));
-		env_put("NAMESPACE_1_INBOX=1");
-		env_put("NAMESPACE_1_LIST=1");
-		env_put("NAMESPACE_1_SEP=.");
-		env_put("NAMESPACE_1_SUBSCRIPTIONS=1");
+	/* Build namespaces environment (ugly!) */
+	env_put(t_strdup_printf("NAMESPACE_1=%s", src_mailstore));
+	env_put("NAMESPACE_1_INBOX=1");
+	env_put("NAMESPACE_1_LIST=1");
+	env_put("NAMESPACE_1_SEP=/");
+	env_put("NAMESPACE_1_SUBSCRIPTIONS=1");
 
-		mail_user = mail_user_init(user);
-		mail_user_set_home(mail_user, home);
-		if (mail_namespaces_init(mail_user) < 0)
-			i_fatal("Namespace initialization failed");	
+	if ( dst_mailstore != NULL ) {
+		env_put(t_strdup_printf("NAMESPACE_2=%s", dst_mailstore));
+		env_put("NAMESPACE_2_LIST=1");
+		env_put("NAMESPACE_2_SEP=/");
+		env_put("NAMESPACE_2_SUBSCRIPTIONS=1");
 
-		ns = mail_user->namespaces;
+		env_put("NAMESPACE_1_PREFIX=#src/");
 	}
 
-	storage = ns->storage;
+	/* Initialize namespaces */
+	mail_user = mail_user_init(user);
+	mail_user_set_home(mail_user, home);
+	if (mail_namespaces_init(mail_user) < 0)
+		i_fatal("Namespace initialization failed");	
 
-	/* Open the mailbox */	
-	box = mailbox_open(&storage, mailbox, NULL, open_flags);
-	if ( box == NULL ) {
+	if ( dst_mailstore != NULL ) {
+		folder = "#src/";
+		src_ns = mail_namespace_find(mail_user->namespaces, &folder);
+
+		folder = "/";
+		dst_ns = mail_namespace_find(mail_user->namespaces, &folder);		
+	} else {
+		dst_ns = src_ns = mail_user->namespaces;
+	}
+
+	src_storage = src_ns->storage;
+	dst_storage = dst_ns->storage;
+
+	/* Open the source mailbox */	
+	src_box = mailbox_open(&src_storage, src_mailbox, NULL, open_flags);
+	if ( src_box == NULL ) {
 		i_fatal("Couldn't open mailbox '%s': %s", 
-			mailbox, mail_storage_get_last_error(storage, &error));
+			src_mailbox, mail_storage_get_last_error(src_storage, &error));
 	}
-
-	if ( mailbox == NULL )
-		mailbox = "INBOX";
 
 	/* Compose script environment */
 	memset(&scriptenv, 0, sizeof(scriptenv));
-	scriptenv.default_mailbox = "INBOX";
-	scriptenv.namespaces = ns;
+	scriptenv.mailbox_autocreate = TRUE;
+	scriptenv.default_mailbox = dst_mailbox;
+	scriptenv.namespaces = dst_ns;
 	scriptenv.username = user;
 	scriptenv.hostname = "host.example.com";
 	scriptenv.postmaster_address = "postmaster@example.com";
@@ -258,11 +275,11 @@ int main(int argc, char **argv)
 	scriptenv.exec_status = &estatus;
 
 	/* Apply Sieve filter to all messages found */
-	filter_mailbox(box, main_sbin, &scriptenv, ehandler, user);
+	filter_mailbox(src_box, main_sbin, &scriptenv, ehandler, user);
 	
 	/* Close the mailbox */
-	if ( box != NULL )
-		mailbox_close(&box);
+	if ( src_box != NULL )
+		mailbox_close(&src_box);
 
 	/* Cleanup error handler */
 	sieve_error_handler_unref(&ehandler);
