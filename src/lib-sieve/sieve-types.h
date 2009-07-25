@@ -91,7 +91,7 @@ struct sieve_exec_status {
 	bool message_saved;
 	bool message_forwarded;
 	bool tried_default_save;
-	bool did_redundant_save;
+	bool keep_original;
 	struct mail_storage *last_storage;
 };
 

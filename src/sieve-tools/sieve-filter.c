@@ -36,10 +36,22 @@ static void print_help(void)
 	);
 }
 
+enum discard_action_type {
+	DISCARD_ACTION_KEEP,            /* Always keep messages in source folder */ 
+	DISCARD_ACTION_DELETE,          /* Flag discarded messages as \DELETED */
+	DISCARD_ACTION_TRASH_FOLDER,    /* Move discarded messages to Trash folder */      
+	DISCARD_ACTION_EXPUNGE          /* Expunge discarded messages */
+};
+
+struct discard_action {
+	enum discard_action_type type;
+	const char *trash_folder;
+};
+
 static int filter_message
 (struct mail *mail, struct sieve_binary *main_sbin, 
 	struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-	bool move)
+	struct discard_action discard_action)
 {
 	struct sieve_exec_status estatus;
 	struct sieve_binary *sbin;
@@ -68,9 +80,34 @@ static int filter_message
 	/* Execute script */
 	ret = sieve_execute(sbin, &msgdata, senv, ehandler, NULL);
 
-	if ( ret > 0 && move && !estatus.did_redundant_save ) {
-		sieve_info(ehandler, NULL, "message removed from source folder");
-		mail_expunge(mail);	
+	/* Handle message in source folder */
+	if ( ret > 0 && !estatus.keep_original ) {
+		switch ( discard_action.type ) {
+		/* Leave it there */
+		case DISCARD_ACTION_KEEP:
+			sieve_info(ehandler, NULL, "message left in source folder");
+			break;
+		/* Flag message as \DELETED */
+		case DISCARD_ACTION_DELETE:					
+			sieve_info(ehandler, NULL, "message flagged as deleted in source folder");
+			mail_update_flags(mail, MODIFY_ADD, MAIL_DELETED);
+			break;
+		/* Move message to Trash folder */
+		case DISCARD_ACTION_TRASH_FOLDER:			
+			sieve_info(ehandler, NULL, 
+				"message in source folder moved to folder '%s'", 
+				discard_action.trash_folder);
+			break;
+		/* Expunge the message immediately */
+		case DISCARD_ACTION_EXPUNGE:
+			sieve_info(ehandler, NULL, "message removed from source folder");
+			mail_expunge(mail);
+			break;
+		/* Unknown */
+		default:
+			i_unreached();
+			break;
+		}
 	}
 
 	return ret;
@@ -94,10 +131,9 @@ static void mail_search_build_add_flags
 static int filter_mailbox
 (struct mailbox *box, struct sieve_binary *main_sbin, 
 	struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-	bool move)
+	struct discard_action discard_action)
 {
 	struct mail_search_args *search_args;
-	struct mail_search_arg *sarg;
 	struct mailbox_transaction_context *t;
 	struct mail_search_context *search_ctx;
 	struct mail *mail;
@@ -138,7 +174,7 @@ static int filter_mailbox
 		sieve_info(ehandler, NULL,
 			"filtering: [%s; %"PRIuUOFF_T" bytes] %s", date, size, subject);
 	
-		ret = filter_message(mail, main_sbin, senv, ehandler, move);
+		ret = filter_message(mail, main_sbin, senv, ehandler, discard_action);
 	}
 	mail_free(&mail);
 	
@@ -176,6 +212,8 @@ int main(int argc, char **argv)
 	struct sieve_script_env scriptenv;
 	struct sieve_error_handler *ehandler;
 	struct mail_storage *dst_storage, *src_storage;
+	struct discard_action discard_action = 
+		{ DISCARD_ACTION_KEEP, "Trash" };
 	struct mailbox *src_box;
 	enum mail_error error;
 	enum mailbox_open_flags open_flags = 
@@ -284,9 +322,12 @@ int main(int argc, char **argv)
 		src_ns = mail_namespace_find(mail_user->namespaces, &folder);
 
 		folder = "/";
-		dst_ns = mail_namespace_find(mail_user->namespaces, &folder);		
+		dst_ns = mail_namespace_find(mail_user->namespaces, &folder);	
+
+		discard_action.type = DISCARD_ACTION_KEEP;	
 	} else {
 		dst_ns = src_ns = mail_user->namespaces;
+		discard_action.type = DISCARD_ACTION_DELETE;	
 	}
 
 	src_storage = src_ns->storage;
@@ -315,7 +356,7 @@ int main(int argc, char **argv)
 
 	/* Apply Sieve filter to all messages found */
 	(void) filter_mailbox
-		(src_box, main_sbin, &scriptenv, ehandler, ( dst_ns == src_ns ));
+		(src_box, main_sbin, &scriptenv, ehandler, discard_action);
 	
 	/* Close the mailbox */
 	if ( src_box != NULL )
