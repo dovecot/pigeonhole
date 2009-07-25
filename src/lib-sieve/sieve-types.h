@@ -18,6 +18,10 @@
 struct sieve_script;
 struct sieve_binary;
 
+struct sieve_message_data;
+struct sieve_script_env;
+struct sieve_exec_status;
+
 /* 
  * Message data
  *
@@ -87,6 +91,7 @@ struct sieve_exec_status {
 	bool message_saved;
 	bool message_forwarded;
 	bool tried_default_save;
+	bool did_redundant_save;
 	struct mail_storage *last_storage;
 };
 

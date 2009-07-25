@@ -456,6 +456,8 @@ static bool act_store_commit
 		return TRUE;
 	} else if ( trans->redundant ) {
 		act_store_log_status(trans, aenv, FALSE, status);
+		aenv->exec_status->did_redundant_save = TRUE;
+		aenv->exec_status->message_saved = TRUE;
 		return TRUE;	
 	}
 

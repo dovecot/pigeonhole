@@ -39,20 +39,26 @@ static void print_help(void)
 static int filter_message
 (struct mail *mail, struct sieve_binary *main_sbin, 
 	struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-	const char *user)
+	bool move)
 {
+	struct sieve_exec_status estatus;
 	struct sieve_binary *sbin;
 	struct sieve_message_data msgdata;
 	const char *recipient, *sender;
+	int ret;
 
 	sieve_tool_get_envelope_data(mail, &recipient, &sender);
+
+	/* Initialize execution status */
+	memset(&estatus, 0, sizeof(estatus));
+	senv->exec_status = &estatus;
 
 	/* Collect necessary message data */
 	memset(&msgdata, 0, sizeof(msgdata));
 	msgdata.mail = mail;
 	msgdata.return_path = sender;
 	msgdata.to_address = recipient;
-	msgdata.auth_user = user;
+	msgdata.auth_user = senv->username;
 	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
 
 	/* Single script */
@@ -60,28 +66,51 @@ static int filter_message
 	main_sbin = NULL;
 
 	/* Execute script */
-	return sieve_execute(sbin, &msgdata, senv, ehandler, NULL);
+	ret = sieve_execute(sbin, &msgdata, senv, ehandler, NULL);
+
+	if ( ret > 0 && move && !estatus.did_redundant_save ) {
+		sieve_info(ehandler, NULL, "message removed from source folder");
+		mail_expunge(mail);	
+	}
+
+	return ret;
+}
+
+/* FIXME: introduce this into Dovecot */
+static void mail_search_build_add_flags
+(struct mail_search_args *args, enum mail_flags flags, bool not)
+{
+	struct mail_search_arg *arg;
+
+	arg = p_new(args->pool, struct mail_search_arg, 1);
+	arg->type = SEARCH_FLAGS;
+	arg->value.flags = flags;
+	arg->not = not;
+
+	arg->next = args->args;
+	args->args = arg;
 }
 
 static int filter_mailbox
 (struct mailbox *box, struct sieve_binary *main_sbin, 
 	struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-	const char *user)
+	bool move)
 {
 	struct mail_search_args *search_args;
+	struct mail_search_arg *sarg;
 	struct mailbox_transaction_context *t;
 	struct mail_search_context *search_ctx;
 	struct mail *mail;
 	int ret = 1;
 
-	search_args = mail_search_build_init();
-	mail_search_build_add_all(search_args);
+	/* Search non-deleted messages in the indicated folder */
 
-	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FAST, 0, NULL) < 0 ) {
-		i_fatal("sync failed");
-	}
-		
-	t = mailbox_transaction_begin(box, 0);
+	search_args = mail_search_build_init();
+	mail_search_build_add_flags(search_args, MAIL_DELETED, TRUE);
+	
+	/* Iterate through all requested messages */
+
+	t = mailbox_transaction_begin(box, MAILBOX_TRANSACTION_FLAG_REFRESH);
 	search_ctx = mailbox_search_init(t, search_args, NULL);
 	mail_search_args_unref(&search_args);
 
@@ -90,12 +119,14 @@ static int filter_mailbox
 		const char *subject, *date;
 		uoff_t size = 0;
 					
+		/* Request message size */
 
 		if ( mail_get_virtual_size(mail, &size) < 0 ) {
 			if ( mail->expunged )
 				continue;
 			
-			i_fatal("failed to obtain message size");
+			sieve_error(ehandler, NULL, "failed to obtain message size");
+			continue;
 		}
 
 		(void)mail_get_first_header(mail, "date", &date);
@@ -104,25 +135,30 @@ static int filter_mailbox
 		if ( subject == NULL ) subject = "";
 		if ( date == NULL ) date = "";
 		
-		i_info("filering: [%s; %"PRIuUOFF_T" bytes] %s\n", date, size, subject);
+		sieve_info(ehandler, NULL,
+			"filtering: [%s; %"PRIuUOFF_T" bytes] %s", date, size, subject);
 	
-		ret = filter_message(mail, main_sbin, senv, ehandler, user);
+		ret = filter_message(mail, main_sbin, senv, ehandler, move);
 	}
 	mail_free(&mail);
 	
+	/* Cleanup */
+
 	if ( mailbox_search_deinit(&search_ctx) < 0 ) {
-		i_error("failed to deinit search");
+		ret = -1;
 	}
 
 	if ( mailbox_transaction_commit(&t) < 0 ) {
-		i_fatal("failed to commit transaction");
+		ret = -1;
 	}
+
+	/* Synchronize mailbox */
 	
 	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FAST, 0, NULL) < 0 ) {
-		i_fatal("sync failed");
+		ret = -1;
 	}
 	
-	return FALSE;
+	return ret;
 }
 
 /*
@@ -138,7 +174,6 @@ int main(int argc, char **argv)
 	struct mail_user *mail_user = NULL;
 	struct sieve_binary *main_sbin;
 	struct sieve_script_env scriptenv;
-	struct sieve_exec_status estatus;
 	struct sieve_error_handler *ehandler;
 	struct mail_storage *dst_storage, *src_storage;
 	struct mailbox *src_box;
@@ -277,10 +312,10 @@ int main(int argc, char **argv)
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
 	scriptenv.trace_stream = NULL;
-	scriptenv.exec_status = &estatus;
 
 	/* Apply Sieve filter to all messages found */
-	filter_mailbox(src_box, main_sbin, &scriptenv, ehandler, user);
+	(void) filter_mailbox
+		(src_box, main_sbin, &scriptenv, ehandler, ( dst_ns == src_ns ));
 	
 	/* Close the mailbox */
 	if ( src_box != NULL )
