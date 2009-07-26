@@ -1,10 +1,27 @@
-Current:
+Current activities:
 
 * Build a sieve tool to filter an entire existing mailbox through a Sieve 
   script.
+	- Add commandline options to fully customixe execution
+	- Write manual page
+* Implement the mailbox extension
+	- Implement mailboxexists command
+	- Build testsuite tests
+* Testsuite:
+	- add support for testing messages stored into a mailbox by looping these back
+	  as the tested mail message
+	- add execution tests for fileinto, imap4flags and mailbox extensions.
 
 Next (in order of descending priority/precedence):
 
+* Implement namespace support for variables extension (to complete include 
+  extension)
+* Update include extension to latest draft:
+	- Perform script name check
+	- Implement global namespace
+	- Allow placing the global command anywhere in the script
+* Implement mechanism for implicitly including an account's aliases in the vacation
+  command's :addresses list.
 * Improve error handling. Now it is not very consistent, especially for the Sieve
   command line tools. 
 * Detect permission errors when writing global script binaries and advise the 
@@ -36,21 +53,16 @@ Next (in order of descending priority/precedence):
 	  compliance. Body test support currently matches but barely exceeds the
 	  original CMU Sieve implentation in terms of standards compliance.
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
-* Implement namespace support for variables extension (to complete include 
-  extension)
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
-* Implement mechanism for implicitly including an account's aliases in the vacation
-  command's :addresses list.
 * Properly implement Sieve internationalization support (utf-8 handling), currently
   it is not complete:
 	- Make this implementation conform section 2.7.2 of RFC5228 (Comparisons 
 	  Across Character Sets). 
 	- Verify validity of utf8 where necessary.
 	- Implement comparator-i;unicode-casemap.
+* Implement date extension
 * Make testsuite much more exhaustive:
-	- add support for testing delivered messages by looping these back as the 
-	  tested mail message
 	- add support for testing the content of result actions
 	- test as many error/warning/info conditions as possible. 
 	- review the specification documents and check whether the given conditions
@@ -66,29 +78,29 @@ Next (in order of descending priority/precedence):
 * Provide a solution for mail_get_headers_utf8 reparsing the whole message each
   time it is called (header and address test; Timo might provide solution from
   within Dovecot)
-* Implement date and index extensions
 * Optimize code containing true/false tests to omit explicit JMP opcodes
   (i.e. optimize the test away and any code that negatively depends on it)
 * Use lib/str-find.h for :contains and :matches match types 
 * Warn during compile if using non-existent folders.
+* Implement index extension
+* Enotify extension: detect use of variable values extracted from the message 
+  that are used in the method argument. RFC reports this as a security issue.
+* Implement editheader extension
+* Implement mimeloop extension
+* Import ManageSieve into this package and provide support for alternate types
+  of script storage like LDAP or SQL database.
 
 * Implement IMAP plugin for IMAPSieve support:
 	- This may include support for manually running a script on a set of messages
 	  through IMAP (no specification for something like this is available; we will 
 	  have to provide our own)
-* Implement editheader extension
-* Implement mimeloop extension
 * Variables extension: implement compile time evaluation of constant values
-* Enotify extension: detect use of variable values extracted from the message 
-  that are used in the method argument. RFC reports this as a security issue.
-* Import ManageSieve into this package and provide support for alternate types
-  of script storage like LDAP or SQL database.
 * Make the engine and its extensions much more configurable. Possibly this can 
   be merged with Dovecot's new master config implementation.
 * Add development documentation, i.e. comment on library functions and document
   the binary and byte-code format. 
 * Give the byte code format some more thought, it is currently quite rough and
   to the point. 
-* Try to implement proposed notify mechanisms other than mailto. Currently: xmpp
+* Implement proposed notify mechanisms other than mailto. Currently defined: xmpp
   and sip
 
