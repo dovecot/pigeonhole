@@ -56,7 +56,9 @@ plugins = \
 	./plugins/variables/libsieve_ext_variables.la \
 	./plugins/enotify/libsieve_ext_enotify.la \
 	./plugins/notify/libsieve_ext_notify.la \
-	./plugins/environment/libsieve_ext_environment.la
+	./plugins/environment/libsieve_ext_environment.la \
+	./plugins/mailbox/libsieve_ext_mailbox.la
+
 
 libsieve_la_DEPENDENCIES = $(plugins)
 libsieve_la_LIBADD = $(plugins)

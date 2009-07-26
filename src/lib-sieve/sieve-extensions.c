@@ -80,6 +80,7 @@ extern const struct sieve_extension body_extension;
 extern const struct sieve_extension variables_extension;
 extern const struct sieve_extension enotify_extension;
 extern const struct sieve_extension environment_extension;
+extern const struct sieve_extension mailbox_extension;
 
 /*
  * Extensions under development
@@ -117,7 +118,8 @@ const struct sieve_extension *sieve_core_extensions[] = {
 	&comparator_i_ascii_numeric_extension, 
 	&relational_extension, &regex_extension, &imap4flags_extension,
 	&copy_extension, &include_extension, &body_extension,
-	&variables_extension, &enotify_extension, &environment_extension
+	&variables_extension, &enotify_extension, &environment_extension,
+	&mailbox_extension
 };
 
 const unsigned int sieve_core_extensions_count =
