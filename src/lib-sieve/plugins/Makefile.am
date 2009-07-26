@@ -11,5 +11,6 @@ SUBDIRS = \
 	variables \
 	enotify \
 	notify \
-	environment
+	environment \
+	mailbox
 

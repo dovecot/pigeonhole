@@ -79,15 +79,18 @@ enum cmd_denotify_optional {
  */
 
 static bool cmd_denotify_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_operation *op ATTR_UNUSED,
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static int cmd_denotify_operation_execute
+	(const struct sieve_operation *op ATTR_UNUSED,
+		const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation denotify_operation = { 
 	"DENOTIFY",
 	&notify_extension,
 	EXT_NOTIFY_OPERATION_DENOTIFY,
 	cmd_denotify_operation_dump,
-	NULL
+	cmd_denotify_operation_execute
 };
 
 /*
@@ -227,12 +230,10 @@ static bool cmd_denotify_operation_dump
  * Code execution
  */
 
-static int cmd_notify_operation_execute
+static int cmd_denotify_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
-	struct ext_notify_action *act;
-	pool_t pool;
 	int opt_code = 1;
 	sieve_number_t importance = 1;
 	const struct sieve_match_type *match_type = NULL;
