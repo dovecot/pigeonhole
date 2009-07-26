@@ -139,11 +139,17 @@ static int filter_mailbox
 	struct mail *mail;
 	int ret = 1;
 
-	/* Search non-deleted messages in the indicated folder */
+	/* Sync mailbox */
+
+	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ, 0, NULL) < 0 ) {
+		return -1;
+	}
+
+	/* Search non-deleted messages in the source folder */
 
 	search_args = mail_search_build_init();
 	mail_search_build_add_flags(search_args, MAIL_DELETED, TRUE);
-	
+
 	/* Iterate through all requested messages */
 
 	t = mailbox_transaction_begin(box, MAILBOX_TRANSACTION_FLAG_REFRESH);
@@ -165,11 +171,10 @@ static int filter_mailbox
 			continue;
 		}
 
-		(void)mail_get_first_header(mail, "date", &date);
-		(void)mail_get_first_header(mail, "subject", &subject);
-
-		if ( subject == NULL ) subject = "";
-		if ( date == NULL ) date = "";
+		if ( mail_get_first_header(mail, "date", &date) <= 0 )
+			date = "";
+		if ( mail_get_first_header(mail, "subject", &subject) <= 0 ) 
+			subject = "";
 		
 		sieve_info(ehandler, NULL,
 			"filtering: [%s; %"PRIuUOFF_T" bytes] %s", date, size, subject);
@@ -184,14 +189,19 @@ static int filter_mailbox
 		ret = -1;
 	}
 
-	if ( mailbox_transaction_commit(&t) < 0 ) {
-		ret = -1;
+	if ( ret < 0 ) {
+		mailbox_transaction_rollback(&t);
+		return -1;
+	} else {
+		if ( mailbox_transaction_commit(&t) < 0 ) {
+			return -1;
+		}
 	}
 
-	/* Synchronize mailbox */
-	
-	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FAST, 0, NULL) < 0 ) {
-		ret = -1;
+	/* Sync mailbox */
+
+	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_WRITE, 0, NULL) < 0 ) {
+		return -1;
 	}
 	
 	return ret;
