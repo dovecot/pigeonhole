@@ -152,7 +152,7 @@ static int filter_mailbox
 
 	/* Iterate through all requested messages */
 
-	t = mailbox_transaction_begin(box, MAILBOX_TRANSACTION_FLAG_REFRESH);
+	t = mailbox_transaction_begin(box, 0);
 	search_ctx = mailbox_search_init(t, search_args, NULL);
 	mail_search_args_unref(&search_args);
 
