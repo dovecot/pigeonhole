@@ -80,19 +80,30 @@ const char *ext_include_get_script_directory
 			
 			sieve_dir = home_expand_tilde("~/sieve", home);	
 		}
+
+		if (sieve_dir == NULL) {
+			sieve_sys_error(
+				"include: sieve_dir and home not set for :personal script include "	
+				"(wanted script %s)", str_sanitize(script_name, 80));
+			return NULL;
+		}
+
 		break;
    	case EXT_INCLUDE_LOCATION_GLOBAL:
 		sieve_dir = getenv("SIEVE_GLOBAL_DIR");
+
+		if (sieve_dir == NULL) {
+			sieve_sys_error(
+				"include: sieve_global_dir not set for :global script include "	
+				"(wanted script %s)", str_sanitize(script_name, 80));
+			return NULL;
+		}
+
 		break;
 	default:
 		return NULL;
 	}
 
-	if (sieve_dir == NULL) {
-		sieve_sys_error("include: sieve_dir and home not set "	
-			"(wanted script %s)", str_sanitize(script_name, 80));
-		return NULL;
-	}
 
 	return sieve_dir;
 }
