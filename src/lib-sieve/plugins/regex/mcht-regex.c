@@ -182,11 +182,13 @@ static void mcht_regex_match_init
 {
 	pool_t pool = mctx->pool;
 	struct mcht_regex_context *ctx;
-	
+
+	/* Create context */	
 	ctx = p_new(pool, struct mcht_regex_context, 1);
 	p_array_init(&ctx->reg_expressions, pool, 4);
-
 	ctx->value_index = -1;
+
+	/* Create storage for match values if match values are requested */
 	if ( sieve_match_values_are_enabled(mctx->interp) ) {
 		ctx->pmatch = p_new(pool, regmatch_t, MCHT_REGEX_MAX_SUBSTITUTIONS);
 		ctx->nmatch = MCHT_REGEX_MAX_SUBSTITUTIONS;
@@ -195,6 +197,7 @@ static void mcht_regex_match_init
 		ctx->nmatch = 0;
 	}
 	
+	/* Assign context */
 	mctx->data = (void *) ctx;
 }
 
@@ -207,24 +210,32 @@ static regex_t *mcht_regex_get
 	int cflags;
 	regex_t *regexp;
 	
+	/* If this is the first matched value, the regexes are not compiled
+	 * yet.
+	 */
 	if ( ctx->value_index <= 0 ) {
+		/* Allocate space */
 		array_idx_clear(&ctx->reg_expressions, key_index);
 		regexp = array_idx_modifiable(&ctx->reg_expressions, key_index);
 
+		/* Configure case-sensitivity according to comparator */
 		if ( cmp == &i_octet_comparator ) 
 			cflags =  REG_EXTENDED;
 		else if ( cmp ==  &i_ascii_casemap_comparator )
 			cflags =  REG_EXTENDED | REG_ICASE;
 		else
-			return NULL;
+			return NULL; /* Not supported */
 			
+		/* Indicate whether match values need to be produced */
 		if ( ctx->nmatch == 0 ) cflags |= REG_NOSUB;
 
+		/* Compile regular expression */
 		if ( (ret=regcomp(regexp, key, cflags)) != 0 ) {
 			/* FIXME: Do something useful, i.e. report error somewhere */
 			return NULL;
 		}
 	} else {
+		/* Get compiled regex from cache */
 		regexp = array_idx_modifiable(&ctx->reg_expressions, key_index);
 	}
 
@@ -248,20 +259,26 @@ static int mcht_regex_match
 
 	if ( key_index == 0 ) ctx->value_index++;
 
+	/* Get compiled regex */
 	if ( (regexp=mcht_regex_get(ctx, mctx->comparator, key, key_index)) == NULL )
 		return FALSE;
 
+	/* Execute regex */
 	if ( regexec(regexp, val, ctx->nmatch, ctx->pmatch, 0) == 0 ) {
 
+		/* Handle match values if necessary */
 		if ( ctx->nmatch > 0 ) {
+			struct sieve_match_values *mvalues;
 			size_t i;
 			int skipped = 0;
 			string_t *subst = t_str_new(32);
 
-			struct sieve_match_values *mvalues = sieve_match_values_start(mctx->interp);
+			/* Start new list of match values */
+			mvalues = sieve_match_values_start(mctx->interp);
 
 			i_assert( mvalues != NULL );
 
+			/* Add match values from regular expression */
 			for ( i = 0; i < ctx->nmatch; i++ ) {
 				str_truncate(subst, 0);
 			
@@ -278,6 +295,7 @@ static int mcht_regex_match
 					skipped++;
 			}
 
+			/* Substitute the new match values */
 			sieve_match_values_commit(mctx->interp, &mvalues);
 		}
 
@@ -294,6 +312,7 @@ int mcht_regex_match_deinit
 	regex_t *regexps;
 	unsigned int count, i;
 
+	/* Clean up compiled regular expressions */
 	regexps = array_get_modifiable(&ctx->reg_expressions, &count);
 	for ( i = 0; i < count; i++ ) {
 		regfree(&regexps[i]);
