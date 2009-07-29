@@ -8,6 +8,7 @@ Current activities:
 	- Implement mailboxexists command
 	- Build testsuite tests
 * Testsuite:
+	- add support for testing binary load/save
 	- add support for testing messages stored into a mailbox by looping these back
 	  as the tested mail message
 	- add execution tests for fileinto, imap4flags and mailbox extensions.
