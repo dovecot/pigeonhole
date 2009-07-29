@@ -406,7 +406,7 @@ static int ext_body_operation_execute
 		body_parts++;	
 	}
 
-	if ( (mret=sieve_match_end(mctx)) < 0 ) {
+	if ( (mret=sieve_match_end(&mctx)) < 0 ) {
 		sieve_runtime_trace_error(renv, "invalid string list item");
 		ret = SIEVE_EXEC_BIN_CORRUPT;
 	} else	

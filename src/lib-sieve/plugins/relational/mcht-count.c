@@ -71,7 +71,7 @@ struct mcht_count_context {
 
 static void mcht_count_match_init(struct sieve_match_context *mctx)
 {
-	struct mcht_count_context *cctx = t_new(struct mcht_count_context, 1);
+	struct mcht_count_context *cctx = p_new(mctx->pool, struct mcht_count_context, 1);
 
 	cctx->count = 0;
 	mctx->data = (void *) cctx;

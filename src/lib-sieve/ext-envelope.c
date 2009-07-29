@@ -506,7 +506,7 @@ static int ext_envelope_operation_execute
 	}
 	
 	/* Finish match */
-	if ( (ret=sieve_match_end(mctx)) < 0 ) 
+	if ( (ret=sieve_match_end(&mctx)) < 0 ) 
 		result = FALSE;
 	else
 		matched = ( ret > 0 || matched );

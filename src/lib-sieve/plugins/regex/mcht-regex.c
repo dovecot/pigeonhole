@@ -178,16 +178,17 @@ struct mcht_regex_context {
 };
 
 static void mcht_regex_match_init
-	(struct sieve_match_context *mctx)
+(struct sieve_match_context *mctx)
 {
-	struct mcht_regex_context *ctx = 
-		t_new(struct mcht_regex_context, 1);
+	pool_t pool = mctx->pool;
+	struct mcht_regex_context *ctx;
 	
-	t_array_init(&ctx->reg_expressions, 4);
+	ctx = p_new(pool, struct mcht_regex_context, 1);
+	p_array_init(&ctx->reg_expressions, pool, 4);
 
 	ctx->value_index = -1;
 	if ( sieve_match_values_are_enabled(mctx->interp) ) {
-		ctx->pmatch = t_new(regmatch_t, MCHT_REGEX_MAX_SUBSTITUTIONS);
+		ctx->pmatch = p_new(pool, regmatch_t, MCHT_REGEX_MAX_SUBSTITUTIONS);
 		ctx->nmatch = MCHT_REGEX_MAX_SUBSTITUTIONS;
 	} else {
 		ctx->pmatch = NULL;
@@ -287,7 +288,7 @@ static int mcht_regex_match
 }
 
 int mcht_regex_match_deinit
-	(struct sieve_match_context *mctx)
+(struct sieve_match_context *mctx)
 {
 	struct mcht_regex_context *ctx = (struct mcht_regex_context *) mctx->data;
 	regex_t *regexps;

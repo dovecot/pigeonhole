@@ -210,7 +210,7 @@ static int tst_environment_operation_execute
 			matched = ( mret > 0 );				
 		}
 
-		if ( (mret=sieve_match_end(mctx)) < 0 )
+		if ( (mret=sieve_match_end(&mctx)) < 0 )
 			result = FALSE;
 		else
 			matched = ( mret > 0 || matched );

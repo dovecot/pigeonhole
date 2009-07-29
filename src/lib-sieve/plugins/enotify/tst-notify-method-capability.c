@@ -236,7 +236,7 @@ static int tst_notifymc_operation_execute
 			result = FALSE;
 		matched = ( mret > 0 );		
 
-		if ( (mret=sieve_match_end(mctx)) < 0 ) 
+		if ( (mret=sieve_match_end(&mctx)) < 0 ) 
 			result = FALSE;
 		matched = ( mret > 0 ) || matched;		
 	} else {
