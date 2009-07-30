@@ -16,9 +16,4 @@ for dir in $GETTEXT_DIR /usr/share/gettext; do
   fi
 done
 
-if test ! -f ChangeLog; then
-  # automake dies unless this exists. It's generated in Makefile
-  touch -t `date +%m%d`0000 ChangeLog
-fi
-
 autoreconf -i
