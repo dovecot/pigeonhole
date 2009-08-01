@@ -12,6 +12,7 @@
 
 #include "testsuite-common.h"
 #include "testsuite-smtp.h"
+#include "testsuite-mailstore.h"
 
 /*
  * Test_message command
@@ -196,6 +197,9 @@ static bool cmd_test_message_validate_folder_tag
 		(valdtr, cmd, tag, *arg, SAAT_STRING) ) {
 		return FALSE;
 	}
+
+	/* Skip parameter */
+	*arg = sieve_ast_argument_next(*arg);
 			
 	return TRUE;
 }
@@ -346,7 +350,8 @@ static int cmd_test_message_mailbox_operation_execute
 {
 	string_t *folder;
 	sieve_number_t msg_index;
-    unsigned int is_test = -1;
+	unsigned int is_test = -1;
+	bool result;
 
 	/*
 	 * Read operands
@@ -377,7 +382,15 @@ static int cmd_test_message_mailbox_operation_execute
 	sieve_runtime_trace(renv, "TEST_MESSAGE_MAILBOX (%s) \"%s\" [%d]", 
 		( is_test ? "TEST" : "COMMAND" ), str_c(folder), msg_index);
 
-	/* FIXME: to be implemented */
+	result = testsuite_mailstore_mail_index(renv, str_c(folder), msg_index);
+
+	if ( is_test ) {
+		sieve_interpreter_set_test_result(renv->interp, result);
+		return SIEVE_EXEC_OK;
+	}
+
+	if ( !result )
+		testsuite_test_failf("no outgoing SMTP message with index %d", msg_index);
 
 	return SIEVE_EXEC_OK;
 }

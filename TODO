@@ -6,9 +6,7 @@ Current activities:
 	- Write manual page
 * Testsuite:
 	- add support for testing binary load/save
-	- add support for testing messages stored into a mailbox by looping these back
-	  as the tested mail message
-	- add execution tests for fileinto and imap4flags extensions.
+	- add execution tests for imap4flags extensions.
 
 Next (in order of descending priority/precedence):
 

@@ -37,6 +37,7 @@ test_cases = \
 	tests/execute/errors.svtest \
 	tests/execute/actions.svtest \
 	tests/execute/smtp.svtest \
+	tests/execute/mailstore.svtest \
 	tests/exists.svtest \
 	tests/header.svtest \
 	tests/address.svtest \

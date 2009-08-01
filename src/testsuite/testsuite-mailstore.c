@@ -194,7 +194,7 @@ bool testsuite_mailstore_mail_index
 	if ( mail == NULL )
 		return FALSE;
 
-	mail_set_seq(mail, index);
+	mail_set_seq(mail, index+1);
 	testsuite_message_set_mail(renv, mail);
 
 	return TRUE;
