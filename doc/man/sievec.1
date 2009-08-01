@@ -52,8 +52,15 @@ a compiled Sieve binary file. Note that this option is not allowed when the \fIo
 is a directory.
 .TP
 \fB-x\fP "\fIextension extension ...\fP"
-Set the available extensions. The \fIextensions\fP parameter is a space-separated list of the 
-active extensions. Unknown extensions are ignored, but a warning is produced.
+Set the available extensions. The parameter is a space-separated list of the active extensions. By
+prepending the extension identifiers with \fB+\fP or \fB-\fP, extensions can be included or excluded 
+relative to the default set of extensions. If no extensions have a \fB+\fP or \fB-\fP prefix, only 
+those extensions that are explicitly listed will be enabled. Unknown extensions are ignored 
+and a warning is produced. By default, all supported extensions are available, except for deprecated 
+extensions or those that are still under development. 
+
+For example \fB-x\fP "+imapflags -enotify" will enable the deprecated imapflags extension along with all 
+extensions that are available by default, except for the enotify extension. 
 .SH AUTHOR
 .PP
 The Sieve implementation for Dovecot was written by Stephan Bosch <stephan@rename-it.nl>.
