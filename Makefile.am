@@ -88,6 +88,7 @@ test_cases = \
 	tests/extensions/enotify/mailto.svtest \
 	tests/extensions/environment/basic.svtest \
 	tests/extensions/environment/rfc.svtest \
+	tests/extensions/mailbox/execute.svtest \
 	tests/multiscript/basic.svtest \
 	tests/deprecated/notify/basic.svtest \
 	tests/deprecated/notify/mailto.svtest \

@@ -1,0 +1,48 @@
+require "vnd.dovecot.testsuite";
+require "mailbox";
+require "fileinto";
+
+test "MailboxExists - None exist" {
+	if mailboxexists "frop" {
+		test_fail "mailboxexists confirms existance of unknown folder";
+	}
+}
+
+test_mailbox :create "frop";
+test_mailbox :create "friep";
+
+test "MailboxExists - Not all exist" {
+	if mailboxexists ["frop", "friep", "frml"] {
+		test_fail "mailboxexists confirms existance of unknown folder";
+	}
+}
+
+test_mailbox :create "frml";
+
+test "MailboxExists - One exists" {
+	if not mailboxexists ["frop"] {
+		test_fail "mailboxexists fails to recognize folder";
+	}
+}
+
+test "MailboxExists - All exist" {
+	if not mailboxexists ["frop", "friep", "frml"] {
+		test_fail "mailboxexists fails to recognize folders";
+	}
+}
+
+test ":Create" {
+	if mailboxexists "created" {
+		test_fail "mailbox exists already";
+	}
+
+	fileinto :create "created";
+
+	if not test_result_execute {
+		test_fail "execution of result failed";
+	}
+
+	if not mailboxexists "created" {
+		test_fail "mailbox somehow not created";
+	}
+}
