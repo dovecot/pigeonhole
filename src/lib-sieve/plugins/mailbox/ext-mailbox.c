@@ -6,8 +6,8 @@
  *
  * Authors: Stephan Bosch
  * Specification: RFC 5490
- * Implementation: skeleton
- * Status: under development
+ * Implementation: full
+ * Status: experimental, largely untested
  * 
  */
 

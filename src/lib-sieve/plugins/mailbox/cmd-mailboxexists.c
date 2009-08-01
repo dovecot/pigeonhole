@@ -1,6 +1,10 @@
 /* Copyright (c) 2002-2009 Dovecot Sieve authors, see the included COPYING file
  */
 
+#include "lib.h"
+#include "mail-storage.h"
+#include "mail-namespace.h"
+
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -106,7 +110,7 @@ static int tst_mailboxexists_operation_execute
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_coded_stringlist *mailbox_names;
-	string_t *uri_item;
+	string_t *mailbox_item;
 	bool result = TRUE, all_exist = TRUE;
 
 	/*
@@ -125,13 +129,36 @@ static int tst_mailboxexists_operation_execute
 
 	sieve_runtime_trace(renv, "MAILBOXEXISTS command");
 
-	uri_item = NULL;
-	while ( (result=sieve_coded_stringlist_next_item(mailbox_names, &uri_item)) 
-		&& uri_item != NULL ) {
-		
-		if ( TRUE ) {
-			all_exist = FALSE;
-			break;
+	if ( renv->scriptenv->namespaces != NULL ) {
+		mailbox_item = NULL;
+		while ( (result=sieve_coded_stringlist_next_item
+			(mailbox_names, &mailbox_item)) 
+			&& mailbox_item != NULL ) {
+			struct mail_namespace *ns;
+			struct mail_storage *storage;
+			const char *mailbox = str_c(mailbox_item);
+			struct mailbox *box;
+
+			/* Find the namespace */	
+			ns = mail_namespace_find(renv->scriptenv->namespaces, &mailbox);
+			if ( ns == NULL) {
+				all_exist = FALSE;
+				break;
+			}
+
+			/* Open the box */
+			storage = ns->storage;
+			box = mailbox_open(&storage, mailbox, NULL, MAILBOX_OPEN_FAST);
+			if ( box == NULL ) {
+				all_exist = FALSE;
+				break;
+			}
+
+			/* Also fail when it is readonly */
+			if ( mailbox_is_readonly(box) )
+				all_exist = FALSE;
+
+			mailbox_close(&box);
 		}
 	}
 	
