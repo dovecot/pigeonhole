@@ -158,6 +158,9 @@ static int tst_mailboxexists_operation_execute
 			if ( mailbox_is_readonly(box) )
 				all_exist = FALSE;
 
+			/* FIXME: check acl for 'p' or 'i' ACL permissions as required by RFC */
+
+			/* Close mailbox */
 			mailbox_close(&box);
 		}
 	}

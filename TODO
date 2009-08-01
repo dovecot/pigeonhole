@@ -4,14 +4,11 @@ Current activities:
   script.
 	- Add commandline options to fully customixe execution
 	- Write manual page
-* Implement the mailbox extension
-	- Implement mailboxexists command
-	- Build testsuite tests
 * Testsuite:
 	- add support for testing binary load/save
 	- add support for testing messages stored into a mailbox by looping these back
 	  as the tested mail message
-	- add execution tests for fileinto, imap4flags and mailbox extensions.
+	- add execution tests for fileinto and imap4flags extensions.
 
 Next (in order of descending priority/precedence):
 
@@ -70,6 +67,7 @@ Next (in order of descending priority/precedence):
 	  are tested at least once.
 * Code cleanup:
 	- Make address handling more uniform. 
+	- Review all FIXMEs 
 
 * Build a server with test mail accounts that processes lots and lots of mail 
   (e.g. spam, mailing lists etc.)

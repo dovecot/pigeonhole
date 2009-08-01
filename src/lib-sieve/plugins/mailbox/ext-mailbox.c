@@ -6,7 +6,7 @@
  *
  * Authors: Stephan Bosch
  * Specification: RFC 5490
- * Implementation: full
+ * Implementation: almost full; acl support is missing for mailboxexists
  * Status: experimental, largely untested
  * 
  */
