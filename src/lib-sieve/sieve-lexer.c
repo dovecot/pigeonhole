@@ -795,13 +795,10 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 
 bool sieve_lexer_skip_token(struct sieve_lexer *lexer) 
 {
-	/* Scan token */
-	if ( !sieve_lexer_scan_raw_token(lexer) ) return FALSE;
-	
-	/* Skip any whitespace */	
-	while ( lexer->token_type == STT_WHITESPACE ) {
+	/* Scan token while skipping whitespace */
+	do { 
 		if ( !sieve_lexer_scan_raw_token(lexer) ) return FALSE;
-	}
+	} while ( lexer->token_type == STT_WHITESPACE );
 	
 	return TRUE;
 }
