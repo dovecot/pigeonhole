@@ -23,7 +23,7 @@ endif
 TESTSUITE_BIN = $(top_srcdir)/src/testsuite/testsuite
 
 if TESTSUITE_VALGRIND
-TEST_BIN = valgrind -q --error-exitcode=1 --leak-check=full $(TESTSUITE_BIN) 
+TEST_BIN = valgrind -q --error-exitcode=1 --show-reachable=yes --leak-check=full $(TESTSUITE_BIN) 
 else
 TEST_BIN = $(TESTSUITE_BIN)
 endif
