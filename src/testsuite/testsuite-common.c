@@ -176,7 +176,7 @@ void testsuite_test_succeed(string_t *reason)
 
 static void testsuite_test_context_deinit(void)
 {
-	//str_free(test_name);
+	str_free(&test_name);
 }
 
 int testsuite_testcase_result(void)
