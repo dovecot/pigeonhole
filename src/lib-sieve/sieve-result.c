@@ -148,10 +148,25 @@ pool_t sieve_result_pool(struct sieve_result *result)
 	return result->pool;
 }
 
+/*
+ * Getters/Setters
+ */
+
 struct sieve_error_handler *sieve_result_get_error_handler
 (struct sieve_result *result)
 {
 	return result->ehandler;
+}
+const struct sieve_script_env *sieve_result_get_script_env
+(struct sieve_result *result)
+{
+    return result->action_env.scriptenv;
+}
+
+const struct sieve_message_data *sieve_result_get_message_data
+(struct sieve_result *result)
+{
+	return result->action_env.msgdata;
 }
 
 struct sieve_message_context *sieve_result_get_message_context

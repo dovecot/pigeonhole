@@ -28,11 +28,19 @@ void sieve_result_unref(struct sieve_result **result);
 
 pool_t sieve_result_pool(struct sieve_result *result);
 
+/*
+ * Getters/Setters
+ */
+
 struct sieve_error_handler *sieve_result_get_error_handler
 	(struct sieve_result *result);
 void sieve_result_set_error_handler
 	(struct sieve_result *result, struct sieve_error_handler *ehandler);
 
+const struct sieve_script_env *sieve_result_get_script_env
+	(struct sieve_result *result);
+const struct sieve_message_data *sieve_result_get_message_data
+	(struct sieve_result *result);
 struct sieve_message_context *sieve_result_get_message_context
 	(struct sieve_result *result);
 
