@@ -72,10 +72,20 @@ struct sieve_binary *sieve_open
 		struct sieve_error_handler *ehandler, bool *exists_r);
 
 /* sieve_save:
- *  Saves the binary as the file indicated by the path parameter.
+ *
+ *  Saves the binary as the file indicated by the path parameter. If 
+ *  path is NULL, it chooses the default path relative to the original
+ *  script.
  */
 bool sieve_save
-    (struct sieve_binary *sbin, const char *path);
+    (struct sieve_binary *sbin, const char *bin_path);
+
+/* sieve_load:
+ *
+ *  Loads the sieve binary indicated by the provided path.
+ */
+struct sieve_binary *sieve_load
+	(const char *bin_path);
 
 /* sieve_close:
  *

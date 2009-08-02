@@ -5,7 +5,6 @@
 
 #include "sieve.h"
 #include "sieve-extensions.h"
-#include "sieve-binary.h"
 #include "sieve-tool.h"
 
 #include "sieve-ext-debug.h"
@@ -72,17 +71,12 @@ int main(int argc, char **argv) {
 	/* Register tool-specific extensions */
 	(void) sieve_extension_register(&debug_extension, TRUE);
 		
-	sbin = sieve_binary_open(binfile, NULL);
-
-	if ( sbin != NULL && !sieve_binary_load(sbin) ) {
-		sieve_binary_unref(&sbin);
-		sbin = NULL;
-	}
+	sbin = sieve_load(binfile);
 
 	if ( sbin != NULL ) {
 		sieve_tool_dump_binary_to(sbin, outfile == NULL ? "-" : outfile);
 	
-		sieve_binary_unref(&sbin);
+		sieve_close(&sbin);
 	} else 
 		i_error("failed to load binary: %s", binfile);
 	

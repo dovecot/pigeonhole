@@ -259,9 +259,22 @@ struct sieve_binary *sieve_open
 } 
 
 bool sieve_save
-    (struct sieve_binary *sbin, const char *path)
+(struct sieve_binary *sbin, const char *bin_path)
 {
-	return sieve_binary_save(sbin, path);
+	return sieve_binary_save(sbin, bin_path);
+}
+
+struct sieve_binary *sieve_load
+(const char *bin_path)
+{
+	struct sieve_binary *sbin = sieve_binary_open(bin_path, NULL);
+
+    if ( sbin != NULL && !sieve_binary_load(sbin) ) {
+        sieve_binary_unref(&sbin);
+        sbin = NULL;
+    }
+
+	return sbin;
 }
 
 void sieve_close(struct sieve_binary **sbin)
