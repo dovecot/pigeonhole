@@ -167,6 +167,38 @@ struct ext_imap4flags_result_context {
     string_t *internal_flags;
 };
 
+static void _get_initial_flags
+(struct sieve_result *result, string_t *flags)
+{
+	const struct sieve_message_data *msgdata = 
+		sieve_result_get_message_data(result);
+	enum mail_flags mail_flags;
+	const char *const *mail_keywords;
+
+	mail_flags = mail_get_flags(msgdata->mail);
+	mail_keywords = mail_get_keywords(msgdata->mail);	
+
+	if ( (mail_flags & MAIL_FLAGGED) > 0 )
+		str_printfa(flags, " \\flagged");
+
+	if ( (mail_flags & MAIL_ANSWERED) > 0 )
+		str_printfa(flags, " \\answered");
+
+	if ( (mail_flags & MAIL_DELETED) > 0 )
+		str_printfa(flags, " \\deleted");
+
+	if ( (mail_flags & MAIL_SEEN) > 0 )
+		str_printfa(flags, " \\seen");
+
+	if ( (mail_flags & MAIL_DRAFT) > 0 )
+		str_printfa(flags, " \\draft");
+
+	while ( *mail_keywords != NULL ) {
+		str_printfa(flags, " %s", *mail_keywords);
+		mail_keywords++;
+	}	
+}
+
 static inline struct ext_imap4flags_result_context *_get_result_context
 (struct sieve_result *result)
 {
@@ -179,6 +211,7 @@ static inline struct ext_imap4flags_result_context *_get_result_context
 
 		rctx =p_new(pool, struct ext_imap4flags_result_context, 1);
 		rctx->internal_flags = str_new(pool, 32);
+		_get_initial_flags(result, rctx->internal_flags);
 
 		sieve_result_extension_set_context
 			(result, &imap4flags_extension, rctx);

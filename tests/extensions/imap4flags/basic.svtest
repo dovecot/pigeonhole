@@ -11,11 +11,26 @@ require "comparator-i;ascii-numeric";
 
 test "Hasflag empty" {
 	if hasflag "\\Seen" {
-		test_fail "hasflag sees flags were there should be none";
+		test_fail "hasflag sees initial \\seen flag were there should be none";
+	}
+	if hasflag "\\draft" {
+		test_fail "hasflag sees initial \\draft flag were there should be none";
+	}
+	if hasflag "\\recent" {
+		test_fail "hasflag sees initial \\recent flag were there should be none";
+	}
+	if hasflag "\\flagged" {
+		test_fail "hasflag sees initial \\flagged flag were there should be none";
+	}
+	if hasflag "\\answered" {
+		test_fail "hasflag sees initial \\answered flag were there should be none";
+	}
+	if hasflag "\\deleted" {
+		test_fail "hasflag sees initial \\deleted flag were there should be none";
 	}
 
 	if hasflag :comparator "i;ascii-numeric" :count "ge" "1" {
-		test_fail "hasflag sees flags were there should be none";
+		test_fail "hasflag sees initial flags were there should be none";
 	}
 }
 
