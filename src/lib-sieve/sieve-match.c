@@ -121,15 +121,16 @@ int sieve_match_value
 int sieve_match_end(struct sieve_match_context **mctx)
 {
 	const struct sieve_match_type *mtch = (*mctx)->match_type;
+	int ret = FALSE;
 
 	if ( mtch->match_deinit != NULL ) {
-		return mtch->match_deinit(*mctx);
+		ret = mtch->match_deinit(*mctx);
 	}
 
     pool_unref(&(*mctx)->pool);
     *mctx = NULL;
 
-	return FALSE;
+	return ret;
 }
 
 /*
