@@ -66,5 +66,6 @@ noinst_HEADERS = \
 	testsuite-log.h \
 	testsuite-script.h \
 	testsuite-result.h \
-	testsuite-smtp.h
+	testsuite-smtp.h \
+	testsuite-mailstore.h
 
