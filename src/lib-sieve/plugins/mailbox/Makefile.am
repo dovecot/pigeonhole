@@ -14,7 +14,6 @@ commands = \
 	cmd-mailboxexists.c
 
 libsieve_ext_mailbox_la_SOURCES = \
-	ext-mailbox-commonc \
 	$(tags) \
 	$(commands) \
 	ext-mailbox.c
