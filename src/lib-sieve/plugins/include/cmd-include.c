@@ -253,16 +253,12 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	script = sieve_script_create_in_directory(script_path, script_name, 
 		sieve_validator_error_handler(validator), &exists);
 	if ( script == NULL ) {
-		sieve_argument_validate_error(validator, arg, 
-			"included %s script '%s' does not exist", 
-			ext_include_script_location_name(ctx_data->location),
-			str_sanitize(script_name, 80));
-		sieve_sys_info("include command in '%s' at line %d "
-			"cannot find included script '%s' at location '%s'", 
-			sieve_script_path(sieve_validator_script(validator)),
-			sieve_ast_node_line(cmd->ast_node),
-			str_sanitize(script_name, 80), 
-			script_path);
+		if ( !exists ) {
+			sieve_argument_validate_error(validator, arg, 
+				"included %s script '%s' does not exist", 
+				ext_include_script_location_name(ctx_data->location),
+				str_sanitize(script_name, 80));
+		}
 		return FALSE;
 	}
 

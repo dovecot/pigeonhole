@@ -80,7 +80,7 @@ const char *ext_include_get_script_directory
 			if ( home == NULL )	{		
 				sieve_sys_error(
 					"include: sieve_dir and home not set for :personal script include "	
-					"(wanted script %s)", str_sanitize(script_name, 80));
+					"(wanted script '%s')", str_sanitize(script_name, 80));
 				return NULL;
 			}
 
@@ -97,7 +97,7 @@ const char *ext_include_get_script_directory
 		if (sieve_dir == NULL) {
 			sieve_sys_error(
 				"include: sieve_global_dir not set for :global script include "	
-				"(wanted script %s)", str_sanitize(script_name, 80));
+				"(wanted script '%s')", str_sanitize(script_name, 80));
 			return NULL;
 		}
 
