@@ -69,24 +69,26 @@ struct ext_include_interpreter_context {
 const char *ext_include_get_script_directory
 (enum ext_include_script_location location, const char *script_name)
 {
-	const char *sieve_dir;
+	const char *home, *sieve_dir;
 
 	switch ( location ) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
 		sieve_dir = getenv("SIEVE_DIR");
+		home = getenv("HOME");
 
 		if (sieve_dir == NULL) {
-			const char *home = getenv("HOME");
-			
-			sieve_dir = home_expand_tilde("~/sieve", home);	
+			if ( home == NULL )	{		
+				sieve_sys_error(
+					"include: sieve_dir and home not set for :personal script include "	
+					"(wanted script %s)", str_sanitize(script_name, 80));
+				return NULL;
+			}
+
+			sieve_dir = "~/sieve"; 
 		}
 
-		if (sieve_dir == NULL) {
-			sieve_sys_error(
-				"include: sieve_dir and home not set for :personal script include "	
-				"(wanted script %s)", str_sanitize(script_name, 80));
-			return NULL;
-		}
+		if ( home != NULL )
+			sieve_dir = home_expand_tilde(sieve_dir, home);	
 
 		break;
    	case EXT_INCLUDE_LOCATION_GLOBAL:
