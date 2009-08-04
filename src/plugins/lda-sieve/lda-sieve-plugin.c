@@ -625,7 +625,7 @@ static int lda_sieve_deliver_mail
 	
 		/* Check whether there are any scripts to execute */
 
-		if ( array_count(&scripts_before) == 0 && array_count(&scripts_before) == 0 &&
+		if ( array_count(&scripts_before) == 0 && array_count(&scripts_after) == 0 &&
 			user_script == NULL && default_script == NULL ) {
 			if ( debug )
 				sieve_sys_info("no scripts to execute: reverting to default delivery.");
