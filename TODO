@@ -1,7 +1,7 @@
 Current activities:
 
 * Build a sieve tool to filter an entire existing mailbox through a Sieve 
-  script.
+  script:
 	- Add commandline options to fully customixe execution
 	- Write manual page
 * Testsuite:
@@ -15,22 +15,22 @@ Next (in order of descending priority/precedence):
 	- Perform script name check
 	- Implement global namespace
 	- Allow placing the global command anywhere in the script
-* Implement mechanism for implicitly including an account's aliases in the vacation
-  command's :addresses list.
-* Improve error handling. Now it is not very consistent, especially for the Sieve
-  command line tools. 
+* Implement mechanism for implicitly including an account's aliases in the
+  vacation command's :addresses list.
+* Improve error handling. Now it is not very consistent, especially for the 
+  Sieve command line tools. 
 * Detect permission errors when writing global script binaries and advise the 
   administrator on using sievec to precompile the scripts. 
 * Improve debugging support in the sieve-test tool:
 	- Improve trace debugging towards something more intuitively readable.
-	- Give trace debugging multiple levels of verbosity (e.g. to include more messy
-	  output like value matching).
+	- Give trace debugging multiple levels of verbosity (e.g. to include more 
+    messy output like value matching).
 * Implement dropping errors in the user's mailbox as a mail message.
-* Implement a better way to encode source line numbers into a binary for reporting 
-  errors at runtime. Currently, this is done explicitly for each command that adds 
-  actions to the result. However, some tests, match types etc. will also need this 
-  when the variables extension is active. Many of the RFC deviations listed below 
-  depend on this. Also trace debugging will benefit.
+* Implement a better way to encode source line numbers into a binary for
+  reporting errors at runtime. Currently, this is done explicitly for each 
+  command that adds actions to the result. However, some tests, match types etc. 
+  will also need this when the variables extension is active. Many of the RFC 
+  deviations listed below depend on this. Also trace debugging will benefit.
 * Fix remaining RFC deviations:
 	- Fix issues listed in doc/rfc/RFC-questions.txt based on answers
 	- Allow for the existance of dynamic comparators (i.e. specified by 
@@ -50,8 +50,8 @@ Next (in order of descending priority/precedence):
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
-* Properly implement Sieve internationalization support (utf-8 handling), currently
-  it is not complete:
+* Properly implement Sieve internationalization support (utf-8 handling), 
+  currently it is not complete:
 	- Make this implementation conform section 2.7.2 of RFC5228 (Comparisons 
 	  Across Character Sets). 
 	- Verify validity of utf8 where necessary.
@@ -97,6 +97,6 @@ Next (in order of descending priority/precedence):
   the binary and byte-code format. 
 * Give the byte code format some more thought, it is currently quite rough and
   to the point. 
-* Implement proposed notify mechanisms other than mailto. Currently defined: xmpp
-  and sip
+* Implement proposed notify mechanisms other than mailto. Currently defined: 
+  xmpp and sip
 
