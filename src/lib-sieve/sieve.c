@@ -69,7 +69,8 @@ struct sieve_ast *sieve_parse
 	struct sieve_ast *ast = NULL;
 	
 	/* Parse */
-	parser = sieve_parser_create(script, ehandler);
+	if ( (parser = sieve_parser_create(script, ehandler)) == NULL )
+		return NULL;
 
  	if ( !sieve_parser_run(parser, &ast) || sieve_get_errors(ehandler) > 0 ) {
  		ast = NULL;
