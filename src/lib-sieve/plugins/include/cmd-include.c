@@ -216,13 +216,12 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	if ( !sieve_validator_argument_activate(validator, cmd, arg, FALSE) )
 		return FALSE;
 
-	/* FIXME: We can currently only handle string literal argument, so
-	 * variables are not allowed.
+	/* 
+	 * Variables are not allowed.
 	 */
 	if ( !sieve_argument_is_string_literal(arg) ) {
 		sieve_argument_validate_error(validator, arg, 
-			"this Sieve implementation currently only supports "
-			"a literal string argument for the include command");
+			"the include command requires a constant string for its value argument");
 		return FALSE;
 	}
 
