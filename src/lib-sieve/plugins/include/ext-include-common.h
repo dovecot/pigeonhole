@@ -24,7 +24,25 @@ enum ext_include_script_location {
 	EXT_INCLUDE_LOCATION_PERSONAL, 
 	EXT_INCLUDE_LOCATION_GLOBAL,
 	EXT_INCLUDE_LOCATION_INVALID 
-}; 
+};
+
+static inline const char *ext_include_script_location_name
+(enum ext_include_script_location location)
+{
+	switch ( location ) {
+	case EXT_INCLUDE_LOCATION_PERSONAL:
+		return "personal";
+
+	case EXT_INCLUDE_LOCATION_GLOBAL:
+		return "global";
+
+	default:
+		break;
+	}
+
+	return "[INVALUD LOCATION]";
+}
+
 
 /* 
  * Extension 

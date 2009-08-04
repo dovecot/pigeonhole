@@ -6,6 +6,7 @@
 
 #include "sieve-common.h"
 #include "sieve-script.h"
+#include "sieve-ast.h"
 #include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
@@ -205,7 +206,8 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 	struct cmd_include_context_data *ctx_data = 
 		(struct cmd_include_context_data *) cmd->data;
 	struct sieve_script *script;
-	const char *script_dir, *script_name;
+	const char *script_path, *script_name;
+	bool exists = TRUE;
 	
 	/* Check argument */
 	if ( !sieve_validate_positional_argument
@@ -236,21 +238,33 @@ static bool cmd_include_validate(struct sieve_validator *validator,
 		return FALSE;
 	}
 		
-	script_dir = ext_include_get_script_directory
+	script_path = ext_include_get_script_directory
 		(ctx_data->location, script_name);
-	if ( script_dir == NULL ) {
+	if ( script_path == NULL ) {
 		sieve_argument_validate_error(validator, arg,
-			"include: specified location for included script '%s' is unavailable "
-			"(system logs should provide more information)",
+			"include: %s location for included script '%s' is unavailable "
+			"(contact system administrator for more information)",
+			ext_include_script_location_name(ctx_data->location),
 			str_sanitize(script_name, 80));
 		return FALSE;
 	}
 	
 	/* Create script object */
-	script = sieve_script_create_in_directory(script_dir, script_name, 
-		sieve_validator_error_handler(validator), NULL);
-	if ( script == NULL ) 
-		return FALSE;	
+	script = sieve_script_create_in_directory(script_path, script_name, 
+		sieve_validator_error_handler(validator), &exists);
+	if ( script == NULL ) {
+		sieve_argument_validate_error(validator, arg, 
+			"included %s script '%s' does not exist", 
+			ext_include_script_location_name(ctx_data->location),
+			str_sanitize(script_name, 80));
+		sieve_sys_info("include command in '%s' at line %d "
+			"cannot find included script '%s' at location '%s'", 
+			sieve_script_path(sieve_validator_script(validator)),
+			sieve_ast_node_line(cmd->ast_node),
+			str_sanitize(script_name, 80), 
+			script_path);
+		return FALSE;
+	}
 
 	ext_include_ast_link_included_script(cmd->ast_node->ast, script);		
 	ctx_data->script = script;
