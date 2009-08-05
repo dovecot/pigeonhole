@@ -1,11 +1,12 @@
 Current activities:
 
+* Testsuite:
+	- Add support for testing binary load/save
+* Implement date extension (RFC 5260)
 * Build a sieve tool to filter an entire existing mailbox through a Sieve 
   script:
 	- Add commandline options to fully customixe execution
 	- Write manual page
-* Testsuite:
-	- add support for testing binary load/save
 
 Next (in order of descending priority/precedence):
 
@@ -56,7 +57,6 @@ Next (in order of descending priority/precedence):
 	  Across Character Sets). 
 	- Verify validity of utf8 where necessary.
 	- Implement comparator-i;unicode-casemap.
-* Implement date extension
 * Make testsuite much more exhaustive:
 	- add support for testing the content of result actions
 	- test as many error/warning/info conditions as possible. 
