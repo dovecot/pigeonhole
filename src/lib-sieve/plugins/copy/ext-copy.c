@@ -55,8 +55,10 @@ static bool ext_copy_validator_load(struct sieve_validator *validator)
 	 * whether these commands are registered or even whether they will be
 	 * registered at all. The validator handles either situation gracefully 
 	 */
-	sieve_validator_register_external_tag(validator, &copy_tag, "redirect", -1);
-	sieve_validator_register_external_tag(validator, &copy_tag, "fileinto", -1);
+	sieve_validator_register_external_tag
+		(validator, &copy_tag, "redirect", SIEVE_OPT_SIDE_EFFECT);
+	sieve_validator_register_external_tag
+		(validator, &copy_tag, "fileinto", SIEVE_OPT_SIDE_EFFECT);
 
 	return TRUE;
 }

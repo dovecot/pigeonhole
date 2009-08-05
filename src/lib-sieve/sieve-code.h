@@ -79,7 +79,7 @@ bool sieve_operand_optional_read
 /* Operand codes */
 
 enum sieve_core_operand {
-	SIEVE_OPERAND_OPTIONAL,
+	SIEVE_OPERAND_OPTIONAL = 0x00,
 	SIEVE_OPERAND_NUMBER,
 	SIEVE_OPERAND_STRING,
 	SIEVE_OPERAND_STRING_LIST,

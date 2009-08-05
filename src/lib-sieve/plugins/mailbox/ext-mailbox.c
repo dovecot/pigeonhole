@@ -51,7 +51,7 @@ static bool ext_mailbox_validator_load(struct sieve_validator *valdtr)
 	 * validator handles either situation gracefully 
 	 */
 	sieve_validator_register_external_tag
-		(valdtr, &mailbox_create_tag, "fileinto", -1);
+		(valdtr, &mailbox_create_tag, "fileinto", SIEVE_OPT_SIDE_EFFECT);
 
 	/* Register new test */
 	sieve_validator_register_command(valdtr, &mailboxexists_test);

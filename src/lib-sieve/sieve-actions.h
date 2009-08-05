@@ -153,7 +153,7 @@ struct sieve_side_effect {
 #define SIEVE_EXT_DEFINE_SIDE_EFFECT(SEF) SIEVE_EXT_DEFINE_OBJECT(SEF)
 #define SIEVE_EXT_DEFINE_SIDE_EFFECTS(SEFS) SIEVE_EXT_DEFINE_OBJECTS(SEFS)
 
-#define SIEVE_OPT_SIDE_EFFECT -1
+#define SIEVE_OPT_SIDE_EFFECT (-1)
 
 extern const struct sieve_operand_class sieve_side_effect_operand_class;
 

@@ -155,6 +155,10 @@ bool cmd_flag_operation_dump
 	
 	sieve_code_mark(denv);
 	operand = sieve_operand_read(denv->sbin, address);
+	if ( operand == NULL ) {
+		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
+		return FALSE;
+	}
 
 	if ( sieve_operand_is_variable(operand) ) {	
 		return 

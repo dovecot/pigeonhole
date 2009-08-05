@@ -152,7 +152,7 @@ void ext_imap4flags_attach_flags_tag
 	 
 	/* Tag specified by user */
 	sieve_validator_register_external_tag
-		(valdtr, &tag_flags, command, -1);
+		(valdtr, &tag_flags, command, SIEVE_OPT_SIDE_EFFECT);
 
     /* Implicit tag if none is specified */
 	sieve_validator_register_persistent_tag

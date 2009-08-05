@@ -196,6 +196,11 @@ static bool seff_flags_dump_context
     const struct sieve_operand *operand;
 
     operand = sieve_operand_read(denv->sbin, address);
+	if ( operand == NULL ) {
+		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
+		return FALSE;
+	}
+
 
     if ( sieve_operand_is_omitted(operand) ) {
 		sieve_code_dumpf(denv, "flags: INTERNAL");
