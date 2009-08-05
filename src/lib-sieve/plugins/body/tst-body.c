@@ -356,7 +356,7 @@ static int ext_body_operation_execute
 
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
-			return FALSE;
+			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 	} while ( opt_code != SIEVE_MATCH_OPT_END );
 		
