@@ -266,7 +266,7 @@ bool sieve_operand_optional_present
 }
 
 bool sieve_operand_optional_read
-(struct sieve_binary *sbin, sieve_size_t *address, int *id_code)
+(struct sieve_binary *sbin, sieve_size_t *address, signed int *id_code)
 {
 	if ( sieve_binary_read_code(sbin, address, id_code) ) 
 		return TRUE;

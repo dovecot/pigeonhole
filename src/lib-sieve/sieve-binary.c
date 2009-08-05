@@ -158,7 +158,7 @@ struct sieve_binary {
 	
 	/* Current block buffer: all emit and read functions act upon this buffer */
 	buffer_t *data;
-	const char *code;
+	const signed char *code;
 	size_t code_size;
 };
 
@@ -1612,9 +1612,10 @@ void sieve_binary_emit_extension_object
  * Code retrieval
  */
  
-#define ADDR_CODE_AT(binary, address) (binary->code[*address])
-#define ADDR_DATA_AT(binary, address) ((unsigned char) (binary->code[*address]))
-#define ADDR_BYTES_LEFT(binary, address) (binary->code_size - (*address))
+#define ADDR_CODE_AT(binary, address) ((signed char) ((binary)->code[*address]))
+#define ADDR_DATA_AT(binary, address) ((unsigned char) ((binary)->code[*address]))
+#define ADDR_POINTER(binary, address) ((const char *) (&(binary)->code[*address]))
+#define ADDR_BYTES_LEFT(binary, address) ((binary)->code_size - (*address))
 #define ADDR_JUMP(address, offset) (*address) += offset
 
 /* Literals */
@@ -1635,7 +1636,7 @@ bool sieve_binary_read_byte
 }
 
 bool sieve_binary_read_code
-	(struct sieve_binary *binary, sieve_size_t *address, int *code_r) 
+	(struct sieve_binary *binary, sieve_size_t *address, signed int *code_r) 
 {	
 	if ( ADDR_BYTES_LEFT(binary, address) >= 1 ) {
 		if ( code_r != NULL )
@@ -1713,7 +1714,7 @@ bool sieve_binary_read_string
 		return FALSE;
  
  	if ( str_r != NULL )  
-		*str_r = t_str_new_const(&ADDR_CODE_AT(binary, address), strlen);
+		*str_r = t_str_new_const(ADDR_POINTER(binary, address), strlen);
 	ADDR_JUMP(address, strlen);
 	
 	if ( ADDR_CODE_AT(binary, address) != 0 )

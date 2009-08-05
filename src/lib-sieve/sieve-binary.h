@@ -162,7 +162,7 @@ void sieve_binary_emit_extension_object
 bool sieve_binary_read_byte
 	(struct sieve_binary *binary, sieve_size_t *address, unsigned int *byte_r);
 bool sieve_binary_read_code
-	(struct sieve_binary *binary, sieve_size_t *address, int *code_r);
+	(struct sieve_binary *binary, sieve_size_t *address, signed int *code_r);
 bool sieve_binary_read_offset
 	(struct sieve_binary *binary, sieve_size_t *address, int *offset_r);
 bool sieve_binary_read_integer

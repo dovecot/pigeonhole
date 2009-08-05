@@ -384,7 +384,7 @@ int sieve_interpreter_handle_optional_operands
 (const struct sieve_runtime_env *renv, sieve_size_t *address,
 	struct sieve_side_effects_list **list)
 {
-	int opt_code = -1;
+	signed int opt_code = -1;
 	
 	if ( sieve_operand_optional_present(renv->sbin, address) ) {
 		while ( opt_code != 0 ) {

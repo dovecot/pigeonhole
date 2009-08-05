@@ -70,7 +70,8 @@ const struct sieve_operand *sieve_operand_read
 bool sieve_operand_optional_present
 	(struct sieve_binary *sbin, sieve_size_t *address);
 bool sieve_operand_optional_read	
-	(struct sieve_binary *sbin, sieve_size_t *address, int *id_code);
+	(struct sieve_binary *sbin, sieve_size_t *address, 
+		signed int *id_code);
 
 /*
  * Core operands
