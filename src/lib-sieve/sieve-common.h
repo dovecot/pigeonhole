@@ -8,7 +8,6 @@
 #include "sieve-types.h"
 
 #include <sys/types.h>
-#include <stdint.h>
 
 /* 
  * Types
