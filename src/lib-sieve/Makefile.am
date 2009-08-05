@@ -42,6 +42,11 @@ comparators = \
 	cmp-i-octet.c \
 	cmp-i-ascii-casemap.c
 
+if BUILD_UNFINISHED
+unfinished_plugins = \
+	./plugins/date/libsieve_ext_date.la
+endif
+
 # These are not actual plugins just yet...
 plugins = \
 	./plugins/vacation/libsieve_ext_vacation.la \
@@ -57,8 +62,8 @@ plugins = \
 	./plugins/enotify/libsieve_ext_enotify.la \
 	./plugins/notify/libsieve_ext_notify.la \
 	./plugins/environment/libsieve_ext_environment.la \
-	./plugins/mailbox/libsieve_ext_mailbox.la
-
+	./plugins/mailbox/libsieve_ext_mailbox.la \
+	$(unfinished_plugins)
 
 libsieve_la_DEPENDENCIES = $(plugins)
 libsieve_la_LIBADD = $(plugins)

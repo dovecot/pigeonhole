@@ -89,6 +89,7 @@ extern const struct sieve_extension mailbox_extension;
 #ifdef HAVE_SIEVE_UNFINISHED
 
 extern const struct sieve_extension ereject_extension;
+extern const struct sieve_extension date_extension;
 
 #endif
 
@@ -111,6 +112,7 @@ const struct sieve_extension *sieve_core_extensions[] = {
 
 #ifdef HAVE_SIEVE_UNFINISHED
 	&ereject_extension,
+	&date_extension,
 #endif
 	
 	/* 'Plugins' */

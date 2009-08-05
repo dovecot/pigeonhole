@@ -1,3 +1,7 @@
+if BUILD_UNFINISHED
+UNFINISHED = date
+endif
+
 SUBDIRS = \
 	vacation \
 	subaddress \
@@ -12,5 +16,6 @@ SUBDIRS = \
 	enotify \
 	notify \
 	environment \
-	mailbox
+	mailbox \
+	$(UNFINISHED)
 
