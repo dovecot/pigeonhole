@@ -5,7 +5,7 @@ Current activities:
 * Implement date extension (RFC 5260)
 * Build a sieve tool to filter an entire existing mailbox through a Sieve 
   script:
-	- Add commandline options to fully customixe execution
+	- Add commandline options to fully customize execution
 	- Write manual page
 
 Next (in order of descending priority/precedence):
