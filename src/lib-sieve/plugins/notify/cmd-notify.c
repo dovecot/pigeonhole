@@ -72,9 +72,6 @@ static bool cmd_notify_validate_string_tag
 static bool cmd_notify_validate_stringlist_tag
 	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
 		struct sieve_command_context *cmd);
-static bool cmd_notify_validate_importance_tag
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-		struct sieve_command_context *cmd);
 
 /* Argument objects */
 
@@ -103,27 +100,6 @@ static const struct sieve_argument notify_message_tag = {
 	"message",
 	NULL, NULL,
 	cmd_notify_validate_string_tag,
-	NULL, NULL
-};
-
-static const struct sieve_argument notify_low_tag = {
-	"low",
-	NULL, NULL,
-	cmd_notify_validate_importance_tag,
-	NULL, NULL
-};
-
-static const struct sieve_argument notify_normal_tag = {
-	"normal",
-	NULL, NULL,
-	cmd_notify_validate_importance_tag,
-	NULL, NULL
-};
-
-static const struct sieve_argument notify_high_tag = {
-	"high",
-	NULL, NULL,
-	cmd_notify_validate_importance_tag,
 	NULL, NULL
 };
 
@@ -213,11 +189,11 @@ static bool cmd_notify_validate_string_tag
 	/* Detach the tag itself */
 	*arg = sieve_ast_arguments_detach(*arg, 1);
 
-    /* Check syntax:
-     *   :id <string>
-     *   :method <string>
-     *   :message <string>
-     */
+	/* Check syntax:
+	 *   :id <string>
+	 *   :method <string>
+	 *   :message <string>
+	 */
 	if ( !sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, SAAT_STRING) )
 		return FALSE;
 
@@ -269,27 +245,6 @@ static bool cmd_notify_validate_stringlist_tag
 	return TRUE;
 }
 
-static bool cmd_notify_validate_importance_tag
-(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast_argument **arg,
-	struct sieve_command_context *cmd ATTR_UNUSED)
-{
-	struct sieve_ast_argument *tag = *arg;
-
-	if ( tag->argument == &notify_low_tag )
-		sieve_ast_argument_number_substitute(tag, 3);
-	else if ( tag->argument == &notify_normal_tag )
-		sieve_ast_argument_number_substitute(tag, 2);
-	else
-		sieve_ast_argument_number_substitute(tag, 1);
-
-	tag->argument = &number_argument;
-
-	/* Skip parameter */
-	*arg = sieve_ast_argument_next(*arg);
-
-	return TRUE;
-}
-
 /*
  * Command registration
  */
@@ -306,12 +261,7 @@ static bool cmd_notify_registered
 	sieve_validator_register_tag
 		(valdtr, cmd_reg, &notify_options_tag, OPT_OPTIONS);
 
-	sieve_validator_register_tag
-		(valdtr, cmd_reg, &notify_low_tag, OPT_IMPORTANCE);
-	sieve_validator_register_tag
-		(valdtr, cmd_reg, &notify_normal_tag, OPT_IMPORTANCE);
-	sieve_validator_register_tag
-		(valdtr, cmd_reg, &notify_high_tag, OPT_IMPORTANCE);
+	ext_notify_register_importance_tags(valdtr, cmd_reg, OPT_IMPORTANCE);
 
 	return TRUE;
 }
@@ -473,14 +423,14 @@ static void cmd_notify_construct_message
 	string_t *out_msg)
 {
 	const struct sieve_message_data *msgdata = renv->msgdata;
-	const char *p;
+  const char *p;
 
-	if ( msg_format == NULL )
+  if ( msg_format == NULL )
 		msg_format = "$from$: $subject$";
  
  	/* Scan message for substitutions */
 	p = msg_format;
-	while ( *p != '\0' ) {
+  while ( *p != '\0' ) {
 		const char *const *header;
 
 		if ( strncasecmp(p, "$from$", 6) == 0 ) {
@@ -491,11 +441,10 @@ static void cmd_notify_construct_message
 				 str_append(out_msg, header[0]); 
 
 		} else if ( strncasecmp(p, "$env-from$", 10) == 0 ) {
-			const char *from = sieve_message_get_sender(renv->msgctx);
 			p += 10;
 
-			if ( from != NULL ) 
-				str_append(out_msg, from);
+			if ( msgdata->return_path != NULL ) 
+				str_append(out_msg, msgdata->return_path);
 
 		} else if ( strncasecmp(p, "$subject$", 9) == 0 ) {	
 			p += 9;
@@ -510,7 +459,7 @@ static void cmd_notify_construct_message
 			const char *begin = p;
 			bool valid = TRUE;
 
-			p += 5;
+    	p += 5;
 			if ( *p == '[' ) {
 				p += 1;
 
@@ -835,8 +784,10 @@ static bool contains_8bit(const char *msg)
 }
 
 static bool act_notify_send
-(const struct sieve_action_exec_env *aenv, const struct ext_notify_action *act)
+(const struct sieve_action_exec_env *aenv, 
+	const struct ext_notify_action *act)
 { 
+	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const struct ext_notify_recipient *recipients;
 	void *smtp_handle;
@@ -948,7 +899,7 @@ static bool act_notify_commit
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
 				sieve_result_log(aenv, 
 					"not sending notification for auto-submitted message from <%s>", 
-					str_sanitize(sieve_message_get_sender(aenv->msgctx), 128));	
+					str_sanitize(msgdata->return_path, 128));	
 					return TRUE;				 
 			}
 			hdsp++;

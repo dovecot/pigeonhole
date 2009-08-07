@@ -14,6 +14,7 @@ commands = \
 
 libsieve_ext_notify_la_SOURCES = \
 	ext-notify.c \
+	ext-notify-common.c \
 	$(commands)
 
 noinst_HEADERS = \

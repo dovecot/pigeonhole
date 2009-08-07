@@ -18,6 +18,14 @@ extern const struct sieve_command cmd_notify_old;
 extern const struct sieve_command cmd_denotify;
 
 /*
+ * Arguments
+ */
+
+void ext_notify_register_importance_tags
+	(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg,
+		unsigned int id_code);
+
+/*
  * Operations
  */
 

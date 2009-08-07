@@ -7,15 +7,13 @@
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-notify-00.txt
  * Implementation: deprecated; provided for backwards compatibility
- *                 denotify command is explicitly not supported.
  * Status: deprecated
  * 
  */
 
 /* FIXME: Currently the following CMUSieve features are not supported:
  * 
- * 1) The denotify command is not supported and causes a compile error when used.
- * 2) The $text$ substitution is not available for the :message argument.
+ * (*) The $text$ substitution is not available for the :message argument.
  */
 	
 #include <stdio.h>
