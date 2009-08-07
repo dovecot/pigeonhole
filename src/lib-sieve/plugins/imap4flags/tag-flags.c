@@ -395,47 +395,17 @@ static bool seff_flags_pre_execute
 	void **se_context, void *tr_context)
 {	
 	struct seff_flags_context *ctx = (struct seff_flags_context *) *se_context;
-	struct act_store_transaction *trans = 
-		(struct act_store_transaction *) tr_context;
+	const char *const *keywords;
 		
 	if ( ctx == NULL ) {
 		ctx = seff_flags_get_implicit_context(aenv->result);
 		*se_context = (void *) ctx;
 	}
-
-	/* Assign mail keywords for subsequent mailbox_copy() */
-	if ( array_count(&ctx->keywords) > 0 ) {
-		unsigned int i;
-
-		if ( !array_is_created(&trans->keywords) ) {
-			pool_t pool = sieve_result_pool(aenv->result); 
-			p_array_init(&trans->keywords, pool, 2);
-		}
 		
-		for ( i = 0; i < array_count(&ctx->keywords); i++ ) {		
-			const char *const *keyword = array_idx(&ctx->keywords, i);
-			const char *kw_error;
+	(void)array_append_space(&ctx->keywords);
+	keywords = array_idx(&ctx->keywords, 0);
 
-			if ( trans->box != NULL ) {
-				if ( mailbox_keyword_is_valid(trans->box, *keyword, &kw_error) )
-					array_append(&trans->keywords, keyword, 1);
-				else {
-					char *error = "";
-					if ( kw_error != NULL && *kw_error != '\0' ) {
-						error = t_strdup_noconst(kw_error);
-						error[0] = i_tolower(error[0]);
-					}
-				
-					sieve_result_warning(aenv, 
-						"specified IMAP keyword '%s' is invalid (ignored): %s", 
-						str_sanitize(*keyword, 64), error);
-				}
-			}
-		}
-	}
-
-	/* Assign mail flags for subsequent mailbox_copy() */
-	trans->flags |= ctx->flags;
+	sieve_act_store_add_flags(aenv, tr_context, keywords, ctx->flags);
 	
 	return TRUE;
 }

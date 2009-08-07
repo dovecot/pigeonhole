@@ -199,8 +199,9 @@ struct act_store_transaction {
 	const char *error;
 	
 	enum mail_flags flags;
-	ARRAY_DEFINE(keywords, const char *);
+	ARRAY_TYPE(const_string) keywords;
 
+	unsigned int flags_altered:1;
 	unsigned int disabled:1;
 	unsigned int redundant:1;
 };
@@ -209,6 +210,10 @@ int sieve_act_store_add_to_result
 	(const struct sieve_runtime_env *renv, 
 		struct sieve_side_effects_list *seffects, const char *folder,
 		unsigned int source_line);
+
+void sieve_act_store_add_flags
+	(const struct sieve_action_exec_env *aenv, void *tr_context,
+		const char *const *keywords, enum mail_flags flags);
 
 /*		
  * Action utility functions

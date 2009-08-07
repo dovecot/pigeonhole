@@ -15,6 +15,8 @@
 #include "sieve-result.h"
 #include "sieve-actions.h"
 
+#include <ctype.h>
+
 /*
  * Action execution environment
  */
@@ -117,6 +119,53 @@ int sieve_act_store_add_to_result
 
 	return sieve_result_add_action(renv, &act_store, seffects, 
 		source_line, (void *) act, 0);
+}
+
+void sieve_act_store_add_flags
+(const struct sieve_action_exec_env *aenv, void *tr_context,
+	const char *const *keywords, enum mail_flags flags)
+{
+	struct act_store_transaction *trans = 
+		(struct act_store_transaction *) tr_context;
+
+	/* Assign mail keywords for subsequent mailbox_copy() */
+	if ( *keywords != NULL ) {
+		const char *const *kw;
+
+		if ( !array_is_created(&trans->keywords) ) {
+			pool_t pool = sieve_result_pool(aenv->result); 
+			p_array_init(&trans->keywords, pool, 2);
+		}
+		
+		kw = keywords;
+		while ( *kw != NULL ) {
+
+			const char *kw_error;
+
+			if ( trans->box != NULL ) {
+				if ( mailbox_keyword_is_valid(trans->box, *kw, &kw_error) )
+					array_append(&trans->keywords, kw, 1);
+				else {
+					char *error = "";
+					if ( kw_error != NULL && *kw_error != '\0' ) {
+						error = t_strdup_noconst(kw_error);
+						error[0] = i_tolower(error[0]);
+					}
+				
+					sieve_result_warning(aenv, 
+						"specified IMAP keyword '%s' is invalid (ignored): %s", 
+						str_sanitize(*kw, 64), error);
+				}
+			}
+
+			kw++;
+		}
+	}
+
+	/* Assign mail flags for subsequent mailbox_copy() */
+	trans->flags |= flags;
+
+	trans->flags_altered = TRUE;
 }
 
 /* Equality */
@@ -322,21 +371,64 @@ static bool act_store_start
 	return ( disabled || redundant || (box != NULL) );
 }
 
+static struct mail_keywords *act_store_keywords_create
+(const struct sieve_action_exec_env *aenv, ARRAY_TYPE(const_string) *keywords, 
+	struct mailbox *box)
+{
+	struct mail_keywords *box_keywords = NULL;
+	
+	if ( array_is_created(keywords) && array_count(keywords) > 0 ) 
+	{
+		const char *const *kwds;
+		
+		(void)array_append_space(keywords);
+		kwds = array_idx(keywords, 0);
+				
+		/* FIXME: Do we need to clear duplicates? */
+		if ( mailbox_keywords_create(box, kwds, &box_keywords) < 0) {
+			sieve_result_error(aenv, "invalid keywords set for stored message");
+			return NULL;
+		}
+	}
+
+	return box_keywords;	
+}
+
 static bool act_store_execute
 (const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv, void *tr_context)
 {   
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
-	struct mail_keywords *keywords = NULL;
+	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct mail_save_context *save_ctx;
+	struct mail_keywords *keywords = NULL;
 	bool result = TRUE;
 	
 	/* Verify transaction */
 	if ( trans == NULL ) return FALSE;
 
 	/* Check whether we need to do anything */
-	if ( trans->disabled || trans->redundant ) return TRUE;
+	if ( trans->disabled ) return TRUE;
+
+	/* If the message originates from the target mailbox, only update the flags 
+	 * and keywords 
+	 */
+	if ( trans->redundant ) {
+		if ( trans->flags_altered ) {
+			keywords = act_store_keywords_create
+				(aenv, &trans->keywords, msgdata->mail->box);
+
+			if ( keywords != NULL ) {
+				mail_update_keywords(msgdata->mail, MODIFY_REPLACE, keywords);
+				mailbox_keywords_free(trans->box, &keywords);
+			}
+
+			mail_update_flags(msgdata->mail, MODIFY_REPLACE, trans->flags);
+		}
+
+		return TRUE;
+	}
 
 	/* Exit early if namespace or mailbox are not available */
 	if ( trans->namespace == NULL )
@@ -360,26 +452,18 @@ static bool act_store_execute
 
 	/* Create mail object for stored message */
 	trans->dest_mail = mail_alloc(trans->mail_trans, 0, NULL);
-
-	/* Collect keywords added by side-effects */
-	if ( array_is_created(&trans->keywords) && array_count(&trans->keywords) > 0 ) 
-	{
-		const char *const *kwds;
-		
-		(void)array_append_space(&trans->keywords);
-		kwds = array_idx(&trans->keywords, 0);
-				
-		/* FIXME: Do we need to clear duplicates? */
-		if ( mailbox_keywords_create(trans->box, kwds, &keywords) < 0) {
-			sieve_result_error(aenv, "invalid keywords set for stored message");
-			keywords = NULL;
-		}
-	}
-	
+ 
 	/* Store the message */
 	save_ctx = mailbox_save_alloc(trans->mail_trans);
-	mailbox_save_set_flags(save_ctx, trans->flags, keywords);
 	mailbox_save_set_dest_mail(save_ctx, trans->dest_mail);
+
+	/* Apply keywords and flags that side-effects may have added */
+	if ( trans->flags_altered ) {
+		keywords = act_store_keywords_create(aenv, &trans->keywords, trans->box);
+		
+		mailbox_save_set_flags(save_ctx, trans->flags, keywords);
+	}
+
 	if ( mailbox_copy(&save_ctx, aenv->msgdata->mail) < 0 ) {
 		act_store_get_storage_error(aenv, trans);
  		result = FALSE;
