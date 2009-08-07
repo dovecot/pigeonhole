@@ -217,9 +217,9 @@ static struct mailbox *act_store_mailbox_open
 
 		*ns_r = mail_namespace_find(aenv->scriptenv->namespaces, &folder);
     	if ( *ns_r == NULL) {
-        	*storage = NULL;
-	        return NULL;
-    	}
+			*storage = NULL;
+			return NULL;
+		}
 	}
 
 	/* First attempt at opening the box */
