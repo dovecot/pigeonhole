@@ -8,10 +8,15 @@ EXTRA_DIST = \
 	COPYING.LGPL \
 	ChangeLog
 
+if BUILD_UNFINISHED
+unfinished_man = doc/man/sieve-filter.1
+endif
+
 dist_man_MANS = \
 	doc/man/sievec.1 \
 	doc/man/sieved.1 \
-	doc/man/sieve-test.1
+	doc/man/sieve-test.1 \
+	$(unfinished_man)
 
 if MAINTAINER_MODE
 ChangeLog: .hg/dirstate
