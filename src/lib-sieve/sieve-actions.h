@@ -200,6 +200,9 @@ struct act_store_transaction {
 	
 	enum mail_flags flags;
 	ARRAY_DEFINE(keywords, const char *);
+
+	unsigned int disabled:1;
+	unsigned int redundant:1;
 };
 
 int sieve_act_store_add_to_result

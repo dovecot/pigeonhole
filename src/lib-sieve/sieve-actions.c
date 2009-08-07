@@ -271,15 +271,18 @@ static bool act_store_start
 	const struct sieve_action_exec_env *aenv, void *context, void **tr_context)
 {  
 	struct act_store_context *ctx = (struct act_store_context *) context;
+	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct act_store_transaction *trans;
 	struct mail_namespace *ns = NULL;
 	struct mailbox *box = NULL;
 	pool_t pool = sieve_result_pool(aenv->result);
+	bool disabled = FALSE, redundant = FALSE;
 
 	/* If context is NULL, the store action is the result of (implicit) keep */	
 	if ( ctx == NULL ) {
 		ctx = p_new(pool, struct act_store_context, 1);
-		ctx->folder = p_strdup(pool, SIEVE_SCRIPT_DEFAULT_MAILBOX(aenv->scriptenv));
+		ctx->folder = p_strdup(pool, SIEVE_SCRIPT_DEFAULT_MAILBOX(senv));
 	}
 
 	/* Open the requested mailbox */
@@ -287,20 +290,36 @@ static bool act_store_start
 	/* NOTE: The caller of the sieve library is allowed to leave namespaces set 
 	 * to NULL. This implementation will then skip actually storing the message.
 	 */
-	if ( aenv->scriptenv->namespaces != NULL ) {
+	if ( senv->namespaces != NULL ) {
 		box = act_store_mailbox_open(aenv, &ctx->folder, &ns);
+
+		/* Check whether we are trying to store the message in the folder it
+		 * originates from. In that case skip
+		 */
+		if ( box != NULL && mailbox_backends_equal(box, msgdata->mail->box) ) {
+			mailbox_close(&box);
+			box = NULL;
+			ns = NULL;
+			redundant = TRUE;
+		}
+	} else {
+		disabled = TRUE;
 	}
 				
 	/* Create transaction context */
 	trans = p_new(pool, struct act_store_transaction, 1);
+
 	trans->context = ctx;
 	trans->namespace = ns;
 	trans->box = box;
 	trans->flags = 0;
+
+	trans->disabled = disabled;
+	trans->redundant = redundant;
 	
 	*tr_context = (void *)trans;
 
-	return ( (aenv->scriptenv->namespaces == NULL) || (box != NULL) );
+	return ( disabled || redundant || (box != NULL) );
 }
 
 static bool act_store_execute
@@ -311,17 +330,19 @@ static bool act_store_execute
 		(struct act_store_transaction *) tr_context;
 	struct mail_keywords *keywords = NULL;
 	struct mail_save_context *save_ctx;
+	bool result = TRUE;
 	
 	/* Verify transaction */
 	if ( trans == NULL ) return FALSE;
 
-	/* Exit early if namespace is not available */
-	if ( trans->namespace == NULL ) {
-		if ( aenv->scriptenv->namespaces == NULL )
-			return TRUE;
+	/* Check whether we need to do anything */
+	if ( trans->disabled || trans->redundant ) return TRUE;
 
+	/* Exit early if namespace or mailbox are not available */
+	if ( trans->namespace == NULL )
 		return FALSE;
-	} else if ( trans->box == NULL ) return FALSE;
+	else if ( trans->box == NULL ) 
+		return FALSE;
 
 	/* Mark attempt to store in default mailbox */
 	if ( strcmp(trans->context->folder, 
@@ -349,7 +370,6 @@ static bool act_store_execute
 		kwds = array_idx(&trans->keywords, 0);
 				
 		/* FIXME: Do we need to clear duplicates? */
-		
 		if ( mailbox_keywords_create(trans->box, kwds, &keywords) < 0) {
 			sieve_result_error(aenv, "invalid keywords set for stored message");
 			keywords = NULL;
@@ -362,14 +382,15 @@ static bool act_store_execute
 	mailbox_save_set_dest_mail(save_ctx, trans->dest_mail);
 	if ( mailbox_copy(&save_ctx, aenv->msgdata->mail) < 0 ) {
 		act_store_get_storage_error(aenv, trans);
- 		return FALSE;
+ 		result = FALSE;
  	}
  	
+	/* Deallocate keywords */
  	if ( keywords != NULL ) {
  		mailbox_keywords_unref(trans->box, &keywords);
  	}
  		 	
-	return TRUE;
+	return result;
 }
 
 static void act_store_log_status
@@ -380,30 +401,40 @@ static void act_store_log_status
 	
 	mailbox_name = str_sanitize(trans->context->folder, 128);
 
-	if ( trans->namespace == NULL ) {
-		if ( aenv->scriptenv->namespaces == NULL )
-			sieve_result_log(aenv, "store into mailbox '%s' skipped", mailbox_name);
+	/* Store disabled? */
+	if ( trans->disabled ) {
+		sieve_result_log(aenv, "store into mailbox '%s' skipped", mailbox_name);
+	
+	/* Store redundant? */
+	} else if ( trans->redundant ) {
+		sieve_result_log(aenv, "left message in mailbox '%s'", mailbox_name);
+
+	/* Namespace not set? */
+	} else if ( trans->namespace == NULL ) {
+		sieve_result_error
+			(aenv, "failed to find namespace for mailbox '%s'", mailbox_name);
+
+	/* Store failed? */
+	} else if ( !status ) {
+		const char *errstr;
+		enum mail_error error;
+
+		if ( trans->error != NULL )
+			errstr = trans->error;
 		else
-			sieve_result_error
-				(aenv, "failed to find namespace for mailbox '%s'", mailbox_name);
-	} else {	
-		if ( !rolled_back && status ) {
-			sieve_result_log(aenv, "stored mail into mailbox '%s'", mailbox_name);
-		} else {
-			const char *errstr;
-			enum mail_error error;
-		
-			if ( trans->error != NULL )
-				errstr = trans->error;
-			else
-				errstr = mail_storage_get_last_error(trans->namespace->storage, &error);
-			
-			if ( status )
-				sieve_result_log(aenv, "store into mailbox '%s' aborted", mailbox_name);
-			else
-				sieve_result_error(aenv, "failed to store into mailbox '%s': %s", 
-					mailbox_name, errstr);
-		}
+			errstr = mail_storage_get_last_error(trans->namespace->storage, &error);
+	
+		sieve_result_error(aenv, "failed to store into mailbox '%s': %s", 
+			mailbox_name, errstr);
+
+	/* Store aborted? */
+	} else if ( rolled_back ) {
+		sieve_result_log(aenv, "store into mailbox '%s' aborted", mailbox_name);
+
+	/* Succeeded */
+	} else {
+		sieve_result_log(aenv, "stored mail into mailbox '%s'", mailbox_name);
+
 	}
 }
 
@@ -418,16 +449,21 @@ static bool act_store_commit
 	/* Verify transaction */
 	if ( trans == NULL ) return FALSE;
 
-	/* Exit early if namespace is not available */
-	if ( trans->namespace == NULL ) {
-		if ( aenv->scriptenv->namespaces == NULL ) {
-			act_store_log_status(trans, aenv, FALSE, status);
-			*keep = FALSE;
-			return TRUE;
-		}
+	/* Check whether we need to do anything */
+	if ( trans->disabled ) {
+		act_store_log_status(trans, aenv, FALSE, status);
+		*keep = FALSE;
+		return TRUE;
+	} else if ( trans->redundant ) {
+		act_store_log_status(trans, aenv, FALSE, status);
+		return TRUE;	
+	}
 
+	/* Exit early if namespace is not available */
+	if ( trans->namespace == NULL )
 		return FALSE;
-	} else if ( trans->box == NULL ) return FALSE;
+	else if ( trans->box == NULL ) 
+		return FALSE;
 
 	/* Mark attempt to use storage. Can only get here when all previous actions
 	 * succeeded. 
@@ -439,7 +475,7 @@ static bool act_store_commit
 		mail_free(&trans->dest_mail);	
 
 	/* Commit mailbox transaction */	
-	status = mailbox_transaction_commit(&trans->mail_trans) == 0;
+	status = ( mailbox_transaction_commit(&trans->mail_trans) == 0 );
 
 	/* Note the fact that the message was stored at least once */
 	if ( status )
