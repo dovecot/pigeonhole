@@ -421,7 +421,7 @@ static bool act_store_execute
 
 			if ( keywords != NULL ) {
 				mail_update_keywords(msgdata->mail, MODIFY_REPLACE, keywords);
-				mailbox_keywords_free(trans->box, &keywords);
+				mailbox_keywords_unref(trans->box, &keywords);
 			}
 
 			mail_update_flags(msgdata->mail, MODIFY_REPLACE, trans->flags);
