@@ -520,10 +520,10 @@ static bool ext_include_runtime_include_mark
 	return TRUE;
 }
 
-bool ext_include_execute_include
+int ext_include_execute_include
 (const struct sieve_runtime_env *renv, unsigned int include_id, bool once)
 {
-	int result = TRUE;
+	int result = SIEVE_EXEC_OK;
 	struct ext_include_interpreter_context *ctx;
 	const struct ext_include_script_info *included;
 	struct ext_include_binary_context *binctx = 
