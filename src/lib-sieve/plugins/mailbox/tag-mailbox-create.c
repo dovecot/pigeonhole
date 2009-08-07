@@ -2,6 +2,8 @@
  */
 
 #include "lib.h"
+#include "mail-storage.h"
+#include "mail-namespace.h"
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
@@ -38,19 +40,18 @@ const struct sieve_argument mailbox_create_tag = {
 static void seff_mailbox_create_print
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 		const struct sieve_result_print_env *rpenv, void *se_context, bool *keep);
-static void seff_mailbox_create_post_commit
+static bool seff_mailbox_create_pre_execute
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
-		const struct sieve_action_exec_env *aenv, void *se_context,
-		void *tr_context, bool *keep);
+		const struct sieve_action_exec_env *aenv, void **se_context, 
+		void *tr_context);;
 
 const struct sieve_side_effect mailbox_create_side_effect = {
 	SIEVE_OBJECT("create", &mailbox_create_operand, 0),
 	&act_store,
 	NULL, NULL, NULL,
 	seff_mailbox_create_print,
-	NULL, NULL,
-	seff_mailbox_create_post_commit, 
-	NULL
+	seff_mailbox_create_pre_execute, 
+	NULL, NULL, NULL
 };
 
 /*
@@ -112,13 +113,63 @@ static void seff_mailbox_create_print
 	sieve_result_seffect_printf(rpenv, "create mailbox if it does not exist");
 }
 
-static void seff_mailbox_create_post_commit
+static bool seff_mailbox_create_pre_execute
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
-	const struct sieve_action *action ATTR_UNUSED, 
+	const struct sieve_action *action, 
 	const struct sieve_action_exec_env *aenv ATTR_UNUSED,
-	void *se_context ATTR_UNUSED, void *tr_context ATTR_UNUSED, 
-	bool *keep ATTR_UNUSED)
+	void **se_context ATTR_UNUSED, void *tr_context ATTR_UNUSED)
 {	
+	struct act_store_transaction *trans = 
+		(struct act_store_transaction *) tr_context;
+	struct mail_storage **storage = &(aenv->exec_status->last_storage);
+	enum mailbox_flags flags =
+		MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_SAVEONLY |
+		MAILBOX_FLAG_POST_SESSION;
+	struct mailbox *box = NULL;
+	
+	/* Check whether creation is necessary */
+	if ( trans->box != NULL || trans->redundant || trans->disabled ) 
+		return TRUE;
+
+	/* Check availability of namespace and folder name */
+	if ( trans->namespace == NULL || trans->folder == NULL )
+		return FALSE;
+
+	/* Check whether creation has a chance of working */
+	if ( trans->error_code != MAIL_ERROR_NONE 
+		&& trans->error_code != MAIL_ERROR_NOTFOUND )
+		return FALSE;
+
+	*storage = trans->namespace->storage; 
+
+    box = mailbox_alloc(trans->namespace->list, trans->folder, NULL, flags);
+	/* Create mailbox */
+	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
+		mailbox_close(&box);
+		box = NULL;
+
+	} else {
+		/* Subscribe to it if necessary */
+		if ( aenv->scriptenv->mailbox_autosubscribe ) {
+			(void)mailbox_list_set_subscribed
+				(trans->namespace->list, trans->folder, TRUE);
+		}
+
+		/* Try opening again */
+		if ( mailbox_open(box) < 0 || mailbox_sync(box, 0, 0, NULL) < 0 ) {
+			/* Failed definitively */
+			mailbox_close(&box);
+			box = NULL;
+		}
+	} 
+
+	/* Fetch error */
+	if ( box == NULL )
+		sieve_act_store_get_storage_error(aenv, trans);	
+
+	trans->box = box;
+	
+	return ( box != NULL );
 }
 
 

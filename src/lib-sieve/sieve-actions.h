@@ -187,7 +187,7 @@ extern const struct sieve_action act_discard;
 
 struct act_store_context {
 	/* Folder name represented in modified utf-7 */
-	const char *folder; 
+	const char *mailbox; 
 };
 
 struct act_store_transaction {
@@ -196,7 +196,11 @@ struct act_store_transaction {
 	struct mailbox *box;
 	struct mailbox_transaction_context *mail_trans;
 	struct mail *dest_mail;
+
+	const char *folder;
+
 	const char *error;
+	enum mail_error error_code;
 	
 	enum mail_flags flags;
 	ARRAY_TYPE(const_string) keywords;
