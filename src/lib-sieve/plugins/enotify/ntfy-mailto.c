@@ -934,7 +934,7 @@ static bool ntfy_mailto_send
 	}
 
 	/* Determine SMTP from address */
-	if ( msgdata->return_path != NULL ) {
+	if ( msgdata->return_path != NULL && *(msgdata->return_path) != '\0' ) {
 		if ( mtctx->from_normalized == NULL ) {
 			from_smtp = senv->postmaster_address;
 		} else {

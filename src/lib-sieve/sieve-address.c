@@ -255,6 +255,11 @@ bool sieve_rfc2822_mailbox_validate(const char *address, const char **error_r)
 {
 	struct sieve_message_address_parser ctx;
 
+	if ( address == NULL ) {
+		*error_r = "null address";
+		return FALSE;
+	}
+
 	memset(&ctx, 0, sizeof(ctx));
 	
 	ctx.local_part = t_str_new(128);
@@ -276,9 +281,14 @@ bool sieve_rfc2822_mailbox_validate(const char *address, const char **error_r)
 }
 
 const char *sieve_rfc2822_mailbox_normalize
-	(const char *address, const char **error_r)
+(const char *address, const char **error_r)
 {
 	struct sieve_message_address_parser ctx;
+
+	if ( error_r != NULL )
+		*error_r = NULL;
+
+	if ( address == NULL ) return NULL;
 
 	memset(&ctx, 0, sizeof(ctx));
 	
@@ -293,9 +303,6 @@ const char *sieve_rfc2822_mailbox_normalize
 			*error_r = str_c(ctx.error);
 		return NULL;
 	}
-
-	if ( error_r != NULL )
-		*error_r = NULL;
 		
 	(void)str_lcase(str_c_modifiable(ctx.domain));
 
@@ -361,6 +368,9 @@ int sieve_address_compare
 	/* FIXME: provided addresses are currently assumed to be normalized to 
 	 * local_part@domain
 	 */
+
+	i_assert(address1 != NULL);
+	i_assert(address2 != NULL);
 	 
 	return strcasecmp(address1, address2);
 }
@@ -398,7 +408,7 @@ int sieve_address_compare
 static unsigned char rfc2821_chars[256] = {
 	   DB,    DB,    DB,    DB,    DB,    DB,    DB,    DB, // 0
 	   DB,    QB,    QB,    DB,    DB,    QB,    DB,    DB, // 8
-     DB,    DB,    DB,    DB,    DB,    DB,    DB,    DB, // 16
+	   DB,    DB,    DB,    DB,    DB,    DB,    DB,    DB, // 16
 	   DB,    DB,    DB,    DB,    DB,    DB,    DB,    DB, // 24
 	   QB, DB|AB, QB|DB, DB|AB, DB|AB, DB|AB, DB|AB, DB|AB, // 32
 	   DB,    DB, DB|AB, DB|AB,    DB, DB|AB,    DB, DB|AB, // 40
@@ -747,6 +757,10 @@ const struct sieve_address *sieve_address_parse_envelope_path
 {
 	struct sieve_envelope_address_parser parser;
 	int ret;
+
+	if ( field_value == NULL ) {
+		return t_new(struct sieve_address, 1);
+	}
 
 	parser.data = (const unsigned char *) field_value;
 	parser.end = (const unsigned char *) field_value + strlen(field_value);

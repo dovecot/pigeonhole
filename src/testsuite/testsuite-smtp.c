@@ -81,7 +81,8 @@ void *testsuite_smtp_open
 	
 	smtp_msg.file = p_strdup_printf(testsuite_smtp_pool, 
 		"%s/%d.eml", testsuite_smtp_tmp, smtp_count);
-	smtp_msg.envelope_from = p_strdup(testsuite_smtp_pool, return_path);
+	smtp_msg.envelope_from = 
+		( return_path != NULL ? p_strdup(testsuite_smtp_pool, return_path) : NULL );
 	smtp_msg.envelope_to = p_strdup(testsuite_smtp_pool, destination);
 	 
 	array_append(&testsuite_smtp_messages, &smtp_msg, 1);

@@ -61,8 +61,7 @@ static void *sieve_smtp_open
 	const char *return_path, FILE **file_r)
 {
 	i_info("sending message from <%s> to <%s>:",
-		return_path == NULL || *return_path == '\0' ? "" : return_path, 
-		destination);
+		( return_path == NULL ? "" : return_path ), destination);
 	printf("\nSTART MESSAGE:\n");
 	
 	*file_r = stdout;

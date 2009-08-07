@@ -863,7 +863,7 @@ static bool act_notify_send
 	/* Send message to all recipients */
 	for ( i = 0; i < count; i++ ) {
 
-		if ( msgdata->return_path != NULL )
+		if ( msgdata->return_path != NULL && *(msgdata->return_path) != '\0' )
 			smtp_handle = sieve_smtp_open
 				(senv, recipients[i].normalized, senv->postmaster_address, &f);
 		else		
