@@ -186,7 +186,7 @@ static void act_store_get_storage_error
 }
 
 static struct mailbox *act_store_mailbox_open
-(const struct sieve_action_exec_env *aenv, const char *folder,
+(const struct sieve_action_exec_env *aenv, const char *name,
 	struct mail_namespace **ns_r)
 {
 	struct mail_storage **storage = &(aenv->exec_status->last_storage);
@@ -195,6 +195,7 @@ static struct mailbox *act_store_mailbox_open
 		MAILBOX_FLAG_POST_SESSION;
 	struct mailbox *box;
 	enum mail_error error;
+	const char *folder = name;
 
 	if (strcasecmp(folder, "INBOX") == 0) {
 		/* Deliveries to INBOX must always succeed, regardless of ACLs */
@@ -212,6 +213,13 @@ static struct mailbox *act_store_mailbox_open
 		 * deliver to the INBOX instead
 		 */
 		folder = "INBOX";
+		flags |= MAILBOX_FLAG_IGNORE_ACLS;
+
+		*ns_r = mail_namespace_find(aenv->scriptenv->namespaces, &folder);
+    	if ( *ns_r == NULL) {
+        	*storage = NULL;
+	        return NULL;
+    	}
 	}
 
 	/* First attempt at opening the box */
