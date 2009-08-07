@@ -109,8 +109,9 @@ static const char *lda_sieve_get_personal_path(struct mail_user *user)
 		}
 	} else {
 		if ( home == NULL || *home == '\0' ) {
-			sieve_sys_error("per-user script path is unknown. See "
-				"http://wiki.dovecot.org/LDA/Sieve#location");
+			sieve_sys_error(
+				"path to user's main active personal script is unknown. "
+				"See http://wiki.dovecot.org/LDA/Sieve/Dovecot#configuration");
 			return NULL;
 		}
 
