@@ -581,7 +581,7 @@ int ext_include_execute_include
 			result = SIEVE_EXEC_BIN_CORRUPT;
 		}
 
-		if ( result > 0 ) {
+		if ( result == SIEVE_EXEC_OK ) {
 			/* Create interpreter for top-level included script
 			 * (first sub-interpreter) 
 			 */
@@ -603,8 +603,8 @@ int ext_include_execute_include
 		 * recursively. Rather, the sub-interpreter interrupts and defers the 
 		 * include to the top-level interpreter, which is here.
 		 */
-		if ( result > 0 && interrupted && !curctx->returned ) {
-			while ( result > 0 ) {
+		if ( result == SIEVE_EXEC_OK && interrupted && !curctx->returned ) {
+			while ( result == SIEVE_EXEC_OK ) {
 
 				if ( ( (interrupted && curctx->returned) || (!interrupted) ) && 
 					curctx->parent != NULL ) {
@@ -644,7 +644,7 @@ int ext_include_execute_include
 							result = SIEVE_EXEC_BIN_CORRUPT;
 						}
 				
-						if ( result > 0 ) {
+						if ( result == SIEVE_EXEC_OK ) {
 							/* Create sub-interpreter */
 							subinterp = sieve_interpreter_create(renv->sbin, ehandler);			
 
