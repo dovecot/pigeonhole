@@ -787,7 +787,6 @@ static bool act_notify_send
 (const struct sieve_action_exec_env *aenv, 
 	const struct ext_notify_action *act)
 { 
-	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const struct ext_notify_recipient *recipients;
 	void *smtp_handle;

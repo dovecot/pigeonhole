@@ -22,6 +22,7 @@
 #include "sieve-code-dumper.h"
 #include "sieve-result.h"
 #include "sieve-smtp.h"
+#include "sieve-message.h"
 
 #include <stdio.h>
 

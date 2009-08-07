@@ -7,6 +7,7 @@
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
+#include "sieve-actions.h"
 #include "sieve-code.h"
 #include "sieve-actions.h"
 #include "sieve-result.h"
@@ -115,7 +116,7 @@ static void seff_mailbox_create_print
 
 static bool seff_mailbox_create_pre_execute
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
-	const struct sieve_action *action, 
+	const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv ATTR_UNUSED,
 	void **se_context ATTR_UNUSED, void *tr_context ATTR_UNUSED)
 {	

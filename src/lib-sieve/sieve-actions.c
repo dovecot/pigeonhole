@@ -236,16 +236,6 @@ static void act_store_print
 
 /* Action implementation */
 
-static void act_store_get_storage_error
-(const struct sieve_action_exec_env *aenv, struct act_store_transaction *trans)
-{
-	enum mail_error error;
-	pool_t pool = sieve_result_pool(aenv->result);
-	
-	trans->error = p_strdup(pool, 
-		mail_storage_get_last_error(trans->namespace->storage, &error));
-}
-
 static struct mailbox *act_store_mailbox_open
 (const struct sieve_action_exec_env *aenv, const char **mailbox,
 	struct mail_namespace **ns_r, const char **folder_r)

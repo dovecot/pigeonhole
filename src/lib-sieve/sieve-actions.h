@@ -219,6 +219,9 @@ void sieve_act_store_add_flags
 	(const struct sieve_action_exec_env *aenv, void *tr_context,
 		const char *const *keywords, enum mail_flags flags);
 
+void sieve_act_store_get_storage_error
+	(const struct sieve_action_exec_env *aenv, struct act_store_transaction *trans);
+
 /*		
  * Action utility functions
  */
