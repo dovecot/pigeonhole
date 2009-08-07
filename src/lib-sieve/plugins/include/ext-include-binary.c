@@ -308,7 +308,7 @@ static bool ext_include_binary_up_to_date(struct sieve_binary *sbin)
 	struct hash_iterate_context *hctx;
 	void *key, *value;
 		
-	/* Release references to all included script objects */
+	/* Check all included scripts for changes */
 	hctx = hash_table_iterate_init(binctx->included_scripts);
 	while ( hash_table_iterate(hctx, &key, &value) ) {
 		struct ext_include_script_info *incscript = (struct ext_include_script_info *) value;
