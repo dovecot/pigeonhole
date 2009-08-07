@@ -894,7 +894,7 @@ static bool _contains_8bit(const char *msg)
 
 static bool ntfy_mailto_send
 (const struct sieve_enotify_exec_env *nenv, 
-	const struct sieve_enotify_action *act)
+	const struct sieve_enotify_action *act, const char *recipient)
 { 
 	const struct sieve_enotify_log *nlog = nenv->notify_log;
 	const struct sieve_message_data *msgdata = nenv->msgdata;
@@ -934,7 +934,7 @@ static bool ntfy_mailto_send
 	}
 
 	/* Determine SMTP from address */
-	if ( msgdata->return_path != NULL && *(msgdata->return_path) != '\0' ) {
+	if ( sieve_message_get_sender(nenv->msgctx) != NULL ) {
 		if ( mtctx->from_normalized == NULL ) {
 			from_smtp = senv->postmaster_address;
 		} else {
@@ -1004,7 +1004,7 @@ static bool ntfy_mailto_send
 			rfc2822_header_field_printf(f, "Cc", "%s", str_c(cc));
 			
 		rfc2822_header_field_printf(f, "Auto-Submitted", 
-			"auto-notified; owner-email=\"%s\"", msgdata->to_address);
+			"auto-notified; owner-email=\"%s\"", recipient);
 		rfc2822_header_field_write(f, "Precedence", "bulk");
 
 		/* Set importance */
@@ -1069,12 +1069,21 @@ static bool ntfy_mailto_action_execute
 (const struct sieve_enotify_exec_env *nenv, 
 	const struct sieve_enotify_action *act)
 {
-	const struct sieve_message_data *msgdata = nenv->msgdata;
 	const char *const *headers;
+	const char *sender = sieve_message_get_sender(nenv->msgctx);
+	const char *recipient = sieve_message_get_recipient(nenv->msgctx);
 
+	/* Is the recipient unset? 
+	 */
+	if ( recipient == NULL ) {
+		sieve_enotify_warning(nenv->notify_log, 
+			"notify mailto action aborted: envelope recipient is <>");
+		return TRUE;
+	}
+	
 	/* Is the message an automatic reply ? */
 	if ( mail_get_headers
-		(msgdata->mail, "auto-submitted", &headers) >= 0 ) {
+		(nenv->msgdata->mail, "auto-submitted", &headers) >= 0 ) {
 		const char *const *hdsp = headers;
 
 		/* Theoretically multiple headers could exist, so lets make sure */
@@ -1082,14 +1091,14 @@ static bool ntfy_mailto_action_execute
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
 				sieve_enotify_log(nenv->notify_log, 
 					"not sending notification for auto-submitted message from <%s>", 
-					str_sanitize(msgdata->return_path, 128));	
+					str_sanitize(sender, 128));	
 					return TRUE;				 
 			}
 			hdsp++;
 		}
 	}
 
-	return ntfy_mailto_send(nenv, act);
+	return ntfy_mailto_send(nenv, act, recipient);
 }
 
 

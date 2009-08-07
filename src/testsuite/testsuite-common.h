@@ -12,6 +12,8 @@
 
 extern const struct sieve_extension testsuite_extension;
 
+extern const struct sieve_script_env *testsuite_scriptenv;
+
 /* 
  * Validator context 
  */

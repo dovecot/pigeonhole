@@ -19,7 +19,8 @@ struct sieve_side_effects_list;
 struct sieve_result;
 
 struct sieve_result *sieve_result_create
-	(struct sieve_error_handler *ehandler);
+	(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
+		struct sieve_error_handler *ehandler);
 
 void sieve_result_ref(struct sieve_result *result); 
 
@@ -31,6 +32,9 @@ struct sieve_error_handler *sieve_result_get_error_handler
 	(struct sieve_result *result);
 void sieve_result_set_error_handler
 	(struct sieve_result *result, struct sieve_error_handler *ehandler);
+
+struct sieve_message_context *sieve_result_get_message_context
+	(struct sieve_result *result);
 
 /*
  * Extension support
@@ -107,15 +111,11 @@ void sieve_result_set_failure_action
  * Result execution
  */
  
-bool sieve_result_implicit_keep
-	(struct sieve_result *result, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv);
+bool sieve_result_implicit_keep(struct sieve_result *result);
 
 void sieve_result_mark_executed(struct sieve_result *result);
 
-int sieve_result_execute
-	(struct sieve_result *result, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, bool *keep);
+int sieve_result_execute(struct sieve_result *result, bool *keep);
 
 /*
  * Result evaluation

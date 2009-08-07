@@ -124,8 +124,8 @@ bool testsuite_smtp_get
 	smtp_msg = array_idx(&testsuite_smtp_messages, index);
 
 	testsuite_message_set_file(renv, smtp_msg->file);
-	testsuite_envelope_set_sender(smtp_msg->envelope_from);
-	testsuite_envelope_set_recipient(smtp_msg->envelope_to);
+	testsuite_envelope_set_sender(renv, smtp_msg->envelope_from);
+	testsuite_envelope_set_recipient(renv, smtp_msg->envelope_to);
 
 	return TRUE;
 }

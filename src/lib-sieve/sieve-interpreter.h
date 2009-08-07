@@ -165,8 +165,8 @@ int sieve_interpreter_continue
 	(struct sieve_interpreter *interp, bool *interrupted);
 int sieve_interpreter_start
 	(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, struct sieve_message_context *msgctx, 
-		struct sieve_result *result, bool *interrupted);
+		const struct sieve_script_env *senv, struct sieve_result *result, 
+		bool *interrupted);
 int sieve_interpreter_run
 	(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
 		const struct sieve_script_env *senv, struct sieve_result *result);

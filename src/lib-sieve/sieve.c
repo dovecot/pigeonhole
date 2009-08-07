@@ -185,7 +185,7 @@ static int sieve_run
 	
 	/* Create result object */
 	if ( *result == NULL )
-		*result = sieve_result_create(ehandler);
+		*result = sieve_result_create(msgdata, senv, ehandler);
 	else {
 		sieve_result_ref(*result);
 		sieve_result_set_error_handler(*result, ehandler);
@@ -325,10 +325,10 @@ int sieve_execute
 	if ( ret >= 0 ) {
 		if ( ret > 0 ) 
 			/* Execute result */
-			ret = sieve_result_execute(result, msgdata, senv, NULL);
+			ret = sieve_result_execute(result, NULL);
 		else {
 			/* Perform implicit keep if script failed with a normal runtime error */
-			if ( !sieve_result_implicit_keep(result, msgdata, senv) )
+			if ( !sieve_result_implicit_keep(result) )
 				ret = SIEVE_EXEC_KEEP_FAILED;
 		}
 	}
@@ -362,7 +362,7 @@ struct sieve_multiscript *sieve_multiscript_start_execute
 	struct sieve_result *result;
 	struct sieve_multiscript *mscript;
 	
-	result = sieve_result_create(NULL);
+	result = sieve_result_create(msgdata, senv, NULL);
 	pool = sieve_result_pool(result);
 	
 	sieve_result_set_keep_action(result, NULL);
@@ -412,11 +412,9 @@ static void sieve_multiscript_execute
 	sieve_result_set_error_handler(mscript->result, ehandler);
 
 	if ( mscript->status > 0 )
-		mscript->status = sieve_result_execute
-			(mscript->result, mscript->msgdata, mscript->scriptenv, &keep);
+		mscript->status = sieve_result_execute(mscript->result, &keep);
 	else {
-		if ( !sieve_result_implicit_keep
-			(mscript->result, mscript->msgdata, mscript->scriptenv) )
+		if ( !sieve_result_implicit_keep(mscript->result) )
 			mscript->status = SIEVE_EXEC_KEEP_FAILED;
 	}
 	
@@ -470,8 +468,7 @@ int sieve_multiscript_finish(struct sieve_multiscript **mscript,
 
 		if ( (*mscript)->teststream ) {
 		} else {
-			if ( !sieve_result_implicit_keep
-				((*mscript)->result, (*mscript)->msgdata, (*mscript)->scriptenv) )
+			if ( !sieve_result_implicit_keep((*mscript)->result) )
 				ret = SIEVE_EXEC_KEEP_FAILED;
 		}
 	}

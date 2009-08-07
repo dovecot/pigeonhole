@@ -15,6 +15,8 @@
 #include "sieve-error.h"
 #include "sieve-interpreter.h"
 #include "sieve-actions.h"
+#include "sieve-message.h"
+
 #include "sieve-result.h"
 
 #include <stdio.h>
@@ -83,7 +85,8 @@ struct sieve_result {
 };
 
 struct sieve_result *sieve_result_create
-(struct sieve_error_handler *ehandler) 
+(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
+	struct sieve_error_handler *ehandler)
 {
 	pool_t pool;
 	struct sieve_result *result;
@@ -100,6 +103,9 @@ struct sieve_result *sieve_result_create
 	result->ehandler = ehandler;
 
 	result->action_env.result = result;
+	result->action_env.scriptenv = senv;
+	result->action_env.msgdata = msgdata;
+	result->action_env.msgctx = sieve_message_context_create(msgdata); 
 		
 	result->keep_action = &act_store;
 	result->failure_action = &act_store;
@@ -124,6 +130,8 @@ void sieve_result_unref(struct sieve_result **result)
 	if (--(*result)->refcount != 0)
 		return;
 
+	sieve_message_context_unref(&(*result)->action_env.msgctx);
+
 	if ( (*result)->action_contexts != NULL )
         hash_table_destroy(&(*result)->action_contexts);
 
@@ -144,6 +152,12 @@ struct sieve_error_handler *sieve_result_get_error_handler
 (struct sieve_result *result)
 {
 	return result->ehandler;
+}
+
+struct sieve_message_context *sieve_result_get_message_context
+(struct sieve_result *result)
+{
+	return result->action_env.msgctx;
 }
 
 void sieve_result_set_error_handler
@@ -868,13 +882,11 @@ static bool _sieve_result_implicit_keep
 }
 
 bool sieve_result_implicit_keep
-(struct sieve_result *result, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv)
+(struct sieve_result *result)
 {
+	const struct sieve_script_env *senv = result->action_env.scriptenv;
 	struct sieve_exec_status dummy_status;
 
-	result->action_env.msgdata = msgdata;
-	result->action_env.scriptenv = senv;
 	result->action_env.exec_status = 
 		( senv->exec_status == NULL ? &dummy_status : senv->exec_status );
 
@@ -899,9 +911,9 @@ void sieve_result_mark_executed(struct sieve_result *result)
 }
 
 int sieve_result_execute
-(struct sieve_result *result, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, bool *keep)
+(struct sieve_result *result, bool *keep)
 {
+	const struct sieve_script_env *senv = result->action_env.scriptenv;
 	struct sieve_exec_status dummy_status;
 	bool implicit_keep = TRUE;
 	bool success = TRUE, commit_ok;
@@ -912,8 +924,6 @@ int sieve_result_execute
 
 	/* Prepare environment */
 
-	result->action_env.msgdata = msgdata;
-	result->action_env.scriptenv = senv;
 	result->action_env.exec_status = 
 		( senv->exec_status == NULL ? &dummy_status : senv->exec_status );
 	

@@ -20,8 +20,11 @@ void testsuite_message_set_string
 void testsuite_message_set_file
 	(const struct sieve_runtime_env *renv, const char *file_path);
 
-void testsuite_envelope_set_sender(const char *value);
-void testsuite_envelope_set_recipient(const char *value);
-void testsuite_envelope_set_auth_user(const char *value);
+void testsuite_envelope_set_sender
+	(const struct sieve_runtime_env *renv, const char *value);
+void testsuite_envelope_set_recipient
+	(const struct sieve_runtime_env *renv, const char *value);
+void testsuite_envelope_set_auth_user
+	(const struct sieve_runtime_env *renv, const char *value);
 
 #endif /* __TESTSUITE_MESSAGE_H */

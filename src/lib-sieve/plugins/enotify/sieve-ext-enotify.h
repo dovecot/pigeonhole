@@ -105,6 +105,7 @@ struct sieve_enotify_exec_env {
 
 	const struct sieve_script_env *scriptenv;
 	const struct sieve_message_data *msgdata;
+	struct sieve_message_context *msgctx;
 };
 
 /*

@@ -120,7 +120,8 @@ void testsuite_message_deinit(void)
 	pool_unref(&message_pool);
 }
 
-void testsuite_envelope_set_sender(const char *value)
+void testsuite_envelope_set_sender
+(const struct sieve_runtime_env *renv, const char *value)
 {
 	str_truncate(envelope_from, 0);
 
@@ -128,9 +129,12 @@ void testsuite_envelope_set_sender(const char *value)
 		str_append(envelope_from, value);
 
 	testsuite_msgdata.return_path = str_c(envelope_from);
+
+	sieve_message_context_flush(renv->msgctx);
 }
 
-void testsuite_envelope_set_recipient(const char *value)
+void testsuite_envelope_set_recipient
+(const struct sieve_runtime_env *renv, const char *value)
 {
 	str_truncate(envelope_to, 0);
 
@@ -138,9 +142,12 @@ void testsuite_envelope_set_recipient(const char *value)
 		str_append(envelope_to, value);
 
 	testsuite_msgdata.to_address = str_c(envelope_to);
+
+	sieve_message_context_flush(renv->msgctx);
 }
 
-void testsuite_envelope_set_auth_user(const char *value)
+void testsuite_envelope_set_auth_user
+(const struct sieve_runtime_env *renv, const char *value)
 {
 	str_truncate(envelope_auth, 0);
 
@@ -148,5 +155,7 @@ void testsuite_envelope_set_auth_user(const char *value)
 		str_append(envelope_auth, value);
 
 	testsuite_msgdata.auth_user = str_c(envelope_auth);
+
+	sieve_message_context_flush(renv->msgctx);
 } 
  

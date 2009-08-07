@@ -443,6 +443,8 @@ static unsigned char rfc2821_chars[256] = {
 };
 
 struct sieve_envelope_address_parser {
+	pool_t pool;
+
 	const unsigned char *data;
 	const unsigned char *end;
 
@@ -561,7 +563,7 @@ static int path_parse_domain
 	}
 
 	if ( !skip )
-		parser->address->domain = t_strdup(str_c(parser->str));
+		parser->address->domain = p_strdup(parser->pool, str_c(parser->str));
 
 	return path_skip_white_space(parser);
 }
@@ -680,7 +682,7 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 		}
 	}
 
-	parser->address->local_part = t_strdup(str_c(parser->str));
+	parser->address->local_part = p_strdup(parser->pool, str_c(parser->str));
 	return parser->data < parser->end;
 }
 
@@ -753,19 +755,20 @@ static int path_parse(struct sieve_envelope_address_parser *parser)
 }
 
 const struct sieve_address *sieve_address_parse_envelope_path
-(const char *field_value)
+(pool_t pool, const char *field_value)
 {
 	struct sieve_envelope_address_parser parser;
 	int ret;
 
 	if ( field_value == NULL ) {
-		return t_new(struct sieve_address, 1);
+		return p_new(pool, struct sieve_address, 1);
 	}
 
+	parser.pool = pool;
 	parser.data = (const unsigned char *) field_value;
 	parser.end = (const unsigned char *) field_value + strlen(field_value);
-	parser.address = t_new(struct sieve_address, 1);
-	parser.str = t_str_new(256);
+	parser.address = p_new(pool, struct sieve_address, 1);
+	parser.str = t_str_new(256); /* IMPORTAINT: maintain datastack level */
 
 	if ( (ret=path_parse(&parser)) < 0 )
 		return NULL;

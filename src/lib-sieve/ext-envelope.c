@@ -23,6 +23,7 @@
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
 #include "sieve-address-parts.h"
+#include "sieve-message.h"
 
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -322,7 +323,7 @@ static const struct sieve_address *const *_from_part_get_addresses
 {
 	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
 	const struct sieve_address *address =
-		sieve_address_parse_envelope_path(renv->msgdata->return_path);
+		sieve_message_get_sender_address(renv->msgctx);
 	
 	if ( address != NULL ) {
 		t_array_init(&envelope_values, 2);
@@ -357,7 +358,7 @@ static const struct sieve_address *const *_to_part_get_addresses
 {
 	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
 	const struct sieve_address *address = 
-		sieve_address_parse_envelope_path(renv->msgdata->to_address);	
+		sieve_message_get_recipient_address(renv->msgctx);	
 
 	if ( address != NULL && address->local_part != NULL ) {
 		t_array_init(&envelope_values, 2);

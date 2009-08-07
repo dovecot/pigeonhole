@@ -17,7 +17,8 @@ const char *sieve_message_get_new_id
 
 struct sieve_message_context;
 
-struct sieve_message_context *sieve_message_context_create(void);
+struct sieve_message_context *sieve_message_context_create
+	(const struct sieve_message_data *msgdata);
 void sieve_message_context_ref(struct sieve_message_context *msgctx);
 void sieve_message_context_unref(struct sieve_message_context **msgctx);
 
@@ -33,5 +34,19 @@ void sieve_message_context_extension_set
 		void *context);
 const void *sieve_message_context_extension_get
 	(struct sieve_message_context *msgctx, const struct sieve_extension *ext);
+
+/* Envelope */
+
+const struct sieve_address *sieve_message_get_recipient_address
+	(struct sieve_message_context *msgctx);
+
+const struct sieve_address *sieve_message_get_sender_address
+	(struct sieve_message_context *msgctx);
+
+const char *sieve_message_get_recipient
+	(struct sieve_message_context *msgctx);
+
+const char *sieve_message_get_sender
+	(struct sieve_message_context *msgctx);
 	
 #endif /* __SIEVE_MESSAGE_H */

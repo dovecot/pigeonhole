@@ -133,9 +133,6 @@ void sieve_interpreter_free(struct sieve_interpreter **interp)
 
 	sieve_binary_unref(&(*interp)->runenv.sbin);
 
-	if ( (*interp)->runenv.msgctx != NULL )
-		 sieve_message_context_unref(&(*interp)->runenv.msgctx);
-
 	sieve_error_handler_unref(&(*interp)->ehandler);
 
 	/* Signal registered extensions that the interpreter is being destroyed */
@@ -486,14 +483,14 @@ int sieve_interpreter_continue
 
 int sieve_interpreter_start
 (struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_message_context *msgctx, 
-	struct sieve_result *result, bool *interrupted) 
+	const struct sieve_script_env *senv, struct sieve_result *result, bool *interrupted) 
 {
 	const struct sieve_interpreter_extension_reg *extrs;
 	unsigned int ext_count, i;
 	
 	interp->runenv.msgdata = msgdata;
-	interp->runenv.result = result;		
+	interp->runenv.result = result;
+	interp->runenv.msgctx = sieve_result_get_message_context(result);		
 	interp->runenv.scriptenv = senv;
 	interp->runenv.trace_stream = senv->trace_stream;
 
@@ -502,13 +499,6 @@ int sieve_interpreter_start
 	else
 		interp->runenv.exec_status = senv->exec_status;
 	
-	if ( msgctx == NULL )
-		interp->runenv.msgctx = sieve_message_context_create();
-	else {
-		interp->runenv.msgctx = msgctx;
-		sieve_message_context_ref(msgctx);
-	}
-
 	/* Signal registered extensions that the interpreter is being run */
 	extrs = array_get(&interp->extensions, &ext_count);
 	for ( i = 0; i < ext_count; i++ ) {
@@ -528,7 +518,7 @@ int sieve_interpreter_run
 	sieve_interpreter_reset(interp);
 	sieve_result_ref(result);
 	
-	ret = sieve_interpreter_start(interp, msgdata, senv, NULL, result, NULL);
+	ret = sieve_interpreter_start(interp, msgdata, senv, result, NULL);
 	
 	sieve_result_unref(&result);
 	

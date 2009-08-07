@@ -285,6 +285,7 @@ static bool act_redirect_send
 
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
+	const char *sender = sieve_message_get_sender(aenv->msgctx);
 	struct istream *input, *crlf_input;
 	void *smtp_handle;
 	FILE *f;
@@ -302,7 +303,7 @@ static bool act_redirect_send
 		return FALSE;
 		
 	/* Open SMTP transport */
-	smtp_handle = sieve_smtp_open(senv, ctx->to_address, msgdata->return_path, &f);
+	smtp_handle = sieve_smtp_open(senv, ctx->to_address, sender, &f);
 
 	/* Remove unwanted headers */
 	input = i_stream_create_header_filter

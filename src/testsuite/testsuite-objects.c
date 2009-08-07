@@ -317,17 +317,17 @@ static const char *tsto_envelope_get_member_name(int id)
 }
 
 static bool tsto_envelope_set_member
-(const struct sieve_runtime_env *renv ATTR_UNUSED, int id, string_t *value)
+(const struct sieve_runtime_env *renv, int id, string_t *value)
 {
 	switch ( id ) {
 	case TESTSUITE_OBJECT_ENVELOPE_FROM: 
-		testsuite_envelope_set_sender(str_c(value));
+		testsuite_envelope_set_sender(renv, str_c(value));
 		return TRUE;
 	case TESTSUITE_OBJECT_ENVELOPE_TO:
-		testsuite_envelope_set_recipient(str_c(value));
+		testsuite_envelope_set_recipient(renv, str_c(value));
 		return TRUE;
 	case TESTSUITE_OBJECT_ENVELOPE_AUTH_USER: 
-		testsuite_envelope_set_auth_user(str_c(value));
+		testsuite_envelope_set_auth_user(renv, str_c(value));
 		return TRUE;
 	}
 	

@@ -232,14 +232,12 @@ void testsuite_init(void)
 	testsuite_tmp_dir_init();
 	
 	testsuite_script_init();
-	testsuite_result_init();
 	testsuite_smtp_init();
 }
 
 void testsuite_deinit(void)
 {
 	testsuite_smtp_deinit();
-	testsuite_result_deinit();
 	testsuite_script_deinit();
 	
 	testsuite_tmp_dir_deinit();

@@ -35,6 +35,8 @@
 #include <pwd.h>
 #include <sysexits.h>
 
+const struct sieve_script_env *testsuite_scriptenv;
+
 /*
  * Configuration
  */
@@ -191,9 +193,9 @@ int main(int argc, char **argv)
 	
 	/* Compile sieve script */
 	if ( (sbin = sieve_tool_script_compile(scriptfile, NULL)) != NULL ) {
+		struct sieve_error_handler *ehandler;
 	    struct mail_storage_service_input input;
 		struct sieve_script_env scriptenv;
-		struct sieve_error_handler *ehandler;
 		struct mail_user *mail_user;
 
 		/* Dump script */
@@ -223,6 +225,10 @@ int main(int argc, char **argv)
 		scriptenv.smtp_close = testsuite_smtp_close;
 		scriptenv.trace_stream = ( trace ? o_stream_create_fd(1, 0, FALSE) : NULL );
 
+		testsuite_scriptenv = &scriptenv;
+
+		testsuite_result_init();
+
 		/* Run the test */
 		ehandler = sieve_stderr_ehandler_create(0);
 		ret = testsuite_run(sbin, &testsuite_msgdata, &scriptenv, ehandler);
@@ -249,6 +255,7 @@ int main(int argc, char **argv)
 
 		/* De-initialize message environment */
 		testsuite_message_deinit();
+		testsuite_result_deinit();
 
 		/* De-initialize mail user */
 		if ( mail_user != NULL )

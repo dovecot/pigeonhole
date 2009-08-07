@@ -473,14 +473,14 @@ static void cmd_notify_construct_message
 	string_t *out_msg)
 {
 	const struct sieve_message_data *msgdata = renv->msgdata;
-  const char *p;
+	const char *p;
 
-  if ( msg_format == NULL )
+	if ( msg_format == NULL )
 		msg_format = "$from$: $subject$";
  
  	/* Scan message for substitutions */
 	p = msg_format;
-  while ( *p != '\0' ) {
+	while ( *p != '\0' ) {
 		const char *const *header;
 
 		if ( strncasecmp(p, "$from$", 6) == 0 ) {
@@ -491,10 +491,11 @@ static void cmd_notify_construct_message
 				 str_append(out_msg, header[0]); 
 
 		} else if ( strncasecmp(p, "$env-from$", 10) == 0 ) {
+			const char *from = sieve_message_get_sender(renv->msgctx);
 			p += 10;
 
-			if ( msgdata->return_path != NULL ) 
-				str_append(out_msg, msgdata->return_path);
+			if ( from != NULL ) 
+				str_append(out_msg, from);
 
 		} else if ( strncasecmp(p, "$subject$", 9) == 0 ) {	
 			p += 9;
@@ -509,7 +510,7 @@ static void cmd_notify_construct_message
 			const char *begin = p;
 			bool valid = TRUE;
 
-    	p += 5;
+			p += 5;
 			if ( *p == '[' ) {
 				p += 1;
 
@@ -834,10 +835,8 @@ static bool contains_8bit(const char *msg)
 }
 
 static bool act_notify_send
-(const struct sieve_action_exec_env *aenv, 
-	const struct ext_notify_action *act)
+(const struct sieve_action_exec_env *aenv, const struct ext_notify_action *act)
 { 
-	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const struct ext_notify_recipient *recipients;
 	void *smtp_handle;
@@ -863,7 +862,7 @@ static bool act_notify_send
 	/* Send message to all recipients */
 	for ( i = 0; i < count; i++ ) {
 
-		if ( msgdata->return_path != NULL && *(msgdata->return_path) != '\0' )
+		if ( sieve_message_get_sender(aenv->msgctx) != NULL )
 			smtp_handle = sieve_smtp_open
 				(senv, recipients[i].normalized, senv->postmaster_address, &f);
 		else		
@@ -949,7 +948,7 @@ static bool act_notify_commit
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
 				sieve_result_log(aenv, 
 					"not sending notification for auto-submitted message from <%s>", 
-					str_sanitize(msgdata->return_path, 128));	
+					str_sanitize(sieve_message_get_sender(aenv->msgctx), 128));	
 					return TRUE;				 
 			}
 			hdsp++;

@@ -12,13 +12,16 @@
 
 #include "testsuite-common.h"
 #include "testsuite-log.h"
+#include "testsuite-message.h"
+
 #include "testsuite-result.h"
 
 static struct sieve_result *_testsuite_result;
 
 void testsuite_result_init(void)
 {
-	_testsuite_result = sieve_result_create(testsuite_log_ehandler);
+	_testsuite_result = sieve_result_create
+		(&testsuite_msgdata, testsuite_scriptenv, testsuite_log_ehandler);
 }
 
 void testsuite_result_deinit(void)
@@ -35,7 +38,8 @@ void testsuite_result_reset
 		sieve_result_unref(&_testsuite_result);
 	}
 
-	_testsuite_result = sieve_result_create(testsuite_log_ehandler);
+	_testsuite_result = sieve_result_create
+		(&testsuite_msgdata, testsuite_scriptenv, testsuite_log_ehandler);
 	sieve_interpreter_set_result(renv->interp, _testsuite_result);
 }
 
@@ -65,8 +69,7 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 	testsuite_log_clear_messages();
 
 	/* Execute the result */	
-	ret=sieve_result_execute
-		(_testsuite_result, renv->msgdata, renv->scriptenv, NULL);
+	ret=sieve_result_execute(_testsuite_result, NULL);
 	
 	return ( ret > 0 );
 }

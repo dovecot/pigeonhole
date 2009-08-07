@@ -385,10 +385,11 @@ static void act_reject_print
 }
 
 static bool act_reject_send	
-	(const struct sieve_action_exec_env *aenv, struct act_reject_context *ctx)
+(const struct sieve_action_exec_env *aenv, struct act_reject_context *ctx,
+	const char *sender, const char *recipient)
 {
-	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct istream *input;
 	void *smtp_handle;
 	struct message_size hdr_size;
@@ -405,7 +406,7 @@ static bool act_reject_send
 		return TRUE;
 	}
 
-	smtp_handle = sieve_smtp_open(senv, msgdata->return_path, NULL, &f);
+	smtp_handle = sieve_smtp_open(senv, sender, NULL, &f);
 
 	new_msgid = sieve_message_get_new_id(senv);
 	boundary = t_strdup_printf("%s/%s", my_pid, senv->hostname);
@@ -415,7 +416,7 @@ static bool act_reject_send
 	rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
 	rfc2822_header_field_printf(f, "From", "Mail Delivery Subsystem <%s>",
 		senv->postmaster_address);
-	rfc2822_header_field_printf(f, "To", "<%s>", msgdata->return_path);
+	rfc2822_header_field_printf(f, "To", "<%s>", sender);
 	rfc2822_header_field_write(f, "Subject", "Automatically rejected mail");
 	rfc2822_header_field_write(f, "Auto-Submitted", "auto-replied (rejected)");
 	rfc2822_header_field_write(f, "Precedence", "bulk");
@@ -435,7 +436,7 @@ static bool act_reject_send
 
 	/* FIXME: var_expand_table expansion not possible */
 	fprintf(f, "Your message to <%s> was automatically rejected:\r\n"	
-		"%s\r\n", msgdata->to_address, ctx->reason);
+		"%s\r\n", recipient, ctx->reason);
 
 	/* MDN status report */
 	fprintf(f, "--%s\r\n"
@@ -444,7 +445,7 @@ static bool act_reject_send
 		senv->hostname);
 	if (mail_get_first_header(msgdata->mail, "Original-Recipient", &header) > 0)
 		fprintf(f, "Original-Recipient: rfc822; %s\r\n", header);
-	fprintf(f, "Final-Recipient: rfc822; %s\r\n",	msgdata->to_address);
+	fprintf(f, "Final-Recipient: rfc822; %s\r\n", recipient);
 
 	if ( msgdata->id != NULL )
 		fprintf(f, "Original-Message-ID: %s\r\n", msgdata->id);
@@ -486,7 +487,7 @@ static bool act_reject_send
 		sieve_result_error(aenv, 
 			"failed to send rejection message to <%s> "
 			"(refer to server log for more information)",
-			str_sanitize(msgdata->return_path, 80));
+			str_sanitize(sender, 80));
 		return FALSE;
 	}
 	
@@ -497,8 +498,14 @@ static bool act_reject_commit
 (const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
 {
-	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct act_reject_context *rj_ctx = (struct act_reject_context *) tr_context;
+	const char *sender = sieve_message_get_sender(aenv->msgctx);
+	const char *recipient = sieve_message_get_recipient(aenv->msgctx);
+
+	if ( recipient == NULL ) {
+		sieve_result_warning(aenv, "reject action aborted: envelope recipient is <>");
+		return TRUE;
+	}
 	
 	if ( rj_ctx->reason == NULL ) {
 		sieve_result_log(aenv, "not sending reject message (would cause second response to sender)");
@@ -507,16 +514,15 @@ static bool act_reject_commit
 		return TRUE;
 	}
 
-	if ( msgdata->return_path == NULL || *(msgdata->return_path) == '\0' ) {
+	if ( sender == NULL ) {
 		sieve_result_log(aenv, "not sending reject message to <>");
     
 		*keep = FALSE;
 		return TRUE;
 	}
 		
-	if ( act_reject_send(aenv, rj_ctx) ) {
-		sieve_result_log(aenv, "rejected message from <%s> (%s)",
-			str_sanitize(msgdata->return_path, 80),
+	if ( act_reject_send(aenv, rj_ctx, sender, recipient) ) {
+		sieve_result_log(aenv, "rejected message from <%s> (%s)", str_sanitize(sender, 80),
 			( rj_ctx->ereject ? "ereject" : "reject" ));
 
 		*keep = FALSE;

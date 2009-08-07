@@ -858,7 +858,8 @@ static inline bool _contains_my_address
 }
 
 static bool act_vacation_send	
-	(const struct sieve_action_exec_env *aenv, struct act_vacation_context *ctx)
+(const struct sieve_action_exec_env *aenv, struct act_vacation_context *ctx,
+	const char *sender, const char *recipient)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
@@ -877,7 +878,7 @@ static bool act_vacation_send
 
 	/* Open smtp session */
 
-	smtp_handle = sieve_smtp_open(senv, msgdata->return_path, NULL, &f);
+	smtp_handle = sieve_smtp_open(senv, sender, NULL, &f);
 	outmsgid = sieve_message_get_new_id(senv);
 
 	/* Produce a proper reply */
@@ -888,13 +889,15 @@ static bool act_vacation_send
 
 	if ( ctx->from != NULL && *(ctx->from) != '\0' )
 		rfc2822_header_field_printf(f, "From", "%s", ctx->from);
+	else if ( recipient != NULL ) 
+		rfc2822_header_field_printf(f, "From", "<%s>", recipient);
 	else
-		rfc2822_header_field_printf(f, "From", "<%s>", msgdata->to_address);
+		rfc2822_header_field_printf(f, "From", "Postmaster <%s>", senv->postmaster_address);
 		
 	/* FIXME: If From header of message has same address, we should use that in 
 	 * stead properly include the phrase part.
 	 */
-	rfc2822_header_field_printf(f, "To", "<%s>", msgdata->return_path);
+	rfc2822_header_field_printf(f, "To", "<%s>", sender);
 
 	rfc2822_header_field_printf(f, "Subject", "%s", 
 		str_sanitize(ctx->subject, 256));
@@ -934,7 +937,7 @@ static bool act_vacation_send
 		sieve_result_error(aenv, 
 			"failed to send vacation response to <%s> "
 			"(refer to server log for more information)", 
-			str_sanitize(msgdata->return_path, 128));	
+			str_sanitize(sender, 128));	
 		return TRUE;
 	}
 	
@@ -942,10 +945,9 @@ static bool act_vacation_send
 }
 
 static void act_vacation_hash
-(const struct sieve_message_data *msgdata, struct act_vacation_context *vctx, 
-	unsigned char hash_r[])
+(struct act_vacation_context *vctx, const char *sender, unsigned char hash_r[])
 {
-	const char *rpath = t_str_lcase(msgdata->return_path);
+	const char *rpath = t_str_lcase(sender);
 	struct md5_context ctx;
 
 	md5_init(&ctx);
@@ -967,11 +969,20 @@ static bool act_vacation_commit
 	struct act_vacation_context *ctx = (struct act_vacation_context *) tr_context;
 	unsigned char dupl_hash[MD5_RESULTLEN];
 	const char *const *headers;
+	const char *sender = sieve_message_get_sender(aenv->msgctx);
+	const char *recipient = sieve_message_get_recipient(aenv->msgctx);
 	pool_t pool;
 
-	/* Is the return_path unset ?
+	/* Is the recipient unset? 
 	 */
-	if ( msgdata->return_path == NULL || *(msgdata->return_path) == '\0' ) {
+	if ( recipient == NULL ) {
+		sieve_result_warning(aenv, "vacation action aborted: envelope recipient is <>");
+		return TRUE;
+	}
+
+	/* Is the return path unset ?
+	 */
+	if ( sender == NULL ) {
 		sieve_result_log(aenv, "discarded vacation reply to <>");
 		return TRUE;
 	}    
@@ -979,7 +990,7 @@ static bool act_vacation_commit
 	/* Are we perhaps trying to respond to ourselves ? 
 	 * (FIXME: verify this to :addresses as well?)
 	 */
-	if ( sieve_address_compare(msgdata->return_path, msgdata->to_address, TRUE) 
+	if ( sieve_address_compare(sender, recipient, TRUE) 
 		== 0 ) {
 		sieve_result_log(aenv, "discarded vacation reply to own address");	
 		return TRUE;
@@ -987,12 +998,12 @@ static bool act_vacation_commit
 	
 	/* Did whe respond to this user before? */
 	if ( sieve_action_duplicate_check_available(senv) ) {
-		act_vacation_hash(msgdata, ctx, dupl_hash);
+		act_vacation_hash(ctx, sender, dupl_hash);
 	
 		if ( sieve_action_duplicate_check(senv, dupl_hash, sizeof(dupl_hash)) ) 
 		{
 			sieve_result_log(aenv, "discarded duplicate vacation response to <%s>",
-				str_sanitize(msgdata->return_path, 128));
+				str_sanitize(sender, 128));
 			return TRUE;
 		}
 	}
@@ -1005,7 +1016,7 @@ static bool act_vacation_commit
 			/* Yes, bail out */
 			sieve_result_log(aenv, 
 				"discarding vacation response to mailinglist recipient <%s>", 
-				str_sanitize(msgdata->return_path, 128));	
+				str_sanitize(sender, 128));	
 			return TRUE;				 
 		}
 		hdsp++;
@@ -1020,7 +1031,7 @@ static bool act_vacation_commit
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
 				sieve_result_log(aenv, 
 					"discardig vacation response to auto-submitted message from <%s>", 
-					str_sanitize(msgdata->return_path, 128));	
+					str_sanitize(sender, 128));	
 					return TRUE;				 
 			}
 			hdsp++;
@@ -1037,7 +1048,7 @@ static bool act_vacation_commit
 				strcasecmp(*hdsp, "list") == 0 ) {
 				sieve_result_log(aenv, 
 					"discarding vacation response to precedence=%s message from <%s>", 
-					*hdsp, str_sanitize(msgdata->return_path, 128));	
+					*hdsp, str_sanitize(sender, 128));	
 					return TRUE;				 
 			}
 			hdsp++;
@@ -1045,10 +1056,10 @@ static bool act_vacation_commit
 	}
 	
 	/* Do not reply to system addresses */
-	if ( _is_system_address(msgdata->return_path) ) {
+	if ( _is_system_address(sender) ) {
 		sieve_result_log(aenv, 
 			"not sending vacation response to system address <%s>", 
-			str_sanitize(msgdata->return_path, 128));	
+			str_sanitize(sender, 128));	
 		return TRUE;				
 	} 
 	
@@ -1060,7 +1071,7 @@ static bool act_vacation_commit
 		if ( mail_get_headers_utf8
 			(msgdata->mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
 			
-			if ( _contains_my_address(headers, msgdata->to_address) ) 
+			if ( _contains_my_address(headers, recipient) ) 
 				break;
 			
 			if ( ctx->addresses != NULL ) {
@@ -1082,7 +1093,7 @@ static bool act_vacation_commit
 		/* No, bail out */
 		sieve_result_log(aenv, 
 			"discarding vacation response for message implicitly delivered to <%s>",
-			( msgdata->to_address == NULL ? "UNKNOWN" : msgdata->to_address ) );	
+			recipient );	
 		return TRUE;				 
 	}	
 		
@@ -1099,9 +1110,9 @@ static bool act_vacation_commit
 	
 	/* Send the message */
 	
-	if ( act_vacation_send(aenv, ctx) ) {
+	if ( act_vacation_send(aenv, ctx, sender, recipient) ) {
 		sieve_result_log(aenv, "sent vacation response to <%s>", 
-			str_sanitize(msgdata->return_path, 128));	
+			str_sanitize(sender, 128));	
 
 		/* Mark as replied */
 		sieve_action_duplicate_mark

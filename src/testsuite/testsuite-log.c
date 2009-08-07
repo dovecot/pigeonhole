@@ -106,11 +106,15 @@ void testsuite_log_init(void)
 	testsuite_log_ehandler = _testsuite_log_ehandler_create(); 	
 	sieve_error_handler_accept_infolog(testsuite_log_ehandler, TRUE);
 
+	sieve_system_ehandler_set(testsuite_log_ehandler);
+
 	testsuite_log_clear_messages();
 }
 
 void testsuite_log_deinit(void)
 {
+	sieve_system_ehandler_reset();
+
 	sieve_error_handler_unref(&testsuite_log_ehandler);
 
 	pool_unref(&_testsuite_logmsg_pool);

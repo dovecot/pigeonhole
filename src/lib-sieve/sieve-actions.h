@@ -18,6 +18,7 @@
 struct sieve_action_exec_env { 
 	struct sieve_result *result;
 	const struct sieve_message_data *msgdata;
+	struct sieve_message_context *msgctx;
 	const struct sieve_script_env *scriptenv;
 	struct sieve_exec_status *exec_status;
 };

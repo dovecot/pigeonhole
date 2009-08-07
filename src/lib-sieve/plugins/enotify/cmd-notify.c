@@ -583,6 +583,7 @@ static bool act_notify_commit
 
 	nenv.scriptenv = aenv->scriptenv;
 	nenv.msgdata = aenv->msgdata;
+	nenv.msgctx = aenv->msgctx;
 	nenv.notify_log = &nlog;
 
 	if ( act->method->action_execute != NULL )

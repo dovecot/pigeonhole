@@ -4,6 +4,9 @@
 #ifndef __SIEVE_ADDRESS_H
 #define __SIEVE_ADDRESS_H
  
+#include "lib.h"
+#include "strfuncs.h"
+
 /*
  * Generic address representation
  */ 
@@ -12,6 +15,14 @@ struct sieve_address {
 	const char *local_part;
 	const char *domain;
 };
+
+static inline const char *sieve_address_to_string(const struct sieve_address *address) 
+{
+    if ( address == NULL || address->local_part == NULL || address->domain == NULL )
+        return NULL;
+
+    return t_strconcat(address->local_part, "@", address->domain, NULL);
+}
 
 /* 
  * RFC 2822 addresses
@@ -36,6 +47,6 @@ int sieve_address_compare
  */
 
 const struct sieve_address *sieve_address_parse_envelope_path
-	(const char *field_value);
+	(pool_t pool, const char *field_value);
 
 #endif
