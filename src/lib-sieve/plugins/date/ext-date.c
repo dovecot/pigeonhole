@@ -48,7 +48,9 @@ const struct sieve_extension date_extension = {
 	&ext_date_my_id,
 	NULL, NULL,
 	ext_date_validator_load, 
-	NULL, NULL, NULL, NULL, NULL,
+	NULL, 
+	ext_date_interpreter_load, 
+	NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_date_operations), 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };

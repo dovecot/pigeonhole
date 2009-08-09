@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "str-sanitize.h"
+#include "message-date.h"
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
@@ -17,6 +18,8 @@
 #include "sieve-match.h"
 
 #include "ext-date-common.h"
+
+#include <time.h>
 
 /*
  * Tests
@@ -146,25 +149,26 @@ static bool tag_zone_validate
 (struct sieve_validator *validator, struct sieve_ast_argument **arg,
     struct sieve_command_context *cmd)
 {
-    struct sieve_ast_argument *tag = *arg;
+	struct sieve_ast_argument *tag = *arg;
 
-    if ( (bool) cmd->data ) {
+	if ( (bool) cmd->data ) {
 		if ( cmd->command == &date_test ) {
 			sieve_argument_validate_error(validator, *arg,
 				"multiple :zone or :originalzone arguments specified for "
 				"the currentdate test");
 		} else {
-	        sieve_argument_validate_error(validator, *arg,
-    	        "multiple :zone arguments specified for the currentdate test");
+			sieve_argument_validate_error(validator, *arg,
+				"multiple :zone arguments specified for the currentdate test");
 		}
 		return FALSE;
-    }
+	}
 
 	/* Skip tag */
  	*arg = sieve_ast_argument_next(*arg);
 
 	/* :content tag has a string-list argument */
 	if ( tag->argument == &date_zone_tag ) {
+
 		/* Check syntax:
 		 *   :zone <time-zone: string>
 		 */
@@ -173,7 +177,18 @@ static bool tag_zone_validate
 			return FALSE;
 		}
 
-        /* Assign tag parameters */
+		/* Check it */
+		if ( sieve_argument_is_string_literal(*arg) ) {
+			const char *zone = sieve_ast_argument_strc(*arg);
+	
+			if ( !ext_date_parse_timezone(zone, NULL) ) {
+				sieve_argument_validate_warning(validator, *arg,
+					"specified :zone argument '%s' is not a valid timezone",
+					str_sanitize(zone, 40));
+			}		
+		}
+	
+		/* Assign tag parameters */
 		tag->parameters = *arg;
 		*arg = sieve_ast_arguments_detach(*arg,1);
 	} 
@@ -319,15 +334,14 @@ static bool tst_date_operation_dump
 	sieve_code_descend(denv);
 	
 	/* Handle any optional arguments */
-    do {
+  do {
+		if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
+			return FALSE;
 
-        if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
-            return FALSE;
-
-        switch ( opt_code ) {
-        case SIEVE_MATCH_OPT_END:
-            break;
-        case OPT_DATE_ZONE:
+		switch ( opt_code ) {
+		case SIEVE_MATCH_OPT_END:
+			break;
+		case OPT_DATE_ZONE:
 			operand = sieve_operand_read(denv->sbin, address);
 			if ( operand == NULL ) {
 				sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
@@ -337,16 +351,15 @@ static bool tst_date_operation_dump
 			if ( sieve_operand_is_omitted(operand) ) {
 				sieve_code_dumpf(denv, "zone: ORIGINAL");
 			} else {
-   				if ( !sieve_opr_string_dump_data
+				if ( !sieve_opr_string_dump_data
 					(denv, operand, address, "zone") )
 					return FALSE;
 			}
 			break;
-
-        default:
-            return FALSE;
-        }
-    } while ( opt_code != SIEVE_MATCH_OPT_END );
+    default:
+			return FALSE;
+		}
+	} while ( opt_code != SIEVE_MATCH_OPT_END );
 
 	if ( op == &date_operation &&
 		!sieve_opr_string_dump(denv, address, "header name") )
@@ -365,15 +378,19 @@ static int tst_date_operation_execute
 (const struct sieve_operation *op, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
-	bool result = TRUE;
+	bool result = TRUE, matched = FALSE;
 	int opt_code = 0;
+	const struct sieve_message_data *msgdata = renv->msgdata;
 	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
 	const struct sieve_match_type *mtch = &is_match_type;
 	const struct sieve_operand *operand;
 	struct sieve_match_context *mctx;
 	string_t *header_name = NULL, *date_part = NULL, *zone = NULL;
 	struct sieve_coded_stringlist *key_list;
-	bool matched = FALSE;
+	time_t date_value;
+	struct tm *date_tm;
+	const char *part_value;
+	int zone_offset = 0;
 	int ret;
 	
 	/* Read optional operands */
@@ -398,7 +415,7 @@ static int tst_date_operation_execute
 					sieve_runtime_trace_error(renv, "invalid zone operand");
 					return SIEVE_EXEC_BIN_CORRUPT;
 				} 
-    		}
+			}
 			break;
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
@@ -431,8 +448,80 @@ static int tst_date_operation_execute
 
 	sieve_runtime_trace(renv, "%s test", op->mnemonic);
 
-	/* FIXME: implement */
+	/* Get the date value */
 
-	sieve_interpreter_set_test_result(renv->interp, matched);
-	return SIEVE_EXEC_OK;
+	if ( op == 	&date_operation ) {
+		const char *header_value;
+		const char *date_string;
+
+		/* Get date from the message */
+
+		/* Read first header
+		 *   NOTE: need something for index extension to hook into some time. 
+		 */
+		if ( (ret = mail_get_first_header
+			(msgdata->mail, str_c(header_name), &header_value)) < 0 ) {
+			/* No such header, test failed */
+			sieve_interpreter_set_test_result(renv->interp, FALSE);
+			return SIEVE_EXEC_OK;
+		}
+
+		/* Extract the date string value */
+		date_string = strrchr(header_value, ';');
+		if ( date_string == NULL )
+			/* Direct header value */
+			date_string = header_value;
+		else {
+			/* Delimited by ';', e.g. a Received: header */
+			date_string++; 
+		}
+
+		/* Parse the date value */
+		if ( !message_date_parse((const unsigned char *) date_string,
+			strlen(date_string), &date_value, &zone_offset) ) {
+			/* Uparseable addres, test failed */
+			sieve_interpreter_set_test_result(renv->interp, FALSE);
+			return SIEVE_EXEC_OK;
+		}
+
+	} else if ( op == &currentdate_operation ) {
+		/* Use time stamp recorded at the time the script first started */
+
+		date_value = ext_date_get_current_date(renv);
+
+	} else {
+		i_unreached();
+	}
+
+	if ( (date_tm=gmtime(&date_value)) == NULL ) {
+		sieve_interpreter_set_test_result(renv->interp, FALSE);
+		return SIEVE_EXEC_OK;
+	}
+
+	/* Extract the date part */
+	part_value = ext_date_part_extract(str_c(date_part), date_tm, zone_offset);
+
+	/* Initialize match */
+	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
+			
+	/* Match value */
+	if ( (ret=sieve_match_value(mctx, part_value, strlen(part_value))) < 0 )
+		result = FALSE;
+	else
+		matched = ret > 0;				
+
+	/* Finish match */
+	if ( (ret=sieve_match_end(&mctx)) < 0 ) 
+		result = FALSE;
+	else
+		matched = ( ret > 0 || matched );
+	
+	/* Set test result for subsequent conditional jump */
+	if ( result ) {
+		sieve_interpreter_set_test_result(renv->interp, matched);
+		return SIEVE_EXEC_OK;
+	}	
+
+	sieve_runtime_trace_error(renv, "invalid string-list item");
+	return SIEVE_EXEC_BIN_CORRUPT;
 }

@@ -12,6 +12,7 @@ tests = \
 
 libsieve_ext_date_la_SOURCES = \
 	$(tests) \
+	ext-date-common.c \
 	ext-date.c
 
 noinst_HEADERS = \
