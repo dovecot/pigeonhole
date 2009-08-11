@@ -11,6 +11,9 @@ Test.
 .
 ;
 
+test_mailbox :create "INBOX.VB";
+test_mailbox :create "INBOX.backup";
+
 test "Fileinto" {
 	if not test_script_compile "actions/fileinto.sieve" {
 		test_fail "script compile failed";

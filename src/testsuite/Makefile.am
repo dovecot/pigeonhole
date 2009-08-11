@@ -31,7 +31,8 @@ commands = \
 	cmd-test-set.c \
 	cmd-test-result-reset.c \
 	cmd-test-result-print.c \
-	cmd-test-message.c
+	cmd-test-message.c \
+	cmd-test-mailbox.c
 
 tests = \
 	tst-test-script-compile.c \
@@ -50,6 +51,7 @@ testsuite_SOURCES = \
 	testsuite-script.c \
 	testsuite-result.c \
 	testsuite-smtp.c \
+	testsuite-mailstore.c \
 	$(commands) \
 	$(tests) \
 	ext-testsuite.c \

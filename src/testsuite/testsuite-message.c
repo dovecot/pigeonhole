@@ -111,6 +111,14 @@ void testsuite_message_set_file
 
 	sieve_message_context_flush(renv->msgctx);
 }
+
+void testsuite_message_set_mail
+(const struct sieve_runtime_env *renv, struct mail *mail)
+{
+	_testsuite_message_set_data(mail);
+
+	sieve_message_context_flush(renv->msgctx);
+}
 	
 void testsuite_message_deinit(void)
 {

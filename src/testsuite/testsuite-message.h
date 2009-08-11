@@ -19,6 +19,8 @@ void testsuite_message_set_string
 	(const struct sieve_runtime_env *renv, string_t *message);
 void testsuite_message_set_file
 	(const struct sieve_runtime_env *renv, const char *file_path);
+void testsuite_message_set_mail
+	(const struct sieve_runtime_env *renv, struct mail *mail);
 
 void testsuite_envelope_set_sender
 	(const struct sieve_runtime_env *renv, const char *value);

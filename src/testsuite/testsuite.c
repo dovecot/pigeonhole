@@ -27,6 +27,7 @@
 #include "testsuite-result.h"
 #include "testsuite-message.h"
 #include "testsuite-smtp.h"
+#include "testsuite-mailstore.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -129,17 +130,15 @@ int main(int argc, char **argv)
 	bool trace = FALSE;
 	int ret;
 
-	service = master_service_init("testsuite",
-                      MASTER_SERVICE_FLAG_STANDALONE,
-                      argc, argv);
+	service = master_service_init
+		("testsuite", MASTER_SERVICE_FLAG_STANDALONE, argc, argv);
 
-    user = getenv("USER");
+	user = getenv("USER");
 
 	/* Parse arguments */
 	scriptfile = dumpfile = extensions = NULL;
 
-	getopt_str = t_strconcat("d:x:t",
-                 master_service_getopt_string(), NULL);
+	getopt_str = t_strconcat("d:x:t", master_service_getopt_string(), NULL);
 	while ((c = getopt(argc, argv, getopt_str)) > 0) {
 		switch (c) {
 		case 'd':
@@ -171,9 +170,9 @@ int main(int argc, char **argv)
 	}
 	
 	if (optind != argc) {
-        print_help();
-        i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
-    }
+		print_help();
+		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
+	}
 
 	/* Initialize testsuite */
 	testsuite_tool_init(extensions);
@@ -194,30 +193,35 @@ int main(int argc, char **argv)
 	/* Compile sieve script */
 	if ( (sbin = sieve_tool_script_compile(scriptfile, NULL)) != NULL ) {
 		struct sieve_error_handler *ehandler;
-	    struct mail_storage_service_input input;
+		struct mail_storage_service_input input;
 		struct sieve_script_env scriptenv;
-		struct mail_user *mail_user;
+		struct mail_user *mail_user_dovecot;
+		const char *home;
 
 		/* Dump script */
 		sieve_tool_dump_binary_to(sbin, dumpfile);
 	
 		/* Initialize mail user */
+		home = _get_cwd();
 		user = sieve_tool_get_user();
 		env_put("DOVECONF_ENV=1");
-		env_put(t_strdup_printf("HOME=%s", _get_cwd()));
+		env_put(t_strdup_printf("HOME=%s", home));
 		env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s", user));
 
-	    memset(&input, 0, sizeof(input));
-	    input.username = user;
-		mail_user = mail_storage_service_init_user
+		memset(&input, 0, sizeof(input));
+		input.username = user;
+		mail_user_dovecot = mail_storage_service_init_user
 			(service, &input, NULL, service_flags);
+
+		testsuite_mailstore_init(user, home, mail_user_dovecot);
 
 		if (master_service_set(service, "mail_full_filesystem_access=yes") < 0)
 			i_unreached(); 
 
-		testsuite_message_init(service, user, mail_user);
+		testsuite_message_init(service, user, mail_user_dovecot);
 
 		memset(&scriptenv, 0, sizeof(scriptenv));
+		scriptenv.namespaces = testsuite_mailstore_get_namespace();
 		scriptenv.default_mailbox = "INBOX";
 		scriptenv.hostname = "testsuite.example.com";
 		scriptenv.postmaster_address = "postmaster@example.com";
@@ -256,13 +260,14 @@ int main(int argc, char **argv)
 
 		/* De-initialize message environment */
 		testsuite_message_deinit();
+		testsuite_mailstore_deinit();
 		testsuite_result_deinit();
 
 		/* De-initialize mail user */
-		if ( mail_user != NULL )
-            mail_user_unref(&mail_user);
+		if ( mail_user_dovecot != NULL )
+			mail_user_unref(&mail_user_dovecot);
 
-        mail_storage_service_deinit_user();
+		mail_storage_service_deinit_user();
 	} else {
 		testsuite_testcase_fail("failed to compile testcase script");
 	}

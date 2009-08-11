@@ -4,6 +4,9 @@ require "vnd.dovecot.testsuite";
  * Execution testing (currently just meant to trigger any segfaults)
  */
 
+test_mailbox :create "INBOX.Junk";
+test_mailbox :create "INBOX.Nonsense";
+
 test "Flags Side Effect" {
 	if not test_script_compile "execute/flags-side-effect.sieve" {
 		test_fail "script compile failed";
