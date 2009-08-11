@@ -135,7 +135,6 @@ static int tst_mailboxexists_operation_execute
 			(mailbox_names, &mailbox_item)) 
 			&& mailbox_item != NULL ) {
 			struct mail_namespace *ns;
-			struct mail_storage *storage;
 			const char *mailbox = str_c(mailbox_item);
 			struct mailbox *box;
 
@@ -147,9 +146,8 @@ static int tst_mailboxexists_operation_execute
 			}
 
 			/* Open the box */
-			storage = ns->storage;
-			box = mailbox_open(&storage, mailbox, NULL, MAILBOX_OPEN_FAST);
-			if ( box == NULL ) {
+			box = mailbox_alloc(ns->list, mailbox, NULL, 0);
+			if ( mailbox_open(box) < 0 ) {
 				all_exist = FALSE;
 				break;
 			}
