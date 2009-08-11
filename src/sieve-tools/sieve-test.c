@@ -101,9 +101,9 @@ static void duplicate_mark
 int main(int argc, char **argv) 
 {
 	enum mail_storage_service_flags service_flags = 0;
-    struct master_service *service;
-    const char *getopt_str;
-    int c;
+	struct master_service *service;
+	const char *getopt_str;
+	int c;
 	ARRAY_DEFINE(scriptfiles, const char *);
 	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile, 
 		*mailloc, *extensions; 
@@ -121,15 +121,14 @@ int main(int argc, char **argv)
 	bool trace = FALSE;
 	int ret;
 
-	service = master_service_init("sieve-test",
-                      MASTER_SERVICE_FLAG_STANDALONE,
+	service = master_service_init("sieve-test", MASTER_SERVICE_FLAG_STANDALONE,
                       argc, argv);
 
 	sieve_tool_init(FALSE);
 
 	t_array_init(&scriptfiles, 16);
 
-    user = getenv("USER");
+	user = getenv("USER");
 	
 	/* Parse arguments */
 	scriptfile = recipient = sender = mailbox = dumpfile = mailfile = mailloc = 
@@ -154,15 +153,15 @@ int main(int argc, char **argv)
 			/* dump file */
 			dumpfile = optarg;
 			break;
-        case 'l':
+		case 'l':
 			/* mail location */
 			mailloc = optarg;
 			break;
-        case 'x':
+		case 'x':
 			/* mail location */
 			extensions = optarg;
 			break;
-        case 's': 
+		case 's': 
 			/* scriptfile executed before main script */
 			{
 				const char *file;			
@@ -170,26 +169,24 @@ int main(int argc, char **argv)
 				file = t_strdup(optarg);
 				array_append(&scriptfiles, &file, 1);
 			}
-            break;
-
-        case 'e':
-            execute = TRUE;
-            break;
-        case 'c':
-            force_compile = TRUE;
-            break;
-        case 't':
-            trace = TRUE;
-            break;
-        default:
-            if (!master_service_parse_option(service, c, optarg)) {
-                print_help();
-                i_fatal_status(EX_USAGE,
-                           "Unknown argument: %c", c);
-            }
-            break;
-        }
-    }
+			break;
+		case 'e':
+			execute = TRUE;
+			break;
+		case 'c':
+			force_compile = TRUE;
+			break;
+		case 't':
+			trace = TRUE;
+			break;
+		default:
+			if (!master_service_parse_option(service, c, optarg)) {
+				print_help();
+				i_fatal_status(EX_USAGE, "Unknown argument: %c", c);
+			}
+			break;
+		}
+	}
 
 	if ( optind < argc ) {
 		scriptfile = t_strdup(argv[optind++]);
@@ -262,11 +259,11 @@ int main(int argc, char **argv)
         		i_fatal("Test user initialization failed: %s", errstr);
 
 			memset(&ns_set, 0, sizeof(ns_set));
-    		ns_set.location = mailloc;
+			ns_set.location = mailloc;
 
-    		ns = mail_namespaces_init_empty(mail_user);
-    		ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
-    		ns->set = &ns_set;
+			ns = mail_namespaces_init_empty(mail_user);
+			ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
+			ns->set = &ns_set;
 		}
 
 		if (master_service_set(service, "mail_full_filesystem_access=yes") < 0)
@@ -430,7 +427,7 @@ int main(int argc, char **argv)
 
 	sieve_tool_deinit();
 
-    master_service_deinit(&service);
+	master_service_deinit(&service);
 	
 	return 0;
 }

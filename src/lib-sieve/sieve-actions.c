@@ -296,11 +296,11 @@ static struct mailbox *act_store_mailbox_open
 	}
 
 	/* Try creating it. */
-    if ( mailbox_create(box, NULL, FALSE) < 0 ) {
-        (void)mail_storage_get_last_error(*storage, &error);
-        mailbox_close(&box);
-        return NULL;
-    }
+	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
+		(void)mail_storage_get_last_error(*storage, &error);
+		mailbox_close(&box);
+		return NULL;
+	}
 
 	/* Subscribe to it if required */
 	if ( aenv->scriptenv->mailbox_autosubscribe ) {
