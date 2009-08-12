@@ -65,18 +65,21 @@ void testsuite_mailstore_init
 	mail_user = mail_user_alloc(user, service_user->unexpanded_set);
 	mail_user_set_home(mail_user, home);
 
-	if (mail_user_init(mail_user, &errstr) < 0)
+	if ( mail_user_init(mail_user, &errstr) < 0 )
 		i_fatal("Test user initialization failed: %s", errstr);
 
 	memset(&ns_set, 0, sizeof(ns_set));
 	ns_set.location = t_strconcat("maildir:", testsuite_mailstore_tmp, NULL);
-	//ns_set.inbox = TRUE;
-	//ns_set.separator = ".";
-	//ns_set.subscriptions = TRUE;
+	ns_set.inbox = TRUE;
+	ns_set.separator = ".";
+	ns_set.subscriptions = TRUE;
 
 	ns = mail_namespaces_init_empty(mail_user);
 	ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
 	ns->set = &ns_set;
+
+	if ( mail_storage_create(ns, NULL, 0, &errstr) < 0 )
+        i_fatal("Test storage creation failed: %s", errstr);
 
 	testsuite_mailstore_user = mail_user;
 }

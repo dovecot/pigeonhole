@@ -255,7 +255,7 @@ int main(int argc, char **argv)
 			mail_user = mail_user_alloc(user, mail_user_dovecot->unexpanded_set);
 			mail_user_set_home(mail_user, home);
 
-			if (mail_user_init(mail_user, &errstr) < 0)
+			if ( mail_user_init(mail_user, &errstr) < 0 )
         		i_fatal("Test user initialization failed: %s", errstr);
 
 			memset(&ns_set, 0, sizeof(ns_set));
@@ -264,9 +264,12 @@ int main(int argc, char **argv)
 			ns = mail_namespaces_init_empty(mail_user);
 			ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
 			ns->set = &ns_set;
+
+			if ( mail_storage_create(ns, NULL, 0, &errstr) < 0 )
+		        i_fatal("Test storage creation failed: %s", errstr);
 		}
 
-		if (master_service_set(service, "mail_full_filesystem_access=yes") < 0)
+		if ( master_service_set(service, "mail_full_filesystem_access=yes") < 0 )
 			i_unreached(); 
 
 		/* Initialize raw mail object */
