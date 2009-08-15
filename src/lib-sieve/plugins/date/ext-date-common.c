@@ -264,7 +264,8 @@ static const struct ext_date_part weekday_date_part = {
 static const struct ext_date_part *date_parts[] = {
 	&year_date_part, &month_date_part, &day_date_part, &date_date_part,
 	&julian_date_part, &hour_date_part, &minute_date_part, &second_date_part,
-	&iso8601_date_part, &std11_date_part, &zone_date_part, &weekday_date_part 
+	&time_date_part, &iso8601_date_part, &std11_date_part, &zone_date_part, 
+	&weekday_date_part 
 };
 
 unsigned int date_parts_count = N_ELEMENTS(date_parts);
@@ -308,7 +309,7 @@ static const char *ext_date_year_part_get
 static const char *ext_date_month_part_get
 (struct tm *tm, int zone_offset ATTR_UNUSED)
 {
-	return t_strdup_printf("%02d", tm->tm_mon);
+	return t_strdup_printf("%02d", tm->tm_mon + 1);
 }
 
 static const char *ext_date_day_part_get
@@ -321,29 +322,35 @@ static const char *ext_date_date_part_get
 (struct tm *tm, int zone_offset ATTR_UNUSED)
 {
 	return t_strdup_printf("%04d-%02d-%02d", 
-		tm->tm_year + 1900, tm->tm_mon, tm->tm_mday);
+		tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
 }
 
 static const char *ext_date_julian_part_get
 (struct tm *tm, int zone_offset ATTR_UNUSED)
 {
-	int c, ya;
-
+	int year = tm->tm_year+1900;
+	int month = tm->tm_mon+1;
+	int day = tm->tm_mday;
+	int c, ya, jd;
+	
 	/* Modified from RFC 5260 Appendix A */	
 
-	if ( tm->tm_mon > 2 )
-		tm->tm_mon -= 3;
+	if ( month > 2 )
+		month -= 3;
 	else {
-		tm->tm_mon += 9;
-		tm->tm_year--;
+		month += 9;
+		year--;
 	}
-	
-	c = tm->tm_year / 100;
-	ya = tm->tm_year - c * 100;
 
-	return t_strdup_printf("%d", 
-		c * 146097 / 4 + ya * 1461 / 4 + (tm->tm_mon * 153 + 2) / 5 +
-		tm->tm_mday + 1721119);
+	c = year / 100;
+	ya = year - c * 100;
+
+	jd = c * 146097 / 4 + ya * 1461 / 4 + (month * 153 + 2) / 5 + day + 1721119;
+	
+	if ( tm->tm_hour > 12 )
+		return t_strdup_printf("%d", jd - 2400000 );
+ 
+	return t_strdup_printf("%d", jd - 2400001);
 }
 
 static const char *ext_date_hour_part_get
@@ -413,7 +420,7 @@ static const char *ext_date_iso8601_part_get
 	}
 
 	return t_strdup_printf("%04d-%02d-%02dT%02d:%02d:%02d%s",
-		tm->tm_year + 1900, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, 
+		tm->tm_year + 1900, tm->tm_mon+1, tm->tm_mday, tm->tm_hour, tm->tm_min, 
 		tm->tm_sec, time_offset); 
 }
 
