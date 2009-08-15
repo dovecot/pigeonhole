@@ -101,6 +101,9 @@ test_cases = \
 	tests/extensions/environment/basic.svtest \
 	tests/extensions/environment/rfc.svtest \
 	tests/extensions/mailbox/execute.svtest \
+	tests/extensions/date/basic.svtest \
+	tests/extensions/date/date-parts.svtest \
+	tests/extensions/date/zones.svtest \
 	tests/multiscript/basic.svtest \
 	tests/deprecated/notify/basic.svtest \
 	tests/deprecated/notify/mailto.svtest \
