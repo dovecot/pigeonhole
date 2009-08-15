@@ -334,7 +334,10 @@ uoff_t sieve_script_get_size(const struct sieve_script *script)
 
 int sieve_script_cmp
 (const struct sieve_script *script1, const struct sieve_script *script2)
-{	
+{
+	if ( script1 == NULL || script2 == NULL ) 
+		return -1;	
+
 	return ( script1->st.st_ino == script2->st.st_ino ) ? 0 : -1;
 }
 
