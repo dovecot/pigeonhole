@@ -275,22 +275,31 @@ const char *ext_date_part_extract
  * Date part implementations
  */
 
+static const char *month_names[] = {
+	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
+static const char *weekday_names[] = {
+	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+};
+
 static const char *ext_date_year_part_get
 (struct tm *tm, int zone_offset ATTR_UNUSED)
 {
-	return t_strdup_printf("%04d", tm->tm_year + 1900);
+	return t_strdup_printf("%d", tm->tm_year + 1900);
 }
 
 static const char *ext_date_month_part_get
 (struct tm *tm, int zone_offset ATTR_UNUSED)
 {
-	return t_strdup_printf("%02d", tm->tm_mon);
+	return t_strdup_printf("%d", tm->tm_mon);
 }
 
 static const char *ext_date_day_part_get
 (struct tm *tm, int zone_offset ATTR_UNUSED)
 {
-	return t_strdup_printf("%02d", tm->tm_mday);
+	return t_strdup_printf("%d", tm->tm_mday);
 }
 
 static const char *ext_date_date_part_get
@@ -309,19 +318,19 @@ static const char *ext_date_julian_part_get
 static const char *ext_date_hour_part_get
 (struct tm *tm, int zone_offset ATTR_UNUSED)
 {
-	return t_strdup_printf("%02d", tm->tm_hour);
+	return t_strdup_printf("%d", tm->tm_hour);
 }
 
 static const char *ext_date_minute_part_get
 (struct tm *tm, int zone_offset ATTR_UNUSED)
 {
-	return t_strdup_printf("%02d", tm->tm_min);
+	return t_strdup_printf("%d", tm->tm_min);
 }
 
 static const char *ext_date_second_part_get
 (struct tm *tm, int zone_offset ATTR_UNUSED)
 {
-	return t_strdup_printf("%02d", tm->tm_sec);
+	return t_strdup_printf("%d", tm->tm_sec);
 }
 
 static const char *ext_date_time_part_get
@@ -339,17 +348,35 @@ static const char *ext_date_iso8601_part_get
 static const char *ext_date_std11_part_get
 (struct tm *tm, int zone_offset)
 {
-	return "";
+	return t_strdup_printf("%s, %02d %s %04d %02d:%02d:%02d %s",
+		weekday_names[tm->tm_wday],
+		tm->tm_mday,
+		month_names[tm->tm_mon],
+		tm->tm_year+1900,
+		tm->tm_hour, tm->tm_min, tm->tm_sec, 
+		ext_date_zone_part_get(tm, zone_offset));
 }
 
 static const char *ext_date_zone_part_get
 (struct tm *tm ATTR_UNUSED, int zone_offset)
 {
-	return "";
+	bool negative;
+	int offset = zone_offset;
+
+	if (zone_offset >= 0)
+		negative = FALSE;
+	else {
+		negative = TRUE;
+		offset = -offset;
+	}
+
+	return t_strdup_printf
+		("%c%02d%02d", negative ? '-' : '+', offset / 60, offset % 60);
 }
 
-static const char *ext_date_weekday_part_get(struct tm *tm, int zone_offset)
+static const char *ext_date_weekday_part_get
+(struct tm *tm, int zone_offset ATTR_UNUSED)
 {
-	return "";
+	return t_strdup_printf("%d", tm->tm_wday);
 }
 
