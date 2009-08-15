@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "utc-offset.h"
 
 #include "sieve-common.h"
 #include "sieve-interpreter.h"
@@ -14,6 +15,7 @@
 
 struct ext_date_context {
 	time_t current_date;
+	int zone_offset;
 };
 
 /*
@@ -25,15 +27,21 @@ static void ext_date_runtime_init
 {
 	struct ext_date_context *dctx;
 	pool_t pool;
+	struct tm *tm;
 	time_t current_date;
+	int zone_offset;
 
 	/* Get current time at instance main script is started */
 	time(&current_date);	
+
+	tm = localtime(&current_date);
+	zone_offset = utc_offset(tm, current_date);
 
 	/* Create context */
 	pool = sieve_message_context_pool(renv->msgctx);
 	dctx = p_new(pool, struct ext_date_context, 1);
 	dctx->current_date = current_date;
+	dctx->zone_offset = zone_offset;
 
 	sieve_message_context_extension_set
 		(renv->msgctx, &date_extension, (void *) dctx);
@@ -91,12 +99,16 @@ bool ext_date_parse_timezone
  * Current date
  */
 
-time_t ext_date_get_current_date(const struct sieve_runtime_env *renv)
+time_t ext_date_get_current_date
+(const struct sieve_runtime_env *renv, int *zone_offset_r)
 {	
 	struct ext_date_context *dctx = (struct ext_date_context *) 
 		sieve_message_context_extension_get(renv->msgctx, &date_extension);
 
 	i_assert( dctx != NULL );
+
+	if ( zone_offset_r != NULL )
+		*zone_offset_r = dctx->zone_offset;
 
 	return dctx->current_date;
 }

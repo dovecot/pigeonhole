@@ -46,7 +46,8 @@ bool ext_date_parse_timezone(const char *zone, int *zone_offset_r);
  * Current date
  */
 
-time_t ext_date_get_current_date(const struct sieve_runtime_env *renv);
+time_t ext_date_get_current_date
+	(const struct sieve_runtime_env *renv, int *zone_offset_r);
 
 /*
  * Date part

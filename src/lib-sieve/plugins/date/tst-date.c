@@ -390,7 +390,8 @@ static int tst_date_operation_execute
 	time_t date_value;
 	struct tm *date_tm;
 	const char *part_value;
-	int zone_offset = 0;
+	int wanted_zone = 0;
+	int original_zone = 0;
 	int ret;
 	
 	/* Read optional operands */
@@ -414,7 +415,7 @@ static int tst_date_operation_execute
 					(renv, operand, address, &zone) ) {
 					sieve_runtime_trace_error(renv, "invalid zone operand");
 					return SIEVE_EXEC_BIN_CORRUPT;
-				} 
+				}
 			}
 			break;
 		default:
@@ -478,7 +479,7 @@ static int tst_date_operation_execute
 
 		/* Parse the date value */
 		if ( !message_date_parse((const unsigned char *) date_string,
-			strlen(date_string), &date_value, &zone_offset) ) {
+			strlen(date_string), &date_value, &original_zone) ) {
 			/* Uparseable addres, test failed */
 			sieve_interpreter_set_test_result(renv->interp, FALSE);
 			return SIEVE_EXEC_OK;
@@ -487,11 +488,22 @@ static int tst_date_operation_execute
 	} else if ( op == &currentdate_operation ) {
 		/* Use time stamp recorded at the time the script first started */
 
-		date_value = ext_date_get_current_date(renv);
+		date_value = ext_date_get_current_date(renv, &original_zone);
 
 	} else {
 		i_unreached();
 	}
+
+	/* Apply wanted timezone */
+
+	if ( zone == NULL || !ext_date_parse_timezone(str_c(zone), &wanted_zone) ) {
+		/* FIXME: warn about parse failures */
+		wanted_zone = original_zone;
+	}
+
+	date_value += wanted_zone * 60;
+
+	/* Convert timestamp to struct tm */
 
 	if ( (date_tm=gmtime(&date_value)) == NULL ) {
 		sieve_interpreter_set_test_result(renv->interp, FALSE);
@@ -499,7 +511,7 @@ static int tst_date_operation_execute
 	}
 
 	/* Extract the date part */
-	part_value = ext_date_part_extract(str_c(date_part), date_tm, zone_offset);
+	part_value = ext_date_part_extract(str_c(date_part), date_tm, wanted_zone);
 
 	/* Initialize match */
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
