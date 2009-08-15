@@ -1,7 +1,5 @@
 Current activities:
 
-* Testsuite:
-	- Add support for testing binary load/save
 * Build a sieve tool to filter an entire existing mailbox through a Sieve 
   script:
 	- Add commandline options to fully customize execution
