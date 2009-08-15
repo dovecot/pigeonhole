@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 	/* Currently needed for include (FIXME) */
 	env_put(t_strconcat("SIEVE_DIR=", sieve_dir, "included", NULL));
 	env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
-	
+
 	/* Compile sieve script */
 	if ( (sbin = sieve_tool_script_compile(scriptfile, NULL)) != NULL ) {
 		struct sieve_error_handler *ehandler;

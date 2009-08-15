@@ -70,6 +70,7 @@ test_cases = \
 	tests/extensions/include/once.svtest \
 	tests/extensions/include/twice.svtest \
 	tests/extensions/include/rfc.svtest \
+	tests/extensions/include/execute.svtest \
 	tests/extensions/imap4flags/basic.svtest \
 	tests/extensions/imap4flags/hasflag.svtest \
 	tests/extensions/imap4flags/errors.svtest \

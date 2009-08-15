@@ -51,6 +51,7 @@ bool testsuite_script_compile(const char *script_path)
 	/* Currently needed for include (FIXME) */
 	env_put(t_strconcat("SIEVE_DIR=", sieve_dir, "included", NULL));
 	env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
+	
 
 	if ( (sbin = sieve_compile(script_path, NULL, testsuite_log_ehandler)) == NULL )
 		return FALSE;
