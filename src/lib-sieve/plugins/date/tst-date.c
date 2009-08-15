@@ -481,8 +481,7 @@ static int tst_date_operation_execute
 				strlen(date_string), &date_value, &original_zone) ) {
 				got_date = TRUE;
 			}
-		} else printf("HEADER %s not found\n", str_c(header_name));
-
+		}
 	} else if ( op == &currentdate_operation ) {
 		/* Use time stamp recorded at the time the script first started */
 
