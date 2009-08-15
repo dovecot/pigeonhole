@@ -342,7 +342,48 @@ static const char *ext_date_time_part_get
 static const char *ext_date_iso8601_part_get
 (struct tm *tm, int zone_offset)
 {
-	return "";
+	const char *time_offset;
+
+	/* 
+	 * RFC 3339: 5.6. Internet Date/Time Format
+	 * 
+	 * The following profile of ISO 8601 [ISO8601] dates SHOULD be used in
+	 * new protocols on the Internet.  This is specified using the syntax
+	 * description notation defined in [ABNF].
+	 * 
+	 * date-fullyear   = 4DIGIT
+	 * date-month      = 2DIGIT  ; 01-12
+	 * date-mday       = 2DIGIT  ; 01-28, 01-29, 01-30, 01-31 based on
+	 * 		                     ; month/year
+	 * time-hour       = 2DIGIT  ; 00-23
+	 * time-minute     = 2DIGIT  ; 00-59
+	 * time-second     = 2DIGIT  ; 00-58, 00-59, 00-60 based on leap second
+	 * 		                     ; rules
+	 * time-secfrac    = "." 1*DIGIT
+	 * time-numoffset  = ("+" / "-") time-hour ":" time-minute
+	 * time-offset     = "Z" / time-numoffset
+	 * 
+	 * partial-time    = time-hour ":" time-minute ":" time-second
+	 * 		             [time-secfrac]
+	 * full-date       = date-fullyear "-" date-month "-" date-mday
+	 * full-time       = partial-time time-offset
+	 * 
+	 * date-time       = full-date "T" full-time
+	 * 
+	 */
+
+	if ( zone_offset == 0 )
+		time_offset = "Z";
+	else {
+		int offset = zone_offset > 0 ? zone_offset : -zone_offset;
+
+		time_offset = t_strdup_printf
+			("%c%02d:%02d", (zone_offset > 0 ? '+' : '-'), offset / 60, offset % 60);
+	}
+
+	return t_strdup_printf("%04d-%02d-%02dT%02d:%02d:%02d%s",
+		tm->tm_year + 1900, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, 
+		tm->tm_sec, time_offset); 
 }
 
 static const char *ext_date_std11_part_get
