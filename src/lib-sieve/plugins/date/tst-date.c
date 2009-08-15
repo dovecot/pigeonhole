@@ -378,7 +378,7 @@ static int tst_date_operation_execute
 (const struct sieve_operation *op, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
-	bool result = TRUE, matched = FALSE;
+	bool result = TRUE, got_date = FALSE, matched = FALSE;
 	int opt_code = 0;
 	const struct sieve_message_data *msgdata = renv->msgdata;
 	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
@@ -460,67 +460,67 @@ static int tst_date_operation_execute
 		/* Read first header
 		 *   NOTE: need something for index extension to hook into some time. 
 		 */
-		if ( (ret = mail_get_first_header
-			(msgdata->mail, str_c(header_name), &header_value)) < 0 ) {
-			/* No such header, test failed */
-			sieve_interpreter_set_test_result(renv->interp, FALSE);
-			return SIEVE_EXEC_OK;
-		}
+		if ( (ret=mail_get_first_header
+			(msgdata->mail, str_c(header_name), &header_value)) > 0 ) {
 
-		/* Extract the date string value */
-		date_string = strrchr(header_value, ';');
-		if ( date_string == NULL )
-			/* Direct header value */
-			date_string = header_value;
-		else {
-			/* Delimited by ';', e.g. a Received: header */
-			date_string++; 
-		}
+			/* Extract the date string value */
+			date_string = strrchr(header_value, ';');
+			if ( date_string == NULL )
+				/* Direct header value */
+				date_string = header_value;
+			else {
+				/* Delimited by ';', e.g. a Received: header */
+				date_string++; 
+			}
 
-		/* Parse the date value */
-		if ( !message_date_parse((const unsigned char *) date_string,
-			strlen(date_string), &date_value, &original_zone) ) {
-			/* Uparseable addres, test failed */
-			sieve_interpreter_set_test_result(renv->interp, FALSE);
-			return SIEVE_EXEC_OK;
+			/* Parse the date value */
+			if ( message_date_parse((const unsigned char *) date_string,
+				strlen(date_string), &date_value, &original_zone) ) {
+				got_date = TRUE;
+			}
 		}
 
 	} else if ( op == &currentdate_operation ) {
 		/* Use time stamp recorded at the time the script first started */
 
 		date_value = ext_date_get_current_date(renv, &original_zone);
+		got_date = TRUE;
 
 	} else {
 		i_unreached();
 	}
 
-	/* Apply wanted timezone */
+	if ( got_date ) {
+		/* Apply wanted timezone */
 
-	if ( zone == NULL || !ext_date_parse_timezone(str_c(zone), &wanted_zone) ) {
-		/* FIXME: warn about parse failures */
-		wanted_zone = original_zone;
+		if ( zone == NULL || !ext_date_parse_timezone(str_c(zone), &wanted_zone) ) {
+			/* FIXME: warn about parse failures */
+			wanted_zone = original_zone;
+		}
+
+		date_value += wanted_zone * 60;
+
+		/* Convert timestamp to struct tm */
+
+		if ( (date_tm=gmtime(&date_value)) == NULL ) {
+			sieve_interpreter_set_test_result(renv->interp, FALSE);
+			return SIEVE_EXEC_OK;
+		}
+
+		/* Extract the date part */
+		part_value = ext_date_part_extract(str_c(date_part), date_tm, wanted_zone);
 	}
-
-	date_value += wanted_zone * 60;
-
-	/* Convert timestamp to struct tm */
-
-	if ( (date_tm=gmtime(&date_value)) == NULL ) {
-		sieve_interpreter_set_test_result(renv->interp, FALSE);
-		return SIEVE_EXEC_OK;
-	}
-
-	/* Extract the date part */
-	part_value = ext_date_part_extract(str_c(date_part), date_tm, wanted_zone);
 
 	/* Initialize match */
 	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
-			
-	/* Match value */
-	if ( (ret=sieve_match_value(mctx, part_value, strlen(part_value))) < 0 )
-		result = FALSE;
-	else
-		matched = ret > 0;				
+	
+	if ( got_date ) {		
+		/* Match value */
+		if ( (ret=sieve_match_value(mctx, part_value, strlen(part_value))) < 0 )
+			result = FALSE;
+		else
+			matched = ret > 0;
+	}
 
 	/* Finish match */
 	if ( (ret=sieve_match_end(&mctx)) < 0 ) 

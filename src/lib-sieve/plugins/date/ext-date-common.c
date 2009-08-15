@@ -56,6 +56,7 @@ static struct sieve_interpreter_extension date_interpreter_extension = {
 bool ext_date_interpreter_load
 (const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {	
+	/* Register runtime hook to obtain stript start timestamp */
 	if ( renv->msgctx == NULL ||
 		sieve_message_context_extension_get(renv->msgctx, &date_extension)
 		== NULL ) {
@@ -106,6 +107,8 @@ time_t ext_date_get_current_date
 		sieve_message_context_extension_get(renv->msgctx, &date_extension);
 
 	i_assert( dctx != NULL );
+
+	/* Read script start timestamp from message context */
 
 	if ( zone_offset_r != NULL )
 		*zone_offset_r = dctx->zone_offset;
@@ -324,7 +327,23 @@ static const char *ext_date_date_part_get
 static const char *ext_date_julian_part_get
 (struct tm *tm, int zone_offset ATTR_UNUSED)
 {
-	return "";
+	int c, ya;
+
+	/* Modified from RFC 5260 Appendix A */	
+
+	if ( tm->tm_mon > 2 )
+		tm->tm_mon -= 3;
+	else {
+		tm->tm_mon += 9;
+		tm->tm_year--;
+	}
+	
+	c = tm->tm_year / 100;
+	ya = tm->tm_year - c * 100;
+
+	return t_strdup_printf("%d", 
+		c * 146097 / 4 + ya * 1461 / 4 + (tm->tm_mon * 153 + 2) / 5 +
+		tm->tm_mday + 1721119);
 }
 
 static const char *ext_date_hour_part_get
