@@ -378,7 +378,7 @@ static int tst_date_operation_execute
 (const struct sieve_operation *op, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
-	bool result = TRUE, got_date = FALSE, matched = FALSE;
+	bool result = TRUE, zone_specified = FALSE, got_date = FALSE, matched = FALSE;
 	int opt_code = 0;
 	const struct sieve_message_data *msgdata = renv->msgdata;
 	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
@@ -387,11 +387,10 @@ static int tst_date_operation_execute
 	struct sieve_match_context *mctx;
 	string_t *header_name = NULL, *date_part = NULL, *zone = NULL;
 	struct sieve_coded_stringlist *key_list;
-	time_t date_value;
+	time_t date_value, local_time;
 	struct tm *date_tm;
 	const char *part_value;
-	int wanted_zone = 0;
-	int original_zone = 0;
+	int local_zone = 0, original_zone = 0, wanted_zone = 0;
 	int ret;
 	
 	/* Read optional operands */
@@ -417,6 +416,8 @@ static int tst_date_operation_execute
 					return SIEVE_EXEC_BIN_CORRUPT;
 				}
 			}
+
+			zone_specified = TRUE;
 			break;
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
@@ -451,6 +452,8 @@ static int tst_date_operation_execute
 
 	/* Get the date value */
 
+	local_time = ext_date_get_current_date(renv, &local_zone);
+
 	if ( op == 	&date_operation ) {
 		const char *header_value;
 		const char *date_string;
@@ -478,12 +481,13 @@ static int tst_date_operation_execute
 				strlen(date_string), &date_value, &original_zone) ) {
 				got_date = TRUE;
 			}
-		}
+		} else printf("HEADER %s not found\n", str_c(header_name));
 
 	} else if ( op == &currentdate_operation ) {
 		/* Use time stamp recorded at the time the script first started */
 
-		date_value = ext_date_get_current_date(renv, &original_zone);
+		date_value = local_time;
+		original_zone = local_zone;
 		got_date = TRUE;
 
 	} else {
@@ -493,7 +497,11 @@ static int tst_date_operation_execute
 	if ( got_date ) {
 		/* Apply wanted timezone */
 
-		if ( zone == NULL || !ext_date_parse_timezone(str_c(zone), &wanted_zone) ) {
+		if ( !zone_specified )
+			wanted_zone = local_zone;
+		else if ( zone == NULL 
+			|| !ext_date_parse_timezone(str_c(zone), &wanted_zone) ) {
+
 			/* FIXME: warn about parse failures */
 			wanted_zone = original_zone;
 		}

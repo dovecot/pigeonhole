@@ -106,7 +106,13 @@ time_t ext_date_get_current_date
 	struct ext_date_context *dctx = (struct ext_date_context *) 
 		sieve_message_context_extension_get(renv->msgctx, &date_extension);
 
-	i_assert( dctx != NULL );
+	if ( dctx == NULL ) {
+		ext_date_runtime_init(renv, NULL);
+		dctx = (struct ext_date_context *) 
+			sieve_message_context_extension_get(renv->msgctx, &date_extension);
+
+		i_assert(dctx != NULL);
+	}
 
 	/* Read script start timestamp from message context */
 
