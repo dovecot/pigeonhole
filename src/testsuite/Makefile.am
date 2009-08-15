@@ -32,7 +32,9 @@ commands = \
 	cmd-test-result-reset.c \
 	cmd-test-result-print.c \
 	cmd-test-message.c \
-	cmd-test-mailbox.c
+	cmd-test-mailbox.c \
+	cmd-test-binary.c
+
 
 tests = \
 	tst-test-script-compile.c \
@@ -52,6 +54,7 @@ testsuite_SOURCES = \
 	testsuite-result.c \
 	testsuite-smtp.c \
 	testsuite-mailstore.c \
+	testsuite-binary.c \
 	$(commands) \
 	$(tests) \
 	ext-testsuite.c \
@@ -67,5 +70,6 @@ noinst_HEADERS = \
 	testsuite-script.h \
 	testsuite-result.h \
 	testsuite-smtp.h \
-	testsuite-mailstore.h
+	testsuite-mailstore.h \
+	testsuite-binary.h
 

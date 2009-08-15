@@ -30,7 +30,7 @@ void testsuite_script_init(void)
 void testsuite_script_deinit(void)
 {
 	if ( _testsuite_compiled_script != NULL ) {
-		sieve_close(&_testsuite_compiled_script);
+		sieve_binary_unref(&_testsuite_compiled_script);
 	}
 }
 
@@ -56,7 +56,7 @@ bool testsuite_script_compile(const char *script_path)
 		return FALSE;
 
 	if ( _testsuite_compiled_script != NULL ) {
-		sieve_close(&_testsuite_compiled_script);
+		sieve_binary_unref(&_testsuite_compiled_script);
 	}
 
 	_testsuite_compiled_script = sbin;
@@ -106,5 +106,20 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	sieve_interpreter_free(&interp);
 
 	return ( ret > 0 );
+}
+
+struct sieve_binary *testsuite_script_get_binary(void)
+{
+	return _testsuite_compiled_script;
+}
+
+void testsuite_script_set_binary(struct sieve_binary *sbin)
+{
+	if ( _testsuite_compiled_script != NULL ) {
+		sieve_binary_unref(&_testsuite_compiled_script);
+	}
+
+	_testsuite_compiled_script = sbin;
+	sieve_binary_ref(sbin);
 }
 

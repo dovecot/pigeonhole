@@ -42,12 +42,12 @@ test_cases = \
 	tests/testsuite.svtest\
 	tests/control-structures.svtest \
 	tests/compile/compile.svtest \
-	tests/compile/examples.svtest \
 	tests/compile/errors.svtest \
 	tests/execute/errors.svtest \
 	tests/execute/actions.svtest \
 	tests/execute/smtp.svtest \
 	tests/execute/mailstore.svtest \
+	tests/execute/examples.svtest \
 	tests/exists.svtest \
 	tests/header.svtest \
 	tests/address.svtest \
