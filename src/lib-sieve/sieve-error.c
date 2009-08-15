@@ -35,7 +35,9 @@
 const char *sieve_error_script_location
 (const struct sieve_script *script, unsigned int source_line)
 {
-    const char *sname = sieve_script_name(script);
+    const char *sname;
+
+	sname = ( script == NULL ? NULL : sieve_script_name(script) );
 
     if ( sname == NULL || *sname == '\0' )
         return t_strdup_printf("line %d", source_line);
