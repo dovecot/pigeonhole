@@ -81,17 +81,7 @@ extern const struct sieve_extension variables_extension;
 extern const struct sieve_extension enotify_extension;
 extern const struct sieve_extension environment_extension;
 extern const struct sieve_extension mailbox_extension;
-
-/*
- * Extensions under development
- */
-
-#ifdef HAVE_SIEVE_UNFINISHED
-
-extern const struct sieve_extension ereject_extension;
 extern const struct sieve_extension date_extension;
-
-#endif
 
 /*
  * List of native extensions
@@ -107,13 +97,6 @@ const struct sieve_extension *sieve_core_extensions[] = {
 	/* Core extensions */
 	&fileinto_extension, &reject_extension, &envelope_extension, 
 	&encoded_character_extension,
-
-	/* Extensions under development */
-
-#ifdef HAVE_SIEVE_UNFINISHED
-	&ereject_extension,
-	&date_extension,
-#endif
 	
 	/* 'Plugins' */
 	&vacation_extension, &subaddress_extension, 
@@ -121,7 +104,7 @@ const struct sieve_extension *sieve_core_extensions[] = {
 	&relational_extension, &regex_extension, &imap4flags_extension,
 	&copy_extension, &include_extension, &body_extension,
 	&variables_extension, &enotify_extension, &environment_extension,
-	&mailbox_extension
+	&mailbox_extension, &date_extension
 };
 
 const unsigned int sieve_core_extensions_count =
@@ -135,13 +118,29 @@ extern const struct sieve_extension imapflags_extension;
 extern const struct sieve_extension notify_extension;
 
 const struct sieve_extension *sieve_deprecated_extensions[] = {
-	/* Deprecated extensions */
 	&imapflags_extension,
 	&notify_extension
 };
 
 const unsigned int sieve_deprecated_extensions_count =
 	N_ELEMENTS(sieve_deprecated_extensions);
+
+/*
+ * Unfinished extensions
+ */
+
+#ifdef HAVE_SIEVE_UNFINISHED
+
+extern const struct sieve_extension ereject_extension;
+
+const struct sieve_extension *sieve_unfinished_extensions[] = {
+	&ereject_extension,
+};
+
+const unsigned int sieve_unfinished_extensions_count =
+	N_ELEMENTS(sieve_unfinished_extensions);
+
+#endif /* HAVE_SIEVE_UNFINISHED */
 
 /* 
  * Extensions init/deinit
@@ -163,6 +162,13 @@ bool sieve_extensions_init(void)
 	for ( i = 0; i < sieve_deprecated_extensions_count; i++ ) {
 		(void)sieve_extension_register(sieve_deprecated_extensions[i], FALSE);
 	}
+
+#ifdef HAVE_SIEVE_UNFINISHED
+	/* Register unfinished extensions */
+	for ( i = 0; i < sieve_unfinished_extensions_count; i++ ) {
+		(void)sieve_extension_register(sieve_unfinished_extensions[i], FALSE);
+	}
+#endif
 
 	/* More extensions can be added through plugins */
 	

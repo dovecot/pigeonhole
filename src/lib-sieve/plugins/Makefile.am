@@ -1,5 +1,5 @@
 if BUILD_UNFINISHED
-UNFINISHED = date
+UNFINISHED =
 endif
 
 SUBDIRS = \
@@ -17,5 +17,6 @@ SUBDIRS = \
 	notify \
 	environment \
 	mailbox \
+	date \
 	$(UNFINISHED)
 
