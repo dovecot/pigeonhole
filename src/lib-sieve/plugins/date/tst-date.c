@@ -503,12 +503,12 @@ static int tst_date_operation_execute
 		/* Convert timestamp to struct tm */
 
 		if ( (date_tm=gmtime(&date_value)) == NULL ) {
-			sieve_interpreter_set_test_result(renv->interp, FALSE);
-			return SIEVE_EXEC_OK;
+			got_date = FALSE;
+		} else {
+			/* Extract the date part */
+			part_value = ext_date_part_extract
+				(str_c(date_part), date_tm, wanted_zone);
 		}
-
-		/* Extract the date part */
-		part_value = ext_date_part_extract(str_c(date_part), date_tm, wanted_zone);
 	}
 
 	/* Initialize match */
