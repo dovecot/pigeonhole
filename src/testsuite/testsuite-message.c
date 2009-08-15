@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "str.h"
+#include "istream.h"
 #include "mail-storage.h"
 #include "master-service.h"
 
@@ -98,6 +99,22 @@ void testsuite_message_set_string
 	_testsuite_message_set_data(_raw_message->mail);
 
 	sieve_message_context_flush(renv->msgctx);
+
+	/*{ 
+		const unsigned char *data;
+		struct istream *input;
+		size_t size;
+		int ret;
+
+		if (mail_get_stream(_raw_message->mail, NULL, NULL, &input) < 0)
+        	return;
+
+		while ((ret = i_stream_read_data(input, &data, &size, 0)) > 0) {
+			if (write(1, data, size) == 0)
+				break;
+			i_stream_skip(input, size);
+		}
+    }*/
 }
 
 void testsuite_message_set_file
