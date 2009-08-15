@@ -347,9 +347,6 @@ static const char *ext_date_julian_part_get
 
 	jd = c * 146097 / 4 + ya * 1461 / 4 + (month * 153 + 2) / 5 + day + 1721119;
 	
-	if ( tm->tm_hour > 12 )
-		return t_strdup_printf("%d", jd - 2400000 );
- 
 	return t_strdup_printf("%d", jd - 2400001);
 }
 
