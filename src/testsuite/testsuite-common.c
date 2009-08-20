@@ -27,6 +27,7 @@
 #include "testsuite-objects.h"
 #include "testsuite-log.h"
 #include "testsuite-script.h"
+#include "testsuite-binary.h"
 #include "testsuite-result.h"
 #include "testsuite-smtp.h"
 
