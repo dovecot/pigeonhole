@@ -13,7 +13,6 @@
  */
 
 extern const struct sieve_extension enotify_extension;
-extern const struct sieve_extension notify_extension;
 extern const struct sieve_extension_capabilities notify_capabilities;
 
 /*
