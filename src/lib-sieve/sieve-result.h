@@ -99,8 +99,8 @@ void sieve_result_error
  */
  
 void sieve_result_add_implicit_side_effect
-(struct sieve_result *result, const struct sieve_action *to_action, 
-	const struct sieve_side_effect *seffect, void *context);
+(struct sieve_result *result, const struct sieve_action *to_action,
+	bool to_keep, const struct sieve_side_effect *seffect, void *context);
 	
 int sieve_result_add_action
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action, 

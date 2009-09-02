@@ -259,10 +259,12 @@ void sieve_result_log
 
 void sieve_result_add_implicit_side_effect
 (struct sieve_result *result, const struct sieve_action *to_action, 
-	const struct sieve_side_effect *seffect, void *context)
+	bool to_keep, const struct sieve_side_effect *seffect, void *context)
 {
 	struct sieve_result_action_context *actctx = NULL;
 	
+	to_action = to_keep ? &act_store : to_action;
+
 	if ( result->action_contexts == NULL ) {
 		result->action_contexts = hash_table_create
 			(default_pool, result->pool, 0, NULL, NULL);
@@ -279,7 +281,7 @@ void sieve_result_add_implicit_side_effect
 		
 		hash_table_insert(result->action_contexts, (void *) to_action, 
 			(void *) actctx);
-	}	
+	} 
 	
 	sieve_side_effects_list_add(actctx->seffects, seffect, context);
 }
@@ -550,7 +552,7 @@ static int _sieve_result_add_action
 		
 			/* Check for implicit side effects to this particular action */
 			actctx = (struct sieve_result_action_context *) 
-					hash_table_lookup(result->action_contexts, action);
+					hash_table_lookup(result->action_contexts, keep ? &act_store : action);
 		
 			if ( actctx != NULL ) {
 				struct sieve_result_side_effect *iseff;
@@ -677,7 +679,7 @@ void sieve_result_seffect_printf
 	o_stream_send(penv->stream, str_data(outbuf), str_len(outbuf));
 }
 
-static void sieve_result_print_side_effect
+static void sieve_result_print_side_effects
 (struct sieve_result_print_env *rpenv, const struct sieve_action *action,
 	struct sieve_side_effects_list *slist, bool *implicit_keep)
 {
@@ -691,6 +693,26 @@ static void sieve_result_print_side_effect
 		if ( sef->print != NULL ) 
 			sef->print(sef, action, rpenv, rsef->context, implicit_keep);
 		rsef = rsef->next;
+	}
+}
+
+static void sieve_result_print_implicit_side_effects
+(struct sieve_result_print_env *rpenv)
+{
+	struct sieve_result *result = rpenv->result;
+	bool dummy = TRUE;
+
+	/* Print any implicit side effects if applicable */
+	if ( result->action_contexts != NULL ) {
+		struct sieve_result_action_context *actctx;
+		
+		/* Check for implicit side effects to keep action */
+		actctx = (struct sieve_result_action_context *) 
+			hash_table_lookup(rpenv->result->action_contexts, &act_store);
+		
+		if ( actctx != NULL && actctx->seffects != NULL ) 
+			sieve_result_print_side_effects
+				(rpenv, result->keep_action, actctx->seffects, &dummy);
 	}
 }
 
@@ -741,7 +763,7 @@ bool sieve_result_print
 			}
 	
 			/* Print side effects */
-			sieve_result_print_side_effect
+			sieve_result_print_side_effects
 				(&penv, rac->data.action, rac->seffects, &impl_keep);
 			
 			implicit_keep = implicit_keep && impl_keep;		
@@ -757,9 +779,11 @@ bool sieve_result_print
 	if ( implicit_keep ) {
 		bool dummy = TRUE;
 			
-		if ( act_keep == NULL ) 
+		if ( act_keep == NULL ) {
 			sieve_result_action_printf(&penv, "keep");
-		else {
+
+			sieve_result_print_implicit_side_effects(&penv);
+		} else {
 			/* Scan for execution of keep-equal actions */	
 			rac = result->first_action;
 			while ( act_keep != NULL && rac != NULL ) {
@@ -778,18 +802,7 @@ bool sieve_result_print
 			} else {
 				act_keep->print(act_keep, &penv, NULL, &dummy);
 			
-				/* Apply any implicit side effects if applicable */
-				if ( result->action_contexts != NULL ) {
-					struct sieve_result_action_context *actctx;
-		
-					/* Check for implicit side effects to keep action */
-					actctx = (struct sieve_result_action_context *) 
-							hash_table_lookup(result->action_contexts, act_keep);
-		
-					if ( actctx != NULL && actctx->seffects != NULL ) 
-						sieve_result_print_side_effect
-							(&penv, act_keep, actctx->seffects, &dummy);
-				}
+				sieve_result_print_implicit_side_effects(&penv);
 			}
 		}
 	} else 
@@ -1182,6 +1195,14 @@ void sieve_side_effects_list_add
 	void *context)		
 {
 	struct sieve_result_side_effect *reffect;
+
+	/* Prevent duplicates */
+	reffect = list->first_effect;
+	while ( reffect != NULL ) {
+		if ( reffect->seffect == seffect ) return;
+
+		reffect = reffect->next;
+	}
 	
 	/* Create new side effect object */
 	reffect = p_new(list->result->pool, struct sieve_result_side_effect, 1);

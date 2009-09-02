@@ -237,7 +237,7 @@ static void ext_imap4flags_runtime_init
 (const struct sieve_runtime_env *renv, void *context ATTR_UNUSED)
 {	
 	sieve_result_add_implicit_side_effect
-		(renv->result, &act_store, &flags_side_effect, NULL);
+		(renv->result, NULL, TRUE, &flags_side_effect, NULL);
 }
 
 const struct sieve_interpreter_extension imap4flags_interpreter_extension = {
