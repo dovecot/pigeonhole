@@ -379,6 +379,9 @@ static void sieve_result_action_detach(struct sieve_result_action *raction)
 		
 	if ( result->last_action == raction ) 
 		result->last_action = raction->prev;
+
+	if ( result->last_attempted_action == raction ) 
+		result->last_attempted_action = raction->prev;
 		
 	if ( raction->next != NULL ) raction->next->prev = raction->prev;
 	if ( raction->prev != NULL ) raction->prev->next = raction->next;
@@ -406,7 +409,7 @@ static int _sieve_result_add_action
 	act_data.location = sieve_error_script_location(renv->script, source_line);
 	act_data.context = context;
 	act_data.executed = FALSE;
-		
+
 	/* First, check for duplicates or conflicts */
 	raction = result->first_action;
 	while ( raction != NULL ) {
@@ -415,7 +418,7 @@ static int _sieve_result_add_action
 		if ( keep && raction->keep ) {
 		
 			/* Duplicate keep */
-			if ( raction->data.executed ) {
+			if ( raction->data.action == NULL || raction->data.executed ) {
 				/* Keep action from preceeding execution */
 			
 				/* Detach existing keep action */
@@ -430,12 +433,11 @@ static int _sieve_result_add_action
 					return ret;				
 			} else {
 				/* True duplicate */
-				
 				return sieve_result_side_effects_merge
 					(renv, action, raction, seffects);
 			}
 			
-		} if ( raction->data.action == action ) {
+		} if ( action != NULL && raction->data.action == action ) {
 			instance_count++;
 
 			/* Possible duplicate */
@@ -509,10 +511,10 @@ static int _sieve_result_add_action
 		return -1;
 	}	
 		
-	if ( kaction != NULL )
+	if ( kaction != NULL ) {
 		/* Use existing keep action to define new one */
 		raction = kaction;
-	else {
+	} else {
 		/* Create new action object */
 		raction = p_new(result->pool, struct sieve_result_action, 1);
 		raction->data.executed = FALSE;
