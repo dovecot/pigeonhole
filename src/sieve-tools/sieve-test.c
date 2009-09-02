@@ -222,7 +222,8 @@ int main(int argc, char **argv)
 	/* Compile main sieve script */
 	if ( force_compile ) {
 		main_sbin = sieve_tool_script_compile(scriptfile, NULL);
-		(void) sieve_save(main_sbin, NULL);
+		if ( main_sbin != NULL )
+			(void) sieve_save(main_sbin, NULL);
 	} else {
 		main_sbin = sieve_tool_script_open(scriptfile);
 	}
@@ -350,7 +351,8 @@ int main(int argc, char **argv)
 				/* Compile sieve script */
 				if ( force_compile ) {
 					sbin = sieve_tool_script_compile(sfiles[i], sfiles[i]);
-					(void) sieve_save(sbin, NULL);
+					if ( sbin != NULL )
+						(void) sieve_save(sbin, NULL);
 				} else {
 					sbin = sieve_tool_script_open(sfiles[i]);
 				}
@@ -407,8 +409,10 @@ int main(int argc, char **argv)
 			o_stream_destroy(&teststream);
 
 		/* Cleanup remaining binaries */
-		sieve_close(&sbin);
-		if ( main_sbin != NULL ) sieve_close(&main_sbin);
+		if ( sbin != NULL )
+			sieve_close(&sbin);
+		if ( main_sbin != NULL ) 
+			sieve_close(&main_sbin);
 		
 		/* De-initialize raw mail object */
 		mail_raw_close(mailr);
