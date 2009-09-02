@@ -285,10 +285,11 @@ void sieve_result_add_implicit_side_effect
 }
 
 static int sieve_result_side_effects_merge
-(const struct sieve_runtime_env *renv, const struct sieve_action *action, 
-	struct sieve_side_effects_list *old_seffects,
+(const struct sieve_runtime_env *renv, const struct sieve_action *action,
+	struct sieve_result_action *old_action,
 	struct sieve_side_effects_list *new_seffects)
-{
+{ 
+	struct sieve_side_effects_list *old_seffects = old_action->seffects;
 	int ret;
 	struct sieve_result_side_effect *rsef, *nrsef;
 
@@ -353,6 +354,10 @@ static int sieve_result_side_effects_merge
 					return -1;
 					
 				if ( ret != 0 ) {
+					if ( old_action->seffects == NULL )
+						old_action->seffects = old_seffects =
+							sieve_side_effects_list_create(old_action->result);					
+
 					/* Add side effect */
 					sieve_side_effects_list_add(old_seffects, seffect, new_context);
 				}
@@ -421,13 +426,13 @@ static int _sieve_result_add_action
 					kaction = raction;
 			
 				if ( (ret=sieve_result_side_effects_merge
-					(renv, action, kaction->seffects, seffects)) <= 0 )	 
+					(renv, action, kaction, seffects)) <= 0 )	 
 					return ret;				
 			} else {
 				/* True duplicate */
 				
 				return sieve_result_side_effects_merge
-					(renv, action, raction->seffects, seffects);
+					(renv, action, raction, seffects);
 			}
 			
 		} if ( raction->data.action == action ) {
@@ -448,7 +453,7 @@ static int _sieve_result_add_action
 						 */
 						 
 						if ( (ret=sieve_result_side_effects_merge
-							(renv, action, raction->seffects, seffects)) < 0 ) 
+							(renv, action, raction, seffects)) < 0 ) 
 							return ret;
 						 
 						if ( kaction == NULL ) {								
@@ -465,13 +470,13 @@ static int _sieve_result_add_action
 							sieve_result_action_detach(raction);
 
 							if ( (ret=sieve_result_side_effects_merge
-								(renv, action, kaction->seffects, raction->seffects)) < 0 ) 
+								(renv, action, kaction, raction->seffects)) < 0 ) 
 								return ret;
 						}
 					} else {
 						/* Merge side-effects, but don't add new action */
 						return sieve_result_side_effects_merge
-							(renv, action, raction->seffects, seffects);
+							(renv, action, raction, seffects);
 					}
 				}
 			}
