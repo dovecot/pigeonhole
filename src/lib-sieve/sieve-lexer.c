@@ -318,9 +318,9 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 		while ( sieve_lexer_curchar(lexer) != '\n' ) {
 			switch( sieve_lexer_curchar(lexer) ) {
 			case -1:
-				sieve_lexer_error(lexer, "end of file before end of hash comment");
-				lexer->token_type = STT_ERROR;
-				return FALSE;
+				sieve_lexer_warning(lexer, "no newline (CRLF) at end of hash comment at end of file");
+				lexer->token_type = STT_WHITESPACE;
+				return TRUE;
 			case '\0':
 				sieve_lexer_error(lexer, "encountered NUL character in hash comment");
 				lexer->token_type = STT_ERROR;

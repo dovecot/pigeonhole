@@ -43,6 +43,7 @@ test_cases = \
 	tests/control-structures.svtest \
 	tests/compile/compile.svtest \
 	tests/compile/errors.svtest \
+	tests/compile/warnings.svtest \
 	tests/execute/errors.svtest \
 	tests/execute/actions.svtest \
 	tests/execute/smtp.svtest \
