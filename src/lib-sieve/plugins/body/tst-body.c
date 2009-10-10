@@ -380,9 +380,15 @@ static int ext_body_operation_execute
 	
 	/* Extract requested parts */
 	
-	if ( !ext_body_get_content
-		(renv, content_types, transform != TST_BODY_TRANSFORM_RAW, &body_parts) ) {
-		return SIEVE_EXEC_FAILURE;
+	if ( transform == TST_BODY_TRANSFORM_RAW ) {
+		if ( !ext_body_get_raw(renv, &body_parts) ) {
+			return SIEVE_EXEC_FAILURE;
+		}
+	} else {
+		if ( !ext_body_get_content
+			(renv, content_types, TRUE, &body_parts) ) {
+			return SIEVE_EXEC_FAILURE;
+		}
 	}
 
 	/* Disable match values processing as required by RFC */

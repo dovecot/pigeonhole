@@ -29,7 +29,7 @@ Test!
 
 .
 	{
-		test_fail "invalid message body extracted";
+		test_fail "invalid message body extracted (1)";
 	}
 
 	if body :raw :is text:
@@ -38,12 +38,12 @@ Test!
 
 .
 	{
-		test_fail "invalid message body extracted";
+		test_fail "invalid message body extracted (2)";
 	}
 
 	if body :raw :is "Test"
 	{
-		test_fail "body test matches nonsense";
+		test_fail "body test matches nonsense (3)";
 	}
 }
 

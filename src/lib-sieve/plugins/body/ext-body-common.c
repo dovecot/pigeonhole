@@ -38,6 +38,7 @@ struct ext_body_message_context {
 	ARRAY_DEFINE(cached_body_parts, struct ext_body_part_cached);
 	ARRAY_DEFINE(return_body_parts, struct ext_body_part);
 	buffer_t *tmp_buffer;
+	buffer_t *raw_body;
 };
 
 static bool _is_wanted_content_type
@@ -310,7 +311,8 @@ static struct ext_body_message_context *ext_body_get_context
 		p_array_init(&ctx->cached_body_parts, pool, 8);
 		p_array_init(&ctx->return_body_parts, pool, 8);
 		ctx->tmp_buffer = buffer_create_dynamic(pool, 1024*64);
-		
+		ctx->raw_body = NULL;		
+
 		/* Register context */
 		sieve_message_context_extension_set(msgctx, &body_extension, (void *) ctx);
 	}
@@ -340,4 +342,58 @@ bool ext_body_get_content
 	*parts_r = array_idx_modifiable(&ctx->return_body_parts, 0);
 
 	return result;
+}
+
+bool ext_body_get_raw
+(const struct sieve_runtime_env *renv, struct ext_body_part **parts_r)
+{
+	struct ext_body_message_context *ctx = ext_body_get_context(renv->msgctx);
+	struct ext_body_part *return_part;
+	buffer_t *buf;
+
+	if ( ctx->raw_body == NULL ) {
+		struct mail *mail = renv->msgdata->mail;
+		struct istream *input;
+		struct message_size hdr_size, body_size;
+		const unsigned char *data;
+		size_t size;
+		int ret;
+
+		ctx->raw_body = buf = buffer_create_dynamic(ctx->pool, 1024*64);
+
+		/* Get stream for message */
+ 		if ( mail_get_stream(mail, &hdr_size, &body_size, &input) < 0 )
+			return FALSE;
+
+		/* Skip stream to beginning of body */
+		i_stream_skip(input, hdr_size.physical_size);
+
+		/* Read raw message body */
+		while ( (ret = i_stream_read_data(input, &data, &size, 0)) > 0 ) {	
+			buffer_append(buf, data, size);
+
+			i_stream_skip(input, size);
+		}
+	} else {
+		buf = ctx->raw_body;	
+	}
+
+	/* Clear result array */
+	array_clear(&ctx->return_body_parts);
+
+	if ( buf->used > 0  ) {
+		/* Add terminating NUL to the body part buffer */
+		buffer_append_c(buf, '\0');
+	
+		/* Add single item to the result */
+		return_part = array_append_space(&ctx->return_body_parts);
+		return_part->content = buf->data;
+		return_part->size = buf->used - 1;
+	}
+
+	/* Return the array of body items */
+	(void) array_append_space(&ctx->return_body_parts); /* NULL-terminate */
+	*parts_r = array_idx_modifiable(&ctx->return_body_parts, 0);
+
+	return TRUE;
 }
