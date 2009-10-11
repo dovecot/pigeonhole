@@ -139,7 +139,7 @@ static void ext_body_part_save
 	part_data = p_malloc(ctx->pool, buf->used);
 	memcpy(part_data, buf->data, buf->used);
 	part_size = buf->used - 1;
-	
+
 	/* Depending on whether the part is decoded or not store message body in the
 	 * appropriate cache location.
 	 */
@@ -211,8 +211,7 @@ static bool ext_body_parts_add_missing
 	/* Initialize body decoder */
 	decoder = decode_to_plain ? message_decoder_init(FALSE) : NULL;
 	
-	parser = message_parser_init
-		(ctx->pool, input, 0, 0);
+	parser = message_parser_init(ctx->pool, input, 0, 0);
 	while ( (ret = message_parser_parse_next_block(parser, &block)) > 0 ) {
 		if ( block.part != prev_part ) {
 			/* Save previous body part */
@@ -228,15 +227,15 @@ static bool ext_body_parts_add_missing
 		}
 		
 		if ( block.hdr != NULL || block.size == 0 ) {
-			/* reading headers */
-			if ( decoder != NULL ) {
-				(void)message_decoder_decode_next_block(decoder,
-					&block, &decoded);
-			}
+			/* Reading headers */
 
+			/* Decode block */
+			if ( decoder != NULL )
+				(void)message_decoder_decode_next_block(decoder, &block, &decoded);
+
+			/* Check for end of headers */
 			if ( block.hdr == NULL ) {
-				/* save bodies only if we have a wanted
-				   content-type */
+				/* Save bodies only if we have a wanted content-type */
 				save_body = _is_wanted_content_type
 					(content_types, body_part->content_type);
 				continue;
@@ -269,22 +268,19 @@ static bool ext_body_parts_add_missing
 			continue;
 		}
 
-		/* reading body */
-		if (save_body) {
-			if (decoder != NULL) {
-				(void)message_decoder_decode_next_block(decoder,
-							&block, &decoded);
-				buffer_append(ctx->tmp_buffer,
-					      decoded.data, decoded.size);
+		/* Reading body */
+		if ( save_body ) {
+			if ( decoder != NULL ) {
+				(void)message_decoder_decode_next_block(decoder, &block, &decoded);
+				buffer_append(ctx->tmp_buffer, decoded.data, decoded.size);
 			} else {
-				buffer_append(ctx->tmp_buffer,
-					      block.data, block.size);
+				buffer_append(ctx->tmp_buffer, block.data, block.size);
 			}
 		}
 	}
 
 	/* Save last body part if necessary */
-	if (body_part != NULL && save_body)
+	if ( body_part != NULL && save_body )
 		ext_body_part_save(ctx, prev_part, body_part, decoder != NULL);
 
 	/* Try to fill the return_body_parts array once more */
