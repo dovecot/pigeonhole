@@ -62,8 +62,7 @@ static bool _is_wanted_content_type
 		if (wanted_subtype == NULL) {
 			/* match only main type */
 			if (strlen(*wanted_types) == type_len &&
-			    strncasecmp(*wanted_types, content_type,
-					type_len) == 0)
+			  strncasecmp(*wanted_types, content_type, type_len) == 0)
 				return TRUE;
 		} else {
 			/* match whole type/subtype */
@@ -162,12 +161,21 @@ static const char *_parse_content_type(const struct message_header_line *hdr)
 	struct rfc822_parser_context parser;
 	string_t *content_type;
 
+	/* Initialize parsing */
 	rfc822_parser_init(&parser, hdr->full_value, hdr->full_value_len, NULL);
 	(void)rfc822_skip_lwsp(&parser);
 
+	/* Parse content type */
 	content_type = t_str_new(64);
 	if (rfc822_parse_content_type(&parser, content_type) < 0)
 		return "";
+
+	/* Header field must end here, otherwise content-type is invalid after all */
+	(void)rfc822_skip_lwsp(&parser);
+	if ( parser.data != parser.end && *parser.data != ';' )
+		return "";
+
+	/* Success */
 	return str_c(content_type);
 }
 
