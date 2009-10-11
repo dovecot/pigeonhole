@@ -269,14 +269,8 @@ test "Nested Search" {
  *  separate strings; the contents of nested parts are only searched if
  *  their respective types match the :content specification.
  *
- *  If the :content specification matches a message/rfc822 MIME part,
- *  only the header of the nested message will be searched for the key
- *  strings, treating the header as a single string; the contents of the
- *  nested message body parts are only searched if their content type
- *  matches the :content specification.
  */
 
-/* FIXME: fails
 test "Multipart Content" {
 	if not body :content "multipart" :contains
 		"This is a multi-part message in MIME format" {
@@ -288,6 +282,8 @@ test "Multipart Content" {
 		test_fail "missed second multipart body part";
 	}
 	
+/* FIXME: FAILS
+
 	if not body :content "multipart" :contains
 		"This is the end of the inner MIME multipart" {
 		test_fail "missed third multipart body part";
@@ -297,7 +293,26 @@ test "Multipart Content" {
 		"This is the end of the outer MIME multipart." {
 		test_fail "missed fourth multipart body part";
 	}	
-}*/
 
+	if body :content "multipart" :contains "--inner" {
+		test_fail "inner boundary is part of match";
+	}
+
+	if body :content "multipart" :contains "--outer" {
+		test_fail "outer boundary is part of match";
+	}
+*/
+}
+
+/* RFC5173, Section 5.2:
+ *
+ *  If the :content specification matches a message/rfc822 MIME part,
+ *  only the header of the nested message will be searched for the key
+ *  strings, treating the header as a single string; the contents of the
+ *  nested message body parts are only searched if their content type
+ *  matches the :content specification.
+ */
+
+/* FIXME */
 
 
