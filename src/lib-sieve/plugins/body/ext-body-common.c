@@ -170,7 +170,7 @@ static const char *_parse_content_type(const struct message_header_line *hdr)
 	if (rfc822_parse_content_type(&parser, content_type) < 0)
 		return "";
 
-	/* Header field must end here, otherwise content-type is invalid after all */
+	/* Content-type value must end here, otherwise it is invalid after all */
 	(void)rfc822_skip_lwsp(&parser);
 	if ( parser.data != parser.end && *parser.data != ';' )
 		return "";
