@@ -1,4 +1,7 @@
 require "vnd.dovecot.testsuite";
+require "relational";
+require "comparator-i;ascii-numeric";
+
 require "body";
 
 /*
@@ -19,14 +22,18 @@ Content-Type: text/plain
 Plain Text
 
 --donkey
+Content-Type: text/stupid
+
+Stupid Text
+
+--donkey
 Content-Type: text/plain/stupid
 
-Plain stupid
+Plain Stupid Text
 
 --donkey--
 .
 ;
-
 
 /*
  * RFC5173, Section 5.2:
@@ -34,6 +41,20 @@ Plain stupid
  *  contains multiple slashes, then it matches no content types.
  *  ...
  */
+
+test "Basic Match" {
+	if not body :content "text/plain" :matches "Plain Text*" {
+		test_fail "failed to match (1)";
+	}
+
+	if not body :content "text/plain" :contains "" {
+		test_fail "failed to match (2)";
+	}
+
+	if not body :content "text/stupid" :contains "" {
+		test_fail "failed to match (3)";
+	}
+}
 
 test "Begin Slash" {
 	if body :content "/plain" :contains "" {
@@ -218,7 +239,65 @@ test "Nested Search" {
 	if body :content "text/html" :matches "Hello*" {
 		test_fail "erroneously matched text/plain content";
 	}
+
+	if not body :content "text" :contains "html" {
+		test_fail "failed match text content (1)";	
+	}
+
+	if not body :content "text" :contains "hello" {
+		test_fail "failed match text content (2)";
+	}
+
+	if not body :content "text/plain" :contains "please say hello" {
+		test_fail "failed match nested message content as text/plain";
+	}
+
+	if not body :content "text" :contains "please say hello" {
+		test_fail "failed match nested message content as text/*";
+	}
+	
+	if not body :content "text" :count "eq" :comparator "i;ascii-numeric" "3" {
+		test_fail "matched wrong number of \"text/*\" body parts";
+	}
 }
+
+/* RFC5173, Section 5.2:
+ *
+ *  If the :content specification matches a multipart MIME part, only the
+ *  prologue and epilogue sections of the part will be searched for the
+ *  key strings, treating the entire prologue and the entire epilogue as
+ *  separate strings; the contents of nested parts are only searched if
+ *  their respective types match the :content specification.
+ *
+ *  If the :content specification matches a message/rfc822 MIME part,
+ *  only the header of the nested message will be searched for the key
+ *  strings, treating the header as a single string; the contents of the
+ *  nested message body parts are only searched if their content type
+ *  matches the :content specification.
+ */
+
+/* FIXME: fails
+test "Multipart Content" {
+	if not body :content "multipart" :contains
+		"This is a multi-part message in MIME format" {
+		test_fail "missed first multipart body part";
+	}
+
+	if not body :content "multipart" :contains
+		"This is a nested multi-part message in MIME format" {
+		test_fail "missed second multipart body part";
+	}
+	
+	if not body :content "multipart" :contains
+		"This is the end of the inner MIME multipart" {
+		test_fail "missed third multipart body part";
+	}
+
+	if not body :content "multipart" :contains
+		"This is the end of the outer MIME multipart." {
+		test_fail "missed fourth multipart body part";
+	}	
+}*/
 
 
 
