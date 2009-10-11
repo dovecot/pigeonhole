@@ -79,6 +79,7 @@ test_cases = \
 	tests/extensions/imap4flags/flagstore.svtest \
 	tests/extensions/body/basic.svtest \
 	tests/extensions/body/raw.svtest \
+	tests/extensions/body/content.svtest \
 	tests/extensions/body/match-values.svtest \
 	tests/extensions/regex/basic.svtest \
 	tests/extensions/regex/match-values.svtest \
