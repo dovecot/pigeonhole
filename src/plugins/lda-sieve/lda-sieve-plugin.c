@@ -43,7 +43,7 @@ static void *lda_sieve_smtp_open
 	const char *return_path, FILE **file_r)
 {
 	return (void *) smtp_client_open
-		((struct mail_deliver_context *) script_ctx, destination, 
+		(((struct mail_deliver_context *) script_ctx)->set, destination, 
 			return_path, file_r);
 }
 
