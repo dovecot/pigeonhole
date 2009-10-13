@@ -10,12 +10,12 @@ AM_CPPFLAGS = \
 tags = \
 	tag-mailbox-create.c
 
-commands = \
-	cmd-mailboxexists.c
+tests = \
+	tst-mailboxexists.c
 
 libsieve_ext_mailbox_la_SOURCES = \
 	$(tags) \
-	$(commands) \
+	$(tests) \
 	ext-mailbox.c
 
 noinst_HEADERS = \
