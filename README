@@ -102,6 +102,7 @@ following list outlines the implementation status of each supported extension:
     variables: mostly full; currently no support for future namespaces 
     notify: full, mailto support only; needs to be tested more
     mailbox: almost full, but mailboxexists command lacks ACL support
+	date: full
 
 All implemented extensions are like the engine itself currently experimental. 
 A status of 'full' does not necessarily mean that the extension is bug-free or 
@@ -112,7 +113,7 @@ useful for Dovecot in particular, but many of them are. Currently, the author
 has taken notice of the following extensions:
 
     environment: planned
-    date,index: planned
+    index: planned
     editheader: planned, needs additional support from Dovecot though.
     mimeloop: planned
 
