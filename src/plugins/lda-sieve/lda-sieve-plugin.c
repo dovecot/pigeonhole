@@ -570,7 +570,7 @@ static int lda_sieve_deliver_mail
 		user_script = lda_sieve_get_personal_path(mdctx->dest_user);
 		default_script = lda_sieve_get_default_path(mdctx->dest_user);
 
-		if ( stat(user_script, &st) < 0 ) {
+		if ( user_script != NULL && stat(user_script, &st) < 0 ) {
 
 			if (errno != ENOENT)
 				sieve_sys_error("stat(%s) failed: %m "
