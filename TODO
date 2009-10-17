@@ -43,9 +43,8 @@ Next (in order of descending priority/precedence):
 	  any vacation response that is generated. UTF-8 characters can be used in
 	  the string argument; implementations MUST convert the string to [RFC2047]
  	  encoded words if and only if non-ASCII characters are present.
-	- Body: contains various issues that need to be resolved for standards
-	  compliance. Body test support currently matches but barely exceeds the
-	  original CMU Sieve implentation in terms of standards compliance.
+	- Body: handling of :content "multipart" and :content "message/rfc822" don't
+	  work. 
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
