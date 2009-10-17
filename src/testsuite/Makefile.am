@@ -35,10 +35,10 @@ commands = \
 	cmd-test-mailbox.c \
 	cmd-test-binary.c
 
-
 tests = \
 	tst-test-script-compile.c \
 	tst-test-script-run.c \
+	tst-test-multiscript.c \
 	tst-test-error.c \
 	tst-test-result.c \
 	tst-test-result-execute.c

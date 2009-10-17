@@ -1,0 +1,13 @@
+require "vnd.dovecot.testsuite";
+
+test "Segfault Trigger 1" {
+
+	if not test_multiscript [
+		"multiscript/group-spam.sieve", 
+		"multiscript/spam.sieve", 
+		"multiscript/sent-store.sieve"]
+	{
+		test_fail "failed multiscript execution";	
+	}
+}
+

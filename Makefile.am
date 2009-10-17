@@ -76,6 +76,7 @@ test_cases = \
 	tests/extensions/imap4flags/hasflag.svtest \
 	tests/extensions/imap4flags/errors.svtest \
 	tests/extensions/imap4flags/execute.svtest \
+	tests/extensions/imap4flags/multiscript.svtest \
 	tests/extensions/imap4flags/flagstore.svtest \
 	tests/extensions/body/basic.svtest \
 	tests/extensions/body/raw.svtest \

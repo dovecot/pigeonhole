@@ -35,12 +35,10 @@ void testsuite_script_deinit(void)
 	}
 }
 
-bool testsuite_script_compile(const char *script_path)
+static struct sieve_binary *_testsuite_script_compile(const char *script_path)
 {
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
-
-	testsuite_log_clear_messages();
 
 	/* Initialize environment */
 	sieve_dir = strrchr(script_path, '/');
@@ -53,8 +51,19 @@ bool testsuite_script_compile(const char *script_path)
 	env_put(t_strconcat("SIEVE_DIR=", sieve_dir, "included", NULL));
 	env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
 	
-
 	if ( (sbin = sieve_compile(script_path, NULL, testsuite_log_ehandler)) == NULL )
+		return NULL;
+
+	return sbin;
+}
+
+bool testsuite_script_compile(const char *script_path)
+{
+	struct sieve_binary *sbin;
+
+	testsuite_log_clear_messages();
+
+	if ( (sbin=_testsuite_script_compile(script_path)) == NULL )
 		return FALSE;
 
 	if ( _testsuite_compiled_script != NULL ) {
@@ -125,3 +134,63 @@ void testsuite_script_set_binary(struct sieve_binary *sbin)
 	sieve_binary_ref(sbin);
 }
 
+/*
+ * Multiscript
+ */
+
+bool testsuite_script_multiscript
+(const struct sieve_runtime_env *renv, ARRAY_TYPE (const_string) *scriptfiles)
+{
+	struct sieve_script_env scriptenv;
+	struct sieve_multiscript *mscript;
+	struct sieve_result *result;
+	const char *const *scripts;
+	unsigned int count, i;
+	bool more = TRUE;
+	int ret;
+
+	testsuite_log_clear_messages();
+
+	/* Compose script execution environment */
+	memset(&scriptenv, 0, sizeof(scriptenv));
+	scriptenv.default_mailbox = "INBOX";
+	scriptenv.namespaces = NULL;
+	scriptenv.username = "user";
+	scriptenv.hostname = "host.example.com";
+	scriptenv.postmaster_address = "postmaster@example.com";
+	scriptenv.smtp_open = NULL;
+	scriptenv.smtp_close = NULL;
+	scriptenv.duplicate_mark = NULL;
+	scriptenv.duplicate_check = NULL;
+	
+	result = testsuite_result_get();
+
+	/* Start execution */
+
+	mscript = sieve_multiscript_start_execute(renv->msgdata, &scriptenv);
+
+	/* Execute scripts before main script */
+
+	scripts = array_get(scriptfiles, &count);
+
+	for ( i = 0; i < count && more; i++ ) {
+		struct sieve_binary *sbin = NULL;
+		const char *script_path = scripts[i];
+		bool final = ( i == count - 1 );
+
+		/* Open */
+	
+		if ( (sbin=_testsuite_script_compile(script_path)) == NULL )
+			break;
+
+		/* Execute */
+
+		more = sieve_multiscript_run(mscript, sbin, testsuite_log_ehandler, final);
+
+		sieve_close(&sbin);
+	}
+
+	ret = sieve_multiscript_finish(&mscript, testsuite_log_ehandler, NULL);
+	
+	return ( ret > 0 );
+}
