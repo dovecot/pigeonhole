@@ -10,6 +10,7 @@
 #include "array.h"
 #include "ostream.h"
 #include "eacces-error.h"	
+#include "safe-mkstemp.h"
 
 #include "sieve-error.h"
 #include "sieve-extensions.h"
@@ -611,7 +612,7 @@ bool sieve_binary_save
 (struct sieve_binary *sbin, const char *path)
 {
 	bool result = TRUE;
-	const char *temp_path;
+	string_t *temp_path;
 	struct ostream *stream;
 	int fd;
 	mode_t save_mode = sbin->script == NULL ? 0600 : sieve_script_permissions(sbin->script);
@@ -627,15 +628,16 @@ bool sieve_binary_save
 	}
 
 	/* Open it as temp file first, as not to overwrite an existing just yet */
-	temp_path = t_strconcat(path, ".tmp", NULL);
-	fd = open(temp_path, O_CREAT | O_TRUNC | O_WRONLY, save_mode);
+	temp_path = t_str_new(256);
+	str_append(temp_path, path);
+	fd = safe_mkstemp_hostpid(temp_path, save_mode, (uid_t)-1, (gid_t)-1);
 	if ( fd < 0 ) {
 		if ( errno == EACCES ) {
 			sieve_sys_error("failed to save binary: %s",
-				eacces_error_get_creating("open", temp_path));
+				eacces_error_get_creating("open", str_c(temp_path)));
 		} else {
 			sieve_sys_error("failed to save binary: open(%s) failed: %m", 
-				temp_path);
+				str_c(temp_path));
 		}
 		return FALSE;
 	}
@@ -646,23 +648,23 @@ bool sieve_binary_save
  
 	if (close(fd) < 0)
 		sieve_sys_error("failed to close saved binary temporary file: "
-			"close(fd=%s) failed: %m", temp_path);
+			"close(fd=%s) failed: %m", str_c(temp_path));
 
 	/* Replace any original binary atomically */
-	if (result && (rename(temp_path, path) < 0)) {
+	if (result && (rename(str_c(temp_path), path) < 0)) {
 		if ( errno == EACCES ) {
 			sieve_sys_error("failed to replace existing binary: %s", 
 				eacces_error_get_creating("rename", path));			
 		} else { 		
 			sieve_sys_error("failed to replace existing binary: "
-				"rename(%s, %s) failed: %m", temp_path, path);
+				"rename(%s, %s) failed: %m", str_c(temp_path), path);
 		}
 		result = FALSE;
 	}
 
 	if ( !result ) {
 		/* Get rid of temp output (if any) */
-		(void) unlink(temp_path);
+		(void) unlink(str_c(temp_path));
 	} else {
 		if ( sbin->path == NULL || strcmp(sbin->path, path) != 0 ) {
 			sbin->path = p_strdup(sbin->pool, path);
