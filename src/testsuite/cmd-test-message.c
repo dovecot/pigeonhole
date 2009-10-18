@@ -390,7 +390,8 @@ static int cmd_test_message_mailbox_operation_execute
 	}
 
 	if ( !result )
-		testsuite_test_failf("no outgoing SMTP message with index %d", msg_index);
+		testsuite_test_failf("no message in folder '%s' with index %d", 
+			str_c(folder), msg_index);
 
 	return SIEVE_EXEC_OK;
 }

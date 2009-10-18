@@ -93,7 +93,6 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	/* Compose script execution environment */
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	scriptenv.default_mailbox = "INBOX";
-	scriptenv.namespaces = NULL;
 	scriptenv.username = "user";
 	scriptenv.hostname = "host.example.com";
 	scriptenv.postmaster_address = "postmaster@example.com";
@@ -101,6 +100,8 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	scriptenv.smtp_close = NULL;
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
+	scriptenv.namespaces = renv->scriptenv->namespaces;
+	scriptenv.trace_stream = renv->scriptenv->trace_stream;
 	
 	result = testsuite_result_get();
 
@@ -162,6 +163,8 @@ bool testsuite_script_multiscript
 	scriptenv.smtp_close = NULL;
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
+	scriptenv.namespaces = renv->scriptenv->namespaces;
+	scriptenv.trace_stream = renv->scriptenv->trace_stream;	
 	
 	result = testsuite_result_get();
 
