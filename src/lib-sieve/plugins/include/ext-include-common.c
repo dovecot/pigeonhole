@@ -7,6 +7,7 @@
 #include "home-expand.h"
 
 #include "sieve-common.h"
+#include "sieve-settings.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
 #include "sieve-ast.h"
@@ -73,7 +74,7 @@ const char *ext_include_get_script_directory
 
 	switch ( location ) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
-		sieve_dir = getenv("SIEVE_DIR");
+		sieve_dir = sieve_setting_get("dir");
 		home = getenv("HOME");
 
 		if (sieve_dir == NULL) {
@@ -92,7 +93,7 @@ const char *ext_include_get_script_directory
 
 		break;
    	case EXT_INCLUDE_LOCATION_GLOBAL:
-		sieve_dir = getenv("SIEVE_GLOBAL_DIR");
+		sieve_dir = sieve_setting_get("global_dir");
 
 		if (sieve_dir == NULL) {
 			sieve_sys_error(

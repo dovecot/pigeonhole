@@ -16,6 +16,7 @@
  
 #include "sieve-common.h"
 
+#include "sieve-settings.h"
 #include "sieve-code.h"
 #include "sieve-address.h"
 #include "sieve-extensions.h"
@@ -67,7 +68,7 @@ const struct sieve_extension subaddress_extension = {
 
 static bool ext_subaddress_load(void)
 {
-	sieve_subaddress_sep = getenv("SIEVE_SUBADDRESS_SEP");
+	sieve_subaddress_sep = sieve_setting_get_ext(&subaddress_extension, "sep");
 
 	if ( sieve_subaddress_sep == NULL )
 		sieve_subaddress_sep = SUBADDRESS_DEFAULT_SEP;

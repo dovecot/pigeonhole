@@ -2,10 +2,10 @@
  */
 
 #include "lib.h"
-#include "env-util.h"
 
 #include "sieve.h"
 #include "sieve-common.h"
+#include "sieve-settings.h"
 #include "sieve-script.h"
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"
@@ -48,8 +48,8 @@ static struct sieve_binary *_testsuite_script_compile(const char *script_path)
 		sieve_dir = t_strdup_until(script_path, sieve_dir+1);
 
 	/* Currently needed for include (FIXME) */
-	env_put(t_strconcat("SIEVE_DIR=", sieve_dir, "included", NULL));
-	env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
+	sieve_setting_set("dir", t_strconcat(sieve_dir, "included", NULL));
+    sieve_setting_set("global_dir", t_strconcat(sieve_dir, "included-global", NULL));
 	
 	if ( (sbin = sieve_compile(script_path, NULL, testsuite_log_ehandler)) == NULL )
 		return NULL;

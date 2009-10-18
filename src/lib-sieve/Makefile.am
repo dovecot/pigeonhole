@@ -7,7 +7,8 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-storage \
-	-I$(dovecot_incdir)/src/lib-imap
+	-I$(dovecot_incdir)/src/lib-imap \
+	-I$(dovecot_incdir)/src/lib-master
 
 tests = \
 	tst-truefalse.c \
@@ -71,6 +72,7 @@ libsieve_la_LIBADD = $(plugins)
 libsieve_la_SOURCES = \
 	rfc2822.c \
 	sieve-limits.c \
+	sieve-settings.c \
 	sieve-message.c \
 	sieve-smtp.c \
 	sieve-lexer.c \
@@ -108,6 +110,7 @@ noinst_HEADERS = \
 	sieve-types.h \
 	sieve-common.h \
 	sieve-limits.h \
+	sieve-settings.h \
 	sieve-message.h \
 	sieve-smtp.h \
 	sieve-lexer.h \

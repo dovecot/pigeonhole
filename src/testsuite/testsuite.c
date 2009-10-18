@@ -14,6 +14,7 @@
 #include "mail-storage-service.h"
 
 #include "sieve.h"
+#include "sieve-settings.h"
 #include "sieve-extensions.h"
 #include "sieve-script.h"
 #include "sieve-binary.h"
@@ -49,14 +50,16 @@ const struct sieve_script_env *testsuite_scriptenv;
  * Testsuite initialization 
  */
 
-static void testsuite_tool_init(const char *extensions) 
+static void testsuite_tool_init
+(struct master_service *service, struct mail_user *mail_user, const char *extensions) 
 {
+	sieve_settings_init(service, mail_user);
+
 	sieve_tool_init(FALSE);
 
 	sieve_extensions_set_string(extensions);
-
 	(void) sieve_extension_register(&testsuite_extension, TRUE);
-	
+
 	testsuite_init();
 }
 
@@ -121,10 +124,12 @@ int main(int argc, char **argv)
 {
 	enum mail_storage_service_flags service_flags = 0;
 	struct master_service *service;
+	struct mail_user *mail_user_dovecot;
 	const char *getopt_str;
 	int c;
 	const char *scriptfile, *dumpfile, *extensions; 
-	const char *user;
+	struct mail_storage_service_input input;
+	const char *user, *home;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
 	bool trace = FALSE;
@@ -174,12 +179,25 @@ int main(int argc, char **argv)
 		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
 	}
 
+	/* Initialize mail user */
+	home = _get_cwd();
+	user = sieve_tool_get_user();
+	env_put("DOVECONF_ENV=1");
+	env_put(t_strdup_printf("HOME=%s", home));
+	env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s", user));
+
+	memset(&input, 0, sizeof(input));
+	input.username = user;
+	mail_user_dovecot = mail_storage_service_init_user
+		(service, &input, NULL, service_flags);
+
 	/* Initialize testsuite */
-	testsuite_tool_init(extensions);
+	testsuite_tool_init(service, mail_user_dovecot, extensions);
 
 	printf("Test case: %s:\n\n", scriptfile);
 
 	/* Initialize environment */
+
 	sieve_dir = strrchr(scriptfile, '/');
 	if ( sieve_dir == NULL )
 		sieve_dir= "./";
@@ -187,32 +205,17 @@ int main(int argc, char **argv)
 		sieve_dir = t_strdup_until(scriptfile, sieve_dir+1);
 
 	/* Currently needed for include (FIXME) */
-	env_put(t_strconcat("SIEVE_DIR=", sieve_dir, "included", NULL));
-	env_put(t_strconcat("SIEVE_GLOBAL_DIR=", sieve_dir, "included-global", NULL));
+	sieve_setting_set("dir", t_strconcat(sieve_dir, "included", NULL));
+	sieve_setting_set("global_dir", t_strconcat(sieve_dir, "included-global", NULL));
 
 	/* Compile sieve script */
 	if ( (sbin = sieve_tool_script_compile(scriptfile, NULL)) != NULL ) {
 		struct sieve_error_handler *ehandler;
-		struct mail_storage_service_input input;
 		struct sieve_script_env scriptenv;
-		struct mail_user *mail_user_dovecot;
-		const char *home;
 
 		/* Dump script */
 		sieve_tool_dump_binary_to(sbin, dumpfile);
 	
-		/* Initialize mail user */
-		home = _get_cwd();
-		user = sieve_tool_get_user();
-		env_put("DOVECONF_ENV=1");
-		env_put(t_strdup_printf("HOME=%s", home));
-		env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s", user));
-
-		memset(&input, 0, sizeof(input));
-		input.username = user;
-		mail_user_dovecot = mail_storage_service_init_user
-			(service, &input, NULL, service_flags);
-
 		testsuite_mailstore_init(user, home, mail_user_dovecot);
 
 		if (master_service_set(service, "mail_full_filesystem_access=yes") < 0)

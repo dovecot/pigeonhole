@@ -12,6 +12,7 @@
 #include "lda-settings.h"
 
 #include "sieve.h"
+#include "sieve-settings.h"
 
 #include "lda-sieve-plugin.h"
 
@@ -126,7 +127,7 @@ static const char *lda_sieve_get_default_path(struct mail_user *user)
 	const char *script_path;
 
 	/* Use global script path, if one exists */
-	script_path = mail_user_plugin_getenv(user, "sieve_global_path");
+	script_path = sieve_setting_get("global_path");
 	if (script_path == NULL) {
 		/* For backwards compatibility */
 		script_path = mail_user_plugin_getenv(user, "global_script_path");
@@ -558,9 +559,17 @@ static int lda_sieve_deliver_mail
 	ARRAY_TYPE (const_string) scripts_before;
 	ARRAY_TYPE (const_string) scripts_after;
 	bool debug = mdctx->dest_user->mail_debug;
+	const char *extensions = NULL;
 	int ret = 0;
 
 	*storage_r = NULL;
+
+	sieve_settings_init(NULL, mdctx->dest_user);
+
+	extensions = sieve_setting_get("extensions");
+	if ( extensions != NULL ) {
+		sieve_set_extensions(extensions);
+	}
 
 	T_BEGIN { 
 		struct stat st;
@@ -655,15 +664,8 @@ static int lda_sieve_deliver_mail
 
 void sieve_plugin_init(void)
 {
-	const char *extensions = NULL;
-
 	/* Initialize Sieve engine */
 	sieve_init();
-
-	extensions = getenv("SIEVE_EXTENSIONS");
-	if ( extensions != NULL ) {
-		sieve_set_extensions(extensions);
-	}
 
 	/* Hook into the delivery process */
 	next_deliver_mail = deliver_mail;
