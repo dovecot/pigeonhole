@@ -12,6 +12,7 @@
 #include "sieve-result.h"
 
 #include "testsuite-common.h"
+#include "testsuite-settings.h"
 #include "testsuite-log.h"
 #include "testsuite-result.h"
 
@@ -48,8 +49,10 @@ static struct sieve_binary *_testsuite_script_compile(const char *script_path)
 		sieve_dir = t_strdup_until(script_path, sieve_dir+1);
 
 	/* Currently needed for include (FIXME) */
-	sieve_setting_set("dir", t_strconcat(sieve_dir, "included", NULL));
-    sieve_setting_set("global_dir", t_strconcat(sieve_dir, "included-global", NULL));
+	testsuite_setting_set
+		("sieve_dir", t_strconcat(sieve_dir, "included", NULL));
+	testsuite_setting_set
+		("sieve_global_dir", t_strconcat(sieve_dir, "included-global", NULL));
 	
 	if ( (sbin = sieve_compile(script_path, NULL, testsuite_log_ehandler)) == NULL )
 		return NULL;

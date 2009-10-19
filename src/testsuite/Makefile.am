@@ -45,6 +45,7 @@ tests = \
 
 testsuite_SOURCES = \
 	testsuite-common.c \
+	testsuite-settings.c \
 	testsuite-objects.c \
 	testsuite-substitutions.c \
 	testsuite-arguments.c \
@@ -62,6 +63,7 @@ testsuite_SOURCES = \
 
 noinst_HEADERS = \
 	testsuite-common.h \
+	testsuite-settings.h \
 	testsuite-objects.h \
 	testsuite-substitutions.h \
 	testsuite-arguments.h \

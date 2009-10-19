@@ -6,22 +6,12 @@
 
 #include "sieve-common.h"
 
-struct mail_user;
-struct master_service;
+typedef const char *(*sieve_settings_func_t)(const char *identifier);
 
-void sieve_settings_init
-	(struct master_service *service, struct mail_user *user);
-
-/*
- * Retrieval
- */
+void sieve_settings_init(sieve_settings_func_t settings_func);
  
 const char *sieve_setting_get(const char *identifier);
 const char *sieve_setting_get_ext
 	(const struct sieve_extension *ext, const char *identifier);
-
-void sieve_setting_set(const char *identifier, const char *value);
-void sieve_setting_set_ext
-	(const struct sieve_extension *ext, const char *identifier, const char *value);
 
 #endif /* __SIEVE_SETTINGS_H */

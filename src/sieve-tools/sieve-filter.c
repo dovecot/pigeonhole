@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 	const char *user, *home, *folder;
 	int i;
 
-	sieve_tool_init();
+	sieve_tool_init(NULL, FALSE);
 	
 	/* Parse arguments */
 	scriptfile = recipient = sender = extensions = src_mailstore = dst_mailstore 

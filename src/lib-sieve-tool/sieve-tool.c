@@ -49,7 +49,7 @@ static void sig_die(const siginfo_t *si, void *context ATTR_UNUSED)
 /* HACK */
 static bool _init_lib = FALSE;
 
-void sieve_tool_init(bool init_lib) 
+void sieve_tool_init(sieve_settings_func_t settings_func, bool init_lib) 
 {
 	_init_lib = init_lib;
 
@@ -65,7 +65,7 @@ void sieve_tool_init(bool init_lib)
 		lib_signals_ignore(SIGALRM, FALSE);
 	}
 
-	if ( !sieve_init() ) 
+	if ( !sieve_init(settings_func) ) 
 		i_fatal("failed to initialize sieve implementation\n");
 }
 

@@ -25,6 +25,7 @@
 #include "sieve-tool.h"
 
 #include "testsuite-common.h"
+#include "testsuite-settings.h"
 #include "testsuite-result.h"
 #include "testsuite-message.h"
 #include "testsuite-smtp.h"
@@ -50,12 +51,11 @@ const struct sieve_script_env *testsuite_scriptenv;
  * Testsuite initialization 
  */
 
-static void testsuite_tool_init
-(struct master_service *service, struct mail_user *mail_user, const char *extensions) 
+static void testsuite_tool_init(const char *extensions) 
 {
-	sieve_settings_init(service, mail_user);
+	testsuite_settings_init();
 
-	sieve_tool_init(FALSE);
+	sieve_tool_init(testsuite_setting_get, FALSE);
 
 	sieve_extensions_set_string(extensions);
 	(void) sieve_extension_register(&testsuite_extension, TRUE);
@@ -68,6 +68,8 @@ static void testsuite_tool_deinit(void)
 	testsuite_deinit();
 	
 	sieve_tool_deinit();
+
+	testsuite_settings_deinit();
 }
 
 /*
@@ -192,7 +194,7 @@ int main(int argc, char **argv)
 		(service, &input, NULL, service_flags);
 
 	/* Initialize testsuite */
-	testsuite_tool_init(service, mail_user_dovecot, extensions);
+	testsuite_tool_init(extensions);
 
 	printf("Test case: %s:\n\n", scriptfile);
 
@@ -205,8 +207,10 @@ int main(int argc, char **argv)
 		sieve_dir = t_strdup_until(scriptfile, sieve_dir+1);
 
 	/* Currently needed for include (FIXME) */
-	sieve_setting_set("dir", t_strconcat(sieve_dir, "included", NULL));
-	sieve_setting_set("global_dir", t_strconcat(sieve_dir, "included-global", NULL));
+	testsuite_setting_set
+		("sieve_dir", t_strconcat(sieve_dir, "included", NULL));
+	testsuite_setting_set
+		("sieve_global_dir", t_strconcat(sieve_dir, "included-global", NULL));
 
 	/* Compile sieve script */
 	if ( (sbin = sieve_tool_script_compile(scriptfile, NULL)) != NULL ) {

@@ -34,6 +34,19 @@
  */
 
 static deliver_mail_func_t *next_deliver_mail;
+struct mail_user *lda_sieve_mail_user = NULL; 
+
+/*
+ * Settings handling
+ */
+
+static const char *lda_sieve_setting_get(const char *identifier)
+{
+	if ( lda_sieve_mail_user == NULL )
+		return NULL;
+
+	return mail_user_plugin_getenv(lda_sieve_mail_user, identifier);	
+}
 
 /*
  * Mail transmission
@@ -127,7 +140,7 @@ static const char *lda_sieve_get_default_path(struct mail_user *user)
 	const char *script_path;
 
 	/* Use global script path, if one exists */
-	script_path = sieve_setting_get("global_path");
+	script_path = mail_user_plugin_getenv(user, "global_path");
 	if (script_path == NULL) {
 		/* For backwards compatibility */
 		script_path = mail_user_plugin_getenv(user, "global_script_path");
@@ -564,7 +577,7 @@ static int lda_sieve_deliver_mail
 
 	*storage_r = NULL;
 
-	sieve_settings_init(NULL, mdctx->dest_user);
+	lda_sieve_mail_user = mdctx->dest_user;
 
 	extensions = sieve_setting_get("extensions");
 	if ( extensions != NULL ) {
@@ -665,7 +678,7 @@ static int lda_sieve_deliver_mail
 void sieve_plugin_init(void)
 {
 	/* Initialize Sieve engine */
-	sieve_init();
+	sieve_init(lda_sieve_setting_get);
 
 	/* Hook into the delivery process */
 	next_deliver_mail = deliver_mail;

@@ -2,29 +2,21 @@
  */
 
 #include "lib.h"
-#include "mail-user.h"
-#include "master-service.h"
-#include "master-service-settings.h"
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 
 #include "sieve-settings.h"
 
-#include <stdlib.h>
-
-static struct mail_user *_settings_user; 
-static struct master_service *_settings_service;
+static sieve_settings_func_t sieve_settings_func = NULL;
 
 /*
  * Initialization
  */
 
-void sieve_settings_init
-(struct master_service *service, struct mail_user *user) 
+void sieve_settings_init(sieve_settings_func_t settings_func)
 {
-	_settings_user = user;
-	_settings_service = service;
+	sieve_settings_func = settings_func;
 }
 
 /*
@@ -42,48 +34,17 @@ static const char *_sieve_setting_get_env_name
 
 const char *sieve_setting_get(const char *identifier)
 {
-	const char *value = mail_user_plugin_getenv
-		(_settings_user, _sieve_setting_get_env_name(NULL, identifier));
+	if ( sieve_settings_func == NULL )
+		return NULL;
 
-	printf("GET(%s) = %s\n", identifier, value);
-
-	return value;
+	return sieve_settings_func(_sieve_setting_get_env_name(NULL, identifier));
 }
 
 const char *sieve_setting_get_ext
 (const struct sieve_extension *ext, const char *identifier)
 {
-	return mail_user_plugin_getenv
-		(_settings_user, _sieve_setting_get_env_name(ext, identifier));
-}
+	if ( sieve_settings_func == NULL )
+		return NULL;
 
-void sieve_setting_set(const char *identifier, const char *value)
-{
-	const char *setting;
-
-	if ( _settings_service == NULL ) return;
-
-	setting = t_strconcat("plugin/", 
-		_sieve_setting_get_env_name(NULL, identifier), "=", value, NULL);
-	
-	printf("%s\n", setting);
-
-	if ( master_service_set(_settings_service, setting) < 0 )
-		i_unreached();
-}
-
-void sieve_setting_set_ext
-(const struct sieve_extension *ext, const char *identifier, const char *value)
-{
-	const char *setting;
-
-	if ( _settings_service == NULL ) return;
-
-	setting = t_strconcat("plugin/", 
-		_sieve_setting_get_env_name(NULL, identifier), "=", value, NULL);
-	
-	printf("%s\n", setting);
-
-	if ( master_service_set(_settings_service, setting) < 0 )
-		i_unreached();
+	return sieve_settings_func(_sieve_setting_get_env_name(ext, identifier));
 }

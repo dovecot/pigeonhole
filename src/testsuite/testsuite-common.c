@@ -24,6 +24,7 @@
 #include "sieve-dump.h"
 
 #include "testsuite-common.h"
+#include "testsuite-settings.h"
 #include "testsuite-objects.h"
 #include "testsuite-log.h"
 #include "testsuite-script.h"

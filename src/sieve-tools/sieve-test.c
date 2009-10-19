@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 	service = master_service_init("sieve-test", MASTER_SERVICE_FLAG_STANDALONE,
                       argc, argv);
 
-	sieve_tool_init(FALSE);
+	sieve_tool_init(NULL, FALSE);
 
 	t_array_init(&scriptfiles, 16);
 

@@ -12,6 +12,7 @@ struct sieve_binary;
 #include "sieve-config.h"
 #include "sieve-types.h"
 #include "sieve-error.h"
+#include "sieve-settings.h"
 
 /*
  * Main Sieve library interface
@@ -21,7 +22,7 @@ struct sieve_binary;
  *   Initializes the sieve engine. Must be called before any sieve functionality
  *   is used.
  */
-bool sieve_init(void);
+bool sieve_init(sieve_settings_func_t settings_func);
 
 /* sieve_deinit():
  *   Frees all memory allocated by the sieve engine. 

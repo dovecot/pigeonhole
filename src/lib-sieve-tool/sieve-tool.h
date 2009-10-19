@@ -4,13 +4,15 @@
 #ifndef __SIEVE_TOOL_H
 #define __SIEVE_TOOL_H
 
+#include "sieve-common.h"
+
 /* Functionality common to all Sieve command line tools. */
 
 /*
  * Initialization
  */
 
-void sieve_tool_init(bool init_lib);
+void sieve_tool_init(sieve_settings_func_t settings_func, bool init_lib);
 void sieve_tool_deinit(void);
 
 /*

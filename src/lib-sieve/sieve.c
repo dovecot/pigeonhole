@@ -6,6 +6,7 @@
 #include "istream.h"
 #include "buffer.h"
 
+#include "sieve-settings.h"
 #include "sieve-extensions.h"
 
 #include "sieve-script.h"
@@ -35,8 +36,10 @@
  * Main Sieve library interface
  */
 
-bool sieve_init(void)
+bool sieve_init(sieve_settings_func_t settings_func)
 {
+	sieve_settings_init(settings_func);
+
 	return sieve_extensions_init();
 }
 
