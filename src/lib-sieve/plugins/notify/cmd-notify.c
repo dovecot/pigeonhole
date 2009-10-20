@@ -418,79 +418,6 @@ static bool cmd_notify_operation_dump
  * Code execution
  */
 
-static void cmd_notify_construct_message
-(const struct sieve_runtime_env *renv, const char *msg_format, 
-	string_t *out_msg)
-{
-	const struct sieve_message_data *msgdata = renv->msgdata;
-	const char *p;
-
-	if ( msg_format == NULL )
-		msg_format = "$from$: $subject$";
- 
-	/* Scan message for substitutions */
-	p = msg_format;
-	while ( *p != '\0' ) {
-		const char *const *header;
-
-		if ( strncasecmp(p, "$from$", 6) == 0 ) {
-			p += 6;
-		
-			/* Fetch sender from oriinal message */
-			if ( mail_get_headers_utf8(msgdata->mail, "from", &header) >= 0 )
-				 str_append(out_msg, header[0]); 
-
-		} else if ( strncasecmp(p, "$env-from$", 10) == 0 ) {
-			p += 10;
-
-			if ( msgdata->return_path != NULL ) 
-				str_append(out_msg, msgdata->return_path);
-
-		} else if ( strncasecmp(p, "$subject$", 9) == 0 ) {	
-			p += 9;
-
-			/* Fetch sender from oriinal message */
-			if ( mail_get_headers_utf8(msgdata->mail, "subject", &header) >= 0 )
-				 str_append(out_msg, header[0]); 
-			
-		} else if ( strncasecmp(p, "$text", 5) == 0 
-			&& (p[5] == '[' || p[5] == '$') ) {
-			size_t num = 0;
-			const char *begin = p;
-			bool valid = TRUE;
-
-			p += 5;
-			if ( *p == '[' ) {
-				p += 1;
-
-				while ( i_isdigit(*p) ) {
-					num = num * 10 + (*p - '0');
-					p++;
-				}
-
-				if ( *p++ != ']' || *p++ != '$' ) {
-					str_append_n(out_msg, begin, p-begin);
-					valid = FALSE;										
-				}	    	
-			} else {
-				p += 1;			
-			}
-
-			if ( valid ) {
-				str_append(out_msg, "<body extraction not supported>");
-			}
-		} else {
-			size_t len;
-
-			/* Find next substitution */
-			len = strcspn(p + 1, "$") + 1; 
-
-			/* Copy normal text */
-			str_append_n(out_msg, p, len);
-			p += len;
-		}
-  }
-}
  
 static int cmd_notify_operation_execute
 (const struct sieve_operation *op ATTR_UNUSED,
@@ -584,7 +511,7 @@ static int cmd_notify_operation_execute
 		/* Process message */
 
 		out_message = t_str_new(1024);
-		cmd_notify_construct_message
+		ext_notify_construct_message
 			(renv, (message == NULL ? NULL : str_c(message)), out_message);
 		act->message = p_strdup(pool, str_c(out_message));
 		

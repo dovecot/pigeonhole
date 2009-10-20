@@ -1,5 +1,7 @@
 require "vnd.dovecot.testsuite";
+
 require "notify";
+require "body";
 require "relational";
 require "comparator-i;ascii-numeric";
 
@@ -152,4 +154,164 @@ test "Notifying on automated messages" {
 		test_fail "notified of auto-submitted message";
 	}
 }
+
+test_result_reset;
+
+test_set "message" text:
+To: nico@vestingbar.nl
+From: stephan@rename-it.nl
+Subject: Test
+
+Test. Test
+Frop!
+.
+;
+
+test "Body; Singular Message" {
+	notify :low :id "frop" :options "stephan@rename-it.nl"
+    	:message text:
+Received interesting message:
+
+$text$
+
+You have been notified.
+.
+;	
+	
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not body :raw :contains "Received interesting message" {
+		test_fail "notification has no heading";
+	}
+
+	if not body :raw :contains "You have been notified" {
+		test_fail "notification has no footer";
+	}	
+
+	if not allof(
+		body :raw :contains "Test. Test",
+		body :raw :contains "Frop" ) {
+		test_fail "notification has no original message";
+	}
+}
+
+test_result_reset;
+
+test_set "message" text:
+To: nico@vestingbar.nl
+From: stephan@rename-it.nl
+Subject: Test
+
+Test. Test
+Frop!
+.
+;
+
+test "Body; $text[maxsize]$" {
+	notify :low :id "frop" :options "sirius@rename-it.nl"
+    	:message text:
+Received interesting message:
+
+$text[5]$
+
+You have been notified.
+.
+;	
+	
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not body :raw :contains "Received interesting message" {
+		test_fail "notification has no heading";
+	}
+
+	if not body :raw :contains "You have been notified" {
+		test_fail "notification has no footer";
+	}	
+
+	if anyof(
+		body :raw :contains "Test. Test",
+		body :raw :contains "Frop" ) {
+		test_fail "original message in notification is not truncated";
+	}
+
+	if not body :raw :contains "Test." {
+		test_fail "notification does not contain the required message";
+	}	
+}
+
+test_result_reset;
+
+test_set "message" text:
+From: Whomever <whoever@example.com>
+To: Someone <someone@example.com>
+Date: Sat, 10 Oct 2009 00:30:04 +0200
+Subject: whatever
+Content-Type: multipart/mixed; boundary=outer
+
+This is a multi-part message in MIME format.
+
+--outer
+Content-Type: multipart/alternative; boundary=inner
+
+This is a nested multi-part message in MIME format.
+
+--inner
+Content-Type: application/sieve; charset="us-ascii"
+
+keep;
+        
+--inner
+Content-Type: text/plain; charset="us-ascii"
+
+Friep!
+
+--inner--
+
+This is the end of the inner MIME multipart.
+
+--outer
+Content-Type: message/rfc822
+
+From: Someone Else
+Subject: hello request
+
+Please say Hello
+
+--outer--
+
+This is the end of the outer MIME multipart.
+.
+;
+
+test "Body; Multipart Message" {
+	notify :low :id "frop" :options "stephan@rename-it.nl"
+    	:message text:
+Received interesting message:
+
+$text$
+
+You have been notified.
+.
+;	
+	
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
+
+	test_message :smtp 0;
+
+	if not body :raw :contains "Friep!" {
+		test_fail "notification has incorrect content";
+	}
+}
+
+
 

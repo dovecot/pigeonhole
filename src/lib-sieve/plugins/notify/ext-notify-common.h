@@ -54,4 +54,12 @@ struct ext_notify_action {
 	ARRAY_TYPE(recipients) recipients;
 };
 
+/*
+ * Message construct
+ */
+
+void ext_notify_construct_message
+	(const struct sieve_runtime_env *renv, const char *msg_format, 
+		string_t *out_msg);
+
 #endif /* __EXT_NOTIFY_COMMON_H */
