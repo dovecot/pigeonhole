@@ -423,14 +423,14 @@ static void cmd_notify_construct_message
 	string_t *out_msg)
 {
 	const struct sieve_message_data *msgdata = renv->msgdata;
-  const char *p;
+	const char *p;
 
-  if ( msg_format == NULL )
+	if ( msg_format == NULL )
 		msg_format = "$from$: $subject$";
  
- 	/* Scan message for substitutions */
+	/* Scan message for substitutions */
 	p = msg_format;
-  while ( *p != '\0' ) {
+	while ( *p != '\0' ) {
 		const char *const *header;
 
 		if ( strncasecmp(p, "$from$", 6) == 0 ) {
@@ -459,7 +459,7 @@ static void cmd_notify_construct_message
 			const char *begin = p;
 			bool valid = TRUE;
 
-    	p += 5;
+			p += 5;
 			if ( *p == '[' ) {
 				p += 1;
 
@@ -482,12 +482,12 @@ static void cmd_notify_construct_message
 		} else {
 			size_t len;
 
-    	/* Find next substitution */
-    	len = strcspn(p + 1, "$") + 1; 
+			/* Find next substitution */
+			len = strcspn(p + 1, "$") + 1; 
 
-	    /* Copy normal text */
-	    str_append_n(out_msg, p, len);
-	    p += len;
+			/* Copy normal text */
+			str_append_n(out_msg, p, len);
+			p += len;
 		}
   }
 }
