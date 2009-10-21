@@ -240,6 +240,8 @@ int main(int argc, char **argv)
 		env_put("DOVECONF_ENV=1");
 		env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s", user));
 
+		master_service_init_finish(master_service);
+
 		memset(&input, 0, sizeof(input));
 		input.username = user;
 		mail_user_dovecot = 
