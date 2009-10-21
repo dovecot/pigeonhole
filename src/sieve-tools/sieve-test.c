@@ -101,8 +101,7 @@ static void duplicate_mark
 int main(int argc, char **argv) 
 {
 	enum mail_storage_service_flags service_flags = 0;
-	struct master_service *service;
-	const char *getopt_str;
+	struct master_service *master_service;
 	int c;
 	ARRAY_DEFINE(scriptfiles, const char *);
 	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile, 
@@ -121,8 +120,9 @@ int main(int argc, char **argv)
 	bool trace = FALSE;
 	int ret;
 
-	service = master_service_init("sieve-test", MASTER_SERVICE_FLAG_STANDALONE,
-                      argc, argv);
+	master_service = master_service_init("sieve-test",
+        MASTER_SERVICE_FLAG_STANDALONE,
+        &argc, &argv, "r:f:m:d:l:x:s:ect");
 
 	sieve_tool_init(NULL, FALSE);
 
@@ -133,9 +133,7 @@ int main(int argc, char **argv)
 	/* Parse arguments */
 	scriptfile = recipient = sender = mailbox = dumpfile = mailfile = mailloc = 
 		extensions = NULL;
-	getopt_str = t_strconcat("r:f:m:d:l:x:s:ect",
-                 master_service_getopt_string(), NULL);
-	while ((c = getopt(argc, argv, getopt_str)) > 0) {
+	while ((c = master_getopt(master_service)) > 0) {
 		switch (c) {
 		case 'r':
 			/* destination address */
@@ -180,10 +178,8 @@ int main(int argc, char **argv)
 			trace = TRUE;
 			break;
 		default:
-			if (!master_service_parse_option(service, c, optarg)) {
-				print_help();
-				i_fatal_status(EX_USAGE, "Unknown argument: %c", c);
-			}
+			print_help();
+			i_fatal_status(EX_USAGE, "Unknown argument: %c", c);
 			break;
 		}
 	}
@@ -246,7 +242,8 @@ int main(int argc, char **argv)
 
 		memset(&input, 0, sizeof(input));
 		input.username = user;
-		mail_user_dovecot = mail_storage_service_init_user(service, &input,
+		mail_user_dovecot = 
+			mail_storage_service_init_user(master_service, &input,
                 NULL, service_flags);
 	
 		/* Obtain mail namespaces from -l argument */
@@ -270,11 +267,11 @@ int main(int argc, char **argv)
 		        i_fatal("Test storage creation failed: %s", errstr);
 		}
 
-		if ( master_service_set(service, "mail_full_filesystem_access=yes") < 0 )
+		if ( master_service_set(master_service, "mail_full_filesystem_access=yes") < 0 )
 			i_unreached(); 
 
 		/* Initialize raw mail object */
-		mail_raw_init(service, user, mail_user_dovecot);
+		mail_raw_init(master_service, user, mail_user_dovecot);
 		mailr = mail_raw_open_file(mailfile);
 
 		sieve_tool_get_envelope_data(mailr->mail, &recipient, &sender);
@@ -434,7 +431,7 @@ int main(int argc, char **argv)
 
 	sieve_tool_deinit();
 
-	master_service_deinit(&service);
+	master_service_deinit(&master_service);
 	
 	return 0;
 }

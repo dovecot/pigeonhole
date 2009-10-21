@@ -125,9 +125,8 @@ static const char *_get_cwd(void)
 int main(int argc, char **argv) 
 {
 	enum mail_storage_service_flags service_flags = 0;
-	struct master_service *service;
+	struct master_service *master_service;
 	struct mail_user *mail_user_dovecot;
-	const char *getopt_str;
 	int c;
 	const char *scriptfile, *dumpfile, *extensions; 
 	struct mail_storage_service_input input;
@@ -137,16 +136,16 @@ int main(int argc, char **argv)
 	bool trace = FALSE;
 	int ret;
 
-	service = master_service_init
-		("testsuite", MASTER_SERVICE_FLAG_STANDALONE, argc, argv);
+    master_service = master_service_init("testsuite",
+        MASTER_SERVICE_FLAG_STANDALONE,
+        &argc, &argv, "d:x:t");
 
 	user = getenv("USER");
 
 	/* Parse arguments */
 	scriptfile = dumpfile = extensions = NULL;
 
-	getopt_str = t_strconcat("d:x:t", master_service_getopt_string(), NULL);
-	while ((c = getopt(argc, argv, getopt_str)) > 0) {
+	while ((c = master_getopt(master_service)) > 0) {
 		switch (c) {
 		case 'd':
 			/* destination address */
@@ -160,11 +159,9 @@ int main(int argc, char **argv)
 			trace = TRUE;
 			break;
 		default:
-			if (!master_service_parse_option(service, c, optarg)) {
-				print_help();
-				i_fatal_status(EX_USAGE,
-					"Unknown argument: %c", c);
-			}
+			print_help();
+			i_fatal_status(EX_USAGE,
+				"Unknown argument: %c", c);
 			break;
 		}
 	}
@@ -191,7 +188,7 @@ int main(int argc, char **argv)
 	memset(&input, 0, sizeof(input));
 	input.username = user;
 	mail_user_dovecot = mail_storage_service_init_user
-		(service, &input, NULL, service_flags);
+		(master_service, &input, NULL, service_flags);
 
 	/* Initialize testsuite */
 	testsuite_tool_init(extensions);
@@ -222,10 +219,11 @@ int main(int argc, char **argv)
 	
 		testsuite_mailstore_init(user, home, mail_user_dovecot);
 
-		if (master_service_set(service, "mail_full_filesystem_access=yes") < 0)
+		if (master_service_set
+			(master_service, "mail_full_filesystem_access=yes") < 0)
 			i_unreached(); 
 
-		testsuite_message_init(service, user, mail_user_dovecot);
+		testsuite_message_init(master_service, user, mail_user_dovecot);
 
 		memset(&scriptenv, 0, sizeof(scriptenv));
 		scriptenv.namespaces = testsuite_mailstore_get_namespace();
@@ -282,7 +280,7 @@ int main(int argc, char **argv)
 	/* De-initialize testsuite */
 	testsuite_tool_deinit();  
 
-	master_service_deinit(&service);
+	master_service_deinit(&master_service);
 
 	return testsuite_testcase_result();
 }
