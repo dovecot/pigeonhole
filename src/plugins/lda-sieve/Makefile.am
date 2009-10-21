@@ -8,11 +8,9 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-lda \
 	-I$(dovecot_incdir)/src/lda
 
-lda_moduledir = $(moduledir)/lda
-
 lib90_sieve_plugin_la_LDFLAGS = -module -avoid-version
 
-lda_module_LTLIBRARIES = lib90_sieve_plugin.la
+module_LTLIBRARIES = lib90_sieve_plugin.la
 
 lib90_sieve_plugin_la_LIBADD = \
 	$(top_srcdir)/src/lib-sieve/libsieve.la
