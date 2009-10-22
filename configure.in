@@ -99,6 +99,10 @@ AC_SUBST(moduledir)
 
 AC_CONFIG_FILES([
 Makefile
+doc/Makefile
+doc/man/Makefile
+doc/example-config/Makefile
+doc/example-config/conf.d/Makefile
 src/Makefile
 src/lib-sieve/Makefile
 src/lib-sieve/plugins/Makefile

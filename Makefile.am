@@ -1,27 +1,10 @@
-SUBDIRS = src
-
-unfinished = doc/man/sieve-filter.1
-
-if BUILD_UNFINISHED
-unfinished_mans = $(unfinished)
-else
-unfinished_dist = $(unfinished)
-endif
+SUBDIRS = src doc
 
 EXTRA_DIST = \
 	tests \
-	examples/* \
-	doc/rfc \
-	doc/devel \
+	examples \
 	COPYING.LGPL \
-	ChangeLog \
-	$(unfinished_dist)
-
-dist_man_MANS = \
-	doc/man/sievec.1 \
-	doc/man/sieved.1 \
-	doc/man/sieve-test.1 \
-	$(unfinished_mans)
+	ChangeLog
 
 if MAINTAINER_MODE
 ChangeLog: .hg/dirstate
