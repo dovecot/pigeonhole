@@ -101,12 +101,14 @@ static void duplicate_mark
 int main(int argc, char **argv) 
 {
 	enum mail_storage_service_flags service_flags = 0;
-	struct master_service *master_service;
-	int c;
+	struct mail_storage_service_ctx *storage_service;
+	struct mail_storage_service_user *service_user;
+	struct mail_storage_service_input service_input;
+	struct mail_user *mail_user_dovecot = NULL;
 	ARRAY_DEFINE(scriptfiles, const char *);
 	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile, 
 		*mailloc, *extensions; 
-	const char *user, *home;
+	const char *user, *home, *errstr;
 	struct mail_raw *mailr;
 	struct mail_namespace_settings ns_set;
 	struct mail_namespace *ns = NULL;
@@ -118,11 +120,10 @@ int main(int argc, char **argv)
 	struct ostream *teststream = NULL;
 	bool force_compile = FALSE, execute = FALSE;
 	bool trace = FALSE;
-	int ret;
+	int ret, c;
 
-	master_service = master_service_init("sieve-test",
-        MASTER_SERVICE_FLAG_STANDALONE,
-        &argc, &argv, "r:f:m:d:l:x:s:ect");
+	master_service = master_service_init("sieve-test", 
+		MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "r:f:m:d:l:x:s:ect");
 
 	sieve_tool_init(NULL, FALSE);
 
@@ -210,6 +211,27 @@ int main(int argc, char **argv)
 	/* Register tool-specific extensions */
 	(void) sieve_extension_register(&debug_extension, TRUE);
 	
+	user = sieve_tool_get_user();
+	home = getenv("HOME");
+
+	/* Initialize mail storages */
+	//env_remove("HOME");
+	env_put("DOVECONF_ENV=1");
+	env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s", user));
+
+	master_service_init_finish(master_service);
+
+	memset(&service_input, 0, sizeof(service_input));
+	service_input.module = "sieve-test";
+	service_input.service = "sieve-test";
+	service_input.username = user;
+
+	storage_service = mail_storage_service_init
+		(master_service, NULL, service_flags);
+	if (mail_storage_service_lookup_next(storage_service, &service_input,
+					     &service_user, &mail_user_dovecot, &errstr) <= 0)
+		i_fatal("%s", errstr);
+
 	/* Create error handler */
 	ehandler = sieve_stderr_ehandler_create(0);
 	sieve_system_ehandler_set(ehandler);
@@ -225,28 +247,10 @@ int main(int argc, char **argv)
 	}
 
 	if ( main_sbin != NULL ) {
-		struct mail_user *mail_user_dovecot = NULL;
 		struct mail_user *mail_user = NULL;
-		struct mail_storage_service_input input;
 
 		/* Dump script */
 		sieve_tool_dump_binary_to(main_sbin, dumpfile);
-	
-		user = sieve_tool_get_user();
-		home = getenv("HOME");
-
-		/* Initialize mail storages */
-		//env_remove("HOME");
-		env_put("DOVECONF_ENV=1");
-		env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s", user));
-
-		master_service_init_finish(master_service);
-
-		memset(&input, 0, sizeof(input));
-		input.username = user;
-		mail_user_dovecot = 
-			mail_storage_service_init_user(master_service, &input,
-                NULL, service_flags);
 	
 		/* Obtain mail namespaces from -l argument */
 		if ( mailloc != NULL ) {
@@ -269,7 +273,8 @@ int main(int argc, char **argv)
 		        i_fatal("Test storage creation failed: %s", errstr);
 		}
 
-		if ( master_service_set(master_service, "mail_full_filesystem_access=yes") < 0 )
+		if ( master_service_set
+			(master_service, "mail_full_filesystem_access=yes") < 0 )
 			i_unreached(); 
 
 		/* Initialize raw mail object */
@@ -420,19 +425,19 @@ int main(int argc, char **argv)
 		/* De-initialize mail user objects */
 		if ( mail_user != NULL )
 			mail_user_unref(&mail_user);
-
-		if ( mail_user_dovecot != NULL )
-			mail_user_unref(&mail_user_dovecot);
-	
-		mail_storage_service_deinit_user();
 	}
 
+	if ( mail_user_dovecot != NULL )
+		mail_user_unref(&mail_user_dovecot);
+	
 	/* Cleanup error handler */
 	sieve_error_handler_unref(&ehandler);
 	sieve_system_ehandler_reset();
 
 	sieve_tool_deinit();
 
+	mail_storage_service_user_free(&service_user);
+	mail_storage_service_deinit(&storage_service);
 	master_service_deinit(&master_service);
 	
 	return 0;
