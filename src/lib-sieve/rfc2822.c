@@ -10,6 +10,8 @@
 
 #include "rfc2822.h"
 
+#include "message-header-encode.h"
+
 #include <stdio.h>
 #include <ctype.h>
  
@@ -200,6 +202,19 @@ int rfc2822_header_field_printf
 
 	va_start(args, body_fmt);
 	str_vprintfa(body, body_fmt, args);
+	va_end(args);
+	
+	return rfc2822_header_field_write(f, name, str_c(body));
+}
+
+int rfc2822_header_field_utf8_printf
+(FILE *f, const char *name, const char *body_fmt, ...)
+{
+	string_t *body = t_str_new(256);
+	va_list args;
+
+	va_start(args, body_fmt);
+	message_header_encode(t_strdup_vprintf(body_fmt, args), body);
 	va_end(args);
 	
 	return rfc2822_header_field_write(f, name, str_c(body));

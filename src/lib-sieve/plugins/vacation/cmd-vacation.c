@@ -888,7 +888,7 @@ static bool act_vacation_send
 	rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
 
 	if ( ctx->from != NULL && *(ctx->from) != '\0' )
-		rfc2822_header_field_printf(f, "From", "%s", ctx->from);
+		rfc2822_header_field_utf8_printf(f, "From", "%s", ctx->from);
 	else if ( recipient != NULL ) 
 		rfc2822_header_field_printf(f, "From", "<%s>", recipient);
 	else
@@ -899,7 +899,7 @@ static bool act_vacation_send
 	 */
 	rfc2822_header_field_printf(f, "To", "<%s>", sender);
 
-	rfc2822_header_field_printf(f, "Subject", "%s", 
+	rfc2822_header_field_utf8_printf(f, "Subject", "%s", 
 		str_sanitize(ctx->subject, 256));
 
 	/* Compose proper in-reply-to and references headers */

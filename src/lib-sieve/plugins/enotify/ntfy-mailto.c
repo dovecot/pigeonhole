@@ -993,15 +993,15 @@ static bool ntfy_mailto_send
 		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
 		rfc2822_header_field_write(f, "Message-ID", outmsgid);
 		rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
-		rfc2822_header_field_write(f, "Subject", subject);
+		rfc2822_header_field_utf8_printf(f, "Subject", "%s", subject);
 
-		rfc2822_header_field_printf(f, "From", "%s", from);
+		rfc2822_header_field_utf8_printf(f, "From", "%s", from);
 
 		if ( to != NULL )
-			rfc2822_header_field_printf(f, "To", "%s", str_c(to));
+			rfc2822_header_field_utf8_printf(f, "To", "%s", str_c(to));
 		
 		if ( cc != NULL )
-			rfc2822_header_field_printf(f, "Cc", "%s", str_c(cc));
+			rfc2822_header_field_utf8_printf(f, "Cc", "%s", str_c(cc));
 			
 		rfc2822_header_field_printf(f, "Auto-Submitted", 
 			"auto-notified; owner-email=\"%s\"", recipient);

@@ -33,4 +33,7 @@ int rfc2822_header_field_write
 int rfc2822_header_field_printf
 	(FILE *f, const char *name, const char *body_fmt, ...) ATTR_FORMAT(3, 4);
 
+int rfc2822_header_field_utf8_printf
+	(FILE *f, const char *name, const char *body_fmt, ...) ATTR_FORMAT(3, 4);
+
 #endif /* __RFC2822_H */
