@@ -802,6 +802,7 @@ bool sieve_result_print
 	sieve_result_printf(&penv, "\nImplicit keep:\n\n");
 		
 	if ( implicit_keep ) {
+		bool dummy = TRUE;
 			
 		if ( act_keep.def == NULL ) {
 			sieve_result_action_printf(&penv, "keep");
@@ -824,7 +825,7 @@ bool sieve_result_print
 				sieve_result_printf(&penv, 
 					"  (none; keep or equivalent action executed earlier)\n");
 			} else {
-				act_keep.def->print(&act_keep, &penv, NULL);
+				act_keep.def->print(&act_keep, &penv, &dummy);
 			
 				sieve_result_print_implicit_side_effects(&penv);
 			}
