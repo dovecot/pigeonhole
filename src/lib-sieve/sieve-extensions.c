@@ -528,7 +528,7 @@ void sieve_extensions_set_string
 
 			/* Perform actual activation/deactivation */
 
-			if ( exts[i].enabled && *(exts[i].def->name) != '@' ) {
+			if ( exts[i].id >= 0 && *(exts[i].def->name) != '@' ) {
 				if ( disabled && !exts[i].required )
 					sieve_extension_disable(&exts[i]);
 				else
