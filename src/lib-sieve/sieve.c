@@ -211,7 +211,6 @@ static int sieve_run
 		*result = sieve_result_create
 			(sieve_binary_svinst(sbin), msgdata, senv, ehandler);
 	else {
-		sieve_result_ref(*result);
 		sieve_result_set_error_handler(*result, ehandler);
 	}
 							
