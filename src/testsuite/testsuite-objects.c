@@ -29,7 +29,7 @@ enum testsuite_object_code {
 	TESTSUITE_OBJECT_ENVELOPE
 };
 
-const struct testsuite_object *testsuite_core_objects[] = {
+const struct testsuite_object_def *testsuite_core_objects[] = {
 	&message_testsuite_object, &envelope_testsuite_object
 };
 
@@ -39,38 +39,55 @@ const unsigned int testsuite_core_objects_count =
 /* 
  * Testsuite object registry
  */
+
+static inline struct sieve_validator_object_registry *_get_object_registry
+(struct sieve_validator *valdtr)
+{
+	struct testsuite_validator_context *ctx = 
+		testsuite_validator_context_get(valdtr);
+
+	return ctx->object_registrations;
+}
  
 void testsuite_object_register
-(struct sieve_validator *valdtr, const struct testsuite_object *tobj) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	const struct testsuite_object_def *tobj_def) 
 {
-	struct testsuite_validator_context *ctx = testsuite_validator_context_get
-		(valdtr);
+	struct sieve_validator_object_registry *regs = _get_object_registry(valdtr);
 	
-	sieve_validator_object_registry_add
-		(ctx->object_registrations, &tobj->object);
+	sieve_validator_object_registry_add(regs, ext, &tobj_def->obj_def);
 }
 
-const struct testsuite_object *testsuite_object_find
-(struct sieve_validator *valdtr, const char *identifier) 
+static const struct testsuite_object *testsuite_object_create
+(struct sieve_validator *valdtr, struct sieve_command *cmd, 
+	const char *identifier) 
 {
-	struct testsuite_validator_context *ctx = testsuite_validator_context_get
-		(valdtr);
-	const struct sieve_object *object = 
-		sieve_validator_object_registry_find
-			(ctx->object_registrations, identifier);
+	struct sieve_validator_object_registry *regs = _get_object_registry(valdtr);
+	struct sieve_object object;
+	struct testsuite_object *tobj;
 
-	return (const struct testsuite_object *) object;
+	if ( !sieve_validator_object_registry_find(regs, identifier, &object) )
+		return NULL;
+
+	tobj = p_new(sieve_command_pool(cmd), struct testsuite_object, 1);
+	tobj->object = object;
+	tobj->def = (const struct testsuite_object_def *) object.def;
+
+  return tobj;
 }
 
 void testsuite_register_core_objects
-	(struct testsuite_validator_context *ctx)
+(struct testsuite_validator_context *ctx)
 {
+	struct sieve_validator_object_registry *regs = ctx->object_registrations;
 	unsigned int i;
 	
 	/* Register core testsuite objects */
 	for ( i = 0; i < testsuite_core_objects_count; i++ ) {
+		const struct testsuite_object_def *tobj_def = testsuite_core_objects[i];
+
 		sieve_validator_object_registry_add
-			(ctx->object_registrations, &(testsuite_core_objects[i]->object));
+			(regs, testsuite_ext, &tobj_def->obj_def);
 	}
 }
  
@@ -84,7 +101,7 @@ const struct sieve_operand_class sieve_testsuite_object_operand_class =
 static const struct sieve_extension_objects core_testsuite_objects =
 	SIEVE_EXT_DEFINE_OBJECTS(testsuite_core_objects);
 
-const struct sieve_operand testsuite_object_operand = { 
+const struct sieve_operand_def testsuite_object_operand = { 
 	"testsuite-object",
 	&testsuite_extension, 
 	TESTSUITE_OPERAND_OBJECT, 
@@ -93,74 +110,82 @@ const struct sieve_operand testsuite_object_operand = {
 };
 
 static void testsuite_object_emit
-(struct sieve_binary *sbin, const struct testsuite_object *obj,
-	int member_id)
+(struct sieve_binary *sbin,	const struct testsuite_object *tobj, int member_id)
 { 
-	sieve_opr_object_emit(sbin, &obj->object);
+	sieve_opr_object_emit(sbin, tobj->object.ext, tobj->object.def);
 	
-	if ( obj->get_member_id != NULL ) {
+	if ( tobj->def != NULL && tobj->def->get_member_id != NULL ) {
 		(void) sieve_binary_emit_byte(sbin, (unsigned char) member_id);
 	}
 }
 
-const struct testsuite_object *testsuite_object_read
-(struct sieve_binary *sbin, sieve_size_t *address)
+bool testsuite_object_read
+(struct sieve_binary *sbin, sieve_size_t *address, 
+	struct testsuite_object *tobj)
 {
-	const struct sieve_operand *operand = sieve_operand_read(sbin, address);
+	struct sieve_operand operand;
+
+	if ( !sieve_operand_read(sbin, address, &operand) )
+		return FALSE;
 	
-	return (const struct testsuite_object *) sieve_opr_object_read_data
-		(sbin, operand, &sieve_testsuite_object_operand_class, address);
+	if ( !sieve_opr_object_read_data
+		(sbin, &operand, &sieve_testsuite_object_operand_class, address,
+			&tobj->object) )
+		return FALSE;
+
+	tobj->def = (const struct testsuite_object_def *) tobj->object.def;
+
+	return TRUE;
 }
 
-const struct testsuite_object *testsuite_object_read_member
-(struct sieve_binary *sbin, sieve_size_t *address, int *member_id)
-{
-	const struct testsuite_object *object;
+bool testsuite_object_read_member
+(struct sieve_binary *sbin, sieve_size_t *address, 
+	struct testsuite_object *tobj, int *member_id_r)
+{		
+	if ( !testsuite_object_read(sbin, address, tobj) )
+		return FALSE;
 		
-	if ( (object = testsuite_object_read(sbin, address)) == NULL )
-		return NULL;
-		
-	*member_id = -1;
-	if ( object->get_member_id != NULL ) {
-		if ( !sieve_binary_read_code(sbin, address, member_id) ) 
-			return NULL;
+	*member_id_r = -1;
+	if ( tobj->def != NULL && tobj->def->get_member_id != NULL ) {
+		if ( !sieve_binary_read_code(sbin, address, member_id_r) ) 
+			return FALSE;
 	}
 	
-	return object;
+	return TRUE;
 }
 
 const char *testsuite_object_member_name
 (const struct testsuite_object *object, int member_id)
 {
+	const struct testsuite_object_def *obj_def = object->def;
 	const char *member = NULL;
 
-	if ( object->get_member_id != NULL ) {
-		if ( object->get_member_name != NULL )
-			member = object->get_member_name(member_id);
+	if ( obj_def->get_member_id != NULL ) {
+		if ( obj_def->get_member_name != NULL )
+			member = obj_def->get_member_name(member_id);
 	} else 
-		return object->object.identifier;
+		return obj_def->obj_def.identifier;
 		
 	if ( member == NULL )	
-		return t_strdup_printf("%s.%d", object->object.identifier, member_id);
+		return t_strdup_printf("%s.%d", obj_def->obj_def.identifier, member_id);
 	
-	return t_strdup_printf("%s.%s", object->object.identifier, member);
+	return t_strdup_printf("%s.%s", obj_def->obj_def.identifier, member);
 }
 
 bool testsuite_object_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	const struct testsuite_object *object;
+	struct testsuite_object object;
 	int member_id;
 
 	sieve_code_mark(denv);
 		
-	if ( (object = testsuite_object_read_member(denv->sbin, address, &member_id)) 
-		== NULL )
+	if ( !testsuite_object_read_member(denv->sbin, address, &object, &member_id) )
 		return FALSE;
 	
 	sieve_code_dumpf(denv, "%s: %s",
 		sieve_testsuite_object_operand_class.name, 
-		testsuite_object_member_name(object, member_id));
+		testsuite_object_member_name(&object, member_id));
 	
 	return TRUE;
 }
@@ -171,9 +196,9 @@ bool testsuite_object_dump
  
 static bool arg_testsuite_object_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 
-const struct sieve_argument testsuite_object_argument = { 
+const struct sieve_argument_def testsuite_object_argument = { 
 	"testsuite-object", 
 	NULL, NULL, NULL, NULL,
 	arg_testsuite_object_generate 
@@ -186,10 +211,10 @@ struct testsuite_object_argctx {
 
 bool testsuite_object_argument_activate
 (struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
-	struct sieve_command_context *cmd) 
+	struct sieve_command *cmd) 
 {
 	const char *objname = sieve_ast_argument_strc(arg);
-	const struct testsuite_object *object;
+	const struct testsuite_object *tobj;
 	int member_id;
 	const char *member;
 	struct testsuite_object_argctx *ctx;
@@ -204,8 +229,8 @@ bool testsuite_object_argument_activate
 	
 	/* Find the object */
 	
-	object = testsuite_object_find(valdtr, objname);
-	if ( object == NULL ) {
+	tobj = testsuite_object_create(valdtr, cmd, objname);
+	if ( tobj == NULL ) {
 		sieve_argument_validate_error(valdtr, arg, 
 			"unknown testsuite object '%s'", objname);
 		return FALSE;
@@ -215,8 +240,8 @@ bool testsuite_object_argument_activate
 	
 	member_id = -1;
 	if ( member != NULL ) {
-		if ( object->get_member_id == NULL || 
-			(member_id=object->get_member_id(member)) == -1 ) {
+		if ( tobj->def == NULL || tobj->def->get_member_id == NULL || 
+			(member_id=tobj->def->get_member_id(member)) == -1 ) {
 			sieve_argument_validate_error(valdtr, arg, 
 				"member '%s' does not exist for testsuite object '%s'", member, objname);
 			return FALSE;
@@ -226,21 +251,22 @@ bool testsuite_object_argument_activate
 	/* Assign argument context */
 	
 	ctx = p_new(sieve_command_pool(cmd), struct testsuite_object_argctx, 1);
-	ctx->object = object;
+	ctx->object = tobj;
 	ctx->member = member_id;
 	
-	arg->argument = &testsuite_object_argument;
-	arg->context = (void *) ctx;
+	arg->argument = sieve_argument_create
+		(arg->ast, &testsuite_object_argument, testsuite_ext, 0);
+	arg->argument->data = (void *) ctx;
 	
 	return TRUE;
 }
 
 static bool arg_testsuite_object_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
+	struct sieve_command *cmd ATTR_UNUSED)
 {
 	struct testsuite_object_argctx *ctx = 
-		(struct testsuite_object_argctx *) arg->context;
+		(struct testsuite_object_argctx *) arg->argument->data;
 	
 	testsuite_object_emit(cgenv->sbin, ctx->object, ctx->member);
 		
@@ -259,14 +285,14 @@ static const char *tsto_envelope_get_member_name(int id);
 static bool tsto_envelope_set_member
 	(const struct sieve_runtime_env *renv, int id, string_t *value);
 
-const struct testsuite_object message_testsuite_object = { 
+const struct testsuite_object_def message_testsuite_object = { 
 	SIEVE_OBJECT("message",	&testsuite_object_operand, TESTSUITE_OBJECT_MESSAGE),
 	NULL, NULL, 
 	tsto_message_set_member, 
 	NULL
 };
 
-const struct testsuite_object envelope_testsuite_object = { 
+const struct testsuite_object_def envelope_testsuite_object = { 
 	SIEVE_OBJECT("envelope", &testsuite_object_operand, TESTSUITE_OBJECT_ENVELOPE),
 	tsto_envelope_get_member_id, 
 	tsto_envelope_get_member_name,

@@ -75,11 +75,11 @@ int main(int argc, char **argv) {
 		outfile = "-";
 
 	if ( extensions != NULL ) {
-		sieve_set_extensions(extensions);
+		sieve_set_extensions(sieve_instance, extensions);
 	}
 
 	/* Register tool-specific extensions */
-	(void) sieve_extension_register(&debug_extension, TRUE);
+	(void) sieve_extension_register(sieve_instance, &debug_extension, TRUE);
 
 	if ( stat(scriptfile, &st) == 0 && S_ISDIR(st.st_mode) ) {
 		/* Script directory */

@@ -29,35 +29,36 @@ static bool flag_is_valid(const char *flag);
  * Tagged arguments 
  */
 
-extern const struct sieve_argument tag_flags;
-extern const struct sieve_argument tag_flags_implicit;
+extern const struct sieve_argument_def tag_flags;
+extern const struct sieve_argument_def tag_flags_implicit;
 
 /* 
  * Common command functions 
  */
 
 bool ext_imap4flags_command_validate
-(struct sieve_validator *validator, struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct sieve_ast_argument *arg2;
+	const struct sieve_extension *var_ext;
 	
 	/* Check arguments */
 	
 	if ( arg == NULL ) {
-		sieve_command_validate_error(validator, cmd, 
+		sieve_command_validate_error(valdtr, cmd, 
 			"the %s %s expects at least one argument, but none was found", 
-			cmd->command->identifier, sieve_command_type_name(cmd->command));
+			sieve_command_identifier(cmd), sieve_command_type_name(cmd));
 		return FALSE;
 	}
 	
 	if ( sieve_ast_argument_type(arg) != SAAT_STRING && 
 		sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) 
 	{
-		sieve_argument_validate_error(validator, arg, 
+		sieve_argument_validate_error(valdtr, arg, 
 			"the %s %s expects either a string (variable name) or "
 			"a string-list (list of flags) as first argument, but %s was found", 
-			cmd->command->identifier, sieve_command_type_name(cmd->command),
+			sieve_command_identifier(cmd), sieve_command_type_name(cmd),
 			sieve_ast_argument_name(arg));
 		return FALSE; 
 	}
@@ -68,19 +69,19 @@ bool ext_imap4flags_command_validate
 				
 		if ( sieve_ast_argument_type(arg) != SAAT_STRING ) 
 		{
-			if ( cmd->command == &tst_hasflag ) {
+			if ( sieve_command_is(cmd, tst_hasflag) ) {
 				if ( sieve_ast_argument_type(arg) != SAAT_STRING_LIST ) {
-					sieve_argument_validate_error(validator, arg, 
+					sieve_argument_validate_error(valdtr, arg, 
 						"if a second argument is specified for the hasflag, the first "
 						"must be a string-list (variable-list), but %s was found",
 						sieve_ast_argument_name(arg));
 					return FALSE;
 				}
 			} else {
-				sieve_argument_validate_error(validator, arg, 
+				sieve_argument_validate_error(valdtr, arg, 
 					"if a second argument is specified for the %s %s, the first "
 					"must be a string (variable name), but %s was found",
-					cmd->command->identifier, sieve_command_type_name(cmd->command), 
+					sieve_command_identifier(cmd), sieve_command_type_name(cmd), 
 					sieve_ast_argument_name(arg));
 				return FALSE; 
 			}
@@ -88,36 +89,40 @@ bool ext_imap4flags_command_validate
 		
 		/* Then, check whether the second argument is permitted */
 		
-		if ( !sieve_ext_variables_is_active(validator) )	{
-			sieve_argument_validate_error(validator,arg, 
+		var_ext = sieve_ext_variables_get_extension(cmd->ext->svinst);
+
+		if ( var_ext == NULL || !sieve_ext_variables_is_active(var_ext, valdtr) )	
+			{
+			sieve_argument_validate_error(valdtr,arg, 
 				"the %s %s only allows for the specification of a "
 				"variable name when the variables extension is active",
-				cmd->command->identifier, sieve_command_type_name(cmd->command));
+				sieve_command_identifier(cmd), sieve_command_type_name(cmd));
 			return FALSE;
 		}		
 		
-		if ( !sieve_variable_argument_activate(validator, cmd, arg, 
-			cmd->command != &tst_hasflag ) )
+		if ( !sieve_variable_argument_activate
+			(var_ext, valdtr, cmd, arg, !sieve_command_is(cmd, tst_hasflag) ) )
 			return FALSE;
 		
 		if ( sieve_ast_argument_type(arg2) != SAAT_STRING && 
 			sieve_ast_argument_type(arg2) != SAAT_STRING_LIST ) 
 		{
-			sieve_argument_validate_error(validator, arg2, 
+			sieve_argument_validate_error(valdtr, arg2, 
 				"the %s %s expects a string list (list of flags) as "
 				"second argument when two arguments are specified, "
 				"but %s was found",
-				cmd->command->identifier, sieve_command_type_name(cmd->command),
+				sieve_command_identifier(cmd), sieve_command_type_name(cmd),
 				sieve_ast_argument_name(arg2));
 			return FALSE; 
 		}
 	} else
 		arg2 = arg;
 
-	if ( !sieve_validator_argument_activate(validator, cmd, arg2, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, cmd, arg2, FALSE) )
 		return FALSE;
 
-	if ( cmd->command != &tst_hasflag && sieve_argument_is_string_literal(arg2) ) {
+	if ( !sieve_command_is(cmd, tst_hasflag) && 
+		sieve_argument_is_string_literal(arg2) ) {
 		struct ext_imap4flags_iter fiter;
 		const char *flag;
 		
@@ -126,10 +131,10 @@ bool ext_imap4flags_command_validate
 
 		while ( (flag=ext_imap4flags_iter_get_flag(&fiter)) != NULL ) {
 			if ( !flag_is_valid(flag) ) {
-				sieve_argument_validate_warning(validator, arg,
+				sieve_argument_validate_warning(valdtr, arg,
                 	"IMAP flag '%s' specified for the %s command is invalid "
 					"and will be ignored (only first invalid is reported)",					
-					str_sanitize(flag, 64), cmd->command->identifier);
+					str_sanitize(flag, 64), sieve_command_identifier(cmd));
 				break;
 			}
 		}
@@ -143,7 +148,8 @@ bool ext_imap4flags_command_validate
  */
 
 void ext_imap4flags_attach_flags_tag
-(struct sieve_validator *valdtr, const char *command)
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	const char *command)
 {
 	/* Register :flags tag with the command and we don't care whether it is 
 	 * registered or even whether it will be registered at all. The validator 
@@ -152,11 +158,11 @@ void ext_imap4flags_attach_flags_tag
 	 
 	/* Tag specified by user */
 	sieve_validator_register_external_tag
-		(valdtr, &tag_flags, command, SIEVE_OPT_SIDE_EFFECT);
+		(valdtr, command, ext, &tag_flags, SIEVE_OPT_SIDE_EFFECT);
 
     /* Implicit tag if none is specified */
 	sieve_validator_register_persistent_tag
-		(valdtr, &tag_flags_implicit, command);
+		(valdtr, command, ext, &tag_flags_implicit);
 }
 
 /* 
@@ -200,11 +206,11 @@ static void _get_initial_flags
 }
 
 static inline struct ext_imap4flags_result_context *_get_result_context
-(struct sieve_result *result)
+(const struct sieve_extension *this_ext, struct sieve_result *result)
 {
 	struct ext_imap4flags_result_context *rctx =
 		(struct ext_imap4flags_result_context *) 
-		sieve_result_extension_get_context(result, &imap4flags_extension);
+		sieve_result_extension_get_context(result, this_ext);
 
 	if ( rctx == NULL ) {
 		pool_t pool = sieve_result_pool(result);
@@ -214,17 +220,17 @@ static inline struct ext_imap4flags_result_context *_get_result_context
 		_get_initial_flags(result, rctx->internal_flags);
 
 		sieve_result_extension_set_context
-			(result, &imap4flags_extension, rctx);
+			(result, this_ext, rctx);
 	}
 
 	return rctx;
 }
 
 static string_t *_get_flags_string
-(struct sieve_result *result)
+(const struct sieve_extension *this_ext, struct sieve_result *result)
 {
 	struct ext_imap4flags_result_context *ctx = 
-		_get_result_context(result);
+		_get_result_context(this_ext, result);
 		
 	return ctx->internal_flags;
 }
@@ -234,10 +240,11 @@ static string_t *_get_flags_string
  */
 
 static void ext_imap4flags_runtime_init
-(const struct sieve_runtime_env *renv, void *context ATTR_UNUSED)
+(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+	void *context ATTR_UNUSED)
 {	
 	sieve_result_add_implicit_side_effect
-		(renv->result, NULL, TRUE, &flags_side_effect, NULL);
+		(renv->result, NULL, TRUE, ext, &flags_side_effect, NULL);
 }
 
 const struct sieve_interpreter_extension imap4flags_interpreter_extension = {
@@ -426,7 +433,7 @@ int ext_imap4flags_set_flags
 		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
 			return SIEVE_EXEC_BIN_CORRUPT;
 	} else
-		cur_flags = _get_flags_string(renv->result);
+		cur_flags = _get_flags_string(renv->oprtn.ext, renv->result);
 
 	if ( cur_flags != NULL )
 		flags_list_set_flags(cur_flags, flags);		
@@ -435,7 +442,7 @@ int ext_imap4flags_set_flags
 }
 
 int ext_imap4flags_add_flags
-(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
+(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
 	unsigned int var_index, string_t *flags)
 {
 	string_t *cur_flags;
@@ -444,7 +451,7 @@ int ext_imap4flags_add_flags
 		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
 			return SIEVE_EXEC_BIN_CORRUPT;
 	} else
-		cur_flags = _get_flags_string(renv->result);
+		cur_flags = _get_flags_string(renv->oprtn.ext, renv->result);
 	
 	if ( cur_flags != NULL )
 		flags_list_add_flags(cur_flags, flags);
@@ -453,7 +460,7 @@ int ext_imap4flags_add_flags
 }
 
 int ext_imap4flags_remove_flags
-(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
+(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
 	unsigned int var_index, string_t *flags)
 {
 	string_t *cur_flags;
@@ -462,7 +469,7 @@ int ext_imap4flags_remove_flags
 		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
 			return SIEVE_EXEC_BIN_CORRUPT;
 	} else
-		cur_flags = _get_flags_string(renv->result);
+		cur_flags = _get_flags_string(renv->oprtn.ext, renv->result);
 	
 	if ( cur_flags != NULL )
 		flags_list_remove_flags(cur_flags, flags);		
@@ -471,7 +478,7 @@ int ext_imap4flags_remove_flags
 }
 
 int ext_imap4flags_get_flags_string
-(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
+(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 	unsigned int var_index, const char **flags)
 {
 	string_t *cur_flags;
@@ -480,7 +487,7 @@ int ext_imap4flags_get_flags_string
 		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
 			return SIEVE_EXEC_BIN_CORRUPT;
 	} else
-		cur_flags = _get_flags_string(renv->result);
+		cur_flags = _get_flags_string(renv->oprtn.ext, renv->result);
 	
 	if ( cur_flags == NULL )
 		*flags = "";
@@ -491,7 +498,7 @@ int ext_imap4flags_get_flags_string
 }
 
 void ext_imap4flags_get_flags_init
-(struct ext_imap4flags_iter *iter, const struct sieve_runtime_env *renv,
+(struct ext_imap4flags_iter *iter, const struct sieve_runtime_env *renv, 
 	string_t *flags_list)
 {
 	string_t *cur_flags;
@@ -502,15 +509,16 @@ void ext_imap4flags_get_flags_init
 		flags_list_set_flags(cur_flags, flags_list);
 	}
 	else
-		cur_flags = _get_flags_string(renv->result);
+		cur_flags = _get_flags_string(renv->oprtn.ext, renv->result);
 	
 	ext_imap4flags_iter_init(iter, cur_flags);		
 }
 
 void ext_imap4flags_get_implicit_flags_init
-(struct ext_imap4flags_iter *iter, struct sieve_result *result)
+(struct ext_imap4flags_iter *iter, const struct sieve_extension *this_ext,
+	struct sieve_result *result)
 {
-	string_t *cur_flags = _get_flags_string(result);
+	string_t *cur_flags = _get_flags_string(this_ext, result);
 	
 	ext_imap4flags_iter_init(iter, cur_flags);		
 }

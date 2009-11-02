@@ -1,5 +1,5 @@
 /*
- * This test is primarily meant to check the compiler's handing of typos
+ * This test is primarily meant to check the compiler's handling of typos
  * at various locations.
  */
 

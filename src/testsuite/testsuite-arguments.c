@@ -26,19 +26,19 @@
 
 static bool arg_testsuite_string_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *context);
+		struct sieve_command *context);
 
-const struct sieve_argument testsuite_string_argument = { 
+const struct sieve_argument_def testsuite_string_argument = { 
 	"@testsuite-string", 
-	NULL, NULL,
-	arg_testsuite_string_validate, 
 	NULL, 
+	arg_testsuite_string_validate, 
+	NULL, NULL,
 	sieve_arg_catenated_string_generate,
 };
 
 static bool arg_testsuite_string_validate
 (struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+	struct sieve_command *cmd)
 {
 	enum { ST_NONE, ST_OPEN, ST_SUBSTITUTION, ST_PARAM, ST_CLOSE } state = 
 		ST_NONE;

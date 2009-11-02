@@ -22,14 +22,14 @@
  */
 
 static bool cmd_test_binary_registered
-	(struct sieve_validator *valdtr, 
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
 		struct sieve_command_registration *cmd_reg);
 static bool cmd_test_binary_validate
-	(struct sieve_validator *valdtr, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_test_binary_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-const struct sieve_command cmd_test_binary = { 
+const struct sieve_command_def cmd_test_binary = { 
 	"test_binary", 
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
@@ -45,15 +45,13 @@ const struct sieve_command cmd_test_binary = {
  */ 
 
 static bool cmd_test_binary_operation_dump
-	(const struct sieve_operation *op,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_test_binary_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
  
 /* test_binary_create operation */
 
-const struct sieve_operation test_binary_load_operation = { 
+const struct sieve_operation_def test_binary_load_operation = { 
 	"TEST_BINARY_LOAD",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_BINARY_LOAD,
@@ -63,7 +61,7 @@ const struct sieve_operation test_binary_load_operation = {
 
 /* test_binary_delete operation */
 
-const struct sieve_operation test_binary_save_operation = { 
+const struct sieve_operation_def test_binary_save_operation = { 
 	"TEST_BINARY_SAVE",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_BINARY_SAVE,
@@ -81,7 +79,7 @@ enum test_binary_operation {
 	BINARY_OP_LAST
 };
 
-const struct sieve_operation *test_binary_operations[] = {
+const struct sieve_operation_def *test_binary_operations[] = {
 	&test_binary_load_operation,
 	&test_binary_save_operation
 };
@@ -97,35 +95,36 @@ struct cmd_test_binary_context_data {
  
 static bool cmd_test_binary_validate_tag
 	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 
-static const struct sieve_argument test_binary_load_tag = { 
+static const struct sieve_argument_def test_binary_load_tag = { 
 	"load", 
-	NULL, NULL,
+	NULL, 
 	cmd_test_binary_validate_tag,
-	NULL, NULL 
+	NULL, NULL, NULL,
 };
 
-static const struct sieve_argument test_binary_save_tag = { 
+static const struct sieve_argument_def test_binary_save_tag = { 
 	"save", 
-	NULL, NULL, 
+	NULL,
 	cmd_test_binary_validate_tag,
-	NULL, NULL 
+	NULL, NULL, NULL, 
 };
 
 static bool cmd_test_binary_registered
-(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext, 
+	struct sieve_command_registration *cmd_reg) 
 {
 	/* Register our tags */
-	sieve_validator_register_tag(valdtr, cmd_reg, &test_binary_load_tag, 0); 	
-	sieve_validator_register_tag(valdtr, cmd_reg, &test_binary_save_tag, 0); 	
+	sieve_validator_register_tag(valdtr, cmd_reg, ext, &test_binary_load_tag, 0); 	
+	sieve_validator_register_tag(valdtr, cmd_reg, ext, &test_binary_save_tag, 0); 	
 
 	return TRUE;
 }
 
 static bool cmd_test_binary_validate_tag
 (struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+	struct sieve_command *cmd)
 {
 	struct cmd_test_binary_context_data *ctx_data = 
 		(struct cmd_test_binary_context_data *) cmd->data;	
@@ -141,7 +140,7 @@ static bool cmd_test_binary_validate_tag
 		(sieve_command_pool(cmd), struct cmd_test_binary_context_data, 1);
 	cmd->data = ctx_data;
 	
-	if ( (*arg)->argument == &test_binary_load_tag ) 
+	if ( sieve_argument_is(*arg, test_binary_load_tag) ) 
 		ctx_data->binary_op = BINARY_OP_LOAD;
 	else
 		ctx_data->binary_op = BINARY_OP_SAVE;
@@ -157,8 +156,8 @@ static bool cmd_test_binary_validate_tag
  */
 
 static bool cmd_test_binary_validate
-(struct sieve_validator *valdtr, struct sieve_command_context *cmd) 
-{
+(struct sieve_validator *valdtr, struct sieve_command *cmd) 
+{	
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	
 	if ( cmd->data == NULL ) {
@@ -181,7 +180,7 @@ static bool cmd_test_binary_validate
  */
 
 static bool cmd_test_binary_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
 	struct cmd_test_binary_context_data *ctx_data =
 		(struct cmd_test_binary_context_data *) cmd->data; 
@@ -189,7 +188,7 @@ static bool cmd_test_binary_generate
 	i_assert( ctx_data->binary_op < BINARY_OP_LAST );
 	
 	/* Emit operation */
-	sieve_operation_emit_code(cgenv->sbin, 
+	sieve_operation_emit(cgenv->sbin, cmd->ext, 
 		test_binary_operations[ctx_data->binary_op]);
 	  	
  	/* Generate arguments */
@@ -204,10 +203,11 @@ static bool cmd_test_binary_generate
  */
  
 static bool cmd_test_binary_operation_dump
-(const struct sieve_operation *op,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_code_dumpf(denv, "%s:", op->mnemonic);
+	const struct sieve_operation *op = &denv->oprtn;
+
+	sieve_code_dumpf(denv, "%s:", sieve_operation_mnemonic(op));
 	
 	sieve_code_descend(denv);
 	
@@ -220,9 +220,9 @@ static bool cmd_test_binary_operation_dump
  */
  
 static int cmd_test_binary_operation_execute
-(const struct sieve_operation *op,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	const struct sieve_operation *op = &renv->oprtn;
 	string_t *binary_name = NULL;
 
 	/* 
@@ -240,9 +240,10 @@ static int cmd_test_binary_operation_execute
 	 * Perform operation
 	 */
 		
-	sieve_runtime_trace(renv, "%s %s:", op->mnemonic, str_c(binary_name));
+	sieve_runtime_trace
+		(renv, "%s %s:", sieve_operation_mnemonic(op), str_c(binary_name));
 
-	if ( op == &test_binary_load_operation ) {
+	if ( sieve_operation_is(op, test_binary_load_operation) ) {
 		struct sieve_binary *sbin = testsuite_binary_load(str_c(binary_name));
 
 		if ( sbin != NULL ) {
@@ -254,7 +255,7 @@ static int cmd_test_binary_operation_execute
 			return SIEVE_EXEC_FAILURE;
 		}
 
-	} else if ( op == &test_binary_save_operation ) {
+	} else if ( sieve_operation_is(op, test_binary_save_operation) ) {
 		struct sieve_binary *sbin = testsuite_script_get_binary();
 
 		if ( sbin != NULL ) 
@@ -263,6 +264,8 @@ static int cmd_test_binary_operation_execute
 			sieve_sys_error("no compiled binary to save as %s", str_c(binary_name));
 			return SIEVE_EXEC_FAILURE;
 		}
+	} else {
+		i_unreached();
 	}
 
 	return SIEVE_EXEC_OK;

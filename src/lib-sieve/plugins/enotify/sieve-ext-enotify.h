@@ -86,7 +86,8 @@ struct sieve_enotify_method {
 			const struct sieve_enotify_action *act);
 };
 
-void sieve_enotify_method_register(const struct sieve_enotify_method *method);
+void sieve_enotify_method_register
+(struct sieve_extension *ntfy_ext, const struct sieve_enotify_method *method); 
 
 /*
  * Notify method printing

@@ -39,7 +39,7 @@ struct sieve_match_values {
  * Default match types
  */ 
 
-const struct sieve_match_type *sieve_core_match_types[] = {
+const struct sieve_match_type_def *sieve_core_match_types[] = {
 	&is_match_type, &contains_match_type, &matches_match_type
 };
 
@@ -50,57 +50,80 @@ const unsigned int sieve_core_match_types_count =
  * Match-type 'extension' 
  */
 
-static bool mtch_validator_load(struct sieve_validator *validator);
+static bool mtch_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
-static int ext_my_id = -1;
-
-const struct sieve_extension match_type_extension = {
+const struct sieve_extension_def match_type_extension = {
 	"@match-types",
-	&ext_my_id,
 	NULL, NULL,
 	mtch_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
-
-static const struct sieve_extension *ext_this = &match_type_extension;
 	
 /* 
  * Validator context:
  *   name-based match-type registry. 
  */
+
+static struct sieve_validator_object_registry *_get_object_registry
+(struct sieve_validator *valdtr)
+{
+	struct sieve_instance *svinst;
+	const struct sieve_extension *mcht_ext;
+
+	svinst = sieve_validator_svinst(valdtr);
+	mcht_ext = sieve_get_match_type_extension(svinst);
+	return sieve_validator_object_registry_get(valdtr, mcht_ext);
+}
  
 void sieve_match_type_register
-(struct sieve_validator *validator, const struct sieve_match_type *mtch) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	const struct sieve_match_type_def *mcht_def) 
 {
-	struct sieve_validator_object_registry *regs = 
-		sieve_validator_object_registry_get(validator, ext_this);
+	struct sieve_validator_object_registry *regs = _get_object_registry(valdtr);
 	
-	sieve_validator_object_registry_add(regs, &mtch->object);
+	sieve_validator_object_registry_add(regs, ext, &mcht_def->obj_def);
 }
 
-const struct sieve_match_type *sieve_match_type_find
-(struct sieve_validator *validator, const char *identifier) 
+static bool sieve_match_type_exists
+(struct sieve_validator *valdtr, const char *identifier) 
 {
-	struct sieve_validator_object_registry *regs = 
-		sieve_validator_object_registry_get(validator, ext_this);
-	const struct sieve_object *object = 
-		sieve_validator_object_registry_find(regs, identifier);
+	struct sieve_validator_object_registry *regs = _get_object_registry(valdtr);
 
-  return (const struct sieve_match_type *) object;
+	return sieve_validator_object_registry_find(regs, identifier, NULL);
 }
 
-bool mtch_validator_load(struct sieve_validator *validator)
+static const struct sieve_match_type *sieve_match_type_create_instance
+(struct sieve_validator *valdtr, struct sieve_command *cmd, 
+	const char *identifier) 
+{
+	struct sieve_validator_object_registry *regs = _get_object_registry(valdtr);
+	struct sieve_object object;
+	struct sieve_match_type *mcht;
+
+	if ( !sieve_validator_object_registry_find(regs, identifier, &object) )
+		return NULL;
+
+	mcht = p_new(sieve_command_pool(cmd), struct sieve_match_type, 1);
+	mcht->object = object;
+	mcht->def = (const struct sieve_match_type_def *) object.def;
+
+  return mcht;
+}
+
+bool mtch_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	struct sieve_validator_object_registry *regs = 
-		sieve_validator_object_registry_init(validator, ext_this);
+		sieve_validator_object_registry_init(valdtr, ext);
 	unsigned int i;
 
 	/* Register core match-types */
 	for ( i = 0; i < sieve_core_match_types_count; i++ ) {
 		sieve_validator_object_registry_add
-			(regs, &(sieve_core_match_types[i]->object));
+			(regs, NULL, &(sieve_core_match_types[i]->obj_def));
 	}
 
 	return TRUE;
@@ -116,7 +139,8 @@ struct mtch_interpreter_context {
 };
 
 static void mtch_interpreter_free
-(struct sieve_interpreter *interp ATTR_UNUSED, void *context)
+(const struct sieve_extension *ext ATTR_UNUSED, 
+	struct sieve_interpreter *interp ATTR_UNUSED, void *context)
 {
 	struct mtch_interpreter_context *mctx = 
 		(struct mtch_interpreter_context *) context;
@@ -132,23 +156,26 @@ struct sieve_interpreter_extension mtch_interpreter_extension = {
 	mtch_interpreter_free
 };
 
-static inline struct mtch_interpreter_context *
-get_interpreter_context(struct sieve_interpreter *interp)
+static inline struct mtch_interpreter_context *get_interpreter_context
+(struct sieve_interpreter *interp, bool create)
 {
-	return (struct mtch_interpreter_context *)
-		sieve_interpreter_extension_get_context(interp, ext_this);
-}
-
-static struct mtch_interpreter_context *
-mtch_interpreter_context_init(struct sieve_interpreter *interp)
-{		
-	pool_t pool = sieve_interpreter_pool(interp);
+	struct sieve_instance *svinst;
+	const struct sieve_extension *mcht_ext;
 	struct mtch_interpreter_context *ctx;
-	
-	ctx = p_new(pool, struct mtch_interpreter_context, 1);
 
-	sieve_interpreter_extension_register
-		(interp, &mtch_interpreter_extension, (void *) ctx);
+	svinst = sieve_interpreter_svinst(interp);
+	mcht_ext = sieve_get_match_type_extension(svinst);
+
+	ctx = (struct mtch_interpreter_context *)
+		sieve_interpreter_extension_get_context(interp, mcht_ext);
+
+	if ( ctx == NULL && create ) {
+		pool_t pool = sieve_interpreter_pool(interp);	
+		ctx = p_new(pool, struct mtch_interpreter_context, 1);
+
+		sieve_interpreter_extension_register
+			(interp, mcht_ext, &mtch_interpreter_extension, (void *) ctx);
+	}
 
 	return ctx;
 }
@@ -160,11 +187,9 @@ mtch_interpreter_context_init(struct sieve_interpreter *interp)
 bool sieve_match_values_set_enabled
 (struct sieve_interpreter *interp, bool enable)
 {
-	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
-	
-	if ( ctx == NULL && enable ) 
-		ctx = mtch_interpreter_context_init(interp);
-	
+	struct mtch_interpreter_context *ctx = 
+		get_interpreter_context(interp, enable);
+		
 	if ( ctx != NULL ) {
 		bool previous = ctx->match_values_enabled;
 		
@@ -178,7 +203,8 @@ bool sieve_match_values_set_enabled
 bool sieve_match_values_are_enabled
 (struct sieve_interpreter *interp)
 {
-	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
+	struct mtch_interpreter_context *ctx = 
+		get_interpreter_context(interp, FALSE);
 		
 	return ( ctx == NULL ? FALSE : ctx->match_values_enabled );
 }
@@ -186,7 +212,8 @@ bool sieve_match_values_are_enabled
 struct sieve_match_values *sieve_match_values_start
 (struct sieve_interpreter *interp)
 {
-	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
+	struct mtch_interpreter_context *ctx = 
+		get_interpreter_context(interp, FALSE);
 	struct sieve_match_values *match_values;
 	
 	if ( ctx == NULL || !ctx->match_values_enabled )
@@ -273,7 +300,7 @@ void sieve_match_values_commit
 	
 	if ( (*mvalues) == NULL ) return;
 	
-	ctx = get_interpreter_context(interp);
+	ctx = get_interpreter_context(interp, FALSE);
 	if ( ctx == NULL || !ctx->match_values_enabled )
 		return;	
 		
@@ -298,7 +325,8 @@ void sieve_match_values_abort
 void sieve_match_values_get
 (struct sieve_interpreter *interp, unsigned int index, string_t **value_r) 
 {
-	struct mtch_interpreter_context *ctx = get_interpreter_context(interp);
+	struct mtch_interpreter_context *ctx = 
+		get_interpreter_context(interp, FALSE);
 	struct sieve_match_values *mvalues;
 
 	if ( ctx == NULL || ctx->match_values == NULL ) {
@@ -324,57 +352,59 @@ void sieve_match_values_get
 /* Forward declarations */
 
 static bool tag_match_type_is_instance_of
-	(struct sieve_validator *validator, struct sieve_command_context *cmd, 
-		struct sieve_ast_argument *arg);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd, 
+		const struct sieve_extension *ext, const char *identifier, void **data);
 static bool tag_match_type_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *cmd);
 static bool tag_match_type_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 
 /* Argument object */
  
-const struct sieve_argument match_type_tag = { 
+const struct sieve_argument_def match_type_tag = { 
 	"MATCH-TYPE",
 	tag_match_type_is_instance_of,
-	NULL, 
 	tag_match_type_validate, 
-	NULL,
+	NULL,	NULL,
 	tag_match_type_generate 
 };
 
 /* Argument implementation */
 
 static bool tag_match_type_is_instance_of
-(struct sieve_validator *validator, struct sieve_command_context *cmd, 
-	struct sieve_ast_argument *arg)
+(struct sieve_validator *valdtr, struct sieve_command *cmd, 
+	const struct sieve_extension *ext ATTR_UNUSED, const char *identifier, 
+	void **data)
 {
-	struct sieve_match_type_context *mtctx;
-	const struct sieve_match_type *mtch = 
-		sieve_match_type_find(validator, sieve_ast_argument_tag(arg));
-		
-	if ( mtch == NULL ) return FALSE;	
-		
-	/* Create context */
-	mtctx = p_new(sieve_command_pool(cmd), struct sieve_match_type_context, 1);
-	mtctx->match_type = mtch;
-	mtctx->match_type_arg = arg;
-	mtctx->command_ctx = cmd;
-	mtctx->comparator = NULL; /* Can be filled in later */
+	const struct sieve_match_type *mcht;
+
+	if ( data == NULL )
+		return sieve_match_type_exists(valdtr, identifier);
+
+	if ( (mcht=sieve_match_type_create_instance
+		(valdtr, cmd, identifier)) == NULL )
+		return FALSE;
 	
-	arg->context = (void *) mtctx;
-	
+	*data = (void *) mcht;
 	return TRUE;
 }
  
 static bool tag_match_type_validate
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	struct sieve_command *cmd ATTR_UNUSED)
 {
-	struct sieve_match_type_context *mtctx = 
-		(struct sieve_match_type_context *) (*arg)->context;
-	const struct sieve_match_type *mtch = mtctx->match_type;
+	const struct sieve_match_type *mcht = 
+		(const struct sieve_match_type *) (*arg)->argument->data;
+	struct sieve_match_type_context *mtctx;
+
+	mtctx = p_new(sieve_command_pool(cmd), struct sieve_match_type_context, 1);
+	mtctx->match_type = mcht;
+	mtctx->argument = *arg;
+	mtctx->comparator = NULL; /* Can be filled in later */
+
+	(*arg)->argument->data = mtctx;
 
 	/* Syntax:   
 	 *   ":is" / ":contains" / ":matches" (subject to extension)
@@ -387,8 +417,8 @@ static bool tag_match_type_validate
 	 * Additional validation can override the match type recorded in the context 
 	 * for later code generation. 
 	 */
-	if ( mtch->validate != NULL ) {
-		return mtch->validate(validator, arg, mtctx);
+	if ( mcht->def != NULL && mcht->def->validate != NULL ) {
+		return mcht->def->validate(valdtr, arg, mtctx);
 	}
 	
 	return TRUE;
@@ -396,10 +426,10 @@ static bool tag_match_type_validate
 
 static bool tag_match_type_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
+	struct sieve_command *cmd ATTR_UNUSED)
 {
 	struct sieve_match_type_context *mtctx =
-		(struct sieve_match_type_context *) arg->context;
+		(struct sieve_match_type_context *) arg->argument->data;
 	
 	(void) sieve_opr_match_type_emit(cgenv->sbin, mtctx->match_type);
 			
@@ -407,11 +437,17 @@ static bool tag_match_type_generate
 }
 
 void sieve_match_types_link_tags
-	(struct sieve_validator *validator, 
-		struct sieve_command_registration *cmd_reg, int id_code) 
+(struct sieve_validator *valdtr, 
+	struct sieve_command_registration *cmd_reg, int id_code) 
 {	
+	struct sieve_instance *svinst;
+	const struct sieve_extension *mcht_ext;
+
+	svinst = sieve_validator_svinst(valdtr);
+	mcht_ext = sieve_get_comparator_extension(svinst);
+
 	sieve_validator_register_tag
-		(validator, cmd_reg, &match_type_tag, id_code); 	
+		(valdtr, cmd_reg, mcht_ext, &match_type_tag, id_code); 	
 }
 
 /*
@@ -419,7 +455,7 @@ void sieve_match_types_link_tags
  */
 
 bool sieve_match_type_validate
-(struct sieve_validator *validator, struct sieve_command_context *cmd,
+(struct sieve_validator *valdtr, struct sieve_command *cmd,
 	struct sieve_ast_argument *key_arg, 
 	const struct sieve_match_type *mcht_default, 
 	const struct sieve_comparator *cmp_default)
@@ -445,15 +481,17 @@ bool sieve_match_type_validate
 	}
 	
 	/* Verify using the default comparator if none is specified explicitly */
-	if ( cmp == NULL )
-		cmp = cmp_default;
+	if ( cmp == NULL ) {
+		cmp = sieve_comparator_copy(sieve_command_pool(cmd), cmp_default);
+	}
 	
 	/* Verify the default match type if none is specified explicitly */
-	if ( mt_arg == NULL || mt_arg->context == NULL ) {
+	if ( mt_arg == NULL || mt_arg->argument == NULL || 
+		mt_arg->argument->data == NULL ) {
 		mtctx = NULL;
-		mcht = mcht_default;
+		mcht = sieve_match_type_copy(sieve_command_pool(cmd), mcht_default);
 	} else {
-		mtctx = (struct sieve_match_type_context *) mt_arg->context;
+		mtctx = (struct sieve_match_type_context *) mt_arg->argument->data;
 		mcht = mtctx->match_type;
 		mtctx->comparator = cmp;
 	}
@@ -462,8 +500,9 @@ bool sieve_match_type_validate
 	 * Additional validation can override the match type recorded in the context 
 	 * for later code generation. 
 	 */
-	if ( mcht != NULL && mcht->validate_context != NULL ) {
-		return mcht->validate_context(validator, mt_arg, mtctx, key_arg);
+	if ( mcht != NULL && mcht->def != NULL &&
+		mcht->def->validate_context != NULL ) {
+		return mcht->def->validate_context(valdtr, mt_arg, mtctx, key_arg);
 	}
 	
 	return TRUE;	
@@ -479,7 +518,7 @@ const struct sieve_operand_class sieve_match_type_operand_class =
 static const struct sieve_extension_objects core_match_types =
 	SIEVE_EXT_DEFINE_MATCH_TYPES(sieve_core_match_types);
 
-const struct sieve_operand match_type_operand = { 
+const struct sieve_operand_def match_type_operand = { 
 	"match-type", 
 	NULL,
 	SIEVE_OPERAND_MATCH_TYPE,
@@ -492,20 +531,20 @@ const struct sieve_operand match_type_operand = {
  */
 
 bool sieve_match_substring_validate_context
-(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
 	struct sieve_match_type_context *ctx,
 	struct sieve_ast_argument *key_arg ATTR_UNUSED)
 {
 	const struct sieve_comparator *cmp = ctx->comparator;
 		
-	if ( cmp == NULL )
+	if ( cmp == NULL || cmp->def == NULL )
 		return TRUE;
 			
-	if ( (cmp->flags & SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH) == 0 ) {
-		sieve_argument_validate_error(validator, arg,
+	if ( (cmp->def->flags & SIEVE_COMPARATOR_FLAG_SUBSTRING_MATCH) == 0 ) {
+		sieve_argument_validate_error(valdtr, arg,
 			"the specified %s comparator does not support "
 			"sub-string matching as required by the :%s match type",
-			cmp->object.identifier, ctx->match_type->object.identifier );
+			cmp->object.def->identifier, ctx->match_type->object.def->identifier );
 
 		return FALSE;
 	}

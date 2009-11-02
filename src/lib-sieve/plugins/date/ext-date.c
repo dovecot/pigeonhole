@@ -34,18 +34,16 @@
  * Extension 
  */
 
-static bool ext_date_validator_load(struct sieve_validator *validator);
+static bool ext_date_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *validator);
 
-int ext_date_my_id = -1;
-
-const struct sieve_operation *ext_date_operations[] = {
+const struct sieve_operation_def *ext_date_operations[] = {
 	&date_operation,
 	&currentdate_operation
 };
 
-const struct sieve_extension date_extension = { 
+const struct sieve_extension_def date_extension = { 
 	"date", 
-	&ext_date_my_id,
 	NULL, NULL,
 	ext_date_validator_load, 
 	NULL, 
@@ -55,11 +53,12 @@ const struct sieve_extension date_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
-static bool ext_date_validator_load(struct sieve_validator *valdtr)
+static bool ext_date_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register new test */
-	sieve_validator_register_command(valdtr, &date_test);
-	sieve_validator_register_command(valdtr, &currentdate_test);
+	sieve_validator_register_command(valdtr, ext, &date_test);
+	sieve_validator_register_command(valdtr, ext, &currentdate_test);
 
 	return TRUE;
 }

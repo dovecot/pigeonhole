@@ -22,14 +22,14 @@
  */
 
 static bool cmd_test_message_registered
-	(struct sieve_validator *valdtr, 
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
 		struct sieve_command_registration *cmd_reg);
 static bool cmd_test_message_validate
-	(struct sieve_validator *valdtr, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_test_message_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-const struct sieve_command cmd_test_message = { 
+const struct sieve_command_def cmd_test_message = { 
 	"test_message", 
 	SCT_HYBRID, 
 	1, 0, FALSE, FALSE,
@@ -47,13 +47,11 @@ const struct sieve_command cmd_test_message = {
 /* Test_message_smtp operation */
 
 static bool cmd_test_message_smtp_operation_dump
-	(const struct sieve_operation *op,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_test_message_smtp_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation test_message_smtp_operation = { 
+const struct sieve_operation_def test_message_smtp_operation = { 
 	"TEST_MESSAGE_SMTP",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_MESSAGE_SMTP,
@@ -64,13 +62,11 @@ const struct sieve_operation test_message_smtp_operation = {
 /* Test_message_mailbox operation */
 
 static bool cmd_test_message_mailbox_operation_dump
-	(const struct sieve_operation *op,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_test_message_mailbox_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation test_message_mailbox_operation = { 
+const struct sieve_operation_def test_message_mailbox_operation = { 
 	"TEST_MESSAGE_MAILBOX",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_MESSAGE_MAILBOX,
@@ -88,7 +84,7 @@ enum test_message_source {
 	MSG_SOURCE_LAST
 };
 
-const struct sieve_operation *test_message_operations[] = {
+const struct sieve_operation_def *test_message_operations[] = {
 	&test_message_smtp_operation,
 	&test_message_mailbox_operation
 };
@@ -108,38 +104,41 @@ struct cmd_test_message_context_data {
  
 static bool cmd_test_message_validate_smtp_tag
 	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 static bool cmd_test_message_validate_folder_tag
 	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 
-static const struct sieve_argument test_message_smtp_tag = { 
+static const struct sieve_argument_def test_message_smtp_tag = { 
 	"smtp", 
-	NULL, NULL,
+	NULL,
 	cmd_test_message_validate_smtp_tag,
-	NULL, NULL 
+	NULL, NULL, NULL
 };
 
-static const struct sieve_argument test_message_folder_tag = { 
+static const struct sieve_argument_def test_message_folder_tag = { 
 	"folder", 
-	NULL, NULL, 
+	NULL,
 	cmd_test_message_validate_folder_tag,
-	NULL, NULL 
+	NULL, NULL, NULL 
 };
 
 static bool cmd_test_message_registered
-(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	struct sieve_command_registration *cmd_reg) 
 {
 	/* Register our tags */
-	sieve_validator_register_tag(valdtr, cmd_reg, &test_message_folder_tag, 0); 	
-	sieve_validator_register_tag(valdtr, cmd_reg, &test_message_smtp_tag, 0); 	
+	sieve_validator_register_tag
+		(valdtr, cmd_reg, ext, &test_message_folder_tag, 0); 	
+	sieve_validator_register_tag
+		(valdtr, cmd_reg, ext, &test_message_smtp_tag, 0); 	
 
 	return TRUE;
 }
 
 static struct cmd_test_message_context_data *cmd_test_message_validate_tag
 (struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+	struct sieve_command *cmd)
 {
 	struct cmd_test_message_context_data *ctx_data = 
 		(struct cmd_test_message_context_data *) cmd->data;	
@@ -162,7 +161,7 @@ static struct cmd_test_message_context_data *cmd_test_message_validate_tag
 
 static bool cmd_test_message_validate_smtp_tag
 (struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+	struct sieve_command *cmd)
 {
 	struct cmd_test_message_context_data *ctx_data = 
 		cmd_test_message_validate_tag(valdtr, arg, cmd);
@@ -178,7 +177,7 @@ static bool cmd_test_message_validate_smtp_tag
 
 static bool cmd_test_message_validate_folder_tag
 (struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 	struct cmd_test_message_context_data *ctx_data = 
@@ -209,7 +208,7 @@ static bool cmd_test_message_validate_folder_tag
  */
 
 static bool cmd_test_message_validate
-(struct sieve_validator *valdtr, struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr, struct sieve_command *cmd) 
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	
@@ -233,7 +232,7 @@ static bool cmd_test_message_validate
  */
 
 static bool cmd_test_message_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
 	struct cmd_test_message_context_data *ctx_data =
 		(struct cmd_test_message_context_data *) cmd->data; 
@@ -241,7 +240,7 @@ static bool cmd_test_message_generate
 	i_assert( ctx_data->msg_source < MSG_SOURCE_LAST );
 	
 	/* Emit operation */
-	sieve_operation_emit_code(cgenv->sbin, 
+	sieve_operation_emit(cgenv->sbin, cmd->ext,
 		test_message_operations[ctx_data->msg_source]);
 
 	/* Emit is_test flag */
@@ -259,12 +258,11 @@ static bool cmd_test_message_generate
  */
  
 static bool cmd_test_message_smtp_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	unsigned int is_test;
 
-    if ( !sieve_binary_read_byte(denv->sbin, address, &is_test) )
+	if ( !sieve_binary_read_byte(denv->sbin, address, &is_test) )
 		return FALSE;
 
 	sieve_code_dumpf(denv, "TEST_MESSAGE_SMTP (%s):", 
@@ -276,12 +274,11 @@ static bool cmd_test_message_smtp_operation_dump
 }
 
 static bool cmd_test_message_mailbox_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	unsigned int is_test;
 
-    if ( !sieve_binary_read_byte(denv->sbin, address, &is_test) )
+	if ( !sieve_binary_read_byte(denv->sbin, address, &is_test) )
 		return FALSE;
 
 	sieve_code_dumpf(denv, "TEST_MESSAGE_MAILBOX (%s):",
@@ -299,11 +296,10 @@ static bool cmd_test_message_mailbox_operation_dump
  */
  
 static int cmd_test_message_smtp_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	sieve_number_t msg_index;
-    unsigned int is_test = -1;
+	unsigned int is_test = -1;
 	bool result;
 
 	/* 
@@ -312,7 +308,7 @@ static int cmd_test_message_smtp_operation_execute
 
 	/* Is test */
 
-    if ( !sieve_binary_read_byte(renv->sbin, address, &is_test) ) {
+	if ( !sieve_binary_read_byte(renv->sbin, address, &is_test) ) {
 		sieve_runtime_trace_error(renv, "invalid is_test flag");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
@@ -345,8 +341,7 @@ static int cmd_test_message_smtp_operation_execute
 }
 
 static int cmd_test_message_mailbox_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *folder;
 	sieve_number_t msg_index;
@@ -358,7 +353,7 @@ static int cmd_test_message_mailbox_operation_execute
 	 */
 
 	/* Is test */
-    if ( !sieve_binary_read_byte(renv->sbin, address, &is_test) ) {
+	if ( !sieve_binary_read_byte(renv->sbin, address, &is_test) ) {
 		sieve_runtime_trace_error(renv, "invalid is_test flag");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}

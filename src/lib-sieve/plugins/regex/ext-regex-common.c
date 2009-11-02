@@ -13,7 +13,7 @@
 static const struct sieve_extension_objects ext_match_types =
     SIEVE_EXT_DEFINE_MATCH_TYPE(regex_match_type);
 
-const struct sieve_operand regex_match_type_operand = {
+const struct sieve_operand_def regex_match_type_operand = {
     "regex match",
     &regex_extension,
     0,

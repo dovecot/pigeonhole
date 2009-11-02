@@ -23,7 +23,8 @@ struct ext_date_context {
  */
 
 static void ext_date_runtime_init
-(const struct sieve_runtime_env *renv, void *context ATTR_UNUSED)
+(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+	void *context ATTR_UNUSED)
 {
 	struct ext_date_context *dctx;
 	pool_t pool;
@@ -44,7 +45,7 @@ static void ext_date_runtime_init
 	dctx->zone_offset = zone_offset;
 
 	sieve_message_context_extension_set
-		(renv->msgctx, &date_extension, (void *) dctx);
+		(renv->msgctx, ext, (void *) dctx);
 }
 
 static struct sieve_interpreter_extension date_interpreter_extension = {
@@ -54,14 +55,14 @@ static struct sieve_interpreter_extension date_interpreter_extension = {
 };
 
 bool ext_date_interpreter_load
-(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
+(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
+	sieve_size_t *address ATTR_UNUSED)
 {	
 	/* Register runtime hook to obtain stript start timestamp */
 	if ( renv->msgctx == NULL ||
-		sieve_message_context_extension_get(renv->msgctx, &date_extension)
-		== NULL ) {
+		sieve_message_context_extension_get(renv->msgctx, ext) == NULL ) {
 		sieve_interpreter_extension_register
-			(renv->interp, &date_interpreter_extension, NULL);
+			(renv->interp, ext, &date_interpreter_extension, NULL);
 	}
 
 	return TRUE;
@@ -103,13 +104,14 @@ bool ext_date_parse_timezone
 time_t ext_date_get_current_date
 (const struct sieve_runtime_env *renv, int *zone_offset_r)
 {	
+	const struct sieve_extension *this_ext = renv->oprtn.ext;
 	struct ext_date_context *dctx = (struct ext_date_context *) 
-		sieve_message_context_extension_get(renv->msgctx, &date_extension);
+		sieve_message_context_extension_get(renv->msgctx, this_ext);
 
 	if ( dctx == NULL ) {
-		ext_date_runtime_init(renv, NULL);
+		ext_date_runtime_init(this_ext, renv, NULL);
 		dctx = (struct ext_date_context *) 
-			sieve_message_context_extension_get(renv->msgctx, &date_extension);
+			sieve_message_context_extension_get(renv->msgctx, this_ext);
 
 		i_assert(dctx != NULL);
 	}

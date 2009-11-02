@@ -15,7 +15,8 @@ struct sieve_generator;
 struct sieve_codegen_env {
 	struct sieve_generator *gentr;
 
-    struct sieve_script *script;
+	struct sieve_instance *svinst;
+	struct sieve_script *script;
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin;
 };
@@ -86,12 +87,12 @@ void sieve_jumplist_resolve(struct sieve_jumplist *jlist);
 
 bool sieve_generate_argument
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 bool sieve_generate_arguments
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd, 
-		struct sieve_ast_argument **arg);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd, 
+		struct sieve_ast_argument **last_arg_r);
 bool sieve_generate_argument_parameters
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd, 
 		struct sieve_ast_argument *arg);
 
 bool sieve_generate_block

@@ -8,14 +8,14 @@
  * Extension
  */
 
-extern const struct sieve_extension notify_extension;
+extern const struct sieve_extension_def notify_extension;
 
 /*
  * Commands
  */
 
-extern const struct sieve_command cmd_notify_old;
-extern const struct sieve_command cmd_denotify;
+extern const struct sieve_command_def cmd_notify_old;
+extern const struct sieve_command_def cmd_denotify;
 
 /*
  * Arguments
@@ -23,14 +23,14 @@ extern const struct sieve_command cmd_denotify;
 
 void ext_notify_register_importance_tags
 	(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg,
-		unsigned int id_code);
+		const struct sieve_extension *this_ext, unsigned int id_code);
 
 /*
  * Operations
  */
 
-extern const struct sieve_operation notify_old_operation;
-extern const struct sieve_operation denotify_operation;
+extern const struct sieve_operation_def notify_old_operation;
+extern const struct sieve_operation_def denotify_operation;
 
 enum ext_notify_opcode {
 	EXT_NOTIFY_OPERATION_NOTIFY,

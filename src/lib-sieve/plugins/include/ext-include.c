@@ -27,6 +27,8 @@
 #include "sieve-binary.h"
 #include "sieve-dump.h"
 
+#include "sieve-ext-variables.h"
+
 #include "ext-include-common.h"
 #include "ext-include-binary.h"
 
@@ -34,7 +36,7 @@
  * Operations 
  */
 
-static const struct sieve_operation *ext_include_operations[] = { 
+static const struct sieve_operation_def *ext_include_operations[] = { 
 	&include_operation, 
 	&return_operation,
 	&global_operation
@@ -46,20 +48,26 @@ static const struct sieve_operation *ext_include_operations[] = {
  
 /* Forward declaration */
 
-static bool ext_include_validator_load(struct sieve_validator *validator);
-static bool ext_include_generator_load(const struct sieve_codegen_env *cgenv);
+static bool ext_include_load
+	(const struct sieve_extension *ext, void **context);
+static void ext_include_unload
+	(const struct sieve_extension *ext);
+static bool ext_include_validator_load
+	(const struct sieve_extension *ext, struct sieve_validator *validator);
+static bool ext_include_generator_load
+	(const struct sieve_extension *ext, const struct sieve_codegen_env *cgenv);
 static bool ext_include_interpreter_load
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
-static bool ext_include_binary_load(struct sieve_binary *binary);
+	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+		sieve_size_t *address);
+static bool ext_include_binary_load
+	(const struct sieve_extension *ext, struct sieve_binary *binary);
 
 /* Extension objects */
 
-static int ext_my_id = -1;
-
-const struct sieve_extension include_extension = { 
+const struct sieve_extension_def include_extension = { 
 	"include", 
-	&ext_my_id,
-	NULL, NULL,
+	ext_include_load,
+	ext_include_unload,
 	ext_include_validator_load, 
 	ext_include_generator_load,
 	ext_include_interpreter_load,
@@ -72,38 +80,60 @@ const struct sieve_extension include_extension = {
 
 /* Extension hooks */
 
-static bool ext_include_validator_load(struct sieve_validator *validator)
+static bool ext_include_load
+(const struct sieve_extension *ext, void **context)
+{
+	struct ext_include_context *ctx = i_new(struct ext_include_context, 1);
+	
+	ctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
+	*context = ctx;
+
+	return TRUE;
+}
+
+static void ext_include_unload
+(const struct sieve_extension *ext)
+{
+	struct ext_include_context *ctx = (struct ext_include_context *) ext->context;
+	i_free(ctx);
+}
+
+static bool ext_include_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *validator)
 {
 	/* Register new commands */
-	sieve_validator_register_command(validator, &cmd_include);
-	sieve_validator_register_command(validator, &cmd_return);
-	sieve_validator_register_command(validator, &cmd_global);
+	sieve_validator_register_command(validator, ext, &cmd_include);
+	sieve_validator_register_command(validator, ext, &cmd_return);
+	sieve_validator_register_command(validator, ext, &cmd_global);
 
 	/* DEPRICATED */
-	sieve_validator_register_command(validator, &cmd_import);
-	sieve_validator_register_command(validator, &cmd_export);
+	sieve_validator_register_command(validator, ext, &cmd_import);
+	sieve_validator_register_command(validator, ext, &cmd_export);
 
 	return TRUE;
 }	
 
-static bool ext_include_generator_load(const struct sieve_codegen_env *cgenv)
+static bool ext_include_generator_load
+(const struct sieve_extension *ext, const struct sieve_codegen_env *cgenv)
 {
-	ext_include_register_generator_context(cgenv);
+	ext_include_register_generator_context(ext, cgenv);
 
 	return TRUE;
 }
 
 static bool ext_include_interpreter_load
-(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
+(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+	sieve_size_t *address ATTR_UNUSED)
 {
-	ext_include_interpreter_context_init(renv->interp);
+	ext_include_interpreter_context_init(ext, renv->interp);
 	
 	return TRUE;
 }
 
-static bool ext_include_binary_load(struct sieve_binary *sbin)
+static bool ext_include_binary_load
+(const struct sieve_extension *ext, struct sieve_binary *sbin)
 {
-	(void)ext_include_binary_get_context(sbin);
+	(void)ext_include_binary_get_context(ext, sbin);
 
 	return TRUE;
 }

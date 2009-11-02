@@ -22,11 +22,11 @@
  */
 
 static bool tst_vnotifym_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command *tst);
 static bool tst_vnotifym_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-const struct sieve_command valid_notify_method_test = { 
+const struct sieve_command_def valid_notify_method_test = { 
 	"valid_notify_method", 
 	SCT_TEST, 
 	1, 0, FALSE, FALSE,
@@ -41,13 +41,11 @@ const struct sieve_command valid_notify_method_test = {
  */
 
 static bool tst_vnotifym_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int tst_vnotifym_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation valid_notify_method_operation = { 
+const struct sieve_operation_def valid_notify_method_operation = { 
 	"VALID_NOTIFY_METHOD",
 	&enotify_extension, 
 	EXT_ENOTIFY_OPERATION_VALID_NOTIFY_METHOD, 
@@ -60,16 +58,16 @@ const struct sieve_operation valid_notify_method_operation = {
  */
 
 static bool tst_vnotifym_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst) 
+	(struct sieve_validator *valdtr, struct sieve_command *tst) 
 { 		
 	struct sieve_ast_argument *arg = tst->first_positional;
 	
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "notification-uris", 1, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "notification-uris", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
-	return sieve_validator_argument_activate(validator, tst, arg, FALSE);
+	return sieve_validator_argument_activate(valdtr, tst, arg, FALSE);
 }
 
 /* 
@@ -77,12 +75,12 @@ static bool tst_vnotifym_validate
  */
 
 static bool tst_vnotifym_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &valid_notify_method_operation);
+	sieve_operation_emit(cgenv->sbin, cmd->ext, &valid_notify_method_operation);
 
  	/* Generate arguments */
-	return sieve_generate_arguments(cgenv, ctx, NULL);
+	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
 
 /* 
@@ -90,8 +88,7 @@ static bool tst_vnotifym_generate
  */
 
 static bool tst_vnotifym_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "VALID_NOTIFY_METHOD");
 	sieve_code_descend(denv);
@@ -105,8 +102,7 @@ static bool tst_vnotifym_operation_dump
  */
 
 static int tst_vnotifym_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED, 
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_coded_stringlist *notify_uris;
 	string_t *uri_item;

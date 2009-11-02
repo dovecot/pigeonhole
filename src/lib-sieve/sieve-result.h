@@ -19,7 +19,8 @@ struct sieve_side_effects_list;
 struct sieve_result;
 
 struct sieve_result *sieve_result_create
-	(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
+	(struct sieve_instance *svinst, const struct sieve_message_data *msgdata, 
+		const struct sieve_script_env *senv,
 		struct sieve_error_handler *ehandler);
 
 void sieve_result_ref(struct sieve_result *result); 
@@ -99,11 +100,13 @@ void sieve_result_error
  */
  
 void sieve_result_add_implicit_side_effect
-(struct sieve_result *result, const struct sieve_action *to_action,
-	bool to_keep, const struct sieve_side_effect *seffect, void *context);
+(struct sieve_result *result, const struct sieve_action_def *to_action,
+	bool to_keep, const struct sieve_extension *ext, 
+	const struct sieve_side_effect_def *seffect, void *context);
 	
 int sieve_result_add_action
-	(const struct sieve_runtime_env *renv, const struct sieve_action *action, 
+	(const struct sieve_runtime_env *renv, const struct sieve_extension *ext,
+		const struct sieve_action_def *act_def,
 		struct sieve_side_effects_list *seffects, unsigned int source_line, 
 		void *context, unsigned int instance_limit);
 int sieve_result_add_keep
@@ -111,9 +114,11 @@ int sieve_result_add_keep
 		struct sieve_side_effects_list *seffects, unsigned int source_line);
 
 void sieve_result_set_keep_action
-	(struct sieve_result *result, const struct sieve_action *action);
+	(struct sieve_result *result, const struct sieve_extension *ext,
+		const struct sieve_action_def *act_def);
 void sieve_result_set_failure_action
-	(struct sieve_result *result, const struct sieve_action *action);
+	(struct sieve_result *result, const struct sieve_extension *ext,
+		const struct sieve_action_def *act_def);
 
 /*
  * Result execution
@@ -134,7 +139,7 @@ struct sieve_result_iterate_context;
 struct sieve_result_iterate_context *sieve_result_iterate_init
 	(struct sieve_result *result);
 const struct sieve_action *sieve_result_iterate_next
-	(struct sieve_result_iterate_context *rictx, bool *keep, void **context);
+	(struct sieve_result_iterate_context *rictx, bool *keep);
 	
 /*
  * Side effects list
@@ -143,7 +148,7 @@ const struct sieve_action *sieve_result_iterate_next
 struct sieve_side_effects_list *sieve_side_effects_list_create
 	(struct sieve_result *result);
 void sieve_side_effects_list_add
-(struct sieve_side_effects_list *list, const struct sieve_side_effect *seffect, 
-	void *context);
+	(struct sieve_side_effects_list *list, 
+		const struct sieve_side_effect *seffect);
 
 #endif

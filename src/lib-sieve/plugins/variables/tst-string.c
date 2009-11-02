@@ -23,13 +23,14 @@
  */
 
 static bool tst_string_registered
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext, 
+		struct sieve_command_registration *cmd_reg);
 static bool tst_string_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command *tst);
 static bool tst_string_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-const struct sieve_command tst_string = { 
+const struct sieve_command_def tst_string = { 
 	"string", 
 	SCT_TEST, 
 	2, 0, FALSE, FALSE,
@@ -45,13 +46,11 @@ const struct sieve_command tst_string = {
  */
 
 static bool tst_string_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int tst_string_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation tst_string_operation = { 
+const struct sieve_operation_def tst_string_operation = { 
 	"STRING",
 	&variables_extension, 
 	EXT_VARIABLES_OPERATION_STRING, 
@@ -74,11 +73,12 @@ enum tst_string_optional {
  */
 
 static bool tst_string_registered
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(validator, cmd_reg, OPT_COMPARATOR);
-	sieve_match_types_link_tags(validator, cmd_reg, OPT_MATCH_TYPE);
+	sieve_comparators_link_tag(valdtr, cmd_reg, OPT_COMPARATOR);
+	sieve_match_types_link_tags(valdtr, cmd_reg, OPT_MATCH_TYPE);
 
 	return TRUE;
 }
@@ -88,31 +88,35 @@ static bool tst_string_registered
  */
 
 static bool tst_string_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst) 
+(struct sieve_validator *valdtr, struct sieve_command *tst) 
 { 		
 	struct sieve_ast_argument *arg = tst->first_positional;
+	const struct sieve_match_type mcht_default = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
+	const struct sieve_comparator cmp_default = 
+		SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
 	
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "source", 1, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "source", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
-	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
 	
 	arg = sieve_ast_argument_next(arg);
 
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
-	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
 
 	/* Validate the key argument to a specified match type */
 	return sieve_match_type_validate
-		(validator, tst, arg, &is_match_type, &i_octet_comparator);
+		(valdtr, tst, arg, &mcht_default, &cmp_default);
 }
 
 /* 
@@ -120,12 +124,12 @@ static bool tst_string_validate
  */
 
 static bool tst_string_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &tst_string_operation);
+	sieve_operation_emit(cgenv->sbin, cmd->ext, &tst_string_operation);
 
  	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;
 	
 	return TRUE;
@@ -136,8 +140,7 @@ static bool tst_string_generate
  */
 
 static bool tst_string_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int opt_code = 0;
 
@@ -161,14 +164,15 @@ static bool tst_string_operation_dump
  */
 
 static int tst_string_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED, 
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	int ret, mret;
 	bool result = TRUE;
 	int opt_code = 0;
-	const struct sieve_comparator *cmp = &i_octet_comparator;
-	const struct sieve_match_type *mtch = &is_match_type;
+	struct sieve_match_type mcht = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
+	struct sieve_comparator cmp = 
+		SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
 	struct sieve_match_context *mctx;
 	struct sieve_coded_stringlist *source;
 	struct sieve_coded_stringlist *key_list;
@@ -181,7 +185,7 @@ static int tst_string_operation_execute
 	
 	/* Handle match-type and comparator operands */
 	if ( (ret=sieve_match_read_optional_operands
-		(renv, address, &opt_code, &cmp, &mtch)) <= 0 )
+		(renv, address, &opt_code, &cmp, &mcht)) <= 0 )
 		return ret;
 	
 	/* Check whether we neatly finished the list of optional operands*/
@@ -208,7 +212,7 @@ static int tst_string_operation_execute
 
 	sieve_runtime_trace(renv, "STRING test");
 
-	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
+	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_list); 	
 
 	/* Iterate through all requested strings to match */
 	src_item = NULL;

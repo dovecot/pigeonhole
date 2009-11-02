@@ -128,6 +128,8 @@ struct sieve_binary_file {
 struct sieve_binary {
 	pool_t pool;
 	int refcount;
+
+	struct sieve_instance *svinst;
 	
 	struct sieve_script *script;
 	
@@ -163,31 +165,39 @@ struct sieve_binary {
 	size_t code_size;
 };
 
-static struct sieve_binary *sieve_binary_create(struct sieve_script *script) 
+static struct sieve_binary *sieve_binary_create
+(struct sieve_instance *svinst, struct sieve_script *script) 
 {
 	pool_t pool;
 	struct sieve_binary *sbin;
-	unsigned int i;
+	const struct sieve_extension *const *ext_preloaded;
+	unsigned int i, ext_count;
 	
 	pool = pool_alloconly_create("sieve_binary", 8192);	
 	sbin = p_new(pool, struct sieve_binary, 1);
 	sbin->pool = pool;
 	sbin->refcount = 1;
+	sbin->svinst = svinst;
+
 	sbin->script = script;
 	if ( script != NULL ) 
 		sieve_script_ref(script);
 	
-	p_array_init(&sbin->linked_extensions, pool, 5);
-	p_array_init(&sbin->extensions, pool, 5);
-	p_array_init(&sbin->extension_index, pool, sieve_extensions_get_count());
+	ext_count = sieve_extensions_get_count(svinst);
+
+	p_array_init(&sbin->linked_extensions, pool, ext_count);
+	p_array_init(&sbin->extensions, pool, ext_count);
+	p_array_init(&sbin->extension_index, pool, ext_count);
 	
 	p_array_init(&sbin->blocks, pool, 3);
 
 	/* Pre-load core language features implemented as 'extensions' */
-	for ( i = 0; i < sieve_preloaded_extensions_count; i++ ) {
-		const struct sieve_extension *ext = sieve_preloaded_extensions[i];
-		if ( ext->binary_load != NULL )
-			(void)ext->binary_load(sbin);		
+	ext_preloaded = sieve_extensions_get_preloaded(svinst, &ext_count); 
+	for ( i = 0; i < ext_count; i++ ) {
+		const struct sieve_extension_def *ext_def = ext_preloaded[i]->def;
+
+		if ( ext_def != NULL && ext_def->binary_load != NULL )
+			(void)ext_def->binary_load(ext_preloaded[i], sbin);		
 	}
 			
 	return sbin;
@@ -195,7 +205,8 @@ static struct sieve_binary *sieve_binary_create(struct sieve_script *script)
 
 struct sieve_binary *sieve_binary_create_new(struct sieve_script *script) 
 {
-	struct sieve_binary *sbin = sieve_binary_create(script); 
+	struct sieve_binary *sbin = sieve_binary_create
+		(sieve_script_svinst(script), script); 
 	
 	/* Extensions block */
 	(void) sieve_binary_block_create(sbin);
@@ -214,17 +225,16 @@ void sieve_binary_ref(struct sieve_binary *sbin)
 
 static inline void sieve_binary_extensions_free(struct sieve_binary *sbin) 
 {
+	struct sieve_binary_extension_reg *const *regs;
 	unsigned int ext_count, i;
 	
 	/* Cleanup binary extensions */
-	ext_count = array_count(&sbin->extensions);	
+	regs = array_get(&sbin->extensions, &ext_count);
 	for ( i = 0; i < ext_count; i++ ) {
-		struct sieve_binary_extension_reg * const *ereg
-			= array_idx(&sbin->extensions, i);
-		const struct sieve_binary_extension *binext = (*ereg)->binext;
+		const struct sieve_binary_extension *binext = regs[i]->binext;
 		
 		if ( binext != NULL && binext->binary_free != NULL )
-			binext->binary_free(sbin);
+			binext->binary_free(regs[i]->extension, sbin, regs[i]->context);
 	}
 }
 
@@ -272,6 +282,11 @@ struct sieve_script *sieve_binary_script(struct sieve_binary *sbin)
 const char *sieve_binary_path(struct sieve_binary *sbin)
 {
 	return sbin->path;
+}
+
+struct sieve_instance *sieve_binary_svinst(struct sieve_binary *sbin)
+{
+	return sbin->svinst;
 }
 
 bool sieve_binary_script_older
@@ -536,6 +551,7 @@ static bool _sieve_binary_save
 (struct sieve_binary *sbin, struct ostream *stream)
 {
 	struct sieve_binary_header header;
+	struct sieve_binary_extension_reg *const *regs;
 	unsigned int ext_count, blk_count, i;
 	uoff_t block_index;
 	
@@ -543,14 +559,12 @@ static bool _sieve_binary_save
 	
 	/* Signal all extensions to finish generating their blocks */
 	
-	ext_count = array_count(&sbin->extensions);	
+	regs = array_get(&sbin->extensions, &ext_count);	
 	for ( i = 0; i < ext_count; i++ ) {
-		struct sieve_binary_extension_reg * const *ereg
-			= array_idx(&sbin->extensions, i);
-		const struct sieve_binary_extension *binext = (*ereg)->binext;
+		const struct sieve_binary_extension *binext = regs[i]->binext;
 		
 		if ( binext != NULL && binext->binary_save != NULL )
-			binext->binary_save(sbin);
+			binext->binary_save(regs[i]->extension, sbin, regs[i]->context);
 	}
 		
 	/* Create header */
@@ -584,7 +598,7 @@ static bool _sieve_binary_save
 		struct sieve_binary_extension_reg * const *ext
 			= array_idx(&sbin->linked_extensions, i);
 		
-		sieve_binary_emit_cstring(sbin, (*ext)->extension->name);
+		sieve_binary_emit_cstring(sbin, sieve_extension_name((*ext)->extension));
 		sieve_binary_emit_unsigned(sbin, (*ext)->block_id);
 	}
 	
@@ -1036,7 +1050,7 @@ static bool _sieve_binary_load_extensions(struct sieve_binary *sbin)
 			const struct sieve_extension *ext;
 			
 			if ( sieve_binary_read_string(sbin, &offset, &extension) ) { 
-				ext = sieve_extension_get_by_name(str_c(extension));	
+				ext = sieve_extension_get_by_name(sbin->svinst, str_c(extension));	
 			
 				if ( ext == NULL ) { 
 					sieve_sys_error("loaded binary %s requires unknown extension '%s'", 
@@ -1161,19 +1175,22 @@ static bool _sieve_binary_load(struct sieve_binary *sbin)
 }
 
 struct sieve_binary *sieve_binary_open
-	(const char *path, struct sieve_script *script)
+(struct sieve_instance *svinst, const char *path, struct sieve_script *script)
 {
+	struct sieve_binary_extension_reg *const *regs;
 	unsigned int ext_count, i;
 	struct sieve_binary *sbin;
 	struct sieve_binary_file *file;
-		
+	
+	i_assert( script == NULL || sieve_script_svinst(script) == svinst );
+	
 	//file = _file_memory_open(path);	
 	file = _file_lazy_open(path);
 	if ( file == NULL )
 		return NULL;
 		
 	/* Create binary object */
-	sbin = sieve_binary_create(script);
+	sbin = sieve_binary_create(svinst, script);
 	sbin->path = p_strdup(sbin->pool, path);
 	sbin->file = file;
 	
@@ -1185,14 +1202,12 @@ struct sieve_binary *sieve_binary_open
 	sieve_binary_activate(sbin);
 	
 	/* Signal open event to extensions */
-	ext_count = array_count(&sbin->extensions);	
+	regs = array_get(&sbin->extensions, &ext_count);	
 	for ( i = 0; i < ext_count; i++ ) {
-		struct sieve_binary_extension_reg * const *ereg
-			= array_idx(&sbin->extensions, i);
-		const struct sieve_binary_extension *binext = (*ereg)->binext;
+		const struct sieve_binary_extension *binext = regs[i]->binext;
 		
 		if ( binext != NULL && binext->binary_open != NULL && 
-			!binext->binary_open(sbin) ) {
+			!binext->binary_open(regs[i]->extension, sbin, regs[i]->context) ) {
 			/* Extension thinks its corrupt */
 			sieve_binary_unref(&sbin);
 			return NULL;
@@ -1224,6 +1239,7 @@ bool sieve_binary_load(struct sieve_binary *sbin)
 
 bool sieve_binary_up_to_date(struct sieve_binary *sbin)
 {
+	struct sieve_binary_extension_reg *const *regs;
 	unsigned int ext_count, i;
 	
 	i_assert(sbin->file != NULL);
@@ -1232,14 +1248,12 @@ bool sieve_binary_up_to_date(struct sieve_binary *sbin)
 		(sbin->script, sbin->file->st.st_mtime) )
 		return FALSE;
 	
-	ext_count = array_count(&sbin->extensions);	
+	regs = array_get(&sbin->extensions, &ext_count);	
 	for ( i = 0; i < ext_count; i++ ) {
-		struct sieve_binary_extension_reg * const *ereg
-			= array_idx(&sbin->extensions, i);
-		const struct sieve_binary_extension *binext = (*ereg)->binext;
+		const struct sieve_binary_extension *binext = regs[i]->binext;
 		
 		if ( binext != NULL && binext->binary_up_to_date != NULL && 
-			!binext->binary_up_to_date(sbin) )
+			!binext->binary_up_to_date(regs[i]->extension, sbin, regs[i]->context) )
 			return FALSE;
 	}
 	
@@ -1252,18 +1266,18 @@ bool sieve_binary_up_to_date(struct sieve_binary *sbin)
  
 void sieve_binary_activate(struct sieve_binary *sbin)
 {
-	unsigned int i;
+	struct sieve_binary_extension_reg *const *regs;
+	unsigned int i, ext_count;
 	
 	(void)sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM, NULL);
 	
 	/* Load other extensions into binary */
-	for ( i = 0; i < array_count(&sbin->linked_extensions); i++ ) {
-		struct sieve_binary_extension_reg * const *ereg = 
-			array_idx(&sbin->linked_extensions, i);
-		const struct sieve_extension *ext = (*ereg)->extension;
+	regs = array_get(&sbin->linked_extensions, &ext_count);
+	for ( i = 0; i < ext_count; i++ ) {
+		const struct sieve_extension *ext = regs[i]->extension;
 		
-		if ( ext != NULL && ext->binary_load != NULL )
-			ext->binary_load(sbin);
+		if ( ext != NULL && ext->def != NULL && ext->def->binary_load != NULL )
+			ext->def->binary_load(ext, sbin);
 	}
 }
 
@@ -1275,18 +1289,17 @@ static inline struct sieve_binary_extension_reg *
 	sieve_binary_extension_create_reg
 (struct sieve_binary *sbin, const struct sieve_extension *ext)
 {
-	int ext_id = SIEVE_EXT_ID(ext);
 	int index = array_count(&sbin->extensions);
 	struct sieve_binary_extension_reg *ereg;
 
-	if ( ext_id < 0 ) return NULL;
+	if ( ext->id < 0 ) return NULL;
 
 	ereg = p_new(sbin->pool, struct sieve_binary_extension_reg, 1);
 	ereg->index = index;
 	ereg->extension = ext;
 	
 	array_idx_set(&sbin->extensions, (unsigned int) index, &ereg);
-	array_idx_set(&sbin->extension_index, (unsigned int) ext_id, &ereg);
+	array_idx_set(&sbin->extension_index, (unsigned int) ext->id, &ereg);
 	
 	return ereg;
 }
@@ -1294,12 +1307,11 @@ static inline struct sieve_binary_extension_reg *
 static inline struct sieve_binary_extension_reg *sieve_binary_extension_get_reg 
 (struct sieve_binary *sbin, const struct sieve_extension *ext, bool create) 
 {
-	int ext_id = SIEVE_EXT_ID(ext);
 	struct sieve_binary_extension_reg *reg = NULL;
 
-	if ( ext_id >= 0 && ext_id < (int) array_count(&sbin->extension_index) ) {
+	if ( ext->id >= 0 && ext->id < (int) array_count(&sbin->extension_index) ) {
 		struct sieve_binary_extension_reg * const *ereg = 
-			array_idx(&sbin->extension_index, (unsigned int) ext_id);
+			array_idx(&sbin->extension_index, (unsigned int) ext->id);
 		
 		reg = *ereg;
 	}
@@ -1335,11 +1347,11 @@ const void *sieve_binary_extension_get_context
 }
 
 void sieve_binary_extension_set
-(struct sieve_binary *sbin, const struct sieve_binary_extension *bext,
-	void *context)
+(struct sieve_binary *sbin, const struct sieve_extension *ext,
+	const struct sieve_binary_extension *bext, void *context)
 {
 	struct sieve_binary_extension_reg *ereg = 
-		sieve_binary_extension_get_reg(sbin, bext->extension, TRUE);
+		sieve_binary_extension_get_reg(sbin, ext, TRUE);
 	
 	if ( ereg != NULL ) {
 		ereg->binext = bext;
@@ -1409,12 +1421,12 @@ int sieve_binary_extension_link
 static inline const struct sieve_extension *_sieve_binary_extension_get_by_index
 (struct sieve_binary *sbin, int index) 
 {
-	struct sieve_binary_extension_reg * const *ext;
+	struct sieve_binary_extension_reg * const *ereg;
 	
 	if ( index < (int) array_count(&sbin->extensions) ) {
-		ext = array_idx(&sbin->extensions, (unsigned int) index);
+		ereg = array_idx(&sbin->extensions, (unsigned int) index);
 		
-		return (*ext)->extension;
+		return (*ereg)->extension;
 	}
 	
 	return NULL;
@@ -1598,7 +1610,7 @@ sieve_size_t sieve_binary_emit_extension
 
 	i_assert(ereg != NULL);
 
-   	_sieve_binary_emit_byte(sbin, offset + ereg->index);
+	_sieve_binary_emit_byte(sbin, offset + ereg->index);
 	return address;
 }
 
@@ -1614,11 +1626,16 @@ void sieve_binary_emit_extension_object
  * Code retrieval
  */
  
-#define ADDR_CODE_AT(binary, address) ((signed char) ((binary)->code[*address]))
-#define ADDR_DATA_AT(binary, address) ((unsigned char) ((binary)->code[*address]))
-#define ADDR_POINTER(binary, address) ((const char *) (&(binary)->code[*address]))
-#define ADDR_BYTES_LEFT(binary, address) ((binary)->code_size - (*address))
-#define ADDR_JUMP(address, offset) (*address) += offset
+#define ADDR_CODE_AT(binary, address) \
+	((signed char) ((binary)->code[*address]))
+#define ADDR_DATA_AT(binary, address) \
+	((unsigned char) ((binary)->code[*address]))
+#define ADDR_POINTER(binary, address) \
+	((const char *) (&(binary)->code[*address]))
+#define ADDR_BYTES_LEFT(binary, address) \
+	((binary)->code_size - (*address))
+#define ADDR_JUMP(address, offset) \
+	(*address) += offset
 
 /* Literals */
 

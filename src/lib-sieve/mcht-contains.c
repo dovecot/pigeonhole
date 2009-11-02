@@ -25,7 +25,7 @@ static int mcht_contains_match
  * Match-type object
  */
 
-const struct sieve_match_type contains_match_type = {
+const struct sieve_match_type_def contains_match_type = {
 	SIEVE_OBJECT("contains", &match_type_operand,	SIEVE_MATCH_TYPE_CONTAINS),
 	TRUE, TRUE,
 	NULL,
@@ -55,11 +55,11 @@ static int mcht_contains_match
 	if ( val == NULL || val_size == 0 ) 
 		return ( key_size == 0 );
 
-	if ( mctx->comparator->char_match == NULL ) 
+	if ( cmp->def == NULL || cmp->def->char_match == NULL ) 
 		return FALSE;
 
 	while ( (vp < vend) && (kp < kend) ) {
-		if ( !cmp->char_match(cmp, &vp, vend, &kp, kend) )
+		if ( !cmp->def->char_match(cmp, &vp, vend, &kp, kend) )
 			vp++;
 	}
     

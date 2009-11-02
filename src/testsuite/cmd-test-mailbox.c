@@ -21,14 +21,14 @@
  */
 
 static bool cmd_test_mailbox_registered
-	(struct sieve_validator *valdtr, 
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext, 
 		struct sieve_command_registration *cmd_reg);
 static bool cmd_test_mailbox_validate
-	(struct sieve_validator *valdtr, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_test_mailbox_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-const struct sieve_command cmd_test_mailbox = { 
+const struct sieve_command_def cmd_test_mailbox = { 
 	"test_mailbox", 
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
@@ -44,15 +44,13 @@ const struct sieve_command cmd_test_mailbox = {
  */ 
 
 static bool cmd_test_mailbox_operation_dump
-	(const struct sieve_operation *op,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_test_mailbox_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
  
 /* Test_mailbox_create operation */
 
-const struct sieve_operation test_mailbox_create_operation = { 
+const struct sieve_operation_def test_mailbox_create_operation = { 
 	"TEST_MAILBOX_CREATE",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_MAILBOX_CREATE,
@@ -62,7 +60,7 @@ const struct sieve_operation test_mailbox_create_operation = {
 
 /* Test_mailbox_delete operation */
 
-const struct sieve_operation test_mailbox_delete_operation = { 
+const struct sieve_operation_def test_mailbox_delete_operation = { 
 	"TEST_MAILBOX_DELETE",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_MAILBOX_DELETE,
@@ -80,7 +78,7 @@ enum test_mailbox_operation {
 	MAILBOX_OP_LAST
 };
 
-const struct sieve_operation *test_mailbox_operations[] = {
+const struct sieve_operation_def *test_mailbox_operations[] = {
 	&test_mailbox_create_operation,
 	&test_mailbox_delete_operation
 };
@@ -96,35 +94,38 @@ struct cmd_test_mailbox_context_data {
  
 static bool cmd_test_mailbox_validate_tag
 	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 
-static const struct sieve_argument test_mailbox_create_tag = { 
+static const struct sieve_argument_def test_mailbox_create_tag = { 
 	"create", 
-	NULL, NULL,
+	NULL,
 	cmd_test_mailbox_validate_tag,
-	NULL, NULL 
+	NULL, NULL, NULL 
 };
 
-static const struct sieve_argument test_mailbox_delete_tag = { 
+static const struct sieve_argument_def test_mailbox_delete_tag = { 
 	"delete", 
-	NULL, NULL, 
+	NULL,
 	cmd_test_mailbox_validate_tag,
-	NULL, NULL 
+	NULL, NULL, NULL 
 };
 
 static bool cmd_test_mailbox_registered
-(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	struct sieve_command_registration *cmd_reg) 
 {
 	/* Register our tags */
-	sieve_validator_register_tag(valdtr, cmd_reg, &test_mailbox_create_tag, 0); 	
-	sieve_validator_register_tag(valdtr, cmd_reg, &test_mailbox_delete_tag, 0); 	
+	sieve_validator_register_tag
+		(valdtr, cmd_reg, ext, &test_mailbox_create_tag, 0); 	
+	sieve_validator_register_tag
+		(valdtr, cmd_reg, ext, &test_mailbox_delete_tag, 0); 	
 
 	return TRUE;
 }
 
 static bool cmd_test_mailbox_validate_tag
 (struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+	struct sieve_command *cmd)
 {
 	struct cmd_test_mailbox_context_data *ctx_data = 
 		(struct cmd_test_mailbox_context_data *) cmd->data;	
@@ -140,7 +141,7 @@ static bool cmd_test_mailbox_validate_tag
 		(sieve_command_pool(cmd), struct cmd_test_mailbox_context_data, 1);
 	cmd->data = ctx_data;
 	
-	if ( (*arg)->argument == &test_mailbox_create_tag ) 
+	if ( sieve_argument_is(*arg, test_mailbox_create_tag) ) 
 		ctx_data->mailbox_op = MAILBOX_OP_CREATE;
 	else
 		ctx_data->mailbox_op = MAILBOX_OP_DELETE;
@@ -156,7 +157,7 @@ static bool cmd_test_mailbox_validate_tag
  */
 
 static bool cmd_test_mailbox_validate
-(struct sieve_validator *valdtr, struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr, struct sieve_command *cmd) 
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	
@@ -180,7 +181,7 @@ static bool cmd_test_mailbox_validate
  */
 
 static bool cmd_test_mailbox_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
 	struct cmd_test_mailbox_context_data *ctx_data =
 		(struct cmd_test_mailbox_context_data *) cmd->data; 
@@ -188,7 +189,7 @@ static bool cmd_test_mailbox_generate
 	i_assert( ctx_data->mailbox_op < MAILBOX_OP_LAST );
 	
 	/* Emit operation */
-	sieve_operation_emit_code(cgenv->sbin, 
+	sieve_operation_emit(cgenv->sbin, cmd->ext,
 		test_mailbox_operations[ctx_data->mailbox_op]);
 	  	
  	/* Generate arguments */
@@ -203,10 +204,11 @@ static bool cmd_test_mailbox_generate
  */
  
 static bool cmd_test_mailbox_operation_dump
-(const struct sieve_operation *op,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_code_dumpf(denv, "%s:", op->mnemonic);
+	const struct sieve_operation *op = &denv->oprtn;
+	
+	sieve_code_dumpf(denv, "%s:", sieve_operation_mnemonic(op));
 	
 	sieve_code_descend(denv);
 	
@@ -219,9 +221,9 @@ static bool cmd_test_mailbox_operation_dump
  */
  
 static int cmd_test_mailbox_operation_execute
-(const struct sieve_operation *op,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	const struct sieve_operation *op = &renv->oprtn;
 	string_t *mailbox = NULL;
 
 	/* 
@@ -239,9 +241,10 @@ static int cmd_test_mailbox_operation_execute
 	 * Perform operation
 	 */
 		
-	sieve_runtime_trace(renv, "%s %s:", op->mnemonic, str_c(mailbox));
+	sieve_runtime_trace
+		(renv, "%s %s:", sieve_operation_mnemonic(op), str_c(mailbox));
 
-	if ( op == &test_mailbox_create_operation )
+	if ( sieve_operation_is(op, test_mailbox_create_operation) )
 		testsuite_mailstore_mailbox_create(renv, str_c(mailbox));
 
 	return SIEVE_EXEC_OK;

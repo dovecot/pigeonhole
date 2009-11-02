@@ -24,36 +24,36 @@
 
 static bool arg_number_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-		struct sieve_command_context *context);
+		struct sieve_command *context);
 static bool arg_string_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-		struct sieve_command_context *context);
+		struct sieve_command *context);
 static bool arg_string_list_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *context);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *context);
 static bool arg_string_list_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-		struct sieve_command_context *context);
+		struct sieve_command *context);
 
 /* Argument objects */
 
-const struct sieve_argument number_argument = { 
+const struct sieve_argument_def number_argument = { 
 	"@number", 
 	NULL, NULL, NULL, NULL,
 	arg_number_generate 
 };
 
-const struct sieve_argument string_argument = { 
+const struct sieve_argument_def string_argument = { 
 	"@string", 
 	NULL, NULL, NULL, NULL,
 	arg_string_generate 
 };
 
-const struct sieve_argument string_list_argument = { 
+const struct sieve_argument_def string_list_argument = { 
 	"@string-list", 
-	NULL, NULL,
+	NULL,
 	arg_string_list_validate, 
-	NULL, 
+	NULL, NULL, 
 	arg_string_list_generate 
 };	
 
@@ -61,7 +61,7 @@ const struct sieve_argument string_list_argument = {
 
 static bool arg_number_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context ATTR_UNUSED)
+	struct sieve_command *cmd ATTR_UNUSED)
 {
 	sieve_opr_number_emit(cgenv->sbin, sieve_ast_argument_number(arg));
 
@@ -70,7 +70,7 @@ static bool arg_number_generate
 
 static bool arg_string_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context ATTR_UNUSED)
+	struct sieve_command *cmd ATTR_UNUSED)
 {
 	sieve_opr_string_emit(cgenv->sbin, sieve_ast_argument_str(arg));
   
@@ -78,14 +78,14 @@ static bool arg_string_generate
 }
 
 static bool arg_string_list_validate
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *context)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *stritem;
 
 	stritem = sieve_ast_strlist_first(*arg);	
 	while ( stritem != NULL ) {
-		if ( !sieve_validator_argument_activate(validator, context, stritem, FALSE) )
+		if ( !sieve_validator_argument_activate(valdtr, cmd, stritem, FALSE) )
 			return FALSE;
 			
 		stritem = sieve_ast_strlist_next(stritem);
@@ -96,7 +96,7 @@ static bool arg_string_list_validate
 
 static bool emit_string_list_operand
 (const struct sieve_codegen_env *cgenv, const struct sieve_ast_argument *strlist,
-	struct sieve_command_context *context)
+	struct sieve_command *cmd)
 {	
 	void *list_context;
 	struct sieve_ast_argument *stritem;
@@ -106,7 +106,7 @@ static bool emit_string_list_operand
 
 	stritem = sieve_ast_strlist_first(strlist);
 	while ( stritem != NULL ) {
-		if ( !sieve_generate_argument(cgenv, stritem, context) )
+		if ( !sieve_generate_argument(cgenv, stritem, cmd) )
 			return FALSE;
 			
 		stritem = sieve_ast_strlist_next(stritem);
@@ -119,20 +119,20 @@ static bool emit_string_list_operand
 
 static bool arg_string_list_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context)
+	struct sieve_command *cmd)
 {
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
-		return ( sieve_generate_argument(cgenv, arg, context) );
+		return ( sieve_generate_argument(cgenv, arg, cmd) );
 
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		bool result = TRUE;
 		
 		if ( sieve_ast_strlist_count(arg) == 1 ) 
 			return ( sieve_generate_argument
-				(cgenv, sieve_ast_strlist_first(arg), context) );
+				(cgenv, sieve_ast_strlist_first(arg), cmd) );
 		else {
 			T_BEGIN { 
-				result=emit_string_list_operand(cgenv, arg, context);
+				result=emit_string_list_operand(cgenv, arg, cmd);
 			} T_END;
 		}
 
@@ -165,7 +165,7 @@ struct sieve_arg_catenated_string *sieve_arg_catenated_string_create
 					
 	catstr = p_new(pool, struct sieve_arg_catenated_string, 1);
 	catstr->str_parts = arglist;
-	(orig_arg)->context = (void *) catstr;
+	(orig_arg)->argument->data = (void *) catstr;
 	
 	return catstr;
 }
@@ -183,11 +183,11 @@ void sieve_arg_catenated_string_add_element
 
 bool sieve_arg_catenated_string_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *cmd) 
+	struct sieve_command *cmd) 
 {
 	struct sieve_binary *sbin = cgenv->sbin;
 	struct sieve_arg_catenated_string *catstr = 
-		(struct sieve_arg_catenated_string *) arg->context;
+		(struct sieve_arg_catenated_string *) arg->argument->data;
 	struct sieve_ast_argument *strpart;
 	
 	if ( _cat_string_count(catstr) == 1 )
@@ -207,11 +207,31 @@ bool sieve_arg_catenated_string_generate
 	return TRUE;
 }
 
+/*
+ * Argument creation
+ */
+
+struct sieve_argument *sieve_argument_create
+(struct sieve_ast *ast, const struct sieve_argument_def *def,
+	const struct sieve_extension *ext, int id_code)
+{
+	struct sieve_argument *arg;
+	pool_t pool;
+
+	pool = sieve_ast_pool(ast);
+	arg = p_new(pool, struct sieve_argument, 1);
+	arg->def = def;
+	arg->ext = ext;
+	arg->id_code = id_code;
+
+	return arg;
+}
+
 /* 
  * Core tests and commands 
  */
 
-const struct sieve_command *sieve_core_tests[] = {
+const struct sieve_command_def *sieve_core_tests[] = {
 	&tst_false, &tst_true,
 	&tst_not, &tst_anyof, &tst_allof,
 	&tst_address, &tst_header, &tst_exists, &tst_size
@@ -219,7 +239,7 @@ const struct sieve_command *sieve_core_tests[] = {
 
 const unsigned int sieve_core_tests_count = N_ELEMENTS(sieve_core_tests);
 
-const struct sieve_command *sieve_core_commands[] = {
+const struct sieve_command_def *sieve_core_commands[] = {
 	&cmd_require, 
 	&cmd_stop, &cmd_if, &cmd_elsif, &cmd_else, 
 	&cmd_keep, &cmd_discard, &cmd_redirect
@@ -231,49 +251,49 @@ const unsigned int sieve_core_commands_count = N_ELEMENTS(sieve_core_commands);
  * Command context 
  */
 
-struct sieve_command_context *sieve_command_prev_context	
-	(struct sieve_command_context *context) 
+struct sieve_command *sieve_command_prev	
+(struct sieve_command *cmd) 
 {
-	struct sieve_ast_node *node = sieve_ast_node_prev(context->ast_node);
+	struct sieve_ast_node *node = sieve_ast_node_prev(cmd->ast_node);
 	
 	if ( node != NULL ) {
-		return node->context;
+		return node->command;
 	}
 	
 	return NULL;
 }
 
-struct sieve_command_context *sieve_command_parent_context	
-	(struct sieve_command_context *context) 
+struct sieve_command *sieve_command_parent
+(struct sieve_command *cmd) 
 {
-	struct sieve_ast_node *node = sieve_ast_node_parent(context->ast_node);
+	struct sieve_ast_node *node = sieve_ast_node_parent(cmd->ast_node);
 	
-	if ( node != NULL ) {
-		return node->context;
-	}
-	
-	return NULL;
+	return ( node != NULL ? node->command : NULL );	
 }
 
-struct sieve_command_context *sieve_command_context_create
-	(struct sieve_ast_node *cmd_node, const struct sieve_command *command,
-		struct sieve_command_registration *reg)
+struct sieve_command *sieve_command_create
+(struct sieve_ast_node *cmd_node, const struct sieve_extension *ext,
+	const struct sieve_command_def *cmd_def, 
+	struct sieve_command_registration *cmd_reg)
 {
-	struct sieve_command_context *cmd;
+	struct sieve_command *cmd;
 	
-	cmd = p_new(sieve_ast_node_pool(cmd_node), struct sieve_command_context, 1);
-	
-	cmd->ast_node = cmd_node;	
-	cmd->command = command;
-	cmd->cmd_reg = reg;
+	cmd = p_new(sieve_ast_node_pool(cmd_node), struct sieve_command, 1);
+
+	cmd->ast_node = cmd_node;
+	cmd->def = cmd_def;
+	cmd->ext = ext;
+	cmd->reg = cmd_reg;
 	
 	cmd->block_exit_command = NULL;
 	
 	return cmd;
 }
 
-const char *sieve_command_type_name(const struct sieve_command *command) {
-	switch ( command->type ) {
+const char *sieve_command_def_type_name
+(const struct sieve_command_def *cmd_def) 
+{
+	switch ( cmd_def->type ) {
 	case SCT_NONE: return "command of unspecified type (bug)";
 	case SCT_TEST: return "test";
 	case SCT_COMMAND: return "command";
@@ -284,8 +304,8 @@ const char *sieve_command_type_name(const struct sieve_command *command) {
 }
 
 struct sieve_ast_argument *sieve_command_add_dynamic_tag
-(struct sieve_command_context *cmd, const struct sieve_argument *tag, 
-	int id_code)
+(struct sieve_command *cmd, const struct sieve_extension *ext,
+	const struct sieve_argument_def *tag, int id_code)
 {
 	struct sieve_ast_argument *arg;
 	
@@ -296,20 +316,19 @@ struct sieve_ast_argument *sieve_command_add_dynamic_tag
 		arg = sieve_ast_argument_tag_create
 			(cmd->ast_node, tag->identifier, cmd->ast_node->source_line);
 	
-	arg->argument = tag;
-	arg->arg_id_code = id_code;
+	arg->argument = sieve_argument_create(cmd->ast_node->ast, tag, ext, id_code);
 	
 	return arg;
 }
 
 struct sieve_ast_argument *sieve_command_find_argument
-(struct sieve_command_context *cmd, const struct sieve_argument *argument)
+(struct sieve_command *cmd, const struct sieve_argument_def *arg_def)
 {
 	struct sieve_ast_argument *arg = sieve_ast_argument_first(cmd->ast_node);
 		
 	/* Visit tagged and optional arguments */
 	while ( arg != NULL ) {
-		if ( arg->argument == argument ) 
+		if ( arg->argument != NULL && arg->argument->def == arg_def ) 
 			return arg;
 			
 		arg = sieve_ast_argument_next(arg);
@@ -324,9 +343,9 @@ struct sieve_ast_argument *sieve_command_find_argument
  * necessary.
  */
 void sieve_command_exit_block_unconditionally
-	(struct sieve_command_context *cmd)
+	(struct sieve_command *cmd)
 {
-	struct sieve_command_context *parent = sieve_command_parent_context(cmd);
+	struct sieve_command *parent = sieve_command_parent(cmd);
 
 	/* Only the first unconditional exit is of importance */
 	if ( parent != NULL && parent->block_exit_command == NULL ) 
@@ -334,7 +353,7 @@ void sieve_command_exit_block_unconditionally
 }
 
 bool sieve_command_block_exits_unconditionally
-	(struct sieve_command_context *cmd)
+	(struct sieve_command *cmd)
 {
 	return ( cmd->block_exit_command != NULL );
 }

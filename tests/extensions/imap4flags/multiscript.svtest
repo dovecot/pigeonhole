@@ -26,9 +26,9 @@ Test message.
 ;
 
 test "Internal Flags" {
-    if hasflag :comparator "i;ascii-numeric" :count "ge" "1" {
-        test_fail "some flags or keywords are already set";
-    }
+	if hasflag :comparator "i;ascii-numeric" :count "ge" "1" {
+ 		test_fail "some flags or keywords are already set";
+	}
 
 	if not test_multiscript [
 		"multiscript/setflag.sieve", 
@@ -37,23 +37,19 @@ test "Internal Flags" {
 		test_fail "failed multiscript execution";	
 	}
 	
-    if not test_result_execute {
-        test_fail "failed to execute first result";
-    }
-
 	test_result_reset;	
 	test_message :folder "folder" 0;
+	
+	if not hasflag "\\answered" {
+        	test_fail "\\answered flag not stored for message";
+	}
 
-    if not hasflag "\\answered" {
-        test_fail "\\answered flag not stored for message";
-    }
+	if not hasflag "$label1" {
+		test_fail "$label1 keyword not stored for message";
+ 	}
 
-    if not hasflag "$label1" {
-        test_fail "$label1 keyword not stored for message";
-    }
-
-    if not hasflag :comparator "i;ascii-numeric" :count "eq" "2" {
-        test_fail "invalid number of flags set for message";
-    }
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "2" {
+		test_fail "invalid number of flags set for message";
+	}
 }
 

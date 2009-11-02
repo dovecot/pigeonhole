@@ -23,26 +23,33 @@ extern const struct sieve_operand_class testsuite_object_oprclass;
  * Testsuite object access 
  */
 
-struct testsuite_object {
-	struct sieve_object object;
+struct testsuite_object_def {
+	struct sieve_object_def obj_def;
 	
 	int (*get_member_id)(const char *identifier);
 	const char *(*get_member_name)(int id);
 
-	bool (*set_member)(const struct sieve_runtime_env *renv, int id, string_t *value);
-	string_t *(*get_member)(const struct sieve_runtime_env *renv, int id);
+	bool (*set_member)
+		(const struct sieve_runtime_env *renv, int id, string_t *value);
+	string_t *(*get_member)
+		(const struct sieve_runtime_env *renv, int id);
+};
+
+struct testsuite_object {
+	struct sieve_object object;
+
+	const struct testsuite_object_def *def;
 };
 
 /* 
  * Testsuite object registration 
  */
 
-const struct testsuite_object *testsuite_object_find
-	(struct sieve_validator *valdtr, const char *identifier);
-void testsuite_object_register
-	(struct sieve_validator *valdtr, const struct testsuite_object *tobj);		
 void testsuite_register_core_objects
 	(struct testsuite_validator_context *ctx);
+void testsuite_object_register
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+		const struct testsuite_object_def *tobj_def);		
 		
 /* 
  * Testsuite object argument 
@@ -50,26 +57,30 @@ void testsuite_register_core_objects
 	
 bool testsuite_object_argument_activate
 	(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
-		struct sieve_command_context *cmd);		
+		struct sieve_command *cmd);		
 		
 /* 
  * Testsuite object code 
  */
 
-const struct testsuite_object *testsuite_object_read
-  (struct sieve_binary *sbin, sieve_size_t *address);
-const struct testsuite_object *testsuite_object_read_member
-  (struct sieve_binary *sbin, sieve_size_t *address, int *member_id);
-const char *testsuite_object_member_name
-	(const struct testsuite_object *object, int member_id);
+bool testsuite_object_read
+  (struct sieve_binary *sbin, sieve_size_t *address, 
+		struct testsuite_object *tobj);
+bool testsuite_object_read_member
+  (struct sieve_binary *sbin, sieve_size_t *address,
+		struct testsuite_object *tobj, int *member_id_r);
+
 bool testsuite_object_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+
+const char *testsuite_object_member_name
+	(const struct testsuite_object *object, int member_id);
 
 /* 
  * Testsuite core objects 
  */
 
-extern const struct testsuite_object message_testsuite_object;
-extern const struct testsuite_object envelope_testsuite_object;
+extern const struct testsuite_object_def message_testsuite_object;
+extern const struct testsuite_object_def envelope_testsuite_object;
 
 #endif /* __TESTSUITE_OBJECTS_H */

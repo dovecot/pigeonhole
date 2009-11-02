@@ -31,21 +31,19 @@
  * Forward declarations 
  */
 
-static const struct sieve_command fileinto_command;
-const struct sieve_operation fileinto_operation;
-const struct sieve_extension fileinto_extension; 
+static const struct sieve_command_def fileinto_command;
+const struct sieve_operation_def fileinto_operation;
+const struct sieve_extension_def fileinto_extension; 
 
 /* 
  * Extension
  */
 
-static bool ext_fileinto_validator_load(struct sieve_validator *validator);
+static bool ext_fileinto_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
-static int ext_my_id = -1;
-
-const struct sieve_extension fileinto_extension = { 
+const struct sieve_extension_def fileinto_extension = { 
 	"fileinto", 
-	&ext_my_id,
 	NULL, NULL,
 	ext_fileinto_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
@@ -53,10 +51,11 @@ const struct sieve_extension fileinto_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERANDS	
 };
 
-static bool ext_fileinto_validator_load(struct sieve_validator *validator)
+static bool ext_fileinto_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register new command */
-	sieve_validator_register_command(validator, &fileinto_command);
+	sieve_validator_register_command(valdtr, ext, &fileinto_command);
 
 	return TRUE;
 }
@@ -69,11 +68,11 @@ static bool ext_fileinto_validator_load(struct sieve_validator *validator)
  */
 
 static bool cmd_fileinto_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_fileinto_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-static const struct sieve_command fileinto_command = { 
+static const struct sieve_command_def fileinto_command = { 
 	"fileinto", 
 	SCT_COMMAND,
 	1, 0, FALSE, FALSE, 
@@ -88,13 +87,11 @@ static const struct sieve_command fileinto_command = {
  */
 
 static bool ext_fileinto_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int ext_fileinto_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address); 
+	(const struct sieve_runtime_env *renv, sieve_size_t *address); 
 
-const struct sieve_operation fileinto_operation = { 
+const struct sieve_operation_def fileinto_operation = { 
 	"FILEINTO",
 	&fileinto_extension,
 	0,
@@ -107,16 +104,16 @@ const struct sieve_operation fileinto_operation = {
  */
 
 static bool cmd_fileinto_validate
-(struct sieve_validator *validator, struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr, struct sieve_command *cmd) 
 { 	
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	
 	if ( !sieve_validate_positional_argument
-		(validator, cmd, arg, "folder", 1, SAAT_STRING) ) {
+		(valdtr, cmd, arg, "folder", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
 	
-	return sieve_validator_argument_activate(validator, cmd, arg, FALSE);
+	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
 /*
@@ -124,15 +121,15 @@ static bool cmd_fileinto_validate
  */
  
 static bool cmd_fileinto_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &fileinto_operation);
+	sieve_operation_emit(cgenv->sbin, cmd->ext, &fileinto_operation);
 
 	/* Emit line number */
-    sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
+	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
 
 	/* Generate arguments */
-	return sieve_generate_arguments(cgenv, ctx, NULL);
+	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
 
 /* 
@@ -140,15 +137,14 @@ static bool cmd_fileinto_generate
  */
  
 static bool ext_fileinto_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "FILEINTO");
 	sieve_code_descend(denv);
 
 	/* Source line */
-    if ( !sieve_code_source_line_dump(denv, address) )
-        return FALSE;
+	if ( !sieve_code_source_line_dump(denv, address) )
+		return FALSE;
 
 	if ( !sieve_code_dumper_print_optional_operands(denv, address) ) {
 		return FALSE;
@@ -162,8 +158,7 @@ static bool ext_fileinto_operation_dump
  */
 
 static int ext_fileinto_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_side_effects_list *slist = NULL; 
 	string_t *folder, *folder_utf7;

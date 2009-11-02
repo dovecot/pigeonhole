@@ -9,6 +9,12 @@
 /* Functionality common to all Sieve command line tools. */
 
 /*
+ * Sieve instance
+ */
+
+struct sieve_instance *sieve_instance;
+
+/*
  * Initialization
  */
 

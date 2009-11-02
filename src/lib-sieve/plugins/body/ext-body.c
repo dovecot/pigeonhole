@@ -48,13 +48,11 @@
  * Extension 
  */
 
-static bool ext_body_validator_load(struct sieve_validator *validator);
+static bool ext_body_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
-int ext_body_my_id = -1;
-
-const struct sieve_extension body_extension = { 
+const struct sieve_extension_def body_extension = { 
 	"body", 
-	&ext_body_my_id,
 	NULL, NULL,
 	ext_body_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
@@ -62,10 +60,11 @@ const struct sieve_extension body_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
-static bool ext_body_validator_load(struct sieve_validator *validator)
+static bool ext_body_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register new test */
-	sieve_validator_register_command(validator, &body_test);
+	sieve_validator_register_command(valdtr, ext, &body_test);
 
 	return TRUE;
 }

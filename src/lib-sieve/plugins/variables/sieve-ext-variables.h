@@ -11,8 +11,23 @@
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 #include "sieve-objects.h"
+#include "sieve-code.h"
 
 #include "ext-variables-limits.h"
+
+/*
+ * Variable extension
+ */
+
+/* FIXME: this is not suitable for future plugin support */
+
+extern const struct sieve_extension_def variables_extension;
+
+static inline const struct sieve_extension *sieve_ext_variables_get_extension
+(struct sieve_instance *svinst)
+{
+	return sieve_extension_register(svinst, &variables_extension, FALSE);
+}
 
 /*
  * Variable scope
@@ -94,30 +109,32 @@ bool sieve_variable_get_identifier
  * Variables access
  */
 
-bool sieve_ext_variables_is_active(struct sieve_validator *valdtr);
+bool sieve_ext_variables_is_active
+	(const struct sieve_extension *var_ext, struct sieve_validator *valdtr);
 
 struct sieve_variable_scope *sieve_ext_variables_get_main_scope
-	(struct sieve_validator *validator);
+	(const struct sieve_extension *var_ext, struct sieve_validator *valdtr);
 	
 struct sieve_variable_storage *sieve_ext_variables_get_storage
-	(struct sieve_interpreter *interp, const struct sieve_extension *ext);
+	(const struct sieve_extension *var_ext, struct sieve_interpreter *interp, 
+		const struct sieve_extension *ext);
 void sieve_ext_variables_set_storage
-	(struct sieve_interpreter *interp, struct sieve_variable_storage *storage,
-		const struct sieve_extension *ext);	
+	(const struct sieve_extension *var_ext, struct sieve_interpreter *interp,
+		struct sieve_variable_storage *storage, const struct sieve_extension *ext);	
 		
 /* 
  * Variable arguments 
  */
 
 bool sieve_variable_argument_activate
-(struct sieve_validator *validator, struct sieve_command_context *cmd, 
-	struct sieve_ast_argument *arg, bool assignment);
+(const struct sieve_extension *this_ext, struct sieve_validator *valdtr,
+	struct sieve_command *cmd, struct sieve_ast_argument *arg, bool assignment);
 	
 /* 
  * Variable operands 
  */
 
-extern const struct sieve_operand variable_operand;
+extern const struct sieve_operand_def variable_operand;
 
 bool sieve_variable_operand_read_data
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand, 
@@ -130,19 +147,26 @@ bool sieve_variable_operand_read
 static inline bool sieve_operand_is_variable
 (const struct sieve_operand *operand)
 {
-	return ( operand != NULL && operand == &variable_operand );
+	return ( operand != NULL && operand->def != NULL && 
+		operand->def == &variable_operand );
 }	
 
 /* 
  * Modifiers 
  */
 
-struct sieve_variables_modifier {
-	struct sieve_object object;
+struct sieve_variables_modifier_def {
+	struct sieve_object_def obj_def;
 	
 	unsigned int precedence;
 	
 	bool (*modify)(string_t *in, string_t **result);
+};
+
+struct sieve_variables_modifier {
+	struct sieve_object object;
+		
+	const struct sieve_variables_modifier_def *def;
 };
 
 extern const struct sieve_operand_class sieve_variables_modifier_operand_class;
@@ -151,14 +175,16 @@ extern const struct sieve_operand_class sieve_variables_modifier_operand_class;
 #define SIEVE_VARIABLES_DEFINE_MODIFIERS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 void sieve_variables_modifier_register
-	(struct sieve_validator *valdtr, const struct sieve_variables_modifier *smodf);
+	(const struct sieve_extension *var_ext, struct sieve_validator *valdtr, 
+		const struct sieve_extension *ext, 
+		const struct sieve_variables_modifier_def *smodf);
 
 /*
  * Code dumping
  */
 
 void sieve_ext_variables_dump_set_scope
-(const struct sieve_dumptime_env *denv, const struct sieve_extension *ext, 
-	struct sieve_variable_scope *scope);
+(const struct sieve_extension *var_ext, const struct sieve_dumptime_env *denv, 
+	const struct sieve_extension *ext, struct sieve_variable_scope *scope);
 
 #endif /* __SIEVE_EXT_VARIABLES_H */

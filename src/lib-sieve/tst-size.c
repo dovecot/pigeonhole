@@ -9,7 +9,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
-#include "sieve-code-dumper.h"
+#include "sieve-dump.h"
 
 /* 
  * Size test 
@@ -19,16 +19,16 @@
  */
 
 static bool tst_size_registered
-	(struct sieve_validator *validator, 
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext, 
 		struct sieve_command_registration *cmd_reg);
 static bool tst_size_pre_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command *tst);
 static bool tst_size_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command *tst);
 static bool tst_size_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx); 
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx); 
 
-const struct sieve_command tst_size = { 
+const struct sieve_command_def tst_size = { 
 	"size", 
 	SCT_TEST, 
 	1, 0, FALSE, FALSE,
@@ -44,13 +44,11 @@ const struct sieve_command tst_size = {
  */
 
 static bool tst_size_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int tst_size_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation tst_size_over_operation = { 
+const struct sieve_operation_def tst_size_over_operation = { 
 	"SIZE-OVER",
 	NULL, 
 	SIEVE_OPERATION_SIZE_OVER,
@@ -58,7 +56,7 @@ const struct sieve_operation tst_size_over_operation = {
 	tst_size_operation_execute 
 };
 
-const struct sieve_operation tst_size_under_operation = {
+const struct sieve_operation_def tst_size_under_operation = {
 	"SIZE-UNDER",
 	NULL, 
 	SIEVE_OPERATION_SIZE_UNDER,
@@ -83,14 +81,14 @@ struct tst_size_context_data {
  */
 
 static bool tst_size_validate_over_tag
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *tst)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	struct sieve_command *tst)
 {
 	struct tst_size_context_data *ctx_data = 
 		(struct tst_size_context_data *) tst->data;	
 	
 	if ( ctx_data->type != SIZE_UNASSIGNED ) {
-		sieve_argument_validate_error(validator, *arg, TST_SIZE_ERROR_DUP_TAG);
+		sieve_argument_validate_error(valdtr, *arg, TST_SIZE_ERROR_DUP_TAG);
 		return FALSE;		
 	}
 	
@@ -103,14 +101,14 @@ static bool tst_size_validate_over_tag
 }
 
 static bool tst_size_validate_under_tag
-(struct sieve_validator *validator, struct sieve_ast_argument **arg ATTR_UNUSED, 
-	struct sieve_command_context *tst)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg ATTR_UNUSED, 
+	struct sieve_command *tst)
 {
 	struct tst_size_context_data *ctx_data = 
 		(struct tst_size_context_data *) tst->data;	
 	
 	if ( ctx_data->type != SIZE_UNASSIGNED ) {
-		sieve_argument_validate_error(validator, *arg, TST_SIZE_ERROR_DUP_TAG);
+		sieve_argument_validate_error(valdtr, *arg, TST_SIZE_ERROR_DUP_TAG);
 		return FALSE;		
 	}
 	
@@ -126,26 +124,27 @@ static bool tst_size_validate_under_tag
  * Test registration 
  */
 
-static const struct sieve_argument size_over_tag = { 
+static const struct sieve_argument_def size_over_tag = { 
 	"over", 
-	NULL, NULL,
+	NULL,
 	tst_size_validate_over_tag, 
-	NULL, NULL 
+	NULL, NULL, NULL
 };
 
-static const struct sieve_argument size_under_tag = { 
+static const struct sieve_argument_def size_under_tag = { 
 	"under", 
-	NULL, NULL, 
+	NULL,
 	tst_size_validate_under_tag, 
-	NULL, NULL 
+	NULL, NULL,  NULL
 };
 
 static bool tst_size_registered
-(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext ATTR_UNUSED, 
+	struct sieve_command_registration *cmd_reg) 
 {
 	/* Register our tags */
-	sieve_validator_register_tag(validator, cmd_reg, &size_over_tag, 0); 	
-	sieve_validator_register_tag(validator, cmd_reg, &size_under_tag, 0); 	
+	sieve_validator_register_tag(valdtr, cmd_reg, NULL, &size_over_tag, 0); 	
+	sieve_validator_register_tag(valdtr, cmd_reg, NULL, &size_under_tag, 0); 	
 
 	return TRUE;
 }
@@ -155,8 +154,8 @@ static bool tst_size_registered
  */
 
 static bool tst_size_pre_validate
-(struct sieve_validator *validator ATTR_UNUSED, 
-	struct sieve_command_context *tst) 
+(struct sieve_validator *valdtr ATTR_UNUSED, 
+	struct sieve_command *tst) 
 {
 	struct tst_size_context_data *ctx_data;
 	
@@ -169,25 +168,25 @@ static bool tst_size_pre_validate
 }
 
 static bool tst_size_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst) 
+	(struct sieve_validator *valdtr, struct sieve_command *tst) 
 {
 	struct tst_size_context_data *ctx_data = 
 		(struct tst_size_context_data *) tst->data;
 	struct sieve_ast_argument *arg = tst->first_positional;
 	
 	if ( ctx_data->type == SIZE_UNASSIGNED ) {
-		sieve_command_validate_error(validator, tst, 
+		sieve_command_validate_error(valdtr, tst, 
 			"the size test requires either the :under or the :over tag "
 			"to be specified");
 		return FALSE;		
 	}
 		
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "limit", 1, SAAT_NUMBER) ) {
+		(valdtr, tst, arg, "limit", 1, SAAT_NUMBER) ) {
 		return FALSE;
 	}
 	
-	return sieve_validator_argument_activate(validator, tst, arg, FALSE);
+	return sieve_validator_argument_activate(valdtr, tst, arg, FALSE);
 }
 
 /* 
@@ -195,18 +194,18 @@ static bool tst_size_validate
  */
 
 bool tst_size_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *tst) 
 {
 	struct tst_size_context_data *ctx_data = 
-		(struct tst_size_context_data *) ctx->data;
+		(struct tst_size_context_data *) tst->data;
 
 	if ( ctx_data->type == SIZE_OVER ) 
-		sieve_operation_emit_code(cgenv->sbin, &tst_size_over_operation);
+		sieve_operation_emit(cgenv->sbin, NULL, &tst_size_over_operation);
 	else
-		sieve_operation_emit_code(cgenv->sbin, &tst_size_under_operation);
+		sieve_operation_emit(cgenv->sbin, NULL, &tst_size_under_operation);
 
  	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, tst, NULL) )
 		return FALSE;
 	  
 	return TRUE;
@@ -217,10 +216,10 @@ bool tst_size_generate
  */
 
 static bool tst_size_operation_dump
-(const struct sieve_operation *op,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-    sieve_code_dumpf(denv, "%s", op->mnemonic);
+	const struct sieve_operation *op = &denv->oprtn;
+	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
 	sieve_code_descend(denv);
 	
 	return 
@@ -245,9 +244,9 @@ static inline bool tst_size_get
 }
 
 static int tst_size_operation_execute
-(const struct sieve_operation *op,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	const struct sieve_operation *op = &renv->oprtn;
 	sieve_number_t mail_size, limit;
 		
 	/* Read size limit */
@@ -256,7 +255,7 @@ static int tst_size_operation_execute
 		return SIEVE_EXEC_BIN_CORRUPT;	
 	}
 
-	sieve_runtime_trace(renv, "%s test", op->mnemonic);
+	sieve_runtime_trace(renv, "%s test", sieve_operation_mnemonic(op));
 	
 	/* Get the size of the message */
 	if ( !tst_size_get(renv, &mail_size) ) {
@@ -266,7 +265,7 @@ static int tst_size_operation_execute
 	}
 	
 	/* Perform the test */
-	if ( op == &tst_size_over_operation )
+	if ( sieve_operation_is(op, tst_size_over_operation) )
 		sieve_interpreter_set_test_result(renv->interp, (mail_size > limit));
 	else
 		sieve_interpreter_set_test_result(renv->interp, (mail_size < limit));

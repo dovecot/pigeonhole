@@ -26,9 +26,9 @@
  */
 
 static bool tst_date_validate
-	(struct sieve_validator *valdtr, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command *tst);
 static bool tst_date_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
  
 /* Address test
  *
@@ -39,9 +39,10 @@ static bool tst_date_generate
  */
 
 static bool tst_date_registered
-	(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg);
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+		struct sieve_command_registration *cmd_reg);
 
-const struct sieve_command date_test = { 
+const struct sieve_command_def date_test = { 
 	"date", 
 	SCT_TEST, 
 	3, 0, FALSE, FALSE,
@@ -61,9 +62,10 @@ const struct sieve_command date_test = {
  */
 
 static bool tst_currentdate_registered
-	(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg);
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+		struct sieve_command_registration *cmd_reg);
 
-const struct sieve_command currentdate_test = { 
+const struct sieve_command_def currentdate_test = { 
 	"currentdate", 
 	SCT_TEST, 
 	2, 0, FALSE, FALSE,
@@ -81,27 +83,27 @@ const struct sieve_command currentdate_test = {
 /* Forward declarations */
 
 static bool tag_zone_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg,
-		struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
+		struct sieve_command *cmd);
 static bool tag_zone_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 
 /* Argument objects */
 
-static const struct sieve_argument date_zone_tag = {
+static const struct sieve_argument_def date_zone_tag = {
  	"zone",
-	NULL, NULL,
-	tag_zone_validate,
 	NULL,
+	tag_zone_validate,
+	NULL, NULL,
 	tag_zone_generate
 };
 
-static const struct sieve_argument date_originalzone_tag = {
+static const struct sieve_argument_def date_originalzone_tag = {
 	"originalzone",
-	NULL, NULL,
-	tag_zone_validate,
 	NULL,
+	tag_zone_validate,
+	NULL, NULL,
 	tag_zone_generate
 };
 
@@ -110,13 +112,11 @@ static const struct sieve_argument date_originalzone_tag = {
  */
 
 static bool tst_date_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int tst_date_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation date_operation = { 
+const struct sieve_operation_def date_operation = { 
 	"DATE",
 	&date_extension,
 	EXT_DATE_OPERATION_DATE,
@@ -124,7 +124,7 @@ const struct sieve_operation date_operation = {
 	tst_date_operation_execute 
 };
 
-const struct sieve_operation currentdate_operation = { 
+const struct sieve_operation_def currentdate_operation = { 
 	"CURRENTDATE",
 	&date_extension,
 	EXT_DATE_OPERATION_CURRENTDATE,
@@ -146,18 +146,18 @@ enum tst_date_optional {
  */
 
 static bool tag_zone_validate
-(struct sieve_validator *validator, struct sieve_ast_argument **arg,
-    struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
+    struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 
 	if ( (bool) cmd->data ) {
-		if ( cmd->command == &date_test ) {
-			sieve_argument_validate_error(validator, *arg,
+		if ( sieve_command_is(cmd, date_test) ) {
+			sieve_argument_validate_error(valdtr, *arg,
 				"multiple :zone or :originalzone arguments specified for "
 				"the currentdate test");
 		} else {
-			sieve_argument_validate_error(validator, *arg,
+			sieve_argument_validate_error(valdtr, *arg,
 				"multiple :zone arguments specified for the currentdate test");
 		}
 		return FALSE;
@@ -167,13 +167,13 @@ static bool tag_zone_validate
  	*arg = sieve_ast_argument_next(*arg);
 
 	/* :content tag has a string-list argument */
-	if ( tag->argument == &date_zone_tag ) {
+	if ( sieve_argument_is(tag, date_zone_tag) ) {
 
 		/* Check syntax:
 		 *   :zone <time-zone: string>
 		 */
 		if ( !sieve_validate_tag_parameter
-			(validator, cmd, tag, *arg, SAAT_STRING) ) {
+			(valdtr, cmd, tag, *arg, SAAT_STRING) ) {
 			return FALSE;
 		}
 
@@ -182,7 +182,7 @@ static bool tag_zone_validate
 			const char *zone = sieve_ast_argument_strc(*arg);
 	
 			if ( !ext_date_parse_timezone(zone, NULL) ) {
-				sieve_argument_validate_warning(validator, *arg,
+				sieve_argument_validate_warning(valdtr, *arg,
 					"specified :zone argument '%s' is not a valid timezone",
 					str_sanitize(zone, 40));
 			}		
@@ -203,27 +203,29 @@ static bool tag_zone_validate
  */
 
 static bool tst_date_registered
-(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	struct sieve_command_registration *cmd_reg) 
 {
 	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
 	sieve_match_types_link_tags(valdtr, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
 
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &date_zone_tag, OPT_DATE_ZONE);
+		(valdtr, cmd_reg, ext, &date_zone_tag, OPT_DATE_ZONE);
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &date_originalzone_tag, OPT_DATE_ZONE);
+		(valdtr, cmd_reg, ext, &date_originalzone_tag, OPT_DATE_ZONE);
 
 	return TRUE;
 }
 
 static bool tst_currentdate_registered
-(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	struct sieve_command_registration *cmd_reg) 
 {
 	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
 	sieve_match_types_link_tags(valdtr, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
 
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &date_zone_tag, OPT_DATE_ZONE);
+		(valdtr, cmd_reg, ext, &date_zone_tag, OPT_DATE_ZONE);
 
 	return TRUE;
 }
@@ -233,14 +235,18 @@ static bool tst_currentdate_registered
  */
  
 static bool tst_date_validate
-	(struct sieve_validator *valdtr, struct sieve_command_context *tst) 
+(struct sieve_validator *valdtr, struct sieve_command *tst) 
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
 	unsigned int arg_offset = 0 ;
+	const struct sieve_match_type mcht_default = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
+	const struct sieve_comparator cmp_default = 
+		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 		
 	/* Check header name */
 
-	if ( tst->command == &date_test ) {
+	if ( sieve_command_is(tst, date_test) ) {
 		arg_offset = 1;
 
 		if ( !sieve_validate_positional_argument
@@ -281,7 +287,7 @@ static bool tst_date_validate
 	
 	/* Validate the key argument to a specified match type */
 	return sieve_match_type_validate
-		(valdtr, tst, arg, &is_match_type, &i_ascii_casemap_comparator); 
+		(valdtr, tst, arg, &mcht_default, &cmp_default); 
 }
 
 /* 
@@ -289,12 +295,12 @@ static bool tst_date_validate
  */
 
 static bool tst_date_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *tst) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *tst) 
 {
-	if ( tst->command == &date_test )
-		sieve_operation_emit_code(cgenv->sbin, &date_operation);
-	else if ( tst->command == &currentdate_test )
-		sieve_operation_emit_code(cgenv->sbin, &currentdate_operation);
+	if ( sieve_command_is(tst, date_test) )
+		sieve_operation_emit(cgenv->sbin, tst->ext, &date_operation);
+	else if ( sieve_command_is(tst, currentdate_test) )
+		sieve_operation_emit(cgenv->sbin, tst->ext, &currentdate_operation);
 	else
 		i_unreached();
 
@@ -304,19 +310,14 @@ static bool tst_date_generate
 
 static bool tag_zone_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-    struct sieve_command_context *cmd)
+    struct sieve_command *cmd)
 {
-	struct sieve_ast_argument *param = arg->parameters;
-
-	if ( param == NULL ) {
+	if ( arg->parameters == NULL ) {
 		sieve_opr_omitted_emit(cgenv->sbin);
 		return TRUE;
 	}
 
-	if ( param->argument != NULL && param->argument->generate != NULL )
-		return param->argument->generate(cgenv, param, cmd);
-
-	return FALSE;	
+	return sieve_generate_argument_parameters(cgenv, cmd, arg);
 }
 
 /* 
@@ -324,13 +325,13 @@ static bool tag_zone_generate
  */
 
 static bool tst_date_operation_dump
-(const struct sieve_operation *op,	
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int opt_code = 0;
-	const struct sieve_operand *operand;
+	const struct sieve_operation *op = &denv->oprtn;
+	struct sieve_operand operand;
 
-	sieve_code_dumpf(denv, "%s", op->mnemonic);
+	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
 	sieve_code_descend(denv);
 	
 	/* Handle any optional arguments */
@@ -342,17 +343,16 @@ static bool tst_date_operation_dump
 		case SIEVE_MATCH_OPT_END:
 			break;
 		case OPT_DATE_ZONE:
-			operand = sieve_operand_read(denv->sbin, address);
-			if ( operand == NULL ) {
+			if ( !sieve_operand_read(denv->sbin, address, &operand) ) {
 				sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 				return FALSE;
 			}				
 
-			if ( sieve_operand_is_omitted(operand) ) {
+			if ( sieve_operand_is_omitted(&operand) ) {
 				sieve_code_dumpf(denv, "zone: ORIGINAL");
 			} else {
 				if ( !sieve_opr_string_dump_data
-					(denv, operand, address, "zone") )
+					(denv, &operand, address, "zone") )
 					return FALSE;
 			}
 			break;
@@ -361,7 +361,7 @@ static bool tst_date_operation_dump
 		}
 	} while ( opt_code != SIEVE_MATCH_OPT_END );
 
-	if ( op == &date_operation &&
+	if ( sieve_operation_is(op, date_operation) &&
 		!sieve_opr_string_dump(denv, address, "header name") )
 		return FALSE;
 
@@ -375,15 +375,17 @@ static bool tst_date_operation_dump
  */
 
 static int tst_date_operation_execute
-(const struct sieve_operation *op, 
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
+	const struct sieve_operation *op = &renv->oprtn;
 	bool result = TRUE, zone_specified = FALSE, got_date = FALSE, matched = FALSE;
 	int opt_code = 0;
 	const struct sieve_message_data *msgdata = renv->msgdata;
-	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
-	const struct sieve_match_type *mtch = &is_match_type;
-	const struct sieve_operand *operand;
+	struct sieve_match_type mcht = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
+	struct sieve_comparator cmp = 
+		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
+	struct sieve_operand operand;
 	struct sieve_match_context *mctx;
 	string_t *header_name = NULL, *date_part = NULL, *zone = NULL;
 	struct sieve_coded_stringlist *key_list;
@@ -396,22 +398,21 @@ static int tst_date_operation_execute
 	/* Read optional operands */
 	do {
 		if ( (ret=sieve_match_read_optional_operands
-			(renv, address, &opt_code, &cmp, &mtch)) <= 0 )
+			(renv, address, &opt_code, &cmp, &mcht)) <= 0 )
 			return ret;
 
 		switch ( opt_code ) {
 		case SIEVE_MATCH_OPT_END:
 			break;
 		case OPT_DATE_ZONE:
-			operand = sieve_operand_read(renv->sbin, address);
-			if ( operand == NULL ) {
+			if ( !sieve_operand_read(renv->sbin, address, &operand) ) {
 				sieve_runtime_trace_error(renv, "invalid operand");
 				return SIEVE_EXEC_BIN_CORRUPT;
 			}
 
-			if ( !sieve_operand_is_omitted(operand) ) {
+			if ( !sieve_operand_is_omitted(&operand) ) {
 				if ( !sieve_opr_string_read_data
-					(renv, operand, address, &zone) ) {
+					(renv, &operand, address, &zone) ) {
 					sieve_runtime_trace_error(renv, "invalid zone operand");
 					return SIEVE_EXEC_BIN_CORRUPT;
 				}
@@ -426,7 +427,7 @@ static int tst_date_operation_execute
 	} while ( opt_code != SIEVE_MATCH_OPT_END );
 
 
-	if ( op == &date_operation ) {
+	if ( sieve_operation_is(op, date_operation) ) {
 		/* Read header name */
 		if ( !sieve_opr_string_read(renv, address, &header_name) ) {
 			sieve_runtime_trace_error(renv, "invalid header-name operand");
@@ -448,13 +449,13 @@ static int tst_date_operation_execute
 
 	/* Perform test */
 
-	sieve_runtime_trace(renv, "%s test", op->mnemonic);
+	sieve_runtime_trace(renv, "%s test", sieve_operation_mnemonic(op));
 
 	/* Get the date value */
 
 	local_time = ext_date_get_current_date(renv, &local_zone);
 
-	if ( op == 	&date_operation ) {
+	if ( sieve_operation_is(op, date_operation) ) {
 		const char *header_value;
 		const char *date_string;
 
@@ -482,7 +483,7 @@ static int tst_date_operation_execute
 				got_date = TRUE;
 			}
 		}
-	} else if ( op == &currentdate_operation ) {
+	} else if ( sieve_operation_is(op, currentdate_operation) ) {
 		/* Use time stamp recorded at the time the script first started */
 
 		date_value = local_time;
@@ -519,7 +520,7 @@ static int tst_date_operation_execute
 	}
 
 	/* Initialize match */
-	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
+	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_list); 	
 	
 	if ( got_date && part_value != NULL ) {		
 		/* Match value */

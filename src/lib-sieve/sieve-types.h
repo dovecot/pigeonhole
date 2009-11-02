@@ -15,12 +15,23 @@
  * Forward declarations
  */
 
+struct sieve_instance;
+struct sieve_callbacks;
+
 struct sieve_script;
 struct sieve_binary;
 
 struct sieve_message_data;
 struct sieve_script_env;
 struct sieve_exec_status;
+
+/*
+ * Callbacks
+ */
+
+struct sieve_callbacks {
+	const char *(*get_setting)(void *context, const char *identifier);
+};
 
 /* 
  * Message data

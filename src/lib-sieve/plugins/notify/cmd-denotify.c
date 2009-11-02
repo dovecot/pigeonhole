@@ -27,11 +27,12 @@
  */
 
 static bool cmd_denotify_registered
-	(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg);
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+		struct sieve_command_registration *cmd_reg);
 static bool cmd_denotify_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command cmd_denotify = {
+const struct sieve_command_def cmd_denotify = {
 	"denotify",
 	SCT_COMMAND,
 	0, 0, FALSE, FALSE,
@@ -49,20 +50,19 @@ const struct sieve_command cmd_denotify = {
 /* Forward declarations */
 
 static bool tag_match_type_is_instance_of
-	(struct sieve_validator *validator, struct sieve_command_context *cmd,
-		struct sieve_ast_argument *arg);
+	(struct sieve_validator *validator, struct sieve_command *cmd,
+		const struct sieve_extension *ext, const char *identifier, void **data);
 static bool tag_match_type_validate
 	(struct sieve_validator *validator, struct sieve_ast_argument **arg,
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 
 /* Argument object */
 
-const struct sieve_argument denotify_match_tag = {
+const struct sieve_argument_def denotify_match_tag = {
 	"MATCH-TYPE-STRING",
 	tag_match_type_is_instance_of,
-	NULL,
 	tag_match_type_validate,
-	NULL, NULL
+	NULL, NULL, NULL,
 };
 
 /* Codes for optional operands */
@@ -79,13 +79,11 @@ enum cmd_denotify_optional {
  */
 
 static bool cmd_denotify_operation_dump
-	(const struct sieve_operation *op ATTR_UNUSED,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_denotify_operation_execute
-	(const struct sieve_operation *op ATTR_UNUSED,
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation denotify_operation = { 
+const struct sieve_operation_def denotify_operation = { 
 	"DENOTIFY",
 	&notify_extension,
 	EXT_NOTIFY_OPERATION_DENOTIFY,
@@ -98,17 +96,21 @@ const struct sieve_operation denotify_operation = {
  */
 
 static bool tag_match_type_is_instance_of
-(struct sieve_validator *valdtr, struct sieve_command_context *cmd,
-	struct sieve_ast_argument *arg)
+(struct sieve_validator *valdtr, struct sieve_command *cmd,
+	const struct sieve_extension *ext, const char *identifier, void **data)
 {
-	return match_type_tag.is_instance_of(valdtr, cmd, arg);
+	return match_type_tag.is_instance_of(valdtr, cmd, ext, identifier, data);
 }
 
 static bool tag_match_type_validate
 (struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-	struct sieve_command_context *cmd)
+	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
+	const struct sieve_match_type mcht_default = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
+	const struct sieve_comparator cmp_default = 
+		SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
 
 	if ( !match_type_tag.validate(valdtr, arg, cmd) )
 		return FALSE;
@@ -134,12 +136,13 @@ static bool tag_match_type_validate
 		return FALSE;
 
 	if ( !sieve_match_type_validate
-		(valdtr, cmd, *arg, &is_match_type, &i_octet_comparator) )
+		(valdtr, cmd, *arg, &mcht_default, &cmp_default) )
 		return FALSE;
 
-	tag->argument = &match_type_tag;
+	tag->argument->def = &match_type_tag;
+	tag->argument->ext = NULL;
 
-	(*arg)->arg_id_code = OPT_MATCH_KEY;
+	(*arg)->argument->id_code = OPT_MATCH_KEY;
 
 	*arg = sieve_ast_argument_next(*arg);
 
@@ -151,12 +154,13 @@ static bool tag_match_type_validate
  */
 
 static bool cmd_denotify_registered
-(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg)
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	struct sieve_command_registration *cmd_reg)
 {
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &denotify_match_tag, OPT_MATCH_TYPE);
+		(valdtr, cmd_reg, ext, &denotify_match_tag, OPT_MATCH_TYPE);
 
-	ext_notify_register_importance_tags(valdtr, cmd_reg, OPT_IMPORTANCE);
+	ext_notify_register_importance_tags(valdtr, cmd_reg, ext, OPT_IMPORTANCE);
 
 	return TRUE;
 }
@@ -166,15 +170,15 @@ static bool cmd_denotify_registered
  */
 
 static bool cmd_denotify_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
-	sieve_operation_emit_code(cgenv->sbin, &denotify_operation);
+	sieve_operation_emit(cgenv->sbin, cmd->ext, &denotify_operation);
 
 	/* Emit source line */
-	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
+	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
 
 	/* Generate arguments */
-	return sieve_generate_arguments(cgenv, ctx, NULL);
+	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
 
 /* 
@@ -182,12 +186,12 @@ static bool cmd_denotify_generate
  */
  
 static bool cmd_denotify_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
+	const struct sieve_operation *op = &denv->oprtn;
 	int opt_code = 1;
 	
-	sieve_code_dumpf(denv, "%s", op->mnemonic);
+	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
 	sieve_code_descend(denv);	
 
 	/* Source line */
@@ -231,12 +235,14 @@ static bool cmd_denotify_operation_dump
  */
 
 static int cmd_denotify_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	int opt_code = 1;
 	sieve_number_t importance = 1;
-	const struct sieve_match_type *match_type = NULL;
+	struct sieve_match_type mcht = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
+/*	const struct sieve_comparator cmp = 
+		SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);*/
 	string_t *match_key = NULL; 
 	unsigned int source_line;
 
@@ -262,7 +268,7 @@ static int cmd_denotify_operation_execute
 			case 0:
 				break;
 			case OPT_MATCH_TYPE:
-				if ( (match_type = sieve_opr_match_type_read(renv, address)) == NULL ) {
+				if ( !sieve_opr_match_type_read(renv, address, &mcht) ) {
 					sieve_runtime_trace_error(renv, "invalid match type operand");
 					return SIEVE_EXEC_BIN_CORRUPT;
 				}

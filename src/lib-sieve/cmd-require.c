@@ -17,9 +17,9 @@
  */
 
 static bool cmd_require_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 
-const struct sieve_command cmd_require = { 
+const struct sieve_command_def cmd_require = { 
 	"require", 
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
@@ -33,19 +33,18 @@ const struct sieve_command cmd_require = {
  */
 
 static bool cmd_require_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr, struct sieve_command *cmd) 
 {
 	bool result = TRUE;
 	struct sieve_ast_argument *arg;
-	struct sieve_command_context *prev_context = 
-		sieve_command_prev_context(cmd);
+	struct sieve_command *prev = sieve_command_prev(cmd);
 	
 	/* Check valid command placement */
 	if ( !sieve_command_is_toplevel(cmd) ||
-		( !sieve_command_is_first(cmd) && prev_context != NULL &&
-			prev_context->command != &cmd_require ) ) 
+		( !sieve_command_is_first(cmd) && prev != NULL &&
+			!sieve_command_is(prev, cmd_require) ) ) 
 	{	
-		sieve_command_validate_error(validator, cmd, 
+		sieve_command_validate_error(valdtr, cmd, 
 			"require commands can only be placed at top level "
 			"at the beginning of the file");
 		return FALSE;
@@ -57,7 +56,7 @@ static bool cmd_require_validate
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		/* Single string */
 		const struct sieve_extension *ext = sieve_validator_extension_load
-			(validator, cmd, arg, sieve_ast_argument_str(arg));	
+			(valdtr, cmd, arg, sieve_ast_argument_str(arg));	
 
 		if ( ext == NULL ) result = FALSE;
 		
@@ -67,7 +66,7 @@ static bool cmd_require_validate
 		
 		while ( stritem != NULL ) {
 			const struct sieve_extension *ext = sieve_validator_extension_load
-				(validator, cmd, stritem, sieve_ast_strlist_str(stritem));
+				(valdtr, cmd, stritem, sieve_ast_strlist_str(stritem));
 
 			if ( ext == NULL ) result = FALSE;
 	
@@ -75,7 +74,7 @@ static bool cmd_require_validate
 		}
 	} else {
 		/* Something else */
-		sieve_argument_validate_error(validator, arg, 
+		sieve_argument_validate_error(valdtr, arg, 
 			"the require command accepts a single string or string list argument, "
 			"but %s was found", 
 			sieve_ast_argument_name(arg));

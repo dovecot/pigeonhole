@@ -17,37 +17,38 @@ struct sieve_extension_objects {
 };
 
 /* 
- * Extension object 
+ * Extension definition
  */
 
-struct sieve_extension {
+struct sieve_extension_def {
 	const char *name;
 
-	int *const _id;
-		
-	bool (*load)(void);
-	void (*unload)(void);
+	/* Registration */		
+	bool (*load)(const struct sieve_extension *ext, void **);
+	void (*unload)(const struct sieve_extension *ext);
 
+	/* Compilation */
 	bool (*validator_load)
-		(struct sieve_validator *validator);	
+		(const struct sieve_extension *ext, struct sieve_validator *validator);	
 	bool (*generator_load)
-		(const struct sieve_codegen_env *cgenv);
+		(const struct sieve_extension *ext, const struct sieve_codegen_env *cgenv);
 	bool (*interpreter_load)
-		(const struct sieve_runtime_env *renv, sieve_size_t *address);
+		(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+			sieve_size_t *address);
 	bool (*binary_load)
-		(struct sieve_binary *binary);
+		(const struct sieve_extension *ext, struct sieve_binary *binary);
 	
+	/* Code dump */
 	bool (*binary_dump)
-		(struct sieve_dumptime_env *denv);
+		(const struct sieve_extension *ext, struct sieve_dumptime_env *denv);
 	bool (*code_dump)
-		(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+		(const struct sieve_extension *ext, const struct sieve_dumptime_env *denv, 
+			sieve_size_t *address);
 
+	/* Objects */
 	struct sieve_extension_objects operations;
 	struct sieve_extension_objects operands;
 };
-
-#define SIEVE_EXT_ID(EXT) (*((EXT)->_id))
-#define SIEVE_EXT_ENABLED(EXT) (((EXT)->_id != NULL) && (*((EXT)->_id) >= 0))
 
 #define SIEVE_EXT_DEFINE_NO_OBJECTS \
 	{ NULL, 0 }
@@ -58,6 +59,25 @@ struct sieve_extension {
 
 #define SIEVE_EXT_GET_OBJECTS_COUNT(ext, field) \
 	ext->field->count;
+
+/*
+ * Extension instance
+ */
+
+struct sieve_extension {
+	const struct sieve_extension_def *def;
+	int id;
+
+	struct sieve_instance *svinst;
+	void *context;	
+
+	unsigned int required:1;
+	unsigned int loaded:1;
+	unsigned int enabled:1;
+};
+
+#define sieve_extension_name(ext) \
+	(ext)->def->name
 
 /* 
  * Defining opcodes and operands 
@@ -71,32 +91,46 @@ struct sieve_extension {
 #define SIEVE_EXT_DEFINE_OPERAND(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
 #define SIEVE_EXT_DEFINE_OPERANDS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
-/* 
- * Pre-loaded extensions 
- */
-
-extern const struct sieve_extension *sieve_preloaded_extensions[];
-extern const unsigned int sieve_preloaded_extensions_count;
-
 /*  
  * Extensions init/deinit 
  */
 
-bool sieve_extensions_init(void);
-void sieve_extensions_deinit(void);
+bool sieve_extensions_init(struct sieve_instance *svinst);
+void sieve_extensions_deinit(struct sieve_instance *svinst);
+
+/* 
+ * Pre-loaded extensions 
+ */
+
+const struct sieve_extension *const *sieve_extensions_get_preloaded
+	(struct sieve_instance *svinst, unsigned int *count_r);
 
 /* 
  * Extension registry 
  */
 
-int sieve_extension_register(const struct sieve_extension *extension, bool load);
-int sieve_extension_require(const struct sieve_extension *extension);
-int sieve_extensions_get_count(void);
-const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id);
-const struct sieve_extension *sieve_extension_get_by_name(const char *name);
+const struct sieve_extension *sieve_extension_register
+	(struct sieve_instance *svinst, const struct sieve_extension_def *extension, 
+		bool load);
+const struct sieve_extension *sieve_extension_require
+	(struct sieve_instance *svinst, const struct sieve_extension_def *extension);
+int sieve_extensions_get_count(struct sieve_instance *svinst);
+const struct sieve_extension *sieve_extension_get_by_id
+	(struct sieve_instance *svinst, unsigned int ext_id);
+const struct sieve_extension *sieve_extension_get_by_name
+	(struct sieve_instance *svinst, const char *name);
 
-const char *sieve_extensions_get_string(void);
-void sieve_extensions_set_string(const char *ext_string);
+const char *sieve_extensions_get_string
+	(struct sieve_instance *svinst);
+void sieve_extensions_set_string
+	(struct sieve_instance *svinst, const char *ext_string);
+
+const struct sieve_extension *sieve_get_match_type_extension
+	(struct sieve_instance *svinst);
+const struct sieve_extension *sieve_get_comparator_extension
+	(struct sieve_instance *svinst);
+const struct sieve_extension *sieve_get_address_part_extension
+	(struct sieve_instance *svinst);
 
 /*
  * Capability registries
@@ -105,14 +139,13 @@ void sieve_extensions_set_string(const char *ext_string);
 struct sieve_extension_capabilities {
 	const char *name;
 
-	const struct sieve_extension *extension;
-
-	const char *(*get_string)(void);	
+	const char *(*get_string)(const struct sieve_extension *ext);	
 };
 
 void sieve_extension_capabilities_register
-	(const struct sieve_extension_capabilities *cap);
+	(struct sieve_instance *svinst, const struct sieve_extension *ext, 
+		const struct sieve_extension_capabilities *cap);
 const char *sieve_extension_capabilities_get_string
-	(const char *cap_name);
+	(struct sieve_instance *svinst, const char *cap_name);
 
 #endif /* __SIEVE_EXTENSIONS_H */

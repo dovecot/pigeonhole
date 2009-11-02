@@ -36,13 +36,14 @@ enum tst_body_transform {
  */
 
 static bool tst_body_registered
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+		struct sieve_command_registration *cmd_reg);
 static bool tst_body_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command *tst);
 static bool tst_body_generate
-	(const struct sieve_codegen_env *cgenv,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv,	struct sieve_command *ctx);
 
-const struct sieve_command body_test = { 
+const struct sieve_command_def body_test = { 
 	"body", 
 	SCT_TEST, 
 	1, 0, FALSE, FALSE,
@@ -58,13 +59,11 @@ const struct sieve_command body_test = {
  */
 
 static bool ext_body_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int ext_body_operation_execute
-	(const struct sieve_operation *op,
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation body_operation = { 
+const struct sieve_operation_def body_operation = { 
 	"body",
 	&body_extension,
 	0,
@@ -87,43 +86,43 @@ enum tst_body_optional {
 /* Forward declarations */
 
 static bool tag_body_transform_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *cmd);
 static bool tag_body_transform_generate	
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 
 /* Argument objects */
  
-static const struct sieve_argument body_raw_tag = { 
+static const struct sieve_argument_def body_raw_tag = { 
 	"raw", 
-	NULL, NULL,
+	NULL,
 	tag_body_transform_validate, 
-	NULL, 
+	NULL, NULL, 
 	tag_body_transform_generate 
 };
 
-static const struct sieve_argument body_content_tag = { 
+static const struct sieve_argument_def body_content_tag = { 
 	"content", 
-	NULL, NULL,
+	NULL,
 	tag_body_transform_validate, 
-	NULL, 
+	NULL, NULL, 
 	tag_body_transform_generate 
 };
 
-static const struct sieve_argument body_text_tag = { 
+static const struct sieve_argument_def body_text_tag = { 
 	"text", 
-	NULL, NULL,
+	NULL,
 	tag_body_transform_validate, 
-	NULL, 
+	NULL, NULL, 
 	tag_body_transform_generate
 };
 
 /* Argument implementation */
  
 static bool tag_body_transform_validate
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	struct sieve_command *cmd)
 {
 	enum tst_body_transform transform;
 	struct sieve_ast_argument *tag = *arg;
@@ -134,7 +133,7 @@ static bool tag_body_transform_validate
 	 *     / :text
 	 */
 	if ( (bool) cmd->data ) {
-		sieve_argument_validate_error(validator, *arg, 
+		sieve_argument_validate_error(valdtr, *arg, 
 			"the :raw, :content and :text arguments for the body test are mutually "
 			"exclusive, but more than one was specified");
 		return FALSE;
@@ -144,22 +143,22 @@ static bool tag_body_transform_validate
 	*arg = sieve_ast_argument_next(*arg);
 
 	/* :content tag has a string-list argument */
-	if ( tag->argument == &body_raw_tag ) 
+	if ( sieve_argument_is(tag, body_raw_tag) ) 
 		transform = TST_BODY_TRANSFORM_RAW;
 		
-	else if ( tag->argument == &body_text_tag )
+	else if ( sieve_argument_is(tag, body_text_tag) )
 		transform = TST_BODY_TRANSFORM_TEXT;
 		
-	else if ( tag->argument == &body_content_tag ) {
+	else if ( sieve_argument_is(tag, body_content_tag) ) {
 		/* Check syntax:
 		 *   :content <content-types: string-list>
 		 */
 		if ( !sieve_validate_tag_parameter
-			(validator, cmd, tag, *arg, SAAT_STRING_LIST) ) {
+			(valdtr, cmd, tag, *arg, SAAT_STRING_LIST) ) {
 			return FALSE;
 		}
 		
-		if ( !sieve_validator_argument_activate(validator, cmd, *arg, FALSE) )
+		if ( !sieve_validator_argument_activate(valdtr, cmd, *arg, FALSE) )
 			return FALSE;
 		
 		/* Assign tag parameters */
@@ -174,7 +173,7 @@ static bool tag_body_transform_validate
 	cmd->data = (void *) TRUE;
 		
 	/* Assign context data */
-	tag->context = (void *) transform;	
+	tag->argument->data = (void *) transform;	
 		
 	return TRUE;
 }
@@ -184,18 +183,19 @@ static bool tag_body_transform_validate
  */
 
 static bool tst_body_registered
-(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(validator, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
-	sieve_match_types_link_tags(validator, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
+	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
+	sieve_match_types_link_tags(valdtr, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &body_raw_tag, OPT_BODY_TRANSFORM); 	
+		(valdtr, cmd_reg, ext, &body_raw_tag, OPT_BODY_TRANSFORM); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &body_content_tag, OPT_BODY_TRANSFORM); 	
+		(valdtr, cmd_reg, ext, &body_content_tag, OPT_BODY_TRANSFORM); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &body_text_tag, OPT_BODY_TRANSFORM); 	
+		(valdtr, cmd_reg, ext, &body_text_tag, OPT_BODY_TRANSFORM); 	
 	
 	return TRUE;
 }
@@ -205,21 +205,25 @@ static bool tst_body_registered
  */
  
 static bool tst_body_validate
-(struct sieve_validator *validator, struct sieve_command_context *tst) 
+(struct sieve_validator *valdtr, struct sieve_command *tst) 
 { 		
 	struct sieve_ast_argument *arg = tst->first_positional;
+	const struct sieve_match_type mcht_default = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
+	const struct sieve_comparator cmp_default = 
+		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 					
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "key list", 1, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "key list", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 
-	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
 
 	/* Validate the key argument to a specified match type */
 	return sieve_match_type_validate
-		(validator, tst, arg, &is_match_type, &i_ascii_casemap_comparator);
+		(valdtr, tst, arg, &mcht_default, &cmp_default);
 }
 
 /*
@@ -227,19 +231,20 @@ static bool tst_body_validate
  */
  
 static bool tst_body_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	(void)sieve_operation_emit_code(cgenv->sbin, &body_operation);
+	(void)sieve_operation_emit(cgenv->sbin, cmd->ext, &body_operation);
 
 	/* Generate arguments */
-	return sieve_generate_arguments(cgenv, ctx, NULL);
+	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
 
 static bool tag_body_transform_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
+	struct sieve_command *cmd ATTR_UNUSED)
 {
-	enum tst_body_transform transform =	(enum tst_body_transform) arg->context;
+	enum tst_body_transform transform =	
+		(enum tst_body_transform) arg->argument->data;
 	
 	sieve_binary_emit_byte(cgenv->sbin, transform);
 	sieve_generate_argument_parameters(cgenv, cmd, arg); 
@@ -252,8 +257,7 @@ static bool tag_body_transform_generate
  */
  
 static bool ext_body_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED, 
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	enum tst_body_transform transform;
 	int opt_code = 0;
@@ -306,16 +310,16 @@ static bool ext_body_operation_dump
  */
 
 static int ext_body_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	static const char * const _no_content_types[] = { "", NULL };
-	
 	int ret = SIEVE_EXEC_OK;
 	int opt_code = 0;
 	int mret;
-	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
-	const struct sieve_match_type *mtch = &is_match_type;
+	struct sieve_comparator cmp = 
+		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
+	struct sieve_match_type mtch = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	enum tst_body_transform transform;
 	struct sieve_coded_stringlist *key_list, *ctype_list = NULL;
 	struct sieve_match_context *mctx;
@@ -398,7 +402,7 @@ static int ext_body_operation_execute
 	/* Iterate through all requested body parts to match */
 
 	matched = FALSE;	
-	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list); 	
+	mctx = sieve_match_begin(renv->interp, &mtch, &cmp, NULL, key_list); 	
 	while ( !matched && body_parts->content != NULL ) {
 		if ( (mret=sieve_match_value(mctx, body_parts->content, body_parts->size)) 	
 			< 0) 

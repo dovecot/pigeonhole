@@ -13,6 +13,7 @@
 #include "sieve-ast.h"
 #include "sieve-binary.h"
 #include "sieve-commands.h"
+#include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 
@@ -37,7 +38,7 @@ struct ext_include_generator_context {
 
 static inline struct ext_include_generator_context *
 	ext_include_get_generator_context
-	(struct sieve_generator *gentr);
+	(const struct sieve_extension *ext_this, struct sieve_generator *gentr);
 
 /* Interpreter context */
 
@@ -107,7 +108,6 @@ const char *ext_include_get_script_directory
 		return NULL;
 	}
 
-
 	return sieve_dir;
 }
 
@@ -116,7 +116,8 @@ const char *ext_include_get_script_directory
  */
 
 static void ext_include_ast_free
-(struct sieve_ast *ast ATTR_UNUSED, void *context)
+(const struct sieve_extension *ext ATTR_UNUSED, 
+	struct sieve_ast *ast ATTR_UNUSED, void *context)
 {
 	struct ext_include_ast_context *actx = 
 		(struct ext_include_ast_context *) context;
@@ -140,7 +141,8 @@ static const struct sieve_ast_extension include_ast_extension = {
 };
 
 struct ext_include_ast_context *ext_include_create_ast_context
-(struct sieve_ast *ast, struct sieve_ast *parent)
+(const struct sieve_extension *this_ext, struct sieve_ast *ast, 
+	struct sieve_ast *parent)
 {
 	struct ext_include_ast_context *actx;
 
@@ -151,37 +153,49 @@ struct ext_include_ast_context *ext_include_create_ast_context
 	if ( parent != NULL ) {
 		struct ext_include_ast_context *parent_ctx =
 			(struct ext_include_ast_context *)
-				sieve_ast_extension_get_context(parent, &include_extension);
+				sieve_ast_extension_get_context(parent, this_ext);
 		actx->global_vars = parent_ctx->global_vars;
 
 		i_assert( actx->global_vars != NULL );
 
 		sieve_variable_scope_ref(actx->global_vars);
-	} else
-		actx->global_vars = sieve_variable_scope_create(&include_extension);			
+	} else {
+		actx->global_vars = sieve_variable_scope_create(this_ext);			
+	}
 
-	sieve_ast_extension_register(ast, &include_ast_extension, (void *) actx);
+	sieve_ast_extension_register
+		(ast, this_ext, &include_ast_extension, (void *) actx);
 
 	return actx;
 }
 
 struct ext_include_ast_context *ext_include_get_ast_context
-(struct sieve_ast *ast)
+(const struct sieve_extension *this_ext, struct sieve_ast *ast)
 {
 	struct ext_include_ast_context *actx = (struct ext_include_ast_context *)
-		sieve_ast_extension_get_context(ast, &include_extension);
+		sieve_ast_extension_get_context(ast, this_ext);
 
 	if ( actx != NULL ) return actx;
 
-	return ext_include_create_ast_context(ast, NULL);
+	return ext_include_create_ast_context(this_ext, ast, NULL);
 }
 
 void ext_include_ast_link_included_script
-(struct sieve_ast *ast, struct sieve_script *script) 
+(const struct sieve_extension *this_ext, struct sieve_ast *ast,
+	struct sieve_script *script) 
 {
-	struct ext_include_ast_context *actx = ext_include_get_ast_context(ast);
+	struct ext_include_ast_context *actx = 
+		ext_include_get_ast_context(this_ext, ast);
 
 	array_append(&actx->included_scripts, &script, 1);
+}
+
+bool ext_include_validator_have_variables
+(const struct sieve_extension *this_ext, struct sieve_validator *valdtr)
+{
+	struct ext_include_context *ectx = ext_include_get_context(this_ext);
+
+	return sieve_ext_variables_is_active(ectx->var_ext, valdtr);
 }
 
 /* 
@@ -189,7 +203,7 @@ void ext_include_ast_link_included_script
  */
  
 static struct ext_include_generator_context *
-	ext_include_create_generator_context
+ext_include_create_generator_context
 (struct sieve_generator *gentr, struct ext_include_generator_context *parent, 
 	struct sieve_script *script)
 {	
@@ -210,25 +224,25 @@ static struct ext_include_generator_context *
 
 static inline struct ext_include_generator_context *
 	ext_include_get_generator_context
-(struct sieve_generator *gentr)
+(const struct sieve_extension *this_ext, struct sieve_generator *gentr)
 {
 	return (struct ext_include_generator_context *)
-		sieve_generator_extension_get_context(gentr, &include_extension);
+		sieve_generator_extension_get_context(gentr, this_ext);
 }
 
 static inline void ext_include_initialize_generator_context
-(struct sieve_generator *gentr, struct ext_include_generator_context *parent, 
-	struct sieve_script *script)
+(const struct sieve_extension *this_ext, struct sieve_generator *gentr,
+	struct ext_include_generator_context *parent, struct sieve_script *script)
 {
-	sieve_generator_extension_set_context(gentr, &include_extension,
+	sieve_generator_extension_set_context(gentr, this_ext,
 		ext_include_create_generator_context(gentr, parent, script));
 }
 
 void ext_include_register_generator_context
-(const struct sieve_codegen_env *cgenv)
+(const struct sieve_extension *this_ext, const struct sieve_codegen_env *cgenv)
 {
 	struct ext_include_generator_context *ctx = 
-		ext_include_get_generator_context(cgenv->gentr);
+		ext_include_get_generator_context(this_ext, cgenv->gentr);
 	
 	/* Initialize generator context if necessary */
 	if ( ctx == NULL ) {
@@ -236,12 +250,12 @@ void ext_include_register_generator_context
 			cgenv->gentr, NULL, cgenv->script);
 		
 		sieve_generator_extension_set_context
-			(cgenv->gentr, &include_extension, (void *) ctx);		
+			(cgenv->gentr, this_ext, (void *) ctx);		
 	}
 
 	/* Initialize ast context if necessary */
-	(void)ext_include_get_ast_context(cgenv->ast);
-	(void)ext_include_binary_init(cgenv->sbin, cgenv->ast);
+	(void)ext_include_get_ast_context(this_ext, cgenv->ast);
+	(void)ext_include_binary_init(this_ext, cgenv->sbin, cgenv->ast);
 }
 
 /*
@@ -249,22 +263,26 @@ void ext_include_register_generator_context
  */
 
 static void ext_include_runtime_init
-    (const struct sieve_runtime_env *renv, void *context)
+(const struct sieve_extension *this_ext, const struct sieve_runtime_env *renv,
+	void *context)
 {
 	struct ext_include_interpreter_context *ctx = 
 		(struct ext_include_interpreter_context *) context;
+	struct ext_include_context *ectx = ext_include_get_context(this_ext);
 
 	if ( ctx->parent == NULL ) {
 		ctx->global = p_new(ctx->pool, struct ext_include_interpreter_global, 1);
-		ctx->global->variables = sieve_variable_storage_create
-			(ctx->pool, ext_include_binary_get_global_scope(renv->sbin), 0);
 		p_array_init(&ctx->global->included_scripts, ctx->pool, 10);
+
+
+		ctx->global->variables = sieve_variable_storage_create
+			(ctx->pool, ext_include_binary_get_global_scope(this_ext, renv->sbin), 0);
 	} else {
 		ctx->global = ctx->parent->global;
 	}
 
 	sieve_ext_variables_set_storage
-		(renv->interp, ctx->global->variables, &include_extension);	
+		(ectx->var_ext, renv->interp, ctx->global->variables, this_ext);	
 }
 
 static struct sieve_interpreter_extension include_interpreter_extension = {
@@ -304,15 +322,15 @@ static struct ext_include_interpreter_context *
 
 static inline struct ext_include_interpreter_context *
 	ext_include_get_interpreter_context
-(struct sieve_interpreter *interp)
+(const struct sieve_extension *this_ext, struct sieve_interpreter *interp)
 {
 	return (struct ext_include_interpreter_context *)
-		sieve_interpreter_extension_get_context(interp, &include_extension);
+		sieve_interpreter_extension_get_context(interp, this_ext);
 }
 
 static inline struct ext_include_interpreter_context *
 	ext_include_interpreter_context_init_child
-(struct sieve_interpreter *interp, 
+(const struct sieve_extension *this_ext, struct sieve_interpreter *interp, 
 	struct ext_include_interpreter_context *parent, 
 	struct sieve_script *script, const struct ext_include_script_info *sinfo)
 {
@@ -320,16 +338,16 @@ static inline struct ext_include_interpreter_context *
 		ext_include_interpreter_context_create(interp, parent, script, sinfo);
 		
 	sieve_interpreter_extension_register
-		(interp, &include_interpreter_extension, ctx);
+		(interp, this_ext, &include_interpreter_extension, ctx);
 	
 	return ctx;
 }
 
 void ext_include_interpreter_context_init
-(struct sieve_interpreter *interp)
+(const struct sieve_extension *this_ext, struct sieve_interpreter *interp)
 {
 	struct ext_include_interpreter_context *ctx = 
-		ext_include_get_interpreter_context(interp);
+		ext_include_get_interpreter_context(this_ext, interp);
 
 	/* Is this is the top-level interpreter ? */	
 	if ( ctx == NULL ) {
@@ -341,15 +359,15 @@ void ext_include_interpreter_context_init
 			(interp, NULL, script, NULL);
 		
 		sieve_interpreter_extension_register
-			(interp, &include_interpreter_extension, (void *) ctx);			
+			(interp, this_ext, &include_interpreter_extension, (void *) ctx);			
 	}
 }
 
 struct sieve_variable_storage *ext_include_interpreter_get_global_variables
-(struct sieve_interpreter *interp)
+(const struct sieve_extension *this_ext, struct sieve_interpreter *interp)
 {
 	struct ext_include_interpreter_context *ctx =
-		ext_include_get_interpreter_context(interp);
+		ext_include_get_interpreter_context(this_ext, interp);
 		
 	return ctx->global->variables;
 }
@@ -359,10 +377,11 @@ struct sieve_variable_storage *ext_include_interpreter_get_global_variables
  */
 
 bool ext_include_generate_include
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd,
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
 	enum ext_include_script_location location, struct sieve_script *script, 
 	const struct ext_include_script_info **included_r, bool once)
 {
+	const struct sieve_extension *this_ext = cmd->ext;
 	bool result = TRUE;
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin = cgenv->sbin;
@@ -370,7 +389,7 @@ bool ext_include_generate_include
 	struct ext_include_binary_context *binctx;
 	struct sieve_generator *subgentr;
 	struct ext_include_generator_context *ctx =
-		ext_include_get_generator_context(gentr);
+		ext_include_get_generator_context(this_ext, gentr);
 	struct ext_include_generator_context *pctx;
 	struct sieve_error_handler *ehandler = sieve_generator_error_handler(gentr);
 	const struct ext_include_script_info *included;
@@ -406,7 +425,7 @@ bool ext_include_generate_include
 	}
 
 	/* Get binary context */
-	binctx = ext_include_binary_init(sbin, cgenv->ast);
+	binctx = ext_include_binary_init(this_ext, sbin, cgenv->ast);
 
 	/* Is the script already compiled into the current binary? */
 	if ( !ext_include_binary_script_is_included(binctx, script, &included) )	
@@ -437,7 +456,7 @@ bool ext_include_generate_include
 		}
 		
 		/* Included scripts inherit global variable scope */
-		(void)ext_include_create_ast_context(ast, cmd->ast_node->ast);
+		(void)ext_include_create_ast_context(this_ext, ast, cmd->ast_node->ast);
 
 		/* Validate */
 		if ( !sieve_validate(ast, ehandler) ) {
@@ -454,7 +473,7 @@ bool ext_include_generate_include
 		 */
 		if ( sieve_binary_block_set_active(sbin, inc_block_id, &this_block_id) ) {
 		 	subgentr = sieve_generator_create(ast, ehandler);			
-			ext_include_initialize_generator_context(subgentr, ctx, script);
+			ext_include_initialize_generator_context(cmd->ext, subgentr, ctx, script);
 				
 			if ( !sieve_generator_run(subgentr, &sbin) ) {
 				sieve_command_generate_error(gentr, cmd, 
@@ -524,11 +543,12 @@ static bool ext_include_runtime_include_mark
 int ext_include_execute_include
 (const struct sieve_runtime_env *renv, unsigned int include_id, bool once)
 {
+	const struct sieve_extension *this_ext = renv->oprtn.ext;
 	int result = SIEVE_EXEC_OK;
 	struct ext_include_interpreter_context *ctx;
 	const struct ext_include_script_info *included;
 	struct ext_include_binary_context *binctx = 
-		ext_include_binary_get_context(renv->sbin);
+		ext_include_binary_get_context(this_ext, renv->sbin);
 
 	/* Check for invalid include id (== corrupt binary) */
 	included = ext_include_binary_script_get_included(binctx, include_id);
@@ -537,7 +557,7 @@ int ext_include_execute_include
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	ctx = ext_include_get_interpreter_context(renv->interp);
+	ctx = ext_include_get_interpreter_context(this_ext, renv->interp);
 	
 	sieve_runtime_trace(renv, 
 		"INCLUDE command (script: %s, id: %d block: %d) START::", 
@@ -590,7 +610,7 @@ int ext_include_execute_include
 
 			if ( subinterp != NULL ) {			
 				curctx = ext_include_interpreter_context_init_child
-					(subinterp, ctx, included->script, included);
+					(this_ext, subinterp, ctx, included->script, included);
 
 				/* Activate and start the top-level included script */
 				result = ( sieve_interpreter_start
@@ -651,7 +671,7 @@ int ext_include_execute_include
 
 							if ( subinterp != NULL ) {
 								curctx = ext_include_interpreter_context_init_child
-									(subinterp, curctx, curctx->include->script, 
+									(this_ext, subinterp, curctx, curctx->include->script, 
 										curctx->include);
 
 								/* Start the sub-include's interpreter */
@@ -701,10 +721,12 @@ int ext_include_execute_include
 	return result;
 }
 
-void ext_include_execute_return(const struct sieve_runtime_env *renv)
+void ext_include_execute_return
+(const struct sieve_runtime_env *renv)
 {
+	const struct sieve_extension *this_ext = renv->oprtn.ext;
 	struct ext_include_interpreter_context *ctx =
-		ext_include_get_interpreter_context(renv->interp);
+		ext_include_get_interpreter_context(this_ext, renv->interp);
 	
 	ctx->returned = TRUE;
 	sieve_interpreter_interrupt(renv->interp);	

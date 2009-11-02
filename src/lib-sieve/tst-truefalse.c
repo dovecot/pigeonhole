@@ -15,13 +15,13 @@
  */
 
 static bool tst_false_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd,
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
 		struct sieve_jumplist *jumps, bool jump_true);
 static bool tst_true_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd,
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
 		struct sieve_jumplist *jumps, bool jump_true);
 
-const struct sieve_command tst_false = { 
+const struct sieve_command_def tst_false = { 
 	"false", 
 	SCT_TEST, 
 	0, 0, FALSE, FALSE,
@@ -29,7 +29,7 @@ const struct sieve_command tst_false = {
 	tst_false_generate 
 };
 
-const struct sieve_command tst_true = { 
+const struct sieve_command_def tst_true = { 
 	"true", 
 	SCT_TEST, 
 	0, 0, FALSE, FALSE,
@@ -39,11 +39,11 @@ const struct sieve_command tst_true = {
 
 static bool tst_false_generate
 (const struct sieve_codegen_env *cgenv, 
-	struct sieve_command_context *cmd ATTR_UNUSED,
+	struct sieve_command *cmd ATTR_UNUSED,
 	struct sieve_jumplist *jumps, bool jump_true)
 {
 	if ( !jump_true ) {
-		sieve_operation_emit_code(cgenv->sbin, &sieve_jmp_operation);
+		sieve_operation_emit(cgenv->sbin, NULL, &sieve_jmp_operation);
 		sieve_jumplist_add(jumps, sieve_binary_emit_offset(cgenv->sbin, 0));
 	}
 	
@@ -52,11 +52,11 @@ static bool tst_false_generate
 
 static bool tst_true_generate
 (const struct sieve_codegen_env *cgenv,	
-	struct sieve_command_context *cmd ATTR_UNUSED,
+	struct sieve_command *cmd ATTR_UNUSED,
 	struct sieve_jumplist *jumps, bool jump_true)
 {
 	if ( jump_true ) {
-		sieve_operation_emit_code(cgenv->sbin, &sieve_jmp_operation);
+		sieve_operation_emit(cgenv->sbin, NULL, &sieve_jmp_operation);
 		sieve_jumplist_add(jumps, sieve_binary_emit_offset(cgenv->sbin, 0));
 	}
 	

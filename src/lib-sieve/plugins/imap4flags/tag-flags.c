@@ -25,27 +25,27 @@
  */
 
 static bool tag_flags_validate
-	(struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *cmd);
 static bool tag_flags_validate_persistent
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd,
+		const struct sieve_extension *ext);
 static bool tag_flags_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 
-const struct sieve_argument tag_flags = { 
+const struct sieve_argument_def tag_flags = { 
 	"flags", 
-	NULL, NULL,
-	tag_flags_validate, 
 	NULL, 
+	tag_flags_validate, 
+	NULL, NULL,
 	tag_flags_generate 
 };
 
-const struct sieve_argument tag_flags_implicit = { 
+const struct sieve_argument_def tag_flags_implicit = { 
 	"flags-implicit", 
-	NULL,
+	NULL,	NULL, NULL, 
 	tag_flags_validate_persistent, 
-	NULL, NULL,
 	tag_flags_generate
 };
 
@@ -59,21 +59,21 @@ static bool seff_flags_dump_context
 static bool seff_flags_read_context
 	(const struct sieve_side_effect *seffect, 
 		const struct sieve_runtime_env *renv, sieve_size_t *address,
-		void **se_context);
+		void **context);
 
 static int seff_flags_merge
 	(const struct sieve_runtime_env *renv, const struct sieve_action *action, 
-		const struct sieve_side_effect *seffect, 
-		void **old_context, void *new_context);
+		const struct sieve_side_effect *old_seffect, 	
+		const struct sieve_side_effect *new_seffect, void **old_context);
+
 static void seff_flags_print
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action,
-		const struct sieve_result_print_env *rpenv, void *se_context, bool *keep);
+		const struct sieve_result_print_env *rpenv, bool *keep);
 static bool seff_flags_pre_execute
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
-		const struct sieve_action_exec_env *aenv, 
-		void **se_context, void *tr_context);
+		const struct sieve_action_exec_env *aenv, void **context, void *tr_context);
 
-const struct sieve_side_effect flags_side_effect = {
+const struct sieve_side_effect_def flags_side_effect = {
 	SIEVE_OBJECT("flags", &flags_side_effect_operand, 0),
 	&act_store,
 
@@ -92,7 +92,7 @@ const struct sieve_side_effect flags_side_effect = {
 static const struct sieve_extension_objects ext_side_effects =
 	SIEVE_EXT_DEFINE_SIDE_EFFECT(flags_side_effect);
 
-const struct sieve_operand flags_side_effect_operand = { 
+const struct sieve_operand_def flags_side_effect_operand = { 
 	"flags operand", 
 	&imap4flags_extension,
 	0, 
@@ -105,18 +105,19 @@ const struct sieve_operand flags_side_effect_operand = {
  */
 
 static bool tag_flags_validate_persistent
-(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command *cmd,
+	const struct sieve_extension *ext)
 {
 	if ( sieve_command_find_argument(cmd, &tag_flags) == NULL ) {
-		sieve_command_add_dynamic_tag(cmd, &tag_flags_implicit, -1);
+		sieve_command_add_dynamic_tag(cmd, ext, &tag_flags_implicit, -1);
 	}
 	
 	return TRUE;
 }
 
 static bool tag_flags_validate
-(struct sieve_validator *validator,	struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 
@@ -127,7 +128,7 @@ static bool tag_flags_validate
 	 *   :flags <list-of-flags: string-list>
 	 */
 	if ( !sieve_validate_tag_parameter
-		(validator, cmd, tag, *arg, SAAT_STRING_LIST) ) {
+		(valdtr, cmd, tag, *arg, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
@@ -145,7 +146,7 @@ static bool tag_flags_validate
 
 static bool tag_flags_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-	struct sieve_command_context *cmd)
+	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *param;
 
@@ -153,18 +154,20 @@ static bool tag_flags_generate
 		return FALSE;
 	}
 
-	sieve_opr_side_effect_emit(cgenv->sbin, &flags_side_effect);
+	sieve_opr_side_effect_emit
+		(cgenv->sbin, arg->argument->ext, &flags_side_effect);
 
-	if ( arg->argument == &tag_flags ) {
+	if ( sieve_argument_is(arg, tag_flags) ) {
 		/* Explicit :flags tag */
 		param = arg->parameters;
 
 		/* Call the generation function for the argument */ 
-		if ( param->argument != NULL && param->argument->generate != NULL && 
-			!param->argument->generate(cgenv, param, cmd) ) 
+		if ( param->argument != NULL && param->argument->def != NULL && 
+			param->argument->def->generate != NULL && 
+			!param->argument->def->generate(cgenv, param, cmd) ) 
 			return FALSE;
 
-	} else if ( arg->argument == &tag_flags_implicit ) {
+	} else if ( sieve_argument_is(arg, tag_flags_implicit) ) {
 		/* Implicit flags */
 		sieve_opr_omitted_emit(cgenv->sbin);
 	
@@ -193,26 +196,23 @@ static bool seff_flags_dump_context
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-    const struct sieve_operand *operand;
+  struct sieve_operand operand;
 
-    operand = sieve_operand_read(denv->sbin, address);
-	if ( operand == NULL ) {
+  if ( !sieve_operand_read(denv->sbin, address, &operand) ) {
 		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 		return FALSE;
 	}
 
-
-    if ( sieve_operand_is_omitted(operand) ) {
+	if ( sieve_operand_is_omitted(&operand) ) {
 		sieve_code_dumpf(denv, "flags: INTERNAL");
 		return TRUE;
-    }
+	}
 
-    return sieve_opr_stringlist_dump_data(denv, operand, address,
-            "flags");
+	return sieve_opr_stringlist_dump_data(denv, &operand, address, "flags");
 }
 
 static struct seff_flags_context *seff_flags_get_implicit_context
-(struct sieve_result *result)
+(const struct sieve_extension *this_ext, struct sieve_result *result)
 {
 	pool_t pool = sieve_result_pool(result);
 	struct seff_flags_context *ctx;
@@ -225,7 +225,7 @@ static struct seff_flags_context *seff_flags_get_implicit_context
 	T_BEGIN {
 		
 		/* Unpack */
-		ext_imap4flags_get_implicit_flags_init(&flit, result);
+		ext_imap4flags_get_implicit_flags_init(&flit, this_ext, result);
 		while ( (flag=ext_imap4flags_iter_get_flag(&flit)) != NULL ) {		
 			if (flag != NULL && *flag != '\\') {
 				/* keyword */
@@ -252,13 +252,12 @@ static struct seff_flags_context *seff_flags_get_implicit_context
 }
 
 static bool seff_flags_read_context
-(const struct sieve_side_effect *seffect ATTR_UNUSED, 
+(const struct sieve_side_effect *seffect, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address,
 	void **se_context)
 {
 	bool result = TRUE;
-	sieve_size_t op_address = *address;
-	const struct sieve_operand *operand;
+	const struct sieve_operand operand;
 	pool_t pool = sieve_result_pool(renv->result);
 	struct seff_flags_context *ctx;
 	string_t *flags_item;
@@ -270,26 +269,25 @@ static bool seff_flags_read_context
 	t_push();
 
 	/* Check whether explicit flag list operand is present */
-	operand = sieve_operand_read(renv->sbin, address);
-
-    if ( operand == NULL ) {
+	if ( !sieve_operand_read(renv->sbin, address, &operand) ) {
         sieve_runtime_trace_error(renv, "invalid operand");
 		t_pop();
         return FALSE;
     }
 
-    if ( sieve_operand_is_omitted(operand) ) {
+    if ( sieve_operand_is_omitted(&operand) ) {
 		/* Flag list is omitted, use current value of internal 
 		 * variable to construct side effect context.
 		 */
-		*se_context = seff_flags_get_implicit_context(renv->result);
+		*se_context = seff_flags_get_implicit_context
+			(SIEVE_OBJECT_EXTENSION(seffect), renv->result);
 		t_pop();
 		return TRUE;
 	}
 	
 	/* Read flag-list */
 	if ( (flag_list=sieve_opr_stringlist_read_data
-		(renv, operand, op_address, address)) == NULL ) {
+		(renv, &operand, address)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}
@@ -339,10 +337,11 @@ static bool seff_flags_read_context
 static int seff_flags_merge
 (const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_side_effect *seffect ATTR_UNUSED, 
-	void **old_context, void *new_context)
+	const struct sieve_side_effect *old_seffect ATTR_UNUSED, 	
+	const struct sieve_side_effect *new_seffect, 	
+	void **old_context)
 {
-	*old_context = new_context;
+	*old_context = new_seffect->context;
 	
 	return 1;
 }
@@ -350,17 +349,18 @@ static int seff_flags_merge
 /* Result printing */
 
 static void seff_flags_print
-(const struct sieve_side_effect *seffect ATTR_UNUSED, 
+(const struct sieve_side_effect *seffect, 
 	const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_result_print_env *rpenv,
-	void *se_context, bool *keep ATTR_UNUSED)
+	const struct sieve_result_print_env *rpenv,bool *keep ATTR_UNUSED)
 {
 	struct sieve_result *result = rpenv->result;
-	struct seff_flags_context *ctx = (struct seff_flags_context *) se_context;
+	struct seff_flags_context *ctx = 
+		(struct seff_flags_context *) seffect->context;
 	unsigned int i;
 	
 	if ( ctx == NULL )
-		ctx = seff_flags_get_implicit_context(result);
+		ctx = seff_flags_get_implicit_context
+			(SIEVE_OBJECT_EXTENSION(seffect), result);
 	
 	if ( ctx->flags != 0 || array_count(&ctx->keywords) > 0 ) {
 		T_BEGIN {
@@ -394,17 +394,17 @@ static void seff_flags_print
 /* Result execution */
 
 static bool seff_flags_pre_execute
-(const struct sieve_side_effect *seffect ATTR_UNUSED, 
-	const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, 
-	void **se_context, void *tr_context)
+(const struct sieve_side_effect *seffect, 
+	const struct sieve_action *action ATTR_UNUSED,
+	const struct sieve_action_exec_env *aenv, void **context, void *tr_context)
 {	
-	struct seff_flags_context *ctx = (struct seff_flags_context *) *se_context;
+	struct seff_flags_context *ctx = (struct seff_flags_context *) *context;
 	const char *const *keywords;
 		
 	if ( ctx == NULL ) {
-		ctx = seff_flags_get_implicit_context(aenv->result);
-		*se_context = (void *) ctx;
+		ctx = seff_flags_get_implicit_context
+			(SIEVE_OBJECT_EXTENSION(seffect), aenv->result);
+		*context = (void *) ctx;
 	}
 		
 	(void)array_append_space(&ctx->keywords);

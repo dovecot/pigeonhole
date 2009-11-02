@@ -28,13 +28,11 @@
  * Extension 
  */
 
-static bool ext_environment_validator_load(struct sieve_validator *validator);
-
-static int ext_my_id = -1;
+static bool ext_environment_validator_load
+	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 	
-const struct sieve_extension environment_extension = { 
+const struct sieve_extension_def environment_extension = { 
 	"environment", 
-	&ext_my_id,
 	ext_environment_init, 
 	ext_environment_deinit,
 	ext_environment_validator_load,
@@ -44,9 +42,9 @@ const struct sieve_extension environment_extension = {
 };
 
 static bool ext_environment_validator_load
-	(struct sieve_validator *validator)
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
-	sieve_validator_register_command(validator, &tst_environment);
+	sieve_validator_register_command(valdtr, ext, &tst_environment);
 	
 	return TRUE;
 }

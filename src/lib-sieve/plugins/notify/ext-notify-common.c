@@ -29,43 +29,44 @@
 
 static bool tag_importance_validate
 	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 
-static const struct sieve_argument importance_low_tag = {
+static const struct sieve_argument_def importance_low_tag = {
 	"low",
-	NULL, NULL,
+	NULL,
 	tag_importance_validate,
-	NULL, NULL
+	NULL, NULL, NULL
 };
 
-static const struct sieve_argument importance_normal_tag = {
+static const struct sieve_argument_def importance_normal_tag = {
 	"normal",
-	NULL, NULL,
+	NULL, 
 	tag_importance_validate,
-	NULL, NULL
+	NULL, NULL, NULL
 };
 
-static const struct sieve_argument importance_high_tag = {
+static const struct sieve_argument_def importance_high_tag = {
 	"high",
-	NULL, NULL,
+	NULL,
 	tag_importance_validate,
-	NULL, NULL
+	NULL, NULL, NULL
 };
 
 static bool tag_importance_validate
 (struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast_argument **arg,
-	struct sieve_command_context *cmd ATTR_UNUSED)
+	struct sieve_command *cmd ATTR_UNUSED)
 {
 	struct sieve_ast_argument *tag = *arg;
 
-	if ( tag->argument == &importance_low_tag )
+	if ( sieve_argument_is(tag, importance_low_tag) )
 		sieve_ast_argument_number_substitute(tag, 3);
-	else if ( tag->argument == &importance_normal_tag )
+	else if ( sieve_argument_is(tag, importance_normal_tag) )
 		sieve_ast_argument_number_substitute(tag, 2);
 	else
 		sieve_ast_argument_number_substitute(tag, 1);
 
-	tag->argument = &number_argument;
+	tag->argument = sieve_argument_create
+		(tag->ast, &number_argument, tag->argument->ext, tag->argument->id_code);
 
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
@@ -74,12 +75,12 @@ static bool tag_importance_validate
 }
 
 void ext_notify_register_importance_tags
-(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg,
-	unsigned int id_code)
+(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg, 
+	const struct sieve_extension *ext, unsigned int id_code)
 {
-	sieve_validator_register_tag(valdtr, cmd_reg, &importance_low_tag, id_code);
-	sieve_validator_register_tag(valdtr, cmd_reg, &importance_normal_tag, id_code);
-	sieve_validator_register_tag(valdtr, cmd_reg, &importance_high_tag, id_code);
+	sieve_validator_register_tag(valdtr, cmd_reg, ext, &importance_low_tag, id_code);
+	sieve_validator_register_tag(valdtr, cmd_reg, ext, &importance_normal_tag, id_code);
+	sieve_validator_register_tag(valdtr, cmd_reg, ext, &importance_high_tag, id_code);
 }
 
 /*
@@ -94,13 +95,13 @@ struct ext_notify_message_context {
 };
 
 static struct ext_notify_message_context *ext_notify_get_message_context
-(struct sieve_message_context *msgctx)
+(const struct sieve_extension *this_ext, struct sieve_message_context *msgctx)
 {
 	struct ext_notify_message_context *ctx;
 	
 	/* Get message context (contains cached message body information) */
 	ctx = (struct ext_notify_message_context *)
-		sieve_message_context_extension_get(msgctx, &notify_extension);
+		sieve_message_context_extension_get(msgctx, this_ext);
 	
 	/* Create it if it does not exist already */
 	if ( ctx == NULL ) {
@@ -111,7 +112,7 @@ static struct ext_notify_message_context *ext_notify_get_message_context
 
 		/* Register context */
 		sieve_message_context_extension_set
-			(msgctx, &notify_extension, (void *) ctx);
+			(msgctx, this_ext, (void *) ctx);
 	}
 	
 	return ctx;
@@ -149,6 +150,7 @@ static bool _is_text_content(const struct message_header_line *hdr)
 static buffer_t *cmd_notify_extract_body_text
 (const struct sieve_runtime_env *renv)
 { 
+	const struct sieve_extension *this_ext = renv->oprtn.ext;
 	struct ext_notify_message_context *mctx;
 	struct message_parser_ctx *parser;
 	struct message_decoder_context *decoder;
@@ -159,7 +161,7 @@ static buffer_t *cmd_notify_extract_body_text
 	int ret;
 	
 	/* Return cached result if available */
-	mctx = ext_notify_get_message_context(renv->msgctx);
+	mctx = ext_notify_get_message_context(this_ext, renv->msgctx);
 	if ( mctx->body_text != NULL ) {
 		return mctx->body_text;	
 	}

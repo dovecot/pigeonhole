@@ -43,13 +43,11 @@
  * Extension
  */
 
-static bool ext_regex_validator_load(struct sieve_validator *validator);
+static bool ext_regex_validator_load
+	(const struct sieve_extension *ext, struct sieve_validator *validator);
 
-static int ext_my_id = -1;
-
-const struct sieve_extension regex_extension = { 
+const struct sieve_extension_def regex_extension = { 
 	"regex", 
-	&ext_my_id,
 	NULL, NULL,
 	ext_regex_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
@@ -57,9 +55,10 @@ const struct sieve_extension regex_extension = {
 	SIEVE_EXT_DEFINE_OPERAND(regex_match_type_operand)
 };
 
-static bool ext_regex_validator_load(struct sieve_validator *validator)
+static bool ext_regex_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
-	sieve_match_type_register(validator, &regex_match_type); 
+	sieve_match_type_register(valdtr, ext, &regex_match_type); 
 
 	return TRUE;
 }

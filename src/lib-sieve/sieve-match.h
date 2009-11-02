@@ -58,7 +58,6 @@ bool sieve_match_dump_optional_operands
 
 int sieve_match_read_optional_operands
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, int *opt_code,
-		const struct sieve_comparator **cmp_r, 
-		const struct sieve_match_type **mtch_r);
+		struct sieve_comparator *cmp, struct sieve_match_type *mcht);
 
 #endif /* __SIEVE_MATCH_H */

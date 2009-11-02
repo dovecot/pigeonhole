@@ -28,20 +28,18 @@
  * Forward declarations 
  */
 
-static const struct sieve_argument copy_tag;
-static const struct sieve_operand copy_side_effect_operand;
+static const struct sieve_argument_def copy_tag;
+static const struct sieve_operand_def copy_side_effect_operand;
 
 /* 
  * Extension
  */
 
-static bool ext_copy_validator_load(struct sieve_validator *validator);
+static bool ext_copy_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
-static int ext_my_id = -1;
-
-const struct sieve_extension copy_extension = { 
+const struct sieve_extension_def copy_extension = { 
 	"copy", 
-	&ext_my_id,
 	NULL, NULL,
 	ext_copy_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
@@ -49,16 +47,17 @@ const struct sieve_extension copy_extension = {
 	SIEVE_EXT_DEFINE_OPERAND(copy_side_effect_operand)
 };
 
-static bool ext_copy_validator_load(struct sieve_validator *validator)
+static bool ext_copy_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register copy tag with redirect and fileinto commands and we don't care
 	 * whether these commands are registered or even whether they will be
 	 * registered at all. The validator handles either situation gracefully 
 	 */
 	sieve_validator_register_external_tag
-		(validator, &copy_tag, "redirect", SIEVE_OPT_SIDE_EFFECT);
+		(valdtr, "redirect", ext, &copy_tag, SIEVE_OPT_SIDE_EFFECT);
 	sieve_validator_register_external_tag
-		(validator, &copy_tag, "fileinto", SIEVE_OPT_SIDE_EFFECT);
+		(valdtr, "fileinto", ext, &copy_tag, SIEVE_OPT_SIDE_EFFECT);
 
 	return TRUE;
 }
@@ -69,13 +68,12 @@ static bool ext_copy_validator_load(struct sieve_validator *validator)
 
 static void seff_copy_print
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
-		const struct sieve_result_print_env *rpenv, void *se_context, bool *keep);
+		const struct sieve_result_print_env *rpenv, bool *keep);
 static void seff_copy_post_commit
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
-		const struct sieve_action_exec_env *aenv, void *se_context,
-		void *tr_context, bool *keep);
+		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 
-const struct sieve_side_effect copy_side_effect = {
+const struct sieve_side_effect_def copy_side_effect = {
 	SIEVE_OBJECT("copy", &copy_side_effect_operand, 0),
 	&act_store,
 	NULL, NULL, NULL,
@@ -90,17 +88,17 @@ const struct sieve_side_effect copy_side_effect = {
  */
 
 static bool tag_copy_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *cmd);
 static bool tag_copy_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-    struct sieve_command_context *context);
+    struct sieve_command *cmd);
 
-static const struct sieve_argument copy_tag = { 
+static const struct sieve_argument_def copy_tag = { 
 	"copy", 
-	NULL, NULL,
-	tag_copy_validate, 
 	NULL,
+	tag_copy_validate, 
+	NULL, NULL,
 	tag_copy_generate
 };
 
@@ -111,7 +109,7 @@ static const struct sieve_argument copy_tag = {
 static const struct sieve_extension_objects ext_side_effects =
 	SIEVE_EXT_DEFINE_SIDE_EFFECT(copy_side_effect);
 
-static const struct sieve_operand copy_side_effect_operand = {
+static const struct sieve_operand_def copy_side_effect_operand = {
 	"copy operand",
 	&copy_extension,
 	0,
@@ -124,9 +122,9 @@ static const struct sieve_operand copy_side_effect_operand = {
  */
 
 static bool tag_copy_validate
-	(struct sieve_validator *validator ATTR_UNUSED, 
+	(struct sieve_validator *valdtr ATTR_UNUSED, 
 	struct sieve_ast_argument **arg ATTR_UNUSED, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
+	struct sieve_command *cmd ATTR_UNUSED)
 {
 	*arg = sieve_ast_argument_next(*arg);
 
@@ -139,13 +137,14 @@ static bool tag_copy_validate
 
 static bool tag_copy_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-    struct sieve_command_context *context ATTR_UNUSED)
+	struct sieve_command *cmd ATTR_UNUSED)
 {
 	if ( sieve_ast_argument_type(arg) != SAAT_TAG ) {
 		return FALSE;
 	}
 
-	sieve_opr_side_effect_emit(cgenv->sbin, &copy_side_effect);
+	sieve_opr_side_effect_emit
+		(cgenv->sbin, sieve_argument_ext(arg), &copy_side_effect);
 
 	return TRUE;
 }
@@ -157,8 +156,7 @@ static bool tag_copy_generate
 static void seff_copy_print
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_result_print_env *rpenv,
-	void *se_context ATTR_UNUSED, bool *keep)
+	const struct sieve_result_print_env *rpenv, bool *keep)
 {
 	sieve_result_seffect_printf(rpenv, "preserve implicit keep");
 
@@ -169,7 +167,7 @@ static void seff_copy_post_commit
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_action *action ATTR_UNUSED, 
 	const struct sieve_action_exec_env *aenv ATTR_UNUSED, 
-		void *se_context ATTR_UNUSED,	void *tr_context ATTR_UNUSED, bool *keep)
+		void *tr_context ATTR_UNUSED, bool *keep)
 {	
 	*keep = TRUE;
 }

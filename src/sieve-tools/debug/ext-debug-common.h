@@ -10,12 +10,12 @@
  * Commands
  */
 
-extern const struct sieve_command debug_print_command;
+extern const struct sieve_command_def debug_print_command;
  
 /*
  * Operations
  */
 
-extern const struct sieve_operation debug_print_operation;
+extern const struct sieve_operation_def debug_print_operation;
 
 #endif /* __EXT_DEBUG_COMMON_H */

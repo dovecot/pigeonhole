@@ -36,6 +36,8 @@ struct sieve_binary_dumper *sieve_binary_dumper_create
 	dumper->dumpenv.sbin = sbin;
 	sieve_binary_ref(sbin);
 	
+	dumper->dumpenv.svinst = sieve_binary_svinst(sbin);
+
 	return dumper;
 }
 
@@ -106,7 +108,8 @@ bool sieve_binary_dumper_run
 		for ( i = 0; i < count; i++ ) {
 			const struct sieve_extension *ext = sieve_binary_extension_get_by_index
 				(sbin, i);
-			sieve_binary_dumpf(denv, "%3d: %s (%d)\n", i, ext->name, SIEVE_EXT_ID(ext));
+			sieve_binary_dumpf(denv, "%3d: %s (%d)\n", i, sieve_extension_name(ext), 
+				ext->id);
 		}
 	}
 
@@ -121,8 +124,8 @@ bool sieve_binary_dumper_run
 				const struct sieve_extension *ext = sieve_binary_extension_get_by_index
 					(sbin, i);
 	
-				if ( ext->binary_dump != NULL ) {	
-					success = ext->binary_dump(denv);
+				if ( ext->def != NULL && ext->def->binary_dump != NULL ) {	
+					success = ext->def->binary_dump(ext, denv);
 				}
 			} T_END;
 

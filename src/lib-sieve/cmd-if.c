@@ -19,11 +19,11 @@
  */
 
 static bool cmd_if_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_if_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command cmd_if = { 
+const struct sieve_command_def cmd_if = { 
 	"if", 
 	SCT_COMMAND, 
 	0, 1, TRUE, TRUE,
@@ -40,9 +40,9 @@ const struct sieve_command cmd_if = {
  */
 
 static bool cmd_elsif_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 
-const struct sieve_command cmd_elsif = {
+const struct sieve_command_def cmd_elsif = {
     "elsif", 
 	SCT_COMMAND,
 	0, 1, TRUE, TRUE, 
@@ -59,9 +59,9 @@ const struct sieve_command cmd_elsif = {
  */
 
 static bool cmd_else_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command cmd_else = {
+const struct sieve_command_def cmd_else = {
     "else", 
 	SCT_COMMAND, 
 	0, 0, TRUE, TRUE,
@@ -84,23 +84,23 @@ struct cmd_if_context_data {
 };
 
 static void cmd_if_initialize_context_data
-(struct sieve_command_context *cmd, struct cmd_if_context_data *previous) 
+(struct sieve_command *cmd, struct cmd_if_context_data *previous) 
 { 	
-	struct cmd_if_context_data *ctx_data;
+	struct cmd_if_context_data *cmd_data;
 
 	/* Assign context */
-	ctx_data = p_new(sieve_command_pool(cmd), struct cmd_if_context_data, 1);
-	ctx_data->exit_jump = 0;
-	ctx_data->jump_generated = FALSE;
+	cmd_data = p_new(sieve_command_pool(cmd), struct cmd_if_context_data, 1);
+	cmd_data->exit_jump = 0;
+	cmd_data->jump_generated = FALSE;
 
 	/* Update linked list of contexts */
-	ctx_data->previous = previous;
-	ctx_data->next = NULL;	
+	cmd_data->previous = previous;
+	cmd_data->next = NULL;	
 	if ( previous != NULL )
-		previous->next = ctx_data;
+		previous->next = cmd_data;
 	
 	/* Assign to command context */
-	cmd->data = ctx_data;
+	cmd->data = cmd_data;
 }
 
 /* 
@@ -108,7 +108,7 @@ static void cmd_if_initialize_context_data
  */
 
 static bool cmd_if_validate
-(struct sieve_validator *validator ATTR_UNUSED, struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command *cmd) 
 { 
 	/* Start if-command structure */
 	cmd_if_initialize_context_data(cmd, NULL);
@@ -117,26 +117,24 @@ static bool cmd_if_validate
 }
 
 static bool cmd_elsif_validate
-(struct sieve_validator *validator, struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_command *cmd)
 {
-	struct sieve_command_context *prev_context = 
-		sieve_command_prev_context(cmd);
+	struct sieve_command *prev = sieve_command_prev(cmd);
 
 	/* Check valid command placement */
-	if ( prev_context == NULL ||
-		( prev_context->command != &cmd_if &&
-			prev_context->command != &cmd_elsif ) ) 
+	if ( prev == NULL ||
+		( !sieve_command_is(prev, cmd_if) && !sieve_command_is(prev, cmd_elsif) ) ) 
 	{		
-		sieve_command_validate_error(validator, cmd, 
+		sieve_command_validate_error(valdtr, cmd, 
 			"the %s command must follow an if or elseif command", 
-			cmd->command->identifier);
+			sieve_command_identifier(cmd));
 		return FALSE;
 	}
 	
 	/* Previous command in this block is 'if' or 'elsif', so we can safely refer 
 	 * to its context data 
 	 */
-	cmd_if_initialize_context_data(cmd, prev_context->data);
+	cmd_if_initialize_context_data(cmd, prev->data);
 
 	return TRUE;
 }
@@ -151,9 +149,9 @@ static bool cmd_elsif_validate
  */
 
 static void cmd_if_resolve_exit_jumps
-(struct sieve_binary *sbin, struct cmd_if_context_data *ctx_data) 
+(struct sieve_binary *sbin, struct cmd_if_context_data *cmd_data) 
 {
-	struct cmd_if_context_data *if_ctx = ctx_data->previous;
+	struct cmd_if_context_data *if_ctx = cmd_data->previous;
 	
 	/* Iterate backwards through all if-command contexts and resolve the 
 	 * exit jumps to the current code position.
@@ -166,10 +164,11 @@ static void cmd_if_resolve_exit_jumps
 }
 
 static bool cmd_if_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
 	struct sieve_binary *sbin = cgenv->sbin;
-	struct cmd_if_context_data *ctx_data = (struct cmd_if_context_data *) ctx->data;
+	struct cmd_if_context_data *cmd_data = 
+		(struct cmd_if_context_data *) cmd->data;
 	struct sieve_ast_node *test;
 	struct sieve_jumplist jmplist;
 	
@@ -177,29 +176,29 @@ static bool cmd_if_generate
 	sieve_jumplist_init_temp(&jmplist, sbin);
 	
 	/* Generate test condition */
-	test = sieve_ast_test_first(ctx->ast_node);
+	test = sieve_ast_test_first(cmd->ast_node);
 	if ( !sieve_generate_test(cgenv, test, &jmplist, FALSE) )
 		return FALSE;
 		
 	/* Case true { */
-	if ( !sieve_generate_block(cgenv, ctx->ast_node) ) 
+	if ( !sieve_generate_block(cgenv, cmd->ast_node) ) 
 		return FALSE;
 	
 	/* Are we the final command in this if-elsif-else structure? */
-	if ( ctx_data->next != NULL ) {
+	if ( cmd_data->next != NULL ) {
 		/* No, generate jump to end of if-elsif-else structure (resolved later) 
 		 * This of course is not necessary if the {} block contains a command 
 		 * like stop at top level that unconditionally exits the block already
 		 * anyway. 
 		 */
-		if ( !sieve_command_block_exits_unconditionally(ctx) ) {
-			sieve_operation_emit_code(sbin, &sieve_jmp_operation);
-			ctx_data->exit_jump = sieve_binary_emit_offset(sbin, 0);
-			ctx_data->jump_generated = TRUE;
+		if ( !sieve_command_block_exits_unconditionally(cmd) ) {
+			sieve_operation_emit(sbin, NULL, &sieve_jmp_operation);
+			cmd_data->exit_jump = sieve_binary_emit_offset(sbin, 0);
+			cmd_data->jump_generated = TRUE;
 		}
 	} else {
 		/* Yes, Resolve previous exit jumps to this point */
-		cmd_if_resolve_exit_jumps(sbin, ctx_data);
+		cmd_if_resolve_exit_jumps(sbin, cmd_data);
 	}
 	
 	/* Case false ... (subsequent elsif/else commands might generate more) */
@@ -209,16 +208,17 @@ static bool cmd_if_generate
 }
 
 static bool cmd_else_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
-	struct cmd_if_context_data *ctx_data = (struct cmd_if_context_data *) ctx->data;
+	struct cmd_if_context_data *cmd_data =
+		(struct cmd_if_context_data *) cmd->data;
 	
 	/* Else { */
-	if ( !sieve_generate_block(cgenv, ctx->ast_node) ) 
+	if ( !sieve_generate_block(cgenv, cmd->ast_node) ) 
 		return FALSE;
 		
 	/* } End: resolve all exit blocks */	
-	cmd_if_resolve_exit_jumps(cgenv->sbin, ctx_data);
+	cmd_if_resolve_exit_jumps(cgenv->sbin, cmd_data);
 		
 	return TRUE;
 }

@@ -20,17 +20,17 @@
  */
 
 static bool tag_mailbox_create_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *cmd);
 static bool tag_mailbox_create_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-    struct sieve_command_context *context);
+    struct sieve_command *context);
 
-const struct sieve_argument mailbox_create_tag = { 
+const struct sieve_argument_def mailbox_create_tag = { 
 	"create", 
-	NULL, NULL,
-	tag_mailbox_create_validate, 
 	NULL,
+	tag_mailbox_create_validate, 
+	NULL, NULL,
 	tag_mailbox_create_generate
 };
 
@@ -40,13 +40,13 @@ const struct sieve_argument mailbox_create_tag = {
 
 static void seff_mailbox_create_print
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
-		const struct sieve_result_print_env *rpenv, void *se_context, bool *keep);
+		const struct sieve_result_print_env *rpenv, bool *keep);
 static bool seff_mailbox_create_pre_execute
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, void **se_context, 
 		void *tr_context);;
 
-const struct sieve_side_effect mailbox_create_side_effect = {
+const struct sieve_side_effect_def mailbox_create_side_effect = {
 	SIEVE_OBJECT("create", &mailbox_create_operand, 0),
 	&act_store,
 	NULL, NULL, NULL,
@@ -62,7 +62,7 @@ const struct sieve_side_effect mailbox_create_side_effect = {
 static const struct sieve_extension_objects ext_side_effects =
 	SIEVE_EXT_DEFINE_SIDE_EFFECT(mailbox_create_side_effect);
 
-const struct sieve_operand mailbox_create_operand = {
+const struct sieve_operand_def mailbox_create_operand = {
 	"create operand",
 	&mailbox_extension,
 	0,
@@ -75,9 +75,8 @@ const struct sieve_operand mailbox_create_operand = {
  */
 
 static bool tag_mailbox_create_validate
-	(struct sieve_validator *validator ATTR_UNUSED, 
-	struct sieve_ast_argument **arg ATTR_UNUSED, 
-	struct sieve_command_context *cmd ATTR_UNUSED)
+(struct sieve_validator *valdtr ATTR_UNUSED, 
+	struct sieve_ast_argument **arg, struct sieve_command *cmd ATTR_UNUSED)
 {
 	*arg = sieve_ast_argument_next(*arg);
 
@@ -90,13 +89,14 @@ static bool tag_mailbox_create_validate
 
 static bool tag_mailbox_create_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
-    struct sieve_command_context *context ATTR_UNUSED)
+	struct sieve_command *context ATTR_UNUSED)
 {
 	if ( sieve_ast_argument_type(arg) != SAAT_TAG ) {
 		return FALSE;
 	}
 
-	sieve_opr_side_effect_emit(cgenv->sbin, &mailbox_create_side_effect);
+	sieve_opr_side_effect_emit
+		(cgenv->sbin, arg->argument->ext, &mailbox_create_side_effect);
 
 	return TRUE;
 }
@@ -108,8 +108,7 @@ static bool tag_mailbox_create_generate
 static void seff_mailbox_create_print
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_result_print_env *rpenv,
-	void *se_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
+	const struct sieve_result_print_env *rpenv, bool *keep ATTR_UNUSED)
 {
 	sieve_result_seffect_printf(rpenv, "create mailbox if it does not exist");
 }

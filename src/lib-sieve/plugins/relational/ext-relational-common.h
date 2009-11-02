@@ -39,10 +39,7 @@ enum relational_match {
  * Extension definitions 
  */
 
-extern int ext_relational_my_id;
-
-extern const struct sieve_extension relational_extension;
-extern const struct sieve_match_type_extension relational_match_extension;
+extern const struct sieve_extension_def relational_extension;
 
 /*
  * Match types
@@ -50,30 +47,30 @@ extern const struct sieve_match_type_extension relational_match_extension;
  
 /* Registered for validation */ 
 
-extern const struct sieve_match_type value_match_type;
-extern const struct sieve_match_type count_match_type;
+extern const struct sieve_match_type_def value_match_type;
+extern const struct sieve_match_type_def count_match_type;
 
 /* Used in byte code */
 
-extern const struct sieve_match_type rel_match_count_gt;
-extern const struct sieve_match_type rel_match_count_ge;
-extern const struct sieve_match_type rel_match_count_lt;
-extern const struct sieve_match_type rel_match_count_le;
-extern const struct sieve_match_type rel_match_count_eq;
-extern const struct sieve_match_type rel_match_count_ne;
+extern const struct sieve_match_type_def rel_match_count_gt;
+extern const struct sieve_match_type_def rel_match_count_ge;
+extern const struct sieve_match_type_def rel_match_count_lt;
+extern const struct sieve_match_type_def rel_match_count_le;
+extern const struct sieve_match_type_def rel_match_count_eq;
+extern const struct sieve_match_type_def rel_match_count_ne;
 
-extern const struct sieve_match_type rel_match_value_gt;
-extern const struct sieve_match_type rel_match_value_ge;
-extern const struct sieve_match_type rel_match_value_lt;
-extern const struct sieve_match_type rel_match_value_le;
-extern const struct sieve_match_type rel_match_value_eq;
-extern const struct sieve_match_type rel_match_value_ne;
+extern const struct sieve_match_type_def rel_match_value_gt;
+extern const struct sieve_match_type_def rel_match_value_ge;
+extern const struct sieve_match_type_def rel_match_value_lt;
+extern const struct sieve_match_type_def rel_match_value_le;
+extern const struct sieve_match_type_def rel_match_value_eq;
+extern const struct sieve_match_type_def rel_match_value_ne;
 
 /*
  * Operand
  */
  
-extern const struct sieve_operand rel_match_type_operand;
+extern const struct sieve_operand_def rel_match_type_operand;
 
 
 /*

@@ -4,6 +4,8 @@
 #ifndef __SIEVE_COMMON_H
 #define __SIEVE_COMMON_H
 
+#include "lib.h"
+
 #include "sieve-config.h"
 #include "sieve-types.h"
 
@@ -35,7 +37,9 @@ struct sieve_ast_argument;
 
 /* sieve-commands.h */
 struct sieve_argument;
+struct sieve_argument_def;
 struct sieve_command;
+struct sieve_command_def;
 struct sieve_command_context;
 struct sieve_command_registration;
 
@@ -69,10 +73,12 @@ struct sieve_code_dumper;
 
 /* sieve-extension.h */
 struct sieve_extension;
+struct sieve_extension_def;
 struct sieve_extension_objects;
 
 /* sieve-code.h */
 struct sieve_operand;
+struct sieve_operand_def;
 struct sieve_operand_class;
 struct sieve_operation;
 struct sieve_coded_stringlist;
@@ -81,6 +87,7 @@ struct sieve_coded_stringlist;
 struct sieve_binary;
 
 /* sieve-objects.h */
+struct sieve_object_def;
 struct sieve_object;
 
 /* sieve-comparator.h */
@@ -96,6 +103,7 @@ struct sieve_match_context;
 struct sieve_address;
 
 /* sieve-address-parts.h */
+struct sieve_address_part_def;
 struct sieve_address_part;
 
 /* sieve-result.h */
@@ -106,7 +114,9 @@ struct sieve_result_print_env;
 /* sieve-actions.h */
 struct sieve_action_exec_env;
 struct sieve_action;
+struct sieve_action_def;
 struct sieve_side_effect;
+struct sieve_side_effect_def;
 
 /* sieve-script.h */
 struct sieve_script;
@@ -119,5 +129,19 @@ struct sieve_ast *sieve_parse
 	(struct sieve_script *script, struct sieve_error_handler *ehandler);
 bool sieve_validate
 	(struct sieve_ast *ast, struct sieve_error_handler *ehandler);	
+
+/*
+ * Sieve engine instance
+ */
+
+struct sieve_instance {
+	pool_t pool;
+
+	const struct sieve_callbacks *callbacks;
+
+	void *context;
+
+	struct sieve_extension_registry *ext_reg;
+};
 
 #endif /* __SIEVE_COMMON_H */

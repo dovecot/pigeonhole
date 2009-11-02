@@ -299,14 +299,14 @@ static bool ext_body_parts_add_missing
 }
 
 static struct ext_body_message_context *ext_body_get_context
-(struct sieve_message_context *msgctx)
+(const struct sieve_extension *this_ext, struct sieve_message_context *msgctx)
 {
 	pool_t pool = sieve_message_context_pool(msgctx);
 	struct ext_body_message_context *ctx;
 	
 	/* Get message context (contains cached message body information) */
 	ctx = (struct ext_body_message_context *)
-		sieve_message_context_extension_get(msgctx, &body_extension);
+		sieve_message_context_extension_get(msgctx, this_ext);
 	
 	/* Create it if it does not exist already */
 	if ( ctx == NULL ) {
@@ -318,7 +318,7 @@ static struct ext_body_message_context *ext_body_get_context
 		ctx->raw_body = NULL;		
 
 		/* Register context */
-		sieve_message_context_extension_set(msgctx, &body_extension, (void *) ctx);
+		sieve_message_context_extension_set(msgctx, this_ext, (void *) ctx);
 	}
 	
 	return ctx;
@@ -328,8 +328,10 @@ bool ext_body_get_content
 (const struct sieve_runtime_env *renv, const char * const *content_types,
 	int decode_to_plain, struct ext_body_part **parts_r)
 {
+	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	struct ext_body_message_context *ctx = 
+		ext_body_get_context(this_ext, renv->msgctx);
 	bool result = TRUE;
-	struct ext_body_message_context *ctx = ext_body_get_context(renv->msgctx);
 
 	T_BEGIN {
 		/* Fill the return_body_parts array */
@@ -351,7 +353,9 @@ bool ext_body_get_content
 bool ext_body_get_raw
 (const struct sieve_runtime_env *renv, struct ext_body_part **parts_r)
 {
-	struct ext_body_message_context *ctx = ext_body_get_context(renv->msgctx);
+	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	struct ext_body_message_context *ctx = 
+		ext_body_get_context(this_ext, renv->msgctx);
 	struct ext_body_part *return_part;
 	buffer_t *buf;
 

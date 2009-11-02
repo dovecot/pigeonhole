@@ -40,11 +40,11 @@
  */
 
 static bool cmd_redirect_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *validator, struct sieve_command *cmd);
 static bool cmd_redirect_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command cmd_redirect = { 
+const struct sieve_command_def cmd_redirect = { 
 	"redirect", 
 	SCT_COMMAND,
 	1, 0, FALSE, FALSE, 
@@ -59,13 +59,11 @@ const struct sieve_command cmd_redirect = {
  */
 
 static bool cmd_redirect_operation_dump
-	(const struct sieve_operation *op,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_redirect_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation cmd_redirect_operation = { 
+const struct sieve_operation_def cmd_redirect_operation = { 
 	"REDIRECT",
 	NULL, 
 	SIEVE_OPERATION_REDIRECT,
@@ -78,19 +76,20 @@ const struct sieve_operation cmd_redirect_operation = {
  */
 
 static bool act_redirect_equals
-	(const struct sieve_script_env *senv, const void *ctx1, const void *ctx2);
+	(const struct sieve_script_env *senv, const struct sieve_action *act1, 
+		const struct sieve_action *act2);
 static int act_redirect_check_duplicate
 	(const struct sieve_runtime_env *renv,
-		const struct sieve_action_data *act, 
-		const struct sieve_action_data *act_other);
+		const struct sieve_action *act, 
+		const struct sieve_action *act_other);
 static void act_redirect_print
 	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
-		void *context, bool *keep);	
+		bool *keep);	
 static bool act_redirect_commit
 	(const struct sieve_action *action, const struct sieve_action_exec_env *aenv,
 		void *tr_context, bool *keep);
 		
-const struct sieve_action act_redirect = {
+const struct sieve_action_def act_redirect = {
 	"redirect",
 	SIEVE_ACTFLAG_TRIES_DELIVER,
 	act_redirect_equals,
@@ -111,7 +110,7 @@ struct act_redirect_context {
  */
 
 static bool cmd_redirect_validate
-(struct sieve_validator *validator, struct sieve_command_context *cmd) 
+(struct sieve_validator *validator, struct sieve_command *cmd) 
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 
@@ -159,15 +158,15 @@ static bool cmd_redirect_validate
  */
  
 static bool cmd_redirect_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &cmd_redirect_operation);
+	sieve_operation_emit(cgenv->sbin, NULL,  &cmd_redirect_operation);
 
 	/* Emit line number */
-	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
+	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
 
 	/* Generate arguments */
-	return sieve_generate_arguments(cgenv, ctx, NULL);
+	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
 
 /* 
@@ -175,8 +174,7 @@ static bool cmd_redirect_generate
  */
  
 static bool cmd_redirect_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "REDIRECT");
 	sieve_code_descend(denv);
@@ -196,8 +194,7 @@ static bool cmd_redirect_operation_dump
  */
 
 static int cmd_redirect_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_redirect_context *act;
@@ -226,7 +223,8 @@ static int cmd_redirect_operation_execute
 	/* FIXME: perform address normalization if the string is not a string literal
 	 */
 
-	sieve_runtime_trace(renv, "REDIRECT action (\"%s\")", str_sanitize(str_c(redirect), 64));
+	sieve_runtime_trace(renv, "REDIRECT action (\"%s\")",
+		str_sanitize(str_c(redirect), 64));
 	
 	/* Add redirect action to the result */
 
@@ -235,7 +233,8 @@ static int cmd_redirect_operation_execute
 	act->to_address = p_strdup(pool, str_c(redirect));
 	
 	ret = sieve_result_add_action
-		(renv, &act_redirect, slist, source_line, (void *) act, sieve_max_redirects);
+		(renv, NULL, &act_redirect, slist, source_line, (void *) act,
+			sieve_max_redirects);
 	
 	return ( ret >= 0 );
 }
@@ -246,12 +245,12 @@ static int cmd_redirect_operation_execute
 
 static bool act_redirect_equals
 (const struct sieve_script_env *senv ATTR_UNUSED, 
-	const void *ctx1, const void *ctx2)
+	const struct sieve_action *act1, const struct sieve_action *act2)
 {
-	struct act_redirect_context *rd_ctx1 = 
-		(struct act_redirect_context *) ctx1;
+	struct act_redirect_context *rd_ctx1 =
+		(struct act_redirect_context *) act1->context;
 	struct act_redirect_context *rd_ctx2 = 
-		(struct act_redirect_context *) ctx2;
+		(struct act_redirect_context *) act2->context;
 
 	/* Address is already normalized */
 	return ( sieve_address_compare
@@ -260,18 +259,18 @@ static bool act_redirect_equals
  
 static int act_redirect_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
-	const struct sieve_action_data *act, 
-	const struct sieve_action_data *act_other)
+	const struct sieve_action *act, 
+	const struct sieve_action *act_other)
 {
-	return ( act_redirect_equals
-		(renv->scriptenv, act->context, act_other->context) ? 1 : 0 );
+	return ( act_redirect_equals(renv->scriptenv, act, act_other) ? 1 : 0 );
 }
 
 static void act_redirect_print
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_result_print_env *rpenv, void *context, bool *keep)	
+(const struct sieve_action *action, 
+	const struct sieve_result_print_env *rpenv, bool *keep)	
 {
-	struct act_redirect_context *ctx = (struct act_redirect_context *) context;
+	struct act_redirect_context *ctx = 
+		(struct act_redirect_context *) action->context;
 	
 	sieve_result_action_printf(rpenv, "redirect message to: %s", 
 		str_sanitize(ctx->to_address, 128));
@@ -340,10 +339,12 @@ static bool act_redirect_send
 }
 
 static bool act_redirect_commit
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
+(const struct sieve_action *action, 
+	const struct sieve_action_exec_env *aenv, void *tr_context ATTR_UNUSED,
+	bool *keep)
 {
-	struct act_redirect_context *ctx = (struct act_redirect_context *) tr_context;
+	struct act_redirect_context *ctx =
+		(struct act_redirect_context *) action->context;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *dupeid;

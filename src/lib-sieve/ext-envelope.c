@@ -35,21 +35,19 @@
  * Forward declarations
  */
 
-static const struct sieve_command envelope_test;
-const struct sieve_operation envelope_operation;
-const struct sieve_extension envelope_extension;
+static const struct sieve_command_def envelope_test;
+const struct sieve_operation_def envelope_operation;
+const struct sieve_extension_def envelope_extension;
 
 /* 
  * Extension 
  */
 
-static bool ext_envelope_validator_load(struct sieve_validator *validator);
+static bool ext_envelope_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
-static int ext_my_id = -1;
-
-const struct sieve_extension envelope_extension = { 
+const struct sieve_extension_def envelope_extension = { 
 	"envelope", 
-	&ext_my_id,
 	NULL, NULL,
 	ext_envelope_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
@@ -57,10 +55,11 @@ const struct sieve_extension envelope_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERANDS 
 };
 
-static bool ext_envelope_validator_load(struct sieve_validator *validator)
+static bool ext_envelope_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register new test */
-	sieve_validator_register_command(validator, &envelope_test);
+	sieve_validator_register_command(valdtr, ext, &envelope_test);
 
 	return TRUE;
 }
@@ -74,13 +73,14 @@ static bool ext_envelope_validator_load(struct sieve_validator *validator)
  */
 
 static bool tst_envelope_registered
-	(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+		struct sieve_command_registration *cmd_reg);
 static bool tst_envelope_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command *tst);
 static bool tst_envelope_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-static const struct sieve_command envelope_test = { 
+static const struct sieve_command_def envelope_test = { 
 	"envelope", 
 	SCT_TEST, 
 	2, 0, FALSE, FALSE,
@@ -96,13 +96,11 @@ static const struct sieve_command envelope_test = {
  */
 
 static bool ext_envelope_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int ext_envelope_operation_execute
-	(const struct sieve_operation *op,
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation envelope_operation = { 
+const struct sieve_operation_def envelope_operation = { 
 	"ENVELOPE",
 	&envelope_extension,
 	0,
@@ -184,12 +182,13 @@ static const struct sieve_envelope_part *_envelope_part_find
  */
 
 static bool tst_envelope_registered
-(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(validator, cmd_reg, SIEVE_AM_OPT_COMPARATOR);
-	sieve_address_parts_link_tags(validator, cmd_reg, SIEVE_AM_OPT_ADDRESS_PART);
-	sieve_match_types_link_tags(validator, cmd_reg, SIEVE_AM_OPT_MATCH_TYPE);
+	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_AM_OPT_COMPARATOR);
+	sieve_address_parts_link_tags(valdtr, cmd_reg, SIEVE_AM_OPT_ADDRESS_PART);
+	sieve_match_types_link_tags(valdtr, cmd_reg, SIEVE_AM_OPT_MATCH_TYPE);
 	
 	return TRUE;
 }
@@ -223,18 +222,22 @@ static int _envelope_part_is_supported
 }
 
 static bool tst_envelope_validate
-(struct sieve_validator *validator, struct sieve_command_context *tst) 
+(struct sieve_validator *valdtr, struct sieve_command *tst) 
 { 		
 	struct sieve_ast_argument *arg = tst->first_positional;
 	struct sieve_ast_argument *epart;
+	struct sieve_comparator cmp_default = 
+		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
+	struct sieve_match_type mcht_default = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	const struct sieve_envelope_part *not_address = NULL;
 				
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "envelope part", 1, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "envelope part", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
-	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
 		
 	/* Check whether supplied envelope parts are supported
@@ -244,7 +247,7 @@ static bool tst_envelope_validate
 	if ( !sieve_ast_stringlist_map(&epart, (void *) &not_address, 
 		_envelope_part_is_supported) ) {		
 		
-		sieve_argument_validate_error(validator, epart, 
+		sieve_argument_validate_error(valdtr, epart, 
 			"specified envelope part '%s' is not supported by the envelope test", 
 				str_sanitize(sieve_ast_strlist_strc(epart), 64));
 		return FALSE;
@@ -255,7 +258,7 @@ static bool tst_envelope_validate
 			sieve_command_find_argument(tst, &address_part_tag);
 
 		if ( addrp_arg != NULL ) {
-			sieve_argument_validate_error(validator, addrp_arg,
+			sieve_argument_validate_error(valdtr, addrp_arg,
 				"address part ':%s' specified while non-address envelope part '%s' "
 				"is tested with the envelope test",
                 sieve_ast_argument_tag(addrp_arg), not_address->identifier);
@@ -266,16 +269,16 @@ static bool tst_envelope_validate
 	arg = sieve_ast_argument_next(arg);
 	
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
-	if ( !sieve_validator_argument_activate(validator, tst, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
 
 	/* Validate the key argument to a specified match type */
 	return sieve_match_type_validate
-		(validator, tst, arg, &is_match_type, &i_ascii_casemap_comparator);
+		(valdtr, tst, arg, &mcht_default, &cmp_default);
 }
 
 /*
@@ -283,12 +286,12 @@ static bool tst_envelope_validate
  */
  
 static bool tst_envelope_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	(void)sieve_operation_emit_code(cgenv->sbin, &envelope_operation);
+	(void)sieve_operation_emit(cgenv->sbin, cmd->ext, &envelope_operation);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;
 
 	return TRUE;
@@ -299,8 +302,7 @@ static bool tst_envelope_generate
  */
  
 static bool ext_envelope_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED, 
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "ENVELOPE");
 	sieve_code_descend(denv);
@@ -405,13 +407,15 @@ static const char *const *_auth_part_get_values
 }
 
 static int ext_envelope_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	bool result = TRUE;
-	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
-	const struct sieve_match_type *mtch = &is_match_type;
-	const struct sieve_address_part *addrp = &all_address_part;
+	struct sieve_comparator cmp = 
+		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
+	struct sieve_match_type mcht = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
+	struct sieve_address_part addrp = 
+		SIEVE_ADDRESS_PART_DEFAULT(all_address_part);
 	struct sieve_match_context *mctx;
 	struct sieve_coded_stringlist *envp_list;
 	struct sieve_coded_stringlist *key_list;
@@ -426,7 +430,7 @@ static int ext_envelope_operation_execute
 	sieve_runtime_trace(renv, "ENVELOPE test");
 
 	if ( (ret=sieve_addrmatch_default_get_optionals
-		(renv, address, &addrp, &mtch, &cmp)) <= 0 )
+		(renv, address, &addrp, &mcht, &cmp)) <= 0 )
 		return ret; 
 
 	/* Read envelope-part */
@@ -442,7 +446,7 @@ static int ext_envelope_operation_execute
 	}
 	
 	/* Initialize match */
-	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list);
+	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_list);
 	
 	/* Iterate through all requested headers to match */
 	envp_item = NULL;
@@ -466,7 +470,10 @@ static int ext_envelope_operation_execute
 							/* Null path <> */
 							ret = sieve_match_value(mctx, "", 0);
 						} else {
-							const char *part = addrp->extract_from(addresses[i]);
+							const char *part = NULL;
+
+							if ( addrp.def != NULL && addrp.def->extract_from	!= NULL )
+								part = addrp.def->extract_from(&addrp, addresses[i]);
 
 							if ( part != NULL ) 
 								ret = sieve_match_value(mctx, part, strlen(part));
@@ -479,13 +486,13 @@ static int ext_envelope_operation_execute
 							break;
 						}
 
-       	        		matched = ret > 0;
+						matched = ret > 0;
 					}
 				}
 			} 
 
 			if ( epart->get_values != NULL && addresses == NULL && 
-				addrp == &all_address_part ) {
+				sieve_address_part_is(&addrp, all_address_part) ) {
 				/* Field contains something else */
 				const char *const *values = epart->get_values(renv);
 
@@ -495,9 +502,9 @@ static int ext_envelope_operation_execute
 
 					if ( (ret=sieve_match_value
 						(mctx, values[i], strlen(values[i]))) < 0 ) {
-	                    result = FALSE;
-    	                break;
-        	        }
+						result = FALSE;
+						break;
+					}
 			
 					matched = ret > 0;				
 				}

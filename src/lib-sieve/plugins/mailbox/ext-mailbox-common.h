@@ -10,31 +10,31 @@
  * Tagged arguments
  */
 
-extern const struct sieve_argument mailbox_create_tag;
+extern const struct sieve_argument_def mailbox_create_tag;
 
 /*
  * Commands
  */
 
-extern const struct sieve_command mailboxexists_test;
+extern const struct sieve_command_def mailboxexists_test;
 
 /*
  * Operands
  */
 
-extern const struct sieve_operand mailbox_create_operand;
+extern const struct sieve_operand_def mailbox_create_operand;
 
 /*
  * Operations
  */
 
-extern const struct sieve_operation mailboxexists_operation;
+extern const struct sieve_operation_def mailboxexists_operation;
 
 /*
  * Extension
  */
 
-extern const struct sieve_extension mailbox_extension;
+extern const struct sieve_extension_def mailbox_extension;
 
 #endif /* __EXT_MAILBOX_COMMON_H */
 

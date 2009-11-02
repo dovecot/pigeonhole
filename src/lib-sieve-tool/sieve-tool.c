@@ -23,6 +23,14 @@
 
 static struct ioloop *ioloop;
 
+/* Sieve instance */
+
+struct sieve_instance *sieve_instance;
+
+static const struct sieve_callbacks sieve_callbacks = {
+	NULL
+};
+
 /*
  * Signal handlers
  */
@@ -65,13 +73,14 @@ void sieve_tool_init(sieve_settings_func_t settings_func, bool init_lib)
 		lib_signals_ignore(SIGALRM, FALSE);
 	}
 
-	if ( !sieve_init(settings_func) ) 
+	if ( (sieve_instance=sieve_init(&sieve_callbacks, NULL)) == NULL )
 		i_fatal("failed to initialize sieve implementation\n");
 }
 
 void sieve_tool_deinit(void)
 {
 	sieve_deinit();
+	sieve_deinit(&sieve_instance);
 
 	if ( _init_lib ) {
 		lib_signals_deinit();
@@ -145,7 +154,7 @@ struct sieve_binary *sieve_tool_script_compile
 	ehandler = sieve_stderr_ehandler_create(0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
-	if ( (sbin = sieve_compile(filename, name, ehandler)) == NULL )
+	if ( (sbin = sieve_compile(sieve_instance, filename, name, ehandler)) == NULL )
 		i_error("failed to compile sieve script '%s'\n", filename);
 
 	sieve_error_handler_unref(&ehandler);
@@ -161,7 +170,7 @@ struct sieve_binary *sieve_tool_script_open(const char *filename)
 	ehandler = sieve_stderr_ehandler_create(0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
-	if ( (sbin = sieve_open(filename, NULL, ehandler, NULL)) == NULL ) {
+	if ( (sbin = sieve_open(sieve_instance, filename, NULL, ehandler, NULL)) == NULL ) {
 		sieve_error_handler_unref(&ehandler);
 		i_fatal("Failed to compile sieve script\n");
 	}

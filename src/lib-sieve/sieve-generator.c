@@ -5,6 +5,7 @@
 #include "mempool.h"
 
 #include "sieve-common.h"
+#include "sieve-script.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -63,6 +64,8 @@ void sieve_jumplist_resolve(struct sieve_jumplist *jlist)
 
 struct sieve_generator {
 	pool_t pool;
+
+	struct sieve_instance *instance;
 	
 	struct sieve_error_handler *ehandler;
 
@@ -72,10 +75,12 @@ struct sieve_generator {
 };
 
 struct sieve_generator *sieve_generator_create
-	(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
+(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
 {
 	pool_t pool;
 	struct sieve_generator *gentr;
+	struct sieve_script *script;
+	struct sieve_instance *svinst;
 	
 	pool = pool_alloconly_create("sieve_generator", 4096);	
 	gentr = p_new(pool, struct sieve_generator, 1);
@@ -86,11 +91,16 @@ struct sieve_generator *sieve_generator_create
 	
 	gentr->genenv.gentr = gentr;
 	gentr->genenv.ast = ast;	
-	gentr->genenv.script = sieve_ast_script(ast);
 	sieve_ast_ref(ast);
 
+	script = sieve_ast_script(ast);
+	svinst = sieve_script_svinst(script);
+
+	gentr->genenv.script = script;
+	gentr->genenv.svinst = svinst;
+
 	/* Setup storage for extension contexts */		
-	p_array_init(&gentr->ext_contexts, pool, sieve_extensions_get_count());
+	p_array_init(&gentr->ext_contexts, pool, sieve_extensions_get_count(svinst));
 		
 	return gentr;
 }
@@ -186,19 +196,20 @@ void sieve_generator_critical
 void sieve_generator_extension_set_context
 (struct sieve_generator *gentr, const struct sieve_extension *ext, void *context)
 {
-	array_idx_set(&gentr->ext_contexts, (unsigned int) SIEVE_EXT_ID(ext), &context);	
+	if ( ext->id < 0 ) return;
+	
+	array_idx_set(&gentr->ext_contexts, (unsigned int) ext->id, &context);	
 }
 
 const void *sieve_generator_extension_get_context
 (struct sieve_generator *gentr, const struct sieve_extension *ext) 
 {
-	int ext_id = SIEVE_EXT_ID(ext);
 	void * const *ctx;
 
-	if  ( ext_id < 0 || ext_id >= (int) array_count(&gentr->ext_contexts) )
+	if  ( ext->id < 0 || ext->id >= (int) array_count(&gentr->ext_contexts) )
 		return NULL;
 	
-	ctx = array_idx(&gentr->ext_contexts, (unsigned int) ext_id);		
+	ctx = array_idx(&gentr->ext_contexts, (unsigned int) ext->id);		
 
 	return *ctx;
 }
@@ -209,59 +220,68 @@ const void *sieve_generator_extension_get_context
 
 bool sieve_generate_argument
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *cmd)
+	struct sieve_command *cmd)
 {
-	const struct sieve_argument *argument = arg->argument;
+	const struct sieve_argument_def *arg_def;
 	
-	if ( argument == NULL ) return FALSE;
+	if ( arg->argument == NULL || arg->argument->def == NULL ) return FALSE;
+
+	arg_def = arg->argument->def;
 	
-	return ( argument->generate == NULL || 	
-		argument->generate(cgenv, arg, cmd) );
+	return ( arg_def->generate == NULL || 	
+		arg_def->generate(cgenv, arg, cmd) );
 }
 
 bool sieve_generate_arguments
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *cmd, 
-	struct sieve_ast_argument **last_arg)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd, 
+	struct sieve_ast_argument **last_arg_r)
 {
 	enum { ARG_START, ARG_OPTIONAL, ARG_POSITIONAL } state = ARG_START;
 	struct sieve_ast_argument *arg = sieve_ast_argument_first(cmd->ast_node);
 	
 	/* Generate all arguments with assigned generator function */
 	
-	while ( arg != NULL && arg->argument != NULL) {
-		const struct sieve_argument *argument = arg->argument;
+	while ( arg != NULL ) {
+		const struct sieve_argument *argument;
+		const struct sieve_argument_def *arg_def;
 		
+		if ( arg->argument == NULL || arg->argument->def == NULL )
+			return FALSE;
+
+		argument = arg->argument;
+		arg_def = argument->def;
+
 		switch ( state ) {
 		case ARG_START: 
-			if ( arg->arg_id_code == 0 )
+			if ( argument->id_code == 0 )
 				state = ARG_POSITIONAL;
 			else {
 				/* Mark start of optional operands with 0 operand identifier */
 				sieve_binary_emit_byte(cgenv->sbin, SIEVE_OPERAND_OPTIONAL);
 								
 				/* Emit argument id for optional operand */
-				sieve_binary_emit_byte(cgenv->sbin, (unsigned char) arg->arg_id_code);
+				sieve_binary_emit_byte(cgenv->sbin, (unsigned char) argument->id_code);
 
 				state = ARG_OPTIONAL;
 			}
 			break;
 		case ARG_OPTIONAL: 
-			if ( arg->arg_id_code == 0 )
+			if ( argument->id_code == 0 )
 				state = ARG_POSITIONAL;
 			
 			/* Emit argument id for optional operand (0 marks the end of the optionals) */
-			sieve_binary_emit_byte(cgenv->sbin, (unsigned char) arg->arg_id_code);
+			sieve_binary_emit_byte(cgenv->sbin, (unsigned char) argument->id_code);
 
 			break;
 		case ARG_POSITIONAL:
-			if ( arg->arg_id_code != 0 )
+			if ( argument->id_code != 0 )
 				return FALSE;
 			break;
 		}
 		
 		/* Call the generation function for the argument */ 
-		if ( argument->generate != NULL ) { 
-			if ( !argument->generate(cgenv, arg, cmd) ) 
+		if ( arg_def->generate != NULL ) { 
+			if ( !arg_def->generate(cgenv, arg, cmd) ) 
 				return FALSE;
 		} else if ( state == ARG_POSITIONAL ) break;
 
@@ -272,27 +292,29 @@ bool sieve_generate_arguments
 	if ( state == ARG_OPTIONAL )
 		sieve_binary_emit_byte(cgenv->sbin, 0);
 	
-	if ( last_arg != NULL )
-		*last_arg = arg;
+	if ( last_arg_r != NULL )
+		*last_arg_r = arg;
 	
 	return TRUE;
 }
 
 bool sieve_generate_argument_parameters
 (const struct sieve_codegen_env *cgenv, 
-	struct sieve_command_context *cmd, struct sieve_ast_argument *arg)
+	struct sieve_command *cmd, struct sieve_ast_argument *arg)
 {
 	struct sieve_ast_argument *param = arg->parameters;
 	
 	/* Generate all parameters with assigned generator function */
 	
-	while ( param != NULL && param->argument != NULL) {
-		const struct sieve_argument *parameter = param->argument;
+	while ( param != NULL ) {
+		if ( param->argument != NULL && param->argument->def != NULL ) {
+			const struct sieve_argument_def *parameter = param->argument->def;
 				
-		/* Call the generation function for the parameter */ 
-		if ( parameter->generate != NULL ) { 
-			if ( !parameter->generate(cgenv, param, cmd) ) 
-				return FALSE;
+			/* Call the generation function for the parameter */ 
+			if ( parameter->generate != NULL ) { 
+				if ( !parameter->generate(cgenv, param, cmd) ) 
+					return FALSE;
+			}
 		}
 
 		param = sieve_ast_argument_next(param);
@@ -305,24 +327,29 @@ bool sieve_generate_test
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_node *tst_node,
 	struct sieve_jumplist *jlist, bool jump_true) 
 {
-	i_assert( tst_node->context != NULL && tst_node->context->command != NULL );
+	struct sieve_command *test;
+	const struct sieve_command_def *tst_def;
 
-	if ( tst_node->context->command->control_generate != NULL ) {
-		if ( tst_node->context->command->control_generate
-			(cgenv, tst_node->context, jlist, jump_true) ) 
+	i_assert( tst_node->command != NULL && tst_node->command->def != NULL );
+
+	test = tst_node->command;
+	tst_def = test->def;
+
+	if ( tst_def->control_generate != NULL ) {
+		if ( tst_def->control_generate(cgenv, test, jlist, jump_true) ) 
 			return TRUE;
 		
 		return FALSE;
 	}
 	
-	if ( tst_node->context->command->generate != NULL ) {
+	if ( tst_def->generate != NULL ) {
 
-		if ( tst_node->context->command->generate(cgenv, tst_node->context) ) {
+		if ( tst_def->generate(cgenv, test) ) {
 			
 			if ( jump_true ) 
-				sieve_operation_emit_code(cgenv->sbin, &sieve_jmptrue_operation);
+				sieve_operation_emit(cgenv->sbin, NULL, &sieve_jmptrue_operation);
 			else
-				sieve_operation_emit_code(cgenv->sbin, &sieve_jmpfalse_operation);
+				sieve_operation_emit(cgenv->sbin, NULL, &sieve_jmpfalse_operation);
 			sieve_jumplist_add(jlist, sieve_binary_emit_offset(cgenv->sbin, 0));
 						
 			return TRUE;
@@ -337,10 +364,16 @@ bool sieve_generate_test
 static bool sieve_generate_command
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_node *cmd_node) 
 {
-	i_assert( cmd_node->context != NULL && cmd_node->context->command != NULL );
+	struct sieve_command *command;
+	const struct sieve_command_def *cmd_def;
 
-	if ( cmd_node->context->command->generate != NULL ) {
-		return cmd_node->context->command->generate(cgenv, cmd_node->context);
+	i_assert( cmd_node->command != NULL && cmd_node->command->def != NULL );
+
+	command = cmd_node->command;
+	cmd_def = command->def;
+
+	if ( cmd_def->generate != NULL ) {
+		return cmd_def->generate(cgenv, command);
 	}
 	
 	return TRUE;		
@@ -350,13 +383,13 @@ bool sieve_generate_block
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_node *block) 
 {
 	bool result = TRUE;
-	struct sieve_ast_node *command;
+	struct sieve_ast_node *cmd_node;
 
 	T_BEGIN {	
-		command = sieve_ast_command_first(block);
-		while ( result && command != NULL ) {	
-			result = sieve_generate_command(cgenv, command);	
-			command = sieve_ast_command_next(command);
+		cmd_node = sieve_ast_command_first(block);
+		while ( result && cmd_node != NULL ) {	
+			result = sieve_generate_command(cgenv, cmd_node);	
+			cmd_node = sieve_ast_command_next(cmd_node);
 		}		
 	} T_END;
 	
@@ -393,7 +426,8 @@ bool sieve_generator_run
 		sieve_binary_emit_extension(*sbin, ext, 0);
 	
 		/* Load */
-		if ( ext->generator_load != NULL && !ext->generator_load(&gentr->genenv) )
+		if ( ext->def != NULL && ext->def->generator_load != NULL &&
+			!ext->def->generator_load(ext, &gentr->genenv) )
 			return FALSE;
 	}
 

@@ -12,17 +12,18 @@
  * Extension
  */
  
-extern const struct sieve_extension date_extension;
+extern const struct sieve_extension_def date_extension;
 
 bool ext_date_interpreter_load
-	(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED);
+	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
+		sieve_size_t *address ATTR_UNUSED);
 
 /* 
  * Tests
  */
 
-extern const struct sieve_command date_test;
-extern const struct sieve_command currentdate_test;
+extern const struct sieve_command_def date_test;
+extern const struct sieve_command_def currentdate_test;
  
 /*
  * Operations
@@ -33,8 +34,8 @@ enum ext_date_opcode {
 	EXT_DATE_OPERATION_CURRENTDATE
 };
 
-extern const struct sieve_operation date_operation;
-extern const struct sieve_operation currentdate_operation;
+extern const struct sieve_operation_def date_operation;
+extern const struct sieve_operation_def currentdate_operation;
 
 /*
  * Zone string

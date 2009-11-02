@@ -32,13 +32,11 @@
  * Extension 
  */
 
-static bool ext_debug_validator_load(struct sieve_validator *validator);
+static bool ext_debug_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *validator);
 
-int ext_debug_my_id = -1;
-
-const struct sieve_extension debug_extension = { 
+const struct sieve_extension_def debug_extension = { 
 	"vnd.dovecot.debug", 
-	&ext_debug_my_id,
 	NULL, NULL,
 	ext_debug_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
@@ -46,10 +44,11 @@ const struct sieve_extension debug_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
-static bool ext_debug_validator_load(struct sieve_validator *validator)
+static bool ext_debug_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *validator)
 {
 	/* Register new test */
-	sieve_validator_register_command(validator, &debug_print_command);
+	sieve_validator_register_command(validator, ext, &debug_print_command);
 
 	return TRUE;
 }

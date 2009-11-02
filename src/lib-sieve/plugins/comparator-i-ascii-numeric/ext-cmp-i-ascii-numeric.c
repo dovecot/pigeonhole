@@ -26,22 +26,19 @@
  * Forward declarations 
  */
 
-static const struct sieve_operand my_comparator_operand;
+static const struct sieve_operand_def my_comparator_operand;
 
-const struct sieve_comparator i_ascii_numeric_comparator;
-
-static bool ext_cmp_i_ascii_numeric_validator_load
-	(struct sieve_validator *validator);
+const struct sieve_comparator_def i_ascii_numeric_comparator;
 
 /* 
  * Extension
  */
 
-static int ext_my_id = -1;
+static bool ext_cmp_i_ascii_numeric_validator_load
+	(const struct sieve_extension *ext, struct sieve_validator *validator);
 
-const struct sieve_extension comparator_i_ascii_numeric_extension = { 
+const struct sieve_extension_def comparator_i_ascii_numeric_extension = { 
 	"comparator-i;ascii-numeric", 
-	&ext_my_id,
 	NULL, NULL,
 	ext_cmp_i_ascii_numeric_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
@@ -50,9 +47,9 @@ const struct sieve_extension comparator_i_ascii_numeric_extension = {
 };
 
 static bool ext_cmp_i_ascii_numeric_validator_load
-	(struct sieve_validator *validator)
+(const struct sieve_extension *ext, struct sieve_validator *validator)
 {
-	sieve_comparator_register(validator, &i_ascii_numeric_comparator);
+	sieve_comparator_register(validator, ext, &i_ascii_numeric_comparator);
 	return TRUE;
 }
 
@@ -63,7 +60,7 @@ static bool ext_cmp_i_ascii_numeric_validator_load
 static const struct sieve_extension_objects ext_comparators =
 	SIEVE_EXT_DEFINE_COMPARATOR(i_ascii_numeric_comparator);
 	
-static const struct sieve_operand my_comparator_operand = { 
+static const struct sieve_operand_def my_comparator_operand = { 
 	"comparator-i;ascii-numeric", 
 	&comparator_i_ascii_numeric_extension,
 	0, 
@@ -83,7 +80,7 @@ static int cmp_i_ascii_numeric_compare
 
 /* Comparator object */
 
-const struct sieve_comparator i_ascii_numeric_comparator = { 
+const struct sieve_comparator_def i_ascii_numeric_comparator = { 
 	SIEVE_OBJECT("i;ascii-numeric", &my_comparator_operand, 0),
 	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY,
 	cmp_i_ascii_numeric_compare,
@@ -113,9 +110,9 @@ static int cmp_i_ascii_numeric_compare
 		}
 	} else {
 		if ( !i_isdigit(*kp) ) {
-            /* Value is less */
-            return -1;
-        }
+			/* Value is less */
+			return -1;
+		}
 	}
 	
 	/* Ignore leading zeros */

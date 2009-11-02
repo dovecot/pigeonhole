@@ -25,7 +25,7 @@ static int mcht_is_match
  * Match-type object 
  */
 
-const struct sieve_match_type is_match_type = {
+const struct sieve_match_type_def is_match_type = {
 	SIEVE_OBJECT("is", &match_type_operand, SIEVE_MATCH_TYPE_IS),
 	TRUE, TRUE,
 	NULL, NULL, NULL,
@@ -45,8 +45,8 @@ static int mcht_is_match
 	if ( (val == NULL || val_size == 0) ) 
 		return ( key_size == 0 );
 
-	if ( mctx->comparator->compare != NULL )
-		return (mctx->comparator->compare(mctx->comparator, 
+	if ( mctx->comparator->def != NULL && mctx->comparator->def->compare != NULL )
+		return (mctx->comparator->def->compare(mctx->comparator, 
 			val, val_size, key, key_size) == 0);
 
 	return FALSE;

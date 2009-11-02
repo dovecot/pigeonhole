@@ -50,6 +50,10 @@ static string_t *test_name;
 unsigned int test_index;
 unsigned int test_failures;
 
+/* Extension */
+
+const struct sieve_extension *testsuite_ext;
+
 /* 
  * Validator context 
  */
@@ -64,7 +68,7 @@ bool testsuite_validator_context_initialize(struct sieve_validator *valdtr)
 	ctx->object_registrations = sieve_validator_object_registry_create(valdtr);
 	testsuite_register_core_objects(ctx);
 	
-	sieve_validator_extension_set_context(valdtr, &testsuite_extension, ctx);
+	sieve_validator_extension_set_context(valdtr, testsuite_ext, ctx);
 
 	return TRUE;
 }
@@ -73,14 +77,15 @@ struct testsuite_validator_context *testsuite_validator_context_get
 (struct sieve_validator *valdtr)
 {
 	return (struct testsuite_validator_context *)
-		sieve_validator_extension_get_context(valdtr, &testsuite_extension);
+		sieve_validator_extension_get_context(valdtr, testsuite_ext);
 }
 
 /* 
  * Generator context 
  */
 
-bool testsuite_generator_context_initialize(struct sieve_generator *gentr)
+bool testsuite_generator_context_initialize
+(struct sieve_generator *gentr, const struct sieve_extension *this_ext)
 {
 	pool_t pool = sieve_generator_pool(gentr);
 	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
@@ -90,7 +95,7 @@ bool testsuite_generator_context_initialize(struct sieve_generator *gentr)
 	/* Setup exit jumplist */
 	ctx->exit_jumps = sieve_jumplist_create(pool, sbin);
 	
-	sieve_generator_extension_set_context(gentr, &testsuite_extension, ctx);
+	sieve_generator_extension_set_context(gentr, this_ext, ctx);
 
 	return TRUE;
 }
@@ -227,7 +232,7 @@ const char *testsuite_tmp_dir_get(void)
  * Main testsuite init/deinit
  */
 
-void testsuite_init(void)
+void testsuite_init(struct sieve_instance *svinst)
 {
 	testsuite_test_context_init();
 	testsuite_log_init();
@@ -236,6 +241,9 @@ void testsuite_init(void)
 	testsuite_script_init();
 	testsuite_binary_init();
 	testsuite_smtp_init();
+
+	testsuite_ext = sieve_extension_register
+		(svinst, &testsuite_extension, TRUE);
 }
 
 void testsuite_deinit(void)

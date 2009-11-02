@@ -29,13 +29,11 @@
  * Extension
  */
 
-static bool ext_vacation_validator_load(struct sieve_validator *validator);
+static bool ext_vacation_validator_load
+	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
-static int ext_my_id = -1;
-
-const struct sieve_extension vacation_extension = { 
+const struct sieve_extension_def vacation_extension = { 
 	"vacation",
-	&ext_my_id,
 	NULL, NULL,
 	ext_vacation_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
@@ -43,10 +41,11 @@ const struct sieve_extension vacation_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
-static bool ext_vacation_validator_load(struct sieve_validator *validator)
+static bool ext_vacation_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register new command */
-	sieve_validator_register_command(validator, &vacation_command);
+	sieve_validator_register_command(valdtr, ext, &vacation_command);
 
 	return TRUE;
 }

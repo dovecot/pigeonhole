@@ -26,7 +26,8 @@
  */
 
 struct sieve_code_dumper_extension_reg {
-	const struct sieve_code_dumper_extension *val_ext;
+	const struct sieve_code_dumper_extension *cdmpext;
+	const struct sieve_extension *ext;
 	void *context;
 };
 
@@ -59,7 +60,8 @@ struct sieve_code_dumper *sieve_code_dumper_create
 	dumper->pc = 0;
 	
 	/* Setup storage for extension contexts */		
-	p_array_init(&dumper->extensions, pool, sieve_extensions_get_count());
+	p_array_init(&dumper->extensions, pool, 
+		sieve_extensions_get_count(denv->svinst));
 
 	return dumper;
 }
@@ -79,39 +81,40 @@ pool_t sieve_code_dumper_pool(struct sieve_code_dumper *dumper)
 /* EXtension support */
 
 void sieve_dump_extension_register
-(struct sieve_code_dumper *dumper, 
-	const struct sieve_code_dumper_extension *dump_ext, void *context)
+(struct sieve_code_dumper *dumper, const struct sieve_extension *ext,
+	const struct sieve_code_dumper_extension *cdmpext, void *context)
 {
-	struct sieve_code_dumper_extension_reg reg = { dump_ext, context };
-	int ext_id = SIEVE_EXT_ID(dump_ext->ext);
+	struct sieve_code_dumper_extension_reg *reg;
 
-	if ( ext_id < 0 ) return;
-	
-	array_idx_set(&dumper->extensions, (unsigned int) ext_id, &reg);	
+	if ( ext->id < 0 ) return;
+
+	reg = array_idx_modifiable(&dumper->extensions, (unsigned int) ext->id);
+	reg->cdmpext = cdmpext;
+	reg->ext = ext;
+	reg->context = context;
 }
 
 void sieve_dump_extension_set_context
 (struct sieve_code_dumper *dumper, const struct sieve_extension *ext, 
 	void *context)
 {
-	struct sieve_code_dumper_extension_reg reg = { NULL, context };
-	int ext_id = SIEVE_EXT_ID(ext);
+	struct sieve_code_dumper_extension_reg *reg;
 
-	if ( ext_id < 0 ) return;
-	
-	array_idx_set(&dumper->extensions, (unsigned int) ext_id, &reg);	
+	if ( ext->id < 0 ) return;
+
+	reg = array_idx_modifiable(&dumper->extensions, (unsigned int) ext->id);
+	reg->context = context;
 }
 
 void *sieve_dump_extension_get_context
 (struct sieve_code_dumper *dumper, const struct sieve_extension *ext) 
 {
-	int ext_id = SIEVE_EXT_ID(ext);
 	const struct sieve_code_dumper_extension_reg *reg;
 
-	if  ( ext_id < 0 || ext_id >= (int) array_count(&dumper->extensions) )
+	if  ( ext->id < 0 || ext->id >= (int) array_count(&dumper->extensions) )
 		return NULL;
 	
-	reg = array_idx(&dumper->extensions, (unsigned int) ext_id);		
+	reg = array_idx(&dumper->extensions, (unsigned int) ext->id);		
 
 	return reg->context;
 }
@@ -192,8 +195,8 @@ bool sieve_code_dumper_print_optional_operands
 static bool sieve_code_dumper_print_operation
 	(struct sieve_code_dumper *dumper) 
 {	
-	const struct sieve_operation *op;
 	struct sieve_dumptime_env *denv = dumper->dumpenv;
+	struct sieve_operation *oprtn = &denv->oprtn;
 	sieve_size_t address;
 	
 	/* Mark start address of operation */
@@ -201,13 +204,11 @@ static bool sieve_code_dumper_print_operation
 	address = dumper->mark_address = dumper->pc;
 
 	/* Read operation */
-	dumper->operation = op = 
-		sieve_operation_read(denv->sbin, &(dumper->pc));
+	if ( sieve_operation_read(denv->sbin, &(dumper->pc), oprtn) ) {
+		const struct sieve_operation_def *op = oprtn->def;
 
-	/* Try to dump it */
-	if ( op != NULL ) {
 		if ( op->dump != NULL )
-			return op->dump(op, denv, &(dumper->pc));
+			return op->dump(denv, &(dumper->pc));
 		else if ( op->mnemonic != NULL )
 			sieve_code_dumpf(denv, "%s", op->mnemonic);
 		else
@@ -250,11 +251,11 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
 					break;
 				}
       	
-				sieve_code_dumpf(denv, "%s", ext->name);
+				sieve_code_dumpf(denv, "%s", sieve_extension_name(ext));
       
-				if ( ext->code_dump != NULL ) {
+				if ( ext->def != NULL && ext->def->code_dump != NULL ) {
 					sieve_code_descend(denv);
-					if ( !ext->code_dump(denv, &dumper->pc) ) {
+					if ( !ext->def->code_dump(ext, denv, &dumper->pc) ) {
 						success = FALSE;
 						break;
 					}

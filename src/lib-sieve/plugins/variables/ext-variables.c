@@ -38,7 +38,7 @@
  * Operations 
  */
 
-const struct sieve_operation *ext_variables_operations[] = {
+const struct sieve_operation_def *ext_variables_operations[] = {
 	&cmd_set_operation, 
 	&tst_string_operation
 };
@@ -47,7 +47,7 @@ const struct sieve_operation *ext_variables_operations[] = {
  * Operands 
  */
 
-const struct sieve_operand *ext_variables_operands[] = {
+const struct sieve_operand_def *ext_variables_operands[] = {
 	&variable_operand, 
 	&match_value_operand,
 	&modifier_operand
@@ -57,13 +57,11 @@ const struct sieve_operand *ext_variables_operands[] = {
  * Extension 
  */
 
-static bool ext_variables_validator_load(struct sieve_validator *validator);
-
-static int ext_my_id = -1;
+static bool ext_variables_validator_load
+	(const struct sieve_extension *ext, struct sieve_validator *validator);
 	
-const struct sieve_extension variables_extension = { 
+const struct sieve_extension_def variables_extension = { 
 	"variables", 
-	&ext_my_id,
 	NULL, NULL,
 	ext_variables_validator_load, 
 	ext_variables_generator_load,
@@ -75,15 +73,15 @@ const struct sieve_extension variables_extension = {
 };
 
 static bool ext_variables_validator_load
-	(struct sieve_validator *validator)
+(const struct sieve_extension *ext, struct sieve_validator *validator)
 {
-	sieve_validator_argument_override(validator, SAT_VAR_STRING, 
-		&variable_string_argument); 
+	sieve_validator_argument_override
+		(validator, SAT_VAR_STRING, ext, &variable_string_argument); 
 		
-	sieve_validator_register_command(validator, &cmd_set);
-	sieve_validator_register_command(validator, &tst_string);
+	sieve_validator_register_command(validator, ext, &cmd_set);
+	sieve_validator_register_command(validator, ext, &tst_string);
 	
-	ext_variables_validator_initialize(validator);
+	ext_variables_validator_initialize(ext, validator);
 
 	return TRUE;
 }

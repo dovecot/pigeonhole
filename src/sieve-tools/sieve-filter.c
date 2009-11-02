@@ -277,11 +277,11 @@ int main(int argc, char **argv)
 	}
 
 	if ( extensions != NULL ) {
-		sieve_set_extensions(extensions);
+		sieve_set_extensions(sieve_instance, extensions);
 	}
 
 	/* Register tool-specific extensions */
-	(void) sieve_extension_register(&debug_extension, TRUE);
+	(void) sieve_extension_register(sieve_instance, &debug_extension, TRUE);
 
 	/* Create error handler */
 	ehandler = sieve_stderr_ehandler_create(0);

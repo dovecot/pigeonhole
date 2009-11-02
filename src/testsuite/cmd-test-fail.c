@@ -20,11 +20,11 @@
  */
 
 static bool cmd_test_fail_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_test_fail_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-const struct sieve_command cmd_test_fail = { 
+const struct sieve_command_def cmd_test_fail = { 
 	"test_fail", 
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
@@ -39,13 +39,11 @@ const struct sieve_command cmd_test_fail = {
  */
 
 static bool cmd_test_fail_operation_dump
-	(const struct sieve_operation *op,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_test_fail_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation test_fail_operation = { 
+const struct sieve_operation_def test_fail_operation = { 
 	"TEST_FAIL",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_FAIL,
@@ -58,7 +56,7 @@ const struct sieve_operation test_fail_operation = {
  */
 
 static bool cmd_test_fail_validate
-(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command *cmd) 
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	
@@ -78,19 +76,19 @@ static inline struct testsuite_generator_context *
 	_get_generator_context(struct sieve_generator *gentr)
 {
 	return (struct testsuite_generator_context *) 
-		sieve_generator_extension_get_context(gentr, &testsuite_extension);
+		sieve_generator_extension_get_context(gentr, testsuite_ext);
 }
 
 static bool cmd_test_fail_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
 	struct testsuite_generator_context *genctx = 
 		_get_generator_context(cgenv->gentr);
 	
-	sieve_operation_emit_code(cgenv->sbin, &test_fail_operation);
+	sieve_operation_emit(cgenv->sbin, cmd->ext, &test_fail_operation);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;
 		
 	sieve_jumplist_add(genctx->exit_jumps, 
@@ -104,8 +102,7 @@ static bool cmd_test_fail_generate
  */
  
 static bool cmd_test_fail_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	unsigned int pc;
 	int offset;
@@ -131,8 +128,7 @@ static bool cmd_test_fail_operation_dump
  */
 
 static int cmd_test_fail_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *reason;
 

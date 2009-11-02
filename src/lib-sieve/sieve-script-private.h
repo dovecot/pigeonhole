@@ -14,6 +14,8 @@ struct sieve_script {
 	pool_t pool;
 	unsigned int refcount;
 
+	struct sieve_instance *svinst;
+
 	struct stat st;
 	struct stat lnk_st;
 	time_t mtime;
@@ -34,7 +36,8 @@ struct sieve_script {
 };
 
 struct sieve_script *sieve_script_init
-(struct sieve_script *script, const char *path, const char *name,
-    struct sieve_error_handler *ehandler, bool *exists_r);
+(struct sieve_script *script, struct sieve_instance *svinst,
+	const char *path, const char *name, struct sieve_error_handler *ehandler, 
+	bool *exists_r);
 
 #endif /* __SIEVE_SCRIPT_PRIVATE_H */

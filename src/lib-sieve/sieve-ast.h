@@ -104,14 +104,10 @@ struct sieve_ast_argument {
 	/* Assigned during validation */
 
 	/* Argument associated with this ast element  */
-	const struct sieve_argument *argument;
-	int arg_id_code;
+	struct sieve_argument *argument;
 
 	/* Parameters to this (tag) argument */
 	struct sieve_ast_argument *parameters;
-	
-	/* Context data associated with this ast element */
-	void *context;
 };
 
 struct sieve_ast_node {
@@ -148,7 +144,7 @@ struct sieve_ast_node {
 	/* Assigned during validation */
 		
 	/* Context */
-	struct sieve_command_context *context;	
+	struct sieve_command *command;	
 };
 
 /*
@@ -184,9 +180,10 @@ struct sieve_script *sieve_ast_script(struct sieve_ast *ast);
 /* Extension support */
 
 struct sieve_ast_extension {
-	const struct sieve_extension *ext;	
+	const struct sieve_extension_def *ext;	
 
-	void (*free)(struct sieve_ast *ast, void *context);
+	void (*free)(const struct sieve_extension *ext, struct sieve_ast *ast, 
+		void *context);
 };
 
 void sieve_ast_extension_link
@@ -195,8 +192,8 @@ const struct sieve_extension * const *sieve_ast_extensions_get
 	(struct sieve_ast *ast, unsigned int *count_r);
 
 void sieve_ast_extension_register
-	(struct sieve_ast *ast, const struct sieve_ast_extension *ast_ext, 
-		void *context);
+	(struct sieve_ast *ast, const struct sieve_extension *ext,
+		const struct sieve_ast_extension *ast_ext, void *context);
 void *sieve_ast_extension_get_context
 	(struct sieve_ast *ast, const struct sieve_extension *ext);
 
@@ -335,6 +332,7 @@ struct sieve_ast_argument *sieve_ast_stringlist_join
 #define sieve_ast_test_next(test) __AST_LIST_NEXT(test)
 
 /* AST argument macros */
+#define sieve_ast_argument_pool(node) (sieve_ast_pool((node)->ast))
 #define sieve_ast_argument_first(node) __AST_NODE_LIST_FIRST(node, arguments)
 #define sieve_ast_argument_last(node) __AST_NODE_LIST_LAST(node, arguments)
 #define sieve_ast_argument_count(node) __AST_NODE_LIST_COUNT(node, arguments)

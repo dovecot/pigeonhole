@@ -17,7 +17,7 @@
  
 bool mod_encodeurl_modify(string_t *in, string_t **result);
  
-const struct sieve_variables_modifier encodeurl_modifier = {
+const struct sieve_variables_modifier_def encodeurl_modifier = {
 	SIEVE_OBJECT("encodeurl", &encodeurl_operand, 0),
 	15,
 	mod_encodeurl_modify
@@ -30,7 +30,7 @@ const struct sieve_variables_modifier encodeurl_modifier = {
 static const struct sieve_extension_objects ext_enotify_modifiers =
 	SIEVE_VARIABLES_DEFINE_MODIFIER(encodeurl_modifier);
 
-const struct sieve_operand encodeurl_operand = { 
+const struct sieve_operand_def encodeurl_operand = { 
 	"modifier", 
 	&enotify_extension,
 	0, 

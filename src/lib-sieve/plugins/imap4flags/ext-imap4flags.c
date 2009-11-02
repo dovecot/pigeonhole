@@ -31,7 +31,7 @@
  * Operations 
  */
 
-const struct sieve_operation *imap4flags_operations[] = { 
+const struct sieve_operation_def *imap4flags_operations[] = { 
 	&setflag_operation, 
 	&addflag_operation, 
 	&removeflag_operation,
@@ -42,15 +42,14 @@ const struct sieve_operation *imap4flags_operations[] = {
  * Extension
  */
 
-static bool ext_imap4flags_validator_load(struct sieve_validator *valdtr);
+static bool ext_imap4flags_validator_load
+	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 static bool ext_imap4flags_interpreter_load
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+		sieve_size_t *address);
 
-int ext_imap4flags_my_id = -1;
-
-const struct sieve_extension imap4flags_extension = { 
+const struct sieve_extension_def imap4flags_extension = { 
 	"imap4flags", 
-	&ext_imap4flags_my_id,
 	NULL, NULL,
 	ext_imap4flags_validator_load, 
 	NULL, 
@@ -61,25 +60,26 @@ const struct sieve_extension imap4flags_extension = {
 };
 
 static bool ext_imap4flags_validator_load
-(struct sieve_validator *valdtr)
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register commands */
-	sieve_validator_register_command(valdtr, &cmd_setflag);
-	sieve_validator_register_command(valdtr, &cmd_addflag);
-	sieve_validator_register_command(valdtr, &cmd_removeflag);
-	sieve_validator_register_command(valdtr, &tst_hasflag);
+	sieve_validator_register_command(valdtr, ext, &cmd_setflag);
+	sieve_validator_register_command(valdtr, ext, &cmd_addflag);
+	sieve_validator_register_command(valdtr, ext, &cmd_removeflag);
+	sieve_validator_register_command(valdtr, ext, &tst_hasflag);
 	
-	ext_imap4flags_attach_flags_tag(valdtr, "keep");
-	ext_imap4flags_attach_flags_tag(valdtr, "fileinto");
+	ext_imap4flags_attach_flags_tag(valdtr, ext, "keep");
+	ext_imap4flags_attach_flags_tag(valdtr, ext, "fileinto");
 
 	return TRUE;
 }
 
 static bool ext_imap4flags_interpreter_load
-(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
+(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+	sieve_size_t *address ATTR_UNUSED)
 {
 	sieve_interpreter_extension_register
-        (renv->interp, &imap4flags_interpreter_extension, NULL);
+		(renv->interp, ext, &imap4flags_interpreter_extension, NULL);
 
 	return TRUE;
 }

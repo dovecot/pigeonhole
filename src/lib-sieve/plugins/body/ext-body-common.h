@@ -8,19 +8,19 @@
  * Extension
  */
  
-extern const struct sieve_extension body_extension;
+extern const struct sieve_extension_def body_extension;
 
 /* 
  * Commands
  */
 
-extern const struct sieve_command body_test;
+extern const struct sieve_command_def body_test;
  
 /*
  * Operations
  */
 
-extern const struct sieve_operation body_operation;
+extern const struct sieve_operation_def body_operation;
 
 /*
  * Message body part extraction

@@ -39,17 +39,17 @@
  */
 
 static bool cmd_notify_registered
-	(struct sieve_validator *valdtr,
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
 		struct sieve_command_registration *cmd_reg);
 static bool cmd_notify_pre_validate
-	(struct sieve_validator *valdtr, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_notify_validate
-	(struct sieve_validator *valdtr, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_notify_generate
 	(const struct sieve_codegen_env *cgenv, 
-		struct sieve_command_context *ctx);
+		struct sieve_command *ctx);
 
-const struct sieve_command cmd_notify_old = {
+const struct sieve_command_def cmd_notify_old = {
 	"notify",
 	SCT_COMMAND,
 	0, 0, FALSE, FALSE,
@@ -68,39 +68,39 @@ const struct sieve_command cmd_notify_old = {
 
 static bool cmd_notify_validate_string_tag
 	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 static bool cmd_notify_validate_stringlist_tag
 	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+		struct sieve_command *cmd);
 
 /* Argument objects */
 
-static const struct sieve_argument notify_method_tag = {
+static const struct sieve_argument_def notify_method_tag = {
 	"method",
-	NULL, NULL,
+	NULL,
 	cmd_notify_validate_string_tag,
-	NULL, NULL
+	NULL, NULL, NULL
 };
 
-static const struct sieve_argument notify_options_tag = { 
+static const struct sieve_argument_def notify_options_tag = { 
 	"options", 
-	NULL, NULL,
+	NULL, 
 	cmd_notify_validate_stringlist_tag, 
-	NULL, NULL 
+	NULL, NULL, NULL 
 };
 
-static const struct sieve_argument notify_id_tag = {
+static const struct sieve_argument_def notify_id_tag = {
 	"id",
-	NULL, NULL,
+	NULL,
 	cmd_notify_validate_string_tag,
-	NULL, NULL
+	NULL, NULL, NULL
 };
 
-static const struct sieve_argument notify_message_tag = {
+static const struct sieve_argument_def notify_message_tag = {
 	"message",
-	NULL, NULL,
+	NULL,
 	cmd_notify_validate_string_tag,
-	NULL, NULL
+	NULL, NULL, NULL
 };
 
 /* 
@@ -108,13 +108,11 @@ static const struct sieve_argument notify_message_tag = {
  */
 
 static bool cmd_notify_operation_dump
-	(const struct sieve_operation *op,	
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_notify_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation notify_old_operation = { 
+const struct sieve_operation_def notify_old_operation = { 
 	"NOTIFY",
 	&notify_extension,
 	EXT_NOTIFY_OPERATION_NOTIFY,
@@ -140,18 +138,18 @@ enum cmd_notify_optional {
 
 static int act_notify_check_duplicate
 	(const struct sieve_runtime_env *renv, 
-		const struct sieve_action_data *act,
-		const struct sieve_action_data *act_other);
+		const struct sieve_action *act,
+		const struct sieve_action *act_other);
 static void act_notify_print
 	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
-		void *context, bool *keep);	
+		bool *keep);	
 static bool act_notify_commit
 	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv, 
 		void *tr_context, bool *keep);
 
 /* Action object */
 
-const struct sieve_action act_notify_old = {
+const struct sieve_action_def act_notify_old = {
 	"notify",
 	0,
 	NULL,
@@ -180,7 +178,7 @@ struct cmd_notify_context_data {
 
 static bool cmd_notify_validate_string_tag
 (struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
-    struct sieve_command_context *cmd)
+    struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 	struct cmd_notify_context_data *ctx_data =
@@ -197,19 +195,19 @@ static bool cmd_notify_validate_string_tag
 	if ( !sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, SAAT_STRING) )
 		return FALSE;
 
-	if ( tag->argument == &notify_method_tag ) {
+	if ( sieve_argument_is(tag, notify_method_tag) ) {
 		ctx_data->method = *arg;
 	
 		/* Removed */
 		*arg = sieve_ast_arguments_detach(*arg, 1);
 
-	} else if ( tag->argument == &notify_id_tag ) {
+	} else if ( sieve_argument_is(tag, notify_id_tag) ) {
 		ctx_data->id = *arg;
 
 		/* Skip parameter */
 		*arg = sieve_ast_argument_next(*arg);
 
-	} else if ( tag->argument == &notify_message_tag ) {
+	} else if ( sieve_argument_is(tag, notify_message_tag) ) {
 		ctx_data->message = *arg;
 
 		/* Skip parameter */
@@ -221,7 +219,7 @@ static bool cmd_notify_validate_string_tag
 
 static bool cmd_notify_validate_stringlist_tag
 (struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 	struct cmd_notify_context_data *ctx_data = 
@@ -250,18 +248,19 @@ static bool cmd_notify_validate_stringlist_tag
  */
 
 static bool cmd_notify_registered
-(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg)
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	struct sieve_command_registration *cmd_reg)
 {
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &notify_method_tag, 0);
+		(valdtr, cmd_reg, ext, &notify_method_tag, 0);
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &notify_id_tag, OPT_ID);
+		(valdtr, cmd_reg, ext, &notify_id_tag, OPT_ID);
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &notify_message_tag, OPT_MESSAGE);
+		(valdtr, cmd_reg, ext, &notify_message_tag, OPT_MESSAGE);
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, &notify_options_tag, OPT_OPTIONS);
+		(valdtr, cmd_reg, ext, &notify_options_tag, OPT_OPTIONS);
 
-	ext_notify_register_importance_tags(valdtr, cmd_reg, OPT_IMPORTANCE);
+	ext_notify_register_importance_tags(valdtr, cmd_reg, ext, OPT_IMPORTANCE);
 
 	return TRUE;
 }
@@ -272,7 +271,7 @@ static bool cmd_notify_registered
 
 static bool cmd_notify_pre_validate
 (struct sieve_validator *valdtr ATTR_UNUSED,
-	struct sieve_command_context *cmd)
+	struct sieve_command *cmd)
 {
 	struct cmd_notify_context_data *ctx_data;
 	
@@ -311,7 +310,7 @@ static int cmd_notify_address_validate
 }
 
 static bool cmd_notify_validate
-(struct sieve_validator *valdtr, struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_command *cmd)
 {
 	struct cmd_notify_context_data *ctx_data =
 		(struct cmd_notify_context_data *) cmd->data;
@@ -350,15 +349,15 @@ static bool cmd_notify_validate
  */
 
 static bool cmd_notify_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
-	sieve_operation_emit_code(cgenv->sbin, &notify_old_operation);
+	sieve_operation_emit(cgenv->sbin, cmd->ext, &notify_old_operation);
 
 	/* Emit source line */
-	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
+	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
 
 	/* Generate arguments */
-	return sieve_generate_arguments(cgenv, ctx, NULL);
+	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
 
 /* 
@@ -366,8 +365,7 @@ static bool cmd_notify_generate
  */
  
 static bool cmd_notify_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
 	int opt_code = 1;
 	
@@ -420,9 +418,9 @@ static bool cmd_notify_operation_dump
 
  
 static int cmd_notify_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
+	const struct sieve_extension *this_ext = renv->oprtn.ext;
 	struct ext_notify_action *act;
 	pool_t pool;
 	int opt_code = 1;
@@ -582,7 +580,8 @@ static int cmd_notify_operation_execute
 		}
 		
 		return ( sieve_result_add_action
-			(renv, &act_notify_old, NULL, source_line, (void *) act, 0) >= 0 );
+			(renv, this_ext, &act_notify_old, NULL, source_line, (void *) act, 0) 
+				>= 0 );
 	}
 
 	return SIEVE_EXEC_OK;
@@ -596,8 +595,8 @@ static int cmd_notify_operation_execute
 
 static int act_notify_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED, 
-	const struct sieve_action_data *act ATTR_UNUSED,
-	const struct sieve_action_data *act_other ATTR_UNUSED)
+	const struct sieve_action *act ATTR_UNUSED,
+	const struct sieve_action *act_other ATTR_UNUSED)
 {
 	struct ext_notify_action *new_nact, *old_nact;
 	const struct ext_notify_recipient *new_rcpts;
@@ -652,12 +651,11 @@ static int act_notify_check_duplicate
 /* Result printing */
  
 static void act_notify_print
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_result_print_env *rpenv, void *context, 
+(const struct sieve_action *action,	const struct sieve_result_print_env *rpenv, 
 	bool *keep ATTR_UNUSED)	
 {
 	const struct ext_notify_action *act = 
-		(const struct ext_notify_action *) context;
+		(const struct ext_notify_action *) action->context;
 	const struct ext_notify_recipient *recipients;
 	unsigned int count, i;
 
@@ -806,12 +804,11 @@ static bool act_notify_send
 }
 
 static bool act_notify_commit
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *tr_context, 
-	bool *keep ATTR_UNUSED)
+(const struct sieve_action *action, const struct sieve_action_exec_env *aenv, 
+	void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
 	const struct ext_notify_action *act = 
-		(const struct ext_notify_action *) tr_context;
+		(const struct ext_notify_action *) action->context;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const char *const *headers;
 

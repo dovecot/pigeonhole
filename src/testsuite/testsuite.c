@@ -57,10 +57,9 @@ static void testsuite_tool_init(const char *extensions)
 
 	sieve_tool_init(testsuite_setting_get, FALSE);
 
-	sieve_extensions_set_string(extensions);
-	(void) sieve_extension_register(&testsuite_extension, TRUE);
+	sieve_extensions_set_string(sieve_instance, extensions);
 
-	testsuite_init();
+	testsuite_init(sieve_instance);
 }
 
 static void testsuite_tool_deinit(void)

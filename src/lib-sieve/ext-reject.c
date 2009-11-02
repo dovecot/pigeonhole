@@ -40,11 +40,11 @@
  * Forward declarations 
  */
 
-static const struct sieve_command reject_command;
-static const struct sieve_operation reject_operation;
+static const struct sieve_command_def reject_command;
+static const struct sieve_operation_def reject_operation;
 
-static const struct sieve_command ereject_command;
-static const struct sieve_operation ereject_operation;
+static const struct sieve_command_def ereject_command;
+static const struct sieve_operation_def ereject_operation;
 
 /* 
  * Extensions
@@ -52,13 +52,11 @@ static const struct sieve_operation ereject_operation;
 
 /* Reject */
 
-static bool ext_reject_validator_load(struct sieve_validator *validator);
-
-static int ext_reject_my_id = -1;
+static bool ext_reject_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 	
-const struct sieve_extension reject_extension = { 
+const struct sieve_extension_def reject_extension = { 
 	"reject", 
-	&ext_reject_my_id,
 	NULL, NULL,
 	ext_reject_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
@@ -66,23 +64,22 @@ const struct sieve_extension reject_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
-static bool ext_reject_validator_load(struct sieve_validator *validator)
+static bool ext_reject_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register new command */
-	sieve_validator_register_command(validator, &reject_command);
+	sieve_validator_register_command(valdtr, ext, &reject_command);
 
 	return TRUE;
 }
 
 /* EReject */
 
-static bool ext_ereject_validator_load(struct sieve_validator *validator);
-
-static int ext_ereject_my_id = -1;
+static bool ext_ereject_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 	
-const struct sieve_extension ereject_extension = { 
+const struct sieve_extension_def ereject_extension = { 
 	"ereject", 
-	&ext_ereject_my_id,
 	NULL, NULL,
 	ext_ereject_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
@@ -90,10 +87,11 @@ const struct sieve_extension ereject_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
-static bool ext_ereject_validator_load(struct sieve_validator *validator)
+static bool ext_ereject_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register new command */
-	sieve_validator_register_command(validator, &ereject_command);
+	sieve_validator_register_command(valdtr, ext, &ereject_command);
 
 	return TRUE;
 }
@@ -105,9 +103,9 @@ static bool ext_ereject_validator_load(struct sieve_validator *validator)
 /* Forward declarations */
 
 static bool cmd_reject_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_reject_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx); 
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd); 
 
 /* Reject command
  * 
@@ -115,7 +113,7 @@ static bool cmd_reject_generate
  *   reject <reason: string>
  */
 
-static const struct sieve_command reject_command = { 
+static const struct sieve_command_def reject_command = { 
 	"reject", 
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
@@ -131,7 +129,7 @@ static const struct sieve_command reject_command = {
  *   ereject <reason: string>
  */
 
-static const struct sieve_command ereject_command = { 
+static const struct sieve_command_def ereject_command = { 
 	"ereject", 
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
@@ -148,15 +146,13 @@ static const struct sieve_command ereject_command = {
 /* Forward declarations */
 
 static bool ext_reject_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int ext_reject_operation_execute
-	(const struct sieve_operation *op,
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 /* Reject operation */
 
-static const struct sieve_operation reject_operation = { 
+static const struct sieve_operation_def reject_operation = { 
 	"REJECT",
 	&reject_extension, 
 	0,
@@ -166,7 +162,7 @@ static const struct sieve_operation reject_operation = {
 
 /* EReject operation */
 
-static const struct sieve_operation ereject_operation = { 
+static const struct sieve_operation_def ereject_operation = { 
 	"EREJECT",
 	&ereject_extension, 
 	0,
@@ -180,20 +176,20 @@ static const struct sieve_operation ereject_operation = {
 
 static int act_reject_check_duplicate
 	(const struct sieve_runtime_env *renv, 
-		const struct sieve_action_data *act, 
-		const struct sieve_action_data *act_other);
+		const struct sieve_action *act, 
+		const struct sieve_action *act_other);
 int act_reject_check_conflict
 	(const struct sieve_runtime_env *renv, 
-		const struct sieve_action_data *act, 
-		const struct sieve_action_data *act_other);
+		const struct sieve_action *act, 
+		const struct sieve_action *act_other);
 static void act_reject_print
-	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
-		void *context, bool *keep);	
+	(const struct sieve_action *action, 
+		const struct sieve_result_print_env *rpenv, bool *keep);	
 static bool act_reject_commit
 	(const struct sieve_action *action ATTR_UNUSED, 
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 		
-const struct sieve_action act_reject = {
+const struct sieve_action_def act_reject = {
 	"reject",
 	SIEVE_ACTFLAG_SENDS_RESPONSE,
 	NULL,
@@ -215,16 +211,16 @@ struct act_reject_context {
  */
 
 static bool cmd_reject_validate
-(struct sieve_validator *validator, struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr, struct sieve_command *cmd) 
 { 	
 	struct sieve_ast_argument *arg = cmd->first_positional;
 		
 	if ( !sieve_validate_positional_argument
-		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {
+		(valdtr, cmd, arg, "reason", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
 	
-	return sieve_validator_argument_activate(validator, cmd, arg, FALSE);
+	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
 /*
@@ -232,18 +228,18 @@ static bool cmd_reject_validate
  */
  
 static bool cmd_reject_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	if ( ctx->command == &reject_command )
-		sieve_operation_emit_code(cgenv->sbin, &reject_operation);
+	if ( sieve_command_is(cmd, reject_command) )
+		sieve_operation_emit(cgenv->sbin, cmd->ext, &reject_operation);
 	else
-		sieve_operation_emit_code(cgenv->sbin, &ereject_operation);
+		sieve_operation_emit(cgenv->sbin, cmd->ext, &ereject_operation);
 
 	/* Emit line number */
-	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
+	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
 
 	/* Generate arguments */
-	return sieve_generate_arguments(cgenv, ctx, NULL);
+	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
 
 /* 
@@ -251,10 +247,11 @@ static bool cmd_reject_generate
  */
  
 static bool ext_reject_operation_dump
-(const struct sieve_operation *op,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	sieve_code_dumpf(denv, "%s", op->mnemonic);
+	const struct sieve_operation *op = &denv->oprtn;
+
+	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
 	sieve_code_descend(denv);
 	
 	/* Source line */
@@ -272,9 +269,10 @@ static bool ext_reject_operation_dump
  */
 
 static int ext_reject_operation_execute
-(const struct sieve_operation *op,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	const struct sieve_operation *op = &renv->oprtn;
+	const struct sieve_extension *this_ext = op->ext;
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_reject_context *act;
 	string_t *reason;
@@ -299,16 +297,17 @@ static int ext_reject_operation_execute
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	sieve_runtime_trace(renv, "%s action (\"%s\")", op->mnemonic, str_sanitize(str_c(reason), 64));
+	sieve_runtime_trace(renv, "%s action (\"%s\")", sieve_operation_mnemonic(op), 
+		str_sanitize(str_c(reason), 64));
 
 	/* Add reject action to the result */
 	pool = sieve_result_pool(renv->result);
 	act = p_new(pool, struct act_reject_context, 1);
 	act->reason = p_strdup(pool, str_c(reason));
-	act->ereject = ( op == &ereject_operation );
+	act->ereject = ( sieve_operation_is(op, ereject_operation) );
 	
 	ret = sieve_result_add_action
-		(renv, &act_reject, slist, source_line, (void *) act, 0);
+		(renv, this_ext, &act_reject, slist, source_line, (void *) act, 0);
 	
 	return ( ret >= 0 );
 }
@@ -319,8 +318,8 @@ static int ext_reject_operation_execute
 
 static int act_reject_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
-	const struct sieve_action_data *act, 
-	const struct sieve_action_data *act_other)
+	const struct sieve_action *act, 
+	const struct sieve_action *act_other)
 {
 	if ( !act_other->executed ) {
 		sieve_runtime_error(renv, act->location, 
@@ -334,27 +333,27 @@ static int act_reject_check_duplicate
  
 int act_reject_check_conflict
 (const struct sieve_runtime_env *renv,
-	const struct sieve_action_data *act, 
-	const struct sieve_action_data *act_other)
+	const struct sieve_action *act, 
+	const struct sieve_action *act_other)
 {
-	if ( (act_other->action->flags & SIEVE_ACTFLAG_TRIES_DELIVER) > 0 ) {
+	if ( (act_other->def->flags & SIEVE_ACTFLAG_TRIES_DELIVER) > 0 ) {
 		if ( !act_other->executed ) {
 			sieve_runtime_error(renv, act->location, 
 				"reject/ereject action conflicts with other action: "
 				"the %s action (%s) tries to deliver the message",
-				act_other->action->name, act_other->location);	
+				act_other->def->name, act_other->location);	
 			return -1;
 		}
 	}
 
-	if ( (act_other->action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
+	if ( (act_other->def->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
 		struct act_reject_context *rj_ctx;
 
 		if ( !act_other->executed ) {
 			sieve_runtime_error(renv, act->location, 
 				"reject/ereject action conflicts with other action: "
 				"the %s action (%s) also sends a response to the sender",
-				act_other->action->name, act_other->location);	
+				act_other->def->name, act_other->location);	
 			return -1;
 		}
 
@@ -369,16 +368,18 @@ int act_reject_check_conflict
 }
  
 static void act_reject_print
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_result_print_env *rpenv, void *context, bool *keep)	
+(const struct sieve_action *action,	const struct sieve_result_print_env *rpenv, 
+	bool *keep)	
 {
-	struct act_reject_context *rj_ctx = (struct act_reject_context *) context;
+	struct act_reject_context *rj_ctx = 
+		(struct act_reject_context *) action->context;
 	
 	if ( rj_ctx->reason != NULL ) {
 		sieve_result_action_printf(rpenv, "reject message with reason: %s", 
 			str_sanitize(rj_ctx->reason, 128));
 	} else {
-		sieve_result_action_printf(rpenv, "reject message without sending a response (discard)"); 		
+		sieve_result_action_printf(rpenv, 
+			"reject message without sending a response (discard)"); 		
 	}
 	
 	*keep = FALSE;
@@ -495,20 +496,23 @@ static bool act_reject_send
 }
 
 static bool act_reject_commit
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
+(const struct sieve_action *action, const struct sieve_action_exec_env *aenv, 
+	void *tr_context ATTR_UNUSED, bool *keep)
 {
-	struct act_reject_context *rj_ctx = (struct act_reject_context *) tr_context;
+	struct act_reject_context *rj_ctx =
+		(struct act_reject_context *) action->context;
 	const char *sender = sieve_message_get_sender(aenv->msgctx);
 	const char *recipient = sieve_message_get_recipient(aenv->msgctx);
 
 	if ( recipient == NULL ) {
-		sieve_result_warning(aenv, "reject action aborted: envelope recipient is <>");
+		sieve_result_warning(aenv, 
+			"reject action aborted: envelope recipient is <>");
 		return TRUE;
 	}
 	
 	if ( rj_ctx->reason == NULL ) {
-		sieve_result_log(aenv, "not sending reject message (would cause second response to sender)");
+		sieve_result_log(aenv, 
+			"not sending reject message (would cause second response to sender)");
     
 		*keep = FALSE;
 		return TRUE;
@@ -522,7 +526,8 @@ static bool act_reject_commit
 	}
 		
 	if ( act_reject_send(aenv, rj_ctx, sender, recipient) ) {
-		sieve_result_log(aenv, "rejected message from <%s> (%s)", str_sanitize(sender, 80),
+		sieve_result_log(aenv, 
+			"rejected message from <%s> (%s)", str_sanitize(sender, 80),
 			( rj_ctx->ereject ? "ereject" : "reject" ));
 
 		*keep = FALSE;

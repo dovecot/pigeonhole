@@ -29,6 +29,7 @@ static struct sieve_ast_node *sieve_ast_node_create
 /* Extensions to the AST */
 
 struct sieve_ast_extension_reg {
+	const struct sieve_extension *ext;
 	const struct sieve_ast_extension *ast_ext;
 	void *context;
 };
@@ -40,6 +41,8 @@ struct sieve_ast_extension_reg {
 struct sieve_ast {
 	pool_t pool;
 	int refcount;
+
+	struct sieve_instance *svinst;
 		
 	struct sieve_script *script;
 		
@@ -49,10 +52,12 @@ struct sieve_ast {
 	ARRAY_DEFINE(extensions, struct sieve_ast_extension_reg);
 };
 
-struct sieve_ast *sieve_ast_create(struct sieve_script *script) 
+struct sieve_ast *sieve_ast_create
+(struct sieve_script *script) 
 {
 	pool_t pool;
 	struct sieve_ast *ast;
+	unsigned int ext_count;
 	
 	pool = pool_alloconly_create("sieve_ast", 16384);	
 	ast = p_new(pool, struct sieve_ast, 1);
@@ -61,12 +66,14 @@ struct sieve_ast *sieve_ast_create(struct sieve_script *script)
 	
 	ast->script = script;
 	sieve_script_ref(script);
+	ast->svinst = sieve_script_svinst(script);
 		
 	ast->root = sieve_ast_node_create(ast, NULL, SAT_ROOT, 0);
 	ast->root->identifier = "ROOT";
 	
-	p_array_init(&ast->linked_extensions, pool, sieve_extensions_get_count());
-	p_array_init(&ast->extensions, pool, sieve_extensions_get_count());
+	ext_count = sieve_extensions_get_count(ast->svinst);
+	p_array_init(&ast->linked_extensions, pool, ext_count);
+	p_array_init(&ast->extensions, pool, ext_count);
 	
 	return ast;
 }
@@ -94,7 +101,7 @@ void sieve_ast_unref(struct sieve_ast **ast)
 	for ( i = 0; i < ext_count; i++ ) {
 		if ( extrs[i].ast_ext != NULL && 
 			extrs[i].ast_ext->free != NULL )
-			extrs[i].ast_ext->free(*ast, extrs[i].context);
+			extrs[i].ast_ext->free(extrs[i].ext, *ast, extrs[i].context);
 	}
 
 	/* Destroy AST */
@@ -125,11 +132,10 @@ struct sieve_script *sieve_ast_script(struct sieve_ast *ast)
 void sieve_ast_extension_link
 (struct sieve_ast *ast, const struct sieve_extension *ext)
 {
-	int ext_id = SIEVE_EXT_ID(ext);
 	unsigned int i, ext_count;
 	const struct sieve_extension *const *extensions;
 	
-	if ( ext_id < 0 ) return;
+	if ( ext->id < 0 ) return;
 	 
 	/* Prevent duplicates */
 	extensions = array_get(&ast->linked_extensions, &ext_count);
@@ -149,30 +155,29 @@ const struct sieve_extension * const *sieve_ast_extensions_get
 }
 
 void sieve_ast_extension_register
-(struct sieve_ast *ast, const struct sieve_ast_extension *ast_ext, 
-	void *context)
+(struct sieve_ast *ast, const struct sieve_extension *ext,
+	const struct sieve_ast_extension *ast_ext, void *context)
 {
-	int ext_id = SIEVE_EXT_ID(ast_ext->ext);
-	struct sieve_ast_extension_reg reg;
+	struct sieve_ast_extension_reg *reg;
 
-	if ( ext_id < 0 ) return;
+	if ( ext->id < 0 ) return;
 
 	/* Initialize registration */
-	reg.ast_ext = ast_ext;
-	reg.context = context;	
-	array_idx_set(&ast->extensions, (unsigned int) ext_id, &reg);
+	reg = array_idx_modifiable(&ast->extensions, (unsigned int) ext->id);
+	reg->ast_ext = ast_ext;
+	reg->ext = ext;
+	reg->context = context;	
 }
 
 void *sieve_ast_extension_get_context
 (struct sieve_ast *ast, const struct sieve_extension *ext) 
 {
-	int ext_id = SIEVE_EXT_ID(ext);
 	const struct sieve_ast_extension_reg *reg;
 
-	if  ( ext_id < 0 || ext_id >= (int) array_count(&ast->extensions) )
+	if  ( ext->id < 0 || ext->id >= (int) array_count(&ast->extensions) )
 		return NULL;
 	
-	reg = array_idx(&ast->extensions, (unsigned int) ext_id);		
+	reg = array_idx(&ast->extensions, (unsigned int) ext->id);		
 
 	return reg->context;
 }
@@ -445,10 +450,8 @@ struct sieve_ast_argument *sieve_ast_argument_create
 	arg->next = NULL;
 	
 	arg->source_line = source_line;
-	arg->context = NULL;
 	
 	arg->argument = NULL;
-	arg->arg_id_code = 0;
 			
 	return arg;
 }

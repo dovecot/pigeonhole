@@ -26,13 +26,14 @@
  */
 
 static bool tst_test_error_registered
-    (struct sieve_validator *validator, struct sieve_command_registration *cmd_reg);
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+		struct sieve_command_registration *cmd_reg);
 static bool tst_test_error_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool tst_test_error_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-const struct sieve_command tst_test_error = { 
+const struct sieve_command_def tst_test_error = { 
 	"test_error", 
 	SCT_TEST, 
 	1, 0, FALSE, FALSE,
@@ -48,13 +49,11 @@ const struct sieve_command tst_test_error = {
  */
 
 static bool tst_test_error_operation_dump
-	(const struct sieve_operation *op,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int tst_test_error_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation test_error_operation = { 
+const struct sieve_operation_def test_error_operation = { 
 	"TEST_ERROR",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_ERROR,
@@ -71,14 +70,14 @@ const struct sieve_operation test_error_operation = {
  */
 
 static bool tst_test_error_validate_index_tag
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg,
-		struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
+		struct sieve_command *cmd);
 
-static const struct sieve_argument test_error_index_tag = {
+static const struct sieve_argument_def test_error_index_tag = {
 	"index",
-	NULL, NULL,
+	NULL, 
 	tst_test_error_validate_index_tag,
-	NULL, NULL
+	NULL, NULL, NULL
 };
 
 enum tst_test_error_optional {
@@ -91,8 +90,8 @@ enum tst_test_error_optional {
  */
 
 static bool tst_test_error_validate_index_tag
-(struct sieve_validator *validator, struct sieve_ast_argument **arg,
-	struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
+	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 
@@ -103,7 +102,7 @@ static bool tst_test_error_validate_index_tag
 	 *   :index number
 	 */
 	if ( !sieve_validate_tag_parameter
-		(validator, cmd, tag, *arg, SAAT_NUMBER) ) {
+		(valdtr, cmd, tag, *arg, SAAT_NUMBER) ) {
 		return FALSE;
 	}
 
@@ -118,14 +117,15 @@ static bool tst_test_error_validate_index_tag
  */
 
 static bool tst_test_error_registered
-(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg)
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	struct sieve_command_registration *cmd_reg)
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(validator, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
-	sieve_match_types_link_tags(validator, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
+	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
+	sieve_match_types_link_tags(valdtr, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
 
 	sieve_validator_register_tag
-		(validator, cmd_reg, &test_error_index_tag, OPT_INDEX);
+		(valdtr, cmd_reg, ext, &test_error_index_tag, OPT_INDEX);
 
 	return TRUE;
 }
@@ -135,10 +135,14 @@ static bool tst_test_error_registered
  */
 
 static bool tst_test_error_validate
-(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command_context *tst) 
+(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command *tst) 
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
-	
+	struct sieve_comparator cmp_default = 
+		SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
+	struct sieve_match_type mcht_default = 
+		SIEVE_COMPARATOR_DEFAULT(is_match_type);
+
 	if ( !sieve_validate_positional_argument
 		(valdtr, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
 		return FALSE;
@@ -149,24 +153,17 @@ static bool tst_test_error_validate
 
 	/* Validate the key argument to a specified match type */
 	return sieve_match_type_validate
-		(valdtr, tst, arg, &is_match_type, &i_octet_comparator);
+		(valdtr, tst, arg, &mcht_default, &cmp_default);
 }
 
 /* 
  * Code generation 
  */
 
-static inline struct testsuite_generator_context *
-_get_generator_context(struct sieve_generator *gentr)
-{
-	return (struct testsuite_generator_context *) 
-		sieve_generator_extension_get_context(gentr, &testsuite_extension);
-}
-
 static bool tst_test_error_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *tst)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *tst)
 {
-	sieve_operation_emit_code(cgenv->sbin, &test_error_operation);
+	sieve_operation_emit(cgenv->sbin, tst->ext, &test_error_operation);
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, tst, NULL);
@@ -177,8 +174,7 @@ static bool tst_test_error_generate
  */
  
 static bool tst_test_error_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int opt_code = 0;
 
@@ -210,13 +206,12 @@ static bool tst_test_error_operation_dump
  */
 
 static int tst_test_error_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	int opt_code = 0;
 	bool result = TRUE;
-	const struct sieve_comparator *cmp = &i_octet_comparator;
-	const struct sieve_match_type *mtch = &is_match_type;
+	struct sieve_comparator cmp = SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
+	struct sieve_match_type mcht = SIEVE_COMPARATOR_DEFAULT(is_match_type);
 	struct sieve_match_context *mctx;
 	struct sieve_coded_stringlist *key_list;
 	bool matched;
@@ -233,7 +228,7 @@ static int tst_test_error_operation_execute
 		sieve_number_t number; 
 
 		if ( (ret=sieve_match_read_optional_operands
-			(renv, address, &opt_code, &cmp, &mtch)) <= 0 )
+			(renv, address, &opt_code, &cmp, &mcht)) <= 0 )
  			return ret;
 
 		switch ( opt_code ) {
@@ -267,7 +262,7 @@ static int tst_test_error_operation_execute
 	testsuite_log_get_error_init();
 
 	/* Initialize match */
-	mctx = sieve_match_begin(renv->interp, mtch, cmp, NULL, key_list);
+	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_list);
 
 	/* Iterate through all errors to match */
 	error = NULL;

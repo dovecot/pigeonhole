@@ -43,11 +43,11 @@
  * Notify capability
  */
 
-static const char *ext_notify_get_methods_string(void);
+static const char *ext_notify_get_methods_string
+	(const struct sieve_extension *ntfy_ext);
 
 const struct sieve_extension_capabilities notify_capabilities = {
 	"notify",
-	&enotify_extension,
 	ext_notify_get_methods_string
 };
 
@@ -55,32 +55,42 @@ const struct sieve_extension_capabilities notify_capabilities = {
  * Notify method registry
  */
  
-static ARRAY_DEFINE(ext_enotify_methods, const struct sieve_enotify_method *); 
-
-void ext_enotify_methods_init(void)
+static void ext_enotify_method_register
+(struct ext_enotify_context *ectx, const struct sieve_enotify_method *method) 
 {
-	p_array_init(&ext_enotify_methods, default_pool, 4);
+	array_append(&ectx->notify_methods, &method, 1);
+} 
 
-	sieve_enotify_method_register(&mailto_notify);
+void ext_enotify_methods_init(struct ext_enotify_context *ectx)
+{
+	p_array_init(&ectx->notify_methods, default_pool, 4);
+
+	ext_enotify_method_register(ectx, &mailto_notify);
 }
 
-void ext_enotify_methods_deinit(void)
+void ext_enotify_methods_deinit(struct ext_enotify_context *ectx)
 {
-	array_free(&ext_enotify_methods);
+	array_free(&ectx->notify_methods);
 }
 
-void sieve_enotify_method_register(const struct sieve_enotify_method *method) 
+void sieve_enotify_method_register
+(struct sieve_extension *ntfy_ext, const struct sieve_enotify_method *method) 
 {
-	array_append(&ext_enotify_methods, &method, 1);
+	struct ext_enotify_context *ectx = 
+		(struct ext_enotify_context *) ntfy_ext->context;
+
+	ext_enotify_method_register(ectx, method);
 }
 
 const struct sieve_enotify_method *ext_enotify_method_find
-(const char *identifier) 
+(const struct sieve_extension *ntfy_ext, const char *identifier) 
 {
+	struct ext_enotify_context *ectx = 
+		(struct ext_enotify_context *) ntfy_ext->context;
 	unsigned int meth_count, i;
 	const struct sieve_enotify_method *const *methods;
 	 
-	methods = array_get(&ext_enotify_methods, &meth_count);
+	methods = array_get(&ectx->notify_methods, &meth_count);
 		
 	for ( i = 0; i < meth_count; i++ ) {
 		if ( strcasecmp(methods[i]->identifier, identifier) == 0 ) {
@@ -91,13 +101,16 @@ const struct sieve_enotify_method *ext_enotify_method_find
 	return NULL;
 }
 
-static const char *ext_notify_get_methods_string(void)
+static const char *ext_notify_get_methods_string
+(const struct sieve_extension *ntfy_ext)
 {
+	struct ext_enotify_context *ectx = 
+		(struct ext_enotify_context *) ntfy_ext->context;
 	unsigned int meth_count, i;
 	const struct sieve_enotify_method *const *methods;
 	string_t *result = t_str_new(128);
 	 
-	methods = array_get(&ext_enotify_methods, &meth_count);
+	methods = array_get(&ectx->notify_methods, &meth_count);
 		
 	if ( meth_count > 0 ) {
 		str_append(result, methods[0]->identifier);
@@ -282,10 +295,11 @@ static int _ext_enotify_option_check
 }
 
 bool ext_enotify_compile_check_arguments
-(struct sieve_validator *valdtr, struct sieve_ast_argument *uri_arg,
-	struct sieve_ast_argument *msg_arg, struct sieve_ast_argument *from_arg,
-	struct sieve_ast_argument *options_arg)
+(struct sieve_validator *valdtr, struct sieve_command *cmd,
+	struct sieve_ast_argument *uri_arg, struct sieve_ast_argument *msg_arg, 
+	struct sieve_ast_argument *from_arg, struct sieve_ast_argument *options_arg)
 {
+	const struct sieve_extension *this_ext = cmd->ext;
 	const char *uri = sieve_ast_argument_strc(uri_arg);
 	const char *scheme;
 	const struct sieve_enotify_method *method;
@@ -306,7 +320,7 @@ bool ext_enotify_compile_check_arguments
 	}
 	
 	/* Find used method with the parsed scheme identifier */
-	if ( (method=ext_enotify_method_find(scheme)) == NULL ) {
+	if ( (method=ext_enotify_method_find(this_ext, scheme)) == NULL ) {
 		sieve_argument_validate_error(valdtr, uri_arg, 
 			"notify command: invalid method '%s'", scheme);
 		return FALSE;
@@ -383,6 +397,7 @@ bool ext_enotify_runtime_method_validate
 (const struct sieve_runtime_env *renv, unsigned int source_line,
 	string_t *method_uri)
 {
+	const struct sieve_extension *this_ext = renv->oprtn.ext;
 	const struct sieve_enotify_method *method;
 	const char *uri = str_c(method_uri);
 	const char *scheme;
@@ -392,7 +407,7 @@ bool ext_enotify_runtime_method_validate
 	if ( (scheme=ext_enotify_uri_scheme_parse(&uri)) == NULL )
 		return FALSE;
 	
-	if ( (method=ext_enotify_method_find(scheme)) == NULL )
+	if ( (method=ext_enotify_method_find(this_ext, scheme)) == NULL )
 		return FALSE;
 		
 	/* Validate the provided URI */
@@ -417,6 +432,7 @@ static const struct sieve_enotify_method *ext_enotify_get_method
 (const struct sieve_runtime_env *renv, unsigned int source_line,
 	string_t *method_uri, const char **uri_body_r)
 {
+	const struct sieve_extension *this_ext = renv->oprtn.ext;
 	const struct sieve_enotify_method *method;
 	const char *uri = str_c(method_uri);
 	const char *scheme;
@@ -433,7 +449,7 @@ static const struct sieve_enotify_method *ext_enotify_get_method
 	}
 	
 	/* Find the notify method */
-	if ( (method=ext_enotify_method_find(scheme)) == NULL ) {
+	if ( (method=ext_enotify_method_find(this_ext, scheme)) == NULL ) {
 		sieve_runtime_error
 			(renv, sieve_error_script_location(renv->script, source_line),
 				"invalid notify method '%s'", scheme);

@@ -34,19 +34,26 @@
  */
 
 static deliver_mail_func_t *next_deliver_mail;
-struct mail_user *lda_sieve_mail_user = NULL; 
 
 /*
  * Settings handling
  */
 
-static const char *lda_sieve_setting_get(const char *identifier)
+static const char *lda_sieve_get_setting
+(void *context, const char *identifier)
 {
-	if ( lda_sieve_mail_user == NULL )
+	struct mail_user *mail_user = (struct mail_user *) context;
+
+	if ( mail_user == NULL )
 		return NULL;
 
-	return mail_user_plugin_getenv(lda_sieve_mail_user, identifier);	
+	return mail_user_plugin_getenv(mail_user, identifier);	
 }
+
+static const struct sieve_callbacks lda_sieve_callbacks = {
+    lda_sieve_get_setting
+};
+
 
 /*
  * Mail transmission
@@ -74,6 +81,8 @@ static bool lda_sieve_smtp_close
  */
 
 struct lda_sieve_run_context {
+	struct sieve_instance *svinst;
+
 	struct mail_deliver_context *mdctx;
 	
 	const char *const *script_files;
@@ -183,6 +192,7 @@ static int lda_sieve_open
 (struct lda_sieve_run_context *srctx, unsigned int script_index,
 	struct sieve_binary **sbin)
 {
+	struct sieve_instance *svinst = srctx->svinst;
 	const char *script_path = srctx->script_files[script_index];
 	const char *script_name =
 		( script_path == srctx->main_script ? "main_script" : NULL );
@@ -201,7 +211,7 @@ static int lda_sieve_open
 
 	sieve_error_handler_reset(ehandler);
 
-	if ( (*sbin=sieve_open(script_path, script_name, ehandler, &exists)) 
+	if ( (*sbin=sieve_open(svinst, script_path, script_name, ehandler, &exists)) 
 		== NULL ) {
 
 		ret = sieve_get_errors(ehandler) > 0 ? -1 : 0;
@@ -231,6 +241,7 @@ static int lda_sieve_open
 static struct sieve_binary *lda_sieve_recompile
 (struct lda_sieve_run_context *srctx, unsigned int script_index)
 {
+	struct sieve_instance *svinst = srctx->svinst;
 	const char *script_path = srctx->script_files[script_index];
 	const char *script_name =
 		( script_path == srctx->main_script ? "main_script" : NULL );
@@ -249,7 +260,8 @@ static struct sieve_binary *lda_sieve_recompile
 	else
 		ehandler = srctx->master_ehandler;
 
-	if ( (sbin=sieve_compile(script_path, script_name, ehandler)) == NULL ) {
+	if ( (sbin=sieve_compile
+		(svinst, script_path, script_name, ehandler)) == NULL ) {
 
 		if ( script_path == srctx->user_script && srctx->userlog != NULL ) {
 			sieve_sys_error
@@ -366,6 +378,7 @@ static int lda_sieve_singlescript_execute
 static int lda_sieve_multiscript_execute
 (struct lda_sieve_run_context *srctx)
 {
+	struct sieve_instance *svinst = srctx->svinst;
 	const char *const *scripts = srctx->script_files;
 	unsigned int count = srctx->script_count;
 	struct sieve_multiscript *mscript;
@@ -378,7 +391,8 @@ static int lda_sieve_multiscript_execute
 
 	/* Start execution */
 
-	mscript = sieve_multiscript_start_execute(srctx->msgdata, srctx->scriptenv);
+	mscript = sieve_multiscript_start_execute
+		(svinst, srctx->msgdata, srctx->scriptenv);
 
 	/* Execute scripts before main script */
 
@@ -462,18 +476,30 @@ static int lda_sieve_run
 	const ARRAY_TYPE (const_string) *scripts_after,
 	struct mail_storage **storage_r)
 {
+	struct sieve_instance *svinst;
 	ARRAY_TYPE (const_string) scripts;
 	struct lda_sieve_run_context srctx;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
+	const char *extensions = NULL;
 	int ret = 0;
 
 	*storage_r = NULL;
 
+	/* Initialize Sieve engine */
+	svinst = sieve_init(&lda_sieve_callbacks, mdctx->dest_user);
+	
+	extensions = mail_user_plugin_getenv
+		(mdctx->dest_user, "sieve_extensions");
+	if ( extensions != NULL ) {
+		sieve_set_extensions(svinst, extensions);
+	}
+
 	/* Initialize */
 
 	memset(&srctx, 0, sizeof(srctx));
+	srctx.svinst = svinst;
 	srctx.mdctx = mdctx;
 
 	/* Compose execution sequence */
@@ -501,10 +527,12 @@ static int lda_sieve_run
 
 	if ( user_script != NULL ) {
 		srctx.userlog = t_strconcat(user_script, ".log", NULL);
-		srctx.user_ehandler = sieve_logfile_ehandler_create(srctx.userlog, LDA_SIEVE_MAX_USER_ERRORS);
+		srctx.user_ehandler = sieve_logfile_ehandler_create
+			(srctx.userlog, LDA_SIEVE_MAX_USER_ERRORS);
 	}
 
-	srctx.master_ehandler = sieve_master_ehandler_create(LDA_SIEVE_MAX_SYSTEM_ERRORS);
+	srctx.master_ehandler = 
+		sieve_master_ehandler_create(LDA_SIEVE_MAX_SYSTEM_ERRORS);
 	sieve_error_handler_accept_infolog(srctx.master_ehandler, TRUE);
 
 	/* Collect necessary message data */
@@ -562,6 +590,9 @@ static int lda_sieve_run
 		sieve_error_handler_unref(&srctx.user_ehandler);
 	sieve_error_handler_unref(&srctx.master_ehandler);
 
+	/* Deinitialize Sieve engine */
+	sieve_deinit(&svinst);
+
 	return ret;
 }
 
@@ -576,13 +607,6 @@ static int lda_sieve_deliver_mail
 	int ret = 0;
 
 	*storage_r = NULL;
-
-	lda_sieve_mail_user = mdctx->dest_user;
-
-	extensions = sieve_setting_get("extensions");
-	if ( extensions != NULL ) {
-		sieve_set_extensions(extensions);
-	}
 
 	T_BEGIN { 
 		struct stat st;
@@ -677,9 +701,6 @@ static int lda_sieve_deliver_mail
 
 void sieve_plugin_init(void)
 {
-	/* Initialize Sieve engine */
-	sieve_init(lda_sieve_setting_get);
-
 	/* Hook into the delivery process */
 	next_deliver_mail = deliver_mail;
 	deliver_mail = lda_sieve_deliver_mail;
@@ -689,7 +710,4 @@ void sieve_plugin_deinit(void)
 {
 	/* Remove hook */
 	deliver_mail = next_deliver_mail;
-
-	/* Deinitialize Sieve engine */
-	sieve_deinit();
 }

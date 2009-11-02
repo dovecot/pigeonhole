@@ -22,22 +22,25 @@ struct sieve_binary;
  *   Initializes the sieve engine. Must be called before any sieve functionality
  *   is used.
  */
-bool sieve_init(sieve_settings_func_t settings_func);
+struct sieve_instance *sieve_init
+	(const struct sieve_callbacks *callbacks, void *context);
 
 /* sieve_deinit():
  *   Frees all memory allocated by the sieve engine. 
  */
-void sieve_deinit(void);
+void sieve_deinit(struct sieve_instance **svinst);
 
 /* sieve_get_capabilities():
  *
  */
-const char *sieve_get_capabilities(const char *name);
+const char *sieve_get_capabilities
+	(struct sieve_instance *svinst, const char *name);
 
 /* sieve_set_extensions():
  *
  */
-void sieve_set_extensions(const char *extensions);
+void sieve_set_extensions
+	(struct sieve_instance *svinst, const char *extensions);
 
 /*
  * Script compilation
@@ -53,8 +56,8 @@ struct sieve_binary *sieve_compile_script
  *   Compiles the script into a binary.
  */
 struct sieve_binary *sieve_compile
-	(const char *script_path, const char *script_name, 
-		struct sieve_error_handler *ehandler);
+	(struct sieve_instance *svinst, const char *script_path, 
+		const char *script_name, struct sieve_error_handler *ehandler);
 
 /* 
  * Reading/writing Sieve binaries
@@ -69,8 +72,9 @@ struct sieve_binary *sieve_compile
  *
  */
 struct sieve_binary *sieve_open
-	(const char *scriptpath, const char *script_name, 
-		struct sieve_error_handler *ehandler, bool *exists_r);
+	(struct sieve_instance *svinst, const char *script_path, 
+		const char *script_name, struct sieve_error_handler *ehandler, 
+		bool *exists_r);
 
 /* sieve_save:
  *
@@ -86,7 +90,7 @@ bool sieve_save
  *  Loads the sieve binary indicated by the provided path.
  */
 struct sieve_binary *sieve_load
-	(const char *bin_path);
+	(struct sieve_instance *svinst, const char *bin_path);
 
 /* sieve_close:
  *
@@ -133,10 +137,11 @@ int sieve_execute
 struct sieve_multiscript;
  
 struct sieve_multiscript *sieve_multiscript_start_execute
-	(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv);
+	(struct sieve_instance *svinst, const struct sieve_message_data *msgdata,
+		const struct sieve_script_env *senv);
 struct sieve_multiscript *sieve_multiscript_start_test
-	(const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
-		struct ostream *stream);
+	(struct sieve_instance *svinst, const struct sieve_message_data *msgdata,
+		const struct sieve_script_env *senv, struct ostream *stream);
 
 bool sieve_multiscript_run
 	(struct sieve_multiscript *mscript, struct sieve_binary *sbin, 

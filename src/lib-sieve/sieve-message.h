@@ -18,7 +18,7 @@ const char *sieve_message_get_new_id
 struct sieve_message_context;
 
 struct sieve_message_context *sieve_message_context_create
-	(const struct sieve_message_data *msgdata);
+	(struct sieve_instance *svinst, const struct sieve_message_data *msgdata);
 void sieve_message_context_ref(struct sieve_message_context *msgctx);
 void sieve_message_context_unref(struct sieve_message_context **msgctx);
 

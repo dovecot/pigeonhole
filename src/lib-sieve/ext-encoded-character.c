@@ -25,13 +25,10 @@
  */
 
 static bool ext_encoded_character_validator_load
-	(struct sieve_validator *validator);
-
-static int ext_my_id = -1;
+	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 	
-struct sieve_extension encoded_character_extension = { 
+struct sieve_extension_def encoded_character_extension = { 
 	"encoded-character", 
-	&ext_my_id,
 	NULL, NULL,
 	ext_encoded_character_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
@@ -44,14 +41,14 @@ struct sieve_extension encoded_character_extension = {
  */
 
 bool arg_encoded_string_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *context);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *context);
 
-const struct sieve_argument encoded_string_argument = { 
+const struct sieve_argument_def encoded_string_argument = { 
 	"@encoded-string", 
-	NULL, NULL,
+	NULL, 
 	arg_encoded_string_validate, 
-	NULL, NULL 
+	NULL, NULL, NULL
 };
 
 /* Parsing */
@@ -156,8 +153,8 @@ static int _decode_unicode
 }
 
 bool arg_encoded_string_validate
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *cmd)
 {
 	bool result = TRUE;
 	enum { ST_NONE, ST_OPEN, ST_TYPE, ST_CLOSE } 
@@ -227,7 +224,7 @@ bool arg_encoded_string_validate
 					/* We now know that the substitution is valid */	
 
 					if ( error_hex != 0 ) {
-						sieve_argument_validate_error(validator, *arg, 
+						sieve_argument_validate_error(valdtr, *arg, 
 							"invalid unicode character 0x%08x in encoded character substitution",
 							error_hex);
 						result = FALSE;
@@ -262,7 +259,7 @@ bool arg_encoded_string_validate
 	
 	/* Pass the processed string to a (possible) next layer of processing */
 	return sieve_validator_argument_activate_super
-		(validator, cmd, *arg, TRUE);
+		(valdtr, cmd, *arg, TRUE);
 }
 
 /* 
@@ -270,11 +267,11 @@ bool arg_encoded_string_validate
  */
 
 static bool ext_encoded_character_validator_load
-(struct sieve_validator *validator ATTR_UNUSED)
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Override the constant string argument with our own */
-	sieve_validator_argument_override(validator, SAT_CONST_STRING, 
-		&encoded_string_argument); 
+	sieve_validator_argument_override
+		(valdtr, SAT_CONST_STRING, ext, &encoded_string_argument); 
 	
 	return TRUE;
 }

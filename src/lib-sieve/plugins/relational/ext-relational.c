@@ -32,13 +32,11 @@
  * Extension
  */
 
-static bool ext_relational_validator_load(struct sieve_validator *validator);
+static bool ext_relational_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
-int ext_relational_my_id = -1;
-
-const struct sieve_extension relational_extension = { 
+const struct sieve_extension_def relational_extension = { 
 	"relational", 
-	&ext_relational_my_id,
 	NULL, NULL,
 	ext_relational_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
@@ -46,10 +44,11 @@ const struct sieve_extension relational_extension = {
 	SIEVE_EXT_DEFINE_OPERAND(rel_match_type_operand)
 };
 
-static bool ext_relational_validator_load(struct sieve_validator *validator)
+static bool ext_relational_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
-	sieve_match_type_register(validator, &value_match_type); 
-	sieve_match_type_register(validator, &count_match_type); 
+	sieve_match_type_register(valdtr, ext, &value_match_type); 
+	sieve_match_type_register(valdtr, ext, &count_match_type); 
 
 	return TRUE;
 }

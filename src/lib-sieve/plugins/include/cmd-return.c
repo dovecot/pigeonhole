@@ -19,10 +19,9 @@
  */
 
 static bool cmd_return_generate
-	(const struct sieve_codegen_env *cgenv, 
-		struct sieve_command_context *ctx ATTR_UNUSED);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 	
-const struct sieve_command cmd_return = { 
+const struct sieve_command_def cmd_return = { 
 	"return", 
 	SCT_COMMAND, 
 	0, 0, FALSE, FALSE,
@@ -36,10 +35,9 @@ const struct sieve_command cmd_return = {
  */
 
 static int opc_return_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation return_operation = { 
+const struct sieve_operation_def return_operation = { 
 	"return",
 	&include_extension,
 	EXT_INCLUDE_OPERATION_RETURN,
@@ -52,10 +50,9 @@ const struct sieve_operation return_operation = {
  */
 
 static bool cmd_return_generate
-(const struct sieve_codegen_env *cgenv, 
-	struct sieve_command_context *ctx ATTR_UNUSED) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &return_operation);
+	sieve_operation_emit(cgenv->sbin, cmd->ext, &return_operation);
 
 	return TRUE;
 }
@@ -65,9 +62,7 @@ static bool cmd_return_generate
  */
 
 static int opc_return_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, 
-	sieve_size_t *address ATTR_UNUSED)
+(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {	
 	sieve_runtime_trace(renv, "RETURN command");
 

@@ -34,21 +34,45 @@ const char *sieve_action_get_location(const struct sieve_action_exec_env *aenv)
 const struct sieve_operand_class sieve_side_effect_operand_class = 
 	{ "SIDE-EFFECT" };
 
+bool sieve_opr_side_effect_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	struct sieve_side_effect *seffect)
+{
+	const struct sieve_side_effect_def *sdef;
+
+	seffect->context = NULL;
+
+	if ( !sieve_opr_object_read
+		(renv, &sieve_side_effect_operand_class, address, &seffect->object) )
+		return FALSE;
+
+	sdef = seffect->def = 
+		(const struct sieve_side_effect_def *) seffect->object.def;
+
+	if ( sdef->read_context != NULL && 
+		!sdef->read_context(seffect, renv, address, &seffect->context) ) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 bool sieve_opr_side_effect_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	const struct sieve_object *obj;
-	const struct sieve_side_effect *seffect;
+	struct sieve_side_effect seffect;
+	const struct sieve_side_effect_def *sdef;
 	
 	if ( !sieve_opr_object_dump
-		(denv, &sieve_side_effect_operand_class, address, &obj) )
+		(denv, &sieve_side_effect_operand_class, address, &seffect.object) )
 		return FALSE;
 	
-	seffect = (const struct sieve_side_effect *) obj;
+	sdef = seffect.def = 
+		(const struct sieve_side_effect_def *) seffect.object.def;
 
-	if ( seffect->dump_context != NULL ) {
+	if ( sdef->dump_context != NULL ) {
 		sieve_code_descend(denv);
-		if ( !seffect->dump_context(seffect, denv, address) ) {
+		if ( !sdef->dump_context(&seffect, denv, address) ) {
 			return FALSE;	
 		}
 		sieve_code_ascend(denv);
@@ -64,19 +88,20 @@ bool sieve_opr_side_effect_dump
 /* Forward declarations */
 
 static bool act_store_equals
-	(const struct sieve_script_env *senv, const void *ctx1, const void *ctx2);
+	(const struct sieve_script_env *senv,
+		const struct sieve_action *act1, const struct sieve_action *act2);
 	
 static int act_store_check_duplicate
 	(const struct sieve_runtime_env *renv, 
-		const struct sieve_action_data *act, 
-		const struct sieve_action_data *act_other);
+		const struct sieve_action *act, 
+		const struct sieve_action *act_other);
 static void act_store_print
 	(const struct sieve_action *action, 
-		const struct sieve_result_print_env *rpenv, void *context, bool *keep);
+		const struct sieve_result_print_env *rpenv, bool *keep);
 
 static bool act_store_start
 	(const struct sieve_action *action,
-		const struct sieve_action_exec_env *aenv, void *context, void **tr_context);
+		const struct sieve_action_exec_env *aenv, void **tr_context);
 static bool act_store_execute
 	(const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, void *tr_context);
@@ -89,7 +114,7 @@ static void act_store_rollback
 		
 /* Action object */
 
-const struct sieve_action act_store = {
+const struct sieve_action_def act_store = {
 	"store",
 	SIEVE_ACTFLAG_TRIES_DELIVER,
 	act_store_equals,
@@ -117,7 +142,7 @@ int sieve_act_store_add_to_result
 	act = p_new(pool, struct act_store_context, 1);
 	act->mailbox = p_strdup(pool, mailbox);
 
-	return sieve_result_add_action(renv, &act_store, seffects, 
+	return sieve_result_add_action(renv, NULL, &act_store, seffects, 
 		source_line, (void *) act, 0);
 }
 
@@ -181,10 +206,13 @@ void sieve_act_store_get_storage_error
 /* Equality */
 
 static bool act_store_equals
-(const struct sieve_script_env *senv, const void *ctx1, const void *ctx2)
+(const struct sieve_script_env *senv,
+	const struct sieve_action *act1, const struct sieve_action *act2)
 {
-	struct act_store_context *st_ctx1 = (struct act_store_context *) ctx1;
-	struct act_store_context *st_ctx2 = (struct act_store_context *) ctx2;
+	struct act_store_context *st_ctx1 = 
+		( act1 == NULL ? NULL : (struct act_store_context *) act1->context );
+	struct act_store_context *st_ctx2 = 
+		( act2 == NULL ? NULL : (struct act_store_context *) act2->context );
 	const char *mailbox1, *mailbox2;
 	
 	/* FIXME: consider namespace aliases */
@@ -209,20 +237,19 @@ static bool act_store_equals
 
 static int act_store_check_duplicate
 (const struct sieve_runtime_env *renv,
-	const struct sieve_action_data *act, 
-	const struct sieve_action_data *act_other)
+	const struct sieve_action *act, 
+	const struct sieve_action *act_other)
 {
-	return ( act_store_equals(renv->scriptenv, act->context, act_other->context)
-		? 1 : 0 );
+	return ( act_store_equals(renv->scriptenv, act, act_other) ? 1 : 0 );
 }
 
 /* Result printing */
 
 static void act_store_print
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_result_print_env *rpenv, void *context, bool *keep)	
+(const struct sieve_action *action, 
+	const struct sieve_result_print_env *rpenv, bool *keep)	
 {
-	struct act_store_context *ctx = (struct act_store_context *) context;
+	struct act_store_context *ctx = (struct act_store_context *) action->context;
 	const char *mailbox;
 
 	mailbox = ( ctx == NULL ? 
@@ -318,10 +345,10 @@ static struct mailbox *act_store_mailbox_open
 }
 
 static bool act_store_start
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *context, void **tr_context)
+(const struct sieve_action *action, 
+	const struct sieve_action_exec_env *aenv, void **tr_context)
 {  
-	struct act_store_context *ctx = (struct act_store_context *) context;
+	struct act_store_context *ctx = (struct act_store_context *) action->context;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct act_store_transaction *trans;

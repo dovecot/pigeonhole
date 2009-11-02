@@ -10,16 +10,16 @@
  * Commands 
  */
 
-extern const struct sieve_command vacation_command;
+extern const struct sieve_command_def vacation_command;
 
 /* 
  * Operations 
  */
 
-extern const struct sieve_operation vacation_operation;
+extern const struct sieve_operation_def vacation_operation;
 
 /* Extension */
 
-extern const struct sieve_extension vacation_extension;
+extern const struct sieve_extension_def vacation_extension;
 
 #endif /* __EXT_VACATION_COMMON_H */

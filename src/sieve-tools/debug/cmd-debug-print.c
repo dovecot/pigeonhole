@@ -21,11 +21,11 @@
  */
 
 static bool cmd_debug_print_validate
-	(struct sieve_validator *validator, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command *tst);
 static bool cmd_debug_print_generate
-	(const struct sieve_codegen_env *cgenv,	struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv,	struct sieve_command *ctx);
 
-const struct sieve_command debug_print_command = { 
+const struct sieve_command_def debug_print_command = { 
 	"debug_print", 
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
@@ -40,13 +40,11 @@ const struct sieve_command debug_print_command = {
  */
 
 static bool cmd_debug_print_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_debug_print_operation_execute
-	(const struct sieve_operation *op,
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation debug_print_operation = { 
+const struct sieve_operation_def debug_print_operation = { 
 	"debug_print",
 	&debug_extension,
 	0,
@@ -59,16 +57,16 @@ const struct sieve_operation debug_print_operation = {
  */
  
 static bool cmd_debug_print_validate
-(struct sieve_validator *validator, struct sieve_command_context *tst) 
+(struct sieve_validator *valdtr, struct sieve_command *tst) 
 { 		
 	struct sieve_ast_argument *arg = tst->first_positional;
 					
 	if ( !sieve_validate_positional_argument
-		(validator, tst, arg, "message", 1, SAAT_STRING) ) {
+		(valdtr, tst, arg, "message", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
 
-	return sieve_validator_argument_activate(validator, tst, arg, FALSE);
+	return sieve_validator_argument_activate(valdtr, tst, arg, FALSE);
 }
 
 /*
@@ -76,12 +74,12 @@ static bool cmd_debug_print_validate
  */
  
 static bool cmd_debug_print_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	(void)sieve_operation_emit_code(cgenv->sbin, &debug_print_operation);
+	(void)sieve_operation_emit(cgenv->sbin, cmd->ext, &debug_print_operation);
 
 	/* Generate arguments */
-	return sieve_generate_arguments(cgenv, ctx, NULL);
+	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
 
 /* 
@@ -89,8 +87,7 @@ static bool cmd_debug_print_generate
  */
  
 static bool cmd_debug_print_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED, 
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "DEBUG_PRINT");
 	sieve_code_descend(denv);
@@ -103,8 +100,7 @@ static bool cmd_debug_print_operation_dump
  */
 
 static int cmd_debug_print_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *message;
 	int ret = SIEVE_EXEC_OK;

@@ -30,13 +30,11 @@
  * Extension
  */
 
-static bool ext_mailbox_validator_load(struct sieve_validator *valdtr);
+static bool ext_mailbox_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
-static int ext_my_id = -1;
-
-const struct sieve_extension mailbox_extension = { 
+const struct sieve_extension_def mailbox_extension = { 
 	"mailbox", 
-	&ext_my_id,
 	NULL, NULL,
 	ext_mailbox_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
@@ -44,17 +42,18 @@ const struct sieve_extension mailbox_extension = {
 	SIEVE_EXT_DEFINE_OPERAND(mailbox_create_operand)
 };
 
-static bool ext_mailbox_validator_load(struct sieve_validator *valdtr)
+static bool ext_mailbox_validator_load
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register :create tag with fileinto command and we don't care whether this 
 	 * command is registered or even whether it will be registered at all. The 
 	 * validator handles either situation gracefully 
 	 */
 	sieve_validator_register_external_tag
-		(valdtr, &mailbox_create_tag, "fileinto", SIEVE_OPT_SIDE_EFFECT);
+		(valdtr, "fileinto", ext, &mailbox_create_tag, SIEVE_OPT_SIDE_EFFECT);
 
 	/* Register new test */
-	sieve_validator_register_command(valdtr, &mailboxexists_test);
+	sieve_validator_register_command(valdtr, ext, &mailboxexists_test);
 
 	return TRUE;
 }

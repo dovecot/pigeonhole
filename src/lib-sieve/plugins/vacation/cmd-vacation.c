@@ -35,12 +35,12 @@
  * Forward declarations 
  */
  
-static const struct sieve_argument vacation_days_tag;
-static const struct sieve_argument vacation_subject_tag;
-static const struct sieve_argument vacation_from_tag;
-static const struct sieve_argument vacation_addresses_tag;
-static const struct sieve_argument vacation_mime_tag;
-static const struct sieve_argument vacation_handle_tag;
+static const struct sieve_argument_def vacation_days_tag;
+static const struct sieve_argument_def vacation_subject_tag;
+static const struct sieve_argument_def vacation_from_tag;
+static const struct sieve_argument_def vacation_addresses_tag;
+static const struct sieve_argument_def vacation_mime_tag;
+static const struct sieve_argument_def vacation_handle_tag;
 
 /* 
  * Vacation command 
@@ -52,16 +52,16 @@ static const struct sieve_argument vacation_handle_tag;
  */
 
 static bool cmd_vacation_registered
-	(struct sieve_validator *validator, 
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
 		struct sieve_command_registration *cmd_reg);
 static bool cmd_vacation_pre_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd); 
+	(struct sieve_validator *valdtr, struct sieve_command *cmd); 
 static bool cmd_vacation_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_vacation_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command vacation_command = { 
+const struct sieve_command_def vacation_command = { 
 	"vacation",
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE, 
@@ -79,60 +79,60 @@ const struct sieve_command vacation_command = {
 /* Forward declarations */
 
 static bool cmd_vacation_validate_number_tag
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *cmd);
 static bool cmd_vacation_validate_string_tag
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *cmd);
 static bool cmd_vacation_validate_stringlist_tag
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *cmd);
 static bool cmd_vacation_validate_mime_tag
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *cmd);
 
 /* Argument objects */
 
-static const struct sieve_argument vacation_days_tag = { 
+static const struct sieve_argument_def vacation_days_tag = { 
 	"days", 
-	NULL, NULL,
+	NULL, 
 	cmd_vacation_validate_number_tag, 
-	NULL, NULL 
+	NULL, NULL, NULL, 
 };
 
-static const struct sieve_argument vacation_subject_tag = { 
+static const struct sieve_argument_def vacation_subject_tag = { 
 	"subject", 
-	NULL, NULL,
+	NULL,
 	cmd_vacation_validate_string_tag, 
-	NULL, NULL 
+	NULL, NULL, NULL 
 };
 
-static const struct sieve_argument vacation_from_tag = { 
+static const struct sieve_argument_def vacation_from_tag = { 
 	"from", 
-	NULL, NULL,
+	NULL,
 	cmd_vacation_validate_string_tag, 
-	NULL, NULL 
+	NULL, NULL, NULL 
 };
 
-static const struct sieve_argument vacation_addresses_tag = { 
+static const struct sieve_argument_def vacation_addresses_tag = { 
 	"addresses", 
-	NULL, NULL,
+	NULL,
 	cmd_vacation_validate_stringlist_tag, 
-	NULL, NULL 
+	NULL, NULL, NULL 
 };
 
-static const struct sieve_argument vacation_mime_tag = { 
+static const struct sieve_argument_def vacation_mime_tag = { 
 	"mime",	
-	NULL, NULL, 
+	NULL, 
 	cmd_vacation_validate_mime_tag,
-	NULL, NULL
+	NULL, NULL, NULL
 };
 
-static const struct sieve_argument vacation_handle_tag = { 
+static const struct sieve_argument_def vacation_handle_tag = { 
 	"handle", 
-	NULL, NULL, 
+	NULL, 
 	cmd_vacation_validate_string_tag, 
-	NULL, NULL 
+	NULL, NULL, NULL 
 };
 
 /* Codes for optional arguments */
@@ -151,13 +151,11 @@ enum cmd_vacation_optional {
  */
 
 static bool ext_vacation_operation_dump
-	(const struct sieve_operation *op,	
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int ext_vacation_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation vacation_operation = { 
+const struct sieve_operation_def vacation_operation = { 
 	"VACATION",
 	&vacation_extension,
 	0,
@@ -173,22 +171,22 @@ const struct sieve_operation vacation_operation = {
 
 static int act_vacation_check_duplicate
 	(const struct sieve_runtime_env *renv, 
-		const struct sieve_action_data *act, 
-		const struct sieve_action_data *act_other);
+		const struct sieve_action *act, 
+		const struct sieve_action *act_other);
 int act_vacation_check_conflict
 	(const struct sieve_runtime_env *renv, 
-		const struct sieve_action_data *act, 
-		const struct sieve_action_data *act_other);
+		const struct sieve_action *act, 
+		const struct sieve_action *act_other);
 static void act_vacation_print
 	(const struct sieve_action *action, 
-		const struct sieve_result_print_env *rpenv, void *context, bool *keep);	
+		const struct sieve_result_print_env *rpenv, bool *keep);	
 static bool act_vacation_commit
 	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv, 
 		void *tr_context, bool *keep);
 
 /* Action object */
 
-const struct sieve_action act_vacation = {
+const struct sieve_action_def act_vacation = {
 	"vacation",
 	SIEVE_ACTFLAG_SENDS_RESPONSE,
 	NULL,
@@ -232,8 +230,8 @@ struct cmd_vacation_context_data {
  */
 
 static bool cmd_vacation_validate_number_tag
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 	
@@ -244,7 +242,7 @@ static bool cmd_vacation_validate_number_tag
 	 *   :days number
 	 */
 	if ( !sieve_validate_tag_parameter
-		(validator, cmd, tag, *arg, SAAT_NUMBER) ) {
+		(valdtr, cmd, tag, *arg, SAAT_NUMBER) ) {
 		return FALSE;
 	}
 
@@ -260,8 +258,8 @@ static bool cmd_vacation_validate_number_tag
 }
 
 static bool cmd_vacation_validate_string_tag
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 	struct cmd_vacation_context_data *ctx_data = 
@@ -276,11 +274,11 @@ static bool cmd_vacation_validate_string_tag
 	 *   :handle string
 	 */
 	if ( !sieve_validate_tag_parameter
-		(validator, cmd, tag, *arg, SAAT_STRING) ) {
+		(valdtr, cmd, tag, *arg, SAAT_STRING) ) {
 		return FALSE;
 	}
 
-	if ( tag->argument == &vacation_from_tag ) {
+	if ( sieve_argument_is(tag, vacation_from_tag) ) {
 		if ( sieve_argument_is_string_literal(*arg) ) {
 			string_t *address = sieve_ast_argument_str(*arg);
 			const char *error;
@@ -290,7 +288,7 @@ static bool cmd_vacation_validate_string_tag
 	 			result = sieve_address_validate(address, &error);
 	 
 				if ( !result ) {
-					sieve_argument_validate_error(validator, *arg, 
+					sieve_argument_validate_error(valdtr, *arg, 
 						"specified :from address '%s' is invalid for vacation action: %s", 
 						str_sanitize(str_c(address), 128), error);
 				}
@@ -305,13 +303,13 @@ static bool cmd_vacation_validate_string_tag
 		/* Skip parameter */
 		*arg = sieve_ast_argument_next(*arg);
 		
-	} else if ( tag->argument == &vacation_subject_tag ) {
+	} else if ( sieve_argument_is(tag, vacation_subject_tag) ) {
 		ctx_data->subject = sieve_ast_argument_str(*arg);
 		
 		/* Skip parameter */
 		*arg = sieve_ast_argument_next(*arg);
 		
-	} else if ( tag->argument == &vacation_handle_tag ) {
+	} else if ( sieve_argument_is(tag, vacation_handle_tag) ) {
 		ctx_data->handle = sieve_ast_argument_str(*arg);
 		
 		/* Detach optional argument (emitted as mandatory) */
@@ -322,8 +320,8 @@ static bool cmd_vacation_validate_string_tag
 }
 
 static bool cmd_vacation_validate_stringlist_tag
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 
@@ -334,7 +332,7 @@ static bool cmd_vacation_validate_stringlist_tag
 	 *   :addresses string-list
 	 */
 	if ( !sieve_validate_tag_parameter
-		(validator, cmd, tag, *arg, SAAT_STRING_LIST) ) {
+		(valdtr, cmd, tag, *arg, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 	
@@ -345,8 +343,8 @@ static bool cmd_vacation_validate_stringlist_tag
 }
 
 static bool cmd_vacation_validate_mime_tag
-(struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast_argument **arg, 
-	struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast_argument **arg, 
+	struct sieve_command *cmd)
 {
 	struct cmd_vacation_context_data *ctx_data = 
 		(struct cmd_vacation_context_data *) cmd->data; 
@@ -364,20 +362,21 @@ static bool cmd_vacation_validate_mime_tag
  */
 
 static bool cmd_vacation_registered
-(struct sieve_validator *validator, struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
+	struct sieve_command_registration *cmd_reg) 
 {
 	sieve_validator_register_tag
-		(validator, cmd_reg, &vacation_days_tag, OPT_DAYS); 	
+		(valdtr, cmd_reg, ext, &vacation_days_tag, OPT_DAYS); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &vacation_subject_tag, OPT_SUBJECT); 	
+		(valdtr, cmd_reg, ext, &vacation_subject_tag, OPT_SUBJECT); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &vacation_from_tag, OPT_FROM); 	
+		(valdtr, cmd_reg, ext, &vacation_from_tag, OPT_FROM); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &vacation_addresses_tag, OPT_ADDRESSES); 	
+		(valdtr, cmd_reg, ext, &vacation_addresses_tag, OPT_ADDRESSES); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &vacation_mime_tag, OPT_MIME); 	
+		(valdtr, cmd_reg, ext, &vacation_mime_tag, OPT_MIME); 	
 	sieve_validator_register_tag
-		(validator, cmd_reg, &vacation_handle_tag, 0); 	
+		(valdtr, cmd_reg, ext, &vacation_handle_tag, 0); 	
 
 	return TRUE;
 }
@@ -387,8 +386,8 @@ static bool cmd_vacation_registered
  */
  
 static bool cmd_vacation_pre_validate
-(struct sieve_validator *validator ATTR_UNUSED, 
-	struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr ATTR_UNUSED, 
+	struct sieve_command *cmd) 
 {
 	struct cmd_vacation_context_data *ctx_data;
 	
@@ -406,18 +405,18 @@ static const char _handle_mime_enabled[] = "<MIME>";
 static const char _handle_mime_disabled[] = "<NO-MIME>";
 
 static bool cmd_vacation_validate
-(struct sieve_validator *validator, struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr, struct sieve_command *cmd) 
 { 	
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct cmd_vacation_context_data *ctx_data = 
 		(struct cmd_vacation_context_data *) cmd->data; 
 
 	if ( !sieve_validate_positional_argument
-		(validator, cmd, arg, "reason", 1, SAAT_STRING) ) {
+		(valdtr, cmd, arg, "reason", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
 	
-	if ( !sieve_validator_argument_activate(validator, cmd, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
 		return FALSE;
 		
 	/* Construct handle if not set explicitly */
@@ -459,18 +458,18 @@ static bool cmd_vacation_validate
  */
  
 static bool cmd_vacation_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
 	struct cmd_vacation_context_data *ctx_data = 
-		(struct cmd_vacation_context_data *) ctx->data;
+		(struct cmd_vacation_context_data *) cmd->data;
 		 
-	sieve_operation_emit_code(cgenv->sbin, &vacation_operation);
+	sieve_operation_emit(cgenv->sbin, cmd->ext, &vacation_operation);
 
 	/* Emit source line */
-	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
+	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;	
 
 	/* FIXME: this will not allow the handle to be a variable */
@@ -484,8 +483,7 @@ static bool cmd_vacation_generate
  */
  
 static bool ext_vacation_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
 	int opt_code = 1;
 	
@@ -544,9 +542,9 @@ static bool ext_vacation_operation_dump
  */
  
 static int ext_vacation_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
+	const struct sieve_extension *this_ext = renv->oprtn.ext;
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_vacation_context *act;
 	pool_t pool;
@@ -705,7 +703,7 @@ static int ext_vacation_operation_execute
 	}	
 		
 	return ( sieve_result_add_action
-		(renv, &act_vacation, slist, source_line, (void *) act, 0) >= 0 );
+		(renv, this_ext, &act_vacation, slist, source_line, (void *) act, 0) >= 0 );
 }
 
 /*
@@ -716,8 +714,8 @@ static int ext_vacation_operation_execute
 
 static int act_vacation_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
-	const struct sieve_action_data *act, 
-	const struct sieve_action_data *act_other)
+	const struct sieve_action *act, 
+	const struct sieve_action *act_other)
 {
 	if ( !act_other->executed ) {
 		sieve_runtime_error(renv, act->location, 
@@ -732,15 +730,15 @@ static int act_vacation_check_duplicate
 
 int act_vacation_check_conflict
 (const struct sieve_runtime_env *renv,
-	const struct sieve_action_data *act, 
-	const struct sieve_action_data *act_other)
+	const struct sieve_action *act, 
+	const struct sieve_action *act_other)
 {
-	if ( (act_other->action->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
+	if ( (act_other->def->flags & SIEVE_ACTFLAG_SENDS_RESPONSE) > 0 ) {
 		if ( !act_other->executed && !act->executed) {
 			sieve_runtime_error(renv, act->location, 
 				"vacation action conflicts with other action: "
 				"the %s action (%s) also sends a response back to the sender",	
-				act_other->action->name, act_other->location);
+				act_other->def->name, act_other->location);
 			return -1;
 		} else {
 			/* Not an error if executed in preceeding script */
@@ -755,10 +753,10 @@ int act_vacation_check_conflict
  
 static void act_vacation_print
 (const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_result_print_env *rpenv, void *context, 
-	bool *keep ATTR_UNUSED)	
+	const struct sieve_result_print_env *rpenv, bool *keep ATTR_UNUSED)	
 {
-	struct act_vacation_context *ctx = (struct act_vacation_context *) context;
+	struct act_vacation_context *ctx = 
+		(struct act_vacation_context *) action->context;
 	
 	sieve_result_action_printf( rpenv, "send vacation message:");
 	sieve_result_printf(rpenv, "    => days   : %d\n", ctx->days);
@@ -959,14 +957,14 @@ static void act_vacation_hash
 }
 
 static bool act_vacation_commit
-(const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_action_exec_env *aenv, void *tr_context, 
-	bool *keep ATTR_UNUSED)
+(const struct sieve_action *action, const struct sieve_action_exec_env *aenv, 
+	void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
 	const char *const *hdsp;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
-	struct act_vacation_context *ctx = (struct act_vacation_context *) tr_context;
+	struct act_vacation_context *ctx = 
+		(struct act_vacation_context *) action->context;
 	unsigned char dupl_hash[MD5_RESULTLEN];
 	const char *const *headers;
 	const char *sender = sieve_message_get_sender(aenv->msgctx);

@@ -23,11 +23,14 @@
  */
  
 struct sieve_variable *ext_include_variable_import_global
-(struct sieve_validator *valdtr, struct sieve_command_context *cmd, 
+(struct sieve_validator *valdtr, struct sieve_command *cmd, 
 	const char *variable)
 {
+	const struct sieve_extension *this_ext = cmd->ext;
 	struct sieve_ast *ast = cmd->ast_node->ast;
-	struct ext_include_ast_context *ctx = ext_include_get_ast_context(ast);
+	struct ext_include_ast_context *ctx = 
+		ext_include_get_ast_context(this_ext, ast);
+	struct ext_include_context *ectx = ext_include_get_context(this_ext);
 	struct sieve_variable_scope *main_scope;
 	struct sieve_variable *var = NULL;
 
@@ -46,7 +49,7 @@ struct sieve_variable *ext_include_variable_import_global
 	}
 	
 	/* Import the global variable into the local script scope */
-	main_scope = sieve_ext_variables_get_main_scope(valdtr);
+	main_scope = sieve_ext_variables_get_main_scope(ectx->var_ext, valdtr);
 	(void)sieve_variable_scope_import(main_scope, var);
 
 	return var;	
@@ -77,7 +80,8 @@ bool ext_include_variables_save
 }
 
 bool ext_include_variables_load
-(struct sieve_binary *sbin, sieve_size_t *offset, unsigned int block,
+(const struct sieve_extension *this_ext, struct sieve_binary *sbin, 
+	sieve_size_t *offset, unsigned int block,
 	struct sieve_variable_scope **global_vars_r)
 {
 	unsigned int count = 0;
@@ -100,7 +104,7 @@ bool ext_include_variables_load
 		return FALSE;
 	}
 
-	*global_vars_r = sieve_variable_scope_create(&include_extension);
+	*global_vars_r = sieve_variable_scope_create(this_ext);
 	pool = sieve_variable_scope_pool(*global_vars_r);
 
 	/* Read global variable scope */

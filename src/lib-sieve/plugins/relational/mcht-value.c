@@ -23,7 +23,7 @@
  * Match-type objects
  */
 
-const struct sieve_match_type value_match_type = {
+const struct sieve_match_type_def value_match_type = {
 	SIEVE_OBJECT("value", &rel_match_type_operand, RELATIONAL_VALUE), 
 	TRUE, TRUE,
 	mcht_relational_validate,
@@ -31,7 +31,7 @@ const struct sieve_match_type value_match_type = {
 };
 
 #define VALUE_MATCH_TYPE(name, rel_match)                   \
-const struct sieve_match_type rel_match_value_ ## name = {  \
+const struct sieve_match_type_def rel_match_value_ ## name = {  \
 	SIEVE_OBJECT(                                           \
 		"value-" #name, &rel_match_type_operand,            \
 		REL_MATCH_INDEX(RELATIONAL_VALUE, rel_match)),      \
@@ -57,7 +57,7 @@ int mcht_value_match
 	const char *key, size_t key_size, int key_index ATTR_UNUSED)
 {
 	const struct sieve_match_type *mtch = mctx->match_type;
-	unsigned int rel_match = REL_MATCH(mtch->object.code);	
+	unsigned int rel_match = REL_MATCH(mtch->object.def->code);	
 	int cmp_result;
 
 	if ( val == NULL ) {
@@ -65,7 +65,7 @@ int mcht_value_match
 		val_size = 0;
 	}
 
-	cmp_result = mctx->comparator->
+	cmp_result = mctx->comparator->def->
 		compare(mctx->comparator, val, val_size, key, key_size);
 
 	switch ( rel_match ) {

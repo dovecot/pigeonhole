@@ -5,12 +5,12 @@
 #define __SIEVE_OBJECTS_H
 
 /*
- * Object
+ * Object definition
  */
 
-struct sieve_object {
+struct sieve_object_def {
 	const char *identifier;
-	const struct sieve_operand *operand;
+	const struct sieve_operand_def *operand;
 	unsigned int code;
 };
 
@@ -18,24 +18,49 @@ struct sieve_object {
 	{ identifier, operand, code }
 
 /*
+ * Object instance
+ */
+
+struct sieve_object {
+	const struct sieve_object_def *def;
+	const struct sieve_extension *ext;
+};
+
+#define SIEVE_OBJECT_DEFAULT(_obj) \
+	{ &((_obj).obj_def), NULL }
+
+#define SIEVE_OBJECT_EXTENSION(_obj) \
+	(_obj->object.ext)
+
+#define SIEVE_OBJECT_SET_DEF(_obj, def_value) \
+	STMT_START { \
+			(_obj)->def = def_value;	\
+			(_obj)->object.def = &(_obj)->def->obj_def; \
+	} STMT_END
+
+
+/*
  * Object coding
  */
  
 void sieve_opr_object_emit
-	(struct sieve_binary *sbin, const struct sieve_object *obj);
+	(struct sieve_binary *sbin, const struct sieve_extension *ext,
+		const struct sieve_object_def *obj_def);
 
-const struct sieve_object *sieve_opr_object_read_data
+bool sieve_opr_object_read_data
 	(struct sieve_binary *sbin, const struct sieve_operand *operand,
-		const struct sieve_operand_class *opclass, sieve_size_t *address);
+		const struct sieve_operand_class *opclass, sieve_size_t *address,
+		struct sieve_object *obj);
 
-const struct sieve_object *sieve_opr_object_read
+bool sieve_opr_object_read
 	(const struct sieve_runtime_env *renv, 
-		const struct sieve_operand_class *opclass, sieve_size_t *address);
+		const struct sieve_operand_class *opclass, sieve_size_t *address,
+		struct sieve_object *obj);
 
 bool sieve_opr_object_dump
 	(const struct sieve_dumptime_env *denv, 
 		const struct sieve_operand_class *opclass, sieve_size_t *address,
-		const struct sieve_object **object_r);
+		struct sieve_object *obj);
 
 
 #endif /* __SIEVE_OBJECTS_H */

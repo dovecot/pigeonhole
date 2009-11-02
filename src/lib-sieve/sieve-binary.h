@@ -27,6 +27,7 @@ struct sieve_script *sieve_binary_script(struct sieve_binary *sbin);
 const char *sieve_binary_path(struct sieve_binary *sbin);
 bool sieve_binary_script_older
 	(struct sieve_binary *sbin, struct sieve_script *script);
+struct sieve_instance *sieve_binary_svinst(struct sieve_binary *sbin);
 
 const char *sieve_binary_script_name(struct sieve_binary *sbin);
 const char *sieve_binary_script_path(struct sieve_binary *sbin);
@@ -49,7 +50,8 @@ bool sieve_binary_save
  */ 
 	
 struct sieve_binary *sieve_binary_open
-	(const char *path, struct sieve_script *script);
+	(struct sieve_instance *svinst, const char *path, 
+		struct sieve_script *script);
 bool sieve_binary_up_to_date(struct sieve_binary *sbin);
 bool sieve_binary_load(struct sieve_binary *sbin);
 	
@@ -74,14 +76,22 @@ void sieve_binary_block_clear
  */
  
 struct sieve_binary_extension {
-	const struct sieve_extension *extension;
+	const struct sieve_extension_def *extension;
 
-	bool (*binary_save)(struct sieve_binary *sbin);
-	bool (*binary_open)(struct sieve_binary *sbin);
+	bool (*binary_save)
+		(const struct sieve_extension *ext, struct sieve_binary *sbin,
+			void *context);
+	bool (*binary_open)
+		(const struct sieve_extension *ext, struct sieve_binary *sbin,
+			void *context);	
+
+	void (*binary_free)
+		(const struct sieve_extension *ext, struct sieve_binary *sbin,
+			void *context);	
 	
-	void (*binary_free)(struct sieve_binary *sbin);
-	
-	bool (*binary_up_to_date)(struct sieve_binary *sbin);
+	bool (*binary_up_to_date)
+		(const struct sieve_extension *ext, struct sieve_binary *sbin,
+			void *context);	
 };
  
 void sieve_binary_extension_set_context
@@ -90,8 +100,8 @@ const void *sieve_binary_extension_get_context
 	(struct sieve_binary *sbin, const struct sieve_extension *ext);
 	
 void sieve_binary_extension_set
-	(struct sieve_binary *sbin, const struct sieve_binary_extension *bext,
-		void *context);
+	(struct sieve_binary *sbin, const struct sieve_extension *ext,
+		const struct sieve_binary_extension *bext, void *context);
 
 unsigned int sieve_binary_extension_create_block
 	(struct sieve_binary *sbin, const struct sieve_extension *ext);

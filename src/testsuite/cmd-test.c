@@ -20,11 +20,11 @@
  */
 
 static bool cmd_test_validate
-	(struct sieve_validator *validator, struct sieve_command_context *cmd);
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_test_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *md);
 
-const struct sieve_command cmd_test = { 
+const struct sieve_command_def cmd_test = { 
 	"test", 
 	SCT_COMMAND, 
 	1, 0, TRUE, TRUE,
@@ -41,13 +41,11 @@ const struct sieve_command cmd_test = {
 /* Test operation */
 
 static bool cmd_test_operation_dump
-	(const struct sieve_operation *op,
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_test_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation test_operation = { 
+const struct sieve_operation_def test_operation = { 
 	"TEST",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST,
@@ -58,10 +56,9 @@ const struct sieve_operation test_operation = {
 /* Test_finish operation */
 
 static int cmd_test_finish_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation test_finish_operation = { 
+const struct sieve_operation_def test_finish_operation = { 
 	"TEST-FINISH",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_FINISH,
@@ -74,7 +71,7 @@ const struct sieve_operation test_finish_operation = {
  */
 
 static bool cmd_test_validate
-(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command_context *cmd) 
+(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command *cmd) 
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 		
@@ -99,32 +96,32 @@ static bool cmd_test_validate
  */
 
 static inline struct testsuite_generator_context *
-	_get_generator_context(struct sieve_generator *gentr)
+_get_generator_context(struct sieve_generator *gentr)
 {
 	return (struct testsuite_generator_context *) 
-		sieve_generator_extension_get_context(gentr, &testsuite_extension);
+		sieve_generator_extension_get_context(gentr, testsuite_ext);
 }
 
 static bool cmd_test_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
 	struct testsuite_generator_context *genctx = 
 		_get_generator_context(cgenv->gentr);
 	
-	sieve_operation_emit_code(cgenv->sbin, &test_operation);
+	sieve_operation_emit(cgenv->sbin, cmd->ext, &test_operation);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;
 		
 	/* Prepare jumplist */
 	sieve_jumplist_reset(genctx->exit_jumps);
 		
 	/* Test body */
-	if ( !sieve_generate_block(cgenv, ctx->ast_node) )
+	if ( !sieve_generate_block(cgenv, cmd->ast_node) )
 		return FALSE;
 	
-	sieve_operation_emit_code(cgenv->sbin, &test_finish_operation);
+	sieve_operation_emit(cgenv->sbin, cmd->ext, &test_finish_operation);
 	
 	/* Resolve exit jumps to this point */
 	sieve_jumplist_resolve(genctx->exit_jumps); 
@@ -137,8 +134,7 @@ static bool cmd_test_generate
  */
  
 static bool cmd_test_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "TEST:");
 	sieve_code_descend(denv);
@@ -152,8 +148,7 @@ static bool cmd_test_operation_dump
  */
 
 static int cmd_test_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *test_name;
 
@@ -169,8 +164,7 @@ static int cmd_test_operation_execute
 }
 
 static int cmd_test_finish_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv ATTR_UNUSED, 
+(const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {
 	sieve_runtime_trace(renv, "TEST FINISHED");

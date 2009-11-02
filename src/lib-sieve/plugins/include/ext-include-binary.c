@@ -23,10 +23,14 @@
  * Forward declarations
  */
  
-static bool ext_include_binary_save(struct sieve_binary *sbin);
-static bool ext_include_binary_open(struct sieve_binary *sbin);
-static bool ext_include_binary_up_to_date(struct sieve_binary *sbin);
-static void ext_include_binary_free(struct sieve_binary *sbin);
+static bool ext_include_binary_save
+	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
+static bool ext_include_binary_open
+	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
+static bool ext_include_binary_up_to_date
+	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
+static void ext_include_binary_free
+	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
 
 /* 
  * Binary include extension
@@ -56,7 +60,7 @@ struct ext_include_binary_context {
 
  
 static struct ext_include_binary_context *ext_include_binary_create_context
-(struct sieve_binary *sbin)
+(const struct sieve_extension *this_ext, struct sieve_binary *sbin)
 {
 	pool_t pool = sieve_binary_pool(sbin);
 	
@@ -69,37 +73,38 @@ static struct ext_include_binary_context *ext_include_binary_create_context
 		(hash_cmp_callback_t *) sieve_script_cmp);
 	p_array_init(&ctx->include_index, pool, 128);
 
-	sieve_binary_extension_set(sbin, &include_binary_ext, ctx);
+	sieve_binary_extension_set(sbin, this_ext, &include_binary_ext, ctx);
 
 	return ctx;
 }
 
 struct ext_include_binary_context *ext_include_binary_get_context
-(struct sieve_binary *sbin)
+(const struct sieve_extension *this_ext, struct sieve_binary *sbin)
 {	
 	struct ext_include_binary_context *ctx = (struct ext_include_binary_context *)
-		sieve_binary_extension_get_context(sbin, &include_extension);
+		sieve_binary_extension_get_context(sbin, this_ext);
 	
 	if ( ctx == NULL )
-		ctx = ext_include_binary_create_context(sbin);
+		ctx = ext_include_binary_create_context(this_ext, sbin);
 	
 	return ctx;
 }
  
 struct ext_include_binary_context *ext_include_binary_init
-(struct sieve_binary *sbin, struct sieve_ast *ast)
+(const struct sieve_extension *this_ext, struct sieve_binary *sbin, 
+	struct sieve_ast *ast)
 {
 	struct ext_include_ast_context *ast_ctx =
-		ext_include_get_ast_context(ast);
+		ext_include_get_ast_context(this_ext, ast);
 	struct ext_include_binary_context *ctx;
 	
 	/* Get/create our context from the binary we are working on */
-	ctx = ext_include_binary_get_context(sbin);
+	ctx = ext_include_binary_get_context(this_ext, sbin);
 	
 	/* Create dependency block */
 	if ( ctx->dependency_block == 0 )
 		ctx->dependency_block = 
-			sieve_binary_extension_create_block(sbin, &include_extension);
+			sieve_binary_extension_create_block(sbin, this_ext);
 
 	if ( ctx->global_vars == NULL ) {
 		ctx->global_vars = ast_ctx->global_vars;
@@ -129,7 +134,8 @@ const struct ext_include_script_info *ext_include_binary_script_include
 	/* Unreferenced on binary_free */
 	sieve_script_ref(script);
 	
-	hash_table_insert(binctx->included_scripts, (void *) script, (void *) incscript);
+	hash_table_insert
+		(binctx->included_scripts, (void *) script, (void *) incscript);
 	array_append(&binctx->include_index, &incscript, 1);
 
 	return incscript;
@@ -152,7 +158,8 @@ bool ext_include_binary_script_is_included
 const struct ext_include_script_info *ext_include_binary_script_get_included
 (struct ext_include_binary_context *binctx, unsigned int include_id)
 {		
-	if ( include_id > 0 && (include_id - 1) < array_count(&binctx->include_index) ) {
+	if ( include_id > 0 && 
+		(include_id - 1) < array_count(&binctx->include_index) ) {
 		struct ext_include_script_info *const *sinfo =
 			array_idx(&binctx->include_index, include_id - 1);
 
@@ -180,10 +187,10 @@ unsigned int ext_include_binary_script_get_count
  */
 
 struct sieve_variable_scope *ext_include_binary_get_global_scope
-(struct sieve_binary *sbin)
+(const struct sieve_extension *this_ext, struct sieve_binary *sbin)
 {
 	struct ext_include_binary_context *binctx = 
-		ext_include_binary_get_context(sbin);
+		ext_include_binary_get_context(this_ext, sbin);
 
 	return binctx->global_vars;
 }
@@ -192,10 +199,12 @@ struct sieve_variable_scope *ext_include_binary_get_global_scope
  * Binary extension
  */
 
-static bool ext_include_binary_save(struct sieve_binary *sbin)
+static bool ext_include_binary_save
+(const struct sieve_extension *ext ATTR_UNUSED, struct sieve_binary *sbin, 
+	void *context)
 {
 	struct ext_include_binary_context *binctx = 
-		ext_include_binary_get_context(sbin);
+		(struct ext_include_binary_context *) context;
 	struct ext_include_script_info *const *scripts;
 	unsigned int script_count, i;
 	unsigned int prvblk;
@@ -224,13 +233,15 @@ static bool ext_include_binary_save(struct sieve_binary *sbin)
 	return result;
 }
 
-static bool ext_include_binary_open(struct sieve_binary *sbin)
+static bool ext_include_binary_open
+(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context)
 {
-	struct ext_include_binary_context *binctx; 
+	struct ext_include_binary_context *binctx = 
+		(struct ext_include_binary_context *) context;
 	unsigned int block, prvblk, depcount, i;
 	sieve_size_t offset;
 	
-	block = sieve_binary_extension_get_block(sbin, &include_extension);
+	block = sieve_binary_extension_get_block(sbin, ext);
 	
 	if ( !sieve_binary_block_set_active(sbin, block, &prvblk) )
 		return FALSE; 
@@ -243,8 +254,6 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 		return FALSE;
 	}
 	
-	binctx = ext_include_binary_get_context(sbin);
-
 	/* Check include limit */	
 	if ( depcount > EXT_INCLUDE_MAX_INCLUDES ) {
 		sieve_sys_error("include: binary %s includes too many scripts (%u > %u)",
@@ -282,7 +291,7 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 		script_dir = ext_include_get_script_directory(location, str_c(script_name));		
 		if ( script_dir == NULL || 
 			!(script=sieve_script_create_in_directory
-				(script_dir, str_c(script_name), NULL, NULL)) ) {
+				(ext->svinst, script_dir, str_c(script_name), NULL, NULL)) ) {
 			/* No, recompile */
 			return FALSE;
 		}
@@ -292,7 +301,8 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 		sieve_script_unref(&script);
 	}
 
-	if ( !ext_include_variables_load(sbin, &offset, block, &binctx->global_vars) )
+	if ( !ext_include_variables_load
+		(ext, sbin, &offset, block, &binctx->global_vars) )
 		return FALSE;
 	
 	/* Restore previously active block */
@@ -301,17 +311,20 @@ static bool ext_include_binary_open(struct sieve_binary *sbin)
 	return TRUE;	
 }
 
-static bool ext_include_binary_up_to_date(struct sieve_binary *sbin)
+static bool ext_include_binary_up_to_date
+(const struct sieve_extension *ext ATTR_UNUSED, struct sieve_binary *sbin, 
+	void *context)
 {
 	struct ext_include_binary_context *binctx = 
-		ext_include_binary_get_context(sbin);
+		(struct ext_include_binary_context *) context;
 	struct hash_iterate_context *hctx;
 	void *key, *value;
 		
 	/* Check all included scripts for changes */
 	hctx = hash_table_iterate_init(binctx->included_scripts);
 	while ( hash_table_iterate(hctx, &key, &value) ) {
-		struct ext_include_script_info *incscript = (struct ext_include_script_info *) value;
+		struct ext_include_script_info *incscript = 
+			(struct ext_include_script_info *) value;
 		
 		/* Is the binary newer than this dependency? */
 		if ( !sieve_binary_script_older(sbin, incscript->script) ) {
@@ -324,17 +337,20 @@ static bool ext_include_binary_up_to_date(struct sieve_binary *sbin)
 	return TRUE;
 }
 
-static void ext_include_binary_free(struct sieve_binary *sbin)
+static void ext_include_binary_free
+(const struct sieve_extension *ext ATTR_UNUSED, 
+	struct sieve_binary *sbin ATTR_UNUSED, void *context)
 {
 	struct ext_include_binary_context *binctx = 
-		ext_include_binary_get_context(sbin);
+		(struct ext_include_binary_context *) context;
 	struct hash_iterate_context *hctx;
 	void *key, *value;
 		
 	/* Release references to all included script objects */
 	hctx = hash_table_iterate_init(binctx->included_scripts);
 	while ( hash_table_iterate(hctx, &key, &value) ) {
-		struct ext_include_script_info *incscript = (struct ext_include_script_info *) value;
+		struct ext_include_script_info *incscript = 
+			(struct ext_include_script_info *) value;
 		
 		sieve_script_unref(&incscript->script);
 	}
@@ -350,26 +366,12 @@ static void ext_include_binary_free(struct sieve_binary *sbin)
  * Dumping the binary 
  */
 
-inline static const char *_script_location
-(enum ext_include_script_location loc)
-{
-	switch ( loc ) {
-	case EXT_INCLUDE_LOCATION_PERSONAL:
-		return "personal";
-	case EXT_INCLUDE_LOCATION_GLOBAL:
-		return "global";
-	default:
-		break;
-	}
-	
-	return "<<INVALID LOCATION>>";
-}
-
-bool ext_include_binary_dump(struct sieve_dumptime_env *denv)
+bool ext_include_binary_dump
+(const struct sieve_extension *ext, struct sieve_dumptime_env *denv)
 {
 	struct sieve_binary *sbin = denv->sbin;
 	struct ext_include_binary_context *binctx = 
-		ext_include_binary_get_context(sbin);
+		ext_include_binary_get_context(ext, sbin);
 	struct hash_iterate_context *hctx;
 	void *key, *value;
 	unsigned int prvblk = 0;
@@ -379,10 +381,11 @@ bool ext_include_binary_dump(struct sieve_dumptime_env *denv)
 
 	hctx = hash_table_iterate_init(binctx->included_scripts);		
 	while ( hash_table_iterate(hctx, &key, &value) ) {
-		struct ext_include_script_info *incscript = (struct ext_include_script_info *) value;
+		struct ext_include_script_info *incscript = 
+			(struct ext_include_script_info *) value;
 
 		sieve_binary_dump_sectionf(denv, "Included %s script '%s' (block: %d)", 
-			_script_location(incscript->location), 
+			ext_include_script_location_name(incscript->location), 
 			sieve_script_name(incscript->script), incscript->block_id);
 			
 		if ( prvblk == 0 ) {
@@ -411,13 +414,16 @@ bool ext_include_binary_dump(struct sieve_dumptime_env *denv)
 }
 
 bool ext_include_code_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address ATTR_UNUSED)
+(const struct sieve_extension *ext, const struct sieve_dumptime_env *denv, 
+	sieve_size_t *address ATTR_UNUSED)
 {
 	struct sieve_binary *sbin = denv->sbin;
 	struct ext_include_binary_context *binctx = 
-		ext_include_binary_get_context(sbin);
+		ext_include_binary_get_context(ext, sbin);
+	struct ext_include_context *ectx = ext_include_get_context(ext);
 	
-	sieve_ext_variables_dump_set_scope(denv, &include_extension, binctx->global_vars);
+	sieve_ext_variables_dump_set_scope
+		(ectx->var_ext, denv, ext, binctx->global_vars);
 
 	return TRUE;
 }

@@ -35,6 +35,8 @@ struct sieve_message_context {
 	pool_t pool;
 	int refcount;
 
+	struct sieve_instance *svinst; 
+
 	const struct sieve_message_data *msgdata;
 
 	/* Normalized envelope addresses */
@@ -49,12 +51,13 @@ struct sieve_message_context {
 };
 
 struct sieve_message_context *sieve_message_context_create
-(const struct sieve_message_data *msgdata)
+(struct sieve_instance *svinst, const struct sieve_message_data *msgdata)
 {
 	struct sieve_message_context *msgctx;
 	
 	msgctx = i_new(struct sieve_message_context, 1);
 	msgctx->refcount = 1;
+	msgctx->svinst = svinst;
 
 	msgctx->msgdata = msgdata;
 		
@@ -96,7 +99,8 @@ void sieve_message_context_flush(struct sieve_message_context *msgctx)
 	msgctx->envelope_sender = NULL;
 	msgctx->envelope_parsed = FALSE;
 
-	p_array_init(&msgctx->ext_contexts, pool, sieve_extensions_get_count());
+	p_array_init(&msgctx->ext_contexts, pool, 
+		sieve_extensions_get_count(msgctx->svinst));
 }
 
 pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
@@ -110,19 +114,20 @@ void sieve_message_context_extension_set
 (struct sieve_message_context *msgctx, const struct sieve_extension *ext, 
 	void *context)
 {
-	array_idx_set(&msgctx->ext_contexts, (unsigned int) SIEVE_EXT_ID(ext), &context);	
+	if ( ext->id < 0 ) return;
+
+	array_idx_set(&msgctx->ext_contexts, (unsigned int) ext->id, &context);	
 }
 
 const void *sieve_message_context_extension_get
 (struct sieve_message_context *msgctx, const struct sieve_extension *ext) 
 {
-	int ext_id = SIEVE_EXT_ID(ext);
 	void * const *ctx;
 
-	if  ( ext_id < 0 || ext_id >= (int) array_count(&msgctx->ext_contexts) )
+	if  ( ext->id < 0 || ext->id >= (int) array_count(&msgctx->ext_contexts) )
 		return NULL;
 	
-	ctx = array_idx(&msgctx->ext_contexts, (unsigned int) ext_id);		
+	ctx = array_idx(&msgctx->ext_contexts, (unsigned int) ext->id);		
 
 	return *ctx;
 }

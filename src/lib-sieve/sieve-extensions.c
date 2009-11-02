@@ -7,6 +7,7 @@
 #include "hash.h"
 #include "array.h"
 
+#include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-extensions.h"
 
@@ -14,26 +15,37 @@
  * Forward declarations 
  */
 
-static void sieve_extensions_init_registry(void);
-static void sieve_extensions_deinit_registry(void);
+static void sieve_extension_registry_init(struct sieve_instance *svinst);
+static void sieve_extension_registry_deinit(struct sieve_instance *svinst);
 
-static void sieve_extensions_init_capabilities(void);
-static void sieve_extensions_deinit_capabilities(void);
+static void sieve_capability_registry_init(struct sieve_instance *svinst);
+static void sieve_capability_registry_deinit(struct sieve_instance *svinst);
+
+/*
+ * Instance global context
+ */
+
+struct sieve_extension_registry {
+	ARRAY_DEFINE(extensions, struct sieve_extension); 
+	struct hash_table *extension_index; 
+	struct hash_table *capabilities_index;
+
+	/* Core language 'extensions' */
+	const struct sieve_extension *comparator_extension;
+	const struct sieve_extension *match_type_extension;
+	const struct sieve_extension *address_part_extension;
+
+	/* Preloaded extensions */
+	ARRAY_DEFINE(preloaded_extensions, const struct sieve_extension *);
+};
 
 /* 
  * Pre-loaded 'extensions' 
  */
 
-extern const struct sieve_extension comparator_extension;
-extern const struct sieve_extension match_type_extension;
-extern const struct sieve_extension address_part_extension;
-
-const struct sieve_extension *sieve_preloaded_extensions[] = {
-	&comparator_extension, &match_type_extension, &address_part_extension
-};
-
-const unsigned int sieve_preloaded_extensions_count = 
-	N_ELEMENTS(sieve_preloaded_extensions);
+extern const struct sieve_extension_def comparator_extension;
+extern const struct sieve_extension_def match_type_extension;
+extern const struct sieve_extension_def address_part_extension;
 
 /* 
  * Dummy extensions 
@@ -41,16 +53,16 @@ const unsigned int sieve_preloaded_extensions_count =
  
 /* FIXME: This is stupid. Define a comparator-* extension and be done with it */
 
-static const struct sieve_extension comparator_i_octet_extension = {
+static const struct sieve_extension_def comparator_i_octet_extension = {
 	"comparator-i;octet", 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
-static const struct sieve_extension comparator_i_ascii_casemap_extension = {
+static const struct sieve_extension_def comparator_i_ascii_casemap_extension = {
 	"comparator-i;ascii-casemap", 
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
@@ -59,38 +71,35 @@ static const struct sieve_extension comparator_i_ascii_casemap_extension = {
  * Core extensions 
  */
 
-extern const struct sieve_extension fileinto_extension;
-extern const struct sieve_extension reject_extension;
-extern const struct sieve_extension envelope_extension;
-extern const struct sieve_extension encoded_character_extension;
+extern const struct sieve_extension_def fileinto_extension;
+extern const struct sieve_extension_def reject_extension;
+extern const struct sieve_extension_def envelope_extension;
+extern const struct sieve_extension_def encoded_character_extension;
 
 /* 
  * Native 'plugin' extensions 
  */
 
-extern const struct sieve_extension vacation_extension;
-extern const struct sieve_extension subaddress_extension;
-extern const struct sieve_extension comparator_i_ascii_numeric_extension;
-extern const struct sieve_extension relational_extension;
-extern const struct sieve_extension regex_extension;
-extern const struct sieve_extension imap4flags_extension;
-extern const struct sieve_extension copy_extension;
-extern const struct sieve_extension include_extension;
-extern const struct sieve_extension body_extension;
-extern const struct sieve_extension variables_extension;
-extern const struct sieve_extension enotify_extension;
-extern const struct sieve_extension environment_extension;
-extern const struct sieve_extension mailbox_extension;
-extern const struct sieve_extension date_extension;
+extern const struct sieve_extension_def vacation_extension;
+extern const struct sieve_extension_def subaddress_extension;
+extern const struct sieve_extension_def comparator_i_ascii_numeric_extension;
+extern const struct sieve_extension_def relational_extension;
+extern const struct sieve_extension_def regex_extension;
+extern const struct sieve_extension_def imap4flags_extension;
+extern const struct sieve_extension_def copy_extension;
+extern const struct sieve_extension_def include_extension;
+extern const struct sieve_extension_def body_extension;
+extern const struct sieve_extension_def variables_extension;
+extern const struct sieve_extension_def enotify_extension;
+extern const struct sieve_extension_def environment_extension;
+extern const struct sieve_extension_def mailbox_extension;
+extern const struct sieve_extension_def date_extension;
 
 /*
  * List of native extensions
  */
 
-const struct sieve_extension *sieve_core_extensions[] = {
-	/* Preloaded 'extensions' */
-	&comparator_extension, &match_type_extension, &address_part_extension,
-	
+const struct sieve_extension_def *sieve_core_extensions[] = {	
 	/* Dummy extensions */ 
 	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension, 
 	
@@ -114,10 +123,10 @@ const unsigned int sieve_core_extensions_count =
  * Deprecated extensions
  */
 
-extern const struct sieve_extension imapflags_extension;
-extern const struct sieve_extension notify_extension;
+extern const struct sieve_extension_def imapflags_extension;
+extern const struct sieve_extension_def notify_extension;
 
-const struct sieve_extension *sieve_deprecated_extensions[] = {
+const struct sieve_extension_def *sieve_deprecated_extensions[] = {
 	&imapflags_extension,
 	&notify_extension
 };
@@ -131,9 +140,9 @@ const unsigned int sieve_deprecated_extensions_count =
 
 #ifdef HAVE_SIEVE_UNFINISHED
 
-extern const struct sieve_extension ereject_extension;
+extern const struct sieve_extension_def ereject_extension;
 
-const struct sieve_extension *sieve_unfinished_extensions[] = {
+const struct sieve_extension_def *sieve_unfinished_extensions[] = {
 	&ereject_extension,
 };
 
@@ -146,27 +155,53 @@ const unsigned int sieve_unfinished_extensions_count =
  * Extensions init/deinit
  */
 
-bool sieve_extensions_init(void) 
+bool sieve_extensions_init(struct sieve_instance *svinst) 
 {
-	unsigned int i;
-	
-	sieve_extensions_init_registry();
-	sieve_extensions_init_capabilities();
-	
+	unsigned int i;	
+	struct sieve_extension_registry *ext_reg = 
+		p_new(svinst->pool, struct sieve_extension_registry, 1);
+
+	svinst->ext_reg = ext_reg;
+
+	sieve_extension_registry_init(svinst);
+	sieve_capability_registry_init(svinst);
+
+	/* Preloaded 'extensions' */
+	ext_reg->comparator_extension = 
+		sieve_extension_register(svinst, &comparator_extension, TRUE);
+	ext_reg->match_type_extension = 
+		sieve_extension_register(svinst, &match_type_extension, TRUE);
+	ext_reg->address_part_extension = 
+		sieve_extension_register(svinst, &address_part_extension, TRUE);
+			
+	p_array_init(&ext_reg->preloaded_extensions, svinst->pool, 5);
+	array_append(&ext_reg->preloaded_extensions, 
+		&ext_reg->comparator_extension, 1);
+	array_append(&ext_reg->preloaded_extensions, 
+		&ext_reg->match_type_extension, 1);
+	array_append(&ext_reg->preloaded_extensions, 
+		&ext_reg->address_part_extension, 1);
+
 	/* Pre-load core extensions */
 	for ( i = 0; i < sieve_core_extensions_count; i++ ) {
-		(void)sieve_extension_register(sieve_core_extensions[i], TRUE);
+		if ( sieve_extension_register
+			(svinst, sieve_core_extensions[i], TRUE) == NULL )
+			return FALSE;
 	}
 
 	/* Register deprecated extensions */
 	for ( i = 0; i < sieve_deprecated_extensions_count; i++ ) {
-		(void)sieve_extension_register(sieve_deprecated_extensions[i], FALSE);
+		if ( sieve_extension_register
+			(svinst, sieve_deprecated_extensions[i], FALSE) == NULL )
+			return FALSE;
 	}
 
 #ifdef HAVE_SIEVE_UNFINISHED
 	/* Register unfinished extensions */
 	for ( i = 0; i < sieve_unfinished_extensions_count; i++ ) {
-		(void)sieve_extension_register(sieve_unfinished_extensions[i], FALSE);
+		if ( sieve_extension_register
+			(svinst, sieve_unfinished_extensions[i], FALSE) == NULL )
+			return FALSE;
 	}
 #endif
 
@@ -175,178 +210,193 @@ bool sieve_extensions_init(void)
 	return TRUE;
 }
 
-void sieve_extensions_deinit(void)
+void sieve_extensions_deinit(struct sieve_instance *svinst)
 {	
-	sieve_extensions_deinit_capabilities();
-	sieve_extensions_deinit_registry();
+	sieve_extension_registry_deinit(svinst);
+	sieve_capability_registry_deinit(svinst);
+}
+
+/*
+ * Pre-loaded extensions
+ */
+
+const struct sieve_extension *const *sieve_extensions_get_preloaded
+(struct sieve_instance *svinst, unsigned int *count_r)
+{
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+
+	return array_get(&ext_reg->preloaded_extensions, count_r);
 }
 
 /* 
  * Extension registry
  */
- 
-struct sieve_extension_registration {
-	const struct sieve_extension *extension;
-	int id;
-	bool required;
-	bool loaded;
-};
 
-static ARRAY_DEFINE(extensions, struct sieve_extension_registration); 
-static struct hash_table *extension_index; 
-
-static void sieve_extensions_init_registry(void)
+static void sieve_extension_registry_init(struct sieve_instance *svinst)
 {	
-	i_array_init(&extensions, 30);
-	extension_index = hash_table_create
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+
+	p_array_init(&ext_reg->extensions, svinst->pool, 30);
+	ext_reg->extension_index = hash_table_create
 		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 }
 
-static bool _sieve_extension_load
-(const struct sieve_extension *extension)
+static void sieve_extension_registry_deinit(struct sieve_instance *svinst) 
+{
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+	struct hash_iterate_context *itx;
+	void *key; 
+	void *value;
+	
+	if ( ext_reg->extension_index == NULL ) return;
+
+	itx = hash_table_iterate_init(ext_reg->extension_index);
+	while ( hash_table_iterate(itx, &key, &value) ) {
+		struct sieve_extension *ext = (struct sieve_extension *) value;
+		
+		if ( ext->def != NULL && ext->def->unload != NULL )
+			ext->def->unload(ext);
+	}
+
+	hash_table_iterate_deinit(&itx); 	
+
+	hash_table_destroy(&ext_reg->extension_index);
+}
+
+static bool _sieve_extension_load(struct sieve_extension *ext)
 {
 	/* Call load handler */
-	if ( extension->load != NULL && !extension->load() ) {
-		sieve_sys_error("failed to load '%s' extension support.", 
-			extension->name);
+	if ( ext->def != NULL && ext->def->load != NULL && 
+		!ext->def->load(ext, &ext->context) ) {
+		sieve_sys_error("failed to load '%s' extension support.", ext->def->name);
 		return FALSE;
 	}
 
 	return TRUE;
 }
 
-static struct sieve_extension_registration *_sieve_extension_register
-(const struct sieve_extension *extension, bool load)
+static struct sieve_extension *_sieve_extension_register
+(struct sieve_instance *svinst, const struct sieve_extension_def *extdef, 
+	bool load, bool required)
 {
-	struct sieve_extension_registration *ereg = 
-		(struct sieve_extension_registration *)	
-		hash_table_lookup(extension_index, extension->name);
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+	struct sieve_extension *ext = (struct sieve_extension *)	
+		hash_table_lookup(ext_reg->extension_index, extdef->name);
 
 	/* Register extension if it is not registered already */
-	if ( ereg == NULL ) {
-		int ext_id = array_count(&extensions);
+	if ( ext == NULL ) {
+		int ext_id = array_count(&ext_reg->extensions);
 
 		/* Add extension to the registry */
 
-		ereg = array_append_space(&extensions);
-		ereg->id = ext_id;
+		ext = array_append_space(&ext_reg->extensions);
+		ext->id = ext_id;
+		ext->def = extdef;
+		ext->svinst = svinst;
 
-		hash_table_insert(extension_index, (void *) extension->name, (void *) ereg);
+		hash_table_insert
+			(ext_reg->extension_index, (void *) extdef->name, (void *) ext);
 	}
 
 	/* Enable extension */
-	if ( extension->_id != NULL && load ) {
-		/* Make sure extension is enabled */
-		*(extension->_id) = ereg->id;
+	if ( load ) {
+		ext->enabled = TRUE;
 
 		/* Call load handler if extension was not loaded already */
-		if ( !ereg->loaded ) {
-			if ( !_sieve_extension_load(extension) )
+		if ( !ext->loaded ) {
+			if ( !_sieve_extension_load(ext) )
 				return NULL;
 		}
 
-		ereg->loaded = TRUE;
+		ext->loaded = TRUE;
 	}
 
-	ereg->extension = extension;
+	ext->required = (ext->required || required );
 
-	return ereg;
+	return ext;
 }
 
-int sieve_extension_register
-(const struct sieve_extension *extension, bool load) 
+const struct sieve_extension *sieve_extension_register
+(struct sieve_instance *svinst, const struct sieve_extension_def *extdef,
+	bool load)
 {
-	struct sieve_extension_registration *ereg;
-
-	/* Register the extension */
-	if ( (ereg=_sieve_extension_register(extension, load)) == NULL ) {
-		return -1;
-	}
-
-	return ereg->id;
+	return _sieve_extension_register(svinst, extdef, load, FALSE);
 }
 
-int sieve_extension_require(const struct sieve_extension *extension)
+const struct sieve_extension *sieve_extension_require
+(struct sieve_instance *svinst, const struct sieve_extension_def *extdef)
 {
-	struct sieve_extension_registration *ereg;
-
-	/* Register (possibly unknown) extension */
-    if ( (ereg=_sieve_extension_register(extension, TRUE)) == NULL ) {
-        return -1;
-    }
-
-	ereg->required = TRUE;
-	return ereg->id;
+  return _sieve_extension_register(svinst, extdef, TRUE, TRUE);
 }
 
-int sieve_extensions_get_count(void)
+int sieve_extensions_get_count(struct sieve_instance *svinst)
 {
-	return array_count(&extensions);
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+
+	return array_count(&ext_reg->extensions);
 }
 
-const struct sieve_extension *sieve_extension_get_by_id(unsigned int ext_id) 
+const struct sieve_extension *sieve_extension_get_by_id
+(struct sieve_instance *svinst, unsigned int ext_id) 
 {
-	const struct sieve_extension_registration *ereg;
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+	const struct sieve_extension *ext;
 	
-	if ( ext_id < array_count(&extensions) ) {
-		ereg = array_idx(&extensions, ext_id);
+	if ( ext_id < array_count(&ext_reg->extensions) ) {
+		ext = array_idx(&ext_reg->extensions, ext_id);
 
-		if ( SIEVE_EXT_ENABLED(ereg->extension) )
-			return ereg->extension;
+		if ( ext->enabled )
+			return ext;
 	}
 	
 	return NULL;
 }
 
-const struct sieve_extension *sieve_extension_get_by_name(const char *name) 
+const struct sieve_extension *sieve_extension_get_by_name
+(struct sieve_instance *svinst, const char *name) 
 {
-	struct sieve_extension_registration *ereg;
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+	const struct sieve_extension *ext;
 	
 	if ( *name == '@' )
 		return NULL;	
 		
-	ereg = (struct sieve_extension_registration *) 
-		hash_table_lookup(extension_index, name);
+	ext = (const struct sieve_extension *) 
+		hash_table_lookup(ext_reg->extension_index, name);
 
-	if ( ereg == NULL || !SIEVE_EXT_ENABLED(ereg->extension) )
+	if ( ext == NULL || !ext->enabled )
 		return NULL;
 		
-	return ereg->extension;
+	return ext;
 }
 
-static inline bool _list_extension
-	(const struct sieve_extension_registration *ereg)
+const char *sieve_extensions_get_string(struct sieve_instance *svinst)
 {
-	return 
-		( SIEVE_EXT_ENABLED(ereg->extension) && 
-			*(ereg->extension->name) != '@' );
-}
-
-const char *sieve_extensions_get_string(void)
-{
-	unsigned int i, ext_count;
-	const struct sieve_extension_registration *eregs;
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
 	string_t *extstr = t_str_new(256);
+	const struct sieve_extension *exts;
+	unsigned int i, ext_count;	
 
-	eregs = array_get(&extensions, &ext_count);
+	exts = array_get(&ext_reg->extensions, &ext_count);
 
 	if ( ext_count > 0 ) {
 		i = 0;
 		
 		/* Find first listable extension */
-		while ( i < ext_count && !_list_extension(&eregs[i]) )
+		while ( i < ext_count && 
+			!( exts[i].enabled && *(exts[i].def->name) != '@' ) )
 			i++;
 
 		if ( i < ext_count ) {
 			/* Add first to string */
-			str_append(extstr, eregs[i].extension->name);
+			str_append(extstr, exts[i].def->name);
 			i++;	 
 
 	 		/* Add others */
 			for ( ; i < ext_count; i++ ) {
-				if ( _list_extension(&eregs[i]) ) {
+				if ( exts[i].enabled && *(exts[i].def->name) != '@' ) {
 					str_append_c(extstr, ' ');
-					str_append(extstr, eregs[i].extension->name);
+					str_append(extstr, exts[i].def->name);
 				}
 			}
 		}
@@ -355,49 +405,48 @@ const char *sieve_extensions_get_string(void)
 	return str_c(extstr);
 }
 
-static void sieve_extension_enable(struct sieve_extension_registration *ereg)
+static void sieve_extension_enable(struct sieve_extension *ext)
 {
-	if ( ereg->extension->_id != NULL ) {
-		*(ereg->extension->_id) = ereg->id;
+	ext->enabled = TRUE;
 	
-		if ( !ereg->loaded ) {
-			(void)_sieve_extension_load(ereg->extension);
-		}
+	if ( !ext->loaded ) {
+		(void)_sieve_extension_load(ext);
 	}
 
-	ereg->loaded = TRUE;
+	ext->loaded = TRUE;
 }
 
-static void sieve_extension_disable(struct sieve_extension_registration *ereg)
+static void sieve_extension_disable(struct sieve_extension *ext)
 {
-	if ( ereg->extension->_id != NULL )
-		*(ereg->extension->_id) = -1;	
+	ext->enabled = FALSE;
 }
 
-void sieve_extensions_set_string(const char *ext_string)
+void sieve_extensions_set_string
+(struct sieve_instance *svinst, const char *ext_string)
 {
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
 	ARRAY_DEFINE(enabled_extensions, const struct sieve_extension *);
 	ARRAY_DEFINE(disabled_extensions, const struct sieve_extension *);
 	const struct sieve_extension *const *ext_enabled;
 	const struct sieve_extension *const *ext_disabled;
-	struct sieve_extension_registration *eregs;
+	struct sieve_extension *exts;
 	const char **ext_names;
 	unsigned int i, ext_count, ena_count, dis_count;
 	bool relative = FALSE;
 
 	if ( ext_string == NULL ) {
 		/* Enable all */
-		eregs = array_get_modifiable(&extensions, &ext_count);
+		exts = array_get_modifiable(&ext_reg->extensions, &ext_count);
 		
 		for ( i = 0; i < ext_count; i++ )
-			sieve_extension_enable(&eregs[i]);
+			sieve_extension_enable(&exts[i]);
 
 		return;	
 	}
 
 	T_BEGIN {
-		t_array_init(&enabled_extensions, array_count(&extensions));
-		t_array_init(&disabled_extensions, array_count(&extensions));
+		t_array_init(&enabled_extensions, array_count(&ext_reg->extensions));
+		t_array_init(&disabled_extensions, array_count(&ext_reg->extensions));
 
 		ext_names = t_strsplit_spaces(ext_string, " \t");
 
@@ -407,7 +456,7 @@ void sieve_extensions_set_string(const char *ext_string)
 			ext_names++;
 
 			if ( *name != '\0' ) {
-				const struct sieve_extension_registration *ereg;
+				const struct sieve_extension *ext;
 				char op = '\0'; /* No add/remove operation */
 	
 				if ( *name == '+' 		/* Add to existing config */
@@ -417,12 +466,12 @@ void sieve_extensions_set_string(const char *ext_string)
 				}
 
 				if ( *name == '@' )
-					ereg = NULL;
+					ext = NULL;
 				else
-					ereg = (const struct sieve_extension_registration *) 
-						hash_table_lookup(extension_index, name);
+					ext = (const struct sieve_extension *) 
+						hash_table_lookup(ext_reg->extension_index, name);
 	
-				if ( ereg == NULL ) {
+				if ( ext == NULL ) {
 					sieve_sys_warning(
 						"ignored unknown extension '%s' while configuring "
 						"available extensions", name);
@@ -430,13 +479,13 @@ void sieve_extensions_set_string(const char *ext_string)
 				}
 
 				if ( op == '-' )
-					array_append(&disabled_extensions, &ereg->extension, 1);
+					array_append(&disabled_extensions, &ext, 1);
 				else
-					array_append(&enabled_extensions, &ereg->extension, 1);
+					array_append(&enabled_extensions, &ext, 1);
 			}
 		}
 
-		eregs = array_get_modifiable(&extensions, &ext_count);
+		exts = array_get_modifiable(&ext_reg->extensions, &ext_count);
 		ext_enabled = array_get(&enabled_extensions, &ena_count);
 		ext_disabled = array_get(&disabled_extensions, &dis_count);
 
@@ -453,15 +502,15 @@ void sieve_extensions_set_string(const char *ext_string)
 			if ( relative ) {
 				/* Enable if core extension */
 				for ( j = 0; j < sieve_core_extensions_count; j++ ) {
-					if ( sieve_core_extensions[j] == eregs[i].extension ) {
+					if ( sieve_core_extensions[j] == exts[i].def ) {
 						disabled = FALSE;
 						break;
 					}
-    			}
+				}
 
 				/* Disable if explicitly disabled */
 				for ( j = 0; j < dis_count; j++ ) {
-					if ( ext_disabled[j] == eregs[i].extension ) {
+					if ( ext_disabled[j]->def == exts[i].def ) {
 						disabled = TRUE;
 						break;
 					}
@@ -471,7 +520,7 @@ void sieve_extensions_set_string(const char *ext_string)
 			/* Enable if listed with '+' or no prefix */
 	
 			for ( j = 0; j < ena_count; j++ ) {
-				if ( ext_enabled[j] == eregs[i].extension ) {
+				if ( ext_enabled[j]->def == exts[i].def ) {
 					disabled = FALSE;
 					break;
 				}		
@@ -479,75 +528,93 @@ void sieve_extensions_set_string(const char *ext_string)
 
 			/* Perform actual activation/deactivation */
 
-			if ( eregs[i].extension->_id != NULL && 
-				*(eregs[i].extension->name) != '@' ) {
-				if ( disabled && !eregs[i].required )
-					sieve_extension_disable(&eregs[i]);
+			if ( exts[i].enabled && *(exts[i].def->name) != '@' ) {
+				if ( disabled && !exts[i].required )
+					sieve_extension_disable(&exts[i]);
 				else
-					sieve_extension_enable(&eregs[i]);
+					sieve_extension_enable(&exts[i]);
 			}
 		}
 	} T_END;
 }
 
-static void sieve_extensions_deinit_registry(void) 
+const struct sieve_extension *sieve_get_match_type_extension
+	(struct sieve_instance *svinst)
 {
-	struct hash_iterate_context *itx = 
-		hash_table_iterate_init(extension_index);
-	void *key; 
-	void *value;
-	
-	while ( hash_table_iterate(itx, &key, &value) ) {
-		struct sieve_extension_registration *ereg =
-			(struct sieve_extension_registration *) value;
-		const struct sieve_extension *ext = ereg->extension;
-		
-		if ( ext->unload != NULL )
-			ext->unload();
-	}
+	return svinst->ext_reg->match_type_extension;
+}
 
-	hash_table_iterate_deinit(&itx); 	
+const struct sieve_extension *sieve_get_comparator_extension
+	(struct sieve_instance *svinst)
+{
+	return svinst->ext_reg->comparator_extension;
+}
 
-	array_free(&extensions);
-	hash_table_destroy(&extension_index);
+const struct sieve_extension *sieve_get_address_part_extension
+	(struct sieve_instance *svinst)
+{
+	return svinst->ext_reg->address_part_extension;
 }
 
 /*
  * Extension capabilities
  */
 
-static struct hash_table *capabilities_index; 
+struct sieve_capability_registration {
+	const struct sieve_extension *ext; 
+	const struct sieve_extension_capabilities *capabilities;
+};
 
-static void sieve_extensions_init_capabilities(void)
+void sieve_capability_registry_init(struct sieve_instance *svinst)
 {	
-	capabilities_index = hash_table_create
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+
+	ext_reg->capabilities_index = hash_table_create
 		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 }
 
-static void sieve_extensions_deinit_capabilities(void) 
+void sieve_capability_registry_deinit(struct sieve_instance *svinst) 
 {
-	hash_table_destroy(&capabilities_index);
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+
+	if ( ext_reg->capabilities_index == NULL ) return;
+
+	hash_table_destroy(&svinst->ext_reg->capabilities_index);
 }
 
 void sieve_extension_capabilities_register
-	(const struct sieve_extension_capabilities *cap) 
+(struct sieve_instance *svinst, const struct sieve_extension *ext, 
+	const struct sieve_extension_capabilities *cap) 
 {	
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+	struct sieve_capability_registration *reg = 
+		p_new(svinst->pool, struct sieve_capability_registration, 1);
+
+	reg->ext = ext;
+	reg->capabilities = cap;
+
 	hash_table_insert
-		(capabilities_index, (void *) cap->name, (void *) cap);
+		(ext_reg->capabilities_index, (void *) cap->name, (void *) reg);
 }
 
 const char *sieve_extension_capabilities_get_string
-	(const char *cap_name) 
+(struct sieve_instance *svinst, const char *cap_name) 
 {
-  const struct sieve_extension_capabilities *cap = 
-		(const struct sieve_extension_capabilities *) 
-			hash_table_lookup(capabilities_index, cap_name);
+	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
+  const struct sieve_capability_registration *cap_reg = 
+		(const struct sieve_capability_registration *) 
+			hash_table_lookup(ext_reg->capabilities_index, cap_name);
+	const struct sieve_extension_capabilities *cap;
 
-	if ( cap == NULL || cap->get_string == NULL || 
-		!SIEVE_EXT_ENABLED(cap->extension) )
+	if ( cap_reg == NULL || cap_reg->capabilities == NULL )
+		return NULL;
+
+	cap = cap_reg->capabilities;
+
+	if ( cap->get_string == NULL || !cap_reg->ext->enabled )
 		return NULL;
 		
-	return cap->get_string();
+	return cap->get_string(cap_reg->ext);
 }
 
 

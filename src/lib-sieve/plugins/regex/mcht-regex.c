@@ -35,8 +35,8 @@
  * Match type
  */
  
-bool mcht_regex_validate_context
-(struct sieve_validator *validator, struct sieve_ast_argument *arg,
+static bool mcht_regex_validate_context
+(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
     struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg);
 
 static void mcht_regex_match_init(struct sieve_match_context *mctx);
@@ -45,7 +45,7 @@ static int mcht_regex_match
     	const char *key, size_t key_size, int key_index);
 static int mcht_regex_match_deinit(struct sieve_match_context *mctx);
 
-const struct sieve_match_type regex_match_type = {
+const struct sieve_match_type_def regex_match_type = {
 	SIEVE_OBJECT("regex", &regex_match_type_operand, 0),
 	TRUE, FALSE,
 	NULL,
@@ -85,15 +85,15 @@ static const char *_regexp_error(regex_t *regexp, int errorcode)
 }
 
 static int mcht_regex_validate_regexp
-(struct sieve_validator *validator, 
-	struct sieve_match_type_context *ctx ATTR_UNUSED,
+(struct sieve_validator *valdtr, 
+	struct sieve_match_type_context *mtctx ATTR_UNUSED,
 	struct sieve_ast_argument *key, int cflags) 
 {
 	int ret;
 	regex_t regexp;
 
 	if ( (ret=regcomp(&regexp, sieve_ast_argument_strc(key), cflags)) != 0 ) {
-		sieve_argument_validate_error(validator, key,
+		sieve_argument_validate_error(valdtr, key,
 			"invalid regular expression for regex match: %s", 
 			_regexp_error(&regexp, ret));
 
@@ -107,7 +107,7 @@ static int mcht_regex_validate_regexp
 
 struct _regex_key_context {
 	struct sieve_validator *valdtr;
-	struct sieve_match_type_context *mctx;
+	struct sieve_match_type_context *mtctx;
 	int cflags;
 };
 
@@ -127,25 +127,25 @@ static int mcht_regex_validate_key_argument
 	}
 
 	return mcht_regex_validate_regexp
-		(keyctx->valdtr, keyctx->mctx, key, keyctx->cflags);
+		(keyctx->valdtr, keyctx->mtctx, key, keyctx->cflags);
 }
 	
-bool mcht_regex_validate_context
-(struct sieve_validator *validator, struct sieve_ast_argument *arg ATTR_UNUSED,
-	struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg)
+static bool mcht_regex_validate_context
+(struct sieve_validator *valdtr, struct sieve_ast_argument *arg ATTR_UNUSED,
+	struct sieve_match_type_context *mtctx, struct sieve_ast_argument *key_arg)
 {
-	const struct sieve_comparator *cmp = ctx->comparator;
+	const struct sieve_comparator *cmp = mtctx->comparator;
 	int cflags = REG_EXTENDED | REG_NOSUB;
 	struct _regex_key_context keyctx;
 	struct sieve_ast_argument *kitem;
 
 	if ( cmp != NULL ) { 
-		if ( cmp == &i_ascii_casemap_comparator )
+		if ( sieve_comparator_is(cmp, i_ascii_casemap_comparator) )
 			cflags =  REG_EXTENDED | REG_NOSUB | REG_ICASE;
-		else if ( cmp == &i_octet_comparator )
+		else if ( sieve_comparator_is(cmp, i_octet_comparator) )
 			cflags =  REG_EXTENDED | REG_NOSUB;
 		else {
-			sieve_argument_validate_error(validator, ctx->match_type_arg, 
+			sieve_argument_validate_error(valdtr, mtctx->argument, 
 				"regex match type only supports "
 				"i;octet and i;ascii-casemap comparators" );
 			return FALSE;	
@@ -154,8 +154,8 @@ bool mcht_regex_validate_context
 
 	/* Validate regular expression keys */
 
-	keyctx.valdtr = validator;
-	keyctx.mctx = ctx;
+	keyctx.valdtr = valdtr;
+	keyctx.mtctx = mtctx;
 	keyctx.cflags = cflags;
 
 	kitem = key_arg;
@@ -219,9 +219,9 @@ static regex_t *mcht_regex_get
 		regexp = array_idx_modifiable(&ctx->reg_expressions, key_index);
 
 		/* Configure case-sensitivity according to comparator */
-		if ( cmp == &i_octet_comparator ) 
+		if ( sieve_comparator_is(cmp, i_octet_comparator) ) 
 			cflags =  REG_EXTENDED;
-		else if ( cmp ==  &i_ascii_casemap_comparator )
+		else if ( sieve_comparator_is(cmp, i_ascii_casemap_comparator) )
 			cflags =  REG_EXTENDED | REG_ICASE;
 		else
 			return NULL; /* Not supported */

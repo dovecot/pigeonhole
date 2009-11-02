@@ -26,7 +26,7 @@ static int mcht_matches_match
  * Match-type object
  */
 
-const struct sieve_match_type matches_match_type = {
+const struct sieve_match_type_def matches_match_type = {
 	SIEVE_OBJECT("matches", &match_type_operand, SIEVE_MATCH_TYPE_MATCHES),
 	TRUE, FALSE,
 	NULL,
@@ -54,7 +54,7 @@ static inline bool _string_find(const struct sieve_comparator *cmp,
 	const char **valp, const char *vend, const char **keyp, const char *kend)
 {
 	while ( (*valp < vend) && (*keyp < kend) ) {
-		if ( !cmp->char_match(cmp, valp, vend, keyp, kend) )
+		if ( !cmp->def->char_match(cmp, valp, vend, keyp, kend) )
 			(*valp)++;
 	}
 	
@@ -96,6 +96,9 @@ static int mcht_matches_match
 	char wcard = '\0';      /* Current wildcard */
 	char next_wcard = '\0'; /* Next  widlcard */
 	unsigned int key_offset = 0;
+
+	if ( cmp->def == NULL || cmp->def->char_match == NULL )
+		return FALSE;
 
 	/* Value may be NULL, parse empty string in stead */
 	if ( val == NULL ) {
@@ -211,7 +214,7 @@ static int mcht_matches_match
 				str_append_n(mvalue, pvp, qp-pvp);
 					
 			/* Compare needle to end of value string */
-			if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
+			if ( !cmp->def->char_match(cmp, &vp, vend, &needle, nend) ) {	
 				debug_printf("  match at end failed\n");				 
 				break;
 			}
@@ -250,7 +253,7 @@ static int mcht_matches_match
 				debug_printf("  begin needle: '%s'\n", t_strdup_until(needle, nend));
 				debug_printf("  begin value:  '%s'\n", t_strdup_until(vp, vend));
 
-				if ( !cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
+				if ( !cmp->def->char_match(cmp, &vp, vend, &needle, nend) ) {	
 					debug_printf("  failed to find needle at beginning\n");				 
 					break;
 				}
@@ -315,7 +318,7 @@ static int mcht_matches_match
 
 				/* Try matching the needle at fixed position */
 				if ( (needle == nend && next_wcard == '\0' && vp < vend ) || 
-					!cmp->char_match(cmp, &vp, vend, &needle, nend) ) {	
+					!cmp->def->char_match(cmp, &vp, vend, &needle, nend) ) {	
 					
 					/* Match failed: now we have a problem. We need to backtrack to the previous
 					 * '*' wildcard occurence and start scanning for the next possible match.

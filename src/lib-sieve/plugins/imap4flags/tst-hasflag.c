@@ -24,14 +24,14 @@
  */
 
 static bool tst_hasflag_registered
-	(struct sieve_validator *validator,
+	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
 		struct sieve_command_registration *cmd_reg);
 static bool tst_hasflag_validate
-	(struct sieve_validator *validator,	struct sieve_command_context *ctx);
+	(struct sieve_validator *valdtr,	struct sieve_command *tst);
 static bool tst_hasflag_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
  
-const struct sieve_command tst_hasflag = { 
+const struct sieve_command_def tst_hasflag = { 
 	"hasflag", 
 	SCT_TEST,
 	-1, /* We check positional arguments ourselves */
@@ -48,13 +48,11 @@ const struct sieve_command tst_hasflag = {
  */
 
 static bool tst_hasflag_operation_dump
-	(const struct sieve_operation *op,	
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int tst_hasflag_operation_execute
-	(const struct sieve_operation *op,	
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation hasflag_operation = { 
+const struct sieve_operation_def hasflag_operation = { 
 	"HASFLAG",
 	&imap4flags_extension,
 	ext_imap4flags_OPERATION_HASFLAG,
@@ -75,12 +73,12 @@ enum tst_hasflag_optional {
  */
 
 static bool tst_hasflag_registered
-(struct sieve_validator *validator, 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext ATTR_UNUSED,
 	struct sieve_command_registration *cmd_reg) 
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(validator, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
-	sieve_match_types_link_tags(validator, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
+	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
+	sieve_match_types_link_tags(valdtr, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
 
 	return TRUE;
 }
@@ -90,24 +88,28 @@ static bool tst_hasflag_registered
  */
 
 static bool tst_hasflag_validate
-(struct sieve_validator *validator,	struct sieve_command_context *tst)
+(struct sieve_validator *valdtr,	struct sieve_command *tst)
 {
 	struct sieve_ast_argument *vars = tst->first_positional;
 	struct sieve_ast_argument *keys = sieve_ast_argument_next(vars);
+	const struct sieve_match_type mcht_default = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
+	const struct sieve_comparator cmp_default = 
+		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 		
-	if ( !ext_imap4flags_command_validate(validator, tst) )
+	if ( !ext_imap4flags_command_validate(valdtr, tst) )
 		return FALSE;
 	
 	if ( keys == NULL ) {
 		keys = vars;
 		vars = NULL;
 	} else {
-		vars->arg_id_code = OPT_VARIABLES;
+		vars->argument->id_code = OPT_VARIABLES;
 	}
 	
 	/* Validate the key argument to a specified match type */
 	return sieve_match_type_validate
-		(validator, tst, keys, &is_match_type, &i_ascii_casemap_comparator);
+		(valdtr, tst, keys, &mcht_default, &cmp_default);
 }
 
 /*
@@ -115,12 +117,12 @@ static bool tst_hasflag_validate
  */
 
 static bool tst_hasflag_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
-	sieve_operation_emit_code(cgenv->sbin, &hasflag_operation);
+	sieve_operation_emit(cgenv->sbin, cmd->ext, &hasflag_operation);
 
 	/* Generate arguments */
-	if ( !sieve_generate_arguments(cgenv, ctx, NULL) )
+	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;	
 
 	return TRUE;
@@ -131,8 +133,7 @@ static bool tst_hasflag_generate
  */
  
 static bool tst_hasflag_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,	
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int opt_code = 0;
 
@@ -194,14 +195,15 @@ static const struct sieve_match_key_extractor _flag_extractor = {
 };
 
 static int tst_hasflag_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	int ret, mret;
 	bool result = TRUE;
 	int opt_code = 0;
-	const struct sieve_comparator *cmp = &i_ascii_casemap_comparator;
-	const struct sieve_match_type *mtch = &is_match_type;
+	struct sieve_comparator cmp = 
+		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
+	struct sieve_match_type mtch = 
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_match_context *mctx;
 	struct sieve_coded_stringlist *flag_list, *variables_list = NULL;
 	struct ext_imap4flags_iter iter;
@@ -248,7 +250,7 @@ static int tst_hasflag_operation_execute
 
 	matched = FALSE;
 	mctx = sieve_match_begin
-		(renv->interp, mtch, cmp, &_flag_extractor, flag_list); 	
+		(renv->interp, &mtch, &cmp, &_flag_extractor, flag_list); 	
 
 	matched = FALSE;
 

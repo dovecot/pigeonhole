@@ -21,7 +21,8 @@ static struct sieve_result *_testsuite_result;
 void testsuite_result_init(void)
 {
 	_testsuite_result = sieve_result_create
-		(&testsuite_msgdata, testsuite_scriptenv, testsuite_log_ehandler);
+		(sieve_instance, &testsuite_msgdata, testsuite_scriptenv, 
+			testsuite_log_ehandler);
 }
 
 void testsuite_result_deinit(void)
@@ -39,7 +40,8 @@ void testsuite_result_reset
 	}
 
 	_testsuite_result = sieve_result_create
-		(&testsuite_msgdata, testsuite_scriptenv, testsuite_log_ehandler);
+		(sieve_instance, &testsuite_msgdata, testsuite_scriptenv, 
+		testsuite_log_ehandler);
 	sieve_interpreter_set_result(renv->interp, _testsuite_result);
 }
 

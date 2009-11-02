@@ -13,14 +13,14 @@
  * Extension
  */
 
-extern const struct sieve_extension variables_extension;
+extern const struct sieve_extension_def variables_extension;
 
 /* 
  * Commands 
  */
 
-extern const struct sieve_command cmd_set;
-extern const struct sieve_command tst_string;
+extern const struct sieve_command_def cmd_set;
+extern const struct sieve_command_def tst_string;
 
 /* 
  * Operands
@@ -36,8 +36,8 @@ enum ext_variables_operand {
  * Operations
  */
 
-extern const struct sieve_operation cmd_set_operation;
-extern const struct sieve_operation tst_string_operation;
+extern const struct sieve_operation_def cmd_set_operation;
+extern const struct sieve_operation_def tst_string_operation;
 
 enum ext_variables_opcode {
 	EXT_VARIABLES_OPERATION_SET,
@@ -56,45 +56,29 @@ struct ext_variables_validator_context {
 	struct sieve_variable_scope *main_scope;
 };
 
-void ext_variables_validator_initialize(struct sieve_validator *validator);
+void ext_variables_validator_initialize
+	(const struct sieve_extension *this_ext, struct sieve_validator *validator);
 	
 struct ext_variables_validator_context *ext_variables_validator_context_get
-	(struct sieve_validator *valdtr);
+	(const struct sieve_extension *this_ext, struct sieve_validator *valdtr);
 
 struct sieve_variable *ext_variables_validator_get_variable
-	(struct sieve_validator *validator, const char *variable, bool declare);
+	(const struct sieve_extension *this_ext, struct sieve_validator *validator, 
+		const char *variable, bool declare);
 
 /*
  * Code generation
  */
  
 bool ext_variables_generator_load
-	(const struct sieve_codegen_env *cgenv);
+	(const struct sieve_extension *ext, const struct sieve_codegen_env *cgenv);
 
 /*
  * Interpreter context
  */	
 
 bool ext_variables_interpreter_load
-(const struct sieve_runtime_env *renv, sieve_size_t *address);
-
-/* 
- * Variable coding 
- */
-
-void ext_variables_opr_variable_emit
-	(struct sieve_binary *sbin, struct sieve_variable *var);
-void ext_variables_opr_match_value_emit
-	(struct sieve_binary *sbin, unsigned int index);
-bool ext_variables_opr_variable_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-		struct sieve_variable_storage **storage, unsigned int *var_index);
-
-void ext_variables_opr_variable_string_emit
-	(struct sieve_binary *sbin, unsigned int elements);
-
-bool ext_variables_variable_assignment_activate
-(struct sieve_validator *validator, struct sieve_ast_argument *arg,
-	struct sieve_command_context *cmd);
+	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+		sieve_size_t *address);
 	
 #endif /* __EXT_VARIABLES_COMMON_H */

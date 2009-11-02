@@ -11,6 +11,7 @@ struct sieve_environment_item {
 };
 
 void sieve_ext_environment_item_register
-	(const struct sieve_environment_item *item);
+	(const struct sieve_extension *ext, 
+		const struct sieve_environment_item *item);
 
 #endif

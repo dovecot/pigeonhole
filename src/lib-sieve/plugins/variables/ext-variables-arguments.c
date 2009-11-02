@@ -17,6 +17,7 @@
 #include "ext-variables-common.h"
 #include "ext-variables-limits.h"
 #include "ext-variables-name.h"
+#include "ext-variables-operands.h"
 #include "ext-variables-arguments.h"
 
 /*
@@ -48,38 +49,40 @@ static inline void _ext_variables_match_index_error
 
 static bool arg_variable_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-		struct sieve_command_context *context);
+		struct sieve_command *context);
 
-const struct sieve_argument variable_argument = { 
+const struct sieve_argument_def variable_argument = { 
 	"@variable", 
 	NULL, NULL, NULL, NULL,
 	arg_variable_generate 
 };
 
 static struct sieve_ast_argument *ext_variables_variable_argument_create
-(struct sieve_validator *validator, struct sieve_ast *ast, 
-	unsigned int source_line, const char *variable)
+(const struct sieve_extension *this_ext, struct sieve_validator *valdtr, 
+	struct sieve_ast *ast, unsigned int source_line, const char *variable)
 {
 	struct sieve_variable *var;
 	struct sieve_ast_argument *arg;
 	
-	var = ext_variables_validator_get_variable(validator, variable, TRUE);
+	var = ext_variables_validator_get_variable(this_ext, valdtr, variable, TRUE);
 
 	if ( var == NULL ) 
 		return NULL;
 	
 	arg = sieve_ast_argument_create(ast, source_line);
 	arg->type = SAAT_STRING;
-	arg->argument = &variable_argument;
-	arg->context = (void *) var;
+	arg->argument = sieve_argument_create(ast, &variable_argument, this_ext, 0);
+	arg->argument->data = (void *) var;
 	
 	return arg;
 }
 
 static bool _sieve_variable_argument_activate
-(struct sieve_validator *validator, struct sieve_command_context *cmd ATTR_UNUSED, 
-	struct sieve_ast_argument *arg, bool assignment)
+(const struct sieve_extension *this_ext, struct sieve_validator *valdtr, 
+	struct sieve_command *cmd ATTR_UNUSED, struct sieve_ast_argument *arg, 
+	bool assignment)
 {
+	struct sieve_ast *ast = arg->ast;
 	bool result = FALSE;
 	struct sieve_variable *var;
 	string_t *variable;
@@ -98,7 +101,7 @@ static bool _sieve_variable_argument_activate
 		/* Check whether name parsing succeeded */	
 		if ( nelements < 0 || varstr != varend ) {
 			/* Parse failed */
-			sieve_argument_validate_error(validator, arg, 
+			sieve_argument_validate_error(valdtr, arg, 
 				"invalid variable name '%s'", str_sanitize(str_c(variable),80));
 		} else if ( nelements == 1 ) {
 			/* Normal (match) variable */
@@ -109,14 +112,15 @@ static bool _sieve_variable_argument_activate
 			if ( cur_element->num_variable < 0 ) {
 				/* Variable */
 				var = ext_variables_validator_get_variable
-					(validator, str_c(cur_element->identifier), TRUE);
+					(this_ext, valdtr, str_c(cur_element->identifier), TRUE);
 
 				if ( var == NULL ) {
 					_ext_variables_scope_size_error
-						(validator, arg, str_c(cur_element->identifier));
+						(valdtr, arg, str_c(cur_element->identifier));
 				} else {
-					arg->argument = &variable_argument;
-					arg->context = (void *) var;
+					arg->argument = sieve_argument_create
+						(ast, &variable_argument, this_ext, 0);
+					arg->argument->data = (void *) var;
 				
 					result = TRUE;
 				}
@@ -125,15 +129,17 @@ static bool _sieve_variable_argument_activate
 				if ( !assignment ) {
 					if ( cur_element->num_variable > SIEVE_VARIABLES_MAX_MATCH_INDEX ) {
 						_ext_variables_match_index_error
-							(validator, arg, cur_element->num_variable);
+							(valdtr, arg, cur_element->num_variable);
 					} else {
-						arg->argument = &match_value_argument;
-						arg->context = POINTER_CAST(cur_element->num_variable);
+						arg->argument = sieve_argument_create
+							(ast, &match_value_argument, this_ext, 0);
+						arg->argument->data = (void *) 
+							POINTER_CAST(cur_element->num_variable);
 										
 						result = TRUE;
 					}
 				} else {		
-					sieve_argument_validate_error(validator, arg, 
+					sieve_argument_validate_error(valdtr, arg, 
 						"cannot assign to match variable");
 				}
 			}
@@ -149,7 +155,7 @@ static bool _sieve_variable_argument_activate
 			 * the relevant extension MUST cause an error.
 			 */
 
-			sieve_argument_validate_error(validator, arg, 
+			sieve_argument_validate_error(valdtr, arg, 
 				"cannot %s to variable in unknown namespace '%s'", 
 				assignment ? "assign" : "refer", str_c(cur_element->identifier));
 		}
@@ -159,12 +165,14 @@ static bool _sieve_variable_argument_activate
 }
 
 bool sieve_variable_argument_activate
-(struct sieve_validator *validator, struct sieve_command_context *cmd, 
-	struct sieve_ast_argument *arg, bool assignment)
+(const struct sieve_extension *this_ext, struct sieve_validator *valdtr, 
+	struct sieve_command *cmd, struct sieve_ast_argument *arg, 
+	bool assignment)
 {
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		/* Single string */
-		return _sieve_variable_argument_activate(validator, cmd, arg, assignment);
+		return _sieve_variable_argument_activate
+			(this_ext, valdtr, cmd, arg, assignment);
 		
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		/* String list */
@@ -175,14 +183,14 @@ bool sieve_variable_argument_activate
 		stritem = sieve_ast_strlist_first(arg);
 		while ( stritem != NULL ) {
 			if ( !_sieve_variable_argument_activate
-				(validator, cmd, stritem, assignment) )
+				(this_ext, valdtr, cmd, stritem, assignment) )
 				return FALSE;
 			
 			stritem = sieve_ast_strlist_next(stritem);
-
 		}
 		
-		arg->argument = &string_list_argument;
+		arg->argument = sieve_argument_create
+			(arg->ast, &string_list_argument, NULL, 0);
 		
 		return TRUE;
 	} 
@@ -192,11 +200,12 @@ bool sieve_variable_argument_activate
 
 static bool arg_variable_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context ATTR_UNUSED)
+	struct sieve_command *context ATTR_UNUSED)
 {
-	struct sieve_variable *var = (struct sieve_variable *) arg->context;
+	struct sieve_argument *argument = arg->argument;
+	struct sieve_variable *var = (struct sieve_variable *) argument->data;
 	
-	ext_variables_opr_variable_emit(cgenv->sbin, var);
+	ext_variables_opr_variable_emit(cgenv->sbin, argument->ext, var);
 
 	return TRUE;
 }
@@ -207,35 +216,38 @@ static bool arg_variable_generate
 
 static bool arg_match_value_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context ATTR_UNUSED);
+	struct sieve_command *context ATTR_UNUSED);
 
-const struct sieve_argument match_value_argument = { 
+const struct sieve_argument_def match_value_argument = { 
 	"@match_value", 
 	NULL, NULL, NULL, NULL,
 	arg_match_value_generate 
 };
 
 static struct sieve_ast_argument *ext_variables_match_value_argument_create
-(struct sieve_validator *validator ATTR_UNUSED, struct sieve_ast *ast, 
+(const struct sieve_extension *this_ext, 
+	struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast *ast, 
 	unsigned int source_line,	unsigned int index)
 {
 	struct sieve_ast_argument *arg;
 	
 	arg = sieve_ast_argument_create(ast, source_line);
 	arg->type = SAAT_STRING;
-	arg->argument = &match_value_argument;
-	arg->context = POINTER_CAST(index);
+	arg->argument = sieve_argument_create
+		(ast, &match_value_argument, this_ext, 0);
+	arg->argument->data = (void *) POINTER_CAST(index);
 	
 	return arg;
 }
 
 static bool arg_match_value_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
-	struct sieve_command_context *context ATTR_UNUSED)
+	struct sieve_command *context ATTR_UNUSED)
 {
-	unsigned int index = POINTER_CAST_TO(arg->context, unsigned int);
+	struct sieve_argument *argument = arg->argument;
+	unsigned int index = POINTER_CAST_TO(argument->data, unsigned int);
 	
-	ext_variables_opr_match_value_emit(cgenv->sbin, index);
+	ext_variables_opr_match_value_emit(cgenv->sbin, argument->ext, index);
 
 	return TRUE;
 }
@@ -245,21 +257,22 @@ static bool arg_match_value_generate
  */
 
 static bool arg_variable_string_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *context);
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+		struct sieve_command *cmd);
 
-const struct sieve_argument variable_string_argument = { 
+const struct sieve_argument_def variable_string_argument = { 
 	"@variable-string", 
-	NULL, NULL,
+	NULL,
 	arg_variable_string_validate, 
-	NULL, 
+	NULL, NULL, 
 	sieve_arg_catenated_string_generate,
 };
 
 static bool arg_variable_string_validate
-(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
-		struct sieve_command_context *cmd)
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	struct sieve_command *cmd)
 {
+	const struct sieve_extension *this_ext = (*arg)->argument->ext;
 	enum { ST_NONE, ST_OPEN, ST_VARIABLE, ST_CLOSE } state = ST_NONE;
 	pool_t pool = sieve_ast_pool((*arg)->ast);
 	struct sieve_arg_catenated_string *catstr = NULL;
@@ -337,7 +350,7 @@ static bool arg_variable_string_validate
 					
 						/* Give other substitution extensions a chance to do their work */
 						if ( !sieve_validator_argument_activate_super
-							(validator, cmd, strarg, FALSE) ) {
+							(valdtr, cmd, strarg, FALSE) ) {
 							result = FALSE;
 							break;
 						}
@@ -353,12 +366,14 @@ static bool arg_variable_string_validate
 							string_t *cur_ident = cur_element->identifier; 
 						
 							strarg = ext_variables_variable_argument_create
-								(validator, (*arg)->ast, (*arg)->source_line, str_c(cur_ident));
+								(this_ext, valdtr, (*arg)->ast, (*arg)->source_line, 
+									str_c(cur_ident));
+
 							if ( strarg != NULL )
 								sieve_arg_catenated_string_add_element(catstr, strarg);
 							else {
 								_ext_variables_scope_size_error
-									(validator, *arg, str_c(cur_element->identifier));
+									(valdtr, *arg, str_c(cur_element->identifier));
 								result = FALSE;
 								break;
 							}
@@ -366,14 +381,15 @@ static bool arg_variable_string_validate
 							/* Add match value argument '${000}' */
 							if ( cur_element->num_variable > SIEVE_VARIABLES_MAX_MATCH_INDEX ) {
 								_ext_variables_match_index_error
-									(validator, *arg, cur_element->num_variable);
+									(valdtr, *arg, cur_element->num_variable);
 								result = FALSE;
 								break;
 							}
 
 							strarg = ext_variables_match_value_argument_create
-								(validator, (*arg)->ast, (*arg)->source_line, 
+								(this_ext, valdtr, (*arg)->ast, (*arg)->source_line, 
 								cur_element->num_variable);
+
 							if ( strarg != NULL )
 								sieve_arg_catenated_string_add_element(catstr, strarg);
 						}
@@ -386,7 +402,7 @@ static bool arg_variable_string_validate
 						/* References to namespaces without a prior require 
 						 * statement for thecrelevant extension MUST cause an error.
 					 	 */
-						sieve_argument_validate_error(validator, *arg, 
+						sieve_argument_validate_error(valdtr, *arg, 
 							"referring to variable in unknown namespace '%s'", 
 							str_c(cur_element->identifier));
 						result = FALSE;
@@ -413,7 +429,7 @@ static bool arg_variable_string_validate
 		/* No substitutions in this string, pass it on to any other substution
 		 * extension.
 		 */
-		return sieve_validator_argument_activate_super(validator, cmd, *arg, TRUE);
+		return sieve_validator_argument_activate_super(valdtr, cmd, *arg, TRUE);
 	}
 	
 	/* Add the final substring that comes after the last substitution to the 
@@ -430,7 +446,7 @@ static bool arg_variable_string_validate
 			
 		/* Give other substitution extensions a chance to do their work */	
 		if ( !sieve_validator_argument_activate_super
-			(validator, cmd, strarg, FALSE) )
+			(valdtr, cmd, strarg, FALSE) )
 			return FALSE;
 	}	
 	

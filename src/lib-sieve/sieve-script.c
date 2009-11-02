@@ -63,8 +63,9 @@ static inline const char *_sieve_scriptfile_from_name(const char *name)
  */
  
 struct sieve_script *sieve_script_init
-(struct sieve_script *script, const char *path, const char *name, 
-	struct sieve_error_handler *ehandler, bool *exists_r)
+(struct sieve_script *script, struct sieve_instance *svinst, 
+	const char *path, const char *name, struct sieve_error_handler *ehandler, 
+	bool *exists_r)
 {
 	int ret;
 	pool_t pool;
@@ -156,6 +157,8 @@ struct sieve_script *sieve_script_init
 				pool = script->pool;
 		
 			script->refcount = 1;
+			script->svinst = svinst;
+
 			script->ehandler = ehandler;
 			sieve_error_handler_ref(ehandler);
 		
@@ -178,15 +181,15 @@ struct sieve_script *sieve_script_init
 }
 
 struct sieve_script *sieve_script_create
-(const char *path, const char *name, 
+(struct sieve_instance *svinst, const char *path, const char *name, 
 	struct sieve_error_handler *ehandler, bool *exists_r)
 {
-	return sieve_script_init(NULL, path, name, ehandler, exists_r);
+	return sieve_script_init(NULL, svinst, path, name, ehandler, exists_r);
 }
 
 struct sieve_script *sieve_script_create_in_directory
-(const char *dirpath, const char *name,
-    struct sieve_error_handler *ehandler, bool *exists_r)
+(struct sieve_instance *svinst, const char *dirpath, const char *name,
+	struct sieve_error_handler *ehandler, bool *exists_r)
 {
 	const char *path;
 
@@ -197,7 +200,7 @@ struct sieve_script *sieve_script_create_in_directory
 		path = t_strconcat(dirpath, "/",
 			_sieve_scriptfile_from_name(name), NULL);
 
-	return sieve_script_init(NULL, path, name, ehandler, exists_r);
+	return sieve_script_init(NULL, svinst, path, name, ehandler, exists_r);
 }
 
 void sieve_script_ref(struct sieve_script *script)
@@ -254,6 +257,11 @@ const char *sieve_script_binpath(const struct sieve_script *script)
 mode_t sieve_script_permissions(const struct sieve_script *script)
 {
 	return script->st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+}
+
+struct sieve_instance *sieve_script_svinst(const struct sieve_script *script)
+{
+	return script->svinst;
 }
 
 /* 

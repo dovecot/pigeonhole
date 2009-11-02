@@ -14,10 +14,10 @@
  */
 
 static bool tst_not_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx,
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx,
 		struct sieve_jumplist *jumps, bool jump_true);
 
-const struct sieve_command tst_not = { 
+const struct sieve_command_def tst_not = { 
 	"not", 
 	SCT_TEST, 
 	0, 1, FALSE, FALSE,
@@ -30,7 +30,7 @@ const struct sieve_command tst_not = {
  */
 
 static bool tst_not_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx,
+(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx,
 	struct sieve_jumplist *jumps, bool jump_true)
 {
 	struct sieve_ast_node *test;

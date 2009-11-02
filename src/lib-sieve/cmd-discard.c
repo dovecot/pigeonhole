@@ -23,9 +23,9 @@
 
 static bool cmd_discard_generate
 	(const struct sieve_codegen_env *cgenv, 
-		struct sieve_command_context *ctx ATTR_UNUSED); 
+		struct sieve_command *ctx ATTR_UNUSED); 
 
-const struct sieve_command cmd_discard = { 
+const struct sieve_command_def cmd_discard = { 
 	"discard", 
 	SCT_COMMAND, 
 	0, 0, FALSE, FALSE,
@@ -39,13 +39,11 @@ const struct sieve_command cmd_discard = {
  */
 
 static bool cmd_discard_operation_dump
-	(const struct sieve_operation *op,
-    	const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_discard_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation cmd_discard_operation = { 
+const struct sieve_operation_def cmd_discard_operation = { 
 	"DISCARD",
 	NULL,
 	SIEVE_OPERATION_DISCARD,
@@ -58,13 +56,13 @@ const struct sieve_operation cmd_discard_operation = {
  */
 
 static void act_discard_print
-	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
-		void *context, bool *keep);	
+	(const struct sieve_action *action, 
+		const struct sieve_result_print_env *rpenv, bool *keep);	
 static bool act_discard_commit
 	(const struct sieve_action *action, 
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 		
-const struct sieve_action act_discard = {
+const struct sieve_action_def act_discard = {
 	"discard",
 	0,
 	NULL, NULL, NULL,
@@ -79,13 +77,12 @@ const struct sieve_action act_discard = {
  */
  
 static bool cmd_discard_generate
-(const struct sieve_codegen_env *cgenv, 
-	struct sieve_command_context *ctx ATTR_UNUSED) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &cmd_discard_operation);
+	sieve_operation_emit(cgenv->sbin, NULL, &cmd_discard_operation);
 
 	/* Emit line number */
-    sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(ctx));
+  sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
 
 	return TRUE;
 }
@@ -95,17 +92,16 @@ static bool cmd_discard_generate
  */
 
 static bool cmd_discard_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED,
-    const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-    sieve_code_dumpf(denv, "DISCARD");
-    sieve_code_descend(denv);
+	sieve_code_dumpf(denv, "DISCARD");
+	sieve_code_descend(denv);
 
-    /* Source line */
-    if ( !sieve_code_source_line_dump(denv, address) )
-        return FALSE;
+	/* Source line */
+	if ( !sieve_code_source_line_dump(denv, address) )
+		return FALSE;
 
-    return sieve_code_dumper_print_optional_operands(denv, address);
+	return sieve_code_dumper_print_optional_operands(denv, address);
 }
 
 /*
@@ -113,14 +109,13 @@ static bool cmd_discard_operation_dump
  */
 
 static int cmd_discard_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv ATTR_UNUSED, 
+(const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {	
 	unsigned int source_line;
 	
 	/* Source line */
-    if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
+	if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
 		sieve_runtime_trace_error(renv, "failed to read source line");
         return SIEVE_EXEC_BIN_CORRUPT;
 	}
@@ -128,7 +123,7 @@ static int cmd_discard_operation_execute
 	sieve_runtime_trace(renv, "DISCARD action");
 
 	return ( sieve_result_add_action
-		(renv, &act_discard, NULL, source_line, NULL, 0) >= 0 );
+		(renv, NULL, &act_discard, NULL, source_line, NULL, 0) >= 0 );
 }
 
 /*
@@ -137,8 +132,7 @@ static int cmd_discard_operation_execute
  
 static void act_discard_print
 (const struct sieve_action *action ATTR_UNUSED, 
-	const struct sieve_result_print_env *rpenv, void *context ATTR_UNUSED, 
-	bool *keep)	
+	const struct sieve_result_print_env *rpenv, bool *keep)	
 {
 	sieve_result_action_printf(rpenv, "discard");
 	

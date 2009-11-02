@@ -10,18 +10,18 @@
  * Variable argument 
  */
 
-extern const struct sieve_argument variable_argument;
+extern const struct sieve_argument_def variable_argument;
 
 /* 
  * Match value argument 
  */
 
-extern const struct sieve_argument match_value_argument;
+extern const struct sieve_argument_def match_value_argument;
 
 /* 
  * Variable string argument 
  */
 
-extern const struct sieve_argument variable_string_argument;
+extern const struct sieve_argument_def variable_string_argument;
 
 #endif /* __EXT_VARIABLES_ARGUMENTS_H */

@@ -23,9 +23,9 @@
  */
 
 static bool tst_test_result_execute_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command tst_test_result_execute = { 
+const struct sieve_command_def tst_test_result_execute = { 
 	"test_result_execute", 
 	SCT_TEST, 
 	0, 0, FALSE, FALSE,
@@ -39,10 +39,9 @@ const struct sieve_command tst_test_result_execute = {
  */
 
 static int tst_test_result_execute_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation test_result_execute_operation = { 
+const struct sieve_operation_def test_result_execute_operation = { 
 	"TEST_RESULT_EXECUTE",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_RESULT_EXECUTE,
@@ -55,10 +54,9 @@ const struct sieve_operation test_result_execute_operation = {
  */
 
 static bool tst_test_result_execute_generate
-(const struct sieve_codegen_env *cgenv, 
-	struct sieve_command_context *tst ATTR_UNUSED)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *tst)
 {
-	sieve_operation_emit_code(cgenv->sbin, &test_result_execute_operation);
+	sieve_operation_emit(cgenv->sbin, tst->ext, &test_result_execute_operation);
 
 	return TRUE;
 }
@@ -68,9 +66,7 @@ static bool tst_test_result_execute_generate
  */
 
 static int tst_test_result_execute_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv, 
-	sieve_size_t *address ATTR_UNUSED)
+(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {
 	bool result = TRUE;
 

@@ -10,6 +10,7 @@
 #include "mail-storage.h"
 
 #include "sieve-common.h"
+#include "sieve-code.h"
 
 /*
  * Forward declarations
@@ -23,6 +24,10 @@ struct sieve_interpreter;
 
 struct sieve_runtime_env {
 	struct sieve_interpreter *interp;
+	struct sieve_instance *svinst;
+
+	struct sieve_binary *sbin;
+	struct sieve_operation oprtn; 
 
 	struct sieve_script *script;
 	const struct sieve_script_env *scriptenv;
@@ -30,7 +35,6 @@ struct sieve_runtime_env {
 	const struct sieve_message_data *msgdata;
 	struct sieve_message_context *msgctx;
 
-	struct sieve_binary *sbin;
 	struct sieve_result *result;
 	
 	struct sieve_exec_status *exec_status;
@@ -54,6 +58,8 @@ pool_t sieve_interpreter_pool
 struct sieve_script *sieve_interpreter_script
 	(struct sieve_interpreter *interp);
 struct sieve_error_handler *sieve_interpreter_get_error_handler
+	(struct sieve_interpreter *interp);
+struct sieve_instance *sieve_interpreter_svinst
 	(struct sieve_interpreter *interp);
 
 /* Do not use this function for normal sieve extensions. This is intended for
@@ -134,15 +140,19 @@ void _sieve_runtime_trace_error
  */
 
 struct sieve_interpreter_extension {
-	const struct sieve_extension *ext;	
+	const struct sieve_extension_def *ext_def;	
 
-	void (*run)(const struct sieve_runtime_env *renv, void *context);
-	void (*free)(struct sieve_interpreter *interp, void *context);
+	void (*run)
+		(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+			void *context);
+	void (*free)
+		(const struct sieve_extension *ext, struct sieve_interpreter *interp, 
+			void *context);
 };
 
 void sieve_interpreter_extension_register
-	(struct sieve_interpreter *interp, 
-		const struct sieve_interpreter_extension *int_ext, void *context);
+	(struct sieve_interpreter *interp, const struct sieve_extension *ext,
+		const struct sieve_interpreter_extension *intext, void *context);
 void sieve_interpreter_extension_set_context
 	(struct sieve_interpreter *interp, const struct sieve_extension *ext, 
 		void *context);

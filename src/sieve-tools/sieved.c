@@ -65,13 +65,13 @@ int main(int argc, char **argv) {
 	}
 
 	if ( extensions != NULL ) {
-		sieve_set_extensions(extensions);
+		sieve_set_extensions(sieve_instance, extensions);
 	}
 
 	/* Register tool-specific extensions */
-	(void) sieve_extension_register(&debug_extension, TRUE);
+	(void) sieve_extension_register(sieve_instance, &debug_extension, TRUE);
 		
-	sbin = sieve_load(binfile);
+	sbin = sieve_load(sieve_instance, binfile);
 
 	if ( sbin != NULL ) {
 		sieve_tool_dump_binary_to(sbin, outfile == NULL ? "-" : outfile);

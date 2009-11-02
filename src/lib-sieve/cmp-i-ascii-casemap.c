@@ -29,7 +29,7 @@ static bool cmp_i_ascii_casemap_char_match
  * Comparator object
  */
  
-const struct sieve_comparator i_ascii_casemap_comparator = {
+const struct sieve_comparator_def i_ascii_casemap_comparator = {
 	SIEVE_OBJECT
 		("i;ascii-casemap", &comparator_operand, SIEVE_COMPARATOR_I_ASCII_CASEMAP),
 	SIEVE_COMPARATOR_FLAG_ORDERING | SIEVE_COMPARATOR_FLAG_EQUALITY |

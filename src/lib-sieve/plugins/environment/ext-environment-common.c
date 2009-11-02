@@ -1,9 +1,14 @@
 #include "lib.h"
 #include "hash.h"
 
+#include "sieve-common.h"
+#include "sieve-extensions.h"
+
 #include "ext-environment-common.h"
 
-static struct hash_table *environment_items;
+struct ext_environment_context {
+	struct hash_table *environment_items;
+};
 
 /*
  * Core environment items
@@ -21,49 +26,73 @@ static const struct sieve_environment_item *core_env_items[] = {
 static unsigned int core_env_items_count = N_ELEMENTS(core_env_items);
 
 /*
+ * Registration
+ */
+
+static void ext_environment_item_register
+(struct ext_environment_context *ectx, 
+	const struct sieve_environment_item *item)
+{
+	hash_table_insert
+		(ectx->environment_items, (void *) item->name, (void *) item);
+}
+
+void sieve_ext_environment_item_register
+(const struct sieve_extension *ext, const struct sieve_environment_item *item)
+{
+	struct ext_environment_context *ectx = 
+		(struct ext_environment_context *) ext->context;
+	
+	ext_environment_item_register(ectx, item);
+}
+
+/*
  * Initialization
  */
 
-bool ext_environment_init(void) 
+bool ext_environment_init
+(const struct sieve_extension *ext ATTR_UNUSED, void **context) 
 {
+	struct ext_environment_context *ectx = 
+		i_new(struct ext_environment_context, 1);
+
 	unsigned int i;
 
-	environment_items = hash_table_create
+	ectx->environment_items = hash_table_create
 		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
 
 	for ( i = 0; i < core_env_items_count; i++ ) {
-		sieve_ext_environment_item_register(core_env_items[i]);
+		ext_environment_item_register(ectx, core_env_items[i]);
 	}
+
+	*context = (void *) ectx;
 
 	return TRUE;
 }
 
-void ext_environment_deinit(void)
+void ext_environment_deinit(const struct sieve_extension *ext)
 {
-	hash_table_destroy(&environment_items);
+	struct ext_environment_context *ectx = 
+		(struct ext_environment_context *) ext->context;
+
+	hash_table_destroy(&ectx->environment_items);
+	i_free(ectx);
 }
 
-/*
- * Registration
- */
-
-void sieve_ext_environment_item_register
-(const struct sieve_environment_item *item)
-{
-	hash_table_insert
-		(environment_items, (void *) item->name, (void *) item);
-}
 
 /*
  * Retrieval
  */
 
 const char *ext_environment_item_get_value
-(const char *name, const struct sieve_script_env *senv)
+(const struct sieve_extension *ext, const char *name, 
+	const struct sieve_script_env *senv)
 {
+	struct ext_environment_context *ectx = 
+		(struct ext_environment_context *) ext->context;
 	const struct sieve_environment_item *item = 
 		(const struct sieve_environment_item *) 
-			hash_table_lookup(environment_items, name);
+			hash_table_lookup(ectx->environment_items, name);
 
 	if ( item == NULL )
 		return NULL;

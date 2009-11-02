@@ -24,9 +24,9 @@
  */
 
 static bool cmd_test_result_reset_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command cmd_test_result_reset = { 
+const struct sieve_command_def cmd_test_result_reset = { 
 	"test_result_reset", 
 	SCT_COMMAND, 
 	0, 0, FALSE, FALSE,
@@ -40,10 +40,9 @@ const struct sieve_command cmd_test_result_reset = {
  */
 
 static int cmd_test_result_reset_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation test_result_reset_operation = { 
+const struct sieve_operation_def test_result_reset_operation = { 
 	"TEST_RESULT_RESET",
 	&testsuite_extension, 
 	TESTSUITE_OPERATION_TEST_RESULT_RESET,
@@ -56,10 +55,9 @@ const struct sieve_operation test_result_reset_operation = {
  */
 
 static bool cmd_test_result_reset_generate
-(const struct sieve_codegen_env *cgenv, 
-	struct sieve_command_context *tst ATTR_UNUSED)
+(const struct sieve_codegen_env *cgenv, struct sieve_command *tst)
 {
-	sieve_operation_emit_code(cgenv->sbin, &test_result_reset_operation);
+	sieve_operation_emit(cgenv->sbin, tst->ext, &test_result_reset_operation);
 
 	return TRUE;
 }
@@ -69,9 +67,7 @@ static bool cmd_test_result_reset_generate
  */
 
 static int cmd_test_result_reset_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED,
-	const struct sieve_runtime_env *renv,
-	sieve_size_t *address ATTR_UNUSED)
+(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {
 	testsuite_result_reset(renv);
 	testsuite_smtp_reset();

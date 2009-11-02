@@ -17,11 +17,11 @@
  */
 
 static bool tst_exists_validate
-	(struct sieve_validator *valdtr, struct sieve_command_context *tst);
+	(struct sieve_validator *valdtr, struct sieve_command *tst);
 static bool tst_exists_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx);
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *tst);
 
-const struct sieve_command tst_exists = { 
+const struct sieve_command_def tst_exists = { 
 	"exists", 
 	SCT_TEST, 
 	1, 0, FALSE, FALSE,
@@ -37,13 +37,11 @@ const struct sieve_command tst_exists = {
  */
 
 static bool tst_exists_operation_dump
-	(const struct sieve_operation *op, 
-		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int tst_exists_operation_execute
-	(const struct sieve_operation *op, 
-		const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation tst_exists_operation = { 
+const struct sieve_operation_def tst_exists_operation = { 
 	"EXISTS",
 	NULL,
 	SIEVE_OPERATION_EXISTS,
@@ -56,7 +54,7 @@ const struct sieve_operation tst_exists_operation = {
  */
 
 static bool tst_exists_validate
-  (struct sieve_validator *valdtr, struct sieve_command_context *tst) 
+  (struct sieve_validator *valdtr, struct sieve_command *tst) 
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
 		
@@ -76,12 +74,12 @@ static bool tst_exists_validate
  */
 
 static bool tst_exists_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command_context *ctx) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *tst) 
 {
-	sieve_operation_emit_code(cgenv->sbin, &tst_exists_operation);
+	sieve_operation_emit(cgenv->sbin, NULL, &tst_exists_operation);
 
  	/* Generate arguments */
-    return sieve_generate_arguments(cgenv, ctx, NULL);
+    return sieve_generate_arguments(cgenv, tst, NULL);
 }
 
 /* 
@@ -89,8 +87,7 @@ static bool tst_exists_generate
  */
 
 static bool tst_exists_operation_dump
-(const struct sieve_operation *op ATTR_UNUSED, 
-	const struct sieve_dumptime_env *denv, sieve_size_t *address)
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
     sieve_code_dumpf(denv, "EXISTS");
 	sieve_code_descend(denv);
@@ -103,8 +100,7 @@ static bool tst_exists_operation_dump
  */
 
 static int tst_exists_operation_execute
-(const struct sieve_operation *op ATTR_UNUSED, 
-	const struct sieve_runtime_env *renv, sieve_size_t *address)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	bool result = TRUE;
 	struct sieve_coded_stringlist *hdr_list;
