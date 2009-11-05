@@ -257,7 +257,7 @@ static bool seff_flags_read_context
 	void **se_context)
 {
 	bool result = TRUE;
-	const struct sieve_operand operand;
+	struct sieve_operand operand;
 	pool_t pool = sieve_result_pool(renv->result);
 	struct seff_flags_context *ctx;
 	string_t *flags_item;
