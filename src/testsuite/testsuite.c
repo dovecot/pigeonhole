@@ -51,11 +51,15 @@ const struct sieve_script_env *testsuite_scriptenv;
  * Testsuite initialization 
  */
 
+static const struct sieve_callbacks testsuite_sieve_callbacks = {
+	testsuite_setting_get
+};
+
 static void testsuite_tool_init(const char *extensions) 
 {
 	testsuite_settings_init();
 
-	sieve_tool_init(testsuite_setting_get, FALSE);
+	sieve_tool_init(&testsuite_sieve_callbacks);
 
 	sieve_extensions_set_string(sieve_instance, extensions);
 

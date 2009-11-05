@@ -12,7 +12,6 @@ struct sieve_binary;
 #include "sieve-config.h"
 #include "sieve-types.h"
 #include "sieve-error.h"
-#include "sieve-settings.h"
 
 /*
  * Main Sieve library interface

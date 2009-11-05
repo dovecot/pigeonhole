@@ -56,6 +56,7 @@ testsuite_SOURCES = \
 	testsuite-smtp.c \
 	testsuite-mailstore.c \
 	testsuite-binary.c \
+	testsuite-settings.c \
 	$(commands) \
 	$(tests) \
 	ext-testsuite.c \
@@ -73,5 +74,6 @@ noinst_HEADERS = \
 	testsuite-result.h \
 	testsuite-smtp.h \
 	testsuite-mailstore.h \
-	testsuite-binary.h
+	testsuite-binary.h \
+	testsuite-settings.h
 

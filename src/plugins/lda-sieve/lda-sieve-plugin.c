@@ -12,7 +12,6 @@
 #include "lda-settings.h"
 
 #include "sieve.h"
-#include "sieve-settings.h"
 
 #include "lda-sieve-plugin.h"
 
@@ -53,7 +52,6 @@ static const char *lda_sieve_get_setting
 static const struct sieve_callbacks lda_sieve_callbacks = {
     lda_sieve_get_setting
 };
-
 
 /*
  * Mail transmission
@@ -603,7 +601,6 @@ static int lda_sieve_deliver_mail
 	ARRAY_TYPE (const_string) scripts_before;
 	ARRAY_TYPE (const_string) scripts_after;
 	bool debug = mdctx->dest_user->mail_debug;
-	const char *extensions = NULL;
 	int ret = 0;
 
 	*storage_r = NULL;

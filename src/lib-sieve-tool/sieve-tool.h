@@ -18,7 +18,7 @@ struct sieve_instance *sieve_instance;
  * Initialization
  */
 
-void sieve_tool_init(sieve_settings_func_t settings_func, bool init_lib);
+void sieve_tool_init(const struct sieve_callbacks *callbacks, bool init_lib);
 void sieve_tool_deinit(void);
 
 /*

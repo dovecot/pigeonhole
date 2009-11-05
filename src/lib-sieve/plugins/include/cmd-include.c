@@ -234,7 +234,7 @@ static bool cmd_include_validate
 	}
 		
 	script_path = ext_include_get_script_directory
-		(ctx_data->location, script_name);
+		(this_ext, ctx_data->location, script_name);
 	if ( script_path == NULL ) {
 		sieve_argument_validate_error(valdtr, arg,
 			"include: %s location for included script '%s' is unavailable "

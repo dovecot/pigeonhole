@@ -84,8 +84,10 @@ static bool ext_include_load
 (const struct sieve_extension *ext, void **context)
 {
 	struct ext_include_context *ctx = i_new(struct ext_include_context, 1);
-	
+
+	/* Extension dependencies */	
 	ctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
+
 	*context = ctx;
 
 	return TRUE;
@@ -95,6 +97,7 @@ static void ext_include_unload
 (const struct sieve_extension *ext)
 {
 	struct ext_include_context *ctx = (struct ext_include_context *) ext->context;
+
 	i_free(ctx);
 }
 

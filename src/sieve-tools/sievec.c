@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
 	}
 	
 	if ( outfile == NULL && dump )
-		outfile = "-";
+		outfile = "-";	
 
 	if ( extensions != NULL ) {
 		sieve_set_extensions(sieve_instance, extensions);

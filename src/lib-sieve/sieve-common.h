@@ -15,9 +15,9 @@
  * Types
  */
 
-typedef size_t        sieve_size_t; 
-typedef uint32_t      sieve_offset_t;
-typedef uint32_t      sieve_number_t;
+typedef size_t sieve_size_t; 
+typedef uint32_t sieve_offset_t;
+typedef uint32_t sieve_number_t;
 
 #define SIEVE_MAX_NUMBER ((sieve_number_t) -1)
 
@@ -135,13 +135,30 @@ bool sieve_validate
  */
 
 struct sieve_instance {
+	/* Main engine pool */
 	pool_t pool;
 
+	/* Callbacks */
 	const struct sieve_callbacks *callbacks;
-
 	void *context;
 
+	/* Extension registry */
 	struct sieve_extension_registry *ext_reg;
 };
+
+/*
+ * Settings
+ */
+
+static inline const char *sieve_get_setting
+(struct sieve_instance *svinst, const char *identifier)
+{
+	const struct sieve_callbacks *callbacks = svinst->callbacks;
+
+	if ( callbacks == NULL || callbacks->get_setting == NULL )
+		return NULL;
+
+	return callbacks->get_setting(svinst->context, identifier);
+}
 
 #endif /* __SIEVE_COMMON_H */

@@ -13,7 +13,6 @@
  
 #include "sieve-common.h"
 
-#include "sieve-settings.h"
 #include "sieve-code.h"
 #include "sieve-address.h"
 #include "sieve-extensions.h"
@@ -51,7 +50,7 @@ static struct sieve_operand_def subaddress_operand;
 
 static bool ext_subaddress_load
 	(const struct sieve_extension *ext, void **context);
-static bool ext_subaddress_unload
+static void ext_subaddress_unload
 	(const struct sieve_extension *ext);
 static bool ext_subaddress_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *validator);
@@ -70,7 +69,7 @@ static bool ext_subaddress_load
 (const struct sieve_extension *ext, void **context)
 {
 	struct ext_subaddress_config *config;
-	const char *sep = getenv("SIEVE_SUBADDRESS_SEP");
+	const char *sep = sieve_get_setting(ext->svinst, "sieve_subaddress_sep");
 
 	if ( sep == NULL )
 		sep = SUBADDRESS_DEFAULT_SEP;
@@ -83,7 +82,7 @@ static bool ext_subaddress_load
 	return TRUE;
 }
 
-static bool ext_subaddress_unload
+static void ext_subaddress_unload
 (const struct sieve_extension *ext)
 {
 	struct ext_subaddress_config *config =

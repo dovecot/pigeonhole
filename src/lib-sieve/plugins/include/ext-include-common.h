@@ -52,16 +52,6 @@ static inline const char *ext_include_script_location_name
 extern const struct sieve_extension_def include_extension;
 extern const struct sieve_binary_extension include_binary_ext;
 
-struct ext_include_context {
-	const struct sieve_extension *var_ext;
-};
-
-static inline struct ext_include_context *ext_include_get_context
-(const struct sieve_extension *ext)
-{
-	return (struct ext_include_context *) ext->context;
-}
-
 /* 
  * Commands 
  */
@@ -93,12 +83,26 @@ extern const struct sieve_operation_def global_operation;
  */
 
 const char *ext_include_get_script_directory
-	(enum ext_include_script_location location, const char *script_name);
+	(const struct sieve_extension *ext,
+		enum ext_include_script_location location, const char *script_name);
 
 /* 
  * Context 
  */
  
+/* Extension context */
+
+struct ext_include_context {
+	/* Extension dependencies */
+	const struct sieve_extension *var_ext;
+};
+
+static inline struct ext_include_context *ext_include_get_context
+(const struct sieve_extension *ext)
+{
+	return (struct ext_include_context *) ext->context;
+}
+
 /* AST Context */
 
 struct ext_include_ast_context {

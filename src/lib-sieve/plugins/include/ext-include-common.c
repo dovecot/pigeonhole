@@ -7,7 +7,6 @@
 #include "home-expand.h"
 
 #include "sieve-common.h"
-#include "sieve-settings.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
 #include "sieve-ast.h"
@@ -69,16 +68,21 @@ struct ext_include_interpreter_context {
  */
 
 const char *ext_include_get_script_directory
-(enum ext_include_script_location location, const char *script_name)
+(const struct sieve_extension *ext, enum ext_include_script_location location,
+   const char *script_name)
 {
-	const char *home, *sieve_dir;
+	struct sieve_instance *svinst = ext->svinst;
+	const char *home = NULL, *sieve_dir = NULL;
 
 	switch ( location ) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
-		sieve_dir = sieve_setting_get("dir");
-		home = getenv("HOME");
+ 		sieve_dir = sieve_get_setting(svinst, "sieve_dir");
 
-		if (sieve_dir == NULL) {
+		if ( sieve_dir == NULL ) {
+			home = sieve_get_setting(svinst, "home");
+
+			if ( home == NULL ) home = getenv("HOME");
+
 			if ( home == NULL )	{		
 				sieve_sys_error(
 					"include: sieve_dir and home not set for :personal script include "	
@@ -94,7 +98,7 @@ const char *ext_include_get_script_directory
 
 		break;
    	case EXT_INCLUDE_LOCATION_GLOBAL:
-		sieve_dir = sieve_setting_get("global_dir");
+		sieve_dir = sieve_get_setting(svinst, "global_dir");
 
 		if (sieve_dir == NULL) {
 			sieve_sys_error(
@@ -105,7 +109,7 @@ const char *ext_include_get_script_directory
 
 		break;
 	default:
-		return NULL;
+		break;
 	}
 
 	return sieve_dir;

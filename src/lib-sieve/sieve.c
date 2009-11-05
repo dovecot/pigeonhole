@@ -6,7 +6,6 @@
 #include "istream.h"
 #include "buffer.h"
 
-#include "sieve-settings.h"
 #include "sieve-extensions.h"
 
 #include "sieve-script.h"

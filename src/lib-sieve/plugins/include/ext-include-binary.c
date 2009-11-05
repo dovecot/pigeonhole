@@ -288,7 +288,8 @@ static bool ext_include_binary_open
 		}		
 		
 		/* Can we find/open the script dependency ? */
-		script_dir = ext_include_get_script_directory(location, str_c(script_name));		
+		script_dir = ext_include_get_script_directory
+			(ext, location, str_c(script_name));		
 		if ( script_dir == NULL || 
 			!(script=sieve_script_create_in_directory
 				(ext->svinst, script_dir, str_c(script_name), NULL, NULL)) ) {

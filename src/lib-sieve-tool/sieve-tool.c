@@ -27,8 +27,18 @@ static struct ioloop *ioloop;
 
 struct sieve_instance *sieve_instance;
 
-static const struct sieve_callbacks sieve_callbacks = {
-	NULL
+/*
+ * Settings management
+ */
+
+static const char *sieve_tool_get_setting
+(void *context ATTR_UNUSED, const char *identifier)
+{
+	return getenv(t_str_ucase(identifier));
+}
+
+static const struct sieve_callbacks sieve_tool_callbacks = {
+	sieve_tool_get_setting
 };
 
 /*
@@ -57,7 +67,7 @@ static void sig_die(const siginfo_t *si, void *context ATTR_UNUSED)
 /* HACK */
 static bool _init_lib = FALSE;
 
-void sieve_tool_init(sieve_settings_func_t settings_func, bool init_lib) 
+void sieve_tool_init(const struct sieve_callbacks *callbacks, bool init_lib) 
 {
 	_init_lib = init_lib;
 
@@ -73,13 +83,14 @@ void sieve_tool_init(sieve_settings_func_t settings_func, bool init_lib)
 		lib_signals_ignore(SIGALRM, FALSE);
 	}
 
-	if ( (sieve_instance=sieve_init(&sieve_callbacks, NULL)) == NULL )
+	if ( callbacks == NULL ) callbacks = &sieve_tool_callbacks;
+
+	if ( (sieve_instance=sieve_init(callbacks, NULL)) == NULL )
 		i_fatal("failed to initialize sieve implementation\n");
 }
 
 void sieve_tool_deinit(void)
 {
-	sieve_deinit();
 	sieve_deinit(&sieve_instance);
 
 	if ( _init_lib ) {
