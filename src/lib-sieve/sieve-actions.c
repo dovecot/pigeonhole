@@ -656,7 +656,7 @@ int sieve_action_duplicate_check
 		return 0;
 
 	return senv->duplicate_check
-		(id, id_size, senv->username); 
+		(senv->script_context, id, id_size, senv->username); 
 }
 
 void sieve_action_duplicate_mark
@@ -667,7 +667,7 @@ void sieve_action_duplicate_mark
 		return;
 
 	senv->duplicate_mark
-		(id, id_size, senv->username, time);
+		(senv->script_context, id, id_size, senv->username, time);
 }
 	
 

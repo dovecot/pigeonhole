@@ -80,15 +80,17 @@ static bool sieve_smtp_close
  * Dummy duplicate check implementation
  */
 
-static int duplicate_check(const void *id ATTR_UNUSED, size_t id_size ATTR_UNUSED, 
-	const char *user)
+static int duplicate_check
+(void *script_context ATTR_UNUSED, const void *id ATTR_UNUSED, 
+	size_t id_size ATTR_UNUSED, const char *user)
 {
 	i_info("checked duplicate for user %s.\n", user);
 	return 0;
 }
 
 static void duplicate_mark
-(const void *id ATTR_UNUSED, size_t id_size ATTR_UNUSED, const char *user, 
+(void *script_context ATTR_UNUSED, const void *id ATTR_UNUSED, 
+	size_t id_size ATTR_UNUSED, const char *user, 
 	time_t time ATTR_UNUSED)
 {
 	i_info("marked duplicate for user %s.\n", user);

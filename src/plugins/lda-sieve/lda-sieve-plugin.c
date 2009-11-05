@@ -61,9 +61,9 @@ static void *lda_sieve_smtp_open
 (void *script_ctx, const char *destination,
 	const char *return_path, FILE **file_r)
 {
-	return (void *) smtp_client_open
-		(((struct mail_deliver_context *) script_ctx)->set, destination, 
-			return_path, file_r);
+	struct mail_deliver_context *dctx = (struct mail_deliver_context *) script_ctx;
+
+	return (void *) smtp_client_open(dctx->set, destination, return_path, file_r);
 }
 
 static bool lda_sieve_smtp_close
@@ -72,6 +72,27 @@ static bool lda_sieve_smtp_close
 	struct smtp_client *smtp_client = (struct smtp_client *) handle;
 
 	return ( smtp_client_close(smtp_client) == 0 );
+}
+
+/*
+ * Duplicate checking
+ */
+
+static int lda_sieve_duplicate_check
+(void *script_ctx, const void *id, size_t id_size, const char *user)
+{
+	struct mail_deliver_context *dctx = (struct mail_deliver_context *) script_ctx;
+
+	return duplicate_check(dctx->dup_ctx, id, id_size, user);
+}
+
+static void lda_sieve_duplicate_mark
+(void *script_ctx, const void *id, size_t id_size, const char *user,
+	time_t time)
+{
+	struct mail_deliver_context *dctx = (struct mail_deliver_context *) script_ctx;
+
+	duplicate_mark(dctx->dup_ctx, id, id_size, user, time);
 }
 
 /*
@@ -559,8 +580,8 @@ static int lda_sieve_run
 	scriptenv.postmaster_address = mdctx->set->postmaster_address;
 	scriptenv.smtp_open = lda_sieve_smtp_open;
 	scriptenv.smtp_close = lda_sieve_smtp_close;
-	scriptenv.duplicate_mark = duplicate_mark;
-	scriptenv.duplicate_check = duplicate_check;
+	scriptenv.duplicate_mark = lda_sieve_duplicate_mark;
+	scriptenv.duplicate_check = lda_sieve_duplicate_check;
 	scriptenv.script_context = (void *) mdctx;
 	scriptenv.exec_status = &estatus;
 

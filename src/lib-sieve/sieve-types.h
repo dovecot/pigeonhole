@@ -79,9 +79,9 @@ struct sieve_script_env {
 	
 	/* Interface for marking and checking duplicates */
 	int (*duplicate_check)
-		(const void *id, size_t id_size, const char *user);
+		(void *script_ctx, const void *id, size_t id_size, const char *user);
 	void (*duplicate_mark)
-		(const void *id, size_t id_size, const char *user, 
+		(void *script_ctx, const void *id, size_t id_size, const char *user, 
 			time_t time);
 	
 	/* Execution status record */	
