@@ -166,7 +166,7 @@ void mail_raw_init
 	
 	sets = master_service_settings_get_others(service);
 
-	raw_mail_user = mail_user_alloc(user, sets[0]); 
+	raw_mail_user = mail_user_alloc(user, mail_user->set_info, sets[0]);
 	mail_user_set_home(raw_mail_user, "/");
    
 	if (mail_user_init(raw_mail_user, &errstr) < 0)

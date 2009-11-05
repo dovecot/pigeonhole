@@ -256,7 +256,8 @@ int main(int argc, char **argv)
 		if ( mailloc != NULL ) {
 			const char *errstr;
 
-			mail_user = mail_user_alloc(user, mail_user_dovecot->unexpanded_set);
+			mail_user = mail_user_alloc
+				(user, mail_user_dovecot->set_info, mail_user_dovecot->unexpanded_set);
 			mail_user_set_home(mail_user, home);
 
 			if ( mail_user_init(mail_user, &errstr) < 0 )

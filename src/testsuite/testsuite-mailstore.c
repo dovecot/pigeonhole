@@ -62,7 +62,8 @@ void testsuite_mailstore_init
 			testsuite_mailstore_tmp);		
 	}
 
-	mail_user = mail_user_alloc(user, service_user->unexpanded_set);
+	mail_user = mail_user_alloc
+		(user, service_user->set_info, service_user->unexpanded_set);
 	mail_user_set_home(mail_user, home);
 
 	if ( mail_user_init(mail_user, &errstr) < 0 )
