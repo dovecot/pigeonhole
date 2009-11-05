@@ -2,10 +2,12 @@
  */
 
 #include "lib.h"
+#include "str.h"
 #include "strfuncs.h"
 #include "str-sanitize.h"
 #include "mail-storage.h"
 #include "mail-namespace.h"
+#include "imap-utf7.h"
 
 #include "sieve-code.h"
 #include "sieve-extensions.h"
@@ -271,15 +273,25 @@ static struct mailbox *act_store_mailbox_open
 	enum mailbox_flags flags =
 		MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_SAVEONLY |
 		MAILBOX_FLAG_POST_SESSION;
+	string_t *mailbox_mutf7;
 	struct mailbox *box;
 	enum mail_error error;
 
+	/* Deliveries to INBOX must always succeed, regardless of ACLs */
 	if (strcasecmp(*mailbox, "INBOX") == 0) {
-		/* Deliveries to INBOX must always succeed, regardless of ACLs */
 		flags |= MAILBOX_FLAG_IGNORE_ACLS;
 	}
 
-	*folder_r = *mailbox;
+	/* Convert utf-8 folder name to utf-7	
+	 */
+	mailbox_mutf7 = t_str_new(256);
+	if ( imap_utf8_to_utf7(*mailbox, mailbox_mutf7) < 0 ) {
+		/* FIXME: check utf-8 validity at compiletime/runtime */
+		sieve_result_error(aenv, "mailbox name not utf-8: %s", *mailbox);
+		return NULL;
+	}
+
+	*folder_r = str_c(mailbox_mutf7);
 	*ns_r = mail_namespace_find(aenv->scriptenv->namespaces, folder_r);
 	if ( *ns_r == NULL) {
 		*storage = NULL;

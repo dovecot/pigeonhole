@@ -161,7 +161,7 @@ static int ext_fileinto_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_side_effects_list *slist = NULL; 
-	string_t *folder, *folder_utf7;
+	string_t *folder;
 	const char *mailbox;
 	unsigned int source_line;
 	int ret = 0;
@@ -194,19 +194,9 @@ static int ext_fileinto_operation_execute
 	mailbox = str_sanitize(str_c(folder), 64);
 	sieve_runtime_trace(renv, "FILEINTO action (\"%s\")", mailbox);
 		
-	/* Convert utf-8 folder name to utf-7
-	 *   FIXME: perform this at compile time when possible.
-	 */
-	folder_utf7 = t_str_new(256);
-	if ( imap_utf8_to_utf7(str_c(folder), folder_utf7) < 0 ) {
-		sieve_runtime_error
-			(renv, sieve_error_script_location(renv->script, source_line),
-				"mailbox name not utf-8: %s", mailbox);
-	}	
-		
 	/* Add action to result */	
 	ret = sieve_act_store_add_to_result
-		(renv, slist, str_c(folder_utf7), source_line);
+		(renv, slist, str_c(folder), source_line);
 
 	return ( ret >= 0 );
 }
