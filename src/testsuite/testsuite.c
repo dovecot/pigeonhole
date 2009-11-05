@@ -128,20 +128,19 @@ static const char *_get_cwd(void)
 int main(int argc, char **argv) 
 {
 	enum mail_storage_service_flags service_flags = 0;
-	struct master_service *master_service;
+	struct mail_storage_service_ctx *storage_service;
+	struct mail_storage_service_user *service_user;
+	struct mail_storage_service_input service_input;
 	struct mail_user *mail_user_dovecot;
-	int c;
 	const char *scriptfile, *dumpfile, *extensions; 
-	struct mail_storage_service_input input;
-	const char *user, *home;
+	const char *user, *home, *errstr;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
 	bool trace = FALSE;
-	int ret;
+	int ret, c;
 
-    master_service = master_service_init("testsuite",
-        MASTER_SERVICE_FLAG_STANDALONE,
-        &argc, &argv, "d:x:t");
+	master_service = master_service_init
+		("testsuite", MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "d:x:t");
 
 	user = getenv("USER");
 
@@ -184,16 +183,23 @@ int main(int argc, char **argv)
 	/* Initialize mail user */
 	home = _get_cwd();
 	user = sieve_tool_get_user();
+
 	env_put("DOVECONF_ENV=1");
 	env_put(t_strdup_printf("HOME=%s", home));
 	env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s", user));
 
 	master_service_init_finish(master_service);
 
-	memset(&input, 0, sizeof(input));
-	input.username = user;
-	mail_user_dovecot = mail_storage_service_init_user
-		(master_service, &input, NULL, service_flags);
+	memset(&service_input, 0, sizeof(service_input));
+	service_input.module = "testsuite";
+	service_input.service = "testsuite";
+	service_input.username = user;
+
+	storage_service = mail_storage_service_init
+		(master_service, NULL, service_flags);
+	if ( mail_storage_service_lookup_next(storage_service, &service_input,
+		&service_user, &mail_user_dovecot, &errstr) <= 0 )
+		i_fatal("%s", errstr);
 
 	/* Initialize testsuite */
 	testsuite_tool_init(extensions);
@@ -272,19 +278,19 @@ int main(int argc, char **argv)
 		testsuite_message_deinit();
 		testsuite_mailstore_deinit();
 		testsuite_result_deinit();
-
-		/* De-initialize mail user */
-		if ( mail_user_dovecot != NULL )
-			mail_user_unref(&mail_user_dovecot);
-
-		mail_storage_service_deinit_user();
 	} else {
 		testsuite_testcase_fail("failed to compile testcase script");
 	}
 
+	/* De-initialize mail user */
+	if ( mail_user_dovecot != NULL )
+		mail_user_unref(&mail_user_dovecot);
+
 	/* De-initialize testsuite */
 	testsuite_tool_deinit();  
 
+	mail_storage_service_user_free(&service_user);
+	mail_storage_service_deinit(&storage_service);
 	master_service_deinit(&master_service);
 
 	return testsuite_testcase_result();
