@@ -98,7 +98,7 @@ const char *ext_include_get_script_directory
 
 		break;
    	case EXT_INCLUDE_LOCATION_GLOBAL:
-		sieve_dir = sieve_get_setting(svinst, "global_dir");
+		sieve_dir = sieve_get_setting(svinst, "sieve_global_dir");
 
 		if (sieve_dir == NULL) {
 			sieve_sys_error(

@@ -14,7 +14,6 @@
 #include "mail-storage-service.h"
 
 #include "sieve.h"
-#include "sieve-settings.h"
 #include "sieve-extensions.h"
 #include "sieve-script.h"
 #include "sieve-binary.h"
@@ -59,7 +58,7 @@ static void testsuite_tool_init(const char *extensions)
 {
 	testsuite_settings_init();
 
-	sieve_tool_init(&testsuite_sieve_callbacks);
+	sieve_tool_init(&testsuite_sieve_callbacks, FALSE);
 
 	sieve_extensions_set_string(sieve_instance, extensions);
 

@@ -4,7 +4,6 @@
 #include "strfuncs.h"
 
 #include "sieve-common.h"
-#include "sieve-settings.h"
 
 #include "testsuite-common.h"
 #include "testsuite-settings.h"
@@ -42,7 +41,8 @@ void testsuite_settings_deinit(void)
 	hash_table_destroy(&settings);
 }
 
-const char *testsuite_setting_get(const char *identifier)
+const char *testsuite_setting_get
+(void *context ATTR_UNUSED, const char *identifier)
 {
 	struct testsuite_setting *setting = (struct testsuite_setting *) 
 		hash_table_lookup(settings, identifier);
