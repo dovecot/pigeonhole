@@ -23,6 +23,9 @@ struct sieve_error_handler;
 typedef void (*sieve_error_vfunc_t)
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args);
+typedef void (*sieve_error_func_t)
+	(struct sieve_error_handler *ehandler, const char *location, 
+		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 /*
  * System errors
@@ -63,83 +66,23 @@ void sieve_vdebug
 		const char *fmt, va_list args);
 void sieve_vcritical
 	(struct sieve_error_handler *ehandler, const char *location, 
-		const char *fmt, va_list args); 
+		const char *fmt, va_list args);
 
-inline static void sieve_error
+void sieve_error
 (struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
-inline static void sieve_warning
+void sieve_warning
 (struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
-inline static void sieve_info
+void sieve_info
 (struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
-inline static void sieve_debug
+void sieve_debug
 (struct sieve_error_handler *ehandler, const char *location,
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
-inline static void sieve_critical
+void sieve_critical
 (struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
-
-inline static void sieve_error
-(struct sieve_error_handler *ehandler, const char *location, 
-	const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	
-	T_BEGIN { sieve_verror(ehandler, location, fmt, args); } T_END;
-	
-	va_end(args);
-}
-
-inline static void sieve_warning
-(struct sieve_error_handler *ehandler, const char *location, 
-	const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	
-	T_BEGIN { sieve_vwarning(ehandler, location, fmt, args); } T_END;
-
-	va_end(args);
-}
-
-inline static void sieve_info
-(struct sieve_error_handler *ehandler, const char *location, 
-	const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	
-	T_BEGIN { sieve_vinfo(ehandler, location, fmt, args); } T_END;
-	
-	va_end(args);
-}
-
-inline static void sieve_debug
-(struct sieve_error_handler *ehandler, const char *location, 
-	const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-
-	T_BEGIN { sieve_vdebug(ehandler, location, fmt, args); } T_END;
-
-	va_end(args);
-}
-
-inline static void sieve_critical
-(struct sieve_error_handler *ehandler, const char *location, 
-	const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	
-	T_BEGIN { sieve_vcritical(ehandler, location, fmt, args); } T_END;
-	
-	va_end(args);
-}
 
 /*
  * Error handler configuration

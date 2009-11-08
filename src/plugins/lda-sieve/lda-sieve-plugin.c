@@ -571,6 +571,7 @@ static int lda_sieve_run
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	memset(&estatus, 0, sizeof(estatus));
 
+	scriptenv.action_log_format = mdctx->set->deliver_log_format;
 	scriptenv.default_mailbox = mdctx->dest_mailbox_name;
 	scriptenv.mailbox_autocreate = mdctx->set->lda_mailbox_autocreate;
 	scriptenv.mailbox_autosubscribe = mdctx->set->lda_mailbox_autosubscribe;

@@ -20,16 +20,6 @@
 #include <ctype.h>
 
 /*
- * Action execution environment
- */
-
-const char *sieve_action_get_location(const struct sieve_action_exec_env *aenv)
-{
-	return t_strdup_printf("msgid=%s", aenv->msgdata->id == NULL ?
-		"unspecified" : str_sanitize(aenv->msgdata->id, 80));
-}
-
-/*
  * Side-effect operand
  */
  

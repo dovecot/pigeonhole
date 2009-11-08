@@ -585,22 +585,37 @@ void sieve_enotify_method_printf
  * Method logging
  */
 
+static void sieve_enotify_vlog_message
+(const struct sieve_enotify_log *nlog, sieve_error_func_t log_func,
+	const char *fmt, va_list args) 
+{
+	if ( nlog == NULL ) return;
+	
+	T_BEGIN {
+		if ( nlog->aenv != NULL ) {
+			if ( nlog->prefix == NULL )
+				sieve_result_vlog_message(nlog->aenv, log_func, fmt, args);
+			else
+				sieve_result_log_message(nlog->aenv, log_func, "%s: %s", nlog->prefix, 
+					t_strdup_vprintf(fmt, args));
+		} else {
+			if ( nlog->prefix == NULL )
+				log_func(nlog->ehandler, nlog->location, "%s", 
+					t_strdup_vprintf(fmt, args));
+			else
+				log_func(nlog->ehandler, nlog->location, "%s: %s", nlog->prefix, 
+					t_strdup_vprintf(fmt, args));	
+		}
+	} T_END;
+}
+
 void sieve_enotify_error
 (const struct sieve_enotify_log *nlog, const char *fmt, ...) 
 {
 	va_list args;
-	va_start(args, fmt);
-	
-	if ( nlog == NULL ) return;
-	
-	T_BEGIN {
-		if ( nlog->prefix == NULL )
-			sieve_verror(nlog->ehandler, nlog->location, fmt, args);
-		else
-			sieve_error(nlog->ehandler, nlog->location, "%s: %s", nlog->prefix, 
-				t_strdup_vprintf(fmt, args));
-	} T_END;
-	
+
+	va_start(args, fmt);	
+	sieve_enotify_vlog_message(nlog, sieve_error, fmt, args);
 	va_end(args);
 }
 
@@ -609,17 +624,7 @@ void sieve_enotify_warning
 {
 	va_list args;
 	va_start(args, fmt);
-	
-	if ( nlog == NULL ) return;
-	
-	T_BEGIN { 
-		if ( nlog->prefix == NULL )
-			sieve_vwarning(nlog->ehandler, nlog->location, fmt, args);
-		else			
-			sieve_warning(nlog->ehandler, nlog->location, "%s: %s", nlog->prefix, 
-				t_strdup_vprintf(fmt, args));
-	} T_END;
-	
+	sieve_enotify_vlog_message(nlog, sieve_warning, fmt, args);
 	va_end(args);
 }
 
@@ -628,18 +633,7 @@ void sieve_enotify_log
 {
 	va_list args;
 	va_start(args, fmt);
-
-	if ( nlog == NULL ) return;
-	
-	T_BEGIN { 
-		if ( nlog->prefix == NULL )
-			sieve_vinfo(nlog->ehandler, nlog->location, fmt, args);
-		else
-			sieve_info(nlog->ehandler, nlog->location, "%s: %s", nlog->prefix, 
-				t_strdup_vprintf(fmt, args));	
-	} T_END;
-	
+	sieve_enotify_vlog_message(nlog, sieve_info, fmt, args);
 	va_end(args);
 }
-
 

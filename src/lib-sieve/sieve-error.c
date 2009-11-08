@@ -141,6 +141,54 @@ void sieve_vcritical
 			str : CRITICAL_MSG );	
 }
 
+void sieve_error
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { sieve_verror(ehandler, location, fmt, args); } T_END;
+	
+	va_end(args);
+}
+
+void sieve_warning
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { sieve_vwarning(ehandler, location, fmt, args); } T_END;
+
+	va_end(args);
+}
+
+void sieve_info
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { sieve_vinfo(ehandler, location, fmt, args); } T_END;
+	
+	va_end(args);
+}
+
+void sieve_critical
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { sieve_vcritical(ehandler, location, fmt, args); } T_END;
+	
+	va_end(args);
+}
+
 /*
  * Error statistics
  */

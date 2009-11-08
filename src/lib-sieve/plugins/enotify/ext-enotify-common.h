@@ -129,8 +129,10 @@ struct sieve_enotify_print_env {
 
 struct sieve_enotify_log {
 	struct sieve_error_handler *ehandler;
-	
 	const char *location;
+
+	const struct sieve_action_exec_env *aenv;
+
 	const char *prefix;
 };
 

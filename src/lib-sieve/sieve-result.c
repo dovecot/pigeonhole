@@ -8,6 +8,8 @@
 #include "str.h"
 #include "strfuncs.h"
 #include "str-sanitize.h"
+#include "var-expand.h"
+#include "message-address.h"
 
 #include "sieve-common.h"
 #include "sieve-limits.h"
@@ -218,42 +220,114 @@ const void *sieve_result_extension_get_context
  * Error handling 
  */
 
-void sieve_result_error
-	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+static const char *_get_from_address(struct mail *mail)
+{
+	struct message_address *addr;
+	const char *str;
+
+	if ( mail_get_first_header(mail, "from", &str) <= 0 )
+		return NULL;
+
+	addr = message_address_parse
+		(pool_datastack_create(), (const unsigned char *)str, strlen(str), 1, 
+			FALSE);
+
+	return addr == NULL || addr->mailbox == NULL || addr->domain == NULL ||
+		*addr->mailbox == '\0' || *addr->domain == '\0' ?
+		NULL : t_strconcat(addr->mailbox, "@", addr->domain, NULL);
+}
+
+void sieve_result_vlog_message
+(const struct sieve_action_exec_env *aenv, sieve_error_func_t log_func,
+	const char *fmt, va_list args)
+{
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	string_t *str;
+	const char *msgid, *msg;
+
+	if ( aenv->result->ehandler == NULL ) return;
+
+	msg = t_strdup_vprintf(fmt, args);
+
+	msgid = msgdata->id;
+	msgid = ( msgid == NULL ? "unspecified" : str_sanitize(msgid, 80) );
+
+	if ( aenv->scriptenv->action_log_format == NULL ) {
+		log_func(aenv->result->ehandler, NULL, "msgid=%s: %s", msgid, msg); 
+
+	} else {
+		static struct var_expand_table static_tab[] = {
+			{ '$', NULL, NULL },
+			{ 'm', NULL, "msgid" },
+			{ 's', NULL, "subject" },
+			{ 'f', NULL, "from" },
+			{ 'l', NULL, "location" },
+			{ '\0', NULL, NULL }
+		};
+		struct var_expand_table *tab;
+		unsigned int i;
+
+		tab = t_malloc(sizeof(static_tab));
+		memcpy(tab, static_tab, sizeof(static_tab));
+
+		/* Fill in substitution items */
+		tab[0].value = msg;
+		tab[1].value = msgid;
+		(void)mail_get_first_header_utf8(msgdata->mail, "Subject", &tab[2].value);
+		tab[3].value = _get_from_address(msgdata->mail);
+		tab[4].value = "";
+
+		/* Sanitize substitution items */
+		for (i = 1; tab[i].key != '\0'; i++)
+			tab[i].value = str_sanitize(tab[i].value, 80);
+
+		/* Expand variables */
+		str = t_str_new(256);
+		var_expand(str, aenv->scriptenv->action_log_format, tab);
+
+		/* Log message */
+		log_func(aenv->result->ehandler, NULL, "%s", str_c(str));
+	}
+}
+
+void sieve_result_log_message
+(const struct sieve_action_exec_env *aenv, sieve_error_func_t log_func,
+	const char *fmt, ...)
 {
 	va_list args;
 	
-	if ( aenv->result->ehandler == NULL ) return;
-
 	va_start(args, fmt);	
-	sieve_verror(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, 
-		args); 
+	sieve_result_vlog_message(aenv, log_func, fmt, args); 
+	va_end(args);
+}
+
+void sieve_result_error
+(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+{
+	va_list args;
+	
+	va_start(args, fmt);	
+	sieve_result_vlog_message(aenv, sieve_error, fmt, args); 
 	va_end(args);
 }
 
 void sieve_result_warning
-	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 {
 	va_list args;
-
-	if ( aenv->result->ehandler == NULL ) return;
 	
 	va_start(args, fmt);	
-	sieve_vwarning(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, 
-		args); 
+	sieve_result_vlog_message(aenv, sieve_warning, fmt, args); 
 	va_end(args);
 }
 
 void sieve_result_log
-	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 {
 	va_list args;
 	
-	if ( aenv->result->ehandler == NULL ) return;
-
 	va_start(args, fmt);	
-	sieve_vinfo(aenv->result->ehandler, sieve_action_get_location(aenv), fmt, 
-		args); 
+	sieve_result_vlog_message(aenv, sieve_info, fmt, args); 
 	va_end(args);
 }
 

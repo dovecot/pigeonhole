@@ -574,8 +574,7 @@ static bool act_notify_commit
 	struct sieve_enotify_log nlog;
 		
 	memset(&nlog, 0, sizeof(nlog));
-	nlog.location = sieve_action_get_location(aenv);
-	nlog.ehandler = sieve_result_get_error_handler(aenv->result);
+	nlog.aenv = aenv;
 
 	nenv.scriptenv = aenv->scriptenv;
 	nenv.msgdata = aenv->msgdata;

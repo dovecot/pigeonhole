@@ -5,6 +5,7 @@
 #define __SIEVE_RESULT_H
 
 #include "sieve-common.h"
+#include "sieve-error.h"
 
 /*
  * Types
@@ -84,6 +85,13 @@ bool sieve_result_print
 /* 
  * Error handling 
  */
+
+void sieve_result_vlog_message
+	(const struct sieve_action_exec_env *aenv, sieve_error_func_t log_func,
+		const char *fmt, va_list args);
+void sieve_result_log_message
+	(const struct sieve_action_exec_env *aenv, sieve_error_func_t log_func,
+		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 void sieve_result_log
 	(const struct sieve_action_exec_env *aenv, const char *fmt, ...)

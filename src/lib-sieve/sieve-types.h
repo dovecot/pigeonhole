@@ -54,6 +54,9 @@ struct sieve_message_data {
  */
 
 struct sieve_script_env {
+	/* Logging related */
+	const char *action_log_format;
+
 	/* Mail-related */
 	struct mail_namespace *namespaces;
 	const char *default_mailbox;
