@@ -110,7 +110,7 @@ AC_SUBST(moduledir)
 dovecot_pkglibexecdir='$(libexecdir)/dovecot'
 dovecot_pkglibdir='$(libdir)/dovecot'
 dovecot_pkgincludedir='$(includedir)/dovecot'
-dovecot_docdir='$(datadir)/dovecot'
+dovecot_docdir='$(datadir)/doc/dovecot'
 AC_SUBST(dovecot_pkglibexecdir)
 AC_SUBST(dovecot_pkglibdir)
 AC_SUBST(dovecot_pkgincludedir)
