@@ -132,7 +132,7 @@ static const char *lda_sieve_get_personal_path(struct mail_user *user)
 		if (*script_path == '\0') {
 			/* disabled */
 			if ( user->mail_debug )
-				sieve_sys_info("empty script path, disabled");
+				sieve_sys_debug("empty script path, disabled");
 			return NULL;
 		}
 
@@ -143,7 +143,7 @@ static const char *lda_sieve_get_personal_path(struct mail_user *user)
 
 			if ( home == NULL || *home == '\0' ) {
 				if ( user->mail_debug )
-					sieve_sys_info("relative script path, but empty home dir");
+					sieve_sys_debug("relative script path, but empty home dir");
 				return NULL;
 			}
 
@@ -226,7 +226,7 @@ static int lda_sieve_open
 		ehandler = srctx->master_ehandler;
 
 	if ( debug )
-		sieve_sys_info("opening script %s", script_path);		
+		sieve_sys_debug("opening script %s", script_path);		
 
 	sieve_error_handler_reset(ehandler);
 
@@ -237,7 +237,7 @@ static int lda_sieve_open
 
 		if ( !exists && ret == 0 ) {
 			if ( debug )
-				sieve_sys_info("script file %s is missing", script_path);
+				sieve_sys_debug("script file %s is missing", script_path);
 		} else {
 			if ( script_path == srctx->user_script && srctx->userlog != NULL ) {
 				sieve_sys_error
@@ -347,7 +347,7 @@ static int lda_sieve_singlescript_execute
 	/* Execute */
 
 	if ( debug )
-		sieve_sys_info("executing compiled script %s", script_file);
+		sieve_sys_debug("executing compiled script %s", script_file);
 
 	if ( user_script ) {
 		ehandler = srctx->user_ehandler;
@@ -640,7 +640,7 @@ static int lda_sieve_deliver_mail
 				sieve_sys_error("stat(%s) failed: %m "
 					"(using global script path in stead)", user_script);
 			else if ( debug )
-				sieve_sys_info("local script path %s doesn't exist "
+				sieve_sys_debug("local script path %s doesn't exist "
 					"(using global script path in stead)", user_script);
 
 			user_script = NULL;
@@ -651,9 +651,9 @@ static int lda_sieve_deliver_mail
 			const char *script = user_script == NULL ? default_script : user_script;
 
 			if ( script == NULL )			
-				sieve_sys_info("user has no valid personal script");
+				sieve_sys_debug("user has no valid personal script");
 			else
-				sieve_sys_info("using sieve path for user's script: %s", script);
+				sieve_sys_debug("using sieve path for user's script: %s", script);
 		}
 
 		/* Check for multiscript */
@@ -678,12 +678,12 @@ static int lda_sieve_deliver_mail
 
 			scriptfiles = array_get(&scripts_before, &count);
 			for ( i = 0; i < count; i ++ ) {
-				sieve_sys_info("executed before user's script(%d): %s", i+1, scriptfiles[i]);				
+				sieve_sys_debug("executed before user's script(%d): %s", i+1, scriptfiles[i]);				
 			}
 
 			scriptfiles = array_get(&scripts_after, &count);
 			for ( i = 0; i < count; i ++ ) {
-				sieve_sys_info("executed after user's script(%d): %s", i+1, scriptfiles[i]);				
+				sieve_sys_debug("executed after user's script(%d): %s", i+1, scriptfiles[i]);				
 			}
 		}
 	
@@ -692,7 +692,7 @@ static int lda_sieve_deliver_mail
 		if ( array_count(&scripts_before) == 0 && array_count(&scripts_after) == 0 &&
 			user_script == NULL && default_script == NULL ) {
 			if ( debug )
-				sieve_sys_info("no scripts to execute: reverting to default delivery.");
+				sieve_sys_debug("no scripts to execute: reverting to default delivery.");
 
 			/* No error, but no delivery by this plugin either. A return value of <= 0 for a 
 			 * deliver plugin is is considered a failure. In deliver itself, saved_mail and 

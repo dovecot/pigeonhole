@@ -33,6 +33,7 @@ extern struct sieve_error_handler *_sieve_system_ehandler;
 #define sieve_sys_error(...) sieve_error(_sieve_system_ehandler, NULL, __VA_ARGS__ )
 #define sieve_sys_warning(...) sieve_warning(_sieve_system_ehandler, NULL, __VA_ARGS__ )
 #define sieve_sys_info(...) sieve_info(_sieve_system_ehandler, NULL, __VA_ARGS__ )
+#define sieve_sys_debug(...) sieve_debug(_sieve_system_ehandler, NULL, __VA_ARGS__ )
 
 void sieve_system_ehandler_set(struct sieve_error_handler *ehandler);
 void sieve_system_ehandler_reset(void);
@@ -57,6 +58,9 @@ void sieve_vwarning
 void sieve_vinfo
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args); 
+void sieve_vdebug
+	(struct sieve_error_handler *ehandler, const char *location,
+		const char *fmt, va_list args);
 void sieve_vcritical
 	(struct sieve_error_handler *ehandler, const char *location, 
 		const char *fmt, va_list args); 
@@ -69,6 +73,9 @@ inline static void sieve_warning
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
 inline static void sieve_info
 (struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...) ATTR_FORMAT(3, 4);
+inline static void sieve_debug
+(struct sieve_error_handler *ehandler, const char *location,
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
 inline static void sieve_critical
 (struct sieve_error_handler *ehandler, const char *location, 
@@ -110,6 +117,18 @@ inline static void sieve_info
 	va_end(args);
 }
 
+inline static void sieve_debug
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	T_BEGIN { sieve_vdebug(ehandler, location, fmt, args); } T_END;
+
+	va_end(args);
+}
+
 inline static void sieve_critical
 (struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, ...)
@@ -127,6 +146,8 @@ inline static void sieve_critical
  */
 
 void sieve_error_handler_accept_infolog
+	(struct sieve_error_handler *ehandler, bool enable);
+void sieve_error_handler_accept_debuglog
 	(struct sieve_error_handler *ehandler, bool enable);
 void sieve_error_handler_copy_masterlog
 	(struct sieve_error_handler *ehandler, bool enable);

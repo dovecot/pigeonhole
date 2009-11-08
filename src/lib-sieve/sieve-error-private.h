@@ -19,13 +19,14 @@ struct sieve_error_handler {
 	unsigned int errors;
 	unsigned int warnings;
 
-	/* Should we copy log to i_error, i_warning and i_info? */
+	/* Should we copy log to i_error, i_warning, i_info and i_debug? */
 	bool log_master;
 
-	/* Should the errorhandler handle or discard info log?
+	/* Should the errorhandler handle or discard info/debug log?
 	 * (This does not influence the previous setting)
 	 */
 	bool log_info;
+	bool log_debug;
 
 	void (*verror)
 		(struct sieve_error_handler *ehandler, const char *location,
@@ -34,6 +35,9 @@ struct sieve_error_handler {
 		(struct sieve_error_handler *ehandler, const char *location,
 			const char *fmt, va_list args);
 	void (*vinfo)
+		(struct sieve_error_handler *ehandler, const char *location,
+			const char *fmt, va_list args);
+	void (*vdebug)
 		(struct sieve_error_handler *ehandler, const char *location,
 			const char *fmt, va_list args);
 

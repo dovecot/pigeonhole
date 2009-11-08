@@ -139,8 +139,8 @@ headers = \
 	sieve.h
 
 if INSTALL_HEADERS
-	pkginc_libdir=$(dovecot_pkgincludedir)/sieve
-	pkginc_lib_HEADERS = $(headers)
+  pkginc_libdir=$(dovecot_pkgincludedir)/sieve
+  pkginc_lib_HEADERS = $(headers)
 else
-	noinst_HEADERS = $(headers)
+  noinst_HEADERS = $(headers)
 endif
