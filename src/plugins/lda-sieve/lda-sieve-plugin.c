@@ -136,7 +136,7 @@ static const char *lda_sieve_get_personal_path(struct mail_user *user)
 			return NULL;
 		}
 
-		script_path = home_expand(script_path);
+		script_path = mail_user_home_expand(user, script_path);
 
 		if (*script_path != '/' && *script_path != '\0') {
 			/* relative path. change to absolute. */
@@ -157,7 +157,7 @@ static const char *lda_sieve_get_personal_path(struct mail_user *user)
 			return NULL;
 		}
 
-		script_path = home_expand(SIEVE_DEFAULT_PATH);
+		script_path = mail_user_home_expand(user, SIEVE_DEFAULT_PATH);
 	}
 
 	return script_path;
