@@ -107,18 +107,14 @@ AC_SUBST(MODULE_LIBS)
 AC_SUBST(dovecot_incdir)
 AC_SUBST(moduledir)
 
-if test "$docdir" = ""; then
-  dnl docdir supported only by autoconf v2.59c and later
-  docdir='${datadir}/doc/dovecot'
-fi
-AC_SUBST(docdir)
-
 dovecot_pkglibexecdir='$(libexecdir)/dovecot'
 dovecot_pkglibdir='$(libdir)/dovecot'
 dovecot_pkgincludedir='$(includedir)/dovecot'
+dovecot_docdir='$(datadir)/dovecot'
 AC_SUBST(dovecot_pkglibexecdir)
 AC_SUBST(dovecot_pkglibdir)
 AC_SUBST(dovecot_pkgincludedir)
+AC_SUBST(dovecot_docdir)
 
 AC_CONFIG_FILES([
 Makefile

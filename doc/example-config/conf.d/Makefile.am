@@ -1,6 +1,6 @@
 pkgsysconfdir = $(sysconfdir)/dovecot
 
-exampledir = $(docdir)/example-config/conf.d
+exampledir = $(dovecot_docdir)/example-config/conf.d
 example_DATA = \
 	sieve.conf 
 
