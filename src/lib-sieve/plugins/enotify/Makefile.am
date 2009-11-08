@@ -37,7 +37,7 @@ headers = \
 	ext-enotify-common.h
 
 if INSTALL_HEADERS
-  pkginc_libdir=$(pkgincludedir)/sieve
+  pkginc_libdir=$(dovecot_pkgincludedir)/sieve
   pkginc_lib_HEADERS = $(public_headers)
   noinst_HEADERS = $(headers)
 else

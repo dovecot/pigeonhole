@@ -1,5 +1,3 @@
-pkglibexecdir = $(libexecdir)/dovecot
-
 SUBDIRS = debug
 
 bin_PROGRAMS = sievec sieved sieve-test

@@ -1,6 +1,6 @@
 SUBDIRS = plugins
 
-pkglib_LTLIBRARIES = libdovecot-sieve.la
+dovecot_pkglib_LTLIBRARIES = libdovecot-sieve.la
 
 AM_CPPFLAGS = \
 	-I$(dovecot_incdir) \
@@ -139,7 +139,7 @@ headers = \
 	sieve.h
 
 if INSTALL_HEADERS
-	pkginc_libdir=$(pkgincludedir)/sieve
+	pkginc_libdir=$(dovecot_pkgincludedir)/sieve
 	pkginc_lib_HEADERS = $(headers)
 else
 	noinst_HEADERS = $(headers)
