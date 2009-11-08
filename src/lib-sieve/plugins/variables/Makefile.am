@@ -24,12 +24,23 @@ libsieve_ext_variables_la_SOURCES = \
 	$(tsts) \
 	ext-variables.c
 
-noinst_HEADERS = \
+public_headers = \
+	sieve-ext-variables.h 
+
+headers = \
 	ext-variables-common.h \
 	ext-variables-limits.h \
 	ext-variables-name.h \
 	ext-variables-arguments.h \
 	ext-variables-operands.h \
 	ext-variables-modifiers.h \
-	ext-variables-dump.h \
-	sieve-ext-variables.h 
+	ext-variables-dump.h
+
+if INSTALL_HEADERS
+  pkginc_libdir=$(pkgincludedir)/sieve
+  pkginc_lib_HEADERS = $(public_headers)
+  noinst_HEADERS = $(headers)
+else
+  noinst_HEADERS = $(headers) $(public_headers)
+endif
+

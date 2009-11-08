@@ -29,8 +29,17 @@ libsieve_ext_enotify_la_SOURCES = \
 	$(var_modifiers) \
 	$(notify_methods)
 
-noinst_HEADERS = \
-	sieve-ext-enotify.h \
+public_headers = \
+	sieve-ext-enotify.h
+
+headers = \
 	ext-enotify-limits.h \
 	ext-enotify-common.h
 
+if INSTALL_HEADERS
+  pkginc_libdir=$(pkgincludedir)/sieve
+  pkginc_lib_HEADERS = $(public_headers)
+  noinst_HEADERS = $(headers)
+else
+  noinst_HEADERS = $(headers) $(public_headers)
+endif

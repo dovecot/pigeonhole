@@ -24,7 +24,7 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-storage/index/raw
 
 libs = \
-	$(top_srcdir)/src/lib-sieve/libsieve.la \
+	$(top_srcdir)/src/lib-sieve/libdovecot-sieve.la \
 	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la \
 	$(dovecot_incdir)/src/lib-storage/libdovecot-storage.la \
 	$(dovecot_incdir)/src/lib-dovecot/libdovecot.la \

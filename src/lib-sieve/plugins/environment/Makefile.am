@@ -15,6 +15,17 @@ libsieve_ext_environment_la_SOURCES = \
 	ext-environment-common.c \
 	ext-environment.c
 
-noinst_HEADERS = \
-	ext-environment-common.h \
+public_headers = \
 	sieve-ext-environment.h
+
+headers = \
+	ext-environment-common.h
+
+if INSTALL_HEADERS
+  pkginc_libdir=$(pkgincludedir)/sieve
+  pkginc_lib_HEADERS = $(public_headers)
+  noinst_HEADERS = $(headers)
+else
+  noinst_HEADERS = $(headers) $(public_headers)
+endif
+

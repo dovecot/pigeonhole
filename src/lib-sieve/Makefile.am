@@ -1,6 +1,6 @@
 SUBDIRS = plugins
 
-noinst_LTLIBRARIES = libsieve.la
+pkglib_LTLIBRARIES = libdovecot-sieve.la
 
 AM_CPPFLAGS = \
 	-I$(dovecot_incdir) \
@@ -66,10 +66,10 @@ plugins = \
 	./plugins/date/libsieve_ext_date.la \
 	$(unfinished_plugins)
 
-libsieve_la_DEPENDENCIES = $(plugins)
-libsieve_la_LIBADD = $(plugins)
+libdovecot_sieve_la_DEPENDENCIES = $(plugins)
+libdovecot_sieve_la_LIBADD = $(plugins)
 
-libsieve_la_SOURCES = \
+libdovecot_sieve_la_SOURCES = \
 	rfc2822.c \
 	sieve-limits.c \
 	sieve-message.c \
@@ -103,7 +103,7 @@ libsieve_la_SOURCES = \
 	$(extensions) \
 	sieve.c 
 
-noinst_HEADERS = \
+headers = \
 	rfc2822.h \
 	sieve-config.h \
 	sieve-types.h \
@@ -137,3 +137,10 @@ noinst_HEADERS = \
 	sieve-actions.h \
 	sieve-extensions.h \
 	sieve.h
+
+if INSTALL_HEADERS
+	pkginc_libdir=$(pkgincludedir)/sieve
+	pkginc_lib_HEADERS = $(headers)
+else
+	noinst_HEADERS = $(headers)
+endif
