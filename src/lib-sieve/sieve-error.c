@@ -177,6 +177,18 @@ void sieve_info
 	va_end(args);
 }
 
+void sieve_debug
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { sieve_vdebug(ehandler, location, fmt, args); } T_END;
+	
+	va_end(args);
+}
+
 void sieve_critical
 (struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, ...)
