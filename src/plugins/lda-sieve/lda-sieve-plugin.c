@@ -528,17 +528,17 @@ static int lda_sieve_run
 	array_append_array(&scripts, scripts_before);
 
 	if ( user_script != NULL ) {
-        array_append(&scripts, &user_script, 1);
-        srctx.user_script = user_script;
-        srctx.main_script = user_script;
-    } else if ( default_script != NULL ) {
-        array_append(&scripts, &default_script, 1);
-        srctx.user_script = NULL;
-        srctx.main_script = default_script;
-    } else {
-        srctx.user_script = NULL;
-        srctx.main_script = NULL;
-    }
+		array_append(&scripts, &user_script, 1);
+		srctx.user_script = user_script;
+		srctx.main_script = user_script;
+	} else if ( default_script != NULL ) {
+		array_append(&scripts, &default_script, 1);
+		srctx.user_script = NULL;
+		srctx.main_script = default_script;
+	} else {
+		srctx.user_script = NULL;
+		srctx.main_script = NULL;
+	}
 
 	array_append_array(&scripts, scripts_after);
 
@@ -560,7 +560,7 @@ static int lda_sieve_run
 
 	msgdata.mail = mdctx->src_mail;
 	msgdata.return_path = mail_deliver_get_return_address(mdctx);
-    msgdata.to_address = mdctx->dest_addr;
+	msgdata.to_address = mdctx->dest_addr;
 	msgdata.auth_user = mdctx->dest_user->username;
 	(void)mail_get_first_header(msgdata.mail, "Message-ID", &msgdata.id);
 
