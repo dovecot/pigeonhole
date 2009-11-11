@@ -29,10 +29,10 @@
  * Configuration 
  */
 
-#define SUBADDRESS_DEFAULT_SEP "+"
+#define SUBADDRESS_DEFAULT_DELIM "+"
 
 struct ext_subaddress_config {
-	char *separator;
+	char *delimiter;
 };
 
 /*
@@ -69,13 +69,13 @@ static bool ext_subaddress_load
 (const struct sieve_extension *ext, void **context)
 {
 	struct ext_subaddress_config *config;
-	const char *sep = sieve_get_setting(ext->svinst, "sieve_subaddress_sep");
+	const char *delim = sieve_get_setting(ext->svinst, "recipient_delimiter");
 
-	if ( sep == NULL )
-		sep = SUBADDRESS_DEFAULT_SEP;
+	if ( delim == NULL )
+		delim = SUBADDRESS_DEFAULT_DELIM;
 
 	config = i_new(struct ext_subaddress_config, 1);
-	config->separator = i_strdup(sep);
+	config->delimiter = i_strdup(delim);
 
 	*context = (void *) config;
 
@@ -88,7 +88,7 @@ static void ext_subaddress_unload
 	struct ext_subaddress_config *config =
 		(struct ext_subaddress_config *) ext->context;
 
-	i_free(config->separator);
+	i_free(config->delimiter);
 	i_free(config);
 }
 
@@ -136,13 +136,13 @@ static const char *subaddress_user_extract_from
 {
 	struct ext_subaddress_config *config = 
 		(struct ext_subaddress_config *) addrp->object.ext->context;
-	const char *sep;
+	const char *delim;
 
-	sep = strstr(address->local_part, config->separator);
+	delim = strstr(address->local_part, config->delimiter);
 	
-	if ( sep == NULL ) return address->local_part;
+	if ( delim == NULL ) return address->local_part;
 	
-	return t_strdup_until(address->local_part, sep);
+	return t_strdup_until(address->local_part, delim);
 }
 
 static const char *subaddress_detail_extract_from
@@ -150,18 +150,18 @@ static const char *subaddress_detail_extract_from
 {
 	struct ext_subaddress_config *config = 
 		(struct ext_subaddress_config *) addrp->object.ext->context;
-	const char *sep;
+	const char *delim;
 
-	if ( (sep=strstr(address->local_part, config->separator)) == NULL )
+	if ( (delim=strstr(address->local_part, config->delimiter)) == NULL )
 		return NULL; 
 
-	sep += strlen(config->separator);
+	delim += strlen(config->delimiter);
 
 	/* Just to be sure */
-	if ( sep > (address->local_part + strlen(address->local_part)) ) 
+	if ( delim > (address->local_part + strlen(address->local_part)) ) 
 		return NULL;
 
-	return sep;
+	return delim;
 }
 
 /*
