@@ -30,7 +30,7 @@ static bool tst_date_validate
 static bool tst_date_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
  
-/* Address test
+/* Date test
  *
  * Syntax:
  *    date [<":zone" <time-zone: string>> / ":originalzone"]
@@ -108,7 +108,7 @@ static const struct sieve_argument_def date_originalzone_tag = {
 };
 
 /* 
- * Address operation 
+ * Date operation 
  */
 
 static bool tst_date_operation_dump
