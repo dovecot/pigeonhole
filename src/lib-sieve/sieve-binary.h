@@ -25,7 +25,7 @@ void sieve_binary_unref(struct sieve_binary **sbin);
 pool_t sieve_binary_pool(struct sieve_binary *sbin);
 struct sieve_script *sieve_binary_script(struct sieve_binary *sbin);
 const char *sieve_binary_path(struct sieve_binary *sbin);
-bool sieve_binary_script_older
+bool sieve_binary_script_newer
 	(struct sieve_binary *sbin, struct sieve_script *script);
 struct sieve_instance *sieve_binary_svinst(struct sieve_binary *sbin);
 

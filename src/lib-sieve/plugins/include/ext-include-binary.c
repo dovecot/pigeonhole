@@ -327,8 +327,8 @@ static bool ext_include_binary_up_to_date
 		struct ext_include_script_info *incscript = 
 			(struct ext_include_script_info *) value;
 		
-		/* Is the binary newer than this dependency? */
-		if ( !sieve_binary_script_older(sbin, incscript->script) ) {
+		/* Is the binary old than this dependency? */
+		if ( sieve_binary_script_newer(sbin, incscript->script) ) {
 			/* No, recompile */
 			return FALSE;
 		}

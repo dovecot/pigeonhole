@@ -289,11 +289,11 @@ struct sieve_instance *sieve_binary_svinst(struct sieve_binary *sbin)
 	return sbin->svinst;
 }
 
-bool sieve_binary_script_older
+bool sieve_binary_script_newer
 (struct sieve_binary *sbin, struct sieve_script *script)
 {
 	i_assert(sbin->file != NULL);
-	return ( sieve_script_older(script, sbin->file->st.st_mtime) );
+	return ( sieve_script_newer(script, sbin->file->st.st_mtime) );
 }
 
 const char *sieve_binary_script_name(struct sieve_binary *sbin)
@@ -1244,7 +1244,7 @@ bool sieve_binary_up_to_date(struct sieve_binary *sbin)
 	
 	i_assert(sbin->file != NULL);
 
-	if ( sbin->script == NULL || !sieve_script_older
+	if ( sbin->script == NULL || sieve_script_newer
 		(sbin->script, sbin->file->st.st_mtime) )
 		return FALSE;
 	

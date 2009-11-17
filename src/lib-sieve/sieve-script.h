@@ -61,7 +61,7 @@ uoff_t sieve_script_get_size(const struct sieve_script *script);
 int sieve_script_cmp
 	(const struct sieve_script *script1, const struct sieve_script *script2);
 unsigned int sieve_script_hash(const struct sieve_script *script);
-bool sieve_script_older(const struct sieve_script *script, time_t time);
+bool sieve_script_newer(const struct sieve_script *script, time_t time);
 
 static inline bool sieve_script_equals
 	(const struct sieve_script *script1, const struct sieve_script *script2)

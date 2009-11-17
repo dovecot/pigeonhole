@@ -354,8 +354,8 @@ unsigned int sieve_script_hash(const struct sieve_script *script)
 	return (unsigned int) script->st.st_ino;
 }
 
-bool sieve_script_older
+bool sieve_script_newer
 (const struct sieve_script *script, time_t time)
 {
-	return ( script->st.st_mtime < time && script->lnk_st.st_mtime < time );
+	return ( script->st.st_mtime > time || script->lnk_st.st_mtime > time );
 }
