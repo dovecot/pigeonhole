@@ -78,11 +78,11 @@ const char *ext_include_get_script_directory
 	case EXT_INCLUDE_LOCATION_PERSONAL:
  		sieve_dir = sieve_get_setting(svinst, "sieve_dir");
 
+		home = sieve_get_setting(svinst, "home");
+
+		if ( home == NULL ) home = getenv("HOME");
+
 		if ( sieve_dir == NULL ) {
-			home = sieve_get_setting(svinst, "home");
-
-			if ( home == NULL ) home = getenv("HOME");
-
 			if ( home == NULL )	{		
 				sieve_sys_error(
 					"include: sieve_dir and home not set for :personal script include "	
