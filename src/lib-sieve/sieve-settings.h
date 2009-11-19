@@ -6,6 +6,10 @@
 
 #include "sieve-common.h"
 
+/*
+ * Settings
+ */
+
 static inline const char *sieve_get_setting
 (struct sieve_instance *svinst, const char *identifier)
 {
@@ -24,5 +28,20 @@ bool sieve_get_uint_setting
 bool sieve_get_int_setting
 (struct sieve_instance *svinst, const char *identifier,
 	long long int *value_r);
+
+/*
+ * Home directory
+ */
+
+static inline const char *sieve_get_homedir
+(struct sieve_instance *svinst)
+{
+	const struct sieve_callbacks *callbacks = svinst->callbacks;
+
+	if ( callbacks == NULL || callbacks->get_homedir == NULL )
+		return NULL;
+
+	return callbacks->get_homedir(svinst->context);
+}
 
 #endif /* __SIEVE_SETTINGS_H */

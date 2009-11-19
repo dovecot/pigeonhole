@@ -91,8 +91,6 @@ Next (in order of descending priority/precedence):
 	  through IMAP (no specification for something like this is available; we will 
 	  have to provide our own)
 * Variables extension: implement compile time evaluation of constant values
-* Make the engine and its extensions much more configurable. Possibly this can 
-  be merged with Dovecot's new master config implementation.
 * Add development documentation, i.e. comment on library functions and document
   the binary and byte-code format. 
 * Give the byte code format some more thought, it is currently quite rough and

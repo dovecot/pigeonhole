@@ -38,6 +38,21 @@ static deliver_mail_func_t *next_deliver_mail;
  * Settings handling
  */
 
+static const char *lda_sieve_get_homedir
+(void *context)
+{
+	struct mail_user *mail_user = (struct mail_user *) context;
+	const char *home = NULL;
+
+	if ( mail_user == NULL )
+		return NULL;
+
+	if ( mail_user_get_home(mail_user, &home) <= 0 )
+		return NULL;
+
+	return home;
+}
+
 static const char *lda_sieve_get_setting
 (void *context, const char *identifier)
 {
@@ -50,6 +65,7 @@ static const char *lda_sieve_get_setting
 }
 
 static const struct sieve_callbacks lda_sieve_callbacks = {
+	lda_sieve_get_homedir,
     lda_sieve_get_setting
 };
 

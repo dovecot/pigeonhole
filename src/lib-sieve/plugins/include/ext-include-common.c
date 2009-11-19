@@ -79,9 +79,7 @@ const char *ext_include_get_script_directory
 	case EXT_INCLUDE_LOCATION_PERSONAL:
  		sieve_dir = sieve_get_setting(svinst, "sieve_dir");
 
-		home = sieve_get_setting(svinst, "home");
-
-		if ( home == NULL ) home = getenv("HOME");
+		home = sieve_get_homedir(svinst);
 
 		if ( sieve_dir == NULL ) {
 			if ( home == NULL )	{		

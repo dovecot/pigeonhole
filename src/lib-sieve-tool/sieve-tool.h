@@ -14,6 +14,11 @@
 
 struct sieve_instance *sieve_instance;
 
+const char *sieve_tool_get_setting(void *context, const char *identifier);
+const char *sieve_tool_get_homedir(void *context);
+
+const struct sieve_callbacks sieve_tool_callbacks;
+
 /*
  * Initialization
  */

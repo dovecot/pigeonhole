@@ -31,13 +31,20 @@ struct sieve_instance *sieve_instance;
  * Settings management
  */
 
-static const char *sieve_tool_get_setting
+const char *sieve_tool_get_setting
 (void *context ATTR_UNUSED, const char *identifier)
 {
 	return getenv(t_str_ucase(identifier));
 }
 
-static const struct sieve_callbacks sieve_tool_callbacks = {
+const char *sieve_tool_get_homedir
+(void *context ATTR_UNUSED)
+{
+	return getenv("HOME");
+}
+
+const struct sieve_callbacks sieve_tool_callbacks = {
+	sieve_tool_get_homedir,
 	sieve_tool_get_setting
 };
 

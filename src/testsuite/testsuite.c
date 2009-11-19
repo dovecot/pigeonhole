@@ -51,6 +51,7 @@ const struct sieve_script_env *testsuite_scriptenv;
  */
 
 static const struct sieve_callbacks testsuite_sieve_callbacks = {
+	sieve_tool_get_homedir,
 	testsuite_setting_get
 };
 
