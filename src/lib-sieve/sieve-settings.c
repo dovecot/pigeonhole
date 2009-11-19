@@ -4,6 +4,7 @@
 #include "lib.h"
 
 #include "sieve-common.h"
+#include "sieve-error.h"
 #include "sieve-settings.h"
 
 #include <stdlib.h>
@@ -22,8 +23,11 @@ bool sieve_get_uint_setting
 
 	*value_r = strtoull(str_value, &endp, 10);
 
-	if ( *endp != '\0' )
+	if ( *endp != '\0' ) {
+		sieve_sys_warning("invalid unsigned integer value for setting '%s': '%s'",
+			identifier, str_value);
 		return FALSE;
+	}
 	
 	return TRUE;	
 }
@@ -42,8 +46,12 @@ bool sieve_get_int_setting
 
 	*value_r = strtoll(str_value, &endp, 10);
 
-	if ( *endp != '\0' )
+	if ( *endp != '\0' ) {
+		sieve_sys_warning("invalid integer value for setting '%s': '%s'",
+			identifier, str_value);
+
 		return FALSE;
+	}
 	
 	return TRUE;	
 }
