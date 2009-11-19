@@ -71,7 +71,7 @@ libdovecot_sieve_la_LIBADD = $(plugins)
 
 libdovecot_sieve_la_SOURCES = \
 	rfc2822.c \
-	sieve-limits.c \
+	sieve-settings.c \
 	sieve-message.c \
 	sieve-smtp.c \
 	sieve-lexer.c \
@@ -109,6 +109,7 @@ headers = \
 	sieve-types.h \
 	sieve-common.h \
 	sieve-limits.h \
+	sieve-settings.h \
 	sieve-message.h \
 	sieve-smtp.h \
 	sieve-lexer.h \

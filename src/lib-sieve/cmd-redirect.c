@@ -196,6 +196,7 @@ static bool cmd_redirect_operation_dump
 static int cmd_redirect_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	struct sieve_instance *svinst = renv->svinst;
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_redirect_context *act;
 	string_t *redirect;
@@ -234,7 +235,7 @@ static int cmd_redirect_operation_execute
 	
 	ret = sieve_result_add_action
 		(renv, NULL, &act_redirect, slist, source_line, (void *) act,
-			sieve_max_redirects);
+			svinst->max_redirects);
 	
 	return ( ret >= 0 );
 }

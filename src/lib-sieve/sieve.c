@@ -6,6 +6,8 @@
 #include "istream.h"
 #include "buffer.h"
 
+#include "sieve-limits.h"
+#include "sieve-settings.h"
 #include "sieve-extensions.h"
 
 #include "sieve-script.h"
@@ -39,14 +41,32 @@ struct sieve_instance *sieve_init
 (const struct sieve_callbacks *callbacks, void *context)
 {
 	struct sieve_instance *svinst;
+	unsigned long long int uint_setting;
 	pool_t pool;
 
+	/* Create Sieve engine instance */
 	pool = pool_alloconly_create("sieve", 8192);
 	svinst = p_new(pool, struct sieve_instance, 1);
 	svinst->pool = pool;
 	svinst->callbacks = callbacks;
 	svinst->context = context;
 
+	/* Read limits from configuration */
+
+	svinst->max_actions = SIEVE_DEFAULT_MAX_ACTIONS;
+	svinst->max_redirects = SIEVE_DEFAULT_MAX_REDIRECTS;
+	
+	if ( sieve_get_uint_setting
+		(svinst, "sieve_max_actions", &uint_setting) ) {
+		svinst->max_actions = (unsigned int) uint_setting;
+	}
+
+	if ( sieve_get_uint_setting
+		(svinst, "sieve_max_redirects", &uint_setting) ) {
+		svinst->max_redirects = (unsigned int) uint_setting;
+	}
+	
+	/* Initialize extensions */
 	if ( !sieve_extensions_init(svinst) ) {
 		sieve_deinit(&svinst);
 		return NULL;

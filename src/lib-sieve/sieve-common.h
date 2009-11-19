@@ -10,6 +10,7 @@
 #include "sieve-types.h"
 
 #include <sys/types.h>
+#include <stdlib.h>
 
 /* 
  * Types
@@ -144,21 +145,10 @@ struct sieve_instance {
 
 	/* Extension registry */
 	struct sieve_extension_registry *ext_reg;
+
+	/* Limits */
+	unsigned int max_actions;
+	unsigned int max_redirects;
 };
-
-/*
- * Settings
- */
-
-static inline const char *sieve_get_setting
-(struct sieve_instance *svinst, const char *identifier)
-{
-	const struct sieve_callbacks *callbacks = svinst->callbacks;
-
-	if ( callbacks == NULL || callbacks->get_setting == NULL )
-		return NULL;
-
-	return callbacks->get_setting(svinst->context, identifier);
-}
 
 #endif /* __SIEVE_COMMON_H */

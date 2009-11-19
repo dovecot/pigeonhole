@@ -13,6 +13,7 @@
  
 #include "sieve-common.h"
 
+#include "sieve-settings.h"
 #include "sieve-code.h"
 #include "sieve-address.h"
 #include "sieve-extensions.h"

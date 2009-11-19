@@ -491,6 +491,7 @@ static int _sieve_result_add_action
 {
 	int ret = 0;
 	unsigned int instance_count = 0;
+	struct sieve_instance *svinst = renv->svinst;
 	struct sieve_result *result = renv->result;
 	struct sieve_result_action *raction = NULL, *kaction = NULL;
 	struct sieve_action action;
@@ -591,7 +592,8 @@ static int _sieve_result_add_action
 	}
 
 	/* Check policy limit on total number of actions */
-	if ( sieve_max_actions > 0 && result->action_count >= sieve_max_actions ) {
+	if ( svinst->max_actions > 0 && result->action_count >= svinst->max_actions ) 
+		{
 		sieve_runtime_error(renv, action.location, 
 			"total number of actions exceeds policy limit");
 		return -1;
