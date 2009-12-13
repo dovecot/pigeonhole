@@ -918,7 +918,7 @@ static const void *_file_lazy_load_data
 static buffer_t *_file_lazy_load_buffer
 (struct sieve_binary_file *file, off_t *offset, size_t size)
 {			
-	buffer_t *buffer = buffer_create_static_hard(file->pool, size);
+	buffer_t *buffer = buffer_create_dynamic(file->pool, size);
 	
 	if ( _file_lazy_read
 		(file, offset, buffer_get_space_unsafe(buffer, 0, size), size) ) {
