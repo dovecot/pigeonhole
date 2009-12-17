@@ -235,7 +235,7 @@ static struct mail_raw *mail_raw_create
         i_fatal("Can't open mail stream as raw: %s",
             mail_storage_get_last_error(raw_ns->storage, &error));
     }
-    if ( mailbox_sync(mailr->box, 0, 0, NULL) < 0 ) {
+    if ( mailbox_sync(mailr->box, 0) < 0 ) {
         i_fatal("Can't sync delivery mail: %s",
             mail_storage_get_last_error(raw_ns->storage, &error));
     }

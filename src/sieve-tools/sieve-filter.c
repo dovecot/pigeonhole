@@ -141,7 +141,7 @@ static int filter_mailbox
 
 	/* Sync mailbox */
 
-	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ, 0, NULL) < 0 ) {
+	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ) < 0 ) {
 		return -1;
 	}
 
@@ -200,7 +200,7 @@ static int filter_mailbox
 
 	/* Sync mailbox */
 
-	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_WRITE, 0, NULL) < 0 ) {
+	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_WRITE) < 0 ) {
 		return -1;
 	}
 	

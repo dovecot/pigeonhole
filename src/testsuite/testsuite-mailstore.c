@@ -173,7 +173,7 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 	
 	/* Sync mailbox */
 
-	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ, 0, NULL) < 0 ) {
+	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ) < 0 ) {
 		sieve_sys_error("testsuite: failed to sync mailbox '%s'", folder);
 		return NULL;
 	}

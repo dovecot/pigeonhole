@@ -156,7 +156,7 @@ static bool seff_mailbox_create_pre_execute
 		}
 
 		/* Try opening again */
-		if ( mailbox_open(box) < 0 || mailbox_sync(box, 0, 0, NULL) < 0 ) {
+		if ( mailbox_sync(box, 0) < 0 ) {
 			/* Failed definitively */
 			mailbox_close(&box);
 			box = NULL;
