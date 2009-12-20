@@ -3,6 +3,8 @@
 
 #include "lib.h"
 #include "compat.h"
+#include "unichar.h"
+#include "array.h"
 #include "istream.h"
 #include "eacces-error.h"
 
@@ -20,6 +22,52 @@
  */
  
 #define SIEVE_READ_BLOCK_SIZE (1024*8)
+
+/*
+ * Script name
+ */
+
+bool sieve_script_name_is_valid(const char *scriptname)
+{
+	ARRAY_TYPE(unichars) uni_name;
+	unsigned int count, i;
+	const unichar_t *name_chars;
+
+	/* Intialize array for unicode characters */
+	t_array_init(&uni_name, strlen(scriptname)* 4);
+
+	/* Convert UTF-8 to UCS4/UTF-32 */
+	if ( uni_utf8_to_ucs4(scriptname, &uni_name) < 0 )
+		return FALSE;
+
+	/* Scan name for invalid characters */
+	name_chars = array_get(&uni_name, &count);
+	for ( i = 0; i < count; i++ ) {
+
+		/* 0000-001F; [CONTROL CHARACTERS] */
+		if ( name_chars[i] <= 0x001f )
+			return FALSE;
+		
+		/* 002F; SLASH */
+		if ( name_chars[i] == 0x002f )
+			return FALSE;
+
+		/* 007F; DELETE */
+		if ( name_chars[i] == 0x007f )
+			return FALSE;
+
+		/* 0080-009F; [CONTROL CHARACTERS] */
+		if ( name_chars[i] >= 0x0080 && name_chars[i] <= 0x009f )
+			return FALSE;
+
+		/* 2028; LINE SEPARATOR */
+		/* 2029; PARAGRAPH SEPARATOR */
+		if ( name_chars[i] == 0x2028 || name_chars[i] == 0x2029 )
+			return FALSE;
+	}
+
+	return TRUE;
+}
 
 /*
  * Filename to name/name to filename

@@ -226,9 +226,9 @@ static bool cmd_include_validate
 
 	script_name = sieve_ast_argument_strc(arg);
 
-	if ( strchr(script_name, '/') != NULL ) {
+	if ( !sieve_script_name_is_valid(script_name) ) {
  		sieve_argument_validate_error(valdtr, arg,
-			"include: '/' not allowed in script name (%s)",
+			"include: invalid script name '%s'",
 			str_sanitize(script_name, 80));
 		return FALSE;
 	}

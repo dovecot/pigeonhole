@@ -8,6 +8,13 @@
 
 #include <sys/types.h>
 
+
+/*
+ * Sieve script name
+ */
+
+bool sieve_script_name_is_valid(const char *scriptname);
+
 /*
  * Sieve script object
  */
