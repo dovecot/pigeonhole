@@ -23,8 +23,8 @@ int ext_variable_name_parse
 		struct ext_variable_name *cur_element;
 		string_t *cur_ident;
 
-		/* Acquire current position in the substitution structure or allocate 
-		 * a new one if this substitution consists of more elements than before.
+		/* Acquire current position in the array of name elements or allocate a new 
+		 * one if this substitution consists of more elements than before.
 		 */
 		if ( nspace_used < (int) array_count(vname) ) {
 			cur_element = array_idx_modifiable
@@ -36,6 +36,8 @@ int ext_variable_name_parse
 			cur_element = array_append_space(vname);
 			cur_ident = cur_element->identifier = t_str_new(32);
 		}
+
+		/* Parse element */
 
 		/* Identifier */
 		if ( *p == '_' || i_isalpha(*p) ) {
@@ -72,9 +74,11 @@ int ext_variable_name_parse
 			*str = p;
 			return -1;
 		}
-		
+
+		/* Advance to next name element */		
 		nspace_used++;
 		
+		/* Check whether next name element is present */
 		if ( p < strend && *p == '.' ) 
 			p++;
 		else

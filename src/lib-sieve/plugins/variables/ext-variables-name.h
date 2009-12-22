@@ -10,9 +10,9 @@
  * The variable strings are preprocessed into an AST list consisting of variable 
  * substitutions and constant parts of the string. The variables to which
  * the substitutions link are looked up and their index in their scope storage
- * is what is added to the list and eventually emitted as byte code. So in byte
- * code a variable string will look as a series of substrings interrupted by
- * integer operands that refer to variables. During execution the strings and 
+ * is what is added to the list and eventually emitted as byte code. So, in 
+ * bytecode a variable string will look as a series of substrings interrupted by
+ * integer operands that refer to variables. During execution, the strings and 
  * the looked-up variables are concatenated to obtain the desired result. The 
  * the variable references are simple indexes into an array of variables, so
  * looking these up during execution is a trivial process.
