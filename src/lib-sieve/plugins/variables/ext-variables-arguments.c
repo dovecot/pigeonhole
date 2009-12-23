@@ -18,33 +18,11 @@
 #include "ext-variables-limits.h"
 #include "ext-variables-name.h"
 #include "ext-variables-operands.h"
+#include "ext-variables-namespaces.h"
 #include "ext-variables-arguments.h"
 
-/*
- * Common error messages
- */
-
-static inline void _ext_variables_scope_size_error
-(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
-	const char *variable)
-{
-	sieve_argument_validate_error(valdtr, arg, 
-		"(implicit) declaration of new variable '%s' exceeds the limit "
-		"(max variables: %u)", variable, 
-		SIEVE_VARIABLES_MAX_SCOPE_SIZE);
-}
-
-static inline void _ext_variables_match_index_error
-(struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
-	unsigned int variable_index)
-{
-	sieve_argument_validate_error(valdtr, arg, 
-		"match value index %u out of range (max: %u)", variable_index, 
-		SIEVE_VARIABLES_MAX_MATCH_INDEX);
-}
-
 /* 
- * Variable argument 
+ * Variable argument implementation
  */
 
 static bool arg_variable_generate
@@ -57,145 +35,44 @@ const struct sieve_argument_def variable_argument = {
 	arg_variable_generate 
 };
 
-static struct sieve_ast_argument *ext_variables_variable_argument_create
+static bool ext_variables_variable_argument_activate
 (const struct sieve_extension *this_ext, struct sieve_validator *valdtr, 
-	struct sieve_ast *ast, unsigned int source_line, const char *variable)
+	struct sieve_ast_argument *arg, const char *variable)
 {
+	struct sieve_ast *ast = arg->ast;
 	struct sieve_variable *var;
-	struct sieve_ast_argument *arg;
 	
 	var = ext_variables_validator_get_variable(this_ext, valdtr, variable, TRUE);
 
-	if ( var == NULL ) 
-		return NULL;
+	if ( var == NULL ) {
+		sieve_argument_validate_error(valdtr, arg, 
+			"(implicit) declaration of new variable '%s' exceeds the limit "
+			"(max variables: %u)", variable, 
+			SIEVE_VARIABLES_MAX_SCOPE_SIZE);
+		return FALSE;
+	}
 	
-	arg = sieve_ast_argument_create(ast, source_line);
-	arg->type = SAAT_STRING;
 	arg->argument = sieve_argument_create(ast, &variable_argument, this_ext, 0);
 	arg->argument->data = (void *) var;
 	
 	return arg;
 }
 
-static bool _sieve_variable_argument_activate
+static struct sieve_ast_argument *ext_variables_variable_argument_create
 (const struct sieve_extension *this_ext, struct sieve_validator *valdtr, 
-	struct sieve_command *cmd ATTR_UNUSED, struct sieve_ast_argument *arg, 
-	bool assignment)
+	struct sieve_ast_argument *parent_arg, const char *variable)
 {
-	struct sieve_ast *ast = arg->ast;
-	bool result = FALSE;
-	struct sieve_variable *var;
-	string_t *variable;
-	const char *varstr, *varend;
-	ARRAY_TYPE(ext_variable_name) vname;	
-	int nelements = 0;
+	struct sieve_ast *ast = parent_arg->ast;
+	struct sieve_ast_argument *new_arg;
+		
+	new_arg = sieve_ast_argument_create(ast, sieve_ast_argument_line(parent_arg));
+	new_arg->type = SAAT_STRING;
 
-	T_BEGIN {
-		t_array_init(&vname, 2);			
+	if ( !ext_variables_variable_argument_activate
+		(this_ext, valdtr, new_arg, variable) )
+		return NULL;
 	
-		variable = sieve_ast_argument_str(arg);
-		varstr = str_c(variable);
-		varend = PTR_OFFSET(varstr, str_len(variable));
-		nelements = ext_variable_name_parse(&vname, &varstr, varend);
-
-		/* Check whether name parsing succeeded */	
-		if ( nelements < 0 || varstr != varend ) {
-			/* Parse failed */
-			sieve_argument_validate_error(valdtr, arg, 
-				"invalid variable name '%s'", str_sanitize(str_c(variable),80));
-		} else if ( nelements == 1 ) {
-			/* Normal (match) variable */
-
-			const struct ext_variable_name *cur_element = 
-				array_idx(&vname, 0);
-
-			if ( cur_element->num_variable < 0 ) {
-				/* Variable */
-				var = ext_variables_validator_get_variable
-					(this_ext, valdtr, str_c(cur_element->identifier), TRUE);
-
-				if ( var == NULL ) {
-					_ext_variables_scope_size_error
-						(valdtr, arg, str_c(cur_element->identifier));
-				} else {
-					arg->argument = sieve_argument_create
-						(ast, &variable_argument, this_ext, 0);
-					arg->argument->data = (void *) var;
-				
-					result = TRUE;
-				}
-			} else {
-				/* Match value */
-				if ( !assignment ) {
-					if ( cur_element->num_variable > SIEVE_VARIABLES_MAX_MATCH_INDEX ) {
-						_ext_variables_match_index_error
-							(valdtr, arg, cur_element->num_variable);
-					} else {
-						arg->argument = sieve_argument_create
-							(ast, &match_value_argument, this_ext, 0);
-						arg->argument->data = (void *) 
-							POINTER_CAST(cur_element->num_variable);
-										
-						result = TRUE;
-					}
-				} else {		
-					sieve_argument_validate_error(valdtr, arg, 
-						"cannot assign to match variable");
-				}
-			}
-		} else {
-			/* Namespace variable */
-
-			const struct ext_variable_name *cur_element = 
-				array_idx(&vname, 0);
-
-			/* FIXME: Variable namespaces unsupported. */
-	
-			/* References to namespaces without a prior require statement for 
-			 * the relevant extension MUST cause an error.
-			 */
-
-			sieve_argument_validate_error(valdtr, arg, 
-				"cannot %s to variable in unknown namespace '%s'", 
-				assignment ? "assign" : "refer", str_c(cur_element->identifier));
-		}
-	} T_END;
-
-	return result;
-}
-
-bool sieve_variable_argument_activate
-(const struct sieve_extension *this_ext, struct sieve_validator *valdtr, 
-	struct sieve_command *cmd, struct sieve_ast_argument *arg, 
-	bool assignment)
-{
-	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
-		/* Single string */
-		return _sieve_variable_argument_activate
-			(this_ext, valdtr, cmd, arg, assignment);
-		
-	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
-		/* String list */
-		struct sieve_ast_argument *stritem;
-		
-		i_assert ( !assignment );
-		
-		stritem = sieve_ast_strlist_first(arg);
-		while ( stritem != NULL ) {
-			if ( !_sieve_variable_argument_activate
-				(this_ext, valdtr, cmd, stritem, assignment) )
-				return FALSE;
-			
-			stritem = sieve_ast_strlist_next(stritem);
-		}
-		
-		arg->argument = sieve_argument_create
-			(arg->ast, &string_list_argument, NULL, 0);
-		
-		return TRUE;
-	} 
-	
-	return FALSE;
+	return new_arg;
 }
 
 static bool arg_variable_generate
@@ -205,13 +82,13 @@ static bool arg_variable_generate
 	struct sieve_argument *argument = arg->argument;
 	struct sieve_variable *var = (struct sieve_variable *) argument->data;
 	
-	ext_variables_opr_variable_emit(cgenv->sbin, argument->ext, var);
+	sieve_variables_opr_variable_emit(cgenv->sbin, argument->ext, var);
 
 	return TRUE;
 }
 
 /* 
- * Match value argument 
+ * Match value argument implementation
  */
 
 static bool arg_match_value_generate
@@ -224,20 +101,48 @@ const struct sieve_argument_def match_value_argument = {
 	arg_match_value_generate 
 };
 
-static struct sieve_ast_argument *ext_variables_match_value_argument_create
+static bool ext_variables_match_value_argument_activate
 (const struct sieve_extension *this_ext, 
-	struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast *ast, 
-	unsigned int source_line,	unsigned int index)
+	struct sieve_validator *valdtr, struct sieve_ast_argument *arg, 
+	unsigned int index, bool assignment)
 {
-	struct sieve_ast_argument *arg;
-	
-	arg = sieve_ast_argument_create(ast, source_line);
-	arg->type = SAAT_STRING;
+	struct sieve_ast *ast = arg->ast;
+
+	if ( assignment ) {
+		sieve_argument_validate_error(valdtr, arg, 
+			"cannot assign to match variable");
+		return FALSE;
+	}
+
+	if ( index > SIEVE_VARIABLES_MAX_MATCH_INDEX ) {
+		sieve_argument_validate_error(valdtr, arg, 
+			"match value index %u out of range (max: %u)", index, 
+			SIEVE_VARIABLES_MAX_MATCH_INDEX);
+		return FALSE;
+	} 
+
 	arg->argument = sieve_argument_create
 		(ast, &match_value_argument, this_ext, 0);
 	arg->argument->data = (void *) POINTER_CAST(index);
+	return TRUE;
+}
+
+static struct sieve_ast_argument *ext_variables_match_value_argument_create
+(const struct sieve_extension *this_ext, struct sieve_validator *valdtr, 
+	struct sieve_ast_argument *parent_arg, unsigned int index)
+{
+	struct sieve_ast *ast = parent_arg->ast;
+	struct sieve_ast_argument *new_arg;
 	
-	return arg;
+	new_arg = sieve_ast_argument_create(ast, sieve_ast_argument_line(parent_arg));
+	new_arg->type = SAAT_STRING;
+
+	if ( !ext_variables_match_value_argument_activate
+		(this_ext, valdtr, new_arg, index, FALSE) ) {
+		return NULL;
+  }
+	
+	return new_arg;
 }
 
 static bool arg_match_value_generate
@@ -247,13 +152,13 @@ static bool arg_match_value_generate
 	struct sieve_argument *argument = arg->argument;
 	unsigned int index = POINTER_CAST_TO(argument->data, unsigned int);
 	
-	ext_variables_opr_match_value_emit(cgenv->sbin, argument->ext, index);
+	sieve_variables_opr_match_value_emit(cgenv->sbin, argument->ext, index);
 
 	return TRUE;
 }
 
 /* 
- * Variable string argument 
+ * Variable string argument implementation
  */
 
 static bool arg_variable_string_validate
@@ -281,8 +186,7 @@ static bool arg_variable_string_validate
 	const char *strval = (const char *) str_data(str);
 	const char *strend = strval + str_len(str);
 	bool result = TRUE;
-
-	ARRAY_TYPE(ext_variable_name) substitution;	
+	ARRAY_TYPE(sieve_variable_name) substitution;	
 	int nelements = 0;
 	
 	T_BEGIN {
@@ -358,53 +262,29 @@ static bool arg_variable_string_validate
 				
 					/* Find the variable */
 					if ( nelements == 1 ) {
-						const struct ext_variable_name *cur_element = 
+						const struct sieve_variable_name *cur_element = 
 							array_idx(&substitution, 0);
 						
 						if ( cur_element->num_variable == -1 ) {
 							/* Add variable argument '${identifier}' */
-							string_t *cur_ident = cur_element->identifier; 
-						
-							strarg = ext_variables_variable_argument_create
-								(this_ext, valdtr, (*arg)->ast, (*arg)->source_line, 
-									str_c(cur_ident));
 
-							if ( strarg != NULL )
-								sieve_arg_catenated_string_add_element(catstr, strarg);
-							else {
-								_ext_variables_scope_size_error
-									(valdtr, *arg, str_c(cur_element->identifier));
-								result = FALSE;
-								break;
-							}
+							strarg = ext_variables_variable_argument_create
+								(this_ext, valdtr, *arg, str_c(cur_element->identifier));
+
 						} else {
 							/* Add match value argument '${000}' */
-							if ( cur_element->num_variable > SIEVE_VARIABLES_MAX_MATCH_INDEX ) {
-								_ext_variables_match_index_error
-									(valdtr, *arg, cur_element->num_variable);
-								result = FALSE;
-								break;
-							}
-
+				
 							strarg = ext_variables_match_value_argument_create
-								(this_ext, valdtr, (*arg)->ast, (*arg)->source_line, 
-								cur_element->num_variable);
-
-							if ( strarg != NULL )
-								sieve_arg_catenated_string_add_element(catstr, strarg);
+								(this_ext, valdtr, *arg, cur_element->num_variable);
 						}
 					} else {
-						const struct ext_variable_name *cur_element = 
-							array_idx(&substitution, 0);
+						strarg = ext_variables_namespace_argument_create
+							(this_ext, valdtr, *arg, cmd, &substitution);				
+					}
 
-						/* FIXME: Namespaces are not supported. */
-
-						/* References to namespaces without a prior require 
-						 * statement for thecrelevant extension MUST cause an error.
-					 	 */
-						sieve_argument_validate_error(valdtr, *arg, 
-							"referring to variable in unknown namespace '%s'", 
-							str_c(cur_element->identifier));
+					if ( strarg != NULL ) {
+						sieve_arg_catenated_string_add_element(catstr, strarg);
+					} else {
 						result = FALSE;
 						break;
 					}
@@ -452,3 +332,93 @@ static bool arg_variable_string_validate
 	
 	return TRUE;
 }
+
+/*
+ * Variable argument interface
+ */
+
+static bool _sieve_variable_argument_activate
+(const struct sieve_extension *this_ext, struct sieve_validator *valdtr, 
+	struct sieve_command *cmd, struct sieve_ast_argument *arg, bool assignment)
+{
+	bool result = FALSE;
+	string_t *variable;
+	const char *varstr, *varend;
+	ARRAY_TYPE(sieve_variable_name) vname;	
+	int nelements = 0;
+
+	T_BEGIN {
+		t_array_init(&vname, 2);			
+	
+		variable = sieve_ast_argument_str(arg);
+		varstr = str_c(variable);
+		varend = PTR_OFFSET(varstr, str_len(variable));
+		nelements = ext_variable_name_parse(&vname, &varstr, varend);
+
+		/* Check whether name parsing succeeded */	
+		if ( nelements < 0 || varstr != varend ) {
+			/* Parse failed */
+			sieve_argument_validate_error(valdtr, arg, 
+				"invalid variable name '%s'", str_sanitize(str_c(variable),80));
+		} else if ( nelements == 1 ) {
+			/* Normal (match) variable */
+
+			const struct sieve_variable_name *cur_element = 
+				array_idx(&vname, 0);
+
+			if ( cur_element->num_variable < 0 ) {
+				/* Variable */
+				result = ext_variables_variable_argument_activate
+					(this_ext, valdtr, arg, str_c(cur_element->identifier));
+
+			} else {
+				/* Match value */	
+				result = ext_variables_match_value_argument_activate
+					(this_ext, valdtr, arg, cur_element->num_variable, assignment);
+			}
+
+		} else {
+			/* Namespace variable */
+			result = ext_variables_namespace_argument_activate
+				(this_ext, valdtr, arg, cmd, &vname, assignment);
+		}
+	} T_END;
+
+	return result;
+}
+
+bool sieve_variable_argument_activate
+(const struct sieve_extension *this_ext, struct sieve_validator *valdtr, 
+	struct sieve_command *cmd, struct sieve_ast_argument *arg, 
+	bool assignment)
+{
+	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
+		/* Single string */
+		return _sieve_variable_argument_activate
+			(this_ext, valdtr, cmd, arg, assignment);
+		
+	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
+		/* String list */
+		struct sieve_ast_argument *stritem;
+		
+		i_assert ( !assignment );
+		
+		stritem = sieve_ast_strlist_first(arg);
+		while ( stritem != NULL ) {
+			if ( !_sieve_variable_argument_activate
+				(this_ext, valdtr, cmd, stritem, assignment) )
+				return FALSE;
+			
+			stritem = sieve_ast_strlist_next(stritem);
+		}
+		
+		arg->argument = sieve_argument_create
+			(arg->ast, &string_list_argument, NULL, 0);
+		
+		return TRUE;
+	} 
+	
+	return FALSE;
+}
+
+

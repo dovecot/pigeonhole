@@ -30,6 +30,17 @@ static inline const struct sieve_extension *sieve_ext_variables_get_extension
 }
 
 /*
+ * Variable name
+ */
+
+struct sieve_variable_name {
+	string_t *identifier;
+	int num_variable;
+};
+
+ARRAY_DEFINE_TYPE(sieve_variable_name, struct sieve_variable_name);
+
+/*
  * Variable scope
  */
 
@@ -60,6 +71,48 @@ struct sieve_variable *sieve_variable_scope_get_variable
 	(struct sieve_variable_scope *scope, const char *identifier, bool create);
 struct sieve_variable *sieve_variable_scope_get_indexed
 	(struct sieve_variable_scope *scope, unsigned int index);
+
+/*
+ * Variable namespaces
+ */
+
+struct sieve_variables_namespace;
+
+struct sieve_variables_namespace_def {
+	struct sieve_object_def obj_def;
+  
+	bool (*validate)
+		(struct sieve_validator *valdtr, 
+			const struct sieve_variables_namespace *nspc,
+			struct sieve_ast_argument *arg, struct sieve_command *cmd, 
+			ARRAY_TYPE(sieve_variable_name) *var_name, void **var_data, 
+			bool assignment);
+	bool (*generate)
+		(const struct sieve_codegen_env *cgenv, 
+			const struct sieve_variables_namespace *nspc,
+			struct sieve_ast_argument *arg, struct sieve_command *cmd, 
+			void *var_data);
+
+	bool (*read_variable)
+		(const struct sieve_runtime_env *renv, 
+			const struct sieve_variables_namespace *nspc, sieve_size_t *address, 
+			string_t **str);
+	bool (*dump_variable)
+		(const struct sieve_dumptime_env *denv, 
+			const struct sieve_variables_namespace *nspc, sieve_size_t *address, 
+			const char *field_name);
+};
+
+struct sieve_variables_namespace {
+	struct sieve_object object;
+		
+	const struct sieve_variables_namespace_def *def;
+};
+
+void sieve_variables_namespace_register
+(const struct sieve_extension *var_ext, struct sieve_validator *valdtr,
+	const struct sieve_extension *ext,
+	const struct sieve_variables_namespace_def *nspc_def);
 
 /* Iteration over all declared variables */
 
@@ -135,6 +188,13 @@ bool sieve_variable_argument_activate
  */
 
 extern const struct sieve_operand_def variable_operand;
+
+void sieve_variables_opr_variable_emit
+	(struct sieve_binary *sbin, const struct sieve_extension *var_ext, 
+		struct sieve_variable *var);
+void sieve_variables_opr_match_value_emit
+	(struct sieve_binary *sbin, const struct sieve_extension *var_ext, 
+		unsigned int index);
 
 bool sieve_variable_operand_read_data
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand, 

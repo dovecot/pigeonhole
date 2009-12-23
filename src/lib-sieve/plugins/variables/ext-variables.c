@@ -31,6 +31,7 @@
 #include "ext-variables-common.h"
 #include "ext-variables-arguments.h"
 #include "ext-variables-operands.h"
+#include "ext-variables-namespaces.h"
 #include "ext-variables-modifiers.h"
 #include "ext-variables-dump.h"
 
@@ -50,6 +51,7 @@ const struct sieve_operation_def *ext_variables_operations[] = {
 const struct sieve_operand_def *ext_variables_operands[] = {
 	&variable_operand, 
 	&match_value_operand,
+	&namespace_variable_operand,
 	&modifier_operand
 };
 

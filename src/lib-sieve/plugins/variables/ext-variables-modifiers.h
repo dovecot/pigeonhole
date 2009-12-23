@@ -7,6 +7,11 @@
 #include "ext-variables-common.h"
 #include "sieve-ext-variables.h"
 
+#define ext_variables_namespace_name(nspc) \
+	(nspc)->object->def->name
+#define ext_variables_namespaces_equal(nspc1, nspc2) \
+	( (nspc1)->def == (nspc2)->def ))
+
 /*
  * Modifier registry
  */

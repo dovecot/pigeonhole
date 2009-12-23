@@ -47,20 +47,20 @@ const struct sieve_operand_def variable_operand = {
 	&variable_interface
 };
 
-void ext_variables_opr_variable_emit
+void sieve_variables_opr_variable_emit
 (struct sieve_binary *sbin, const struct sieve_extension *var_ext, 
 	struct sieve_variable *var) 
 {
 	if ( var->ext == NULL ) {
 		/* Default variable storage */
 		(void) sieve_operand_emit(sbin, var_ext, &variable_operand);
-		(void) sieve_binary_emit_byte(sbin, 0);
+		(void) sieve_binary_emit_byte(sbin, 0); /* Default */
 		(void) sieve_binary_emit_unsigned(sbin, var->index);
 		return;
 	} 
 
 	(void) sieve_operand_emit(sbin, var_ext, &variable_operand);
-	(void) sieve_binary_emit_extension(sbin, var->ext, 1);
+	(void) sieve_binary_emit_extension(sbin, var->ext, 1); /* Extension */
 	(void) sieve_binary_emit_unsigned(sbin, var->index);
 }
 
@@ -198,11 +198,11 @@ const struct sieve_operand_def match_value_operand = {
 	&match_value_interface
 };	
 
-void ext_variables_opr_match_value_emit
-(struct sieve_binary *sbin, const struct sieve_extension *ext, 
+void sieve_variables_opr_match_value_emit
+(struct sieve_binary *sbin, const struct sieve_extension *var_ext, 
 	unsigned int index) 
 {
-	(void) sieve_operand_emit(sbin, ext, &match_value_operand);
+	(void) sieve_operand_emit(sbin, var_ext, &match_value_operand);
 	(void) sieve_binary_emit_unsigned(sbin, index);
 }
 

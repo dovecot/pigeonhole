@@ -14,28 +14,23 @@
 #include <ctype.h>
 
 int ext_variable_name_parse
-(ARRAY_TYPE(ext_variable_name) *vname, const char **str, const char *strend)
+(ARRAY_TYPE(sieve_variable_name) *vname, const char **str, const char *strend)
 {
 	const char *p = *str;
-	int nspace_used = 0;
 				
+	array_clear(vname);
+
 	for (;;) { 
-		struct ext_variable_name *cur_element;
+		struct sieve_variable_name *cur_element;
 		string_t *cur_ident;
 
-		/* Acquire current position in the array of name elements or allocate a new 
-		 * one if this substitution consists of more elements than before.
-		 */
-		if ( nspace_used < (int) array_count(vname) ) {
-			cur_element = array_idx_modifiable
-				(vname, (unsigned int) nspace_used);
-			cur_ident = cur_element->identifier;
-		} else {
-			if ( nspace_used >= SIEVE_VARIABLES_MAX_NAMESPACE_ELEMENTS )
-				return -1;
-			cur_element = array_append_space(vname);
-			cur_ident = cur_element->identifier = t_str_new(32);
-		}
+		/* Acquire current position in the array */
+
+		if ( array_count(vname) >= SIEVE_VARIABLES_MAX_NAMESPACE_ELEMENTS )
+			return -1;
+
+		cur_element = array_append_space(vname);
+		cur_ident = cur_element->identifier = t_str_new(32);
 
 		/* Parse element */
 
@@ -66,7 +61,7 @@ int ext_variable_name_parse
 			/* If a num-variable is first, no more elements can follow because no
 			 * namespace is specified.
 			 */
-			if ( nspace_used == 0 ) {
+			if ( array_count(vname) == 1 ) {
 				*str = p;
 				return 1;
 			}
@@ -74,9 +69,6 @@ int ext_variable_name_parse
 			*str = p;
 			return -1;
 		}
-
-		/* Advance to next name element */		
-		nspace_used++;
 		
 		/* Check whether next name element is present */
 		if ( p < strend && *p == '.' ) 
@@ -86,7 +78,7 @@ int ext_variable_name_parse
 	}
 	
 	*str = p;
-	return nspace_used;
+	return array_count(vname);
 } 
  
 

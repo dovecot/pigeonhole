@@ -29,6 +29,7 @@ extern const struct sieve_command_def tst_string;
 enum ext_variables_operand {
 	EXT_VARIABLES_OPERAND_VARIABLE,
 	EXT_VARIABLES_OPERAND_MATCH_VALUE,
+	EXT_VARIABLES_OPERAND_NAMESPACE_VARIABLE,
 	EXT_VARIABLES_OPERAND_MODIFIER
 };
 
@@ -52,6 +53,7 @@ struct ext_variables_validator_context {
 	bool active;
 	
 	struct sieve_validator_object_registry *modifiers;
+	struct sieve_validator_object_registry *namespaces;
 	
 	struct sieve_variable_scope *main_scope;
 };

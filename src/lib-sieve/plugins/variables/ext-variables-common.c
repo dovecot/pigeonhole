@@ -243,7 +243,8 @@ static inline bool sieve_variable_valid
 }
 
 bool sieve_variable_get_identifier
-(struct sieve_variable_storage *storage, unsigned int index, const char **identifier)
+(struct sieve_variable_storage *storage, unsigned int index, 
+	const char **identifier)
 {
 	struct sieve_variable * const *var;
 	*identifier = NULL;
@@ -316,6 +317,8 @@ bool sieve_variable_assign
 	return TRUE;
 }
 
+
+
 /*
  * AST Context
  */
@@ -372,6 +375,7 @@ ext_variables_validator_context_create
 	
 	ctx = p_new(pool, struct ext_variables_validator_context, 1);
 	ctx->modifiers = sieve_validator_object_registry_create(valdtr);
+	ctx->namespaces = sieve_validator_object_registry_create(valdtr);
 	ctx->main_scope = ext_variables_create_main_scope(this_ext, ast);
 
 	sieve_validator_extension_set_context(valdtr, this_ext, (void *) ctx);

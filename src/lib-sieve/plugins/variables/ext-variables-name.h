@@ -37,21 +37,10 @@
 #include "ext-variables-common.h"
 
 /*
- * Types
- */ 
-
-struct ext_variable_name {
-	string_t *identifier;
-	int num_variable;
-};
-
-ARRAY_DEFINE_TYPE(ext_variable_name, struct ext_variable_name);
-
-/*
  * Variable name parsing
  */
  
 int ext_variable_name_parse
-	(ARRAY_TYPE(ext_variable_name) *vname, const char **str, const char *strend);
+	(ARRAY_TYPE(sieve_variable_name) *vname, const char **str, const char *strend);
 
 #endif /* __EXT_VARIABLES_NAME */
