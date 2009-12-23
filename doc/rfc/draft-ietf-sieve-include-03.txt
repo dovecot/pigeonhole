@@ -3,11 +3,11 @@
 
 Network Working Group                                           C. Daboo
 Internet-Draft                                                  A. Stone
-Expires: September 30, 2009                               March 29, 2009
+Expires: January 30, 2010                                  July 29, 2009
 
 
                 Sieve Email Filtering: Include Extension
-                      draft-ietf-sieve-include-01
+                      draft-ietf-sieve-include-03
 
 Status of this Memo
 
@@ -40,7 +40,7 @@ Status of this Memo
    The list of Internet-Draft Shadow Directories can be accessed at
    http://www.ietf.org/shadow.html.
 
-   This Internet-Draft will expire on September 30, 2009.
+   This Internet-Draft will expire on January 30, 2010.
 
 Copyright Notice
 
@@ -52,9 +52,9 @@ Copyright Notice
 
 
 
-Daboo & Stone          Expires September 30, 2009               [Page 1]
+Daboo & Stone           Expires January 30, 2010                [Page 1]
 
-Internet-Draft          Sieve Extension: Include              March 2009
+Internet-Draft          Sieve Extension: Include               July 2009
 
 
    publication of this document (http://trustee.ietf.org/license-info).
@@ -71,80 +71,127 @@ Abstract
 
 Change History (to be removed prior to publication as an RFC)
 
+   Changes from ietf-02 to ietf-03:
+
+   a.  Setting a variable then calling global on it is an error
+       (something like 'use strict').
+
+   b.  Specify that the 'global' keyword is only available when
+       'variables' has also been required.
+
+   c.  Uploading a script that includes a nonexistent script is not an
+       error at upload time.
+
+   Changes from ietf-01 to ietf-02:
+
+   a.  Require that script names must be constant strings, not subject
+       to variable expansion.
+
+   b.  Try the phrase immediate script instead of current script.
+
+   c.  Clarify that "global 'varname'" and "global.varname" refer to the
+       same variable.
+
+   d.  Drop the requirement the global keywords come after require and
+       before anything else.
+
    Changes from ietf-00 to ietf-01:
+
    a.  Replaced import/export with global.
+
    b.  Added :once modifier to include.
+
    c.  Added global namespace to see if it holds water.
 
    Changes from daboo-06 to ietf-00:
+
+
+
+
+Daboo & Stone           Expires January 30, 2010                [Page 2]
+
+Internet-Draft          Sieve Extension: Include               July 2009
+
+
    a.  None
 
    Changes from -05 to -06:
+
    a.  Aaron Stone joins as author.
+
    b.  Removed | characters from the script examples.
+
    c.  Updated draft references to published RFCs.
 
    Changes from -04 to -05:
+
    a.  Fixed examples.
+
    b.  Relaxed requirement that imported/exported variables be set
        before being used.
 
    Changes from -03 to -04:
+
    a.  Fixed missing 2119 definitions.
+
    b.  Defined interaction with variables through use of import and
        export commands.
 
    Changes from -02 to -03:
+
    a.  Refreshing expired draft (updated for nits).
+
    b.  Syntax -> Usage.
+
    c.  Updated to 3028bis reference.
 
    Changes from -01 to -02:
+
    a.  Minor formatting changes only - refreshing expired draft.
 
    Changes from -00 to -01:
 
-
-
-
-
-Daboo & Stone          Expires September 30, 2009               [Page 2]
-
-Internet-Draft          Sieve Extension: Include              March 2009
-
-
    a.  Added IPR boiler plate.
+
    b.  Re-ordered sections at start to conform to RFC style.
+
    c.  Moved recursion comment into General Considerations section.
+
    d.  Switched to using optional parameter to indicate personal vs
        global.
+
+
+
+
+
+Daboo & Stone           Expires January 30, 2010                [Page 3]
+
+Internet-Draft          Sieve Extension: Include               July 2009
+
+
    e.  Explicitly state that an error occurs when a missing script is
        included.
-
-Open Issues (to be resolved prior to publication as an RFC)
-
-   a.  Interaction with variables (scoping).  Idea 1: use a "global"
-       command to make a variable shared between scripts.  Idea 2: use a
-       "global" variable namespace and no additional commands.
 
 
 Table of Contents
 
-   1.  Introduction and Overview  . . . . . . . . . . . . . . . . . .  4
-   2.  Conventions Used in This Document  . . . . . . . . . . . . . .  4
-   3.  Include Extension  . . . . . . . . . . . . . . . . . . . . . .  4
-     3.1.  General Considerations . . . . . . . . . . . . . . . . . .  4
-     3.2.  Control Structure include  . . . . . . . . . . . . . . . .  5
-     3.3.  Control Structure return . . . . . . . . . . . . . . . . .  8
-     3.4.  Interaction with Variables . . . . . . . . . . . . . . . .  8
-       3.4.1.  Control Structure global . . . . . . . . . . . . . . .  9
-       3.4.2.  Variables Namespace global . . . . . . . . . . . . . . 10
-   4.  Security Considerations  . . . . . . . . . . . . . . . . . . . 10
-   5.  IANA Considerations  . . . . . . . . . . . . . . . . . . . . . 11
-     5.1.  "include" Extension Registration . . . . . . . . . . . . . 11
-   6.  Normative References . . . . . . . . . . . . . . . . . . . . . 11
-   Appendix A.  Acknowledgments . . . . . . . . . . . . . . . . . . . 11
-   Authors' Addresses . . . . . . . . . . . . . . . . . . . . . . . . 11
+   1.  Introduction and Overview  . . . . . . . . . . . . . . . . . .  5
+   2.  Conventions Used in This Document  . . . . . . . . . . . . . .  5
+   3.  Include Extension  . . . . . . . . . . . . . . . . . . . . . .  5
+     3.1.  General Considerations . . . . . . . . . . . . . . . . . .  5
+     3.2.  Control Structure include  . . . . . . . . . . . . . . . .  6
+     3.3.  Control Structure return . . . . . . . . . . . . . . . . . 10
+     3.4.  Interaction with Variables . . . . . . . . . . . . . . . . 10
+       3.4.1.  Control Structure global . . . . . . . . . . . . . . . 10
+       3.4.2.  Variables Namespace global . . . . . . . . . . . . . . 12
+   4.  Security Considerations  . . . . . . . . . . . . . . . . . . . 12
+   5.  IANA Considerations  . . . . . . . . . . . . . . . . . . . . . 13
+     5.1.  "include" Extension Registration . . . . . . . . . . . . . 13
+   6.  References . . . . . . . . . . . . . . . . . . . . . . . . . . 13
+     6.1.  Normative References . . . . . . . . . . . . . . . . . . . 13
+     6.2.  Informative References . . . . . . . . . . . . . . . . . . 13
+   Appendix A.  Acknowledgments . . . . . . . . . . . . . . . . . . . 13
+   Authors' Addresses . . . . . . . . . . . . . . . . . . . . . . . . 13
 
 
 
@@ -164,9 +211,18 @@ Table of Contents
 
 
 
-Daboo & Stone          Expires September 30, 2009               [Page 3]
+
+
+
+
+
+
+
+
+
+Daboo & Stone           Expires January 30, 2010                [Page 4]
 
-Internet-Draft          Sieve Extension: Include              March 2009
+Internet-Draft          Sieve Extension: Include               July 2009
 
 
 1.  Introduction and Overview
@@ -191,6 +247,24 @@ Internet-Draft          Sieve Extension: Include              March 2009
 
    Conventions for notations are as in SIEVE [RFC5228] Section 1.1.
 
+   The following key phrases are used to describe scripts and script
+   execution:
+
+   script
+      a valid Sieve script.
+
+   script execution
+      an instance of a Sieve interpreter invoked for a given message
+      delivery, starting with the user's active script and continuing
+      through any included scripts until the message is delivered.
+
+   immediate script
+      the individual Sieve script file being executed.
+
+   including script
+      the individual Sieve script file that had an include statement
+      which included the immediate script.
+
 
 3.  Include Extension
 
@@ -199,6 +273,14 @@ Internet-Draft          Sieve Extension: Include              March 2009
    Sieve implementations that implement the "include", "return", and
    "global" commands described below have an identifier of "include" for
    use with the capability mechanism.  If any of the "include",
+
+
+
+Daboo & Stone           Expires January 30, 2010                [Page 5]
+
+Internet-Draft          Sieve Extension: Include               July 2009
+
+
    "return", or "global" commands are used in a script, the "include"
    capability MUST be listed in the "require" statement in that script.
 
@@ -217,25 +299,16 @@ Internet-Draft          Sieve Extension: Include              March 2009
 
    Sieve implementations MUST ensure that recursive includes are not
    possible.  For example, if script "A" includes script "B", and script
-
-
-
-Daboo & Stone          Expires September 30, 2009               [Page 4]
-
-Internet-Draft          Sieve Extension: Include              March 2009
-
-
    "B" includes script "A" an error MUST be generated either when the
    script is uploaded to the Sieve repository, or when the script is
    executed.  If such an error is detected whilst processing a Sieve
    script, an implicit "keep" action MUST be executed to prevent loss of
    any messages.
 
-   Sieve implementations MUST handle missing scripts being referenced
-   via an includes in an existing script.  An error MUST be generated
-   when a missing included script is discovered during execution.  If
-   such an error is detected an implicit "keep" action MUST be executed
-   to prevent loss of any messages.
+   Sieve implementations MUST generate an error at execution time if an
+   included script does not exist.  Implementations MUST NOT generate
+   errors for scripts missing at upload time, as this would force an
+   upload ordering requirement upon script authors / generators.
 
    If the Sieve "variables" extension [RFC5229] is present, an issue
    arises with the "scope" of variables defined in scripts that may
@@ -256,8 +329,21 @@ Internet-Draft          Sieve Extension: Include              March 2009
                ONCE = ":once"
 
    The "include" command takes an optional "location" parameter, an
+
+
+
+Daboo & Stone           Expires January 30, 2010                [Page 6]
+
+Internet-Draft          Sieve Extension: Include               July 2009
+
+
    optional ":once" parameter, and a single string argument representing
-   the name of the script to include for processing at that point.
+   the name of the script to include for processing at that point.  It
+   is RECOMMENDED that implementations restrict script names according
+   to [I-D.ietf-sieve-managesieve] Section 1.7.  Implementations MUST
+   NOT allow variables to be expanded into the names of Sieve scripts;
+   in other words, the value MUST be a constant string as defined in
+   VARIABLES [RFC5229], Section 3.
 
    The "location" parameter MUST default to ":personal" if not
    specified.  The "location" has the following meanings:
@@ -265,22 +351,15 @@ Internet-Draft          Sieve Extension: Include              March 2009
    :personal
       Indicates that the named script is stored in the user's own
       personal (private) Sieve repository.
+
    :global
       Indicates that the named script is stored in a site-wide Sieve
       repository, accessible to all users of the Sieve system.
 
-   The ":once" parameter tells the interpreter only to include the Sieve
+   The ":once" parameter tells the interpreter only to include the named
    script if it has not already been included at any other point during
-   the script execution.  If the script has already been included,
+   script execution.  If the script has already been included,
    processing continues immediately following the include command.
-
-
-
-Daboo & Stone          Expires September 30, 2009               [Page 5]
-
-Internet-Draft          Sieve Extension: Include              March 2009
-
-
    Implementations MUST NOT generate an error if an "include :once"
    command names a script whose inclusion would be recursive; in this
    case, the script MUST be considered previously included and therefore
@@ -294,19 +373,27 @@ Internet-Draft          Sieve Extension: Include              March 2009
    The included script MUST be a valid Sieve script, including having
    necessary "require" statements for all optional capabilities used by
    the script.  The scope of a "require" statement in an included script
-   is for that script only, not the including script.  For example, if
-   script "A" includes script "B", and script "B" uses the "fileinto"
-   extension, script "B" must have a "require" statement for "fileinto",
-   irrespective of whether script "A" has one.  In addition, if script
-   "A" does not have a "require" statement for "fileinto", "fileinto"
-   cannot be used anywhere in script "A", even after inclusion of script
-   "B".
+   is for the immediate script only, not the including script.  For
+   example, if script "A" includes script "B", and script "B" uses the
+   "fileinto" extension, script "B" must have a "require" statement for
+   "fileinto", irrespective of whether script "A" has one.  In addition,
+   if script "A" does not have a "require" statement for "fileinto",
+   "fileinto" cannot be used anywhere in script "A", even after
+   inclusion of script "B".
 
    A "stop" command in an included script MUST stop all script
    processing, including the processing of the scripts that include the
-   current one.  The "return" command (described below) stops processing
-   of the current script only, and allows the scripts that include it to
-   continue.
+   immediate one.  The "return" command (described below) stops
+   processing of the immediate script only, and allows the scripts that
+
+
+
+Daboo & Stone           Expires January 30, 2010                [Page 7]
+
+Internet-Draft          Sieve Extension: Include               July 2009
+
+
+   include it to continue.
 
    Examples:
 
@@ -315,6 +402,7 @@ Internet-Draft          Sieve Extension: Include              March 2009
    "default"
 
       This is the default active script that includes several others.
+
 
       require ["include"];
 
@@ -327,14 +415,6 @@ Internet-Draft          Sieve Extension: Include              March 2009
 
       This script special cases some correspondent email addresses and
       makes sure any message containing those addresses are always kept.
-
-
-
-
-
-Daboo & Stone          Expires September 30, 2009               [Page 6]
-
-Internet-Draft          Sieve Extension: Include              March 2009
 
 
       if header :is "From" "boss@example.com"
@@ -351,6 +431,7 @@ Internet-Draft          Sieve Extension: Include              March 2009
       This script does some user-specific spam tests to catch spam
       messages not caught by the site-wide spam tests.
 
+
       require ["reject"];
 
       if header :contains "Subject" "XXXX"
@@ -360,12 +441,21 @@ Internet-Draft          Sieve Extension: Include              March 2009
       elsif header :is "From" "money@example.com"
       {
           reject;
+
+
+
+Daboo & Stone           Expires January 30, 2010                [Page 8]
+
+Internet-Draft          Sieve Extension: Include               July 2009
+
+
       }
 
    Personal script "mailing_lists"
 
       This script looks for messages from different mailing lists and
       files each into a mailbox specific to the mailing list.
+
 
       require ["fileinto"];
 
@@ -385,12 +475,6 @@ Internet-Draft          Sieve Extension: Include              March 2009
       This script does some site-wide spam tests which any user at the
       site can include in their own scripts at a suitable point.  The
       script content is kept up to date by the site administrator.
-
-
-
-Daboo & Stone          Expires September 30, 2009               [Page 7]
-
-Internet-Draft          Sieve Extension: Include              March 2009
 
 
       require ["reject"];
@@ -414,11 +498,18 @@ Internet-Draft          Sieve Extension: Include              March 2009
           include "my_reject_script";
       }
 
+
+
+Daboo & Stone           Expires January 30, 2010                [Page 9]
+
+Internet-Draft          Sieve Extension: Include               July 2009
+
+
 3.3.  Control Structure return
 
       Usage: return
 
-   The "return" command stops processing of the currently included
+   The "return" command stops processing of the immediately included
    script only and returns processing control to the script which
    includes it.  If used in the main script (i.e. not in an included
    script), it has the same effect as the "stop" command, including the
@@ -430,7 +521,7 @@ Internet-Draft          Sieve Extension: Include              March 2009
    In order to avoid problems of variables in an included script
    "overwriting" those from the script that includes it, this
    specification requires that all variables defined in a script MUST be
-   kept "private" to that script by default - i.e. they are not
+   kept "private" to the immediate script by default - i.e. they are not
    "visible" to other scripts.  This ensures that two script authors
    cannot inadvertently cause problems by choosing the same name for a
    variable.
@@ -438,17 +529,9 @@ Internet-Draft          Sieve Extension: Include              March 2009
    However, sometimes there is a need to make a variable defined in one
    script available to others.  This specification defines the new
    command "global" to declare that a variable is shared among scripts.
-   Effectively, two namespaces are defined: one local to the current
+   Effectively, two namespaces are defined: one local to the immediate
    script, and another shared among all scripts.  Implementations MUST
    allow a non-global variable to have the same name as a global
-
-
-
-Daboo & Stone          Expires September 30, 2009               [Page 8]
-
-Internet-Draft          Sieve Extension: Include              March 2009
-
-
    variable but have no interaction between them.
 
 3.4.1.  Control Structure global
@@ -458,23 +541,33 @@ Internet-Draft          Sieve Extension: Include              March 2009
    The "global" command contains a string list argument that defines one
    or more names of variables to be stored in the global variable space.
 
-   The "global" command, if present, MUST be used immediately after any
-   "require" commands (at least one of which will be present listing the
-   "include" extension).  Multiple "global" commands are allowed.  An
-   error occurs if an "global" command appears after a command other
-   than "require" or "global".  Use of the "global" command makes the
-   listed variables immediately available for use in the body of the
-   script that uses it.
+   The "global" command is only available when the script has both
+   "include" and "variables" in its require line.  If the "global"
+   command appears when only "include" or only "variables" has been
+   required, an error MUST be generated when the script is uploaded.
+
+   If a "global" command is given the name of a variable that has
+   previously been defined in the immediate script with "set", an error
+   MUST be generated either when the script is uploaded or at execution
+   time.
 
    If a "global" command lists a variable that has not been defined in
-   the global namespace, the name of the variable is nonetheless marked
-   as global, and any subsequent "set" command will set the value of the
+   the global namespace, the name of the variable is now marked as
+
+
+
+Daboo & Stone           Expires January 30, 2010               [Page 10]
+
+Internet-Draft          Sieve Extension: Include               July 2009
+
+
+   global, and any subsequent "set" command will set the value of the
    variable in global scope.
 
    Interpretation of a string containing a variable marked as global,
    but without any value set, SHALL behave as any other access to an
-   unknown variable, as specified in Section 3 of [RFC5229] (that is,
-   the unknown variable reference evaltuates to an empty string).
+   unknown variable, as specified in VARIABLES [RFC5229], Section 3
+   (i.e., evaluates to an empty string).
 
    Example:
 
@@ -497,14 +590,6 @@ Internet-Draft          Sieve Extension: Include              March 2009
           stop;
       }
 
-
-
-
-Daboo & Stone          Expires September 30, 2009               [Page 9]
-
-Internet-Draft          Sieve Extension: Include              March 2009
-
-
       # If nothing matched, the message is implicitly kept.
 
                                Active script
@@ -520,10 +605,23 @@ Internet-Draft          Sieve Extension: Include              March 2009
 
                             spam_filter_script
 
+
+
+
+
+
+
+
+Daboo & Stone           Expires January 30, 2010               [Page 11]
+
+Internet-Draft          Sieve Extension: Include               July 2009
+
+
 3.4.2.  Variables Namespace global
 
    In addition to the "global" command, this document defines the
-   variables namespace "global", per [RFC5229], Section 3.
+   variables namespace "global", as specified in VARIABLES [RFC5229],
+   Section 3.
 
    Example:
 
@@ -531,10 +629,13 @@ Internet-Draft          Sieve Extension: Include              March 2009
 
       set "global.i_am_on_vacation" "1";
 
-   [[[ Does it make sense to have this form instead of the "global"
-   command?  Does it make sense to have both?  If both, it would make
-   sense that the two syntaxes reference the same set of variables.  By
-   way of example:
+   Variables declared global and variables accessed via the global
+   namespace MUST be one and the same.  In the following example script,
+   we see the variable "i_am_on_vacation" used in a "global" command,
+   and again with the "global." namespace.  Consider these as two
+   syntaxes with identical meaning.
+
+   Example:
 
       require ["variables", "include"];
       global "i_am_on_vacation";
@@ -546,24 +647,30 @@ Internet-Draft          Sieve Extension: Include              March 2009
           vacation "It's true, I am on vacation."
       }
 
-   ]]]
-
 
 4.  Security Considerations
 
    Sieve implementations MUST ensure adequate security for the global
    script repository to prevent unauthorized changes to global scripts.
 
+   Sieve implementations MUST ensure that script names are checked for
+   validity and proper permissions prior to inclusion, in order to
+   prevent a malicious user from gaining acess to files accessible to
+   the mail server software that should not be accessible to the user.
+
+   Beyond these, the "include" extension does not raise any security
+   considerations that are not present in the base SIEVE [RFC5228]
+   document and the VARIABLES [RFC5229] extension.
 
 
-Daboo & Stone          Expires September 30, 2009              [Page 10]
+
+
+
+
+
+Daboo & Stone           Expires January 30, 2010               [Page 12]
 
-Internet-Draft          Sieve Extension: Include              March 2009
-
-
-   Beyond that, the "include" extension does not raise any security
-   considerations that are not present in the base Sieve protocol, and
-   these issues are discussed in Sieve.
+Internet-Draft          Sieve Extension: Include               July 2009
 
 
 5.  IANA Considerations
@@ -574,13 +681,16 @@ Internet-Draft          Sieve Extension: Include              March 2009
 5.1.  "include" Extension Registration
 
    Capability name: include
-   Description:     add the "include" command to execute other Sieve
-                    scripts.
+   Description:     adds the "include" command to execute other Sieve
+                    scripts, and the "global" command and "global" variables
+                    namespace to access variables shared among included scripts.
    RFC number:      this RFC
    Contact address: the Sieve discussion list <ietf-mta-filters@imc.org>
 
 
-6.  Normative References
+6.  References
+
+6.1.  Normative References
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119, March 1997.
@@ -591,11 +701,32 @@ Internet-Draft          Sieve Extension: Include              March 2009
    [RFC5229]  Homme, K., "Sieve Email Filtering: Variables Extension",
               RFC 5229, January 2008.
 
+6.2.  Informative References
+
+   [I-D.ietf-sieve-managesieve]
+              Martin, T. and A. Melnikov, "A Protocol for Remotely
+              Managing Sieve Scripts", draft-ietf-sieve-managesieve-09
+              (work in progress), January 2009.
+
 
 Appendix A.  Acknowledgments
 
-   Thanks to Ken Murchison, Rob Siemborski, Alexey Melnikov, Marc Mutz
-   and Kjetil Torgrim Homme for comments and corrections.
+   Thanks to Ken Murchison, Rob Siemborski, Alexey Melnikov, Marc Mutz,
+   Kjetil Torgrim Homme, Stephan Bosch, Arnt Gulbrandsen, Barry Leiba,
+   and Jeffrey Hutzelman for comments and corrections.
+
+
+
+
+
+
+
+
+
+
+Daboo & Stone           Expires January 30, 2010               [Page 13]
+
+Internet-Draft          Sieve Extension: Include               July 2009
 
 
 Authors' Addresses
@@ -607,10 +738,47 @@ Authors' Addresses
 
    Aaron Stone
 
-   Email: aaron@serendipity.palo-alto.ca.us
+   Email: aaron@serendipity.cx
 
 
 
 
-Daboo & Stone          Expires September 30, 2009              [Page 11]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Daboo & Stone           Expires January 30, 2010               [Page 14]
 
