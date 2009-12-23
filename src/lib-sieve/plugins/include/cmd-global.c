@@ -111,29 +111,19 @@ static bool cmd_global_validate
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct sieve_command *prev = sieve_command_prev(cmd);
 
-	/* Check valid command placement */
-	if ( !sieve_command_is_toplevel(cmd) ||
-		( !sieve_command_is_first(cmd) && prev != NULL &&
-			!sieve_command_is(prev, cmd_require) ) ) {
-
-		if ( sieve_command_is(cmd, cmd_global) ) {
-			if ( !sieve_command_is(prev, cmd_global) ) {
-				sieve_command_validate_error(valdtr, cmd, 
-					"a global command can only be placed at top level "
-					"at the beginning of the file after any require or "
-					"other global commands");
-				return FALSE;
-			}
-		} else {
-			if ( !sieve_command_is(prev, cmd_import) && 
-				!sieve_command_is(prev, cmd_export) ) {
-				sieve_command_validate_error(valdtr, cmd,
-					"the DEPRECATED %s command can only be placed at top level "
-					"at the beginning of the file after any require or "
-					"import/export commands",
-					sieve_command_identifier(cmd));
-				return FALSE;
-				}
+	/* DEPRECATED: Check valid command placement */
+	if ( !sieve_command_is(cmd, cmd_global) ) {
+		if ( !sieve_command_is_toplevel(cmd) ||
+			( !sieve_command_is_first(cmd) && prev != NULL &&
+				!sieve_command_is(prev, cmd_require) && 
+				!sieve_command_is(prev, cmd_import) && 
+				!sieve_command_is(prev, cmd_export) ) ) {
+			sieve_command_validate_error(valdtr, cmd,
+				"the DEPRECATED %s command can only be placed at top level "
+				"at the beginning of the file after any require or "
+				"import/export commands",
+				sieve_command_identifier(cmd));
+			return FALSE;
 		}
 	}
 

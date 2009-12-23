@@ -32,27 +32,37 @@ struct sieve_variable *ext_include_variable_import_global
 		ext_include_get_ast_context(this_ext, ast);
 	struct ext_include_context *ectx = ext_include_get_context(this_ext);
 	struct sieve_variable_scope *main_scope;
-	struct sieve_variable *var = NULL;
+	struct sieve_variable *global_var = NULL, *local_var;
 
 	/* Sanity safeguard */	
 	i_assert ( ctx->global_vars != NULL );
 
 	/* Get/Declare the variable in the global scope */
-	var = sieve_variable_scope_get_variable(ctx->global_vars, variable, TRUE);
+	global_var = sieve_variable_scope_get_variable
+		(ctx->global_vars, variable, TRUE);
 
 	/* Check whether scope is over its size limit */
-	if ( var == NULL ) {
+	if ( global_var == NULL ) {
 		sieve_command_validate_error(valdtr, cmd,
 			"declaration of new global variable '%s' exceeds the limit "
 			"(max variables: %u)", 
 			variable, SIEVE_VARIABLES_MAX_SCOPE_SIZE);
+		return NULL;
 	}
 	
 	/* Import the global variable into the local script scope */
 	main_scope = sieve_ext_variables_get_main_scope(ectx->var_ext, valdtr);
-	(void)sieve_variable_scope_import(main_scope, var);
 
-	return var;	
+	local_var = sieve_variable_scope_get_variable(main_scope, variable, FALSE);
+	if ( local_var != NULL && local_var->ext != this_ext ) {
+		/* FIXME: indicate location of conflicting set statement */
+		sieve_command_validate_error(valdtr, cmd,
+			"declaration of new global variable '%s' conflicts with earlier local "
+			"use", variable);
+		return NULL;
+	}
+
+	return sieve_variable_scope_import(main_scope, global_var);
 }
 
 /*
