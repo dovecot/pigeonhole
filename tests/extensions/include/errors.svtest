@@ -75,3 +75,30 @@ test "Variables" {
 	}
 }
 
+/*
+ * Global variable namespace
+ */
+
+test "Global Namespace" {
+	if test_script_compile "errors/global-namespace.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "4" {
+		test_fail "wrong number of errors reported";
+	}
+}
+
+/*
+ * Invalid script names
+ */
+
+test "Invalid Script Names" {
+        if test_script_compile "errors/scriptname.sieve" {
+                test_fail "compile should have failed";
+        }
+
+        if not test_error :count "eq" :comparator "i;ascii-numeric" "8" {
+                test_fail "wrong number of errors reported";
+        }
+}
