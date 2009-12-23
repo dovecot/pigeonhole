@@ -1028,7 +1028,7 @@ static bool act_vacation_commit
 		while ( *hdsp != NULL ) {
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
 				sieve_result_log(aenv, 
-					"discardig vacation response to auto-submitted message from <%s>", 
+					"discarding vacation response to auto-submitted message from <%s>", 
 					str_sanitize(sender, 128));	
 					return TRUE;				 
 			}
