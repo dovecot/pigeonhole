@@ -30,6 +30,13 @@ bool ext_include_variables_load
 		struct sieve_variable_scope **global_vars_r);
 bool ext_include_variables_dump
 	(struct sieve_dumptime_env *denv, struct sieve_variable_scope *global_vars);
+
+/*
+ * Validation
+ */
+
+void ext_include_variables_global_namespace_init
+	(const struct sieve_extension *this_ext, struct sieve_validator *valdtr);
 		
 #endif /* __EXT_INCLUDE_VARIABLES_H */
 

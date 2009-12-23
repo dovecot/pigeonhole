@@ -128,7 +128,7 @@ static bool cmd_global_validate
 			if ( !sieve_command_is(prev, cmd_import) && 
 				!sieve_command_is(prev, cmd_export) ) {
 				sieve_command_validate_error(valdtr, cmd,
-					"the DEPRICATED %s command can only be placed at top level "
+					"the DEPRECATED %s command can only be placed at top level "
 					"at the beginning of the file after any require or "
 					"import/export commands",
 					sieve_command_identifier(cmd));

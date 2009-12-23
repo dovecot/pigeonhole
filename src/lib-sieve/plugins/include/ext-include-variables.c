@@ -150,3 +150,107 @@ bool ext_include_variables_dump
 
 	return TRUE;
 }
+
+/*
+ * Global variables namespace
+ */
+
+bool vnspc_global_variables_validate
+	(struct sieve_validator *valdtr, const struct sieve_variables_namespace *nspc,
+		struct sieve_ast_argument *arg, struct sieve_command *cmd, 
+		ARRAY_TYPE(sieve_variable_name) *var_name, void **var_data, 
+		bool assignment);
+bool vnspc_global_variables_generate
+	(const struct sieve_codegen_env *cgenv, 
+		const struct sieve_variables_namespace *nspc,
+		struct sieve_ast_argument *arg, struct sieve_command *cmd, void *var_data);
+
+static const struct sieve_variables_namespace_def global_variables_namespace = {
+	SIEVE_OBJECT("global", NULL, 0),
+	vnspc_global_variables_validate,  
+	vnspc_global_variables_generate,
+	NULL, NULL
+};
+
+
+bool vnspc_global_variables_validate
+(struct sieve_validator *valdtr, 
+	const struct sieve_variables_namespace *nspc, struct sieve_ast_argument *arg,
+	struct sieve_command *cmd ATTR_UNUSED, 
+	ARRAY_TYPE(sieve_variable_name) *var_name, void **var_data, 
+	bool assignment ATTR_UNUSED)
+{
+	const struct sieve_extension *this_ext = SIEVE_OBJECT_EXTENSION(nspc);
+	struct sieve_ast *ast = arg->ast;
+	struct ext_include_ast_context *ctx = 
+		ext_include_get_ast_context(this_ext, ast);
+	struct sieve_variable *var = NULL;
+	const struct sieve_variable_name *name_element;
+	const char *variable;
+
+	/* Sanity safeguard */	
+	i_assert ( ctx->global_vars != NULL );
+
+	/* Check variable name */
+
+	if ( array_count(var_name) != 2 ) {
+		sieve_argument_validate_error(valdtr, arg, 
+			"invalid variable name within global namespace: "
+			"encountered sub-namespace");
+		return FALSE;
+	}
+
+	name_element = array_idx(var_name, 1);
+	if ( name_element->num_variable >= 0 ) {
+		sieve_argument_validate_error(valdtr, arg, 
+			"invalid variable name within global namespace: "
+			"encountered numeric variable name");
+		return FALSE;
+	}
+	
+	variable = str_c(name_element->identifier);
+
+	/* Get/Declare the variable in the global scope */
+
+	var = sieve_variable_scope_get_variable(ctx->global_vars, variable, TRUE);
+
+	if ( var == NULL ) {
+		sieve_argument_validate_error(valdtr, arg, 
+			"(implicit) declaration of new global variable '%s' exceeds the limit "
+			"(max variables: %u)", variable, 
+			SIEVE_VARIABLES_MAX_SCOPE_SIZE);
+		return FALSE;
+	}
+	
+	*var_data = (void *) var;
+
+	return TRUE;
+}
+
+bool vnspc_global_variables_generate
+(const struct sieve_codegen_env *cgenv, 
+	const struct sieve_variables_namespace *nspc,	
+	struct sieve_ast_argument *arg ATTR_UNUSED,	
+	struct sieve_command *cmd ATTR_UNUSED, void *var_data)
+{
+	const struct sieve_extension *this_ext = SIEVE_OBJECT_EXTENSION(nspc);
+	struct ext_include_context *ectx = ext_include_get_context(this_ext);
+
+	struct sieve_variable *var = (struct sieve_variable *) var_data;
+	
+	sieve_variables_opr_variable_emit(cgenv->sbin, ectx->var_ext, var);
+
+	return TRUE;
+}
+
+void ext_include_variables_global_namespace_init
+(const struct sieve_extension *this_ext, struct sieve_validator *valdtr)
+{
+	struct ext_include_context *ectx = ext_include_get_context(this_ext);
+
+	sieve_variables_namespace_register
+		(ectx->var_ext, valdtr, this_ext, &global_variables_namespace);
+}
+
+
+

@@ -464,7 +464,8 @@ bool ext_include_generate_include
 		/* Validate */
 		if ( !sieve_validate(ast, ehandler) ) {
 			sieve_command_generate_error(gentr, cmd, 
-				"failed to validate included script '%s'", str_sanitize(script_name, 80));
+				"failed to validate included script '%s'", 
+				str_sanitize(script_name, 80));
 	 		sieve_ast_unref(&ast);
 	 		return FALSE;
 	 	}
@@ -487,7 +488,9 @@ bool ext_include_generate_include
 			
 			if ( sbin != NULL )		
 				(void) sieve_binary_block_set_active(sbin, this_block_id, NULL); 	
+
 			sieve_generator_free(&subgentr);
+
 		} else {
 			sieve_sys_error("include: failed to activate binary  block %d for "
 				"generating code for the included script", inc_block_id);

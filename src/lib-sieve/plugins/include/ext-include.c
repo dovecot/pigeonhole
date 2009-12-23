@@ -31,6 +31,7 @@
 
 #include "ext-include-common.h"
 #include "ext-include-binary.h"
+#include "ext-include-variables.h"
 
 /* 
  * Operations 
@@ -102,16 +103,19 @@ static void ext_include_unload
 }
 
 static bool ext_include_validator_load
-(const struct sieve_extension *ext, struct sieve_validator *validator)
+(const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
 	/* Register new commands */
-	sieve_validator_register_command(validator, ext, &cmd_include);
-	sieve_validator_register_command(validator, ext, &cmd_return);
-	sieve_validator_register_command(validator, ext, &cmd_global);
+	sieve_validator_register_command(valdtr, ext, &cmd_include);
+	sieve_validator_register_command(valdtr, ext, &cmd_return);
+	sieve_validator_register_command(valdtr, ext, &cmd_global);
 
 	/* DEPRICATED */
-	sieve_validator_register_command(validator, ext, &cmd_import);
-	sieve_validator_register_command(validator, ext, &cmd_export);
+	sieve_validator_register_command(valdtr, ext, &cmd_import);
+	sieve_validator_register_command(valdtr, ext, &cmd_export);
+
+	/* Initialize global variables namespace */
+	ext_include_variables_global_namespace_init(ext, valdtr);
 
 	return TRUE;
 }	
