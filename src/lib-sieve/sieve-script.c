@@ -9,6 +9,7 @@
 #include "eacces-error.h"
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-error.h"
 
 #include "sieve-script-private.h"
@@ -32,9 +33,14 @@ bool sieve_script_name_is_valid(const char *scriptname)
 	ARRAY_TYPE(unichars) uni_name;
 	unsigned int count, i;
 	const unichar_t *name_chars;
+	size_t namelen = strlen(scriptname);
+
+	/* Check maximum length */
+	if ( namelen > SIEVE_MAX_SCRIPT_NAME_LEN )
+		return FALSE;
 
 	/* Intialize array for unicode characters */
-	t_array_init(&uni_name, strlen(scriptname)* 4);
+	t_array_init(&uni_name, namelen * 4);
 
 	/* Convert UTF-8 to UCS4/UTF-32 */
 	if ( uni_utf8_to_ucs4(scriptname, &uni_name) < 0 )
@@ -354,6 +360,12 @@ struct istream *sieve_script_open
 		if ( !S_ISREG(st.st_mode) ) {
 			sieve_critical(script->ehandler, script->path,
 				"sieve script file '%s' is not a regular file", script->path);
+			result = NULL;
+		} else if ( script->svinst->max_script_size > 0 && 
+			st.st_size > script->svinst->max_script_size ) {
+			sieve_error(script->ehandler, script->basename,
+				"sieve script is too large (max %"PRIuSIZE_T" bytes)",
+				script->svinst->max_script_size);
 			result = NULL;
 		} else {
 			result = script->stream = 

@@ -153,6 +153,14 @@ int sieve_multiscript_finish
 		bool *keep);
 
 /*
+ * Configured limits
+ */
+
+unsigned int sieve_max_redirects(struct sieve_instance *svinst);
+unsigned int sieve_max_actions(struct sieve_instance *svinst);
+size_t sieve_max_script_size(struct sieve_instance *svinst);
+
+/*
  * Script directory
  */
 

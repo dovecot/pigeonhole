@@ -42,6 +42,7 @@ struct sieve_instance *sieve_init
 {
 	struct sieve_instance *svinst;
 	unsigned long long int uint_setting;
+	size_t size_setting;
 	pool_t pool;
 
 	/* Create Sieve engine instance */
@@ -53,8 +54,14 @@ struct sieve_instance *sieve_init
 
 	/* Read limits from configuration */
 
+	svinst->max_script_size = SIEVE_DEFAULT_MAX_SCRIPT_SIZE;
 	svinst->max_actions = SIEVE_DEFAULT_MAX_ACTIONS;
 	svinst->max_redirects = SIEVE_DEFAULT_MAX_REDIRECTS;
+
+	if ( sieve_get_size_setting
+		(svinst, "sieve_max_script_size", &size_setting) ) {
+		svinst->max_script_size = size_setting;
+	}
 	
 	if ( sieve_get_uint_setting
 		(svinst, "sieve_max_actions", &uint_setting) ) {
@@ -563,6 +570,25 @@ int sieve_multiscript_finish(struct sieve_multiscript **mscript,
 }
 
 /*
+ * Configured Limits
+ */
+
+unsigned int sieve_max_redirects(struct sieve_instance *svinst)
+{
+	return svinst->max_redirects;
+}
+
+unsigned int sieve_max_actions(struct sieve_instance *svinst)
+{
+	return svinst->max_actions;
+}
+
+size_t sieve_max_script_size(struct sieve_instance *svinst)
+{
+	return svinst->max_script_size;
+}
+
+/*
  * Script directory
  */
 
@@ -651,5 +677,6 @@ void sieve_directory_close(struct sieve_directory **sdir)
 		
 	*sdir = NULL;
 }
+
 
 

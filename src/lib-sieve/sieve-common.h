@@ -147,6 +147,7 @@ struct sieve_instance {
 	struct sieve_extension_registry *ext_reg;
 
 	/* Limits */
+	size_t max_script_size;
 	unsigned int max_actions;
 	unsigned int max_redirects;
 };

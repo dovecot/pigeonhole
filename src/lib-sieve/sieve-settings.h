@@ -29,6 +29,10 @@ bool sieve_get_int_setting
 (struct sieve_instance *svinst, const char *identifier,
 	long long int *value_r);
 
+bool sieve_get_size_setting
+(struct sieve_instance *svinst, const char *identifier,
+	size_t *value_r);
+
 /*
  * Home directory
  */
