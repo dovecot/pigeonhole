@@ -14,6 +14,7 @@
 #include "sieve.h"
 
 #include "lda-sieve-plugin.h"
+#include "lda-sieve-log.h"
 
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -566,8 +567,8 @@ static int lda_sieve_run
 			(srctx.userlog, LDA_SIEVE_MAX_USER_ERRORS);
 	}
 
-	srctx.master_ehandler = 
-		sieve_master_ehandler_create(LDA_SIEVE_MAX_SYSTEM_ERRORS);
+	srctx.master_ehandler = lda_sieve_log_ehandler_create
+		(mdctx, LDA_SIEVE_MAX_SYSTEM_ERRORS);
 	sieve_error_handler_accept_infolog(srctx.master_ehandler, TRUE);
 
 	/* Collect necessary message data */
