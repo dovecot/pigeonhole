@@ -362,7 +362,7 @@ struct istream *sieve_script_open
 				"sieve script file '%s' is not a regular file", script->path);
 			result = NULL;
 		} else if ( script->svinst->max_script_size > 0 && 
-			st.st_size > script->svinst->max_script_size ) {
+			(uoff_t)st.st_size > script->svinst->max_script_size ) {
 			sieve_error(script->ehandler, script->basename,
 				"sieve script is too large (max %"PRIuSIZE_T" bytes)",
 				script->svinst->max_script_size);
