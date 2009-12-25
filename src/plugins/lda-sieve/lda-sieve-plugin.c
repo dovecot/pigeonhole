@@ -569,6 +569,8 @@ static int lda_sieve_run
 
 	srctx.master_ehandler = lda_sieve_log_ehandler_create
 		(mdctx, LDA_SIEVE_MAX_SYSTEM_ERRORS);
+	sieve_system_ehandler_set(srctx.master_ehandler);
+
 	sieve_error_handler_accept_infolog(srctx.master_ehandler, TRUE);
 
 	/* Collect necessary message data */
@@ -623,8 +625,11 @@ static int lda_sieve_run
 
 	/* Clean up */
 
+
 	if ( srctx.user_ehandler != NULL )
 		sieve_error_handler_unref(&srctx.user_ehandler);
+
+	sieve_system_ehandler_reset();
 	sieve_error_handler_unref(&srctx.master_ehandler);
 
 	/* Deinitialize Sieve engine */
