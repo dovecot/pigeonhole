@@ -22,10 +22,10 @@ struct lda_sieve_log_ehandler {
 	struct mail_deliver_context *mdctx;
 };
 
-typedef void (*log_func_t)(const char *fmt, ...) ATTR_FORMAT(1, 2)
+typedef void (*log_func_t)(const char *fmt, ...) ATTR_FORMAT(1, 2);
 
 static void lda_sieve_vlog
-(struct sieve_error_handler *_ehandler, log_func_t *log_func,
+(struct sieve_error_handler *_ehandler, log_func_t log_func,
 	const char *location, const char *fmt, va_list args) 
 {
 	struct lda_sieve_log_ehandler *ehandler =
@@ -44,7 +44,7 @@ static void lda_sieve_vlog
 	if ( location != NULL && *location != '\0' )
 		str_printfa(str, "%s: ", location);
 
-	str_vprintfa(str, fmt, args)
+	str_vprintfa(str, fmt, args);
 
 	log_func("%s", str_c(str));
 }

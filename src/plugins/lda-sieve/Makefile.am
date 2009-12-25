@@ -16,7 +16,9 @@ lib90_sieve_plugin_la_LIBADD = \
 	$(top_srcdir)/src/lib-sieve/libdovecot-sieve.la
 
 lib90_sieve_plugin_la_SOURCES = \
+	lda-sieve-log.c \
 	lda-sieve-plugin.c 
 
 noinst_HEADERS = \
+	lda-sieve-log.h \
 	lda-sieve-plugin.h
