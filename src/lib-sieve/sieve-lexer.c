@@ -43,6 +43,7 @@ inline static void sieve_lexer_warning
 
 struct sieve_lexer {
 	pool_t pool;
+	struct sieve_instance *svinst;
 
 	struct sieve_script *script;
 	struct istream *input;
@@ -66,11 +67,24 @@ struct sieve_lexer *sieve_lexer_create
 {
 	pool_t pool;
 	struct sieve_lexer *lexer;
+	struct sieve_instance *svinst = sieve_script_svinst(script);
 	struct istream *stream;
-	
+	const struct stat *st;
+
+	/* Open script as stream */
 	stream = sieve_script_open(script, NULL);
 	if ( stream == NULL )
 		return NULL;
+
+	/* Check script size */
+	st = i_stream_stat(stream, TRUE);
+	if ( st != NULL && st->st_size > 0 && svinst->max_script_size > 0 &&
+		(uoff_t)st->st_size > svinst->max_script_size ) {
+		sieve_error(ehandler, sieve_script_name(script),
+			"sieve script is too large (max %"PRIuSIZE_T" bytes)",
+			svinst->max_script_size);
+		return NULL;
+	}
 	
 	pool = pool_alloconly_create("sieve_lexer", 1024);	
 	lexer = p_new(pool, struct sieve_lexer, 1);

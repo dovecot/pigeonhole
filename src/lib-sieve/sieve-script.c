@@ -318,6 +318,11 @@ struct sieve_instance *sieve_script_svinst(const struct sieve_script *script)
 	return script->svinst;
 }
 
+size_t sieve_script_size(const struct sieve_script *script)
+{
+	return script->st.st_size;
+}
+
 /* 
  * Stream manageement 
  */
@@ -360,12 +365,6 @@ struct istream *sieve_script_open
 		if ( !S_ISREG(st.st_mode) ) {
 			sieve_critical(script->ehandler, script->path,
 				"sieve script file '%s' is not a regular file", script->path);
-			result = NULL;
-		} else if ( script->svinst->max_script_size > 0 && 
-			(uoff_t)st.st_size > script->svinst->max_script_size ) {
-			sieve_error(script->ehandler, script->basename,
-				"sieve script is too large (max %"PRIuSIZE_T" bytes)",
-				script->svinst->max_script_size);
 			result = NULL;
 		} else {
 			result = script->stream = 

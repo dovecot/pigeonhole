@@ -51,6 +51,7 @@ const char *sieve_script_dirpath(const struct sieve_script *script);
 mode_t sieve_script_permissions(const struct sieve_script *script);
 
 struct sieve_instance *sieve_script_svinst(const struct sieve_script *script);
+size_t sieve_script_size(const struct sieve_script *script);
 
 /* 
  * Stream management 
