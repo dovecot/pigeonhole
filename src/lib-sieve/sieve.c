@@ -5,6 +5,7 @@
 #include "str.h"
 #include "istream.h"
 #include "buffer.h"
+#include "eacces-error.h"
 
 #include "sieve-limits.h"
 #include "sieve-settings.h"
@@ -605,14 +606,28 @@ struct sieve_directory *sieve_directory_open(const char *path)
 	struct stat st;
 
 	/* Specified path can either be a regular file or a directory */
-	if ( stat(path, &st) != 0 )
+	if ( stat(path, &st) != 0 ) {
+		switch ( errno ) {
+		case ENOENT:
+			break;
+		case EACCES:
+			sieve_sys_error("failed to open sieve dir: %s",
+				eacces_error_get("stat", path));
+			break;
+		default:
+			sieve_sys_error("failed to open sieve dir: "
+				"stat(%s) failed: %m", path);
+			break;
+		}
 		return NULL;
+	}
 
 	if ( S_ISDIR(st.st_mode) ) {
 	 	
 		/* Open the directory */
 		if ( (dirp = opendir(path)) == NULL ) {
-			sieve_sys_error("opendir(%s) failed: %m", path);
+			sieve_sys_error("failed to open sieve dir: "
+				"opendir(%s) failed: %m", path);
 			return NULL;		
 		}
 	
@@ -642,7 +657,8 @@ const char *sieve_directory_get_scriptfile(struct sieve_directory *sdir)
 			errno = 0;
 			if ( (dp = readdir(sdir->dirp)) == NULL ) {
 				if ( errno != 0 ) { 
-					sieve_sys_error("readdir(%s) failed: %m", sdir->path);
+					sieve_sys_error("failed to read sieve dir: "
+						"readdir(%s) failed: %m", sdir->path);
 					continue;
 				} else 
 					return NULL;
@@ -673,7 +689,8 @@ void sieve_directory_close(struct sieve_directory **sdir)
 {
 	/* Close the directory */
 	if ( (*sdir)->dirp != NULL && closedir((*sdir)->dirp) < 0 ) 
-		sieve_sys_error("closedir(%s) failed: %m", (*sdir)->path);
+		sieve_sys_error("failed to close sieve dir: "
+			"closedir(%s) failed: %m", (*sdir)->path);
 		
 	*sdir = NULL;
 }

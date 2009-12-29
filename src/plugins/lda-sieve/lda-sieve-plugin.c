@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "array.h"
 #include "home-expand.h"
+#include "eacces-error.h"
 #include "mail-storage.h"
 #include "mail-deliver.h"
 #include "mail-user.h"
@@ -659,16 +660,26 @@ static int lda_sieve_deliver_mail
 
 		if ( user_script != NULL && stat(user_script, &st) < 0 ) {
 
-			if (errno != ENOENT)
-				sieve_sys_error("stat(%s) failed: %m "
-					"(using global script path in stead)", user_script);
-			else if ( debug )
-				sieve_sys_debug("local script path %s doesn't exist "
-					"(using global script path in stead)", user_script);
+			switch ( errno ) {
+			case ENOENT:
+				if (getenv("DEBUG") != NULL)
+					sieve_sys_info("user's script path %s doesn't exist "
+						"(using global script path in stead)", user_script);
+				break;
+			case EACCES:
+				sieve_sys_error("failed to stat user's sieve script: %s "
+					"(using global script path in stead)",
+					eacces_error_get("stat", user_script));
+				break;
+			default:
+				sieve_sys_error("failed to stat user's sieve script: "
+					"stat(%s) failed: %m (using global script path in stead)",
+					user_script);
+				break;
+			}
 
 			user_script = NULL;
 		}
-
 
 		if ( debug ) {
 			const char *script = user_script == NULL ? default_script : user_script;

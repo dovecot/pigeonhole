@@ -161,14 +161,22 @@ struct sieve_script *sieve_script_init
 		/* First obtain stat data from the system */
 		
 		if ( (ret=lstat(path, &st)) < 0 ) {
-			if ( errno == ENOENT ) {
+			switch ( errno ) {
+			case ENOENT:
 				if ( exists_r == NULL ) 
 					sieve_error(ehandler, basename, "sieve script does not exist");
 				else
 					*exists_r = FALSE;
-			} else
+				break;
+			case EACCES:
+				sieve_critical(ehandler, basename, 
+					"failed to stat sieve script: %s",
+					eacces_error_get("lstat", path));
+				break;
+            default:
 				sieve_critical(ehandler, basename, 
 					"failed to stat sieve script: lstat(%s) failed: %m", path);
+			}
 
 			script = NULL;
 			ret = 1;
@@ -180,14 +188,23 @@ struct sieve_script *sieve_script_init
 			/* Only create/init the object if it stat()s without problems */
 			if (S_ISLNK(st.st_mode)) {
 				if ( (ret=stat(path, &st)) < 0 ) { 
-					if ( errno == ENOENT ) {
+					switch ( errno ) {
+					case ENOENT:
 						if ( exists_r == NULL )
 							sieve_error(ehandler, basename, "sieve script does not exist");
 						else
 							*exists_r = FALSE;
-					} else
+						break;
+					case EACCES:
+						sieve_critical(ehandler, basename, 
+							"failed to stat sieve script: %s",
+							eacces_error_get("stat", path));
+						break;
+            		default:
 						sieve_critical(ehandler, basename, 
 							"failed to stat sieve script: stat(%s) failed: %m", path);
+						break;
+					}
 
 					script = NULL;	
 					ret = 1;
@@ -338,20 +355,24 @@ struct istream *sieve_script_open
 		*deleted_r = FALSE;
 
 	if ( (fd=open(script->path, O_RDONLY)) < 0 ) {
-		if ( errno == ENOENT ) {
+		switch( errno ) {
+		case ENOENT:
 			if ( deleted_r == NULL ) 
 				/* Not supposed to occur, create() does stat already */
 				sieve_error(script->ehandler, script->basename, 
 					"sieve script does not exist");
 			else 
 				*deleted_r = TRUE;
-		} else if ( errno == EACCES ) {
+			break;
+		case EACCES:
 			sieve_critical(script->ehandler, script->path,
 				"failed to open sieve script: %s",
 				eacces_error_get("open", script->path));
-		} else {
+			break;
+		default:
 			sieve_critical(script->ehandler, script->path, 
 				"failed to open sieve script: open(%s) failed: %m", script->path);
+			break;
 		}
 		return NULL;
 	}	
