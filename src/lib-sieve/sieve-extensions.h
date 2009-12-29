@@ -24,7 +24,7 @@ struct sieve_extension_def {
 	const char *name;
 
 	/* Registration */		
-	bool (*load)(const struct sieve_extension *ext, void **);
+	bool (*load)(const struct sieve_extension *ext, void **context);
 	void (*unload)(const struct sieve_extension *ext);
 
 	/* Compilation */
@@ -78,6 +78,8 @@ struct sieve_extension {
 
 #define sieve_extension_name(ext) \
 	(ext)->def->name
+#define sieve_extension_is(ext, definition) \
+	( (ext)->def == &(definition) )
 
 /* 
  * Defining opcodes and operands 

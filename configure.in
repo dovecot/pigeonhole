@@ -140,6 +140,7 @@ src/lib-sieve/plugins/notify/Makefile
 src/lib-sieve/plugins/environment/Makefile
 src/lib-sieve/plugins/mailbox/Makefile
 src/lib-sieve/plugins/date/Makefile
+src/lib-sieve/plugins/spamvirustest/Makefile
 src/lib-sieve-tool/Makefile
 src/plugins/Makefile
 src/plugins/lda-sieve/Makefile

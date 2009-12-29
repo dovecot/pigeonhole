@@ -1,5 +1,5 @@
 if BUILD_UNFINISHED
-UNFINISHED =
+UNFINISHED = spamvirustest
 endif
 
 SUBDIRS = \

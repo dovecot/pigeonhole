@@ -141,9 +141,15 @@ const unsigned int sieve_deprecated_extensions_count =
 #ifdef HAVE_SIEVE_UNFINISHED
 
 extern const struct sieve_extension_def ereject_extension;
+extern const struct sieve_extension_def spamtest_extension;
+extern const struct sieve_extension_def spamtestplus_extension;
+extern const struct sieve_extension_def virustest_extension;
 
 const struct sieve_extension_def *sieve_unfinished_extensions[] = {
 	&ereject_extension,
+	&spamtest_extension,
+	&spamtestplus_extension,
+	&virustest_extension
 };
 
 const unsigned int sieve_unfinished_extensions_count =

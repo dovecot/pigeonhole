@@ -44,7 +44,8 @@ comparators = \
 	cmp-i-ascii-casemap.c
 
 if BUILD_UNFINISHED
-unfinished_plugins =
+unfinished_plugins = \
+	./plugins/spamvirustest/libsieve_ext_spamvirustest.la
 endif
 
 # These are not actual plugins just yet...

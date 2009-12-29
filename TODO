@@ -4,7 +4,9 @@ Current activities:
 	- Implement proper :content "multipart" behavior
 	- Implement proper :content "message/rfc822" behavior
 	- Build test cases for decoding MIME encodings to UTF-8
-* Finish ereject extension
+* Unfinished new extensions:
+	- Finish the spamtest and virustest extensions
+	- Finish the ereject extension
 * Build a sieve tool to filter an entire existing mailbox through a Sieve 
   script:
 	- Add commandline options to fully customize execution
