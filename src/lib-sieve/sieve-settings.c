@@ -10,14 +10,14 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-bool sieve_get_uint_setting
-(struct sieve_instance *svinst, const char *identifier,
+bool sieve_setting_get_uint_value
+(struct sieve_instance *svinst, const char *setting,
 	unsigned long long int *value_r)
 {
 	const char *str_value;
 	char *endp;
 
-	str_value = sieve_get_setting(svinst, identifier);
+	str_value = sieve_setting_get(svinst, setting);
 
 	if ( str_value == NULL || *str_value == '\0' )
 		return FALSE;
@@ -26,21 +26,21 @@ bool sieve_get_uint_setting
 
 	if ( *endp != '\0' ) {
 		sieve_sys_warning("invalid unsigned integer value for setting '%s': '%s'",
-			identifier, str_value);
+			setting, str_value);
 		return FALSE;
 	}
 	
 	return TRUE;	
 }
 
-bool sieve_get_int_setting
-(struct sieve_instance *svinst, const char *identifier,
+bool sieve_setting_get_int_value
+(struct sieve_instance *svinst, const char *setting,
 	long long int *value_r)
 {
 	const char *str_value;
 	char *endp;
 
-	str_value = sieve_get_setting(svinst, identifier);
+	str_value = sieve_setting_get(svinst, setting);
 
 	if ( str_value == NULL || *str_value == '\0' )
 		return FALSE;
@@ -49,7 +49,7 @@ bool sieve_get_int_setting
 
 	if ( *endp != '\0' ) {
 		sieve_sys_warning("invalid integer value for setting '%s': '%s'",
-			identifier, str_value);
+			setting, str_value);
 
 		return FALSE;
 	}
@@ -57,15 +57,15 @@ bool sieve_get_int_setting
 	return TRUE;	
 }
 
-bool sieve_get_size_setting
-(struct sieve_instance *svinst, const char *identifier,
+bool sieve_setting_get_size_value
+(struct sieve_instance *svinst, const char *setting,
 	size_t *value_r)
 {
 	const char *str_value;
 	unsigned long long int value, multiply = 1;
 	char *endp;
 
-	str_value = sieve_get_setting(svinst, identifier);
+	str_value = sieve_setting_get(svinst, setting);
 
 	if ( str_value == NULL || *str_value == '\0' )
 		return FALSE;
@@ -93,7 +93,7 @@ bool sieve_get_size_setting
 		break;
 	default:
 		sieve_sys_warning("invalid unsigned integer value for setting '%s': '%s'",
-			identifier, str_value);
+			setting, str_value);
 		return FALSE;
 	}
 

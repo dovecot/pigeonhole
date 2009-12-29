@@ -38,7 +38,7 @@
  */
 
 struct sieve_instance *sieve_init
-(const struct sieve_callbacks *callbacks, void *context)
+(const struct sieve_environment *env, void *context)
 {
 	struct sieve_instance *svinst;
 	unsigned long long int uint_setting;
@@ -49,7 +49,7 @@ struct sieve_instance *sieve_init
 	pool = pool_alloconly_create("sieve", 8192);
 	svinst = p_new(pool, struct sieve_instance, 1);
 	svinst->pool = pool;
-	svinst->callbacks = callbacks;
+	svinst->env = env;
 	svinst->context = context;
 
 	/* Read limits from configuration */
@@ -58,17 +58,17 @@ struct sieve_instance *sieve_init
 	svinst->max_actions = SIEVE_DEFAULT_MAX_ACTIONS;
 	svinst->max_redirects = SIEVE_DEFAULT_MAX_REDIRECTS;
 
-	if ( sieve_get_size_setting
+	if ( sieve_setting_get_size_value
 		(svinst, "sieve_max_script_size", &size_setting) ) {
 		svinst->max_script_size = size_setting;
 	}
 	
-	if ( sieve_get_uint_setting
+	if ( sieve_setting_get_uint_value
 		(svinst, "sieve_max_actions", &uint_setting) ) {
 		svinst->max_actions = (unsigned int) uint_setting;
 	}
 
-	if ( sieve_get_uint_setting
+	if ( sieve_setting_get_uint_value
 		(svinst, "sieve_max_redirects", &uint_setting) ) {
 		svinst->max_redirects = (unsigned int) uint_setting;
 	}

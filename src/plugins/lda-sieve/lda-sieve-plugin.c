@@ -65,7 +65,7 @@ static const char *lda_sieve_get_setting
 	return mail_user_plugin_getenv(mail_user, identifier);	
 }
 
-static const struct sieve_callbacks lda_sieve_callbacks = {
+static const struct sieve_environment lda_sieve_env = {
 	lda_sieve_get_homedir,
     lda_sieve_get_setting
 };
@@ -524,7 +524,7 @@ static int lda_sieve_run
 	*storage_r = NULL;
 
 	/* Initialize Sieve engine */
-	svinst = sieve_init(&lda_sieve_callbacks, mdctx->dest_user);
+	svinst = sieve_init(&lda_sieve_env, mdctx->dest_user);
 	
 	extensions = mail_user_plugin_getenv
 		(mdctx->dest_user, "sieve_extensions");

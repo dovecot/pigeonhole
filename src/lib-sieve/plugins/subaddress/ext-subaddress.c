@@ -70,7 +70,8 @@ static bool ext_subaddress_load
 (const struct sieve_extension *ext, void **context)
 {
 	struct ext_subaddress_config *config;
-	const char *delim = sieve_get_setting(ext->svinst, "recipient_delimiter");
+	const char *delim = sieve_setting_get
+		(ext->svinst, "recipient_delimiter");
 
 	if ( delim == NULL )
 		delim = SUBADDRESS_DEFAULT_DELIM;

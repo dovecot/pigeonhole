@@ -140,7 +140,7 @@ struct sieve_instance {
 	pool_t pool;
 
 	/* Callbacks */
-	const struct sieve_callbacks *callbacks;
+	const struct sieve_environment *env;
 	void *context;
 
 	/* Extension registry */

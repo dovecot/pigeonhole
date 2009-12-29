@@ -22,7 +22,7 @@ struct sieve_binary;
  *   is used.
  */
 struct sieve_instance *sieve_init
-	(const struct sieve_callbacks *callbacks, void *context);
+	(const struct sieve_environment *env, void *context);
 
 /* sieve_deinit():
  *   Frees all memory allocated by the sieve engine. 

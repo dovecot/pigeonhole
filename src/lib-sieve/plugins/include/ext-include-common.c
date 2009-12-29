@@ -77,9 +77,9 @@ const char *ext_include_get_script_directory
 
 	switch ( location ) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
- 		sieve_dir = sieve_get_setting(svinst, "sieve_dir");
+ 		sieve_dir = sieve_setting_get(svinst, "sieve_dir");
 
-		home = sieve_get_homedir(svinst);
+		home = sieve_environment_get_homedir(svinst);
 
 		if ( sieve_dir == NULL ) {
 			if ( home == NULL )	{		
@@ -97,7 +97,7 @@ const char *ext_include_get_script_directory
 
 		break;
    	case EXT_INCLUDE_LOCATION_GLOBAL:
-		sieve_dir = sieve_get_setting(svinst, "sieve_global_dir");
+		sieve_dir = sieve_setting_get(svinst, "sieve_global_dir");
 
 		if (sieve_dir == NULL) {
 			sieve_sys_error(

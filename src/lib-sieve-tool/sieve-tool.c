@@ -43,7 +43,7 @@ const char *sieve_tool_get_homedir
 	return getenv("HOME");
 }
 
-const struct sieve_callbacks sieve_tool_callbacks = {
+const struct sieve_environment sieve_tool_sieve_env = {
 	sieve_tool_get_homedir,
 	sieve_tool_get_setting
 };
@@ -74,7 +74,7 @@ static void sig_die(const siginfo_t *si, void *context ATTR_UNUSED)
 /* HACK */
 static bool _init_lib = FALSE;
 
-void sieve_tool_init(const struct sieve_callbacks *callbacks, bool init_lib) 
+void sieve_tool_init(const struct sieve_environment *env, bool init_lib) 
 {
 	_init_lib = init_lib;
 
@@ -90,9 +90,9 @@ void sieve_tool_init(const struct sieve_callbacks *callbacks, bool init_lib)
 		lib_signals_ignore(SIGALRM, FALSE);
 	}
 
-	if ( callbacks == NULL ) callbacks = &sieve_tool_callbacks;
+	if ( env == NULL ) env = &sieve_tool_sieve_env;
 
-	if ( (sieve_instance=sieve_init(callbacks, NULL)) == NULL )
+	if ( (sieve_instance=sieve_init(env, NULL)) == NULL )
 		i_fatal("failed to initialize sieve implementation\n");
 }
 

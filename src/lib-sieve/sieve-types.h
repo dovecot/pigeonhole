@@ -29,7 +29,7 @@ struct sieve_exec_status;
  * Callbacks
  */
 
-struct sieve_callbacks {
+struct sieve_environment {
 	const char *(*get_homedir)(void *context);
 	const char *(*get_setting)(void *context, const char *identifier);
 };

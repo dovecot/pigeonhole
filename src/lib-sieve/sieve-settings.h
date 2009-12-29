@@ -10,42 +10,42 @@
  * Settings
  */
 
-static inline const char *sieve_get_setting
+static inline const char *sieve_setting_get
 (struct sieve_instance *svinst, const char *identifier)
 {
-	const struct sieve_callbacks *callbacks = svinst->callbacks;
+	const struct sieve_environment *env = svinst->env;
 
-	if ( callbacks == NULL || callbacks->get_setting == NULL )
+	if ( env == NULL || env->get_setting == NULL )
 		return NULL;
 
-	return callbacks->get_setting(svinst->context, identifier);
+	return env->get_setting(svinst->context, identifier);
 }
 
-bool sieve_get_uint_setting
-(struct sieve_instance *svinst, const char *identifier,
+bool sieve_setting_get_uint_value
+(struct sieve_instance *svinst, const char *setting,
 	unsigned long long int *value_r);
 
-bool sieve_get_int_setting
-(struct sieve_instance *svinst, const char *identifier,
+bool sieve_setting_get_int_value
+(struct sieve_instance *svinst, const char *setting,
 	long long int *value_r);
 
-bool sieve_get_size_setting
-(struct sieve_instance *svinst, const char *identifier,
+bool sieve_setting_get_size_value
+(struct sieve_instance *svinst, const char *setting,
 	size_t *value_r);
 
 /*
  * Home directory
  */
 
-static inline const char *sieve_get_homedir
+static inline const char *sieve_environment_get_homedir
 (struct sieve_instance *svinst)
 {
-	const struct sieve_callbacks *callbacks = svinst->callbacks;
+	const struct sieve_environment *env = svinst->env;
 
-	if ( callbacks == NULL || callbacks->get_homedir == NULL )
+	if ( env == NULL || env->get_homedir == NULL )
 		return NULL;
 
-	return callbacks->get_homedir(svinst->context);
+	return env->get_homedir(svinst->context);
 }
 
 #endif /* __SIEVE_SETTINGS_H */

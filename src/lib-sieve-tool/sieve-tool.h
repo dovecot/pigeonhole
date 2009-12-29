@@ -17,13 +17,13 @@ struct sieve_instance *sieve_instance;
 const char *sieve_tool_get_setting(void *context, const char *identifier);
 const char *sieve_tool_get_homedir(void *context);
 
-const struct sieve_callbacks sieve_tool_callbacks;
+const struct sieve_environment sieve_tool_env;
 
 /*
  * Initialization
  */
 
-void sieve_tool_init(const struct sieve_callbacks *callbacks, bool init_lib);
+void sieve_tool_init(const struct sieve_environment *env, bool init_lib);
 void sieve_tool_deinit(void);
 
 /*
