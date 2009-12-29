@@ -37,7 +37,11 @@ enum ext_notify_opcode {
 	EXT_NOTIFY_OPERATION_DENOTIFY,
 };
 
-/* Action context */
+/* 
+ * Actions 
+ */
+
+const struct sieve_action_def act_notify_old;
 
 struct ext_notify_recipient {
 	const char *full;

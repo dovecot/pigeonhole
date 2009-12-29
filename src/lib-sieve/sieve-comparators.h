@@ -91,9 +91,10 @@ static inline const struct sieve_comparator *sieve_comparator_copy
 extern const struct sieve_argument_def comparator_tag;
 
 static inline bool sieve_argument_is_comparator
-	(struct sieve_ast_argument *arg) 
+(struct sieve_ast_argument *arg) 
 {
-	return arg->argument->def == &comparator_tag;
+	return ( arg->argument != NULL && 
+		(arg->argument->def == &comparator_tag) );
 }
 
 void sieve_comparators_link_tag

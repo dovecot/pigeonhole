@@ -96,7 +96,8 @@ test_cases = \
 	tests/deprecated/notify/basic.svtest \
 	tests/deprecated/notify/mailto.svtest \
 	tests/deprecated/notify/errors.svtest \
-	tests/deprecated/notify/execute.svtest
+	tests/deprecated/notify/execute.svtest \
+	tests/deprecated/notify/denotify.svtest
 
 if HAVE_DOVECOT_LIBS
 

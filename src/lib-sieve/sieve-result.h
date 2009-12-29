@@ -148,6 +148,8 @@ struct sieve_result_iterate_context *sieve_result_iterate_init
 	(struct sieve_result *result);
 const struct sieve_action *sieve_result_iterate_next
 	(struct sieve_result_iterate_context *rictx, bool *keep);
+void sieve_result_iterate_delete
+	(struct sieve_result_iterate_context *rictx);
 	
 /*
  * Side effects list

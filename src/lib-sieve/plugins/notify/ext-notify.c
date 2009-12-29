@@ -6,16 +6,11 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-notify-00.txt
- * Implementation: deprecated; provided for backwards compatibility
- * Status: deprecated
+ * Implementation: fully backwards compatible
+ * Status: testing (deprecated)
  * 
  */
 
-/* FIXME: Currently the following CMUSieve features are not supported:
- * 
- * (*) The $text$ substitution is not available for the :message argument.
- */
-	
 #include <stdio.h>
 
 #include "sieve-common.h"

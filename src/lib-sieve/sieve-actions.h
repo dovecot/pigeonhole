@@ -92,6 +92,9 @@ struct sieve_action {
 	bool executed;
 };
 
+#define sieve_action_is(act, definition) \
+	( (act)->def == &(definition) )
+
 /* 
  * Action side effects 
  */

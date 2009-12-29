@@ -1237,7 +1237,8 @@ int sieve_result_execute
 
 struct sieve_result_iterate_context {
 	struct sieve_result *result;
-	struct sieve_result_action *action;
+	struct sieve_result_action *current_action;
+	struct sieve_result_action *next_action;
 };
 
 struct sieve_result_iterate_context *sieve_result_iterate_init
@@ -1247,7 +1248,8 @@ struct sieve_result_iterate_context *sieve_result_iterate_init
 		t_new(struct sieve_result_iterate_context, 1);
 	
 	rictx->result = result;
-	rictx->action = result->first_action;
+	rictx->current_action = NULL;
+	rictx->next_action = result->first_action;
 
 	return rictx;
 }
@@ -1260,9 +1262,9 @@ const struct sieve_action *sieve_result_iterate_next
 	if ( rictx == NULL )
 		return  NULL;
 
-	rac = rictx->action;
+	rac = rictx->current_action = rictx->next_action;
 	if ( rac != NULL ) {
-		rictx->action = rac->next;
+		rictx->next_action = rac->next;
 		
 		if ( keep != NULL )
 			*keep = rac->keep;
@@ -1271,6 +1273,35 @@ const struct sieve_action *sieve_result_iterate_next
 	}
 
 	return NULL;
+}
+
+void sieve_result_iterate_delete
+(struct sieve_result_iterate_context *rictx)
+{
+	struct sieve_result *result;
+	struct sieve_result_action *rac;
+
+	if ( rictx == NULL || rictx->current_action == NULL )
+		return;
+
+	result = rictx->result;
+	rac = rictx->current_action;
+
+	/* Delete action */
+
+	if ( rac->prev == NULL )
+		result->first_action = rac->next;
+	else
+		rac->prev->next = rac->next;
+
+	if ( rac->next == NULL )
+		result->last_action = rac->prev;
+	else
+		rac->next->prev = rac->prev;
+
+	/* Skip to next action in iteration */
+
+	rictx->current_action = NULL;
 }
 
 /*
