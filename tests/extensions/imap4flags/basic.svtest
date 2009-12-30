@@ -84,24 +84,152 @@ test "Flag operations" {
 	}
 
 	if hasflag :comparator "i;ascii-numeric" :count "gt" "2" {
-                test_fail "hasflag sees more than two flags";
-        }
+		test_fail "hasflag sees more than two flags";
+	}
 
 	addflag ["C", "D", "E F"];	
 
 	if not hasflag :comparator "i;ascii-numeric" :count "eq" "6" {
-                test_fail "hasflag sees more than two flags";
-        }
+		test_fail "hasflag sees more than two flags";
+	}
 
 	removeflag ["D"];
 
 	if not hasflag :comparator "i;ascii-numeric" :count "eq" "5" {
-                test_fail "hasflag sees more than two flags";
-        }	
+		test_fail "hasflag sees more than two flags";
+	}	
 	
 	if hasflag "D" {
 		test_fail "removed flag still present";
 	}
+}
+
+test "Removal: one" {
+	setflag "\\seen";
+
+	if not hasflag "\\seen" {
+        test_fail "hasflag misses set flag";
+    }
+
+	removeflag "\\seen";
+
+	if hasflag "\\seen" { 
+		test_fail "flag not removed";
+	}
+
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "0" {
+		test_fail "flags are still set";
+    }
+}
+
+test "Removal: first" {
+	setflag "$frop \\seen";
+
+	if not allof ( hasflag "\\seen", hasflag "$frop" ) {
+        test_fail "hasflag misses set flags";
+    }
+
+	removeflag "$frop";
+
+	if not hasflag "\\seen" { 
+		test_fail "wrong flag removed";
+	}
+
+	if hasflag "$frop" { 
+		test_fail "flag not removed";
+	}	
+
+	if not hasflag :comparator "i;ascii-numeric" :count "eq" "1" {
+		test_fail "more than one flag remains set";
+    }
+}
+
+test "Removal: last" {
+    setflag "\\seen $friep";
+
+    if not allof ( hasflag "\\seen", hasflag "$friep" ) {
+        test_fail "hasflag misses set flags";
+    }
+
+    removeflag "$friep";
+
+    if not hasflag "\\seen" {
+        test_fail "wrong flag removed";
+    }
+
+    if hasflag "$friep" {
+        test_fail "flag not removed";
+    }
+
+    if not hasflag :comparator "i;ascii-numeric" :count "eq" "1" {
+        test_fail "more than one flag remains set";
+    }
+}
+
+test "Removal: middle" {
+    setflag "\\seen $friep \\flagged";
+
+    if not allof ( hasflag "\\flagged", hasflag "\\seen", hasflag "$friep" ) {
+        test_fail "hasflag misses set flags";
+    }
+
+    removeflag "$friep";
+
+    if not allof ( hasflag "\\seen", hasflag "\\flagged" ) {
+        test_fail "wrong flag removed";
+    }
+
+    if hasflag "$friep" {
+        test_fail "flag not removed";
+    }
+
+    if not hasflag :comparator "i;ascii-numeric" :count "eq" "2" {
+        test_fail "more than two flags remain set";
+    }
+}
+
+test "Removal: duplicates" {
+    setflag "\\seen $friep $friep \\flagged $friep";
+
+    if not allof ( hasflag "\\flagged", hasflag "\\seen", hasflag "$friep" ) {
+        test_fail "hasflag misses set flags";
+    }
+
+    removeflag "$friep";
+
+    if not allof ( hasflag "\\seen", hasflag "\\flagged" ) {
+        test_fail "wrong flag removed";
+    }
+
+    if hasflag "$friep" {
+        test_fail "flag not removed";
+    }
+
+    if not hasflag :comparator "i;ascii-numeric" :count "eq" "2" {
+        test_fail "more than two flags remain set";
+    }
+}
+
+test "Removal: whitespace" {
+    setflag "   \\seen     $friep      $friep   \\flagged    $friep   ";
+
+    if not allof ( hasflag "\\flagged", hasflag "\\seen", hasflag "$friep" ) {
+        test_fail "hasflag misses set flags";
+    }
+
+    removeflag "$friep";
+
+    if not allof ( hasflag "\\seen", hasflag "\\flagged" ) {
+        test_fail "wrong flag removed";
+    }
+
+    if hasflag "$friep" {
+        test_fail "flag not removed";
+    }
+
+    if not hasflag :comparator "i;ascii-numeric" :count "eq" "2" {
+        test_fail "more than two flags remain set";
+    }
 }
 
 
