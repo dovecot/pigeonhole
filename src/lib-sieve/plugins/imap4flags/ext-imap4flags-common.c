@@ -307,24 +307,34 @@ const char *ext_imap4flags_iter_get_flag
 	const unsigned char *fbegin;
 	const unsigned char *fstart;
 	const unsigned char *fend;
-	
+
+	/* Return if no more flags are available */	
 	if ( iter->offset >= len ) return NULL;
 	
+	/* Mark string boundries */
 	fbegin = str_data(iter->flags_list);
-	fp = fbegin + iter->offset;
-	fstart = fp;
 	fend = fbegin + len;
+
+	/* Start of this flag */
+	fstart = fbegin + iter->offset;
+
+	/* Scan for next flag */
+	fp = fstart;
 	for (;;) {
-		if ( fp >= fend || *fp == ' ' ) { 
+		/* Have we reached the end or a flag boundary? */
+		if ( fp >= fend || *fp == ' ' ) {
+			/* Did we scan more than nothing ? */
 			if ( fp > fstart ) {
+				/* Return flag */
 				const char *flag = t_strdup_until(fstart, fp);
 				
 				iter->last = fstart - fbegin;
 				iter->offset = fp - fbegin;
+
 				return flag;
 			} 	
 			
-			fstart = fp+1;
+			fstart = fp + 1;
 		}
 		
 		if ( fp >= fend ) break;
@@ -343,7 +353,7 @@ static void ext_imap4flags_iter_delete_last
 	iter->offset++;
 	if ( iter->offset > str_len(iter->flags_list) )
 		iter->offset = str_len(iter->flags_list);
-	if ( iter->offset == str_len(iter->flags_list) )
+	if ( iter->offset == str_len(iter->flags_list) && iter->last > 0 )
 		iter->last--;
 
 	str_delete(iter->flags_list, iter->last, iter->offset - iter->last);	
