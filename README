@@ -78,47 +78,62 @@ Features
 Implementation Status
 ---------------------
 
-The the core of the language (as specified in RFC 5228) is fully supported. In 
-addition to that, this Sieve implementation features various extensions. The 
+The the core of the language (as specified in RFC 5228) is fully supported. In
+addition to that, this Sieve implementation features various extensions. The
 following list outlines the implementation status of each supported extension:
-	
-  Base specification (RFC5228):
-    fileinto: full
-    reject: full (without Dovecot LMTP currently no refuse support)
-    envelope: full
-    encoded-character: full
 
-  Other RFCs/drafts:
-    subaddress: full (limited configurability)
-    comparator-i;ascii-numeric: full
-    relational: full 
-    copy: full
-    regex: mostly full; but suboptimal and no UTF-8
-    body: mostly full, but text body-transform implementation is simple
-        and some issues make it still not completely RFC incompliant. 
-    include: almost full; global namespace missing 
-    vacation: mostly full; handling of utf-8 in headers is non-existant
-    imap4flags: full (old imapflags supported for backwards compatibility)
-    variables: mostly full; currently no support for future namespaces 
-    notify: full, mailto support only; needs to be tested more
-    mailbox: almost full, but mailboxexists command lacks ACL support
-	date: full
+  The the core of the language (as specified in RFC 5228) is fully supported,
+  including the language extensions defined in the base specification:
 
-All implemented extensions are like the engine itself currently experimental. 
-A status of 'full' does not necessarily mean that the extension is bug-free or 
-even fully RFC-compliant. Check the TODO file for open issues.
- 
-Many more extensions to the language exist. Not all of these extensions are 
-useful for Dovecot in particular, but many of them are. Currently, the author 
-has taken notice of the following extensions:
+    encoded-character (RFC 5228; page 10)
+    fileinto (RFC 5228; page 23)
+    envelope (RFC 5228; page 27)
 
-    environment: planned
-    index: planned
-    editheader: planned, needs additional support from Dovecot though.
-    mimeloop: planned
+  The following Sieve language extensions are also supported:
 
-These extensions will be added as soon as the necessary infrastructure is 
-available. 
+    copy (RFC 3894): fully supported
+    body (RFC 5173): almost fully supported, but the text body-transform
+      implementation is simple and some issues make it still not completely
+      RFC compliant.
+    environment (RFC 5183): basic support is provided (v0.1.5+)
+    variables (RFC 5229): fully supported
+    vacation (RFC 5230): fully supported
+    relational (RFC 5231): fully supported
+    imap4flags (RFC 5232): fully supported
+    subaddress (RFC 5233): fully supported, but with limited configurability
+    date (RFC 5260; page 3): fully supported (v0.1.12+)
+    reject (RFC 5429; page 6): fully supported
+    enotify (RFC 5435): fully supported (v0.1.3+), but only the mailto
+      notification mechanism is available
+    mailbox (RFC 5490; page 2): fully supported (v0.1.10+), but
+      ACL permissions are not verified for mailboxexists
+    include (draft): fully supported, but the interaction with
+      ManageSieve is not according to specification.
+    regex (draft): almost fully supported, but UTF-8 is not supported.
+
+  The following deprecated extensions are supported for backwards
+  compatibility:
+
+    imapflags (obsolete draft): fully backwards compatible (v0.1.3+)
+    notify (obsolete draft): fully backwards compatible (v0.1.15+)
+
+    The availability of these deprecated extensions is disabled by default.
+
+  The following extensions are under development:
+
+    ereject (RFC 5429; page 4): implemented, but currently equal to reject
+    spamtest and virustest (RFC 5235): implemented, but needs thorough testing
+
+  Many more extensions to the language exist. Not all of these extensions are
+  useful for Dovecot in particular, but many of them are. Currently, the
+  author has taken notice of the following extensions:
+
+    index (RFC 5260; page 7): planned
+    editheader (RFC 5293): planned
+    foreverypart, mime, replace, enclose, and extracttext (RFC 5703): planned
+
+    These extensions will be added as soon as the necessary infrastructure is
+    available.
 
 Compiling and Configuring
 -------------------------
