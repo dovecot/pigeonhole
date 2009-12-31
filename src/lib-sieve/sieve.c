@@ -6,6 +6,7 @@
 #include "istream.h"
 #include "buffer.h"
 #include "eacces-error.h"
+#include "module-dir.h"
 
 #include "sieve-limits.h"
 #include "sieve-settings.h"
@@ -33,6 +34,81 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <dirent.h>
+
+/*
+ * Plugin support
+ */
+
+static struct module *sieve_modules = NULL;
+static int sieve_modules_refcount = 0;
+
+static void sieve_plugins_load(struct sieve_instance *svinst)
+{
+	struct module *module;
+
+	/* Physically load modules */
+
+	/* FIXME: sieve plugins may/cannot differ between Sieve instances */
+
+	if ( sieve_modules == NULL ) {
+		const char *plugins = sieve_setting_get(svinst, "sieve_plugins");
+
+		if ( plugins != NULL && *plugins != '\0' ) { 
+			const char *plugin_dir = sieve_setting_get(svinst, "sieve_plugin_dir");
+		
+			if ( plugin_dir == NULL || *plugin_dir == '\0' )
+				plugin_dir = MODULEDIR"/sieve";
+
+			sieve_modules = module_dir_load(plugin_dir, plugins, TRUE, SIEVE_VERSION);
+		}
+	}
+
+	sieve_modules_refcount++;
+
+	/* Call plugin load functions for this instance */
+
+	module = sieve_modules;
+	while ( module != NULL ) {
+		void (*load_func)(struct sieve_instance *svinst);
+
+		load_func = module_get_symbol
+			(module, t_strdup_printf("%s_load", module->name));
+		if ( load_func != NULL ) {
+			load_func(svinst);
+		}
+
+		module = module->next;
+	}
+}
+
+static void sieve_plugins_unload(struct sieve_instance *svinst)
+{
+	struct module *module;
+
+	/* Call plugin unload functions for this instance */
+
+	module = sieve_modules;
+	while ( module != NULL ) {
+		void (*unload_func)(struct sieve_instance *svinst);
+
+		unload_func = module_get_symbol
+			(module, t_strdup_printf("%s_unload", module->name));
+		if ( unload_func != NULL ) {
+			unload_func(svinst);
+		}
+
+		module = module->next;
+	}
+
+	/* Physically unload modules */
+
+	i_assert(sieve_modules_refcount > 0);
+
+	if ( --sieve_modules_refcount != 0 )
+        return;
+
+	module_dir_unload(&sieve_modules);
+}
 
 /* 
  * Main Sieve library interface
@@ -80,11 +156,14 @@ struct sieve_instance *sieve_init
 		return NULL;
 	}
 
+	sieve_plugins_load(svinst);
+
 	return svinst;
 }
 
 void sieve_deinit(struct sieve_instance **svinst)
 {
+	sieve_plugins_unload(*svinst);
 	sieve_extensions_deinit(*svinst);
 
 	pool_unref(&(*svinst)->pool);

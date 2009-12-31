@@ -83,6 +83,16 @@ AC_ARG_ENABLE(header-install,
     want_headers=no)
 AM_CONDITIONAL(INSTALL_HEADERS, test "$want_headers" = "yes")
 
+AC_ARG_ENABLE(header-install,
+[  --enable-header-install Install development headers],
+    if test x$enableval = xno; then
+        want_headers=no
+    else
+        want_headers=yes
+    fi,
+    want_headers=no)
+AM_CONDITIONAL(INSTALL_HEADERS, test "$want_headers" = "yes")
+
 AC_ARG_ENABLE(valgrind,
 [AC_HELP_STRING([--enable-valgrind], [Enable Valgrind memory leak checks in testsuite [default=no]])],
     if test x$enableval = xno || test x$enableval = xauto; then
@@ -106,6 +116,9 @@ AC_SUBST(RAND_LIBS)
 AC_SUBST(MODULE_LIBS)
 AC_SUBST(dovecot_incdir)
 AC_SUBST(moduledir)
+
+dovecot_pkgincludedir='$(includedir)/dovecot'
+AC_SUBST(dovecot_pkgincludedir)
 
 dovecot_pkglibexecdir='$(libexecdir)/dovecot'
 dovecot_pkglibdir='$(libdir)/dovecot'

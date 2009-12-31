@@ -8,7 +8,8 @@ AM_CPPFLAGS = \
 	-I$(dovecot_incdir)/src/lib-mail \
 	-I$(dovecot_incdir)/src/lib-storage \
 	-I$(dovecot_incdir)/src/lib-imap \
-	-I$(dovecot_incdir)/src/lib-master
+	-I$(dovecot_incdir)/src/lib-master \
+	-DMODULEDIR=\""$(moduledir)"\"
 
 tests = \
 	tst-truefalse.c \
@@ -139,6 +140,13 @@ headers = \
 	sieve-actions.h \
 	sieve-extensions.h \
 	sieve.h
+
+if INSTALL_HEADERS
+  pkginc_libdir=$(dovecot_pkgincludedir)/sieve
+  pkginc_lib_HEADERS = $(headers)
+else
+  noinst_HEADERS = $(headers)
+endif
 
 if INSTALL_HEADERS
   pkginc_libdir=$(dovecot_pkgincludedir)/sieve
