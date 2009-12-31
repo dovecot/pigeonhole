@@ -74,12 +74,17 @@ void ext_enotify_methods_deinit(struct ext_enotify_context *ectx)
 }
 
 void sieve_enotify_method_register
-(struct sieve_extension *ntfy_ext, const struct sieve_enotify_method *method) 
+(struct sieve_instance *svinst, const struct sieve_enotify_method *method) 
 {
-	struct ext_enotify_context *ectx = 
-		(struct ext_enotify_context *) ntfy_ext->context;
+	const struct sieve_extension *ntfy_ext =
+		sieve_extension_get_by_name(svinst, "enotify");
 
-	ext_enotify_method_register(ectx, method);
+	if ( ntfy_ext != NULL ) {
+		struct ext_enotify_context *ectx = 
+			(struct ext_enotify_context *) ntfy_ext->context;
+
+		ext_enotify_method_register(ectx, method);
+	}
 }
 
 const struct sieve_enotify_method *ext_enotify_method_find
