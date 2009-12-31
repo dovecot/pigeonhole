@@ -78,7 +78,7 @@ Features
 Implementation Status
 ---------------------
 
-The the core of the language (as specified in RFC 5228) is fully supported. In
+The core of the language (as specified in RFC 5228) is fully supported. In
 addition to that, this Sieve implementation features various extensions. The
 following list outlines the implementation status of each supported extension:
 
