@@ -46,11 +46,7 @@ static struct module *sieve_plugin_module_find(const char *path, const char *nam
 
 		/* Strip module names */
 
-    	len = strlen(module->name);
-    	if (len > 7 && strcmp(module->name + len - 7, "_plugin") == 0)
-        	mod_name = t_strndup(module->name, len - 7);
-		else
-			mod_name = module->name;
+		mod_name = module_get_plugin_name(module);
 		
 		if ( strcmp(mod_path, path) == 0 && strcmp(mod_name, name) == 0 )
 			return module;
@@ -63,9 +59,9 @@ static struct module *sieve_plugin_module_find(const char *path, const char *nam
 
 void sieve_plugins_load(struct sieve_instance *svinst, const char *path, const char *plugins)
 {
-	struct module *module;
+	struct module *new_modules, *module;
+	struct module_dir_load_settings mod_set;
 	const char **module_names;
-	string_t *missing_modules;
 	unsigned int i;
 
 	/* Determine what to load */
@@ -81,51 +77,40 @@ void sieve_plugins_load(struct sieve_instance *svinst, const char *path, const c
 	if ( path == NULL || *path == '\0' )
 		path = MODULEDIR"/sieve";
 
-	module_names = t_strsplit_spaces(plugins, ", ");
+	memset(&mod_set, 0, sizeof(mod_set));
+	mod_set.version = SIEVE_VERSION;
+	mod_set.require_init_funcs = TRUE;
+	mod_set.debug = FALSE;
 
- 	for (i = 0; module_names[i] != NULL; i++) {
-		/* Allow giving the module names also in non-base form. */
- 		module_names[i] = module_file_get_name(module_names[i]);
-	}
+	/* Load missing plugin modules */
 
-	/* Load missing modules 
-	 *   FIXME: Dovecot should provide this functionality (v2.0 does) 
-	 */
+	new_modules = module_dir_load_missing
+		(sieve_modules, path, plugins, &mod_set);
 
-	missing_modules = t_str_new(256);
+	if ( sieve_modules == NULL ) {
+		/* No modules loaded yet */
+		sieve_modules = new_modules;
+	} else {
+		/* Find the end of the list */
+		module = sieve_modules;
+		while ( module != NULL && module->next != NULL )
+			module = module->next;
 
- 	for (i = 0; module_names[i] != NULL; i++) {
-		const char *name = module_names[i];
-
-		if ( sieve_plugin_module_find(path, name) == NULL ) {
-			if ( i > 0 ) str_append_c(missing_modules, ' ');
-	
-			str_append(missing_modules, name);
-		}
-	}
-
-	if ( str_len(missing_modules) > 0 ) {
-		struct module *new_modules = module_dir_load
-			(path, str_c(missing_modules), TRUE, SIEVE_VERSION);
-
-		if ( sieve_modules == NULL ) {
-			/* No modules loaded yet */
-			sieve_modules = new_modules;
-		} else {
-			/* Find the end of the list */
-			module = sieve_modules;
-			while ( module != NULL && module->next != NULL )
-				module = module->next;
-
-			/* Add newly loaded modules */
-			module->next = new_modules;
-		}
+		/* Add newly loaded modules */
+		module->next = new_modules;
 	}
 
 	/* Call plugin load functions for this Sieve instance */
 
 	if ( svinst->plugins == NULL ) {
 		sieve_modules_refcount++;
+	}
+
+	module_names = t_strsplit_spaces(plugins, ", ");
+
+	for (i = 0; module_names[i] != NULL; i++) {
+		/* Allow giving the module names also in non-base form. */
+		module_names[i] = module_file_get_name(module_names[i]);
 	}
 
  	for (i = 0; module_names[i] != NULL; i++) {
