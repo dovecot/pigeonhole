@@ -125,6 +125,9 @@ struct sieve_script;
 /* sieve-message.h */
 struct sieve_message_context;
 
+/* sieve-plugins.h */
+struct sieve_plugin;
+
 /* sieve.c */
 struct sieve_ast *sieve_parse
 	(struct sieve_script *script, struct sieve_error_handler *ehandler);
@@ -145,6 +148,9 @@ struct sieve_instance {
 
 	/* Extension registry */
 	struct sieve_extension_registry *ext_reg;
+
+	/* Plugin modules */
+	struct sieve_plugin *plugins;
 
 	/* Limits */
 	size_t max_script_size;

@@ -98,6 +98,7 @@ libdovecot_sieve_la_SOURCES = \
 	sieve-code.c \
 	sieve-actions.c \
 	sieve-extensions.c \
+	sieve-plugins.c \
 	$(comparators) \
 	$(match_types) \
 	$(tests) \
@@ -139,6 +140,7 @@ headers = \
 	sieve-code.h \
 	sieve-actions.h \
 	sieve-extensions.h \
+	sieve-plugins.h \
 	sieve.h
 
 if INSTALL_HEADERS
