@@ -23,32 +23,19 @@ struct sieve_plugin {
 static struct module *sieve_modules = NULL;
 static int sieve_modules_refcount = 0;
 
-static struct module *sieve_plugin_module_find(const char *path, const char *name)
+static struct module *sieve_plugin_module_find(const char *name)
 {
 	struct module *module;
 
 	module = sieve_modules;
     while ( module != NULL ) {
-		const char *mod_path, *mod_name;
-		char *p;
-		size_t len;
+		const char *mod_name;
 		
-		/* Strip module paths */
-
-		p = strrchr(module->path, '/');
-		if ( p == NULL ) continue;
-		while ( p > module->path && *p == '/' ) p--;
-		mod_path = t_strdup_until(module->path, p+1);
-	
-		len = strlen(path);
-		if ( path[len-1] == '/' )
-			path = t_strndup(path, len-1);
-
 		/* Strip module names */
 
 		mod_name = module_get_plugin_name(module);
 		
-		if ( strcmp(mod_path, path) == 0 && strcmp(mod_name, name) == 0 )
+		if ( strcmp(mod_name, name) == 0 )
 			return module;
 
 		module = module->next;
@@ -119,7 +106,7 @@ void sieve_plugins_load(struct sieve_instance *svinst, const char *path, const c
 		void (*load_func)(struct sieve_instance *svinst);
 
 		/* Find the module */
-		module = sieve_plugin_module_find(path, name);
+		module = sieve_plugin_module_find(name);
 		i_assert(module != NULL);
 
 		/* Check whether the plugin is already loaded in this instance */
