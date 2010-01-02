@@ -23,7 +23,7 @@ AC_PROG_LIBTOOL
 AC_ARG_WITH(dovecot,
 [AC_HELP_STRING([--with-dovecot=DIR], [Dovecot base directory [../dovecot]])],
 	dovecotdir="$withval",
-	dovecotdir=../dovecot
+	dovecotdir=../dovecot-2.0
 )
 old=`pwd`
 cd $dovecotdir
