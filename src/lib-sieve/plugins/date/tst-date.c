@@ -173,7 +173,7 @@ static bool tag_zone_validate
 		 *   :zone <time-zone: string>
 		 */
 		if ( !sieve_validate_tag_parameter
-			(valdtr, cmd, tag, *arg, SAAT_STRING) ) {
+			(valdtr, cmd, tag, *arg, NULL, 0, SAAT_STRING, FALSE) ) {
 			return FALSE;
 		}
 

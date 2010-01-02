@@ -128,7 +128,7 @@ static bool tag_flags_validate
 	 *   :flags <list-of-flags: string-list>
 	 */
 	if ( !sieve_validate_tag_parameter
-		(valdtr, cmd, tag, *arg, SAAT_STRING_LIST) ) {
+		(valdtr, cmd, tag, *arg, NULL, 0, SAAT_STRING_LIST, FALSE) ) {
 		return FALSE;
 	}
 	

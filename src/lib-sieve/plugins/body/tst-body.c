@@ -154,12 +154,9 @@ static bool tag_body_transform_validate
 		 *   :content <content-types: string-list>
 		 */
 		if ( !sieve_validate_tag_parameter
-			(valdtr, cmd, tag, *arg, SAAT_STRING_LIST) ) {
+			(valdtr, cmd, tag, *arg, NULL, 0, SAAT_STRING_LIST, FALSE) ) {
 			return FALSE;
 		}
-		
-		if ( !sieve_validator_argument_activate(valdtr, cmd, *arg, FALSE) )
-			return FALSE;
 		
 		/* Assign tag parameters */
 		tag->parameters = *arg;

@@ -107,7 +107,7 @@ static bool tst_test_result_validate_index_tag
 	 *   :index number
 	 */
 	if ( !sieve_validate_tag_parameter
-		(validator, cmd, tag, *arg, SAAT_NUMBER) ) {
+		(validator, cmd, tag, *arg, NULL, 0, SAAT_NUMBER, FALSE) ) {
 		return FALSE;
 	}
 

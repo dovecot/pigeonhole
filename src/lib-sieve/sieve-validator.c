@@ -803,14 +803,18 @@ bool sieve_validate_positional_argument
 bool sieve_validate_tag_parameter
 (struct sieve_validator *valdtr, struct sieve_command *cmd,
 	struct sieve_ast_argument *tag, struct sieve_ast_argument *param,
-	enum sieve_ast_argument_type req_type)
+	const char *arg_name, unsigned int arg_pos,
+	enum sieve_ast_argument_type req_type, bool constant)
 {
 	if ( param == NULL ) {
+		const char *position = ( arg_pos == 0 ? "" :
+			t_strdup_printf(" %d (%s)", arg_pos, arg_name) );
+ 
 		sieve_argument_validate_error(valdtr, tag, 
-			"the :%s tag for the %s %s requires %s as parameter, "
-			"but no more arguments were found", sieve_ast_argument_tag(tag), 
+			"the :%s tag for the %s %s requires %s as parameter %s, "
+			"but no parameters were found", sieve_ast_argument_tag(tag), 
 			sieve_command_identifier(cmd), sieve_command_type_name(cmd),
-			sieve_ast_argument_type_name(req_type));
+			sieve_ast_argument_type_name(req_type), position);
 		return FALSE;	
 	}
 
@@ -818,15 +822,19 @@ bool sieve_validate_tag_parameter
 		(sieve_ast_argument_type(param) != SAAT_STRING || 
 			req_type != SAAT_STRING_LIST) ) 
 	{
+		const char *position = ( arg_pos == 0 ? "" :
+			t_strdup_printf(" %d (%s)", arg_pos, arg_name) );
+
 		sieve_argument_validate_error(valdtr, param, 
-			"the :%s tag for the %s %s requires %s as parameter, "
+			"the :%s tag for the %s %s requires %s as parameter%s, "
 			"but %s was found", sieve_ast_argument_tag(tag), 
 			sieve_command_identifier(cmd), sieve_command_type_name(cmd),
-			sieve_ast_argument_type_name(req_type),	sieve_ast_argument_name(param));
+			sieve_ast_argument_type_name(req_type),	position,
+			sieve_ast_argument_name(param));
 		return FALSE;
 	}
 
-	if ( !sieve_validator_argument_activate(valdtr, cmd, param, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, cmd, param, constant) )
 		return FALSE;
 
 	param->argument->id_code = tag->argument->id_code;

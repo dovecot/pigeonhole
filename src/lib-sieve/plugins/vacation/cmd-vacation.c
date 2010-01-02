@@ -242,7 +242,7 @@ static bool cmd_vacation_validate_number_tag
 	 *   :days number
 	 */
 	if ( !sieve_validate_tag_parameter
-		(valdtr, cmd, tag, *arg, SAAT_NUMBER) ) {
+		(valdtr, cmd, tag, *arg, NULL, 0, SAAT_NUMBER, FALSE) ) {
 		return FALSE;
 	}
 
@@ -274,7 +274,7 @@ static bool cmd_vacation_validate_string_tag
 	 *   :handle string
 	 */
 	if ( !sieve_validate_tag_parameter
-		(valdtr, cmd, tag, *arg, SAAT_STRING) ) {
+		(valdtr, cmd, tag, *arg, NULL, 0, SAAT_STRING, FALSE) ) {
 		return FALSE;
 	}
 
@@ -332,7 +332,7 @@ static bool cmd_vacation_validate_stringlist_tag
 	 *   :addresses string-list
 	 */
 	if ( !sieve_validate_tag_parameter
-		(valdtr, cmd, tag, *arg, SAAT_STRING_LIST) ) {
+		(valdtr, cmd, tag, *arg, NULL, 0, SAAT_STRING_LIST, FALSE) ) {
 		return FALSE;
 	}
 	

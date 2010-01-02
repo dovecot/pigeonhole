@@ -114,7 +114,8 @@ bool sieve_validator_argument_activate
 bool sieve_validate_tag_parameter
 	(struct sieve_validator *valdtr, struct sieve_command *cmd,
 		struct sieve_ast_argument *tag, struct sieve_ast_argument *param,
-		enum sieve_ast_argument_type req_type);
+		const char *arg_name, unsigned int arg_pos,
+		enum sieve_ast_argument_type req_type, bool constant);
 	
 /* 
  * Extension support

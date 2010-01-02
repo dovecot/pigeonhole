@@ -180,7 +180,8 @@ static bool cmd_notify_validate_string_tag
 	 *   :from <string>
 	 *   :message <string>
 	 */
-	if ( !sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, SAAT_STRING) )
+	if ( !sieve_validate_tag_parameter
+		(valdtr, cmd, tag, *arg, NULL, 0, SAAT_STRING, FALSE) )
 		return FALSE;
 
 	if ( sieve_argument_is(tag, notify_from_tag) ) {
@@ -213,7 +214,8 @@ static bool cmd_notify_validate_stringlist_tag
 	/* Check syntax:
 	 *   :options string-list
 	 */
-	if ( !sieve_validate_tag_parameter(valdtr, cmd, tag, *arg, SAAT_STRING_LIST) ) 
+	if ( !sieve_validate_tag_parameter
+		(valdtr, cmd, tag, *arg, NULL, 0, SAAT_STRING_LIST, FALSE) ) 
 		return FALSE;
 		
 	/* Assign context */
