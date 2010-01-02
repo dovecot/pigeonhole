@@ -3,10 +3,7 @@ noinst_LTLIBRARIES = libsieve_ext_include.la
 AM_CPPFLAGS = \
 	-I../../ \
 	-I../variables \
-	-I$(dovecot_incdir) \
-	-I$(dovecot_incdir)/src/lib \
-	-I$(dovecot_incdir)/src/lib-mail \
-	-I$(dovecot_incdir)/src/lib-storage
+	$(SIEVE_LIB_DOVECOT_INCLUDE)
 
 cmds = \
 	cmd-include.c \

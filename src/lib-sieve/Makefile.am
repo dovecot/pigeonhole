@@ -3,12 +3,7 @@ SUBDIRS = plugins
 dovecot_pkglib_LTLIBRARIES = libdovecot-sieve.la
 
 AM_CPPFLAGS = \
-	-I$(dovecot_incdir) \
-	-I$(dovecot_incdir)/src/lib \
-	-I$(dovecot_incdir)/src/lib-mail \
-	-I$(dovecot_incdir)/src/lib-storage \
-	-I$(dovecot_incdir)/src/lib-imap \
-	-I$(dovecot_incdir)/src/lib-master \
+	$(SIEVE_LIB_DOVECOT_INCLUDE) \
 	-DMODULEDIR=\""$(moduledir)"\"
 
 tests = \
@@ -142,13 +137,6 @@ headers = \
 	sieve-extensions.h \
 	sieve-plugins.h \
 	sieve.h
-
-if INSTALL_HEADERS
-  pkginc_libdir=$(dovecot_pkgincludedir)/sieve
-  pkginc_lib_HEADERS = $(headers)
-else
-  noinst_HEADERS = $(headers)
-endif
 
 if INSTALL_HEADERS
   pkginc_libdir=$(dovecot_pkgincludedir)/sieve

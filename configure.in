@@ -41,15 +41,11 @@ fi
 
 if test -d "$dovecotdir/src"; then
   # compiling against sources
-  have_dovecot_libs=yes
+  have_dovecot_sources=yes
 else
   # compiling against installed headers
-  echo "WARNING: Cannot build Sieve commandline tools without the compiled"
-  echo "         Dovecot sources. Compiling against headers will only build"
-  echo "         the Sieve plugin." 
-  have_dovecot_libs=no
+  have_dovecot_sources=no
 fi
-AM_CONDITIONAL(HAVE_DOVECOT_LIBS, test "$have_dovecot_libs" = "yes")
 
 # Extensions under development
 #
@@ -83,16 +79,6 @@ AC_ARG_ENABLE(header-install,
     want_headers=no)
 AM_CONDITIONAL(INSTALL_HEADERS, test "$want_headers" = "yes")
 
-AC_ARG_ENABLE(header-install,
-[  --enable-header-install Install development headers],
-    if test x$enableval = xno; then
-        want_headers=no
-    else
-        want_headers=yes
-    fi,
-    want_headers=no)
-AM_CONDITIONAL(INSTALL_HEADERS, test "$want_headers" = "yes")
-
 AC_ARG_ENABLE(valgrind,
 [AC_HELP_STRING([--enable-valgrind], [Enable Valgrind memory leak checks in testsuite [default=no]])],
     if test x$enableval = xno || test x$enableval = xauto; then
@@ -106,28 +92,72 @@ AM_CONDITIONAL(TESTSUITE_VALGRIND, test "$want_valgrind" = "yes")
 dnl replace relative ../ paths in the file with full paths
 eval `cat $dovecotdir/dovecot-config|sed 's,\$(top_builddir)/,$dovecotdir/,g'`
 
-if test $have_dovecot_libs = yes; then
+if test $have_dovecot_sources = yes; then
   dovecot_incdir="$dovecotdir"
+  dovecot_libdir="$dovecotdir"
+
+  dovecot_pkgincludedir='$(includedir)/dovecot'
+  dovecot_pkglibdir='$(libdir)/dovecot'
+
+  LIBDOVECOT='$(dovecot_libdir)/src/lib-dovecot/libdovecot.la'
+  LIBDOVECOT_STORAGE='$(dovecot_libdir)/src/lib-storage/libdovecot-storage.la'
+
+  SIEVE_DOVECOT_INCLUDE=' \
+    -I$(dovecot_incdir) \
+    -I$(dovecot_incdir)/src/lib \
+    -I$(dovecot_incdir)/src/lib-mail \
+    -I$(dovecot_incdir)/src/lib-storage'
+
+  SIEVE_LIB_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}' \
+    -I$(dovecot_incdir)/src/lib-imap \
+    -I$(dovecot_incdir)/src/lib-master'
+
+  SIEVE_LDA_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}' \
+    -I$(dovecot_incdir)/src/lib-dict \
+    -I$(dovecot_incdir)/src/lib-lda \
+    -I$(dovecot_incdir)/src/lda'
+
+  SIEVE_TOOL_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}' \
+    -I$(dovecot_incdir)/src/lib-settings \
+    -I$(dovecot_incdir)/src/lib-imap \
+    -I$(dovecot_incdir)/src/lib-index \
+    -I$(dovecot_incdir)/src/lib-master \
+    -I$(dovecot_incdir)/src/lib-storage/index \
+    -I$(dovecot_incdir)/src/lib-storage/index/raw'
+else
+  dovecot_libdir="$dovecotdir"
+  
+  dovecot_pkgincludedir='$(dovecot_incdir)'
+  dovecot_pkglibdir='$(dovecotdir)'
+
+  LIBDOVECOT='$(dovecot_libdir)/libdovecot.la'
+  LIBDOVECOT_STORAGE='$(dovecot_libdir)/libdovecot-storage.la'
+
+  SIEVE_DOVECOT_INCLUDE='-I$(dovecot_incdir)'
+  SIEVE_LIB_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}
+  SIEVE_LDA_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}
+  SIEVE_TOOL_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}
 fi
 
-AC_SUBST(STORAGE_LIBS)
+dovecot_pkglibexecdir='$(libexecdir)/dovecot'
+dovecot_docdir='$(datadir)/doc/dovecot'
+
 AC_SUBST(LIBICONV)
 AC_SUBST(RAND_LIBS)
 AC_SUBST(MODULE_LIBS)
 AC_SUBST(dovecot_incdir)
+AC_SUBST(dovecot_libdir)
 AC_SUBST(moduledir)
-
-dovecot_pkgincludedir='$(includedir)/dovecot'
 AC_SUBST(dovecot_pkgincludedir)
-
-dovecot_pkglibexecdir='$(libexecdir)/dovecot'
-dovecot_pkglibdir='$(libdir)/dovecot'
-dovecot_pkgincludedir='$(includedir)/dovecot'
-dovecot_docdir='$(datadir)/doc/dovecot'
 AC_SUBST(dovecot_pkglibexecdir)
 AC_SUBST(dovecot_pkglibdir)
-AC_SUBST(dovecot_pkgincludedir)
 AC_SUBST(dovecot_docdir)
+
+AC_SUBST(LIBDOVECOT)
+AC_SUBST(LIBDOVECOT_STORAGE)
+AC_SUBST(SIEVE_LDA_DOVECOT_INCLUDE)
+AC_SUBST(SIEVE_LIB_DOVECOT_INCLUDE)
+AC_SUBST(SIEVE_TOOL_DOVECOT_INCLUDE)
 
 AC_CONFIG_FILES([
 Makefile

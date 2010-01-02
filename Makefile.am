@@ -100,18 +100,9 @@ test_cases = \
 	tests/deprecated/notify/execute.svtest \
 	tests/deprecated/notify/denotify.svtest
 
-if HAVE_DOVECOT_LIBS
-
 $(test_cases):
 	@$(TEST_BIN) $@
 
 .PHONY: $(test_cases)
 
 test: $(test_cases)
-
-else
-
-test:
-	@echo "Cannot compile or execute the testsuite without the Dovecot sources."
-
-endif	

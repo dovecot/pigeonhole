@@ -10,24 +10,14 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
 	-I$(top_srcdir)/src/lib-sieve-tool \
 	-I./debug \
-	-I$(dovecot_incdir) \
-	-I$(dovecot_incdir)/src/lib \
-	-I$(dovecot_incdir)/src/lib-settings \
-	-I$(dovecot_incdir)/src/lib-mail \
-	-I$(dovecot_incdir)/src/lib-imap \
-	-I$(dovecot_incdir)/src/lib-index \
-	-I$(dovecot_incdir)/src/lib-master \
-	-I$(dovecot_incdir)/src/lib-storage \
-	-I$(dovecot_incdir)/src/lib-storage/index \
-	-I$(dovecot_incdir)/src/lib-storage/index/raw
+	$(SIEVE_TOOL_DOVECOT_INCLUDE) 
 
 libs = \
 	$(top_srcdir)/src/lib-sieve/libdovecot-sieve.la \
 	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la \
-	$(dovecot_incdir)/src/lib-storage/libdovecot-storage.la \
-	$(dovecot_incdir)/src/lib-dovecot/libdovecot.la \
+	$(LIBDOVECOT_STORAGE) \
+	$(LIBDOVECOT) \
 	./debug/libsieve_ext_debug.la
-
 
 # Sieve Compile Tool
 
