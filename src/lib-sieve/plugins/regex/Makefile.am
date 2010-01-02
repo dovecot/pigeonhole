@@ -2,7 +2,7 @@ noinst_LTLIBRARIES = libsieve_ext_regex.la
 
 AM_CPPFLAGS = \
 	-I../../ \
-	$(SIEVE_LIB_DOVECOT_INCLUDE)
+	$(LIBDOVECOT_INCLUDE)
 
 libsieve_ext_regex_la_SOURCES = \
 	mcht-regex.c \

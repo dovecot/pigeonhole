@@ -2,7 +2,7 @@ noinst_LTLIBRARIES = libsieve_ext_mailbox.la
 
 AM_CPPFLAGS = \
 	-I../../ \
-	$(SIEVE_LIB_DOVECOT_INCLUDE)
+	$(LIBDOVECOT_INCLUDE)
 
 tags = \
 	tag-mailbox-create.c

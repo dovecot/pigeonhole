@@ -3,7 +3,7 @@ noinst_LTLIBRARIES = libsieve_ext_enotify.la
 AM_CPPFLAGS = \
 	-I../../ \
 	-I../variables \
-	$(SIEVE_LIB_DOVECOT_INCLUDE)
+	$(LIBDOVECOT_INCLUDE)
 
 commands = \
 	cmd-notify.c

@@ -2,7 +2,7 @@ noinst_LTLIBRARIES = libsieve_ext_debug.la
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
-	$(SIEVE_LIB_DOVECOT_INCLUDE)
+	$(LIBDOVECOT_INCLUDE)
 
 commands = \
 	cmd-debug-print.c

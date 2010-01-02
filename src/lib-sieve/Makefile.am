@@ -3,7 +3,7 @@ SUBDIRS = plugins
 dovecot_pkglib_LTLIBRARIES = libdovecot-sieve.la
 
 AM_CPPFLAGS = \
-	$(SIEVE_LIB_DOVECOT_INCLUDE) \
+	$(LIBDOVECOT_INCLUDE) \
 	-DMODULEDIR=\""$(moduledir)"\"
 
 tests = \

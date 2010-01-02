@@ -2,7 +2,7 @@ noinst_LTLIBRARIES = libsieve_ext_date.la
 
 AM_CPPFLAGS = \
 	-I../../ \
-	$(SIEVE_LIB_DOVECOT_INCLUDE)
+	$(LIBDOVECOT_INCLUDE)
 
 tests = \
 	tst-date.c

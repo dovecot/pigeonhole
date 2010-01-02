@@ -102,26 +102,22 @@ if test $have_dovecot_sources = yes; then
   LIBDOVECOT='$(dovecot_libdir)/src/lib-dovecot/libdovecot.la'
   LIBDOVECOT_STORAGE='$(dovecot_libdir)/src/lib-storage/libdovecot-storage.la'
 
-  SIEVE_DOVECOT_INCLUDE=' \
+  LIBDOVECOT_INCLUDE=' \
     -I$(dovecot_incdir) \
     -I$(dovecot_incdir)/src/lib \
     -I$(dovecot_incdir)/src/lib-mail \
-    -I$(dovecot_incdir)/src/lib-storage'
-
-  SIEVE_LIB_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}' \
+    -I$(dovecot_incdir)/src/lib-storage \
     -I$(dovecot_incdir)/src/lib-imap \
     -I$(dovecot_incdir)/src/lib-master'
 
-  SIEVE_LDA_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}' \
+  LIBDOVECOT_LDA_INCLUDE=' \
     -I$(dovecot_incdir)/src/lib-dict \
     -I$(dovecot_incdir)/src/lib-lda \
     -I$(dovecot_incdir)/src/lda'
 
-  SIEVE_TOOL_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}' \
+  LIBDOVECOT_STORAGE_INCLUDE=' \
     -I$(dovecot_incdir)/src/lib-settings \
-    -I$(dovecot_incdir)/src/lib-imap \
     -I$(dovecot_incdir)/src/lib-index \
-    -I$(dovecot_incdir)/src/lib-master \
     -I$(dovecot_incdir)/src/lib-storage/index \
     -I$(dovecot_incdir)/src/lib-storage/index/raw'
 else
@@ -133,10 +129,9 @@ else
   LIBDOVECOT='$(dovecot_libdir)/libdovecot.la'
   LIBDOVECOT_STORAGE='$(dovecot_libdir)/libdovecot-storage.la'
 
-  SIEVE_DOVECOT_INCLUDE='-I$(dovecot_incdir)'
-  SIEVE_LIB_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}
-  SIEVE_LDA_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}
-  SIEVE_TOOL_DOVECOT_INCLUDE=${SIEVE_DOVECOT_INCLUDE}
+  LIBDOVECOT_INCLUDE='-I$(dovecot_incdir)'
+  LIBDOVECOT_LDA_INCLUDE='-I$(dovecot_incdir)'
+  LIBDOVECOT_STORAGE_INCLUDE='-I$(dovecot_incdir)'
 fi
 
 dovecot_pkglibexecdir='$(libexecdir)/dovecot'
@@ -155,9 +150,9 @@ AC_SUBST(dovecot_docdir)
 
 AC_SUBST(LIBDOVECOT)
 AC_SUBST(LIBDOVECOT_STORAGE)
-AC_SUBST(SIEVE_LDA_DOVECOT_INCLUDE)
-AC_SUBST(SIEVE_LIB_DOVECOT_INCLUDE)
-AC_SUBST(SIEVE_TOOL_DOVECOT_INCLUDE)
+AC_SUBST(LIBDOVECOT_INCLUDE)
+AC_SUBST(LIBDOVECOT_LDA_INCLUDE)
+AC_SUBST(LIBDOVECOT_STORAGE_INCLUDE)
 
 AC_CONFIG_FILES([
 Makefile

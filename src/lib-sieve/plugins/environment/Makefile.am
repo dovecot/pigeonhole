@@ -2,7 +2,7 @@ noinst_LTLIBRARIES = libsieve_ext_environment.la
 
 AM_CPPFLAGS = \
 	-I../../ \
-	$(SIEVE_LIB_DOVECOT_INCLUDE)
+	$(LIBDOVECOT_INCLUDE)
 
 tests = \
 	tst-environment.c

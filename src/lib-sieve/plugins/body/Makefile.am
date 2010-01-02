@@ -2,7 +2,7 @@ noinst_LTLIBRARIES = libsieve_ext_body.la
 
 AM_CPPFLAGS = \
 	-I../../ \
-	$(SIEVE_LIB_DOVECOT_INCLUDE)
+	$(LIBDOVECOT_INCLUDE)
 
 tsts = \
 	tst-body.c
