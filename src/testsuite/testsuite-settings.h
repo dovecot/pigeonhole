@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __TESTSUITE_SETTINGS_H
 #define __TESTSUITE_SETTINGS_H
 
