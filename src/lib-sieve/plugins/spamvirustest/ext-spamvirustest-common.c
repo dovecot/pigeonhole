@@ -152,8 +152,8 @@ static bool ext_spamvirustest_parse_strlen_value
 	char ch = *p;
 
 	if ( *str_value == '\0' ) {
-		*error_r = "empty value";		
-		return FALSE;
+		*value_r = 0;
+		return TRUE;
 	}
 	
 	while ( *p == ch ) p++;
@@ -306,6 +306,7 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 
 	if ( *context != NULL ) {
 		ext_spamvirustest_unload(ext);
+		*context = NULL;
 	}
 
 	/* FIXME: 
@@ -360,7 +361,8 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 		sieve_sys_warning("%s: extension not configured, "
 			"tests will always match against \"0\"", ext_name);
 		ext_spamvirustest_config_free(ext_data);
-		pool_unref(&ext_data->pool);
+		pool_unref(&pool);
+		*context = NULL;
 	} else { 
 		*context = (void *) ext_data;
 	}
@@ -373,10 +375,12 @@ void ext_spamvirustest_unload(const struct sieve_extension *ext)
 	struct ext_spamvirustest_data *ext_data = 
 		(struct ext_spamvirustest_data *) ext->context;
 	
-	ext_spamvirustest_header_spec_free(&ext_data->status_header);
-	ext_spamvirustest_header_spec_free(&ext_data->max_header);
+	if ( ext_data != NULL ) {
+		ext_spamvirustest_header_spec_free(&ext_data->status_header);
+		ext_spamvirustest_header_spec_free(&ext_data->max_header);
 	
-	pool_unref(&ext_data->pool);
+		pool_unref(&ext_data->pool);
+	}
 }
 
 /*
