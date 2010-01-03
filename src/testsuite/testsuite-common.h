@@ -77,6 +77,7 @@ enum testsuite_operation_code {
 	TESTSUITE_OPERATION_TEST_FINISH,
 	TESTSUITE_OPERATION_TEST_FAIL,
 	TESTSUITE_OPERATION_TEST_CONFIG_SET,
+	TESTSUITE_OPERATION_TEST_CONFIG_UNSET,
 	TESTSUITE_OPERATION_TEST_CONFIG_RELOAD,
 	TESTSUITE_OPERATION_TEST_SET,
 	TESTSUITE_OPERATION_TEST_SCRIPT_COMPILE,
@@ -99,6 +100,7 @@ extern const struct sieve_operation_def test_operation;
 extern const struct sieve_operation_def test_finish_operation;
 extern const struct sieve_operation_def test_fail_operation;
 extern const struct sieve_operation_def test_config_set_operation;
+extern const struct sieve_operation_def test_config_unset_operation;
 extern const struct sieve_operation_def test_config_reload_operation;
 extern const struct sieve_operation_def test_set_operation;
 extern const struct sieve_operation_def test_script_compile_operation;

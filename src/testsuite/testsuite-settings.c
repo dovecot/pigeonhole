@@ -73,3 +73,17 @@ void testsuite_setting_set(const char *identifier, const char *value)
 		hash_table_insert(settings, (void *) identifier, (void *) setting);
 	}
 }
+
+void testsuite_setting_unset(const char *identifier)
+{
+	struct testsuite_setting *setting = (struct testsuite_setting *) 
+		hash_table_lookup(settings, identifier);
+
+	if ( setting != NULL ) {
+		i_free(setting->identifier);
+		i_free(setting->value);
+		i_free(setting);
+	}
+
+	hash_table_remove(settings, identifier);
+}

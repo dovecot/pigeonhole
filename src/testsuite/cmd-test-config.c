@@ -19,7 +19,8 @@
  *
  * Syntax:   
  *   test_config (
- *     :set <setting: string> <value: string> / 
+ *     :set <setting: string> <value: string> /
+ *     :unset <setting: string> /  
  *     :reload [<extension: string>] )
  */
 
@@ -58,6 +59,21 @@ const struct sieve_operation_def test_config_set_operation = {
 	cmd_test_config_set_operation_execute 
 };
 
+/* Test_message_unset operation */
+
+static bool cmd_test_config_unset_operation_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static int cmd_test_config_unset_operation_execute
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+
+const struct sieve_operation_def test_config_unset_operation = { 
+	"TEST_CONFIG_UNSET",
+	&testsuite_extension, 
+	TESTSUITE_OPERATION_TEST_CONFIG_UNSET,
+	cmd_test_config_unset_operation_dump, 
+	cmd_test_config_unset_operation_execute 
+};
+
 /* Test_message_mailbox operation */
 
 static bool cmd_test_config_reload_operation_dump
@@ -79,12 +95,14 @@ const struct sieve_operation_def test_config_reload_operation = {
 
 enum cmd_test_config_action {
 	CONFIG_ACTION_SET,
+	CONFIG_ACTION_UNSET,
 	CONFIG_ACTION_RELOAD,
 	CONFIG_ACTION_LAST
 };
 
 const struct sieve_operation_def *test_config_operations[] = {
 	&test_config_set_operation,
+	&test_config_unset_operation,
 	&test_config_reload_operation
 };
  
@@ -124,6 +142,8 @@ static bool tag_action_is_instance_of
 
 	if ( strcmp(identifier, "set") == 0 )
 		action = CONFIG_ACTION_SET;
+	else if ( strcmp(identifier, "unset") == 0 )
+		action = CONFIG_ACTION_UNSET;
 	else if ( strcmp(identifier, "reload") == 0 )
 		action = CONFIG_ACTION_RELOAD;
 	else 
@@ -181,6 +201,20 @@ static bool tag_action_validate
 		/* Detach parameters */
 		*arg = sieve_ast_arguments_detach(tag->parameters,2);
 		break;
+	case CONFIG_ACTION_UNSET:
+		/* Check syntax:
+		 *   :unset <setting: string>
+		 */
+		if ( !sieve_validate_tag_parameter
+			(valdtr, cmd, tag, *arg, NULL, 0, SAAT_STRING, TRUE) ) {
+			return FALSE;
+		}
+
+		/* Detach parameter */
+		tag->parameters = *arg;
+		*arg = sieve_ast_arguments_detach(*arg,1);
+		break;
+
 	case CONFIG_ACTION_RELOAD:
 		/* Check syntax:
 		 *   :reload <extension: string>
@@ -253,6 +287,17 @@ static bool cmd_test_config_set_operation_dump
 		sieve_opr_string_dump(denv, address, "value");
 }
 
+static bool cmd_test_config_unset_operation_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	sieve_code_dumpf(denv, "TEST_CONFIG_UNSET:");
+	
+	sieve_code_descend(denv);
+
+	return 
+		sieve_opr_string_dump(denv, address, "setting");
+}
+
 static bool cmd_test_config_reload_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
@@ -278,7 +323,7 @@ static int cmd_test_config_set_operation_execute
 	 * Read operands 
 	 */
 
-	/* Settings */
+	/* Setting */
 
 	if ( !sieve_opr_string_read(renv, address, &setting) ) {
 		sieve_runtime_trace_error(renv, "invalid setting operand");
@@ -300,6 +345,31 @@ static int cmd_test_config_set_operation_execute
 		str_c(setting), str_c(value));
 
 	testsuite_setting_set(str_c(setting), str_c(value));
+
+	return SIEVE_EXEC_OK;
+}
+
+static int cmd_test_config_unset_operation_execute
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
+{
+	string_t *setting;
+
+	/* 
+	 * Read operands 
+	 */
+
+	if ( !sieve_opr_string_read(renv, address, &setting) ) {
+		sieve_runtime_trace_error(renv, "invalid setting operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	/*
+	 * Perform operation
+	 */
+		
+	sieve_runtime_trace(renv, "TEST_CONFIG_UNSET %s", str_c(setting));
+
+	testsuite_setting_unset(str_c(setting));
 
 	return SIEVE_EXEC_OK;
 }

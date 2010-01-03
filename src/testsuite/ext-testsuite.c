@@ -56,6 +56,7 @@ const struct sieve_operation_def *testsuite_operations[] = {
 	&test_finish_operation,
 	&test_fail_operation,
 	&test_config_set_operation,
+	&test_config_unset_operation,
 	&test_config_reload_operation,
 	&test_set_operation,
 	&test_script_compile_operation,
