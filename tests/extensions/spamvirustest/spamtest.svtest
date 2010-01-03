@@ -128,3 +128,102 @@ test "Value: past-max" {
 	}
 }
 
+/*
+ * Value
+ */
+
+test_set "message" text:
+From: legitimate@example.com
+To: victim@dovecot.org
+Subject: Not spammish
+X-Spam-Status: 
+X-Spam-Status1: s
+X-Spam-Status2: sssssss
+X-Spam-Status3: ssssssss
+X-Spam-Status4: ssssssssssssss
+
+Test!
+.
+;
+
+test_config :set "sieve_spamtest_status_header" "X-Spam-Status";
+test_config :set "sieve_spamtest_max_value" "8.0";
+test_config :set "sieve_spamtest_status_type" "strlen";
+test_config :unset "sieve_spamtest_max_header";
+test_config :reload "spamtest";
+
+test "Strlen: zero" {
+	if spamtest :is "0" {
+		test_fail "spamtest not configured or test failed";
+	}
+
+	if not spamtest :is "1" {
+		if spamtest :matches "*" { }
+		test_fail "wrong spam value produced: ${1}";
+	}
+
+	if spamtest :is "2" {
+		test_fail "spam test matches anything";
+	}
+}
+
+test_config :set "sieve_spamtest_status_header" "X-Spam-Status1";
+test_config :reload "spamtest";
+
+test "Strlen: low" {
+	if spamtest :is "0" {
+		test_fail "spamtest not configured or test failed";
+	}
+
+	if not spamtest :value "gt" "1" {
+		test_fail "too small spam value produced";
+	}
+
+	if not spamtest :value "eq" "2" {
+		if spamtest :matches "*" { }
+		test_fail "wrong spam value produced: ${1}";
+	}
+}
+
+test_config :set "sieve_spamtest_status_header" "X-Spam-Status2";
+test_config :reload "spamtest";
+
+test "Strlen: high" {
+	if spamtest :is "0" {
+		test_fail "spamtest not configured or test failed";
+	}
+
+	if not spamtest :value "eq" "8" {
+		if spamtest :matches "*" { }
+		test_fail "wrong spam value produced: ${1}";
+	}
+}
+
+test_config :set "sieve_spamtest_status_header" "X-Spam-Status3";
+test_config :reload "spamtest";
+
+test "Value: max" {
+	if spamtest :is "0" {
+		test_fail "spamtest not configured or test failed";
+	}
+
+	if not spamtest :value "eq" "10" {
+		if spamtest :matches "*" { }
+		test_fail "wrong spam value produced: ${1}";
+	}
+}
+
+test_config :set "sieve_spamtest_status_header" "X-Spam-Status4";
+test_config :reload "spamtest";
+
+test "Value: past-max" {
+	if spamtest :is "0" {
+		test_fail "spamtest not configured or test failed";
+	}
+
+	if not spamtest :value "eq" "10" {
+		if spamtest :matches "*" { }
+		test_fail "wrong spam value produced: ${1}";
+	}
+}
+
