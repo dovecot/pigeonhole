@@ -281,6 +281,22 @@ static bool _sieve_extension_load(struct sieve_extension *ext)
 	return TRUE;
 }
 
+bool sieve_extension_reload(const struct sieve_extension *ext)
+{
+	struct sieve_extension_registry *ext_reg = ext->svinst->ext_reg;
+	struct sieve_extension *mod_ext;
+	int ext_id = ext->id;
+	
+	/* Let's not just cast the 'const' away */
+	if ( ext_id > 0 && ext_id < (int) array_count(&ext_reg->extensions) ) {
+		mod_ext = array_idx_modifiable(&ext_reg->extensions, ext_id);
+
+		return _sieve_extension_load(mod_ext);
+	}
+
+	return FALSE;
+}
+
 static struct sieve_extension *_sieve_extension_register
 (struct sieve_instance *svinst, const struct sieve_extension_def *extdef, 
 	bool load, bool required)

@@ -76,6 +76,7 @@ test_cases = \
 	tests/extensions/relational/errors.svtest \
 	tests/extensions/subaddress/basic.svtest \
 	tests/extensions/subaddress/rfc.svtest \
+	tests/extensions/subaddress/config.svtest \
 	tests/extensions/vacation/errors.svtest \
 	tests/extensions/vacation/execute.svtest \
 	tests/extensions/vacation/message.svtest \

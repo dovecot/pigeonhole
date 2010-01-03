@@ -91,9 +91,11 @@ const struct sieve_extension_def imapflags_extension = {
 static bool ext_imapflags_load
 (const struct sieve_extension *ext, void **context)
 {
-	/* Make sure real extension is registered, it is needed by the binary */
-	*context = (void *)	
-		sieve_extension_require(ext->svinst, &imap4flags_extension);
+	if ( *context == NULL ) {	
+		/* Make sure real extension is registered, it is needed by the binary */
+		*context = (void *)	
+			sieve_extension_require(ext->svinst, &imap4flags_extension);
+	}
 
 	return TRUE;
 }

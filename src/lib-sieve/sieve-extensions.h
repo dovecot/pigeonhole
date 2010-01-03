@@ -116,7 +116,10 @@ const struct sieve_extension *sieve_extension_register
 		bool load);
 const struct sieve_extension *sieve_extension_require
 	(struct sieve_instance *svinst, const struct sieve_extension_def *extension);
+bool sieve_extension_reload(const struct sieve_extension *ext);
+
 int sieve_extensions_get_count(struct sieve_instance *svinst);
+
 const struct sieve_extension *sieve_extension_get_by_id
 	(struct sieve_instance *svinst, unsigned int ext_id);
 const struct sieve_extension *sieve_extension_get_by_name

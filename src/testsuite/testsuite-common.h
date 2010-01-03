@@ -49,6 +49,7 @@ bool testsuite_generator_context_initialize
 
 extern const struct sieve_command_def cmd_test;
 extern const struct sieve_command_def cmd_test_fail;
+extern const struct sieve_command_def cmd_test_config;
 extern const struct sieve_command_def cmd_test_set;
 extern const struct sieve_command_def cmd_test_result_reset;
 extern const struct sieve_command_def cmd_test_result_print;
@@ -75,6 +76,8 @@ enum testsuite_operation_code {
 	TESTSUITE_OPERATION_TEST,
 	TESTSUITE_OPERATION_TEST_FINISH,
 	TESTSUITE_OPERATION_TEST_FAIL,
+	TESTSUITE_OPERATION_TEST_CONFIG_SET,
+	TESTSUITE_OPERATION_TEST_CONFIG_RELOAD,
 	TESTSUITE_OPERATION_TEST_SET,
 	TESTSUITE_OPERATION_TEST_SCRIPT_COMPILE,
 	TESTSUITE_OPERATION_TEST_SCRIPT_RUN,
@@ -95,6 +98,8 @@ enum testsuite_operation_code {
 extern const struct sieve_operation_def test_operation;
 extern const struct sieve_operation_def test_finish_operation;
 extern const struct sieve_operation_def test_fail_operation;
+extern const struct sieve_operation_def test_config_set_operation;
+extern const struct sieve_operation_def test_config_reload_operation;
 extern const struct sieve_operation_def test_set_operation;
 extern const struct sieve_operation_def test_script_compile_operation;
 extern const struct sieve_operation_def test_script_run_operation;

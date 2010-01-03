@@ -54,7 +54,9 @@
 const struct sieve_operation_def *testsuite_operations[] = { 
 	&test_operation, 
 	&test_finish_operation,
-	&test_fail_operation, 
+	&test_fail_operation,
+	&test_config_set_operation,
+	&test_config_reload_operation,
 	&test_set_operation,
 	&test_script_compile_operation,
 	&test_script_run_operation,
@@ -115,6 +117,7 @@ static bool ext_testsuite_validator_load
 {
 	sieve_validator_register_command(valdtr, ext, &cmd_test);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_fail);
+	sieve_validator_register_command(valdtr, ext, &cmd_test_config);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_set);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_result_print);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_result_reset);

@@ -237,6 +237,10 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 	const char *ext_name;
 	const char *error;
 
+	if ( *context != NULL ) {
+		ext_spamvirustest_unload(ext);
+	}
+
 	/* FIXME: 
 	 *   Prevent loading of both spamtest and spamtestplus: let these share 
 	 *   contexts.
@@ -325,6 +329,12 @@ bool ext_spamvirustest_load(const struct sieve_extension *ext, void **context)
 	*context = (void *) ext_data;
 	return TRUE;
 }
+
+void ext_spamvirustest_unload(const struct sieve_extension *ext)
+{
+	/* FIXME */
+}
+
 
 /*
  * Score extraction
