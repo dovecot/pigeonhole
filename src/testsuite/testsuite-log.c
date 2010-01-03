@@ -26,6 +26,7 @@ unsigned int _testsuite_log_error_index = 0;
 
 static pool_t _testsuite_logmsg_pool = NULL;
 ARRAY_DEFINE(_testsuite_log_errors, struct _testsuite_log_message);
+ARRAY_DEFINE(_testsuite_log_warnings, struct _testsuite_log_message);
 
 static void _testsuite_log_verror
 (struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location,
@@ -47,6 +48,26 @@ static void _testsuite_log_verror
 	array_append(&_testsuite_log_errors, &msg, 1);	
 }
 
+static void _testsuite_log_vwarning
+(struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location,
+	const char *fmt, va_list args)
+{
+	pool_t pool = _testsuite_logmsg_pool;
+	struct _testsuite_log_message msg;
+
+	if ( _testsuite_log_stdout ) 	
+	{
+		va_list args_copy;
+		VA_COPY(args_copy, args);
+		printf("warning: %s: %s.\n", location, t_strdup_vprintf(fmt, args_copy));
+	}
+	
+	msg.location = p_strdup(pool, location);
+	msg.message = p_strdup_vprintf(pool, fmt, args);
+
+	array_append(&_testsuite_log_warnings, &msg, 1);	
+}
+
 static struct sieve_error_handler *_testsuite_log_ehandler_create(void)
 {
 	pool_t pool;
@@ -61,6 +82,7 @@ static struct sieve_error_handler *_testsuite_log_ehandler_create(void)
 	sieve_error_handler_init(ehandler, pool, 0);
 
 	ehandler->verror = _testsuite_log_verror;
+	ehandler->vwarning = _testsuite_log_vwarning;
 
 	return ehandler;
 }
@@ -77,6 +99,7 @@ void testsuite_log_clear_messages(void)
 		("testsuite_log_messages", 8192);
 	
 	p_array_init(&_testsuite_log_errors, _testsuite_logmsg_pool, 128);	
+	p_array_init(&_testsuite_log_warnings, _testsuite_logmsg_pool, 128);	
 
 	sieve_error_handler_reset(testsuite_log_ehandler);
 }
