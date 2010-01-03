@@ -527,6 +527,11 @@ const char *ext_spamvirustest_get_value
 	/* Calculate value */
 	if ( status_value < 0 ) {
 		value = 1;
+	} else if ( status_value > max_value ) {
+		if ( percent )
+			value = 100;
+		else
+			value = 10;
 	} else {
 		if ( percent )
 			value = (status_value / max_value) * 99 + 1;
