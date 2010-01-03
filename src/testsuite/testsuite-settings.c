@@ -83,7 +83,7 @@ void testsuite_setting_unset(const char *identifier)
 		i_free(setting->identifier);
 		i_free(setting->value);
 		i_free(setting);
-	}
 
-	hash_table_remove(settings, identifier);
+		hash_table_remove(settings, identifier);
+	}
 }
