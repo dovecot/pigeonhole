@@ -1,0 +1,41 @@
+require "vnd.dovecot.testsuite";
+require "spamtest";
+
+/*
+ * Value
+ */
+
+test_set "message" text:
+From: legitimate@example.com
+To: victim@dovecot.org
+Subject: Not spammish
+X-Company-MailScanner-SpamScore: -1.6 (-)
+X-Company-MailScanner-SpamCheck: 
+	No, score=-1.6 required=5.0 tests=AWL,BAYES_00,HTML_IMAGE_RATIO_02,HTML_MESSAGE,MIME_HTML_MOSTLY
+	autolearn=no version=3.2.5
+
+Test!
+.
+;
+
+test_config :set "sieve_spamtest_status_header"
+	"X-Company-MailScanner-SpamCheck: [ \\ta-zA-Z]+, score=(-?[0-9]+.[0-9]+)";
+test_config :set "sieve_spamtest_max_header"
+	"X-Company-MailScanner-SpamCheck: [ \\ta-zA-Z]+, score=-?[0-9]+.[0-9]+ required=(-?[0-9]+.[0-9]+)";
+test_config :set "sieve_spamtest_status_type" "value";
+test_config :reload "spamtest";
+
+test "Value: subzero" {
+	if spamtest :is "0" {
+		test_fail "spamtest not configured";
+	}
+
+	if not spamtest :is "1" {
+		test_fail "wrong spam value produced";
+	}
+
+	if spamtest :is "2" {
+		test_fail "spam test matches anything";
+	}
+}
+

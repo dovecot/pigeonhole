@@ -21,6 +21,13 @@ else
 TEST_BIN = $(TESTSUITE_BIN)
 endif
 
+if BUILD_UNFINISHED
+test_unfinished = \
+	tests/extensions/spamvirustest/spamtest.svtest
+else
+test_unfinished = 
+endif
+
 test_cases = \
 	tests/testsuite.svtest\
 	tests/control-structures.svtest \
@@ -99,7 +106,8 @@ test_cases = \
 	tests/deprecated/notify/mailto.svtest \
 	tests/deprecated/notify/errors.svtest \
 	tests/deprecated/notify/execute.svtest \
-	tests/deprecated/notify/denotify.svtest
+	tests/deprecated/notify/denotify.svtest \
+	$(test_unfinished)
 
 $(test_cases):
 	@$(TEST_BIN) $@
