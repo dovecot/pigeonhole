@@ -263,7 +263,7 @@ static bool ext_spamvirustest_config_load
 	} else if ( strcmp(status_type, "strlen") == 0 ) {
 		ext_data->status_type = EXT_SPAMVIRUSTEST_STATUS_TYPE_STRLEN;
 	} else if ( strcmp(status_type, "yesno") == 0 ) {
-		ext_data->status_type = EXT_SPAMVIRUSTEST_STATUS_TYPE_STRLEN;
+		ext_data->status_type = EXT_SPAMVIRUSTEST_STATUS_TYPE_YESNO;
 	} else {
 		sieve_sys_error("%s: invalid status type '%s'", ext_name, status_type);
 		return FALSE;
