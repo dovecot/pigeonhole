@@ -55,7 +55,7 @@ static const struct sieve_environment testsuite_sieve_env = {
 	testsuite_setting_get
 };
 
-static void testsuite_tool_init(const char *extensions) 
+static void testsuite_tool_init(const char *extensions, bool log_stdout) 
 {
 	testsuite_settings_init();
 
@@ -63,7 +63,7 @@ static void testsuite_tool_init(const char *extensions)
 
 	sieve_extensions_set_string(sieve_instance, extensions);
 
-	testsuite_init(sieve_instance);
+	testsuite_init(sieve_instance, log_stdout);
 }
 
 static void testsuite_tool_deinit(void)
@@ -82,7 +82,7 @@ static void testsuite_tool_deinit(void)
 static void print_help(void)
 {
 	printf(
-"Usage: testsuite [-d <dump filename>] <scriptfile>\n"
+"Usage: testsuite [-t][-E][-d <dump filename>] <scriptfile>\n"
 	);
 }
 
@@ -136,11 +136,11 @@ int main(int argc, char **argv)
 	const char *user, *home, *errstr;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
-	bool trace = FALSE;
+	bool trace = FALSE, log_stdout = FALSE;
 	int ret, c;
 
 	master_service = master_service_init
-		("testsuite", MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "d:x:t");
+		("testsuite", MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "d:x:tE");
 
 	user = getenv("USER");
 
@@ -159,6 +159,9 @@ int main(int argc, char **argv)
             break;
 		case 't':
 			trace = TRUE;
+			break;
+		case 'E':
+			log_stdout = TRUE;
 			break;
 		default:
 			print_help();
@@ -202,7 +205,7 @@ int main(int argc, char **argv)
 		i_fatal("%s", errstr);
 
 	/* Initialize testsuite */
-	testsuite_tool_init(extensions);
+	testsuite_tool_init(extensions, log_stdout);
 
 	printf("Test case: %s:\n\n", scriptfile);
 

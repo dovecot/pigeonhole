@@ -8,7 +8,7 @@
 
 extern struct sieve_error_handler *testsuite_log_ehandler;
 
-void testsuite_log_init(void);
+void testsuite_log_init(bool log_stdout);
 void testsuite_log_deinit(void);
 
 void testsuite_log_clear_messages(void);

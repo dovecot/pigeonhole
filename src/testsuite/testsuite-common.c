@@ -232,10 +232,10 @@ const char *testsuite_tmp_dir_get(void)
  * Main testsuite init/deinit
  */
 
-void testsuite_init(struct sieve_instance *svinst)
+void testsuite_init(struct sieve_instance *svinst, bool log_stdout)
 {
 	testsuite_test_context_init();
-	testsuite_log_init();
+	testsuite_log_init(log_stdout);
 	testsuite_tmp_dir_init();
 	
 	testsuite_script_init();

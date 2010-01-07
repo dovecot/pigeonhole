@@ -152,7 +152,7 @@ const char *testsuite_tmp_dir_get(void);
  * Testsuite init/deinit 
  */
 
-void testsuite_init(struct sieve_instance *svinst);
+void testsuite_init(struct sieve_instance *svinst, bool log_stdout);
 void testsuite_deinit(void);
 
 #endif /* __TESTSUITE_COMMON_H */

@@ -101,8 +101,10 @@ const char *testsuite_log_get_error_next(bool location)
 	return msg->message;		
 }
 
-void testsuite_log_init(void)
+void testsuite_log_init(bool log_stdout)
 {
+	_testsuite_log_stdout = log_stdout;
+
 	testsuite_log_ehandler = _testsuite_log_ehandler_create(); 	
 	sieve_error_handler_accept_infolog(testsuite_log_ehandler, TRUE);
 
