@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 	const char *user, *home, *folder;
 	int i;
 
-	sieve_tool_init(NULL, FALSE);
+	sieve_tool_init();
 	
 	/* Parse arguments */
 	scriptfile = recipient = sender = extensions = src_mailstore = dst_mailstore 
@@ -275,6 +275,8 @@ int main(int argc, char **argv)
 		print_help();
 		i_fatal("Missing <mailstore> argument");
 	}
+
+	sieve_tool_sieve_init(NULL, FALSE);
 
 	if ( extensions != NULL ) {
 		sieve_set_extensions(sieve_instance, extensions);

@@ -47,33 +47,13 @@ const struct sieve_script_env *testsuite_scriptenv;
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
 
 /*
- * Testsuite initialization 
+ * Testsuite Sieve environment
  */
 
 static const struct sieve_environment testsuite_sieve_env = {
 	sieve_tool_get_homedir,
 	testsuite_setting_get
 };
-
-static void testsuite_tool_init(const char *extensions, bool log_stdout) 
-{
-	testsuite_settings_init();
-
-	sieve_tool_init(&testsuite_sieve_env, FALSE);
-
-	sieve_extensions_set_string(sieve_instance, extensions);
-
-	testsuite_init(sieve_instance, log_stdout);
-}
-
-static void testsuite_tool_deinit(void)
-{
-	testsuite_deinit();
-	
-	sieve_tool_deinit();
-
-	testsuite_settings_deinit();
-}
 
 /*
  * Testsuite execution
@@ -82,7 +62,9 @@ static void testsuite_tool_deinit(void)
 static void print_help(void)
 {
 	printf(
-"Usage: testsuite [-t][-E][-d <dump filename>] <scriptfile>\n"
+"Usage: testsuite [-t] [-E] [-d <dump filename>]\n"
+"                 [-P <plugin>] [-x <extensions>]\n"
+"                 <scriptfile>\n"
 	);
 }
 
@@ -134,6 +116,7 @@ int main(int argc, char **argv)
 	struct mail_user *mail_user_dovecot;
 	const char *scriptfile, *dumpfile, *extensions; 
 	const char *user, *home, *errstr;
+	ARRAY_TYPE(const_string) plugins;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
 	bool trace = FALSE, log_stdout = FALSE;
@@ -143,6 +126,10 @@ int main(int argc, char **argv)
 		("testsuite", MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "d:x:tE");
 
 	user = getenv("USER");
+
+	sieve_tool_init(FALSE);
+
+	t_array_init(&plugins, 4);
 
 	/* Parse arguments */
 	scriptfile = dumpfile = extensions = NULL;
@@ -205,7 +192,11 @@ int main(int argc, char **argv)
 		i_fatal("%s", errstr);
 
 	/* Initialize testsuite */
-	testsuite_tool_init(extensions, log_stdout);
+	testsuite_settings_init();
+	sieve_tool_sieve_init(&testsuite_sieve_env);
+	sieve_tool_load_plugins(&plugins);
+	sieve_extensions_set_string(sieve_instance, extensions);
+	testsuite_init(sieve_instance, log_stdout);
 
 	printf("Test case: %s:\n\n", scriptfile);
 
@@ -214,8 +205,9 @@ int main(int argc, char **argv)
 	sieve_dir = strrchr(scriptfile, '/');
 	if ( sieve_dir == NULL )
 		sieve_dir= "./";
-	else
+	else {
 		sieve_dir = t_strdup_until(scriptfile, sieve_dir+1);
+	}
 
 	/* Currently needed for include (FIXME) */
 	testsuite_setting_set
@@ -290,7 +282,9 @@ int main(int argc, char **argv)
 		mail_user_unref(&mail_user_dovecot);
 
 	/* De-initialize testsuite */
-	testsuite_tool_deinit();  
+	testsuite_deinit();	
+	testsuite_settings_deinit();
+	sieve_tool_deinit();
 
 	mail_storage_service_user_free(&service_user);
 	mail_storage_service_deinit(&storage_service);

@@ -3,12 +3,16 @@
 
 #include "lib.h"
 #include "lib-signals.h"
+#include "array.h"
 #include "ioloop.h"
 #include "ostream.h"
 #include "hostpid.h"
+#include "dict.h"
 #include "mail-storage.h"
 
 #include "sieve.h"
+#include "sieve-plugins.h"
+
 #include "sieve-tool.h"
 
 #include <stdio.h>
@@ -74,7 +78,7 @@ static void sig_die(const siginfo_t *si, void *context ATTR_UNUSED)
 /* HACK */
 static bool _init_lib = FALSE;
 
-void sieve_tool_init(const struct sieve_environment *env, bool init_lib) 
+void sieve_tool_init(bool init_lib) 
 {
 	_init_lib = init_lib;
 
@@ -89,7 +93,10 @@ void sieve_tool_init(const struct sieve_environment *env, bool init_lib)
 		lib_signals_ignore(SIGPIPE, TRUE);
 		lib_signals_ignore(SIGALRM, FALSE);
 	}
+}
 
+void sieve_tool_sieve_init(const struct sieve_environment *env)
+{
 	if ( env == NULL ) env = &sieve_tool_sieve_env;
 
 	if ( (sieve_instance=sieve_init(env, NULL)) == NULL )
@@ -157,6 +164,27 @@ void sieve_tool_get_envelope_data
 		(void)mail_get_first_header(mail, "From", sender);
 	if ( *sender == NULL ) 
 		*sender = "sender@example.com";
+}
+
+void sieve_tool_load_plugins(ARRAY_TYPE(const_string) *plugins)
+{
+	unsigned int i, count;
+	const char * const*_plugins;
+
+	_plugins = array_get(plugins, &count);
+	for ( i = 0; i < count; i++ ) {
+		const char *path, *file = strrchr(_plugins[i], '/');
+
+		if ( file != NULL ) {
+			path = t_strdup_until(_plugins[i], file);
+			file = file+1;
+		} else {
+			path = NULL;
+			file = _plugins[i];
+		}
+
+		sieve_plugins_load(sieve_instance, path, file);		
+	}
 }
 
 /*

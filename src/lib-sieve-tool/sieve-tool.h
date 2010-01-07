@@ -23,7 +23,8 @@ const struct sieve_environment sieve_tool_env;
  * Initialization
  */
 
-void sieve_tool_init(const struct sieve_environment *env, bool init_lib);
+void sieve_tool_init(bool init_lib);
+void sieve_tool_sieve_init(const struct sieve_environment *env);
 void sieve_tool_deinit(void);
 
 /*
@@ -34,6 +35,8 @@ const char *sieve_tool_get_user(void);
 
 void sieve_tool_get_envelope_data
 	(struct mail *mail, const char **recipient, const char **sender);
+
+void sieve_tool_load_plugins(ARRAY_TYPE(const_string) *plugins);
 
 /*
  * Sieve script handling

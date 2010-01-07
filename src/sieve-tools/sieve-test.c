@@ -48,7 +48,8 @@ static void print_help(void)
 "Usage: sieve-test [-c] [-d <dump-filename>] [-e] [-f <envelope-sender>]\n"
 "                  [-l <mail-location>] [-m <default-mailbox>]\n" 
 "                  [-r <recipient-address>] [-s <script-file>]\n"
-"                  [-t] [-x <extensions>] <script-file> <mail-file>\n"
+"                  [-t] [-P <plugin>] [-x <extensions>]\n"
+"                  <script-file> <mail-file>\n"
 	);
 }
 
@@ -107,7 +108,8 @@ int main(int argc, char **argv)
 	struct mail_storage_service_user *service_user;
 	struct mail_storage_service_input service_input;
 	struct mail_user *mail_user_dovecot = NULL;
-	ARRAY_DEFINE(scriptfiles, const char *);
+	ARRAY_TYPE (const_string) scriptfiles;
+	ARRAY_TYPE (const_string) plugins;
 	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile, 
 		*mailloc, *extensions; 
 	const char *user, *home, *errstr;
@@ -125,11 +127,12 @@ int main(int argc, char **argv)
 	int ret, c;
 
 	master_service = master_service_init("sieve-test", 
-		MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "r:f:m:d:l:x:s:ect");
+		MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "r:f:m:d:l:x:s:ectP:");
 
-	sieve_tool_init(NULL, FALSE);
+	sieve_tool_init(FALSE);
 
 	t_array_init(&scriptfiles, 16);
+	t_array_init(&plugins, 4);
 
 	user = getenv("USER");
 	
@@ -171,6 +174,15 @@ int main(int argc, char **argv)
 				array_append(&scriptfiles, &file, 1);
 			}
 			break;
+		case 'P': 
+			/* Plugin */
+			{
+				const char *plugin;			
+
+				plugin = t_strdup(optarg);
+				array_append(&plugins, &plugin, 1);
+			}
+			break;
 		case 'e':
 			execute = TRUE;
 			break;
@@ -204,6 +216,12 @@ int main(int argc, char **argv)
 	if (optind != argc) {
 		print_help();
 		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
+	}
+
+	sieve_tool_sieve_init(NULL);
+
+	if ( array_count(&plugins) > 0 ) {
+		sieve_tool_load_plugins(&plugins);
 	}
 
 	if ( extensions != NULL ) {

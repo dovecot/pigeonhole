@@ -105,13 +105,13 @@ if test $have_dovecot_sources = yes; then
   LIBDOVECOT_INCLUDE=' \
     -I$(dovecot_incdir) \
     -I$(dovecot_incdir)/src/lib \
+    -I$(dovecot_incdir)/src/lib-dict \
     -I$(dovecot_incdir)/src/lib-mail \
     -I$(dovecot_incdir)/src/lib-storage \
     -I$(dovecot_incdir)/src/lib-imap \
     -I$(dovecot_incdir)/src/lib-master'
 
   LIBDOVECOT_LDA_INCLUDE=' \
-    -I$(dovecot_incdir)/src/lib-dict \
     -I$(dovecot_incdir)/src/lib-lda \
     -I$(dovecot_incdir)/src/lda'
 
@@ -130,8 +130,8 @@ else
   LIBDOVECOT_STORAGE='$(dovecot_libdir)/libdovecot-storage.la'
 
   LIBDOVECOT_INCLUDE='-I$(dovecot_incdir)'
-  LIBDOVECOT_LDA_INCLUDE='-I$(dovecot_incdir)'
-  LIBDOVECOT_STORAGE_INCLUDE='-I$(dovecot_incdir)'
+  LIBDOVECOT_LDA_INCLUDE=''
+  LIBDOVECOT_STORAGE_INCLUDE=''
 fi
 
 dovecot_pkglibexecdir='$(libexecdir)/dovecot'
