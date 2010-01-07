@@ -162,7 +162,7 @@ int main(int argc, char **argv)
 			mailloc = optarg;
 			break;
 		case 'x':
-			/* mail location */
+			/* extensions */
 			extensions = optarg;
 			break;
 		case 's': 
