@@ -177,7 +177,7 @@ const struct sieve_operand_def namespace_variable_operand = {
 	&namespace_variable_interface
 };
 
-void ext_variables_opr_namespace_variable_emit
+void sieve_variables_opr_namespace_variable_emit
 (struct sieve_binary *sbin, const struct sieve_extension *var_ext,
 	const struct sieve_extension *ext,
 	const struct sieve_variables_namespace_def *nspc_def)

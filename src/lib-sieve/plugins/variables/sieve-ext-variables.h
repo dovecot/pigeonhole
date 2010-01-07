@@ -103,6 +103,9 @@ struct sieve_variables_namespace_def {
 			const char *field_name);
 };
 
+#define SIEVE_VARIABLES_DEFINE_NAMESPACE(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
+#define SIEVE_VARIABLES_DEFINE_NAMESPACES(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
+
 struct sieve_variables_namespace {
 	struct sieve_object object;
 		
@@ -113,6 +116,13 @@ void sieve_variables_namespace_register
 (const struct sieve_extension *var_ext, struct sieve_validator *valdtr,
 	const struct sieve_extension *ext,
 	const struct sieve_variables_namespace_def *nspc_def);
+
+extern const struct sieve_operand_class sieve_variables_namespace_operand_class;
+
+void sieve_variables_opr_namespace_variable_emit
+(struct sieve_binary *sbin, const struct sieve_extension *var_ext,
+    const struct sieve_extension *ext,
+    const struct sieve_variables_namespace_def *nspc_def);
 
 /* Iteration over all declared variables */
 
