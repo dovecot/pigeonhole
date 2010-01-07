@@ -88,8 +88,9 @@ struct sieve_instance *sieve_init
 
 void sieve_deinit(struct sieve_instance **svinst)
 {
-	sieve_plugins_unload(*svinst);
 	sieve_extensions_deinit(*svinst);
+
+	sieve_plugins_unload(*svinst);
 
 	pool_unref(&(*svinst)->pool);
 
