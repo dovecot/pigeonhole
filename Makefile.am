@@ -88,6 +88,7 @@ test_cases = \
 	tests/extensions/vacation/execute.svtest \
 	tests/extensions/vacation/message.svtest \
 	tests/extensions/vacation/smtp.svtest \
+	tests/extensions/vacation/utf-8.svtest \
 	tests/extensions/enotify/basic.svtest \
 	tests/extensions/enotify/encodeurl.svtest \
 	tests/extensions/enotify/valid_notify_method.svtest \

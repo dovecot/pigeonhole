@@ -855,6 +855,17 @@ static inline bool _contains_my_address
 	return result;
 }
 
+static bool _contains_8bit(const char *text)
+{
+	const unsigned char *p = (const unsigned char *) text;
+
+	for (; *p != '\0'; p++) {
+		if ((*p & 0x80) != 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
 static bool act_vacation_send	
 (const struct sieve_action_exec_env *aenv, struct act_vacation_context *ctx,
 	const char *sender, const char *recipient)
@@ -865,6 +876,7 @@ static bool act_vacation_send
 	FILE *f;
  	const char *outmsgid;
  	const char *const *headers;
+	const char *subject;
 	int ret;
 
 	/* Check smpt functions just to be sure */
@@ -873,6 +885,21 @@ static bool act_vacation_send
 		sieve_result_warning(aenv, "vacation action has no means to send mail");
 		return TRUE;
 	}
+
+	/* Make sure we have a subject for our reply */
+
+	if ( ctx->subject == NULL || *(ctx->subject) == '\0' ) {		
+		if ( mail_get_headers_utf8
+			(msgdata->mail, "subject", &headers) >= 0 && headers[0] != NULL ) {
+			subject = t_strconcat("Auto: ", headers[0], NULL);
+		}	else {
+			subject = "Automated reply";
+		}
+	}	else {
+		subject = ctx->subject;
+	}
+
+	subject = str_sanitize(subject, 256);
 
 	/* Open smtp session */
 
@@ -897,8 +924,10 @@ static bool act_vacation_send
 	 */
 	rfc2822_header_field_printf(f, "To", "<%s>", sender);
 
-	rfc2822_header_field_utf8_printf(f, "Subject", "%s", 
-		str_sanitize(ctx->subject, 256));
+	if ( _contains_8bit(subject) )
+		rfc2822_header_field_utf8_printf(f, "Subject", "%s", subject);
+	else 
+		rfc2822_header_field_printf(f, "Subject", "%s", subject);
 
 	/* Compose proper in-reply-to and references headers */
 	
@@ -969,7 +998,6 @@ static bool act_vacation_commit
 	const char *const *headers;
 	const char *sender = sieve_message_get_sender(aenv->msgctx);
 	const char *recipient = sieve_message_get_recipient(aenv->msgctx);
-	pool_t pool;
 
 	/* Is the recipient unset? 
 	 */
@@ -1093,17 +1121,6 @@ static bool act_vacation_commit
 			"discarding vacation response for message implicitly delivered to <%s>",
 			recipient );	
 		return TRUE;				 
-	}	
-		
-	/* Make sure we have a subject for our reply */
-	if ( ctx->subject == NULL || *(ctx->subject) == '\0' ) {
-		if ( mail_get_headers_utf8
-			(msgdata->mail, "subject", &headers) >= 0 && headers[0] != NULL ) {
-			pool = sieve_result_pool(aenv->result);
-			ctx->subject = p_strconcat(pool, "Auto: ", headers[0], NULL);
-		}	else {
-			ctx->subject = "Automated reply";
-		}
 	}	
 	
 	/* Send the message */
