@@ -549,12 +549,12 @@ bool uri_mailto_validate
 	parser.ehandler = ehandler;
 	parser.max_recipients = max_recipients;
 	parser.max_headers = max_headers;
+	parser.reserved_headers = reserved_headers;
+	parser.unique_headers = unique_headers;
 	
 	/* If no errors are reported, we don't need to record any data */
 	if ( ehandler != NULL ) { 
 		parser.pool = pool_datastack_create();
-		parser.reserved_headers = reserved_headers;
-		parser.unique_headers = unique_headers;
 
 		parser.uri = p_new(parser.pool, struct uri_mailto, 1);
 		p_array_init(&parser.uri->recipients, parser.pool, max_recipients);
@@ -583,7 +583,6 @@ struct uri_mailto *uri_mailto_parse
 {
 	struct uri_mailto_parser parser;
 	
-	/* If no errors are reported, we don't need to record any data */
 	parser.pool = pool;
 	parser.ehandler = ehandler;
 	parser.max_recipients = max_recipients;
