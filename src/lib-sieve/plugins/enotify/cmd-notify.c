@@ -523,7 +523,7 @@ static int act_notify_check_duplicate
 	const struct sieve_action *act ATTR_UNUSED,
 	const struct sieve_action *act_other ATTR_UNUSED)
 {
-	const struct sieve_enotify_action *nact1, *nact2;
+	const struct sieve_enotify_action *nact, *nact_other;
 	const struct sieve_enotify_method_def *nmth_def;
 	struct sieve_enotify_env nenv;
 	bool result = TRUE;
@@ -531,23 +531,22 @@ static int act_notify_check_duplicate
 	if ( act->context == NULL || act_other->context == NULL )
 		return 0;
 
-	nact1 = (const struct sieve_enotify_action *) act->context;
-	nact2 = (const struct sieve_enotify_action *) act_other->context;
+	nact = (const struct sieve_enotify_action *) act->context;
+	nact_other = (const struct sieve_enotify_action *) act_other->context;
 
-	if ( nact1->method == NULL || nact1->method->def == NULL ) 
+	if ( nact->method == NULL || nact->method->def == NULL ) 
 		return 0;
 
-	nmth_def = nact1->method->def;
+	nmth_def = nact->method->def;
 	if ( nmth_def->action_check_duplicates == NULL )
 		return 0;
 
 	memset(&nenv, sizeof(nenv), 0);
-	nenv.method = nact1->method;	
+	nenv.method = nact->method;	
 	nenv.ehandler = sieve_prefix_ehandler_create
 		(sieve_result_get_error_handler(renv->result), act->location, "notify");
 
-	result = nmth_def->action_check_duplicates
-		(&nenv, nact1->method_context, nact2->method_context, act_other->location);
+	result = nmth_def->action_check_duplicates(&nenv, nact, nact_other);
 
 	sieve_error_handler_unref(&nenv.ehandler);
 	

@@ -65,16 +65,17 @@ static bool ntfy_mailto_runtime_check_operands
 		void **method_context);
 
 static int ntfy_mailto_action_check_duplicates
-	(const struct sieve_enotify_env *nenv, void *method_ctx1, void *method_ctx2,
-		const char *dupl_location);
+	(const struct sieve_enotify_env *nenv, 
+		const struct sieve_enotify_action *nact,
+		const struct sieve_enotify_action *nact_other);
 
 static void ntfy_mailto_action_print
 	(const struct sieve_enotify_print_env *penv, 
-		const struct sieve_enotify_action *act);	
+		const struct sieve_enotify_action *nact);	
 
 static bool ntfy_mailto_action_execute
 	(const struct sieve_enotify_exec_env *nenv, 
-		const struct sieve_enotify_action *act);
+		const struct sieve_enotify_action *nact);
 
 const struct sieve_enotify_method_def mailto_notify = {
 	"mailto",
@@ -238,19 +239,19 @@ static bool ntfy_mailto_runtime_check_operands
 
 static int ntfy_mailto_action_check_duplicates
 (const struct sieve_enotify_env *nenv ATTR_UNUSED, 
-	void *method_ctx1, void *method_ctx2,
-	const char *dupl_location ATTR_UNUSED)
+	const struct sieve_enotify_action *nact, 
+	const struct sieve_enotify_action *nact_other)
 {
-	struct ntfy_mailto_context *mt_new = 
-		(struct ntfy_mailto_context *) method_ctx1;
-	struct ntfy_mailto_context *mt_old = 
-		(struct ntfy_mailto_context *) method_ctx2;
+	struct ntfy_mailto_context *mtctx = 
+		(struct ntfy_mailto_context *) nact->method_context;
+	struct ntfy_mailto_context *mtctx_other = 
+		(struct ntfy_mailto_context *) nact_other->method_context;
 	const struct uri_mailto_recipient *new_rcpts, *old_rcpts;
 	unsigned int new_count, old_count, i, j;
 	unsigned int del_start = 0, del_len = 0;
 
-	new_rcpts = array_get(&mt_new->uri->recipients, &new_count);
-	old_rcpts = array_get(&mt_old->uri->recipients, &old_count);
+	new_rcpts = array_get(&mtctx->uri->recipients, &new_count);
+	old_rcpts = array_get(&mtctx_other->uri->recipients, &old_count);
 
 	for ( i = 0; i < new_count; i++ ) {
 		for ( j = 0; j < old_count; j++ ) {
@@ -263,11 +264,11 @@ static int ntfy_mailto_action_check_duplicates
 			/* Not duplicate */
 			if ( del_len > 0 ) {
 				/* Perform pending deletion */
-				array_delete(&mt_new->uri->recipients, del_start, del_len);
+				array_delete(&mtctx->uri->recipients, del_start, del_len);
 
 				/* Make sure the loop integrity is maintained */
 				i -= del_len;
-				new_rcpts = array_get(&mt_new->uri->recipients, &new_count);
+				new_rcpts = array_get(&mtctx->uri->recipients, &new_count);
 			}
 			del_len = 0;		
 		} else {
@@ -280,10 +281,10 @@ static int ntfy_mailto_action_check_duplicates
 
 	/* Perform pending deletion */
 	if ( del_len > 0 ) {
-		array_delete(&mt_new->uri->recipients, del_start, del_len);			
+		array_delete(&mtctx->uri->recipients, del_start, del_len);			
 	}
 
-	return ( array_count(&mt_new->uri->recipients) > 0 ? 0 : 1 );
+	return ( array_count(&mtctx->uri->recipients) > 0 ? 0 : 1 );
 }
 
 /*
@@ -292,29 +293,29 @@ static int ntfy_mailto_action_check_duplicates
  
 static void ntfy_mailto_action_print
 (const struct sieve_enotify_print_env *penv, 
-	const struct sieve_enotify_action *act)
+	const struct sieve_enotify_action *nact)
 {
 	unsigned int count, i;
 	const struct uri_mailto_recipient *recipients;
 	const struct uri_mailto_header_field *headers;
 	struct ntfy_mailto_context *mtctx = 
-		(struct ntfy_mailto_context *) act->method_context;
+		(struct ntfy_mailto_context *) nact->method_context;
 	
 	/* Print main method parameters */
 
 	sieve_enotify_method_printf
-		(penv,   "    => importance   : %d\n", act->importance);
+		(penv,   "    => importance   : %d\n", nact->importance);
 
-	if ( act->message != NULL )
+	if ( nact->message != NULL )
 		sieve_enotify_method_printf
-			(penv, "    => subject      : %s\n", act->message);
+			(penv, "    => subject      : %s\n", nact->message);
 	else if ( mtctx->uri->subject != NULL )
 		sieve_enotify_method_printf
 			(penv, "    => subject      : %s\n", mtctx->uri->subject);
 
-	if ( act->from != NULL )
+	if ( nact->from != NULL )
 		sieve_enotify_method_printf
-			(penv, "    => from         : %s\n", act->from);
+			(penv, "    => from         : %s\n", nact->from);
 
 	/* Print mailto: recipients */
 
@@ -374,12 +375,12 @@ static bool _contains_8bit(const char *msg)
 
 static bool ntfy_mailto_send
 (const struct sieve_enotify_exec_env *nenv, 
-	const struct sieve_enotify_action *act, const char *recipient)
+	const struct sieve_enotify_action *nact, const char *recipient)
 { 
 	const struct sieve_message_data *msgdata = nenv->msgdata;
 	const struct sieve_script_env *senv = nenv->scriptenv;
 	struct ntfy_mailto_context *mtctx = 
-		(struct ntfy_mailto_context *) act->method_context;	
+		(struct ntfy_mailto_context *) nact->method_context;	
 	const char *from = NULL, *from_smtp = NULL; 
 	const char *subject = mtctx->uri->subject;
 	const char *body = mtctx->uri->body;
@@ -406,10 +407,10 @@ static bool ntfy_mailto_send
 	}
 	
 	/* Determine message from address */
-	if ( act->from == NULL ) {
+	if ( nact->from == NULL ) {
 		from = t_strdup_printf("Postmaster <%s>", senv->postmaster_address);
 	} else {
-		from = act->from;
+		from = nact->from;
 	}
 
 	/* Determine SMTP from address */
@@ -422,9 +423,9 @@ static bool ntfy_mailto_send
 	}
 	
 	/* Determine subject */
-	if ( act->message != NULL ) {
+	if ( nact->message != NULL ) {
 		/* FIXME: handle UTF-8 */
-		subject = str_sanitize(act->message, NTFY_MAILTO_MAX_SUBJECT);
+		subject = str_sanitize(nact->message, NTFY_MAILTO_MAX_SUBJECT);
 	} else if ( subject == NULL ) {
 		const char *const *hsubject;
 		
@@ -487,7 +488,7 @@ static bool ntfy_mailto_send
 		rfc2822_header_field_write(f, "Precedence", "bulk");
 
 		/* Set importance */
-		switch ( act->importance ) {
+		switch ( nact->importance ) {
 		case 1:
 			rfc2822_header_field_write(f, "X-Priority", "1 (Highest)");
 			rfc2822_header_field_write(f, "Importance", "High");
@@ -546,7 +547,7 @@ static bool ntfy_mailto_send
 
 static bool ntfy_mailto_action_execute
 (const struct sieve_enotify_exec_env *nenv, 
-	const struct sieve_enotify_action *act)
+	const struct sieve_enotify_action *nact)
 {
 	const char *const *headers;
 	const char *sender = sieve_message_get_sender(nenv->msgctx);
@@ -577,7 +578,7 @@ static bool ntfy_mailto_action_execute
 		}
 	}
 
-	return ntfy_mailto_send(nenv, act, recipient);
+	return ntfy_mailto_send(nenv, nact, recipient);
 }
 
 

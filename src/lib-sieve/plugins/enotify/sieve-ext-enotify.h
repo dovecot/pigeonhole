@@ -63,18 +63,19 @@ struct sieve_enotify_method_def {
 
 	/* Action duplicates */
 	int (*action_check_duplicates)
-		(const struct sieve_enotify_env *nenv, void *method_ctx1, 
-			void *method_ctx2, const char *dupl_location);
+		(const struct sieve_enotify_env *nenv, 
+			const struct sieve_enotify_action *nact, 
+			const struct sieve_enotify_action *nact_other);
 		
 	/* Action print */
 	void (*action_print)
 		(const struct sieve_enotify_print_env *penv, 
-			const struct sieve_enotify_action *act);	
+			const struct sieve_enotify_action *nact);	
 			
 	/* Action execution */
 	bool (*action_execute)
 		(const struct sieve_enotify_exec_env *nenv, 
-			const struct sieve_enotify_action *act);
+			const struct sieve_enotify_action *nact);
 };
 
 /*
