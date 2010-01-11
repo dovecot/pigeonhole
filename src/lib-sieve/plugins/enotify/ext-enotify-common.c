@@ -52,29 +52,56 @@ const struct sieve_extension_capabilities notify_capabilities = {
 };
 
 /*
+ * Core notification methods
+ */
+
+extern const struct sieve_enotify_method_def mailto_notify;
+
+/*
  * Notify method registry
  */
  
-static void ext_enotify_method_register
-(struct ext_enotify_context *ectx, const struct sieve_enotify_method *method) 
+static const struct sieve_enotify_method *ext_enotify_method_register
+(struct sieve_instance *svinst, struct ext_enotify_context *ectx, 
+	const struct sieve_enotify_method_def *nmth_def) 
 {
-	array_append(&ectx->notify_methods, &method, 1);
+	struct sieve_enotify_method *nmth;
+
+	nmth = array_append_space(&ectx->notify_methods);
+	nmth->def = nmth_def;
+	nmth->svinst = svinst;
+
+	if ( nmth_def->load != NULL )
+		nmth_def->load(nmth, &nmth->context);
+
+	return nmth;
 } 
 
-void ext_enotify_methods_init(struct ext_enotify_context *ectx)
+void ext_enotify_methods_init
+(struct sieve_instance *svinst, struct ext_enotify_context *ectx)
 {
 	p_array_init(&ectx->notify_methods, default_pool, 4);
 
-	ext_enotify_method_register(ectx, &mailto_notify);
+	ext_enotify_method_register(svinst, ectx, &mailto_notify);
 }
 
 void ext_enotify_methods_deinit(struct ext_enotify_context *ectx)
 {
+	const struct sieve_enotify_method *methods;
+	unsigned int meth_count, i;
+	 
+	methods = array_get(&ectx->notify_methods, &meth_count);
+	for ( i = 0; i < meth_count; i++ ) {
+		if ( methods[i].def != NULL && methods[i].def->unload != NULL )
+			methods[i].def->unload(&methods[i]);
+	}
+
 	array_free(&ectx->notify_methods);
 }
 
-void sieve_enotify_method_register
-(struct sieve_instance *svinst, const struct sieve_enotify_method *method) 
+const struct sieve_enotify_method *sieve_enotify_method_register
+(struct sieve_instance *svinst, 
+	const struct sieve_enotify_method_def *nmth_def)
 {
 	const struct sieve_extension *ntfy_ext =
 		sieve_extension_get_by_name(svinst, "enotify");
@@ -83,8 +110,10 @@ void sieve_enotify_method_register
 		struct ext_enotify_context *ectx = 
 			(struct ext_enotify_context *) ntfy_ext->context;
 
-		ext_enotify_method_register(ectx, method);
+		return ext_enotify_method_register(svinst, ectx, nmth_def);
 	}
+
+	return NULL;
 }
 
 const struct sieve_enotify_method *ext_enotify_method_find
@@ -93,13 +122,15 @@ const struct sieve_enotify_method *ext_enotify_method_find
 	struct ext_enotify_context *ectx = 
 		(struct ext_enotify_context *) ntfy_ext->context;
 	unsigned int meth_count, i;
-	const struct sieve_enotify_method *const *methods;
+	const struct sieve_enotify_method *methods;
 	 
 	methods = array_get(&ectx->notify_methods, &meth_count);
 		
 	for ( i = 0; i < meth_count; i++ ) {
-		if ( strcasecmp(methods[i]->identifier, identifier) == 0 ) {
-			return methods[i];
+		if ( methods[i].def == NULL ) continue;
+
+		if ( strcasecmp(methods[i].def->identifier, identifier) == 0 ) {
+			return &methods[i];
 		}
 	}
 	
@@ -112,17 +143,17 @@ static const char *ext_notify_get_methods_string
 	struct ext_enotify_context *ectx = 
 		(struct ext_enotify_context *) ntfy_ext->context;
 	unsigned int meth_count, i;
-	const struct sieve_enotify_method *const *methods;
+	const struct sieve_enotify_method *methods;
 	string_t *result = t_str_new(128);
 	 
 	methods = array_get(&ectx->notify_methods, &meth_count);
 		
 	if ( meth_count > 0 ) {
-		str_append(result, methods[0]->identifier);
+		str_append(result, methods[0].def->identifier);
 		
 		for ( i = 1; i < meth_count; i++ ) {
 			str_append_c(result, ' ');
-			str_append(result, methods[i]->identifier);
+			str_append(result, methods[i].def->identifier);
 		}
 		
 		return str_c(result);
@@ -173,7 +204,7 @@ static const char *ext_enotify_uri_scheme_parse(const char **uri_p)
 }
 
 static bool ext_enotify_option_parse
-(struct sieve_enotify_log *nlog, const char *option, bool name_only,
+(struct sieve_enotify_env *nenv, const char *option, bool name_only,
 	const char **opt_name_r, const char **opt_value_r)
 {
 	const char *p = option;
@@ -194,7 +225,7 @@ static bool ext_enotify_option_parse
 	
 	/* Explicitly report empty option as such */
 	if ( *p == '\0' ) {
-		sieve_enotify_error(nlog, "empty option specified");
+		sieve_enotify_error(nenv, "empty option specified");
 		return FALSE;
 	}
 
@@ -209,7 +240,7 @@ static bool ext_enotify_option_parse
 	
 	/* Parsing must end at '=' and we must parse at least one character */
 	if ( *p != '=' || p == option ) {
-		sieve_enotify_error(nlog, "invalid option name specified in option '%s'",
+		sieve_enotify_error(nenv, "invalid option name specified in option '%s'",
 				str_sanitize(option, 80));
 		return FALSE;
 	}
@@ -235,7 +266,7 @@ static bool ext_enotify_option_parse
 		
 	/* Parse must end at end of string */
 	if ( *p != '\0' ) {
-		sieve_enotify_error(nlog, 
+		sieve_enotify_error(nenv, 
 			"notify command: invalid option value specified in option '%s'",
 				str_sanitize(option, 80));
 		return FALSE;
@@ -260,20 +291,22 @@ static int _ext_enotify_option_check
 		(struct _ext_enotify_option_check_context *) context;
 	struct sieve_validator *valdtr = optn_context->valdtr;
 	const struct sieve_enotify_method *method = optn_context->method;
-	struct sieve_enotify_log nlog;
+	struct sieve_enotify_env nenv;
 	const char *option = sieve_ast_argument_strc(arg);
 	const char *opt_name = NULL, *opt_value = NULL;
-	bool literal = sieve_argument_is_string_literal(arg);
+	bool result = TRUE, check = TRUE;
 	
 	/* Compose log structure */
-	memset(&nlog, 0, sizeof(nlog));
-	nlog.ehandler = sieve_validator_error_handler(valdtr);
-	nlog.prefix = "notify command";
-	nlog.location = sieve_error_script_location
-		(sieve_validator_script(valdtr), arg->source_line);
+	memset(&nenv, sizeof(nenv), 0);
+	nenv.method = method;	
+	nenv.ehandler = sieve_prefix_ehandler_create
+		(sieve_validator_error_handler(valdtr), 
+			sieve_error_script_location
+				(sieve_validator_script(valdtr), arg->source_line), 
+			"notify command");
 		
 	/* Parse option */
-	if ( !literal ) {
+	if ( !sieve_argument_is_string_literal(arg) ) {
 		/* Variable string: partial option parse
 		 * 
 		 * If the string item is not a string literal, it cannot be validated fully
@@ -284,19 +317,22 @@ static int _ext_enotify_option_check
 		 * of the option itself and not the assigned value.
 		 */ 
 		if ( !ext_enotify_option_parse(NULL, option, TRUE, &opt_name, &opt_value) )
-			return TRUE;
+			check = FALSE;
 	} else {
 		/* Literal string: full option parse */
 		if ( !ext_enotify_option_parse
-			(&nlog, option, FALSE, &opt_name, &opt_value) )
-			return FALSE;
+			(&nenv, option, FALSE, &opt_name, &opt_value) )
+			result = FALSE;
 	}
 	
 	/* Call method's option check function */
-	if ( method->compile_check_option != NULL ) 
-		return method->compile_check_option(&nlog, opt_name, opt_value); 
+	if ( result && check && method->def != NULL && 
+		method->def->compile_check_option != NULL ) 
+		result = method->def->compile_check_option(&nenv, opt_name, opt_value); 
 	
-	return TRUE;
+	sieve_error_handler_unref(&nenv.ehandler);
+
+	return result;
 }
 
 bool ext_enotify_compile_check_arguments
@@ -308,7 +344,8 @@ bool ext_enotify_compile_check_arguments
 	const char *uri = sieve_ast_argument_strc(uri_arg);
 	const char *scheme;
 	const struct sieve_enotify_method *method;
-	struct sieve_enotify_log nlog;
+	struct sieve_enotify_env nenv;
+	bool result = TRUE;
 
 	/* If the uri string is not a constant literal, we cannot determine which
 	 * method is used, so we bail out successfully and defer checking to runtime.
@@ -331,67 +368,78 @@ bool ext_enotify_compile_check_arguments
 		return FALSE;
 	}
 
+	if ( method->def == NULL ) return TRUE;
+
 	/* Compose log structure */
-	memset(&nlog, 0, sizeof(nlog));
-	nlog.ehandler = sieve_validator_error_handler(valdtr);
-	nlog.prefix = "notify command";
+	memset(&nenv, sizeof(nenv), 0);
+	nenv.method = method;	
 	
 	/* Check URI itself */
-	if ( method->compile_check_uri != NULL ) {
+	if ( result && method->def->compile_check_uri != NULL ) {
 		/* Set log location to location of URI argument */
-		nlog.location = sieve_error_script_location
-			(sieve_validator_script(valdtr), uri_arg->source_line);
+		nenv.ehandler = sieve_prefix_ehandler_create
+		(sieve_validator_error_handler(valdtr), 
+			sieve_error_script_location
+				(sieve_validator_script(valdtr), uri_arg->source_line), 
+			"notify command");
 
 		/* Execute method check function */
-		if ( !method->compile_check_uri
-			(&nlog, sieve_ast_argument_strc(uri_arg), uri) )
-			return FALSE;
+		result = method->def->compile_check_uri
+			(&nenv, sieve_ast_argument_strc(uri_arg), uri);
 	}
 
 	/* Check :message argument */
-	if ( msg_arg != NULL && sieve_argument_is_string_literal(msg_arg) && 
-		method->compile_check_message != NULL ) {
+	if ( result && msg_arg != NULL && sieve_argument_is_string_literal(msg_arg)
+		&& method->def->compile_check_message != NULL ) {
 		/* Set log location to location of :message argument */
-		nlog.location = sieve_error_script_location
-			(sieve_validator_script(valdtr), msg_arg->source_line);
+		sieve_error_handler_unref(&nenv.ehandler);
+		nenv.ehandler = sieve_prefix_ehandler_create
+		(sieve_validator_error_handler(valdtr), 
+			sieve_error_script_location
+				(sieve_validator_script(valdtr), msg_arg->source_line), 
+			"notify command");
 
 		/* Execute method check function */
-		if ( !method->compile_check_message
-			(&nlog, sieve_ast_argument_str(msg_arg)) )
-			return FALSE;
+		result = method->def->compile_check_message
+			(&nenv, sieve_ast_argument_str(msg_arg));
 	}
 
 	/* Check :from argument */
-	if ( from_arg != NULL && sieve_argument_is_string_literal(from_arg) &&
-		method->compile_check_from != NULL ) {
+	if ( result && from_arg != NULL && sieve_argument_is_string_literal(from_arg)
+		&& method->def->compile_check_from != NULL ) {
 		/* Set log location to location of :from argument */
-		nlog.location = sieve_error_script_location
-			(sieve_validator_script(valdtr), from_arg->source_line);
+		sieve_error_handler_unref(&nenv.ehandler);
+		nenv.ehandler = sieve_prefix_ehandler_create
+		(sieve_validator_error_handler(valdtr), 
+			sieve_error_script_location
+				(sieve_validator_script(valdtr), from_arg->source_line), 
+				"notify command");
 
 		/* Execute method check function */
-		if ( !method->compile_check_from(&nlog, sieve_ast_argument_str(from_arg)) )
-			return FALSE;
+		result = method->def->compile_check_from
+			(&nenv, sieve_ast_argument_str(from_arg));
 	}
+
+	sieve_error_handler_unref(&nenv.ehandler);
 	
 	/* Check :options argument */
-	if ( options_arg != NULL ) {
+	if ( result && options_arg != NULL ) {
 		struct sieve_ast_argument *option = options_arg;
 		struct _ext_enotify_option_check_context optn_context = { valdtr, method };
 		
 		/* Parse and check options */
-		if ( sieve_ast_stringlist_map
-			(&option, (void *) &optn_context, _ext_enotify_option_check) <= 0 )
-			return FALSE;
+		result = ( sieve_ast_stringlist_map
+			(&option, (void *) &optn_context, _ext_enotify_option_check) > 0 );
 			
 		/* Discard argument if options are not accepted by method */
-		if ( method->compile_check_option == NULL ) {
+		if ( result && method->def->compile_check_option == NULL ) {
 			sieve_argument_validate_warning(valdtr, options_arg, 
 				"notify command: method '%s' accepts no options", scheme);
 			(void)sieve_ast_arguments_detach(options_arg,1);
 		}
 	}
 	
-	return TRUE;
+	return result;
 }
 
 /*
@@ -406,6 +454,7 @@ bool ext_enotify_runtime_method_validate
 	const struct sieve_enotify_method *method;
 	const char *uri = str_c(method_uri);
 	const char *scheme;
+	bool result = TRUE;
 	
 	/* Get the method */
 	
@@ -417,20 +466,23 @@ bool ext_enotify_runtime_method_validate
 		
 	/* Validate the provided URI */
 	
-	if ( method->runtime_check_uri != NULL ) {
-		struct sieve_enotify_log nlog;
+	if ( method->def != NULL && method->def->runtime_check_uri != NULL ) {
+		struct sieve_enotify_env nenv; 
 		
-		memset(&nlog, 0, sizeof(nlog));
-		nlog.location = sieve_error_script_location(renv->script, source_line);
-		nlog.ehandler = sieve_interpreter_get_error_handler(renv->interp);
-		nlog.prefix = "valid_notify_method test";
+		memset(&nenv, 0, sizeof(nenv));
+		nenv.method = method;
+		nenv.ehandler = sieve_prefix_ehandler_create
+			(sieve_interpreter_get_error_handler(renv->interp), 
+				sieve_error_script_location(renv->script, source_line), 
+				"valid_notify_method test");
 
 		/* Use the method check function to validate the URI */
-		return method->runtime_check_uri(&nlog, str_c(method_uri), uri);
+		result = method->def->runtime_check_uri(&nenv, str_c(method_uri), uri);
+
+		sieve_error_handler_unref(&nenv.ehandler);
 	}
 
-	/* Method has no check function */
-	return TRUE;
+	return result;
 }
  
 static const struct sieve_enotify_method *ext_enotify_get_method
@@ -471,28 +523,33 @@ const char *ext_enotify_runtime_get_method_capability
 	string_t *method_uri, const char *capability)
 {
 	const struct sieve_enotify_method *method;
-	const char *uri;
+	const char *uri_body;
+	const char *result = NULL;
 	
 	/* Get method */
-	method = ext_enotify_get_method(renv, source_line, method_uri, &uri);
+	method = ext_enotify_get_method(renv, source_line, method_uri, &uri_body);
 	if ( method == NULL ) return NULL;
 	
 	/* Get requested capability */
-	if ( method->runtime_get_method_capability != NULL ) {
-		struct sieve_enotify_log nlog;
-		
-		/* Compose log structure */
-		memset(&nlog, 0, sizeof(nlog));
-		nlog.location = sieve_error_script_location(renv->script, source_line);
-		nlog.ehandler = sieve_interpreter_get_error_handler(renv->interp);
-		nlog.prefix = "notify_method_capability test";
+	if ( method->def != NULL && 
+		method->def->runtime_get_method_capability != NULL ) {
+		struct sieve_enotify_env nenv; 
 
+		memset(&nenv, 0, sizeof(nenv));
+		nenv.method = method;
+		nenv.ehandler = sieve_prefix_ehandler_create
+			(sieve_interpreter_get_error_handler(renv->interp), 
+				sieve_error_script_location(renv->script, source_line), 
+				"notify_method_capability test");
+		
 		/* Execute method function to acquire capability value */
-		return method->runtime_get_method_capability
-			(&nlog, str_c(method_uri), uri, capability);
+		result = method->def->runtime_get_method_capability
+			(&nenv, str_c(method_uri), uri_body, capability);
+
+		sieve_error_handler_unref(&nenv.ehandler);
 	}
 
-	return NULL;
+	return result;
 }
 
 int ext_enotify_runtime_check_operands
@@ -502,25 +559,28 @@ int ext_enotify_runtime_check_operands
 	const struct sieve_enotify_method **method_r, void **method_context)
 {
 	const struct sieve_enotify_method *method;
-	const char *uri;
+	const char *uri_body;
 	
 	/* Get method */
-	method = ext_enotify_get_method(renv, source_line, method_uri, &uri);
+	method = ext_enotify_get_method(renv, source_line, method_uri, &uri_body);
 	if ( method == NULL ) return SIEVE_EXEC_FAILURE;
 	
 	/* Check provided operands */
-	if ( method->runtime_check_operands != NULL ) {
-		struct sieve_enotify_log nlog;
-		
-		/* Compose log structure */
-		memset(&nlog, 0, sizeof(nlog));
-		nlog.location = sieve_error_script_location(renv->script, source_line);
-		nlog.ehandler = sieve_interpreter_get_error_handler(renv->interp);
-		nlog.prefix = "notify action";
+	if ( method->def != NULL && method->def->runtime_check_operands != NULL ) {
+		struct sieve_enotify_env nenv; 
+		int ret = SIEVE_EXEC_OK;
+
+		memset(&nenv, 0, sizeof(nenv));
+		nenv.method = method;
+		nenv.ehandler = sieve_prefix_ehandler_create
+			(sieve_interpreter_get_error_handler(renv->interp), 
+				sieve_error_script_location(renv->script, source_line), 
+				"notify action");
 
 		/* Execute check function */
-		if ( method->runtime_check_operands(&nlog, str_c(method_uri), uri, message, 
-			from, sieve_result_pool(renv->result), method_context) ) {
+		if ( method->def->runtime_check_operands
+			(&nenv, str_c(method_uri), uri_body, message, from, 
+				sieve_result_pool(renv->result), method_context) ) {
 			
 			/* Check any provided options */
 			if ( options != NULL ) {			
@@ -535,12 +595,12 @@ int ext_enotify_runtime_check_operands
 				
 					/* Parse option into <optionname> and <value> */
 					if ( ext_enotify_option_parse
-						(&nlog, str_c(option), FALSE, &opt_name, &opt_value) ) {
+						(&nenv, str_c(option), FALSE, &opt_name, &opt_value) ) {
 					
 						/* Set option */
-						if ( method->runtime_set_option != NULL ) {
-							(void) method->runtime_set_option
-								(&nlog, *method_context, opt_name, opt_value);
+						if ( method->def->runtime_set_option != NULL ) {
+							(void) method->def->runtime_set_option
+								(&nenv, *method_context, opt_name, opt_value);
 						}
 					}
 				}
@@ -549,21 +609,25 @@ int ext_enotify_runtime_check_operands
 				 */
 				if ( result ) {
 					*method_r = method;
-					return SIEVE_EXEC_OK;
+				} else {
+					/* Binary corrupt */
+					sieve_runtime_trace_error
+						(renv, "invalid item in options string list");
+					ret = SIEVE_EXEC_BIN_CORRUPT;
 				}
-	
-				/* Binary corrupt */
-				sieve_runtime_trace_error(renv, "invalid item in options string list");
-				return SIEVE_EXEC_BIN_CORRUPT;
+
+			} else {
+				/* No options */			
+				*method_r = method;
 			}
 
-			/* No options */			
-			*method_r = method;
-			return SIEVE_EXEC_OK;
+		} else { 	
+			/* Operand check failed */
+			ret = SIEVE_EXEC_FAILURE;
 		}
-		
-		/* Check failed */
-		return SIEVE_EXEC_FAILURE;
+
+		sieve_error_handler_unref(&nenv.ehandler);
+		return ret;
 	}
 
 	/* No check function defined: a most unlikely situation */
@@ -584,61 +648,5 @@ void sieve_enotify_method_printf
 	va_start(args, fmt);	
 	sieve_result_vprintf(penv->result_penv, fmt, args);
 	va_end(args);	 
-}
-
-/*
- * Method logging
- */
-
-static void sieve_enotify_vlog_message
-(const struct sieve_enotify_log *nlog, sieve_error_func_t log_func,
-	const char *fmt, va_list args) 
-{
-	if ( nlog == NULL ) return;
-	
-	T_BEGIN {
-		if ( nlog->aenv != NULL ) {
-			if ( nlog->prefix == NULL )
-				sieve_result_vlog_message(nlog->aenv, log_func, fmt, args);
-			else
-				sieve_result_log_message(nlog->aenv, log_func, "%s: %s", nlog->prefix, 
-					t_strdup_vprintf(fmt, args));
-		} else {
-			if ( nlog->prefix == NULL )
-				log_func(nlog->ehandler, nlog->location, "%s", 
-					t_strdup_vprintf(fmt, args));
-			else
-				log_func(nlog->ehandler, nlog->location, "%s: %s", nlog->prefix, 
-					t_strdup_vprintf(fmt, args));	
-		}
-	} T_END;
-}
-
-void sieve_enotify_error
-(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
-{
-	va_list args;
-
-	va_start(args, fmt);	
-	sieve_enotify_vlog_message(nlog, sieve_error, fmt, args);
-	va_end(args);
-}
-
-void sieve_enotify_warning
-(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
-{
-	va_list args;
-	va_start(args, fmt);
-	sieve_enotify_vlog_message(nlog, sieve_warning, fmt, args);
-	va_end(args);
-}
-
-void sieve_enotify_log
-(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
-{
-	va_list args;
-	va_start(args, fmt);
-	sieve_enotify_vlog_message(nlog, sieve_info, fmt, args);
-	va_end(args);
 }
 

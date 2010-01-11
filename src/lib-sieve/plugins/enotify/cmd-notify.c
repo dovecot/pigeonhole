@@ -4,6 +4,7 @@
 #include "lib.h"
 
 #include "sieve-common.h"
+#include "sieve-error.h"
 #include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
@@ -523,7 +524,9 @@ static int act_notify_check_duplicate
 	const struct sieve_action *act_other ATTR_UNUSED)
 {
 	const struct sieve_enotify_action *nact1, *nact2;
-	struct sieve_enotify_log nlog;
+	const struct sieve_enotify_method_def *nmth_def;
+	struct sieve_enotify_env nenv;
+	bool result = TRUE;
 		
 	if ( act->context == NULL || act_other->context == NULL )
 		return 0;
@@ -531,15 +534,24 @@ static int act_notify_check_duplicate
 	nact1 = (const struct sieve_enotify_action *) act->context;
 	nact2 = (const struct sieve_enotify_action *) act_other->context;
 
-	if ( nact1->method == NULL || nact1->method->action_check_duplicates == NULL )
+	if ( nact1->method == NULL || nact1->method->def == NULL ) 
 		return 0;
 
-	memset(&nlog, 0, sizeof(nlog));
-	nlog.location = act->location;
-	nlog.ehandler = sieve_result_get_error_handler(renv->result);
+	nmth_def = nact1->method->def;
+	if ( nmth_def->action_check_duplicates == NULL )
+		return 0;
 
-	return nact1->method->action_check_duplicates
-		(&nlog, nact1->method_context, nact2->method_context, act_other->location);
+	memset(&nenv, sizeof(nenv), 0);
+	nenv.method = nact1->method;	
+	nenv.ehandler = sieve_prefix_ehandler_create
+		(sieve_result_get_error_handler(renv->result), act->location, "notify");
+
+	result = nmth_def->action_check_duplicates
+		(&nenv, nact1->method_context, nact2->method_context, act_other->location);
+
+	sieve_error_handler_unref(&nenv.ehandler);
+	
+	return result;
 }
 
 /* Result printing */
@@ -550,17 +562,22 @@ static void act_notify_print
 {
 	const struct sieve_enotify_action *act = 
 		(const struct sieve_enotify_action *) action->context;
+	const struct sieve_enotify_method *method;
 
-	sieve_result_action_printf
-		( rpenv, "send notification with method '%s:':", act->method->identifier);
-		
-	if ( act->method->action_print != NULL ) {
-		struct sieve_enotify_print_env penv;
+	method = act->method;
 
-		memset(&penv, 0, sizeof(penv));
-		penv.result_penv = rpenv;
+	if ( method->def != NULL ) {
+		sieve_result_action_printf
+			( rpenv, "send notification with method '%s:':", method->def->identifier);
 
-		act->method->action_print(&penv, act);
+		if ( method->def->action_print != NULL ) {
+			struct sieve_enotify_print_env penv;
+
+			memset(&penv, 0, sizeof(penv));
+			penv.result_penv = rpenv;
+
+			method->def->action_print(&penv, act);
+		}
 	}
 }
 
@@ -572,21 +589,25 @@ static bool act_notify_commit
 {
 	const struct sieve_enotify_action *act = 
 		(const struct sieve_enotify_action *) action->context;
+	const struct sieve_enotify_method *method = act->method;
 	struct sieve_enotify_exec_env nenv;
-	struct sieve_enotify_log nlog;
-		
-	memset(&nlog, 0, sizeof(nlog));
-	nlog.aenv = aenv;
+	bool result = TRUE;
 
-	nenv.scriptenv = aenv->scriptenv;
-	nenv.msgdata = aenv->msgdata;
-	nenv.msgctx = aenv->msgctx;
-	nenv.notify_log = &nlog;
+	if ( method->def != NULL && method->def->action_execute != NULL )	{	
+		/* Compose log structure */
+		memset(&nenv, sizeof(nenv), 0);
+		nenv.method = method;	
+		nenv.scriptenv = aenv->scriptenv;
+		nenv.msgdata = aenv->msgdata;
+		nenv.msgctx = aenv->msgctx;
 
-	if ( act->method->action_execute != NULL )
-		return act->method->action_execute(&nenv, act);
+		nenv.ehandler = sieve_prefix_ehandler_create
+			(aenv->ehandler, action->location, "notify action");
+
+		result = method->def->action_execute(&nenv, act);
+	}
 			
-	return TRUE;
+	return result;
 }
 
 

@@ -1,3 +1,5 @@
+SUBDIRS = mailto
+
 noinst_LTLIBRARIES = libsieve_ext_enotify.la
 
 AM_CPPFLAGS = \
@@ -16,15 +18,19 @@ var_modifiers = \
 	vmodf-encodeurl.c
 
 notify_methods = \
-	ntfy-mailto.c
+	./mailto/libsieve_ext_enotify_mailto.la
 
+libsieve_ext_enotify_la_DEPENDENCIES = \
+	$(notify_methods)
+libsieve_ext_enotify_la_LIBADD = \
+	$(notify_methods)
+	
 libsieve_ext_enotify_la_SOURCES = \
 	ext-enotify.c \
 	ext-enotify-common.c \
 	$(commands) \
 	$(tests) \
-	$(var_modifiers) \
-	$(notify_methods)
+	$(var_modifiers)
 
 public_headers = \
 	sieve-ext-enotify.h

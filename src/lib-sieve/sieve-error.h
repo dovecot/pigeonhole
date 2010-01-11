@@ -13,6 +13,8 @@
  * Forward declarations
  */
 
+struct var_expand_table;
+
 struct sieve_script;
 struct sieve_error_handler;
 
@@ -65,7 +67,7 @@ void sieve_vdebug
 	(struct sieve_error_handler *ehandler, const char *location,
 		const char *fmt, va_list args);
 void sieve_vcritical
-	(struct sieve_error_handler *ehandler, const char *location, 
+	(struct sieve_error_handler *ehandler, const char *location,
 		const char *fmt, va_list args);
 
 void sieve_error
@@ -132,5 +134,15 @@ struct sieve_error_handler *sieve_strbuf_ehandler_create
 /* Write errors to a logfile */
 struct sieve_error_handler *sieve_logfile_ehandler_create
 	(const char *logfile, unsigned int max_errors);  
+
+/* Wrapper: prefix all log messages */
+struct sieve_error_handler *sieve_prefix_ehandler_create
+	(struct sieve_error_handler *parent, const char *location, 
+		const char *prefix);
+
+/* Wrapper: make messages part of var expansion */
+struct sieve_error_handler *sieve_varexpand_ehandler_create
+(struct sieve_error_handler *parent, const char *format,
+	struct var_expand_table *table);
 
 #endif /* __SIEVE_ERROR_H */

@@ -15,64 +15,55 @@
  * Forward declarations
  */
 
-struct sieve_enotify_log;
-struct sieve_enotify_context; 
+struct sieve_enotify_method;
+struct sieve_enotify_env;
 struct sieve_enotify_action;
 struct sieve_enotify_print_env;
 struct sieve_enotify_exec_env;
 
 /*
- * Notify context
- */
-
-struct sieve_enotify_context {
-	struct sieve_error_handler *ehandler;
-	
-	/* Script location */
-	const struct sieve_script *script;
-	unsigned int source_line;
-
-	const struct sieve_message_data *msgdata;
-	pool_t pool;
-};
-
-/*
- * Notify methods
+ * Notify method definition
  */ 
 
-struct sieve_enotify_method {
+struct sieve_enotify_method_def {
 	const char *identifier;
+
+	/* Registration */
+	bool (*load)
+		(const struct sieve_enotify_method *nmth, void **context);
+	void (*unload)
+		(const struct sieve_enotify_method *nmth);
 	
 	/* Validation */
 	bool (*compile_check_uri)
-		(const struct sieve_enotify_log *nlog, const char *uri,
+		(const struct sieve_enotify_env *nenv, const char *uri,
 			const char *uri_body);
 	bool (*compile_check_message)
-		(const struct sieve_enotify_log *nlog, string_t *message);
+		(const struct sieve_enotify_env *nenv, string_t *message);
 	bool (*compile_check_from)
-		(const struct sieve_enotify_log *nlog, string_t *from);
+		(const struct sieve_enotify_env *nenv, string_t *from);
 	bool (*compile_check_option)
-		(const struct sieve_enotify_log *nlog, const char *option, 
+		(const struct sieve_enotify_env *nenv, const char *option, 
 			const char *value);
 
 	/* Runtime */
 	bool (*runtime_check_uri)
-		(const struct sieve_enotify_log *nlog, const char *uri,
+		(const struct sieve_enotify_env *nenv, const char *uri,
 			const char *uri_body);
 	const char *(*runtime_get_method_capability)
-		(const struct sieve_enotify_log *nlog, const char *uri, 
+		(const struct sieve_enotify_env *nenv, const char *uri, 
 			const char *uri_body, const char *capability);
 	bool (*runtime_check_operands)
-		(const struct sieve_enotify_log *nlog, const char *uri, 
+		(const struct sieve_enotify_env *nenv, const char *uri, 
 			const char *uri_body, string_t *message, string_t *from, 
 			pool_t context_pool, void **method_context);
 	bool (*runtime_set_option)
-		(const struct sieve_enotify_log *nlog, void *method_context,
+		(const struct sieve_enotify_env *nenv, void *method_context,
 			const char *option, const char *value);
 
 	/* Action duplicates */
 	int (*action_check_duplicates)
-		(const struct sieve_enotify_log *nlog, void *method_ctx1, 
+		(const struct sieve_enotify_env *nenv, void *method_ctx1, 
 			void *method_ctx2, const char *dupl_location);
 		
 	/* Action print */
@@ -86,8 +77,30 @@ struct sieve_enotify_method {
 			const struct sieve_enotify_action *act);
 };
 
-void sieve_enotify_method_register
-(struct sieve_instance *svinst, const struct sieve_enotify_method *method); 
+/*
+ * Notify method instance
+ */
+
+struct sieve_enotify_method {
+	const struct sieve_enotify_method_def *def;
+
+	struct sieve_instance *svinst;
+	void *context;
+};
+
+const struct sieve_enotify_method *sieve_enotify_method_register
+	(struct sieve_instance *svinst, 
+		const struct sieve_enotify_method_def *nmth_def); 
+
+/*
+ * Notify method environment
+ */
+
+struct sieve_enotify_env {
+	const struct sieve_enotify_method *method;
+
+	struct sieve_error_handler *ehandler;
+};
 
 /*
  * Notify method printing
@@ -102,11 +115,13 @@ void sieve_enotify_method_printf
  */
 
 struct sieve_enotify_exec_env {
-	const struct sieve_enotify_log *notify_log;
+	const struct sieve_enotify_method *method;
 
 	const struct sieve_script_env *scriptenv;
 	const struct sieve_message_data *msgdata;
 	struct sieve_message_context *msgctx;
+
+	struct sieve_error_handler *ehandler;
 };
 
 /*
@@ -123,18 +138,18 @@ struct sieve_enotify_action {
 };
 
 /*
- * Logging
+ * Error handling
  */
 
-void sieve_enotify_error
-	(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
-		ATTR_FORMAT(2, 3);
-void sieve_enotify_warning
-	(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
-		ATTR_FORMAT(2, 3);
-void sieve_enotify_log
-	(const struct sieve_enotify_log *nlog, const char *fmt, ...) 
-		ATTR_FORMAT(2, 3);
+#define sieve_enotify_error(ENV, ...) \
+	sieve_error((ENV)->ehandler, NULL, __VA_ARGS__ )
+	
+#define sieve_enotify_warning(ENV, ...) \
+	sieve_warning((ENV)->ehandler, NULL, __VA_ARGS__ )
+
+#define sieve_enotify_info(ENV, ...) \
+	sieve_info((ENV)->ehandler, NULL, __VA_ARGS__ )
+
 
 #endif /* __SIEVE_EXT_ENOTIFY_H */
 

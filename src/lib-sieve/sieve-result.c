@@ -220,94 +220,13 @@ const void *sieve_result_extension_get_context
  * Error handling 
  */
 
-static const char *_get_from_address(struct mail *mail)
-{
-	struct message_address *addr;
-	const char *str;
-
-	if ( mail_get_first_header(mail, "from", &str) <= 0 )
-		return NULL;
-
-	addr = message_address_parse
-		(pool_datastack_create(), (const unsigned char *)str, strlen(str), 1, 
-			FALSE);
-
-	return addr == NULL || addr->mailbox == NULL || addr->domain == NULL ||
-		*addr->mailbox == '\0' || *addr->domain == '\0' ?
-		NULL : t_strconcat(addr->mailbox, "@", addr->domain, NULL);
-}
-
-void sieve_result_vlog_message
-(const struct sieve_action_exec_env *aenv, sieve_error_func_t log_func,
-	const char *fmt, va_list args)
-{
-	const struct sieve_message_data *msgdata = aenv->msgdata;
-	string_t *str;
-	const char *msgid, *msg;
-
-	if ( aenv->result->ehandler == NULL ) return;
-
-	msg = t_strdup_vprintf(fmt, args);
-
-	msgid = msgdata->id;
-	msgid = ( msgid == NULL ? "unspecified" : str_sanitize(msgid, 80) );
-
-	if ( aenv->scriptenv->action_log_format == NULL ) {
-		log_func(aenv->result->ehandler, NULL, "msgid=%s: %s", msgid, msg); 
-
-	} else {
-		static struct var_expand_table static_tab[] = {
-			{ '$', NULL, NULL },
-			{ 'm', NULL, "msgid" },
-			{ 's', NULL, "subject" },
-			{ 'f', NULL, "from" },
-			{ 'l', NULL, "location" },
-			{ '\0', NULL, NULL }
-		};
-		struct var_expand_table *tab;
-		unsigned int i;
-
-		tab = t_malloc(sizeof(static_tab));
-		memcpy(tab, static_tab, sizeof(static_tab));
-
-		/* Fill in substitution items */
-		tab[0].value = msg;
-		tab[1].value = msgid;
-		(void)mail_get_first_header_utf8(msgdata->mail, "Subject", &tab[2].value);
-		tab[3].value = _get_from_address(msgdata->mail);
-		tab[4].value = "";
-
-		/* Sanitize substitution items */
-		for (i = 1; tab[i].key != '\0'; i++)
-			tab[i].value = str_sanitize(tab[i].value, 80);
-
-		/* Expand variables */
-		str = t_str_new(256);
-		var_expand(str, aenv->scriptenv->action_log_format, tab);
-
-		/* Log message */
-		log_func(aenv->result->ehandler, NULL, "%s", str_c(str));
-	}
-}
-
-void sieve_result_log_message
-(const struct sieve_action_exec_env *aenv, sieve_error_func_t log_func,
-	const char *fmt, ...)
-{
-	va_list args;
-	
-	va_start(args, fmt);	
-	sieve_result_vlog_message(aenv, log_func, fmt, args); 
-	va_end(args);
-}
-
 void sieve_result_error
 (const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 {
 	va_list args;
 	
 	va_start(args, fmt);	
-	sieve_result_vlog_message(aenv, sieve_error, fmt, args); 
+	sieve_verror(aenv->ehandler, NULL, fmt, args); 
 	va_end(args);
 }
 
@@ -317,7 +236,7 @@ void sieve_result_warning
 	va_list args;
 	
 	va_start(args, fmt);	
-	sieve_result_vlog_message(aenv, sieve_warning, fmt, args); 
+	sieve_vwarning(aenv->ehandler, NULL, fmt, args);
 	va_end(args);
 }
 
@@ -327,7 +246,7 @@ void sieve_result_log
 	va_list args;
 	
 	va_start(args, fmt);	
-	sieve_result_vlog_message(aenv, sieve_info, fmt, args); 
+	sieve_vinfo(aenv->ehandler, NULL, fmt, args);
 	va_end(args);
 }
 
@@ -918,8 +837,61 @@ bool sieve_result_print
  * Result execution
  */
 
+static const char *_get_from_address(struct mail *mail)
+{
+	struct message_address *addr;
+	const char *str;
+
+	if ( mail_get_first_header(mail, "from", &str) <= 0 )
+		return NULL;
+
+	addr = message_address_parse
+		(pool_datastack_create(), (const unsigned char *)str, strlen(str), 1, 
+			FALSE);
+
+	return addr == NULL || addr->mailbox == NULL || addr->domain == NULL ||
+		*addr->mailbox == '\0' || *addr->domain == '\0' ?
+		NULL : t_strconcat(addr->mailbox, "@", addr->domain, NULL);
+}
+
+static void _sieve_result_prepare_environment(struct sieve_result *result)
+{
+	const struct sieve_message_data *msgdata = result->action_env.msgdata;
+	const struct sieve_script_env *senv = result->action_env.scriptenv;
+	const struct var_expand_table static_tab[] = {
+		{ 'm', NULL, "msgid" },
+		{ 's', NULL, "subject" },
+		{ 'f', NULL, "from" },
+		{ '\0', NULL, NULL }
+	};
+	const char *msgid = msgdata->id;
+	struct var_expand_table *tab;
+	unsigned int i;
+
+	tab = t_malloc(sizeof(static_tab));
+	memcpy(tab, static_tab, sizeof(static_tab));
+
+	msgid = ( msgid == NULL ? "unspecified" : str_sanitize(msgid, 80) );
+
+	/* Fill in substitution items */
+	tab[0].value = msgid;
+	(void)mail_get_first_header_utf8(msgdata->mail, "Subject", &tab[1].value);
+	tab[2].value = _get_from_address(msgdata->mail);
+	tab[3].value = "";
+
+	/* Sanitize substitution items */
+	for (i = 0; tab[i].key != '\0'; i++)
+		tab[i].value = str_sanitize(tab[i].value, 80);
+
+	result->action_env.exec_status = 
+		( senv->exec_status == NULL ? 
+			t_new(struct sieve_exec_status, 1) : senv->exec_status );
+	result->action_env.ehandler = sieve_varexpand_ehandler_create
+		(result->ehandler, senv->action_log_format, tab);
+}
+
 static bool _sieve_result_implicit_keep
-	(struct sieve_result *result, bool rollback)
+(struct sieve_result *result, bool rollback)
 {	
 	struct sieve_result_action *rac;
 	bool success = TRUE;
@@ -1024,11 +996,7 @@ static bool _sieve_result_implicit_keep
 bool sieve_result_implicit_keep
 (struct sieve_result *result)
 {
-	const struct sieve_script_env *senv = result->action_env.scriptenv;
-	struct sieve_exec_status dummy_status;
-
-	result->action_env.exec_status = 
-		( senv->exec_status == NULL ? &dummy_status : senv->exec_status );
+	_sieve_result_prepare_environment(result);
 
 	return _sieve_result_implicit_keep(result, TRUE);	
 }
@@ -1053,8 +1021,6 @@ void sieve_result_mark_executed(struct sieve_result *result)
 int sieve_result_execute
 (struct sieve_result *result, bool *keep)
 {
-	const struct sieve_script_env *senv = result->action_env.scriptenv;
-	struct sieve_exec_status dummy_status;
 	bool implicit_keep = TRUE;
 	bool success = TRUE, commit_ok;
 	struct sieve_result_action *rac, *first_action;
@@ -1064,8 +1030,7 @@ int sieve_result_execute
 
 	/* Prepare environment */
 
-	result->action_env.exec_status = 
-		( senv->exec_status == NULL ? &dummy_status : senv->exec_status );
+	_sieve_result_prepare_environment(result);
 	
 	/* Make notice of this attempt */
 	

@@ -22,7 +22,7 @@ extern const struct sieve_extension_capabilities notify_capabilities;
 
 struct ext_enotify_context {
 	const struct sieve_extension *var_ext;
-	ARRAY_DEFINE(notify_methods, const struct sieve_enotify_method *);
+	ARRAY_DEFINE(notify_methods, struct sieve_enotify_method);
 };
 
 
@@ -78,11 +78,11 @@ extern const struct sieve_variables_modifier_def encodeurl_modifier;
 /*
  * Notify methods
  */
- 
-extern const struct sieve_enotify_method mailto_notify;
- 
-void ext_enotify_methods_init(struct ext_enotify_context *ectx);
-void ext_enotify_methods_deinit(struct ext_enotify_context *ectx);
+  
+void ext_enotify_methods_init
+	(struct sieve_instance *svinst, struct ext_enotify_context *ectx);
+void ext_enotify_methods_deinit
+	(struct ext_enotify_context *ectx);
 
 const struct sieve_enotify_method *ext_enotify_method_find
 	(const struct sieve_extension *ntfy_ext, const char *identifier);
@@ -121,19 +121,6 @@ int ext_enotify_runtime_check_operands
 
 struct sieve_enotify_print_env {
 	const struct sieve_result_print_env *result_penv;
-};
-
-/*
- * Method logging
- */ 
-
-struct sieve_enotify_log {
-	struct sieve_error_handler *ehandler;
-	const char *location;
-
-	const struct sieve_action_exec_env *aenv;
-
-	const char *prefix;
 };
 
 #endif /* __EXT_ENOTIFY_COMMON_H */
