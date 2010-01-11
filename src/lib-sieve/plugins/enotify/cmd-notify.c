@@ -604,6 +604,8 @@ static bool act_notify_commit
 			(aenv->ehandler, action->location, "notify action");
 
 		result = method->def->action_execute(&nenv, act);
+
+		sieve_error_handler_unref(&nenv.ehandler);
 	}
 			
 	return result;

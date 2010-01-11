@@ -144,6 +144,9 @@ void sieve_result_unref(struct sieve_result **result)
 	if ( (*result)->ehandler != NULL )
 		sieve_error_handler_unref(&(*result)->ehandler);
 
+	if ( (*result)->action_env.ehandler != NULL ) 
+		sieve_error_handler_unref(&(*result)->action_env.ehandler);
+
 	pool_unref(&(*result)->pool);
 
  	*result = NULL;
@@ -854,7 +857,7 @@ static const char *_get_from_address(struct mail *mail)
 		NULL : t_strconcat(addr->mailbox, "@", addr->domain, NULL);
 }
 
-static void _sieve_result_prepare_environment(struct sieve_result *result)
+static void _sieve_result_prepare_execution(struct sieve_result *result)
 {
 	const struct sieve_message_data *msgdata = result->action_env.msgdata;
 	const struct sieve_script_env *senv = result->action_env.scriptenv;
@@ -886,6 +889,10 @@ static void _sieve_result_prepare_environment(struct sieve_result *result)
 	result->action_env.exec_status = 
 		( senv->exec_status == NULL ? 
 			t_new(struct sieve_exec_status, 1) : senv->exec_status );
+
+	if ( result->action_env.ehandler != NULL ) 
+		sieve_error_handler_unref(&result->action_env.ehandler);
+
 	result->action_env.ehandler = sieve_varexpand_ehandler_create
 		(result->ehandler, senv->action_log_format, tab);
 }
@@ -996,7 +1003,7 @@ static bool _sieve_result_implicit_keep
 bool sieve_result_implicit_keep
 (struct sieve_result *result)
 {
-	_sieve_result_prepare_environment(result);
+	_sieve_result_prepare_execution(result);
 
 	return _sieve_result_implicit_keep(result, TRUE);	
 }
@@ -1030,7 +1037,7 @@ int sieve_result_execute
 
 	/* Prepare environment */
 
-	_sieve_result_prepare_environment(result);
+	_sieve_result_prepare_execution(result);
 	
 	/* Make notice of this attempt */
 	
