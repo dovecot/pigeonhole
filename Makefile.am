@@ -6,6 +6,11 @@ EXTRA_DIST = \
 	COPYING.LGPL \
 	ChangeLog
 
+if INSTALL_HEADERS
+  pkginc_libdir=$(dovecot_pkgincludedir)/sieve
+  nodist_pkginc_lib_HEADERS = dsieve-config.h
+endif
+
 if MAINTAINER_MODE
 ChangeLog: .hg/dirstate
 	hg log --style=changelog > ChangeLog
