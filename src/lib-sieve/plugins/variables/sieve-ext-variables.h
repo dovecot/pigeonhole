@@ -13,7 +13,11 @@
 #include "sieve-objects.h"
 #include "sieve-code.h"
 
-#include "ext-variables-limits.h"
+/*
+ * Limits
+ */
+
+unsigned int sieve_variables_get_max_scope_size(void);
 
 /*
  * Variable extension

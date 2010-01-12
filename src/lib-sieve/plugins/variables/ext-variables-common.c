@@ -21,8 +21,18 @@
 #include "sieve-interpreter.h"
 
 #include "ext-variables-common.h"
+#include "ext-variables-limits.h"
 #include "ext-variables-name.h"
 #include "ext-variables-modifiers.h"
+
+/*
+ * Limits
+ */
+
+unsigned int sieve_variables_get_max_scope_size(void)
+{ 
+	return EXT_VARIABLES_MAX_SCOPE_SIZE;
+}
 
 /*
  * Variable scope 
@@ -95,7 +105,7 @@ struct sieve_variable *sieve_variable_scope_declare
 	new_var = p_new(scope->pool, struct sieve_variable, 1);
 	new_var->ext = scope->ext;
 
-	if ( array_count(&scope->variable_index) >= SIEVE_VARIABLES_MAX_SCOPE_SIZE ) {
+	if ( array_count(&scope->variable_index) >= EXT_VARIABLES_MAX_SCOPE_SIZE ) {
 		if ( scope->error_var == NULL ) {
 			new_var->identifier = "@ERROR@";
 			new_var->index = 0;
@@ -311,8 +321,8 @@ bool sieve_variable_assign
 	str_append_str(varval, value);
 
 	/* Just a precaution, caller should prevent this in the first place */
-	if ( str_len(varval) > SIEVE_VARIABLES_MAX_VARIABLE_SIZE )
-		str_truncate(varval, SIEVE_VARIABLES_MAX_VARIABLE_SIZE);
+	if ( str_len(varval) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
+		str_truncate(varval, EXT_VARIABLES_MAX_VARIABLE_SIZE);
 
 	return TRUE;
 }
@@ -510,9 +520,9 @@ bool ext_variables_interpreter_load
 		return FALSE;
 	}
 
-	if ( scope_size > SIEVE_VARIABLES_MAX_SCOPE_SIZE ) {
+	if ( scope_size > EXT_VARIABLES_MAX_SCOPE_SIZE ) {
 		sieve_sys_error("variables: scope size exceeds the limit (%u > %u)", 
-			scope_size, SIEVE_VARIABLES_MAX_SCOPE_SIZE );
+			scope_size, EXT_VARIABLES_MAX_SCOPE_SIZE );
 		return FALSE;
 	}
 	

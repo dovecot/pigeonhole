@@ -48,7 +48,7 @@ static bool ext_variables_variable_argument_activate
 		sieve_argument_validate_error(valdtr, arg, 
 			"(implicit) declaration of new variable '%s' exceeds the limit "
 			"(max variables: %u)", variable, 
-			SIEVE_VARIABLES_MAX_SCOPE_SIZE);
+			EXT_VARIABLES_MAX_SCOPE_SIZE);
 		return FALSE;
 	}
 	
@@ -114,10 +114,10 @@ static bool ext_variables_match_value_argument_activate
 		return FALSE;
 	}
 
-	if ( index > SIEVE_VARIABLES_MAX_MATCH_INDEX ) {
+	if ( index > EXT_VARIABLES_MAX_MATCH_INDEX ) {
 		sieve_argument_validate_error(valdtr, arg, 
 			"match value index %u out of range (max: %u)", index, 
-			SIEVE_VARIABLES_MAX_MATCH_INDEX);
+			EXT_VARIABLES_MAX_MATCH_INDEX);
 		return FALSE;
 	} 
 

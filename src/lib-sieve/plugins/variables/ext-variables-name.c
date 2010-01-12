@@ -26,7 +26,7 @@ int ext_variable_name_parse
 
 		/* Acquire current position in the array */
 
-		if ( array_count(vname) >= SIEVE_VARIABLES_MAX_NAMESPACE_ELEMENTS )
+		if ( array_count(vname) >= EXT_VARIABLES_MAX_NAMESPACE_ELEMENTS )
 			return -1;
 
 		cur_element = array_append_space(vname);
@@ -42,7 +42,7 @@ int ext_variable_name_parse
 			p++;
 		
 			while ( p < strend && (*p == '_' || i_isalnum(*p)) ) {
-				if ( str_len(cur_ident) >= SIEVE_VARIABLES_MAX_VARIABLE_NAME_LEN )
+				if ( str_len(cur_ident) >= EXT_VARIABLES_MAX_VARIABLE_NAME_LEN )
 					return -1;
 				str_append_c(cur_ident, *p);
 				p++;

@@ -19,6 +19,7 @@
 #include "sieve-interpreter.h"
 
 #include "ext-variables-common.h"
+#include "ext-variables-limits.h"
 #include "ext-variables-name.h"
 #include "ext-variables-dump.h"
 #include "ext-variables-operands.h"
@@ -242,8 +243,8 @@ static bool opr_match_value_read
 		
 			if ( *str == NULL ) 
 				*str = t_str_new(0);
-			else if ( str_len(*str) > SIEVE_VARIABLES_MAX_VARIABLE_SIZE ) 
-				str_truncate(*str, SIEVE_VARIABLES_MAX_VARIABLE_SIZE);
+			else if ( str_len(*str) > EXT_VARIABLES_MAX_VARIABLE_SIZE ) 
+				str_truncate(*str, EXT_VARIABLES_MAX_VARIABLE_SIZE);
 		}
 		return TRUE;
 	}

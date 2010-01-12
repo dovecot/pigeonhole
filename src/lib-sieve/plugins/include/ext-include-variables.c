@@ -46,7 +46,7 @@ struct sieve_variable *ext_include_variable_import_global
 		sieve_command_validate_error(valdtr, cmd,
 			"declaration of new global variable '%s' exceeds the limit "
 			"(max variables: %u)", 
-			variable, SIEVE_VARIABLES_MAX_SCOPE_SIZE);
+			variable, sieve_variables_get_max_scope_size());
 		return NULL;
 	}
 	
@@ -107,10 +107,10 @@ bool ext_include_variables_load
 		return FALSE;
 	}
 
-	if ( count > SIEVE_VARIABLES_MAX_SCOPE_SIZE ) {
+	if ( count > sieve_variables_get_max_scope_size() ) {
 		sieve_sys_error("include: global variable scope size of binary %s "
 			"exceeds the limit (%u > %u)", sieve_binary_path(sbin),
-			count, SIEVE_VARIABLES_MAX_SCOPE_SIZE );
+			count, sieve_variables_get_max_scope_size() );
 		return FALSE;
 	}
 
@@ -228,7 +228,7 @@ bool vnspc_global_variables_validate
 		sieve_argument_validate_error(valdtr, arg, 
 			"(implicit) declaration of new global variable '%s' exceeds the limit "
 			"(max variables: %u)", variable, 
-			SIEVE_VARIABLES_MAX_SCOPE_SIZE);
+			sieve_variables_get_max_scope_size());
 		return FALSE;
 	}
 	

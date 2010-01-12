@@ -19,6 +19,7 @@
 #include "sieve-dump.h"
 
 #include "ext-variables-common.h"
+#include "ext-variables-limits.h"
 #include "ext-variables-modifiers.h"
 
 /* 
@@ -316,8 +317,8 @@ static int cmd_set_operation_execute
 	sieve_runtime_trace(renv, "SET action");
 
 	/* Hold value within limits */
-	if ( str_len(value) > SIEVE_VARIABLES_MAX_VARIABLE_SIZE )
-		str_truncate(value, SIEVE_VARIABLES_MAX_VARIABLE_SIZE);
+	if ( str_len(value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
+		str_truncate(value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
 
 	T_BEGIN {
 		/* Apply modifiers if necessary (sorted during code generation already) */
@@ -346,8 +347,8 @@ static int cmd_set_operation_execute
 						break;
 
 					/* Hold value within limits */
-					if ( str_len(value) > SIEVE_VARIABLES_MAX_VARIABLE_SIZE )
-						str_truncate(value, SIEVE_VARIABLES_MAX_VARIABLE_SIZE);
+					if ( str_len(value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
+						str_truncate(value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
 				}
 			}
 		}	
