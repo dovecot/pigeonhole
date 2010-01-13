@@ -118,6 +118,8 @@ const struct sieve_extension *sieve_extension_require
 	(struct sieve_instance *svinst, const struct sieve_extension_def *extension);
 bool sieve_extension_reload(const struct sieve_extension *ext);
 
+void sieve_extension_unregister(const struct sieve_extension *ext);
+
 int sieve_extensions_get_count(struct sieve_instance *svinst);
 
 const struct sieve_extension *sieve_extension_get_by_id
@@ -148,8 +150,11 @@ struct sieve_extension_capabilities {
 };
 
 void sieve_extension_capabilities_register
-	(struct sieve_instance *svinst, const struct sieve_extension *ext, 
+	(const struct sieve_extension *ext, 
 		const struct sieve_extension_capabilities *cap);
+void sieve_extension_capabilities_unregister
+	(const struct sieve_extension *ext);
+
 const char *sieve_extension_capabilities_get_string
 	(struct sieve_instance *svinst, const char *cap_name);
 

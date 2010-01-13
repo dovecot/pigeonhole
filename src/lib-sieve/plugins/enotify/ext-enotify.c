@@ -71,7 +71,7 @@ static bool ext_enotify_load(const struct sieve_extension *ext, void **context)
 
 	ext_enotify_methods_init(ext->svinst, ectx);
 
-	sieve_extension_capabilities_register(ext->svinst, ext, &notify_capabilities);
+	sieve_extension_capabilities_register(ext, &notify_capabilities);
 
 	return TRUE;
 }

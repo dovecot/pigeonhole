@@ -13,6 +13,9 @@
 
 struct sieve_plugin {
 	struct module *module;
+	
+	void *context;
+
 	struct sieve_plugin *next;
 };
 
@@ -103,7 +106,7 @@ void sieve_plugins_load(struct sieve_instance *svinst, const char *path, const c
  	for (i = 0; module_names[i] != NULL; i++) {
 		struct sieve_plugin *plugin;
 		const char *name = module_names[i];
-		void (*load_func)(struct sieve_instance *svinst);
+		void (*load_func)(struct sieve_instance *svinst, void **context);
 
 		/* Find the module */
 		module = sieve_plugin_module_find(name);
@@ -129,7 +132,7 @@ void sieve_plugins_load(struct sieve_instance *svinst, const char *path, const c
 		load_func = module_get_symbol
 			(module, t_strdup_printf("%s_load", module->name));
 		if ( load_func != NULL ) {
-			load_func(svinst);
+			load_func(svinst, &plugin->context);
 		}
 
 		/* Add plugin to the instance */
@@ -159,12 +162,12 @@ void sieve_plugins_unload(struct sieve_instance *svinst)
 	plugin = svinst->plugins;
 	while ( plugin != NULL ) {
 		struct module *module = plugin->module;
-		void (*unload_func)(struct sieve_instance *svinst);
+		void (*unload_func)(struct sieve_instance *svinst, void *context);
 
 		unload_func = module_get_symbol
 			(module, t_strdup_printf("%s_unload", module->name));
 		if ( unload_func != NULL ) {
-			unload_func(svinst);
+			unload_func(svinst, plugin->context);
 		}
 
 		plugin = plugin->next;

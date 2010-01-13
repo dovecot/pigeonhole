@@ -84,6 +84,7 @@ struct sieve_enotify_method_def {
 
 struct sieve_enotify_method {
 	const struct sieve_enotify_method_def *def;
+	int id;
 
 	struct sieve_instance *svinst;
 	void *context;
@@ -91,7 +92,9 @@ struct sieve_enotify_method {
 
 const struct sieve_enotify_method *sieve_enotify_method_register
 	(struct sieve_instance *svinst, 
-		const struct sieve_enotify_method_def *nmth_def); 
+		const struct sieve_enotify_method_def *nmth_def);
+void  sieve_enotify_method_unregister
+	(const struct sieve_enotify_method *nmth);
 
 /*
  * Notify method environment

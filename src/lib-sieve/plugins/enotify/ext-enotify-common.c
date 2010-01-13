@@ -66,9 +66,11 @@ static const struct sieve_enotify_method *ext_enotify_method_register
 	const struct sieve_enotify_method_def *nmth_def) 
 {
 	struct sieve_enotify_method *nmth;
+	int nmth_id = (int) array_count(&ectx->notify_methods);
 
 	nmth = array_append_space(&ectx->notify_methods);
 	nmth->def = nmth_def;
+	nmth->id = nmth_id;
 	nmth->svinst = svinst;
 
 	if ( nmth_def->load != NULL )
@@ -116,6 +118,27 @@ const struct sieve_enotify_method *sieve_enotify_method_register
 	return NULL;
 }
 
+void sieve_enotify_method_unregister
+(const struct sieve_enotify_method *nmth)
+{
+	struct sieve_instance *svinst = nmth->svinst;
+	const struct sieve_extension *ntfy_ext =
+		sieve_extension_get_by_name(svinst, "enotify");
+
+	if ( ntfy_ext != NULL ) {
+		struct ext_enotify_context *ectx = 
+			(struct ext_enotify_context *) ntfy_ext->context;
+		int nmth_id = nmth->id;
+
+		if ( nmth_id >= 0 && nmth_id < (int)array_count(&ectx->notify_methods) ) {
+			struct sieve_enotify_method *nmth_mod =
+				array_idx_modifiable(&ectx->notify_methods, nmth_id);
+			
+			nmth_mod->def = NULL;
+		}
+	}
+}
+
 const struct sieve_enotify_method *ext_enotify_method_find
 (const struct sieve_extension *ntfy_ext, const char *identifier) 
 {
@@ -147,13 +170,14 @@ static const char *ext_notify_get_methods_string
 	string_t *result = t_str_new(128);
 	 
 	methods = array_get(&ectx->notify_methods, &meth_count);
-		
+	
 	if ( meth_count > 0 ) {
-		str_append(result, methods[0].def->identifier);
-		
-		for ( i = 1; i < meth_count; i++ ) {
-			str_append_c(result, ' ');
-			str_append(result, methods[i].def->identifier);
+		for ( i = 0; i < meth_count; i++ ) {
+			if ( str_len(result) > 0 )
+				str_append_c(result, ' ');
+
+			if ( methods[i].def != NULL )
+				str_append(result, methods[i].def->identifier);
 		}
 		
 		return str_c(result);
