@@ -269,20 +269,15 @@ static void sieve_extension_registry_init(struct sieve_instance *svinst)
 static void sieve_extension_registry_deinit(struct sieve_instance *svinst) 
 {
 	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
-	struct hash_iterate_context *itx;
-	void *key; 
-	void *value;
+	struct sieve_extension *exts;
+    unsigned int i, ext_count;
 	
 	if ( ext_reg->extension_index == NULL ) return;
 
-	itx = hash_table_iterate_init(ext_reg->extension_index);
-	while ( hash_table_iterate(itx, &key, &value) ) {
-		struct sieve_extension *ext = (struct sieve_extension *) value;
-		
-		_sieve_extension_unload(ext);
+    exts = array_get_modifiable(&ext_reg->extensions, &ext_count);
+	for ( i = 0; i < ext_count; i++ ) {
+		_sieve_extension_unload(&exts[i]);
 	}
-
-	hash_table_iterate_deinit(&itx); 	
 
 	hash_table_destroy(&ext_reg->extension_index);
 }
@@ -363,10 +358,10 @@ void sieve_extension_unregister(const struct sieve_extension *ext)
     struct sieve_extension *mod_ext;
     int ext_id = ext->id;
 
-    if ( ext_id > 0 && ext_id < (int) array_count(&ext_reg->extensions) ) {
+    if ( ext_id >= 0 && ext_id < (int) array_count(&ext_reg->extensions) ) {
         mod_ext = array_idx_modifiable(&ext_reg->extensions, ext_id);
 
-		sieve_extension_capabilities_unregister(ext);
+		sieve_extension_capabilities_unregister(mod_ext);
 		_sieve_extension_unload(mod_ext);
 		mod_ext->loaded = FALSE;
 		mod_ext->def = NULL;
