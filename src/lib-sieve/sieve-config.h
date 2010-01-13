@@ -4,8 +4,8 @@
 #ifndef __SIEVE_CONFIG_H
 #define __SIEVE_CONFIG_H
 
-#include "dsieve-config.h"
+#include "pigeonhole-config.h"
 
-#define SIEVE_IMPLEMENTATION SIEVE_NAME " " SIEVE_VERSION
+#define SIEVE_IMPLEMENTATION PIGEONHOLE_NAME " Sieve " PIGEONHOLE_VERSION
 
 #endif

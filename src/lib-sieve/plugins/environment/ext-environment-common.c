@@ -177,7 +177,7 @@ const struct sieve_environment_item phase_env_item = {
  */
 const struct sieve_environment_item name_env_item = {
 	"name",
-	SIEVE_NAME,
+	PIGEONHOLE_NAME" Sieve",
 	NULL,
 };
 
@@ -190,7 +190,7 @@ const struct sieve_environment_item name_env_item = {
 
 const struct sieve_environment_item version_env_item = {
 	"version",
-	SIEVE_VERSION,
+	PIGEONHOLE_VERSION,
 	NULL,
 };
 

@@ -1,9 +1,0 @@
-
-/* Define to the full name of this Sieve implementation. */
-#undef SIEVE_NAME
-
-/* Define to the version of this Sieve implementation. */
-#undef SIEVE_VERSION
-
-/* Define to build Sieve unfinished features/extensions. */
-#undef HAVE_SIEVE_UNFINISHED

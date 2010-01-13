@@ -1,16 +1,16 @@
-AC_INIT([Dovecot Sieve], [0.1.13], [dovecot@dovecot.org], [dovecot-2.0-sieve])
+AC_INIT([Pigeonhole], [0.1.13], [dovecot@dovecot.org], [dovecot-2.0-pigeonhole])
 AC_CONFIG_SRCDIR([src])
 
 # Autoheader is not needed and does more harm than good for this package. However, it is 
 # tightly integrated in autoconf/automake and therefore it is difficult not to use it. As 
 # a workaround we give autoheader a dummy config header to chew on and we handle the 
 # real config header ourselves.
-AC_CONFIG_HEADERS([dummy-config.h dsieve-config.h])
+AC_CONFIG_HEADERS([dummy-config.h pigeonhole-config.h])
 
-AC_DEFINE_UNQUOTED(SIEVE_NAME, "$PACKAGE_NAME", 
-	[Define to the full name of this Sieve implementation.])
-AC_DEFINE_UNQUOTED(SIEVE_VERSION, "$PACKAGE_VERSION", 
-	[Define to the version of this Sieve implementation.])
+AC_DEFINE_UNQUOTED(PIGEONHOLE_NAME, "$PACKAGE_NAME", 
+	[Define to the full name of Pigeonhole for Dovecot.])
+AC_DEFINE_UNQUOTED(PIGEONHOLE_VERSION, "$PACKAGE_VERSION", 
+	[Define to the version of Pigeonhole for Dovecot.])
 
 AM_INIT_AUTOMAKE([no-define foreign])
 
@@ -63,7 +63,7 @@ AM_CONDITIONAL(BUILD_UNFINISHED, test "$want_unfinished_features" = "yes")
 
 if test "$want_unfinished_features" = "yes"; then
 	AC_DEFINE(HAVE_SIEVE_UNFINISHED,,
-		[Define to build Sieve unfinished features/extensions.])
+		[Define to build unfinished features/extensions.])
 fi
 
 #
@@ -89,6 +89,17 @@ AC_ARG_ENABLE(valgrind,
     want_valgrind=no)
 AM_CONDITIONAL(TESTSUITE_VALGRIND, test "$want_valgrind" = "yes")
 
+AC_ARG_WITH(managesieve,
+[AC_HELP_STRING([--with-managesieve], 
+	[Build ManageSieve service [default=yes]])],
+        if test x$withval = xno || test x$withval = xauto; then
+                want_managesieve=$withval
+        else
+                want_managesieve=yes
+        fi,
+        want_managesieve=yes)
+AM_CONDITIONAL(BUILD_MANAGESIEVE, test "$want_managesieve" = "yes")
+
 dnl replace relative ../ paths in the file with full paths
 eval `cat $dovecotdir/dovecot-config|sed 's,\$(top_builddir)/,$dovecotdir/,g'`
 
@@ -101,10 +112,13 @@ if test $have_dovecot_sources = yes; then
 
   LIBDOVECOT='$(dovecot_libdir)/src/lib-dovecot/libdovecot.la'
   LIBDOVECOT_STORAGE='$(dovecot_libdir)/src/lib-storage/libdovecot-storage.la'
+  LIBDOVECOT_LOGIN='$(dovecot_libdir)/src/login-common/libdovecot-login.la'
 
-  LIBDOVECOT_INCLUDE='-I$(dovecot_incdir) -I$(dovecot_incdir)/src/lib -I$(dovecot_incdir)/src/lib-dict -I$(dovecot_incdir)/src/lib-mail -I$(dovecot_incdir)/src/lib-storage -I$(dovecot_incdir)/src/lib-imap -I$(dovecot_incdir)/src/lib-master'
+  LIBDOVECOT_INCLUDE='-I$(dovecot_incdir) -I$(dovecot_incdir)/src/lib -I$(dovecot_incdir)/src/lib-dict -I$(dovecot_incdir)/src/lib-mail -I$(dovecot_incdir)/src/lib-storage -I$(dovecot_incdir)/src/lib-imap -I$(dovecot_incdir)/src/lib-charset'
   LIBDOVECOT_LDA_INCLUDE='-I$(dovecot_incdir)/src/lib-lda -I$(dovecot_incdir)/src/lda'
-  LIBDOVECOT_STORAGE_INCLUDE='-I$(dovecot_incdir)/src/lib-settings  -I$(dovecot_incdir)/src/lib-index -I$(dovecot_incdir)/src/lib-storage/index -I$(dovecot_incdir)/src/lib-storage/index/raw'
+  LIBDOVECOT_SERVICE_INCLUDE='-I$(dovecot_incdir)/src/lib-master -I$(dovecot_incdir)/src/lib-settings'
+  LIBDOVECOT_STORAGE_INCLUDE='-I$(dovecot_incdir)/src/lib-index -I$(dovecot_incdir)/src/lib-storage/index -I$(dovecot_incdir)/src/lib-storage/index/raw'
+  LIBDOVECOT_LOGIN_INCLUDE='-I$(dovecot_incdir)/src/lib-auth -I$(dovecot_incdir)/src/login-common'
 else
   dovecot_libdir="$dovecotdir"
   
@@ -113,10 +127,13 @@ else
 
   LIBDOVECOT='$(dovecot_libdir)/libdovecot.la'
   LIBDOVECOT_STORAGE='$(dovecot_libdir)/libdovecot-storage.la'
+  LIBDOVECOT_LOGIN='$(dovecot_libdir)/libdovecot-login.la'
 
   LIBDOVECOT_INCLUDE='-I$(dovecot_incdir)'
   LIBDOVECOT_LDA_INCLUDE=''
+  LIBDOVECOT_SERVICE_INCLUDE=''
   LIBDOVECOT_STORAGE_INCLUDE=''
+  LIBDOVECOT_LOGIN_INCLUDE=''
 fi
 
 dovecot_pkglibexecdir='$(libexecdir)/dovecot'
@@ -135,9 +152,13 @@ AC_SUBST(dovecot_docdir)
 
 AC_SUBST(LIBDOVECOT)
 AC_SUBST(LIBDOVECOT_STORAGE)
+AC_SUBST(LIBDOVECOT_LOGIN)
+
 AC_SUBST(LIBDOVECOT_INCLUDE)
 AC_SUBST(LIBDOVECOT_LDA_INCLUDE)
+AC_SUBST(LIBDOVECOT_SERVICE_INCLUDE)
 AC_SUBST(LIBDOVECOT_STORAGE_INCLUDE)
+AC_SUBST(LIBDOVECOT_LOGIN_INCLUDE)
 
 AC_CONFIG_FILES([
 Makefile
@@ -166,10 +187,14 @@ src/lib-sieve/plugins/mailbox/Makefile
 src/lib-sieve/plugins/date/Makefile
 src/lib-sieve/plugins/spamvirustest/Makefile
 src/lib-sieve-tool/Makefile
+src/lib-sievestorage/Makefile
+src/lib-managesieve/Makefile
 src/plugins/Makefile
 src/plugins/lda-sieve/Makefile
 src/sieve-tools/Makefile
 src/sieve-tools/debug/Makefile
+src/managesieve/Makefile
+src/managesieve-login/Makefile
 src/testsuite/Makefile
 stamp.h])
 

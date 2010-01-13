@@ -1,13 +1,16 @@
 Stephan Bosch <stephan@rename-it.nl>
 
-This plugin is partly based on the original cmusieve plugin for the Dovecot 
-secure IMAP server. It is based only on code relating to interfacing the CMU 
-Sieve implementation to Dovecot, meaning that no CMU code is incorporated in 
-this implementation. 
+This package is built for and partly based on the Dovecot Secure IMAP server 
+written by:
 
-Both the cmusieve plugin and the Dovecot IMAP server are primarily written by:
+Timo Sirainen <tss@iki.fi>. 
 
-Timo Sirainen <tss@iki.fi>
+The LDA Sieve plugin is partly based on the original CMUSieve plugin for the
+Dovecot secure IMAP server. It is based only on code relating to interfacing t
+he CMU Sieve implementation to Dovecot, meaning that no CMU code is
+incorporated in this implementation. 
 
-View the AUTHORS files in the Dovecot and Dovecot-Sieve distributions for other 
-contributors. 
+The ManageSieve service is a modified version of Dovecot's IMAP service 
+implementation.
+
+Grepping 'patch by' from ChangeLog shows up more people.

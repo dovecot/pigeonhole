@@ -57,6 +57,14 @@ Next (in order of descending priority/precedence):
 	- Test as many error/warning/info conditions as possible. 
 	- Review the specification documents and check whether the given conditions
 	  are tested at least once.
+* Fix ManageSieve proxy to recognize response codes from the backend and forward
+  them to the user if appropriate/safe.
+* Implement proper support for ManageSieve SASL ANONYMOUS login.
+* Enforce ManageSieve protocol syntax better with some of the commands. Some 
+  commands still allow spurious extra arguments.
+* Test ManageSieve behavior thoroughly:
+  - Test pipelined behavior
+  - Test proxy authentication
 * Code cleanup:
 	- Make address handling more uniform. 
 	- Review all FIXMEs 
@@ -66,6 +74,9 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A SECOND RELEASE (0.2.x) ##
 
+* Make the sieve storage a base class with (possibly) various implementations, 
+  just like mail-storage. This aims to provide support for alternate types
+  of script storage like LDAP or SQL database.
 * Add support for stream matching for handling large values, e.g. from the body
   extension.
 * Provide a solution for mail_get_headers_utf8 reparsing the whole message each
@@ -80,8 +91,6 @@ Next (in order of descending priority/precedence):
   that are used in the method argument. RFC reports this as a security issue.
 * Implement editheader extension
 * Implement mimeloop extension
-* Import ManageSieve into this package and provide support for alternate types
-  of script storage like LDAP or SQL database.
 
 * Implement IMAP plugin for IMAPSieve support:
 	- This may include support for manually running a script on a set of messages

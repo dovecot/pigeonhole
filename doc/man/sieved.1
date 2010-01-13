@@ -6,7 +6,7 @@ sieved [\fB-x\fR "\fIextension extension ...\fR"] \fIsieve-binary\fR [\fIout-fil
 .br
 .SH DESCRIPTION
 .PP
-The \fBsieved\fP command is part of the Sieve implementation for the Dovecot secure 
+The \fBsieved\fP command is part of the Pigeonhole Sieve implementation for the Dovecot secure 
 IMAP server. Sieve (RFC 5228) is a simple and highly extensible language for filtering 
 e-mail messages. It can be implemented for any type of mail access protocol, mail 
 architecture and operating system. The language cannot execute external programs and in 
@@ -46,10 +46,13 @@ For example \fB-x\fP "+imapflags -enotify" will enable the deprecated imapflags 
 extensions that are available by default, except for the enotify extension.
 .SH AUTHOR
 .PP
-The Sieve implementation for Dovecot was written by Stephan Bosch <stephan@rename-it.nl>.
+Pigeonhole for Dovecot was written by Stephan Bosch <stephan@rename-it.nl>.
 .PP
 Dovecot was written by Timo Sirainen <tss@iki.fi>.
 .SH "SEE ALSO"
 .BR sievec (1),
 .BR sieve-test (1)
-
+.PP
+Dovecot website: http://www.dovecot.org
+.PP
+Pigeonhole website: http://pigeonhole.dovecot.org

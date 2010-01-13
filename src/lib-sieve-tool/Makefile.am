@@ -3,6 +3,7 @@ noinst_LTLIBRARIES = libsieve-tool.la
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
 	$(LIBDOVECOT_INCLUDE) \
+	$(LIBDOVECOT_SERVICE_INCLUDE) \
 	$(LIBDOVECOT_STORAGE_INCLUDE)
 
 libsieve_tool_la_SOURCES = \

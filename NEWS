@@ -1,3 +1,5 @@
+<TO BE RELEASED>
+
 v0.1.5 18-4-2009  Stephan Bosch <stephan@rename-it.nl>
 	* Ported the implementation of the Sieve include extension to the latest 
 	  draft. This means that the import and export commands are replaced by a new 
@@ -120,3 +122,231 @@ v0.1.1 24-11-2008  Stephan Bosch <stephan@rename-it.nl>
 v0.1.0 23-10-2008  Stephan Bosch <stephan@rename-it.nl>
 
 	* Initial release
+
+ManageSieve NEWS history:
+
+Dovecot 1.2:
+  
+v0.11.4:
+	* Adjusted to changes in the Dovecot signal handler API.
+
+v0.11.3:
+	* Changed the SASL service name from "managesieve" into "sieve" as required
+	  in the protocol specification. Don't forget to adjust your configuration 
+	  if your authentication mechanism depends on this service name. 
+	* Adapted to changes in Dovecot, making this release dependent on Dovecot
+	  >= v1.2.beta1.
+	* Adapted to changes in the new Sieve implementation, making this release
+	  dependent on Dovecot Sieve >= v0.1.3 if used. The old cmusieve plugin is 
+	  still supported. 
+	+ Implemented making the SIEVE and NOTIFY capability fully dynamic, meaning 
+	  that the sieve_extensions setting that was introduced for the new Sieve 
+	  plugin properly affects the ManageSieve daemon as well.
+	+ Added support for the CHECKSCRIPT command. In terms of the supported 
+	  commands, the ManageSieve daemon now complies with protocol VERSION 1.0 as
+	  listed in the CAPABILITY response. 
+	- Fixed maximum permissions for uploaded scripts; was 0777. This
+	  was shielded however by the default umask (not documented to be 
+	  configurable), so the actual permissions would never have been 0777.
+	- Fixed a segfault bug in the authentication time-out. Bug report and trace
+	  provided by Wolfgang Friebel.
+	- Fixed handling of ~/ in use of mail-data for script location.
+	- Fixed small problems in the login proxy support.
+  
+v0.11.2:
+	* Adapted to changes in Dovecot, making this release dependent on Dovecot 
+	  >= v1.2.alpa4.	
+
+v0.11.1:
+	- Fixed security issue that gives virtual users the ability to read and
+	  modify each other's scripts if the directory structure of the sieve
+	  storage is known.
+	* Updated NOOP command to match new protocol specification
+	+ Improved error handling and implemented the new response codes: 
+	  ACTIVE, NONEXISTENT, ALREADYEXISTS and WARNINGS
+
+v0.11.0:
+	* Upgraded to Dovecot v1.2
+	* Added support for new ManageSieve extensions RENAME and NOOP
+	* Moved sieve settings to plugin {} section of config file. Now the settings
+	  `sieve` and `sieve_dir` in the plugin section are used for the Sieve plugin
+	  and the ManageSieve service, avoiding the posibility of accidental 
+	  differences in configuration.
+
+Dovecot 1.1:
+
+v0.10.3
+	* Removed erroneous inline declarations that caused compiler warnings. GCC 4.3
+	  turns out to fail entirely as reported by Joel Johnson. 
+	* Fixed auto-dectection of Sieve implementation during ./configure. It now 
+	  produces a proper error when the directory is invalid.
+
+v0.10.2
+	* Fixed bug that caused SASL mechanisms that require more than a single client
+	  response to fail. Reported by Steffen Kaiser and occured when he tried using 
+	  the (obsolete) LOGIN mechanism.
+	* Updated installation and configuration documentation to match the 
+	  information provided in the wiki
+
+v0.10.1
+	* Fixed bug introduced in v0.10.0: compiled scripts were also written to disk
+	  in the sieve/tmp directory and left there. This accumulates much .sievec 
+	  junk in that directory over time. 
+	* Fixed bug in tmp file generation for sieve-storage: errors other than EEXIST
+	  would cause the daemon to sleep() loop indefinitely. 
+	  
+	+ Improved log lines to be more recognizable as being generated from 
+	  managesieve.
+	+ Added short proxy configuration explanation to the README file
+	+ Added 'Known Issues' section to the README file
+	- Fixed assert bug in sieve-storage occuring when save is canceled.
+  
+v0.10.0
+	* Upgraded to Dovecot 1.1:
+		- The actual managesieve implementation is now a separate package. 
+		  The dovecot tree still needs to be patched though to make dovecot 
+		  recognize the new managesieve service.
+		- Incorporated changes to imap/imap-login into the equivalent 
+		  managesieve processes.
+		- Removed cmusieve implementation from managesieve sources. It is 
+		  now linked externally from the dovecot-sieve-1.1 package. 
+		- Restructured README.managesieve file into separate README, NEWS, 
+		  TODO, DESIGN and INSTALL files. 
+	* Added support for new libsieve implementation (to be released). This 
+	  package can be compiled with either the new or the old Sieve
+	  implementation (autodetected). If the new Sieve becomes stable, this 
+	  package will be merged with it to make a single package for Dovecot 
+	  Sieve support.
+   
+Dovecot 1.0:
+
+(development forked, v9 is still maintained for Dovecot v1.0)
+
+v9
+
++ Definitively fixed the segfault mentioned in V8. It proved to be 
+  very time-constrained and thus hard to reproduce. The error turned out
+  to be related to the input handling of the login daemon during 
+  authentication. 
++ Checked for changes in the imap daemon that weren't propagated to the 
+  managesieve implementation due to code duplication.
++ Fixed a bug in the autodetection of the sieve storage location.
++ Fixed bug in the sieve storage that failed to refresh the symlink if
+  the storage was moved. 
++ Improved error handing in the sieve-storage implementation in various 
+  places. 
++ Fixed the situation in which the active script link is located in the 
+  sieve storage. 
++ Added managesieve configuration to dovecot-example.conf and made the example
+  in this file more concise. 
+
+v8
+
++ Fixed a few incompatibilities with 1.0.7 version. For instance, the "Logged
+  in" message is now sent by the -login process and not by the managesieve 
+  daemon anymore. This caused a segfault every once in a while. 
++ Probably fixed the settings problem reported by Steffen Kaiser regarding 
+  login_dir. 'dovecot -n' now reports correct results, but testing will show
+  whether the whole problem is solved.
++ The managesieve daemon now accepts the sieve_storage and sieve configuration
+  settings, so it is now possible to explicitly configure the location of the
+  sieve storage and the active script respectively. The daemon still falls back
+  to using the mail_location (MAIL) settings if nothing else is specified. 
++ The cyrus timsieved does not use the + character in string literals and many
+  clients have adopted to this behaviour. The latest managesieve (08) advises to
+  accept a missing + from clients. The server should not send any + characters 
+  as well. This behavior is now implemented on the server. 
++ Cleaned up sieve-storage.c: split up the sieve_storage_create function in 
+  various sub-functions for obtaining the various paths and directories.
++ Forced manual intervention if rescueing a non-symlink file at the active script
+  path fails somehow. Previously, this presented the admin with a log message 
+  that it had just eaten the script, which is not very nice. 
++ Restructured the README.managesieve file and added some more explanation with
+  regard to the configuration of the daemon.
+
+v7 
+
+- Robin Breathe indicated that the regex capability was missing in the server's
+  SIEVE listing. It turns out I forgot to make arrangements for setting 
+  ENABLE_REGEX in the cmu libsieve sources, so the regex extension was not
+  compiled in. I copied the configure.in section regarding ENABLE_REGEX from 
+  dovecot-sieve-1.0.2 and that fixed the problem.
+
+v6
+
+- Corked the client output stream while producing the capability greeting and on 
+  other some other occasions as well. Some naive client implementations expect to 
+  receive this as a single tcp frame and it is a good practice to do so anyway.
+  Using this change the Thunderbird sieve extension (v0.1.1) seemed to work. However,
+  scripts larger than a tcp frame still caused failures. All these issues are fixed
+  in the latest version of the sieve add-on (currently v0.1.4). 
+- Cleaned up the new proxy source. My editor made the indentation a complete mess
+  in terms of TABs vs spaces. 
+- Added TRYLATER response codes to BYE and NO messages where appropriate.  
+- Recopied the libsieve library into this patch to incorporate any changes that were
+  made (only sieve-cmu.c still needs to be compared to the old cmu-sieve.c). This 
+  also solves the __attribute__((unused)) GCC dependencies. These were fixed long
+  ago by Timo....  the code duplication beast strikes again. 
+- Removed spurious return value from void function in 
+  src/lib-sieve/sieve-implementation.c as reported by Robin Breathe. GCC fails to
+  report these issues. The function involved is currently not used and serves only
+  as an example on how dovecot could support multiple sieve backends... 
+
+v5 
+
+- Applied patch by Uldis Pakuls to fix master_dump_settings bug
+- Added some compilation/installation info to this README
+- Moved README to source tree root as README.managesieve
+- Fixed minor error handling bug in sieve_storage.c with respect to a missing
+  root directory.
+- Now sieve capabilities are reported as they are specified by the implementing
+  library and not in forced upper case. The sieve RFC now explicitly states
+  that sieve capability identifiers are case-sensitive. This broke compatibility
+  with SquirrelMail/Avelsieve. 
+- Disabled ANONYMOUS login entirely until proper support is implemented. V4
+  claimed to do so as well, but in fact it only stopped announcing it.
+- Implemented managesieve-proxy. It is not so much a clean copy of imap-proxy,
+  since the managesieve greeting is much more complex and requires parsing. 
+  Configuration is identical to imap-proxy. This seems to be a little under-
+  documented however (http://wiki.dovecot.org/PasswordDatabase/ExtraFields).  
+
+v4
+
+- Added managesieve_implementation_string setting to the managesieve 
+  configuration. This can be used to customize the default "IMPLEMENTATION" 
+  capability response.
+- Denied ANONYMOUS login until proper support is implemented
+- Fixed problem with authenticate command regarding continued responses. In
+  V3 only initial response would work. Problem was caused by rc2 -> rc28 
+  upgrade. One of the clear reasons why code duplication is a very bad idea.
+- Fixed readlink bug as indicated by Timo: return value of readlink can also
+  be -1.
+- Fixed bug in the regular file rescue code, as introduced in the previous 
+  version. Used stat instead of lstat. This caused the symlink to be rescued 
+  subsequently in the next activation, thus still overwriting the initially 
+  rescued script.
+
+v3
+
+- Updated source to compile with dovecot 1.0.rc27 
+- Daemon now uses the same location for .dovecot.sieve as dovecot-lda
+  This is typically ~/.dovecot.sieve
+- If .dovecot.sieve is a regular file, it is now moved into the script storage as
+  dovecot.orig.sieve, preventing deletion of (important) active scripts 
+  upon upgrade.
+- Changed error handling to yield a BYE message when the managesieve 
+  daemon exits unexpectedly (upon login) before any commands are entered. 
+  Horde-ingo would wait indefinitely for a response. 
+
+v2
+
+- Fixed the bug (missing CRLF) in the authenticate command
+- Modified the sieve storage library making the interface much less crude.
+- The scripts put on the server using the putscript command are now 
+  checked before they are accepted.
+- The reported SIEVE capability is now directly read from the sieve 
+  implementation (in this case cmu), listing much more than "FILEINTO 
+  VACATION".
+- Imported instance of libsieve source into this patch for implementation
+  of script checking and capability listing. THIS NEEDS TO BE CHANGED! 
+- Fixed some minor bugs in the putscript command

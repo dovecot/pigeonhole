@@ -8,7 +8,7 @@ EXTRA_DIST = \
 
 if INSTALL_HEADERS
   pkginc_libdir=$(dovecot_pkgincludedir)/sieve
-  nodist_pkginc_lib_HEADERS = dsieve-config.h
+  nodist_pkginc_lib_HEADERS = pigeonhole-config.h
 endif
 
 if MAINTAINER_MODE

@@ -5,7 +5,7 @@ config.cache
 config.guess
 dummy-config.h
 dummy-config.h.in
-dsieve-config.h
+pigeonhole-config.h
 config.log
 config.status
 config.sub
@@ -56,3 +56,6 @@ src/sieve-tools/sieve-test
 src/sieve-tools/sieve-filter
 
 src/testsuite/testsuite
+
+src/managesieve/managesieve
+src/managesieve-login/managesieve-login
