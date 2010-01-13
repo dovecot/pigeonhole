@@ -659,7 +659,7 @@ void sieve_extension_capabilities_unregister
 	void *key = NULL, *value = NULL;
 
 	hictx = hash_table_iterate_init(ext_reg->capabilities_index);
-	while ( hash_table_iterate(hictx, key, value) ) {
+	while ( hash_table_iterate(hictx, &key, &value) ) {
 		struct sieve_capability_registration *reg = 
 			(struct sieve_capability_registration *) value;
 
