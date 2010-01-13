@@ -289,7 +289,7 @@ bool sieve_extension_reload(const struct sieve_extension *ext)
 	int ext_id = ext->id;
 	
 	/* Let's not just cast the 'const' away */
-	if ( ext_id > 0 && ext_id < (int) array_count(&ext_reg->extensions) ) {
+	if ( ext_id >= 0 && ext_id < (int) array_count(&ext_reg->extensions) ) {
 		mod_ext = array_idx_modifiable(&ext_reg->extensions, ext_id);
 
 		return _sieve_extension_load(mod_ext);
