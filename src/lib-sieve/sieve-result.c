@@ -24,6 +24,12 @@
 #include <stdio.h>
 
 /*
+ * Defaults
+ */
+
+#define DEFAULT_ACTION_LOG_FORMAT "msgid=%m: %$"
+
+/*
  * Types
  */
  
@@ -893,8 +899,13 @@ static void _sieve_result_prepare_execution(struct sieve_result *result)
 	if ( result->action_env.ehandler != NULL ) 
 		sieve_error_handler_unref(&result->action_env.ehandler);
 
-	result->action_env.ehandler = sieve_varexpand_ehandler_create
-		(result->ehandler, senv->action_log_format, tab);
+	if ( senv->action_log_format != NULL ) {
+		result->action_env.ehandler = sieve_varexpand_ehandler_create
+			(result->ehandler, senv->action_log_format, tab);
+	} else {
+		result->action_env.ehandler = sieve_varexpand_ehandler_create
+            (result->ehandler, DEFAULT_ACTION_LOG_FORMAT, tab);
+	}
 }
 
 static bool _sieve_result_implicit_keep

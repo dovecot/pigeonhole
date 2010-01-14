@@ -872,6 +872,9 @@ struct sieve_error_handler *sieve_prefix_ehandler_create
 	pool_t pool;
 	struct sieve_prefix_ehandler *ehandler;
 
+	if ( parent == NULL )
+		return NULL;
+
 	pool = pool_alloconly_create("sieve_prefix_error_handler", 256);	
 	ehandler = p_new(pool, struct sieve_prefix_ehandler, 1);
 	ehandler->parent = parent;
@@ -879,6 +882,8 @@ struct sieve_error_handler *sieve_prefix_ehandler_create
 	ehandler->prefix = p_strdup(pool, prefix);
 
 	sieve_error_handler_init(&ehandler->handler, pool, parent->max_errors);
+    ehandler->handler.log_info = parent->log_info;
+    ehandler->handler.log_debug = parent->log_debug;
 
 	ehandler->handler.verror = sieve_prefix_verror;
 	ehandler->handler.vwarning = sieve_prefix_vwarning;
@@ -908,12 +913,13 @@ static const char *_expand_message
 (struct sieve_varexpand_ehandler *ehandler,
 	const char *location, const char *fmt, va_list args) 
 {
-	struct var_expand_table *table = array_get_modifiable(&ehandler->table, NULL);
+	unsigned int count;
+	struct var_expand_table *table = array_get_modifiable(&ehandler->table, &count);
 	string_t *str = t_str_new(256);
 
 	/* Fill in substitution items */
-	table[0].value = location;
-	table[1].value = t_strdup_vprintf(fmt, args);
+	table[0].value = t_strdup_vprintf(fmt, args);
+	table[1].value = location;
 
 	/* Expand variables */
 	var_expand(str, ehandler->format, table);
@@ -982,6 +988,14 @@ struct sieve_error_handler *sieve_varexpand_ehandler_create
 	struct var_expand_table *entry;
 	int i;
 
+	if ( parent == NULL )
+		return NULL;
+
+	if ( format == NULL ) {
+		sieve_error_handler_ref(parent);
+		return parent;
+	}
+
 	pool = pool_alloconly_create("sieve_varexpand_error_handler", 256);	
 	ehandler = p_new(pool, struct sieve_varexpand_ehandler, 1);
 	ehandler->parent = parent;
@@ -989,6 +1003,8 @@ struct sieve_error_handler *sieve_varexpand_ehandler_create
 	p_array_init(&ehandler->table, pool, 10);
 
 	sieve_error_handler_init(&ehandler->handler, pool, parent->max_errors);
+	ehandler->handler.log_info = parent->log_info;
+	ehandler->handler.log_debug = parent->log_debug;
 
 	entry = array_append_space(&ehandler->table);
 	entry->key = '$';
