@@ -262,9 +262,9 @@ void sieve_error_handler_init_from_parent
 
 	sieve_error_handler_init(ehandler, pool, parent->max_errors);
 
-	ehandler->handler.log_master = parent->log_master;
-	ehandler->handler.log_info = parent->log_info;
-	ehandler->handler.log_debug = parent->log_debug;
+	ehandler->log_master = parent->log_master;
+	ehandler->log_info = parent->log_info;
+	ehandler->log_debug = parent->log_debug;
 }
 
 void sieve_error_handler_ref(struct sieve_error_handler *ehandler)
