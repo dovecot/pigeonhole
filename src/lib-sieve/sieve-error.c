@@ -69,7 +69,7 @@ void sieve_verror
 {
 	if ( ehandler == NULL ) return;
 	
-	if ( ehandler->log_master )
+	if ( ehandler->parent == NULL && ehandler->log_master )
 		sieve_vcopy_master(location, sieve_verror, fmt, args);
 
 	sieve_direct_verror(ehandler, location, fmt, args);
@@ -81,7 +81,7 @@ void sieve_vwarning
 {
 	if ( ehandler == NULL ) return;
 
-	if ( ehandler->log_master )
+	if ( ehandler->parent == NULL && ehandler->log_master )
 		sieve_vcopy_master(location, sieve_vwarning, fmt, args);
 
 	sieve_direct_vwarning(ehandler, location, fmt, args);
@@ -93,7 +93,7 @@ void sieve_vinfo
 {
 	if ( ehandler == NULL ) return;
 
-	if ( ehandler->log_master )
+	if ( ehandler->parent == NULL && ehandler->log_master )
 		sieve_vcopy_master(location, sieve_vinfo, fmt, args);
 
 	sieve_direct_vinfo(ehandler, location, fmt, args);
@@ -105,7 +105,7 @@ void sieve_vdebug
 {
 	if ( ehandler == NULL ) return;
 
-	if ( ehandler->log_master )
+	if ( ehandler->parent == NULL && ehandler->log_master )
 		sieve_vcopy_master(location, sieve_vdebug, fmt, args);
 
 	sieve_direct_vdebug(ehandler, location, fmt, args);
@@ -223,21 +223,30 @@ bool sieve_errors_more_allowed(struct sieve_error_handler *ehandler)
  */
 
 void sieve_error_handler_accept_infolog
-	(struct sieve_error_handler *ehandler, bool enable)
+(struct sieve_error_handler *ehandler, bool enable)
 {
-	ehandler->log_info = enable;	
+	while ( ehandler != NULL ) {
+		ehandler->log_info = enable;
+		ehandler = ehandler->parent;
+	}
 }
 
 void sieve_error_handler_accept_debuglog
-	(struct sieve_error_handler *ehandler, bool enable)
+(struct sieve_error_handler *ehandler, bool enable)
 {
-	ehandler->log_debug = enable;
+	while ( ehandler != NULL ) {
+		ehandler->log_debug = enable;
+		ehandler = ehandler->parent;
+	}
 }
 
 void sieve_error_handler_copy_masterlog
-	(struct sieve_error_handler *ehandler, bool enable)
+(struct sieve_error_handler *ehandler, bool enable)
 {
-	ehandler->log_master = enable;
+	while ( ehandler != NULL ) {
+		ehandler->log_master = enable;
+		ehandler = ehandler->parent;
+	}
 }
 
 /*
@@ -262,6 +271,9 @@ void sieve_error_handler_init_from_parent
 
 	sieve_error_handler_init(ehandler, pool, parent->max_errors);
 
+	ehandler->parent = parent;
+	sieve_error_handler_ref(parent);
+
 	ehandler->log_master = parent->log_master;
 	ehandler->log_info = parent->log_info;
 	ehandler->log_debug = parent->log_debug;
@@ -282,6 +294,9 @@ void sieve_error_handler_unref(struct sieve_error_handler **ehandler)
 
 	if (--(*ehandler)->refcount != 0)
         	return;
+
+	if ( (*ehandler)->parent != NULL ) 
+		sieve_error_handler_unref(&(*ehandler)->parent);
 
 	if ( (*ehandler)->free != NULL )
 		(*ehandler)->free(*ehandler);
@@ -376,7 +391,7 @@ struct sieve_error_handler *sieve_master_ehandler_create
 }
 
 struct sieve_error_handler _sieve_system_ehandler_object = {
-	NULL, 0, 0, 0, 0,
+	NULL, 0, NULL, 0, 0, 0,
 	FALSE,
 	TRUE,
 	TRUE,
@@ -829,13 +844,13 @@ static const char *_prefix_message
 static void sieve_prefix_verror
 (struct sieve_error_handler *_ehandler, const char *location,
 	const char *fmt, va_list args) 
-{
-	struct sieve_prefix_ehandler *ehandler =
-		(struct sieve_prefix_ehandler *) _ehandler;
-	
-	if ( ehandler->parent == NULL ) return;
+{	
+    struct sieve_prefix_ehandler *ehandler =
+        (struct sieve_prefix_ehandler *) _ehandler;
 
-	sieve_direct_error(ehandler->parent, ehandler->location, "%s",
+	if ( _ehandler->parent == NULL ) return;
+
+	sieve_error(_ehandler->parent, ehandler->location, "%s",
 		_prefix_message(ehandler, location, fmt, args)); 
 }
 
@@ -843,12 +858,12 @@ static void sieve_prefix_vwarning
 (struct sieve_error_handler *_ehandler, const char *location,
 	const char *fmt, va_list args) 
 {
-	struct sieve_prefix_ehandler *ehandler =
-		(struct sieve_prefix_ehandler *) _ehandler;
+    struct sieve_prefix_ehandler *ehandler =
+        (struct sieve_prefix_ehandler *) _ehandler;
 
-	if ( ehandler->parent == NULL ) return;
+	if ( _ehandler->parent == NULL ) return;
 
-	sieve_direct_warning(ehandler->parent, ehandler->location, "%s",
+	sieve_warning(_ehandler->parent, ehandler->location, "%s",
 		_prefix_message(ehandler, location, fmt, args)); 
 }
 
@@ -856,12 +871,12 @@ static void sieve_prefix_vinfo
 (struct sieve_error_handler *_ehandler, const char *location,
 	const char *fmt, va_list args) 
 {
-	struct sieve_prefix_ehandler *ehandler =
-		(struct sieve_prefix_ehandler *) _ehandler;
+    struct sieve_prefix_ehandler *ehandler =
+        (struct sieve_prefix_ehandler *) _ehandler;
 
-	if ( ehandler->parent == NULL ) return;
+	if ( _ehandler->parent == NULL ) return;
 
-	sieve_direct_info(ehandler->parent, ehandler->location, "%s",
+	sieve_direct_info(_ehandler->parent, ehandler->location, "%s",
 		_prefix_message(ehandler, location, fmt, args)); 
 }
 
@@ -869,12 +884,12 @@ static void sieve_prefix_vdebug
 (struct sieve_error_handler *_ehandler, const char *location,
 	const char *fmt, va_list args) 
 {
-	struct sieve_prefix_ehandler *ehandler =
-		(struct sieve_prefix_ehandler *) _ehandler;
+    struct sieve_prefix_ehandler *ehandler =
+        (struct sieve_prefix_ehandler *) _ehandler;
 
-	if ( ehandler->parent == NULL ) return;
+	if ( _ehandler->parent == NULL ) return;
 
-	sieve_direct_debug(ehandler->parent, ehandler->location, "%s",
+	sieve_direct_debug(_ehandler->parent, ehandler->location, "%s",
 		_prefix_message(ehandler, location, fmt, args)); 
 }
 
@@ -889,11 +904,10 @@ struct sieve_error_handler *sieve_prefix_ehandler_create
 
 	pool = pool_alloconly_create("sieve_prefix_error_handler", 256);	
 	ehandler = p_new(pool, struct sieve_prefix_ehandler, 1);
-	ehandler->parent = parent;
+	sieve_error_handler_init_from_parent(&ehandler->handler, pool, parent);
+
 	ehandler->location = p_strdup(pool, location);
 	ehandler->prefix = p_strdup(pool, prefix);
-
-	sieve_error_handler_init_from_parent(&ehandler->handler, pool, parent);
 
 	ehandler->handler.verror = sieve_prefix_verror;
 	ehandler->handler.vwarning = sieve_prefix_vwarning;
@@ -913,16 +927,16 @@ struct sieve_error_handler *sieve_prefix_ehandler_create
 struct sieve_varexpand_ehandler {
 	struct sieve_error_handler handler;
 
-	struct sieve_error_handler *parent;
-
 	const char *format;
 	ARRAY_DEFINE(table, struct var_expand_table);
 };
 
 static const char *_expand_message
-(struct sieve_varexpand_ehandler *ehandler,
+(struct sieve_error_handler *_ehandler,
 	const char *location, const char *fmt, va_list args) 
 {
+    struct sieve_varexpand_ehandler *ehandler =
+        (struct sieve_varexpand_ehandler *) _ehandler;
 	unsigned int count;
 	struct var_expand_table *table = array_get_modifiable(&ehandler->table, &count);
 	string_t *str = t_str_new(256);
@@ -938,51 +952,39 @@ static const char *_expand_message
 }
 
 static void sieve_varexpand_verror
-(struct sieve_error_handler *_ehandler, const char *location,
+(struct sieve_error_handler *ehandler, const char *location,
 	const char *fmt, va_list args) 
-{
-	struct sieve_varexpand_ehandler *ehandler =
-		(struct sieve_varexpand_ehandler *) _ehandler;
-
+{	
 	if ( ehandler->parent == NULL ) return;
-	
-	sieve_direct_error(ehandler->parent, location, "%s",
+
+	sieve_error(ehandler->parent, location, "%s",
 		_expand_message(ehandler, location, fmt, args)); 
 }
 
 static void sieve_varexpand_vwarning
-(struct sieve_error_handler *_ehandler, const char *location,
+(struct sieve_error_handler *ehandler, const char *location,
 	const char *fmt, va_list args) 
 {
-	struct sieve_varexpand_ehandler *ehandler =
-		(struct sieve_varexpand_ehandler *) _ehandler;
-
 	if ( ehandler->parent == NULL ) return;
 
-	sieve_direct_warning(ehandler->parent, location, "%s",
+	sieve_warning(ehandler->parent, location, "%s",
 		_expand_message(ehandler, location, fmt, args)); 
 }
 
 static void sieve_varexpand_vinfo
-(struct sieve_error_handler *_ehandler, const char *location,
+(struct sieve_error_handler *ehandler, const char *location,
 	const char *fmt, va_list args) 
 {
-	struct sieve_varexpand_ehandler *ehandler =
-		(struct sieve_varexpand_ehandler *) _ehandler;
-
 	if ( ehandler->parent == NULL ) return;
 
-	sieve_direct_info(ehandler->parent, location, "%s",
+	sieve_info(ehandler->parent, location, "%s",
 		_expand_message(ehandler, location, fmt, args)); 
 }
 
 static void sieve_varexpand_vdebug
-(struct sieve_error_handler *_ehandler, const char *location,
+(struct sieve_error_handler *ehandler, const char *location,
 	const char *fmt, va_list args) 
 {
-	struct sieve_varexpand_ehandler *ehandler =
-		(struct sieve_varexpand_ehandler *) _ehandler;
-
 	if ( ehandler->parent == NULL ) return;
 
 	sieve_direct_debug(ehandler->parent, location, "%s",
@@ -1008,11 +1010,10 @@ struct sieve_error_handler *sieve_varexpand_ehandler_create
 
 	pool = pool_alloconly_create("sieve_varexpand_error_handler", 256);	
 	ehandler = p_new(pool, struct sieve_varexpand_ehandler, 1);
-	ehandler->parent = parent;
+	sieve_error_handler_init_from_parent(&ehandler->handler, pool, parent);
+
 	ehandler->format = format;
 	p_array_init(&ehandler->table, pool, 10);
-
-	sieve_error_handler_init_from_parent(&ehandler->handler, pool, parent);
 
 	entry = array_append_space(&ehandler->table);
 	entry->key = '$';

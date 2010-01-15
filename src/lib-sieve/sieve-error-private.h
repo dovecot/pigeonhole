@@ -14,6 +14,8 @@ struct sieve_error_handler {
 	pool_t pool;
 	int refcount;
 
+	struct sieve_error_handler *parent;
+
 	unsigned int max_errors;
 
 	unsigned int errors;
@@ -52,7 +54,7 @@ static inline void sieve_direct_verror
 (struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, va_list args)
 {
-	if ( sieve_errors_more_allowed(ehandler) ) {
+	if ( ehandler->parent != NULL || sieve_errors_more_allowed(ehandler) ) {
 		if ( ehandler->verror != NULL )
 			ehandler->verror(ehandler, location, fmt, args);
 		
@@ -76,16 +78,20 @@ static inline void sieve_direct_vinfo
 (struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, va_list args)
 {
-	if ( ehandler->log_info && ehandler->vinfo != NULL )	
-		ehandler->vinfo(ehandler, location, fmt, args);
+	if ( ehandler->parent != NULL || ehandler->log_info ) {
+		if ( ehandler->vinfo != NULL )	
+			ehandler->vinfo(ehandler, location, fmt, args);
+	}
 }
 
 static inline void sieve_direct_vdebug
 (struct sieve_error_handler *ehandler, const char *location, 
 	const char *fmt, va_list args)
 {
-	if ( ehandler->log_info && ehandler->vdebug != NULL )	
-		ehandler->vdebug(ehandler, location, fmt, args);
+	if ( ehandler->parent != NULL || ehandler->log_info ) {
+		if ( ehandler->vdebug != NULL )	
+			ehandler->vdebug(ehandler, location, fmt, args);
+	}
 }
 
 static inline void sieve_direct_error
