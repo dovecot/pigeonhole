@@ -647,25 +647,28 @@ bool sieve_binary_save
 	fd = safe_mkstemp_hostpid(temp_path, save_mode, (uid_t)-1, (gid_t)-1);
 	if ( fd < 0 ) {
 		if ( errno == EACCES ) {
-			sieve_sys_error("failed to save binary: %s",
+			sieve_sys_error("failed to save binary temporary file: %s",
 				eacces_error_get_creating("open", str_c(temp_path)));
 		} else {
-			sieve_sys_error("failed to save binary: open(%s) failed: %m", 
-				str_c(temp_path));
+			sieve_sys_error("failed to save binary temporary file: "
+				"open(%s) failed: %m", str_c(temp_path));
 		}
 		return FALSE;
 	}
 
+	/* Save binary */
 	stream = o_stream_create_fd(fd, 0, FALSE);
 	result = _sieve_binary_save(sbin, stream);
 	o_stream_destroy(&stream);
- 
-	if (close(fd) < 0)
+
+	/* Close saved binary */ 
+	if ( close(fd) < 0 ) {
 		sieve_sys_error("failed to close saved binary temporary file: "
 			"close(fd=%s) failed: %m", str_c(temp_path));
+	}
 
 	/* Replace any original binary atomically */
-	if (result && (rename(str_c(temp_path), path) < 0)) {
+	if ( result && (rename(str_c(temp_path), path) < 0) ) {
 		if ( errno == EACCES ) {
 			sieve_sys_error("failed to replace existing binary: %s", 
 				eacces_error_get_creating("rename", path));			
