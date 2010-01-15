@@ -40,6 +40,10 @@ struct sieve_error_handler {
 void sieve_error_handler_init
 	(struct sieve_error_handler *ehandler, pool_t pool, unsigned int max_errors);
 
+void sieve_error_handler_init_from_parent
+	(struct sieve_error_handler *ehandler, pool_t pool, 
+		struct sieve_error_handler *parent);
+
 /*
  * Direct handler calls
  */

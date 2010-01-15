@@ -245,7 +245,7 @@ void sieve_error_handler_copy_masterlog
  */
 
 void sieve_error_handler_init
-	(struct sieve_error_handler *ehandler, pool_t pool, unsigned int max_errors)
+(struct sieve_error_handler *ehandler, pool_t pool, unsigned int max_errors)
 {
 	ehandler->pool = pool;
 	ehandler->refcount = 1;
@@ -253,6 +253,18 @@ void sieve_error_handler_init
 	
 	ehandler->errors = 0;
 	ehandler->warnings = 0;
+}
+
+void sieve_error_handler_init_from_parent
+(struct sieve_error_handler *ehandler, pool_t pool, struct sieve_error_handler *parent)
+{
+	i_assert( parent != NULL );
+
+	sieve_error_handler_init(ehandler, pool, parent->max_errors);
+
+	ehandler->handler.log_master = parent->log_master;
+	ehandler->handler.log_info = parent->log_info;
+	ehandler->handler.log_debug = parent->log_debug;
 }
 
 void sieve_error_handler_ref(struct sieve_error_handler *ehandler)
@@ -881,9 +893,7 @@ struct sieve_error_handler *sieve_prefix_ehandler_create
 	ehandler->location = p_strdup(pool, location);
 	ehandler->prefix = p_strdup(pool, prefix);
 
-	sieve_error_handler_init(&ehandler->handler, pool, parent->max_errors);
-    ehandler->handler.log_info = parent->log_info;
-    ehandler->handler.log_debug = parent->log_debug;
+	sieve_error_handler_init_from_parent(&ehandler->handler, pool, parent);
 
 	ehandler->handler.verror = sieve_prefix_verror;
 	ehandler->handler.vwarning = sieve_prefix_vwarning;
@@ -1002,9 +1012,7 @@ struct sieve_error_handler *sieve_varexpand_ehandler_create
 	ehandler->format = format;
 	p_array_init(&ehandler->table, pool, 10);
 
-	sieve_error_handler_init(&ehandler->handler, pool, parent->max_errors);
-	ehandler->handler.log_info = parent->log_info;
-	ehandler->handler.log_debug = parent->log_debug;
+	sieve_error_handler_init_from_parent(&ehandler->handler, pool, parent);
 
 	entry = array_append_space(&ehandler->table);
 	entry->key = '$';
