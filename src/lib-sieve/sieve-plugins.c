@@ -142,7 +142,7 @@ void sieve_plugins_load(struct sieve_instance *svinst, const char *path, const c
 			struct sieve_plugin *plugin_last;
 
 			plugin_last = svinst->plugins;
-			while ( plugin_last != NULL )
+			while ( plugin_last->next != NULL )
 				plugin_last = plugin_last->next;
 
 			plugin_last->next = plugin;
