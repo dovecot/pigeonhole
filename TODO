@@ -16,8 +16,10 @@ Next (in order of descending priority/precedence):
 
 * Update include extension to latest draft:
 	- Implement required ManageSieve behavior
-* Implement mechanism for implicitly including an account's aliases in the
-  vacation command's :addresses list.
+* Vacation extension improvements:
+    - Implement configurable sender exclusion list.
+    - Implement mechanism for implicitly including an account's aliases in the
+      vacation command's :addresses list.
 * Improve error handling. Now it is not very consistent, especially for the 
   Sieve command line tools. 
 * Detect permission errors when writing global script binaries and advise the 
