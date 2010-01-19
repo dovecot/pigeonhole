@@ -86,6 +86,7 @@ test_cases = \
 	tests/extensions/relational/basic.svtest \
 	tests/extensions/relational/rfc.svtest \
 	tests/extensions/relational/errors.svtest \
+	tests/extensions/relational/comparators.svtest \
 	tests/extensions/subaddress/basic.svtest \
 	tests/extensions/subaddress/rfc.svtest \
 	tests/extensions/subaddress/config.svtest \

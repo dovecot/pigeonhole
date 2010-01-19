@@ -106,7 +106,7 @@ static int cmp_i_ascii_numeric_compare
 	if ( !i_isdigit(*vp) ) {
 		if ( i_isdigit(*kp) ) {
 			/* Value is greater */
-			return -1;
+			return 1;
 		}
 	} else {
 		if ( !i_isdigit(*kp) ) {
