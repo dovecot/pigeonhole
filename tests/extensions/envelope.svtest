@@ -67,10 +67,10 @@ test "Envelope - from empty" {
 test "Envelope - invalid paths" {
     /* Return_path: "hutsefluts" */
 
-	test_set "envelope.from" "hutsefluts";
-	test_set "envelope.to" "knurft";
+	test_set "envelope.from" "hutsefluts@";
+	test_set "envelope.to" "knurft@";
 
-	if not envelope :all :is "from" "hutsefluts" {
+	if not envelope :all :is "from" "hutsefluts@" {
 		test_fail ":all address part mangled syntactically incorrect reverse path";
 	}
 
@@ -82,7 +82,7 @@ test "Envelope - invalid paths" {
         test_fail ":domain address part matched syntactically incorrect reverse path";
     }
 
-	if not envelope :all :is "to" "knurft" {
+	if not envelope :all :is "to" "knurft@" {
 		test_fail ":all address part mangled syntactically incorrect forward path";
 	}
 
@@ -215,4 +215,31 @@ test "Envelope - source route errors" {
 	if not envelope :all :is "to" "<@cola.rename-it.nl,@mx.utwente.nl,stephan@rename-it.nl>" {
 		test_fail ":all address part mangled syntactically incorrect path";
 	}
+}
+
+test "Envelope - local part only" {
+	test_set "envelope.to" "<MAILER-DAEMON>";
+	if not envelope :is "to" "MAILER-DAEMON" {
+		test_fail "failed to parse local_part only path";
+	}
+
+	test_set "envelope.to" "MAILER-DAEMON@";
+	if envelope :is "to" "MAILER-DAEMON" {
+		test_fail "parsing syntactically incorrect path with missing domain";
+	}
+
+	test_set "envelope.to" "<MAILER-DAEMON>";
+	if not envelope :is "to" "MAILER-DAEMON" {
+        test_fail "failed to parse local_part only path with angle brackets";
+    }
+
+	test_set "envelope.to" "<MAILER-DAEMON  >";
+	if not envelope :is "to" "MAILER-DAEMON" {
+        test_fail "failed to parse local_part only path with angle brackets and whitespace";
+    }
+
+	test_set "envelope.to" "   MAILER-DAEMON   ";
+	if not envelope :is "to" "MAILER-DAEMON" {
+        test_fail "failed to parse local_part only path with whitespace";
+    }
 }

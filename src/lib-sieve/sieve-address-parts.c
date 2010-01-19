@@ -371,6 +371,14 @@ static const char *addrp_all_extract_from
 	const char *local_part = address->local_part;
 	const char *domain = address->domain;
 
+	if ( domain == NULL ) {
+		return local_part;
+	}
+
+	if ( local_part == NULL ) {
+		return NULL;
+	}
+
 	return t_strconcat(local_part, "@", domain, NULL);
 }
 
