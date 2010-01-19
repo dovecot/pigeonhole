@@ -142,7 +142,7 @@ static void sieve_message_envelope_parse(struct sieve_message_context *msgctx)
 		(msgctx->pool, msgctx->msgdata->to_address);	
 
 	if ( msgctx->envelope_recipient == NULL )
-		sieve_sys_error("envelope recipient address '%s' is unparseable", msgctx->msgdata->to_address); 
+		sieve_sys_error("envelope recipient address '%s' is unparsable", msgctx->msgdata->to_address); 
 	else if ( msgctx->envelope_recipient->local_part == NULL )
 		sieve_sys_error("envelope recipient address '%s' is a null path", msgctx->msgdata->to_address); 
 
@@ -150,7 +150,7 @@ static void sieve_message_envelope_parse(struct sieve_message_context *msgctx)
 		(msgctx->pool, msgctx->msgdata->return_path);	
 
 	if ( msgctx->envelope_sender == NULL )
-		sieve_sys_error("envelope sender address '%s' is unparseable", msgctx->msgdata->return_path); 
+		sieve_sys_error("envelope sender address '%s' is unparsable", msgctx->msgdata->return_path); 
 
 	msgctx->envelope_parsed = TRUE;
 }
