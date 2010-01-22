@@ -2,26 +2,26 @@
 .SH NAME
 sieved \- Sieve script binary dump tool for the Dovecot secure IMAP server
 .SH SYNOPSIS
-sieved [\fB-x\fR "\fIextension extension ...\fR"] \fIsieve-binary\fR [\fIout-file\fR]
+sieved [\fB\-x\fR "\fIextension extension ...\fR"] \fIsieve\-binary\fR [\fIout\-file\fR]
 .br
 .SH DESCRIPTION
 .PP
 The \fBsieved\fP command is part of the Pigeonhole Sieve implementation for the Dovecot secure 
 IMAP server. Sieve (RFC 5228) is a simple and highly extensible language for filtering 
-e-mail messages. It can be implemented for any type of mail access protocol, mail 
+e\-mail messages. It can be implemented for any type of mail access protocol, mail 
 architecture and operating system. The language cannot execute external programs and in 
 its basic form it does not provide the means to cause infinite loops, making it suitable 
 for running securely on mail servers where mail users have no permission run arbitrary programs.
 .PP
 Using the \fBsieved\fP command, Sieve binaries, which are produced for instance by
-\fBsievec\fP(1), can be transformed into a human-readable textual representation. This can 
+\fBsievec\fP(1), can be transformed into a human\-readable textual representation. This can 
 provide valuable insight in how the Sieve script is executed. This is also particularly useful 
 to view corrupt binaries that can result from bugs in the Sieve implementation. This tool is 
 intended mainly for development purposes, so normally system administrators and users will not 
 need to use this tool.
 .PP
-The \fIsieve-binary\fR argument specifies the Sieve binary file that needs to be dumped. The
-optional \fIout-file\fR argument specifies where the output must be written. If omitted, the
+The \fIsieve\-binary\fR argument specifies the Sieve binary file that needs to be dumped. The
+optional \fIout\-file\fR argument specifies where the output must be written. If omitted, the
 output is written to \fBstdout\fR.
 .PP
 The format of the output is not explained here in detail, but it should be relatively easy
@@ -34,24 +34,24 @@ new operations and use additional blocks. Therefore, the output of \fBsieved\fP 
 on the language extensions used when compiling the binary. 
 .SH OPTIONS
 .TP
-\fB-x\fP "\fIextension extension ...\fP"
-Set the available extensions. The parameter is a space-separated list of the active extensions. By
-prepending the extension identifiers with \fB+\fP or \fB-\fP, extensions can be included or excluded
-relative to the default set of extensions. If no extensions have a \fB+\fP or \fB-\fP prefix, only 
+\fB\-x\fP "\fIextension extension ...\fP"
+Set the available extensions. The parameter is a space\-separated list of the active extensions. By
+prepending the extension identifiers with \fB+\fP or \fB\-\fP, extensions can be included or excluded
+relative to the default set of extensions. If no extensions have a \fB+\fP or \fB\-\fP prefix, only 
 those extensions that are explicitly listed will be enabled. Unknown extensions are ignored and a 
 warning is produced. By default, all supported extensions are available, except for deprecated
 extensions or those that are still under development.
 
-For example \fB-x\fP "+imapflags -enotify" will enable the deprecated imapflags extension along with all
+For example \fB\-x\fP "+imapflags \-enotify" will enable the deprecated imapflags extension along with all
 extensions that are available by default, except for the enotify extension.
 .SH AUTHOR
 .PP
-Pigeonhole for Dovecot was written by Stephan Bosch <stephan@rename-it.nl>.
+Pigeonhole for Dovecot was written by Stephan Bosch <stephan@rename\-it.nl>.
 .PP
 Dovecot was written by Timo Sirainen <tss@iki.fi>.
 .SH "SEE ALSO"
 .BR sievec (1),
-.BR sieve-test (1)
+.BR sieve\-test (1)
 .PP
 Dovecot website: http://www.dovecot.org
 .PP
