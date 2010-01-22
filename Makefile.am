@@ -39,6 +39,7 @@ test_cases = \
 	tests/compile/compile.svtest \
 	tests/compile/errors.svtest \
 	tests/compile/warnings.svtest \
+	tests/compile/recover.svtest \
 	tests/execute/errors.svtest \
 	tests/execute/actions.svtest \
 	tests/execute/smtp.svtest \

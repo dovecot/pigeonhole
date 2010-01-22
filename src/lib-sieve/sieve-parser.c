@@ -157,9 +157,13 @@ static int sieve_parse_arguments
 	                       necessarily error-free state */
 
 	/* Parse arguments */
-	while ( arg_present && result > 0 && 
-		(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
+	while ( arg_present && result > 0 ) {
 		struct sieve_ast_argument *arg;
+
+		if ( !parser->valid && !sieve_errors_more_allowed(parser->ehandler) ) {
+			result = 0;
+			break;
+		}
 		
 		switch ( sieve_lexer_current_token(lexer) ) {
 		
@@ -184,10 +188,14 @@ static int sieve_parse_arguments
 				
 				sieve_lexer_skip_token(lexer);
 				 
-				while ( !add_failed && sieve_lexer_current_token(lexer) == STT_COMMA &&
-					(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
-			
+				while ( !add_failed && sieve_lexer_current_token(lexer) == STT_COMMA ) {
 					sieve_lexer_skip_token(lexer);
+
+					/* Check parser status */
+					if ( !parser->valid && !sieve_errors_more_allowed(parser->ehandler) ) {
+						result = sieve_parser_recover(parser, STT_RSQUARE);
+						break;						
+					}
 				
 					if ( sieve_lexer_current_token(lexer) == STT_STRING ) {
 						/* Add the string to the list */
@@ -339,10 +347,15 @@ static int sieve_parse_arguments
 			if ( (result=sieve_parse_arguments(parser, test, depth+1)) > 0 ) {
 			
 				/* More tests ? */
-				while ( sieve_lexer_current_token(lexer) == STT_COMMA && 
-					(parser->valid && sieve_errors_more_allowed(parser->ehandler)) ) {
+				while ( sieve_lexer_current_token(lexer) == STT_COMMA ) { 
 					sieve_lexer_skip_token(lexer);
-					
+
+					/* Check parser status */
+					if ( !parser->valid && !sieve_errors_more_allowed(parser->ehandler) ) {
+						result = sieve_parser_recover(parser, STT_RBRACKET);
+						break;
+					}
+
 					/* Test starts with identifier */
 					if ( sieve_lexer_current_token(lexer) == STT_IDENTIFIER ) {
 						test = sieve_ast_test_create
@@ -355,7 +368,6 @@ static int sieve_parse_arguments
 						/* Parse test arguments, which may include more tests (recurse) */
 						if ( (result=sieve_parse_arguments(parser, test, depth+1)) <= 0 ) {
 							if ( result < 0 ) return result;
-
 							result = sieve_parser_recover(parser, STT_RBRACKET);
 							break;
 						}
@@ -430,12 +442,20 @@ static int sieve_parse_commands
 	int result = TRUE;
 
 	while ( result > 0 && 
-		sieve_lexer_current_token(lexer) == STT_IDENTIFIER && 
-		(parser->valid || sieve_errors_more_allowed(parser->ehandler)) ) {
-		struct sieve_ast_node *command = 
-			sieve_ast_command_create
-				(block, sieve_lexer_token_ident(lexer), 
-					sieve_lexer_current_line(parser->lexer));
+		sieve_lexer_current_token(lexer) == STT_IDENTIFIER ) {
+		struct sieve_ast_node *command;
+
+		/* Check parser status */
+		if ( !parser->valid && !sieve_errors_more_allowed(parser->ehandler) ) {
+			result = sieve_parser_recover(parser, STT_SEMICOLON);
+			break;
+		}
+
+		/* Create command node */
+		command = sieve_ast_command_create
+			(block, sieve_lexer_token_ident(lexer), 
+				sieve_lexer_current_line(parser->lexer));
+		sieve_lexer_skip_token(lexer);
 	
 		if ( command == NULL ) {
 			sieve_parser_error(parser, 
@@ -444,11 +464,6 @@ static int sieve_parse_commands
 			return -1;
 		}
 
-		/* Defined state */
-		result = TRUE;		
-		
-		sieve_lexer_skip_token(lexer);
-		
 		result = sieve_parse_arguments(parser, command, 1);
 
 		/* Check whether the command is properly terminated 
@@ -471,7 +486,9 @@ static int sieve_parse_commands
 		}
 
 		/* Don't bother to continue if we are not in a defined state */
-		if ( result <= 0 ) return result;
+		if ( result <= 0 ) {
+			return result;
+		}
 			
 		switch ( sieve_lexer_current_token(lexer) ) {
 		
@@ -510,7 +527,7 @@ static int sieve_parse_commands
 			} else {
 				if ( result < 0 ) return result;
 
-				if ( (result=sieve_parser_recover(parser, STT_RCURLY)) == 0 ) 
+				if ( (result=sieve_parser_recover(parser, STT_RCURLY)) > 0 ) 
 					sieve_lexer_skip_token(lexer);
 			}
 
@@ -643,8 +660,9 @@ static int sieve_parser_recover
 	
 	/* Special case: COMMAND */
 	if (end_token == STT_SEMICOLON && 
-		sieve_lexer_current_token(lexer) == STT_LCURLY)
+		sieve_lexer_current_token(lexer) == STT_LCURLY) {
 		return TRUE;
+	}
 	
 	/* End not found before eof or end of surrounding grammatical structure 
 	 */
