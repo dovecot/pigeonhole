@@ -410,7 +410,7 @@ static int cmd_notify_operation_execute
 	void *method_context;
 	pool_t pool;
 	int opt_code = 1, result = SIEVE_EXEC_OK;
-	sieve_number_t importance = 1;
+	sieve_number_t importance = 2;
 	struct sieve_coded_stringlist *options = NULL;
 	const struct sieve_enotify_method *method;
 	string_t *method_uri, *message = NULL, *from = NULL; 

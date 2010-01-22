@@ -33,6 +33,13 @@ test "Simple" {
 	if not exists "X-Sieve" {
 		test_fail "x-sieve header missing from outgoing message";
 	}
+
+	if anyof (
+		not header :matches "x-priority" "3 *",
+		not header "importance" "normal") {
+
+		test_fail "default priority is not normal";
+	}
 }
 
 /*
