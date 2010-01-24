@@ -3,6 +3,10 @@ require "variables";
 require "relational";
 require "comparator-i;ascii-numeric";
 
+/*
+ * Comparator i;octet
+ */
+
 test "i;octet" {
 	if not string :comparator "i;octet" :value "eq" "" "" {
 		test_fail "not '' eq ''";
@@ -56,6 +60,10 @@ test "i;octet" {
         test_fail "not 'Z' lt 'b'";
     }
 }
+
+/*
+ * Comparator i;ascii-casemap
+ */
 
 test "i;ascii-casemap" {
 	if not string :comparator "i;ascii-casemap" :value "eq" "" "" {
@@ -111,7 +119,13 @@ test "i;ascii-casemap" {
     }
 }
 
+/*
+ * Comparator i;ascii-numeric
+ */
+
 test "i;ascii-numeric" {
+	/* Non-digit characters; equality */
+
 	if not string :comparator "i;ascii-numeric" :value "eq" "" "" {
 		test_fail "not '' eq ''";
 	}
@@ -132,9 +146,83 @@ test "i;ascii-numeric" {
 		test_fail "not 'b' eq 'a'";
 	}
 
+	if string :comparator "i;ascii-numeric" :value "eq" "a" "0" {
+		test_fail "'a' eq '0'";
+	}
+
+	if string :comparator "i;ascii-numeric" :value "eq" "0" "a" {
+		test_fail "'0' eq 'a'";
+	}
+
+	if not string :comparator "i;ascii-numeric" :value "ne" "a" "0" {
+		test_fail "not 'a' ne '0'";
+	}
+
+	if not string :comparator "i;ascii-numeric" :value "ne" "0" "a" {
+		test_fail "not '0' ne 'a'";
+	}
+
+	/* Non-digit characters; comparison */
+
+	if string :comparator "i;ascii-numeric" :value "lt" "a" "0" {
+		test_fail "'a' lt '0'";
+	}
+
+	if not string :comparator "i;ascii-numeric" :value "lt" "0" "a" {
+		test_fail "not '0' lt 'a'";
+	}
+
+	if not string :comparator "i;ascii-numeric" :value "gt" "a" "0" {
+		test_fail "not 'a' gt '0'";
+	}
+
+	if string :comparator "i;ascii-numeric" :value "gt" "0" "a" {
+		test_fail "'0' gt 'a'";
+	}
+
+	if not string :comparator "i;ascii-numeric" :value "ge" "a" "0" {
+		test_fail "not 'a' ge '0'";
+	}
+
+	if string :comparator "i;ascii-numeric" :value "ge" "0" "a" {
+		test_fail "'0' ge 'a'";
+	}
+
+	if string :comparator "i;ascii-numeric" :value "le" "a" "0" {
+		test_fail "'a' le '0'";
+	}
+
+	if not string :comparator "i;ascii-numeric" :value "le" "0" "a" {
+		test_fail "not '0' le 'a'";
+	}
+
 	if not string :comparator "i;ascii-numeric" :value "eq" "0" "0" {
 		test_fail "not '0' eq '0'";
 	}
+	
+	/* Digit characters; basic comparison */
+
+	if not string :comparator "i;ascii-numeric" :value "eq" "2" "2" {
+		test_fail "not '2' eq '2'";
+	}
+
+	if not string :comparator "i;ascii-numeric" :value "gt" "2" "1" {
+		test_fail "not '2' gt '1'";
+	}	
+
+	if not string :comparator "i;ascii-numeric" :value "lt" "1" "2" {
+		test_fail "not '1' lt '2'";
+	}
+
+	if not string :comparator "i;ascii-numeric" :value "lt" "65535" "65635" {
+		test_fail "not '65535' lt '65635'";
+	}
+
+	if not string :comparator "i;ascii-numeric" :value "gt" "65635" "65535" {
+		test_fail "not '65635' gt '65535'";
+	}	
+
+	/* Digit characters; leading zeros */
 
 	if not string :comparator "i;ascii-numeric" :value "eq" "0" "000" {
 		test_fail "not '0' eq '000'";
@@ -144,24 +232,12 @@ test "i;ascii-numeric" {
 		test_fail "not '0' eq '000'";
 	}	
 
-	if not string :comparator "i;ascii-numeric" :value "eq" "2" "2" {
-		test_fail "not '2' eq '2'";
-	}	
-
 	if not string :comparator "i;ascii-numeric" :value "eq" "02" "0002" {
 		test_fail "not '02' eq '0002'";
 	}	
 
 	if not string :comparator "i;ascii-numeric" :value "eq" "0002" "02" {
 		test_fail "not '0002' eq '02'";
-	}	
-
-	if not string :comparator "i;ascii-numeric" :value "gt" "2" "1" {
-		test_fail "not '2' gt '1'";
-	}	
-
-	if not string :comparator "i;ascii-numeric" :value "lt" "1" "2" {
-		test_fail "not '1' lt '2'";
 	}	
 
 	if not string :comparator "i;ascii-numeric" :value "gt" "2" "001" {
@@ -178,12 +254,5 @@ test "i;ascii-numeric" {
 
 	if not string :comparator "i;ascii-numeric" :value "lt" "1" "002" {
 		test_fail "not '1' lt '002'";
-	}	
-
-	if not string :comparator "i;ascii-numeric" :value "lt" "65535" "65635" {
-		test_fail "not '65535' lt '65635'";
-	}	
-	if not string :comparator "i;ascii-numeric" :value "gt" "65635" "65535" {
-		test_fail "not '65635' gt '65535'";
 	}	
 }
