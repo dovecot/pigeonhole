@@ -102,3 +102,30 @@ bool sieve_setting_get_size_value
 	
 	return TRUE;
 }
+
+bool sieve_setting_get_bool_value
+(struct sieve_instance *svinst, const char *setting,
+	bool *value_r)
+{
+	const char *str_value;
+	char *endp;
+
+	str_value = sieve_setting_get(svinst, setting);
+
+	if ( str_value == NULL || *str_value == '\0' )
+		return FALSE;
+
+ 	if ( strcasecmp(str_value, "yes" ) == 0) {
+        *value_r = TRUE;
+		return TRUE;
+	}
+
+ 	if ( strcasecmp(str_value, "no" ) == 0) {
+        *value_r = FALSE;
+		return TRUE;
+	}
+
+	sieve_sys_warning("invalid boolean value for setting '%s': '%s'",
+		setting, str_value);
+	return FALSE;
+}

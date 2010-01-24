@@ -22,16 +22,17 @@ static inline const char *sieve_setting_get
 }
 
 bool sieve_setting_get_uint_value
-(struct sieve_instance *svinst, const char *setting,
-	unsigned long long int *value_r);
-
+	(struct sieve_instance *svinst, const char *setting,
+		unsigned long long int *value_r);
 bool sieve_setting_get_int_value
-(struct sieve_instance *svinst, const char *setting,
-	long long int *value_r);
-
+	(struct sieve_instance *svinst, const char *setting,
+		long long int *value_r);
 bool sieve_setting_get_size_value
-(struct sieve_instance *svinst, const char *setting,
-	size_t *value_r);
+	(struct sieve_instance *svinst, const char *setting,
+		size_t *value_r);
+bool sieve_setting_get_bool_value
+	(struct sieve_instance *svinst, const char *setting,
+		bool *value_r);
 
 /*
  * Home directory
