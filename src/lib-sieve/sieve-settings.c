@@ -108,7 +108,6 @@ bool sieve_setting_get_bool_value
 	bool *value_r)
 {
 	const char *str_value;
-	char *endp;
 
 	str_value = sieve_setting_get(svinst, setting);
 
