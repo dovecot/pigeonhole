@@ -242,12 +242,14 @@ Test!
 ;
 
 test_config :set "sieve_spamtest_status_header" "X-Spam-Verdict";
-test_config :set "sieve_spamtest_max_value" "Spam";
-test_config :set "sieve_spamtest_status_type" "yesno";
+test_config :set "sieve_spamtest_status_type" "text";
+test_config :set "sieve_spamtest_text_value1" "Not Spam";
+test_config :set "sieve_spamtest_text_value10" "Spam";
 test_config :unset "sieve_spamtest_max_header";
+test_config :unset "sieve_spamtest_max_value";
 test_config :reload "spamtest";
 
-test "Yes/No: Not Spam" {
+test "Text: Not Spam" {
 	if spamtest :is "0" {
 		test_fail "spamtest not configured or test failed";
 	}
@@ -261,7 +263,7 @@ test "Yes/No: Not Spam" {
 test_config :set "sieve_spamtest_status_header" "X-Spam-Verdict1";
 test_config :reload "spamtest";
 
-test "Yes/No: Spam" {
+test "Text: Spam" {
 	if spamtest :is "0" {
 		test_fail "spamtest not configured or test failed";
 	}

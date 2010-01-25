@@ -28,7 +28,9 @@ endif
 
 if BUILD_UNFINISHED
 test_unfinished = \
-	tests/extensions/spamvirustest/spamtest.svtest
+	tests/extensions/spamvirustest/spamtest.svtest \
+	tests/extensions/spamvirustest/virustest.svtest \
+	tests/extensions/spamvirustest/spamtestplus.svtest
 else
 test_unfinished = 
 endif

@@ -37,10 +37,13 @@
  * sieve_spamtest_max_header = \
  *   X-Spam-Score: score=-?[[:digit:]]+\.[[:digit:]] required=([[:digit:]]+\.[[:digit:]]) 
  *
- * # 5: X-Virus-Scan: Clean
+ * # 5: X-Virus-Scan: Found to be clean.
  *
- * sieve_virustest_header = X-Virus-Scan
- * sieve_virustest_values = Clean:Cleaned:Cured:Possible:Detected
+ * sieve_virustest_status_header = \
+ *   X-Virus-Scan: Found to be (.+)\.
+ * sieve_virustest_status_type = text
+ * sieve_virustest_text_value1 = clean
+ * sieve_virustest_text_value5 = infected
  */
 
 /* TODO: 
