@@ -12,12 +12,12 @@
  * Sieve instance
  */
 
-struct sieve_instance *sieve_instance;
+extern struct sieve_instance *sieve_instance;
 
 const char *sieve_tool_get_setting(void *context, const char *identifier);
 const char *sieve_tool_get_homedir(void *context);
 
-const struct sieve_environment sieve_tool_env;
+extern const struct sieve_environment sieve_tool_env;
 
 /*
  * Initialization

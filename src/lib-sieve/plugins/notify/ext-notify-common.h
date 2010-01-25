@@ -41,7 +41,7 @@ enum ext_notify_opcode {
  * Actions 
  */
 
-const struct sieve_action_def act_notify_old;
+extern const struct sieve_action_def act_notify_old;
 
 struct ext_notify_recipient {
 	const char *full;
