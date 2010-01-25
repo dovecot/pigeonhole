@@ -601,7 +601,7 @@ static bool act_notify_commit
 		nenv.msgctx = aenv->msgctx;
 
 		nenv.ehandler = sieve_prefix_ehandler_create
-			(aenv->ehandler, action->location, "notify action");
+			(aenv->ehandler, NULL, "notify action");
 
 		result = method->def->action_execute(&nenv, act);
 
