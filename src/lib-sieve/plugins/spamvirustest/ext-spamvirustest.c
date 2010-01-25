@@ -6,7 +6,7 @@
  *
  * Authors: Stephan Bosch
  * Specification: RFC 5235
- * Implementation: unfinished
+ * Implementation: full
  * Status: experimental
  *
  */
@@ -44,12 +44,6 @@
  * sieve_virustest_status_type = text
  * sieve_virustest_text_value1 = clean
  * sieve_virustest_text_value5 = infected
- */
-
-/* TODO: 
- *   - Spamtest/Spamtestplus configuration needs testing
- *   - Virustest configuration is currently not present
- *   - Testsuite tests
  */
  
 #include "lib.h"

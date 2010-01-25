@@ -94,6 +94,9 @@ extern const struct sieve_extension_def enotify_extension;
 extern const struct sieve_extension_def environment_extension;
 extern const struct sieve_extension_def mailbox_extension;
 extern const struct sieve_extension_def date_extension;
+extern const struct sieve_extension_def spamtest_extension;
+extern const struct sieve_extension_def spamtestplus_extension;
+extern const struct sieve_extension_def virustest_extension;
 
 /*
  * List of native extensions
@@ -113,7 +116,8 @@ const struct sieve_extension_def *sieve_core_extensions[] = {
 	&relational_extension, &regex_extension, &imap4flags_extension,
 	&copy_extension, &include_extension, &body_extension,
 	&variables_extension, &enotify_extension, &environment_extension,
-	&mailbox_extension, &date_extension
+	&mailbox_extension, &date_extension, &spamtest_extension, 
+	&spamtestplus_extension, &virustest_extension
 };
 
 const unsigned int sieve_core_extensions_count =
@@ -141,15 +145,9 @@ const unsigned int sieve_deprecated_extensions_count =
 #ifdef HAVE_SIEVE_UNFINISHED
 
 extern const struct sieve_extension_def ereject_extension;
-extern const struct sieve_extension_def spamtest_extension;
-extern const struct sieve_extension_def spamtestplus_extension;
-extern const struct sieve_extension_def virustest_extension;
 
 const struct sieve_extension_def *sieve_unfinished_extensions[] = {
-	&ereject_extension,
-	&spamtest_extension,
-	&spamtestplus_extension,
-	&virustest_extension
+	&ereject_extension
 };
 
 const unsigned int sieve_unfinished_extensions_count =

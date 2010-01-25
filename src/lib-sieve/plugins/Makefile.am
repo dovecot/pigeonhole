@@ -1,5 +1,5 @@
 if BUILD_UNFINISHED
-UNFINISHED = spamvirustest
+UNFINISHED = 
 endif
 
 SUBDIRS = \
@@ -18,6 +18,7 @@ SUBDIRS = \
 	environment \
 	mailbox \
 	date \
+	spamvirustest \
 	$(UNFINISHED)
 
 

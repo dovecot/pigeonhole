@@ -40,8 +40,7 @@ comparators = \
 	cmp-i-ascii-casemap.c
 
 if BUILD_UNFINISHED
-unfinished_plugins = \
-	./plugins/spamvirustest/libsieve_ext_spamvirustest.la
+unfinished_plugins =
 endif
 
 # These are not actual plugins just yet...
@@ -61,6 +60,7 @@ plugins = \
 	./plugins/environment/libsieve_ext_environment.la \
 	./plugins/mailbox/libsieve_ext_mailbox.la \
 	./plugins/date/libsieve_ext_date.la \
+	./plugins/spamvirustest/libsieve_ext_spamvirustest.la \
 	$(unfinished_plugins)
 
 libdovecot_sieve_la_DEPENDENCIES = $(plugins)
