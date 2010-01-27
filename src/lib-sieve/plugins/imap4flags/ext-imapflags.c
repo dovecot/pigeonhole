@@ -130,6 +130,10 @@ static bool ext_imapflags_validator_load
 
 	sieve_validator_register_command(valdtr, master_ext, &cmd_mark);
 	sieve_validator_register_command(valdtr, master_ext, &cmd_unmark);	
+
+    /* Attach implicit flags tag to keep and fileinto commands */
+    ext_imap4flags_attach_flags_tag(valdtr, master_ext, "keep", TRUE);
+    ext_imap4flags_attach_flags_tag(valdtr, master_ext, "fileinto", TRUE);
 	
 	return TRUE;
 }

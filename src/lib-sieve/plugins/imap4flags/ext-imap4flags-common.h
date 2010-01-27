@@ -68,7 +68,7 @@ bool ext_imap4flags_command_validate
 	
 void ext_imap4flags_attach_flags_tag
 	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-		const char *command);
+		const char *command, bool implicit);
 
 /* 
  * Flag management 
