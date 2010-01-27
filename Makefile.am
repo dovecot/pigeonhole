@@ -69,7 +69,6 @@ test_cases = \
 	tests/extensions/include/execute.svtest \
 	tests/extensions/imap4flags/basic.svtest \
 	tests/extensions/imap4flags/hasflag.svtest \
-	tests/extensions/imap4flags/errors.svtest \
 	tests/extensions/imap4flags/execute.svtest \
 	tests/extensions/imap4flags/multiscript.svtest \
 	tests/extensions/imap4flags/flagstring.svtest \
@@ -114,6 +113,8 @@ test_cases = \
 	tests/deprecated/notify/errors.svtest \
 	tests/deprecated/notify/execute.svtest \
 	tests/deprecated/notify/denotify.svtest \
+	tests/deprecated/imapflags/execute.svtest \
+	tests/deprecated/imapflags/errors.svtest \
 	tests/extensions/spamvirustest/spamtest.svtest \
 	tests/extensions/spamvirustest/virustest.svtest \
 	tests/extensions/spamvirustest/spamtestplus.svtest \
