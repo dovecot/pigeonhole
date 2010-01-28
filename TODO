@@ -43,8 +43,6 @@ Next (in order of descending priority/precedence):
 	  time.
 	- Verify outgoing mail addresses at runtime when necessary
 	  (e.g. after variables substitution)
-	- Body: handling of :content "multipart" and :content "message/rfc822" don't
-	  work. 
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
@@ -76,11 +74,21 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A SECOND RELEASE (0.2.x) ##
 
+* Implement abstract string list and make matching interface more generic. Use
+  this to:
+	- Simplify matching API
+	- Implement index extension
+	- Implement extlists extension
+* Enotify extension: detect use of variable values extracted from the message 
+  that are used in the method argument. RFC reports this as a security issue.
 * Make the sieve storage a base class with (possibly) various implementations, 
   just like mail-storage. This aims to provide support for alternate types
   of script storage like LDAP or SQL database.
 * Add support for stream matching for handling large values, e.g. from the body
   extension.
+* Implement message modification and extraction API in order to:
+	- Implement editheader extension
+	- Implement replace, enclose, foreverypart, mime and extracttext extensions 
 * Provide a solution for mail_get_headers_utf8 reparsing the whole message each
   time it is called (header and address test; Timo might provide solution from
   within Dovecot)
@@ -88,11 +96,6 @@ Next (in order of descending priority/precedence):
   (i.e. optimize the test away and any code that negatively depends on it)
 * Use lib/str-find.h for :contains and :matches match types 
 * Warn during compile if using non-existent folders.
-* Implement index extension
-* Enotify extension: detect use of variable values extracted from the message 
-  that are used in the method argument. RFC reports this as a security issue.
-* Implement editheader extension
-* Implement mimeloop extension
 
 * Implement IMAP plugin for IMAPSieve support:
 	- This may include support for manually running a script on a set of messages
@@ -103,6 +106,5 @@ Next (in order of descending priority/precedence):
   the binary and byte-code format. 
 * Give the byte code format some more thought, it is currently quite rough and
   to the point. 
-* Implement proposed notify mechanisms other than mailto. Currently defined: 
-  xmpp and sip
+* Implement SIP notify mechanism.
 
