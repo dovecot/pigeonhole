@@ -10,8 +10,8 @@
 #include <stddef.h>
 
 struct service_settings managesieve_login_settings_service_settings = {
-	.name = "sieve-login",
-	.protocol = "sieve",
+	.name = "managesieve-login",
+	.protocol = "managesieve",
 	.type = "login",
 	.executable = "managesieve-login",
 	.user = "dovecot",
@@ -55,7 +55,7 @@ static const struct setting_parser_info *managesieve_login_setting_dependencies[
 };
 
 static const struct setting_parser_info managesieve_login_setting_parser_info = {
-	.module_name = "sieve-login",
+	.module_name = "managesieve-login",
 	.defines = managesieve_login_setting_defines,
 	.defaults = &managesieve_login_default_settings,
 	

@@ -17,7 +17,7 @@ static bool managesieve_settings_verify(void *_set, pool_t pool,
 
 /* <settings checks> */
 static struct file_listener_settings managesieve_unix_listeners_array[] = {
-	{ "login/sieve", 0666, "", "" }
+	{ "login/managesieve", 0666, "", "" }
 };
 static struct file_listener_settings *managesieve_unix_listeners[] = {
 	&managesieve_unix_listeners_array[0]
@@ -28,8 +28,8 @@ static buffer_t managesieve_unix_listeners_buf = {
 /* </settings checks> */
 
 struct service_settings managesieve_settings_service_settings = {
-	.name = "sieve",
-	.protocol = "sieve",
+	.name = "managesieve",
+	.protocol = "managesieve",
 	.type = "",
 	.executable = "managesieve",
 	.user = "",
@@ -93,7 +93,7 @@ static const struct setting_parser_info *managesieve_setting_dependencies[] = {
 };
 
 const struct setting_parser_info managesieve_setting_parser_info = {
-	.module_name = "sieve",
+	.module_name = "managesieve",
 	.defines = managesieve_setting_defines,
 	.defaults = &managesieve_default_settings,
 

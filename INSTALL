@@ -288,7 +288,7 @@ managesieve-login binaries are installed during make install.
 There are two things to have be done to activate the ManageSieve support in
 Dovecot:
 
-  - The first step is to add `sieve' to the protocols= configuration line in 
+  - The first step is to add `managesieve' to the protocols= configuration line in 
     your dovecot.conf.
 
   - The next step is specifying an additional service type for the ManageSieve
@@ -298,7 +298,7 @@ Dovecot:
 
     For example:
 
-    service sieve-login {
+    service managesieve-login {
       inet_listener {
         port = 4190
       }
@@ -306,7 +306,7 @@ Dovecot:
 
 Because the implementation of the ManageSieve daemon is largely based on the
 original IMAP implementation, it is very similar in terms of configuration. The 
-following settings can be configured in the 'protocol sieve' section:
+following settings can be configured in the 'protocol managesieve' section:
 
 managesieve_max_line_length = 65536
   The maximum ManageSieve command line length in bytes. This setting is directly
@@ -361,7 +361,7 @@ with comments, but don't forget to configure Sieve and add sieve to the
 
 # *** conf.d/managesieve.conf ***
 
-service sieve-login {
+service managesieve-login {
   inet_listener {
     # Bind the daemon only to the specified address(es)
     # (default: *, ::)
@@ -372,7 +372,7 @@ service sieve-login {
   }
 }
 
-protocol sieve {
+protocol managesieve {
   managesieve_sieve_capability = fileinto reject
 }
 
@@ -388,7 +388,7 @@ plugin {
 # .... (other config items)
 
 # Start imap, pop3, lmtp and managesieve services
-protocols = imap pop3 lmtp sieve
+protocols = imap pop3 lmtp managesieve
 
 # .... (other config items)
 

@@ -171,7 +171,7 @@ static void main_stdio_run(void)
 	buffer_t *input_buf;
 
 	memset(&input, 0, sizeof(input));
-	input.module = input.service = "sieve";
+	input.module = input.service = "managesieve";
 	input.username = getenv("USER");
 	if (input.username == NULL && IS_STANDALONE())
 		input.username = getlogin();
@@ -200,7 +200,7 @@ login_client_connected(const struct master_login_client *client,
 	buffer_t input_buf;
 
 	memset(&input, 0, sizeof(input));
-	input.module = input.service = "sieve";
+	input.module = input.service = "managesieve";
 	input.local_ip = client->auth_req.local_ip;
 	input.remote_ip = client->auth_req.remote_ip;
 	input.username = username;
@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
 			MAIL_STORAGE_SERVICE_FLAG_DISALLOW_ROOT;
 	}
 
-	master_service = master_service_init("sieve", service_flags,
+	master_service = master_service_init("managesieve", service_flags,
 					     &argc, &argv, NULL);
 	if (master_getopt(master_service) > 0)
 		return FATAL_DEFAULT;

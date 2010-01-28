@@ -28,8 +28,8 @@
 /* Disconnect client when it sends too many bad commands */
 #define CLIENT_MAX_BAD_COMMANDS 10
 
-const char *login_protocol = "sieve";
-const char *login_process_name = "sieve-login";
+const char *login_protocol = "managesieve";
+const char *login_process_name = "managesieve-login";
 unsigned int login_default_port = 4190;
 
 void login_process_preinit(void)
