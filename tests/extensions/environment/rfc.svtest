@@ -2,7 +2,7 @@ require "vnd.dovecot.testsuite";
 require "environment";
 require "relational";
 
-test "Non-existant" {
+test "Non-existent" {
 	if environment :contains "nonsense" "" {
 		test_fail "matched unknown environment item";	
 	}

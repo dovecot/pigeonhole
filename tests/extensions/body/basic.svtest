@@ -84,14 +84,14 @@ Subject: No body is here!
 
 test "No body" {
 	if body :raw :contains "" {
-		test_fail "matched against non-existant body (:contains \"\")";
+		test_fail "matched against non-existent body (:contains \"\")";
 	}
 
 	if body :raw :is "" {
-		test_fail "matched against non-existant body (:is \"\")";
+		test_fail "matched against non-existent body (:is \"\")";
 	}
 
 	if body :raw :matches "*" {
-		test_fail "matched against non-existant body (:matches \"*\")";
+		test_fail "matched against non-existent body (:matches \"*\")";
 	}
 }

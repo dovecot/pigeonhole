@@ -17,7 +17,7 @@ test "EXISTS-one" {
 	}
 
 	if exists "x-nonsense" {
-        test_fail "exists test found non-existant header";
+        test_fail "exists test found non-existent header";
     }
 }
 
@@ -27,7 +27,7 @@ test "EXISTS-two" {
     }
 
     if exists ["from","to","x-nonsense"] {
-        test_fail "exists test found non-existant header";
+        test_fail "exists test found non-existent header";
     }
 }
 
@@ -37,6 +37,6 @@ test "EXISTS-three" {
     }
 
     if exists ["x-spam", "sub", "resent"] {
-        test_fail "exists test found non-existant header";
+        test_fail "exists test found non-existent header";
     }
 }

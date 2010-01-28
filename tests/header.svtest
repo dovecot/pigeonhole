@@ -45,7 +45,7 @@ test "Contains empty - exist" {
 
 test "Contains empty - not exist" {
 	if header :contains "x-nonsense" "" {
-		test_fail "header test :contains match type matches \"\" on non-existant header";
+		test_fail "header test :contains match type matches \"\" on non-existent header";
 	}
 }
 

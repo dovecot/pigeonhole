@@ -1,6 +1,6 @@
 require "include";
 
-# Non-existant sieve script
+# Non-existent sieve script
 include "frop.sieve";
 
 # Use of / in script names
