@@ -2,12 +2,26 @@
  */
 
 #include "lib.h"
+#include "buffer.h"
 #include "settings-parser.h"
 #include "service-settings.h"
 #include "login-settings.h"
 #include "managesieve-login-settings.h"
 
 #include <stddef.h>
+
+/* <settings checks> */
+static struct inet_listener_settings managesieve_login_inet_listeners_array[] = {
+    { "managesieve", "", 4190, FALSE },
+};
+static struct inet_listener_settings *managesieve_login_inet_listeners[] = {
+	&managesieve_login_inet_listeners_array[0],
+	&managesieve_login_inet_listeners_array[1]
+};
+static buffer_t managesieve_login_inet_listeners_buf = {
+	managesieve_login_inet_listeners, sizeof(managesieve_login_inet_listeners), { 0, }
+};
+/* </settings checks> */
 
 struct service_settings managesieve_login_settings_service_settings = {
 	.name = "managesieve-login",
@@ -30,7 +44,8 @@ struct service_settings managesieve_login_settings_service_settings = {
 
 	.unix_listeners = ARRAY_INIT,
 	.fifo_listeners = ARRAY_INIT,
-	.inet_listeners = ARRAY_INIT
+	.inet_listeners = { { &managesieve_login_inet_listeners_buf,
+		sizeof(managesieve_login_inet_listeners[0]) } }
 };
 
 #undef DEF
