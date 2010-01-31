@@ -178,6 +178,7 @@ static buffer_t *cmd_notify_extract_body_text
 	
 	parser = message_parser_init(mctx->pool, input, 0, 0);
 	is_text = TRUE;
+	save_body = FALSE;
 	while ( (ret = message_parser_parse_next_block(parser, &block)) > 0 ) {		
 		if ( block.hdr != NULL || block.size == 0 ) {
 			/* Decode block */
