@@ -33,26 +33,20 @@
  */
  
 inline static void sieve_lexer_error
-	(struct sieve_lexer *lexer, const char *fmt, ...) ATTR_FORMAT(2, 3);
+	(const struct sieve_lexer *lexer, const char *fmt, ...) ATTR_FORMAT(2, 3);
 inline static void sieve_lexer_warning
-	(struct sieve_lexer *lexer, const char *fmt, ...) ATTR_FORMAT(2, 3);
+	(const struct sieve_lexer *lexer, const char *fmt, ...) ATTR_FORMAT(2, 3);
 
 /*
  * Lexer object
  */
 
-struct sieve_lexer {
+struct sieve_lexical_scanner {
 	pool_t pool;
 	struct sieve_instance *svinst;
 
 	struct sieve_script *script;
-	struct istream *input;
-		
-	int current_line;
-	
-	enum sieve_token_type token_type;
-	string_t *token_str_value;
-	int token_int_value;
+	struct istream *input;	
 	
 	struct sieve_error_handler *ehandler;
 	
@@ -60,13 +54,15 @@ struct sieve_lexer {
 	const unsigned char *buffer;
 	size_t buffer_size;
 	size_t buffer_pos;
+
+	struct sieve_lexer lexer;
 };
 
-struct sieve_lexer *sieve_lexer_create
+const struct sieve_lexer *sieve_lexer_create
 (struct sieve_script *script, struct sieve_error_handler *ehandler) 
 {
 	pool_t pool;
-	struct sieve_lexer *lexer;
+	struct sieve_lexical_scanner *scanner;
 	struct sieve_instance *svinst = sieve_script_svinst(script);
 	struct istream *stream;
 	const struct stat *st;
@@ -86,41 +82,44 @@ struct sieve_lexer *sieve_lexer_create
 		return NULL;
 	}
 	
-	pool = pool_alloconly_create("sieve_lexer", 1024);	
-	lexer = p_new(pool, struct sieve_lexer, 1);
-	lexer->pool = pool;
+	pool = pool_alloconly_create("sieve_lexer_scanner", 1024);	
+	scanner = p_new(pool, struct sieve_lexical_scanner, 1);
+	scanner->pool = pool;
+	scanner->lexer.scanner = scanner;
 	
-	lexer->ehandler = ehandler;
+	scanner->ehandler = ehandler;
 	sieve_error_handler_ref(ehandler);
 
-	lexer->input = stream;
-	i_stream_ref(lexer->input);
+	scanner->input = stream;
+	i_stream_ref(scanner->input);
 	
-	lexer->script = script;
+	scanner->script = script;
 	sieve_script_ref(script);
 	
-	lexer->buffer = NULL;
-	lexer->buffer_size = 0;
-	lexer->buffer_pos = 0;
+	scanner->buffer = NULL;
+	scanner->buffer_size = 0;
+	scanner->buffer_pos = 0;
 	
-	lexer->current_line = 1;	
-	lexer->token_type = STT_NONE;
-	lexer->token_str_value = str_new(pool, 256);
-	lexer->token_int_value = 0;
+	scanner->lexer.current_line = 1;	
+	scanner->lexer.token_type = STT_NONE;
+	scanner->lexer.token_str_value = str_new(pool, 256);
+	scanner->lexer.token_int_value = 0;
 		
-	return lexer;
+	return &scanner->lexer;
 }
 
-void sieve_lexer_free(struct sieve_lexer **lexer) 
+void sieve_lexer_free(const struct sieve_lexer **lexer) 
 {	
-	i_stream_unref(&(*lexer)->input);
+	struct sieve_lexical_scanner *scanner = (*lexer)->scanner;
 
-	sieve_script_close((*lexer)->script);
-	sieve_script_unref(&(*lexer)->script);
+	i_stream_unref(&scanner->input);
 
-	sieve_error_handler_unref(&(*lexer)->ehandler);
+	sieve_script_close(scanner->script);
+	sieve_script_unref(&scanner->script);
 
-	pool_unref(&(*lexer)->pool); 
+	sieve_error_handler_unref(&scanner->ehandler);
+
+	pool_unref(&scanner->pool); 
 
 	*lexer = NULL;
 }
@@ -130,14 +129,16 @@ void sieve_lexer_free(struct sieve_lexer **lexer)
  */
 
 inline static void sieve_lexer_error
-(struct sieve_lexer *lexer, const char *fmt, ...)
+(const struct sieve_lexer *lexer, const char *fmt, ...)
 {
+	struct sieve_lexical_scanner *scanner = lexer->scanner;
+
 	va_list args;
 	va_start(args, fmt);
 
 	T_BEGIN {
-		sieve_verror(lexer->ehandler, 
-			sieve_error_script_location(lexer->script, lexer->current_line),
+		sieve_verror(scanner->ehandler, 
+			sieve_error_script_location(scanner->script, lexer->current_line),
 			fmt, args);
 	} T_END;
 		
@@ -145,21 +146,24 @@ inline static void sieve_lexer_error
 }
 
 inline static void sieve_lexer_warning
-(struct sieve_lexer *lexer, const char *fmt, ...)
+(const struct sieve_lexer *lexer, const char *fmt, ...)
 {
+	struct sieve_lexical_scanner *scanner = lexer->scanner;
+
 	va_list args;
 	va_start(args, fmt);
 
 	T_BEGIN { 
-		sieve_vwarning(lexer->ehandler, 
-			sieve_error_script_location(lexer->script, lexer->current_line),
+		sieve_vwarning(scanner->ehandler, 
+			sieve_error_script_location(scanner->script, lexer->current_line),
 			fmt, args);
 	} T_END;
 		
 	va_end(args);
 }
 
-const char *sieve_lexer_token_string(struct sieve_lexer *lexer) 
+const char *sieve_lexer_token_description
+(const struct sieve_lexer *lexer) 
 {
 	switch ( lexer->token_type ) {
 		case STT_NONE: return "no token (bug)"; 		
@@ -194,7 +198,7 @@ const char *sieve_lexer_token_string(struct sieve_lexer *lexer)
  * Debug 
  */
  
-void sieve_lexer_print_token(struct sieve_lexer *lexer) 
+void sieve_lexer_token_print(const struct sieve_lexer *lexer) 
 {
 	switch ( lexer->token_type ) {
 		case STT_NONE: printf("??NONE?? "); break;		
@@ -227,77 +231,37 @@ void sieve_lexer_print_token(struct sieve_lexer *lexer)
 }
 
 /*
- * Token access
- */ 
-
-enum sieve_token_type sieve_lexer_current_token(struct sieve_lexer *lexer) 
-{
-	return lexer->token_type;
-}
-
-const string_t *sieve_lexer_token_str(struct sieve_lexer *lexer) 
-{
-	i_assert(	lexer->token_type == STT_STRING );
-		
-	return lexer->token_str_value;
-}
-
-const char *sieve_lexer_token_ident(struct sieve_lexer *lexer) 
-{
-	i_assert(
-		lexer->token_type == STT_TAG ||
-		lexer->token_type == STT_IDENTIFIER);
-		
-	return str_c(lexer->token_str_value);
-}
-
-int sieve_lexer_token_int(struct sieve_lexer *lexer) 
-{
-	i_assert(lexer->token_type == STT_NUMBER);
-		
-	return lexer->token_int_value;
-}
-
-bool sieve_lexer_eof(struct sieve_lexer *lexer) 
-{
-	return lexer->token_type == STT_EOF;
-}
-
-int sieve_lexer_current_line(struct sieve_lexer *lexer) 
-{
-	return lexer->current_line;
-}
-
-/*
  * Lexical scanning 
  */
 
-static void sieve_lexer_shift(struct sieve_lexer *lexer) 
+static void sieve_lexer_shift(struct sieve_lexical_scanner *scanner) 
 {
-	if ( lexer->buffer != NULL && lexer->buffer[lexer->buffer_pos] == '\n' ) 
-		lexer->current_line++;	
+	if ( scanner->buffer != NULL && scanner->buffer[scanner->buffer_pos] == '\n' ) 
+		scanner->lexer.current_line++;	
 	
-	if ( lexer->buffer != NULL && lexer->buffer_pos + 1 < lexer->buffer_size )
-		lexer->buffer_pos++;
+	if ( scanner->buffer != NULL && 
+		scanner->buffer_pos + 1 < scanner->buffer_size )
+		scanner->buffer_pos++;
 	else {
-		if ( lexer->buffer != NULL )
-			i_stream_skip(lexer->input, lexer->buffer_size);
+		if ( scanner->buffer != NULL )
+			i_stream_skip(scanner->input, scanner->buffer_size);
 		
-		lexer->buffer = i_stream_get_data(lexer->input, &lexer->buffer_size);
+		scanner->buffer = i_stream_get_data(scanner->input, &scanner->buffer_size);
 	  
-		if ( lexer->buffer == NULL && i_stream_read(lexer->input) > 0 )
-	  		lexer->buffer = i_stream_get_data(lexer->input, &lexer->buffer_size);
+		if ( scanner->buffer == NULL && i_stream_read(scanner->input) > 0 )
+	  		scanner->buffer = i_stream_get_data
+					(scanner->input, &scanner->buffer_size);
 	  	
-		lexer->buffer_pos = 0;
+		scanner->buffer_pos = 0;
 	}
 }
 
-static inline int sieve_lexer_curchar(struct sieve_lexer *lexer) 
+static inline int sieve_lexer_curchar(struct sieve_lexical_scanner *scanner) 
 {	
-	if ( lexer->buffer == NULL )
+	if ( scanner->buffer == NULL )
 		return -1;
 	
-	return lexer->buffer[lexer->buffer_pos];
+	return scanner->buffer[scanner->buffer_pos];
 }
 
 static inline const char *_char_sanitize(int ch)
@@ -311,32 +275,35 @@ static inline const char *_char_sanitize(int ch)
 /* sieve_lexer_scan_raw_token:
  *   Scans valid tokens and whitespace 
  */
-static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer) 
+static bool sieve_lexer_scan_raw_token(struct sieve_lexical_scanner *scanner) 
 {
+	struct sieve_lexer *lexer = &scanner->lexer;
 	sieve_number_t start_line;
 	string_t *str;
 
 	/* Read first character */
 	if ( lexer->token_type == STT_NONE ) {
-		i_stream_read(lexer->input);
-		sieve_lexer_shift(lexer);
+		i_stream_read(scanner->input);
+		sieve_lexer_shift(scanner);
 	}
   
-	switch ( sieve_lexer_curchar(lexer) ) {
+	switch ( sieve_lexer_curchar(scanner) ) {
 	
 	/* whitespace */
 	
 	// hash-comment = ( "#" *CHAR-NOT-CRLF CRLF )
 	case '#': 
-		sieve_lexer_shift(lexer);
-		while ( sieve_lexer_curchar(lexer) != '\n' ) {
-			switch( sieve_lexer_curchar(lexer) ) {
+		sieve_lexer_shift(scanner);
+		while ( sieve_lexer_curchar(scanner) != '\n' ) {
+			switch( sieve_lexer_curchar(scanner) ) {
 			case -1:
-				sieve_lexer_warning(lexer, "no newline (CRLF) at end of hash comment at end of file");
+				sieve_lexer_warning
+					(lexer, "no newline (CRLF) at end of hash comment at end of file");
 				lexer->token_type = STT_WHITESPACE;
 				return TRUE;
 			case '\0':
-				sieve_lexer_error(lexer, "encountered NUL character in hash comment");
+				sieve_lexer_error
+					(lexer, "encountered NUL character in hash comment");
 				lexer->token_type = STT_ERROR;
 				return FALSE;				
 			default:
@@ -345,10 +312,10 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 						
 			/* Stray CR is ignored */
 			
-			sieve_lexer_shift(lexer);
+			sieve_lexer_shift(scanner);
 		} 
 
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		
 		lexer->token_type = STT_WHITESPACE;
 		return TRUE;
@@ -360,13 +327,13 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 	//        ;; slash.)
 	case '/': 
 		start_line = lexer->current_line;
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		
-		if ( sieve_lexer_curchar(lexer) == '*' ) { 
-			sieve_lexer_shift(lexer);
+		if ( sieve_lexer_curchar(scanner) == '*' ) { 
+			sieve_lexer_shift(scanner);
 			
 			while ( TRUE ) {
-				switch ( sieve_lexer_curchar(lexer) ) {
+				switch ( sieve_lexer_curchar(scanner) ) {
 				case -1:
 					sieve_lexer_error(lexer, 
 						"end of file before end of bracket comment ('/* ... */') "
@@ -374,15 +341,15 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 					lexer->token_type = STT_ERROR;
 					return FALSE;
 				case '*':
-					sieve_lexer_shift(lexer);
+					sieve_lexer_shift(scanner);
 					
-					if ( sieve_lexer_curchar(lexer) == '/' ) {
-						sieve_lexer_shift(lexer);
+					if ( sieve_lexer_curchar(scanner) == '/' ) {
+						sieve_lexer_shift(scanner);
 						
 						lexer->token_type = STT_WHITESPACE;
 						return TRUE;
 						
-					} else if ( sieve_lexer_curchar(lexer) == -1 ) {
+					} else if ( sieve_lexer_curchar(scanner) == -1 ) {
 						sieve_lexer_error(lexer, 
 							"end of file before end of bracket comment ('/* ... */') "
 							"started at line %d", start_line);
@@ -396,7 +363,7 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 					lexer->token_type = STT_ERROR;
 					return FALSE;				
 				default:
-					sieve_lexer_shift(lexer);
+					sieve_lexer_shift(scanner);
 				}
 			}
 			
@@ -408,19 +375,19 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 		return TRUE;
 		
 	// comment = bracket-comment / hash-comment
-  	// white-space = 1*(SP / CRLF / HTAB) / comment
+	// white-space = 1*(SP / CRLF / HTAB) / comment
 	case '\t':
 	case '\r':
 	case '\n':
 	case ' ':
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		
-		while ( sieve_lexer_curchar(lexer) == '\t' ||
-			sieve_lexer_curchar(lexer) == '\r' ||
-			sieve_lexer_curchar(lexer) == '\n' ||
-			sieve_lexer_curchar(lexer) == ' ' ) {
+		while ( sieve_lexer_curchar(scanner) == '\t' ||
+			sieve_lexer_curchar(scanner) == '\r' ||
+			sieve_lexer_curchar(scanner) == '\n' ||
+			sieve_lexer_curchar(scanner) == ' ' ) {
 			
-			sieve_lexer_shift(lexer);
+			sieve_lexer_shift(scanner);
 		}
 		
 		lexer->token_type = STT_WHITESPACE;
@@ -429,16 +396,16 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 	/* quoted-string */
 	case '"':
 		start_line = lexer->current_line;
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		str_truncate(lexer->token_str_value, 0);
 		str = lexer->token_str_value;
 		
-		while ( sieve_lexer_curchar(lexer) != '"' ) {
-			if ( sieve_lexer_curchar(lexer) == '\\' ) {
-				sieve_lexer_shift(lexer);
+		while ( sieve_lexer_curchar(scanner) != '"' ) {
+			if ( sieve_lexer_curchar(scanner) == '\\' ) {
+				sieve_lexer_shift(scanner);
 			}
 
-			switch ( sieve_lexer_curchar(lexer) ) {
+			switch ( sieve_lexer_curchar(scanner) ) {
 		
 			/* End of file */			
 			case -1:
@@ -458,9 +425,9 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 
 			/* CR .. check for LF */
 			case '\r':
-				sieve_lexer_shift(lexer);
+				sieve_lexer_shift(scanner);
 
-				if ( sieve_lexer_curchar(lexer) != '\n' ) {
+				if ( sieve_lexer_curchar(scanner) != '\n' ) {
 					sieve_lexer_error(lexer, 
 						"found stray carriage-return (CR) character "
 						"in quoted string started at line %d", start_line);
@@ -481,13 +448,13 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 			/* Other characters */
 			default:
 				if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
-					str_append_c(str, sieve_lexer_curchar(lexer));
+					str_append_c(str, sieve_lexer_curchar(scanner));
 			}
 
-			sieve_lexer_shift(lexer);							
+			sieve_lexer_shift(scanner);							
 		}
 
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 
 		if ( str_len(str) > SIEVE_MAX_STRING_LEN ) {
 			sieve_lexer_error(lexer, 
@@ -503,35 +470,35 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 		
 	/* single character tokens */
 	case ']':
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		lexer->token_type = STT_RSQUARE;
 		return TRUE;
 	case '[':
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		lexer->token_type = STT_LSQUARE;
 		return TRUE;
 	case '}':
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		lexer->token_type = STT_RCURLY;
 		return TRUE;
 	case '{':
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		lexer->token_type = STT_LCURLY;
 		return TRUE;
 	case ')':
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		lexer->token_type = STT_RBRACKET;
 		return TRUE;
 	case '(':
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		lexer->token_type = STT_LBRACKET;	
 		return TRUE;
 	case ';':
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		lexer->token_type = STT_SEMICOLON;
 		return TRUE;
 	case ',':
-		sieve_lexer_shift(lexer);
+		sieve_lexer_shift(scanner);
 		lexer->token_type = STT_COMMA;
 		return TRUE;
 		
@@ -542,32 +509,32 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 		
 	default: 
 		/* number */
-		if ( i_isdigit(sieve_lexer_curchar(lexer)) ) {
-			sieve_number_t value = DIGIT_VAL(sieve_lexer_curchar(lexer));
+		if ( i_isdigit(sieve_lexer_curchar(scanner)) ) {
+			sieve_number_t value = DIGIT_VAL(sieve_lexer_curchar(scanner));
 			bool overflow = FALSE;
 
-			sieve_lexer_shift(lexer);
+			sieve_lexer_shift(scanner);
   		
-			while ( i_isdigit(sieve_lexer_curchar(lexer)) ) {
+			while ( i_isdigit(sieve_lexer_curchar(scanner)) ) {
 				sieve_number_t valnew = 
-					value * 10 + DIGIT_VAL(sieve_lexer_curchar(lexer));
+					value * 10 + DIGIT_VAL(sieve_lexer_curchar(scanner));
 			
 				/* Check for integer wrap */
 				if ( valnew < value )
 					overflow = TRUE;
 
 				value = valnew;
-				sieve_lexer_shift(lexer);
+				sieve_lexer_shift(scanner);
  			}
   		
-			switch ( sieve_lexer_curchar(lexer) ) { 
+			switch ( sieve_lexer_curchar(scanner) ) { 
 			case 'k':
 			case 'K': /* Kilo */
 				if ( value > (SIEVE_MAX_NUMBER >> 10) )
 					overflow = TRUE;
 				else
 					value = value << 10;
-				sieve_lexer_shift(lexer);
+				sieve_lexer_shift(scanner);
 				break;
 			case 'm': 
 			case 'M': /* Mega */
@@ -575,7 +542,7 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 					overflow = TRUE;
 				else
 					value = value << 20;
-				sieve_lexer_shift(lexer);
+				sieve_lexer_shift(scanner);
 				break;
 			case 'g':
 			case 'G': /* Giga */
@@ -583,7 +550,7 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 					overflow = TRUE;
 				else
 					value = value << 30;
-				sieve_lexer_shift(lexer);
+				sieve_lexer_shift(scanner);
 				break;
 			default:
 				/* Next token */
@@ -604,72 +571,72 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 			return TRUE;	
   		
 		/* identifier / tag */	
-		} else if ( i_isalpha(sieve_lexer_curchar(lexer)) ||
-			sieve_lexer_curchar(lexer) == '_' || 
-			sieve_lexer_curchar(lexer) == ':' ) {
+		} else if ( i_isalpha(sieve_lexer_curchar(scanner)) ||
+			sieve_lexer_curchar(scanner) == '_' || 
+			sieve_lexer_curchar(scanner) == ':' ) {
   		
 			enum sieve_token_type type = STT_IDENTIFIER;
 			str_truncate(lexer->token_str_value,0);
 			str = lexer->token_str_value;
   		
 			/* If it starts with a ':' it is a tag and not an identifier */
- 			if ( sieve_lexer_curchar(lexer) == ':' ) {
-				sieve_lexer_shift(lexer); // discard colon
+ 			if ( sieve_lexer_curchar(scanner) == ':' ) {
+				sieve_lexer_shift(scanner); // discard colon
 				type = STT_TAG;
   			
 				/* First character still can't be a DIGIT */
- 				if ( i_isalpha(sieve_lexer_curchar(lexer)) ||
-					sieve_lexer_curchar(lexer) == '_' ) { 
-					str_append_c(str, sieve_lexer_curchar(lexer));
-					sieve_lexer_shift(lexer);
+ 				if ( i_isalpha(sieve_lexer_curchar(scanner)) ||
+					sieve_lexer_curchar(scanner) == '_' ) { 
+					str_append_c(str, sieve_lexer_curchar(scanner));
+					sieve_lexer_shift(scanner);
 				} else {
 					/* Hmm, otherwise it is just a spurious colon */
 					lexer->token_type = STT_COLON;
 					return TRUE;
 				}
 			} else {
-				str_append_c(str, sieve_lexer_curchar(lexer));
-				sieve_lexer_shift(lexer);
+				str_append_c(str, sieve_lexer_curchar(scanner));
+				sieve_lexer_shift(scanner);
 			}
   		
 			/* Scan the rest of the identifier */
-			while ( i_isalnum(sieve_lexer_curchar(lexer)) ||
-				sieve_lexer_curchar(lexer) == '_' ) {
+			while ( i_isalnum(sieve_lexer_curchar(scanner)) ||
+				sieve_lexer_curchar(scanner) == '_' ) {
 
 				if ( str_len(str) <= SIEVE_MAX_IDENTIFIER_LEN ) {
-	 				str_append_c(str, sieve_lexer_curchar(lexer));
+	 				str_append_c(str, sieve_lexer_curchar(scanner));
 				}
-				sieve_lexer_shift(lexer);
+				sieve_lexer_shift(scanner);
 			}
 
 			/* Is this in fact a multiline text string ? */
-			if ( sieve_lexer_curchar(lexer) == ':' &&
+			if ( sieve_lexer_curchar(scanner) == ':' &&
 				type == STT_IDENTIFIER && str_len(str) == 4 &&
 				strncasecmp(str_c(str), "text", 4) == 0 ) {
-				sieve_lexer_shift(lexer); // discard colon
+				sieve_lexer_shift(scanner); // discard colon
 
 				start_line = lexer->current_line;
   			
 				/* Discard SP and HTAB whitespace */
-				while ( sieve_lexer_curchar(lexer) == ' ' || 
-					sieve_lexer_curchar(lexer) == '\t' )
- 					sieve_lexer_shift(lexer);
+				while ( sieve_lexer_curchar(scanner) == ' ' || 
+					sieve_lexer_curchar(scanner) == '\t' )
+ 					sieve_lexer_shift(scanner);
   				
 				/* Discard hash comment or handle single CRLF */
-				switch ( sieve_lexer_curchar(lexer) ) {
+				switch ( sieve_lexer_curchar(scanner) ) {
 				case '#':
-					while ( sieve_lexer_curchar(lexer) != '\n' )
-						sieve_lexer_shift(lexer);
+					while ( sieve_lexer_curchar(scanner) != '\n' )
+						sieve_lexer_shift(scanner);
 					break;
 				case '\r':
-					sieve_lexer_shift(lexer);
+					sieve_lexer_shift(scanner);
 					break;
 				}
   			
 				/* Terminating LF required */
- 				switch ( sieve_lexer_curchar(lexer) ) {
+ 				switch ( sieve_lexer_curchar(scanner) ) {
 				case '\n':
-					sieve_lexer_shift(lexer);
+					sieve_lexer_shift(scanner);
 					break;
 				case -1:
 					sieve_lexer_error(lexer, 
@@ -679,7 +646,7 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 				default: 
  					sieve_lexer_error(lexer, 
  						"invalid character %s after 'text:' in multiline string",
-						_char_sanitize(sieve_lexer_curchar(lexer)));
+						_char_sanitize(sieve_lexer_curchar(scanner)));
 					lexer->token_type = STT_ERROR;
 					return FALSE;
 				}
@@ -692,18 +659,18 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 					bool cr_shifted = FALSE;
 
 					/* Remove dot-stuffing or detect end of text */
-					if ( sieve_lexer_curchar(lexer) == '.' ) {
-						sieve_lexer_shift(lexer);
+					if ( sieve_lexer_curchar(scanner) == '.' ) {
+						sieve_lexer_shift(scanner);
   					
 						/* Check for CR.. */
-						if ( sieve_lexer_curchar(lexer) == '\r' ) {
-							sieve_lexer_shift(lexer);
+						if ( sieve_lexer_curchar(scanner) == '\r' ) {
+							sieve_lexer_shift(scanner);
 							cr_shifted = TRUE;
 						}
   				
 						/* ..LF */
-						if ( sieve_lexer_curchar(lexer) == '\n' ) {
-							sieve_lexer_shift(lexer);
+						if ( sieve_lexer_curchar(scanner) == '\n' ) {
+							sieve_lexer_shift(scanner);
 
 							/* End of multi-line string */
 
@@ -731,15 +698,15 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 						/* Handle dot-stuffing */
 						if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
 							str_append_c(str, '.');
-						if ( sieve_lexer_curchar(lexer) == '.' )
-							sieve_lexer_shift(lexer);
+						if ( sieve_lexer_curchar(scanner) == '.' )
+							sieve_lexer_shift(scanner);
 					}
   				
 					/* Scan the rest of the line */
-					while ( sieve_lexer_curchar(lexer) != '\n' &&
-						sieve_lexer_curchar(lexer) != '\r' ) {
+					while ( sieve_lexer_curchar(scanner) != '\n' &&
+						sieve_lexer_curchar(scanner) != '\r' ) {
 
-						switch ( sieve_lexer_curchar(lexer) ) {
+						switch ( sieve_lexer_curchar(scanner) ) {
 						case -1:
 							sieve_lexer_error(lexer, 
 								"end of file before end of multi-line string");
@@ -753,19 +720,19 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 							return FALSE;
 						default:
 							if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
-  								str_append_c(str, sieve_lexer_curchar(lexer));
+  								str_append_c(str, sieve_lexer_curchar(scanner));
 						}
 
-						sieve_lexer_shift(lexer);
+						sieve_lexer_shift(scanner);
 					}
 
 					/* If exited loop due to CR, skip it */
-					if ( sieve_lexer_curchar(lexer) == '\r' ) {
-						sieve_lexer_shift(lexer);
+					if ( sieve_lexer_curchar(scanner) == '\r' ) {
+						sieve_lexer_shift(scanner);
 					}
 
 					/* Now we must see an LF */
-					if ( sieve_lexer_curchar(lexer) != '\n' ) {					
+					if ( sieve_lexer_curchar(scanner) != '\n' ) {					
 						sieve_lexer_error(lexer, 
 							"found stray carriage-return (CR) character "
 							"in multi-line string started at line %d", start_line);
@@ -776,7 +743,7 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 					if ( str_len(str) <= SIEVE_MAX_STRING_LEN ) 
 						str_append(str, "\r\n");
 
-					sieve_lexer_shift(lexer);
+					sieve_lexer_shift(scanner);
 				}
   			
  				i_unreached();
@@ -800,18 +767,19 @@ static bool sieve_lexer_scan_raw_token(struct sieve_lexer *lexer)
 		/* Error (unknown character and EOF handled already) */
 		if ( lexer->token_type != STT_GARBAGE ) 
 			sieve_lexer_error(lexer, "unexpected character(s) starting with %s", 
-				_char_sanitize(sieve_lexer_curchar(lexer)));
-		sieve_lexer_shift(lexer);
+				_char_sanitize(sieve_lexer_curchar(scanner)));
+		sieve_lexer_shift(scanner);
 		lexer->token_type = STT_GARBAGE;
 		return FALSE;
 	}
 }
 
-bool sieve_lexer_skip_token(struct sieve_lexer *lexer) 
+bool sieve_lexer_skip_token(const struct sieve_lexer *lexer) 
 {
 	/* Scan token while skipping whitespace */
 	do { 
-		if ( !sieve_lexer_scan_raw_token(lexer) ) return FALSE;
+		if ( !sieve_lexer_scan_raw_token(lexer->scanner) )
+			return FALSE;
 	} while ( lexer->token_type == STT_WHITESPACE );
 	
 	return TRUE;
