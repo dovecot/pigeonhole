@@ -15,7 +15,7 @@ libs = \
 	$(LIBDOVECOT_STORAGE) \
 	$(LIBDOVECOT)
 
-testsuite_LDADD = $(libs)
+testsuite_LDADD = $(libs) $(MODULE_LIBS)
 testsuite_DEPENDENCIES = $(libs)
 
 commands = \

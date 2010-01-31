@@ -39,14 +39,6 @@ if ! test -f "$dovecotdir/dovecot-config"; then
   AC_MSG_ERROR([dovecot-config not found])
 fi
 
-if test -d "$dovecotdir/src"; then
-  # compiling against sources
-  have_dovecot_sources=yes
-else
-  # compiling against installed headers
-  have_dovecot_sources=no
-fi
-
 # Extensions under development
 #
 
@@ -100,50 +92,9 @@ AC_ARG_WITH(managesieve,
         want_managesieve=yes)
 AM_CONDITIONAL(BUILD_MANAGESIEVE, test "$want_managesieve" = "yes")
 
-dnl replace relative ../ paths in the file with full paths
-eval `cat $dovecotdir/dovecot-config|sed 's,\$(top_builddir)/,$dovecotdir/,g'`
+eval `cat $dovecotdir/dovecot-config`
 
-if test $have_dovecot_sources = yes; then
-  dovecot_incdir="$dovecotdir"
-  dovecot_libdir="$dovecotdir"
-
-  dovecot_pkgincludedir='$(includedir)/dovecot'
-  dovecot_pkglibdir='$(libdir)/dovecot'
-
-  LIBDOVECOT='$(dovecot_libdir)/src/lib-dovecot/libdovecot.la'
-  LIBDOVECOT_STORAGE='$(dovecot_libdir)/src/lib-storage/libdovecot-storage.la'
-  LIBDOVECOT_LOGIN='$(dovecot_libdir)/src/login-common/libdovecot-login.la'
-
-  LIBDOVECOT_INCLUDE='-I$(dovecot_incdir) -I$(dovecot_incdir)/src/lib -I$(dovecot_incdir)/src/lib-dict -I$(dovecot_incdir)/src/lib-mail -I$(dovecot_incdir)/src/lib-storage -I$(dovecot_incdir)/src/lib-imap -I$(dovecot_incdir)/src/lib-charset'
-  LIBDOVECOT_LDA_INCLUDE='-I$(dovecot_incdir)/src/lib-lda -I$(dovecot_incdir)/src/lda'
-  LIBDOVECOT_SERVICE_INCLUDE='-I$(dovecot_incdir)/src/lib-master -I$(dovecot_incdir)/src/lib-settings'
-  LIBDOVECOT_STORAGE_INCLUDE='-I$(dovecot_incdir)/src/lib-index -I$(dovecot_incdir)/src/lib-storage/index -I$(dovecot_incdir)/src/lib-storage/index/raw'
-  LIBDOVECOT_LOGIN_INCLUDE='-I$(dovecot_incdir)/src/lib-auth -I$(dovecot_incdir)/src/login-common'
-else
-  dovecot_libdir="$dovecotdir"
-  
-  dovecot_pkgincludedir='$(dovecot_incdir)'
-  dovecot_pkglibdir='$(dovecotdir)'
-
-  LIBDOVECOT='$(dovecot_libdir)/libdovecot.la'
-  LIBDOVECOT_STORAGE='$(dovecot_libdir)/libdovecot-storage.la'
-  LIBDOVECOT_LOGIN='$(dovecot_libdir)/libdovecot-login.la'
-
-  LIBDOVECOT_INCLUDE='-I$(dovecot_incdir)'
-  LIBDOVECOT_LDA_INCLUDE=''
-  LIBDOVECOT_SERVICE_INCLUDE=''
-  LIBDOVECOT_STORAGE_INCLUDE=''
-  LIBDOVECOT_LOGIN_INCLUDE=''
-fi
-
-dovecot_pkglibexecdir='$(libexecdir)/dovecot'
-dovecot_docdir='$(datadir)/doc/dovecot'
-
-AC_SUBST(LIBICONV)
-AC_SUBST(RAND_LIBS)
 AC_SUBST(MODULE_LIBS)
-AC_SUBST(dovecot_incdir)
-AC_SUBST(dovecot_libdir)
 AC_SUBST(moduledir)
 AC_SUBST(dovecot_pkgincludedir)
 AC_SUBST(dovecot_pkglibexecdir)
