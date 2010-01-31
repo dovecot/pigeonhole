@@ -11,12 +11,10 @@ testsuite_LDFLAGS = -export-dynamic
 
 libs = \
 	$(top_srcdir)/src/lib-sieve/libdovecot-sieve.la \
-	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la \
-	$(LIBDOVECOT_STORAGE) \
-	$(LIBDOVECOT)
+	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la
 
-testsuite_LDADD = $(libs) $(MODULE_LIBS)
-testsuite_DEPENDENCIES = $(libs)
+testsuite_LDADD = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT)
+testsuite_DEPENDENCIES = $(libs) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
 
 commands = \
 	cmd-test.c \

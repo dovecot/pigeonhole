@@ -25,13 +25,11 @@ libs = \
 	managesieve-settings.lo \
 	$(top_srcdir)/src/lib-managesieve/libmanagesieve.a \
 	$(top_srcdir)/src/lib-sievestorage/libsievestorage.a \
-	$(top_srcdir)/src/lib-sieve/libdovecot-sieve.la \
-	$(LIBDOVECOT_STORAGE) \
-	$(LIBDOVECOT)
+	$(top_srcdir)/src/lib-sieve/libdovecot-sieve.la
 
-managesieve_LDADD = $(libs) $(MODULE_LIBS) 
+managesieve_LDADD = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT)
 
-managesieve_DEPENDENCIES = $(libs)
+managesieve_DEPENDENCIES = $(libs) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
 
 cmds = \
 	cmd-capability.c \

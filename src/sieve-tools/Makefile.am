@@ -17,17 +17,16 @@ AM_CPPFLAGS = \
 libs = \
 	$(top_srcdir)/src/lib-sieve/libdovecot-sieve.la \
 	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la \
-	$(LIBDOVECOT_STORAGE) \
-	$(LIBDOVECOT) \
 	./debug/libsieve_ext_debug.la
 
-libs_ldadd = $(libs) $(MODULE_LIBS)
+libs_ldadd = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT)
+libs_deps = $(libs) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
 
 # Sieve Compile Tool
 
 sievec_LDFLAGS = -export-dynamic
 sievec_LDADD = $(libs_ldadd)
-sievec_DEPENDENCIES = $(libs)
+sievec_DEPENDENCIES = $(libs_deps)
 
 sievec_SOURCES = \
 	sievec.c 
@@ -36,7 +35,7 @@ sievec_SOURCES = \
 
 sieved_LDFLAGS = -export-dynamic
 sieved_LDADD = $(libs_ldadd)
-sieved_DEPENDENCIES = $(libs)
+sieved_DEPENDENCIES = $(libs_deps)
 
 sieved_SOURCES = \
 	sieved.c 
@@ -45,7 +44,7 @@ sieved_SOURCES = \
 
 sieve_test_LDFLAGS = -export-dynamic
 sieve_test_LDADD = $(libs_ldadd)
-sieve_test_DEPENDENCIES = $(libs)
+sieve_test_DEPENDENCIES = $(libs_deps)
 
 sieve_test_SOURCES = \
 	sieve-test.c 
@@ -56,7 +55,7 @@ sieve_test_SOURCES = \
 
 sieve_filter_LDFLAGS = -export-dynamic
 sieve_filter_LDADD = $(libs_ldadd)
-sieve_filter_DEPENDENCIES = $(libs)
+sieve_filter_DEPENDENCIES = $(libs_deps)
 
 sieve_filter_SOURCES = \
 	sieve-filter.c 
