@@ -320,14 +320,14 @@ static struct mailbox *act_store_mailbox_open
 	 * create it.
 	 */
 	if ( !aenv->scriptenv->mailbox_autocreate || error != MAIL_ERROR_NOTFOUND ) {
-		mailbox_close(&box);
+		mailbox_free(&box);
 		return NULL;
 	}
 
 	/* Try creating it. */
 	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
 		(void)mail_storage_get_last_error(*storage, &error);
-		mailbox_close(&box);
+		mailbox_free(&box);
 		return NULL;
 	}
 
@@ -339,7 +339,7 @@ static struct mailbox *act_store_mailbox_open
 	/* Try opening again */
 	if ( mailbox_sync(box, 0) < 0 ) {
 		/* Failed definitively */
-		mailbox_close(&box);
+		mailbox_free(&box);
 		return NULL;
 	}
 
@@ -378,7 +378,7 @@ static bool act_store_start
 		 * originates from. In that case we skip actually storing it.
 		 */
 		if ( box != NULL && mailbox_backends_equal(box, msgdata->mail->box) ) {
-			mailbox_close(&box);
+			mailbox_free(&box);
 			box = NULL;
 			ns = NULL;
 			redundant = TRUE;
@@ -613,7 +613,7 @@ static bool act_store_commit
 	
 	/* Close mailbox */	
 	if ( trans->box != NULL )
-		mailbox_close(&trans->box);
+		mailbox_free(&trans->box);
 
 	return status;
 }
@@ -638,7 +638,7 @@ static void act_store_rollback
   
 	/* Close the mailbox */
 	if ( trans->box != NULL )  
-		mailbox_close(&trans->box);
+		mailbox_free(&trans->box);
 }
 
 /*

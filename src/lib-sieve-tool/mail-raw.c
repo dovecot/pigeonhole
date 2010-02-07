@@ -291,7 +291,7 @@ void mail_raw_close(struct mail_raw *mailr)
 {
 	mail_free(&mailr->mail);
 	mailbox_transaction_rollback(&mailr->trans);
-	mailbox_close(&mailr->box);
+	mailbox_free(&mailr->box);
 
 	pool_unref(&mailr->pool);
 }

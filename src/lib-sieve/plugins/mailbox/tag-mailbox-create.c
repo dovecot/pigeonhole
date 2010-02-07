@@ -145,7 +145,7 @@ static bool seff_mailbox_create_pre_execute
     box = mailbox_alloc(trans->namespace->list, trans->folder, NULL, flags);
 	/* Create mailbox */
 	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
-		mailbox_close(&box);
+		mailbox_free(&box);
 		box = NULL;
 
 	} else {
@@ -158,7 +158,7 @@ static bool seff_mailbox_create_pre_execute
 		/* Try opening again */
 		if ( mailbox_sync(box, 0) < 0 ) {
 			/* Failed definitively */
-			mailbox_close(&box);
+			mailbox_free(&box);
 			box = NULL;
 		}
 	} 

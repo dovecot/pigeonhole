@@ -155,7 +155,7 @@ static int tst_mailboxexists_operation_execute
 			/* FIXME: check acl for 'p' or 'i' ACL permissions as required by RFC */
 
 			/* Close mailbox */
-			mailbox_close(&box);
+			mailbox_free(&box);
 		}
 	}
 	

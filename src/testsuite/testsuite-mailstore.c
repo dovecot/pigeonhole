@@ -123,11 +123,11 @@ bool testsuite_mailstore_mailbox_create
 	box = mailbox_alloc(ns->list, folder, NULL, 0);
 
 	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
-		mailbox_close(&box);
+		mailbox_free(&box);
 		return FALSE;
 	}
 
-	mailbox_close(&box);
+	mailbox_free(&box);
 
 	return TRUE;
 }
@@ -141,7 +141,7 @@ static void testsuite_mailstore_close(void)
 		mailbox_transaction_rollback(&testsuite_mailstore_trans);
 		
 	if ( testsuite_mailstore_box != NULL )
-		mailbox_close(&testsuite_mailstore_box);
+		mailbox_free(&testsuite_mailstore_box);
 
 	if ( testsuite_mailstore_folder != NULL )
 		i_free(testsuite_mailstore_folder);
