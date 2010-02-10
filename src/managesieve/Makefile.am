@@ -1,11 +1,11 @@
-settingsdir = $(moduledir)/settings
+settingsdir = $(dovecot_moduledir)/settings
 
 dovecot_pkglibexec_PROGRAMS = managesieve
 
 AM_CPPFLAGS = \
 	$(LIBDOVECOT_INCLUDE) \
 	$(LIBDOVECOT_SERVICE_INCLUDE) \
-	-DMODULEDIR=\""$(moduledir)"\" \
+	-DMODULEDIR=\""$(dovecot_moduledir)"\" \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/src/lib-sieve \
 	-I$(top_srcdir)/src/lib-managesieve \

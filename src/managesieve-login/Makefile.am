@@ -1,4 +1,4 @@
-settingsdir = $(moduledir)/settings
+settingsdir = $(dovecot_moduledir)/settings
 
 dovecot_pkglibexec_PROGRAMS = managesieve-login
 

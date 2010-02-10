@@ -4,7 +4,7 @@ dovecot_pkglib_LTLIBRARIES = libdovecot-sieve.la
 
 AM_CPPFLAGS = \
 	$(LIBDOVECOT_INCLUDE) \
-	-DMODULEDIR=\""$(moduledir)"\"
+	-DMODULEDIR=\""$(dovecot_moduledir)"\"
 
 tests = \
 	tst-truefalse.c \

@@ -12,7 +12,6 @@ AM_CPPFLAGS = \
 	-I./debug \
 	$(LIBDOVECOT_INCLUDE) \
 	$(LIBDOVECOT_SERVICE_INCLUDE)
-	$(LIBDOVECOT_STORAGE_INCLUDE)
 
 libs = \
 	$(top_srcdir)/src/lib-sieve/libdovecot-sieve.la \
