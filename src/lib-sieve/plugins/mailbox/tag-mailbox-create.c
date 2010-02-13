@@ -142,7 +142,7 @@ static bool seff_mailbox_create_pre_execute
 
 	*storage = trans->namespace->storage; 
 
-    box = mailbox_alloc(trans->namespace->list, trans->folder, NULL, flags);
+    box = mailbox_alloc(trans->namespace->list, trans->folder, flags);
 	/* Create mailbox */
 	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
 		mailbox_free(&box);

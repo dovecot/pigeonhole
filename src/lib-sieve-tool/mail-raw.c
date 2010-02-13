@@ -224,17 +224,23 @@ static struct mail_raw *mail_raw_create
 
 	if ( mailfile == NULL ) {
 		mailr->box = mailbox_alloc(raw_ns->list, "Dovecot Delivery Mail",
-			input, MAILBOX_FLAG_NO_INDEX_FILES);
+			MAILBOX_FLAG_NO_INDEX_FILES);
+
+		if (mailbox_open_stream(mailr->box, input) < 0) {
+            i_fatal("Can't open mail stream as raw: %s",
+                mail_storage_get_last_error(raw_ns->storage, &error));
+        }
 	} else {
 		mtime = (time_t)-1;
-		mailr->box = mailbox_alloc(raw_ns->list, mailfile, NULL,
+		mailr->box = mailbox_alloc(raw_ns->list, mailfile,
 			MAILBOX_FLAG_NO_INDEX_FILES);
+
+		if ( mailbox_open(mailr->box) < 0 ) {
+    	    i_fatal("Can't open mail stream as raw: %s",
+        	    mail_storage_get_last_error(raw_ns->storage, &error));
+	    }
 	}
 
-	if ( mailbox_open(mailr->box) < 0 ) {
-        i_fatal("Can't open mail stream as raw: %s",
-            mail_storage_get_last_error(raw_ns->storage, &error));
-    }
     if ( mailbox_sync(mailr->box, 0) < 0 ) {
         i_fatal("Can't sync delivery mail: %s",
             mail_storage_get_last_error(raw_ns->storage, &error));

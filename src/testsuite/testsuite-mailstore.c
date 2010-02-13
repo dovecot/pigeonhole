@@ -120,7 +120,7 @@ bool testsuite_mailstore_mailbox_create
 	struct mail_namespace *ns = testsuite_mailstore_user->namespaces;
 	struct mailbox *box;
 
-	box = mailbox_alloc(ns->list, folder, NULL, 0);
+	box = mailbox_alloc(ns->list, folder, 0);
 
 	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
 		mailbox_free(&box);
@@ -165,7 +165,7 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 		return testsuite_mailstore_mail;
 	}
 
-	box = mailbox_alloc(ns->list, folder, NULL, flags);
+	box = mailbox_alloc(ns->list, folder, flags);
 	if ( mailbox_open(box) < 0 ) {
 		sieve_sys_error("testsuite: failed to open mailbox '%s'", folder);
 		return NULL;	

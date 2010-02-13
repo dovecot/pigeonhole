@@ -401,7 +401,7 @@ int main(int argc, char **argv)
 	dst_storage = dst_ns->storage;
 
 	/* Open the source mailbox */	
-	src_box = mailbox_alloc(src_ns->list, src_mailbox, NULL, open_flags);
+	src_box = mailbox_alloc(src_ns->list, src_mailbox, open_flags);
     if ( mailbox_open(src_box) < 0 ) {
 		i_fatal("Couldn't open mailbox '%s': %s", 
 			src_mailbox, mail_storage_get_last_error(src_storage, &error));

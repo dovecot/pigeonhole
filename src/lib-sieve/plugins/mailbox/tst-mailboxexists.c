@@ -142,7 +142,7 @@ static int tst_mailboxexists_operation_execute
 			}
 
 			/* Open the box */
-			box = mailbox_alloc(ns->list, mailbox, NULL, 0);
+			box = mailbox_alloc(ns->list, mailbox, 0);
 			if ( mailbox_open(box) < 0 ) {
 				all_exist = FALSE;
 				break;

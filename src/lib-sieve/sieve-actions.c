@@ -305,7 +305,7 @@ static struct mailbox *act_store_mailbox_open
 	}
 
 	/* First attempt at opening the box */
-	box = mailbox_alloc((*ns_r)->list, *folder_r, NULL, flags);
+	box = mailbox_alloc((*ns_r)->list, *folder_r, flags);
 	if ( mailbox_open(box) == 0 ) {
 		/* Success */
 		return box;
