@@ -34,6 +34,7 @@ unsigned int login_default_port = 4190;
 
 void login_process_preinit(void)
 {
+	login_set_roots = managesieve_login_settings_set_roots;
 }
 
 /* Skip incoming data until newline is found,
@@ -392,7 +393,6 @@ static void managesieve_client_send_line
 
 void clients_init(void)
 {
-	login_set_roots = managesieve_login_settings_set_roots;
 }
 
 void clients_deinit(void)
