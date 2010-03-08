@@ -541,7 +541,7 @@ static int act_notify_check_duplicate
 	if ( nmth_def->action_check_duplicates == NULL )
 		return 0;
 
-	memset(&nenv, sizeof(nenv), 0);
+	memset(&nenv, 0, sizeof(nenv));
 	nenv.method = nact->method;	
 	nenv.ehandler = sieve_prefix_ehandler_create
 		(sieve_result_get_error_handler(renv->result), act->location, "notify");
@@ -594,7 +594,7 @@ static bool act_notify_commit
 
 	if ( method->def != NULL && method->def->action_execute != NULL )	{	
 		/* Compose log structure */
-		memset(&nenv, sizeof(nenv), 0);
+		memset(&nenv, 0, sizeof(nenv));
 		nenv.method = method;	
 		nenv.scriptenv = aenv->scriptenv;
 		nenv.msgdata = aenv->msgdata;

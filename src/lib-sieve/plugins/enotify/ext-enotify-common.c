@@ -321,7 +321,7 @@ static int _ext_enotify_option_check
 	bool result = TRUE, check = TRUE;
 	
 	/* Compose log structure */
-	memset(&nenv, sizeof(nenv), 0);
+	memset(&nenv, 0, sizeof(nenv));
 	nenv.method = method;	
 	nenv.ehandler = sieve_prefix_ehandler_create
 		(sieve_validator_error_handler(valdtr), 
@@ -395,7 +395,7 @@ bool ext_enotify_compile_check_arguments
 	if ( method->def == NULL ) return TRUE;
 
 	/* Compose log structure */
-	memset(&nenv, sizeof(nenv), 0);
+	memset(&nenv, 0, sizeof(nenv));
 	nenv.method = method;	
 	
 	/* Check URI itself */
