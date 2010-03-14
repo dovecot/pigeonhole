@@ -102,6 +102,8 @@ extern const struct sieve_extension_def virustest_extension;
  * List of native extensions
  */
 
+/* Core */
+
 const struct sieve_extension_def *sieve_core_extensions[] = {	
 	/* Dummy extensions */ 
 	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension, 
@@ -122,6 +124,18 @@ const struct sieve_extension_def *sieve_core_extensions[] = {
 
 const unsigned int sieve_core_extensions_count =
 	N_ELEMENTS(sieve_core_extensions);
+
+/* Extra; 
+ *   These are not enabled by default, because explicit configuration is
+ *   necessary to make these useful.
+ */
+
+const struct sieve_extension_def *sieve_extra_extensions[] = {	
+	&spamtest_extension, &spamtestplus_extension, &virustest_extension
+};
+
+const unsigned int sieve_extra_extensions_count =
+	N_ELEMENTS(sieve_extra_extensions);
 
 /*
  * Deprecated extensions
@@ -190,6 +204,13 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 	for ( i = 0; i < sieve_core_extensions_count; i++ ) {
 		if ( sieve_extension_register
 			(svinst, sieve_core_extensions[i], TRUE) == NULL )
+			return FALSE;
+	}
+
+	/* Pre-load extra extensions */
+	for ( i = 0; i < sieve_extra_extensions_count; i++ ) {
+		if ( sieve_extension_register
+			(svinst, sieve_extra_extensions[i], FALSE) == NULL )
 			return FALSE;
 	}
 
