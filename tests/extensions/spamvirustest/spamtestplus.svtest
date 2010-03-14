@@ -26,7 +26,7 @@ Test!
 
 test_config :set "sieve_spamtest_status_header" "X-SpamCheck";
 test_config :set "sieve_spamtest_max_value" "1";
-test_config :set "sieve_spamtest_status_type" "value";
+test_config :set "sieve_spamtest_status_type" "score";
 test_config :reload "spamtestplus";
 
 test "Value percent: .00" {

@@ -22,7 +22,7 @@
  */
 
 enum ext_spamvirustest_status_type {
-	EXT_SPAMVIRUSTEST_STATUS_TYPE_VALUE,
+	EXT_SPAMVIRUSTEST_STATUS_TYPE_SCORE,
 	EXT_SPAMVIRUSTEST_STATUS_TYPE_STRLEN,
 	EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT,
 };
@@ -292,8 +292,8 @@ bool ext_spamvirustest_load
 		return TRUE;
 	}
 
-	if ( status_type == NULL || strcmp(status_type, "value") == 0 ) {
-		type = EXT_SPAMVIRUSTEST_STATUS_TYPE_VALUE;
+	if ( status_type == NULL || strcmp(status_type, "score") == 0 ) {
+		type = EXT_SPAMVIRUSTEST_STATUS_TYPE_SCORE;
 	} else if ( strcmp(status_type, "strlen") == 0 ) {
 		type = EXT_SPAMVIRUSTEST_STATUS_TYPE_STRLEN;
 	} else if ( strcmp(status_type, "text") == 0 ) {
@@ -566,7 +566,7 @@ const char *ext_spamvirustest_get_value
 	}
 
 	switch ( ext_data->status_type ) {
-	case EXT_SPAMVIRUSTEST_STATUS_TYPE_VALUE:
+	case EXT_SPAMVIRUSTEST_STATUS_TYPE_SCORE:
 		if ( !ext_spamvirustest_parse_decimal_value
 			(status, &status_value, &error) ) {
 			sieve_runtime_trace(renv, "%s: failed to parse status value '%s': %s", 
