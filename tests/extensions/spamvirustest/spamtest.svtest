@@ -84,7 +84,7 @@ test "Value: low" {
 }
 
 test_config :set "sieve_spamtest_status_header"
-	"X-SpamCheck3:[ \\ta-zA-Z]+, score=(-?[0-9]+.[0-9]+)";
+	"X-SpamCheck3: [ \\ta-zA-Z]+, score=(-?[0-9]+.[0-9]+)";
 test_config :reload "spamtest";
 
 test "Value: high" {

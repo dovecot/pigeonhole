@@ -118,6 +118,7 @@ test_cases = \
 	tests/extensions/spamvirustest/spamtest.svtest \
 	tests/extensions/spamvirustest/virustest.svtest \
 	tests/extensions/spamvirustest/spamtestplus.svtest \
+	tests/extensions/spamvirustest/errors.svtest \
 	$(test_unfinished)
 
 $(test_cases):

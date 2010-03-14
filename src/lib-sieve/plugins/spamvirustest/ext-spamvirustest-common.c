@@ -133,6 +133,7 @@ static bool ext_spamvirustest_header_spec_parse
 		return FALSE;
 	}
 	p++;
+	while ( *p == ' ' || *p == '\t' ) p++;
 
 	spec->regexp_match = TRUE;
 	if ( !_regexp_compile(&spec->regexp, p, &regexp_error) ) {
