@@ -247,6 +247,22 @@ plugin {
 IMPORTANT: Be sure to manually pre-compile the scripts specified by sieve_before 
 and sieve_after using the sievec tool, as explained in the README file.
 
+Sieve Plugin - Spamtest and Virustest Extensions
+------------------------------------------------
+
+Using the spamtest and virustest extensions (RFC 5235), the Sieve language
+provides a uniform and standardized command interface for evaluating spam and
+virus tests performed on the message. Users no longer need to know what headers
+need to be checked and how the scanner's verdict is represented in the header
+field value. They only need to know how to use the spamtest (spamtestplus) and
+virustest extensions. This also gives GUI-based Sieve editors the means to
+provide a portable and easy to install interface for spam and virus filter
+configuration.
+
+The spamtest, spamtestplus and virustest extensions require explicit
+configuration and are not enabled for use by default. Refer to
+doc/spamtest-virustest.txt for configuration information.
+
 Sieve Plugin - Migration from CMUSieve
 --------------------------------------
 
