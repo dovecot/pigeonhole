@@ -5,7 +5,6 @@ Current activities:
 	- Implement proper :content "message/rfc822" behavior
 	- Build test cases for decoding MIME encodings to UTF-8
 * Unfinished new extensions:
-	- Finish the spamtest and virustest extensions
 	- Finish the ereject extension
 * Build a sieve tool to filter an entire existing mailbox through a Sieve 
   script:
@@ -20,15 +19,15 @@ Next (in order of descending priority/precedence):
     - Implement configurable sender exclusion list.
     - Implement mechanism for implicitly including an account's aliases in the
       vacation command's :addresses list.
-* Improve error handling. Now it is not very consistent, especially for the 
-  Sieve command line tools. 
-* Detect permission errors when writing global script binaries and advise the 
-  administrator on using sievec to precompile the scripts. 
+* Improve error handling. 
+	- Detect permission errors when writing global script binaries and advise the 
+	  administrator on using sievec to precompile the scripts.
+	- Avoid reporting user-caused errors to the master log.
+	- Implement dropping errors in the user's mailbox as a mail message.
 * Improve debugging support in the sieve-test tool:
 	- Improve trace debugging towards something more intuitively readable.
 	- Give trace debugging multiple levels of verbosity (e.g. to include more 
     messy output like value matching).
-* Implement dropping errors in the user's mailbox as a mail message.
 * Implement a better way to encode source line numbers into a binary for
   reporting errors at runtime. Currently, this is done explicitly for each 
   command that adds actions to the result. However, some tests, match types etc. 
