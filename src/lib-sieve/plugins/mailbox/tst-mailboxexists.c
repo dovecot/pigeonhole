@@ -145,6 +145,7 @@ static int tst_mailboxexists_operation_execute
 			box = mailbox_alloc(ns->list, mailbox, 0);
 			if ( mailbox_open(box) < 0 ) {
 				all_exist = FALSE;
+				mailbox_free(&box);
 				break;
 			}
 
