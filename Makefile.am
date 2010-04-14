@@ -1,4 +1,8 @@
-SUBDIRS = src doc
+if BUILD_DOCS
+DOCS = doc
+endif
+
+SUBDIRS = src $(DOCS)
 
 ACLOCAL_AMFLAGS = -I m4 --install
 

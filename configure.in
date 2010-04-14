@@ -21,9 +21,18 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_LIBTOOL
 
+# Couple with Dovecot
+#
+
 DC_DOVECOT
 LIBDOVECOT_INCLUDE="$LIBDOVECOT_INCLUDE $LIBDOVECOT_STORAGE_INCLUDE" 
 AC_SUBST(LIBDOVECOT_INCLUDE)
+
+# Defome Sieve documentation install dir
+#
+
+sieve_docdir='${dovecot_docdir}/sieve'
+AC_SUBST(sieve_docdir)
 
 # Extensions under development
 #
@@ -56,6 +65,16 @@ AC_ARG_ENABLE(header-install,
     fi,
     want_headers=no)
 AM_CONDITIONAL(INSTALL_HEADERS, test "$want_headers" = "yes")
+
+AC_ARG_WITH(docs,
+[  --with-docs             Install documentation (default)],
+    if test x$withval = xno; then
+        want_docs=no
+    else
+        want_docs=yes
+    fi,
+    want_docs=yes)
+AM_CONDITIONAL(BUILD_DOCS, test "$want_docs" = "yes")
 
 AC_ARG_ENABLE(valgrind,
 [AC_HELP_STRING([--enable-valgrind], [Enable Valgrind memory leak checks in testsuite [default=no]])],
