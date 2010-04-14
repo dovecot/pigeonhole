@@ -28,9 +28,11 @@
 /* Disconnect client when it sends too many bad commands */
 #define CLIENT_MAX_BAD_COMMANDS 10
 
-const char *login_protocol = "managesieve";
-const char *login_process_name = "managesieve-login";
-unsigned int login_default_port = 4190;
+const struct login_binary login_binary = {
+	.protocol = "managesieve",
+	.process_name = "managesieve-login",
+	.default_port = 4190
+};
 
 void login_process_preinit(void)
 {
