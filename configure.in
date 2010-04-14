@@ -1,4 +1,4 @@
-AC_INIT([Pigeonhole], [0.1.13], [dovecot@dovecot.org], [dovecot-2.0-pigeonhole])
+AC_INIT([Pigeonhole], [0.2.UNSTABLE], [dovecot@dovecot.org], [dovecot-2.0-pigeonhole])
 AC_CONFIG_SRCDIR([src])
 
 # Autoheader is not needed and does more harm than good for this package. However, it is 
