@@ -1,5 +1,6 @@
 AC_INIT([Pigeonhole], [0.2.UNSTABLE], [dovecot@dovecot.org], [dovecot-2.0-pigeonhole])
 AC_CONFIG_SRCDIR([src])
+AC_CONFIG_MACRO_DIR([m4])
 
 # Autoheader is not needed and does more harm than good for this package. However, it is 
 # tightly integrated in autoconf/automake and therefore it is difficult not to use it. As 
@@ -20,10 +21,9 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_LIBTOOL
 
-AC_ARG_WITH(dovecot,
-[AC_HELP_STRING([--with-dovecot=DIR], [Dovecot base directory [../dovecot]])],
-	dovecotdir="$withval"
-)
+DC_DOVECOT
+LIBDOVECOT_INCLUDE="$LIBDOVECOT_INCLUDE $LIBDOVECOT_STORAGE_INCLUDE" 
+AC_SUBST(LIBDOVECOT_INCLUDE)
 
 # Extensions under development
 #
@@ -77,39 +77,6 @@ AC_ARG_WITH(managesieve,
         fi,
         want_managesieve=yes)
 AM_CONDITIONAL(BUILD_MANAGESIEVE, test "$want_managesieve" = "yes")
-
-if test "$dovecotdir" = ""; then
-  test "x$prefix" = xNONE && prefix=$ac_default_prefix
-  dovecotdir=$prefix/lib/dovecot
-fi
-if ! test -f "$dovecotdir/dovecot-config"; then
-  echo
-  echo "dovecot-config not found from $dovecotdir, use --with-dovecot=PATH"
-  echo "to give path to compiled Dovecot sources or to a directory with the"
-  echo "installed dovecot-config file."
-  AC_MSG_ERROR([dovecot-config not found])
-fi
-eval `cat $dovecotdir/dovecot-config`
-
-AC_SUBST(dovecot_moduledir)
-AC_SUBST(dovecot_pkgincludedir)
-AC_SUBST(dovecot_pkglibexecdir)
-AC_SUBST(dovecot_pkglibdir)
-AC_SUBST(dovecot_docdir)
-
-AC_SUBST(LIBDOVECOT)
-AC_SUBST(LIBDOVECOT_STORAGE)
-AC_SUBST(LIBDOVECOT_LOGIN)
-
-AC_SUBST(LIBDOVECOT_DEPS)
-AC_SUBST(LIBDOVECOT_STORAGE_DEPS)
-AC_SUBST(LIBDOVECOT_LOGIN_DEPS)
-
-LIBDOVECOT_INCLUDE="$LIBDOVECOT_INCLUDE $LIBDOVECOT_STORAGE_INCLUDE" 
-AC_SUBST(LIBDOVECOT_INCLUDE)
-AC_SUBST(LIBDOVECOT_LDA_INCLUDE)
-AC_SUBST(LIBDOVECOT_SERVICE_INCLUDE)
-AC_SUBST(LIBDOVECOT_LOGIN_INCLUDE)
 
 AC_CONFIG_FILES([
 Makefile
