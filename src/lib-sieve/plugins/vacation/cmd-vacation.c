@@ -868,7 +868,7 @@ static bool _contains_8bit(const char *text)
 
 static bool act_vacation_send	
 (const struct sieve_action_exec_env *aenv, struct act_vacation_context *ctx,
-	const char *sender, const char *recipient)
+	const char *reply_to, const char *reply_from)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
@@ -903,7 +903,7 @@ static bool act_vacation_send
 
 	/* Open smtp session */
 
-	smtp_handle = sieve_smtp_open(senv, sender, NULL, &f);
+	smtp_handle = sieve_smtp_open(senv, reply_to, NULL, &f);
 	outmsgid = sieve_message_get_new_id(senv);
 
 	/* Produce a proper reply */
@@ -914,15 +914,15 @@ static bool act_vacation_send
 
 	if ( ctx->from != NULL && *(ctx->from) != '\0' )
 		rfc2822_header_field_utf8_printf(f, "From", "%s", ctx->from);
-	else if ( recipient != NULL ) 
-		rfc2822_header_field_printf(f, "From", "<%s>", recipient);
+	else if ( reply_from != NULL ) 
+		rfc2822_header_field_printf(f, "From", "<%s>", reply_from);
 	else
 		rfc2822_header_field_printf(f, "From", "Postmaster <%s>", senv->postmaster_address);
 		
 	/* FIXME: If From header of message has same address, we should use that in 
 	 * stead properly include the phrase part.
 	 */
-	rfc2822_header_field_printf(f, "To", "<%s>", sender);
+	rfc2822_header_field_printf(f, "To", "<%s>", reply_to);
 
 	if ( _contains_8bit(subject) )
 		rfc2822_header_field_utf8_printf(f, "Subject", "%s", subject);
@@ -964,7 +964,7 @@ static bool act_vacation_send
 		sieve_result_error(aenv, 
 			"failed to send vacation response to <%s> "
 			"(refer to server log for more information)", 
-			str_sanitize(sender, 128));	
+			str_sanitize(reply_to, 128));	
 		return TRUE;
 	}
 	
@@ -998,6 +998,7 @@ static bool act_vacation_commit
 	const char *const *headers;
 	const char *sender = sieve_message_get_sender(aenv->msgctx);
 	const char *recipient = sieve_message_get_recipient(aenv->msgctx);
+	const char *reply_from = NULL;
 
 	/* Is the recipient unset? 
 	 */
@@ -1097,8 +1098,10 @@ static bool act_vacation_commit
 		if ( mail_get_headers_utf8
 			(msgdata->mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
 			
-			if ( _contains_my_address(headers, recipient) ) 
+			if ( _contains_my_address(headers, recipient) ) {
+				reply_from = recipient;
 				break;
+			}
 			
 			if ( ctx->addresses != NULL ) {
 				bool found = FALSE;
@@ -1106,6 +1109,7 @@ static bool act_vacation_commit
 		
 				while ( !found && *my_address != NULL ) {
 					found = _contains_my_address(headers, *my_address);
+					reply_from = *my_address;
 					my_address++;
 				}
 				
@@ -1125,7 +1129,7 @@ static bool act_vacation_commit
 	
 	/* Send the message */
 	
-	if ( act_vacation_send(aenv, ctx, sender, recipient) ) {
+	if ( act_vacation_send(aenv, ctx, sender, reply_from) ) {
 		sieve_result_log(aenv, "sent vacation response to <%s>", 
 			str_sanitize(sender, 128));	
 
