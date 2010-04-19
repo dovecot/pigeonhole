@@ -1,8 +1,8 @@
 require "vnd.dovecot.testsuite";
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: test@dovecot.org
+From: stephan@example.org
+To: test@dovecot.example.net
 Subject: Test
 
 Test!
@@ -41,31 +41,31 @@ test "ELSEIF-false" {
 }
 
 test "IF-address-true" {
-	if address :is "from" "stephan@rename-it.nl" {
+	if address :is "from" "stephan@example.org" {
 	} else {
 		test_fail "executed wrong alternative";
 	}
 }
 
 test "IF-address-false" {
-	if address :is "from" "tss@iki.fi" {
+	if address :is "from" "tss@example.net" {
 		test_fail "executed wrong alternative";
 	}
 }
 
 test "ELSEIF-address-true" {
-	if address :is "from" "tss@iki.fi" {
+	if address :is "from" "tss@example.net" {
 		test_fail "executed wrong alternative (if)";
-	} elsif address :is "from" "stephan@rename-it.nl" {
+	} elsif address :is "from" "stephan@example.org" {
 	} else {
 		test_fail "executed wrong alternative (else)";	
 	}
 }
 
 test "ELSEIF-address-false" {
-	if address :is "from" "tss@iki.fi" {
+	if address :is "from" "tss@example.net" {
 		test_fail "executed wrong alternative (if)";
-	} elsif address :is "to" "stephan@rename-it.nl" {
+	} elsif address :is "to" "stephan@example.org" {
 		test_fail "executed wrong alternative (elsif)";	
 	} else {
 	}

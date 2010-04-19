@@ -8,7 +8,7 @@
 if address :all :comparator "i;octet" :domain "from" "STEPHAN" {
 
 	# Duplicate address part (2)
-	if address :domain :localpart :comparator "i;octet" "from" "drunksnipers.com" {
+	if address :domain :localpart :comparator "i;octet" "from" "friep.example.com" {
 		keep;
 	}
 

@@ -4,8 +4,8 @@ require "notify";
 notify :options "";
 
 # 2: invalid address syntax
-notify :options "frop#vestingbar.nl";
+notify :options "frop#frop.example.org";
 
 # Valid
-notify :options "frop@vestingbar.nl";
+notify :options "frop@frop.example.org";
 

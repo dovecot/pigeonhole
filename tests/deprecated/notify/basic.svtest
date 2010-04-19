@@ -7,5 +7,5 @@ test "Execute" {
 		:message "This is probably very important"
 		:low
 		:method "mailto" 
-		:options ["stephan@example.com", "stephan@rename-it.nl"];
+		:options ["stephan@example.com", "stephan@example.org"];
 }

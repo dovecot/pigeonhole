@@ -7,7 +7,7 @@ require "vnd.dovecot.testsuite";
 
 test_set "message" text:
 From: stephan@
-To: @rename-it.nl
+To: @example.org
 Cc: nonsense
 Resent-To:
 Subject: Invalid addresses
@@ -21,7 +21,7 @@ test "Invalid single addresses" {
 		test_fail ":localpart matched invalid address";
 	}	
 
-	if address :domain "to" "rename-it.nl" {
+	if address :domain "to" "example.org" {
 		test_fail ":domain matched invalid address";
 	}	
 
@@ -40,8 +40,8 @@ test "Invalid single addresses" {
 
 test_set "message" text:
 From: stephan@
-To: nico@vestingbar.nl, @rename-it.nl
-Cc: stephan@rename-it.nl, nonsense
+To: nico@frop.example.com, @example.org
+Cc: stephan@example.org, nonsense
 Subject: Invalid addresses
 
 Test.
@@ -53,7 +53,7 @@ test "Invalid address list" {
 		test_fail ":localpart matched invalid address";
 	}	
 
-	if address :is :domain "to" "rename-it.nl" {
+	if address :is :domain "to" "example.org" {
 		test_fail ":domain matched invalid address";
 	}	
 }
@@ -87,7 +87,7 @@ test "Undisclosed recipients" {
 
 test_set "message" text:
 From: SPAM@MYDOMAIN
-To: stephan@renane-it.nl
+To: stephan@example.org
 Subject: Spam
 
 Spam!

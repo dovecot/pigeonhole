@@ -1,8 +1,8 @@
 require "vnd.dovecot.testsuite";
 
 test_set "message" text:
-From: Stephan Bosch <stephan@rename-it.nl>
-To: nico@vestingbar.nl
+From: Stephan Bosch <stephan@example.org>
+To: nico@frop.example.org
 Subject: Test message
 Comment:                                     
 

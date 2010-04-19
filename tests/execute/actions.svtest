@@ -3,8 +3,8 @@ require "relational";
 require "comparator-i;ascii-numeric";
 
 test_set "message" text:
-To: nico@vestingbar.nl
-From: stephan@rename-it.nl
+To: nico@frop.example.org
+From: stephan@example.org
 Subject: Test
 
 Test.

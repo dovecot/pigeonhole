@@ -10,6 +10,6 @@ test "Execute" {
 		notify 
 			:message "This is probably very important"
 			:importance "1" 
-			"mailto:stephan@example.com%2cstephan@rename-it.nl?subject=Important%20message%20received";
+			"mailto:stephan@example.com%2cstephan@example.org?subject=Important%20message%20received";
 	}
 }

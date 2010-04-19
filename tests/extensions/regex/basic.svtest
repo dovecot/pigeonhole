@@ -3,8 +3,8 @@ require "vnd.dovecot.testsuite";
 require "regex";
 
 test_set "message" text:
-From: stephan+sieve@drunksnipers.com
-To: tss@iki.fi
+From: stephan+sieve@friep.example.com
+To: tss@example.net
 Subject: Test
 
 Test message.
@@ -13,8 +13,8 @@ Test message.
 
 test "Basic example" {
 	if not address :regex :comparator "i;ascii-casemap" "from" [
-		"stephan(\\+.*)?@rename-it\\.com", 
-		"stephan(\\+.*)?@drunksnipers\\.com" 
+		"stephan(\\+.*)?@it\\.example\\.com", 
+		"stephan(\\+.*)?@friep\\.example\\.com" 
 		] {
 		test_fail "failed to match";
 	}

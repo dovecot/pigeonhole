@@ -1,3 +1,3 @@
 require "enotify";
 
-notify "mailto:stephan@rename-it.nl";
+notify "mailto:stephan@example.org";

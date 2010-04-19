@@ -2,7 +2,7 @@ require "vnd.dovecot.testsuite";
 
 test_set "message" text:
 From: idiot@example.com
-To: idiot@rename-it.nl
+To: idiot@example.org
 Subject: Frop!
 
 Frop.

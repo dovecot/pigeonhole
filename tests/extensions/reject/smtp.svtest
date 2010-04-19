@@ -3,16 +3,16 @@ require "envelope";
 require "reject";
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: tss@iki.fi
+From: stephan@example.org
+To: tss@example.net
 Subject: Frop!
 
 Frop!
 .
 ;
 
-test_set "envelope.from" "sirius@rename-it.nl";
-test_set "envelope.to" "timo@iki.fi";
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "timo@example.net";
 
 test "Basic" {
 	reject "I don't want your mail";
@@ -23,7 +23,7 @@ test "Basic" {
 
     test_message :smtp 0;
 
-    if not address :is "to" "sirius@rename-it.nl" {
+    if not address :is "to" "sirius@example.org" {
         test_fail "to address incorrect";
     }
 
@@ -31,7 +31,7 @@ test "Basic" {
         test_fail "from address incorrect";
     }
 
-	if not envelope :is "to" "sirius@rename-it.nl" {
+	if not envelope :is "to" "sirius@example.org" {
 		test_fail "envelope recipient incorrect";
 	}
 

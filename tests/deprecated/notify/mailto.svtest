@@ -10,8 +10,8 @@ require "comparator-i;ascii-numeric";
  */
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -19,7 +19,7 @@ Klutsefluts.
 ;
 
 test "Simple" {
-	notify :method "mailto" :options "stephan@rename-it.nl";
+	notify :method "mailto" :options "stephan@example.org";
 
 	if not test_result_execute {
 		test_fail "failed to execute notify";
@@ -43,8 +43,8 @@ test "Simple" {
 test_result_reset;
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -52,7 +52,7 @@ Klutsefluts.
 ;
 
 test "Multiple recipients" {
-	notify :options ["timo@example.com","stephan@dovecot.org","postmaster@vestingbar.nl"];
+	notify :options ["timo@example.com","stephan@dovecot.example.net","postmaster@frop.example.org"];
 
 	if not test_result_execute {
 		test_fail "failed to execute notify";
@@ -66,7 +66,7 @@ test "Multiple recipients" {
 
 	test_message :smtp 1;
 
-	if not address :is "to" "stephan@dovecot.org" {
+	if not address :is "to" "stephan@dovecot.example.net" {
 		test_fail "second To address missing";
 	}
 
@@ -76,7 +76,7 @@ test "Multiple recipients" {
 
 	test_message :smtp 2;
 
-	if not address :is "to" "postmaster@vestingbar.nl" {
+	if not address :is "to" "postmaster@frop.example.org" {
 		test_fail "third To address missing";
 	}
 
@@ -100,8 +100,8 @@ test "Multiple recipients" {
 test_result_reset;
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -109,8 +109,8 @@ Klutsefluts.
 ;
 
 test "Duplicate recipients" {
-	notify :options ["timo@example.com", "stephan@dovecot.org", "stephan@dovecot.org"];
-	notify :options ["timo@example.com", "stephan@rename-it.nl"];
+	notify :options ["timo@example.com", "stephan@dovecot.example.net", "stephan@dovecot.example.net"];
+	notify :options ["timo@example.com", "stephan@example.org"];
 
 	if not test_result_execute {
 		test_fail "failed to execute notify";
@@ -118,7 +118,7 @@ test "Duplicate recipients" {
 
 	test_message :smtp 2;
 
-	if address "To" "stephan@dovecot.org" {
+	if address "To" "stephan@dovecot.example.net" {
 		test_fail "duplicate recipient not removed from first message";
 	}
 
@@ -134,8 +134,8 @@ test "Duplicate recipients" {
 test_result_reset;
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Auto-submitted: auto-notify
 Subject: Frop!
 
@@ -144,7 +144,7 @@ Klutsefluts.
 ;
 
 test "Notifying on automated messages" {
-	notify :options "stephan@rename-it.nl";
+	notify :options "stephan@example.org";
 
 	if not test_result_execute {
 		test_fail "failed to execute notify";
@@ -158,8 +158,8 @@ test "Notifying on automated messages" {
 test_result_reset;
 
 test_set "message" text:
-To: nico@vestingbar.nl
-From: stephan@rename-it.nl
+To: nico@frop.example.org
+From: stephan@example.org
 Subject: Test
 
 Test. Test
@@ -168,7 +168,7 @@ Frop!
 ;
 
 test "Body; Singular Message" {
-	notify :low :id "frop" :options "stephan@rename-it.nl"
+	notify :low :id "frop" :options "stephan@example.org"
     	:message text:
 Received interesting message:
 
@@ -202,8 +202,8 @@ You have been notified.
 test_result_reset;
 
 test_set "message" text:
-To: nico@vestingbar.nl
-From: stephan@rename-it.nl
+To: nico@frop.example.org
+From: stephan@example.org
 Subject: Test
 
 Test. Test
@@ -212,7 +212,7 @@ Frop!
 ;
 
 test "Body; $text[maxsize]$" {
-	notify :low :id "frop" :options "sirius@rename-it.nl"
+	notify :low :id "frop" :options "sirius@example.org"
     	:message text:
 Received interesting message:
 
@@ -292,7 +292,7 @@ This is the end of the outer MIME multipart.
 ;
 
 test "Body; Multipart Message" {
-	notify :low :id "frop" :options "stephan@rename-it.nl"
+	notify :low :id "frop" :options "stephan@example.org"
     	:message text:
 Received interesting message:
 

@@ -3,7 +3,7 @@ require "subaddress";
 require "envelope";
 
 test_set "message" text:
-From: stephan+sieve@renane-it.nl
+From: stephan+sieve@example.org
 To: test-failed@example.com
 Subject: subaddress test
 
@@ -11,8 +11,8 @@ Test!
 .
 ;
 
-test_set "envelope.to" "friep++frop@dovecot.org";
-test_set "envelope.from" "list--request@lists.dovecot.org";
+test_set "envelope.to" "friep++frop@dovecot.example.net";
+test_set "envelope.from" "list--request@lists.dovecot.example.net";
 
 test "Delimiter default" {
     if not address :is :user "from" "stephan" {

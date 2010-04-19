@@ -4,8 +4,8 @@ require "variables";
 require "mailbox";
 
 set "message1" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: First message
 
 Frop
@@ -13,8 +13,8 @@ Frop
 ;
 
 set "message2" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Second message
 
 Frop
@@ -22,8 +22,8 @@ Frop
 ;
 
 set "message3" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Third message
 
 Frop

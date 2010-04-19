@@ -3,8 +3,8 @@ require "vnd.dovecot.testsuite";
 require "subaddress";
 
 test_set "message" text:
-From: stephan+@rename-it.nl
-To: timo+spam@iki.fi
+From: stephan+@example.org
+To: timo+spam@example.net
 CC: nico@example.com
 Subject: fetch my spam
 

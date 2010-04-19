@@ -4,8 +4,8 @@ require "body";
 require "variables";
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: s.bosch@utwente.nl
+From: stephan@example.org
+To: s.bosch@twente.example.net
 Subject: Body test
 
 The big bad body test.
@@ -34,9 +34,9 @@ test "Match values re-enabled" {
 	}
 
 	if anyof (
-		not string :is "${0}" "stephan@rename-it.nl",
+		not string :is "${0}" "stephan@example.org",
 		not string :is "${1}" "stephan",
-		not string :is "${2}" "rename-it.nl" ) {
+		not string :is "${2}" "example.org" ) {
 		test_fail "match values not re-enabled properly.";
 	}
 }
@@ -47,9 +47,9 @@ test "Match values retained" {
 	}
 
 	if anyof (
-		not string :is "${0}" "stephan@rename-it.nl",
+		not string :is "${0}" "stephan@example.org",
 		not string :is "${1}" "stephan",
-		not string :is "${2}" "rename-it.nl" ) {
+		not string :is "${2}" "example.org" ) {
 		test_fail "match values not retained after body test.";
 	}
 }

@@ -9,8 +9,8 @@ require "comparator-i;ascii-numeric";
  */
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -18,7 +18,7 @@ Klutsefluts.
 ;
 
 test "Simple" {
-	notify "mailto:stephan@rename-it.nl";
+	notify "mailto:stephan@example.org";
 
 	if not test_result_execute {
 		test_fail "failed to execute notify";
@@ -49,8 +49,8 @@ test "Simple" {
 test_result_reset;
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -58,7 +58,7 @@ Klutsefluts.
 ;
 
 test "Multiple recipients" {
-	notify "mailto:timo@example.com%2cstephan@dovecot.org?cc=postmaster@vestingbar.nl&subject=Frop%20received";
+	notify "mailto:timo@example.com%2cstephan@dovecot.example.net?cc=postmaster@frop.example.org&subject=Frop%20received";
 
 	if not test_result_execute {
 		test_fail "failed to execute notify";
@@ -70,11 +70,11 @@ test "Multiple recipients" {
 		test_fail "first To address missing";
 	}
 
-	if not address :is "to" "stephan@dovecot.org" {
+	if not address :is "to" "stephan@dovecot.example.net" {
 		test_fail "second To address missing";
 	}
 
-	if not address :is "cc" "postmaster@vestingbar.nl" {
+	if not address :is "cc" "postmaster@frop.example.org" {
 		test_fail "first Cc address missing";
 	}
 
@@ -110,8 +110,8 @@ test "Multiple recipients" {
 test_result_reset;
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -119,8 +119,8 @@ Klutsefluts.
 ;
 
 test "Duplicate recipients" {
-	notify "mailto:timo@example.com%2cstephan@dovecot.org?cc=stephan@dovecot.org";
-	notify "mailto:stephan@rename-it.nl?cc=timo@example.com";
+	notify "mailto:timo@example.com%2cstephan@dovecot.example.net?cc=stephan@dovecot.example.net";
+	notify "mailto:stephan@example.org?cc=timo@example.com";
 
 	if not test_result_execute {
 		test_fail "failed to execute notify";
@@ -128,7 +128,7 @@ test "Duplicate recipients" {
 
 	test_message :smtp 0;
 
-	if address "Cc" "stephan@dovecot.org" {
+	if address "Cc" "stephan@dovecot.example.net" {
 		test_fail "duplicate recipient not removed from first message";
 	}
 
@@ -147,8 +147,8 @@ test "Duplicate recipients" {
 test_result_reset;
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Auto-submitted: auto-notify
 Subject: Frop!
 
@@ -157,7 +157,7 @@ Klutsefluts.
 ;
 
 test "Notifying on automated messages" {
-	notify "mailto:stephan@rename-it.nl?cc=timo@example.com";
+	notify "mailto:stephan@example.org?cc=timo@example.com";
 
 	if not test_result_execute {
 		test_fail "failed to execute notify";
@@ -173,8 +173,8 @@ test "Notifying on automated messages" {
  */
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -183,11 +183,11 @@ Klutsefluts.
 
 test_result_reset;
 
-test_set "envelope.from" "sirius@rename-it.nl";
-test_set "envelope.to" "bertus@vestingbar.nl";
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "bertus@frop.example.org";
 
 test "Envelope" {
-	notify "mailto:stephan@rename-it.nl?cc=timo@example.com";
+	notify "mailto:stephan@example.org?cc=timo@example.com";
 
 	if not test_result_execute {
 		test_fail "failed to execute notify";
@@ -199,7 +199,7 @@ test "Envelope" {
 		test_fail "envelope sender set incorrectly";
 	}
 
-	if not envelope :is "to" "stephan@rename-it.nl" {
+	if not envelope :is "to" "stephan@example.org" {
 		test_fail "envelope sender set incorrectly";
 	}
 
@@ -219,22 +219,22 @@ test "Envelope" {
  */
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
 .
 ;
 
-test_set "envelope.from" "sirius@rename-it.nl";
-test_set "envelope.to" "bertus@vestingbar.nl";
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "bertus@frop.example.org";
 
 test_result_reset;
 
 test "Envelope :from" {
-	notify :from "nico@vestingbar.nl"
-		"mailto:stephan@rename-it.nl?cc=timo@example.com";
+	notify :from "nico@frop.example.org"
+		"mailto:stephan@example.org?cc=timo@example.com";
 
 	if not test_result_execute {
 		test_fail "failed to execute notify";
@@ -242,17 +242,17 @@ test "Envelope :from" {
 
 	test_message :smtp 0;
 
-	if not envelope :is "from" "nico@vestingbar.nl" {
+	if not envelope :is "from" "nico@frop.example.org" {
 		test_fail "envelope sender set incorrectly";
 	}
 
-	if not envelope :is "to" "stephan@rename-it.nl" {
+	if not envelope :is "to" "stephan@example.org" {
 		test_fail "envelope sender set incorrectly";
 	}
 
 	test_message :smtp 1;
 
-	if not envelope :is "from" "nico@vestingbar.nl" {
+	if not envelope :is "from" "nico@frop.example.org" {
 		test_fail "envelope sender set incorrectly";
 	}
 
@@ -266,8 +266,8 @@ test "Envelope :from" {
  */
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -275,13 +275,13 @@ Klutsefluts.
 ;
 
 test_set "envelope.from" "<>";
-test_set "envelope.to" "bertus@vestingbar.nl";
+test_set "envelope.to" "bertus@frop.example.org";
 
 test_result_reset;
 
 test "Envelope <>" {
-	notify :from "nico@vestingbar.nl"
-		"mailto:stephan@rename-it.nl?cc=timo@example.com";
+	notify :from "nico@frop.example.org"
+		"mailto:stephan@example.org?cc=timo@example.com";
 
 	if not test_result_execute {
 		test_fail "failed to execute notify";
@@ -293,7 +293,7 @@ test "Envelope <>" {
 		test_fail "envelope sender set incorrectly";
 	}
 
-	if not envelope :is "to" "stephan@rename-it.nl" {
+	if not envelope :is "to" "stephan@example.org" {
 		test_fail "envelope sender set incorrectly";
 	}
 

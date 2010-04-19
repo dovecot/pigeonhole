@@ -1,7 +1,7 @@
 keep;
 discard;
 keep
-redirect "frop@frop.nl";
+redirect "frop@nl.example.com";
 discard;
 keep
-redirect "frml@frop.nl";
+redirect "frml@nl.example.com";

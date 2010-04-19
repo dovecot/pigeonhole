@@ -2,7 +2,7 @@ require "fileinto";
 
 /* Three store actions */
 
-if address :contains "to" "vestingbar" {
+if address :contains "to" "frop.example" {
 	/* #1 */
 	fileinto "INBOX.VB";
 }

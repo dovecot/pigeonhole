@@ -1,9 +1,9 @@
 require "vnd.dovecot.testsuite";
 
 test_set "message" text:
-From: stephan@rename-it.nl
-Message-ID: <frop33333333333333333@frutsens.nl>
-To: nico@vestingbar.nl
+From: stephan@example.org
+Message-ID: <frop33333333333333333@frutsens.example.nl>
+To: nico@frop.example.org
 Subject: Frop.
 
 Friep.

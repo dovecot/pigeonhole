@@ -102,9 +102,9 @@ test "RFC - values overwrite" {
 test "RFC - example" {
 	test_set "message" text:
 Subject: [acme-users] [fwd] version 1.0 is out
-List-Id: Dovecot Mailing List <dovecot@dovecot.org>     
+List-Id: Dovecot Mailing List <dovecot@dovecot.example.net>     
 To: coyote@ACME.Example.COM
-Fom: stephan@rename-it.nl
+Fom: stephan@example.org
 
 Test message.
 .
@@ -337,17 +337,17 @@ test "Letters words *? first" {
  */
 
 test_set "message" text:
-Return-path: <stephan@xi.rename-it.nl>
-Envelope-to: stephan@xi.rename-it.nl
+Return-path: <stephan@xi.example.org>
+Envelope-to: stephan@xi.example.org
 Delivery-date: Sun, 01 Feb 2009 11:29:57 +0100
-Received: from stephan by xi.rename-it.nl with local (Exim 4.69)
-	(envelope-from <stephan@xi.rename-it.nl>)
+Received: from stephan by xi.example.org with local (Exim 4.69)
+	(envelope-from <stephan@xi.example.org>)
 	id 1LTZaP-0007h3-2e
-	for stephan@xi.rename-it.nl; Sun, 01 Feb 2009 11:29:57 +0100
-From: Dovecot Debian Builder <stephan.rename-it.nl@xi.rename-it.nl>
-To: stephan@xi.rename-it.nl
+	for stephan@xi.example.org; Sun, 01 Feb 2009 11:29:57 +0100
+From: Dovecot Debian Builder <stephan.example.org@xi.example.org>
+To: stephan@xi.example.org
 Subject: Log for failed build of dovecot_2:1.2.alpha5-0~auto+159 (dist=hardy)
-Message-Id: <E1LTZaP-0007h3-2e@xi.rename-it.nl>
+Message-Id: <E1LTZaP-0007h3-2e@xi.example.org>
 Date: Sun, 01 Feb 2009 11:29:57 +0100
 
 Automatic build of dovecot_1.2.alpha5-0~auto+159 on xi by sbuild/i386 0.57.7

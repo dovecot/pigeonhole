@@ -1,4 +1,4 @@
-if address :contains "to" "vestingbar" {
+if address :contains "to" "frop.example" {
 	/* #1 */
 	redirect "stephan@example.com";
 	
@@ -7,7 +7,7 @@ if address :contains "to" "vestingbar" {
 }
 
 /* #3 */
-redirect "stephan@rename-it.nl";
+redirect "stephan@example.org";
 
 /* #4 */
 redirect "nico@example.nl";

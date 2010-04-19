@@ -5,28 +5,28 @@ require "envelope";
 
 test "Message Environment" {
 	test_set "message" text:
-From: sirius@rename-it.nl
-To: nico@vestingbar.nl
+From: sirius@example.org
+To: nico@frop.example.com
 Subject: Frop!
 
 Frop!
 .
 	;
 
-	if not header :contains "from" "rename-it.nl" {
+	if not header :contains "from" "example.org" {
 		test_fail "message data not set properly.";
 	}
 
 	test_set "message" text:
-From: nico@vestingbar.nl
-To: stephan@zuiphol.nl
+From: nico@frop.example.com
+To: stephan@nl.example.com
 Subject: Friep!
 
 Friep!
 .
 	;
 
-	if not header :is "from" "nico@vestingbar.nl" {
+	if not header :is "from" "nico@frop.example.com" {
     	test_fail "message data not set properly.";
 	} 
 
@@ -36,15 +36,15 @@ Friep!
 /* Test envelope environment */
 
 test "Envelope Environment" {
-	test_set "envelope.from" "stephan@hutsefluts.nl";
+	test_set "envelope.from" "stephan@hutsefluts.example.net";
 
-	if not envelope :is "from" "stephan@hutsefluts.nl" {
+	if not envelope :is "from" "stephan@hutsefluts.example.net" {
         test_fail "envelope.from data not set properly (1).";
     }
 
-	test_set "envelope.to" "news@rename-it.nl";
+	test_set "envelope.to" "news@example.org";
 
-	if not envelope :is "to" "news@rename-it.nl" {
+	if not envelope :is "to" "news@example.org" {
         test_fail "envelope.to data not set properly (1).";
     }
 
@@ -54,15 +54,15 @@ test "Envelope Environment" {
         test_fail "envelope.auth data not set properly (1).";
     }
 
-	test_set "envelope.from" "stephan@rename-it.nl";
+	test_set "envelope.from" "stephan@example.org";
 
-	if not envelope :is "from" "stephan@rename-it.nl" {
+	if not envelope :is "from" "stephan@example.org" {
         test_fail "envelope.from data not reset properly (2).";
     }
 
-	test_set "envelope.to" "past-news@rename-it.nl";
+	test_set "envelope.to" "past-news@example.org";
 
-	if not envelope :is "to" "past-news@rename-it.nl" {
+	if not envelope :is "to" "past-news@example.org" {
         test_fail "envelope.to data not reset properly (2).";
     }
 

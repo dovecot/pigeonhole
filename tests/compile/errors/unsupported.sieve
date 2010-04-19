@@ -16,7 +16,7 @@ require "regex";
 
 set "comp" "i;ascii-numeric";
 
-if address :comparator "${comp}" "from" "stephan@rename-it.nl" {
+if address :comparator "${comp}" "from" "stephan@example.org" {
 	stop;
 }
 

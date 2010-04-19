@@ -2,7 +2,7 @@ require "vnd.dovecot.testsuite";
 require "variables";
 
 test_set "message" text:
-From: stephan@rename-it.nl
+From: stephan@example.org
 To: test@example.com
 Subject: Variables test
 
@@ -174,20 +174,20 @@ I'm out, please leave a message after the meep.
 
 test "Multi-line string substitution" {
 	set "name" "Stephan Bosch";
-	set "address" "stephan@rename-it.nl";
+	set "address" "stephan@example.org";
 	set "subject" "Test message";
 	
 	set "message" text: # Message with substitutions
 From: ${name} <${address}>
-To: Bertus van Asseldonk <b.vanasseldonk@hetkennet.nl>
+To: Bertus van Asseldonk <b.vanasseldonk@nl.example.com>
 Subject: ${subject}
 
 This is a test message.
 .
 ;
 	if not string :is "${message}" text:
-From: Stephan Bosch <stephan@rename-it.nl>
-To: Bertus van Asseldonk <b.vanasseldonk@hetkennet.nl>
+From: Stephan Bosch <stephan@example.org>
+To: Bertus van Asseldonk <b.vanasseldonk@nl.example.com>
 Subject: Test message
 
 This is a test message.

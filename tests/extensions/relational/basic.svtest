@@ -8,10 +8,10 @@ require "comparator-i;ascii-numeric";
  */
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
-Cc: frop@rename-it.nl
-CC: timo@rename-it.nl
+From: stephan@example.org
+To: nico@frop.example.org
+Cc: frop@example.org
+CC: timo@example.org
 X-Spam-Score: 300
 X-Nonsense: 1000
 X-Nonsense: 20

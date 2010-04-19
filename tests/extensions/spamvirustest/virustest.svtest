@@ -10,7 +10,7 @@ require "variables";
 
 test_set "message" text:
 From: legitimate@example.com
-To: victim@dovecot.org
+To: victim@dovecot.example.net
 Subject: Viral
 X-VirusCheck: Definitely
 X-VirusCheck1: Almost Certain

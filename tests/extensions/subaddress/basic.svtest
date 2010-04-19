@@ -3,7 +3,7 @@ require "envelope";
 require "subaddress";
 
 test_set "message" text:
-From: stephan+sieve@renane-it.nl
+From: stephan+sieve@example.org
 To: test+failed@example.com
 Subject: subaddress test
 
@@ -11,8 +11,8 @@ Test!
 .
 ;
 
-test_set "envelope.to" "friep+frop@dovecot.org";
-test_set "envelope.from" "list+request@lists.dovecot.org";
+test_set "envelope.to" "friep+frop@dovecot.example.net";
+test_set "envelope.from" "list+request@lists.dovecot.example.net";
 
 test "Address from :user" {
 	if not address :is :user "from" "stephan" {
@@ -98,7 +98,7 @@ test "Undisclosed-recipients" {
 	}
 }
 
-test_set "envelope.to" "frop@sieve.nl";
+test_set "envelope.to" "frop@sieve.example.net";
 
 test "No detail" {
 	if envelope :detail "to" "virus" {

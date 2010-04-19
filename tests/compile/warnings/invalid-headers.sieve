@@ -1,8 +1,8 @@
-if header "from:" "frop@rename-it.nl" {
+if header "from:" "frop@example.org" {
 	stop;
 }
 
-if address "from:" "frop@rename-it.nl" {
+if address "from:" "frop@example.org" {
 	stop;
 }
 

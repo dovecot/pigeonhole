@@ -7,8 +7,8 @@ require "envelope";
  */
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -17,8 +17,8 @@ Klutsefluts.
 
 test "Denotify All" {
     notify :options "timo@example.com";
-	notify :options "stephan@dovecot.org";
-	notify :options "postmaster@vestingbar.nl";
+	notify :options "stephan@dovecot.example.net";
+	notify :options "postmaster@frop.example.org";
 	denotify;
 
     if not test_result_execute {
@@ -37,8 +37,8 @@ test "Denotify All" {
 test_result_reset;
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -50,10 +50,10 @@ test "Denotify ID First" {
     notify :options "timo@example.com" :id "aap";
 
 	/* #2 */
-	notify :options "stephan@dovecot.org" :id "noot";
+	notify :options "stephan@dovecot.example.net" :id "noot";
 
 	/* #3 */
-	notify :options "postmaster@vestingbar.nl" :id "mies";
+	notify :options "postmaster@frop.example.org" :id "mies";
 
 	denotify :is "aap";
 
@@ -65,7 +65,7 @@ test "Denotify ID First" {
         test_fail "two notifications should have been sent (#2 missing)";
 	}
 
-	if not envelope "to" "stephan@dovecot.org" {
+	if not envelope "to" "stephan@dovecot.example.net" {
 		test_fail "message #2 unexpectedly missing from output";
 	}
 
@@ -73,7 +73,7 @@ test "Denotify ID First" {
         test_fail "two notifications should have been sent (#3 missing)";
 	}
 
-	if not envelope "to" "postmaster@vestingbar.nl" {
+	if not envelope "to" "postmaster@frop.example.org" {
 		test_fail "message #3 unexpectedly missing from output";
 	}
 
@@ -89,8 +89,8 @@ test "Denotify ID First" {
 test_result_reset;
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -102,10 +102,10 @@ test "Denotify ID Middle" {
     notify :options "timo@example.com" :id "aap";
 
 	/* #2 */
-	notify :options "stephan@dovecot.org" :id "noot";
+	notify :options "stephan@dovecot.example.net" :id "noot";
 
 	/* #3 */
-	notify :options "postmaster@vestingbar.nl" :id "mies";
+	notify :options "postmaster@frop.example.org" :id "mies";
 
 	denotify :is "noot";
 
@@ -125,7 +125,7 @@ test "Denotify ID Middle" {
         test_fail "two notifications should have been sent (#3 missing)";
 	}
 
-	if not envelope "to" "postmaster@vestingbar.nl" {
+	if not envelope "to" "postmaster@frop.example.org" {
 		test_fail "message #3 unexpectedly missing from output";
 	}
 
@@ -141,8 +141,8 @@ test "Denotify ID Middle" {
 test_result_reset;
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -154,10 +154,10 @@ test "Denotify ID Last" {
     notify :options "timo@example.com" :id "aap";
 
 	/* #2 */
-	notify :options "stephan@dovecot.org" :id "noot";
+	notify :options "stephan@dovecot.example.net" :id "noot";
 
 	/* #3 */
-	notify :options "postmaster@vestingbar.nl" :id "mies";
+	notify :options "postmaster@frop.example.org" :id "mies";
 
 	denotify :is "mies";
 
@@ -177,7 +177,7 @@ test "Denotify ID Last" {
         test_fail "two notifications should have been sent (#2 missing)";
 	}
 
-	if not envelope "to" "stephan@dovecot.org" {
+	if not envelope "to" "stephan@dovecot.example.net" {
 		test_fail "message #2 unexpectedly missing from output";
 	}
 
@@ -194,8 +194,8 @@ test "Denotify ID Last" {
 test_result_reset;
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -207,10 +207,10 @@ test "Denotify Matching" {
     notify :options "timo@example.com" :id "frop";
 
 	/* #2 */
-	notify :options "stephan@dovecot.org" :id "noot";
+	notify :options "stephan@dovecot.example.net" :id "noot";
 
 	/* #3 */
-	notify :options "postmaster@vestingbar.nl" :id "friep";
+	notify :options "postmaster@frop.example.org" :id "friep";
 
 	denotify :matches "fr*";
 
@@ -222,7 +222,7 @@ test "Denotify Matching" {
         test_fail "one notification should have been sent";
 	}
 
-	if not envelope "to" "stephan@dovecot.org" {
+	if not envelope "to" "stephan@dovecot.example.net" {
 		test_fail "message #2 unexpectedly missing from output";
 	}
 
@@ -239,8 +239,8 @@ test "Denotify Matching" {
 test_result_reset;
 
 test_set "message" text:
-From: stephan@rename-it.nl
-To: nico@vestingbar.nl
+From: stephan@example.org
+To: nico@frop.example.org
 Subject: Frop!
 
 Klutsefluts.
@@ -252,10 +252,10 @@ test "Denotify Matching Importance" {
     notify :options "timo@example.com" :id "frop" :low;
 
 	/* #2 */
-	notify :options "stephan@dovecot.org" :id "frml" :high;
+	notify :options "stephan@dovecot.example.net" :id "frml" :high;
 
 	/* #3 */
-	notify :options "postmaster@vestingbar.nl" :id "friep" :low;
+	notify :options "postmaster@frop.example.org" :id "friep" :low;
 
 	denotify :matches "fr*" :low;
 
@@ -267,7 +267,7 @@ test "Denotify Matching Importance" {
         test_fail "one notification should have been sent";
 	}
 
-	if not envelope "to" "stephan@dovecot.org" {
+	if not envelope "to" "stephan@dovecot.example.net" {
 		test_fail "message #2 unexpectedly missing from output";
 	}
 
