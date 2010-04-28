@@ -143,6 +143,6 @@ struct sieve_error_handler *sieve_prefix_ehandler_create
 /* Wrapper: make messages part of var expansion */
 struct sieve_error_handler *sieve_varexpand_ehandler_create
 (struct sieve_error_handler *parent, const char *format,
-	struct var_expand_table *table);
+	const struct var_expand_table *table);
 
 #endif /* __SIEVE_ERROR_H */

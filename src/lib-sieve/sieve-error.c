@@ -993,7 +993,7 @@ static void sieve_varexpand_vdebug
 
 struct sieve_error_handler *sieve_varexpand_ehandler_create
 (struct sieve_error_handler *parent, const char *format,
-	struct var_expand_table *table)
+	const struct var_expand_table *table)
 {
 	pool_t pool;
 	struct sieve_varexpand_ehandler *ehandler;
