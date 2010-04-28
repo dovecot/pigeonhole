@@ -12,8 +12,8 @@ libs = \
 	$(top_srcdir)/src/lib-sieve/libdovecot-sieve.la \
 	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la
 
-testsuite_LDADD = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT)
-testsuite_DEPENDENCIES = $(libs) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
+testsuite_LDADD = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT_LDA) $(LIBDOVECOT)
+testsuite_DEPENDENCIES = $(libs) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_LDA_DEPS) $(LIBDOVECOT_DEPS)
 
 commands = \
 	cmd-test.c \

@@ -10,6 +10,7 @@
 #include "str-sanitize.h"
 #include "var-expand.h"
 #include "message-address.h"
+#include "mail-deliver.h"
 
 #include "sieve-common.h"
 #include "sieve-limits.h"
@@ -846,53 +847,14 @@ bool sieve_result_print
  * Result execution
  */
 
-static const char *_get_from_address(struct mail *mail)
-{
-	struct message_address *addr;
-	const char *str;
-
-	if ( mail_get_first_header(mail, "from", &str) <= 0 )
-		return NULL;
-
-	addr = message_address_parse
-		(pool_datastack_create(), (const unsigned char *)str, strlen(str), 1, 
-			FALSE);
-
-	return addr == NULL || addr->mailbox == NULL || addr->domain == NULL ||
-		*addr->mailbox == '\0' || *addr->domain == '\0' ?
-		NULL : t_strconcat(addr->mailbox, "@", addr->domain, NULL);
-}
-
 static void _sieve_result_prepare_execution(struct sieve_result *result)
 {
 	const struct sieve_message_data *msgdata = result->action_env.msgdata;
 	const struct sieve_script_env *senv = result->action_env.scriptenv;
-	const struct var_expand_table static_tab[] = {
-		{ 'm', NULL, "msgid" },
-		{ 's', NULL, "subject" },
-		{ 'f', NULL, "from" },
-		{ '\0', NULL, NULL }
-	};
-	const char *msgid = msgdata->id;
-	struct var_expand_table *tab;
-	unsigned int i;
+	const struct var_expand_table *tab;
 
-	tab = t_malloc(sizeof(static_tab));
-	memcpy(tab, static_tab, sizeof(static_tab));
-
-	msgid = ( msgid == NULL ? "unspecified" : str_sanitize(msgid, 80) );
-
-	/* Fill in substitution items */
-	tab[0].value = msgid;
-	(void)mail_get_first_header_utf8(msgdata->mail, "Subject", &tab[1].value);
-	tab[2].value = _get_from_address(msgdata->mail);
-	tab[3].value = "";
-
-	/* Sanitize substitution items */
-	for (i = 0; tab[i].key != '\0'; i++)
-		tab[i].value = str_sanitize(tab[i].value, 80);
-
-	result->action_env.exec_status = 
+	tab = mail_deliver_get_log_var_expand_table(msgdata->mail, NULL);
+	result->action_env.exec_status =
 		( senv->exec_status == NULL ? 
 			t_new(struct sieve_exec_status, 1) : senv->exec_status );
 

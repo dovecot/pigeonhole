@@ -27,9 +27,9 @@ libs = \
 	$(top_srcdir)/src/lib-sievestorage/libsievestorage.a \
 	$(top_srcdir)/src/lib-sieve/libdovecot-sieve.la
 
-managesieve_LDADD = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT)
+managesieve_LDADD = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT_LDA) $(LIBDOVECOT)
 
-managesieve_DEPENDENCIES = $(libs) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
+managesieve_DEPENDENCIES = $(libs) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_LDA_DEPS) $(LIBDOVECOT_DEPS)
 
 cmds = \
 	cmd-capability.c \

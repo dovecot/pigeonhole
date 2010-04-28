@@ -18,8 +18,8 @@ libs = \
 	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la \
 	./debug/libsieve_ext_debug.la
 
-libs_ldadd = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT)
-libs_deps = $(libs) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
+libs_ldadd = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT_LDA) $(LIBDOVECOT)
+libs_deps = $(libs) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_LDA_DEPS) $(LIBDOVECOT_DEPS)
 
 # Sieve Compile Tool
 
