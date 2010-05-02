@@ -44,7 +44,7 @@ struct sieve_storage {
 
 	mode_t dir_create_mode;
 	mode_t file_create_mode;
-	gid_t dir_create_gid;
+	gid_t file_create_gid;
 
 	uint64_t max_scripts;
 	uint64_t max_storage;

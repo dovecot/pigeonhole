@@ -5,6 +5,7 @@
 #include "home-expand.h"
 #include "ioloop.h"
 #include "mkdir-parents.h"
+#include "eacces-error.h"
 
 #include "sieve.h"
 #include "sieve-common.h"
@@ -70,59 +71,97 @@ static const char *sieve_storage_get_relative_link_path
 	return t_strdup(link_path);
 }
 
-static int sieve_storage_verify_dir
-(const char *path, mode_t *mode_r, gid_t *gid_r)
+static mode_t get_dir_mode(mode_t mode)
+{
+	/* Add the execute bit if either read or write bit is set */
+
+	if ((mode & 0600) != 0) mode |= 0100;
+	if ((mode & 0060) != 0) mode |= 0010;
+	if ((mode & 0006) != 0) mode |= 0001;
+
+	return mode;
+}
+
+static void sieve_storage_get_permissions
+(const char *path, mode_t *file_mode_r, mode_t *dir_mode_r, gid_t *gid_r, 
+	const char **gid_origin_r, bool debug)
 {
 	struct stat st;
 
+	/* Use safe defaults */
+	*file_mode_r = 0600;
+	*dir_mode_r = 0700;
+	*gid_r = (gid_t)-1;
+	*gid_origin_r = "defaults";
+
 	if ( stat(path, &st) < 0 ) {
-		const char *p;
-		int ret;
+		if ( !ENOTFOUND(errno) ) {
+			i_error("sieve-storage: stat(%s) failed: %m", path);
+		} else if ( debug ) {
+			i_debug("sieve-storage: permission lookup failed from %s", path);
+		}
+		return;
 
-		if ( errno != ENOENT )
-			return -1;
+	} else {
+		*file_mode_r = (st.st_mode & 0666) | 0600;
+		*dir_mode_r = (st.st_mode & 0777) | 0700;
+		*gid_origin_r = path;
 
-		/* Ascend to parent path element */
-		p = strrchr(path, '/');
+		if ( !S_ISDIR(st.st_mode) ) {
+			/* We're getting permissions from a file. Apply +x modes as necessary. */
+			*dir_mode_r = get_dir_mode(*dir_mode_r);
+		}
 
-		/* Path components exhausted? */
-		if  (p == NULL || p == path )
-			return -1;
-
-		/* Recurse */
-		T_BEGIN {
-			ret = sieve_storage_verify_dir(t_strdup_until(path, p), mode_r, gid_r);
-		} T_END;
-
-		if ( ret < 0 )
-			return -1;
-
-		if ( mkdir_chown(path, *mode_r, (uid_t) -1, *gid_r) < 0 )
-			return -1;
-
-		return 0;
+		if (S_ISDIR(st.st_mode) && (st.st_mode & S_ISGID) != 0) {
+			/* Directory's GID is used automatically for new files */
+			*gid_r = (gid_t)-1;
+		} else if ((st.st_mode & 0070) >> 3 == (st.st_mode & 0007)) {
+			/* Group has same permissions as world, so don't bother changing it */
+			*gid_r = (gid_t)-1;
+		} else if (getegid() == st.st_gid) {
+			/* Using our own gid, no need to change it */
+			*gid_r = (gid_t)-1;
+		} else {
+			*gid_r = st.st_gid;
+		}
 	}
-	
-	/* Report back permission bits and group id back to caller */
 
-	if ( !S_ISDIR(st.st_mode) ) {
-		i_error("sieve-storage: Path is not a directory: %s", path);
+	if ( debug ) {
+		i_debug("sieve-storage: using permissions from %s: mode=0%o gid=%ld", 
+			path, (int)*dir_mode_r, *gid_r == (gid_t)-1 ? -1L : (long)*gid_r);
+	}
+}
+
+static int mkdir_verify
+(const char *dir, mode_t mode, gid_t gid, const char *gid_origin, bool debug)
+{
+	struct stat st;
+
+	if ( stat(dir, &st) == 0 )
+		return 0;
+
+	if ( errno != ENOENT ) {
+		i_error("sieve-storage: stat(%s) failed: %m", dir);
 		return -1;
 	}
 
-	*mode_r = st.st_mode & MAX_DIR_CREATE_MODE & 0777;
-
-	/* Check whether changing GID will be necessary */
-	if ( (st.st_mode & S_ISGID) != 0 ) {
-		/* Setgid bit set */
-		*gid_r = (gid_t) -1;
-	} else if ( getegid() == st.st_gid ) {
-		*gid_r = (gid_t) -1;
-	} else {
-		*gid_r = st.st_gid;
+	if ( mkdir_parents_chgrp(dir, mode, gid, gid_origin) == 0 ) {
+		if ( debug )
+			i_debug("sieve-storage: created storage directory %s", dir);
+		return 0;
 	}
 
-	return 0;
+	if ( errno == EEXIST ) {
+		return 0;
+	} else if (errno == ENOENT) {
+		i_error("sieve-storage: storage was deleted while it was being created");
+	} else if (errno == EACCES) {
+		i_error("sieve-storage: %s", eacces_error_get_creating("mkdir", dir));
+	} else {
+		i_error("sieve-storage: mkdir(%s) failed: %m", dir);
+	}
+
+	return -1;
 }
 
 static struct sieve_storage *_sieve_storage_create
@@ -132,8 +171,9 @@ static struct sieve_storage *_sieve_storage_create
 	struct sieve_storage *storage;
 	const char *tmp_dir, *link_path;
 	const char *sieve_data, *active_path, *active_fname, *storage_dir;
-	mode_t dir_mode;
-	gid_t dir_gid;
+	mode_t dir_create_mode, file_create_mode;
+	gid_t file_create_gid;
+	const char *file_create_gid_origin;
 	unsigned long long int uint_setting;
 	size_t size_setting;
 
@@ -242,16 +282,27 @@ static struct sieve_storage *_sieve_storage_create
 			"using sieve script storage directory: %s", storage_dir); 
 	}
 
+	/* Get permissions */
+
+	sieve_storage_get_permissions
+		(storage_dir, &file_create_mode, &dir_create_mode, &file_create_gid, 
+			&file_create_gid_origin, debug);
+
 	/* 
 	 * Ensure sieve local directory structure exists (full autocreate):
 	 *  This currently currently only consists of a ./tmp direcory
 	 */
-	tmp_dir = t_strconcat( storage_dir, "/tmp", NULL );	
-	if ( sieve_storage_verify_dir(tmp_dir, &dir_mode, &dir_gid) < 0 ) {
-		i_error("sieve-storage: sieve_storage_verify_dir(%s) failed: %m", tmp_dir);
-		return NULL;
-	}
+	
+	tmp_dir = t_strconcat(storage_dir, "/tmp", NULL);	
 
+	/*ret = maildir_check_tmp(box->storage, box->path);
+	if (ret < 0)
+		return -1;*/
+
+	if ( mkdir_verify(tmp_dir, dir_create_mode, file_create_gid, 
+		file_create_gid_origin, debug) < 0 )
+		return NULL;
+	
 	/* 
 	 * Create storage object 
 	 */
@@ -266,9 +317,9 @@ static struct sieve_storage *_sieve_storage_create
 	storage->active_path = p_strdup(pool, active_path);
 	storage->active_fname = p_strdup(pool, active_fname);
 
-	storage->dir_create_mode = dir_mode;
-	storage->file_create_mode = dir_mode & 0666;
-	storage->dir_create_gid = dir_gid;
+	storage->dir_create_mode = dir_create_mode;
+	storage->file_create_mode = file_create_mode;
+	storage->file_create_gid = file_create_gid;
 
 	/* Get the path to be prefixed to the script name in the symlink pointing 
 	 * to the active script.
