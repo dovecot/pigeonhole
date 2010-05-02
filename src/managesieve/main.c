@@ -103,37 +103,18 @@ static void managesieve_die(void)
 static void client_add_input(struct client *client, const buffer_t *buf)
 {
 	struct ostream *output;
-	const char *tag;
-	unsigned int data_pos;
-	bool send_untagged_capability = FALSE;
 
 	if (buf != NULL && buf->used > 0) {
-		tag = t_strndup(buf->data, buf->used);
-		switch (*tag) {
-		case '0':
-			tag++;
-			break;
-		case '1':
-			send_untagged_capability = TRUE;
-			tag++;
-			break;
-		}
-		data_pos = strlen(tag) + 1;
-		if (data_pos > buf->used &&
-		    !i_stream_add_data(client->input,
-				       CONST_PTR_OFFSET(buf->data, data_pos),
-				       buf->used - data_pos))
+		if (!i_stream_add_data(client->input, buf->data, buf->used))
 			i_panic("Couldn't add client input to stream");
 	}
 
 	output = client->output;
 	o_stream_ref(output);
 	o_stream_cork(output);
-
-	client_send_ok(client, "Logged in.");
-
+	if (!IS_STANDALONE())
+		client_send_ok(client, "Logged in.");
   (void)client_input(client);
-
 	o_stream_uncork(output);
 	o_stream_unref(&output);
 }
@@ -164,7 +145,7 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	return 0;
 }
 
-static void main_stdio_run(void)
+static void main_stdio_run(const char *username)
 {
 	struct mail_storage_service_input input;
 	const char *value, *error, *input_base64;
@@ -172,7 +153,7 @@ static void main_stdio_run(void)
 
 	memset(&input, 0, sizeof(input));
 	input.module = input.service = "managesieve";
-	input.username = getenv("USER");
+	input.username =  username != NULL ? username : getenv("USER");
 	if (input.username == NULL && IS_STANDALONE())
 		input.username = getlogin();
 	if (input.username == NULL)
@@ -206,18 +187,13 @@ login_client_connected(const struct master_login_client *client,
 	input.username = username;
 	input.userdb_fields = extra_fields;
 
-	if (input.username == NULL) {
-		i_error("login client: Username missing from auth reply");
-		(void)close(client->fd);
-		return;
-	}
-
 	buffer_create_const_data(&input_buf, client->data,
 				 client->auth_req.data_size);
 	if (client_create_from_input(&input, client->fd, client->fd,
 				     &input_buf, &error) < 0) {
 		i_error("%s", error);
 		(void)close(client->fd);
+		master_service_client_connection_destroyed(master_service);
 	}
 }
 
@@ -250,7 +226,8 @@ int main(int argc, char *argv[])
 	};
 	enum master_service_flags service_flags = 0;
 	enum mail_storage_service_flags storage_service_flags = 0;
-	const char *postlogin_socket_path;
+	const char *postlogin_socket_path, *username = NULL;
+	int c;
 
 	if (IS_STANDALONE() && getuid() == 0 &&
 	    net_getpeername(1, NULL, NULL) == 0) {
@@ -269,9 +246,18 @@ int main(int argc, char *argv[])
 	}
 
 	master_service = master_service_init("managesieve", service_flags,
-					     &argc, &argv, NULL);
-	if (master_getopt(master_service) > 0)
-		return FATAL_DEFAULT;
+					     &argc, &argv, "u:");
+	while ((c = master_getopt(master_service)) > 0) {
+		switch (c) {
+		case 'u':
+			storage_service_flags |=
+				MAIL_STORAGE_SERVICE_FLAG_USERDB_LOOKUP;
+			username = optarg;
+			break;
+		default:
+			return FATAL_DEFAULT;
+		}
+	}
 	postlogin_socket_path = argv[1] == NULL ? NULL : t_abspath(argv[1]);
 
 	master_service_init_finish(master_service);
@@ -290,7 +276,7 @@ int main(int argc, char *argv[])
 
 	if (IS_STANDALONE()) {
 		T_BEGIN {
-			main_stdio_run();
+			main_stdio_run(username);
 		} T_END;
 	} else {
 		master_login = master_login_init(master_service, "auth-master",

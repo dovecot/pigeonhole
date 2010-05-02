@@ -112,7 +112,7 @@ void client_send_storage_error(struct client *client,
 /* Read a number of arguments. Returns TRUE if everything was read or
    FALSE if either needs more data or error occurred. */
 bool client_read_args(struct client_command_context *cmd, unsigned int count,
-		      unsigned int flags, struct managesieve_arg **args);
+		      unsigned int flags, struct managesieve_arg **args_r);
 /* Reads a number of string arguments. ... is a list of pointers where to
    store the arguments. */
 bool client_read_string_args(struct client_command_context *cmd,

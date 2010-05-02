@@ -13,7 +13,7 @@
  * to avoid duplicate code 
  */
 
-const struct command managesieve_commands[] = {
+static const struct command managesieve_base_commands[] = {
 	{ "CAPABILITY", cmd_capability },
 	{ "LOGOUT", cmd_logout },
 	{ "PUTSCRIPT", cmd_putscript },
@@ -27,18 +27,19 @@ const struct command managesieve_commands[] = {
 	{ "NOOP", cmd_noop }
 };
 
-#define MANAGESIEVE_COMMANDS_COUNT N_ELEMENTS(managesieve_commands) 
+#define MANAGESIEVE_COMMANDS_COUNT N_ELEMENTS(managesieve_base_commands) 
 
-static ARRAY_DEFINE(commands, struct command);
+static ARRAY_DEFINE(managesieve_commands, struct command);
 static bool commands_unsorted;
 
 void command_register(const char *name, command_func_t *func)
 {
 	struct command cmd;
 
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.name = name;
 	cmd.func = func;
-	array_append(&commands, &cmd, 1);
+	array_append(&managesieve_commands, &cmd, 1);
 
 	commands_unsorted = TRUE;
 }
@@ -48,10 +49,10 @@ void command_unregister(const char *name)
 	const struct command *cmd;
 	unsigned int i, count;
 
-	cmd = array_get(&commands, &count);
+	cmd = array_get(&managesieve_commands, &count);
 	for (i = 0; i < count; i++) {
 		if (strcasecmp(cmd[i].name, name) == 0) {
-			array_delete(&commands, i, 1);
+			array_delete(&managesieve_commands, i, 1);
 			return;
 		}
 	}
@@ -62,7 +63,7 @@ void command_unregister(const char *name)
 void command_register_array(const struct command *cmdarr, unsigned int count)
 {
 	commands_unsorted = TRUE;
-	array_append(&commands, cmdarr, count);
+	array_append(&managesieve_commands, cmdarr, count);
 }
 
 void command_unregister_array(const struct command *cmdarr, unsigned int count)
@@ -73,45 +74,36 @@ void command_unregister_array(const struct command *cmdarr, unsigned int count)
 	}
 }
 
-static int command_cmp(const void *p1, const void *p2)
+static int command_cmp(const struct command *c1, const struct command *c2)
 {
-	const struct command *c1 = p1, *c2 = p2;
-
 	return strcasecmp(c1->name, c2->name);
 }
 
-static int command_bsearch(const void *name, const void *cmd_p)
+static int command_bsearch(const char *name, const struct command *cmd)
 {
-	const struct command *cmd = cmd_p;
-
 	return strcasecmp(name, cmd->name);
 }
 
 struct command *command_find(const char *name)
 {
-    void *base;
-    unsigned int count;
+	if (commands_unsorted) {
+		array_sort(&managesieve_commands, command_cmp);
+		commands_unsorted = FALSE;
+	}
 
-    base = array_get_modifiable(&commands, &count);
-    if (commands_unsorted) {
-        qsort(base, count, sizeof(struct command), command_cmp);
-                commands_unsorted = FALSE;
-    }
-
-    return bsearch(name, base, count, sizeof(struct command),
-               command_bsearch);
+	return array_bsearch(&managesieve_commands, name, command_bsearch);
 }
 
 void commands_init(void)
 {
-	i_array_init(&commands, 16);
+	i_array_init(&managesieve_commands, 16);
 	commands_unsorted = FALSE;
 	
-	command_register_array(managesieve_commands, MANAGESIEVE_COMMANDS_COUNT);
+	command_register_array(managesieve_base_commands, MANAGESIEVE_COMMANDS_COUNT);
 }
 
 void commands_deinit(void)
 {
-	command_unregister_array(managesieve_commands, MANAGESIEVE_COMMANDS_COUNT);
-	array_free(&commands);
+	command_unregister_array(managesieve_base_commands, MANAGESIEVE_COMMANDS_COUNT);
+	array_free(&managesieve_commands);
 }

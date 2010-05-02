@@ -67,8 +67,13 @@ static const struct sieve_environment managesieve_sieve_env = {
 
 static void client_idle_timeout(struct client *client)
 {
-	client_send_bye(client, "Disconnected for inactivity.");
-	client_destroy(client, "Disconnected for inactivity");
+	if (client->cmd.func != NULL) {
+		client_destroy(client,
+			"Disconnected for inactivity in reading our output");
+	} else {
+		client_send_bye(client, "Disconnected for inactivity");
+		client_destroy(client, "Disconnected for inactivity");
+	}
 }
 
 static struct sieve_storage *client_get_storage
@@ -192,7 +197,8 @@ static const char *client_stats(struct client *client)
 
 static const char *client_get_disconnect_reason(struct client *client)
 {
-	errno = client->input->stream_errno != 0 ?		client->input->stream_errno :
+	errno = client->input->stream_errno != 0 ?
+		client->input->stream_errno :
 		client->output->stream_errno;
 	return errno == 0 || errno == EPIPE ? "Connection closed" :
 		t_strdup_printf("Connection closed: %m");
@@ -406,22 +412,22 @@ void client_send_storage_error(struct client *client,
 }
 
 bool client_read_args(struct client_command_context *cmd, unsigned int count,
-		      unsigned int flags, struct managesieve_arg **args)
+		      unsigned int flags, struct managesieve_arg **args_r)
 {
 	int ret;
 
 	i_assert(count <= INT_MAX);
 
-	ret = managesieve_parser_read_args(cmd->client->parser, count, flags, args);
+	ret = managesieve_parser_read_args(cmd->client->parser, count, flags, args_r);
 	if (ret >= (int)count) {
 		/* all parameters read successfully */
 		return TRUE;
 	} else if (ret == -2) {
 		/* need more data */
 		if (cmd->client->input->closed) {
-            /* disconnected */
-            cmd->param_error = TRUE;
-        }
+			/* disconnected */
+ 			cmd->param_error = TRUE;
+		}
 		return FALSE;
 	} else {
 		/* error, or missing arguments */
@@ -565,6 +571,7 @@ static bool client_handle_input(struct client_command_context *cmd)
 		if (cmd->name == NULL)
 			return FALSE; /* need more data */
 		cmd->name = p_strdup(cmd->pool, cmd->name);
+		managesieve_refresh_proctitle();
 	}
 
 	if (cmd->name == '\0') {
