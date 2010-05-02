@@ -254,8 +254,8 @@ int main(int argc, char *argv[])
 
 	if (IS_STANDALONE() && getuid() == 0 &&
 	    net_getpeername(1, NULL, NULL) == 0) {
-		printf("* BAD [ALERT] managesieve binary must not be started from "
-		       "inetd, use managesieve-login instead.\n");
+		printf("NO \"managesieve binary must not be started from "
+		       "inetd, use managesieve-login instead.\"\n");
 		return 1;
 	}
 
