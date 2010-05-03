@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <dirent.h>
+#include <sysexits.h>
 
 /*
  * Print help
@@ -44,6 +45,7 @@ int main(int argc, char **argv)
 	struct sieve_binary *sbin;
 	bool dump = FALSE;
 	const char *scriptfile, *outfile, *extensions;
+	int exit_status = EXIT_SUCCESS;
 		
 	sieve_tool_init(TRUE);
 
@@ -59,7 +61,7 @@ int main(int argc, char **argv)
 			i++;
 			if (i == argc) {
 				print_help();
-				i_fatal("Missing -x argument");
+				i_fatal_status(EX_USAGE, "Missing -x argument");
 			}
 			extensions = argv[i];
 		} else if (strcmp(argv[i], "-P") == 0) {
@@ -69,7 +71,7 @@ int main(int argc, char **argv)
 			i++;
 			if (i == argc) {
 				print_help();
-				i_fatal("Missing -P argument");
+				i_fatal_status(EX_USAGE, "Missing -P argument");
 			}
 
 			plugin = t_strdup(argv[i]);
@@ -80,13 +82,13 @@ int main(int argc, char **argv)
 			outfile = argv[i];
 		} else {
 			print_help();
-			i_fatal("Unknown argument: %s", argv[i]);
+			i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[i]);
 		}
 	}
 	
 	if ( scriptfile == NULL ) {
 		print_help();
-		i_fatal("Missing <script-file> argument");
+		i_fatal_status(EX_USAGE, "Missing <script-file> argument");
 	}
 	
 	if ( outfile == NULL && dump )
@@ -113,11 +115,12 @@ int main(int argc, char **argv)
 		/* Sanity checks on some of the arguments */
 		
 		if ( dump )
-			i_fatal("the -d option is not allowed when scriptfile is a directory."); 
+			i_fatal_status(EX_USAGE, 
+				"the -d option is not allowed when scriptfile is a directory."); 
 		
 		if ( outfile != NULL )
-			i_fatal("the outfile argument is not allowed when scriptfile is a "
-				"directory."); 
+			i_fatal_status(EX_USAGE, 
+				"the outfile argument is not allowed when scriptfile is a directory."); 
 		
 		/* Open the directory */
 		if ( (dirp = opendir(scriptfile)) == NULL )
@@ -144,8 +147,7 @@ int main(int argc, char **argv)
 				sbin = sieve_tool_script_compile(file, dp->d_name);
 
 				if ( sbin != NULL ) {
-					sieve_save(sbin, NULL);
-		
+					sieve_save(sbin, NULL);		
 					sieve_close(&sbin);
 				}
 			}
@@ -153,8 +155,7 @@ int main(int argc, char **argv)
    
 		/* Close the directory */
 		if ( closedir(dirp) < 0 ) 
-			i_fatal("closedir(%s) failed: %m", scriptfile);
- 	
+			i_fatal("closedir(%s) failed: %m", scriptfile); 	
 	} else {
 		/* Script file (i.e. not a directory)
 		 * 
@@ -170,8 +171,12 @@ int main(int argc, char **argv)
 			}
 		
 			sieve_close(&sbin);
+		} else {
+			exit_status = EXIT_FAILURE;
 		}
 	}
 		
 	sieve_tool_deinit();
+
+	return exit_status;
 }

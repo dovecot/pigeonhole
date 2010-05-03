@@ -186,15 +186,15 @@ static void testsuite_test_context_deinit(void)
 	str_free(&test_name);
 }
 
-int testsuite_testcase_result(void)
+bool testsuite_testcase_result(void)
 {
 	if ( test_failures > 0 ) {
 		printf("\nFAIL: %d of %d tests failed.\n\n", test_failures, test_index);
-		return 1;
+		return FALSE;
 	}
 
 	printf("\nPASS: %d tests succeeded.\n\n", test_index);
-	return 0;
+	return TRUE;
 }
 
 /*

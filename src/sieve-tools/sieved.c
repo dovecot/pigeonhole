@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sysexits.h>
 
 /*
  * Print help
@@ -40,6 +41,7 @@ int main(int argc, char **argv)
 	int i;
 	struct sieve_binary *sbin;
 	const char *binfile, *outfile, *extensions;
+	int exit_status = EXIT_SUCCESS;
 	
 	sieve_tool_init(TRUE);
 
@@ -52,7 +54,7 @@ int main(int argc, char **argv)
 			i++;
 			if (i == argc) {
 				print_help();
-				i_fatal("Missing -x argument");
+				i_fatal_status(EX_USAGE, "Missing -x argument");
 			}
 			extensions = argv[i];
 		} else if (strcmp(argv[i], "-P") == 0) {
@@ -62,7 +64,7 @@ int main(int argc, char **argv)
 			i++;
 			if (i == argc) {
 				print_help();
-				i_fatal("Missing -P argument");
+				i_fatal_status(EX_USAGE, "Missing -P argument");
 			}
 
 			plugin = t_strdup(argv[i]);
@@ -73,13 +75,13 @@ int main(int argc, char **argv)
 			outfile = argv[i];
 		} else {
 			print_help();
-			i_fatal("unknown argument: %s", argv[i]);
+			i_fatal_status(EX_USAGE, "unknown argument: %s", argv[i]);
 		}
 	}
 	
 	if ( binfile == NULL ) {
 		print_help();
-		i_fatal("missing <sieve-binary> argument");
+		i_fatal_status(EX_USAGE, "missing <sieve-binary> argument");
 	}
 
 	sieve_tool_sieve_init(NULL);
@@ -101,9 +103,13 @@ int main(int argc, char **argv)
 		sieve_tool_dump_binary_to(sbin, outfile == NULL ? "-" : outfile);
 	
 		sieve_close(&sbin);
-	} else 
+	} else {
 		i_error("failed to load binary: %s", binfile);
-	
+		exit_status = EXIT_FAILURE;
+	}
+
 	sieve_tool_deinit();
+
+	return exit_status;
 }
 

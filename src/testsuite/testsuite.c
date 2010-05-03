@@ -290,5 +290,8 @@ int main(int argc, char **argv)
 	mail_storage_service_deinit(&storage_service);
 	master_service_deinit(&master_service);
 
-	return testsuite_testcase_result();
+	if ( !testsuite_testcase_result() )
+		return EXIT_FAILURE;
+
+	return EXIT_SUCCESS;
 }

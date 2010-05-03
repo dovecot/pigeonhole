@@ -124,6 +124,7 @@ int main(int argc, char **argv)
 	struct ostream *teststream = NULL;
 	bool force_compile = FALSE, execute = FALSE;
 	bool trace = FALSE;
+	int exit_status = EXIT_SUCCESS;
 	int ret, c;
 
 	master_service = master_service_init("sieve-test", 
@@ -266,7 +267,9 @@ int main(int argc, char **argv)
 		main_sbin = sieve_tool_script_open(scriptfile);
 	}
 
-	if ( main_sbin != NULL ) {
+	if ( main_sbin == NULL ) {
+		exit_status = EXIT_FAILURE;
+	} else {
 		struct mail_user *mail_user = NULL;
 
 		/* Dump script */
@@ -422,11 +425,14 @@ int main(int argc, char **argv)
 			(void) unlink(sieve_binary_path(sbin));
 		case SIEVE_EXEC_FAILURE:
 			i_info("final result: failed; resolved with successful implicit keep");
+			exit_status = EXIT_FAILURE;
 			break;
 		case SIEVE_EXEC_KEEP_FAILED:
 			i_info("final result: utter failure");
+			exit_status = EXIT_FAILURE;
 			break;
 		default:
+			exit_status = EXIT_FAILURE;
 			i_info("final result: unrecognized return value?!");	
 		}
 
@@ -461,5 +467,5 @@ int main(int argc, char **argv)
 	mail_storage_service_deinit(&storage_service);
 	master_service_deinit(&master_service);
 	
-	return 0;
+	return exit_status;
 }
