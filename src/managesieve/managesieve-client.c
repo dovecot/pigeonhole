@@ -111,7 +111,7 @@ struct client *client_create
 	const struct managesieve_settings *set)
 {
 	struct client *client;
-	const char *ident;
+	const char *ident, *extensions;
 	struct sieve_instance *svinst;
 	struct sieve_storage *storage;
 
