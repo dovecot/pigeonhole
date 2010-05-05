@@ -226,8 +226,9 @@ static void capability_dump(void)
 
 	alarm(5);
 	if (wait(&status) == -1) {
-		i_fatal("managesieve-login: dump-capability process %d got stuck", 
+		i_error("managesieve-login: dump-capability failed: process %d got stuck", 
 			(int)pid);
+		return;
 	}
 	alarm(0);
 
