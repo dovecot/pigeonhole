@@ -116,8 +116,8 @@ const struct setting_parser_info *managesieve_login_settings_set_roots[] = {
 
 typedef enum { CAP_SIEVE, CAP_NOTIFY } capability_type_t;
 
-static const char *capability_sieve = NULL;
-static const char *capability_notify = NULL;
+static char *capability_sieve = NULL;
+static char *capability_notify = NULL;
 
 void managesieve_login_settings_deinit(void)
 {
@@ -205,7 +205,7 @@ static void capability_dump(void)
 	}
 
 	if ( pid == 0 ) {
-		const char *argv[1];
+		const char *argv[2];
 
 		/* Child */
 		(void)close(fd[0]);		
@@ -216,6 +216,7 @@ static void capability_dump(void)
 		env_put("DUMP_CAPABILITY=1");
 
 		argv[0] = PKG_LIBEXECDIR"/managesieve"; /* BAD */
+		argv[1] = NULL;
 		execv_const(argv[0], argv);
 
 		i_fatal("managesieve-login: dump-capability execv(%s) failed: %m", argv[0]);
