@@ -95,7 +95,7 @@ static const struct setting_parser_info managesieve_login_setting_parser_info = 
 
 	/* Only compiled in the doveconf plugin */
 #ifdef _CONFIG_PLUGIN
-	.check_func = managesieve_login_settings_verify,
+//	.check_func = managesieve_login_settings_verify,
 #endif
 
 	.dependencies = managesieve_login_setting_dependencies
@@ -284,7 +284,7 @@ static bool managesieve_login_settings_verify
 
 	if ( *set->managesieve_notify_capability == '\0' && capability_notify != NULL )
 		set->managesieve_notify_capability = capability_notify;
-	
+
 	return TRUE;
 }
 /* </settings checks> */
