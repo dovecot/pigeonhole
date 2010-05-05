@@ -179,21 +179,6 @@ struct client *client_create
 	return client;
 }
 
-void client_dump_capability
-(struct client *client)
-{
-	struct sieve_instance *svinst = client->svinst;
-	const char *notify_cap;
-
-	notify_cap = sieve_get_capabilities(svinst, "notify");
-
-	if ( notify_cap == NULL ) 
-		printf("SIEVE: %s\n", sieve_get_capabilities(svinst, NULL));
-	else
-		printf("SIEVE: %s, NOTIFY: %s\n", sieve_get_capabilities(svinst, NULL),
-			sieve_get_capabilities(svinst, "notify"));
-}
-
 static const char *client_stats(struct client *client)
 {	
 	static struct var_expand_table static_tab[] = {
