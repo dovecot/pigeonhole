@@ -62,7 +62,7 @@ static const char *managesieve_sieve_get_setting
 
 static const struct sieve_environment managesieve_sieve_env = {
 	managesieve_sieve_get_homedir,
-    managesieve_sieve_get_setting
+	managesieve_sieve_get_setting
 };
 
 static void client_idle_timeout(struct client *client)
@@ -123,6 +123,11 @@ struct client *client_create
 	/* Initialize Sieve instance */
 
 	svinst = sieve_init(&managesieve_sieve_env, (void *) user);
+
+	extensions = mail_user_plugin_getenv(user, "sieve_extensions");
+	if ( extensions != NULL ) {
+		sieve_set_extensions(svinst, extensions);
+	}
 
 	/* Get Sieve storage */
 
