@@ -119,7 +119,7 @@ static void client_add_input(struct client *client, const buffer_t *buf)
 	o_stream_unref(&output);
 }
 
-static int
+static struct client *
 client_create_from_input(const struct mail_storage_service_input *input,
 			 int fd_in, int fd_out, const buffer_t *input_buf,
 			 const char **error_r)
@@ -131,7 +131,7 @@ client_create_from_input(const struct mail_storage_service_input *input,
 
 	if (mail_storage_service_lookup_next(storage_service, input,
 					     &user, &mail_user, error_r) <= 0)
-		return -1;
+		return NULL;
 	restrict_access_allow_coredumps(TRUE);
 
 	set = mail_storage_service_user_get_set(user)[1];
@@ -142,13 +142,15 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	T_BEGIN {
 		client_add_input(client, input_buf);
 	} T_END;
-	return 0;
+
+	return client;
 }
 
 static void main_stdio_run(const char *username)
 {
 	struct mail_storage_service_input input;
 	const char *value, *error, *input_base64;
+	struct client *client;
 	buffer_t *input_buf;
 
 	memset(&input, 0, sizeof(input));
@@ -167,9 +169,16 @@ static void main_stdio_run(const char *username)
 	input_buf = input_base64 == NULL ? NULL :
 		t_base64_decode_str(input_base64);
 
-	if (client_create_from_input(&input, STDIN_FILENO, STDOUT_FILENO,
-				     input_buf, &error) < 0)
+	client = client_create_from_input(&input, STDIN_FILENO, STDOUT_FILENO,
+				     input_buf, &error);
+	if ( client == NULL )
 		i_fatal("%s", error);
+
+	/* Dump capabilities if requested */
+	if ( getenv("DUMP_CAPABILITY") != NULL ) {
+		client_dump_capability(client);
+		exit(0);
+	}
 }
 
 static void
@@ -190,7 +199,7 @@ login_client_connected(const struct master_login_client *client,
 	buffer_create_const_data(&input_buf, client->data,
 				 client->auth_req.data_size);
 	if (client_create_from_input(&input, client->fd, client->fd,
-				     &input_buf, &error) < 0) {
+				     &input_buf, &error) == NULL) {
 		i_error("%s", error);
 		(void)close(client->fd);
 		master_service_client_connection_destroyed(master_service);
@@ -271,7 +280,7 @@ int main(int argc, char *argv[])
 					  set_roots, storage_service_flags);
 
 	/* fake that we're running, so we know if client was destroyed
-	   while handling its initial input */
+		while handling its initial input */
 	io_loop_set_running(current_ioloop);
 
 	if (IS_STANDALONE()) {

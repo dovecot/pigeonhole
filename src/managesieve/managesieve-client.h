@@ -76,6 +76,8 @@ struct client *client_create(int fd_in, int fd_out, struct mail_user *user,
 			     const struct managesieve_settings *set);
 void client_destroy(struct client *client, const char *reason);
 
+void client_dump_capability(struct client *client);
+
 /* Disconnect client connection */
 void client_disconnect(struct client *client, const char *reason);
 void client_disconnect_with_error(struct client *client, const char *msg);
