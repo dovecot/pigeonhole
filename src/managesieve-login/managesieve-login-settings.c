@@ -183,7 +183,7 @@ static void capability_parse(const char *cap_string)
 	}
 }
 
-static void capability_dump(void)
+static bool capability_dump(void)
 {
 	char buf[4096];
 	int fd[2], status;
@@ -193,7 +193,7 @@ static void capability_dump(void)
 
 	if ( pipe(fd) < 0 ) {
 		i_error("managesieve-login: dump-capability pipe() failed: %m");
-		return;
+		return FALSE;
 	}
 	fd_close_on_exec(fd[0], TRUE);
 	fd_close_on_exec(fd[1], TRUE);
@@ -201,7 +201,7 @@ static void capability_dump(void)
 	if ( (pid = fork()) == (pid_t)-1 ) {
 		(void)close(fd[0]); (void)close(fd[1]);
 		i_error("managesieve-login: dump-capability fork() failed: %m");
-		return;
+		return FALSE;
 	}
 
 	if ( pid == 0 ) {
@@ -228,7 +228,7 @@ static void capability_dump(void)
 	if (wait(&status) == -1) {
 		i_error("managesieve-login: dump-capability failed: process %d got stuck", 
 			(int)pid);
-		return;
+		return FALSE;
 	}
 	alarm(0);
 
@@ -241,7 +241,7 @@ static void capability_dump(void)
 			i_error("managesieve-login: dump-capability process returned %d",
 				WIFEXITED(status) ? WEXITSTATUS(status) : status);
 		}
-		return;
+		return FALSE;
 	}
 
 	pos = 0;
@@ -251,18 +251,20 @@ static void capability_dump(void)
 	if (ret < 0) {
 		i_error("managesieve-login: read(dump-capability process) failed: %m");
 		(void)close(fd[0]);
-		return;
+		return FALSE;
 	}
 	(void)close(fd[0]);
 
 	if (pos == 0 || buf[pos-1] != '\n') {
 		i_error("managesieve-login: dump-capability: Couldn't read capability "
 			"(got %u bytes)", pos);
-		return;
+		return FALSE;
 	}
 	buf[pos-1] = '\0';
 
 	capability_parse(buf);
+
+	return TRUE;
 }
 
 /* <settings checks> */
@@ -271,13 +273,16 @@ static bool managesieve_login_settings_verify
 {
 	struct managesieve_login_settings *set = _set;
 
-	if ( capability_sieve == NULL )
-		capability_dump();
+	if ( capability_sieve == NULL ) {
+		if ( !capability_dump() ) {
+			capability_sieve = "";
+		}
+	}
 
-	if ( *set->managesieve_sieve_capability == '\0' )
+	if ( *set->managesieve_sieve_capability == '\0' && capability_sieve != NULL )
 		set->managesieve_sieve_capability = capability_sieve;
 
-	if ( *set->managesieve_notify_capability == '\0' )
+	if ( *set->managesieve_notify_capability == '\0' && capability_notify != NULL )
 		set->managesieve_notify_capability = capability_notify;
 	
 	return TRUE;

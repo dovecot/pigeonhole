@@ -57,45 +57,15 @@ static const struct setting_parser_info **plugin_set_roots =
 
 static struct master_service_settings_cache *set_cache;
 
-static struct plugin_settings *
-plugin_settings_read(pool_t pool, void ***other_settings_r)
+static struct plugin_settings *plugin_settings_read(void)
 {
-	struct master_service_settings_input input;
 	const char *error;
-	const struct setting_parser_context *parser;
-	void *const *cache_sets;
-	void **sets;
-	unsigned int i, count;
 
-	memset(&input, 0, sizeof(input));
-	input.roots = plugin_set_roots;
-	input.module = "managesieve";
-	input.service = "managesieve";
+	if (master_service_settings_read_simple(master_service, plugin_set_roots, &error) < 0)
+		i_fatal("Error reading configuration: %s", error);
 
-	if (set_cache == NULL) {
-		set_cache = master_service_settings_cache_init
-			(master_service, input.module, input.service);
-	}
-
-	if (master_service_settings_cache_read(set_cache, &input, NULL,
-					       &parser, &error) < 0)
-		i_fatal("dump-capability: Error reading configuration: %s", error);
-
-	cache_sets = settings_parser_get_list(parser) + 1;
-	for (count = 0; input.roots[count] != NULL; count++) ;
-	i_assert(cache_sets[count] == NULL);
-	sets = p_new(pool, void *, count + 1);
-	for (i = 0; i < count; i++) {
-		sets[i] = settings_dup(input.roots[i], cache_sets[i], pool);
-		if (!settings_check(input.roots[i], pool, sets[i], &error)) {
-			const char *name = input.roots[i]->module_name;
-			i_fatal("dump-capability: settings_check(%s) failed: %s",
-				name != NULL ? name : "unknown", error);
-		}
-	}
-
-	*other_settings_r = sets + 1;
-	return sets[0];
+	return (struct plugin_settings *)
+		master_service_settings_get_others(master_service)[0];
 }
 
 static const char *plugin_settings_get
@@ -150,18 +120,13 @@ static const struct sieve_environment sieve_env = {
 
 void managesieve_capabilities_dump(void)
 {
-	pool_t set_pool;
 	const struct plugin_settings *global_plugin_settings;
-	void **global_other_settings;
 	struct sieve_instance *svinst;
 	const char *extensions, *notify_cap;
 	
 	/* Read plugin settings */
 
-	set_pool = pool_alloconly_create("global plugin settings", 4096);
-
-	global_plugin_settings = plugin_settings_read
-		(set_pool, &global_other_settings);
+	global_plugin_settings = plugin_settings_read();
 
 	/* Initialize Sieve engine */
 
