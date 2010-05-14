@@ -24,7 +24,7 @@ extern const struct sieve_environment sieve_tool_env;
  */
 
 void sieve_tool_init(bool init_lib);
-void sieve_tool_sieve_init(const struct sieve_environment *env);
+void sieve_tool_sieve_init(const struct sieve_environment *env, bool debug);
 void sieve_tool_deinit(void);
 
 /*

@@ -119,11 +119,11 @@ int main(int argc, char **argv)
 	ARRAY_TYPE(const_string) plugins;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
-	bool trace = FALSE, log_stdout = FALSE;
+	bool trace = FALSE, log_stdout = FALSE, debug = FALSE;
 	int ret, c;
 
 	master_service = master_service_init
-		("testsuite", MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "d:x:tP:E");
+		("testsuite", MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "d:x:P:tED");
 
 	user = getenv("USER");
 
@@ -141,11 +141,8 @@ int main(int argc, char **argv)
 			dumpfile = optarg;
 			break;
 		case 'x':
-            /* destination address */
-            extensions = optarg;
-            break;
-		case 't':
-			trace = TRUE;
+			/* destination address */
+			extensions = optarg;
 			break;
 		case 'P':
 			/* Plugin */
@@ -156,8 +153,14 @@ int main(int argc, char **argv)
 				array_append(&plugins, &plugin, 1);
 			}
 			break;
+		case 't':
+			trace = TRUE;
+			break;
 		case 'E':
 			log_stdout = TRUE;
+			break;
+		case 'D':
+			debug = TRUE;
 			break;
 		default:
 			print_help();
@@ -202,7 +205,8 @@ int main(int argc, char **argv)
 
 	/* Initialize testsuite */
 	testsuite_settings_init();
-	sieve_tool_sieve_init(&testsuite_sieve_env);
+
+	sieve_tool_sieve_init(&testsuite_sieve_env, debug);
 	sieve_tool_load_plugins(&plugins);
 	sieve_extensions_set_string(sieve_instance, extensions);
 	testsuite_init(sieve_instance, log_stdout);

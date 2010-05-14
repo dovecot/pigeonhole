@@ -123,12 +123,12 @@ int main(int argc, char **argv)
 	struct sieve_error_handler *ehandler;
 	struct ostream *teststream = NULL;
 	bool force_compile = FALSE, execute = FALSE;
-	bool trace = FALSE;
+	bool debug = FALSE, trace = FALSE;
 	int exit_status = EXIT_SUCCESS;
 	int ret, c;
 
 	master_service = master_service_init("sieve-test", 
-		MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "r:f:m:d:l:x:s:ectP:");
+		MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "r:f:m:d:l:x:s:P:eCtD");
 
 	sieve_tool_init(FALSE);
 
@@ -187,11 +187,14 @@ int main(int argc, char **argv)
 		case 'e':
 			execute = TRUE;
 			break;
-		case 'c':
+		case 'C':
 			force_compile = TRUE;
 			break;
 		case 't':
 			trace = TRUE;
+			break;
+		case 'D':
+			debug = TRUE;
 			break;
 		default:
 			print_help();
@@ -219,7 +222,7 @@ int main(int argc, char **argv)
 		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
 	}
 
-	sieve_tool_sieve_init(NULL);
+	sieve_tool_sieve_init(NULL, debug);
 
 	if ( array_count(&plugins) > 0 ) {
 		sieve_tool_load_plugins(&plugins);

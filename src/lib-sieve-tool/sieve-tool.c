@@ -95,11 +95,11 @@ void sieve_tool_init(bool init_lib)
 	}
 }
 
-void sieve_tool_sieve_init(const struct sieve_environment *env)
+void sieve_tool_sieve_init(const struct sieve_environment *env, bool debug)
 {
 	if ( env == NULL ) env = &sieve_tool_sieve_env;
 
-	if ( (sieve_instance=sieve_init(env, NULL)) == NULL )
+	if ( (sieve_instance=sieve_init(env, NULL, debug)) == NULL )
 		i_fatal("failed to initialize sieve implementation\n");
 }
 

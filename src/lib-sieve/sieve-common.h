@@ -149,6 +149,9 @@ struct sieve_instance {
 	const struct sieve_environment *env;
 	void *context;
 
+	/* Engine debug */
+	bool debug;
+
 	/* Extension registry */
 	struct sieve_extension_registry *ext_reg;
 

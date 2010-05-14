@@ -520,12 +520,13 @@ static int lda_sieve_run
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
 	const char *extensions = NULL;
+	bool debug = mdctx->dest_user->mail_debug;
 	int ret = 0;
 
 	*storage_r = NULL;
 
 	/* Initialize Sieve engine */
-	svinst = sieve_init(&lda_sieve_env, mdctx->dest_user);
+	svinst = sieve_init(&lda_sieve_env, mdctx->dest_user, debug);
 	
 	extensions = mail_user_plugin_getenv
 		(mdctx->dest_user, "sieve_extensions");
@@ -626,7 +627,6 @@ static int lda_sieve_run
 
 	/* Clean up */
 
-
 	if ( srctx.user_ehandler != NULL )
 		sieve_error_handler_unref(&srctx.user_ehandler);
 
@@ -662,8 +662,8 @@ static int lda_sieve_deliver_mail
 
 			switch ( errno ) {
 			case ENOENT:
-				if (getenv("DEBUG") != NULL)
-					sieve_sys_info("user's script path %s doesn't exist "
+				if ( debug )
+					sieve_sys_debug("user's script path %s doesn't exist "
 						"(using global script path in stead)", user_script);
 				break;
 			case EACCES:
@@ -712,12 +712,14 @@ static int lda_sieve_deliver_mail
 
 			scriptfiles = array_get(&scripts_before, &count);
 			for ( i = 0; i < count; i ++ ) {
-				sieve_sys_debug("executed before user's script(%d): %s", i+1, scriptfiles[i]);				
+				sieve_sys_debug("executed before user's script(%d): %s", 
+					i+1, scriptfiles[i]);				
 			}
 
 			scriptfiles = array_get(&scripts_after, &count);
 			for ( i = 0; i < count; i ++ ) {
-				sieve_sys_debug("executed after user's script(%d): %s", i+1, scriptfiles[i]);				
+				sieve_sys_debug("executed after user's script(%d): %s", 
+					i+1, scriptfiles[i]);				
 			}
 		}
 	
@@ -738,7 +740,7 @@ static int lda_sieve_deliver_mail
 			/* Run the script(s) */
 				
 			ret = lda_sieve_run
-                (mdctx, user_script, default_script, &scripts_before, &scripts_after, 
+				(mdctx, user_script, default_script, &scripts_before, &scripts_after, 
 					storage_r);
 		}
 

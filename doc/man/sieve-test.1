@@ -3,7 +3,8 @@
 sieve\-test \- Sieve script tester for the Dovecot secure IMAP server
 .SH SYNOPSIS
 sieve\-test
-[\fB\-c\fR] 
+[\fB\-C\fR]
+[\fB\-D\fR]
 [\fB\-d\fR \fIdump\-file\fR]
 [\fB\-e\fR]
 [\fB\-f\fR \fIenvelope\-sender\fR]
@@ -39,16 +40,19 @@ script to (compile and) execute, and the \fImail\-file\fP argument, which specif
 containing the e\-mail message to filter. 
 
 Note that this tool looks for a pre\-compiled binary file with a \fI.svbin\fP extension and 
-with basename and path identical to the specified script. Use the \fB\-c\fP option to disable this
+with basename and path identical to the specified script. Use the \fB\-C\fP option to disable this
 behavior by forcing the script to be compiled into a new binary.  
 .SH OPTIONS
 .TP 
-\fB\-c\fP
+\fB\-C\fP
 Force compilation. By default, the compiled binary is stored on disk. When this binary is found
 during the next execution of \fBsieve\-test\fP and its modification time is more recent than the
 script file, it is used and the script is not compiled again. This option forces the script to be
 compiled, thus ignoring any present binary. Refer to \fBsievec\fP(1) for more information about 
 Sieve compilation.
+.TP
+\fB\-D\fP
+Enable Sieve debugging.
 .TP
 \fB\-d\fP \fIdump\-file\fP
 Causes a dump of the generated code to be written to the specified file. This is identical to the

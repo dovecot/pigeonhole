@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 	if ( outfile == NULL && dump )
 		outfile = "-";	
 
-	sieve_tool_sieve_init(NULL);
+	sieve_tool_sieve_init(NULL, FALSE);
 
 	if ( array_count(&plugins) > 0 ) {
 		sieve_tool_load_plugins(&plugins);

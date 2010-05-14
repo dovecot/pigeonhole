@@ -130,7 +130,7 @@ void managesieve_capabilities_dump(void)
 
 	/* Initialize Sieve engine */
 
-	svinst = sieve_init(&sieve_env, (void *) global_plugin_settings);
+	svinst = sieve_init(&sieve_env, (void *) global_plugin_settings, FALSE);
 
 	extensions = plugin_settings_get(global_plugin_settings, "sieve_extensions");
 	if ( extensions != NULL ) {

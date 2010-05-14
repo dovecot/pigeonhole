@@ -221,39 +221,39 @@ static int filter_mailbox
 
 int main(int argc, char **argv) 
 {
-    enum mail_storage_service_flags service_flags = 0;
-    struct mail_storage_service_ctx *storage_service;
-    struct mail_storage_service_user *service_user;
-    struct mail_storage_service_input service_input;
-    struct mail_user *mail_user_dovecot = NULL;
+	enum mail_storage_service_flags service_flags = 0;
+	struct mail_storage_service_ctx *storage_service;
+	struct mail_storage_service_user *service_user;
+	struct mail_storage_service_input service_input;
+	struct mail_user *mail_user_dovecot = NULL;
 	struct mail_user *mail_user = NULL;
-    ARRAY_TYPE (const_string) plugins;
+	ARRAY_TYPE (const_string) plugins;
 	const char *scriptfile, *recipient, *sender, *extensions,
-		*src_mailbox, *dst_mailbox, *src_mailstore, *dst_mailstore; 
-    const char *user, *home, *errstr;
-    struct mail_namespace_settings ns_set;
+	*src_mailbox, *dst_mailbox, *src_mailstore, *dst_mailstore; 
+	const char *user, *home, *errstr;
+	struct mail_namespace_settings ns_set;
 	struct mail_namespace *src_ns = NULL, *dst_ns = NULL;
 	struct mail_storage *dst_storage, *src_storage;
-    struct sieve_binary *main_sbin;
-    struct sieve_script_env scriptenv;
-    struct sieve_error_handler *ehandler;
-    bool force_compile = FALSE;
-    enum mailbox_flags open_flags =
-		MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_IGNORE_ACLS;
+	struct sieve_binary *main_sbin;
+	struct sieve_script_env scriptenv;
+	struct sieve_error_handler *ehandler;
+	bool force_compile = FALSE, debug = FALSE;
+	enum mailbox_flags open_flags =
+	MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_IGNORE_ACLS;
 	enum mail_error error;
 	struct discard_action discard_action = 
-		{ DISCARD_ACTION_KEEP, "Trash" };
+	{ DISCARD_ACTION_KEEP, "Trash" };
 	struct mailbox *src_box;
-    int c;
+	int c;
 
-    master_service = master_service_init("sieve-test",
-        MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "m:x:cP:");
+	master_service = master_service_init("sieve-test",
+		MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "m:x:P:CD");
 
-    sieve_tool_init(FALSE);
+	sieve_tool_init(FALSE);
 
-    t_array_init(&plugins, 4);
+	t_array_init(&plugins, 4);
 
-    user = getenv("USER");
+	user = getenv("USER");
 
 	/* Parse arguments */
 	scriptfile = recipient = sender = extensions = src_mailstore = dst_mailstore 
@@ -270,9 +270,6 @@ int main(int argc, char **argv)
 			/* extensions */
 			extensions = optarg;
 			break;
-		case 'c':
-			force_compile = TRUE;
-			break;
 		case 'P':
 			/* Plugin */
 			{
@@ -282,7 +279,12 @@ int main(int argc, char **argv)
 				array_append(&plugins, &plugin, 1);
 			}
 			break;
-
+		case 'C':
+			force_compile = TRUE;
+			break;
+		case 'D':
+			debug = TRUE;
+			break;
 		default:
 			print_help();
 			i_fatal_status(EX_USAGE, "Unknown argument: %c", c);
@@ -313,7 +315,7 @@ int main(int argc, char **argv)
 		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
 	}
 
-	sieve_tool_sieve_init(NULL);
+	sieve_tool_sieve_init(NULL, debug);
 
 	if ( array_count(&plugins) > 0 ) {
 		sieve_tool_load_plugins(&plugins);

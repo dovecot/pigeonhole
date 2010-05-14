@@ -122,7 +122,7 @@ struct client *client_create
 
 	/* Initialize Sieve instance */
 
-	svinst = sieve_init(&managesieve_sieve_env, (void *) user);
+	svinst = sieve_init(&managesieve_sieve_env, (void *) user, set->mail_debug);
 
 	extensions = mail_user_plugin_getenv(user, "sieve_extensions");
 	if ( extensions != NULL ) {

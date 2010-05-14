@@ -40,7 +40,7 @@
  */
 
 struct sieve_instance *sieve_init
-(const struct sieve_environment *env, void *context)
+(const struct sieve_environment *env, void *context, bool debug)
 {
 	struct sieve_instance *svinst;
 	unsigned long long int uint_setting;
@@ -53,6 +53,7 @@ struct sieve_instance *sieve_init
 	svinst->pool = pool;
 	svinst->env = env;
 	svinst->context = context;
+	svinst->debug = debug;
 
 	/* Read limits from configuration */
 
@@ -215,6 +216,10 @@ struct sieve_binary *sieve_compile
 	sbin = sieve_compile_script(script, ehandler);
 	
 	sieve_script_unref(&script);
+
+	if ( svinst->debug && sbin != NULL ) {
+		sieve_sys_debug("script file %s successfully compiled", script_path);
+	}
 	
 	return sbin;
 }
@@ -266,7 +271,7 @@ struct sieve_binary *sieve_open
 {
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
-	const char *binpath;
+	const char *bin_path;
 	
 	/* First open the scriptfile itself */
 	script = sieve_script_create
@@ -279,15 +284,19 @@ struct sieve_binary *sieve_open
 
 	T_BEGIN {
 		/* Then try to open the matching binary */
-		binpath = sieve_script_binpath(script);	
-		sbin = sieve_binary_open(svinst, binpath, script);
+		bin_path = sieve_script_binpath(script);	
+		sbin = sieve_binary_open(svinst, bin_path, script);
 	
 		if (sbin != NULL) {
 			/* Ok, it exists; now let's see if it is up to date */
 			if ( !sieve_binary_up_to_date(sbin) ) {
 				/* Not up to date */
+				if ( svinst->debug )
+					sieve_sys_debug("script binary %s is not up-to-date", bin_path);
+
 				sieve_binary_unref(&sbin);
 				sbin = NULL;
+
 			} else if ( !sieve_binary_load(sbin) ) {
 				/* Failed to load */
 				sieve_binary_unref(&sbin);
@@ -298,12 +307,25 @@ struct sieve_binary *sieve_open
 		/* If the binary does not exist, is not up-to-date or fails to load, we need
 		 * to (re-)compile.
 		 */
-		if ( sbin == NULL ) {	
+		if ( sbin != NULL ) {
+			if ( svinst->debug )
+				sieve_sys_debug("script binary %s successfully loaded", bin_path);
+			
+		} else {	
 			sbin = sieve_compile_script(script, ehandler);
 
 			/* Save the binary if compile was successful */
-			if ( sbin != NULL ) 
-				(void) sieve_binary_save(sbin, binpath);	
+			if ( sbin != NULL ) {
+				if ( svinst->debug )
+					sieve_sys_debug("script %s successfully compiled", script_path);
+
+				if ( sieve_binary_save(sbin, bin_path) ) {
+					if ( svinst->debug ) {
+						sieve_sys_debug
+							("compiled script saved as binary file %s", bin_path);
+					}
+				}
+			}
 		}
 	} T_END;
 	
