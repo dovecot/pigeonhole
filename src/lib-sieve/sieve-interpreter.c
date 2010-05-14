@@ -282,6 +282,15 @@ void sieve_runtime_log
  * Runtime trace
  */
 
+unsigned int sieve_runtime_get_source_location
+(const struct sieve_runtime_env *renv, sieve_size_t code_address)
+{
+	if ( renv->interp->dreader != NULL ) 
+		return sieve_binary_debug_read_line(renv->interp->dreader, code_address);
+
+	return 0;
+}
+
 #ifdef SIEVE_RUNTIME_TRACE
 void _sieve_runtime_trace
 (const struct sieve_runtime_env *runenv, const char *fmt, ...)
@@ -465,7 +474,7 @@ int sieve_interpreter_handle_optional_operands
  * Code execute 
  */
 
-static int sieve_interpreter_execute_operation
+static int sieve_interpreter_operation_execute
 (struct sieve_interpreter *interp) 
 {
 	struct sieve_operation *oprtn = &(interp->runenv.oprtn);
@@ -504,7 +513,7 @@ int sieve_interpreter_continue
 	while ( ret == SIEVE_EXEC_OK && !interp->interrupted && 
 		interp->pc < sieve_binary_block_get_size(interp->runenv.sblock) ) {
 		
-		ret = sieve_interpreter_execute_operation(interp);
+		ret = sieve_interpreter_operation_execute(interp);
 
 		if ( ret != SIEVE_EXEC_OK ) {
 			sieve_runtime_trace(&interp->runenv, "[[EXECUTION ABORTED]]");

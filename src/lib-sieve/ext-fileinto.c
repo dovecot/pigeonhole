@@ -125,9 +125,6 @@ static bool cmd_fileinto_generate
 {
 	sieve_operation_emit(cgenv->sblock, cmd->ext, &fileinto_operation);
 
-	/* Emit line number */
-	sieve_code_source_line_emit(cgenv->sblock, sieve_command_source_line(cmd));
-
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
@@ -141,10 +138,6 @@ static bool ext_fileinto_operation_dump
 {
 	sieve_code_dumpf(denv, "FILEINTO");
 	sieve_code_descend(denv);
-
-	/* Source line */
-	if ( !sieve_code_source_line_dump(denv, address) )
-		return FALSE;
 
 	if ( !sieve_code_dumper_print_optional_operands(denv, address) ) {
 		return FALSE;
@@ -163,7 +156,7 @@ static int ext_fileinto_operation_execute
 	struct sieve_side_effects_list *slist = NULL; 
 	string_t *folder;
 	const char *mailbox;
-	unsigned int source_line;
+	unsigned int source_line; 
 	int ret = 0;
 	
 	/*
@@ -171,10 +164,7 @@ static int ext_fileinto_operation_execute
 	 */
 
 	/* Source line */
-	if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
-		sieve_runtime_trace_error(renv, "invalid source line");
-		return SIEVE_EXEC_BIN_CORRUPT;
-	}
+	source_line = sieve_runtime_get_source_location(renv, renv->oprtn.address);
 	
 	/* Optional operands */
 	if ( (ret=sieve_interpreter_handle_optional_operands(renv, address, &slist)) 

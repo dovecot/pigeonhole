@@ -77,12 +77,9 @@ const struct sieve_action_def act_discard = {
  */
  
 static bool cmd_discard_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd ATTR_UNUSED) 
 {
 	sieve_operation_emit(cgenv->sblock, NULL, &cmd_discard_operation);
-
-	/* Emit line number */
-	sieve_code_source_line_emit(cgenv->sblock, sieve_command_source_line(cmd));
 
 	return TRUE;
 }
@@ -96,10 +93,6 @@ static bool cmd_discard_operation_dump
 {
 	sieve_code_dumpf(denv, "DISCARD");
 	sieve_code_descend(denv);
-
-	/* Source line */
-	if ( !sieve_code_source_line_dump(denv, address) )
-		return FALSE;
 
 	return sieve_code_dumper_print_optional_operands(denv, address);
 }
@@ -115,10 +108,7 @@ static int cmd_discard_operation_execute
 	unsigned int source_line;
 	
 	/* Source line */
-	if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
-		sieve_runtime_trace_error(renv, "failed to read source line");
-        return SIEVE_EXEC_BIN_CORRUPT;
-	}
+	source_line = sieve_runtime_get_source_location(renv, renv->oprtn.address);
 
 	sieve_runtime_trace(renv, "DISCARD action");
 

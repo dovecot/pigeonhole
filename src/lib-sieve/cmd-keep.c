@@ -59,9 +59,6 @@ static bool cmd_keep_generate
 	/* Emit opcode */
 	sieve_operation_emit(cgenv->sblock, NULL, &cmd_keep_operation);
 
-	/* Emit line number */
-	sieve_code_source_line_emit(cgenv->sblock, sieve_command_source_line(cmd));
-
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
@@ -76,10 +73,6 @@ static bool cmd_keep_operation_dump
 	sieve_code_dumpf(denv, "KEEP");
 	sieve_code_descend(denv);
 
-	/* Source line */
-	if ( !sieve_code_source_line_dump(denv, address) )
-		return FALSE;
-
 	return sieve_code_dumper_print_optional_operands(denv, address);
 }
 
@@ -88,18 +81,14 @@ static bool cmd_keep_operation_dump
  */
 
 static int cmd_keep_operation_execute
-(const struct sieve_runtime_env *renv ATTR_UNUSED, 
-	sieve_size_t *address ATTR_UNUSED)
+(const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	struct sieve_side_effects_list *slist = NULL;
 	unsigned int source_line;
 	int ret = 0;	
 
 	/* Source line */
-	if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
-		sieve_runtime_trace_error(renv, "invalid source line");
-		return SIEVE_EXEC_BIN_CORRUPT;
-	}
+	source_line = sieve_runtime_get_source_location(renv, renv->oprtn.address);
 	
 	/* Optional operands (side effects only) */
 	if ( (ret=sieve_interpreter_handle_optional_operands

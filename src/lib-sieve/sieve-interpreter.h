@@ -98,6 +98,9 @@ bool sieve_interpreter_get_test_result
  * Error handling 
  */
 
+unsigned int sieve_runtime_get_source_location
+	(const struct sieve_runtime_env *renv, sieve_size_t code_address);
+
 /* This is not particularly user-friendly, so avoid using this.. */
 const char *sieve_runtime_location(const struct sieve_runtime_env *runenv);
 

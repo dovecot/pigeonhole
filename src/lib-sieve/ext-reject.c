@@ -235,9 +235,6 @@ static bool cmd_reject_generate
 	else
 		sieve_operation_emit(cgenv->sblock, cmd->ext, &ereject_operation);
 
-	/* Emit line number */
-	sieve_code_source_line_emit(cgenv->sblock, sieve_command_source_line(cmd));
-
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
@@ -253,10 +250,6 @@ static bool ext_reject_operation_dump
 
 	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
 	sieve_code_descend(denv);
-	
-	/* Source line */
-	if ( !sieve_code_source_line_dump(denv, address) )
-		return FALSE;
 
 	if ( !sieve_code_dumper_print_optional_operands(denv, address) )
 		return FALSE;
@@ -281,10 +274,7 @@ static int ext_reject_operation_execute
 	int ret;
 
 	/* Source line */
-	if ( !sieve_code_source_line_read(renv, address, &source_line) ) {
-		sieve_runtime_trace_error(renv, "invalid source line");
-		return SIEVE_EXEC_BIN_CORRUPT;
-	}
+	source_line = sieve_runtime_get_source_location(renv, op->address);
 	
 	/* Optional operands (side effects) */
 	if ( (ret=sieve_interpreter_handle_optional_operands
