@@ -43,8 +43,8 @@ static bool tst_false_generate
 	struct sieve_jumplist *jumps, bool jump_true)
 {
 	if ( !jump_true ) {
-		sieve_operation_emit(cgenv->sbin, NULL, &sieve_jmp_operation);
-		sieve_jumplist_add(jumps, sieve_binary_emit_offset(cgenv->sbin, 0));
+		sieve_operation_emit(cgenv->sblock, NULL, &sieve_jmp_operation);
+		sieve_jumplist_add(jumps, sieve_binary_emit_offset(cgenv->sblock, 0));
 	}
 	
 	return TRUE;
@@ -56,8 +56,8 @@ static bool tst_true_generate
 	struct sieve_jumplist *jumps, bool jump_true)
 {
 	if ( jump_true ) {
-		sieve_operation_emit(cgenv->sbin, NULL, &sieve_jmp_operation);
-		sieve_jumplist_add(jumps, sieve_binary_emit_offset(cgenv->sbin, 0));
+		sieve_operation_emit(cgenv->sblock, NULL, &sieve_jmp_operation);
+		sieve_jumplist_add(jumps, sieve_binary_emit_offset(cgenv->sblock, 0));
 	}
 	
 	return TRUE;

@@ -65,7 +65,7 @@ static bool cmd_stop_generate
 (const struct sieve_codegen_env *cgenv, 
 	struct sieve_command *cmd ATTR_UNUSED) 
 {
-	sieve_operation_emit(cgenv->sbin, NULL, &cmd_stop_operation);
+	sieve_operation_emit(cgenv->sblock, NULL, &cmd_stop_operation);
 
 	return TRUE;
 }

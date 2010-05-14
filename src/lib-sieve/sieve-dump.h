@@ -21,6 +21,7 @@ struct sieve_dumptime_env {
 	struct sieve_instance *svinst;
 
 	struct sieve_binary *sbin;
+	struct sieve_binary_block *sblock;
 
 	struct sieve_operation oprtn;
 	

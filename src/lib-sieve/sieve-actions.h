@@ -170,10 +170,10 @@ struct sieve_side_effect {
 extern const struct sieve_operand_class sieve_side_effect_operand_class;
 
 static inline void sieve_opr_side_effect_emit
-(struct sieve_binary *sbin, const struct sieve_extension *ext,
+(struct sieve_binary_block *sblock, const struct sieve_extension *ext,
 	const struct sieve_side_effect_def *seff)
 { 
-	sieve_opr_object_emit(sbin, ext, &seff->obj_def);
+	sieve_opr_object_emit(sblock, ext, &seff->obj_def);
 }
 
 bool sieve_opr_side_effect_read

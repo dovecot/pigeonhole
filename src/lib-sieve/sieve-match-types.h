@@ -201,9 +201,9 @@ static inline bool sieve_operand_is_match_type
 }
 
 static inline void sieve_opr_match_type_emit
-(struct sieve_binary *sbin, const struct sieve_match_type *mcht)
+(struct sieve_binary_block *sblock, const struct sieve_match_type *mcht)
 { 
-	sieve_opr_object_emit(sbin, mcht->object.ext, mcht->object.def);
+	sieve_opr_object_emit(sblock, mcht->object.ext, mcht->object.def);
 }
 
 static inline bool sieve_opr_match_type_read

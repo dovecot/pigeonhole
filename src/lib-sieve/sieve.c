@@ -156,7 +156,7 @@ static struct sieve_binary *sieve_generate
 	struct sieve_generator *generator = sieve_generator_create(ast, ehandler);
 	struct sieve_binary *sbin = NULL;
 		
-	(void) sieve_generator_run(generator, &sbin);
+	sbin = sieve_generator_run(generator, NULL);
 	
 	sieve_generator_free(&generator);
 	
@@ -343,11 +343,11 @@ void sieve_close(struct sieve_binary **sbin)
  * Debugging
  */
 
-void sieve_dump(struct sieve_binary *sbin, struct ostream *stream) 
+void sieve_dump(struct sieve_binary *sbin, struct ostream *stream, bool verbose) 
 {
 	struct sieve_binary_dumper *dumpr = sieve_binary_dumper_create(sbin);			
 
-	sieve_binary_dumper_run(dumpr, stream);	
+	sieve_binary_dumper_run(dumpr, stream, verbose);	
 	
 	sieve_binary_dumper_free(&dumpr);
 }

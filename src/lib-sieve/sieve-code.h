@@ -37,7 +37,7 @@ sieve_size_t sieve_coded_stringlist_get_current_offset
  */
 
 void sieve_code_source_line_emit
-	(struct sieve_binary *sbin, unsigned int source_line);
+	(struct sieve_binary_block *sblock, unsigned int source_line);
 bool sieve_code_source_line_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 bool sieve_code_source_line_read
@@ -74,16 +74,16 @@ struct sieve_operand {
 	( (opr)->def == &(definition) )
 
 sieve_size_t sieve_operand_emit
-	(struct sieve_binary *sbin, const struct sieve_extension *ext,
+	(struct sieve_binary_block *sblock, const struct sieve_extension *ext,
 		const struct sieve_operand_def *oprnd);
 bool sieve_operand_read
-	(struct sieve_binary *sbin, sieve_size_t *address, 
+	(struct sieve_binary_block *sblock, sieve_size_t *address, 
 		struct sieve_operand *oprnd);
 
 bool sieve_operand_optional_present
-	(struct sieve_binary *sbin, sieve_size_t *address);
+	(struct sieve_binary_block *sblock, sieve_size_t *address);
 bool sieve_operand_optional_read	
-	(struct sieve_binary *sbin, sieve_size_t *address, 
+	(struct sieve_binary_block *sblock, sieve_size_t *address, 
 		signed int *id_code);
 
 /*
@@ -156,7 +156,7 @@ struct sieve_opr_stringlist_interface {
 
 /* Omitted */
 
-void sieve_opr_omitted_emit(struct sieve_binary *sbin);
+void sieve_opr_omitted_emit(struct sieve_binary_block *sblock);
 
 static inline bool sieve_operand_is_omitted
 (const struct sieve_operand *operand)
@@ -167,7 +167,8 @@ static inline bool sieve_operand_is_omitted
 
 /* Number */
 
-void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_number_t number);
+void sieve_opr_number_emit
+	(struct sieve_binary_block *sblock, sieve_number_t number);
 bool sieve_opr_number_dump_data	
 	(const struct sieve_dumptime_env *denv, const struct sieve_operand *operand,
 		sieve_size_t *address, const char *field_name); 
@@ -190,7 +191,8 @@ static inline bool sieve_operand_is_number
 
 /* String */
 
-void sieve_opr_string_emit(struct sieve_binary *sbin, string_t *str);
+void sieve_opr_string_emit
+	(struct sieve_binary_block *sblock, string_t *str);
 bool sieve_opr_string_dump_data
 	(const struct sieve_dumptime_env *denv, const struct sieve_operand *operand,
 		sieve_size_t *address, const char *field_name); 
@@ -219,11 +221,12 @@ static inline bool sieve_operand_is_string
 /* String list */
 
 void sieve_opr_stringlist_emit_start
-	(struct sieve_binary *sbin, unsigned int listlen, void **context);
+	(struct sieve_binary_block *sblock, unsigned int listlen, void **context);
 void sieve_opr_stringlist_emit_item
-	(struct sieve_binary *sbin, void *context ATTR_UNUSED, string_t *item);
+	(struct sieve_binary_block *sblock, void *context ATTR_UNUSED,
+		string_t *item);
 void sieve_opr_stringlist_emit_end
-	(struct sieve_binary *sbin, void *context);
+	(struct sieve_binary_block *sblock, void *context);
 bool sieve_opr_stringlist_dump_data
 	(const struct sieve_dumptime_env *denv, const struct sieve_operand *operand, 
 		sieve_size_t *address, const char *field_name);
@@ -247,7 +250,7 @@ static inline bool sieve_operand_is_stringlist
 /* Catenated string */
 
 void sieve_opr_catenated_string_emit
-	(struct sieve_binary *sbin, unsigned int elements);
+	(struct sieve_binary_block *sblock, unsigned int elements);
 	
 /*
  * Operation object
@@ -278,13 +281,13 @@ struct sieve_operation {
 	( (oprtn)->def == NULL ? "(NULL)" : (oprtn)->def->mnemonic )
 
 sieve_size_t sieve_operation_emit
-	(struct sieve_binary *sbin, const struct sieve_extension *ext,
+	(struct sieve_binary_block *sblock, const struct sieve_extension *ext,
 		const struct sieve_operation_def *op_def);	
 bool sieve_operation_read
-	(struct sieve_binary *sbin, sieve_size_t *address,
+	(struct sieve_binary_block *sblock, sieve_size_t *address,
 		struct sieve_operation *oprtn);
 const char *sieve_operation_read_string
-	(struct sieve_binary *sbin, sieve_size_t *address);
+	(struct sieve_binary_block *sblock, sieve_size_t *address);
 
 /* 
  * Core operations 

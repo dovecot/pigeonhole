@@ -193,7 +193,7 @@ static bool tag_comparator_generate
 	const struct sieve_comparator *cmp = 
 		(const struct sieve_comparator *) arg->argument->data;
 	
-	sieve_opr_comparator_emit(cgenv->sbin, cmp);
+	sieve_opr_comparator_emit(cgenv->sblock, cmp);
 		
 	return TRUE;
 }

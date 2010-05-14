@@ -201,26 +201,27 @@ static bool cmd_global_generate
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
 
-	sieve_operation_emit(cgenv->sbin, cmd->ext, &global_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &global_operation);
  	 			
 	if ( sieve_ast_argument_type(arg) == SAAT_STRING ) {
 		/* Single string */
 		struct sieve_variable *var = (struct sieve_variable *) arg->argument->data;
 		
-		(void)sieve_binary_emit_unsigned(cgenv->sbin, 1);
-		(void)sieve_binary_emit_unsigned(cgenv->sbin, var->index);
+		(void)sieve_binary_emit_unsigned(cgenv->sblock, 1);
+		(void)sieve_binary_emit_unsigned(cgenv->sblock, var->index);
 		
 	} else if ( sieve_ast_argument_type(arg) == SAAT_STRING_LIST ) {
 		/* String list */
 		struct sieve_ast_argument *stritem = sieve_ast_strlist_first(arg);
 		
-		(void)sieve_binary_emit_unsigned(cgenv->sbin, sieve_ast_strlist_count(arg));
+		(void)sieve_binary_emit_unsigned
+			(cgenv->sblock, sieve_ast_strlist_count(arg));
 						
 		while ( stritem != NULL ) {
 			struct sieve_variable *var = 
 				(struct sieve_variable *) stritem->argument->data;
 			
-			(void)sieve_binary_emit_unsigned(cgenv->sbin, var->index);
+			(void)sieve_binary_emit_unsigned(cgenv->sblock, var->index);
 			
 			stritem = sieve_ast_strlist_next(stritem);
 		}
@@ -243,7 +244,7 @@ static bool opc_global_dump
 	struct sieve_variable_scope *scope;
 	struct sieve_variable * const *vars;
 	
-	if ( !sieve_binary_read_unsigned(denv->sbin, address, &count) )
+	if ( !sieve_binary_read_unsigned(denv->sblock, address, &count) )
 		return FALSE;
 
 	sieve_code_dumpf(denv, "GLOBAL (count: %u):", count);
@@ -257,7 +258,7 @@ static bool opc_global_dump
 		unsigned int index;
 		
 		sieve_code_mark(denv);
-		if ( !sieve_binary_read_unsigned(denv->sbin, address, &index) ||
+		if ( !sieve_binary_read_unsigned(denv->sblock, address, &index) ||
 			index >= var_count )
 			return FALSE;
 			
@@ -280,7 +281,7 @@ static int opc_global_execute
 	struct sieve_variable * const *vars;
 	unsigned int var_count, count, i;
 		
-	if ( !sieve_binary_read_unsigned(renv->sbin, address, &count) ) {
+	if ( !sieve_binary_read_unsigned(renv->sblock, address, &count) ) {
 		sieve_runtime_trace_error(renv, "invalid count operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
@@ -293,7 +294,7 @@ static int opc_global_execute
 	for ( i = 0; i < count; i++ ) {
 		unsigned int index;
 		
-		if ( !sieve_binary_read_unsigned(renv->sbin, address, &index) ) {
+		if ( !sieve_binary_read_unsigned(renv->sblock, address, &index) ) {
 			sieve_runtime_trace_error(renv, "invalid global variable operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}

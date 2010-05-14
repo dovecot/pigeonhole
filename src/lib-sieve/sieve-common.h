@@ -86,6 +86,9 @@ struct sieve_coded_stringlist;
 
 /* sieve-binary.h */
 struct sieve_binary;
+struct sieve_binary_block;
+struct sieve_binary_debug_writer;
+struct sieve_binary_debug_reader;
 
 /* sieve-objects.h */
 struct sieve_object_def;

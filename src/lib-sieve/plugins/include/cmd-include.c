@@ -287,9 +287,9 @@ static bool cmd_include_generate
 			ctx_data->include_once) )
  		return FALSE;
  		
- 	(void)sieve_operation_emit(cgenv->sbin, cmd->ext, &include_operation);
-	(void)sieve_binary_emit_unsigned(cgenv->sbin, included->id); 
-	(void)sieve_binary_emit_byte(cgenv->sbin, flags); 
+ 	(void)sieve_operation_emit(cgenv->sblock, cmd->ext, &include_operation);
+	(void)sieve_binary_emit_unsigned(cgenv->sblock, included->id); 
+	(void)sieve_binary_emit_byte(cgenv->sblock, flags); 
  	 		
 	return TRUE;
 }
@@ -308,10 +308,10 @@ static bool opc_include_dump
 	sieve_code_dumpf(denv, "INCLUDE:");
 	
 	sieve_code_mark(denv);
-	if ( !sieve_binary_read_unsigned(denv->sbin, address, &include_id) )
+	if ( !sieve_binary_read_unsigned(denv->sblock, address, &include_id) )
 		return FALSE;
 
-	if ( !sieve_binary_read_byte(denv->sbin, address, &flags) )
+	if ( !sieve_binary_read_byte(denv->sblock, address, &flags) )
 		return FALSE;
 
 	binctx = ext_include_binary_get_context(denv->oprtn.ext, denv->sbin);
@@ -322,7 +322,7 @@ static bool opc_include_dump
 	sieve_code_descend(denv);
 	sieve_code_dumpf(denv, "script: %s %s[ID: %d, BLOCK: %d]", 
 		sieve_script_filename(included->script), (flags & 0x01 ? "(once) " : ""),
-		include_id, included->block_id);
+		include_id, sieve_binary_block_get_id(included->block));
 
 	return TRUE;
 }
@@ -336,12 +336,12 @@ static int opc_include_execute
 {
 	unsigned int include_id, flags;
 		
-	if ( !sieve_binary_read_unsigned(renv->sbin, address, &include_id) ) {
+	if ( !sieve_binary_read_unsigned(renv->sblock, address, &include_id) ) {
 		sieve_runtime_trace_error(renv, "invalid include-id operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	if ( !sieve_binary_read_unsigned(renv->sbin, address, &flags) ) {
+	if ( !sieve_binary_read_unsigned(renv->sblock, address, &flags) ) {
 		sieve_runtime_trace_error(renv, "invalid flags operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}

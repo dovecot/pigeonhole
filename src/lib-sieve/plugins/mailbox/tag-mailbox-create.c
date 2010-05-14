@@ -96,7 +96,7 @@ static bool tag_mailbox_create_generate
 	}
 
 	sieve_opr_side_effect_emit
-		(cgenv->sbin, arg->argument->ext, &mailbox_create_side_effect);
+		(cgenv->sblock, arg->argument->ext, &mailbox_create_side_effect);
 
 	return TRUE;
 }

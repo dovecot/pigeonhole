@@ -123,11 +123,11 @@ static bool cmd_flag_generate
 {
 	/* Emit operation */
 	if ( sieve_command_is(cmd, cmd_setflag) ) 
-		sieve_operation_emit(cgenv->sbin, cmd->ext, &setflag_operation);
+		sieve_operation_emit(cgenv->sblock, cmd->ext, &setflag_operation);
 	else if ( sieve_command_is(cmd, cmd_addflag) ) 
-		sieve_operation_emit(cgenv->sbin, cmd->ext, &addflag_operation);
+		sieve_operation_emit(cgenv->sblock, cmd->ext, &addflag_operation);
 	else if ( sieve_command_is(cmd, cmd_removeflag) ) 
-		sieve_operation_emit(cgenv->sbin, cmd->ext, &removeflag_operation);
+		sieve_operation_emit(cgenv->sblock, cmd->ext, &removeflag_operation);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
@@ -149,7 +149,7 @@ bool cmd_flag_operation_dump
 	sieve_code_descend(denv);
 	
 	sieve_code_mark(denv);
-	if ( !sieve_operand_read(denv->sbin, address, &operand) ) {
+	if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
 		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 		return FALSE;
 	}
@@ -188,7 +188,7 @@ static int cmd_flag_operation_execute
 	 * Read operands 
 	 */
 
-	if ( !sieve_operand_read(renv->sbin, address, &operand) ) {
+	if ( !sieve_operand_read(renv->sblock, address, &operand) ) {
 		sieve_runtime_trace_error(renv, "invalid operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}

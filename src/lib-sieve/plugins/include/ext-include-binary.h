@@ -35,12 +35,13 @@ struct ext_include_script_info {
     struct sieve_script *script;
     enum ext_include_script_location location;
 
-    unsigned int block_id;
+    struct sieve_binary_block *block;
 };
 
 const struct ext_include_script_info *ext_include_binary_script_include
 	(struct ext_include_binary_context *binctx, struct sieve_script *script,
-		enum ext_include_script_location location, unsigned int block_id);
+		enum ext_include_script_location location, 
+		struct sieve_binary_block *block);
 bool ext_include_binary_script_is_included
 	(struct ext_include_binary_context *binctx, struct sieve_script *script,
 		const struct ext_include_script_info **script_info_r);

@@ -116,7 +116,7 @@ static bool tst_environment_validate
 static bool tst_environment_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit(cgenv->sbin, cmd->ext, &tst_environment_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &tst_environment_operation);
 
  	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )

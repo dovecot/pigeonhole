@@ -240,11 +240,11 @@ static bool cmd_test_message_generate
 	i_assert( ctx_data->msg_source < MSG_SOURCE_LAST );
 	
 	/* Emit operation */
-	sieve_operation_emit(cgenv->sbin, cmd->ext,
+	sieve_operation_emit(cgenv->sblock, cmd->ext,
 		test_message_operations[ctx_data->msg_source]);
 
 	/* Emit is_test flag */
-	sieve_binary_emit_byte(cgenv->sbin, ( cmd->ast_node->type == SAT_TEST ));
+	sieve_binary_emit_byte(cgenv->sblock, ( cmd->ast_node->type == SAT_TEST ));
 	  	
  	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
@@ -262,7 +262,7 @@ static bool cmd_test_message_smtp_operation_dump
 {
 	unsigned int is_test;
 
-	if ( !sieve_binary_read_byte(denv->sbin, address, &is_test) )
+	if ( !sieve_binary_read_byte(denv->sblock, address, &is_test) )
 		return FALSE;
 
 	sieve_code_dumpf(denv, "TEST_MESSAGE_SMTP (%s):", 
@@ -278,7 +278,7 @@ static bool cmd_test_message_mailbox_operation_dump
 {
 	unsigned int is_test;
 
-	if ( !sieve_binary_read_byte(denv->sbin, address, &is_test) )
+	if ( !sieve_binary_read_byte(denv->sblock, address, &is_test) )
 		return FALSE;
 
 	sieve_code_dumpf(denv, "TEST_MESSAGE_MAILBOX (%s):",
@@ -308,7 +308,7 @@ static int cmd_test_message_smtp_operation_execute
 
 	/* Is test */
 
-	if ( !sieve_binary_read_byte(renv->sbin, address, &is_test) ) {
+	if ( !sieve_binary_read_byte(renv->sblock, address, &is_test) ) {
 		sieve_runtime_trace_error(renv, "invalid is_test flag");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
@@ -353,7 +353,7 @@ static int cmd_test_message_mailbox_operation_execute
 	 */
 
 	/* Is test */
-	if ( !sieve_binary_read_byte(renv->sbin, address, &is_test) ) {
+	if ( !sieve_binary_read_byte(renv->sblock, address, &is_test) ) {
 		sieve_runtime_trace_error(renv, "invalid is_test flag");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}

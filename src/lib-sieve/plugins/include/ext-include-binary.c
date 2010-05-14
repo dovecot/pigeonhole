@@ -50,7 +50,7 @@ const struct sieve_binary_extension include_binary_ext = {
  
 struct ext_include_binary_context {
 	struct sieve_binary *binary;
-	unsigned int dependency_block;
+	struct sieve_binary_block *dependency_block;
 	
 	struct hash_table *included_scripts;
 	ARRAY_DEFINE(include_index, struct ext_include_script_info *);
@@ -120,7 +120,7 @@ struct ext_include_binary_context *ext_include_binary_init
 
 const struct ext_include_script_info *ext_include_binary_script_include
 (struct ext_include_binary_context *binctx, struct sieve_script *script,
-	enum ext_include_script_location location, unsigned int block_id)
+	enum ext_include_script_location location, struct sieve_binary_block *inc_block)
 {
 	pool_t pool = sieve_binary_pool(binctx->binary);
 	struct ext_include_script_info *incscript;
@@ -129,7 +129,7 @@ const struct ext_include_script_info *ext_include_binary_script_include
 	incscript->id = array_count(&binctx->include_index)+1;
 	incscript->script = script;
 	incscript->location = location;
-	incscript->block_id = block_id;
+	incscript->block = inc_block;
 	
 	/* Unreferenced on binary_free */
 	sieve_script_ref(script);
@@ -200,36 +200,32 @@ struct sieve_variable_scope *ext_include_binary_get_global_scope
  */
 
 static bool ext_include_binary_save
-(const struct sieve_extension *ext ATTR_UNUSED, struct sieve_binary *sbin, 
-	void *context)
+(const struct sieve_extension *ext ATTR_UNUSED, 
+	struct sieve_binary *sbin ATTR_UNUSED, void *context)
 {
 	struct ext_include_binary_context *binctx = 
 		(struct ext_include_binary_context *) context;
 	struct ext_include_script_info *const *scripts;
+	struct sieve_binary_block *sblock = binctx->dependency_block;
 	unsigned int script_count, i;
-	unsigned int prvblk;
 	bool result = TRUE;
 	
-	sieve_binary_block_clear(sbin, binctx->dependency_block);
-	if ( !sieve_binary_block_set_active(sbin, binctx->dependency_block, &prvblk) )	
-		return FALSE;
+	sieve_binary_block_clear(sblock);
 
 	scripts = array_get(&binctx->include_index, &script_count);
 
-	sieve_binary_emit_unsigned(sbin, script_count);
+	sieve_binary_emit_unsigned(sblock, script_count);
 
 	for ( i = 0; i < script_count; i++ ) {
 		struct ext_include_script_info *incscript = scripts[i];
 
-		sieve_binary_emit_unsigned(sbin, incscript->block_id);
-		sieve_binary_emit_byte(sbin, incscript->location);
-		sieve_binary_emit_cstring(sbin, sieve_script_name(incscript->script));
+		sieve_binary_emit_unsigned(sblock, sieve_binary_block_get_id(incscript->block));
+		sieve_binary_emit_byte(sblock, incscript->location);
+		sieve_binary_emit_cstring(sblock, sieve_script_name(incscript->script));
 	}
 
-	result = ext_include_variables_save(sbin, binctx->global_vars);
+	result = ext_include_variables_save(sblock, binctx->global_vars);
 	
-	(void) sieve_binary_block_set_active(sbin, prvblk, NULL);
-
 	return result;
 }
 
@@ -238,19 +234,20 @@ static bool ext_include_binary_open
 {
 	struct ext_include_binary_context *binctx = 
 		(struct ext_include_binary_context *) context;
-	unsigned int block, prvblk, depcount, i;
+	struct sieve_binary_block *sblock;
+	unsigned int depcount, i, block_id;
 	sieve_size_t offset;
 	
-	block = sieve_binary_extension_get_block(sbin, ext);
-	
-	if ( !sieve_binary_block_set_active(sbin, block, &prvblk) )
-		return FALSE; 
-		
+	sblock = sieve_binary_extension_get_block(sbin, ext);
+	block_id = sieve_binary_block_get_id(sblock);
+			
 	offset = 0;	
 		
-	if ( !sieve_binary_read_unsigned(sbin, &offset, &depcount) ) {
+	if ( !sieve_binary_read_unsigned(sblock, &offset, &depcount) ) {
 		sieve_sys_error("include: failed to read include count "
-			"for dependency block %d of binary %s", block, sieve_binary_path(sbin)); 
+			"for dependency block %d of binary %s", block_id, 
+			sieve_binary_path(sbin));
+		printf("BLOCK: %ld\n", sieve_binary_block_get_size(sblock));
 		return FALSE;
 	}
 	
@@ -263,19 +260,29 @@ static bool ext_include_binary_open
 	
 	/* Read dependencies */
 	for ( i = 0; i < depcount; i++ ) {
-		unsigned int block_id;
+		unsigned int inc_block_id;
+		struct sieve_binary_block *inc_block;
 		enum ext_include_script_location location;
 		string_t *script_name;
 		const char *script_dir;
 		struct sieve_script *script;
 		
 		if ( 
-			!sieve_binary_read_unsigned(sbin, &offset, &block_id) ||
-			!sieve_binary_read_byte(sbin, &offset, &location) ||
-			!sieve_binary_read_string(sbin, &offset, &script_name) ) {
+			!sieve_binary_read_unsigned(sblock, &offset, &inc_block_id) ||
+			!sieve_binary_read_byte(sblock, &offset, &location) ||
+			!sieve_binary_read_string(sblock, &offset, &script_name) ) {
 			/* Binary is corrupt, recompile */
 			sieve_sys_error("include: failed to read included script "
-				"from dependency block %d of binary %s", block, sieve_binary_path(sbin)); 
+				"from dependency block %d of binary %s", block_id, 
+				sieve_binary_path(sbin)); 
+			return FALSE;
+		}
+
+		if ( (inc_block=sieve_binary_block_get(sbin, inc_block_id)) == NULL ) {
+			sieve_sys_error("include: failed to find block %d for included script "
+				"from dependency block %d of binary %s", inc_block_id, block_id, 
+				sieve_binary_path(sbin)); 
+
 			return FALSE;
 		}
 		
@@ -283,7 +290,7 @@ static bool ext_include_binary_open
 			/* Binary is corrupt, recompile */
 			sieve_sys_error("include: dependency block %d of binary %s "
 				"reports invalid script location (id %d)", 
-				block, sieve_binary_path(sbin), location); 
+				block_id, sieve_binary_path(sbin), location); 
 			return FALSE;
 		}		
 		
@@ -297,18 +304,16 @@ static bool ext_include_binary_open
 			return FALSE;
 		}
 		
-		(void)ext_include_binary_script_include(binctx, script, location, block_id);
+		(void)ext_include_binary_script_include
+			(binctx, script, location, inc_block);
 				
 		sieve_script_unref(&script);
 	}
 
 	if ( !ext_include_variables_load
-		(ext, sbin, &offset, block, &binctx->global_vars) )
+		(ext, sblock, &offset, &binctx->global_vars) )
 		return FALSE;
 	
-	/* Restore previously active block */
-	(void)sieve_binary_block_set_active(sbin, prvblk, NULL);
-
 	return TRUE;	
 }
 
@@ -375,7 +380,6 @@ bool ext_include_binary_dump
 		ext_include_binary_get_context(ext, sbin);
 	struct hash_iterate_context *hctx;
 	void *key, *value;
-	unsigned int prvblk = 0;
 
 	if ( !ext_include_variables_dump(denv, binctx->global_vars) )
 		return FALSE;
@@ -384,19 +388,13 @@ bool ext_include_binary_dump
 	while ( hash_table_iterate(hctx, &key, &value) ) {
 		struct ext_include_script_info *incscript = 
 			(struct ext_include_script_info *) value;
-
+		unsigned int block_id = sieve_binary_block_get_id(incscript->block);
+		
 		sieve_binary_dump_sectionf(denv, "Included %s script '%s' (block: %d)", 
 			ext_include_script_location_name(incscript->location), 
-			sieve_script_name(incscript->script), incscript->block_id);
-			
-		if ( prvblk == 0 ) {
-			if ( !sieve_binary_block_set_active(sbin, incscript->block_id, &prvblk) )	
-				return FALSE;
-		} else {
-			if ( !sieve_binary_block_set_active(sbin, incscript->block_id, NULL) )	
-				return FALSE;
-		}
-				
+			sieve_script_name(incscript->script), block_id);
+							
+		denv->sblock = incscript->block;
 		denv->cdumper = sieve_code_dumper_create(denv);
 
 		if ( denv->cdumper == NULL )
@@ -405,10 +403,7 @@ bool ext_include_binary_dump
 		sieve_code_dumper_run(denv->cdumper);
 		sieve_code_dumper_free(&(denv->cdumper));
 	}
-	
-	if ( !sieve_binary_block_set_active(sbin, prvblk, NULL) ) 
-		return FALSE;
-	
+		
 	hash_table_iterate_deinit(&hctx);
 	
 	return TRUE;

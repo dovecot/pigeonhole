@@ -37,7 +37,7 @@ static struct sieve_coded_stringlist *sieve_coded_stringlist_create
 {
 	struct sieve_coded_stringlist *strlist;
 	
-	if ( end > sieve_binary_get_code_size(renv->sbin) ) 
+	if ( end > sieve_binary_block_get_size(renv->sblock) ) 
   		return NULL;
     
 	strlist = t_new(struct sieve_coded_stringlist, 1);
@@ -128,7 +128,7 @@ static bool sieve_coded_stringlist_dump
 {
 	unsigned int i;
 	
-	if ( end > sieve_binary_get_code_size(denv->sbin) ) 
+	if ( end > sieve_binary_block_get_size(denv->sblock) ) 
   		return FALSE;
     
 	if ( field_name != NULL )
@@ -163,31 +163,31 @@ static bool sieve_coded_stringlist_dump
  */
 
 void sieve_code_source_line_emit
-(struct sieve_binary *sbin, unsigned int source_line)
+(struct sieve_binary_block *sblock, unsigned int source_line)
 {
-    (void)sieve_binary_emit_unsigned(sbin, source_line);
+	(void)sieve_binary_emit_unsigned(sblock, source_line);
 }
 
 bool sieve_code_source_line_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-    unsigned int number = 0;
+	unsigned int number = 0;
 
 	sieve_code_mark(denv);
-    if (sieve_binary_read_unsigned(denv->sbin, address, &number) ) {
-        sieve_code_dumpf(denv, "(source line: %lu)", (unsigned long) number);
+	if (sieve_binary_read_unsigned(denv->sblock, address, &number) ) {
+		sieve_code_dumpf(denv, "(source line: %lu)", (unsigned long) number);
 
-        return TRUE;
-    }
+		return TRUE;
+	}
 
-    return FALSE;
+	return FALSE;
 }
 
 bool sieve_code_source_line_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address,
 	unsigned int *source_line_r)
 {
-	return sieve_binary_read_unsigned(renv->sbin, address, source_line_r);
+	return sieve_binary_read_unsigned(renv->sblock, address, source_line_r);
 }
 
 /*
@@ -217,26 +217,26 @@ const unsigned int sieve_operand_count =
  */
 
 sieve_size_t sieve_operand_emit
-(struct sieve_binary *sbin, const struct sieve_extension *ext, 
+(struct sieve_binary_block *sblock, const struct sieve_extension *ext, 
 	const struct sieve_operand_def *opr_def)
 {
 	sieve_size_t address;
 
 	if ( ext != NULL ) {
 		address = sieve_binary_emit_extension
-			(sbin, ext, sieve_operand_count);
+			(sblock, ext, sieve_operand_count);
 	
 		sieve_binary_emit_extension_object
-			(sbin, &opr_def->ext_def->operands, opr_def->code);
+			(sblock, &opr_def->ext_def->operands, opr_def->code);
 
 		return address;
 	}
 
-	return sieve_binary_emit_byte(sbin, opr_def->code);
+	return sieve_binary_emit_byte(sblock, opr_def->code);
 }
 
 bool sieve_operand_read
-(struct sieve_binary *sbin, sieve_size_t *address, 
+(struct sieve_binary_block *sblock, sieve_size_t *address, 
 	struct sieve_operand *operand) 
 {
 	unsigned int code = sieve_operand_count;
@@ -245,7 +245,7 @@ bool sieve_operand_read
 	operand->ext = NULL;
 	operand->def = NULL;
 
-	if ( !sieve_binary_read_extension(sbin, address, &code, &operand->ext) )
+	if ( !sieve_binary_read_extension(sblock, address, &code, &operand->ext) )
 		return NULL;
 
 	if ( operand->ext == NULL ) {
@@ -259,19 +259,19 @@ bool sieve_operand_read
 		return FALSE;
 
 	operand->def = (const struct sieve_operand_def *) 
-		sieve_binary_read_extension_object(sbin, address, 
+		sieve_binary_read_extension_object(sblock, address, 
 			&operand->ext->def->operands);
 
 	return ( operand->def != NULL );
 }
 
 bool sieve_operand_optional_present
-(struct sieve_binary *sbin, sieve_size_t *address)
+(struct sieve_binary_block *sblock, sieve_size_t *address)
 {	
 	sieve_size_t tmp_addr = *address;
 	unsigned int op = -1;
 	
-	if ( sieve_binary_read_byte(sbin, &tmp_addr, &op) && 
+	if ( sieve_binary_read_byte(sblock, &tmp_addr, &op) && 
 		(op == SIEVE_OPERAND_OPTIONAL) ) {
 		*address = tmp_addr;
 		return TRUE;
@@ -281,9 +281,9 @@ bool sieve_operand_optional_present
 }
 
 bool sieve_operand_optional_read
-(struct sieve_binary *sbin, sieve_size_t *address, signed int *id_code)
+(struct sieve_binary_block *sblock, sieve_size_t *address, signed int *id_code)
 {
-	if ( sieve_binary_read_code(sbin, address, id_code) ) 
+	if ( sieve_binary_read_code(sblock, address, id_code) ) 
 		return TRUE;
 	
 	*id_code = 0;
@@ -404,17 +404,18 @@ const struct sieve_operand_def catenated_string_operand = {
 
 /* Omitted */
 
-void sieve_opr_omitted_emit(struct sieve_binary *sbin)
+void sieve_opr_omitted_emit(struct sieve_binary_block *sblock)
 {
-	(void) sieve_operand_emit(sbin, NULL, &omitted_operand);
+	(void) sieve_operand_emit(sblock, NULL, &omitted_operand);
 }
  
 /* Number */
 
-void sieve_opr_number_emit(struct sieve_binary *sbin, sieve_number_t number) 
+void sieve_opr_number_emit
+(struct sieve_binary_block *sblock, sieve_number_t number) 
 {
-	(void) sieve_operand_emit(sbin, NULL, &number_operand);
-	(void) sieve_binary_emit_integer(sbin, number);
+	(void) sieve_operand_emit(sblock, NULL, &number_operand);
+	(void) sieve_binary_emit_integer(sblock, number);
 }
 
 bool sieve_opr_number_dump_data
@@ -442,7 +443,7 @@ bool sieve_opr_number_dump
 	
 	sieve_code_mark(denv);
 	
-	if ( !sieve_operand_read(denv->sbin, address, &operand) )
+	if ( !sieve_operand_read(denv->sblock, address, &operand) )
 		return FALSE;
 
 	return sieve_opr_number_dump_data(denv, &operand, address, field_name);
@@ -471,7 +472,7 @@ bool sieve_opr_number_read
 {
 	struct sieve_operand operand;
 
-	if ( !sieve_operand_read(renv->sbin, address, &operand) )
+	if ( !sieve_operand_read(renv->sblock, address, &operand) )
 		return FALSE;
 		
 	return sieve_opr_number_read_data(renv, &operand, address, number_r);
@@ -483,7 +484,7 @@ static bool opr_number_dump
 {
 	sieve_number_t number = 0;
 	
-	if (sieve_binary_read_integer(denv->sbin, address, &number) ) {
+	if (sieve_binary_read_integer(denv->sblock, address, &number) ) {
 		if ( field_name != NULL ) 
 			sieve_code_dumpf(denv, "%s: NUM %llu", field_name, 
 				(unsigned long long) number);
@@ -500,15 +501,15 @@ static bool opr_number_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, 
 	sieve_number_t *number_r)
 { 
-	return sieve_binary_read_integer(renv->sbin, address, number_r);
+	return sieve_binary_read_integer(renv->sblock, address, number_r);
 }
 
 /* String */
 
-void sieve_opr_string_emit(struct sieve_binary *sbin, string_t *str)
+void sieve_opr_string_emit(struct sieve_binary_block *sblock, string_t *str)
 {
-	(void) sieve_operand_emit(sbin, NULL, &string_operand);
-	(void) sieve_binary_emit_string(sbin, str);
+	(void) sieve_operand_emit(sblock, NULL, &string_operand);
+	(void) sieve_binary_emit_string(sblock, str);
 }
 
 bool sieve_opr_string_dump_data
@@ -541,7 +542,7 @@ bool sieve_opr_string_dump
 	
 	sieve_code_mark(denv);
 
-	if ( !sieve_operand_read(denv->sbin, address, &operand) ) {
+	if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
 		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 		return FALSE;
 	}
@@ -556,7 +557,7 @@ bool sieve_opr_string_dump_ex
 	struct sieve_operand operand;
 	
 	sieve_code_mark(denv);
-	if ( !sieve_operand_read(denv->sbin, address, &operand) ) {
+	if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
 		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 		return FALSE;
 	}
@@ -588,7 +589,7 @@ bool sieve_opr_string_read
 {
 	struct sieve_operand operand;
 
-	if ( !sieve_operand_read(renv->sbin, address, &operand) ) {
+	if ( !sieve_operand_read(renv->sblock, address, &operand) ) {
 		return FALSE;
 	}
 
@@ -601,7 +602,7 @@ bool sieve_opr_string_read_ex
 {
 	struct sieve_operand operand;
 
-	if ( !sieve_operand_read(renv->sbin, address, &operand) ) {
+	if ( !sieve_operand_read(renv->sblock, address, &operand) ) {
 		return FALSE;
 	}
 
@@ -638,7 +639,7 @@ bool opr_string_dump
 {
 	string_t *str; 
 	
-	if ( sieve_binary_read_string(denv->sbin, address, &str) ) {
+	if ( sieve_binary_read_string(denv->sblock, address, &str) ) {
 		_dump_string(denv, str, field_name);   		
 		
 		return TRUE;
@@ -652,39 +653,39 @@ static bool opr_string_read
 	const struct sieve_operand *opr ATTR_UNUSED, sieve_size_t *address, 
 	string_t **str_r)
 { 	
-	return sieve_binary_read_string(renv->sbin, address, str_r);
+	return sieve_binary_read_string(renv->sblock, address, str_r);
 }
 
 /* String list */
 
 void sieve_opr_stringlist_emit_start
-(struct sieve_binary *sbin, unsigned int listlen, void **context)
+(struct sieve_binary_block *sblock, unsigned int listlen, void **context)
 {
 	sieve_size_t *end_offset = t_new(sieve_size_t, 1);
 
 	/* Emit byte identifying the type of operand */	  
-	(void) sieve_operand_emit(sbin, NULL, &stringlist_operand);
+	(void) sieve_operand_emit(sblock, NULL, &stringlist_operand);
   
 	/* Give the interpreter an easy way to skip over this string list */
-	*end_offset = sieve_binary_emit_offset(sbin, 0);
+	*end_offset = sieve_binary_emit_offset(sblock, 0);
 	*context = (void *) end_offset;
 
 	/* Emit the length of the list */
-	(void) sieve_binary_emit_unsigned(sbin, listlen);
+	(void) sieve_binary_emit_unsigned(sblock, listlen);
 }
 
 void sieve_opr_stringlist_emit_item
-(struct sieve_binary *sbin, void *context ATTR_UNUSED, string_t *item)
+(struct sieve_binary_block *sblock, void *context ATTR_UNUSED, string_t *item)
 {
-	(void) sieve_opr_string_emit(sbin, item);
+	(void) sieve_opr_string_emit(sblock, item);
 }
 
 void sieve_opr_stringlist_emit_end
-(struct sieve_binary *sbin, void *context)
+(struct sieve_binary_block *sblock, void *context)
 {
 	sieve_size_t *end_offset = (sieve_size_t *) context;
 
-	(void) sieve_binary_resolve_offset(sbin, *end_offset);
+	(void) sieve_binary_resolve_offset(sblock, *end_offset);
 }
 
 bool sieve_opr_stringlist_dump_data
@@ -723,7 +724,7 @@ bool sieve_opr_stringlist_dump
 
 	sieve_code_mark(denv);
 
-	if ( !sieve_operand_read(denv->sbin, address, &operand) ) {
+	if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
 		return FALSE;
 	}
 
@@ -765,7 +766,7 @@ struct sieve_coded_stringlist *sieve_opr_stringlist_read
 {
 	struct sieve_operand operand;
 
-	if ( !sieve_operand_read(renv->sbin, address, &operand) ) {
+	if ( !sieve_operand_read(renv->sblock, address, &operand) ) {
 		return NULL;
 	}
 	
@@ -781,12 +782,12 @@ static bool opr_stringlist_dump
 	unsigned int length = 0; 
  	int end_offset;
 
-	if ( !sieve_binary_read_offset(denv->sbin, address, &end_offset) )
+	if ( !sieve_binary_read_offset(denv->sblock, address, &end_offset) )
 		return FALSE;
 
 	end = pc + end_offset;
 
-	if ( !sieve_binary_read_unsigned(denv->sbin, address, &length) ) 
+	if ( !sieve_binary_read_unsigned(denv->sblock, address, &length) ) 
 		return FALSE;	
   	
 	return sieve_coded_stringlist_dump(denv, address, length, end, field_name); 
@@ -801,12 +802,12 @@ static struct sieve_coded_stringlist *opr_stringlist_read
 	unsigned int length = 0;  
 	int end_offset;
 	
-	if ( !sieve_binary_read_offset(renv->sbin, address, &end_offset) )
+	if ( !sieve_binary_read_offset(renv->sblock, address, &end_offset) )
 		return NULL;
 
 	end = pc + end_offset;
 
-	if ( !sieve_binary_read_unsigned(renv->sbin, address, &length) ) 
+	if ( !sieve_binary_read_unsigned(renv->sblock, address, &length) ) 
 	  	return NULL;	
   	
 	strlist = sieve_coded_stringlist_create(renv, *address, (unsigned int) length, end); 
@@ -820,10 +821,10 @@ static struct sieve_coded_stringlist *opr_stringlist_read
 /* Catenated String */
 
 void sieve_opr_catenated_string_emit
-(struct sieve_binary *sbin, unsigned int elements) 
+(struct sieve_binary_block *sblock, unsigned int elements) 
 {
-	(void) sieve_operand_emit(sbin, NULL, &catenated_string_operand);
-	(void) sieve_binary_emit_unsigned(sbin, elements);
+	(void) sieve_operand_emit(sblock, NULL, &catenated_string_operand);
+	(void) sieve_binary_emit_unsigned(sblock, elements);
 }
 
 static bool opr_catenated_string_dump
@@ -834,7 +835,7 @@ static bool opr_catenated_string_dump
 	unsigned int elements = 0;
 	unsigned int i;
 	
-	if (!sieve_binary_read_unsigned(denv->sbin, address, &elements) )
+	if (!sieve_binary_read_unsigned(denv->sblock, address, &elements) )
 		return FALSE;
 	
 	if ( field_name != NULL ) 
@@ -861,7 +862,7 @@ static bool opr_catenated_string_read
 	unsigned int elements = 0;
 	unsigned int i;
 		
-	if ( !sieve_binary_read_unsigned(renv->sbin, address, &elements) )
+	if ( !sieve_binary_read_unsigned(renv->sblock, address, &elements) )
 		return FALSE;
 
 	/* Parameter str can be NULL if we are requested to only skip and not 
@@ -978,26 +979,26 @@ const unsigned int sieve_operation_count =
  */
 
 sieve_size_t sieve_operation_emit
-(struct sieve_binary *sbin, const struct sieve_extension *ext,
+(struct sieve_binary_block *sblock, const struct sieve_extension *ext,
 	const struct sieve_operation_def *op_def)
 {
 	sieve_size_t address;
 
   if ( ext != NULL ) {
 		address = sieve_binary_emit_extension
-			(sbin, ext, sieve_operation_count);
+			(sblock, ext, sieve_operation_count);
 
 		sieve_binary_emit_extension_object
-			(sbin, &op_def->ext_def->operations, op_def->code);
+			(sblock, &op_def->ext_def->operations, op_def->code);
 
 		return address;
   }
 
-  return sieve_binary_emit_byte(sbin, op_def->code);
+  return sieve_binary_emit_byte(sblock, op_def->code);
 }
 
 bool sieve_operation_read
-(struct sieve_binary *sbin, sieve_size_t *address,
+(struct sieve_binary_block *sblock, sieve_size_t *address,
 	struct sieve_operation *oprtn) 
 {
 	unsigned int code = sieve_operation_count;
@@ -1006,7 +1007,7 @@ bool sieve_operation_read
 	oprtn->def = NULL;
 	oprtn->ext = NULL;
 
-	if ( !sieve_binary_read_extension(sbin, address, &code, &oprtn->ext) )
+	if ( !sieve_binary_read_extension(sblock, address, &code, &oprtn->ext) )
 		return FALSE;
 
 	if ( !oprtn->ext ) {
@@ -1018,7 +1019,7 @@ bool sieve_operation_read
 	}
 
 	oprtn->def = (const struct sieve_operation_def *) 
-		sieve_binary_read_extension_object(sbin, address, 
+		sieve_binary_read_extension_object(sblock, address, 
 			&oprtn->ext->def->operations);
 
 	return ( oprtn->def != NULL );
@@ -1037,7 +1038,7 @@ static bool opc_jmp_dump
 	unsigned int pc = *address;
 	int offset;
 	
-	if ( sieve_binary_read_offset(denv->sbin, address, &offset) ) 
+	if ( sieve_binary_read_offset(denv->sblock, address, &offset) ) 
 		sieve_code_dumpf(denv, "%s %d [%08x]", 
 			sieve_operation_mnemonic(op), offset, pc + offset);
 	else

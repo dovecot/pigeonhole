@@ -163,7 +163,7 @@ static bool tst_test_error_validate
 static bool tst_test_error_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *tst)
 {
-	sieve_operation_emit(cgenv->sbin, tst->ext, &test_error_operation);
+	sieve_operation_emit(cgenv->sblock, tst->ext, &test_error_operation);
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, tst, NULL);

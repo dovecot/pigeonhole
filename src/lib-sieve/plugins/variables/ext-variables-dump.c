@@ -77,11 +77,11 @@ bool ext_variables_code_dump
 	int end_offset;
 	
 	sieve_code_mark(denv);
-	if ( !sieve_binary_read_unsigned(denv->sbin, address, &scope_size) )
+	if ( !sieve_binary_read_unsigned(denv->sblock, address, &scope_size) )
 		return FALSE;
 		
 	pc = *address;	
-	if ( !sieve_binary_read_offset(denv->sbin, address, &end_offset) )
+	if ( !sieve_binary_read_offset(denv->sblock, address, &end_offset) )
 		return FALSE;
 	
 	main_scope = sieve_variable_scope_create(NULL);
@@ -95,7 +95,7 @@ bool ext_variables_code_dump
 		string_t *identifier;
 
 		sieve_code_mark(denv);
-		if (!sieve_binary_read_string(denv->sbin, address, &identifier) ) {
+		if (!sieve_binary_read_string(denv->sblock, address, &identifier) ) {
 			return FALSE;
 		}
 		

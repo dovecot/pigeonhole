@@ -178,12 +178,12 @@ const struct sieve_operand_def namespace_variable_operand = {
 };
 
 void sieve_variables_opr_namespace_variable_emit
-(struct sieve_binary *sbin, const struct sieve_extension *var_ext,
+(struct sieve_binary_block *sblock, const struct sieve_extension *var_ext,
 	const struct sieve_extension *ext,
 	const struct sieve_variables_namespace_def *nspc_def)
 { 
-	sieve_operand_emit(sbin, var_ext, &namespace_variable_operand);
-	sieve_opr_object_emit(sbin, ext, &nspc_def->obj_def);
+	sieve_operand_emit(sblock, var_ext, &namespace_variable_operand);
+	sieve_opr_object_emit(sblock, ext, &nspc_def->obj_def);
 }
 
 static bool opr_namespace_variable_read
@@ -202,7 +202,6 @@ static bool opr_namespace_variable_read
 	if ( nspc.def == NULL || nspc.def->read_variable == NULL )
 		return FALSE;
 		
-
 	return nspc.def->read_variable(renv, &nspc, address, str);
 }
 
@@ -214,12 +213,12 @@ static bool opr_namespace_variable_dump
 	struct sieve_variables_namespace nspc;
 	struct sieve_operand oprnd; 
 
-	if ( !sieve_operand_read(denv->sbin, address, &oprnd) ) {
+	if ( !sieve_operand_read(denv->sblock, address, &oprnd) ) {
 		return FALSE;
 	}
 
 	if ( !sieve_opr_object_read_data
-		(denv->sbin, &oprnd, &sieve_variables_namespace_operand_class, address, 
+		(denv->sblock, &oprnd, &sieve_variables_namespace_operand_class, address, 
 			&nspc.object) ) {
 		return FALSE;
   }

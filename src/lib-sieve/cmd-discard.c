@@ -79,10 +79,10 @@ const struct sieve_action_def act_discard = {
 static bool cmd_discard_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit(cgenv->sbin, NULL, &cmd_discard_operation);
+	sieve_operation_emit(cgenv->sblock, NULL, &cmd_discard_operation);
 
 	/* Emit line number */
-  sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
+	sieve_code_source_line_emit(cgenv->sblock, sieve_command_source_line(cmd));
 
 	return TRUE;
 }

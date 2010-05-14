@@ -189,7 +189,7 @@ static bool cmd_test_mailbox_generate
 	i_assert( ctx_data->mailbox_op < MAILBOX_OP_LAST );
 	
 	/* Emit operation */
-	sieve_operation_emit(cgenv->sbin, cmd->ext,
+	sieve_operation_emit(cgenv->sblock, cmd->ext,
 		test_mailbox_operations[ctx_data->mailbox_op]);
 	  	
  	/* Generate arguments */

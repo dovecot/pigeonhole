@@ -27,6 +27,7 @@ struct sieve_runtime_env {
 	struct sieve_instance *svinst;
 
 	struct sieve_binary *sbin;
+	struct sieve_binary_block *sblock;
 	struct sieve_operation oprtn; 
 
 	struct sieve_script *script;
@@ -47,6 +48,8 @@ struct sieve_runtime_env {
 
 struct sieve_interpreter *sieve_interpreter_create
 	(struct sieve_binary *sbin, struct sieve_error_handler *ehandler);
+struct sieve_interpreter *sieve_interpreter_create_for_block
+	(struct sieve_binary_block *sblock, struct sieve_error_handler *ehandler);
 void sieve_interpreter_free(struct sieve_interpreter **interp);
 
 /*

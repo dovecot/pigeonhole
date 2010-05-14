@@ -56,7 +56,7 @@ const struct sieve_operation_def test_result_print_operation = {
 static bool cmd_test_result_print_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
-	sieve_operation_emit(cgenv->sbin, cmd->ext, &test_result_print_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &test_result_print_operation);
 
 	return TRUE;
 }

@@ -204,7 +204,7 @@ static bool tag_address_part_generate
 	struct sieve_address_part *addrp =
 		(struct sieve_address_part *) arg->argument->data;
 		
-	sieve_opr_address_part_emit(cgenv->sbin, addrp); 
+	sieve_opr_address_part_emit(cgenv->sblock, addrp); 
 		
 	return TRUE;
 }
@@ -295,9 +295,9 @@ bool sieve_addrmatch_default_dump_optionals
 {
 	int opt_code = 1;
 	
-	if ( sieve_operand_optional_present(denv->sbin, address) ) {
+	if ( sieve_operand_optional_present(denv->sblock, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 
+			if ( !sieve_operand_optional_read(denv->sblock, address, &opt_code) ) 
 				return FALSE;
 
 			switch ( opt_code ) {
@@ -331,9 +331,9 @@ bool sieve_addrmatch_default_get_optionals
 {
 	int opt_code = 1;
 	
-	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+	if ( sieve_operand_optional_present(renv->sblock, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) )
+			if ( !sieve_operand_optional_read(renv->sblock, address, &opt_code) )
 				return FALSE;
 				  
 			switch ( opt_code ) {

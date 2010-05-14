@@ -97,7 +97,7 @@ static bool cmd_test_set_validate
 static bool cmd_test_set_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit(cgenv->sbin, cmd->ext, &test_set_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &test_set_operation);
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);
@@ -130,7 +130,7 @@ static int cmd_test_set_operation_execute
 	int member_id;
 
 	if ( !testsuite_object_read_member
-		(renv->sbin, address, &tobj, &member_id) ) {
+		(renv->sblock, address, &tobj, &member_id) ) {
 		sieve_runtime_trace_error(renv, "invalid testsuite object member");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}

@@ -64,10 +64,10 @@ bool testsuite_object_argument_activate
  */
 
 bool testsuite_object_read
-  (struct sieve_binary *sbin, sieve_size_t *address, 
+  (struct sieve_binary_block *sblock, sieve_size_t *address, 
 		struct testsuite_object *tobj);
 bool testsuite_object_read_member
-  (struct sieve_binary *sbin, sieve_size_t *address,
+  (struct sieve_binary_block *sblock, sieve_size_t *address,
 		struct testsuite_object *tobj, int *member_id_r);
 
 bool testsuite_object_dump

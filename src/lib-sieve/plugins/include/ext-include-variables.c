@@ -70,11 +70,11 @@ struct sieve_variable *ext_include_variable_import_global
  */
  
 bool ext_include_variables_save
-(struct sieve_binary *sbin, struct sieve_variable_scope *global_vars)
+(struct sieve_binary_block *sblock, struct sieve_variable_scope *global_vars)
 {
 	unsigned int count = sieve_variable_scope_size(global_vars);
 
-	sieve_binary_emit_unsigned(sbin, count);
+	sieve_binary_emit_unsigned(sblock, count);
 
 	if ( count > 0 ) {
 		unsigned int size, i;
@@ -82,7 +82,7 @@ bool ext_include_variables_save
 			sieve_variable_scope_get_variables(global_vars, &size);
 
 		for ( i = 0; i < size; i++ ) {
-			sieve_binary_emit_cstring(sbin, vars[i]->identifier);
+			sieve_binary_emit_cstring(sblock, vars[i]->identifier);
 		}
 	}
 
@@ -90,20 +90,21 @@ bool ext_include_variables_save
 }
 
 bool ext_include_variables_load
-(const struct sieve_extension *this_ext, struct sieve_binary *sbin, 
-	sieve_size_t *offset, unsigned int block,
-	struct sieve_variable_scope **global_vars_r)
+(const struct sieve_extension *this_ext, struct sieve_binary_block *sblock, 
+	sieve_size_t *offset, struct sieve_variable_scope **global_vars_r)
 {
-	unsigned int count = 0;
-	unsigned int i;
+	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
+	unsigned int block_id = sieve_binary_block_get_id(sblock);
+	unsigned int i, count = 0;
 	pool_t pool;
 
 	/* Sanity assert */
 	i_assert( *global_vars_r == NULL );
 
-	if ( !sieve_binary_read_unsigned(sbin, offset, &count) ) {
+	if ( !sieve_binary_read_unsigned(sblock, offset, &count) ) {
 		sieve_sys_error("include: failed to read global variables count "
-			"from dependency block %d of binary %s", block, sieve_binary_path(sbin));
+			"from dependency block %d of binary %s", block_id, 
+			sieve_binary_path(sbin));
 		return FALSE;
 	}
 
@@ -122,10 +123,11 @@ bool ext_include_variables_load
 		struct sieve_variable *var;
 		string_t *identifier;
 
-		if ( !sieve_binary_read_string(sbin, offset, &identifier) ) {
+		if ( !sieve_binary_read_string(sblock, offset, &identifier) ) {
 			/* Binary is corrupt, recompile */
 			sieve_sys_error("include: failed to read global variable specification "
-				"from dependency block %d of binary %s", block, sieve_binary_path(sbin));
+				"from dependency block %d of binary %s", block_id, 
+				sieve_binary_path(sbin));
 			return FALSE;
 		}
 		
@@ -248,7 +250,7 @@ bool vnspc_global_variables_generate
 
 	struct sieve_variable *var = (struct sieve_variable *) var_data;
 	
-	sieve_variables_opr_variable_emit(cgenv->sbin, ectx->var_ext, var);
+	sieve_variables_opr_variable_emit(cgenv->sblock, ectx->var_ext, var);
 
 	return TRUE;
 }

@@ -246,7 +246,7 @@ static bool tag_action_generate
 	i_assert(ctx_data->action < CONFIG_ACTION_LAST);
 
 	sieve_operation_emit
-		(cgenv->sbin, cmd->ext, test_config_operations[ctx_data->action]);
+		(cgenv->sblock, cmd->ext, test_config_operations[ctx_data->action]);
 
 	while ( param != NULL ) {
 		if ( !sieve_generate_argument(cgenv, param, cmd) )

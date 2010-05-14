@@ -23,7 +23,7 @@ struct sieve_binary_dumper {
 };
 
 struct sieve_binary_dumper *sieve_binary_dumper_create
-	(struct sieve_binary *sbin) 
+(struct sieve_binary *sbin) 
 {
 	pool_t pool;
 	struct sieve_binary_dumper *dumper;
@@ -91,25 +91,52 @@ void sieve_binary_dump_sectionf
  */
 
 bool sieve_binary_dumper_run
-(struct sieve_binary_dumper *dumper, struct ostream *stream) 
+(struct sieve_binary_dumper *dumper, struct ostream *stream, bool verbose) 
 {	
 	struct sieve_binary *sbin = dumper->dumpenv.sbin;
 	struct sieve_dumptime_env *denv = &(dumper->dumpenv);
 	int count, i;
 	
 	dumper->dumpenv.stream = stream;
+
+	/* Dump list of binary blocks */
+	if ( verbose ) {
+		count = sieve_binary_block_count(sbin);
+
+		sieve_binary_dump_sectionf
+			(denv, "Binary blocks (count: %d)", count);
+
+		for ( i = 0; i < count; i++ ) {
+			struct sieve_binary_block *sblock = sieve_binary_block_get(sbin, i);
+
+			sieve_binary_dumpf(denv, 
+				"%3d: size: %"PRIuSIZE_T" bytes\n", i, 
+				sieve_binary_block_get_size(sblock));
+		}
+	}
 	
 	/* Dump list of used extensions */
 	
 	count = sieve_binary_extensions_count(sbin);
 	if ( count > 0 ) {
-		sieve_binary_dump_sectionf(denv, "Required extensions");
+		sieve_binary_dump_sectionf
+			(denv, "Required extensions (block: %d)", SBIN_SYSBLOCK_EXTENSIONS);
 	
 		for ( i = 0; i < count; i++ ) {
 			const struct sieve_extension *ext = sieve_binary_extension_get_by_index
 				(sbin, i);
-			sieve_binary_dumpf(denv, "%3d: %s (%d)\n", i, sieve_extension_name(ext), 
-				ext->id);
+
+			struct sieve_binary_block *sblock = sieve_binary_extension_get_block
+				(sbin, ext);
+	
+			if ( sblock == NULL ) {
+				sieve_binary_dumpf(denv, "%3d: %s (id: %d)\n", 
+					i, sieve_extension_name(ext), ext->id);
+			} else {
+				sieve_binary_dumpf(denv, "%3d: %s (id: %d; block: %d)\n", 
+					i, sieve_extension_name(ext), ext->id, 
+					sieve_binary_block_get_id(sblock));
+			}
 		}
 	}
 
@@ -135,12 +162,11 @@ bool sieve_binary_dumper_run
 	
 	/* Dump main program */
 	
-	sieve_binary_dump_sectionf(denv, "Main program (block: %d)", SBIN_SYSBLOCK_MAIN_PROGRAM);
+	sieve_binary_dump_sectionf
+		(denv, "Main program (block: %d)", SBIN_SYSBLOCK_MAIN_PROGRAM);
 
-	if ( !sieve_binary_block_set_active(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM, NULL) ) {
-        return FALSE;
-	}
-
+	dumper->dumpenv.sblock = 
+		sieve_binary_block_get(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);
 	dumper->dumpenv.cdumper = sieve_code_dumper_create(&(dumper->dumpenv));
 
 	if ( dumper->dumpenv.cdumper != NULL ) {

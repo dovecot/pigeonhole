@@ -36,14 +36,14 @@ static bool tst_anyof_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx,
 		struct sieve_jumplist *jumps, bool jump_true)
 {
-	struct sieve_binary *sbin = cgenv->sbin;
+	struct sieve_binary_block *sblock = cgenv->sblock;
 	struct sieve_ast_node *test;
 	struct sieve_jumplist true_jumps;
 
 	if ( sieve_ast_test_count(ctx->ast_node) > 1 ) {	
 		if ( !jump_true ) {
 			/* Prepare jumplist */
-			sieve_jumplist_init_temp(&true_jumps, sbin);
+			sieve_jumplist_init_temp(&true_jumps, sblock);
 		}
 	
 		test = sieve_ast_test_first(ctx->ast_node);
@@ -67,8 +67,8 @@ static bool tst_anyof_generate
 	
 		if ( !jump_true ) {
 			/* All tests failed, jump to case FALSE */
-			sieve_operation_emit(sbin, NULL, &sieve_jmp_operation);
-			sieve_jumplist_add(jumps, sieve_binary_emit_offset(sbin, 0));
+			sieve_operation_emit(sblock, NULL, &sieve_jmp_operation);
+			sieve_jumplist_add(jumps, sieve_binary_emit_offset(sblock, 0));
 			
 			/* All true exits jump here */
 			sieve_jumplist_resolve(&true_jumps);

@@ -15,21 +15,21 @@
  */
 
 void sieve_opr_object_emit
-(struct sieve_binary *sbin, const struct sieve_extension *ext,
+(struct sieve_binary_block *sblock, const struct sieve_extension *ext,
 	const struct sieve_object_def *obj_def)
 {
 	struct sieve_extension_objects *objs = 
 		(struct sieve_extension_objects *) obj_def->operand->interface;
 		 
-	(void) sieve_operand_emit(sbin, ext, obj_def->operand);
+	(void) sieve_operand_emit(sblock, ext, obj_def->operand);
 	
 	if ( objs->count > 1 ) {	
-		(void) sieve_binary_emit_byte(sbin, obj_def->code);
+		(void) sieve_binary_emit_byte(sblock, obj_def->code);
 	} 
 }
 
 bool sieve_opr_object_read_data
-(struct sieve_binary *sbin, const struct sieve_operand *operand,
+(struct sieve_binary_block *sblock, const struct sieve_operand *operand,
 	const struct sieve_operand_class *opclass, sieve_size_t *address,
 	struct sieve_object *obj)
 {
@@ -44,7 +44,7 @@ bool sieve_opr_object_read_data
 		return FALSE;
 			
 	if ( objs->count > 1 ) {
-		if ( !sieve_binary_read_byte(sbin, address, &obj_code) ) 
+		if ( !sieve_binary_read_byte(sblock, address, &obj_code) ) 
 			return FALSE;
 
 		if ( obj_code < objs->count ) {
@@ -69,12 +69,12 @@ bool sieve_opr_object_read
 {
 	struct sieve_operand operand; 
 
-	if ( !sieve_operand_read(renv->sbin, address, &operand) ) {
+	if ( !sieve_operand_read(renv->sblock, address, &operand) ) {
 		return FALSE;
 	}
 	
 	return sieve_opr_object_read_data
-		(renv->sbin, &operand, opclass, address, obj);
+		(renv->sblock, &operand, opclass, address, obj);
 }
 
 bool sieve_opr_object_dump
@@ -91,12 +91,12 @@ bool sieve_opr_object_dump
 
 	sieve_code_mark(denv);
 	
-	if ( !sieve_operand_read(denv->sbin, address, &operand) ) {
+	if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
 		return FALSE;
 	}
 
 	if ( !sieve_opr_object_read_data
-		(denv->sbin, &operand, opclass, address, obj) )
+		(denv->sblock, &operand, opclass, address, obj) )
 		return FALSE;
 			
 	if ( operand.def->class == NULL )

@@ -117,7 +117,7 @@ static bool tst_header_validate
 static bool tst_header_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *tst) 
 {
-	sieve_operation_emit(cgenv->sbin, NULL, &tst_header_operation);
+	sieve_operation_emit(cgenv->sblock, NULL, &tst_header_operation);
 
  	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, tst, NULL);

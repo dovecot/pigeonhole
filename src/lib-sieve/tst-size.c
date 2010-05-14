@@ -200,9 +200,9 @@ bool tst_size_generate
 		(struct tst_size_context_data *) tst->data;
 
 	if ( ctx_data->type == SIZE_OVER ) 
-		sieve_operation_emit(cgenv->sbin, NULL, &tst_size_over_operation);
+		sieve_operation_emit(cgenv->sblock, NULL, &tst_size_over_operation);
 	else
-		sieve_operation_emit(cgenv->sbin, NULL, &tst_size_under_operation);
+		sieve_operation_emit(cgenv->sblock, NULL, &tst_size_under_operation);
 
  	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, tst, NULL) )

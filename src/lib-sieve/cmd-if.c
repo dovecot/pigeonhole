@@ -149,7 +149,7 @@ static bool cmd_elsif_validate
  */
 
 static void cmd_if_resolve_exit_jumps
-(struct sieve_binary *sbin, struct cmd_if_context_data *cmd_data) 
+(struct sieve_binary_block *sblock, struct cmd_if_context_data *cmd_data) 
 {
 	struct cmd_if_context_data *if_ctx = cmd_data->previous;
 	
@@ -158,7 +158,7 @@ static void cmd_if_resolve_exit_jumps
 	 */
 	while ( if_ctx != NULL ) {
 		if ( if_ctx->jump_generated ) 
-			sieve_binary_resolve_offset(sbin, if_ctx->exit_jump);
+			sieve_binary_resolve_offset(sblock, if_ctx->exit_jump);
 		if_ctx = if_ctx->previous;	
 	}
 }
@@ -166,14 +166,14 @@ static void cmd_if_resolve_exit_jumps
 static bool cmd_if_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
-	struct sieve_binary *sbin = cgenv->sbin;
+	struct sieve_binary_block *sblock = cgenv->sblock;
 	struct cmd_if_context_data *cmd_data = 
 		(struct cmd_if_context_data *) cmd->data;
 	struct sieve_ast_node *test;
 	struct sieve_jumplist jmplist;
 	
 	/* Prepare jumplist */
-	sieve_jumplist_init_temp(&jmplist, sbin);
+	sieve_jumplist_init_temp(&jmplist, sblock);
 	
 	/* Generate test condition */
 	test = sieve_ast_test_first(cmd->ast_node);
@@ -192,13 +192,13 @@ static bool cmd_if_generate
 		 * anyway. 
 		 */
 		if ( !sieve_command_block_exits_unconditionally(cmd) ) {
-			sieve_operation_emit(sbin, NULL, &sieve_jmp_operation);
-			cmd_data->exit_jump = sieve_binary_emit_offset(sbin, 0);
+			sieve_operation_emit(sblock, NULL, &sieve_jmp_operation);
+			cmd_data->exit_jump = sieve_binary_emit_offset(sblock, 0);
 			cmd_data->jump_generated = TRUE;
 		}
 	} else {
 		/* Yes, Resolve previous exit jumps to this point */
-		cmd_if_resolve_exit_jumps(sbin, cmd_data);
+		cmd_if_resolve_exit_jumps(sblock, cmd_data);
 	}
 	
 	/* Case false ... (subsequent elsif/else commands might generate more) */
@@ -218,7 +218,7 @@ static bool cmd_else_generate
 		return FALSE;
 		
 	/* } End: resolve all exit blocks */	
-	cmd_if_resolve_exit_jumps(cgenv->sbin, cmd_data);
+	cmd_if_resolve_exit_jumps(cgenv->sblock, cmd_data);
 		
 	return TRUE;
 }

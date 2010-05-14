@@ -124,7 +124,7 @@ void sieve_variables_namespace_register
 extern const struct sieve_operand_class sieve_variables_namespace_operand_class;
 
 void sieve_variables_opr_namespace_variable_emit
-(struct sieve_binary *sbin, const struct sieve_extension *var_ext,
+	(struct sieve_binary_block *sblock, const struct sieve_extension *var_ext,
     const struct sieve_extension *ext,
     const struct sieve_variables_namespace_def *nspc_def);
 
@@ -204,10 +204,10 @@ bool sieve_variable_argument_activate
 extern const struct sieve_operand_def variable_operand;
 
 void sieve_variables_opr_variable_emit
-	(struct sieve_binary *sbin, const struct sieve_extension *var_ext, 
+	(struct sieve_binary_block *sblock, const struct sieve_extension *var_ext, 
 		struct sieve_variable *var);
 void sieve_variables_opr_match_value_emit
-	(struct sieve_binary *sbin, const struct sieve_extension *var_ext, 
+	(struct sieve_binary_block *sblock, const struct sieve_extension *var_ext, 
 		unsigned int index);
 
 bool sieve_variable_operand_read_data

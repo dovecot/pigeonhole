@@ -231,12 +231,12 @@ static bool cmd_reject_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
 	if ( sieve_command_is(cmd, reject_command) )
-		sieve_operation_emit(cgenv->sbin, cmd->ext, &reject_operation);
+		sieve_operation_emit(cgenv->sblock, cmd->ext, &reject_operation);
 	else
-		sieve_operation_emit(cgenv->sbin, cmd->ext, &ereject_operation);
+		sieve_operation_emit(cgenv->sblock, cmd->ext, &ereject_operation);
 
 	/* Emit line number */
-	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
+	sieve_code_source_line_emit(cgenv->sblock, sieve_command_source_line(cmd));
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);

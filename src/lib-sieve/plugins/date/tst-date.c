@@ -298,9 +298,9 @@ static bool tst_date_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *tst) 
 {
 	if ( sieve_command_is(tst, date_test) )
-		sieve_operation_emit(cgenv->sbin, tst->ext, &date_operation);
+		sieve_operation_emit(cgenv->sblock, tst->ext, &date_operation);
 	else if ( sieve_command_is(tst, currentdate_test) )
-		sieve_operation_emit(cgenv->sbin, tst->ext, &currentdate_operation);
+		sieve_operation_emit(cgenv->sblock, tst->ext, &currentdate_operation);
 	else
 		i_unreached();
 
@@ -313,7 +313,7 @@ static bool tag_zone_generate
     struct sieve_command *cmd)
 {
 	if ( arg->parameters == NULL ) {
-		sieve_opr_omitted_emit(cgenv->sbin);
+		sieve_opr_omitted_emit(cgenv->sblock);
 		return TRUE;
 	}
 
@@ -343,7 +343,7 @@ static bool tst_date_operation_dump
 		case SIEVE_MATCH_OPT_END:
 			break;
 		case OPT_DATE_ZONE:
-			if ( !sieve_operand_read(denv->sbin, address, &operand) ) {
+			if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
 				sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 				return FALSE;
 			}				
@@ -405,7 +405,7 @@ static int tst_date_operation_execute
 		case SIEVE_MATCH_OPT_END:
 			break;
 		case OPT_DATE_ZONE:
-			if ( !sieve_operand_read(renv->sbin, address, &operand) ) {
+			if ( !sieve_operand_read(renv->sblock, address, &operand) ) {
 				sieve_runtime_trace_error(renv, "invalid operand");
 				return SIEVE_EXEC_BIN_CORRUPT;
 			}

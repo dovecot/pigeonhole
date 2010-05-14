@@ -9,6 +9,13 @@
 #include "sieve-common.h"
 
 /*
+ * Config
+ */
+ 
+#define SIEVE_BINARY_VERSION_MAJOR     0
+#define SIEVE_BINARY_VERSION_MINOR     2
+
+/*
  * Binary object
  */
  
@@ -65,12 +72,27 @@ enum sieve_binary_system_block {
 	SBIN_SYSBLOCK_LAST
 };
 
-bool sieve_binary_block_set_active
-	(struct sieve_binary *sbin, unsigned int id, unsigned *old_id_r);
-unsigned int sieve_binary_block_create(struct sieve_binary *sbin);
-void sieve_binary_block_clear
+struct sieve_binary_block *sieve_binary_block_create
+	(struct sieve_binary *sbin);
+
+unsigned int sieve_binary_block_count
+	(struct sieve_binary *sbin);
+
+struct sieve_binary_block *sieve_binary_block_get
 	(struct sieve_binary *sbin, unsigned int id);
-	
+
+void sieve_binary_block_clear
+	(struct sieve_binary_block *sblock);
+
+size_t sieve_binary_block_get_size
+	(const struct sieve_binary_block *sblock);
+
+struct sieve_binary *sieve_binary_block_get_binary
+	(const struct sieve_binary_block *sblock);
+
+unsigned int sieve_binary_block_get_id
+	(const struct sieve_binary_block *sblock);
+
 /* 
  * Extension support 
  */
@@ -103,9 +125,9 @@ void sieve_binary_extension_set
 	(struct sieve_binary *sbin, const struct sieve_extension *ext,
 		const struct sieve_binary_extension *bext, void *context);
 
-unsigned int sieve_binary_extension_create_block
+struct sieve_binary_block *sieve_binary_extension_create_block
 	(struct sieve_binary *sbin, const struct sieve_extension *ext);
-unsigned int sieve_binary_extension_get_block
+struct sieve_binary_block *sieve_binary_extension_get_block
 (struct sieve_binary *sbin, const struct sieve_extension *ext);
 
 int sieve_binary_extension_link
@@ -124,68 +146,73 @@ int sieve_binary_extensions_count(struct sieve_binary *sbin);
 /* Low-level emission functions */
 
 sieve_size_t sieve_binary_emit_data
-	(struct sieve_binary *binary, const void *data, sieve_size_t size);
+	(struct sieve_binary_block *sblock, const void *data, sieve_size_t size);
 sieve_size_t sieve_binary_emit_byte
-	(struct sieve_binary *binary, unsigned char byte);
+	(struct sieve_binary_block *sblock, unsigned char byte);
 void sieve_binary_update_data
-	(struct sieve_binary *binary, sieve_size_t address, const void *data, 
+	(struct sieve_binary_block *sblock, sieve_size_t address, const void *data, 
 		sieve_size_t size);
-sieve_size_t sieve_binary_get_code_size(struct sieve_binary *binary);
 
 /* Offset emission functions */
 
 sieve_size_t sieve_binary_emit_offset
-	(struct sieve_binary *binary, int offset);
+	(struct sieve_binary_block *sblock, int offset);
 void sieve_binary_resolve_offset
-	(struct sieve_binary *binary, sieve_size_t address);
+	(struct sieve_binary_block *sblock, sieve_size_t address);
 
 /* Literal emission functions */
 
 sieve_size_t sieve_binary_emit_integer
-	(struct sieve_binary *binary, sieve_number_t integer);
+	(struct sieve_binary_block *sblock, sieve_number_t integer);
 sieve_size_t sieve_binary_emit_string
-	(struct sieve_binary *binary, const string_t *str);
+	(struct sieve_binary_block *sblock, const string_t *str);
 sieve_size_t sieve_binary_emit_cstring
-	(struct sieve_binary *binary, const char *str);
+	(struct sieve_binary_block *sblock, const char *str);
 
 static inline sieve_size_t sieve_binary_emit_unsigned
-	(struct sieve_binary *binary, unsigned int count)
+	(struct sieve_binary_block *sblock, unsigned int count)
 {
-	return sieve_binary_emit_integer(binary, count);
+	return sieve_binary_emit_integer(sblock, count);
 }
-
 
 /* Extension emission functions */
 
 sieve_size_t sieve_binary_emit_extension
-	(struct sieve_binary *sbin, const struct sieve_extension *ext,
+	(struct sieve_binary_block *sblock, const struct sieve_extension *ext,
 		unsigned int offset);
 void sieve_binary_emit_extension_object
-	(struct sieve_binary *sbin, const struct sieve_extension_objects *objs,
-    	unsigned int code);
+	(struct sieve_binary_block *sblock, 
+		const struct sieve_extension_objects *objs, unsigned int code);
 
 /* 
  * Code retrieval 
  */
 
 /* Literals */
+
 bool sieve_binary_read_byte
-	(struct sieve_binary *binary, sieve_size_t *address, unsigned int *byte_r);
+	(struct sieve_binary_block *sblock, sieve_size_t *address, 
+		unsigned int *byte_r);
 bool sieve_binary_read_code
-	(struct sieve_binary *binary, sieve_size_t *address, signed int *code_r);
+	(struct sieve_binary_block *sblock, sieve_size_t *address, 
+		signed int *code_r);
 bool sieve_binary_read_offset
-	(struct sieve_binary *binary, sieve_size_t *address, int *offset_r);
+	(struct sieve_binary_block *sblock, sieve_size_t *address,
+		int *offset_r);
 bool sieve_binary_read_integer
-  (struct sieve_binary *binary, sieve_size_t *address, sieve_number_t *int_r); 
+  (struct sieve_binary_block *sblock, sieve_size_t *address, 
+		sieve_number_t *int_r); 
 bool sieve_binary_read_string
-  (struct sieve_binary *binary, sieve_size_t *address, string_t **str_r);
+  (struct sieve_binary_block *sblock, sieve_size_t *address, 
+		string_t **str_r);
 
 static inline bool sieve_binary_read_unsigned
-  (struct sieve_binary *binary, sieve_size_t *address, unsigned int *count_r)
+(struct sieve_binary_block *sblock, sieve_size_t *address, 
+	unsigned int *count_r)
 {
 	sieve_number_t integer;
 
-	if ( !sieve_binary_read_integer(binary, address, &integer) )
+	if ( !sieve_binary_read_integer(sblock, address, &integer) )
 		return FALSE;
 
 	*count_r = integer;
@@ -193,12 +220,44 @@ static inline bool sieve_binary_read_unsigned
 	return TRUE;
 }
 
-/* Extension */
+/* Extensions */
+
 bool sieve_binary_read_extension
-	(struct sieve_binary *sbin, sieve_size_t *address, unsigned int *offset_r,
-		const struct sieve_extension **ext_r);
+	(struct sieve_binary_block *sblock, sieve_size_t *address,
+		unsigned int *offset_r, const struct sieve_extension **ext_r);
 const void *sieve_binary_read_extension_object
-	(struct sieve_binary *binary, sieve_size_t *address,
-    	const struct sieve_extension_objects *objs);
+	(struct sieve_binary_block *sblock, sieve_size_t *address,
+    const struct sieve_extension_objects *objs);
+
+/*
+ * Debug info
+ */
+
+/* Writer */
+
+struct sieve_binary_debug_writer;
+
+struct sieve_binary_debug_writer *sieve_binary_debug_writer_init
+	(struct sieve_binary_block *sblock);
+void sieve_binary_debug_writer_deinit
+	(struct sieve_binary_debug_writer **dwriter);
+
+void sieve_binary_debug_emit
+	(struct sieve_binary_debug_writer *dwriter, sieve_size_t code_address, 
+		unsigned int code_line, unsigned int code_column);
+
+/* Reader */
+
+struct sieve_binary_debug_reader *sieve_binary_debug_reader_init
+	(struct sieve_binary_block *sblock);
+void sieve_binary_debug_reader_deinit
+	(struct sieve_binary_debug_reader **dreader);
+
+
+void sieve_binary_debug_reader_reset
+	(struct sieve_binary_debug_reader *dreader);
+
+unsigned int sieve_binary_debug_read_line
+	(struct sieve_binary_debug_reader *dreader, sieve_size_t code_address);
 
 #endif

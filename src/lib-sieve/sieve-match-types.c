@@ -431,7 +431,7 @@ static bool tag_match_type_generate
 	struct sieve_match_type_context *mtctx =
 		(struct sieve_match_type_context *) arg->argument->data;
 	
-	(void) sieve_opr_match_type_emit(cgenv->sbin, mtctx->match_type);
+	(void) sieve_opr_match_type_emit(cgenv->sblock, mtctx->match_type);
 			
 	return TRUE;
 }

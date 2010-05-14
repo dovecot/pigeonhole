@@ -52,7 +52,7 @@ const struct sieve_operation_def return_operation = {
 static bool cmd_return_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit(cgenv->sbin, cmd->ext, &return_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &return_operation);
 
 	return TRUE;
 }

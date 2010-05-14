@@ -140,9 +140,9 @@ bool sieve_match_dump_optional_operands
 (const struct sieve_dumptime_env *denv, sieve_size_t *address, int *opt_code)
 {
 	if ( *opt_code != SIEVE_MATCH_OPT_END || 
-		sieve_operand_optional_present(denv->sbin, address) ) {
+		sieve_operand_optional_present(denv->sblock, address) ) {
 		do {
-			if ( !sieve_operand_optional_read(denv->sbin, address, opt_code) ) 
+			if ( !sieve_operand_optional_read(denv->sblock, address, opt_code) ) 
 				return FALSE;
 
 			switch ( *opt_code ) {
@@ -171,9 +171,9 @@ int sieve_match_read_optional_operands
 {	 
 	/* Handle any optional arguments */
 	if ( *opt_code != SIEVE_MATCH_OPT_END || 
-		sieve_operand_optional_present(renv->sbin, address) ) {
+		sieve_operand_optional_present(renv->sblock, address) ) {
 		do {
-			if ( !sieve_operand_optional_read(renv->sbin, address, opt_code) ) {
+			if ( !sieve_operand_optional_read(renv->sblock, address, opt_code) ) {
 				sieve_runtime_trace_error(renv, "invalid optional operand");
 				return SIEVE_EXEC_BIN_CORRUPT;
 			}

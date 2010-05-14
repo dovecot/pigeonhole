@@ -82,7 +82,7 @@ static bool arg_variable_generate
 	struct sieve_argument *argument = arg->argument;
 	struct sieve_variable *var = (struct sieve_variable *) argument->data;
 	
-	sieve_variables_opr_variable_emit(cgenv->sbin, argument->ext, var);
+	sieve_variables_opr_variable_emit(cgenv->sblock, argument->ext, var);
 
 	return TRUE;
 }
@@ -152,7 +152,7 @@ static bool arg_match_value_generate
 	struct sieve_argument *argument = arg->argument;
 	unsigned int index = POINTER_CAST_TO(argument->data, unsigned int);
 	
-	sieve_variables_opr_match_value_emit(cgenv->sbin, argument->ext, index);
+	sieve_variables_opr_match_value_emit(cgenv->sblock, argument->ext, index);
 
 	return TRUE;
 }

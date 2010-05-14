@@ -155,7 +155,7 @@ static bool tag_flags_generate
 	}
 
 	sieve_opr_side_effect_emit
-		(cgenv->sbin, arg->argument->ext, &flags_side_effect);
+		(cgenv->sblock, arg->argument->ext, &flags_side_effect);
 
 	if ( sieve_argument_is(arg, tag_flags) ) {
 		/* Explicit :flags tag */
@@ -169,7 +169,7 @@ static bool tag_flags_generate
 
 	} else if ( sieve_argument_is(arg, tag_flags_implicit) ) {
 		/* Implicit flags */
-		sieve_opr_omitted_emit(cgenv->sbin);
+		sieve_opr_omitted_emit(cgenv->sblock);
 	
 	} else {
 		/* Something else?! */
@@ -198,7 +198,7 @@ static bool seff_flags_dump_context
 {
   struct sieve_operand operand;
 
-  if ( !sieve_operand_read(denv->sbin, address, &operand) ) {
+  if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
 		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 		return FALSE;
 	}
@@ -269,7 +269,7 @@ static bool seff_flags_read_context
 	t_push();
 
 	/* Check whether explicit flag list operand is present */
-	if ( !sieve_operand_read(renv->sbin, address, &operand) ) {
+	if ( !sieve_operand_read(renv->sblock, address, &operand) ) {
         sieve_runtime_trace_error(renv, "invalid operand");
 		t_pop();
         return FALSE;

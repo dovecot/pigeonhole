@@ -108,7 +108,7 @@ static bool cmd_test_generate
 	struct testsuite_generator_context *genctx = 
 		_get_generator_context(cgenv->gentr);
 	
-	sieve_operation_emit(cgenv->sbin, cmd->ext, &test_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &test_operation);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
@@ -121,7 +121,7 @@ static bool cmd_test_generate
 	if ( !sieve_generate_block(cgenv, cmd->ast_node) )
 		return FALSE;
 	
-	sieve_operation_emit(cgenv->sbin, cmd->ext, &test_finish_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &test_finish_operation);
 	
 	/* Resolve exit jumps to this point */
 	sieve_jumplist_resolve(genctx->exit_jumps); 

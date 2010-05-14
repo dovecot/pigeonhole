@@ -88,12 +88,12 @@ bool testsuite_generator_context_initialize
 (struct sieve_generator *gentr, const struct sieve_extension *this_ext)
 {
 	pool_t pool = sieve_generator_pool(gentr);
-	struct sieve_binary *sbin = sieve_generator_get_binary(gentr);
+	struct sieve_binary_block *sblock = sieve_generator_get_block(gentr);
 	struct testsuite_generator_context *ctx = 
 		p_new(pool, struct testsuite_generator_context, 1);
 	
 	/* Setup exit jumplist */
-	ctx->exit_jumps = sieve_jumplist_create(pool, sbin);
+	ctx->exit_jumps = sieve_jumplist_create(pool, sblock);
 	
 	sieve_generator_extension_set_context(gentr, this_ext, ctx);
 

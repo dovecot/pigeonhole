@@ -63,7 +63,7 @@ static bool arg_number_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command *cmd ATTR_UNUSED)
 {
-	sieve_opr_number_emit(cgenv->sbin, sieve_ast_argument_number(arg));
+	sieve_opr_number_emit(cgenv->sblock, sieve_ast_argument_number(arg));
 
 	return TRUE;
 }
@@ -72,7 +72,7 @@ static bool arg_string_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command *cmd ATTR_UNUSED)
 {
-	sieve_opr_string_emit(cgenv->sbin, sieve_ast_argument_str(arg));
+	sieve_opr_string_emit(cgenv->sblock, sieve_ast_argument_str(arg));
   
 	return TRUE;
 }
@@ -102,7 +102,7 @@ static bool emit_string_list_operand
 	struct sieve_ast_argument *stritem;
    	
 	sieve_opr_stringlist_emit_start
-		(cgenv->sbin, sieve_ast_strlist_count(strlist), &list_context);
+		(cgenv->sblock, sieve_ast_strlist_count(strlist), &list_context);
 
 	stritem = sieve_ast_strlist_first(strlist);
 	while ( stritem != NULL ) {
@@ -112,7 +112,7 @@ static bool emit_string_list_operand
 		stritem = sieve_ast_strlist_next(stritem);
 	}
 
-	sieve_opr_stringlist_emit_end(cgenv->sbin, list_context);
+	sieve_opr_stringlist_emit_end(cgenv->sblock, list_context);
 	
 	return TRUE;
 }
@@ -185,7 +185,6 @@ bool sieve_arg_catenated_string_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
 	struct sieve_command *cmd) 
 {
-	struct sieve_binary *sbin = cgenv->sbin;
 	struct sieve_arg_catenated_string *catstr = 
 		(struct sieve_arg_catenated_string *) arg->argument->data;
 	struct sieve_ast_argument *strpart;
@@ -193,7 +192,7 @@ bool sieve_arg_catenated_string_generate
 	if ( _cat_string_count(catstr) == 1 )
 		sieve_generate_argument(cgenv, _cat_string_first(catstr), cmd);
 	else {
-		sieve_opr_catenated_string_emit(sbin, _cat_string_count(catstr));
+		sieve_opr_catenated_string_emit(cgenv->sblock, _cat_string_count(catstr));
 
 		strpart = _cat_string_first(catstr);
 		while ( strpart != NULL ) {

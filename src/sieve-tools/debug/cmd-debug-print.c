@@ -76,7 +76,7 @@ static bool cmd_debug_print_validate
 static bool cmd_debug_print_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	(void)sieve_operation_emit(cgenv->sbin, cmd->ext, &debug_print_operation);
+	(void)sieve_operation_emit(cgenv->sblock, cmd->ext, &debug_print_operation);
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);

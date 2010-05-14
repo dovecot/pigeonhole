@@ -334,10 +334,10 @@ static bool cmd_notify_validate
 static bool cmd_notify_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {		 
-	sieve_operation_emit(cgenv->sbin, cmd->ext, &notify_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &notify_operation);
 
 	/* Emit source line */
-	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
+	sieve_code_source_line_emit(cgenv->sblock, sieve_command_source_line(cmd));
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);
@@ -360,11 +360,11 @@ static bool cmd_notify_operation_dump
 		return FALSE;
 
 	/* Dump optional operands */
-	if ( sieve_operand_optional_present(denv->sbin, address) ) {
+	if ( sieve_operand_optional_present(denv->sblock, address) ) {
 		while ( opt_code != 0 ) {
 			sieve_code_mark(denv);
 			
-			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 
+			if ( !sieve_operand_optional_read(denv->sblock, address, &opt_code) ) 
 				return FALSE;
 
 			switch ( opt_code ) {
@@ -427,9 +427,9 @@ static int cmd_notify_operation_execute
 	}
 	
 	/* Optional operands */	
-	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+	if ( sieve_operand_optional_present(renv->sblock, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
+			if ( !sieve_operand_optional_read(renv->sblock, address, &opt_code) ) {
 				sieve_runtime_trace_error(renv, "invalid optional operand");
 				return SIEVE_EXEC_BIN_CORRUPT;
 			}

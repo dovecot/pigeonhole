@@ -223,23 +223,23 @@ static bool cmd_set_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
 	const struct sieve_extension *this_ext = cmd->ext;
-	struct sieve_binary *sbin = cgenv->sbin;
+	struct sieve_binary_block *sblock = cgenv->sblock;
 	struct cmd_set_context *sctx = (struct cmd_set_context *) cmd->data;
 	const struct sieve_variables_modifier *const *modfs;
 	unsigned int i, modf_count;	
 
-	sieve_operation_emit(sbin, this_ext, &cmd_set_operation); 
+	sieve_operation_emit(sblock, this_ext, &cmd_set_operation); 
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;	
 		
 	/* Generate modifiers (already sorted during validation) */
-	sieve_binary_emit_byte(sbin, array_count(&sctx->modifiers));
+	sieve_binary_emit_byte(sblock, array_count(&sctx->modifiers));
 
 	modfs = array_get(&sctx->modifiers, &modf_count); 
 	for ( i = 0; i < modf_count; i++ ) {
-		ext_variables_opr_modifier_emit(sbin, modfs[i]->object.ext, modfs[i]->def);
+		ext_variables_opr_modifier_emit(sblock, modfs[i]->object.ext, modfs[i]->def);
 	}
 
 	return TRUE;
@@ -263,7 +263,7 @@ static bool cmd_set_operation_dump
 		return FALSE;
 	
 	/* Read the number of applied modifiers we need to read */
-	if ( !sieve_binary_read_byte(denv->sbin, address, &mdfs) ) 
+	if ( !sieve_binary_read_byte(denv->sblock, address, &mdfs) ) 
 		return FALSE;
 	
 	/* Print all modifiers (sorted during code generation already) */
@@ -305,7 +305,7 @@ static int cmd_set_operation_execute
 	}
 		
 	/* Read the number of modifiers used */
-	if ( !sieve_binary_read_byte(renv->sbin, address, &mdfs) ) {
+	if ( !sieve_binary_read_byte(renv->sblock, address, &mdfs) ) {
 		sieve_runtime_trace_error(renv, "invalid modifier count");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}

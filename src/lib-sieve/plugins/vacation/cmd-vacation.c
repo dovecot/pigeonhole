@@ -463,17 +463,17 @@ static bool cmd_vacation_generate
 	struct cmd_vacation_context_data *ctx_data = 
 		(struct cmd_vacation_context_data *) cmd->data;
 		 
-	sieve_operation_emit(cgenv->sbin, cmd->ext, &vacation_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &vacation_operation);
 
 	/* Emit source line */
-	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
+	sieve_code_source_line_emit(cgenv->sblock, sieve_command_source_line(cmd));
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;	
 
 	/* FIXME: this will not allow the handle to be a variable */
-	sieve_opr_string_emit(cgenv->sbin, ctx_data->handle);
+	sieve_opr_string_emit(cgenv->sblock, ctx_data->handle);
 		
 	return TRUE;
 }
@@ -495,11 +495,11 @@ static bool ext_vacation_operation_dump
 		return FALSE;
 
 	/* Dump optional operands */
-	if ( sieve_operand_optional_present(denv->sbin, address) ) {
+	if ( sieve_operand_optional_present(denv->sblock, address) ) {
 		while ( opt_code != 0 ) {
 			sieve_code_mark(denv);
 			
-			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 
+			if ( !sieve_operand_optional_read(denv->sblock, address, &opt_code) ) 
 				return FALSE;
 
 			switch ( opt_code ) {
@@ -567,9 +567,9 @@ static int ext_vacation_operation_execute
 	}
 	
 	/* Optional operands */	
-	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+	if ( sieve_operand_optional_present(renv->sblock, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
+			if ( !sieve_operand_optional_read(renv->sblock, address, &opt_code) ) {
 				sieve_runtime_trace_error(renv, "invalid optional operand");
 				return SIEVE_EXEC_BIN_CORRUPT;
 			}

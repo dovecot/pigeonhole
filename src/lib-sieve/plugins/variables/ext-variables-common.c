@@ -459,9 +459,9 @@ bool ext_variables_generator_load
 	unsigned int count = sieve_variable_scope_size(main_scope);
 	sieve_size_t jump;
 
-	sieve_binary_emit_unsigned(cgenv->sbin, count);
+	sieve_binary_emit_unsigned(cgenv->sblock, count);
 
-	jump = sieve_binary_emit_offset(cgenv->sbin, 0);
+	jump = sieve_binary_emit_offset(cgenv->sblock, 0);
 
 	if ( count > 0 ) {
 		unsigned int size, i;
@@ -469,11 +469,11 @@ bool ext_variables_generator_load
 			sieve_variable_scope_get_variables(main_scope, &size);
 
 		for ( i = 0; i < size; i++ ) {			
-			sieve_binary_emit_cstring(cgenv->sbin, vars[i]->identifier);
+			sieve_binary_emit_cstring(cgenv->sblock, vars[i]->identifier);
 		}
 	}
 	
-	sieve_binary_resolve_offset(cgenv->sbin, jump);
+	sieve_binary_resolve_offset(cgenv->sblock, jump);
 		
 	return TRUE;
 }
@@ -515,7 +515,7 @@ bool ext_variables_interpreter_load
 	sieve_size_t pc;
 	int end_offset;
 		
-	if ( !sieve_binary_read_unsigned(renv->sbin, address, &scope_size) ) {
+	if ( !sieve_binary_read_unsigned(renv->sblock, address, &scope_size) ) {
 		sieve_sys_error("variables: failed to read main scope size");
 		return FALSE;
 	}
@@ -527,7 +527,7 @@ bool ext_variables_interpreter_load
 	}
 	
 	pc = *address;
-	if ( !sieve_binary_read_offset(renv->sbin, address, &end_offset) )
+	if ( !sieve_binary_read_offset(renv->sblock, address, &end_offset) )
 		return NULL;
 	*address = pc + end_offset;
 	

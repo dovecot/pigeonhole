@@ -188,7 +188,7 @@ static bool cmd_test_binary_generate
 	i_assert( ctx_data->binary_op < BINARY_OP_LAST );
 	
 	/* Emit operation */
-	sieve_operation_emit(cgenv->sbin, cmd->ext, 
+	sieve_operation_emit(cgenv->sblock, cmd->ext, 
 		test_binary_operations[ctx_data->binary_op]);
 	  	
  	/* Generate arguments */
@@ -241,7 +241,7 @@ static int cmd_test_binary_operation_execute
 	 */
 		
 	sieve_runtime_trace
-		(renv, "%s %s:", sieve_operation_mnemonic(op), str_c(binary_name));
+		(renv, "%s %s", sieve_operation_mnemonic(op), str_c(binary_name));
 
 	if ( sieve_operation_is(op, test_binary_load_operation) ) {
 		struct sieve_binary *sbin = testsuite_binary_load(str_c(binary_name));

@@ -160,10 +160,10 @@ static bool cmd_redirect_validate
 static bool cmd_redirect_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit(cgenv->sbin, NULL,  &cmd_redirect_operation);
+	sieve_operation_emit(cgenv->sblock, NULL,  &cmd_redirect_operation);
 
 	/* Emit line number */
-	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
+	sieve_code_source_line_emit(cgenv->sblock, sieve_command_source_line(cmd));
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);

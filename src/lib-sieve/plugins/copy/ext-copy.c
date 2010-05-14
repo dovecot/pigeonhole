@@ -144,7 +144,7 @@ static bool tag_copy_generate
 	}
 
 	sieve_opr_side_effect_emit
-		(cgenv->sbin, sieve_argument_ext(arg), &copy_side_effect);
+		(cgenv->sblock, sieve_argument_ext(arg), &copy_side_effect);
 
 	return TRUE;
 }

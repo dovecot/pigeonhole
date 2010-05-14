@@ -141,7 +141,7 @@ static bool tst_notifymc_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
 	sieve_operation_emit
-		(cgenv->sbin, cmd->ext, &notify_method_capability_operation);
+		(cgenv->sblock, cmd->ext, &notify_method_capability_operation);
 
  	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);

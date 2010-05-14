@@ -18,7 +18,9 @@ struct sieve_codegen_env {
 	struct sieve_instance *svinst;
 	struct sieve_script *script;
 	struct sieve_ast *ast;
+
 	struct sieve_binary *sbin;
+	struct sieve_binary_block *sblock;
 };
 
 struct sieve_generator *sieve_generator_create
@@ -35,6 +37,8 @@ pool_t sieve_generator_pool(struct sieve_generator *gentr);
 struct sieve_script *sieve_generator_script
 	(struct sieve_generator *gentr);
 struct sieve_binary *sieve_generator_get_binary
+	(struct sieve_generator *gentr);
+struct sieve_binary_block *sieve_generator_get_block
 	(struct sieve_generator *gentr);
 
 /* 
@@ -67,14 +71,14 @@ const void *sieve_generator_extension_get_context
 
 struct sieve_jumplist {
 	pool_t pool;
-	struct sieve_binary *binary;
+	struct sieve_binary_block *block;
 	ARRAY_DEFINE(jumps, sieve_size_t);
 };
 
 struct sieve_jumplist *sieve_jumplist_create
-	(pool_t pool, struct sieve_binary *sbin);
+	(pool_t pool, struct sieve_binary_block *sblock);
 void sieve_jumplist_init_temp
-	(struct sieve_jumplist *jlist, struct sieve_binary *sbin);
+	(struct sieve_jumplist *jlist, struct sieve_binary_block *sblock);
 void sieve_jumplist_reset
 	(struct sieve_jumplist *jlist);
 void sieve_jumplist_add
@@ -100,8 +104,8 @@ bool sieve_generate_block
 bool sieve_generate_test
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_node *tst_node, 
 		struct sieve_jumplist *jlist, bool jump_true);
-bool sieve_generator_run
-	(struct sieve_generator *gentr, struct sieve_binary **sbin);
+struct sieve_binary *sieve_generator_run
+	(struct sieve_generator *gentr, struct sieve_binary_block **sblock_r);
 
 #endif /* __SIEVE_GENERATOR_H */
 

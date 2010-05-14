@@ -78,7 +78,7 @@ static bool tst_test_script_compile_validate
 static bool tst_test_script_compile_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *tst)
 {
-	sieve_operation_emit(cgenv->sbin, tst->ext, &test_script_compile_operation);
+	sieve_operation_emit(cgenv->sblock, tst->ext, &test_script_compile_operation);
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, tst, NULL);

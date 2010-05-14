@@ -58,16 +58,20 @@ struct sieve_interpreter {
 	
 	/* Runtime environment */
 	struct sieve_runtime_env runenv; 
+
+	struct sieve_binary_debug_reader *dreader;
 };
 
-struct sieve_interpreter *sieve_interpreter_create
-(struct sieve_binary *sbin, struct sieve_error_handler *ehandler) 
+static struct sieve_interpreter *_sieve_interpreter_create
+(struct sieve_binary *sbin, struct sieve_binary_block *sblock, 
+	struct sieve_error_handler *ehandler) 
 {
 	unsigned int i, ext_count;
 	struct sieve_interpreter *interp;
 	pool_t pool;
 	struct sieve_instance *svinst;
 	const struct sieve_extension *const *ext_preloaded;
+	unsigned int debug_block_id;
 	bool success = TRUE;
 	
 	pool = pool_alloconly_create("sieve_interpreter", 4096);	
@@ -79,6 +83,7 @@ struct sieve_interpreter *sieve_interpreter_create
 
 	interp->runenv.interp = interp;	
 	interp->runenv.sbin = sbin;
+	interp->runenv.sblock = sblock;
 	sieve_binary_ref(sbin);
 
 	svinst = sieve_binary_svinst(sbin);
@@ -100,13 +105,29 @@ struct sieve_interpreter *sieve_interpreter_create
 				(ext_preloaded[i], &interp->runenv, &interp->pc);		
 	}
 
+	/* Load debug block */
+	if ( sieve_binary_read_unsigned(sblock, &interp->pc, &debug_block_id) ) {
+		struct sieve_binary_block *debug_block =
+			sieve_binary_block_get(sbin, debug_block_id);
+
+		if ( debug_block == NULL ) {
+			sieve_runtime_trace_error(&interp->runenv, "invalid id for debug block");
+			success = FALSE;
+		} else {
+			/* Initialize debug reader */
+			interp->dreader = sieve_binary_debug_reader_init(debug_block);
+		}
+	}
+
 	/* Load other extensions listed in code */
-	if ( sieve_binary_read_unsigned(sbin, &interp->pc, &ext_count) ) {
+	if ( success && 
+		sieve_binary_read_unsigned(sblock, &interp->pc, &ext_count) ) {
+
 		for ( i = 0; i < ext_count; i++ ) {
 			unsigned int code = 0;
 			const struct sieve_extension *ext;
 			
-			if ( !sieve_binary_read_extension(sbin, &interp->pc, &code, &ext) ) {
+			if ( !sieve_binary_read_extension(sblock, &interp->pc, &code, &ext) ) {
 				success = FALSE;
 				break;
 			}
@@ -129,6 +150,23 @@ struct sieve_interpreter *sieve_interpreter_create
 	return interp;
 }
 
+struct sieve_interpreter *sieve_interpreter_create
+(struct sieve_binary *sbin, struct sieve_error_handler *ehandler) 
+{
+	struct sieve_binary_block *sblock =
+		sieve_binary_block_get(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);
+
+ 	return _sieve_interpreter_create(sbin, sblock, ehandler);
+}
+
+struct sieve_interpreter *sieve_interpreter_create_for_block
+(struct sieve_binary_block *sblock, struct sieve_error_handler *ehandler) 
+{
+	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
+
+ 	return _sieve_interpreter_create(sbin, sblock, ehandler);
+}
+
 void sieve_interpreter_free(struct sieve_interpreter **interp) 
 {
 	const struct sieve_interpreter_extension_reg *eregs;
@@ -141,6 +179,7 @@ void sieve_interpreter_free(struct sieve_interpreter **interp)
 			eregs[i].intext->free(eregs[i].ext, *interp, eregs[i].context);
 	}
 
+	sieve_binary_debug_reader_deinit(&(*interp)->dreader);
 	sieve_binary_unref(&(*interp)->runenv.sbin);
 	sieve_error_handler_unref(&(*interp)->ehandler);
 		 
@@ -349,13 +388,13 @@ int sieve_interpreter_program_jump
 	sieve_size_t pc = interp->pc;
 	int offset;
 	
-	if ( !sieve_binary_read_offset(renv->sbin, &(interp->pc), &offset) )
+	if ( !sieve_binary_read_offset(renv->sblock, &(interp->pc), &offset) )
 	{
 		sieve_runtime_trace_error(renv, "invalid jump offset"); 
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	if ( pc + offset <= sieve_binary_get_code_size(renv->sbin) && 
+	if ( pc + offset <= sieve_binary_block_get_size(renv->sblock) && 
 		pc + offset > 0 ) 
 	{	
 		if ( jump )
@@ -394,9 +433,9 @@ int sieve_interpreter_handle_optional_operands
 {
 	signed int opt_code = -1;
 	
-	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+	if ( sieve_operand_optional_present(renv->sblock, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
+			if ( !sieve_operand_optional_read(renv->sblock, address, &opt_code) ) {
 				sieve_runtime_trace_error(renv, "invalid optional operand");
 				return SIEVE_EXEC_BIN_CORRUPT;
 			}
@@ -431,7 +470,7 @@ static int sieve_interpreter_execute_operation
 {
 	struct sieve_operation *oprtn = &(interp->runenv.oprtn);
 
-	if ( sieve_operation_read(interp->runenv.sbin, &(interp->pc), oprtn) ) {
+	if ( sieve_operation_read(interp->runenv.sblock, &(interp->pc), oprtn) ) {
 		const struct sieve_operation_def *op = oprtn->def;
 
 		int result = SIEVE_EXEC_OK;
@@ -463,7 +502,7 @@ int sieve_interpreter_continue
 		*interrupted = FALSE;
 	
 	while ( ret == SIEVE_EXEC_OK && !interp->interrupted && 
-		interp->pc < sieve_binary_get_code_size(interp->runenv.sbin) ) {
+		interp->pc < sieve_binary_block_get_size(interp->runenv.sblock) ) {
 		
 		ret = sieve_interpreter_execute_operation(interp);
 

@@ -82,9 +82,9 @@ extern const struct sieve_operand_class sieve_address_part_operand_class;
 #define SIEVE_EXT_DEFINE_ADDRESS_PARTS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 static inline void sieve_opr_address_part_emit
-(struct sieve_binary *sbin, const struct sieve_address_part *addrp)
+(struct sieve_binary_block *sblock, const struct sieve_address_part *addrp)
 { 
-	sieve_opr_object_emit(sbin, addrp->object.ext, addrp->object.def);
+	sieve_opr_object_emit(sblock, addrp->object.ext, addrp->object.def);
 }
 
 static inline bool sieve_opr_address_part_read

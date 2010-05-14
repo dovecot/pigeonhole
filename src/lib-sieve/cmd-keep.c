@@ -57,10 +57,10 @@ static bool cmd_keep_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
 	/* Emit opcode */
-	sieve_operation_emit(cgenv->sbin, NULL, &cmd_keep_operation);
+	sieve_operation_emit(cgenv->sblock, NULL, &cmd_keep_operation);
 
 	/* Emit line number */
-	sieve_code_source_line_emit(cgenv->sbin, sieve_command_source_line(cmd));
+	sieve_code_source_line_emit(cgenv->sblock, sieve_command_source_line(cmd));
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);

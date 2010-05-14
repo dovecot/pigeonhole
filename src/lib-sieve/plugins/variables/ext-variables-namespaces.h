@@ -43,9 +43,4 @@ bool ext_variables_namespace_argument_activate
 
 extern const struct sieve_operand_def namespace_variable_operand;
 
-void ext_variables_opr_namespace_variable_emit
-	(struct sieve_binary *sbin, const struct sieve_extension *var_ext,
-		const struct sieve_extension *ext,
-		const struct sieve_variables_namespace_def *nspc_def);
-
 #endif /* __EXT_VARIABLES_NAMESPACES_H */

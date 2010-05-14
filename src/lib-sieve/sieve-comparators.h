@@ -120,9 +120,9 @@ extern const struct sieve_operand_class sieve_comparator_operand_class;
 extern const struct sieve_operand_def comparator_operand;
 
 static inline void sieve_opr_comparator_emit
-(struct sieve_binary *sbin, const struct sieve_comparator *cmp)
+(struct sieve_binary_block *sblock, const struct sieve_comparator *cmp)
 { 
-	sieve_opr_object_emit(sbin, cmp->object.ext, cmp->object.def);
+	sieve_opr_object_emit(sblock, cmp->object.ext, cmp->object.def);
 }
 
 static inline bool sieve_opr_comparator_read

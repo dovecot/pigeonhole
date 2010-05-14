@@ -110,26 +110,27 @@ const struct sieve_operand_def testsuite_object_operand = {
 };
 
 static void testsuite_object_emit
-(struct sieve_binary *sbin,	const struct testsuite_object *tobj, int member_id)
+(struct sieve_binary_block *sblock, const struct testsuite_object *tobj,
+	int member_id)
 { 
-	sieve_opr_object_emit(sbin, tobj->object.ext, tobj->object.def);
+	sieve_opr_object_emit(sblock, tobj->object.ext, tobj->object.def);
 	
 	if ( tobj->def != NULL && tobj->def->get_member_id != NULL ) {
-		(void) sieve_binary_emit_byte(sbin, (unsigned char) member_id);
+		(void) sieve_binary_emit_byte(sblock, (unsigned char) member_id);
 	}
 }
 
 bool testsuite_object_read
-(struct sieve_binary *sbin, sieve_size_t *address, 
+(struct sieve_binary_block *sblock, sieve_size_t *address, 
 	struct testsuite_object *tobj)
 {
 	struct sieve_operand operand;
 
-	if ( !sieve_operand_read(sbin, address, &operand) )
+	if ( !sieve_operand_read(sblock, address, &operand) )
 		return FALSE;
 	
 	if ( !sieve_opr_object_read_data
-		(sbin, &operand, &sieve_testsuite_object_operand_class, address,
+		(sblock, &operand, &sieve_testsuite_object_operand_class, address,
 			&tobj->object) )
 		return FALSE;
 
@@ -139,15 +140,15 @@ bool testsuite_object_read
 }
 
 bool testsuite_object_read_member
-(struct sieve_binary *sbin, sieve_size_t *address, 
+(struct sieve_binary_block *sblock, sieve_size_t *address, 
 	struct testsuite_object *tobj, int *member_id_r)
 {		
-	if ( !testsuite_object_read(sbin, address, tobj) )
+	if ( !testsuite_object_read(sblock, address, tobj) )
 		return FALSE;
 		
 	*member_id_r = -1;
 	if ( tobj->def != NULL && tobj->def->get_member_id != NULL ) {
-		if ( !sieve_binary_read_code(sbin, address, member_id_r) ) 
+		if ( !sieve_binary_read_code(sblock, address, member_id_r) ) 
 			return FALSE;
 	}
 	
@@ -180,7 +181,8 @@ bool testsuite_object_dump
 
 	sieve_code_mark(denv);
 		
-	if ( !testsuite_object_read_member(denv->sbin, address, &object, &member_id) )
+	if ( !testsuite_object_read_member
+		(denv->sblock, address, &object, &member_id) )
 		return FALSE;
 	
 	sieve_code_dumpf(denv, "%s: %s",
@@ -268,7 +270,7 @@ static bool arg_testsuite_object_generate
 	struct testsuite_object_argctx *ctx = 
 		(struct testsuite_object_argctx *) arg->argument->data;
 	
-	testsuite_object_emit(cgenv->sbin, ctx->object, ctx->member);
+	testsuite_object_emit(cgenv->sblock, ctx->object, ctx->member);
 		
 	return TRUE;
 }

@@ -126,7 +126,7 @@ static bool tst_string_validate
 static bool tst_string_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	sieve_operation_emit(cgenv->sbin, cmd->ext, &tst_string_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &tst_string_operation);
 
  	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )

@@ -78,7 +78,7 @@ static bool tst_mailboxexists_validate
 static bool tst_mailboxexists_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *tst) 
 {
-	sieve_operation_emit(cgenv->sbin, tst->ext, &mailboxexists_operation);
+	sieve_operation_emit(cgenv->sblock, tst->ext, &mailboxexists_operation);
 
  	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, tst, NULL);

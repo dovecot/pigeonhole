@@ -85,14 +85,14 @@ static bool cmd_test_fail_generate
 	struct testsuite_generator_context *genctx = 
 		_get_generator_context(cgenv->gentr);
 	
-	sieve_operation_emit(cgenv->sbin, cmd->ext, &test_fail_operation);
+	sieve_operation_emit(cgenv->sblock, cmd->ext, &test_fail_operation);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;
 		
 	sieve_jumplist_add(genctx->exit_jumps, 
-		sieve_binary_emit_offset(cgenv->sbin, 0));			
+		sieve_binary_emit_offset(cgenv->sblock, 0));			
 	
 	return TRUE;
 }
@@ -115,7 +115,7 @@ static bool cmd_test_fail_operation_dump
 
 	sieve_code_mark(denv);
 	pc = *address;
-	if ( sieve_binary_read_offset(denv->sbin, address, &offset) )
+	if ( sieve_binary_read_offset(denv->sblock, address, &offset) )
 		sieve_code_dumpf(denv, "offset: %d [%08x]", offset, pc + offset);
 	else
 		return FALSE;

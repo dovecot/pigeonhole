@@ -230,7 +230,7 @@ static bool tst_body_validate
 static bool tst_body_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	(void)sieve_operation_emit(cgenv->sbin, cmd->ext, &body_operation);
+	(void)sieve_operation_emit(cgenv->sblock, cmd->ext, &body_operation);
 
 	/* Generate arguments */
 	return sieve_generate_arguments(cgenv, cmd, NULL);
@@ -243,7 +243,7 @@ static bool tag_body_transform_generate
 	enum tst_body_transform transform =	
 		(enum tst_body_transform) arg->argument->data;
 	
-	sieve_binary_emit_byte(cgenv->sbin, transform);
+	sieve_binary_emit_byte(cgenv->sblock, transform);
 	sieve_generate_argument_parameters(cgenv, cmd, arg); 
 			
 	return TRUE;
@@ -272,7 +272,7 @@ static bool ext_body_operation_dump
 		case SIEVE_MATCH_OPT_END:
 			break;
 		case OPT_BODY_TRANSFORM:
-			if ( !sieve_binary_read_byte(denv->sbin, address, &transform) )
+			if ( !sieve_binary_read_byte(denv->sblock, address, &transform) )
 				return FALSE;
 			
 			switch ( transform ) {
@@ -339,7 +339,7 @@ static int ext_body_operation_execute
 		case SIEVE_MATCH_OPT_END: 
 			break;
 		case OPT_BODY_TRANSFORM:
-			if ( !sieve_binary_read_byte(renv->sbin, address, &transform) ||
+			if ( !sieve_binary_read_byte(renv->sblock, address, &transform) ||
 				transform > TST_BODY_TRANSFORM_TEXT ) {
 				sieve_runtime_trace_error(renv, "invalid body transform type");
 				return SIEVE_EXEC_BIN_CORRUPT;

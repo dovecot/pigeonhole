@@ -288,7 +288,7 @@ static bool tst_envelope_validate
 static bool tst_envelope_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
 {
-	(void)sieve_operation_emit(cgenv->sbin, cmd->ext, &envelope_operation);
+	(void)sieve_operation_emit(cgenv->sblock, cmd->ext, &envelope_operation);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )

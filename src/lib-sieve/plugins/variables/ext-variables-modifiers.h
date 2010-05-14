@@ -34,10 +34,10 @@ void ext_variables_register_core_modifiers
 extern const struct sieve_operand_def modifier_operand;
 
 static inline void ext_variables_opr_modifier_emit
-(struct sieve_binary *sbin, const struct sieve_extension *ext,
+(struct sieve_binary_block *sblock, const struct sieve_extension *ext,
 	const struct sieve_variables_modifier_def *modf_def)
 { 
-	sieve_opr_object_emit(sbin, ext, &modf_def->obj_def);
+	sieve_opr_object_emit(sblock, ext, &modf_def->obj_def);
 }
 
 static inline bool ext_variables_opr_modifier_read

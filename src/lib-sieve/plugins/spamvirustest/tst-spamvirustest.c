@@ -187,9 +187,9 @@ static bool tst_spamvirustest_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *tst) 
 { 
 	if ( sieve_command_is(tst, spamtest_test) )
-		sieve_operation_emit(cgenv->sbin, tst->ext, &spamtest_operation);
+		sieve_operation_emit(cgenv->sblock, tst->ext, &spamtest_operation);
 	else if ( sieve_command_is(tst, virustest_test) )
-		sieve_operation_emit(cgenv->sbin, tst->ext, &virustest_operation);
+		sieve_operation_emit(cgenv->sblock, tst->ext, &virustest_operation);
 	else
 		i_unreached();
 

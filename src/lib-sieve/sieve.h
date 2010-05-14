@@ -105,7 +105,7 @@ void sieve_close(struct sieve_binary **sbin);
  *
  *   Dumps the byte code in human-readable form to the specified ostream.
  */
-void sieve_dump(struct sieve_binary *sbin, struct ostream *stream);
+void sieve_dump(struct sieve_binary *sbin, struct ostream *stream, bool verbose);
 
 /* sieve_test:
  *

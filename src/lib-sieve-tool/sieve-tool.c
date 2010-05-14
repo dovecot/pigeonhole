@@ -244,7 +244,7 @@ void sieve_tool_dump_binary_to(struct sieve_binary *sbin, const char *filename)
 	}
 	
 	if ( dumpstream != NULL ) {
-		(void) sieve_dump(sbin, dumpstream);
+		(void) sieve_dump(sbin, dumpstream, FALSE);
 		o_stream_destroy(&dumpstream);
 	} else {
 		i_fatal("Failed to create stream for sieve code dump.");

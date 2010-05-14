@@ -92,7 +92,7 @@ static bool tst_test_script_run_registered
 static bool tst_test_script_run_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *tst)
 {
-	sieve_operation_emit(cgenv->sbin, tst->ext, &test_script_run_operation);
+	sieve_operation_emit(cgenv->sblock, tst->ext, &test_script_run_operation);
 
 	return sieve_generate_arguments(cgenv, tst, NULL);
 }
@@ -110,11 +110,11 @@ static bool tst_test_script_run_operation_dump
 	sieve_code_descend(denv);	
 
 	/* Dump optional operands */
-	if ( sieve_operand_optional_present(denv->sbin, address) ) {
+	if ( sieve_operand_optional_present(denv->sblock, address) ) {
 		while ( opt_code != 0 ) {
 			sieve_code_mark(denv);
 			
-			if ( !sieve_operand_optional_read(denv->sbin, address, &opt_code) ) 
+			if ( !sieve_operand_optional_read(denv->sblock, address, &opt_code) ) 
 				return FALSE;
 
 			switch ( opt_code ) {
@@ -150,9 +150,9 @@ static int tst_test_script_run_operation_execute
 	 */
 
 	/* Optional operands */	
-	if ( sieve_operand_optional_present(renv->sbin, address) ) {
+	if ( sieve_operand_optional_present(renv->sblock, address) ) {
 		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sbin, address, &opt_code) ) {
+			if ( !sieve_operand_optional_read(renv->sblock, address, &opt_code) ) {
 				sieve_runtime_trace_error(renv, "invalid optional operand");
 				return SIEVE_EXEC_BIN_CORRUPT;
 			}
