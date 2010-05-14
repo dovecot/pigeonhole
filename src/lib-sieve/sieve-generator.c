@@ -427,17 +427,20 @@ bool sieve_generator_run
 	
 		/* Load */
 		if ( ext->def != NULL && ext->def->generator_load != NULL &&
-			!ext->def->generator_load(ext, &gentr->genenv) )
-			return FALSE;
+			!ext->def->generator_load(ext, &gentr->genenv) ) {
+			result = FALSE;
+		}
 	}
 
 	/* Generate code */
 	
-	if ( !sieve_generate_block
-		(&gentr->genenv, sieve_ast_root(gentr->genenv.ast))) 
-		result = FALSE;
-	else if ( topmost ) 
-		sieve_binary_activate(*sbin);
+	if ( result ) {
+		if ( !sieve_generate_block
+			(&gentr->genenv, sieve_ast_root(gentr->genenv.ast))) 
+			result = FALSE;
+		else if ( topmost ) 
+			sieve_binary_activate(*sbin);
+	}
 
 	/* Cleanup */
 		
