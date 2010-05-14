@@ -134,16 +134,15 @@ void sieve_interpreter_free(struct sieve_interpreter **interp)
 	const struct sieve_interpreter_extension_reg *eregs;
 	unsigned int ext_count, i;
 
-	sieve_binary_unref(&(*interp)->runenv.sbin);
-
-	sieve_error_handler_unref(&(*interp)->ehandler);
-
 	/* Signal registered extensions that the interpreter is being destroyed */
 	eregs = array_get(&(*interp)->extensions, &ext_count);
 	for ( i = 0; i < ext_count; i++ ) {
 		if ( eregs[i].intext != NULL && eregs[i].intext->free != NULL )
 			eregs[i].intext->free(eregs[i].ext, *interp, eregs[i].context);
 	}
+
+	sieve_binary_unref(&(*interp)->runenv.sbin);
+	sieve_error_handler_unref(&(*interp)->ehandler);
 		 
 	pool_unref(&((*interp)->pool));	
 	*interp = NULL;
