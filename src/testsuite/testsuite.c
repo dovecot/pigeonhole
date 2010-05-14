@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 	int ret, c;
 
 	master_service = master_service_init
-		("testsuite", MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "d:x:tE");
+		("testsuite", MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "d:x:tP:E");
 
 	user = getenv("USER");
 
@@ -146,6 +146,15 @@ int main(int argc, char **argv)
             break;
 		case 't':
 			trace = TRUE;
+			break;
+		case 'P':
+			/* Plugin */
+			{
+				const char *plugin;
+
+				plugin = t_strdup(optarg);
+				array_append(&plugins, &plugin, 1);
+			}
 			break;
 		case 'E':
 			log_stdout = TRUE;
