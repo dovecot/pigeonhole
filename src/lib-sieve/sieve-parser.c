@@ -105,7 +105,7 @@ inline static void sieve_parser_error
 		T_BEGIN {
 			sieve_verror(parser->ehandler,
 				sieve_error_script_location(parser->script, 
-					sieve_lexer_current_line(parser->lexer)),
+					sieve_lexer_token_line(parser->lexer)),
 				fmt, args);
 		} T_END; 
 	}
@@ -124,7 +124,7 @@ inline static void sieve_parser_warning
 	T_BEGIN	{
 		sieve_vwarning(parser->ehandler, 
 			sieve_error_script_location(parser->script, 
-				sieve_lexer_current_line(parser->lexer)),
+				sieve_lexer_token_line(parser->lexer)),
 			fmt, args);
 	} T_END;
 		
@@ -171,7 +171,7 @@ static int sieve_parse_arguments
 		case STT_LSQUARE:
 			/* Create stinglist object */
 			arg = sieve_ast_argument_stringlist_create
-				(node, sieve_lexer_current_line(parser->lexer));
+				(node, sieve_lexer_token_line(parser->lexer));
 
 			if ( arg == NULL ) break;
 				
@@ -183,7 +183,7 @@ static int sieve_parse_arguments
 				/* Add the string to the list */
 				if ( !sieve_ast_stringlist_add
 					(arg, sieve_lexer_token_str(lexer), 
-						sieve_lexer_current_line(parser->lexer)) )
+						sieve_lexer_token_line(parser->lexer)) )
 					add_failed = TRUE;
 				
 				sieve_lexer_skip_token(lexer);
@@ -201,7 +201,7 @@ static int sieve_parse_arguments
 						/* Add the string to the list */
 						if ( !sieve_ast_stringlist_add
 							(arg, sieve_lexer_token_str(lexer), 
-								sieve_lexer_current_line(parser->lexer)) )
+								sieve_lexer_token_line(parser->lexer)) )
 							add_failed = TRUE;
 							
 						sieve_lexer_skip_token(lexer);
@@ -246,7 +246,7 @@ static int sieve_parse_arguments
 		case STT_STRING: 
 			arg = sieve_ast_argument_string_create
 				(node, sieve_lexer_token_str(lexer), 
-					sieve_lexer_current_line(parser->lexer));
+					sieve_lexer_token_line(parser->lexer));
 
 			sieve_lexer_skip_token(lexer);
 			break;
@@ -255,7 +255,7 @@ static int sieve_parse_arguments
 		case STT_NUMBER:
 			arg = sieve_ast_argument_number_create
 				(node, sieve_lexer_token_int(lexer), 
-					sieve_lexer_current_line(parser->lexer));
+					sieve_lexer_token_line(parser->lexer));
 			sieve_lexer_skip_token(lexer);
 			break;
 			
@@ -263,7 +263,7 @@ static int sieve_parse_arguments
 		case STT_TAG:
 			arg = sieve_ast_argument_tag_create
 				(node, sieve_lexer_token_ident(lexer), 
-					sieve_lexer_current_line(parser->lexer));
+					sieve_lexer_token_line(parser->lexer));
 			sieve_lexer_skip_token(lexer);
 			break;
 			
@@ -305,7 +305,7 @@ static int sieve_parse_arguments
 
 		test = sieve_ast_test_create
 			(node, sieve_lexer_token_ident(lexer), 
-				sieve_lexer_current_line(parser->lexer));
+				sieve_lexer_token_line(parser->lexer));
 		sieve_lexer_skip_token(lexer);
 		
 		/* Theoretically, test can be NULL */
@@ -338,7 +338,7 @@ static int sieve_parse_arguments
 		if ( sieve_lexer_token_type(lexer) == STT_IDENTIFIER ) {
 			test = sieve_ast_test_create
 				(node, sieve_lexer_token_ident(lexer), 
-					sieve_lexer_current_line(parser->lexer));
+					sieve_lexer_token_line(parser->lexer));
 			sieve_lexer_skip_token(lexer);
 		
 			if ( test == NULL ) break;
@@ -360,7 +360,7 @@ static int sieve_parse_arguments
 					if ( sieve_lexer_token_type(lexer) == STT_IDENTIFIER ) {
 						test = sieve_ast_test_create
 							(node, sieve_lexer_token_ident(lexer), 
-								sieve_lexer_current_line(parser->lexer));
+								sieve_lexer_token_line(parser->lexer));
 						sieve_lexer_skip_token(lexer);
 
 						if ( test == NULL ) break;
@@ -454,7 +454,7 @@ static int sieve_parse_commands
 		/* Create command node */
 		command = sieve_ast_command_create
 			(block, sieve_lexer_token_ident(lexer), 
-				sieve_lexer_current_line(parser->lexer));
+				sieve_lexer_token_line(parser->lexer));
 		sieve_lexer_skip_token(lexer);
 	
 		if ( command == NULL ) {

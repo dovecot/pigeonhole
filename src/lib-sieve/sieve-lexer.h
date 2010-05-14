@@ -55,7 +55,7 @@ struct sieve_lexer {
 	string_t *token_str_value;
 	int token_int_value;
 
-	int current_line;
+	int token_line;
 };
 
 const struct sieve_lexer *sieve_lexer_create
@@ -110,10 +110,10 @@ static inline bool sieve_lexer_eof
 	return lexer->token_type == STT_EOF;
 }
 
-static inline int sieve_lexer_current_line
+static inline int sieve_lexer_token_line
 (const struct sieve_lexer *lexer) 
 {
-	return lexer->current_line;
+	return lexer->token_line;
 }
 
 const char *sieve_lexer_token_description
