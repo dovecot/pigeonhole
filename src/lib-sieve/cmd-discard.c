@@ -94,7 +94,7 @@ static bool cmd_discard_operation_dump
 	sieve_code_dumpf(denv, "DISCARD");
 	sieve_code_descend(denv);
 
-	return sieve_code_dumper_print_optional_operands(denv, address);
+	return ( sieve_action_opr_optional_dump(denv, address, NULL) == 0 );
 }
 
 /*
@@ -108,9 +108,9 @@ static int cmd_discard_operation_execute
 	unsigned int source_line;
 	
 	/* Source line */
-	source_line = sieve_runtime_get_source_location(renv, renv->oprtn.address);
+	source_line = sieve_runtime_get_command_location(renv);
 
-	sieve_runtime_trace(renv, "DISCARD action");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "discard action");
 
 	return ( sieve_result_add_action
 		(renv, NULL, &act_discard, NULL, source_line, NULL, 0) >= 0 );

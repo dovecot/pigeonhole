@@ -474,7 +474,7 @@ bool ext_enotify_runtime_method_validate
 (const struct sieve_runtime_env *renv, unsigned int source_line,
 	string_t *method_uri)
 {
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	const struct sieve_enotify_method *method;
 	const char *uri = str_c(method_uri);
 	const char *scheme;
@@ -513,7 +513,7 @@ static const struct sieve_enotify_method *ext_enotify_get_method
 (const struct sieve_runtime_env *renv, unsigned int source_line,
 	string_t *method_uri, const char **uri_body_r)
 {
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	const struct sieve_enotify_method *method;
 	const char *uri = str_c(method_uri);
 	const char *scheme;

@@ -117,16 +117,15 @@ static int tst_test_multiscript_operation_execute
 	 * Read operands
 	 */
 
-  if ( (scripts_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid scripts operand");
+  if ( (scripts_list=sieve_opr_stringlist_read(renv, address, "scripts")) 
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "TEST MULTISCRIPT");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "TEST MULTISCRIPT");
 
 	t_array_init(&scriptfiles, 16);
 

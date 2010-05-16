@@ -176,14 +176,14 @@ static bool cmd_redirect_operation_dump
 	sieve_code_dumpf(denv, "REDIRECT");
 	sieve_code_descend(denv);
 
-	if ( !sieve_code_dumper_print_optional_operands(denv, address) )
+	if ( sieve_action_opr_optional_dump(denv, address, NULL) != 0 )
 		return FALSE;
 
 	return sieve_opr_string_dump(denv, address, "reason");
 }
 
 /*
- * Intepretation
+ * Code execution
  */
 
 static int cmd_redirect_operation_execute
@@ -197,24 +197,29 @@ static int cmd_redirect_operation_execute
 	pool_t pool;
 	int ret = 0;
 
-	/* Source line */
-	source_line = sieve_runtime_get_source_location(renv, renv->oprtn.address);
+	/*
+	 * Read data
+	 */
 
-	/* Optional operands (side effects) */
-	if ( (ret=sieve_interpreter_handle_optional_operands
-		(renv, address, &slist)) <= 0 )
-		return ret;
+	/* Source line */
+	source_line = sieve_runtime_get_command_location(renv);
+
+	/* Optional operands (side effects only) */
+	if ( (ret=sieve_action_opr_optional_read(renv, address, NULL, &slist)) < 0 ) 
+		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Read the address */
-	if ( !sieve_opr_string_read(renv, address, &redirect) ) {
-		sieve_runtime_trace_error(renv, "invalid address string");
+	if ( !sieve_opr_string_read(renv, address, "address", &redirect) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
+
+	/*
+	 * Perform operation
+	 */
 
 	/* FIXME: perform address normalization if the string is not a string literal
 	 */
 
-	sieve_runtime_trace(renv, "REDIRECT action (\"%s\")",
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "redirect action (\"%s\")",
 		str_sanitize(str_c(redirect), 64));
 	
 	/* Add redirect action to the result */

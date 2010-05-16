@@ -136,69 +136,56 @@ int sieve_match_end(struct sieve_match_context **mctx)
  * Reading match operands
  */
  
-bool sieve_match_dump_optional_operands
+int sieve_match_opr_optional_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address, int *opt_code)
 {
-	if ( *opt_code != SIEVE_MATCH_OPT_END || 
-		sieve_operand_optional_present(denv->sblock, address) ) {
-		do {
-			if ( !sieve_operand_optional_read(denv->sblock, address, opt_code) ) 
-				return FALSE;
+	bool opok = TRUE;
 
-			switch ( *opt_code ) {
-			case SIEVE_MATCH_OPT_END:
-				break;
-			case SIEVE_MATCH_OPT_COMPARATOR:
-				if ( !sieve_opr_comparator_dump(denv, address) )
-					return FALSE;
-				break;
-			case SIEVE_MATCH_OPT_MATCH_TYPE:
-				if ( !sieve_opr_match_type_dump(denv, address) )
-					return FALSE;
-				break;
-			default: 
-				return TRUE;
-			}
- 		} while ( *opt_code != SIEVE_MATCH_OPT_END );
+	while ( opok ) {
+		int ret;
+
+		if ( (ret=sieve_opr_optional_dump(denv, address, opt_code)) <= 0 )
+			return ret;
+
+		switch ( *opt_code ) {
+		case SIEVE_MATCH_OPT_COMPARATOR:
+			opok = sieve_opr_comparator_dump(denv, address);
+			break;
+		case SIEVE_MATCH_OPT_MATCH_TYPE:
+			opok = sieve_opr_match_type_dump(denv, address);
+			break;
+		default:
+			return 1;
+		}
 	}
-	
-	return TRUE;
+
+	return -1;
 }
 
-int sieve_match_read_optional_operands
+int sieve_match_opr_optional_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, int *opt_code,
 	struct sieve_comparator *cmp, struct sieve_match_type *mcht)
-{	 
-	/* Handle any optional arguments */
-	if ( *opt_code != SIEVE_MATCH_OPT_END || 
-		sieve_operand_optional_present(renv->sblock, address) ) {
-		do {
-			if ( !sieve_operand_optional_read(renv->sblock, address, opt_code) ) {
-				sieve_runtime_trace_error(renv, "invalid optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
+{
+	bool opok = TRUE;
 
-			switch ( *opt_code ) {
-			case SIEVE_MATCH_OPT_END: 
-				break;
-			case SIEVE_MATCH_OPT_COMPARATOR:
-				if ( !sieve_opr_comparator_read(renv, address, cmp) ) {
-					sieve_runtime_trace_error(renv, "invalid comparator operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			case SIEVE_MATCH_OPT_MATCH_TYPE:
-				if ( !sieve_opr_match_type_read(renv, address, mcht) ) {
-					sieve_runtime_trace_error(renv, "invalid match type operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			default:
-				return SIEVE_EXEC_OK;
-			}
-		} while ( *opt_code != SIEVE_MATCH_OPT_END );
+	while ( opok ) {
+		int ret;
+
+		if ( (ret=sieve_opr_optional_read(renv, address, opt_code)) <= 0 )
+			return ret;
+
+		switch ( *opt_code ) {
+		case SIEVE_MATCH_OPT_COMPARATOR:
+			opok = sieve_opr_comparator_read(renv, address, cmp);
+			break;
+		case SIEVE_MATCH_OPT_MATCH_TYPE:
+			opok = sieve_opr_match_type_read(renv, address, mcht);
+			break;
+		default:
+			return 1;
+		}
 	}
-	
-	return SIEVE_EXEC_OK;
+
+	return -1;
 }
 

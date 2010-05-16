@@ -74,6 +74,81 @@ bool sieve_opr_side_effect_dump
 }
 
 /*
+ * Optional operands
+ */
+
+int sieve_action_opr_optional_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+	signed int *opt_code)
+{	
+	signed int _opt_code = 0;
+	bool final = FALSE, opok = TRUE;
+
+	if ( opt_code == NULL ) {
+		opt_code = &_opt_code;
+		final = TRUE;
+	}
+	
+	while ( opok ) {
+		int ret;
+
+		if ( (ret=sieve_opr_optional_dump(denv, address, opt_code)) <= 0 )
+			return ret;
+
+		if ( *opt_code == SIEVE_OPT_SIDE_EFFECT ) {
+			opok = sieve_opr_side_effect_dump(denv, address);
+		} else {
+			return ( final ? -1 : 1 );
+		}
+	}
+
+	return -1;
+}
+
+int sieve_action_opr_optional_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	signed int *opt_code, struct sieve_side_effects_list **list)
+{
+	signed int _opt_code = 0;
+	bool final = FALSE;
+
+	if ( opt_code == NULL ) {
+		opt_code = &_opt_code;
+		final = TRUE;
+	}
+
+	for ( ;; ) {
+		int ret;
+
+		if ( (ret=sieve_opr_optional_read(renv, address, opt_code)) <= 0 )
+			return ret;
+
+		if ( *opt_code == SIEVE_OPT_SIDE_EFFECT ) {
+			struct sieve_side_effect seffect;
+		
+			if ( list == NULL )
+				return -1;
+				
+			if ( !sieve_opr_side_effect_read(renv, address, &seffect) )
+				return -1;
+		
+			if ( *list == NULL ) 
+				*list = sieve_side_effects_list_create(renv->result);
+
+			sieve_side_effects_list_add(*list, &seffect);
+		} else {
+			if ( final ) {
+				sieve_runtime_trace_error(renv, "invalid optional operand");
+				return -1;
+			}
+			return 1;
+		}
+	}
+
+	return -1;
+}
+
+/*
  * Store action
  */
  

@@ -135,12 +135,11 @@ static int cmd_test_set_operation_execute
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	if ( !sieve_opr_string_read(renv, address, &value) ) {
-		sieve_runtime_trace_error(renv, "invalid string operand");
+	if ( !sieve_opr_string_read(renv, address, "string", &value) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
-	sieve_runtime_trace(renv, "TEST SET command (%s = \"%s\")", 
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
+		"test_set '%s' = \"%s\"", 
 		testsuite_object_member_name(&tobj, member_id), str_c(value));
 	
 	if ( tobj.def == NULL || tobj.def->set_member == NULL ) {

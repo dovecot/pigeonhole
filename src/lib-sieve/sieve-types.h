@@ -48,6 +48,19 @@ struct sieve_message_data {
 	const char *id;
 };
 
+/*
+ * Runtime trace level
+ */
+
+typedef enum {
+	SIEVE_TRLVL_MINIMUM,
+	SIEVE_TRLVL_ACTIONS,
+	SIEVE_TRLVL_COMMANDS,
+	SIEVE_TRLVL_TESTS,
+	SIEVE_TRLVL_MATCH,
+	SIEVE_TRLVL_DEBUG
+} sieve_trace_level_t;
+
 /* 
  * Script environment
  *
@@ -91,8 +104,9 @@ struct sieve_script_env {
 	/* Execution status record */	
 	struct sieve_exec_status *exec_status;
 		
-	/* Trace stream */
+	/* Runtime trace*/
 	struct ostream *trace_stream;
+	sieve_trace_level_t trace_level;
 };
 
 #define SIEVE_SCRIPT_DEFAULT_MAILBOX(senv) \

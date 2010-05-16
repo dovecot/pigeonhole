@@ -10,6 +10,9 @@
 #include "array.h"
 
 #include "sieve-common.h"
+#include "sieve-runtime.h"
+#include "sieve-runtime-trace.h"
+#include "sieve-dump.h"
 
 /* 
  * Coded string list 
@@ -68,11 +71,52 @@ bool sieve_operand_read
 	(struct sieve_binary_block *sblock, sieve_size_t *address, 
 		struct sieve_operand *oprnd);
 
-bool sieve_operand_optional_present
-	(struct sieve_binary_block *sblock, sieve_size_t *address);
-bool sieve_operand_optional_read	
-	(struct sieve_binary_block *sblock, sieve_size_t *address, 
-		signed int *id_code);
+static inline bool sieve_operand_runtime_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	const char *field_name, struct sieve_operand *operand)
+{
+	if ( !sieve_operand_read(renv->sblock, address, operand) ) {
+		sieve_runtime_trace_operand_error
+			(renv, operand, field_name, "invalid operand");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/*
+ * Optional operands
+ */
+
+int sieve_opr_optional_next
+(struct sieve_binary_block *sblock, sieve_size_t *address, 
+	signed int *opt_code);
+
+static inline int sieve_opr_optional_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address, 
+	signed int *opt_code)
+{
+	sieve_size_t pc = *address;
+	int ret;
+
+	if ( (ret=sieve_opr_optional_next(denv->sblock, address, opt_code)) <= 0 )
+		return ret;
+
+	sieve_code_mark_specific(denv, pc);
+	return ret; 
+}
+
+static inline int sieve_opr_optional_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	signed int *opt_code)
+{
+	int ret;
+
+	if ( (ret=sieve_opr_optional_next(renv->sblock, address, opt_code)) < 0 )
+		sieve_runtime_trace_error(renv, "invalid optional operand code");
+
+	return ret;
+}
 
 /*
  * Core operands
@@ -165,10 +209,10 @@ bool sieve_opr_number_dump
 		const char *field_name); 
 bool sieve_opr_number_read_data
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-		sieve_size_t *address, sieve_number_t *number_r);
+		sieve_size_t *address, const char *field_name, sieve_number_t *number_r);
 bool sieve_opr_number_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-		sieve_number_t *number_r);
+		const char *field_name, sieve_number_t *number_r);
 
 static inline bool sieve_operand_is_number
 (const struct sieve_operand *operand)
@@ -192,12 +236,13 @@ bool sieve_opr_string_dump_ex
 		const char *field_name, bool *literal_r); 
 bool sieve_opr_string_read_data
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-		sieve_size_t *address, string_t **str_r);
+		sieve_size_t *address, const char *field_name, string_t **str_r);
 bool sieve_opr_string_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str_r);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+		const char *field_name, string_t **str_r);
 bool sieve_opr_string_read_ex
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, string_t **str_r,
-		bool *literal_r);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+		const char *field_name, string_t **str_r, bool *literal_r);
 
 static inline bool sieve_operand_is_string
 (const struct sieve_operand *operand)
@@ -223,9 +268,10 @@ bool sieve_opr_stringlist_dump
 		const char *field_name);
 struct sieve_coded_stringlist *sieve_opr_stringlist_read_data
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand, 
-		sieve_size_t *address);
+		sieve_size_t *address, const char *field_name);
 struct sieve_coded_stringlist *sieve_opr_stringlist_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
+		const char *field_name);
 
 static inline bool sieve_operand_is_stringlist
 (const struct sieve_operand *operand)

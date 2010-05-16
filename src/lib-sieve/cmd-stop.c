@@ -77,7 +77,7 @@ static bool cmd_stop_generate
 static int opc_stop_execute
 (const struct sieve_runtime_env *renv,  sieve_size_t *address ATTR_UNUSED)
 {	
-	sieve_runtime_trace(renv, "STOP");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "STOP");
 	
 	sieve_interpreter_interrupt(renv->interp);
 

@@ -324,25 +324,19 @@ static int cmd_test_config_set_operation_execute
 	 */
 
 	/* Setting */
-
-	if ( !sieve_opr_string_read(renv, address, &setting) ) {
-		sieve_runtime_trace_error(renv, "invalid setting operand");
+	if ( !sieve_opr_string_read(renv, address, "setting", &setting) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/* Value */
-
-	if ( !sieve_opr_string_read(renv, address, &value) ) {
-		sieve_runtime_trace_error(renv, "invalid value operand");
+	if ( !sieve_opr_string_read(renv, address, "value", &value) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
 		
-	sieve_runtime_trace(renv, "TEST_CONFIG_SET %s = '%s'", 
-		str_c(setting), str_c(value));
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+		"TEST_CONFIG_SET %s = '%s'", str_c(setting), str_c(value));
 
 	testsuite_setting_set(str_c(setting), str_c(value));
 
@@ -358,16 +352,16 @@ static int cmd_test_config_unset_operation_execute
 	 * Read operands 
 	 */
 
-	if ( !sieve_opr_string_read(renv, address, &setting) ) {
-		sieve_runtime_trace_error(renv, "invalid setting operand");
+	/* Setting */
+	if ( !sieve_opr_string_read(renv, address, "setting", &setting) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
 		
-	sieve_runtime_trace(renv, "TEST_CONFIG_UNSET %s", str_c(setting));
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+		"TEST_CONFIG_UNSET %s", str_c(setting));
 
 	testsuite_setting_unset(str_c(setting));
 
@@ -385,17 +379,15 @@ static int cmd_test_config_reload_operation_execute
 	 */
 
 	/* Extension */
-
-	if ( !sieve_opr_string_read(renv, address, &extension) ) {
-		sieve_runtime_trace_error(renv, "invalid extension operand");
+	if ( !sieve_opr_string_read(renv, address, "extension", &extension) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
 		
-	sieve_runtime_trace(renv, "TEST_CONFIG_RELOAD [%s]", str_c(extension));
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+		"TEST_CONFIG_RELOAD [%s]", str_c(extension));
 
 	ext = sieve_extension_get_by_name(renv->svinst, str_c(extension));
 	if ( ext == NULL ) {

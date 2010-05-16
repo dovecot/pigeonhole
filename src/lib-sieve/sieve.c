@@ -237,7 +237,8 @@ static int sieve_run
 	int ret = 0;
 
 	/* Create the interpreter */
-	if ( (interp=sieve_interpreter_create(sbin, ehandler)) == NULL )
+	if ( (interp=sieve_interpreter_create(sbin, msgdata, senv, ehandler)) 
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Reset execution status */
@@ -253,7 +254,7 @@ static int sieve_run
 	}
 							
 	/* Run the interpreter */
-	ret = sieve_interpreter_run(interp, msgdata, senv, *result);
+	ret = sieve_interpreter_run(interp, *result);
 	
 	/* Free the interpreter */
 	sieve_interpreter_free(&interp);

@@ -150,7 +150,7 @@ static bool _is_text_content(const struct message_header_line *hdr)
 static buffer_t *cmd_notify_extract_body_text
 (const struct sieve_runtime_env *renv)
 { 
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_notify_message_context *mctx;
 	struct message_parser_ctx *parser;
 	struct message_decoder_context *decoder;

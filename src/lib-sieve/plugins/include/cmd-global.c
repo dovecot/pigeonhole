@@ -239,7 +239,7 @@ static bool cmd_global_generate
 static bool opc_global_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	const struct sieve_extension *this_ext = denv->oprtn.ext;
+	const struct sieve_extension *this_ext = denv->oprtn->ext;
 	unsigned int count, i, var_count;
 	struct sieve_variable_scope *scope;
 	struct sieve_variable * const *vars;
@@ -275,7 +275,7 @@ static bool opc_global_dump
 static int opc_global_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct sieve_variable_scope *scope;	
 	struct sieve_variable_storage *storage;
 	struct sieve_variable * const *vars;
@@ -289,7 +289,7 @@ static int opc_global_execute
 	scope = ext_include_binary_get_global_scope(this_ext, renv->sbin);
 	vars = sieve_variable_scope_get_variables(scope, &var_count);
 	storage = ext_include_interpreter_get_global_variables
-		(renv->oprtn.ext, renv->interp);
+		(this_ext, renv->interp);
 
 	for ( i = 0; i < count; i++ ) {
 		unsigned int index;
@@ -304,6 +304,10 @@ static int opc_global_execute
 				index, var_count);
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
+
+		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+			"exporting global variable '%s' (index: %u)", vars[index]->identifier, 
+			index);
 		
 		/* Make sure variable is initialized (export) */
 		(void)sieve_variable_get_modifiable(storage, index, NULL); 

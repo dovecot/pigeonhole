@@ -208,7 +208,7 @@ static bool tst_address_operation_dump
 	sieve_code_descend(denv);
 	
 	/* Handle any optional arguments */
-	if ( !sieve_addrmatch_default_dump_optionals(denv, address) )
+	if ( sieve_addrmatch_opr_optional_dump(denv, address, NULL) != 0 )
 		return FALSE;
 
 	return
@@ -238,23 +238,21 @@ static int tst_address_operation_execute
 	int ret;
 	
 	/* Read optional operands */
-	if ( (ret=sieve_addrmatch_default_get_optionals
-		(renv, address, &addrp, &mcht, &cmp)) <= 0 ) 
-		return ret;
+	if ( (ret=sieve_addrmatch_opr_optional_read
+		(renv, address, NULL, &addrp, &mcht, &cmp)) < 0 ) 
+		return SIEVE_EXEC_BIN_CORRUPT;
 		
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid header-list operand");
+	if ( (hdr_list=sieve_opr_stringlist_read(renv, address, "header-list"))
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid key-list operand");
+	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list"))
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
-	sieve_runtime_trace(renv, "ADDRESS test");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "address test");
 
 	/* Initialize match context */
 	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_list);

@@ -137,11 +137,8 @@ static bool tst_environment_operation_dump
 	sieve_code_dumpf(denv, "ENVIRONMENT");
 	sieve_code_descend(denv);
 
-	/* Handle any optional arguments */
-	if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
-		return FALSE;
-
-	if ( opt_code != SIEVE_MATCH_OPT_END )
+	/* Optional operands */
+	if ( sieve_match_opr_optional_dump(denv, address, &opt_code) != 0 )
 		return FALSE;
 		
 	return
@@ -156,7 +153,7 @@ static bool tst_environment_operation_dump
 static int tst_environment_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	int ret, mret;
 	bool result = TRUE;
 	int opt_code = 0;
@@ -175,33 +172,30 @@ static int tst_environment_operation_execute
 	 */
 	
 	/* Handle match-type and comparator operands */
-	if ( (ret=sieve_match_read_optional_operands
-		(renv, address, &opt_code, &cmp, &mcht)) <= 0 )
-		return ret;
-	
+	if ( (ret=sieve_match_opr_optional_read
+		(renv, address, &opt_code, &cmp, &mcht)) < 0 )
+		return SIEVE_EXEC_BIN_CORRUPT;
+
 	/* Check whether we neatly finished the list of optional operands*/
-	if ( opt_code != SIEVE_MATCH_OPT_END) {
+	if ( ret > 0 ) {
 		sieve_runtime_trace_error(renv, "invalid optional operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
 	/* Read source */
-	if ( !sieve_opr_string_read(renv, address, &name) ) {
-		sieve_runtime_trace_error(renv, "invalid name operand");
+	if ( !sieve_opr_string_read(renv, address, "name", &name) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 	
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid key-list operand");
+	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) 
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "ENVIRONMENT test");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "environment test");
 
 	env_item = ext_environment_item_get_value
 		(this_ext, str_c(name), renv->scriptenv);

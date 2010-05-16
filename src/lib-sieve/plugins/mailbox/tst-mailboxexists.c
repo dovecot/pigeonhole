@@ -114,16 +114,15 @@ static int tst_mailboxexists_operation_execute
 	 */
 	
 	/* Read notify uris */
-	if ( (mailbox_names=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid mailbox-names operand");
+	if ( (mailbox_names=sieve_opr_stringlist_read(renv, address, "mailbox-names"))
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 	
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "MAILBOXEXISTS command");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "mailboxexists test");
 
 	if ( renv->scriptenv->namespaces != NULL ) {
 		mailbox_item = NULL;

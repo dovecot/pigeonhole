@@ -540,7 +540,7 @@ static bool ext_include_runtime_include_mark
 int ext_include_execute_include
 (const struct sieve_runtime_env *renv, unsigned int include_id, bool once)
 {
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	int result = SIEVE_EXEC_OK;
 	struct ext_include_interpreter_context *ctx;
 	const struct ext_include_script_info *included;
@@ -559,16 +559,17 @@ int ext_include_execute_include
 	
 	block_id = sieve_binary_block_get_id(included->block);
 
-	sieve_runtime_trace(renv, 
-		"INCLUDE command (script: %s, id: %d block: %d) START::", 
-		sieve_script_name(included->script), include_id, block_id);
-
 	/* If :once modifier is specified, check for duplicate include */
-	if ( !ext_include_runtime_include_mark(ctx, included, once) ) {
+	if ( ext_include_runtime_include_mark(ctx, included, once) ) {
+		sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM,
+			"include script '%s' (id: %d, block: %d) STARTED ::", 
+			sieve_script_name(included->script), include_id, block_id);
+	} else {
 		/* skip */
-
-		sieve_runtime_trace(renv, 
-			"INCLUDE command (block: %d) SKIPPED ::", block_id);
+		sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM, 
+			"include script '%s' (id: %d, block: %d); "
+			"SKIPPED, because already run once", 
+			sieve_script_name(included->script), include_id, block_id);
 		return result;
 	}
 
@@ -598,7 +599,8 @@ int ext_include_execute_include
 			 * (first sub-interpreter) 
 			 */
 			subinterp = sieve_interpreter_create_for_block
-				(included->block, ehandler);
+				(included->block, included->script, renv->msgdata, renv->scriptenv, 
+					ehandler);
 
 			if ( subinterp != NULL ) {			
 				curctx = ext_include_interpreter_context_init_child
@@ -606,8 +608,7 @@ int ext_include_execute_include
 
 				/* Activate and start the top-level included script */
 				result = ( sieve_interpreter_start
-					(subinterp, renv->msgdata, renv->scriptenv, renv->result, 
-						&interrupted) == 1 );
+					(subinterp, renv->result, &interrupted) == 1 );
 			} else
 				result = SIEVE_EXEC_BIN_CORRUPT;
 		}
@@ -624,7 +625,10 @@ int ext_include_execute_include
 					
 					/* Sub-interpreter ended or executed return */
 					
-					sieve_runtime_trace(renv, "INCLUDE command (block: %d) END ::", 
+					sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM,
+						"included script '%s' (id: %d, block: %d) ENDED ::",  
+						sieve_script_name(curctx->script_info->script),
+						curctx->script_info->id,
 						sieve_binary_block_get_id(curctx->script_info->block));
 
 					/* Ascend interpreter stack */
@@ -649,7 +653,8 @@ int ext_include_execute_include
 						if ( result == SIEVE_EXEC_OK ) {
 							/* Create sub-interpreter */
 							subinterp = sieve_interpreter_create_for_block
-								(curctx->include->block, ehandler);			
+								(curctx->include->block, curctx->include->script, renv->msgdata,
+									renv->scriptenv, ehandler);			
 
 							if ( subinterp != NULL ) {
 								curctx = ext_include_interpreter_context_init_child
@@ -659,9 +664,8 @@ int ext_include_execute_include
 								/* Start the sub-include's interpreter */
 								curctx->include = NULL;
 								curctx->returned = FALSE;
-								result = ( sieve_interpreter_start
-									(subinterp, renv->msgdata, renv->scriptenv, renv->result, 
-										&interrupted) == 1 );		 	
+								result = ( sieve_interpreter_start(subinterp, renv->result, 
+									&interrupted) == 1 );		 	
 							} else
 								result = SIEVE_EXEC_BIN_CORRUPT;
 						}
@@ -675,9 +679,13 @@ int ext_include_execute_include
 					}
 				}
 			}
-		} else 
-			sieve_runtime_trace(renv, "INCLUDE command (block: %d) END ::", 
+		} else {
+			sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM,
+				"included script '%s' (id: %d, block: %d) ENDED ::",  
+				sieve_script_name(curctx->script_info->script),
+				curctx->script_info->id,
 				sieve_binary_block_get_id(curctx->script_info->block));
+		}
 
 		/* Free any sub-interpreters that might still be active */
 		while ( curctx != NULL && curctx->parent != NULL ) {
@@ -704,10 +712,12 @@ int ext_include_execute_include
 void ext_include_execute_return
 (const struct sieve_runtime_env *renv)
 {
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_include_interpreter_context *ctx =
 		ext_include_get_interpreter_context(this_ext, renv->interp);
 	
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "return");
+
 	ctx->returned = TRUE;
 	sieve_interpreter_interrupt(renv->interp);	
 }

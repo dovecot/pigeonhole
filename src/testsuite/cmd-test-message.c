@@ -315,17 +315,19 @@ static int cmd_test_message_smtp_operation_execute
 
 	/* Index */
 
-	if ( !sieve_opr_number_read(renv, address, &msg_index) ) {
-		sieve_runtime_trace_error(renv, "invalid index operand");
+	if ( !sieve_opr_number_read(renv, address, "index", &msg_index) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
 		
-	sieve_runtime_trace(renv, "TEST_MESSAGE_SMTP (%s) [%d]", 
-		( is_test ? "TEST" : "COMMAND" ), msg_index);
+	if ( is_test )
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+			"TEST_MESSAGE_SMTP test [%d]", msg_index);
+	else
+		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+			"TEST_MESSAGE_SMTP command [%d]", msg_index);
 
 	result = testsuite_smtp_get(renv, msg_index);
 
@@ -359,23 +361,23 @@ static int cmd_test_message_mailbox_operation_execute
 	}
 
 	/* Folder */
-	if ( !sieve_opr_string_read(renv, address, &folder) ) {
-		sieve_runtime_trace_error(renv, "invalid folder operand");
+	if ( !sieve_opr_string_read(renv, address, "folder", &folder) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 	
 	/* Index */
-	if ( !sieve_opr_number_read(renv, address, &msg_index) ) {
-		sieve_runtime_trace_error(renv, "invalid index operand");
+	if ( !sieve_opr_number_read(renv, address, "index", &msg_index) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
-		
-	sieve_runtime_trace(renv, "TEST_MESSAGE_MAILBOX (%s) \"%s\" [%d]", 
-		( is_test ? "TEST" : "COMMAND" ), str_c(folder), msg_index);
+
+	if ( is_test ) 		
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, 
+			"TEST_MESSAGE_MAILBOX test \"%s\" [%d]", str_c(folder), msg_index);
+	else
+		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
+			"TEST_MESSAGE_MAILBOX command \"%s\" [%d]", str_c(folder), msg_index);
 
 	result = testsuite_mailstore_mail_index(renv, str_c(folder), msg_index);
 

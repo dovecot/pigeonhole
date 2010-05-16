@@ -89,7 +89,7 @@ static bool tst_exists_generate
 static bool tst_exists_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-    sieve_code_dumpf(denv, "EXISTS");
+	sieve_code_dumpf(denv, "EXISTS");
 	sieve_code_descend(denv);
 
 	return sieve_opr_stringlist_dump(denv, address, "header names");
@@ -107,13 +107,20 @@ static int tst_exists_operation_execute
 	string_t *hdr_item;
 	bool matched;
 	
-	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid header-list operand");
-		return SIEVE_EXEC_BIN_CORRUPT;
-	}
+	/*
+	 * Read operands
+	 */
 
-	sieve_runtime_trace(renv, "EXISTS test");
+	/* Read header-list */
+	if ( (hdr_list=sieve_opr_stringlist_read(renv, address, "header-list"))
+		== NULL )
+		return SIEVE_EXEC_BIN_CORRUPT;
+
+	/*
+	 * Perfrom test
+	 */
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "exists test");
 		
 	/* Iterate through all requested headers to match (must find all specified) */
 	hdr_item = NULL;

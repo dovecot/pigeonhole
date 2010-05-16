@@ -337,6 +337,7 @@ int main(int argc, char **argv)
 		scriptenv.duplicate_mark = duplicate_mark;
 		scriptenv.duplicate_check = duplicate_check;
 		scriptenv.trace_stream = ( trace ? teststream : NULL );
+		scriptenv.trace_level = SIEVE_TRLVL_TESTS;
 		scriptenv.exec_status = &estatus;
 	
 		/* Run the test */

@@ -34,10 +34,8 @@ struct sieve_code_dumper_extension_reg {
 struct sieve_code_dumper {
 	pool_t pool;
 					
-	/* Dump status */
-	sieve_size_t pc;          /* Program counter */
-	
-	const struct sieve_operation *operation;
+	/* Dump status */	
+	struct sieve_operation oprtn;
 	sieve_size_t mark_address;
 	unsigned int mark_line;
 	unsigned int mark_last_line;
@@ -55,71 +53,70 @@ struct sieve_code_dumper *sieve_code_dumper_create
 (struct sieve_dumptime_env *denv) 
 {
 	pool_t pool;
-	struct sieve_code_dumper *dumper;
+	struct sieve_code_dumper *cdumper;
 	
 	pool = pool_alloconly_create("sieve_code_dumper", 4096);	
-	dumper = p_new(pool, struct sieve_code_dumper, 1);
-	dumper->pool = pool;
-	dumper->dumpenv = denv;
-	dumper->pc = 0;
+	cdumper = p_new(pool, struct sieve_code_dumper, 1);
+	cdumper->pool = pool;
+	cdumper->dumpenv = denv;
 	
 	/* Setup storage for extension contexts */		
-	p_array_init(&dumper->extensions, pool, 
+	p_array_init(&cdumper->extensions, pool, 
 		sieve_extensions_get_count(denv->svinst));
 
-	return dumper;
+	return cdumper;
 }
 
-void sieve_code_dumper_free(struct sieve_code_dumper **dumper) 
+void sieve_code_dumper_free(struct sieve_code_dumper **cdumper) 
 {	
-	sieve_binary_debug_reader_deinit(&(*dumper)->dreader);
+	sieve_binary_debug_reader_deinit(&(*cdumper)->dreader);
 
-	pool_unref(&((*dumper)->pool));
-	*dumper = NULL;
+	pool_unref(&((*cdumper)->pool));
+	*cdumper = NULL;
 }
 
-pool_t sieve_code_dumper_pool(struct sieve_code_dumper *dumper)
+pool_t sieve_code_dumper_pool(struct sieve_code_dumper *cdumper)
 {
-	return dumper->pool;
+	return cdumper->pool;
 }
 
 /* EXtension support */
 
 void sieve_dump_extension_register
-(struct sieve_code_dumper *dumper, const struct sieve_extension *ext,
+(struct sieve_code_dumper *cdumper, const struct sieve_extension *ext,
 	const struct sieve_code_dumper_extension *cdmpext, void *context)
 {
 	struct sieve_code_dumper_extension_reg *reg;
 
 	if ( ext->id < 0 ) return;
 
-	reg = array_idx_modifiable(&dumper->extensions, (unsigned int) ext->id);
+	reg = array_idx_modifiable(&cdumper->extensions, (unsigned int) ext->id);
 	reg->cdmpext = cdmpext;
 	reg->ext = ext;
 	reg->context = context;
 }
 
 void sieve_dump_extension_set_context
-(struct sieve_code_dumper *dumper, const struct sieve_extension *ext, 
+(struct sieve_code_dumper *cdumper, const struct sieve_extension *ext, 
 	void *context)
 {
 	struct sieve_code_dumper_extension_reg *reg;
 
 	if ( ext->id < 0 ) return;
 
-	reg = array_idx_modifiable(&dumper->extensions, (unsigned int) ext->id);
+	reg = array_idx_modifiable(&cdumper->extensions, (unsigned int) ext->id);
 	reg->context = context;
 }
 
 void *sieve_dump_extension_get_context
-(struct sieve_code_dumper *dumper, const struct sieve_extension *ext) 
+(struct sieve_code_dumper *cdumper, const struct sieve_extension *ext) 
 {
 	const struct sieve_code_dumper_extension_reg *reg;
 
-	if  ( ext->id < 0 || ext->id >= (int) array_count(&dumper->extensions) )
+	if  ( ext->id < 0 || ext->id >= (int) array_count(&cdumper->extensions) )
 		return NULL;
 	
-	reg = array_idx(&dumper->extensions, (unsigned int) ext->id);		
+	reg = array_idx(&cdumper->extensions, (unsigned int) ext->id);		
 
 	return reg->context;
 }
@@ -169,8 +166,8 @@ static inline void sieve_code_line_mark
 
 void sieve_code_mark(const struct sieve_dumptime_env *denv)
 {
-	denv->cdumper->mark_address = denv->cdumper->pc;
-	sieve_code_line_mark(denv, denv->cdumper->pc);
+	denv->cdumper->mark_address = denv->offset;
+	sieve_code_line_mark(denv, denv->offset);
 }
 
 void sieve_code_mark_specific
@@ -190,53 +187,30 @@ void sieve_code_ascend(const struct sieve_dumptime_env *denv)
 	if ( denv->cdumper->indent > 0 )
 		denv->cdumper->indent--;
 }
-
-/* Operations and operands */
-
-bool sieve_code_dumper_print_optional_operands
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
-{
-	int opt_code = -1;
-	
-	if ( sieve_operand_optional_present(denv->sblock, address) ) {
-		
-		while ( opt_code != 0 ) {			
-			if ( !sieve_operand_optional_read(denv->sblock, address, &opt_code) ) {
-				return FALSE;
-			}
-
-			if ( opt_code == SIEVE_OPT_SIDE_EFFECT ) {
-				if ( !sieve_opr_side_effect_dump(denv, address) )
-					return FALSE;
-			}
-		}
-	} 
-	return TRUE;
-}
  
 /* Code Dump */
 
 static bool sieve_code_dumper_print_operation
-	(struct sieve_code_dumper *dumper) 
+(struct sieve_code_dumper *cdumper) 
 {	
-	struct sieve_dumptime_env *denv = dumper->dumpenv;
-	struct sieve_operation *oprtn = &denv->oprtn;
-	sieve_size_t address;
-	
-	/* Mark start address of operation */
-	dumper->indent = 0;
-	address = dumper->mark_address = dumper->pc;
+	struct sieve_dumptime_env *denv = cdumper->dumpenv;
+	struct sieve_operation *oprtn = &(cdumper->oprtn);
+	sieve_size_t *address	= &(denv->offset);
 
-	sieve_code_line_mark(denv, address);
+	/* Mark start address of operation */
+	cdumper->indent = 0;
+	cdumper->mark_address = *address;
+
+	sieve_code_line_mark(denv, *address);
 
 	/* Read operation */
-	if ( sieve_operation_read(denv->sblock, &(dumper->pc), oprtn) ) {
-		const struct sieve_operation_def *op = oprtn->def;
+	if ( sieve_operation_read(denv->sblock, address, oprtn) ) {
+		const struct sieve_operation_def *opdef = oprtn->def;
 
-		if ( op->dump != NULL )
-			return op->dump(denv, &(dumper->pc));
-		else if ( op->mnemonic != NULL )
-			sieve_code_dumpf(denv, "%s", op->mnemonic);
+		if ( opdef->dump != NULL )
+			return opdef->dump(denv, address);
+		else if ( opdef->mnemonic != NULL )
+			sieve_code_dumpf(denv, "%s", opdef->mnemonic);
 		else
 			return FALSE;
 			
@@ -247,15 +221,18 @@ static bool sieve_code_dumper_print_operation
 	return FALSE;
 }
 
-void sieve_code_dumper_run(struct sieve_code_dumper *dumper) 
+void sieve_code_dumper_run(struct sieve_code_dumper *cdumper) 
 {
-	const struct sieve_dumptime_env *denv = dumper->dumpenv;
+	struct sieve_dumptime_env *denv = cdumper->dumpenv;
 	struct sieve_binary *sbin = denv->sbin;
 	struct sieve_binary_block *sblock = denv->sblock;
 	unsigned int debug_block_id, ext_count;
 	bool success = TRUE;
+	sieve_size_t *address;
 
-	dumper->pc = 0;
+	denv->offset = 0;
+	denv->oprtn = &(cdumper->oprtn);
+	address = &(denv->offset);
 
 	/* Heading */
 	o_stream_send_str(denv->stream, "Address   Line  Code\n");
@@ -263,7 +240,7 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
 	/* Load debug block */
 	sieve_code_mark(denv);
 	
-	if ( sieve_binary_read_unsigned(sblock, &dumper->pc, &debug_block_id) ) {
+	if ( sieve_binary_read_unsigned(sblock, address, &debug_block_id) ) {
 		struct sieve_binary_block *debug_block =
 			sieve_binary_block_get(sbin, debug_block_id);
 
@@ -272,7 +249,7 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
 			return;
 		} else {
 			/* Initialize debug reader */
-			dumper->dreader = sieve_binary_debug_reader_init(debug_block);
+			cdumper->dreader = sieve_binary_debug_reader_init(debug_block);
 
 			/* Dump block id */
 			sieve_code_dumpf(denv, "DEBUG BLOCK: %d", debug_block_id);
@@ -285,7 +262,7 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
 	/* Load and dump extensions listed in code */
 	sieve_code_mark(denv);
 	
-	if ( sieve_binary_read_unsigned(sblock, &dumper->pc, &ext_count) ) {
+	if ( sieve_binary_read_unsigned(sblock, address, &ext_count) ) {
 		unsigned int i;
 		
 		sieve_code_dumpf(denv, "EXTENSIONS [%d]:", ext_count);
@@ -298,7 +275,7 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
 			T_BEGIN {
 				sieve_code_mark(denv);
 			
-				if ( !sieve_binary_read_extension(sblock, &dumper->pc, &code, &ext) ) {
+				if ( !sieve_binary_read_extension(sblock, address, &code, &ext) ) {
 					success = FALSE;
 					break;
 				}
@@ -307,7 +284,7 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
       
 				if ( ext->def != NULL && ext->def->code_dump != NULL ) {
 					sieve_code_descend(denv);
-					if ( !ext->def->code_dump(ext, denv, &dumper->pc) ) {
+					if ( !ext->def->code_dump(ext, denv, address) ) {
 						success = FALSE;
 						break;
 					}
@@ -325,21 +302,20 @@ void sieve_code_dumper_run(struct sieve_code_dumper *dumper)
 		return;
 	}
 	
-	while ( dumper->pc < 
-		sieve_binary_block_get_size(sblock) ) {
+	while ( *address < sieve_binary_block_get_size(sblock) ) {
 
 		T_BEGIN {
-			success = sieve_code_dumper_print_operation(dumper);
+			success = sieve_code_dumper_print_operation(cdumper);
 		} T_END;
 
 		if ( !success ) {
-			sieve_code_dumpf(dumper->dumpenv, "Binary is corrupt.");
+			sieve_code_dumpf(denv, "Binary is corrupt.");
 			return;
 		}
 	}
 	
 	/* Mark end of the binary */
-	dumper->indent = 0;
-	dumper->mark_address = sieve_binary_block_get_size(sblock);
-	sieve_code_dumpf(dumper->dumpenv, "[End of code]");	
+	cdumper->indent = 0;
+	cdumper->mark_address = sieve_binary_block_get_size(sblock);
+	sieve_code_dumpf(denv, "[End of code]");	
 }

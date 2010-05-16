@@ -113,16 +113,15 @@ static int tst_vnotifym_operation_execute
 	 */
 	
 	/* Read notify uris */
-	if ( (notify_uris=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid notify-uris operand");
+	if ( (notify_uris=sieve_opr_stringlist_read(renv, address, "notify-uris")) 
+		== NULL ) 
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 	
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "VALID_NOTIFY_METHOD test");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "valid_notify_method test");
 
 	uri_item = NULL;
 	while ( (result=sieve_coded_stringlist_next_item(notify_uris, &uri_item)) 

@@ -218,8 +218,7 @@ bool tst_size_generate
 static bool tst_size_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	const struct sieve_operation *op = &denv->oprtn;
-	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
+	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(denv->oprtn));
 	sieve_code_descend(denv);
 	
 	return 
@@ -246,16 +245,19 @@ static inline bool tst_size_get
 static int tst_size_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	const struct sieve_operation *op = &renv->oprtn;
 	sieve_number_t mail_size, limit;
 		
-	/* Read size limit */
-	if ( !sieve_opr_number_read(renv, address, &limit) ) {
-		sieve_runtime_trace_error(renv, "invalid limit operand");
-		return SIEVE_EXEC_BIN_CORRUPT;	
-	}
+	/*
+	 * Read operands
+	 */
 
-	sieve_runtime_trace(renv, "%s test", sieve_operation_mnemonic(op));
+	/* Read size limit */
+	if ( !sieve_opr_number_read(renv, address, "limit", &limit) )
+		return SIEVE_EXEC_BIN_CORRUPT;	
+
+	/*
+	 * Perform test
+	 */
 	
 	/* Get the size of the message */
 	if ( !tst_size_get(renv, &mail_size) ) {
@@ -265,10 +267,15 @@ static int tst_size_operation_execute
 	}
 	
 	/* Perform the test */
-	if ( sieve_operation_is(op, tst_size_over_operation) )
+	if ( sieve_operation_is(renv->oprtn, tst_size_over_operation) ) {
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "size :over test");
+
 		sieve_interpreter_set_test_result(renv->interp, (mail_size > limit));
-	else
+	} else {
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "size :under test");
+
 		sieve_interpreter_set_test_result(renv->interp, (mail_size < limit));
+	}
 
 	return SIEVE_EXEC_OK;
 }

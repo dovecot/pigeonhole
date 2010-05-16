@@ -328,20 +328,22 @@ static bool tst_date_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int opt_code = 0;
-	const struct sieve_operation *op = &denv->oprtn;
+	const struct sieve_operation *op = denv->oprtn;
 	struct sieve_operand operand;
 
 	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
 	sieve_code_descend(denv);
 	
 	/* Handle any optional arguments */
-  do {
-		if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
+	for (;;) {
+		int ret;
+
+		if ( (ret=sieve_match_opr_optional_dump(denv, address, &opt_code)) < 0 )
 			return FALSE;
 
+		if ( ret == 0 ) break;
+
 		switch ( opt_code ) {
-		case SIEVE_MATCH_OPT_END:
-			break;
 		case OPT_DATE_ZONE:
 			if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
 				sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
@@ -359,7 +361,7 @@ static bool tst_date_operation_dump
     default:
 			return FALSE;
 		}
-	} while ( opt_code != SIEVE_MATCH_OPT_END );
+	} 
 
 	if ( sieve_operation_is(op, date_operation) &&
 		!sieve_opr_string_dump(denv, address, "header name") )
@@ -377,7 +379,7 @@ static bool tst_date_operation_dump
 static int tst_date_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
-	const struct sieve_operation *op = &renv->oprtn;
+	const struct sieve_operation *op = renv->oprtn;
 	bool result = TRUE, zone_specified = FALSE, got_date = FALSE, matched = FALSE;
 	int opt_code = 0;
 	const struct sieve_message_data *msgdata = renv->msgdata;
@@ -396,26 +398,24 @@ static int tst_date_operation_execute
 	int ret;
 	
 	/* Read optional operands */
-	do {
-		if ( (ret=sieve_match_read_optional_operands
-			(renv, address, &opt_code, &cmp, &mcht)) <= 0 )
-			return ret;
+	for (;;) {
+		int ret;
 
+		if ( (ret=sieve_match_opr_optional_read
+			(renv, address, &opt_code, &cmp, &mcht)) < 0 )
+			return SIEVE_EXEC_BIN_CORRUPT;
+
+		if ( ret == 0 ) break;
+	
 		switch ( opt_code ) {
-		case SIEVE_MATCH_OPT_END:
-			break;
 		case OPT_DATE_ZONE:
-			if ( !sieve_operand_read(renv->sblock, address, &operand) ) {
-				sieve_runtime_trace_error(renv, "invalid operand");
+			if ( !sieve_operand_runtime_read(renv, address, "zone", &operand) )
 				return SIEVE_EXEC_BIN_CORRUPT;
-			}
 
 			if ( !sieve_operand_is_omitted(&operand) ) {
 				if ( !sieve_opr_string_read_data
-					(renv, &operand, address, &zone) ) {
-					sieve_runtime_trace_error(renv, "invalid zone operand");
+					(renv, &operand, address, "zone", &zone) )
 					return SIEVE_EXEC_BIN_CORRUPT;
-				}
 			}
 
 			zone_specified = TRUE;
@@ -424,32 +424,26 @@ static int tst_date_operation_execute
 			sieve_runtime_trace_error(renv, "unknown optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
-	} while ( opt_code != SIEVE_MATCH_OPT_END );
-
+	} 
 
 	if ( sieve_operation_is(op, date_operation) ) {
 		/* Read header name */
-		if ( !sieve_opr_string_read(renv, address, &header_name) ) {
-			sieve_runtime_trace_error(renv, "invalid header-name operand");
+		if ( !sieve_opr_string_read(renv, address, "header-name", &header_name) )
 			return SIEVE_EXEC_BIN_CORRUPT;
-		}
 	}
 
 	/* Read date part */
-	if ( !sieve_opr_string_read(renv, address, &date_part) ) {
-		sieve_runtime_trace_error(renv, "invalid date-part operand");
+	if ( !sieve_opr_string_read(renv, address, "date-part", &date_part) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 		
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid key-list operand");
+	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) 
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
-
-	/* Perform test */
-
-	sieve_runtime_trace(renv, "%s test", sieve_operation_mnemonic(op));
+	
+	/* 
+	 * Perform test 
+	 */
 
 	/* Get the date value */
 
@@ -458,6 +452,8 @@ static int tst_date_operation_execute
 	if ( sieve_operation_is(op, date_operation) ) {
 		const char *header_value;
 		const char *date_string;
+
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "date test");
 
 		/* Get date from the message */
 
@@ -485,6 +481,8 @@ static int tst_date_operation_execute
 		}
 	} else if ( sieve_operation_is(op, currentdate_operation) ) {
 		/* Use time stamp recorded at the time the script first started */
+
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "currentdatedate test");
 
 		date_value = local_time;
 		original_zone = local_zone;

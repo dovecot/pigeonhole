@@ -206,9 +206,7 @@ static bool cmd_test_mailbox_generate
 static bool cmd_test_mailbox_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	const struct sieve_operation *op = &denv->oprtn;
-	
-	sieve_code_dumpf(denv, "%s:", sieve_operation_mnemonic(op));
+	sieve_code_dumpf(denv, "%s:", sieve_operation_mnemonic(denv->oprtn));
 	
 	sieve_code_descend(denv);
 	
@@ -223,7 +221,7 @@ static bool cmd_test_mailbox_operation_dump
 static int cmd_test_mailbox_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	const struct sieve_operation *op = &renv->oprtn;
+	const struct sieve_operation *oprtn = renv->oprtn;
 	string_t *mailbox = NULL;
 
 	/* 
@@ -232,19 +230,17 @@ static int cmd_test_mailbox_operation_execute
 
 	/* Index */
 
-	if ( !sieve_opr_string_read(renv, address, &mailbox) ) {
-		sieve_runtime_trace_error(renv, "invalid mailbox operand");
+	if ( !sieve_opr_string_read(renv, address, "mailbox", &mailbox) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
 		
-	sieve_runtime_trace
-		(renv, "%s %s:", sieve_operation_mnemonic(op), str_c(mailbox));
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+		"%s %s:", sieve_operation_mnemonic(oprtn), str_c(mailbox));
 
-	if ( sieve_operation_is(op, test_mailbox_create_operation) )
+	if ( sieve_operation_is(oprtn, test_mailbox_create_operation) )
 		testsuite_mailstore_mailbox_create(renv, str_c(mailbox));
 
 	return SIEVE_EXEC_OK;

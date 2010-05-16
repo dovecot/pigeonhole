@@ -132,12 +132,11 @@ static int cmd_test_fail_operation_execute
 {
 	string_t *reason;
 
-	if ( !sieve_opr_string_read(renv, address, &reason) ) {
-		sieve_runtime_trace_error(renv, "invalid reason operand");
+	if ( !sieve_opr_string_read(renv, address, "reason", &reason) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
-	sieve_runtime_trace(renv, "TEST FAIL");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "TEST FAIL");
+
 	testsuite_test_fail(reason);
 	
 	return sieve_interpreter_program_jump(renv->interp, TRUE);

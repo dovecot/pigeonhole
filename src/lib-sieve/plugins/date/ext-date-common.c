@@ -5,6 +5,7 @@
 #include "utc-offset.h"
 
 #include "sieve-common.h"
+#include "sieve-code.h"
 #include "sieve-interpreter.h"
 #include "sieve-message.h"
 
@@ -104,7 +105,7 @@ bool ext_date_parse_timezone
 time_t ext_date_get_current_date
 (const struct sieve_runtime_env *renv, int *zone_offset_r)
 {	
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_date_context *dctx = (struct ext_date_context *) 
 		sieve_message_context_extension_get(renv->msgctx, this_ext);
 

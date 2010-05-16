@@ -94,7 +94,7 @@ static bool tst_test_script_compile_operation_dump
 	sieve_code_dumpf(denv, "TEST_SCRIPT_COMPILE:");
 	sieve_code_descend(denv);
 
-	if ( !sieve_opr_string_dump(denv, address, "script") ) 
+	if ( !sieve_opr_string_dump(denv, address, "script-name") ) 
 		return FALSE;
 
 	return TRUE;
@@ -115,16 +115,15 @@ static int tst_test_script_compile_operation_execute
 	 * Read operands
 	 */
 
-	if ( !sieve_opr_string_read(renv, address, &script_name) ) {
-		sieve_runtime_trace_error(renv, "invalid script name operand");
+	if ( !sieve_opr_string_read(renv, address, "script-name", &script_name) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "TEST COMPILE: %s", str_c(script_name));
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+		"testsuite: compile script '%s'", str_c(script_name));
 
 	script_path = sieve_script_dirpath(renv->script);
 	if ( script_path == NULL ) 

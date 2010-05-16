@@ -205,9 +205,7 @@ static bool cmd_test_binary_generate
 static bool cmd_test_binary_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	const struct sieve_operation *op = &denv->oprtn;
-
-	sieve_code_dumpf(denv, "%s:", sieve_operation_mnemonic(op));
+	sieve_code_dumpf(denv, "%s:", sieve_operation_mnemonic(denv->oprtn));
 	
 	sieve_code_descend(denv);
 	
@@ -222,7 +220,7 @@ static bool cmd_test_binary_operation_dump
 static int cmd_test_binary_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	const struct sieve_operation *op = &renv->oprtn;
+	const struct sieve_operation *oprtn = renv->oprtn;
 	string_t *binary_name = NULL;
 
 	/* 
@@ -231,20 +229,18 @@ static int cmd_test_binary_operation_execute
 
 	/* Binary Name */
 
-	if ( !sieve_opr_string_read(renv, address, &binary_name) ) {
-		sieve_runtime_trace_error(renv, "invalid mailbox operand");
+	if ( !sieve_opr_string_read(renv, address, "binary-name", &binary_name) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
-		
-	sieve_runtime_trace
-		(renv, "%s %s", sieve_operation_mnemonic(op), str_c(binary_name));
 
-	if ( sieve_operation_is(op, test_binary_load_operation) ) {
+	if ( sieve_operation_is(oprtn, test_binary_load_operation) ) {
 		struct sieve_binary *sbin = testsuite_binary_load(str_c(binary_name));
+
+		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+			"binary :load %s", str_c(binary_name));
 
 		if ( sbin != NULL ) {
 			testsuite_script_set_binary(sbin);
@@ -255,8 +251,11 @@ static int cmd_test_binary_operation_execute
 			return SIEVE_EXEC_FAILURE;
 		}
 
-	} else if ( sieve_operation_is(op, test_binary_save_operation) ) {
+	} else if ( sieve_operation_is(oprtn, test_binary_save_operation) ) {
 		struct sieve_binary *sbin = testsuite_script_get_binary();
+
+		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+			"binary :save %s", str_c(binary_name));
 
 		if ( sbin != NULL ) 
 			testsuite_binary_save(sbin, str_c(binary_name));

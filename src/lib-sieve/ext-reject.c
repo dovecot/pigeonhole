@@ -246,12 +246,10 @@ static bool cmd_reject_generate
 static bool ext_reject_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	const struct sieve_operation *op = &denv->oprtn;
-
-	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
+	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(denv->oprtn));
 	sieve_code_descend(denv);
 
-	if ( !sieve_code_dumper_print_optional_operands(denv, address) )
+	if ( sieve_action_opr_optional_dump(denv, address, NULL) != 0 )
 		return FALSE;
 	
 	return sieve_opr_string_dump(denv, address, "reason");
@@ -264,8 +262,8 @@ static bool ext_reject_operation_dump
 static int ext_reject_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	const struct sieve_operation *op = &renv->oprtn;
-	const struct sieve_extension *this_ext = op->ext;
+	const struct sieve_operation *oprtn = renv->oprtn;
+	const struct sieve_extension *this_ext = oprtn->ext;
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_reject_context *act;
 	string_t *reason;
@@ -273,28 +271,37 @@ static int ext_reject_operation_execute
 	pool_t pool;
 	int ret;
 
+	/*
+	 * Read data
+	 */
+
 	/* Source line */
-	source_line = sieve_runtime_get_source_location(renv, op->address);
-	
-	/* Optional operands (side effects) */
-	if ( (ret=sieve_interpreter_handle_optional_operands
-		(renv, address, &slist)) <= 0 )
-		return ret;
+	source_line = sieve_runtime_get_command_location(renv);
+
+	/* Optional operands (side effects only) */
+	if ( (ret=sieve_action_opr_optional_read(renv, address, NULL, &slist)) < 0 ) 
+		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Read rejection reason */
-	if ( !sieve_opr_string_read(renv, address, &reason) ) {
-		sieve_runtime_trace_error(renv, "invalid reason operand");
+	if ( !sieve_opr_string_read(renv, address, "reason", &reason) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
-	sieve_runtime_trace(renv, "%s action (\"%s\")", sieve_operation_mnemonic(op), 
-		str_sanitize(str_c(reason), 64));
+	/*
+	 * Perform operation
+	 */
+
+	if ( sieve_operation_is(oprtn, ereject_operation) )
+		sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS,
+			"ereject action (\"%s\")", str_sanitize(str_c(reason), 64));
+	else
+		sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS,
+			"reject action (\"%s\")", str_sanitize(str_c(reason), 64));
 
 	/* Add reject action to the result */
 	pool = sieve_result_pool(renv->result);
 	act = p_new(pool, struct act_reject_context, 1);
 	act->reason = p_strdup(pool, str_c(reason));
-	act->ereject = ( sieve_operation_is(op, ereject_operation) );
+	act->ereject = ( sieve_operation_is(oprtn, ereject_operation) );
 	
 	ret = sieve_result_add_action
 		(renv, this_ext, &act_reject, slist, source_line, (void *) act, 0);

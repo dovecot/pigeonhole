@@ -139,9 +139,8 @@ static bool ext_fileinto_operation_dump
 	sieve_code_dumpf(denv, "FILEINTO");
 	sieve_code_descend(denv);
 
-	if ( !sieve_code_dumper_print_optional_operands(denv, address) ) {
+	if ( sieve_action_opr_optional_dump(denv, address, NULL) != 0 )
 		return FALSE;
-	}
 
 	return sieve_opr_string_dump(denv, address, "folder");
 }
@@ -164,25 +163,23 @@ static int ext_fileinto_operation_execute
 	 */
 
 	/* Source line */
-	source_line = sieve_runtime_get_source_location(renv, renv->oprtn.address);
+	source_line = sieve_runtime_get_command_location(renv);
 	
-	/* Optional operands */
-	if ( (ret=sieve_interpreter_handle_optional_operands(renv, address, &slist)) 
-		<= 0 )
-		return ret;
+	/* Optional operands (side effects only) */
+	if ( (ret=sieve_action_opr_optional_read(renv, address, NULL, &slist)) < 0 ) 
+		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Folder operand */
-	if ( !sieve_opr_string_read(renv, address, &folder) ) {
-		sieve_runtime_trace_error(renv, "invalid folder operand");
+	if ( !sieve_opr_string_read(renv, address, "folder", &folder) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 	
 	/*
 	 * Perform operation
 	 */
 
 	mailbox = str_sanitize(str_c(folder), 64);
-	sieve_runtime_trace(renv, "FILEINTO action (\"%s\")", mailbox);
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, 
+		"fileinto action (\"%s\")", mailbox);
 		
 	/* Add action to result */	
 	ret = sieve_act_store_add_to_result

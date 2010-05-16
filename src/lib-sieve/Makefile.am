@@ -84,6 +84,7 @@ libdovecot_sieve_la_SOURCES = \
 	sieve-validator.c \
 	sieve-generator.c \
 	sieve-interpreter.c \
+	sieve-runtime-trace.c \
 	sieve-code-dumper.c \
 	sieve-binary-dumper.c \
 	sieve-result.c \
@@ -125,6 +126,8 @@ headers = \
 	sieve-validator.h \
 	sieve-generator.h \
 	sieve-interpreter.h \
+	sieve-runtime-trace.h \
+	sieve-runtime.h \
 	sieve-code-dumper.h \
 	sieve-binary-dumper.h \
 	sieve-dump.h \

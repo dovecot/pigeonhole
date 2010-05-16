@@ -135,11 +135,8 @@ static bool tst_header_operation_dump
 	sieve_code_dumpf(denv, "HEADER");
 	sieve_code_descend(denv);
 
-	/* Handle any optional arguments */
-	if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
-		return FALSE;
-
-	if ( opt_code != SIEVE_MATCH_OPT_END )
+	/* Optional operands */
+	if ( sieve_match_opr_optional_dump(denv, address, &opt_code) != 0 )
 		return FALSE;
 	
 	return
@@ -181,30 +178,36 @@ static int tst_header_operation_execute
 	bool matched;
 	int ret;
 	
+	/* 
+	 * Read operands
+	 */
+
 	/* Handle match-type and comparator operands */
-	if ( (ret=sieve_match_read_optional_operands
-		(renv, address, &opt_code, &cmp, &mcht)) <= 0 )
-		return ret;
-	
+	if ( (ret=sieve_match_opr_optional_read
+		(renv, address, &opt_code, &cmp, &mcht)) < 0 )
+		return SIEVE_EXEC_BIN_CORRUPT;
+
 	/* Check whether we neatly finished the list of optional operands*/
-	if ( opt_code != SIEVE_MATCH_OPT_END) {
+	if ( ret > 0 ) {
 		sieve_runtime_trace_error(renv, "invalid optional operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 		
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid header-list operand");
+	if ( (hdr_list=sieve_opr_stringlist_read(renv, address, "header-list")) 
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 	
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid key-list operand");
+	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list"))
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
-	sieve_runtime_trace(renv, "HEADER test");
+	/*
+	 * Perform test
+	 */
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "header test");
 
 	/* Initialize match */
 	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_list); 	

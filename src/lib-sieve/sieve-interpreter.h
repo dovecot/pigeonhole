@@ -10,46 +10,19 @@
 #include "mail-storage.h"
 
 #include "sieve-common.h"
-#include "sieve-code.h"
-
-/*
- * Forward declarations
- */
- 
-struct sieve_interpreter;
-
-/*
- * Runtime environment
- */
-
-struct sieve_runtime_env {
-	struct sieve_interpreter *interp;
-	struct sieve_instance *svinst;
-
-	struct sieve_binary *sbin;
-	struct sieve_binary_block *sblock;
-	struct sieve_operation oprtn; 
-
-	struct sieve_script *script;
-	const struct sieve_script_env *scriptenv;
-	
-	const struct sieve_message_data *msgdata;
-	struct sieve_message_context *msgctx;
-
-	struct sieve_result *result;
-	
-	struct sieve_exec_status *exec_status;
-	struct ostream *trace_stream;
-};
+#include "sieve-runtime.h"
 
 /* 
  * Interpreter 
  */
 
 struct sieve_interpreter *sieve_interpreter_create
-	(struct sieve_binary *sbin, struct sieve_error_handler *ehandler);
+	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
+		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler);
 struct sieve_interpreter *sieve_interpreter_create_for_block
-	(struct sieve_binary_block *sblock, struct sieve_error_handler *ehandler);
+	(struct sieve_binary_block *sblock, struct sieve_script *script,
+		const struct sieve_message_data *msgdata, 
+		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler);
 void sieve_interpreter_free(struct sieve_interpreter **interp);
 
 /*
@@ -94,12 +67,18 @@ void sieve_interpreter_set_test_result
 bool sieve_interpreter_get_test_result
 	(struct sieve_interpreter *interp);
 	
-/* 
- * Error handling 
+/*
+ * Source location
  */
 
 unsigned int sieve_runtime_get_source_location
 	(const struct sieve_runtime_env *renv, sieve_size_t code_address);
+unsigned int sieve_runtime_get_command_location
+	(const struct sieve_runtime_env *renv);
+
+/* 
+ * Error handling 
+ */
 
 /* This is not particularly user-friendly, so avoid using this.. */
 const char *sieve_runtime_location(const struct sieve_runtime_env *runenv);
@@ -113,33 +92,6 @@ void sieve_runtime_warning
 void sieve_runtime_log
 	(const struct sieve_runtime_env *runenv, const char *location, 
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
-
-/* 
- * Runtime Trace 
- */
-
-#ifdef SIEVE_RUNTIME_TRACE
-		
-void _sieve_runtime_trace
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
-		ATTR_FORMAT(2, 3);
-void _sieve_runtime_trace_error
-	(const struct sieve_runtime_env *runenv, const char *fmt, ...)
-		ATTR_FORMAT(2, 3);
-		
-# define sieve_runtime_trace(runenv, ...) STMT_START { \
-		if ( (runenv)->trace_stream != NULL ) \
-			_sieve_runtime_trace((runenv), __VA_ARGS__); \
-	} STMT_END
-# define sieve_runtime_trace_error(runenv, ...) STMT_START { \
-		if ( (runenv)->trace_stream != NULL ) \
-			_sieve_runtime_trace_error((runenv), __VA_ARGS__); \
-		} STMT_END	
-
-#else
-# define sieve_runtime_trace(runenv, ...)
-# define sieve_runtime_trace_error(runenv, ...)
-#endif
 
 /* 
  * Extension support 
@@ -180,11 +132,9 @@ int sieve_interpreter_handle_optional_operands
 int sieve_interpreter_continue
 	(struct sieve_interpreter *interp, bool *interrupted);
 int sieve_interpreter_start
-	(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, struct sieve_result *result, 
+	(struct sieve_interpreter *interp, struct sieve_result *result, 
 		bool *interrupted);
 int sieve_interpreter_run
-	(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, struct sieve_result *result);
+	(struct sieve_interpreter *interp, struct sieve_result *result);
 
 #endif /* __SIEVE_INTERPRETER_H */

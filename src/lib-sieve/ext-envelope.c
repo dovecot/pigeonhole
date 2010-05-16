@@ -308,7 +308,7 @@ static bool ext_envelope_operation_dump
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	if ( !sieve_addrmatch_default_dump_optionals(denv, address) )
+	if ( sieve_addrmatch_opr_optional_dump(denv, address, NULL) != 0 )
 		return FALSE;
 
 	return
@@ -426,24 +426,27 @@ static int ext_envelope_operation_execute
 	/*
 	 * Read operands
 	 */
-	
-	sieve_runtime_trace(renv, "ENVELOPE test");
 
-	if ( (ret=sieve_addrmatch_default_get_optionals
-		(renv, address, &addrp, &mcht, &cmp)) <= 0 )
-		return ret; 
+	/* Read optional operands */
+	if ( (ret=sieve_addrmatch_opr_optional_read
+		(renv, address, NULL, &addrp, &mcht, &cmp)) < 0 )
+		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Read envelope-part */
-	if ( (envp_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid envelope-part operand");
+	if ( (envp_list=sieve_opr_stringlist_read(renv, address, "envelope-part"))
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid key-list operand");
+	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) 
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
+
+	/* 
+	 * Perform test
+	 */
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "envelope test");
 	
 	/* Initialize match */
 	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_list);

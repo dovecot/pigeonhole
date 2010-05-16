@@ -104,29 +104,26 @@ static bool tst_test_script_run_generate
 static bool tst_test_script_run_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
-	int opt_code = 1;
+	int opt_code = 0;
 	
 	sieve_code_dumpf(denv, "TEST_SCRIPT_RUN");
 	sieve_code_descend(denv);	
 
 	/* Dump optional operands */
-	if ( sieve_operand_optional_present(denv->sblock, address) ) {
-		while ( opt_code != 0 ) {
-			sieve_code_mark(denv);
-			
-			if ( !sieve_operand_optional_read(denv->sblock, address, &opt_code) ) 
-				return FALSE;
+	for (;;) {
+		int ret;
 
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case OPT_APPEND_RESULT:
-				sieve_code_dumpf(denv, "append_result");	
-				break;
-			
-			default:
-				return FALSE;
-			}
+		if ( (ret=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
+			return FALSE;
+
+		if ( ret == 0 ) break;
+
+		switch ( opt_code ) {
+		case OPT_APPEND_RESULT:
+			sieve_code_dumpf(denv, "append_result");	
+			break;
+		default:
+			return FALSE;
 		}
 	}
 	
@@ -142,7 +139,7 @@ static int tst_test_script_run_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	bool append_result = FALSE;
-	int opt_code = 1;
+	int opt_code = 0;
 	bool result = TRUE;
 
 	/*
@@ -150,30 +147,31 @@ static int tst_test_script_run_operation_execute
 	 */
 
 	/* Optional operands */	
-	if ( sieve_operand_optional_present(renv->sblock, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sblock, address, &opt_code) ) {
-				sieve_runtime_trace_error(renv, "invalid optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
+	for (;;) {
+		int ret;
 
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case OPT_APPEND_RESULT:
-				append_result = TRUE;
-				break;
-			default:
-				sieve_runtime_trace_error(renv, 
-					"unknown optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
+		if ( (ret=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
+			return SIEVE_EXEC_BIN_CORRUPT;
+
+		if ( ret == 0 ) break;
+
+		switch ( opt_code ) {
+		case OPT_APPEND_RESULT:
+			append_result = TRUE;
+			break;
+		default:
+			sieve_runtime_trace_error(renv, 
+				"unknown optional operand");
+			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 	}
 
 	/*
 	 * Perform operation
 	 */
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
+		"testsuite: run compiled script");
 
 	/* Reset result object */
 	if ( !append_result ) 

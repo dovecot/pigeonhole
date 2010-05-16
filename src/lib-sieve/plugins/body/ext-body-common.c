@@ -13,6 +13,7 @@
 #include "message-decoder.h"
 
 #include "sieve-common.h"
+#include "sieve-code.h"
 #include "sieve-message.h"
 #include "sieve-interpreter.h"
 
@@ -328,7 +329,7 @@ bool ext_body_get_content
 (const struct sieve_runtime_env *renv, const char * const *content_types,
 	int decode_to_plain, struct ext_body_part **parts_r)
 {
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_body_message_context *ctx = 
 		ext_body_get_context(this_ext, renv->msgctx);
 	bool result = TRUE;
@@ -353,7 +354,7 @@ bool ext_body_get_content
 bool ext_body_get_raw
 (const struct sieve_runtime_env *renv, struct ext_body_part **parts_r)
 {
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_body_message_context *ctx = 
 		ext_body_get_context(this_ext, renv->msgctx);
 	struct ext_body_part *return_part;

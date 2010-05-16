@@ -291,20 +291,13 @@ static int cmd_set_operation_execute
 	 * Read the normal operands
 	 */
 		
-	/* Read the variable */
 	if ( !sieve_variable_operand_read
-		(renv, address, &storage, &var_index) ) {
-		sieve_runtime_trace_error(renv, "invalid variable operand");
+		(renv, address, "variable", &storage, &var_index) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 		
-	/* Read the raw string value */
-	if ( !sieve_opr_string_read(renv, address, &value) ) {
-		sieve_runtime_trace_error(renv, "invalid string operand");
+	if ( !sieve_opr_string_read(renv, address, "string", &value) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
-		
-	/* Read the number of modifiers used */
+
 	if ( !sieve_binary_read_byte(renv->sblock, address, &mdfs) ) {
 		sieve_runtime_trace_error(renv, "invalid modifier count");
 		return SIEVE_EXEC_BIN_CORRUPT;
@@ -314,7 +307,7 @@ static int cmd_set_operation_execute
 	 * Determine and assign the value 
 	 */
 
-	sieve_runtime_trace(renv, "SET action");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "set command");
 
 	/* Hold value within limits */
 	if ( str_len(value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
@@ -329,8 +322,6 @@ static int cmd_set_operation_execute
 					
 				if ( !ext_variables_opr_modifier_read(renv, address, &modf) ) {
 					value = NULL;
-
-					sieve_runtime_trace_error(renv, "invalid modifier operand");
 					ret = SIEVE_EXEC_BIN_CORRUPT;
 					break;
 				}

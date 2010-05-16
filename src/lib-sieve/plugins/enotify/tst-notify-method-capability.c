@@ -160,10 +160,7 @@ static bool tst_notifymc_operation_dump
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
-		return FALSE;
-
-	if ( opt_code != SIEVE_MATCH_OPT_END )
+	if ( sieve_match_opr_optional_dump(denv, address, &opt_code) != 0 )
 		return FALSE;
 		
 	return
@@ -197,39 +194,35 @@ static int tst_notifymc_operation_execute
 	 */
 	
 	/* Handle match-type and comparator operands */
-	if ( (ret=sieve_match_read_optional_operands
-		(renv, address, &opt_code, &cmp, &mcht)) <= 0 )
-		return ret;
-	
-	/* Check whether we neatly finished the list of optional operands */
-	if ( opt_code != SIEVE_MATCH_OPT_END) {
+	if ( (ret=sieve_match_opr_optional_read
+		(renv, address, &opt_code, &cmp, &mcht)) < 0 )
+		return SIEVE_EXEC_BIN_CORRUPT;
+
+	/* Check whether we neatly finished the list of optional operands*/
+	if ( ret > 0 ) {
 		sieve_runtime_trace_error(renv, "invalid optional operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
 	/* Read notify uri */
-	if ( !sieve_opr_string_read(renv, address, &notify_uri) ) {
-		sieve_runtime_trace_error(renv, "invalid notify-uri operand");
+	if ( !sieve_opr_string_read(renv, address, "notify-uri", &notify_uri) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 	
 	/* Read notify capability */
-	if ( !sieve_opr_string_read(renv, address, &notify_capability) ) {
-		sieve_runtime_trace_error(renv, "invalid notify-uri operand");
+	if ( !sieve_opr_string_read
+		(renv, address, "notify-capability", &notify_capability) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 	
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid key-list operand");
+	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) 
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "NOTIFY_METHOD_CAPABILITY test");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "notify_method_capability test");
 
 	cap_value = ext_enotify_runtime_get_method_capability
 		(renv, 0 /* FIXME */, notify_uri, str_c(notify_capability));

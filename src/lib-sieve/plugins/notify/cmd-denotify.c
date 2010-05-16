@@ -231,39 +231,36 @@ static bool cmd_denotify_generate
 static bool cmd_denotify_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
-	const struct sieve_operation *op = &denv->oprtn;
-	int opt_code = 1;
+	const struct sieve_operation *op = denv->oprtn;
+	int opt_code = 0;
 	
 	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
 	sieve_code_descend(denv);	
 
-	/* Dump optional operands */
-	if ( sieve_operand_optional_present(denv->sblock, address) ) {
-		while ( opt_code != 0 ) {
-			sieve_code_mark(denv);
-			
-			if ( !sieve_operand_optional_read(denv->sblock, address, &opt_code) ) 
-				return FALSE;
+	for (;;) {
+		int ret;
+		bool opok = TRUE;
 
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case OPT_MATCH_KEY:
-				if ( !sieve_opr_string_dump(denv, address, "key-string") )
-					return FALSE;
-				break;
-			case OPT_MATCH_TYPE:
-				if ( !sieve_opr_match_type_dump(denv, address) )
-					return FALSE;
-				break;
-			case OPT_IMPORTANCE:
-				if ( !sieve_opr_number_dump(denv, address, "importance") )
-					return FALSE;
-				break;
-			default:
-				return FALSE;
-			}
+		if ( (ret=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
+			return FALSE;
+
+		if ( ret == 0 ) break;
+
+		switch ( opt_code ) {
+		case OPT_MATCH_KEY:
+			opok = sieve_opr_string_dump(denv, address, "key-string");
+			break;
+		case OPT_MATCH_TYPE:
+			opok = sieve_opr_match_type_dump(denv, address);
+			break;
+		case OPT_IMPORTANCE:
+			opok = sieve_opr_number_dump(denv, address, "importance");
+			break;
+		default:
+			return FALSE;
 		}
+
+		if ( !opok ) return FALSE;
 	}
 	
 	return TRUE;
@@ -277,7 +274,7 @@ static int cmd_denotify_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	bool result = TRUE;
-	int opt_code = 1;
+	int opt_code = 0;
 	struct sieve_match_type mcht = 
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	const struct sieve_comparator cmp = 
@@ -294,53 +291,49 @@ static int cmd_denotify_operation_execute
 	 */
 	
 	/* Optional operands */	
-	if ( sieve_operand_optional_present(renv->sblock, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sblock, address, &opt_code) ) {
-				sieve_runtime_trace_error(renv, "invalid optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
 
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case OPT_MATCH_TYPE:
-				if ( !sieve_opr_match_type_read(renv, address, &mcht) ) {
-					sieve_runtime_trace_error(renv, "invalid match type operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			case OPT_MATCH_KEY:
-				if ( (match_key=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-					sieve_runtime_trace_error(renv, "invalid match key operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			case OPT_IMPORTANCE:
-				if ( !sieve_opr_number_read(renv, address, &importance) ) {
-					sieve_runtime_trace_error(renv, "invalid importance operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-	
-				/* Enforce 0 < importance < 4 (just to be sure) */
-				if ( importance < 1 ) 
-					importance = 1;
-				else if ( importance > 3 )
-					importance = 3;
-				break;
-			default:
-				sieve_runtime_trace_error(renv, "unknown optional operand: %d", 
-					opt_code);
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
+	for (;;) {
+		bool opok = TRUE;
+		int ret;
+
+		if ( (ret=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
+			return SIEVE_EXEC_BIN_CORRUPT;
+
+		if ( ret == 0 ) break;
+
+		switch ( opt_code ) {
+		case OPT_MATCH_TYPE:
+			opok = sieve_opr_match_type_read(renv, address, &mcht);
+			break;
+		case OPT_MATCH_KEY:
+			match_key = sieve_opr_stringlist_read(renv, address, "match key");
+			opok = ( match_key != NULL );
+			break;
+		case OPT_IMPORTANCE:
+			opok = sieve_opr_number_read(renv, address, "importance", &importance);
+			break;
+		default:
+			sieve_runtime_trace_error(renv, "unknown optional operand");
+			return SIEVE_EXEC_BIN_CORRUPT;
 		}
+
+		if ( !opok ) return SIEVE_EXEC_BIN_CORRUPT;
 	}
 		
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "DENOTIFY action");
+	/* Enforce 0 < importance < 4 (just to be sure) */
+
+	if ( importance < 1 ) 
+		importance = 1;
+	else if ( importance > 3 )
+		importance = 3;
+
+	/* Trace */
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "denotify action");
 
 	/* Either do string matching or just kill all notify actions */
 	if ( match_key != NULL ) { 	

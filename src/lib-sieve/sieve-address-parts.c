@@ -290,74 +290,81 @@ int sieve_address_match
  * Default ADDRESS-PART, MATCH-TYPE, COMPARATOR access
  */
  
-bool sieve_addrmatch_default_dump_optionals
-(const struct sieve_dumptime_env *denv, sieve_size_t *address) 
+int sieve_addrmatch_opr_optional_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address, 
+	signed int *opt_code) 
 {
-	int opt_code = 1;
-	
-	if ( sieve_operand_optional_present(denv->sblock, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(denv->sblock, address, &opt_code) ) 
-				return FALSE;
+	signed int _opt_code = 0;
+	bool final = FALSE, opok = TRUE;
 
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case SIEVE_AM_OPT_COMPARATOR:
-				if ( !sieve_opr_comparator_dump(denv, address) )
-					return FALSE;
-				break;
-			case SIEVE_AM_OPT_MATCH_TYPE:
-				if ( !sieve_opr_match_type_dump(denv, address) )
-					return FALSE;
-				break;
-			case SIEVE_AM_OPT_ADDRESS_PART:
-				if ( !sieve_opr_address_part_dump(denv, address) )
-					return FALSE;
-				break;
-			default:
-				return FALSE;
-			}
+	if ( opt_code == NULL ) {
+		opt_code = &_opt_code;
+		final = TRUE;
+	}
+
+	while ( opok ) {
+		int ret;
+
+		if ( (ret=sieve_opr_optional_dump(denv, address, opt_code)) <= 0 )
+			return ret;
+
+		switch ( *opt_code ) {
+		case SIEVE_AM_OPT_COMPARATOR:
+			opok = sieve_opr_comparator_dump(denv, address);
+			break;
+		case SIEVE_AM_OPT_MATCH_TYPE:
+			opok = sieve_opr_match_type_dump(denv, address);
+			break;
+		case SIEVE_AM_OPT_ADDRESS_PART:
+			opok = sieve_opr_address_part_dump(denv, address);
+			break;
+		default:
+			return ( final ? -1 : 1 );
 		}
 	}
-	
-	return TRUE;
+
+	return -1;
 }
 
-bool sieve_addrmatch_default_get_optionals
-(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	struct sieve_address_part *addrp, struct sieve_match_type *mtch, 
-	struct sieve_comparator *cmp) 
+int sieve_addrmatch_opr_optional_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	signed int *opt_code, struct sieve_address_part *addrp,
+	struct sieve_match_type *mtch, struct sieve_comparator *cmp) 
 {
-	int opt_code = 1;
-	
-	if ( sieve_operand_optional_present(renv->sblock, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sblock, address, &opt_code) )
-				return FALSE;
-				  
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case SIEVE_AM_OPT_COMPARATOR:
-				if ( !sieve_opr_comparator_read(renv, address, cmp) )
-					return FALSE;
-				break;
-			case SIEVE_AM_OPT_MATCH_TYPE:
-				if ( !sieve_opr_match_type_read(renv, address, mtch) )
-					return FALSE;
-				break;
-			case SIEVE_AM_OPT_ADDRESS_PART:
-				if ( !sieve_opr_address_part_read(renv, address, addrp) )
-					return FALSE;
-				break;
-			default:
-				return FALSE;
+	signed int _opt_code = 0;
+	bool final = FALSE, opok = TRUE;
+
+	if ( opt_code == NULL ) {
+		opt_code = &_opt_code;
+		final = TRUE;
+	}
+
+	while ( opok ) {
+		int ret;
+
+		if ( (ret=sieve_opr_optional_read(renv, address, opt_code)) <= 0 )
+			return ret;
+
+		switch ( *opt_code ) {
+		case SIEVE_AM_OPT_COMPARATOR:
+			opok = sieve_opr_comparator_read(renv, address, cmp);
+			break;
+		case SIEVE_AM_OPT_MATCH_TYPE:
+			opok = sieve_opr_match_type_read(renv, address, mtch);
+			break;
+		case SIEVE_AM_OPT_ADDRESS_PART:
+			opok = sieve_opr_address_part_read(renv, address, addrp);
+			break;
+		default:
+			if ( final ) {
+				sieve_runtime_trace_error(renv, "invalid optional operand");
+				return -1;
 			}
+			return 1;
 		}
 	}
-	
-	return TRUE;
+
+	return -1;
 }
 
 /* 

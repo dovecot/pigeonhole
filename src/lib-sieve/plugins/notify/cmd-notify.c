@@ -366,42 +366,39 @@ static bool cmd_notify_generate
 static bool cmd_notify_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
-	int opt_code = 1;
+	int opt_code = 0;
 	
 	sieve_code_dumpf(denv, "NOTIFY");
 	sieve_code_descend(denv);	
 
 	/* Dump optional operands */
-	if ( sieve_operand_optional_present(denv->sblock, address) ) {
-		while ( opt_code != 0 ) {
-			sieve_code_mark(denv);
-			
-			if ( !sieve_operand_optional_read(denv->sblock, address, &opt_code) ) 
-				return FALSE;
+	for (;;) {
+		int ret;
+		bool opok = TRUE;
 
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case OPT_IMPORTANCE:
-				if ( !sieve_opr_number_dump(denv, address, "importance") )
-					return FALSE;
-				break;
-			case OPT_ID:
-				if ( !sieve_opr_string_dump(denv, address, "id") )
-					return FALSE;
-				break;
-			case OPT_OPTIONS:
-				if ( !sieve_opr_stringlist_dump(denv, address, "options") )
-					return FALSE;
-				break;
-			case OPT_MESSAGE:
-				if ( !sieve_opr_string_dump(denv, address, "message") )
-					return FALSE;
-				break;
-			default:
-				return FALSE;
-			}
+		if ( (ret=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
+			return FALSE;
+
+		if ( ret == 0 ) break;
+
+		switch ( opt_code ) {
+		case OPT_IMPORTANCE:
+			opok = sieve_opr_number_dump(denv, address, "importance");
+			break;
+		case OPT_ID:
+			opok = sieve_opr_string_dump(denv, address, "id");
+			break;
+		case OPT_OPTIONS:
+			opok = sieve_opr_stringlist_dump(denv, address, "options");
+			break;
+		case OPT_MESSAGE:
+			opok = sieve_opr_string_dump(denv, address, "message");
+			break;
+		default:
+			return FALSE;
 		}
+
+		if ( !opok ) return FALSE;
 	}
 	
 	return TRUE;
@@ -415,10 +412,10 @@ static bool cmd_notify_operation_dump
 static int cmd_notify_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_notify_action *act;
 	pool_t pool;
-	int opt_code = 1;
+	int opt_code = 0;
 	sieve_number_t importance = 1;
 	struct sieve_coded_stringlist *options = NULL;
 	string_t *message = NULL, *id = NULL; 
@@ -429,62 +426,56 @@ static int cmd_notify_operation_execute
 	 */
 		
 	/* Source line */
-	source_line = sieve_runtime_get_source_location(renv, renv->oprtn.address);
+
+	source_line = sieve_runtime_get_command_location(renv);
 	
 	/* Optional operands */	
-	if ( sieve_operand_optional_present(renv->sblock, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sblock, address, &opt_code) ) {
-				sieve_runtime_trace_error(renv, "invalid optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
 
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case OPT_IMPORTANCE:
-				if ( !sieve_opr_number_read(renv, address, &importance) ) {
-					sieve_runtime_trace_error(renv, "invalid importance operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-	
-				/* Enforce 0 < importance < 4 (just to be sure) */
-				if ( importance < 1 ) 
-					importance = 1;
-				else if ( importance > 3 )
-					importance = 3;
-				break;
-			case OPT_ID:
-				if ( !sieve_opr_string_read(renv, address, &id) ) {
-					sieve_runtime_trace_error(renv, "invalid id operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			case OPT_MESSAGE:
-				if ( !sieve_opr_string_read(renv, address, &message) ) {
-					sieve_runtime_trace_error(renv, "invalid from operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			case OPT_OPTIONS:
-				if ( (options=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-					sieve_runtime_trace_error(renv, "invalid options operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			default:
-				sieve_runtime_trace_error(renv, "unknown optional operand: %d", 
-					opt_code);
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
+	for (;;) {
+		bool opok = TRUE;
+		int ret;
+
+		if ( (ret=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
+			return SIEVE_EXEC_BIN_CORRUPT;
+
+		if ( ret == 0 ) break;
+
+		switch ( opt_code ) {
+		case OPT_IMPORTANCE:
+			opok = sieve_opr_number_read(renv, address, "importance", &importance);
+			break;
+		case OPT_ID:
+			opok = sieve_opr_string_read(renv, address, "id", &id);
+			break;
+		case OPT_MESSAGE:
+			opok = sieve_opr_string_read(renv, address, "from", &message);
+			break;
+		case OPT_OPTIONS:
+			options = sieve_opr_stringlist_read(renv, address, "options");
+			opok = ( options != NULL );
+			break;
+		default:
+			sieve_runtime_trace_error(renv, "unknown optional operand");
+			return SIEVE_EXEC_BIN_CORRUPT;
 		}
+
+		if ( !opok ) return SIEVE_EXEC_BIN_CORRUPT;
 	}
 		
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "NOTIFY action");	
+	/* Enforce 0 < importance < 4 (just to be sure) */
+
+	if ( importance < 1 ) 
+		importance = 1;
+	else if ( importance > 3 )
+		importance = 3;
+
+	/* Trace */
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "notify action");	
 
 	/* Compose action */
 	if ( options != NULL ) {

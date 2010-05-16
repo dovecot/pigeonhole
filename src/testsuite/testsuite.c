@@ -77,17 +77,13 @@ static int testsuite_run
 	int ret = 0;
 
 	/* Create the interpreter */
-	if ( (interp=sieve_interpreter_create(sbin, ehandler)) == NULL )
+	if ( (interp=sieve_interpreter_create(sbin, msgdata, senv, ehandler)) == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-
-	/* Reset execution status */
-	if ( senv->exec_status != NULL )
-		memset(senv->exec_status, 0, sizeof(*senv->exec_status));
 
 	/* Run the interpreter */
 	result = testsuite_result_get();
 	sieve_result_ref(result);
-	ret = sieve_interpreter_run(interp, msgdata, senv, result);
+	ret = sieve_interpreter_run(interp, result);
 	sieve_result_unref(&result);
 
 	/* Free the interpreter */
@@ -253,6 +249,7 @@ int main(int argc, char **argv)
 		scriptenv.smtp_open = testsuite_smtp_open;
 		scriptenv.smtp_close = testsuite_smtp_close;
 		scriptenv.trace_stream = ( trace ? o_stream_create_fd(1, 0, FALSE) : NULL );
+		scriptenv.trace_level = SIEVE_TRLVL_TESTS;
 
 		testsuite_scriptenv = &scriptenv;
 

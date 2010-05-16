@@ -105,18 +105,18 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	scriptenv.duplicate_check = NULL;
 	scriptenv.namespaces = renv->scriptenv->namespaces;
 	scriptenv.trace_stream = renv->scriptenv->trace_stream;
+	scriptenv.trace_level = renv->scriptenv->trace_level;
 	
 	result = testsuite_result_get();
 
 	/* Execute the script */
-	interp=sieve_interpreter_create
-		(_testsuite_compiled_script, testsuite_log_ehandler);
+	interp=sieve_interpreter_create(_testsuite_compiled_script, renv->msgdata, 
+		&scriptenv, testsuite_log_ehandler);
 	
 	if ( interp == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 		
-	ret = sieve_interpreter_run
-		(interp, renv->msgdata, &scriptenv, result);
+	ret = sieve_interpreter_run(interp, result);
 
 	sieve_interpreter_free(&interp);
 

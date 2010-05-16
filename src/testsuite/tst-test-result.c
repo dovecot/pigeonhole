@@ -187,21 +187,22 @@ static bool tst_test_result_operation_dump
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	do {
-		if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
+	for (;;) {
+		int ret;
+
+		if ( (ret=sieve_match_opr_optional_dump(denv, address, &opt_code)) 
+			< 0 )
 			return FALSE;
 
-		switch ( opt_code ) {
-		case SIEVE_MATCH_OPT_END:
-			break;
-		case OPT_INDEX:
+		if ( ret == 0 ) break;
+
+		if ( opt_code == OPT_INDEX ) {
 			if ( !sieve_opr_number_dump(denv, address, "index") )
 				return FALSE;
-			break;
-		default:
+		} else {
 			return FALSE;
 		}
-	} while ( opt_code != SIEVE_MATCH_OPT_END );
+	} 
 
 	return sieve_opr_stringlist_dump(denv, address, "key list");
 }
@@ -230,41 +231,37 @@ static int tst_test_result_operation_execute
 	 * Read operands
 	 */
 
-	/* Handle optional operands */
-	do {
+	/* Read optional operands */
+	for (;;) {
 		sieve_number_t number; 
+		int ret;
 
-		if ( (ret=sieve_match_read_optional_operands
-			(renv, address, &opt_code, &cmp, &mcht)) <= 0 )
- 			return ret;
+		if ( (ret=sieve_match_opr_optional_read
+			(renv, address, &opt_code, &cmp, &mcht)) < 0 )
+			return SIEVE_EXEC_BIN_CORRUPT;
 
-		switch ( opt_code ) {
-		case SIEVE_MATCH_OPT_END:
-			break;
-		case OPT_INDEX:
-			if ( !sieve_opr_number_read(renv, address, &number) ) {
-				sieve_runtime_trace_error(renv, "invalid index operand");
+		if ( ret == 0 ) break;
+	
+		if ( opt_code == OPT_INDEX ) {
+			if ( !sieve_opr_number_read(renv, address, "index", &number) )
 				return SIEVE_EXEC_BIN_CORRUPT;
-			}
 			index = (int) number;
-			break;
-		default:
+		} else {
 			sieve_runtime_trace_error(renv, "invalid optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}	
-	} while ( opt_code != SIEVE_MATCH_OPT_END);
+	}
 
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid key-list operand");
+	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
 	
-	sieve_runtime_trace(renv, "TEST_RESULT test (index: %d)", index);
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+		"TEST_RESULT test (index: %d)", index);
 
 	rictx = testsuite_result_iterate_init();
 

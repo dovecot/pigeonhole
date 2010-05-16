@@ -137,42 +137,55 @@ static bool opr_variable_read_value
 		
 bool sieve_variable_operand_read_data
 (const struct sieve_runtime_env *renv, const struct sieve_operand *operand, 
-	sieve_size_t *address, struct sieve_variable_storage **storage, 
-	unsigned int *var_index)
+	sieve_size_t *address, const char *field_name, 
+	struct sieve_variable_storage **storage, unsigned int *var_index)
 {
 	const struct sieve_extension *ext;
 	unsigned int code = 1; /* Initially set to offset value */
 	unsigned int idx = 0;
 
 	if ( !sieve_operand_is_variable(operand) ) {
+		sieve_runtime_trace_operand_error
+			(renv, operand, field_name, "expected variable operand but found %s",
+				sieve_operand_name(operand));
 		return FALSE;
 	}
 
-	if ( !sieve_binary_read_extension(renv->sblock, address, &code, &ext) )
+	if ( !sieve_binary_read_extension(renv->sblock, address, &code, &ext) ) {
+		sieve_runtime_trace_operand_error
+			(renv, operand, field_name, "variable operand: failed to read extension");
 		return FALSE;
+	}
 		
 	*storage = sieve_ext_variables_get_storage(operand->ext, renv->interp, ext);
-	if ( *storage == NULL )	
+	if ( *storage == NULL )	{
+		sieve_runtime_trace_operand_error(renv, operand, field_name, 
+			"variable operand: failed to get variable storage");
 		return FALSE;
+	}
 	
-	if ( !sieve_binary_read_unsigned(renv->sblock, address, &idx) )
-		return FALSE;		
+	if ( !sieve_binary_read_unsigned(renv->sblock, address, &idx) ) {
+		sieve_runtime_trace_operand_error
+			(renv, operand, field_name, "variable operand: failed to read index");
+		return FALSE;
+	}
 
 	*var_index = idx;
 	return TRUE;
 }
 
 bool sieve_variable_operand_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	struct sieve_variable_storage **storage, unsigned int *var_index)
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	const char *field_name, struct sieve_variable_storage **storage, 
+	unsigned int *var_index)
 {
 	struct sieve_operand operand;
 
-	if ( !sieve_operand_read(renv->sblock, address, &operand) )
+	if ( !sieve_operand_runtime_read(renv, address, field_name, &operand) )
 		return FALSE;
 
 	return sieve_variable_operand_read_data
-		(renv, &operand, address, storage, var_index);
+		(renv, &operand, address, field_name, storage, var_index);
 }
 	
 /* 

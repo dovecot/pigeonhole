@@ -140,21 +140,28 @@ static bool tst_hasflag_operation_dump
 	sieve_code_dumpf(denv, "HASFLAG");
 	sieve_code_descend(denv);
 
-	/* Handle any optional arguments */
-	do {
-		if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
+	/* Optional operands */
+
+	for (;;) {
+		bool opok = TRUE;
+		int ret;
+
+		if ( (ret=sieve_match_opr_optional_dump(denv, address, &opt_code)) 
+			< 0 )
 			return FALSE;
 
+		if ( ret == 0 ) break;
+
 		switch ( opt_code ) {
-		case SIEVE_MATCH_OPT_END:
-			break;
 		case OPT_VARIABLES:
-			sieve_opr_stringlist_dump(denv, address, "variables");
+			opok = sieve_opr_stringlist_dump(denv, address, "variables");
 			break;
 		default:
 			return FALSE;
 		}
-	} while ( opt_code != SIEVE_MATCH_OPT_END );
+
+		if ( !opok ) return FALSE;
+	}
 			
 	return 
 		sieve_opr_stringlist_dump(denv, address, "list of flags");
@@ -197,7 +204,7 @@ static const struct sieve_match_key_extractor _flag_extractor = {
 static int tst_hasflag_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	int ret, mret;
+	int mret;
 	bool result = TRUE;
 	int opt_code = 0;
 	struct sieve_comparator cmp = 
@@ -214,39 +221,43 @@ static int tst_hasflag_operation_execute
 	 * Read operands
 	 */
 
-	/* Handle match-type and comparator operands */
-	do {
-		if ( (ret=sieve_match_read_optional_operands
-			(renv, address, &opt_code, &cmp, &mtch)) <= 0 )
-			return ret;
+	/* Optional operands */
+
+	for (;;) {
+		bool opok = TRUE;
+		int ret;
+
+		if ( (ret=sieve_match_opr_optional_read
+			(renv, address, &opt_code, &cmp, &mtch)) < 0 )
+			return SIEVE_EXEC_BIN_CORRUPT;
+
+		if ( ret == 0 ) break;
 	
-		/* Check whether we neatly finished the list of optional operands*/
 		switch ( opt_code ) { 
-		case SIEVE_MATCH_OPT_END:
-			break;
 		case OPT_VARIABLES:
-			if ( (variables_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-					sieve_runtime_trace_error(renv, "invalid variables-list operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
+			variables_list = sieve_opr_stringlist_read
+				(renv, address, "variables-list");
+			opok = ( variables_list != NULL );
 			break;
 		default:
 			sieve_runtime_trace_error(renv, "invalid optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
-	} while ( opt_code != SIEVE_MATCH_OPT_END );
-		
-	/* Read flag list */
-	if ( (flag_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid flag-list operand");
+
+		if ( !opok ) return SIEVE_EXEC_BIN_CORRUPT;
+	} 
+
+	/* Fixed operands */
+
+	if ( (flag_list=sieve_opr_stringlist_read(renv, address, "flag-list")) 
+		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "HASFLAG test");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "hasflag test");
 
 	matched = FALSE;
 	mctx = sieve_match_begin

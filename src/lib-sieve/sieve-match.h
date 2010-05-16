@@ -53,10 +53,10 @@ enum sieve_match_opt_operand {
 	SIEVE_MATCH_OPT_LAST
 };
 
-bool sieve_match_dump_optional_operands
+int sieve_match_opr_optional_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *addres, int *opt_code);
 
-int sieve_match_read_optional_operands
+int sieve_match_opr_optional_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, int *opt_code,
 		struct sieve_comparator *cmp, struct sieve_match_type *mcht);
 

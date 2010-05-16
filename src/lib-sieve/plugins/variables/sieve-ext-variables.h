@@ -212,11 +212,12 @@ void sieve_variables_opr_match_value_emit
 
 bool sieve_variable_operand_read_data
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand, 
-		sieve_size_t *address, struct sieve_variable_storage **storage, 
-		unsigned int *var_index);
-bool sieve_variable_operand_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+		sieve_size_t *address, const char *field_name,
 		struct sieve_variable_storage **storage, unsigned int *var_index);
+bool sieve_variable_operand_read
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
+		const char *field_name, struct sieve_variable_storage **storage,
+		unsigned int *var_index);
 		
 static inline bool sieve_operand_is_variable
 (const struct sieve_operand *operand)

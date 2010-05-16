@@ -482,46 +482,43 @@ static bool cmd_vacation_generate
 static bool ext_vacation_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {	
-	int opt_code = 1;
+	int opt_code = 0;
 	
 	sieve_code_dumpf(denv, "VACATION");
 	sieve_code_descend(denv);	
 
 	/* Dump optional operands */
-	if ( sieve_operand_optional_present(denv->sblock, address) ) {
-		while ( opt_code != 0 ) {
-			sieve_code_mark(denv);
-			
-			if ( !sieve_operand_optional_read(denv->sblock, address, &opt_code) ) 
-				return FALSE;
 
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case OPT_DAYS:
-				if ( !sieve_opr_number_dump(denv, address, "days") )
-					return FALSE;
-				break;
-			case OPT_SUBJECT:
-				if ( !sieve_opr_string_dump(denv, address, "subject") )
-					return FALSE;
-				break;
-			case OPT_FROM:
-				if ( !sieve_opr_string_dump(denv, address, "from") )
-					return FALSE;
-				break;
-			case OPT_ADDRESSES:
-				if ( !sieve_opr_stringlist_dump(denv, address, "addresses") )
-					return FALSE;
-				break;
-			case OPT_MIME:
-				sieve_code_dumpf(denv, "mime");	
-				break;
-			
-			default:
-				return FALSE;
-			}
+	for (;;) {
+		int ret;
+		bool opok = TRUE;
+
+		if ( (ret=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
+			return FALSE;
+
+		if ( ret == 0 ) break;
+
+		switch ( opt_code ) {
+		case OPT_DAYS:
+			opok = sieve_opr_number_dump(denv, address, "days");
+			break;
+		case OPT_SUBJECT:
+			opok = sieve_opr_string_dump(denv, address, "subject");
+			break;
+		case OPT_FROM:
+			opok = sieve_opr_string_dump(denv, address, "from");
+			break;
+		case OPT_ADDRESSES:
+			opok = sieve_opr_stringlist_dump(denv, address, "addresses");
+			break;
+		case OPT_MIME:
+			sieve_code_dumpf(denv, "mime");	
+			break;		
+		default:
+			return FALSE;
 		}
+
+		if ( !opok ) return FALSE;
 	}
 	
 	/* Dump reason and handle operands */
@@ -537,11 +534,11 @@ static bool ext_vacation_operation_dump
 static int ext_vacation_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
-	const struct sieve_extension *this_ext = renv->oprtn.ext;
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_vacation_context *act;
 	pool_t pool;
-	int opt_code = 1;
+	int opt_code = 0;
 	sieve_number_t days = 7;
 	bool mime = FALSE;
 	struct sieve_coded_stringlist *addresses = NULL;
@@ -550,76 +547,53 @@ static int ext_vacation_operation_execute
 	const char *from_normalized = NULL;
 
 	/*
-	 * Read operands
+	 * Read code
 	 */
 		
 	/* Source line */
-	source_line = sieve_runtime_get_source_location(renv, renv->oprtn.address);
-	
-	/* Optional operands */	
-	if ( sieve_operand_optional_present(renv->sblock, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sblock, address, &opt_code) ) {
-				sieve_runtime_trace_error(renv, "invalid optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
 
-			switch ( opt_code ) {
-			case 0:
-				break;
-			case OPT_DAYS:
-				if ( !sieve_opr_number_read(renv, address, &days) ) {
-					sieve_runtime_trace_error(renv, 
-						"invalid days operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
+	source_line = sieve_runtime_get_command_location(renv);
 	
-				/* Enforce days > 0 (just to be sure) */
-				if ( days == 0 )
-					days = 1;
-				break;
-			case OPT_SUBJECT:
-				if ( !sieve_opr_string_read(renv, address, &subject) ) {
-					sieve_runtime_trace_error(renv, 
-						"invalid subject operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			case OPT_FROM:
-				if ( !sieve_opr_string_read(renv, address, &from) ) {
-					sieve_runtime_trace_error(renv, 
-						"invalid from address operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			case OPT_ADDRESSES:
-				if ( (addresses=sieve_opr_stringlist_read(renv, address))
-					== NULL ) {
-					sieve_runtime_trace_error(renv, 
-						"invalid addresses operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-				break;
-			case OPT_MIME:
-				mime = TRUE;
-				break;
-			default:
-				sieve_runtime_trace_error(renv, 
-					"unknown optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
+	/* Optional operands */
+
+	for (;;) {
+		bool opok = TRUE;
+		int ret;
+
+		if ( (ret=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
+			return SIEVE_EXEC_BIN_CORRUPT;
+
+		if ( ret == 0 ) break;
+
+		switch ( opt_code ) {
+		case OPT_DAYS:
+			opok = sieve_opr_number_read(renv, address, "days", &days);
+			break;
+		case OPT_SUBJECT:
+			opok = sieve_opr_string_read(renv, address, "subject", &subject);
+			break;
+		case OPT_FROM:
+			opok = sieve_opr_string_read(renv, address, "from", &from);
+			break;
+		case OPT_ADDRESSES:
+			addresses = sieve_opr_stringlist_read(renv, address, "addresses");
+			opok = ( addresses != NULL );
+			break;
+		case OPT_MIME:
+			mime = TRUE;
+			break;
+		default:
+			sieve_runtime_trace_error(renv, "unknown optional operand");
+			opok = FALSE;
 		}
+
+		if ( !opok ) return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
-	/* Reason operand */
-	if ( !sieve_opr_string_read(renv, address, &reason) ) {
-		sieve_runtime_trace_error(renv, "invalid reason operand");
-		return SIEVE_EXEC_BIN_CORRUPT;
-	}
-	
-	/* Handle operand */
-	if ( !sieve_opr_string_read(renv, address, &handle) ) {
-		sieve_runtime_trace_error(renv, "invalid handle operand");
+	/* Fixed operands */
+
+	if ( !sieve_opr_string_read(renv, address, "reason", &reason) ||
+		!sieve_opr_string_read(renv, address, "handle", &handle) ) {
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
@@ -627,7 +601,14 @@ static int ext_vacation_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "VACATION action");	
+	/* Enforce days > 0 (just to be sure) */
+
+	if ( days == 0 )
+		days = 1;
+
+	/* Trace */
+	
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "vacation action");	
 
 	/* Check and normalize :from address */
 	if ( from != NULL ) {

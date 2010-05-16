@@ -73,7 +73,7 @@ static bool cmd_keep_operation_dump
 	sieve_code_dumpf(denv, "KEEP");
 	sieve_code_descend(denv);
 
-	return sieve_code_dumper_print_optional_operands(denv, address);
+	return ( sieve_action_opr_optional_dump(denv, address, NULL) == 0 );
 }
 
 /*
@@ -85,17 +85,24 @@ static int cmd_keep_operation_execute
 {	
 	struct sieve_side_effects_list *slist = NULL;
 	unsigned int source_line;
-	int ret = 0;	
+	int ret = 0;
+
+	/*
+	 * Read data
+	 */
 
 	/* Source line */
-	source_line = sieve_runtime_get_source_location(renv, renv->oprtn.address);
+	source_line = sieve_runtime_get_command_location(renv);
 	
 	/* Optional operands (side effects only) */
-	if ( (ret=sieve_interpreter_handle_optional_operands
-		(renv, address, &slist)) <= 0 ) 
-		return ret;
+	if ( (ret=sieve_action_opr_optional_read(renv, address, NULL, &slist)) != 0 ) 
+		return SIEVE_EXEC_BIN_CORRUPT;
 
-	sieve_runtime_trace(renv, "KEEP action");
+	/*
+	 * Perform operation
+	 */
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "keep action");
 	
 	/* Add keep action to result. 
 	 */

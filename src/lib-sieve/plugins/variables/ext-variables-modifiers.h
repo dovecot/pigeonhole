@@ -4,8 +4,10 @@
 #ifndef __EXT_VARIABLES_MODIFIERS_H
 #define __EXT_VARIABLES_MODIFIERS_H
 
+#include "sieve-common.h"
+#include "sieve-runtime-trace.h"
+
 #include "ext-variables-common.h"
-#include "sieve-ext-variables.h"
 
 #define ext_variables_namespace_name(nspc) \
 	(nspc)->object->def->name
@@ -45,8 +47,10 @@ static inline bool ext_variables_opr_modifier_read
 	struct sieve_variables_modifier *modf)
 {
 	if ( !sieve_opr_object_read
-		(renv, &sieve_variables_modifier_operand_class, address, &modf->object) )
+		(renv, &sieve_variables_modifier_operand_class, address, &modf->object) ) {
+		sieve_runtime_trace_error(renv, "invalid modifier operand");
 		return FALSE;
+	}
 
 	modf->def = (const struct sieve_variables_modifier_def *) modf->object.def;
 	return TRUE;

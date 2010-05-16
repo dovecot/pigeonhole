@@ -121,12 +121,13 @@ enum sieve_addrmatch_opt_operand {
 	SIEVE_AM_OPT_MATCH_TYPE
 };
 
-bool sieve_addrmatch_default_dump_optionals
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+int sieve_addrmatch_opr_optional_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+		signed int *opt_code);
 
-bool sieve_addrmatch_default_get_optionals
+int sieve_addrmatch_opr_optional_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-		struct sieve_address_part *addrp, 
+		signed int *opt_code, struct sieve_address_part *addrp,
 		struct sieve_match_type *mtch, struct sieve_comparator *cmp);
 
 #endif /* __SIEVE_ADDRESS_PARTS_H */

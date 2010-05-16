@@ -445,7 +445,7 @@ int ext_imap4flags_set_flags
 		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
 			return SIEVE_EXEC_BIN_CORRUPT;
 	} else
-		cur_flags = _get_flags_string(renv->oprtn.ext, renv->result);
+		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
 
 	if ( cur_flags != NULL )
 		flags_list_set_flags(cur_flags, flags);		
@@ -463,7 +463,7 @@ int ext_imap4flags_add_flags
 		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
 			return SIEVE_EXEC_BIN_CORRUPT;
 	} else
-		cur_flags = _get_flags_string(renv->oprtn.ext, renv->result);
+		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
 	
 	if ( cur_flags != NULL )
 		flags_list_add_flags(cur_flags, flags);
@@ -481,7 +481,7 @@ int ext_imap4flags_remove_flags
 		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
 			return SIEVE_EXEC_BIN_CORRUPT;
 	} else
-		cur_flags = _get_flags_string(renv->oprtn.ext, renv->result);
+		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
 	
 	if ( cur_flags != NULL )
 		flags_list_remove_flags(cur_flags, flags);		
@@ -499,7 +499,7 @@ int ext_imap4flags_get_flags_string
 		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
 			return SIEVE_EXEC_BIN_CORRUPT;
 	} else
-		cur_flags = _get_flags_string(renv->oprtn.ext, renv->result);
+		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
 	
 	if ( cur_flags == NULL )
 		*flags = "";
@@ -521,7 +521,7 @@ void ext_imap4flags_get_flags_init
 		flags_list_set_flags(cur_flags, flags_list);
 	}
 	else
-		cur_flags = _get_flags_string(renv->oprtn.ext, renv->result);
+		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
 	
 	ext_imap4flags_iter_init(iter, cur_flags);		
 }

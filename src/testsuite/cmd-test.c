@@ -152,12 +152,11 @@ static int cmd_test_operation_execute
 {
 	string_t *test_name;
 
-	if ( !sieve_opr_string_read(renv, address, &test_name) ) {
-		sieve_runtime_trace_error(renv, "invalid test name operand");
+	if ( !sieve_opr_string_read(renv, address, "test name", &test_name) )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 	
-	sieve_runtime_trace(renv, "TEST \"%s\"", str_c(test_name));
+	sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM, 
+		"** Test start: \"%s\"", str_c(test_name));
 
 	testsuite_test_start(test_name);
 	return SIEVE_EXEC_OK;
@@ -167,7 +166,7 @@ static int cmd_test_finish_operation_execute
 (const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {
-	sieve_runtime_trace(renv, "TEST FINISHED");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM, "** Test end");
 	
 	testsuite_test_succeed(NULL);
 	return SIEVE_EXEC_OK;

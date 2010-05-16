@@ -263,14 +263,16 @@ static bool ext_body_operation_dump
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	do {
-		
-		if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
+	for (;;) {
+		int ret;
+
+		if ( (ret=sieve_match_opr_optional_dump(denv, address, &opt_code)) 
+			< 0 )
 			return FALSE;
 
+		if ( ret == 0 ) break;
+
 		switch ( opt_code ) {
-		case SIEVE_MATCH_OPT_END:
-			break;
 		case OPT_BODY_TRANSFORM:
 			if ( !sieve_binary_read_byte(denv->sblock, address, &transform) )
 				return FALSE;
@@ -297,7 +299,7 @@ static bool ext_body_operation_dump
 		default: 
 			return FALSE;
 		}
-	} while ( opt_code != SIEVE_MATCH_OPT_END );
+	};
 
 	return sieve_opr_stringlist_dump(denv, address, "key list");
 }
@@ -329,43 +331,45 @@ static int ext_body_operation_execute
 	 * Read operands
 	 */
 	
-	/* Handle any optional operands */
-	do {
-		if ( (ret=sieve_match_read_optional_operands
-			(renv, address, &opt_code, &cmp, &mtch)) <= 0 )
-			return ret;
+	/* Optional operands */
+
+	for (;;) {
+		bool opok = TRUE;
+		int ret;
+
+		if ( (ret=sieve_match_opr_optional_read
+			(renv, address, &opt_code, &cmp, &mtch)) < 0 )
+			return SIEVE_EXEC_BIN_CORRUPT;
+
+		if ( ret == 0 ) break;
 			
 		switch ( opt_code ) {
-		case SIEVE_MATCH_OPT_END: 
-			break;
 		case OPT_BODY_TRANSFORM:
 			if ( !sieve_binary_read_byte(renv->sblock, address, &transform) ||
 				transform > TST_BODY_TRANSFORM_TEXT ) {
 				sieve_runtime_trace_error(renv, "invalid body transform type");
-				return SIEVE_EXEC_BIN_CORRUPT;
+				opok = FALSE;
 			}
 			
-			if ( transform == TST_BODY_TRANSFORM_CONTENT ) {				
-				if ( (ctype_list=sieve_opr_stringlist_read(renv, address)) 
-					== NULL ) {
-					sieve_runtime_trace_error(renv, 
-						"invalid :content body transform operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
+			if ( opok && transform == TST_BODY_TRANSFORM_CONTENT ) {				
+				ctype_list = sieve_opr_stringlist_read
+					(renv, address, "content-type-list"); 
+				opok = ( ctype_list != NULL );
 			}
 			break;
 
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
-			return SIEVE_EXEC_BIN_CORRUPT;
+			opok = FALSE;
 		}
-	} while ( opt_code != SIEVE_MATCH_OPT_END );
+
+		if ( !opok) return SIEVE_EXEC_BIN_CORRUPT;
+	} 
 		
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid key-list operand");
+
+	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) == NULL ) 
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 	
 	if ( ctype_list != NULL && !sieve_coded_stringlist_read_all
 		(ctype_list, pool_datastack_create(), &content_types) ) {
@@ -377,7 +381,7 @@ static int ext_body_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "BODY action");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "body test");
 	
 	/* Extract requested parts */
 	

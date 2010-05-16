@@ -269,13 +269,12 @@ static bool seff_flags_read_context
 	t_push();
 
 	/* Check whether explicit flag list operand is present */
-	if ( !sieve_operand_read(renv->sblock, address, &operand) ) {
-        sieve_runtime_trace_error(renv, "invalid operand");
-		t_pop();
-        return FALSE;
-    }
-
-    if ( sieve_operand_is_omitted(&operand) ) {
+	if ( !sieve_operand_runtime_read(renv, address, NULL, &operand) ) {
+ 		t_pop();
+		return FALSE;
+	}
+	
+	if ( sieve_operand_is_omitted(&operand) ) {
 		/* Flag list is omitted, use current value of internal 
 		 * variable to construct side effect context.
 		 */
@@ -287,7 +286,7 @@ static bool seff_flags_read_context
 	
 	/* Read flag-list */
 	if ( (flag_list=sieve_opr_stringlist_read_data
-		(renv, &operand, address)) == NULL ) {
+		(renv, &operand, address, NULL)) == NULL ) {
 		t_pop();
 		return FALSE;
 	}

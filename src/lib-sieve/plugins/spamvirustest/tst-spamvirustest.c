@@ -205,26 +205,28 @@ static bool tst_spamvirustest_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int opt_code = 0;
-	const struct sieve_operation *op = &denv->oprtn;
+	const struct sieve_operation *op = denv->oprtn;
 
 	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
 	sieve_code_descend(denv);
 	
-	/* Handle any optional arguments */
-  do {
-		if ( !sieve_match_dump_optional_operands(denv, address, &opt_code) )
+	/* Optional operands */
+	for (;;) {
+		int ret;
+
+		if ( (ret=sieve_match_opr_optional_dump(denv, address, &opt_code)) < 0 )
 			return FALSE;
 
+		if ( ret == 0 ) break;
+
 		switch ( opt_code ) {
-		case SIEVE_MATCH_OPT_END:
-			break;
 		case OPT_SPAMTEST_PERCENT:
 			sieve_code_dumpf(denv, "percent");
 			break;
     default:
 			return FALSE;
 		}
-	} while ( opt_code != SIEVE_MATCH_OPT_END );
+	}
 
 	return
 		sieve_opr_string_dump(denv, address, "value");
@@ -237,7 +239,7 @@ static bool tst_spamvirustest_operation_dump
 static int tst_spamvirustest_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
-	const struct sieve_operation *op = &renv->oprtn;
+	const struct sieve_operation *op = renv->oprtn;
 	const struct sieve_extension *this_ext = op->ext;
 	bool result = TRUE, matched = FALSE;
 	int opt_code = 0;
@@ -252,14 +254,16 @@ static int tst_spamvirustest_operation_execute
 	int ret;
 	
 	/* Read optional operands */
-	do {
-		if ( (ret=sieve_match_read_optional_operands
-			(renv, address, &opt_code, &cmp, &mcht)) <= 0 )
-			return ret;
+	for (;;) {
+		int ret;
 
+		if ( (ret=sieve_match_opr_optional_read
+			(renv, address, &opt_code, &cmp, &mcht)) < 0 )
+			return SIEVE_EXEC_BIN_CORRUPT;
+
+		if ( ret == 0 ) break;
+	
 		switch ( opt_code ) {
-		case SIEVE_MATCH_OPT_END:
-			break;
 		case OPT_SPAMTEST_PERCENT:
 			percent = TRUE;
 			break;
@@ -267,17 +271,16 @@ static int tst_spamvirustest_operation_execute
 			sieve_runtime_trace_error(renv, "unknown optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
-	} while ( opt_code != SIEVE_MATCH_OPT_END );
+	}
 
 	/* Read value part */
-	if ( (key_value=sieve_opr_stringlist_read(renv, address)) == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid value operand");
+	if ( (key_value=sieve_opr_stringlist_read(renv, address, "value")) == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 			
 	/* Perform test */
 
-	sieve_runtime_trace(renv, "%s test", sieve_operation_mnemonic(op));
+	sieve_runtime_trace
+		(renv, SIEVE_TRLVL_TESTS, "%s test", sieve_operation_mnemonic(op));
 
 	/* Initialize match */
 	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_value); 	

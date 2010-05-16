@@ -57,14 +57,20 @@ struct sieve_interpreter {
 	bool test_result;         /* Result of previous test command */
 	
 	/* Runtime environment */
-	struct sieve_runtime_env runenv; 
+	struct sieve_runtime_env runenv;
 
+	/* Current operation */
+	struct sieve_operation oprtn; 
+
+	/* Location information */
 	struct sieve_binary_debug_reader *dreader;
+	unsigned int command_line;
 };
 
 static struct sieve_interpreter *_sieve_interpreter_create
 (struct sieve_binary *sbin, struct sieve_binary_block *sblock, 
-	struct sieve_error_handler *ehandler) 
+	struct sieve_script *script, const struct sieve_message_data *msgdata,
+	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler) 
 {
 	unsigned int i, ext_count;
 	struct sieve_interpreter *interp;
@@ -72,6 +78,7 @@ static struct sieve_interpreter *_sieve_interpreter_create
 	struct sieve_instance *svinst;
 	const struct sieve_extension *const *ext_preloaded;
 	unsigned int debug_block_id;
+	sieve_size_t *address;
 	bool success = TRUE;
 	
 	pool = pool_alloconly_create("sieve_interpreter", 4096);	
@@ -81,17 +88,34 @@ static struct sieve_interpreter *_sieve_interpreter_create
 	interp->ehandler = ehandler;
 	sieve_error_handler_ref(ehandler);
 
-	interp->runenv.interp = interp;	
+	interp->runenv.interp = interp;
+	interp->runenv.oprtn = &interp->oprtn;
 	interp->runenv.sbin = sbin;
 	interp->runenv.sblock = sblock;
 	sieve_binary_ref(sbin);
 
 	svinst = sieve_binary_svinst(sbin);
 
-	interp->runenv.svinst = svinst;	
-	interp->runenv.script = sieve_binary_script(sbin); 
+	interp->runenv.svinst = svinst;
+	interp->runenv.msgdata = msgdata;
+	interp->runenv.scriptenv = senv;
+	interp->runenv.trace_stream = senv->trace_stream;
+	interp->runenv.trace_level = senv->trace_level;
+
+	if ( senv->exec_status == NULL ) 
+		interp->runenv.exec_status = p_new(interp->pool, struct sieve_exec_status, 1);
+	else
+		interp->runenv.exec_status = senv->exec_status;
+
+	if ( script == NULL )	
+		interp->runenv.script = sieve_binary_script(sbin);
+	else
+		interp->runenv.script = script;
 	
-	interp->pc = 0;
+	interp->runenv.pc = 0;
+	address = &(interp->runenv.pc);
+
+	sieve_runtime_trace_begin(&(interp->runenv));
 
 	p_array_init(&interp->extensions, pool, sieve_extensions_get_count(svinst));
 
@@ -102,11 +126,11 @@ static struct sieve_interpreter *_sieve_interpreter_create
 
 		if ( ext_def != NULL && ext_def->interpreter_load != NULL )
 			(void)ext_def->interpreter_load
-				(ext_preloaded[i], &interp->runenv, &interp->pc);		
+				(ext_preloaded[i], &interp->runenv, address);		
 	}
 
 	/* Load debug block */
-	if ( sieve_binary_read_unsigned(sblock, &interp->pc, &debug_block_id) ) {
+	if ( sieve_binary_read_unsigned(sblock, address, &debug_block_id) ) {
 		struct sieve_binary_block *debug_block =
 			sieve_binary_block_get(sbin, debug_block_id);
 
@@ -121,19 +145,19 @@ static struct sieve_interpreter *_sieve_interpreter_create
 
 	/* Load other extensions listed in code */
 	if ( success && 
-		sieve_binary_read_unsigned(sblock, &interp->pc, &ext_count) ) {
+		sieve_binary_read_unsigned(sblock, address, &ext_count) ) {
 
 		for ( i = 0; i < ext_count; i++ ) {
 			unsigned int code = 0;
 			const struct sieve_extension *ext;
 			
-			if ( !sieve_binary_read_extension(sblock, &interp->pc, &code, &ext) ) {
+			if ( !sieve_binary_read_extension(sblock, address, &code, &ext) ) {
 				success = FALSE;
 				break;
 			}
  
 			if ( ext->def != NULL && ext->def->interpreter_load != NULL && 
-				!ext->def->interpreter_load(ext, &interp->runenv, &interp->pc) ) {
+				!ext->def->interpreter_load(ext, &interp->runenv, address) ) {
 				success = FALSE;
 				break;
 			}
@@ -144,33 +168,39 @@ static struct sieve_interpreter *_sieve_interpreter_create
 	if ( !success ) {
 		sieve_interpreter_free(&interp);
 	} else {
-		interp->reset_vector = interp->pc;
+		interp->reset_vector = *address;
 	}
 	
 	return interp;
 }
 
 struct sieve_interpreter *sieve_interpreter_create
-(struct sieve_binary *sbin, struct sieve_error_handler *ehandler) 
+(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
+	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler) 
 {
 	struct sieve_binary_block *sblock =
 		sieve_binary_block_get(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);
 
- 	return _sieve_interpreter_create(sbin, sblock, ehandler);
+ 	return _sieve_interpreter_create(sbin, sblock, NULL, msgdata, senv, ehandler);
 }
 
 struct sieve_interpreter *sieve_interpreter_create_for_block
-(struct sieve_binary_block *sblock, struct sieve_error_handler *ehandler) 
+(struct sieve_binary_block *sblock, struct sieve_script *script,
+	const struct sieve_message_data *msgdata, const struct sieve_script_env *senv, 
+	struct sieve_error_handler *ehandler) 
 {
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
 
- 	return _sieve_interpreter_create(sbin, sblock, ehandler);
+ 	return _sieve_interpreter_create
+		(sbin, sblock, script, msgdata, senv, ehandler);
 }
 
 void sieve_interpreter_free(struct sieve_interpreter **interp) 
 {
 	const struct sieve_interpreter_extension_reg *eregs;
 	unsigned int ext_count, i;
+
+	sieve_runtime_trace_end(&((*interp)->runenv));
 
 	/* Signal registered extensions that the interpreter is being destroyed */
 	eregs = array_get(&(*interp)->extensions, &ext_count);
@@ -231,12 +261,11 @@ void sieve_interpreter_set_result
 
 /* This is not particularly user friendly, so avoid using this
  */
-const char *sieve_runtime_location(const struct sieve_runtime_env *runenv)
+const char *sieve_runtime_location(const struct sieve_runtime_env *renv)
 {
-	const char *op = runenv->oprtn.def == NULL ?
-		"<<NOOP>>" : runenv->oprtn.def->mnemonic;
-	return t_strdup_printf("%s: #%08llx: %s", sieve_script_name(runenv->script),
-		(unsigned long long) runenv->oprtn.address, op);
+	const char *op = sieve_operation_mnemonic(renv->oprtn);
+	return t_strdup_printf("%s: #%08llx: %s", sieve_script_name(renv->script),
+		(unsigned long long) renv->oprtn->address, op);
 }
 
 void sieve_runtime_error
@@ -279,50 +308,39 @@ void sieve_runtime_log
 }
 
 /*
- * Runtime trace
+ * Source location
  */
 
 unsigned int sieve_runtime_get_source_location
 (const struct sieve_runtime_env *renv, sieve_size_t code_address)
 {
-	if ( renv->interp->dreader != NULL ) 
-		return sieve_binary_debug_read_line(renv->interp->dreader, code_address);
+	struct sieve_interpreter *interp = renv->interp;
 
-	return 0;
+	if ( interp->dreader == NULL )
+		return 0;
+
+	if ( interp->command_line == 0 ) {
+		interp->command_line = sieve_binary_debug_read_line
+			(interp->dreader, renv->oprtn->address);
+	}
+
+	return sieve_binary_debug_read_line(interp->dreader, code_address);
 }
 
-#ifdef SIEVE_RUNTIME_TRACE
-void _sieve_runtime_trace
-(const struct sieve_runtime_env *runenv, const char *fmt, ...)
-{	
-	string_t *outbuf = t_str_new(128);
-	va_list args;
-	
-	va_start(args, fmt);	
-	str_printfa(outbuf, "%08llx: ", (unsigned long long) runenv->oprtn.address); 
-	str_vprintfa(outbuf, fmt, args); 
-	str_append_c(outbuf, '\n');
-	va_end(args);
-	
-	o_stream_send(runenv->trace_stream, str_data(outbuf), str_len(outbuf));	
-}
-
-void _sieve_runtime_trace_error
-(const struct sieve_runtime_env *runenv, const char *fmt, ...)
+unsigned int sieve_runtime_get_command_location
+(const struct sieve_runtime_env *renv)
 {
-	string_t *outbuf = t_str_new(128);
-	va_list args;
+	struct sieve_interpreter *interp = renv->interp;
 
-	va_start(args, fmt);
-	str_printfa(outbuf, "%08llx: [[ERROR: %s: ", 
-		(unsigned long long) runenv->interp->pc, runenv->oprtn.def->mnemonic);
-	str_vprintfa(outbuf, fmt, args);
-    str_append(outbuf, "]]\n");
-	va_end(args);
+	if ( interp->dreader == NULL )
+		return 0;
 
-	o_stream_send(runenv->trace_stream, str_data(outbuf), str_len(outbuf));
+	if ( interp->command_line == 0 )
+		interp->command_line = sieve_binary_debug_read_line
+			(interp->dreader, renv->oprtn->address);
+
+	return interp->command_line;
 }
-#endif
 
 /* 
  * Extension support 
@@ -373,10 +391,9 @@ void *sieve_interpreter_extension_get_context
 
 void sieve_interpreter_reset(struct sieve_interpreter *interp) 
 {
-	interp->pc = interp->reset_vector;
+	interp->runenv.pc = interp->reset_vector;
 	interp->interrupted = FALSE;
 	interp->test_result = FALSE;
-	interp->runenv.msgdata = NULL;
 	interp->runenv.result = NULL;
 }
 
@@ -387,27 +404,32 @@ void sieve_interpreter_interrupt(struct sieve_interpreter *interp)
 
 sieve_size_t sieve_interpreter_program_counter(struct sieve_interpreter *interp)
 {
-	return interp->pc;
+	return interp->runenv.pc;
 }
 
 int sieve_interpreter_program_jump
 (struct sieve_interpreter *interp, bool jump)
 {
 	const struct sieve_runtime_env *renv = &interp->runenv;
-	sieve_size_t pc = interp->pc;
-	int offset;
+	sieve_size_t *address = &(interp->runenv.pc);
+	sieve_size_t jmp_start = *address;
+	int jmp_offset;
 	
-	if ( !sieve_binary_read_offset(renv->sblock, &(interp->pc), &offset) )
+	if ( !sieve_binary_read_offset(renv->sblock, address, &jmp_offset) )
 	{
 		sieve_runtime_trace_error(renv, "invalid jump offset"); 
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	if ( pc + offset <= sieve_binary_block_get_size(renv->sblock) && 
-		pc + offset > 0 ) 
+	if ( jmp_start + jmp_offset <= sieve_binary_block_get_size(renv->sblock) && 
+		jmp_start + jmp_offset > 0 ) 
 	{	
-		if ( jump )
-			interp->pc = pc + offset;
+		if ( jump ) {
+			sieve_runtime_trace_here(renv, SIEVE_TRLVL_COMMANDS, "jump to #%08llx", 
+				(long long unsigned int) jmp_start + jmp_offset);
+
+			*address = jmp_start + jmp_offset;
+		}
 		
 		return SIEVE_EXEC_OK;
 	}
@@ -433,75 +455,46 @@ bool sieve_interpreter_get_test_result
 }
 
 /* 
- * Operations and operands 
- */
-
-int sieve_interpreter_handle_optional_operands
-(const struct sieve_runtime_env *renv, sieve_size_t *address,
-	struct sieve_side_effects_list **list)
-{
-	signed int opt_code = -1;
-	
-	if ( sieve_operand_optional_present(renv->sblock, address) ) {
-		while ( opt_code != 0 ) {
-			if ( !sieve_operand_optional_read(renv->sblock, address, &opt_code) ) {
-				sieve_runtime_trace_error(renv, "invalid optional operand");
-				return SIEVE_EXEC_BIN_CORRUPT;
-			}
-
-			if ( opt_code == SIEVE_OPT_SIDE_EFFECT ) {
-				struct sieve_side_effect seffect;
-			
-				if ( list == NULL )
-					return SIEVE_EXEC_BIN_CORRUPT;
-					
-				if ( !sieve_opr_side_effect_read(renv, address, &seffect) ) {
-					sieve_runtime_trace_error(renv, "invalid side effect operand");
-					return SIEVE_EXEC_BIN_CORRUPT;
-				}
-			
-				if ( *list == NULL ) 
-					*list = sieve_side_effects_list_create(renv->result);
-
-				sieve_side_effects_list_add(*list, &seffect);
-			}
-		}
-	}
-	return TRUE;
-}
- 
-/* 
  * Code execute 
  */
 
 static int sieve_interpreter_operation_execute
 (struct sieve_interpreter *interp) 
 {
-	struct sieve_operation *oprtn = &(interp->runenv.oprtn);
+	struct sieve_operation *oprtn = &(interp->oprtn);
+	sieve_size_t *address = &(interp->runenv.pc);
 
-	if ( sieve_operation_read(interp->runenv.sblock, &(interp->pc), oprtn) ) {
+	/* Read the operation */
+	if ( sieve_operation_read(interp->runenv.sblock, address, oprtn) ) {
 		const struct sieve_operation_def *op = oprtn->def;
-
 		int result = SIEVE_EXEC_OK;
 
+		/* Reset cached command location */
+		interp->command_line = 0;
+
+		/* Execute the operation */
 		if ( op->execute != NULL ) { /* Noop ? */
 			T_BEGIN {
-				result = op->execute(&(interp->runenv), &(interp->pc));
+				result = op->execute(&(interp->runenv), address);
 			} T_END;
 		} else {
-			sieve_runtime_trace(&interp->runenv, "OP: %s (NOOP)", op->mnemonic);
+			sieve_runtime_trace
+				(&interp->runenv, SIEVE_TRLVL_COMMANDS, "OP: %s (NOOP)", 
+					sieve_operation_mnemonic(oprtn));
 		}
 
 		return result;
 	}
 	
-	sieve_runtime_trace(&interp->runenv, "Encountered invalid operation");	
+	/* Binary corrupt */
+	sieve_runtime_trace_error(&interp->runenv, "Encountered invalid operation");	
 	return SIEVE_EXEC_BIN_CORRUPT;
 }		
 
 int sieve_interpreter_continue
 (struct sieve_interpreter *interp, bool *interrupted) 
 {
+	sieve_size_t *address = &(interp->runenv.pc);
 	int ret = SIEVE_EXEC_OK;
 	
 	sieve_result_ref(interp->runenv.result);
@@ -511,12 +504,13 @@ int sieve_interpreter_continue
 		*interrupted = FALSE;
 	
 	while ( ret == SIEVE_EXEC_OK && !interp->interrupted && 
-		interp->pc < sieve_binary_block_get_size(interp->runenv.sblock) ) {
+		*address < sieve_binary_block_get_size(interp->runenv.sblock) ) {
 		
 		ret = sieve_interpreter_operation_execute(interp);
 
 		if ( ret != SIEVE_EXEC_OK ) {
-			sieve_runtime_trace(&interp->runenv, "[[EXECUTION ABORTED]]");
+			sieve_runtime_trace(&interp->runenv, SIEVE_TRLVL_MINIMUM, 
+				"[[EXECUTION ABORTED]]");
 		}
 	}
 	
@@ -528,22 +522,13 @@ int sieve_interpreter_continue
 }
 
 int sieve_interpreter_start
-(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_result *result, bool *interrupted) 
+(struct sieve_interpreter *interp, struct sieve_result *result, bool *interrupted) 
 {
 	const struct sieve_interpreter_extension_reg *eregs;
 	unsigned int ext_count, i;
 	
-	interp->runenv.msgdata = msgdata;
 	interp->runenv.result = result;
 	interp->runenv.msgctx = sieve_result_get_message_context(result);		
-	interp->runenv.scriptenv = senv;
-	interp->runenv.trace_stream = senv->trace_stream;
-
-	if ( senv->exec_status == NULL ) 
-		interp->runenv.exec_status = p_new(interp->pool, struct sieve_exec_status, 1);
-	else
-		interp->runenv.exec_status = senv->exec_status;
 	
 	/* Signal registered extensions that the interpreter is being run */
 	eregs = array_get(&interp->extensions, &ext_count);
@@ -556,15 +541,14 @@ int sieve_interpreter_start
 }
 
 int sieve_interpreter_run
-(struct sieve_interpreter *interp, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_result *result)
+(struct sieve_interpreter *interp, struct sieve_result *result)
 {
 	int ret = 0;
 	
 	sieve_interpreter_reset(interp);
 	sieve_result_ref(result);
 	
-	ret = sieve_interpreter_start(interp, msgdata, senv, result, NULL);
+	ret = sieve_interpreter_start(interp, result, NULL);
 	
 	sieve_result_unref(&result);
 	

@@ -111,16 +111,14 @@ static int cmd_debug_print_operation_execute
 	
 	/* Read message */
 
-	if ( sieve_opr_string_read(renv, address, &message) < 0 ) {
-		sieve_runtime_trace_error(renv, "invalid message operand");
+	if ( sieve_opr_string_read(renv, address, "message", &message) < 0 )
 		return SIEVE_EXEC_BIN_CORRUPT;
-	}
 	
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, "DEBUG_PRINT");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "DEBUG_PRINT");
 	
 	/* FIXME: give this proper source location */
 	sieve_runtime_log(renv, "DEBUG", "%s", str_c(message));

@@ -314,7 +314,7 @@ static bool opc_include_dump
 	if ( !sieve_binary_read_byte(denv->sblock, address, &flags) )
 		return FALSE;
 
-	binctx = ext_include_binary_get_context(denv->oprtn.ext, denv->sbin);
+	binctx = ext_include_binary_get_context(denv->oprtn->ext, denv->sbin);
 	included = ext_include_binary_script_get_included(binctx, include_id);
 	if ( included == NULL )
 		return FALSE;
