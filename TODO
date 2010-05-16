@@ -7,36 +7,45 @@ Current activities:
 
 Next (in order of descending priority/precedence):
 
+* Make command line tools use Dovecot settings API
+* Cleanup the test suite
+	- Make uniform command implementations
+	- Cleanup test scripts
+* Improve error handling. 
+	- Detect permission errors when writing global script binaries and advise the 
+	  administrator on using sievec to precompile the scripts.
+	- Avoid reporting user-caused errors to the master log.
+	- Review error handling; add more warning/info/debug messages where useful.
+* Update include extension to latest draft:
+	- Implement required ManageSieve behavior
+* Unfinished new extensions:
+	- Finish the ereject extension
+* Enforce ManageSieve protocol syntax better with some of the commands. Some 
+  commands still allow spurious extra arguments.
+* Code cleanup:
+	- Review all FIXMEs 
+
 * ## MAKE A SECOND RELEASE (0.2.x) ##
 
 * Finish body extension:
 	- Implement proper :content "multipart" behavior
 	- Implement proper :content "message/rfc822" behavior
 	- Build test cases for decoding MIME encodings to UTF-8
-* Unfinished new extensions:
-	- Finish the ereject extension
 * Build a sieve tool to filter an entire existing mailbox through a Sieve 
   script:
 	- Add commandline options to fully customize execution
 	- Write manual page
-* Update include extension to latest draft:
-	- Implement required ManageSieve behavior
 * Vacation extension improvements:
     - Implement configurable sender exclusion list.
     - Implement mechanism for implicitly including an account's aliases in the
       vacation command's :addresses list.
 * Improve error handling. 
-	- Detect permission errors when writing global script binaries and advise the 
-	  administrator on using sievec to precompile the scripts.
-	- Avoid reporting user-caused errors to the master log.
 	- Implement dropping errors in the user's mailbox as a mail message.
 * Fix remaining RFC deviations:
 	- Fix issues listed in doc/rfc/RFC-questions.txt based on answers
 	- Allow for the existence of dynamic comparators (i.e. specified by 
 	  variables). 
 	- Allow for :regex matching with variable key.
-	- Detect assignment of too large constant values to variables at compile
-	  time.
 	- Verify outgoing mail addresses at runtime when necessary
 	  (e.g. after variables substitution)
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
@@ -56,8 +65,6 @@ Next (in order of descending priority/precedence):
 * Fix ManageSieve proxy to recognize response codes from the backend and forward
   them to the user if appropriate/safe.
 * Implement proper support for ManageSieve SASL ANONYMOUS login.
-* Enforce ManageSieve protocol syntax better with some of the commands. Some 
-  commands still allow spurious extra arguments.
 * Test ManageSieve behavior thoroughly:
   - Test pipelined behavior
   - Test proxy authentication
@@ -98,9 +105,9 @@ Next (in order of descending priority/precedence):
 	  through IMAP (no specification for something like this is available; we will 
 	  have to provide our own)
 * Variables extension: implement compile time evaluation of constant values
+	- Detect assignment of too large constant values to variables at compile
+	  time.
 * Add development documentation, i.e. comment on library functions and document
   the binary and byte-code format. 
-* Give the byte code format some more thought, it is currently quite rough and
-  to the point. 
 * Implement SIP notify mechanism.
 
