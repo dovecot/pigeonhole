@@ -247,7 +247,6 @@ static bool ext_include_binary_open
 		sieve_sys_error("include: failed to read include count "
 			"for dependency block %d of binary %s", block_id, 
 			sieve_binary_path(sbin));
-		printf("BLOCK: %ld\n", sieve_binary_block_get_size(sblock));
 		return FALSE;
 	}
 	
