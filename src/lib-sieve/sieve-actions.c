@@ -402,8 +402,10 @@ static struct mailbox *act_store_mailbox_open
 	/* Try creating it. */
 	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
 		(void)mail_storage_get_last_error(*storage, &error);
-		mailbox_free(&box);
-		return NULL;
+		if (error != MAIL_ERROR_EXISTS) {
+			mailbox_free(&box);
+			return NULL;
+		}
 	}
 
 	/* Subscribe to it if required */
