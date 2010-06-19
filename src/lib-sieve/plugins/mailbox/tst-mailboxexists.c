@@ -124,7 +124,7 @@ static int tst_mailboxexists_operation_execute
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "mailboxexists test");
 
-	if ( renv->scriptenv->namespaces != NULL ) {
+	if ( renv->scriptenv->user != NULL ) {
 		mailbox_item = NULL;
 		while ( (result=sieve_coded_stringlist_next_item
 			(mailbox_names, &mailbox_item)) 
@@ -134,7 +134,7 @@ static int tst_mailboxexists_operation_execute
 			struct mailbox *box;
 
 			/* Find the namespace */	
-			ns = mail_namespace_find(renv->scriptenv->namespaces, &mailbox);
+			ns = mail_namespace_find(renv->scriptenv->user->namespaces, &mailbox);
 			if ( ns == NULL) {
 				all_exist = FALSE;
 				break;

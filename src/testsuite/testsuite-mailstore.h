@@ -19,10 +19,10 @@ void testsuite_mailstore_deinit(void);
 void testsuite_mailstore_reset(void);
 
 /* 
- * Namespace
+ * User
  */
 
-struct mail_namespace *testsuite_mailstore_get_namespace(void);
+struct mail_user *testsuite_mailstore_get_user(void);
 
 /*
  * Mailbox Access

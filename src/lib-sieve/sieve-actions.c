@@ -265,10 +265,10 @@ void sieve_act_store_get_storage_error
 {
 	pool_t pool = sieve_result_pool(aenv->result);
 	
-	trans->error = p_strdup(pool, 
-		mail_storage_get_last_error(trans->namespace->storage, &trans->error_code));
+	trans->error = p_strdup(pool,
+		mail_storage_get_last_error(mailbox_get_storage(trans->box), 
+		&trans->error_code));
 }
-
 
 /* Equality */
 
@@ -330,17 +330,21 @@ static void act_store_print
 
 /* Action implementation */
 
-static struct mailbox *act_store_mailbox_open
+static bool act_store_mailbox_open
 (const struct sieve_action_exec_env *aenv, const char **mailbox,
-	struct mail_namespace **ns_r, const char **folder_r)
+ struct mailbox **box_r)
 {
 	struct mail_storage **storage = &(aenv->exec_status->last_storage);
 	enum mailbox_flags flags =
 		MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_SAVEONLY |
 		MAILBOX_FLAG_POST_SESSION;
 	string_t *mailbox_mutf7;
+	struct mail_namespace *ns;
 	struct mailbox *box;
+	const char *folder;
 	enum mail_error error;
+
+	*box_r = NULL;
 
 	/* Deliveries to INBOX must always succeed, regardless of ACLs */
 	if (strcasecmp(*mailbox, "INBOX") == 0) {
@@ -353,37 +357,32 @@ static struct mailbox *act_store_mailbox_open
 	if ( imap_utf8_to_utf7(*mailbox, mailbox_mutf7) < 0 ) {
 		/* FIXME: check utf-8 validity at compiletime/runtime */
 		sieve_result_error(aenv, "mailbox name not utf-8: %s", *mailbox);
-		return NULL;
+		return FALSE;
 	}
 
-	*folder_r = str_c(mailbox_mutf7);
-	*ns_r = mail_namespace_find(aenv->scriptenv->namespaces, folder_r);
-	if ( *ns_r == NULL) {
-		*storage = NULL;
-		return NULL;
+	folder = str_c(mailbox_mutf7);
+	ns = mail_namespace_find(aenv->scriptenv->user->namespaces, &folder);
+	if ( ns == NULL) {
+		sieve_result_error
+			(aenv, "failed to find namespace for mailbox '%s'", *mailbox);
+		return FALSE;
 	}
 	
-	if ( **folder_r == '\0' ) {
+	if ( *folder == '\0' ) {
 		/* delivering to a namespace prefix means we actually want to
 		 * deliver to the INBOX instead
 		 */
-		*folder_r = *mailbox = "INBOX";
+		folder = *mailbox = "INBOX";
 		flags |= MAILBOX_FLAG_IGNORE_ACLS;
 
-		*ns_r = mail_namespace_find(aenv->scriptenv->namespaces, folder_r);
-		if ( *ns_r == NULL) {
-			*storage = NULL;
-			return NULL;
-		}
-
-		*storage = (*ns_r)->storage;
+		ns = mail_namespace_find_inbox(aenv->scriptenv->user->namespaces);
 	}
 
 	/* First attempt at opening the box */
-	box = mailbox_alloc((*ns_r)->list, *folder_r, flags);
+	*box_r = box = mailbox_alloc(ns->list, folder, flags);
 	if ( mailbox_open(box) == 0 ) {
 		/* Success */
-		return box;
+		return TRUE;
 	}
 
 	/* Failed */
@@ -394,33 +393,28 @@ static struct mailbox *act_store_mailbox_open
 	/* Only continue when the mailbox is missing and when we are allowed to
 	 * create it.
 	 */
-	if ( !aenv->scriptenv->mailbox_autocreate || error != MAIL_ERROR_NOTFOUND ) {
-		mailbox_free(&box);
-		return NULL;
-	}
+	if ( error != MAIL_ERROR_NOTFOUND || !aenv->scriptenv->mailbox_autocreate )
+		return FALSE;
 
 	/* Try creating it. */
 	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
 		(void)mail_storage_get_last_error(*storage, &error);
-		if (error != MAIL_ERROR_EXISTS) {
-			mailbox_free(&box);
-			return NULL;
-		}
+		if (error != MAIL_ERROR_EXISTS)
+			return FALSE;
 	}
 
 	/* Subscribe to it if required */
 	if ( aenv->scriptenv->mailbox_autosubscribe ) {
-		(void)mailbox_list_set_subscribed((*ns_r)->list, *folder_r, TRUE);
+		(void)mailbox_list_set_subscribed(ns->list, folder, TRUE);
 	}
 
 	/* Try opening again */
 	if ( mailbox_sync(box, 0) < 0 ) {
 		/* Failed definitively */
-		mailbox_free(&box);
-		return NULL;
+		return FALSE;
 	}
 
-	return box;
+	return TRUE;
 }
 
 static bool act_store_start
@@ -431,11 +425,9 @@ static bool act_store_start
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct act_store_transaction *trans;
-	struct mail_namespace *ns = NULL;
 	struct mailbox *box = NULL;
-	const char *folder;
 	pool_t pool = sieve_result_pool(aenv->result);
-	bool disabled = FALSE, redundant = FALSE;
+	bool disabled = FALSE, redundant = FALSE, open_failed = FALSE;
 
 	/* If context is NULL, the store action is the result of (implicit) keep */	
 	if ( ctx == NULL ) {
@@ -445,19 +437,19 @@ static bool act_store_start
 
 	/* Open the requested mailbox */
 
-	/* NOTE: The caller of the sieve library is allowed to leave namespaces set 
+	/* NOTE: The caller of the sieve library is allowed to leave user set 
 	 * to NULL. This implementation will then skip actually storing the message.
 	 */
-	if ( senv->namespaces != NULL ) {
-		box = act_store_mailbox_open(aenv, &ctx->mailbox, &ns, &folder);
+	if ( senv->user != NULL ) {
+		if ( !act_store_mailbox_open(aenv, &ctx->mailbox, &box) ) {
+			open_failed = TRUE;
 
 		/* Check whether we are trying to store the message in the folder it
 		 * originates from. In that case we skip actually storing it.
 		 */
-		if ( box != NULL && mailbox_backends_equal(box, msgdata->mail->box) ) {
+		} else if ( mailbox_backends_equal(box, msgdata->mail->box) ) {
 			mailbox_free(&box);
 			box = NULL;
-			ns = NULL;
 			redundant = TRUE;
 		}
 	} else {
@@ -468,22 +460,19 @@ static bool act_store_start
 	trans = p_new(pool, struct act_store_transaction, 1);
 
 	trans->context = ctx;
-	trans->namespace = ns;
-	trans->folder = folder;
 	trans->box = box;
 	trans->flags = 0;
 
 	trans->disabled = disabled;
 	trans->redundant = redundant;
+	trans->error_code = MAIL_ERROR_NONE;
 
-	if ( ns != NULL && box == NULL )
+	if ( open_failed )
 		sieve_act_store_get_storage_error(aenv, trans);
-	
+
 	*tr_context = (void *)trans;
 
-	return ( (box != NULL)
-		|| (trans->error_code == MAIL_ERROR_NOTFOUND)
-		|| disabled || redundant );
+	return TRUE;
 }
 
 static struct mail_keywords *act_store_keywords_create
@@ -545,10 +534,8 @@ static bool act_store_execute
 		return TRUE;
 	}
 
-	/* Exit early if namespace or mailbox are not available */
-	if ( trans->namespace == NULL )
-		return FALSE;
-	else if ( trans->box == NULL ) 
+	/* Exit early if mailbox is not available */
+	if ( trans->box == NULL ) 
 		return FALSE;
 
 	/* Mark attempt to store in default mailbox */
@@ -582,7 +569,7 @@ static bool act_store_execute
 	if ( mailbox_copy(&save_ctx, aenv->msgdata->mail) < 0 ) {
 		sieve_act_store_get_storage_error(aenv, trans);
  		result = FALSE;
- 	}
+	}
  	
 	/* Deallocate keywords */
  	if ( keywords != NULL ) {
@@ -608,11 +595,6 @@ static void act_store_log_status
 	} else if ( trans->redundant ) {
 		sieve_result_log(aenv, "left message in mailbox '%s'", mailbox_name);
 
-	/* Namespace not set? */
-	} else if ( trans->namespace == NULL ) {
-		sieve_result_error
-			(aenv, "failed to find namespace for mailbox '%s'", mailbox_name);
-
 	/* Store failed? */
 	} else if ( !status ) {
 		const char *errstr;
@@ -621,7 +603,8 @@ static void act_store_log_status
 		if ( trans->error != NULL )
 			errstr = trans->error;
 		else
-			errstr = mail_storage_get_last_error(trans->namespace->storage, &error);
+			errstr = mail_storage_get_last_error
+				(mailbox_get_storage(trans->box), &error);
 	
 		sieve_result_error(aenv, "failed to store into mailbox '%s': %s", 
 			mailbox_name, errstr);
@@ -652,24 +635,22 @@ static bool act_store_commit
 	if ( trans->disabled ) {
 		act_store_log_status(trans, aenv, FALSE, status);
 		*keep = FALSE;
+		if ( trans->box != NULL )
+			mailbox_free(&trans->box);
 		return TRUE;
 	} else if ( trans->redundant ) {
 		act_store_log_status(trans, aenv, FALSE, status);
 		aenv->exec_status->keep_original = TRUE;
 		aenv->exec_status->message_saved = TRUE;
+		if ( trans->box != NULL )
+			mailbox_free(&trans->box);
 		return TRUE;	
 	}
-
-	/* Exit early if namespace is not available */
-	if ( trans->namespace == NULL )
-		return FALSE;
-	else if ( trans->box == NULL ) 
-		return FALSE;
 
 	/* Mark attempt to use storage. Can only get here when all previous actions
 	 * succeeded. 
 	 */
-	aenv->exec_status->last_storage = trans->namespace->storage;
+	aenv->exec_status->last_storage = mailbox_get_storage(trans->box);
 
 	/* Free mail object for stored message */
 	if ( trans->dest_mail != NULL ) 

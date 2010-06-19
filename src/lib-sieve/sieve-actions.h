@@ -214,17 +214,13 @@ struct act_store_context {
 
 struct act_store_transaction {
 	struct act_store_context *context;
-	struct mail_namespace *namespace;
 	struct mailbox *box;
 	struct mailbox_transaction_context *mail_trans;
 	struct mail *dest_mail;
-
-	const char *folder;
-	const char *folder_mutf7;
-
+	
 	const char *error;
 	enum mail_error error_code;
-	
+
 	enum mail_flags flags;
 	ARRAY_TYPE(const_string) keywords;
 

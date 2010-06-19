@@ -328,7 +328,7 @@ int main(int argc, char **argv)
 		/* Compose script environment */
 		memset(&scriptenv, 0, sizeof(scriptenv));
 		scriptenv.default_mailbox = "INBOX";
-		scriptenv.namespaces = ns;
+		scriptenv.user = mail_user;
 		scriptenv.username = user;
 		scriptenv.hostname = "host.example.com";
 		scriptenv.postmaster_address = "postmaster@example.com";

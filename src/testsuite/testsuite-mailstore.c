@@ -109,9 +109,9 @@ void testsuite_mailstore_reset(void)
  * Mailbox Access
  */
 
-struct mail_namespace *testsuite_mailstore_get_namespace(void)
+struct mail_user *testsuite_mailstore_get_user(void)
 {
-	return testsuite_mailstore_user->namespaces;
+	return testsuite_mailstore_user;
 }
 
 bool testsuite_mailstore_mailbox_create
@@ -168,6 +168,7 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 	box = mailbox_alloc(ns->list, folder, flags);
 	if ( mailbox_open(box) < 0 ) {
 		sieve_sys_error("testsuite: failed to open mailbox '%s'", folder);
+		mailbox_free(&box);
 		return NULL;	
 	}
 	
@@ -175,6 +176,7 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 
 	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ) < 0 ) {
 		sieve_sys_error("testsuite: failed to sync mailbox '%s'", folder);
+		mailbox_free(&box);
 		return NULL;
 	}
 

@@ -72,7 +72,7 @@ struct sieve_script_env {
 	const char *action_log_format;
 
 	/* Mail-related */
-	struct mail_namespace *namespaces;
+	struct mail_user *user;
 	const char *default_mailbox;
 	bool mailbox_autocreate;
 	bool mailbox_autosubscribe;

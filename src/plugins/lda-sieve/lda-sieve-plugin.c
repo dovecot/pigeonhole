@@ -596,7 +596,7 @@ static int lda_sieve_run
 	scriptenv.default_mailbox = mdctx->dest_mailbox_name;
 	scriptenv.mailbox_autocreate = mdctx->set->lda_mailbox_autocreate;
 	scriptenv.mailbox_autosubscribe = mdctx->set->lda_mailbox_autosubscribe;
-	scriptenv.namespaces = mdctx->dest_user->namespaces;
+	scriptenv.user = mdctx->dest_user;
 	scriptenv.username = mdctx->dest_user->username;
 	scriptenv.hostname = mdctx->set->hostname;
 	scriptenv.postmaster_address = mdctx->set->postmaster_address;

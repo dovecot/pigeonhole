@@ -241,7 +241,7 @@ int main(int argc, char **argv)
 		testsuite_message_init(master_service, user, mail_user_dovecot);
 
 		memset(&scriptenv, 0, sizeof(scriptenv));
-		scriptenv.namespaces = testsuite_mailstore_get_namespace();
+		scriptenv.user = testsuite_mailstore_get_user();
 		scriptenv.default_mailbox = "INBOX";
 		scriptenv.hostname = "testsuite.example.com";
 		scriptenv.postmaster_address = "postmaster@example.com";

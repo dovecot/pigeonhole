@@ -413,7 +413,7 @@ int main(int argc, char **argv)
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	scriptenv.mailbox_autocreate = TRUE;
 	scriptenv.default_mailbox = dst_mailbox;
-	scriptenv.namespaces = dst_ns;
+	scriptenv.user = mail_user;
 	scriptenv.username = user;
 	scriptenv.hostname = "host.example.com";
 	scriptenv.postmaster_address = "postmaster@example.com";

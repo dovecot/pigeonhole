@@ -122,54 +122,42 @@ static bool seff_mailbox_create_pre_execute
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
 	struct mail_storage **storage = &(aenv->exec_status->last_storage);
-	enum mailbox_flags flags =
-		MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_SAVEONLY |
-		MAILBOX_FLAG_POST_SESSION;
-	struct mailbox *box = NULL;
+	enum mail_error error;
 	
 	/* Check whether creation is necessary */
-	if ( trans->box != NULL || trans->redundant || trans->disabled ) 
+	if ( trans->box == NULL || trans->redundant || trans->disabled )
 		return TRUE;
 
-	/* Check availability of namespace and folder name */
-	if ( trans->namespace == NULL || trans->folder == NULL )
-		return FALSE;
-
 	/* Check whether creation has a chance of working */
-	if ( trans->error_code != MAIL_ERROR_NONE 
-		&& trans->error_code != MAIL_ERROR_NOTFOUND )
+	if ( trans->error_code != MAIL_ERROR_NONE && 
+		trans->error_code != MAIL_ERROR_NOTFOUND )
 		return FALSE;
 
-	*storage = trans->namespace->storage; 
+	*storage = mailbox_get_storage(trans->box);
 
-    box = mailbox_alloc(trans->namespace->list, trans->folder, flags);
 	/* Create mailbox */
-	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
-		mailbox_free(&box);
-		box = NULL;
-
-	} else {
-		/* Subscribe to it if necessary */
-		if ( aenv->scriptenv->mailbox_autosubscribe ) {
-			(void)mailbox_list_set_subscribed
-				(trans->namespace->list, trans->folder, TRUE);
+	if ( mailbox_create(trans->box, NULL, FALSE) < 0 ) {
+		(void)mail_storage_get_last_error(*storage, &error);
+		if ( error != MAIL_ERROR_EXISTS ) {
+			sieve_act_store_get_storage_error(aenv, trans);
+			return FALSE;
 		}
+	}
+	/* Subscribe to it if necessary */
+	if ( aenv->scriptenv->mailbox_autosubscribe ) {
+		(void)mailbox_list_set_subscribed
+			(mailbox_get_namespace(trans->box)->list,
+			 mailbox_get_name(trans->box), TRUE);
+	}
 
-		/* Try opening again */
-		if ( mailbox_sync(box, 0) < 0 ) {
-			/* Failed definitively */
-			mailbox_free(&box);
-			box = NULL;
-		}
-	} 
+	/* Try opening again */
+	if ( mailbox_sync(trans->box, 0) < 0 ) {
+		/* Failed definitively */
+		sieve_act_store_get_storage_error(aenv, trans);
+		return FALSE;
+	}
 
-	/* Fetch error */
-	if ( box == NULL )
-		sieve_act_store_get_storage_error(aenv, trans);	
-
-	trans->box = box;
-	
-	return ( box != NULL );
+	return TRUE;
 }
 
 
