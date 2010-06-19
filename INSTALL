@@ -304,25 +304,25 @@ managesieve-login binaries are installed during make install.
 There are two things to have be done to activate the ManageSieve support in
 Dovecot:
 
-  - The first step is to add `managesieve' to the protocols= configuration line in 
+  - The first step is to add `sieve' to the protocols= configuration line in 
     your dovecot.conf.
 
   - The next step is specifying an additional service type for the ManageSieve
     service. This could be done in Dovecot's conf.d/master.conf or you can use 
-    the managesieve.conf file from the doc/example-config/conf.d directory of
+    the 20-managesieve.conf file from the doc/example-config/conf.d directory of
     this package. 
 
     For example:
 
     service managesieve-login {
-      inet_listener {
+      inet_listener sieve {
         port = 4190
       }
     }
 
 Because the implementation of the ManageSieve daemon is largely based on the
 original IMAP implementation, it is very similar in terms of configuration. The 
-following settings can be configured in the 'protocol managesieve' section:
+following settings can be configured in the 'protocol sieve' section:
 
 managesieve_max_line_length = 65536
   The maximum ManageSieve command line length in bytes. This setting is directly
@@ -371,14 +371,14 @@ privileges are used). This is similar to the behavior of the mail daemons.
 
 The following provides an example configuration for Sieve and ManageSieve. 
 Only sections and settings relevant to ManageSieve are shown. Refer to 
-managesieve.conf in the doc/example-config/conf.d directory for a full example 
-with comments, but don't forget to configure Sieve and add sieve to the 
+20-managesieve.conf in the doc/example-config/conf.d directory for a full 
+example with comments, but don't forget to configure Sieve and add sieve to the 
 'protocols = ...' setting if you use it.
 
-# *** conf.d/managesieve.conf ***
+# *** conf.d/20-managesieve.conf ***
 
 service managesieve-login {
-  inet_listener {
+  inet_listener sieve {
     # Bind the daemon only to the specified address(es)
     # (default: *, ::)
     address = 127.0.0.1
@@ -388,11 +388,11 @@ service managesieve-login {
   }
 }
 
-protocol managesieve {
+protocol sieve {
   managesieve_sieve_capability = fileinto reject
 }
 
-# ***  conf.d/sieve.conf ***
+# ***  conf.d/90-sieve.conf ***
 
 plugin {
   sieve=~/.dovecot.sieve
@@ -404,7 +404,7 @@ plugin {
 # .... (other config items)
 
 # Start imap, pop3, lmtp and managesieve services
-protocols = imap pop3 lmtp managesieve
+protocols = imap pop3 lmtp sieve
 
 # .... (other config items)
 
