@@ -307,7 +307,7 @@ static int cmd_set_operation_execute
 	 * Determine and assign the value 
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "set command");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "set:");
 
 	/* Hold value within limits */
 	if ( str_len(value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
@@ -333,6 +333,10 @@ static int cmd_set_operation_execute
 						break;
 					}
 
+					sieve_runtime_trace_here
+						(renv, SIEVE_TRLVL_COMMANDS, " :%s \"%s\" => \"%s\"",
+							sieve_variables_modifier_name(&modf), str_c(value), str_c(new_value));
+
 					value = new_value;
 					if ( value == NULL )
 						break;
@@ -348,7 +352,18 @@ static int cmd_set_operation_execute
 		if ( value != NULL ) {
 			if ( !sieve_variable_assign(storage, var_index, value) )
 				ret = SIEVE_EXEC_BIN_CORRUPT;
-		}	
+			else {
+				if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+					const char *var_name, *var_id;
+
+					(void)sieve_variable_get_identifier(storage, var_index, &var_name);
+					var_id = sieve_variable_get_varid(storage, var_index);
+
+					sieve_runtime_trace_here(renv, 0, " %s [%s] = \"%s\"",
+						var_name, var_id, str_c(value));
+				}
+			}
+		}
 	} T_END;
 			
 	if ( ret <= 0 ) 

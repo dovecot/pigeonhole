@@ -45,7 +45,8 @@ static inline struct ext_include_generator_context *
 struct ext_include_interpreter_global {
 	ARRAY_DEFINE(included_scripts, struct sieve_script *);
 
-	struct sieve_variable_storage *variables;
+	struct sieve_variable_scope_binary *var_scope;
+	struct sieve_variable_storage *var_storage;
 };
 
 struct ext_include_interpreter_context {
@@ -272,20 +273,23 @@ static void ext_include_runtime_init
 	struct ext_include_interpreter_context *ctx = 
 		(struct ext_include_interpreter_context *) context;
 	struct ext_include_context *ectx = ext_include_get_context(this_ext);
+	
 
 	if ( ctx->parent == NULL ) {
 		ctx->global = p_new(ctx->pool, struct ext_include_interpreter_global, 1);
 		p_array_init(&ctx->global->included_scripts, ctx->pool, 10);
 
 
-		ctx->global->variables = sieve_variable_storage_create
-			(ctx->pool, ext_include_binary_get_global_scope(this_ext, renv->sbin), 0);
+		ctx->global->var_scope = 
+			ext_include_binary_get_global_scope(this_ext, renv->sbin);
+		ctx->global->var_storage = 
+			sieve_variable_storage_create(ctx->pool, ctx->global->var_scope);
 	} else {
 		ctx->global = ctx->parent->global;
 	}
 
-	sieve_ext_variables_set_storage
-		(ectx->var_ext, renv->interp, ctx->global->variables, this_ext);	
+	sieve_ext_variables_runtime_set_storage
+		(ectx->var_ext, renv, this_ext, ctx->global->var_storage);	
 }
 
 static struct sieve_interpreter_extension include_interpreter_extension = {
@@ -372,7 +376,7 @@ struct sieve_variable_storage *ext_include_interpreter_get_global_variables
 	struct ext_include_interpreter_context *ctx =
 		ext_include_get_interpreter_context(this_ext, interp);
 		
-	return ctx->global->variables;
+	return ctx->global->var_storage;
 }
 
 /* 
@@ -551,7 +555,8 @@ int ext_include_execute_include
 	/* Check for invalid include id (== corrupt binary) */
 	included = ext_include_binary_script_get_included(binctx, include_id);
 	if ( included == NULL ) {
-		sieve_runtime_trace_error(renv, "invalid include id: %d", include_id);
+		sieve_runtime_trace_error(renv, "include: include id %d is invalid", 
+			include_id);
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
@@ -562,13 +567,13 @@ int ext_include_execute_include
 	/* If :once modifier is specified, check for duplicate include */
 	if ( ext_include_runtime_include_mark(ctx, included, once) ) {
 		sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM,
-			"include script '%s' (id: %d, block: %d) STARTED ::", 
+			"include: start script '%s' [inc id: %d, block: %d]", 
 			sieve_script_name(included->script), include_id, block_id);
 	} else {
 		/* skip */
 		sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM, 
-			"include script '%s' (id: %d, block: %d); "
-			"SKIPPED, because already run once", 
+			"include: skipped include for script '%s' [inc id: %d, block: %d]; "
+			"already run once", 
 			sieve_script_name(included->script), include_id, block_id);
 		return result;
 	}
@@ -578,8 +583,8 @@ int ext_include_execute_include
 	 */
 	if ( ext_include_runtime_check_circular(ctx, included) ) {
 		sieve_runtime_trace_error(renv, 
-			"circular include for script: %s [%d]", 
-			sieve_script_name(included->script), block_id);
+			"include: circular include of script '%s' [inc id: %d, block: %d]", 
+			sieve_script_name(included->script), include_id, block_id);
 
 		/* Situation has no valid way to emerge at runtime */
 		return SIEVE_EXEC_BIN_CORRUPT; 
@@ -622,18 +627,19 @@ int ext_include_execute_include
 
 				if ( ( (interrupted && curctx->returned) || (!interrupted) ) && 
 					curctx->parent != NULL ) {
+					const struct ext_include_script_info *ended_script =
+						curctx->script_info;						
 					
 					/* Sub-interpreter ended or executed return */
-					
-					sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM,
-						"included script '%s' (id: %d, block: %d) ENDED ::",  
-						sieve_script_name(curctx->script_info->script),
-						curctx->script_info->id,
-						sieve_binary_block_get_id(curctx->script_info->block));
 
 					/* Ascend interpreter stack */
 					curctx = curctx->parent;
 					sieve_interpreter_free(&subinterp);
+
+					sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM,
+						"include: script '%s' ended [inc id: %d, block: %d]",  
+						sieve_script_name(ended_script->script), ended_script->id,
+						sieve_binary_block_get_id(ended_script->block));
 					
 					/* This is the top-most sub-interpreter, bail out */
 					if ( curctx->parent == NULL ) break;
@@ -679,21 +685,22 @@ int ext_include_execute_include
 					}
 				}
 			}
-		} else {
-			sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM,
-				"included script '%s' (id: %d, block: %d) ENDED ::",  
-				sieve_script_name(curctx->script_info->script),
-				curctx->script_info->id,
-				sieve_binary_block_get_id(curctx->script_info->block));
 		}
 
 		/* Free any sub-interpreters that might still be active */
 		while ( curctx != NULL && curctx->parent != NULL ) {
 			struct ext_include_interpreter_context *nextctx	= curctx->parent;
 			struct sieve_interpreter *killed_interp = curctx->interp;
+			const struct ext_include_script_info *ended_script =
+				curctx->script_info;						
 
 			/* This kills curctx too */
 			sieve_interpreter_free(&killed_interp);
+
+			sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM,
+				"include: script '%s' ended [id: %d, block: %d]",  
+				sieve_script_name(ended_script->script),
+				ended_script->id, sieve_binary_block_get_id(ended_script->block));
 
 			/* Luckily we recorded the parent earlier */
 			curctx = nextctx;
@@ -716,7 +723,8 @@ void ext_include_execute_return
 	struct ext_include_interpreter_context *ctx =
 		ext_include_get_interpreter_context(this_ext, renv->interp);
 	
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "return");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
+		"return: exiting included script");
 
 	ctx->returned = TRUE;
 	sieve_interpreter_interrupt(renv->interp);	

@@ -8,6 +8,14 @@
  * Runtime trace
  */
 
+/* Trace configuration */
+
+static inline bool sieve_runtime_trace_active
+(const struct sieve_runtime_env *renv, sieve_trace_level_t trace_level) 
+{
+	return ( renv->trace_stream != NULL && trace_level <= renv->trace_level );
+}
+
 /* Trace errors */
 
 void _sieve_runtime_trace_error

@@ -55,7 +55,7 @@ struct ext_include_binary_context {
 	struct hash_table *included_scripts;
 	ARRAY_DEFINE(include_index, struct ext_include_script_info *);
 
-	struct sieve_variable_scope *global_vars;
+	struct sieve_variable_scope_binary *global_vars;
 };
 
  
@@ -107,8 +107,9 @@ struct ext_include_binary_context *ext_include_binary_init
 			sieve_binary_extension_create_block(sbin, this_ext);
 
 	if ( ctx->global_vars == NULL ) {
-		ctx->global_vars = ast_ctx->global_vars;
-		sieve_variable_scope_ref(ctx->global_vars);
+		ctx->global_vars = 
+			sieve_variable_scope_binary_create(ast_ctx->global_vars);
+		sieve_variable_scope_binary_ref(ctx->global_vars);
 	}
 			
 	return ctx;
@@ -186,7 +187,7 @@ unsigned int ext_include_binary_script_get_count
  * Variables 
  */
 
-struct sieve_variable_scope *ext_include_binary_get_global_scope
+struct sieve_variable_scope_binary *ext_include_binary_get_global_scope
 (const struct sieve_extension *this_ext, struct sieve_binary *sbin)
 {
 	struct ext_include_binary_context *binctx = 
@@ -364,7 +365,7 @@ static void ext_include_binary_free
 	hash_table_destroy(&binctx->included_scripts);
 
 	if ( binctx->global_vars != NULL ) 
-		sieve_variable_scope_unref(&binctx->global_vars);
+		sieve_variable_scope_binary_unref(&binctx->global_vars);
 }
 
 /*
@@ -418,7 +419,8 @@ bool ext_include_code_dump
 	struct ext_include_context *ectx = ext_include_get_context(ext);
 	
 	sieve_ext_variables_dump_set_scope
-		(ectx->var_ext, denv, ext, binctx->global_vars);
+		(ectx->var_ext, denv, ext, 
+			sieve_variable_scope_binary_get(binctx->global_vars));
 
 	return TRUE;
 }

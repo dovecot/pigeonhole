@@ -29,7 +29,7 @@ const struct sieve_code_dumper_extension variables_dump_extension = {
  */
  
 struct ext_variables_dump_context {
-	struct sieve_variable_scope *main_scope;
+	struct sieve_variable_scope *local_scope;
 	ARRAY_DEFINE(ext_scopes, struct sieve_variable_scope *);
 };
 
@@ -39,10 +39,10 @@ static void ext_variables_code_dumper_free
 	struct ext_variables_dump_context *dctx = 
 		(struct ext_variables_dump_context *) context;
 
-	if ( dctx == NULL || dctx->main_scope == NULL )
+	if ( dctx == NULL || dctx->local_scope == NULL )
 		return;
 
-	sieve_variable_scope_unref(&dctx->main_scope);
+	sieve_variable_scope_unref(&dctx->local_scope);
 }
 
 static struct ext_variables_dump_context *ext_variables_dump_get_context
@@ -71,41 +71,12 @@ bool ext_variables_code_dump
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	struct ext_variables_dump_context *dctx;
-	struct sieve_variable_scope *main_scope;
-	unsigned int i, scope_size;
-	sieve_size_t pc;
-	int end_offset;
-	
-	sieve_code_mark(denv);
-	if ( !sieve_binary_read_unsigned(denv->sblock, address, &scope_size) )
-		return FALSE;
-		
-	pc = *address;	
-	if ( !sieve_binary_read_offset(denv->sblock, address, &end_offset) )
-		return FALSE;
-	
-	main_scope = sieve_variable_scope_create(NULL);
-	
-	sieve_code_dumpf(denv, "SCOPE [%u] (end: %08x)", 
-		scope_size, (unsigned int) (pc + end_offset));
-	
-	/* Read main variable scope */
-	
-	for ( i = 0; i < scope_size; i++ ) {
-		string_t *identifier;
+	struct sieve_variable_scope *local_scope;
 
-		sieve_code_mark(denv);
-		if (!sieve_binary_read_string(denv->sblock, address, &identifier) ) {
-			return FALSE;
-		}
+	local_scope = sieve_variable_scope_binary_dump(NULL, denv, address);
 		
-		sieve_code_dumpf(denv, "%3d: '%s'", i, str_c(identifier));
-		
-		(void) sieve_variable_scope_declare(main_scope, str_c(identifier));
-	}
-	
 	dctx = ext_variables_dump_get_context(ext, denv);
-	dctx->main_scope = main_scope;
+	dctx->local_scope = local_scope;
 	
 	return TRUE;
 }
@@ -140,7 +111,7 @@ const char *ext_variables_dump_get_identifier
 	struct sieve_variable *var;
 
 	if ( ext == NULL )
-		scope = dctx->main_scope;
+		scope = dctx->local_scope;
 	else {
 		struct sieve_variable_scope *const *ext_scope;
 

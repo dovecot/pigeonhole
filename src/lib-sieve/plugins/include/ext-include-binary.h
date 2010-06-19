@@ -22,7 +22,7 @@ struct ext_include_binary_context *ext_include_binary_get_context
  * Variables
  */
 
-struct sieve_variable_scope *ext_include_binary_get_global_scope
+struct sieve_variable_scope_binary *ext_include_binary_get_global_scope
 	(const struct sieve_extension *this_ext, struct sieve_binary *sbin);
 
 /*

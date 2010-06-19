@@ -241,7 +241,8 @@ static bool opc_global_dump
 {
 	const struct sieve_extension *this_ext = denv->oprtn->ext;
 	unsigned int count, i, var_count;
-	struct sieve_variable_scope *scope;
+	struct sieve_variable_scope_binary *global_vars;
+	struct sieve_variable_scope *global_scope;
 	struct sieve_variable * const *vars;
 	
 	if ( !sieve_binary_read_unsigned(denv->sblock, address, &count) )
@@ -249,8 +250,9 @@ static bool opc_global_dump
 
 	sieve_code_dumpf(denv, "GLOBAL (count: %u):", count);
 
-	scope = ext_include_binary_get_global_scope(this_ext, denv->sbin);
-	vars = sieve_variable_scope_get_variables(scope, &var_count);
+	global_vars = ext_include_binary_get_global_scope(this_ext, denv->sbin);
+	global_scope = sieve_variable_scope_binary_get(global_vars);
+	vars = sieve_variable_scope_get_variables(global_scope, &var_count);
 
 	sieve_code_descend(denv);
 
@@ -262,7 +264,7 @@ static bool opc_global_dump
 			index >= var_count )
 			return FALSE;
 			
-		sieve_code_dumpf(denv, "VAR[%d]: '%s'", index, vars[index]->identifier); 
+		sieve_code_dumpf(denv, "%d: VAR[%d]: '%s'", i, index, vars[index]->identifier); 
 	}
 	 
 	return TRUE;
@@ -276,18 +278,21 @@ static int opc_global_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
-	struct sieve_variable_scope *scope;	
+	struct sieve_variable_scope_binary *global_vars;	
+	struct sieve_variable_scope *global_scope;	
 	struct sieve_variable_storage *storage;
 	struct sieve_variable * const *vars;
 	unsigned int var_count, count, i;
 		
 	if ( !sieve_binary_read_unsigned(renv->sblock, address, &count) ) {
-		sieve_runtime_trace_error(renv, "invalid count operand");
+		sieve_runtime_trace_error(renv, 
+			"global: count operand invalid");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
-	scope = ext_include_binary_get_global_scope(this_ext, renv->sbin);
-	vars = sieve_variable_scope_get_variables(scope, &var_count);
+	global_vars = ext_include_binary_get_global_scope(this_ext, renv->sbin);
+	global_scope = sieve_variable_scope_binary_get(global_vars);
+	vars = sieve_variable_scope_get_variables(global_scope, &var_count);
 	storage = ext_include_interpreter_get_global_variables
 		(this_ext, renv->interp);
 
@@ -295,19 +300,21 @@ static int opc_global_execute
 		unsigned int index;
 		
 		if ( !sieve_binary_read_unsigned(renv->sblock, address, &index) ) {
-			sieve_runtime_trace_error(renv, "invalid global variable operand");
+			sieve_runtime_trace_error(renv, 
+				"global: variable index operand invalid");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 		
 		if ( index >= var_count ) {
-			sieve_runtime_trace_error(renv, "invalid global variable index (%u > %u)",
+			sieve_runtime_trace_error(renv, 
+				"global: variable index %u is invalid in global storage (> %u)", 
 				index, var_count);
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 
 		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-			"exporting global variable '%s' (index: %u)", vars[index]->identifier, 
-			index);
+			"global: exporting variable '%s' [gvid: %u, vid: %u]",
+			vars[index]->identifier, i, index);
 		
 		/* Make sure variable is initialized (export) */
 		(void)sieve_variable_get_modifiable(storage, index, NULL); 

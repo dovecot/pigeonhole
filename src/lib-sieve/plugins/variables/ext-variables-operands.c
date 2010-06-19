@@ -84,21 +84,13 @@ static bool opr_variable_dump
 	identifier = ext_variables_dump_get_identifier(this_ext, denv, ext, index);
 	identifier = identifier == NULL ? "??" : identifier;
 
-	if ( ext == NULL ) {		
-		if ( field_name != NULL ) 
-			sieve_code_dumpf(denv, "%s: VAR ${%s} (%ld)", 
-				field_name, identifier, (long) index);
-		else
-			sieve_code_dumpf(denv, "VAR ${%s} (%ld)", 
-				identifier, (long) index);
-	} else {
-		if ( field_name != NULL ) 
-			sieve_code_dumpf(denv, "%s: VAR [%s] ${%s} (%ld)", 
-				field_name, sieve_extension_name(ext), identifier, (long) index);
-		else
-			sieve_code_dumpf(denv, "VAR [%s] ${%s} (%ld)", 
-				sieve_extension_name(ext), identifier, (long) index);
-	}
+	if ( field_name != NULL ) 
+		sieve_code_dumpf(denv, "%s: VAR[%s] ${%s}", 
+			field_name, sieve_ext_variables_get_varid(ext, index), identifier);
+	else
+		sieve_code_dumpf(denv, "VAR[%s] ${%s}", 
+			sieve_ext_variables_get_varid(ext, index), identifier);
+
 	return TRUE;
 }
 
@@ -115,7 +107,8 @@ static bool opr_variable_read_value
 	if ( !sieve_binary_read_extension(renv->sblock, address, &code, &ext) )
 		return FALSE;
 
-	storage = sieve_ext_variables_get_storage(this_ext, renv->interp, ext);
+	storage = sieve_ext_variables_runtime_get_storage
+		(this_ext, renv, ext);
 	if ( storage == NULL ) 
 		return FALSE;
 	
@@ -157,7 +150,8 @@ bool sieve_variable_operand_read_data
 		return FALSE;
 	}
 		
-	*storage = sieve_ext_variables_get_storage(operand->ext, renv->interp, ext);
+	*storage = sieve_ext_variables_runtime_get_storage
+		(operand->ext, renv, ext);
 	if ( *storage == NULL )	{
 		sieve_runtime_trace_operand_error(renv, operand, field_name, 
 			"variable operand: failed to get variable storage");

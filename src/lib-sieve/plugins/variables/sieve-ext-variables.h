@@ -8,6 +8,8 @@
 #ifndef __SIEVE_EXT_VARIABLES_H
 #define __SIEVE_EXT_VARIABLES_H
 
+#include "lib.h"
+
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 #include "sieve-objects.h"
@@ -75,6 +77,28 @@ struct sieve_variable *sieve_variable_scope_get_variable
 	(struct sieve_variable_scope *scope, const char *identifier, bool create);
 struct sieve_variable *sieve_variable_scope_get_indexed
 	(struct sieve_variable_scope *scope, unsigned int index);
+
+/* Binary */
+
+struct sieve_variable_scope_binary *sieve_variable_scope_binary_create
+	(struct sieve_variable_scope *scope);
+
+void sieve_variable_scope_binary_ref
+	(struct sieve_variable_scope_binary *scpbin);
+void sieve_variable_scope_binary_unref
+	(struct sieve_variable_scope_binary **scpbin);
+
+struct sieve_variable_scope *sieve_variable_scope_binary_dump
+	(const struct sieve_extension *ext, 
+		const struct sieve_dumptime_env *denv, sieve_size_t *address);
+struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
+	(const struct sieve_extension *ext, struct sieve_binary_block *sblock,
+		sieve_size_t *address);
+
+struct sieve_variable_scope *sieve_variable_scope_binary_get
+	(struct sieve_variable_scope_binary *scpbin);
+unsigned int sieve_variable_scope_binary_get_size
+	(struct sieve_variable_scope_binary *scpbin);
 
 /*
  * Variable namespaces
@@ -158,7 +182,7 @@ struct sieve_variable * const *sieve_variable_scope_get_variables
 struct sieve_variable_storage;
 
 struct sieve_variable_storage *sieve_variable_storage_create
-	(pool_t pool, struct sieve_variable_scope *scope, unsigned int max_size);
+	(pool_t pool, struct sieve_variable_scope_binary *scpbin);
 bool sieve_variable_get
 	(struct sieve_variable_storage *storage, unsigned int index, 
 		string_t **value);
@@ -171,6 +195,8 @@ bool sieve_variable_assign
 bool sieve_variable_get_identifier
 	(struct sieve_variable_storage *storage, unsigned int index, 
 		const char **identifier);
+const char *sieve_variable_get_varid
+	(struct sieve_variable_storage *storage, unsigned int index);
 
 /*
  * Variables access
@@ -179,15 +205,30 @@ bool sieve_variable_get_identifier
 bool sieve_ext_variables_is_active
 	(const struct sieve_extension *var_ext, struct sieve_validator *valdtr);
 
-struct sieve_variable_scope *sieve_ext_variables_get_main_scope
+struct sieve_variable_scope *sieve_ext_variables_get_local_scope
 	(const struct sieve_extension *var_ext, struct sieve_validator *valdtr);
+
+/* Runtime */
+
+static inline const char *sieve_ext_variables_get_varid
+(const struct sieve_extension *ext, unsigned int index)
+{
+	if ( ext == NULL )
+		return t_strdup_printf("%ld", (long) index);
+
+	return t_strdup_printf("%s:%ld", sieve_extension_name(ext), (long) index);
+}
 	
-struct sieve_variable_storage *sieve_ext_variables_get_storage
-	(const struct sieve_extension *var_ext, struct sieve_interpreter *interp, 
+struct sieve_variable_storage *sieve_ext_variables_runtime_get_storage
+	(const struct sieve_extension *var_ext, const struct sieve_runtime_env *renv,
 		const struct sieve_extension *ext);
-void sieve_ext_variables_set_storage
-	(const struct sieve_extension *var_ext, struct sieve_interpreter *interp,
-		struct sieve_variable_storage *storage, const struct sieve_extension *ext);	
+void sieve_ext_variables_runtime_set_storage
+	(const struct sieve_extension *var_ext, const struct sieve_runtime_env *renv,
+		const struct sieve_extension *ext, struct sieve_variable_storage *storage);
+
+const char *sieve_ext_variables_runtime_get_identifier
+(const struct sieve_extension *var_ext, const struct sieve_runtime_env *renv,
+	const struct sieve_extension *ext, unsigned int index);
 		
 /* 
  * Variable arguments 
@@ -248,6 +289,9 @@ extern const struct sieve_operand_class sieve_variables_modifier_operand_class;
 
 #define SIEVE_VARIABLES_DEFINE_MODIFIER(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
 #define SIEVE_VARIABLES_DEFINE_MODIFIERS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
+
+#define sieve_variables_modifier_name(smodf) \
+	( (smodf)->object.def->identifier )
 
 void sieve_variables_modifier_register
 	(const struct sieve_extension *var_ext, struct sieve_validator *valdtr, 

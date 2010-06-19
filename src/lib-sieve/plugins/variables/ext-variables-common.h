@@ -55,7 +55,7 @@ struct ext_variables_validator_context {
 	struct sieve_validator_object_registry *modifiers;
 	struct sieve_validator_object_registry *namespaces;
 	
-	struct sieve_variable_scope *main_scope;
+	struct sieve_variable_scope *local_scope;
 };
 
 void ext_variables_validator_initialize
