@@ -29,7 +29,7 @@ static buffer_t managesieve_unix_listeners_buf = {
 
 struct service_settings managesieve_settings_service_settings = {
 	.name = "managesieve",
-	.protocol = "managesieve",
+	.protocol = "sieve",
 	.type = "",
 	.executable = "managesieve",
 	.user = "",

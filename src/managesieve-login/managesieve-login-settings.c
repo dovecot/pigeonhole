@@ -24,7 +24,7 @@ static bool managesieve_login_settings_verify
 #endif
 
 static struct inet_listener_settings managesieve_login_inet_listeners_array[] = {
-    { "managesieve", "", 4190, FALSE },
+    { "sieve", "", 4190, FALSE },
 };
 static struct inet_listener_settings *managesieve_login_inet_listeners[] = {
 	&managesieve_login_inet_listeners_array[0]
@@ -36,7 +36,7 @@ static buffer_t managesieve_login_inet_listeners_buf = {
 
 struct service_settings managesieve_login_settings_service_settings = {
 	.name = "managesieve-login",
-	.protocol = "managesieve",
+	.protocol = "sieve",
 	.type = "login",
 	.executable = "managesieve-login",
 	.user = "$default_login_user",
