@@ -29,7 +29,7 @@
 #define CLIENT_MAX_BAD_COMMANDS 10
 
 const struct login_binary login_binary = {
-	.protocol = "managesieve",
+	.protocol = "sieve",
 	.process_name = "managesieve-login",
 	.default_port = 4190
 };
