@@ -5,9 +5,9 @@
 #include "str.h"
 #include "strfuncs.h"
 #include "str-sanitize.h"
+#include "unichar.h"
+#include "mail-deliver.h"
 #include "mail-storage.h"
-#include "mail-namespace.h"
-#include "imap-utf7.h"
 
 #include "sieve-code.h"
 #include "sieve-extensions.h"
@@ -332,88 +332,36 @@ static void act_store_print
 
 static bool act_store_mailbox_open
 (const struct sieve_action_exec_env *aenv, const char **mailbox,
- struct mailbox **box_r)
+ struct mailbox **box_r, const char **error_r)
 {
 	struct mail_storage **storage = &(aenv->exec_status->last_storage);
-	enum mailbox_flags flags =
-		MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_SAVEONLY |
-		MAILBOX_FLAG_POST_SESSION;
-	string_t *mailbox_mutf7;
-	struct mail_namespace *ns;
-	struct mailbox *box;
-	const char *folder;
-	enum mail_error error;
+	struct mail_deliver_save_open_context save_ctx;
+	const char *error;
 
 	*box_r = NULL;
 
-	/* Deliveries to INBOX must always succeed, regardless of ACLs */
-	if (strcasecmp(*mailbox, "INBOX") == 0) {
-		flags |= MAILBOX_FLAG_IGNORE_ACLS;
-	}
-
-	/* Convert utf-8 folder name to utf-7	
-	 */
-	mailbox_mutf7 = t_str_new(256);
-	if ( imap_utf8_to_utf7(*mailbox, mailbox_mutf7) < 0 ) {
+	if ( !uni_utf8_str_is_valid(*mailbox) ) {
 		/* FIXME: check utf-8 validity at compiletime/runtime */
-		sieve_result_error(aenv, "mailbox name not utf-8: %s", *mailbox);
+		*error_r = t_strdup_printf("mailbox name not utf-8: %s",
+					   *mailbox);
 		return FALSE;
 	}
 
-	folder = str_c(mailbox_mutf7);
-	ns = mail_namespace_find(aenv->scriptenv->user->namespaces, &folder);
-	if ( ns == NULL) {
-		sieve_result_error
-			(aenv, "failed to find namespace for mailbox '%s'", *mailbox);
-		return FALSE;
-	}
-	
-	if ( *folder == '\0' ) {
-		/* delivering to a namespace prefix means we actually want to
-		 * deliver to the INBOX instead
-		 */
-		folder = *mailbox = "INBOX";
-		flags |= MAILBOX_FLAG_IGNORE_ACLS;
+	memset(&save_ctx, 0, sizeof(save_ctx));
+	save_ctx.user = aenv->scriptenv->user;
+	save_ctx.lda_mailbox_autocreate = aenv->scriptenv->mailbox_autocreate;
+	save_ctx.lda_mailbox_autosubscribe = aenv->scriptenv->mailbox_autosubscribe;
 
-		ns = mail_namespace_find_inbox(aenv->scriptenv->user->namespaces);
-	}
-
-	/* First attempt at opening the box */
-	*box_r = box = mailbox_alloc(ns->list, folder, flags);
-	if ( mailbox_open(box) == 0 ) {
-		/* Success */
-		return TRUE;
-	}
-
-	/* Failed */
-
-	*storage = mailbox_get_storage(box);
-	(void)mail_storage_get_last_error(*storage, &error);
-	
-	/* Only continue when the mailbox is missing and when we are allowed to
-	 * create it.
-	 */
-	if ( error != MAIL_ERROR_NOTFOUND || !aenv->scriptenv->mailbox_autocreate )
-		return FALSE;
-
-	/* Try creating it. */
-	if ( mailbox_create(box, NULL, FALSE) < 0 ) {
-		(void)mail_storage_get_last_error(*storage, &error);
-		if (error != MAIL_ERROR_EXISTS)
-			return FALSE;
-	}
-
-	/* Subscribe to it if required */
-	if ( aenv->scriptenv->mailbox_autosubscribe ) {
-		(void)mailbox_list_set_subscribed(ns->list, folder, TRUE);
-	}
-
-	/* Try opening again */
-	if ( mailbox_sync(box, 0) < 0 ) {
-		/* Failed definitively */
+	if (mail_deliver_save_open(&save_ctx, *mailbox, box_r, &error) < 0) {
+		*error_r = t_strdup_printf("failed to save mail to mailbox '%s': %s",
+					   *mailbox, error);
 		return FALSE;
 	}
 
+	/* FIXME: is box freed too early for this? is it even useful to update
+	   this name now that box is set? */
+	*mailbox = mailbox_get_vname(*box_r);
+	*storage = mailbox_get_storage(*box_r);
 	return TRUE;
 }
 
@@ -427,6 +375,7 @@ static bool act_store_start
 	struct act_store_transaction *trans;
 	struct mailbox *box = NULL;
 	pool_t pool = sieve_result_pool(aenv->result);
+	const char *error = NULL;
 	bool disabled = FALSE, redundant = FALSE, open_failed = FALSE;
 
 	/* If context is NULL, the store action is the result of (implicit) keep */	
@@ -441,7 +390,7 @@ static bool act_store_start
 	 * to NULL. This implementation will then skip actually storing the message.
 	 */
 	if ( senv->user != NULL ) {
-		if ( !act_store_mailbox_open(aenv, &ctx->mailbox, &box) ) {
+		if ( !act_store_mailbox_open(aenv, &ctx->mailbox, &box, &error) ) {
 			open_failed = TRUE;
 
 		/* Check whether we are trying to store the message in the folder it
@@ -467,8 +416,8 @@ static bool act_store_start
 	trans->redundant = redundant;
 	trans->error_code = MAIL_ERROR_NONE;
 
-	if ( open_failed )
-		sieve_act_store_get_storage_error(aenv, trans);
+	if ( open_failed && error != NULL )
+		trans->error = p_strdup(sieve_result_pool(aenv->result), error);
 
 	*tr_context = (void *)trans;
 
