@@ -44,6 +44,7 @@ struct service_settings managesieve_settings_service_settings = {
 	.process_limit = 0,
 	.client_limit = 1,
 	.service_count = 1,
+	.idle_kill = 0,
 	.vsz_limit = -1U,
 
 	.unix_listeners = { { &managesieve_unix_listeners_buf,

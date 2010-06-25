@@ -51,6 +51,7 @@ struct service_settings managesieve_login_settings_service_settings = {
 	.process_limit = 0,
 	.client_limit = 0,
 	.service_count = 1,
+	.idle_kill = 0,
 	.vsz_limit = 64,
 
 	.unix_listeners = ARRAY_INIT,
