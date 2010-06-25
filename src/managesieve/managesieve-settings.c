@@ -17,7 +17,7 @@ static bool managesieve_settings_verify(void *_set, pool_t pool,
 
 /* <settings checks> */
 static struct file_listener_settings managesieve_unix_listeners_array[] = {
-	{ "login/managesieve", 0666, "", "" }
+	{ "login/sieve", 0666, "", "" }
 };
 static struct file_listener_settings *managesieve_unix_listeners[] = {
 	&managesieve_unix_listeners_array[0]
