@@ -13,11 +13,13 @@ Next (in order of descending priority/precedence):
 * Cleanup the test suite
 	- Make uniform command implementations
 	- Cleanup test scripts
-* Improve error handling. 
+* Improve error handling and logging
 	- Detect permission errors when writing global script binaries and advise the 
 	  administrator on using sievec to precompile the scripts.
 	- Avoid reporting user-caused errors to the master log.
-	- Review error handling; add more warning/info/debug messages where useful.
+	- Review logging and error handling; add more warning/info/debug messages where useful.
+	- Improve logging of script execution (particularly what is currently executed;
+	  a promptly compiled script or the stored binary).
 * Update include extension to latest draft:
 	- Implement required ManageSieve behavior
 * Unfinished new extensions:
