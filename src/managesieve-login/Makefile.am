@@ -15,8 +15,9 @@ settings_LTLIBRARIES = \
 	libmanagesieve_login_settings.la
 
 libmanagesieve_login_settings_la_SOURCES = \
-	managesieve-login-settings.c
-libmanagesieve_login_settings_la_CFLAGS = $(AM_CFLAGS) -D_CONFIG_PLUGIN -DPKG_LIBEXECDIR=\""$(dovecot_pkglibexecdir)"\"
+	managesieve-login-settings-plugin.c
+libmanagesieve_login_settings_la_CFLAGS = \
+	$(AM_CFLAGS) $(LIBDOVECOT_CONFIG_INCLUDE) -DPKG_LIBEXECDIR=\""$(dovecot_pkglibexecdir)"\"
 
 libs = \
 	$(top_srcdir)/src/lib-managesieve/libmanagesieve.a
@@ -34,4 +35,5 @@ noinst_HEADERS = \
 	client.h \
 	client-authenticate.h \
 	managesieve-login-settings.h \
+	managesieve-login-settings-plugin.h \
 	managesieve-proxy.h

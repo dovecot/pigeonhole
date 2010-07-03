@@ -13,6 +13,7 @@ struct managesieve_login_settings {
 extern const struct setting_parser_info *managesieve_login_settings_set_roots[];
 
 #ifdef _CONFIG_PLUGIN
+void managesieve_login_settings_init(void);
 void managesieve_login_settings_deinit(void);
 #endif
 
