@@ -132,11 +132,6 @@ void managesieve_capabilities_dump(void)
 
 	svinst = sieve_init(&sieve_env, (void *) global_plugin_settings, FALSE);
 
-	extensions = plugin_settings_get(global_plugin_settings, "sieve_extensions");
-	if ( extensions != NULL ) {
-		sieve_set_extensions(svinst, extensions);
-	}
-
 	/* Dump capabilities */
 
 	notify_cap = sieve_get_capabilities(svinst, "notify");

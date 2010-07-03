@@ -111,7 +111,7 @@ struct client *client_create
 	const struct managesieve_settings *set)
 {
 	struct client *client;
-	const char *ident, *extensions;
+	const char *ident;
 	struct sieve_instance *svinst;
 	struct sieve_storage *storage;
 
@@ -123,11 +123,6 @@ struct client *client_create
 	/* Initialize Sieve instance */
 
 	svinst = sieve_init(&managesieve_sieve_env, (void *) user, set->mail_debug);
-
-	extensions = mail_user_plugin_getenv(user, "sieve_extensions");
-	if ( extensions != NULL ) {
-		sieve_set_extensions(svinst, extensions);
-	}
 
 	/* Get Sieve storage */
 

@@ -9,6 +9,7 @@
 
 #include "sieve-common.h"
 #include "sieve-error.h"
+#include "sieve-settings.h"
 #include "sieve-extensions.h"
 
 /*
@@ -178,6 +179,7 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 	unsigned int i;	
 	struct sieve_extension_registry *ext_reg = 
 		p_new(svinst->pool, struct sieve_extension_registry, 1);
+	const char *extensions;
 
 	svinst->ext_reg = ext_reg;
 
@@ -230,8 +232,13 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 	}
 #endif
 
+	/* Use sieve_extensions if set */
+
+	if ( (extensions=sieve_setting_get(svinst, "sieve_extensions")) != NULL )
+		sieve_extensions_set_string(svinst, extensions);
+
 	/* More extensions can be added through plugins */
-	
+
 	return TRUE;
 }
 

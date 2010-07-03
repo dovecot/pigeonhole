@@ -519,7 +519,6 @@ static int lda_sieve_run
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
-	const char *extensions = NULL;
 	bool debug = mdctx->dest_user->mail_debug;
 	int ret = 0;
 
@@ -528,12 +527,6 @@ static int lda_sieve_run
 	/* Initialize Sieve engine */
 	svinst = sieve_init(&lda_sieve_env, mdctx->dest_user, debug);
 	
-	extensions = mail_user_plugin_getenv
-		(mdctx->dest_user, "sieve_extensions");
-	if ( extensions != NULL ) {
-		sieve_set_extensions(svinst, extensions);
-	}
-
 	/* Initialize */
 
 	memset(&srctx, 0, sizeof(srctx));
