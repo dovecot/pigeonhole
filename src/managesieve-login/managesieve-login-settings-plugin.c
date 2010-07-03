@@ -28,7 +28,7 @@ static void managesieve_login_config_parser_begin(struct config_parser_context *
 void managesieve_login_settings_init(struct module *module ATTR_UNUSED)
 {
 	next_hook_config_parser_begin = hook_config_parser_begin;
-	//hook_config_parser_begin = managesieve_login_config_parser_begin;
+	hook_config_parser_begin = managesieve_login_config_parser_begin;
 }
 
 void managesieve_login_settings_deinit(void)
@@ -196,9 +196,11 @@ static void managesieve_login_config_parser_begin(struct config_parser_context *
 		}
 	}
 
+/*	Currently fails and makes doveconf go berserk 
+
 	if ( capability_sieve != NULL )
 		managesieve_login_config_set(ctx, "managesieve_sieve_capability", capability_sieve);
 
 	if ( capability_notify != NULL )
-		managesieve_login_config_set(ctx, "managesieve_notify_capability", capability_notify);
+		managesieve_login_config_set(ctx, "managesieve_notify_capability", capability_notify);*/
 }

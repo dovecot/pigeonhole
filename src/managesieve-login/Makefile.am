@@ -15,7 +15,9 @@ settings_LTLIBRARIES = \
 	libmanagesieve_login_settings.la
 
 libmanagesieve_login_settings_la_SOURCES = \
+	managesieve-login-settings.c \
 	managesieve-login-settings-plugin.c
+
 libmanagesieve_login_settings_la_CFLAGS = \
 	$(AM_CFLAGS) $(LIBDOVECOT_CONFIG_INCLUDE) -DPKG_LIBEXECDIR=\""$(dovecot_pkglibexecdir)"\"
 
