@@ -5,6 +5,7 @@
 #include "compat.h"
 #include "unichar.h"
 #include "array.h"
+#include "abspath.h"
 #include "istream.h"
 #include "eacces-error.h"
 
@@ -163,9 +164,11 @@ struct sieve_script *sieve_script_init
 		if ( (ret=lstat(path, &st)) < 0 ) {
 			switch ( errno ) {
 			case ENOENT:
-				if ( exists_r == NULL ) 
+				if ( exists_r == NULL ) {
 					sieve_error(ehandler, basename, "sieve script does not exist");
-				else
+					if ( svinst->debug )
+						sieve_sys_debug("script file %s not found", t_abspath(path));
+				} else
 					*exists_r = FALSE;
 				break;
 			case EACCES:

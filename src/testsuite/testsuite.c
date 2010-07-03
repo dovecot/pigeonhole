@@ -123,8 +123,6 @@ int main(int argc, char **argv)
 
 	user = getenv("USER");
 
-	sieve_tool_init(FALSE);
-
 	t_array_init(&plugins, 4);
 
 	/* Parse arguments */
@@ -202,7 +200,7 @@ int main(int argc, char **argv)
 	/* Initialize testsuite */
 	testsuite_settings_init();
 
-	sieve_tool_sieve_init(&testsuite_sieve_env, debug);
+	sieve_tool_init(&testsuite_sieve_env, NULL, debug);
 	sieve_tool_load_plugins(&plugins);
 	sieve_extensions_set_string(sieve_instance, extensions);
 	testsuite_init(sieve_instance, log_stdout);

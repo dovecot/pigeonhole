@@ -3,6 +3,9 @@
 
 #include "lib.h"
 #include "array.h"
+#include "master-service.h"
+#include "master-service-settings.h"
+#include "mail-storage-service.h"
 
 #include "sieve.h"
 #include "sieve-extensions.h"
@@ -39,62 +42,87 @@ static void print_help(void)
 
 int main(int argc, char **argv) 
 {
+	enum master_service_flags service_flags =
+		MASTER_SERVICE_FLAG_STANDALONE |
+		MASTER_SERVICE_FLAG_KEEP_CONFIG_OPEN;
+	enum mail_storage_service_flags storage_service_flags =
+		MAIL_STORAGE_SERVICE_FLAG_NO_CHDIR |
+		MAIL_STORAGE_SERVICE_FLAG_NO_LOG_INIT;
+	struct mail_storage_service_ctx *storage_service;
+	struct mail_storage_service_user *service_user;
+	struct mail_storage_service_input service_input;
+	struct mail_user *mail_user_dovecot = NULL;
 	ARRAY_TYPE(const_string) plugins;
-	int i;
 	struct stat st;
 	struct sieve_binary *sbin;
 	bool dump = FALSE;
-	const char *scriptfile, *outfile, *extensions;
+	const char *scriptfile, *outfile, *extensions, *username;
+	const char *errstr;
 	int exit_status = EXIT_SUCCESS;
+	int c;
 		
-	sieve_tool_init(TRUE);
+	master_service = master_service_init("sievec", 
+		service_flags, &argc, &argv, "dx:P:");
 
 	t_array_init(&plugins, 4);	
 		
 	scriptfile = outfile = extensions = NULL;
-	for (i = 1; i < argc; i++) {
-		if (strcmp(argv[i], "-d") == 0) {
+	username = getenv("USER");
+	while ((c = master_getopt(master_service)) > 0) {
+		switch (c) {
+		case 'd':
 			/* dump file */
 			dump = TRUE;
-		} else if (strcmp(argv[i], "-x") == 0) {
+			break;
+		case 'x':
 			/* extensions */
-			i++;
-			if (i == argc) {
-				print_help();
-				i_fatal_status(EX_USAGE, "Missing -x argument");
-			}
-			extensions = argv[i];
-		} else if (strcmp(argv[i], "-P") == 0) {
-			const char *plugin;
+			extensions = optarg;
+			break;
+		case 'P': 
+			/* Plugin */
+			{
+				const char *plugin;			
 
-			/* scriptfile executed before main script */
-			i++;
-			if (i == argc) {
-				print_help();
-				i_fatal_status(EX_USAGE, "Missing -P argument");
+				plugin = t_strdup(optarg);
+				array_append(&plugins, &plugin, 1);
 			}
-
-			plugin = t_strdup(argv[i]);
-			array_append(&plugins, &plugin, 1);
-		} else if ( scriptfile == NULL ) {
-			scriptfile = argv[i];
-		} else if ( outfile == NULL ) {
-			outfile = argv[i];
-		} else {
+			break;
+		default:
 			print_help();
-			i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[i]);
+			i_fatal_status(EX_USAGE, "Unknown argument: %c", c);
+			break;
 		}
 	}
-	
-	if ( scriptfile == NULL ) {
+
+	if ( optind < argc ) {
+		scriptfile = argv[optind++];
+	} else { 
 		print_help();
 		i_fatal_status(EX_USAGE, "Missing <script-file> argument");
 	}
-	
-	if ( outfile == NULL && dump )
-		outfile = "-";	
 
-	sieve_tool_sieve_init(NULL, FALSE);
+	if ( optind < argc ) {
+		outfile = argv[optind++];
+	} else if ( dump ) {
+		outfile = "-";
+	}
+
+	master_service_init_finish(master_service);
+
+	memset(&service_input, 0, sizeof(service_input));
+	service_input.module = "sievec";
+	service_input.service = "sievec";
+	service_input.username = username;
+
+	storage_service = mail_storage_service_init
+		(master_service, NULL, storage_service_flags);
+	if (mail_storage_service_lookup_next(storage_service, &service_input,
+					     &service_user, &mail_user_dovecot, &errstr) <= 0)
+		i_fatal("%s", errstr);
+
+	/* Initialize Sieve */
+
+	sieve_tool_init(NULL, (void *) mail_user_dovecot, FALSE);
 
 	if ( array_count(&plugins) > 0 ) {
 		sieve_tool_load_plugins(&plugins);
@@ -177,6 +205,13 @@ int main(int argc, char **argv)
 	}
 		
 	sieve_tool_deinit();
+
+	if ( mail_user_dovecot != NULL )
+		mail_user_unref(&mail_user_dovecot);
+
+	mail_storage_service_user_free(&service_user);
+	mail_storage_service_deinit(&storage_service);
+	master_service_deinit(&master_service);
 
 	return exit_status;
 }

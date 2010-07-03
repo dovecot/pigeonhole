@@ -9,6 +9,7 @@
 #include "hostpid.h"
 #include "dict.h"
 #include "mail-storage.h"
+#include "mail-user.h"
 
 #include "sieve.h"
 #include "sieve-plugins.h"
@@ -25,8 +26,6 @@
  * Global state
  */
 
-static struct ioloop *ioloop;
-
 /* Sieve instance */
 
 struct sieve_instance *sieve_instance;
@@ -36,15 +35,29 @@ struct sieve_instance *sieve_instance;
  */
 
 const char *sieve_tool_get_setting
-(void *context ATTR_UNUSED, const char *identifier)
+(void *context, const char *identifier)
 {
-	return getenv(t_str_ucase(identifier));
+	struct mail_user *mail_user = (struct mail_user *) context;
+
+	if ( mail_user == NULL )
+		return NULL;
+
+	return mail_user_plugin_getenv(mail_user, identifier);
 }
 
 const char *sieve_tool_get_homedir
-(void *context ATTR_UNUSED)
+(void *context)
 {
-	return getenv("HOME");
+	struct mail_user *mail_user = (struct mail_user *) context;
+	const char *home = NULL;
+
+	if ( mail_user == NULL )
+		return NULL;
+
+	if ( mail_user_get_home(mail_user, &home) <= 0 )
+		return NULL;
+
+	return home;
 }
 
 const struct sieve_environment sieve_tool_sieve_env = {
@@ -53,53 +66,15 @@ const struct sieve_environment sieve_tool_sieve_env = {
 };
 
 /*
- * Signal handlers
- */
-
-static void sig_die(const siginfo_t *si, void *context ATTR_UNUSED)
-{
-	/* warn about being killed because of some signal, except SIGINT (^C)
-	 * which is too common at least while testing :) 
-	 */
-	if (si->si_signo != SIGINT) {
-		/* FIXME: strange error for a command line tool */
-		i_warning("Killed with signal %d (by pid=%s uid=%s code=%s)",
- 			si->si_signo, dec2str(si->si_pid),
-			dec2str(si->si_uid),
-			lib_signal_code_to_str(si->si_signo, si->si_code));
-	}
-	io_loop_stop(current_ioloop);
-}
-
-/*
  * Initialization
  */
 
-/* HACK */
-static bool _init_lib = FALSE;
-
-void sieve_tool_init(bool init_lib) 
-{
-	_init_lib = init_lib;
-
-	if ( _init_lib ) {
-		lib_init();
-
-		ioloop = io_loop_create();
-
-		lib_signals_init();
-		lib_signals_set_handler(SIGINT, TRUE, sig_die, NULL);
-		lib_signals_set_handler(SIGTERM, TRUE, sig_die, NULL);
-		lib_signals_ignore(SIGPIPE, TRUE);
-		lib_signals_ignore(SIGALRM, FALSE);
-	}
-}
-
-void sieve_tool_sieve_init(const struct sieve_environment *env, bool debug)
+void sieve_tool_init
+(const struct sieve_environment *env, void *context, bool debug)
 {
 	if ( env == NULL ) env = &sieve_tool_sieve_env;
 
-	if ( (sieve_instance=sieve_init(env, NULL, debug)) == NULL )
+	if ( (sieve_instance=sieve_init(env, context, debug)) == NULL )
 		i_fatal("failed to initialize sieve implementation\n");
 }
 
@@ -107,13 +82,6 @@ void sieve_tool_deinit(void)
 {
 	sieve_deinit(&sieve_instance);
 
-	if ( _init_lib ) {
-		lib_signals_deinit();
-	
-		io_loop_destroy(&ioloop);
-
-		lib_deinit();
-	}
 }
 
 
@@ -201,7 +169,7 @@ struct sieve_binary *sieve_tool_script_compile
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	if ( (sbin = sieve_compile(sieve_instance, filename, name, ehandler)) == NULL )
-		i_error("failed to compile sieve script '%s'\n", filename);
+		i_error("failed to compile sieve script '%s'", filename);
 
 	sieve_error_handler_unref(&ehandler);
 		
@@ -218,7 +186,7 @@ struct sieve_binary *sieve_tool_script_open(const char *filename)
 
 	if ( (sbin = sieve_open(sieve_instance, filename, NULL, ehandler, NULL)) == NULL ) {
 		sieve_error_handler_unref(&ehandler);
-		i_fatal("Failed to compile sieve script\n");
+		i_fatal("Failed to compile sieve script");
 	}
 
 	sieve_error_handler_unref(&ehandler);
