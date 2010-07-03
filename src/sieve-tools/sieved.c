@@ -42,8 +42,7 @@ static void print_help(void)
 int main(int argc, char **argv) 
 {
 	enum master_service_flags service_flags =
-		MASTER_SERVICE_FLAG_STANDALONE |
-		MASTER_SERVICE_FLAG_KEEP_CONFIG_OPEN;
+		MASTER_SERVICE_FLAG_STANDALONE;
 	enum mail_storage_service_flags storage_service_flags =
 		MAIL_STORAGE_SERVICE_FLAG_NO_CHDIR |
 		MAIL_STORAGE_SERVICE_FLAG_NO_LOG_INIT;
