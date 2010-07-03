@@ -72,6 +72,9 @@ static void client_send_capabilities(struct client *client)
 			msieve_client->set->managesieve_implementation_string, "\"\r\n", NULL));
 		client_send_raw(client, t_strconcat("\"SIEVE\" \"", 
 			msieve_client->set->managesieve_sieve_capability, "\"\r\n", NULL));
+		if ( msieve_client->set->managesieve_notify_capability != NULL )
+			client_send_raw(client, t_strconcat("\"NOTIFY\" \"", 
+				msieve_client->set->managesieve_notify_capability, "\"\r\n", NULL));
 		client_send_raw
 			(client, t_strconcat("\"SASL\" \"", saslcap, "\"\r\n", NULL));
 
