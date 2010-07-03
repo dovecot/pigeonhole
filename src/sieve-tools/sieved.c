@@ -6,6 +6,7 @@
 #include "master-service.h"
 #include "master-service-settings.h"
 #include "mail-storage-service.h"
+#include "mail-user.h"
 
 #include "sieve.h"
 #include "sieve-extensions.h"
