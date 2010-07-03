@@ -133,8 +133,9 @@ static bool capability_dump(void)
 
 		env_put("DUMP_CAPABILITY=1");
 
-		argv[0] = PKG_LIBEXECDIR"/managesieve"; /* BAD */
-		argv[1] = NULL;
+		argv[0] = PKG_LIBEXECDIR"/managesieve";
+		argv[1] = "-k";
+		argv[2] = NULL;
 		execv_const(argv[0], argv);
 
 		i_fatal("managesieve-login: dump-capability execv(%s) failed: %m", argv[0]);
