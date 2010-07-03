@@ -122,7 +122,7 @@ void managesieve_capabilities_dump(void)
 {
 	const struct plugin_settings *global_plugin_settings;
 	struct sieve_instance *svinst;
-	const char *extensions, *notify_cap;
+	const char *notify_cap;
 	
 	/* Read plugin settings */
 
