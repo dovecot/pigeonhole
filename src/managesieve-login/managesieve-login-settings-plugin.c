@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sysexits.h>
+#include <stdlib.h>
 
 typedef enum { CAP_SIEVE, CAP_NOTIFY } capability_type_t;
 
@@ -104,6 +105,9 @@ static bool capability_dump(void)
 	ssize_t ret;
 	unsigned int pos;
 	pid_t pid;
+
+	if ( getenv("DUMP_CAPABILITY") != NULL )
+		return TRUE;
 
 	if ( pipe(fd) < 0 ) {
 		i_error("managesieve-login: dump-capability pipe() failed: %m");
@@ -196,11 +200,9 @@ static void managesieve_login_config_parser_begin(struct config_parser_context *
 		}
 	}
 
-/*	Currently fails and makes doveconf go berserk 
-
 	if ( capability_sieve != NULL )
 		managesieve_login_config_set(ctx, "managesieve_sieve_capability", capability_sieve);
 
 	if ( capability_notify != NULL )
-		managesieve_login_config_set(ctx, "managesieve_notify_capability", capability_notify);*/
+		managesieve_login_config_set(ctx, "managesieve_notify_capability", capability_notify);
 }
