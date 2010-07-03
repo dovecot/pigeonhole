@@ -189,8 +189,7 @@ static bool capability_dump(void)
 static void managesieve_login_config_set
 (struct config_parser_context *ctx, const char *key, const char *value)
 {
-	config_apply_line(ctx, key, 
-		t_strdup_printf("service/managesieve-login/%s=%s", key, value), NULL);
+	config_apply_line(ctx, key, t_strdup_printf("%s=%s", key, value), NULL);
 }
 
 static void managesieve_login_config_parser_begin(struct config_parser_context *ctx)
