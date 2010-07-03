@@ -4,8 +4,6 @@ Current activities:
 	- Improve trace debugging towards something more intuitively readable.
 	- Give trace debugging multiple levels of verbosity (e.g. to include more 
     messy output like value matching).
-* Implement dynamic capability reporting at login.
-	- Fix final issues
 
 Next (in order of descending priority/precedence):
 
