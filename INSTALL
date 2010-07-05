@@ -39,7 +39,7 @@ Pigeonhole build:
     external plugins. The default is not to install development headers.
 
   --with-unfinished-features=no
-	  Controls whether unfinished features and extensions are built. Enabling this
+	Controls whether unfinished features and extensions are built. Enabling this
     will enable the compilation of code that is considered unfinished and highly
     experimental and may therefore introduce bugs and unexpected behavior. 
     In fact, it may not compile at all. Enable this only when you are eager to
@@ -335,12 +335,15 @@ managesieve_implementation_string = Dovecot
   (e.g. 'Cyrus timsieved v2.2.13').
 
 managesieve_max_compile_errors = 5
-	The maximum number of compile errors that are returned to the client upon 
+  The maximum number of compile errors that are returned to the client upon 
   script upload or script verification.
 
 managesieve_sieve_capability =
-	The SIEVE capability reported by the ManageSieve service before 
-  authentication.
+managesieve_notify_capability =
+  Respectively the SIEVE and NOTIFY capabilities reported by the ManageSieve
+  service before authentication. If left unassigned these will be assigned
+  dynamically according to what the Sieve interpreter supports by default
+  (after login this may differ depending on the user).
 
 Additionally, the ManageSieve service uses the following settings from the
 plugin section of the config file. These settings are the ones used by the Sieve
@@ -389,7 +392,7 @@ service managesieve-login {
 }
 
 protocol sieve {
-  managesieve_sieve_capability = fileinto reject
+  managesieve_max_compile_errors = 10
 }
 
 # ***  conf.d/90-sieve.conf ***
