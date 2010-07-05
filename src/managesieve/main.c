@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if (IS_STANDALONE()) {
+	if (IS_STANDALONE() || getenv("DUMP_CAPABILITY") != NULL) {
 		service_flags |= MASTER_SERVICE_FLAG_STANDALONE |
 			MASTER_SERVICE_FLAG_STD_CLIENT;
 	} else {
