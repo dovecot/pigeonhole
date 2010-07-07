@@ -92,15 +92,19 @@ test "Fileinto missing folder" {
 		test_fail "execution failed";
 	}
 
-    if test_result_execute {
-        test_fail "execution of result should have failed";
-    }	
+	if test_result_execute {
+		test_fail "execution of result should have failed";
+	}
 
 	if test_error :count "gt" :comparator "i;ascii-numeric" "1" {
 		test_fail "too many runtime errors reported";
 	}
-	
-/*	if not test_error :index 1 :contains "number of redirect actions exceeds policy limit"{
+
+	if not allof (
+		test_error :index 1 :contains "failed to store into mailbox",
+		test_error :index 1 :contains "exist",
+		test_error :index 1 :contains "FROP") {
 		test_fail "unexpected error reported";
-	}*/
+	}
 }
+
