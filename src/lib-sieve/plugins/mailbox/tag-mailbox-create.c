@@ -125,13 +125,17 @@ static bool seff_mailbox_create_pre_execute
 	enum mail_error error;
 	
 	/* Check whether creation is necessary */
-	if ( trans->box == NULL || trans->redundant || trans->disabled )
+	if ( trans->box == NULL || trans->disabled )
 		return TRUE;
 
 	/* Check whether creation has a chance of working */
 	if ( trans->error_code != MAIL_ERROR_NONE && 
 		trans->error_code != MAIL_ERROR_NOTFOUND )
 		return FALSE;
+
+	trans->error = NULL;
+	trans->error_code = MAIL_ERROR_NONE;
+	
 
 	*storage = mailbox_get_storage(trans->box);
 
@@ -143,6 +147,7 @@ static bool seff_mailbox_create_pre_execute
 			return FALSE;
 		}
 	}
+
 	/* Subscribe to it if necessary */
 	if ( aenv->scriptenv->mailbox_autosubscribe ) {
 		(void)mailbox_list_set_subscribed

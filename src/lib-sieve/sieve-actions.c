@@ -331,8 +331,8 @@ static void act_store_print
 /* Action implementation */
 
 static bool act_store_mailbox_open
-(const struct sieve_action_exec_env *aenv, const char **mailbox,
- struct mailbox **box_r, const char **error_r)
+(const struct sieve_action_exec_env *aenv, const char *mailbox,
+	struct mailbox **box_r, const char **error_r)
 {
 	struct mail_storage **storage = &(aenv->exec_status->last_storage);
 	struct mail_deliver_save_open_context save_ctx;
@@ -340,10 +340,9 @@ static bool act_store_mailbox_open
 
 	*box_r = NULL;
 
-	if ( !uni_utf8_str_is_valid(*mailbox) ) {
+	if ( !uni_utf8_str_is_valid(mailbox) ) {
 		/* FIXME: check utf-8 validity at compiletime/runtime */
-		*error_r = t_strdup_printf("mailbox name not utf-8: %s",
-					   *mailbox);
+		*error_r = t_strdup_printf("mailbox name not utf-8: %s", mailbox);
 		return FALSE;
 	}
 
@@ -352,15 +351,11 @@ static bool act_store_mailbox_open
 	save_ctx.lda_mailbox_autocreate = aenv->scriptenv->mailbox_autocreate;
 	save_ctx.lda_mailbox_autosubscribe = aenv->scriptenv->mailbox_autosubscribe;
 
-	if (mail_deliver_save_open(&save_ctx, *mailbox, box_r, &error) < 0) {
-		*error_r = t_strdup_printf("failed to save mail to mailbox '%s': %s",
-					   *mailbox, error);
+	if (mail_deliver_save_open(&save_ctx, mailbox, box_r, &error) < 0) {
+		*error_r = error;
 		return FALSE;
 	}
 
-	/* FIXME: is box freed too early for this? is it even useful to update
-	   this name now that box is set? */
-	*mailbox = mailbox_get_vname(*box_r);
 	*storage = mailbox_get_storage(*box_r);
 	return TRUE;
 }
@@ -371,12 +366,11 @@ static bool act_store_start
 {  
 	struct act_store_context *ctx = (struct act_store_context *) action->context;
 	const struct sieve_script_env *senv = aenv->scriptenv;
-	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct act_store_transaction *trans;
 	struct mailbox *box = NULL;
 	pool_t pool = sieve_result_pool(aenv->result);
 	const char *error = NULL;
-	bool disabled = FALSE, redundant = FALSE, open_failed = FALSE;
+	bool disabled = FALSE, open_failed = FALSE;
 
 	/* If context is NULL, the store action is the result of (implicit) keep */	
 	if ( ctx == NULL ) {
@@ -390,16 +384,8 @@ static bool act_store_start
 	 * to NULL. This implementation will then skip actually storing the message.
 	 */
 	if ( senv->user != NULL ) {
-		if ( !act_store_mailbox_open(aenv, &ctx->mailbox, &box, &error) ) {
+		if ( !act_store_mailbox_open(aenv, ctx->mailbox, &box, &error) ) {
 			open_failed = TRUE;
-
-		/* Check whether we are trying to store the message in the folder it
-		 * originates from. In that case we skip actually storing it.
-		 */
-		} else if ( mailbox_backends_equal(box, msgdata->mail->box) ) {
-			mailbox_free(&box);
-			box = NULL;
-			redundant = TRUE;
 		}
 	} else {
 		disabled = TRUE;
@@ -413,11 +399,14 @@ static bool act_store_start
 	trans->flags = 0;
 
 	trans->disabled = disabled;
-	trans->redundant = redundant;
-	trans->error_code = MAIL_ERROR_NONE;
 
-	if ( open_failed && error != NULL )
-		trans->error = p_strdup(sieve_result_pool(aenv->result), error);
+	if ( open_failed  ) {
+		trans->error = error;
+		(void)mail_storage_get_last_error
+			(mailbox_get_storage(trans->box), &trans->error_code);
+	} else {
+		trans->error_code = MAIL_ERROR_NONE;
+	}
 
 	*tr_context = (void *)trans;
 
@@ -464,10 +453,16 @@ static bool act_store_execute
 	/* Check whether we need to do anything */
 	if ( trans->disabled ) return TRUE;
 
+	/* Exit early if mailbox is not available */
+	if ( trans->box == NULL || trans->error_code != MAIL_ERROR_NONE ) 
+		return FALSE;
+
 	/* If the message originates from the target mailbox, only update the flags 
 	 * and keywords 
 	 */
-	if ( trans->redundant ) {
+	if ( mailbox_backends_equal(trans->box, msgdata->mail->box) ) {
+		trans->redundant = TRUE;
+
 		if ( trans->flags_altered ) {
 			keywords = act_store_keywords_create
 				(aenv, &trans->keywords, msgdata->mail->box);
@@ -482,10 +477,6 @@ static bool act_store_execute
 
 		return TRUE;
 	}
-
-	/* Exit early if mailbox is not available */
-	if ( trans->box == NULL ) 
-		return FALSE;
 
 	/* Mark attempt to store in default mailbox */
 	if ( strcmp(trans->context->mailbox, 
@@ -529,12 +520,15 @@ static bool act_store_execute
 }
 
 static void act_store_log_status
-(struct act_store_transaction *trans, 
-	const struct sieve_action_exec_env *aenv, bool rolled_back, bool status )
+(struct act_store_transaction *trans, const struct sieve_action_exec_env *aenv,
+	bool rolled_back, bool status )
 {
 	const char *mailbox_name;
-	
-	mailbox_name = str_sanitize(trans->context->mailbox, 128);
+
+	if ( trans->box != NULL )
+		mailbox_name = str_sanitize(mailbox_get_vname(trans->box), 128);
+	else
+		mailbox_name = str_sanitize(trans->context->mailbox, 128);
 
 	/* Store disabled? */
 	if ( trans->disabled ) {
