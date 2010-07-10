@@ -75,10 +75,10 @@ static const char *sieve_tool_sieve_get_setting
 	if ( tool->setting_callback != NULL )
 		return tool->setting_callback(tool->setting_callback_context, identifier);
 
-	if ( tool->mail_user == NULL )
+	if ( tool->mail_user_dovecot == NULL )
 		return NULL;
 
-	return mail_user_plugin_getenv(tool->mail_user, identifier);
+	return mail_user_plugin_getenv(tool->mail_user_dovecot, identifier);
 }
 
 static const char *sieve_tool_sieve_get_homedir
