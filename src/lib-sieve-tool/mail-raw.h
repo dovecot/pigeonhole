@@ -15,14 +15,16 @@ struct mail_raw {
 	struct mailbox_transaction_context *trans;
 };
 
-void mail_raw_init
-(struct master_service *service, const char *user, 
+struct mail_raw_user *mail_raw_user_init
+(struct master_service *service, const char *username,
 	struct mail_user *mail_user);
-void mail_raw_deinit(void);
+void mail_raw_user_deinit(struct mail_raw_user **_ruser);
 
-struct mail_raw *mail_raw_open_file(const char *path);
-struct mail_raw *mail_raw_open_data(string_t *mail_data);
-void mail_raw_close(struct mail_raw *mailr);
+struct mail_raw *mail_raw_open_file
+	(struct mail_raw_user *ruser, const char *path);
+struct mail_raw *mail_raw_open_data
+	(struct mail_raw_user *ruser, string_t *mail_data);
+void mail_raw_close(struct mail_raw **mailr);
 
 
 #endif /* __MAIL_RAW_H */

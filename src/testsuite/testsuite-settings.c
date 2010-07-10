@@ -18,10 +18,15 @@ struct testsuite_setting {
 
 static struct hash_table *settings; 
 
+static const char *testsuite_setting_get
+	(void *context, const char *identifier);
+
 void testsuite_settings_init(void)
 {
 	settings = hash_table_create
 		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
+
+	sieve_tool_set_setting_callback(sieve_tool, testsuite_setting_get, NULL);
 }
 
 void testsuite_settings_deinit(void)
@@ -44,7 +49,7 @@ void testsuite_settings_deinit(void)
 	hash_table_destroy(&settings);
 }
 
-const char *testsuite_setting_get
+static const char *testsuite_setting_get
 (void *context ATTR_UNUSED, const char *identifier)
 {
 	struct testsuite_setting *setting = (struct testsuite_setting *) 

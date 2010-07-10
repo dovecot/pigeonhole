@@ -7,11 +7,7 @@
 #include "env-util.h"
 #include "ostream.h"
 #include "hostpid.h"
-#include "mail-storage.h"
-#include "mail-namespace.h"
-#include "master-service.h"
-#include "master-service-settings.h"
-#include "mail-storage-service.h"
+#include "abspath.h"
 
 #include "sieve.h"
 #include "sieve-extensions.h"
@@ -20,7 +16,6 @@
 #include "sieve-result.h"
 #include "sieve-interpreter.h"
 
-#include "mail-raw.h"
 #include "sieve-tool.h"
 
 #include "testsuite-common.h"
@@ -45,15 +40,6 @@ const struct sieve_script_env *testsuite_scriptenv;
 
 #define DEFAULT_SENDMAIL_PATH "/usr/lib/sendmail"
 #define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
-
-/*
- * Testsuite Sieve environment
- */
-
-static const struct sieve_environment testsuite_sieve_env = {
-	sieve_tool_get_homedir,
-	testsuite_setting_get
-};
 
 /*
  * Testsuite execution
@@ -92,69 +78,32 @@ static int testsuite_run
 	return ret;
 }
 
-/* IEW.. YUCK.. and so forth.. */
-static const char *_get_cwd(void)
-{
-	static char cwd[PATH_MAX];
-	const char *result;
-
-	result = t_strdup(getcwd(cwd, sizeof(cwd)));
-
-	return result;
-}
-
 int main(int argc, char **argv) 
 {
-	enum mail_storage_service_flags service_flags = 0;
-	struct mail_storage_service_ctx *storage_service;
-	struct mail_storage_service_user *service_user;
-	struct mail_storage_service_input service_input;
-	struct mail_user *mail_user_dovecot;
-	const char *scriptfile, *dumpfile, *extensions; 
-	const char *user, *home, *errstr;
-	ARRAY_TYPE(const_string) plugins;
+	struct sieve_instance *svinst;
+	const char *scriptfile, *dumpfile; 
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
-	bool trace = FALSE, log_stdout = FALSE, debug = FALSE;
+	bool trace = FALSE, log_stdout = FALSE;
 	int ret, c;
 
-	master_service = master_service_init
-		("testsuite", MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "d:x:P:tED");
-
-	user = getenv("USER");
-
-	t_array_init(&plugins, 4);
+	sieve_tool = sieve_tool_init
+		("testsuite", &argc, &argv, "d:tEP:", TRUE);
 
 	/* Parse arguments */
-	scriptfile = dumpfile = extensions = NULL;
+	scriptfile = dumpfile = NULL;
 
-	while ((c = master_getopt(master_service)) > 0) {
+	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'd':
 			/* destination address */
 			dumpfile = optarg;
-			break;
-		case 'x':
-			/* destination address */
-			extensions = optarg;
-			break;
-		case 'P':
-			/* Plugin */
-			{
-				const char *plugin;
-
-				plugin = t_strdup(optarg);
-				array_append(&plugins, &plugin, 1);
-			}
 			break;
 		case 't':
 			trace = TRUE;
 			break;
 		case 'E':
 			log_stdout = TRUE;
-			break;
-		case 'D':
-			debug = TRUE;
 			break;
 		default:
 			print_help();
@@ -177,33 +126,12 @@ int main(int argc, char **argv)
 	}
 
 	/* Initialize mail user */
-	home = _get_cwd();
-	user = sieve_tool_get_user();
+	sieve_tool_set_homedir(sieve_tool, t_abspath(""));
 
-	env_put("DOVECONF_ENV=1");
-	env_put(t_strdup_printf("HOME=%s", home));
-	env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s", user));
-
-	master_service_init_finish(master_service);
-
-	memset(&service_input, 0, sizeof(service_input));
-	service_input.module = "testsuite";
-	service_input.service = "testsuite";
-	service_input.username = user;
-
-	storage_service = mail_storage_service_init
-		(master_service, NULL, service_flags);
-	if ( mail_storage_service_lookup_next(storage_service, &service_input,
-		&service_user, &mail_user_dovecot, &errstr) <= 0 )
-		i_fatal("%s", errstr);
-
-	/* Initialize testsuite */
+	svinst = sieve_tool_init_finish(sieve_tool);
+	
+	testsuite_init(svinst, log_stdout);
 	testsuite_settings_init();
-
-	sieve_tool_init(&testsuite_sieve_env, NULL, debug);
-	sieve_tool_load_plugins(&plugins);
-	sieve_extensions_set_string(sieve_instance, extensions);
-	testsuite_init(sieve_instance, log_stdout);
 
 	printf("Test case: %s:\n\n", scriptfile);
 
@@ -223,27 +151,22 @@ int main(int argc, char **argv)
 		("sieve_global_dir", t_strconcat(sieve_dir, "included-global", NULL));
 
 	/* Compile sieve script */
-	if ( (sbin = sieve_tool_script_compile(scriptfile, NULL)) != NULL ) {
+	if ( (sbin = sieve_tool_script_compile(svinst, scriptfile, NULL)) != NULL ) {
 		struct sieve_error_handler *ehandler;
 		struct sieve_script_env scriptenv;
 
 		/* Dump script */
 		sieve_tool_dump_binary_to(sbin, dumpfile);
 	
-		testsuite_mailstore_init(user, home, mail_user_dovecot);
-
-		if (master_service_set
-			(master_service, "mail_full_filesystem_access=yes") < 0)
-			i_unreached(); 
-
-		testsuite_message_init(master_service, user, mail_user_dovecot);
+		testsuite_mailstore_init();
+		testsuite_message_init();
 
 		memset(&scriptenv, 0, sizeof(scriptenv));
-		scriptenv.user = testsuite_mailstore_get_user();
+		scriptenv.user = sieve_tool_get_mail_user(sieve_tool);
 		scriptenv.default_mailbox = "INBOX";
 		scriptenv.hostname = "testsuite.example.com";
 		scriptenv.postmaster_address = "postmaster@example.com";
-		scriptenv.username = user;
+		scriptenv.username = sieve_tool_get_username(sieve_tool);
 		scriptenv.smtp_open = testsuite_smtp_open;
 		scriptenv.smtp_close = testsuite_smtp_close;
 		scriptenv.trace_stream = ( trace ? o_stream_create_fd(1, 0, FALSE) : NULL );
@@ -285,18 +208,11 @@ int main(int argc, char **argv)
 		testsuite_testcase_fail("failed to compile testcase script");
 	}
 
-	/* De-initialize mail user */
-	if ( mail_user_dovecot != NULL )
-		mail_user_unref(&mail_user_dovecot);
-
 	/* De-initialize testsuite */
 	testsuite_deinit();	
 	testsuite_settings_deinit();
-	sieve_tool_deinit();
 
-	mail_storage_service_user_free(&service_user);
-	mail_storage_service_deinit(&storage_service);
-	master_service_deinit(&master_service);
+	sieve_tool_deinit(&sieve_tool);
 
 	if ( !testsuite_testcase_result() )
 		return EXIT_FAILURE;

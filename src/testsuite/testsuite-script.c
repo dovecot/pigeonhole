@@ -37,6 +37,7 @@ void testsuite_script_deinit(void)
 
 static struct sieve_binary *_testsuite_script_compile(const char *script_path)
 {
+	struct sieve_instance *svinst = testsuite_sieve_instance;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
 
@@ -53,8 +54,8 @@ static struct sieve_binary *_testsuite_script_compile(const char *script_path)
 	testsuite_setting_set
 		("sieve_global_dir", t_strconcat(sieve_dir, "included-global", NULL));
 	
-	if ( (sbin = sieve_compile
-		(sieve_instance, script_path, NULL, testsuite_log_ehandler)) == NULL )
+	if ( (sbin = sieve_compile(svinst, script_path, NULL, testsuite_log_ehandler)) 
+		== NULL )
 		return NULL;
 
 	return sbin;
@@ -145,6 +146,7 @@ void testsuite_script_set_binary(struct sieve_binary *sbin)
 bool testsuite_script_multiscript
 (const struct sieve_runtime_env *renv, ARRAY_TYPE (const_string) *scriptfiles)
 {
+	struct sieve_instance *svinst = testsuite_sieve_instance;
 	struct sieve_script_env scriptenv;
 	struct sieve_multiscript *mscript;
 	const char *const *scripts;
@@ -169,8 +171,7 @@ bool testsuite_script_multiscript
 
 	/* Start execution */
 
-	mscript = sieve_multiscript_start_execute
-		(sieve_instance, renv->msgdata, &scriptenv);
+	mscript = sieve_multiscript_start_execute(svinst, renv->msgdata, &scriptenv);
 
 	/* Execute scripts before main script */
 

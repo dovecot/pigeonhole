@@ -8,11 +8,11 @@
 #include "master-service.h"
 
 #include "sieve-common.h"
+#include "sieve-tool.h"
 
 extern struct sieve_message_data testsuite_msgdata;
 
-void testsuite_message_init
-(struct master_service *service, const char *user, struct mail_user *mail_user);
+void testsuite_message_init(void);
 void testsuite_message_deinit(void);
 
 void testsuite_message_set_string

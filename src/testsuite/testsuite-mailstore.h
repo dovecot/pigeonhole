@@ -13,16 +13,10 @@
  * Initialization
  */
 
-void testsuite_mailstore_init
-	(const char *user, const char *home, struct mail_user *service_user);
+void testsuite_mailstore_init(void);
 void testsuite_mailstore_deinit(void);
 void testsuite_mailstore_reset(void);
 
-/* 
- * User
- */
-
-struct mail_user *testsuite_mailstore_get_user(void);
 
 /*
  * Mailbox Access

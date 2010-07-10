@@ -6,45 +6,81 @@
 
 #include "sieve-common.h"
 
-/* Functionality common to all Sieve command line tools. */
-
-/*
- * Sieve instance
+/* 
+ * Types
  */
 
-extern struct sieve_instance *sieve_instance;
+typedef const char *(*sieve_tool_setting_callback_t)
+	(void *context, const char *identifier);
 
-const char *sieve_tool_get_setting(void *context, const char *identifier);
-const char *sieve_tool_get_homedir(void *context);
+/*
+ * Global variables
+ */
 
-extern const struct sieve_environment sieve_tool_env;
+extern struct sieve_tool *sieve_tool;
 
 /*
  * Initialization
  */
 
-void sieve_tool_init
-	(const struct sieve_environment *env, void *context, bool debug);
-void sieve_tool_deinit(void);
+struct sieve_tool *sieve_tool_init
+	(const char *name, int *argc, char **argv[], const char *getopt_str,
+		bool no_config);
+
+int sieve_tool_getopt(struct sieve_tool *tool);
+
+struct sieve_instance *sieve_tool_init_finish(struct sieve_tool *tool);
+
+void sieve_tool_deinit(struct sieve_tool **_tool);
+
+/*
+ * Mail environment
+ */
+
+void sieve_tool_init_mail_user
+	(struct sieve_tool *tool, const char *mail_location);
+
+struct mail *sieve_tool_open_file_as_mail
+	(struct sieve_tool *tool, const char *path);
+struct mail *sieve_tool_open_data_as_mail
+	(struct sieve_tool *tool, string_t *mail_data);
+
+/*
+ * Accessors
+ */
+
+const char *sieve_tool_get_username
+	(struct sieve_tool *tool);
+const char *sieve_tool_get_homedir
+(struct sieve_tool *tool);
+struct mail_user *sieve_tool_get_mail_user
+	(struct sieve_tool *tool);
+
+/*
+ * Configuration
+ */
+
+void sieve_tool_set_homedir(struct sieve_tool *tool, const char *homedir);
+void sieve_tool_set_setting_callback
+	(struct sieve_tool *tool, sieve_tool_setting_callback_t callback,
+		void *context);
 
 /*
  * Commonly needed functionality
  */
 
-const char *sieve_tool_get_user(void);
-
 void sieve_tool_get_envelope_data
 	(struct mail *mail, const char **recipient, const char **sender);
-
-void sieve_tool_load_plugins(ARRAY_TYPE(const_string) *plugins);
 
 /*
  * Sieve script handling
  */
 
 struct sieve_binary *sieve_tool_script_compile
-	(const char *filename, const char *name);
-struct sieve_binary *sieve_tool_script_open(const char *filename);
-void sieve_tool_dump_binary_to(struct sieve_binary *sbin, const char *filename);
+	(struct sieve_instance *svinst, const char *filename, const char *name);
+struct sieve_binary *sieve_tool_script_open
+	(struct sieve_instance *svinst, const char *filename);
+void sieve_tool_dump_binary_to
+	(struct sieve_binary *sbin, const char *filename);
 
 #endif /* __SIEVE_TOOL_H */

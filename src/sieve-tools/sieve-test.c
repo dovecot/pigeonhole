@@ -18,7 +18,6 @@
 #include "sieve-binary.h"
 #include "sieve-extensions.h"
 
-#include "mail-raw.h"
 #include "sieve-tool.h"
 
 #include "sieve-ext-debug.h"
@@ -103,23 +102,11 @@ static void duplicate_mark
 
 int main(int argc, char **argv) 
 {
-	enum master_service_flags service_flags =
-		MASTER_SERVICE_FLAG_STANDALONE;
-	enum mail_storage_service_flags storage_service_flags =
-		MAIL_STORAGE_SERVICE_FLAG_NO_CHDIR |
-		MAIL_STORAGE_SERVICE_FLAG_NO_LOG_INIT;
-	struct mail_storage_service_ctx *storage_service;
-	struct mail_storage_service_user *service_user;
-	struct mail_storage_service_input service_input;
-	struct mail_user *mail_user_dovecot = NULL;
+	struct sieve_instance *svinst;
 	ARRAY_TYPE (const_string) scriptfiles;
-	ARRAY_TYPE (const_string) plugins;
 	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile, 
-		*mailloc, *extensions, *username; 
-	const char *errstr;
-	struct mail_raw *mailr;
-	struct mail_namespace_settings ns_set;
-	struct mail_namespace *ns = NULL;
+		*mailloc; 
+	struct mail *mail;
 	struct sieve_binary *main_sbin, *sbin = NULL;
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
@@ -127,21 +114,18 @@ int main(int argc, char **argv)
 	struct sieve_error_handler *ehandler;
 	struct ostream *teststream = NULL;
 	bool force_compile = FALSE, execute = FALSE;
-	bool debug = FALSE, trace = FALSE;
+	bool trace = FALSE;
 	int exit_status = EXIT_SUCCESS;
 	int ret, c;
 
-	master_service = master_service_init("sieve-test", 
-		service_flags, &argc, &argv, "r:f:m:d:l:x:s:P:eCtD");
+	sieve_tool = sieve_tool_init
+		("sieve-test", &argc, &argv, "r:f:m:d:l:s:eCtDP:x:u:", FALSE);
 
 	t_array_init(&scriptfiles, 16);
-	t_array_init(&plugins, 4);
 	
 	/* Parse arguments */
-	scriptfile = recipient = sender = mailbox = dumpfile = mailfile = mailloc = 
-		extensions = NULL;
-	username = getenv("USER");
-	while ((c = master_getopt(master_service)) > 0) {
+	scriptfile = recipient = sender = mailbox = dumpfile = mailfile = mailloc = NULL;
+	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'r':
 			/* destination address */
@@ -163,15 +147,6 @@ int main(int argc, char **argv)
 			/* mail location */
 			mailloc = optarg;
 			break;
-		case 'x':
-			/* extensions */
-			extensions = optarg;
-			break;
-		case 'u':
-			storage_service_flags |=
-				MAIL_STORAGE_SERVICE_FLAG_USERDB_LOOKUP;
-			username = optarg;
-			break;
 		case 's': 
 			/* scriptfile executed before main script */
 			{
@@ -179,15 +154,6 @@ int main(int argc, char **argv)
 
 				file = t_strdup(optarg);
 				array_append(&scriptfiles, &file, 1);
-			}
-			break;
-		case 'P': 
-			/* Plugin */
-			{
-				const char *plugin;			
-
-				plugin = t_strdup(optarg);
-				array_append(&plugins, &plugin, 1);
 			}
 			break;
 		case 'e':
@@ -198,9 +164,6 @@ int main(int argc, char **argv)
 			break;
 		case 't':
 			trace = TRUE;
-			break;
-		case 'D':
-			debug = TRUE;
 			break;
 		default:
 			print_help();
@@ -228,33 +191,11 @@ int main(int argc, char **argv)
 		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
 	}
 
-	master_service_init_finish(master_service);
+	/* Finish tool initialization */
+	svinst = sieve_tool_init_finish(sieve_tool);
 
-	memset(&service_input, 0, sizeof(service_input));
-	service_input.module = "sieve-test";
-	service_input.service = "sieve-test";
-	service_input.username = username;
-
-	storage_service = mail_storage_service_init
-		(master_service, NULL, storage_service_flags);
-	if (mail_storage_service_lookup_next(storage_service, &service_input,
-					     &service_user, &mail_user_dovecot, &errstr) <= 0)
-		i_fatal("%s", errstr);
-
-	/* Initialize Sieve */
-
-	sieve_tool_init(NULL, (void *) mail_user_dovecot, debug);
-
-	if ( array_count(&plugins) > 0 ) {
-		sieve_tool_load_plugins(&plugins);
-	}
-
-	if ( extensions != NULL ) {
-		sieve_set_extensions(sieve_instance, extensions);
-	}
-
-	/* Register tool-specific extensions */
-	(void) sieve_extension_register(sieve_instance, &debug_extension, TRUE);
+	/* Register debug extension */
+	(void) sieve_extension_register(svinst, &debug_extension, TRUE);
 
 	/* Create error handler */
 	ehandler = sieve_stderr_ehandler_create(0);
@@ -263,67 +204,39 @@ int main(int argc, char **argv)
 
 	/* Compile main sieve script */
 	if ( force_compile ) {
-		main_sbin = sieve_tool_script_compile(scriptfile, NULL);
+		main_sbin = sieve_tool_script_compile(svinst, scriptfile, NULL);
 		if ( main_sbin != NULL )
 			(void) sieve_save(main_sbin, NULL);
 	} else {
-		main_sbin = sieve_tool_script_open(scriptfile);
+		main_sbin = sieve_tool_script_open(svinst, scriptfile);
 	}
 
 	if ( main_sbin == NULL ) {
 		exit_status = EXIT_FAILURE;
 	} else {
-		struct mail_user *mail_user = NULL;
-
 		/* Dump script */
 		sieve_tool_dump_binary_to(main_sbin, dumpfile);
 	
 		/* Obtain mail namespaces from -l argument */
 		if ( mailloc != NULL ) {
-			const char *home, *errstr;
-
-			mail_user = mail_user_alloc
-				(username, mail_user_dovecot->set_info, mail_user_dovecot->unexpanded_set);
-
-			if ( mail_user_get_home(mail_user_dovecot, &home) > 0 ||
-				(home=getenv("HOME")) != NULL ) {
-				mail_user_set_home(mail_user, home);
-			}
-
-			if ( mail_user_init(mail_user, &errstr) < 0 )
-        		i_fatal("Test user initialization failed: %s", errstr);
-
-			memset(&ns_set, 0, sizeof(ns_set));
-			ns_set.location = mailloc;
-
-			ns = mail_namespaces_init_empty(mail_user);
-			ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
-			ns->set = &ns_set;
-
-			if ( mail_storage_create(ns, NULL, 0, &errstr) < 0 )
-		        i_fatal("Test storage creation failed: %s", errstr);
+			sieve_tool_init_mail_user(sieve_tool, mailloc);
 		}
 
-		if ( master_service_set
-			(master_service, "mail_full_filesystem_access=yes") < 0 )
-			i_unreached(); 
-
 		/* Initialize raw mail object */
-		mail_raw_init(master_service, username, mail_user_dovecot);
-		mailr = mail_raw_open_file(mailfile);
+		mail = sieve_tool_open_file_as_mail(sieve_tool, mailfile);
 
-		sieve_tool_get_envelope_data(mailr->mail, &recipient, &sender);
+		sieve_tool_get_envelope_data(mail, &recipient, &sender);
 
 		if ( mailbox == NULL )
 			mailbox = "INBOX";
 
 		/* Collect necessary message data */
 		memset(&msgdata, 0, sizeof(msgdata));
-		msgdata.mail = mailr->mail;
+		msgdata.mail = mail;
 		msgdata.return_path = sender;
 		msgdata.to_address = recipient;
-		msgdata.auth_user = username;
-		(void)mail_get_first_header(mailr->mail, "Message-ID", &msgdata.id);
+		msgdata.auth_user = sieve_tool_get_username(sieve_tool);
+		(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
 
 		/* Create stream for test and trace output */
 		if ( !execute || trace )
@@ -332,8 +245,8 @@ int main(int argc, char **argv)
 		/* Compose script environment */
 		memset(&scriptenv, 0, sizeof(scriptenv));
 		scriptenv.default_mailbox = "INBOX";
-		scriptenv.user = mail_user == NULL ? mail_user_dovecot : mail_user;
-		scriptenv.username = username;
+		scriptenv.user = sieve_tool_get_mail_user(sieve_tool);
+		scriptenv.username = sieve_tool_get_username(sieve_tool);
 		scriptenv.hostname = "host.example.com";
 		scriptenv.postmaster_address = "postmaster@example.com";
 		scriptenv.smtp_open = sieve_smtp_open;
@@ -368,10 +281,10 @@ int main(int argc, char **argv)
 
 			if ( execute )
 				mscript = sieve_multiscript_start_execute
-					(sieve_instance, &msgdata, &scriptenv);
+					(svinst, &msgdata, &scriptenv);
 			else
 				mscript = sieve_multiscript_start_test
-					(sieve_instance, &msgdata, &scriptenv, teststream);
+					(svinst, &msgdata, &scriptenv, teststream);
 		
 			/* Execute scripts sequentially */
 			sfiles = array_get(&scriptfiles, &count); 
@@ -386,11 +299,11 @@ int main(int argc, char **argv)
 		
 				/* Compile sieve script */
 				if ( force_compile ) {
-					sbin = sieve_tool_script_compile(sfiles[i], sfiles[i]);
+					sbin = sieve_tool_script_compile(svinst, sfiles[i], sfiles[i]);
 					if ( sbin != NULL )
 						(void) sieve_save(sbin, NULL);
 				} else {
-					sbin = sieve_tool_script_open(sfiles[i]);
+					sbin = sieve_tool_script_open(svinst, sfiles[i]);
 				}
 			
 				if ( sbin == NULL ) {
@@ -440,8 +353,9 @@ int main(int argc, char **argv)
 			exit_status = EXIT_FAILURE;
 			break;
 		default:
-			exit_status = EXIT_FAILURE;
 			i_info("final result: unrecognized return value?!");	
+			exit_status = EXIT_FAILURE;
+			break;
 		}
 
 		if ( teststream != NULL )
@@ -452,28 +366,13 @@ int main(int argc, char **argv)
 			sieve_close(&sbin);
 		if ( main_sbin != NULL ) 
 			sieve_close(&main_sbin);
-		
-		/* De-initialize raw mail object */
-		mail_raw_close(mailr);
-		mail_raw_deinit();
-
-		/* De-initialize mail user objects */
-		if ( mail_user != NULL )
-			mail_user_unref(&mail_user);
 	}
 	
 	/* Cleanup error handler */
 	sieve_error_handler_unref(&ehandler);
 	sieve_system_ehandler_reset();
 
-	sieve_tool_deinit();
-
-	if ( mail_user_dovecot != NULL )
-		mail_user_unref(&mail_user_dovecot);
-
-	mail_storage_service_user_free(&service_user);
-	mail_storage_service_deinit(&storage_service);
-	master_service_deinit(&master_service);
+	sieve_tool_deinit(&sieve_tool);
 	
 	return exit_status;
 }

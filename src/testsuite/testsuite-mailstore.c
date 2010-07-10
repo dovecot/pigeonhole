@@ -35,7 +35,6 @@ static void testsuite_mailstore_close(void);
  */
 
 static char *testsuite_mailstore_tmp = NULL;
-static struct mail_user *testsuite_mailstore_user = NULL;
 
 static char *testsuite_mailstore_folder = NULL;
 static struct mailbox *testsuite_mailstore_box = NULL;
@@ -46,14 +45,8 @@ static struct mail *testsuite_mailstore_mail = NULL;
  * Initialization
  */
 
-void testsuite_mailstore_init
-(const char *user, const char *home, struct mail_user *service_user)
+void testsuite_mailstore_init(void)
 {	
-	struct mail_namespace_settings ns_set;
-	struct mail_namespace *ns = NULL;
-	struct mail_user *mail_user;
-	const char *errstr;
-
 	testsuite_mailstore_tmp = i_strconcat
 		(testsuite_tmp_dir_get(), "/mailstore", NULL);
 
@@ -62,36 +55,13 @@ void testsuite_mailstore_init
 			testsuite_mailstore_tmp);		
 	}
 
-	mail_user = mail_user_alloc
-		(user, service_user->set_info, service_user->unexpanded_set);
-	mail_user_set_home(mail_user, home);
-
-	if ( mail_user_init(mail_user, &errstr) < 0 )
-		i_fatal("Test user initialization failed: %s", errstr);
-
-	memset(&ns_set, 0, sizeof(ns_set));
-	ns_set.location = t_strconcat("maildir:", testsuite_mailstore_tmp, NULL);
-	ns_set.inbox = TRUE;
-	ns_set.separator = ".";
-	ns_set.subscriptions = TRUE;
-
-	ns = mail_namespaces_init_empty(mail_user);
-	ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
-	ns->set = &ns_set;
-
-	if ( mail_storage_create(ns, NULL, 0, &errstr) < 0 )
-        i_fatal("Test storage creation failed: %s", errstr);
-
-	testsuite_mailstore_user = mail_user;
+	sieve_tool_init_mail_user
+		(sieve_tool, t_strconcat("maildir:", testsuite_mailstore_tmp, NULL));
 }
 
 void testsuite_mailstore_deinit(void)
 {
 	testsuite_mailstore_close();
-
-	/* De-initialize mail user object */
-	if ( testsuite_mailstore_user != NULL )
-		mail_user_unref(&testsuite_mailstore_user);
 
 	if ( unlink_directory(testsuite_mailstore_tmp, TRUE) < 0 ) {
 		i_warning("failed to remove temporary directory '%s': %m.",
@@ -109,15 +79,11 @@ void testsuite_mailstore_reset(void)
  * Mailbox Access
  */
 
-struct mail_user *testsuite_mailstore_get_user(void)
-{
-	return testsuite_mailstore_user;
-}
-
 bool testsuite_mailstore_mailbox_create
 (const struct sieve_runtime_env *renv ATTR_UNUSED, const char *folder)
 {
-	struct mail_namespace *ns = testsuite_mailstore_user->namespaces;
+	struct mail_user *mail_user = sieve_tool_get_mail_user(sieve_tool);
+	struct mail_namespace *ns = mail_user->namespaces;
 	struct mailbox *box;
 
 	box = mailbox_alloc(ns->list, folder, 0);
@@ -152,7 +118,8 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 	enum mailbox_flags flags =
 		MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_SAVEONLY |
 		MAILBOX_FLAG_POST_SESSION;
-	struct mail_namespace *ns = testsuite_mailstore_user->namespaces;
+	struct mail_user *mail_user = sieve_tool_get_mail_user(sieve_tool);
+	struct mail_namespace *ns = mail_user->namespaces;
 	struct mailbox *box;
 	struct mailbox_transaction_context *t;
 

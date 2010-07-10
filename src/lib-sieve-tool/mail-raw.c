@@ -16,6 +16,7 @@
 #include "safe-mkstemp.h"
 #include "close-keep-errno.h"
 #include "mkdir-parents.h"
+#include "abspath.h"
 #include "message-address.h"
 #include "mbox-from.h"
 #include "raw-storage.h"
@@ -50,11 +51,12 @@ static const char *wanted_headers[] = {
  * Global data
  */
 
-static struct mail_namespace *raw_ns;
-static struct mail_namespace_settings raw_ns_set;
-static struct mail_user *raw_mail_user;
+struct mail_raw_user {
+	struct mail_namespace *ns;;
+	struct mail_user *mail_user;
 
-char *raw_tmp_prefix;
+	char *tmp_prefix;
+};
 
 /*
  * Raw mail implementation
@@ -148,7 +150,7 @@ static struct istream *create_raw_stream
 
 	input_list[0] = input2; input_list[1] = NULL;
 	input = i_stream_create_seekable(input_list, MAIL_MAX_MEMORY_BUFFER,
-		seekable_fd_callback, raw_mail_user);
+		seekable_fd_callback, NULL);
 	i_stream_unref(&input2);
 	return input;
 }
@@ -157,39 +159,50 @@ static struct istream *create_raw_stream
  * Init/Deinit
  */
 
-void mail_raw_init
-(struct master_service *service, const char *user,
+struct mail_raw_user *mail_raw_user_init
+(struct master_service *service, const char *username,
 	struct mail_user *mail_user) 
 {
+	struct mail_raw_user *ruser;
+	struct mail_namespace_settings ns_set;
 	const char *errstr;
 	void **sets;
+
+	ruser = i_new(struct mail_raw_user, 1);
 	
 	sets = master_service_settings_get_others(service);
 
-	raw_mail_user = mail_user_alloc(user, mail_user->set_info, sets[0]);
-	mail_user_set_home(raw_mail_user, "/");
+	ruser->mail_user = mail_user_alloc(username, mail_user->set_info, sets[0]);
+	mail_user_set_home(ruser->mail_user, "/");
    
-	if (mail_user_init(raw_mail_user, &errstr) < 0)
+	if (mail_user_init(ruser->mail_user, &errstr) < 0)
 		i_fatal("Raw user initialization failed: %s", errstr);
 
-	memset(&raw_ns_set, 0, sizeof(raw_ns_set));
-	raw_ns_set.location = ":LAYOUT=none";
+	memset(&ns_set, 0, sizeof(ns_set));
+	ns_set.location = ":LAYOUT=none";
 
-	raw_ns = mail_namespaces_init_empty(raw_mail_user);
-	raw_ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
-	raw_ns->set = &raw_ns_set;
+	ruser->ns = mail_namespaces_init_empty(ruser->mail_user);
+	ruser->ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
+	ruser->ns->set = &ns_set;
     
-	if (mail_storage_create(raw_ns, "raw", 0, &errstr) < 0)
+	if (mail_storage_create(ruser->ns, "raw", 0, &errstr) < 0)
 		i_fatal("Couldn't create internal raw storage: %s", errstr);
 
-	raw_tmp_prefix = i_strdup(mail_user_get_temp_prefix(mail_user));
+	ruser->tmp_prefix = i_strdup(mail_user_get_temp_prefix(ruser->mail_user));
+
+	return ruser;
 }
 
-void mail_raw_deinit(void)
+void mail_raw_user_deinit(struct mail_raw_user **_ruser)
 {
-	i_free(raw_tmp_prefix);
+	struct mail_raw_user *ruser = *_ruser;
 
-	mail_user_unref(&raw_mail_user);
+	*_ruser = NULL;
+
+	mail_user_unref(&ruser->mail_user);
+
+	i_free(ruser->tmp_prefix);
+	i_free(ruser);	
 }
 
 /*
@@ -197,26 +210,18 @@ void mail_raw_deinit(void)
  */
 
 static struct mail_raw *mail_raw_create
-(struct istream *input, const char *mailfile, const char *sender,
-	time_t mtime)
+(struct mail_raw_user *ruser, struct istream *input, 
+	const char *mailfile, const char *sender, time_t mtime)
 {
 	pool_t pool;
+	struct mail_namespace *raw_ns = ruser->ns;
 	struct raw_mailbox *raw_box;
 	struct mail_raw *mailr;
 	enum mail_error error;
 	struct mailbox_header_lookup_ctx *headers_ctx;
 
-	if ( mailfile != NULL ) {
-		if ( *mailfile != '/') {
-			char cwd[PATH_MAX];
-
-			/* Expand relative paths */
-			if (getcwd(cwd, sizeof(cwd)) == NULL)
-				i_fatal("getcwd() failed: %m");
-
-			mailfile = t_strconcat(cwd, "/", mailfile, NULL);		
-		} 
-	}
+	if ( mailfile != NULL && *mailfile != '/' )
+		mailfile = t_abspath(mailfile);		
 
 	pool = pool_alloconly_create("mail_raw", 1024);
 	mailr = p_new(pool, struct mail_raw, 1);
@@ -227,24 +232,24 @@ static struct mail_raw *mail_raw_create
 			MAILBOX_FLAG_NO_INDEX_FILES);
 
 		if (mailbox_open_stream(mailr->box, input) < 0) {
-            i_fatal("Can't open mail stream as raw: %s",
-                mail_storage_get_last_error(raw_ns->storage, &error));
-        }
+			i_fatal("Can't open mail stream as raw: %s",
+				mail_storage_get_last_error(raw_ns->storage, &error));
+		}
 	} else {
 		mtime = (time_t)-1;
 		mailr->box = mailbox_alloc(raw_ns->list, mailfile,
 			MAILBOX_FLAG_NO_INDEX_FILES);
 
 		if ( mailbox_open(mailr->box) < 0 ) {
-    	    i_fatal("Can't open mail stream as raw: %s",
-        	    mail_storage_get_last_error(raw_ns->storage, &error));
-	    }
+			i_fatal("Can't open mail stream as raw: %s",
+				mail_storage_get_last_error(raw_ns->storage, &error));
+		}
 	}
 
-    if ( mailbox_sync(mailr->box, 0) < 0 ) {
-        i_fatal("Can't sync delivery mail: %s",
-            mail_storage_get_last_error(raw_ns->storage, &error));
-    }
+	if ( mailbox_sync(mailr->box, 0) < 0 ) {
+		i_fatal("Can't sync delivery mail: %s",
+		mail_storage_get_last_error(raw_ns->storage, &error));
+	}
 
 	raw_box = (struct raw_mailbox *)mailr->box;
 	raw_box->envelope_sender = sender != NULL ? sender : DEFAULT_ENVELOPE_SENDER;
@@ -259,21 +264,23 @@ static struct mail_raw *mail_raw_create
 	return mailr;
 }
 
-struct mail_raw *mail_raw_open_data(string_t *mail_data)
+struct mail_raw *mail_raw_open_data
+(struct mail_raw_user *ruser, string_t *mail_data)
 {
 	struct mail_raw *mailr;
 	struct istream *input;
 
 	input = i_stream_create_from_data(str_data(mail_data), str_len(mail_data));
 	
-	mailr = mail_raw_create(input, NULL, NULL, (time_t)-1);
+	mailr = mail_raw_create(ruser, input, NULL, NULL, (time_t)-1);
 
 	i_stream_unref(&input);
 
 	return mailr;
 }
 	
-struct mail_raw *mail_raw_open_file(const char *path)
+struct mail_raw *mail_raw_open_file
+(struct mail_raw_user *ruser, const char *path)
 {
 	struct mail_raw *mailr;
 	struct istream *input = NULL;
@@ -285,7 +292,7 @@ struct mail_raw *mail_raw_open_file(const char *path)
 		input = create_raw_stream(0, &mtime, &sender);
 	}
 
-	mailr = mail_raw_create(input, path, sender, mtime);
+	mailr = mail_raw_create(ruser, input, path, sender, mtime);
 
 	if ( input != NULL )
 		i_stream_unref(&input);
@@ -293,12 +300,13 @@ struct mail_raw *mail_raw_open_file(const char *path)
 	return mailr;
 }
 
-void mail_raw_close(struct mail_raw *mailr) 
+void mail_raw_close(struct mail_raw **mailr) 
 {
-	mail_free(&mailr->mail);
-	mailbox_transaction_rollback(&mailr->trans);
-	mailbox_free(&mailr->box);
+	mail_free(&(*mailr)->mail);
+	mailbox_transaction_rollback(&(*mailr)->trans);
+	mailbox_free(&(*mailr)->box);
 
-	pool_unref(&mailr->pool);
+	pool_unref(&(*mailr)->pool);
+	*mailr = NULL;
 }
 

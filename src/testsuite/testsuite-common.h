@@ -9,16 +9,17 @@
 #include "sieve-tool.h"
 
 /*
- * Extension
+ * Global data
  */
 
-/* Extension */
+extern struct sieve_instance *testsuite_sieve_instance;
 
 extern const struct sieve_extension_def testsuite_extension;
 
 extern const struct sieve_extension *testsuite_ext;
 
 extern const struct sieve_script_env *testsuite_scriptenv;
+
 
 /* 
  * Validator context 

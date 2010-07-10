@@ -44,11 +44,13 @@
  * Global data
  */
 
+struct sieve_instance *testsuite_sieve_instance = NULL;
+
 /* Test context */
 
 static string_t *test_name;
-unsigned int test_index;
-unsigned int test_failures;
+static unsigned int test_index;
+static unsigned int test_failures;
 
 /* Extension */
 
@@ -234,6 +236,8 @@ const char *testsuite_tmp_dir_get(void)
 
 void testsuite_init(struct sieve_instance *svinst, bool log_stdout)
 {
+	testsuite_sieve_instance = svinst;
+
 	testsuite_test_context_init();
 	testsuite_log_init(log_stdout);
 	testsuite_tmp_dir_init();

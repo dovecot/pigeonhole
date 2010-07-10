@@ -11,15 +11,11 @@
 #include "mail-namespace.h"
 #include "mail-storage.h"
 #include "mail-search-build.h"
-#include "master-service.h"
-#include "master-service-settings.h"
-#include "mail-storage-service.h"
 
 #include "sieve.h"
 #include "sieve-extensions.h"
 #include "sieve-binary.h"
 
-#include "mail-raw.h"
 #include "sieve-tool.h"
 
 #include "sieve-ext-debug.h"
@@ -30,7 +26,6 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <sysexits.h>
-
 
 /*
  * Print help
@@ -221,69 +216,37 @@ static int filter_mailbox
 
 int main(int argc, char **argv) 
 {
-	enum mail_storage_service_flags service_flags = 0;
-	struct mail_storage_service_ctx *storage_service;
-	struct mail_storage_service_user *service_user;
-	struct mail_storage_service_input service_input;
-	struct mail_user *mail_user_dovecot = NULL;
-	struct mail_user *mail_user = NULL;
-	ARRAY_TYPE (const_string) plugins;
-	const char *scriptfile, *recipient, *sender, *extensions,
-	*src_mailbox, *dst_mailbox, *src_mailstore, *dst_mailstore; 
-	const char *user, *home, *errstr;
-	struct mail_namespace_settings ns_set;
-	struct mail_namespace *src_ns = NULL, *dst_ns = NULL;
-	struct mail_storage *dst_storage, *src_storage;
+	struct sieve_instance *svinst;
+	const char *scriptfile, *recipient, *sender,
+	*src_mailbox, *dst_mailbox, *src_mailstore, *dst_mailstore;
+	struct mail_user *mail_user;
+	struct mail_namespace *src_ns, *dst_ns;
 	struct sieve_binary *main_sbin;
 	struct sieve_script_env scriptenv;
 	struct sieve_error_handler *ehandler;
-	bool force_compile = FALSE, debug = FALSE;
+	bool force_compile = FALSE;
 	enum mailbox_flags open_flags =
-	MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_IGNORE_ACLS;
+		MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_IGNORE_ACLS;
 	enum mail_error error;
 	struct discard_action discard_action = 
 	{ DISCARD_ACTION_KEEP, "Trash" };
 	struct mailbox *src_box;
 	int c;
 
-	master_service = master_service_init("sieve-test",
-		MASTER_SERVICE_FLAG_STANDALONE, &argc, &argv, "m:x:P:CD");
-
-	sieve_tool_init(FALSE);
-
-	t_array_init(&plugins, 4);
-
-	user = getenv("USER");
+	sieve_tool = sieve_tool_init("sieve-filter", &argc, &argv, "m:x:P:CD", FALSE);
 
 	/* Parse arguments */
-	scriptfile = recipient = sender = extensions = src_mailstore = dst_mailstore 
-		= NULL;
+	scriptfile = recipient = sender = src_mailstore = dst_mailstore = NULL;
 	src_mailbox = dst_mailbox = "INBOX";
 	force_compile = FALSE;
-	while ((c = master_getopt(master_service)) > 0) {
+	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'm':
 			/* default mailbox (keep box) */
 			dst_mailbox = optarg;
 			break;
-		case 'x':
-			/* extensions */
-			extensions = optarg;
-			break;
-		case 'P':
-			/* Plugin */
-			{
-				const char *plugin;
-
-				plugin = t_strdup(optarg);
-				array_append(&plugins, &plugin, 1);
-			}
-			break;
 		case 'C':
 			force_compile = TRUE;
-			break;
-		case 'D':
-			debug = TRUE;
 			break;
 		default:
 			print_help();
@@ -315,18 +278,10 @@ int main(int argc, char **argv)
 		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
 	}
 
-	sieve_tool_sieve_init(NULL, debug);
+	svinst = sieve_tool_init_finish(sieve_tool);
 
-	if ( array_count(&plugins) > 0 ) {
-		sieve_tool_load_plugins(&plugins);
-	}
-
-	if ( extensions != NULL ) {
-		sieve_set_extensions(sieve_instance, extensions);
-	}
-
-	/* Register tool-specific extensions */
-	(void) sieve_extension_register(sieve_instance, &debug_extension, TRUE);
+	/* Register Sieve debug extension */
+	(void) sieve_extension_register(svinst, &debug_extension, TRUE);
 
 	/* Create error handler */
 	ehandler = sieve_stderr_ehandler_create(0);
@@ -335,56 +290,14 @@ int main(int argc, char **argv)
 
 	/* Compile main sieve script */
 	if ( force_compile ) {
-		main_sbin = sieve_tool_script_compile(scriptfile, NULL);
+		main_sbin = sieve_tool_script_compile(svinst, scriptfile, NULL);
 		(void) sieve_save(main_sbin, NULL);
 	} else {
-		main_sbin = sieve_tool_script_open(scriptfile);
+		main_sbin = sieve_tool_script_open(svinst, scriptfile);
 	}
 
-	user = sieve_tool_get_user();
-	home = getenv("HOME");
-
-	/* Initialize mail storages */
-	env_put("DOVECONF_ENV=1");
-	env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s", user));
-
-	master_service_init_finish(master_service);
-
-	memset(&service_input, 0, sizeof(service_input));
-	service_input.module = "sieve-test";
-	service_input.service = "sieve-test";
-	service_input.username = user;
-
- 	storage_service = mail_storage_service_init
-		(master_service, NULL, service_flags);
-	if (mail_storage_service_lookup_next(storage_service, &service_input,
-		                 &service_user, &mail_user_dovecot, &errstr) <= 0)
-		i_fatal("%s", errstr);
-
-	/* Initialize namespaces */
-	mail_user = mail_user_alloc
-		(user, mail_user_dovecot->set_info, mail_user_dovecot->unexpanded_set);
-	mail_user_set_home(mail_user, home);
-	if ( mail_user_init(mail_user, &errstr) < 0 )
-		i_fatal("Test user initialization failed: %s", errstr);
-
-
- 	memset(&ns_set, 0, sizeof(ns_set));
-	ns_set.location = src_mailstore;
-
-	/*if ( dst_mailstore != NULL ) {
-	}*/
-
-	src_ns = mail_namespaces_init_empty(mail_user);
-	src_ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
-	src_ns->set = &ns_set;
-
-	if ( mail_storage_create(src_ns, NULL, 0, &errstr) < 0 )
-		i_fatal("Test storage creation failed: %s", errstr);
-
-	if ( master_service_set
-		(master_service, "mail_full_filesystem_access=yes") < 0 )
-		i_unreached();	
+	sieve_tool_init_mail_user(sieve_tool, src_mailstore);
+	mail_user = sieve_tool_get_mail_user(sieve_tool);
 
 /*	if ( dst_mailstore != NULL ) {
 		folder = "#src/";
@@ -395,26 +308,23 @@ int main(int argc, char **argv)
 
 		discard_action.type = DISCARD_ACTION_KEEP;	
 	} else {*/
-		dst_ns = src_ns;
+		dst_ns = src_ns = mail_user->namespaces;
 		discard_action.type = DISCARD_ACTION_DELETE;	
 /*	}*/
 
-	src_storage = src_ns->storage;
-	dst_storage = dst_ns->storage;
-
 	/* Open the source mailbox */	
 	src_box = mailbox_alloc(src_ns->list, src_mailbox, open_flags);
-    if ( mailbox_open(src_box) < 0 ) {
+  if ( mailbox_open(src_box) < 0 ) {
 		i_fatal("Couldn't open mailbox '%s': %s", 
-			src_mailbox, mail_storage_get_last_error(src_storage, &error));
-    }
+			src_mailbox, mail_storage_get_last_error(src_ns->storage, &error));
+  }
 
 	/* Compose script environment */
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	scriptenv.mailbox_autocreate = TRUE;
 	scriptenv.default_mailbox = dst_mailbox;
 	scriptenv.user = mail_user;
-	scriptenv.username = user;
+	scriptenv.username = sieve_tool_get_username(sieve_tool);
 	scriptenv.hostname = "host.example.com";
 	scriptenv.postmaster_address = "postmaster@example.com";
 	scriptenv.smtp_open = NULL;
@@ -429,24 +339,13 @@ int main(int argc, char **argv)
 	
 	/* Close the mailbox */
 	if ( src_box != NULL )
-		mailbox_close(&src_box);
+		mailbox_free(&src_box);
 
-	/* De-initialize mail user objects */
-	if ( mail_user != NULL )
-		mail_user_unref(&mail_user);
+	/* Cleanup error handler */
+	sieve_error_handler_unref(&ehandler);
+	sieve_system_ehandler_reset();
 
-	if ( mail_user_dovecot != NULL )
-		mail_user_unref(&mail_user_dovecot);
-
-    /* Cleanup error handler */
-    sieve_error_handler_unref(&ehandler);
-    sieve_system_ehandler_reset();
-
-    sieve_tool_deinit();
-
-    mail_storage_service_user_free(&service_user);
-    mail_storage_service_deinit(&storage_service);
-    master_service_deinit(&master_service);
+	sieve_tool_deinit(&sieve_tool);
 
 	return 0;
 }
