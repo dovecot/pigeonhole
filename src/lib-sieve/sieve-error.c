@@ -789,7 +789,7 @@ struct sieve_error_handler *sieve_logfile_ehandler_create
 	pool_t pool;
 	struct sieve_logfile_ehandler *ehandler;
 
-	pool = pool_alloconly_create("logfile_error_handler", 256);
+	pool = pool_alloconly_create("logfile_error_handler", 512);
 	ehandler = p_new(pool, struct sieve_logfile_ehandler, 1);
 	sieve_error_handler_init(&ehandler->handler, pool, max_errors);
 
@@ -1008,7 +1008,7 @@ struct sieve_error_handler *sieve_varexpand_ehandler_create
 		return parent;
 	}
 
-	pool = pool_alloconly_create("sieve_varexpand_error_handler", 256);	
+	pool = pool_alloconly_create("sieve_varexpand_error_handler", 1024);
 	ehandler = p_new(pool, struct sieve_varexpand_ehandler, 1);
 	sieve_error_handler_init_from_parent(&ehandler->handler, pool, parent);
 
