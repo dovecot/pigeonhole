@@ -7,7 +7,7 @@ Current activities:
 
 Next (in order of descending priority/precedence):
 
-* Make command line tools use Dovecot settings API
+* Update man pages to match style of Dovecot man pages.
 * Cleanup the test suite
 	- Make uniform command implementations
 	- Cleanup test scripts

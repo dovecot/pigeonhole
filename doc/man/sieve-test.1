@@ -1,8 +1,9 @@
-.TH "SIEVE\-TEST" "1" "4 July 2009"
+.TH "SIEVE\-TEST" "1" "11 July 2010"
 .SH NAME
 sieve\-test \- Sieve script tester for the Dovecot secure IMAP server
 .SH SYNOPSIS
 sieve\-test
+[\fB\-c\fR \fIconfig-file\fR]
 [\fB\-C\fR]
 [\fB\-D\fR]
 [\fB\-d\fR \fIdump\-file\fR]
@@ -44,6 +45,9 @@ with basename and path identical to the specified script. Use the \fB\-C\fP opti
 behavior by forcing the script to be compiled into a new binary.  
 .SH OPTIONS
 .TP 
+\fB\-c\fP \fIconfig-file\fP
+Alternative Dovecot configuration file path.
+.TP
 \fB\-C\fP
 Force compilation. By default, the compiled binary is stored on disk. When this binary is found
 during the next execution of \fBsieve\-test\fP and its modification time is more recent than the

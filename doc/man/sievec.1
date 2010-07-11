@@ -1,8 +1,8 @@
-.TH "SIEVEC" "1" "4 July 2009"
+.TH "SIEVEC" "1" "11 July 2010"
 .SH NAME
 sievec \- Sieve script compiler for the Dovecot secure IMAP server
 .SH SYNOPSIS
-sievec [\fB\-d\fR] [\fB\-x\fR "\fIextension extension ...\fR"] \fIscript\-file\fR [\fIout\-file\fR]
+sievec [\fB\-c\fR \fIconfig-file\fR] [\fB\-d\fR] [\fB\-x\fR "\fIextension extension ...\fR"] \fIscript\-file\fR [\fIout\-file\fR]
 .SH DESCRIPTION
 .PP
 The \fBsievec\fP command is part of the Pigeonhole Sieve implementation for the Dovecot secure 
@@ -42,6 +42,9 @@ code to the specified file. The output is then identical to what the \fBsieved\f
 for a stored binary file. This output is mainly useful to find bugs in the compiler that yield corrupt 
 binaries.
 .SH OPTIONS
+.TP
+\fB\-c\fP \fIconfig-file\fP
+Alternative Dovecot configuration file path.
 .TP 
 \fB\-d\fP 
 Don't write the binary to \fIout\-file\fP, but write a textual dump of the binary in 
