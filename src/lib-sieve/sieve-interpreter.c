@@ -100,7 +100,7 @@ static struct sieve_interpreter *_sieve_interpreter_create
 	interp->runenv.msgdata = msgdata;
 	interp->runenv.scriptenv = senv;
 	interp->runenv.trace_stream = senv->trace_stream;
-	interp->runenv.trace_level = senv->trace_level;
+	interp->runenv.trace_config = senv->trace_config;
 
 	if ( senv->exec_status == NULL ) 
 		interp->runenv.exec_status = p_new(interp->pool, struct sieve_exec_status, 1);
@@ -509,7 +509,7 @@ int sieve_interpreter_continue
 		ret = sieve_interpreter_operation_execute(interp);
 
 		if ( ret != SIEVE_EXEC_OK ) {
-			sieve_runtime_trace(&interp->runenv, SIEVE_TRLVL_MINIMUM, 
+			sieve_runtime_trace(&interp->runenv, SIEVE_TRLVL_NONE, 
 				"[[EXECUTION ABORTED]]");
 		}
 	}

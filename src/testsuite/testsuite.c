@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 		scriptenv.smtp_open = testsuite_smtp_open;
 		scriptenv.smtp_close = testsuite_smtp_close;
 		scriptenv.trace_stream = ( trace ? o_stream_create_fd(1, 0, FALSE) : NULL );
-		scriptenv.trace_level = SIEVE_TRLVL_TESTS;
+		scriptenv.trace_config.level = SIEVE_TRLVL_TESTS;
 
 		testsuite_scriptenv = &scriptenv;
 

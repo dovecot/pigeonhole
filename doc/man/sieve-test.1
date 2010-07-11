@@ -3,7 +3,7 @@
 sieve\-test \- Sieve script tester for the Dovecot secure IMAP server
 .SH SYNOPSIS
 sieve\-test
-[\fB\-c\fR \fIconfig-file\fR]
+[\fB\-c\fR \fIconfig\-file\fR]
 [\fB\-C\fR]
 [\fB\-D\fR]
 [\fB\-d\fR \fIdump\-file\fR]
@@ -13,7 +13,7 @@ sieve\-test
 [\fB\-m\fR \fIdefault\-mailbox\fR]
 [\fB\-r\fR \fIrecipient\-address\fR]
 [\fB\-s\fR \fIscript\-file\fR]
-[\fB\-t\fR]
+[\fB\-t\fR \fItrace\-option\fR]
 [\fB\-x\fR "\fIextension extension ...\fR"]
 \fIscript\-file\fR \fImail\-file\fR
 .SH DESCRIPTION
@@ -45,7 +45,7 @@ with basename and path identical to the specified script. Use the \fB\-C\fP opti
 behavior by forcing the script to be compiled into a new binary.  
 .SH OPTIONS
 .TP 
-\fB\-c\fP \fIconfig-file\fP
+\fB\-c\fP \fIconfig\-file\fP
 Alternative Dovecot configuration file path.
 .TP
 \fB\-C\fP
@@ -91,9 +91,9 @@ Specify additional scripts to be executed before the main script. Multiple \fB\-
 allowed and the specified scripts are executed sequentially in the order specified at the command
 line.
 .TP
-\fB\-t\fP
-Enable simple trace debugging; prints all encountered byte code instructions to \fBstdout\fP. This is
-currently only intelligible for developers.
+\fB\-t\fP \fItrace\-option\fP
+Configure runtime trace debugging. Trace debugging provides detailed insight in the operations performed
+by the Sieve script. Refer to the trace debugging section below. 
 .TP
 \fB\-x\fP "\fIextension extension ...\fP"
 Set the available extensions. The parameter is a space\-separated list of the active extensions. By
@@ -105,7 +105,45 @@ or those that are still under development.
 
 For example \fB\-x\fP "+imapflags \-enotify" will enable the deprecated imapflags extension along with all
 extensions that are available by default, except for the enotify extension.
-.SH DEBUG SUPPORT
+
+.SH RUNTIME TRACE DEBUGGING
+.PP
+Using the \fB-t\fP option, the \fBsieve\-test\fP tool can be configured to print detailed information on
+the Sieve script execution. For example, the encountered commands, the performed tests and the matched 
+values can be printed. 
+.PP
+The \fB\-t\fP option can be specified multiple times. It can be used as follows:
+
+.TP 2
+\fB\-tlevel=...\fP
+Set the verbosity level of the trace debugging. One of the following values can be supplied:
+.RS 2
+.TP 3 
+\fInone\fP (default)
+No trace debugging.
+.TP 
+\fIactions\fP
+Only print executed action commands, like keep, fileinto, reject and redirect.
+.TP
+\fIcommands\fP
+Print any command, excluding tests.
+.TP
+\fItests\fP
+Print all commands and performed tests.
+.TP
+\fImatching\fP
+Print all commands, performed tests and the values matched for those tests. 
+.RE
+.TP 2
+\fB\-tdebug\fP
+Print debug messages as well. This is usually only useful for developers and produces messy output.
+.TP
+\fB\-taddresses\fP
+Print byte code addresses for the current trace output. Normally, only the current Sieve source code 
+position is printed. The byte code addresses are equal to those listed in a binary dump produced
+using the \fB\-d\fP option or by the \fBsieved(1)\fP command.
+
+.SH DEBUG SIEVE EXTENSION
 .PP
 To improve script debugging, the Sieve command line tools such as \fBsieve\-test\fP support a custom
 Sieve language extension called 'vnd.dovecot.debug'. It adds the \fBdebug_print\fP command that allows

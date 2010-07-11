@@ -566,12 +566,12 @@ int ext_include_execute_include
 
 	/* If :once modifier is specified, check for duplicate include */
 	if ( ext_include_runtime_include_mark(ctx, included, once) ) {
-		sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM,
+		sieve_runtime_trace(renv, SIEVE_TRLVL_NONE,
 			"include: start script '%s' [inc id: %d, block: %d]", 
 			sieve_script_name(included->script), include_id, block_id);
 	} else {
 		/* skip */
-		sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM, 
+		sieve_runtime_trace(renv, SIEVE_TRLVL_NONE, 
 			"include: skipped include for script '%s' [inc id: %d, block: %d]; "
 			"already run once", 
 			sieve_script_name(included->script), include_id, block_id);
@@ -636,7 +636,7 @@ int ext_include_execute_include
 					curctx = curctx->parent;
 					sieve_interpreter_free(&subinterp);
 
-					sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM,
+					sieve_runtime_trace(renv, SIEVE_TRLVL_NONE,
 						"include: script '%s' ended [inc id: %d, block: %d]",  
 						sieve_script_name(ended_script->script), ended_script->id,
 						sieve_binary_block_get_id(ended_script->block));
@@ -697,7 +697,7 @@ int ext_include_execute_include
 			/* This kills curctx too */
 			sieve_interpreter_free(&killed_interp);
 
-			sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM,
+			sieve_runtime_trace(renv, SIEVE_TRLVL_NONE,
 				"include: script '%s' ended [id: %d, block: %d]",  
 				sieve_script_name(ended_script->script),
 				ended_script->id, sieve_binary_block_get_id(ended_script->block));

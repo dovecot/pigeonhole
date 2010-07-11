@@ -6,7 +6,7 @@ sieve\-filter \- Sieve mailbox filter tool for the Dovecot secure IMAP server
 features! The behavior described in this manual page represents the design and not necessarily what the tool currently implements.
 
 .SH SYNOPSIS
-sieve\-filter [\fB\-c\fR \fIconfig-file\fR] [\fIoptions\fR] \fIscript\-file\fR \fIsource\-location\fR \fIsource\-mailbox\fR [\fIinbox\-namespace\fR [\fInamespace\fR ...]]
+sieve\-filter [\fB\-c\fR \fIconfig\-file\fR] [\fIoptions\fR] \fIscript\-file\fR \fIsource\-location\fR \fIsource\-mailbox\fR [\fIinbox\-namespace\fR [\fInamespace\fR ...]]
 .TP
 \fInamepace\fR = [prefix=]location[;option=value,option=value,...]
 .TP
@@ -66,7 +66,7 @@ Sieve script decides to do so.
 
 .SH OPTIONS
 .TP
-\fB\-c\fP \fIconfig-file\fP
+\fB\-c\fP \fIconfig\-file\fP
 Alternative Dovecot configuration file path.
 .TP 
 \fB\-D\fP \fIsource\-action\fP

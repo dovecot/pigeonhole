@@ -155,7 +155,7 @@ static int cmd_test_operation_execute
 	if ( !sieve_opr_string_read(renv, address, "test name", &test_name) )
 		return SIEVE_EXEC_BIN_CORRUPT;
 	
-	sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM, 
+	sieve_runtime_trace(renv, SIEVE_TRLVL_NONE, 
 		"** Test start: \"%s\"", str_c(test_name));
 
 	testsuite_test_start(test_name);
@@ -166,7 +166,7 @@ static int cmd_test_finish_operation_execute
 (const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {
-	sieve_runtime_trace(renv, SIEVE_TRLVL_MINIMUM, "** Test end");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_NONE, "** Test end");
 	
 	testsuite_test_succeed(NULL);
 	return SIEVE_EXEC_OK;

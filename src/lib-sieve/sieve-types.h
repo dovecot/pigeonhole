@@ -8,9 +8,6 @@
 
 #include <stdio.h>
 
-/* Enable runtime trace functionality */
-#define SIEVE_RUNTIME_TRACE
-
 /*
  * Forward declarations
  */
@@ -49,17 +46,26 @@ struct sieve_message_data {
 };
 
 /*
- * Runtime trace level
+ * Runtime trace settings
  */
 
 typedef enum {
-	SIEVE_TRLVL_MINIMUM,
+	SIEVE_TRLVL_NONE,
 	SIEVE_TRLVL_ACTIONS,
 	SIEVE_TRLVL_COMMANDS,
 	SIEVE_TRLVL_TESTS,
-	SIEVE_TRLVL_MATCH,
-	SIEVE_TRLVL_DEBUG
+	SIEVE_TRLVL_MATCHING
 } sieve_trace_level_t;
+
+enum {
+	SIEVE_TRFLG_DEBUG = (1 << 0),
+	SIEVE_TRFLG_ADDRESSES = (1 << 1)
+};
+
+struct sieve_trace_config {
+	sieve_trace_level_t level;
+	unsigned int flags;
+};
 
 /* 
  * Script environment
@@ -106,7 +112,7 @@ struct sieve_script_env {
 		
 	/* Runtime trace*/
 	struct ostream *trace_stream;
-	sieve_trace_level_t trace_level;
+	struct sieve_trace_config trace_config;
 };
 
 #define SIEVE_SCRIPT_DEFAULT_MAILBOX(senv) \
