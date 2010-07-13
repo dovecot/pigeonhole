@@ -127,9 +127,14 @@ int main(int argc, char **argv)
 
 	/* Initialize mail user */
 	sieve_tool_set_homedir(sieve_tool, t_abspath(""));
-
-	svinst = sieve_tool_init_finish(sieve_tool);
 	
+	/* Set dummy mail environment */
+	env_put(t_strdup_printf("MAIL=maildir:/tmp/dovecot-test-%s",
+		sieve_tool_get_username(sieve_tool)));
+
+	/* Finish tool initialization */
+	svinst = sieve_tool_init_finish(sieve_tool);
+		
 	testsuite_init(svinst, log_stdout);
 	testsuite_settings_init();
 
