@@ -1,62 +1,21 @@
 
 
 
-Sieve Working Group                                     A. Melnikov, Ed.
-Internet-Draft                                             Isode Limited
-Intended status: Standards Track                               T. Martin
-Expires: July 21, 2009                              BeThereBeSquare Inc.
-                                                        January 17, 2009
 
 
-             A Protocol for Remotely Managing Sieve Scripts
-                    draft-ietf-sieve-managesieve-09
 
-Status of this Memo
+Internet Engineering Task Force (IETF)                  A. Melnikov, Ed.
+Request for Comments: 5804                                 Isode Limited
+Category: Standards Track                                      T. Martin
+ISSN: 2070-1721                                    BeThereBeSquare, Inc.
+                                                               July 2010
 
-   This Internet-Draft is submitted to IETF in full conformance with the
-   provisions of BCP 78 and BCP 79.
 
-   Internet-Drafts are working documents of the Internet Engineering
-   Task Force (IETF), its areas, and its working groups.  Note that
-   other groups may also distribute working documents as Internet-
-   Drafts.
-
-   Internet-Drafts are draft documents valid for a maximum of six months
-   and may be updated, replaced, or obsoleted by other documents at any
-   time.  It is inappropriate to use Internet-Drafts as reference
-   material or to cite them other than as "work in progress."
-
-   The list of current Internet-Drafts can be accessed at
-   http://www.ietf.org/ietf/1id-abstracts.txt.
-
-   The list of Internet-Draft Shadow Directories can be accessed at
-   http://www.ietf.org/shadow.html.
-
-   This Internet-Draft will expire on July 21, 2009.
-
-Copyright Notice
-
-   Copyright (c) 2009 IETF Trust and the persons identified as the
-   document authors.  All rights reserved.
-
-   This document is subject to BCP 78 and the IETF Trust's Legal
-   Provisions Relating to IETF Documents
-   (http://trustee.ietf.org/license-info) in effect on the date of
-   publication of this document.  Please review these documents
-   carefully, as they describe your rights and restrictions with respect
-   to this document.
+              A Protocol for Remotely Managing Sieve Scripts
 
 Abstract
 
    Sieve scripts allow users to filter incoming email.  Message stores
-
-
-
-Melnikov & Martin         Expires July 21, 2009                 [Page 1]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
    are commonly sealed servers so users cannot log into them, yet users
    must be able to update their scripts on them.  This document
    describes a protocol "ManageSieve" for securely managing Sieve
@@ -64,180 +23,102 @@ Internet-Draft                 ManageSieve                  January 2009
    multiple scripts, and also alerts a user to syntactically flawed
    scripts.
 
+Status of This Memo
+
+   This is an Internet Standards Track document.
+
+   This document is a product of the Internet Engineering Task Force
+   (IETF).  It represents the consensus of the IETF community.  It has
+   received public review and has been approved for publication by the
+   Internet Engineering Steering Group (IESG).  Further information on
+   Internet Standards is available in Section 2 of RFC 5741.
+
+   Information about the current status of this document, any errata,
+   and how to provide feedback on it may be obtained at
+   http://www.rfc-editor.org/info/rfc5804.
+
+Copyright Notice
+
+   Copyright (c) 2010 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                 [Page 2]
+Melnikov & Martin            Standards Track                    [Page 1]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
 Table of Contents
 
-   1.      Introduction . . . . . . . . . . . . . . . . . . . . . . .  5
-   1.1.    Conventions used in this document  . . . . . . . . . . . .  5
-   1.2.    Commands and Responses . . . . . . . . . . . . . . . . . .  5
-   1.3.    Syntax . . . . . . . . . . . . . . . . . . . . . . . . . .  5
-   1.4.    Response Codes . . . . . . . . . . . . . . . . . . . . . .  6
-   1.5.    Active Script  . . . . . . . . . . . . . . . . . . . . . .  8
-   1.6.    Quotas . . . . . . . . . . . . . . . . . . . . . . . . . .  8
-   1.7.    Script Names . . . . . . . . . . . . . . . . . . . . . . .  9
-   1.8.    Capabilities . . . . . . . . . . . . . . . . . . . . . . .  9
-   1.9.    Transport  . . . . . . . . . . . . . . . . . . . . . . . . 11
-
-   2.      Commands . . . . . . . . . . . . . . . . . . . . . . . . . 12
-   2.1.    AUTHENTICATE Command . . . . . . . . . . . . . . . . . . . 12
-   2.1.1.  Use of SASL PLAIN mechanism over TLS . . . . . . . . . . . 17
-   2.2.    STARTTLS Command . . . . . . . . . . . . . . . . . . . . . 17
-   2.2.1.  Server Identity Check  . . . . . . . . . . . . . . . . . . 18
-   2.3.    LOGOUT Command . . . . . . . . . . . . . . . . . . . . . . 21
-   2.4.    CAPABILITY Command . . . . . . . . . . . . . . . . . . . . 21
-   2.5.    HAVESPACE Command  . . . . . . . . . . . . . . . . . . . . 21
-   2.6.    PUTSCRIPT Command  . . . . . . . . . . . . . . . . . . . . 22
-   2.7.    LISTSCRIPTS Command  . . . . . . . . . . . . . . . . . . . 24
-   2.8.    SETACTIVE Command  . . . . . . . . . . . . . . . . . . . . 25
-   2.9.    GETSCRIPT Command  . . . . . . . . . . . . . . . . . . . . 25
-   2.10.   DELETESCRIPT Command . . . . . . . . . . . . . . . . . . . 26
-   2.11.   RENAMESCRIPT Command . . . . . . . . . . . . . . . . . . . 26
-   2.12.   CHECKSCRIPT Command  . . . . . . . . . . . . . . . . . . . 27
-   2.13.   NOOP Command . . . . . . . . . . . . . . . . . . . . . . . 28
-   2.14.   Recommended extensions . . . . . . . . . . . . . . . . . . 29
-   2.14.1. UNAUTHENTICATE Command . . . . . . . . . . . . . . . . . . 29
-
-   3.      Sieve URL Scheme . . . . . . . . . . . . . . . . . . . . . 29
-
-   4.      Formal Syntax  . . . . . . . . . . . . . . . . . . . . . . 32
-
-   5.      Security Considerations  . . . . . . . . . . . . . . . . . 38
-
-   6.      IANA Considerations  . . . . . . . . . . . . . . . . . . . 39
-   6.1.    ManageSieve Capability Registration Template . . . . . . . 39
-   6.2.    Registration of Initial ManageSieve capabilities . . . . . 40
-   6.3.    ManageSieve Response Code Registration Template  . . . . . 42
-   6.4.    Registration of Initial ManageSieve Response Codes . . . . 43
-
-   7.      Internationalization Considerations  . . . . . . . . . . . 48
-
-   8.      Acknowledgements . . . . . . . . . . . . . . . . . . . . . 49
+   1. Introduction ....................................................3
+      1.1. Commands and Responses .....................................3
+      1.2. Syntax .....................................................3
+      1.3. Response Codes .............................................3
+      1.4. Active Script ..............................................6
+      1.5. Quotas .....................................................6
+      1.6. Script Names ...............................................6
+      1.7. Capabilities ...............................................7
+      1.8. Transport ..................................................9
+      1.9. Conventions Used in This Document .........................10
+   2. Commands .......................................................10
+      2.1. AUTHENTICATE Command ......................................11
+           2.1.1. Use of SASL PLAIN Mechanism over TLS ...............16
+      2.2. STARTTLS Command ..........................................16
+           2.2.1. Server Identity Check ..............................17
+      2.3. LOGOUT Command ............................................20
+      2.4. CAPABILITY Command ........................................20
+      2.5. HAVESPACE Command .........................................20
+      2.6. PUTSCRIPT Command .........................................21
+      2.7. LISTSCRIPTS Command .......................................23
+      2.8. SETACTIVE Command .........................................24
+      2.9. GETSCRIPT Command .........................................25
+      2.10. DELETESCRIPT Command .....................................25
+      2.11. RENAMESCRIPT Command .....................................26
+      2.12. CHECKSCRIPT Command ......................................27
+      2.13. NOOP Command .............................................28
+      2.14. Recommended Extensions ...................................28
+           2.14.1. UNAUTHENTICATE Command ............................28
+   3. Sieve URL Scheme ...............................................29
+   4. Formal Syntax ..................................................31
+   5. Security Considerations ........................................37
+   6. IANA Considerations ............................................38
+      6.1. ManageSieve Capability Registration Template ..............39
+      6.2. Registration of Initial ManageSieve Capabilities ..........39
+      6.3. ManageSieve Response Code Registration Template ...........41
+      6.4. Registration of Initial ManageSieve Response Codes ........41
+   7. Internationalization Considerations ............................46
+   8. Acknowledgements ...............................................46
+   9. References .....................................................47
+      9.1. Normative References ......................................47
+      9.2. Informative References ....................................48
 
 
 
 
-Melnikov & Martin         Expires July 21, 2009                 [Page 3]
+
+
+
+
+Melnikov & Martin            Standards Track                    [Page 2]
 
-Internet-Draft                 ManageSieve                  January 2009
-
-
-   9.      References . . . . . . . . . . . . . . . . . . . . . . . . 49
-   9.1.    Normative References . . . . . . . . . . . . . . . . . . . 49
-   9.2.    Informative References . . . . . . . . . . . . . . . . . . 51
-
-           Authors' Addresses . . . . . . . . . . . . . . . . . . . . 51
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                 [Page 4]
-
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
 1.  Introduction
 
-1.1.  Conventions used in this document
-
-   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
-   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
-   document are to be interpreted as described in [KEYWORDS].
-
-   In examples, "C:" and "S:" indicate lines sent by the client and
-   server respectively.  Line breaks that do not start a new "C:" or
-   "S:" exist for editorial reasons.
-
-1.2.  Commands and Responses
+1.1.  Commands and Responses
 
    A ManageSieve connection consists of the establishment of a client/
    server network connection, an initial greeting from the server, and
@@ -247,12 +128,12 @@ Internet-Draft                 ManageSieve                  January 2009
 
    All interactions transmitted by client and server are in the form of
    lines, that is, strings that end with a CRLF.  The protocol receiver
-   of a ManageSieve client or server is either reading a line, or is
-   reading a sequence of octets with a known count followed by a line.
+   of a ManageSieve client or server is either reading a line or reading
+   a sequence of octets with a known count followed by a line.
 
-1.3.  Syntax
+1.2.  Syntax
 
-   ManageSieve is a line oriented protocol much like [IMAP] or [ACAP],
+   ManageSieve is a line-oriented protocol much like [IMAP] or [ACAP],
    which runs over TCP.  There are three data types: atoms, numbers and
    strings.  Strings may be quoted or literal.  See [ACAP] for detailed
    descriptions of these types.
@@ -262,50 +143,50 @@ Internet-Draft                 ManageSieve                  January 2009
 
    All client queries are replied to with either an OK, NO, or BYE
    response.  Each response may be followed by a response code (see
-   Section 1.4) and by a string consisting of human readable text in the
-   local language (as returned by the LANGUAGE capability, see
-   Section 1.8), encoded in [UTF-8].  The contents of the string SHOULD
-   be shown to the user and implementations MUST NOT attempt to parse
-   the message for meaning.
+   Section 1.3) and by a string consisting of human-readable text in the
+   local language (as returned by the LANGUAGE capability; see
+   Section 1.7), encoded in UTF-8 [UTF-8].  The contents of the string
+   SHOULD be shown to the user ,and implementations MUST NOT attempt to
+   parse the message for meaning.
 
    The BYE response SHOULD be used if the server wishes to close the
    connection.  A server may wish to do this because the client was idle
    for too long or there were too many failed authentication attempts.
    This response can be issued at any time and should be immediately
    followed by a server hang-up of the connection.  If a server has an
-
-
-
-Melnikov & Martin         Expires July 21, 2009                 [Page 5]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
-   inactivity timeout resulting in client autologout it MUST be no less
+   inactivity timeout resulting in client autologout, it MUST be no less
    than 30 minutes after successful authentication.  The inactivity
    timeout MAY be less before authentication.
 
-1.4.  Response Codes
+1.3.  Response Codes
 
    An OK, NO, or BYE response from the server MAY contain a response
-   code to describe the event in a more detailed machine parsable
+   code to describe the event in a more detailed machine-parsable
    fashion.  A response code consists of data inside parentheses in the
    form of an atom, possibly followed by a space and arguments.
+
+
+
+Melnikov & Martin            Standards Track                    [Page 3]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
    Response codes are defined when there is a specific action that a
    client can take based upon the additional information.  In order to
    support future extension, the response code is represented as a
    slash-separated (Solidus, %x2F) hierarchy with each level of
    hierarchy representing increasing detail about the error.  Response
    codes MUST NOT start with the Solidus character.  Clients MUST
-   tolerate additional hierarchical response code detail which they
-   don't understand.  For example, if the client supports the "QUOTA"
-   response code, but doesn't understand the "QUOTA/MAXSCRIPTS" response
-   code, it should treat "QUOTA/MAXSCRIPTS" as "QUOTA".
+   tolerate additional hierarchical response code detail that they don't
+   understand.  For example, if the client supports the "QUOTA" response
+   code, but doesn't understand the "QUOTA/MAXSCRIPTS" response code, it
+   should treat "QUOTA/MAXSCRIPTS" as "QUOTA".
 
    Client implementations MUST tolerate (ignore) response codes that
    they do not recognize.
 
-   The currently defined response codes are:
+   The currently defined response codes are the following:
 
    AUTH-TOO-WEAK
 
@@ -327,26 +208,26 @@ Internet-Draft                 ManageSieve                  January 2009
    that the command would have placed the user above the site-defined
    quota constraints.  If this response code is returned in the OK
    response, it can mean that the user's storage is near its quota, or
-   it can mean that the account exceeded its quota but that that
-   condition is being allowed by the server (the server supports so
-
-
-
-Melnikov & Martin         Expires July 21, 2009                 [Page 6]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
-   called "soft quotas").  The QUOTA response code has 2 more detailed
-   variants: "QUOTA/MAXSCRIPTS" (the maximum number of per-user scripts)
-   and "QUOTA/MAXSIZE" (the maximum script size).
+   it can mean that the account exceeded its quota but that the
+   condition is being allowed by the server (the server supports
+   so-called soft quotas).  The QUOTA response code has two more
+   detailed variants: "QUOTA/MAXSCRIPTS" (the maximum number of per-user
+   scripts) and "QUOTA/MAXSIZE" (the maximum script size).
 
    REFERRAL
 
    This response code may be returned with a BYE result from any
    command, and includes a mandatory parameter that indicates what
-   server to access to manage this user's sieve scripts.  The server
+   server to access to manage this user's Sieve scripts.  The server
    will be specified by a Sieve URL (see Section 3).  The scriptname
+
+
+
+Melnikov & Martin            Standards Track                    [Page 4]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
    portion of the URL MUST NOT be specified.  The client should
    authenticate to the specified server and use it for all further
    commands in the current session.
@@ -380,18 +261,11 @@ Internet-Draft                 ManageSieve                  January 2009
 
    ACTIVE
 
-   A command failed because it is not allowed on the active script.  For
-   example DELETESCRIPT on the active script.  This response code only
+   A command failed because it is not allowed on the active script, for
+   example, DELETESCRIPT on the active script.  This response code only
    makes sense when returned in a NO/BYE response.
 
    NONEXISTENT
-
-
-
-Melnikov & Martin         Expires July 21, 2009                 [Page 7]
-
-Internet-Draft                 ManageSieve                  January 2009
-
 
    A command failed because the referenced script name doesn't exist.
    This response code only makes sense when returned in a NO/BYE
@@ -402,6 +276,13 @@ Internet-Draft                 ManageSieve                  January 2009
    A command failed because the referenced script name already exists.
    This response code only makes sense when returned in a NO/BYE
    response.
+
+
+
+Melnikov & Martin            Standards Track                    [Page 5]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
    TAG
 
@@ -418,19 +299,18 @@ Internet-Draft                 ManageSieve                  January 2009
    and/or CHECKSCRIPT commands.  A client seeing such response code
    SHOULD present the returned warning text to the user.
 
-1.5.  Active Script
+1.4.  Active Script
 
    A user may have multiple Sieve scripts on the server, yet only one
    script may be used for filtering of incoming messages.  This is the
-   active script.  Users may have zero or one active scripts and MUST
-   use the SETACTIVE command described below for changing the active
-   script or disabling Sieve processing.  For example, a user may have
-   an everyday script they normally use and a special script they use
-   when they go on vacation.  Users can change which script is being
-   used without having to download and upload a script stored somewhere
-   else.
+   active script.  Users may have zero or one active script and MUST use
+   the SETACTIVE command described below for changing the active script
+   or disabling Sieve processing.  For example, users may have an
+   everyday script they normally use and a special script they use when
+   they go on vacation.  Users can change which script is being used
+   without having to download and upload a script stored somewhere else.
 
-1.6.  Quotas
+1.5.  Quotas
 
    Servers SHOULD impose quotas to prevent malicious users from
    overflowing available storage.  If a command would place a user over
@@ -439,17 +319,7 @@ Internet-Draft                 ManageSieve                  January 2009
    MUST be able to handle commands failing because of quota
    restrictions.
 
-
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                 [Page 8]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
-1.7.  Script Names
+1.6.  Script Names
 
    A Sieve script name is a sequence of Unicode characters encoded in
    UTF-8 [UTF-8].  A script name MUST comply with Net-Unicode Definition
@@ -462,11 +332,19 @@ Internet-Draft                 ManageSieve                  January 2009
 
    o  0080-009F; [CONTROL CHARACTERS]
 
+
+
+
+Melnikov & Martin            Standards Track                    [Page 6]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
    o  2028; LINE SEPARATOR
 
    o  2029; PARAGRAPH SEPARATOR
 
-   Sieve script names MUST be at least one octet (and hense Unicode
+   Sieve script names MUST be at least one octet (and hence Unicode
    character) long.  Zero octets script name has a special meaning (see
    Section 2.8).  Servers MUST allow names of up to 128 Unicode
    characters in length (which can take up to 512 bytes when encoded in
@@ -475,16 +353,16 @@ Internet-Draft                 ManageSieve                  January 2009
    MUST reject the corresponding operation, in particular it MUST NOT
    truncate the script name.
 
-1.8.  Capabilities
+1.7.  Capabilities
 
    Server capabilities are sent automatically by the server upon a
    client connection, or after successful STARTTLS and AUTHENTICATE
-   (which establishes a SASL security layer) commands.  Capabilities may
-   change immediately after a successfully completed STARTTLS command,
-   and/or immediately after a successfully completed AUTHENTICATE
-   command, and/or after a successfully completed UNAUTHENTICATE command
-   (see Section 2.14.1).  Capabilities MUST remain static at all other
-   times.
+   (which establishes a Simple Authentication and Security Layer (SASL))
+   commands.  Capabilities may change immediately after a successfully
+   completed STARTTLS command, and/or immediately after a successfully
+   completed AUTHENTICATE command, and/or after a successfully completed
+   UNAUTHENTICATE command (see Section 2.14.1).  Capabilities MUST
+   remain static at all other times.
 
    Clients MAY request the capabilities at a later time by issuing the
    CAPABILITY command described later.  The capabilities consist of a
@@ -497,25 +375,26 @@ Internet-Draft                 ManageSieve                  January 2009
    The following capabilities are defined in this document:
 
    IMPLEMENTATION - Name of implementation and version.  This capability
-
-
-
-Melnikov & Martin         Expires July 21, 2009                 [Page 9]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
    MUST always be returned by the server.
 
    SASL - List of SASL mechanisms supported by the server, each
    separated by a space.  This list can be empty if and only if STARTTLS
    is also advertised.  This means that the client must negotiate TLS
    encryption with STARTTLS first, at which point the SASL capability
-   will list a non empty list of SASL mechanisms.
+   will list a non-empty list of SASL mechanisms.
 
-   SIEVE - List of space separated Sieve extensions (as listed in Sieve
+   SIEVE - List of space-separated Sieve extensions (as listed in Sieve
    "require" action [SIEVE]) supported by the Sieve engine.  This
    capability MUST always be returned by the server.
+
+
+
+
+
+Melnikov & Martin            Standards Track                    [Page 7]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
    STARTTLS - If TLS [TLS] is supported by this implementation.  Before
    advertising this capability a server MUST verify to the best of its
@@ -527,48 +406,51 @@ Internet-Draft                 ManageSieve                  January 2009
    and server implementations MUST implement the STARTTLS extension.
 
    MAXREDIRECTS - Specifies the limit on the number of Sieve "redirect"
-   actions a script can perform during a single evaluation.  Note, that
+   actions a script can perform during a single evaluation.  Note that
    this is different from the total number of "redirect" actions a
    script can contain.  The value is a non-negative number represented
    as a ManageSieve string.
 
-   NOTIFY - A space separated list of URI schema parts for supported
+   NOTIFY - A space-separated list of URI schema parts for supported
    notification methods.  This capability MUST be specified if the Sieve
    implementation supports the "enotify" extension [NOTIFY].
 
-   LANGUAGE - The language (<Language-Tag> from [RFC4646]) currently
-   used for human readable error messages.  If this capability is not
+   LANGUAGE - The language (<Language-Tag> from [RFC5646]) currently
+   used for human-readable error messages.  If this capability is not
    returned, the "i-default" [RFC2277] language is assumed.  Note that
-   the current language MAY be per-user configurable (i.e. it MAY change
-   after authentication).
+   the current language MAY be per-user configurable (i.e., it MAY
+   change after authentication).
 
-   OWNER - The canonical name of the logged in user (SASL "authorization
+   OWNER - The canonical name of the logged-in user (SASL "authorization
    identity") encoded in UTF-8.  This capability MUST NOT be returned in
    unauthenticated state and SHOULD be returned once the AUTHENTICATE
    command succeeds.
 
    VERSION - This capability MUST be returned by servers compliant with
    this document or its successor.  For servers compliant with this
-   document the capability value is the string "1.0".  Lack of this
+   document, the capability value is the string "1.0".  Lack of this
    capability means that the server predates this specification and thus
-   doesn't support the following commands: RENAMESCRIPT, CHECKSCRIPT and
-   NOOP.
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 10]
-
-Internet-Draft                 ManageSieve                  January 2009
-
+   doesn't support the following commands: RENAMESCRIPT, CHECKSCRIPT,
+   and NOOP.
 
    Section 2.14 defines some additional ManageSieve extensions and their
    respective capabilities.
 
-   A server implementation MUST return SIEVE, IMPLEMENTATION and VERSION
-   capabilities.
+   A server implementation MUST return SIEVE, IMPLEMENTATION, and
+   VERSION capabilities.
 
    A client implementation MUST ignore any listed capabilities that it
    does not understand.
+
+
+
+
+
+
+Melnikov & Martin            Standards Track                    [Page 8]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
        Example:
 
@@ -581,7 +463,7 @@ Internet-Draft                 ManageSieve                  January 2009
        S: "VERSION" "1.0"
        S: OK
 
-   After successful authentication this might look like this:
+   After successful authentication, this might look like this:
 
        Example:
 
@@ -594,11 +476,11 @@ Internet-Draft                 ManageSieve                  January 2009
        S: "VERSION" "1.0"
        S: OK
 
-1.9.  Transport
+1.8.  Transport
 
    The ManageSieve protocol assumes a reliable data stream such as that
    provided by TCP.  When TCP is used, a ManageSieve server typically
-   listens on port [[anchor7: To-be-assigned by IANA]].
+   listens on port 4190.
 
    Before opening the TCP connection, the ManageSieve client first MUST
    resolve the Domain Name System (DNS) hostname associated with the
@@ -606,17 +488,9 @@ Internet-Draft                 ManageSieve                  January 2009
    communication with the receiving entity.  The process is as follows:
 
    1.  Attempt to resolve the hostname using a [DNS-SRV] Service of
-       "sieve" and a Proto of "tcp" for the target domain (e.g.
+       "sieve" and a Proto of "tcp" for the target domain (e.g.,
        "example.net"), resulting in resource records such as
        "_sieve._tcp.example.net.".  The result of the SRV lookup, if
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 11]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
        successful, will be one or more combinations of a port and
        hostname; the ManageSieve client MUST resolve the returned
        hostnames to IPv4/IPv6 addresses according to returned SRV record
@@ -624,36 +498,71 @@ Internet-Draft                 ManageSieve                  January 2009
        hostname (with the corresponding port number returned by SRV
        lookup) are used to connect to the server.  If connection using
        one of the IP addresses fails, the next resolved IP address is
+
+
+
+
+
+Melnikov & Martin            Standards Track                    [Page 9]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
        used to connect.  If connection to all resolved IP addresses
        fails, then the resolution/connect is repeated for the next
        hostname returned by SRV lookup.
 
    2.  If the SRV lookup fails, the fallback SHOULD be a normal IPv4 or
        IPv6 address record resolution to determine the IP address, where
-       the port used is the default ManageSieve port of [[anchor8: To-
-       be-assigned by IANA]].
+       the port used is the default ManageSieve port of 4190.
 
+1.9.  Conventions Used in This Document
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in [KEYWORDS].
+
+   In examples, "C:" and "S:" indicate lines sent by the client and
+   server respectively.  Line breaks that do not start a new "C:" or
+   "S:" exist for editorial reasons.
+
+   Examples of authentication in this document are using DIGEST-MD5
+   [DIGEST-MD5] and GSSAPI [GSSAPI] SASL mechanisms.
 
 2.  Commands
 
-   This section and its subsections describes valid ManageSieve
-   commands.  Upon initial connection to the server the client's session
-   is in non-authenticated state.  Prior to successful authentication
-   only the AUTHENTICATE, CAPABILITY, STARTTLS, LOGOUT and NOOP (see
-   Section 2.13) commands are valid.  ManageSieve extensions MAY define
-   other commands which are valid in non-authenticated state.  Servers
-   MUST reject all other commands with a NO response.  Clients may
-   pipeline commands (send more than one command at a time without
-   waiting for completion of the first command ).  However, a group of
-   commands sent together MUST NOT have an AUTHENTICATE (*), a STARTTLS
-   or a HAVESPACE command anywhere but the last command in the list.
+   This section and its subsections describe valid ManageSieve commands.
+   Upon initial connection to the server, the client's session is in
+   non-authenticated state.  Prior to successful authentication, only
+   the AUTHENTICATE, CAPABILITY, STARTTLS, LOGOUT, and NOOP (see Section
+   2.13) commands are valid.  ManageSieve extensions MAY define other
+   commands that are valid in non-authenticated state.  Servers MUST
+   reject all other commands with a NO response.  Clients may pipeline
+   commands (send more than one command at a time without waiting for
+   completion of the first command).  However, a group of commands sent
+   together MUST NOT have an AUTHENTICATE (*), a STARTTLS, or a
+   HAVESPACE command anywhere but the last command in the list.
 
    (*) - The only exception to this rule is when the AUTHENTICATE
    command contains an initial response for a SASL mechanism that allows
    clients to send data first, the mechanism is known to complete in one
-   round-trip and the mechanism doesn't negotiate a SASL security layer.
-   Two examples of such SASL mechanisms are PLAIN [PLAIN] and EXTERNAL
-   [SASL].
+   round trip, and the mechanism doesn't negotiate a SASL security
+   layer.  Two examples of such SASL mechanisms are PLAIN [PLAIN] and
+   EXTERNAL [SASL].
+
+
+
+
+
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 10]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
 2.1.  AUTHENTICATE Command
 
@@ -665,14 +574,6 @@ Internet-Draft                 ManageSieve                  January 2009
    authentication mechanism, it performs an authentication protocol
    exchange to identify and authenticate the user.  Optionally, it also
    negotiates a security layer for subsequent protocol interactions.  If
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 12]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
    the requested authentication mechanism is not supported, the server
    rejects the AUTHENTICATE command by sending the NO response.
 
@@ -685,10 +586,10 @@ Internet-Draft                 ManageSieve                  January 2009
    the SASL data followed by a CRLF.  If the client wishes to cancel the
    authentication exchange, it issues a string containing a single "*".
    If the server receives such a response, it MUST reject the
-   AUTHENTICATE command by sending an NO reply.
+   AUTHENTICATE command by sending a NO reply.
 
    Note that an empty challenge/response is sent as an empty string.  If
-   the mechanism dictates that the final response is sent by the server
+   the mechanism dictates that the final response is sent by the server,
    this data MAY be placed within the data portion of the SASL response
    code to save a round trip.
 
@@ -707,12 +608,20 @@ Internet-Draft                 ManageSieve                  January 2009
    "sieve".
 
    Reauthentication is not supported by ManageSieve protocol's profile
-   of SASL.  I.e. after a successfully completed AUTHENTICATE command,
-   no more AUTHENTICATE commands may be issued in the same session.
-   After a successful AUTHENTICATE command completes, a server MUST
-   reject any further AUTHENTICATE commands with a NO reply.  However
-   note that a server may implement UNAUTHENTICATE extension described
-   in Section 2.14.1.
+   of SASL.  That is, after a successfully completed AUTHENTICATE
+   command, no more AUTHENTICATE commands may be issued in the same
+   session.  After a successful AUTHENTICATE command completes, a server
+   MUST reject any further AUTHENTICATE commands with a NO reply.
+
+
+
+Melnikov & Martin            Standards Track                   [Page 11]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
+   However, note that a server may implement the UNAUTHENTICATE
+   extension described in Section 2.14.1.
 
    If a security layer is negotiated through the SASL authentication
    exchange, it takes effect immediately following the CRLF that
@@ -721,37 +630,30 @@ Internet-Draft                 ManageSieve                  January 2009
 
    When a security layer takes effect, the ManageSieve protocol is reset
    to the initial state (the state in ManageSieve after a client has
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 13]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
    connected to the server).  The server MUST discard any knowledge
-   obtained from the client which was not obtained from the SASL (or
-   TLS) negotiation itself.  Likewise, the client MUST discard any
-   knowledge obtained from the server, such as the list of ManageSieve
-   extensions, which was not obtained from the SASL (and/or TLS)
-   negotiation itself.  (Note that a client MAY compare the advertised
-   SASL mechanisms before and after authentication in order to detect an
-   active down-negotiation attack.  See below.)
+   obtained from the client that was not obtained from the SASL (or TLS)
+   negotiation itself.  Likewise, the client MUST discard any knowledge
+   obtained from the server, such as the list of ManageSieve extensions,
+   that was not obtained from the SASL (and/or TLS) negotiation itself.
+   (Note that a client MAY compare the advertised SASL mechanisms before
+   and after authentication in order to detect an active down-
+   negotiation attack.  See below.)
 
    Once a SASL security layer is established, the server MUST re-issue
    the capability results, followed by an OK response.  This is
-   necessary to protect against man-in-the-middle attacks which alter
-   the capabilities list prior to SASL negotiation.  The capability
-   results MUST include all SASL mechanisms the server was capable of
+   necessary to protect against man-in-the-middle attacks that alter the
+   capabilities list prior to SASL negotiation.  The capability results
+   MUST include all SASL mechanisms the server was capable of
    negotiating with that client.  This is done in order to allow the
-   client to detect active down-negotiation attack.  If a user-oriented
-   client detects such down-negotiation attack, it SHOULD either notify
-   the user (it MAY give the user the opportunity to continue with the
-   ManageSieve session in this case) or close the transport connection
-   and indicate that a down-negotiation attack might be in progress.  If
-   an automated client detects down-negotiation attack, it SHOULD return
-   or log an error indicating that a possible attack might be in
-   progress and/or SHOULD close the transport connection.
+   client to detect an active down-negotiation attack.  If a user-
+   oriented client detects such a down-negotiation attack, it SHOULD
+   either notify the user (it MAY give the user the opportunity to
+   continue with the ManageSieve session in this case) or close the
+   transport connection and indicate that a down-negotiation attack
+   might be in progress.  If an automated client detects a down-
+   negotiation attack, it SHOULD return or log an error indicating that
+   a possible attack might be in progress and/or SHOULD close the
+   transport connection.
 
    When both [TLS] and SASL security layers are in effect, the TLS
    encoding MUST be applied (when sending data) after the SASL encoding.
@@ -766,6 +668,14 @@ Internet-Draft                 ManageSieve                  January 2009
    client and server MUST use the [SASLprep] profile of the [StringPrep]
    algorithm to prepare these names for transmission or comparison.  If
    preparation of the authorization identity fails or results in an
+
+
+
+Melnikov & Martin            Standards Track                   [Page 12]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
    empty string (unless it was transmitted as the empty string), the
    server MUST fail the authentication.
 
@@ -776,25 +686,17 @@ Internet-Draft                 ManageSieve                  January 2009
 
    Note that a failed (NO) response to the AUTHENTICATE command may
    contain one of the following response codes: AUTH-TOO-WEAK, ENCRYPT-
-   NEEDED or TRANSITION-NEEDED.  See Section 1.4 for detailed
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 14]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
+   NEEDED, or TRANSITION-NEEDED.  See Section 1.3 for detailed
    description of the relevant conditions.
 
    To ensure interoperability, both client and server implementations of
-   the ManageSieve protocol MUST implement the SCRAM-HMAC-SHA-1 [SCRAM]
-   SASL mechanism, as well as [PLAIN] over [TLS].
+   the ManageSieve protocol MUST implement the SCRAM-SHA-1 [SCRAM] SASL
+   mechanism, as well as [PLAIN] over [TLS].
 
    Note: use of PLAIN over TLS reflects current use of PLAIN over TLS in
-   other email related protocols, however a longer term goal is to
-   migrate email related protocols from using PLAIN over TLS to SCRAM-
-   HMAC-SHA-1 mechanism.
+   other email-related protocols; however, a longer-term goal is to
+   migrate email-related protocols from using PLAIN over TLS to SCRAM-
+   SHA-1 mechanism.
 
    Examples (Note that long lines are folded for readability and are not
    part of protocol exchange):
@@ -818,7 +720,6 @@ Internet-Draft                 ManageSieve                  January 2009
        S: OK (SASL "cnNwYXV0aD1lYTQwZjYwMzM1YzQyN2I1NTI3Yjg0ZGJhYmNkZ
           mZmZA==")
 
-   A slightly different variant of the same authentication exchange:
 
 
 
@@ -826,20 +727,12 @@ Internet-Draft                 ManageSieve                  January 2009
 
 
 
-
-
-
-
-
-
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 15]
+Melnikov & Martin            Standards Track                   [Page 13]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
+
+   A slightly different variant of the same authentication exchange is:
 
        S: "IMPLEMENTATION" "Example1 ManageSieved v001"
        S: "SASL" "DIGEST-MD5 GSSAPI"
@@ -864,9 +757,40 @@ Internet-Draft                 ManageSieve                  January 2009
        C: ""
        S: OK
 
-   Another example demonstrating use of SASL PLAIN mechanism under TLS.
-   This example also demonstrate use of SASL "initial response" (the
-   second parameter to the Authenticate command):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 14]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
+   Another example demonstrating use of SASL PLAIN mechanism under TLS
+   follows.  This example also demonstrate use of SASL "initial
+   response" (the second parameter to the Authenticate command):
 
        S: "IMPLEMENTATION" "Example1 ManageSieved v001"
        S: "VERSION" "1.0"
@@ -892,15 +816,38 @@ Internet-Draft                 ManageSieve                  January 2009
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 16]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 15]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
    The following example demonstrates use of SASL "initial response".
-   It also demonstrates that an empty response can be sent as a literal,
-   and that negotiation a SASL security layer results in the server
-   reissuing server capabilities:
+   It also demonstrates that an empty response can be sent as a literal
+   and that negotiating a SASL security layer results in the server
+   re-issuing server capabilities:
 
        C: AUTHENTICATE "GSSAPI" {1488+}
        C: YIIE[...1480 octets here ...]dA==
@@ -924,7 +871,7 @@ Internet-Draft                 ManageSieve                  January 2009
        S: "MAXREDIRECTS" "3"
        S: ok
 
-2.1.1.  Use of SASL PLAIN mechanism over TLS
+2.1.1.  Use of SASL PLAIN Mechanism over TLS
 
    This section is normative for ManageSieve client implementations that
    support SASL [PLAIN] over [TLS].
@@ -932,15 +879,15 @@ Internet-Draft                 ManageSieve                  January 2009
    If a ManageSieve client is willing to use SASL PLAIN over TLS to
    authenticate to the ManageSieve server, the client MUST verify the
    server identity (see Section 2.2.1).  If the server identity can't be
-   verified (e.g. the server has not provided any certificate, or if the
-   certificate verification fails) the client MUST NOT attempt to
+   verified (e.g., the server has not provided any certificate, or if
+   the certificate verification fails), the client MUST NOT attempt to
    authenticate using the SASL PLAIN mechanism.
 
 2.2.  STARTTLS Command
 
    Support for STARTTLS command in servers is optional.  Its
    availability is advertised with "STARTTLS" capability as described in
-   Section 1.8.
+   Section 1.7.
 
    The STARTTLS command requests commencement of a TLS [TLS]
    negotiation.  The negotiation begins immediately after the CRLF in
@@ -948,9 +895,9 @@ Internet-Draft                 ManageSieve                  January 2009
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 17]
+Melnikov & Martin            Standards Track                   [Page 16]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
    NOT issue further commands until a server response is seen and the
@@ -965,9 +912,9 @@ Internet-Draft                 ManageSieve                  January 2009
 
    After the TLS layer is established, the server MUST re-issue the
    capability results, followed by an OK response.  This is necessary to
-   protect against man-in-the-middle attacks which alter the
-   capabilities list prior to STARTTLS.  This capability result MUST NOT
-   include the STARTTLS capability.
+   protect against man-in-the-middle attacks that alter the capabilities
+   list prior to STARTTLS.  This capability result MUST NOT include the
+   STARTTLS capability.
 
    The client MUST discard cached capability information and replace it
    with the new information.  The server MAY advertise different
@@ -1004,9 +951,9 @@ Internet-Draft                 ManageSieve                  January 2009
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 18]
+Melnikov & Martin            Standards Track                   [Page 17]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
           source of the server's identity.  Matching is performed as
@@ -1032,7 +979,7 @@ Internet-Draft                 ManageSieve                  January 2009
           X.500 or other conventions.  For example, some X.500
           implementations order the RDNs in a DN using a left-to-right
           (most significant to least significant) convention instead of
-          LDAP's right- to-left convention.
+          LDAP's right-to-left convention.
 
    o  When the reference identity is an IP address, the iPAddress
       subjectAltName SHOULD be used by the client for comparison.  The
@@ -1045,7 +992,7 @@ Internet-Draft                 ManageSieve                  January 2009
    suspect.  Automated clients SHOULD return or log an error indicating
    that the server's identity is suspect and/or SHOULD close the
    transport connection.  Automated clients MAY provide a configuration
-   setting that disables this check, but MUST provide a setting which
+   setting that disables this check, but MUST provide a setting that
    enables it.
 
    Beyond the server identity check described in this section, clients
@@ -1060,9 +1007,9 @@ Internet-Draft                 ManageSieve                  January 2009
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 19]
+Melnikov & Martin            Standards Track                   [Page 18]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
 2.2.1.1.  Comparison of DNS Names
@@ -1084,7 +1031,7 @@ Internet-Draft                 ManageSieve                  January 2009
 
    After performing the "to-ASCII" conversion, the DNS labels and names
    MUST be compared for equality according to the rules specified in
-   Section 3 of [RFC3490], i.e. once all label separators are replaced
+   Section 3 of [RFC3490]; i.e., once all label separators are replaced
    with U+002E (dot) they are compared in the case-insensitive manner.
 
    The '*' (ASCII 42) wildcard character is allowed in subjectAltName
@@ -1116,9 +1063,9 @@ Internet-Draft                 ManageSieve                  January 2009
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 20]
+Melnikov & Martin            Standards Track                   [Page 19]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
 2.3.  LOGOUT Command
@@ -1130,10 +1077,10 @@ Internet-Draft                 ManageSieve                  January 2009
 
    The client SHOULD wait for the OK response before closing the
    connection.  This avoids the TCP connection going into the TIME_WAIT
-   state on the server.  In order to avoid going into the the TIME_WAIT
-   TCP state the server MAY wait for a short while for the client to
-   close the TCP connection first.  Whether or not the server waits for
-   the client to close the connection, it MUST then close the connection
+   state on the server.  In order to avoid going into the TIME_WAIT TCP
+   state, the server MAY wait for a short while for the client to close
+   the TCP connection first.  Whether or not the server waits for the
+   client to close the connection, it MUST then close the connection
    itself.
 
        Example:
@@ -1152,7 +1099,7 @@ Internet-Draft                 ManageSieve                  January 2009
        C: CAPABILITY
        S: "IMPLEMENTATION" "Example1 ManageSieved v001"
        S: "VERSION" "1.0"
-       S: "SASL" "PLAIN OTP GSSAPI"
+       S: "SASL" "PLAIN SCRAM-SHA-1 GSSAPI"
        S: "SIEVE" "fileinto vacation"
        S: "STARTTLS"
        S: OK
@@ -1165,16 +1112,16 @@ Internet-Draft                 ManageSieve                  January 2009
    The HAVESPACE command is used to query the server for available
    space.  Clients specify the name they wish to save the script as and
    its size in octets.  Both parameters can be used by the server to see
-   if the script with the specified name and size is within user's
-   quota(s), for example the server MAY use the script name to check if
-   a script would be replaced or a new one would be created.  Servers
-   respond with an NO if storing a script with that name and size would
+   if the script with the specified name and size is within a user's
+   quota(s).  For example, the server MAY use the script name to check
+   if a script would be replaced or a new one would be created.  Servers
+   respond with a NO if storing a script with that name and size would
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 21]
+Melnikov & Martin            Standards Track                   [Page 20]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
    fail or OK otherwise.  Clients SHOULD issue this command before
@@ -1184,7 +1131,7 @@ Internet-Draft                 ManageSieve                  January 2009
    constitute a guarantee of success as server disk space conditions
    could change between the client issuing the HAVESPACE and the client
    issuing the PUTSCRIPT commands.  A QUOTA response code (see
-   Section 1.4) remains a possible (albeit unlikely) response to a
+   Section 1.3) remains a possible (albeit unlikely) response to a
    subsequent PUTSCRIPT with the same name and size.
 
        Example:
@@ -1209,16 +1156,16 @@ Internet-Draft                 ManageSieve                  January 2009
 
    This command places the script on the server.  It does not affect
    whether the script is processed on incoming mail, unless it replaces
-   the script which is already active.  The SETACTIVE command is used to
+   the script that is already active.  The SETACTIVE command is used to
    mark a script as active.
 
-   When submitting large scripts clients SHOULD use the HAVESPACE
+   When submitting large scripts, clients SHOULD use the HAVESPACE
    command beforehand to query if the server is willing to accept a
    script of that size.
 
    The server MUST check the submitted script for validity, which
    includes checking that the script complies with the Sieve grammar
-   [SIEVE], and that all Sieve extensions mentioned in script's
+   [SIEVE] and that all Sieve extensions mentioned in the script's
    "require" statement(s) are supported by the Sieve interpreter.  (Note
    that if the Sieve interpreter supports the Sieve "ihave" extension
    [I-HAVE], any unrecognized/unsupported extension mentioned in the
@@ -1228,9 +1175,9 @@ Internet-Draft                 ManageSieve                  January 2009
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 22]
+Melnikov & Martin            Standards Track                   [Page 21]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
    the same as performed when compiling the script for execution.
@@ -1238,7 +1185,7 @@ Internet-Draft                 ManageSieve                  January 2009
    scripts can extend the validation to a full compilation, in order to
    avoid validating uploaded scripts multiple times.
 
-   If the script fails the validation the server MUST reply with a NO
+   If the script fails the validation, the server MUST reply with a NO
    response.  Any script that fails the validity test MUST NOT be stored
    on the server.  The message given with a NO response MUST be human
    readable and SHOULD contain a specific error message giving the line
@@ -1246,18 +1193,18 @@ Internet-Draft                 ManageSieve                  January 2009
    helpful error messages similar to those given by programming language
    compilers.  Client implementations should note that this may be a
    multiline literal string with more than one error message separated
-   by CRLFs.  The human readable message is in the language returned in
-   the latest LANGUAGE capability (or in "i-default", see Section 1.8),
+   by CRLFs.  The human-readable message is in the language returned in
+   the latest LANGUAGE capability (or in "i-default"; see Section 1.7),
    encoded in UTF-8 [UTF-8].
 
-   An OK response MAY contain the WARNINGS response code.  In such case
-   the human readable message that follows the OK response SHOULD
+   An OK response MAY contain the WARNINGS response code.  In such a
+   case the human-readable message that follows the OK response SHOULD
    contain a specific warning message (or messages) giving the line
    number(s) in the script that might contain errors not intended by the
-   script writer.  The human readable message is in the language
-   returned in the latest LANGUAGE capability (or in "i-default", see
-   Section 1.8), encoded in UTF-8 [UTF-8] A client seeing such response
-   code SHOULD present the message to the user.
+   script writer.  The human-readable message is in the language
+   returned in the latest LANGUAGE capability (or in "i-default"; see
+   Section 1.7), encoded in UTF-8 [UTF-8].  A client seeing such a
+   response code SHOULD present the message to the user.
 
 
 
@@ -1284,9 +1231,9 @@ Internet-Draft                 ManageSieve                  January 2009
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 23]
+Melnikov & Martin            Standards Track                   [Page 22]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
        Examples:
@@ -1321,9 +1268,9 @@ Internet-Draft                 ManageSieve                  January 2009
 2.7.  LISTSCRIPTS Command
 
    This command lists the scripts the user has on the server.  Upon
-   success a list of CRLF separated script names (each represented as a
+   success, a list of CRLF-separated script names (each represented as a
    quoted or literal string) is returned followed by an OK response.  If
-   there exists an active script the atom ACTIVE is appended to the
+   there exists an active script, the atom ACTIVE is appended to the
    corresponding script name.  The atom ACTIVE MUST NOT appear on more
    than one response line.
 
@@ -1340,9 +1287,9 @@ Internet-Draft                 ManageSieve                  January 2009
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 24]
+Melnikov & Martin            Standards Track                   [Page 23]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
        Example:
@@ -1365,13 +1312,13 @@ Internet-Draft                 ManageSieve                  January 2009
    Arguments:  String - script name
 
    This command sets a script active.  If the script name is the empty
-   string (i.e. "") then any active script is disabled.  Disabling an
+   string (i.e., ""), then any active script is disabled.  Disabling an
    active script when there is no script active is not an error and MUST
-   result in OK reply.
+   result in an OK reply.
 
-   If the script does not exist on the server then the server MUST reply
-   with a NO response.  Such reply SHOULD contain the NONEXISTENT
-   response code.
+   If the script does not exist on the server, then the server MUST
+   reply with a NO response.  Such a reply SHOULD contain the
+   NONEXISTENT response code.
 
        Examples:
 
@@ -1388,7 +1335,6 @@ Internet-Draft                 ManageSieve                  January 2009
        S: No (NONEXISTENT) {31}
        S: There is no script by that name
 
-2.9.  GETSCRIPT Command
 
 
 
@@ -1396,19 +1342,22 @@ Internet-Draft                 ManageSieve                  January 2009
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 25]
+
+Melnikov & Martin            Standards Track                   [Page 24]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
+
+2.9.  GETSCRIPT Command
 
    Arguments:  String - script name
 
    This command gets the contents of the specified script.  If the
-   script does not exist the server MUST reply with a NO response.  Such
-   reply SHOULD contain the NONEXISTENT response code.
+   script does not exist, the server MUST reply with a NO response.
+   Such a reply SHOULD contain the NONEXISTENT response code.
 
-   Upon success a string with the contents of the script is returned
-   followed by a OK response.
+   Upon success, a string with the contents of the script is returned
+   followed by an OK response.
 
        Example:
 
@@ -1428,9 +1377,9 @@ Internet-Draft                 ManageSieve                  January 2009
    responses SHOULD include the NONEXISTENT response code.
 
    The server MUST NOT allow the client to delete an active script, so
-   the server MUST reply with a NO response if attempted.  Such response
-   SHOULD contain the ACTIVE response code.  If a client wishes to
-   delete an active script it should use the SETACTIVE command to
+   the server MUST reply with a NO response if attempted.  Such a
+   response SHOULD contain the ACTIVE response code.  If a client wishes
+   to delete an active script, it should use the SETACTIVE command to
    disable the script first.
 
        Example:
@@ -1441,6 +1390,20 @@ Internet-Draft                 ManageSieve                  January 2009
        C: Deletescript "baz"
        S: No (ACTIVE) "You may not delete an active script"
 
+
+
+
+
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 25]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
 2.11.  RENAMESCRIPT Command
 
    Arguments:  String - Old Script name
@@ -1449,17 +1412,9 @@ Internet-Draft                 ManageSieve                  January 2009
    This command is used to rename a user's Sieve script.  Servers MUST
    reply with a NO response if the old script does not exist (in which
    case the NONEXISTENT response code SHOULD be included), or a script
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 26]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
    with the new name already exists (in which case the ALREADYEXISTS
    response code SHOULD be included).  Renaming the active script is
-   allowed, the renamed script remains active.
+   allowed; the renamed script remains active.
 
        Example:
 
@@ -1475,7 +1430,7 @@ Internet-Draft                 ManageSieve                  January 2009
    1.  List available scripts with LISTSCRIPTS.  If the script with the
        new script name exists, then the client should ask the user
        whether to abort the operation, to replace the script (by issuing
-       the DELETESCRIPT <newname> after that) or to chose a different
+       the DELETESCRIPT <newname> after that), or to choose a different
        name.
 
    2.  Download the old script with GETSCRIPT <oldname>.
@@ -1483,14 +1438,27 @@ Internet-Draft                 ManageSieve                  January 2009
    3.  Upload the old script with the new name: PUTSCRIPT <newname>.
 
    4.  If the old script was active (as reported by LISTSCRIPTS in step
-       1), then make the new script active: SETACTIVE <newname>
+       1), then make the new script active: SETACTIVE <newname>.
 
-   5.  Delete the old script: DELETESCRIPT <oldname>
+   5.  Delete the old script: DELETESCRIPT <oldname>.
 
    Note that these steps don't describe how to handle various other
-   error conditions (for example NO response containing QUOTA response
-   code in step 3).  Error handling is left as an excercise for the
+   error conditions (for example, NO response containing QUOTA response
+   code in step 3).  Error handling is left as an exercise for the
    reader.
+
+
+
+
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 26]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
 2.12.  CHECKSCRIPT Command
 
@@ -1505,23 +1473,15 @@ Internet-Draft                 ManageSieve                  January 2009
    (Note that if the Sieve interpreter supports the Sieve "ihave"
    extension [I-HAVE], any unrecognized/unsupported extension mentioned
    in the "ihave" test MUST NOT cause the syntactic validation failure.)
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 27]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
-   If the script fails this test the server MUST reply with a NO
+   If the script fails this test, the server MUST reply with a NO
    response.  The message given with a NO response MUST be human
    readable and SHOULD contain a specific error message giving the line
    number of the first error.  Implementors should strive to produce
    helpful error messages similar to those given by programming language
    compilers.  Client implementations should note that this may be a
    multiline literal string with more than one error message separated
-   by CRLFs.  The human readable message is in the language returned in
-   the latest LANGUAGE capability (or in "i-default", see Section 1.8),
+   by CRLFs.  The human-readable message is in the language returned in
+   the latest LANGUAGE capability (or in "i-default"; see Section 1.7),
    encoded in UTF-8 [UTF-8].
 
        Examples:
@@ -1535,39 +1495,39 @@ Internet-Draft                 ManageSieve                  January 2009
    A ManageSieve server supporting this command MUST NOT check if the
    script will put the current user over its quota limit.
 
-   An OK response MAY contain the WARNINGS response code.  In such case
-   the human readable message that follows the OK response SHOULD
+   An OK response MAY contain the WARNINGS response code.  In such a
+   case, the human-readable message that follows the OK response SHOULD
    contain a specific warning message (or messages) giving the line
    number(s) in the script that might contain errors not intended by the
-   script writer.  The human readable message is in the language
-   returned in the latest LANGUAGE capability (or in "i-default", see
-   Section 1.8), encoded in UTF-8 [UTF-8] A client seeing such response
-   code SHOULD present the message to the user.
+   script writer.  The human-readable message is in the language
+   returned in the latest LANGUAGE capability (or in "i-default"; see
+   Section 1.7), encoded in UTF-8 [UTF-8].  A client seeing such a
+   response code SHOULD present the message to the user.
+
+
+
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 27]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
 2.13.  NOOP Command
 
    Arguments:  String - tag to echo back (optional)
 
    The NOOP command does nothing, beyond returning a response to the
-   client.  It may be used by clients for protocol re-synchronisation or
+   client.  It may be used by clients for protocol re-synchronization or
    to reset any inactivity auto-logout timer on the server.
 
    The response to the NOOP command is always OK, followed by the TAG
-   response code together with the supplied string; if no string was
+   response code together with the supplied string.  If no string was
    supplied in the NOOP command, the TAG response code MUST NOT be
    included.
-
-
-
-
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 28]
-
-Internet-Draft                 ManageSieve                  January 2009
-
 
        Examples:
 
@@ -1578,7 +1538,7 @@ Internet-Draft                 ManageSieve                  January 2009
        S: OK (TAG {16}
        S: STARTTLS-SYNC-42) "Done"
 
-2.14.  Recommended extensions
+2.14.  Recommended Extensions
 
    The UNAUTHENTICATE extension (advertised as the "UNAUTHENTICATE"
    capability with no parameters) defines a new UNAUTHENTICATE command,
@@ -1587,9 +1547,9 @@ Internet-Draft                 ManageSieve                  January 2009
 
 2.14.1.  UNAUTHENTICATE Command
 
-   The UNAUTHENTICATE command returns the server to the non-
-   authenticated state.  It doesn't affect any previously established
-   TLS [TLS] or SASL (Section 2.1) security layer.
+   The UNAUTHENTICATE command returns the server to the
+   non-authenticated state.  It doesn't affect any previously
+   established TLS [TLS] or SASL (Section 2.1) security layer.
 
    The UNAUTHENTICATE command is only valid in authenticated state.  If
    issued in a wrong state, the server MUST reject it with a NO
@@ -1598,8 +1558,18 @@ Internet-Draft                 ManageSieve                  January 2009
    The UNAUTHENTICATE command has no parameters.
 
    When issued in the authenticated state, the UNAUTHENTICATE command
-   MUST NOT fail (i.e. it must never return anything other than OK or
-   BYE)
+   MUST NOT fail (i.e., it must never return anything other than OK or
+   BYE).
+
+
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 28]
+
+RFC 5804                       ManageSieve                     July 2010
 
 
 3.  Sieve URL Scheme
@@ -1608,26 +1578,8 @@ Internet-Draft                 ManageSieve                  January 2009
 
    Status: permanent
 
-   URI scheme syntax:
-
-
-
-
-
-
-
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 29]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
-         Described using ABNF [ABNF]. Some ABNF productions not defined
-             below are from [URI-GEN].
-
+   URI scheme syntax: Described using ABNF [ABNF].  Some ABNF
+   productions not defined below are from [URI-GEN].
 
          sieveurl = sieveurl-server / sieveurl-list-scripts /
                     sieveurl-script
@@ -1661,25 +1613,25 @@ Internet-Draft                 ManageSieve                  January 2009
 
          ochar         = unreserved / pct-encoded / sub-delims-sh /
                          ":" / "@"
-                         ;; Same as [URI-GEN] 'pchar'
+                         ;; Same as [URI-GEN] 'pchar',
                          ;; but without ";", "&" and "=".
 
          unreserved = <defined in [URI-GEN]>
 
          pct-encoded = <defined in [URI-GEN]>
 
+
+
+
+Melnikov & Martin            Standards Track                   [Page 29]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
          sub-delims-sh = "!" / "$" / "'" / "(" / ")" /
                          "*" / "+" / ","
                          ;; Same as [URI-GEN] sub-delims,
                          ;; but without ";", "&" and "=".
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 30]
-
-Internet-Draft                 ManageSieve                  January 2009
-
 
    URI scheme semantics:
 
@@ -1688,39 +1640,49 @@ Internet-Draft                 ManageSieve                  January 2009
       MIME type defined in [SIEVE].  There is no MIME type associated
       with the former form of Sieve URI.
 
-      The server form is used in the REFERRAL response code (see
-      Section 1.4 in order to designate another server where the client
-      should perform its operations.
+      The server form is used in the REFERRAL response code (see Section
+      1.3) in order to designate another server where the client should
+      perform its operations.
 
       The script form allows to retrieve (GETSCRIPT), update
-      (PUTSCRIPT), delete (DELETESCRIPT) or activate (SETACTIVE) the
-      named script, however the most typical action would be to retrieve
-      the script.  If the script name is empty (omitted), the URI
-      requests that the client lists available scripts using the
+      (PUTSCRIPT), delete (DELETESCRIPT), or activate (SETACTIVE) the
+      named script; however, the most typical action would be to
+      retrieve the script.  If the script name is empty (omitted), the
+      URI requests that the client lists available scripts using the
       LISTSCRIPTS command.
 
    Encoding considerations:
 
-      The script name and/or the owner, if present, is in UTF-8.  Non-
+      The script name and/or the owner, if present, is in UTF-8.  Non--
       US-ASCII UTF-8 octets MUST be percent-encoded as described in
       [URI-GEN].  US-ASCII characters such as " " (space), ";", "&",
       "=", "/" and "?"  MUST be %-encoded as described in [URI-GEN].
       Note that "&" and "?" are in this list in order to allow for
       future extensions.
 
-      Note that the empty owner (e.g. sieve://example.com//script) is
-      different from the missing owner (e.g. sieve://example.com/script)
-      and is reserved for referencing global scripts.
+      Note that the empty owner (e.g., sieve://example.com//script) is
+      different from the missing owner (e.g.,
+      sieve://example.com/script) and is reserved for referencing global
+      scripts.
 
       The user name (in the "authority" part), if present, is in UTF-8.
       Non-US-ASCII UTF-8 octets MUST be percent-encoded as described in
       [URI-GEN].
 
    Applications/protocols that use this URI scheme name:
-   ManageSieve [RFC XXXX] clients and servers.  Clients that can store
+   ManageSieve [RFC5804] clients and servers.  Clients that can store
    user preferences in protocols such as [LDAP] or [ACAP].
 
    Interoperability considerations: None.
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 30]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
    Security considerations:
    The <scriptname> part of a ManageSieve URL might potentially disclose
@@ -1728,14 +1690,6 @@ Internet-Draft                 ManageSieve                  January 2009
    depending on a ManageSieve implementation, about configuration of the
    mail system.  The latter might be used to prepare for a more complex
    attack on the mail system.
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 31]
-
-Internet-Draft                 ManageSieve                  January 2009
-
 
    Clients resolving ManageSieve URLs that wish to achieve data
    confidentiality and/or integrity SHOULD use the STARTTLS command (if
@@ -1749,16 +1703,15 @@ Internet-Draft                 ManageSieve                  January 2009
 
    References: This document and RFC 5228 [SIEVE].
 
-
 4.  Formal Syntax
 
-   The following syntax specification uses the augmented Backus-Naur
+   The following syntax specification uses the Augmented Backus-Naur
    Form (BNF) notation as specified in [ABNF].  This uses the ABNF core
    rules as specified in Appendix A of the ABNF specification [ABNF].
-   "UTF8-2", "UTF8-3" and "UTF8-4" non-terminal are defined in [UTF-8].
+   "UTF8-2", "UTF8-3", and "UTF8-4" non-terminal are defined in [UTF-8].
 
    Except as noted otherwise, all alphabetic characters are case-
-   insensitive.  The use of upper or lower case characters to define
+   insensitive.  The use of upper- or lowercase characters to define
    token strings is for editorial clarity only.  Implementations MUST
    accept these strings in a case-insensitive fashion.
 
@@ -1766,32 +1719,31 @@ Internet-Draft                 ManageSieve                  January 2009
                             %x5D-7F
                             ;; any TEXT-CHAR except QUOTED-SPECIALS
 
-    QUOTED-CHAR           = SAFE-UTF8-CHAR / DQUOTE QUOTED-SPECIALS
+    QUOTED-CHAR           = SAFE-UTF8-CHAR / "\" QUOTED-SPECIALS
 
     QUOTED-SPECIALS       = DQUOTE / "\"
 
     SAFE-UTF8-CHAR        = SAFE-CHAR / UTF8-2 / UTF8-3 / UTF8-4
-                            ;; <UTF8-2>, <UTF8-3> and <UTF8-4>
-                            ;; are defined in [UTF-8]
+                            ;; <UTF8-2>, <UTF8-3>, and <UTF8-4>
+                            ;; are defined in [UTF-8].
 
     ATOM-CHAR             = "!" / %x23-27 / %x2A-5B / %x5D-7A / %x7C-7E
                             ;; Any CHAR except ATOM-SPECIALS
 
-    ATOM-SPECIALS         = "(" / ")" / "{" / SP / CTL /
-                             QUOTED-SPECIALS
+    ATOM-SPECIALS         = "(" / ")" / "{" / SP / CTL / QUOTED-SPECIALS
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 31]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
     NZDIGIT               = %x31-39
                             ;; 1-9
 
     atom                  = 1*1024ATOM-CHAR
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 32]
-
-Internet-Draft                 ManageSieve                  January 2009
-
 
     iana-token            = atom
                             ;; MUST be registered with IANA
@@ -1836,18 +1788,19 @@ Internet-Draft                 ManageSieve                  January 2009
 
     command-noop          = "NOOP" [SP string]
 
+
+
+
+Melnikov & Martin            Standards Track                   [Page 32]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
     command-logout        = "LOGOUT"
 
     command-putscript     = "PUTSCRIPT" SP sieve-name SP sieve-script
 
     command-checkscript   = "CHECKSCRIPT" SP sieve-script
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 33]
-
-Internet-Draft                 ManageSieve                  January 2009
-
 
     sieve-script          = string
 
@@ -1865,8 +1818,8 @@ Internet-Draft                 ManageSieve                  January 2009
     command-unauthenticate= "UNAUTHENTICATE"
 
     extend-token          = atom
-                            ;; MUST be defined by a standards track or
-                            ;; IESG approved experimental protocol
+                            ;; MUST be defined by a Standards Track or
+                            ;; IESG-approved experimental protocol
                             ;; extension
 
     extension-data        = extension-item *(SP extension-item)
@@ -1888,6 +1841,17 @@ Internet-Draft                 ManageSieve                  January 2009
                             ;; This type of literal can only be sent
                             ;; from the server to the client.
 
+
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 33]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
     number                = (NZDIGIT *DIGIT) / "0"
                             ;; A 32-bit unsigned number
                             ;; with no extra leading zeros.
@@ -1897,18 +1861,10 @@ Internet-Draft                 ManageSieve                  January 2009
                             ;; <number> encoded as a <string>.
 
     quoted                = DQUOTE *1024QUOTED-CHAR DQUOTE
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 34]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
                             ;; limited to 1024 octets between the <">s
 
-    resp-code             = "AUTH-TOO-WEAK" / "ENCRYPT-NEEDED" /
-                            "QUOTA" ["/" ("MAXSCRIPTS" / "MAXSIZE")] /
+    resp-code             = "AUTH-TOO-WEAK" / "ENCRYPT-NEEDED" / "QUOTA"
+                            ["/" ("MAXSCRIPTS" / "MAXSIZE")] /
                             resp-code-sasl /
                             resp-code-referral /
                             "TRANSITION-NEEDED" / "TRYLATER" /
@@ -1944,6 +1900,14 @@ Internet-Draft                 ManageSieve                  January 2009
                             response-starttls /
                             response-renamescript /
                             response-noop /
+
+
+
+Melnikov & Martin            Standards Track                   [Page 34]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
                             response-unauthenticate
 
     response-authenticate = *(string CRLF)
@@ -1953,19 +1917,12 @@ Internet-Draft                 ManageSieve                  January 2009
                             ;; SASL security layer was negotiated and
                             ;; MUST be omitted otherwise.
 
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 35]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
     response-capability   = *(single-capability) response-oknobye
 
     single-capability     = capability-name [SP string] CRLF
 
     capability-name       = string
+
                             ;; Note that literal-s2c is allowed.
 
     initial-capabilities  = DQUOTE "IMPLEMENTATION" DQUOTE SP string /
@@ -1979,7 +1936,7 @@ Internet-Draft                 ManageSieve                  January 2009
                             DQUOTE "OWNER" DQUOTE SP string
                             ;; Each capability conforms to
                             ;; the syntax for single-capability.
-                            ;; Also note that the capability name
+                            ;; Also, note that the capability name
                             ;; can be returned as either literal-s2c
                             ;; or quoted, even though only "quoted"
                             ;; string is shown above.
@@ -1988,42 +1945,43 @@ Internet-Draft                 ManageSieve                  January 2009
 
     version-ext = DQUOTE ver-major "." ver-minor DQUOTE
                  ; Future versions specified in updates
-                 ; to this document. An increment to
+                 ; to this document.  An increment to
                  ; the ver-major means a backward-incompatible
-                 ; change to the protocol, e.g. "3.5" (ver-major "3")
+                 ; change to the protocol, e.g., "3.5" (ver-major "3")
                  ; is not backward-compatible with any "2.X" version.
                  ; Any version "Z.W" MUST be backward compatible
                  ; with any version "Z.Q", where Q < W.
-                 ; E.g. version "2.4" is backward-compatible
-                 ; with version "2.0", "2.1", "2.2" and "2.3".
+                 ; For example, version "2.4" is backward compatible
+                 ; with version "2.0", "2.1", "2.2", and "2.3".
 
     ver-major = number
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 35]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
     ver-minor = number
 
     sasl-mechs = string
-                 ; space separated list of SASL mechanisms,
+                 ; Space-separated list of SASL mechanisms,
                  ; each SASL mechanism name complies with rules
                  ; specified in [SASL].
                  ; Can be empty.
 
     sieve-extensions = string
-                 ; space separated list of supported SIEVE extensions,
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 36]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
-                 ; can be empty.
+                 ; Space-separated list of supported SIEVE extensions.
+                 ; Can be empty.
 
     language     = string
-                 ; Contains <Language-Tag> from [RFC4646].
+                 ; Contains <Language-Tag> from [RFC5646].
+
 
     notify-mechs = string
-                 ; space separated list of URI schema parts
+                 ; Space-separated list of URI schema parts
                  ; for supported notification [NOTIFY] methods.
                  ; MUST NOT be empty.
 
@@ -2047,13 +2005,20 @@ Internet-Draft                 ManageSieve                  January 2009
 
     response-ok           = "OK" [SP "(" resp-code ")"]
                             [SP string] CRLF
-                            ;; The string contains human readable text
+                            ;; The string contains human-readable text
                             ;; encoded as UTF-8.
 
     response-nobye        = ("NO" / "BYE") [SP "(" resp-code ")"]
                             [SP string] CRLF
-                            ;; The string contains human readable text
+                            ;; The string contains human-readable text
                             ;; encoded as UTF-8.
+
+
+
+Melnikov & Martin            Standards Track                   [Page 36]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
     response-oknobye      = response-ok / response-nobye
 
@@ -2064,14 +2029,6 @@ Internet-Draft                 ManageSieve                  January 2009
     response-checkscript  = response-oknobye
 
     response-renamescript = response-oknobye
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 37]
-
-Internet-Draft                 ManageSieve                  January 2009
-
 
     response-setactive    = response-oknobye
 
@@ -2097,21 +2054,27 @@ Internet-Draft                 ManageSieve                  January 2009
                             ;; from the server to the client.
                             ;; quoted is allowed in either direction.
 
-
 5.  Security Considerations
 
    The AUTHENTICATE command uses SASL [SASL] to provide authentication
    and authorization services.  Integrity and privacy services can be
-   provided by [SASL] and/or [TLS].  When a SASL mechanism is used the
+   provided by [SASL] and/or [TLS].  When a SASL mechanism is used, the
    security considerations for that mechanism apply.
 
    This protocol's transactions are susceptible to passive observers or
-   man in the middle attacks which alter the data, unless the optional
+   man-in-the-middle attacks that alter the data, unless the optional
    encryption and integrity services of the SASL (via the AUTHENTICATE
    command) and/or [TLS] (via the STARTTLS command) are enabled, or an
    external security mechanism is used for protection.  It may be useful
    to allow configuration of both clients and servers to refuse to
    transfer sensitive information in the absence of strong encryption.
+
+
+
+Melnikov & Martin            Standards Track                   [Page 37]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
    If an implementation supports SASL mechanisms that are vulnerable to
    passive eavesdropping attacks (such as [PLAIN]), then the
@@ -2120,15 +2083,7 @@ Internet-Draft                 ManageSieve                  January 2009
    external security layer such as [TLS].
 
    Some response codes returned on failed AUTHENTICATE command may
-   disclose whether or not the username is valid (e.g.  TRANSITION-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 38]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
+   disclose whether or not the username is valid (e.g., TRANSITION-
    NEEDED), so server implementations SHOULD provide the ability to
    disable these features (or make them not conditional on a per-user
    basis) for sites concerned about such disclosure.  In the case of
@@ -2137,538 +2092,455 @@ Internet-Draft                 ManageSieve                  January 2009
    can disclose information.
 
    A compromised or malicious server can use the TRANSITION-NEEDED
-   response code to force the client which is configured to use a
+   response code to force the client that is configured to use a
    mechanism that does not disclose the user's password to the server
    (e.g., Kerberos), to send the bare password to the server.  Clients
    SHOULD have the ability to disable the password transition feature,
-   or disclose that risk to the user and offer the user an option how to
-   proceed.
-
+   or disclose that risk to the user and offer the user an option of how
+   to proceed.
 
 6.  IANA Considerations
 
-   IANA is requested to reserve a TCP port number for use with the
-   ManageSieve protocol described in this document.
+   IANA has reserved TCP port number 4190 for use with the ManageSieve
+   protocol described in this document.
 
-   IANA is requested to register the "sieve" URI scheme defined in
-   Section 3 of this document.
+   IANA has registered the "sieve" URI scheme defined in Section 3 of
+   this document.
 
-   IANA is requested to register "sieve" in the "GSSAPI/Kerberos/SASL
-   Service Names" registry.
+   IANA has registered "sieve" in the "GSSAPI/Kerberos/SASL Service
+   Names" registry.
 
-   IANA is requested to create a new registry for ManageSieve
-   capabilities.  The registration template for ManageSieve capabilities
-   is specified in Section 6.1.  ManageSieve protocol capabilities MUST
-   be specified in a standards track or IESG approved experimental RFC.
+   IANA has created a new registry for ManageSieve capabilities.  The
+   registration template for ManageSieve capabilities is specified in
+   Section 6.1.  ManageSieve protocol capabilities MUST be specified in
+   a Standards-Track or IESG-approved Experimental RFC.
 
-   IANA is requested to create a new registry for ManageSieve response
-   codes.  The registration template for ManageSieve response codes is
-   specified in Section 6.3.  ManageSieve protocol response codes MUST
-   be specified in a standards track or IESG approved experimental RFC.
+   IANA has created a new registry for ManageSieve response codes.  The
+   registration template for ManageSieve response codes is specified in
+   Section 6.3.  ManageSieve protocol response codes MUST be specified
+   in a Standards-Track or IESG-approved Experimental RFC.
+
+
+
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 38]
+
+RFC 5804                       ManageSieve                     July 2010
+
 
 6.1.  ManageSieve Capability Registration Template
 
    To: iana@iana.org
    Subject: ManageSieve Capability Registration
 
-   Please register the following ManageSieve Capability:
+   Please register the following ManageSieve capability:
+
    Capability name:
    Description:
    Relevant publications:
    Person & email address to contact for further information:
    Author/Change controller:
 
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 39]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
-6.2.  Registration of Initial ManageSieve capabilities
+6.2.  Registration of Initial ManageSieve Capabilities
 
    To: iana@iana.org
    Subject: ManageSieve Capability Registration
 
-   Please register the following ManageSieve Capabilities:
+   Please register the following ManageSieve capabilities:
 
-      Capability name: IMPLEMENTATION
+   Capability name:  IMPLEMENTATION
+   Description:   Its value contains the name of the server
+                  implementation and its version.
+   Relevant publications:  this RFC, Section 1.7.
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Description: Its value contains name of server implementation and
-      its version.
+   Capability name:  SASL
+   Description:   Its value contains a space-separated list of SASL
+                  mechanisms supported by the server.
+   Relevant publications:  this RFC, Sections 1.7 and 2.1.
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Relevant publications: this RFC, Section 1.8.
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Capability name: SASL
-
-      Description: Its value contains a space separated list of SASL
-      mechanisms supported by server.
-
-      Relevant publications: this RFC, Section 1.8 and Section 2.1.
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Capability name: SIEVE
-
-      Description: Its value contains a space separated list of
-      supported SIEVE extensions
-
-      Relevant publications: this RFC, Section 1.8.  Also [SIEVE].
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Capability name: STARTTLS
-
-      Description: This capability is returned if server supports TLS
-      (STARTTLS command).
+   Capability name:  SIEVE
+   Description:   Its value contains a space-separated list of supported
+                  SIEVE extensions.
+   Relevant publications:  this RFC, Section 1.7.  Also [SIEVE].
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 40]
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 39]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
-      Relevant publications: this RFC, Section 1.8 and Section 2.2.
+   Capability name:  STARTTLS
+   Description:   This capability is returned if the server supports TLS
+                  (STARTTLS command).
+   Relevant publications:  this RFC, Sections 1.7 and 2.2.
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
+   Capability name:  NOTIFY
+   Description:   This capability is returned if the server supports the
+                  'enotify' [NOTIFY] Sieve extension.
+   Relevant publications:  this RFC, Section 1.7.
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Author/Change controller: IESG.
+   Capability name:  MAXREDIRECTS
+   Description:   This capability returns the limit on the number of
+                  Sieve "redirect" actions a script can perform during a
+                  single evaluation.  The value is a non-negative number
+                  represented as a ManageSieve string.
+   Relevant publications:  this RFC, Section 1.7.
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Capability name: NOTIFY
+   Capability name:  LANGUAGE
+   Description:   The language (<Language-Tag> from [RFC5646]) currently
+                  used for human-readable error messages.
+   Relevant publications:  this RFC, Section 1.7.
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Description: This capability is returned if server supports
-      'enotify' [NOTIFY] Sieve extension.
-
-      Relevant publications: this RFC, Section 1.8.
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Capability name: MAXREDIRECTS
-
-      Description: This capability returns the limit on the number of
-      Sieve "redirect" actions a script can perform during a single
-      evaluation.  The value is a non-negative number represented as a
-      ManageSieve string.
-
-      Relevant publications: this RFC, Section 1.8.
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Capability name: LANGUAGE
-
-      Description: The language (<Language-Tag> from [RFC4646])
-      currently used for human readable error messages.
-
-      Relevant publications: this RFC, Section 1.8.
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Capability name: OWNER
+   Capability name:  OWNER
+   Description:   Its value contains the UTF-8-encoded name of the
+                  currently logged-in user ("authorization identity"
+                  according to RFC 4422).
+   Relevant publications:  this RFC, Section 1.7.
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
 
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 41]
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 40]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
-      Description: Its value contains UTF-8 encoded name of the
-      currently logged in user ("authorization identity" according to
-      RFC 4422).
-
-      Relevant publications: this RFC, Section 1.8.
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Capability name: VERSION
-
-      Description: This capability is returned if the server is
-      compliant with RFCXXXX, i.e. that it supports RENAMESCRIPT,
-      CHECKSCRIPT and NOOP commands.
-
-      Relevant publications: this RFC, Section 2.11.
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
+   Capability name:  VERSION
+   Description:   This capability is returned if the server is compliant
+                  with RFC 5804; i.e., that it supports RENAMESCRIPT,
+                  CHECKSCRIPT, and NOOP commands.
+   Relevant publications:  this RFC, Sections 2.11, 2.12, and 2.13.
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
 6.3.  ManageSieve Response Code Registration Template
 
    To: iana@iana.org
    Subject: ManageSieve Response Code Registration
 
-   Please register the following ManageSieve Response Code:
+   Please register the following ManageSieve response code:
 
       Response Code:
-
       Arguments (use ABNF to specify syntax, or the word NONE if none
       can be specified):
-
       Purpose:
-
       Published Specification(s):
-
       Person & email address to contact for further information:
-
       Author/Change controller:
-
-
-
-
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 42]
-
-Internet-Draft                 ManageSieve                  January 2009
-
 
 6.4.  Registration of Initial ManageSieve Response Codes
 
    To: iana@iana.org
    Subject: ManageSieve Response Code Registration
 
-   Please register the following ManageSieve Response Codes:
+   Please register the following ManageSieve response codes:
 
-      Response Code: AUTH-TOO-WEAK
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): NONE
-
-      Purpose: This response code is returned in the NO response from an
-      AUTHENTICATE command.  It indicates that site security policy
-      forbids the use of the requested mechanism for the specified
-      authentication identity.
-
-      Published Specification(s): [RFCXXXX]
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Response Code: ENCRYPT-NEEDED
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): NONE
-
-      Purpose: This response code is returned in the NO response from an
-      AUTHENTICATE command.  It indicates that site security policy
-      requires the use of a strong encryption mechanism for the
-      specified authentication identity and mechanism.
-
-      Published Specification(s): [RFCXXXX]
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Response Code: QUOTA
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): NONE
-
-      Purpose: If this response code is returned in the NO/BYE response,
-      it means that the command would have placed the user above the
+   Response Code: AUTH-TOO-WEAK
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  NONE
+   Purpose:       This response code is returned in the NO response from
+                  an AUTHENTICATE command.  It indicates that site
+                  security policy forbids the use of the requested
+                  mechanism for the specified authentication identity.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 43]
+
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 41]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
-      site-defined quota constraints.  If this response code is returned
-      in the OK response, it can mean that the user is near its quota or
-      that the user exceeded its quota, but the server supports soft
-      quotas.
+   Response Code: ENCRYPT-NEEDED
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  NONE
+   Purpose:       This response code is returned in the NO response from
+                  an AUTHENTICATE command.  It indicates that site
+                  security policy requires the use of a strong
+                  encryption mechanism for the specified authentication
+                  identity and mechanism.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Published Specification(s): [RFCXXXX]
+   Response Code: QUOTA
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  NONE
+   Purpose:       If this response code is returned in the NO/BYE
+                  response, it means that the command would have placed
+                  the user above the site-defined quota constraints.  If
+                  this response code is returned in the OK response, it
+                  can mean that the user is near its quota or that the
+                  user exceeded its quota, but the server supports soft
+                  quotas.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Response Code: QUOTA/MAXSCRIPTS
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): NONE
-
-      Purpose: If this response code is returned in the NO/BYE response,
-      it means that the command would have placed the user above the
-      site-defined limit on the number of Sieve scripts.  If this
-      response code is returned in the OK response, it can mean that the
-      user is near its quota or that the user exceeded its quota, but
-      the server supports soft quotas.  This response code is a more
-      specific version of the QUOTA response code.
-
-      Published Specification(s): [RFCXXXX]
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Response Code: QUOTA/MAXSIZE
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): NONE
-
-      Purpose: If this response code is returned in the NO/BYE response,
-      it means that the command would have placed the user above the
-      site-defined maximum script size.  If this response code is
-      returned in the OK response, it can mean that the user is near its
-      quota or that the user exceeded its quota, but the server supports
-      soft quotas.  This response code is a more specific version of the
-      QUOTA response code.
-
-      Published Specification(s): [RFCXXXX]
+   Response Code: QUOTA/MAXSCRIPTS
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  NONE
+   Purpose:       If this response code is returned in the NO/BYE
+                  response, it means that the command would have placed
+                  the user above the site-defined limit on the number of
+                  Sieve scripts.  If this response code is returned in
+                  the OK response, it can mean that the user is near its
+                  quota or that the user exceeded its quota, but the
+                  server supports soft quotas.  This response code is a
+                  more specific version of the QUOTA response code.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
 
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 44]
+
+
+
+Melnikov & Martin            Standards Track                   [Page 42]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
+   Response Code: QUOTA/MAXSIZE
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  NONE
+   Purpose:       If this response code is returned in the NO/BYE
+                  response, it means that the command would have placed
+                  the user above the site-defined maximum script size.
+                  If this response code is returned in the OK response,
+                  it can mean that the user is near its quota or that
+                  the user exceeded its quota, but the server supports
+                  soft quotas.  This response code is a more specific
+                  version of the QUOTA response code.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Author/Change controller: IESG.
+   Response Code: REFERRAL
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  <sieveurl>
+   Purpose:       This response code may be returned with a BYE result
+                  from any command, and includes a mandatory parameter
+                  that indicates what server to access to manage this
+                  user's Sieve scripts.  The server will be specified by
+                  a Sieve URL (see Section 3).  The scriptname portion
+                  of the URL MUST NOT be specified.  The client should
+                  authenticate to the specified server and use it for
+                  all further commands in the current session.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Response Code: REFERRAL
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): <sieveurl>
-
-      Purpose: This response code may be returned with a BYE result from
-      any command, and includes a mandatory parameter that indicates
-      what server to access to manage this user's sieve scripts.  The
-      server will be specified by a Sieve URL (see Section 3).  The
-      scriptname portion of the URL MUST NOT be specified.  The client
-      should authenticate to the specified server and use it for all
-      further commands in the current session.
-
-      Published Specification(s): [RFCXXXX]
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Response Code: SASL
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): <string>
-
-      Purpose: This response code can occur in the OK response to a
-      successful AUTHENTICATE command and includes the optional final
-      server response data from the server as specified by [SASL].
-
-      Published Specification(s): [RFCXXXX]
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Response Code: TRANSITION-NEEDED
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): NONE
-
-      Purpose: This response code occurs in a NO response of an
-      AUTHENTICATE command.  It indicates that the user name is valid,
+   Response Code: SASL
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  <string>
+   Purpose:       This response code can occur in the OK response to a
+                  successful AUTHENTICATE command and includes the
+                  optional final server response data from the server as
+                  specified by [SASL].
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 45]
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 43]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
-      but the entry in the authentication database needs to be updated
-      in order to permit authentication with the specified mechanism.
-      This is typically done by establishing a secure channel using TLS,
-      followed by authenticating once using the [PLAIN] authentication
-      mechanism.  The selected mechanism SHOULD then work for
-      authentications in subsequent sessions.
+   Response Code: TRANSITION-NEEDED
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  NONE
+   Purpose:       This response code occurs in a NO response of an
+                  AUTHENTICATE command.  It indicates that the user name
+                  is valid, but the entry in the authentication database
+                  needs to be updated in order to permit authentication
+                  with the specified mechanism.  This is typically done
+                  by establishing a secure channel using TLS, followed
+                  by authenticating once using the [PLAIN]
+                  authentication mechanism.  The selected mechanism
+                  SHOULD then work for authentications in subsequent
+                  sessions.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Published Specification(s): [RFCXXXX]
+   Response Code: TRYLATER
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  NONE
+   Purpose:       A command failed due to a temporary server failure.
+                  The client MAY continue using local information and
+                  try the command later.  This response code only make
+                  sense when returned in a NO/BYE response.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Response Code: TRYLATER
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): NONE
-
-      Purpose: A command failed due to a temporary server failure.  The
-      client MAY continue using local information and try the command
-      later.  This response code only make sense when returned in a NO/
-      BYE response.
-
-      Published Specification(s): [RFCXXXX]
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Response Code: ACTIVE
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): NONE
-
-      Purpose: A command failed because it is not allowed on the active
-      script.  For example DELETESCRIPT on the active script.  This
-      response code only makes sense when returned in a NO/BYE response.
-
-      Published Specification(s): [RFCXXXX]
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
+   Response Code: ACTIVE
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  NONE
+   Purpose:       A command failed because it is not allowed on the
+                  active script, for example, DELETESCRIPT on the active
+                  script.  This response code only makes sense when
+                  returned in a NO/BYE response.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
 
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 46]
+
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 44]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
-      Response Code: NONEXISTENT
+   Response Code: NONEXISTENT
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  NONE
+   Purpose:       A command failed because the referenced script name
+                  doesn't exist.  This response code only makes sense
+                  when returned in a NO/BYE response.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): NONE
+   Response Code: ALREADYEXISTS
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  NONE
+   Purpose:       A command failed because the referenced script name
+                  already exists.  This response code only makes sense
+                  when returned in a NO/BYE response.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Purpose: A command failed because the referenced script name
-      doesn't exist.  This response code only makes sense when returned
-      in a NO/BYE response.
+   Response Code: WARNINGS
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  NONE
+   Purpose:       This response code MAY be returned by the server in
+                  the OK response (but it might be returned with the NO/
+                  BYE response as well) and signals the client that even
+                  though the script is syntactically valid, it might
+                  contain errors not intended by the script writer.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
-      Published Specification(s): [RFCXXXX]
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Response Code: ALREADYEXISTS
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): NONE
-
-      Purpose: A command failed because the referenced script name
-      already exists.  This response code only makes sense when returned
-      in a NO/BYE response.
-
-      Published Specification(s): [RFCXXXX]
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
-
-      Response Code: WARNINGS
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): NONE
-
-      Purpose: This response code MAY be returned by the server in the
-      OK response (but it might be returned with the NO/BYE response as
-      well) and signals the client that even though the script is
-      syntactically valid, it might contain errors not intended by the
-      script writer.
-
-      Published Specification(s): [RFCXXXX]
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
+   Response Code: TAG
+   Arguments (use ABNF to specify syntax, or the word NONE if none can
+   be specified):  string
+   Purpose:       This response code name is followed by a string
+                  specified in the command that caused this response.
+                  It is typically used for client state synchronization.
+   Published Specification(s):  [RFC5804]
+   Person & email address to contact for further information:
+                  Alexey Melnikov <alexey.melnikov@isode.com>
+   Author/Change controller:  IESG.
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 47]
+
+
+
+Melnikov & Martin            Standards Track                   [Page 45]
 
-Internet-Draft                 ManageSieve                  January 2009
-
-
-      Author/Change controller: IESG.
-
-      Response Code: TAG
-
-      Arguments (use ABNF to specify syntax, or the word NONE if none
-      can be specified): string
-
-      Purpose: This response code name is followed by a string specified
-      in the command that caused this response.  It is typically used
-      for client state synchronization.
-
-      Published Specification(s): [RFCXXXX]
-
-      Person & email address to contact for further information: Alexey
-      Melnikov <alexey.melnikov@isode.com>
-
-      Author/Change controller: IESG.
+RFC 5804                       ManageSieve                     July 2010
 
 
 7.  Internationalization Considerations
 
-   The LANGUAGE capability (see Section 1.8) allows a client to discover
-   the current language used in all human readable responses that might
-   be returned at the end of any OK/NO/BYE response.  Human readable
+   The LANGUAGE capability (see Section 1.7) allows a client to discover
+   the current language used in all human-readable responses that might
+   be returned at the end of any OK/NO/BYE response.  Human-readable
    text in OK responses typically doesn't need to be shown to the user,
-   unless it is returned in response to PUTSCRIPT or CHECKSCRIPT command
-   that also contain the WARNINGS response code Section 1.4.  Human
-   readable text from NO/BYE responses is intended be shown to the user,
-   unless the client can automatically handle failure of the command
-   that caused such response.  Clients SHOULD use response codes
-   (Section 1.4) for automatic error handling.  Response codes MAY also
-   be used by the client to present error messages in a language
-   understood by the user, for example if the LANGUAGE capability
+   unless it is returned in response to a PUTSCRIPT or CHECKSCRIPT
+   command that also contains the WARNINGS response code (Section 1.3).
+   Human-readable text from NO/BYE responses is intended be shown to the
+   user, unless the client can automatically handle failure of the
+   command that caused such a response.  Clients SHOULD use response
+   codes (Section 1.3) for automatic error handling.  Response codes MAY
+   also be used by the client to present error messages in a language
+   understood by the user, for example, if the LANGUAGE capability
    doesn't return a language understood by the user.
 
-   Note that the human readable text from OK (WARNINGS) or NO/BYE
+   Note that the human-readable text from OK (WARNINGS) or NO/BYE
    responses for PUTSCRIPT/CHECKSCRIPT commands is intended for advanced
    users that understand Sieve language.  Such advanced users are often
    sophisticated enough to be able to handle whatever language the
@@ -2676,26 +2548,17 @@ Internet-Draft                 ManageSieve                  January 2009
    want to see error/warning text no matter what language the server
    puts it in.
 
-   A client that generates Sieve script automatically, for example if
+   A client that generates Sieve script automatically, for example, if
    the script is generated without user intervention or from a UI that
    presents an abstract list of conditions and corresponding actions,
    SHOULD NOT present warning/error messages to the user, because the
    user might not even be aware that the client is using Sieve
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 48]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
-   underneath.  However if the client has a debugging mode, such
+   underneath.  However, if the client has a debugging mode, such
    warnings/errors SHOULD be available in the debugging mode.
 
    Note that this document doesn't provide a way to modify the currently
    used language.  It is expected that a future extension will address
    that.
-
 
 8.  Acknowledgements
 
@@ -2705,135 +2568,143 @@ Internet-Draft                 ManageSieve                  January 2009
    Pennock, Ned Freed, Jeffrey Hutzelman, Mark E. Mallett, Dilyan
    Palauzov, Dave Cridland, Aaron Stone, Robert Burrell Donkin, Patrick
    Ben Koetter, Bjoern Hoehrmann, Martin Duerst, Pasi Eronen, Magnus
-   Westerlund and Tim Polk for help with this document.  Special thank
-   you to Phil Pennock for providing text for the NOOP command, as well
-   as finding various bugs in the document.
+   Westerlund, Tim Polk, and Julien Coloos for help with this document.
+   Special thank you to Phil Pennock for providing text for the NOOP
+   command, as well as finding various bugs in the document.
+
+
+
+
+Melnikov & Martin            Standards Track                   [Page 46]
+
+RFC 5804                       ManageSieve                     July 2010
 
 
 9.  References
 
 9.1.  Normative References
 
-   [ABNF]     Crocker, D., Ed. and P. Overell, "Augmented BNF for Syntax
-              Specifications: ABNF", RFC 5234, January 2008.
+   [ABNF]         Crocker, D. and P. Overell, "Augmented BNF for Syntax
+                  Specifications: ABNF", STD 68, RFC 5234, January 2008.
 
-   [ACAP]     Newman, C. and J. Myers, "ACAP -- Application
-              Configuration Access Protocol", RFC 2244, November 1997.
+   [ACAP]         Newman, C. and J. Myers, "ACAP -- Application
+                  Configuration Access Protocol", RFC 2244, November
+                  1997.
 
-   [BASE64]   Josefsson, S., "The Base16, Base32, and Base64 Data
-              Encodings", RFC 4648, October 2006.
+   [BASE64]       Josefsson, S., "The Base16, Base32, and Base64 Data
+                  Encodings", RFC 4648, October 2006.
 
-   [DNS-SRV]  Gulbrandsen, A., Vixie, P., and L. Esibov, "A DNS RR for
-              specifying the location of services (DNS SRV)", RFC 2782,
-              February 2000.
+   [DNS-SRV]      Gulbrandsen, A., Vixie, P., and L. Esibov, "A DNS RR
+                  for specifying the location of services (DNS SRV)",
+                  RFC 2782, February 2000.
 
-   [KEYWORDS]
-              Bradner, S., "Key words for use in RFCs to Indicate
-              Requirement Levels", RFC 2119, March 1997.
+   [KEYWORDS]     Bradner, S., "Key words for use in RFCs to Indicate
+                  Requirement Levels", BCP 14, RFC 2119, March 1997.
 
-   [NET-UNICODE]
-              Klensin, J. and M. Padlipsky, "Unicode Format for Network
-              Interchange", RFC 5198, March 2008.
+   [NET-UNICODE]  Klensin, J. and M. Padlipsky, "Unicode Format for
+                  Network Interchange", RFC 5198, March 2008.
 
-   [NOTIFY]   Melnikov, A., Ed., Leiba, B., Ed., Segmuller, W., and T.
-              Martin, "Sieve Extension: Notifications",
+   [NOTIFY]       Melnikov, A., Leiba, B., Segmuller, W., and T. Martin,
+                  "Sieve Email Filtering: Extension for Notifications",
+                  RFC 5435, January 2009.
+
+   [RFC2277]      Alvestrand, H., "IETF Policy on Character Sets and
+                  Languages", BCP 18, RFC 2277, January 1998.
+
+   [RFC2460]      Deering, S. and R. Hinden, "Internet Protocol, Version
+                  6 (IPv6) Specification", RFC 2460, December 1998.
+
+   [RFC3490]      Faltstrom, P., Hoffman, P., and A. Costello,
+                  "Internationalizing Domain Names in Applications
+                  (IDNA)", RFC 3490, March 2003.
+
+   [RFC4519]      Sciberras, A., "Lightweight Directory Access Protocol
+                  (LDAP): Schema for User Applications", RFC 4519, June
+                  2006.
+
+   [RFC5646]      Phillips, A. and M. Davis, "Tags for Identifying
+                  Languages", BCP 47, RFC 5646, September 2009.
+
+   [RFC791]       Postel, J., "Internet Protocol", STD 5, RFC 791,
+                  September 1981.
 
 
 
-Melnikov & Martin         Expires July 21, 2009                [Page 49]
+
+Melnikov & Martin            Standards Track                   [Page 47]
 
-Internet-Draft                 ManageSieve                  January 2009
+RFC 5804                       ManageSieve                     July 2010
 
 
-              draft-ietf-sieve-notify-12 (work in progress),
-              December 2007.
+   [SASL]         Melnikov, A. and K. Zeilenga, "Simple Authentication
+                  and Security Layer (SASL)", RFC 4422, June 2006.
 
-   [RFC2277]  Alvestrand, H., "IETF Policy on Character Sets and
-              Languages", RFC 2277, January 1998.
+   [SASLprep]     Zeilenga, K., "SASLprep: Stringprep Profile for User
+                  Names and Passwords", RFC 4013, February 2005.
 
-   [RFC2460]  Deering, S. and R. Hinden, "Internet Protocol, Version 6
-              (IPv6) Specification", RFC 2460, December 1998.
+   [SCRAM]        Menon-Sen, A., Melnikov, A., Newman, C., and N.
+                  Williams, "Salted Challenge Response Authentication
+                  Mechanism (SCRAM) SASL and GSS-API Mechanisms", RFC
+                  5802, July 2010.
 
-   [RFC3490]  Faltstrom, P., Hoffman, P., and A. Costello,
-              "Internationalizing Domain Names in Applications (IDNA)",
-              RFC 3490, March 2003.
+   [SIEVE]        Guenther, P. and T. Showalter, "Sieve: An Email
+                  Filtering Language", RFC 5228, January 2008.
 
-   [RFC4519]  Sciberras, A., "Lightweight Directory Access Protocol
-              (LDAP): Schema for User Applications", RFC 4519,
-              June 2006.
+   [StringPrep]   Hoffman, P. and M. Blanchet, "Preparation of
+                  Internationalized Strings ("stringprep")", RFC 3454,
+                  December 2002.
 
-   [RFC4646]  Phillips, A. and M. Davis, "Tags for Identifying
-              Languages", RFC 4646, September 2006.
+   [TLS]          Dierks, T. and E. Rescorla, "The Transport Layer
+                  Security (TLS) Protocol Version 1.2", RFC 5246, August
+                  2008.
 
-   [RFC791]   Postel, J., "Internet Protocol", RFC 791, September 1981.
+   [URI-GEN]      Berners-Lee, T., Fielding, R., and L. Masinter,
+                  "Uniform Resource Identifier (URI): Generic Syntax",
+                  STD 66, RFC 3986, January 2005.
 
-   [SASL]     Melnikov, A. and K. Zeilenga, "Simple Authentication and
-              Security Layer (SASL)", RFC 4422, June 2006.
+   [UTF-8]        Yergeau, F., "UTF-8, a transformation format of ISO
+                  10646", STD 63, RFC 3629, November 2003.
 
-   [SASLprep]
-              Zeilenga, K., "SASLprep: Stringprep Profile for User Names
-              and Passwords", RFC 4013, February 2005.
+   [X509]         Cooper, D., Santesson, S., Farrell, S., Boeyen, S.,
+                  Housley, R., and W. Polk, "Internet X.509 Public Key
+                  Infrastructure Certificate and Certificate Revocation
+                  List (CRL) Profile", RFC 5280, May 2008.
 
-   [SCRAM]    Menon-Sen, A., Ed. and C. Newman, "Salted Challenge
-              Response Authentication Mechanism (SCRAM)",
-              draft-newman-auth-scram-07.txt (work in progress),
-              November 2008.
-
-   [SIEVE]    Guenther, P., Ed. and T. Showalter, Ed., "Sieve: An Email
-              Filtering Language", RFC 5228, January 2008.
-
-   [StringPrep]
-              Hoffman, P. and M. Blanchet, "Preparation of
-              Internationalized Strings ("stringprep")", RFC 3454,
-              December 2002.
-
-   [TLS]      Dierks, T. and E. Rescorla, "The Transport Layer Security
-              (TLS) Protocol Version 1.2", RFC 5246, August 2008.
-
-   [URI-GEN]  Berners-Lee, T., Fielding, R., and L. Masinter, "Uniform
-              Resource Identifier (URI): Generic Syntax", STD 66,
-              RFC 3986, January 2005.
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 50]
-
-Internet-Draft                 ManageSieve                  January 2009
-
-
-   [UTF-8]    Yergeau, F., "UTF-8, a transformation format of ISO
-              10646", STD 63, RFC 3629, November 2003.
-
-   [X509]     Housley, R., Polk, W., Ford, W., and D. Solo, "Internet
-              X.509 Public Key Infrastructure Certificate and
-              Certificate Revocation List (CRL) Profile", RFC 5280,
-              May 2008.
-
-   [X509-SRV]
-              Santesson, S., "Internet X.509 Public Key Infrastructure
-              Subject Alternative Name for Expression of Service Name",
-              RFC 4985, August 2007.
+   [X509-SRV]     Santesson, S., "Internet X.509 Public Key
+                  Infrastructure Subject Alternative Name for Expression
+                  of Service Name", RFC 4985, August 2007.
 
 9.2.  Informative References
 
-   [DIGEST-MD5]
-              Leach, P. and C. Newman, "Using Digest Authentication as a
-              SASL Mechanism", RFC 2831, May 2000.
+   [DIGEST-MD5]   Leach, P. and C. Newman, "Using Digest Authentication
+                  as a SASL Mechanism", RFC 2831, May 2000.
 
-   [I-HAVE]   Freed, N., "Sieve Email Filtering: Ihave Extension",
-              draft-freed-sieve-ihave-03.txt (work in progress),
-              October 2008.
+   [GSSAPI]       Melnikov, A., "The Kerberos V5 ("GSSAPI") Simple
+                  Authentication and Security Layer (SASL) Mechanism",
+                  RFC 4752, November 2006.
 
-   [IMAP]     Crispin, M., "INTERNET MESSAGE ACCESS PROTOCOL - VERSION
-              4rev1", RFC 3501, March 2003.
 
-   [LDAP]     Zeilenga, K., "Lightweight Directory Access Protocol
-              (LDAP): Technical Specification Road Map", RFC 4510,
-              June 2006.
 
-   [PLAIN]    Zeilenga, K., "The PLAIN Simple Authentication and
-              Security Layer (SASL) Mechanism", RFC 4616, August 2006.
 
+
+Melnikov & Martin            Standards Track                   [Page 48]
+
+RFC 5804                       ManageSieve                     July 2010
+
+
+   [I-HAVE]       Freed, N., "Sieve Email Filtering: Ihave Extension",
+                  RFC 5463, March 2009.
+
+   [IMAP]         Crispin, M., "INTERNET MESSAGE ACCESS PROTOCOL -
+                  VERSION 4rev1", RFC 3501, March 2003.
+
+   [LDAP]         Zeilenga, K., "Lightweight Directory Access Protocol
+                  (LDAP): Technical Specification Road Map", RFC 4510,
+                  June 2006.
+
+   [PLAIN]        Zeilenga, K., "The PLAIN Simple Authentication and
+                  Security Layer (SASL) Mechanism", RFC 4616, August
+                  2006.
 
 Authors' Addresses
 
@@ -2844,27 +2715,17 @@ Authors' Addresses
    Hampton, Middlesex  TW12 2BX
    UK
 
-   Email: Alexey.Melnikov@isode.com
-
-
-
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 51]
-
-Internet-Draft                 ManageSieve                  January 2009
+   EMail: Alexey.Melnikov@isode.com
 
 
    Tim Martin
-   BeThereBeSquare Inc.
+   BeThereBeSquare, Inc.
    672 Haight st.
    San Francisco, CA  94117
-   US
+   USA
 
    Phone: +1 510 260-4175
-   Email: timmartin@alumni.cmu.edu
+   EMail: timmartin@alumni.cmu.edu
 
 
 
@@ -2882,32 +2743,5 @@ Internet-Draft                 ManageSieve                  January 2009
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Melnikov & Martin         Expires July 21, 2009                [Page 52]
+Melnikov & Martin            Standards Track                   [Page 49]
 
-
