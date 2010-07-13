@@ -29,6 +29,10 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A SECOND RELEASE (0.2.x) ##
 
+* Further develop regex extension and update it to the latest draft:
+	- Allow for :regex matching with variable key
+	- Implement the :quoteregex set modifier
+	- Investigate the use of the TRE regexp library to gain UTF-8 capability
 * Finish body extension:
 	- Implement proper :content "multipart" behavior
 	- Implement proper :content "message/rfc822" behavior
@@ -47,7 +51,6 @@ Next (in order of descending priority/precedence):
 	- Fix issues listed in doc/rfc/RFC-questions.txt based on answers
 	- Allow for the existence of dynamic comparators (i.e. specified by 
 	  variables). 
-	- Allow for :regex matching with variable key.
 	- Verify outgoing mail addresses at runtime when necessary
 	  (e.g. after variables substitution)
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
