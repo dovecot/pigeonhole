@@ -71,6 +71,8 @@ struct sieve_comparator {
 #define SIEVE_COMPARATOR_DEFAULT(definition) \
 	{ SIEVE_OBJECT_DEFAULT(definition), &(definition) }
 
+#define sieve_comparator_name(cmp) \
+	( (cmp)->object.def->identifier )
 #define sieve_comparator_is(cmp, definition) \
 	( (cmp)->def == &(definition) ) 
 

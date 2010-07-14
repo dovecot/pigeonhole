@@ -5,6 +5,7 @@
 #include "mempool.h"
 #include "hash.h"
 #include "array.h"
+#include "str-sanitize.h"
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
@@ -16,6 +17,7 @@
 #include "sieve-dump.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
+#include "sieve-runtime-trace.h"
 
 #include "sieve-match.h"
 
@@ -42,6 +44,10 @@ struct sieve_match_context *sieve_match_begin
 	mctx->kextract = kextract;
 	mctx->key_list = key_list;
 
+	sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
+		"  starting `:%s' match with `%s' comparator:", sieve_match_type_name(mcht),
+		sieve_comparator_name(cmp));
+
 	if ( mcht->def != NULL && mcht->def->match_init != NULL ) {
 		mcht->def->match_init(mctx);
 	}
@@ -50,8 +56,9 @@ struct sieve_match_context *sieve_match_begin
 }
 
 int sieve_match_value
-	(struct sieve_match_context *mctx, const char *value, size_t val_size)
+(struct sieve_match_context *mctx, const char *value, size_t val_size)
 {
+	const struct sieve_runtime_env *renv = mctx->runenv;
 	const struct sieve_match_type *mcht = mctx->match_type;
 	sieve_coded_stringlist_reset(mctx->key_list);
 	bool ok = TRUE;
@@ -59,7 +66,10 @@ int sieve_match_value
 	/* Reject unimplemented match-type */
 	if ( mcht->def == NULL || mcht->def->match == NULL )
 		return FALSE;
-				
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
+		"  matching value `%s'", str_sanitize(value, 80));
+
 	/* Match to all key values */
 	if ( mcht->def->is_iterative ) {
 		unsigned int key_index = 0;
@@ -81,12 +91,18 @@ int sieve_match_value
 							ret = mcht->def->match
 								(mctx, value, val_size, key, key_size, key_index);
 						
+							sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
+								"    with key `%s' => %d", str_sanitize(key, 80), ret);
+
 							if ( ret != 0 ) break;
 						}
 					}  
 				} else {
 					ret = mcht->def->match(mctx, value, val_size, str_c(key_item), 
 							str_len(key_item), key_index);
+
+					sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
+						"    with key `%s' => %d", str_sanitize(str_c(key_item), 80), ret);
 				}
 			} T_END;
 			
@@ -105,13 +121,13 @@ int sieve_match_value
 			return TRUE;
 
 	} else {
-		bool result;
+		int ret;
 
 		T_BEGIN {
-			result = mcht->def->match(mctx, value, val_size, NULL, 0, -1);
+			ret = mcht->def->match(mctx, value, val_size, NULL, 0, -1);
 		} T_END;
 
-		return result;
+		return ret;
 	}
 
 	return FALSE;
@@ -119,6 +135,7 @@ int sieve_match_value
 
 int sieve_match_end(struct sieve_match_context **mctx)
 {
+	const struct sieve_runtime_env *renv = (*mctx)->runenv;
 	const struct sieve_match_type *mcht = (*mctx)->match_type;
 	int ret = FALSE;
 
@@ -128,6 +145,10 @@ int sieve_match_end(struct sieve_match_context **mctx)
 
 	pool_unref(&(*mctx)->pool);
 	*mctx = NULL;
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
+		"  finishing match with result: %s", 
+		( ret > 0 ? "true" : ( ret < 0 ? "error" : "false" ) ));
 
 	return ret;
 }
