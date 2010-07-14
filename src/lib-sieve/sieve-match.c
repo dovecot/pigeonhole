@@ -24,7 +24,7 @@
  */
 
 struct sieve_match_context *sieve_match_begin
-(struct sieve_interpreter *interp, const struct sieve_match_type *mcht, 
+(const struct sieve_runtime_env *renv, const struct sieve_match_type *mcht, 
 	const struct sieve_comparator *cmp, 
 	const struct sieve_match_key_extractor *kextract,
 	struct sieve_coded_stringlist *key_list)
@@ -36,7 +36,7 @@ struct sieve_match_context *sieve_match_begin
 	mctx = p_new(pool, struct sieve_match_context, 1);  
 
 	mctx->pool = pool;
-	mctx->interp = interp;
+	mctx->runenv = renv;
 	mctx->match_type = mcht;
 	mctx->comparator = cmp;
 	mctx->kextract = kextract;

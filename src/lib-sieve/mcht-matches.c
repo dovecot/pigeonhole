@@ -121,7 +121,7 @@ static int mcht_matches_match
 	pvp = val;                  /* Previous value Pointer */
 
 	/* Start match values list if requested */
-	if ( (mvalues = sieve_match_values_start(mctx->interp)) != NULL ) {
+	if ( (mvalues = sieve_match_values_start(mctx->runenv)) != NULL ) {
 		/* Skip ${0} for now; added when match succeeds */
 		sieve_match_values_add(mvalues, NULL);
 
@@ -425,7 +425,7 @@ static int mcht_matches_match
 			sieve_match_values_set(mvalues, 0, matched);
 
 			/* Commit new match values */
-			sieve_match_values_commit(mctx->interp, &mvalues);
+			sieve_match_values_commit(mctx->runenv, &mvalues);
 		}
 		return TRUE;
 	}

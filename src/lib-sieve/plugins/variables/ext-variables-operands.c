@@ -246,7 +246,7 @@ static bool opr_match_value_read
 		 * actually read the argument.
 		 	*/
 		if ( str != NULL ) {
-			sieve_match_values_get(renv->interp, index, str);
+			sieve_match_values_get(renv, index, str);
 		
 			if ( *str == NULL ) 
 				*str = t_str_new(0);

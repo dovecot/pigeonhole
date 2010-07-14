@@ -339,7 +339,7 @@ static int cmd_denotify_operation_execute
 	if ( match_key != NULL ) { 	
 
 		/* Initialize match */
-    	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, match_key);
+    	mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, match_key);
 
 		/* Iterate through all actions */
 		rictx = sieve_result_iterate_init(renv->result);

@@ -189,7 +189,7 @@ static void mcht_regex_match_init
 	ctx->value_index = -1;
 
 	/* Create storage for match values if match values are requested */
-	if ( sieve_match_values_are_enabled(mctx->interp) ) {
+	if ( sieve_match_values_are_enabled(mctx->runenv) ) {
 		ctx->pmatch = p_new(pool, regmatch_t, MCHT_REGEX_MAX_SUBSTITUTIONS);
 		ctx->nmatch = MCHT_REGEX_MAX_SUBSTITUTIONS;
 	} else {
@@ -274,7 +274,7 @@ static int mcht_regex_match
 			string_t *subst = t_str_new(32);
 
 			/* Start new list of match values */
-			mvalues = sieve_match_values_start(mctx->interp);
+			mvalues = sieve_match_values_start(mctx->runenv);
 
 			i_assert( mvalues != NULL );
 
@@ -296,7 +296,7 @@ static int mcht_regex_match
 			}
 
 			/* Substitute the new match values */
-			sieve_match_values_commit(mctx->interp, &mvalues);
+			sieve_match_values_commit(mctx->runenv, &mvalues);
 		}
 
 		return TRUE;

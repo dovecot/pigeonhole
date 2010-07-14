@@ -398,12 +398,12 @@ static int ext_body_operation_execute
 
 	/* Disable match values processing as required by RFC */
 		
-	mvalues_active = sieve_match_values_set_enabled(renv->interp, FALSE);
+	mvalues_active = sieve_match_values_set_enabled(renv, FALSE);
 
 	/* Iterate through all requested body parts to match */
 
 	matched = FALSE;	
-	mctx = sieve_match_begin(renv->interp, &mtch, &cmp, NULL, key_list); 	
+	mctx = sieve_match_begin(renv, &mtch, &cmp, NULL, key_list); 	
 	while ( !matched && body_parts->content != NULL ) {
 		if ( (mret=sieve_match_value(mctx, body_parts->content, body_parts->size)) 	
 			< 0) 
@@ -425,7 +425,7 @@ static int ext_body_operation_execute
 	
 	/* Restore match values processing */ 
 	
-	(void)sieve_match_values_set_enabled(renv->interp, mvalues_active);
+	(void)sieve_match_values_set_enabled(renv, mvalues_active);
 	
 	/* Set test result */	
 	

@@ -134,12 +134,12 @@ void sieve_match_type_register
 struct sieve_match_values;
 
 bool sieve_match_values_set_enabled
-	(struct sieve_interpreter *interp, bool enable);
+	(const struct sieve_runtime_env *renv, bool enable);
 bool sieve_match_values_are_enabled
-	(struct sieve_interpreter *interp);	
+	(const struct sieve_runtime_env *renv);	
 	
 struct sieve_match_values *sieve_match_values_start
-	(struct sieve_interpreter *interp);
+	(const struct sieve_runtime_env *renv);
 void sieve_match_values_set
 	(struct sieve_match_values *mvalues, unsigned int index, string_t *value);
 void sieve_match_values_add
@@ -150,12 +150,12 @@ void sieve_match_values_skip
 	(struct sieve_match_values *mvalues, int num);
 	
 void sieve_match_values_commit
-	(struct sieve_interpreter *interp, struct sieve_match_values **mvalues);
+	(const struct sieve_runtime_env *renv, struct sieve_match_values **mvalues);
 void sieve_match_values_abort
 	(struct sieve_match_values **mvalues);
 	
 void sieve_match_values_get
-	(struct sieve_interpreter *interp, unsigned int index, string_t **value_r);
+	(const struct sieve_runtime_env *renv, unsigned int index, string_t **value_r);
 
 /*
  * Match type tagged argument 

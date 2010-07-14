@@ -283,7 +283,7 @@ static int tst_spamvirustest_operation_execute
 		(renv, SIEVE_TRLVL_TESTS, "%s test", sieve_operation_mnemonic(op));
 
 	/* Initialize match */
-	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_value); 	
+	mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, key_value); 	
 
 	/* Perform match */
 

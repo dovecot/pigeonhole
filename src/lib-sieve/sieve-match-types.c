@@ -185,10 +185,10 @@ static inline struct mtch_interpreter_context *get_interpreter_context
  */
 
 bool sieve_match_values_set_enabled
-(struct sieve_interpreter *interp, bool enable)
+(const struct sieve_runtime_env *renv, bool enable)
 {
 	struct mtch_interpreter_context *ctx = 
-		get_interpreter_context(interp, enable);
+		get_interpreter_context(renv->interp, enable);
 		
 	if ( ctx != NULL ) {
 		bool previous = ctx->match_values_enabled;
@@ -201,19 +201,19 @@ bool sieve_match_values_set_enabled
 }
 
 bool sieve_match_values_are_enabled
-(struct sieve_interpreter *interp)
+(const struct sieve_runtime_env *renv)
 {
 	struct mtch_interpreter_context *ctx = 
-		get_interpreter_context(interp, FALSE);
+		get_interpreter_context(renv->interp, FALSE);
 		
 	return ( ctx == NULL ? FALSE : ctx->match_values_enabled );
 }
 
 struct sieve_match_values *sieve_match_values_start
-(struct sieve_interpreter *interp)
+(const struct sieve_runtime_env *renv)
 {
 	struct mtch_interpreter_context *ctx = 
-		get_interpreter_context(interp, FALSE);
+		get_interpreter_context(renv->interp, FALSE);
 	struct sieve_match_values *match_values;
 	
 	if ( ctx == NULL || !ctx->match_values_enabled )
@@ -294,13 +294,13 @@ void sieve_match_values_skip
 }
 
 void sieve_match_values_commit
-(struct sieve_interpreter *interp, struct sieve_match_values **mvalues)
+(const struct sieve_runtime_env *renv, struct sieve_match_values **mvalues)
 {
 	struct mtch_interpreter_context *ctx;
 	
 	if ( (*mvalues) == NULL ) return;
 	
-	ctx = get_interpreter_context(interp, FALSE);
+	ctx = get_interpreter_context(renv->interp, FALSE);
 	if ( ctx == NULL || !ctx->match_values_enabled )
 		return;	
 		
@@ -323,10 +323,10 @@ void sieve_match_values_abort
 }
 
 void sieve_match_values_get
-(struct sieve_interpreter *interp, unsigned int index, string_t **value_r) 
+(const struct sieve_runtime_env *renv, unsigned int index, string_t **value_r) 
 {
 	struct mtch_interpreter_context *ctx = 
-		get_interpreter_context(interp, FALSE);
+		get_interpreter_context(renv->interp, FALSE);
 	struct sieve_match_values *mvalues;
 
 	if ( ctx == NULL || ctx->match_values == NULL ) {

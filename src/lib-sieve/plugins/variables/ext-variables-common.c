@@ -723,7 +723,7 @@ bool ext_variables_interpreter_load
 		(ext, renv->interp, scpbin);
 
 	/* Enable support for match values */
-	(void) sieve_match_values_set_enabled(renv->interp, TRUE);
+	(void) sieve_match_values_set_enabled(renv, TRUE);
 
 	return TRUE;
 }

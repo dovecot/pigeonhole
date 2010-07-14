@@ -261,7 +261,7 @@ static int tst_hasflag_operation_execute
 
 	matched = FALSE;
 	mctx = sieve_match_begin
-		(renv->interp, &mtch, &cmp, &_flag_extractor, flag_list); 	
+		(renv, &mtch, &cmp, &_flag_extractor, flag_list); 	
 
 	matched = FALSE;
 

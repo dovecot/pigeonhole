@@ -201,7 +201,7 @@ static int tst_environment_operation_execute
 		(this_ext, str_c(name), renv->scriptenv);
 
 	if ( env_item != NULL ) {
-		mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_list); 	
+		mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, key_list); 	
 
 		if ( (mret=sieve_match_value(mctx, strlen(env_item) == 0 ? NULL : env_item, 
 			strlen(env_item))) < 0 ) {

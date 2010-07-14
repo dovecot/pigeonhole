@@ -449,7 +449,7 @@ static int ext_envelope_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "envelope test");
 	
 	/* Initialize match */
-	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_list);
+	mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, key_list);
 	
 	/* Iterate through all requested headers to match */
 	envp_item = NULL;

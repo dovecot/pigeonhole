@@ -228,7 +228,7 @@ static int tst_notifymc_operation_execute
 		(renv, 0 /* FIXME */, notify_uri, str_c(notify_capability));
 
 	if ( cap_value != NULL ) {
-		mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_list); 	
+		mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, key_list); 	
 
 		if ( (mret=sieve_match_value(mctx, cap_value, strlen(cap_value))) < 0 )
 			result = FALSE;

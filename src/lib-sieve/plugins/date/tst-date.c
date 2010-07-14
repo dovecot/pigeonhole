@@ -518,7 +518,7 @@ static int tst_date_operation_execute
 	}
 
 	/* Initialize match */
-	mctx = sieve_match_begin(renv->interp, &mcht, &cmp, NULL, key_list); 	
+	mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, key_list); 	
 	
 	if ( got_date && part_value != NULL ) {		
 		/* Match value */

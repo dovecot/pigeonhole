@@ -18,7 +18,7 @@ struct sieve_match_key_extractor {
 struct sieve_match_context {
 	pool_t pool;
 
-	struct sieve_interpreter *interp;
+	const struct sieve_runtime_env *runenv;
 	const struct sieve_match_type *match_type;
 	const struct sieve_comparator *comparator;
 	const struct sieve_match_key_extractor *kextract;
@@ -34,7 +34,8 @@ struct sieve_match_context {
  */
 
 struct sieve_match_context *sieve_match_begin
-	(struct sieve_interpreter *interp, const struct sieve_match_type *mtch, 
+	(const struct sieve_runtime_env *renv,
+		const struct sieve_match_type *mtch, 
 		const struct sieve_comparator *cmp, 
 		const struct sieve_match_key_extractor *kextract,
 		struct sieve_coded_stringlist *key_list);
