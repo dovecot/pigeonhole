@@ -54,8 +54,6 @@ static const char *wanted_headers[] = {
 struct mail_raw_user {
 	struct mail_namespace *ns;;
 	struct mail_user *mail_user;
-
-	char *tmp_prefix;
 };
 
 /*
@@ -188,8 +186,6 @@ struct mail_raw_user *mail_raw_user_init
 	if (mail_storage_create(ruser->ns, "raw", 0, &errstr) < 0)
 		i_fatal("Couldn't create internal raw storage: %s", errstr);
 
-	ruser->tmp_prefix = i_strdup(mail_user_get_temp_prefix(ruser->mail_user));
-
 	return ruser;
 }
 
@@ -201,7 +197,6 @@ void mail_raw_user_deinit(struct mail_raw_user **_ruser)
 
 	mail_user_unref(&ruser->mail_user);
 
-	i_free(ruser->tmp_prefix);
 	i_free(ruser);	
 }
 

@@ -29,7 +29,7 @@ static const struct setting_parser_info **plugin_set_roots;
 
 #undef DEF
 #define DEF(type, name) \
-	{ type, #name, offsetof(struct login_settings, name), NULL }
+	{ type, #name, offsetof(struct plugin_settings, name), NULL }
 
 static const struct setting_define plugin_setting_defines[] = {
 	{ SET_STRLIST, "plugin", offsetof(struct plugin_settings, plugin_envs), NULL },
@@ -54,8 +54,6 @@ static const struct setting_parser_info *default_plugin_set_roots[] = {
 
 static const struct setting_parser_info **plugin_set_roots = 
 	default_plugin_set_roots;
-
-static struct master_service_settings_cache *set_cache;
 
 static struct plugin_settings *plugin_settings_read(void)
 {
@@ -84,12 +82,6 @@ static const char *plugin_settings_get
 	}
 
 	return NULL;
-}
-
-static void plugin_settings_deinit(void)
-{
-	if (set_cache != NULL)
-		master_service_settings_cache_deinit(&set_cache);
 }
 
 /*
@@ -141,8 +133,4 @@ void managesieve_capabilities_dump(void)
 	else
 		printf("SIEVE: %s, NOTIFY: %s\n", sieve_get_capabilities(svinst, NULL),
 			sieve_get_capabilities(svinst, "notify"));
-
-	/* Deinitialize */
-
-	plugin_settings_deinit();
 }
