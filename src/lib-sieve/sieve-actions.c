@@ -332,17 +332,17 @@ static void act_store_print
 
 static bool act_store_mailbox_open
 (const struct sieve_action_exec_env *aenv, const char *mailbox,
-	struct mailbox **box_r, const char **error_r)
+	struct mailbox **box_r, enum mail_error *error_code_r, const char **error_r)
 {
 	struct mail_storage **storage = &(aenv->exec_status->last_storage);
 	struct mail_deliver_save_open_context save_ctx;
-	const char *error;
 
 	*box_r = NULL;
 
 	if ( !uni_utf8_str_is_valid(mailbox) ) {
 		/* FIXME: check utf-8 validity at compiletime/runtime */
 		*error_r = t_strdup_printf("mailbox name not utf-8: %s", mailbox);
+		*error_code_r = MAIL_ERROR_PARAMS;
 		return FALSE;
 	}
 
@@ -351,10 +351,8 @@ static bool act_store_mailbox_open
 	save_ctx.lda_mailbox_autocreate = aenv->scriptenv->mailbox_autocreate;
 	save_ctx.lda_mailbox_autosubscribe = aenv->scriptenv->mailbox_autosubscribe;
 
-	if (mail_deliver_save_open(&save_ctx, mailbox, box_r, &error) < 0) {
-		*error_r = error;
+	if (mail_deliver_save_open(&save_ctx, mailbox, box_r, error_code_r, error_r) < 0)
 		return FALSE;
-	}
 
 	*storage = mailbox_get_storage(*box_r);
 	return TRUE;
@@ -370,6 +368,7 @@ static bool act_store_start
 	struct mailbox *box = NULL;
 	pool_t pool = sieve_result_pool(aenv->result);
 	const char *error = NULL;
+	enum mail_error error_code = MAIL_ERROR_NONE;
 	bool disabled = FALSE, open_failed = FALSE;
 
 	/* If context is NULL, the store action is the result of (implicit) keep */	
@@ -384,7 +383,7 @@ static bool act_store_start
 	 * to NULL. This implementation will then skip actually storing the message.
 	 */
 	if ( senv->user != NULL ) {
-		if ( !act_store_mailbox_open(aenv, ctx->mailbox, &box, &error) ) {
+		if ( !act_store_mailbox_open(aenv, ctx->mailbox, &box, &error_code, &error) ) {
 			open_failed = TRUE;
 		}
 	} else {
@@ -402,8 +401,7 @@ static bool act_store_start
 
 	if ( open_failed  ) {
 		trans->error = error;
-		(void)mail_storage_get_last_error
-			(mailbox_get_storage(trans->box), &trans->error_code);
+		trans->error_code = error_code;
 	} else {
 		trans->error_code = MAIL_ERROR_NONE;
 	}
