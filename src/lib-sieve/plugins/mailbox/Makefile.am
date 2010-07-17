@@ -1,7 +1,7 @@
 noinst_LTLIBRARIES = libsieve_ext_mailbox.la
 
 AM_CPPFLAGS = \
-	-I../../ \
+	-I$(srcdir)/../.. \
 	$(LIBDOVECOT_INCLUDE)
 
 tags = \

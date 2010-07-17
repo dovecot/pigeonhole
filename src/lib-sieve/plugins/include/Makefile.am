@@ -1,8 +1,8 @@
 noinst_LTLIBRARIES = libsieve_ext_include.la
 
 AM_CPPFLAGS = \
-	-I../../ \
-	-I../variables \
+	-I$(srcdir)/../.. \
+	-I$(srcdir)/../variables \
 	$(LIBDOVECOT_INCLUDE)
 
 cmds = \

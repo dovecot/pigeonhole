@@ -9,14 +9,14 @@ endif
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
 	-I$(top_srcdir)/src/lib-sieve-tool \
-	-I./debug \
+	-I$(srcdir)/debug \
 	$(LIBDOVECOT_INCLUDE) \
 	$(LIBDOVECOT_SERVICE_INCLUDE)
 
 libs = \
-	$(top_srcdir)/src/lib-sieve/libdovecot-sieve.la \
-	$(top_srcdir)/src/lib-sieve-tool/libsieve-tool.la \
-	./debug/libsieve_ext_debug.la
+	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la \
+	$(top_builddir)/src/lib-sieve-tool/libsieve-tool.la \
+	$(builddir)/debug/libsieve_ext_debug.la
 
 libs_ldadd = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT_LDA) $(LIBDOVECOT)
 libs_deps = $(libs) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_LDA_DEPS) $(LIBDOVECOT_DEPS)

@@ -24,7 +24,7 @@ endif
 
 # Testsuite tests
 
-TESTSUITE_BIN = $(top_srcdir)/src/testsuite/testsuite
+TESTSUITE_BIN = $(top_builddir)/src/testsuite/testsuite
 
 if TESTSUITE_VALGRIND
 TEST_BIN = valgrind -q --error-exitcode=1 --show-reachable=yes --leak-check=full $(TESTSUITE_BIN) 
@@ -128,8 +128,10 @@ test_cases = \
 	$(test_unfinished)
 
 $(test_cases):
-	@$(TEST_BIN) $@
+	@$(TEST_BIN) $(top_srcdir)/$@
 
 .PHONY: $(test_cases)
 
 test: $(test_cases)
+
+check: check-am test all-am

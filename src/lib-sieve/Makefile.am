@@ -45,23 +45,24 @@ unfinished_plugins =
 endif
 
 # These are not actual plugins just yet...
+extdir = $(builddir)/plugins
 plugins = \
-	./plugins/vacation/libsieve_ext_vacation.la \
-	./plugins/subaddress/libsieve_ext_subaddress.la \
- 	./plugins/comparator-i-ascii-numeric/libsieve_ext_comparator-i-ascii-numeric.la \
-	./plugins/relational/libsieve_ext_relational.la \
-	./plugins/regex/libsieve_ext_regex.la \
-	./plugins/copy/libsieve_ext_copy.la \
-	./plugins/imap4flags/libsieve_ext_imap4flags.la \
-	./plugins/include/libsieve_ext_include.la \
-	./plugins/body/libsieve_ext_body.la \
-	./plugins/variables/libsieve_ext_variables.la \
-	./plugins/enotify/libsieve_ext_enotify.la \
-	./plugins/notify/libsieve_ext_notify.la \
-	./plugins/environment/libsieve_ext_environment.la \
-	./plugins/mailbox/libsieve_ext_mailbox.la \
-	./plugins/date/libsieve_ext_date.la \
-	./plugins/spamvirustest/libsieve_ext_spamvirustest.la \
+	$(extdir)/vacation/libsieve_ext_vacation.la \
+	$(extdir)/subaddress/libsieve_ext_subaddress.la \
+ 	$(extdir)/comparator-i-ascii-numeric/libsieve_ext_comparator-i-ascii-numeric.la \
+	$(extdir)/relational/libsieve_ext_relational.la \
+	$(extdir)/regex/libsieve_ext_regex.la \
+	$(extdir)/copy/libsieve_ext_copy.la \
+	$(extdir)/imap4flags/libsieve_ext_imap4flags.la \
+	$(extdir)/include/libsieve_ext_include.la \
+	$(extdir)/body/libsieve_ext_body.la \
+	$(extdir)/variables/libsieve_ext_variables.la \
+	$(extdir)/enotify/libsieve_ext_enotify.la \
+	$(extdir)/notify/libsieve_ext_notify.la \
+	$(extdir)/environment/libsieve_ext_environment.la \
+	$(extdir)/mailbox/libsieve_ext_mailbox.la \
+	$(extdir)/date/libsieve_ext_date.la \
+	$(extdir)/spamvirustest/libsieve_ext_spamvirustest.la \
 	$(unfinished_plugins)
 
 libdovecot_sieve_la_DEPENDENCIES = $(plugins)

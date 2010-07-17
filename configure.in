@@ -31,7 +31,7 @@ CFLAGS="$DOVECOT_CFLAGS"
 LIBS="$DOVECOT_LIBS"
 AC_SUBST(LIBDOVECOT_INCLUDE)
 
-# Defome Sieve documentation install dir
+# Define Sieve documentation install dir
 #
 
 sieve_docdir='${dovecot_docdir}/sieve'

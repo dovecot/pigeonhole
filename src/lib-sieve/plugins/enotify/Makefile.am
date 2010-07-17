@@ -3,8 +3,8 @@ SUBDIRS = mailto
 noinst_LTLIBRARIES = libsieve_ext_enotify.la
 
 AM_CPPFLAGS = \
-	-I../../ \
-	-I../variables \
+	-I$(srcdir)/../.. \
+	-I$(srcdir)/../variables \
 	$(LIBDOVECOT_INCLUDE)
 
 commands = \

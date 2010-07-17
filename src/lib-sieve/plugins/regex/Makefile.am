@@ -1,7 +1,7 @@
 noinst_LTLIBRARIES = libsieve_ext_regex.la
 
 AM_CPPFLAGS = \
-	-I../../ \
+	-I$(srcdir)/../.. \
 	$(LIBDOVECOT_INCLUDE)
 
 libsieve_ext_regex_la_SOURCES = \
