@@ -2,8 +2,6 @@ Current activities:
 
 * Improve debugging support in the sieve-test tool:
 	- Improve trace debugging towards something more intuitively readable.
-	- Give trace debugging multiple levels of verbosity (e.g. to include more 
-    messy output like value matching).
 
 Next (in order of descending priority/precedence):
 

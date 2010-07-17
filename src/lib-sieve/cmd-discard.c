@@ -110,7 +110,7 @@ static int cmd_discard_operation_execute
 	/* Source line */
 	source_line = sieve_runtime_get_command_location(renv);
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "discard action");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "discard action; cancel implicit keep");
 
 	return ( sieve_result_add_action
 		(renv, NULL, &act_discard, NULL, source_line, NULL, 0) >= 0 );

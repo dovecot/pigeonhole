@@ -1,6 +1,9 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
+#include "lib.h"
+#include "str-sanitize.h"
+
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -132,9 +135,13 @@ static int tst_exists_operation_execute
 			
 		if ( mail_get_headers
 			(renv->msgdata->mail, str_c(hdr_item), &headers) < 0 ||
-			headers[0] == NULL ) {	
+			headers[0] == NULL ) {
 			matched = FALSE;				 
-		}
+		}	
+	
+		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
+        	"  header `%s' %s", str_sanitize(str_c(hdr_item), 80),
+			( matched ? "exists" : "missing" ));
 	}
 	
 	/* Set test result for subsequent conditional jump */

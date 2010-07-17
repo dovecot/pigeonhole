@@ -120,9 +120,9 @@ static void parse_trace_option
 			i_fatal_status(EX_USAGE, "Unknown -tlevel= trace level: %s", lvl);
 		}
 	} else if ( strcmp(tr_option, "debug") == 0 ) {
-		tr_config->flags = SIEVE_TRFLG_DEBUG;
+		tr_config->flags |= SIEVE_TRFLG_DEBUG;
 	} else if ( strcmp(tr_option, "addresses") == 0 ) {
-		tr_config->flags = SIEVE_TRFLG_ADDRESSES;
+		tr_config->flags |= SIEVE_TRFLG_ADDRESSES;
 	} else {
 		i_fatal_status(EX_USAGE, "Unknown -t trace option value: %s", tr_option);
 	}

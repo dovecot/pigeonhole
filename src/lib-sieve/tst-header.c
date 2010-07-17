@@ -1,6 +1,9 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
+#include "lib.h"
+#include "str-sanitize.h"
+
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -219,6 +222,9 @@ static int tst_header_operation_execute
 		(result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
 		&& hdr_item != NULL ) {
 		const char *const *headers;
+
+		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
+			"  matching header `%s'", str_sanitize(str_c(hdr_item), 80));
 			
 		if ( mail_get_headers_utf8
 			(renv->msgdata->mail, str_c(hdr_item), &headers) >= 0 ) {	

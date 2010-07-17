@@ -102,7 +102,8 @@ static int cmd_keep_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "keep action");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, 
+		"keep action; store message in default mailbox");
 	
 	/* Add keep action to result. 
 	 */

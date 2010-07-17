@@ -219,7 +219,8 @@ static int cmd_redirect_operation_execute
 	/* FIXME: perform address normalization if the string is not a string literal
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "redirect action (\"%s\")",
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, 
+		"redirect action; forward message to address `%s'",
 		str_sanitize(str_c(redirect), 64));
 	
 	/* Add redirect action to the result */

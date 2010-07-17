@@ -25,7 +25,7 @@ struct sieve_match_context {
 
 	struct sieve_coded_stringlist *key_list;
 
-
+	int status;
 	void *data;
 };
 

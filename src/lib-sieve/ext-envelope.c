@@ -458,6 +458,9 @@ static int ext_envelope_operation_execute
 		(result=sieve_coded_stringlist_next_item(envp_list, &envp_item)) 
 		&& envp_item != NULL ) {
 		const struct sieve_envelope_part *epart;
+
+		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
+            "  matching envelope part `%s'", str_sanitize(str_c(envp_item), 80));
 			
 		if ( (epart=_envelope_part_find(str_c(envp_item))) != NULL ) {
 			const struct sieve_address * const *addresses = NULL;

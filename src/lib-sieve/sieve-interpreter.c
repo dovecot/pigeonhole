@@ -425,10 +425,23 @@ int sieve_interpreter_program_jump
 		jmp_start + jmp_offset > 0 ) 
 	{	
 		if ( jump ) {
-			sieve_runtime_trace_here(renv, SIEVE_TRLVL_COMMANDS, "jump to #%08llx", 
-				(long long unsigned int) jmp_start + jmp_offset);
+			sieve_size_t jmp_addr = jmp_start + jmp_offset;
 
-			*address = jmp_start + jmp_offset;
+			if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+				unsigned int jmp_line = 
+					sieve_runtime_get_source_location(renv, jmp_addr);
+
+				if ( (renv->trace_config.flags & SIEVE_TRFLG_ADDRESSES) > 0 ) {
+					sieve_runtime_trace(renv, 0, "jumping to line %d [%08llx]", 
+						jmp_line, (long long unsigned int) jmp_addr);
+				} else {
+					sieve_runtime_trace(renv, 0, "jumping to line %d", jmp_line);
+				}
+			}
+
+			*address = jmp_addr;
+		} else {
+			sieve_runtime_trace(renv, 0, "not jumping");	
 		}
 		
 		return SIEVE_EXEC_OK;

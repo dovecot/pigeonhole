@@ -11,12 +11,13 @@
 #include "sieve-runtime-trace.h"
 
 static inline string_t *_trace_line_new
-(sieve_size_t address, unsigned int cmd_line)
+(const struct sieve_runtime_env *renv, sieve_size_t address, unsigned int cmd_line)
 {
 	string_t *trline;
 	
 	trline = t_str_new(128);
-	str_printfa(trline, "%08llx: ", (unsigned long long) address);
+	if ( (renv->trace_config.flags & SIEVE_TRFLG_ADDRESSES) > 0 )
+		str_printfa(trline, "%08llx: ", (unsigned long long) address);
 	if ( cmd_line > 0 )	
 		str_printfa(trline, "%4d: ", cmd_line); 
 	else
@@ -46,7 +47,7 @@ static inline void _trace_line_print_empty
 void _sieve_runtime_trace_error
 (const struct sieve_runtime_env *renv, const char *fmt, va_list args)
 {
-	string_t *trline = _trace_line_new(renv->pc, 0);
+	string_t *trline = _trace_line_new(renv, renv->pc, 0);
 
 	str_printfa(trline, "%s: #ERROR#: ", sieve_operation_mnemonic(renv->oprtn));
 	str_vprintfa(trline, fmt, args);
@@ -59,7 +60,7 @@ void _sieve_runtime_trace_operand_error
 	const char *field_name, const char *fmt, va_list args)
 {
 	string_t *trline = _trace_line_new
-		(oprnd->address, sieve_runtime_get_source_location(renv, oprnd->address));
+		(renv, oprnd->address, sieve_runtime_get_source_location(renv, oprnd->address));
 
 	str_printfa(trline, "%s: #ERROR#: ", sieve_operation_mnemonic(renv->oprtn));
 
@@ -79,7 +80,7 @@ static inline void _sieve_runtime_trace_vprintf
 (const struct sieve_runtime_env *renv, sieve_size_t address,
 	unsigned int cmd_line, const char *fmt, va_list args)
 {	
-	string_t *trline = _trace_line_new(address, cmd_line);
+	string_t *trline = _trace_line_new(renv, address, cmd_line);
 		
 	str_vprintfa(trline, fmt, args); 
 	

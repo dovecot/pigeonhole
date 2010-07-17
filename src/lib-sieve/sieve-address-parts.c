@@ -7,6 +7,7 @@
 #include "hash.h"
 #include "array.h"
 #include "message-address.h"
+#include "str-sanitize.h"
 
 #include "sieve-extensions.h"
 #include "sieve-code.h"
@@ -234,8 +235,12 @@ int sieve_address_match
 (const struct sieve_address_part *addrp, struct sieve_match_context *mctx, 		
 	const char *data)
 {
+	const struct sieve_runtime_env *renv = mctx->runenv;
 	int result = FALSE;
 	const struct message_address *addr;
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
+            "  matching addresses `%s'", str_sanitize(data, 80));
 
 	T_BEGIN {
 		bool valid = TRUE;
