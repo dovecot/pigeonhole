@@ -45,7 +45,7 @@ unfinished_plugins =
 endif
 
 # These are not actual plugins just yet...
-extdir = $(builddir)/plugins
+extdir = $(top_builddir)/src/lib-sieve/plugins
 plugins = \
 	$(extdir)/vacation/libsieve_ext_vacation.la \
 	$(extdir)/subaddress/libsieve_ext_subaddress.la \
