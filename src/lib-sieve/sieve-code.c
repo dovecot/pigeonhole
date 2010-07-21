@@ -1048,8 +1048,6 @@ static bool opc_jmp_dump
 static int opc_jmp_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED) 
 {
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "jump");
-	
 	return sieve_interpreter_program_jump(renv->interp, TRUE);
 }	
 		

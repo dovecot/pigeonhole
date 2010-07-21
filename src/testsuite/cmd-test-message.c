@@ -324,10 +324,10 @@ static int cmd_test_message_smtp_operation_execute
 		
 	if ( is_test )
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-			"TEST_MESSAGE_SMTP test [%d]", msg_index);
+			"test_message test [smtp index=%d]", msg_index);
 	else
 		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-			"TEST_MESSAGE_SMTP command [%d]", msg_index);
+			"text_message command [smtp index=%d]", msg_index);
 
 	result = testsuite_smtp_get(renv, msg_index);
 
@@ -374,10 +374,10 @@ static int cmd_test_message_mailbox_operation_execute
 
 	if ( is_test ) 		
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, 
-			"TEST_MESSAGE_MAILBOX test \"%s\" [%d]", str_c(folder), msg_index);
+			"test_message test [mailbox=`%s' index=%d]", str_c(folder), msg_index);
 	else
 		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
-			"TEST_MESSAGE_MAILBOX command \"%s\" [%d]", str_c(folder), msg_index);
+			"test_message command [mailbox=`%s' index=%d]", str_c(folder), msg_index);
 
 	result = testsuite_mailstore_mail_index(renv, str_c(folder), msg_index);
 

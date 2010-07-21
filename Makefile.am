@@ -24,7 +24,7 @@ endif
 
 # Testsuite tests
 
-TESTSUITE_BIN = $(top_builddir)/src/testsuite/testsuite
+TESTSUITE_BIN = $(top_builddir)/src/testsuite/testsuite $(TESTSUITE_OPTIONS)
 
 if TESTSUITE_VALGRIND
 TEST_BIN = valgrind -q --error-exitcode=1 --show-reachable=yes --leak-check=full $(TESTSUITE_BIN) 

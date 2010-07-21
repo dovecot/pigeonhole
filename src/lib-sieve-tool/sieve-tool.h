@@ -73,6 +73,12 @@ void sieve_tool_get_envelope_data
 	(struct mail *mail, const char **recipient, const char **sender);
 
 /*
+ * File I/O
+ */
+
+struct ostream *sieve_tool_open_output_stream(const char *filename);
+
+/*
  * Sieve script handling
  */
 
@@ -82,5 +88,12 @@ struct sieve_binary *sieve_tool_script_open
 	(struct sieve_instance *svinst, const char *filename);
 void sieve_tool_dump_binary_to
 	(struct sieve_binary *sbin, const char *filename);
+
+/*
+ * Command line option parsing
+ */
+
+void sieve_tool_parse_trace_option
+	(struct sieve_trace_config *tr_config, const char *tr_option);
 
 #endif /* __SIEVE_TOOL_H */

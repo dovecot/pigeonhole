@@ -48,7 +48,8 @@ const struct sieve_script_env *testsuite_scriptenv;
 static void print_help(void)
 {
 	printf(
-"Usage: testsuite [-t] [-E] [-d <dump filename>]\n"
+"Usage: testsuite [-E] [-d <dump-filename>]\n"
+"                 [-t <trace-filename>] [-T <trace-option>]\n"
 "                 [-P <plugin>] [-x <extensions>]\n"
 "                 <scriptfile>\n"
 	);
@@ -81,18 +82,21 @@ static int testsuite_run
 int main(int argc, char **argv) 
 {
 	struct sieve_instance *svinst;
-	const char *scriptfile, *dumpfile; 
+	const char *scriptfile, *dumpfile, *tracefile;
+	struct sieve_trace_config tr_config;
+	struct ostream *tracestream = NULL;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
-	bool trace = FALSE, log_stdout = FALSE;
+	bool log_stdout = FALSE;
 	int ret, c;
 
 	sieve_tool = sieve_tool_init
-		("testsuite", &argc, &argv, "d:tEP:", TRUE);
+		("testsuite", &argc, &argv, "d:t:T:EP:", TRUE);
 
 	/* Parse arguments */
-	scriptfile = dumpfile = NULL;
-
+	scriptfile = dumpfile = tracefile = NULL;
+	memset(&tr_config, 0, sizeof(tr_config));
+	tr_config.level = SIEVE_TRLVL_ACTIONS;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'd':
@@ -100,7 +104,11 @@ int main(int argc, char **argv)
 			dumpfile = optarg;
 			break;
 		case 't':
-			trace = TRUE;
+			/* trace file */
+			tracefile = optarg;
+			break;
+		case 'T':
+			sieve_tool_parse_trace_option(&tr_config, optarg);
 			break;
 		case 'E':
 			log_stdout = TRUE;
@@ -166,6 +174,9 @@ int main(int argc, char **argv)
 		testsuite_mailstore_init();
 		testsuite_message_init();
 
+		if ( tracefile != NULL )
+            tracestream = sieve_tool_open_output_stream(tracefile);
+
 		memset(&scriptenv, 0, sizeof(scriptenv));
 		scriptenv.user = sieve_tool_get_mail_user(sieve_tool);
 		scriptenv.default_mailbox = "INBOX";
@@ -174,8 +185,8 @@ int main(int argc, char **argv)
 		scriptenv.username = sieve_tool_get_username(sieve_tool);
 		scriptenv.smtp_open = testsuite_smtp_open;
 		scriptenv.smtp_close = testsuite_smtp_close;
-		scriptenv.trace_stream = ( trace ? o_stream_create_fd(1, 0, FALSE) : NULL );
-		scriptenv.trace_config.level = SIEVE_TRLVL_TESTS;
+		scriptenv.trace_stream = tracestream;
+		scriptenv.trace_config = tr_config;
 
 		testsuite_scriptenv = &scriptenv;
 

@@ -74,7 +74,7 @@ static int tst_test_result_execute_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "TEST_RESULT_EXECUTE test");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "test_result_execute");
 
 	result = testsuite_result_execute(renv);
 

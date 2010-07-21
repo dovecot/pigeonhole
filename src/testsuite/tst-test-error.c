@@ -253,8 +253,12 @@ static int tst_test_error_operation_execute
 	 * Perform operation
 	 */
 	
-	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-		"TEST_ERROR test (index: %d)", index);
+	if ( index > 0 )
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+			"test_error test [index=%d]", index);
+	else
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+			"test_error test");
 
 	testsuite_log_get_error_init();
 

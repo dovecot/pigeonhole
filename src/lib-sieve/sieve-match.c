@@ -147,7 +147,10 @@ int sieve_match_end(struct sieve_match_context **mctx)
 	pool_unref(&(*mctx)->pool);
 	*mctx = NULL;
 
-	if ( ret < 0 ) status = ret;
+	if ( ret < 0 || status < 0 )
+		status = ( ret <= status ? ret : status );
+	else
+		status = status || ret;
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
 		"  finishing match with result: %s", 

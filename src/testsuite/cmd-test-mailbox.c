@@ -237,11 +237,12 @@ static int cmd_test_mailbox_operation_execute
 	 * Perform operation
 	 */
 		
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-		"%s %s:", sieve_operation_mnemonic(oprtn), str_c(mailbox));
+	if ( sieve_operation_is(oprtn, test_mailbox_create_operation) ) {
+		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+			"test_mailbox :create `%s'", str_c(mailbox));
 
-	if ( sieve_operation_is(oprtn, test_mailbox_create_operation) )
 		testsuite_mailstore_mailbox_create(renv, str_c(mailbox));
+	}
 
 	return SIEVE_EXEC_OK;
 }

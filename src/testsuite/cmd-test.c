@@ -155,6 +155,7 @@ static int cmd_test_operation_execute
 	if ( !sieve_opr_string_read(renv, address, "test name", &test_name) )
 		return SIEVE_EXEC_BIN_CORRUPT;
 	
+	sieve_runtime_trace_sep(renv);
 	sieve_runtime_trace(renv, SIEVE_TRLVL_NONE, 
 		"** Test start: \"%s\"", str_c(test_name));
 
@@ -167,6 +168,7 @@ static int cmd_test_finish_operation_execute
 	sieve_size_t *address ATTR_UNUSED)
 {
 	sieve_runtime_trace(renv, SIEVE_TRLVL_NONE, "** Test end");
+	sieve_runtime_trace_sep(renv);
 	
 	testsuite_test_succeed(NULL);
 	return SIEVE_EXEC_OK;

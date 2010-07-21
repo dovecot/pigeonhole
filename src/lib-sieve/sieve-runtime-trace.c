@@ -138,3 +138,9 @@ void _sieve_runtime_trace_end(const struct sieve_runtime_env *renv)
 		"## Finished executing script '%s'", script_name);
 	_trace_line_print_empty(renv);
 }
+
+void _sieve_runtime_trace_sep(const struct sieve_runtime_env *renv)
+{
+	_trace_line_print_empty(renv);	
+}
+

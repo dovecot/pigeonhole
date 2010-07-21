@@ -47,7 +47,8 @@ static void print_help(void)
 "Usage: sieve-test [-C] [-d <dump-filename>] [-e] [-f <envelope-sender>]\n"
 "                  [-l <mail-location>] [-m <default-mailbox>]\n" 
 "                  [-r <recipient-address>] [-s <script-file>]\n"
-"                  [-t <trace-option>] [-P <plugin>] [-x <extensions>]\n"
+"                  [-t <trace-filename>] [-T <trace-option>]\n"
+"                  [-P <plugin>] [-x <extensions>]\n"
 "                  <script-file> <mail-file>\n"
 	);
 }
@@ -97,38 +98,6 @@ static void duplicate_mark
 }
 
 /*
- * Trace option handling
- */
-
-static void parse_trace_option
-(struct sieve_trace_config *tr_config, const char *tr_option)
-{
-	if ( strncmp(tr_option, "level=", 6) == 0 ) {
-		const char *lvl = &tr_option[6];
-		
-		if ( strcmp(lvl, "none") == 0 ) {
-			tr_config->level = SIEVE_TRLVL_NONE;
-		} else if ( strcmp(lvl, "actions") == 0 ) {
-			tr_config->level = SIEVE_TRLVL_ACTIONS;
-		} else if ( strcmp(lvl, "commands") == 0 ) {
-			tr_config->level = SIEVE_TRLVL_COMMANDS;
-		} else if ( strcmp(lvl, "tests") == 0 ) {
-			tr_config->level = SIEVE_TRLVL_TESTS;
-		} else if ( strcmp(lvl, "matching") == 0 ) {
-			tr_config->level = SIEVE_TRLVL_MATCHING;
-		} else {
-			i_fatal_status(EX_USAGE, "Unknown -tlevel= trace level: %s", lvl);
-		}
-	} else if ( strcmp(tr_option, "debug") == 0 ) {
-		tr_config->flags |= SIEVE_TRFLG_DEBUG;
-	} else if ( strcmp(tr_option, "addresses") == 0 ) {
-		tr_config->flags |= SIEVE_TRFLG_ADDRESSES;
-	} else {
-		i_fatal_status(EX_USAGE, "Unknown -t trace option value: %s", tr_option);
-	}
-}
-
-/*
  * Tool implementation
  */
 
@@ -136,8 +105,8 @@ int main(int argc, char **argv)
 {
 	struct sieve_instance *svinst;
 	ARRAY_TYPE (const_string) scriptfiles;
-	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *mailfile, 
-		*mailloc; 
+	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *tracefile,
+		*mailfile, *mailloc; 
 	struct sieve_trace_config tr_config;
 	struct mail *mail;
 	struct sieve_binary *main_sbin, *sbin = NULL;
@@ -146,19 +115,21 @@ int main(int argc, char **argv)
 	struct sieve_exec_status estatus;
 	struct sieve_error_handler *ehandler;
 	struct ostream *teststream = NULL;
+	struct ostream *tracestream = NULL;
 	bool force_compile = FALSE, execute = FALSE;
-	bool trace = FALSE;
 	int exit_status = EXIT_SUCCESS;
 	int ret, c;
 
 	sieve_tool = sieve_tool_init
-		("sieve-test", &argc, &argv, "r:f:m:d:l:s:eCt:DP:x:u:", FALSE);
+		("sieve-test", &argc, &argv, "r:f:m:d:l:s:eCt:T:DP:x:u:", FALSE);
 
 	t_array_init(&scriptfiles, 16);
 	
 	/* Parse arguments */
-	scriptfile = recipient = sender = mailbox = dumpfile = mailfile = mailloc = NULL;
+	scriptfile = recipient = sender = mailbox = dumpfile = tracefile =
+		mailfile = mailloc = NULL;
 	memset(&tr_config, 0, sizeof(tr_config));
+	tr_config.level = SIEVE_TRLVL_ACTIONS;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'r':
@@ -173,16 +144,16 @@ int main(int argc, char **argv)
 			/* default mailbox (keep box) */
 			mailbox = optarg;
 			break;
-		case 'd':
-			/* dump file */
-			dumpfile = optarg;
-			break;
 		case 'l':
 			/* mail location */
 			mailloc = optarg;
 			break;
 		case 't':
-			parse_trace_option(&tr_config, optarg);
+			/* trace file */
+			tracefile = optarg;
+			break;
+		case 'T':
+			sieve_tool_parse_trace_option(&tr_config, optarg);
 			break;
 		case 's': 
 			/* scriptfile executed before main script */
@@ -272,9 +243,13 @@ int main(int argc, char **argv)
 		msgdata.auth_user = sieve_tool_get_username(sieve_tool);
 		(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
 
-		/* Create stream for test and trace output */
-		if ( !execute || trace )
-			teststream = o_stream_create_fd(1, 0, FALSE);	
+		/* Create streams for test and trace output */
+
+		if ( !execute )
+			teststream = o_stream_create_fd(1, 0, FALSE);
+
+		if ( tracefile != NULL )
+			tracestream = sieve_tool_open_output_stream(tracefile);
 		
 		/* Compose script environment */
 		memset(&scriptenv, 0, sizeof(scriptenv));
@@ -287,8 +262,7 @@ int main(int argc, char **argv)
 		scriptenv.smtp_close = sieve_smtp_close;
 		scriptenv.duplicate_mark = duplicate_mark;
 		scriptenv.duplicate_check = duplicate_check;
-		scriptenv.trace_stream = 
-			( tr_config.level > SIEVE_TRLVL_NONE ? teststream : NULL );
+		scriptenv.trace_stream = teststream;
 		scriptenv.trace_config = tr_config;
 		scriptenv.exec_status = &estatus;
 	

@@ -279,8 +279,14 @@ static int tst_spamvirustest_operation_execute
 			
 	/* Perform test */
 
-	sieve_runtime_trace
-		(renv, SIEVE_TRLVL_TESTS, "%s test", sieve_operation_mnemonic(op));
+	if ( sieve_operation_is(op, spamtest_operation) ) {
+		sieve_runtime_trace
+			(renv, SIEVE_TRLVL_TESTS, "spamtest test [percent=%s]",
+				( percent ? "true" : "false" ));
+	} else {
+		sieve_runtime_trace
+			(renv, SIEVE_TRLVL_TESTS, "virustest test");
+	}
 
 	/* Initialize match */
 	mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, key_value); 	

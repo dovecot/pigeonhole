@@ -336,7 +336,7 @@ static int cmd_test_config_set_operation_execute
 	 */
 		
 	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-		"TEST_CONFIG_SET %s = '%s'", str_c(setting), str_c(value));
+		"test_config :set %s = `%s'", str_c(setting), str_c(value));
 
 	testsuite_setting_set(str_c(setting), str_c(value));
 
@@ -361,7 +361,7 @@ static int cmd_test_config_unset_operation_execute
 	 */
 		
 	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-		"TEST_CONFIG_UNSET %s", str_c(setting));
+		"test_config :unset `%s'", str_c(setting));
 
 	testsuite_setting_unset(str_c(setting));
 
@@ -387,7 +387,7 @@ static int cmd_test_config_reload_operation_execute
 	 */
 		
 	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-		"TEST_CONFIG_RELOAD [%s]", str_c(extension));
+		"test_config :reload `%s'", str_c(extension));
 
 	ext = sieve_extension_get_by_name(renv->svinst, str_c(extension));
 	if ( ext == NULL ) {

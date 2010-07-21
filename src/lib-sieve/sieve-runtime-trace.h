@@ -125,21 +125,27 @@ static inline void sieve_runtime_trace_here
 
 void _sieve_runtime_trace_begin(const struct sieve_runtime_env *renv);
 void _sieve_runtime_trace_end(const struct sieve_runtime_env *renv);
+void _sieve_runtime_trace_sep(const struct sieve_runtime_env *renv);
 
 static inline void sieve_runtime_trace_begin
 (const struct sieve_runtime_env *renv)
 {
-	if ( renv->trace_stream != NULL && 
-		renv->trace_config.level > SIEVE_TRLVL_NONE )
+	if ( renv->trace_stream != NULL )
 		_sieve_runtime_trace_begin(renv);
 }
 
 static inline void sieve_runtime_trace_end
 (const struct sieve_runtime_env *renv)
 {
-	if ( renv->trace_stream != NULL && 
-		renv->trace_config.level > SIEVE_TRLVL_NONE )
+	if ( renv->trace_stream != NULL )
 		_sieve_runtime_trace_end(renv);
+}
+
+static inline void sieve_runtime_trace_sep
+(const struct sieve_runtime_env *renv)
+{
+	if ( renv->trace_stream != NULL )
+		_sieve_runtime_trace_sep(renv);
 }
 
 #endif /* __SIEVE_TRACE_H */

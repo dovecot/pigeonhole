@@ -443,6 +443,28 @@ void sieve_tool_get_envelope_data
 }
 
 /*
+ * File I/O
+ */
+
+struct ostream *sieve_tool_open_output_stream(const char *filename)
+{
+	struct ostream *outstream;
+	int fd;
+
+	if ( strcmp(filename, "-") == 0 ) 
+		outstream = o_stream_create_fd(1, 0, TRUE);
+	else {
+		if ( (fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0600)) < 0 ) {
+			i_fatal("failed to open file for writing: %m");
+		}
+		
+		outstream = o_stream_create_fd(fd, 0, TRUE);
+	}
+	
+	return outstream;
+}
+
+/*
  * Sieve script handling
  */
 
@@ -481,32 +503,52 @@ struct sieve_binary *sieve_tool_script_open
 		
 	return sbin;
 }
-	
+
 void sieve_tool_dump_binary_to(struct sieve_binary *sbin, const char *filename)	
 {
-	int dfd = -1;
 	struct ostream *dumpstream;
-	
+
 	if ( filename == NULL ) return;
-	
-	if ( strcmp(filename, "-") == 0 ) 
-		dumpstream = o_stream_create_fd(1, 0, FALSE);
-	else {
-		if ( (dfd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0600)) < 0 ) {
-			i_fatal("failed to open dump-file for writing: %m");
-		}
-		
-		dumpstream = o_stream_create_fd(dfd, 0, FALSE);
-	}
-	
+
+	dumpstream = sieve_tool_open_output_stream(filename);
 	if ( dumpstream != NULL ) {
 		(void) sieve_dump(sbin, dumpstream, FALSE);
 		o_stream_destroy(&dumpstream);
 	} else {
 		i_fatal("Failed to create stream for sieve code dump.");
 	}
-	
-	if ( dfd != -1 )
-		close(dfd);
 }
+	
+/*
+ * Commandline option parsing
+ */
+
+void sieve_tool_parse_trace_option
+(struct sieve_trace_config *tr_config, const char *tr_option)
+{
+    if ( strncmp(tr_option, "level=", 6) == 0 ) {
+        const char *lvl = &tr_option[6];
+
+        if ( strcmp(lvl, "none") == 0 ) {
+            tr_config->level = SIEVE_TRLVL_NONE;
+        } else if ( strcmp(lvl, "actions") == 0 ) {
+            tr_config->level = SIEVE_TRLVL_ACTIONS;
+        } else if ( strcmp(lvl, "commands") == 0 ) {
+            tr_config->level = SIEVE_TRLVL_COMMANDS;
+        } else if ( strcmp(lvl, "tests") == 0 ) {
+            tr_config->level = SIEVE_TRLVL_TESTS;
+        } else if ( strcmp(lvl, "matching") == 0 ) {
+            tr_config->level = SIEVE_TRLVL_MATCHING;
+        } else {
+            i_fatal_status(EX_USAGE, "Unknown -tlevel= trace level: %s", lvl);
+        }
+    } else if ( strcmp(tr_option, "debug") == 0 ) {
+        tr_config->flags |= SIEVE_TRFLG_DEBUG;
+    } else if ( strcmp(tr_option, "addresses") == 0 ) {
+        tr_config->flags |= SIEVE_TRFLG_ADDRESSES;
+    } else {
+        i_fatal_status(EX_USAGE, "Unknown -t trace option value: %s", tr_option);
+    }
+}
+
 

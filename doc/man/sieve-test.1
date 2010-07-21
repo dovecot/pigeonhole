@@ -91,9 +91,14 @@ Specify additional scripts to be executed before the main script. Multiple \fB\-
 allowed and the specified scripts are executed sequentially in the order specified at the command
 line.
 .TP
-\fB\-t\fP \fItrace\-option\fP
-Configure runtime trace debugging. Trace debugging provides detailed insight in the operations performed
-by the Sieve script. Refer to the trace debugging section below. 
+\fB\-t\fP \fItrace\-file\fP
+Enables runtime trace debugging. Trace debugging provides detailed insight in the operations performed
+by the Sieve script. Refer to the runtime trace debugging section below. The trace information is
+written to the specified file. Using '\-' as filename causes the trace data to be written to \fBstdout\fP.
+.TP
+\fB\-T\fP \fItrace\-option\fP
+Configures runtime trace debugging, which is enabled with the \fP\-t\fP option. Refer to the runtime
+trace debugging section below.  
 .TP
 \fB\-x\fP "\fIextension extension ...\fP"
 Set the available extensions. The parameter is a space\-separated list of the active extensions. By
@@ -108,21 +113,19 @@ extensions that are available by default, except for the enotify extension.
 
 .SH RUNTIME TRACE DEBUGGING
 .PP
-Using the \fB-t\fP option, the \fBsieve\-test\fP tool can be configured to print detailed information on
-the Sieve script execution. For example, the encountered commands, the performed tests and the matched 
-values can be printed. 
+Using the \fB-t\fP option, the \fBsieve\-test\fP tool can be configured to print detailed trace information
+on the Sieve script execution to a file or standard output. For example, the encountered commands, the
+performed tests and the matched values can be printed. 
 .PP
-The \fB\-t\fP option can be specified multiple times. It can be used as follows:
+The runtime trace can be configured using the \fB\-T\fP option, which can be specified multiple times. 
+It can be used as follows:
 
 .TP 2
-\fB\-tlevel=...\fP
+\fB\-Tlevel=...\fP
 Set the verbosity level of the trace debugging. One of the following values can be supplied:
 .RS 2
 .TP 3 
-\fInone\fP (default)
-No trace debugging.
-.TP 
-\fIactions\fP
+\fIactions\fP (default)
 Only print executed action commands, like keep, fileinto, reject and redirect.
 .TP
 \fIcommands\fP
@@ -135,10 +138,10 @@ Print all commands and performed tests.
 Print all commands, performed tests and the values matched for those tests. 
 .RE
 .TP 2
-\fB\-tdebug\fP
+\fB\-Tdebug\fP
 Print debug messages as well. This is usually only useful for developers and produces messy output.
 .TP
-\fB\-taddresses\fP
+\fB\-Taddresses\fP
 Print byte code addresses for the current trace output. Normally, only the current Sieve source code 
 position is printed. The byte code addresses are equal to those listed in a binary dump produced
 using the \fB\-d\fP option or by the \fBsieved(1)\fP command.
