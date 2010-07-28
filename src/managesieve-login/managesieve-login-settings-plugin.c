@@ -19,6 +19,7 @@
 
 typedef enum { CAP_SIEVE, CAP_NOTIFY } capability_type_t;
 
+bool capability_dumped = FALSE;
 static char *capability_sieve = NULL;
 static char *capability_notify = NULL;
 
@@ -197,10 +198,9 @@ static void managesieve_login_config_parser_begin(struct config_parser_context *
 	if (*ctx->module != '\0' && strcmp(ctx->module, "managesieve-login") != 0)
 		return;
 
-	if ( capability_sieve == NULL ) {
-		if ( !capability_dump() ) {
-			capability_sieve = "";
-		}
+	if ( !capability_dumped ) {
+		(void)capability_dump();
+		capability_dumped = TRUE;
 	}
 
 	if ( capability_sieve != NULL )
