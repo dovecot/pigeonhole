@@ -1,20 +1,14 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
-/* Extension variables 
+/* Extension variables
  * -------------------
  *
  * Authors: Stephan Bosch
  * Specification: RFC 5229
- * Implementation: mostly full; no support for future namespaces
- * Status: experimental, not thoroughly tested
+ * Implementation: full
+ * Status: testing
  *
- */
- 
-/* FIXME: This implementation of the variables extension does not support 
- * namespaces. It recognizes them, but there is currently no support to let
- * an extension register a new namespace. Currently no such extension exists 
- * and therefore this support has a very low implementation priority.
  */
 
 #include "lib.h"

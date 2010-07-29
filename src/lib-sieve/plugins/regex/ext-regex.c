@@ -1,20 +1,22 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
-/* Extension regex 
+/* Extension regex
  * ---------------
  *
  * Authors: Stephan Bosch
- * Specification: draft-murchison-sieve-regex-07
- * Implementation: full, but suboptimal
- * Status: experimental, largely untested
+ * Specification: draft-murchison-sieve-regex-08 (not latest)
+ * Implementation: full
+ * Status: testing
  *
- * FIXME: Regular expressions are compiled during compilation and 
- * again during interpretation. This is suboptimal and should be 
- * changed. This requires dumping the compiled regex to the binary. 
+ */
+
+/* FIXME: Regular expressions are compiled during compilation and
+ * again during interpretation. This is suboptimal and should be
+ * changed. This requires dumping the compiled regex to the binary.
  * Most likely, this will only be possible when we implement regular
- * expressions ourselves. 
- * 
+ * expressions ourselves.
+ *
  */
 
 #include "lib.h"

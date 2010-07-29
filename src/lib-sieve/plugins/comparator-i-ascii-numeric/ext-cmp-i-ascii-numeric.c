@@ -1,5 +1,5 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
- */ 
+ */
 
 /* Extension comparator-i;ascii-numeric
  * ------------------------------------
@@ -7,10 +7,10 @@
  * Author: Stephan Bosch
  * Specification: RFC 2244
  * Implementation: full
- * Status: experimental, largely untested
- * 
+ * Status: testing
+ *
  */
- 
+
 #include "sieve-common.h"
 
 #include "sieve-code.h"

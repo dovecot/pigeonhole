@@ -6,11 +6,11 @@
  *
  * Authors: Stephan Bosch
  * Specification: RFC 5232
- * Implementation: full 
- * Status: experimental, roughly tested
+ * Implementation: full
+ * Status: testing
  *
  */
- 
+
 #include "lib.h"
 #include "mempool.h"
 #include "str.h"

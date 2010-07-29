@@ -1,13 +1,14 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
-/* Extension body 
+/* Extension body
  * ------------------
  *
- * Authors: Stephan Bosch, original CMUSieve implementation by Timo Sirainen
+ * Authors: Stephan Bosch
+ *          Original CMUSieve implementation by Timo Sirainen
  * Specification: RFC 5173
- * Implementation: full, but text body-transform implementation is simple
- * Status: experimental, largely untested
+ * Implementation: almost full, but text body-transform implementation is simple
+ * Status: testing
  *
  */
  

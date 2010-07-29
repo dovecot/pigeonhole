@@ -6,9 +6,9 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-notify-00.txt
- * Implementation: fully backwards compatible
- * Status: testing (deprecated)
- * 
+ * Implementation: full, but deprecated; provided for backwards compatibility
+ * Status: testing
+ *
  */
 
 #include <stdio.h>

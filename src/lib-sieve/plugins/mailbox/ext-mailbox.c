@@ -7,8 +7,8 @@
  * Authors: Stephan Bosch
  * Specification: RFC 5490
  * Implementation: almost full; acl support is missing for mailboxexists
- * Status: experimental, largely untested
- * 
+ * Status: testing
+ *
  */
 
 #include <stdio.h>
@@ -26,7 +26,7 @@
 
 #include "ext-mailbox-common.h"
 
-/* 
+/*
  * Extension
  */
 

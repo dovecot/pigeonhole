@@ -103,25 +103,30 @@ following list outlines the implementation status of each supported extension:
 
   The following Sieve language extensions are also supported:
 
-    copy (RFC 3894): fully supported
+    copy (RFC 3894): fully supported.
     body (RFC 5173): almost fully supported, but the text body-transform
-      implementation is simple and some issues make it still not completely
-      RFC compliant.
-    environment (RFC 5183): basic support is provided (v0.1.5+)
-    variables (RFC 5229): fully supported
-    vacation (RFC 5230): fully supported
-    relational (RFC 5231): fully supported
-    imap4flags (RFC 5232): fully supported
-    subaddress (RFC 5233): fully supported, but with limited configurability
-    date (RFC 5260; page 3): fully supported (v0.1.12+)
-    reject (RFC 5429; page 6): fully supported
-    enotify (RFC 5435): fully supported (v0.1.3+), but only the mailto
-      notification mechanism is available
-    mailbox (RFC 5490; page 2): fully supported (v0.1.10+), but
-      ACL permissions are not verified for mailboxexists
-    include (draft): fully supported, but the interaction with
-      ManageSieve is not according to specification.
-    regex (draft): almost fully supported, but UTF-8 is not supported.
+      implementation is simple and some issues make it still not completely RFC 
+      compliant.
+    environment (RFC 5183): basic support is provided (v0.1.5+).
+    variables (RFC 5229): fully supported.
+    vacation (RFC 5230): fully supported.
+    relational (RFC 5231): fully supported.
+    imap4flags (RFC 5232): fully supported.
+    subaddress (RFC 5233): fully supported, but with limited configurability.
+    spamtest and virustest (RFC 5235): fully supported (v0.1.16+), but currently
+      considered experimental.
+    date (RFC 5260; page 3): fully supported (v0.1.12+).
+    reject (RFC 5429; page 6): fully supported.
+    enotify (RFC 5435): fully supported (v0.1.3+). Currently, only the mailto
+      notification mechanism (RFC 5436) is available. The xmpp notification
+      mechanism (RFC 5437) is under development and will become available as a 
+      plugin.
+    mailbox (RFC 5490; page 2): fully supported (v0.1.10+), but ACL permissions
+      are not verified for mailboxexists.
+    include (draft v05): almost fully supported, but interaction with ManageSieve
+      is not in accordance with specification.
+    regex (draft v08; not latest ietf version): almost fully supported, but
+      UTF-8 is not supported.
 
   The following deprecated extensions are supported for backwards
   compatibility:
@@ -134,15 +139,15 @@ following list outlines the implementation status of each supported extension:
   The following extensions are under development:
 
     ereject (RFC 5429; page 4): implemented, but currently equal to reject
-    spamtest and virustest (RFC 5235): implemented, but needs thorough testing
 
   Many more extensions to the language exist. Not all of these extensions are
   useful for Dovecot in particular, but many of them are. Currently, the
   author has taken notice of the following extensions:
 
-    index (RFC 5260; page 7): planned
-    editheader (RFC 5293): planned
-    foreverypart, mime, replace, enclose, and extracttext (RFC 5703): planned
+    vacation-seconds (draft): planned.
+    index (RFC 5260; page 7): planned.
+    editheader (RFC 5293): planned.
+    foreverypart, mime, replace, enclose, and extracttext (RFC 5703): planned.
 
     These extensions will be added as soon as the necessary infrastructure is
     available.

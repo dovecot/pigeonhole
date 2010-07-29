@@ -1,16 +1,16 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
-/* Extension variables 
+/* Extension variables
  * -------------------
  *
  * Authors: Stephan Bosch
  * Specification: RFC 5183
- * Implementation: full
+ * Implementation: basic
  * Status: experimental, not thoroughly tested
  *
  */
- 
+
 #include "lib.h"
 #include "str.h"
 #include "unichar.h"
@@ -24,8 +24,8 @@
 
 #include "ext-environment-common.h"
 
-/* 
- * Extension 
+/*
+ * Extension
  */
 
 static bool ext_environment_validator_load

@@ -1,16 +1,16 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
-/* Extension subaddress 
+/* Extension subaddress
  * --------------------
  *
  * Author: Stephan Bosch
  * Specification: RFC 3598
- * Implementation: full, but not fully configurable
- * Status: experimental
+ * Implementation: full
+ * Status: testing
  *
  */
- 
+
 #include "sieve-common.h"
 
 #include "sieve-settings.h"
@@ -26,8 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* 
- * Configuration 
+/*
+ * Configuration
  */
 
 #define SUBADDRESS_DEFAULT_DELIM "+"

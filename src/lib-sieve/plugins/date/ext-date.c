@@ -7,10 +7,10 @@
  * Authors: Stephan Bosch
  * Specification: RFC 5260
  * Implementation: full
- * Status: experimental
+ * Status: testing
  *
  */
- 
+
 #include "lib.h"
 #include "array.h"
 

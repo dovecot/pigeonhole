@@ -1,13 +1,13 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
-/* Extension encoded-character 
+/* Extension encoded-character
  * ---------------------------
  *
  * Authors: Stephan Bosch
- * Specification: RFC5228
- * Implementation: full 
- * Status: experimental, largely untested
+ * Specification: RFC 5228
+ * Implementation: full
+ * Status: testing
  *
  */
 

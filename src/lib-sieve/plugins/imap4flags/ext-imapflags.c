@@ -6,11 +6,11 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-melnikov-sieve-imapflags-03.txt
- * Implementation: deprecated; provided for backwards compatibility
- * Status: deprecated
+ * Implementation: full, but deprecated; provided for backwards compatibility
+ * Status: testing
  *
  */
- 
+
 #include "lib.h"
 #include "mempool.h"
 #include "str.h"

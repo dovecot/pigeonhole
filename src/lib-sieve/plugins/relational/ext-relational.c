@@ -1,14 +1,14 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
-/* Extension relational 
+/* Extension relational
  * --------------------
  *
  * Author: Stephan Bosch
  * Specification: RFC 3431
  * Implementation: full
- * Status: experimental, largely untested
- * 
+ * Status: testing
+ *
  */
 
 #include "lib.h"
@@ -28,7 +28,7 @@
 
 #include "ext-relational-common.h"
 
-/* 
+/*
  * Extension
  */
 

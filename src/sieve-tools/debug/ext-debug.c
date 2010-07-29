@@ -1,8 +1,8 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
-/* Extension debug 
- * ------------------
+/* Extension debug
+ * ---------------
  *
  * Authors: Stephan Bosch
  * Specification: vendor-defined
@@ -10,7 +10,7 @@
  * Status: experimental
  *
  */
- 
+
 #include "lib.h"
 #include "array.h"
 
@@ -28,8 +28,8 @@
 
 #include "ext-debug-common.h"
 
-/* 
- * Extension 
+/*
+ * Extension
  */
 
 static bool ext_debug_validator_load

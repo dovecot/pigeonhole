@@ -6,10 +6,9 @@
  *
  * Authors: Stephan Bosch <stephan@rename-it.nl>
  * Specification: RFC 5230
- * Implementation: almost complete; the required sopport for Refences header 
- *   is missing.
- * Status: experimental, largely untested
- * 
+ * Implementation: full
+ * Status: testing
+ *
  */
 
 #include "lib.h"
@@ -25,7 +24,7 @@
 
 #include "ext-vacation-common.h"
 
-/* 
+/*
  * Extension
  */
 

@@ -1,13 +1,13 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
-/* Extension reject 
+/* Extension reject
  * ----------------
  *
  * Authors: Stephan Bosch
- * Specification: RFC5429
- * Implementation: full  
- * Status: experimental
+ * Specification: RFC 5429
+ * Implementation: full
+ * Status: testing
  *
  */
 

@@ -2,13 +2,13 @@
  */
 
 /* Extension copy
- * ------------------
+ * --------------
  *
  * Authors: Stephan Bosch
  * Specification: RFC 3894
  * Implementation: full
- * Status: experimental, largely untested
- * 
+ * Status: testing
+ *
  */
 
 #include <stdio.h>
@@ -24,8 +24,8 @@
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
 
-/* 
- * Forward declarations 
+/*
+ * Forward declarations
  */
 
 static const struct sieve_argument_def copy_tag;

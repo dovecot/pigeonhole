@@ -6,16 +6,17 @@
  *
  * Authors: Stephan Bosch
  * Specification: draft-ietf-sieve-include-01
- * Implementation: almost full; global namespace is missing. 
- * Status: experimental
- * 
+ * Implementation: mostly full, but required ManageSieve behavior is not
+ *                 implemented
+ * Status: testing
+ *
  */
- 
+
 /* FIXME: Current include implementation does not allow for parts of the script
  * to be located in external binaries; all included scripts are recompiled and
  * the resulting byte code is imported into the main binary in separate blocks.
  */
- 
+
 #include "lib.h"
 
 #include "sieve-common.h"

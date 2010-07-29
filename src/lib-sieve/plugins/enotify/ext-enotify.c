@@ -8,9 +8,9 @@
  * Specification: RFC 5435
  * Implementation: full
  * Status: testing
- * 
+ *
  */
-	
+
 #include <stdio.h>
 
 #include "sieve-common.h"
