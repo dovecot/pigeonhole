@@ -27,6 +27,10 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A SECOND RELEASE (0.2.x) ##
 
+* Improve error handling. 
+	- Implement dropping errors in the user's mailbox as a mail message.
+* Add normalize() method to comparators to normalize the string before matching
+  (for efficiency).
 * Further develop regex extension and update it to the latest draft:
 	- Allow for :regex matching with variable key
 	- Implement the :quoteregex set modifier
@@ -44,8 +48,6 @@ Next (in order of descending priority/precedence):
 	- Implement configurable sender exclusion list.
 	- Implement mechanism for implicitly including an account's aliases in the
 	  vacation command's :addresses list.
-* Improve error handling. 
-	- Implement dropping errors in the user's mailbox as a mail message.
 * Fix remaining RFC deviations:
 	- Fix issues listed in doc/rfc/RFC-questions.txt based on answers
 	- Allow for the existence of dynamic comparators (i.e. specified by 
@@ -53,8 +55,6 @@ Next (in order of descending priority/precedence):
 	- Verify outgoing mail addresses at runtime when necessary
 	  (e.g. after variables substitution)
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
-* Add normalize() method to comparators to normalize the string before matching
-  (for efficiency).
 * Properly implement Sieve internationalization support (utf-8 handling), 
   currently it is not complete:
 	- Make this implementation fully conform section 2.7.2 of RFC5228 (Comparisons 
@@ -109,5 +109,5 @@ Next (in order of descending priority/precedence):
 	  time.
 * Add development documentation, i.e. comment on library functions and document
   the binary and byte-code format. 
-* Implement SIP notify mechanism.
+* Implement sip-message notify mechanism.
 
