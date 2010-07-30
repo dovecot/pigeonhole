@@ -105,7 +105,7 @@ static bool cmd_test_fail_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	unsigned int pc;
-	int offset;
+	sieve_offset_t offset;
     
 	sieve_code_dumpf(denv, "TEST_FAIL:");
 	sieve_code_descend(denv);

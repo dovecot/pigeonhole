@@ -38,7 +38,7 @@ static inline void _sieve_binary_emit_data
 }
 
 static inline void _sieve_binary_emit_byte
-(struct sieve_binary_block *sblock, unsigned char byte)
+(struct sieve_binary_block *sblock, uint8_t byte)
 {
 	_sieve_binary_emit_data(sblock, &byte, 1);
 }
@@ -61,7 +61,7 @@ sieve_size_t sieve_binary_emit_data
 }
 
 sieve_size_t sieve_binary_emit_byte
-(struct sieve_binary_block *sblock, unsigned char byte) 
+(struct sieve_binary_block *sblock, uint8_t byte) 
 {
 	sieve_size_t address = _sieve_binary_block_get_size(sblock);
 
@@ -80,13 +80,13 @@ void sieve_binary_update_data
 /* Offset emission functions */
 
 sieve_size_t sieve_binary_emit_offset
-(struct sieve_binary_block *sblock, int offset) 
+(struct sieve_binary_block *sblock, sieve_offset_t offset) 
 {
 	int i;
 	sieve_size_t address = _sieve_binary_block_get_size(sblock);
 
 	for ( i = 3; i >= 0; i-- ) {
-		char c = (char) (offset >> (i * 8));
+		uint8_t c = (uint8_t) (offset >> (i * 8));
 		_sieve_binary_emit_data(sblock, &c, 1);
 	}
 	
@@ -97,10 +97,10 @@ void sieve_binary_resolve_offset
 (struct sieve_binary_block *sblock, sieve_size_t address) 
 {
 	int i;
-	int offset = _sieve_binary_block_get_size(sblock) - address; 
+	sieve_offset_t offset = _sieve_binary_block_get_size(sblock) - address; 
 	
 	for ( i = 3; i >= 0; i-- ) {
-		char c = (char) (offset >> (i * 8));	
+		uint8_t c = (uint8_t) (offset >> (i * 8));	
 		_sieve_binary_update_data(sblock, address + 3 - i, &c, 1);
 	}
 }
@@ -112,7 +112,7 @@ sieve_size_t sieve_binary_emit_integer
 {
 	sieve_size_t address = _sieve_binary_block_get_size(sblock);
 	int i;
-	char buffer[sizeof(sieve_number_t) + 1];
+	uint8_t buffer[sizeof(sieve_number_t) + 1];
 	int bufpos = sizeof(buffer) - 1;
   
 	buffer[bufpos] = integer & 0x7F;
@@ -201,14 +201,14 @@ void sieve_binary_emit_extension_object
 
 #define ADDR_CODE_READ(block) \
 	size_t _code_size; \
-	const signed char *_code = buffer_get_data((block)->data, &_code_size)
+	const int8_t *_code = buffer_get_data((block)->data, &_code_size)
  
 #define ADDR_CODE_AT(address) \
-	((signed char) (_code[*address]))
+	((int8_t) (_code[*address]))
 #define ADDR_DATA_AT(address) \
-	((unsigned char) (_code[*address]))
+	((uint8_t) (_code[*address]))
 #define ADDR_POINTER(address) \
-	((const char *) (&_code[*address]))
+	((const int8_t *) (&_code[*address]))
 
 #define ADDR_BYTES_LEFT(address) \
 	((_code_size) - (*address))
@@ -253,9 +253,9 @@ bool sieve_binary_read_code
 
 
 bool sieve_binary_read_offset
-(struct sieve_binary_block *sblock, sieve_size_t *address, int *offset_r) 
+(struct sieve_binary_block *sblock, sieve_size_t *address, sieve_offset_t *offset_r) 
 {
-	uint32_t offs = 0;
+	sieve_offset_t offs = 0;
 	ADDR_CODE_READ(sblock);
 	
 	if ( ADDR_BYTES_LEFT(address) >= 4 ) {
@@ -267,7 +267,7 @@ bool sieve_binary_read_offset
 		}
 	  
 		if ( offset_r != NULL )
-			*offset_r = (int) offs;
+			*offset_r = offs;
 			
 		return TRUE;
 	}
@@ -320,7 +320,7 @@ bool sieve_binary_read_string
 		return FALSE;
  
  	if ( str_r != NULL )  
-		*str_r = t_str_new_const(ADDR_POINTER(address), strlen);
+		*str_r = t_str_new_const((const char *) ADDR_POINTER(address), strlen);
 	ADDR_JUMP(address, strlen);
 	
 	if ( ADDR_CODE_AT(address) != 0 )

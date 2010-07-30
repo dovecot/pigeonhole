@@ -413,7 +413,7 @@ int sieve_interpreter_program_jump
 	const struct sieve_runtime_env *renv = &interp->runenv;
 	sieve_size_t *address = &(interp->runenv.pc);
 	sieve_size_t jmp_start = *address;
-	int jmp_offset;
+	sieve_offset_t jmp_offset;
 	
 	if ( !sieve_binary_read_offset(renv->sblock, address, &jmp_offset) )
 	{

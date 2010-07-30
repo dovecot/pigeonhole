@@ -765,7 +765,7 @@ static bool opr_stringlist_dump
 	sieve_size_t pc = *address;
 	sieve_size_t end; 
 	unsigned int length = 0; 
- 	int end_offset;
+ 	sieve_offset_t end_offset;
 
 	if ( !sieve_binary_read_offset(denv->sblock, address, &end_offset) )
 		return FALSE;
@@ -785,7 +785,7 @@ static struct sieve_stringlist *opr_stringlist_read
 	sieve_size_t pc = *address;
 	sieve_size_t end; 
 	unsigned int length = 0;  
-	int end_offset;
+	sieve_offset_t end_offset;
 	
 	if ( !sieve_binary_read_offset(renv->sblock, address, &end_offset) )
 		return NULL;
@@ -1022,7 +1022,7 @@ static bool opc_jmp_dump
 {
 	const struct sieve_operation *oprtn = denv->oprtn;
 	unsigned int pc = *address;
-	int offset;
+	sieve_offset_t offset;
 	
 	if ( sieve_binary_read_offset(denv->sblock, address, &offset) ) 
 		sieve_code_dumpf(denv, "%s %d [%08x]", 

@@ -240,7 +240,7 @@ struct sieve_variable_scope *sieve_variable_scope_binary_dump
 	struct sieve_variable_scope *local_scope;
 	unsigned int i, scope_size;
 	sieve_size_t pc;
-	int end_offset;
+	sieve_offset_t end_offset;
 
 	/* Read scope size */	
 	sieve_code_mark(denv);
@@ -310,7 +310,7 @@ struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
 	const char *ext_name = 
 		( ext == NULL ? "variables" : sieve_extension_name(ext) );
 	sieve_size_t pc;
-	int end_offset;
+	sieve_offset_t end_offset;
 
 	/* Read scope size */	
 	if ( !sieve_binary_read_unsigned(sblock, address, &scope_size) ) {

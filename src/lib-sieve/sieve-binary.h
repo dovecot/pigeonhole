@@ -148,7 +148,7 @@ int sieve_binary_extensions_count(struct sieve_binary *sbin);
 sieve_size_t sieve_binary_emit_data
 	(struct sieve_binary_block *sblock, const void *data, sieve_size_t size);
 sieve_size_t sieve_binary_emit_byte
-	(struct sieve_binary_block *sblock, unsigned char byte);
+	(struct sieve_binary_block *sblock, uint8_t byte);
 void sieve_binary_update_data
 	(struct sieve_binary_block *sblock, sieve_size_t address, const void *data, 
 		sieve_size_t size);
@@ -156,7 +156,7 @@ void sieve_binary_update_data
 /* Offset emission functions */
 
 sieve_size_t sieve_binary_emit_offset
-	(struct sieve_binary_block *sblock, int offset);
+	(struct sieve_binary_block *sblock, sieve_offset_t offset);
 void sieve_binary_resolve_offset
 	(struct sieve_binary_block *sblock, sieve_size_t address);
 
@@ -198,7 +198,7 @@ bool sieve_binary_read_code
 		signed int *code_r);
 bool sieve_binary_read_offset
 	(struct sieve_binary_block *sblock, sieve_size_t *address,
-		int *offset_r);
+		sieve_offset_t *offset_r);
 bool sieve_binary_read_integer
   (struct sieve_binary_block *sblock, sieve_size_t *address, 
 		sieve_number_t *int_r); 
