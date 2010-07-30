@@ -262,7 +262,7 @@ int main(int argc, char **argv)
 		scriptenv.smtp_close = sieve_smtp_close;
 		scriptenv.duplicate_mark = duplicate_mark;
 		scriptenv.duplicate_check = duplicate_check;
-		scriptenv.trace_stream = teststream;
+		scriptenv.trace_stream = tracestream;
 		scriptenv.trace_config = tr_config;
 		scriptenv.exec_status = &estatus;
 	
