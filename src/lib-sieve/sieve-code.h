@@ -15,27 +15,6 @@
 #include "sieve-dump.h"
 
 /* 
- * Coded string list 
- */
-
-struct sieve_coded_stringlist;
-
-bool sieve_coded_stringlist_next_item
-	(struct sieve_coded_stringlist *strlist, string_t **str_r);
-void sieve_coded_stringlist_reset
-	(struct sieve_coded_stringlist *strlist);
-bool sieve_coded_stringlist_read_all
-	(struct sieve_coded_stringlist *strlist, pool_t pool,
-		const char * const **list_r);
-
-unsigned int sieve_coded_stringlist_get_length
-	(struct sieve_coded_stringlist *strlist);
-sieve_size_t sieve_coded_stringlist_get_end_address
-	(struct sieve_coded_stringlist *strlist);
-sieve_size_t sieve_coded_stringlist_get_current_offset
-	(struct sieve_coded_stringlist *strlist);
-
-/* 
  * Operand object
  */
 
@@ -178,7 +157,7 @@ struct sieve_opr_stringlist_interface {
 	bool (*dump)
 		(const struct sieve_dumptime_env *denv, sieve_size_t *address,
 			const char *field_name);
-	struct sieve_coded_stringlist *(*read)
+	struct sieve_stringlist *(*read)
 		(const struct sieve_runtime_env *renv, sieve_size_t *address);
 };
 
@@ -266,10 +245,10 @@ bool sieve_opr_stringlist_dump_data
 bool sieve_opr_stringlist_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
 		const char *field_name);
-struct sieve_coded_stringlist *sieve_opr_stringlist_read_data
+struct sieve_stringlist *sieve_opr_stringlist_read_data
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand, 
 		sieve_size_t *address, const char *field_name);
-struct sieve_coded_stringlist *sieve_opr_stringlist_read
+struct sieve_stringlist *sieve_opr_stringlist_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,
 		const char *field_name);
 

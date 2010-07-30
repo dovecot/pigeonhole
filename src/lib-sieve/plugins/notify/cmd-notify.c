@@ -12,6 +12,7 @@
 #include "rfc2822.h"
 
 #include "sieve-common.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
@@ -417,7 +418,7 @@ static int cmd_notify_operation_execute
 	pool_t pool;
 	int opt_code = 0;
 	sieve_number_t importance = 1;
-	struct sieve_coded_stringlist *options = NULL;
+	struct sieve_stringlist *options = NULL;
 	string_t *message = NULL, *id = NULL; 
 	unsigned int source_line;
 
@@ -481,7 +482,7 @@ static int cmd_notify_operation_execute
 	if ( options != NULL ) {
 		string_t *raw_address;
 		string_t *out_message;
-		bool result;	
+		int ret;
 
 		pool = sieve_result_pool(renv->result);
 		act = p_new(pool, struct ext_notify_action, 1);
@@ -498,13 +499,12 @@ static int cmd_notify_operation_execute
 		
 		/* Normalize and verify all :options addresses */					
 
-		sieve_coded_stringlist_reset(options);
+		sieve_stringlist_reset(options);
 			
 		p_array_init(&act->recipients, pool, 4);
 		
 		raw_address = NULL;
-		while ( (result=sieve_coded_stringlist_next_item(options, &raw_address))
-			&& raw_address != NULL ) {
+		while ( (ret=sieve_stringlist_next_item(options, &raw_address)) > 0 ) {
 			const char *error = NULL;
 			const char *addr_norm = sieve_address_normalize(raw_address, &error);
 			
@@ -557,7 +557,7 @@ static int cmd_notify_operation_execute
 			}
 		}
 		
-		if ( !result ) {
+		if ( ret < 0 ) {
 			sieve_runtime_trace_error(renv, "invalid options stringlist");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}

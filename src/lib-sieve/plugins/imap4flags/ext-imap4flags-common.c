@@ -8,6 +8,7 @@
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
+#include "sieve-stringlist.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
@@ -256,12 +257,13 @@ const struct sieve_interpreter_extension imap4flags_interpreter_extension = {
 };
 
 /* 
- * Flag operations 
+ * Flag handling
  */
 
 /* FIXME: This currently accepts a potentially unlimited number of 
  * flags, making the internal or variable flag list indefinitely long
  */
+
 static bool flag_is_valid(const char *flag)
 {	
 	if (*flag == '\\') {
@@ -293,24 +295,35 @@ static bool flag_is_valid(const char *flag)
 	return TRUE;  
 }
 
+/* Flag iterator */
+
+static void ext_imap4flags_iter_clear
+(struct ext_imap4flags_iter *iter)
+{
+	memset(iter, 0, sizeof(*iter));
+} 
+
 void ext_imap4flags_iter_init
 (struct ext_imap4flags_iter *iter, string_t *flags_list) 
 {
+	ext_imap4flags_iter_clear(iter);
 	iter->flags_list = flags_list;
-	iter->offset = 0;
-	iter->last = 0;
 }
 
-const char *ext_imap4flags_iter_get_flag
+static string_t *ext_imap4flags_iter_get_flag_str
 (struct ext_imap4flags_iter *iter) 
 {
-	unsigned int len = str_len(iter->flags_list);
+	unsigned int len;
 	const unsigned char *fp;
 	const unsigned char *fbegin;
 	const unsigned char *fstart;
 	const unsigned char *fend;
 
+	/* Return if not initialized */
+	if ( iter->flags_list == NULL ) return NULL;
+
 	/* Return if no more flags are available */	
+	len = str_len(iter->flags_list);
 	if ( iter->offset >= len ) return NULL;
 	
 	/* Mark string boundries */
@@ -328,7 +341,8 @@ const char *ext_imap4flags_iter_get_flag
 			/* Did we scan more than nothing ? */
 			if ( fp > fstart ) {
 				/* Return flag */
-				const char *flag = t_strdup_until(fstart, fp);
+				string_t *flag = t_str_new(fp-fstart+1);
+				str_append_n(flag, fstart, fp-fstart);
 				
 				iter->last = fstart - fbegin;
 				iter->offset = fp - fbegin;
@@ -349,6 +363,16 @@ const char *ext_imap4flags_iter_get_flag
 	return NULL;
 }
 
+const char *ext_imap4flags_iter_get_flag
+(struct ext_imap4flags_iter *iter)
+{
+	string_t *flag = ext_imap4flags_iter_get_flag_str(iter);
+
+	if ( flag == NULL ) return NULL;
+
+	return str_c(flag);
+}
+
 static void ext_imap4flags_iter_delete_last
 (struct ext_imap4flags_iter *iter) 
 {
@@ -362,6 +386,8 @@ static void ext_imap4flags_iter_delete_last
 	
 	iter->offset = iter->last;
 }
+
+/* Flag operations */
 
 static bool flags_list_flag_exists
 (string_t *flags_list, const char *flag)
@@ -431,10 +457,6 @@ static void flags_list_set_flags
 	flags_list_add_flags(flags_list, flags);
 }
 
-/* 
- * Flag registration 
- */
-
 int ext_imap4flags_set_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 	unsigned int var_index, string_t *flags)
@@ -489,41 +511,119 @@ int ext_imap4flags_remove_flags
 	return SIEVE_EXEC_OK;
 }
 
-int ext_imap4flags_get_flags_string
-(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-	unsigned int var_index, const char **flags)
-{
-	string_t *cur_flags;
-	
-	if ( storage != NULL ) {
-		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
-			return SIEVE_EXEC_BIN_CORRUPT;
-	} else
-		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
-	
-	if ( cur_flags == NULL )
-		*flags = "";
-	else 
-		*flags = str_c(cur_flags);
+/* Flag stringlist */
 
-	return SIEVE_EXEC_OK;
+static int ext_imap4flags_stringlist_next_item
+	(struct sieve_stringlist *_strlist, string_t **str_r);
+static void ext_imap4flags_stringlist_reset
+	(struct sieve_stringlist *_strlist);
+
+struct ext_imap4flags_stringlist {
+	struct sieve_stringlist strlist;
+
+	struct sieve_stringlist *flags_list;
+	string_t *flags_string;
+	struct ext_imap4flags_iter flit;
+
+	unsigned int normalize:1;
+};
+
+static struct sieve_stringlist *ext_imap4flags_stringlist_create
+(const struct sieve_runtime_env *renv, struct sieve_stringlist *flags_list,
+	bool normalize)
+{
+	struct ext_imap4flags_stringlist *strlist;
+
+	strlist = t_new(struct ext_imap4flags_stringlist, 1);
+	strlist->strlist.runenv = renv;
+	strlist->strlist.next_item = ext_imap4flags_stringlist_next_item;
+	strlist->strlist.reset = ext_imap4flags_stringlist_reset;
+	strlist->normalize = normalize;
+
+	strlist->flags_list = flags_list;
+
+	return &strlist->strlist;
 }
 
-void ext_imap4flags_get_flags_init
-(struct ext_imap4flags_iter *iter, const struct sieve_runtime_env *renv, 
-	string_t *flags_list)
+static struct sieve_stringlist *ext_imap4flags_stringlist_create_single
+(const struct sieve_runtime_env *renv, string_t *flags_string, bool normalize)
 {
-	string_t *cur_flags;
-	
-	if ( flags_list != NULL ) {
-		cur_flags = t_str_new(256);
-		
-		flags_list_set_flags(cur_flags, flags_list);
+	struct ext_imap4flags_stringlist *strlist;
+
+	strlist = t_new(struct ext_imap4flags_stringlist, 1);
+	strlist->strlist.runenv = renv;
+	strlist->strlist.next_item = ext_imap4flags_stringlist_next_item;
+	strlist->strlist.reset = ext_imap4flags_stringlist_reset;
+	strlist->normalize = normalize;
+
+	if ( normalize ) {
+		strlist->flags_string = t_str_new(256);
+		flags_list_set_flags(strlist->flags_string, flags_string);
+	} else {
+		strlist->flags_string = flags_string;
 	}
-	else
-		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
+
+	ext_imap4flags_iter_init(&strlist->flit, strlist->flags_string);
+
+	return &strlist->strlist;
+}
+
+static int ext_imap4flags_stringlist_next_item
+(struct sieve_stringlist *_strlist, string_t **str_r)
+{
+	struct ext_imap4flags_stringlist *strlist = 
+		(struct ext_imap4flags_stringlist *)_strlist;
 	
-	ext_imap4flags_iter_init(iter, cur_flags);		
+	while ( (*str_r=ext_imap4flags_iter_get_flag_str(&strlist->flit)) == NULL ) {
+		int ret;
+
+		if ( strlist->flags_list == NULL )
+			return 0;
+
+		if ( (ret=sieve_stringlist_next_item
+			(strlist->flags_list, &strlist->flags_string)) <= 0 )
+			return ret;
+
+		if ( strlist->flags_string == NULL )
+			return -1; 
+
+		if ( strlist->normalize ) {
+			string_t *flags_string = t_str_new(256);
+
+			flags_list_set_flags(flags_string, strlist->flags_string);
+			strlist->flags_string = flags_string;
+		}
+
+		ext_imap4flags_iter_init(&strlist->flit, strlist->flags_string);
+	}
+
+	return 1;
+}
+
+static void ext_imap4flags_stringlist_reset
+(struct sieve_stringlist *_strlist)
+{
+	struct ext_imap4flags_stringlist *strlist = 
+		(struct ext_imap4flags_stringlist *)_strlist;
+
+	if ( strlist->flags_list != NULL ) {
+		sieve_stringlist_reset(strlist->flags_list);
+		ext_imap4flags_iter_clear(&strlist->flit);
+	} else {
+		ext_imap4flags_iter_init(&strlist->flit, strlist->flags_string);
+	}
+}
+
+/* Flag access */
+
+struct sieve_stringlist *ext_imap4flags_get_flags
+(const struct sieve_runtime_env *renv, struct sieve_stringlist *flags_list)
+{
+	if ( flags_list == NULL )
+		return ext_imap4flags_stringlist_create_single
+			(renv, _get_flags_string(renv->oprtn->ext, renv->result), FALSE);
+
+	return ext_imap4flags_stringlist_create(renv, flags_list, TRUE);
 }
 
 void ext_imap4flags_get_implicit_flags_init

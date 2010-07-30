@@ -112,7 +112,7 @@ const char *ext_enotify_runtime_get_method_capability
 int ext_enotify_runtime_check_operands
 	(const struct sieve_runtime_env *renv, unsigned int source_line,
 		string_t *method_uri, string_t *message, string_t *from, 
-		struct sieve_coded_stringlist *options, 
+		struct sieve_stringlist *options, 
 		const struct sieve_enotify_method **method_r, void **method_context);
 		
 /*

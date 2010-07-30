@@ -14,6 +14,7 @@
 #include "rfc2822.h"
 
 #include "sieve-common.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-address.h"
 #include "sieve-extensions.h"
@@ -541,7 +542,7 @@ static int ext_vacation_operation_execute
 	int opt_code = 0;
 	sieve_number_t days = 7;
 	bool mime = FALSE;
-	struct sieve_coded_stringlist *addresses = NULL;
+	struct sieve_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
 	unsigned int source_line;
 	const char *from_normalized = NULL;
@@ -643,15 +644,14 @@ static int ext_vacation_operation_execute
 	if ( addresses != NULL ) {
 		ARRAY_DEFINE(norm_addresses, const char *);
 		string_t *raw_address;
-		bool result = FALSE;
-		
-		sieve_coded_stringlist_reset(addresses);
+		int ret;
+
+		sieve_stringlist_reset(addresses);
 			
 		p_array_init(&norm_addresses, pool, 4);
 		
 		raw_address = NULL;
-		while ( (result=sieve_coded_stringlist_next_item(addresses, &raw_address))
-			&& raw_address != NULL ) {
+		while ( (ret=sieve_stringlist_next_item(addresses, &raw_address)) > 0 ) {
 			const char *error;
 			const char *addr_norm = sieve_address_normalize(raw_address, &error);
 			
@@ -664,7 +664,7 @@ static int ext_vacation_operation_execute
 			}
 		}
 		
-		if ( !result ) {
+		if ( ret < 0 ) {
 			sieve_runtime_trace_error(renv, "invalid addresses stringlist");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}

@@ -7,6 +7,7 @@
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -105,9 +106,9 @@ static bool tst_mailboxexists_operation_dump
 static int tst_mailboxexists_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	struct sieve_coded_stringlist *mailbox_names;
+	struct sieve_stringlist *mailbox_names;
 	string_t *mailbox_item;
-	bool result = TRUE, all_exist = TRUE;
+	bool all_exist = TRUE;
 
 	/*
 	 * Read operands 
@@ -125,10 +126,11 @@ static int tst_mailboxexists_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "mailboxexists test");
 
 	if ( renv->scriptenv->user != NULL ) {
+		int ret;
+
 		mailbox_item = NULL;
-		while ( (result=sieve_coded_stringlist_next_item
-			(mailbox_names, &mailbox_item)) 
-			&& mailbox_item != NULL ) {
+		while ( (ret=sieve_stringlist_next_item(mailbox_names, &mailbox_item)) > 0 ) 
+			{
 			struct mail_namespace *ns;
 			const char *mailbox = str_c(mailbox_item);
 			struct mailbox *box;
@@ -157,11 +159,11 @@ static int tst_mailboxexists_operation_execute
 			/* Close mailbox */
 			mailbox_free(&box);
 		}
-	}
 	
-	if ( !result ) {
-		sieve_runtime_trace_error(renv, "invalid mailbox name item");
-		return SIEVE_EXEC_BIN_CORRUPT;
+		if ( ret < 0 ) {
+			sieve_runtime_trace_error(renv, "invalid mailbox name item");
+			return SIEVE_EXEC_BIN_CORRUPT;
+		}
 	}
 	
 	sieve_interpreter_set_test_result(renv->interp, all_exist);

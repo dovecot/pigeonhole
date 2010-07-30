@@ -3,6 +3,7 @@
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
@@ -160,21 +161,79 @@ static bool tst_string_operation_dump
  * Code execution 
  */
 
+static int tst_string_stringlist_next_item
+	(struct sieve_stringlist *_strlist, string_t **str_r);
+static void tst_string_stringlist_reset
+	(struct sieve_stringlist *_strlist);
+static int tst_string_stringlist_get_length
+	(struct sieve_stringlist *_strlist);
+
+struct tst_string_stringlist {
+	struct sieve_stringlist strlist;
+
+	struct sieve_stringlist *value_list;
+};
+
+static struct sieve_stringlist *tst_string_stringlist_create
+(const struct sieve_runtime_env *renv, struct sieve_stringlist *value_list)
+{
+	struct tst_string_stringlist *strlist;
+
+	strlist = t_new(struct tst_string_stringlist, 1);
+	strlist->strlist.runenv = renv;
+	strlist->strlist.next_item = tst_string_stringlist_next_item;
+	strlist->strlist.reset = tst_string_stringlist_reset;
+	strlist->strlist.get_length = tst_string_stringlist_get_length;
+	strlist->value_list = value_list;
+
+	return &strlist->strlist;
+}
+
+static int tst_string_stringlist_next_item
+(struct sieve_stringlist *_strlist, string_t **str_r)
+{
+	struct tst_string_stringlist *strlist = 
+		(struct tst_string_stringlist *)_strlist;
+
+	return sieve_stringlist_next_item(strlist->value_list, str_r);
+}
+
+static void tst_string_stringlist_reset
+(struct sieve_stringlist *_strlist)
+{
+	struct tst_string_stringlist *strlist = 
+		(struct tst_string_stringlist *)_strlist;
+
+	sieve_stringlist_reset(strlist->value_list);
+}
+
+static int tst_string_stringlist_get_length
+(struct sieve_stringlist *_strlist)
+{
+	struct tst_string_stringlist *strlist = 
+		(struct tst_string_stringlist *)_strlist;
+	string_t *item;
+	int length = 0;
+	int ret;
+
+	while ( (ret=sieve_stringlist_next_item(strlist->value_list, &item)) > 0 ) {
+		if ( str_len(item) > 0 )
+			length++;
+	}
+
+	return ( ret < 0 ? -1 : length );
+}
+
 static int tst_string_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	int ret, mret;
-	bool result = TRUE;
+	int ret;
 	int opt_code = 0;
 	struct sieve_match_type mcht = 
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
-	struct sieve_match_context *mctx;
-	struct sieve_coded_stringlist *source;
-	struct sieve_coded_stringlist *key_list;
-	string_t *src_item;
-	bool matched;
+	struct sieve_stringlist *source, *value_list, *key_list;
 
 	/*
 	 * Read operands 
@@ -205,35 +264,18 @@ static int tst_string_operation_execute
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "string test");
 
-	mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, key_list); 	
+	/* Create wrapper string list wich does not count empty string items */
+	value_list = tst_string_stringlist_create(renv, source);
 
-	/* Iterate through all requested strings to match */
-	src_item = NULL;
-	matched = FALSE;
-	while ( result && !matched && 
-		(result=sieve_coded_stringlist_next_item(source, &src_item)) 
-		&& src_item != NULL ) {
-		const char *src = str_len(src_item) > 0 ? str_c(src_item) : NULL;
-
-		if ( (mret=sieve_match_value
-			(mctx, src, str_len(src_item))) < 0 ) {
-			result = FALSE;
-			break;
-		}
-		
-		matched = ( mret > 0 );				
-	}
-
-	if ( (mret=sieve_match_end(&mctx)) < 0 ) 
-		result = FALSE;
-	else
-		matched = ( mret > 0 || matched ); 	
+	/* Perform match */
+	ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
 	
-	if ( result ) {
-		sieve_interpreter_set_test_result(renv->interp, matched);
+	/* Set test result for subsequent conditional jump */
+	if ( ret >= 0 ) {
+		sieve_interpreter_set_test_result(renv->interp, ret > 0);
 		return SIEVE_EXEC_OK;
-	}
-	
-	sieve_runtime_trace_error(renv, "invalid string list item");
+	}	
+
+	sieve_runtime_trace_error(renv, "invalid string-list item");
 	return SIEVE_EXEC_BIN_CORRUPT;
 }

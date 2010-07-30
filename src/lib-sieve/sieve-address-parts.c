@@ -6,7 +6,6 @@
 #include "mempool.h"
 #include "hash.h"
 #include "array.h"
-#include "message-address.h"
 #include "str-sanitize.h"
 
 #include "sieve-extensions.h"
@@ -228,67 +227,94 @@ const struct sieve_operand_def address_part_operand = {
 };
 
 /*
- * Address Matching
+ * Address-part string list
  */
- 
-int sieve_address_match
-(const struct sieve_address_part *addrp, struct sieve_match_context *mctx, 		
-	const char *data)
+
+static int sieve_address_part_stringlist_next_item
+	(struct sieve_stringlist *_strlist, string_t **str_r);
+static void sieve_address_part_stringlist_reset
+	(struct sieve_stringlist *_strlist);
+static int sieve_address_part_stringlist_get_length
+	(struct sieve_stringlist *_strlist);
+
+struct sieve_address_part_stringlist {
+	struct sieve_stringlist strlist;
+
+	const struct sieve_address_part *addrp;
+	struct sieve_address_list *addresses;
+};
+
+struct sieve_stringlist *sieve_address_part_stringlist_create
+(const struct sieve_runtime_env *renv, const struct sieve_address_part *addrp,
+	struct sieve_address_list *addresses)
 {
-	const struct sieve_runtime_env *renv = mctx->runenv;
-	int result = FALSE;
-	const struct message_address *addr;
+	struct sieve_address_part_stringlist *strlist;
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
-            "  matching addresses `%s'", str_sanitize(data, 80));
+	strlist = t_new(struct sieve_address_part_stringlist, 1);
+	strlist->strlist.runenv = renv;
+	strlist->strlist.next_item = sieve_address_part_stringlist_next_item;
+	strlist->strlist.reset = sieve_address_part_stringlist_reset;
+	strlist->strlist.get_length = sieve_address_part_stringlist_get_length;
 
-	T_BEGIN {
-		bool valid = TRUE;
-		const struct message_address *aitem;
+	strlist->addrp = addrp;
+	strlist->addresses = addresses;
 
-		addr = message_address_parse
-			(pool_datastack_create(), (const unsigned char *) data, 
-				strlen(data), 256, FALSE);
+	return &strlist->strlist;
+}
 
-		/* Check validity of all addresses simultaneously. Unfortunately,
-		 * errorneous addresses cannot be extracted from the address list
-		 * and therefore :all will match against the whole header value
-		 * which is not entirely standard.
-		 */
-		aitem = addr;
-		while ( aitem != NULL) {
-			if ( aitem->invalid_syntax )
-				valid = FALSE;
-			aitem = aitem->next;
-		}
+static int sieve_address_part_stringlist_next_item
+	(struct sieve_stringlist *_strlist, string_t **str_r)
+{
+	struct sieve_address_part_stringlist *strlist = 
+		(struct sieve_address_part_stringlist *)_strlist;
+	struct sieve_address item;
+	string_t *item_unparsed;
+	int ret;
 
-		if ( !valid || addr == NULL ) {
-			if ( sieve_address_part_is(addrp, all_address_part) )
-				result = sieve_match_value(mctx, data, strlen(data));
-			else 
-				result = FALSE;
-		} else {
-			while ( result == 0 && addr != NULL) {
-				/* mailbox@domain */
-				struct sieve_address address;
-				const char *part = NULL;
-			
-				if ( addr->domain != NULL ) {
-					address.local_part = addr->mailbox;
-					address.domain = addr->domain;
-	
-					if ( addrp->def != NULL && addrp->def->extract_from ) 
-						part = addrp->def->extract_from(addrp, &address);
+	*str_r = NULL;
 
-					if ( part != NULL )
-						result = sieve_match_value(mctx, part, strlen(part));
-				}
-				addr = addr->next;
+	while ( *str_r == NULL ) {
+		if ( (ret=sieve_address_list_next_item
+			(strlist->addresses, &item, &item_unparsed)) <= 0 )
+			return ret;
+		
+		if ( item.local_part == NULL ) {
+			if ( item_unparsed != NULL ) {
+				if ( str_len(item_unparsed) == 0 ||
+					sieve_address_part_is(strlist->addrp, all_address_part) )
+					*str_r = item_unparsed;
 			}
+		} else {
+			const struct sieve_address_part *addrp = strlist->addrp;
+			const char *part = NULL;
+
+			if ( addrp->def != NULL && addrp->def->extract_from ) 
+				part = addrp->def->extract_from(addrp, &item);
+
+			if ( part != NULL )
+				*str_r = t_str_new_const(part, strlen(part));
 		}
-	} T_END;
-	
-	return result;
+	}
+		
+	return 1;
+}
+
+static void sieve_address_part_stringlist_reset
+	(struct sieve_stringlist *_strlist)
+{
+	struct sieve_address_part_stringlist *strlist = 
+		(struct sieve_address_part_stringlist *)_strlist;
+
+	sieve_address_list_reset(strlist->addresses);
+}
+
+static int sieve_address_part_stringlist_get_length
+	(struct sieve_stringlist *_strlist)
+{
+	struct sieve_address_part_stringlist *strlist = 
+		(struct sieve_address_part_stringlist *)_strlist;
+
+	return sieve_address_list_get_length(strlist->addresses);
 }
 
 /* 

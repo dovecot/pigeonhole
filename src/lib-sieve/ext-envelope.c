@@ -18,6 +18,7 @@
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-address.h"
 #include "sieve-comparators.h"
@@ -176,6 +177,250 @@ static const struct sieve_envelope_part *_envelope_part_find
 	return NULL;
 }
 
+/* Envelope parts implementation */
+
+static const struct sieve_address *const *_from_part_get_addresses
+(const struct sieve_runtime_env *renv)
+{
+	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
+	const struct sieve_address *address =
+		sieve_message_get_sender_address(renv->msgctx);
+	
+	if ( address != NULL ) {
+		t_array_init(&envelope_values, 2);
+
+        array_append(&envelope_values, &address, 1);
+
+	    (void)array_append_space(&envelope_values);
+    	return array_idx(&envelope_values, 0);
+	} 
+
+	return NULL;
+}
+
+static const char *const *_from_part_get_values
+(const struct sieve_runtime_env *renv)
+{
+	ARRAY_DEFINE(envelope_values, const char *);
+
+	t_array_init(&envelope_values, 2);
+
+	if ( renv->msgdata->return_path != NULL ) {
+        array_append(&envelope_values, &renv->msgdata->return_path, 1);
+	}
+
+	(void)array_append_space(&envelope_values);
+
+	return array_idx(&envelope_values, 0);
+}
+
+static const struct sieve_address *const *_to_part_get_addresses
+(const struct sieve_runtime_env *renv)
+{
+	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
+	const struct sieve_address *address = 
+		sieve_message_get_recipient_address(renv->msgctx);	
+
+	if ( address != NULL && address->local_part != NULL ) {
+		t_array_init(&envelope_values, 2);
+
+		array_append(&envelope_values, &address, 1);
+
+		(void)array_append_space(&envelope_values);
+		return array_idx(&envelope_values, 0);
+	}
+
+	return NULL;
+}
+
+static const char *const *_to_part_get_values
+(const struct sieve_runtime_env *renv)
+{
+	ARRAY_DEFINE(envelope_values, const char *);
+
+	t_array_init(&envelope_values, 2);
+
+	if ( renv->msgdata->to_address != NULL ) {
+        array_append(&envelope_values, &renv->msgdata->to_address, 1);
+	}
+
+	(void)array_append_space(&envelope_values);
+
+	return array_idx(&envelope_values, 0);
+}
+
+
+static const char *const *_auth_part_get_values
+(const struct sieve_runtime_env *renv)
+{
+	ARRAY_DEFINE(envelope_values, const char *);
+
+	t_array_init(&envelope_values, 2);
+
+	if ( renv->msgdata->auth_user != NULL )
+        array_append(&envelope_values, &renv->msgdata->auth_user, 1);
+
+	(void)array_append_space(&envelope_values);
+
+	return array_idx(&envelope_values, 0);
+}
+
+/*
+ * Envelope address list
+ */
+
+/* Forward declarations */
+
+static int sieve_envelope_address_list_next_string_item
+	(struct sieve_stringlist *_strlist, string_t **str_r);
+static int sieve_envelope_address_list_next_item
+	(struct sieve_address_list *_addrlist, struct sieve_address *addr_r, 
+		string_t **unparsed_r);
+static void sieve_envelope_address_list_reset
+	(struct sieve_stringlist *_strlist);
+
+/* Stringlist object */
+
+struct sieve_envelope_address_list {
+	struct sieve_address_list addrlist;
+
+	struct sieve_stringlist *env_parts;
+
+	const struct sieve_address *const *cur_addresses;
+	const char * const *cur_values;
+
+	int value_index; 
+};
+
+static struct sieve_address_list *sieve_envelope_address_list_create
+(const struct sieve_runtime_env *renv, struct sieve_stringlist *env_parts)
+{
+	struct sieve_envelope_address_list *addrlist;
+	    
+	addrlist = t_new(struct sieve_envelope_address_list, 1);
+	addrlist->addrlist.strlist.runenv = renv;
+	addrlist->addrlist.strlist.next_item = 
+		sieve_envelope_address_list_next_string_item;
+	addrlist->addrlist.strlist.reset = sieve_envelope_address_list_reset;
+	addrlist->addrlist.next_item = sieve_envelope_address_list_next_item;
+	addrlist->env_parts = env_parts;
+  
+	return &addrlist->addrlist;
+}
+
+static int sieve_envelope_address_list_next_item
+(struct sieve_address_list *_addrlist, struct sieve_address *addr_r, 
+	string_t **unparsed_r)
+{
+	struct sieve_envelope_address_list *addrlist = 
+		(struct sieve_envelope_address_list *) _addrlist;	
+	const struct sieve_runtime_env *renv = _addrlist->strlist.runenv;
+
+	if ( addr_r != NULL ) addr_r->local_part = NULL;
+	if ( unparsed_r != NULL ) *unparsed_r = NULL;
+
+	while ( addrlist->cur_addresses == NULL && addrlist->cur_values == NULL ) {
+		const struct sieve_envelope_part *epart;
+		string_t *envp_item = NULL;
+		int ret;
+
+		/* Read next header value from source list */
+		if ( (ret=sieve_stringlist_next_item(addrlist->env_parts, &envp_item)) 
+			<= 0 )
+			return ret;
+			
+		if ( (epart=_envelope_part_find(str_c(envp_item))) != NULL ) {
+			addrlist->value_index = 0;
+
+			if ( epart->get_addresses != NULL ) {
+				/* Field contains addresses */
+				addrlist->cur_addresses = epart->get_addresses(renv);
+
+				/* Drop empty list */
+				if ( addrlist->cur_addresses != NULL &&
+					addrlist->cur_addresses[0] == NULL )
+					addrlist->cur_addresses = NULL;
+			}  
+
+			if ( addrlist->cur_addresses == NULL && epart->get_values != NULL ) {
+				/* Field contains something else */
+				addrlist->cur_values = epart->get_values(renv);
+
+				/* Drop empty list */
+				if ( addrlist->cur_values != NULL && addrlist->cur_values[0] == NULL )
+					addrlist->cur_values = NULL;
+			}
+		}
+	}
+	
+	/* Return next item */
+	if ( addrlist->cur_addresses != NULL ) {
+		const struct sieve_address *addr = 
+			addrlist->cur_addresses[addrlist->value_index];
+
+		if ( addr->local_part == NULL ) {
+			/* Null path <> */
+			if ( unparsed_r != NULL ) 
+				*unparsed_r = t_str_new_const("", 0);
+		} else {
+			if ( addr_r != NULL )
+				*addr_r = *addr;
+		}
+
+		/* Advance to next value */
+		addrlist->value_index++;
+		if ( addrlist->cur_addresses[addrlist->value_index] == NULL ) {
+			addrlist->cur_addresses = NULL;
+			addrlist->value_index = 0;
+		}
+	} else {
+		if ( unparsed_r != NULL ) {
+			const char *value = addrlist->cur_values[addrlist->value_index];
+
+			*unparsed_r = t_str_new_const(value, strlen(value));
+		}
+
+		/* Advance to next value */
+		addrlist->value_index++;
+		if ( addrlist->cur_values[addrlist->value_index] == NULL ) {
+			addrlist->cur_values = NULL;
+			addrlist->value_index = 0;
+		}
+	}
+
+	return 1;
+}
+
+static int sieve_envelope_address_list_next_string_item
+(struct sieve_stringlist *_strlist, string_t **str_r)
+{
+	struct sieve_address_list *addrlist = (struct sieve_address_list *)_strlist;
+	struct sieve_address addr;
+	int ret;
+
+	if ( (ret=sieve_envelope_address_list_next_item
+		(addrlist, &addr, str_r)) <= 0 )
+		return ret;
+
+	if ( addr.local_part != NULL ) {
+		const char *addr_str = sieve_address_to_string(&addr);
+		*str_r = t_str_new_const(addr_str, strlen(addr_str));
+	}
+
+	return 1;
+}
+
+static void sieve_envelope_address_list_reset
+(struct sieve_stringlist *_strlist)
+{
+	struct sieve_envelope_address_list *addrlist = 
+		(struct sieve_envelope_address_list *)_strlist;
+
+	sieve_stringlist_reset(addrlist->env_parts);
+	addrlist->cur_addresses = NULL;
+	addrlist->cur_values = NULL;
+	addrlist->value_index = 0;
+}
 
 /* 
  * Command Registration 
@@ -320,107 +565,17 @@ static bool ext_envelope_operation_dump
  * Interpretation
  */
 
-static const struct sieve_address *const *_from_part_get_addresses
-(const struct sieve_runtime_env *renv)
-{
-	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
-	const struct sieve_address *address =
-		sieve_message_get_sender_address(renv->msgctx);
-	
-	if ( address != NULL ) {
-		t_array_init(&envelope_values, 2);
-
-        array_append(&envelope_values, &address, 1);
-
-	    (void)array_append_space(&envelope_values);
-    	return array_idx(&envelope_values, 0);
-	} 
-
-	return NULL;
-}
-
-static const char *const *_from_part_get_values
-(const struct sieve_runtime_env *renv)
-{
-	ARRAY_DEFINE(envelope_values, const char *);
-
-	t_array_init(&envelope_values, 2);
-
-	if ( renv->msgdata->return_path != NULL ) {
-        array_append(&envelope_values, &renv->msgdata->return_path, 1);
-	}
-
-	(void)array_append_space(&envelope_values);
-
-	return array_idx(&envelope_values, 0);
-}
-
-static const struct sieve_address *const *_to_part_get_addresses
-(const struct sieve_runtime_env *renv)
-{
-	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
-	const struct sieve_address *address = 
-		sieve_message_get_recipient_address(renv->msgctx);	
-
-	if ( address != NULL && address->local_part != NULL ) {
-		t_array_init(&envelope_values, 2);
-
-        array_append(&envelope_values, &address, 1);
-
-	    (void)array_append_space(&envelope_values);
-    	return array_idx(&envelope_values, 0);
-	}
-
-	return NULL;
-}
-
-static const char *const *_to_part_get_values
-(const struct sieve_runtime_env *renv)
-{
-	ARRAY_DEFINE(envelope_values, const char *);
-
-	t_array_init(&envelope_values, 2);
-
-	if ( renv->msgdata->to_address != NULL ) {
-        array_append(&envelope_values, &renv->msgdata->to_address, 1);
-	}
-
-	(void)array_append_space(&envelope_values);
-
-	return array_idx(&envelope_values, 0);
-}
-
-
-static const char *const *_auth_part_get_values
-(const struct sieve_runtime_env *renv)
-{
-	ARRAY_DEFINE(envelope_values, const char *);
-
-	t_array_init(&envelope_values, 2);
-
-	if ( renv->msgdata->auth_user != NULL )
-        array_append(&envelope_values, &renv->msgdata->auth_user, 1);
-
-	(void)array_append_space(&envelope_values);
-
-	return array_idx(&envelope_values, 0);
-}
-
 static int ext_envelope_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	bool result = TRUE;
 	struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 	struct sieve_match_type mcht = 
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_address_part addrp = 
 		SIEVE_ADDRESS_PART_DEFAULT(all_address_part);
-	struct sieve_match_context *mctx;
-	struct sieve_coded_stringlist *envp_list;
-	struct sieve_coded_stringlist *key_list;
-	string_t *envp_item;
-	bool matched;
+	struct sieve_stringlist *env_part_list, *value_list, *key_list;
+	struct sieve_address_list *addr_list;
 	int ret;
 
 	/*
@@ -433,7 +588,7 @@ static int ext_envelope_operation_execute
 		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Read envelope-part */
-	if ( (envp_list=sieve_opr_stringlist_read(renv, address, "envelope-part"))
+	if ( (env_part_list=sieve_opr_stringlist_read(renv, address, "envelope-part"))
 		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 
@@ -447,90 +602,21 @@ static int ext_envelope_operation_execute
 	 */
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "envelope test");
+
+	/* Create value stringlist */
+	addr_list = sieve_envelope_address_list_create(renv, env_part_list);
+	value_list = sieve_address_part_stringlist_create(renv, &addrp, addr_list);
+
+	/* Perform match */
+	ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
 	
-	/* Initialize match */
-	mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, key_list);
-	
-	/* Iterate through all requested headers to match */
-	envp_item = NULL;
-	matched = FALSE;
-	while ( result && !matched && 
-		(result=sieve_coded_stringlist_next_item(envp_list, &envp_item)) 
-		&& envp_item != NULL ) {
-		const struct sieve_envelope_part *epart;
-
-		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
-            "  matching envelope part `%s'", str_sanitize(str_c(envp_item), 80));
-			
-		if ( (epart=_envelope_part_find(str_c(envp_item))) != NULL ) {
-			const struct sieve_address * const *addresses = NULL;
-			int i;
-
-			if ( epart->get_addresses != NULL ) {
-				/* Field contains addresses */
-				addresses = epart->get_addresses(renv);
-
-				if ( addresses != NULL ) {
-					for ( i = 0; !matched && addresses[i] != NULL; i++ ) {
-						if ( addresses[i]->local_part == NULL ) {
-							/* Null path <> */
-							ret = sieve_match_value(mctx, "", 0);
-						} else {
-							const char *part = NULL;
-
-							if ( addrp.def != NULL && addrp.def->extract_from	!= NULL )
-								part = addrp.def->extract_from(&addrp, addresses[i]);
-
-							if ( part != NULL ) 
-								ret = sieve_match_value(mctx, part, strlen(part));
-							else
-								ret = 0;
-						}
-
-						if ( ret < 0 ) {
-							result = FALSE;
-							break;
-						}
-
-						matched = ret > 0;
-					}
-				}
-			} 
-
-			if ( epart->get_values != NULL && addresses == NULL && 
-				sieve_address_part_is(&addrp, all_address_part) ) {
-				/* Field contains something else */
-				const char *const *values = epart->get_values(renv);
-
-				if ( values == NULL ) continue;
-	
-				for ( i = 0; !matched && values[i] != NULL; i++ ) {				
-
-					if ( (ret=sieve_match_value
-						(mctx, values[i], strlen(values[i]))) < 0 ) {
-						result = FALSE;
-						break;
-					}
-			
-					matched = ret > 0;				
-				}
-			}
-		}
-	}
-	
-	/* Finish match */
-	if ( (ret=sieve_match_end(&mctx)) < 0 ) 
-		result = FALSE;
-	else
-		matched = ( ret > 0 || matched );
-
-	if ( result ) {
-		/* Set test result for subsequent conditional jump */
-		sieve_interpreter_set_test_result(renv->interp, matched);
+	/* Set test result for subsequent conditional jump */
+	if ( ret >= 0 ) {
+		sieve_interpreter_set_test_result(renv->interp, ret > 0);
 		return SIEVE_EXEC_OK;
-	}
-	
-	sieve_runtime_trace_error(renv, "invalid string-list item");	
+	}	
+
+	sieve_runtime_trace_error(renv, "invalid string-list item");
 	return SIEVE_EXEC_BIN_CORRUPT;
 }
 

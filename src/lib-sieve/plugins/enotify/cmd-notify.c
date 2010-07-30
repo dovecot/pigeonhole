@@ -401,7 +401,7 @@ static int cmd_notify_operation_execute
 	pool_t pool;
 	int opt_code = 0, result = SIEVE_EXEC_OK;
 	sieve_number_t importance = 2;
-	struct sieve_coded_stringlist *options = NULL;
+	struct sieve_stringlist *options = NULL;
 	const struct sieve_enotify_method *method;
 	string_t *method_uri, *message = NULL, *from = NULL; 
 	unsigned int source_line;

@@ -86,6 +86,8 @@ void ext_imap4flags_iter_init
 const char *ext_imap4flags_iter_get_flag
 	(struct ext_imap4flags_iter *iter);
 
+/* Flag operations */
+
 typedef int (*ext_imapflag_flag_operation_t)
 	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 		unsigned int var_index, string_t *flags);
@@ -100,17 +102,11 @@ int ext_imap4flags_remove_flags
 	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 		unsigned int var_index, string_t *flags);
 
-/*
- * Flags access
- */
+/* Flags access */
 
-int ext_imap4flags_get_flags_string
-(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
-	unsigned int var_index, const char **flags);
+struct sieve_stringlist *ext_imap4flags_get_flags
+	(const struct sieve_runtime_env *renv, struct sieve_stringlist *flags_list);
 
-void ext_imap4flags_get_flags_init
-	(struct ext_imap4flags_iter *iter, const struct sieve_runtime_env *renv,
-		string_t *flags_list);
 void ext_imap4flags_get_implicit_flags_init
 	(struct ext_imap4flags_iter *iter, const struct sieve_extension *this_ext,
 		struct sieve_result *result);

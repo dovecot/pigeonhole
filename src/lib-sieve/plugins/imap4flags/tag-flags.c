@@ -7,6 +7,7 @@
 #include "mail-storage.h"
 
 #include "sieve-code.h"
+#include "sieve-stringlist.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-result.h"
@@ -256,12 +257,12 @@ static bool seff_flags_read_context
 	const struct sieve_runtime_env *renv, sieve_size_t *address,
 	void **se_context)
 {
-	bool result = TRUE;
+	int ret;
 	struct sieve_operand operand;
 	pool_t pool = sieve_result_pool(renv->result);
 	struct seff_flags_context *ctx;
 	string_t *flags_item;
-	struct sieve_coded_stringlist *flag_list;
+	struct sieve_stringlist *flag_list;
 	
 	ctx = p_new(pool, struct seff_flags_context, 1);
 	p_array_init(&ctx->keywords, pool, 2);
@@ -293,8 +294,7 @@ static bool seff_flags_read_context
 	
 	/* Unpack */
 	flags_item = NULL;
-	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flags_item)) && 
-		flags_item != NULL ) {
+	while ( (ret=sieve_stringlist_next_item(flag_list, &flags_item)) > 0 ) {
 		const char *flag;
 		struct ext_imap4flags_iter flit;
 
@@ -328,7 +328,7 @@ static bool seff_flags_read_context
 
 	t_pop();
 	
-	return result;
+	return ( ret >= 0 );
 }
 
 /* Result verification */

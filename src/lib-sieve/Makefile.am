@@ -91,6 +91,7 @@ libdovecot_sieve_la_SOURCES = \
 	sieve-result.c \
 	sieve-error.c \
 	sieve-objects.c \
+	sieve-stringlist.c \
 	sieve-comparators.c \
 	sieve-match-types.c \
 	sieve-address-parts.c \
@@ -136,6 +137,7 @@ headers = \
 	sieve-error.h \
 	sieve-error-private.h \
 	sieve-objects.h \
+	sieve-stringlist.h \
 	sieve-match.h \
 	sieve-comparators.h \
 	sieve-match-types.h \

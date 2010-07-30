@@ -35,14 +35,15 @@ Next (in order of descending priority/precedence):
 	- Implement proper :content "multipart" behavior
 	- Implement proper :content "message/rfc822" behavior
 	- Build test cases for decoding MIME encodings to UTF-8
+* Implement index extension
 * Build a sieve tool to filter an entire existing mailbox through a Sieve 
   script:
 	- Add commandline options to fully customize execution
 	- Write manual page
 * Vacation extension improvements:
-    - Implement configurable sender exclusion list.
-    - Implement mechanism for implicitly including an account's aliases in the
-      vacation command's :addresses list.
+	- Implement configurable sender exclusion list.
+	- Implement mechanism for implicitly including an account's aliases in the
+	  vacation command's :addresses list.
 * Improve error handling. 
 	- Implement dropping errors in the user's mailbox as a mail message.
 * Fix remaining RFC deviations:
@@ -69,8 +70,8 @@ Next (in order of descending priority/precedence):
   them to the user if appropriate/safe.
 * Implement proper support for ManageSieve SASL ANONYMOUS login.
 * Test ManageSieve behavior thoroughly:
-  - Test pipelined behavior
-  - Test proxy authentication
+	- Test pipelined behavior
+	- Test proxy authentication
 * Code cleanup:
 	- Make address handling more uniform. 
 	- Review all FIXMEs 
@@ -80,11 +81,7 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A THIRD RELEASE (0.3.x) ##
 
-* Implement abstract string list and make matching interface more generic. Use
-  this to:
-	- Simplify matching API
-	- Implement index extension
-	- Implement extlists extension
+* Implement extlists extension as a plugin
 * Enotify extension: detect use of variable values extracted from the message 
   that are used in the method argument. RFC reports this as a security issue.
 * Make the sieve storage a base class with (possibly) various implementations, 

@@ -8,6 +8,7 @@
 
 #include "sieve-common.h"
 #include "sieve-ast.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
@@ -579,7 +580,7 @@ const char *ext_enotify_runtime_get_method_capability
 int ext_enotify_runtime_check_operands
 (const struct sieve_runtime_env *renv, unsigned int source_line,
 	string_t *method_uri, string_t *message, string_t *from, 
-	struct sieve_coded_stringlist *options, 
+	struct sieve_stringlist *options, 
 	const struct sieve_enotify_method **method_r, void **method_context)
 {
 	const struct sieve_enotify_method *method;
@@ -592,7 +593,7 @@ int ext_enotify_runtime_check_operands
 	/* Check provided operands */
 	if ( method->def != NULL && method->def->runtime_check_operands != NULL ) {
 		struct sieve_enotify_env nenv; 
-		int ret = SIEVE_EXEC_OK;
+		int result = SIEVE_EXEC_OK;
 
 		memset(&nenv, 0, sizeof(nenv));
 		nenv.method = method;
@@ -608,13 +609,11 @@ int ext_enotify_runtime_check_operands
 			
 			/* Check any provided options */
 			if ( options != NULL ) {			
-				int result = TRUE;
 				string_t *option = NULL;
+				int ret;
 			
 				/* Iterate through all provided options */
-				while ( result && 
-					(result=sieve_coded_stringlist_next_item(options, &option)) && 
-					option != NULL ) {
+				while ( (ret=sieve_stringlist_next_item(options, &option)) > 0 ) {
 					const char *opt_name = NULL, *opt_value = NULL;
 				
 					/* Parse option into <optionname> and <value> */
@@ -631,13 +630,13 @@ int ext_enotify_runtime_check_operands
 			
 				/* Check for binary corruptions encountered during string list iteration
 				 */
-				if ( result ) {
+				if ( ret >= 0 ) {
 					*method_r = method;
 				} else {
 					/* Binary corrupt */
 					sieve_runtime_trace_error
 						(renv, "invalid item in options string list");
-					ret = SIEVE_EXEC_BIN_CORRUPT;
+					result = SIEVE_EXEC_BIN_CORRUPT;
 				}
 
 			} else {
@@ -647,11 +646,11 @@ int ext_enotify_runtime_check_operands
 
 		} else { 	
 			/* Operand check failed */
-			ret = SIEVE_EXEC_FAILURE;
+			result = SIEVE_EXEC_FAILURE;
 		}
 
 		sieve_error_handler_unref(&nenv.ehandler);
-		return ret;
+		return result;
 	}
 
 	/* No check function defined: a most unlikely situation */

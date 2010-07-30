@@ -2,9 +2,11 @@
  */
 
 #include "lib.h"
+#include "str.h"
 #include "array.h"
 
 #include "sieve-common.h"
+#include "sieve-stringlist.h"
 #include "sieve-error-private.h"
 
 #include "testsuite-log.h"
@@ -143,6 +145,81 @@ void testsuite_log_deinit(void)
 	sieve_error_handler_unref(&testsuite_log_ehandler);
 
 	pool_unref(&_testsuite_logmsg_pool);
+}
+
+/*
+ * Result stringlist
+ */
+
+/* Forward declarations */
+
+static int testsuite_log_stringlist_next_item
+	(struct sieve_stringlist *_strlist, string_t **str_r);
+static void testsuite_log_stringlist_reset
+	(struct sieve_stringlist *_strlist);
+
+/* Stringlist object */
+
+struct testsuite_log_stringlist {
+	struct sieve_stringlist strlist;
+
+	int pos, index;
+};
+
+struct sieve_stringlist *testsuite_log_stringlist_create
+(const struct sieve_runtime_env *renv, int index)
+{
+	struct testsuite_log_stringlist *strlist;
+	    
+	strlist = t_new(struct testsuite_log_stringlist, 1);
+	strlist->strlist.runenv = renv;
+	strlist->strlist.next_item = testsuite_log_stringlist_next_item;
+	strlist->strlist.reset = testsuite_log_stringlist_reset;
+
+ 	strlist->index = index;
+	strlist->pos = 0;
+ 
+	return &strlist->strlist;
+}
+
+static int testsuite_log_stringlist_next_item
+(struct sieve_stringlist *_strlist, string_t **str_r)
+{
+	struct testsuite_log_stringlist *strlist = 
+		(struct testsuite_log_stringlist *) _strlist;
+	const struct _testsuite_log_message *msg;
+	int pos;
+
+	*str_r = NULL;
+
+	if ( strlist->pos < 0 )
+		return 0;
+
+	if ( strlist->index > 0 ) {
+		pos = strlist->index - 1;
+		strlist->pos = -1;
+	} else { 
+		pos = strlist->pos++;
+	}
+
+	if ( pos >= (int) array_count(&_testsuite_log_errors) ) {
+		strlist->pos = -1;
+		return 0;
+	}
+
+	msg = array_idx(&_testsuite_log_errors, (unsigned int) pos);
+
+	*str_r = t_str_new_const(msg->message, strlen(msg->message));
+	return 1;
+}
+
+static void testsuite_log_stringlist_reset
+(struct sieve_stringlist *_strlist)
+{
+	struct testsuite_log_stringlist *strlist = 
+		(struct testsuite_log_stringlist *) _strlist;
+
+	strlist->pos = 0;
 }
 
 

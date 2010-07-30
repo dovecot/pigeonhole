@@ -4,6 +4,7 @@
 #include "lib.h"
 
 #include "sieve-commands.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
@@ -170,52 +171,17 @@ static bool tst_hasflag_operation_dump
 /*
  * Interpretation
  */
- 
-static int _flag_key_extract_init
-(void **context, string_t *raw_key)
-{
-	struct ext_imap4flags_iter *iter = t_new(struct ext_imap4flags_iter, 1);
-	
-	ext_imap4flags_iter_init(iter, raw_key);
-	
-	*context = iter; 
-	
-	return TRUE;
-}
-
-static int _flag_key_extract
-(void *context, const char **key, size_t *size)
-{
-	struct ext_imap4flags_iter *iter = (struct ext_imap4flags_iter *) context;
-	
-	if ( (*key = ext_imap4flags_iter_get_flag(iter)) != NULL ) {
-		*size = strlen(*key); 
-		return TRUE;
-	}
-	
-	return FALSE;
-}
-
-static const struct sieve_match_key_extractor _flag_extractor = {
-	_flag_key_extract_init,
-	_flag_key_extract
-};
 
 static int tst_hasflag_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	int mret;
-	bool result = TRUE;
 	int opt_code = 0;
 	struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
-	struct sieve_match_type mtch = 
+	struct sieve_match_type mcht = 
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
-	struct sieve_match_context *mctx;
-	struct sieve_coded_stringlist *flag_list, *variables_list = NULL;
-	struct ext_imap4flags_iter iter;
-	const char *flag;
-	bool matched;
+	struct sieve_stringlist *flag_list, *variables_list, *value_list, *key_list;
+	int ret;
 	
 	/*
 	 * Read operands
@@ -223,12 +189,12 @@ static int tst_hasflag_operation_execute
 
 	/* Optional operands */
 
+	variables_list = NULL;
 	for (;;) {
 		bool opok = TRUE;
-		int ret;
 
 		if ( (ret=sieve_match_opr_optional_read
-			(renv, address, &opt_code, &cmp, &mtch)) < 0 )
+			(renv, address, &opt_code, &cmp, &mcht)) < 0 )
 			return SIEVE_EXEC_BIN_CORRUPT;
 
 		if ( ret == 0 ) break;
@@ -259,50 +225,19 @@ static int tst_hasflag_operation_execute
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "hasflag test");
 
-	matched = FALSE;
-	mctx = sieve_match_begin
-		(renv, &mtch, &cmp, &_flag_extractor, flag_list); 	
+	value_list = ext_imap4flags_get_flags(renv, variables_list);
 
-	matched = FALSE;
+	if ( sieve_match_type_is(&mcht, is_match_type) ||
+		sieve_match_type_is(&mcht, contains_match_type) )
+		key_list = ext_imap4flags_get_flags(renv, flag_list);
+	else
+		key_list = flag_list;
 
-	if ( variables_list != NULL ) {
-		string_t *var_item = NULL;
-		
-		/* Iterate through all requested variables to match */
-		while ( result && !matched && 
-			(result=sieve_coded_stringlist_next_item(variables_list, &var_item)) 
-			&& var_item != NULL ) {
-		
-			ext_imap4flags_get_flags_init(&iter, renv, var_item);	
-			while ( !matched && (flag=ext_imap4flags_iter_get_flag(&iter)) != NULL ) {
-				if ( (mret=sieve_match_value(mctx, flag, strlen(flag))) < 0 ) {
-					result = FALSE;
-					break;
-				}
-
-				matched = ( mret > 0 ); 	
-			}
-		}
-	} else {
-		ext_imap4flags_get_flags_init(&iter, renv, NULL);	
-		while ( !matched && (flag=ext_imap4flags_iter_get_flag(&iter)) != NULL ) {
-			if ( (mret=sieve_match_value(mctx, flag, strlen(flag))) < 0 ) {
-				result = FALSE;
-				break;
-			}
-
-			matched = ( mret > 0 ); 	
-		}
-	}
-
-	if ( (mret=sieve_match_end(&mctx)) < 0 ) {
-		result = FALSE;
-	} else
-		matched = ( mret > 0 || matched ); 	
+	ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
 	
 	/* Assign test result */
-	if ( result ) {
-		sieve_interpreter_set_test_result(renv->interp, matched);
+	if ( ret >= 0 ) {
+		sieve_interpreter_set_test_result(renv->interp, ret > 0);
 		return SIEVE_EXEC_OK;
 	}
 	

@@ -7,6 +7,7 @@
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
+#include "sieve-message.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
 #include "sieve-validator.h"
@@ -151,34 +152,15 @@ static bool tst_header_operation_dump
  * Code execution 
  */
 
-static inline string_t *_header_right_trim(const char *raw) 
-{
-	string_t *result;
-	int i;
-	
-	for ( i = strlen(raw)-1; i >= 0; i-- ) {
-		if ( raw[i] != ' ' && raw[i] != '\t' ) break;
-	}
-	
-	result = t_str_new(i+1);
-	str_append_n(result, raw, i + 1);
-	return result;
-}
-
 static int tst_header_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	bool result = TRUE;
 	int opt_code = 0;
 	struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 	struct sieve_match_type mcht = 
 		SIEVE_COMPARATOR_DEFAULT(is_match_type);
-	struct sieve_match_context *mctx;
-	struct sieve_coded_stringlist *hdr_list;
-	struct sieve_coded_stringlist *key_list;
-	string_t *hdr_item;
-	bool matched;
+	struct sieve_stringlist *hdr_list, *key_list, *value_list;
 	int ret;
 	
 	/* 
@@ -212,48 +194,15 @@ static int tst_header_operation_execute
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "header test");
 
-	/* Initialize match */
-	mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, key_list); 	
+	/* Create header stringlist */
+	value_list = sieve_message_header_stringlist_create(renv, hdr_list);
 
-	/* Iterate through all requested headers to match */
-	hdr_item = NULL;
-	matched = FALSE;
-	while ( result && !matched && 
-		(result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
-		&& hdr_item != NULL ) {
-		const char *const *headers;
-
-		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
-			"  matching header `%s'", str_sanitize(str_c(hdr_item), 80));
-			
-		if ( mail_get_headers_utf8
-			(renv->msgdata->mail, str_c(hdr_item), &headers) >= 0 ) {	
-			int i;
-
-			for ( i = 0; !matched && headers[i] != NULL; i++ ) {
-				string_t *theader = _header_right_trim(headers[i]);
-			
-				if ( (ret=sieve_match_value(mctx, str_c(theader), str_len(theader))) 
-					< 0 ) 
-				{
-					result = FALSE;
-					break;
-				}
-
-				matched = ret > 0;				
-			} 
-		}
-	}
-
-	/* Finish match */
-	if ( (ret=sieve_match_end(&mctx)) < 0 ) 
-		result = FALSE;
-	else
-		matched = ( ret > 0 || matched );
+	/* Perform match */
+	ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
 	
 	/* Set test result for subsequent conditional jump */
-	if ( result ) {
-		sieve_interpreter_set_test_result(renv->interp, matched);
+	if ( ret >= 0 ) {
+		sieve_interpreter_set_test_result(renv->interp, ret > 0);
 		return SIEVE_EXEC_OK;
 	}	
 

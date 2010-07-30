@@ -7,6 +7,9 @@
 #include "lib.h"
 #include "strfuncs.h"
 
+#include "sieve-common.h"
+#include "sieve-stringlist.h"
+
 /*
  * Generic address representation
  */ 
@@ -16,13 +19,53 @@ struct sieve_address {
 	const char *domain;
 };
 
-static inline const char *sieve_address_to_string(const struct sieve_address *address) 
+static inline const char *sieve_address_to_string
+(const struct sieve_address *address) 
 {
-    if ( address == NULL || address->local_part == NULL || address->domain == NULL )
-        return NULL;
+	if ( address == NULL || address->local_part == NULL ||
+		address->domain == NULL )
+		return NULL;
 
-    return t_strconcat(address->local_part, "@", address->domain, NULL);
+	return t_strconcat(address->local_part, "@", address->domain, NULL);
 }
+
+/*
+ * Address list API
+ */
+
+struct sieve_address_list {
+	struct sieve_stringlist strlist;
+
+	int (*next_item)
+		(struct sieve_address_list *_addrlist, struct sieve_address *addr_r, 
+			string_t **unparsed_r);
+};
+
+static inline int sieve_address_list_next_item
+(struct sieve_address_list *addrlist, struct sieve_address *addr_r, 
+	string_t **unparsed_r)
+{
+	return addrlist->next_item(addrlist, addr_r, unparsed_r);
+}
+
+static inline void sieve_address_list_reset
+(struct sieve_address_list *addrlist) 
+{
+	return sieve_stringlist_reset(&addrlist->strlist);
+}
+
+static inline int sieve_address_list_get_length
+(struct sieve_address_list *addrlist)
+{
+	return sieve_stringlist_get_length(&addrlist->strlist);
+}
+
+/*
+ * Header address list
+ */
+
+struct sieve_address_list *sieve_header_address_list_create
+	(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_values);
 
 /* 
  * RFC 2822 addresses

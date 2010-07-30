@@ -13,15 +13,22 @@
 #include "message-decoder.h"
 
 #include "sieve-common.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-message.h"
 #include "sieve-interpreter.h"
 
 #include "ext-body-common.h"
 
-/* This implementation is largely borrowed from the original sieve-cmu.c of the 
- * cmusieve plugin.
+/* FIXME: This implementation is largely borrowed from the original sieve-cmu.c
+ * of the old cmusieve plugin. This nees work to match current specification of
+ * the body extension.
  */
+
+struct ext_body_part {
+	const char *content;
+	unsigned long size;
+};
  
 struct ext_body_part_cached {
 	const char *content_type;
@@ -147,6 +154,7 @@ static void ext_body_part_save
 	if ( !decoded ) {
 		body_part->raw_body = part_data;
 		body_part->raw_body_size = part_size;
+		printf("%ld <=> %ld\n", (long) buf->used - 1, (long) part->body_size.physical_size);
 		i_assert(buf->used - 1 == part->body_size.physical_size);
 	} else {
 		body_part->decoded_body = part_data;
@@ -325,7 +333,7 @@ static struct ext_body_message_context *ext_body_get_context
 	return ctx;
 }
 
-bool ext_body_get_content
+static bool ext_body_get_content
 (const struct sieve_runtime_env *renv, const char * const *content_types,
 	int decode_to_plain, struct ext_body_part **parts_r)
 {
@@ -351,7 +359,7 @@ bool ext_body_get_content
 	return result;
 }
 
-bool ext_body_get_raw
+static bool ext_body_get_raw
 (const struct sieve_runtime_env *renv, struct ext_body_part **parts_r)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
@@ -405,4 +413,84 @@ bool ext_body_get_raw
 	*parts_r = array_idx_modifiable(&ctx->return_body_parts, 0);
 
 	return TRUE;
+}
+
+/*
+ * Body part stringlist
+ */
+
+static int ext_body_stringlist_next_item
+	(struct sieve_stringlist *_strlist, string_t **str_r);
+static void ext_body_stringlist_reset
+	(struct sieve_stringlist *_strlist);
+
+struct ext_body_stringlist {
+	struct sieve_stringlist strlist;
+
+	struct ext_body_part *body_parts;
+	struct ext_body_part *body_parts_iter;
+};
+
+struct sieve_stringlist *ext_body_get_part_list
+(const struct sieve_runtime_env *renv, enum tst_body_transform transform,
+	const char * const *content_types)
+{
+	static const char * const _no_content_types[] = { "", NULL };
+	struct ext_body_stringlist *strlist;
+	struct ext_body_part *body_parts;
+
+	if ( content_types == NULL ) content_types = _no_content_types;
+
+	switch ( transform ) {
+	case TST_BODY_TRANSFORM_RAW:
+		if ( !ext_body_get_raw(renv, &body_parts) )
+			return NULL;
+		break;
+	case TST_BODY_TRANSFORM_CONTENT:
+		/* FIXME: check these parameters */
+		if ( !ext_body_get_content(renv, content_types, TRUE, &body_parts) )
+			return NULL;
+		break;
+	case TST_BODY_TRANSFORM_TEXT:
+		/* FIXME: check these parameters */
+		if ( !ext_body_get_content(renv, content_types, TRUE, &body_parts) )
+			return NULL;
+		break;
+	default:
+		i_unreached();
+	}
+
+	strlist = t_new(struct ext_body_stringlist, 1);
+	strlist->strlist.runenv = renv;
+	strlist->strlist.next_item = ext_body_stringlist_next_item;
+	strlist->strlist.reset = ext_body_stringlist_reset;
+	strlist->body_parts = body_parts;
+	strlist->body_parts_iter = body_parts;
+
+	return &strlist->strlist;
+}
+
+static int ext_body_stringlist_next_item
+(struct sieve_stringlist *_strlist, string_t **str_r)
+{
+	struct ext_body_stringlist *strlist = 
+		(struct ext_body_stringlist *)_strlist;
+
+	*str_r = NULL;
+
+	if ( strlist->body_parts_iter->content == NULL ) return 0;
+
+	*str_r = t_str_new_const
+		(strlist->body_parts_iter->content, strlist->body_parts_iter->size);
+	strlist->body_parts_iter++;		
+	return 1;
+}
+
+static void ext_body_stringlist_reset
+(struct sieve_stringlist *_strlist)
+{
+	struct ext_body_stringlist *strlist = 
+		(struct ext_body_stringlist *)_strlist;
+
+	strlist->body_parts_iter = strlist->body_parts;
 }

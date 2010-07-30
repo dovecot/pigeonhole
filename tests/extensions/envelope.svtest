@@ -6,6 +6,10 @@ require "envelope";
  * Empty envelope addresses
  */
 
+/* RFC 5228, Section 5.4: The null reverse-path is matched against as the empty
+ * string, regardless of the ADDRESS-PART argument specified.
+ */
+
 test "Envelope - from empty" {
 	/* Return_path: "" */
 

@@ -215,16 +215,10 @@ static int tst_test_result_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	int opt_code = 0;
-	bool result = TRUE;
 	struct sieve_comparator cmp = SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
-	struct sieve_match_type mcht = SIEVE_COMPARATOR_DEFAULT(is_match_type);
-	struct sieve_match_context *mctx;
-	struct sieve_coded_stringlist *key_list;
-	bool matched;
-	struct sieve_result_iterate_context *rictx;
-	const struct sieve_action *action;
-	bool keep;
-	int cur_index = 0, index = 0;
+	struct sieve_match_type mcht = SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
+	struct sieve_stringlist *value_list, *key_list;
+	int index = 0;
 	int ret;
 
 	/*
@@ -261,54 +255,23 @@ static int tst_test_result_operation_execute
 	 */
 	
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-		"TEST_RESULT test (index: %d)", index);
+		"test_result test (index: %d)", index);
 
-	rictx = testsuite_result_iterate_init();
+	/* Create value stringlist */
+	value_list = testsuite_result_stringlist_create(renv, index);
 
-  /* Initialize match */
-  mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, key_list);
-
-  /* Iterate through all errors to match */
-	matched = FALSE;
-	cur_index = 1;
-	ret = 0;
-	while ( result && !matched &&
-		(action=sieve_result_iterate_next(rictx, &keep)) != NULL ) {
-		const char *act_name;
-		
-		if ( keep ) 
-			act_name = "keep";
-		else
-			act_name = ( action == NULL || action->def == NULL ||
-				action->def->name == NULL ) ? "" : action->def->name;
-
-		if ( index == 0 || index == cur_index ) {
-			if ( (ret=sieve_match_value(mctx, act_name, strlen(act_name))) < 0 ) {
-				result = FALSE;
-				break;
-			}
-		}
-
-		matched = ret > 0;
-		cur_index++;
-	}
-
-	/* Finish match */
-	if ( (ret=sieve_match_end(&mctx)) < 0 )
-		result = FALSE;
-	else
-		matched = ( ret > 0 || matched );
-
+	/* Perform match */
+	ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
+	
 	/* Set test result for subsequent conditional jump */
-	if ( result ) {
-		sieve_interpreter_set_test_result(renv->interp, matched);
+	if ( ret >= 0 ) {
+		sieve_interpreter_set_test_result(renv->interp, ret > 0);
 		return SIEVE_EXEC_OK;
-	}
+	}	
 
 	sieve_runtime_trace_error(renv, "invalid string-list item");
 	return SIEVE_EXEC_BIN_CORRUPT;
 }
-
 
 
 

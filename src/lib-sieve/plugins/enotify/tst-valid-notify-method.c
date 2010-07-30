@@ -3,6 +3,7 @@
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
@@ -104,9 +105,10 @@ static bool tst_vnotifym_operation_dump
 static int tst_vnotifym_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	struct sieve_coded_stringlist *notify_uris;
+	struct sieve_stringlist *notify_uris;
 	string_t *uri_item;
-	bool result = TRUE, all_valid = TRUE;
+	bool all_valid = TRUE;
+	int ret;
 
 	/*
 	 * Read operands 
@@ -124,16 +126,14 @@ static int tst_vnotifym_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "valid_notify_method test");
 
 	uri_item = NULL;
-	while ( (result=sieve_coded_stringlist_next_item(notify_uris, &uri_item)) 
-		&& uri_item != NULL ) {
-		
+	while ( (ret=sieve_stringlist_next_item(notify_uris, &uri_item)) > 0 ) {		
 		if ( !ext_enotify_runtime_method_validate(renv, 0 /* FIXME */, uri_item) ) {
 			all_valid = FALSE;
 			break;
 		}
 	}
 	
-	if ( !result ) {
+	if ( ret < 0 ) {
 		sieve_runtime_trace_error(renv, "invalid method uri item");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}

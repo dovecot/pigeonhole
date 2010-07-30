@@ -4,6 +4,7 @@
 #include "lib.h"
 
 #include "sieve-code.h"
+#include "sieve-stringlist.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
@@ -176,9 +177,8 @@ static int cmd_flag_operation_execute
 {
 	const struct sieve_operation *op = renv->oprtn;
 	struct sieve_operand operand;
-	bool result = TRUE;
 	string_t *flag_item;
-	struct sieve_coded_stringlist *flag_list;
+	struct sieve_stringlist *flag_list;
 	struct sieve_variable_storage *storage;
 	unsigned int var_index;
 	ext_imapflag_flag_operation_t flag_op;
@@ -243,14 +243,12 @@ static int cmd_flag_operation_execute
 
 	/* Iterate through all flags and perform requested operation */
 	
-	while ( (result=sieve_coded_stringlist_next_item(flag_list, &flag_item)) && 
-		flag_item != NULL ) {
-
+	while ( (ret=sieve_stringlist_next_item(flag_list, &flag_item)) > 0 ) {
 		if ( (ret=flag_op(renv, storage, var_index, flag_item)) <= 0)
 			return ret;
 	}
 
-	if ( !result ) {	
+	if ( ret < 0 ) {	
 		sieve_runtime_trace_error(renv, "invalid flag-list item");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}

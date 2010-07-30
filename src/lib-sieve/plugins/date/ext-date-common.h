@@ -63,4 +63,19 @@ struct ext_date_part {
 const char *ext_date_part_extract
 	(const char *part, struct tm *tm, int zone_offset);
 
+/*
+ * Date stringlist
+ */
+
+enum ext_date_timezone_special {
+	EXT_DATE_TIMEZONE_LOCAL    = 100,
+	EXT_DATE_TIMEZONE_ORIGINAL = 101
+};
+
+struct sieve_stringlist *ext_date_stringlist_create
+(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_values,
+	int time_zone, const char *date_part);
+
+
+
 #endif /* __EXT_DATE_COMMON_H */

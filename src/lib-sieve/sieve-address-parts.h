@@ -106,13 +106,17 @@ static inline bool sieve_opr_address_part_dump
 		(denv, &sieve_address_part_operand_class, address, NULL);
 }
 
+/*
+ * Address-part string list
+ */
+
+struct sieve_stringlist *sieve_address_part_stringlist_create
+	(const struct sieve_runtime_env *renv, const struct sieve_address_part *addrp,
+		struct sieve_address_list *addresses);
+
 /* 
  * Match utility 
  */
-
-int sieve_address_match
-(const struct sieve_address_part *addrp, struct sieve_match_context *mctx,
-    const char *data);
 
 enum sieve_addrmatch_opt_operand {
 	SIEVE_AM_OPT_END,

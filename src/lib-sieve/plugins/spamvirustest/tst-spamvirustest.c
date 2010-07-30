@@ -6,6 +6,7 @@
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
@@ -241,16 +242,14 @@ static int tst_spamvirustest_operation_execute
 {	
 	const struct sieve_operation *op = renv->oprtn;
 	const struct sieve_extension *this_ext = op->ext;
-	bool result = TRUE, matched = FALSE;
 	int opt_code = 0;
 	struct sieve_match_type mcht = 
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 	bool percent = FALSE;
-	struct sieve_coded_stringlist *key_value;
-	struct sieve_match_context *mctx;
-	const char *value;
+	struct sieve_stringlist *value_list, *key_list;
+	const char *score_value;
 	int ret;
 	
 	/* Read optional operands */
@@ -274,7 +273,7 @@ static int tst_spamvirustest_operation_execute
 	}
 
 	/* Read value part */
-	if ( (key_value=sieve_opr_stringlist_read(renv, address, "value")) == NULL )
+	if ( (key_list=sieve_opr_stringlist_read(renv, address, "value")) == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 			
 	/* Perform test */
@@ -288,30 +287,18 @@ static int tst_spamvirustest_operation_execute
 			(renv, SIEVE_TRLVL_TESTS, "virustest test");
 	}
 
-	/* Initialize match */
-	mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, key_value); 	
+	/* Get score value */
+	score_value = ext_spamvirustest_get_value(renv, this_ext, percent);
+
+	/* Construct value list */
+	value_list = sieve_single_stringlist_create_cstr(renv, score_value, TRUE);
 
 	/* Perform match */
-
-	matched = FALSE;
-
-	value = ext_spamvirustest_get_value(renv, this_ext, percent);
-
-	if ( (ret=sieve_match_value(mctx, value, strlen(value))) < 0 ) {
-		result = FALSE;
-	} else {
-		matched = ( ret > 0 );				
-	}
-
-	/* Finish match */
-	if ( (ret=sieve_match_end(&mctx)) < 0 ) 
-		result = FALSE;
-	else
-		matched = ( ret > 0 || matched );
+	ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
 
 	/* Set test result for subsequent conditional jump */
-	if ( result ) {
-		sieve_interpreter_set_test_result(renv->interp, matched);
+	if ( ret >= 0 ) {
+		sieve_interpreter_set_test_result(renv->interp, ret > 0);
 		return SIEVE_EXEC_OK;
 	}	
 

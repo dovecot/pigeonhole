@@ -3,9 +3,11 @@
 
 #include "lib.h"
 #include "ostream.h"
+#include "str.h"
 
 #include "sieve-common.h"
 #include "sieve-error.h"
+#include "sieve-stringlist.h"
 #include "sieve-actions.h"
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
@@ -92,4 +94,82 @@ void testsuite_result_print
 	o_stream_destroy(&out);	
 }
 
+/*
+ * Result stringlist
+ */
+
+/* Forward declarations */
+
+static int testsuite_result_stringlist_next_item
+	(struct sieve_stringlist *_strlist, string_t **str_r);
+static void testsuite_result_stringlist_reset
+	(struct sieve_stringlist *_strlist);
+
+/* Stringlist object */
+
+struct testsuite_result_stringlist {
+	struct sieve_stringlist strlist;
+
+	struct sieve_result_iterate_context *result_iter;
+	int pos, index;
+};
+
+struct sieve_stringlist *testsuite_result_stringlist_create
+(const struct sieve_runtime_env *renv, int index)
+{
+	struct testsuite_result_stringlist *strlist;
+	    
+	strlist = t_new(struct testsuite_result_stringlist, 1);
+	strlist->strlist.runenv = renv;
+	strlist->strlist.next_item = testsuite_result_stringlist_next_item;
+	strlist->strlist.reset = testsuite_result_stringlist_reset;
+
+	strlist->result_iter = testsuite_result_iterate_init();
+ 	strlist->index = index;
+	strlist->pos = 0;
+ 
+	return &strlist->strlist;
+}
+
+static int testsuite_result_stringlist_next_item
+(struct sieve_stringlist *_strlist, string_t **str_r)
+{
+	struct testsuite_result_stringlist *strlist = 
+		(struct testsuite_result_stringlist *) _strlist;
+	const struct sieve_action *action;
+	const char *act_name;
+	bool keep;
+
+	*str_r = NULL;
+
+	if ( strlist->index > 0 && strlist->pos > 0 )
+		return 0;
+
+	do { 
+		if ( (action=sieve_result_iterate_next(strlist->result_iter, &keep))
+			== NULL )
+			return 0;
+		
+		strlist->pos++;
+	} while ( strlist->pos < strlist->index );
+	
+	if ( keep ) 
+		act_name = "keep";
+	else
+		act_name = ( action == NULL || action->def == NULL ||
+			action->def->name == NULL ) ? "" : action->def->name;
+
+	*str_r = t_str_new_const(act_name, strlen(act_name));
+	return 1;
+}
+
+static void testsuite_result_stringlist_reset
+(struct sieve_stringlist *_strlist)
+{
+	struct testsuite_result_stringlist *strlist = 
+		(struct testsuite_result_stringlist *) _strlist;
+
+	strlist->result_iter = testsuite_result_iterate_init();
+	strlist->pos = 0;
+}
 

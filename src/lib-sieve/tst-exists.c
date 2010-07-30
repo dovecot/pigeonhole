@@ -6,6 +6,7 @@
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -105,8 +106,8 @@ static bool tst_exists_operation_dump
 static int tst_exists_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	bool result = TRUE;
-	struct sieve_coded_stringlist *hdr_list;
+	int ret;
+	struct sieve_stringlist *hdr_list;
 	string_t *hdr_item;
 	bool matched;
 	
@@ -129,8 +130,7 @@ static int tst_exists_operation_execute
 	hdr_item = NULL;
 	matched = TRUE;
 	while ( matched &&
-		(result=sieve_coded_stringlist_next_item(hdr_list, &hdr_item)) 
-		&& hdr_item != NULL ) {
+		(ret=sieve_stringlist_next_item(hdr_list, &hdr_item)) > 0 ) {
 		const char *const *headers;
 			
 		if ( mail_get_headers
@@ -145,7 +145,7 @@ static int tst_exists_operation_execute
 	}
 	
 	/* Set test result for subsequent conditional jump */
-	if ( result ) {
+	if ( ret >= 0 ) {
 		sieve_interpreter_set_test_result(renv->interp, matched);
 		return SIEVE_EXEC_OK;
 	}

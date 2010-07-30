@@ -4,6 +4,7 @@
 #include "lib.h"
 
 #include "sieve-common.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-extensions.h"
 #include "sieve-ast.h"
@@ -279,7 +280,7 @@ static int cmd_denotify_operation_execute
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	const struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
-    struct sieve_coded_stringlist *match_key = NULL;
+	struct sieve_stringlist *match_key = NULL;
 	sieve_number_t importance = 0;
 	struct sieve_match_context *mctx;
 	struct sieve_result_iterate_context *rictx;
@@ -339,7 +340,7 @@ static int cmd_denotify_operation_execute
 	if ( match_key != NULL ) { 	
 
 		/* Initialize match */
-    	mctx = sieve_match_begin(renv, &mcht, &cmp, NULL, match_key);
+		mctx = sieve_match_begin(renv, &mcht, &cmp);
 
 		/* Iterate through all actions */
 		rictx = sieve_result_iterate_init(renv->result);
@@ -351,8 +352,8 @@ static int cmd_denotify_operation_execute
 					(struct ext_notify_action *) action->context;
 	
 				if ( importance == 0 || nact->importance == importance ) {
-					if ( (ret=sieve_match_value(mctx, nact->id, strlen(nact->id)))
-						< 0 ) {
+					if ( (ret=sieve_match_value
+						(mctx, nact->id, strlen(nact->id), match_key)) < 0 ) {
 						result = FALSE;
 						break;
 					}
@@ -364,12 +365,11 @@ static int cmd_denotify_operation_execute
 		}
 	
 		/* Finish match */
-		if ( sieve_match_end(&mctx) < 0 )
-			result = FALSE;
+		(void)sieve_match_end(&mctx);
 
-	    if ( !result ) {
-		    sieve_runtime_trace_error(renv, "invalid string-list item");
-    		return SIEVE_EXEC_BIN_CORRUPT;
+		if ( !result ) {
+			sieve_runtime_trace_error(renv, "invalid string-list item");
+			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 	} else {
 		/* Iterate through all actions */

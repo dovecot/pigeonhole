@@ -3,6 +3,7 @@
  
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
@@ -16,16 +17,6 @@
 #include "sieve-match.h"
 
 #include "ext-body-common.h"
-
-/*
- * Types
- */
-
-enum tst_body_transform {
-	TST_BODY_TRANSFORM_RAW,
-	TST_BODY_TRANSFORM_CONTENT,
-	TST_BODY_TRANSFORM_TEXT
-};
 
 /* 
  * Body test 
@@ -311,21 +302,16 @@ static bool ext_body_operation_dump
 static int ext_body_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	static const char * const _no_content_types[] = { "", NULL };
-	int ret = SIEVE_EXEC_OK;
+	int ret;
 	int opt_code = 0;
-	int mret;
 	struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
-	struct sieve_match_type mtch = 
+	struct sieve_match_type mcht = 
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
-	enum tst_body_transform transform;
-	struct sieve_coded_stringlist *key_list, *ctype_list = NULL;
-	struct sieve_match_context *mctx;
-	const char * const *content_types = _no_content_types;
-	struct ext_body_part *body_parts;
+	enum tst_body_transform transform = TST_BODY_TRANSFORM_TEXT;
+	struct sieve_stringlist *ctype_list, *value_list, *key_list;
 	bool mvalues_active;
-	bool matched;
+	const char * const *content_types = NULL;
 
 	/*
 	 * Read operands
@@ -333,12 +319,12 @@ static int ext_body_operation_execute
 	
 	/* Optional operands */
 
+	ctype_list = NULL;
 	for (;;) {
 		bool opok = TRUE;
-		int ret;
 
 		if ( (ret=sieve_match_opr_optional_read
-			(renv, address, &opt_code, &cmp, &mtch)) < 0 )
+			(renv, address, &opt_code, &cmp, &mcht)) < 0 )
 			return SIEVE_EXEC_BIN_CORRUPT;
 
 		if ( ret == 0 ) break;
@@ -371,9 +357,9 @@ static int ext_body_operation_execute
 	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) == NULL ) 
 		return SIEVE_EXEC_BIN_CORRUPT;
 	
-	if ( ctype_list != NULL && !sieve_coded_stringlist_read_all
+	if ( ctype_list != NULL && !sieve_stringlist_read_all
 		(ctype_list, pool_datastack_create(), &content_types) ) {
-		sieve_runtime_trace_error(renv, "invalid content-type-list operand");
+		sieve_runtime_trace_error(renv, "failed to read content-type-list operand");
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
@@ -384,53 +370,25 @@ static int ext_body_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "body test");
 	
 	/* Extract requested parts */
-	
-	if ( transform == TST_BODY_TRANSFORM_RAW ) {
-		if ( !ext_body_get_raw(renv, &body_parts) ) {
-			return SIEVE_EXEC_FAILURE;
-		}
-	} else {
-		if ( !ext_body_get_content
-			(renv, content_types, TRUE, &body_parts) ) {
-			return SIEVE_EXEC_FAILURE;
-		}
-	}
+	value_list = ext_body_get_part_list(renv, transform, content_types);
+	if ( value_list == FALSE )
+		return SIEVE_EXEC_FAILURE;
 
 	/* Disable match values processing as required by RFC */
-		
 	mvalues_active = sieve_match_values_set_enabled(renv, FALSE);
 
-	/* Iterate through all requested body parts to match */
+	/* Perform match */
+	ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
 
-	matched = FALSE;	
-	mctx = sieve_match_begin(renv, &mtch, &cmp, NULL, key_list); 	
-	while ( !matched && body_parts->content != NULL ) {
-		if ( (mret=sieve_match_value(mctx, body_parts->content, body_parts->size)) 	
-			< 0) 
-		{
-			sieve_runtime_trace_error(renv, "invalid string list item");
-			ret = SIEVE_EXEC_BIN_CORRUPT;
-			break;
-		}
-		
-		matched = ( mret > 0 );			
-		body_parts++;	
-	}
-
-	if ( (mret=sieve_match_end(&mctx)) < 0 ) {
-		sieve_runtime_trace_error(renv, "invalid string list item");
-		ret = SIEVE_EXEC_BIN_CORRUPT;
-	} else	
-		matched = ( mret > 0 || matched ); 	
-	
-	/* Restore match values processing */ 
-	
+	/* Restore match values processing */ 	
 	(void)sieve_match_values_set_enabled(renv, mvalues_active);
 	
-	/* Set test result */	
-	
-	if ( ret == SIEVE_EXEC_OK )
-		sieve_interpreter_set_test_result(renv->interp, matched);
+	/* Set test result for subsequent conditional jump */
+	if ( ret >= 0 ) {
+		sieve_interpreter_set_test_result(renv->interp, ret > 0);
+		return SIEVE_EXEC_OK;
+	}	
 
-	return ret;
+	sieve_runtime_trace_error(renv, "invalid string-list item");
+	return SIEVE_EXEC_BIN_CORRUPT;
 }

@@ -9,10 +9,12 @@
 #include "buffer.h"
 #include "array.h"
 #include "str.h"
+#include "str-sanitize.h"
 
 #include "sieve-common.h"
 #include "sieve-limits.h"
 #include "sieve-ast.h"
+#include "sieve-stringlist.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 #include "sieve-comparators.h"
@@ -40,18 +42,19 @@ static bool mcht_regex_validate_context
     struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg);
 
 static void mcht_regex_match_init(struct sieve_match_context *mctx);
-static int mcht_regex_match
+static int mcht_regex_match_keys
 	(struct sieve_match_context *mctx, const char *val, size_t val_size,
-    	const char *key, size_t key_size, int key_index);
-static int mcht_regex_match_deinit(struct sieve_match_context *mctx);
+    struct sieve_stringlist *key_list);
+static void mcht_regex_match_deinit(struct sieve_match_context *mctx);
 
 const struct sieve_match_type_def regex_match_type = {
 	SIEVE_OBJECT("regex", &regex_match_type_operand, 0),
-	TRUE, FALSE,
 	NULL,
 	mcht_regex_validate_context,
+	NULL,
 	mcht_regex_match_init,
-	mcht_regex_match,
+	mcht_regex_match_keys,
+	NULL, 
 	mcht_regex_match_deinit
 };
 
@@ -170,11 +173,16 @@ static bool mcht_regex_validate_context
  * Match type implementation 
  */
 
+struct mcht_regex_key {
+	regex_t regexp;
+	int status;
+};
+
 struct mcht_regex_context {
-	ARRAY_DEFINE(reg_expressions, regex_t);
-	int value_index;
+	ARRAY_DEFINE(reg_expressions, struct mcht_regex_key);
 	regmatch_t *pmatch;
 	size_t nmatch;
+	unsigned int all_compiled:1;
 };
 
 static void mcht_regex_match_init
@@ -185,8 +193,6 @@ static void mcht_regex_match_init
 
 	/* Create context */	
 	ctx = p_new(pool, struct mcht_regex_context, 1);
-	p_array_init(&ctx->reg_expressions, pool, 4);
-	ctx->value_index = -1;
 
 	/* Create storage for match values if match values are requested */
 	if ( sieve_match_values_are_enabled(mctx->runenv) ) {
@@ -201,72 +207,20 @@ static void mcht_regex_match_init
 	mctx->data = (void *) ctx;
 }
 
-static regex_t *mcht_regex_get
-(struct mcht_regex_context *ctx,
-	const struct sieve_comparator *cmp, 
-	const char *key, unsigned int key_index)
-{
-	int ret;
-	int cflags;
-	regex_t *regexp;
-	
-	/* If this is the first matched value, the regexes are not compiled
-	 * yet.
-	 */
-	if ( ctx->value_index <= 0 ) {
-		/* Allocate space */
-		array_idx_clear(&ctx->reg_expressions, key_index);
-		regexp = array_idx_modifiable(&ctx->reg_expressions, key_index);
-
-		/* Configure case-sensitivity according to comparator */
-		if ( sieve_comparator_is(cmp, i_octet_comparator) ) 
-			cflags =  REG_EXTENDED;
-		else if ( sieve_comparator_is(cmp, i_ascii_casemap_comparator) )
-			cflags =  REG_EXTENDED | REG_ICASE;
-		else
-			return NULL; /* Not supported */
-			
-		/* Indicate whether match values need to be produced */
-		if ( ctx->nmatch == 0 ) cflags |= REG_NOSUB;
-
-		/* Compile regular expression */
-		if ( (ret=regcomp(regexp, key, cflags)) != 0 ) {
-			/* FIXME: Do something useful, i.e. report error somewhere */
-			return NULL;
-		}
-	} else {
-		/* Get compiled regex from cache */
-		regexp = array_idx_modifiable(&ctx->reg_expressions, key_index);
-	}
-
-	return regexp;
-}
-
-static int mcht_regex_match
-(struct sieve_match_context *mctx, 
-	const char *val, size_t val_size ATTR_UNUSED, 
-	const char *key, size_t key_size ATTR_UNUSED, int key_index)
+static int mcht_regex_match_key
+(struct sieve_match_context *mctx, const char *val,
+	const regex_t *regexp)
 {
 	struct mcht_regex_context *ctx = (struct mcht_regex_context *) mctx->data;
-	regex_t *regexp;
-
-	if ( val == NULL ) {
-		val = "";
-		val_size = 0;
-	}
-
-	if ( key_index < 0 ) return FALSE;
-
-	if ( key_index == 0 ) ctx->value_index++;
-
-	/* Get compiled regex */
-	if ( (regexp=mcht_regex_get(ctx, mctx->comparator, key, key_index)) == NULL )
-		return FALSE;
+	int ret;
 
 	/* Execute regex */
-	if ( regexec(regexp, val, ctx->nmatch, ctx->pmatch, 0) == 0 ) {
 
-		/* Handle match values if necessary */
+	ret = regexec(regexp, val, ctx->nmatch, ctx->pmatch, 0);
+
+	/* Handle match values if necessary */
+
+	if ( ret == 0 ) {
 		if ( ctx->nmatch > 0 ) {
 			struct sieve_match_values *mvalues;
 			size_t i;
@@ -281,13 +235,13 @@ static int mcht_regex_match
 			/* Add match values from regular expression */
 			for ( i = 0; i < ctx->nmatch; i++ ) {
 				str_truncate(subst, 0);
-			
+	
 				if ( ctx->pmatch[i].rm_so != -1 ) {
 					if ( skipped > 0 ) {
 						sieve_match_values_skip(mvalues, skipped);
 						skipped = 0;
 					}
-					
+			
 					str_append_n(subst, val + ctx->pmatch[i].rm_so, 
 						ctx->pmatch[i].rm_eo - ctx->pmatch[i].rm_so);
 					sieve_match_values_add(mvalues, subst);
@@ -299,25 +253,124 @@ static int mcht_regex_match
 			sieve_match_values_commit(mctx->runenv, &mvalues);
 		}
 
-		return TRUE;
+		return 1;
 	}
-	
-	return FALSE;
+
+	return 0;
 }
 
-int mcht_regex_match_deinit
+static int mcht_regex_match_keys
+(struct sieve_match_context *mctx, const char *val, size_t val_size ATTR_UNUSED, 
+	struct sieve_stringlist *key_list)
+{
+	const struct sieve_runtime_env *renv = mctx->runenv;
+	bool trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_MATCHING);
+	struct mcht_regex_context *ctx = (struct mcht_regex_context *) mctx->data;
+	const struct sieve_comparator *cmp = mctx->comparator;
+	int result = 0;
+
+	if ( !ctx->all_compiled ) {
+		string_t *key_item = NULL;
+		unsigned int i;
+		int ret;
+
+		/* Regular expressions still need to be compiled */
+
+		if ( !array_is_created(&ctx->reg_expressions) )
+			p_array_init(&ctx->reg_expressions, mctx->pool, 16);
+
+		i = 0;
+		while ( result == 0 &&
+			(ret=sieve_stringlist_next_item(key_list, &key_item)) > 0 ) {				
+
+			T_BEGIN {
+				struct mcht_regex_key *rkey;
+
+				if ( i >= array_count(&ctx->reg_expressions) ) {
+					int cflags;
+
+					rkey = array_append_space(&ctx->reg_expressions);
+
+					/* Configure case-sensitivity according to comparator */
+					if ( sieve_comparator_is(cmp, i_octet_comparator) ) 
+						cflags =  REG_EXTENDED;
+					else if ( sieve_comparator_is(cmp, i_ascii_casemap_comparator) )
+						cflags =  REG_EXTENDED | REG_ICASE;
+					else
+						rkey->status = -1; /* Not supported */
+		
+					if ( rkey->status >= 0 ) {
+						/* Indicate whether match values need to be produced */
+						if ( ctx->nmatch == 0 ) cflags |= REG_NOSUB;
+
+						/* Compile regular expression */
+						if ( regcomp(&rkey->regexp, str_c(key_item), cflags) != 0 ) {
+							/* FIXME: Do something useful, i.e. report error somewhere */
+							rkey->status = -1;
+						} else {
+							rkey->status = 1;
+						}
+					}
+				} else {
+					rkey = array_idx_modifiable(&ctx->reg_expressions, 1);
+				} 
+
+				if ( rkey->status > 0 ) {
+					result = mcht_regex_match_key(mctx, val, &rkey->regexp);
+
+					if ( trace ) {
+						sieve_runtime_trace(renv, 0,
+							"    with regex `%s' [id=%d] => %d", 
+							str_sanitize(str_c(key_item), 80),
+							array_count(&ctx->reg_expressions)-1, result);
+					}
+				}
+			} T_END;
+
+			i++;
+		}
+
+		if ( ret < 0 ) result = -1;
+
+	} else {
+		const struct mcht_regex_key *rkeys;
+		unsigned int i, count;
+
+		/* Regular expressions are compiled */
+
+		rkeys = array_get(&ctx->reg_expressions, &count);
+
+		i = 0; 
+		while ( result == 0 && i < count ) {
+			if ( rkeys[i].status > 0 ) {
+				result = mcht_regex_match_key(mctx, val, &rkeys[i].regexp);
+
+				if ( trace ) {
+					sieve_runtime_trace(renv, 0,
+						"    with compiled regex [id=%d] => %d", i, result);
+				}
+			}
+
+			i++;
+		}
+
+		if ( i == count ) ctx->all_compiled = TRUE;
+	}
+
+	return result;
+}
+
+void mcht_regex_match_deinit
 (struct sieve_match_context *mctx)
 {
 	struct mcht_regex_context *ctx = (struct mcht_regex_context *) mctx->data;
-	regex_t *regexps;
+	struct mcht_regex_key *rkeys;
 	unsigned int count, i;
 
 	/* Clean up compiled regular expressions */
-	regexps = array_get_modifiable(&ctx->reg_expressions, &count);
+	rkeys = array_get_modifiable(&ctx->reg_expressions, &count);
 	for ( i = 0; i < count; i++ ) {
-		regfree(&regexps[i]);
+		regfree(&rkeys[i].regexp);
 	}
-
-	return FALSE;
 }
 

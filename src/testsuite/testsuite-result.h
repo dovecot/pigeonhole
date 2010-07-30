@@ -19,4 +19,7 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv);
 void testsuite_result_print
 	(const struct sieve_runtime_env *renv ATTR_UNUSED);
 
+struct sieve_stringlist *testsuite_result_stringlist_create
+	(const struct sieve_runtime_env *renv, int index);
+
 #endif /* __TESTSUITE_RESULT_H */

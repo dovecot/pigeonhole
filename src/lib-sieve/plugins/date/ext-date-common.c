@@ -3,8 +3,11 @@
 
 #include "lib.h"
 #include "utc-offset.h"
+#include "str.h"
+#include "message-date.h"
 
 #include "sieve-common.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-interpreter.h"
 #include "sieve-message.h"
@@ -465,3 +468,147 @@ static const char *ext_date_weekday_part_get
 	return t_strdup_printf("%d", tm->tm_wday);
 }
 
+/*
+ * Date stringlist
+ */
+
+/* Forward declarations */
+
+static int ext_date_stringlist_next_item
+	(struct sieve_stringlist *_strlist, string_t **str_r);
+static void ext_date_stringlist_reset
+	(struct sieve_stringlist *_strlist);
+
+/* Stringlist object */
+
+struct ext_date_stringlist {
+	struct sieve_stringlist strlist;
+
+	struct sieve_stringlist *field_values;	
+	int time_zone;
+	const char *date_part;
+
+	time_t local_time;
+	int local_zone;
+
+	unsigned int read:1;
+};
+
+struct sieve_stringlist *ext_date_stringlist_create
+(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_values,
+	int time_zone, const char *date_part)
+{
+	struct ext_date_stringlist *strlist;
+	    
+	strlist = t_new(struct ext_date_stringlist, 1);
+	strlist->strlist.runenv = renv;
+	strlist->strlist.next_item = ext_date_stringlist_next_item;
+	strlist->strlist.reset = ext_date_stringlist_reset;
+	strlist->field_values = field_values;
+	strlist->time_zone = time_zone;
+	strlist->date_part = date_part;
+  
+	strlist->local_time = ext_date_get_current_date(renv, &strlist->local_zone);
+
+	return &strlist->strlist;
+}
+
+/* Stringlist implementation */
+
+static int ext_date_stringlist_next_item
+(struct sieve_stringlist *_strlist, string_t **str_r)
+{
+	struct ext_date_stringlist *strlist = 
+		(struct ext_date_stringlist *) _strlist;
+	bool got_date = FALSE;
+	time_t date_value;
+	const char *part_value = NULL;
+	int original_zone;
+
+	/* Check whether the item was already read */
+	if ( strlist->read ) return 0;
+
+	if ( strlist->field_values != NULL ) {
+		string_t *hdr_item;
+		const char *header_value, *date_string;
+		int ret;
+
+		/* Use header field value */
+
+		/* Read first */
+		if ( (ret=sieve_stringlist_next_item(strlist->field_values, &hdr_item))
+			<= 0 )
+			return ret;
+
+		/* Extract the date string value */
+
+		header_value = str_c(hdr_item);
+		date_string = strrchr(header_value, ';');
+
+		if ( date_string == NULL ) {
+			/* Direct header value */
+			date_string = header_value;
+		} else {
+			/* Delimited by ';', e.g. a Received: header */
+			date_string++; 
+		}
+
+		/* Parse the date value */
+		if ( message_date_parse((const unsigned char *) date_string,
+			strlen(date_string), &date_value, &original_zone) ) {
+			got_date = TRUE;
+		}
+	} else {
+		/* Use time stamp recorded at the time the script first started */
+		date_value = strlist->local_time;
+		original_zone = strlist->local_zone;
+		got_date = TRUE;
+	}
+
+	if ( got_date ) {
+		int wanted_zone;
+		struct tm *date_tm;
+
+		/* Apply wanted timezone */
+
+		switch ( strlist->time_zone ) {
+		case EXT_DATE_TIMEZONE_LOCAL:
+			wanted_zone = strlist->local_zone;
+			break;
+		case EXT_DATE_TIMEZONE_ORIGINAL:
+			wanted_zone = original_zone;
+			break;
+		default:
+			wanted_zone = strlist->time_zone;
+		}
+
+		date_value += wanted_zone * 60;
+
+		/* Convert timestamp to struct tm */
+
+		if ( (date_tm=gmtime(&date_value)) != NULL ) {
+			/* Extract the date part */
+			part_value = ext_date_part_extract
+				(strlist->date_part, date_tm, wanted_zone);
+		}
+	}
+
+	strlist->read = TRUE;
+
+	if ( part_value == NULL ) 
+		return 0;
+
+	*str_r = t_str_new_const(part_value, strlen(part_value));
+	return 1;
+}
+
+static void ext_date_stringlist_reset
+(struct sieve_stringlist *_strlist)
+{
+	struct ext_date_stringlist *strlist = 
+		(struct ext_date_stringlist *) _strlist;
+
+	if ( strlist->field_values != NULL )
+		sieve_stringlist_reset(strlist->field_values);
+	strlist->read = FALSE;
+}

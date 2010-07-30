@@ -44,6 +44,9 @@ struct sieve_command_def;
 struct sieve_command_context;
 struct sieve_command_registration;
 
+/* sieve-stringlist.h */
+struct sieve_stringlist;
+
 /* sieve-code.h */
 struct sieve_operation_extension;
 
@@ -107,6 +110,7 @@ struct sieve_match_context;
 
 /* sieve-address.h */
 struct sieve_address;
+struct sieve_address_list;
 
 /* sieve-address-parts.h */
 struct sieve_address_part_def;

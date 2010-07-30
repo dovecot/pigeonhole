@@ -5,10 +5,14 @@
 #include "ioloop.h"
 #include "mempool.h"
 #include "array.h"
+#include "str.h"
+#include "mail-storage.h"
 
 #include "sieve-common.h"
+#include "sieve-stringlist.h"
 #include "sieve-error.h"
 #include "sieve-extensions.h"
+#include "sieve-runtime.h"
 #include "sieve-address.h"
 
 #include "sieve-message.h"
@@ -191,5 +195,107 @@ const char *sieve_message_get_sender
 	return sieve_address_to_string(msgctx->envelope_sender);
 } 
 
+/*
+ * Header stringlist
+ */
 
+/* Forward declarations */
 
+static int sieve_message_header_stringlist_next_item
+	(struct sieve_stringlist *_strlist, string_t **str_r);
+static void sieve_message_header_stringlist_reset
+	(struct sieve_stringlist *_strlist);
+
+/* String list object */
+
+struct sieve_message_header_stringlist {
+	struct sieve_stringlist strlist;
+
+	struct sieve_stringlist *field_names;
+
+	const char *const *headers;
+	int headers_index;
+};
+
+struct sieve_stringlist *sieve_message_header_stringlist_create
+(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_names)
+{
+	struct sieve_message_header_stringlist *strlist;
+	    
+	strlist = t_new(struct sieve_message_header_stringlist, 1);
+	strlist->strlist.runenv = renv;
+	strlist->strlist.next_item = sieve_message_header_stringlist_next_item;
+	strlist->strlist.reset = sieve_message_header_stringlist_reset;
+	strlist->field_names = field_names;
+  
+	return &strlist->strlist;
+}
+
+static inline string_t *_header_right_trim(const char *raw) 
+{
+	string_t *result;
+	int i;
+	
+	for ( i = strlen(raw)-1; i >= 0; i-- ) {
+		if ( raw[i] != ' ' && raw[i] != '\t' ) break;
+	}
+	
+	result = t_str_new(i+1);
+	str_append_n(result, raw, i + 1);
+	return result;
+}
+
+/* String list implementation */
+
+static int sieve_message_header_stringlist_next_item
+(struct sieve_stringlist *_strlist, string_t **str_r)
+{
+	struct sieve_message_header_stringlist *strlist = 
+		(struct sieve_message_header_stringlist *) _strlist;
+	const struct sieve_runtime_env *renv = _strlist->runenv;
+	struct mail *mail = renv->msgdata->mail;
+
+	*str_r = NULL;
+
+	/* Check for end of current header list */
+	if ( strlist->headers == NULL ) {
+		strlist->headers_index = 0;
+ 	} else if ( strlist->headers[strlist->headers_index] == NULL ) {
+		strlist->headers = NULL;
+		strlist->headers_index = 0;
+	}
+
+	/* Fetch next header */
+	while ( strlist->headers == NULL ) {
+		string_t *hdr_item = NULL;
+		int ret;
+
+		/* Read next header name from source list */
+		if ( (ret=sieve_stringlist_next_item(strlist->field_names, &hdr_item)) 
+			<= 0 )
+			return ret;
+
+		/* Fetch all matching headers from the e-mail */
+		if ( mail_get_headers_utf8(mail, str_c(hdr_item), &strlist->headers) < 0 ||
+			( strlist->headers != NULL && strlist->headers[0] == NULL ) ) {
+			/* Try next item when this fails somehow */
+			strlist->headers = NULL;
+			continue;
+		}
+	}
+
+	/* Return next item */
+	*str_r = _header_right_trim(strlist->headers[strlist->headers_index++]);
+	return 1;
+}
+
+static void sieve_message_header_stringlist_reset
+(struct sieve_stringlist *_strlist)
+{
+	struct sieve_message_header_stringlist *strlist = 
+		(struct sieve_message_header_stringlist *) _strlist;
+
+	strlist->headers = NULL;
+	strlist->headers_index = 0;
+	sieve_stringlist_reset(strlist->field_names);
+}

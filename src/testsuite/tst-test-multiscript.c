@@ -7,6 +7,7 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
+#include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-binary.h"
 #include "sieve-dump.h"
@@ -107,17 +108,18 @@ static bool tst_test_multiscript_operation_dump
 static int tst_test_multiscript_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	struct sieve_coded_stringlist *scripts_list;
+	struct sieve_stringlist *scripts_list;
 	string_t *script_name;
 	const char *script_path;
 	ARRAY_TYPE (const_string) scriptfiles;
 	bool result = TRUE;
+	int ret;
 
 	/*
 	 * Read operands
 	 */
 
-	if ( (scripts_list=sieve_opr_stringlist_read(renv, address, "scripts")) 
+	if ( (scripts_list=sieve_opr_stringlist_read(renv, address, "scripts"))
 		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 
@@ -130,22 +132,21 @@ static int tst_test_multiscript_operation_execute
 	t_array_init(&scriptfiles, 16);
 
 	script_path = sieve_script_dirpath(renv->script);
-	if ( script_path == NULL ) 
+	if ( script_path == NULL )
 		return SIEVE_EXEC_FAILURE;
 
 	script_name = NULL;
-	while ( result && 
-		(result=sieve_coded_stringlist_next_item(scripts_list, &script_name))
-		&& script_name != NULL ) {	
+	while ( result &&
+		(ret=sieve_stringlist_next_item(scripts_list, &script_name)) > 0 ) {
 
-		const char *path = 
+		const char *path =
 			t_strconcat(script_path, "/", str_c(script_name), NULL);
 
 		/* Attempt script compile */
-		array_append(&scriptfiles, &path, 1);	
+		array_append(&scriptfiles, &path, 1);
 	}
 
-	result = result && testsuite_script_multiscript(renv, &scriptfiles);
+	result = result && (ret >= 0) && testsuite_script_multiscript(renv, &scriptfiles);
 
 	/* Set result */
 	sieve_interpreter_set_test_result(renv->interp, result);

@@ -15,4 +15,7 @@ void testsuite_log_clear_messages(void);
 void testsuite_log_get_error_init(void);
 const char *testsuite_log_get_error_next(bool location);
 
+struct sieve_stringlist *testsuite_log_stringlist_create
+	(const struct sieve_runtime_env *renv, int index);
+
 #endif /* __TESTSUITE_LOG_H */

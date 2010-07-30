@@ -5,11 +5,149 @@
 #include "str.h"
 #include "str-sanitize.h"
 #include "rfc822-parser.h"
+#include "message-address.h"
 
 #include "sieve-common.h"
+
 #include "sieve-address.h"
 
 #include <ctype.h>
+
+/*
+ * Header address list
+ */
+
+/* Forward declarations */
+
+static int sieve_header_address_list_next_string_item
+	(struct sieve_stringlist *_strlist, string_t **str_r);
+static int sieve_header_address_list_next_item
+	(struct sieve_address_list *_addrlist, struct sieve_address *addr_r, 
+		string_t **unparsed_r);
+static void sieve_header_address_list_reset
+	(struct sieve_stringlist *_strlist);
+
+/* Stringlist object */
+
+struct sieve_header_address_list {
+	struct sieve_address_list addrlist;
+
+	struct sieve_stringlist *field_values;
+	const struct message_address *cur_address;
+};
+
+struct sieve_address_list *sieve_header_address_list_create
+(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_values)
+{
+	struct sieve_header_address_list *addrlist;
+	    
+	addrlist = t_new(struct sieve_header_address_list, 1);
+	addrlist->addrlist.strlist.runenv = renv;
+	addrlist->addrlist.strlist.next_item = 
+		sieve_header_address_list_next_string_item;
+	addrlist->addrlist.strlist.reset = sieve_header_address_list_reset;
+	addrlist->addrlist.next_item = sieve_header_address_list_next_item;
+	addrlist->field_values = field_values;
+  
+	return &addrlist->addrlist;
+}
+
+static int sieve_header_address_list_next_item
+(struct sieve_address_list *_addrlist, struct sieve_address *addr_r, 
+	string_t **unparsed_r)
+{
+	struct sieve_header_address_list *addrlist = 
+		(struct sieve_header_address_list *) _addrlist;	
+	const struct message_address *aitem;
+	bool valid = TRUE;
+
+	if ( addr_r != NULL ) addr_r->local_part = NULL;
+	if ( unparsed_r != NULL ) *unparsed_r = NULL;
+
+	/* Parse next header field value if necessary */
+	while ( addrlist->cur_address == NULL ) {
+		string_t *value_item = NULL;
+		int ret;
+
+		/* Read next header value from source list */
+		if ( (ret=sieve_stringlist_next_item(addrlist->field_values, &value_item)) 
+			<= 0 )
+			return ret;
+
+		addrlist->cur_address = message_address_parse
+			(pool_datastack_create(), (const unsigned char *) str_data(value_item), 
+				str_len(value_item), 256, FALSE);
+
+		/* Check validity of all addresses simultaneously. Unfortunately,
+		 * errorneous addresses cannot be extracted from the address list.
+		 */
+		aitem = addrlist->cur_address;
+		while ( aitem != NULL) {
+			if ( aitem->invalid_syntax )
+				valid = FALSE;
+			aitem = aitem->next;
+		}
+
+		if ( addrlist->cur_address == NULL || !valid ) {
+			addrlist->cur_address = NULL;
+
+			if ( unparsed_r != NULL) *unparsed_r = value_item;
+			return 1;
+		}
+
+		/* Find first usable address */
+		aitem = addrlist->cur_address;
+		while ( aitem != NULL && aitem->domain == NULL ) {
+			aitem = aitem->next;
+		}
+
+		addrlist->cur_address = aitem;
+	}
+
+	/* Return next item */
+
+	if ( addr_r != NULL ) {
+		addr_r->local_part = addrlist->cur_address->mailbox;
+		addr_r->domain = addrlist->cur_address->domain;
+	}
+
+	/* Find next usable address */
+	aitem = addrlist->cur_address->next;
+	while ( aitem != NULL && aitem->domain == NULL ) {
+		aitem = aitem->next;
+	}
+	addrlist->cur_address = aitem;
+
+	return 1;
+}
+
+static int sieve_header_address_list_next_string_item
+(struct sieve_stringlist *_strlist, string_t **str_r)
+{
+	struct sieve_address_list *addrlist = (struct sieve_address_list *)_strlist;
+	struct sieve_address addr;
+	int ret;
+
+	if ( (ret=sieve_header_address_list_next_item(addrlist, &addr, str_r)) <= 0 )
+		return ret;
+
+	if ( addr.local_part != NULL ) {
+		const char *addr_str = sieve_address_to_string(&addr);
+		*str_r = t_str_new_const(addr_str, strlen(addr_str));
+	}
+
+	return 1;
+}
+
+static void sieve_header_address_list_reset
+(struct sieve_stringlist *_strlist)
+{
+	struct sieve_header_address_list *addrlist = 
+		(struct sieve_header_address_list *)_strlist;
+
+	sieve_stringlist_reset(addrlist->field_values);
+	addrlist->cur_address = NULL;
+}
 
 /*
  * RFC 2822 addresses

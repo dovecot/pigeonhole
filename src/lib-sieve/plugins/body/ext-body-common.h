@@ -5,6 +5,16 @@
 #define __EXT_BODY_COMMON_H
 
 /*
+ * Types
+ */
+
+enum tst_body_transform {
+	TST_BODY_TRANSFORM_RAW,
+	TST_BODY_TRANSFORM_CONTENT,
+	TST_BODY_TRANSFORM_TEXT
+};
+
+/*
  * Extension
  */
  
@@ -26,16 +36,8 @@ extern const struct sieve_operation_def body_operation;
  * Message body part extraction
  */
 
-struct ext_body_part {
-	const char *content;
-	unsigned long size;
-};
-
-bool ext_body_get_content
-	(const struct sieve_runtime_env *renv, const char * const *content_types,
-		int decode_to_plain, struct ext_body_part **parts_r);
-
-bool ext_body_get_raw
-	(const struct sieve_runtime_env *renv, struct ext_body_part **parts_r);
+struct sieve_stringlist *ext_body_get_part_list
+	(const struct sieve_runtime_env *renv, enum tst_body_transform transform,
+		const char * const *content_types);
 
 #endif /* __EXT_BODY_COMMON_H */

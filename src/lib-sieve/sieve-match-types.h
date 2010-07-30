@@ -37,16 +37,6 @@ extern const struct sieve_match_type_def matches_match_type;
  
 struct sieve_match_type_def {
 	struct sieve_object_def obj_def;
-
-	/* Match function called for every key value or should it be called once
-	 * for every tested value? (TRUE = first alternative)
-	 */
-	bool is_iterative;
-	
-	/* Is the key value allowed to contain formatting to extract multiple keys
-	 * out of the same string?
-	 */
-	bool allow_key_extract;
 		
 	bool (*validate)
 		(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
@@ -59,18 +49,24 @@ struct sieve_match_type_def {
 	 * Matching
  	 */
 
+	/* Custom implementation */
+
+	int (*match)
+		(struct sieve_match_context *mctx, struct sieve_stringlist *value_list,
+			struct sieve_stringlist *key_list);
+
+	/* Default match loop */ 
+
 	void (*match_init)(struct sieve_match_context *mctx);
 
-	/* WARNING: some tests may pass a val == NULL parameter indicating that the 
-	 * passed value has no significance. For string-type matches this should map 
-	 * to the empty string "", but for match types that consider the passed values 
-	 * as objects rather than strings (e.g. :count) this means that the passed 
-	 * value should be skipped. 
-	 */
-	int (*match)
+	int (*match_keys)
 		(struct sieve_match_context *mctx, const char *val, size_t val_size, 
-			const char *key, size_t key_size, int key_index);
-	int (*match_deinit)(struct sieve_match_context *mctx);
+			struct sieve_stringlist *key_list);
+	int (*match_key)
+		(struct sieve_match_context *mctx, const char *val, size_t val_size, 
+			const char *key, size_t key_size);
+
+	void (*match_deinit)(struct sieve_match_context *mctx);
 };
 
 /* 
@@ -88,6 +84,8 @@ struct sieve_match_type {
 
 #define sieve_match_type_name(mcht) \
 	( (mcht)->object.def->identifier )
+#define sieve_match_type_is(mcht, definition) \
+	( (mcht)->def == &(definition) ) 
 
 static inline const struct sieve_match_type *sieve_match_type_copy
 (pool_t pool, const struct sieve_match_type *cmp_orig)

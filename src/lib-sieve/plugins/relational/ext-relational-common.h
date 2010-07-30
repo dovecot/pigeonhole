@@ -85,9 +85,9 @@ bool mcht_relational_validate
  * Value match function (also used by :count)
  */
  
-int mcht_value_match
-    (struct sieve_match_context *mctx, const char *val, size_t val_size,
-        const char *key, size_t key_size, int key_index);
+int mcht_value_match_key
+	(struct sieve_match_context *mctx, const char *val, size_t val_size,
+		const char *key, size_t key_size);
 
 
 #endif /* __EXT_RELATIONAL_COMMON_H */

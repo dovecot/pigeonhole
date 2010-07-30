@@ -9,39 +9,42 @@
 /*
  * Matching context
  */
- 
-struct sieve_match_key_extractor {
-	int (*init)(void **context, string_t *raw_key);
-	int (*extract_key)(void *context, const char **key, size_t *size);
-};
 
 struct sieve_match_context {
 	pool_t pool;
 
 	const struct sieve_runtime_env *runenv;
+
 	const struct sieve_match_type *match_type;
 	const struct sieve_comparator *comparator;
-	const struct sieve_match_key_extractor *kextract;
 
-	struct sieve_coded_stringlist *key_list;
+	void *data;
 
 	int status;
-	void *data;
+	unsigned int trace:1;
 };
 
 /*
  * Matching implementation
  */
 
+/* Manual value iteration (for when multiple matches are allowed) */
 struct sieve_match_context *sieve_match_begin
 	(const struct sieve_runtime_env *renv,
-		const struct sieve_match_type *mtch, 
-		const struct sieve_comparator *cmp, 
-		const struct sieve_match_key_extractor *kextract,
-		struct sieve_coded_stringlist *key_list);
+		const struct sieve_match_type *mcht, 
+		const struct sieve_comparator *cmp);
 int sieve_match_value
-	(struct sieve_match_context *mctx, const char *value, size_t val_size);
+	(struct sieve_match_context *mctx, const char *value, size_t value_size,
+		struct sieve_stringlist *key_list);
 int sieve_match_end(struct sieve_match_context **mctx);
+
+/* Default matching operation */
+int sieve_match
+	(const struct sieve_runtime_env *renv,
+		const struct sieve_match_type *mcht, 
+		const struct sieve_comparator *cmp, 
+		struct sieve_stringlist *value_list,
+		struct sieve_stringlist *key_list);
 
 /*
  * Read matching operands

@@ -18,9 +18,9 @@
  * Forward declarations
  */
 
-static int mcht_matches_match
+static int mcht_matches_match_key
 	(struct sieve_match_context *mctx, const char *val, size_t val_size, 
-		const char *key, size_t key_size, int key_index);
+		const char *key, size_t key_size);
 
 /*
  * Match-type object
@@ -28,11 +28,10 @@ static int mcht_matches_match
 
 const struct sieve_match_type_def matches_match_type = {
 	SIEVE_OBJECT("matches", &match_type_operand, SIEVE_MATCH_TYPE_MATCHES),
-	TRUE, FALSE,
 	NULL,
 	sieve_match_substring_validate_context, 
-	NULL,
-	mcht_matches_match,
+	NULL, NULL, NULL,
+	mcht_matches_match_key,
 	NULL
 };
 
@@ -83,9 +82,9 @@ static char _scan_key_section
 	return '\0';
 }
 
-static int mcht_matches_match
+static int mcht_matches_match_key
 (struct sieve_match_context *mctx, const char *val, size_t val_size, 
-	const char *key, size_t key_size, int key_index ATTR_UNUSED)
+	const char *key, size_t key_size)
 {
 	const struct sieve_comparator *cmp = mctx->comparator;
 	struct sieve_match_values *mvalues;
@@ -100,12 +99,6 @@ static int mcht_matches_match
 	if ( cmp->def == NULL || cmp->def->char_match == NULL )
 		return FALSE;
 
-	/* Value may be NULL, parse empty string in stead */
-	if ( val == NULL ) {
-		val = "";
-		val_size = 0;
-	}
-	
 	/* Key sections */
 	section = t_str_new(32);    /* Section (after beginning or *) */
 	subsection = t_str_new(32); /* Sub-section (after ?) */
