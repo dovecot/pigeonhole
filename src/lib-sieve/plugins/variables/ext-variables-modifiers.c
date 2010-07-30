@@ -1,6 +1,9 @@
 /* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
  */
 
+#include "lib.h"
+#include "unichar.h"
+
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -238,8 +241,8 @@ bool mod_lower_modify(string_t *in, string_t **result)
 bool mod_length_modify(string_t *in, string_t **result)
 {
 	*result = t_str_new(64);
-	str_printfa(*result, "%llu", (unsigned long long) str_len(in));
-
+	str_printfa(*result, "%llu", (unsigned long long) 
+		uni_utf8_strlen_n(str_data(in), str_len(in)));
 	return TRUE;
 }
 

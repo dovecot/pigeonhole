@@ -1,5 +1,6 @@
 require "vnd.dovecot.testsuite";
 require "variables";
+require "encoded-character";
 
 /*
  * Modifiers
@@ -137,4 +138,15 @@ test "RFC examples" {
 	if not string "${b}" "Rock\\*" {
 		test_fail "modified assignment failed (6): ${a}";
 	}	
+}
+
+/* RFC mentions `characters' and not octets */
+
+test "Modifier :length utf8" {
+	set "a" "Das ist ${unicode: 00fc}berhaupt nicht m${unicode: 00f6}glich.";
+
+	set :length "b" "${a}";
+    if not string "${b}" "32" {
+        test_fail "incorrect number of unicode characters reported: ${b}/32";
+    }
 }
