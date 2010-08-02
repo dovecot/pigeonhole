@@ -452,15 +452,15 @@ struct ostream *sieve_tool_open_output_stream(const char *filename)
 	int fd;
 
 	if ( strcmp(filename, "-") == 0 ) 
-		outstream = o_stream_create_fd(1, 0, TRUE);
+		outstream = o_stream_create_fd(1, 0, FALSE);
 	else {
 		if ( (fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT, 0600)) < 0 ) {
 			i_fatal("failed to open file for writing: %m");
 		}
-		
+
 		outstream = o_stream_create_fd(fd, 0, TRUE);
 	}
-	
+
 	return outstream;
 }
 
