@@ -155,6 +155,10 @@ int main(int argc, char **argv)
 		case 'T':
 			sieve_tool_parse_trace_option(&tr_config, optarg);
 			break;
+		case 'd':
+			/* dump file */
+			dumpfile = optarg;
+			break;
 		case 's': 
 			/* scriptfile executed before main script */
 			{
