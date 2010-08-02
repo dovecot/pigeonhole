@@ -84,7 +84,6 @@ int main(int argc, char **argv)
 	struct sieve_instance *svinst;
 	const char *scriptfile, *dumpfile, *tracefile;
 	struct sieve_trace_config tr_config;
-	struct ostream *tracestream = NULL;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
 	bool log_stdout = FALSE;
@@ -166,16 +165,17 @@ int main(int argc, char **argv)
 	/* Compile sieve script */
 	if ( (sbin = sieve_tool_script_compile(svinst, scriptfile, NULL)) != NULL ) {
 		struct sieve_error_handler *ehandler;
+		struct ostream *tracestream = NULL;
 		struct sieve_script_env scriptenv;
 
 		/* Dump script */
 		sieve_tool_dump_binary_to(sbin, dumpfile);
-	
-		testsuite_mailstore_init();
-		testsuite_message_init();
 
 		if ( tracefile != NULL )
-            tracestream = sieve_tool_open_output_stream(tracefile);
+			tracestream = sieve_tool_open_output_stream(tracefile);
+
+		testsuite_mailstore_init();
+		testsuite_message_init();
 
 		memset(&scriptenv, 0, sizeof(scriptenv));
 		scriptenv.user = sieve_tool_get_mail_user(sieve_tool);
@@ -213,19 +213,20 @@ int main(int argc, char **argv)
 
 		sieve_close(&sbin);
 
-		if ( scriptenv.trace_stream != NULL )
-			o_stream_unref(&scriptenv.trace_stream);
-
 		/* De-initialize message environment */
 		testsuite_message_deinit();
 		testsuite_mailstore_deinit();
 		testsuite_result_deinit();
+
+		if ( tracestream != NULL )
+			o_stream_unref(&tracestream);
+
 	} else {
 		testsuite_testcase_fail("failed to compile testcase script");
 	}
 
 	/* De-initialize testsuite */
-	testsuite_deinit();	
+	testsuite_deinit();
 	testsuite_settings_deinit();
 
 	sieve_tool_deinit(&sieve_tool);
