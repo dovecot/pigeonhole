@@ -85,10 +85,14 @@ sieve_size_t sieve_binary_emit_offset
 	int i;
 	sieve_size_t address = _sieve_binary_block_get_size(sblock);
 
+	uint8_t encoded[4];
+
 	for ( i = 3; i >= 0; i-- ) {
-		uint8_t c = (uint8_t) (offset >> (i * 8));
-		_sieve_binary_emit_data(sblock, &c, 1);
+		encoded[i] = (uint8_t) offset;
+		offset >>= 8;
 	}
+
+	_sieve_binary_emit_data(sblock, encoded, 4);
 	
 	return address;
 }
@@ -98,11 +102,14 @@ void sieve_binary_resolve_offset
 {
 	int i;
 	sieve_offset_t offset = _sieve_binary_block_get_size(sblock) - address; 
-	
+	uint8_t encoded[4];
+
 	for ( i = 3; i >= 0; i-- ) {
-		uint8_t c = (uint8_t) (offset >> (i * 8));	
-		_sieve_binary_update_data(sblock, address + 3 - i, &c, 1);
+		encoded[i] = (uint8_t) offset;
+		offset >>= 8;
 	}
+
+	_sieve_binary_update_data(sblock, address, encoded, 4);
 }
 
 /* Literal emission */
@@ -111,28 +118,24 @@ sieve_size_t sieve_binary_emit_integer
 (struct sieve_binary_block *sblock, sieve_number_t integer)
 {
 	sieve_size_t address = _sieve_binary_block_get_size(sblock);
-	int i;
 	uint8_t buffer[sizeof(sieve_number_t) + 1];
-	int bufpos = sizeof(buffer) - 1;
-  
+	int bufpos = sizeof(buffer) - 1;  
+
+	/* Encode last byte [0xxxxxxx]; msb == 0 marks the last byte */
 	buffer[bufpos] = integer & 0x7F;
 	bufpos--;
+
+	/* Encode first bytes [1xxxxxxx] */
 	integer >>= 7;
 	while ( integer > 0 ) {
-		buffer[bufpos] = integer & 0x7F;
+		buffer[bufpos] = (integer & 0x7F) | 0x80;
 		bufpos--;
 		integer >>= 7;  
 	}
   
-	bufpos++;
-	if ( (sizeof(buffer) - bufpos) > 1 ) { 
-		for ( i = bufpos; i < ((int) sizeof(buffer) - 1); i++) {
-			buffer[i] |= 0x80;
-		}
-	} 
-  
-	_sieve_binary_emit_data
-		(sblock, buffer + bufpos, sizeof(buffer) - bufpos);
+	/* Emit encoded integer */
+	bufpos++;  
+	_sieve_binary_emit_data(sblock, buffer + bufpos, sizeof(buffer) - bufpos);
 
 	return address;
 }
@@ -286,12 +289,14 @@ bool sieve_binary_read_integer
   
 	if ( ADDR_BYTES_LEFT(address) == 0 )
 		return FALSE;
-  
+
+	/* Read first integer bytes [1xxxxxxx] */  
 	while ( (ADDR_DATA_AT(address) & 0x80) > 0 ) {
 		if ( ADDR_BYTES_LEFT(address) > 0 && bits > 0) {
 			*int_r |= ADDR_DATA_AT(address) & 0x7F;
 			ADDR_JUMP(address, 1);
     
+			/* Each byte encodes 7 bits of the integer */
 			*int_r <<= 7;
 			bits -= 7;
 		} else {
@@ -300,6 +305,7 @@ bool sieve_binary_read_integer
 		}
 	}
   
+	/* Read last byte [0xxxxxxx] */
 	*int_r |= ADDR_DATA_AT(address) & 0x7F;
 	ADDR_JUMP(address, 1);
   
