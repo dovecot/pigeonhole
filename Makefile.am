@@ -53,6 +53,7 @@ test_cases = \
 	tests/exists.svtest \
 	tests/header.svtest \
 	tests/address.svtest \
+	tests/size.svtest \
 	tests/lexer.svtest \
 	tests/comparators/core.svtest \
 	tests/match-types/is.svtest \
