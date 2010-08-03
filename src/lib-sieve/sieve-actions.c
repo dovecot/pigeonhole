@@ -408,7 +408,8 @@ static bool act_store_start
 
 	*tr_context = (void *)trans;
 
-	return TRUE;
+	return ( trans->error_code == MAIL_ERROR_NONE || 
+		trans->error_code == MAIL_ERROR_NOTFOUND );
 }
 
 static struct mail_keywords *act_store_keywords_create
