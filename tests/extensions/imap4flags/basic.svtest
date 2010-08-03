@@ -104,6 +104,30 @@ test "Flag operations" {
 	}
 }
 
+test "Setflag; string list" {
+	setflag ["A B", "C D"];
+
+	if not hasflag "A" {
+		test_fail "hasflag misses A flag";
+	}
+
+	if not hasflag "B" {
+		test_fail "hasflag misses B flag";
+	}
+
+	if not hasflag "C" {
+		test_fail "hasflag misses C flag";
+	}
+
+	if not hasflag "D" {
+		test_fail "hasflag misses D flag";
+	}
+
+	if hasflag :comparator "i;ascii-numeric" :count "ne" "4" {
+		test_fail "hasflag sees incorrect number of flags";
+	}
+}
+
 test "Removal: one" {
 	setflag "\\seen";
 

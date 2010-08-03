@@ -90,17 +90,17 @@ const char *ext_imap4flags_iter_get_flag
 
 typedef int (*ext_imapflag_flag_operation_t)
 	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-		unsigned int var_index, string_t *flags);
+		unsigned int var_index, struct sieve_stringlist *flags);
 
 int ext_imap4flags_set_flags
 	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-		unsigned int var_index, string_t *flags);
+		unsigned int var_index, struct sieve_stringlist *flags);
 int ext_imap4flags_add_flags
 	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-		unsigned int var_index, string_t *flags);
+		unsigned int var_index, struct sieve_stringlist *flags);
 int ext_imap4flags_remove_flags
 	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-		unsigned int var_index, string_t *flags);
+		unsigned int var_index, struct sieve_stringlist *flags);
 
 /* Flags access */
 

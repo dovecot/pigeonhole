@@ -241,17 +241,7 @@ static int cmd_flag_operation_execute
 		i_unreached();
 	}
 
-	/* Iterate through all flags and perform requested operation */
+	/* Perform requested operation */
 	
-	while ( (ret=sieve_stringlist_next_item(flag_list, &flag_item)) > 0 ) {
-		if ( (ret=flag_op(renv, storage, var_index, flag_item)) <= 0)
-			return ret;
-	}
-
-	if ( ret < 0 ) {	
-		sieve_runtime_trace_error(renv, "invalid flag-list item");
-		return SIEVE_EXEC_BIN_CORRUPT;
-	}
-
-	return SIEVE_EXEC_OK;
+	return flag_op(renv, storage, var_index, flag_list);
 }

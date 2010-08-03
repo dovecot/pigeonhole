@@ -457,27 +457,43 @@ static void flags_list_set_flags
 	flags_list_add_flags(flags_list, flags);
 }
 
+static void flags_list_clear_flags
+(string_t *flags_list)
+{
+	str_truncate(flags_list, 0);
+}
+
 int ext_imap4flags_set_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-	unsigned int var_index, string_t *flags)
+	unsigned int var_index, struct sieve_stringlist *flags)
 {
 	string_t *cur_flags;
 	
 	if ( storage != NULL ) {
 		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
 			return SIEVE_EXEC_BIN_CORRUPT;
-	} else
+	} else {
 		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
+	}
+	
+	if ( cur_flags != NULL ) {
+		string_t *flags_item;
+		int ret;
 
-	if ( cur_flags != NULL )
-		flags_list_set_flags(cur_flags, flags);		
+		flags_list_clear_flags(cur_flags);
+		while ( (ret=sieve_stringlist_next_item(flags, &flags_item)) > 0 ) {
+			flags_list_add_flags(cur_flags, flags_item);
+		}
+
+		if ( ret < 0 ) return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	return SIEVE_EXEC_OK;
 }
 
 int ext_imap4flags_add_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
-	unsigned int var_index, string_t *flags)
+	unsigned int var_index, struct sieve_stringlist *flags)
 {
 	string_t *cur_flags;
 	
@@ -486,16 +502,24 @@ int ext_imap4flags_add_flags
 			return SIEVE_EXEC_BIN_CORRUPT;
 	} else
 		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
-	
-	if ( cur_flags != NULL )
-		flags_list_add_flags(cur_flags, flags);
-	
-	return SIEVE_EXEC_OK;	
+
+	if ( cur_flags != NULL ) {
+		string_t *flags_item;
+		int ret;
+
+		while ( (ret=sieve_stringlist_next_item(flags, &flags_item)) > 0 ) {
+			flags_list_add_flags(cur_flags, flags_item);
+		}
+
+		if ( ret < 0 ) return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	return SIEVE_EXEC_OK;
 }
 
 int ext_imap4flags_remove_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
-	unsigned int var_index, string_t *flags)
+	unsigned int var_index, struct sieve_stringlist *flags)
 {
 	string_t *cur_flags;
 	
@@ -505,8 +529,16 @@ int ext_imap4flags_remove_flags
 	} else
 		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
 	
-	if ( cur_flags != NULL )
-		flags_list_remove_flags(cur_flags, flags);		
+	if ( cur_flags != NULL ) {
+		string_t *flags_item;
+		int ret;
+
+		while ( (ret=sieve_stringlist_next_item(flags, &flags_item)) > 0 ) {
+			flags_list_remove_flags(cur_flags, flags_item);
+		}
+
+		if ( ret < 0 ) return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	return SIEVE_EXEC_OK;
 }
