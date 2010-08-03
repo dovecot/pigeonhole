@@ -137,7 +137,8 @@ int sieve_tool_getopt(struct sieve_tool *tool)
 			tool->sieve_extensions = i_strdup(optarg);
 			break;
 		case 'u':
-			tool->username = i_strdup(optarg);
+			if ( tool->username == NULL )
+				tool->username = i_strdup(optarg);
 			break;
 		case 'P': 
 			/* Plugin */
@@ -383,6 +384,9 @@ void sieve_tool_set_setting_callback
 const char *sieve_tool_get_username
 (struct sieve_tool *tool)
 {
+	if ( tool->username == NULL )
+		return getenv("USER");
+
 	return tool->username;
 }
 
