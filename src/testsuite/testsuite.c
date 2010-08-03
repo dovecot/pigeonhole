@@ -19,6 +19,7 @@
 #include "sieve-tool.h"
 
 #include "testsuite-common.h"
+#include "testsuite-log.h"
 #include "testsuite-settings.h"
 #include "testsuite-result.h"
 #include "testsuite-message.h"
@@ -163,8 +164,8 @@ int main(int argc, char **argv)
 		("sieve_global_dir", t_strconcat(sieve_dir, "included-global", NULL));
 
 	/* Compile sieve script */
-	if ( (sbin = sieve_tool_script_compile(svinst, scriptfile, NULL)) != NULL ) {
-		struct sieve_error_handler *ehandler;
+	if ( (sbin = sieve_compile
+		(svinst, scriptfile, NULL, testsuite_log_main_ehandler)) != NULL ) {
 		struct ostream *tracestream = NULL;
 		struct sieve_script_env scriptenv;
 
@@ -193,19 +194,18 @@ int main(int argc, char **argv)
 		testsuite_result_init();
 
 		/* Run the test */
-		ehandler = sieve_stderr_ehandler_create(0);
-		ret = testsuite_run(sbin, &testsuite_msgdata, &scriptenv, ehandler);
-		sieve_error_handler_unref(&ehandler);
+		ret = testsuite_run
+			(sbin, &testsuite_msgdata, &scriptenv, testsuite_log_main_ehandler);
 
 		switch ( ret ) {
 		case SIEVE_EXEC_OK:
 			break;
 		case SIEVE_EXEC_FAILURE:
 		case SIEVE_EXEC_KEEP_FAILED:
-			testsuite_testcase_fail("execution aborted");
+			testsuite_testcase_fail("test script execution aborted due to error");
 			break;
 		case SIEVE_EXEC_BIN_CORRUPT:
-			testsuite_testcase_fail("binary corrupt");
+			testsuite_testcase_fail("compiled test script binary is corrupt");
 			break;
 		default:
 			testsuite_testcase_fail("unknown execution exit code");
