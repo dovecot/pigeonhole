@@ -251,10 +251,10 @@ static int tst_test_error_operation_execute
 	
 	if ( index > 0 )
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-			"test_error test [index=%d]", index);
+			"testsuite: test_error test; match error message [index=%d]", index);
 	else
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-			"test_error test");
+			"testsuite: test_error test; match error messages");
 
 	/* Create value stringlist */
 	value_list = testsuite_log_stringlist_create(renv, index);

@@ -74,9 +74,16 @@ static int tst_test_result_execute_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "test_result_execute");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, 
+		"testsuite: test_result_execute test");
 
 	result = testsuite_result_execute(renv);
+
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_TESTS) ) {
+		sieve_runtime_trace_descend(renv);
+		sieve_runtime_trace(renv, 0, "execution of result %s", 
+			( result ? "succeeded" : "failed" ));
+	}
 
 	/* Set result */
 	sieve_interpreter_set_test_result(renv->interp, result);

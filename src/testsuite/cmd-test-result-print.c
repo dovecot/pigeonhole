@@ -68,6 +68,9 @@ static bool cmd_test_result_print_generate
 static int cmd_test_result_print_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
+			"testsuite: test_result_print command; print script result ");
+
 	testsuite_result_print(renv);
 
 	return SIEVE_EXEC_OK;

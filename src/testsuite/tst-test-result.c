@@ -255,7 +255,7 @@ static int tst_test_result_operation_execute
 	 */
 	
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-		"test_result test (index: %d)", index);
+		"testsuite: test_result test; match result name (index: %d)", index);
 
 	/* Create value stringlist */
 	value_list = testsuite_result_stringlist_create(renv, index);

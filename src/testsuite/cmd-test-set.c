@@ -138,9 +138,13 @@ static int cmd_test_set_operation_execute
 	if ( !sieve_opr_string_read(renv, address, "string", &value) )
 		return SIEVE_EXEC_BIN_CORRUPT;
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
-		"test_set '%s' = \"%s\"", 
-		testsuite_object_member_name(&tobj, member_id), str_c(value));
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+		sieve_runtime_trace(renv, 0, "testsuite: test_set command");
+		sieve_runtime_trace_descend(renv);
+		sieve_runtime_trace(renv, 0, 
+			"set test parameter '%s' = \"%s\"", 
+				testsuite_object_member_name(&tobj, member_id), str_c(value));
+	}
 	
 	if ( tobj.def == NULL || tobj.def->set_member == NULL ) {
 		sieve_runtime_trace_error(renv, "unimplemented testsuite object");

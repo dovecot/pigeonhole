@@ -320,7 +320,7 @@ static int mcht_regex_match_keys
 
 					if ( trace ) {
 						sieve_runtime_trace(renv, 0,
-							"    with regex `%s' [id=%d] => %d", 
+							"with regex `%s' [id=%d] => %d", 
 							str_sanitize(str_c(key_item), 80),
 							array_count(&ctx->reg_expressions)-1, result);
 					}
@@ -347,7 +347,7 @@ static int mcht_regex_match_keys
 
 				if ( trace ) {
 					sieve_runtime_trace(renv, 0,
-						"    with compiled regex [id=%d] => %d", i, result);
+						"with compiled regex [id=%d] => %d", i, result);
 				}
 			}
 

@@ -110,7 +110,6 @@ static int tst_test_multiscript_operation_execute
 {
 	struct sieve_stringlist *scripts_list;
 	string_t *script_name;
-	const char *script_path;
 	ARRAY_TYPE (const_string) scriptfiles;
 	bool result = TRUE;
 	int ret;
@@ -127,26 +126,22 @@ static int tst_test_multiscript_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "test_multiscript test");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, 
+		"testsuite: test_multiscript test");
+	sieve_runtime_trace_descend(renv);
 
 	t_array_init(&scriptfiles, 16);
-
-	script_path = sieve_script_dirpath(renv->script);
-	if ( script_path == NULL )
-		return SIEVE_EXEC_FAILURE;
 
 	script_name = NULL;
 	while ( result &&
 		(ret=sieve_stringlist_next_item(scripts_list, &script_name)) > 0 ) {
+		const char *script = t_strdup(str_c(script_name));
 
-		const char *path =
-			t_strconcat(script_path, "/", str_c(script_name), NULL);
-
-		/* Attempt script compile */
-		array_append(&scriptfiles, &path, 1);
+		array_append(&scriptfiles, &script, 1);
 	}
 
-	result = result && (ret >= 0) && testsuite_script_multiscript(renv, &scriptfiles);
+	result = result && (ret >= 0) && 
+		testsuite_script_multiscript(renv, &scriptfiles);
 
 	/* Set result */
 	sieve_interpreter_set_test_result(renv->interp, result);

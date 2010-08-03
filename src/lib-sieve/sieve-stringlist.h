@@ -6,8 +6,6 @@
  */
 
 struct sieve_stringlist {
-	const struct sieve_runtime_env *runenv;
-
 	int (*next_item)
 		(struct sieve_stringlist *strlist, string_t **str_r);
 	void (*reset)
@@ -18,7 +16,22 @@ struct sieve_stringlist {
 	bool (*read_all)
 		(struct sieve_stringlist *strlist, pool_t pool,
 			const char * const **list_r);
+
+	void (*set_trace)
+		(struct sieve_stringlist *strlist, bool trace);
+
+	const struct sieve_runtime_env *runenv;
+	unsigned int trace:1;
 };
+
+static inline void sieve_stringlist_set_trace
+(struct sieve_stringlist *strlist, bool trace)
+{
+	strlist->trace = trace;
+
+	if ( strlist->set_trace != NULL )
+		strlist->set_trace(strlist, trace);
+}
 
 static inline int sieve_stringlist_next_item
 (struct sieve_stringlist *strlist, string_t **str_r) 

@@ -236,6 +236,8 @@ static void sieve_address_part_stringlist_reset
 	(struct sieve_stringlist *_strlist);
 static int sieve_address_part_stringlist_get_length
 	(struct sieve_stringlist *_strlist);
+static void sieve_address_part_stringlist_set_trace
+(struct sieve_stringlist *_strlist, bool trace);
 
 struct sieve_address_part_stringlist {
 	struct sieve_stringlist strlist;
@@ -255,6 +257,7 @@ struct sieve_stringlist *sieve_address_part_stringlist_create
 	strlist->strlist.next_item = sieve_address_part_stringlist_next_item;
 	strlist->strlist.reset = sieve_address_part_stringlist_reset;
 	strlist->strlist.get_length = sieve_address_part_stringlist_get_length;
+	strlist->strlist.set_trace = sieve_address_part_stringlist_set_trace;
 
 	strlist->addrp = addrp;
 	strlist->addresses = addresses;
@@ -280,6 +283,13 @@ static int sieve_address_part_stringlist_next_item
 		
 		if ( item.local_part == NULL ) {
 			if ( item_unparsed != NULL ) {
+				if ( _strlist->trace ) {
+					sieve_runtime_trace(_strlist->runenv, 0,
+						"extracting `%s' part from non-address value `%s'",
+						sieve_address_part_name(strlist->addrp),
+						str_sanitize(str_c(item_unparsed), 80));
+				}
+
 				if ( str_len(item_unparsed) == 0 ||
 					sieve_address_part_is(strlist->addrp, all_address_part) )
 					*str_r = item_unparsed;
@@ -287,6 +297,13 @@ static int sieve_address_part_stringlist_next_item
 		} else {
 			const struct sieve_address_part *addrp = strlist->addrp;
 			const char *part = NULL;
+
+			if ( _strlist->trace ) {
+				sieve_runtime_trace(_strlist->runenv, 0,
+					"extracting `%s' part from address `%s'",
+					sieve_address_part_name(strlist->addrp),
+					str_sanitize(sieve_address_to_string(&item), 80));
+			}
 
 			if ( addrp->def != NULL && addrp->def->extract_from ) 
 				part = addrp->def->extract_from(addrp, &item);
@@ -315,6 +332,15 @@ static int sieve_address_part_stringlist_get_length
 		(struct sieve_address_part_stringlist *)_strlist;
 
 	return sieve_address_list_get_length(strlist->addresses);
+}
+
+static void sieve_address_part_stringlist_set_trace
+(struct sieve_stringlist *_strlist, bool trace)
+{
+	struct sieve_address_part_stringlist *strlist = 
+		(struct sieve_address_part_stringlist *)_strlist;
+
+	sieve_address_list_set_trace(strlist->addresses, trace);
 }
 
 /* 

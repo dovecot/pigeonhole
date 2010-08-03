@@ -50,8 +50,9 @@ struct sieve_match_context *sieve_match_begin
 
 	/* Trace */
 	if ( mctx->trace ) {
+		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(renv, 0,
-			"  starting `:%s' match with `%s' comparator:",
+			"starting `:%s' match with `%s' comparator:",
 			sieve_match_type_name(mcht), sieve_comparator_name(cmp));
 	}
 
@@ -73,12 +74,17 @@ int sieve_match_value
 
 	if ( mctx->trace ) {
 		sieve_runtime_trace(renv, 0,
-			"  matching value `%s'", str_sanitize(value, 80));
+			"matching value `%s'", str_sanitize(value, 80));
 	}
 
 	/* Match to key values */
 	
 	sieve_stringlist_reset(key_list);
+
+	if ( mctx->trace )
+		sieve_stringlist_set_trace(key_list, TRUE);
+
+	sieve_runtime_trace_descend(renv);
 
 	if ( mcht->def->match_keys != NULL ) {
 		/* Call match-type's own key match handler */
@@ -96,7 +102,7 @@ int sieve_match_value
 
 				if ( mctx->trace ) {
 					sieve_runtime_trace(renv, 0,
-						"    with key `%s' => %d", str_sanitize(str_c(key_item), 80),
+						"with key `%s' => %d", str_sanitize(str_c(key_item), 80),
 						result);
 				}
 			} T_END;
@@ -104,6 +110,8 @@ int sieve_match_value
 
 		if ( ret < 0 ) result = -1;
 	}
+
+	sieve_runtime_trace_ascend(renv);
 
 	if ( mctx->status < 0 || result < 0 )
 		mctx->status = -1;
@@ -124,8 +132,9 @@ int sieve_match_end(struct sieve_match_context **mctx)
 	pool_unref(&(*mctx)->pool);
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
-		"  finishing match with result: %s", 
+		"finishing match with result: %s", 
 		( result > 0 ? "matched" : ( result < 0 ? "error" : "not matched" ) ));
+	sieve_runtime_trace_ascend(renv);
 
 	return result;
 }
@@ -148,9 +157,12 @@ int sieve_match
 
 	sieve_stringlist_reset(value_list);
 
+	if ( mctx->trace )
+		sieve_stringlist_set_trace(value_list, TRUE);
+
 	if ( mcht->def->match != NULL ) {
 		/* Call match-type's match handler */
-		result = mcht->def->match(mctx, value_list, key_list); 
+		result = mctx->status = mcht->def->match(mctx, value_list, key_list); 
 
 	} else {
 		/* Default value match loop */

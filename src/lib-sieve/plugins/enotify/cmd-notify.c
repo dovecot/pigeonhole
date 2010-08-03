@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "str-sanitize.h"
 
 #include "sieve-common.h"
 #include "sieve-error.h"
@@ -465,7 +466,12 @@ static int cmd_notify_operation_execute
 
 	/* Trace */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "notify action");	
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS) ) {
+		sieve_runtime_trace(renv, 0, "notify action");	
+		sieve_runtime_trace_descend(renv);
+		sieve_runtime_trace(renv, 0, "notify with uri `%s'",
+			str_sanitize(str_c(method_uri), 80));	
+	}
 
 	/* Check operands */
 

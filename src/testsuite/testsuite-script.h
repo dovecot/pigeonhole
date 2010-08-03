@@ -9,10 +9,13 @@
 void testsuite_script_init(void);
 void testsuite_script_deinit(void);
 
-bool testsuite_script_compile(const char *script_path);
-bool testsuite_script_run(const struct sieve_runtime_env *renv);
+bool testsuite_script_compile
+	(const struct sieve_runtime_env *renv, const char *script);
+bool testsuite_script_run
+	(const struct sieve_runtime_env *renv);
 bool testsuite_script_multiscript
-(const struct sieve_runtime_env *renv, ARRAY_TYPE (const_string) *scriptfiles);
+	(const struct sieve_runtime_env *renv, 
+		ARRAY_TYPE (const_string) *scriptfiles);
 
 struct sieve_binary *testsuite_script_get_binary(void);
 void testsuite_script_set_binary(struct sieve_binary *sbin);

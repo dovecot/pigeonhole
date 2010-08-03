@@ -35,6 +35,8 @@ struct sieve_address_part {
 #define SIEVE_ADDRESS_PART_DEFAULT(definition) \
 	{ SIEVE_OBJECT_DEFAULT(definition), &(definition) };
 
+#define sieve_address_part_name(addrp) \
+	( (addrp)->object.def->identifier )
 #define sieve_address_part_is(addrp, definition) \
 	( (addrp)->def == &(definition) )
 

@@ -36,8 +36,7 @@ struct sieve_runtime_env {
 	struct sieve_result *result;
 
 	/* Runtime tracing */
-	struct ostream *trace_stream;
-	struct sieve_trace_config trace_config;
+	struct sieve_runtime_trace *trace;
 };
 
 #endif /* __SIEVE_RUNTIME_H */

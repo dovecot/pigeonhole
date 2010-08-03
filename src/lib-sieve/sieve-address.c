@@ -8,6 +8,7 @@
 #include "message-address.h"
 
 #include "sieve-common.h"
+#include "sieve-runtime-trace.h"
 
 #include "sieve-address.h"
 
@@ -26,6 +27,8 @@ static int sieve_header_address_list_next_item
 		string_t **unparsed_r);
 static void sieve_header_address_list_reset
 	(struct sieve_stringlist *_strlist);
+static void sieve_header_address_list_set_trace
+	(struct sieve_stringlist *_strlist, bool trace);
 
 /* Stringlist object */
 
@@ -46,6 +49,7 @@ struct sieve_address_list *sieve_header_address_list_create
 	addrlist->addrlist.strlist.next_item = 
 		sieve_header_address_list_next_string_item;
 	addrlist->addrlist.strlist.reset = sieve_header_address_list_reset;
+	addrlist->addrlist.strlist.set_trace = sieve_header_address_list_set_trace;
 	addrlist->addrlist.next_item = sieve_header_address_list_next_item;
 	addrlist->field_values = field_values;
   
@@ -73,6 +77,12 @@ static int sieve_header_address_list_next_item
 		if ( (ret=sieve_stringlist_next_item(addrlist->field_values, &value_item)) 
 			<= 0 )
 			return ret;
+
+		if ( _addrlist->strlist.trace ) {
+			sieve_runtime_trace(_addrlist->strlist.runenv, 0,
+				"parsing address header value `%s'",
+				str_sanitize(str_c(value_item), 80));
+		}
 
 		addrlist->cur_address = message_address_parse
 			(pool_datastack_create(), (const unsigned char *) str_data(value_item), 
@@ -147,6 +157,15 @@ static void sieve_header_address_list_reset
 
 	sieve_stringlist_reset(addrlist->field_values);
 	addrlist->cur_address = NULL;
+}
+
+static void sieve_header_address_list_set_trace
+(struct sieve_stringlist *_strlist, bool trace)
+{
+	struct sieve_header_address_list *addrlist = 
+		(struct sieve_header_address_list *)_strlist;
+
+	sieve_stringlist_set_trace(addrlist->field_values, trace);
 }
 
 /*

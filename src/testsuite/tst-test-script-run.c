@@ -170,8 +170,9 @@ static int tst_test_script_run_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
-		"testsuite: run compiled script");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, 
+		"testsuite: run compiled script [append_result=%s]",
+		( append_result ? "yes" : "no" ));
 
 	/* Reset result object */
 	if ( !append_result ) 
@@ -179,6 +180,12 @@ static int tst_test_script_run_operation_execute
 
 	/* Run script */
 	result = testsuite_script_run(renv);
+
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_TESTS) ) {
+		sieve_runtime_trace_descend(renv);
+		sieve_runtime_trace(renv, 0, "execution of script %s", 
+			( result ? "succeeded" : "failed" ));
+	}
 
 	/* Indicate test status */
 	sieve_interpreter_set_test_result(renv->interp, result);

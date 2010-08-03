@@ -608,8 +608,13 @@ static int ext_vacation_operation_execute
 		days = 1;
 
 	/* Trace */
-	
-	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "vacation action");	
+
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS) ) {
+		sieve_runtime_trace(renv, 0, "vacation action");
+		sieve_runtime_trace_descend(renv);
+		sieve_runtime_trace(renv, 0, "auto-reply with message `%s'",
+			str_sanitize(str_c(reason), 80));
+	}	
 
 	/* Check and normalize :from address */
 	if ( from != NULL ) {

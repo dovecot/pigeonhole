@@ -20,6 +20,7 @@
 #include "sieve-binary.h"
 #include "sieve-result.h"
 #include "sieve-comparators.h"
+#include "sieve-runtime-trace.h"
 
 #include "sieve-interpreter.h"
 
@@ -58,6 +59,7 @@ struct sieve_interpreter {
 	
 	/* Runtime environment */
 	struct sieve_runtime_env runenv;
+	struct sieve_runtime_trace trace;
 
 	/* Current operation */
 	struct sieve_operation oprtn; 
@@ -99,8 +101,13 @@ static struct sieve_interpreter *_sieve_interpreter_create
 	interp->runenv.svinst = svinst;
 	interp->runenv.msgdata = msgdata;
 	interp->runenv.scriptenv = senv;
-	interp->runenv.trace_stream = senv->trace_stream;
-	interp->runenv.trace_config = senv->trace_config;
+
+	if ( senv->trace_stream != NULL ) {
+		interp->trace.stream = senv->trace_stream;
+		interp->trace.config = senv->trace_config;
+		interp->trace.indent = 0;
+		interp->runenv.trace = &interp->trace;
+	}
 
 	if ( senv->exec_status == NULL ) 
 		interp->runenv.exec_status = p_new(interp->pool, struct sieve_exec_status, 1);
@@ -431,7 +438,7 @@ int sieve_interpreter_program_jump
 				unsigned int jmp_line = 
 					sieve_runtime_get_source_location(renv, jmp_addr);
 
-				if ( (renv->trace_config.flags & SIEVE_TRFLG_ADDRESSES) > 0 ) {
+				if ( sieve_runtime_trace_hasflag(renv, SIEVE_TRFLG_ADDRESSES) ) {
 					sieve_runtime_trace(renv, 0, "jumping to line %d [%08llx]", 
 						jmp_line, (long long unsigned int) jmp_addr);
 				} else {
@@ -476,6 +483,8 @@ static int sieve_interpreter_operation_execute
 {
 	struct sieve_operation *oprtn = &(interp->oprtn);
 	sieve_size_t *address = &(interp->runenv.pc);
+
+	sieve_runtime_trace_toplevel(&interp->runenv);
 
 	/* Read the operation */
 	if ( sieve_operation_read(interp->runenv.sblock, address, oprtn) ) {

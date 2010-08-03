@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "str-sanitize.h"
 #include "mail-storage.h"
 #include "mail-namespace.h"
 
@@ -108,6 +109,7 @@ static int tst_mailboxexists_operation_execute
 {
 	struct sieve_stringlist *mailbox_names;
 	string_t *mailbox_item;
+	bool trace = FALSE; 
 	bool all_exist = TRUE;
 
 	/*
@@ -123,7 +125,12 @@ static int tst_mailboxexists_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "mailboxexists test");
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_TESTS) ) {
+		sieve_runtime_trace(renv, 0, "mailboxexists test");
+		sieve_runtime_trace_descend(renv);
+
+		trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_MATCHING);
+	}
 
 	if ( renv->scriptenv->user != NULL ) {
 		int ret;
@@ -138,6 +145,11 @@ static int tst_mailboxexists_operation_execute
 			/* Find the namespace */	
 			ns = mail_namespace_find(renv->scriptenv->user->namespaces, &mailbox);
 			if ( ns == NULL) {
+				if ( trace ) {
+					sieve_runtime_trace(renv, 0, "mailbox `%s' not found", 
+						str_sanitize(mailbox, 80));
+				}
+
 				all_exist = FALSE;
 				break;
 			}
@@ -145,16 +157,34 @@ static int tst_mailboxexists_operation_execute
 			/* Open the box */
 			box = mailbox_alloc(ns->list, mailbox, 0);
 			if ( mailbox_open(box) < 0 ) {
+				if ( trace ) {
+					sieve_runtime_trace(renv, 0, "mailbox `%s' cannot be opened", 
+						str_sanitize(mailbox, 80));
+				}
+
 				all_exist = FALSE;
 				mailbox_free(&box);
 				break;
 			}
 
 			/* Also fail when it is readonly */
-			if ( mailbox_is_readonly(box) )
+			if ( mailbox_is_readonly(box) ) {
+				if ( trace ) {
+					sieve_runtime_trace(renv, 0, "mailbox `%s' is read-only", 
+						str_sanitize(mailbox, 80));
+				}
+
 				all_exist = FALSE;
+				mailbox_free(&box);
+				break;
+			}
 
 			/* FIXME: check acl for 'p' or 'i' ACL permissions as required by RFC */
+
+			if ( trace ) {
+				sieve_runtime_trace(renv, 0, "mailbox `%s' exists", 
+					str_sanitize(mailbox, 80));
+			}
 
 			/* Close mailbox */
 			mailbox_free(&box);
@@ -164,6 +194,13 @@ static int tst_mailboxexists_operation_execute
 			sieve_runtime_trace_error(renv, "invalid mailbox name item");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
+	}
+
+	if ( trace ) {
+		if ( all_exist )
+			sieve_runtime_trace(renv, 0, "all mailboxes are available");
+		else
+			sieve_runtime_trace(renv, 0, "some mailboxes are unavailable");
 	}
 	
 	sieve_interpreter_set_test_result(renv->interp, all_exist);

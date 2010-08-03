@@ -69,6 +69,9 @@ static bool cmd_test_result_reset_generate
 static int cmd_test_result_reset_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
+			"testsuite: test_result_reset command; reset script result");
+
 	testsuite_result_reset(renv);
 	testsuite_smtp_reset();
 

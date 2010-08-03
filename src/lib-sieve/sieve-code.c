@@ -1047,6 +1047,7 @@ static int opc_jmptrue_execute
 	bool result = sieve_interpreter_get_test_result(renv->interp);
 	
 	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "jump if result is true");
+	sieve_runtime_trace_descend(renv);
 	
 	return sieve_interpreter_program_jump(renv->interp, result);
 }
@@ -1057,6 +1058,7 @@ static int opc_jmpfalse_execute
 	bool result = sieve_interpreter_get_test_result(renv->interp);
 	
 	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "jump if result is false");
-	
+	sieve_runtime_trace_descend(renv);
+
 	return sieve_interpreter_program_jump(renv->interp, !result);
 }	

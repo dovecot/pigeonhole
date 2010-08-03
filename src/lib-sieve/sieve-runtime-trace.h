@@ -8,13 +8,44 @@
  * Runtime trace
  */
 
+struct sieve_runtime_trace {
+	struct sieve_trace_config config;
+	struct ostream *stream;
+	unsigned int indent;
+};
+
 /* Trace configuration */
 
 static inline bool sieve_runtime_trace_active
 (const struct sieve_runtime_env *renv, sieve_trace_level_t trace_level) 
 {
-	return ( renv->trace_stream != NULL && 
-		trace_level <= renv->trace_config.level );
+	return ( renv->trace != NULL && trace_level <= renv->trace->config.level );
+}
+
+static inline bool sieve_runtime_trace_hasflag
+(const struct sieve_runtime_env *renv, unsigned int flag) 
+{
+	return ( renv->trace != NULL && (renv->trace->config.flags & flag) != 0 );
+}
+
+/* Trace indent */
+
+static inline void sieve_runtime_trace_descend
+(const struct sieve_runtime_env *renv)
+{
+	if ( renv->trace != NULL ) renv->trace->indent++;
+}
+
+static inline void sieve_runtime_trace_ascend
+(const struct sieve_runtime_env *renv)
+{
+	if ( renv->trace != NULL ) renv->trace->indent--;
+}
+
+static inline void sieve_runtime_trace_toplevel
+(const struct sieve_runtime_env *renv)
+{
+	if ( renv->trace != NULL ) renv->trace->indent = 0;
 }
 
 /* Trace errors */
@@ -40,8 +71,7 @@ static inline void sieve_runtime_trace_error
 	va_list args;
 	
 	va_start(args, fmt);
-	if ( renv->trace_stream != NULL && 
-		renv->trace_config.level > SIEVE_TRLVL_NONE )
+	if ( renv->trace != NULL )
 		_sieve_runtime_trace_error(renv, fmt, args);	
 	va_end(args);
 }
@@ -53,8 +83,7 @@ static inline void sieve_runtime_trace_operand_error
 	va_list args;
 	
 	va_start(args, fmt);
-	if ( renv->trace_stream != NULL && 
-		renv->trace_config.level > SIEVE_TRLVL_NONE )
+	if ( renv->trace != NULL )
 		_sieve_runtime_trace_operand_error(renv, oprnd, field_name, fmt, args);
 	va_end(args);
 }
@@ -76,7 +105,7 @@ static inline void sieve_runtime_trace
 
 	va_start(args, fmt);
 
-	if ( renv->trace_stream != NULL && trace_level <= renv->trace_config.level ) {
+	if ( renv->trace != NULL && trace_level <= renv->trace->config.level ) {
 		_sieve_runtime_trace(renv, fmt, args);
 	}
 
@@ -99,7 +128,7 @@ static inline void sieve_runtime_trace_address
 
 	va_start(args, fmt);
 
-	if ( renv->trace_stream != NULL && trace_level <= renv->trace_config.level ) {
+	if ( renv->trace != NULL && trace_level <= renv->trace->config.level ) {
 		_sieve_runtime_trace_address(renv, address, fmt, args);
 	}
 
@@ -114,7 +143,7 @@ static inline void sieve_runtime_trace_here
 
 	va_start(args, fmt);
 
-	if ( renv->trace_stream != NULL && trace_level <= renv->trace_config.level ) {
+	if ( renv->trace != NULL && trace_level <= renv->trace->config.level ) {
 		_sieve_runtime_trace_address(renv, renv->pc, fmt, args);
 	}
 
@@ -130,21 +159,21 @@ void _sieve_runtime_trace_sep(const struct sieve_runtime_env *renv);
 static inline void sieve_runtime_trace_begin
 (const struct sieve_runtime_env *renv)
 {
-	if ( renv->trace_stream != NULL )
+	if ( renv->trace != NULL )
 		_sieve_runtime_trace_begin(renv);
 }
 
 static inline void sieve_runtime_trace_end
 (const struct sieve_runtime_env *renv)
 {
-	if ( renv->trace_stream != NULL )
+	if ( renv->trace != NULL )
 		_sieve_runtime_trace_end(renv);
 }
 
 static inline void sieve_runtime_trace_sep
 (const struct sieve_runtime_env *renv)
 {
-	if ( renv->trace_stream != NULL )
+	if ( renv->trace != NULL )
 		_sieve_runtime_trace_sep(renv);
 }
 

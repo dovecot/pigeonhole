@@ -463,84 +463,109 @@ static void flags_list_clear_flags
 	str_truncate(flags_list, 0);
 }
 
+static string_t *ext_imap4flags_get_flag_variable
+(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
+	unsigned int var_index)
+{
+	string_t *flags;
+	
+	if ( storage != NULL ) {
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+			const char *var_name, *var_id;
+	
+			(void)sieve_variable_get_identifier(storage, var_index, &var_name);
+			var_id = sieve_variable_get_varid(storage, var_index);
+
+			sieve_runtime_trace(renv, 0, "update variable `%s' [%s]", 
+				var_name, var_id);
+		}
+
+		if ( !sieve_variable_get_modifiable(storage, var_index, &flags) )
+			return NULL;
+	} else {
+		flags = _get_flags_string(renv->oprtn->ext, renv->result);
+	}
+
+	return flags;
+}
+
 int ext_imap4flags_set_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
 	unsigned int var_index, struct sieve_stringlist *flags)
 {
-	string_t *cur_flags;
-	
-	if ( storage != NULL ) {
-		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
-			return SIEVE_EXEC_BIN_CORRUPT;
-	} else {
-		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
-	}
-	
+	string_t *cur_flags = ext_imap4flags_get_flag_variable
+		(renv, storage, var_index);
+		
 	if ( cur_flags != NULL ) {
 		string_t *flags_item;
 		int ret;
 
 		flags_list_clear_flags(cur_flags);
 		while ( (ret=sieve_stringlist_next_item(flags, &flags_item)) > 0 ) {
+			sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
+				"set flags `%s'", str_c(flags_item)); 
+
 			flags_list_add_flags(cur_flags, flags_item);
 		}
 
 		if ( ret < 0 ) return SIEVE_EXEC_BIN_CORRUPT;
+	
+		return SIEVE_EXEC_OK;
 	}
 
-	return SIEVE_EXEC_OK;
+	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
 int ext_imap4flags_add_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
 	unsigned int var_index, struct sieve_stringlist *flags)
 {
-	string_t *cur_flags;
-	
-	if ( storage != NULL ) {
-		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
-			return SIEVE_EXEC_BIN_CORRUPT;
-	} else
-		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
-
+	string_t *cur_flags = ext_imap4flags_get_flag_variable
+		(renv, storage, var_index);
+		
 	if ( cur_flags != NULL ) {
 		string_t *flags_item;
 		int ret;
 
 		while ( (ret=sieve_stringlist_next_item(flags, &flags_item)) > 0 ) {
+			sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
+				"add flags `%s'", str_c(flags_item)); 
+
 			flags_list_add_flags(cur_flags, flags_item);
 		}
 
 		if ( ret < 0 ) return SIEVE_EXEC_BIN_CORRUPT;
+	
+		return SIEVE_EXEC_OK;
 	}
 
-	return SIEVE_EXEC_OK;
+	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
 int ext_imap4flags_remove_flags
 (const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage, 
 	unsigned int var_index, struct sieve_stringlist *flags)
 {
-	string_t *cur_flags;
-	
-	if ( storage != NULL ) {
-		if ( !sieve_variable_get_modifiable(storage, var_index, &cur_flags) )
-			return SIEVE_EXEC_BIN_CORRUPT;
-	} else
-		cur_flags = _get_flags_string(renv->oprtn->ext, renv->result);
-	
+	string_t *cur_flags = ext_imap4flags_get_flag_variable
+		(renv, storage, var_index);
+		
 	if ( cur_flags != NULL ) {
 		string_t *flags_item;
 		int ret;
 
 		while ( (ret=sieve_stringlist_next_item(flags, &flags_item)) > 0 ) {
+			sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
+				"remove flags `%s'", str_c(flags_item)); 
+
 			flags_list_remove_flags(cur_flags, flags_item);
 		}
 
 		if ( ret < 0 ) return SIEVE_EXEC_BIN_CORRUPT;
+	
+		return SIEVE_EXEC_OK;
 	}
 
-	return SIEVE_EXEC_OK;
+	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
 /* Flag stringlist */

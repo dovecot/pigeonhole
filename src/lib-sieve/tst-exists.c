@@ -125,7 +125,8 @@ static int tst_exists_operation_execute
 	 */
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "exists test");
-		
+	sieve_runtime_trace_descend(renv);
+
 	/* Iterate through all requested headers to match (must find all specified) */
 	hdr_item = NULL;
 	matched = TRUE;
@@ -140,9 +141,14 @@ static int tst_exists_operation_execute
 		}	
 	
 		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
-        	"  header `%s' %s", str_sanitize(str_c(hdr_item), 80),
-			( matched ? "exists" : "missing" ));
+        	"header `%s' %s", str_sanitize(str_c(hdr_item), 80),
+			( matched ? "exists" : "is missing" ));
 	}
+
+	if ( matched )
+		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING, "all headers exist");
+	else
+		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING, "headers are missing");
 	
 	/* Set test result for subsequent conditional jump */
 	if ( ret >= 0 ) {

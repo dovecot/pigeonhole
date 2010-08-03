@@ -178,8 +178,13 @@ static int ext_fileinto_operation_execute
 	 */
 
 	mailbox = str_sanitize(str_c(folder), 64);
-	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, 
-		"fileinto action; store message in mailbox `%s'", mailbox);
+
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS) ) {
+		sieve_runtime_trace(renv, 0, "fileinto action");
+		sieve_runtime_trace_descend(renv);
+		sieve_runtime_trace(renv, 0, "store message in mailbox `%s'", 
+			str_sanitize(mailbox, 80));
+	}
 		
 	/* Add action to result */	
 	ret = sieve_act_store_add_to_result

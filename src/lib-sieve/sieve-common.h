@@ -64,8 +64,10 @@ struct sieve_jumplist;
 struct sieve_generator;
 struct sieve_codegen_env;
 
-/* sieve-interpreter.h */
+/* sieve-runtime.h */
 struct sieve_runtime_env;
+
+/* sieve-interpreter.h */
 struct sieve_interpreter;
 
 /* sieve-dump.h */

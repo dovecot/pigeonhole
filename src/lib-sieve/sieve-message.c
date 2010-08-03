@@ -6,6 +6,7 @@
 #include "mempool.h"
 #include "array.h"
 #include "str.h"
+#include "str-sanitize.h"
 #include "mail-storage.h"
 
 #include "sieve-common.h"
@@ -13,6 +14,7 @@
 #include "sieve-error.h"
 #include "sieve-extensions.h"
 #include "sieve-runtime.h"
+#include "sieve-runtime-trace.h"
 #include "sieve-address.h"
 
 #include "sieve-message.h"
@@ -274,6 +276,12 @@ static int sieve_message_header_stringlist_next_item
 		if ( (ret=sieve_stringlist_next_item(strlist->field_names, &hdr_item)) 
 			<= 0 )
 			return ret;
+
+		if ( _strlist->trace ) {
+			sieve_runtime_trace(renv, 0,
+				"extracting `%s' headers from message",
+				str_sanitize(str_c(hdr_item), 80));
+		}
 
 		/* Fetch all matching headers from the e-mail */
 		if ( mail_get_headers_utf8(mail, str_c(hdr_item), &strlist->headers) < 0 ||

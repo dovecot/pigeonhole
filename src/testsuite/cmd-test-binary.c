@@ -239,8 +239,11 @@ static int cmd_test_binary_operation_execute
 	if ( sieve_operation_is(oprtn, test_binary_load_operation) ) {
 		struct sieve_binary *sbin = testsuite_binary_load(str_c(binary_name));
 
-		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-			"binary :load %s", str_c(binary_name));
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+			sieve_runtime_trace(renv, 0, "testsuite: test_binary command");
+			sieve_runtime_trace_descend(renv);
+			sieve_runtime_trace(renv, 0, "load binary `%s'", str_c(binary_name));
+		}
 
 		if ( sbin != NULL ) {
 			testsuite_script_set_binary(sbin);
@@ -254,8 +257,11 @@ static int cmd_test_binary_operation_execute
 	} else if ( sieve_operation_is(oprtn, test_binary_save_operation) ) {
 		struct sieve_binary *sbin = testsuite_script_get_binary();
 
-		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-			"binary :save %s", str_c(binary_name));
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+			sieve_runtime_trace(renv, 0, "testsuite: test_binary command");
+			sieve_runtime_trace_descend(renv);
+			sieve_runtime_trace(renv, 0, "save binary `%s'", str_c(binary_name));
+		}
 
 		if ( sbin != NULL ) 
 			testsuite_binary_save(sbin, str_c(binary_name));

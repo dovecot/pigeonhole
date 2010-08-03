@@ -321,13 +321,24 @@ static int cmd_test_message_smtp_operation_execute
 	/*
 	 * Perform operation
 	 */
-		
-	if ( is_test )
-		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-			"test_message test [smtp index=%d]", msg_index);
-	else
-		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
-			"text_message command [smtp index=%d]", msg_index);
+
+	if ( is_test ) {
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_TESTS) ) {
+			sieve_runtime_trace(renv, 0, 
+				"testsuite: test_message test");
+			sieve_runtime_trace_descend(renv);
+			sieve_runtime_trace(renv, 0, 
+				"check and retrieve smtp message [index=%d]", msg_index);
+		}
+	} else {
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+			sieve_runtime_trace(renv, 0, 
+				"testsuite: test_message command");
+			sieve_runtime_trace_descend(renv);
+			sieve_runtime_trace(renv, 0, 
+				"retrieve smtp message [index=%d]", msg_index);
+		}
+	}
 
 	result = testsuite_smtp_get(renv, msg_index);
 
@@ -371,13 +382,26 @@ static int cmd_test_message_mailbox_operation_execute
 	/*
 	 * Perform operation
 	 */
-
-	if ( is_test ) 		
-		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, 
-			"test_message test [mailbox=`%s' index=%d]", str_c(folder), msg_index);
-	else
-		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
-			"test_message command [mailbox=`%s' index=%d]", str_c(folder), msg_index);
+ 
+	if ( is_test ) {
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_TESTS) ) {
+			sieve_runtime_trace(renv, 0, 
+				"testsuite: test_message test");
+			sieve_runtime_trace_descend(renv);
+			sieve_runtime_trace(renv, 0, 
+				"check and retrieve mailbox message [mailbox=`%s' index=%d]", 
+				str_c(folder), msg_index);
+		}
+	} else {
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+			sieve_runtime_trace(renv, 0, 
+				"testsuite: test_message command");
+			sieve_runtime_trace_descend(renv);
+			sieve_runtime_trace(renv, 0, 
+				"retrieve mailbox message [mailbox=`%s' index=%d]", 
+				str_c(folder), msg_index);
+		}
+	}
 
 	result = testsuite_mailstore_mail_index(renv, str_c(folder), msg_index);
 

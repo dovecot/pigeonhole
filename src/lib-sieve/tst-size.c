@@ -269,10 +269,28 @@ static int tst_size_operation_execute
 	/* Perform the test */
 	if ( sieve_operation_is(renv->oprtn, tst_size_over_operation) ) {
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "size :over test");
+		
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_MATCHING) ) {
+			sieve_runtime_trace_descend(renv);
+
+			sieve_runtime_trace(renv, 0,
+				"comparing message size %"PRIuSIZE_T, mail_size);
+			sieve_runtime_trace(renv, 0,
+				"with upper limit %"PRIuSIZE_T, limit);
+		}
 
 		sieve_interpreter_set_test_result(renv->interp, (mail_size > limit));
 	} else {
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "size :under test");
+
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_MATCHING) ) {
+			sieve_runtime_trace_descend(renv);
+
+			sieve_runtime_trace(renv, 0,
+				"comparing message size %"PRIuSIZE_T, mail_size);
+			sieve_runtime_trace(renv, 0,
+				"with lower limit %"PRIuSIZE_T, limit);
+		}
 
 		sieve_interpreter_set_test_result(renv->interp, (mail_size < limit));
 	}

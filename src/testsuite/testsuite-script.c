@@ -8,6 +8,7 @@
 #include "sieve-script.h"
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"
+#include "sieve-runtime-trace.h"
 #include "sieve-result.h"
 
 #include "testsuite-common.h"
@@ -35,11 +36,21 @@ void testsuite_script_deinit(void)
 	}
 }
 
-static struct sieve_binary *_testsuite_script_compile(const char *script_path)
+static struct sieve_binary *_testsuite_script_compile
+(const struct sieve_runtime_env *renv, const char *script)
 {
 	struct sieve_instance *svinst = testsuite_sieve_instance;
 	struct sieve_binary *sbin;
 	const char *sieve_dir;
+	const char *script_path;
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "compile script `%s'", script);
+
+	script_path = sieve_script_dirpath(renv->script);
+	if ( script_path == NULL ) 
+		return SIEVE_EXEC_FAILURE;
+
+	script_path = t_strconcat(script_path, "/", script, NULL);
 
 	/* Initialize environment */
 	sieve_dir = strrchr(script_path, '/');
@@ -61,13 +72,14 @@ static struct sieve_binary *_testsuite_script_compile(const char *script_path)
 	return sbin;
 }
 
-bool testsuite_script_compile(const char *script_path)
+bool testsuite_script_compile
+(const struct sieve_runtime_env *renv, const char *script)
 {
 	struct sieve_binary *sbin;
 
 	testsuite_log_clear_messages();
 
-	if ( (sbin=_testsuite_script_compile(script_path)) == NULL )
+	if ( (sbin=_testsuite_script_compile(renv, script)) == NULL )
 		return FALSE;
 
 	if ( _testsuite_compiled_script != NULL ) {
@@ -152,7 +164,7 @@ bool testsuite_script_multiscript
 	const char *const *scripts;
 	unsigned int count, i;
 	bool more = TRUE;
-	int ret;
+	bool result = TRUE;
 
 	testsuite_log_clear_messages();
 
@@ -168,6 +180,7 @@ bool testsuite_script_multiscript
 	scriptenv.duplicate_check = NULL;
 	scriptenv.user = renv->scriptenv->user;
 	scriptenv.trace_stream = renv->scriptenv->trace_stream;	
+	scriptenv.trace_config = renv->scriptenv->trace_config;
 
 	/* Start execution */
 
@@ -179,22 +192,25 @@ bool testsuite_script_multiscript
 
 	for ( i = 0; i < count && more; i++ ) {
 		struct sieve_binary *sbin = NULL;
-		const char *script_path = scripts[i];
+		const char *script = scripts[i];
 		bool final = ( i == count - 1 );
 
 		/* Open */
 	
-		if ( (sbin=_testsuite_script_compile(script_path)) == NULL )
+		if ( (sbin=_testsuite_script_compile(renv, script)) == NULL ) {
+			result = FALSE;
 			break;
+		}
 
 		/* Execute */
+
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "run script `%s'", script);
 
 		more = sieve_multiscript_run(mscript, sbin, testsuite_log_ehandler, final);
 
 		sieve_close(&sbin);
 	}
 
-	ret = sieve_multiscript_finish(&mscript, testsuite_log_ehandler, NULL);
-	
-	return ( ret > 0 );
+	return ( sieve_multiscript_finish(&mscript, testsuite_log_ehandler, NULL) > 0
+		&& result );
 }

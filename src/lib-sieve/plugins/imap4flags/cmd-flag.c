@@ -177,12 +177,10 @@ static int cmd_flag_operation_execute
 {
 	const struct sieve_operation *op = renv->oprtn;
 	struct sieve_operand operand;
-	string_t *flag_item;
 	struct sieve_stringlist *flag_list;
 	struct sieve_variable_storage *storage;
 	unsigned int var_index;
 	ext_imapflag_flag_operation_t flag_op;
-	int ret;
 		
 	/* 
 	 * Read operands 
@@ -241,7 +239,8 @@ static int cmd_flag_operation_execute
 		i_unreached();
 	}
 
+	sieve_runtime_trace_descend(renv);
+
 	/* Perform requested operation */
-	
 	return flag_op(renv, storage, var_index, flag_list);
 }

@@ -108,7 +108,6 @@ static int tst_test_script_compile_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *script_name;
-	const char *script_path;
 	bool result = TRUE;
 
 	/*
@@ -122,18 +121,14 @@ static int tst_test_script_compile_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-		"testsuite: compile script '%s'", str_c(script_name));
-
-	script_path = sieve_script_dirpath(renv->script);
-	if ( script_path == NULL ) 
-		return SIEVE_EXEC_FAILURE;
-
-	script_path = t_strconcat(script_path, "/", str_c(script_name), NULL);
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_TESTS) ) {
+		sieve_runtime_trace(renv, 0, "testsuite: test_script_compile test");
+		sieve_runtime_trace_descend(renv);
+	}
 
 	/* Attempt script compile */
 
-	result = testsuite_script_compile(script_path);
+	result = testsuite_script_compile(renv, str_c(script_name));
 
 	/* Set result */
 	sieve_interpreter_set_test_result(renv->interp, result);

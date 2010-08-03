@@ -135,7 +135,8 @@ static int cmd_test_fail_operation_execute
 	if ( !sieve_opr_string_read(renv, address, "reason", &reason) )
 		return SIEVE_EXEC_BIN_CORRUPT;
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "TEST FAIL");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
+		"testsuite: test_fail command; FAIL current test");
 
 	testsuite_test_fail(reason);
 	

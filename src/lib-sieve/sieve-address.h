@@ -22,9 +22,11 @@ struct sieve_address {
 static inline const char *sieve_address_to_string
 (const struct sieve_address *address) 
 {
-	if ( address == NULL || address->local_part == NULL ||
-		address->domain == NULL )
+	if ( address == NULL || address->local_part == NULL )
 		return NULL;
+
+	if ( address->domain == NULL )
+		return address->local_part;
 
 	return t_strconcat(address->local_part, "@", address->domain, NULL);
 }
@@ -58,6 +60,12 @@ static inline int sieve_address_list_get_length
 (struct sieve_address_list *addrlist)
 {
 	return sieve_stringlist_get_length(&addrlist->strlist);
+}
+
+static inline void sieve_address_list_set_trace
+(struct sieve_address_list *addrlist, bool trace)
+{
+	return sieve_stringlist_set_trace(&addrlist->strlist, trace);
 }
 
 /*

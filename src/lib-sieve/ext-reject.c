@@ -290,12 +290,16 @@ static int ext_reject_operation_execute
 	 * Perform operation
 	 */
 
-	if ( sieve_operation_is(oprtn, ereject_operation) )
-		sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS,
-			"ereject action; reject message with reason `%s'", str_sanitize(str_c(reason), 64));
-	else
-		sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS,
-			"reject action; reject message with reason `%s'", str_sanitize(str_c(reason), 64));
+	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS) ) {
+		if ( sieve_operation_is(oprtn, ereject_operation) )
+			sieve_runtime_trace(renv, 0, "ereject action");
+		else
+			sieve_runtime_trace(renv, 0, "reject action");
+
+		sieve_runtime_trace_descend(renv);
+		sieve_runtime_trace(renv, 0, "reject message with reason `%s'", 
+			str_sanitize(str_c(reason), 64));
+	}
 
 	/* Add reject action to the result */
 	pool = sieve_result_pool(renv->result);

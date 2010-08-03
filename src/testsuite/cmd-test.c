@@ -157,7 +157,7 @@ static int cmd_test_operation_execute
 	
 	sieve_runtime_trace_sep(renv);
 	sieve_runtime_trace(renv, SIEVE_TRLVL_NONE, 
-		"** Test start: \"%s\"", str_c(test_name));
+		"** Testsuite test start: \"%s\"", str_c(test_name));
 
 	testsuite_test_start(test_name);
 	return SIEVE_EXEC_OK;
@@ -167,7 +167,8 @@ static int cmd_test_finish_operation_execute
 (const struct sieve_runtime_env *renv ATTR_UNUSED, 
 	sieve_size_t *address ATTR_UNUSED)
 {
-	sieve_runtime_trace(renv, SIEVE_TRLVL_NONE, "** Test end");
+	sieve_runtime_trace(renv, SIEVE_TRLVL_NONE, 
+		"** Testsuite test end");
 	sieve_runtime_trace_sep(renv);
 	
 	testsuite_test_succeed(NULL);

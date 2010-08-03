@@ -1,14 +1,12 @@
 Current activities:
 
-* Improve debugging support in the sieve-test tool:
-	- Improve trace debugging towards something more intuitively readable.
+* Cleanup the test suite
+	- Make uniform command implementations
+	- Cleanup test scripts
 
 Next (in order of descending priority/precedence):
 
 * Update man pages to match style of Dovecot man pages.
-* Cleanup the test suite
-	- Make uniform command implementations
-	- Cleanup test scripts
 * Improve error handling and logging
 	- Detect permission errors when writing global script binaries and advise the 
 	  administrator on using sievec to precompile the scripts.

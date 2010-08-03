@@ -83,8 +83,10 @@ static int mcht_count_match
 
 	if ( trace ) {
 		sieve_runtime_trace(renv, 0,
-			"  matching count value `%s'", str_sanitize(str_c(value), 80));
+			"matching count value `%s'", str_sanitize(str_c(value), 80));
 	}
+
+	sieve_runtime_trace_descend(renv);
 
   /* Match to all key values */
   key_item = NULL;
@@ -97,9 +99,11 @@ static int mcht_count_match
 
 		if ( trace ) {
 			sieve_runtime_trace(renv, 0,
-				"    with key `%s' => %d", str_sanitize(str_c(key_item), 80), ret);
+				"with key `%s' => %d", str_sanitize(str_c(key_item), 80), ret);
 		}
 	}
+
+	sieve_runtime_trace_ascend(renv);
 
 	return ret;
 }
