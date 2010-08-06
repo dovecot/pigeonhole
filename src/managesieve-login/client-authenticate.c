@@ -145,6 +145,12 @@ int managesieve_client_auth_parse_response(struct client *client)
 	const char *msg;
 	bool fatal;
 
+	if ( i_stream_read(client->input) == -1 ) {	
+		/* disconnected */
+		client_destroy(client, "Disconnected");
+		return -1;
+	}
+
 	if ( msieve_client->skip_line ) {
 		if ( i_stream_next_line(client->input) == NULL )
 			return 0;
@@ -159,15 +165,18 @@ int managesieve_client_auth_parse_response(struct client *client)
 		if (fatal) {
 			/* FIXME: What to do? */
 		}
-	  
+
+		if ( i_stream_next_line(client->input) == NULL )
+			msieve_client->skip_line = TRUE;
 		sasl_server_auth_failed(client, msg);
 		return -1;
 	case -2:
 		/* not enough data */
 		return 0;
 	}
-
-	msieve_client->skip_line = TRUE;
+	
+	if ( i_stream_next_line(client->input) == NULL )
+		msieve_client->skip_line = TRUE;
 
 	if ( args[0].type != MANAGESIEVE_ARG_STRING || 
 		args[1].type != MANAGESIEVE_ARG_EOL ) {
