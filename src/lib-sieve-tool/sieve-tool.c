@@ -98,6 +98,39 @@ const struct sieve_environment sieve_tool_sieve_env = {
  * Initialization
  */
 
+static void sieve_tool_get_user_data
+(const char **username_r, const char **homedir_r)
+{
+	uid_t process_euid = geteuid();
+	struct passwd *pw;
+	const char *user = NULL, *home = NULL;
+
+	user = getenv("USER");
+	home = getenv("HOME");
+
+	if ( user == NULL || *user == '\0' ||
+		home == NULL || *home == '\0' ) {
+
+		if ((pw = getpwuid(process_euid)) != NULL) {
+            user = pw->pw_name;
+			home = pw->pw_dir;
+		} 
+	}
+
+	if ( username_r != NULL ) {
+		if ( user == NULL || *user == '\0' ) {
+            i_fatal("couldn't lookup our username (uid=%s)", 
+				dec2str(process_euid));
+		}
+
+		*username_r = t_strdup(user);
+	}
+
+	if ( homedir_r != NULL )
+		*homedir_r = t_strdup(home);
+}
+
+
 struct sieve_tool *sieve_tool_init
 (const char *name, int *argc, char **argv[], const char *getopt_str,
 	bool no_config)
@@ -131,7 +164,7 @@ int sieve_tool_getopt(struct sieve_tool *tool)
 			/* extensions */
 			if ( tool->sieve_extensions != NULL ) {
 				i_fatal_status(EX_USAGE, 
-					"Duplicate -x option specified, but only one allowed.");
+					"duplicate -x option specified, but only one allowed.");
 			}
 
 			tool->sieve_extensions = i_strdup(optarg);
@@ -190,13 +223,17 @@ struct sieve_instance *sieve_tool_init_finish
 		MAIL_STORAGE_SERVICE_FLAG_NO_LOG_INIT;
 	struct mail_storage_service_input service_input;
 	const char *username = tool->username;
+	const char *homedir = tool->homedir;
 	const char *errstr;
 
 	master_service_init_finish(master_service);
 
-	if ( username == NULL )
-		username = tool->username = i_strdup(getenv("USER"));
-	else
+	if ( username == NULL ) {
+		sieve_tool_get_user_data(&username, &homedir);
+		
+		username = tool->username = i_strdup(username);
+		tool->homedir = i_strdup(homedir);
+	} else
 		storage_service_flags |=
 			MAIL_STORAGE_SERVICE_FLAG_USERDB_LOOKUP;
 
@@ -219,7 +256,7 @@ struct sieve_instance *sieve_tool_init_finish
 	/* Initialize Sieve Engine */
 	if ( (tool->svinst=sieve_init(&sieve_tool_sieve_env, tool, tool->debug)) 
 		== NULL )
-		i_fatal("failed to initialize sieve implementation\n");
+		i_fatal("failed to initialize sieve implementation");
 
 	/* Load Sieve plugins */
 	if ( array_count(&tool->sieve_plugins) > 0 ) {
@@ -384,8 +421,12 @@ void sieve_tool_set_setting_callback
 const char *sieve_tool_get_username
 (struct sieve_tool *tool)
 {
-	if ( tool->username == NULL )
-		return getenv("USER");
+	const char *username;
+
+	if ( tool->username == NULL ) {
+		sieve_tool_get_user_data(&username, NULL);
+		return username;
+	} 
 
 	return tool->username;
 }
@@ -393,24 +434,18 @@ const char *sieve_tool_get_username
 const char *sieve_tool_get_homedir
 (struct sieve_tool *tool)
 {
-	const char *home = NULL;
+	const char *homedir = NULL;
 
 	if ( tool->homedir != NULL )
 		return tool->homedir;
 
 	if ( tool->mail_user_dovecot != NULL &&
-		mail_user_get_home(tool->mail_user_dovecot, &home) > 0 ) {
-		tool->homedir = i_strdup(home);
+		mail_user_get_home(tool->mail_user_dovecot, &homedir) > 0 ) {
 		return tool->homedir;
 	}
 
-	home = getenv("HOME");
-	if ( home != NULL ) {
-		tool->homedir = i_strdup(home);
-		return tool->homedir;
-	}
-		
-	return NULL;
+	sieve_tool_get_user_data(NULL, &homedir);
+	return homedir;
 }
 
 struct mail_user *sieve_tool_get_mail_user
