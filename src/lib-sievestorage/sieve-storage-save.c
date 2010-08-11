@@ -330,7 +330,7 @@ int sieve_storage_save_commit(struct sieve_save_context **ctx)
 
 	sieve_storage_save_destroy(ctx);
 
-	return !failed;
+	return ( failed ? -1 : 0 );
 }
 
 void sieve_storage_save_cancel(struct sieve_save_context **ctx)
