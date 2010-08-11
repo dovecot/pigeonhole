@@ -174,6 +174,7 @@ static struct sieve_interpreter *_sieve_interpreter_create
 	
 	if ( !success ) {
 		sieve_interpreter_free(&interp);
+		interp = NULL;
 	} else {
 		interp->reset_vector = *address;
 	}
@@ -185,8 +186,11 @@ struct sieve_interpreter *sieve_interpreter_create
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
 	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler) 
 {
-	struct sieve_binary_block *sblock =
-		sieve_binary_block_get(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM);
+	struct sieve_binary_block *sblock;
+
+	if ( (sblock=sieve_binary_block_get(sbin, SBIN_SYSBLOCK_MAIN_PROGRAM)) 
+		== NULL )
+		return NULL;
 
  	return _sieve_interpreter_create(sbin, sblock, NULL, msgdata, senv, ehandler);
 }
@@ -196,10 +200,11 @@ struct sieve_interpreter *sieve_interpreter_create_for_block
 	const struct sieve_message_data *msgdata, const struct sieve_script_env *senv, 
 	struct sieve_error_handler *ehandler) 
 {
-	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
+	if ( sblock == NULL ) return NULL;
 
  	return _sieve_interpreter_create
-		(sbin, sblock, script, msgdata, senv, ehandler);
+		(sieve_binary_block_get_binary(sblock), sblock, script, msgdata, senv,
+			ehandler);
 }
 
 void sieve_interpreter_free(struct sieve_interpreter **interp) 
