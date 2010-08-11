@@ -453,7 +453,6 @@ struct sieve_multiscript {
 
 	int status;
 	bool active;
-	bool ended;
 	bool keep;
 
 	struct ostream *teststream;
@@ -508,8 +507,6 @@ static void sieve_multiscript_test
 	} else {
 		if ( keep != NULL ) *keep = TRUE;
 	}
-		
-	mscript->active = ( mscript->active && *keep );
 
 	sieve_result_mark_executed(mscript->result);
 }
@@ -528,8 +525,6 @@ static void sieve_multiscript_execute
 		else
 			if ( keep != NULL ) *keep = TRUE;			
 	}
-	
-	mscript->active = ( mscript->active && *keep );
 }
 
 bool sieve_multiscript_run
@@ -553,7 +548,8 @@ bool sieve_multiscript_run
 		else
 			sieve_multiscript_execute(mscript, ehandler, &mscript->keep);
 
-		if ( final ) mscript->active = FALSE;
+		mscript->active =
+			( mscript->active && mscript->keep && !final && mscript->status > 0 );
 	}	
 
 	if ( mscript->status <= 0 )
