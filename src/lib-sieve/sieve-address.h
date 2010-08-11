@@ -53,7 +53,7 @@ static inline int sieve_address_list_next_item
 static inline void sieve_address_list_reset
 (struct sieve_address_list *addrlist) 
 {
-	return sieve_stringlist_reset(&addrlist->strlist);
+	sieve_stringlist_reset(&addrlist->strlist);
 }
 
 static inline int sieve_address_list_get_length
@@ -65,7 +65,7 @@ static inline int sieve_address_list_get_length
 static inline void sieve_address_list_set_trace
 (struct sieve_address_list *addrlist, bool trace)
 {
-	return sieve_stringlist_set_trace(&addrlist->strlist, trace);
+	sieve_stringlist_set_trace(&addrlist->strlist, trace);
 }
 
 /*

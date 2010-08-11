@@ -42,7 +42,7 @@ static inline int sieve_stringlist_next_item
 static inline void sieve_stringlist_reset
 (struct sieve_stringlist *strlist) 
 {
-	return strlist->reset(strlist);
+	strlist->reset(strlist);
 }
 
 int sieve_stringlist_get_length
