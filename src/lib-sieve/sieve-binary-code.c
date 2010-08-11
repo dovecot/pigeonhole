@@ -316,6 +316,7 @@ bool sieve_binary_read_string
 (struct sieve_binary_block *sblock, sieve_size_t *address, string_t **str_r) 
 {
 	unsigned int strlen = 0;
+	const char *strdata;
 
 	ADDR_CODE_READ(sblock);
   
@@ -325,12 +326,14 @@ bool sieve_binary_read_string
 	if ( strlen > ADDR_BYTES_LEFT(address) ) 
 		return FALSE;
  
- 	if ( str_r != NULL )  
-		*str_r = t_str_new_const((const char *) ADDR_POINTER(address), strlen);
+	strdata = (const char *) ADDR_POINTER(address);
 	ADDR_JUMP(address, strlen);
 	
 	if ( ADDR_CODE_AT(address) != 0 )
 		return FALSE;
+
+ 	if ( str_r != NULL )  
+		*str_r = t_str_new_const(strdata, strlen);
 	
 	ADDR_JUMP(address, 1);
   
