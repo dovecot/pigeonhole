@@ -202,7 +202,7 @@ static bool cmd_include_validate
 		(struct cmd_include_context_data *) cmd->data;
 	struct sieve_script *script;
 	const char *script_path, *script_name;
-	bool exists = TRUE;
+	enum sieve_error error = TRUE;
 	
 	/* Check argument */
 	if ( !sieve_validate_positional_argument
@@ -247,10 +247,10 @@ static bool cmd_include_validate
 	/* Create script object */
 	script = sieve_script_create_in_directory
 		(this_ext->svinst, script_path, script_name, 
-			sieve_validator_error_handler(valdtr), &exists);
+			sieve_validator_error_handler(valdtr), &error);
 
 	if ( script == NULL ) {
-		if ( !exists ) {
+		if ( error == SIEVE_ERROR_NOT_FOUND ) {
 			sieve_argument_validate_error(valdtr, arg, 
 				"included %s script '%s' does not exist", 
 				ext_include_script_location_name(ctx_data->location),

@@ -9,16 +9,16 @@
 #include "sieve-storage.h"
 
 struct sieve_script *sieve_storage_script_init
-    (struct sieve_storage *storage, const char *scriptname, bool *exists_r);
+	(struct sieve_storage *storage, const char *scriptname);
 
 const char *sieve_storage_file_get_scriptname
 	(const struct sieve_storage *storage, const char *filename);
 
-const char *
-	sieve_storage_get_active_scriptfile(struct sieve_storage *storage);
+int sieve_storage_get_active_scriptfile
+	(struct sieve_storage *storage, const char **file_r);
 
 struct sieve_script *sieve_storage_get_active_script
-	(struct sieve_storage *storage, bool *no_active);
+	(struct sieve_storage *storage);
 
 int sieve_storage_script_is_active(struct sieve_script *script);
 
@@ -29,7 +29,7 @@ int sieve_storage_deactivate(struct sieve_storage *storage);
 int sieve_storage_script_activate(struct sieve_script *script);
 
 int sieve_storage_script_rename
-	(struct sieve_script *script, const char *newname);
+(struct sieve_script *script, const char *newname);
 
 #endif
 

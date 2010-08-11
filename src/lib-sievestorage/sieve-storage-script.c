@@ -7,6 +7,7 @@
 #include "ioloop.h"
 #include "istream.h"
 #include "file-copy.h"
+#include "eacces-error.h"
 
 #include "sieve-script-private.h"
 
@@ -30,10 +31,11 @@ struct sieve_storage_script {
 
 struct sieve_script *sieve_storage_script_init_from_path
 (struct sieve_storage *storage, const char *path, 
-	const char *scriptname, bool *exists_r)
+	const char *scriptname)
 {
 	pool_t pool;
 	struct sieve_storage_script *st_script = NULL;	
+	enum sieve_error error;
 
 	/* Prevent initializing the active script link as a script when it
 	 * resides in the sieve storage directory.
@@ -48,8 +50,8 @@ struct sieve_script *sieve_storage_script_init_from_path
 			fname++;
 
 		if ( strcmp(fname, storage->active_fname) == 0 ) {
-			if ( exists_r != NULL )
-				*exists_r = FALSE;
+			sieve_storage_set_error
+				(storage, SIEVE_ERROR_NOT_FOUND, "Script does not exist.");
 			return NULL;
 		}
 	}
@@ -60,26 +62,27 @@ struct sieve_script *sieve_storage_script_init_from_path
 	st_script->storage = storage;
 
 	if ( sieve_script_init(&st_script->script, storage->svinst, path, scriptname, 
-		sieve_storage_get_error_handler(storage), exists_r) != NULL ) {
-
+		sieve_storage_get_error_handler(storage), &error) != NULL ) {
 		return &st_script->script;
 	}
 
 	pool_unref(&pool);
 
+	if ( error == SIEVE_ERROR_NOT_FOUND )
+		sieve_storage_set_error(storage, error, "Script does not exist.");
+
 	return NULL;
 }
 
 struct sieve_script *sieve_storage_script_init
-(struct sieve_storage *storage, const char *scriptname, bool *exists_r)
+(struct sieve_storage *storage, const char *scriptname)
 {	
 	struct sieve_script *script;
 	const char *path;
 
 	/* Validate script name */	
 	if ( !sieve_script_name_is_valid(scriptname) ) {
-		sieve_storage_set_error(storage, 
-			SIEVE_STORAGE_ERROR_IMPOSSIBLE,
+		sieve_storage_set_error(storage, SIEVE_ERROR_BAD_PARAMS,
 			"Invalid script name '%s'.", scriptname);
 		return NULL;
 	}
@@ -87,15 +90,14 @@ struct sieve_script *sieve_storage_script_init
 	T_BEGIN {
 		path = t_strconcat( storage->dir, "/", scriptname, ".sieve", NULL );
 
-		script = sieve_storage_script_init_from_path
-			(storage, path, NULL, exists_r);
+		script = sieve_storage_script_init_from_path(storage, path, NULL);
 	} T_END;
 
 	return script;
 }
 
 static struct sieve_script *sieve_storage_script_init_from_file
-(struct sieve_storage *storage, const char *scriptfile, bool *exists_r)
+(struct sieve_storage *storage, const char *scriptfile)
 {	
 	struct sieve_script *script;
 	const char *path;
@@ -103,8 +105,7 @@ static struct sieve_script *sieve_storage_script_init_from_file
 	T_BEGIN {
 		path = t_strconcat( storage->dir, "/", scriptfile, NULL );
 
-		script = sieve_storage_script_init_from_path
-			(storage, path, NULL, exists_r);
+		script = sieve_storage_script_init_from_path(storage, path, NULL);
 	} T_END;
 
 	return script;
@@ -123,14 +124,13 @@ const char *sieve_storage_file_get_scriptname
 	return t_strdup_until(filename, ext);
 }
 
-static const char *sieve_storage_read_active_link
-(struct sieve_storage *storage, bool *not_link)
+static int sieve_storage_read_active_link
+(struct sieve_storage *storage, const char **link_r)
 {
   char linkbuf[PATH_MAX];
   int ret;
 
-	if ( not_link != NULL )
-		*not_link = FALSE;
+	*link_r = NULL;
 
 	ret = readlink(storage->active_path, linkbuf, sizeof(linkbuf));
 
@@ -143,25 +143,24 @@ static const char *sieve_storage_read_active_link
 			i_warning
 			  ("sieve-storage: Active sieve script symlink %s is no symlink.",
 			   storage->active_path);
-			if ( not_link != NULL )
-				*not_link = TRUE;
-			return "";
+			return 0;
 		}
 
-		if (errno != ENOENT ) {
-			/* We do need to panic otherwise */
-			sieve_storage_set_critical
-			  (storage,
-			  	"Performing readlink() on active sieve symlink '%s' failed: %m", 
-					storage->active_path);
-			return NULL;
+		if (errno == ENOENT ) {
+			/* Symlink not found */
+			return 0;
 		}
 
-		return "";
+		/* We do need to panic otherwise */
+		sieve_storage_set_critical(storage,
+			"Performing readlink() on active sieve symlink '%s' failed: %m", 
+			storage->active_path);
+		return -1;
 	}
 
 	/* ret is now assured to be valid, i.e. > 0 */
-	return t_strndup(linkbuf, ret);
+	*link_r = t_strndup(linkbuf, ret);
+	return 1;
 }
 
 static const char *sieve_storage_parse_link
@@ -204,16 +203,17 @@ static const char *sieve_storage_parse_link
 	return fname;
 }
 
-const char *sieve_storage_get_active_scriptfile
-(struct sieve_storage *storage)
+int sieve_storage_get_active_scriptfile
+(struct sieve_storage *storage, const char **file_r)
 {
 	const char *link, *scriptfile;
+	int ret;
+
+	*file_r = NULL;
 
 	/* Read the active link */
-	link = sieve_storage_read_active_link(storage, NULL);
-
-	if ( link == NULL || *link == '\0' ) 
-		return link;
+	if ( (ret=sieve_storage_read_active_link(storage, &link)) <= 0 )
+		return ret;
 
 	/* Parse the link */
 	scriptfile = sieve_storage_parse_link(storage, link);
@@ -223,37 +223,30 @@ const char *sieve_storage_get_active_scriptfile
 		 * ignore this situation and report 'no active script'.
 		 * Activation should fix this situation.
 		 */
-		return "";
+		return 0;
 	}
 
-	return scriptfile;
+	*file_r = scriptfile;
+	return 1;
 }
 
 struct sieve_script *sieve_storage_get_active_script
-(struct sieve_storage *storage, bool *no_active)
+(struct sieve_storage *storage)
 {
-	bool exists, no_link;
 	struct sieve_script *script;
 	const char *scriptfile, *link;
+	int ret;
 
-	*no_active = FALSE;
+	sieve_storage_clear_error(storage);
 
 	/* Read the active link */
-	link = sieve_storage_read_active_link(storage, &no_link);
-	
-	if ( link == NULL )
-		/* Error */
-		return NULL;
-
-	if ( *link == '\0' )
-	{
-		if (no_link) {
+	if ( (ret=sieve_storage_read_active_link(storage, &link)) <= 0 ) {
+		if ( ret == 0 ) {
 			/* Try to open the active_path as a regular file */
 			return sieve_storage_script_init_from_path
-				(storage, storage->active_path, NULL, NULL);
+				(storage, storage->active_path, NULL);
 		}
 
-		*no_active = TRUE;
 		return NULL;
 	}
 
@@ -261,43 +254,37 @@ struct sieve_script *sieve_storage_get_active_script
 	scriptfile = sieve_storage_parse_link(storage, link);
 
 	if (scriptfile == NULL) {
-  		/* Obviously someone has been playing with our symlink,
-		 * ignore this situation and report 'no active script'.
+		/* Obviously someone has been playing with our symlink,
+		 * ignore this situation and report.
 		 */
-		*no_active = TRUE;
 		return NULL;
 	}
 	
-	exists = TRUE;
-	script = sieve_storage_script_init_from_file(storage, scriptfile, &exists);	
+	script = sieve_storage_script_init_from_file(storage, scriptfile);	
 
-	if ( !exists ) {
+	if ( script == NULL && storage->error_code == SIEVE_ERROR_NOT_FOUND ) {
 		i_warning
 		  ("sieve-storage: Active sieve script symlink %s "
 		   "points to non-existent script (points to %s).",
 		   storage->active_path, link);
 	}
-	
-	*no_active = !exists;
+
 	return script;
 }
 
 int sieve_storage_script_is_active(struct sieve_script *script)
 {
-	struct sieve_storage_script *st_script = (struct sieve_storage_script *) script;
+	struct sieve_storage_script *st_script =
+		(struct sieve_storage_script *) script;
 	const char *afile;
 	int ret = 0;
 
 	T_BEGIN {
-		afile = sieve_storage_get_active_scriptfile(st_script->storage);
+		ret = sieve_storage_get_active_scriptfile(st_script->storage, &afile);
 	
-		if (afile == NULL) {
-			/* Critical error */
-			ret = -1;
-		} else {
+		if ( ret > 0 ) {
 		 	/* Is the requested script active? */
-			if ( strcmp(script->filename, afile) == 0 ) 
-				ret = 1;
+			ret = ( strcmp(script->filename, afile) == 0 ? 1 : 0 );
 		}
 	} T_END;
 
@@ -306,13 +293,14 @@ int sieve_storage_script_is_active(struct sieve_script *script)
 
 int sieve_storage_script_delete(struct sieve_script **script) 
 {
-	struct sieve_storage_script *st_script = (struct sieve_storage_script *) *script;
+	struct sieve_storage_script *st_script = 
+		(struct sieve_storage_script *) *script;
 	struct sieve_storage *storage = st_script->storage;
 	int ret = 0;
 
 	/* Is the requested script active? */
 	if ( sieve_storage_script_is_active(*script) ) {
-		sieve_storage_set_error(storage, SIEVE_STORAGE_ERROR_ACTIVE,
+		sieve_storage_set_error(storage, SIEVE_ERROR_ACTIVE,
 			"Cannot delete the active sieve script.");
 		ret = -1;
 	} else {
@@ -320,7 +308,7 @@ int sieve_storage_script_delete(struct sieve_script **script)
 
 		if ( ret < 0 ) {
 			if ( errno == ENOENT ) 
-				sieve_storage_set_error(storage, SIEVE_STORAGE_ERROR_NOTFOUND,
+				sieve_storage_set_error(storage, SIEVE_ERROR_NOT_FOUND,
 					"Sieve script does not exist.");
 			else
 				sieve_storage_set_critical(
@@ -331,7 +319,6 @@ int sieve_storage_script_delete(struct sieve_script **script)
 
 	/* Always deinitialize the script object */
 	sieve_script_unref(script);
-
 	return ret;	
 }
 
@@ -350,11 +337,11 @@ static bool sieve_storage_rescue_regular_file(struct sieve_storage *storage)
 		return TRUE;
 	}
 
-  	if ( S_ISLNK( st.st_mode ) ) {
+	if ( S_ISLNK( st.st_mode ) ) {
 		if ( storage->debug )
-	    	i_info( "sieve-storage: nothing to rescue %s.", storage->active_path);
-    	return TRUE; /* Nothing to rescue */
-  	}
+			i_info( "sieve-storage: nothing to rescue %s.", storage->active_path);
+		return TRUE; /* Nothing to rescue */
+	}
 
 	/* Only regular files can be rescued */
 	if ( S_ISREG( st.st_mode ) ) {
@@ -480,10 +467,10 @@ static int _sieve_storage_script_activate(struct sieve_script *script)
 	 * resolves automatically. This step is only necessary to provide a
 	 * proper return value indicating whether the script was already active.
 	 */
-	afile = sieve_storage_get_active_scriptfile(storage);
+	ret = sieve_storage_get_active_scriptfile(storage, &afile);
 
 	/* Is the requested script already active? */
-	if ( afile == NULL || strcmp(script->filename, afile) != 0 ) 
+	if ( ret <= 0 || strcmp(script->filename, afile) != 0 ) 
 		activated = 1; 
 
 	/* Check the scriptfile we are trying to activate */
@@ -550,7 +537,7 @@ int sieve_storage_script_rename
 	/* Check script name */
 	if ( !sieve_script_name_is_valid(newname) ) {
 		sieve_storage_set_error(storage, 
-			SIEVE_STORAGE_ERROR_IMPOSSIBLE, 
+			SIEVE_ERROR_BAD_PARAMS, 
 			"Invalid new script name '%s'.", newname);
 		return -1;
 	}
@@ -601,11 +588,11 @@ int sieve_storage_script_rename
 			/* Our efforts failed right away */
 			switch ( errno ) {
 			case ENOENT: 
-				sieve_storage_set_error(storage, SIEVE_STORAGE_ERROR_NOTFOUND, 
+				sieve_storage_set_error(storage, SIEVE_ERROR_NOT_FOUND, 
 					"Sieve script does not exist.");
 				break;
 			case EEXIST:
-				sieve_storage_set_error(storage, SIEVE_STORAGE_ERROR_EXISTS,
+				sieve_storage_set_error(storage, SIEVE_ERROR_EXISTS,
 					"A sieve script with that name already exists.");
 				break;
 			default:

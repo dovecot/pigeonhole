@@ -13,7 +13,6 @@ libsievestorage_a_SOURCES = \
 	sieve-storage.c 
 
 noinst_HEADERS = \
-	sieve-storage-error.h \
 	sieve-storage-save.h \
 	sieve-storage-script.h \
 	sieve-storage-list.h \

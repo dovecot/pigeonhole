@@ -45,12 +45,13 @@ struct sieve_parser {
 };
 
 struct sieve_parser *sieve_parser_create
-(struct sieve_script *script, struct sieve_error_handler *ehandler)
+(struct sieve_script *script, struct sieve_error_handler *ehandler,
+	enum sieve_error *error_r)
 {
 	struct sieve_parser *parser;
 	const struct sieve_lexer *lexer;
 	
-	lexer = sieve_lexer_create(script, ehandler);
+	lexer = sieve_lexer_create(script, ehandler, error_r);
   
 	if ( lexer != NULL ) {
 		pool_t pool = pool_alloconly_create("sieve_parser", 4096);	

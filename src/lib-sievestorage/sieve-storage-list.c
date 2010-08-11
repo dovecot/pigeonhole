@@ -25,25 +25,22 @@ struct sieve_list_context {
 };
 
 struct sieve_list_context *sieve_storage_list_init
-	(struct sieve_storage *storage)
+(struct sieve_storage *storage)
 {	
 	struct sieve_list_context *ctx;
-	const char *active;
+	const char *active = NULL;
 	pool_t pool;
 	DIR *dirp;
 
 	/* Open the directory */
 	if ( (dirp = opendir(storage->dir)) == NULL ) {
-		sieve_storage_set_critical(storage, "opendir(%s) failed: %m",
-					   storage->dir);
+		sieve_storage_set_critical(storage, "opendir(%s) failed: %m", storage->dir);
 		return NULL;
 	}
 
 	T_BEGIN {
-
 		/* Get the name of the active script */
-		if ( (active = sieve_storage_get_active_scriptfile(storage)) 
-			== NULL ) {
+		if ( sieve_storage_get_active_scriptfile(storage, &active) < 0) {
 			ctx = NULL;
 		} else {
 			pool = pool_alloconly_create("sieve_list_context", 4096);
@@ -51,7 +48,7 @@ struct sieve_list_context *sieve_storage_list_init
 			ctx->pool = pool;
 			ctx->storage = storage;
 			ctx->dirp = dirp;
-			ctx->active = p_strdup(pool, active);
+			ctx->active = ( active != NULL ? p_strdup(pool, active) : NULL );
 			ctx->seen_active = FALSE;
 		}
 	} T_END;
@@ -60,7 +57,7 @@ struct sieve_list_context *sieve_storage_list_init
 }
 
 const char *sieve_storage_list_next
-	(struct sieve_list_context *ctx, bool *active)
+(struct sieve_list_context *ctx, bool *active)
 {
 	const struct sieve_storage *storage = ctx->storage;
 	struct dirent *dp;
@@ -87,8 +84,7 @@ const char *sieve_storage_list_next
 		}
 	}
 
-	if ( ctx->active != NULL && 
-		strcmp(dp->d_name, ctx->active) == 0 ) {
+	if ( ctx->active != NULL && strcmp(dp->d_name, ctx->active) == 0 ) {
 		*active = TRUE;
 		ctx->active = NULL;
 	}
@@ -100,7 +96,7 @@ int sieve_storage_list_deinit(struct sieve_list_context **ctx)
 {
 	if (closedir((*ctx)->dirp) < 0) {
 		sieve_storage_set_critical((*ctx)->storage, "closedir(%s) failed: %m",
-					   (*ctx)->storage->dir);
+			(*ctx)->storage->dir);
 	}
 
 	pool_unref(&(*ctx)->pool);

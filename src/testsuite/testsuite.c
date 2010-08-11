@@ -165,7 +165,7 @@ int main(int argc, char **argv)
 
 	/* Compile sieve script */
 	if ( (sbin = sieve_compile
-		(svinst, scriptfile, NULL, testsuite_log_main_ehandler)) != NULL ) {
+		(svinst, scriptfile, NULL, testsuite_log_main_ehandler, NULL)) != NULL ) {
 		struct ostream *tracestream = NULL;
 		struct sieve_script_env scriptenv;
 

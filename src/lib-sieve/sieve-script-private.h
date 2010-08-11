@@ -38,6 +38,6 @@ struct sieve_script {
 struct sieve_script *sieve_script_init
 (struct sieve_script *script, struct sieve_instance *svinst,
 	const char *path, const char *name, struct sieve_error_handler *ehandler, 
-	bool *exists_r);
+	enum sieve_error *error_r);
 
 #endif /* __SIEVE_SCRIPT_PRIVATE_H */

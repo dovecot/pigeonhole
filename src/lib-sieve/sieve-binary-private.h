@@ -22,7 +22,6 @@ struct sieve_binary_file {
 	int fd;
 	off_t offset;
 
-	bool (*load)(struct sieve_binary_file *file);	
 	const void *(*load_data)
 		(struct sieve_binary_file *file, off_t *offset, size_t size);
 	buffer_t *(*load_buffer)
@@ -30,7 +29,7 @@ struct sieve_binary_file {
 };
 
 bool sieve_binary_file_open
-	(struct sieve_binary_file *file, const char *path);
+	(struct sieve_binary_file *file, const char *path, enum sieve_error *error_r);
 void sieve_binary_file_close(struct sieve_binary_file **file);
 
 /* 

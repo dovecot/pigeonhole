@@ -48,7 +48,8 @@ void sieve_set_extensions
 /* sieve_compile_script:
  */
 struct sieve_binary *sieve_compile_script
-	(struct sieve_script *script, struct sieve_error_handler *ehandler);
+	(struct sieve_script *script, struct sieve_error_handler *ehandler,
+		enum sieve_error *error_r);
 
 /* sieve_compile:
  *
@@ -56,46 +57,61 @@ struct sieve_binary *sieve_compile_script
  */
 struct sieve_binary *sieve_compile
 	(struct sieve_instance *svinst, const char *script_path, 
-		const char *script_name, struct sieve_error_handler *ehandler);
+		const char *script_name, struct sieve_error_handler *ehandler,
+		enum sieve_error *error_r);
 
 /* 
  * Reading/writing Sieve binaries
  */
-
-/* sieve_open:
- *
- *   First tries to open the binary version of the specified script and
- *   if it does not exist or if it contains errors, the script is
- *   (re-)compiled. The binary is updated if the script is recompiled.
- *   Note that errors in the bytecode are not caught here.
- *
- */
-struct sieve_binary *sieve_open
-	(struct sieve_instance *svinst, const char *script_path, 
-		const char *script_name, struct sieve_error_handler *ehandler, 
-		bool *exists_r);
-
-/* sieve_save:
- *
- *  Saves the binary as the file indicated by the path parameter. If 
- *  path is NULL, it chooses the default path relative to the original
- *  script.
- */
-bool sieve_save
-    (struct sieve_binary *sbin, const char *bin_path);
 
 /* sieve_load:
  *
  *  Loads the sieve binary indicated by the provided path.
  */
 struct sieve_binary *sieve_load
-	(struct sieve_instance *svinst, const char *bin_path);
+	(struct sieve_instance *svinst, const char *bin_path,
+		enum sieve_error *error_r);
+
+/* sieve_open:
+ *
+ *   First tries to open the binary version of the specified script and if it 
+ *   does not exist or if it contains errors, the script is (re-)compiled. Note 
+ *   that errors in the bytecode are caught only at runtime.
+ */
+struct sieve_binary *sieve_open
+	(struct sieve_instance *svinst, const char *script_path, 
+		const char *script_name, struct sieve_error_handler *ehandler, 
+		enum sieve_error *error_r);
+
+/* sieve_save:
+ *
+ *  Saves the binary as the file indicated by the path parameter. If 
+ *  path is NULL, it chooses the default path relative to the original
+ *  script. This function will not write the binary to disk when it was
+ *  loaded from the indicated bin_path, unless update is TRUE. 
+ */
+int sieve_save
+    (struct sieve_binary *sbin, const char *bin_path, bool update,
+			enum sieve_error *error_r);
 
 /* sieve_close:
  *
  *   Closes a compiled/opened sieve binary.
  */
 void sieve_close(struct sieve_binary **sbin);
+
+/* sieve_get_source:
+ *
+ *   Obtains the path the binary was compiled or loaded from
+ */
+const char *sieve_get_source(struct sieve_binary *sbin);
+
+/*
+ * sieve_is_loeded:
+ *
+ *   Indicates whether the binary was loaded from a pre-compiled file. 
+ */
+bool sieve_is_loaded(struct sieve_binary *sbin);
 
 /*
  * Debugging
@@ -166,7 +182,8 @@ size_t sieve_max_script_size(struct sieve_instance *svinst);
 
 struct sieve_directory;
 
-struct sieve_directory *sieve_directory_open(const char *path);
+struct sieve_directory *sieve_directory_open
+	(const char *path, enum sieve_error *error_r);
 const char *sieve_directory_get_scriptfile(struct sieve_directory *sdir);
 void sieve_directory_close(struct sieve_directory **sdir);
 

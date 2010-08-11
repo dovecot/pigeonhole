@@ -16,21 +16,15 @@ bool cmd_renamescript(struct client_command_context *cmd)
 	struct sieve_storage *storage = client->storage;
 	const char *scriptname, *newname;
 	struct sieve_script *script;
-	bool exists;
 
 	/* <oldname> <newname> */
 	if (!client_read_string_args(cmd, 2, &scriptname, &newname))
 		return FALSE;
 
-	exists = TRUE;
-	script = sieve_storage_script_init(storage, scriptname, &exists);
+	script = sieve_storage_script_init(storage, scriptname);
 
 	if (script == NULL) {
-		if (!exists)
-			client_send_noresp(client, "NONEXISTENT", "Script does not exist.");
-		else
-			client_send_storage_error(client, storage);
-
+		client_send_storage_error(client, storage);
 		return TRUE;
 	}
 

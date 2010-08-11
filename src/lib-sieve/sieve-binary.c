@@ -142,6 +142,24 @@ const char *sieve_binary_path(struct sieve_binary *sbin)
 	return sbin->path;
 }
 
+bool sieve_binary_saved(struct sieve_binary *sbin)
+{
+	return ( sbin->path != NULL );
+}
+
+bool sieve_binary_loaded(struct sieve_binary *sbin)
+{
+	return ( sbin->file != NULL );
+}
+
+const char *sieve_binary_source(struct sieve_binary *sbin)
+{
+	if ( sbin->script != NULL && (sbin->path == NULL || sbin->file == NULL) )
+		return sieve_script_path(sbin->script);
+
+	return sbin->path;
+}
+
 struct sieve_instance *sieve_binary_svinst(struct sieve_binary *sbin)
 {
 	return sbin->svinst;
@@ -156,16 +174,12 @@ bool sieve_binary_script_newer
 
 const char *sieve_binary_script_name(struct sieve_binary *sbin)
 {
-	struct sieve_script *script = sieve_binary_script(sbin);
-
-	return ( script == NULL ? NULL : sieve_script_name(script) );
+	return ( sbin->script == NULL ? NULL : sieve_script_name(sbin->script) );
 }
 
 const char *sieve_binary_script_path(struct sieve_binary *sbin)
 {
-	struct sieve_script *script = sieve_binary_script(sbin);
-
-	return ( script == NULL ? NULL : sieve_script_path(script) );
+	return ( sbin->script == NULL ? NULL : sieve_script_path(sbin->script) );
 }
 
 /* 
@@ -215,11 +229,8 @@ static bool sieve_binary_block_fetch(struct sieve_binary_block *sblock)
 	if ( sbin->file ) {
 		/* Try to acces the block in the binary on disk (apperently we were lazy)
 		 */
-		if ( !sieve_binary_load_block(sblock) || sblock->data == NULL ) {
-			sieve_sys_error("block %d of loaded binary %s is corrupt", 
-				sblock->id, sbin->path);			
+		if ( !sieve_binary_load_block(sblock) || sblock->data == NULL )		
 			return FALSE;
-		}
 	} else {
 		sblock->data = buffer_create_dynamic(sbin->pool, 64);
 		return TRUE;

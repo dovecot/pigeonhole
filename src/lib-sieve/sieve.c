@@ -118,41 +118,58 @@ const char *sieve_get_capabilities
  */
 
 struct sieve_ast *sieve_parse
-(struct sieve_script *script, struct sieve_error_handler *ehandler)
+(struct sieve_script *script, struct sieve_error_handler *ehandler,
+	enum sieve_error *error_r)
 {
 	struct sieve_parser *parser;
 	struct sieve_ast *ast = NULL;
 	
 	/* Parse */
-	if ( (parser = sieve_parser_create(script, ehandler)) == NULL )
+	if ( (parser = sieve_parser_create(script, ehandler, error_r)) == NULL )
 		return NULL;
 
- 	if ( !sieve_parser_run(parser, &ast) || sieve_get_errors(ehandler) > 0 ) {
+ 	if ( !sieve_parser_run(parser, &ast) ) {
  		ast = NULL;
  	} else 
 		sieve_ast_ref(ast);
 	
 	sieve_parser_free(&parser); 	
+
+	if ( error_r != NULL ) {
+		if ( ast == NULL )
+			*error_r = SIEVE_ERROR_NOT_VALID;
+		else
+			*error_r = SIEVE_ERROR_NONE;
+	}
 	
 	return ast;
 }
 
 bool sieve_validate
-(struct sieve_ast *ast, struct sieve_error_handler *ehandler)
+(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
+	enum sieve_error *error_r)
 {
 	bool result = TRUE;
 	struct sieve_validator *validator = sieve_validator_create(ast, ehandler);
 		
-	if ( !sieve_validator_run(validator) || sieve_get_errors(ehandler) > 0 ) 
+	if ( !sieve_validator_run(validator) ) 
 		result = FALSE;
 	
 	sieve_validator_free(&validator);	
+
+	if ( error_r != NULL ) {
+		if ( !result )
+			*error_r = SIEVE_ERROR_NOT_VALID;
+		else
+			*error_r = SIEVE_ERROR_NONE;
+	}
 		
 	return result;
 }
 
 static struct sieve_binary *sieve_generate
-(struct sieve_ast *ast, struct sieve_error_handler *ehandler)
+(struct sieve_ast *ast, struct sieve_error_handler *ehandler, 
+	enum sieve_error *error_r)
 {
 	struct sieve_generator *generator = sieve_generator_create(ast, ehandler);
 	struct sieve_binary *sbin = NULL;
@@ -161,6 +178,13 @@ static struct sieve_binary *sieve_generate
 	
 	sieve_generator_free(&generator);
 	
+	if ( error_r != NULL ) {
+		if ( sbin == NULL )
+			*error_r = SIEVE_ERROR_NOT_VALID;
+		else
+			*error_r = SIEVE_ERROR_NONE;
+	}
+
 	return sbin;
 }
 
@@ -169,19 +193,20 @@ static struct sieve_binary *sieve_generate
  */
 
 struct sieve_binary *sieve_compile_script
-(struct sieve_script *script, struct sieve_error_handler *ehandler) 
+(struct sieve_script *script, struct sieve_error_handler *ehandler,
+	enum sieve_error *error_r) 
 {
 	struct sieve_ast *ast;
-	struct sieve_binary *sbin;		
-  	
+	struct sieve_binary *sbin;  	
+
 	/* Parse */
-	if ( (ast = sieve_parse(script, ehandler)) == NULL ) {
+	if ( (ast = sieve_parse(script, ehandler, error_r)) == NULL ) {
  		sieve_error(ehandler, sieve_script_name(script), "parse failed");
 		return NULL;
 	}
 
 	/* Validate */
-	if ( !sieve_validate(ast, ehandler) ) {
+	if ( !sieve_validate(ast, ehandler, error_r) ) {
 		sieve_error(ehandler, sieve_script_name(script), "validation failed");
 		
  		sieve_ast_unref(&ast);
@@ -189,31 +214,35 @@ struct sieve_binary *sieve_compile_script
  	}
  	
 	/* Generate */
-	if ( (sbin=sieve_generate(ast, ehandler)) == NULL ) {
+	if ( (sbin=sieve_generate(ast, ehandler, error_r)) == NULL ) {
 		sieve_error(ehandler, sieve_script_name(script), "code generation failed");
 		
 		sieve_ast_unref(&ast);
 		return NULL;
 	}
-	
+
 	/* Cleanup */
 	sieve_ast_unref(&ast);
+
+	if ( error_r != NULL )
+		error_r = SIEVE_ERROR_NONE;
 
 	return sbin;
 }
 
 struct sieve_binary *sieve_compile
 (struct sieve_instance *svinst, const char *script_path,
-	const char *script_name, struct sieve_error_handler *ehandler)
+	const char *script_name, struct sieve_error_handler *ehandler,
+	enum sieve_error *error_r)
 {
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
 
 	if ( (script = sieve_script_create
-		(svinst, script_path, script_name, ehandler, NULL)) == NULL )
+		(svinst, script_path, script_name, ehandler, error_r)) == NULL )
 		return NULL;
 	
-	sbin = sieve_compile_script(script, ehandler);
+	sbin = sieve_compile_script(script, ehandler, error_r);
 	
 	sieve_script_unref(&script);
 
@@ -266,9 +295,16 @@ static int sieve_run
  * Reading/writing sieve binaries
  */
 
+struct sieve_binary *sieve_load
+(struct sieve_instance *svinst, const char *bin_path, enum sieve_error *error_r)
+{
+	return sieve_binary_open(svinst, bin_path, NULL, error_r);
+}
+
 struct sieve_binary *sieve_open
 (struct sieve_instance *svinst, const char *script_path, 
-	const char *script_name, struct sieve_error_handler *ehandler, bool *exists_r)
+	const char *script_name, struct sieve_error_handler *ehandler,
+	enum sieve_error *error_r)
 {
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
@@ -276,7 +312,7 @@ struct sieve_binary *sieve_open
 	
 	/* First open the scriptfile itself */
 	script = sieve_script_create
-		(svinst, script_path, script_name, ehandler, exists_r);
+		(svinst, script_path, script_name, ehandler, error_r);
 
 	if ( script == NULL ) {
 		/* Failed */
@@ -286,7 +322,7 @@ struct sieve_binary *sieve_open
 	T_BEGIN {
 		/* Then try to open the matching binary */
 		bin_path = sieve_script_binpath(script);	
-		sbin = sieve_binary_open(svinst, bin_path, script);
+		sbin = sieve_binary_open(svinst, bin_path, script, error_r);
 	
 		if (sbin != NULL) {
 			/* Ok, it exists; now let's see if it is up to date */
@@ -297,15 +333,10 @@ struct sieve_binary *sieve_open
 
 				sieve_binary_unref(&sbin);
 				sbin = NULL;
-
-			} else if ( !sieve_binary_load(sbin) ) {
-				/* Failed to load */
-				sieve_binary_unref(&sbin);
-				sbin = NULL;
-			}
+			} 
 		}
 		
-		/* If the binary does not exist, is not up-to-date or fails to load, we need
+		/* If the binary does not exist or is not up-to-date, we need
 		 * to (re-)compile.
 		 */
 		if ( sbin != NULL ) {
@@ -313,19 +344,12 @@ struct sieve_binary *sieve_open
 				sieve_sys_debug("script binary %s successfully loaded", bin_path);
 			
 		} else {	
-			sbin = sieve_compile_script(script, ehandler);
+			sbin = sieve_compile_script(script, ehandler, error_r);
 
 			/* Save the binary if compile was successful */
 			if ( sbin != NULL ) {
 				if ( svinst->debug )
 					sieve_sys_debug("script %s successfully compiled", script_path);
-
-				if ( sieve_binary_save(sbin, bin_path) ) {
-					if ( svinst->debug ) {
-						sieve_sys_debug
-							("compiled script saved as binary file %s", bin_path);
-					}
-				}
 			}
 		}
 	} T_END;
@@ -336,25 +360,23 @@ struct sieve_binary *sieve_open
 	sieve_script_unref(&script);
 
 	return sbin;
-} 
-
-bool sieve_save
-(struct sieve_binary *sbin, const char *bin_path)
-{
-	return sieve_binary_save(sbin, bin_path);
 }
 
-struct sieve_binary *sieve_load
-(struct sieve_instance *svinst, const char *bin_path)
+const char *sieve_get_source(struct sieve_binary *sbin)
 {
-	struct sieve_binary *sbin = sieve_binary_open(svinst, bin_path, NULL);
+	return sieve_binary_source(sbin);
+}
 
-    if ( sbin != NULL && !sieve_binary_load(sbin) ) {
-        sieve_binary_unref(&sbin);
-        sbin = NULL;
-    }
+bool sieve_is_loaded(struct sieve_binary *sbin)
+{
+	return sieve_binary_loaded(sbin);
+}
 
-	return sbin;
+int sieve_save
+(struct sieve_binary *sbin, const char *bin_path, bool update,
+	enum sieve_error *error_r)
+{
+	return sieve_binary_save(sbin, bin_path, update, error_r);
 }
 
 void sieve_close(struct sieve_binary **sbin)
@@ -623,24 +645,34 @@ struct sieve_directory {
 		const char *path;
 };
 
-struct sieve_directory *sieve_directory_open(const char *path)
+struct sieve_directory *sieve_directory_open
+(const char *path, enum sieve_error *error_r)
 { 
 	struct sieve_directory *sdir = NULL;
 	DIR *dirp;
 	struct stat st;
 
+	if ( error_r != NULL )
+		*error_r = SIEVE_ERROR_NONE;
+
 	/* Specified path can either be a regular file or a directory */
 	if ( stat(path, &st) != 0 ) {
 		switch ( errno ) {
 		case ENOENT:
+			if ( error_r != NULL )
+				*error_r = SIEVE_ERROR_NOT_FOUND;
 			break;
 		case EACCES:
 			sieve_sys_error("failed to open sieve dir: %s",
 				eacces_error_get("stat", path));
+			if ( error_r != NULL )
+				*error_r = SIEVE_ERROR_NO_PERM;
 			break;
 		default:
 			sieve_sys_error("failed to open sieve dir: "
 				"stat(%s) failed: %m", path);
+			if ( error_r != NULL )
+				*error_r = SIEVE_ERROR_TEMP_FAIL;
 			break;
 		}
 		return NULL;
@@ -650,8 +682,24 @@ struct sieve_directory *sieve_directory_open(const char *path)
 	 	
 		/* Open the directory */
 		if ( (dirp = opendir(path)) == NULL ) {
-			sieve_sys_error("failed to open sieve dir: "
-				"opendir(%s) failed: %m", path);
+			switch ( errno ) {
+			case ENOENT:
+				if ( error_r != NULL )
+					*error_r = SIEVE_ERROR_NOT_FOUND;
+				break;
+			case EACCES:
+				sieve_sys_error("failed to open sieve dir: %s",
+					eacces_error_get("opendir", path));
+				if ( error_r != NULL )
+					*error_r = SIEVE_ERROR_NO_PERM;
+				break;
+			default:
+				sieve_sys_error("failed to open sieve dir: "
+					"opendir(%s) failed: %m", path);
+				if ( error_r != NULL )
+					*error_r = SIEVE_ERROR_TEMP_FAIL;
+				break;
+			}
 			return NULL;		
 		}
 	
@@ -680,12 +728,12 @@ const char *sieve_directory_get_scriptfile(struct sieve_directory *sdir)
 
 			errno = 0;
 			if ( (dp = readdir(sdir->dirp)) == NULL ) {
-				if ( errno != 0 ) { 
+				if ( errno != 0 ) {
 					sieve_sys_error("failed to read sieve dir: "
 						"readdir(%s) failed: %m", sdir->path);
-					continue;
-				} else 
-					return NULL;
+				}
+
+				return NULL;
 			}
 
 			if ( !sieve_script_file_has_extension(dp->d_name) )

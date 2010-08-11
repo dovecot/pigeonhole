@@ -140,7 +140,10 @@ static int mkdir_verify
 	if ( stat(dir, &st) == 0 )
 		return 0;
 
-	if ( errno != ENOENT ) {
+	if ( errno == EACCES ) {
+		i_error("sieve-storage: %s", eacces_error_get("stat", dir));
+		return -1;
+	} else if ( errno != ENOENT ) {
 		i_error("sieve-storage: stat(%s) failed: %m", dir);
 		return -1;
 	}
@@ -151,14 +154,18 @@ static int mkdir_verify
 		return 0;
 	}
 
-	if ( errno == EEXIST ) {
+	switch ( errno ) {
+	case EEXIST:
 		return 0;
-	} else if (errno == ENOENT) {
+	case ENOENT:
 		i_error("sieve-storage: storage was deleted while it was being created");
-	} else if (errno == EACCES) {
+		break;
+	case EACCES:
 		i_error("sieve-storage: %s", eacces_error_get_creating("mkdir", dir));
-	} else {
+		break;
+	default:
 		i_error("sieve-storage: mkdir(%s) failed: %m", dir);
+		break;
 	}
 
 	return -1;
@@ -341,7 +348,7 @@ static struct sieve_storage *_sieve_storage_create
 	if ( sieve_setting_get_size_value
 		(svinst, "sieve_quota_max_storage", &size_setting) ) {
 		storage->max_storage = size_setting;
-    }
+	}
 
 	if ( sieve_setting_get_uint_value
 		(svinst, "sieve_quota_max_scripts", &uint_setting) ) {
@@ -416,16 +423,18 @@ static void sieve_storage_verror
 	if (fmt != NULL) {
 		storage->error = i_strdup_vprintf(fmt, args);
 	}
+	storage->error_code = SIEVE_ERROR_TEMP_FAIL;
 }
 
 void sieve_storage_clear_error(struct sieve_storage *storage)
 {
 	i_free(storage->error);
+	storage->error_code = SIEVE_ERROR_NONE;
 	storage->error = NULL;
 }
 
 void sieve_storage_set_error
-(struct sieve_storage *storage, enum sieve_storage_error error,
+(struct sieve_storage *storage, enum sieve_error error,
 	const char *fmt, ...)
 {
 	va_list va;
@@ -449,14 +458,14 @@ void sieve_storage_set_internal_error(struct sieve_storage *storage)
 	tm = localtime(&ioloop_time);
 
 	i_free(storage->error);
-	storage->error_code = SIEVE_STORAGE_ERROR_TEMP;
+	storage->error_code = SIEVE_ERROR_TEMP_FAIL;
 	storage->error =
 	  strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ?
 	  i_strdup(str) : i_strdup(CRITICAL_MSG);
 }
 
-void sieve_storage_set_critical(struct sieve_storage *storage,
-             const char *fmt, ...)
+void sieve_storage_set_critical
+(struct sieve_storage *storage, const char *fmt, ...)
 {
 	va_list va;
 	
@@ -474,7 +483,7 @@ void sieve_storage_set_critical(struct sieve_storage *storage,
 }
 
 const char *sieve_storage_get_last_error
-	(struct sieve_storage *storage, enum sieve_storage_error *error_r)
+(struct sieve_storage *storage, enum sieve_error *error_r)
 {
 	/* We get here only in error situations, so we have to return some
 	   error. If storage->error is NULL, it means we forgot to set it at

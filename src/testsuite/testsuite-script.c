@@ -65,8 +65,8 @@ static struct sieve_binary *_testsuite_script_compile
 	testsuite_setting_set
 		("sieve_global_dir", t_strconcat(sieve_dir, "included-global", NULL));
 	
-	if ( (sbin = sieve_compile(svinst, script_path, NULL, testsuite_log_ehandler)) 
-		== NULL )
+	if ( (sbin = sieve_compile(svinst, script_path, NULL, testsuite_log_ehandler,
+		NULL)) == NULL )
 		return NULL;
 
 	return sbin;

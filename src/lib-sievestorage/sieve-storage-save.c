@@ -8,6 +8,7 @@
 #include "buffer.h"
 #include "ostream.h"
 #include "str.h"
+#include "eacces-error.h"
 
 #include "sieve-script.h"
 
@@ -112,7 +113,7 @@ static int sieve_storage_create_tmp
 	*fpath_r = str_c(path);
 	if (fd == -1) {
 		if (ENOSPACE(errno)) {
-			sieve_storage_set_error(storage, SIEVE_STORAGE_ERROR_NOSPACE,
+			sieve_storage_set_error(storage, SIEVE_ERROR_NO_SPACE,
 				"Not enough disk space");
 		} else {
 			sieve_storage_set_critical(storage,
@@ -140,12 +141,15 @@ static int sieve_storage_script_move(struct sieve_save_context *ctx,
 			failed = FALSE;
 		else {
 			failed = TRUE;
-			if (ENOSPACE(errno)) {
+			if ( ENOSPACE(errno) ) {
 				sieve_storage_set_error
-				  (ctx->storage, SIEVE_STORAGE_ERROR_NOSPACE, "Not enough disk space");
+				  (ctx->storage, SIEVE_ERROR_NO_SPACE, "Not enough disk space");
+			} else if ( errno == EACCES ) {
+				sieve_storage_set_critical
+				  (ctx->storage, "%s", eacces_error_get("rename", dst));
 			} else {
 				sieve_storage_set_critical
-				  (ctx->storage, "link(%s, %s) failed: %m", ctx->tmp_path, dst);
+				  (ctx->storage, "rename(%s, %s) failed: %m", ctx->tmp_path, dst);
 			}
 		}
 
@@ -169,7 +173,7 @@ sieve_storage_save_init(struct sieve_storage *storage,
 		/* Validate script name */
 		if ( !sieve_script_name_is_valid(scriptname) ) {
 			sieve_storage_set_error(storage, 
-				SIEVE_STORAGE_ERROR_IMPOSSIBLE,
+				SIEVE_ERROR_BAD_PARAMS,
 				"Invalid script name '%s'.", scriptname);
 			return NULL;
 		}
@@ -188,7 +192,7 @@ sieve_storage_save_init(struct sieve_storage *storage,
 				strncmp(scriptname, storage->active_fname, namelen) == 0 ) 
 			{
 				sieve_storage_set_error(
-					storage, SIEVE_STORAGE_ERROR_IMPOSSIBLE, 
+					storage, SIEVE_ERROR_BAD_PARAMS, 
 					"Script name '%s' is reserved for internal use.", scriptname); 
 				return NULL;
 			}
@@ -263,7 +267,7 @@ int sieve_storage_save_finish(struct sieve_save_context *ctx)
 
 			errno = output_errno;
 			if ( ENOSPACE(errno) ) {
-				sieve_storage_set_error(ctx->storage, SIEVE_STORAGE_ERROR_NOSPACE,
+				sieve_storage_set_error(ctx->storage, SIEVE_ERROR_NO_SPACE,
 					"Not enough disk space");
 			} else if ( errno != 0 ) {
 				sieve_storage_set_critical(ctx->storage,
@@ -289,7 +293,6 @@ struct sieve_script *sieve_storage_save_get_tempscript
 {
 	const char *scriptname = 
 		( ctx->scriptname == NULL ? "" : ctx->scriptname ); 
-	bool exists = FALSE;
 
 	if (ctx->failed) 
 		return NULL;
@@ -298,14 +301,15 @@ struct sieve_script *sieve_storage_save_get_tempscript
 		return ctx->scriptobject;
 
 	ctx->scriptobject = sieve_storage_script_init_from_path
-		(ctx->storage, ctx->tmp_path, scriptname, &exists);	
+		(ctx->storage, ctx->tmp_path, scriptname);	
 
-	if ( !exists ) {
-		sieve_storage_set_critical(ctx->storage, 
-			"save: Temporary script file with name '%s' got lost, "
-			"which should not happen (possibly deleted externally).", 
-			ctx->tmp_path);
-		sieve_script_unref(&ctx->scriptobject);
+	if ( ctx->scriptobject == NULL ) {
+		if ( ctx->storage->error_code == SIEVE_ERROR_NOT_FOUND ) {
+			sieve_storage_set_critical(ctx->storage, 
+				"save: Temporary script file with name '%s' got lost, "
+				"which should not happen (possibly deleted externally).", 
+				ctx->tmp_path);
+		}
 		return NULL;
 	}
 

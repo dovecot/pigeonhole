@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 	(void) sieve_extension_register(svinst, &debug_extension, TRUE);
 		
 	/* Dump binary */
-	sbin = sieve_load(svinst, binfile);
+	sbin = sieve_load(svinst, binfile, NULL);
 	if ( sbin != NULL ) {
 		sieve_tool_dump_binary_to(sbin, outfile == NULL ? "-" : outfile);
 	

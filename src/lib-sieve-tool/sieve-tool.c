@@ -516,11 +516,11 @@ struct sieve_binary *sieve_tool_script_compile
 	ehandler = sieve_stderr_ehandler_create(0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
-	if ( (sbin = sieve_compile(svinst, filename, name, ehandler)) == NULL )
+	if ( (sbin = sieve_compile(svinst, filename, name, ehandler, NULL)) == NULL )
 		i_error("failed to compile sieve script '%s'", filename);
 
 	sieve_error_handler_unref(&ehandler);
-		
+
 	return sbin;
 }
 	
@@ -540,6 +540,7 @@ struct sieve_binary *sieve_tool_script_open
 
 	sieve_error_handler_unref(&ehandler);
 		
+	sieve_save(sbin, NULL, FALSE, NULL);
 	return sbin;
 }
 

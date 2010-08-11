@@ -30,14 +30,18 @@ void sieve_binary_unref(struct sieve_binary **sbin);
  */
 
 pool_t sieve_binary_pool(struct sieve_binary *sbin);
-struct sieve_script *sieve_binary_script(struct sieve_binary *sbin);
+struct sieve_instance *sieve_binary_svinst(struct sieve_binary *sbin);
 const char *sieve_binary_path(struct sieve_binary *sbin);
+struct sieve_script *sieve_binary_script(struct sieve_binary *sbin);
+
 bool sieve_binary_script_newer
 	(struct sieve_binary *sbin, struct sieve_script *script);
-struct sieve_instance *sieve_binary_svinst(struct sieve_binary *sbin);
-
 const char *sieve_binary_script_name(struct sieve_binary *sbin);
 const char *sieve_binary_script_path(struct sieve_binary *sbin);
+
+const char *sieve_binary_source(struct sieve_binary *sbin);
+bool sieve_binary_loaded(struct sieve_binary *sbin);
+bool sieve_binary_saved(struct sieve_binary *sbin);
 
 /*
  * Activation after code generation
@@ -49,8 +53,9 @@ void sieve_binary_activate(struct sieve_binary *sbin);
  * Saving the binary
  */
  
-bool sieve_binary_save
-	(struct sieve_binary *sbin, const char *path);
+int sieve_binary_save
+(struct sieve_binary *sbin, const char *path, bool update,
+	enum sieve_error *error_r);
 	
 /* 
  * Loading the binary
@@ -58,9 +63,8 @@ bool sieve_binary_save
 	
 struct sieve_binary *sieve_binary_open
 	(struct sieve_instance *svinst, const char *path, 
-		struct sieve_script *script);
+		struct sieve_script *script, enum sieve_error *error_r);
 bool sieve_binary_up_to_date(struct sieve_binary *sbin);
-bool sieve_binary_load(struct sieve_binary *sbin);
 	
 /* 
  * Block management 

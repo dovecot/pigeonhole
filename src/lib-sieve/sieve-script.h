@@ -23,11 +23,11 @@ struct sieve_script;
 
 struct sieve_script *sieve_script_create
 	(struct sieve_instance *svinst, const char *path, const char *name, 
-		struct sieve_error_handler *ehandler, bool *exists_r);
+		struct sieve_error_handler *ehandler, enum sieve_error *error_r);
 
 struct sieve_script *sieve_script_create_in_directory
 	(struct sieve_instance *svinst, const char *dirpath, const char *name,
-    	struct sieve_error_handler *ehandler, bool *exists_r);
+    	struct sieve_error_handler *ehandler, enum sieve_error *error_r);
 
 void sieve_script_ref(struct sieve_script *script);
 void sieve_script_unref(struct sieve_script **script);
@@ -57,7 +57,8 @@ size_t sieve_script_size(const struct sieve_script *script);
  * Stream management 
  */
 
-struct istream *sieve_script_open(struct sieve_script *script, bool *deleted_r);
+struct istream *sieve_script_open
+	(struct sieve_script *script, enum sieve_error *error_r);
 void sieve_script_close(struct sieve_script *script);
 
 uoff_t sieve_script_get_size(const struct sieve_script *script);

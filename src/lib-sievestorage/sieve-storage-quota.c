@@ -22,10 +22,10 @@ bool sieve_storage_quota_validsize
 	uint64_t max_size;
 
 	max_size = sieve_max_script_size(storage->svinst);
-    if ( max_size > 0 && size > max_size ) {
+	if ( max_size > 0 && size > max_size ) {
 		*limit_r = max_size;
-        return FALSE;
-    }
+		return FALSE;
+	}
 
 	return TRUE;
 }

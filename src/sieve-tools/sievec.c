@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 				sbin = sieve_tool_script_compile(svinst, file, dp->d_name);
 
 				if ( sbin != NULL ) {
-					sieve_save(sbin, NULL);		
+					sieve_save(sbin, NULL, TRUE, NULL);		
 					sieve_close(&sbin);
 				}
 			}
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 			if ( dump ) 
 				sieve_tool_dump_binary_to(sbin, outfile);
 			else {
-				sieve_save(sbin, outfile);
+				sieve_save(sbin, outfile, TRUE, NULL);
 			}
 		
 			sieve_close(&sbin);

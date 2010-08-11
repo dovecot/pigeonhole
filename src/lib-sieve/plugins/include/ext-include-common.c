@@ -456,7 +456,7 @@ bool ext_include_generate_include
 			(binctx, script, location, inc_block);
 
 		/* Parse */
-		if ( (ast = sieve_parse(script, ehandler)) == NULL ) {
+		if ( (ast = sieve_parse(script, ehandler, NULL)) == NULL ) {
 	 		sieve_command_generate_error(gentr, cmd, 
 	 			"failed to parse included script '%s'", str_sanitize(script_name, 80));
 	 		return FALSE;
@@ -466,7 +466,7 @@ bool ext_include_generate_include
 		(void)ext_include_create_ast_context(this_ext, ast, cmd->ast_node->ast);
 
 		/* Validate */
-		if ( !sieve_validate(ast, ehandler) ) {
+		if ( !sieve_validate(ast, ehandler, NULL) ) {
 			sieve_command_generate_error(gentr, cmd, 
 				"failed to validate included script '%s'", 
 				str_sanitize(script_name, 80));

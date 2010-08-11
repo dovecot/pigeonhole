@@ -59,7 +59,8 @@ struct sieve_lexer {
 };
 
 const struct sieve_lexer *sieve_lexer_create
-	(struct sieve_script *script, struct sieve_error_handler *ehandler);
+	(struct sieve_script *script, struct sieve_error_handler *ehandler, 
+		enum sieve_error *error_r);
 void sieve_lexer_free(const struct sieve_lexer **lexer);
 
 /* 

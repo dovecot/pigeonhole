@@ -112,6 +112,39 @@ static inline const char *_sieve_scriptfile_from_name(const char *name)
 	return name;
 }
 
+/*
+ * Common error handling
+ */
+
+static void sieve_script_handle_file_error
+(struct sieve_instance *svinst, const char *path, const char *name,
+	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
+{
+	switch ( errno ) {
+	case ENOENT:
+		if ( error_r == NULL )
+			sieve_error(ehandler, name, "sieve script does not exist");
+		else {
+			if ( svinst->debug )
+				sieve_sys_debug("script file %s not found", t_abspath(path));
+			*error_r = SIEVE_ERROR_NOT_FOUND;
+		}
+		break;
+	case EACCES:
+		sieve_critical(ehandler, name, 
+			"failed to stat sieve script: %s",
+			eacces_error_get("stat", path));
+		if ( error_r != NULL )
+			*error_r = SIEVE_ERROR_NO_PERM;
+		break;
+	default:
+		sieve_critical(ehandler, name, 
+			"failed to stat sieve script: stat(%s) failed: %m", path);
+		if ( error_r != NULL )
+			*error_r = SIEVE_ERROR_TEMP_FAIL;
+		break;
+	}
+}
 
 /* 
  * Script object 
@@ -120,7 +153,7 @@ static inline const char *_sieve_scriptfile_from_name(const char *name)
 struct sieve_script *sieve_script_init
 (struct sieve_script *script, struct sieve_instance *svinst, 
 	const char *path, const char *name, struct sieve_error_handler *ehandler, 
-	bool *exists_r)
+	enum sieve_error *error_r)
 {
 	int ret;
 	pool_t pool;
@@ -128,8 +161,8 @@ struct sieve_script *sieve_script_init
 	struct stat lnk_st;
 	const char *filename, *dirpath, *basename, *binpath;
 
-	if ( exists_r != NULL )
-		*exists_r = TRUE;
+	if ( error_r != NULL )
+		*error_r = SIEVE_ERROR_NONE;
 
 	T_BEGIN {
 
@@ -162,25 +195,7 @@ struct sieve_script *sieve_script_init
 		/* First obtain stat data from the system */
 		
 		if ( (ret=lstat(path, &st)) < 0 ) {
-			switch ( errno ) {
-			case ENOENT:
-				if ( exists_r == NULL ) {
-					sieve_error(ehandler, basename, "sieve script does not exist");
-					if ( svinst->debug )
-						sieve_sys_debug("script file %s not found", t_abspath(path));
-				} else
-					*exists_r = FALSE;
-				break;
-			case EACCES:
-				sieve_critical(ehandler, basename, 
-					"failed to stat sieve script: %s",
-					eacces_error_get("lstat", path));
-				break;
-            default:
-				sieve_critical(ehandler, basename, 
-					"failed to stat sieve script: lstat(%s) failed: %m", path);
-			}
-
+			sieve_script_handle_file_error(svinst, path, basename, ehandler, error_r);
 			script = NULL;
 			ret = 1;
 
@@ -189,34 +204,18 @@ struct sieve_script *sieve_script_init
 			lnk_st = st;
 
 			/* Only create/init the object if it stat()s without problems */
-			if (S_ISLNK(st.st_mode)) {
-				if ( (ret=stat(path, &st)) < 0 ) { 
-					switch ( errno ) {
-					case ENOENT:
-						if ( exists_r == NULL )
-							sieve_error(ehandler, basename, "sieve script does not exist");
-						else
-							*exists_r = FALSE;
-						break;
-					case EACCES:
-						sieve_critical(ehandler, basename, 
-							"failed to stat sieve script: %s",
-							eacces_error_get("stat", path));
-						break;
-            		default:
-						sieve_critical(ehandler, basename, 
-							"failed to stat sieve script: stat(%s) failed: %m", path);
-						break;
-					}
-
-					script = NULL;	
-					ret = 1;
-				}
+			if ( S_ISLNK(st.st_mode) && (ret=stat(path, &st)) < 0 ) { 
+				sieve_script_handle_file_error
+					(svinst, path, basename, ehandler, error_r);
+				script = NULL;	
+				ret = 1;
 			}
 
 			if ( ret == 0 && !S_ISREG(st.st_mode) ) {
 				sieve_critical(ehandler, basename, 
 					"sieve script file '%s' is not a regular file.", path);
+				if ( error_r != NULL )
+					*error_r = SIEVE_ERROR_NOT_POSSIBLE;
 				script = NULL;
 				ret = 1;
 			} 
@@ -256,14 +255,14 @@ struct sieve_script *sieve_script_init
 
 struct sieve_script *sieve_script_create
 (struct sieve_instance *svinst, const char *path, const char *name, 
-	struct sieve_error_handler *ehandler, bool *exists_r)
+	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
 {
-	return sieve_script_init(NULL, svinst, path, name, ehandler, exists_r);
+	return sieve_script_init(NULL, svinst, path, name, ehandler, error_r);
 }
 
 struct sieve_script *sieve_script_create_in_directory
 (struct sieve_instance *svinst, const char *dirpath, const char *name,
-	struct sieve_error_handler *ehandler, bool *exists_r)
+	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
 {
 	const char *path;
 
@@ -274,7 +273,7 @@ struct sieve_script *sieve_script_create_in_directory
 		path = t_strconcat(dirpath, "/",
 			_sieve_scriptfile_from_name(name), NULL);
 
-	return sieve_script_init(NULL, svinst, path, name, ehandler, exists_r);
+	return sieve_script_init(NULL, svinst, path, name, ehandler, error_r);
 }
 
 void sieve_script_ref(struct sieve_script *script)
@@ -348,47 +347,35 @@ size_t sieve_script_size(const struct sieve_script *script)
  */
 
 struct istream *sieve_script_open
-(struct sieve_script *script, bool *deleted_r)
+(struct sieve_script *script, enum sieve_error *error_r)
 {
 	int fd;
 	struct stat st;
 	struct istream *result;
 
-	if ( deleted_r != NULL )
-		*deleted_r = FALSE;
+	if ( error_r != NULL )
+		*error_r = SIEVE_ERROR_NONE;
 
 	if ( (fd=open(script->path, O_RDONLY)) < 0 ) {
-		switch( errno ) {
-		case ENOENT:
-			if ( deleted_r == NULL ) 
-				/* Not supposed to occur, create() does stat already */
-				sieve_error(script->ehandler, script->basename, 
-					"sieve script does not exist");
-			else 
-				*deleted_r = TRUE;
-			break;
-		case EACCES:
-			sieve_critical(script->ehandler, script->path,
-				"failed to open sieve script: %s",
-				eacces_error_get("open", script->path));
-			break;
-		default:
-			sieve_critical(script->ehandler, script->path, 
-				"failed to open sieve script: open(%s) failed: %m", script->path);
-			break;
-		}
+		sieve_script_handle_file_error
+			(script->svinst, script->path, script->basename, script->ehandler, 
+				error_r);
 		return NULL;
 	}	
 	
 	if ( fstat(fd, &st) != 0 ) {
 		sieve_critical(script->ehandler, script->path, 
 			"failed to open sieve script: fstat(fd=%s) failed: %m", script->path);
+		if ( error_r != NULL )
+			*error_r = SIEVE_ERROR_TEMP_FAIL;
 		result = NULL;
 	} else {
 		/* Re-check the file type just to be sure */
 		if ( !S_ISREG(st.st_mode) ) {
 			sieve_critical(script->ehandler, script->path,
 				"sieve script file '%s' is not a regular file", script->path);
+			if ( error_r != NULL )
+				*error_r = SIEVE_ERROR_NOT_POSSIBLE;
 			result = NULL;
 		} else {
 			result = script->stream = 

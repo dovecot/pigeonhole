@@ -374,37 +374,37 @@ void client_send_command_error
 	cmd->param_error = TRUE;
 }
 
-void client_send_storage_error(struct client *client,
-             struct sieve_storage *storage)
+void client_send_storage_error
+(struct client *client, struct sieve_storage *storage)
 {
-	enum sieve_storage_error error_code;
+	enum sieve_error error_code;
 	const char *error;
 
 	error = sieve_storage_get_last_error(storage, &error_code);
 
 	switch ( error_code ) {
-	case SIEVE_STORAGE_ERROR_TEMP:
+	case SIEVE_ERROR_TEMP_FAIL:
 		client_send_noresp(client, "TRYLATER", error);
 		break;
 
-	case SIEVE_STORAGE_ERROR_QUOTA:
-	case SIEVE_STORAGE_ERROR_NOSPACE: /* Not sure if this is appropriate */
+	case SIEVE_ERROR_NO_QUOTA:
+	case SIEVE_ERROR_NO_SPACE: /* Not sure if this is appropriate */
 		client_send_noresp(client, "QUOTA", error);
 		break;
 
-	case SIEVE_STORAGE_ERROR_NOTFOUND:
+	case SIEVE_ERROR_NOT_FOUND:
 		client_send_noresp(client, "NONEXISTENT", error);
 		break;
 
-	case SIEVE_STORAGE_ERROR_ACTIVE:
+	case SIEVE_ERROR_ACTIVE:
 		client_send_noresp(client, "ACTIVE", error);
 		break;
 
-	case SIEVE_STORAGE_ERROR_EXISTS:
+	case SIEVE_ERROR_EXISTS:
 		client_send_noresp(client, "ALREADYEXISTS", error);
 		break;
 
-	case SIEVE_STORAGE_ERROR_IMPOSSIBLE:
+	case SIEVE_ERROR_NOT_POSSIBLE:
 	default:
 		client_send_no(client, error);
 		break;

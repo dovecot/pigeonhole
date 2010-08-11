@@ -31,6 +31,35 @@ struct sieve_environment {
 	const char *(*get_setting)(void *context, const char *identifier);
 };
 
+/*
+ * Errors
+ */
+
+enum sieve_error {
+	SIEVE_ERROR_NONE = 0,
+
+	/* Temporary internal error */
+	SIEVE_ERROR_TEMP_FAIL,
+	/* It's not possible to do the wanted operation */
+	SIEVE_ERROR_NOT_POSSIBLE,
+	/* Invalid parameters (eg. script name not valid) */
+	SIEVE_ERROR_BAD_PARAMS,
+	/* No permission to do the request */
+	SIEVE_ERROR_NO_PERM,
+	/* Out of disk space */
+	SIEVE_ERROR_NO_SPACE,
+	/* Out of disk space */
+	SIEVE_ERROR_NO_QUOTA,
+	/* Item (e.g. script or binary) cannot be found */
+	SIEVE_ERROR_NOT_FOUND,
+	/* Item (e.g. script or binary) already exists */
+	SIEVE_ERROR_EXISTS,
+	/* Referenced item (e.g. script or binary) is not valid or currupt */
+	SIEVE_ERROR_NOT_VALID,
+	/* Not allowed to perform the operation because the item is in active use */
+	SIEVE_ERROR_ACTIVE
+};
+
 /* 
  * Message data
  *

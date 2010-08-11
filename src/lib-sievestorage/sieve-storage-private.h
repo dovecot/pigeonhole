@@ -49,16 +49,14 @@ struct sieve_storage {
 	uint64_t max_scripts;
 	uint64_t max_storage;
 
-	enum sieve_storage_error error_code;
-
+	enum sieve_error error_code;
 	struct sieve_error_handler *ehandler;
 
 	enum sieve_storage_flags flags;
 };
 
 struct sieve_script *sieve_storage_script_init_from_path
-	(struct sieve_storage *storage, const char *path, 
-		const char *scriptname, bool *exists_r);
+	(struct sieve_storage *storage, const char *path, const char *scriptname);
 
 #endif
 

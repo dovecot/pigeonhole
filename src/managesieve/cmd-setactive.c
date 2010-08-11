@@ -14,8 +14,7 @@ bool cmd_setactive(struct client_command_context *cmd)
 	struct client *client = cmd->client;
 	struct sieve_storage *storage = client->storage;
 	const char *scriptname;
-	struct sieve_script *script;
-	bool exists;
+	struct sieve_script *script;;
 	int ret;
 
 	/* <scriptname> */
@@ -23,15 +22,10 @@ bool cmd_setactive(struct client_command_context *cmd)
 		return FALSE;
 
 	if ( *scriptname != '\0' ) {
-		exists = TRUE;
-		script = sieve_storage_script_init(storage, scriptname, &exists);
+		script = sieve_storage_script_init(storage, scriptname);
 
 		if ( script == NULL ) {
-			if (!exists)
-				client_send_noresp(client, "NONEXISTENT", "Script does not exist.");
-			else
-				client_send_storage_error(client, storage);
-
+			client_send_storage_error(client, storage);
 			return TRUE;
 		}
 	

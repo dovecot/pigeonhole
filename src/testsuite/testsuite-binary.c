@@ -61,8 +61,8 @@ void testsuite_binary_reset(void)
 
 bool testsuite_binary_save(struct sieve_binary *sbin, const char *name)
 {
-	return sieve_save
-    (sbin, t_strdup_printf("%s/%s.svbin", testsuite_binary_tmp, name));
+	return sieve_save(sbin, 
+		t_strdup_printf("%s/%s.svbin", testsuite_binary_tmp, name), TRUE, NULL);
 }
 
 struct sieve_binary *testsuite_binary_load(const char *name)
@@ -70,7 +70,7 @@ struct sieve_binary *testsuite_binary_load(const char *name)
 	struct sieve_instance *svinst = testsuite_sieve_instance;
 
 	return sieve_load(svinst, 
-		t_strdup_printf("%s/%s.svbin", testsuite_binary_tmp, name));
+		t_strdup_printf("%s/%s.svbin", testsuite_binary_tmp, name), NULL);
 }
 
 
