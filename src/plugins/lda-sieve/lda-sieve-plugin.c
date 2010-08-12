@@ -785,12 +785,13 @@ static int lda_sieve_deliver_mail
 void sieve_plugin_init(void)
 {
 	/* Hook into the delivery process */
-	next_deliver_mail = deliver_mail;
-	deliver_mail = lda_sieve_deliver_mail;
+	next_deliver_mail = mail_deliver_hook_set(lda_sieve_deliver_mail);
 }
 
 void sieve_plugin_deinit(void)
 {
 	/* Remove hook */
-	deliver_mail = next_deliver_mail;
+	mail_deliver_hook_set(next_deliver_mail);
 }
+
+const char sieve_plugin_binary_dependency[] = "lda lmtp";
