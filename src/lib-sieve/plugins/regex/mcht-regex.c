@@ -368,9 +368,11 @@ void mcht_regex_match_deinit
 	unsigned int count, i;
 
 	/* Clean up compiled regular expressions */
-	rkeys = array_get_modifiable(&ctx->reg_expressions, &count);
-	for ( i = 0; i < count; i++ ) {
-		regfree(&rkeys[i].regexp);
+	if ( array_is_created(&ctx->reg_expressions) ) {
+		rkeys = array_get_modifiable(&ctx->reg_expressions, &count);
+		for ( i = 0; i < count; i++ ) {
+			regfree(&rkeys[i].regexp);
+		}
 	}
 }
 
