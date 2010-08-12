@@ -1,8 +1,10 @@
 Current activities:
 
 * Improve error handling and logging
+	- Improve runtime error handling
 	- Avoid reporting user-caused errors to the master log.
-	- Review logging and error handling; add more warning/info/debug messages where useful.
+	- Review logging and error handling; add more warning/info/debug messages
+	  where useful.
 * Cleanup the test suite
 	- Make uniform command implementations
 	- Cleanup test scripts
@@ -10,8 +12,6 @@ Current activities:
 Next (in order of descending priority/precedence):
 
 * Update man pages to match style of Dovecot man pages.
-* Update include extension to latest draft:
-	- Implement required ManageSieve behavior
 * Unfinished new extensions:
 	- Finish the ereject extension
 * Enforce ManageSieve protocol syntax better with some of the commands. Some 
@@ -38,10 +38,15 @@ Next (in order of descending priority/precedence):
   script:
 	- Add commandline options to fully customize execution
 	- Write manual page
+* Update include extension to latest draft (v05 currently):
+	- Implement required ManageSieve behavior (pending IETF discussion)
 * Vacation extension improvements:
 	- Implement configurable sender exclusion list.
 	- Implement mechanism for implicitly including an account's aliases in the
 	  vacation command's :addresses list.
+* Optimize code containing true/false tests to omit explicit JMP opcodes
+  (i.e. optimize the test away and any code that negatively depends on it)
+* Implement ihave extension.
 * Fix remaining RFC deviations:
 	- Fix issues listed in doc/rfc/RFC-questions.txt based on answers
 	- Allow for the existence of dynamic comparators (i.e. specified by 
@@ -89,8 +94,6 @@ Next (in order of descending priority/precedence):
 * Provide a solution for mail_get_headers_utf8 reparsing the whole message each
   time it is called (header and address test; Timo might provide solution from
   within Dovecot)
-* Optimize code containing true/false tests to omit explicit JMP opcodes
-  (i.e. optimize the test away and any code that negatively depends on it)
 * Use lib/str-find.h for :contains and :matches match types 
 * Warn during compile if using non-existent folders.
 
