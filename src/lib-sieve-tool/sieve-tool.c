@@ -232,6 +232,9 @@ struct sieve_instance *sieve_tool_init_finish
 		sieve_tool_get_user_data(&username, &homedir);
 		
 		username = tool->username = i_strdup(username);
+
+		if ( tool->homedir != NULL )
+			i_free(tool->homedir);
 		tool->homedir = i_strdup(homedir);
 	} else
 		storage_service_flags |=
