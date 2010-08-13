@@ -131,9 +131,10 @@ static int cmd_test_fail_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *reason;
+	int ret;
 
-	if ( !sieve_opr_string_read(renv, address, "reason", &reason) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "reason", &reason)) <= 0 )
+		return ret;
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
 		"testsuite: test_fail command; FAIL current test");

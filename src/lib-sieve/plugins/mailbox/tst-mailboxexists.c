@@ -111,15 +111,16 @@ static int tst_mailboxexists_operation_execute
 	string_t *mailbox_item;
 	bool trace = FALSE; 
 	bool all_exist = TRUE;
+	int ret;
 
 	/*
 	 * Read operands 
 	 */
 	
 	/* Read notify uris */
-	if ( (mailbox_names=sieve_opr_stringlist_read(renv, address, "mailbox-names"))
-		== NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_stringlist_read
+		(renv, address, "mailbox-names", &mailbox_names)) <= 0 )
+		return ret;
 	
 	/*
 	 * Perform operation

@@ -374,13 +374,13 @@ static bool cmd_notify_operation_dump
 
 	/* Dump optional operands */
 	for (;;) {
-		int ret;
+		int opt;
 		bool opok = TRUE;
 
-		if ( (ret=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
 			return FALSE;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case OPT_IMPORTANCE:
@@ -421,6 +421,7 @@ static int cmd_notify_operation_execute
 	struct sieve_stringlist *options = NULL;
 	string_t *message = NULL, *id = NULL; 
 	unsigned int source_line;
+	int ret;
 
 	/*
 	 * Read operands
@@ -433,34 +434,32 @@ static int cmd_notify_operation_execute
 	/* Optional operands */	
 
 	for (;;) {
-		bool opok = TRUE;
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
 			return SIEVE_EXEC_BIN_CORRUPT;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case OPT_IMPORTANCE:
-			opok = sieve_opr_number_read(renv, address, "importance", &importance);
+			ret = sieve_opr_number_read(renv, address, "importance", &importance);
 			break;
 		case OPT_ID:
-			opok = sieve_opr_string_read(renv, address, "id", &id);
+			ret = sieve_opr_string_read(renv, address, "id", &id);
 			break;
 		case OPT_MESSAGE:
-			opok = sieve_opr_string_read(renv, address, "from", &message);
+			ret = sieve_opr_string_read(renv, address, "from", &message);
 			break;
 		case OPT_OPTIONS:
-			options = sieve_opr_stringlist_read(renv, address, "options");
-			opok = ( options != NULL );
+			ret = sieve_opr_stringlist_read(renv, address, "options", &options);
 			break;
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 
-		if ( !opok ) return SIEVE_EXEC_BIN_CORRUPT;
+		if ( ret <= 0 ) return ret;
 	}
 		
 	/*
@@ -562,9 +561,10 @@ static int cmd_notify_operation_execute
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 		
-		return ( sieve_result_add_action
+		if ( sieve_result_add_action
 			(renv, this_ext, &act_notify_old, NULL, source_line, (void *) act, 0) 
-				>= 0 );
+				< 0 )
+			return SIEVE_EXEC_FAILURE;
 	}
 
 	return SIEVE_EXEC_OK;

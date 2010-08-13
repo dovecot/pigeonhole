@@ -204,6 +204,7 @@ struct sieve_stringlist *testsuite_log_stringlist_create
 	    
 	strlist = t_new(struct testsuite_log_stringlist, 1);
 	strlist->strlist.runenv = renv;
+	strlist->strlist.exec_status = SIEVE_EXEC_OK;
 	strlist->strlist.next_item = testsuite_log_stringlist_next_item;
 	strlist->strlist.reset = testsuite_log_stringlist_reset;
 

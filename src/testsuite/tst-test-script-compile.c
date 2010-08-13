@@ -109,13 +109,15 @@ static int tst_test_script_compile_operation_execute
 {
 	string_t *script_name;
 	bool result = TRUE;
+	int ret;
 
 	/*
 	 * Read operands
 	 */
 
-	if ( !sieve_opr_string_read(renv, address, "script-name", &script_name) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "script-name", &script_name))
+		<= 0 )
+		return ret;
 
 	/*
 	 * Perform operation

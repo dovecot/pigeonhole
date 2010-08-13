@@ -46,6 +46,7 @@ struct sieve_address_list *sieve_header_address_list_create
 	    
 	addrlist = t_new(struct sieve_header_address_list, 1);
 	addrlist->addrlist.strlist.runenv = renv;
+	addrlist->addrlist.strlist.exec_status = SIEVE_EXEC_OK;
 	addrlist->addrlist.strlist.next_item = 
 		sieve_header_address_list_next_string_item;
 	addrlist->addrlist.strlist.reset = sieve_header_address_list_reset;

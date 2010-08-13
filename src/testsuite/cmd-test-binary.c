@@ -222,6 +222,7 @@ static int cmd_test_binary_operation_execute
 {
 	const struct sieve_operation *oprtn = renv->oprtn;
 	string_t *binary_name = NULL;
+	int ret;
 
 	/* 
 	 * Read operands 
@@ -229,8 +230,9 @@ static int cmd_test_binary_operation_execute
 
 	/* Binary Name */
 
-	if ( !sieve_opr_string_read(renv, address, "binary-name", &binary_name) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "binary-name", &binary_name))
+		<= 0 )
+		return ret;
 
 	/*
 	 * Perform operation

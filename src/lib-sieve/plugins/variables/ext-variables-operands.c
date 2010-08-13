@@ -28,12 +28,12 @@
  * Variable operand 
  */
 
-static bool opr_variable_read_value
-	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-		sieve_size_t *address, string_t **str);
 static bool opr_variable_dump
-	(const struct sieve_dumptime_env *denv, const struct sieve_operand *operand,
-		sieve_size_t *address, const char *field_name);
+	(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
+		sieve_size_t *address);
+static int opr_variable_read_value
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+		sieve_size_t *address, string_t **str_r);
 
 const struct sieve_opr_string_interface variable_interface = { 
 	opr_variable_dump,
@@ -66,10 +66,10 @@ void sieve_variables_opr_variable_emit
 }
 
 static bool opr_variable_dump
-(const struct sieve_dumptime_env *denv, const struct sieve_operand *operand,
-	sieve_size_t *address, const char *field_name) 
+(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
+	sieve_size_t *address) 
 {
-	const struct sieve_extension *this_ext = operand->ext;
+	const struct sieve_extension *this_ext = oprnd->ext;
 	unsigned int index = 0;
 	const struct sieve_extension *ext;
 	unsigned int code = 1; /* Initially set to offset value */
@@ -84,9 +84,9 @@ static bool opr_variable_dump
 	identifier = ext_variables_dump_get_identifier(this_ext, denv, ext, index);
 	identifier = identifier == NULL ? "??" : identifier;
 
-	if ( field_name != NULL ) 
+	if ( oprnd->field_name != NULL ) 
 		sieve_code_dumpf(denv, "%s: VAR[%s] ${%s}", 
-			field_name, sieve_ext_variables_get_varid(ext, index), identifier);
+			oprnd->field_name, sieve_ext_variables_get_varid(ext, index), identifier);
 	else
 		sieve_code_dumpf(denv, "VAR[%s] ${%s}", 
 			sieve_ext_variables_get_varid(ext, index), identifier);
@@ -94,104 +94,116 @@ static bool opr_variable_dump
 	return TRUE;
 }
 
-static bool opr_variable_read_value
-(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-	sieve_size_t *address, string_t **str)
+static int opr_variable_read_value
+(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+	sieve_size_t *address, string_t **str_r)
 { 
-	const struct sieve_extension *this_ext = operand->ext;
+	const struct sieve_extension *this_ext = oprnd->ext;
 	const struct sieve_extension *ext;
 	unsigned int code = 1; /* Initially set to offset value */
 	struct sieve_variable_storage *storage;
 	unsigned int index = 0;
 	
-	if ( !sieve_binary_read_extension(renv->sblock, address, &code, &ext) )
-		return FALSE;
+	if ( !sieve_binary_read_extension(renv->sblock, address, &code, &ext) ) {
+		sieve_runtime_trace_operand_error(renv, oprnd,
+			"variable operand corrupt: invalid extension byte");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	storage = sieve_ext_variables_runtime_get_storage
 		(this_ext, renv, ext);
-	if ( storage == NULL ) 
-		return FALSE;
+	if ( storage == NULL ) {
+		sieve_runtime_trace_operand_error(renv, oprnd,
+			"variable operand corrupt: extension has no storage");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 	
-	if (sieve_binary_read_unsigned(renv->sblock, address, &index) ) {
+	if ( sieve_binary_read_unsigned(renv->sblock, address, &index) ) {
 		/* Parameter str can be NULL if we are requested to only skip and not 
 		 * actually read the argument.
 		 */
-		if ( str != NULL ) {
-			if ( !sieve_variable_get(storage, index, str) )
-				return FALSE;
+		if ( str_r != NULL ) {
+			if ( !sieve_variable_get(storage, index, str_r) )
+				return SIEVE_EXEC_FAILURE;
 		
-			if ( *str == NULL ) *str = t_str_new(0);
+			if ( *str_r == NULL ) *str_r = t_str_new(0);
 		}
-		return TRUE;
+
+		return SIEVE_EXEC_OK;
 	}
 	
-	return FALSE;
+	sieve_runtime_trace_operand_error(renv, oprnd,
+		"variable operand corrupt: invalid variable index");
+	return SIEVE_EXEC_BIN_CORRUPT;
 }
 		
-bool sieve_variable_operand_read_data
-(const struct sieve_runtime_env *renv, const struct sieve_operand *operand, 
-	sieve_size_t *address, const char *field_name, 
-	struct sieve_variable_storage **storage, unsigned int *var_index)
+int sieve_variable_operand_read_data
+(const struct sieve_runtime_env *renv, struct sieve_operand *oprnd, 
+	sieve_size_t *address, const char *field_name,
+	struct sieve_variable_storage **storage_r, unsigned int *var_index_r)
 {
 	const struct sieve_extension *ext;
 	unsigned int code = 1; /* Initially set to offset value */
 	unsigned int idx = 0;
+	
+	oprnd->field_name = field_name;
 
-	if ( !sieve_operand_is_variable(operand) ) {
-		sieve_runtime_trace_operand_error
-			(renv, operand, field_name, "expected variable operand but found %s",
-				sieve_operand_name(operand));
-		return FALSE;
+	if ( !sieve_operand_is_variable(oprnd) ) {
+		sieve_runtime_trace_operand_error(renv, oprnd, 
+			"expected variable operand but found %s",	sieve_operand_name(oprnd));
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
 	if ( !sieve_binary_read_extension(renv->sblock, address, &code, &ext) ) {
-		sieve_runtime_trace_operand_error
-			(renv, operand, field_name, "variable operand: failed to read extension");
-		return FALSE;
+		sieve_runtime_trace_operand_error(renv, oprnd,
+			"variable operand corrupt: invalid extension byte");
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 		
-	*storage = sieve_ext_variables_runtime_get_storage
-		(operand->ext, renv, ext);
-	if ( *storage == NULL )	{
-		sieve_runtime_trace_operand_error(renv, operand, field_name, 
-			"variable operand: failed to get variable storage");
-		return FALSE;
+	*storage_r = sieve_ext_variables_runtime_get_storage
+		(oprnd->ext, renv, ext);
+	if ( *storage_r == NULL )	{
+		sieve_runtime_trace_operand_error(renv, oprnd,
+			"variable operand corrupt: extension has no storage");
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	
 	if ( !sieve_binary_read_unsigned(renv->sblock, address, &idx) ) {
-		sieve_runtime_trace_operand_error
-			(renv, operand, field_name, "variable operand: failed to read index");
-		return FALSE;
+		sieve_runtime_trace_operand_error(renv, oprnd, 
+			"variable operand corrupt: invalid variable index");
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	*var_index = idx;
-	return TRUE;
+	*var_index_r = idx;
+	return SIEVE_EXEC_OK;
 }
 
-bool sieve_variable_operand_read
+int sieve_variable_operand_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address,
-	const char *field_name, struct sieve_variable_storage **storage, 
-	unsigned int *var_index)
+	const char *field_name, struct sieve_variable_storage **storage_r, 
+	unsigned int *var_index_r)
 {
 	struct sieve_operand operand;
+	int ret;
 
-	if ( !sieve_operand_runtime_read(renv, address, field_name, &operand) )
-		return FALSE;
+	if ( (ret=sieve_operand_runtime_read(renv, address, field_name, &operand))
+		<= 0)
+		return ret;
 
 	return sieve_variable_operand_read_data
-		(renv, &operand, address, field_name, storage, var_index);
+		(renv, &operand, address, field_name, storage_r, var_index_r);
 }
 	
 /* 
  * Match value operand 
  */
 
-static bool opr_match_value_read
-	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-		sieve_size_t *address, string_t **str);
 static bool opr_match_value_dump
-	(const struct sieve_dumptime_env *denv,  const struct sieve_operand *operand,
-		sieve_size_t *address, const char *field_name);
+	(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
+		sieve_size_t *address);
+static int opr_match_value_read
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+		sieve_size_t *address, string_t **str_r);
 
 const struct sieve_opr_string_interface match_value_interface = { 
 	opr_match_value_dump,
@@ -215,16 +227,15 @@ void sieve_variables_opr_match_value_emit
 }
 
 static bool opr_match_value_dump
-(const struct sieve_dumptime_env *denv,
-	const struct sieve_operand *operand ATTR_UNUSED,
-	sieve_size_t *address, const char *field_name) 
+(const struct sieve_dumptime_env *denv,	const struct sieve_operand *oprnd,
+	sieve_size_t *address) 
 {
 	unsigned int index = 0;
 	
 	if (sieve_binary_read_unsigned(denv->sblock, address, &index) ) {
-		if ( field_name != NULL )
+		if ( oprnd->field_name != NULL )
 			sieve_code_dumpf
-				(denv, "%s: MATCHVAL %lu", field_name, (unsigned long) index);
+				(denv, "%s: MATCHVAL %lu", oprnd->field_name, (unsigned long) index);
 		else
 			sieve_code_dumpf(denv, "MATCHVAL %lu", (unsigned long) index);
 
@@ -234,27 +245,29 @@ static bool opr_match_value_dump
 	return FALSE;
 }
 
-static bool opr_match_value_read
-(const struct sieve_runtime_env *renv, 
-	const struct sieve_operand *operand ATTR_UNUSED,
-	sieve_size_t *address, string_t **str)
+static int opr_match_value_read
+(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+	sieve_size_t *address, string_t **str_r)
 { 
 	unsigned int index = 0;
 			
-	if (sieve_binary_read_unsigned(renv->sblock, address, &index) ) {
+	if ( sieve_binary_read_unsigned(renv->sblock, address, &index) ) {
 		/* Parameter str can be NULL if we are requested to only skip and not 
 		 * actually read the argument.
 		 	*/
-		if ( str != NULL ) {
-			sieve_match_values_get(renv, index, str);
+		if ( str_r != NULL ) {
+			sieve_match_values_get(renv, index, str_r);
 		
-			if ( *str == NULL ) 
-				*str = t_str_new(0);
-			else if ( str_len(*str) > EXT_VARIABLES_MAX_VARIABLE_SIZE ) 
-				str_truncate(*str, EXT_VARIABLES_MAX_VARIABLE_SIZE);
+			if ( *str_r == NULL ) 
+				*str_r = t_str_new(0);
+			else if ( str_len(*str_r) > EXT_VARIABLES_MAX_VARIABLE_SIZE ) 
+				str_truncate(*str_r, EXT_VARIABLES_MAX_VARIABLE_SIZE);
 		}
-		return TRUE;
+
+		return SIEVE_EXEC_OK;
 	}
 	
-	return FALSE;
+	sieve_runtime_trace_operand_error(renv, oprnd,
+		"match value operand corrupt: invalid index data");
+	return SIEVE_EXEC_BIN_CORRUPT;
 }

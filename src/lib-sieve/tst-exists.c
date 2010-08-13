@@ -106,19 +106,19 @@ static bool tst_exists_operation_dump
 static int tst_exists_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	int ret;
 	struct sieve_stringlist *hdr_list;
 	string_t *hdr_item;
 	bool matched;
+	int ret;
 	
 	/*
 	 * Read operands
 	 */
 
 	/* Read header-list */
-	if ( (hdr_list=sieve_opr_stringlist_read(renv, address, "header-list"))
-		== NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_stringlist_read(renv, address, "header-list", &hdr_list))
+		<= 0 )
+		return ret;
 
 	/*
 	 * Perfrom test

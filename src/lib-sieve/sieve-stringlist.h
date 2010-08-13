@@ -13,7 +13,7 @@ struct sieve_stringlist {
 	int (*get_length)
 		(struct sieve_stringlist *strlist);
 
-	bool (*read_all)
+	int (*read_all)
 		(struct sieve_stringlist *strlist, pool_t pool,
 			const char * const **list_r);
 
@@ -21,6 +21,8 @@ struct sieve_stringlist {
 		(struct sieve_stringlist *strlist, bool trace);
 
 	const struct sieve_runtime_env *runenv;
+	int exec_status;
+
 	unsigned int trace:1;
 };
 
@@ -48,7 +50,7 @@ static inline void sieve_stringlist_reset
 int sieve_stringlist_get_length
 	(struct sieve_stringlist *strlist);
 
-bool sieve_stringlist_read_all
+int sieve_stringlist_read_all
 	(struct sieve_stringlist *strlist, pool_t pool,
 		const char * const **list_r);
 

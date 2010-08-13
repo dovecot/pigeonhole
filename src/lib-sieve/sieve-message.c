@@ -226,6 +226,7 @@ struct sieve_stringlist *sieve_message_header_stringlist_create
 	    
 	strlist = t_new(struct sieve_message_header_stringlist, 1);
 	strlist->strlist.runenv = renv;
+	strlist->strlist.exec_status = SIEVE_EXEC_OK;
 	strlist->strlist.next_item = sieve_message_header_stringlist_next_item;
 	strlist->strlist.reset = sieve_message_header_stringlist_reset;
 	strlist->field_names = field_names;

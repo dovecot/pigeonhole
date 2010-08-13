@@ -255,13 +255,13 @@ static bool ext_body_operation_dump
 
 	/* Handle any optional arguments */
 	for (;;) {
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_match_opr_optional_dump(denv, address, &opt_code)) 
+		if ( (opt=sieve_match_opr_optional_dump(denv, address, &opt_code)) 
 			< 0 )
 			return FALSE;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case OPT_BODY_TRANSFORM:
@@ -302,7 +302,6 @@ static bool ext_body_operation_dump
 static int ext_body_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	int ret;
 	int opt_code = 0;
 	struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
@@ -312,6 +311,7 @@ static int ext_body_operation_execute
 	struct sieve_stringlist *ctype_list, *value_list, *key_list;
 	bool mvalues_active;
 	const char * const *content_types = NULL;
+	int match, ret;
 
 	/*
 	 * Read operands
@@ -321,46 +321,44 @@ static int ext_body_operation_execute
 
 	ctype_list = NULL;
 	for (;;) {
-		bool opok = TRUE;
+		int opt;
 
-		if ( (ret=sieve_match_opr_optional_read
-			(renv, address, &opt_code, &cmp, &mcht)) < 0 )
-			return SIEVE_EXEC_BIN_CORRUPT;
+		if ( (opt=sieve_match_opr_optional_read
+			(renv, address, &opt_code, &ret, &cmp, &mcht)) < 0 )
+			return ret;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 			
 		switch ( opt_code ) {
 		case OPT_BODY_TRANSFORM:
 			if ( !sieve_binary_read_byte(renv->sblock, address, &transform) ||
 				transform > TST_BODY_TRANSFORM_TEXT ) {
 				sieve_runtime_trace_error(renv, "invalid body transform type");
-				opok = FALSE;
+				return SIEVE_EXEC_BIN_CORRUPT;
 			}
 			
-			if ( opok && transform == TST_BODY_TRANSFORM_CONTENT ) {				
-				ctype_list = sieve_opr_stringlist_read
-					(renv, address, "content-type-list"); 
-				opok = ( ctype_list != NULL );
-			}
+			if ( transform == TST_BODY_TRANSFORM_CONTENT && 
+				(ret=sieve_opr_stringlist_read
+					(renv, address, "content-type-list", &ctype_list)) <= 0 )
+				return ret;
 			break;
 
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
-			opok = FALSE;
+			return SIEVE_EXEC_BIN_CORRUPT;
 		}
-
-		if ( !opok) return SIEVE_EXEC_BIN_CORRUPT;
 	} 
 		
 	/* Read key-list */
 
-	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) == NULL ) 
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_stringlist_read(renv, address, "key-list", &key_list)) 
+		<= 0 ) 
+		return ret;
 	
-	if ( ctype_list != NULL && !sieve_stringlist_read_all
-		(ctype_list, pool_datastack_create(), &content_types) ) {
+	if ( ctype_list != NULL && sieve_stringlist_read_all
+		(ctype_list, pool_datastack_create(), &content_types) < 0 ) {
 		sieve_runtime_trace_error(renv, "failed to read content-type-list operand");
-		return SIEVE_EXEC_BIN_CORRUPT;
+		return ctype_list->exec_status;
 	}
 	
 	/*
@@ -378,17 +376,15 @@ static int ext_body_operation_execute
 	mvalues_active = sieve_match_values_set_enabled(renv, FALSE);
 
 	/* Perform match */
-	ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
+	match = sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret); 	
 
 	/* Restore match values processing */ 	
 	(void)sieve_match_values_set_enabled(renv, mvalues_active);
 	
-	/* Set test result for subsequent conditional jump */
-	if ( ret >= 0 ) {
-		sieve_interpreter_set_test_result(renv->interp, ret > 0);
-		return SIEVE_EXEC_OK;
-	}	
+	if ( match < 0 )
+		return ret;
 
-	sieve_runtime_trace_error(renv, "invalid string-list item");
-	return SIEVE_EXEC_BIN_CORRUPT;
+	/* Set test result for subsequent conditional jump */
+	sieve_interpreter_set_test_result(renv->interp, match > 0);
+	return SIEVE_EXEC_OK;
 }

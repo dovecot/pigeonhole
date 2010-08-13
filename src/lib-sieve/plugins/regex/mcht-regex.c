@@ -267,7 +267,7 @@ static int mcht_regex_match_keys
 	bool trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_MATCHING);
 	struct mcht_regex_context *ctx = (struct mcht_regex_context *) mctx->data;
 	const struct sieve_comparator *cmp = mctx->comparator;
-	int result = 0;
+	int match;
 
 	if ( !ctx->all_compiled ) {
 		string_t *key_item = NULL;
@@ -280,7 +280,8 @@ static int mcht_regex_match_keys
 			p_array_init(&ctx->reg_expressions, mctx->pool, 16);
 
 		i = 0;
-		while ( result == 0 &&
+		match = 0;
+		while ( match == 0 &&
 			(ret=sieve_stringlist_next_item(key_list, &key_item)) > 0 ) {				
 
 			T_BEGIN {
@@ -316,13 +317,13 @@ static int mcht_regex_match_keys
 				} 
 
 				if ( rkey->status > 0 ) {
-					result = mcht_regex_match_key(mctx, val, &rkey->regexp);
+					match = mcht_regex_match_key(mctx, val, &rkey->regexp);
 
 					if ( trace ) {
 						sieve_runtime_trace(renv, 0,
 							"with regex `%s' [id=%d] => %d", 
 							str_sanitize(str_c(key_item), 80),
-							array_count(&ctx->reg_expressions)-1, result);
+							array_count(&ctx->reg_expressions)-1, match);
 					}
 				}
 			} T_END;
@@ -330,7 +331,12 @@ static int mcht_regex_match_keys
 			i++;
 		}
 
-		if ( ret < 0 ) result = -1;
+		if ( ret == 0 ) {
+			ctx->all_compiled = TRUE;
+		} else if ( ret < 0 ) {
+			mctx->exec_status = key_list->exec_status;
+			match = -1;
+		}
 
 	} else {
 		const struct mcht_regex_key *rkeys;
@@ -340,24 +346,23 @@ static int mcht_regex_match_keys
 
 		rkeys = array_get(&ctx->reg_expressions, &count);
 
-		i = 0; 
-		while ( result == 0 && i < count ) {
+		i = 0;
+		match = 0;
+		while ( match == 0 && i < count ) {
 			if ( rkeys[i].status > 0 ) {
-				result = mcht_regex_match_key(mctx, val, &rkeys[i].regexp);
+				match = mcht_regex_match_key(mctx, val, &rkeys[i].regexp);
 
 				if ( trace ) {
 					sieve_runtime_trace(renv, 0,
-						"with compiled regex [id=%d] => %d", i, result);
+						"with compiled regex [id=%d] => %d", i, match);
 				}
 			}
 
 			i++;
 		}
-
-		if ( i == count ) ctx->all_compiled = TRUE;
 	}
 
-	return result;
+	return match;
 }
 
 void mcht_regex_match_deinit

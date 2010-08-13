@@ -279,12 +279,12 @@ static int ext_reject_operation_execute
 	source_line = sieve_runtime_get_command_location(renv);
 
 	/* Optional operands (side effects only) */
-	if ( (ret=sieve_action_opr_optional_read(renv, address, NULL, &slist)) < 0 ) 
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 ) 
+		return ret;
 
 	/* Read rejection reason */
-	if ( !sieve_opr_string_read(renv, address, "reason", &reason) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "reason", &reason)) <= 0 )
+		return ret;
 
 	/*
 	 * Perform operation
@@ -307,10 +307,11 @@ static int ext_reject_operation_execute
 	act->reason = p_strdup(pool, str_c(reason));
 	act->ereject = ( sieve_operation_is(oprtn, ereject_operation) );
 	
-	ret = sieve_result_add_action
-		(renv, this_ext, &act_reject, slist, source_line, (void *) act, 0);
+	if ( sieve_result_add_action
+		(renv, this_ext, &act_reject, slist, source_line, (void *) act, 0) < 0 )
+		return SIEVE_EXEC_FAILURE;
 	
-	return ( ret >= 0 );
+	return SIEVE_EXEC_OK;
 }
 
 /*

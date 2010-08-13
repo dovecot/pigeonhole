@@ -336,16 +336,16 @@ static bool tst_date_operation_dump
 	
 	/* Handle any optional arguments */
 	for (;;) {
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_match_opr_optional_dump(denv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_match_opr_optional_dump(denv, address, &opt_code)) < 0 )
 			return FALSE;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case OPT_DATE_ZONE:
-			if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
+			if ( !sieve_operand_read(denv->sblock, address, "zone", &operand) ) {
 				sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 				return FALSE;
 			}				
@@ -386,33 +386,34 @@ static int tst_date_operation_execute
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
-	struct sieve_operand operand;
+	struct sieve_operand oprnd;
 	string_t *date_part = NULL, *zone = NULL;
 	struct sieve_stringlist *hdr_list = NULL, *hdr_value_list;
 	struct sieve_stringlist *value_list, *key_list;
 	bool zone_specified = FALSE;
 	int time_zone;
-	int ret;
+	int match, ret;
 	
 	/* Read optional operands */
 	for (;;) {
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_match_opr_optional_read
-			(renv, address, &opt_code, &cmp, &mcht)) < 0 )
-			return SIEVE_EXEC_BIN_CORRUPT;
+		if ( (opt=sieve_match_opr_optional_read
+			(renv, address, &opt_code, &ret, &cmp, &mcht)) < 0 )
+			return ret;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 	
 		switch ( opt_code ) {
 		case OPT_DATE_ZONE:
-			if ( !sieve_operand_runtime_read(renv, address, "zone", &operand) )
-				return SIEVE_EXEC_BIN_CORRUPT;
+			if ( (ret=sieve_operand_runtime_read(renv, address, "zone", &oprnd))
+				<= 0 )
+				return ret;
 
-			if ( !sieve_operand_is_omitted(&operand) ) {
-				if ( !sieve_opr_string_read_data
-					(renv, &operand, address, "zone", &zone) )
-					return SIEVE_EXEC_BIN_CORRUPT;
+			if ( !sieve_operand_is_omitted(&oprnd) ) {
+				if ( (ret=sieve_opr_string_read_data
+					(renv, &oprnd, address, "zone", &zone)) <= 0 )
+					return ret;
 			}
 
 			zone_specified = TRUE;
@@ -425,19 +426,20 @@ static int tst_date_operation_execute
 
 	if ( sieve_operation_is(op, date_operation) ) {
 		/* Read header name as stringlist */
-		if ( (hdr_list=sieve_opr_stringlist_read(renv, address, "header-name"))
-			== NULL )
-			return SIEVE_EXEC_BIN_CORRUPT;
+		if ( (ret=sieve_opr_stringlist_read
+			(renv, address, "header-name", &hdr_list)) <= 0 )
+			return ret;
 	}
 
 	/* Read date part */
-	if ( !sieve_opr_string_read(renv, address, "date-part", &date_part) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "date-part", &date_part)) 
+		<= 0 )
+		return ret;
 		
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) 
-		== NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_stringlist_read(renv, address, "key-list", &key_list))
+		<= 0 )
+		return ret;
 	
 	/* Determine what time zone to use in the result */
 	if ( !zone_specified ) {
@@ -475,14 +477,10 @@ static int tst_date_operation_execute
 	}
 
 	/* Perform match */
-	ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
-	
-	/* Set test result for subsequent conditional jump */
-	if ( ret >= 0 ) {
-		sieve_interpreter_set_test_result(renv->interp, ret > 0);
-		return SIEVE_EXEC_OK;
-	}	
+	if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret)) < 0 )
+		return ret;	
 
-	sieve_runtime_trace_error(renv, "invalid string-list item");
-	return SIEVE_EXEC_BIN_CORRUPT;
+	/* Set test result for subsequent conditional jump */
+	sieve_interpreter_set_test_result(renv->interp, match > 0);
+	return SIEVE_EXEC_OK;
 }

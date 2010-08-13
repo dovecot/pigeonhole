@@ -55,6 +55,7 @@ static struct sieve_stringlist *sieve_code_stringlist_create
     
 	strlist = t_new(struct sieve_code_stringlist, 1);
 	strlist->strlist.runenv = renv;
+	strlist->strlist.exec_status = SIEVE_EXEC_OK;
 	strlist->strlist.next_item = sieve_code_stringlist_next_item;
 	strlist->strlist.reset = sieve_code_stringlist_reset;
 	strlist->strlist.get_length = sieve_code_stringlist_get_length;
@@ -76,6 +77,7 @@ static int sieve_code_stringlist_next_item
 		(struct sieve_code_stringlist *) _strlist;
 	sieve_size_t address;
 	*str_r = NULL;
+	int ret;
   
 	/* Check for end of list */
 	if ( strlist->index >= strlist->length ) 
@@ -83,12 +85,14 @@ static int sieve_code_stringlist_next_item
 
 	/* Read next item */
 	address = strlist->current_offset;	
-	if ( sieve_opr_string_read(_strlist->runenv, &address, NULL, str_r) ) {
+	if ( (ret=sieve_opr_string_read(_strlist->runenv, &address, NULL, str_r))
+		== SIEVE_EXEC_OK ) {
 		strlist->index++;
 		strlist->current_offset = address;
 		return 1;
 	}
   
+	_strlist->exec_status = ret;
 	return -1;
 }
 
@@ -193,17 +197,18 @@ sieve_size_t sieve_operand_emit
 }
 
 bool sieve_operand_read
-(struct sieve_binary_block *sblock, sieve_size_t *address, 
-	struct sieve_operand *operand) 
+(struct sieve_binary_block *sblock, sieve_size_t *address,
+	const char *field_name, struct sieve_operand *operand) 
 {
 	unsigned int code = sieve_operand_count;
 
 	operand->address = *address;
+	operand->field_name = field_name;
 	operand->ext = NULL;
 	operand->def = NULL;
 
 	if ( !sieve_binary_read_extension(sblock, address, &code, &operand->ext) )
-		return NULL;
+		return FALSE;
 
 	if ( operand->ext == NULL ) {
 		if ( code < sieve_operand_count )
@@ -267,11 +272,11 @@ const struct sieve_operand_def omitted_operand = {
 /* Number */
 
 static bool opr_number_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
-		const char *field_name);
-static bool opr_number_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-		sieve_number_t *number_r);
+	(const struct sieve_dumptime_env *denv,	const struct sieve_operand *oprnd,
+		sieve_size_t *address);
+static int opr_number_read
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+		sieve_size_t *address, sieve_number_t *number_r);
 
 const struct sieve_opr_number_interface number_interface = { 
 	opr_number_dump, 
@@ -291,10 +296,10 @@ const struct sieve_operand_def number_operand = {
 /* String */
 
 static bool opr_string_dump
-	(const struct sieve_dumptime_env *denv, const struct sieve_operand *opr,
-		sieve_size_t *address, const char *field_name);
-static bool opr_string_read
-	(const struct sieve_runtime_env *renv, const struct sieve_operand *opr,
+	(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
+		sieve_size_t *address);
+static int opr_string_read
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
 		sieve_size_t *address, string_t **str_r);
 
 const struct sieve_opr_string_interface string_interface ={ 
@@ -315,10 +320,11 @@ const struct sieve_operand_def string_operand = {
 /* String List */
 
 static bool opr_stringlist_dump
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
-		const char *field_name);
-static struct sieve_stringlist *opr_stringlist_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+	(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
+		sieve_size_t *address);
+static int opr_stringlist_read
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+		sieve_size_t *address, struct sieve_stringlist **strlist_r);
 
 const struct sieve_opr_stringlist_interface stringlist_interface = { 
 	opr_stringlist_dump, 
@@ -337,12 +343,12 @@ const struct sieve_operand_def stringlist_operand =	{
 
 /* Catenated String */
 
-static bool opr_catenated_string_read
-	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-		sieve_size_t *address, string_t **str);
 static bool opr_catenated_string_dump
 	(const struct sieve_dumptime_env *denv, const struct sieve_operand *operand,
-		sieve_size_t *address, const char *field_name);
+		sieve_size_t *address);
+static int opr_catenated_string_read
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
+		sieve_size_t *address, string_t **str);
 
 const struct sieve_opr_string_interface catenated_string_interface = { 
 	opr_catenated_string_dump,
@@ -377,20 +383,22 @@ void sieve_opr_number_emit
 }
 
 bool sieve_opr_number_dump_data
-(const struct sieve_dumptime_env *denv, const struct sieve_operand *opr,
+(const struct sieve_dumptime_env *denv, struct sieve_operand *oprnd,
 	sieve_size_t *address, const char *field_name) 
 {
 	const struct sieve_opr_number_interface *intf;
 
-	if ( !sieve_operand_is_number(opr) ) 
+	oprnd->field_name = field_name;
+
+	if ( !sieve_operand_is_number(oprnd) ) 
 		return FALSE;
 		
-	intf = (const struct sieve_opr_number_interface *) opr->def->interface; 
+	intf = (const struct sieve_opr_number_interface *) oprnd->def->interface; 
 	
 	if ( intf->dump == NULL )
 		return FALSE;
 
-	return intf->dump(denv, address, field_name);  
+	return intf->dump(denv, oprnd, address);  
 }
 
 bool sieve_opr_number_dump
@@ -401,60 +409,61 @@ bool sieve_opr_number_dump
 	
 	sieve_code_mark(denv);
 	
-	if ( !sieve_operand_read(denv->sblock, address, &operand) )
+	if ( !sieve_operand_read(denv->sblock, address, field_name, &operand) )
 		return FALSE;
 
 	return sieve_opr_number_dump_data(denv, &operand, address, field_name);
 }
 
-bool sieve_opr_number_read_data
-(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+int sieve_opr_number_read_data
+(const struct sieve_runtime_env *renv, struct sieve_operand *oprnd,
 	sieve_size_t *address, const char *field_name, sieve_number_t *number_r)
 {
 	const struct sieve_opr_number_interface *intf;
 		
+	oprnd->field_name = field_name;
+
 	if ( !sieve_operand_is_number(oprnd) ) {
-		sieve_runtime_trace_operand_error(renv, oprnd, field_name,
+		sieve_runtime_trace_operand_error(renv, oprnd,
 			"expected number operand but found %s", sieve_operand_name(oprnd));
-		return FALSE;
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 		
 	intf = (const struct sieve_opr_number_interface *) oprnd->def->interface; 
 	
-	if ( intf->read == NULL )
-		return FALSE;
-
-	if ( !intf->read(renv, address, number_r) ) {
-		sieve_runtime_trace_operand_error(renv, oprnd, field_name,
-			"invalid number operand");
-		return FALSE;	
+	if ( intf->read == NULL ) {
+		sieve_runtime_trace_operand_error(renv, oprnd,
+			"number operand not implemented");
+		return SIEVE_EXEC_FAILURE;
 	}
 
-	return TRUE;
+	return intf->read(renv, oprnd, address, number_r);
 }
 
-bool sieve_opr_number_read
+int sieve_opr_number_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, 
 	const char *field_name, sieve_number_t *number_r)
 {
 	struct sieve_operand operand;
+	int ret;
 
-	if ( !sieve_operand_runtime_read(renv, address, field_name, &operand) )
-		return FALSE;
+	if ( (ret=sieve_operand_runtime_read(renv, address, field_name, &operand)) 
+		<= 0)
+		return ret;
 		
 	return sieve_opr_number_read_data
 		(renv, &operand, address, field_name, number_r);
 }
 
 static bool opr_number_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address,
-	const char *field_name) 
+(const struct sieve_dumptime_env *denv,	const struct sieve_operand *oprnd, 
+	sieve_size_t *address) 
 {
 	sieve_number_t number = 0;
 	
 	if (sieve_binary_read_integer(denv->sblock, address, &number) ) {
-		if ( field_name != NULL ) 
-			sieve_code_dumpf(denv, "%s: NUM %llu", field_name, 
+		if ( oprnd->field_name != NULL ) 
+			sieve_code_dumpf(denv, "%s: NUM %llu", oprnd->field_name, 
 				(unsigned long long) number);
 		else
 			sieve_code_dumpf(denv, "NUM %llu", (unsigned long long) number);
@@ -465,11 +474,16 @@ static bool opr_number_dump
 	return FALSE;
 }
 
-static bool opr_number_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	sieve_number_t *number_r)
+static int opr_number_read
+(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd, 
+	sieve_size_t *address, sieve_number_t *number_r)
 { 
-	return sieve_binary_read_integer(renv->sblock, address, number_r);
+	if ( !sieve_binary_read_integer(renv->sblock, address, number_r) ) {
+		sieve_runtime_trace_operand_error(renv, oprnd, "invalid number operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	return SIEVE_EXEC_OK;
 }
 
 /* String */
@@ -481,25 +495,27 @@ void sieve_opr_string_emit(struct sieve_binary_block *sblock, string_t *str)
 }
 
 bool sieve_opr_string_dump_data
-(const struct sieve_dumptime_env *denv, const struct sieve_operand *opr,
+(const struct sieve_dumptime_env *denv, struct sieve_operand *oprnd,
 	sieve_size_t *address, const char *field_name) 
 {
 	const struct sieve_opr_string_interface *intf;
 	
-	if ( !sieve_operand_is_string(opr) ) {
+	oprnd->field_name = field_name;
+
+	if ( !sieve_operand_is_string(oprnd) ) {
 		sieve_code_dumpf(denv, "ERROR: INVALID STRING OPERAND %s", 
-			sieve_operand_name(opr));
+			sieve_operand_name(oprnd));
 		return FALSE;
 	}
 		
-	intf = (const struct sieve_opr_string_interface *) opr->def->interface; 
+	intf = (const struct sieve_opr_string_interface *) oprnd->def->interface; 
 	
 	if ( intf->dump == NULL ) {
 		sieve_code_dumpf(denv, "ERROR: DUMP STRING OPERAND");
 		return FALSE;
 	}
 
-	return intf->dump(denv, opr, address, field_name);  
+	return intf->dump(denv, oprnd, address);  
 }
 
 bool sieve_opr_string_dump
@@ -510,7 +526,7 @@ bool sieve_opr_string_dump
 	
 	sieve_code_mark(denv);
 
-	if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
+	if ( !sieve_operand_read(denv->sblock, address, field_name, &operand) ) {
 		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 		return FALSE;
 	}
@@ -525,7 +541,7 @@ bool sieve_opr_string_dump_ex
 	struct sieve_operand operand;
 	
 	sieve_code_mark(denv);
-	if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
+	if ( !sieve_operand_read(denv->sblock, address, field_name, &operand) ) {
 		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 		return FALSE;
 	}
@@ -535,49 +551,55 @@ bool sieve_opr_string_dump_ex
 	return sieve_opr_string_dump_data(denv, &operand, address, field_name);
 } 
 
-bool sieve_opr_string_read_data
-(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+int sieve_opr_string_read_data
+(const struct sieve_runtime_env *renv, struct sieve_operand *oprnd,
 	sieve_size_t *address, const char *field_name, string_t **str_r)
 {
 	const struct sieve_opr_string_interface *intf;
+
+	oprnd->field_name = field_name;
 	
 	if ( !sieve_operand_is_string(oprnd) ) {
-		sieve_runtime_trace_operand_error(renv, oprnd, field_name,
+		sieve_runtime_trace_operand_error(renv, oprnd,
 			"expected string operand but found %s", sieve_operand_name(oprnd));
-		return FALSE;
+		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 		
 	intf = (const struct sieve_opr_string_interface *) oprnd->def->interface; 
 	
 	if ( intf->read == NULL ) {
-		sieve_runtime_trace_operand_error(renv, oprnd, field_name,
-			"invalid string operand");
-		return FALSE;
+		sieve_runtime_trace_operand_error(renv, oprnd,
+			"string operand not implemented");
+		return SIEVE_EXEC_FAILURE;
 	}
 
 	return intf->read(renv, oprnd, address, str_r);  
 }
 
-bool sieve_opr_string_read
+int sieve_opr_string_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, 
 	const char *field_name, string_t **str_r)
 {
 	struct sieve_operand operand;
+	int ret;
 
-	if ( !sieve_operand_runtime_read(renv, address, field_name, &operand) )
-		return FALSE;
+	if ( (ret=sieve_operand_runtime_read(renv, address, field_name, &operand))
+		<= 0 )
+		return ret;
 
 	return sieve_opr_string_read_data(renv, &operand, address, field_name, str_r);
 }
 
-bool sieve_opr_string_read_ex
+int sieve_opr_string_read_ex
 (const struct sieve_runtime_env *renv, sieve_size_t *address,
 	const char *field_name, string_t **str_r, bool *literal_r)
 {
 	struct sieve_operand operand;
+	int ret;
 
-	if ( !sieve_operand_runtime_read(renv, address, field_name, &operand) )
-		return FALSE;
+	if ( (ret=sieve_operand_runtime_read(renv, address, field_name, &operand))
+		<= 0 )
+		return ret;
 
 	*literal_r = sieve_operand_is(&operand, string_operand);
 
@@ -606,14 +628,13 @@ static void _dump_string
 }
 
 bool opr_string_dump
-(const struct sieve_dumptime_env *denv, 
-	const struct sieve_operand *opr ATTR_UNUSED, sieve_size_t *address, 
-	const char *field_name) 
+(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
+	sieve_size_t *address) 
 {
 	string_t *str; 
 	
 	if ( sieve_binary_read_string(denv->sblock, address, &str) ) {
-		_dump_string(denv, str, field_name);   		
+		_dump_string(denv, str, oprnd->field_name);   		
 		
 		return TRUE;
 	}
@@ -621,12 +642,17 @@ bool opr_string_dump
 	return FALSE;
 }
 
-static bool opr_string_read
-(const struct sieve_runtime_env *renv, 
-	const struct sieve_operand *opr ATTR_UNUSED, sieve_size_t *address, 
-	string_t **str_r)
+static int opr_string_read
+(const struct sieve_runtime_env *renv, 	const struct sieve_operand *oprnd, 
+	sieve_size_t *address, string_t **str_r)
 { 	
-	return sieve_binary_read_string(renv->sblock, address, str_r);
+	if ( !sieve_binary_read_string(renv->sblock, address, str_r) ) {
+		sieve_runtime_trace_operand_error(renv, oprnd, 
+			"invalid string operand");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	return SIEVE_EXEC_OK;
 }
 
 /* String list */
@@ -662,28 +688,30 @@ void sieve_opr_stringlist_emit_end
 }
 
 bool sieve_opr_stringlist_dump_data
-(const struct sieve_dumptime_env *denv, const struct sieve_operand *opr,
+(const struct sieve_dumptime_env *denv, struct sieve_operand *oprnd,
 	sieve_size_t *address, const char *field_name) 
 {
-	if ( opr == NULL || opr->def == NULL )
+	if ( oprnd == NULL || oprnd->def == NULL )
 		return FALSE;
 	
-	if ( opr->def->class == &stringlist_class ) {
+	oprnd->field_name = field_name;
+
+	if ( oprnd->def->class == &stringlist_class ) {
 		const struct sieve_opr_stringlist_interface *intf =
-			(const struct sieve_opr_stringlist_interface *) opr->def->interface; 
+			(const struct sieve_opr_stringlist_interface *) oprnd->def->interface; 
 		
 		if ( intf->dump == NULL )
 			return FALSE;
 
-		return intf->dump(denv, address, field_name); 
-	} else if ( opr->def->class == &string_class ) {
+		return intf->dump(denv, oprnd, address); 
+	} else if ( oprnd->def->class == &string_class ) {
 		const struct sieve_opr_string_interface *intf =
-			(const struct sieve_opr_string_interface *) opr->def->interface; 
+			(const struct sieve_opr_string_interface *) oprnd->def->interface; 
 	
 		if ( intf->dump == NULL ) 
 			return FALSE;
 
-		return intf->dump(denv, opr, address, field_name);  
+		return intf->dump(denv, oprnd, address);  
 	}
 	
 	return FALSE;
@@ -697,70 +725,83 @@ bool sieve_opr_stringlist_dump
 
 	sieve_code_mark(denv);
 
-	if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
+	if ( !sieve_operand_read(denv->sblock, address, field_name, &operand) ) {
 		return FALSE;
 	}
 
 	return sieve_opr_stringlist_dump_data(denv, &operand, address, field_name);
 }
 
-struct sieve_stringlist *sieve_opr_stringlist_read_data
-(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
-	sieve_size_t *address, const char *field_name)
+int sieve_opr_stringlist_read_data
+(const struct sieve_runtime_env *renv, struct sieve_operand *oprnd,
+	sieve_size_t *address, const char *field_name, 
+	struct sieve_stringlist **strlist_r)
 {
 	if ( oprnd == NULL || oprnd->def == NULL )
-		return NULL;
+		return SIEVE_EXEC_FAILURE;
+
+	oprnd->field_name = field_name;
 		
 	if ( oprnd->def->class == &stringlist_class ) {
 		const struct sieve_opr_stringlist_interface *intf = 
 			(const struct sieve_opr_stringlist_interface *) oprnd->def->interface;
-		struct sieve_stringlist *strlist;
+		int ret;
 			
-		if ( intf->read == NULL ) 
-			return NULL;
-
-		if ( (strlist=intf->read(renv, address)) == NULL ) {
-			sieve_runtime_trace_operand_error(renv, oprnd, field_name,
-				"invalid stringlist operand");
-			return NULL;
+		if ( intf->read == NULL ) {
+			sieve_runtime_trace_operand_error(renv, oprnd,
+				"stringlist operand not implemented");
+			return SIEVE_EXEC_FAILURE;
 		}
 
-		return strlist;
+		if ( (ret=intf->read(renv, oprnd, address, strlist_r)) <= 0 )
+			return ret;
+
+		return SIEVE_EXEC_OK;
 	} else if ( oprnd->def->class == &string_class ) {
 		/* Special case, accept single string as string list as well. */
 		const struct sieve_opr_string_interface *intf = 
 			(const struct sieve_opr_string_interface *) oprnd->def->interface;
+		int ret;
 				
-		if ( intf->read == NULL || !intf->read(renv, oprnd, address, NULL) ) {
-			sieve_runtime_trace_operand_error(renv, oprnd, field_name,
-				"invalid stringlist string operand");
-			return NULL;
+		if ( intf->read == NULL ) {
+			sieve_runtime_trace_operand_error(renv, oprnd,
+				"stringlist string operand not implemented");
+			return SIEVE_EXEC_FAILURE;
 		}
-		
-		return sieve_code_stringlist_create(renv, oprnd->address, 1, *address); 
+
+		if ( (ret=intf->read(renv, oprnd, address, NULL)) <= 0 )
+			return ret;
+
+		if ( strlist_r != NULL ) 
+			*strlist_r = sieve_code_stringlist_create
+				(renv, oprnd->address, 1, *address); 
+		return SIEVE_EXEC_OK;
 	}	
 
-	sieve_runtime_trace_operand_error(renv, oprnd, field_name,
+	sieve_runtime_trace_operand_error(renv, oprnd,
 		"expected stringlist or string operand but found %s", 
 		sieve_operand_name(oprnd));
-	return NULL;
+	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
-struct sieve_stringlist *sieve_opr_stringlist_read
+int sieve_opr_stringlist_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	const char *field_name)
+	const char *field_name, struct sieve_stringlist **strlist_r)
 {
 	struct sieve_operand operand;
+	int ret;
 
-	if ( !sieve_operand_runtime_read(renv, address, field_name, &operand) )
-		return NULL;
+	if ( (ret=sieve_operand_runtime_read(renv, address, field_name, &operand))
+		<= 0 )
+		return ret;
 	
-	return sieve_opr_stringlist_read_data(renv, &operand, address, field_name);
+	return sieve_opr_stringlist_read_data
+		(renv, &operand, address, field_name, strlist_r);
 }
 
 static bool opr_stringlist_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address, 
-	const char *field_name) 
+(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
+	sieve_size_t *address) 
 {
 	sieve_size_t pc = *address;
 	sieve_size_t end; 
@@ -775,33 +816,41 @@ static bool opr_stringlist_dump
 	if ( !sieve_binary_read_unsigned(denv->sblock, address, &length) ) 
 		return FALSE;	
   	
-	return sieve_code_stringlist_dump(denv, address, length, end, field_name); 
+	return sieve_code_stringlist_dump
+		(denv, address, length, end, oprnd->field_name); 
 }
 
-static struct sieve_stringlist *opr_stringlist_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address )
+static int opr_stringlist_read
+(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+	sieve_size_t *address, struct sieve_stringlist **strlist_r)
 {
-	struct sieve_stringlist *strlist;
 	sieve_size_t pc = *address;
 	sieve_size_t end; 
 	unsigned int length = 0;  
 	sieve_offset_t end_offset;
 	
-	if ( !sieve_binary_read_offset(renv->sblock, address, &end_offset) )
-		return NULL;
+	if ( !sieve_binary_read_offset(renv->sblock, address, &end_offset) ) {
+		sieve_runtime_trace_operand_error(renv, oprnd,
+			"stringlist corrupt: invalid end offset");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	end = pc + end_offset;
 
-	if ( !sieve_binary_read_unsigned(renv->sblock, address, &length) ) 
-	  	return NULL;	
-  	
-	strlist = sieve_code_stringlist_create
-		(renv, *address, (unsigned int) length, end); 
+	if ( !sieve_binary_read_unsigned(renv->sblock, address, &length) ) {
+		sieve_runtime_trace_operand_error(renv, oprnd,
+			"stringlist corrupt: invalid length data");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+ 
+	if ( strlist_r != NULL ) 	
+		*strlist_r = sieve_code_stringlist_create
+			(renv, *address, (unsigned int) length, end); 
 
 	/* Skip over the string list for now */
 	*address = end;
   
-	return strlist;
+	return SIEVE_EXEC_OK;
 }  
 
 /* Catenated String */
@@ -814,19 +863,18 @@ void sieve_opr_catenated_string_emit
 }
 
 static bool opr_catenated_string_dump
-(const struct sieve_dumptime_env *denv, 
-	const struct sieve_operand *operand ATTR_UNUSED, sieve_size_t *address, 
-	const char *field_name) 
+(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
+	sieve_size_t *address) 
 {
 	unsigned int elements = 0;
 	unsigned int i;
 	
-	if (!sieve_binary_read_unsigned(denv->sblock, address, &elements) )
+	if ( !sieve_binary_read_unsigned(denv->sblock, address, &elements) )
 		return FALSE;
 	
-	if ( field_name != NULL ) 
+	if ( oprnd->field_name != NULL ) 
 		sieve_code_dumpf(denv, "%s: CAT-STR [%ld]:", 
-			field_name, (long) elements);
+			oprnd->field_name, (long) elements);
 	else
 		sieve_code_dumpf(denv, "CAT-STR [%ld]:", (long) elements);
 
@@ -840,24 +888,27 @@ static bool opr_catenated_string_dump
 	return TRUE;
 }
 
-static bool opr_catenated_string_read
-(const struct sieve_runtime_env *renv, 
-	const struct sieve_operand *operand ATTR_UNUSED, sieve_size_t *address,
-	string_t **str)
+static int opr_catenated_string_read
+(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+	sieve_size_t *address, string_t **str)
 { 
 	unsigned int elements = 0;
 	unsigned int i;
+	int ret;
 		
-	if ( !sieve_binary_read_unsigned(renv->sblock, address, &elements) )
-		return FALSE;
+	if ( !sieve_binary_read_unsigned(renv->sblock, address, &elements) ) {
+		sieve_runtime_trace_operand_error(renv, oprnd,
+			"catenated string corrupt: invalid element count data");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
 
 	/* Parameter str can be NULL if we are requested to only skip and not 
 	 * actually read the argument.
 	 */
 	if ( str == NULL ) {
 		for ( i = 0; i < (unsigned int) elements; i++ ) {		
-			if ( !sieve_opr_string_read(renv, address, NULL, NULL) ) 
-				return FALSE;
+			if ( (ret=sieve_opr_string_read(renv, address, NULL, NULL)) <= 0 ) 
+				return ret;
 		}
 	} else {
 		string_t *strelm;
@@ -866,8 +917,8 @@ static bool opr_catenated_string_read
 		*str = t_str_new(128);
 		for ( i = 0; i < (unsigned int) elements; i++ ) {
 		
-			if ( !sieve_opr_string_read(renv, address, NULL, elm) ) 
-				return FALSE;
+			if ( (ret=sieve_opr_string_read(renv, address, NULL, elm)) <= 0 ) 
+				return ret;
 		
 			if ( elm != NULL ) {
 				str_append_str(*str, strelm);
@@ -880,7 +931,7 @@ static bool opr_catenated_string_read
 		}
 	}
 
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 /* 

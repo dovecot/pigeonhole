@@ -118,9 +118,9 @@ static int tst_test_multiscript_operation_execute
 	 * Read operands
 	 */
 
-	if ( (scripts_list=sieve_opr_stringlist_read(renv, address, "scripts"))
-		== NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_stringlist_read(renv, address, "scripts", &scripts_list))
+		<= 0 )
+		return ret;
 
 	/*
 	 * Perform operation

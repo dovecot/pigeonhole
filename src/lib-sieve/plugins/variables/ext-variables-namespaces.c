@@ -157,12 +157,12 @@ static bool arg_namespace_generate
 const struct sieve_operand_class sieve_variables_namespace_operand_class = 
 	{ "variable-namespace" };
 
-static bool opr_namespace_variable_read
-	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand,
-		sieve_size_t *address, string_t **str);
 static bool opr_namespace_variable_dump
-	(const struct sieve_dumptime_env *denv, const struct sieve_operand *operand,
-		sieve_size_t *address, const char *field_name);
+	(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
+		sieve_size_t *address);
+static int opr_namespace_variable_read
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+		sieve_size_t *address, string_t **str_r);
 
 static const struct sieve_opr_string_interface namespace_variable_interface = { 
 	opr_namespace_variable_dump,
@@ -186,39 +186,19 @@ void sieve_variables_opr_namespace_variable_emit
 	sieve_opr_object_emit(sblock, ext, &nspc_def->obj_def);
 }
 
-static bool opr_namespace_variable_read
-(const struct sieve_runtime_env *renv, 
-	const struct sieve_operand *operand ATTR_UNUSED,
-	sieve_size_t *address, string_t **str)
-{
-	struct sieve_variables_namespace nspc;
-
-	if ( !sieve_opr_object_read
-		(renv, &sieve_variables_namespace_operand_class, address, &nspc.object) )
-		return FALSE;
-
-	nspc.def = (const struct sieve_variables_namespace_def *) nspc.object.def;
-
-	if ( nspc.def == NULL || nspc.def->read_variable == NULL )
-		return FALSE;
-		
-	return nspc.def->read_variable(renv, &nspc, address, str);
-}
-
 static bool opr_namespace_variable_dump
-(const struct sieve_dumptime_env *denv, 
-	const struct sieve_operand *operand ATTR_UNUSED,
-	sieve_size_t *address, const char *field_name)
+(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
+	sieve_size_t *address)
 {
 	struct sieve_variables_namespace nspc;
-	struct sieve_operand oprnd; 
+	struct sieve_operand nsoprnd; 
 
-	if ( !sieve_operand_read(denv->sblock, address, &oprnd) ) {
+	if ( !sieve_operand_read(denv->sblock, address, NULL, &nsoprnd) ) {
 		return FALSE;
 	}
 
 	if ( !sieve_opr_object_read_data
-		(denv->sblock, &oprnd, &sieve_variables_namespace_operand_class, address, 
+		(denv->sblock, &nsoprnd, &sieve_variables_namespace_operand_class, address, 
 			&nspc.object) ) {
 		return FALSE;
   }
@@ -228,7 +208,28 @@ static bool opr_namespace_variable_dump
 	if ( nspc.def == NULL || nspc.def->dump_variable == NULL )
 		return FALSE;
 
-	return nspc.def->dump_variable(denv, &nspc, address, field_name);
+	return nspc.def->dump_variable(denv, &nspc, oprnd, address);
+}
+
+static int opr_namespace_variable_read
+(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
+	sieve_size_t *address, string_t **str_r)
+{
+	struct sieve_variables_namespace nspc;
+
+	if ( !sieve_opr_object_read
+		(renv, &sieve_variables_namespace_operand_class, address, &nspc.object) ) {
+		sieve_runtime_trace_operand_error(renv, oprnd,
+			"variable namespace operand corrupt: failed to read");
+		return SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	nspc.def = (const struct sieve_variables_namespace_def *) nspc.object.def;
+
+	if ( nspc.def == NULL || nspc.def->read_variable == NULL )
+		return SIEVE_EXEC_FAILURE;
+		
+	return nspc.def->read_variable(renv, &nspc, oprnd, address, str_r);
 }
 
 

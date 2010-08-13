@@ -239,13 +239,13 @@ static bool cmd_denotify_operation_dump
 	sieve_code_descend(denv);	
 
 	for (;;) {
-		int ret;
+		int opt;
 		bool opok = TRUE;
 
-		if ( (ret=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
 			return FALSE;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case OPT_MATCH_KEY:
@@ -274,7 +274,6 @@ static bool cmd_denotify_operation_dump
 static int cmd_denotify_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
-	bool result = TRUE;
 	int opt_code = 0;
 	struct sieve_match_type mcht = 
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
@@ -294,31 +293,29 @@ static int cmd_denotify_operation_execute
 	/* Optional operands */	
 
 	for (;;) {
-		bool opok = TRUE;
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
 			return SIEVE_EXEC_BIN_CORRUPT;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case OPT_MATCH_TYPE:
-			opok = sieve_opr_match_type_read(renv, address, &mcht);
+			ret = sieve_opr_match_type_read(renv, address, &mcht);
 			break;
 		case OPT_MATCH_KEY:
-			match_key = sieve_opr_stringlist_read(renv, address, "match key");
-			opok = ( match_key != NULL );
+			ret = sieve_opr_stringlist_read(renv, address, "match key", &match_key);
 			break;
 		case OPT_IMPORTANCE:
-			opok = sieve_opr_number_read(renv, address, "importance", &importance);
+			ret = sieve_opr_number_read(renv, address, "importance", &importance);
 			break;
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 
-		if ( !opok ) return SIEVE_EXEC_BIN_CORRUPT;
+		if ( ret <= 0 ) return ret;
 	}
 		
 	/*
@@ -337,46 +334,40 @@ static int cmd_denotify_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "denotify action");
 
 	/* Either do string matching or just kill all notify actions */
-	if ( match_key != NULL ) { 	
-
+	if ( match_key != NULL ) {	
 		/* Initialize match */
 		mctx = sieve_match_begin(renv, &mcht, &cmp);
 
-		/* Iterate through all actions */
+		/* Iterate through all notify actions and delete those that match */
 		rictx = sieve_result_iterate_init(renv->result);
 	
-		while ( result &&
-			(action=sieve_result_iterate_next(rictx, NULL)) != NULL ) {
+		while ( (action=sieve_result_iterate_next(rictx, NULL)) != NULL ) {
 			if ( sieve_action_is(action, act_notify_old) ) {		
 				struct ext_notify_action *nact =
 					(struct ext_notify_action *) action->context;
 	
 				if ( importance == 0 || nact->importance == importance ) {
-					if ( (ret=sieve_match_value
-						(mctx, nact->id, strlen(nact->id), match_key)) < 0 ) {
-						result = FALSE;
+					int match; 
+
+					if ( (match=sieve_match_value
+						(mctx, nact->id, strlen(nact->id), match_key)) < 0 )
 						break;
-					}
 	
-					if ( ret > 0 )
+					if ( match > 0 )
 						sieve_result_iterate_delete(rictx);
 				}
 			}
 		}
 	
 		/* Finish match */
-		(void)sieve_match_end(&mctx);
-
-		if ( !result ) {
-			sieve_runtime_trace_error(renv, "invalid string-list item");
-			return SIEVE_EXEC_BIN_CORRUPT;
-		}
+		if ( sieve_match_end(&mctx, &ret) < 0 )
+			return ret;
+ 
 	} else {
-		/* Iterate through all actions */
+		/* Delete all notify actions */
 		rictx = sieve_result_iterate_init(renv->result);
 
-		while ( result &&
-			(action=sieve_result_iterate_next(rictx, NULL)) != NULL ) {
+		while ( (action=sieve_result_iterate_next(rictx, NULL)) != NULL ) {
 
 			if ( sieve_action_is(action, act_notify_old) ) {
 				struct ext_notify_action *nact =

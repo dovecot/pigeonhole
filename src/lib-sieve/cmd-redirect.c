@@ -195,7 +195,7 @@ static int cmd_redirect_operation_execute
 	string_t *redirect;
 	unsigned int source_line;
 	pool_t pool;
-	int ret = 0;
+	int ret;
 
 	/*
 	 * Read data
@@ -205,12 +205,12 @@ static int cmd_redirect_operation_execute
 	source_line = sieve_runtime_get_command_location(renv);
 
 	/* Optional operands (side effects only) */
-	if ( (ret=sieve_action_opr_optional_read(renv, address, NULL, &slist)) < 0 ) 
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 ) 
+		return ret;
 
 	/* Read the address */
-	if ( !sieve_opr_string_read(renv, address, "address", &redirect) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "address", &redirect)) <= 0 )
+		return ret;
 
 	/*
 	 * Perform operation
@@ -232,11 +232,12 @@ static int cmd_redirect_operation_execute
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = p_strdup(pool, str_c(redirect));
 	
-	ret = sieve_result_add_action
+	if ( sieve_result_add_action
 		(renv, NULL, &act_redirect, slist, source_line, (void *) act,
-			svinst->max_redirects);
+			svinst->max_redirects) < 0 )
+		return SIEVE_EXEC_FAILURE;
 	
-	return ( ret >= 0 );
+	return SIEVE_EXEC_OK;
 }
 
 /*

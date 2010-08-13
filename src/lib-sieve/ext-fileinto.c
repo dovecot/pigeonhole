@@ -166,12 +166,12 @@ static int ext_fileinto_operation_execute
 	source_line = sieve_runtime_get_command_location(renv);
 	
 	/* Optional operands (side effects only) */
-	if ( (ret=sieve_action_opr_optional_read(renv, address, NULL, &slist)) < 0 ) 
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 ) 
+		return ret;
 
 	/* Folder operand */
-	if ( !sieve_opr_string_read(renv, address, "folder", &folder) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "folder", &folder)) <= 0 )
+		return ret;
 	
 	/*
 	 * Perform operation
@@ -187,10 +187,11 @@ static int ext_fileinto_operation_execute
 	}
 		
 	/* Add action to result */	
-	ret = sieve_act_store_add_to_result
-		(renv, slist, str_c(folder), source_line);
+	if ( sieve_act_store_add_to_result
+		(renv, slist, str_c(folder), source_line) < 0 )
+		return SIEVE_EXEC_FAILURE;
 
-	return ( ret >= 0 );
+	return SIEVE_EXEC_OK;
 }
 
 

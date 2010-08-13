@@ -291,12 +291,12 @@ static int cmd_set_operation_execute
 	 * Read the normal operands
 	 */
 		
-	if ( !sieve_variable_operand_read
-		(renv, address, "variable", &storage, &var_index) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_variable_operand_read
+		(renv, address, "variable", &storage, &var_index)) <= 0 )
+		return ret;
 		
-	if ( !sieve_opr_string_read(renv, address, "string", &value) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "string", &value)) <= 0 )
+		return ret;
 
 	if ( !sieve_binary_read_byte(renv->sblock, address, &mdfs) ) {
 		sieve_runtime_trace_error(renv, "invalid modifier count");
@@ -367,10 +367,10 @@ static int cmd_set_operation_execute
 		}
 	} T_END;
 			
-	if ( ret <= 0 ) 
-		return ret;		
+	if ( ret <= 0 ) return ret;		
+	if ( value == NULL ) return SIEVE_EXEC_FAILURE;
 
-	return ( value != NULL );
+	return SIEVE_EXEC_OK;
 }
 
 

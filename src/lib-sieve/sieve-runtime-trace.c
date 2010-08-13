@@ -61,15 +61,15 @@ void _sieve_runtime_trace_error
 
 void _sieve_runtime_trace_operand_error
 (const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
-	const char *field_name, const char *fmt, va_list args)
+	const char *fmt, va_list args)
 {
 	string_t *trline = _trace_line_new(renv, oprnd->address,
 		sieve_runtime_get_source_location(renv, oprnd->address));
 
 	str_printfa(trline, "%s: #ERROR#: ", sieve_operation_mnemonic(renv->oprtn));
 
-	if ( field_name != NULL )
-		str_printfa(trline, "%s: ", field_name);
+	if ( oprnd->field_name != NULL )
+		str_printfa(trline, "%s: ", oprnd->field_name);
 
 	str_vprintfa(trline, fmt, args);
 

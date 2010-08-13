@@ -144,28 +144,25 @@ static bool cmd_flag_generate
 bool cmd_flag_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	struct sieve_operand operand;
+	struct sieve_operand oprnd;
 
 	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(denv->oprtn));
 	sieve_code_descend(denv);
 	
 	sieve_code_mark(denv);
-	if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
+	if ( !sieve_operand_read(denv->sblock, address, NULL, &oprnd) ) {
 		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 		return FALSE;
 	}
 
-	if ( sieve_operand_is_variable(&operand) ) {	
+	if ( sieve_operand_is_variable(&oprnd) ) {	
 		return 
-			sieve_opr_string_dump_data(denv, &operand, address, 
-				"variable name") &&
-			sieve_opr_stringlist_dump(denv, address, 
-				"list of flags");
+			sieve_opr_string_dump_data(denv, &oprnd, address, "variable name") &&
+			sieve_opr_stringlist_dump(denv, address, "list of flags");
 	}
 	
 	return 
-		sieve_opr_stringlist_dump_data(denv, &operand, address,
-			"list of flags");
+		sieve_opr_stringlist_dump_data(denv, &oprnd, address, "list of flags");
 }
  
 /*
@@ -176,47 +173,49 @@ static int cmd_flag_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	const struct sieve_operation *op = renv->oprtn;
-	struct sieve_operand operand;
+	struct sieve_operand oprnd;
 	struct sieve_stringlist *flag_list;
 	struct sieve_variable_storage *storage;
 	unsigned int var_index;
 	ext_imapflag_flag_operation_t flag_op;
+	int ret;
 		
 	/* 
 	 * Read operands 
 	 */
 
 	/* Read bare operand (two types possible) */
-	if ( !sieve_operand_runtime_read(renv, address, NULL, &operand) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_operand_runtime_read
+		(renv, address, NULL, &oprnd)) <= 0 )
+		return ret;
 		
 	/* Variable operand (optional) */
-	if ( sieve_operand_is_variable(&operand) ) {		
+	if ( sieve_operand_is_variable(&oprnd) ) {		
 		/* Read the variable operand */
-		if ( !sieve_variable_operand_read_data
-				(renv, &operand, address, "variable", &storage, &var_index) )
-			return SIEVE_EXEC_BIN_CORRUPT;
+		if ( (ret=sieve_variable_operand_read_data
+				(renv, &oprnd, address, "variable", &storage, &var_index)) <= 0 )
+			return ret;
 
 		/* Read flag list */
-		if ( (flag_list=sieve_opr_stringlist_read(renv, address, "flag-list")) 
-			== NULL )
-			return SIEVE_EXEC_BIN_CORRUPT;
+		if ( (ret=sieve_opr_stringlist_read(renv, address, "flag-list", &flag_list)) 
+			<= 0 )
+			return ret;
 		
 	/* Flag-list operand */
-	} else if ( sieve_operand_is_stringlist(&operand) ) {	
+	} else if ( sieve_operand_is_stringlist(&oprnd) ) {	
 		storage = NULL;
 		var_index = 0;
 		
 		/* Read flag list */
-		if ( (flag_list=sieve_opr_stringlist_read_data
-			(renv, &operand, address, "flag-list")) == NULL )
-			return SIEVE_EXEC_BIN_CORRUPT;
+		if ( (ret=sieve_opr_stringlist_read_data
+			(renv, &oprnd, address, "flag-list", &flag_list)) <= 0 )
+			return ret;
 
 	/* Invalid */
 	} else {
-		sieve_runtime_trace_error
-			(renv, "expected variable or string-list (flag-list) operand "
-				"but found %s", sieve_operand_name(&operand));
+		sieve_runtime_trace_operand_error
+			(renv, &oprnd, "expected variable or string-list (flag-list) operand "
+				"but found %s", sieve_operand_name(&oprnd));
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 	

@@ -155,13 +155,11 @@ static bool tst_notifymc_generate
 static bool tst_notifymc_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	int opt_code = 0;
-
 	sieve_code_dumpf(denv, "NOTIFY_METHOD_CAPABILITY");
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	if ( sieve_match_opr_optional_dump(denv, address, &opt_code) != 0 )
+	if ( sieve_match_opr_optional_dump(denv, address, NULL) != 0 )
 		return FALSE;
 		
 	return
@@ -177,8 +175,6 @@ static bool tst_notifymc_operation_dump
 static int tst_notifymc_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
-	int ret;
-	int opt_code = 0;
 	struct sieve_match_type mcht = 
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_comparator cmp = 
@@ -186,35 +182,31 @@ static int tst_notifymc_operation_execute
 	string_t *notify_uri, *notify_capability;
 	struct sieve_stringlist *value_list, *key_list;
 	const char *cap_value;
+	int match, ret;
 
 	/*
 	 * Read operands 
 	 */
 	
 	/* Handle match-type and comparator operands */
-	if ( (ret=sieve_match_opr_optional_read
-		(renv, address, &opt_code, &cmp, &mcht)) < 0 )
-		return SIEVE_EXEC_BIN_CORRUPT;
-
-	/* Check whether we neatly finished the list of optional operands*/
-	if ( ret > 0 ) {
-		sieve_runtime_trace_error(renv, "invalid optional operand");
-		return SIEVE_EXEC_BIN_CORRUPT;
-	}
+	if ( sieve_match_opr_optional_read
+		(renv, address, NULL, &ret, &cmp, &mcht) < 0 )
+		return ret;
 
 	/* Read notify uri */
-	if ( !sieve_opr_string_read(renv, address, "notify-uri", &notify_uri) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "notify-uri", &notify_uri))
+		<= 0 )
+		return ret;
 	
 	/* Read notify capability */
-	if ( !sieve_opr_string_read
-		(renv, address, "notify-capability", &notify_capability) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read
+		(renv, address, "notify-capability", &notify_capability)) <= 0 )
+		return ret;
 	
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) 
-		== NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_stringlist_read(renv, address, "key-list", &key_list)) 
+		<= 0)
+		return ret;
 
 	/*
 	 * Perform operation
@@ -229,16 +221,14 @@ static int tst_notifymc_operation_execute
 		value_list = sieve_single_stringlist_create_cstr(renv, cap_value, TRUE);
 
 		/* Perform match */
-		ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
+		if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret)) 
+			< 0 )
+			return ret;
 	} else {
-		ret = 0;
+		match = 0;
 	}
-	
-	if ( ret >= 0 ) {
-		sieve_interpreter_set_test_result(renv->interp, ret > 0);
-		return SIEVE_EXEC_OK;
-	}
-	
-	sieve_runtime_trace_error(renv, "invalid string list item");
-	return SIEVE_EXEC_BIN_CORRUPT;
+
+	/* Set test result for subsequent conditional jump */
+	sieve_interpreter_set_test_result(renv->interp, match > 0);
+	return SIEVE_EXEC_OK;
 }

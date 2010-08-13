@@ -223,6 +223,7 @@ static int cmd_test_mailbox_operation_execute
 {
 	const struct sieve_operation *oprtn = renv->oprtn;
 	string_t *mailbox = NULL;
+	int ret;
 
 	/* 
 	 * Read operands 
@@ -230,8 +231,8 @@ static int cmd_test_mailbox_operation_execute
 
 	/* Index */
 
-	if ( !sieve_opr_string_read(renv, address, "mailbox", &mailbox) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "mailbox", &mailbox)) <= 0 )
+		return ret;
 
 	/*
 	 * Perform operation

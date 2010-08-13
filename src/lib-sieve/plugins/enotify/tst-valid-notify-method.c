@@ -115,9 +115,9 @@ static int tst_vnotifym_operation_execute
 	 */
 	
 	/* Read notify uris */
-	if ( (notify_uris=sieve_opr_stringlist_read(renv, address, "notify-uris")) 
-		== NULL ) 
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_stringlist_read
+		(renv, address, "notify-uris", &notify_uris)) <= 0 ) 
+		return ret;
 	
 	/*
 	 * Perform operation

@@ -301,6 +301,7 @@ static int cmd_test_message_smtp_operation_execute
 	sieve_number_t msg_index;
 	unsigned int is_test = -1;
 	bool result;
+	int ret;
 
 	/* 
 	 * Read operands 
@@ -315,8 +316,8 @@ static int cmd_test_message_smtp_operation_execute
 
 	/* Index */
 
-	if ( !sieve_opr_number_read(renv, address, "index", &msg_index) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_number_read(renv, address, "index", &msg_index)) <= 0 )
+		return ret;
 
 	/*
 	 * Perform operation
@@ -360,6 +361,7 @@ static int cmd_test_message_mailbox_operation_execute
 	sieve_number_t msg_index;
 	unsigned int is_test = -1;
 	bool result;
+	int ret;
 
 	/*
 	 * Read operands
@@ -372,12 +374,12 @@ static int cmd_test_message_mailbox_operation_execute
 	}
 
 	/* Folder */
-	if ( !sieve_opr_string_read(renv, address, "folder", &folder) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "folder", &folder)) <= 0 )
+		return ret;
 	
 	/* Index */
-	if ( !sieve_opr_number_read(renv, address, "index", &msg_index) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_number_read(renv, address, "index", &msg_index)) <= 0 )
+		return ret;
 
 	/*
 	 * Perform operation

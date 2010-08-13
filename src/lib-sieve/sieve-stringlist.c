@@ -9,7 +9,7 @@
  * Default implementation
  */
 
-bool sieve_stringlist_read_all
+int sieve_stringlist_read_all
 (struct sieve_stringlist *strlist, pool_t pool,
 	const char * const **list_r)
 {
@@ -32,7 +32,7 @@ bool sieve_stringlist_read_all
 		(void)array_append_space(&items);
 		*list_r = array_idx(&items, 0);
 	
-		return ( ret >= 0 );
+		return ( ret < 0 ? -1 : 1 );
 	}
 
 	return strlist->read_all(strlist, pool, list_r);
@@ -85,6 +85,7 @@ struct sieve_stringlist *sieve_single_stringlist_create
 
 	strlist = t_new(struct sieve_single_stringlist, 1);
 	strlist->strlist.runenv = renv;
+	strlist->strlist.exec_status = SIEVE_EXEC_OK;
 	strlist->strlist.next_item = sieve_single_stringlist_next_item;
 	strlist->strlist.reset = sieve_single_stringlist_reset;
 	strlist->strlist.get_length = sieve_single_stringlist_get_length;

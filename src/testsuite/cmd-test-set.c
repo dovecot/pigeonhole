@@ -128,6 +128,7 @@ static int cmd_test_set_operation_execute
 	struct testsuite_object tobj;
 	string_t *value;
 	int member_id;
+	int ret;
 
 	if ( !testsuite_object_read_member
 		(renv->sblock, address, &tobj, &member_id) ) {
@@ -135,8 +136,8 @@ static int cmd_test_set_operation_execute
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	if ( !sieve_opr_string_read(renv, address, "string", &value) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "string", &value)) <= 0 )
+		return ret;
 
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
 		sieve_runtime_trace(renv, 0, "testsuite: test_set command");

@@ -356,13 +356,13 @@ static bool cmd_notify_operation_dump
 	/* Dump optional operands */
 
 	for (;;) {
-		int ret;
+		int opt;
 		bool opok = TRUE;
 
-		if ( (ret=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
 			return FALSE;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case CMD_NOTIFY_OPT_IMPORTANCE:
@@ -400,12 +400,13 @@ static int cmd_notify_operation_execute
 	struct sieve_enotify_action *act;
 	void *method_context;
 	pool_t pool;
-	int opt_code = 0, result = SIEVE_EXEC_OK;
+	int opt_code = 0;
 	sieve_number_t importance = 2;
 	struct sieve_stringlist *options = NULL;
 	const struct sieve_enotify_method *method;
 	string_t *method_uri, *message = NULL, *from = NULL; 
 	unsigned int source_line;
+	int ret;
 
 	/*
 	 * Read operands
@@ -418,40 +419,38 @@ static int cmd_notify_operation_execute
 	/* Optional operands */
 
 	for (;;) {
-		bool opok = TRUE;
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
 			return SIEVE_EXEC_BIN_CORRUPT;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case CMD_NOTIFY_OPT_IMPORTANCE:
-			opok = sieve_opr_number_read(renv, address, "importance", &importance);	
+			ret = sieve_opr_number_read(renv, address, "importance", &importance);	
 			break;
 		case CMD_NOTIFY_OPT_FROM:
-			opok = sieve_opr_string_read(renv, address, "from", &from);
+			ret = sieve_opr_string_read(renv, address, "from", &from);
 			break;
 		case CMD_NOTIFY_OPT_MESSAGE:
-			opok = sieve_opr_string_read(renv, address, "message", &message);
+			ret = sieve_opr_string_read(renv, address, "message", &message);
 			break;
 		case CMD_NOTIFY_OPT_OPTIONS:
-			options = sieve_opr_stringlist_read(renv, address, "options");
-			opok = ( options != NULL );
+			ret = sieve_opr_stringlist_read(renv, address, "options", &options);
 			break;
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
 
-		if ( !opok ) return SIEVE_EXEC_BIN_CORRUPT;
+		if ( ret <= 0 ) return ret;
 	}
 	
 	/* Method operand */
 
-	if ( !sieve_opr_string_read(renv, address, "method", &method_uri) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "method", &method_uri)) <= 0 )
+		return ret;
 		
 	/*
 	 * Perform operation
@@ -475,9 +474,9 @@ static int cmd_notify_operation_execute
 
 	/* Check operands */
 
-	if ( (result=ext_enotify_runtime_check_operands
+	if ( (ret=ext_enotify_runtime_check_operands
 		(renv, source_line, method_uri, message, from, options, &method, 
-			&method_context)) ) 
+			&method_context)) > 0 ) 
 	{
 		/* Add notify action to the result */
 
@@ -491,11 +490,14 @@ static int cmd_notify_operation_execute
 		if ( from != NULL )
 			act->from = p_strdup(pool, str_c(from));
 		
-		return ( sieve_result_add_action
-			(renv, this_ext, &act_notify, slist, source_line, (void *) act, 0) >= 0 );
+		if ( sieve_result_add_action
+			(renv, this_ext, &act_notify, slist, source_line, (void *) act, 0) < 0 )
+			return SIEVE_EXEC_FAILURE;
+
+		return SIEVE_EXEC_OK;
 	}
 	
-	return result;
+	return ret;
 }
 
 /*

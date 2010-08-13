@@ -69,7 +69,7 @@ bool sieve_opr_object_read
 {
 	struct sieve_operand operand; 
 
-	if ( !sieve_operand_read(renv->sblock, address, &operand) ) {
+	if ( !sieve_operand_read(renv->sblock, address, NULL, &operand) ) {
 		return FALSE;
 	}
 	
@@ -91,7 +91,7 @@ bool sieve_opr_object_dump
 
 	sieve_code_mark(denv);
 	
-	if ( !sieve_operand_read(denv->sblock, address, &operand) ) {
+	if ( !sieve_operand_read(denv->sblock, address, NULL, &operand) ) {
 		return FALSE;
 	}
 

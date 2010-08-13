@@ -20,7 +20,9 @@ struct sieve_match_context {
 
 	void *data;
 
-	int status;
+	int match_status;
+	int exec_status;
+
 	unsigned int trace:1;
 };
 
@@ -36,7 +38,7 @@ struct sieve_match_context *sieve_match_begin
 int sieve_match_value
 	(struct sieve_match_context *mctx, const char *value, size_t value_size,
 		struct sieve_stringlist *key_list);
-int sieve_match_end(struct sieve_match_context **mctx);
+int sieve_match_end(struct sieve_match_context **mctx, int *exec_status);
 
 /* Default matching operation */
 int sieve_match
@@ -44,7 +46,8 @@ int sieve_match
 		const struct sieve_match_type *mcht, 
 		const struct sieve_comparator *cmp, 
 		struct sieve_stringlist *value_list,
-		struct sieve_stringlist *key_list);
+		struct sieve_stringlist *key_list,
+		int *exec_status);
 
 /*
  * Read matching operands
@@ -62,6 +65,7 @@ int sieve_match_opr_optional_dump
 
 int sieve_match_opr_optional_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, int *opt_code,
-		struct sieve_comparator *cmp, struct sieve_match_type *mcht);
+		int *exec_status, struct sieve_comparator *cmp, 
+		struct sieve_match_type *mcht);
 
 #endif /* __SIEVE_MATCH_H */

@@ -348,7 +348,7 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 				break;
 			}
 			if (ret == -1 || ret == 0)
-                break;
+        break;
 		}
 	}
 

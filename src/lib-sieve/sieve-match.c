@@ -46,6 +46,7 @@ struct sieve_match_context *sieve_match_begin
 	mctx->runenv = renv;
 	mctx->match_type = mcht;
 	mctx->comparator = cmp;
+	mctx->exec_status = SIEVE_EXEC_OK;
 	mctx->trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_MATCHING);
 
 	/* Trace */
@@ -70,7 +71,7 @@ int sieve_match_value
 {
 	const struct sieve_match_type *mcht = mctx->match_type;
 	const struct sieve_runtime_env *renv = mctx->runenv;
-	int result = 0;
+	int match, ret;
 
 	if ( mctx->trace ) {
 		sieve_runtime_trace(renv, 0,
@@ -88,55 +89,62 @@ int sieve_match_value
 
 	if ( mcht->def->match_keys != NULL ) {
 		/* Call match-type's own key match handler */
-		result = mcht->def->match_keys(mctx, value, value_size, key_list);
+		match = mcht->def->match_keys(mctx, value, value_size, key_list);
 	} else {
 		string_t *key_item = NULL;
-		int ret;
 
 		/* Default key match loop */
-		while ( result == 0 && 
+		match = 0;
+		while ( match == 0 && 
 			(ret=sieve_stringlist_next_item(key_list, &key_item)) > 0 ) {				
 			T_BEGIN {
-				result = mcht->def->match_key
+				match = mcht->def->match_key
 					(mctx, value, value_size, str_c(key_item), str_len(key_item));
 
 				if ( mctx->trace ) {
 					sieve_runtime_trace(renv, 0,
 						"with key `%s' => %d", str_sanitize(str_c(key_item), 80),
-						result);
+						match);
 				}
 			} T_END;
 		}
 
-		if ( ret < 0 ) result = -1;
+		if ( ret < 0 ) {
+			mctx->exec_status = key_list->exec_status;
+			match = -1;
+		}
 	}
 
 	sieve_runtime_trace_ascend(renv);
 
-	if ( mctx->status < 0 || result < 0 )
-		mctx->status = -1;
+	if ( mctx->match_status < 0 || match < 0 )
+		mctx->match_status = -1;
 	else 
-		mctx->status = ( mctx->status > result ? mctx->status : result );
-	return result;
+		mctx->match_status = 
+			( mctx->match_status > match ? mctx->match_status : match );
+	return match;
 }
 
-int sieve_match_end(struct sieve_match_context **mctx)
+int sieve_match_end(struct sieve_match_context **mctx, int *exec_status)
 {
 	const struct sieve_match_type *mcht = (*mctx)->match_type;
 	const struct sieve_runtime_env *renv = (*mctx)->runenv;
-	int result = (*mctx)->status;
+	int match = (*mctx)->match_status;
 
 	if ( mcht->def != NULL && mcht->def->match_deinit != NULL )
 		mcht->def->match_deinit(*mctx);
+
+	if ( exec_status != NULL )
+		*exec_status = (*mctx)->exec_status;
 
 	pool_unref(&(*mctx)->pool);
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
 		"finishing match with result: %s", 
-		( result > 0 ? "matched" : ( result < 0 ? "error" : "not matched" ) ));
+		( match > 0 ? "matched" : ( match < 0 ? "error" : "not matched" ) ));
 	sieve_runtime_trace_ascend(renv);
 
-	return result;
+	return match;
 }
 
 int sieve_match
@@ -144,11 +152,12 @@ int sieve_match
 	const struct sieve_match_type *mcht, 
 	const struct sieve_comparator *cmp, 
 	struct sieve_stringlist *value_list,
-	struct sieve_stringlist *key_list)
+	struct sieve_stringlist *key_list, 
+	int *exec_status)
 {
 	struct sieve_match_context *mctx;
 	string_t *value_item = NULL;
-	int result, ret;
+	int match, ret;
 
 	if ( (mctx=sieve_match_begin(renv, mcht, cmp)) == NULL )
 		return 0;
@@ -162,24 +171,28 @@ int sieve_match
 
 	if ( mcht->def->match != NULL ) {
 		/* Call match-type's match handler */
-		result = mctx->status = mcht->def->match(mctx, value_list, key_list); 
+		match = mctx->match_status = 
+			mcht->def->match(mctx, value_list, key_list); 
 
 	} else {
 		/* Default value match loop */
 
-		result = 0;
-		while ( result == 0 && 
+		match = 0;
+		while ( match == 0 && 
 			(ret=sieve_stringlist_next_item(value_list, &value_item)) > 0 ) {
 
-			result = sieve_match_value
+			match = sieve_match_value
 				(mctx, str_c(value_item), str_len(value_item), key_list);
 		}
 
-		if ( ret < 0 ) result = -1;
+		if ( ret < 0 ) {
+			mctx->exec_status = value_list->exec_status;
+			match = -1;
+		}
 	}
 
-	(void)sieve_match_end(&mctx);
-	return result;
+	(void)sieve_match_end(&mctx, exec_status);
+	return match;
 }
 
 /*
@@ -189,13 +202,19 @@ int sieve_match
 int sieve_match_opr_optional_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address, int *opt_code)
 {
-	bool opok = TRUE;
+	int _opt_code = 0;
+	bool final = FALSE, opok = TRUE;
+
+	if ( opt_code == NULL ) {
+		opt_code = &_opt_code;
+		final = TRUE;
+	}
 
 	while ( opok ) {
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_opr_optional_dump(denv, address, opt_code)) <= 0 )
-			return ret;
+		if ( (opt=sieve_opr_optional_dump(denv, address, opt_code)) <= 0 )
+			return opt;
 
 		switch ( *opt_code ) {
 		case SIEVE_MATCH_OPT_COMPARATOR:
@@ -205,7 +224,7 @@ int sieve_match_opr_optional_dump
 			opok = sieve_opr_match_type_dump(denv, address);
 			break;
 		default:
-			return 1;
+			return ( final ? -1 : 1 );
 		}
 	}
 
@@ -214,28 +233,49 @@ int sieve_match_opr_optional_dump
 
 int sieve_match_opr_optional_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address, int *opt_code,
-	struct sieve_comparator *cmp, struct sieve_match_type *mcht)
+	int *exec_status, struct sieve_comparator *cmp, struct sieve_match_type *mcht)
 {
-	bool opok = TRUE;
+	int _opt_code = 0;
+	bool final = FALSE;
+	int status = SIEVE_EXEC_OK;
 
-	while ( opok ) {
-		int ret;
+	if ( opt_code == NULL ) {
+		opt_code = &_opt_code;
+		final = TRUE;
+	}
 
-		if ( (ret=sieve_opr_optional_read(renv, address, opt_code)) <= 0 )
-			return ret;
+	if ( exec_status != NULL )
+		*exec_status = SIEVE_EXEC_OK;			
+
+	while ( status == SIEVE_EXEC_OK ) {
+		int opt;
+
+		if ( (opt=sieve_opr_optional_read(renv, address, opt_code)) <= 0 ){
+			if ( opt < 0 && exec_status != NULL )
+				*exec_status = SIEVE_EXEC_BIN_CORRUPT;				
+			return opt;
+		}
 
 		switch ( *opt_code ) {
 		case SIEVE_MATCH_OPT_COMPARATOR:
-			opok = sieve_opr_comparator_read(renv, address, cmp);
+			status = sieve_opr_comparator_read(renv, address, cmp);
 			break;
 		case SIEVE_MATCH_OPT_MATCH_TYPE:
-			opok = sieve_opr_match_type_read(renv, address, mcht);
+			status = sieve_opr_match_type_read(renv, address, mcht);
 			break;
 		default:
+			if ( final ) {
+				sieve_runtime_trace_error(renv, "invalid optional operand");
+				if ( exec_status != NULL )
+					*exec_status = SIEVE_EXEC_BIN_CORRUPT;
+				return -1;
+			}
 			return 1;
 		}
 	}
 
+	if ( exec_status != NULL )
+		*exec_status = status;	
 	return -1;
 }
 

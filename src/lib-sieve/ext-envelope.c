@@ -299,6 +299,7 @@ static struct sieve_address_list *sieve_envelope_address_list_create
 	    
 	addrlist = t_new(struct sieve_envelope_address_list, 1);
 	addrlist->addrlist.strlist.runenv = renv;
+	addrlist->addrlist.strlist.exec_status = SIEVE_EXEC_OK;
 	addrlist->addrlist.strlist.next_item = 
 		sieve_envelope_address_list_next_string_item;
 	addrlist->addrlist.strlist.reset = sieve_envelope_address_list_reset;
@@ -582,26 +583,26 @@ static int ext_envelope_operation_execute
 		SIEVE_ADDRESS_PART_DEFAULT(all_address_part);
 	struct sieve_stringlist *env_part_list, *value_list, *key_list;
 	struct sieve_address_list *addr_list;
-	int ret;
+	int match, ret;
 
 	/*
 	 * Read operands
 	 */
 
 	/* Read optional operands */
-	if ( (ret=sieve_addrmatch_opr_optional_read
-		(renv, address, NULL, &addrp, &mcht, &cmp)) < 0 )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( sieve_addrmatch_opr_optional_read
+		(renv, address, NULL, &ret, &addrp, &mcht, &cmp) < 0 )
+		return ret;
 
 	/* Read envelope-part */
-	if ( (env_part_list=sieve_opr_stringlist_read(renv, address, "envelope-part"))
-		== NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_stringlist_read
+		(renv, address, "envelope-part", &env_part_list)) <= 0 )
+		return ret;
 
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) 
-		== NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_stringlist_read(renv, address, "key-list", &key_list))
+		<= 0 )
+		return ret;
 
 	/* 
 	 * Perform test
@@ -614,15 +615,11 @@ static int ext_envelope_operation_execute
 	value_list = sieve_address_part_stringlist_create(renv, &addrp, addr_list);
 
 	/* Perform match */
-	ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
-	
-	/* Set test result for subsequent conditional jump */
-	if ( ret >= 0 ) {
-		sieve_interpreter_set_test_result(renv->interp, ret > 0);
-		return SIEVE_EXEC_OK;
-	}	
+	if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret)) < 0 )
+		return ret;
 
-	sieve_runtime_trace_error(renv, "invalid string-list item");
-	return SIEVE_EXEC_BIN_CORRUPT;
+	/* Set test result for subsequent conditional jump */
+	sieve_interpreter_set_test_result(renv->interp, match > 0);
+	return SIEVE_EXEC_OK;
 }
 

@@ -318,18 +318,19 @@ static int cmd_test_config_set_operation_execute
 {
 	string_t *setting;
 	string_t *value;
+	int ret;
 
 	/* 
 	 * Read operands 
 	 */
 
 	/* Setting */
-	if ( !sieve_opr_string_read(renv, address, "setting", &setting) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "setting", &setting)) <= 0 )
+		return ret;
 
 	/* Value */
-	if ( !sieve_opr_string_read(renv, address, "value", &value) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "value", &value)) <= 0 )
+		return ret;
 
 	/*
 	 * Perform operation
@@ -352,14 +353,15 @@ static int cmd_test_config_unset_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *setting;
+	int ret;
 
 	/* 
 	 * Read operands 
 	 */
 
 	/* Setting */
-	if ( !sieve_opr_string_read(renv, address, "setting", &setting) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "setting", &setting)) <= 0 )
+		return ret;
 
 	/*
 	 * Perform operation
@@ -382,14 +384,16 @@ static int cmd_test_config_reload_operation_execute
 {
 	const struct sieve_extension *ext;
 	string_t *extension;
+	int ret;
 
 	/* 
 	 * Read operands 
 	 */
 
 	/* Extension */
-	if ( !sieve_opr_string_read(renv, address, "extension", &extension) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "extension", &extension))
+		<= 0 )
+		return ret;
 
 	/*
 	 * Perform operation

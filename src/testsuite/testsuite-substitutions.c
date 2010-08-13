@@ -136,10 +136,10 @@ static bool arg_testsuite_substitution_generate
  */
 
 static bool opr_substitution_dump
-	(const struct sieve_dumptime_env *denv, const struct sieve_operand *opr,
-		sieve_size_t *address, const char *field_name);
-static bool opr_substitution_read_value
-	(const struct sieve_runtime_env *renv, const struct sieve_operand *opr, 
+	(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
+		sieve_size_t *address);
+static int opr_substitution_read_value
+	(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd, 
 		sieve_size_t *address, string_t **str);
 	
 const struct sieve_opr_string_interface testsuite_substitution_interface = { 
@@ -167,9 +167,8 @@ void testsuite_opr_substitution_emit
 }
 
 static bool opr_substitution_dump
-(const struct sieve_dumptime_env *denv, 
-	const struct sieve_operand *opr ATTR_UNUSED, sieve_size_t *address,
-	const char *field_name) 
+(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd, 
+	sieve_size_t *address) 
 {
 	unsigned int code = 0;
 	const struct testsuite_substitution_def *tsub;
@@ -185,41 +184,48 @@ static bool opr_substitution_dump
 	if ( !sieve_binary_read_string(denv->sblock, address, &param) )
 		return FALSE;
 	
-	if ( field_name != NULL ) 
+	if ( oprnd->field_name != NULL ) 
 		sieve_code_dumpf(denv, "%s: TEST_SUBS %%{%s:%s}", 
-			field_name, tsub->obj_def.identifier, str_c(param));
+			oprnd->field_name, tsub->obj_def.identifier, str_c(param));
 	else
 		sieve_code_dumpf(denv, "TEST_SUBS %%{%s:%s}", 
 			tsub->obj_def.identifier, str_c(param));
 	return TRUE;
 }
 
-static bool opr_substitution_read_value
+static int opr_substitution_read_value
 (const struct sieve_runtime_env *renv, 
-	const struct sieve_operand *opr ATTR_UNUSED, sieve_size_t *address, 
-	string_t **str)
+	const struct sieve_operand *oprnd ATTR_UNUSED, sieve_size_t *address, 
+	string_t **str_r)
 { 
 	const struct testsuite_substitution_def *tsub;
 	unsigned int code = 0;
 	string_t *param;
 	
 	if ( !sieve_binary_read_unsigned(renv->sblock, address, &code) )
-		return FALSE;
+		return SIEVE_EXEC_BIN_CORRUPT;
 		
 	tsub = testsuite_substitution_get(code);
 	if ( tsub == NULL )
-		return FALSE;	
+		return SIEVE_EXEC_FAILURE;	
 
 	/* Parameter str can be NULL if we are requested to only skip and not 
 	 * actually read the argument.
 	 */	
-	if ( str == NULL ) 
-		return sieve_binary_read_string(renv->sblock, address, NULL);
+	if ( str_r == NULL ) {
+		if ( !sieve_binary_read_string(renv->sblock, address, NULL) )
+			return SIEVE_EXEC_BIN_CORRUPT;
+		
+		return SIEVE_EXEC_OK;
+	}
 	
 	if ( !sieve_binary_read_string(renv->sblock, address, &param) )
-		return FALSE;
+		return SIEVE_EXEC_BIN_CORRUPT;
 				
-	return tsub->get_value(str_c(param), str);
+	if ( !tsub->get_value(str_c(param), str_r) )
+		return SIEVE_EXEC_FAILURE;
+	
+	return SIEVE_EXEC_OK;
 }
 
 /*

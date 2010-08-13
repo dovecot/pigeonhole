@@ -491,13 +491,13 @@ static bool ext_vacation_operation_dump
 	/* Dump optional operands */
 
 	for (;;) {
-		int ret;
+		int opt;
 		bool opok = TRUE;
 
-		if ( (ret=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
 			return FALSE;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case OPT_DAYS:
@@ -546,6 +546,7 @@ static int ext_vacation_operation_execute
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
 	unsigned int source_line;
 	const char *from_normalized = NULL;
+	int ret;
 
 	/*
 	 * Read code
@@ -558,44 +559,43 @@ static int ext_vacation_operation_execute
 	/* Optional operands */
 
 	for (;;) {
-		bool opok = TRUE;
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
 			return SIEVE_EXEC_BIN_CORRUPT;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case OPT_DAYS:
-			opok = sieve_opr_number_read(renv, address, "days", &days);
+			ret = sieve_opr_number_read(renv, address, "days", &days);
 			break;
 		case OPT_SUBJECT:
-			opok = sieve_opr_string_read(renv, address, "subject", &subject);
+			ret = sieve_opr_string_read(renv, address, "subject", &subject);
 			break;
 		case OPT_FROM:
-			opok = sieve_opr_string_read(renv, address, "from", &from);
+			ret = sieve_opr_string_read(renv, address, "from", &from);
 			break;
 		case OPT_ADDRESSES:
-			addresses = sieve_opr_stringlist_read(renv, address, "addresses");
-			opok = ( addresses != NULL );
+			ret = sieve_opr_stringlist_read(renv, address, "addresses", &addresses);
 			break;
 		case OPT_MIME:
 			mime = TRUE;
+			ret = SIEVE_EXEC_OK;
 			break;
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
-			opok = FALSE;
+			ret = SIEVE_EXEC_BIN_CORRUPT;
 		}
 
-		if ( !opok ) return SIEVE_EXEC_BIN_CORRUPT;
+		if ( ret <= 0 ) return ret;
 	}
 	
 	/* Fixed operands */
 
-	if ( !sieve_opr_string_read(renv, address, "reason", &reason) ||
-		!sieve_opr_string_read(renv, address, "handle", &handle) ) {
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "reason", &reason)) <= 0 ||
+		(ret=sieve_opr_string_read(renv, address, "handle", &handle)) <= 0 ) {
+		return ret;
 	}
 	
 	/*
@@ -678,8 +678,11 @@ static int ext_vacation_operation_execute
 		act->addresses = array_idx(&norm_addresses, 0);
 	}	
 		
-	return ( sieve_result_add_action
-		(renv, this_ext, &act_vacation, slist, source_line, (void *) act, 0) >= 0 );
+	if ( sieve_result_add_action
+		(renv, this_ext, &act_vacation, slist, source_line, (void *) act, 0) < 0 )
+		return SIEVE_EXEC_FAILURE;
+
+	return SIEVE_EXEC_OK;	
 }
 
 /*

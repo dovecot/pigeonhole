@@ -115,7 +115,7 @@ struct sieve_side_effect_def {
 	bool (*dump_context)
 		(const struct sieve_side_effect *seffect, 
 			const struct sieve_dumptime_env *renv, sieve_size_t *address);
-	bool (*read_context)
+	int (*read_context)
 		(const struct sieve_side_effect *seffect, 
 			const struct sieve_runtime_env *renv, sieve_size_t *address,
 			void **se_context);
@@ -193,7 +193,8 @@ int sieve_action_opr_optional_dump
 
 int sieve_action_opr_optional_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,
-		signed int *opt_code, struct sieve_side_effects_list **list);
+		signed int *opt_code, int *exec_status,
+		struct sieve_side_effects_list **list);
 
 /* 
  * Core actions 

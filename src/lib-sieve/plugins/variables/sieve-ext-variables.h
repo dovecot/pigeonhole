@@ -121,14 +121,14 @@ struct sieve_variables_namespace_def {
 			struct sieve_ast_argument *arg, struct sieve_command *cmd, 
 			void *var_data);
 
-	bool (*read_variable)
-		(const struct sieve_runtime_env *renv, 
-			const struct sieve_variables_namespace *nspc, sieve_size_t *address, 
-			string_t **str);
 	bool (*dump_variable)
 		(const struct sieve_dumptime_env *denv, 
-			const struct sieve_variables_namespace *nspc, sieve_size_t *address, 
-			const char *field_name);
+			const struct sieve_variables_namespace *nspc,
+			const struct sieve_operand *oprnd, sieve_size_t *address);
+	int (*read_variable)
+		(const struct sieve_runtime_env *renv, 
+			const struct sieve_variables_namespace *nspc, 
+			const struct sieve_operand *oprnd, sieve_size_t *address, string_t **str);
 };
 
 #define SIEVE_VARIABLES_DEFINE_NAMESPACE(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
@@ -251,14 +251,14 @@ void sieve_variables_opr_match_value_emit
 	(struct sieve_binary_block *sblock, const struct sieve_extension *var_ext, 
 		unsigned int index);
 
-bool sieve_variable_operand_read_data
-	(const struct sieve_runtime_env *renv, const struct sieve_operand *operand, 
+int sieve_variable_operand_read_data
+	(const struct sieve_runtime_env *renv, struct sieve_operand *operand, 
 		sieve_size_t *address, const char *field_name,
-		struct sieve_variable_storage **storage, unsigned int *var_index);
-bool sieve_variable_operand_read
+		struct sieve_variable_storage **storage_r, unsigned int *var_index_r);
+int sieve_variable_operand_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,
-		const char *field_name, struct sieve_variable_storage **storage,
-		unsigned int *var_index);
+		const char *field_name, struct sieve_variable_storage **storage_r,
+		unsigned int *var_index_r);
 		
 static inline bool sieve_operand_is_variable
 (const struct sieve_operand *operand)

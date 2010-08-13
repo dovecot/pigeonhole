@@ -89,23 +89,23 @@ static inline void sieve_opr_address_part_emit
 	sieve_opr_object_emit(sblock, addrp->object.ext, addrp->object.def);
 }
 
-static inline bool sieve_opr_address_part_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-	struct sieve_address_part *addrp)
-{
-	if ( !sieve_opr_object_read
-		(renv, &sieve_address_part_operand_class, address, &addrp->object) )
-		return FALSE;
-
-	addrp->def = (const struct sieve_address_part_def *) addrp->object.def;
-	return TRUE;
-}
-
 static inline bool sieve_opr_address_part_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	return sieve_opr_object_dump
 		(denv, &sieve_address_part_operand_class, address, NULL);
+}
+
+static inline int sieve_opr_address_part_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	struct sieve_address_part *addrp)
+{
+	if ( !sieve_opr_object_read
+		(renv, &sieve_address_part_operand_class, address, &addrp->object) )
+		return SIEVE_EXEC_BIN_CORRUPT;
+
+	addrp->def = (const struct sieve_address_part_def *) addrp->object.def;
+	return SIEVE_EXEC_OK;
 }
 
 /*
@@ -133,7 +133,7 @@ int sieve_addrmatch_opr_optional_dump
 
 int sieve_addrmatch_opr_optional_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
-		signed int *opt_code, struct sieve_address_part *addrp,
+		signed int *opt_code, int *exec_status, struct sieve_address_part *addrp,
 		struct sieve_match_type *mtch, struct sieve_comparator *cmp);
 
 #endif /* __SIEVE_ADDRESS_PARTS_H */

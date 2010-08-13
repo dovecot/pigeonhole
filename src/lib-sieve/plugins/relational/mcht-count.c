@@ -71,10 +71,12 @@ static int mcht_count_match
 	bool trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_MATCHING);
 	int count;
 	string_t *key_item;
-	int ret;
+	int match, ret;
 
-	if ( (count=sieve_stringlist_get_length(value_list)) < 0 )
+	if ( (count=sieve_stringlist_get_length(value_list)) < 0 ) {
+		mctx->exec_status = value_list->exec_status;
 		return -1;
+	}
 
 	sieve_stringlist_reset(key_list);
 
@@ -90,11 +92,11 @@ static int mcht_count_match
 
   /* Match to all key values */
   key_item = NULL;
-	ret = 0;
-  while ( ret == 0 && 
+	match = 0;
+  while ( match == 0 && 
 		(ret=sieve_stringlist_next_item(key_list, &key_item)) > 0 )
   {
-		ret = mcht_value_match_key
+		match = mcht_value_match_key
 			(mctx, str_c(value), str_len(value), str_c(key_item), str_len(key_item));
 
 		if ( trace ) {
@@ -105,7 +107,12 @@ static int mcht_count_match
 
 	sieve_runtime_trace_ascend(renv);
 
-	return ret;
+	if ( ret < 0 ) {
+		mctx->exec_status = key_list->exec_status;
+		match = -1;
+	}
+
+	return match;
 }
 
 

@@ -360,10 +360,10 @@ int sieve_addrmatch_opr_optional_dump
 	}
 
 	while ( opok ) {
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_opr_optional_dump(denv, address, opt_code)) <= 0 )
-			return ret;
+		if ( (opt=sieve_opr_optional_dump(denv, address, opt_code)) <= 0 )
+			return opt;
 
 		switch ( *opt_code ) {
 		case SIEVE_AM_OPT_COMPARATOR:
@@ -385,42 +385,53 @@ int sieve_addrmatch_opr_optional_dump
 
 int sieve_addrmatch_opr_optional_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address,
-	signed int *opt_code, struct sieve_address_part *addrp,
+	signed int *opt_code, int *exec_status, struct sieve_address_part *addrp,
 	struct sieve_match_type *mtch, struct sieve_comparator *cmp) 
 {
 	signed int _opt_code = 0;
-	bool final = FALSE, opok = TRUE;
+	bool final = FALSE;
+	int status = SIEVE_EXEC_OK;
 
 	if ( opt_code == NULL ) {
 		opt_code = &_opt_code;
 		final = TRUE;
 	}
 
-	while ( opok ) {
-		int ret;
+	if ( exec_status != NULL )
+		*exec_status = SIEVE_EXEC_OK;			
 
-		if ( (ret=sieve_opr_optional_read(renv, address, opt_code)) <= 0 )
-			return ret;
+	while ( status == SIEVE_EXEC_OK ) {
+		int opt;
+
+		if ( (opt=sieve_opr_optional_read(renv, address, opt_code)) <= 0 ){
+			if ( opt < 0 && exec_status != NULL )
+				*exec_status = SIEVE_EXEC_BIN_CORRUPT;				
+			return opt;
+		}
 
 		switch ( *opt_code ) {
 		case SIEVE_AM_OPT_COMPARATOR:
-			opok = sieve_opr_comparator_read(renv, address, cmp);
+			status = sieve_opr_comparator_read(renv, address, cmp);
 			break;
 		case SIEVE_AM_OPT_MATCH_TYPE:
-			opok = sieve_opr_match_type_read(renv, address, mtch);
+			status = sieve_opr_match_type_read(renv, address, mtch);
 			break;
 		case SIEVE_AM_OPT_ADDRESS_PART:
-			opok = sieve_opr_address_part_read(renv, address, addrp);
+			status = sieve_opr_address_part_read(renv, address, addrp);
 			break;
 		default:
 			if ( final ) {
 				sieve_runtime_trace_error(renv, "invalid optional operand");
+				if ( exec_status != NULL )
+					*exec_status = SIEVE_EXEC_BIN_CORRUPT;
 				return -1;
 			}
 			return 1;
 		}
 	}
 
+	if ( exec_status != NULL )
+		*exec_status = status;
 	return -1;
 }
 

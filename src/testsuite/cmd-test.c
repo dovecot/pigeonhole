@@ -151,9 +151,11 @@ static int cmd_test_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *test_name;
+	int ret;
 
-	if ( !sieve_opr_string_read(renv, address, "test name", &test_name) )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "test name", &test_name))
+		<= 0 )
+		return ret;
 	
 	sieve_runtime_trace_sep(renv);
 	sieve_runtime_trace(renv, SIEVE_TRLVL_NONE, 

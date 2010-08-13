@@ -188,13 +188,13 @@ static bool tst_test_result_operation_dump
 
 	/* Handle any optional arguments */
 	for (;;) {
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_match_opr_optional_dump(denv, address, &opt_code)) 
+		if ( (opt=sieve_match_opr_optional_dump(denv, address, &opt_code)) 
 			< 0 )
 			return FALSE;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		if ( opt_code == OPT_INDEX ) {
 			if ( !sieve_opr_number_dump(denv, address, "index") )
@@ -219,7 +219,7 @@ static int tst_test_result_operation_execute
 	struct sieve_match_type mcht = SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_stringlist *value_list, *key_list;
 	int index = 0;
-	int ret;
+	int match, ret;
 
 	/*
 	 * Read operands
@@ -228,17 +228,17 @@ static int tst_test_result_operation_execute
 	/* Read optional operands */
 	for (;;) {
 		sieve_number_t number; 
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_match_opr_optional_read
-			(renv, address, &opt_code, &cmp, &mcht)) < 0 )
-			return SIEVE_EXEC_BIN_CORRUPT;
+		if ( (opt=sieve_match_opr_optional_read
+			(renv, address, &opt_code, &ret, &cmp, &mcht)) < 0 )
+			return ret;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 	
 		if ( opt_code == OPT_INDEX ) {
-			if ( !sieve_opr_number_read(renv, address, "index", &number) )
-				return SIEVE_EXEC_BIN_CORRUPT;
+			if ( (ret=sieve_opr_number_read(renv, address, "index", &number)) <= 0 )
+				return ret;
 			index = (int) number;
 		} else {
 			sieve_runtime_trace_error(renv, "invalid optional operand");
@@ -247,8 +247,9 @@ static int tst_test_result_operation_execute
 	}
 
 	/* Read key-list */
-	if ( (key_list=sieve_opr_stringlist_read(renv, address, "key-list")) == NULL )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_stringlist_read(renv, address, "key-list", &key_list))
+		<= 0 )
+		return ret;
 
 	/*
 	 * Perform operation
@@ -261,16 +262,12 @@ static int tst_test_result_operation_execute
 	value_list = testsuite_result_stringlist_create(renv, index);
 
 	/* Perform match */
-	ret = sieve_match(renv, &mcht, &cmp, value_list, key_list); 	
+	if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret)) < 0 )
+		return ret;	
 	
 	/* Set test result for subsequent conditional jump */
-	if ( ret >= 0 ) {
-		sieve_interpreter_set_test_result(renv->interp, ret > 0);
-		return SIEVE_EXEC_OK;
-	}	
-
-	sieve_runtime_trace_error(renv, "invalid string-list item");
-	return SIEVE_EXEC_BIN_CORRUPT;
+	sieve_interpreter_set_test_result(renv->interp, match > 0);
+	return SIEVE_EXEC_OK;
 }
 
 

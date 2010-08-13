@@ -204,23 +204,23 @@ static inline void sieve_opr_match_type_emit
 	sieve_opr_object_emit(sblock, mcht->object.ext, mcht->object.def);
 }
 
-static inline bool sieve_opr_match_type_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address,
-	struct sieve_match_type *mcht)
-{
-	if ( !sieve_opr_object_read
-		(renv, &sieve_match_type_operand_class, address, &mcht->object) )
-		return FALSE;
-
-	mcht->def = (const struct sieve_match_type_def *) mcht->object.def;
-	return TRUE;
-}
-
 static inline bool sieve_opr_match_type_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	return sieve_opr_object_dump
 		(denv, &sieve_match_type_operand_class, address, NULL);
+}
+
+static inline int sieve_opr_match_type_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	struct sieve_match_type *mcht)
+{
+	if ( !sieve_opr_object_read
+		(renv, &sieve_match_type_operand_class, address, &mcht->object) )
+		return SIEVE_EXEC_BIN_CORRUPT;
+
+	mcht->def = (const struct sieve_match_type_def *) mcht->object.def;
+	return SIEVE_EXEC_OK;
 }
 
 /* Common validation implementation */

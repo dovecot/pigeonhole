@@ -55,7 +55,7 @@ void _sieve_runtime_trace_error
 
 void _sieve_runtime_trace_operand_error
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
-		const char *field_name, const char *fmt, va_list args);
+		const char *fmt, va_list args);
 
 static inline void sieve_runtime_trace_error
 	(const struct sieve_runtime_env *renv, const char *fmt, ...)
@@ -63,7 +63,7 @@ static inline void sieve_runtime_trace_error
 
 static inline void sieve_runtime_trace_operand_error
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd, 
-		const char *field_name, const char *fmt, ...) ATTR_FORMAT(4, 5);
+		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 static inline void sieve_runtime_trace_error
 	(const struct sieve_runtime_env *renv, const char *fmt, ...)
@@ -78,13 +78,13 @@ static inline void sieve_runtime_trace_error
 
 static inline void sieve_runtime_trace_operand_error
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd, 
-		const char *field_name, const char *fmt, ...)
+		const char *fmt, ...)
 {
 	va_list args;
 	
 	va_start(args, fmt);
 	if ( renv->trace != NULL )
-		_sieve_runtime_trace_operand_error(renv, oprnd, field_name, fmt, args);
+		_sieve_runtime_trace_operand_error(renv, oprnd, fmt, args);
 	va_end(args);
 }
 

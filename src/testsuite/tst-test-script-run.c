@@ -111,12 +111,12 @@ static bool tst_test_script_run_operation_dump
 
 	/* Dump optional operands */
 	for (;;) {
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_opr_optional_dump(denv, address, &opt_code)) < 0 )
 			return FALSE;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case OPT_APPEND_RESULT:
@@ -148,12 +148,12 @@ static int tst_test_script_run_operation_execute
 
 	/* Optional operands */	
 	for (;;) {
-		int ret;
+		int opt;
 
-		if ( (ret=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_opr_optional_read(renv, address, &opt_code)) < 0 )
 			return SIEVE_EXEC_BIN_CORRUPT;
 
-		if ( ret == 0 ) break;
+		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
 		case OPT_APPEND_RESULT:

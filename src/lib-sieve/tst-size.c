@@ -246,14 +246,15 @@ static int tst_size_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	sieve_number_t mail_size, limit;
+	int ret;
 		
 	/*
 	 * Read operands
 	 */
 
 	/* Read size limit */
-	if ( !sieve_opr_number_read(renv, address, "limit", &limit) )
-		return SIEVE_EXEC_BIN_CORRUPT;	
+	if ( (ret=sieve_opr_number_read(renv, address, "limit", &limit)) <= 0 )
+		return ret;	
 
 	/*
 	 * Perform test

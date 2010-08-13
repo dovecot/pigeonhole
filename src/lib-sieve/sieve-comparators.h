@@ -126,24 +126,23 @@ static inline void sieve_opr_comparator_emit
 { 
 	sieve_opr_object_emit(sblock, cmp->object.ext, cmp->object.def);
 }
-
-static inline bool sieve_opr_comparator_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address,
-	struct sieve_comparator *cmp)
-{
-	if ( !sieve_opr_object_read
-		(renv, &sieve_comparator_operand_class, address, &cmp->object) )
-		return FALSE;
-
-	cmp->def = (const struct sieve_comparator_def *) cmp->object.def;
-	return TRUE;
-}
-
 static inline bool sieve_opr_comparator_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	return sieve_opr_object_dump
 		(denv, &sieve_comparator_operand_class, address, NULL);
+}
+
+static inline int sieve_opr_comparator_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	struct sieve_comparator *cmp)
+{
+	if ( !sieve_opr_object_read
+		(renv, &sieve_comparator_operand_class, address, &cmp->object) )
+		return SIEVE_EXEC_BIN_CORRUPT;
+
+	cmp->def = (const struct sieve_comparator_def *) cmp->object.def;
+	return SIEVE_EXEC_OK;
 }
 	
 /*

@@ -502,6 +502,7 @@ struct sieve_stringlist *ext_date_stringlist_create
 	    
 	strlist = t_new(struct ext_date_stringlist, 1);
 	strlist->strlist.runenv = renv;
+	strlist->strlist.exec_status = SIEVE_EXEC_OK;
 	strlist->strlist.next_item = ext_date_stringlist_next_item;
 	strlist->strlist.reset = ext_date_stringlist_reset;
 	strlist->field_values = field_values;

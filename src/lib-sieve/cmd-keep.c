@@ -95,8 +95,8 @@ static int cmd_keep_operation_execute
 	source_line = sieve_runtime_get_command_location(renv);
 	
 	/* Optional operands (side effects only) */
-	if ( (ret=sieve_action_opr_optional_read(renv, address, NULL, &slist)) != 0 ) 
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 ) 
+		return ret;
 
 	/*
 	 * Perform operation
@@ -107,9 +107,10 @@ static int cmd_keep_operation_execute
 	
 	/* Add keep action to result. 
 	 */
-	ret = sieve_result_add_keep(renv, slist, source_line);
+	if ( sieve_result_add_keep(renv, slist, source_line) < 0 )
+		return SIEVE_EXEC_FAILURE;
 	
-	return ( ret >= 0 );
+	return SIEVE_EXEC_OK;
 }
 
 

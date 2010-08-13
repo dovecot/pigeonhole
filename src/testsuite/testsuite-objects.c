@@ -124,13 +124,13 @@ bool testsuite_object_read
 (struct sieve_binary_block *sblock, sieve_size_t *address, 
 	struct testsuite_object *tobj)
 {
-	struct sieve_operand operand;
+	struct sieve_operand oprnd;
 
-	if ( !sieve_operand_read(sblock, address, &operand) )
+	if ( !sieve_operand_read(sblock, address, NULL, &oprnd) )
 		return FALSE;
 	
 	if ( !sieve_opr_object_read_data
-		(sblock, &operand, &sieve_testsuite_object_operand_class, address,
+		(sblock, &oprnd, &sieve_testsuite_object_operand_class, address,
 			&tobj->object) )
 		return FALSE;
 

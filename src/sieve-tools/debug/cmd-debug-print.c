@@ -103,7 +103,7 @@ static int cmd_debug_print_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	string_t *message;
-	int ret = SIEVE_EXEC_OK;
+	int ret;
 
 	/*
 	 * Read operands
@@ -111,8 +111,8 @@ static int cmd_debug_print_operation_execute
 	
 	/* Read message */
 
-	if ( sieve_opr_string_read(renv, address, "message", &message) < 0 )
-		return SIEVE_EXEC_BIN_CORRUPT;
+	if ( (ret=sieve_opr_string_read(renv, address, "message", &message)) <= 0 )
+		return ret;
 	
 	/*
 	 * Perform operation
@@ -123,5 +123,5 @@ static int cmd_debug_print_operation_execute
 	/* FIXME: give this proper source location */
 	sieve_runtime_log(renv, "DEBUG", "%s", str_c(message));
 
-	return ret;
+	return SIEVE_EXEC_OK;
 }
