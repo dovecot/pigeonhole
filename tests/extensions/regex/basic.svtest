@@ -4,7 +4,7 @@ require "regex";
 
 test_set "message" text:
 From: stephan+sieve@friep.example.com
-To: tss@example.net
+To: tss@example.net, nico@nl.example.com, sirius@fi.example.com
 Subject: Test
 
 Test message.
@@ -17,5 +17,22 @@ test "Basic example" {
 		"stephan(\\+.*)?@friep\\.example\\.com" 
 		] {
 		test_fail "failed to match";
+	}
+}
+
+test "No values" {
+	if header :regex "cc" [".*\\.com", ".*\\.nl"] {
+		test_fail "matched inappropriately";
+	}
+}	
+
+
+test "More values" {
+	if address :regex "to" [".*\\.uk", ".*\\.nl", ".*\\.tk"] {
+		test_fail "matched inappropriately";
+	}
+
+	if not address :regex "to" [".*\\.uk", ".*\\.nl", ".*\\.tk", ".*fi\\..*"] {
+		test_fail "failed to match last";
 	}
 }	
