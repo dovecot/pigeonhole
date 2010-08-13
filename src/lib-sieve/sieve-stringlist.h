@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #ifndef __SIEVE_STRINGLIST_H
 #define __SIEVE_STRINGLIST_H
 

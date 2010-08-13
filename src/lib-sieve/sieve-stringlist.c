@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "array.h"
 #include "str.h"

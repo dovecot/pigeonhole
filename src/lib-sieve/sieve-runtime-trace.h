@@ -1,5 +1,8 @@
-#ifndef __SIEVE_TRACE_H
-#define __SIEVE_TRACE_H
+/* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
+ */
+
+#ifndef __SIEVE_RUNTIME_TRACE_H
+#define __SIEVE_RUNTIME_TRACE_H
 
 #include "sieve-common.h"
 #include "sieve-runtime.h"
@@ -177,4 +180,4 @@ static inline void sieve_runtime_trace_sep
 		_sieve_runtime_trace_sep(renv);
 }
 
-#endif /* __SIEVE_TRACE_H */
+#endif /* __SIEVE_RUNTUME_TRACE_H */
