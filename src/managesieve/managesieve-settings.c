@@ -6,6 +6,9 @@
 #include "settings-parser.h"
 #include "service-settings.h"
 #include "mail-storage-settings.h"
+
+#include "pigeonhole-config.h"
+
 #include "managesieve-settings.h"
 
 #include <stddef.h>
@@ -82,7 +85,7 @@ static struct managesieve_settings managesieve_default_settings = {
 	   break large message sets to multiple commands, so we're pretty
 	   liberal by default. */
 	.managesieve_max_line_length = 65536,
-	.managesieve_implementation_string = PACKAGE_NAME,
+	.managesieve_implementation_string = DOVECOT_NAME " " PIGEONHOLE_NAME,
 	.managesieve_client_workarounds = "",
 	.managesieve_logout_format = "bytes=%i/%o",
 	.managesieve_max_compile_errors = 5

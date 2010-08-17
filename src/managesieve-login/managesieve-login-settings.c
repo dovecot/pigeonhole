@@ -10,6 +10,9 @@
 #include "settings-parser.h"
 #include "service-settings.h"
 #include "login-settings.h"
+
+#include "pigeonhole-config.h"
+
 #include "managesieve-login-settings.h"
 
 #include <stddef.h>
@@ -69,7 +72,7 @@ static const struct setting_define managesieve_login_setting_defines[] = {
 };
 
 static const struct managesieve_login_settings managesieve_login_default_settings = {
-	.managesieve_implementation_string = PACKAGE_NAME,
+	.managesieve_implementation_string = DOVECOT_NAME " " PIGEONHOLE_NAME,
 	.managesieve_sieve_capability = "",
 	.managesieve_notify_capability = NULL
 };
