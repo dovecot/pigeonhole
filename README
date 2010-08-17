@@ -5,39 +5,36 @@ Pigeonhole for Dovecot v2.0
 Introduction
 ============
 
-This package provides Sieve support for the Dovecot Secure IMAP server. Sieve is
-a machine language specifically tailored for internet message filtering. By
-writing Sieve scripts, users can customize how messages are delivered, e.g. 
-whether they are forwarded or stored in special folders. The Sieve language is 
-meant to be simple, extensible and system independent. And, unlike most other 
-mail filtering script languages, it does not allow users to execute arbitrary 
-programs. This is particularly useful to prevent virtual users from having full 
-access to the mail store. The intention of the language is to make it impossible
-for users to do anything more complex (and dangerous) than write simple mail
-filters.
+This package is part of the Pigeonhole project (http://pigeonhole.dovecot.org). 
+It adds support for the Sieve language (RFC 5228) and the ManageSieve protocol
+(RFC 5804) to the Dovecot Secure IMAP Server. In the literal sense, a 
+pigeonhole is a a hole or recess inside a dovecot for pigeons to nest in. It 
+is, however, also the name for one of a series of small, open compartments in 
+a cabinet used for filing or sorting mail. As a verb, it describes the act of 
+putting an item into one of those pigeonholes. The name `Pigeonhole' therefore
+well describes an important part of the functionality that this project adds to
+Dovecot: sorting and filing e-mail messages.
 
-Support for filtering messages through Sieve scripts is provided at message
-delivery. This is implemented as a plugin for Dovecot's Local Delivery Agent
-(LDA). 
+The Sieve language is used to specify how e-mail needs to be processed. By 
+writing Sieve scripts, users can customize how messages are delivered, e.g.
+whether they are forwarded or stored in special folders. Unwanted messages can 
+be discarded or rejected, and, when the user is not available, the Sieve
+interpreter can send an automated reply. Above all, the Sieve language is meant
+to be simple, extensible and system independent. And, unlike most other mail
+filtering script languages, it does not allow users to execute arbitrary
+programs. This is particularly useful to prevent virtual users from having full
+access to the mail store. The intention of the language is to make it
+impossible for users to do anything more complex (and dangerous) than write 
+simple mail filters.
 
-This package also adds a ManageSieve service to Dovecot, which can be used to
-let users manage their Sieve script remotely. It has the following advantages 
-over managing these directly via the filesystem:
+Using the ManageSieve protocol, users can upload their Sieve scripts remotely, 
+without needing direct filesystem access through FTP or SCP. Additionally, a
+ManageSieve server always makes sure that uploaded scripts are valid, 
+preventing compile failures at mail delivery.
 
-  * There is no need to let users log in via FTP/SFTP/etc, which could be 
-    difficult and undesirable, especially with virtual users.
-
-  * ManageSieve is a standard protocol (although still a draft), so users can
-    manage their scripts using (hopefully) user-friendly ManageSieve clients.
-    Many webmails already include a ManageSieve client.
-
-  * Scripts are compiled before they are installed, which guarantees that the
-    uploaded script is valid, preventing a user from inadvertently installing a
-    broken Sieve script.
-
-More information about the Pigeonhole project can be found at:
-
-  http://pigeonhole.dovecot.org
+This package provides Sieve support as a plugin to Dovecot's Local Delivery 
+Agent (LDA). The ManageSieve protocol is provided is an additional service, 
+next to Dovecot's own POP3 and IMAP services. 
 
 Features
 ========
@@ -192,11 +189,11 @@ url and author information.
 Compiling Sieve Scripts
 =======================
 
-When the Sieve plugin executes a script for the first time (or after it has been
-changed), it's compiled into into a binary form. Pigeonhole Sieve implementation
-uses the .svbin extension to store compiled Sieve scripts (e.g. .dovecot.svbin).
-To store the binary, the plugin needs write access in the directory in which the
-script is located.
+When the LDA Sieve plugin executes a script for the first time (or after it has 
+been changed), it is compiled into into a binary form. The Pigeonhole Sieve 
+implementation uses the .svbin extension to store compiled Sieve scripts (e.g. 
+.dovecot.svbin). To store the binary, the plugin needs write access in the 
+directory in which the script is located.
 
 A problem occurs when a global script is encountered by the plugin. For security
 reasons, global script directories are not supposed to be writable by the user.
@@ -216,12 +213,8 @@ sievec /var/lib/dovecot/sieve/global/
 This is necessary for scripts listed in the sieve_global_path, sieve_before and
 sieve_after settings. For global scripts that are only included in other scripts
 using the include extension, this step is not necessary, since included scripts
-are incorporated into the binary produced for the main script.
-
-When manually compiling scripts with sievec, if those scripts use the include
-sieve extension and your sieve_dir is not the sieve subfolder of the directory
-of the main file, you can specify it by defining the SIEVE_DIR environment
-variable (e.g SIEVE_DIR=~/.sieve sievec .dovecot.sieve )
+are incorporated into the binary produced for the main script located in a
+user directory.
 
 Compile and Runtime Logging
 ===========================
@@ -240,7 +233,7 @@ locations:
     produced.
 
   * Messages that could be of interest to the system administrator are also
-    written to the Dovecot logging facility (usually syslog). This includes
+    written to the Dovecot LDA logging facility (usually syslog). This includes
     informational messages that indicate what actions are executed on incoming
     messages. Compile errors encountered in the user's private script are not
     logged here.
@@ -286,7 +279,7 @@ ManageSieve
 
 	- SmartSieve, WebSieve:
 	  These clients are specifically written for Cyrus timsieved and fail on
-	  multiple stages of the protocol when connected to Dovecot ManageSieve.
+	  multiple stages of the protocol when connected to Pigeonhole ManageSieve.
 
 * The ANONYMOUS authentication mechanism is currently not supported and
   explicitly denied.

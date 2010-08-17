@@ -56,8 +56,8 @@ Configuration
 
 The Pigeonhole package provides the following items:
 
-  - The Sieve plugin for Dovecot's Local Delivery Agent (LDA): This facilitates 
-    the actual Sieve filtering upon delivery.
+  - The LDA Sieve plugin for Dovecot's Local Delivery Agent (LDA): This
+	facilitates the actual Sieve filtering upon delivery.
 
   - The ManageSieve Service: This implements the ManageSieve protocol through
     which users can remotely manage Sieve scripts on the server. 
@@ -67,12 +67,12 @@ In this file and in this section their configuration is described. Example
 configuration files are provided in the doc/example-config directory of this
 package. 
 
-Sieve Plugin - Basic Configuration
-----------------------------------
+LDA Sieve Plugin - Basic Configuration
+--------------------------------------
 
 To use Sieve, you will first need to make sure you are using Dovecot's LDA
 for delivering incoming mail to users' mailboxes. Then, you need to enable the
-Sieve plugin in your dovecot.conf:
+LDA Sieve plugin in your dovecot.conf:
 
 protocol lda {
 ..
@@ -138,8 +138,8 @@ plugin {
    sieve_global_dir = /var/lib/dovecot/sieve/global/
 }
 
-Sieve Plugin - Configurable Limits
-----------------------------------
+LDA Sieve Plugin - Configurable Limits
+--------------------------------------
 
 sieve_max_script_size = 1M
   The maximum size of a Sieve script. The compiler will refuse to compile any
@@ -155,11 +155,11 @@ sieve_max_redirects = 4
 
 A value of 0 for these settings means that the limit is not enforced. 
 
-Sieve Plugin - Per-user Sieve script location
----------------------------------------------
+LDA Sieve Plugin - Per-user Sieve script location
+-------------------------------------------------
 
-By default, the Dovecot Sieve plugin looks for the user's Sieve script file in
-the user's home directory (~/.dovecot.sieve). This requires that the home 
+By default, the Pigeonhole LDA Sieve plugin looks for the user's Sieve script file
+in the user's home directory (~/.dovecot.sieve). This requires that the home 
 directory is set for the user.
 
 If you want to store the script elsewhere, you can override the default using 
@@ -178,21 +178,22 @@ plugin {
  sieve = /var/sieve-scripts/%u.sieve
 }
 
-You may use templates like %u, as shown in the example. See all variables.
+You may use templates like %u, as shown in the example. Refer to 
+http://wiki.dovecot.org/Variables for more information.
 
 A relative path (or just a filename) will be interpreted to point under the 
 user's home directory.
 
-Sieve Plugin - Executing Multiple Scripts Sequentially
-------------------------------------------------------
+LDA Sieve Plugin - Executing Multiple Scripts Sequentially
+----------------------------------------------------------
 
-The Dovecot Sieve plugin allows executing multiple Sieve scripts sequentially.
-The extra scripts can be executed before and after the user's private script. 
-For example, this allows executing global Sieve policies before the user's 
-script. This is not possible using the sieve_global_path setting, because that
-is only used when the user's private script does not exist. The following 
-settings in the plugin section of the Dovecot config file control the execution
-sequence:
+Pigeonhole's LDA Sieve plugin allows executing multiple Sieve scripts 
+sequentially. The extra scripts can be executed before and after the user's
+private script. For example, this allows executing global Sieve policies before
+the user's script. This is not possible using the sieve_global_path setting, 
+because that is only used as a default when the user's private script does not
+exist. The following settings in the plugin section of the Dovecot config file
+control the execution sequence:
 
 sieve_before =
   Path to a script file or a directory containing script files that need to be
@@ -224,12 +225,14 @@ are executed before continuing to the next script. This means that when a script
 in the sequence encounters an error, actions from earlier executed scripts are
 not affected. The sequence is broken however, meaning that the script execution
 of the offending script is aborted and no further scripts are executed. An
-implicit keep is executed in stead.
+implicit keep is executed in stead if necessary, meaning that the interpreter
+makes sure that the message is at least stored in the default folder (INBOX).
 
-Just as for executing a single script the normal way, the Dovecot Sieve plugin
-takes care never to duplicate deliveries, forwards or responses. When vacation
-actions are executed multiple times in different scripts, the usual error is not
-triggered: the subsequent duplicate vacation actions are simply discarded.
+Just as for executing a single script the normal way, the Pigeonhole LDA Sieve
+plugin takes care never to duplicate deliveries, forwards or responses. When
+vacation actions are executed multiple times in different scripts, the usual 
+error is not triggered: the subsequent duplicate vacation actions are simply
+discarded.
 
 For example:
 
@@ -247,8 +250,8 @@ plugin {
 IMPORTANT: Be sure to manually pre-compile the scripts specified by sieve_before 
 and sieve_after using the sievec tool, as explained in the README file.
 
-Sieve Plugin - Spamtest and Virustest Extensions
-------------------------------------------------
+LDA Sieve Plugin - Spamtest and Virustest Extensions
+----------------------------------------------------
 
 Using the spamtest and virustest extensions (RFC 5235), the Sieve language
 provides a uniform and standardized command interface for evaluating spam and
@@ -263,11 +266,11 @@ The spamtest, spamtestplus and virustest extensions require explicit
 configuration and are not enabled for use by default. Refer to
 doc/spamtest-virustest.txt for configuration information.
 
-Sieve Plugin - Migration from CMUSieve
---------------------------------------
+LDA Sieve Plugin - Migration from CMUSieve
+------------------------------------------
 
-For the most part, migration from CMUSieve to the Pigeonhole Sieve plugin is 
-just a matter of changing the used plugin name from cmusieve to sieve in the
+For the most part, migration from CMUSieve to the Pigeonhole LDA Sieve plugin is 
+just a matter of changing the used plugin name from 'cmusieve' to 'sieve' in the
 mail_plugins option in the protocol lda section of the config file (as explained
 above). However, there are a few important differences:
 
@@ -277,14 +280,17 @@ above). However, there are a few important differences:
    specification. For backwards compatibility, support for the old imapflags
    extension can be enabled using the sieve_extensions setting (as explained
    above). This is disabled by default.
- 
- * The notify extension is now called enotify. Sieve scripts need to be adjusted
-   to incorporate this change: unlike imapflags, no backwards compatibility is
-   provided currently.
- 
- * The include extension now requires your script file names to end with 
-   ".sieve" : include :personal "myscript"; won't work unless you rename
-   "myscript" to "myscript.sieve"
+
+ * The notify extension is now called enotify. The CMUSieve implementation is
+   based on an old draft specification that is not completely compatible.
+   Particularly, the denotify command and $text$ substitutions were removed from
+   the new specification. For backwards compatibility, support for the old
+   imapflags extension can be enabled using the sieve_extensions setting (as
+   explained above). This is disabled by default.
+
+ * The include extension now requires your script file names to end with ".sieve".
+   This means that ` include :personal "myscript"; ' won't work unless you rename
+   "myscript" to "myscript.sieve" 
 
 ManageSieve Service - Basic Configuration
 -----------------------------------------
@@ -301,7 +307,7 @@ IMPORTANT:
 Just like all other binaries that Dovecot uses, the managesieve and 
 managesieve-login binaries are installed during make install.
 
-There are two things to have be done to activate the ManageSieve support in
+There are two things that have be done to activate the ManageSieve support in
 Dovecot:
 
   - The first step is to add `sieve' to the protocols= configuration line in 
@@ -329,7 +335,7 @@ managesieve_max_line_length = 65536
   borrowed from IMAP. But, since long command lines are very unlikely with 
   ManageSieve, changing this will not be very useful.
 
-managesieve_implementation_string = Dovecot
+managesieve_implementation_string = Dovecot Pigeonhole
   To fool ManageSieve clients that are focused on CMU's timesieved you can 
   specify the IMPLEMENTATION capability that the Dovecot reports to clients 
   (e.g. 'Cyrus timsieved v2.2.13').
@@ -343,11 +349,11 @@ managesieve_notify_capability =
   Respectively the SIEVE and NOTIFY capabilities reported by the ManageSieve
   service before authentication. If left unassigned these will be assigned
   dynamically according to what the Sieve interpreter supports by default
-  (after login this may differ depending on the user).
+  (after login this may differ depending on the authenticated user).
 
 Additionally, the ManageSieve service uses the following settings from the
-plugin section of the config file. These settings are the ones used by the Sieve
-plugin.
+plugin section of the config file. These settings are the same ones used by
+the LDA Sieve plugin.
 
 sieve_dir = ~/sieve
   This specifies the path to the directory where the uploaded scripts are 
