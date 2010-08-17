@@ -11,8 +11,6 @@ Current activities:
 Next (in order of descending priority/precedence):
 
 * Update man pages to match style of Dovecot man pages.
-* Unfinished new extensions:
-	- Finish the ereject extension
 * Enforce ManageSieve protocol syntax better with some of the commands. Some 
   commands still allow spurious extra arguments.
 * Code cleanup:
@@ -20,6 +18,8 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A SECOND RELEASE (0.2.x) ##
 
+* Unfinished new extensions:
+	- Finish the ereject extension
 * Improve error handling. 
 	- Implement dropping errors in the user's mailbox as a mail message.
 * Add normalize() method to comparators to normalize the string before matching
