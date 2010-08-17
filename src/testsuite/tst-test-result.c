@@ -1,4 +1,4 @@
-/* Copyright (c) 2002-2010 Dovecot Sieve authors, see the included COPYING file
+/* Copyright (c) 2002-2010 Pigeonhole authors, see the included COPYING file
  */
 
 /* FIXME: this file is very similar to tst-test-error.c. Maybe it is best to 
