@@ -39,7 +39,7 @@ Pigeonhole build:
     external plugins. The default is not to install development headers.
 
   --with-unfinished-features=no
-	Controls whether unfinished features and extensions are built. Enabling this
+    Controls whether unfinished features and extensions are built. Enabling this
     will enable the compilation of code that is considered unfinished and highly
     experimental and may therefore introduce bugs and unexpected behavior. 
     In fact, it may not compile at all. Enable this only when you are eager to
@@ -57,7 +57,7 @@ Configuration
 The Pigeonhole package provides the following items:
 
   - The LDA Sieve plugin for Dovecot's Local Delivery Agent (LDA): This
-	facilitates the actual Sieve filtering upon delivery.
+    facilitates the actual Sieve filtering upon delivery.
 
   - The ManageSieve Service: This implements the ManageSieve protocol through
     which users can remotely manage Sieve scripts on the server. 
@@ -121,21 +121,21 @@ For example:
 
 plugin {
 ...
-   # The location of the user's active script:
-   sieve = ~/.dovecot.sieve
+  # The location of the user's active script:
+  sieve = ~/.dovecot.sieve
 
-   # If the user has no personal active script (i.e. if the file 
-   # indicated in sieve= does not exist), use this one:
-   sieve_global_path = /var/lib/dovecot/sieve/default.sieve
+  # If the user has no personal active script (i.e. if the file 
+  # indicated in sieve= does not exist), use this one:
+  sieve_global_path = /var/lib/dovecot/sieve/default.sieve
 
-   # The include extension fetches the :personal scripts from this 
-   # directory. When ManageSieve is used, this is also where scripts 
-   # are uploaded.
-   sieve_dir = ~/sieve
+  # The include extension fetches the :personal scripts from this 
+  # directory. When ManageSieve is used, this is also where scripts 
+  # are uploaded.
+  sieve_dir = ~/sieve
 
-   # The include extension fetches the :global scripts from this 
-   # directory.
-   sieve_global_dir = /var/lib/dovecot/sieve/global/
+  # The include extension fetches the :global scripts from this 
+  # directory.
+  sieve_global_dir = /var/lib/dovecot/sieve/global/
 }
 
 LDA Sieve Plugin - Configurable Limits
@@ -158,9 +158,9 @@ A value of 0 for these settings means that the limit is not enforced.
 LDA Sieve Plugin - Per-user Sieve script location
 -------------------------------------------------
 
-By default, the Pigeonhole LDA Sieve plugin looks for the user's Sieve script file
-in the user's home directory (~/.dovecot.sieve). This requires that the home 
-directory is set for the user.
+By default, the Pigeonhole LDA Sieve plugin looks for the user's Sieve script
+file in the user's home directory (~/.dovecot.sieve). This requires that the
+home directory is set for the user.
 
 If you want to store the script elsewhere, you can override the default using 
 the sieve setting, which specifies the path to the user's script file. This can 
@@ -209,16 +209,16 @@ sieve_after =
 The script execution ends when the currently executing script in the sequence
 does not yield a "keep" result: when the script terminates, the next script is 
 only executed if an implicit or explicit "keep" is in effect. Thus, to end all
-script execution, a script must not execute keep and it must cancel the 
-implicit keep, e.g. by executing "discard; stop;". This means that the command 
-"keep;" has different semantics when used in a sequence of scripts. For normal
-Sieve execution, "keep;" is equivalent to "fileinto "INBOX";", because both 
-cause the message to be stored in INBOX. However, in sequential script 
-execution, it only controls whether the next script is executed. Storing the 
-message into INBOX (the default folder) is not done until the last script in 
-the sequence executes (implicit) keep. To force storing the message into INBOX
-earlier in the sequence, the fileinto command can be used (with ":copy" or 
-together with "keep;").
+script execution, a script must not execute keep and it must cancel the implicit
+keep, e.g. by executing "discard; stop;". This means that the command "keep;" 
+has different semantics when used in a sequence of scripts. For normal Sieve 
+execution, "keep;" is equivalent to "fileinto "INBOX";", because both cause the
+message to be stored in INBOX. However, in sequential script execution, it only
+controls whether the next script is executed. Storing the message into INBOX
+(the default folder) is not done until the last script in the sequence executes
+(implicit) keep. To force storing the message into INBOX earlier in the
+sequence, the fileinto command can be used (with ":copy" or together with
+"keep;").
 
 Apart from the keep action, all actions triggered in a script in the sequence
 are executed before continuing to the next script. This means that when a script
@@ -378,8 +378,8 @@ A storage location specified by 'sieve_dir' is always generated automatically if
 it does not exist (as far as the system permits the user to do so; no root 
 privileges are used). This is similar to the behavior of the mail daemons. 
 
-The following provides an example configuration for Sieve and ManageSieve. 
-Only sections and settings relevant to ManageSieve are shown. Refer to 
+The following provides an example configuration for Sieve and ManageSieve. Only
+sections and settings relevant to ManageSieve are shown. Refer to 
 20-managesieve.conf in the doc/example-config/conf.d directory for a full 
 example with comments, but don't forget to configure Sieve and add sieve to the 
 'protocols = ...' setting if you use it.

@@ -1,6 +1,298 @@
-<TO BE RELEASED>
+v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
+	* Merged Sieve and ManageSieve packages into a single Pigeonhole package. 
+	  There is also no need to patch Dovecot anymore to gain ManageSieve support.
+	  Version numbering of previous Sieve releases is continued as v0.2.0. The
+	  sources originally branched off from Sieve v0.1.5 and ManageSieve v0.11.4,
+	  but the NEWS history of much more recent releases for Dovecot v1.2 is
+	  included since these changes are all included in this release as well. 
+	* The ManageSieve service now binds to TCP port 4190 by default due to the 
+	  IANA port assignment for the ManageSieve service. When upgrading from v1.2,
+	  this should be taken into account. The service can be configured manually to
+	  listen on both 2000 and 4190.
+	* The Dovecot configuration now calls the ManageSieve protocol 'sieve' in
+	  stead of 'managesieve' because it is registered as such with IANA. The 
+	  binaries and the services are still called managesieve and
+	  managesieve-login.
+	* The binary representation of a compiled Sieve script is updated to include
+	  source code locations of all commands and arguments. This is implemented in
+	  a similar manner as such debug information is included in some system
+	  executables and libraries (DWARF-like). Run-time errors can now always refer 
+	  to the proper line number in the Sieve source script.
+	+ Simplified string matching API to use abstract string lists as data sources.
+	  This will also make implementing the index extension easier in the future. 
+	+ Significantly improved trace debugging with the sieve-test tool. The full
+	  execution of the script can be examined, including the matched values and 
+	  keys of the respective Sieve test commands. The executed statements are
+	  listed with their line number (and code address when requested). The level
+	  of detail is configurable from the command line. 
+	+ The SIEVE and NOTIFY capabilities reported by the ManageSieve protocol can
+	  now be configured manually. If left unconfigured, the capabilities are 
+	  determined from the default Sieve and ManageSieve configuration.
+	  User-specific capabilities aren't reported until after configuration.
+	+ Significantly improved file error handling. This means that administrators
+	  get a more useful and informative log message when file operations fail. The
+	  most notable example is that when the LDA Sieve plugin is trying to store a
+	  binary for a global script, the resulting failure message also points the
+	  administrator towards pre-compiling the script with sievec.
+	- Multiscript: fixed duplicate implicit keep caused by erroneous execution
+	  state update.
+	- Prevented assertion failure due to currupt binary string representation. 
+	  If the string were missing a final \0 character an assertion was produced in
+	  stead of a binary corruption error.
+	- Imap4flags: fixed bug in setflag command; when parameter was a stringlist,
+	  only the last item was actually set.
+	- Variables extension: fixed :length set modifier to recognize utf8 characters
+	  in stead of octets.
+	- Testsuite: prevented innocent warning messages, i.e. part of the test,
+	  from showing up by default.
+	- ManageSieve/Sieve storage: fixed error handling of PUTSCRIPT commmand; save
+	  commit errors would not make the command fail.
 
-v0.1.5 18-4-2009  Stephan Bosch <stephan@rename-it.nl>
+Sieve NEWS history:
+
+v0.1.17 19-06-2010 Stephan Bosch <stephan@rename-it.nl>
+	- Made sure source code positions for compiler messages are recorded at start
+	  of tokens.
+	- Fixed a few potential memory leaks in the Sieve compiler and the
+	  spam/virustest extensions.
+	- Made command line tools return proper exit status upon failure.
+
+v0.1.16 30-04-2010 Stephan Bosch <stephan@rename-it.nl>
+
+	* Finished implementation of spamtest, spamtestplus and virustest extensions.
+	  These are not enabled by default and need to be activated with the
+	  sieve_extensions setting. Documentation available in 
+	  doc/spamtest-virustest.txt
+	+ Vacation extension: the from address of the generated reply is now by 
+	  default equal to whatever known recipient alias matched the headers of the
+	  message. If it is one of the aliases specified with :addresses, it is used
+	  in stead of the envelope recipient address that was used before. 
+	+ Restructured and optimized the lexical scanner. 
+	+ Added --with-docs configure option to allow disabling installation of 
+	  documentation. 
+	- Accidentally omitted 'extern' in two declarations of global variables in
+	  header files, causing compile failures on certain systems.
+	- Deprecated imapflags extension: fixed implicit assignment of flags. Turns
+	  out this never really worked, but the effect of this bug was obscured by the
+	  removeflag bug fixed in the previous release.
+	- Fixed various memset argument mixups in enotify extension. This caused 
+	  warnings on certain systems, but luckily no adverse effects at runtime.
+
+v0.1.15 25-01-2010 Stephan Bosch <stephan@rename-it.nl>
+
+	* Enotify extension: 
+	  - Adjusted notify method API for addition of new notification methods.
+	  - Set default importance level to 'normal' (was 'high').
+	* Include extension: updated implementation towards most recent specification
+	  (all should be backwards compatible):
+	  - Implemented global variables namespace.
+	  - Global command may now appear anywhere in a script.
+	  - Implemented script name checking using the requirements specified in the
+	    ManageSieve draft.
+	  - One issue remains: ManageSieve currently requires included scripts to be
+	    uploaded first, which is not according to specification.
+	* Changed envelope path parser to allow to and from envelope addresses that
+	  have no domain part. 
+	+ Added preliminary support for Sieve plugins and added support for installing
+	  Sieve development headers.
+	+ Started work on the implementation of the spamtest, spamtestplus and
+	  virustest extensions (unfinished).
+	+ Deprecated notify extension: implemented denotify command.
+	+ Variables extension: added support for variable namespaces.
+	+ Added configurable script size limit. Compiler will refuse to compile files
+	  larger than sieve_max_script_size.
+	+ Testsuite changes: 
+	  - Added support for changing and testing an extension's configuration.
+	  - Added a command line parameter for copying errors to stderr.
+	- Fixed a bug in the i;ascii-numeric comparator. If one of the strings started
+	  with a non-digit character, the comparator would always yield less-than.
+	- Imap4flags extension: fixed bug in removeflag: removing a single flag failed 
+	  due to off-by-one error (bug report by Julian Cowley).
+	- Improved EACCES error messages for stat() and lstat() syscalls and slightly
+	  improved error messages that may uccur when saving a binary.
+	- Vacation extension: fixed typo in runtime log message (patch by Julian 
+	  Cowley).
+	- Fixed use of minus '-' in man pages; it is now properly escaped.
+	- Fixed parser recovery. In particular cases it would trigger spurious errors
+	  after an initial valid error and sometimes additional errors were
+	  inappropriately ignored.
+
+v0.1.14 19-12-2009 Stephan Bosch <stephan@rename-it.nl>
+
+	* Made the imposed limits on the number of redirects and the number of 
+	  actions configurable. The settings are called sieve_max_actions and 
+	  sieve_max_redirects.
+	* Did a major rework of extension handling, making sure that no global state
+	  is maintained. This change was triggered by problems that global state info
+	  would cause for Dovecot v2.0, but it is also important for v1.2 as it
+	  significantly cleans up the library implementation. 
+	+ Made LDA Sieve plugin recognize the deliver_log_format setting.
+	+ Message headers produced from user-supplied data are now RFC2047-encoded if
+	  necessary for outgoing messages. This is for example important for the
+	  :subject argument of the vacation action.  
+	+ Added support for the $text$ substitution in the deprecated notify 
+	  extension.
+	+ The subaddress extension now also accepts recipient_delimiter setting as an 
+	  alias for sieve_subaddress_sep setting. This anticipates the 
+	  recipient_delimiter setting in v2.0. 
+	- Fixed logging of mailbox names. It logged the converted mUTF7 version in 
+	  stead of the original UTF8 version supplied by the user.
+	- Fixed a minor memory leak in the multiscript support.
+	- Fixed a bug in the recompilation of Sieve scripts. Made sure that scripts 
+	  are only recompiled when the script file - or the symlink pointing to it - 
+	  is strictly newer.
+
+v0.1.13 18-10-2009 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Body extension: implemented proper handling of the :raw transform and added 
+	  various new tests to the test suite. However, :content "multipart" and
+	  :content "message/rfc822" are still not working. 
+	+ Fixed race condition occuring when multiple instances are saving the same 
+	  binary (patch by Timo Sirainen).
+	+ Test suite: added support for testing multiscript execution.
+	- Made compiler more lenient towars missing CRLF at the end of the script in a 
+	  hash comment.
+	- Body extension: don't give SKIP_BODY_BLOCK flag to message parser, we want 
+	  the body! (patch by Timo Sirainen).
+	- Fixed handling of implicit side effects for multiscript execution.
+	- Fixed bugs in multiscript support; subsequent keep actions were not always 
+	  merged correctly and implicit side effects were not always handled
+	  correctly.
+	- Fixed a segfault bug in the sieve-test tool occuring when compile fails.
+	- Fixed segfault bug in action procesing. It was triggered while merging side 
+	  effects in duplicate actions.
+	- Fixed bug in the Sieve plugin that caused it to try to stat() a NULL path, 
+	  yielding a 'Bad address' error. 
+
+v0.1.12 21-08-2009 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Testsuite: added support for testing binaries stored on disk.
+	+ Implemented the new date extension. This allows matching against date values 
+	  in header fields and the current date at the time of script evaluation.
+
+v0.1.11 08-08-2009 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Built skeleton implementation for the date extension (RFC 5260). It
+	  compiles, but it does not do anything useful yet. Therefore, it is not part 
+	  of the default compilation. 
+	- Fixed ARM portability issues caused by char type not being signed on that
+	  platform. Reading optional operands from a binary would fail for action side 
+	  effects. Also, an accidental mixup of an int return type with bool caused 
+	  the interpreter to continue on ARM even though an error occured.  
+	- Removed direct stdint.h includes to prevent portability issues.
+	- Fixed segfault bug in the handling of script open failures.
+	- Include: improved user error messages and system log messages.
+	- Fixed copy-paste mixup between sieve_after and sieve_before settings in the
+	  LDA Sieve plugin. If only a sieve_after script was active, nothing would 
+	  have been executed. Patch by Mike Abbott.
+	- Include: fixed a bug in HOME substitution in the sieve_dir path. Surfaced in 
+	  ManageSieve.
+
+v0.1.10 03-08-2009 Stephan Bosch <stephan@rename-it.nl>
+
+	* Changed action execution of fileinto and keep. These changes depend on API 
+	  additions in Dovecot, making this release depend on Dovecot v1.2.2 or newer.
+	* Further developed the sieve-filter command line tool. This required a few
+	  changes to the action execution of the Sieve engine. The tool was 
+	  successfully tested on folders with a few 100k spam messages. However, the 
+	  commandline options are still incomplete, a man page is missing and it needs 
+	  much more testing before I can recommend anyone to use this tool. 
+	+ Added support for the mailbox extension. This allows checking whether a 
+	  mailbox exists using the mailboxexists command and it adds the :create 
+	  argument to the fileinto command to create the mailbox when it is missing. 
+	  The :create feature is useless unless the Deliver LDA is run with the -n 
+	  option.
+	+ Improved the testsuite with tests for message delivery. Messages stored
+	  using keep and fileinto can be fed back into the Sieve engine for 
+	  verification. This includes testing of applied IMAP flags.
+	+ Updated the man pages with the new method of specifying the supported 
+	  extensions using + and - (for the -x parameter of the sieve tools)
+	+ Further developed the deprecated notify extension. A dummy for the denotify
+	  command exists, meaning that its use does not cause an error anymore. 
+	- Fixed a bug in the derivation of the binary path from the script path. A 
+	  bare filename would yield a path relative to root.
+	- Fixed a bug in the value matching code. The context data now uses a proper
+	  pool in stead of the data stack. Bug reported by Jan Sechser.
+	- Fixed assertion fail in the include extension caused by missing 
+	  initialization upon binary load. This bug surfaces only for stored
+	  binaries. Bug reported by Tom Hendrikx.
+	- Fixed include error message for failed :global include. It mentioned the 
+	  wrong config parameter.
+	- Fixed broken wiki reference in an error message of the plugin about the
+	  'sieve' setting.
+	- Fixed behavior of fileinto when delivering into a namespace prefix.
+	  Previous fix used the wrong storage.
+
+v0.1.9 22-07-2009  Stephan Bosch <stephan@rename-it.nl>
+
+	* Removed the unfinished sieve-filter tool from the default build. It is now 
+	  only built when the --with-unfinished-features switch is supplied during 
+	  configure.
+	+ Started building support for the ereject version of the reject action, 
+	  which has a preference to use an SMTP/LMTP protocol error in stead of a 
+	  bounce message. This is to be used to make the Sieve plugin honour Deliver's
+	  -e parameter. This is not yet finished and not built by default. 
+	+ Improved 'Permission denied' error messages just like Dovecot does,
+	  precisely specifying what permission is missing to access or create a file.
+	+ Added additional headers to the list of allowed headers for the address 
+	  test. The restrictive nature of the address test is not always appropriate. 
+	  Still thinking of a better, less restrictive implementation.
+	+ Made the deprecated notify extension compatible with the old CMUSieve
+	  plugin. However, the denotify command and the $text$ substitution are not
+	  yet supported. 
+	+ Made the discard action log a message to avoid confusion about disappearing 
+	  messages.
+	- Fixed behavior of fileinto when delivering into a namespace prefix. It now
+	  uses silent delivery into INBOX as fallback.
+	- Fixed logging of folder namespace prefix upon delivery into a prefixed 
+	  namespace. Formerly it only logged the bare folder name.
+	- Fixed a potential segfault in the argument validation. It didn't surface
+	  because no command could have a :tag followed by an associated parameter as
+	  last argument.
+	- Fixed segfault bug occuring in envelope test when performed on null (<>) 
+	  envelope path. The fix involves a rather large restructuring of the code to 
+	  make sure envelope addresses are properly handled everywhere (bug reported
+	  by Nikita Koshikov)
+	- Envelope: fixed bug in application of address parts; failure to obtain 
+	  the part would cause inappropriate match success (bug reported by Ron Lee)
+	- Fixed extension conflict checks during validation. It could sometimes
+	  produce useless errormessages. This is currently only used by the 
+	  deprecated extensions.
+	- Forgot to remove old explicit storage library dependency (patch by 
+	  Arkadiusz Miskiewicz).
+	- Fixed compiler warnings on certain platforms regarding the use fwrite for 
+	  outgoing message construction
+
+v0.1.8 12-07-2009  Stephan Bosch <stephan@rename-it.nl>
+
+	- Fixed AIX compile problem. For portability, the typeof operator is
+	  not used anymore. 
+	+ Added partial support for the deprecated notify extension. However, it
+	  turns out that the implementation provided by cmusieve is even older (2001),
+	  meaning that this is currently not backwards compatible with cmusieve.
+
+v0.1.7 05-07-2009  Stephan Bosch <stephan@rename-it.nl>
+
+	+ Added support for CRLF line breaks in strbuf error handler to fix a
+	  ManageSieve problem.
+	+ Improved consistency of sieve tool documentation and fixed missing
+	  parameters in internal tool help output.
+	+ Enhanced extensions configuration, allowing to specify the enabled
+	  extensions relatively to the default (patch by Steffen Kaiser).
+	- Forgot to initialize script execution status in Sieve plugin, causing 
+	  segfaults on compile errors in specific conditions.
+	- Fixed logging in Sieve plugin for execution of default main script (went 
+	  to STDERR).
+                                                                               
+v0.1.6 18-06-2009  Stephan Bosch <stephan@rename-it.nl>
+
+	* Adjusted to changes in Dovecot to make it compile against v1.2.rc5
+	* Made default of sieve_dir setting match the ManageSieve implementation.
+	- Fixed a few problems in de body extension that caused assert failures in
+	  specific situations.	
+
+v0.1.5 18-04-2009  Stephan Bosch <stephan@rename-it.nl>
+
 	* Ported the implementation of the Sieve include extension to the latest 
 	  draft. This means that the import and export commands are replaced by a new 
 	  command called global. The import and export commands are now DEPRICATED and
@@ -24,7 +316,8 @@ v0.1.5 18-4-2009  Stephan Bosch <stephan@rename-it.nl>
 	  recipients:;' in particular triggered this bug. Bug reported by Bernhard
 	  Schmidt. 	  
 
-v0.1.4 21-3-2009  Stephan Bosch <stephan@rename-it.nl>
+v0.1.4 21-03-2009  Stephan Bosch <stephan@rename-it.nl>
+
 	* Started work on the sieve-filter tool. With this command line tool it will 
 	  be possible to (re-)apply Sieve filters on a mail folder. It is currently
 	  undocumented and far from functional.
@@ -37,7 +330,7 @@ v0.1.4 21-3-2009  Stephan Bosch <stephan@rename-it.nl>
 	- Fixed Solaris compile problem: removed unecessary and unportable linker
 	  flags that caused compile to fail. Bug reported by Andrés Yacopino.
 
-v0.1.3 12-2-2009  Stephan Bosch <stephan@rename-it.nl>
+v0.1.3 12-02-2009  Stephan Bosch <stephan@rename-it.nl>
 
 	* Adapted to changes in Dovecot, making this release dependent on Dovecot
 	  >= 1.2.beta1
@@ -126,6 +419,65 @@ v0.1.0 23-10-2008  Stephan Bosch <stephan@rename-it.nl>
 ManageSieve NEWS history:
 
 Dovecot 1.2:
+  
+v0.11.11:
+	* This release contains adjustments to match changes in the Sieve API. This
+	  means that this release will only compile against Pigeonhole Sieve
+	  v0.1.15.
+	+ Implemented ManageSieve QUOTA enforcement. 
+	+ Added MAXREDIRECTS capability after login.
+	+ Implemented new script name rules specified in most recent ManageSieve
+	  draft.
+	- Fixed assertion failure occuring with challenge-response SASL mechanisms.
+	- Made configure complain about trying to compile against installed Dovecot
+	  headers alone.
+	- Fixed compile warning for compilation against CMUSieve.
+
+v0.11.10:
+	* This release contains adjustments to match changes in the Sieve API. This
+	  means that this release will only compile against Pigeonhole Sieve 
+	  v0.1.14.
+	- Fixed compilation of ManageSieve against CMUSieve.
+
+v0.11.9:
+	* Adjusted to changes in the Dovecot login proxy API. This release 
+	  therefore depends on Dovecot v1.2.4.
+	+ Reintroduced ability to abort SASL with "*" response. Latest ManageSieve
+	  specification includes it.
+
+v0.11.8:
+	- Fixed TLS support for proxying ManageSieve. The protocol state machine
+	  was incorrect. Also added a check that disables ssl when 'starttls' is 
+	  not enabled for the user. This produces a proper warning in the log file. 
+	  There is no such thing as a managesieveS protocol which has SSL from the 
+	  start.
+
+v0.11.7:
+	* Adjusted to changes in the Dovecot login API. This release now depends on
+	  Dovecot v1.2.1 or newer.
+	* Incorporated various small changes in IMAP into ManageSieve. This includes
+	  properly enabling the generation of core dumps.
+	- The previous release implicitly resolved the FreeBSD script truncation
+	  error. This release adds a small correction to the code that detects the
+	  truncation.
+	- Fixed panic occurring when many errors are produced by the Sieve compiler
+	  (bug found by Pascal Volk).
+	- Fixed memory leak in the PUTSCRIPT command.
+
+v0.11.6:
+	* Adjusted to changes in Dovecot regarding client idle timeout vs 
+	  authentication timeout. This release now depends on Dovecot v1.2.rc6 or
+	  newer.
+	- Fixed CRLF line breaks in compile errors (bug reported by Pascal Volk).
+	- Corrected directory/file creation behavior with respect to mode bits
+	  and gid (bug reported by Pascal Volk).
+	- Improved handling of script truncation bugs: connection is now closed and
+	  an error is logged. bug itself not fixed yet). 
+	- Prevented temp script name from showing up in error output.
+
+v0.11.5:
+	* Incorporated various changes from imap-login into managesieve-login. This
+	  includes changes in the proxy support.
   
 v0.11.4:
 	* Adjusted to changes in the Dovecot signal handler API.

@@ -7,13 +7,13 @@ Introduction
 
 This package is part of the Pigeonhole project (http://pigeonhole.dovecot.org). 
 It adds support for the Sieve language (RFC 5228) and the ManageSieve protocol
-(RFC 5804) to the Dovecot Secure IMAP Server. In the literal sense, a 
-pigeonhole is a a hole or recess inside a dovecot for pigeons to nest in. It 
-is, however, also the name for one of a series of small, open compartments in 
-a cabinet used for filing or sorting mail. As a verb, it describes the act of 
-putting an item into one of those pigeonholes. The name `Pigeonhole' therefore
-well describes an important part of the functionality that this project adds to
-Dovecot: sorting and filing e-mail messages.
+(RFC 5804) to the Dovecot Secure IMAP Server. In the literal sense, a pigeonhole 
+is a a hole or recess inside a dovecot for pigeons to nest in. It is, however, 
+also the name for one of a series of small, open compartments in a cabinet used 
+for filing or sorting mail. As a verb, it describes the act of putting an item 
+into one of those pigeonholes. The name `Pigeonhole' therefore well describes an
+important part of the functionality that this project adds to Dovecot: sorting 
+and filing e-mail messages.
 
 The Sieve language is used to specify how e-mail needs to be processed. By 
 writing Sieve scripts, users can customize how messages are delivered, e.g.
@@ -23,18 +23,18 @@ interpreter can send an automated reply. Above all, the Sieve language is meant
 to be simple, extensible and system independent. And, unlike most other mail
 filtering script languages, it does not allow users to execute arbitrary
 programs. This is particularly useful to prevent virtual users from having full
-access to the mail store. The intention of the language is to make it
-impossible for users to do anything more complex (and dangerous) than write 
-simple mail filters.
+access to the mail store. The intention of the language is to make it impossible
+for users to do anything more complex (and dangerous) than write simple mail 
+filters.
 
 Using the ManageSieve protocol, users can upload their Sieve scripts remotely, 
 without needing direct filesystem access through FTP or SCP. Additionally, a
-ManageSieve server always makes sure that uploaded scripts are valid, 
-preventing compile failures at mail delivery.
+ManageSieve server always makes sure that uploaded scripts are valid, preventing 
+compile failures at mail delivery.
 
 This package provides Sieve support as a plugin to Dovecot's Local Delivery 
-Agent (LDA). The ManageSieve protocol is provided is an additional service, 
-next to Dovecot's own POP3 and IMAP services. 
+Agent (LDA). The ManageSieve protocol is provided is an additional service, next
+to Dovecot's own POP3 and IMAP services. 
 
 Features
 ========
@@ -120,8 +120,8 @@ following list outlines the implementation status of each supported extension:
       plugin.
     mailbox (RFC 5490; page 2): fully supported (v0.1.10+), but ACL permissions
       are not verified for mailboxexists.
-    include (draft v05): almost fully supported, but interaction with ManageSieve
-      is not in accordance with specification.
+    include (draft v05): almost fully supported, but interaction with
+      ManageSieve is not in accordance with specification.
     regex (draft v08; not latest ietf version): almost fully supported, but
       UTF-8 is not supported.
 
