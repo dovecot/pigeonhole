@@ -1,6 +1,6 @@
 SUBDIRS = debug
 
-bin_PROGRAMS = sievec sieved sieve-test
+bin_PROGRAMS = sievec sieve-dump sieve-test
 
 if BUILD_UNFINISHED
 bin_PROGRAMS += sieve-filter
@@ -32,12 +32,12 @@ sievec_SOURCES = \
 
 # Sieve Dump Tool
 
-sieved_LDFLAGS = -export-dynamic
-sieved_LDADD = $(libs_ldadd)
-sieved_DEPENDENCIES = $(libs_deps)
+sieve_dump_LDFLAGS = -export-dynamic
+sieve_dump_LDADD = $(libs_ldadd)
+sieve_dump_DEPENDENCIES = $(libs_deps)
 
-sieved_SOURCES = \
-	sieved.c 
+sieve_dump_SOURCES = \
+	sieve-dump.c 
 
 # Sieve Test Tool
 

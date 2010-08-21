@@ -173,7 +173,7 @@ sieve-test - This is a universal Sieve test tool for testing the effect of a
              can be used to test the actual delivery of the message and show the
              messages that would normally be sent through SMTP.
 
-sieved     - Dumps the content of a Sieve binary file for (development) 
+sieve-dump - Dumps the content of a Sieve binary file for (development) 
              debugging purposes.
 
 When installed, man pages are also available for these commands. In this package

@@ -34,6 +34,8 @@ v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
 	  most notable example is that when the LDA Sieve plugin is trying to store a
 	  binary for a global script, the resulting failure message also points the
 	  administrator towards pre-compiling the script with sievec.
+	* Renamed the sieved tool to sieve-dump. The original name was somewhat
+	  confusing.
 	- Multiscript: fixed duplicate implicit keep caused by erroneous execution
 	  state update.
 	- Prevented assertion failure due to currupt binary string representation. 

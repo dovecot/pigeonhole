@@ -11,7 +11,7 @@ EXTRA_DIST = \
 
 dist_man_MANS = \
 	sievec.1 \
-	sieved.1 \
+	sieve-dump.1 \
 	sieve-test.1 \
 	$(unfinished_mans)
 

@@ -56,7 +56,7 @@ m4/lt~obsolete.m4
 **/.deps
 
 src/sieve-tools/sievec
-src/sieve-tools/sieved
+src/sieve-tools/sieve-dump
 src/sieve-tools/sieve-test
 src/sieve-tools/sieve-filter
 

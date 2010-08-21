@@ -38,7 +38,7 @@ is a directory.
 .PP
 The \fBsievec\fP command is also useful to verify Sieve scripts before using. Additionally, with 
 the \fB\-d\fP option it can output a textual (and thus human\-readable) dump of the generated Sieve
-code to the specified file. The output is then identical to what the \fBsieved\fP(1) command produces
+code to the specified file. The output is then identical to what the \fBsieve\-dump\fP(1) command produces
 for a stored binary file. This output is mainly useful to find bugs in the compiler that yield corrupt 
 binaries.
 .SH OPTIONS
@@ -50,7 +50,7 @@ Alternative Dovecot configuration file path.
 Don't write the binary to \fIout\-file\fP, but write a textual dump of the binary in 
 stead. In this context, the \fIout\-file\fP value '\-' has special meaning: it causes the the textual 
 dump to be written to \fBstdout\fP. The \fIout\-file\fP argument may also be omitted, which has 
-the same effect as '\-'. The output is identical to what the \fBsieved\fP(1) command produces for 
+the same effect as '\-'. The output is identical to what the \fBsieve\-dump\fP(1) command produces for 
 a compiled Sieve binary file. Note that this option is not allowed when the \fIout\-file\fP argument
 is a directory.
 .TP
@@ -70,7 +70,7 @@ Pigeonhole for Dovecot was written by Stephan Bosch <stephan@rename\-it.nl>.
 .PP
 Dovecot was written by Timo Sirainen <tss@iki.fi>.
 .SH "SEE ALSO"
-.BR sieved (1),
+.BR sieve\-dump (1),
 .BR sieve\-test (1)
 .PP
 Dovecot website: http://www.dovecot.org

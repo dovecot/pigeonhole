@@ -60,7 +60,7 @@ Enable Sieve debugging.
 .TP
 \fB\-d\fP \fIdump\-file\fP
 Causes a dump of the generated code to be written to the specified file. This is identical to the
-dump produced by \fBsieved\fR(1). Using '\-' as filename causes the dump to be written to \fBstdout\fP.
+dump produced by \fBsieve\-dump\fR(1). Using '\-' as filename causes the dump to be written to \fBstdout\fP.
 .TP
 \fB\-e\fP
 Turns on true execution of the set of actions that results from running the script. In combination
@@ -144,7 +144,7 @@ Print debug messages as well. This is usually only useful for developers and pro
 \fB\-Taddresses\fP
 Print byte code addresses for the current trace output. Normally, only the current Sieve source code 
 position is printed. The byte code addresses are equal to those listed in a binary dump produced
-using the \fB\-d\fP option or by the \fBsieved(1)\fP command.
+using the \fB\-d\fP option or by the \fBsieve\-dump(1)\fP command.
 
 .SH DEBUG SIEVE EXTENSION
 .PP
@@ -162,7 +162,7 @@ if header :contains "subject" "hello" {
 .PP
 }
 .PP
-Other tools like \fBsievec\fP and \fBsieved\fP also recognize the vnd.dovecot.debug extension. In contrast,
+Other tools like \fBsievec\fP and \fBsieve\-dump\fP also recognize the vnd.dovecot.debug extension. In contrast,
 the actual Sieve plugin for the Dovecot LDA does not allow the use of the debug extension. So, keep in mind that 
 scripts and compiled binaries that refer to de debug extension will fail to be run by the Sieve plugin itself.
 .PP
@@ -175,7 +175,7 @@ Pigeonhole for Dovecot was written by Stephan Bosch <stephan@rename\-it.nl>.
 Dovecot was written by Timo Sirainen <tss@iki.fi>.
 .SH "SEE ALSO"
 .BR sievec (1),
-.BR sieved (1)
+.BR sieve\-dump (1)
 .PP
 Dovecot website: http://www.dovecot.org
 .PP
