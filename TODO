@@ -10,7 +10,6 @@ Current activities:
 
 Next (in order of descending priority/precedence):
 
-* Update man pages to match style of Dovecot man pages.
 * Enforce ManageSieve protocol syntax better with some of the commands. Some 
   commands still allow spurious extra arguments.
 * Code cleanup:

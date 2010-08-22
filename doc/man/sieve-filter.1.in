@@ -141,12 +141,15 @@ extensions that are available by default, except for the enotify extension.
 .TP
 [...]
 
+.\"------------------------------------------------------------------------
+@INCLUDE:reporting-bugs@
+.\"------------------------------------------------------------------------
 .SH AUTHOR
 .PP
 The Sieve implementation for Dovecot was written by Stephan Bosch <stephan@rename\-it.nl>.
 .PP
 Dovecot was written by Timo Sirainen <tss@iki.fi>.
-
+.\"------------------------------------------------------------------------
 .SH "SEE ALSO"
 .BR sievec (1),
 .BR sieve\-dump (1),
