@@ -17,7 +17,7 @@ bool cmd_deletescript(struct client_command_context *cmd)
 	struct sieve_script *script;
 
 	/* <scrip name>*/
-	if (!client_read_string_args(cmd, 1, &scriptname))
+	if ( !client_read_string_args(cmd, 1, TRUE, &scriptname) )
 		return FALSE;
 
 	script = sieve_storage_script_init(storage, scriptname);

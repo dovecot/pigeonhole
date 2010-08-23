@@ -412,14 +412,28 @@ void client_send_storage_error
 }
 
 bool client_read_args(struct client_command_context *cmd, unsigned int count,
-		      unsigned int flags, struct managesieve_arg **args_r)
+	unsigned int flags, bool no_more, struct managesieve_arg **args_r)
 {
+	struct managesieve_arg *dummy_args_r = NULL;
 	int ret;
+
+	if ( args_r == NULL ) args_r = &dummy_args_r; 
 
 	i_assert(count <= INT_MAX);
 
-	ret = managesieve_parser_read_args(cmd->client->parser, count, flags, args_r);
-	if (ret >= (int)count) {
+	ret = managesieve_parser_read_args
+		(cmd->client->parser, ( no_more ? 0 : count ), flags, args_r);
+	if ( ret >= 0 ) {
+		if ( count > 0 || no_more ) {
+			if ( ret < (int)count ) {
+				client_send_command_error(cmd, "Missing arguments.");
+				return FALSE;
+			} else if ( no_more && ret > (int)count ) {
+				client_send_command_error(cmd, "Too many arguments.");
+				return FALSE;
+			}
+		}
+	
 		/* all parameters read successfully */
 		return TRUE;
 	} else if (ret == -2) {
@@ -430,15 +444,14 @@ bool client_read_args(struct client_command_context *cmd, unsigned int count,
 		}
 		return FALSE;
 	} else {
-		/* error, or missing arguments */
-		client_send_command_error(cmd, ret < 0 ? NULL :
-					  "Missing arguments");
+		/* error */
+		client_send_command_error(cmd, NULL);
 		return FALSE;
 	}
 }
 
 bool client_read_string_args(struct client_command_context *cmd,
-			     unsigned int count, ...)
+			     unsigned int count, bool no_more, ...)
 {
 	struct managesieve_arg *managesieve_args;
 	va_list va;
@@ -446,10 +459,10 @@ bool client_read_string_args(struct client_command_context *cmd,
 	unsigned int i;
 	bool result = TRUE;
 
-	if (!client_read_args(cmd, count, 0, &managesieve_args))
+	if (!client_read_args(cmd, count, 0, no_more, &managesieve_args))
 		return FALSE;
 
-	va_start(va, count);
+	va_start(va, no_more);
 	for (i = 0; i < count; i++) {
 		const char **ret = va_arg(va, const char **);
 
@@ -470,11 +483,6 @@ bool client_read_string_args(struct client_command_context *cmd,
 			*ret = str;
 	}
 	va_end(va);
-
-	if (result && managesieve_args[i].type != MANAGESIEVE_ARG_EOL) {
-		client_send_command_error(cmd, "Too many arguments.");
-		result = FALSE;
-	}
 
 	return result;
 }

@@ -18,7 +18,7 @@ bool cmd_setactive(struct client_command_context *cmd)
 	int ret;
 
 	/* <scriptname> */
-	if (!client_read_string_args(cmd, 1, &scriptname))
+	if ( !client_read_string_args(cmd, 1, TRUE, &scriptname) )
 		return FALSE;
 
 	if ( *scriptname != '\0' ) {

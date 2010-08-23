@@ -20,6 +20,10 @@ bool cmd_listscripts(struct client_command_context *cmd)
 	bool active;
 	string_t *str;
 
+	/* no arguments */
+	if ( !client_read_no_args(cmd) )
+		return FALSE;
+
 	if ( (ctx = sieve_storage_list_init(client->storage))
 		== NULL ) {
 		client_send_storage_error(client, client->storage);

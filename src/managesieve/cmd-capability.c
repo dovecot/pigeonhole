@@ -17,6 +17,10 @@ bool cmd_capability(struct client_command_context *cmd)
 	const char *sievecap, *notifycap;
 	unsigned int max_redirects;
 
+	/* no arguments */
+	if ( !client_read_no_args(cmd) )
+		return FALSE;
+
 	o_stream_cork(client->output);
 
 	T_BEGIN {

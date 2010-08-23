@@ -20,16 +20,10 @@ bool cmd_havespace(struct client_command_context *cmd)
 	struct managesieve_arg *args;
 	const char *scriptname;
 	uoff_t size;
-	int ret;
 
 	/* <scriptname> <size> */
-	if (!(ret=client_read_args(cmd, 2, 0, &args)))
+	if ( !client_read_args(cmd, 2, 0, TRUE, &args) )
 	  return FALSE;
-
-	if ( ret > 2 ) {
-		client_send_no(client, "Too many arguments");
-		return TRUE;
-	}
 
 	if ( (scriptname = managesieve_arg_string(&args[0])) == NULL ) {
 		client_send_no(client, "Invalid string for scriptname.");

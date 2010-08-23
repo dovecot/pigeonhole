@@ -11,6 +11,10 @@ bool cmd_logout(struct client_command_context *cmd)
 {
 	struct client *client = cmd->client;
 
+	/* no arguments */
+	if ( !client_read_no_args(cmd) )
+		return FALSE;
+
 	client_send_line(client, "OK \"Logout completed.\"");
 	client_disconnect(client, "Logged out");
 	return TRUE;
