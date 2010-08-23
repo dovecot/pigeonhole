@@ -36,8 +36,12 @@ bool sieve_script_name_is_valid(const char *scriptname)
 	const unichar_t *name_chars;
 	size_t namelen = strlen(scriptname);
 
-	/* Check maximum length */
-	if ( namelen > SIEVE_MAX_SCRIPT_NAME_LEN )
+	/* Check minimum length */
+	if ( namelen == 0 )
+		return FALSE;
+
+	/* Check worst-case maximum length */
+	if ( namelen > SIEVE_MAX_SCRIPT_NAME_LEN * 4 )
 		return FALSE;
 
 	/* Intialize array for unicode characters */
@@ -46,16 +50,24 @@ bool sieve_script_name_is_valid(const char *scriptname)
 	/* Convert UTF-8 to UCS4/UTF-32 */
 	if ( uni_utf8_to_ucs4(scriptname, &uni_name) < 0 )
 		return FALSE;
-
-	/* Scan name for invalid characters */
 	name_chars = array_get(&uni_name, &count);
+
+	/* Check true maximum length */
+	if ( count > SIEVE_MAX_SCRIPT_NAME_LEN )
+		return FALSE;
+
+	/* Scan name for invalid characters
+	 *   FIXME: compliance with Net-Unicode Definition (Section 2 of
+	 *          RFC 5198) is not checked fully and no normalization
+	 *          is performed.
+	 */
 	for ( i = 0; i < count; i++ ) {
 
 		/* 0000-001F; [CONTROL CHARACTERS] */
 		if ( name_chars[i] <= 0x001f )
 			return FALSE;
-		
-		/* 002F; SLASH */
+
+		/* 002F; SLASH (not RFC-prohibited, but '/' is dangerous) */
 		if ( name_chars[i] == 0x002f )
 			return FALSE;
 
@@ -65,6 +77,10 @@ bool sieve_script_name_is_valid(const char *scriptname)
 
 		/* 0080-009F; [CONTROL CHARACTERS] */
 		if ( name_chars[i] >= 0x0080 && name_chars[i] <= 0x009f )
+			return FALSE;
+
+		/* 00FF */
+		if ( name_chars[i] == 0x00ff )
 			return FALSE;
 
 		/* 2028; LINE SEPARATOR */
@@ -88,8 +104,8 @@ static inline const char *_sieve_scriptfile_get_basename(const char *filename)
 	ext = strrchr(filename, '.');
 	if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
 		return filename;
-	
-	return t_strdup_until(filename, ext);	
+
+	return t_strdup_until(filename, ext);
 }
 
 bool sieve_script_file_has_extension(const char *filename)

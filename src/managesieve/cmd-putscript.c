@@ -431,7 +431,7 @@ bool cmd_putscript(struct client_command_context *cmd)
 	const char *scriptname;
 
 	/* <scriptname> */
-	if ( !client_read_string_args(cmd, 1, FALSE, &scriptname) || *scriptname == '\0' )
+	if ( !client_read_string_args(cmd, 1, FALSE, &scriptname) )
 		return FALSE;
 
 	return cmd_putscript_start(cmd, scriptname);
