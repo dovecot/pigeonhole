@@ -28,10 +28,22 @@ EXTRA_DIST = \
 
 CLEANFILES = $(nodist_man1_MANS) $(nodist_man7_MANS)
 
-%.1: $(srcdir)/%.1.in $(man_includefiles) Makefile
+sievec.1: $(srcdir)/sievec.1.in $(man_includefiles) Makefile
 	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
-		< $(srcdir)/$< > $@
+		< $(srcdir)/sievec.1.in > sievec.1
 
-%.7: $(srcdir)/%.7.in $(man_includefiles) Makefile
+sieve-dump.1: $(srcdir)/sieve-dump.1.in $(man_includefiles) Makefile
 	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
-		< $(srcdir)/$< > $@
+		< $(srcdir)/sieve-dump.1.in > sieve-dump.1
+
+sieve-filter.1: $(srcdir)/sieve-filter.1.in $(man_includefiles) Makefile
+	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
+		< $(srcdir)/sieve-filter.1.in > sieve-filter.1
+
+sieve-test.1: $(srcdir)/sieve-test.1.in $(man_includefiles) Makefile
+	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
+		< $(srcdir)/sieve-test.1.in > sieve-test.1
+
+pigeonhole.7: $(srcdir)/pigeonhole.7.in $(man_includefiles) Makefile
+	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
+		< $(srcdir)/pigeonhole.7.in > pigeonhole.7
