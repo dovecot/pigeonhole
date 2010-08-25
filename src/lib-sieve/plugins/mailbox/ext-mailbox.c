@@ -11,8 +11,6 @@
  *
  */
 
-#include <stdio.h>
-
 #include "sieve-common.h"
 
 #include "sieve-code.h"

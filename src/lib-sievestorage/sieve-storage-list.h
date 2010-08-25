@@ -8,11 +8,6 @@
 #include "str.h"
 #include "sieve-storage.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <dirent.h>
-#include <sys/stat.h>
-
 struct sieve_list_context;
 
 /* Create a context for listing the scripts in the storage */

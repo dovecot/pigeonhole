@@ -1,8 +1,6 @@
 /* Copyright (c) 2002-2010 Pigeonhole authors, see the included COPYING file
  */
 
-#include <stdio.h>
-
 #include "sieve-common.h"
 #include "sieve-commands.h"
 #include "sieve-stringlist.h"

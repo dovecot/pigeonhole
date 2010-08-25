@@ -4,8 +4,6 @@
 #ifndef __SIEVE_H
 #define __SIEVE_H
 
-#include <stdio.h>
-
 struct sieve_script;
 struct sieve_binary;
 
