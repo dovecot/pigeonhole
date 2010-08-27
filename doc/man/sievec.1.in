@@ -50,8 +50,9 @@ Alternative Dovecot configuration file path.
 Don\(aqt write the binary to \fIout\-file\fP, but write a textual dump of the
 binary instead. In this context, the \fIout\-file\fP value '\-' has special
 meaning: it causes the the textual dump to be written to \fBstdout\fP.
-The \fIout\-file\fP argument may also be omitted, which has the same effect as
-'\-'. The output is identical to what the \fBsieve\-dump\fP(1) command produces
+The \fIout\-file\fP argument may also be omitted, which has the same effect
+as '\-'.
+The output is identical to what the \fBsieve\-dump\fP(1) command produces
 for a compiled Sieve binary file. Note that this option is not allowed when the
 \fIout\-file\fP argument is a directory.
 .TP
