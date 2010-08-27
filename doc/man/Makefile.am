@@ -24,7 +24,9 @@ EXTRA_DIST = \
 	sieve-dump.1.in \
 	sieve-test.1.in \
 	sieve-filter.1.in \
-	pigeonhole.7.in
+	pigeonhole.7.in \
+    sed.sh \
+    $(man_includefiles)
 
 CLEANFILES = $(nodist_man1_MANS) $(nodist_man7_MANS)
 
