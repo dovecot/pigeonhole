@@ -124,7 +124,7 @@ static bool capability_dump(void)
 	}
 
 	if ( pid == 0 ) {
-		const char *argv[2];
+		const char *argv[3];
 
 		/* Child */
 		(void)close(fd[0]);		
