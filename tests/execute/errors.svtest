@@ -87,7 +87,7 @@ test "Fileinto missing folder" {
 		test_fail "compile failed";
 	}
 
-	test_mailbox :create "INBOX";
+	test_mailbox_create "INBOX";
 
 	if not test_script_run {
 		test_fail "execution failed";

@@ -9,8 +9,8 @@ test "Elvey example" {
 		test_fail "could not compile";
 	}
 
-	test_binary :save "elvey";
-	test_binary :load "elvey";
+	test_binary_save "elvey";
+	test_binary_load "elvey";
 
 	if not test_script_run { }
 }
@@ -20,8 +20,8 @@ test "M. Johnson example" {
 		test_fail "could not compile";
 	}
 
-	test_binary :save "mjohnson";
-	test_binary :load "mjohnson";
+	test_binary_save "mjohnson";
+	test_binary_load "mjohnson";
 
 	if not test_script_run { }
 }
@@ -31,8 +31,8 @@ test "RFC 3028 example" {
 		test_fail "could not compile";
 	}
 
-	test_binary :save "rfc3028";
-	test_binary :load "rfc3028";
+	test_binary_save "rfc3028";
+	test_binary_load "rfc3028";
 
 	if not test_script_run { }
 }
@@ -42,8 +42,8 @@ test "Sieve examples" {
 		test_fail "could not compile";
 	}
 
-	test_binary :save "sieve_examples";
-	test_binary :load "sieve_examples";
+	test_binary_save "sieve_examples";
+	test_binary_load "sieve_examples";
 
 	if not test_script_run { }
 }
@@ -53,8 +53,8 @@ test "Vivil example" {
 		test_fail "could not compile";
 	}
 
-	test_binary :save "vivil";
-	test_binary :load "vivil";
+	test_binary_save "vivil";
+	test_binary_load "vivil";
 
 	if not test_script_run { }
 }
@@ -64,8 +64,8 @@ test "Jerry example" {
 		test_fail "could not compile";
 	}
 
-	test_binary :save "jerry";
-	test_binary :load "jerry";
+	test_binary_save "jerry";
+	test_binary_load "jerry";
 
 	if not test_script_run { }
 }
@@ -75,8 +75,8 @@ test "M. Klose example" {
 		test_fail "could not compile";
 	}
 
-	test_binary :save "mklose";
-	test_binary :load "mklose";
+	test_binary_save "mklose";
+	test_binary_load "mklose";
 
 	if not test_script_run { }
 }
@@ -86,8 +86,8 @@ test "Sanjay example" {
 		test_fail "could not compile";
 	}
 
-	test_binary :save "sanjay";
-	test_binary :load "sanjay";
+	test_binary_save "sanjay";
+	test_binary_load "sanjay";
 
 	if not test_script_run { }
 }
@@ -97,8 +97,8 @@ test "Relational (RFC5231) example" {
 		test_fail "could not compile";
 	}
 
-	test_binary :save "relational";
-	test_binary :load "relational";
+	test_binary_save "relational";
+	test_binary_load "relational";
 
 	if not test_script_run { }
 }
@@ -108,8 +108,8 @@ test "Subaddress (RFC5233) example" {
 		test_fail "could not compile";
 	}
 
-	test_binary :save "subaddress";
-	test_binary :load "subaddress";
+	test_binary_save "subaddress";
+	test_binary_load "subaddress";
 
 	if not test_script_run { }
 }

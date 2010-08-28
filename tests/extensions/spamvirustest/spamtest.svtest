@@ -23,12 +23,12 @@ Test!
 .
 ;
 
-test_config :set "sieve_spamtest_status_header"
+test_config_set "sieve_spamtest_status_header"
 	"X-SpamCheck:[ \\ta-zA-Z]+, score=(-?[0-9]+.[0-9]+)";
-test_config :set "sieve_spamtest_max_header"
+test_config_set "sieve_spamtest_max_header"
 	"X-SpamCheck:[ \\ta-zA-Z]+, score=-?[0-9]+.[0-9]+ required=(-?[0-9]+.[0-9]+)";
-test_config :set "sieve_spamtest_status_type" "score";
-test_config :reload "spamtest";
+test_config_set "sieve_spamtest_status_type" "score";
+test_config_reload :extension "spamtest";
 
 test "Value: subzero" {
 	if spamtest :is "0" {
@@ -45,9 +45,9 @@ test "Value: subzero" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header"
+test_config_set "sieve_spamtest_status_header"
 	"X-SpamCheck1:[ \\ta-zA-Z]+, score=(-?[0-9]+.[0-9]+)";
-test_config :reload "spamtest";
+test_config_reload :extension "spamtest";
 
 test "Value: zero" {
 	if spamtest :is "0" {
@@ -64,9 +64,9 @@ test "Value: zero" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header"
+test_config_set "sieve_spamtest_status_header"
 	"X-SpamCheck2:[ \\ta-zA-Z]+, score=(-?[0-9]+.[0-9]+)";
-test_config :reload "spamtest";
+test_config_reload :extension "spamtest";
 
 test "Value: low" {
 	if spamtest :is "0" {
@@ -83,9 +83,9 @@ test "Value: low" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header"
+test_config_set "sieve_spamtest_status_header"
 	"X-SpamCheck3: [ \\ta-zA-Z]+, score=(-?[0-9]+.[0-9]+)";
-test_config :reload "spamtest";
+test_config_reload :extension "spamtest";
 
 test "Value: high" {
 	if spamtest :is "0" {
@@ -98,9 +98,9 @@ test "Value: high" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header"
+test_config_set "sieve_spamtest_status_header"
 	"X-SpamCheck4:[ \\ta-zA-Z]+, score=(-?[0-9]+.[0-9]+)";
-test_config :reload "spamtest";
+test_config_reload :extension "spamtest";
 
 test "Value: max" {
 	if spamtest :is "0" {
@@ -113,9 +113,9 @@ test "Value: max" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header"
+test_config_set "sieve_spamtest_status_header"
 	"X-SpamCheck5:[ \\ta-zA-Z]+, score=(-?[0-9]+.[0-9]+)";
-test_config :reload "spamtest";
+test_config_reload :extension "spamtest";
 
 test "Value: past-max" {
 	if spamtest :is "0" {
@@ -146,11 +146,11 @@ Test!
 .
 ;
 
-test_config :set "sieve_spamtest_status_header" "X-Spam-Status";
-test_config :set "sieve_spamtest_max_value" "8.0";
-test_config :set "sieve_spamtest_status_type" "strlen";
-test_config :unset "sieve_spamtest_max_header";
-test_config :reload "spamtest";
+test_config_set "sieve_spamtest_status_header" "X-Spam-Status";
+test_config_set "sieve_spamtest_max_value" "8.0";
+test_config_set "sieve_spamtest_status_type" "strlen";
+test_config_unset "sieve_spamtest_max_header";
+test_config_reload :extension "spamtest";
 
 test "Strlen: zero" {
 	if spamtest :is "0" {
@@ -167,8 +167,8 @@ test "Strlen: zero" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-Spam-Status1";
-test_config :reload "spamtest";
+test_config_set "sieve_spamtest_status_header" "X-Spam-Status1";
+test_config_reload :extension "spamtest";
 
 test "Strlen: low" {
 	if spamtest :is "0" {
@@ -185,8 +185,8 @@ test "Strlen: low" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-Spam-Status2";
-test_config :reload "spamtest";
+test_config_set "sieve_spamtest_status_header" "X-Spam-Status2";
+test_config_reload :extension "spamtest";
 
 test "Strlen: high" {
 	if spamtest :is "0" {
@@ -199,8 +199,8 @@ test "Strlen: high" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-Spam-Status3";
-test_config :reload "spamtest";
+test_config_set "sieve_spamtest_status_header" "X-Spam-Status3";
+test_config_reload :extension "spamtest";
 
 test "Strlen: max" {
 	if spamtest :is "0" {
@@ -213,8 +213,8 @@ test "Strlen: max" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-Spam-Status4";
-test_config :reload "spamtest";
+test_config_set "sieve_spamtest_status_header" "X-Spam-Status4";
+test_config_reload :extension "spamtest";
 
 test "Strlen: past-max" {
 	if spamtest :is "0" {
@@ -241,13 +241,13 @@ Test!
 .
 ;
 
-test_config :set "sieve_spamtest_status_header" "X-Spam-Verdict";
-test_config :set "sieve_spamtest_status_type" "text";
-test_config :set "sieve_spamtest_text_value1" "Not Spam";
-test_config :set "sieve_spamtest_text_value10" "Spam";
-test_config :unset "sieve_spamtest_max_header";
-test_config :unset "sieve_spamtest_max_value";
-test_config :reload "spamtest";
+test_config_set "sieve_spamtest_status_header" "X-Spam-Verdict";
+test_config_set "sieve_spamtest_status_type" "text";
+test_config_set "sieve_spamtest_text_value1" "Not Spam";
+test_config_set "sieve_spamtest_text_value10" "Spam";
+test_config_unset "sieve_spamtest_max_header";
+test_config_unset "sieve_spamtest_max_value";
+test_config_reload :extension "spamtest";
 
 test "Text: Not Spam" {
 	if spamtest :is "0" {
@@ -260,8 +260,8 @@ test "Text: Not Spam" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-Spam-Verdict1";
-test_config :reload "spamtest";
+test_config_set "sieve_spamtest_status_header" "X-Spam-Verdict1";
+test_config_reload :extension "spamtest";
 
 test "Text: Spam" {
 	if spamtest :is "0" {

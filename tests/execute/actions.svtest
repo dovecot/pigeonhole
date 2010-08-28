@@ -11,8 +11,8 @@ Test.
 .
 ;
 
-test_mailbox :create "INBOX.VB";
-test_mailbox :create "INBOX.backup";
+test_mailbox_create "INBOX.VB";
+test_mailbox_create "INBOX.backup";
 
 test "Fileinto" {
 	if not test_script_compile "actions/fileinto.sieve" {
@@ -23,19 +23,19 @@ test "Fileinto" {
 		test_fail "script run failed";
 	}
 
-	if not test_result :count "eq" :comparator "i;ascii-numeric" "3" {
+	if not test_result_action :count "eq" :comparator "i;ascii-numeric" "3" {
 		test_fail "wrong number of actions in result";
 	} 
 
-	if not test_result :index 1 "store" {
+	if not test_result_action :index 1 "store" {
 		test_fail "first action is not 'store'";
 	} 
 
-	if not test_result :index 2 "store" {
+	if not test_result_action :index 2 "store" {
 		test_fail "second action is not 'store'";
 	} 
 
-	if not test_result :index 3 "keep" {
+	if not test_result_action :index 3 "keep" {
 		test_fail "third action is not 'keep'";
 	} 
 
@@ -53,23 +53,23 @@ test "Redirect" {
 		test_fail "execute failed";
 	}
 
-	if not test_result :count "eq" :comparator "i;ascii-numeric" "4" {
+	if not test_result_action :count "eq" :comparator "i;ascii-numeric" "4" {
 		test_fail "wrong number of actions in result";
 	} 
 
-	if not test_result :index 1 "redirect" {
+	if not test_result_action :index 1 "redirect" {
 		test_fail "first action is not 'redirect'";
 	} 
 
-	if not test_result :index 2 "keep" {
+	if not test_result_action :index 2 "keep" {
 		test_fail "second action is not 'keep'";
 	} 
 
-	if not test_result :index 3 "redirect" {
+	if not test_result_action :index 3 "redirect" {
 		test_fail "third action is not 'redirect'";
 	} 
 
-	if not test_result :index 4 "redirect" {
+	if not test_result_action :index 4 "redirect" {
 		test_fail "fourth action is not 'redirect'";
 	} 
 

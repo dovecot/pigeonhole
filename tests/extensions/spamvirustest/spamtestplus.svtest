@@ -24,10 +24,10 @@ Test!
 .
 ;
 
-test_config :set "sieve_spamtest_status_header" "X-SpamCheck";
-test_config :set "sieve_spamtest_max_value" "1";
-test_config :set "sieve_spamtest_status_type" "score";
-test_config :reload "spamtestplus";
+test_config_set "sieve_spamtest_status_header" "X-SpamCheck";
+test_config_set "sieve_spamtest_max_value" "1";
+test_config_set "sieve_spamtest_status_type" "score";
+test_config_reload :extension "spamtestplus";
 
 test "Value percent: .00" {
 	if not spamtest :percent :is "0" {
@@ -36,8 +36,8 @@ test "Value percent: .00" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-SpamCheck1";
-test_config :reload "spamtestplus";
+test_config_set "sieve_spamtest_status_header" "X-SpamCheck1";
+test_config_reload :extension "spamtestplus";
 
 test "Value percent: .01" {
 	if spamtest :percent :is "0" {
@@ -50,8 +50,8 @@ test "Value percent: .01" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-SpamCheck2";
-test_config :reload "spamtestplus";
+test_config_set "sieve_spamtest_status_header" "X-SpamCheck2";
+test_config_reload :extension "spamtestplus";
 
 test "Value percent: .13" {
 	if spamtest :percent :is "0" {
@@ -64,8 +64,8 @@ test "Value percent: .13" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-SpamCheck3";
-test_config :reload "spamtestplus";
+test_config_set "sieve_spamtest_status_header" "X-SpamCheck3";
+test_config_reload :extension "spamtestplus";
 
 test "Value percent: .29" {
 	if spamtest :percent :is "0" {
@@ -78,8 +78,8 @@ test "Value percent: .29" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-SpamCheck4";
-test_config :reload "spamtestplus";
+test_config_set "sieve_spamtest_status_header" "X-SpamCheck4";
+test_config_reload :extension "spamtestplus";
 
 test "Value percent: .51" {
 	if spamtest :percent :is "0" {
@@ -92,8 +92,8 @@ test "Value percent: .51" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-SpamCheck5";
-test_config :reload "spamtestplus";
+test_config_set "sieve_spamtest_status_header" "X-SpamCheck5";
+test_config_reload :extension "spamtestplus";
 
 test "Value percent: .73" {
 	if spamtest :percent :is "0" {
@@ -106,8 +106,8 @@ test "Value percent: .73" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-SpamCheck6";
-test_config :reload "spamtestplus";
+test_config_set "sieve_spamtest_status_header" "X-SpamCheck6";
+test_config_reload :extension "spamtestplus";
 
 test "Value percent: .89" {
 	if spamtest :percent :is "0" {
@@ -120,8 +120,8 @@ test "Value percent: .89" {
 	}
 }
 
-test_config :set "sieve_spamtest_status_header" "X-SpamCheck7";
-test_config :reload "spamtestplus";
+test_config_set "sieve_spamtest_status_header" "X-SpamCheck7";
+test_config_reload :extension "spamtestplus";
 
 test "Value percent: 1.01" {
 	if spamtest :percent :is "0" {

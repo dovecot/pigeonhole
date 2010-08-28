@@ -25,14 +25,14 @@ Test!
 .
 ;
 
-test_config :set "sieve_virustest_status_header" "X-VirusCheck";
-test_config :set "sieve_virustest_status_type" "text";
-test_config :set "sieve_virustest_text_value1" "Clean";
-test_config :set "sieve_virustest_text_value2" "Presumed Clean";
-test_config :set "sieve_virustest_text_value3" "Not sure";
-test_config :set "sieve_virustest_text_value4" "Almost Certain";
-test_config :set "sieve_virustest_text_value5" "Definitely";
-test_config :reload "virustest";
+test_config_set "sieve_virustest_status_header" "X-VirusCheck";
+test_config_set "sieve_virustest_status_type" "text";
+test_config_set "sieve_virustest_text_value1" "Clean";
+test_config_set "sieve_virustest_text_value2" "Presumed Clean";
+test_config_set "sieve_virustest_text_value3" "Not sure";
+test_config_set "sieve_virustest_text_value4" "Almost Certain";
+test_config_set "sieve_virustest_text_value5" "Definitely";
+test_config_reload :extension "virustest";
 
 test "Text: 5" {
 	if virustest :is "0" {
@@ -45,8 +45,8 @@ test "Text: 5" {
 	}
 }
 
-test_config :set "sieve_virustest_status_header" "X-VirusCheck1";
-test_config :reload "virustest";
+test_config_set "sieve_virustest_status_header" "X-VirusCheck1";
+test_config_reload :extension "virustest";
 
 test "Text: 4" {
 	if virustest :is "0" {
@@ -59,8 +59,8 @@ test "Text: 4" {
 	}
 }
 
-test_config :set "sieve_virustest_status_header" "X-VirusCheck2";
-test_config :reload "virustest";
+test_config_set "sieve_virustest_status_header" "X-VirusCheck2";
+test_config_reload :extension "virustest";
 
 test "Text: 3" {
 	if virustest :is "0" {
@@ -73,8 +73,8 @@ test "Text: 3" {
 	}
 }
 
-test_config :set "sieve_virustest_status_header" "X-VirusCheck3";
-test_config :reload "virustest";
+test_config_set "sieve_virustest_status_header" "X-VirusCheck3";
+test_config_reload :extension "virustest";
 
 test "Text: 2" {
 	if virustest :is "0" {
@@ -87,8 +87,8 @@ test "Text: 2" {
 	}
 }
 
-test_config :set "sieve_virustest_status_header" "X-VirusCheck4";
-test_config :reload "virustest";
+test_config_set "sieve_virustest_status_header" "X-VirusCheck4";
+test_config_reload :extension "virustest";
 
 test "Text: 1" {
 	if virustest :is "0" {
@@ -101,11 +101,11 @@ test "Text: 1" {
 	}
 }
 
-test_config :set "sieve_virustest_status_header" "X-Virus-Scan:Found to be (.+)\.";
-test_config :set "sieve_virustest_status_type" "text";
-test_config :set "sieve_virustest_text_value1" "clean";
-test_config :set "sieve_virustest_text_value5" "infected";
-test_config :reload "virustest";
+test_config_set "sieve_virustest_status_header" "X-Virus-Scan:Found to be (.+)\.";
+test_config_set "sieve_virustest_status_type" "text";
+test_config_set "sieve_virustest_text_value1" "clean";
+test_config_set "sieve_virustest_text_value5" "infected";
+test_config_reload :extension "virustest";
 
 test "Text: regex: 1" {
 	if virustest :is "0" {
@@ -118,8 +118,8 @@ test "Text: regex: 1" {
     }
 }
 
-test_config :set "sieve_virustest_status_header" "X-Virus-Scan1:Found to be (.+)\.";
-test_config :reload "virustest";
+test_config_set "sieve_virustest_status_header" "X-Virus-Scan1:Found to be (.+)\.";
+test_config_reload :extension "virustest";
 
 test "Text: regex: 5" {
 	if virustest :is "0" {
@@ -132,8 +132,8 @@ test "Text: regex: 5" {
     }
 }
 
-test_config :set "sieve_virustest_status_header" "X-Virus-Scan2:Found to be (.+)\.";
-test_config :reload "virustest";
+test_config_set "sieve_virustest_status_header" "X-Virus-Scan2:Found to be (.+)\.";
+test_config_reload :extension "virustest";
 
 test "Text: regex: 0" {
 	if not virustest :is "0" {

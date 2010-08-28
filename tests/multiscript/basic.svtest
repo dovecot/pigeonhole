@@ -29,15 +29,15 @@ test "Append" {
 		test_fail "failed to compile and run third script";
 	}
 
-	if not test_result :index 1 "store" {
+	if not test_result_action :index 1 "store" {
 		test_fail "first action is not 'store'";
 	}
 
-	if not test_result :index 2 "vacation" {
+	if not test_result_action :index 2 "vacation" {
 		test_fail "second action is not 'vacation'";
 	}
 
-	if not test_result :index 3 "notify" {
+	if not test_result_action :index 3 "notify" {
 		test_fail "third action is not 'notify'";
 	}
 
@@ -77,15 +77,15 @@ test "Sequential Execute" {
 		test_fail "result execute failed after third script";
 	}
 
-	if not test_result :index 1 "store" {
+	if not test_result_action :index 1 "store" {
 		test_fail "first action is not 'store'";
 	}
 
-	if not test_result :index 2 "vacation" {
+	if not test_result_action :index 2 "vacation" {
 		test_fail "second action is not 'vacation'";
 	}
 
-	if not test_result :index 3 "notify" {
+	if not test_result_action :index 3 "notify" {
 		test_fail "third action is not 'notify'";
 	}
 }

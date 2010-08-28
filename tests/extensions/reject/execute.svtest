@@ -20,11 +20,11 @@ test "Execute" {
 		test_fail "script run failed";
 	}
 
-	if not test_result :count "eq" :comparator "i;ascii-numeric" "1" {
+	if not test_result_action :count "eq" :comparator "i;ascii-numeric" "1" {
 		test_fail "invalid number of actions in result";
 	}
 
-	if not test_result :index 1 "reject" {
+	if not test_result_action :index 1 "reject" {
 		test_fail "reject action missing from result";
 	}
 

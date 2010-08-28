@@ -10,15 +10,15 @@ Frop.
 ;
 
 test "Actions Fileinto" {
-	test_mailbox :create "aaaa";
-	test_mailbox :create "bbbb";
+	test_mailbox_create "aaaa";
+	test_mailbox_create "bbbb";
 	
 	if not test_script_compile "execute/actions-fileinto.sieve" {
 		test_fail "failed to compile sieve script";
 	}
 
-	test_binary :save "actions-fileinto";
-	test_binary :load "actions-fileinto";
+	test_binary_save "actions-fileinto";
+	test_binary_load "actions-fileinto";
 
 	if not test_script_run {
 		test_fail "failed to execute sieve script";
@@ -34,7 +34,7 @@ test "Actions Fileinto" {
 		test_fail "fileinto \"aaaa\" not executed.";
 	}	
 
-	test_message :folder "aaaa" 0;
+	test_message :folder "bbbb" 0;
 
 	if not header "subject" "Frop!" {
 		test_fail "fileinto \"bbbb\" not executed.";

@@ -8,8 +8,8 @@ test "MailboxExists - None exist" {
 	}
 }
 
-test_mailbox :create "frop";
-test_mailbox :create "friep";
+test_mailbox_create "frop";
+test_mailbox_create "friep";
 
 test "MailboxExists - Not all exist" {
 	if mailboxexists ["frop", "friep", "frml"] {
@@ -17,7 +17,7 @@ test "MailboxExists - Not all exist" {
 	}
 }
 
-test_mailbox :create "frml";
+test_mailbox_create "frml";
 
 test "MailboxExists - One exists" {
 	if not mailboxexists ["frop"] {

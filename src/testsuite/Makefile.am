@@ -20,8 +20,7 @@ commands = \
 	cmd-test-fail.c \
 	cmd-test-config.c \
 	cmd-test-set.c \
-	cmd-test-result-reset.c \
-	cmd-test-result-print.c \
+	cmd-test-result.c \
 	cmd-test-message.c \
 	cmd-test-mailbox.c \
 	cmd-test-binary.c
@@ -31,7 +30,7 @@ tests = \
 	tst-test-script-run.c \
 	tst-test-multiscript.c \
 	tst-test-error.c \
-	tst-test-result.c \
+	tst-test-result-action.c \
 	tst-test-result-execute.c
 
 testsuite_SOURCES = \

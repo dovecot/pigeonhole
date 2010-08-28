@@ -15,25 +15,42 @@
 #include "testsuite-script.h"
 
 /*
- * Test_binary command
- *
- * Syntax:   
- *   test_binary ( :load / :save ) <mailbox: string>
+ * Commands
  */
 
-static bool cmd_test_binary_registered
-	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-		struct sieve_command_registration *cmd_reg);
 static bool cmd_test_binary_validate
 	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_test_binary_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-const struct sieve_command_def cmd_test_binary = { 
-	"test_binary", 
+/* Test_binary_load command
+ *
+ * Syntax:   
+ *   test_binary_load <binary-name: string>
+ */
+
+const struct sieve_command_def cmd_test_binary_load = { 
+	"test_binary_load", 
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
-	cmd_test_binary_registered, 
+	NULL, 
+	NULL,
+	cmd_test_binary_validate, 
+	cmd_test_binary_generate, 
+	NULL 
+};
+
+/* Test_binary_save command
+ *
+ * Syntax:   
+ *   test_binary_save <binary-name: string>
+ */
+
+const struct sieve_command_def cmd_test_binary_save = { 
+	"test_binary_save", 
+	SCT_COMMAND, 
+	1, 0, FALSE, FALSE,
+	NULL, 
 	NULL,
 	cmd_test_binary_validate, 
 	cmd_test_binary_generate, 
@@ -69,88 +86,6 @@ const struct sieve_operation_def test_binary_save_operation = {
 	cmd_test_binary_operation_execute 
 };
 
-/*
- * Compiler context data
- */
- 
-enum test_binary_operation {
-	BINARY_OP_LOAD, 
-	BINARY_OP_SAVE,
-	BINARY_OP_LAST
-};
-
-const struct sieve_operation_def *test_binary_operations[] = {
-	&test_binary_load_operation,
-	&test_binary_save_operation
-};
-
-struct cmd_test_binary_context_data {
-	enum test_binary_operation binary_op;
-	const char *folder;
-};
-
-/* 
- * Command tags 
- */
- 
-static bool cmd_test_binary_validate_tag
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-		struct sieve_command *cmd);
-
-static const struct sieve_argument_def test_binary_load_tag = { 
-	"load", 
-	NULL, 
-	cmd_test_binary_validate_tag,
-	NULL, NULL, NULL,
-};
-
-static const struct sieve_argument_def test_binary_save_tag = { 
-	"save", 
-	NULL,
-	cmd_test_binary_validate_tag,
-	NULL, NULL, NULL, 
-};
-
-static bool cmd_test_binary_registered
-(struct sieve_validator *valdtr, const struct sieve_extension *ext, 
-	struct sieve_command_registration *cmd_reg) 
-{
-	/* Register our tags */
-	sieve_validator_register_tag(valdtr, cmd_reg, ext, &test_binary_load_tag, 0); 	
-	sieve_validator_register_tag(valdtr, cmd_reg, ext, &test_binary_save_tag, 0); 	
-
-	return TRUE;
-}
-
-static bool cmd_test_binary_validate_tag
-(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-	struct sieve_command *cmd)
-{
-	struct cmd_test_binary_context_data *ctx_data = 
-		(struct cmd_test_binary_context_data *) cmd->data;	
-	
-	if ( ctx_data != NULL ) {
-		sieve_argument_validate_error
-			(valdtr, *arg, "exactly one of the ':load' or ':save' tags must be "
-				"specified for the test_binary command, but more were found");
-		return NULL;		
-	}
-	
-	ctx_data = p_new
-		(sieve_command_pool(cmd), struct cmd_test_binary_context_data, 1);
-	cmd->data = ctx_data;
-	
-	if ( sieve_argument_is(*arg, test_binary_load_tag) ) 
-		ctx_data->binary_op = BINARY_OP_LOAD;
-	else
-		ctx_data->binary_op = BINARY_OP_SAVE;
-
-	/* Delete this tag */
-	*arg = sieve_ast_arguments_detach(*arg, 1);
-
-	return TRUE;
-}
-
 /* 
  * Validation 
  */
@@ -159,14 +94,7 @@ static bool cmd_test_binary_validate
 (struct sieve_validator *valdtr, struct sieve_command *cmd) 
 {	
 	struct sieve_ast_argument *arg = cmd->first_positional;
-	
-	if ( cmd->data == NULL ) {
-		sieve_command_validate_error(valdtr, cmd, 
-			"the test_binary command requires either the :load or the :save tag "
-			"to be specified");
-		return FALSE;		
-	}
-		
+			
 	if ( !sieve_validate_positional_argument
 		(valdtr, cmd, arg, "binary-name", 1, SAAT_STRING) ) {
 		return FALSE;
@@ -182,15 +110,14 @@ static bool cmd_test_binary_validate
 static bool cmd_test_binary_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
-	struct cmd_test_binary_context_data *ctx_data =
-		(struct cmd_test_binary_context_data *) cmd->data; 
-
-	i_assert( ctx_data->binary_op < BINARY_OP_LAST );
-	
 	/* Emit operation */
-	sieve_operation_emit(cgenv->sblock, cmd->ext, 
-		test_binary_operations[ctx_data->binary_op]);
-	  	
+	if ( sieve_command_is(cmd, cmd_test_binary_load) )
+		sieve_operation_emit(cgenv->sblock, cmd->ext, &test_binary_load_operation);
+	else if ( sieve_command_is(cmd, cmd_test_binary_save) )
+		sieve_operation_emit(cgenv->sblock, cmd->ext, &test_binary_save_operation);
+	else
+		i_unreached();
+		  	
  	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;
@@ -211,7 +138,6 @@ static bool cmd_test_binary_operation_dump
 	
 	return sieve_opr_string_dump(denv, address, "binary-name");
 }
-
 
 /*
  * Intepretation
@@ -242,7 +168,7 @@ static int cmd_test_binary_operation_execute
 		struct sieve_binary *sbin = testsuite_binary_load(str_c(binary_name));
 
 		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-			sieve_runtime_trace(renv, 0, "testsuite: test_binary command");
+			sieve_runtime_trace(renv, 0, "testsuite: test_binary_load command");
 			sieve_runtime_trace_descend(renv);
 			sieve_runtime_trace(renv, 0, "load binary `%s'", str_c(binary_name));
 		}
@@ -260,7 +186,7 @@ static int cmd_test_binary_operation_execute
 		struct sieve_binary *sbin = testsuite_script_get_binary();
 
 		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-			sieve_runtime_trace(renv, 0, "testsuite: test_binary command");
+			sieve_runtime_trace(renv, 0, "testsuite: test_binary_save command");
 			sieve_runtime_trace_descend(renv);
 			sieve_runtime_trace(renv, 0, "save binary `%s'", str_c(binary_name));
 		}

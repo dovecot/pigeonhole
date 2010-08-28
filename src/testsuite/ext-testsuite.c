@@ -63,7 +63,7 @@ const struct sieve_operation_def *testsuite_operations[] = {
 	&test_script_run_operation,
 	&test_multiscript_operation,
 	&test_error_operation,
-	&test_result_operation,
+	&test_result_action_operation,
 	&test_result_execute_operation,
 	&test_result_reset_operation,
 	&test_result_print_operation,
@@ -118,20 +118,24 @@ static bool ext_testsuite_validator_load
 {
 	sieve_validator_register_command(valdtr, ext, &cmd_test);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_fail);
-	sieve_validator_register_command(valdtr, ext, &cmd_test_config);
+	sieve_validator_register_command(valdtr, ext, &cmd_test_config_set);
+	sieve_validator_register_command(valdtr, ext, &cmd_test_config_unset);
+	sieve_validator_register_command(valdtr, ext, &cmd_test_config_reload);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_set);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_result_print);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_result_reset);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_message);
-	sieve_validator_register_command(valdtr, ext, &cmd_test_mailbox);
-	sieve_validator_register_command(valdtr, ext, &cmd_test_binary);
+	sieve_validator_register_command(valdtr, ext, &cmd_test_mailbox_create);
+	sieve_validator_register_command(valdtr, ext, &cmd_test_mailbox_delete);
+	sieve_validator_register_command(valdtr, ext, &cmd_test_binary_load);
+	sieve_validator_register_command(valdtr, ext, &cmd_test_binary_save);
 
 	sieve_validator_register_command(valdtr, ext, &tst_test_script_compile);
 	sieve_validator_register_command(valdtr, ext, &tst_test_script_run);
 	sieve_validator_register_command(valdtr, ext, &tst_test_multiscript);
 	sieve_validator_register_command(valdtr, ext, &tst_test_error);
-	sieve_validator_register_command(valdtr, ext, &tst_test_result);	
-	sieve_validator_register_command(valdtr, ext, &tst_test_result_execute);	
+	sieve_validator_register_command(valdtr, ext, &tst_test_result_action);
+	sieve_validator_register_command(valdtr, ext, &tst_test_result_execute);
 
 /*	sieve_validator_argument_override(valdtr, SAT_VAR_STRING, ext,
 		&testsuite_string_argument);*/

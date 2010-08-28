@@ -11,15 +11,15 @@ test "Action" {
 		test_fail "script run failed";
 	}
 
-	if not test_result :count "eq" :comparator "i;ascii-numeric" "2" {
+	if not test_result_action :count "eq" :comparator "i;ascii-numeric" "2" {
 		test_fail "invalid number of actions in result";
 	}
 
-	if not test_result :index 1 "vacation" {
+	if not test_result_action :index 1 "vacation" {
 		test_fail "vacation action is not present as first item in result";
 	}
 	
-	if not test_result :index 2 "keep" {
+	if not test_result_action :index 2 "keep" {
 		test_fail "keep action is missing in result";
 	}
 

@@ -50,13 +50,18 @@ bool testsuite_generator_context_initialize
 
 extern const struct sieve_command_def cmd_test;
 extern const struct sieve_command_def cmd_test_fail;
-extern const struct sieve_command_def cmd_test_config;
+extern const struct sieve_command_def cmd_test_config_set;
+extern const struct sieve_command_def cmd_test_config_unset;
+extern const struct sieve_command_def cmd_test_config_reload;
 extern const struct sieve_command_def cmd_test_set;
 extern const struct sieve_command_def cmd_test_result_reset;
 extern const struct sieve_command_def cmd_test_result_print;
 extern const struct sieve_command_def cmd_test_message;
 extern const struct sieve_command_def cmd_test_mailbox;
-extern const struct sieve_command_def cmd_test_binary;
+extern const struct sieve_command_def cmd_test_mailbox_create;
+extern const struct sieve_command_def cmd_test_mailbox_delete;
+extern const struct sieve_command_def cmd_test_binary_load;
+extern const struct sieve_command_def cmd_test_binary_save;
 
 /*
  * Tests
@@ -66,7 +71,7 @@ extern const struct sieve_command_def tst_test_script_compile;
 extern const struct sieve_command_def tst_test_script_run;
 extern const struct sieve_command_def tst_test_multiscript;
 extern const struct sieve_command_def tst_test_error;
-extern const struct sieve_command_def tst_test_result;
+extern const struct sieve_command_def tst_test_result_action;
 extern const struct sieve_command_def tst_test_result_execute;
 
 /* 
@@ -85,7 +90,7 @@ enum testsuite_operation_code {
 	TESTSUITE_OPERATION_TEST_SCRIPT_RUN,
 	TESTSUITE_OPERATION_TEST_MULTISCRIPT,
 	TESTSUITE_OPERATION_TEST_ERROR,
-	TESTSUITE_OPERATION_TEST_RESULT,
+	TESTSUITE_OPERATION_TEST_RESULT_ACTION,
 	TESTSUITE_OPERATION_TEST_RESULT_EXECUTE,
 	TESTSUITE_OPERATION_TEST_RESULT_RESET,
 	TESTSUITE_OPERATION_TEST_RESULT_PRINT,
@@ -108,7 +113,7 @@ extern const struct sieve_operation_def test_script_compile_operation;
 extern const struct sieve_operation_def test_script_run_operation;
 extern const struct sieve_operation_def test_multiscript_operation;
 extern const struct sieve_operation_def test_error_operation;
-extern const struct sieve_operation_def test_result_operation;
+extern const struct sieve_operation_def test_result_action_operation;
 extern const struct sieve_operation_def test_result_execute_operation;
 extern const struct sieve_operation_def test_result_reset_operation;
 extern const struct sieve_operation_def test_result_print_operation;

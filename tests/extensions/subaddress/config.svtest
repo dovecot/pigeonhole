@@ -25,8 +25,8 @@ test "Delimiter default" {
 }
 
 test "Delimiter \"-\"" {
-	test_config :set "recipient_delimiter" "-";
-	test_config :reload "subaddress";
+	test_config_set "recipient_delimiter" "-";
+	test_config_reload :extension "subaddress";
 
     if not address :is :user "to" "test" {
         test_fail "wrong user part extracted";
@@ -38,8 +38,8 @@ test "Delimiter \"-\"" {
 }
 
 test "Delimiter \"++\"" {
-	test_config :set "recipient_delimiter" "++";
-	test_config :reload "subaddress";
+	test_config_set "recipient_delimiter" "++";
+	test_config_reload :extension "subaddress";
 
     if not envelope :is :user "to" "friep" {
         test_fail "wrong user part extracted";
@@ -51,8 +51,8 @@ test "Delimiter \"++\"" {
 }
 
 test "Delimiter \"--\"" {
-	test_config :set "recipient_delimiter" "--";
-	test_config :reload "subaddress";
+	test_config_set "recipient_delimiter" "--";
+	test_config_reload :extension "subaddress";
 
     if not envelope :is :user "from" "list" {
         test_fail "wrong user part extracted";
@@ -64,8 +64,8 @@ test "Delimiter \"--\"" {
 }
 
 test "Delimiter \"+-\"" {
-	test_config :set "recipient_delimiter" "+-";
-	test_config :reload "subaddress";
+	test_config_set "recipient_delimiter" "+-";
+	test_config_reload :extension "subaddress";
 
     if envelope :is :user "from" "list" {
         test_fail "user part extracted";

@@ -89,7 +89,7 @@ test "Duplicate recipients" {
 		test_fail "script execute failed";
 	}
 
-	if test_result :count "ne" "2" {
+	if test_result_action :count "ne" "2" {
 		test_fail "second notify action was discarded entirely";
 	}
 

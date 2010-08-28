@@ -14,26 +14,41 @@
 #include "testsuite-mailstore.h"
 
 /*
- * Test_mailbox command
- *
- * Syntax:   
- *   test_mailbox ( :create / :delete ) <mailbox: string>
+ * Commands
  */
 
-static bool cmd_test_mailbox_registered
-	(struct sieve_validator *valdtr, const struct sieve_extension *ext, 
-		struct sieve_command_registration *cmd_reg);
 static bool cmd_test_mailbox_validate
 	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 static bool cmd_test_mailbox_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-const struct sieve_command_def cmd_test_mailbox = { 
-	"test_mailbox", 
+/* Test_mailbox_create command
+ *
+ * Syntax:   
+ *   test_mailbox_create <mailbox: string>
+ */
+
+const struct sieve_command_def cmd_test_mailbox_create = { 
+	"test_mailbox_create", 
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
-	cmd_test_mailbox_registered, 
-	NULL,
+	NULL, NULL,
+	cmd_test_mailbox_validate, 
+	cmd_test_mailbox_generate, 
+	NULL 
+};
+
+/* Test_mailbox_delete command
+ *
+ * Syntax:   
+ *   test_mailbox_create <mailbox: string>
+ */
+
+const struct sieve_command_def cmd_test_mailbox_delete = { 
+	"test_mailbox_delete", 
+	SCT_COMMAND, 
+	1, 0, FALSE, FALSE,
+	NULL, NULL,
 	cmd_test_mailbox_validate, 
 	cmd_test_mailbox_generate, 
 	NULL 
@@ -68,90 +83,6 @@ const struct sieve_operation_def test_mailbox_delete_operation = {
 	cmd_test_mailbox_operation_execute 
 };
 
-/*
- * Compiler context data
- */
- 
-enum test_mailbox_operation {
-	MAILBOX_OP_CREATE, 
-	MAILBOX_OP_DELETE,
-	MAILBOX_OP_LAST
-};
-
-const struct sieve_operation_def *test_mailbox_operations[] = {
-	&test_mailbox_create_operation,
-	&test_mailbox_delete_operation
-};
-
-struct cmd_test_mailbox_context_data {
-	enum test_mailbox_operation mailbox_op;
-	const char *folder;
-};
-
-/* 
- * Command tags 
- */
- 
-static bool cmd_test_mailbox_validate_tag
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-		struct sieve_command *cmd);
-
-static const struct sieve_argument_def test_mailbox_create_tag = { 
-	"create", 
-	NULL,
-	cmd_test_mailbox_validate_tag,
-	NULL, NULL, NULL 
-};
-
-static const struct sieve_argument_def test_mailbox_delete_tag = { 
-	"delete", 
-	NULL,
-	cmd_test_mailbox_validate_tag,
-	NULL, NULL, NULL 
-};
-
-static bool cmd_test_mailbox_registered
-(struct sieve_validator *valdtr, const struct sieve_extension *ext,
-	struct sieve_command_registration *cmd_reg) 
-{
-	/* Register our tags */
-	sieve_validator_register_tag
-		(valdtr, cmd_reg, ext, &test_mailbox_create_tag, 0); 	
-	sieve_validator_register_tag
-		(valdtr, cmd_reg, ext, &test_mailbox_delete_tag, 0); 	
-
-	return TRUE;
-}
-
-static bool cmd_test_mailbox_validate_tag
-(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
-	struct sieve_command *cmd)
-{
-	struct cmd_test_mailbox_context_data *ctx_data = 
-		(struct cmd_test_mailbox_context_data *) cmd->data;	
-	
-	if ( ctx_data != NULL ) {
-		sieve_argument_validate_error
-			(valdtr, *arg, "exactly one of the ':create' or ':delete' tags must be "
-				"specified for the test_mailbox command, but more were found");
-		return NULL;		
-	}
-	
-	ctx_data = p_new
-		(sieve_command_pool(cmd), struct cmd_test_mailbox_context_data, 1);
-	cmd->data = ctx_data;
-	
-	if ( sieve_argument_is(*arg, test_mailbox_create_tag) ) 
-		ctx_data->mailbox_op = MAILBOX_OP_CREATE;
-	else
-		ctx_data->mailbox_op = MAILBOX_OP_DELETE;
-
-	/* Delete this tag */
-	*arg = sieve_ast_arguments_detach(*arg, 1);
-
-	return TRUE;
-}
-
 /* 
  * Validation 
  */
@@ -160,14 +91,7 @@ static bool cmd_test_mailbox_validate
 (struct sieve_validator *valdtr, struct sieve_command *cmd) 
 {
 	struct sieve_ast_argument *arg = cmd->first_positional;
-	
-	if ( cmd->data == NULL ) {
-		sieve_command_validate_error(valdtr, cmd, 
-			"the test_mailbox command requires either the :create or the :delete tag "
-			"to be specified");
-		return FALSE;		
-	}
-		
+			
 	if ( !sieve_validate_positional_argument
 		(valdtr, cmd, arg, "mailbox", 1, SAAT_STRING) ) {
 		return FALSE;
@@ -183,14 +107,15 @@ static bool cmd_test_mailbox_validate
 static bool cmd_test_mailbox_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
-	struct cmd_test_mailbox_context_data *ctx_data =
-		(struct cmd_test_mailbox_context_data *) cmd->data; 
-
-	i_assert( ctx_data->mailbox_op < MAILBOX_OP_LAST );
-	
 	/* Emit operation */
-	sieve_operation_emit(cgenv->sblock, cmd->ext,
-		test_mailbox_operations[ctx_data->mailbox_op]);
+	if ( sieve_command_is(cmd, cmd_test_mailbox_create) )	
+		sieve_operation_emit
+			(cgenv->sblock, cmd->ext, &test_mailbox_create_operation);
+	else if ( sieve_command_is(cmd, cmd_test_mailbox_delete) )	
+		sieve_operation_emit
+			(cgenv->sblock, cmd->ext, &test_mailbox_delete_operation);
+	else
+		i_unreached();
 	  	
  	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
@@ -240,12 +165,21 @@ static int cmd_test_mailbox_operation_execute
 		
 	if ( sieve_operation_is(oprtn, test_mailbox_create_operation) ) {
 		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-			sieve_runtime_trace(renv, 0, "testsuite/test_mailbox command");
+			sieve_runtime_trace(renv, 0, "testsuite/test_mailbox_create command");
 			sieve_runtime_trace_descend(renv);
 			sieve_runtime_trace(renv, 0, "create mailbox `%s'", str_c(mailbox));
 		}
 
 		testsuite_mailstore_mailbox_create(renv, str_c(mailbox));
+	} else {
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+			sieve_runtime_trace(renv, 0, "testsuite/test_mailbox_delete command");
+			sieve_runtime_trace_descend(renv);
+			sieve_runtime_trace(renv, 0, "delete mailbox `%s'", str_c(mailbox));
+		}
+		
+		/* FIXME: implement */
+		testsuite_test_failf("test_mailbox_delete: NOT IMPLEMENTED");
 	}
 
 	return SIEVE_EXEC_OK;
