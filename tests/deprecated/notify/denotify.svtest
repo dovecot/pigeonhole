@@ -16,17 +16,17 @@ Klutsefluts.
 ;
 
 test "Denotify All" {
-    notify :options "timo@example.com";
+	notify :options "timo@example.com";
 	notify :options "stephan@dovecot.example.net";
 	notify :options "postmaster@frop.example.org";
 	denotify;
 
-    if not test_result_execute {
-        test_fail "failed to execute notify";
-    }
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
 
-    if test_message :smtp 0 {
-        test_fail "no notifications should have been sent";
+	if test_message :smtp 0 {
+		test_fail "no notifications should have been sent";
 	}
 }
 
@@ -47,7 +47,7 @@ Klutsefluts.
 
 test "Denotify ID First" {
 	/* #1 */
-    notify :options "timo@example.com" :id "aap";
+	notify :options "timo@example.com" :id "aap";
 
 	/* #2 */
 	notify :options "stephan@dovecot.example.net" :id "noot";
@@ -57,28 +57,28 @@ test "Denotify ID First" {
 
 	denotify :is "aap";
 
-    if not test_result_execute {
-        test_fail "failed to execute notify";
-    }
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
 
-    if not test_message :smtp 0 {
-        test_fail "two notifications should have been sent (#2 missing)";
+	if not test_message :smtp 0 {
+		test_fail "two notifications should have been sent (#2 missing)";
 	}
 
 	if not envelope "to" "stephan@dovecot.example.net" {
 		test_fail "message #2 unexpectedly missing from output";
 	}
 
-    if not test_message :smtp 1 {
-        test_fail "two notifications should have been sent (#3 missing)";
+	if not test_message :smtp 1 {
+		test_fail "two notifications should have been sent (#3 missing)";
 	}
 
 	if not envelope "to" "postmaster@frop.example.org" {
 		test_fail "message #3 unexpectedly missing from output";
 	}
 
-    if test_message :smtp 2 {
-        test_fail "too many notifications sent";
+	if test_message :smtp 2 {
+		test_fail "too many notifications sent";
 	}
 }
 
@@ -99,7 +99,7 @@ Klutsefluts.
 
 test "Denotify ID Middle" {
 	/* #1 */
-    notify :options "timo@example.com" :id "aap";
+	notify :options "timo@example.com" :id "aap";
 
 	/* #2 */
 	notify :options "stephan@dovecot.example.net" :id "noot";
@@ -109,28 +109,28 @@ test "Denotify ID Middle" {
 
 	denotify :is "noot";
 
-    if not test_result_execute {
-        test_fail "failed to execute notify";
-    }
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
 
-    if not test_message :smtp 0 {
-        test_fail "two notifications should have been sent (#1 missing)";
+	if not test_message :smtp 0 {
+		test_fail "two notifications should have been sent (#1 missing)";
 	}
 
 	if not envelope "to" "timo@example.com" {
 		test_fail "message #1 unexpectedly missing from output";
 	}
 
-    if not test_message :smtp 1 {
-        test_fail "two notifications should have been sent (#3 missing)";
+	if not test_message :smtp 1 {
+		test_fail "two notifications should have been sent (#3 missing)";
 	}
 
 	if not envelope "to" "postmaster@frop.example.org" {
 		test_fail "message #3 unexpectedly missing from output";
 	}
 
-    if test_message :smtp 2 {
-        test_fail "too many notifications sent";
+	if test_message :smtp 2 {
+		test_fail "too many notifications sent";
 	}
 }
 
@@ -151,7 +151,7 @@ Klutsefluts.
 
 test "Denotify ID Last" {
 	/* #1 */
-    notify :options "timo@example.com" :id "aap";
+	notify :options "timo@example.com" :id "aap";
 
 	/* #2 */
 	notify :options "stephan@dovecot.example.net" :id "noot";
@@ -161,28 +161,28 @@ test "Denotify ID Last" {
 
 	denotify :is "mies";
 
-    if not test_result_execute {
-        test_fail "failed to execute notify";
-    }
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
 
-    if not test_message :smtp 0 {
-        test_fail "two notifications should have been sent (#1 missing)";
+	if not test_message :smtp 0 {
+		test_fail "two notifications should have been sent (#1 missing)";
 	}
 
 	if not envelope "to" "timo@example.com" {
 		test_fail "message #1 unexpectedly missing from output";
 	}
 
-    if not test_message :smtp 1 {
-        test_fail "two notifications should have been sent (#2 missing)";
+	if not test_message :smtp 1 {
+		test_fail "two notifications should have been sent (#2 missing)";
 	}
 
 	if not envelope "to" "stephan@dovecot.example.net" {
 		test_fail "message #2 unexpectedly missing from output";
 	}
 
-    if test_message :smtp 2 {
-        test_fail "too many notifications sent";
+	if test_message :smtp 2 {
+		test_fail "too many notifications sent";
 	}
 }
 
@@ -204,7 +204,7 @@ Klutsefluts.
 
 test "Denotify Matching" {
 	/* #1 */
-    notify :options "timo@example.com" :id "frop";
+	notify :options "timo@example.com" :id "frop";
 
 	/* #2 */
 	notify :options "stephan@dovecot.example.net" :id "noot";
@@ -214,20 +214,20 @@ test "Denotify Matching" {
 
 	denotify :matches "fr*";
 
-    if not test_result_execute {
-        test_fail "failed to execute notify";
-    }
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
 
-    if not test_message :smtp 0 {
-        test_fail "one notification should have been sent";
+	if not test_message :smtp 0 {
+		test_fail "one notification should have been sent";
 	}
 
 	if not envelope "to" "stephan@dovecot.example.net" {
 		test_fail "message #2 unexpectedly missing from output";
 	}
 
-    if test_message :smtp 1 {
-        test_fail "too many notifications sent";
+	if test_message :smtp 1 {
+		test_fail "too many notifications sent";
 	}
 }
 
@@ -249,7 +249,7 @@ Klutsefluts.
 
 test "Denotify Matching Importance" {
 	/* #1 */
-    notify :options "timo@example.com" :id "frop" :low;
+	notify :options "timo@example.com" :id "frop" :low;
 
 	/* #2 */
 	notify :options "stephan@dovecot.example.net" :id "frml" :high;
@@ -259,20 +259,20 @@ test "Denotify Matching Importance" {
 
 	denotify :matches "fr*" :low;
 
-    if not test_result_execute {
-        test_fail "failed to execute notify";
-    }
+	if not test_result_execute {
+		test_fail "failed to execute notify";
+	}
 
-    if not test_message :smtp 0 {
-        test_fail "one notification should have been sent";
+	if not test_message :smtp 0 {
+		test_fail "one notification should have been sent";
 	}
 
 	if not envelope "to" "stephan@dovecot.example.net" {
 		test_fail "message #2 unexpectedly missing from output";
 	}
 
-    if test_message :smtp 1 {
-        test_fail "too many notifications sent";
+	if test_message :smtp 1 {
+		test_fail "too many notifications sent";
 	}
 }
 

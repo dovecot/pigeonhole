@@ -109,13 +109,13 @@ test_config_reload :extension "virustest";
 
 test "Text: regex: 1" {
 	if virustest :is "0" {
-        test_fail "virustest not configured or test failed";
-    }
+		test_fail "virustest not configured or test failed";
+	}
 
-    if not virustest :value "eq" "1" {
-        if virustest :matches "*" { }
-        test_fail "wrong virus value produced: ${1}";
-    }
+	if not virustest :value "eq" "1" {
+		if virustest :matches "*" { }
+		test_fail "wrong virus value produced: ${1}";
+	}
 }
 
 test_config_set "sieve_virustest_status_header" "X-Virus-Scan1:Found to be (.+)\.";
@@ -123,13 +123,13 @@ test_config_reload :extension "virustest";
 
 test "Text: regex: 5" {
 	if virustest :is "0" {
-        test_fail "virustest not configured or test failed";
-    }
+		test_fail "virustest not configured or test failed";
+	}
 
-    if not virustest :value "eq" "5" {
-        if virustest :matches "*" { }
-        test_fail "wrong virus value produced: ${1}";
-    }
+	if not virustest :value "eq" "5" {
+		if virustest :matches "*" { }
+		test_fail "wrong virus value produced: ${1}";
+	}
 }
 
 test_config_set "sieve_virustest_status_header" "X-Virus-Scan2:Found to be (.+)\.";
@@ -137,7 +137,7 @@ test_config_reload :extension "virustest";
 
 test "Text: regex: 0" {
 	if not virustest :is "0" {
-        if virustest :matches "*" { }
-        test_fail "wrong virus value produced: ${1}";
-    }
+		if virustest :matches "*" { }
+		test_fail "wrong virus value produced: ${1}";
+	}
 }

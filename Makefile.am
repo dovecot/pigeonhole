@@ -39,8 +39,15 @@ test_unfinished =
 endif
 
 test_cases = \
-	tests/testsuite.svtest\
-	tests/control-structures.svtest \
+	tests/testsuite.svtest \
+	tests/control-if.svtest \
+	tests/control-stop.svtest \
+	tests/test-allof.svtest \
+	tests/test-anyof.svtest \
+	tests/test-exists.svtest \
+	tests/test-header.svtest \
+	tests/test-address.svtest \
+	tests/test-size.svtest \
 	tests/compile/compile.svtest \
 	tests/compile/errors.svtest \
 	tests/compile/warnings.svtest \
@@ -50,15 +57,14 @@ test_cases = \
 	tests/execute/smtp.svtest \
 	tests/execute/mailstore.svtest \
 	tests/execute/examples.svtest \
-	tests/exists.svtest \
-	tests/header.svtest \
-	tests/address.svtest \
-	tests/size.svtest \
 	tests/lexer.svtest \
-	tests/comparators/core.svtest \
+	tests/comparators/i-octet.svtest \
+	tests/comparators/i-ascii-casemap.svtest \
 	tests/match-types/is.svtest \
 	tests/match-types/contains.svtest \
 	tests/match-types/matches.svtest \
+	tests/multiscript/basic.svtest \
+	tests/multiscript/conflicts.svtest \
 	tests/extensions/encoded-character.svtest \
 	tests/extensions/envelope.svtest \
 	tests/extensions/variables/basic.svtest \
@@ -114,7 +120,10 @@ test_cases = \
 	tests/extensions/date/basic.svtest \
 	tests/extensions/date/date-parts.svtest \
 	tests/extensions/date/zones.svtest \
-	tests/multiscript/basic.svtest \
+	tests/extensions/spamvirustest/spamtest.svtest \
+	tests/extensions/spamvirustest/virustest.svtest \
+	tests/extensions/spamvirustest/spamtestplus.svtest \
+	tests/extensions/spamvirustest/errors.svtest \
 	tests/deprecated/notify/basic.svtest \
 	tests/deprecated/notify/mailto.svtest \
 	tests/deprecated/notify/errors.svtest \
@@ -122,10 +131,6 @@ test_cases = \
 	tests/deprecated/notify/denotify.svtest \
 	tests/deprecated/imapflags/execute.svtest \
 	tests/deprecated/imapflags/errors.svtest \
-	tests/extensions/spamvirustest/spamtest.svtest \
-	tests/extensions/spamvirustest/virustest.svtest \
-	tests/extensions/spamvirustest/spamtestplus.svtest \
-	tests/extensions/spamvirustest/errors.svtest \
 	$(test_unfinished)
 
 $(test_cases):

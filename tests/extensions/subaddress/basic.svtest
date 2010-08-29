@@ -56,27 +56,27 @@ test "Address to :detail" {
 
 
 test "Envelope :user" {
-    if not envelope :is :user "to" "friep" {
-        test_fail "wrong user part extracted 1";
-    }
+	if not envelope :is :user "to" "friep" {
+		test_fail "wrong user part extracted 1";
+	}
 
-    if not envelope :comparator "i;ascii-casemap" :is :user "to" "FRIEP" {
-        test_fail "wrong user part extracted";
-    }
+	if not envelope :comparator "i;ascii-casemap" :is :user "to" "FRIEP" {
+		test_fail "wrong user part extracted";
+	}
 
-    if envelope :comparator "i;ascii-casemap" :is :user "to" "FROP" {
-        test_fail "envelope test failed";
-    }
+	if envelope :comparator "i;ascii-casemap" :is :user "to" "FROP" {
+		test_fail "envelope test failed";
+	}
 }
 
 test "Envelope :detail" {
-    if not envelope :comparator "i;ascii-casemap" :contains :detail "from" "QUES" {
-        test_fail "wrong user part extracted";
-    }
+	if not envelope :comparator "i;ascii-casemap" :contains :detail "from" "QUES" {
+		test_fail "wrong user part extracted";
+	}
 
-    if envelope :comparator "i;ascii-casemap" :contains :detail "from" "LIS" {
-        test_fail "address test failed";
-    }
+	if envelope :comparator "i;ascii-casemap" :contains :detail "from" "LIS" {
+		test_fail "address test failed";
+	}
 }
 
 test_set "message" text:

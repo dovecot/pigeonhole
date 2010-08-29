@@ -63,8 +63,8 @@ test "Value \"\" eq 40 (vs)" {
 	}
 
 	if header :value "gt" :comparator "i;ascii-numeric" "x-spam-score" "" {
-        test_fail ":count exceeded empty string with i;ascii-numeric";
-    }
+		test_fail ":count exceeded empty string with i;ascii-numeric";
+	}
 }
 
 /* 
@@ -98,49 +98,49 @@ test "Value 300 le 302" {
 test "Value 302 le 00302" {
 	if not header :value "le" :comparator "i;ascii-numeric" "x-spam-score" "00302" {
 		test_fail "should have matched";
-    }
+	}
 }
 
 test "Value {1000,20} le 300" {
-    if not header :value "le" :comparator "i;ascii-numeric" "x-nonsense" "300" {
-        test_fail "should have matched";
-    }
+	if not header :value "le" :comparator "i;ascii-numeric" "x-nonsense" "300" {
+		test_fail "should have matched";
+	}
 }
 
 test "Value {1000,20} lt 3" {
-    if header :value "lt" :comparator "i;ascii-numeric" "x-nonsense" "3" {
-        test_fail "should not have matched";
-    }
+	if header :value "lt" :comparator "i;ascii-numeric" "x-nonsense" "3" {
+		test_fail "should not have matched";
+	}
 }
 
 test "Value {1000,20} gt 3000" {
-    if header :value "gt" :comparator "i;ascii-numeric" "x-nonsense" "3000" {
-        test_fail "should not have matched";
-    }
+	if header :value "gt" :comparator "i;ascii-numeric" "x-nonsense" "3000" {
+		test_fail "should not have matched";
+	}
 }
 
 test "Value {1000,20} gt {3000,30}" {
-    if not header :value "gt" :comparator "i;ascii-numeric" "x-nonsense" ["3000","30"] {
-        test_fail "should have matched";
-    }
+	if not header :value "gt" :comparator "i;ascii-numeric" "x-nonsense" ["3000","30"] {
+		test_fail "should have matched";
+	}
 }
 
 test "Value {1000,20} lt {3, 19})" {
-    if header :value "lt" :comparator "i;ascii-numeric" "x-nonsense" ["3","19"] {
-        test_fail "should not have matched";
-    }
+	if header :value "lt" :comparator "i;ascii-numeric" "x-nonsense" ["3","19"] {
+		test_fail "should not have matched";
+	}
 }
 
 test "Value {1000,20} gt {3000,1001}" {
-    if header :value "gt" :comparator "i;ascii-numeric" "x-nonsense" ["3000","1001"] {
-        test_fail "should not have matched";
-    }
+	if header :value "gt" :comparator "i;ascii-numeric" "x-nonsense" ["3000","1001"] {
+		test_fail "should not have matched";
+	}
 }
 
 test "Value abcdzyz gt aaaaaaa" {
-    if not header :value "gt" :comparator "i;octet" "x-alpha" "aaaaaaa" {
-        test_fail "should have matched";
-    }
+	if not header :value "gt" :comparator "i;octet" "x-alpha" "aaaaaaa" {
+		test_fail "should have matched";
+	}
 }
 
 /* 

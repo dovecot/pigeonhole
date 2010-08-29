@@ -41,7 +41,7 @@ test "Internal Flags" {
 	test_message :folder "folder" 0;
 	
 	if not hasflag "\\answered" {
-        	test_fail "\\answered flag not stored for message";
+		test_fail "\\answered flag not stored for message";
 	}
 
 	if not hasflag "$label1" {

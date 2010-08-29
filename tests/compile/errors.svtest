@@ -13,13 +13,13 @@ require "comparator-i;ascii-numeric";
  */
 
 test "Lexer errors (FIXME: count only)" {
-    if test_script_compile "errors/lexer.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/lexer.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "10" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "10" {
+		test_fail "wrong number of errors reported";
+	}
 }
 
 /*
@@ -27,13 +27,13 @@ test "Lexer errors (FIXME: count only)" {
  */
 
 test "Parser errors (FIXME: count only)" {
-    if test_script_compile "errors/parser.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/parser.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "9" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "9" {
+		test_fail "wrong number of errors reported";
+	}
 }
 
 /*
@@ -191,13 +191,13 @@ test "Require errors (FIXME: count only)" {
  */
 
 test "Size errors (FIXME: count only)" {
-    if test_script_compile "errors/size.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/size.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "7" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "7" {
+		test_fail "wrong number of errors reported";
+	}
 }
 
 /*
@@ -205,13 +205,13 @@ test "Size errors (FIXME: count only)" {
  */
 
 test "Envelope errors (FIXME: count only)" {
-    if test_script_compile "errors/envelope.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/envelope.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+		test_fail "wrong number of errors reported";
+	}
 }
 
 /*
@@ -219,13 +219,13 @@ test "Envelope errors (FIXME: count only)" {
  */
 
 test "Stop errors (FIXME: count only)" {
-    if test_script_compile "errors/stop.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/stop.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "9" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "9" {
+		test_fail "wrong number of errors reported";
+	}
 }
 
 /*
@@ -233,13 +233,13 @@ test "Stop errors (FIXME: count only)" {
  */
 
 test "Keep errors (FIXME: count only)" {
-    if test_script_compile "errors/keep.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/keep.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+		test_fail "wrong number of errors reported";
+	}
 }
 
 /*
@@ -247,13 +247,13 @@ test "Keep errors (FIXME: count only)" {
  */
 
 test "ADDRESS-PART errors (FIXME: count only)" {
-    if test_script_compile "errors/address-part.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/address-part.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+		test_fail "wrong number of errors reported";
+	}
 }
 
 /*
@@ -261,13 +261,13 @@ test "ADDRESS-PART errors (FIXME: count only)" {
  */
 
 test "MATCH-TYPE errors (FIXME: count only)" {
-    if test_script_compile "errors/match-type.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/match-type.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+		test_fail "wrong number of errors reported";
+	}
 }
 
 /*
@@ -275,13 +275,13 @@ test "MATCH-TYPE errors (FIXME: count only)" {
  */
 
 test "Encoded-character errors (FIXME: count only)" {
-    if test_script_compile "errors/encoded-character.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/encoded-character.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+		test_fail "wrong number of errors reported";
+	}
 }
 
 /*
@@ -289,28 +289,27 @@ test "Encoded-character errors (FIXME: count only)" {
  */
 
 test "Outgoing address errors (FIXME: count only)" {
-    if test_script_compile "errors/out-address.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/out-address.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "15" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "15" {
+		test_fail "wrong number of errors reported";
+	}
 }
-
 
 /*
  * Tagged argument errors
  */
 
 test "Tagged argument errors (FIXME: count only)" {
-    if test_script_compile "errors/tag.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/tag.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+		test_fail "wrong number of errors reported";
+	}
 }
 
 /*
@@ -358,11 +357,11 @@ test "Typos" {
  */
 
 test "Unsupported language features (FIXME: count only)" {
-    if test_script_compile "errors/unsupported.sieve" {
-        test_fail "compile should have failed.";
-    }
+	if test_script_compile "errors/unsupported.sieve" {
+		test_fail "compile should have failed.";
+	}
 
-    if not test_error :count "eq" :comparator "i;ascii-numeric" "4" {
-        test_fail "wrong number of errors reported";
-    }
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "4" {
+		test_fail "wrong number of errors reported";
+	}
 }

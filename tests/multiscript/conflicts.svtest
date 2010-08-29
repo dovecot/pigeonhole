@@ -42,12 +42,20 @@ test "Graceful Conflicts" {
 	}
 
 	if not test_result_action :index 1 "store" {
+		test_result_print;
 		test_fail "first action is not 'store'";
 	}
 
-	if test_result_action :index 2 "reject" {
-		test_fail "reject action not discarded";
+	if not test_result_action :index 2 "reject" {
+		test_result_print;
+		test_fail "first reject action not retained";
 	}
+
+	if test_result_action :index 3 "reject" {
+		test_result_print;
+		test_fail "second reject action not discarded";
+	}
+
 }
 
 test "Duplicates" {
@@ -80,8 +88,6 @@ test "Duplicates" {
 	if not test_result_execute {
 		test_fail "result execute failed after third script";
 	}
-
-	test_result_print;
 
 	if not test_result_action :index 1 "keep" {
 		test_fail "first action is not 'keep'";

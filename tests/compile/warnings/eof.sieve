@@ -1,2 +1,2 @@
 keep;
-# Kept
+# Final comment without newline

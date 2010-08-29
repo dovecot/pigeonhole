@@ -33,6 +33,8 @@ test "Basic match values 1" {
 		if string :is "${4}" "-bounces" {
 			test_fail "fourth match contains third value";
 		}
+	} else {
+		test_fail "failed to match";
 	}
 }
 
@@ -58,6 +60,8 @@ test "Basic match values 2" {
 		if string :is "${5}" "-bounces" {
 			test_fail "fifth match contains fourth value: ${5}";
 		}
+	} else {
+		test_fail "failed to match";
 	}
 }
 

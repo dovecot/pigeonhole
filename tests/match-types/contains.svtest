@@ -20,8 +20,8 @@ test "Match empty" {
 	}
 
 	if not header :contains "comment" "" {
-        test_fail "contains tests fails to match \"\" against empty string";
-    }
+		test_fail "contains tests fails to match \"\" against empty string";
+	}
 }
 
 test "Match full" {
