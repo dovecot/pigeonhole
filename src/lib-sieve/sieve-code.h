@@ -231,6 +231,12 @@ static inline bool sieve_operand_is_string
 		operand->def->class == &string_class );
 }
 
+static inline bool sieve_operand_is_string_literal
+(const struct sieve_operand *operand)
+{
+	return ( operand != NULL && sieve_operand_is(operand, string_operand) );
+}
+
 /* String list */
 
 void sieve_opr_stringlist_emit_start

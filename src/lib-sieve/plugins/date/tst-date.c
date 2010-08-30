@@ -390,7 +390,7 @@ static int tst_date_operation_execute
 	string_t *date_part = NULL, *zone = NULL;
 	struct sieve_stringlist *hdr_list = NULL, *hdr_value_list;
 	struct sieve_stringlist *value_list, *key_list;
-	bool zone_specified = FALSE;
+	bool zone_specified = FALSE, zone_literal = TRUE;
 	int time_zone;
 	int match, ret;
 	
@@ -414,6 +414,8 @@ static int tst_date_operation_execute
 				if ( (ret=sieve_opr_string_read_data
 					(renv, &oprnd, address, "zone", &zone)) <= 0 )
 					return ret;
+
+				zone_literal = sieve_operand_is_string_literal(&oprnd);
 			}
 
 			zone_specified = TRUE;
@@ -435,26 +437,29 @@ static int tst_date_operation_execute
 	if ( (ret=sieve_opr_string_read(renv, address, "date-part", &date_part)) 
 		<= 0 )
 		return ret;
-		
+
 	/* Read key-list */
 	if ( (ret=sieve_opr_stringlist_read(renv, address, "key-list", &key_list))
 		<= 0 )
 		return ret;
-	
+
 	/* Determine what time zone to use in the result */
 	if ( !zone_specified ) {
 		time_zone = EXT_DATE_TIMEZONE_LOCAL;
 	} else if ( zone == NULL ) {
 		time_zone = EXT_DATE_TIMEZONE_ORIGINAL;
 	} else if ( !ext_date_parse_timezone(str_c(zone), &time_zone) ) {
-		/* FIXME: warn about parse failures */
+		if ( !zone_literal )
+			sieve_runtime_warning(renv, NULL, 
+				"specified :zone argument '%s' is not a valid timezone "
+				"(using local zone)", str_sanitize(str_c(zone), 40));
 		time_zone = EXT_DATE_TIMEZONE_LOCAL;
 	}
 
-	/* 
+	/*
 	 * Perform test 
 	 */
-	
+
 	if ( sieve_operation_is(op, date_operation) ) {
 	
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "date test");

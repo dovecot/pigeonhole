@@ -546,7 +546,7 @@ bool sieve_opr_string_dump_ex
 		return FALSE;
 	}
 
-	*literal_r = sieve_operand_is(&operand, string_operand);	
+	*literal_r = sieve_operand_is_string_literal(&operand);
 
 	return sieve_opr_string_dump_data(denv, &operand, address, field_name);
 } 
@@ -601,7 +601,7 @@ int sieve_opr_string_read_ex
 		<= 0 )
 		return ret;
 
-	*literal_r = sieve_operand_is(&operand, string_operand);
+	*literal_r = sieve_operand_is_string_literal(&operand);
 
 	return sieve_opr_string_read_data(renv, &operand, address, field_name, str_r);
 }
