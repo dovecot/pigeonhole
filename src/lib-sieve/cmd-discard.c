@@ -102,19 +102,14 @@ static bool cmd_discard_operation_dump
  */
 
 static int cmd_discard_operation_execute
-(const struct sieve_runtime_env *renv ATTR_UNUSED, 
+(const struct sieve_runtime_env *renv ATTR_UNUSED,
 	sieve_size_t *address ATTR_UNUSED)
-{	
-	unsigned int source_line;
-	
-	/* Source line */
-	source_line = sieve_runtime_get_command_location(renv);
-
-	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, 
+{
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS,
 		"discard action; cancel implicit keep");
 
 	if ( sieve_result_add_action
-		(renv, NULL, &act_discard, NULL, source_line, NULL, 0) < 0 )
+		(renv, NULL, &act_discard, NULL, NULL, 0) < 0 )
 		return SIEVE_EXEC_FAILURE;
 
 	return SIEVE_EXEC_OK;

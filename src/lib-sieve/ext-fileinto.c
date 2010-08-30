@@ -155,16 +155,12 @@ static int ext_fileinto_operation_execute
 	struct sieve_side_effects_list *slist = NULL; 
 	string_t *folder;
 	const char *mailbox;
-	unsigned int source_line; 
 	int ret = 0;
-	
+
 	/*
 	 * Read operands
 	 */
 
-	/* Source line */
-	source_line = sieve_runtime_get_command_location(renv);
-	
 	/* Optional operands (side effects only) */
 	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 ) 
 		return ret;
@@ -172,7 +168,7 @@ static int ext_fileinto_operation_execute
 	/* Folder operand */
 	if ( (ret=sieve_opr_string_read(renv, address, "folder", &folder)) <= 0 )
 		return ret;
-	
+
 	/*
 	 * Perform operation
 	 */
@@ -185,10 +181,10 @@ static int ext_fileinto_operation_execute
 		sieve_runtime_trace(renv, 0, "store message in mailbox `%s'", 
 			str_sanitize(mailbox, 80));
 	}
-		
-	/* Add action to result */	
+
+	/* Add action to result */
 	if ( sieve_act_store_add_to_result
-		(renv, slist, str_c(folder), source_line) < 0 )
+		(renv, slist, str_c(folder)) < 0 )
 		return SIEVE_EXEC_FAILURE;
 
 	return SIEVE_EXEC_OK;

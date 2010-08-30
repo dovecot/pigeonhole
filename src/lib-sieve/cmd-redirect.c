@@ -193,16 +193,12 @@ static int cmd_redirect_operation_execute
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_redirect_context *act;
 	string_t *redirect;
-	unsigned int source_line;
 	pool_t pool;
 	int ret;
 
 	/*
 	 * Read data
 	 */
-
-	/* Source line */
-	source_line = sieve_runtime_get_command_location(renv);
 
 	/* Optional operands (side effects only) */
 	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 ) 
@@ -225,18 +221,18 @@ static int cmd_redirect_operation_execute
 		sieve_runtime_trace(renv, 0, "forward message to address `%s'",
 			str_sanitize(str_c(redirect), 80));
 	}
-	
+
 	/* Add redirect action to the result */
 
 	pool = sieve_result_pool(renv->result);
 	act = p_new(pool, struct act_redirect_context, 1);
 	act->to_address = p_strdup(pool, str_c(redirect));
-	
+
 	if ( sieve_result_add_action
-		(renv, NULL, &act_redirect, slist, source_line, (void *) act,
+		(renv, NULL, &act_redirect, slist, (void *) act,
 			svinst->max_redirects) < 0 )
 		return SIEVE_EXEC_FAILURE;
-	
+
 	return SIEVE_EXEC_OK;
 }
 

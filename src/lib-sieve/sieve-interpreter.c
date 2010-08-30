@@ -224,7 +224,7 @@ void sieve_interpreter_free(struct sieve_interpreter **interp)
 	sieve_binary_debug_reader_deinit(&(*interp)->dreader);
 	sieve_binary_unref(&(*interp)->runenv.sbin);
 	sieve_error_handler_unref(&(*interp)->ehandler);
-		 
+
 	pool_unref(&((*interp)->pool));	
 	*interp = NULL;
 }
@@ -267,54 +267,54 @@ void sieve_interpreter_set_result
 	sieve_result_ref(result);
 }
 
-/* 
- * Error handling 
+/*
+ * Error handling
  */
-
-/* This is not particularly user friendly, so avoid using this
- */
-const char *sieve_runtime_location(const struct sieve_runtime_env *renv)
-{
-	const char *op = sieve_operation_mnemonic(renv->oprtn);
-	return t_strdup_printf("%s: #%08llx: %s", sieve_script_name(renv->script),
-		(unsigned long long) renv->oprtn->address, op);
-}
 
 void sieve_runtime_error
-(const struct sieve_runtime_env *runenv, const char *location,
+(const struct sieve_runtime_env *renv, const char *location,
 	const char *fmt, ...)
 {
 	va_list args;
-	
+
+	if ( location == NULL )
+		location = sieve_runtime_get_full_command_location(renv);
+
 	va_start(args, fmt);
 	T_BEGIN {
-		sieve_verror(runenv->interp->ehandler, location, fmt, args); 
+		sieve_verror(renv->interp->ehandler, location, fmt, args); 
 	} T_END;
 	va_end(args);
 }
 
 void sieve_runtime_warning
-(const struct sieve_runtime_env *runenv, const char *location,
+(const struct sieve_runtime_env *renv, const char *location,
 	const char *fmt, ...)
-{	
+{
 	va_list args;
-	
+
+	if ( location == NULL )
+		location = sieve_runtime_get_full_command_location(renv);
+
 	va_start(args, fmt);
 	T_BEGIN {
-		sieve_vwarning(runenv->interp->ehandler, location, fmt, args);
+		sieve_vwarning(renv->interp->ehandler, location, fmt, args);
 	} T_END; 
 	va_end(args);
 }
 
 void sieve_runtime_log
-(const struct sieve_runtime_env *runenv, const char *location,
+(const struct sieve_runtime_env *renv, const char *location,
 	const char *fmt, ...)
-{	
+{
 	va_list args;
-	
+
+	if ( location == NULL )
+		location = sieve_runtime_get_full_command_location(renv);
+
 	va_start(args, fmt);
 	T_BEGIN {
-		sieve_vinfo(runenv->interp->ehandler, location, fmt, args); 
+		sieve_vinfo(renv->interp->ehandler, location, fmt, args); 
 	} T_END;
 	va_end(args);
 }
@@ -354,8 +354,15 @@ unsigned int sieve_runtime_get_command_location
 	return interp->command_line;
 }
 
-/* 
- * Extension support 
+const char *sieve_runtime_get_full_command_location
+(const struct sieve_runtime_env *renv)
+{
+	return sieve_error_script_location
+		(renv->script, sieve_runtime_get_command_location(renv));
+}
+
+/*
+ * Extension support
  */
 
 void sieve_interpreter_extension_register
@@ -365,7 +372,7 @@ void sieve_interpreter_extension_register
 	struct sieve_interpreter_extension_reg *reg;
 
 	if ( ext->id < 0 ) return;
-	
+
 	reg = array_idx_modifiable(&interp->extensions, (unsigned int) ext->id);	
 	reg->intext = intext;
 	reg->ext = ext;

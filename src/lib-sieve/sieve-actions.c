@@ -210,20 +210,19 @@ const struct sieve_action_def act_store = {
 /* API */
 
 int sieve_act_store_add_to_result
-(const struct sieve_runtime_env *renv, 
-	struct sieve_side_effects_list *seffects, const char *mailbox,
-	unsigned int source_line)
+(const struct sieve_runtime_env *renv,
+	struct sieve_side_effects_list *seffects, const char *mailbox)
 {
 	pool_t pool;
 	struct act_store_context *act;
-	
+
 	/* Add redirect action to the result */
 	pool = sieve_result_pool(renv->result);
 	act = p_new(pool, struct act_store_context, 1);
 	act->mailbox = p_strdup(pool, mailbox);
 
-	return sieve_result_add_action(renv, NULL, &act_store, seffects, 
-		source_line, (void *) act, 0);
+	return sieve_result_add_action(renv, NULL, &act_store, seffects,
+		(void *) act, 0);
 }
 
 void sieve_act_store_add_flags

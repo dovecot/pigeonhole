@@ -1,6 +1,9 @@
 /* Copyright (c) 2002-2010 Pigeonhole authors, see the included COPYING file
  */
- 
+
+#include "lib.h"
+#include "str-sanitize.h"
+
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
@@ -108,20 +111,20 @@ static int cmd_debug_print_operation_execute
 	/*
 	 * Read operands
 	 */
-	
+
 	/* Read message */
 
 	if ( (ret=sieve_opr_string_read(renv, address, "message", &message)) <= 0 )
 		return ret;
-	
+
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "DEBUG_PRINT");
-	
-	/* FIXME: give this proper source location */
-	sieve_runtime_log(renv, "DEBUG", "%s", str_c(message));
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "debug_print \"%s\"",
+		str_sanitize(str_c(message), 80));
+
+	sieve_runtime_log(renv, NULL, "DEBUG: %s", str_c(message));
 
 	return SIEVE_EXEC_OK;
 }

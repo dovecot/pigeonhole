@@ -1,14 +1,13 @@
 Current activities:
 
+* Code cleanup:
+	- Review all FIXMEs 
 * Improve error handling and logging
 	- Avoid reporting user-caused errors to the master log.
 	- Review logging and error handling; add more warning/info/debug messages
 	  where useful.
 
 Next (in order of descending priority/precedence):
-
-* Code cleanup:
-	- Review all FIXMEs 
 
 * ## MAKE A SECOND RELEASE (0.2.x) ##
 

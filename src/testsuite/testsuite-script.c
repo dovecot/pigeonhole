@@ -99,8 +99,8 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	int ret;
 
 	if ( _testsuite_compiled_script == NULL ) {
-		sieve_runtime_error(renv, sieve_error_script_location(renv->script,0),
-			"testsuite: no script compiled yet");
+		sieve_runtime_error(renv, NULL,
+			"testsuite: trying to run script, but no script compiled yet");
 		return FALSE;
 	}
 

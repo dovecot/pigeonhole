@@ -127,7 +127,7 @@ static int tst_vnotifym_operation_execute
 
 	uri_item = NULL;
 	while ( (ret=sieve_stringlist_next_item(notify_uris, &uri_item)) > 0 ) {		
-		if ( !ext_enotify_runtime_method_validate(renv, 0 /* FIXME */, uri_item) ) {
+		if ( !ext_enotify_runtime_method_validate(renv, uri_item) ) {
 			all_valid = FALSE;
 			break;
 		}

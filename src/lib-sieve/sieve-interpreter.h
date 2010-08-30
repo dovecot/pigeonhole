@@ -57,40 +57,40 @@ sieve_size_t sieve_interpreter_program_counter
 
 int sieve_interpreter_program_jump
 	(struct sieve_interpreter *interp, bool jump);
-	
+
 /*
  * Test results
- */	
-	
+ */
+
 void sieve_interpreter_set_test_result
 	(struct sieve_interpreter *interp, bool result);
 bool sieve_interpreter_get_test_result
 	(struct sieve_interpreter *interp);
-	
+
 /*
  * Source location
  */
 
 unsigned int sieve_runtime_get_source_location
 	(const struct sieve_runtime_env *renv, sieve_size_t code_address);
+
 unsigned int sieve_runtime_get_command_location
+	(const struct sieve_runtime_env *renv);
+const char *sieve_runtime_get_full_command_location
 	(const struct sieve_runtime_env *renv);
 
 /* 
  * Error handling 
  */
 
-/* This is not particularly user-friendly, so avoid using this.. */
-const char *sieve_runtime_location(const struct sieve_runtime_env *runenv);
-
 void sieve_runtime_error
-	(const struct sieve_runtime_env *runenv, const char *location,
+	(const struct sieve_runtime_env *renv, const char *location,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_runtime_warning
-	(const struct sieve_runtime_env *runenv, const char *location,
+	(const struct sieve_runtime_env *renv, const char *location,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_runtime_log
-	(const struct sieve_runtime_env *runenv, const char *location, 
+	(const struct sieve_runtime_env *renv, const char *location, 
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 /* 

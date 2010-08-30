@@ -232,8 +232,7 @@ struct act_store_transaction {
 
 int sieve_act_store_add_to_result
 	(const struct sieve_runtime_env *renv, 
-		struct sieve_side_effects_list *seffects, const char *folder,
-		unsigned int source_line);
+		struct sieve_side_effects_list *seffects, const char *folder);
 
 void sieve_act_store_add_flags
 	(const struct sieve_action_exec_env *aenv, void *tr_context,

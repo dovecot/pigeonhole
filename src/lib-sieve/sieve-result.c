@@ -414,9 +414,9 @@ static void sieve_result_action_detach
 
 static int _sieve_result_add_action
 (const struct sieve_runtime_env *renv, const struct sieve_extension *ext,
-	const struct sieve_action_def *act_def, 
-	struct sieve_side_effects_list *seffects, unsigned int source_line, 
-	void *context, unsigned int instance_limit, bool keep)		
+	const struct sieve_action_def *act_def,
+	struct sieve_side_effects_list *seffects,
+	void *context, unsigned int instance_limit, bool keep)
 {
 	int ret = 0;
 	unsigned int instance_count = 0;
@@ -424,10 +424,10 @@ static int _sieve_result_add_action
 	struct sieve_result *result = renv->result;
 	struct sieve_result_action *raction = NULL, *kaction = NULL;
 	struct sieve_action action;
-			
+
 	action.def = act_def;
 	action.ext = ext;
-	action.location = sieve_error_script_location(renv->script, source_line);
+	action.location = sieve_runtime_get_full_command_location(renv);
 	action.context = context;
 	action.executed = FALSE;
 
@@ -621,20 +621,19 @@ static int _sieve_result_add_action
 int sieve_result_add_action
 (const struct sieve_runtime_env *renv, const struct sieve_extension *ext,
 	const struct sieve_action_def *act_def,
-	struct sieve_side_effects_list *seffects, unsigned int source_line, 
+	struct sieve_side_effects_list *seffects,
 	void *context, unsigned int instance_limit)
 {
 	return _sieve_result_add_action
-		(renv, ext, act_def, seffects, source_line, context, instance_limit, FALSE);
+		(renv, ext, act_def, seffects, context, instance_limit, FALSE);
 }
 
 int sieve_result_add_keep
-(const struct sieve_runtime_env *renv, struct sieve_side_effects_list *seffects,
-	unsigned int source_line)
+(const struct sieve_runtime_env *renv, struct sieve_side_effects_list *seffects)
 {
 	return _sieve_result_add_action
 		(renv, renv->result->keep_action.ext, renv->result->keep_action.def, 
-			seffects, source_line, NULL, 0, TRUE);
+			seffects, NULL, 0, TRUE);
 }
 
 void sieve_result_set_keep_action

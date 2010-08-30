@@ -213,7 +213,7 @@ static int tst_notifymc_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "notify_method_capability test");
 
 	cap_value = ext_enotify_runtime_get_method_capability
-		(renv, 0 /* FIXME */, notify_uri, str_c(notify_capability));
+		(renv, notify_uri, str_c(notify_capability));
 
 	if ( cap_value != NULL ) {
 		value_list = sieve_single_stringlist_create_cstr(renv, cap_value, TRUE);

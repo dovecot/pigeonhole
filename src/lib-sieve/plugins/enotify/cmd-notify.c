@@ -405,17 +405,12 @@ static int cmd_notify_operation_execute
 	struct sieve_stringlist *options = NULL;
 	const struct sieve_enotify_method *method;
 	string_t *method_uri, *message = NULL, *from = NULL; 
-	unsigned int source_line;
 	int ret;
 
 	/*
 	 * Read operands
 	 */
-		
-	/* Source line */
 
-	source_line = sieve_runtime_get_command_location(renv);
-	
 	/* Optional operands */
 
 	for (;;) {
@@ -475,7 +470,7 @@ static int cmd_notify_operation_execute
 	/* Check operands */
 
 	if ( (ret=ext_enotify_runtime_check_operands
-		(renv, source_line, method_uri, message, from, options, &method, 
+		(renv, method_uri, message, from, options, &method, 
 			&method_context)) > 0 ) 
 	{
 		/* Add notify action to the result */
@@ -489,14 +484,14 @@ static int cmd_notify_operation_execute
 			act->message = p_strdup(pool, str_c(message));
 		if ( from != NULL )
 			act->from = p_strdup(pool, str_c(from));
-		
+
 		if ( sieve_result_add_action
-			(renv, this_ext, &act_notify, slist, source_line, (void *) act, 0) < 0 )
+			(renv, this_ext, &act_notify, slist, (void *) act, 0) < 0 )
 			return SIEVE_EXEC_FAILURE;
 
 		return SIEVE_EXEC_OK;
 	}
-	
+
 	return ret;
 }
 

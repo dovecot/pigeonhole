@@ -82,18 +82,14 @@ static bool cmd_keep_operation_dump
 
 static int cmd_keep_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
-{	
+{
 	struct sieve_side_effects_list *slist = NULL;
-	unsigned int source_line;
 	int ret = 0;
 
 	/*
 	 * Read data
 	 */
 
-	/* Source line */
-	source_line = sieve_runtime_get_command_location(renv);
-	
 	/* Optional operands (side effects only) */
 	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 ) 
 		return ret;
@@ -104,12 +100,12 @@ static int cmd_keep_operation_execute
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, 
 		"keep action; store message in default mailbox");
-	
+
 	/* Add keep action to result. 
 	 */
-	if ( sieve_result_add_keep(renv, slist, source_line) < 0 )
+	if ( sieve_result_add_keep(renv, slist) < 0 )
 		return SIEVE_EXEC_FAILURE;
-	
+
 	return SIEVE_EXEC_OK;
 }
 

@@ -67,8 +67,8 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 	int ret;
 
 	if ( _testsuite_result == NULL ) {
-		sieve_runtime_error(renv, sieve_error_script_location(renv->script,0),
-			"testsuite: no result evaluated yet");
+		sieve_runtime_error(renv, NULL,
+			"testsuite: trying to execute result, but no result evaluated yet");
 		return FALSE;
 	}
 

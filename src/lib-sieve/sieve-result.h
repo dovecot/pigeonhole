@@ -99,20 +99,20 @@ void sieve_result_log
 /*
  * Result composition
  */
- 
+
 void sieve_result_add_implicit_side_effect
 (struct sieve_result *result, const struct sieve_action_def *to_action,
-	bool to_keep, const struct sieve_extension *ext, 
+	bool to_keep, const struct sieve_extension *ext,
 	const struct sieve_side_effect_def *seffect, void *context);
-	
+
 int sieve_result_add_action
 	(const struct sieve_runtime_env *renv, const struct sieve_extension *ext,
 		const struct sieve_action_def *act_def,
-		struct sieve_side_effects_list *seffects, unsigned int source_line, 
+		struct sieve_side_effects_list *seffects,
 		void *context, unsigned int instance_limit);
 int sieve_result_add_keep
-	(const struct sieve_runtime_env *renv, 
-		struct sieve_side_effects_list *seffects, unsigned int source_line);
+	(const struct sieve_runtime_env *renv,
+		struct sieve_side_effects_list *seffects);
 
 void sieve_result_set_keep_action
 	(struct sieve_result *result, const struct sieve_extension *ext,

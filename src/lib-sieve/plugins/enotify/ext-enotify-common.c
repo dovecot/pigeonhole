@@ -472,33 +472,32 @@ bool ext_enotify_compile_check_arguments
  */
  
 bool ext_enotify_runtime_method_validate
-(const struct sieve_runtime_env *renv, unsigned int source_line,
-	string_t *method_uri)
+(const struct sieve_runtime_env *renv, string_t *method_uri)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	const struct sieve_enotify_method *method;
 	const char *uri = str_c(method_uri);
 	const char *scheme;
 	bool result = TRUE;
-	
+
 	/* Get the method */
-	
+
 	if ( (scheme=ext_enotify_uri_scheme_parse(&uri)) == NULL )
 		return FALSE;
-	
+
 	if ( (method=ext_enotify_method_find(this_ext, scheme)) == NULL )
 		return FALSE;
-		
+
 	/* Validate the provided URI */
-	
+
 	if ( method->def != NULL && method->def->runtime_check_uri != NULL ) {
-		struct sieve_enotify_env nenv; 
-		
+		struct sieve_enotify_env nenv;
+
 		memset(&nenv, 0, sizeof(nenv));
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create
-			(sieve_interpreter_get_error_handler(renv->interp), 
-				sieve_error_script_location(renv->script, source_line), 
+			(sieve_interpreter_get_error_handler(renv->interp),
+				sieve_runtime_get_full_command_location(renv),
 				"valid_notify_method test");
 
 		/* Use the method check function to validate the URI */
@@ -509,32 +508,30 @@ bool ext_enotify_runtime_method_validate
 
 	return result;
 }
- 
+
 static const struct sieve_enotify_method *ext_enotify_get_method
-(const struct sieve_runtime_env *renv, unsigned int source_line,
-	string_t *method_uri, const char **uri_body_r)
+(const struct sieve_runtime_env *renv, string_t *method_uri,
+	const char **uri_body_r)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	const struct sieve_enotify_method *method;
 	const char *uri = str_c(method_uri);
 	const char *scheme;
-	
+
 	/* Parse part before ':' of the uri (the scheme) and use it to identify
 	 * notify method.
 	 */
 	if ( (scheme=ext_enotify_uri_scheme_parse(&uri)) == NULL ) {
-		sieve_runtime_error
-			(renv, sieve_error_script_location(renv->script, source_line),
-				"invalid scheme part for method URI '%s'", 
-				str_sanitize(str_c(method_uri), 80));
+		sieve_runtime_error(renv, NULL,
+			"invalid scheme part for method URI '%s'", 
+			str_sanitize(str_c(method_uri), 80));
 		return NULL;
 	}
-	
+
 	/* Find the notify method */
 	if ( (method=ext_enotify_method_find(this_ext, scheme)) == NULL ) {
-		sieve_runtime_error
-			(renv, sieve_error_script_location(renv->script, source_line),
-				"invalid notify method '%s'", scheme);
+		sieve_runtime_error(renv, NULL,
+			"invalid notify method '%s'", scheme);
 		return NULL;
 	}
 
@@ -544,17 +541,17 @@ static const struct sieve_enotify_method *ext_enotify_get_method
 }
 
 const char *ext_enotify_runtime_get_method_capability
-(const struct sieve_runtime_env *renv, unsigned int source_line,
+(const struct sieve_runtime_env *renv,
 	string_t *method_uri, const char *capability)
 {
 	const struct sieve_enotify_method *method;
 	const char *uri_body;
 	const char *result = NULL;
-	
+
 	/* Get method */
-	method = ext_enotify_get_method(renv, source_line, method_uri, &uri_body);
+	method = ext_enotify_get_method(renv, method_uri, &uri_body);
 	if ( method == NULL ) return NULL;
-	
+
 	/* Get requested capability */
 	if ( method->def != NULL && 
 		method->def->runtime_get_method_capability != NULL ) {
@@ -563,14 +560,13 @@ const char *ext_enotify_runtime_get_method_capability
 		memset(&nenv, 0, sizeof(nenv));
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create
-			(sieve_interpreter_get_error_handler(renv->interp), 
-				sieve_error_script_location(renv->script, source_line), 
+			(sieve_interpreter_get_error_handler(renv->interp),
+				sieve_runtime_get_full_command_location(renv),
 				"notify_method_capability test");
-		
+
 		/* Execute method function to acquire capability value */
 		result = method->def->runtime_get_method_capability
 			(&nenv, str_c(method_uri), uri_body, capability);
-
 		sieve_error_handler_unref(&nenv.ehandler);
 	}
 
@@ -578,18 +574,18 @@ const char *ext_enotify_runtime_get_method_capability
 }
 
 int ext_enotify_runtime_check_operands
-(const struct sieve_runtime_env *renv, unsigned int source_line,
+(const struct sieve_runtime_env *renv,
 	string_t *method_uri, string_t *message, string_t *from, 
 	struct sieve_stringlist *options, 
 	const struct sieve_enotify_method **method_r, void **method_context)
 {
 	const struct sieve_enotify_method *method;
 	const char *uri_body;
-	
+
 	/* Get method */
-	method = ext_enotify_get_method(renv, source_line, method_uri, &uri_body);
+	method = ext_enotify_get_method(renv, method_uri, &uri_body);
 	if ( method == NULL ) return SIEVE_EXEC_FAILURE;
-	
+
 	/* Check provided operands */
 	if ( method->def != NULL && method->def->runtime_check_operands != NULL ) {
 		struct sieve_enotify_env nenv; 
@@ -598,15 +594,15 @@ int ext_enotify_runtime_check_operands
 		memset(&nenv, 0, sizeof(nenv));
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create
-			(sieve_interpreter_get_error_handler(renv->interp), 
-				sieve_error_script_location(renv->script, source_line), 
+			(sieve_interpreter_get_error_handler(renv->interp),
+				sieve_runtime_get_full_command_location(renv),
 				"notify action");
 
 		/* Execute check function */
 		if ( method->def->runtime_check_operands
 			(&nenv, str_c(method_uri), uri_body, message, from, 
 				sieve_result_pool(renv->result), method_context) ) {
-			
+
 			/* Check any provided options */
 			if ( options != NULL ) {			
 				string_t *option = NULL;

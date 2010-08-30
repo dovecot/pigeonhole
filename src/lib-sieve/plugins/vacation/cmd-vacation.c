@@ -544,18 +544,13 @@ static int ext_vacation_operation_execute
 	bool mime = FALSE;
 	struct sieve_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
-	unsigned int source_line;
 	const char *from_normalized = NULL;
 	int ret;
 
 	/*
 	 * Read code
 	 */
-		
-	/* Source line */
 
-	source_line = sieve_runtime_get_command_location(renv);
-	
 	/* Optional operands */
 
 	for (;;) {
@@ -623,8 +618,7 @@ static int ext_vacation_operation_execute
 		from_normalized = sieve_address_normalize(from, &error);
 	
 		if ( from_normalized == NULL) {
-			sieve_runtime_error(renv, 
-				sieve_error_script_location(renv->script, source_line),
+			sieve_runtime_error(renv, NULL,
 				"specified :from address '%s' is invalid for vacation action: %s",
 				str_sanitize(str_c(from), 128), error);
    		}
@@ -679,7 +673,7 @@ static int ext_vacation_operation_execute
 	}	
 		
 	if ( sieve_result_add_action
-		(renv, this_ext, &act_vacation, slist, source_line, (void *) act, 0) < 0 )
+		(renv, this_ext, &act_vacation, slist, (void *) act, 0) < 0 )
 		return SIEVE_EXEC_FAILURE;
 
 	return SIEVE_EXEC_OK;	
@@ -693,11 +687,11 @@ static int ext_vacation_operation_execute
 
 static int act_vacation_check_duplicate
 (const struct sieve_runtime_env *renv ATTR_UNUSED,
-	const struct sieve_action *act, 
+	const struct sieve_action *act,
 	const struct sieve_action *act_other)
 {
 	if ( !act_other->executed ) {
-		sieve_runtime_error(renv, act->location, 
+		sieve_runtime_error(renv, act->location,
 			"duplicate vacation action not allowed "
 			"(previously triggered one was here: %s)", act_other->location);
 		return -1;

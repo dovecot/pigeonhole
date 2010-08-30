@@ -420,17 +420,12 @@ static int cmd_notify_operation_execute
 	sieve_number_t importance = 1;
 	struct sieve_stringlist *options = NULL;
 	string_t *message = NULL, *id = NULL; 
-	unsigned int source_line;
 	int ret;
 
 	/*
 	 * Read operands
 	 */
-		
-	/* Source line */
 
-	source_line = sieve_runtime_get_command_location(renv);
-	
 	/* Optional operands */	
 
 	for (;;) {
@@ -523,16 +518,14 @@ static int cmd_notify_operation_execute
 	
 				/* Add only if unique */
 				if ( i != rcpt_count ) {
-					sieve_runtime_warning(renv, 
-						sieve_error_script_location(renv->script, source_line),
+					sieve_runtime_warning(renv, NULL,
 						"duplicate recipient '%s' specified in the :options argument of "
 						"the deprecated notify command", 
 						str_sanitize(str_c(raw_address), 128));
 
 				}	else if 
 					( array_count(&act->recipients) >= EXT_NOTIFY_MAX_RECIPIENTS ) {
-					sieve_runtime_warning(renv, 
-						sieve_error_script_location(renv->script, source_line),
+					sieve_runtime_warning(renv, NULL,
 						"more than the maximum %u recipients are specified "
 						"for the deprecated notify command; "
 						"the rest is discarded", EXT_NOTIFY_MAX_RECIPIENTS);
@@ -545,25 +538,23 @@ static int cmd_notify_operation_execute
 					recipient.normalized = p_strdup(pool, addr_norm);
 		
 					array_append(&act->recipients, &recipient, 1);
-				}		
+				}
 			} else {
-				sieve_runtime_error(renv, 
-					sieve_error_script_location(renv->script, source_line),
+				sieve_runtime_error(renv, NULL,
 					"specified :options address '%s' is invalid for "
 					"the deprecated notify command: %s", 
 					str_sanitize(str_c(raw_address), 128), error);
 				return SIEVE_EXEC_FAILURE;
 			}
 		}
-		
+
 		if ( ret < 0 ) {
 			sieve_runtime_trace_error(renv, "invalid options stringlist");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
-		
+
 		if ( sieve_result_add_action
-			(renv, this_ext, &act_notify_old, NULL, source_line, (void *) act, 0) 
-				< 0 )
+			(renv, this_ext, &act_notify_old, NULL, (void *) act, 0) < 0 )
 			return SIEVE_EXEC_FAILURE;
 	}
 

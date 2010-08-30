@@ -267,16 +267,12 @@ static int ext_reject_operation_execute
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_reject_context *act;
 	string_t *reason;
-	unsigned int source_line;
 	pool_t pool;
 	int ret;
 
 	/*
 	 * Read data
 	 */
-
-	/* Source line */
-	source_line = sieve_runtime_get_command_location(renv);
 
 	/* Optional operands (side effects only) */
 	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 ) 
@@ -306,11 +302,11 @@ static int ext_reject_operation_execute
 	act = p_new(pool, struct act_reject_context, 1);
 	act->reason = p_strdup(pool, str_c(reason));
 	act->ereject = ( sieve_operation_is(oprtn, ereject_operation) );
-	
+
 	if ( sieve_result_add_action
-		(renv, this_ext, &act_reject, slist, source_line, (void *) act, 0) < 0 )
+		(renv, this_ext, &act_reject, slist, (void *) act, 0) < 0 )
 		return SIEVE_EXEC_FAILURE;
-	
+
 	return SIEVE_EXEC_OK;
 }
 
