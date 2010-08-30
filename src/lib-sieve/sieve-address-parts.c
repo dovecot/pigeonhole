@@ -183,14 +183,14 @@ static bool tag_address_part_validate
 (struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast_argument **arg, 
 	struct sieve_command *cmd ATTR_UNUSED)
 {
-	/* FIXME: Currenly trivial, but might need to allow for further validation for
+	/* NOTE: Currenly trivial, but might need to allow for further validation for
 	 * future extensions.
 	 */
-	 
-	/* Syntax:   
+
+	/* Syntax:
 	 *   ":localpart" / ":domain" / ":all" (subject to extension)
-   */
-	
+   	 */
+
 	/* Skip tag */
 	*arg = sieve_ast_argument_next(*arg);
 

@@ -283,7 +283,7 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 		ctx->script_size = MANAGESIEVE_ARG_LITERAL_SIZE(args);
 		nonsync = TRUE;
 	} else {
-		/* FIXME */
+		/* FIXME: allow quoted strings */
 		client_send_no(client, 
 			"This MANAGESIEVE implementation currently does not allow "
 			"quoted strings to be used for script contents.");

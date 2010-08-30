@@ -120,14 +120,14 @@ static bool cmd_redirect_validate
 		(validator, cmd, arg, "address", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-	
+
 	if ( !sieve_validator_argument_activate(validator, cmd, arg, FALSE) )
 		return FALSE;
 
-	/* We can only assess the validity of the outgoing address when it is 
-	 * a string literal. For runtime-generated strings this needs to be 
-	 * done at runtime (FIXME!)
-     */
+	/* We can only assess the validity of the outgoing address when it is
+	 * a string literal. For runtime-generated strings this needs to be
+	 * done at runtime.
+	 */
 	if ( sieve_argument_is_string_literal(arg) ) {
 		string_t *address = sieve_ast_argument_str(arg);
 		const char *error;
@@ -136,9 +136,9 @@ static bool cmd_redirect_validate
 		T_BEGIN {
 			/* Verify and normalize the address to 'local_part@domain' */
 			norm_address = sieve_address_normalize(address, &error);
-		
+
 			if ( norm_address == NULL ) {
-				sieve_argument_validate_error(validator, arg, 
+				sieve_argument_validate_error(validator, arg,
 					"specified redirect address '%s' is invalid: %s",
 					str_sanitize(str_c(address),128), error);
 			} else {
@@ -148,7 +148,7 @@ static bool cmd_redirect_validate
 		} T_END;
 
 		return ( norm_address != NULL );
-	}		
+	}
 
 	return TRUE;
 }
@@ -193,6 +193,8 @@ static int cmd_redirect_operation_execute
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_redirect_context *act;
 	string_t *redirect;
+	bool literal_address;
+	const char *norm_address;
 	pool_t pool;
 	int ret;
 
@@ -205,28 +207,42 @@ static int cmd_redirect_operation_execute
 		return ret;
 
 	/* Read the address */
-	if ( (ret=sieve_opr_string_read(renv, address, "address", &redirect)) <= 0 )
+	if ( (ret=sieve_opr_string_read_ex(renv, address, "address", &redirect, 
+		&literal_address)) <= 0 )
 		return ret;
 
 	/*
 	 * Perform operation
 	 */
 
-	/* FIXME: perform address normalization if the string is not a string literal
-	 */
+	if ( !literal_address ) {
+		const char *error;
+
+		/* Verify and normalize the address to 'local_part@domain' */
+		norm_address = sieve_address_normalize(redirect, &error);
+
+		if ( norm_address == NULL ) {
+			sieve_runtime_error(renv, NULL,
+				"specified redirect address '%s' is invalid: %s",
+				str_sanitize(str_c(redirect),128), error);
+			return SIEVE_EXEC_FAILURE;
+		}
+	} else {
+		norm_address = str_c(redirect);
+	}
 
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS) ) {
 		sieve_runtime_trace(renv, 0, "redirect action");
 		sieve_runtime_trace_descend(renv);
 		sieve_runtime_trace(renv, 0, "forward message to address `%s'",
-			str_sanitize(str_c(redirect), 80));
+			str_sanitize(norm_address, 80));
 	}
 
 	/* Add redirect action to the result */
 
 	pool = sieve_result_pool(renv->result);
 	act = p_new(pool, struct act_redirect_context, 1);
-	act->to_address = p_strdup(pool, str_c(redirect));
+	act->to_address = p_strdup(pool, norm_address);
 
 	if ( sieve_result_add_action
 		(renv, NULL, &act_redirect, slist, (void *) act,

@@ -1,11 +1,6 @@
 /* Copyright (c) 2002-2010 Pigeonhole authors, see the included COPYING file
  */
 
-/* FIXME: This file was gratefully stolen from dovecot/src/deliver/deliver.c and 
- * altered to suit our needs. So, this contains lots and lots of duplicated 
- * code. 
- */
-
 #include "lib.h"
 #include "istream.h"
 #include "istream-seekable.h"
