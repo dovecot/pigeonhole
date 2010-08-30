@@ -13,7 +13,7 @@
 
 #include "lib.h"
 #include "str-sanitize.h"
-#include "imap-utf7.h"
+#include "unichar.h"
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
@@ -113,7 +113,21 @@ static bool cmd_fileinto_validate
 		return FALSE;
 	}
 	
-	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
+	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
+		return FALSE;
+
+	/* Check name validity when folder argument is not a variable */
+	if ( sieve_argument_is_string_literal(arg) ) {
+		const char *folder = sieve_ast_argument_strc(arg);
+
+		if ( !uni_utf8_str_is_valid(folder) ) {
+			sieve_command_validate_error(valdtr, cmd, 
+				"folder name specified for fileinto command is not utf-8: %s", folder);
+			return FALSE;
+		}		
+	}
+
+	return TRUE;
 }
 
 /*
@@ -154,7 +168,8 @@ static int ext_fileinto_operation_execute
 {
 	struct sieve_side_effects_list *slist = NULL; 
 	string_t *folder;
-	const char *mailbox;
+	bool folder_literal;
+	bool trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS);
 	int ret = 0;
 
 	/*
@@ -166,20 +181,30 @@ static int ext_fileinto_operation_execute
 		return ret;
 
 	/* Folder operand */
-	if ( (ret=sieve_opr_string_read(renv, address, "folder", &folder)) <= 0 )
+	if ( (ret=sieve_opr_string_read_ex(renv, address, "folder", &folder, 
+		&folder_literal)) <= 0 )
 		return ret;
 
 	/*
 	 * Perform operation
 	 */
 
-	mailbox = str_sanitize(str_c(folder), 64);
-
-	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS) ) {
+	if ( trace ) {
 		sieve_runtime_trace(renv, 0, "fileinto action");
 		sieve_runtime_trace_descend(renv);
+	}
+
+	if ( !folder_literal && !uni_utf8_str_is_valid(str_c(folder)) ) {
+		sieve_runtime_error(renv, NULL, 
+			"folder name specified for fileinto command is not utf-8: %s", 
+			str_c(folder));
+		return SIEVE_EXEC_FAILURE;		
+	}
+	
+
+	if ( trace ) {
 		sieve_runtime_trace(renv, 0, "store message in mailbox `%s'", 
-			str_sanitize(mailbox, 80));
+			str_sanitize(str_c(folder), 80));
 	}
 
 	/* Add action to result */

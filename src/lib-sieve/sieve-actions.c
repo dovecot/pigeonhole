@@ -352,7 +352,9 @@ static bool act_store_mailbox_open
 	*box_r = NULL;
 
 	if ( !uni_utf8_str_is_valid(mailbox) ) {
-		/* FIXME: check utf-8 validity at compiletime/runtime */
+		/* Just a precaution; already (supposed to be) checked at
+		 * compiletime/runtime.
+		 */
 		*error_r = t_strdup_printf("mailbox name not utf-8: %s", mailbox);
 		*error_code_r = MAIL_ERROR_PARAMS;
 		return FALSE;
