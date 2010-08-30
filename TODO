@@ -11,8 +11,8 @@ Next (in order of descending priority/precedence):
 
 * ## MAKE A SECOND RELEASE (0.2.x) ##
 
-* Unfinished new extensions:
-	- Finish the ereject extension
+* Finish the ereject extension
+	- Make reject/ereject use the LDA reject interface when available
 * Improve error handling. 
 	- Implement dropping errors in the user's mailbox as a mail message.
 * Add normalize() method to comparators to normalize the string before matching

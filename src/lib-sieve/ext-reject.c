@@ -383,6 +383,8 @@ static void act_reject_print
 	*keep = FALSE;
 }
 
+/* FIXME: use LDA reject interface when available */
+
 static bool act_reject_send	
 (const struct sieve_action_exec_env *aenv, struct act_reject_context *ctx,
 	const char *sender, const char *recipient)
