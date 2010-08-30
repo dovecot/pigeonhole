@@ -659,7 +659,10 @@ static int ext_vacation_operation_execute
 		
 				array_append(&norm_addresses, &addr_norm, 1);			
 			} else {
-				/* FIXME: report proper warning */
+				sieve_runtime_error(renv, NULL,
+					"specified :addresses item '%s' is invalid: %s for vacation action "
+					"(ignored)",
+					str_sanitize(str_c(raw_address),128), error);
 			}
 		}
 		
