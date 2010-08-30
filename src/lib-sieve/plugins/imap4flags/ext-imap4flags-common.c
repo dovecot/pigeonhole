@@ -265,34 +265,48 @@ const struct sieve_interpreter_extension imap4flags_interpreter_extension = {
  */
 
 static bool flag_is_valid(const char *flag)
-{	
+{
 	if (*flag == '\\') {
 		/* System flag */
-		const char *atom = t_str_ucase(flag); 
-        
+		const char *atom = t_str_ucase(flag);
+
 		if (
 			(strcmp(atom, "\\ANSWERED") != 0) &&
 			(strcmp(atom, "\\FLAGGED") != 0) &&
 			(strcmp(atom, "\\DELETED") != 0) &&
 			(strcmp(atom, "\\SEEN") != 0) &&
-			(strcmp(atom, "\\DRAFT") != 0) )  
-		{           
+			(strcmp(atom, "\\DRAFT") != 0) )
+		{
 			return FALSE;
 		}
 	} else {
+		const char *p;
+
 		/* Custom keyword:
 		 *
-		 * The validity of the keyword cannot be validated until the 
-		 * target mailbox for the message is known. Meaning that the 
-		 * verfication of keyword can only be performed when the
-		 * action side effect is about to be executed.
-		 *
-		 * FIXME: technically this is nonsense, since we can simply parse
-		 * using the flag-keyword grammar provided by imap.
-		 */					
+		 * Syntax (IMAP4rev1, RFC 3501, Section 9. Formal Syntax) :
+		 *  flag-keyword    = atom
+		 *  atom            = 1*ATOM-CHAR
+		 *  ATOM-CHAR       = <any CHAR except atom-specials>
+		 *  atom-specials   = "(" / ")" / "{" / SP / CTL / list-wildcards /
+		 *                    quoted-specials / resp-specials
+		 *  CTL             =  %x00-1F / %x7F
+		 *  list-wildcards  = "%" / "*"
+		 *  quoted-specials = DQUOTE / "\"
+		 *  resp-specials   = "]"
+		 */
+
+		p = flag;
+		while ( *p != '\0' ) {
+			if ( *p == '(' || *p == ')' || *p == '{' || *p == ' ' ||
+				*p <= 0x1F || *p == 0x7F || *p == '%' || *p ==  '*' ||
+				*p == '"' || *p == '\\' || *p == ']' )
+				return FALSE;
+			p++;
+		}
 	}
 
-	return TRUE;  
+	return TRUE;
 }
 
 /* Flag iterator */
