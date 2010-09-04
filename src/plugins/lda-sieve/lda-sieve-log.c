@@ -76,7 +76,8 @@ static void lda_sieve_log_vdebug
 }
 
 struct sieve_error_handler *lda_sieve_log_ehandler_create
-(struct mail_deliver_context *mdctx, unsigned int max_errors)
+(struct sieve_instance *svinst, struct mail_deliver_context *mdctx,
+	unsigned int max_errors)
 {
 	pool_t pool;
 	struct lda_sieve_log_ehandler *ehandler;
@@ -85,7 +86,7 @@ struct sieve_error_handler *lda_sieve_log_ehandler_create
 	ehandler = p_new(pool, struct lda_sieve_log_ehandler, 1);
 	ehandler->mdctx = mdctx;
 
-	sieve_error_handler_init(&ehandler->handler, pool, max_errors);
+	sieve_error_handler_init(&ehandler->handler, svinst, pool, max_errors);
 
 	ehandler->handler.verror = lda_sieve_log_verror;
 	ehandler->handler.vwarning = lda_sieve_log_vwarning;

@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 	(void) sieve_extension_register(svinst, &debug_extension, TRUE);
 
 	/* Create error handler */
-	ehandler = sieve_stderr_ehandler_create(0);
+	ehandler = sieve_stderr_ehandler_create(svinst, 0);
 	sieve_system_ehandler_set(ehandler);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
 	} else {
 		/* Dump script */
 		sieve_tool_dump_binary_to(main_sbin, dumpfile);
-	
+
 		/* Obtain mail namespaces from -l argument */
 		if ( mailloc != NULL ) {
 			sieve_tool_init_mail_user(sieve_tool, mailloc);
@@ -380,12 +380,11 @@ int main(int argc, char **argv)
 		if ( main_sbin != NULL ) 
 			sieve_close(&main_sbin);
 	}
-	
+
 	/* Cleanup error handler */
 	sieve_error_handler_unref(&ehandler);
-	sieve_system_ehandler_reset();
 
 	sieve_tool_deinit(&sieve_tool);
-	
+
 	return exit_status;
 }

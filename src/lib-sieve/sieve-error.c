@@ -47,20 +47,95 @@ const char *sieve_error_script_location
 	return t_strdup_printf("%s: line %d", sname, source_line);
 }
 
+/*
+ * Initialization
+ */
+
+void sieve_errors_init(struct sieve_instance *svinst)
+{
+	svinst->system_ehandler = sieve_master_ehandler_create(svinst, 0);
+}
+ 
+void sieve_errors_deinit(struct sieve_instance *svinst)
+{
+	sieve_error_handler_unref(&svinst->system_ehandler);
+}
+
+/*
+ * System errors
+ */
+
+void sieve_sys_error(struct sieve_instance *svinst, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { 
+		sieve_verror(svinst->system_ehandler, NULL, fmt, args);
+	} T_END;
+	
+	va_end(args);
+}
+
+void sieve_sys_warning(struct sieve_instance *svinst, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN {
+		sieve_vwarning(svinst->system_ehandler, NULL, fmt, args);
+	} T_END;
+	
+	va_end(args);
+}
+
+void sieve_sys_info(struct sieve_instance *svinst, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN {
+		sieve_vinfo(svinst->system_ehandler, NULL, fmt, args);
+	} T_END;
+	
+	va_end(args);
+}
+
+void sieve_sys_debug(struct sieve_instance *svinst, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN {
+		sieve_vdebug(svinst->system_ehandler, NULL, fmt, args);
+	} T_END;
+	
+	va_end(args);
+}
+
+void sieve_system_ehandler_set
+(struct sieve_error_handler *ehandler)
+{
+	struct sieve_instance *svinst = ehandler->svinst;
+
+	sieve_error_handler_unref(&svinst->system_ehandler);
+	svinst->system_ehandler = ehandler;
+	sieve_error_handler_ref(ehandler);
+}
 
 /*
  * Main error functions
  */
 
 static void sieve_vcopy_master
-(const char *location, sieve_error_vfunc_t error_vfunc, 
-	const char *fmt, va_list args)
+(struct sieve_instance *svinst, const char *location,
+	sieve_error_vfunc_t error_vfunc, const char *fmt, va_list args)
 {
 	va_list args_copy;
 
 	VA_COPY(args_copy, args);
 
-	error_vfunc(_sieve_system_ehandler, location, fmt, args_copy);
+	error_vfunc(svinst->system_ehandler, location, fmt, args_copy);
 }
 
 void sieve_verror
@@ -70,7 +145,7 @@ void sieve_verror
 	if ( ehandler == NULL ) return;
 	
 	if ( ehandler->parent == NULL && ehandler->log_master )
-		sieve_vcopy_master(location, sieve_verror, fmt, args);
+		sieve_vcopy_master(ehandler->svinst, location, sieve_verror, fmt, args);
 
 	sieve_direct_verror(ehandler, location, fmt, args);
 }
@@ -82,7 +157,7 @@ void sieve_vwarning
 	if ( ehandler == NULL ) return;
 
 	if ( ehandler->parent == NULL && ehandler->log_master )
-		sieve_vcopy_master(location, sieve_vwarning, fmt, args);
+		sieve_vcopy_master(ehandler->svinst, location, sieve_vwarning, fmt, args);
 
 	sieve_direct_vwarning(ehandler, location, fmt, args);
 }
@@ -94,7 +169,7 @@ void sieve_vinfo
 	if ( ehandler == NULL ) return;
 
 	if ( ehandler->parent == NULL && ehandler->log_master )
-		sieve_vcopy_master(location, sieve_vinfo, fmt, args);
+		sieve_vcopy_master(ehandler->svinst, location, sieve_vinfo, fmt, args);
 
 	sieve_direct_vinfo(ehandler, location, fmt, args);
 }
@@ -106,7 +181,7 @@ void sieve_vdebug
 	if ( ehandler == NULL ) return;
 
 	if ( ehandler->parent == NULL && ehandler->log_master )
-		sieve_vcopy_master(location, sieve_vdebug, fmt, args);
+		sieve_vcopy_master(ehandler->svinst, location, sieve_vdebug, fmt, args);
 
 	sieve_direct_vdebug(ehandler, location, fmt, args);
 }
@@ -120,11 +195,14 @@ void sieve_vcritical
 	
 	tm = localtime(&ioloop_time);
 	
-	if ( location == NULL || *location == '\0' )
-		sieve_sys_error("%s", t_strdup_vprintf(fmt, args));
-	else
-		sieve_sys_error("%s: %s", location, t_strdup_vprintf(fmt, args));
-		
+	if ( location == NULL || *location == '\0' ) {
+		sieve_sys_error
+			(ehandler->svinst, "%s", t_strdup_vprintf(fmt, args));
+	} else {
+		sieve_sys_error
+			(ehandler->svinst, "%s: %s", location, t_strdup_vprintf(fmt, args));
+	}
+
 	if ( ehandler == NULL ) return;
 	
 	sieve_error(ehandler, location, "%s", 
@@ -254,9 +332,11 @@ void sieve_error_handler_copy_masterlog
  */
 
 void sieve_error_handler_init
-(struct sieve_error_handler *ehandler, pool_t pool, unsigned int max_errors)
+(struct sieve_error_handler *ehandler, struct sieve_instance *svinst,
+	pool_t pool, unsigned int max_errors)
 {
 	ehandler->pool = pool;
+	ehandler->svinst = svinst;
 	ehandler->refcount = 1;
 	ehandler->max_errors = max_errors;
 	
@@ -269,7 +349,7 @@ void sieve_error_handler_init_from_parent
 {
 	i_assert( parent != NULL );
 
-	sieve_error_handler_init(ehandler, pool, parent->max_errors);
+	sieve_error_handler_init(ehandler, parent->svinst, pool, parent->max_errors);
 
 	ehandler->parent = parent;
 	sieve_error_handler_ref(parent);
@@ -369,7 +449,7 @@ static void sieve_master_vdebug
 }
 
 struct sieve_error_handler *sieve_master_ehandler_create
-(unsigned int max_errors) 
+(struct sieve_instance *svinst, unsigned int max_errors) 
 {
 	pool_t pool;
 	struct sieve_error_handler *ehandler;
@@ -380,7 +460,7 @@ struct sieve_error_handler *sieve_master_ehandler_create
 	pool = pool_alloconly_create
 		("master_error_handler", sizeof(struct sieve_error_handler));
 	ehandler = p_new(pool, struct sieve_error_handler, 1);
-	sieve_error_handler_init(ehandler, pool, max_errors);
+	sieve_error_handler_init(ehandler, svinst, pool, max_errors);
 
 	ehandler->verror = sieve_master_verror;
 	ehandler->vwarning = sieve_master_vwarning;
@@ -388,33 +468,6 @@ struct sieve_error_handler *sieve_master_ehandler_create
 	ehandler->vdebug = sieve_master_vdebug;
 
 	return ehandler;
-}
-
-struct sieve_error_handler _sieve_system_ehandler_object = {
-	NULL, 0, NULL, 0, 0, 0,
-	FALSE,
-	TRUE,
-	TRUE,
-	sieve_master_verror,
-	sieve_master_vwarning,
-	sieve_master_vinfo,
-	sieve_master_vdebug,
-	NULL
-};
-
-struct sieve_error_handler *_sieve_system_ehandler = &_sieve_system_ehandler_object;
-
-void sieve_system_ehandler_set(struct sieve_error_handler *ehandler)
-{
-	sieve_error_handler_unref(&_sieve_system_ehandler);
-	_sieve_system_ehandler = ehandler;
-	sieve_error_handler_ref(_sieve_system_ehandler);
-}
-
-void sieve_system_ehandler_reset(void)
-{
-	sieve_error_handler_unref(&_sieve_system_ehandler);
-	_sieve_system_ehandler = &_sieve_system_ehandler_object;	
 }
 
 /* 
@@ -462,7 +515,7 @@ static void sieve_stderr_vdebug
 }
 
 struct sieve_error_handler *sieve_stderr_ehandler_create
-(unsigned int max_errors)
+(struct sieve_instance *svinst, unsigned int max_errors)
 {
 	pool_t pool;
 	struct sieve_error_handler *ehandler;
@@ -473,7 +526,7 @@ struct sieve_error_handler *sieve_stderr_ehandler_create
 	pool = pool_alloconly_create
 		("stderr_error_handler", sizeof(struct sieve_error_handler));
 	ehandler = p_new(pool, struct sieve_error_handler, 1);
-	sieve_error_handler_init(ehandler, pool, max_errors);
+	sieve_error_handler_init(ehandler, svinst, pool, max_errors);
 
 	ehandler->verror = sieve_stderr_verror;
 	ehandler->vwarning = sieve_stderr_vwarning;
@@ -542,7 +595,8 @@ static void sieve_strbuf_vdebug
 }
 
 struct sieve_error_handler *sieve_strbuf_ehandler_create
-(string_t *strbuf, bool crlf, unsigned int max_errors)
+(struct sieve_instance *svinst, string_t *strbuf, bool crlf,
+	unsigned int max_errors)
 {
 	pool_t pool;
 	struct sieve_strbuf_ehandler *ehandler;
@@ -551,7 +605,7 @@ struct sieve_error_handler *sieve_strbuf_ehandler_create
 	ehandler = p_new(pool, struct sieve_strbuf_ehandler, 1);
 	ehandler->errors = strbuf;
 
-	sieve_error_handler_init(&ehandler->handler, pool, max_errors);
+	sieve_error_handler_init(&ehandler->handler, svinst, pool, max_errors);
 
 	ehandler->handler.verror = sieve_strbuf_verror;
 	ehandler->handler.vwarning = sieve_strbuf_vwarning;
@@ -609,14 +663,14 @@ static void sieve_logfile_vprintf
 	} T_END;
 
 	if ( ret < 0 ) {
-		sieve_sys_error(
+		sieve_sys_error(ehandler->handler.svinst,
 			"o_stream_send() failed on logfile %s: %m", ehandler->logfile);		
 	}
 }
 
 inline static void sieve_logfile_printf
-(struct sieve_logfile_ehandler *ehandler, const char *location, const char *prefix,
-	const char *fmt, ...) 
+(struct sieve_logfile_ehandler *ehandler, const char *location,
+	const char *prefix, const char *fmt, ...) 
 {
 	va_list args;
 	va_start(args, fmt);
@@ -628,22 +682,23 @@ inline static void sieve_logfile_printf
 
 static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 {
-	int fd;
+	struct sieve_instance *svinst = ehandler->handler.svinst;
 	struct ostream *ostream = NULL;
 	struct stat st;
 	struct tm *tm;
 	char buf[256];
 	time_t now;
+	int fd;
 
 	/* Open the logfile */
 
 	fd = open(ehandler->logfile, O_CREAT | O_APPEND | O_WRONLY, 0600);
 	if (fd == -1) {
 		if ( errno == EACCES ) {
-			sieve_sys_error("failed to open logfile (LOGGING TO STDERR): %s",
+			sieve_sys_error(svinst, "failed to open logfile (LOGGING TO STDERR): %s",
 				eacces_error_get_creating("open", ehandler->logfile));
 		} else {
-			sieve_sys_error("failed to open logfile (LOGGING TO STDERR): "
+			sieve_sys_error(svinst, "failed to open logfile (LOGGING TO STDERR): "
 				"open(%s) failed: %m", ehandler->logfile);
 		}
 		fd = STDERR_FILENO;
@@ -652,11 +707,11 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 
 		/* Stat the log file to obtain size information */
 		if ( fstat(fd, &st) != 0 ) {
-			sieve_sys_error("failed to stat logfile (logging to STDERR): "
+			sieve_sys_error(svinst, "failed to stat logfile (logging to STDERR): "
 				"fstat(fd=%s) failed: %m", ehandler->logfile);
 			
 			if ( close(fd) < 0 ) {
-				sieve_sys_error("failed to close logfile after error: "
+				sieve_sys_error(svinst, "failed to close logfile after error: "
 					"close(fd=%s) failed: %m", ehandler->logfile);
 			}
 
@@ -669,14 +724,15 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 			
 			/* Close open file */
 			if ( close(fd) < 0 ) {
-				sieve_sys_error("failed to close logfile: close(fd=%s) failed: %m",
-					ehandler->logfile);
+				sieve_sys_error(svinst, 
+					"failed to close logfile: close(fd=%s) failed: %m", ehandler->logfile);
 			}
 			
 			/* Rotate logfile */
 			rotated = t_strconcat(ehandler->logfile, ".0", NULL);
 			if ( rename(ehandler->logfile, rotated) < 0 ) {
-				sieve_sys_error("failed to rotate logfile: rename(%s, %s) failed: %m", 
+				sieve_sys_error(svinst,
+					"failed to rotate logfile: rename(%s, %s) failed: %m", 
 					ehandler->logfile, rotated);
 			}
 			
@@ -684,11 +740,13 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 			fd = open(ehandler->logfile, O_CREAT | O_WRONLY | O_TRUNC, 0600);
 			if (fd == -1) {
 				if ( errno == EACCES ) {
-					sieve_sys_error("failed to open logfile (LOGGING TO STDERR): %s",
+					sieve_sys_error(svinst,
+						"failed to open logfile (LOGGING TO STDERR): %s",
 						eacces_error_get_creating("open", ehandler->logfile));
 				} else {
-					sieve_sys_error("failed to open logfile (LOGGING TO STDERR): "
-						"open(%s) failed: %m", ehandler->logfile);
+					sieve_sys_error(svinst,
+						"failed to open logfile (LOGGING TO STDERR): open(%s) failed: %m", 
+						ehandler->logfile);
 				}
 				fd = STDERR_FILENO;
 			}
@@ -698,7 +756,7 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 	ostream = o_stream_create_fd(fd, 0, FALSE);
 	if ( ostream == NULL ) {
 		/* Can't we do anything else in this most awkward situation? */
-		sieve_sys_error("failed to open log stream on open file: "
+		sieve_sys_error(svinst, "failed to open log stream on open file: "
 			"o_stream_create_fd(fd=%s) failed "
 			"(non-critical messages are not logged!)", ehandler->logfile);
 	} 
@@ -776,7 +834,7 @@ static void sieve_logfile_free
 		o_stream_destroy(&(handler->stream));
 		if ( handler->fd != STDERR_FILENO ){
 			if ( close(handler->fd) < 0 ) {
-				sieve_sys_error("failed to close logfile: "
+				sieve_sys_error(ehandler->svinst, "failed to close logfile: "
 					"close(fd=%s) failed: %m", handler->logfile);
 			}
 		}
@@ -784,14 +842,14 @@ static void sieve_logfile_free
 }
 
 struct sieve_error_handler *sieve_logfile_ehandler_create
-(const char *logfile, unsigned int max_errors)
+(struct sieve_instance *svinst, const char *logfile, unsigned int max_errors)
 {
 	pool_t pool;
 	struct sieve_logfile_ehandler *ehandler;
 
 	pool = pool_alloconly_create("logfile_error_handler", 512);
 	ehandler = p_new(pool, struct sieve_logfile_ehandler, 1);
-	sieve_error_handler_init(&ehandler->handler, pool, max_errors);
+	sieve_error_handler_init(&ehandler->handler, svinst, pool, max_errors);
 
 	ehandler->handler.verror = sieve_logfile_verror;
 	ehandler->handler.vwarning = sieve_logfile_vwarning;

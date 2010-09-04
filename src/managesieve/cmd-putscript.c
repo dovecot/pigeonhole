@@ -199,8 +199,8 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 
 			/* Prepare error handler */
 			errors = str_new(default_pool, 1024);
-			ehandler = sieve_strbuf_ehandler_create
-				(errors, TRUE, client->set->managesieve_max_compile_errors);
+			ehandler = sieve_strbuf_ehandler_create(client->svinst, errors, TRUE, 
+				client->set->managesieve_max_compile_errors);
 
 			/* Compile */
 			if ( (sbin=sieve_compile_script(script, ehandler, NULL)) == NULL ) {

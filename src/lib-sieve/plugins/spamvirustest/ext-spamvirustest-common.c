@@ -248,8 +248,8 @@ bool ext_spamvirustest_load
 (const struct sieve_extension *ext, void **context)
 {
 	struct ext_spamvirustest_data *ext_data =
-        (struct ext_spamvirustest_data *) *context;
-    struct sieve_instance *svinst = ext->svinst;
+		(struct ext_spamvirustest_data *) *context;
+	struct sieve_instance *svinst = ext->svinst;
 	const char *ext_name, *status_header, *max_header, *status_type, 
 		*max_value;
 	enum ext_spamvirustest_status_type type;
@@ -300,7 +300,8 @@ bool ext_spamvirustest_load
 	} else if ( strcmp(status_type, "text") == 0 ) {
 		type = EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT;
 	} else {
-		sieve_sys_error("%s: invalid status type '%s'", ext_name, status_type);
+		sieve_sys_error(svinst, 
+			"%s: invalid status type '%s'", ext_name, status_type);
 		return FALSE;
 	}
 
@@ -309,24 +310,28 @@ bool ext_spamvirustest_load
 	if ( type != EXT_SPAMVIRUSTEST_STATUS_TYPE_TEXT ) {
 
 		if ( max_header != NULL && max_value != NULL ) {
-			sieve_sys_error("%s: sieve_%s_max_header and sieve_%s_max_value "
+			sieve_sys_error(svinst,
+				"%s: sieve_%s_max_header and sieve_%s_max_value "
 				"cannot both be configured", ext_name, ext_name, ext_name);
 			return TRUE;
 		}
 
 		if ( max_header == NULL && max_value == NULL ) {
-			sieve_sys_error("%s: none of sieve_%s_max_header or sieve_%s_max_value "
+			sieve_sys_error(svinst,
+				"%s: none of sieve_%s_max_header or sieve_%s_max_value "
 				"is configured", ext_name, ext_name, ext_name);
 			return TRUE;
 		}
 	} else {
 		if ( max_header != NULL ) {
-			sieve_sys_warning("%s: setting sieve_%s_max_header has no meaning "
+			sieve_sys_warning(svinst,
+				"%s: setting sieve_%s_max_header has no meaning "
 				"for sieve_%s_status_type=text", ext_name, ext_name, ext_name);
 		}
 
 		if ( max_value != NULL ) {
-			sieve_sys_warning("%s: setting sieve_%s_max_value has no meaning "
+			sieve_sys_warning(svinst,
+				"%s: setting sieve_%s_max_value has no meaning "
 				"for sieve_%s_status_type=text", ext_name, ext_name, ext_name);
 		}	
 	}
@@ -339,7 +344,8 @@ bool ext_spamvirustest_load
 
 	if ( !ext_spamvirustest_header_spec_parse
 		(&ext_data->status_header, ext_data->pool, status_header, &error) ) {
-		sieve_sys_error("%s: invalid status header specification "
+		sieve_sys_error(svinst,
+			"%s: invalid status header specification "
 			"'%s': %s", ext_name, status_header, error);
 		result = FALSE;
 	}
@@ -350,7 +356,8 @@ bool ext_spamvirustest_load
 
 			if ( max_header != NULL && !ext_spamvirustest_header_spec_parse
 				(&ext_data->max_header, ext_data->pool, max_header, &error) ) {
-				sieve_sys_error("%s: invalid max header specification "
+				sieve_sys_error(svinst,
+					"%s: invalid max header specification "
 					"'%s': %s", ext_name, max_header, error);
 				result = FALSE;
 			}
@@ -360,7 +367,8 @@ bool ext_spamvirustest_load
 			if ( result && max_value != NULL ) {
 				if ( !ext_spamvirustest_parse_decimal_value
 					(max_value, &ext_data->max_value, &error) ) {
-					sieve_sys_error("%s: invalid max value specification "
+					sieve_sys_error(svinst,
+						"%s: invalid max value specification "
 						"'%s': %s", ext_name, max_value, error);
 					result = FALSE;
 				}
@@ -387,8 +395,9 @@ bool ext_spamvirustest_load
 	if ( result ) {
 		*context = (void *) ext_data;
 	} else {
-		sieve_sys_warning("%s: extension not configured, "
-			"tests will always match against \"0\"", ext_name);
+		sieve_sys_warning(svinst, 
+			"%s: extension not configured, tests will always match against \"0\"",
+			ext_name);
 		ext_spamvirustest_unload(ext);
 		*context = NULL;
 	}

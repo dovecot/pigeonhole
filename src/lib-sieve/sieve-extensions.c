@@ -268,7 +268,8 @@ static bool _sieve_extension_load(struct sieve_extension *ext)
 	/* Call load handler */
 	if ( ext->def != NULL && ext->def->load != NULL && 
 		!ext->def->load(ext, &ext->context) ) {
-		sieve_sys_error("failed to load '%s' extension support.", ext->def->name);
+		sieve_sys_error(ext->svinst,
+			"failed to load '%s' extension support.", ext->def->name);
 		return FALSE;
 	}
 
@@ -277,9 +278,9 @@ static bool _sieve_extension_load(struct sieve_extension *ext)
 
 static void _sieve_extension_unload(struct sieve_extension *ext)
 {
-    /* Call unload handler */
-    if ( ext->def != NULL && ext->def->unload != NULL )
-        ext->def->unload(ext);
+	/* Call unload handler */
+	if ( ext->def != NULL && ext->def->unload != NULL )
+		ext->def->unload(ext);
 }
 
 static void sieve_extension_registry_init(struct sieve_instance *svinst)
@@ -544,7 +545,7 @@ void sieve_extensions_set_string
 						hash_table_lookup(ext_reg->extension_index, name);
 	
 				if ( ext == NULL || ext->def == NULL ) {
-					sieve_sys_warning(
+					sieve_sys_warning(ext->svinst,
 						"ignored unknown extension '%s' while configuring "
 						"available extensions", name);
 					continue;

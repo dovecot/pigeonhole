@@ -181,7 +181,7 @@ size_t sieve_max_script_size(struct sieve_instance *svinst);
 struct sieve_directory;
 
 struct sieve_directory *sieve_directory_open
-	(const char *path, enum sieve_error *error_r);
+	(struct sieve_instance *svinst, const char *path, enum sieve_error *error_r);
 const char *sieve_directory_get_scriptfile(struct sieve_directory *sdir);
 void sieve_directory_close(struct sieve_directory **sdir);
 

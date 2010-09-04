@@ -104,7 +104,8 @@ bool ext_include_variables_load
 	/* Sanity assert */
 	i_assert( *global_vars_r == NULL );
 
-	*global_vars_r = sieve_variable_scope_binary_read(this_ext, sblock, offset);
+	*global_vars_r = sieve_variable_scope_binary_read
+		(this_ext->svinst, this_ext, sblock, offset);
 
 	return ( *global_vars_r != NULL );
 }

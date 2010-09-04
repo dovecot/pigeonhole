@@ -301,8 +301,8 @@ void sieve_variable_scope_binary_unref
 }
 
 struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
-(const struct sieve_extension *ext, struct sieve_binary_block *sblock,
-	sieve_size_t *address)
+(struct sieve_instance *svinst, const struct sieve_extension *ext,
+	struct sieve_binary_block *sblock, sieve_size_t *address)
 {
 	struct sieve_variable_scope *scope;
 	struct sieve_variable_scope_binary *scpbin;
@@ -314,13 +314,15 @@ struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
 
 	/* Read scope size */	
 	if ( !sieve_binary_read_unsigned(sblock, address, &scope_size) ) {
-		sieve_sys_error("%s: variable scope: failed to read size", ext_name);
+		sieve_sys_error
+			(svinst, "%s: variable scope: failed to read size", ext_name);
 		return NULL;
 	}
 
 	/* Check size limit */
 	if ( scope_size > EXT_VARIABLES_MAX_SCOPE_SIZE ) {
-		sieve_sys_error("%s: variable scope: size exceeds the limit (%u > %u)", 
+		sieve_sys_error(svinst,
+			"%s: variable scope: size exceeds the limit (%u > %u)", 
 			ext_name, scope_size, EXT_VARIABLES_MAX_SCOPE_SIZE );
 		return NULL;
 	}
@@ -328,7 +330,8 @@ struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
 	/* Read offset */
 	pc = *address;	
 	if ( !sieve_binary_read_offset(sblock, address, &end_offset) ) {
-		sieve_sys_error("%s: variable scope: failed to read end offset", ext_name);
+		sieve_sys_error(svinst,
+			"%s: variable scope: failed to read end offset", ext_name);
 		return NULL;
 	}
 	
@@ -349,6 +352,7 @@ struct sieve_variable_scope *sieve_variable_scope_binary_get
 (struct sieve_variable_scope_binary *scpbin)
 {
 	const struct sieve_extension *ext = scpbin->scope->ext;
+	struct sieve_instance *svinst = ext->svinst;
 	const char *ext_name = 
 		( ext == NULL ? "variables" : sieve_extension_name(ext) );
 	unsigned int i;
@@ -362,8 +366,8 @@ struct sieve_variable_scope *sieve_variable_scope_binary_get
 			string_t *identifier;
 
 			if (!sieve_binary_read_string(scpbin->sblock, address, &identifier) ) {
-				sieve_sys_error
-					("%s: variable scope: failed to read variable name", ext_name);
+				sieve_sys_error(svinst,
+					"%s: variable scope: failed to read variable name", ext_name);
 				return NULL;
 			}
 		
@@ -714,7 +718,8 @@ bool ext_variables_interpreter_load
 	struct ext_variables_interpreter_context *ctx;
 	struct sieve_variable_scope_binary *scpbin;
 
-	scpbin = sieve_variable_scope_binary_read(NULL, renv->sblock, address);
+	scpbin = sieve_variable_scope_binary_read
+		(renv->svinst, NULL, renv->sblock, address);
 	if ( scpbin == NULL )
 		return FALSE;
 	

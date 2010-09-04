@@ -233,6 +233,7 @@ static bool ext_include_binary_save
 static bool ext_include_binary_open
 (const struct sieve_extension *ext, struct sieve_binary *sbin, void *context)
 {
+	struct sieve_instance *svinst = ext->svinst;
 	struct ext_include_binary_context *binctx = 
 		(struct ext_include_binary_context *) context;
 	struct sieve_binary_block *sblock;
@@ -245,7 +246,8 @@ static bool ext_include_binary_open
 	offset = 0;	
 		
 	if ( !sieve_binary_read_unsigned(sblock, &offset, &depcount) ) {
-		sieve_sys_error("include: failed to read include count "
+		sieve_sys_error(svinst, 
+			"include: failed to read include count "
 			"for dependency block %d of binary %s", block_id, 
 			sieve_binary_path(sbin));
 		return FALSE;
@@ -253,7 +255,8 @@ static bool ext_include_binary_open
 	
 	/* Check include limit */	
 	if ( depcount > EXT_INCLUDE_MAX_INCLUDES ) {
-		sieve_sys_error("include: binary %s includes too many scripts (%u > %u)",
+		sieve_sys_error(svinst,
+			"include: binary %s includes too many scripts (%u > %u)",
 			sieve_binary_path(sbin), depcount, EXT_INCLUDE_MAX_INCLUDES); 
 		return FALSE;
 	}
@@ -272,14 +275,16 @@ static bool ext_include_binary_open
 			!sieve_binary_read_byte(sblock, &offset, &location) ||
 			!sieve_binary_read_string(sblock, &offset, &script_name) ) {
 			/* Binary is corrupt, recompile */
-			sieve_sys_error("include: failed to read included script "
+			sieve_sys_error(svinst,
+				"include: failed to read included script "
 				"from dependency block %d of binary %s", block_id, 
 				sieve_binary_path(sbin)); 
 			return FALSE;
 		}
 
 		if ( (inc_block=sieve_binary_block_get(sbin, inc_block_id)) == NULL ) {
-			sieve_sys_error("include: failed to find block %d for included script "
+			sieve_sys_error(svinst,
+				"include: failed to find block %d for included script "
 				"from dependency block %d of binary %s", inc_block_id, block_id, 
 				sieve_binary_path(sbin)); 
 
@@ -288,7 +293,8 @@ static bool ext_include_binary_open
 		
 		if ( location >= EXT_INCLUDE_LOCATION_INVALID ) {
 			/* Binary is corrupt, recompile */
-			sieve_sys_error("include: dependency block %d of binary %s "
+			sieve_sys_error(svinst,
+				"include: dependency block %d of binary %s "
 				"reports invalid script location (id %d)", 
 				block_id, sieve_binary_path(sbin), location); 
 			return FALSE;

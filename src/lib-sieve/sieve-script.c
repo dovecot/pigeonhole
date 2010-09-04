@@ -142,7 +142,7 @@ static void sieve_script_handle_file_error
 			sieve_error(ehandler, name, "sieve script does not exist");
 		else {
 			if ( svinst->debug )
-				sieve_sys_debug("script file %s not found", t_abspath(path));
+				sieve_sys_debug(svinst, "script file %s not found", t_abspath(path));
 			*error_r = SIEVE_ERROR_NOT_FOUND;
 		}
 		break;
@@ -403,7 +403,7 @@ struct istream *sieve_script_open
 	if ( result == NULL ) {
 		/* Something went wrong, close the fd */
 		if ( close(fd) != 0 ) {
-			sieve_sys_error(
+			sieve_sys_error(script->svinst, 
 				"failed to close sieve script: close(fd=%s) failed: %m", 
 				script->path);
 		}

@@ -9,6 +9,7 @@
 #include "sieve-stringlist.h"
 #include "sieve-error-private.h"
 
+#include "testsuite-common.h"
 #include "testsuite-log.h"
 
 /*
@@ -40,8 +41,7 @@ static void _testsuite_log_verror
 	pool_t pool = _testsuite_logmsg_pool;
 	struct _testsuite_log_message msg;
 
-	if ( _testsuite_log_stdout ) 	
-	{
+	if ( _testsuite_log_stdout ) {
 		va_list args_copy;
 		VA_COPY(args_copy, args);
 
@@ -52,7 +52,7 @@ static void _testsuite_log_verror
 			fprintf(stdout,
 				"LOG: error: %s: %s.\n", location, t_strdup_vprintf(fmt, args_copy));
 	}
-	
+
 	msg.location = p_strdup(pool, location);
 	msg.message = p_strdup_vprintf(pool, fmt, args);
 
@@ -78,8 +78,7 @@ static void _testsuite_log_vwarning
 	pool_t pool = _testsuite_logmsg_pool;
 	struct _testsuite_log_message msg;
 
-	if ( _testsuite_log_stdout ) 	
-	{
+	if ( _testsuite_log_stdout ) {
 		va_list args_copy;
 		VA_COPY(args_copy, args);
 
@@ -90,11 +89,11 @@ static void _testsuite_log_vwarning
 			fprintf(stdout,
 				"LOG: warning: %s: %s.\n", location, t_strdup_vprintf(fmt, args_copy));
 	}
-	
+
 	msg.location = p_strdup(pool, location);
 	msg.message = p_strdup_vprintf(pool, fmt, args);
 
-	array_append(&_testsuite_log_warnings, &msg, 1);	
+	array_append(&_testsuite_log_warnings, &msg, 1);
 }
 
 static struct sieve_error_handler *_testsuite_log_ehandler_create(void)
@@ -105,7 +104,7 @@ static struct sieve_error_handler *_testsuite_log_ehandler_create(void)
 	pool = pool_alloconly_create
 		("testsuite_log_ehandler", sizeof(struct sieve_error_handler));
 	ehandler = p_new(pool, struct sieve_error_handler, 1);
-	sieve_error_handler_init(ehandler, pool, 0);
+	sieve_error_handler_init(ehandler, testsuite_sieve_instance, pool, 0);
 
 	ehandler->verror = _testsuite_log_verror;
 	ehandler->vwarning = _testsuite_log_vwarning;
@@ -121,7 +120,7 @@ static struct sieve_error_handler *_testsuite_log_main_ehandler_create(void)
 	pool = pool_alloconly_create
 		("testsuite_log_main_ehandler", sizeof(struct sieve_error_handler));
 	ehandler = p_new(pool, struct sieve_error_handler, 1);
-	sieve_error_handler_init(ehandler, pool, 0);
+	sieve_error_handler_init(ehandler, testsuite_sieve_instance, pool, 0);
 
 	ehandler->verror = _testsuite_log_main_verror;
 	ehandler->vwarning = _testsuite_log_vwarning;
@@ -143,9 +142,9 @@ void testsuite_log_clear_messages(void)
 
 	_testsuite_logmsg_pool = pool_alloconly_create
 		("testsuite_log_messages", 8192);
-	
-	p_array_init(&_testsuite_log_errors, _testsuite_logmsg_pool, 128);	
-	p_array_init(&_testsuite_log_warnings, _testsuite_logmsg_pool, 128);	
+
+	p_array_init(&_testsuite_log_errors, _testsuite_logmsg_pool, 128);
+	p_array_init(&_testsuite_log_warnings, _testsuite_logmsg_pool, 128);
 
 	sieve_error_handler_reset(testsuite_log_ehandler);
 }
@@ -158,10 +157,10 @@ void testsuite_log_init(bool log_stdout)
 {
 	_testsuite_log_stdout = log_stdout;
 
-	testsuite_log_ehandler = _testsuite_log_ehandler_create(); 	
+	testsuite_log_ehandler = _testsuite_log_ehandler_create(); 
 	sieve_error_handler_accept_infolog(testsuite_log_ehandler, TRUE);
 
-	testsuite_log_main_ehandler = _testsuite_log_main_ehandler_create(); 	
+	testsuite_log_main_ehandler = _testsuite_log_main_ehandler_create(); 
 
 	sieve_system_ehandler_set(testsuite_log_ehandler);
 
@@ -170,8 +169,6 @@ void testsuite_log_init(bool log_stdout)
 
 void testsuite_log_deinit(void)
 {
-	sieve_system_ehandler_reset();
-
 	sieve_error_handler_unref(&testsuite_log_ehandler);
 	sieve_error_handler_unref(&testsuite_log_main_ehandler);
 

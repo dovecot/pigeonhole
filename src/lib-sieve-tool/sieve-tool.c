@@ -41,7 +41,7 @@ struct sieve_tool {
 
 	char *username;
 	char *homedir;
-	
+
 	char *sieve_extensions;
 	ARRAY_TYPE(const_string) sieve_plugins;
 
@@ -515,8 +515,8 @@ struct sieve_binary *sieve_tool_script_compile
 {
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
-	
-	ehandler = sieve_stderr_ehandler_create(0);
+
+	ehandler = sieve_stderr_ehandler_create(svinst, 0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	if ( (sbin = sieve_compile(svinst, filename, name, ehandler, NULL)) == NULL )
@@ -526,14 +526,14 @@ struct sieve_binary *sieve_tool_script_compile
 
 	return sbin;
 }
-	
+
 struct sieve_binary *sieve_tool_script_open
 (struct sieve_instance *svinst, const char *filename)
 {
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
-	
-	ehandler = sieve_stderr_ehandler_create(0);
+
+	ehandler = sieve_stderr_ehandler_create(svinst, 0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	if ( (sbin = sieve_open(svinst, filename, NULL, ehandler, NULL)) == NULL ) {
@@ -542,7 +542,7 @@ struct sieve_binary *sieve_tool_script_open
 	}
 
 	sieve_error_handler_unref(&ehandler);
-		
+
 	sieve_save(sbin, NULL, FALSE, NULL);
 	return sbin;
 }
@@ -561,7 +561,7 @@ void sieve_tool_dump_binary_to(struct sieve_binary *sbin, const char *filename)
 		i_fatal("Failed to create stream for sieve code dump.");
 	}
 }
-	
+
 /*
  * Commandline option parsing
  */

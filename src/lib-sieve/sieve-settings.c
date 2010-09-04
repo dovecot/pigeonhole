@@ -25,7 +25,8 @@ bool sieve_setting_get_uint_value
 	*value_r = strtoull(str_value, &endp, 10);
 
 	if ( *endp != '\0' ) {
-		sieve_sys_warning("invalid unsigned integer value for setting '%s': '%s'",
+		sieve_sys_warning(svinst,
+			"invalid unsigned integer value for setting '%s': '%s'",
 			setting, str_value);
 		return FALSE;
 	}
@@ -48,7 +49,7 @@ bool sieve_setting_get_int_value
 	*value_r = strtoll(str_value, &endp, 10);
 
 	if ( *endp != '\0' ) {
-		sieve_sys_warning("invalid integer value for setting '%s': '%s'",
+		sieve_sys_warning(svinst, "invalid integer value for setting '%s': '%s'",
 			setting, str_value);
 
 		return FALSE;
@@ -92,7 +93,8 @@ bool sieve_setting_get_size_value
 		multiply = 1024ULL*1024*1024*1024;
 		break;
 	default:
-		sieve_sys_warning("invalid unsigned integer value for setting '%s': '%s'",
+		sieve_sys_warning(svinst,
+			"invalid unsigned integer value for setting '%s': '%s'",
 			setting, str_value);
 		return FALSE;
 	}
@@ -124,7 +126,7 @@ bool sieve_setting_get_bool_value
 		return TRUE;
 	}
 
-	sieve_sys_warning("invalid boolean value for setting '%s': '%s'",
+	sieve_sys_warning(svinst, "invalid boolean value for setting '%s': '%s'",
 		setting, str_value);
 	return FALSE;
 }

@@ -8,6 +8,7 @@
 #include "mail-deliver.h"
 
 struct sieve_error_handler *lda_sieve_log_ehandler_create
-	(struct mail_deliver_context *mdctx, unsigned int max_errors);
+	(struct sieve_instance *svinst, struct mail_deliver_context *mdctx,
+		unsigned int max_errors);
 
 #endif /* __LDA_SIEVE_LOG */

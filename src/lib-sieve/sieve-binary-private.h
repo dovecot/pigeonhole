@@ -17,6 +17,7 @@
 struct sieve_binary_file {
 	pool_t pool;
 	const char *path;
+	struct sieve_instance *svinst;
 	
 	struct stat st;
 	int fd;
@@ -29,7 +30,8 @@ struct sieve_binary_file {
 };
 
 bool sieve_binary_file_open
-	(struct sieve_binary_file *file, const char *path, enum sieve_error *error_r);
+	(struct sieve_binary_file *file, struct sieve_instance *svinst,
+		const char *path, enum sieve_error *error_r);
 void sieve_binary_file_close(struct sieve_binary_file **file);
 
 /* 

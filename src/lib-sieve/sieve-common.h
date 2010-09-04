@@ -165,6 +165,9 @@ struct sieve_instance {
 	/* Extension registry */
 	struct sieve_extension_registry *ext_reg;
 
+	/* System error handler */
+	struct sieve_error_handler *system_ehandler;
+
 	/* Plugin modules */
 	struct sieve_plugin *plugins;
 

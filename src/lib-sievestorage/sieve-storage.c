@@ -399,7 +399,7 @@ struct sieve_error_handler *sieve_storage_get_error_handler
 	if ( storage->ehandler == NULL ) {
 		pool_t pool = pool_alloconly_create("sieve_storage_ehandler", 512);
 		ehandler = p_new(pool, struct sieve_storage_ehandler,1);
-		sieve_error_handler_init(&ehandler->handler, pool, 1);
+		sieve_error_handler_init(&ehandler->handler, storage->svinst, pool, 1);
 
 		ehandler->handler.verror = sieve_storage_verror;
 		ehandler->storage = storage;

@@ -64,10 +64,12 @@ struct sieve_binary_block_header {
  * Saving the binary to a file. 
  */
 
-static inline bool _save_skip(struct ostream *stream, size_t size)
+static inline bool _save_skip
+(struct sieve_binary *sbin, struct ostream *stream, size_t size)
 {	
 	if ( (o_stream_seek(stream, stream->offset + size)) <= 0 ) {
-		sieve_sys_error("binary save: failed to skip output stream "
+		sieve_sys_error(sbin->svinst,
+			"binary save: failed to skip output stream "
 			"to position %"PRIuUOFF_T": %s", stream->offset + size,
 			strerror(stream->stream_errno));
 		return FALSE;
@@ -77,12 +79,13 @@ static inline bool _save_skip(struct ostream *stream, size_t size)
 }
 
 static inline bool _save_skip_aligned
-(struct ostream *stream, size_t size, uoff_t *offset)
+(struct sieve_binary *sbin, struct ostream *stream, size_t size, 
+	uoff_t *offset)
 {
 	uoff_t aligned_offset = SIEVE_BINARY_ALIGN(stream->offset);
 	
 	if ( (o_stream_seek(stream, aligned_offset + size)) <= 0 ) {
-		sieve_sys_error("binary save: failed to skip output stream "
+		sieve_sys_error(sbin->svinst, "binary save: failed to skip output stream "
 			"to position %"PRIuUOFF_T": %s", aligned_offset + size,
 			strerror(stream->stream_errno));
 		return FALSE;
@@ -95,7 +98,8 @@ static inline bool _save_skip_aligned
 }
 
 /* FIXME: Is this even necessary for a file? */
-static bool _save_full(struct ostream *stream, const void *data, size_t size)
+static bool _save_full
+(struct sieve_binary *sbin, struct ostream *stream, const void *data, size_t size)
 {
 	size_t bytes_left = size;
 	const void *pdata = data;
@@ -104,7 +108,8 @@ static bool _save_full(struct ostream *stream, const void *data, size_t size)
 		ssize_t ret;
 		
 		if ( (ret=o_stream_send(stream, pdata, bytes_left)) <= 0 ) {
-			sieve_sys_error("binary save: failed to write %"PRIuSIZE_T" bytes "
+			sieve_sys_error(sbin->svinst,
+				"binary save: failed to write %"PRIuSIZE_T" bytes "
 				"to output stream: %s", bytes_left, strerror(stream->stream_errno));
 			return FALSE;
 		}
@@ -117,7 +122,8 @@ static bool _save_full(struct ostream *stream, const void *data, size_t size)
 }
 
 static bool _save_aligned
-(struct ostream *stream, const void *data, size_t size, uoff_t *offset)
+(struct sieve_binary *sbin, struct ostream *stream, const void *data,
+	size_t size, uoff_t *offset)
 {	
 	uoff_t aligned_offset = SIEVE_BINARY_ALIGN(stream->offset);
 
@@ -125,11 +131,11 @@ static bool _save_aligned
 	
 	/* Align the data by adding zeroes to the output stream */
 	if ( stream->offset < aligned_offset ) {
-		if ( !_save_skip(stream, aligned_offset - stream->offset) ) 
+		if ( !_save_skip(sbin, stream, aligned_offset - stream->offset) ) 
 			return FALSE;
 	}
 	
-	if ( !_save_full(stream, data, size) )
+	if ( !_save_full(sbin, stream, data, size) )
 		return FALSE;
 	
 	o_stream_uncork(stream); 
@@ -157,11 +163,11 @@ static bool _save_block
 	block_header.id = id;
 	block_header.size = size;
 	
-	if ( !_save_aligned(stream, &block_header,
+	if ( !_save_aligned(sbin, stream, &block_header,
 		sizeof(block_header), &block->offset) )
 		return FALSE;
 	
-	return _save_aligned(stream, data, size, NULL);
+	return _save_aligned(sbin, stream, data, size, NULL);
 }
 
 static bool _save_block_index_record
@@ -179,8 +185,9 @@ static bool _save_block_index_record
 	header.ext_id = block->ext_index;
 	header.offset = block->offset;
 	
-	if ( !_save_full(stream, &header, sizeof(header)) ) {
-		sieve_sys_error("binary save: failed to save block index header %d", id);
+	if ( !_save_full(sbin, stream, &header, sizeof(header)) ) {
+		sieve_sys_error(sbin->svinst,
+			"binary save: failed to save block index header %d", id);
 		return FALSE;
 	}
 	
@@ -215,14 +222,14 @@ static bool _sieve_binary_save
 	header.version_minor = SIEVE_BINARY_VERSION_MINOR;
 	header.blocks = blk_count;
 
-	if ( !_save_aligned(stream, &header, sizeof(header), NULL) ) {
-		sieve_sys_error("binary save: failed to save header");
+	if ( !_save_aligned(sbin, stream, &header, sizeof(header), NULL) ) {
+		sieve_sys_error(sbin->svinst, "binary save: failed to save header");
 		return FALSE;
 	} 
 	
 	/* Skip block index for now */
 	
-	if ( !_save_skip_aligned(stream, 
+	if ( !_save_skip_aligned(sbin, stream, 
 		sizeof(struct sieve_binary_block_index) * blk_count, &block_index) )
 		return FALSE;
 	
@@ -277,7 +284,8 @@ int sieve_binary_save
 	/* Use default path if none is specified */
 	if ( path == NULL ) {
 		if ( sbin->script == NULL ) {
-			sieve_sys_error("binary save: cannot determine default path "
+			sieve_sys_error(sbin->svinst, 
+				"binary save: cannot determine default path "
 				"with missing script object");
 			if ( error_r != NULL )
 				*error_r = SIEVE_ERROR_NOT_POSSIBLE;
@@ -289,7 +297,7 @@ int sieve_binary_save
 	/* Check whether saving is necessary */
 	if ( !update && sbin->path != NULL && strcmp(sbin->path, path) == 0 ) {
 		if ( sbin->svinst->debug ) {
-			sieve_sys_debug("binary save: not saving binary %s, "
+			sieve_sys_debug(sbin->svinst, "binary save: not saving binary %s, "
 				"because it is already stored", path);
 		}		
 		return 0;
@@ -302,13 +310,15 @@ int sieve_binary_save
 	fd = safe_mkstemp_hostpid(temp_path, save_mode, (uid_t)-1, (gid_t)-1);
 	if ( fd < 0 ) {
 		if ( errno == EACCES ) {
-			sieve_sys_error("binary save: failed to create temporary file: %s",
+			sieve_sys_error(sbin->svinst,
+				"binary save: failed to create temporary file: %s",
 				eacces_error_get_creating("open", str_c(temp_path)));
 			if ( error_r != NULL )
 				*error_r = SIEVE_ERROR_NO_PERM;
 		} else {
-			sieve_sys_error("binary save: failed to create temporary file: "
-				"open(%s) failed: %m", str_c(temp_path));
+			sieve_sys_error(sbin->svinst,
+				"binary save: failed to create temporary file: open(%s) failed: %m",
+				str_c(temp_path));
 			if ( error_r != NULL )
 				*error_r = SIEVE_ERROR_TEMP_FAIL;
 		}
@@ -327,19 +337,20 @@ int sieve_binary_save
 
 	/* Close saved binary */ 
 	if ( close(fd) < 0 ) {
-		sieve_sys_error("binary save: failed to close temporary file: "
+		sieve_sys_error(sbin->svinst,
+			"binary save: failed to close temporary file: "
 			"close(fd=%s) failed: %m", str_c(temp_path));
 	}
 
 	/* Replace any original binary atomically */
 	if ( result && (rename(str_c(temp_path), path) < 0) ) {
 		if ( errno == EACCES ) {
-			sieve_sys_error("binary save: failed to save binary: %s", 
+			sieve_sys_error(sbin->svinst, "binary save: failed to save binary: %s", 
 				eacces_error_get_creating("rename", path));
 			if ( error_r != NULL )
 				*error_r = SIEVE_ERROR_NO_PERM;
 		} else { 		
-			sieve_sys_error("binary save: failed to save binary: "
+			sieve_sys_error(sbin->svinst, "binary save: failed to save binary: "
 				"rename(%s, %s) failed: %m", str_c(temp_path), path);
 			if ( error_r != NULL )
 				*error_r = SIEVE_ERROR_TEMP_FAIL;
@@ -350,8 +361,9 @@ int sieve_binary_save
 	if ( result < 0 ) {
 		/* Get rid of temp output (if any) */
 		if ( unlink(str_c(temp_path)) < 0 && errno != ENOENT ) {
-			sieve_sys_error("binary save: failed to clean up after error: "
-				"unlink(%s) failed: %m", str_c(temp_path));
+			sieve_sys_error(sbin->svinst, 
+				"binary save: failed to clean up after error: unlink(%s) failed: %m",
+				str_c(temp_path));
 		}
 	} else {
 		if ( sbin->path == NULL ) {
@@ -367,7 +379,8 @@ int sieve_binary_save
  */
 
 bool sieve_binary_file_open
-(struct sieve_binary_file *file, const char *path, enum sieve_error *error_r)
+(struct sieve_binary_file *file, 
+	struct sieve_instance *svinst, const char *path, enum sieve_error *error_r)
 {
 	int fd;
 	bool result = TRUE;
@@ -383,13 +396,13 @@ bool sieve_binary_file_open
 				*error_r = SIEVE_ERROR_NOT_FOUND;
 			break;
 		case EACCES:
-			sieve_sys_error("binary open: failed to open: %s", 
+			sieve_sys_error(svinst, "binary open: failed to open: %s", 
 				eacces_error_get("open", path));
 			if ( error_r != NULL )
 				*error_r = SIEVE_ERROR_NO_PERM;
 			break;
 		default:
-			sieve_sys_error("binary open: failed to open: "
+			sieve_sys_error(svinst, "binary open: failed to open: "
 				"open(%s) failed: %m", path);
 			if ( error_r != NULL )
 				*error_r = SIEVE_ERROR_TEMP_FAIL;
@@ -400,24 +413,27 @@ bool sieve_binary_file_open
 
 	if ( fstat(fd, &st) < 0 ) {
 		if ( errno != ENOENT ) {
-			sieve_sys_error("binary open: fstat(fd=%s) failed: %m", path);
+			sieve_sys_error(svinst,
+				"binary open: fstat(fd=%s) failed: %m", path);
 		}
 		result = FALSE;
 	}
 
 	if ( result && !S_ISREG(st.st_mode) ) {
-		sieve_sys_error("binary open: %s is not a regular file", path);
+		sieve_sys_error(svinst, 
+			"binary open: %s is not a regular file", path);
 		result = FALSE;		
 	}
 	
 	if ( !result )	{
 		if ( close(fd) < 0 ) {
-			sieve_sys_error("binary open: close(fd=%s) failed after error: %m",
-				path);
+			sieve_sys_error(svinst,
+				"binary open: close(fd=%s) failed after error: %m", path);
 		}
 		return FALSE;
 	}
 
+	file->svinst = svinst;
 	file->fd = fd;
 	file->st = st;
 
@@ -428,8 +444,9 @@ void sieve_binary_file_close(struct sieve_binary_file **file)
 {
 	if ( (*file)->fd != -1 ) {
 		if ( close((*file)->fd) < 0 ) {
-			sieve_sys_error("binary close: failed to close: "
-				"close(fd=%s) failed: %m", (*file)->path);
+			sieve_sys_error((*file)->svinst, 
+				"binary close: failed to close: close(fd=%s) failed: %m",
+				(*file)->path);
 		}
 	}
 
@@ -557,6 +574,7 @@ static struct sieve_binary_file *_file_memory_open(const char *path)
 static bool _file_lazy_read
 (struct sieve_binary_file *file, off_t *offset, void *buffer, size_t size)
 {
+	struct sieve_instance *svinst = file->svinst;
 	int ret;
 	void *indata = buffer;
 	size_t insize = size;
@@ -566,7 +584,7 @@ static bool _file_lazy_read
 	/* Seek to the correct position */ 
 	if ( *offset != file->offset && 
 		lseek(file->fd, *offset, SEEK_SET) == (off_t) -1 ) {
-		sieve_sys_error("binary read:"
+		sieve_sys_error(svinst, "binary read:"
 			"failed to seek(fd, %lld, SEEK_SET) in binary %s: %m", 
 			(long long) *offset, file->path);
 		return FALSE;
@@ -576,11 +594,11 @@ static bool _file_lazy_read
 	while (insize > 0) {
 		if ( (ret=read(file->fd, indata, insize)) <= 0 ) {
 			if ( ret == 0 ) 
-				sieve_sys_error(
+				sieve_sys_error(svinst, 
 					"binary read: binary %s is truncated (more data expected)", 
 					file->path);
 			else
-				sieve_sys_error(
+				sieve_sys_error(svinst,
 					"binary read: failed to read from binary %s: %m", file->path);
 			break;
 		}
@@ -626,7 +644,7 @@ static buffer_t *_file_lazy_load_buffer
 }
 
 static struct sieve_binary_file *_file_lazy_open
-(const char *path, enum sieve_error *error_r)
+(struct sieve_instance *svinst, const char *path, enum sieve_error *error_r)
 {
 	pool_t pool;
 	struct sieve_binary_file *file;
@@ -638,7 +656,7 @@ static struct sieve_binary_file *_file_lazy_open
 	file->load_data = _file_lazy_load_data;
 	file->load_buffer = _file_lazy_load_buffer;
 	
-	if ( !sieve_binary_file_open(file, path, error_r) ) {
+	if ( !sieve_binary_file_open(file, svinst, path, error_r) ) {
 		pool_unref(&pool);
 		return NULL;
 	}
@@ -663,14 +681,14 @@ bool sieve_binary_load_block
 		LOAD_HEADER(sbin, &offset, const struct sieve_binary_block_header);
 		
 	if ( header == NULL ) {
-		sieve_sys_error(
+		sieve_sys_error(sbin->svinst,
 			"binary load: binary %s is corrupt: "
 			"failed to read header of block %d", sbin->path, id);
 		return FALSE;
 	}
 	
 	if ( header->id != id ) {
-		sieve_sys_error(
+		sieve_sys_error(sbin->svinst,
 			"binary load: binary %s is corrupt: "
 			"header of block %d has non-matching id %d",
 			sbin->path, id, header->id);
@@ -679,7 +697,7 @@ bool sieve_binary_load_block
 	
 	sblock->data = sbin->file->load_buffer(sbin->file, &offset, header->size);
 	if ( sblock->data == NULL ) {
-		sieve_sys_error(
+		sieve_sys_error(sbin->svinst,
 			"binary load: failed to read block %d of binary %s (size=%d)",
 			id, sbin->path, header->size);
 		return FALSE;
@@ -696,14 +714,14 @@ static bool _read_block_index_record
 	struct sieve_binary_block *block;
 	
 	if ( record == NULL ) {
-		sieve_sys_error(
+		sieve_sys_error(sbin->svinst,
 			"binary open: binary %s is corrupt: "
 			"failed to load block index record %d", sbin->path, id);
 		return FALSE;
 	}
 	
 	if ( record->id != id ) {
-		sieve_sys_error(
+		sieve_sys_error(sbin->svinst,
 			"binary open: binary %s is corrupt: "
 			"block index record %d has unexpected id %d", sbin->path, id, record->id);
 		return FALSE;
@@ -735,7 +753,7 @@ static bool _read_extensions(struct sieve_binary_block *sblock)
 				ext = sieve_extension_get_by_name(sbin->svinst, str_c(extension));	
 			
 				if ( ext == NULL ) { 
-					sieve_sys_error(
+					sieve_sys_error(sbin->svinst,
 						"binary open: binary %s requires unknown extension '%s'", 
 						sbin->path, str_sanitize(str_c(extension), 128));
 					result = FALSE;					
@@ -768,18 +786,20 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 		header = LOAD_HEADER(sbin, &offset, const struct sieve_binary_header);
 		/* Check header presence */
 		if ( header == NULL ) {
-			sieve_sys_error("binary_open: file %s is not large enough "
-				"to contain the header.", sbin->path);
+			sieve_sys_error(sbin->svinst,
+				"binary_open: file %s is not large enough to contain the header.",
+				sbin->path);
 			result = FALSE;
 
 		/* Check header validity */
 		} else if ( header->magic != SIEVE_BINARY_MAGIC ) {
 			if ( header->magic != SIEVE_BINARY_MAGIC_OTHER_ENDIAN ) 
-				sieve_sys_error("binary_open: binary %s has corrupted header "
+				sieve_sys_error(sbin->svinst, 
+					"binary_open: binary %s has corrupted header "
 					"(0x%08x) or it is not a Sieve binary", sbin->path, header->magic);
 			else if ( sbin->svinst->debug )
-				sieve_sys_debug("binary open: binary %s stored "
-					"with in different endian format "
+				sieve_sys_debug(sbin->svinst,
+					"binary open: binary %s stored with in different endian format "
 					"(automatically fixed when re-compiled)",
 					sbin->path);
 			result = FALSE;
@@ -792,8 +812,8 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 			/* Binary is of different version. Caller will have to recompile */
 			
 			if ( sbin->svinst->debug ) {
-				sieve_sys_debug("binary open: binary %s stored "
-					"with different binary version %d.%d "
+				sieve_sys_debug(sbin->svinst,
+					"binary open: binary %s stored with different binary version %d.%d "
 					"(!= %d.%d; automatically fixed when re-compiled)", sbin->path,
 					(int) header->version_major, header->version_minor,
 					SIEVE_BINARY_VERSION_MAJOR, SIEVE_BINARY_VERSION_MINOR);
@@ -802,7 +822,7 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 
 		/* Check block content */
 		} else if ( result && header->blocks == 0 ) {
-			sieve_sys_error(
+			sieve_sys_error(sbin->svinst,
 				"binary open: binary %s is corrupt: it contains no blocks",
 				sbin->path);
 			result = FALSE; 
@@ -835,8 +855,8 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 			result = FALSE;
 		} else {
 			if ( !_read_extensions(ext_block) ) {
-				sieve_sys_error("binary open: binary %s is corrupt: "
-					"failed to load extension block", 
+				sieve_sys_error(sbin->svinst,
+					"binary open: binary %s is corrupt: failed to load extension block", 
 					sbin->path);
 				result = FALSE;
 			}
@@ -858,7 +878,7 @@ struct sieve_binary *sieve_binary_open
 	i_assert( script == NULL || sieve_script_svinst(script) == svinst );
 	
 	//file = _file_memory_open(path);	
-	if ( (file=_file_lazy_open(path, error_r)) == NULL ) 
+	if ( (file=_file_lazy_open(svinst, path, error_r)) == NULL ) 
 		return NULL;
 		
 	/* Create binary object */

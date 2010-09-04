@@ -92,8 +92,8 @@ struct sieve_variable_scope *sieve_variable_scope_binary_dump
 	(const struct sieve_extension *ext, 
 		const struct sieve_dumptime_env *denv, sieve_size_t *address);
 struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
-	(const struct sieve_extension *ext, struct sieve_binary_block *sblock,
-		sieve_size_t *address);
+	(struct sieve_instance *svinst, const struct sieve_extension *ext,
+		struct sieve_binary_block *sblock, sieve_size_t *address);
 
 struct sieve_variable_scope *sieve_variable_scope_binary_get
 	(struct sieve_variable_scope_binary *scpbin);

@@ -178,7 +178,8 @@ static int cmd_test_binary_operation_execute
 
 			sieve_binary_unref(&sbin);
 		} else {
-			sieve_sys_error("failed to load binary %s", str_c(binary_name));
+			sieve_sys_error(testsuite_sieve_instance,
+				"failed to load binary %s", str_c(binary_name));
 			return SIEVE_EXEC_FAILURE;
 		}
 
@@ -194,7 +195,8 @@ static int cmd_test_binary_operation_execute
 		if ( sbin != NULL ) 
 			testsuite_binary_save(sbin, str_c(binary_name));
 		else {
-			sieve_sys_error("no compiled binary to save as %s", str_c(binary_name));
+			sieve_sys_error(testsuite_sieve_instance,
+				"no compiled binary to save as %s", str_c(binary_name));
 			return SIEVE_EXEC_FAILURE;
 		}
 	} else {

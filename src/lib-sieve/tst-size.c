@@ -263,7 +263,7 @@ static int tst_size_operation_execute
 	/* Get the size of the message */
 	if ( !tst_size_get(renv, &mail_size) ) {
 		/* FIXME: improve this error */
-		sieve_sys_error("failed to assess message size");
+		sieve_sys_error(renv->svinst, "failed to assess message size");
 		return SIEVE_EXEC_FAILURE;
 	}
 	

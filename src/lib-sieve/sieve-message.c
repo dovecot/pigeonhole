@@ -142,21 +142,31 @@ const void *sieve_message_context_extension_get
 
 static void sieve_message_envelope_parse(struct sieve_message_context *msgctx)
 {
+	struct sieve_instance *svinst = msgctx->svinst;
+
 	/* FIXME: log parse problems properly; logs only 'failure' now */
 
 	msgctx->envelope_recipient = sieve_address_parse_envelope_path
 		(msgctx->pool, msgctx->msgdata->to_address);	
 
-	if ( msgctx->envelope_recipient == NULL )
-		sieve_sys_error("envelope recipient address '%s' is unparsable", msgctx->msgdata->to_address); 
-	else if ( msgctx->envelope_recipient->local_part == NULL )
-		sieve_sys_error("envelope recipient address '%s' is a null path", msgctx->msgdata->to_address); 
+	if ( msgctx->envelope_recipient == NULL ) {
+		sieve_sys_error(svinst,
+			"envelope recipient address '%s' is unparsable",
+			msgctx->msgdata->to_address); 
+	} else if ( msgctx->envelope_recipient->local_part == NULL ) {
+		sieve_sys_error(svinst,
+			"envelope recipient address '%s' is a null path",
+			msgctx->msgdata->to_address);
+	} 
 
 	msgctx->envelope_sender = sieve_address_parse_envelope_path
 		(msgctx->pool, msgctx->msgdata->return_path);	
 
-	if ( msgctx->envelope_sender == NULL )
-		sieve_sys_error("envelope sender address '%s' is unparsable", msgctx->msgdata->return_path); 
+	if ( msgctx->envelope_sender == NULL ) {
+		sieve_sys_error(svinst, 
+			"envelope sender address '%s' is unparsable", 
+			msgctx->msgdata->return_path);
+	}
 
 	msgctx->envelope_parsed = TRUE;
 }

@@ -15,6 +15,7 @@
 
 struct var_expand_table;
 
+struct sieve_instance;
 struct sieve_script;
 struct sieve_error_handler;
 
@@ -33,15 +34,17 @@ typedef void (*sieve_error_func_t)
  * System errors
  */
 
-extern struct sieve_error_handler *_sieve_system_ehandler;
+void sieve_sys_error
+	(struct sieve_instance *svinst, const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_sys_warning
+	(struct sieve_instance *svinst, const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_sys_info
+	(struct sieve_instance *svinst, const char *fmt, ...) ATTR_FORMAT(2, 3);
+void sieve_sys_debug
+	(struct sieve_instance *svinst, const char *fmt, ...) ATTR_FORMAT(2, 3);
 
-#define sieve_sys_error(...) sieve_error(_sieve_system_ehandler, NULL, __VA_ARGS__ )
-#define sieve_sys_warning(...) sieve_warning(_sieve_system_ehandler, NULL, __VA_ARGS__ )
-#define sieve_sys_info(...) sieve_info(_sieve_system_ehandler, NULL, __VA_ARGS__ )
-#define sieve_sys_debug(...) sieve_debug(_sieve_system_ehandler, NULL, __VA_ARGS__ )
-
-void sieve_system_ehandler_set(struct sieve_error_handler *ehandler);
-void sieve_system_ehandler_reset(void);
+void sieve_system_ehandler_set
+	(struct sieve_error_handler *ehandler);
 
 /*
  * Main error functions
@@ -121,19 +124,20 @@ void sieve_error_handler_reset(struct sieve_error_handler *ehandler);
 
 /* Write errors to dovecot master log */
 struct sieve_error_handler *sieve_master_ehandler_create
-	(unsigned int max_errors);
+	(struct sieve_instance *svinst, unsigned int max_errors);
 
 /* Write errors to stderr */
 struct sieve_error_handler *sieve_stderr_ehandler_create
-	(unsigned int max_errors);
+	(struct sieve_instance *svinst, unsigned int max_errors);
 
 /* Write errors into a string buffer */
 struct sieve_error_handler *sieve_strbuf_ehandler_create
-	(string_t *strbuf, bool crlf, unsigned int max_errors);
+	(struct sieve_instance *svinst, string_t *strbuf, bool crlf,
+		unsigned int max_errors);
 
 /* Write errors to a logfile */
 struct sieve_error_handler *sieve_logfile_ehandler_create
-	(const char *logfile, unsigned int max_errors);  
+	(struct sieve_instance *svinst, const char *logfile, unsigned int max_errors);  
 
 /* Wrapper: prefix all log messages */
 struct sieve_error_handler *sieve_prefix_ehandler_create

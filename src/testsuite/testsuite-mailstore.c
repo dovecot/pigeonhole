@@ -134,7 +134,8 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 
 	box = mailbox_alloc(ns->list, folder, flags);
 	if ( mailbox_open(box) < 0 ) {
-		sieve_sys_error("testsuite: failed to open mailbox '%s'", folder);
+		sieve_sys_error(testsuite_sieve_instance,
+			"testsuite: failed to open mailbox '%s'", folder);
 		mailbox_free(&box);
 		return NULL;	
 	}
@@ -142,7 +143,8 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 	/* Sync mailbox */
 
 	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ) < 0 ) {
-		sieve_sys_error("testsuite: failed to sync mailbox '%s'", folder);
+		sieve_sys_error(testsuite_sieve_instance,
+			"testsuite: failed to sync mailbox '%s'", folder);
 		mailbox_free(&box);
 		return NULL;
 	}

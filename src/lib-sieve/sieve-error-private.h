@@ -7,12 +7,21 @@
 #include "sieve-error.h"
 
 /*
+ * Initialization
+ */
+
+void sieve_errors_init(struct sieve_instance *svinst);
+void sieve_errors_deinit(struct sieve_instance *svinst);
+
+/*
  * Error handler object
  */
 
 struct sieve_error_handler {
 	pool_t pool;
 	int refcount;
+
+	struct sieve_instance *svinst;
 
 	struct sieve_error_handler *parent;
 
@@ -40,7 +49,8 @@ struct sieve_error_handler {
 };
 
 void sieve_error_handler_init
-	(struct sieve_error_handler *ehandler, pool_t pool, unsigned int max_errors);
+	(struct sieve_error_handler *ehandler, struct sieve_instance *svinst, 
+		pool_t pool, unsigned int max_errors);
 
 void sieve_error_handler_init_from_parent
 	(struct sieve_error_handler *ehandler, pool_t pool, 
