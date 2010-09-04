@@ -240,6 +240,16 @@ void sieve_result_error
 	va_end(args);
 }
 
+void sieve_result_user_error
+(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+{
+	va_list args;
+	
+	va_start(args, fmt);	
+	sieve_user_verror(aenv->ehandler, NULL, fmt, args); 
+	va_end(args);
+}
+
 void sieve_result_warning
 (const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 {
@@ -249,6 +259,17 @@ void sieve_result_warning
 	sieve_vwarning(aenv->ehandler, NULL, fmt, args);
 	va_end(args);
 }
+
+void sieve_result_user_warning
+(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+{
+	va_list args;
+	
+	va_start(args, fmt);	
+	sieve_user_vwarning(aenv->ehandler, NULL, fmt, args);
+	va_end(args);
+}
+
 
 void sieve_result_log
 (const struct sieve_action_exec_env *aenv, const char *fmt, ...)
@@ -533,8 +554,8 @@ static int _sieve_result_add_action
 		sieve_runtime_error(renv, action.location, 
 			"number of %s actions exceeds policy limit", act_def->name);
 		return -1;
-	}	
-		
+	}
+
 	if ( kaction != NULL ) {
 		/* Use existing keep action to define new one */
 		raction = kaction;
@@ -546,7 +567,7 @@ static int _sieve_result_add_action
 		raction->tr_context = NULL;
 		raction->success = FALSE;
 	}
-	
+
 	raction->action.context = context;
 	raction->action.def = act_def;
 	raction->action.ext = ext;

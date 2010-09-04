@@ -65,6 +65,38 @@ void sieve_errors_deinit(struct sieve_instance *svinst)
  * System errors
  */
 
+void sieve_sys_verror
+(struct sieve_instance *svinst, const char *fmt, va_list args)
+{	
+	T_BEGIN { 
+		sieve_verror(svinst->system_ehandler, NULL, fmt, args);
+	} T_END;
+}
+
+void sieve_sys_vwarning
+(struct sieve_instance *svinst, const char *fmt, va_list args)
+{	
+	T_BEGIN { 
+		sieve_vwarning(svinst->system_ehandler, NULL, fmt, args);
+	} T_END;
+}
+
+void sieve_sys_vinfo
+(struct sieve_instance *svinst, const char *fmt, va_list args)
+{	
+	T_BEGIN { 
+		sieve_vinfo(svinst->system_ehandler, NULL, fmt, args);
+	} T_END;
+}
+
+void sieve_sys_vdebug
+(struct sieve_instance *svinst, const char *fmt, va_list args)
+{	
+	T_BEGIN { 
+		sieve_vdebug(svinst->system_ehandler, NULL, fmt, args);
+	} T_END;
+}
+
 void sieve_sys_error(struct sieve_instance *svinst, const char *fmt, ...)
 {
 	va_list args;
@@ -121,6 +153,73 @@ void sieve_system_ehandler_set
 	sieve_error_handler_unref(&svinst->system_ehandler);
 	svinst->system_ehandler = ehandler;
 	sieve_error_handler_ref(ehandler);
+}
+
+/*
+ * User errors
+ */
+
+void sieve_user_verror
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, va_list args)
+{
+	if ( ehandler == NULL ) return;
+	
+	sieve_direct_verror(ehandler, location, fmt, args);
+}
+
+void sieve_user_vwarning
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, va_list args)
+{
+	if ( ehandler == NULL ) return;
+
+	sieve_direct_vwarning(ehandler, location, fmt, args);
+}
+
+void sieve_user_vinfo
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, va_list args)
+{
+	if ( ehandler == NULL ) return;
+
+	sieve_direct_vinfo(ehandler, location, fmt, args);
+}
+
+void sieve_user_error
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { sieve_user_verror(ehandler, location, fmt, args); } T_END;
+	
+	va_end(args);
+}
+
+void sieve_user_warning
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { sieve_user_vwarning(ehandler, location, fmt, args); } T_END;
+
+	va_end(args);
+}
+
+void sieve_user_info
+(struct sieve_error_handler *ehandler, const char *location, 
+	const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	T_BEGIN { sieve_user_vinfo(ehandler, location, fmt, args); } T_END;
+	
+	va_end(args);
 }
 
 /*
@@ -187,23 +286,21 @@ void sieve_vdebug
 }
 
 void sieve_vcritical
-	(struct sieve_error_handler *ehandler, const char *location, 
-		const char *fmt, va_list args)
+(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
+	const char *location, const char *fmt, va_list args)
 {
 	char str[256];
 	struct tm *tm; 
-	
-	tm = localtime(&ioloop_time);
-	
+		
 	if ( location == NULL || *location == '\0' ) {
-		sieve_sys_error
-			(ehandler->svinst, "%s", t_strdup_vprintf(fmt, args));
+		sieve_verror(svinst->system_ehandler, NULL, fmt, args);
 	} else {
-		sieve_sys_error
-			(ehandler->svinst, "%s: %s", location, t_strdup_vprintf(fmt, args));
+		sieve_verror(svinst->system_ehandler, location, fmt, args);
 	}
 
 	if ( ehandler == NULL ) return;
+
+	tm = localtime(&ioloop_time);
 	
 	sieve_error(ehandler, location, "%s", 
 		strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ? 
@@ -259,13 +356,13 @@ void sieve_debug
 }
 
 void sieve_critical
-(struct sieve_error_handler *ehandler, const char *location, 
-	const char *fmt, ...)
+(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
+	const char *location, const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
 	
-	T_BEGIN { sieve_vcritical(ehandler, location, fmt, args); } T_END;
+	T_BEGIN { sieve_vcritical(svinst, ehandler, location, fmt, args); } T_END;
 	
 	va_end(args);
 }

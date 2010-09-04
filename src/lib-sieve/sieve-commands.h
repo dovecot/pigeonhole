@@ -192,13 +192,9 @@ bool sieve_command_block_exits_unconditionally
 	sieve_validator_error(validator, (context)->ast_node->source_line, __VA_ARGS__)
 #define sieve_command_validate_warning(validator, context, ...) \
 	sieve_validator_warning(validator, (context)->ast_node->source_line, __VA_ARGS__)
-#define sieve_command_validate_critical(validator, context, ...) \
-	sieve_validator_critical(validator, (context)->ast_node->source_line, __VA_ARGS__)
 
 #define sieve_command_generate_error(gentr, context, ...) \
 	sieve_generator_error(gentr, (context)->ast_node->source_line, __VA_ARGS__)
-#define sieve_command_generate_critical(gentr, context, ...) \
-	sieve_generator_critical(gentr, (context)->ast_node->source_line, __VA_ARGS__)
 
 /* Utility macros */
 

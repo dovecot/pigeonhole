@@ -281,7 +281,7 @@ static struct sieve_binary *lda_sieve_open
 			if ( script_path == srctx->user_script && srctx->userlog != NULL ) {
 				sieve_sys_error(svinst,
 					"failed to open script %s "
-					"(view logfile %s for more information)",
+					"(view user logfile %s for more information)",
 					script_path, srctx->userlog);
 			} else {
 				sieve_sys_error(svinst,
@@ -325,7 +325,7 @@ static struct sieve_binary *lda_sieve_recompile
 		if ( script_path == srctx->user_script && srctx->userlog != NULL ) {
 			sieve_sys_error(svinst,
 				"failed to re-compile script %s "
-				"(view logfile %s for more information)",
+				"(view user logfile %s for more information)",
 				script_path, srctx->userlog);
 		} else {
 			sieve_sys_error(svinst,
@@ -342,25 +342,32 @@ static int lda_sieve_handle_exec_status
 (struct lda_sieve_run_context *srctx, const char *script_path, int status)
 {
 	struct sieve_instance *svinst = srctx->svinst;
+	const char *userlog_notice = "";
 	int ret;
+
+	if ( script_path == srctx->user_script && srctx->userlog != NULL ) {
+		userlog_notice = t_strdup_printf
+			(" (user logfile %s may reveal additional details)", srctx->userlog);
+	}
 
 	switch ( status ) {
 	case SIEVE_EXEC_FAILURE:
 		sieve_sys_error(svinst,
-			"execution of script %s failed, but implicit keep was successful", 
-				script_path);
+			"execution of script %s failed, but implicit keep was successful%s", 
+			script_path, userlog_notice);
 		ret = 1;
 		break;
 	case SIEVE_EXEC_BIN_CORRUPT:
 		sieve_sys_error(svinst,
 			"!!BUG!!: binary compiled from %s is still corrupt; "
-				"bailing out and reverting to default delivery", 
-				script_path);
+			"bailing out and reverting to default delivery", 
+			script_path);
 		ret = -1;
 		break;
 	case SIEVE_EXEC_KEEP_FAILED:
 		sieve_sys_error(svinst,
-			"script %s failed with unsuccessful implicit keep", script_path);
+			"script %s failed with unsuccessful implicit keep%s", 
+			script_path, userlog_notice);
 		ret = -1;
 		break;
 	default:
@@ -419,10 +426,11 @@ static int lda_sieve_singlescript_execute
 		/* Execute again */
 
 		if ( debug )
-			sieve_sys_debug(svinst, "executing script from %s", sieve_get_source(sbin));
+			sieve_sys_debug
+				(svinst, "executing script from %s", sieve_get_source(sbin));
 
 		if ( user_script )
-        	sieve_error_handler_copy_masterlog(ehandler, TRUE);
+			sieve_error_handler_copy_masterlog(ehandler, TRUE);
 
 		ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv, ehandler, NULL);
 

@@ -485,7 +485,7 @@ static bool act_reject_send
 	fprintf(f, "\r\n\r\n--%s--\r\n", boundary);
 
 	if ( !sieve_smtp_close(senv, smtp_handle) ) {
-		sieve_result_error(aenv, 
+		sieve_result_error(aenv,
 			"failed to send rejection message to <%s> "
 			"(refer to server log for more information)",
 			str_sanitize(sender, 80));

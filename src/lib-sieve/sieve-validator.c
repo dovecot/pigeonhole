@@ -136,19 +136,6 @@ void sieve_validator_error
 	va_end(args);
 }
 
-void sieve_validator_critical
-(struct sieve_validator *valdtr, unsigned int source_line, 
-	const char *fmt, ...) 
-{
-	va_list args;
-	
-	va_start(args, fmt);
-	sieve_vcritical(valdtr->ehandler, 
-		sieve_error_script_location(valdtr->script, source_line),
-		fmt, args);
-	va_end(args);
-}
-
 /* 
  * Validator object 
  */

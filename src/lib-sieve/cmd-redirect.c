@@ -361,7 +361,7 @@ static bool act_redirect_commit
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *dupeid;
-	
+
 	/* Prevent mail loops if possible */
 	dupeid = msgdata->id == NULL ? 
 		NULL : t_strdup_printf("%s-%s", msgdata->id, ctx->to_address);
@@ -373,16 +373,16 @@ static bool act_redirect_commit
 			return TRUE;
 		}
 	}
-	
+
 	/* Try to forward the message */
 	if ( act_redirect_send(aenv, ctx) ) {
-	
+
 		/* Mark this message id as forwarded to the specified destination */
 		if (dupeid != NULL) {
 			sieve_action_duplicate_mark(senv, dupeid, strlen(dupeid),
 				ioloop_time + CMD_REDIRECT_DUPLICATE_KEEP);
 		}
-	
+
 		sieve_result_log(aenv, "forwarded to <%s>", 
 			str_sanitize(ctx->to_address, 128));	
 
@@ -394,7 +394,7 @@ static bool act_redirect_commit
 
 		return TRUE;
 	}
-  
+ 
 	return FALSE;
 }
 

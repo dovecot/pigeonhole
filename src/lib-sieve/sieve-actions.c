@@ -500,14 +500,14 @@ static bool act_store_execute
 	 * succeeded. 
 	 */
 	aenv->exec_status->last_storage = mailbox_get_storage(trans->box);
-	
+
 	/* Start mail transaction */
 	trans->mail_trans = mailbox_transaction_begin
 		(trans->box, MAILBOX_TRANSACTION_FLAG_EXTERNAL);
 
 	/* Create mail object for stored message */
 	trans->dest_mail = mail_alloc(trans->mail_trans, 0, NULL);
- 
+
 	/* Store the message */
 	save_ctx = mailbox_save_alloc(trans->mail_trans);
 	mailbox_save_set_dest_mail(save_ctx, trans->dest_mail);
@@ -515,7 +515,7 @@ static bool act_store_execute
 	/* Apply keywords and flags that side-effects may have added */
 	if ( trans->flags_altered ) {
 		keywords = act_store_keywords_create(aenv, &trans->keywords, trans->box);
-		
+
 		mailbox_save_set_flags(save_ctx, trans->flags, keywords);
 	}
 
@@ -523,12 +523,12 @@ static bool act_store_execute
 		sieve_act_store_get_storage_error(aenv, trans);
  		result = FALSE;
 	}
- 	
+
 	/* Deallocate keywords */
  	if ( keywords != NULL ) {
  		mailbox_keywords_unref(trans->box, &keywords);
  	}
- 		 	
+ 
 	return result;
 }
 
@@ -555,7 +555,7 @@ static void act_store_log_status
 	/* Store disabled? */
 	if ( trans->disabled ) {
 		sieve_result_log(aenv, "store into mailbox %s skipped", mailbox_name);
-	
+
 	/* Store redundant? */
 	} else if ( trans->redundant ) {
 		sieve_result_log(aenv, "left message in mailbox %s", mailbox_name);
@@ -563,16 +563,23 @@ static void act_store_log_status
 	/* Store failed? */
 	} else if ( !status ) {
 		const char *errstr;
-		enum mail_error error;
+		enum mail_error error_code;
 
-		if ( trans->error != NULL )
+		if ( trans->error != NULL ) {
 			errstr = trans->error;
-		else
+			error_code = trans->error_code;
+		} else {
 			errstr = mail_storage_get_last_error
-				(mailbox_get_storage(trans->box), &error);
-	
-		sieve_result_error(aenv, "failed to store into mailbox %s: %s", 
-			mailbox_name, errstr);
+				(mailbox_get_storage(trans->box), &error_code);
+		}
+
+		if ( error_code != MAIL_ERROR_NOTFOUND || error_code != MAIL_ERROR_PARAMS ) {
+			sieve_result_error(aenv, "failed to store into mailbox %s: %s",
+				mailbox_name, errstr);
+		} else {
+			sieve_result_user_error(aenv, "failed to store into mailbox %s: %s",
+				mailbox_name, errstr);
+		}
 
 	/* Store aborted? */
 	} else if ( rolled_back ) {

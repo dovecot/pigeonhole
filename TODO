@@ -1,7 +1,6 @@
 Current activities:
 
 * Improve error handling and logging
-	- Avoid reporting user-caused errors to the master log.
 	- Review logging and error handling; add more warning/info/debug messages
 	  where useful.
 
