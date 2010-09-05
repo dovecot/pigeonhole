@@ -275,16 +275,15 @@ static struct sieve_binary *lda_sieve_open
 		if ( *error_r == SIEVE_ERROR_NOT_FOUND ) {
 			if ( debug )
 				sieve_sys_debug(svinst, "script file %s is missing", script_path);
+		} else if ( *error_r == SIEVE_ERROR_NOT_VALID && 
+			script_path == srctx->user_script && srctx->userlog != NULL ) {
+			sieve_sys_error(svinst,
+				"failed to open script %s "
+				"(view user logfile %s for more information)",
+				script_path, srctx->userlog);
 		} else {
-			if ( script_path == srctx->user_script && srctx->userlog != NULL ) {
-				sieve_sys_error(svinst,
-					"failed to open script %s "
-					"(view user logfile %s for more information)",
-					script_path, srctx->userlog);
-			} else {
-				sieve_sys_error(svinst,
-					"failed to open script %s", script_path);
-			}
+			sieve_sys_error(svinst,
+				"failed to open script %s", script_path);
 		}
 
 		return NULL;
@@ -304,11 +303,12 @@ static struct sieve_binary *lda_sieve_recompile
 		( script_path == srctx->main_script ? "main_script" : NULL );
 	struct sieve_error_handler *ehandler;
 	struct sieve_binary *sbin;
+	bool debug = srctx->mdctx->dest_user->mail_debug;
 
 	/* Warn */
 
-	sieve_sys_warning(svinst, "encountered corrupt binary: re-compiling script %s",
-		script_path);
+	sieve_sys_warning(svinst,
+		"encountered corrupt binary: re-compiling script %s", script_path);
 
 	/* Recompile */
 
@@ -320,7 +320,12 @@ static struct sieve_binary *lda_sieve_recompile
 	if ( (sbin=sieve_compile
 		(svinst, script_path, script_name, ehandler, error_r)) == NULL ) {
 
-		if ( script_path == srctx->user_script && srctx->userlog != NULL ) {
+		if ( *error_r == SIEVE_ERROR_NOT_FOUND ) {
+			if ( debug )
+				sieve_sys_debug(svinst, "script file %s is missing for re-compile", 
+					script_path);
+		} else if ( *error_r == SIEVE_ERROR_NOT_VALID && 
+			script_path == srctx->user_script && srctx->userlog != NULL ) {
 			sieve_sys_error(svinst,
 				"failed to re-compile script %s "
 				"(view user logfile %s for more information)",
