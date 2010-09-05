@@ -133,7 +133,7 @@ static bool act_discard_commit
 	const struct sieve_action_exec_env *aenv, 
 	void *tr_context ATTR_UNUSED, bool *keep)
 {
-	sieve_result_log(aenv, 
+	sieve_result_global_log(aenv, 
 		"marked message to be discarded if not explicitly delivered "
 		"(discard action)");
 	*keep = FALSE;

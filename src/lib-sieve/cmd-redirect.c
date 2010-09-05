@@ -308,7 +308,8 @@ static bool act_redirect_send
 	
 	/* Just to be sure */
 	if ( !sieve_smtp_available(senv) ) {
-		sieve_result_warning(aenv, "redirect action has no means to send mail.");
+		sieve_result_global_warning
+			(aenv, "redirect action has no means to send mail.");
 		return TRUE;
 	}
 	
@@ -341,7 +342,7 @@ static bool act_redirect_send
 
 	/* Close SMTP transport */
 	if ( !sieve_smtp_close(senv, smtp_handle) ) {
-		sieve_result_error(aenv, 
+		sieve_result_global_error(aenv, 
 			"failed to redirect message to <%s> "
 			"(refer to server log for more information)",
 			str_sanitize(ctx->to_address, 80));
@@ -368,7 +369,7 @@ static bool act_redirect_commit
 	if (dupeid != NULL) {
 		/* Check whether we've seen this message before */
 		if (sieve_action_duplicate_check(senv, dupeid, strlen(dupeid))) {
-			sieve_result_log(aenv, "discarded duplicate forward to <%s>",
+			sieve_result_global_log(aenv, "discarded duplicate forward to <%s>",
 				str_sanitize(ctx->to_address, 128));
 			return TRUE;
 		}
@@ -383,7 +384,7 @@ static bool act_redirect_commit
 				ioloop_time + CMD_REDIRECT_DUPLICATE_KEEP);
 		}
 
-		sieve_result_log(aenv, "forwarded to <%s>", 
+		sieve_result_global_log(aenv, "forwarded to <%s>", 
 			str_sanitize(ctx->to_address, 128));	
 
 		/* Indicate that message was successfully forwarded */

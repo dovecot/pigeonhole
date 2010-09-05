@@ -703,7 +703,7 @@ static bool act_notify_send
 
 	/* Just to be sure */
 	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
-		sieve_result_warning(aenv, 
+		sieve_result_global_warning(aenv, 
 			"notify action has no means to send mail");
 		return TRUE;
 	}
@@ -763,11 +763,11 @@ static bool act_notify_send
 		fprintf(f, "%s\r\n", act->message);
 			
 		if ( sieve_smtp_close(senv, smtp_handle) ) {
-			sieve_result_log(aenv, 
+			sieve_result_global_log(aenv, 
 				"sent mail notification to <%s>", 
 				str_sanitize(recipients[i].normalized, 80));
 		} else {
-			sieve_result_error(aenv,
+			sieve_result_global_error(aenv,
 				"failed to send mail notification to <%s> "
 				"(refer to system log for more information)", 
 				str_sanitize(recipients[i].normalized, 80));
@@ -794,7 +794,7 @@ static bool act_notify_commit
 		/* Theoretically multiple headers could exist, so lets make sure */
 		while ( *hdsp != NULL ) {
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
-				sieve_result_log(aenv, 
+				sieve_result_global_log(aenv, 
 					"not sending notification for auto-submitted message from <%s>", 
 					str_sanitize(msgdata->return_path, 128));	
 					return TRUE;				 

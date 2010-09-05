@@ -16,6 +16,8 @@
  */
 
 struct sieve_action_exec_env { 
+	struct sieve_instance *svinst;
+
 	struct sieve_result *result;
 	struct sieve_error_handler *ehandler;
 

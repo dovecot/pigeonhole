@@ -858,7 +858,8 @@ static bool act_vacation_send
 	/* Check smpt functions just to be sure */
 
 	if ( !sieve_smtp_available(senv) ) {
-		sieve_result_warning(aenv, "vacation action has no means to send mail");
+		sieve_result_global_warning(aenv,
+			"vacation action has no means to send mail");
 		return TRUE;
 	}
 
@@ -937,7 +938,7 @@ static bool act_vacation_send
 
 	/* Close smtp session */    
 	if ( !sieve_smtp_close(senv, smtp_handle) ) {
-		sieve_result_error(aenv, 
+		sieve_result_global_error(aenv, 
 			"failed to send vacation response to <%s> "
 			"(refer to server log for more information)", 
 			str_sanitize(reply_to, 128));	
@@ -979,14 +980,15 @@ static bool act_vacation_commit
 	/* Is the recipient unset? 
 	 */
 	if ( recipient == NULL ) {
-		sieve_result_warning(aenv, "vacation action aborted: envelope recipient is <>");
+		sieve_result_global_warning
+			(aenv, "vacation action aborted: envelope recipient is <>");
 		return TRUE;
 	}
 
 	/* Is the return path unset ?
 	 */
 	if ( sender == NULL ) {
-		sieve_result_log(aenv, "discarded vacation reply to <>");
+		sieve_result_global_log(aenv, "discarded vacation reply to <>");
 		return TRUE;
 	}    
 	
@@ -995,7 +997,7 @@ static bool act_vacation_commit
 	 */
 	if ( sieve_address_compare(sender, recipient, TRUE) 
 		== 0 ) {
-		sieve_result_log(aenv, "discarded vacation reply to own address");	
+		sieve_result_global_log(aenv, "discarded vacation reply to own address");	
 		return TRUE;
 	}
 	
@@ -1005,7 +1007,8 @@ static bool act_vacation_commit
 	
 		if ( sieve_action_duplicate_check(senv, dupl_hash, sizeof(dupl_hash)) ) 
 		{
-			sieve_result_log(aenv, "discarded duplicate vacation response to <%s>",
+			sieve_result_global_log(aenv,
+				"discarded duplicate vacation response to <%s>",
 				str_sanitize(sender, 128));
 			return TRUE;
 		}
@@ -1017,7 +1020,7 @@ static bool act_vacation_commit
 		if ( mail_get_headers
 			(msgdata->mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
 			/* Yes, bail out */
-			sieve_result_log(aenv, 
+			sieve_result_global_log(aenv, 
 				"discarding vacation response to mailinglist recipient <%s>", 
 				str_sanitize(sender, 128));	
 			return TRUE;				 
@@ -1032,7 +1035,7 @@ static bool act_vacation_commit
 		hdsp = headers;
 		while ( *hdsp != NULL ) {
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
-				sieve_result_log(aenv, 
+				sieve_result_global_log(aenv, 
 					"discarding vacation response to auto-submitted message from <%s>", 
 					str_sanitize(sender, 128));	
 					return TRUE;				 
@@ -1049,7 +1052,7 @@ static bool act_vacation_commit
 		while ( *hdsp != NULL ) {
 			if ( strcasecmp(*hdsp, "junk") == 0 || strcasecmp(*hdsp, "bulk") == 0 ||
 				strcasecmp(*hdsp, "list") == 0 ) {
-				sieve_result_log(aenv, 
+				sieve_result_global_log(aenv, 
 					"discarding vacation response to precedence=%s message from <%s>", 
 					*hdsp, str_sanitize(sender, 128));	
 					return TRUE;				 
@@ -1060,7 +1063,7 @@ static bool act_vacation_commit
 	
 	/* Do not reply to system addresses */
 	if ( _is_system_address(sender) ) {
-		sieve_result_log(aenv, 
+		sieve_result_global_log(aenv, 
 			"not sending vacation response to system address <%s>", 
 			str_sanitize(sender, 128));	
 		return TRUE;				
@@ -1097,7 +1100,7 @@ static bool act_vacation_commit
 
 	if ( *hdsp == NULL ) {
 		/* No, bail out */
-		sieve_result_log(aenv, 
+		sieve_result_global_log(aenv, 
 			"discarding vacation response for message implicitly delivered to <%s>",
 			recipient );	
 		return TRUE;				 
@@ -1106,7 +1109,7 @@ static bool act_vacation_commit
 	/* Send the message */
 	
 	if ( act_vacation_send(aenv, ctx, sender, reply_from) ) {
-		sieve_result_log(aenv, "sent vacation response to <%s>", 
+		sieve_result_global_log(aenv, "sent vacation response to <%s>", 
 			str_sanitize(sender, 128));	
 
 		/* Mark as replied */

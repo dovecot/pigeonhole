@@ -31,8 +31,9 @@
 #define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
 
 static void sieve_storage_verror
-	(struct sieve_error_handler *ehandler ATTR_UNUSED, 
-		const char *location ATTR_UNUSED, const char *fmt, va_list args);
+	(struct sieve_error_handler *ehandler ATTR_UNUSED,
+		unsigned int flags ATTR_UNUSED, const char *location ATTR_UNUSED,
+		const char *fmt, va_list args);
 
 static const char *sieve_storage_get_relative_link_path
 	(const char *active_path, const char *storage_dir) 
@@ -411,8 +412,8 @@ struct sieve_error_handler *sieve_storage_get_error_handler
 }
 
 static void sieve_storage_verror
-(struct sieve_error_handler *ehandler, const char *location ATTR_UNUSED,
-    const char *fmt, va_list args)
+(struct sieve_error_handler *ehandler, unsigned int flags ATTR_UNUSED,
+	const char *location ATTR_UNUSED, const char *fmt, va_list args)
 {
 	struct sieve_storage_ehandler *sehandler = 
 		(struct sieve_storage_ehandler *) ehandler; 

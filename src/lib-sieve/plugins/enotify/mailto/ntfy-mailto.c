@@ -401,7 +401,7 @@ static bool ntfy_mailto_send
 
 	/* Just to be sure */
 	if ( !sieve_smtp_available(senv) ) {
-		sieve_enotify_warning(nenv, 
+		sieve_enotify_global_warning(nenv, 
 			"notify mailto method has no means to send mail");
 		return TRUE;
 	}
@@ -531,11 +531,11 @@ static bool ntfy_mailto_send
 		}
 	
 		if ( sieve_smtp_close(senv, smtp_handle) ) {
-			sieve_enotify_info(nenv, 
+			sieve_enotify_global_info(nenv, 
 				"sent mail notification to <%s>", 
 				str_sanitize(recipients[i].normalized, 80));
 		} else {
-			sieve_enotify_error(nenv,
+			sieve_enotify_global_error(nenv,
 				"failed to send mail notification to <%s> "
 				"(refer to system log for more information)", 
 				str_sanitize(recipients[i].normalized, 80));
@@ -556,7 +556,7 @@ static bool ntfy_mailto_action_execute
 	/* Is the recipient unset? 
 	 */
 	if ( recipient == NULL ) {
-		sieve_enotify_warning(nenv, 
+		sieve_enotify_global_warning(nenv, 
 			"notify mailto action aborted: envelope recipient is <>");
 		return TRUE;
 	}
@@ -569,7 +569,7 @@ static bool ntfy_mailto_action_execute
 		/* Theoretically multiple headers could exist, so lets make sure */
 		while ( *hdsp != NULL ) {
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
-				sieve_enotify_info(nenv, 
+				sieve_enotify_global_info(nenv, 
 					"not sending notification for auto-submitted message from <%s>", 
 					str_sanitize(sender, 128));	
 					return TRUE;				 

@@ -290,7 +290,7 @@ void sieve_runtime_error
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_runtime_vmsg(renv, sieve_user_verror, location, fmt, args);
+	sieve_runtime_vmsg(renv, sieve_verror, location, fmt, args);
 	va_end(args);
 }
 
@@ -301,7 +301,7 @@ void sieve_runtime_warning
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_runtime_vmsg(renv, sieve_user_vwarning, location, fmt, args);
+	sieve_runtime_vmsg(renv, sieve_vwarning, location, fmt, args);
 	va_end(args);
 }
 
@@ -312,7 +312,7 @@ void sieve_runtime_log
 	va_list args;
 
 	va_start(args, fmt);
-	sieve_runtime_vmsg(renv, sieve_user_vinfo, location, fmt, args);
+	sieve_runtime_vmsg(renv, sieve_vinfo, location, fmt, args);
 	va_end(args);
 }
 

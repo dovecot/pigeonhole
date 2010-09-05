@@ -101,6 +101,8 @@ void  sieve_enotify_method_unregister
  */
 
 struct sieve_enotify_env {
+	struct sieve_instance *svinst;
+
 	const struct sieve_enotify_method *method;
 
 	struct sieve_error_handler *ehandler;
@@ -119,6 +121,8 @@ void sieve_enotify_method_printf
  */
 
 struct sieve_enotify_exec_env {
+	struct sieve_instance *svinst;
+	
 	const struct sieve_enotify_method *method;
 
 	const struct sieve_script_env *scriptenv;
@@ -154,6 +158,14 @@ struct sieve_enotify_action {
 #define sieve_enotify_info(ENV, ...) \
 	sieve_info((ENV)->ehandler, NULL, __VA_ARGS__ )
 
+#define sieve_enotify_global_error(ENV, ...) \
+	sieve_global_error((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
+	
+#define sieve_enotify_global_warning(ENV, ...) \
+	sieve_global_warning((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
+
+#define sieve_enotify_global_info(ENV, ...) \
+	sieve_global_info((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
 
 #endif /* __SIEVE_EXT_ENOTIFY_H */
 

@@ -35,8 +35,9 @@ ARRAY_DEFINE(_testsuite_log_errors, struct _testsuite_log_message);
 ARRAY_DEFINE(_testsuite_log_warnings, struct _testsuite_log_message);
 
 static void _testsuite_log_verror
-(struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location,
-	const char *fmt, va_list args)
+(struct sieve_error_handler *ehandler ATTR_UNUSED,
+	unsigned int flags ATTR_UNUSED, const char *location, const char *fmt,
+	va_list args)
 {
 	pool_t pool = _testsuite_logmsg_pool;
 	struct _testsuite_log_message msg;
@@ -60,8 +61,9 @@ static void _testsuite_log_verror
 }
 
 static void _testsuite_log_main_verror
-(struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location,
-	const char *fmt, va_list args)
+(struct sieve_error_handler *ehandler ATTR_UNUSED,
+	unsigned int flags ATTR_UNUSED, const char *location, const char *fmt,
+	va_list args)
 {
 	if ( location == NULL || *location == '\0' )
 		fprintf(stderr, 
@@ -72,8 +74,9 @@ static void _testsuite_log_main_verror
 }
 
 static void _testsuite_log_vwarning
-(struct sieve_error_handler *ehandler ATTR_UNUSED, const char *location,
-	const char *fmt, va_list args)
+(struct sieve_error_handler *ehandler ATTR_UNUSED,
+	unsigned int flags ATTR_UNUSED, const char *location, const char *fmt,
+	va_list args)
 {
 	pool_t pool = _testsuite_logmsg_pool;
 	struct _testsuite_log_message msg;

@@ -403,7 +403,8 @@ static bool act_reject_send
 
 	/* Just to be sure */
 	if ( !sieve_smtp_available(senv) ) {
-		sieve_result_warning(aenv, "reject action has no means to send mail");
+		sieve_result_global_warning
+			(aenv, "reject action has no means to send mail");
 		return TRUE;
 	}
 
@@ -485,7 +486,7 @@ static bool act_reject_send
 	fprintf(f, "\r\n\r\n--%s--\r\n", boundary);
 
 	if ( !sieve_smtp_close(senv, smtp_handle) ) {
-		sieve_result_error(aenv,
+		sieve_result_global_error(aenv,
 			"failed to send rejection message to <%s> "
 			"(refer to server log for more information)",
 			str_sanitize(sender, 80));
@@ -505,13 +506,13 @@ static bool act_reject_commit
 	const char *recipient = sieve_message_get_recipient(aenv->msgctx);
 
 	if ( recipient == NULL ) {
-		sieve_result_warning(aenv, 
+		sieve_result_global_warning(aenv, 
 			"reject action aborted: envelope recipient is <>");
 		return TRUE;
 	}
 	
 	if ( rj_ctx->reason == NULL ) {
-		sieve_result_log(aenv, 
+		sieve_result_global_log(aenv, 
 			"not sending reject message (would cause second response to sender)");
     
 		*keep = FALSE;
@@ -519,14 +520,14 @@ static bool act_reject_commit
 	}
 
 	if ( sender == NULL ) {
-		sieve_result_log(aenv, "not sending reject message to <>");
+		sieve_result_global_log(aenv, "not sending reject message to <>");
     
 		*keep = FALSE;
 		return TRUE;
 	}
 		
 	if ( act_reject_send(aenv, rj_ctx, sender, recipient) ) {
-		sieve_result_log(aenv, 
+		sieve_result_global_log(aenv, 
 			"rejected message from <%s> (%s)", str_sanitize(sender, 80),
 			( rj_ctx->ereject ? "ereject" : "reject" ));
 

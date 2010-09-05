@@ -147,14 +147,13 @@ static void sieve_script_handle_file_error
 		}
 		break;
 	case EACCES:
-		sieve_critical(svinst, ehandler, name, 
-			"failed to stat sieve script: %s",
-			eacces_error_get("stat", path));
+		sieve_critical(svinst, ehandler, name, "failed to open sieve script", 
+			"failed to stat sieve script: %s", eacces_error_get("stat", path));
 		if ( error_r != NULL )
 			*error_r = SIEVE_ERROR_NO_PERM;
 		break;
 	default:
-		sieve_critical(svinst, ehandler, name, 
+		sieve_critical(svinst, ehandler, name, "failed to open sieve script", 
 			"failed to stat sieve script: stat(%s) failed: %m", path);
 		if ( error_r != NULL )
 			*error_r = SIEVE_ERROR_TEMP_FAIL;
@@ -229,6 +228,7 @@ struct sieve_script *sieve_script_init
 
 			if ( ret == 0 && !S_ISREG(st.st_mode) ) {
 				sieve_critical(svinst, ehandler, basename, 
+					"failed to open sieve script",
 					"sieve script file '%s' is not a regular file.", path);
 				if ( error_r != NULL )
 					*error_r = SIEVE_ERROR_NOT_POSSIBLE;
@@ -380,7 +380,8 @@ struct istream *sieve_script_open
 	}	
 	
 	if ( fstat(fd, &st) != 0 ) {
-		sieve_critical(script->svinst, script->ehandler, script->path, 
+		sieve_critical(script->svinst, script->ehandler, script->basename,
+			"failed to open sieve script",
 			"failed to open sieve script: fstat(fd=%s) failed: %m", script->path);
 		if ( error_r != NULL )
 			*error_r = SIEVE_ERROR_TEMP_FAIL;
@@ -388,7 +389,8 @@ struct istream *sieve_script_open
 	} else {
 		/* Re-check the file type just to be sure */
 		if ( !S_ISREG(st.st_mode) ) {
-			sieve_critical(script->svinst, script->ehandler, script->path,
+			sieve_critical(script->svinst, script->ehandler, script->basename,
+				"failed to open sieve script",
 				"sieve script file '%s' is not a regular file", script->path);
 			if ( error_r != NULL )
 				*error_r = SIEVE_ERROR_NOT_POSSIBLE;

@@ -33,8 +33,6 @@ static void lda_sieve_vlog
 	struct mail_deliver_context *mdctx = ehandler->mdctx;
 	string_t *str;
 
-	if ( _ehandler->log_master ) return;
-
 	str = t_str_new(256);
 	if ( mdctx->session_id != NULL)
 		str_printfa(str, "%s: ", mdctx->session_id);
@@ -50,27 +48,27 @@ static void lda_sieve_vlog
 }
 
 static void lda_sieve_log_verror
-(struct sieve_error_handler *ehandler, const char *location,
-	const char *fmt, va_list args) 
+(struct sieve_error_handler *ehandler, unsigned int flags ATTR_UNUSED,
+	const char *location, const char *fmt, va_list args) 
 {
 	lda_sieve_vlog(ehandler, i_error, location, fmt, args);
 }
 static void lda_sieve_log_vwarning
-(struct sieve_error_handler *ehandler, const char *location,
-	const char *fmt, va_list args) 
+(struct sieve_error_handler *ehandler, unsigned int flags ATTR_UNUSED,
+	const char *location, const char *fmt, va_list args) 
 {
 	lda_sieve_vlog(ehandler, i_warning, location, fmt, args);
 }
 static void lda_sieve_log_vinfo
-(struct sieve_error_handler *ehandler, const char *location,
-	const char *fmt, va_list args) 
+(struct sieve_error_handler *ehandler, unsigned int flags ATTR_UNUSED,
+	const char *location, const char *fmt, va_list args) 
 {
 	lda_sieve_vlog(ehandler, i_info, location, fmt, args);
 }
 
 static void lda_sieve_log_vdebug
-(struct sieve_error_handler *ehandler, const char *location,
-	const char *fmt, va_list args) 
+(struct sieve_error_handler *ehandler, unsigned int flags ATTR_UNUSED,
+	const char *location, const char *fmt, va_list args) 
 {
 	lda_sieve_vlog(ehandler, i_debug, location, fmt, args);
 }

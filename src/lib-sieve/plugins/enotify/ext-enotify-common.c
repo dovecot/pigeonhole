@@ -305,6 +305,7 @@ static bool ext_enotify_option_parse
 } 
 
 struct _ext_enotify_option_check_context {
+	struct sieve_instance *svinst;
 	struct sieve_validator *valdtr;
 	const struct sieve_enotify_method *method;
 };
@@ -323,6 +324,7 @@ static int _ext_enotify_option_check
 	
 	/* Compose log structure */
 	memset(&nenv, 0, sizeof(nenv));
+	nenv.svinst = optn_context->svinst;
 	nenv.method = method;	
 	nenv.ehandler = sieve_prefix_ehandler_create
 		(sieve_validator_error_handler(valdtr), 
@@ -366,6 +368,7 @@ bool ext_enotify_compile_check_arguments
 	struct sieve_ast_argument *from_arg, struct sieve_ast_argument *options_arg)
 {
 	const struct sieve_extension *this_ext = cmd->ext;
+	struct sieve_instance *svinst = this_ext->svinst;
 	const char *uri = sieve_ast_argument_strc(uri_arg);
 	const char *scheme;
 	const struct sieve_enotify_method *method;
@@ -397,6 +400,7 @@ bool ext_enotify_compile_check_arguments
 
 	/* Compose log structure */
 	memset(&nenv, 0, sizeof(nenv));
+	nenv.svinst = svinst;
 	nenv.method = method;	
 	
 	/* Check URI itself */
@@ -450,7 +454,8 @@ bool ext_enotify_compile_check_arguments
 	/* Check :options argument */
 	if ( result && options_arg != NULL ) {
 		struct sieve_ast_argument *option = options_arg;
-		struct _ext_enotify_option_check_context optn_context = { valdtr, method };
+		struct _ext_enotify_option_check_context optn_context = 
+			{ svinst, valdtr, method };
 		
 		/* Parse and check options */
 		result = ( sieve_ast_stringlist_map
@@ -494,6 +499,7 @@ bool ext_enotify_runtime_method_validate
 		struct sieve_enotify_env nenv;
 
 		memset(&nenv, 0, sizeof(nenv));
+		nenv.svinst = renv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create
 			(sieve_interpreter_get_error_handler(renv->interp),
@@ -558,6 +564,7 @@ const char *ext_enotify_runtime_get_method_capability
 		struct sieve_enotify_env nenv; 
 
 		memset(&nenv, 0, sizeof(nenv));
+		nenv.svinst = renv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create
 			(sieve_interpreter_get_error_handler(renv->interp),
@@ -592,6 +599,7 @@ int ext_enotify_runtime_check_operands
 		int result = SIEVE_EXEC_OK;
 
 		memset(&nenv, 0, sizeof(nenv));
+		nenv.svinst = renv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create
 			(sieve_interpreter_get_error_handler(renv->interp),

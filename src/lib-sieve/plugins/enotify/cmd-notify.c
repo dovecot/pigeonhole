@@ -502,9 +502,8 @@ static int cmd_notify_operation_execute
 /* Runtime verification */
 
 static int act_notify_check_duplicate
-(const struct sieve_runtime_env *renv ATTR_UNUSED, 
-	const struct sieve_action *act ATTR_UNUSED,
-	const struct sieve_action *act_other ATTR_UNUSED)
+(const struct sieve_runtime_env *renv, const struct sieve_action *act,
+	const struct sieve_action *act_other)
 {
 	const struct sieve_enotify_action *nact, *nact_other;
 	const struct sieve_enotify_method_def *nmth_def;
@@ -525,6 +524,7 @@ static int act_notify_check_duplicate
 		return 0;
 
 	memset(&nenv, 0, sizeof(nenv));
+	nenv.svinst = renv->svinst;
 	nenv.method = nact->method;	
 	nenv.ehandler = sieve_prefix_ehandler_create
 		(sieve_result_get_error_handler(renv->result), act->location, "notify");
@@ -578,6 +578,7 @@ static bool act_notify_commit
 	if ( method->def != NULL && method->def->action_execute != NULL )	{	
 		/* Compose log structure */
 		memset(&nenv, 0, sizeof(nenv));
+		nenv.svinst = aenv->svinst;
 		nenv.method = method;	
 		nenv.scriptenv = aenv->scriptenv;
 		nenv.msgdata = aenv->msgdata;

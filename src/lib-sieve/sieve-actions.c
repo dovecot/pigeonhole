@@ -554,11 +554,13 @@ static void act_store_log_status
 
 	/* Store disabled? */
 	if ( trans->disabled ) {
-		sieve_result_log(aenv, "store into mailbox %s skipped", mailbox_name);
+		sieve_result_global_log
+			(aenv, "store into mailbox %s skipped", mailbox_name);
 
 	/* Store redundant? */
 	} else if ( trans->redundant ) {
-		sieve_result_log(aenv, "left message in mailbox %s", mailbox_name);
+		sieve_result_global_log
+			(aenv, "left message in mailbox %s", mailbox_name);
 
 	/* Store failed? */
 	} else if ( !status ) {
@@ -573,22 +575,24 @@ static void act_store_log_status
 				(mailbox_get_storage(trans->box), &error_code);
 		}
 
-		if ( error_code != MAIL_ERROR_NOTFOUND || error_code != MAIL_ERROR_PARAMS ) {
-			sieve_result_error(aenv, "failed to store into mailbox %s: %s",
+		if ( error_code != MAIL_ERROR_NOTFOUND && error_code != MAIL_ERROR_PARAMS ) 
+			{
+			sieve_result_global_error(aenv, "failed to store into mailbox %s: %s",
 				mailbox_name, errstr);
 		} else {
-			sieve_result_user_error(aenv, "failed to store into mailbox %s: %s",
+			sieve_result_error(aenv, "failed to store into mailbox %s: %s",
 				mailbox_name, errstr);
 		}
 
 	/* Store aborted? */
 	} else if ( rolled_back ) {
-		sieve_result_log(aenv, "store into mailbox %s aborted", mailbox_name);
+		sieve_result_global_log
+			(aenv, "store into mailbox %s aborted", mailbox_name);
 
 	/* Succeeded */
 	} else {
-		sieve_result_log(aenv, "stored mail into mailbox %s", mailbox_name);
-
+		sieve_result_global_log
+			(aenv, "stored mail into mailbox %s", mailbox_name);
 	}
 }
 

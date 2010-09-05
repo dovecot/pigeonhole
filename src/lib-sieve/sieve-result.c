@@ -113,6 +113,7 @@ struct sieve_result *sieve_result_create
 		sieve_error_handler_ref(ehandler);	
 	result->ehandler = ehandler;
 
+	result->action_env.svinst = svinst;
 	result->action_env.result = result;
 	result->action_env.scriptenv = senv;
 	result->action_env.msgdata = msgdata;
@@ -240,13 +241,13 @@ void sieve_result_error
 	va_end(args);
 }
 
-void sieve_result_user_error
+void sieve_result_global_error
 (const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 {
 	va_list args;
 	
 	va_start(args, fmt);	
-	sieve_user_verror(aenv->ehandler, NULL, fmt, args); 
+	sieve_global_verror(aenv->svinst, aenv->ehandler, NULL, fmt, args); 
 	va_end(args);
 }
 
@@ -260,13 +261,13 @@ void sieve_result_warning
 	va_end(args);
 }
 
-void sieve_result_user_warning
+void sieve_result_global_warning
 (const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 {
 	va_list args;
 	
 	va_start(args, fmt);	
-	sieve_user_vwarning(aenv->ehandler, NULL, fmt, args);
+	sieve_global_vwarning(aenv->svinst, aenv->ehandler, NULL, fmt, args);
 	va_end(args);
 }
 
@@ -278,6 +279,16 @@ void sieve_result_log
 	
 	va_start(args, fmt);	
 	sieve_vinfo(aenv->ehandler, NULL, fmt, args);
+	va_end(args);
+}
+
+void sieve_result_global_log
+(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+{
+	va_list args;
+	
+	va_start(args, fmt);	
+	sieve_global_vinfo(aenv->svinst, aenv->ehandler, NULL, fmt, args);
 	va_end(args);
 }
 

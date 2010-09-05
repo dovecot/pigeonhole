@@ -402,14 +402,11 @@ static int lda_sieve_singlescript_execute
 
 	if ( user_script ) {
 		ehandler = srctx->user_ehandler;
-		sieve_error_handler_copy_masterlog(ehandler, TRUE);
 	} else {
 		ehandler = srctx->master_ehandler;
 	}
 
 	ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv, ehandler, NULL);
-
-	sieve_error_handler_copy_masterlog(ehandler, FALSE);
 
 	/* Recompile if corrupt binary */
 
@@ -429,12 +426,7 @@ static int lda_sieve_singlescript_execute
 			sieve_sys_debug
 				(svinst, "executing script from %s", sieve_get_source(sbin));
 
-		if ( user_script )
-			sieve_error_handler_copy_masterlog(ehandler, TRUE);
-
 		ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv, ehandler, NULL);
-
-		sieve_error_handler_copy_masterlog(ehandler, FALSE);
 
 		/* Save new version */
 
@@ -493,15 +485,10 @@ static int lda_sieve_multiscript_execute
 
 		/* Execute */
 
-		if ( user_script )
-			sieve_error_handler_copy_masterlog(ehandler, TRUE);
-
 		if ( debug )
 			sieve_sys_debug(svinst, "executing script from %s", sieve_get_source(sbin));
 
 		more = sieve_multiscript_run(mscript, sbin, ehandler, final);
-
-		sieve_error_handler_copy_masterlog(ehandler, FALSE);
 
 		if ( !more ) {
 			if ( sieve_multiscript_status(mscript) == SIEVE_EXEC_BIN_CORRUPT &&
@@ -519,12 +506,7 @@ static int lda_sieve_multiscript_execute
 
 				/* Execute again */
 
-				if ( user_script )
-					sieve_error_handler_copy_masterlog(ehandler, TRUE);
-
 				more = sieve_multiscript_run(mscript, sbin, ehandler, final);
-
-				sieve_error_handler_copy_masterlog(ehandler, FALSE);
 
 				/* Save new version */
 
@@ -539,12 +521,7 @@ static int lda_sieve_multiscript_execute
 
 	/* Finish execution */
 
-	if ( user_script )
-		sieve_error_handler_copy_masterlog(ehandler, TRUE);
-
 	ret = sieve_multiscript_finish(&mscript, ehandler, NULL);
-
-	sieve_error_handler_copy_masterlog(ehandler, FALSE);
 
 	return lda_sieve_handle_exec_status(srctx, last_script, ret);
 }
