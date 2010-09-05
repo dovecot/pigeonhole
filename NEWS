@@ -4,7 +4,7 @@ v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
 	  Version numbering of previous Sieve releases is continued as v0.2.0. The
 	  sources originally branched off from Sieve v0.1.5 and ManageSieve v0.11.4,
 	  but the NEWS history of much more recent releases for Dovecot v1.2 is
-	  included since these changes are all included in this release as well. 
+	  included since these changes are all included in this release as well.
 	* The ManageSieve service now binds to TCP port 4190 by default due to the 
 	  IANA port assignment for the ManageSieve service. When upgrading from v1.2,
 	  this should be taken into account. The service can be configured manually to
@@ -18,6 +18,13 @@ v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
 	  a similar manner as such debug information is included in some system
 	  executables and libraries (DWARF-like). Run-time errors can now always refer 
 	  to the proper line number in the Sieve source script.
+	* ManageSieve: changed default IMPLEMENTATION capability to from 'Dovecot' to
+	  'Dovecot Pigeonhole'.
+	* Renamed the sieved tool to sieve-dump. The original name was somewhat
+	  confusing.
+	* Updated man pages to match style and structure of new Dovecot man pages.
+	* Made testsuite commands more uniform and cleaned up many of the testsuite
+	  scripts. Some minor new tests were added in the process.
 	+ Simplified string matching API to use abstract string lists as data sources.
 	  This will also make implementing the index extension easier in the future. 
 	+ Significantly improved trace debugging with the sieve-test tool. The full
@@ -34,8 +41,18 @@ v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
 	  most notable example is that when the LDA Sieve plugin is trying to store a
 	  binary for a global script, the resulting failure message also points the
 	  administrator towards pre-compiling the script with sievec.
-	* Renamed the sieved tool to sieve-dump. The original name was somewhat
-	  confusing.
+	+ Added runtime argument value checking for several commands (redirect, date 
+	  vacation) and. When variables are used, these checks cannot be performed at
+	  compiletime. A proper runtime error now is produced when invalid data is
+	  encountered.
+	+ UTF8 validity of fileinto command argument is now checked either at compile
+	  time or at runtime. Previously, it was not checked until the store action
+	  was executed.
+	+ Validity of IMAP flags for the imap4flags extension is now checked also
+	  at runtime. Previously, it was not checked until the store action was
+	  executed.
+	+ Simplified error handling and made sure that user-caused errors are no
+	  longer written to the Dovecot master/LDA log. 
 	- Multiscript: fixed duplicate implicit keep caused by erroneous execution
 	  state update.
 	- Prevented assertion failure due to currupt binary string representation. 
@@ -45,10 +62,20 @@ v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
 	  only the last item was actually set.
 	- Variables extension: fixed :length set modifier to recognize utf8 characters
 	  in stead of octets.
-	- Testsuite: prevented innocent warning messages, i.e. part of the test,
-	  from showing up by default.
+	- Testsuite: prevented innocent warning messages, i.e. those that are part of
+	  the test, from showing up by default.
 	- ManageSieve/Sieve storage: fixed error handling of PUTSCRIPT commmand; save
 	  commit errors would not make the command fail.
+	- ManageSieve: enforced protocol syntax better with some of the commands; some
+	  commands allowed spurious extra arguments.
+	- Fixed Sieve script name checking to properly handle length limit and added
+	  0x00ff as invalid character.
+	- Removed spurious old stdio.h (top) includes; these caused compile issues on
+	  specific systems.
+	- Fixed default Sieve capability (as reported by ManageSieve): extra
+	  extensions spamtest, spamtestplus and virustest were enabled by default.
+	  These should, however, only be enabled when properly configured and there
+	  is no default configuration.
 
 Sieve NEWS history:
 

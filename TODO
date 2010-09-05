@@ -1,12 +1,8 @@
 Current activities:
 
-* Improve error handling and logging
-	- Review logging and error handling; add more warning/info/debug messages
-	  where useful.
+* ## MAKE A SECOND RELEASE (0.2.x) ##
 
 Next (in order of descending priority/precedence):
-
-* ## MAKE A SECOND RELEASE (0.2.x) ##
 
 * Finish the ereject extension
 	- Make reject/ereject use the LDA reject interface when available
