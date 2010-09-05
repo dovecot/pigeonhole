@@ -92,6 +92,9 @@ void sieve_runtime_warning
 void sieve_runtime_log
 	(const struct sieve_runtime_env *renv, const char *location, 
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
+void sieve_runtime_critical
+	(const struct sieve_runtime_env *renv, const char *location,
+		const char *user_prefix, const char *fmt, ...) ATTR_FORMAT(4, 5);
 
 /* 
  * Extension support 

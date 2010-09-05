@@ -316,6 +316,25 @@ void sieve_runtime_log
 	va_end(args);
 }
 
+void sieve_runtime_critical
+(const struct sieve_runtime_env *renv, const char *location,
+	const char *user_prefix, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+
+	T_BEGIN {
+		if ( location == NULL )
+			location = sieve_runtime_get_full_command_location(renv);
+
+		sieve_vcritical
+			(renv->svinst, renv->interp->ehandler, location, user_prefix, fmt, args); 
+	} T_END;
+
+	va_end(args);
+}
+
 /*
  * Source location
  */

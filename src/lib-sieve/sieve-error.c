@@ -377,7 +377,7 @@ void sieve_vdebug
 
 void sieve_vcritical
 (struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
-	const char *location, const char *prefix, const char *fmt, va_list args)
+	const char *location, const char *user_prefix, const char *fmt, va_list args)
 {
 	char str[256];
 	struct tm *tm; 
@@ -394,12 +394,12 @@ void sieve_vcritical
 
 	tm = localtime(&ioloop_time);
 	
-	if ( prefix == NULL || *prefix == '\0' ) {
+	if ( user_prefix == NULL || *user_prefix == '\0' ) {
 		sieve_direct_error(svinst, ehandler, 0, location, "%s",  
 			( strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ? 
 				str : CRITICAL_MSG ));	
 	} else { 
-		sieve_direct_error(svinst, ehandler, 0, location, "%s: %s", prefix,  
+		sieve_direct_error(svinst, ehandler, 0, location, "%s: %s", user_prefix,  
 			( strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ? 
 				str : CRITICAL_MSG ));
 	}	
@@ -455,13 +455,13 @@ void sieve_debug
 
 void sieve_critical
 (struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
-	const char *location, const char *prefix, const char *fmt, ...)
+	const char *location, const char *user_prefix, const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
 	
 	T_BEGIN {
-		sieve_vcritical(svinst, ehandler, location, prefix, fmt, args);
+		sieve_vcritical(svinst, ehandler, location, user_prefix, fmt, args);
 	} T_END;
 	
 	va_end(args);

@@ -106,7 +106,8 @@ void sieve_vdebug
 		const char *fmt, va_list args);
 void sieve_vcritical
 	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
-		const char *location, const char *prefix, const char *fmt, va_list args);
+		const char *location, const char *user_prefix, const char *fmt,
+		va_list args);
 
 void sieve_error
 	(struct sieve_error_handler *ehandler, const char *location, 
@@ -122,7 +123,7 @@ void sieve_debug
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_critical
 	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
-		const char *location, const char *prefix, const char *fmt, ...)
+		const char *location, const char *user_prefix, const char *fmt, ...)
 		ATTR_FORMAT(5, 6);
 
 /*
