@@ -390,7 +390,7 @@ void sieve_vcritical
 			(svinst, svinst->system_ehandler, 0, location, fmt, args);
 	}
 
-	if ( ehandler == NULL ) return;
+	if ( ehandler == NULL || ehandler == svinst->system_ehandler ) return;
 
 	tm = localtime(&ioloop_time);
 	
