@@ -53,7 +53,7 @@ const char *sieve_error_script_location
 
 void sieve_errors_init(struct sieve_instance *svinst)
 {
-	svinst->system_ehandler = sieve_master_ehandler_create(svinst, 0);
+	svinst->system_ehandler = sieve_master_ehandler_create(svinst, NULL, 0);
 }
  
 void sieve_errors_deinit(struct sieve_instance *svinst)
@@ -257,6 +257,12 @@ void sieve_system_ehandler_set
 	sieve_error_handler_unref(&svinst->system_ehandler);
 	svinst->system_ehandler = ehandler;
 	sieve_error_handler_ref(ehandler);
+}
+
+struct sieve_error_handler *sieve_system_ehandler_get
+(struct sieve_instance *svinst)
+{
+	return svinst->system_ehandler; 
 }
 
 /*
@@ -581,15 +587,42 @@ void sieve_error_handler_reset(struct sieve_error_handler *ehandler)
  * - Output errors directly to Dovecot master log
  */
 
+struct sieve_master_ehandler {
+	struct sieve_error_handler handler;
+
+	const char *prefix;
+};
+
+typedef void (*master_log_func_t)(const char *fmt, ...) ATTR_FORMAT(1, 2);
+
+static void sieve_master_vlog
+(struct sieve_error_handler *_ehandler, master_log_func_t log_func,
+	const char *location, const char *fmt, va_list args) 
+{
+	struct sieve_master_ehandler *ehandler =
+		(struct sieve_master_ehandler *) _ehandler;
+	string_t *str;
+
+	str = t_str_new(256);
+	if ( ehandler->prefix != NULL)
+		str_printfa(str, "%s: ", ehandler->prefix);
+
+	str_append(str, "sieve: ");
+
+	if ( location != NULL && *location != '\0' )
+		str_printfa(str, "%s: ", location);
+
+	str_vprintfa(str, fmt, args);
+
+	log_func("%s", str_c(str));
+}
+
 static void sieve_master_verror
-(struct sieve_error_handler *ehandler ATTR_UNUSED,
+(struct sieve_error_handler *ehandler,
 	unsigned int flags ATTR_UNUSED, const char *location, const char *fmt,
 	va_list args) 
 {
-	if ( location == NULL || *location == '\0' )
-		i_error("sieve: %s", t_strdup_vprintf(fmt, args));
-	else
-		i_error("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	sieve_master_vlog(ehandler, i_error, location, fmt, args);
 }
 
 static void sieve_master_vwarning
@@ -597,10 +630,7 @@ static void sieve_master_vwarning
 	unsigned int flags ATTR_UNUSED, const char *location, const char *fmt,
 	va_list args) 
 {
-	if ( location == NULL || *location == '\0' )
-		i_warning("sieve: %s", t_strdup_vprintf(fmt, args));
-	else
-		i_warning("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	sieve_master_vlog(ehandler, i_warning, location, fmt, args);
 }
 
 static void sieve_master_vinfo
@@ -608,10 +638,7 @@ static void sieve_master_vinfo
 	unsigned int flags ATTR_UNUSED, const char *location, const char *fmt,
 	va_list args) 
 {
-	if ( location == NULL || *location == '\0' )
-		i_info("sieve: %s", t_strdup_vprintf(fmt, args));
-	else
-		i_info("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	sieve_master_vlog(ehandler, i_info, location, fmt, args);
 }
 
 static void sieve_master_vdebug
@@ -619,32 +646,28 @@ static void sieve_master_vdebug
 	unsigned int flags ATTR_UNUSED, const char *location, const char *fmt,
 	va_list args) 
 {
-	if ( location == NULL || *location == '\0' )
-		i_debug("sieve: %s", t_strdup_vprintf(fmt, args));
-	else
-		i_debug("sieve: %s: %s", location, t_strdup_vprintf(fmt, args));
+	sieve_master_vlog(ehandler, i_debug, location, fmt, args);
 }
 
 struct sieve_error_handler *sieve_master_ehandler_create
-(struct sieve_instance *svinst, unsigned int max_errors) 
+(struct sieve_instance *svinst, const char *prefix, unsigned int max_errors) 
 {
 	pool_t pool;
-	struct sieve_error_handler *ehandler;
+	struct sieve_master_ehandler *ehandler;
 
-	/* Pool is not strictly necessary, but other handler types will need
-	 * a pool, so this one will have one too.
-	 */
-	pool = pool_alloconly_create
-		("master_error_handler", sizeof(struct sieve_error_handler));
-	ehandler = p_new(pool, struct sieve_error_handler, 1);
-	sieve_error_handler_init(ehandler, svinst, pool, max_errors);
+	pool = pool_alloconly_create("master_error_handler", 256);
+	ehandler = p_new(pool, struct sieve_master_ehandler, 1);
+	sieve_error_handler_init(&ehandler->handler, svinst, pool, max_errors);
 
-	ehandler->verror = sieve_master_verror;
-	ehandler->vwarning = sieve_master_vwarning;
-	ehandler->vinfo = sieve_master_vinfo;
-	ehandler->vdebug = sieve_master_vdebug;
+	ehandler->handler.verror = sieve_master_verror;
+	ehandler->handler.vwarning = sieve_master_vwarning;
+	ehandler->handler.vinfo = sieve_master_vinfo;
+	ehandler->handler.vdebug = sieve_master_vdebug;
 
-	return ehandler;
+	if ( prefix != NULL )
+		ehandler->prefix = p_strdup(pool, prefix);
+
+	return &ehandler->handler;
 }
 
 /* 

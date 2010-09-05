@@ -15,7 +15,6 @@
 #include "sieve.h"
 
 #include "lda-sieve-plugin.h"
-#include "lda-sieve-log.h"
 
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -27,8 +26,7 @@
 
 #define SIEVE_DEFAULT_PATH "~/.dovecot.sieve"
 
-#define LDA_SIEVE_MAX_USER_ERRORS 10
-#define LDA_SIEVE_MAX_SYSTEM_ERRORS 100
+#define LDA_SIEVE_MAX_USER_ERRORS 30
 
 /*
  * Global variables 
@@ -569,19 +567,15 @@ static int lda_sieve_run
 
 	array_append_array(&scripts, scripts_after);
 
-	/* Create error handlers */
+	/* Initialize error handlers */
+
+	srctx.master_ehandler = sieve_system_ehandler_get(svinst);
 
 	if ( user_script != NULL ) {
 		srctx.userlog = t_strconcat(user_script, ".log", NULL);
 		srctx.user_ehandler = sieve_logfile_ehandler_create
 			(svinst, srctx.userlog, LDA_SIEVE_MAX_USER_ERRORS);
 	}
-
-	srctx.master_ehandler = lda_sieve_log_ehandler_create
-		(svinst, mdctx, LDA_SIEVE_MAX_SYSTEM_ERRORS);
-	sieve_system_ehandler_set(srctx.master_ehandler);
-
-	sieve_error_handler_accept_infolog(srctx.master_ehandler, TRUE);
 
 	/* Collect necessary message data */
 
@@ -650,6 +644,7 @@ static int lda_sieve_deliver_mail
 (struct mail_deliver_context *mdctx, struct mail_storage **storage_r)
 {
 	struct sieve_instance *svinst;
+	struct sieve_error_handler *master_ehandler; 
 	const char *user_script, *default_script, *sieve_before, *sieve_after;
 	ARRAY_TYPE (const_string) scripts_before;
 	ARRAY_TYPE (const_string) scripts_after;
@@ -660,7 +655,17 @@ static int lda_sieve_deliver_mail
 
 	svinst = sieve_init(&lda_sieve_env, mdctx->dest_user, debug);
 
+	/* Initialize master error handler */
+
+	master_ehandler = sieve_master_ehandler_create(svinst, mdctx->session_id, 0);
+	sieve_system_ehandler_set(master_ehandler);
+
+	sieve_error_handler_accept_infolog(master_ehandler, TRUE);
+	sieve_error_handler_accept_debuglog(master_ehandler, debug);
+
 	*storage_r = NULL;
+
+	/* Find scripts and run them */
 
 	T_BEGIN { 
 		struct stat st;

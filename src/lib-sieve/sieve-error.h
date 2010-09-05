@@ -54,6 +54,8 @@ void sieve_sys_debug
 
 void sieve_system_ehandler_set
 	(struct sieve_error_handler *ehandler);
+struct sieve_error_handler *sieve_system_ehandler_get
+	(struct sieve_instance *svinst);
 
 /*
  * Global (user+system) errors
@@ -131,8 +133,6 @@ void sieve_error_handler_accept_infolog
 	(struct sieve_error_handler *ehandler, bool enable);
 void sieve_error_handler_accept_debuglog
 	(struct sieve_error_handler *ehandler, bool enable);
-void sieve_error_handler_copy_masterlog
-	(struct sieve_error_handler *ehandler, bool enable);
 
 /*
  * Error handler statistics
@@ -158,7 +158,7 @@ void sieve_error_handler_reset(struct sieve_error_handler *ehandler);
 
 /* Write errors to dovecot master log */
 struct sieve_error_handler *sieve_master_ehandler_create
-	(struct sieve_instance *svinst, unsigned int max_errors);
+	(struct sieve_instance *svinst, const char *prefix, unsigned int max_errors);
 
 /* Write errors to stderr */
 struct sieve_error_handler *sieve_stderr_ehandler_create
