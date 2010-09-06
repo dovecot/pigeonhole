@@ -87,7 +87,7 @@ struct sieve_binary *sieve_tool_script_compile
 struct sieve_binary *sieve_tool_script_open
 	(struct sieve_instance *svinst, const char *filename);
 void sieve_tool_dump_binary_to
-	(struct sieve_binary *sbin, const char *filename);
+	(struct sieve_binary *sbin, const char *filename, bool hexdump);
 
 /*
  * Command line option parsing

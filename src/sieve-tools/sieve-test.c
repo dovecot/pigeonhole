@@ -224,7 +224,7 @@ int main(int argc, char **argv)
 		exit_status = EXIT_FAILURE;
 	} else {
 		/* Dump script */
-		sieve_tool_dump_binary_to(main_sbin, dumpfile);
+		sieve_tool_dump_binary_to(main_sbin, dumpfile, FALSE);
 
 		/* Obtain mail namespaces from -l argument */
 		if ( mailloc != NULL ) {

@@ -119,7 +119,16 @@ bool sieve_is_loaded(struct sieve_binary *sbin);
  *
  *   Dumps the byte code in human-readable form to the specified ostream.
  */
-void sieve_dump(struct sieve_binary *sbin, struct ostream *stream, bool verbose);
+void sieve_dump
+	(struct sieve_binary *sbin, struct ostream *stream, bool verbose);
+
+/* sieve_hexdump:
+ *
+ *   Dumps the byte code in hexdump form to the specified ostream.
+ */
+
+void sieve_hexdump
+	(struct sieve_binary *sbin, struct ostream *stream);
 
 /* sieve_test:
  *

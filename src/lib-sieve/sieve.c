@@ -397,11 +397,22 @@ void sieve_close(struct sieve_binary **sbin)
  * Debugging
  */
 
-void sieve_dump(struct sieve_binary *sbin, struct ostream *stream, bool verbose) 
+void sieve_dump
+(struct sieve_binary *sbin, struct ostream *stream, bool verbose) 
 {
 	struct sieve_binary_dumper *dumpr = sieve_binary_dumper_create(sbin);			
 
 	sieve_binary_dumper_run(dumpr, stream, verbose);	
+	
+	sieve_binary_dumper_free(&dumpr);
+}
+
+void sieve_hexdump
+(struct sieve_binary *sbin, struct ostream *stream) 
+{	
+	struct sieve_binary_dumper *dumpr = sieve_binary_dumper_create(sbin);			
+
+	sieve_binary_dumper_hexdump(dumpr, stream);	
 	
 	sieve_binary_dumper_free(&dumpr);
 }

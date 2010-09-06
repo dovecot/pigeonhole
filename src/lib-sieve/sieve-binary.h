@@ -257,7 +257,6 @@ struct sieve_binary_debug_reader *sieve_binary_debug_reader_init
 void sieve_binary_debug_reader_deinit
 	(struct sieve_binary_debug_reader **dreader);
 
-
 void sieve_binary_debug_reader_reset
 	(struct sieve_binary_debug_reader *dreader);
 

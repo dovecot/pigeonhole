@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 		struct sieve_script_env scriptenv;
 
 		/* Dump script */
-		sieve_tool_dump_binary_to(sbin, dumpfile);
+		sieve_tool_dump_binary_to(sbin, dumpfile, FALSE);
 
 		if ( tracefile != NULL )
 			tracestream = sieve_tool_open_output_stream(tracefile);

@@ -40,6 +40,10 @@ the binary.
 .BI \-c\  config\-file
 Alternative Dovecot configuration file path.
 .TP
+.B \-h
+Produce per-block hexdump output of the whole binary instead of the normal
+human-readable output. 
+.TP
 .BI \-x\  extensions
 Set the available extensions. The parameter is a space\-separated list of the
 active extensions. By prepending the extension identifiers with \fB+\fP or

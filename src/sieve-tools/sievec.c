@@ -143,7 +143,7 @@ int main(int argc, char **argv)
 
 		if ( sbin != NULL ) {
 			if ( dump ) 
-				sieve_tool_dump_binary_to(sbin, outfile);
+				sieve_tool_dump_binary_to(sbin, outfile, FALSE);
 			else {
 				sieve_save(sbin, outfile, TRUE, NULL);
 			}

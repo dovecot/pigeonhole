@@ -547,7 +547,8 @@ struct sieve_binary *sieve_tool_script_open
 	return sbin;
 }
 
-void sieve_tool_dump_binary_to(struct sieve_binary *sbin, const char *filename)	
+void sieve_tool_dump_binary_to
+(struct sieve_binary *sbin, const char *filename, bool hexdump)	
 {
 	struct ostream *dumpstream;
 
@@ -555,7 +556,10 @@ void sieve_tool_dump_binary_to(struct sieve_binary *sbin, const char *filename)
 
 	dumpstream = sieve_tool_open_output_stream(filename);
 	if ( dumpstream != NULL ) {
-		(void) sieve_dump(sbin, dumpstream, FALSE);
+		if ( hexdump ) 
+			(void) sieve_hexdump(sbin, dumpstream);
+		else
+			(void) sieve_dump(sbin, dumpstream, FALSE);
 		o_stream_destroy(&dumpstream);
 	} else {
 		i_fatal("Failed to create stream for sieve code dump.");

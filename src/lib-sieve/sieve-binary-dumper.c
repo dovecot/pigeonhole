@@ -4,12 +4,14 @@
 #include "lib.h"
 #include "str.h"
 #include "ostream.h"
+#include "array.h"
+#include "buffer.h"
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
-#include "sieve-binary.h"
-
 #include "sieve-dump.h"
+
+#include "sieve-binary-private.h"
 
 /*
  * Binary dumper object
@@ -180,3 +182,91 @@ bool sieve_binary_dumper_run
 
 	return TRUE;
 }
+
+/*
+ * Hexdump production
+ */
+
+void sieve_binary_dumper_hexdump
+(struct sieve_binary_dumper *dumper, struct ostream *stream)
+{
+	struct sieve_binary *sbin = dumper->dumpenv.sbin;
+	struct sieve_dumptime_env *denv = &(dumper->dumpenv);
+	int count, i;
+	
+	dumper->dumpenv.stream = stream;
+
+	count = sieve_binary_block_count(sbin);
+
+	/* Block overview */
+
+	sieve_binary_dump_sectionf
+		(denv, "Binary blocks (count: %d)", count);
+
+	for ( i = 0; i < count; i++ ) {
+		struct sieve_binary_block *sblock = sieve_binary_block_get(sbin, i);
+
+		sieve_binary_dumpf(denv, 
+			"%3d: size: %"PRIuSIZE_T" bytes\n", i, 
+			sieve_binary_block_get_size(sblock));
+	}
+
+	/* Hexdump for each block */
+
+	for ( i = 0; i < count; i++ ) {
+		struct sieve_binary_block *sblock = sieve_binary_block_get(sbin, i);
+		buffer_t *blockbuf = sieve_binary_block_get_buffer(sblock);
+		string_t *line;
+		size_t data_size;
+		const char *data;
+		size_t offset;
+
+		data = (const char *) buffer_get_data(blockbuf, &data_size);
+		
+		sieve_binary_dump_sectionf
+			(denv, "Block %d (%"PRIuSIZE_T" bytes, file offset %08llx)", i, 
+				data_size, sblock->offset + 8 /* header size (yuck) */);
+
+		line = t_str_new(128);
+		offset = 0;
+		while ( offset < data_size ) {
+			size_t len = ( data_size - offset >= 16 ? 16 : data_size - offset );
+			size_t b;
+
+			str_printfa(line, "%08llx  ", (unsigned long long) offset);
+
+			for ( b = 0; b < len; b++ ) {
+				str_printfa(line, "%02x ", (unsigned int) data[offset+b]);	
+				if ( b == 7 ) str_append_c(line, ' ');
+			}
+
+			if ( len < 16 ) {
+				if ( len <= 7 ) str_append_c(line, ' ');
+
+				for ( b = len; b < 16; b++ ) {
+					str_append(line, "   ");
+				}
+			}
+
+			str_append(line, " |");
+
+			for ( b = 0; b < len; b++ ) {
+				const char c = data[offset+b];
+
+				if ( c >= 32 && c <= 126 )
+					str_append_c(line, c);
+				else
+					str_append_c(line, '.');
+			}
+
+			str_append(line, "|\n");
+			o_stream_send(stream, str_data(line), str_len(line));
+			str_truncate(line, 0);
+			offset += len;
+		}
+		
+		str_printfa(line, "%08llx\n", (unsigned long long) offset);
+		o_stream_send(stream, str_data(line), str_len(line));
+	}
+} 
+

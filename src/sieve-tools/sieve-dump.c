@@ -30,7 +30,7 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sieve-dump [-P <plugin>] [-x <extensions>]\n"
+"Usage: sieve-dump [-h] [-P <plugin>] [-x <extensions>]\n"
 "                  <sieve-binary> [<out-file>]\n"
 	);
 }
@@ -44,16 +44,25 @@ int main(int argc, char **argv)
 	struct sieve_instance *svinst;
 	struct sieve_binary *sbin;
 	const char *binfile, *outfile;
+	bool hexdump = FALSE;
 	int exit_status = EXIT_SUCCESS;
 	int c;
 
-	sieve_tool = sieve_tool_init("sieve-dump", &argc, &argv, "P:x:", FALSE);
+	sieve_tool = sieve_tool_init("sieve-dump", &argc, &argv, "hP:x:", FALSE);
 		
 	binfile = outfile = NULL;
 
-	if ( (c = sieve_tool_getopt(sieve_tool)) > 0 ) {
-		print_help();
-		i_fatal_status(EX_USAGE, "Unknown argument: %c", c);
+	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
+		switch (c) {
+		case 'h':
+			/* produce hexdump */
+			hexdump = TRUE;
+			break;
+		default:
+			print_help();
+			i_fatal_status(EX_USAGE, "Unknown argument: %c", c);
+			break;
+		}
 	}
 
 	if ( optind < argc ) {
@@ -76,7 +85,7 @@ int main(int argc, char **argv)
 	/* Dump binary */
 	sbin = sieve_load(svinst, binfile, NULL);
 	if ( sbin != NULL ) {
-		sieve_tool_dump_binary_to(sbin, outfile == NULL ? "-" : outfile);
+		sieve_tool_dump_binary_to(sbin, outfile == NULL ? "-" : outfile, hexdump);
 	
 		sieve_close(&sbin);
 	} else {
