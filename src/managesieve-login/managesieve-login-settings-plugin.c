@@ -7,6 +7,7 @@
 #include "env-util.h"
 #include "fd-close-on-exec.h"
 #include "execv-const.h"
+#include "master-service.h"
 #include "settings-parser.h"
 #include "config-parser-private.h"
 #include "managesieve-login-settings-plugin.h"
@@ -124,7 +125,7 @@ static bool capability_dump(void)
 	}
 
 	if ( pid == 0 ) {
-		const char *argv[3];
+		const char *argv[5];
 
 		/* Child */
 		(void)close(fd[0]);		
@@ -136,7 +137,9 @@ static bool capability_dump(void)
 
 		argv[0] = PKG_LIBEXECDIR"/managesieve";
 		argv[1] = "-k";
-		argv[2] = NULL;
+		argv[2] = "-c";
+		argv[3] = master_service_get_config_path(master_service);
+		argv[4] = NULL;
 		execv_const(argv[0], argv);
 
 		i_fatal("managesieve-login: dump-capability execv(%s) failed: %m", argv[0]);
