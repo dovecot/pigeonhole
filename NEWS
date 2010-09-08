@@ -1,4 +1,5 @@
 v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
+
 	* Merged Sieve and ManageSieve packages into a single Pigeonhole package. 
 	  There is also no need to patch Dovecot anymore to gain ManageSieve support.
 	  Version numbering of previous Sieve releases is continued as v0.2.0. The
@@ -18,6 +19,13 @@ v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
 	  a similar manner as such debug information is included in some system
 	  executables and libraries (DWARF-like). Run-time errors can now always refer 
 	  to the proper line number in the Sieve source script.
+	* The Sieve plugin is adapted to work properly with the new LMTP service 
+	  introduced with Dovecot v2.0. The same plugin is used for both LDA and LMTP.
+	* The 'sieve_subaddress_sep' setting for the Sieve subaddress extension is now
+	  known as 'recipient_delimiter'. Although the deprecated sieve_subaddress_sep 
+	  setting is still recognized for backwards compatibility, it is recommended
+	  to update the setting to the new name, since the new LMTP service also uses
+	  the recipient_delimiter setting. 
 	* ManageSieve: changed default IMPLEMENTATION capability to from 'Dovecot' to
 	  'Dovecot Pigeonhole'.
 	* Renamed the sieved tool to sieve-dump. The original name was somewhat
@@ -35,14 +43,14 @@ v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
 	+ The SIEVE and NOTIFY capabilities reported by the ManageSieve protocol can
 	  now be configured manually. If left unconfigured, the capabilities are 
 	  determined from the default Sieve and ManageSieve configuration.
-	  User-specific capabilities aren't reported until after configuration.
+	  User-specific capabilities aren't reported until after authentication.
 	+ Significantly improved file error handling. This means that administrators
 	  get a more useful and informative log message when file operations fail. The
 	  most notable example is that when the LDA Sieve plugin is trying to store a
 	  binary for a global script, the resulting failure message also points the
 	  administrator towards pre-compiling the script with sievec.
 	+ Added runtime argument value checking for several commands (redirect, date 
-	  vacation) and. When variables are used, these checks cannot be performed at
+	  vacation). When variables are used, these checks cannot be performed at
 	  compiletime. A proper runtime error now is produced when invalid data is
 	  encountered.
 	+ UTF8 validity of fileinto command argument is now checked either at compile
@@ -51,12 +59,12 @@ v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
 	+ Validity of IMAP flags for the imap4flags extension is now checked also
 	  at runtime. Previously, it was not checked until the store action was
 	  executed.
-	+ Simplified error handling and made sure that user-caused errors are no
-	  longer written to the Dovecot master/LDA log. 
+	+ Simplified and restructured error handling. Also made sure that user-caused
+	  errors are no longer written to the Dovecot master/LDA log. 
 	- Multiscript: fixed duplicate implicit keep caused by erroneous execution
 	  state update.
 	- Prevented assertion failure due to currupt binary string representation. 
-	  If the string were missing a final \0 character an assertion was produced in
+	  If the string was missing a final \0 character an assertion was produced in
 	  stead of a binary corruption error.
 	- Imap4flags: fixed bug in setflag command; when parameter was a stringlist,
 	  only the last item was actually set.
@@ -77,9 +85,15 @@ v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
 	  These should, however, only be enabled when properly configured and there
 	  is no default configuration.
 
-Sieve NEWS history:
+(Fused Dovecot Sieve and ManageSieve packages into a single Pigeonhole release)
+
+Dovecot Sieve NEWS history:
+---------------------------
+
+Dovecot 1.2:
 
 v0.1.17 19-06-2010 Stephan Bosch <stephan@rename-it.nl>
+
 	- Made sure source code positions for compiler messages are recorded at start
 	  of tokens.
 	- Fixed a few potential memory leaks in the Sieve compiler and the
@@ -414,7 +428,6 @@ v0.1.1 24-11-2008  Stephan Bosch <stephan@rename-it.nl>
 	  though. 
 	* Adapted to changes in Dovecot on various occasions, making this release
 	  dependent on Dovecot >= v1.2.alpa4.
-
 	+ Improved logging of errors at specific occasions and added debug messages to
 	  find script execution problems quicker. 
 	+ Removed code duplication between command line tools and the test suite. 
@@ -445,7 +458,8 @@ v0.1.0 23-10-2008  Stephan Bosch <stephan@rename-it.nl>
 
 	* Initial release
 
-ManageSieve NEWS history:
+Dovecot ManageSieve NEWS history:
+---------------------------------
 
 Dovecot 1.2:
   
@@ -600,8 +614,6 @@ v0.10.0
 	  Sieve support.
    
 Dovecot 1.0:
-
-(development forked, v9 is still maintained for Dovecot v1.0)
 
 v9
 
