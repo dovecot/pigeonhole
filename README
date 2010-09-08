@@ -1,7 +1,5 @@
 Pigeonhole for Dovecot v2.0
 
-(NOTE: This is the UNSTABLE development branch)
-
 Introduction
 ============
 
@@ -33,8 +31,8 @@ ManageSieve server always makes sure that uploaded scripts are valid, preventing
 compile failures at mail delivery.
 
 This package provides Sieve support as a plugin to Dovecot's Local Delivery 
-Agent (LDA). The ManageSieve protocol is provided is an additional service, next
-to Dovecot's own POP3 and IMAP services. 
+Agent (LDA) and Dovecot's LMTP service. The ManageSieve protocol is provided is
+an additional service, next to Dovecot's own POP3 and IMAP services. 
 
 Features
 ========
