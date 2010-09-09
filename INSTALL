@@ -1,42 +1,45 @@
 Compiling
 =========
 
-If you downloaded this package through Mercurial, you need to execute 
-./autogen.sh first to build the automake/autoconf structure. This requires
-autotools and libtool to be installed. 
+If you downloaded the sources using Mercurial, you will need to execute 
+./autogen.sh first to build the automake structure in your source tree. This
+process requires autotools and libtool to be installed.
 
-Subsequently, the package needs to be configured using the configure script.
-Pigeonhole can either be built against installed Dovecot v2.0 development 
-headers and libraties or against a pre-built Dovecot v2.0 source tree. Use 
---with-dovecot=<path> to point to dovecot-config file's directory. There are two
-possibilities where this could exist:
+If you installed Dovecot from sources, Pigeonhole's configure script should be
+able to find the installed dovecot-config automatically:
 
- 1. Dovecot's library directory when compiling against a Dovecot installation:
+./configure
+make
+sudo make install
 
-    If you configured Dovecot with --enable-header-install, you'll have 
-    dovecot-config installed in the $prefix/lib/dovecot/ directory. Pigeonhole
-    is then for example configured as follows:
+If your system uses a $prefix different than the default /usr/local, the 
+configure script can still find the installed dovecot-config automatically when
+supplied with the proper --prefix argument:
 
-     ./configure --with-dovecot=/usr/local/lib/dovecot
+./configure --prefix=/usr
+make
+sudo make install
 
- 2. The root directory of a built Dovecot source tree:
+If this doesn't work, you can use --with-dovecot=<path> configure option, where
+the path points to a directory containing dovecot-config file. This can point to
+an installed file:
 
-    The compilation of the Dovecot sources will produce the dovecot-config file
-    in the root of the source tree. Pigeonhole is then for example configured
-    as follows:
+./configure --with-dovecot=/usr/local/lib/dovecot
+make
+sudo make install
 
-     ./configure --with-dovecot=../dovecot-2.0/
+or to a Dovecot source directory that is already compiled:
 
-The following additional parameters are of interest for the configuration of the
-Pigeonhole build:
+./configure --with-dovecot=../dovecot-2.0.0
+make
+sudo make install
+
+The following additional parameters may be of interest for the configuration of
+the Pigeonhole build:
 
  --with-managesieve=yes
-   Controls whether the ManageSieve is compiled and installed. ManageSieve is
-   compiled by default.
-
- --enable-header-install=no
-   Controls whether Pigeonhole will install development headers for building
-   external plugins. The default is not to install development headers.
+   Controls whether Pigeonhole ManageSieve is compiled and installed, which is
+   the default.
 
  --with-unfinished-features=no
    Controls whether unfinished features and extensions are built. Enabling this
@@ -44,12 +47,6 @@ Pigeonhole build:
    experimental and may therefore introduce bugs and unexpected behavior. 
    In fact, it may not compile at all. Enable this only when you are eager to
    test some of the new development functionality.
-
-After the package is successfully configured, you can compile and install the 
-package.
-
-make
-sudo make install
 
 Configuration
 =============
