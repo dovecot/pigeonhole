@@ -12,10 +12,8 @@ EXTRA_DIST = \
 	COPYING.LGPL \
 	ChangeLog
 
-if INSTALL_HEADERS
-  pkginc_libdir=$(dovecot_pkgincludedir)/sieve
-  nodist_pkginc_lib_HEADERS = pigeonhole-config.h
-endif
+pkginc_libdir=$(dovecot_pkgincludedir)/sieve
+nodist_pkginc_lib_HEADERS = pigeonhole-config.h
 
 if MAINTAINER_MODE
 ChangeLog: .hg/dirstate
