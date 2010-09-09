@@ -131,12 +131,12 @@ static bool _is_text_content(const struct message_header_line *hdr)
 	/* Parse content type */
 	content_type = t_str_new(64);
 	if (rfc822_parse_content_type(&parser, content_type) < 0)
-		return "";
+		return FALSE;
 
 	/* Content-type value must end here, otherwise it is invalid after all */
 	(void)rfc822_skip_lwsp(&parser);
 	if ( parser.data != parser.end && *parser.data != ';' )
-		return "";
+		return FALSE;
 
 	/* Success */
 	data = str_c(content_type);

@@ -247,7 +247,7 @@ static bool tag_body_transform_generate
 static bool ext_body_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	enum tst_body_transform transform;
+	unsigned int transform;
 	int opt_code = 0;
 
 	sieve_code_dumpf(denv, "BODY");
@@ -307,7 +307,7 @@ static int ext_body_operation_execute
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 	struct sieve_match_type mcht = 
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
-	enum tst_body_transform transform = TST_BODY_TRANSFORM_TEXT;
+	unsigned int transform = TST_BODY_TRANSFORM_TEXT;
 	struct sieve_stringlist *ctype_list, *value_list, *key_list;
 	bool mvalues_active;
 	const char * const *content_types = NULL;
@@ -341,6 +341,7 @@ static int ext_body_operation_execute
 				(ret=sieve_opr_stringlist_read
 					(renv, address, "content-type-list", &ctype_list)) <= 0 )
 				return ret;
+
 			break;
 
 		default:
@@ -368,7 +369,8 @@ static int ext_body_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "body test");
 	
 	/* Extract requested parts */
-	value_list = ext_body_get_part_list(renv, transform, content_types);
+	value_list = ext_body_get_part_list
+		(renv, (enum tst_body_transform) transform, content_types);
 	if ( value_list == FALSE )
 		return SIEVE_EXEC_FAILURE;
 

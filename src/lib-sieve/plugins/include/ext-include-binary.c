@@ -265,7 +265,7 @@ static bool ext_include_binary_open
 	for ( i = 0; i < depcount; i++ ) {
 		unsigned int inc_block_id;
 		struct sieve_binary_block *inc_block;
-		enum ext_include_script_location location;
+		unsigned int location;
 		string_t *script_name;
 		const char *script_dir;
 		struct sieve_script *script;

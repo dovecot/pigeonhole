@@ -11,6 +11,15 @@
 #include "sieve-common.h"
 #include "sieve-plugins.h"
 
+/*
+ * Types
+ */
+
+typedef void (*sieve_plugin_load_func_t)
+	(struct sieve_instance *svinst, void **context);
+typedef void (*sieve_plugin_unload_func_t)
+	(struct sieve_instance *svinst, void *context);
+
 struct sieve_plugin {
 	struct module *module;
 	
@@ -106,7 +115,7 @@ void sieve_plugins_load(struct sieve_instance *svinst, const char *path, const c
  	for (i = 0; module_names[i] != NULL; i++) {
 		struct sieve_plugin *plugin;
 		const char *name = module_names[i];
-		void (*load_func)(struct sieve_instance *svinst, void **context);
+		sieve_plugin_load_func_t load_func;
 
 		/* Find the module */
 		module = sieve_plugin_module_find(name);
@@ -129,7 +138,7 @@ void sieve_plugins_load(struct sieve_instance *svinst, const char *path, const c
 		plugin->module = module;
 	
 		/* Call load function */
-		load_func = module_get_symbol
+		load_func = (sieve_plugin_load_func_t) module_get_symbol
 			(module, t_strdup_printf("%s_load", module->name));
 		if ( load_func != NULL ) {
 			load_func(svinst, &plugin->context);
@@ -162,9 +171,9 @@ void sieve_plugins_unload(struct sieve_instance *svinst)
 	plugin = svinst->plugins;
 	while ( plugin != NULL ) {
 		struct module *module = plugin->module;
-		void (*unload_func)(struct sieve_instance *svinst, void *context);
+		sieve_plugin_unload_func_t unload_func;
 
-		unload_func = module_get_symbol
+		unload_func = (sieve_plugin_unload_func_t)module_get_symbol
 			(module, t_strdup_printf("%s_unload", module->name));
 		if ( unload_func != NULL ) {
 			unload_func(svinst, plugin->context);

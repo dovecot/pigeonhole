@@ -54,8 +54,7 @@ static bool ext_variables_variable_argument_activate
 	
 	arg->argument = sieve_argument_create(ast, &variable_argument, this_ext, 0);
 	arg->argument->data = (void *) var;
-	
-	return arg;
+	return TRUE;
 }
 
 static struct sieve_ast_argument *ext_variables_variable_argument_create
