@@ -1,4 +1,4 @@
-v0.2.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
+v0.2.0 10-09-2010 Stephan Bosch <stephan@rename-it.nl>
 
 	* Merged Sieve and ManageSieve packages into a single Pigeonhole package. 
 	  There is also no need to patch Dovecot anymore to gain ManageSieve support.
