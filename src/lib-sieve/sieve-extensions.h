@@ -74,6 +74,7 @@ struct sieve_extension {
 	unsigned int required:1;
 	unsigned int loaded:1;
 	unsigned int enabled:1;
+	unsigned int dummy:1;
 };
 
 #define sieve_extension_name(ext) \

@@ -22,6 +22,10 @@ static void sieve_extension_registry_deinit(struct sieve_instance *svinst);
 static void sieve_capability_registry_init(struct sieve_instance *svinst);
 static void sieve_capability_registry_deinit(struct sieve_instance *svinst);
 
+static struct sieve_extension *_sieve_extension_register
+	(struct sieve_instance *svinst, const struct sieve_extension_def *extdef, 
+		bool load, bool required);
+
 /*
  * Instance global context
  */
@@ -103,12 +107,17 @@ extern const struct sieve_extension_def virustest_extension;
  * List of native extensions
  */
 
+const struct sieve_extension_def *sieve_dummy_extensions[] = {		
+	/* Dummy extensions */ 
+	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension
+};
+
+const unsigned int sieve_dummy_extensions_count =
+	N_ELEMENTS(sieve_dummy_extensions);
+
 /* Core */
 
-const struct sieve_extension_def *sieve_core_extensions[] = {	
-	/* Dummy extensions */ 
-	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension, 
-	
+const struct sieve_extension_def *sieve_core_extensions[] = {		
 	/* Core extensions */
 	&fileinto_extension, &reject_extension, &envelope_extension, 
 	&encoded_character_extension,
@@ -179,6 +188,7 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 	struct sieve_extension_registry *ext_reg = 
 		p_new(svinst->pool, struct sieve_extension_registry, 1);
 	const char *extensions;
+	struct sieve_extension *ext;
 
 	svinst->ext_reg = ext_reg;
 
@@ -200,6 +210,15 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 		&ext_reg->match_type_extension, 1);
 	array_append(&ext_reg->preloaded_extensions, 
 		&ext_reg->address_part_extension, 1);
+
+	/* Pre-load dummy extensions */
+	for ( i = 0; i < sieve_dummy_extensions_count; i++ ) {
+		if ( (ext=_sieve_extension_register
+			(svinst, sieve_dummy_extensions[i], TRUE, FALSE)) == NULL )
+			return FALSE;
+	
+		ext->dummy = TRUE;
+	}
 
 	/* Pre-load core extensions */
 	for ( i = 0; i < sieve_core_extensions_count; i++ ) {
@@ -456,7 +475,7 @@ const char *sieve_extensions_get_string(struct sieve_instance *svinst)
 		/* Find first listable extension */
 		while ( i < ext_count && 
 			!( exts[i].enabled && exts[i].def != NULL &&
-			*(exts[i].def->name) != '@' ) )
+			*(exts[i].def->name) != '@' && !exts[i].dummy ) )
 			i++;
 
 		if ( i < ext_count ) {
@@ -467,7 +486,7 @@ const char *sieve_extensions_get_string(struct sieve_instance *svinst)
 	 		/* Add others */
 			for ( ; i < ext_count; i++ ) {
 				if ( exts[i].enabled && exts[i].def != NULL && 
-					*(exts[i].def->name) != '@' ) {
+					*(exts[i].def->name) != '@' && !exts[i].dummy ) {
 					str_append_c(extstr, ' ');
 					str_append(extstr, exts[i].def->name);
 				}
