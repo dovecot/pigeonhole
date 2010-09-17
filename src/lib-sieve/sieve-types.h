@@ -69,7 +69,8 @@ enum sieve_error {
 struct sieve_message_data {
 	struct mail *mail;
 	const char *return_path;
-	const char *to_address;
+	const char *orig_envelope_to;
+	const char *final_envelope_to;
 	const char *auth_user;
 	const char *id;
 };

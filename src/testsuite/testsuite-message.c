@@ -65,7 +65,8 @@ static void testsuite_message_set_data(struct mail *mail)
 	testsuite_msgdata.mail = mail;
 	testsuite_msgdata.auth_user = sieve_tool_get_username(sieve_tool);
 	testsuite_msgdata.return_path = sender;
-	testsuite_msgdata.to_address = recipient;
+	testsuite_msgdata.orig_envelope_to = recipient;
+	testsuite_msgdata.final_envelope_to = recipient;
 
 	(void)mail_get_first_header(mail, "Message-ID", &testsuite_msgdata.id);
 }
@@ -137,7 +138,8 @@ void testsuite_envelope_set_recipient
 	if ( value != NULL )
 		str_append(envelope_to, value);
 
-	testsuite_msgdata.to_address = str_c(envelope_to);
+	testsuite_msgdata.orig_envelope_to = str_c(envelope_to);
+	testsuite_msgdata.final_envelope_to = str_c(envelope_to);
 
 	sieve_message_context_flush(renv->msgctx);
 }

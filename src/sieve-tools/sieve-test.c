@@ -105,8 +105,8 @@ int main(int argc, char **argv)
 {
 	struct sieve_instance *svinst;
 	ARRAY_TYPE (const_string) scriptfiles;
-	const char *scriptfile, *recipient, *sender, *mailbox, *dumpfile, *tracefile,
-		*mailfile, *mailloc; 
+	const char *scriptfile, *recipient, *final_recipient, *sender, *mailbox,
+		*dumpfile, *tracefile, *mailfile, *mailloc;
 	struct sieve_trace_config tr_config;
 	struct mail *mail;
 	struct sieve_binary *main_sbin, *sbin = NULL;
@@ -121,13 +121,13 @@ int main(int argc, char **argv)
 	int ret, c;
 
 	sieve_tool = sieve_tool_init
-		("sieve-test", &argc, &argv, "r:f:m:d:l:s:eCt:T:DP:x:u:", FALSE);
+		("sieve-test", &argc, &argv, "r:a:f:m:d:l:s:eCt:T:DP:x:u:", FALSE);
 
 	t_array_init(&scriptfiles, 16);
-	
+
 	/* Parse arguments */
-	scriptfile = recipient = sender = mailbox = dumpfile = tracefile =
-		mailfile = mailloc = NULL;
+	scriptfile = recipient = final_recipient = sender = mailbox = dumpfile =
+		tracefile = mailfile = mailloc = NULL;
 	memset(&tr_config, 0, sizeof(tr_config));
 	tr_config.level = SIEVE_TRLVL_ACTIONS;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
@@ -135,6 +135,10 @@ int main(int argc, char **argv)
 		case 'r':
 			/* destination address */
 			recipient = optarg;
+			break;
+		case 'a':
+			/* final destination address */
+			final_recipient = optarg;
 			break;
 		case 'f':
 			/* envelope sender address */
@@ -243,7 +247,9 @@ int main(int argc, char **argv)
 		memset(&msgdata, 0, sizeof(msgdata));
 		msgdata.mail = mail;
 		msgdata.return_path = sender;
-		msgdata.to_address = recipient;
+		msgdata.orig_envelope_to = recipient;
+		msgdata.final_envelope_to =
+			( final_recipient == NULL ? recipient : final_recipient );
 		msgdata.auth_user = sieve_tool_get_username(sieve_tool);
 		(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
 

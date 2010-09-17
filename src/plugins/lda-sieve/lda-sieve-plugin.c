@@ -588,7 +588,8 @@ static int lda_sieve_run
 
 	msgdata.mail = mdctx->src_mail;
 	msgdata.return_path = mail_deliver_get_return_address(mdctx);
-	msgdata.to_address = mdctx->dest_addr;
+	msgdata.orig_envelope_to = mdctx->dest_addr;
+	msgdata.final_envelope_to = mdctx->final_dest_addr;
 	msgdata.auth_user = mdctx->dest_user->username;
 	(void)mail_get_first_header(msgdata.mail, "Message-ID", &msgdata.id);
 

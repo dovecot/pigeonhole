@@ -974,7 +974,7 @@ static bool act_vacation_commit
 	unsigned char dupl_hash[MD5_RESULTLEN];
 	const char *const *headers;
 	const char *sender = sieve_message_get_sender(aenv->msgctx);
-	const char *recipient = sieve_message_get_recipient(aenv->msgctx);
+	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
 	const char *reply_from = NULL;
 
 	/* Is the recipient unset? 

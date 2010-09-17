@@ -551,7 +551,7 @@ static bool ntfy_mailto_action_execute
 {
 	const char *const *headers;
 	const char *sender = sieve_message_get_sender(nenv->msgctx);
-	const char *recipient = sieve_message_get_recipient(nenv->msgctx);
+	const char *recipient = sieve_message_get_final_recipient(nenv->msgctx);
 
 	/* Is the recipient unset? 
 	 */
@@ -571,8 +571,8 @@ static bool ntfy_mailto_action_execute
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
 				sieve_enotify_global_info(nenv, 
 					"not sending notification for auto-submitted message from <%s>", 
-					str_sanitize(sender, 128));	
-					return TRUE;				 
+					str_sanitize(sender, 128));
+					return TRUE;
 			}
 			hdsp++;
 		}

@@ -219,7 +219,7 @@ static const struct sieve_address *const *_to_part_get_addresses
 {
 	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
 	const struct sieve_address *address = 
-		sieve_message_get_recipient_address(renv->msgctx);	
+		sieve_message_get_orig_recipient_address(renv->msgctx);	
 
 	if ( address != NULL && address->local_part != NULL ) {
 		t_array_init(&envelope_values, 2);
@@ -240,15 +240,14 @@ static const char *const *_to_part_get_values
 
 	t_array_init(&envelope_values, 2);
 
-	if ( renv->msgdata->to_address != NULL ) {
-        array_append(&envelope_values, &renv->msgdata->to_address, 1);
+	if ( renv->msgdata->orig_envelope_to != NULL ) {
+        array_append(&envelope_values, &renv->msgdata->orig_envelope_to, 1);
 	}
 
 	(void)array_append_space(&envelope_values);
 
 	return array_idx(&envelope_values, 0);
 }
-
 
 static const char *const *_auth_part_get_values
 (const struct sieve_runtime_env *renv)

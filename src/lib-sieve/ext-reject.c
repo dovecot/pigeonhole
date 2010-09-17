@@ -503,7 +503,7 @@ static bool act_reject_commit
 	struct act_reject_context *rj_ctx =
 		(struct act_reject_context *) action->context;
 	const char *sender = sieve_message_get_sender(aenv->msgctx);
-	const char *recipient = sieve_message_get_recipient(aenv->msgctx);
+	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
 
 	if ( recipient == NULL ) {
 		sieve_result_global_warning(aenv, 
