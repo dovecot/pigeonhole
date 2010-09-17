@@ -86,7 +86,7 @@ static bool tst_header_validate
 	struct sieve_comparator cmp_default = 
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 	struct sieve_match_type mcht_default = 
-		SIEVE_COMPARATOR_DEFAULT(is_match_type);
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	
 	if ( !sieve_validate_positional_argument
 		(valdtr, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
@@ -156,7 +156,7 @@ static int tst_header_operation_execute
 	struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 	struct sieve_match_type mcht = 
-		SIEVE_COMPARATOR_DEFAULT(is_match_type);
+		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_stringlist *hdr_list, *key_list, *value_list;
 	int match, ret;
 	
