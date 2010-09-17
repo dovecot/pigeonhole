@@ -7,7 +7,6 @@ Next (in order of descending priority/precedence):
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
 * Further develop regex extension and update it to the latest draft:
-	- Allow for :regex matching with variable key
 	- Implement the :quoteregex set modifier
 	- Investigate the use of the TRE regexp library to gain UTF-8 capability
 * Finish body extension:

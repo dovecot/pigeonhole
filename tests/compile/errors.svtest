@@ -361,7 +361,7 @@ test "Unsupported language features (FIXME: count only)" {
 		test_fail "compile should have failed.";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "4" {
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
 		test_fail "wrong number of errors reported";
 	}
 }

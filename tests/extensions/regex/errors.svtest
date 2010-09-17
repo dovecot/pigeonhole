@@ -12,3 +12,18 @@ test "Compile errors" {
 		test_fail "wrong number of errors reported";
 	}
 }
+
+test "Runtime errors" {
+	if not test_script_compile "errors/runtime.sieve" {
+		test_fail "failed to compile";
+	}
+
+	if not test_script_run {
+		test_fail "script should have run fine";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
+		test_fail "wrong number of errors reported";
+	}
+}
+

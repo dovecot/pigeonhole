@@ -17,6 +17,7 @@
 #include "sieve-stringlist.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
+#include "sieve-interpreter.h"
 #include "sieve-comparators.h"
 #include "sieve-match-types.h"
 #include "sieve-match.h"
@@ -94,11 +95,12 @@ static int mcht_regex_validate_regexp
 {
 	int ret;
 	regex_t regexp;
+	const char *regex_str = sieve_ast_argument_strc(key);
 
-	if ( (ret=regcomp(&regexp, sieve_ast_argument_strc(key), cflags)) != 0 ) {
+	if ( (ret=regcomp(&regexp, regex_str, cflags)) != 0 ) {
 		sieve_argument_validate_error(valdtr, key,
-			"invalid regular expression for regex match: %s", 
-			_regexp_error(&regexp, ret));
+			"invalid regular expression '%s' for regex match: %s", 
+			str_sanitize(regex_str, 128), _regexp_error(&regexp, ret));
 
 		regfree(&regexp);	
 		return FALSE;
@@ -122,15 +124,12 @@ static int mcht_regex_validate_key_argument
 	/* FIXME: We can currently only handle string literal argument, so
 	 * variables are not allowed.
 	 */
-	if ( !sieve_argument_is_string_literal(key) ) {
-		sieve_argument_validate_error(keyctx->valdtr, key,
-			"this Sieve implementation currently only accepts a literal string "
-			"for a regular expression");
-		return FALSE;
+	if ( sieve_argument_is_string_literal(key) ) {
+		return mcht_regex_validate_regexp
+			(keyctx->valdtr, keyctx->mtctx, key, keyctx->cflags);
 	}
 
-	return mcht_regex_validate_regexp
-		(keyctx->valdtr, keyctx->mtctx, key, keyctx->cflags);
+	return TRUE;
 }
 	
 static bool mcht_regex_validate_context
@@ -301,12 +300,18 @@ static int mcht_regex_match_keys
 						rkey->status = -1; /* Not supported */
 		
 					if ( rkey->status >= 0 ) {
+						const char *regex_str = str_c(key_item);
+						int rxret;
+
 						/* Indicate whether match values need to be produced */
 						if ( ctx->nmatch == 0 ) cflags |= REG_NOSUB;
 
 						/* Compile regular expression */
-						if ( regcomp(&rkey->regexp, str_c(key_item), cflags) != 0 ) {
-							/* FIXME: Do something useful, i.e. report error somewhere */
+						if ( (rxret=regcomp(&rkey->regexp, regex_str, cflags)) != 0 ) {
+							sieve_runtime_error(renv, NULL,
+								"invalid regular expression '%s' for regex match: %s", 
+								str_sanitize(regex_str, 128),
+								_regexp_error(&rkey->regexp, rxret));
 							rkey->status = -1;
 						} else {
 							rkey->status = 1;

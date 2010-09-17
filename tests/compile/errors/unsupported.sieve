@@ -26,14 +26,5 @@ set "script" "blacklist";
 
 include "${blacklist}";
 
-/* Variable regexp */
-
-set "match" "(.*)rename-it(.*)";
-
-if address :regex "from" "${match}" {
-	stop;
-}
- 
-
 
 
