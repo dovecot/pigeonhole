@@ -159,8 +159,7 @@ static const char *lda_sieve_get_personal_path
 			/* relative path. change to absolute. */
 
 			if ( home == NULL || *home == '\0' ) {
-				if ( user->mail_debug )
-					sieve_sys_debug(svinst, "relative script path, but empty home dir");
+				sieve_sys_error(svinst, "relative script path, but empty home dir: %s", script_path);
 				return NULL;
 			}
 
