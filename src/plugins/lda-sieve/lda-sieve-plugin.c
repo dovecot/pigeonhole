@@ -169,7 +169,7 @@ static const char *lda_sieve_get_personal_path
 		if ( home == NULL || *home == '\0' ) {
 			sieve_sys_error(svinst, 
 				"path to user's main active personal script is unknown. "
-				"See http://wiki.dovecot.org/LDA/Sieve/Dovecot#configuration");
+				"See http://wiki2.dovecot.org/Pigeonhole/Sieve/Configuration");
 			return NULL;
 		}
 
