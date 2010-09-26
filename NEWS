@@ -1,3 +1,17 @@
+v0.2.1 27-09-2010 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Incorporated distinction between original and final envelope recipient in
+	  Sieve interpreter, as recently introduced in Dovecot.
+	+ Regex extension: added support for regex keys composed from variables.
+	- LDA Sieve plugin: added _version symbol to enable Dovecot's plugin version
+	  check. Without this check, people can forget to recompile the plugin, which
+	  can lead to unexpected effects.  
+	- LDA Sieve plugin: turned debug message about an unconfigured home directory
+	  into a proper error and added script path information.
+	- Fixed unnecessary reporting of dummy extensions in ManageSieve SIEVE
+	  capability; the comparator-i;octet and comparator-i;ascii-numeric
+	  'extensions' were reported explicitly.
+
 v0.2.0 10-09-2010 Stephan Bosch <stephan@rename-it.nl>
 
 	* Merged Sieve and ManageSieve packages into a single Pigeonhole package. 
