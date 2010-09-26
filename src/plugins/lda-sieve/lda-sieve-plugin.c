@@ -781,6 +781,9 @@ static int lda_sieve_deliver_mail
  * Plugin interface
  */
 
+const char *sieve_plugin_version = DOVECOT_VERSION;
+const char sieve_plugin_binary_dependency[] = "lda lmtp";
+
 void sieve_plugin_init(void)
 {
 	/* Hook into the delivery process */
@@ -792,5 +795,3 @@ void sieve_plugin_deinit(void)
 	/* Remove hook */
 	mail_deliver_hook_set(next_deliver_mail);
 }
-
-const char sieve_plugin_binary_dependency[] = "lda lmtp";
