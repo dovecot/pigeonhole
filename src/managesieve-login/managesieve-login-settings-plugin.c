@@ -28,6 +28,8 @@ static void (*next_hook_config_parser_begin)(struct config_parser_context *ctx) 
 
 static void managesieve_login_config_parser_begin(struct config_parser_context *ctx);
 
+const char *managesieve_login_settings_version = DOVECOT_VERSION;
+
 void managesieve_login_settings_init(struct module *module ATTR_UNUSED)
 {
 	next_hook_config_parser_begin = hook_config_parser_begin;

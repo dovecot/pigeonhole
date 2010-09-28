@@ -166,3 +166,5 @@ static bool managesieve_settings_verify
 }
 
 /* </settings checks> */
+
+const char *managesieve_settings_version = DOVECOT_VERSION;
