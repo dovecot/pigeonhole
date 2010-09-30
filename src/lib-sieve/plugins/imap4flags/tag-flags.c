@@ -340,7 +340,8 @@ static int seff_flags_merge
 	const struct sieve_side_effect *new_seffect, 	
 	void **old_context)
 {
-	*old_context = new_seffect->context;
+	if ( new_seffect != NULL )
+		*old_context = new_seffect->context;
 	
 	return 1;
 }
