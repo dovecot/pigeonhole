@@ -1,3 +1,8 @@
+Current activities:
+
+* Build a sieve tool to filter an entire existing mailbox through a Sieve 
+  script.
+
 Next (in order of descending priority/precedence):
 
 * Finish the ereject extension
@@ -16,10 +21,6 @@ Next (in order of descending priority/precedence):
 * Cleanup the test suite
 	- Restructure test scripts
 	- Add more comment on purpose of tests
-* Build a sieve tool to filter an entire existing mailbox through a Sieve 
-  script:
-	- Add commandline options to fully customize execution
-	- Write manual page
 * Implement index extension
 * Update include extension to latest draft (v05 currently):
 	- Implement required ManageSieve behavior (pending IETF discussion)

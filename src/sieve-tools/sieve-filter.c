@@ -11,6 +11,7 @@
 #include "mail-namespace.h"
 #include "mail-storage.h"
 #include "mail-search-build.h"
+#include "imap-utf7.h"
 
 #include "sieve.h"
 #include "sieve-extensions.h"
@@ -36,25 +37,30 @@ static void print_help(void)
 	printf(
 "Usage: sieve-filter [-m <mailbox>] [-x <extensions>] [-s <script-file>] [-c]\n"
 "                    <script-file> <src-mail-store> [<dest-mail-store>]\n"
+"Usage: sieve-filter [-c <config-file>] [-C] [-D] [-e]\n"
+"                  [-m <default-mailbox>] [-P <plugin>]\n"
+"                  [-r <recipient-address>] [-s <script-file>]\n"
+"                  [-t <trace-file>] [-T <trace-option>] [-x <extensions>]\n"
+"                  <script-file> <mail-file>\n"
 	);
 }
 
-enum discard_action_type {
-	DISCARD_ACTION_KEEP,            /* Always keep messages in source folder */ 
-	DISCARD_ACTION_DELETE,          /* Flag discarded messages as \DELETED */
-	DISCARD_ACTION_TRASH_FOLDER,    /* Move discarded messages to Trash folder */      
-	DISCARD_ACTION_EXPUNGE          /* Expunge discarded messages */
+enum source_action_type {
+	SOURCE_ACTION_KEEP,            /* Always keep messages in source folder */ 
+	SOURCE_ACTION_DELETE,          /* Flag discarded messages as \DELETED */
+	SOURCE_ACTION_TRASH_FOLDER,    /* Move discarded messages to Trash folder */      
+	SOURCE_ACTION_EXPUNGE          /* Expunge discarded messages */
 };
 
-struct discard_action {
-	enum discard_action_type type;
+struct source_action {
+	enum source_action_type type;
 	const char *trash_folder;
 };
 
 static int filter_message
 (struct mail *mail, struct sieve_binary *main_sbin, 
 	struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-	struct discard_action discard_action)
+	struct source_action source_action)
 {
 	struct sieve_exec_status estatus;
 	struct sieve_binary *sbin;
@@ -72,7 +78,8 @@ static int filter_message
 	memset(&msgdata, 0, sizeof(msgdata));
 	msgdata.mail = mail;
 	msgdata.return_path = sender;
-	msgdata.to_address = recipient;
+	msgdata.orig_envelope_to = recipient;
+	msgdata.final_envelope_to = recipient;
 	msgdata.auth_user = senv->username;
 	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
 
@@ -85,24 +92,24 @@ static int filter_message
 
 	/* Handle message in source folder */
 	if ( ret > 0 && !estatus.keep_original ) {
-		switch ( discard_action.type ) {
+		switch ( source_action.type ) {
 		/* Leave it there */
-		case DISCARD_ACTION_KEEP:
-			sieve_info(ehandler, NULL, "message left in source folder");
+		case SOURCE_ACTION_KEEP:
+			sieve_info(ehandler, NULL, "message left in source mailbox");
 			break;
 		/* Flag message as \DELETED */
-		case DISCARD_ACTION_DELETE:					
-			sieve_info(ehandler, NULL, "message flagged as deleted in source folder");
+		case SOURCE_ACTION_DELETE:					
+			sieve_info(ehandler, NULL, "message flagged as deleted in source mailbox");
 			mail_update_flags(mail, MODIFY_ADD, MAIL_DELETED);
 			break;
 		/* Move message to Trash folder */
-		case DISCARD_ACTION_TRASH_FOLDER:			
+		case SOURCE_ACTION_TRASH_FOLDER:			
 			sieve_info(ehandler, NULL, 
 				"message in source folder moved to folder '%s'", 
-				discard_action.trash_folder);
+				source_action.trash_folder);
 			break;
 		/* Expunge the message immediately */
-		case DISCARD_ACTION_EXPUNGE:
+		case SOURCE_ACTION_EXPUNGE:
 			sieve_info(ehandler, NULL, "message removed from source folder");
 			mail_expunge(mail);
 			break;
@@ -132,9 +139,9 @@ static void mail_search_build_add_flags
 }
 
 static int filter_mailbox
-(struct mailbox *box, struct sieve_binary *main_sbin, 
+(struct mailbox *src_box, struct sieve_binary *main_sbin, 
 	struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-	struct discard_action discard_action)
+	struct source_action source_action)
 {
 	struct mail_search_args *search_args;
 	struct mailbox_transaction_context *t;
@@ -144,7 +151,7 @@ static int filter_mailbox
 
 	/* Sync mailbox */
 
-	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ) < 0 ) {
+	if ( mailbox_sync(src_box, MAILBOX_SYNC_FLAG_FULL_READ) < 0 ) {
 		return -1;
 	}
 
@@ -155,7 +162,7 @@ static int filter_mailbox
 
 	/* Iterate through all requested messages */
 
-	t = mailbox_transaction_begin(box, 0);
+	t = mailbox_transaction_begin(src_box, 0);
 	search_ctx = mailbox_search_init(t, search_args, NULL);
 	mail_search_args_unref(&search_args);
 
@@ -182,7 +189,7 @@ static int filter_mailbox
 		sieve_info(ehandler, NULL,
 			"filtering: [%s; %"PRIuUOFF_T" bytes] %s", date, size, subject);
 	
-		ret = filter_message(mail, main_sbin, senv, ehandler, discard_action);
+		ret = filter_message(mail, main_sbin, senv, ehandler, source_action);
 	}
 	mail_free(&mail);
 	
@@ -203,11 +210,21 @@ static int filter_mailbox
 
 	/* Sync mailbox */
 
-	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_WRITE) < 0 ) {
+	if ( mailbox_sync(src_box, MAILBOX_SYNC_FLAG_FULL_WRITE) < 0 ) {
 		return -1;
 	}
 	
 	return ret;
+}
+
+static const char *mailbox_name_to_mutf7(const char *mailbox_utf8)
+{
+	string_t *str = t_str_new(128);
+
+	if (imap_utf8_to_utf7(mailbox_utf8, str) < 0)
+		return mailbox_utf8;
+	else
+		return str_c(str);
 }
 
 /*
@@ -217,26 +234,27 @@ static int filter_mailbox
 int main(int argc, char **argv) 
 {
 	struct sieve_instance *svinst;
-	const char *scriptfile, *recipient, *sender,
-	*src_mailbox, *dst_mailbox, *src_mailstore, *dst_mailstore;
+	ARRAY_TYPE (const_string) scriptfiles;
+	const char *scriptfile,	*src_mailbox, *dst_mailbox;
+	struct source_action source_action = { SOURCE_ACTION_KEEP, "Trash" };
 	struct mail_user *mail_user;
-	struct mail_namespace *src_ns, *dst_ns;
 	struct sieve_binary *main_sbin;
 	struct sieve_script_env scriptenv;
 	struct sieve_error_handler *ehandler;
-	bool force_compile = FALSE;
+	bool force_compile = FALSE, execute = FALSE, source_write = FALSE;
+	struct mail_namespace *ns;
+	struct mailbox *src_box;
 	enum mailbox_flags open_flags =
 		MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_IGNORE_ACLS;
 	enum mail_error error;
-	struct discard_action discard_action = 
-	{ DISCARD_ACTION_KEEP, "Trash" };
-	struct mailbox *src_box;
 	int c;
 
-	sieve_tool = sieve_tool_init("sieve-filter", &argc, &argv, "m:x:P:CD", FALSE);
+	sieve_tool = sieve_tool_init("sieve-filter", &argc, &argv, "m:s:x:P:CD", FALSE);
+
+	t_array_init(&scriptfiles, 16);
 
 	/* Parse arguments */
-	scriptfile = recipient = sender = src_mailstore = dst_mailstore = NULL;
+	scriptfile =  NULL;
 	src_mailbox = dst_mailbox = "INBOX";
 	force_compile = FALSE;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
@@ -245,8 +263,27 @@ int main(int argc, char **argv)
 			/* default mailbox (keep box) */
 			dst_mailbox = optarg;
 			break;
+		case 's': 
+			/* scriptfile executed before main script */
+			{
+				const char *file;			
+
+				file = t_strdup(optarg);
+				array_append(&scriptfiles, &file, 1);
+
+				/* FIXME: */
+				i_fatal_status(EX_USAGE, 
+					"The -s argument is currently NOT IMPLEMENTED");
+			}
+			break;
+		case 'e':
+			execute = TRUE;
+			break;
 		case 'C':
 			force_compile = TRUE;
+			break;
+		case 'W':
+			source_write = TRUE;
 			break;
 		default:
 			print_help();
@@ -263,14 +300,10 @@ int main(int argc, char **argv)
 	}
 
 	if ( optind < argc ) {
-		src_mailstore = t_strdup(argv[optind++]);
+		src_mailbox = t_strdup(argv[optind++]);
 	} else {
 		print_help();
-		i_fatal_status(EX_USAGE, "Missing <mailstore> argument");
-	}
-
-	if ( optind < argc ) {
-		dst_mailstore = t_strdup(argv[optind++]);
+		i_fatal_status(EX_USAGE, "Missing <source-mailbox> argument");
 	}
 
 	if ( optind != argc ) {
@@ -284,39 +317,35 @@ int main(int argc, char **argv)
 	(void) sieve_extension_register(svinst, &debug_extension, TRUE);
 
 	/* Create error handler */
-	ehandler = sieve_stderr_ehandler_create(0);
+	ehandler = sieve_stderr_ehandler_create(svinst, 0);
 	sieve_system_ehandler_set(ehandler);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
 
 	/* Compile main sieve script */
 	if ( force_compile ) {
 		main_sbin = sieve_tool_script_compile(svinst, scriptfile, NULL);
-		(void) sieve_save(main_sbin, NULL);
+		if ( main_sbin != NULL )
+			(void) sieve_save(main_sbin, NULL, TRUE, NULL);
 	} else {
 		main_sbin = sieve_tool_script_open(svinst, scriptfile);
 	}
 
-	sieve_tool_init_mail_user(sieve_tool, src_mailstore);
+	/* Initialize mail user */
 	mail_user = sieve_tool_get_mail_user(sieve_tool);
 
-/*	if ( dst_mailstore != NULL ) {
-		folder = "#src/";
-		src_ns = mail_namespace_find(mail_user->namespaces, &folder);
-
-		folder = "/";
-		dst_ns = mail_namespace_find(mail_user->namespaces, &folder);	
-
-		discard_action.type = DISCARD_ACTION_KEEP;	
-	} else {*/
-		dst_ns = src_ns = mail_user->namespaces;
-		discard_action.type = DISCARD_ACTION_DELETE;	
-/*	}*/
+	/* Find namespace for source mailbox */
+	src_mailbox = mailbox_name_to_mutf7(src_mailbox);
+	ns = mail_namespace_find(mail_user->namespaces, &src_mailbox);
+	if ( ns == NULL )
+		i_fatal("Unknown namespace for source mailbox '%s'", src_mailbox);
 
 	/* Open the source mailbox */	
-	src_box = mailbox_alloc(src_ns->list, src_mailbox, open_flags);
+	if ( !source_write ) 
+		open_flags |= MAILBOX_FLAG_READONLY;
+	src_box = mailbox_alloc(ns->list, src_mailbox, open_flags);
   if ( mailbox_open(src_box) < 0 ) {
 		i_fatal("Couldn't open mailbox '%s': %s", 
-			src_mailbox, mail_storage_get_last_error(src_ns->storage, &error));
+			src_mailbox, mail_storage_get_last_error(ns->storage, &error));
   }
 
 	/* Compose script environment */
@@ -329,13 +358,10 @@ int main(int argc, char **argv)
 	scriptenv.postmaster_address = "postmaster@example.com";
 	scriptenv.smtp_open = NULL;
 	scriptenv.smtp_close = NULL;
-	scriptenv.duplicate_mark = NULL;
-	scriptenv.duplicate_check = NULL;
-	scriptenv.trace_stream = NULL;
 
 	/* Apply Sieve filter to all messages found */
 	(void) filter_mailbox
-		(src_box, main_sbin, &scriptenv, ehandler, discard_action);
+		(src_box, main_sbin, &scriptenv, ehandler, source_action);
 	
 	/* Close the mailbox */
 	if ( src_box != NULL )
@@ -343,7 +369,6 @@ int main(int argc, char **argv)
 
 	/* Cleanup error handler */
 	sieve_error_handler_unref(&ehandler);
-	sieve_system_ehandler_reset();
 
 	sieve_tool_deinit(&sieve_tool);
 
