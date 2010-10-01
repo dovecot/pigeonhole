@@ -44,11 +44,11 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sieve-test [-C] [-d <dump-filename>] [-e] [-f <envelope-sender>]\n"
-"                  [-l <mail-location>] [-m <default-mailbox>]\n" 
+"Usage: sieve-test [-c <config-file>] [-C] [-D] [-d <dump-filename>] [-e]\n"
+"                  [-f <envelope-sender>] [-l <mail-location>]\n"
+"                  [-m <default-mailbox>] [-P <plugin>]\n"
 "                  [-r <recipient-address>] [-s <script-file>]\n"
-"                  [-t <trace-filename>] [-T <trace-option>]\n"
-"                  [-P <plugin>] [-x <extensions>]\n"
+"                  [-t <trace-file>] [-T <trace-option>] [-x <extensions>]\n"
 "                  <script-file> <mail-file>\n"
 	);
 }
@@ -133,11 +133,11 @@ int main(int argc, char **argv)
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'r':
-			/* destination address */
+			/* original recipient address */
 			recipient = optarg;
 			break;
 		case 'a':
-			/* final destination address */
+			/* final recipient address */
 			final_recipient = optarg;
 			break;
 		case 'f':

@@ -220,7 +220,8 @@ struct sieve_instance *sieve_tool_init_finish
 {
 	enum mail_storage_service_flags storage_service_flags =
 		MAIL_STORAGE_SERVICE_FLAG_NO_CHDIR |
-		MAIL_STORAGE_SERVICE_FLAG_NO_LOG_INIT;
+		MAIL_STORAGE_SERVICE_FLAG_NO_LOG_INIT |
+		MAIL_STORAGE_SERVICE_FLAG_USE_SYSEXITS;
 	struct mail_storage_service_input service_input;
 	const char *username = tool->username;
 	const char *homedir = tool->homedir;
