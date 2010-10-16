@@ -14,6 +14,7 @@ implements.
 .RI [ options ]
 .I script\-file
 .I source\-mailbox
+.RI [ source\-action ]
 .SH DESCRIPTION
 .PP
 The \fBsieve\-filter\fP command is part of the Pigeonhole Project
@@ -88,34 +89,6 @@ Sieve actions such as redirect, reject, vacation and notify, but using this
 option outgoing messages can be fed to the \fBstdin\fP of an external shell
 command. This option has no effect in simulation mode. Unless you really know
 what you are doing, \fBDO NOT USE THIS TO FEED MAIL TO SENDMAIL!\fP.
-.TP 
-.BI \-R\  source\-action
-Specifies what needs to be done with messages in the source mailbox once
-processed by the Sieve script. By default, the sieve\-filter command does not
-remove the messages from the source mailbox. In particular this means that the
-keep and fileinto actions will cause the messages to be copied. To alter this
-behavior, the \fIsource\-action\fP parameter of the \fB\-R\fP option accepts
-one of the following values:
-.RS 7
-.TP 
-\fBkeep\fP (default)
-Keep processed messages in source folder. If \fB\-W\fR is specified and the
-source mailbox is the destination of a keep or fileinto action, flags may be
-changed by the Sieve script, but messages are never duplicated there. 
-.TP 
-\fBflag\fP
-Flag processed messages as \\DELETED.
-.TP 
-\fBmove\fP [\fIfolder\fP]
-Move processed messages to the indicated \fIfolder\fP.
-.TP 
-\fBexpunge\fP
-Expunge processed messages, meaning that these are removed irreversibly when the
-tool finishes filtering.
-.PP
-Note that the chosen \fIsource\-action\fP only has an effect on the source
-mailbox when the \fB\-W\fP option is specified as well.
-.RE
 .TP
 .BI \-s\  script\-file
 Specify additional scripts to be executed before the main script. Multiple
@@ -157,6 +130,35 @@ into a new binary.
 .TP
 .I source\-mailbox
 The name of the source mailbox.
+.TP 
+.I source\-action
+Specifies what needs to be done with messages in the source mailbox once
+processed by the Sieve script. By default, the sieve\-filter command does not
+remove the messages from the source mailbox. In particular this means that the
+keep and fileinto actions will cause the messages to be copied. To alter this
+behavior, the \fIsource\-action\fP parameter of the \fB\-R\fP option accepts
+one of the following values:
+.RS 7
+.TP 
+.BR keep\  (default)
+Keep processed messages in source folder. If \fB\-W\fR is specified and the
+source mailbox is the destination of a keep or fileinto action, flags may be
+changed by the Sieve script, but messages are never duplicated there. 
+.TP 
+.BI move\  folder
+Move processed messages to the indicated \fIfolder\fP.
+.TP 
+.B delete
+Flag processed messages as \\DELETED.
+.TP 
+.B expunge
+Expunge processed messages, meaning that these are removed irreversibly when the
+tool finishes filtering.
+.PP
+Note that the chosen \fIsource\-action\fP only has an effect on the source
+mailbox when the \fB\-W\fP option is specified as well.
+.RE
+
 .\"------------------------------------------------------------------------
 
 .SH EXAMPLES
