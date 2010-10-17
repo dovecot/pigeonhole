@@ -80,7 +80,8 @@ by default.
 Store outgoing e\-mail into the indicated \fIoutput\-mailbox\fP. By default,
 the sieve\-filter command ignores Sieve actions such as redirect, reject,
 vacation and notify, but using this option outgoing messages can be appended to
-the indicated mailbox. This option has no effect in simulation mode.
+the indicated mailbox. This option has no effect in simulation mode. Flags of
+redirected messages are not preserved. 
 .TP
 .BI \-Q\  mail\-command
 Send outgoing e\-mail (e.g. as produced by redirect, reject and vacation)
