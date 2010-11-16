@@ -27,7 +27,7 @@
 #include <unistd.h>
 
 #define IS_STANDALONE() \
-        (getenv(MASTER_UID_ENV) == NULL)
+        (getenv(MASTER_IS_PARENT_ENV) == NULL)
 
 #define MANAGESIEVE_DIE_IDLE_SECS 10
 
