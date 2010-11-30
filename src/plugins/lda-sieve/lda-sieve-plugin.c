@@ -637,11 +637,6 @@ static int lda_sieve_run
 	if ( srctx.user_ehandler != NULL )
 		sieve_error_handler_unref(&srctx.user_ehandler);
 
-	sieve_error_handler_unref(&srctx.master_ehandler);
-
-	/* Deinitialize Sieve engine */
-	sieve_deinit(&svinst);
-
 	return ret;
 }
 
