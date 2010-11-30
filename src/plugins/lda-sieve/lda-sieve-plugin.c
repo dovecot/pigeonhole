@@ -10,6 +10,7 @@
 #include "mail-user.h"
 #include "duplicate.h"
 #include "smtp-client.h"
+#include "mail-send.h"
 #include "lda-settings.h"
 
 #include "sieve.h"
@@ -77,7 +78,8 @@ static void *lda_sieve_smtp_open
 (void *script_ctx, const char *destination,
 	const char *return_path, FILE **file_r)
 {
-	struct mail_deliver_context *dctx = (struct mail_deliver_context *) script_ctx;
+	struct mail_deliver_context *dctx =
+		(struct mail_deliver_context *) script_ctx;
 
 	return (void *) smtp_client_open(dctx->set, destination, return_path, file_r);
 }
@@ -88,6 +90,15 @@ static bool lda_sieve_smtp_close
 	struct smtp_client *smtp_client = (struct smtp_client *) handle;
 
 	return ( smtp_client_close(smtp_client) == 0 );
+}
+
+static int lda_sieve_reject_mail(void *script_ctx, const char *recipient,
+	const char *reason)
+{
+	struct mail_deliver_context *dctx =
+		(struct mail_deliver_context *) script_ctx;
+	
+	return mail_send_rejection(dctx, recipient, reason);
 }
 
 /*
@@ -611,6 +622,7 @@ static int lda_sieve_run
 	scriptenv.smtp_close = lda_sieve_smtp_close;
 	scriptenv.duplicate_mark = lda_sieve_duplicate_mark;
 	scriptenv.duplicate_check = lda_sieve_duplicate_check;
+	scriptenv.reject_mail = lda_sieve_reject_mail;
 	scriptenv.script_context = (void *) mdctx;
 	scriptenv.exec_status = &estatus;
 

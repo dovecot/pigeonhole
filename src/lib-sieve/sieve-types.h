@@ -136,6 +136,10 @@ struct sieve_script_env {
 	void (*duplicate_mark)
 		(void *script_ctx, const void *id, size_t id_size, const char *user, 
 			time_t time);
+
+	/* Interface for rejecting mail */
+	int (*reject_mail)(void *script_ctx, const char *recipient,
+			const char *reason);
 	
 	/* Execution status record */	
 	struct sieve_exec_status *exec_status;

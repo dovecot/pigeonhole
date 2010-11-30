@@ -247,6 +247,8 @@ void sieve_act_store_get_storage_error
  * Action utility functions
  */
 
+/* Checking for duplicates */
+
 bool sieve_action_duplicate_check_available
 	(const struct sieve_script_env *senv);
 int sieve_action_duplicate_check
@@ -254,5 +256,11 @@ int sieve_action_duplicate_check
 void sieve_action_duplicate_mark
 	(const struct sieve_script_env *senv, const void *id, size_t id_size,
 		time_t time);
+
+/* Rejecting mail */
+
+bool sieve_action_reject_mail
+(const struct sieve_action_exec_env *aenv,
+	const char *sender, const char *recipient, const char *reason);
 
 #endif /* __SIEVE_ACTIONS_H */

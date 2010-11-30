@@ -4,10 +4,18 @@
 #include "lib.h"
 #include "str.h"
 #include "strfuncs.h"
+#include "ioloop.h"
+#include "hostpid.h"
 #include "str-sanitize.h"
 #include "unichar.h"
+#include "istream.h"
+#include "istream-header-filter.h"
 #include "mail-deliver.h"
 #include "mail-storage.h"
+#include "message-date.h"
+#include "message-size.h"
+
+#include "rfc2822.h"
 
 #include "sieve-code.h"
 #include "sieve-extensions.h"
@@ -16,6 +24,8 @@
 #include "sieve-dump.h"
 #include "sieve-result.h"
 #include "sieve-actions.h"
+#include "sieve-message.h"
+#include "sieve-smtp.h"
 
 #include <ctype.h>
 
@@ -679,6 +689,8 @@ static void act_store_rollback
  * Action utility functions
  */
 
+/* Checking for duplicates */
+
 bool sieve_action_duplicate_check_available
 (const struct sieve_script_env *senv)
 {
@@ -705,5 +717,132 @@ void sieve_action_duplicate_mark
 	senv->duplicate_mark
 		(senv->script_context, id, id_size, senv->username, time);
 }
+
+/* Rejecting the mail */
+
+static bool sieve_action_do_reject_mail
+(const struct sieve_action_exec_env *aenv, const char *sender, 
+	const char *recipient, const char *reason)
+{
+	const struct sieve_script_env *senv = aenv->scriptenv;
+	const struct sieve_message_data *msgdata = aenv->msgdata;
+	struct istream *input;
+	void *smtp_handle;
+	struct message_size hdr_size;
+	FILE *f;
+	const char *new_msgid, *boundary;
+	const unsigned char *data;
+	const char *header;
+	size_t size;
+	int ret;
+
+	/* Just to be sure */
+	if ( !sieve_smtp_available(senv) ) {
+		sieve_result_global_warning
+			(aenv, "reject action has no means to send mail");
+		return TRUE;
+	}
+
+	smtp_handle = sieve_smtp_open(senv, sender, NULL, &f);
+
+	new_msgid = sieve_message_get_new_id(senv);
+	boundary = t_strdup_printf("%s/%s", my_pid, senv->hostname);
+
+	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
+	rfc2822_header_field_write(f, "Message-ID", new_msgid);
+	rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
+	rfc2822_header_field_printf(f, "From", "Mail Delivery Subsystem <%s>",
+		senv->postmaster_address);
+	rfc2822_header_field_printf(f, "To", "<%s>", sender);
+	rfc2822_header_field_write(f, "Subject", "Automatically rejected mail");
+	rfc2822_header_field_write(f, "Auto-Submitted", "auto-replied (rejected)");
+	rfc2822_header_field_write(f, "Precedence", "bulk");
+	
+	rfc2822_header_field_write(f, "MIME-Version", "1.0");
+	rfc2822_header_field_printf(f, "Content-Type", 
+		"multipart/report; report-type=disposition-notification;\n"
+		"boundary=\"%s\"", boundary);
+	
+	fprintf(f, "\r\nThis is a MIME-encapsulated message\r\n\r\n");
+
+	/* Human readable status report */
+	fprintf(f, "--%s\r\n", boundary);
+	fprintf(f, "Content-Type: text/plain; charset=utf-8\r\n");
+	fprintf(f, "Content-Disposition: inline\r\n");
+	fprintf(f, "Content-Transfer-Encoding: 8bit\r\n\r\n");
+
+	fprintf(f, "Your message to <%s> was automatically rejected:\r\n"	
+		"%s\r\n", recipient, reason);
+
+	/* MDN status report */
+	fprintf(f, "--%s\r\n"
+		"Content-Type: message/disposition-notification\r\n\r\n", boundary);
+	fprintf(f, "Reporting-UA: %s; Dovecot Mail Delivery Agent\r\n",
+		senv->hostname);
+	if (mail_get_first_header(msgdata->mail, "Original-Recipient", &header) > 0)
+		fprintf(f, "Original-Recipient: rfc822; %s\r\n", header);
+	fprintf(f, "Final-Recipient: rfc822; %s\r\n", recipient);
+
+	if ( msgdata->id != NULL )
+		fprintf(f, "Original-Message-ID: %s\r\n", msgdata->id);
+	fprintf(f, "Disposition: "
+		"automatic-action/MDN-sent-automatically; deleted\r\n");
+	fprintf(f, "\r\n");
+
+	/* original message's headers */
+	fprintf(f, "--%s\r\nContent-Type: message/rfc822\r\n\r\n", boundary);
+
+	if (mail_get_stream(msgdata->mail, &hdr_size, NULL, &input) == 0) {
+		/* Note: If you add more headers, they need to be sorted.
+		 * We'll drop Content-Type because we're not including the message
+		 * body, and having a multipart Content-Type may confuse some
+		 * MIME parsers when they don't see the message boundaries. 
+		 */
+		static const char *const exclude_headers[] = {
+			"Content-Type"
+		};
+
+		input = i_stream_create_header_filter(input,
+			HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR | HEADER_FILTER_HIDE_BODY, 
+			exclude_headers, N_ELEMENTS(exclude_headers), 
+			null_header_filter_callback, NULL);
+
+		while ((ret = i_stream_read_data(input, &data, &size, 0)) > 0) {
+			if (fwrite(data, size, 1, f) == 0)
+				break;
+			i_stream_skip(input, size);
+		}
+		i_stream_unref(&input);
+			
+		i_assert(ret != 0);
+	}
+
+	fprintf(f, "\r\n\r\n--%s--\r\n", boundary);
+
+	if ( !sieve_smtp_close(senv, smtp_handle) ) {
+		sieve_result_global_error(aenv,
+			"failed to send rejection message to <%s> "
+			"(refer to server log for more information)",
+			str_sanitize(sender, 80));
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+
+bool sieve_action_reject_mail
+(const struct sieve_action_exec_env *aenv,
+	const char *sender, const char *recipient, const char *reason)
+{
+	const struct sieve_script_env *senv = aenv->scriptenv;
+
+	if ( senv->reject_mail != NULL ) {
+		return ( senv->reject_mail(senv->script_context, recipient, reason) >= 0 );
+	}
+		
+	return sieve_action_do_reject_mail(aenv, sender, recipient, reason);
+}
+
+
 	
 
