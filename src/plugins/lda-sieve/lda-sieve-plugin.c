@@ -774,6 +774,8 @@ static int lda_sieve_deliver_mail
 
 	} T_END;
 
+	sieve_deinit(&svinst);
+	sieve_error_handler_unref(&master_ehandler);
 	return ret; 
 }
 
