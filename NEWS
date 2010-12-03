@@ -1,3 +1,21 @@
+v0.2.2 03-12-2010 Stephan Bosch <stephan@rename-it.nl>
+
+	* LDA Sieve plugin: started using Dovecot LDA reject API for the reject
+	  extension. This means that the LDA reject_reason and reject_subject
+	  settings now also work for Pigeonhole's LDA Sieve plugin.
+	* Did some work on the new sieve-filter tool. It is mostly functional, but
+	  it is not finished yet.
+	* Dovecot change: services' default vsz_limits weren't being enforced
+	  correctly in earlier v2.0 releases. Now that they are enforced, you might
+	  notice that the default limits are too low and you need to increase them.
+	  This problem will show up in logs as "out of memory" errors. See
+	  default_vsz_limit and service { vsz_limit } settings.
+	- Imap4flags: fixed segfault bug occuring in multiscript context.
+	- Added version checking to the ManageSieve settings plugin. This plugin was
+	  forgotten when the LDA plugin was updated with this change in the previous
+	  release. 
+	- LDA Sieve plugin: fixed memory leak at deinitialization.
+
 v0.2.1 27-09-2010 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Incorporated distinction between original and final envelope recipient in
