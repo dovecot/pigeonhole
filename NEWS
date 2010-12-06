@@ -1,4 +1,4 @@
-v0.2.2 03-12-2010 Stephan Bosch <stephan@rename-it.nl>
+v0.2.2 06-12-2010 Stephan Bosch <stephan@rename-it.nl>
 
 	* LDA Sieve plugin: started using Dovecot LDA reject API for the reject
 	  extension. This means that the LDA reject_reason and reject_subject
