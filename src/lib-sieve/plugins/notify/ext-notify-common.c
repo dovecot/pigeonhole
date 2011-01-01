@@ -245,7 +245,7 @@ void ext_notify_construct_message
 			p += 6;
 		
 			/* Fetch sender from oriinal message */
-			if ( mail_get_headers_utf8(msgdata->mail, "from", &header) >= 0 )
+			if ( mail_get_headers(msgdata->mail, "from", &header) >= 0 )
 				 str_append(out_msg, header[0]); 
 
 		} else if ( strncasecmp(p, "$env-from$", 10) == 0 ) {

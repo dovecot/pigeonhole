@@ -1074,7 +1074,7 @@ static bool act_vacation_commit
 	 */
 	hdsp = _my_address_headers;
 	while ( *hdsp != NULL ) {
-		if ( mail_get_headers_utf8
+		if ( mail_get_headers
 			(msgdata->mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
 			
 			if ( _contains_my_address(headers, recipient) ) {
