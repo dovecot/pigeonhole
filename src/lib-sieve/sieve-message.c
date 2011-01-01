@@ -266,20 +266,24 @@ struct sieve_message_header_stringlist {
 
 	const char *const *headers;
 	int headers_index;
+
+	unsigned int mime_decode:1;
 };
 
 struct sieve_stringlist *sieve_message_header_stringlist_create
-(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_names)
+(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_names,
+	bool mime_decode)
 {
 	struct sieve_message_header_stringlist *strlist;
-	    
+
 	strlist = t_new(struct sieve_message_header_stringlist, 1);
 	strlist->strlist.runenv = renv;
 	strlist->strlist.exec_status = SIEVE_EXEC_OK;
 	strlist->strlist.next_item = sieve_message_header_stringlist_next_item;
 	strlist->strlist.reset = sieve_message_header_stringlist_reset;
 	strlist->field_names = field_names;
-  
+	strlist->mime_decode = mime_decode;
+
 	return &strlist->strlist;
 }
 
@@ -334,11 +338,20 @@ static int sieve_message_header_stringlist_next_item
 		}
 
 		/* Fetch all matching headers from the e-mail */
-		if ( mail_get_headers_utf8(mail, str_c(hdr_item), &strlist->headers) < 0 ||
-			( strlist->headers != NULL && strlist->headers[0] == NULL ) ) {
-			/* Try next item when this fails somehow */
-			strlist->headers = NULL;
-			continue;
+		if ( strlist->mime_decode ) {
+			if ( mail_get_headers_utf8(mail, str_c(hdr_item), &strlist->headers) < 0 ||
+				( strlist->headers != NULL && strlist->headers[0] == NULL ) ) {
+				/* Try next item when this fails somehow */
+				strlist->headers = NULL;
+				continue;
+			}
+		} else {
+			if ( mail_get_headers(mail, str_c(hdr_item), &strlist->headers) < 0 ||
+				( strlist->headers != NULL && strlist->headers[0] == NULL ) ) {
+				/* Try next item when this fails somehow */
+				strlist->headers = NULL;
+				continue;
+			}
 		}
 	}
 

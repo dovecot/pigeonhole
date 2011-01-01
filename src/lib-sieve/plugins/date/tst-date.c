@@ -461,11 +461,11 @@ static int tst_date_operation_execute
 	 */
 
 	if ( sieve_operation_is(op, date_operation) ) {
-	
+
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "date test");
 
 		/* Create value stringlist */
-		hdr_value_list = sieve_message_header_stringlist_create(renv, hdr_list);
+		hdr_value_list = sieve_message_header_stringlist_create(renv, hdr_list, FALSE);
 		value_list = ext_date_stringlist_create
 			(renv, hdr_value_list, time_zone, str_c(date_part));
 

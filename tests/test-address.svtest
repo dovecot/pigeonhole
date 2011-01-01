@@ -370,3 +370,27 @@ test "Default address part" {
 		test_fail "invalid default address part (2)";
 	}
 }
+
+/*
+ * TEST: Erroneous mime encoding
+ */
+
+test_set "message" text:
+From: "William Wallace <william@scotsmen.ex>"
+To: "=?UTF-8?B?IkR1bWIgTWFpbGVyIg==?="
+	<horde@lists.scotsmen.ex>
+Subject: Test
+
+Frop!
+.
+;
+
+
+test "Erroneous mime encoding" {
+        # Relevant sieve rule:
+
+        if not address :is ["To","CC"] ["horde@lists.scotsmen.ex","archers@lists.scotsmen.ex"] {
+                test_fail "Failed to match improperly encoded address headers";
+        }
+}
+

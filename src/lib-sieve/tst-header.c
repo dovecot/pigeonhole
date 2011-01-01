@@ -186,7 +186,7 @@ static int tst_header_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "header test");
 
 	/* Create header stringlist */
-	value_list = sieve_message_header_stringlist_create(renv, hdr_list);
+	value_list = sieve_message_header_stringlist_create(renv, hdr_list, TRUE);
 
 	/* Perform match */
 	if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret)) < 0 )

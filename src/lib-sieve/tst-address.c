@@ -254,7 +254,7 @@ static int tst_address_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "address test");
 
 	/* Create value stringlist */
-	hdr_value_list = sieve_message_header_stringlist_create(renv, hdr_list);
+	hdr_value_list = sieve_message_header_stringlist_create(renv, hdr_list, FALSE);
 	addr_list = sieve_header_address_list_create(renv, hdr_value_list);
 	value_list = sieve_address_part_stringlist_create(renv, &addrp, addr_list);
 

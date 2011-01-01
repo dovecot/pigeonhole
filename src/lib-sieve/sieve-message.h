@@ -58,6 +58,7 @@ const char *sieve_message_get_sender
  */
 
 struct sieve_stringlist *sieve_message_header_stringlist_create
-	(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_names);
-	
+	(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_names,
+		bool mime_decode);
+
 #endif /* __SIEVE_MESSAGE_H */
