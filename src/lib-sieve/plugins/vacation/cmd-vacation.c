@@ -942,7 +942,7 @@ static bool act_vacation_send
 			"failed to send vacation response to <%s> "
 			"(refer to server log for more information)", 
 			str_sanitize(reply_to, 128));	
-		return TRUE;
+		return FALSE;
 	}
 	
 	return TRUE;
@@ -1120,7 +1120,7 @@ static bool act_vacation_commit
 		return TRUE;
 	}
 
-	return FALSE;
+	return TRUE;
 }
 
 
