@@ -279,9 +279,6 @@ ManageSieve
 	  These clients are specifically written for Cyrus timsieved and fail on
 	  multiple stages of the protocol when connected to Pigeonhole ManageSieve.
 
-* The ANONYMOUS authentication mechanism is currently not supported and
-  explicitly denied.
-
 Authors
 =======
 

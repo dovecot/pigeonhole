@@ -51,7 +51,6 @@ Next (in order of descending priority/precedence):
 	  are tested at least once.
 * Fix ManageSieve proxy to recognize response codes from the backend and forward
   them to the user if appropriate/safe.
-* Implement proper support for ManageSieve SASL ANONYMOUS login.
 * Test ManageSieve behavior thoroughly:
 	- Test pipelined behavior
 	- Test proxy authentication

@@ -33,6 +33,7 @@ const char *client_authenticate_get_capabilities
 	mech = sasl_server_get_advertised_mechs(client, &count);
 
 	for (i = 0; i < count; i++) {
+		/* Filter ANONYMOUS mechanism, ManageSieve has no use-case for it */
 		if ( (mech[i].flags & MECH_SEC_ANONYMOUS) == 0 ) {
 			if ( !first )
 				str_append_c(str, ' ');
@@ -215,13 +216,10 @@ int cmd_authenticate
 	if (*mech_name == '\0') 
 		return -1;
 
-	/* FIXME: This refuses the ANONYMOUS mechanism. 
-	 *   This can be removed once anonymous login is implemented according to the 
-	 *   draft RFC. - Stephan
-	 */
+	/* Refuse the ANONYMOUS mechanism. */
 	if ( strncasecmp(mech_name, "ANONYMOUS", 9) == 0 ) {
 		client_send_no
-			(&msieve_client->common, "ANONYMOUS mechanism is not implemented.");		
+			(&msieve_client->common, "ANONYMOUS login is not allowed.");
 		return 0;
 	}
 
