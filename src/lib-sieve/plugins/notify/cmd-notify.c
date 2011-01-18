@@ -420,7 +420,7 @@ static int cmd_notify_operation_execute
 	sieve_number_t importance = 1;
 	struct sieve_stringlist *options = NULL;
 	string_t *message = NULL, *id = NULL; 
-	int ret;
+	int ret = 0;
 
 	/*
 	 * Read operands
@@ -476,7 +476,6 @@ static int cmd_notify_operation_execute
 	if ( options != NULL ) {
 		string_t *raw_address;
 		string_t *out_message;
-		int ret;
 
 		pool = sieve_result_pool(renv->result);
 		act = p_new(pool, struct ext_notify_action, 1);
