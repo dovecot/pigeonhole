@@ -115,7 +115,7 @@ static inline bool _is_qchar(unsigned char c)
 	return _qchar_lookup[c];
 }
   
-static inline int _decode_hex_digit(char digit)
+static inline int _decode_hex_digit(unsigned char digit)
 {
 	switch ( digit ) {
 	case '0': case '1': case '2': case '3': case '4': 
@@ -134,20 +134,25 @@ static inline int _decode_hex_digit(char digit)
 
 static bool _parse_hex_value(const char **in, char *out)
 {
-	char value;
+	int value, digit;
 		
-	if ( **in == '\0' || (value=_decode_hex_digit(**in)) < 0 )
+	if ( (digit=_decode_hex_digit((unsigned char) **in)) < 0 )
 		return FALSE;
 	
-	*out = value << 4;
+	value = digit << 4;
 	(*in)++;
 	
-	if ( **in == '\0' || (value=_decode_hex_digit(**in)) < 0 )
+	if ( (digit=_decode_hex_digit((unsigned char) **in)) < 0 )
 		return FALSE;	
 
-	*out |= value;
+	value |= digit;
 	(*in)++;
-	return (*out != '\0');	
+
+	if ( value == 0 )
+		return FALSE;
+
+	*out = (char) value;
+	return TRUE;	
 }
 
 /* 
