@@ -115,6 +115,20 @@ static const struct sieve_operand_def copy_side_effect_operand = {
 	&ext_side_effects
 };
 
+/*
+ * Tag registration
+ */
+
+void sieve_ext_copy_register_tag
+(struct sieve_validator *valdtr, const struct sieve_extension *copy_ext,
+	const char *command)
+{
+	if ( sieve_validator_extension_loaded(valdr, copy_ext) ) {
+		sieve_validator_register_external_tag
+			(valdtr, command, copy_ext, &copy_tag, SIEVE_OPT_SIDE_EFFECT);
+	}
+}
+
 /* 
  * Tag validation 
  */
