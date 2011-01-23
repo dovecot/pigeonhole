@@ -22,6 +22,8 @@
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
 
+#include "sieve-ext-copy.h"
+
 /*
  * Forward declarations
  */
@@ -123,7 +125,7 @@ void sieve_ext_copy_register_tag
 (struct sieve_validator *valdtr, const struct sieve_extension *copy_ext,
 	const char *command)
 {
-	if ( sieve_validator_extension_loaded(valdr, copy_ext) ) {
+	if ( sieve_validator_extension_loaded(valdtr, copy_ext) ) {
 		sieve_validator_register_external_tag
 			(valdtr, command, copy_ext, &copy_tag, SIEVE_OPT_SIDE_EFFECT);
 	}

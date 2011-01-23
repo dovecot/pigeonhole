@@ -179,7 +179,7 @@ static bool cmd_redirect_operation_dump
 	if ( sieve_action_opr_optional_dump(denv, address, NULL) != 0 )
 		return FALSE;
 
-	return sieve_opr_string_dump(denv, address, "reason");
+	return sieve_opr_string_dump(denv, address, "address");
 }
 
 /*
