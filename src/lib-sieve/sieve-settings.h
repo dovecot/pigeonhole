@@ -33,6 +33,9 @@ bool sieve_setting_get_size_value
 bool sieve_setting_get_bool_value
 	(struct sieve_instance *svinst, const char *setting,
 		bool *value_r);
+bool sieve_setting_get_duration_value
+	(struct sieve_instance *svinst, const char *setting,
+		unsigned int *value_r);
 
 /*
  * Home directory

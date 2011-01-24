@@ -10,6 +10,44 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+static bool sieve_setting_parse_uint
+(struct sieve_instance *svinst, const char *setting, const char *str_value,
+	char **endptr, unsigned long long int *value_r)
+{
+	if ( (*value_r = strtoull(str_value, endptr, 10)) == ULLONG_MAX
+		&& errno == ERANGE ) {
+		sieve_sys_warning(svinst,
+			"overflowing unsigned integer value for setting '%s': '%s'",
+			setting, str_value);
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+
+static bool sieve_setting_parse_int
+(struct sieve_instance *svinst, const char *setting, const char *str_value,
+	char **endptr, long long int *value_r)
+{
+	*value_r = strtoll(str_value, endptr, 10);
+
+	if ( *value_r == LLONG_MIN && errno == ERANGE ) {
+		sieve_sys_warning(svinst,
+			"underflowing integer value for setting '%s': '%s'",
+			setting, str_value);
+		return FALSE;
+	}
+
+	if ( *value_r == LLONG_MAX && errno == ERANGE ) {
+		sieve_sys_warning(svinst,
+			"overflowing integer value for setting '%s': '%s'",
+			setting, str_value);
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+
 bool sieve_setting_get_uint_value
 (struct sieve_instance *svinst, const char *setting,
 	unsigned long long int *value_r)
@@ -22,7 +60,8 @@ bool sieve_setting_get_uint_value
 	if ( str_value == NULL || *str_value == '\0' )
 		return FALSE;
 
-	*value_r = strtoull(str_value, &endp, 10);
+	if ( !sieve_setting_parse_uint(svinst, setting, str_value, &endp, value_r) )
+		return FALSE;
 
 	if ( *endp != '\0' ) {
 		sieve_sys_warning(svinst,
@@ -46,7 +85,8 @@ bool sieve_setting_get_int_value
 	if ( str_value == NULL || *str_value == '\0' )
 		return FALSE;
 
-	*value_r = strtoll(str_value, &endp, 10);
+	if ( !sieve_setting_parse_int(svinst, setting, str_value, &endp, value_r) )
+		return FALSE;
 
 	if ( *endp != '\0' ) {
 		sieve_sys_warning(svinst, "invalid integer value for setting '%s': '%s'",
@@ -71,35 +111,41 @@ bool sieve_setting_get_size_value
 	if ( str_value == NULL || *str_value == '\0' )
 		return FALSE;
 
-	value = strtoull(str_value, &endp, 10);
+	if ( !sieve_setting_parse_uint(svinst, setting, str_value, &endp, &value) )
+		return FALSE;
 
 	switch (i_toupper(*endp)) {
-	case '\0':
-		/* default */
-		break;
-	case 'B':
+	case '\0': /* default */
+	case 'B': /* byte (useless) */
 		multiply = 1;
 		break;
-	case 'K':	
+	case 'k': /* kilobyte */
+	case 'K':	 
 		multiply = 1024;
 		break;
-	case 'M':
+	case 'M': /* megabyte */
 		multiply = 1024*1024;
 		break;
-	case 'G':
+	case 'G': /* gigabyte */
 		multiply = 1024*1024*1024;
 		break;
-	case 'T':
+	case 'T': /* terabyte */
 		multiply = 1024ULL*1024*1024*1024;
 		break;
 	default:
 		sieve_sys_warning(svinst,
-			"invalid unsigned integer value for setting '%s': '%s'",
+			"invalid size value for setting '%s': '%s'",
 			setting, str_value);
 		return FALSE;
 	}
 
-	/* FIXME: conversion to size_t may overflow */
+	if ( value > SSIZE_T_MAX / multiply ) {
+		sieve_sys_warning(svinst,
+			"overflowing size value for setting '%s': '%s'",
+			setting, str_value);
+		return FALSE;
+	}
+
 	*value_r = (size_t) (value * multiply);
 	
 	return TRUE;
@@ -130,3 +176,53 @@ bool sieve_setting_get_bool_value
 		setting, str_value);
 	return FALSE;
 }
+
+bool sieve_setting_get_duration_value
+(struct sieve_instance *svinst, const char *setting,
+	unsigned int *value_r)
+{
+	const char *str_value;
+	unsigned long long int value, multiply = 1;
+	char *endp;
+
+	str_value = sieve_setting_get(svinst, setting);
+
+	if ( str_value == NULL || *str_value == '\0' )
+		return FALSE;
+
+	if ( !sieve_setting_parse_uint(svinst, setting, str_value, &endp, &value) )
+		return FALSE;
+
+	switch (i_toupper(*endp)) {
+	case '\0': /* default */
+	case 's': /* seconds */
+		multiply = 1;
+		break;
+	case 'm': /* minutes */	
+		multiply = 60;
+		break;
+	case 'h': /* hours */
+		multiply = 60*60;
+		break;
+	case 'd': /* days */
+		multiply = 24*60*60;
+		break;
+	default:
+		sieve_sys_warning(svinst,
+			"invalid duration value for setting '%s': '%s'",
+			setting, str_value);
+		return FALSE;
+	}
+
+	if ( value > UINT_MAX / multiply ) {
+		sieve_sys_warning(svinst,
+			"overflowing duration value for setting '%s': '%s'",
+			setting, str_value);
+		return FALSE;
+	}
+
+	*value_r = (unsigned int) (value * multiply);
+	
+	return TRUE;
+}
+
