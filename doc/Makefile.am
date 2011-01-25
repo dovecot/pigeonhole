@@ -1,6 +1,8 @@
 SUBDIRS = man example-config
 
-docfiles = spamtest-virustest.txt
+docfiles = \
+	vacation.txt \
+	spamtest-virustest.txt
 
 if BUILD_DOCS
 sieve_doc_DATA = $(docfiles)

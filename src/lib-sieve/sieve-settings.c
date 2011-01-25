@@ -179,7 +179,7 @@ bool sieve_setting_get_bool_value
 
 bool sieve_setting_get_duration_value
 (struct sieve_instance *svinst, const char *setting,
-	unsigned int *value_r)
+	sieve_number_t *value_r)
 {
 	const char *str_value;
 	unsigned long long int value, multiply = 1;
@@ -214,7 +214,7 @@ bool sieve_setting_get_duration_value
 		return FALSE;
 	}
 
-	if ( value > UINT_MAX / multiply ) {
+	if ( value > SIEVE_MAX_NUMBER / multiply ) {
 		sieve_sys_warning(svinst,
 			"overflowing duration value for setting '%s': '%s'",
 			setting, str_value);

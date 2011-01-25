@@ -33,7 +33,8 @@ static bool ext_vacation_validator_load
 
 const struct sieve_extension_def vacation_extension = { 
 	"vacation",
-	NULL, NULL,
+	ext_vacation_load,
+	ext_vacation_unload,
 	ext_vacation_validator_load, 
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATION(vacation_operation),

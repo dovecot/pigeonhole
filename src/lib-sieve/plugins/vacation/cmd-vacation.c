@@ -140,7 +140,7 @@ static const struct sieve_argument_def vacation_handle_tag = {
 
 enum cmd_vacation_optional {
 	OPT_END,
-	OPT_DAYS,
+	OPT_SECONDS,
 	OPT_SUBJECT,
 	OPT_FROM,
 	OPT_ADDRESSES,
@@ -204,7 +204,7 @@ const struct sieve_action_def act_vacation = {
 struct act_vacation_context {
 	const char *reason;
 
-	sieve_number_t days;
+	sieve_number_t seconds;
 	const char *subject;
 	const char *handle;
 	bool mime;
@@ -234,6 +234,9 @@ static bool cmd_vacation_validate_number_tag
 (struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
 	struct sieve_command *cmd)
 {
+	const struct sieve_extension *ext = sieve_argument_ext(*arg);
+	const struct ext_vacation_config *config =
+		(const struct ext_vacation_config *) ext->context;
 	struct sieve_ast_argument *tag = *arg;
 	
 	/* Detach the tag itself */
@@ -247,9 +250,24 @@ static bool cmd_vacation_validate_number_tag
 		return FALSE;
 	}
 
-	/* Enforce :days > 0 */
-	if ( sieve_ast_argument_number(*arg) == 0 ) {
-		sieve_ast_argument_number_set(*arg, 1);
+	if ( sieve_argument_is(tag, vacation_days_tag) ) {
+		sieve_number_t days = sieve_ast_argument_number(*arg);
+
+		/* Enforce :days >= min_period */
+		if ( days * (24*60*60) < config->min_period ) {
+			sieve_ast_argument_number_set(*arg, config->min_period);
+
+			sieve_argument_validate_warning(valdtr, *arg,
+				"specified :days period '%d' is under the minimum", days);
+
+		/* Enforce :days <= max_period */
+		} else if ( config->max_period > 0
+			&& days * (24*60*60) > config->max_period ) {
+			sieve_ast_argument_number_set(*arg, config->max_period);
+
+			sieve_argument_validate_warning(valdtr, *arg,
+				"specified :days period '%d' is over the maximum", days);
+		}
 	}
 
 	/* Skip parameter */
@@ -367,7 +385,7 @@ static bool cmd_vacation_registered
 	struct sieve_command_registration *cmd_reg) 
 {
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, ext, &vacation_days_tag, OPT_DAYS); 	
+		(valdtr, cmd_reg, ext, &vacation_days_tag, OPT_SECONDS); 	
 	sieve_validator_register_tag
 		(valdtr, cmd_reg, ext, &vacation_subject_tag, OPT_SUBJECT); 	
 	sieve_validator_register_tag
@@ -500,8 +518,8 @@ static bool ext_vacation_operation_dump
 		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
-		case OPT_DAYS:
-			opok = sieve_opr_number_dump(denv, address, "days");
+		case OPT_SECONDS:
+			opok = sieve_opr_number_dump(denv, address, "seconds");
 			break;
 		case OPT_SUBJECT:
 			opok = sieve_opr_string_dump(denv, address, "subject");
@@ -540,7 +558,7 @@ static int ext_vacation_operation_execute
 	struct act_vacation_context *act;
 	pool_t pool;
 	int opt_code = 0;
-	sieve_number_t days = 7;
+	sieve_number_t seconds = EXT_VACATION_DEFAULT_PERIOD;
 	bool mime = FALSE;
 	struct sieve_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
@@ -562,8 +580,8 @@ static int ext_vacation_operation_execute
 		if ( opt == 0 ) break;
 
 		switch ( opt_code ) {
-		case OPT_DAYS:
-			ret = sieve_opr_number_read(renv, address, "days", &days);
+		case OPT_SECONDS:
+			ret = sieve_opr_number_read(renv, address, "seconds", &seconds);
 			break;
 		case OPT_SUBJECT:
 			ret = sieve_opr_string_read(renv, address, "subject", &subject);
@@ -597,11 +615,6 @@ static int ext_vacation_operation_execute
 	 * Perform operation
 	 */
 
-	/* Enforce days > 0 (just to be sure) */
-
-	if ( days == 0 )
-		days = 1;
-
 	/* Trace */
 
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS) ) {
@@ -630,7 +643,7 @@ static int ext_vacation_operation_execute
 	act = p_new(pool, struct act_vacation_context, 1);
 	act->reason = p_strdup(pool, str_c(reason));
 	act->handle = p_strdup(pool, str_c(handle));
-	act->days = days;
+	act->seconds = seconds;
 	act->mime = mime;
 	if ( subject != NULL )
 		act->subject = p_strdup(pool, str_c(subject));
@@ -735,7 +748,7 @@ static void act_vacation_print
 		(struct act_vacation_context *) action->context;
 	
 	sieve_result_action_printf( rpenv, "send vacation message:");
-	sieve_result_printf(rpenv, "    => days   : %d\n", ctx->days);
+	sieve_result_printf(rpenv, "    => seconds   : %d\n", ctx->seconds);
 	if ( ctx->subject != NULL )
 		sieve_result_printf(rpenv, "    => subject: %s\n", ctx->subject);
 	if ( ctx->from != NULL )
@@ -966,11 +979,14 @@ static bool act_vacation_commit
 (const struct sieve_action *action, const struct sieve_action_exec_env *aenv, 
 	void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
-	const char *const *hdsp;
+	const struct sieve_extension *ext = action->ext;
+	const struct ext_vacation_config *config =
+		(const struct ext_vacation_config *) ext->context;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct act_vacation_context *ctx = 
 		(struct act_vacation_context *) action->context;
+	const char *const *hdsp;
 	unsigned char dupl_hash[MD5_RESULTLEN];
 	const char *const *headers;
 	const char *sender = sieve_message_get_sender(aenv->msgctx);
@@ -1109,13 +1125,19 @@ static bool act_vacation_commit
 	/* Send the message */
 	
 	if ( act_vacation_send(aenv, ctx, sender, reply_from) ) {
+		sieve_number_t seconds; 
+
 		sieve_result_global_log(aenv, "sent vacation response to <%s>", 
 			str_sanitize(sender, 128));	
 
+		/* Check period limits once more */
+		seconds = ctx->seconds;
+		if ( seconds < config->min_period ) seconds = config->min_period;
+		if ( seconds > config->max_period ) seconds = config->max_period;
+
 		/* Mark as replied */
 		sieve_action_duplicate_mark
-			(senv, dupl_hash, sizeof(dupl_hash),
-				ioloop_time + ctx->days * (24 * 60 * 60));
+			(senv, dupl_hash, sizeof(dupl_hash), ioloop_time + seconds);
 
 		return TRUE;
 	}
