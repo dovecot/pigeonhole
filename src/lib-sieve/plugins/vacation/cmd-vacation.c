@@ -554,11 +554,13 @@ static int ext_vacation_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
+	const struct ext_vacation_config *config =
+		(const struct ext_vacation_config *) this_ext->context;
 	struct sieve_side_effects_list *slist = NULL;
 	struct act_vacation_context *act;
 	pool_t pool;
 	int opt_code = 0;
-	sieve_number_t seconds = EXT_VACATION_DEFAULT_PERIOD;
+	sieve_number_t seconds = config->default_period;
 	bool mime = FALSE;
 	struct sieve_stringlist *addresses = NULL;
 	string_t *reason, *subject = NULL, *from = NULL, *handle = NULL; 
@@ -1132,8 +1134,10 @@ static bool act_vacation_commit
 
 		/* Check period limits once more */
 		seconds = ctx->seconds;
-		if ( seconds < config->min_period ) seconds = config->min_period;
-		if ( seconds > config->max_period ) seconds = config->max_period;
+		if ( seconds < config->min_period ) 
+			seconds = config->min_period;
+		else if ( config->max_period > 0 && seconds > config->max_period )
+			seconds = config->max_period;
 
 		/* Mark as replied */
 		sieve_action_duplicate_mark

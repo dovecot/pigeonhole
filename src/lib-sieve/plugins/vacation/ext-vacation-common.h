@@ -17,6 +17,7 @@
 struct ext_vacation_config {
 	unsigned int min_period;
 	unsigned int max_period;
+	unsigned int default_period;
 };
 
 /* 
@@ -31,7 +32,9 @@ extern const struct sieve_command_def vacation_command;
 
 extern const struct sieve_operation_def vacation_operation;
 
-/* Extension */
+/* 
+ * Extension 
+ */
 
 extern const struct sieve_extension_def vacation_extension;
 

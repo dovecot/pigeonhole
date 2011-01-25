@@ -8,14 +8,19 @@ The following settings can be configured for using the vacation extension:
 sieve_vacation_min_period = 1d
   This specifies the minimum period that can be specified for the :days tag
   of the vacation command. Values are specified in s(econds), unless followed
-  by a d(ay), h(our), m(inute) specifier character. 
+  by a d(ay), h(our) or m(inute) specifier character. 
 
 sieve_vacation_max_period = 0
   This specifies the minimum period that can be specified for the :days tag
   of the vacation command. Values are specified in s(econds), unless followed
-  by a d(ay), h(our), m(inute) specifier character. The configured value
+  by a d(ay), h(our) or m(inute) specifier character. The configured value
   must be larger than the sieve_vacation_min_period setting. A value of 0
   has a special meaning: it indicates that there is no upper limit. 
+
+sieve_vacation_default_period = 7d
+	This specifies the default period that can be specified for the :days tag
+  of the vacation command. Values are specified in s(econds), unless followed
+  by a d(ay), h(our) or m(inute) specifier character.
 
 Example
 =======
@@ -25,6 +30,9 @@ plugin {
 
   # One minute at minimum
   sieve_vacation_min_period = 1m
+
+  # Ten days default
+  sieve_vacation_min_period = 10d
 
   # Thirty days at maximum
   sieve_vacation_max_period = 30d
