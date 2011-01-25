@@ -335,6 +335,8 @@ void sieve_tool_init_mail_user
 	const char *username = tool->username;
 	struct mail_namespace_settings ns_set;
 	struct mail_namespace *ns = NULL;
+	enum mail_storage_flags storage_flags =
+		MAIL_STORAGE_FLAG_NO_AUTOCREATE;
 	const char *home = NULL, *errstr = NULL;
 
 	tool->mail_user = mail_user_alloc
@@ -356,7 +358,7 @@ void sieve_tool_init_mail_user
 	ns->flags |= NAMESPACE_FLAG_NOQUOTA | NAMESPACE_FLAG_NOACL;
 	ns->set = &ns_set;
 
-	if ( mail_storage_create(ns, NULL, 0, &errstr) < 0 )
+	if ( mail_storage_create(ns, NULL, storage_flags, &errstr) < 0 )
 		i_fatal("Test storage creation failed: %s", errstr);
 }
 
