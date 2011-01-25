@@ -86,6 +86,7 @@ extern const struct sieve_extension_def encoded_character_extension;
  */
 
 extern const struct sieve_extension_def vacation_extension;
+extern const struct sieve_extension_def vacation_seconds_extension;
 extern const struct sieve_extension_def subaddress_extension;
 extern const struct sieve_extension_def comparator_i_ascii_numeric_extension;
 extern const struct sieve_extension_def relational_extension;
@@ -140,6 +141,7 @@ const unsigned int sieve_core_extensions_count =
  */
 
 const struct sieve_extension_def *sieve_extra_extensions[] = {	
+	&vacation_seconds_extension,
 	&spamtest_extension, &spamtestplus_extension, &virustest_extension
 };
 

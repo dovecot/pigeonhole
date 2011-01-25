@@ -101,6 +101,13 @@ static const struct sieve_argument_def vacation_days_tag = {
 	NULL, NULL, NULL, 
 };
 
+static const struct sieve_argument_def vacation_seconds_tag = { 
+	"seconds", 
+	NULL, 
+	cmd_vacation_validate_number_tag, 
+	NULL, NULL, NULL, 
+};
+
 static const struct sieve_argument_def vacation_subject_tag = { 
 	"subject", 
 	NULL,
@@ -238,6 +245,7 @@ static bool cmd_vacation_validate_number_tag
 	const struct ext_vacation_config *config =
 		(const struct ext_vacation_config *) ext->context;
 	struct sieve_ast_argument *tag = *arg;
+	sieve_number_t period, seconds;
 	
 	/* Detach the tag itself */
 	*arg = sieve_ast_arguments_detach(*arg,1);
@@ -250,25 +258,35 @@ static bool cmd_vacation_validate_number_tag
 		return FALSE;
 	}
 
+	period = sieve_ast_argument_number(*arg);
 	if ( sieve_argument_is(tag, vacation_days_tag) ) {
-		sieve_number_t days = sieve_ast_argument_number(*arg);
+		seconds = period * (24*60*60);	
 
-		/* Enforce :days >= min_period */
-		if ( days * (24*60*60) < config->min_period ) {
-			sieve_ast_argument_number_set(*arg, config->min_period);
+	} else if ( sieve_argument_is(tag, vacation_seconds_tag) ) {
+		seconds = period;
 
-			sieve_argument_validate_warning(valdtr, *arg,
-				"specified :days period '%d' is under the minimum", days);
-
-		/* Enforce :days <= max_period */
-		} else if ( config->max_period > 0
-			&& days * (24*60*60) > config->max_period ) {
-			sieve_ast_argument_number_set(*arg, config->max_period);
-
-			sieve_argument_validate_warning(valdtr, *arg,
-				"specified :days period '%d' is over the maximum", days);
-		}
+	} else {
+		i_unreached();
 	}
+
+	/* Enforce :seconds >= min_period */
+	if ( seconds < config->min_period ) {
+		seconds = config->min_period;
+
+		sieve_argument_validate_warning(valdtr, *arg,
+			"specified :%s value '%lu' is under the minimum",
+			sieve_argument_identifier(tag), (unsigned long) period);
+
+	/* Enforce :days <= max_period */
+	} else if ( config->max_period > 0 && seconds > config->max_period ) {
+		seconds = config->max_period;
+
+		sieve_argument_validate_warning(valdtr, *arg,
+			"specified :%s value '%lu' is over the maximum",
+			sieve_argument_identifier(tag), (unsigned long) period);
+	}
+
+	sieve_ast_argument_number_set(*arg, seconds);
 
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
@@ -399,6 +417,16 @@ static bool cmd_vacation_registered
 
 	return TRUE;
 }
+
+bool ext_vacation_register_seconds_tag
+(struct sieve_validator *valdtr, const struct sieve_extension *vacation_ext)
+{
+	sieve_validator_register_external_tag
+		(valdtr, vacation_command.identifier, vacation_ext, &vacation_seconds_tag,
+			OPT_SECONDS);
+
+	return TRUE;
+} 
 
 /* 
  * Command validation 
@@ -1140,8 +1168,10 @@ static bool act_vacation_commit
 			seconds = config->max_period;
 
 		/* Mark as replied */
-		sieve_action_duplicate_mark
-			(senv, dupl_hash, sizeof(dupl_hash), ioloop_time + seconds);
+		if ( seconds > 0  ) {
+			sieve_action_duplicate_mark
+				(senv, dupl_hash, sizeof(dupl_hash), ioloop_time + seconds);
+		}
 
 		return TRUE;
 	}

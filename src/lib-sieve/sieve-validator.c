@@ -601,6 +601,36 @@ const struct sieve_extension *sieve_validator_extension_load
 	return ext;
 }
 
+const struct sieve_extension *sieve_validator_extension_load_implicit
+(struct sieve_validator *valdtr, const char *ext_name)
+{
+	struct sieve_validator_extension_reg *reg;
+	const struct sieve_extension *ext;
+	const struct sieve_extension_def *extdef;
+
+	ext = sieve_extension_get_by_name(valdtr->svinst, ext_name); 
+	
+	if ( ext == NULL || ext->def == NULL )
+		return NULL;
+	
+	sieve_ast_extension_link(valdtr->ast, ext);
+
+	extdef = ext->def;
+
+	if ( extdef->validator_load != NULL && !extdef->validator_load(ext, valdtr) )
+		return NULL;
+
+	/* Register extension no matter what and store the AST argument registering it 
+	 */
+	if ( ext->id >= 0 ) {
+		reg = array_idx_modifiable(&valdtr->extensions, (unsigned int) ext->id);
+		reg->loaded = TRUE;
+	}
+
+	return ext;
+}
+
+
 void sieve_validator_extension_register
 (struct sieve_validator *valdtr, const struct sieve_extension *ext,
 	const struct sieve_validator_extension *valext, void *context)

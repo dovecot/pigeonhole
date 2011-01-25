@@ -259,9 +259,10 @@ and sieve_after using the sievec tool, as explained in the README file.
 Sieve Interpreter - Extension Configuration
 -------------------------------------------
 
-- Vacation extension:
+- Vacation and Vacation-Seconds extensions:
 
-  Refer to doc/vacation.txt for settings specific to the vacation extension.
+  Refer to doc/vacation.txt for settings specific to the vacation and 
+  vacation-seconds extensions.
 
 - Spamtest and Virustest extensions:
 

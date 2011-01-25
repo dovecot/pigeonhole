@@ -135,7 +135,9 @@ struct sieve_validator_extension {
 
 const struct sieve_extension *sieve_validator_extension_load
 	(struct sieve_validator *valdtr, struct sieve_command *cmd,
-		struct sieve_ast_argument *ext_arg, string_t *ext_name); 
+		struct sieve_ast_argument *ext_arg, string_t *ext_name);
+const struct sieve_extension *sieve_validator_extension_load_implicit
+	(struct sieve_validator *valdtr, const char *ext_name);
 
 void sieve_validator_extension_register
 	(struct sieve_validator *valdtr, const struct sieve_extension *ext,

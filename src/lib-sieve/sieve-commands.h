@@ -52,6 +52,8 @@ struct sieve_argument {
 	( (ast_arg)->argument->def == &(definition) )
 #define sieve_argument_ext(ast_arg) \
 	( (ast_arg)->argument->ext )
+#define sieve_argument_identifier(ast_arg) \
+	( (ast_arg)->argument->def->identifier )
 
 /* Utility macros */
 
