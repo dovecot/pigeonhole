@@ -1039,12 +1039,29 @@ static bool act_vacation_commit
 	}    
 	
 	/* Are we perhaps trying to respond to ourselves ? 
-	 * (FIXME: verify this to :addresses as well?)
 	 */
-	if ( sieve_address_compare(sender, recipient, TRUE) 
-		== 0 ) {
-		sieve_result_global_log(aenv, "discarded vacation reply to own address");	
+	if ( sieve_address_compare(sender, recipient, TRUE) == 0 ) {
+		sieve_result_global_log(aenv,
+			"discarded vacation reply to own address <%s>",
+			str_sanitize(sender, 128));	
 		return TRUE;
+	}
+
+	/* Are we perhaps trying to respond to one of our alternative :addresses?
+	 */
+	if ( ctx->addresses != NULL ) {
+		const char * const *alt_address = ctx->addresses;
+		
+		while ( *alt_address != NULL ) {
+			if ( sieve_address_compare(sender, *alt_address, TRUE) == 0 ) {
+				sieve_result_global_log(aenv,
+					"discarded vacation reply to own address <%s> "
+					"(as specified using :addresses argument)",
+					str_sanitize(sender, 128));	
+				return TRUE;
+			}
+			alt_address++;
+		}			
 	}
 	
 	/* Did whe respond to this user before? */
