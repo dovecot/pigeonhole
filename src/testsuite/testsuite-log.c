@@ -114,10 +114,10 @@ static void _testsuite_log_vinfo
 
 		if ( location == NULL || *location == '\0' )
 			fprintf(stdout,
-				"LOG: warning: %s.\n", t_strdup_vprintf(fmt, args_copy));
+				"LOG: info: %s.\n", t_strdup_vprintf(fmt, args_copy));
 		else
 			fprintf(stdout,
-				"LOG: warning: %s: %s.\n", location, t_strdup_vprintf(fmt, args_copy));
+				"LOG: info: %s: %s.\n", location, t_strdup_vprintf(fmt, args_copy));
 	}
 
 	msg.location = p_strdup(pool, location);
