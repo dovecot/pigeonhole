@@ -119,8 +119,7 @@ bool sieve_setting_get_size_value
 	case 'B': /* byte (useless) */
 		multiply = 1;
 		break;
-	case 'k': /* kilobyte */
-	case 'K':	 
+	case 'K': /* kilobyte */
 		multiply = 1024;
 		break;
 	case 'M': /* megabyte */
@@ -193,7 +192,7 @@ bool sieve_setting_get_duration_value
 	if ( !sieve_setting_parse_uint(svinst, setting, str_value, &endp, &value) )
 		return FALSE;
 
-	switch (i_toupper(*endp)) {
+	switch (i_tolower(*endp)) {
 	case '\0': /* default */
 	case 's': /* seconds */
 		multiply = 1;
