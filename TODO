@@ -2,8 +2,6 @@ Current activities:
 
 * Build a sieve tool to filter an entire existing mailbox through a Sieve 
   script.
-* Finish the ereject extension
-	- Make reject/ereject use the LDA reject interface when available
 
 Next (in order of descending priority/precedence):
 
@@ -24,6 +22,7 @@ Next (in order of descending priority/precedence):
 * Implement index extension
 * Update include extension to latest draft (v05 currently):
 	- Implement required ManageSieve behavior (pending IETF discussion)
+* Finish the ereject extension
 * Vacation extension improvements:
 	- Implement configurable sender exclusion list.
 	- Implement mechanism for implicitly including an account's aliases in the

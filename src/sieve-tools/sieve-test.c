@@ -156,6 +156,7 @@ int main(int argc, char **argv)
 			/* trace file */
 			tracefile = optarg;
 			break;
+			/* trace options */
 		case 'T':
 			sieve_tool_parse_trace_option(&tr_config, optarg);
 			break;
@@ -172,13 +173,16 @@ int main(int argc, char **argv)
 				array_append(&scriptfiles, &file, 1);
 			}
 			break;
+			/* execution mode */
 		case 'e':
 			execute = TRUE;
 			break;
+			/* force script compile */
 		case 'C':
 			force_compile = TRUE;
 			break;
 		default:
+			/* unrecognized option */
 			print_help();
 			i_fatal_status(EX_USAGE, "Unknown argument: %c", c);
 			break;

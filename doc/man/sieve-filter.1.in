@@ -26,7 +26,7 @@ However, there are occasions when it is desirable to filter messages that are
 already stored in a mailbox, for instance when a bug in a Sieve script caused
 many messages to be delivered incorrectly. Using the sieve\-filter tool it is
 possible to apply a Sieve script on all messages in a particular mailbox, making
-it possible to delete messages, to store them in a different folder and to
+it possible to delete messages, to store them in a different mailbox and to
 change the assigned IMAP flags and keywords. Attempts to send messages to the
 outside world are ignored by default for obvious reasons, but, using the proper
 command line options, it is possible to capture outgoing mail as well. 
@@ -35,7 +35,10 @@ If no options are specified, the sieve\-filter command runs in a simulation mode
 in which it only prints what would be performed, without actually doing
 anything. Use the \fB\-e\fP option to activate true script execution. Also, the
 source mailbox is opened read\-only by default, so that the source mailbox 
-remains unchanged. Use the \fB\-W\fP to allow changes in the source mailbox. 
+remains unchanged. Use the \fB\-W\fP option to allow changes in the source mailbox.
+And even with the \fB\-W\fP option enabled, messages in the source mailbox are
+only potentially modified and not (re)moved, unless a \fIsource\-action\fP
+argument other than \fBkeep\fP is specified.
 .SS CAUTION
 Although this is a very useful tool, it can also be very destructive when used
 improperly. A small bug in your Sieve script in combination with the wrong
@@ -73,17 +76,28 @@ Using this option the sieve\-filter command becomes active and performs the
 requested actions.
 .TP
 .BI \-m\  default\-mailbox
-The mailbox where the keep action stores messages. This is \(dqINBOX\(dq
-by default.
+The mailbox where the (implicit) \fBkeep\fP Sieve action stores messages. This is
+equal to the source mailbox by default. 
 .TP
-.BI \-q\  output\-mailbox
+.B \-M
+Enable move mode. This will cause all messages that were succesfully stored
+somewhere else to be expunged from the source mailbox, regardless of what the 
+\fIsource\-action\fP is (refer to Arguments section below). However, if the
+Sieve filter decides to keep the message in the source mailbox, it is left
+there and not affected by this option. 
+.IP
+Note that some Sieve actions, such as \fBredirect\fP, don't store the message
+anywhere and are thus \- with respect to the fate of the message in the source
+mailbox \- treated as if a \fBdiscard\fP action were executed. 
+.TP
+.BI \-q\  output\-mailbox\  \fR[not\ implemented\ yet]\fP
 Store outgoing e\-mail into the indicated \fIoutput\-mailbox\fP. By default,
 the sieve\-filter command ignores Sieve actions such as redirect, reject,
 vacation and notify, but using this option outgoing messages can be appended to
 the indicated mailbox. This option has no effect in simulation mode. Flags of
 redirected messages are not preserved. 
 .TP
-.BI \-Q\  mail\-command
+.BI \-Q\  mail\-command\  \fR[not\ implemented\ yet]\fP
 Send outgoing e\-mail (e.g. as produced by redirect, reject and vacation)
 through the specified program. By default, the sieve\-filter command ignores
 Sieve actions such as redirect, reject, vacation and notify, but using this
@@ -91,7 +105,7 @@ option outgoing messages can be fed to the \fBstdin\fP of an external shell
 command. This option has no effect in simulation mode. Unless you really know
 what you are doing, \fBDO NOT USE THIS TO FEED MAIL TO SENDMAIL!\fP.
 .TP
-.BI \-s\  script\-file
+.BI \-s\  script\-file\  \fR[not\ implemented\ yet]\fP
 Specify additional scripts to be executed before the main script. Multiple
 \fB\-s\fP arguments are allowed and the specified scripts are executed
 sequentially in the order specified at the command
@@ -133,21 +147,18 @@ into a new binary.
 The name of the source mailbox.
 .TP 
 .I source\-action
-Specifies what needs to be done with messages in the source mailbox once
-processed by the Sieve script. By default, the sieve\-filter command does not
-remove the messages from the source mailbox. In particular this means that the
-keep and fileinto actions will cause the messages to be copied. To alter this
-behavior, the \fIsource\-action\fP parameter of the \fB\-R\fP option accepts
-one of the following values:
+Specifies what is done with messages in the source mailbox once processed by the
+Sieve script. The \fIsource\-action\fP parameter accepts one of the following values:
 .RS 7
 .TP 
 .BR keep\  (default)
-Keep processed messages in source folder. If \fB\-W\fR is specified and the
-source mailbox is the destination of a keep or fileinto action, flags may be
-changed by the Sieve script, but messages are never duplicated there. 
+Keep processed messages in source mailbox. When the filter decides to store the message
+in the source mailbox, it is never duplicated there. However, in that case, the
+IMAP flags of the original message can be modified by the Sieve interpreter. 
 .TP 
-.BI move\  folder
-Move processed messages to the indicated \fIfolder\fP.
+.BI move\  mailbox
+Move processed messages to the indicated \fImailbox\fP. This is for instance useful
+to move messages to a Trash mailbox. 
 .TP 
 .B delete
 Flag processed messages as \\DELETED.
@@ -155,9 +166,21 @@ Flag processed messages as \\DELETED.
 .B expunge
 Expunge processed messages, meaning that these are removed irreversibly when the
 tool finishes filtering.
-.PP
-Note that the chosen \fIsource\-action\fP only has an effect on the source
-mailbox when the \fB\-W\fP option is specified as well.
+.RE
+.IP
+The \fBsource\-action\fP is normally applied to all messages in the source mailbox,
+but there are a few exceptions:
+.RS 7
+.IP \(bu
+When the \fB\-W\fP option is not specified, the source mailbox is immutable and
+the specified \fIsource\-action\fP has no effect.
+.IP \(bu
+When the \fB-M\fR option (move mode) is active, all messages that were
+successfully moved to another mailbox are expunged irrespective of the specified 
+\fIsource\-action\fP. 
+.IP \(bu
+If the filter decides to keep the message in the source mailbox, it is left there
+and not affected by the \fIsource\-action\fP.
 .RE
 
 .\"------------------------------------------------------------------------
