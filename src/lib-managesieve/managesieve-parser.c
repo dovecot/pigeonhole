@@ -318,12 +318,11 @@ static int managesieve_parser_read_string(struct managesieve_parser *parser,
 				return FALSE;
 			}
 
-			i++;
 			utf8_len--;
 	
 			/* Parse the series of UTF8_1 characters */
 			for (; utf8_len > 0; utf8_len--, i++ ) {  
-				if (!IS_UTF8_1(data[i])) {
+				if (!IS_UTF8_1(data[i+1])) {
 					parser->error = "String contains invalid UTF-8 character.";
 			    return FALSE;
 				}
