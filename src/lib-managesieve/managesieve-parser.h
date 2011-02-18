@@ -39,47 +39,6 @@
 #define IS_SAFE_CHAR(c) \
 	(IS_TEXT_CHAR(c) && !IS_QUOTED_SPECIAL(c))
 
-/* UTF8-1             = %x80-BF
- */
-#define IS_UTF8_1(c) \
-	(((c) & 0xC0) == 0x80)
-
-/* UTF8-2             = %xC0-DF UTF8-1
- */
-#define IS_UTF8_2S(c) \
-  (((c) & 0xE0) == 0xC0)
-
-/* UTF8-3             = %xE0-EF 2UTF8-1
- */
-#define IS_UTF8_3S(c) \
-  (((c) & 0xF0) == 0xE0)
-
-/* UTF8-4             = %xF0-F7 3UTF8-1
- */
-#define IS_UTF8_4S(c) \
-  (((c) & 0xF8) == 0xF0)
-
-/* UTF8-5             = %xF8-FB 4UTF8-1
- */
-#define IS_UTF8_5S(c) \
-  (((c) & 0xFC) == 0xF8)
-
-/* UTF8-6             = %xFC-FD 5UTF8-1
- */
-#define IS_UTF8_6S(c) \
-  (((c) & 0xFE) == 0xFC)
-
-/* SAFE-UTF8-CHAR     = SAFE-CHAR / UTF8-2 / UTF8-3 / UTF8-4 /
- *                      UTF8-5 / UTF8-6
- */
-#define UTF8_LEN(c) \
-  ( IS_SAFE_CHAR(c) ? 1 : \
-    IS_UTF8_2S(c) ? 2 : \
-    IS_UTF8_3S(c) ? 3 : \
-    IS_UTF8_4S(c) ? 4 : \
-    IS_UTF8_5S(c) ? 5 : \
-    IS_UTF8_6S(c) ? 6 : 0 )
-
 enum managesieve_parser_flags {
 	/* Set this flag if you wish to read only size of literal argument
 	   and not convert literal into string. Useful when you need to deal

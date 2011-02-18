@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "unichar.h"
 #include "istream.h"
 #include "ostream.h"
 #include "strescape.h"
@@ -60,7 +61,7 @@ static void managesieve_args_realloc(struct managesieve_parser *parser, size_t s
 	parser->cur_list = LIST_REALLOC(parser, parser->cur_list, size);
 	parser->cur_list->alloc = size;
 
-  parser->root_list = parser->cur_list;
+	parser->root_list = parser->cur_list;
 }
 
 struct managesieve_parser *
@@ -70,7 +71,7 @@ managesieve_parser_create(struct istream *input, struct ostream *output,
 	struct managesieve_parser *parser;
 
 	parser = i_new(struct managesieve_parser, 1);
-        parser->pool = pool_alloconly_create("MANAGESIEVE parser", 8192);
+	parser->pool = pool_alloconly_create("MANAGESIEVE parser", 8192);
 	parser->input = input;
 	parser->output = output;
 	parser->max_line_size = max_line_size;
@@ -237,7 +238,6 @@ static int managesieve_parser_read_string(struct managesieve_parser *parser,
 				   const unsigned char *data, size_t data_size)
 {
 	size_t i;
-	int utf8_len;
 
 	/* QUOTED-CHAR        = SAFE-UTF8-CHAR / "\" QUOTED-SPECIALS
 	 * quoted             = <"> *QUOTED-CHAR <">
@@ -247,8 +247,13 @@ static int managesieve_parser_read_string(struct managesieve_parser *parser,
 	/* read until we've found non-escaped ", CR or LF */
 	for (i = parser->cur_pos; i < data_size; i++) {
 		if (data[i] == '"') {
-			managesieve_parser_save_arg(parser, data, i);
 
+			if ( !uni_utf8_data_is_valid(data+1, i-1) ) {
+				parser->error = "Invalid UTF-8 character in quoted-string.";
+				return FALSE;
+			}
+
+			managesieve_parser_save_arg(parser, data, i);
 			i++; /* skip the trailing '"' too */
 			break;
 		}
@@ -275,58 +280,9 @@ static int managesieve_parser_read_string(struct managesieve_parser *parser,
 			continue;
 		}
 
-		/* Enforce valid UTF-8
-		 */
-		if ( (utf8_len = UTF8_LEN(data[i])) == 0 ) {
+		if ( !IS_SAFE_CHAR(data[i]) ) {
 			parser->error = "String contains invalid character.";
 			return FALSE;
-		}
-		
-		if ( utf8_len > 1 ) {
-			bool overlong = FALSE;
-
-			if ( (i+utf8_len-1) >= data_size ) {
-				/* Known data ends in the middle of a UTF-8 character;
-				 * leave it to next time.
-				 */
-				break;
-			}
-
-			/* Check for overlong UTF-8 sequences */
-			switch (utf8_len) {
-			case 2:
-				if (!(data[i] & 0x1E)) overlong = TRUE;
-				break;
-			case 3:	
-				if (!(data[i] & 0x0F) && !(data[i+1] & 0x20)) overlong = TRUE;
-				break;
-			case 4:
-				if (!(data[i] & 0x07) && !(data[i+1] & 0x30)) overlong = TRUE;				
-				break;
-			case 5:
-				if (!(data[i] & 0x03) && !(data[i+1] & 0x38)) overlong = TRUE;
-				break;				
-			case 6:
-				if (!(data[i] & 0x01) && !(data[i+1] & 0x3C)) overlong = TRUE;
-				break;				
-			default:
-				i_unreached();
-			} 
-
-			if ( overlong ) {
-				parser->error = "String contains invalid/overlong UTF-8 character.";
-				return FALSE;
-			}
-
-			utf8_len--;
-	
-			/* Parse the series of UTF8_1 characters */
-			for (; utf8_len > 0; utf8_len--, i++ ) {  
-				if (!IS_UTF8_1(data[i+1])) {
-					parser->error = "String contains invalid UTF-8 character.";
-			    return FALSE;
-				}
-			}
 		}
 	}
 
@@ -436,6 +392,12 @@ static int managesieve_parser_read_literal_data(struct managesieve_parser *parse
 		if (data_size < parser->literal_size) {
 			return FALSE;
 		} else {
+			if ( !uni_utf8_data_is_valid
+				(data, (size_t)parser->literal_size) ) {
+				parser->error = "Invalid UTF-8 character in literal string.";
+				return FALSE;
+			}
+			
 			managesieve_parser_save_arg(parser, data,
 					     (size_t)parser->literal_size);
 			parser->cur_pos = (size_t)parser->literal_size;

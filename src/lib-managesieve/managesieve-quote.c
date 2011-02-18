@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "str.h"
+#include "unichar.h"
 #include "managesieve-parser.h"
 #include "managesieve-quote.h"
 
@@ -14,13 +15,11 @@
 void managesieve_quote_append(string_t *str, const unsigned char *value,
 		       size_t value_len, bool compress_lwsp)
 {
-	size_t i, extra = 0;
+	size_t i, extra = 0, escape = 0;
 	bool 
 		last_lwsp = TRUE, 
 		literal = FALSE, 
-		modify = FALSE,
-		escape = FALSE;
-	int utf8_len;
+		modify = FALSE;
 
  	if (value == NULL) {
 		str_append(str, "\"\"");
@@ -42,7 +41,7 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 			break;
 		case '"':
 		case '\\':
-			escape = TRUE;
+			escape++;
 			last_lwsp = FALSE;
 			break;
 		case 13:
@@ -51,36 +50,6 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 			last_lwsp = TRUE;
 			break;
 		default:
-			/* Enforce valid UTF-8
-			 */
-			if ( (utf8_len=UTF8_LEN(value[i])) == 0 ) {
-				modify = TRUE;
-				extra++;
-				break;
-			}
-
-			if ( utf8_len > 1 ) {
-				int c = utf8_len - 1;
-
-		 		if ( (i+utf8_len-1) >= value_len ) {
-				  	/* Value ends in the middle of a UTF-8 character;
-					 * Kill the partial UTF-8 character
-					 */
-				  	extra += i + utf8_len - value_len;
-					modify = TRUE;
-					break;        	
-				}
-
-				/* Parse the series of UTF8_1 characters */
-				for (i++; c > 0; c--, i++ ) {
-					if (!IS_UTF8_1(value[i])) {
-						extra += utf8_len - c;
-						modify = TRUE;
-						break;
-					}
-				}
-			}
-   			
 			last_lwsp = FALSE;
 		}
 	}
@@ -93,9 +62,10 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 		str_printfa(str, "{%"PRIuSIZE_T"}\r\n", value_len - extra);
 	}
 
-	if (!modify && (literal || !escape))
+	if (!modify && (literal || escape == 0))
 		str_append_n(str, value, value_len);
 	else {
+		string_t *unchecked = t_str_new(value_len+escape+4);
 		last_lwsp = TRUE;
 		for (i = 0; i < value_len; i++) {
 			switch (value[i]) {
@@ -103,58 +73,29 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 			case '\\':
 				last_lwsp = FALSE;
 				if (!literal) 
-					str_append_c(str, '\\');
-				str_append_c(str, value[i]);
+					str_append_c(unchecked, '\\');
+				str_append_c(unchecked, value[i]);
 				break;
 			case ' ':
 			case '\t':
 				if (!last_lwsp || !compress_lwsp)
-					str_append_c(str, ' ');
+					str_append_c(unchecked, ' ');
 				last_lwsp = TRUE;
 				break;
 			case 13:
 			case 10:
 				last_lwsp = TRUE;
-				str_append_c(str, value[i]);
+				str_append_c(unchecked, value[i]);
 				break;
 			default:
-	  			/* Enforce valid UTF-8
-				 */
-				if ( (utf8_len=UTF8_LEN(value[i])) == 0 ) 
-					break;
-      
-				if ( utf8_len > 1 ) {
-					int c = utf8_len - 1;
-					int j;
-
-					if ( (i+utf8_len-1) >= value_len ) {
-						/* Value ends in the middle of a UTF-8 character;
-						 * Kill the partial character
-						 */
-					 	i = value_len;
-						break;
-					}
-
-					/* Parse the series of UTF8_1 characters */
-					for (j = i+1; c > 0; c--, j++ ) {
-						if (!IS_UTF8_1(value[j])) {
-							/* Skip until after this erroneous character */
-							i = j;
-							break;
-						}
-					}
-
-					/* Append the UTF-8 character. Last octet is done later */
-					c = utf8_len - 1;
-					for (; c > 0; c--, i++ ) 
-						str_append_c(str, value[i]);
-				}
-     
 				last_lwsp = FALSE;
-				str_append_c(str, value[i]);
+				str_append_c(unchecked, value[i]);
 				break;
 			}
 		}
+
+		if ( uni_utf8_get_valid_data(str_data(unchecked), str_len(unchecked), str) )
+			str_append_str(str, unchecked);
 	}
 
 	if (!literal)
