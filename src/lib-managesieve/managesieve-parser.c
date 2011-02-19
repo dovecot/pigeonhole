@@ -280,7 +280,7 @@ static int managesieve_parser_read_string(struct managesieve_parser *parser,
 			continue;
 		}
 
-		if ( !IS_SAFE_CHAR(data[i]) ) {
+		if ( (data[i] & 0x80) == 0 && !IS_SAFE_CHAR(data[i]) ) {
 			parser->error = "String contains invalid character.";
 			return FALSE;
 		}

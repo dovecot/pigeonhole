@@ -16,6 +16,7 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 		       size_t value_len, bool compress_lwsp)
 {
 	size_t i, extra = 0, escape = 0;
+	string_t *tmp;
 	bool 
 		last_lwsp = TRUE, 
 		literal = FALSE, 
@@ -62,10 +63,10 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 		str_printfa(str, "{%"PRIuSIZE_T"}\r\n", value_len - extra);
 	}
 
+	tmp = t_str_new(value_len+escape+4);
 	if (!modify && (literal || escape == 0))
-		str_append_n(str, value, value_len);
+		str_append_n(tmp, value, value_len);
 	else {
-		string_t *unchecked = t_str_new(value_len+escape+4);
 		last_lwsp = TRUE;
 		for (i = 0; i < value_len; i++) {
 			switch (value[i]) {
@@ -73,30 +74,30 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 			case '\\':
 				last_lwsp = FALSE;
 				if (!literal) 
-					str_append_c(unchecked, '\\');
-				str_append_c(unchecked, value[i]);
+					str_append_c(tmp, '\\');
+				str_append_c(tmp, value[i]);
 				break;
 			case ' ':
 			case '\t':
 				if (!last_lwsp || !compress_lwsp)
-					str_append_c(unchecked, ' ');
+					str_append_c(tmp, ' ');
 				last_lwsp = TRUE;
 				break;
 			case 13:
 			case 10:
 				last_lwsp = TRUE;
-				str_append_c(unchecked, value[i]);
+				str_append_c(tmp, value[i]);
 				break;
 			default:
 				last_lwsp = FALSE;
-				str_append_c(unchecked, value[i]);
+				str_append_c(tmp, value[i]);
 				break;
 			}
 		}
-
-		if ( uni_utf8_get_valid_data(str_data(unchecked), str_len(unchecked), str) )
-			str_append_str(str, unchecked);
 	}
+
+	if ( uni_utf8_get_valid_data(str_data(tmp), str_len(tmp), str) )
+		str_append_str(str, tmp);
 
 	if (!literal)
 		str_append_c(str, '"');
