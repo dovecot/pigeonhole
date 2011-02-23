@@ -207,10 +207,10 @@ Invalid parameter given. (EX_USAGE)
 .\"------------------------------------------------------------------------
 .SH FILES
 .TP
-.I /usr/local/etc/dovecot/dovecot.conf
+.I @pkgsysconfdir@/dovecot.conf
 Dovecot\(aqs main configuration file.
 .TP
-.I /usr/local/etc/dovecot/conf.d/90\-sieve.conf
+.I @pkgsysconfdir@/conf.d/90\-sieve.conf
 Sieve interpreter settings (included from Dovecot\(aqs main configuration file)
 .\"------------------------------------------------------------------------
 @INCLUDE:reporting-bugs@

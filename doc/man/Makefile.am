@@ -1,3 +1,5 @@
+pkgsysconfdir = $(sysconfdir)/dovecot
+rundir = ${prefix}/var/run/dovecot
 unfinished = sieve-filter.1
 
 if BUILD_UNFINISHED
