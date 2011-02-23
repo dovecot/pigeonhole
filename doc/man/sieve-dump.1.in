@@ -1,5 +1,5 @@
-.\" Copyright (c) 2010 Pigeonhole authors, see the included COPYING file
-.TH "SIEVE-DUMP" 1 "2010-08-23" "Pigeonhole for Dovecot v2.0" "Pigeonhole"
+.\" Copyright (c) 2010-2011 Pigeonhole authors, see the included COPYING file
+.TH "SIEVE\-DUMP" 1 "2011-02-23" "Pigeonhole for Dovecot v2.0" "Pigeonhole"
 .\"------------------------------------------------------------------------
 .SH NAME
 sieve\-dump \- Pigeonhole\(aqs Sieve script binary dump tool
@@ -41,8 +41,8 @@ the binary.
 Alternative Dovecot configuration file path.
 .TP
 .B \-h
-Produce per-block hexdump output of the whole binary instead of the normal
-human-readable output. 
+Produce per\-block hexdump output of the whole binary instead of the normal
+human\-readable output.
 .TP
 .BI \-x\  extensions
 Set the available extensions. The parameter is a space\-separated list of the
@@ -54,7 +54,7 @@ ignored and a warning is produced. By default, all supported extensions are
 available, except for deprecated extensions or those that are still under
 development.
 
-For example \fB\-x\fP "+imapflags \-enotify" will enable the deprecated
+For example \fB\-x\fP \(dq+imapflags \-enotify\(dq will enable the deprecated
 imapflags extension along with all extensions that are available by default,
 except for the enotify extension.
 .\"------------------------------------------------------------------------

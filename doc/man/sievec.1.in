@@ -1,5 +1,5 @@
-.\" Copyright (c) 2010 Pigeonhole authors, see the included COPYING file
-.TH "SIEVEC" 1 "2010-08-23" "Pigeonhole for Dovecot v2.0" "Pigeonhole"
+.\" Copyright (c) 2010-2011 Pigeonhole authors, see the included COPYING file
+.TH "SIEVEC" 1 "2011-02-23" "Pigeonhole for Dovecot v2.0" "Pigeonhole"
 .\"------------------------------------------------------------------------
 .SH NAME
 sievec \- Pigeonhole\(aqs Sieve script compiler
@@ -20,7 +20,7 @@ Using the \fBsievec\fP command, Sieve scripts can be compiled into a binary
 representation. The resulting binary can be used directly to process e\-mail
 messages during the delivery process. The delivery of mail messages and \- by
 means of the LDA Sieve plugin \- also the execution of Sieve scripts is
-performed by Dovecot\aqs local delivery agent (LDA) called \fBdovecot\-lda\fP(1).
+performed by Dovecot\(aqs local delivery agent (LDA) called \fBdovecot\-lda\fP(1).
 Usually, it is not necessaryto compile the Sieve script manually using
 \fBsievec\fP, because \fBdovecot\-lda\fP will do this automatically if the binary
 is missing. However, in some cases \fBdovecot\-lda\fP does not have permission to
@@ -66,7 +66,7 @@ are ignored and a warning is produced. By default, all supported extensions are
 available, except for deprecated extensions or those that are still under
 development.
 
-For example \fB\-x\fP "+imapflags \-enotify" will enable the deprecated
+For example \fB\-x\fP \(dq+imapflags \-enotify\(dq will enable the deprecated
 imapflags extension along with all extensions that are available by default,
 except for the enotify extension.
 .\"------------------------------------------------------------------------
