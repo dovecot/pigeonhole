@@ -351,7 +351,7 @@ int main(int argc, char **argv)
 	int c;
 
 	sieve_tool = sieve_tool_init("sieve-filter", &argc, &argv, 
-		"m:s:x:P:q:Q:DCeWM", FALSE);
+		"m:s:x:P:u:q:Q:DCeWM", FALSE);
 
 	t_array_init(&scriptfiles, 16);
 
