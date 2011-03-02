@@ -569,7 +569,7 @@ void sieve_extensions_set_string
 						hash_table_lookup(ext_reg->extension_index, name);
 	
 				if ( ext == NULL || ext->def == NULL ) {
-					sieve_sys_warning(ext->svinst,
+					sieve_sys_warning(svinst,
 						"ignored unknown extension '%s' while configuring "
 						"available extensions", name);
 					continue;
