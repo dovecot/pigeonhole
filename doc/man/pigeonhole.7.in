@@ -1,5 +1,5 @@
-.\" Copyright (c) 2010 Pigeonhole authors, see the included COPYING file
-.TH "PIGEONHOLE" 7 "2010-08-23" "Pigeonhole for Dovecot v2.0" "Pigeonhole"
+.\" Copyright (c) 2010-2011 Pigeonhole authors, see the included COPYING file
+.TH "PIGEONHOLE" 7 "2010-03-05" "Pigeonhole for Dovecot v2.0" "Pigeonhole"
 .\"------------------------------------------------------------------------
 .SH NAME
 pigeonhole \- Overview of the Pigeonhole project\(aqs Sieve support for the

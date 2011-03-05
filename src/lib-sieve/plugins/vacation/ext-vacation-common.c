@@ -1,3 +1,8 @@
+/* Copyright (c) 2002-2011 Pigeonhole authors, see the included COPYING file
+ */
+
+#include "lib.h"
+
 #include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-settings.h"
