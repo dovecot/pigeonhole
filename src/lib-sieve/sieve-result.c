@@ -1295,7 +1295,7 @@ struct sieve_side_effects_list *sieve_side_effects_list_create
 	list->last_effect = NULL;
 	
 	return list;
-};
+}
 
 void sieve_side_effects_list_add
 (struct sieve_side_effects_list *list, const struct sieve_side_effect *seffect)		

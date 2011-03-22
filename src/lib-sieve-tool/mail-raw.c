@@ -47,7 +47,7 @@ static const char *wanted_headers[] = {
  */
 
 struct mail_raw_user {
-	struct mail_namespace *ns;;
+	struct mail_namespace *ns;
 	struct mail_user *mail_user;
 };
 

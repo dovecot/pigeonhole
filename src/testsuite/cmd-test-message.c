@@ -299,7 +299,7 @@ static int cmd_test_message_smtp_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	sieve_number_t msg_index;
-	unsigned int is_test = -1;
+	unsigned int is_test = 0;
 	bool result;
 	int ret;
 
@@ -359,7 +359,7 @@ static int cmd_test_message_mailbox_operation_execute
 {
 	string_t *folder;
 	sieve_number_t msg_index;
-	unsigned int is_test = -1;
+	unsigned int is_test = 0;
 	bool result;
 	int ret;
 
