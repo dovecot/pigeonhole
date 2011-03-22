@@ -29,7 +29,8 @@ struct sieve_tool *sieve_tool_init
 
 int sieve_tool_getopt(struct sieve_tool *tool);
 
-struct sieve_instance *sieve_tool_init_finish(struct sieve_tool *tool);
+struct sieve_instance *sieve_tool_init_finish
+	(struct sieve_tool *tool, bool init_mailstore);
 
 void sieve_tool_deinit(struct sieve_tool **_tool);
 

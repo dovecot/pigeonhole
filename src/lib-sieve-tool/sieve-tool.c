@@ -216,7 +216,7 @@ static void sieve_tool_load_plugins
 }
 
 struct sieve_instance *sieve_tool_init_finish
-(struct sieve_tool *tool)
+(struct sieve_tool *tool, bool init_mailstore)
 {
 	enum mail_storage_service_flags storage_service_flags =
 		MAIL_STORAGE_SERVICE_FLAG_NO_CHDIR |
@@ -240,6 +240,10 @@ struct sieve_instance *sieve_tool_init_finish
 	} else
 		storage_service_flags |=
 			MAIL_STORAGE_SERVICE_FLAG_USERDB_LOOKUP;
+
+	if ( !init_mailstore ) 
+		storage_service_flags |=
+			MAIL_STORAGE_SERVICE_FLAG_NO_NAMESPACES;
 
 	memset(&service_input, 0, sizeof(service_input));
 	service_input.module = "mail";

@@ -209,7 +209,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Finish tool initialization */
-	svinst = sieve_tool_init_finish(sieve_tool);
+	svinst = sieve_tool_init_finish(sieve_tool, TRUE);
 
 	/* Register debug extension */
 	(void) sieve_extension_register(svinst, &debug_extension, TRUE);

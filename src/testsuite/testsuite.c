@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 		sieve_tool_get_username(sieve_tool)));
 
 	/* Finish tool initialization */
-	svinst = sieve_tool_init_finish(sieve_tool);
+	svinst = sieve_tool_init_finish(sieve_tool, TRUE);
 		
 	testsuite_init(svinst, log_stdout);
 	testsuite_settings_init();
