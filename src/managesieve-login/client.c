@@ -26,7 +26,7 @@
 #include <stdlib.h>
 
 /* Disconnect client when it sends too many bad commands */
-#define CLIENT_MAX_BAD_COMMANDS 10
+#define CLIENT_MAX_BAD_COMMANDS 3
 
 const struct login_binary login_binary = {
 	.protocol = "sieve",
