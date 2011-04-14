@@ -1,3 +1,30 @@
+v0.2.3 14-04-2011 Stephan Bosch <stephan@rename-it.nl>
+
+	* Sieve filter tool: finished implementing basic functionality. It is not
+	  quite ready yet, but it is available for those willing to experiment
+	  with it (needs --with-unfinished-features config to compile). Also
+	  includes man page.  
+	+ Vacation extension now inhibits replies to messages from sender listed
+	  in :addresses, thus preventing replies to one of the user's other known
+	  addresses.
+	+ Vacation extension: implemented the (draft) vacation-seconds extension.
+	  This also adds min/max period configuration settings. Refer to 
+	  doc/vacation.txt for configuration information. 
+    - ManageSieve: fixed bug in UTF-8 checking of string values. This is done
+	  by discarding the original implementation and migrating to the Dovecot
+	  API's UTF-8 functionality.  
+	- Sieve command line tools now avoid initializing the mail store unless
+	  necessary. This prevents sievec and sieve-dump from failing when
+	  executed by root for example. 
+	- Enotify extension: fixed inappropriate return type in mailto URI parse
+	  function, also fixing ARM compiler warning.
+	- Vacation extension: fixed handling of sendmail errors. It produced an 
+	  additional confusing success message in case of error. 
+	- Removed header MIME-decoding to fix erroneous address parsing. Applies to
+	  address test and vacation command.
+	- Fixed segfault bug in extension configuration, triggered when unknown
+	  extension is mentioned in sieve_extensions setting.
+
 v0.2.2 06-12-2010 Stephan Bosch <stephan@rename-it.nl>
 
 	* LDA Sieve plugin: started using Dovecot LDA reject API for the reject
