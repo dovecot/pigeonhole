@@ -259,10 +259,14 @@ and sieve_after using the sievec tool, as explained in the README file.
 Sieve Interpreter - Extension Configuration
 -------------------------------------------
 
-- Vacation and Vacation-Seconds extensions:
+- Vacation extension:
 
-  Refer to doc/vacation.txt for settings specific to the vacation and 
-  vacation-seconds extensions.
+  The Sieve vacation extension [RFC5230] defines a mechanism to generate
+  automatic replies to incoming email messages.
+
+  The vacation extension is available by default, but it has its own specific
+  configuration options. Refer to doc/vacation.txt for settings specific to the
+  vacation extension.
 
 - Spamtest and Virustest extensions:
 
