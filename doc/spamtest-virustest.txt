@@ -1,5 +1,12 @@
 Spamtest and Virustest Extensions
-=================================
+
+Relevant Specifications
+=======================
+
+	RFC5235 - doc/rfc/spamvirustest.rfc5235.txt
+
+Description
+===========
 
 Using the spamtest and virustest extensions (RFC 5235), the Sieve language 
 provides a uniform and standardized command interface for evaluating spam and
@@ -8,12 +15,14 @@ need to be checked and how the scanner's verdict is represented in the header
 field value. They only need to know how to use the spamtest (spamtestplus) and 
 virustest extensions. This also gives GUI-based Sieve editors the means to 
 provide a portable and easy to install interface for spam and virus filter 
-configuration.
+configuration. The burden of specifying which headers need to be checked and
+how the scanner output is represented falls onto the Sieve administrator.
 
-The burden of specifying which headers need to be checked and how the scanner
-output is represented falls onto the Sieve administrator. The spamtest, 
-spamtestplus and virustest extensions are not enabled by default and thus need
-to be enabled explicitly using the sieve_extensions setting. 
+Configuration
+=============
+
+The spamtest, spamtestplus and virustest extensions are not enabled by default
+and thus need to be enabled explicitly using the sieve_extensions setting. 
 
 The following settings need to be configured for using the spamtest and
 spamtestplus extensions. The virustest extension has identical configuration
