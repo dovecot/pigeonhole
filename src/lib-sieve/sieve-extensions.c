@@ -24,7 +24,7 @@ static void sieve_capability_registry_deinit(struct sieve_instance *svinst);
 
 static struct sieve_extension *_sieve_extension_register
 	(struct sieve_instance *svinst, const struct sieve_extension_def *extdef, 
-		bool load, bool required);
+		bool load, bool required, bool implied);
 
 /*
  * Instance global context
@@ -216,7 +216,7 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 	/* Pre-load dummy extensions */
 	for ( i = 0; i < sieve_dummy_extensions_count; i++ ) {
 		if ( (ext=_sieve_extension_register
-			(svinst, sieve_dummy_extensions[i], TRUE, FALSE)) == NULL )
+			(svinst, sieve_dummy_extensions[i], TRUE, FALSE, FALSE)) == NULL )
 			return FALSE;
 	
 		ext->dummy = TRUE;
@@ -346,8 +346,8 @@ bool sieve_extension_reload(const struct sieve_extension *ext)
 }
 
 static struct sieve_extension *_sieve_extension_register
-(struct sieve_instance *svinst, const struct sieve_extension_def *extdef, 
-	bool load, bool required)
+(struct sieve_instance *svinst, const struct sieve_extension_def *extdef,
+	bool load, bool required, bool implied)
 {
 	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
 	struct sieve_extension *ext = (struct sieve_extension *)	
@@ -390,7 +390,8 @@ static struct sieve_extension *_sieve_extension_register
 		ext->loaded = TRUE;
 	}
 
-	ext->required = (ext->required || required );
+	ext->required = ( ext->required || required );
+	ext->implied = ( ext->implied || implied );
 
 	return ext;
 }
@@ -399,7 +400,7 @@ const struct sieve_extension *sieve_extension_register
 (struct sieve_instance *svinst, const struct sieve_extension_def *extdef,
 	bool load)
 {
-	return _sieve_extension_register(svinst, extdef, load, FALSE);
+	return _sieve_extension_register(svinst, extdef, load, FALSE, FALSE);
 }
 
 void sieve_extension_unregister(const struct sieve_extension *ext)
@@ -419,9 +420,10 @@ void sieve_extension_unregister(const struct sieve_extension *ext)
 }
 
 const struct sieve_extension *sieve_extension_require
-(struct sieve_instance *svinst, const struct sieve_extension_def *extdef)
+(struct sieve_instance *svinst, const struct sieve_extension_def *extdef,
+	bool implied)
 {
-	return _sieve_extension_register(svinst, extdef, TRUE, TRUE);
+	return _sieve_extension_register(svinst, extdef, TRUE, TRUE, implied);
 }
 
 int sieve_extensions_get_count(struct sieve_instance *svinst)
@@ -627,7 +629,7 @@ void sieve_extensions_set_string
 
 			if ( exts[i]->id >= 0 && exts[i]->def != NULL && 
 				*(exts[i]->def->name) != '@' ) {
-				if ( disabled && !exts[i]->required )
+				if ( disabled && !exts[i]->implied )
 					sieve_extension_disable(exts[i]);
 				else
 					sieve_extension_enable(exts[i]);

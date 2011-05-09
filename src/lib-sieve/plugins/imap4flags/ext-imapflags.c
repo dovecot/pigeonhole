@@ -94,7 +94,7 @@ static bool ext_imapflags_load
 	if ( *context == NULL ) {	
 		/* Make sure real extension is registered, it is needed by the binary */
 		*context = (void *)	
-			sieve_extension_require(ext->svinst, &imap4flags_extension);
+			sieve_extension_require(ext->svinst, &imap4flags_extension, FALSE);
 	}
 
 	return TRUE;
