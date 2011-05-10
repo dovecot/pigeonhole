@@ -74,7 +74,6 @@ struct sieve_extension {
 	unsigned int required:1;
 	unsigned int loaded:1;
 	unsigned int enabled:1;
-	unsigned int implied:1;
 	unsigned int dummy:1;
 };
 
@@ -118,7 +117,7 @@ const struct sieve_extension *sieve_extension_register
 		bool load);
 const struct sieve_extension *sieve_extension_require
 	(struct sieve_instance *svinst, const struct sieve_extension_def *extension, 
-		bool implied);
+		bool load);
 bool sieve_extension_reload(const struct sieve_extension *ext);
 
 void sieve_extension_unregister(const struct sieve_extension *ext);

@@ -546,8 +546,8 @@ const struct sieve_extension *sieve_validator_extension_load
 	}
 
 	ext = sieve_extension_get_by_name(valdtr->svinst, name); 
-	
-	if ( ext == NULL || ext->def == NULL ) {
+
+	if ( ext == NULL || ext->def == NULL || !ext->enabled ) {
 		unsigned int i;
 		bool core_test = FALSE;
 		bool core_command = FALSE;
@@ -576,7 +576,7 @@ const struct sieve_extension *sieve_validator_extension_load
 		}
 		return NULL;
 	}
-	
+
 	sieve_ast_extension_link(valdtr->ast, ext);
 
 	extdef = ext->def;
@@ -609,10 +609,10 @@ const struct sieve_extension *sieve_validator_extension_load_implicit
 	const struct sieve_extension_def *extdef;
 
 	ext = sieve_extension_get_by_name(valdtr->svinst, ext_name); 
-	
+
 	if ( ext == NULL || ext->def == NULL )
 		return NULL;
-	
+
 	sieve_ast_extension_link(valdtr->ast, ext);
 
 	extdef = ext->def;
