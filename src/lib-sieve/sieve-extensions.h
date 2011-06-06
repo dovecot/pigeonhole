@@ -141,6 +141,8 @@ const struct sieve_extension *sieve_get_comparator_extension
 const struct sieve_extension *sieve_get_address_part_extension
 	(struct sieve_instance *svinst);
 
+void sieve_enable_debug_extension(struct sieve_instance *svinst);
+
 /*
  * Capability registries
  */

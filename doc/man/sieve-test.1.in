@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2011 Pigeonhole authors, see the included COPYING file
-.TH "SIEVE\-TEST" 1 "2011-02-23" "Pigeonhole for Dovecot v2.0" "Pigeonhole"
+.TH "SIEVE\-TEST" 1 "2011-06-06" "Pigeonhole for Dovecot v2.0" "Pigeonhole"
 .SH NAME
 sieve\-test \- Pigeonhole\(aqs Sieve script tester
 .\"------------------------------------------------------------------------
@@ -125,10 +125,10 @@ Specifies the file containing the e\-mail message to test with.
 .SH USAGE
 .SS RUNTIME TRACE DEBUGGING
 .PP
-Using the \fB\-t\fP option, the \fBsieve\-test\fP tool can be configured to print
-detailed trace information on the Sieve script execution to a file or standard
-output. For example, the encountered commands, the performed tests and the
-matched values can be printed.
+Using the \fB\-t\fP option, the \fBsieve\-test\fP tool can be configured to
+print detailed trace information on the Sieve script execution to a file or
+standard output. For example, the encountered commands, the performed tests and
+the matched values can be printed.
 .PP
 The runtime trace can be configured using the \fB\-T\fP option, which can be
 specified multiple times. It can be used as follows:
@@ -165,10 +165,9 @@ addresses are equal to those listed in a binary dump produced using the
 .\"------------------------------------------------------------------------
 .SS DEBUG SIEVE EXTENSION
 .PP
-To improve script debugging, the Sieve command line tools such as
-\fBsieve\-test\fP support a custom Sieve language extension called
-\(aqvnd.dovecot.debug\(aq. It adds the \fBdebug_print\fP command that allows
-printing debug messages to \fBstdout\fP.
+To improve script debugging, this Sieve implementation supports a custom Sieve 
+language extension called \(aqvnd.dovecot.debug\(aq. It adds the \fBdebug_log\fP
+command that allows logging debug messages.
 .PP
 Example:
 .PP
@@ -176,18 +175,21 @@ require \(dqvnd.dovecot.debug\(dq;
 .PP
 if header :contains \(dqsubject\(dq \(dqhello\(dq {
 .PP
-  debug_print \(dqSubject header contains hello!\(dq;
+  debug_log \(dqSubject header contains hello!\(dq;
 .PP
 }
 .PP
-Other tools like \fBsievec\fP and \fBsieve\-dump\fP also recognize the
-vnd.dovecot.debug extension. In contrast, the actual Sieve plugin for the
-Dovecot LDA (\fBdovecot\-lda\fR(1)) does not allow the use of the debug
-extension. So, keep in mind that scripts and compiled binaries that refer to de
-debug extension will fail to be run by the Sieve plugin itself.
-.PP
-Note that it is not necessary to enable nor possible to disable the availability
-of the debug extension with the \fB\-x\fP option.
+Tools such as \fBsieve\-test\fP, \fBsievec\fP and \fBsieve\-dump\fP have support
+for the vnd.dovecot.debug extension enabled by default and it is not necessary
+to enable nor possible to disable the availability of the debug extension with
+the \fB\-x\fP option. The logged messages are written to \fBstdout\fP in this
+case.
+
+In contrast, for the actual Sieve plugin for the Dovecot LDA
+(\fBdovecot\-lda\fR(1)) the vnd.dovecot.debug extension needs to be enabled 
+explicitly using the \fIsieve_extensions\fP setting. The messages are then
+logged to the user's private script log file. If used in a global script, the
+messages are logged through the default Dovecot logging facility.
 .\"------------------------------------------------------------------------
 .SH "EXIT STATUS"
 .B sieve\-test

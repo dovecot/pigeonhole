@@ -104,6 +104,9 @@ extern const struct sieve_extension_def spamtest_extension;
 extern const struct sieve_extension_def spamtestplus_extension;
 extern const struct sieve_extension_def virustest_extension;
 
+/* vnd.dovecot. */
+extern const struct sieve_extension_def debug_extension;
+
 /*
  * List of native extensions
  */
@@ -118,14 +121,14 @@ const unsigned int sieve_dummy_extensions_count =
 
 /* Core */
 
-const struct sieve_extension_def *sieve_core_extensions[] = {		
+const struct sieve_extension_def *sieve_core_extensions[] = {
 	/* Core extensions */
-	&fileinto_extension, &reject_extension, &envelope_extension, 
+	&fileinto_extension, &reject_extension, &envelope_extension,
 	&encoded_character_extension,
-	
+
 	/* 'Plugins' */
-	&vacation_extension, &subaddress_extension, 
-	&comparator_i_ascii_numeric_extension, 
+	&vacation_extension, &subaddress_extension,
+	&comparator_i_ascii_numeric_extension,
 	&relational_extension, &regex_extension, &imap4flags_extension,
 	&copy_extension, &include_extension, &body_extension,
 	&variables_extension, &enotify_extension, &environment_extension,
@@ -135,14 +138,17 @@ const struct sieve_extension_def *sieve_core_extensions[] = {
 const unsigned int sieve_core_extensions_count =
 	N_ELEMENTS(sieve_core_extensions);
 
-/* Extra; 
- *   These are not enabled by default, because explicit configuration is
+/* Extra;
+ *   These are not enabled by default, e.g. because explicit configuration is
  *   necessary to make these useful.
  */
 
-const struct sieve_extension_def *sieve_extra_extensions[] = {	
+const struct sieve_extension_def *sieve_extra_extensions[] = {
 	&vacation_seconds_extension,
-	&spamtest_extension, &spamtestplus_extension, &virustest_extension
+	&spamtest_extension, &spamtestplus_extension, &virustest_extension,
+
+	/* vnd.dovecot. */
+	&debug_extension
 };
 
 const unsigned int sieve_extra_extensions_count =
@@ -653,6 +659,11 @@ const struct sieve_extension *sieve_get_address_part_extension
 	(struct sieve_instance *svinst)
 {
 	return svinst->ext_reg->address_part_extension;
+}
+
+void sieve_enable_debug_extension(struct sieve_instance *svinst)
+{
+	(void) sieve_extension_register(svinst, &debug_extension, TRUE);
 }
 
 /*

@@ -13,8 +13,6 @@
 #include "sieve-script.h"
 #include "sieve-tool.h"
 
-#include "sieve-ext-debug.h"
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -82,8 +80,8 @@ int main(int argc, char **argv)
 
 	svinst = sieve_tool_init_finish(sieve_tool, FALSE);
 
-	/* Register debug extension */
-	(void) sieve_extension_register(svinst, &debug_extension, TRUE);
+	/* Enable debug extension */
+	sieve_enable_debug_extension(svinst);
 
 	if ( stat(scriptfile, &st) == 0 && S_ISDIR(st.st_mode) ) {
 		/* Script directory */

@@ -63,6 +63,7 @@ plugins = \
 	$(extdir)/mailbox/libsieve_ext_mailbox.la \
 	$(extdir)/date/libsieve_ext_date.la \
 	$(extdir)/spamvirustest/libsieve_ext_spamvirustest.la \
+	$(extdir)/vnd.dovecot/debug/libsieve_ext_debug.la \
 	$(unfinished_plugins)
 
 libdovecot_sieve_la_DEPENDENCIES = $(plugins)
