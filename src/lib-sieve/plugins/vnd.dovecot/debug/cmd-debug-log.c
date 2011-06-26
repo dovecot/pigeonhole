@@ -34,6 +34,7 @@ const struct sieve_command_def debug_log_command = {
 	1, 0, FALSE, FALSE,
 	NULL, NULL,
 	cmd_debug_log_validate,
+	NULL,
 	cmd_debug_log_generate,
 	NULL
 };

@@ -25,7 +25,7 @@ const struct sieve_command_def cmd_require = {
 	1, 0, FALSE, FALSE,
 	NULL, NULL, 
 	cmd_require_validate, 
-	NULL, NULL
+	NULL, NULL, NULL
 };
  
 /* 

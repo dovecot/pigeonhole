@@ -28,13 +28,14 @@ static bool cmd_global_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
 const struct sieve_command_def cmd_global = {
-    "global",
-    SCT_COMMAND,
-    1, 0, FALSE, FALSE,
-    NULL, NULL,
-    cmd_global_validate,
-    cmd_global_generate,
-    NULL
+  "global",
+  SCT_COMMAND,
+  1, 0, FALSE, FALSE,
+  NULL, NULL,
+  cmd_global_validate,
+	NULL,
+  cmd_global_generate,
+  NULL
 };
 
 /* DEPRICATED:
@@ -50,7 +51,8 @@ const struct sieve_command_def cmd_import = {
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
 	NULL, NULL,
-	cmd_global_validate, 
+	cmd_global_validate,
+	NULL,
 	cmd_global_generate, 
 	NULL
 };
@@ -65,7 +67,8 @@ const struct sieve_command_def cmd_export = {
 	SCT_COMMAND, 
 	1, 0, FALSE, FALSE,
 	NULL, NULL, 
-	cmd_global_validate, 
+	cmd_global_validate,
+	NULL,
 	cmd_global_generate, 
 	NULL
 };

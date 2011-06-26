@@ -49,7 +49,8 @@ const struct sieve_command_def cmd_redirect = {
 	SCT_COMMAND,
 	1, 0, FALSE, FALSE, 
 	NULL, NULL,
-	cmd_redirect_validate, 
+	cmd_redirect_validate,
+	NULL,
 	cmd_redirect_generate, 
 	NULL 
 };

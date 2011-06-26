@@ -47,7 +47,7 @@ static const struct sieve_command_def cmd_mark = {
     0, 0, FALSE, FALSE,
     NULL, NULL,
     cmd_mark_validate,
-    NULL, NULL,
+    NULL, NULL, NULL
 };
 
 /* Unmark command
@@ -61,7 +61,7 @@ static const struct sieve_command_def cmd_unmark = {
     0, 0, FALSE, FALSE,
     NULL, NULL,
     cmd_mark_validate,
-    NULL, NULL,
+    NULL, NULL, NULL
 };
 
 /* 

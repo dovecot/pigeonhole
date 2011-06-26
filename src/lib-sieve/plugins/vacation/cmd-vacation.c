@@ -68,7 +68,8 @@ const struct sieve_command_def vacation_command = {
 	1, 0, FALSE, FALSE, 
 	cmd_vacation_registered,
 	cmd_vacation_pre_validate, 
-	cmd_vacation_validate, 
+	cmd_vacation_validate,
+	NULL,
 	cmd_vacation_generate, 
 	NULL 
 };
