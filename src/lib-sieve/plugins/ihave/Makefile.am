@@ -7,8 +7,12 @@ AM_CPPFLAGS = \
 tests = \
 	tst-ihave.c
 
+commands = \
+	cmd-error.c
+
 libsieve_ext_ihave_la_SOURCES = \
 	$(tests) \
+	$(commands) \
 	ext-ihave-binary.c \
 	ext-ihave-common.c \
 	ext-ihave.c

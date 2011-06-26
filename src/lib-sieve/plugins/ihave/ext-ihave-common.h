@@ -22,13 +22,13 @@ extern const struct sieve_command_def ihave_test;
  * Commands
  */
 
-//extern const struct sieve_command_def error_command;
+extern const struct sieve_command_def error_command;
 
 /*
  * Operations
  */
 
-//extern const struct sieve_operation_def error_operation;
+extern const struct sieve_operation_def error_operation;
 
 /*
  * AST context

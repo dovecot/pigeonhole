@@ -113,12 +113,12 @@ static bool tst_ihave_validate
 	/* RFC 5463, Section 4, page 4:
 	 *
 	 * The "ihave" extension is designed to be used with other extensions
-   * that add tests, actions, comparators, or arguments.  Implementations
-   * MUST NOT allow it to be used with extensions that change the
-   * underlying Sieve grammar, or extensions like encoded-character
-   * [RFC5228], or variables [RFC5229] that change how the content of
-   * Sieve scripts are interpreted.  The test MUST fail and the extension
-   * MUST NOT be enabled if such usage is attempted.
+	 * that add tests, actions, comparators, or arguments.  Implementations
+	 * MUST NOT allow it to be used with extensions that change the
+	 * underlying Sieve grammar, or extensions like encoded-character
+	 * [RFC5228], or variables [RFC5229] that change how the content of
+	 * Sieve scripts are interpreted.  The test MUST fail and the extension
+	 * MUST NOT be enabled if such usage is attempted.
 	 *
 	 * FIXME: current implementation of this restriction is hardcoded and
 	 * therefore highly inflexible
