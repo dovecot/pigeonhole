@@ -19,6 +19,7 @@ SUBDIRS = \
 	mailbox \
 	date \
 	spamvirustest \
+	ihave \
 	vnd.dovecot \
 	$(UNFINISHED)
 

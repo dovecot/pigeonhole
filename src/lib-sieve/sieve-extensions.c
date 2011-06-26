@@ -103,6 +103,7 @@ extern const struct sieve_extension_def date_extension;
 extern const struct sieve_extension_def spamtest_extension;
 extern const struct sieve_extension_def spamtestplus_extension;
 extern const struct sieve_extension_def virustest_extension;
+extern const struct sieve_extension_def ihave_extension;
 
 /* vnd.dovecot. */
 extern const struct sieve_extension_def debug_extension;
@@ -132,7 +133,7 @@ const struct sieve_extension_def *sieve_core_extensions[] = {
 	&relational_extension, &regex_extension, &imap4flags_extension,
 	&copy_extension, &include_extension, &body_extension,
 	&variables_extension, &enotify_extension, &environment_extension,
-	&mailbox_extension, &date_extension
+	&mailbox_extension, &date_extension, &ihave_extension
 };
 
 const unsigned int sieve_core_extensions_count =
@@ -461,6 +462,9 @@ const struct sieve_extension *sieve_extension_get_by_name
 	const struct sieve_extension *ext;
 
 	if ( *name == '@' )
+		return NULL;
+
+	if ( strlen(name) > 128 )
 		return NULL;
 
 	ext = (const struct sieve_extension *)

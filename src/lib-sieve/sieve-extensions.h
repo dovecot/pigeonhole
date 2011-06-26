@@ -77,10 +77,12 @@ struct sieve_extension {
 	unsigned int dummy:1;
 };
 
-#define sieve_extension_name(ext) \
-	(ext)->def->name
 #define sieve_extension_is(ext, definition) \
 	( (ext)->def == &(definition) )
+#define sieve_extension_name(ext) \
+	(ext)->def->name
+#define sieve_extension_name_is(ext, _name) \
+	( strcmp((ext)->def->name, (_name)) == 0 )
 
 /* 
  * Defining opcodes and operands 
