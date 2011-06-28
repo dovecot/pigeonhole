@@ -715,16 +715,15 @@ bool ext_variables_interpreter_load
 (const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
 	sieve_size_t *address)
 {
-	struct ext_variables_interpreter_context *ctx;
 	struct sieve_variable_scope_binary *scpbin;
 
 	scpbin = sieve_variable_scope_binary_read
 		(renv->svinst, NULL, renv->sblock, address);
 	if ( scpbin == NULL )
 		return FALSE;
-	
+
 	/* Create our context */
-	ctx = ext_variables_interpreter_context_create
+	(void)ext_variables_interpreter_context_create
 		(ext, renv->interp, scpbin);
 
 	/* Enable support for match values */
