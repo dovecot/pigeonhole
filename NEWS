@@ -10,7 +10,7 @@ v0.2.3 14-04-2011 Stephan Bosch <stephan@rename-it.nl>
 	+ Vacation extension: implemented the (draft) vacation-seconds extension.
 	  This also adds min/max period configuration settings. Refer to 
 	  doc/vacation.txt for configuration information. 
-    - ManageSieve: fixed bug in UTF-8 checking of string values. This is done
+	- ManageSieve: fixed bug in UTF-8 checking of string values. This is done
 	  by discarding the original implementation and migrating to the Dovecot
 	  API's UTF-8 functionality.  
 	- Sieve command line tools now avoid initializing the mail store unless
