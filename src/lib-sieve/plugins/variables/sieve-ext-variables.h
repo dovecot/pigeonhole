@@ -46,6 +46,8 @@ struct sieve_variable_name {
 
 ARRAY_DEFINE_TYPE(sieve_variable_name, struct sieve_variable_name);
 
+bool sieve_variable_identifier_is_valid(const char *identifier);
+
 /*
  * Variable scope
  */

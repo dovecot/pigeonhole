@@ -174,13 +174,13 @@ static bool cmd_global_validate
 			sieve_ast_argument_name(arg));
 		return FALSE;
 	}
-	
+
 	/* Join global commands with predecessors if possible */
 	if ( sieve_commands_equal(prev, cmd) ) {
 		/* Join this command's string list with the previous one */
 		prev->first_positional = sieve_ast_stringlist_join
 			(prev->first_positional, cmd->first_positional);
-		
+
 		if ( prev->first_positional == NULL ) {
 			/* Not going to happen unless MAXINT stringlist items are specified */
 			sieve_command_validate_error(valdtr, cmd, 
