@@ -1017,11 +1017,11 @@ static bool act_vacation_commit
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct act_vacation_context *ctx = 
 		(struct act_vacation_context *) action->context;
-	const char *const *hdsp;
 	unsigned char dupl_hash[MD5_RESULTLEN];
-	const char *const *headers;
 	const char *sender = sieve_message_get_sender(aenv->msgctx);
 	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
+	const char *const *hdsp;
+	const char *const *headers;
 	const char *reply_from = NULL;
 
 	/* Is the recipient unset? 
@@ -1037,14 +1037,14 @@ static bool act_vacation_commit
 	if ( sender == NULL ) {
 		sieve_result_global_log(aenv, "discarded vacation reply to <>");
 		return TRUE;
-	}    
-	
-	/* Are we perhaps trying to respond to ourselves ? 
+	}
+
+	/* Are we perhaps trying to respond to ourselves ?
 	 */
 	if ( sieve_address_compare(sender, recipient, TRUE) == 0 ) {
 		sieve_result_global_log(aenv,
 			"discarded vacation reply to own address <%s>",
-			str_sanitize(sender, 128));	
+			str_sanitize(sender, 128));
 		return TRUE;
 	}
 
@@ -1052,24 +1052,24 @@ static bool act_vacation_commit
 	 */
 	if ( ctx->addresses != NULL ) {
 		const char * const *alt_address = ctx->addresses;
-		
+
 		while ( *alt_address != NULL ) {
 			if ( sieve_address_compare(sender, *alt_address, TRUE) == 0 ) {
 				sieve_result_global_log(aenv,
 					"discarded vacation reply to own address <%s> "
 					"(as specified using :addresses argument)",
-					str_sanitize(sender, 128));	
+					str_sanitize(sender, 128));
 				return TRUE;
 			}
 			alt_address++;
-		}			
+		}
 	}
-	
+
 	/* Did whe respond to this user before? */
 	if ( sieve_action_duplicate_check_available(senv) ) {
 		act_vacation_hash(ctx, sender, dupl_hash);
-	
-		if ( sieve_action_duplicate_check(senv, dupl_hash, sizeof(dupl_hash)) ) 
+
+		if ( sieve_action_duplicate_check(senv, dupl_hash, sizeof(dupl_hash)) )
 		{
 			sieve_result_global_log(aenv,
 				"discarded duplicate vacation response to <%s>",
@@ -1077,7 +1077,7 @@ static bool act_vacation_commit
 			return TRUE;
 		}
 	}
-	
+
 	/* Are we trying to respond to a mailing list ? */
 	hdsp = _list_headers;
 	while ( *hdsp != NULL ) {
@@ -1101,7 +1101,7 @@ static bool act_vacation_commit
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
 				sieve_result_global_log(aenv, 
 					"discarding vacation response to auto-submitted message from <%s>", 
-					str_sanitize(sender, 128));	
+ 					str_sanitize(sender, 128));	
 					return TRUE;				 
 			}
 			hdsp++;
@@ -1124,59 +1124,73 @@ static bool act_vacation_commit
 			hdsp++;
 		}
 	}
-	
+
 	/* Do not reply to system addresses */
 	if ( _is_system_address(sender) ) {
-		sieve_result_global_log(aenv, 
-			"not sending vacation response to system address <%s>", 
-			str_sanitize(sender, 128));	
-		return TRUE;				
-	} 
-	
-	/* Is the original message directly addressed to the user or the addresses
-	 * specified using the :addresses tag? 
-	 */
-	hdsp = _my_address_headers;
-	while ( *hdsp != NULL ) {
-		if ( mail_get_headers
-			(msgdata->mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
-			
-			if ( _contains_my_address(headers, recipient) ) {
-				reply_from = recipient;
-				break;
-			}
-			
-			if ( ctx->addresses != NULL ) {
-				bool found = FALSE;
-				const char * const *my_address = ctx->addresses;
-		
-				while ( !found && *my_address != NULL ) {
-					found = _contains_my_address(headers, *my_address);
-					reply_from = *my_address;
-					my_address++;
-				}
-				
-				if ( found ) break;
-			}
-		}
-		hdsp++;
-	}	
+		sieve_result_global_log(aenv,
+			"not sending vacation response to system address <%s>",
+			str_sanitize(sender, 128));
+		return TRUE;
+	}
 
-	if ( *hdsp == NULL ) {
-		/* No, bail out */
-		sieve_result_global_log(aenv, 
-			"discarding vacation response for message implicitly delivered to <%s>",
-			recipient );	
-		return TRUE;				 
-	}	
-	
+	/* Is the original message directly addressed to the user or the addresses
+	 * specified using the :addresses tag?
+	 */
+	if ( !config->dont_check_recipient ) {
+		const char *orig_recipient = NULL;
+
+		if ( config->use_original_recipient  )
+			orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
+
+		hdsp = _my_address_headers;
+		while ( *hdsp != NULL ) {
+			if ( mail_get_headers
+				(msgdata->mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
+
+				if ( _contains_my_address(headers, recipient) ) {
+					reply_from = recipient;
+					break;
+				}
+
+				if ( orig_recipient != NULL && _contains_my_address(headers, orig_recipient) ) {
+					reply_from = orig_recipient;
+					break;
+				}
+
+				if ( ctx->addresses != NULL ) {
+					bool found = FALSE;
+					const char * const *my_address = ctx->addresses;
+
+					while ( !found && *my_address != NULL ) {
+						if ( (found=_contains_my_address(headers, *my_address)) )
+							reply_from = *my_address;
+						my_address++;
+					}
+
+					if ( found ) break;
+				}
+			}
+			hdsp++;
+		}
+
+
+		/* My address not found in the headers; we got an implicit delivery */
+		if ( *hdsp == NULL ) {
+			/* No, bail out */
+			sieve_result_global_log(aenv,
+				"discarding vacation response for message implicitly delivered to <%s>",
+				recipient );
+			return TRUE;
+		}
+	}
+
 	/* Send the message */
-	
+
 	if ( act_vacation_send(aenv, ctx, sender, reply_from) ) {
 		sieve_number_t seconds; 
 
 		sieve_result_global_log(aenv, "sent vacation response to <%s>", 
-			str_sanitize(sender, 128));	
+			str_sanitize(sender, 128));
 
 		/* Check period limits once more */
 		seconds = ctx->seconds;
