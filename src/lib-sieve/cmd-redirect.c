@@ -332,7 +332,8 @@ static bool act_redirect_send
 
 	/* Prepend sieve headers (should not affect signatures) */
 	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
-	rfc2822_header_field_write(f, "X-Sieve-Redirected-From", recipient);
+	if ( recipient != NULL )
+		rfc2822_header_field_write(f, "X-Sieve-Redirected-From", recipient);
 
 	/* Pipe the message to the outgoing SMTP transport */
 	while ((ret = i_stream_read_data(crlf_input, &data, &size, 0)) > 0) {	
