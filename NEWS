@@ -1,3 +1,34 @@
+v0.2.4 29-08-2011 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Vacation extension: finally added support for using the original recipient
+	  in vacation address check. It is also possible to disable the recipient
+	  address check entirely. Check doc/vacation.txt for configuration
+	  information.
+	+ Implemented ihave extension. This allows checking for the availability
+	  of Sieve language extensions at 'runtime'. Actually, this is checked
+	  at compile time. At runtime the interpreter checks whether extensions
+	  that were not previously available are still unavailable. If the situation
+	  changed, the script is re-compiled and the ihave tests are evaluated again. 
+	+ Sieve: optimized compilation of tests that yield constant results (i.e.
+	  known at compile tme), such as 'true' and 'false'. No code is produced
+	  anymore for script sections that are never executed. Also, semantics
+	  are not verified anymore in uncompiled script sections.
+	+ Made vnd.dovecot.debug extension available to the LDA plugin instead of
+	  only the command line tools.
+	+ Sieve: redirect action now adds X-Sieve-Redirected-From header (mainly for
+	  people using SPF/SRS).
+	- Sieve: fixed bug in handling flags and keywords; in case of error an
+	  assertion was triggered.
+	- Script storage: improved handling of unconfigured user home directory.
+	  Originally this would produce an unhelpful error message.
+	- Imap4flags extension: prevent forcibly enabling imap4flags when imapflags
+	  is enabled.
+	- Fixed various -Wunused-but-set-variable compiler warnings.
+	- Include extension: forgot to check variable identifier syntax for 'global'
+	  command.
+	- Sieve: fixed debug mode; no messages were logged in some situations.
+	- sievec tool: forgot to enable -D (debug) parameter.
+
 v0.2.3 14-04-2011 Stephan Bosch <stephan@rename-it.nl>
 
 	* Sieve filter tool: finished implementing basic functionality. It is not
