@@ -48,9 +48,9 @@ int main(int argc, char **argv)
 	const char *scriptfile, *outfile;
 	int exit_status = EXIT_SUCCESS;
 	int c;
-		
-	sieve_tool = sieve_tool_init("sievec", &argc, &argv, "dP:x:u:", FALSE);
-		
+
+	sieve_tool = sieve_tool_init("sievec", &argc, &argv, "DdP:x:u:", FALSE);
+
 	scriptfile = outfile = NULL;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
