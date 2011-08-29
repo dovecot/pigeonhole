@@ -19,6 +19,9 @@ Parallel plugin-based efforts:
 
 Next (mostly in order of descending priority/precedence):
 
+* Update include extension to latest draft (v10 currently):
+	- Implement :optional tag.
+	- Implement required ManageSieve behavior
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
 * Improve error handling. 
@@ -36,8 +39,6 @@ Next (mostly in order of descending priority/precedence):
 * Cleanup the test suite
 	- Restructure test scripts
 	- Add more comment on purpose of tests
-* Update include extension to latest draft (v05 currently):
-	- Implement required ManageSieve behavior (pending IETF discussion)
 * Finish the ereject extension
 * Vacation extension improvements:
 	- Implement configurable sender exclusion list.
