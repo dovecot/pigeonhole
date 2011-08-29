@@ -517,6 +517,7 @@ struct sieve_binary *sieve_tool_script_compile
 
 	ehandler = sieve_stderr_ehandler_create(svinst, 0);
 	sieve_error_handler_accept_infolog(ehandler, TRUE);
+	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 
 	if ( (sbin = sieve_compile(svinst, filename, name, ehandler, NULL)) == NULL )
 		i_error("failed to compile sieve script '%s'", filename);
