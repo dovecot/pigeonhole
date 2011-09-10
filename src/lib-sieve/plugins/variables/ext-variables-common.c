@@ -90,17 +90,19 @@ void sieve_variable_scope_ref(struct sieve_variable_scope *scope)
 	scope->refcount++;
 }
 
-void sieve_variable_scope_unref(struct sieve_variable_scope **scope)
+void sieve_variable_scope_unref(struct sieve_variable_scope **_scope)
 {
-	i_assert((*scope)->refcount > 0);
+	struct sieve_variable_scope *scope = *_scope;
 
-	if (--(*scope)->refcount != 0)
+	i_assert(scope->refcount > 0);
+
+	if (--scope->refcount != 0)
 		return;
 
-	hash_table_destroy(&(*scope)->variables);
+	hash_table_destroy(&scope->variables);
 
-	pool_unref(&(*scope)->pool);
-    *scope = NULL;
+	*_scope = NULL;
+	pool_unref(&scope->pool);
 }
 
 pool_t sieve_variable_scope_pool(struct sieve_variable_scope *scope)
@@ -691,6 +693,22 @@ struct ext_variables_interpreter_context {
 	ARRAY_DEFINE(ext_storages, struct sieve_variable_storage *);
 };
 
+static void ext_variables_interpreter_free
+(const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_interpreter *interp ATTR_UNUSED, void *context)
+{
+	struct ext_variables_interpreter_context *ctx = 
+		(struct ext_variables_interpreter_context *)context;
+
+	sieve_variable_scope_binary_unref(&ctx->local_scope_bin);
+}
+
+static struct sieve_interpreter_extension variables_interpreter_extension = {
+	&variables_extension,
+	NULL,
+	ext_variables_interpreter_free
+};
+
 static struct ext_variables_interpreter_context *
 ext_variables_interpreter_context_create
 (const struct sieve_extension *this_ext, struct sieve_interpreter *interp, 
@@ -707,8 +725,8 @@ ext_variables_interpreter_context_create
 	p_array_init(&ctx->ext_storages, pool, 
 		sieve_extensions_get_count(this_ext->svinst));
 
-	sieve_interpreter_extension_set_context
-		(interp, this_ext, (void *) ctx);
+	sieve_interpreter_extension_register
+		(interp, this_ext, &variables_interpreter_extension, (void *) ctx);
 
 	return ctx;
 }
