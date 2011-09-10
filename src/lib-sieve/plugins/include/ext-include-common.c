@@ -164,7 +164,7 @@ struct ext_include_ast_context *ext_include_create_ast_context
 
 		sieve_variable_scope_ref(actx->global_vars);
 	} else {
-		actx->global_vars = sieve_variable_scope_create(this_ext);			
+		actx->global_vars = sieve_variable_scope_create(this_ext->svinst, this_ext);			
 	}
 
 	sieve_ast_extension_register

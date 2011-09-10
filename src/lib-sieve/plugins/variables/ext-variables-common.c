@@ -42,9 +42,10 @@ struct sieve_variable_scope {
 	pool_t pool;
 	int refcount;
 
-	struct sieve_variable *error_var;
-
+	struct sieve_instance *svinst;
 	const struct sieve_extension *ext;
+
+	struct sieve_variable *error_var;
 
 	struct hash_table *variables;
 	ARRAY_DEFINE(variable_index, struct sieve_variable *);
@@ -64,7 +65,7 @@ struct sieve_variable_scope_iter {
 };
 
 struct sieve_variable_scope *sieve_variable_scope_create
-(const struct sieve_extension *ext) 
+(struct sieve_instance *svinst, const struct sieve_extension *ext) 
 {
 	struct sieve_variable_scope *scope;
 	pool_t pool;
@@ -74,6 +75,7 @@ struct sieve_variable_scope *sieve_variable_scope_create
 	scope->pool = pool;
 	scope->refcount = 1;
 
+	scope->svinst = svinst;
 	scope->ext = ext;
 
 	scope->variables = hash_table_create
@@ -234,7 +236,7 @@ struct sieve_variable *sieve_variable_scope_get_indexed
 /* Scope binary */
 
 struct sieve_variable_scope *sieve_variable_scope_binary_dump
-(const struct sieve_extension *ext, 
+(struct sieve_instance *svinst, const struct sieve_extension *ext, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	struct sieve_variable_scope *local_scope;
@@ -253,7 +255,7 @@ struct sieve_variable_scope *sieve_variable_scope_binary_dump
 		return FALSE;
 	
 	/* Create scope */
-	local_scope = sieve_variable_scope_create(ext);
+	local_scope = sieve_variable_scope_create(svinst, ext);
 	
 	/* Read and dump scope itself */
 
@@ -336,7 +338,7 @@ struct sieve_variable_scope_binary *sieve_variable_scope_binary_read
 	}
 	
 	/* Create scope */
-	scope = sieve_variable_scope_create(ext);
+	scope = sieve_variable_scope_create(svinst, ext);
 
 	scpbin = sieve_variable_scope_binary_create(scope);
 	scpbin->size = scope_size;
@@ -352,7 +354,7 @@ struct sieve_variable_scope *sieve_variable_scope_binary_get
 (struct sieve_variable_scope_binary *scpbin)
 {
 	const struct sieve_extension *ext = scpbin->scope->ext;
-	struct sieve_instance *svinst = ext->svinst;
+	struct sieve_instance *svinst = scpbin->scope->svinst;
 	const char *ext_name = 
 		( ext == NULL ? "variables" : sieve_extension_name(ext) );
 	unsigned int i;
@@ -551,7 +553,7 @@ static struct sieve_variable_scope *ext_variables_create_local_scope
 {
 	struct sieve_variable_scope *scope;
 
-	scope = sieve_variable_scope_create(NULL);
+	scope = sieve_variable_scope_create(this_ext->svinst, NULL);
 
 	sieve_ast_extension_register
 		(ast, this_ext, &variables_ast_extension, (void *) scope);
