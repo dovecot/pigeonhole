@@ -3,63 +3,12 @@
 
 Network Working Group                                           C. Daboo
 Internet-Draft                                                  A. Stone
-Expires: January 30, 2010                                  July 29, 2009
+Intended status: Standards Track                           July 12, 2010
+Expires: January 13, 2011
 
 
                 Sieve Email Filtering: Include Extension
-                      draft-ietf-sieve-include-03
-
-Status of this Memo
-
-   This Internet-Draft is submitted to IETF in full conformance with the
-   provisions of BCP 78 and BCP 79.  This document may contain material
-   from IETF Documents or IETF Contributions published or made publicly
-   available before November 10, 2008.  The person(s) controlling the
-   copyright in some of this material may not have granted the IETF
-   Trust the right to allow modifications of such material outside the
-   IETF Standards Process.  Without obtaining an adequate license from
-   the person(s) controlling the copyright in such materials, this
-   document may not be modified outside the IETF Standards Process, and
-   derivative works of it may not be created outside the IETF Standards
-   Process, except to format it for publication as an RFC or to
-   translate it into languages other than English.
-
-   Internet-Drafts are working documents of the Internet Engineering
-   Task Force (IETF), its areas, and its working groups.  Note that
-   other groups may also distribute working documents as Internet-
-   Drafts.
-
-   Internet-Drafts are draft documents valid for a maximum of six months
-   and may be updated, replaced, or obsoleted by other documents at any
-   time.  It is inappropriate to use Internet-Drafts as reference
-   material or to cite them other than as "work in progress."
-
-   The list of current Internet-Drafts can be accessed at
-   http://www.ietf.org/ietf/1id-abstracts.txt.
-
-   The list of Internet-Draft Shadow Directories can be accessed at
-   http://www.ietf.org/shadow.html.
-
-   This Internet-Draft will expire on January 30, 2010.
-
-Copyright Notice
-
-   Copyright (c) 2009 IETF Trust and the persons identified as the
-   document authors.  All rights reserved.
-
-   This document is subject to BCP 78 and the IETF Trust's Legal
-   Provisions Relating to IETF Documents in effect on the date of
-
-
-
-Daboo & Stone           Expires January 30, 2010                [Page 1]
-
-Internet-Draft          Sieve Extension: Include               July 2009
-
-
-   publication of this document (http://trustee.ietf.org/license-info).
-   Please review these documents carefully, as they describe your rights
-   and restrictions with respect to this document.
+                      draft-ietf-sieve-include-05
 
 Abstract
 
@@ -69,7 +18,110 @@ Abstract
    site and its users to build up libraries of scripts.  Users are able
    to include their own personal scripts or site-wide scripts.
 
+Status of this Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at http://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on January 13, 2011.
+
+Copyright Notice
+
+   Copyright (c) 2010 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.  Code Components extracted from this document must
+   include Simplified BSD License text as described in Section 4.e of
+   the Trust Legal Provisions and are provided without warranty as
+   described in the Simplified BSD License.
+
+
+
+Daboo & Stone           Expires January 13, 2011                [Page 1]
+
+Internet-Draft          Sieve Extension: Include               July 2010
+
+
+   This document may contain material from IETF Documents or IETF
+   Contributions published or made publicly available before November
+   10, 2008.  The person(s) controlling the copyright in some of this
+   material may not have granted the IETF Trust the right to allow
+   modifications of such material outside the IETF Standards Process.
+   Without obtaining an adequate license from the person(s) controlling
+   the copyright in such materials, this document may not be modified
+   outside the IETF Standards Process, and derivative works of it may
+   not be created outside the IETF Standards Process, except to format
+   it for publication as an RFC or to translate it into languages other
+   than English.
+
+
+Table of Contents
+
+   1.  Introduction and Overview  . . . . . . . . . . . . . . . . . .  5
+   2.  Conventions Used in This Document  . . . . . . . . . . . . . .  5
+   3.  Include Extension  . . . . . . . . . . . . . . . . . . . . . .  5
+     3.1.  General Considerations . . . . . . . . . . . . . . . . . .  5
+     3.2.  Control Structure include  . . . . . . . . . . . . . . . .  6
+     3.3.  Control Structure return . . . . . . . . . . . . . . . . . 10
+     3.4.  Interaction with Variables . . . . . . . . . . . . . . . . 10
+       3.4.1.  Control Structure global . . . . . . . . . . . . . . . 10
+       3.4.2.  Variables Namespace global . . . . . . . . . . . . . . 12
+   4.  Security Considerations  . . . . . . . . . . . . . . . . . . . 12
+   5.  IANA Considerations  . . . . . . . . . . . . . . . . . . . . . 13
+     5.1.  "include" Extension Registration . . . . . . . . . . . . . 13
+   6.  References . . . . . . . . . . . . . . . . . . . . . . . . . . 13
+     6.1.  Normative References . . . . . . . . . . . . . . . . . . . 13
+     6.2.  Informative References . . . . . . . . . . . . . . . . . . 13
+   Appendix A.  Acknowledgments . . . . . . . . . . . . . . . . . . . 13
+   Authors' Addresses . . . . . . . . . . . . . . . . . . . . . . . . 13
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Daboo & Stone           Expires January 13, 2011                [Page 2]
+
+Internet-Draft          Sieve Extension: Include               July 2010
+
+
 Change History (to be removed prior to publication as an RFC)
+
+   Changes from ietf-04 to ietf-05:
+
+   a.  Integrate review from Barry Leiba.
+
+   Changes from ietf-03 to ietf-04:
+
+   a.  No changes.
 
    Changes from ietf-02 to ietf-03:
 
@@ -105,17 +157,17 @@ Change History (to be removed prior to publication as an RFC)
 
    Changes from daboo-06 to ietf-00:
 
-
-
-
-Daboo & Stone           Expires January 30, 2010                [Page 2]
-
-Internet-Draft          Sieve Extension: Include               July 2009
-
-
    a.  None
 
    Changes from -05 to -06:
+
+
+
+
+Daboo & Stone           Expires January 13, 2011                [Page 3]
+
+Internet-Draft          Sieve Extension: Include               July 2010
+
 
    a.  Aaron Stone joins as author.
 
@@ -160,69 +212,17 @@ Internet-Draft          Sieve Extension: Include               July 2009
    d.  Switched to using optional parameter to indicate personal vs
        global.
 
-
-
-
-
-Daboo & Stone           Expires January 30, 2010                [Page 3]
-
-Internet-Draft          Sieve Extension: Include               July 2009
-
-
    e.  Explicitly state that an error occurs when a missing script is
        included.
 
 
-Table of Contents
-
-   1.  Introduction and Overview  . . . . . . . . . . . . . . . . . .  5
-   2.  Conventions Used in This Document  . . . . . . . . . . . . . .  5
-   3.  Include Extension  . . . . . . . . . . . . . . . . . . . . . .  5
-     3.1.  General Considerations . . . . . . . . . . . . . . . . . .  5
-     3.2.  Control Structure include  . . . . . . . . . . . . . . . .  6
-     3.3.  Control Structure return . . . . . . . . . . . . . . . . . 10
-     3.4.  Interaction with Variables . . . . . . . . . . . . . . . . 10
-       3.4.1.  Control Structure global . . . . . . . . . . . . . . . 10
-       3.4.2.  Variables Namespace global . . . . . . . . . . . . . . 12
-   4.  Security Considerations  . . . . . . . . . . . . . . . . . . . 12
-   5.  IANA Considerations  . . . . . . . . . . . . . . . . . . . . . 13
-     5.1.  "include" Extension Registration . . . . . . . . . . . . . 13
-   6.  References . . . . . . . . . . . . . . . . . . . . . . . . . . 13
-     6.1.  Normative References . . . . . . . . . . . . . . . . . . . 13
-     6.2.  Informative References . . . . . . . . . . . . . . . . . . 13
-   Appendix A.  Acknowledgments . . . . . . . . . . . . . . . . . . . 13
-   Authors' Addresses . . . . . . . . . . . . . . . . . . . . . . . . 13
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Daboo & Stone           Expires January 30, 2010                [Page 4]
+Daboo & Stone           Expires January 13, 2011                [Page 4]
 
-Internet-Draft          Sieve Extension: Include               July 2009
+Internet-Draft          Sieve Extension: Include               July 2010
 
 
 1.  Introduction and Overview
@@ -276,15 +276,15 @@ Internet-Draft          Sieve Extension: Include               July 2009
 
 
 
-Daboo & Stone           Expires January 30, 2010                [Page 5]
+Daboo & Stone           Expires January 13, 2011                [Page 5]
 
-Internet-Draft          Sieve Extension: Include               July 2009
+Internet-Draft          Sieve Extension: Include               July 2010
 
 
    "return", or "global" commands are used in a script, the "include"
    capability MUST be listed in the "require" statement in that script.
 
-   Sieve implementations must track the use of actions in included
+   Sieve implementations need to track the use of actions in included
    scripts so that implicit "keep" behavior can be properly determined
    based on whether any actions have executed in any script.
 
@@ -332,9 +332,9 @@ Internet-Draft          Sieve Extension: Include               July 2009
 
 
 
-Daboo & Stone           Expires January 30, 2010                [Page 6]
+Daboo & Stone           Expires January 13, 2011                [Page 6]
 
-Internet-Draft          Sieve Extension: Include               July 2009
+Internet-Draft          Sieve Extension: Include               July 2010
 
 
    optional ":once" parameter, and a single string argument representing
@@ -388,9 +388,9 @@ Internet-Draft          Sieve Extension: Include               July 2009
 
 
 
-Daboo & Stone           Expires January 30, 2010                [Page 7]
+Daboo & Stone           Expires January 13, 2011                [Page 7]
 
-Internet-Draft          Sieve Extension: Include               July 2009
+Internet-Draft          Sieve Extension: Include               July 2010
 
 
    include it to continue.
@@ -413,7 +413,7 @@ Internet-Draft          Sieve Extension: Include               July 2009
 
    Personal script "always_allow"
 
-      This script special cases some correspondent email addresses and
+      This script special-cases some correspondent email addresses and
       makes sure any message containing those addresses are always kept.
 
 
@@ -444,9 +444,9 @@ Internet-Draft          Sieve Extension: Include               July 2009
 
 
 
-Daboo & Stone           Expires January 30, 2010                [Page 8]
+Daboo & Stone           Expires January 13, 2011                [Page 8]
 
-Internet-Draft          Sieve Extension: Include               July 2009
+Internet-Draft          Sieve Extension: Include               July 2010
 
 
       }
@@ -459,11 +459,11 @@ Internet-Draft          Sieve Extension: Include               July 2009
 
       require ["fileinto"];
 
-      if header :is "Sender" "owner-ietf-mta-filters@imc.org"
+      if header :is "List-ID" "owner-ietf-mta-filters@imc.org"
       {
           fileinto "lists.sieve";
       }
-      elsif header :is "Sender" "owner-ietf-imapext@imc.org"
+      elsif header :is "List-ID" "owner-ietf-imapext@imc.org"
       {
           fileinto "lists.imapext";
       }
@@ -500,9 +500,9 @@ Internet-Draft          Sieve Extension: Include               July 2009
 
 
 
-Daboo & Stone           Expires January 30, 2010                [Page 9]
+Daboo & Stone           Expires January 13, 2011                [Page 9]
 
-Internet-Draft          Sieve Extension: Include               July 2009
+Internet-Draft          Sieve Extension: Include               July 2010
 
 
 3.3.  Control Structure return
@@ -511,7 +511,7 @@ Internet-Draft          Sieve Extension: Include               July 2009
 
    The "return" command stops processing of the immediately included
    script only and returns processing control to the script which
-   includes it.  If used in the main script (i.e. not in an included
+   includes it.  If used in the main script (i.e., not in an included
    script), it has the same effect as the "stop" command, including the
    appropriate "keep" action if no other actions have been executed up
    to that point.
@@ -521,8 +521,8 @@ Internet-Draft          Sieve Extension: Include               July 2009
    In order to avoid problems of variables in an included script
    "overwriting" those from the script that includes it, this
    specification requires that all variables defined in a script MUST be
-   kept "private" to the immediate script by default - i.e. they are not
-   "visible" to other scripts.  This ensures that two script authors
+   kept "private" to the immediate script by default - that is, they are
+   not "visible" to other scripts.  This ensures that two script authors
    cannot inadvertently cause problems by choosing the same name for a
    variable.
 
@@ -556,13 +556,18 @@ Internet-Draft          Sieve Extension: Include               July 2009
 
 
 
-Daboo & Stone           Expires January 30, 2010               [Page 10]
+Daboo & Stone           Expires January 13, 2011               [Page 10]
 
-Internet-Draft          Sieve Extension: Include               July 2009
+Internet-Draft          Sieve Extension: Include               July 2010
 
 
    global, and any subsequent "set" command will set the value of the
    variable in global scope.
+
+   A variable has global scope in all scripts that have declared it with
+   the "global" command.  If a script uses that variable name without
+   declaring it global, the name specifies a separate, non-global
+   variable within that script.
 
    Interpretation of a string containing a variable marked as global,
    but without any value set, SHALL behave as any other access to an
@@ -607,14 +612,9 @@ Internet-Draft          Sieve Extension: Include               July 2009
 
 
 
-
-
-
-
-
-Daboo & Stone           Expires January 30, 2010               [Page 11]
+Daboo & Stone           Expires January 13, 2011               [Page 11]
 
-Internet-Draft          Sieve Extension: Include               July 2009
+Internet-Draft          Sieve Extension: Include               July 2010
 
 
 3.4.2.  Variables Namespace global
@@ -668,9 +668,9 @@ Internet-Draft          Sieve Extension: Include               July 2009
 
 
 
-Daboo & Stone           Expires January 30, 2010               [Page 12]
+Daboo & Stone           Expires January 13, 2011               [Page 12]
 
-Internet-Draft          Sieve Extension: Include               July 2009
+Internet-Draft          Sieve Extension: Include               July 2010
 
 
 5.  IANA Considerations
@@ -704,7 +704,7 @@ Internet-Draft          Sieve Extension: Include               July 2009
 6.2.  Informative References
 
    [I-D.ietf-sieve-managesieve]
-              Martin, T. and A. Melnikov, "A Protocol for Remotely
+              Melnikov, A. and T. Martin, "A Protocol for Remotely
               Managing Sieve Scripts", draft-ietf-sieve-managesieve-09
               (work in progress), January 2009.
 
@@ -724,9 +724,9 @@ Appendix A.  Acknowledgments
 
 
 
-Daboo & Stone           Expires January 30, 2010               [Page 13]
+Daboo & Stone           Expires January 13, 2011               [Page 13]
 
-Internet-Draft          Sieve Extension: Include               July 2009
+Internet-Draft          Sieve Extension: Include               July 2010
 
 
 Authors' Addresses
@@ -780,5 +780,5 @@ Authors' Addresses
 
 
 
-Daboo & Stone           Expires January 30, 2010               [Page 14]
+Daboo & Stone           Expires January 13, 2011               [Page 14]
 

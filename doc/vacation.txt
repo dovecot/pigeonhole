@@ -35,7 +35,7 @@ settings. The settings that specify a period are specified in
 s(econds), unless followed by a d(ay), h(our) or m(inute) specifier
 character. 
 
-The following settings can be configured the vacation extension (default
+The following settings can be configured for the vacation extension (default
 values are indicated):
 
 sieve_vacation_min_period = 1d
