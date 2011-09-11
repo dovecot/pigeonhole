@@ -31,7 +31,7 @@
 /* Generator context */
 
 struct ext_include_generator_context {
-	unsigned int nesting_level;
+	unsigned int nesting_depth;
 	struct sieve_script *script;
 	struct ext_include_generator_context *parent;
 };
@@ -56,7 +56,7 @@ struct ext_include_interpreter_context {
 	struct sieve_interpreter *interp;
 	pool_t pool;
 
-	unsigned int nesting_level;
+	unsigned int nesting_depth;
 
 	struct sieve_script *script;
 	const struct ext_include_script_info *script_info;
@@ -76,26 +76,31 @@ bool ext_include_load
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_include_context *ctx;
-	const char *global_dir, *personal_dir, *home;
+	const char *sieve_dir, *home;
+	unsigned long long int uint_setting;
 
 	if ( *context != NULL ) {
 		ext_include_unload(ext);
 	}
 
-	/* Get directory for :global scripts */
-	global_dir = sieve_setting_get(svinst, "sieve_global_dir");
+	ctx = i_new(struct ext_include_context, 1);
 
-	if ( global_dir == NULL && svinst->debug ) {
+	/* Get directory for :global scripts */
+	sieve_dir = sieve_setting_get(svinst, "sieve_global_dir");
+
+	if ( sieve_dir == NULL && svinst->debug ) {
 		sieve_sys_debug(svinst, "include: sieve_global_dir is not set; "
 			"it is currently not possible to include `:global' scripts.");
 	}
 
+	ctx->global_dir = i_strdup(sieve_dir);
+
 	/* Get directory for :personal scripts */
- 	personal_dir = sieve_setting_get(svinst, "sieve_dir");
+ 	sieve_dir = sieve_setting_get(svinst, "sieve_dir");
 
 	home = sieve_environment_get_homedir(svinst);
 
-	if ( personal_dir == NULL ) {
+	if ( sieve_dir == NULL ) {
 		if ( home == NULL )	{
 			if ( svinst->debug ) {		
 				sieve_sys_debug(svinst, "include: sieve_dir is not set "
@@ -103,16 +108,28 @@ bool ext_include_load
 					"it is currently not possible to include `:personal' scripts.");
 			}
 		} else {
-			personal_dir = "~/sieve"; 
+			sieve_dir = "~/sieve"; 
 		}
 	}
 
 	if ( home != NULL )
-		personal_dir = home_expand_tilde(personal_dir, home);	
+		sieve_dir = home_expand_tilde(sieve_dir, home);
 
-	ctx = i_new(struct ext_include_context, 1);
-	ctx->personal_dir = i_strdup(personal_dir);
-	ctx->global_dir = i_strdup(global_dir);
+	ctx->personal_dir = i_strdup(sieve_dir);
+
+	/* Get limits */
+	ctx->max_nesting_depth = EXT_INCLUDE_DEFAULT_MAX_NESTING_DEPTH;
+	ctx->max_includes = EXT_INCLUDE_DEFAULT_MAX_INCLUDES;
+
+	if ( sieve_setting_get_uint_value
+		(svinst, "sieve_include_max_nesting_depth", &uint_setting) ) {
+		ctx->max_nesting_depth = (unsigned int) uint_setting;
+	}
+
+	if ( sieve_setting_get_uint_value
+		(svinst, "sieve_include_max_includes", &uint_setting) ) {
+		ctx->max_includes = (unsigned int) uint_setting;
+	}
 
 	/* Extension dependencies */	
 	ctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
@@ -280,9 +297,9 @@ ext_include_create_generator_context
 	ctx->parent = parent;
 	ctx->script = script;
 	if ( parent == NULL ) {
-		ctx->nesting_level = 0;
+		ctx->nesting_depth = 0;
 	} else {
-		ctx->nesting_level = parent->nesting_level + 1;
+		ctx->nesting_depth = parent->nesting_depth + 1;
 	}
 	
 	return ctx;
@@ -381,9 +398,9 @@ static struct ext_include_interpreter_context *
 	ctx->script_info = sinfo;
 
 	if ( parent == NULL ) {
-		ctx->nesting_level = 0;
+		ctx->nesting_depth = 0;
 	} else {
-		ctx->nesting_level = parent->nesting_level + 1;
+		ctx->nesting_depth = parent->nesting_depth + 1;
 	}
 
 	return ctx;
@@ -451,6 +468,8 @@ bool ext_include_generate_include
 	const struct ext_include_script_info **included_r, bool once)
 {
 	const struct sieve_extension *this_ext = cmd->ext;
+	struct ext_include_context *ext_ctx =
+		(struct ext_include_context *)this_ext->context;
 	bool result = TRUE;
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin = cgenv->sbin;
@@ -472,10 +491,10 @@ bool ext_include_generate_include
 		return FALSE;
 		
 	/* Limit nesting level */
-	if ( ctx->nesting_level >= EXT_INCLUDE_MAX_NESTING_LEVEL ) {
+	if ( ctx->nesting_depth >= ext_ctx->max_nesting_depth ) {
 		sieve_command_generate_error
 			(gentr, cmd, "cannot nest includes deeper than %d levels",
-				EXT_INCLUDE_MAX_NESTING_LEVEL);
+				ext_ctx->max_nesting_depth);
 		return FALSE;
 	}
 	
@@ -504,10 +523,10 @@ bool ext_include_generate_include
 
 		/* Check whether include limit is exceeded */
 		if ( ext_include_binary_script_get_count(binctx) >= 
-			EXT_INCLUDE_MAX_INCLUDES ) {
+			ext_ctx->max_includes ) {
 	 		sieve_command_generate_error(gentr, cmd, 
 	 			"failed to include script '%s': no more than %u includes allowed", 
-				str_sanitize(script_name, 80), EXT_INCLUDE_MAX_INCLUDES);
+				str_sanitize(script_name, 80), ext_ctx->max_includes);
 	 		return FALSE;			
 		}
 		
