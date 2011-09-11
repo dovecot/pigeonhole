@@ -65,6 +65,74 @@ struct ext_include_interpreter_context {
 	bool returned;
 };
 
+/*
+ * Extension configuration
+ */
+
+/* Extension hooks */
+
+bool ext_include_load
+(const struct sieve_extension *ext, void **context)
+{
+	struct sieve_instance *svinst = ext->svinst;
+	struct ext_include_context *ctx;
+	const char *global_dir, *personal_dir, *home;
+
+	if ( *context != NULL ) {
+		ext_include_unload(ext);
+	}
+
+	/* Get directory for :global scripts */
+	global_dir = sieve_setting_get(svinst, "sieve_global_dir");
+
+	if ( global_dir == NULL && svinst->debug ) {
+		sieve_sys_debug(svinst, "include: sieve_global_dir is not set; "
+			"it is currently not possible to include `:global' scripts.");
+	}
+
+	/* Get directory for :personal scripts */
+ 	personal_dir = sieve_setting_get(svinst, "sieve_dir");
+
+	home = sieve_environment_get_homedir(svinst);
+
+	if ( personal_dir == NULL ) {
+		if ( home == NULL )	{
+			if ( svinst->debug ) {		
+				sieve_sys_debug(svinst, "include: sieve_dir is not set "
+					"and no home directory is set for the default `~/sieve'; "
+					"it is currently not possible to include `:personal' scripts.");
+			}
+		} else {
+			personal_dir = "~/sieve"; 
+		}
+	}
+
+	if ( home != NULL )
+		personal_dir = home_expand_tilde(personal_dir, home);	
+
+	ctx = i_new(struct ext_include_context, 1);
+	ctx->personal_dir = i_strdup(personal_dir);
+	ctx->global_dir = i_strdup(global_dir);
+
+	/* Extension dependencies */	
+	ctx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
+
+	*context = (void *)ctx;
+
+	return TRUE;
+}
+
+void ext_include_unload
+(const struct sieve_extension *ext)
+{
+	struct ext_include_context *ctx =
+		(struct ext_include_context *) ext->context;
+
+	i_free(ctx->personal_dir);
+	i_free(ctx->global_dir);
+	i_free(ctx);
+}
+
 /* 
  * Script access 
  */
@@ -74,42 +142,36 @@ const char *ext_include_get_script_directory
    const char *script_name)
 {
 	struct sieve_instance *svinst = ext->svinst;
-	const char *home = NULL, *sieve_dir = NULL;
+	struct ext_include_context *ctx =
+		(struct ext_include_context *) ext->context;
+	const char *sieve_dir;
 
 	switch ( location ) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
- 		sieve_dir = sieve_setting_get(svinst, "sieve_dir");
 
-		home = sieve_environment_get_homedir(svinst);
-
-		if ( sieve_dir == NULL ) {
-			if ( home == NULL )	{		
-				sieve_sys_error(svinst,
-					"include: sieve_dir and home not set for :personal script include "	
-					"(wanted script '%s')", str_sanitize(script_name, 80));
-				return NULL;
-			}
-
-			sieve_dir = "~/sieve"; 
-		}
-
-		if ( home != NULL )
-			sieve_dir = home_expand_tilde(sieve_dir, home);	
-
-		break;
-   	case EXT_INCLUDE_LOCATION_GLOBAL:
-		sieve_dir = sieve_setting_get(svinst, "sieve_global_dir");
-
-		if (sieve_dir == NULL) {
-			sieve_sys_error(svinst,
-				"include: sieve_global_dir not set for :global script include "	
-				"(wanted script '%s')", str_sanitize(script_name, 80));
+		if ( ctx->personal_dir == NULL ) {
+			sieve_sys_error(svinst, "include: sieve_dir is unconfigured; "
+				"include of `:personal' script `%s' is therefore not possible",
+				str_sanitize(script_name, 80));
 			return NULL;
 		}
 
+		sieve_dir = ctx->personal_dir;
+		break;
+
+	case EXT_INCLUDE_LOCATION_GLOBAL:
+
+		if ( ctx->global_dir == NULL ) {
+			sieve_sys_error(svinst, "include: sieve_global_dir is unconfigured; "
+				"include of `:global' script `%s' is therefore not possible",
+				str_sanitize(script_name, 80));
+			return NULL;
+		}
+
+		sieve_dir = ctx->global_dir;
 		break;
 	default:
-		break;
+		i_unreached();
 	}
 
 	return sieve_dir;
