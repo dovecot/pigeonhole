@@ -1,8 +1,11 @@
-v0.2.4 29-08-2011 Stephan Bosch <stephan@rename-it.nl>
+v0.2.4 13-09-2011 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Vacation extension: finally added support for using the original recipient
 	  in vacation address check. It is also possible to disable the recipient
 	  address check entirely. Check doc/vacation.txt for configuration
+	  information.
+	+ Include extension: made limits on the include depth and the total number of
+	  included scripts configurable. Check doc/include.txt for configuration
 	  information.
 	+ Implemented ihave extension. This allows checking for the availability
 	  of Sieve language extensions at 'runtime'. Actually, this is checked
