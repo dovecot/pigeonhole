@@ -41,7 +41,6 @@ static struct sieve_binary *_testsuite_script_compile
 {
 	struct sieve_instance *svinst = testsuite_sieve_instance;
 	struct sieve_binary *sbin;
-	const char *sieve_dir;
 	const char *script_path;
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "compile script `%s'", script);
@@ -51,7 +50,7 @@ static struct sieve_binary *_testsuite_script_compile
 		return SIEVE_EXEC_FAILURE;
 
 	script_path = t_strconcat(script_path, "/", script, NULL);
-	
+
 	if ( (sbin = sieve_compile(svinst, script_path, NULL, testsuite_log_ehandler,
 		NULL)) == NULL )
 		return NULL;
