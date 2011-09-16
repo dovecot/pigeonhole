@@ -63,8 +63,8 @@ static const char *lda_sieve_get_setting
 	if ( mdctx == NULL )
 		return NULL;
 
-	if ( mdxtx->dest_user == NULL ||
-		(value=mail_user_plugin_getenv(mail_user, identifier)) == NULL ) {
+	if ( mdctx->dest_user == NULL ||
+		(value=mail_user_plugin_getenv(mdctx->dest_user, identifier)) == NULL ) {
 		if ( strcmp(identifier, "recipient_delimiter") == 0 )
 			value = mdctx->set->recipient_delimiter;
 	}
