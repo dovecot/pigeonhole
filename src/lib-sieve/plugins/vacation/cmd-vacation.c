@@ -231,7 +231,7 @@ struct cmd_vacation_context_data {
 	
 	bool mime;
 	
-	string_t *handle;
+	struct sieve_ast_argument *handle_arg;
 };
 
 /* 
@@ -348,10 +348,10 @@ static bool cmd_vacation_validate_string_tag
 		*arg = sieve_ast_argument_next(*arg);
 		
 	} else if ( sieve_argument_is(tag, vacation_handle_tag) ) {
-		ctx_data->handle = sieve_ast_argument_str(*arg);
-		
+		ctx_data->handle_arg = *arg;		
+
 		/* Detach optional argument (emitted as mandatory) */
-		*arg = sieve_ast_arguments_detach(*arg,1);
+		*arg = sieve_ast_arguments_detach(*arg, 1);
 	}
 			
 	return TRUE;
@@ -468,34 +468,48 @@ static bool cmd_vacation_validate
 		return FALSE;
 		
 	/* Construct handle if not set explicitly */
-	if ( ctx_data->handle == NULL ) {
-		string_t *reason = sieve_ast_argument_str(arg);
-		unsigned int size = str_len(reason);
+	if ( ctx_data->handle_arg == NULL ) {
+		T_BEGIN {
+			string_t *handle;
+			string_t *reason = sieve_ast_argument_str(arg);
+			unsigned int size = str_len(reason);
 		
-		/* Precalculate the size of it all */
-		size += ctx_data->subject == NULL ? 
-			sizeof(_handle_empty_subject) - 1 : str_len(ctx_data->subject);
-		size += ctx_data->from == NULL ? 
-			sizeof(_handle_empty_from) - 1 : str_len(ctx_data->from); 
-		size += ctx_data->mime ? 
-			sizeof(_handle_mime_enabled) - 1 : sizeof(_handle_mime_disabled) - 1; 
+			/* Precalculate the size of it all */
+			size += ctx_data->subject == NULL ? 
+				sizeof(_handle_empty_subject) - 1 : str_len(ctx_data->subject);
+			size += ctx_data->from == NULL ? 
+				sizeof(_handle_empty_from) - 1 : str_len(ctx_data->from); 
+			size += ctx_data->mime ? 
+				sizeof(_handle_mime_enabled) - 1 : sizeof(_handle_mime_disabled) - 1; 
 			
-		/* Construct the string */
-		ctx_data->handle = str_new(sieve_command_pool(cmd), size);
-		str_append_str(ctx_data->handle, reason);
+			/* Construct the string */
+			handle = t_str_new(size);
+			str_append_str(handle, reason);
 		
-		if ( ctx_data->subject != NULL )
-			str_append_str(ctx_data->handle, ctx_data->subject);
-		else
-			str_append(ctx_data->handle, _handle_empty_subject);
+			if ( ctx_data->subject != NULL )
+				str_append_str(handle, ctx_data->subject);
+			else
+				str_append(handle, _handle_empty_subject);
 		
-		if ( ctx_data->from != NULL )
-			str_append_str(ctx_data->handle, ctx_data->from);
-		else
-			str_append(ctx_data->handle, _handle_empty_from);
+			if ( ctx_data->from != NULL )
+				str_append_str(handle, ctx_data->from);
+			else
+				str_append(handle, _handle_empty_from);
 			
-		str_append(ctx_data->handle, 
-			ctx_data->mime ? _handle_mime_enabled : _handle_mime_disabled );
+			str_append(handle, 
+				ctx_data->mime ? _handle_mime_enabled : _handle_mime_disabled );
+		
+			/* Create positional handle argument */
+			ctx_data->handle_arg = sieve_ast_argument_string_create
+				(cmd->ast_node, handle, sieve_ast_node_line(cmd->ast_node));
+		} T_END;
+
+		if ( !sieve_validator_argument_activate
+			(valdtr, cmd, ctx_data->handle_arg, TRUE) )
+			return FALSE;
+	} else {
+		/* Attach explicit handle argument as positional */
+		(void)sieve_ast_argument_attach(cmd->ast_node, ctx_data->handle_arg);
 	}
 	
 	return TRUE;
@@ -507,18 +521,12 @@ static bool cmd_vacation_validate
  
 static bool cmd_vacation_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
-{
-	struct cmd_vacation_context_data *ctx_data = 
-		(struct cmd_vacation_context_data *) cmd->data;
-		 
+{		 
 	sieve_operation_emit(cgenv->sblock, cmd->ext, &vacation_operation);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;	
-
-	/* FIXME: this will not allow the handle to be a variable */
-	sieve_opr_string_emit(cgenv->sblock, ctx_data->handle);
 		
 	return TRUE;
 }
@@ -779,13 +787,13 @@ static void act_vacation_print
 		(struct act_vacation_context *) action->context;
 	
 	sieve_result_action_printf( rpenv, "send vacation message:");
-	sieve_result_printf(rpenv, "    => seconds   : %d\n", ctx->seconds);
+	sieve_result_printf(rpenv, "    => seconds : %d\n", ctx->seconds);
 	if ( ctx->subject != NULL )
-		sieve_result_printf(rpenv, "    => subject: %s\n", ctx->subject);
+		sieve_result_printf(rpenv, "    => subject : %s\n", ctx->subject);
 	if ( ctx->from != NULL )
-		sieve_result_printf(rpenv, "    => from   : %s\n", ctx->from);
+		sieve_result_printf(rpenv, "    => from    : %s\n", ctx->from);
 	if ( ctx->handle != NULL )
-		sieve_result_printf(rpenv, "    => handle : %s\n", ctx->handle);
+		sieve_result_printf(rpenv, "    => handle  : %s\n", ctx->handle);
 	sieve_result_printf(rpenv, "\nSTART MESSAGE\n%s\nEND MESSAGE\n", ctx->reason);
 }
 
