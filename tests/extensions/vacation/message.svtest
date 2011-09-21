@@ -70,8 +70,6 @@ test "Variables" {
 
 	vacation :from "${from}" :subject "${subject}" "${message}";
 
-	test_result_print;
-
 	if not test_result_execute {
 		test_fail "execution of result failed";
 	}
