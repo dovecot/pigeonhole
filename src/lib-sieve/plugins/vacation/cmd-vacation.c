@@ -1189,16 +1189,17 @@ static bool act_vacation_commit
 			/* No, bail out */
 
 			if ( config->use_original_recipient ) {
-				original_recipient = t_strdup_printf("original recipient = <%s>; ",
-					( orig_recipient == NULL ? "UNAVAILABLE" : str_sanitize(orig_recipient, 128) ));
+				original_recipient = t_strdup_printf("original-recipient=<%s>, ",
+					( orig_recipient == NULL ? "UNAVAILABLE" :
+						str_sanitize(orig_recipient, 128) ));
 			}
 
 			sieve_result_global_log(aenv,
-				"discarding vacation response for implicitly delivered message "
-				"(no known recipient address found in message headers: "
-				"recipient = <%s>; %sadditional :addresses are%s specified)",
+				"discarding vacation response for implicitly delivered message; "
+				"no known (envelope) recipient address found in message headers "
+				"(recipient=<%s>, %sand%s additional `:addresses' are specified)",
 				str_sanitize(recipient, 128), original_recipient,
-				(ctx->addresses == NULL ? " not" : ""));
+				(ctx->addresses == NULL ? " no" : ""));
 
 			return TRUE;
 		}
