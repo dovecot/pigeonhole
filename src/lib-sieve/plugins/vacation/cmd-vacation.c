@@ -1184,10 +1184,22 @@ static bool act_vacation_commit
 
 		/* My address not found in the headers; we got an implicit delivery */
 		if ( *hdsp == NULL ) {
+			const char *original_recipient = "";
+
 			/* No, bail out */
+
+			if ( config->use_original_recipient ) {
+				original_recipient = t_strdup_printf("original recipient = <%s>; ",
+					( orig_recipient == NULL ? "UNAVAILABLE" : str_sanitize(orig_recipient, 128) ));
+			}
+
 			sieve_result_global_log(aenv,
-				"discarding vacation response for message implicitly delivered to <%s>",
-				recipient );
+				"discarding vacation response for implicitly delivered message "
+				"(no known recipient address found in message headers: "
+				"recipient = <%s>; %sadditional :addresses are%s specified)",
+				str_sanitize(recipient, 128), original_recipient,
+				(ctx->addresses == NULL ? " not" : ""));
+
 			return TRUE;
 		}
 	}
