@@ -42,7 +42,8 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sieve-test [-c <config-file>] [-C] [-D] [-d <dump-filename>] [-e]\n"
+"Usage: sieve-test [-a <orig-recipient-address] [-c <config-file>]\n"
+"                  [-C] [-D] [-d <dump-filename>] [-e]\n"
 "                  [-f <envelope-sender>] [-l <mail-location>]\n"
 "                  [-m <default-mailbox>] [-P <plugin>]\n"
 "                  [-r <recipient-address>] [-s <script-file>]\n"

@@ -30,7 +30,7 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sievec [-d] [-P <plugin>] [-x <extensions>] \n"
+"Usage: sievec  [-c <config-file>] [-d] [-P <plugin>] [-x <extensions>] \n"
 "              <script-file> [<out-file>]\n"
 	);
 }

@@ -28,7 +28,7 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sieve-dump [-h] [-P <plugin>] [-x <extensions>]\n"
+"Usage: sieve-dump [-c <config-file>] [-h] [-P <plugin>] [-x <extensions>]\n"
 "                  <sieve-binary> [<out-file>]\n"
 	);
 }
