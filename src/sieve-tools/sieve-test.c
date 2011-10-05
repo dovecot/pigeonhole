@@ -132,12 +132,12 @@ int main(int argc, char **argv)
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'r':
-			/* original recipient address */
-			recipient = optarg;
-			break;
-		case 'a':
 			/* final recipient address */
 			final_recipient = optarg;
+			break;
+		case 'a':
+			/* original recipient address */
+			recipient = optarg;
 			break;
 		case 'f':
 			/* envelope sender address */
