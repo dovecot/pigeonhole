@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2011 Pigeonhole authors, see the included COPYING file
-.TH "PIGEONHOLE" 7 "2010-03-05" "Pigeonhole for Dovecot v2.0" "Pigeonhole"
+.TH "PIGEONHOLE" 7 "2011-11-19" "Pigeonhole for Dovecot v2.1" "Pigeonhole"
 .\"------------------------------------------------------------------------
 .SH NAME
 pigeonhole \- Overview of the Pigeonhole project\(aqs Sieve support for the
@@ -83,7 +83,7 @@ LGPLv2.1 license, which is the same license as Dovecot, see
 Additional resources:
 .IP "Dovecot website"
 http://www.dovecot.org
-.IP "Dovecot v2.0 Wiki"
+.IP "Dovecot v2.x Wiki"
 http://wiki2.dovecot.org/Pigeonhole
 .IP "Pigeonhole website"
 http://pigeonhole.dovecot.org

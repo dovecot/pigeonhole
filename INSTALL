@@ -30,7 +30,7 @@ sudo make install
 
 or to a Dovecot source directory that is already compiled:
 
-./configure --with-dovecot=../dovecot-2.0.0
+./configure --with-dovecot=../dovecot-2.1.0
 make
 sudo make install
 

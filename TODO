@@ -1,12 +1,6 @@
 Current activities:
 
-* Build a sieve tool to filter an entire existing mailbox through a Sieve 
-  script.
-	> Needs to have single mail transaction for each destination folder for
-	  all moved messages. Otherwise, partial failure cannot be prevented.
-	- Implement ability to group Sieve execution results of all processed messages
-	  into one big `Sieve transaction' object, which (among other things) keeps
-	  track of opened mailboxes and transactions. Is probably also more efficient.
+* Implement editheader extension
 
 Parallel plugin-based efforts:
 
@@ -19,6 +13,14 @@ Parallel plugin-based efforts:
 
 Next (mostly in order of descending priority/precedence):
 
+* Implement index extension
+* Build a sieve tool to filter an entire existing mailbox through a Sieve 
+  script.
+	> Needs to have single mail transaction for each destination folder for
+	  all moved messages. Otherwise, partial failure cannot be prevented.
+	- Implement ability to group Sieve execution results of all processed messages
+	  into one big `Sieve transaction' object, which (among other things) keeps
+	  track of opened mailboxes and transactions. Is probably also more efficient.
 * Update include extension to latest draft (v10 currently):
 	- Implement :optional tag.
 	- Implement required ManageSieve behavior
@@ -26,7 +28,6 @@ Next (mostly in order of descending priority/precedence):
   (for efficiency).
 * Improve error handling. 
 	- Implement dropping errors in the user's mailbox as a mail message.
-* Implement index extension
 * Further develop regex extension and update it to the latest draft:
 	- Implement the :quoteregex set modifier
 	- Investigate the use of the TRE regexp library to gain UTF-8 capability
@@ -73,7 +74,7 @@ Next (mostly in order of descending priority/precedence):
 * Build a server with test mail accounts that processes lots and lots of mail 
   (e.g. spam, mailing lists etc.)
 
-* ## MAKE A THIRD RELEASE (0.3.x) ##
+* ## MAKE A FOURTH MAIN RELEASE (0.4.x) ##
 
 * Implement extlists extension as a plugin
 * Enotify extension: detect use of variable values extracted from the message 

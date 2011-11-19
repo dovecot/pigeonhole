@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2011 Pigeonhole authors, see the included COPYING file
-.TH "SIEVE\-TEST" 1 "2011-10-04" "Pigeonhole for Dovecot v2.0" "Pigeonhole"
+.TH "SIEVE\-TEST" 1 "2011-11-19" "Pigeonhole for Dovecot v2.1" "Pigeonhole"
 .SH NAME
 sieve\-test \- Pigeonhole\(aqs Sieve script tester
 .\"------------------------------------------------------------------------
