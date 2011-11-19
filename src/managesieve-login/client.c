@@ -28,17 +28,6 @@
 /* Disconnect client when it sends too many bad commands */
 #define CLIENT_MAX_BAD_COMMANDS 3
 
-const struct login_binary login_binary = {
-	.protocol = "sieve",
-	.process_name = "managesieve-login",
-	.default_port = 4190
-};
-
-void login_process_preinit(void)
-{
-	login_set_roots = managesieve_login_settings_set_roots;
-}
-
 /* Skip incoming data until newline is found,
    returns TRUE if newline was found. */
 bool client_skip_line(struct managesieve_client *client)
@@ -396,16 +385,21 @@ static void managesieve_client_send_line
 	_client_send_response(client, prefix, resp_code, text);
 }
 
-void clients_init(void)
+static void managesieve_login_preinit(void)
+{
+	login_set_roots = managesieve_login_settings_set_roots;
+}
+
+static void managesieve_login_init(void)
 {
 }
 
-void clients_deinit(void)
+static void managesieve_login_deinit(void)
 {
 	clients_destroy_all();
 }
 
-struct client_vfuncs client_vfuncs = {
+static struct client_vfuncs managesieve_client_vfuncs = {
 	managesieve_client_alloc,
 	managesieve_client_create,
 	managesieve_client_destroy,
@@ -420,4 +414,18 @@ struct client_vfuncs client_vfuncs = {
 	managesieve_proxy_parse_line
 };
 
+static const struct login_binary managesieve_login_binary = {
+	.protocol = "sieve",
+	.process_name = "managesieve-login",
+	.default_port = 4190,
 
+	.client_vfuncs = &managesieve_client_vfuncs,
+	.preinit = managesieve_login_preinit,
+	.init = managesieve_login_init,
+	.deinit = managesieve_login_deinit
+};
+
+int main(int argc, char *argv[])
+{
+	return login_binary_run(&managesieve_login_binary, argc, argv);
+}

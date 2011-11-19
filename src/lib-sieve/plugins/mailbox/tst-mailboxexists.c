@@ -144,8 +144,8 @@ static int tst_mailboxexists_operation_execute
 			const char *mailbox = str_c(mailbox_item);
 			struct mailbox *box;
 
-			/* Find the namespace */	
-			ns = mail_namespace_find(renv->scriptenv->user->namespaces, &mailbox);
+			/* Find the namespace */
+			ns = mail_namespace_find(renv->scriptenv->user->namespaces, mailbox);
 			if ( ns == NULL) {
 				if ( trace ) {
 					sieve_runtime_trace(renv, 0, "mailbox `%s' not found", 

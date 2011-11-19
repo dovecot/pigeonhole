@@ -55,7 +55,7 @@ struct sieve_tool {
 	struct mail_user *mail_user_dovecot;
 	struct mail_user *mail_user;
 
-	struct mail_raw_user *mail_raw_user;
+	struct mail_user *mail_raw_user;
 	struct mail_raw *mail_raw;
 
 	unsigned int debug:1;
@@ -307,7 +307,7 @@ void sieve_tool_deinit(struct sieve_tool **_tool)
 		mail_raw_close(&tool->mail_raw);
 
 	if ( tool->mail_raw_user != NULL )
-		mail_raw_user_deinit(&tool->mail_raw_user);
+		mail_user_unref(&tool->mail_raw_user);
 	
 	/* Free mail service */
 
@@ -362,8 +362,8 @@ struct mail *sieve_tool_open_file_as_mail
 (struct sieve_tool *tool, const char *path)
 {
 	if ( tool->mail_raw_user == NULL )
-		tool->mail_raw_user = mail_raw_user_init
-			(master_service, tool->username, tool->mail_user_dovecot);
+		tool->mail_raw_user = mail_raw_user_create
+			(master_service, tool->mail_user_dovecot);
 
 	if ( tool->mail_raw != NULL )
 		mail_raw_close(&tool->mail_raw);
@@ -377,8 +377,8 @@ struct mail *sieve_tool_open_data_as_mail
 (struct sieve_tool *tool, string_t *mail_data)
 {
 	if ( tool->mail_raw_user == NULL )
-		tool->mail_raw_user = mail_raw_user_init
-			(master_service, tool->username, tool->mail_user_dovecot);
+		tool->mail_raw_user = mail_raw_user_create
+			(master_service, tool->mail_user_dovecot);
 
 	if ( tool->mail_raw != NULL )
 		mail_raw_close(&tool->mail_raw);

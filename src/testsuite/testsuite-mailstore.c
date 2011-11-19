@@ -116,8 +116,7 @@ static void testsuite_mailstore_close(void)
 static struct mail *testsuite_mailstore_open(const char *folder)
 {
 	enum mailbox_flags flags =
-		MAILBOX_FLAG_KEEP_RECENT | MAILBOX_FLAG_SAVEONLY |
-		MAILBOX_FLAG_POST_SESSION;
+		MAILBOX_FLAG_SAVEONLY | MAILBOX_FLAG_POST_SESSION;
 	struct mail_user *mail_user = sieve_tool_get_mail_user(sieve_tool);
 	struct mail_namespace *ns = mail_user->namespaces;
 	struct mailbox *box;
