@@ -1,3 +1,18 @@
+v0.2.5 19-11-2011 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Sieve vacation extension: made discard message for implicit delivery more
+	  verbose
+	- The sieve-test tool: mixed up original and final envelope recipient in
+	  implementation of command line arguments.
+	- Sieve vacation extension: resolved FIXME regarding the use of variables in
+	  the :handle argument. Variables are now handled correctly.
+	- Sieve body extension: fixed handling of :content "message/rfc822". This now
+	  yields the headers of the embedded message as required by the specification.
+		Handling of :content "multipart" remains to be fixed.
+	- LDA Sieve plugin: fixed problem with recipient_delimiter configuration. Now
+	  falls back to global recipient_delimiter setting if
+	  plugin/recipient_delimiter is not set.
+
 v0.2.4 13-09-2011 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Vacation extension: finally added support for using the original recipient
