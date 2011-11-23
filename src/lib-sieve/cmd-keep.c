@@ -7,6 +7,7 @@
 #include "sieve-commands.h"
 #include "sieve-code.h"
 #include "sieve-dump.h"
+#include "sieve-message.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
@@ -105,6 +106,8 @@ static int cmd_keep_operation_execute
 	 */
 	if ( sieve_result_add_keep(renv, slist) < 0 )
 		return SIEVE_EXEC_FAILURE;
+
+	sieve_message_snapshot(renv->msgctx);
 
 	return SIEVE_EXEC_OK;
 }

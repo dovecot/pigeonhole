@@ -15,6 +15,7 @@
 #include "sieve-address.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
+#include "sieve-message.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h" 
 #include "sieve-generator.h"
@@ -250,6 +251,8 @@ static int cmd_redirect_operation_execute
 			svinst->max_redirects) < 0 )
 		return SIEVE_EXEC_FAILURE;
 
+	sieve_message_snapshot(renv->msgctx);
+
 	return SIEVE_EXEC_OK;
 }
 
@@ -293,15 +296,16 @@ static void act_redirect_print
 }
 
 static bool act_redirect_send	
-(const struct sieve_action_exec_env *aenv, struct act_redirect_context *ctx)
+(const struct sieve_action_exec_env *aenv, struct mail *mail,
+	struct act_redirect_context *ctx)
 {
 	static const char *hide_headers[] = 
 		{ "Return-Path", "X-Sieve", "X-Sieve-Redirected-From" };
 
-	const struct sieve_message_data *msgdata = aenv->msgdata;
+	struct sieve_message_context *msgctx = aenv->msgctx;
 	const struct sieve_script_env *senv = aenv->scriptenv;
-	const char *sender = sieve_message_get_sender(aenv->msgctx);
-	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
+	const char *sender = sieve_message_get_sender(msgctx);
+	const char *recipient = sieve_message_get_final_recipient(msgctx);
 	struct istream *input, *crlf_input;
 	void *smtp_handle;
 	FILE *f;
@@ -316,7 +320,7 @@ static bool act_redirect_send
 		return TRUE;
 	}
 	
-	if (mail_get_stream(msgdata->mail, NULL, NULL, &input) < 0)
+	if (mail_get_stream(mail, NULL, NULL, &input) < 0)
 		return FALSE;
 		
 	/* Open SMTP transport */
@@ -364,6 +368,8 @@ static bool act_redirect_commit
 {
 	struct act_redirect_context *ctx =
 		(struct act_redirect_context *) action->context;
+	struct mail *mail =	( action->mail != NULL ?
+		action->mail : sieve_message_get_mail(aenv->msgctx) );
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *dupeid;
@@ -381,7 +387,7 @@ static bool act_redirect_commit
 	}
 
 	/* Try to forward the message */
-	if ( act_redirect_send(aenv, ctx) ) {
+	if ( act_redirect_send(aenv, mail, ctx) ) {
 
 		/* Mark this message id as forwarded to the specified destination */
 		if (dupeid != NULL) {

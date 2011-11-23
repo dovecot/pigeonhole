@@ -1,0 +1,122 @@
+require "vnd.dovecot.testsuite";
+require "variables";
+require "fileinto";
+require "mailbox";
+require "body";
+
+require "editheader";
+
+set "message" text:
+From: stephan@example.com
+To: timo@example.com
+Subject: Frop!
+
+Frop!
+
+.
+;
+
+
+test_set "message" "${message}";
+test "Alternating - add; delete" {
+	addheader "X-Some-Header" "Header content";
+
+	if not exists "x-some-header" {
+		test_fail "header not added";
+	}
+
+	if not header :is "x-some-header" "Header content" {
+		test_fail "wrong content added";
+	}
+
+	redirect "frop@example.com";
+
+	deleteheader "X-Some-Header";
+
+	if exists "x-some-header" {
+		test_fail "header not deleted";
+	}
+
+	fileinto :create "folder1";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	/* redirected message */
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not exists "x-some-header" {
+		test_fail "added header not in redirected mail";
+	}
+
+	if not header :is "x-some-header" "Header content" {
+		test_fail "wrong content in redirected mail ";
+	}
+	
+	/* stored message message */
+
+	if not test_message :folder "folder1" 0 {
+		test_fail "message not stored";
+	}
+
+	if exists "x-some-header" {
+		test_fail "added header still present stored mail";
+	}
+}
+
+test_result_reset;
+
+test_set "message" "${message}";
+test "Alternating - delete; add" {
+	deleteheader "Subject";
+
+	if exists "subject" {
+		test_fail "header not deleted";
+	}
+
+	redirect "frop@example.com";
+
+	addheader "Subject" "Friep!";
+
+	if not exists "subject" {
+		test_fail "header not added";
+	}
+
+	if not header :is "subject" "Friep!" {
+		test_fail "wrong content added";
+	}
+
+	fileinto :create "folder2";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	/* redirected message */
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if exists "subject" {
+		test_fail "deleted header still present redirected mail";
+	}
+	
+	/* stored message message */
+
+	if not test_message :folder "folder2" 0 {
+		test_fail "message not stored";
+	}
+
+	if not exists "subject" {
+		test_fail "added header not in stored mail";
+	}
+
+	if not header :is "subject" "Friep!" {
+		test_fail "wrong content in redirected mail ";
+	}
+}

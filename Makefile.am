@@ -126,6 +126,10 @@ test_cases = \
 	tests/extensions/ihave/execute.svtest \
 	tests/extensions/ihave/errors.svtest \
 	tests/extensions/ihave/restrictions.svtest \
+	tests/extensions/editheader/addheader.svtest \
+	tests/extensions/editheader/deleteheader.svtest \
+	tests/extensions/editheader/alternating.svtest \
+	tests/extensions/editheader/utf8.svtest \
 	tests/extensions/vnd.dovecot/debug/execute.svtest \
 	tests/deprecated/notify/basic.svtest \
 	tests/deprecated/notify/mailto.svtest \

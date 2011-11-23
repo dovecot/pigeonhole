@@ -93,6 +93,7 @@ struct sieve_action {
 
 	const char *location;
 	void *context;
+	struct mail *mail;
 	bool executed;
 };
 

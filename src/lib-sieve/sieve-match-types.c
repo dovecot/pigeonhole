@@ -506,6 +506,28 @@ bool sieve_match_type_validate
 	return TRUE;	
 }
 
+void sieve_match_type_arguments_remove
+(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command *cmd)
+{
+	struct sieve_ast_argument *arg = sieve_command_first_argument(cmd);
+
+	/* Remove any comparator and match type arguments */
+	while ( arg != NULL && arg != cmd->first_positional ) {
+		if ( sieve_argument_is_comparator(arg) ) {
+			arg = sieve_ast_arguments_detach(arg, 1);
+			continue;
+		}
+
+		if ( sieve_argument_is_match_type(arg) ) {
+			arg = sieve_ast_arguments_detach(arg, 1);
+			continue;
+		}
+
+		arg = sieve_ast_argument_next(arg);
+	}
+}
+
+
 /*
  * Match-type operand
  */

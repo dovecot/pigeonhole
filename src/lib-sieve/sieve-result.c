@@ -454,6 +454,7 @@ static int _sieve_result_add_action
 	unsigned int instance_count = 0;
 	struct sieve_instance *svinst = renv->svinst;
 	struct sieve_result *result = renv->result;
+	struct mail *mail = sieve_message_get_mail(renv->msgctx);
 	struct sieve_result_action *raction = NULL, *kaction = NULL;
 	struct sieve_action action;
 
@@ -583,6 +584,7 @@ static int _sieve_result_add_action
 	raction->action.def = act_def;
 	raction->action.ext = ext;
 	raction->action.location = p_strdup(result->pool, action.location);
+	raction->action.mail = mail;
 	raction->keep = keep;
 
 	if ( raction->prev == NULL ) {

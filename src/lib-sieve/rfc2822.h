@@ -27,6 +27,10 @@ const char *rfc2822_header_field_name_sanitize(const char *name);
  * Message composition
  */
 
+unsigned int rfc2822_header_field_append
+	(string_t *header, const char *name, const char *body, bool crlf,
+		uoff_t *body_offset_r);
+
 int rfc2822_header_field_write
 	(FILE *f, const char *name, const char *body);
 	

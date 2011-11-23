@@ -1,0 +1,833 @@
+require "vnd.dovecot.testsuite";
+require "variables";
+require "fileinto";
+require "mailbox";
+require "body";
+
+require "editheader";
+
+set "message" text:
+X-A: Onzinnige informatie
+X-B: kun je maar beter
+X-C: niet via e-mail versturen
+From: stephan@example.com
+X-D: en daarom is het nuttig
+To: timo@example.com
+Subject: Frop!
+X-A: dit terstond te verwijderen,
+X-B: omdat dit anders
+X-C: alleen maar schijfruimte verspilt.
+
+Frop!
+
+.
+;
+
+test_set "message" "${message}";
+test "Deleteheader - nonexistent" {
+	if size :over 288 {
+		test_fail "original message is longer than 288 bytes?!";
+	}
+
+	if size :under 288 {
+		test_fail "original message is shorter than 288 bytes?!";
+	}
+
+	deleteheader "X-Z";
+
+	if size :under 288 {
+		test_fail "message is shorter than original";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained";
+	}
+
+	redirect "frop@example.com";
+	fileinto :create "folder1";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :folder "folder1" 0 {
+		test_fail "message not stored";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in stored mail";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained in stored mail";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained in stored mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in stored mail";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in redirected mail";
+	}	
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained in redirected mail";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained in redirected mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}
+
+test_result_reset;
+test_set "message" "${message}";
+test "Deleteheader - one" {
+	if size :over 288 {
+		test_fail "original message is longer than 288 bytes?!";
+	}
+
+	if size :under 288 {
+		test_fail "original message is shorter than 288 bytes?!";
+	}
+
+	deleteheader "X-D";
+
+	if not size :under 288 {
+		test_fail "edited message is not shorter";
+	}
+
+	if size :over 258 {
+		test_fail "edited message is too long";
+	}
+
+	if size :under 258 {
+		test_fail "edited message is too short";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained";
+	}
+
+	if exists "X-D" {
+		test_fail "X-D header not deleted";
+	}
+
+	redirect "frop@example.com";
+	fileinto :create "folder2";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :folder "folder2" 0 {
+		test_fail "message not stored";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in stored mail";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained in stored mail";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained in stored mail";
+	}
+
+	if exists "X-D" {
+		test_fail "X-D header not deleted in stored mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in stored mail";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in redirected mail";
+	}	
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained in redirected mail";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained in redirected mail";
+	}
+
+	if exists "X-D" {
+		test_fail "X-D header not deleted in redirected mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}
+
+test_result_reset;
+test_set "message" "${message}";
+test "Deleteheader - two (first)" {
+	if size :over 288 {
+		test_fail "original message is longer than 288 bytes?!";
+	}
+
+	if size :under 288 {
+		test_fail "original message is shorter than 288 bytes?!";
+	}
+
+	deleteheader "X-A";
+
+	if not size :under 288 {
+		test_fail "edited message is not shorter";
+	}
+
+	if size :over 226 {
+		test_fail "edited message is too long";
+	}
+
+	if size :under 226 {
+		test_fail "edited message is too short";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained";
+	}
+
+	if exists "X-A" {
+		test_fail "X-A header not deleted";
+	}
+
+	redirect "frop@example.com";
+	fileinto :create "folder3";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :folder "folder3" 0 {
+		test_fail "message not stored";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in stored mail";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained in stored mail";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained in stored mail";
+	}
+
+	if exists "X-A" {
+		test_fail "X-A header not deleted in stored mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in stored mail";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in redirected mail";
+	}	
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained in redirected mail";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained in redirected mail";
+	}
+
+	if exists "X-A" {
+		test_fail "X-A header not deleted in redirected mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}
+
+test_result_reset;
+test_set "message" "${message}";
+test "Deleteheader - two (last)" {
+	if size :over 288 {
+		test_fail "original message is longer than 288 bytes?!";
+	}
+
+	if size :under 288 {
+		test_fail "original message is shorter than 288 bytes?!";
+	}
+
+	deleteheader "X-C";
+
+	if not size :under 288 {
+		test_fail "edited message is not shorter";
+	}
+
+	if size :over 215 {
+		test_fail "edited message is too long";
+	}
+
+	if size :under 215 {
+		test_fail "edited message is too short";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained";
+	}
+
+	if not header :is "X-A" "dit terstond te verwijderen," {
+		test_fail "original X-A header not retained";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained";
+	}
+
+	if exists "X-C" {
+		test_fail "X-C header not deleted";
+	}
+
+	redirect "frop@example.com";
+	fileinto :create "folder4";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :folder "folder4" 0 {
+		test_fail "message not stored";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in stored mail";
+	}
+
+	if not header :is "X-A" "dit terstond te verwijderen," {
+		test_fail "original X-A header not retained in stored mail";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained in stored mail";
+	}
+
+	if exists "X-C" {
+		test_fail "X-C header not deleted in stored mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in stored mail";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in redirected mail";
+	}
+
+	if not header :is "X-A" "dit terstond te verwijderen," {
+		test_fail "original X-A header not retained in redirected mail";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained in redirected mail";
+	}
+
+	if exists "X-C" {
+		test_fail "X-C header not deleted in redirected mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}
+
+test_result_reset;
+test_set "message" "${message}";
+test "Deleteheader - :index" {
+	if size :over 288 {
+		test_fail "original message is longer than 288 bytes?!";
+	}
+
+	if size :under 288 {
+		test_fail "original message is shorter than 288 bytes?!";
+	}
+
+	deleteheader :index 1 "X-A";
+	deleteheader :index 2 "X-C";
+
+	if not size :under 288 {
+		test_fail "edited message is not shorter";
+	}
+
+	if size :over 220 {
+		test_fail "edited message is too long";
+	}
+
+	if size :under 220 {
+		test_fail "edited message is too short";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained";
+	}
+
+	if not header :is "X-A" "dit terstond te verwijderen," {
+		test_fail "original X-A (2) header not retained";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C (1) header not retained";
+	}
+
+	if header :is "X-A" "Onzinnige informatie" {
+		test_fail "original X-A (1) header not deleted";
+	}
+
+	if header :is "X-C" "alleen maar schijfruimte verspilt." {
+		test_fail "original X-C (2) header not deleted";
+	}
+
+	redirect "frop@example.com";
+	fileinto :create "folder5";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :folder "folder5" 0 {
+		test_fail "message not stored";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in stored mail";
+	}
+
+	if not header :is "X-A" "dit terstond te verwijderen," {
+		test_fail "original X-A (2) header not retained in stored mail";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C (1) header not retained in stored mail";
+	}
+
+	if header :is "X-A" "Onzinnige informatie" {
+		test_fail "original X-A (1) header not deleted in stored mail";
+	}
+
+	if header :is "X-C" "alleen maar schijfruimte verspilt." {
+		test_fail "original X-C (2) header not deleted in stored mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in stored mail";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in redirected mail";
+	}
+
+	if not header :is "X-A" "dit terstond te verwijderen," {
+		test_fail "original X-A (2) header not retained redirected mail";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-B (1) header not retained redirected mail";
+	}
+
+	if header :is "X-A" "Onzinnige informatie" {
+		test_fail "original X-A (1) header not deleted redirected mail";
+	}
+
+	if header :is "X-C" "alleen maar schijfruimte verspilt." {
+		test_fail "original X-B (2) header not deleted redirected mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}
+
+test_result_reset;
+test_set "message" "${message}";
+test "Deleteheader - :index :last" {
+	if size :over 288 {
+		test_fail "original message is longer than 288 bytes?!";
+	}
+
+	if size :under 288 {
+		test_fail "original message is shorter than 288 bytes?!";
+	}
+
+	deleteheader :index 1 :last "X-A";
+	deleteheader :last :index 2 "X-C";
+
+	if size :over 221 {
+		test_fail "edited message is too long";
+	}
+
+	if size :under 221 {
+		test_fail "edited message is too short";
+	}
+
+	if not size :under 288 {
+		test_fail "edited message is not shorter";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained";
+	}
+
+	if not header :is "X-A" "Onzinnige informatie" {
+		test_fail "original X-A (1) header not retained";
+	}
+
+	if not header :is "X-C" "alleen maar schijfruimte verspilt." {
+		test_fail "original X-C (2) header not retained";
+	}
+
+	if header :is "X-A" "dit terstond te verwijderen," {
+		test_fail "original X-A (2) header not deleted";
+	}
+
+	if header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C (1) header not deleted";
+	}
+
+	redirect "frop@example.com";
+	fileinto :create "folder6";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :folder "folder6" 0 {
+		test_fail "message not stored";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in stored mail";
+	}
+
+	if not header :is "X-A" "Onzinnige informatie" {
+		test_fail "original X-A (1) header not retained in stored mail";
+	}
+
+	if not header :is "X-C" "alleen maar schijfruimte verspilt." {
+		test_fail "original X-C (2) header not retained in stored mail";
+	}
+
+	if header :is "X-A" "dit terstond te verwijderen," {
+		test_fail "original X-A (2) header not deleted in stored mail";
+	}
+
+	if header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C (1) header not deleted in stored mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in stored mail";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in redirected mail";
+	}
+
+	if header :is "X-A" "dit terstond te verwijderen," {
+		test_fail "original X-A (2) header not deleted redirected mail";
+	}
+
+	if header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-B (1) header not deleted redirected mail";
+	}
+
+	if not header :is "X-A" "Onzinnige informatie" {
+		test_fail "original X-A (1) header not retained redirected mail";
+	}
+
+	if not header :is "X-C" "alleen maar schijfruimte verspilt." {
+		test_fail "original X-B (2) header not retained redirected mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}
+
+test_result_reset;
+
+test_set "message" text:
+X-A: Dit is een klein verhaaltje
+X-B: om te testen of de correcte
+X-C: informatie wordt herkend en
+X-D: verwijderd. Zo valt goed te
+X-A: zien dat het allemaal werkt
+X-B: zoals het bedoeld is. Alles
+X-C: wordt in een keer getest op
+X-D: een wijze die efficient die
+X-A: problemen naar voren brengt
+X-B: die bij dit nieuwe deel van
+X-C: de programmatuur naar voren
+X-D: kunnen komen. Zo werkt het!
+
+Frop!
+.
+;
+
+test "Deleteheader - :matches" {
+	if size :over 417 {
+		test_fail "original message is longer than 417 bytes?!";
+	}
+
+	if size :under 417 {
+		test_fail "original message is shorter than 417 bytes?!";
+	}
+
+	deleteheader :matches "X-A" "*klein*";
+	deleteheader :matches "X-B" "*bedoeld*";
+	deleteheader :matches "X-C" "*programmatuur*";
+	deleteheader :contains "X-D" ["verwijderd", "!"];
+
+	if not size :under 417 {
+		test_fail "edited message is not shorter";
+	}
+
+	if size :over 247 {
+		test_fail "edited message is too long";
+	}
+
+	if size :under 247 {
+		test_fail "edited message is too short";
+	}
+
+	if not header :is "X-A" "zien dat het allemaal werkt" {
+		test_fail "original X-A (2) header not retained";
+	}
+
+	if not header :is "X-A" "problemen naar voren brengt" {
+		test_fail "original X-A (3) header not retained";
+	}
+
+	if not header :is "X-B" "om te testen of de correcte" {
+		test_fail "original X-B (1) header not retained";
+	}
+
+	if not header :is "X-B" "die bij dit nieuwe deel van" {
+		test_fail "original X-B (3) header not retained";
+	}
+
+	if not header :is "X-C" "informatie wordt herkend en" {
+		test_fail "original X-C (1) header not retained";
+	}
+
+	if not header :is "X-C" "wordt in een keer getest op" {
+		test_fail "original X-C (2) header not retained";
+	}
+
+	if not header :is "X-D" "een wijze die efficient die" {
+		test_fail "original X-C (2) header not retained";
+	}
+
+	if header :is "X-A" "Dit is een klein verhaaltje" {
+		test_fail "original X-A (1) header not deleted";
+	}
+
+	if header :is "X-B" "zoals het bedoeld is. Alles" {
+		test_fail "original X-B (2) header not deleted";
+	}
+
+	if header :is "X-C" "de programmatuur naar voren" {
+		test_fail "original X-C (3) header not deleted";
+	}
+
+	if header :is "X-D" "verwijderd. Zo valt goed te" {
+		test_fail "original X-C (1) header not deleted";
+	}
+
+	if header :is "X-D" "kunnen komen. Zo werkt het!" {
+		test_fail "original X-C (3) header not deleted";
+	}
+
+	redirect "frop@example.com";
+	fileinto :create "folder7";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :folder "folder7" 0 {
+		test_fail "message not stored";
+	}
+
+	if not header :is "X-A" "zien dat het allemaal werkt" {
+		test_fail "original X-A (2) header not retained in stored mail";
+	}
+
+	if not header :is "X-A" "problemen naar voren brengt" {
+		test_fail "original X-A (3) header not retained in stored mail";
+	}
+
+	if not header :is "X-B" "om te testen of de correcte" {
+		test_fail "original X-B (1) header not retained in stored mail";
+	}
+
+	if not header :is "X-B" "die bij dit nieuwe deel van" {
+		test_fail "original X-B (3) header not retained in stored mail";
+	}
+
+	if not header :is "X-C" "informatie wordt herkend en" {
+		test_fail "original X-C (1) header not retained in stored mail";
+	}
+
+	if not header :is "X-C" "wordt in een keer getest op" {
+		test_fail "original X-C (2) header not retained in stored mail";
+	}
+
+	if not header :is "X-D" "een wijze die efficient die" {
+		test_fail "original X-C (2) header not retained in stored mail";
+	}
+
+	if header :is "X-A" "Dit is een klein verhaaltje" {
+		test_fail "original X-A (1) header not deleted in stored mail";
+	}
+
+	if header :is "X-B" "zoals het bedoeld is. Alles" {
+		test_fail "original X-B (2) header not deleted in stored mail";
+	}
+
+	if header :is "X-C" "de programmatuur naar voren" {
+		test_fail "original X-C (3) header not deleted in stored mail";
+	}
+
+	if header :is "X-D" "verwijderd. Zo valt goed te" {
+		test_fail "original X-C (1) header not deleted in stored mail";
+	}
+
+	if header :is "X-D" "kunnen komen. Zo werkt het!" {
+		test_fail "original X-C (3) header not deleted in stored mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in stored mail";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not header :is "X-A" "zien dat het allemaal werkt" {
+		test_fail "original X-A (2) header not retained in redirected mail";
+	}
+
+	if not header :is "X-A" "problemen naar voren brengt" {
+		test_fail "original X-A (3) header not retained in redirected mail";
+	}
+
+	if not header :is "X-B" "om te testen of de correcte" {
+		test_fail "original X-B (1) header not retained in redirected mail";
+	}
+
+	if not header :is "X-B" "die bij dit nieuwe deel van" {
+		test_fail "original X-B (3) header not retained in redirected mail";
+	}
+
+	if not header :is "X-C" "informatie wordt herkend en" {
+		test_fail "original X-C (1) header not retained in redirected mail";
+	}
+
+	if not header :is "X-C" "wordt in een keer getest op" {
+		test_fail "original X-C (2) header not retained in redirected mail";
+	}
+
+	if not header :is "X-D" "een wijze die efficient die" {
+		test_fail "original X-C (2) header not retained in redirected mail";
+	}
+
+	if header :is "X-A" "Dit is een klein verhaaltje" {
+		test_fail "original X-A (1) header not deleted in redirected mail";
+	}
+
+	if header :is "X-B" "zoals het bedoeld is. Alles" {
+		test_fail "original X-B (2) header not deleted in redirected mail";
+	}
+
+	if header :is "X-C" "de programmatuur naar voren" {
+		test_fail "original X-C (3) header not deleted in redirected mail";
+	}
+
+	if header :is "X-D" "verwijderd. Zo valt goed te" {
+		test_fail "original X-C (1) header not deleted in redirected mail";
+	}
+
+	if header :is "X-D" "kunnen komen. Zo werkt het!" {
+		test_fail "original X-C (3) header not deleted in redirected mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}
+
+
+
+
+
+
+
+

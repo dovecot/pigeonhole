@@ -264,6 +264,7 @@ void sieve_interpreter_set_result
 {
 	sieve_result_unref(&interp->runenv.result);
 	interp->runenv.result = result;
+	interp->runenv.msgctx = sieve_result_get_message_context(result);
 	sieve_result_ref(result);
 }
 

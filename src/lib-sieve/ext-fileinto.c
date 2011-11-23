@@ -20,6 +20,7 @@
 #include "sieve-binary.h"
 #include "sieve-commands.h"
 #include "sieve-code.h"
+#include "sieve-message.h"
 #include "sieve-actions.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -212,6 +213,8 @@ static int ext_fileinto_operation_execute
 	if ( sieve_act_store_add_to_result
 		(renv, slist, str_c(folder)) < 0 )
 		return SIEVE_EXEC_FAILURE;
+
+	sieve_message_snapshot(renv->msgctx);
 
 	return SIEVE_EXEC_OK;
 }

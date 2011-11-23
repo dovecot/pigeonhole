@@ -9,6 +9,8 @@
 #include "str-sanitize.h"
 #include "mail-storage.h"
 
+#include "edit-mail.h"
+
 #include "sieve-common.h"
 #include "sieve-stringlist.h"
 #include "sieve-error.h"
@@ -53,9 +55,14 @@ struct sieve_message_context {
 	const struct sieve_address *envelope_orig_recipient;
 	const struct sieve_address *envelope_final_recipient;
 
-	
+	/* Edited mail struct */
+
+	struct edit_mail *edit_mail;
+
 	/* Context data for extensions */
-	ARRAY_DEFINE(ext_contexts, void *); 
+	ARRAY_DEFINE(ext_contexts, void *);
+
+	unsigned int edit_snapshot:1;
 };
 
 struct sieve_message_context *sieve_message_context_create
@@ -68,7 +75,7 @@ struct sieve_message_context *sieve_message_context_create
 	msgctx->svinst = svinst;
 
 	msgctx->msgdata = msgdata;
-		
+
 	sieve_message_context_flush(msgctx);
 
 	return msgctx;
@@ -87,6 +94,9 @@ void sieve_message_context_unref(struct sieve_message_context **msgctx)
 		return;
 	
 	pool_unref(&((*msgctx)->pool));
+
+	if ( (*msgctx)->edit_mail != NULL )
+		edit_mail_unwrap(&(*msgctx)->edit_mail);
 		
 	i_free(*msgctx);
 	*msgctx = NULL;
@@ -110,6 +120,11 @@ void sieve_message_context_flush(struct sieve_message_context *msgctx)
 
 	p_array_init(&msgctx->ext_contexts, pool, 
 		sieve_extensions_get_count(msgctx->svinst));
+
+	if ( msgctx->edit_mail != NULL ) {
+		edit_mail_unwrap(&msgctx->edit_mail);
+		msgctx->edit_mail = NULL;
+	}
 }
 
 pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
@@ -244,7 +259,38 @@ const char *sieve_message_get_sender
 		sieve_message_envelope_parse(msgctx);
 
 	return sieve_address_to_string(msgctx->envelope_sender);
-} 
+}
+
+/* Mail */
+
+struct mail *sieve_message_get_mail
+(struct sieve_message_context *msgctx)
+{
+	if ( msgctx->edit_mail == NULL )
+		return msgctx->msgdata->mail;
+
+	return edit_mail_get_mail(msgctx->edit_mail);
+}
+
+struct edit_mail *sieve_message_edit
+(struct sieve_message_context *msgctx)
+{
+	if ( msgctx->edit_mail == NULL ) {
+		msgctx->edit_mail = edit_mail_wrap(msgctx->msgdata->mail);
+	} else if ( msgctx->edit_snapshot ) {	
+		msgctx->edit_mail = edit_mail_snapshot(msgctx->edit_mail); 
+	}
+
+	msgctx->edit_snapshot = FALSE;
+
+	return msgctx->edit_mail; 
+}
+
+void sieve_message_snapshot
+(struct sieve_message_context *msgctx)
+{
+	msgctx->edit_snapshot = TRUE;
+}
 
 /*
  * Header stringlist
@@ -309,7 +355,7 @@ static int sieve_message_header_stringlist_next_item
 	struct sieve_message_header_stringlist *strlist = 
 		(struct sieve_message_header_stringlist *) _strlist;
 	const struct sieve_runtime_env *renv = _strlist->runenv;
-	struct mail *mail = renv->msgdata->mail;
+	struct mail *mail = sieve_message_get_mail(renv->msgctx);
 
 	*str_r = NULL;
 

@@ -91,27 +91,27 @@ void testsuite_message_init(void)
 void testsuite_message_set_string
 (const struct sieve_runtime_env *renv, string_t *message)
 {
+	sieve_message_context_flush(renv->msgctx);
+
 	testsuite_mail = sieve_tool_open_data_as_mail(sieve_tool, message);
 	testsuite_message_set_data(testsuite_mail);
-
-	sieve_message_context_flush(renv->msgctx);
 }
 
 void testsuite_message_set_file
 (const struct sieve_runtime_env *renv, const char *file_path)
 {
+	sieve_message_context_flush(renv->msgctx);
+
 	testsuite_mail = sieve_tool_open_file_as_mail(sieve_tool, file_path);
 	testsuite_message_set_data(testsuite_mail);
-
-	sieve_message_context_flush(renv->msgctx);
 }
 
 void testsuite_message_set_mail
 (const struct sieve_runtime_env *renv, struct mail *mail)
 {
-	testsuite_message_set_data(mail);
-
 	sieve_message_context_flush(renv->msgctx);
+
+	testsuite_message_set_data(mail);
 }
 
 void testsuite_message_deinit(void)
@@ -122,19 +122,21 @@ void testsuite_message_deinit(void)
 void testsuite_envelope_set_sender
 (const struct sieve_runtime_env *renv, const char *value)
 {
+	sieve_message_context_flush(renv->msgctx);
+
 	str_truncate(envelope_from, 0);
 
 	if ( value != NULL )
 		str_append(envelope_from, value);
 
 	testsuite_msgdata.return_path = str_c(envelope_from);
-
-	sieve_message_context_flush(renv->msgctx);
 }
 
 void testsuite_envelope_set_recipient
 (const struct sieve_runtime_env *renv, const char *value)
 {
+	sieve_message_context_flush(renv->msgctx);
+
 	str_truncate(envelope_to, 0);
 
 	if ( value != NULL )
@@ -142,33 +144,31 @@ void testsuite_envelope_set_recipient
 
 	testsuite_msgdata.orig_envelope_to = str_c(envelope_to);
 	testsuite_msgdata.final_envelope_to = str_c(envelope_to);
-
-	sieve_message_context_flush(renv->msgctx);
 }
 
 void testsuite_envelope_set_orig_recipient
 (const struct sieve_runtime_env *renv, const char *value)
 {
+	sieve_message_context_flush(renv->msgctx);
+
 	str_truncate(envelope_orig_to, 0);
 
 	if ( value != NULL )
 		str_append(envelope_orig_to, value);
 
 	testsuite_msgdata.orig_envelope_to = str_c(envelope_orig_to);
-
-	sieve_message_context_flush(renv->msgctx);
 }
 
 void testsuite_envelope_set_auth_user
 (const struct sieve_runtime_env *renv, const char *value)
 {
+	sieve_message_context_flush(renv->msgctx);
+
 	str_truncate(envelope_auth, 0);
 
 	if ( value != NULL )
 		str_append(envelope_auth, value);
 
 	testsuite_msgdata.auth_user = str_c(envelope_auth);
-
-	sieve_message_context_flush(renv->msgctx);
 } 
  

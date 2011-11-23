@@ -5,6 +5,7 @@ dovecot_pkglib_LTLIBRARIES = libdovecot-sieve.la
 AM_CPPFLAGS = \
 	$(LIBDOVECOT_INCLUDE) \
 	$(LIBDOVECOT_LDA_INCLUDE) \
+	$(LIBDOVECOT_SERVICE_INCLUDE) \
 	-DMODULEDIR=\""$(dovecot_moduledir)"\"
 
 tests = \
@@ -64,6 +65,7 @@ plugins = \
 	$(extdir)/date/libsieve_ext_date.la \
 	$(extdir)/spamvirustest/libsieve_ext_spamvirustest.la \
 	$(extdir)/ihave/libsieve_ext_ihave.la \
+	$(extdir)/editheader/libsieve_ext_editheader.la \
 	$(extdir)/vnd.dovecot/debug/libsieve_ext_debug.la \
 	$(unfinished_plugins)
 
@@ -72,6 +74,7 @@ libdovecot_sieve_la_LIBADD = $(plugins)
 
 libdovecot_sieve_la_SOURCES = \
 	rfc2822.c \
+	edit-mail.c \
 	sieve-settings.c \
 	sieve-message.c \
 	sieve-smtp.c \
@@ -112,6 +115,7 @@ libdovecot_sieve_la_SOURCES = \
 
 headers = \
 	rfc2822.h \
+	edit-mail.h \
 	sieve-config.h \
 	sieve-types.h \
 	sieve-common.h \

@@ -181,6 +181,9 @@ bool sieve_match_type_validate
 		const struct sieve_match_type *mcht_default, 
 		const struct sieve_comparator *cmp_default);
 
+void sieve_match_type_arguments_remove
+	(struct sieve_validator *valdtr, struct sieve_command *cmd);
+
 /*
  * Match type operand
  */

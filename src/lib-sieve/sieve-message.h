@@ -53,6 +53,16 @@ const char *sieve_message_get_final_recipient
 const char *sieve_message_get_sender
 	(struct sieve_message_context *msgctx);
 
+/* Mail */
+
+struct mail *sieve_message_get_mail
+	(struct sieve_message_context *msgctx);
+
+struct edit_mail *sieve_message_edit
+	(struct sieve_message_context *msgctx);
+void sieve_message_snapshot
+	(struct sieve_message_context *msgctx);
+
 /*
  * Header stringlist
  */

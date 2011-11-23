@@ -1,6 +1,8 @@
 Current activities:
 
 * Implement editheader extension
+	- Add header value verification to addheader command
+	- Add testsuite items for various error conditions 
 
 Parallel plugin-based efforts:
 

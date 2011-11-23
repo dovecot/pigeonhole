@@ -112,6 +112,7 @@ following list outlines the implementation status of each supported extension:
     spamtest and virustest (RFC 5235): fully supported (v0.1.16+), but
         currently considered experimental.
     date (RFC 5260; Section 4): fully supported (v0.1.12+).
+    editheader (RFC 5293): fully supported (v0.3.0+).
     reject (RFC 5429; Section 2.2): fully supported.
     enotify (RFC 5435): fully supported (v0.1.3+).
         mailto method (RFC 5436): fully supported (v0.1.3+).
@@ -142,7 +143,6 @@ following list outlines the implementation status of each supported extension:
   author has taken notice of the following extensions:
 
     index (RFC 5260; page 7): planned.
-    editheader (RFC 5293): planned.
     foreverypart, mime, replace, enclose, and extracttext (RFC 5703): planned.
 
     These extensions will be added as soon as the necessary infrastructure is

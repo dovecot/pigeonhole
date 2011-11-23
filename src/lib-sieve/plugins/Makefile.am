@@ -20,6 +20,7 @@ SUBDIRS = \
 	date \
 	spamvirustest \
 	ihave \
+	editheader \
 	vnd.dovecot \
 	$(UNFINISHED)
 

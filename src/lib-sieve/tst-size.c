@@ -5,6 +5,7 @@
 
 #include "sieve-common.h"
 #include "sieve-code.h"
+#include "sieve-message.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
@@ -233,9 +234,10 @@ static bool tst_size_operation_dump
 static inline bool tst_size_get
 (const struct sieve_runtime_env *renv, sieve_number_t *size) 
 {
+	struct mail *mail = sieve_message_get_mail(renv->msgctx);
 	uoff_t psize;
 
-	if ( mail_get_physical_size(renv->msgdata->mail, &psize) < 0 )
+	if ( mail_get_physical_size(mail, &psize) < 0 )
 		return FALSE;
 
 	*size = psize;
@@ -267,7 +269,7 @@ static int tst_size_operation_execute
 		sieve_sys_error(renv->svinst, "failed to assess message size");
 		return SIEVE_EXEC_FAILURE;
 	}
-	
+
 	/* Perform the test */
 	if ( sieve_operation_is(renv->oprtn, tst_size_over_operation) ) {
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "size :over test");

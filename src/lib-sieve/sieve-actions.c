@@ -375,7 +375,8 @@ static bool act_store_mailbox_open
 	save_ctx.lda_mailbox_autocreate = aenv->scriptenv->mailbox_autocreate;
 	save_ctx.lda_mailbox_autosubscribe = aenv->scriptenv->mailbox_autosubscribe;
 
-	if (mail_deliver_save_open(&save_ctx, mailbox, box_r, error_code_r, error_r) < 0)
+	if ( mail_deliver_save_open
+		(&save_ctx, mailbox, box_r, error_code_r, error_r) < 0 )
 		return FALSE;
 
 	*storage = mailbox_get_storage(*box_r);
@@ -460,12 +461,13 @@ static struct mail_keywords *act_store_keywords_create
 }
 
 static bool act_store_execute
-(const struct sieve_action *action ATTR_UNUSED, 
+(const struct sieve_action *action, 
 	const struct sieve_action_exec_env *aenv, void *tr_context)
 {   
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
-	const struct sieve_message_data *msgdata = aenv->msgdata;
+	struct mail *mail =	( action->mail != NULL ?
+		action->mail : sieve_message_get_mail(aenv->msgctx) );	
 	struct mail_save_context *save_ctx;
 	struct mail_keywords *keywords = NULL;
 	bool result = TRUE;
@@ -483,19 +485,19 @@ static bool act_store_execute
 	/* If the message originates from the target mailbox, only update the flags 
 	 * and keywords 
 	 */
-	if ( mailbox_backends_equal(trans->box, msgdata->mail->box) ) {
+	if ( mailbox_backends_equal(trans->box, mail->box) ) {
 		trans->redundant = TRUE;
 
 		if ( trans->flags_altered ) {
 			keywords = act_store_keywords_create
-				(aenv, &trans->keywords, msgdata->mail->box);
+				(aenv, &trans->keywords, mail->box);
 
 			if ( keywords != NULL ) {
-				mail_update_keywords(msgdata->mail, MODIFY_REPLACE, keywords);
+				mail_update_keywords(mail, MODIFY_REPLACE, keywords);
 				mailbox_keywords_unref(&keywords);
 			}
 
-			mail_update_flags(msgdata->mail, MODIFY_REPLACE, trans->flags);
+			mail_update_flags(mail, MODIFY_REPLACE, trans->flags);
 		}
 
 		return TRUE;
@@ -529,7 +531,7 @@ static bool act_store_execute
 		mailbox_save_set_flags(save_ctx, trans->flags, keywords);
 	}
 
-	if ( mailbox_copy(&save_ctx, aenv->msgdata->mail) < 0 ) {
+	if ( mailbox_copy(&save_ctx, mail) < 0 ) {
 		sieve_act_store_get_storage_error(aenv, trans);
  		result = FALSE;
 	}
