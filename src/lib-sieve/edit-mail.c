@@ -689,6 +689,43 @@ static int edit_mail_headers_parse
 	return 1;
 }
 
+static inline char *_header_value_unfold
+(const char *value)
+{
+	string_t *out;
+	unsigned int i, j;
+
+	for (i = 0; value[i] != '\0'; i++) {
+		if (value[i] == '\r' || value[i] == '\n')
+			break;
+	}
+	if (value[i] == '\0') {
+		return i_strdup(value);
+	}
+	
+	out = t_str_new(i + strlen(value+i) + 10);
+	str_append_n(out, value, i);
+	for (j = i; value[i] != '\0'; i++) {
+		if (value[i] == '\n') {
+			i++;
+			if (value[i] == '\0')
+				break;
+
+			switch ( value[i] ) {
+			default:
+				str_append_c(out, '\t');
+			case ' ': case '\t':
+				str_append_c(out, value[i]);
+			}
+		} else {
+			if (value[i] != '\r')
+				str_append_c(out, value[i]);
+		}
+	}
+	
+	return i_strndup(str_c(out), str_len(out));
+}
+
 void edit_mail_header_add
 (struct edit_mail *edmail, const char *field_name, const char *value, bool last)
 {
@@ -697,8 +734,6 @@ void edit_mail_header_add
 	struct _header_field_index *field_idx;
 	struct _header_field *field;
 	unsigned int lines;
-
-	/* FIXME: validate value */
 
 	edit_mail_modify(edmail);
 
@@ -731,7 +766,7 @@ void edit_mail_header_add
 	} T_END;	
 
 	/* Record original (utf8) value */
-	field->utf8_value = i_strdup(value);
+	field->utf8_value = _header_value_unfold(value);
 
 	/* Add it to the header field index */
 	if ( last ) {
