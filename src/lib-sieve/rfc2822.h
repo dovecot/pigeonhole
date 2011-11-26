@@ -15,7 +15,7 @@
 bool rfc2822_header_field_name_verify
 	(const char *field_name, unsigned int len);
 bool rfc2822_header_field_body_verify
-(const char *field_body, unsigned int len);
+	(const char *field_body, unsigned int len, bool allow_crlf, bool allow_utf8);
 
 /*
  *

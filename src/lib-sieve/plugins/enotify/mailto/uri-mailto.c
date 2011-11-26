@@ -442,7 +442,8 @@ static bool uri_mailto_parse_headers
 		if ( hname_type == _HNAME_BODY ) {
 			// FIXME: verify body ... 
 		} else {
-			if ( !rfc2822_header_field_body_verify(str_c(field), str_len(field)) ) {
+			if ( !rfc2822_header_field_body_verify
+				(str_c(field), str_len(field), FALSE, FALSE) ) {
 				uri_mailto_error(parser, "invalid header field body");
 				return FALSE;
 			}

@@ -7,6 +7,7 @@
 
 #include "lib.h"
 #include "str.h"
+#include "unichar.h"
 
 #include "rfc2822.h"
 
@@ -38,34 +39,39 @@ bool rfc2822_header_field_name_verify
 }
 
 bool rfc2822_header_field_body_verify
-(const char *field_body, unsigned int len) 
+(const char *field_body, unsigned int len, bool allow_crlf, bool allow_utf8)
 {
 	const char *p = field_body;
 	const char *pend = p + len;
+	bool is8bit = FALSE;
 
-	/* unstructured    =       *([FWS] utext) [FWS]
-	 * FWS             =       ([*WSP CRLF] 1*WSP) /   ; Folding white space
-	 *                         obs-FWS
-	 * utext           =       NO-WS-CTL /     ; Non white space controls
-	 *                         %d33-126 /      ; The rest of US-ASCII
-	 *                         obs-utext
-	 * NO-WS-CTL       =       %d1-8 /         ; US-ASCII control characters
-	 *                         %d11 /          ;  that do not include the
-	 *                         %d12 /          ;  carriage return, line feed,
-	 *                         %d14-31 /       ;  and white space characters
-	 *                         %d127
-	 * WSP             =  SP / HTAB
-	 */
-
-	/* This verification does not allow content to be folded. This should done
-	 * automatically upon message composition.
+	/* RFC5322:
+	 *
+	 * unstructured    =  (*([FWS] VCHAR) *WSP)
+	 * VCHAR           =  %x21-7E
+	 * FWS             =  ([*WSP CRLF] 1*WSP) /   ; Folding white space
+	 * WSP             =  SP / HTAB               ; White space
 	 */
 
 	while ( p < pend ) {
-		if ( *p == '\0' || *p == '\r' || *p == '\n' || ((unsigned char)*p) > 127 )
+		if ( *p != '\t' && *p < 0x20 )
 			return FALSE;
 
+		if ( (*p == '\r' || *p == '\n') && !allow_crlf )
+			return FALSE;
+
+		if ( !is8bit && ((unsigned char)*p) > 127 ) {
+			if ( !allow_utf8 )
+				return FALSE;
+
+			is8bit = TRUE;
+		}
+
 		p++;
+	}
+
+	if ( is8bit && !uni_utf8_str_is_valid(field_body) ) {
+		return FALSE;
 	}	
 	
 	return TRUE;
