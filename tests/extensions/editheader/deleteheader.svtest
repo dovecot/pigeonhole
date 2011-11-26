@@ -825,9 +825,69 @@ test "Deleteheader - :matches" {
 }
 
 
+/*
+ *
+ */
 
+test_result_reset;
 
+test_set "message" text:
+X-A: Long folded header to test removal of folded
+ headers from a message. This is the top header.
+X-B: First intermittent unfolded header
+X-A: Long folded header to test removal of folded
+ headers from a message. This is the middle header.
+X-B: Second intermittent unfolded header
+X-A: Long folded header to test removal of folded
+ headers from a message. This is the bottom header,
+ which concludes the header of this message.
 
+Frop!
+.
+;
 
+test "Deleteheader - :matches" {
+	deleteheader "X-A";
 
+	if exists "X-A" {
+		test_fail "original X-A (1) header not deleted";
+	}
 
+	if not header :is "X-B" "First intermittent unfolded header" {
+		test_fail "original X-B (2) header not retained";
+	}
+
+	if not header :is "X-B" "Second intermittent unfolded header" {
+		test_fail "original X-B (2) header not retained";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+
+	redirect "frop@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if exists "X-A" {
+		test_fail "original X-A (1) header not deleted in redirected mail";
+	}
+
+	if not header :is "X-B" "First intermittent unfolded header" {
+		test_fail "original X-B (2) header not retained in redirected mail";
+	}
+
+	if not header :is "X-B" "Second intermittent unfolded header" {
+		test_fail "original X-B (2) header not retained in redirected mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}

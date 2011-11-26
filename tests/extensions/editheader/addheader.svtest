@@ -202,7 +202,6 @@ test "Addheader - last" {
 	}
 }
 
-
 test_result_reset;
 test_set "message" "${message}";
 test "Addheader - framed" {
@@ -320,4 +319,163 @@ test "Addheader - framed" {
 		test_fail "body not retained in redirected mail";
 	}
 }
+
+/*
+ * Addheader - folded
+ */
+
+test_result_reset;
+test_set "message" "${message}";
+test "Addheader - folded" {
+	set "before"
+		"This is very long header content, folded to fit inside multiple header lines. This may cause problems, so that is why it is tested here.";
+	set "after"
+		"This is somewhat longer header content, folded to fit inside multiple header lines. This may cause problems, so that is why it is tested here.";
+
+	addheader "X-Some-Header-first" "${before}";	
+	addheader :last "X-Some-Header-last" "${after}";
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained";
+	}
+
+	if not exists "x-some-header-first" {
+		test_fail "first header not added";
+	}
+
+	if not exists "x-some-header-last" {
+		test_fail "last header not added";
+	}
+
+	if not header :is "x-some-header-first" "${before}" {
+		test_fail "wrong first content added";
+	}
+
+	if not header :is "x-some-header-last" "${after}" {
+		test_fail "wrong last content added";
+	}
+
+	redirect "frop@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in redirected mail";
+	}	
+
+	if not exists "x-some-header-first" {
+		test_fail "first header not in redirected mail";
+	}
+
+	if not exists "x-some-header-last" {
+		test_fail "last header not in redirected mail";
+	}
+
+	if not header :is "x-some-header-first" "${before}" {
+		test_fail "wrong first header content in redirected mail ";
+	}
+
+	if not header :is "x-some-header-last" "${after}" {
+		test_fail "wrong last header content in redirected mail ";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}
+
+/*
+ * Addheader - newlines
+ */
+
+test_result_reset;
+test_set "message" "${message}";
+test "Addheader - newlines" {
+	set "before" text:
+This is very long header content
+ containing newlines. This may
+ cause some problems, so that
+ is why it is tested here.
+.
+;
+
+	set "after" text:
+This is somewhat longer header content
+ containing newlines. This may
+ cause some problems, so that
+ is why it is tested here.
+.
+;
+
+	set "before_out"
+		"This is very long header content containing newlines. This may cause some problems, so that is why it is tested here.";
+
+	set "after_out"
+		"This is somewhat longer header content containing newlines. This may cause some problems, so that is why it is tested here.";
+
+	addheader "X-Some-Header-first" "${before}";	
+	addheader :last "X-Some-Header-last" "${after}";
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained";
+	}
+
+	if not exists "x-some-header-first" {
+		test_fail "first header not added";
+	}
+
+	if not exists "x-some-header-last" {
+		test_fail "last header not added";
+	}
+
+	if not header :is "x-some-header-first" "${before_out}" {
+		test_fail "wrong first content added";
+	}
+
+	if not header :is "x-some-header-last" "${after_out}" {
+		test_fail "wrong last content added";
+	}
+
+	redirect "frop@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in redirected mail";
+	}	
+
+	if not exists "x-some-header-first" {
+		test_fail "first header not in redirected mail";
+	}
+
+	if not exists "x-some-header-last" {
+		test_fail "last header not in redirected mail";
+	}
+
+	if not header :is "x-some-header-first" "${before_out}" {
+		test_fail "wrong first header content in redirected mail ";
+	}
+
+	if not header :is "x-some-header-last" "${after_out}" {
+		test_fail "wrong last header content in redirected mail ";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}
+
+
 
