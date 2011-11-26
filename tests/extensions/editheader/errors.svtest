@@ -1,0 +1,49 @@
+require "vnd.dovecot.testsuite";
+require "comparator-i;ascii-numeric";
+require "relational";
+
+require "editheader";
+
+test "Invalid field-name" {
+	if test_script_compile "errors/field-name.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "5" {
+		test_fail "wrong number of errors reported";
+	}
+
+	if not test_error :index 1 :matches "*field name*X-field:*invalid" {
+		test_fail "wrong error reported";
+	}
+
+	if not test_error :index 2 :matches "*field name*X field*invalid" {
+		test_fail "wrong error reported";
+	}
+
+	if not test_error :index 3 :matches "*field name*X-field:*invalid" {
+		test_fail "wrong error reported";
+	}
+
+	if not test_error :index 4 :matches "*field name*X field*invalid" {
+		test_fail "wrong error reported";
+	}
+}
+
+test "Invalid field-name at runtime " {
+	if not test_script_compile "errors/field-name-runtime.sieve" {
+		test_fail "compile failed";
+	}
+
+	if test_script_run {
+		test_fail "run should have failed";		
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
+		test_fail "wrong number of errors reported";
+	}
+
+	if not test_error :matches "*field name*X-field:*invalid" {
+		test_fail "wrong error reported";
+	}
+}
