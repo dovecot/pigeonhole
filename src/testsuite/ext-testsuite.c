@@ -69,6 +69,7 @@ const struct sieve_operation_def *testsuite_operations[] = {
 	&test_result_print_operation,
 	&test_message_smtp_operation,
 	&test_message_mailbox_operation,
+	&test_message_print_operation,
 	&test_mailbox_create_operation,
 	&test_mailbox_delete_operation,
 	&test_binary_load_operation,
@@ -125,6 +126,7 @@ static bool ext_testsuite_validator_load
 	sieve_validator_register_command(valdtr, ext, &cmd_test_result_print);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_result_reset);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_message);
+	sieve_validator_register_command(valdtr, ext, &cmd_test_message_print);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_mailbox_create);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_mailbox_delete);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_binary_load);

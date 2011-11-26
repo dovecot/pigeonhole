@@ -57,6 +57,7 @@ extern const struct sieve_command_def cmd_test_set;
 extern const struct sieve_command_def cmd_test_result_reset;
 extern const struct sieve_command_def cmd_test_result_print;
 extern const struct sieve_command_def cmd_test_message;
+extern const struct sieve_command_def cmd_test_message_print;
 extern const struct sieve_command_def cmd_test_mailbox;
 extern const struct sieve_command_def cmd_test_mailbox_create;
 extern const struct sieve_command_def cmd_test_mailbox_delete;
@@ -96,6 +97,7 @@ enum testsuite_operation_code {
 	TESTSUITE_OPERATION_TEST_RESULT_PRINT,
 	TESTSUITE_OPERATION_TEST_MESSAGE_SMTP,
 	TESTSUITE_OPERATION_TEST_MESSAGE_MAILBOX,
+	TESTSUITE_OPERATION_TEST_MESSAGE_PRINT,
 	TESTSUITE_OPERATION_TEST_MAILBOX_CREATE,
 	TESTSUITE_OPERATION_TEST_MAILBOX_DELETE,
 	TESTSUITE_OPERATION_TEST_BINARY_LOAD,
@@ -119,6 +121,7 @@ extern const struct sieve_operation_def test_result_reset_operation;
 extern const struct sieve_operation_def test_result_print_operation;
 extern const struct sieve_operation_def test_message_smtp_operation;
 extern const struct sieve_operation_def test_message_mailbox_operation;
+extern const struct sieve_operation_def test_message_print_operation;
 extern const struct sieve_operation_def test_mailbox_create_operation;
 extern const struct sieve_operation_def test_mailbox_delete_operation;
 extern const struct sieve_operation_def test_binary_load_operation;

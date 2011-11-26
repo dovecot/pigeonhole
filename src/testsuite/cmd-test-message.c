@@ -1,8 +1,12 @@
 /* Copyright (c) 2002-2011 Pigeonhole authors, see the included COPYING file
  */
 
+#include "lib.h"
+#include "istream.h"
+
 #include "sieve-common.h"
 #include "sieve-commands.h"
+#include "sieve-message.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -15,7 +19,10 @@
 #include "testsuite-mailstore.h"
 
 /*
- * Test_message command
+ * Commands
+ */ 
+
+/* Test_message command
  *
  * Syntax:   
  *   test_message ( :smtp / :mailbox <mailbox: string> ) <index: number>
@@ -40,6 +47,25 @@ const struct sieve_command_def cmd_test_message = {
 	cmd_test_message_generate, 
 	NULL 
 };
+
+/* Test_message_print command
+ *
+ * Syntax:   
+ *   test_message_print
+ */
+
+static bool cmd_test_message_print_generate
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
+
+const struct sieve_command_def cmd_test_message_print = { 
+	"test_message_print", 
+	SCT_COMMAND, 
+	0, 0, FALSE, FALSE,
+	NULL, NULL, NULL, NULL,
+	cmd_test_message_print_generate
+	, NULL
+};
+
 
 /* 
  * Operations
@@ -73,6 +99,21 @@ const struct sieve_operation_def test_message_mailbox_operation = {
 	TESTSUITE_OPERATION_TEST_MESSAGE_MAILBOX,
 	cmd_test_message_mailbox_operation_dump, 
 	cmd_test_message_mailbox_operation_execute 
+};
+
+/* Test_message_print operation */
+
+static bool cmd_test_message_print_operation_dump
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+static int cmd_test_message_print_operation_execute
+	(const struct sieve_runtime_env *renv, sieve_size_t *address);
+
+const struct sieve_operation_def test_message_print_operation = { 
+	"TEST_MESSAGE_PRINT",
+	&testsuite_extension, 
+	TESTSUITE_OPERATION_TEST_MESSAGE_PRINT,
+	cmd_test_message_print_operation_dump, 
+	cmd_test_message_print_operation_execute 
 };
 
 /*
@@ -254,6 +295,15 @@ static bool cmd_test_message_generate
 	return TRUE;
 }
 
+static bool cmd_test_message_print_generate
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
+{	
+	/* Emit operation */
+	sieve_operation_emit
+		(cgenv->sblock, cmd->ext, &test_message_print_operation);
+	return TRUE;
+}
+
 /* 
  * Code dump
  */
@@ -291,6 +341,15 @@ static bool cmd_test_message_mailbox_operation_dump
 		sieve_opr_string_dump(denv, address, "folder") &&
 		sieve_opr_number_dump(denv, address, "index");
 }
+
+static bool cmd_test_message_print_operation_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address ATTR_UNUSED)
+{
+	sieve_code_dumpf(denv, "TEST_MESSAGE_PRINT");
+
+	return TRUE;
+}
+
 
 /*
  * Intepretation
@@ -419,6 +478,34 @@ static int cmd_test_message_mailbox_operation_execute
 
 	return SIEVE_EXEC_OK;
 }
+
+static int cmd_test_message_print_operation_execute
+(const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
+{
+	struct mail *mail = sieve_message_get_mail(renv->msgctx);
+	struct istream *input;
+	const unsigned char *data;
+	size_t size;
+	int ret;
+
+	if (mail_get_stream(mail, NULL, NULL, &input) < 0) {
+		sieve_runtime_error(renv, NULL,
+			"test_message_print: failed to read current message");
+		return SIEVE_EXEC_OK;
+	}
+
+	printf("\n--MESSAGE: \n");
+		
+	/* Pipe the message to the outgoing SMTP transport */
+	while ((ret=i_stream_read_data(input, &data, &size, 0)) > 0) {
+		write(1, data, size);
+		i_stream_skip(input, size);
+	}
+	printf("\n--MESSAGE--\n");
+	
+	return SIEVE_EXEC_OK;
+}
+
 
 
 
