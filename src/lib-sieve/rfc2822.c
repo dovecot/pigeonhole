@@ -41,8 +41,8 @@ bool rfc2822_header_field_name_verify
 bool rfc2822_header_field_body_verify
 (const char *field_body, unsigned int len, bool allow_crlf, bool allow_utf8)
 {
-	const char *p = field_body;
-	const char *pend = p + len;
+	const unsigned char *p = (const unsigned char *)field_body;
+	const unsigned char *pend = p + len;
 	bool is8bit = FALSE;
 
 	/* RFC5322:
@@ -60,7 +60,7 @@ bool rfc2822_header_field_body_verify
 		if ( (*p == '\r' || *p == '\n') && !allow_crlf )
 			return FALSE;
 
-		if ( !is8bit && ((unsigned char)*p) > 127 ) {
+		if ( !is8bit && *p > 127 ) {
 			if ( !allow_utf8 )
 				return FALSE;
 
