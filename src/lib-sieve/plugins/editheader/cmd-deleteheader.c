@@ -426,6 +426,17 @@ static int cmd_deleteheader_operation_execute
 		return ret;
 	
 	/*
+	 * Verify arguments
+	 */
+
+	if ( !rfc2822_header_field_name_verify
+		(str_c(field_name), str_len(field_name)) ) {
+		sieve_runtime_error(renv, NULL, "specified field name `%s' is invalid",
+			str_sanitize(str_c(field_name), 80));
+		return SIEVE_EXEC_FAILURE;
+	}
+
+	/*
 	 * Execute command
 	 */
 
