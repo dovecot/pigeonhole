@@ -431,7 +431,7 @@ static int cmd_deleteheader_operation_execute
 
 	if ( !rfc2822_header_field_name_verify
 		(str_c(field_name), str_len(field_name)) ) {
-		sieve_runtime_error(renv, NULL, "deleteheader action: ",
+		sieve_runtime_error(renv, NULL, "deleteheader action: "
 			"specified field name `%s' is invalid",
 			str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_FAILURE;
