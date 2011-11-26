@@ -107,7 +107,7 @@ static bool cmd_addheader_validate
 
 		if ( !rfc2822_header_field_name_verify(str_c(fname), str_len(fname)) ) {
 			sieve_argument_validate_error
-				(valdtr, arg, "specified field name `%s' is invalid",
+				(valdtr, arg, "addheader command: specified field name `%s' is invalid",
 					str_sanitize(str_c(fname), 80));
 			return FALSE;
 		}
@@ -125,7 +125,17 @@ static bool cmd_addheader_validate
 	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
 
-	/* FIXME: validate value if constant */
+	if ( sieve_argument_is_string_literal(arg) ) {
+		string_t *fvalue = sieve_ast_argument_str(arg);
+
+		if ( !rfc2822_header_field_body_verify
+			(str_c(fvalue), str_len(fvalue), TRUE, TRUE) ) {
+			sieve_argument_validate_error
+				(valdtr, arg, "addheader command: specified value `%s' is invalid",
+					str_sanitize(str_c(fvalue), 80));
+			return FALSE;
+		}
+	}
 
 	return TRUE;
 }
@@ -244,8 +254,17 @@ static int cmd_addheader_operation_execute
 
 	if ( !rfc2822_header_field_name_verify
 		(str_c(field_name), str_len(field_name)) ) {
-		sieve_runtime_error(renv, NULL, "specified field name `%s' is invalid",
+		sieve_runtime_error(renv, NULL, "addheader action: "
+			"specified field name `%s' is invalid",
 			str_sanitize(str_c(field_name), 80));
+		return SIEVE_EXEC_FAILURE;
+	}
+
+	if ( !rfc2822_header_field_body_verify
+		(str_c(value), str_len(value), TRUE, TRUE) ) {
+		sieve_runtime_error(renv, NULL, "addheader action: "
+			"specified value `%s' is invalid",
+			str_sanitize(str_c(value), 80));
 		return SIEVE_EXEC_FAILURE;
 	}
 

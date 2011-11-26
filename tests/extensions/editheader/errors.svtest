@@ -13,20 +13,20 @@ test "Invalid field-name" {
 		test_fail "wrong number of errors reported";
 	}
 
-	if not test_error :index 1 :matches "*field name*X-field:*invalid" {
-		test_fail "wrong error reported";
+	if not test_error :index 1 :matches "*field name*X-field:*invalid*" {
+		test_fail "wrong error reported (1)";
 	}
 
-	if not test_error :index 2 :matches "*field name*X field*invalid" {
-		test_fail "wrong error reported";
+	if not test_error :index 2 :matches "*field name*X field*invalid*" {
+		test_fail "wrong error reported (2)";
 	}
 
-	if not test_error :index 3 :matches "*field name*X-field:*invalid" {
-		test_fail "wrong error reported";
+	if not test_error :index 3 :matches "*field name*X-field:*invalid*" {
+		test_fail "wrong error reported (3)";
 	}
 
-	if not test_error :index 4 :matches "*field name*X field*invalid" {
-		test_fail "wrong error reported";
+	if not test_error :index 4 :matches "*field name*X field*invalid*" {
+		test_fail "wrong error reported (4)";
 	}
 }
 
@@ -43,7 +43,26 @@ test "Invalid field-name at runtime " {
 		test_fail "wrong number of errors reported";
 	}
 
-	if not test_error :matches "*field name*X-field:*invalid" {
+	if not test_error :matches "*field name*X-field:*invalid*" {
 		test_fail "wrong error reported";
 	}
 }
+
+test "Invalid field value" {
+	if test_script_compile "errors/field-value.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+		test_fail "wrong number of errors reported";
+	}
+
+	if not test_error :index 1 :matches "*value*Yeah!?*invalid*" {
+		test_fail "wrong error reported (1)";
+	}
+
+	if not test_error :index 2 :matches "*value*Woah!*invalid*" {
+		test_fail "wrong error reported (2)";
+	}
+}
+

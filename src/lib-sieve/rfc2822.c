@@ -54,11 +54,14 @@ bool rfc2822_header_field_body_verify
 	 */
 
 	while ( p < pend ) {
-		if ( *p != '\t' && *p < 0x20 )
-			return FALSE;
-
-		if ( (*p == '\r' || *p == '\n') && !allow_crlf )
-			return FALSE;
+		if ( *p < 0x20 ) {
+			if ( (*p == '\r' || *p == '\n') ) {
+				if ( !allow_crlf )
+					return FALSE;
+			} else if ( *p != '\t' ) {
+				return FALSE;
+			}
+		}
 
 		if ( !is8bit && *p > 127 ) {
 			if ( !allow_utf8 )

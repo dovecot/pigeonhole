@@ -236,7 +236,7 @@ static bool cmd_deleteheader_validate
 
 	if ( arg == NULL ) {
 		sieve_command_validate_error(valdtr, cmd, 
-			"the %s %s expects at least one positioal argument, but none was found", 
+			"the %s %s expects at least one positional argument, but none was found", 
 			sieve_command_identifier(cmd), sieve_command_type_name(cmd));
 		return FALSE;
 	}
@@ -253,9 +253,9 @@ static bool cmd_deleteheader_validate
 		string_t *fname = sieve_ast_argument_str(arg);
 
 		if ( !rfc2822_header_field_name_verify(str_c(fname), str_len(fname)) ) {
-			sieve_argument_validate_error
-				(valdtr, arg, "specified field name `%s' is invalid",
-					str_sanitize(str_c(fname), 80));
+			sieve_argument_validate_error(valdtr, arg, "deleteheader command:"
+				"specified field name `%s' is invalid",
+				str_sanitize(str_c(fname), 80));
 			return FALSE;
 		}
 	}
@@ -431,7 +431,8 @@ static int cmd_deleteheader_operation_execute
 
 	if ( !rfc2822_header_field_name_verify
 		(str_c(field_name), str_len(field_name)) ) {
-		sieve_runtime_error(renv, NULL, "specified field name `%s' is invalid",
+		sieve_runtime_error(renv, NULL, "deleteheader action: ",
+			"specified field name `%s' is invalid",
 			str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_FAILURE;
 	}
@@ -513,7 +514,7 @@ static int cmd_deleteheader_operation_execute
 		if ( ret == 0 ) {
 			sieve_runtime_trace(renv, 0, "header `%s' not found", str_c(field_name));
 		} else if ( ret < 0 ) {
-			sieve_runtime_warning(renv, NULL, "editheader action: "
+			sieve_runtime_warning(renv, NULL, "deleteheader action: "
 				"failed to delete occurences of header `%s' (this should not happen!)",
 				str_c(field_name));
 		}
