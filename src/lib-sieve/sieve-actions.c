@@ -467,7 +467,7 @@ static bool act_store_execute
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
 	struct mail *mail =	( action->mail != NULL ?
-		action->mail : sieve_message_get_mail(aenv->msgctx) );	
+		action->mail : aenv->msgdata->mail );	
 	struct mail_save_context *save_ctx;
 	struct mail_keywords *keywords = NULL;
 	bool result = TRUE;
