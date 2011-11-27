@@ -1,8 +1,10 @@
 Current activities:
 
 * Implement editheader extension
-	- Add header value verification to addheader command
-	- Add testsuite items for various error conditions 
+	- Implement configurable limit on header value length
+	- Implement configurable list of protected headers, with Received: and
+	  Auto-Submitted: headers always protected.
+	- Add command syntax checks to the test suite.
 
 Parallel plugin-based efforts:
 
