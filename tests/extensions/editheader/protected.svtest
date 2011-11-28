@@ -1,0 +1,74 @@
+require "vnd.dovecot.testsuite";
+
+require "variables";
+
+require "editheader";
+
+set "message" text:
+Received: by example.com (Postfix, from userid 202)
+	id 32A131WFW23QWE4; Mon, 21 Nov 2011 05:25:26 +0200 (EET)
+Delivery-date: Mon, 21 Nov 2011 04:26:04 +0100
+Auto-Submitted: yes
+Subject: Frop!
+From: stephan@example.com
+To: tss@example.com
+
+Frop!
+.
+;
+
+test_set "message" "${message}";
+test "Default protected" {
+	if not exists "received" {
+		test_fail "received header did not exist in the first place";
+	}
+
+	if not exists "auto-submitted" {
+		test_fail "auto-submitted header did not exist in the first place";
+	}
+
+	deleteheader "received";
+	deleteheader "auto-submitted";
+	
+	if not exists "received" {
+		test_fail "protected received header was deleted";
+	}	
+
+	if not exists "auto-submitted" {
+		test_fail "protected auto-submitted header was deleted";
+	}	
+}
+
+test_config_set "sieve_editheader_protected" "subject delivery-date x-frop";
+test_config_reload :extension "editheader";
+
+test_set "message" "${message}";
+test "Configured protected" {
+	if not exists "delivery-date" {
+		test_fail "received header did not exist in the first place";
+	}
+
+	if not exists "subject" {
+		test_fail "received header did not exist in the first place";
+	}
+
+	if exists "x-frop" {
+		test_fail "x-frop header already present";
+	}
+
+	deleteheader "delivery-date";
+	deleteheader "subject";
+	addheader "x-frop" "Frop!";
+	
+	if not exists "delivery-date" {
+		test_fail "protected delivery-date header was deleted";
+	}	
+
+	if exists "subject" {
+		test_fail "subject header cannot be protected, but it was not deleted";
+	}	
+
+	if exists "x-frop" {
+		test_fail "protected x-frop header was added";
+	}
+}

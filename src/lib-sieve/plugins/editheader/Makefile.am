@@ -10,7 +10,8 @@ commands = \
 
 libsieve_ext_editheader_la_SOURCES = \
 	$(commands) \
-	ext-editheader.c
+	ext-editheader.c \
+	ext-editheader-common.c
 
 noinst_HEADERS = \
 	ext-editheader-common.h

@@ -88,18 +88,18 @@ const struct sieve_operation_def addheader_operation = {
  */
 
 static bool cmd_addheader_validate
-(struct sieve_validator *valdtr, struct sieve_command *tst)
+(struct sieve_validator *valdtr, struct sieve_command *cmd)
 {
-	struct sieve_ast_argument *arg = tst->first_positional;
+	struct sieve_ast_argument *arg = cmd->first_positional;
 
 	/* Check field-name syntax */
 
 	if ( !sieve_validate_positional_argument
-		(valdtr, tst, arg, "field-name", 1, SAAT_STRING) ) {
+		(valdtr, cmd, arg, "field-name", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
 
-	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
 		return FALSE;
 	
 	if ( sieve_argument_is_string_literal(arg) ) {
@@ -111,6 +111,12 @@ static bool cmd_addheader_validate
 					str_sanitize(str_c(fname), 80));
 			return FALSE;
 		}
+
+		if ( ext_editheader_header_is_protected(cmd->ext, str_c(fname)) ) {
+			sieve_argument_validate_warning(valdtr, arg, "addheader command: "
+				"specified header field `%s' is protected "
+				"(modification will be denied)", str_sanitize(str_c(fname), 80));
+		}
 	}
 
 	/* Check value syntax */
@@ -118,11 +124,11 @@ static bool cmd_addheader_validate
 	arg = sieve_ast_argument_next(arg);
 
 	if ( !sieve_validate_positional_argument
-		(valdtr, tst, arg, "value", 2, SAAT_STRING) ) {
+		(valdtr, cmd, arg, "value", 2, SAAT_STRING) ) {
 		return FALSE;
 	}
 
-	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
 		return FALSE;
 
 	if ( sieve_argument_is_string_literal(arg) ) {
@@ -207,6 +213,7 @@ static bool cmd_addheader_operation_dump
 static int cmd_addheader_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	string_t *field_name;
 	string_t *value;
 	struct edit_mail *edmail;
@@ -259,7 +266,14 @@ static int cmd_addheader_operation_execute
 			str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_FAILURE;
 	}
-
+	
+	if ( ext_editheader_header_is_protected(this_ext, str_c(field_name)) ) {
+		sieve_runtime_warning(renv, NULL, "addheader action: "
+			"specified header field `%s' is protected (modification denied)",
+			str_sanitize(str_c(field_name), 80));
+		return SIEVE_EXEC_OK;
+	}
+	
 	if ( !rfc2822_header_field_body_verify
 		(str_c(value), str_len(value), TRUE, TRUE) ) {
 		sieve_runtime_error(renv, NULL, "addheader action: "

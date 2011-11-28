@@ -46,7 +46,8 @@ static bool ext_editheader_validator_load
 
 const struct sieve_extension_def editheader_extension = {
 	"editheader",
-	NULL, NULL,
+	ext_editheader_load,
+	ext_editheader_unload,
 	ext_editheader_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(editheader_operations),
