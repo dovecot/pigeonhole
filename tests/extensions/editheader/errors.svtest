@@ -66,6 +66,16 @@ test "Invalid field value" {
 	}
 }
 
+test "Invalid field value (FIXME: count only)" {
+	if test_script_compile "errors/command-syntax.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "10" {
+		test_fail "wrong number of errors reported";
+	}
+}
+
 test_set "message" text:
 From: stephan@example.com
 To: tss@example.com
