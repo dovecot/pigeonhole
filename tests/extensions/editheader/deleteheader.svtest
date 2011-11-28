@@ -929,3 +929,36 @@ test "Deleteheader - folded" {
 		test_fail "body not retained in redirected mail";
 	}
 }
+
+/*
+ * TEST: Ignoring whitespace
+ */
+
+test_set "message" text:
+From: stephan@example.org
+To: nico@frop.example.com
+Subject:         Help        
+X-A:     Text
+X-B: Text            
+
+Text
+.
+;
+
+test "Ignoring whitespace" {
+	deleteheader :is "subject" "Help";
+	deleteheader :is "x-a" "Text";
+	deleteheader :is "x-b" "Text";
+
+	if exists "subject" {
+		test_fail "subject header not deleted";
+	}
+
+	if exists "x-a" {
+		test_fail "x-a header not deleted";
+	}
+
+	if exists "x-b" {
+		test_fail "x-b header not deleted";
+	}
+}
