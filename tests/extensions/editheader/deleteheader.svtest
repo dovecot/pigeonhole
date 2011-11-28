@@ -611,6 +611,44 @@ test "Deleteheader - :index :last" {
 }
 
 test_result_reset;
+test_set "message" "${message}";
+test "Deleteheader - implicit keep" {
+	deleteheader "X-D";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :folder "INBOX" 0 {
+		test_fail "message not stored";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in stored mail";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained in stored mail";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained in stored mail";
+	}
+
+	if exists "X-D" {
+		test_fail "X-D header not deleted in stored mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in stored mail";
+	}
+}
+
+/*
+ *
+ */
+
+test_result_reset;
 
 test_set "message" text:
 X-A: Dit is een klein verhaaltje
@@ -846,7 +884,7 @@ Frop!
 .
 ;
 
-test "Deleteheader - :matches" {
+test "Deleteheader - folded" {
 	deleteheader "X-A";
 
 	if exists "X-A" {

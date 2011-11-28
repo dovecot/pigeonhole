@@ -477,5 +477,51 @@ This is somewhat longer header content
 	}
 }
 
+test_result_reset;
+
+test_set "message" "${message}";
+test "Addheader - implicit keep" {
+	if size :over 76 {
+		test_fail "original message is longer than 76 bytes?!";
+	}
+
+	addheader "X-Some-Header" "Header content";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :folder "INBOX" 0 {
+		test_fail "message not stored";
+	}
+
+	if not size :over 76 {
+		test_fail "stored mail is not larger";
+	}
+	
+	if size :over 107 {
+		test_fail "stored mail is too large";
+	}
+
+	if size :under 100 {
+		test_fail "stored mail is too small";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in stored message";
+	}
+
+	if not exists "x-some-header" {
+		test_fail "header not added to stored message";
+	}
+
+	if not header :is "x-some-header" "Header content" {
+		test_fail "wrong content added to stored message";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in stored mail";
+	}
+}
 
 

@@ -912,10 +912,13 @@ static bool _sieve_result_implicit_keep
 	void *tr_context = NULL;
 	struct sieve_action act_keep;
 	
-	if ( rollback )
+	if ( rollback ) {
 		act_keep = result->failure_action;
-	else 
+		act_keep.mail = NULL;
+	} else {
 		act_keep = result->keep_action;
+		act_keep.mail = sieve_message_get_mail(result->action_env.msgctx);
+	}
 	
 	/* If keep is a non-action, return right away */
 	if ( act_keep.def == NULL ) return TRUE; 
