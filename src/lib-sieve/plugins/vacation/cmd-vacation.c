@@ -1026,6 +1026,7 @@ static bool act_vacation_commit
 	struct act_vacation_context *ctx = 
 		(struct act_vacation_context *) action->context;
 	unsigned char dupl_hash[MD5_RESULTLEN];
+	struct mail *mail = sieve_message_get_mail(aenv->msgctx);
 	const char *sender = sieve_message_get_sender(aenv->msgctx);
 	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
 	const char *const *hdsp;
@@ -1090,7 +1091,7 @@ static bool act_vacation_commit
 	hdsp = _list_headers;
 	while ( *hdsp != NULL ) {
 		if ( mail_get_headers
-			(msgdata->mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
+			(mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
 			/* Yes, bail out */
 			sieve_result_global_log(aenv, 
 				"discarding vacation response to mailinglist recipient <%s>", 
@@ -1118,7 +1119,7 @@ static bool act_vacation_commit
 	
 	/* Check for the (non-standard) precedence header */
 	if ( mail_get_headers
-		(msgdata->mail, "precedence", &headers) >= 0 ) {
+		(mail, "precedence", &headers) >= 0 ) {
 		/* Theoretically multiple headers could exist, so lets make sure */
 		hdsp = headers;
 		while ( *hdsp != NULL ) {
@@ -1153,7 +1154,7 @@ static bool act_vacation_commit
 		hdsp = _my_address_headers;
 		while ( *hdsp != NULL ) {
 			if ( mail_get_headers
-				(msgdata->mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
+				(mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {	
 
 				if ( _contains_my_address(headers, recipient) ) {
 					reply_from = recipient;
