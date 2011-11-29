@@ -135,7 +135,6 @@ const struct sieve_extension_def *sieve_core_extensions[] = {
 	&copy_extension, &include_extension, &body_extension,
 	&variables_extension, &enotify_extension, &environment_extension,
 	&mailbox_extension, &date_extension, &ihave_extension,
-	&editheader_extension
 };
 
 const unsigned int sieve_core_extensions_count =
@@ -147,8 +146,8 @@ const unsigned int sieve_core_extensions_count =
  */
 
 const struct sieve_extension_def *sieve_extra_extensions[] = {
-	&vacation_seconds_extension,
-	&spamtest_extension, &spamtestplus_extension, &virustest_extension,
+	&vacation_seconds_extension, &spamtest_extension, &spamtestplus_extension,
+	&virustest_extension, &editheader_extension,
 
 	/* vnd.dovecot. */
 	&debug_extension

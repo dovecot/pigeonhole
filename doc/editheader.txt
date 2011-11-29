@@ -1,0 +1,51 @@
+Editheader Extension
+
+Relevant specifications
+=======================
+
+	RFC5293 - doc/rfc/editheader.rfc5293.txt
+
+Description
+===========
+
+The editheader extension [RFC5293] enables sieve scripts to interact with other
+components that consume or produce header fields by allowing the script to
+delete and add header fields.
+
+Configuration
+=============
+
+The editheader is not available by default and needs to be enabled explicitly by
+adding it to the sieve_extensions setting. 
+
+The following settings can be configured for the editheader extension (default
+values are indicated):
+
+sieve_editheader_max_header_size = 2048
+  The maximum size in bytes of a header field value passed to the addheader
+  command. The minumum value for this setting is 1024 bytes. The value is in
+	bytes, unless followed by a k(ilo).
+
+sieve_editheader_protected =
+  A space-separated list of headers that cannot be added to nor removed from the
+	message header. The `Received:' and `Auto-Submitted:' fields are always
+	protected and the `Subject:' header cannot be protected, as required by the
+  RFC specificiation; adding one of these headers to this setting has no effect.
+
+Invalid values for the settings above will make the Sieve interpreter log
+a warning and revert to the default values. 
+
+Example
+=======
+
+plugin {
+  # Use editheader
+  sieve_extensions = +editheader
+
+  # Header fiels must not exceed one 1k
+  sieve_editheader_max_header_size = 1k
+
+  # Protect special header
+  sieve_editheader_protected = X-Verified
+}
+

@@ -259,6 +259,15 @@ and sieve_after using the sievec tool, as explained in the README file.
 Sieve Interpreter - Extension Configuration
 -------------------------------------------
 
+- Editheader extension:
+
+  The editheader extension [RFC5293] enables sieve scripts to interact with
+  other components that consume or produce header fields by allowing the script
+  to delete and add header fields.
+
+  The editheader extension requires explicit configuration and is not enabled
+  for use by default. Refer to doc/editheader.txt for configuration information.
+
 - Vacation extension:
 
   The Sieve vacation extension [RFC5230] defines a mechanism to generate
@@ -270,8 +279,8 @@ Sieve Interpreter - Extension Configuration
 
 - Include extension:
 
-	The Sieve include extension (draft) permits users to include one Sieve script
-	into another.
+  The Sieve include extension (draft) permits users to include one Sieve script
+  into another.
 
   The include extension is available by default, but it has its own specific
   configuration options. Refer to doc/include.txt for settings specific to the
