@@ -1,7 +1,7 @@
 Current activities:
 
-* Implement editheader extension
-	- Implement configurable limit on header value length
+* Finish editheader extension
+	- Document extension configuration
 
 Parallel plugin-based efforts:
 

@@ -76,6 +76,64 @@ test "Command syntax (FIXME: count only)" {
 	}
 }
 
+/*
+ * TEST - Size limit
+ */
+
+test "Size limit" {
+	if not test_script_compile "errors/size-limit.sieve" {
+		test_fail "compile should have succeeded";
+	}
+
+	test_config_set "sieve_editheader_max_header_size" "1024";
+	test_config_reload :extension "editheader";
+
+	if test_script_compile "errors/size-limit.sieve" {
+		test_fail "compile should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+		test_fail "wrong number of errors reported";
+	}	
+}
+
+
+/*
+ * TEST - Size limit at runtime
+ */
+
+test_config_set "sieve_editheader_max_header_size" "";
+test_config_reload :extension "editheader";
+
+test "Size limit at runtime" {
+	if not test_script_compile "errors/size-limit-runtime.sieve" {
+		test_fail "compile should have succeeded";
+	}
+
+	if not test_script_run {
+		test_fail "run failed";
+	}
+
+	test_config_set "sieve_editheader_max_header_size" "1024";
+	test_config_reload :extension "editheader";
+
+	if not test_script_compile "errors/size-limit-runtime.sieve" {
+		test_fail "compile should have succeeded";
+	}
+
+	if test_script_run {
+		test_fail "run should have failed";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
+		test_fail "wrong number of errors reported";
+	}	
+}
+
+/*
+ * TEST - Implicit keep at runtime error
+ */
+
 test_set "message" text:
 From: stephan@example.com
 To: tss@example.com

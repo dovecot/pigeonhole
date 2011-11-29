@@ -40,4 +40,11 @@ void ext_editheader_unload(const struct sieve_extension *ext);
 bool ext_editheader_header_is_protected
 	(const struct sieve_extension *ext, const char *header);
 
+/*
+ * Limits
+ */
+
+bool ext_editheader_header_too_large
+	(const struct sieve_extension *ext, size_t size);
+
 #endif /* __EXT_EDITHEADER_COMMON_H */

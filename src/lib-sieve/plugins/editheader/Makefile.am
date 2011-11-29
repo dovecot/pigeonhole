@@ -14,4 +14,5 @@ libsieve_ext_editheader_la_SOURCES = \
 	ext-editheader-common.c
 
 noinst_HEADERS = \
+	ext-editheader-limits.h \
 	ext-editheader-common.h

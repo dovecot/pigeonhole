@@ -114,8 +114,8 @@ static bool cmd_addheader_validate
 
 		if ( ext_editheader_header_is_protected(cmd->ext, str_c(fname)) ) {
 			sieve_argument_validate_warning(valdtr, arg, "addheader command: "
-				"specified header field `%s' is protected "
-				"(modification will be denied)", str_sanitize(str_c(fname), 80));
+				"specified header field `%s' is protected; "
+				"modification will be denied", str_sanitize(str_c(fname), 80));
 		}
 	}
 
@@ -136,10 +136,17 @@ static bool cmd_addheader_validate
 
 		if ( !rfc2822_header_field_body_verify
 			(str_c(fvalue), str_len(fvalue), TRUE, TRUE) ) {
-			sieve_argument_validate_error
-				(valdtr, arg, "addheader command: specified value `%s' is invalid",
-					str_sanitize(str_c(fvalue), 80));
+			sieve_argument_validate_error(valdtr, arg,
+				"addheader command: specified value `%s' is invalid",
+				str_sanitize(str_c(fvalue), 80));
 			return FALSE;
+		}
+
+		if ( ext_editheader_header_too_large(cmd->ext, str_len(fvalue)) ) {
+			sieve_argument_validate_error(valdtr, arg, "addheader command: "
+				"specified header value `%s' is too large (%"PRIuSIZE_T" bytes)",
+				str_sanitize(str_c(fvalue), 80), str_len(fvalue));
+			return SIEVE_EXEC_FAILURE;
 		}
 	}
 
@@ -269,7 +276,7 @@ static int cmd_addheader_operation_execute
 	
 	if ( ext_editheader_header_is_protected(this_ext, str_c(field_name)) ) {
 		sieve_runtime_warning(renv, NULL, "addheader action: "
-			"specified header field `%s' is protected (modification denied)",
+			"specified header field `%s' is protected; modification denied",
 			str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_OK;
 	}
@@ -279,6 +286,13 @@ static int cmd_addheader_operation_execute
 		sieve_runtime_error(renv, NULL, "addheader action: "
 			"specified value `%s' is invalid",
 			str_sanitize(str_c(value), 80));
+		return SIEVE_EXEC_FAILURE;
+	}
+
+	if ( ext_editheader_header_too_large(this_ext, str_len(value)) ) {
+		sieve_runtime_error(renv, NULL, "addheader action: "
+			"specified header value `%s' is too large (%"PRIuSIZE_T" bytes)",
+			str_sanitize(str_c(value), 80), str_len(value));
 		return SIEVE_EXEC_FAILURE;
 	}
 

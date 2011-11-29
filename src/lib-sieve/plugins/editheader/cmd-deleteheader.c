@@ -261,8 +261,8 @@ static bool cmd_deleteheader_validate
 
 		if ( ext_editheader_header_is_protected(cmd->ext, str_c(fname)) ) {
 			sieve_argument_validate_warning(valdtr, arg, "deleteheader command: "
-				"specified header field `%s' is protected "
-				"(modification will be denied)", str_sanitize(str_c(fname), 80));
+				"specified header field `%s' is protected; "
+				"modification will be denied", str_sanitize(str_c(fname), 80));
 		}
 	}
 	
@@ -446,7 +446,7 @@ static int cmd_deleteheader_operation_execute
 
 	if ( ext_editheader_header_is_protected(this_ext, str_c(field_name)) ) {
 		sieve_runtime_warning(renv, NULL, "deleteheader action: "
-			"specified header field `%s' is protected (modification denied)",
+			"specified header field `%s' is protected; modification denied",
 			str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_OK;
 	}

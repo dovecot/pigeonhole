@@ -12,6 +12,7 @@
 #include "sieve-settings.h"
 #include "sieve-extensions.h"
 
+#include "ext-editheader-limits.h"
 #include "ext-editheader-common.h"
 
 /*
@@ -29,6 +30,8 @@ struct ext_editheader_config {
 	pool_t pool;
 
 	ARRAY_DEFINE(headers, struct ext_editheader_header);
+
+	size_t max_header_size;
 };
 
 static struct ext_editheader_header *ext_editheader_config_header_find
@@ -53,6 +56,7 @@ bool ext_editheader_load
 		(struct ext_editheader_config *) *context;
 	struct sieve_instance *svinst = ext->svinst;
 	const char *protected;
+	size_t max_header_size;
 	pool_t pool;
 
 	if ( *context != NULL ) {
@@ -64,6 +68,7 @@ bool ext_editheader_load
 		pool = pool_alloconly_create("editheader_config", 512);
 		ext_config = p_new(pool, struct ext_editheader_config, 1);
 		ext_config->pool = pool;
+		ext_config->max_header_size = EXT_EDITHEADER_DEFAULT_MAX_HEADER_SIZE;
 
 		p_array_init(&ext_config->headers, pool, 16);
 
@@ -90,6 +95,19 @@ bool ext_editheader_load
 				header->protected = TRUE;
 
 				headers++;
+			}
+		}
+
+		if ( sieve_setting_get_size_value
+			(svinst, "sieve_editheader_max_header_size", &max_header_size) ) {
+			if ( max_header_size < EXT_EDITHEADER_MINIMUM_MAX_HEADER_SIZE ) {
+				sieve_sys_warning(svinst, 
+					"editheader: value of sieve_editheader_max_header_size setting "
+					"(=%"PRIuSIZE_T") is less than the minimum (=%"PRIuSIZE_T") "
+					"(ignored)", max_header_size, 
+					(size_t) EXT_EDITHEADER_MINIMUM_MAX_HEADER_SIZE);
+			} else {
+				ext_config->max_header_size = max_header_size;
 			}
 		}
 	} T_END;
@@ -133,3 +151,17 @@ bool ext_editheader_header_is_protected
 
 	return header->protected;
 }
+
+/*
+ * Limits
+ */
+
+bool ext_editheader_header_too_large
+(const struct sieve_extension *ext, size_t size)
+{
+	struct ext_editheader_config *ext_config = 
+		(struct ext_editheader_config *) ext->context;
+
+	return size > ext_config->max_header_size;
+}
+
