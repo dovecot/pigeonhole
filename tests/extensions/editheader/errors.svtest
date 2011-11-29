@@ -66,7 +66,7 @@ test "Invalid field value" {
 	}
 }
 
-test "Invalid field value (FIXME: count only)" {
+test "Command syntax (FIXME: count only)" {
 	if test_script_compile "errors/command-syntax.sieve" {
 		test_fail "compile should have failed";
 	}
