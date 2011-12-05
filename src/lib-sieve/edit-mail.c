@@ -693,19 +693,19 @@ static inline char *_header_value_unfold
 (const char *value)
 {
 	string_t *out;
-	unsigned int i, j;
+	unsigned int i;
 
-	for (i = 0; value[i] != '\0'; i++) {
+	for ( i = 0; value[i] != '\0'; i++ ) {
 		if (value[i] == '\r' || value[i] == '\n')
 			break;
 	}
-	if (value[i] == '\0') {
+	if ( value[i] == '\0' ) {
 		return i_strdup(value);
 	}
-	
+
 	out = t_str_new(i + strlen(value+i) + 10);
 	str_append_n(out, value, i);
-	for (j = i; value[i] != '\0'; i++) {
+	for ( ; value[i] != '\0'; i++ ) {
 		if (value[i] == '\n') {
 			i++;
 			if (value[i] == '\0')
@@ -722,7 +722,7 @@ static inline char *_header_value_unfold
 				str_append_c(out, value[i]);
 		}
 	}
-	
+
 	return i_strndup(str_c(out), str_len(out));
 }
 
