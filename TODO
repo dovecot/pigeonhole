@@ -1,6 +1,7 @@
 Current activities:
 
--
+* Build a sieve tool to filter an entire existing mailbox through a Sieve 
+  script.
 
 Parallel plugin-based efforts:
 
@@ -14,13 +15,6 @@ Parallel plugin-based efforts:
 Next (mostly in order of descending priority/precedence):
 
 * Implement index extension
-* Build a sieve tool to filter an entire existing mailbox through a Sieve 
-  script.
-	> Needs to have single mail transaction for each destination folder for
-	  all moved messages. Otherwise, partial failure cannot be prevented.
-	- Implement ability to group Sieve execution results of all processed messages
-	  into one big `Sieve transaction' object, which (among other things) keeps
-	  track of opened mailboxes and transactions. Is probably also more efficient.
 * Update include extension to latest draft (v10 currently):
 	- Implement :optional tag.
 	- Implement required ManageSieve behavior

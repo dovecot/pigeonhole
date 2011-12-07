@@ -1,8 +1,4 @@
-bin_PROGRAMS = sievec sieve-dump sieve-test
-
-if BUILD_UNFINISHED
-bin_PROGRAMS += sieve-filter
-endif
+bin_PROGRAMS = sievec sieve-dump sieve-test sieve-filter
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \

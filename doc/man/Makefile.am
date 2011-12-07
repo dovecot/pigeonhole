@@ -1,10 +1,5 @@
 pkgsysconfdir = $(sysconfdir)/dovecot
 rundir = ${prefix}/var/run/dovecot
-unfinished = sieve-filter.1
-
-if BUILD_UNFINISHED
-unfinished_mans = $(unfinished)
-endif
 
 dist_man1_MANS = \
 	sieved.1
@@ -13,7 +8,7 @@ nodist_man1_MANS = \
 	sievec.1 \
 	sieve-dump.1 \
 	sieve-test.1 \
-	$(unfinished_mans)
+	sieve-filter.1
 
 nodist_man7_MANS = \
 	pigeonhole.7
@@ -27,8 +22,8 @@ EXTRA_DIST = \
 	sieve-test.1.in \
 	sieve-filter.1.in \
 	pigeonhole.7.in \
-    sed.sh \
-    $(man_includefiles)
+	sed.sh \
+	$(man_includefiles)
 
 CLEANFILES = $(nodist_man1_MANS) $(nodist_man7_MANS)
 
