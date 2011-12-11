@@ -41,8 +41,15 @@ const char *sieve_error_script_location
 
 	sname = ( script == NULL ? NULL : sieve_script_name(script) );
 
-	if ( sname == NULL || *sname == '\0' )
+	if ( sname == NULL || *sname == '\0' ) {
+		if ( source_line == 0 )
+			return NULL;
+
 		return t_strdup_printf("line %d", source_line);
+	}
+
+	if ( source_line == 0 )
+		return sname;
 
 	return t_strdup_printf("%s: line %d", sname, source_line);
 }
