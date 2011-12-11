@@ -47,7 +47,7 @@ void sieve_set_extensions
  */
 struct sieve_binary *sieve_compile_script
 	(struct sieve_script *script, struct sieve_error_handler *ehandler,
-		enum sieve_error *error_r);
+		enum sieve_compile_flags flags, enum sieve_error *error_r);
 
 /* sieve_compile:
  *
@@ -56,7 +56,7 @@ struct sieve_binary *sieve_compile_script
 struct sieve_binary *sieve_compile
 	(struct sieve_instance *svinst, const char *script_path, 
 		const char *script_name, struct sieve_error_handler *ehandler,
-		enum sieve_error *error_r);
+		enum sieve_compile_flags flags, enum sieve_error *error_r);
 
 /* 
  * Reading/writing Sieve binaries
@@ -78,8 +78,8 @@ struct sieve_binary *sieve_load
  */
 struct sieve_binary *sieve_open
 	(struct sieve_instance *svinst, const char *script_path, 
-		const char *script_name, struct sieve_error_handler *ehandler, 
-		enum sieve_error *error_r);
+		const char *script_name, struct sieve_error_handler *ehandler,
+		enum sieve_compile_flags flags, enum sieve_error *error_r);
 
 /* sieve_save:
  *
@@ -137,7 +137,7 @@ void sieve_hexdump
 int sieve_test
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata, 
 		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler, 
-		struct ostream *stream, bool *keep);
+		struct ostream *stream, enum sieve_runtime_flags flags, bool *keep);
 
 /*
  * Script execution
@@ -150,7 +150,7 @@ int sieve_test
 int sieve_execute
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
 		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-		bool *keep);
+		enum sieve_runtime_flags flags, bool *keep);
 		
 /*
  * Multiscript support
@@ -167,7 +167,8 @@ struct sieve_multiscript *sieve_multiscript_start_test
 
 bool sieve_multiscript_run
 	(struct sieve_multiscript *mscript, struct sieve_binary *sbin, 
-		struct sieve_error_handler *ehandler, bool final);
+		struct sieve_error_handler *ehandler, enum sieve_runtime_flags flags,
+		bool final);
 
 int sieve_multiscript_status(struct sieve_multiscript *mscript);
 

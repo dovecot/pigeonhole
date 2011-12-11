@@ -75,6 +75,7 @@ struct sieve_extension {
 	unsigned int loaded:1;
 	unsigned int enabled:1;
 	unsigned int dummy:1;
+	unsigned int global:1;
 };
 
 #define sieve_extension_is(ext, definition) \
@@ -101,6 +102,7 @@ struct sieve_extension {
  */
 
 bool sieve_extensions_init(struct sieve_instance *svinst);
+void sieve_extensions_configure(struct sieve_instance *svinst);
 void sieve_extensions_deinit(struct sieve_instance *svinst);
 
 /* 
@@ -134,7 +136,7 @@ const struct sieve_extension *sieve_extension_get_by_name
 const char *sieve_extensions_get_string
 	(struct sieve_instance *svinst);
 void sieve_extensions_set_string
-	(struct sieve_instance *svinst, const char *ext_string);
+	(struct sieve_instance *svinst, const char *ext_string, bool global);
 
 const struct sieve_extension *sieve_get_match_type_extension
 	(struct sieve_instance *svinst);

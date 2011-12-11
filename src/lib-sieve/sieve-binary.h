@@ -64,7 +64,8 @@ int sieve_binary_save
 struct sieve_binary *sieve_binary_open
 	(struct sieve_instance *svinst, const char *path, 
 		struct sieve_script *script, enum sieve_error *error_r);
-bool sieve_binary_up_to_date(struct sieve_binary *sbin);
+bool sieve_binary_up_to_date
+	(struct sieve_binary *sbin, enum sieve_compile_flags cpflags);
 	
 /* 
  * Block management 
@@ -117,7 +118,7 @@ struct sieve_binary_extension {
 	
 	bool (*binary_up_to_date)
 		(const struct sieve_extension *ext, struct sieve_binary *sbin,
-			void *context);	
+			void *context, enum sieve_compile_flags cpflags);	
 };
  
 void sieve_binary_extension_set_context

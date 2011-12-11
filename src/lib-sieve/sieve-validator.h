@@ -30,7 +30,8 @@ struct sieve_command_registration;
 struct sieve_validator;
 
 struct sieve_validator *sieve_validator_create
-	(struct sieve_ast *ast, struct sieve_error_handler *ehandler);
+	(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
+		enum sieve_compile_flags flags);
 void sieve_validator_free(struct sieve_validator **valdtr);
 pool_t sieve_validator_pool(struct sieve_validator *valdtr);
 
@@ -47,6 +48,8 @@ struct sieve_ast *sieve_validator_ast
 struct sieve_script *sieve_validator_script
 	(struct sieve_validator *valdtr);
 struct sieve_instance *sieve_validator_svinst
+	(struct sieve_validator *valdtr);
+enum sieve_compile_flags sieve_validator_compile_flags
 	(struct sieve_validator *valdtr);
 
 /*

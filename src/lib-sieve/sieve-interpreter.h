@@ -18,11 +18,13 @@
 
 struct sieve_interpreter *sieve_interpreter_create
 	(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler);
+		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
+		enum sieve_runtime_flags flags);
 struct sieve_interpreter *sieve_interpreter_create_for_block
 	(struct sieve_binary_block *sblock, struct sieve_script *script,
 		const struct sieve_message_data *msgdata, 
-		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler);
+		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
+		enum sieve_runtime_flags flags);
 void sieve_interpreter_free(struct sieve_interpreter **interp);
 
 /*

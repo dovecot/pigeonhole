@@ -25,7 +25,8 @@ static bool ext_ihave_binary_save
 static bool ext_ihave_binary_open
 	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
 static bool ext_ihave_binary_up_to_date
-	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
+	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context,
+		enum sieve_compile_flags cpflags);
 
 /* 
  * Binary include extension
@@ -187,16 +188,18 @@ static bool ext_ihave_binary_open
 
 static bool ext_ihave_binary_up_to_date
 (const struct sieve_extension *ext, struct sieve_binary *sbin ATTR_UNUSED, 
-	void *context)
+	void *context, enum sieve_compile_flags cpflags)
 {
 	struct ext_ihave_binary_context *binctx = 
 		(struct ext_ihave_binary_context *) context;
-	const char *const *exts;
+	const struct sieve_extension *mext;
+	const char *const *mexts;
 	unsigned int count, i;
 	
-	exts = array_get(&binctx->missing_extensions, &count);
+	mexts = array_get(&binctx->missing_extensions, &count);
 	for ( i = 0; i < count; i++ ) {
-		if ( sieve_extension_get_by_name(ext->svinst, exts[i]) != NULL )
+		if ( (mext=sieve_extension_get_by_name(ext->svinst, mexts[i])) != NULL &&
+			((cpflags & SIEVE_COMPILE_FLAG_NOGLOBAL) == 0 || !mext->global) )
 			return FALSE;
 	}
 	

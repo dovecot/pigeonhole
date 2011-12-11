@@ -197,7 +197,6 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 	unsigned int i;	
 	struct sieve_extension_registry *ext_reg = 
 		p_new(svinst->pool, struct sieve_extension_registry, 1);
-	const char *extensions;
 	struct sieve_extension *ext;
 
 	svinst->ext_reg = ext_reg;
@@ -260,14 +259,24 @@ bool sieve_extensions_init(struct sieve_instance *svinst)
 	}
 #endif
 
-	/* Use sieve_extensions if set */
-
-	if ( (extensions=sieve_setting_get(svinst, "sieve_extensions")) != NULL )
-		sieve_extensions_set_string(svinst, extensions);
-
 	/* More extensions can be added through plugins */
 
 	return TRUE;
+}
+
+void sieve_extensions_configure(struct sieve_instance *svinst)
+{
+	const char *extensions;
+
+	/* Apply sieve_extensions configuration */
+
+	if ( (extensions=sieve_setting_get(svinst, "sieve_extensions")) != NULL )
+		sieve_extensions_set_string(svinst, extensions, FALSE);
+
+	/* Apply sieve_global_extensions configuration */
+
+	if ( (extensions=sieve_setting_get(svinst, "sieve_global_extensions")) != NULL )
+		sieve_extensions_set_string(svinst, extensions, TRUE);
 }
 
 void sieve_extensions_deinit(struct sieve_instance *svinst)
@@ -412,18 +421,19 @@ const struct sieve_extension *sieve_extension_register
 
 void sieve_extension_unregister(const struct sieve_extension *ext)
 {
-    struct sieve_extension_registry *ext_reg = ext->svinst->ext_reg;
-    struct sieve_extension * const *mod_ext;
-    int ext_id = ext->id;
+	struct sieve_extension_registry *ext_reg = ext->svinst->ext_reg;
+	struct sieve_extension * const *mod_ext;
+	int ext_id = ext->id;
 
-    if ( ext_id >= 0 && ext_id < (int) array_count(&ext_reg->extensions) ) {
-        mod_ext = array_idx(&ext_reg->extensions, ext_id);
+	if ( ext_id >= 0 && ext_id < (int) array_count(&ext_reg->extensions) ) {
+		mod_ext = array_idx(&ext_reg->extensions, ext_id);
 
-		sieve_extension_capabilities_unregister(*mod_ext);
-		_sieve_extension_unload(*mod_ext);
-		(*mod_ext)->loaded = FALSE;
-		(*mod_ext)->def = NULL;
-    }
+	sieve_extension_capabilities_unregister(*mod_ext);
+	_sieve_extension_unload(*mod_ext);
+	(*mod_ext)->loaded = FALSE;
+	(*mod_ext)->enabled = FALSE;
+	(*mod_ext)->def = NULL;
+	}
 }
 
 const struct sieve_extension *sieve_extension_require
@@ -477,6 +487,12 @@ const struct sieve_extension *sieve_extension_get_by_name
 	return ext;
 }
 
+static inline bool _sieve_extension_listable(const struct sieve_extension *ext)
+{
+	return ( ext->enabled && ext->def != NULL && *(ext->def->name) != '@'
+		&& !ext->dummy && !ext->global );
+}
+
 const char *sieve_extensions_get_string(struct sieve_instance *svinst)
 {
 	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
@@ -490,9 +506,7 @@ const char *sieve_extensions_get_string(struct sieve_instance *svinst)
 		i = 0;
 
 		/* Find first listable extension */
-		while ( i < ext_count &&
-			!( exts[i]->enabled && exts[i]->def != NULL &&
-			*(exts[i]->def->name) != '@' && !exts[i]->dummy ) )
+		while ( i < ext_count && !_sieve_extension_listable(exts[i]) )
 			i++;
 
 		if ( i < ext_count ) {
@@ -502,8 +516,7 @@ const char *sieve_extensions_get_string(struct sieve_instance *svinst)
 
 	 		/* Add others */
 			for ( ; i < ext_count; i++ ) {
-				if ( exts[i]->enabled && exts[i]->def != NULL &&
-					*(exts[i]->def->name) != '@' && !exts[i]->dummy ) {
+				if ( _sieve_extension_listable(exts[i]) ) {
 					str_append_c(extstr, ' ');
 					str_append(extstr, exts[i]->def->name);
 				}
@@ -514,24 +527,42 @@ const char *sieve_extensions_get_string(struct sieve_instance *svinst)
 	return str_c(extstr);
 }
 
-static void sieve_extension_enable(struct sieve_extension *ext)
+static void sieve_extension_set_enabled
+(struct sieve_extension *ext, bool enabled)
 {
-	ext->enabled = TRUE;
+	if ( enabled ) {
+		ext->enabled = TRUE;
+		ext->global = FALSE;
 
-	if ( !ext->loaded ) {
-		(void)_sieve_extension_load(ext);
+		if ( !ext->loaded ) {
+			(void)_sieve_extension_load(ext);
+		}
+
+		ext->loaded = TRUE;
+	} else {
+		ext->enabled = FALSE;
 	}
-
-	ext->loaded = TRUE;
 }
 
-static void sieve_extension_disable(struct sieve_extension *ext)
+static void sieve_extension_set_global
+(struct sieve_extension *ext, bool enabled)
 {
-	ext->enabled = FALSE;
+	if ( enabled ) {
+		ext->enabled = TRUE;
+		ext->global = TRUE;
+
+		if ( !ext->loaded ) {
+			(void)_sieve_extension_load(ext);
+		}
+
+		ext->loaded = TRUE;
+	} else {
+		ext->global = FALSE;
+	}
 }
 
 void sieve_extensions_set_string
-(struct sieve_instance *svinst, const char *ext_string)
+(struct sieve_instance *svinst, const char *ext_string, bool global)
 {
 	struct sieve_extension_registry *ext_reg = svinst->ext_reg;
 	ARRAY_DEFINE(enabled_extensions, const struct sieve_extension *);
@@ -544,11 +575,13 @@ void sieve_extensions_set_string
 	bool relative = FALSE;
 
 	if ( ext_string == NULL ) {
+		if ( global ) return;
+
 		/* Enable all */
 		exts = array_get_modifiable(&ext_reg->extensions, &ext_count);
 
 		for ( i = 0; i < ext_count; i++ )
-			sieve_extension_enable(exts[i]);
+			sieve_extension_set_enabled(exts[i], TRUE);
 
 		return;	
 	}
@@ -602,26 +635,30 @@ void sieve_extensions_set_string
 
 		for ( i = 0; i < ext_count; i++ ) {
 			unsigned int j;
-			bool disabled = TRUE;
+			bool enabled = FALSE;
+
+			if ( exts[i]->id < 0 || exts[i]->def == NULL ||
+				*(exts[i]->def->name) == '@' ) {
+				continue;
+			}
 
 			/* If extensions are specified relative to the default set,
 			 * we first need to check which ones are disabled 
 			 */
 
 			if ( relative ) {
-				/* Enable if core extension */
-				for ( j = 0; j < sieve_core_extensions_count; j++ ) {
-					if ( sieve_core_extensions[j] == exts[i]->def ) {
-						disabled = FALSE;
-						break;
-					}
-				}
-
-				/* Disable if explicitly disabled */
-				for ( j = 0; j < dis_count; j++ ) {
-					if ( ext_disabled[j]->def == exts[i]->def ) {
-						disabled = TRUE;
-						break;
+				if ( global )
+					enabled = exts[i]->global;
+				else
+					enabled = exts[i]->enabled; 
+				
+				if ( enabled ) {
+					/* Disable if explicitly disabled */
+					for ( j = 0; j < dis_count; j++ ) {
+						if ( ext_disabled[j]->def == exts[i]->def ) {
+							enabled = FALSE;
+							break;
+						}
 					}
 				}
 			} 
@@ -630,19 +667,16 @@ void sieve_extensions_set_string
 
 			for ( j = 0; j < ena_count; j++ ) {
 				if ( ext_enabled[j]->def == exts[i]->def ) {
-					disabled = FALSE;
+					enabled = TRUE;
 					break;
 				}
 			}
 
 			/* Perform actual activation/deactivation */
-
-			if ( exts[i]->id >= 0 && exts[i]->def != NULL && 
-				*(exts[i]->def->name) != '@' ) {
-				if ( disabled )
-					sieve_extension_disable(exts[i]);
-				else
-					sieve_extension_enable(exts[i]);
+			if ( global ) {
+				sieve_extension_set_global(exts[i], enabled);
+			} else {
+				sieve_extension_set_enabled(exts[i], enabled);
 			}
 		}
 	} T_END;

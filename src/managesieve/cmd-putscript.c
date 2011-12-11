@@ -203,7 +203,8 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 				client->set->managesieve_max_compile_errors);
 
 			/* Compile */
-			if ( (sbin=sieve_compile_script(script, ehandler, NULL)) == NULL ) {
+			if ( (sbin=sieve_compile_script
+				(script, ehandler, SIEVE_COMPILE_FLAG_NOGLOBAL, NULL)) == NULL ) {
 				client_send_no(client, str_c(errors));
 				success = FALSE;
 			} else {

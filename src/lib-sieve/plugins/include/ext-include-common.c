@@ -520,6 +520,7 @@ bool ext_include_generate_include
 	{	
 		struct sieve_binary_block *inc_block;
 		const char *script_name = sieve_script_name(script);
+		enum sieve_compile_flags cpflags = 0;
 
 		/* Check whether include limit is exceeded */
 		if ( ext_include_binary_script_get_count(binctx) >= 
@@ -546,8 +547,11 @@ bool ext_include_generate_include
 		/* Included scripts inherit global variable scope */
 		(void)ext_include_create_ast_context(this_ext, ast, cmd->ast_node->ast);
 
+		if ( location != EXT_INCLUDE_LOCATION_GLOBAL )
+				cpflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
+
 		/* Validate */
-		if ( !sieve_validate(ast, ehandler, NULL) ) {
+		if ( !sieve_validate(ast, ehandler, cpflags, NULL) ) {
 			sieve_command_generate_error(gentr, cmd, 
 				"failed to validate included script '%s'", 
 				str_sanitize(script_name, 80));
@@ -681,12 +685,17 @@ int ext_include_execute_include
 		/* We are the top-level interpreter instance */	
 		
 		if ( result == SIEVE_EXEC_OK ) {
+			enum sieve_runtime_flags rtflags = 0;
+	
+			if ( included->location != EXT_INCLUDE_LOCATION_GLOBAL )
+				rtflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
+
 			/* Create interpreter for top-level included script
 			 * (first sub-interpreter) 
 			 */
 			subinterp = sieve_interpreter_create_for_block
 				(included->block, included->script, renv->msgdata, renv->scriptenv, 
-					ehandler);
+					ehandler, rtflags);
 
 			if ( subinterp != NULL ) {			
 				curctx = ext_include_interpreter_context_init_child
@@ -734,14 +743,18 @@ int ext_include_execute_include
 					result = ( sieve_interpreter_continue(subinterp, &interrupted) == 1 );
 				} else {
 					if ( curctx->include != NULL ) {
-
 						/* Sub-include requested */
 																	
 						if ( result == SIEVE_EXEC_OK ) {
+							enum sieve_runtime_flags rtflags = 0;
+	
+							if ( curctx->include->location != EXT_INCLUDE_LOCATION_GLOBAL )
+								rtflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
+
 							/* Create sub-interpreter */
 							subinterp = sieve_interpreter_create_for_block
 								(curctx->include->block, curctx->include->script, renv->msgdata,
-									renv->scriptenv, ehandler);			
+									renv->scriptenv, ehandler, rtflags);			
 
 							if ( subinterp != NULL ) {
 								curctx = ext_include_interpreter_context_init_child

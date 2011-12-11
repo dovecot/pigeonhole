@@ -122,7 +122,7 @@ static int filter_message
 			"filtering: [%s; %"PRIuUOFF_T" bytes] `%s'", date, size,
 			str_sanitize(subject, 40));
 
-		ret = sieve_execute(sbin, &msgdata, senv, ehandler, NULL);
+		ret = sieve_execute(sbin, &msgdata, senv, ehandler, 0, NULL);
 	} else {
 		(void)o_stream_send_str(sfctx->teststream,
 			t_strdup_printf(">> Filtering message:\n\n"
@@ -133,7 +133,7 @@ static int filter_message
 				date, size, str_sanitize(subject, 40)));
 
 		ret = sieve_test
-			(sbin, &msgdata, senv, ehandler, sfctx->teststream, NULL);
+			(sbin, &msgdata, senv, ehandler, sfctx->teststream, 0, NULL);
 	}
 
 	/* Handle message in source folder */

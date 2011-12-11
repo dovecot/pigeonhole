@@ -28,7 +28,8 @@ static bool ext_include_binary_save
 static bool ext_include_binary_open
 	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
 static bool ext_include_binary_up_to_date
-	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
+	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context,
+		enum sieve_compile_flags cpflags);
 static void ext_include_binary_free
 	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
 
@@ -327,7 +328,7 @@ static bool ext_include_binary_open
 
 static bool ext_include_binary_up_to_date
 (const struct sieve_extension *ext ATTR_UNUSED, struct sieve_binary *sbin, 
-	void *context)
+	void *context, enum sieve_compile_flags cpflags ATTR_UNUSED)
 {
 	struct ext_include_binary_context *binctx = 
 		(struct ext_include_binary_context *) context;

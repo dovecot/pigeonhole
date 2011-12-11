@@ -72,7 +72,8 @@ struct sieve_interpreter {
 static struct sieve_interpreter *_sieve_interpreter_create
 (struct sieve_binary *sbin, struct sieve_binary_block *sblock, 
 	struct sieve_script *script, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler) 
+	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
+	enum sieve_runtime_flags flags) 
 {
 	unsigned int i, ext_count;
 	struct sieve_interpreter *interp;
@@ -94,6 +95,7 @@ static struct sieve_interpreter *_sieve_interpreter_create
 	interp->runenv.oprtn = &interp->oprtn;
 	interp->runenv.sbin = sbin;
 	interp->runenv.sblock = sblock;
+	interp->runenv.flags = flags;
 	sieve_binary_ref(sbin);
 
 	svinst = sieve_binary_svinst(sbin);
@@ -163,10 +165,21 @@ static struct sieve_interpreter *_sieve_interpreter_create
 				break;
 			}
  
-			if ( ext->def != NULL && ext->def->interpreter_load != NULL && 
-				!ext->def->interpreter_load(ext, &interp->runenv, address) ) {
-				success = FALSE;
-				break;
+			if ( ext->def != NULL ) {
+				if ( ext->global && (flags & SIEVE_RUNTIME_FLAG_NOGLOBAL) != 0 ) {
+					sieve_runtime_error(&interp->runenv, NULL,
+						"failed to enable extension `%s': "
+						"its use is restricted to global scripts",
+						sieve_extension_name(ext));
+					success = FALSE;
+					break;
+				}
+
+				if ( ext->def->interpreter_load != NULL && 
+					!ext->def->interpreter_load(ext, &interp->runenv, address) ) {
+					success = FALSE;
+					break;
+				}
 			}
 		}
 	}	else
@@ -184,7 +197,8 @@ static struct sieve_interpreter *_sieve_interpreter_create
 
 struct sieve_interpreter *sieve_interpreter_create
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler) 
+	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
+	enum sieve_runtime_flags flags) 
 {
 	struct sieve_binary_block *sblock;
 
@@ -192,19 +206,20 @@ struct sieve_interpreter *sieve_interpreter_create
 		== NULL )
 		return NULL;
 
- 	return _sieve_interpreter_create(sbin, sblock, NULL, msgdata, senv, ehandler);
+ 	return _sieve_interpreter_create
+		(sbin, sblock, NULL, msgdata, senv, ehandler, flags);
 }
 
 struct sieve_interpreter *sieve_interpreter_create_for_block
 (struct sieve_binary_block *sblock, struct sieve_script *script,
 	const struct sieve_message_data *msgdata, const struct sieve_script_env *senv, 
-	struct sieve_error_handler *ehandler) 
+	struct sieve_error_handler *ehandler, enum sieve_runtime_flags flags) 
 {
 	if ( sblock == NULL ) return NULL;
 
  	return _sieve_interpreter_create
 		(sieve_binary_block_get_binary(sblock), sblock, script, msgdata, senv,
-			ehandler);
+			ehandler, flags);
 }
 
 void sieve_interpreter_free(struct sieve_interpreter **interp) 

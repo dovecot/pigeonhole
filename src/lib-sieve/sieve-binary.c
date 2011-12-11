@@ -290,7 +290,8 @@ size_t sieve_binary_block_get_size
  * Up-to-date checking
  */
 
-bool sieve_binary_up_to_date(struct sieve_binary *sbin)
+bool sieve_binary_up_to_date
+(struct sieve_binary *sbin, enum sieve_compile_flags cpflags)
 {
 	struct sieve_binary_extension_reg *const *regs;
 	unsigned int ext_count, i;
@@ -306,7 +307,8 @@ bool sieve_binary_up_to_date(struct sieve_binary *sbin)
 		const struct sieve_binary_extension *binext = regs[i]->binext;
 		
 		if ( binext != NULL && binext->binary_up_to_date != NULL && 
-			!binext->binary_up_to_date(regs[i]->extension, sbin, regs[i]->context) )
+			!binext->binary_up_to_date
+				(regs[i]->extension, sbin, regs[i]->context, cpflags) )
 			return FALSE;
 	}
 	

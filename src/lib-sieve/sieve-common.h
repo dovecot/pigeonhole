@@ -145,7 +145,7 @@ struct sieve_ast *sieve_parse
 		enum sieve_error *error_r);
 bool sieve_validate
 	(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
-		enum sieve_error *error_r);	
+		enum sieve_compile_flags flags, enum sieve_error *error_r);	
 
 /*
  * Sieve engine instance

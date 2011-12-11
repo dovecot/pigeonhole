@@ -60,6 +60,14 @@ enum sieve_error {
 	SIEVE_ERROR_ACTIVE
 };
 
+/*
+ * Compile flags
+ */
+
+enum sieve_compile_flags {
+	SIEVE_COMPILE_FLAG_NOGLOBAL = (1<<0)
+};
+
 /* 
  * Message data
  *
@@ -73,6 +81,14 @@ struct sieve_message_data {
 	const char *final_envelope_to;
 	const char *auth_user;
 	const char *id;
+};
+
+/*
+ * Runtime flags
+ */
+
+enum sieve_runtime_flags {
+	SIEVE_RUNTIME_FLAG_NOGLOBAL = (1<<0)
 };
 
 /*
@@ -153,7 +169,7 @@ struct sieve_script_env {
 	(senv->default_mailbox == NULL ? "INBOX" : senv->default_mailbox )
 
 /*
- * Script executionstatus
+ * Script execution status
  */	
 
 struct sieve_exec_status {

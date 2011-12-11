@@ -51,8 +51,8 @@ static struct sieve_binary *_testsuite_script_compile
 
 	script_path = t_strconcat(script_path, "/", script, NULL);
 
-	if ( (sbin = sieve_compile(svinst, script_path, NULL, testsuite_log_ehandler,
-		NULL)) == NULL )
+	if ( (sbin = sieve_compile
+		(svinst, script_path, NULL, testsuite_log_ehandler, 0, NULL)) == NULL )
 		return NULL;
 
 	return sbin;
@@ -110,7 +110,7 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 
 	/* Execute the script */
 	interp=sieve_interpreter_create(_testsuite_compiled_script, renv->msgdata, 
-		&scriptenv, testsuite_log_ehandler);
+		&scriptenv, testsuite_log_ehandler, 0);
 	
 	if ( interp == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
@@ -192,7 +192,8 @@ bool testsuite_script_multiscript
 
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "run script `%s'", script);
 
-		more = sieve_multiscript_run(mscript, sbin, testsuite_log_ehandler, final);
+		more = sieve_multiscript_run
+			(mscript, sbin, testsuite_log_ehandler, 0, final);
 
 		sieve_close(&sbin);
 	}

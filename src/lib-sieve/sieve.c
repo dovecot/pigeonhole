@@ -87,6 +87,8 @@ struct sieve_instance *sieve_init
 
 	sieve_plugins_load(svinst, NULL, NULL);
 
+	sieve_extensions_configure(svinst);
+
 	return svinst;
 }
 
@@ -106,7 +108,7 @@ void sieve_deinit(struct sieve_instance **svinst)
 void sieve_set_extensions
 (struct sieve_instance *svinst, const char *extensions)
 {
-	sieve_extensions_set_string(svinst, extensions);
+	sieve_extensions_set_string(svinst, extensions, FALSE);
 }
 
 const char *sieve_get_capabilities
@@ -152,10 +154,11 @@ struct sieve_ast *sieve_parse
 
 bool sieve_validate
 (struct sieve_ast *ast, struct sieve_error_handler *ehandler,
-	enum sieve_error *error_r)
+	enum sieve_compile_flags flags, enum sieve_error *error_r)
 {
 	bool result = TRUE;
-	struct sieve_validator *validator = sieve_validator_create(ast, ehandler);
+	struct sieve_validator *validator =
+		sieve_validator_create(ast, ehandler, flags);
 		
 	if ( !sieve_validator_run(validator) ) 
 		result = FALSE;
@@ -199,7 +202,7 @@ static struct sieve_binary *sieve_generate
 
 struct sieve_binary *sieve_compile_script
 (struct sieve_script *script, struct sieve_error_handler *ehandler,
-	enum sieve_error *error_r) 
+	enum sieve_compile_flags flags, enum sieve_error *error_r) 
 {
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin;  	
@@ -211,7 +214,7 @@ struct sieve_binary *sieve_compile_script
 	}
 
 	/* Validate */
-	if ( !sieve_validate(ast, ehandler, error_r) ) {
+	if ( !sieve_validate(ast, ehandler, flags, error_r) ) {
 		sieve_error(ehandler, sieve_script_name(script), "validation failed");
 		
  		sieve_ast_unref(&ast);
@@ -238,7 +241,7 @@ struct sieve_binary *sieve_compile_script
 struct sieve_binary *sieve_compile
 (struct sieve_instance *svinst, const char *script_path,
 	const char *script_name, struct sieve_error_handler *ehandler,
-	enum sieve_error *error_r)
+	enum sieve_compile_flags flags, enum sieve_error *error_r)
 {
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
@@ -247,7 +250,7 @@ struct sieve_binary *sieve_compile
 		(svinst, script_path, script_name, ehandler, error_r)) == NULL )
 		return NULL;
 	
-	sbin = sieve_compile_script(script, ehandler, error_r);
+	sbin = sieve_compile_script(script, ehandler, flags, error_r);
 	
 	sieve_script_unref(&script);
 
@@ -266,13 +269,13 @@ struct sieve_binary *sieve_compile
 static int sieve_run
 (struct sieve_binary *sbin, struct sieve_result **result, 
 	const struct sieve_message_data *msgdata, const struct sieve_script_env *senv, 
-	struct sieve_error_handler *ehandler)
+	struct sieve_error_handler *ehandler, enum sieve_runtime_flags flags)
 {
 	struct sieve_interpreter *interp;
 	int ret = 0;
 
 	/* Create the interpreter */
-	if ( (interp=sieve_interpreter_create(sbin, msgdata, senv, ehandler)) 
+	if ( (interp=sieve_interpreter_create(sbin, msgdata, senv, ehandler, flags)) 
 		== NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 
@@ -310,7 +313,7 @@ struct sieve_binary *sieve_load
 struct sieve_binary *sieve_open
 (struct sieve_instance *svinst, const char *script_path, 
 	const char *script_name, struct sieve_error_handler *ehandler,
-	enum sieve_error *error_r)
+	enum sieve_compile_flags flags, enum sieve_error *error_r)
 {
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
@@ -332,7 +335,7 @@ struct sieve_binary *sieve_open
 	
 		if (sbin != NULL) {
 			/* Ok, it exists; now let's see if it is up to date */
-			if ( !sieve_binary_up_to_date(sbin) ) {
+			if ( !sieve_binary_up_to_date(sbin, flags) ) {
 				/* Not up to date */
 				if ( svinst->debug )
 					sieve_sys_debug(svinst, "script binary %s is not up-to-date",
@@ -352,7 +355,7 @@ struct sieve_binary *sieve_open
 					bin_path);
 			
 		} else {	
-			sbin = sieve_compile_script(script, ehandler, error_r);
+			sbin = sieve_compile_script(script, ehandler, flags, error_r);
 
 			/* Save the binary if compile was successful */
 			if ( sbin != NULL ) {
@@ -420,7 +423,7 @@ void sieve_hexdump
 int sieve_test
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
 	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-	struct ostream *stream, bool *keep) 	
+	struct ostream *stream, enum sieve_runtime_flags flags, bool *keep) 	
 {
 	struct sieve_result *result = NULL;
 	int ret;
@@ -428,7 +431,7 @@ int sieve_test
 	if ( keep != NULL ) *keep = FALSE;
 	
 	/* Run the script */
-	ret = sieve_run(sbin, &result, msgdata, senv, ehandler);
+	ret = sieve_run(sbin, &result, msgdata, senv, ehandler, flags);
 				
 	/* Print result if successful */
 	if ( ret > 0 ) {
@@ -451,7 +454,7 @@ int sieve_test
 int sieve_execute
 (struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
 	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
-	bool *keep)
+	enum sieve_runtime_flags flags, bool *keep)
 {
 	struct sieve_result *result = NULL;
 	int ret;
@@ -459,7 +462,7 @@ int sieve_execute
 	if ( keep != NULL ) *keep = FALSE;
 	
 	/* Run the script */
-	ret = sieve_run(sbin, &result, msgdata, senv, ehandler);
+	ret = sieve_run(sbin, &result, msgdata, senv, ehandler, flags);
 		
 	/* Evaluate status and execute the result:
 	 *   Strange situations, e.g. currupt binaries, must be handled by the caller. 
@@ -573,7 +576,7 @@ static void sieve_multiscript_execute
 
 bool sieve_multiscript_run
 (struct sieve_multiscript *mscript, struct sieve_binary *sbin,
-	struct sieve_error_handler *ehandler, bool final)
+	struct sieve_error_handler *ehandler, unsigned int flags, bool final)
 {
 	if ( !mscript->active ) return FALSE;
 	
@@ -582,7 +585,7 @@ bool sieve_multiscript_run
 	
 	/* Run the script */
 	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata, 
-		mscript->scriptenv, ehandler);
+		mscript->scriptenv, ehandler, flags);
 
 	if ( mscript->status >= 0 ) {
 		mscript->keep = FALSE;

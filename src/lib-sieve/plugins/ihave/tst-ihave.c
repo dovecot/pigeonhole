@@ -49,6 +49,8 @@ static bool tst_ihave_validate
 
 	struct sieve_ast_argument *arg = tst->first_positional;
 	struct sieve_ast_argument *stritem;
+	enum sieve_compile_flags cpflags = sieve_validator_compile_flags(valdtr);
+	bool no_global = ( (cpflags & SIEVE_COMPILE_FLAG_NOGLOBAL) != 0 );	
 	ARRAY_DEFINE(capabilities, struct _capability);
 	struct _capability capability;
 	const struct _capability *caps;
@@ -71,13 +73,14 @@ static bool tst_ihave_validate
 		capability.arg = arg;
 		capability.ext = sieve_extension_get_by_name
 			(tst->ext->svinst, sieve_ast_argument_strc(arg));
-		array_append(&capabilities, &capability, 1);
 
-		if ( capability.ext == NULL ) {
+		if ( capability.ext == NULL || (no_global && capability.ext->global)) {
 			all_known = FALSE;
 
 			ext_ihave_ast_add_missing_extension
 				(tst->ext, tst->ast_node->ast, sieve_ast_argument_strc(arg));
+		} else {
+			array_append(&capabilities, &capability, 1);
 		}
 
 		break;
@@ -90,13 +93,14 @@ static bool tst_ihave_validate
 			capability.arg = stritem;
 			capability.ext = sieve_extension_get_by_name
 				(tst->ext->svinst, sieve_ast_argument_strc(stritem));
-			array_append(&capabilities, &capability, 1);
 
-			if ( capability.ext == NULL ) {
+			if ( capability.ext == NULL || (no_global && capability.ext->global)) {
 				all_known = FALSE;
 
 				ext_ihave_ast_add_missing_extension
 					(tst->ext, tst->ast_node->ast, sieve_ast_argument_strc(stritem));
+			} else {
+				array_append(&capabilities, &capability, 1);
 			}
 	
 			stritem = sieve_ast_strlist_next(stritem);

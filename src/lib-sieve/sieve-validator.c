@@ -85,6 +85,7 @@ struct sieve_validator {
 	struct sieve_instance *svinst;
 	struct sieve_ast *ast;
 	struct sieve_script *script;
+	enum sieve_compile_flags flags;
 	
 	struct sieve_error_handler *ehandler;
 
@@ -141,7 +142,8 @@ void sieve_validator_error
  */
 
 struct sieve_validator *sieve_validator_create
-(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
+(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
+	enum sieve_compile_flags flags) 
 {
 	pool_t pool;
 	struct sieve_validator *valdtr;
@@ -160,6 +162,7 @@ struct sieve_validator *sieve_validator_create
 
 	valdtr->script = sieve_ast_script(ast);
 	valdtr->svinst = sieve_script_svinst(valdtr->script);
+	valdtr->flags = flags;
 
 	/* Setup default arguments */
 	valdtr->default_arguments[SAT_NUMBER].arg_def = &number_argument;
@@ -219,6 +222,8 @@ void sieve_validator_free(struct sieve_validator **valdtr)
  * Accessors
  */
 
+// FIXME: build validate environment
+
 pool_t sieve_validator_pool(struct sieve_validator *valdtr)
 {
 	return valdtr->pool;
@@ -246,6 +251,12 @@ struct sieve_instance *sieve_validator_svinst
 (struct sieve_validator *valdtr)
 {
 	return valdtr->svinst;
+}
+
+enum sieve_compile_flags sieve_validator_compile_flags
+	(struct sieve_validator *valdtr)
+{
+	return valdtr->flags;
 }
 
 /* 
@@ -535,6 +546,15 @@ bool sieve_validator_extension_load
 	const struct sieve_extension_def *extdef = ext->def;
 	struct sieve_validator_extension_reg *reg;
 
+	if ( ext->global && (valdtr->flags & SIEVE_COMPILE_FLAG_NOGLOBAL) != 0 ) {
+		sieve_argument_validate_error(valdtr, ext_arg, 
+			"%s %s: failed to load Sieve capability `%s': "
+			"its use is restricted to global scripts",
+			sieve_command_identifier(cmd), sieve_command_type_name(cmd),
+			sieve_extension_name(ext));
+		return FALSE;
+	}
+
 	if ( !sieve_ast_extension_link(valdtr->ast, ext) ) {
 		/*if ( cmd != NULL && ext_arg != NULL ) {
 			sieve_argument_validate_warning(valdtr, ext_arg, 
@@ -547,7 +567,7 @@ bool sieve_validator_extension_load
 			!extdef->validator_load(ext, valdtr) ) {
 			if ( cmd != NULL && ext_arg != NULL ) {
 				sieve_argument_validate_error(valdtr, ext_arg, 
-					"%s %s: failed to load Sieve capability '%s'",
+					"%s %s: failed to load Sieve capability `%s'",
 					sieve_command_identifier(cmd), sieve_command_type_name(cmd),
 					sieve_extension_name(ext));
 			}
@@ -592,13 +612,13 @@ const struct sieve_extension *sieve_validator_extension_load_by_name
 
 		if ( core_test || core_command ) {
 			sieve_argument_validate_error(valdtr, ext_arg,
-				"%s %s: '%s' is not known as a Sieve capability, "
+				"%s %s: `%s' is not known as a Sieve capability, "
 				"but it is known as a Sieve %s that is always available",
 				sieve_command_identifier(cmd), sieve_command_type_name(cmd),
 				str_sanitize(ext_name, 128), ( core_test ? "test" : "command" ));
 		} else {
 			sieve_argument_validate_error(valdtr, ext_arg,
-				"%s %s: unknown Sieve capability '%s'", 
+				"%s %s: unknown Sieve capability `%s'", 
 				sieve_command_identifier(cmd), sieve_command_type_name(cmd),
 				str_sanitize(ext_name, 128));
 		}

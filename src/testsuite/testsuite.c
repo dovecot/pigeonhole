@@ -65,7 +65,8 @@ static int testsuite_run
 	int ret = 0;
 
 	/* Create the interpreter */
-	if ( (interp=sieve_interpreter_create(sbin, msgdata, senv, ehandler)) == NULL )
+	if ( (interp=sieve_interpreter_create
+		(sbin, msgdata, senv, ehandler, 0)) == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Run the interpreter */
@@ -160,7 +161,8 @@ int main(int argc, char **argv)
 
 	/* Compile sieve script */
 	if ( (sbin = sieve_compile
-		(svinst, scriptfile, NULL, testsuite_log_main_ehandler, NULL)) != NULL ) {
+		(svinst, scriptfile, NULL, testsuite_log_main_ehandler, 0, NULL))
+			!= NULL ) {
 		struct ostream *tracestream = NULL;
 		struct sieve_script_env scriptenv;
 

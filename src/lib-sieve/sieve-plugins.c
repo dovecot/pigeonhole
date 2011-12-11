@@ -40,23 +40,23 @@ static struct module *sieve_plugin_module_find(const char *name)
 	struct module *module;
 
 	module = sieve_modules;
-    while ( module != NULL ) {
+	while ( module != NULL ) {
 		const char *mod_name;
-		
-		/* Strip module names */
 
+		/* Strip module names */
 		mod_name = module_get_plugin_name(module);
-		
+
 		if ( strcmp(mod_name, name) == 0 )
 			return module;
 
 		module = module->next;
-    }
+	}
 
-    return NULL;
+	return NULL;
 }
 
-void sieve_plugins_load(struct sieve_instance *svinst, const char *path, const char *plugins)
+void sieve_plugins_load
+(struct sieve_instance *svinst, const char *path, const char *plugins)
 {
 	struct module *new_modules, *module;
 	struct module_dir_load_settings mod_set;
@@ -187,7 +187,7 @@ void sieve_plugins_unload(struct sieve_instance *svinst)
 	i_assert(sieve_modules_refcount > 0);
 
 	if ( --sieve_modules_refcount != 0 )
-        return;
+		return;
 
 	module_dir_unload(&sieve_modules);
 }
