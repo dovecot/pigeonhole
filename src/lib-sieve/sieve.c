@@ -438,8 +438,9 @@ int sieve_test
 	}
 	
 	/* Cleanup */
-	sieve_result_unref(&result);
-	
+	if ( result != NULL )
+		sieve_result_unref(&result);
+
 	return ret;
 }
 
@@ -476,9 +477,10 @@ int sieve_execute
 			if ( keep != NULL ) *keep = TRUE;
 		}
 	}
-	
+
 	/* Cleanup */
-	sieve_result_unref(&result);
+	if ( result != NULL )
+		sieve_result_unref(&result);
 
 	return ret;
 }
