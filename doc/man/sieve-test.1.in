@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2011 Pigeonhole authors, see the included COPYING file
-.TH "SIEVE\-TEST" 1 "2011-11-19" "Pigeonhole for Dovecot v2.1" "Pigeonhole"
+.TH "SIEVE\-TEST" 1 "2011-12-12" "Pigeonhole for Dovecot v2.1" "Pigeonhole"
 .SH NAME
 sieve\-test \- Pigeonhole\(aqs Sieve script tester
 .\"------------------------------------------------------------------------
@@ -112,16 +112,19 @@ Refer to the runtime trace debugging section below.
 .BI \-x\  extensions
 Set the available extensions. The parameter is a space\-separated list of the
 active extensions. By prepending the extension identifiers with \fB+\fP or
-\fB\-\fP, extensions can be included or excluded relative to the default set of
-extensions. If no extensions have a \fB+\fP or \fB\-\fP prefix, only those
-extensions that are explicitly listed will be enabled. Unknown extensions are
-ignored and a warning is produced. By default, all supported extensions are
-available, except for deprecated extensions or those that are still under
-development.
+\fB\-\fP, extensions can be included or excluded relative to the configured set
+of active extensions. If no extensions have a \fB+\fP or \fB\-\fP prefix, only
+those extensions that are explicitly listed will be enabled. Unknown extensions
+are ignored and a warning is produced.
 
 For example \fB\-x\fP \(dq+imapflags \-enotify\(dq will enable the deprecated
-imapflags extension along with all extensions that are available by default,
-except for the enotify extension.
+imapflags extension and disable the enotify extension. The rest of the active
+extensions depends on the \fIsieve_extensions\fP and 
+\fIsieve_global_extensions\fP settings. By default, i.e.
+when \fIsieve_extensions\fP and \fIsieve_global_extensions\fP remain
+unconfigured, all supported extensions are available, except for deprecated
+extensions or those that are still under development.
+
 .\"------------------------------------------------------------------------
 .SH ARGUMENTS
 .TP
