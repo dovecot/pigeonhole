@@ -529,6 +529,8 @@ static bool act_store_execute
 		keywords = act_store_keywords_create(aenv, &trans->keywords, trans->box);
 
 		mailbox_save_set_flags(save_ctx, trans->flags, keywords);
+	} else {
+		mailbox_save_copy_flags(save_ctx, mail);
 	}
 
 	if ( mailbox_copy(&save_ctx, mail) < 0 ) {
