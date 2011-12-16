@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2011 Pigeonhole authors, see the included COPYING file
-.TH "SIEVE\-FILTER" 1 "2011-12-12" "Pigeonhole for Dovecot v2.1" "Pigeonhole"
+.TH "SIEVE\-FILTER" 1 "2011-12-17" "Pigeonhole for Dovecot v2.1" "Pigeonhole"
 .SH NAME
 sieve\-filter \- Pigeonhole\(aqs Sieve mailbox filter tool
 
@@ -27,10 +27,10 @@ already stored in a mailbox, for instance when a bug in a Sieve script caused
 many messages to be delivered incorrectly. Using the sieve\-filter tool it is
 possible to apply a Sieve script on all messages in a particular
 \fIsource\-mailbox\fP, making it possible to delete messages, to store them in a
-different mailbox and to change the assigned IMAP flags and keywords. Attempts
-to send messages to the outside world are ignored by default for obvious
-reasons, but, using the proper command line options, it is possible to capture
-and handle outgoing mail as well. 
+different mailbox, to change their content, and to change the assigned IMAP
+flags and keywords. Attempts to send messages to the outside world are ignored
+by default for obvious reasons, but, using the proper command line options, it
+is possible to capture and handle outgoing mail as well. 
 .PP
 If no options are specified, the sieve\-filter command runs in a simulation mode
 in which it only prints what would be performed, without actually doing
@@ -44,8 +44,12 @@ are only potentially modified or moved to a different folder. Messages are never
 lost unless a \fIdiscard\-action\fP argument other than \fBkeep\fP (the default)
 is specified. If the Sieve filter decides to store the message in the
 \fIsource\-mailbox\fP, where it obviously already exists, it is never duplicated
-there. However, in that case, the IMAP flags of the original message can be
-modified by the Sieve interpreter, provided that \fB\-W\fP is specified. 
+there. In that case, the IMAP flags of the original message can be modified by
+the Sieve interpreter using the \fIimap4flags\fP extension, provided that
+\fB\-W\fP is specified. If the message itself is modified by the Sieve
+interpreter (e.g. using the \fIeditheader\fP extension), a new message is stored
+and the old one is expunged. However, if \fB-W\fP is omitted, the original
+message is left untouched and the modifications are discarded. 
 
 .SS CAUTION
 Although this is a very useful tool, it can also be very destructive when used
@@ -108,19 +112,18 @@ what you are doing, \fBDO NOT USE THIS TO FEED MAIL TO SENDMAIL!\fP.
 .BI \-s\  script\-file\  \fB[not\ implemented\ yet]\fP
 Specify additional scripts to be executed before the main script. Multiple
 \fB\-s\fP arguments are allowed and the specified scripts are executed
-sequentially in the order specified at the command
-line.
+sequentially in the order specified at the command line.
 .TP
 .BI \-u\  user
 Run the Sieve script for the given \fIuser\fP.
 .TP
-.B \-v\
+.B \-v
 Produce verbose output during filtering.
 .TP
 .B \-W
 Enables write access to the \fIsource\-mailbox\fP. This allows (re)moving the
-messages from the \fIsource\-mailbox\fP and changing the assigned IMAP flags and
-keywords. 
+messages from the \fIsource\-mailbox\fP, changing their contents, and changing
+the assigned IMAP flags and keywords. 
 .TP
 .BI \-x\  extensions
 Set the available extensions. The parameter is a space\-separated list of the

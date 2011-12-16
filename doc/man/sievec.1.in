@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2011 Pigeonhole authors, see the included COPYING file
-.TH "SIEVEC" 1 "2011-12-12" "Pigeonhole for Dovecot v2.1" "Pigeonhole"
+.TH "SIEVEC" 1 "2011-12-17" "Pigeonhole for Dovecot v2.1" "Pigeonhole"
 .\"------------------------------------------------------------------------
 .SH NAME
 sievec \- Pigeonhole\(aqs Sieve script compiler
@@ -118,5 +118,6 @@ Sieve interpreter settings (included from Dovecot\(aqs main configuration file)
 .BR dovecot (1),
 .BR dovecot\-lda (1),
 .BR sieve\-dump (1),
+.BR sieve\-filter (1),
 .BR sieve\-test (1),
 .BR pigeonhole (7)

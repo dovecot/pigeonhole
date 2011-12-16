@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2011 Pigeonhole authors, see the included COPYING file
-.TH "PIGEONHOLE" 7 "2011-11-19" "Pigeonhole for Dovecot v2.1" "Pigeonhole"
+.TH "PIGEONHOLE" 7 "2011-12-17" "Pigeonhole for Dovecot v2.1" "Pigeonhole"
 .\"------------------------------------------------------------------------
 .SH NAME
 pigeonhole \- Overview of the Pigeonhole project\(aqs Sieve support for the
@@ -60,6 +60,9 @@ Compiles Sieve scripts into a binary representation for later execution.
 The universal Sieve test tool for testing the effect of a Sieve script on a
 particular message.
 .TP
+.BR sieve\-filter (1)
+Filters all messages in a particular source mailbox through a Sieve script. 
+.TP
 .BR sieve\-dump (1)
 Dumps the content of a Sieve binary file for (development) debugging purposes.
 .\"------------------------------------------------------------------------
@@ -77,6 +80,7 @@ LGPLv2.1 license, which is the same license as Dovecot, see
 .BR dovecot\-lda (1),
 .BR sieve\-dump (1),
 .BR sieve\-test (1),
+.BR sieve\-filter (1),
 .BR sievec (1)
 .\"-------------------------------------
 .PP
