@@ -467,7 +467,8 @@ static bool act_store_execute
 	struct act_store_transaction *trans = 
 		(struct act_store_transaction *) tr_context;
 	struct mail *mail =	( action->mail != NULL ?
-		action->mail : aenv->msgdata->mail );	
+		action->mail : aenv->msgdata->mail );
+	struct mail *real_mail = mail_get_real_mail(mail);
 	struct mail_save_context *save_ctx;
 	struct mail_keywords *keywords = NULL;
 	bool result = TRUE;
@@ -483,12 +484,14 @@ static bool act_store_execute
 		return FALSE;
 
 	/* If the message originates from the target mailbox, only update the flags 
-	 * and keywords 
+	 * and keywords (if not read-only)
 	 */
-	if ( mailbox_backends_equal(trans->box, mail->box) ) {
+	if ( mailbox_backends_equal(trans->box, mail->box) ||
+		(real_mail != mail && mailbox_backends_equal(trans->box, real_mail->box)) )
+		{
 		trans->redundant = TRUE;
 
-		if ( trans->flags_altered ) {
+		if ( trans->flags_altered && !mailbox_is_readonly(mail->box) ) {
 			keywords = act_store_keywords_create
 				(aenv, &trans->keywords, mail->box);
 
@@ -500,6 +503,18 @@ static bool act_store_execute
 			mail_update_flags(mail, MODIFY_REPLACE, trans->flags);
 		}
 
+		return TRUE;
+
+	/* If the message is modified, only store it in the source mailbox when it is
+	 * not opened read-only. Mail structs of modified messages have their own
+	 * mailbox, unrelated to the orignal mail, so this case needs to be handled
+	 * separately.
+	 */
+	} else if ( mail != aenv->msgdata->mail
+		&& mailbox_is_readonly(aenv->msgdata->mail->box) 
+		&& ( mailbox_backends_equal(trans->box, aenv->msgdata->mail->box) ) ) {
+
+		trans->redundant = TRUE;
 		return TRUE;
 	}
 

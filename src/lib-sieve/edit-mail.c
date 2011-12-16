@@ -405,6 +405,10 @@ void edit_mail_unwrap(struct edit_mail **edmail)
 
 struct mail *edit_mail_get_mail(struct edit_mail *edmail)
 {
+	/* Return wrapped mail when nothing is modified yet */
+	if ( !edmail->modified )
+		return &edmail->wrapped->mail;
+
 	return &edmail->mail.mail;
 }
 
@@ -1337,17 +1341,21 @@ static int edit_mail_get_special
 {
 	struct edit_mail *edmail = (struct edit_mail *)mail;
 
-	switch (field) {
-	case MAIL_FETCH_GUID:
-		/* This is in essence a new message */
-		*value_r = "";
-		return 0;
-	case MAIL_FETCH_UIDL_FILE_NAME:
-		/* Prevent hardlink copying */
-		*value_r = "";
-		return 0;
-	default:
-		break;
+	if ( edmail->modified ) {
+		/* Block certain fields when modified */
+
+		switch (field) {
+		case MAIL_FETCH_GUID:
+			/* This is in essence a new message */
+			*value_r = "";
+			return 0;
+		case MAIL_FETCH_UIDL_FILE_NAME:
+			/* Prevent hardlink copying */
+			*value_r = "";
+			return 0;
+		default:
+			break;
+		}
 	}
 
 	return edmail->wrapped->v.get_special(&edmail->wrapped->mail, field, value_r);
@@ -1357,7 +1365,7 @@ static struct mail *edit_mail_get_real_mail(struct mail *mail)
 {
 	struct edit_mail *edmail = (struct edit_mail *)mail;
 
-	return edmail->wrapped->v.get_real_mail(&edmail->wrapped->mail);
+	return edit_mail_get_mail(edmail);
 }
 
 static void edit_mail_update_flags
