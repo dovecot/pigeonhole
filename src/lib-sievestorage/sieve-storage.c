@@ -6,6 +6,7 @@
 #include "ioloop.h"
 #include "mkdir-parents.h"
 #include "eacces-error.h"
+#include "unlink-old-files.h"
 
 #include "sieve.h"
 #include "sieve-common.h"
@@ -142,10 +143,10 @@ static int mkdir_verify
 		return 0;
 
 	if ( errno == EACCES ) {
-		i_error("sieve-storage: %s", eacces_error_get("stat", dir));
+		i_error("sieve-storage: mkdir_verify: %s", eacces_error_get("stat", dir));
 		return -1;
 	} else if ( errno != ENOENT ) {
-		i_error("sieve-storage: stat(%s) failed: %m", dir);
+		i_error("sieve-storage: mkdir_verify: stat(%s) failed: %m", dir);
 		return -1;
 	}
 
@@ -162,14 +163,42 @@ static int mkdir_verify
 		i_error("sieve-storage: storage was deleted while it was being created");
 		break;
 	case EACCES:
-		i_error("sieve-storage: %s", eacces_error_get_creating("mkdir", dir));
+		i_error("sieve-storage: %s",
+			eacces_error_get_creating("mkdir_parents_chgrp", dir));
 		break;
 	default:
-		i_error("sieve-storage: mkdir(%s) failed: %m", dir);
+		i_error("sieve-storage: mkdir_parents_chgrp(%s) failed: %m", dir);
 		break;
 	}
 
 	return -1;
+}
+
+static int check_tmp(const char *path)
+{
+	struct stat st;
+
+	/* If tmp/ directory exists, we need to clean it up once in a while */
+	if ( stat(path, &st) < 0 ) {
+		if ( errno == ENOENT )
+			return 0;
+		if ( errno == EACCES ) {
+			i_error("sieve-storage: check_tmp: %s", eacces_error_get("stat", path));
+			return -1;
+		}
+		i_error("sieve-storage: check_tmp: stat(%s) failed: %m", path);
+		return -1;
+	}
+
+	if ( st.st_atime > st.st_ctime + SIEVE_STORAGE_TMP_DELETE_SECS ) {
+		/* The directory should be empty. we won't do anything
+		   until ctime changes. */
+	} else if ( st.st_atime < ioloop_time - SIEVE_STORAGE_TMP_SCAN_SECS ) {
+		/* Time to scan */
+		(void)unlink_old_files(path, "",
+			ioloop_time - SIEVE_STORAGE_TMP_DELETE_SECS);
+	}
+	return 1;
 }
 
 static struct sieve_storage *_sieve_storage_create
@@ -184,6 +213,7 @@ static struct sieve_storage *_sieve_storage_create
 	const char *file_create_gid_origin;
 	unsigned long long int uint_setting;
 	size_t size_setting;
+	int ret;
 
 	/*
 	 * Configure active script path
@@ -321,16 +351,17 @@ static struct sieve_storage *_sieve_storage_create
 
 	/* 
 	 * Ensure sieve local directory structure exists (full autocreate):
-	 *  This currently currently only consists of a ./tmp direcory
+	 *  This currently only consists of a ./tmp direcory
 	 */
 
 	tmp_dir = t_strconcat(storage_dir, "/tmp", NULL);
 
-	/*ret = maildir_check_tmp(box->storage, box->path);
-	if (ret < 0)
-		return -1;*/
+	/* Try to find and clean up tmp dir */
+	if ( (ret=check_tmp(tmp_dir)) < 0 )
+		return NULL;
 
-	if ( mkdir_verify(tmp_dir, dir_create_mode, file_create_gid,
+	/* Auto-create if necessary */
+	if ( ret == 0 && mkdir_verify(tmp_dir, dir_create_mode, file_create_gid,
 		file_create_gid_origin, debug) < 0 )
 		return NULL;
 

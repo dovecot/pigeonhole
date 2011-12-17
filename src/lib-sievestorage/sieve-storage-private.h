@@ -19,6 +19,11 @@ enum sieve_storage_flags {
 
 #define SIEVE_READ_BLOCK_SIZE (1024*8)
 
+/* How often to scan tmp/ directory for old files (based on dir's atime) */
+#define SIEVE_STORAGE_TMP_SCAN_SECS (8*60*60)
+/* Delete files having ctime older than this from tmp/. 36h is standard. */
+#define SIEVE_STORAGE_TMP_DELETE_SECS (36*60*60)
+
 struct sieve_storage;
 
 struct sieve_storage_ehandler {
