@@ -489,7 +489,7 @@ unsigned int sieve_get_warnings(struct sieve_error_handler *ehandler)
 {
 	if ( ehandler == NULL || ehandler->pool == NULL ) return 0;
 
-	return ehandler->errors;
+	return ehandler->warnings;
 }
 
 bool sieve_errors_more_allowed(struct sieve_error_handler *ehandler) 
