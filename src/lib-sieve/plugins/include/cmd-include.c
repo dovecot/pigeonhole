@@ -203,7 +203,8 @@ static bool cmd_include_validate
 		(struct cmd_include_context_data *) cmd->data;
 	struct sieve_script *script;
 	const char *script_path, *script_name;
-	enum sieve_error error = TRUE;
+	enum sieve_error error = SIEVE_ERROR_NONE;
+	bool include = TRUE;
 	
 	/* Check argument */
 	if ( !sieve_validate_positional_argument
@@ -251,18 +252,33 @@ static bool cmd_include_validate
 			sieve_validator_error_handler(valdtr), &error);
 
 	if ( script == NULL ) {
-		if ( error == SIEVE_ERROR_NOT_FOUND ) {
-			sieve_argument_validate_error(valdtr, arg, 
-				"included %s script '%s' does not exist", 
-				ext_include_script_location_name(ctx_data->location),
-				str_sanitize(script_name, 80));
+		if ( error != SIEVE_ERROR_NOT_FOUND ) {
+			return FALSE;
+		} else {
+			enum sieve_compile_flags cpflags =
+				sieve_validator_compile_flags(valdtr);
+
+			if ( (cpflags & SIEVE_COMPILE_FLAG_UPLOADED) != 0 ) {
+				sieve_argument_validate_warning(valdtr, arg, 
+					"included %s script '%s' does not exist (ignored during upload)", 
+					ext_include_script_location_name(ctx_data->location),
+					str_sanitize(script_name, 80));
+				include = FALSE;
+			} else {
+				sieve_argument_validate_error(valdtr, arg, 
+					"included %s script '%s' does not exist", 
+					ext_include_script_location_name(ctx_data->location),
+					str_sanitize(script_name, 80));
+				return FALSE;
+			}
 		}
-		return FALSE;
 	}
 
-	ext_include_ast_link_included_script(cmd->ext, cmd->ast_node->ast, script);		
-	ctx_data->script = script;
-		
+	if ( include ) {
+		ext_include_ast_link_included_script(cmd->ext, cmd->ast_node->ast, script);		
+		ctx_data->script = script;
+	}
+	
 	arg = sieve_ast_arguments_detach(arg, 1);
 	
 	return TRUE;
@@ -279,18 +295,26 @@ static bool cmd_include_generate
 		(struct cmd_include_context_data *) cmd->data;
 	const struct ext_include_script_info *included;
 	unsigned int flags = ctx_data->include_once;
+	int ret;
 
-	/* Compile (if necessary) and include the script into the binary.
-	 * This yields the id of the binary block containing the compiled byte code.  
+	/* Upon upload ctx_data->script may be NULL if the script was not found. We
+	 * don't emit any code for this include command in that case.
 	 */
-	if ( !ext_include_generate_include
-		(cgenv, cmd, ctx_data->location, ctx_data->script, &included,
-			ctx_data->include_once) )
- 		return FALSE;
- 		
- 	(void)sieve_operation_emit(cgenv->sblock, cmd->ext, &include_operation);
-	(void)sieve_binary_emit_unsigned(cgenv->sblock, included->id); 
-	(void)sieve_binary_emit_byte(cgenv->sblock, flags); 
+	if ( ctx_data->script != NULL ) {
+		/* Compile (if necessary) and include the script into the binary.
+		 * This yields the id of the binary block containing the compiled byte code.  
+		 */
+		if ( (ret=ext_include_generate_include
+			(cgenv, cmd, ctx_data->location, ctx_data->script, &included,
+				ctx_data->include_once)) < 0 )
+	 		return FALSE;
+	 		
+		if ( ret > 0 ) {
+		 	(void)sieve_operation_emit(cgenv->sblock, cmd->ext, &include_operation);
+			(void)sieve_binary_emit_unsigned(cgenv->sblock, included->id); 
+			(void)sieve_binary_emit_byte(cgenv->sblock, flags);
+		}
+	}
  	 		
 	return TRUE;
 }

@@ -174,8 +174,6 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 
 	if (args[0].type == MANAGESIEVE_ARG_EOL) {
 		struct sieve_script *script;
-
-		/* Last (and only) script */
 		bool success = TRUE;
 
 		/* Eat away the trailing CRLF */
@@ -194,8 +192,15 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 		/* Try to compile script */
 		T_BEGIN {
 			struct sieve_error_handler *ehandler;
+			enum sieve_compile_flags cpflags = 
+				SIEVE_COMPILE_FLAG_NOGLOBAL | SIEVE_COMPILE_FLAG_UPLOADED;
 			struct sieve_binary *sbin;
 			string_t *errors;
+
+			/* Mark this as an activation when we are replacing the active script */
+			if ( sieve_storage_save_will_activate(ctx->save_ctx) ) {
+				cpflags |= SIEVE_COMPILE_FLAG_ACTIVATED;
+			}
 
 			/* Prepare error handler */
 			errors = str_new(default_pool, 1024);
@@ -204,7 +209,7 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 
 			/* Compile */
 			if ( (sbin=sieve_compile_script
-				(script, ehandler, SIEVE_COMPILE_FLAG_NOGLOBAL, NULL)) == NULL ) {
+				(script, ehandler, cpflags, NULL)) == NULL ) {
 				client_send_no(client, str_c(errors));
 				success = FALSE;
 			} else {

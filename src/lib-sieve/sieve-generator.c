@@ -76,7 +76,8 @@ struct sieve_generator {
 };
 
 struct sieve_generator *sieve_generator_create
-(struct sieve_ast *ast, struct sieve_error_handler *ehandler) 
+(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
+	enum sieve_compile_flags flags) 
 {
 	pool_t pool;
 	struct sieve_generator *gentr;
@@ -91,6 +92,7 @@ struct sieve_generator *sieve_generator_create
 	sieve_error_handler_ref(ehandler);
 	
 	gentr->genenv.gentr = gentr;
+	gentr->genenv.flags = flags;
 	gentr->genenv.ast = ast;	
 	sieve_ast_ref(ast);
 

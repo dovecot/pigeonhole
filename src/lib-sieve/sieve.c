@@ -177,9 +177,10 @@ bool sieve_validate
 
 static struct sieve_binary *sieve_generate
 (struct sieve_ast *ast, struct sieve_error_handler *ehandler, 
-	enum sieve_error *error_r)
+	enum sieve_compile_flags flags, enum sieve_error *error_r)
 {
-	struct sieve_generator *generator = sieve_generator_create(ast, ehandler);
+	struct sieve_generator *generator =
+		sieve_generator_create(ast, ehandler, flags);
 	struct sieve_binary *sbin = NULL;
 		
 	sbin = sieve_generator_run(generator, NULL);
@@ -222,7 +223,7 @@ struct sieve_binary *sieve_compile_script
  	}
  	
 	/* Generate */
-	if ( (sbin=sieve_generate(ast, ehandler, error_r)) == NULL ) {
+	if ( (sbin=sieve_generate(ast, ehandler, flags, error_r)) == NULL ) {
 		sieve_error(ehandler, sieve_script_name(script), "code generation failed");
 		
 		sieve_ast_unref(&ast);

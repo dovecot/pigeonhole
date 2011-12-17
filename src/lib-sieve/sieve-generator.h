@@ -16,6 +16,8 @@ struct sieve_codegen_env {
 	struct sieve_generator *gentr;
 
 	struct sieve_instance *svinst;
+	enum sieve_compile_flags flags;
+
 	struct sieve_script *script;
 	struct sieve_ast *ast;
 
@@ -24,7 +26,8 @@ struct sieve_codegen_env {
 };
 
 struct sieve_generator *sieve_generator_create
-	(struct sieve_ast *ast, struct sieve_error_handler *ehandler);
+	(struct sieve_ast *ast, struct sieve_error_handler *ehandler,\
+		enum sieve_compile_flags flags);
 void sieve_generator_free(struct sieve_generator **generator);
 
 /* 

@@ -200,6 +200,8 @@ bool sieve_command_block_exits_unconditionally
 
 #define sieve_command_generate_error(gentr, context, ...) \
 	sieve_generator_error(gentr, (context)->ast_node->source_line, __VA_ARGS__)
+#define sieve_command_generate_warning(gentr, context, ...) \
+	sieve_generator_warning(gentr, (context)->ast_node->source_line, __VA_ARGS__)
 
 /* Utility macros */
 

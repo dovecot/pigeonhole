@@ -65,7 +65,14 @@ enum sieve_error {
  */
 
 enum sieve_compile_flags {
-	SIEVE_COMPILE_FLAG_NOGLOBAL = (1<<0)
+	/* No global extensions are allowed
+	 *  (as marked by sieve_global_extensions setting)
+	 */
+	SIEVE_COMPILE_FLAG_NOGLOBAL = (1<<0),
+	/* Script is being uploaded (usually through ManageSieve) */
+	SIEVE_COMPILE_FLAG_UPLOADED = (1<<1),
+	/* Script is being activated (usually through ManageSieve) */
+	SIEVE_COMPILE_FLAG_ACTIVATED = (1<<2),	
 };
 
 /* 
@@ -88,6 +95,9 @@ struct sieve_message_data {
  */
 
 enum sieve_runtime_flags {
+	/* No global extensions are allowed
+	 *  (as marked by sieve_global_extensions setting)
+	 */
 	SIEVE_RUNTIME_FLAG_NOGLOBAL = (1<<0)
 };
 

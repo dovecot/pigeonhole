@@ -19,6 +19,9 @@ int sieve_storage_save_finish(struct sieve_save_context *ctx);
 struct sieve_script *sieve_storage_save_get_tempscript
   (struct sieve_save_context *ctx);
 
+bool sieve_storage_save_will_activate
+	(struct sieve_save_context *ctx);
+
 void sieve_storage_save_cancel(struct sieve_save_context **ctx);
 
 int sieve_storage_save_commit(struct sieve_save_context **ctx);

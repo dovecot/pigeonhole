@@ -164,7 +164,7 @@ static int sieve_storage_read_active_link
 }
 
 static const char *sieve_storage_parse_link
-(struct sieve_storage *storage, const char *link)
+(struct sieve_storage *storage, const char *link, const char **scriptname_r)
 {
 	const char *fname, *scriptname, *scriptpath;
 
@@ -200,6 +200,9 @@ static const char *sieve_storage_parse_link
 		return NULL; 
 	}
 
+	if ( scriptname_r != NULL )
+		*scriptname_r = scriptname;
+
 	return fname;
 }
 
@@ -216,7 +219,7 @@ int sieve_storage_get_active_scriptfile
 		return ret;
 
 	/* Parse the link */
-	scriptfile = sieve_storage_parse_link(storage, link);
+	scriptfile = sieve_storage_parse_link(storage, link, NULL);
 
 	if (scriptfile == NULL) {
 		/* Obviously someone has been playing with our symlink,
@@ -227,6 +230,29 @@ int sieve_storage_get_active_scriptfile
 	}
 
 	*file_r = scriptfile;
+	return 1;
+}
+
+int sieve_storage_get_active_scriptname
+(struct sieve_storage *storage, const char **name_r)
+{
+	const char *link;
+	int ret;
+
+	*name_r = NULL;
+
+	/* Read the active link */
+	if ( (ret=sieve_storage_read_active_link(storage, &link)) <= 0 )
+		return ret;
+
+	if ( sieve_storage_parse_link(storage, link, name_r) == NULL ) {
+		/* Obviously someone has been playing with our symlink,
+		 * ignore this situation and report 'no active script'.
+		 * Activation should fix this situation.
+		 */
+		return 0;
+	}
+
 	return 1;
 }
 
@@ -251,7 +277,7 @@ struct sieve_script *sieve_storage_get_active_script
 	}
 
 	/* Parse the link */
-	scriptfile = sieve_storage_parse_link(storage, link);
+	scriptfile = sieve_storage_parse_link(storage, link, NULL);
 
 	if (scriptfile == NULL) {
 		/* Obviously someone has been playing with our symlink,

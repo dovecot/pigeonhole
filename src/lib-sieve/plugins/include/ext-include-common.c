@@ -462,7 +462,7 @@ struct sieve_variable_storage *ext_include_interpreter_get_global_variables
  * Including a script during code generation 
  */
 
-bool ext_include_generate_include
+int ext_include_generate_include
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
 	enum ext_include_script_location location, struct sieve_script *script, 
 	const struct ext_include_script_info **included_r, bool once)
@@ -470,7 +470,7 @@ bool ext_include_generate_include
 	const struct sieve_extension *this_ext = cmd->ext;
 	struct ext_include_context *ext_ctx =
 		(struct ext_include_context *)this_ext->context;
-	bool result = TRUE;
+	int result = 1;
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin = cgenv->sbin;
 	struct sieve_generator *gentr = cgenv->gentr;
@@ -488,14 +488,14 @@ bool ext_include_generate_include
 	 * already. 
 	 */
 	if ( sieve_get_errors(ehandler) > 0 )
-		return FALSE;
+		return -1;
 		
 	/* Limit nesting level */
 	if ( ctx->nesting_depth >= ext_ctx->max_nesting_depth ) {
 		sieve_command_generate_error
 			(gentr, cmd, "cannot nest includes deeper than %d levels",
 				ext_ctx->max_nesting_depth);
-		return FALSE;
+		return -1;
 	}
 	
 	/* Check for circular include */
@@ -503,9 +503,18 @@ bool ext_include_generate_include
 		pctx = ctx;
 		while ( pctx != NULL ) {
 			if ( sieve_script_equals(pctx->script, script) ) {
+				/* Just drop circular include when uploading inactive script;
+				 * not an error
+				 */
+				if ( (cgenv->flags & SIEVE_COMPILE_FLAG_UPLOADED) != 0 && 
+					(cgenv->flags & SIEVE_COMPILE_FLAG_ACTIVATED) == 0 ) {
+					sieve_command_generate_warning
+						(gentr, cmd, "circular include (ignored during upload)");
+					return 0;
+				}
+
 				sieve_command_generate_error(gentr, cmd, "circular include");
-				
-				return FALSE;
+				return -1;
 			}
 		
 			pctx = pctx->parent;
@@ -520,7 +529,7 @@ bool ext_include_generate_include
 	{	
 		struct sieve_binary_block *inc_block;
 		const char *script_name = sieve_script_name(script);
-		enum sieve_compile_flags cpflags = 0;
+		enum sieve_compile_flags cpflags = cgenv->flags;
 
 		/* Check whether include limit is exceeded */
 		if ( ext_include_binary_script_get_count(binctx) >= 
@@ -528,7 +537,7 @@ bool ext_include_generate_include
 	 		sieve_command_generate_error(gentr, cmd, 
 	 			"failed to include script '%s': no more than %u includes allowed", 
 				str_sanitize(script_name, 80), ext_ctx->max_includes);
-	 		return FALSE;			
+	 		return -1;
 		}
 		
 		/* No, allocate a new block in the binary and mark the script as included.
@@ -541,13 +550,15 @@ bool ext_include_generate_include
 		if ( (ast = sieve_parse(script, ehandler, NULL)) == NULL ) {
 	 		sieve_command_generate_error(gentr, cmd, 
 	 			"failed to parse included script '%s'", str_sanitize(script_name, 80));
-	 		return FALSE;
+	 		return -1;
 		}
 		
 		/* Included scripts inherit global variable scope */
 		(void)ext_include_create_ast_context(this_ext, ast, cmd->ast_node->ast);
 
-		if ( location != EXT_INCLUDE_LOCATION_GLOBAL )
+		if ( location == EXT_INCLUDE_LOCATION_GLOBAL )
+				cpflags &= ~SIEVE_RUNTIME_FLAG_NOGLOBAL;
+		else
 				cpflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
 
 		/* Validate */
@@ -556,7 +567,7 @@ bool ext_include_generate_include
 				"failed to validate included script '%s'", 
 				str_sanitize(script_name, 80));
 	 		sieve_ast_unref(&ast);
-	 		return FALSE;
+	 		return -1;
 	 	}
 
 		/* Generate 
@@ -564,14 +575,14 @@ bool ext_include_generate_include
 		 * FIXME: It might not be a good idea to recurse code generation for 
 		 * included scripts.
 		 */
-	 	subgentr = sieve_generator_create(ast, ehandler);			
+	 	subgentr = sieve_generator_create(ast, ehandler, cpflags);			
 		ext_include_initialize_generator_context(cmd->ext, subgentr, ctx, script);
 			
 		if ( sieve_generator_run(subgentr, &inc_block) == NULL ) {
 			sieve_command_generate_error(gentr, cmd, 
 				"failed to generate code for included script '%s'", 
 				str_sanitize(script_name, 80));
-	 		result = FALSE;
+	 		result = -1;
 		}
 		
 		sieve_generator_free(&subgentr);
@@ -580,7 +591,7 @@ bool ext_include_generate_include
 		sieve_ast_unref(&ast);		
 	} 
 
-	if ( result ) *included_r = included;
+	if ( result > 0 ) *included_r = included;
 	
 	return result;
 }

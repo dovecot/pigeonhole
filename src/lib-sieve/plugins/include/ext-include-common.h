@@ -142,7 +142,7 @@ void ext_include_register_generator_context
 	(const struct sieve_extension *this_ext, 
 		const struct sieve_codegen_env *cgenv);
 
-bool ext_include_generate_include
+int ext_include_generate_include
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
 		enum ext_include_script_location location, struct sieve_script *script, 
 		const struct ext_include_script_info **included_r, bool once);

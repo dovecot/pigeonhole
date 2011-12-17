@@ -1,7 +1,7 @@
 Current activities:
 
-* Build a sieve tool to filter an entire existing mailbox through a Sieve 
-  script.
+* Update include extension to latest draft (v13 currently):
+	- Implement :optional tag.
 
 Parallel plugin-based efforts:
 
@@ -15,9 +15,6 @@ Parallel plugin-based efforts:
 Next (mostly in order of descending priority/precedence):
 
 * Implement index extension
-* Update include extension to latest draft (v10 currently):
-	- Implement :optional tag.
-	- Implement required ManageSieve behavior
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
 * Improve error handling. 
