@@ -5,4 +5,4 @@ global "result";
 
 set "result" "${result} THREE";
 
-include "twice-1.sieve";
+include "twice-1";

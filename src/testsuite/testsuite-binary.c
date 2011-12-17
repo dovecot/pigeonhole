@@ -10,6 +10,7 @@
 
 #include "sieve.h"
 #include "sieve-common.h" 
+#include "sieve-script.h"
 #include "sieve-error.h"
  
 #include "testsuite-common.h"
@@ -61,16 +62,16 @@ void testsuite_binary_reset(void)
 
 bool testsuite_binary_save(struct sieve_binary *sbin, const char *name)
 {
-	return sieve_save(sbin, 
-		t_strdup_printf("%s/%s.svbin", testsuite_binary_tmp, name), TRUE, NULL);
+	return sieve_save(sbin, t_strdup_printf
+		("%s/%s", testsuite_binary_tmp, sieve_binfile_from_name(name)), TRUE, NULL);
 }
 
 struct sieve_binary *testsuite_binary_load(const char *name)
 {
 	struct sieve_instance *svinst = testsuite_sieve_instance;
 
-	return sieve_load(svinst, 
-		t_strdup_printf("%s/%s.svbin", testsuite_binary_tmp, name), NULL);
+	return sieve_load(svinst, t_strdup_printf
+		("%s/%s", testsuite_binary_tmp, sieve_binfile_from_name(name)), NULL);
 }
 
 

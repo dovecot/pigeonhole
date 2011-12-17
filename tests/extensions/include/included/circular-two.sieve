@@ -2,6 +2,6 @@ require "include";
 
 keep;
 
-include "circular-two-2.sieve";
+include "circular-two-2";
 
 

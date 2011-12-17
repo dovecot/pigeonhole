@@ -11,9 +11,6 @@
 struct sieve_script *sieve_storage_script_init
 	(struct sieve_storage *storage, const char *scriptname);
 
-const char *sieve_storage_file_get_scriptname
-	(const struct sieve_storage *storage, const char *filename);
-
 int sieve_storage_get_active_scriptfile
 	(struct sieve_storage *storage, const char **file_r);
 int sieve_storage_get_active_scriptname

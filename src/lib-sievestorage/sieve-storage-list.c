@@ -69,9 +69,7 @@ const char *sieve_storage_list_next
 		if ( (dp = readdir(ctx->dirp)) == NULL )
 			return NULL;
 
-		scriptname = sieve_storage_file_get_scriptname
-			(storage, dp->d_name);	
-		
+		scriptname = sieve_scriptfile_get_script_name(dp->d_name);	
 		if (scriptname != NULL ) {
 			/* Don't list our active sieve script link if the link 
 			 * resides in the script dir (generally a bad idea).

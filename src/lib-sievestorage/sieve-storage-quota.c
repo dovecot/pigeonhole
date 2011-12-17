@@ -78,7 +78,7 @@ int sieve_storage_quota_havespace
 		}
 
 		/* Parse filename */
-		name = sieve_storage_file_get_scriptname(storage, dp->d_name);	
+		name = sieve_scriptfile_get_script_name(dp->d_name);	
 
 		/* Ignore non-script files */
 		if ( name == NULL )

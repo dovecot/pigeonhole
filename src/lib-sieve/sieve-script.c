@@ -96,37 +96,34 @@ bool sieve_script_name_is_valid(const char *scriptname)
  * Filename to name/name to filename
  */
 
-static inline const char *_sieve_scriptfile_get_basename(const char *filename)
+const char *sieve_scriptfile_get_script_name(const char *filename)
 {
 	const char *ext;
 
 	/* Extract the script name */
 	ext = strrchr(filename, '.');
-	if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
-		return filename;
+	if ( ext == NULL || ext == filename ||
+		strcmp(ext, "."SIEVE_SCRIPT_FILEEXT) != 0 )
+		return NULL;
 
 	return t_strdup_until(filename, ext);
 }
 
-bool sieve_script_file_has_extension(const char *filename)
+bool sieve_scriptfile_has_extension(const char *filename)
 {
-	const char *ext;
-
- 	/* See if it ends in .sieve already */
-	ext = strrchr(filename, '.');
-	if ( ext == NULL || ext == filename || strncmp(ext,".sieve",6) != 0 )
-		return FALSE;
-
-	return TRUE;
+	return ( sieve_scriptfile_get_script_name(filename) != NULL );
 }
 
-static inline const char *_sieve_scriptfile_from_name(const char *name)
+const char *sieve_scriptfile_from_name(const char *name)
 {
-	if ( !sieve_script_file_has_extension(name) )
-		return t_strconcat(name, ".sieve", NULL);
-
-	return name;
+	return t_strconcat(name, "."SIEVE_SCRIPT_FILEEXT, NULL);
 }
+
+const char *sieve_binfile_from_name(const char *name)
+{
+	return t_strconcat(name, "."SIEVE_BINARY_FILEEXT, NULL);
+}
+
 
 /*
  * Common error handling
@@ -192,12 +189,12 @@ struct sieve_script *sieve_script_init
 			filename++;
 		}
 
-		basename = _sieve_scriptfile_get_basename(filename);
+		if ( (basename=sieve_scriptfile_get_script_name(filename)) == NULL )
+			basename = filename;
 
-		if ( *dirpath == '\0' )
-			binpath = t_strconcat(basename, ".svbin", NULL);
-		else
-			binpath = t_strconcat(dirpath, "/", basename, ".svbin", NULL);
+		binpath = sieve_binfile_from_name(basename);
+		if ( *dirpath != '\0' )
+			binpath = t_strconcat(dirpath, "/", binpath, NULL);
 				
 		if ( name == NULL ) {
 			name = basename; 
@@ -284,10 +281,10 @@ struct sieve_script *sieve_script_create_in_directory
 
 	if ( dirpath[strlen(dirpath)-1] == '/' )
 		path = t_strconcat(dirpath, 
-			_sieve_scriptfile_from_name(name), NULL);
+			sieve_scriptfile_from_name(name), NULL);
 	else
 		path = t_strconcat(dirpath, "/",
-			_sieve_scriptfile_from_name(name), NULL);
+			sieve_scriptfile_from_name(name), NULL);
 
 	return sieve_script_init(NULL, svinst, path, name, ehandler, error_r);
 }

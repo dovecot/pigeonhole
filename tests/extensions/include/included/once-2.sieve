@@ -7,6 +7,6 @@ set "result" "${result} TWO";
 
 keep;
 
-include :once "once-1.sieve";
+include :once "once-1";
 
 return;

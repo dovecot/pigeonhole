@@ -2,4 +2,4 @@ require "include";
 
 discard;
 
-include "circular-one.sieve";
+include "circular-one";

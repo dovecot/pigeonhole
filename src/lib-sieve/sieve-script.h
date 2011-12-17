@@ -16,6 +16,15 @@
 bool sieve_script_name_is_valid(const char *scriptname);
 
 /*
+ * Sieve script filenames
+ */
+ 
+bool sieve_scriptfile_has_extension(const char *filename);
+const char *sieve_scriptfile_get_script_name(const char *filename);
+const char *sieve_scriptfile_from_name(const char *name);
+const char *sieve_binfile_from_name(const char *name);
+
+/*
  * Sieve script object
  */
 
@@ -31,12 +40,6 @@ struct sieve_script *sieve_script_create_in_directory
 
 void sieve_script_ref(struct sieve_script *script);
 void sieve_script_unref(struct sieve_script **script);
-
-/*
- * Filename filter
- */
- 
-bool sieve_script_file_has_extension(const char *filename);
 
 /*
  * Accessors
