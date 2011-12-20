@@ -316,7 +316,6 @@ static bool cmd_deleteheader_generate
 static bool cmd_deleteheader_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-	struct sieve_operand oprnd;
 	int opt_code = 0;
 
 	sieve_code_dumpf(denv, "DELETEHEADER");
@@ -347,19 +346,7 @@ static bool cmd_deleteheader_operation_dump
 	if ( !sieve_opr_string_dump(denv, address, "field name") )
 		return FALSE;
 
-	sieve_code_mark(denv);
-
-	if ( !sieve_operand_read
-		(denv->sblock, address, "value patterns", &oprnd) ) {
-		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
-		return FALSE;
-	}				
-
-	if ( sieve_operand_is_omitted(&oprnd) )
-		return TRUE;
-
-	return sieve_opr_stringlist_dump_data
-		(denv, &oprnd, address, "value patterns");
+	return sieve_opr_stringlist_dump_ex(denv, address, "value patterns", "");
 }
 
 /* 
@@ -371,7 +358,6 @@ static int cmd_deleteheader_operation_execute
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	int opt_code = 0;
-	struct sieve_operand oprnd;
 	struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 	struct sieve_match_type mcht = 
@@ -423,13 +409,9 @@ static int cmd_deleteheader_operation_execute
 		<= 0 )
 		return ret;
 
-	/* Read value-patterns */	
-	if ( (ret=sieve_operand_runtime_read
-		(renv, address, "value-patterns", &oprnd)) <= 0 )
-		return ret;
-
-	if ( !sieve_operand_is_omitted(&oprnd) && (ret=sieve_opr_stringlist_read_data
-		(renv, &oprnd, address, "value-patterns", &vpattern_list)) <= 0 )
+	/* Read value-patterns */
+	if ( (ret=sieve_opr_stringlist_read_ex
+		(renv, address, "value-patterns", TRUE, &vpattern_list)) <= 0 )
 		return ret;
 	
 	/*

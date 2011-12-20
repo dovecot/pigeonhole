@@ -536,7 +536,7 @@ bool sieve_opr_string_dump
 
 bool sieve_opr_string_dump_ex
 (const struct sieve_dumptime_env *denv, sieve_size_t *address, 
-	const char *field_name, bool *literal_r)
+	const char *field_name, const char *omitted_value)
 {
 	struct sieve_operand operand;
 	
@@ -546,7 +546,11 @@ bool sieve_opr_string_dump_ex
 		return FALSE;
 	}
 
-	*literal_r = sieve_operand_is_string_literal(&operand);
+	if ( omitted_value != NULL && sieve_operand_is_omitted(&operand) ) {
+		if ( *omitted_value != '\0' )
+			sieve_code_dumpf(denv, "%s: %s", field_name, omitted_value);
+		return TRUE;
+	}
 
 	return sieve_opr_string_dump_data(denv, &operand, address, field_name);
 } 
@@ -592,7 +596,7 @@ int sieve_opr_string_read
 
 int sieve_opr_string_read_ex
 (const struct sieve_runtime_env *renv, sieve_size_t *address,
-	const char *field_name, string_t **str_r, bool *literal_r)
+	const char *field_name, bool optional, string_t **str_r, bool *literal_r)
 {
 	struct sieve_operand operand;
 	int ret;
@@ -601,7 +605,13 @@ int sieve_opr_string_read_ex
 		<= 0 )
 		return ret;
 
-	*literal_r = sieve_operand_is_string_literal(&operand);
+	if ( optional && sieve_operand_is_omitted(&operand) ) {
+		*str_r = NULL;
+		return TRUE;
+	}
+
+	if ( literal_r != NULL )
+		*literal_r = sieve_operand_is_string_literal(&operand);
 
 	return sieve_opr_string_read_data(renv, &operand, address, field_name, str_r);
 }
@@ -732,6 +742,27 @@ bool sieve_opr_stringlist_dump
 	return sieve_opr_stringlist_dump_data(denv, &operand, address, field_name);
 }
 
+bool sieve_opr_stringlist_dump_ex
+(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+	const char *field_name, const char *omitted_value) 
+{
+	struct sieve_operand operand;
+
+	sieve_code_mark(denv);
+
+	if ( !sieve_operand_read(denv->sblock, address, field_name, &operand) ) {
+		return FALSE;
+	}
+
+	if ( omitted_value != NULL && sieve_operand_is_omitted(&operand) ) {
+		if ( *omitted_value != '\0' )
+			sieve_code_dumpf(denv, "%s: %s", field_name, omitted_value);
+		return TRUE;
+	}
+
+	return sieve_opr_stringlist_dump_data(denv, &operand, address, field_name);
+}
+
 int sieve_opr_stringlist_read_data
 (const struct sieve_runtime_env *renv, struct sieve_operand *oprnd,
 	sieve_size_t *address, const char *field_name, 
@@ -794,6 +825,26 @@ int sieve_opr_stringlist_read
 	if ( (ret=sieve_operand_runtime_read(renv, address, field_name, &operand))
 		<= 0 )
 		return ret;
+	
+	return sieve_opr_stringlist_read_data
+		(renv, &operand, address, field_name, strlist_r);
+}
+
+int sieve_opr_stringlist_read_ex
+(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	const char *field_name, bool optional, struct sieve_stringlist **strlist_r)
+{
+	struct sieve_operand operand;
+	int ret;
+
+	if ( (ret=sieve_operand_runtime_read(renv, address, field_name, &operand))
+		<= 0 )
+		return ret;
+
+	if ( optional && sieve_operand_is_omitted(&operand) ) {
+		*strlist_r = NULL;
+		return TRUE;
+	}
 	
 	return sieve_opr_stringlist_read_data
 		(renv, &operand, address, field_name, strlist_r);

@@ -197,19 +197,7 @@ static bool seff_flags_dump_context
 (const struct sieve_side_effect *seffect ATTR_UNUSED, 
 	const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
-  struct sieve_operand oprnd;
-
-  if ( !sieve_operand_read(denv->sblock, address, "flags", &oprnd) ) {
-		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
-		return FALSE;
-	}
-
-	if ( sieve_operand_is_omitted(&oprnd) ) {
-		sieve_code_dumpf(denv, "flags: INTERNAL");
-		return TRUE;
-	}
-
-	return sieve_opr_stringlist_dump_data(denv, &oprnd, address, "flags");
+	return sieve_opr_stringlist_dump_ex(denv, address, "flags", "INTERNAL");
 }
 
 static struct seff_flags_context *seff_flags_get_implicit_context
@@ -252,43 +240,30 @@ static struct seff_flags_context *seff_flags_get_implicit_context
 	return ctx;
 }
 
-static int seff_flags_read_context
+static int seff_flags_do_read_context
 (const struct sieve_side_effect *seffect, 
 	const struct sieve_runtime_env *renv, sieve_size_t *address,
 	void **se_context)
 {
-	struct sieve_operand oprnd;
 	pool_t pool = sieve_result_pool(renv->result);
 	struct seff_flags_context *ctx;
 	string_t *flags_item;
-	struct sieve_stringlist *flag_list;
-	int ret;
-	
-	t_push();
+	struct sieve_stringlist *flag_list = NULL;
+	int ret;	
 
-	/* Check whether explicit flag list operand is present */
-	if ( (ret=sieve_operand_runtime_read(renv, address, "flags", &oprnd)) <= 0 ) {
- 		t_pop();
+	if ( (ret=sieve_opr_stringlist_read_ex
+		(renv, address, "flags", TRUE, &flag_list)) <= 0 )
 		return ret;
-	}
 	
-	if ( sieve_operand_is_omitted(&oprnd) ) {
+	if ( flag_list == NULL ) {
 		/* Flag list is omitted, use current value of internal 
 		 * variable to construct side effect context.
 		 */
 		*se_context = seff_flags_get_implicit_context
 			(SIEVE_OBJECT_EXTENSION(seffect), renv->result);
-		t_pop();
 		return SIEVE_EXEC_OK;
 	}
-	
-	/* Read flag-list */
-	if ( (ret=sieve_opr_stringlist_read_data
-		(renv, &oprnd, address, NULL, &flag_list)) <= 0 ) {
-		t_pop();
-		return ret;
-	}
-	
+		
 	ctx = p_new(pool, struct seff_flags_context, 1);
 	p_array_init(&ctx->keywords, pool, 2);
 
@@ -325,10 +300,22 @@ static int seff_flags_read_context
 	}
 	
 	*se_context = (void *) ctx;
-
-	t_pop();
 	
 	return SIEVE_EXEC_OK;
+}
+
+static int seff_flags_read_context
+(const struct sieve_side_effect *seffect, 
+	const struct sieve_runtime_env *renv, sieve_size_t *address,
+	void **se_context)
+{
+	int ret;
+
+	T_BEGIN {
+		ret = seff_flags_do_read_context(seffect, renv, address, se_context);
+	} T_END;
+
+	return ret;
 }
 
 /* Result verification */

@@ -209,8 +209,8 @@ static int cmd_redirect_operation_execute
 		return ret;
 
 	/* Read the address */
-	if ( (ret=sieve_opr_string_read_ex(renv, address, "address", &redirect, 
-		&literal_address)) <= 0 )
+	if ( (ret=sieve_opr_string_read_ex
+		(renv, address, "address", FALSE, &redirect, &literal_address)) <= 0 )
 		return ret;
 
 	/*

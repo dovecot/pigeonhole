@@ -183,8 +183,8 @@ static int ext_fileinto_operation_execute
 		return ret;
 
 	/* Folder operand */
-	if ( (ret=sieve_opr_string_read_ex(renv, address, "folder", &folder, 
-		&folder_literal)) <= 0 )
+	if ( (ret=sieve_opr_string_read_ex
+		(renv, address, "folder", FALSE, &folder, &folder_literal)) <= 0 )
 		return ret;
 
 	/*

@@ -331,7 +331,6 @@ static bool tst_date_operation_dump
 {
 	int opt_code = 0;
 	const struct sieve_operation *op = denv->oprtn;
-	struct sieve_operand operand;
 
 	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
 	sieve_code_descend(denv);
@@ -347,18 +346,8 @@ static bool tst_date_operation_dump
 
 		switch ( opt_code ) {
 		case OPT_DATE_ZONE:
-			if ( !sieve_operand_read(denv->sblock, address, "zone", &operand) ) {
-				sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
+			if ( !sieve_opr_string_dump_ex(denv, address, "zone", "ORIGINAL") )
 				return FALSE;
-			}				
-
-			if ( sieve_operand_is_omitted(&operand) ) {
-				sieve_code_dumpf(denv, "zone: ORIGINAL");
-			} else {
-				if ( !sieve_opr_string_dump_data
-					(denv, &operand, address, "zone") )
-					return FALSE;
-			}
 			break;
     default:
 			return FALSE;
@@ -388,7 +377,6 @@ static int tst_date_operation_execute
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_comparator cmp = 
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
-	struct sieve_operand oprnd;
 	string_t *date_part = NULL, *zone = NULL;
 	struct sieve_stringlist *hdr_list = NULL, *hdr_value_list;
 	struct sieve_stringlist *value_list, *key_list;
@@ -408,17 +396,9 @@ static int tst_date_operation_execute
 	
 		switch ( opt_code ) {
 		case OPT_DATE_ZONE:
-			if ( (ret=sieve_operand_runtime_read(renv, address, "zone", &oprnd))
-				<= 0 )
+			if ( (ret=sieve_opr_string_read_ex
+				(renv, address, "zone", TRUE, &zone, &zone_literal)) <= 0 )
 				return ret;
-
-			if ( !sieve_operand_is_omitted(&oprnd) ) {
-				if ( (ret=sieve_opr_string_read_data
-					(renv, &oprnd, address, "zone", &zone)) <= 0 )
-					return ret;
-
-				zone_literal = sieve_operand_is_string_literal(&oprnd);
-			}
 
 			zone_specified = TRUE;
 			break;
