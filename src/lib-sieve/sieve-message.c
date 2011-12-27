@@ -179,6 +179,9 @@ void sieve_message_context_unref(struct sieve_message_context **msgctx)
 
 	sieve_message_context_clear(*msgctx);
 
+	if ( (*msgctx)->context_pool != NULL )
+		pool_unref(&((*msgctx)->context_pool));
+
 	i_free(*msgctx);
 	*msgctx = NULL;
 }
