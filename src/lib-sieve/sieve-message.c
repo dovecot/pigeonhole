@@ -78,6 +78,7 @@ struct sieve_message_context {
 	ARRAY_DEFINE(ext_contexts, void *);
 
 	unsigned int edit_snapshot:1;
+	unsigned int substitute_snapshot:1;
 };
 
 /*
@@ -376,7 +377,7 @@ int sieve_message_substitute
 		return -1;
 	}
 
-	if ( msgctx->edit_snapshot ) {
+	if ( msgctx->substitute_snapshot ) {
 		version = sieve_message_version_new(msgctx);
 	} else {
 		version = sieve_message_version_get(msgctx);	
@@ -392,6 +393,7 @@ int sieve_message_substitute
 
 	sieve_message_context_flush(msgctx);
 
+	msgctx->substitute_snapshot = FALSE;
 	msgctx->edit_snapshot = FALSE;
 
 	return 1;
@@ -436,6 +438,7 @@ void sieve_message_snapshot
 (struct sieve_message_context *msgctx)
 {
 	msgctx->edit_snapshot = TRUE;
+	msgctx->substitute_snapshot = TRUE;
 }
 
 /*
