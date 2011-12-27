@@ -56,14 +56,15 @@ struct mail_raw_user {
  */
 
 static int seekable_fd_callback
-(const char **path_r, void *context ATTR_UNUSED)
+(const char **path_r, void *context)
 {
+	struct mail_user *ruser = (struct mail_user *)context;
 	const char *dir, *p;
 	string_t *path;
 	int fd;
 
- 	path = t_str_new(128);
- 	str_append(path, "/tmp/dovecot.sieve-tool.");
+	path = t_str_new(128);
+	mail_user_set_get_temp_prefix(path, ruser->set);
 	fd = safe_mkstemp(path, 0600, (uid_t)-1, (gid_t)-1);
 	if (fd == -1 && errno == ENOENT) {
 		dir = str_c(path);
@@ -95,8 +96,8 @@ static int seekable_fd_callback
 	return fd;
 }
 
-static struct istream *create_raw_stream
-(int fd, time_t *mtime_r, const char **sender)
+static struct istream *mail_raw_create_stream
+(struct mail_user *ruser, int fd, time_t *mtime_r, const char **sender)
 {
 	struct istream *input, *input2, *input_list[2];
 	const unsigned char *data;
@@ -143,7 +144,7 @@ static struct istream *create_raw_stream
 
 	input_list[0] = input2; input_list[1] = NULL;
 	input = i_stream_create_seekable(input_list, MAIL_MAX_MEMORY_BUFFER,
-		seekable_fd_callback, NULL);
+		seekable_fd_callback, (void*)ruser);
 	i_stream_unref(&input2);
 	return input;
 }
@@ -227,7 +228,7 @@ struct mail_raw *mail_raw_open_file
 	
 	if ( path == NULL || strcmp(path, "-") == 0 ) {
 		path = NULL;
-		input = create_raw_stream(0, &mtime, &sender);
+		input = mail_raw_create_stream(ruser, 0, &mtime, &sender);
 	}
 
 	mailr = mail_raw_create(ruser, input, path, sender, mtime);
