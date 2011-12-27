@@ -192,9 +192,10 @@ static const char *_parse_content_type(const struct message_header_line *hdr)
  *   Add requested message body parts to the cache that are missing. 
  */
 static bool ext_body_parts_add_missing
-(const struct sieve_message_data *msgdata, struct ext_body_message_context *ctx, 
+(struct sieve_message_context *msgctx, struct ext_body_message_context *ctx, 
 	const char * const *content_types, bool decode_to_plain)
 {
+	struct mail *mail = sieve_message_get_mail(msgctx);
 	struct ext_body_part_cached *body_part = NULL, *header_part = NULL;
 	struct message_parser_ctx *parser;
 	struct message_decoder_context *decoder;
@@ -212,9 +213,9 @@ static bool ext_body_parts_add_missing
 	}
 
 	/* Get the message stream */
-	if ( mail_get_stream(msgdata->mail, NULL, NULL, &input) < 0 )
+	if ( mail_get_stream(mail, NULL, NULL, &input) < 0 )
 		return FALSE;
-	//if (mail_get_parts(msgdata->mail, &parts) < 0)
+	//if (mail_get_parts(mail, &parts) < 0)
 	//	return FALSE;
 
 	buffer_set_used_size(ctx->tmp_buffer, 0);
@@ -395,7 +396,7 @@ static bool ext_body_get_content
 	T_BEGIN {
 		/* Fill the return_body_parts array */
 		if ( !ext_body_parts_add_missing
-			(renv->msgdata, ctx, content_types, decode_to_plain != 0) )
+			(renv->msgctx, ctx, content_types, decode_to_plain != 0) )
 			result = FALSE;
 	} T_END;
 	
@@ -419,7 +420,7 @@ static bool ext_body_get_raw
 	buffer_t *buf;
 
 	if ( ctx->raw_body == NULL ) {
-		struct mail *mail = renv->msgdata->mail;
+		struct mail *mail = sieve_message_get_mail(renv->msgctx);
 		struct istream *input;
 		struct message_size hdr_size, body_size;
 		const unsigned char *data;

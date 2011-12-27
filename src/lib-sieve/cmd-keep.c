@@ -107,8 +107,6 @@ static int cmd_keep_operation_execute
 	if ( sieve_result_add_keep(renv, slist) < 0 )
 		return SIEVE_EXEC_FAILURE;
 
-	sieve_message_snapshot(renv->msgctx);
-
 	return SIEVE_EXEC_OK;
 }
 

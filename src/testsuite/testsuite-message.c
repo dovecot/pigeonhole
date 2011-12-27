@@ -91,7 +91,7 @@ void testsuite_message_init(void)
 void testsuite_message_set_string
 (const struct sieve_runtime_env *renv, string_t *message)
 {
-	sieve_message_context_flush(renv->msgctx);
+	sieve_message_context_reset(renv->msgctx);
 
 	testsuite_mail = sieve_tool_open_data_as_mail(sieve_tool, message);
 	testsuite_message_set_data(testsuite_mail);
@@ -100,7 +100,7 @@ void testsuite_message_set_string
 void testsuite_message_set_file
 (const struct sieve_runtime_env *renv, const char *file_path)
 {
-	sieve_message_context_flush(renv->msgctx);
+	sieve_message_context_reset(renv->msgctx);
 
 	testsuite_mail = sieve_tool_open_file_as_mail(sieve_tool, file_path);
 	testsuite_message_set_data(testsuite_mail);
@@ -109,7 +109,7 @@ void testsuite_message_set_file
 void testsuite_message_set_mail
 (const struct sieve_runtime_env *renv, struct mail *mail)
 {
-	sieve_message_context_flush(renv->msgctx);
+	sieve_message_context_reset(renv->msgctx);
 
 	testsuite_message_set_data(mail);
 }
@@ -122,7 +122,7 @@ void testsuite_message_deinit(void)
 void testsuite_envelope_set_sender
 (const struct sieve_runtime_env *renv, const char *value)
 {
-	sieve_message_context_flush(renv->msgctx);
+	sieve_message_context_reset(renv->msgctx);
 
 	str_truncate(envelope_from, 0);
 
@@ -135,7 +135,7 @@ void testsuite_envelope_set_sender
 void testsuite_envelope_set_recipient
 (const struct sieve_runtime_env *renv, const char *value)
 {
-	sieve_message_context_flush(renv->msgctx);
+	sieve_message_context_reset(renv->msgctx);
 
 	str_truncate(envelope_to, 0);
 
@@ -149,7 +149,7 @@ void testsuite_envelope_set_recipient
 void testsuite_envelope_set_orig_recipient
 (const struct sieve_runtime_env *renv, const char *value)
 {
-	sieve_message_context_flush(renv->msgctx);
+	sieve_message_context_reset(renv->msgctx);
 
 	str_truncate(envelope_orig_to, 0);
 
@@ -162,7 +162,7 @@ void testsuite_envelope_set_orig_recipient
 void testsuite_envelope_set_auth_user
 (const struct sieve_runtime_env *renv, const char *value)
 {
-	sieve_message_context_flush(renv->msgctx);
+	sieve_message_context_reset(renv->msgctx);
 
 	str_truncate(envelope_auth, 0);
 

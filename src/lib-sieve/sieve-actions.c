@@ -231,8 +231,8 @@ int sieve_act_store_add_to_result
 	act = p_new(pool, struct act_store_context, 1);
 	act->mailbox = p_strdup(pool, mailbox);
 
-	return sieve_result_add_action(renv, NULL, &act_store, seffects,
-		(void *) act, 0);
+	return sieve_result_add_action
+		(renv, NULL, &act_store, seffects, (void *)act, 0, TRUE);
 }
 
 void sieve_act_store_add_flags

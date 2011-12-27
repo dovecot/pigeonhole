@@ -728,7 +728,7 @@ static int ext_vacation_operation_execute
 	}	
 		
 	if ( sieve_result_add_action
-		(renv, this_ext, &act_vacation, slist, (void *) act, 0) < 0 )
+		(renv, this_ext, &act_vacation, slist, (void *) act, 0, FALSE) < 0 )
 		return SIEVE_EXEC_FAILURE;
 
 	return SIEVE_EXEC_OK;	

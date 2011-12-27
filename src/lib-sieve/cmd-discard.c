@@ -109,7 +109,7 @@ static int cmd_discard_operation_execute
 		"discard action; cancel implicit keep");
 
 	if ( sieve_result_add_action
-		(renv, NULL, &act_discard, NULL, NULL, 0) < 0 )
+		(renv, NULL, &act_discard, NULL, NULL, 0, FALSE) < 0 )
 		return SIEVE_EXEC_FAILURE;
 
 	return SIEVE_EXEC_OK;

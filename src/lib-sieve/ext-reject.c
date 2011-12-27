@@ -306,7 +306,7 @@ static int ext_reject_operation_execute
 	act->ereject = ( sieve_operation_is(oprtn, ereject_operation) );
 
 	if ( sieve_result_add_action
-		(renv, this_ext, &act_reject, slist, (void *) act, 0) < 0 )
+		(renv, this_ext, &act_reject, slist, (void *) act, 0, FALSE) < 0 )
 		return SIEVE_EXEC_FAILURE;
 
 	return SIEVE_EXEC_OK;

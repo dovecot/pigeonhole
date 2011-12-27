@@ -117,8 +117,8 @@ void sieve_result_add_implicit_side_effect
 int sieve_result_add_action
 	(const struct sieve_runtime_env *renv, const struct sieve_extension *ext,
 		const struct sieve_action_def *act_def,
-		struct sieve_side_effects_list *seffects,
-		void *context, unsigned int instance_limit);
+		struct sieve_side_effects_list *seffects,	void *context,
+		unsigned int instance_limit, bool preserve_mail);
 int sieve_result_add_keep
 	(const struct sieve_runtime_env *renv,
 		struct sieve_side_effects_list *seffects);

@@ -117,7 +117,8 @@ struct sieve_result *sieve_result_create
 	result->action_env.result = result;
 	result->action_env.scriptenv = senv;
 	result->action_env.msgdata = msgdata;
-	result->action_env.msgctx = sieve_message_context_create(svinst, msgdata); 
+	result->action_env.msgctx = sieve_message_context_create
+		(svinst, senv->user, msgdata); 
 		
 	result->keep_action.def = &act_store;
 	result->keep_action.ext = NULL;
@@ -448,13 +449,12 @@ static int _sieve_result_add_action
 (const struct sieve_runtime_env *renv, const struct sieve_extension *ext,
 	const struct sieve_action_def *act_def,
 	struct sieve_side_effects_list *seffects,
-	void *context, unsigned int instance_limit, bool keep)
+	void *context, unsigned int instance_limit, bool preserve_mail, bool keep)
 {
 	int ret = 0;
 	unsigned int instance_count = 0;
 	struct sieve_instance *svinst = renv->svinst;
 	struct sieve_result *result = renv->result;
-	struct mail *mail = sieve_message_get_mail(renv->msgctx);
 	struct sieve_result_action *raction = NULL, *kaction = NULL;
 	struct sieve_action action;
 
@@ -584,7 +584,6 @@ static int _sieve_result_add_action
 	raction->action.def = act_def;
 	raction->action.ext = ext;
 	raction->action.location = p_strdup(result->pool, action.location);
-	raction->action.mail = mail;
 	raction->keep = keep;
 
 	if ( raction->prev == NULL ) {
@@ -648,6 +647,13 @@ static int _sieve_result_add_action
 			}
 		}
 	}
+
+	if ( preserve_mail ) {
+		raction->action.mail = sieve_message_get_mail(renv->msgctx);	
+		sieve_message_snapshot(renv->msgctx);
+	} else {
+		raction->action.mail = NULL;
+	}
 	
 	return 0;
 }
@@ -655,11 +661,11 @@ static int _sieve_result_add_action
 int sieve_result_add_action
 (const struct sieve_runtime_env *renv, const struct sieve_extension *ext,
 	const struct sieve_action_def *act_def,
-	struct sieve_side_effects_list *seffects,
-	void *context, unsigned int instance_limit)
+	struct sieve_side_effects_list *seffects,	void *context,
+	unsigned int instance_limit, bool preserve_mail)
 {
-	return _sieve_result_add_action
-		(renv, ext, act_def, seffects, context, instance_limit, FALSE);
+	return _sieve_result_add_action(renv, ext, act_def, seffects, context,
+		instance_limit, preserve_mail, FALSE);
 }
 
 int sieve_result_add_keep
@@ -667,7 +673,7 @@ int sieve_result_add_keep
 {
 	return _sieve_result_add_action
 		(renv, renv->result->keep_action.ext, renv->result->keep_action.def, 
-			seffects, NULL, 0, TRUE);
+			seffects, NULL, 0, TRUE, TRUE);
 }
 
 void sieve_result_set_keep_action

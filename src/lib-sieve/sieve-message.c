@@ -7,7 +7,12 @@
 #include "array.h"
 #include "str.h"
 #include "str-sanitize.h"
+#include "istream.h"
 #include "mail-storage.h"
+#include "mail-user.h"
+#include "master-service.h"
+#include "master-service-settings.h"
+#include "raw-storage.h"
 
 #include "edit-mail.h"
 
@@ -39,12 +44,21 @@ const char *sieve_message_get_new_id
  * Message context 
  */
 
+struct sieve_message_version {
+	struct mail *mail;
+	struct mailbox *box;
+	struct mailbox_transaction_context *trans;
+	struct edit_mail *edit_mail;
+};
+
 struct sieve_message_context {
 	pool_t pool;
+	pool_t context_pool;
 	int refcount;
 
 	struct sieve_instance *svinst; 
 
+	struct mail_user *mail_user;
 	const struct sieve_message_data *msgdata;
 
 	/* Normalized envelope addresses */
@@ -55,9 +69,10 @@ struct sieve_message_context {
 	const struct sieve_address *envelope_orig_recipient;
 	const struct sieve_address *envelope_final_recipient;
 
-	/* Edited mail struct */
+	/* Message versioning */
 
-	struct edit_mail *edit_mail;
+	struct mail_user *raw_mail_user;
+	ARRAY_DEFINE(versions, struct sieve_message_version);
 
 	/* Context data for extensions */
 	ARRAY_DEFINE(ext_contexts, void *);
@@ -65,18 +80,63 @@ struct sieve_message_context {
 	unsigned int edit_snapshot:1;
 };
 
+/*
+ * Message versions
+ */
+
+static inline struct sieve_message_version *sieve_message_version_new
+(struct sieve_message_context *msgctx)
+{
+	return array_append_space(&msgctx->versions);
+}
+
+static inline struct sieve_message_version *sieve_message_version_get
+(struct sieve_message_context *msgctx)
+{
+	struct sieve_message_version *versions;
+	unsigned int count;
+
+	versions = array_get_modifiable(&msgctx->versions, &count);
+	if ( count == 0 )
+		return array_append_space(&msgctx->versions);
+	
+	return &versions[count-1];
+}
+
+static inline void sieve_message_version_free
+(struct sieve_message_version *version)
+{
+	if ( version->edit_mail != NULL ) {
+		edit_mail_unwrap(&version->edit_mail);
+		version->edit_mail = NULL;
+	}
+
+	if ( version->mail != NULL ) {
+		mail_free(&version->mail);
+		mailbox_transaction_rollback(&version->trans);
+		mailbox_free(&version->box);
+		version->mail = NULL;
+	}
+}
+
+/*
+ * Message context object
+ */
+
 struct sieve_message_context *sieve_message_context_create
-(struct sieve_instance *svinst, const struct sieve_message_data *msgdata)
+(struct sieve_instance *svinst, struct mail_user *mail_user,
+	const struct sieve_message_data *msgdata)
 {
 	struct sieve_message_context *msgctx;
-	
+
 	msgctx = i_new(struct sieve_message_context, 1);
 	msgctx->refcount = 1;
 	msgctx->svinst = svinst;
 
+	msgctx->mail_user = mail_user;
 	msgctx->msgdata = msgdata;
 
-	sieve_message_context_flush(msgctx);
+	sieve_message_context_reset(msgctx);
 
 	return msgctx;
 }
@@ -86,50 +146,69 @@ void sieve_message_context_ref(struct sieve_message_context *msgctx)
 	msgctx->refcount++;
 }
 
-void sieve_message_context_unref(struct sieve_message_context **msgctx)
+static void sieve_message_context_clear(struct sieve_message_context *msgctx)
 {
-	i_assert((*msgctx)->refcount > 0);
-
-	if (--(*msgctx)->refcount != 0)
-		return;
-	
-	pool_unref(&((*msgctx)->pool));
-
-	if ( (*msgctx)->edit_mail != NULL )
-		edit_mail_unwrap(&(*msgctx)->edit_mail);
-		
-	i_free(*msgctx);
-	*msgctx = NULL;
-}
-
-void sieve_message_context_flush(struct sieve_message_context *msgctx)
-{
-	pool_t pool;
+	struct sieve_message_version *versions;
+	unsigned int count, i;
 
 	if ( msgctx->pool != NULL ) {
-		pool_unref(&msgctx->pool);
-	}
+		versions = array_get_modifiable(&msgctx->versions, &count);
 
-	pool = pool_alloconly_create("sieve_message_context", 1024);
-	msgctx->pool = pool;
+		for ( i = 0; i < count; i++ ) {
+			sieve_message_version_free(&versions[i]);
+		}
+
+		pool_unref(&(msgctx->pool));
+	}
 
 	msgctx->envelope_orig_recipient = NULL;
 	msgctx->envelope_final_recipient = NULL;
 	msgctx->envelope_sender = NULL;
 	msgctx->envelope_parsed = FALSE;
+}
 
-	p_array_init(&msgctx->ext_contexts, pool, 
+void sieve_message_context_unref(struct sieve_message_context **msgctx)
+{	
+	i_assert((*msgctx)->refcount > 0);
+
+	if (--(*msgctx)->refcount != 0)
+		return;
+		
+	if ( (*msgctx)->raw_mail_user != NULL )
+		mail_user_unref(&(*msgctx)->raw_mail_user);
+
+	sieve_message_context_clear(*msgctx);
+
+	i_free(*msgctx);
+	*msgctx = NULL;
+}
+
+static void sieve_message_context_flush(struct sieve_message_context *msgctx)
+{
+	if ( msgctx->context_pool != NULL )
+		pool_unref(&(msgctx->context_pool));
+	
+	msgctx->context_pool =
+		pool_alloconly_create("sieve_message_context_data", 1024);
+
+	p_array_init(&msgctx->ext_contexts, msgctx->context_pool, 
 		sieve_extensions_get_count(msgctx->svinst));
+}
 
-	if ( msgctx->edit_mail != NULL ) {
-		edit_mail_unwrap(&msgctx->edit_mail);
-		msgctx->edit_mail = NULL;
-	}
+void sieve_message_context_reset(struct sieve_message_context *msgctx)
+{
+	sieve_message_context_clear(msgctx);
+
+	msgctx->pool = pool_alloconly_create("sieve_message_context", 1024);
+
+	p_array_init(&msgctx->versions, msgctx->pool, 4);
+
+	sieve_message_context_flush(msgctx);
 }
 
 pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
 {
-	return msgctx->pool;
+	return msgctx->context_pool;
 }
 
 /* Extension support */
@@ -261,29 +340,93 @@ const char *sieve_message_get_sender
 	return sieve_address_to_string(msgctx->envelope_sender);
 }
 
-/* Mail */
+/*
+ * Mail
+ */
+
+int sieve_message_substitute
+(struct sieve_message_context *msgctx, struct istream *input)
+{
+	static const char *wanted_headers[] = {
+		"From", "Message-ID", "Subject", "Return-Path", NULL
+	};
+	struct mail_user *mail_user = msgctx->mail_user;
+	struct sieve_message_version *version;
+	struct mailbox_header_lookup_ctx *headers_ctx;
+	struct mailbox *box = NULL;
+	int ret;
+
+	if ( msgctx->raw_mail_user == NULL ) {
+		void **sets = master_service_settings_get_others(master_service);
+
+		msgctx->raw_mail_user =
+			raw_storage_create_from_set(mail_user->set_info, sets[0]);
+	}
+
+	i_stream_seek(input, 0);
+	ret = raw_mailbox_alloc_stream(msgctx->raw_mail_user, input, (time_t)-1,
+		sieve_message_get_sender(msgctx), &box);
+
+	if ( ret < 0 ) {
+		sieve_sys_error(msgctx->svinst, "can't open substituted mail as raw: %s",
+			mailbox_get_last_error(box, NULL));
+		return -1;
+	}
+
+	if ( msgctx->edit_snapshot ) {
+		version = sieve_message_version_new(msgctx);
+	} else {
+		version = sieve_message_version_get(msgctx);	
+		sieve_message_version_free(version);
+	}
+
+	version->box = box;
+	version->trans = mailbox_transaction_begin(box, 0);
+	headers_ctx = mailbox_header_lookup_init(box, wanted_headers);
+	version->mail = mail_alloc(version->trans, 0, headers_ctx);
+	mailbox_header_lookup_unref(&headers_ctx);
+	mail_set_seq(version->mail, 1);
+
+	sieve_message_context_flush(msgctx);
+
+	msgctx->edit_snapshot = FALSE;
+
+	return 1;
+}
 
 struct mail *sieve_message_get_mail
 (struct sieve_message_context *msgctx)
 {
-	if ( msgctx->edit_mail == NULL )
+	const struct sieve_message_version *versions;
+	unsigned int count;
+	
+	versions = array_get(&msgctx->versions, &count); 
+	if ( count == 0 )
 		return msgctx->msgdata->mail;
 
-	return edit_mail_get_mail(msgctx->edit_mail);
+	if ( versions[count-1].edit_mail != NULL )
+		return edit_mail_get_mail(versions[count-1].edit_mail);
+
+	return versions[count-1].mail;
 }
 
 struct edit_mail *sieve_message_edit
 (struct sieve_message_context *msgctx)
 {
-	if ( msgctx->edit_mail == NULL ) {
-		msgctx->edit_mail = edit_mail_wrap(msgctx->msgdata->mail);
+	struct sieve_message_version *version;
+
+	version = sieve_message_version_get(msgctx);
+
+	if ( version->edit_mail == NULL ) {
+		version->edit_mail = edit_mail_wrap
+			(( version->mail == NULL ? msgctx->msgdata->mail : version->mail ));
 	} else if ( msgctx->edit_snapshot ) {	
-		msgctx->edit_mail = edit_mail_snapshot(msgctx->edit_mail); 
+		version->edit_mail = edit_mail_snapshot(version->edit_mail); 
 	}
 
 	msgctx->edit_snapshot = FALSE;
 
-	return msgctx->edit_mail; 
+	return version->edit_mail; 
 }
 
 void sieve_message_snapshot

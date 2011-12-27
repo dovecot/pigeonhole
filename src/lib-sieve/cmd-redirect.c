@@ -248,10 +248,8 @@ static int cmd_redirect_operation_execute
 
 	if ( sieve_result_add_action
 		(renv, NULL, &act_redirect, slist, (void *) act,
-			svinst->max_redirects) < 0 )
+			svinst->max_redirects, TRUE) < 0 )
 		return SIEVE_EXEC_FAILURE;
-
-	sieve_message_snapshot(renv->msgctx);
 
 	return SIEVE_EXEC_OK;
 }
