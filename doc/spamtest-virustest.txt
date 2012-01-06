@@ -15,8 +15,8 @@ need to be checked and how the scanner's verdict is represented in the header
 field value. They only need to know how to use the spamtest (spamtestplus) and 
 virustest extensions. This also gives GUI-based Sieve editors the means to 
 provide a portable and easy to install interface for spam and virus filter 
-configuration. The burden of specifying which headers need to be checked and
-how the scanner output is represented falls onto the Sieve administrator.
+configuration. The burden of specifying which headers need to be checked and how
+the scanner output is represented falls onto the Sieve administrator.
 
 Configuration
 =============
@@ -37,14 +37,14 @@ sieve_spamtest_status_type = "score" / "strlen" / "text"
 
 sieve_spamtest_status_header = <header-field> [ ":" <regexp> ]
   This specifies the header field that contains the result information of the
-  spam scanner and it may express the syntax of the content of the header. If
-  no matching header is found in the message, the spamtest command will match 
+  spam scanner and it may express the syntax of the content of the header. If no
+  matching header is found in the message, the spamtest command will match
   against "0". 
 
   This is a structured setting. The first part specifies the header field name. 
-  Optionally, a POSIX regular expression follows the header field name, 
+  Optionally, a POSIX regular expression follows the header field name,
   separated by a colon. Any whitespace directly following the colon is not part
-  of the regular expression. If the regular expression is ommitted, any header
+  of the regular expression. If the regular expression is omitted, any header
   content is accepted and the full header value is used. When a regular
   expression is used, it must specify one match value (inside brackets) that 
   yields the desired spam scanner result. If the header does not match the
@@ -62,18 +62,17 @@ sieve_spamtest_max_header = <header-field> [ ":" <regexp> ]
   `sieve_spamtext_status_header' setting.
 
 sieve_spamtest_text_valueX =
-  When the `sieve_spamtest_status_type' setting is set to "text", these
-  settings specify that the spamtest command will match against "X" when
-  the specified string is equal to the text (extracted) from the status 
-  header. For spamtest, values of X between 0 and 10 are recognized, while
-  virustest only uses values between 0 and 5.
+  When the `sieve_spamtest_status_type' setting is set to "text", these settings
+  specify that the spamtest command will match against "X" when the specified
+  string is equal to the text (extracted) from the status header. For spamtest,
+  values of X between 0 and 10 are recognized, while virustest only uses values
+  between 0 and 5.
 
 Examples
 ========
 
-This section shows several configuration examples. Each example shows a
-specimen of valid virus/spam test headers that the given configuration will
-work on. 
+This section shows several configuration examples. Each example shows a specimen
+of valid virus/spam test headers that the given configuration will work on. 
 
 Example 1
 ---------

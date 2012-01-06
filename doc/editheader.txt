@@ -23,14 +23,14 @@ values are indicated):
 
 sieve_editheader_max_header_size = 2048
   The maximum size in bytes of a header field value passed to the addheader
-  command. The minumum value for this setting is 1024 bytes. The value is in
+  command. The minimum value for this setting is 1024 bytes. The value is in
 	bytes, unless followed by a k(ilo).
 
 sieve_editheader_protected =
   A space-separated list of headers that cannot be added to nor removed from the
 	message header. The `Received:' and `Auto-Submitted:' fields are always
 	protected and the `Subject:' header cannot be protected, as required by the
-  RFC specificiation; adding one of these headers to this setting has no effect.
+  RFC specification; adding one of these headers to this setting has no effect.
 
 Invalid values for the settings above will make the Sieve interpreter log
 a warning and revert to the default values. 
