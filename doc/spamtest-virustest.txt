@@ -3,7 +3,7 @@ Spamtest and Virustest Extensions
 Relevant Specifications
 =======================
 
-	RFC5235 - doc/rfc/spamvirustest.rfc5235.txt
+  RFC5235 - doc/rfc/spamvirustest.rfc5235.txt
 
 Description
 ===========
@@ -128,7 +128,7 @@ plugin {
   sieve_spamtest_status_header = \
     X-Spam-Score: score=(-?[[:digit:]]+\.[[:digit:]]).*
   sieve_spamtest_max_header = \
-   X-Spam-Score: score=-?[[:digit:]]+\.[[:digit:]] required=([[:digit:]]+\.[[:digit:]])
+    X-Spam-Score: score=-?[[:digit:]]+\.[[:digit:]] required=([[:digit:]]+\.[[:digit:]])
 
   sieve_virustest_status_type = text
   sieve_virustest_status_header = X-Virus-Scan: Found to be (.+)\.

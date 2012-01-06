@@ -3,8 +3,8 @@ Vacation Extension
 Relevant specifications
 =======================
 
-	RFC5230 - doc/rfc/vacation.rfc5230.txt
-	RFC6131 - doc/rfc/vacation-seconds.rfc6131.txt
+  RFC5230 - doc/rfc/vacation.rfc5230.txt
+  RFC6131 - doc/rfc/vacation-seconds.rfc6131.txt
 
 Description
 ===========

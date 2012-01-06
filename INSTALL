@@ -105,15 +105,15 @@ plugin section of the config file (default values are shown if applicable):
    that are still under development. Some system administrators may want to 
    disable certain Sieve extensions or enable those that are not available by 
    default. This setting can use '+' and '-' to specify differences relative to
-	 the default. For example `sieve_extensions = +imapflags' will enable the
-	 deprecated imapflags extension in addition to all extensions were already
+   the default. For example `sieve_extensions = +imapflags' will enable the
+   deprecated imapflags extension in addition to all extensions were already
    enabled by default. 
 
  sieve_global_extensions =
    Which Sieve language extensions are ONLY avalable in global scripts. This can
    be used to restrict the use of certain Sieve extensions to administrator
    control, for instance when these extensions can cause security concerns. This
-	 setting has higher precedence than the `sieve_extensions' setting (above),
+   setting has higher precedence than the `sieve_extensions' setting (above),
    meaning that the extensions enabled with this setting are never available to
    the user's personal script no matter what is specified for the 
    `sieve_extensions' setting. The syntax of this setting is similar to
