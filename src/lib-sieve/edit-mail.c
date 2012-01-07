@@ -1,3 +1,6 @@
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
+ */
+
 #include "lib.h"
 #include "array.h"
 #include "str.h"
