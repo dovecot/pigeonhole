@@ -114,6 +114,7 @@ struct act_redirect_context {
 static bool cmd_redirect_validate
 (struct sieve_validator *validator, struct sieve_command *cmd) 
 {
+	struct sieve_instance *svinst = sieve_validator_svinst(validator);
 	struct sieve_ast_argument *arg = cmd->first_positional;
 
 	/* Check and activate address argument */
@@ -151,6 +152,13 @@ static bool cmd_redirect_validate
 
 		return ( norm_address != NULL );
 	}
+
+	if ( svinst->max_redirects == 0 ) {
+		sieve_command_validate_error(validator, cmd,
+			"local policy prohibits the use of a redirect action");
+		return FALSE;
+	}
+
 
 	return TRUE;
 }
@@ -231,6 +239,12 @@ static int cmd_redirect_operation_execute
 		}
 	} else {
 		norm_address = str_c(redirect);
+	}
+
+	if ( svinst->max_redirects == 0 ) {
+		sieve_runtime_error(renv, NULL,
+			"local policy prohibits the use of a redirect action");
+		return SIEVE_EXEC_FAILURE;
 	}
 
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_ACTIONS) ) {

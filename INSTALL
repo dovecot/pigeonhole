@@ -161,17 +161,16 @@ Sieve Interpreter - Configurable Limits
 
  sieve_max_script_size = 1M
    The maximum size of a Sieve script. The compiler will refuse to compile any
-   script larger than this limit. 
+   script larger than this limit. If set to 0, no limit on the script size is
+   enforced.
 
  sieve_max_actions = 32
    The maximum number of actions that can be performed during a single script
-   execution.
+   execution. If set to 0, no limit on the total number of actions is enforced.
 
  sieve_max_redirects = 4
    The maximum number of redirect actions that can be performed during a single
-   script execution.
-
-A value of 0 for these settings means that the limit is not enforced.
+   script execution. If set to 0, no redirect actions are allowed.
 
 Sieve Interpreter - Per-user Sieve script location
 --------------------------------------------------
@@ -495,15 +494,16 @@ dictated by the configuration of the Sieve plugin. The limits are configured in
 the plugin section of the Dovecot configuration as follows:
 
  sieve_max_script_size = 1M
-   The maximum size of a Sieve script.
+   The maximum size of a Sieve script. If set to 0, no limit on the script size
+   is enforced.
 
  sieve_quota_max_scripts = 0
-   The maximum number of personal Sieve scripts a single user can have.
+   The maximum number of personal Sieve scripts a single user can have. If set
+   to 0, no limit on the number of scripts is enforced.
 
  sieve_quota_max_storage = 0
-   The maximum amount of disk storage a single user's scripts may occupy.
-
-A value of 0 for these settings means that no limit is enforced.
+   The maximum amount of disk storage a single user's scripts may occupy. If set
+   to 0, no limit on the used amount of disk storage is enforced.
 
 ManageSieve Service - Proxying
 ------------------------------
