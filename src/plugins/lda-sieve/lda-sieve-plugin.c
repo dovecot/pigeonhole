@@ -202,11 +202,11 @@ static const char *lda_sieve_get_default_path
 {
 	const char *script_path;
 
-	/* Use global script path, if one exists */
-	script_path = mail_user_plugin_getenv(user, "sieve_global_path");
-	if (script_path == NULL) {
+	/* Use default script path, if one exists */
+	script_path = mail_user_plugin_getenv(user, "sieve_default");
+	if ( script_path == NULL ) {
 		/* For backwards compatibility */
-		script_path = mail_user_plugin_getenv(user, "global_script_path");
+		script_path = mail_user_plugin_getenv(user, "sieve_global_path");
 	}
 
 	return script_path;

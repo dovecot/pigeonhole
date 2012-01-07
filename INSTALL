@@ -87,11 +87,15 @@ plugin section of the config file (default values are shown if applicable):
  sieve = ~/.dovecot.sieve
    The path to the user's main active script. 
  
- sieve_global_path
-   A path to a global sieve script file, which gets executed ONLY if user's 
-   private Sieve script doesn't exist, e.g. /var/lib/dovecot/default.sieve. Be 
-   sure to pre-compile this script manually using the sievec command line tool,
-   as explained in the README file. 
+ sieve_default = 
+   The path to the default personal sieve script file, which gets executed ONLY
+   if user's private Sieve script does no exist, e.g.
+   /var/lib/dovecot/default.sieve. This is usually a global script, so sure to
+   pre-compile this script manually using the sievec command line tool, as
+   explained in the README file.
+
+ sieve_global_path =
+   This is the DEPRECATED former name of the sieve_default setting.
 
  sieve_global_dir =
    Directory for :global include scripts for the Sieve include extension. 
@@ -144,7 +148,7 @@ plugin {
 
   # If the user has no personal active script (i.e. if the file 
   # indicated in sieve= does not exist), use this one:
-  sieve_global_path = /var/lib/dovecot/sieve/default.sieve
+  sieve_default = /var/lib/dovecot/sieve/default.sieve
 
   # The include extension fetches the :personal scripts from this 
   # directory. When ManageSieve is used, this is also where scripts 
@@ -207,10 +211,8 @@ Sieve Interpreter - Executing Multiple Scripts Sequentially
 Pigeonhole's Sieve interpreter allows executing multiple Sieve scripts 
 sequentially. The extra scripts can be executed before and after the user's
 private script. For example, this allows executing global Sieve policies before
-the user's script. This is not possible using the sieve_global_path setting, 
-because that is only used as a default when the user's private script does not
-exist. The following settings in the plugin section of the Dovecot config file
-control the execution sequence:
+the user's script. The following settings in the plugin section of the Dovecot
+config file control the execution sequence:
 
  sieve_before =
    Path to a script file or a directory containing script files that need to be
