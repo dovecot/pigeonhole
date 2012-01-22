@@ -113,6 +113,7 @@ bool managesieve_client_auth_handle_reply
 
 	i_assert(reply->nologin);
 
+	msieve_client->auth_response_input = NULL;
 	managesieve_parser_reset(msieve_client->parser);
 
 	if ( !client->destroyed ) 
@@ -135,16 +136,20 @@ void managesieve_client_auth_send_challenge
 		client_send_raw_data(client, str_c(str), str_len(str));
 	} T_END;
 
+	msieve_client->auth_response_input = NULL;
 	managesieve_parser_reset(msieve_client->parser);
 }
 
-int managesieve_client_auth_parse_response(struct client *client)
+static int managesieve_client_auth_read_response
+(struct managesieve_client *msieve_client, bool initial, const char **error_r)
 {
-	struct managesieve_client *msieve_client =
-		(struct managesieve_client *) client;
+	struct client *client = &msieve_client->common;
 	struct managesieve_arg *args;
-	const char *msg;
+	const char *error;
 	bool fatal;
+	const unsigned char *data;
+	size_t size;
+	int ret;
 
 	if ( i_stream_read(client->input) == -1 ) {	
 		/* disconnected */
@@ -152,40 +157,127 @@ int managesieve_client_auth_parse_response(struct client *client)
 		return -1;
 	}
 
-	if ( msieve_client->skip_line ) {
-		if ( i_stream_next_line(client->input) == NULL )
-			return 0;
+	if ( msieve_client->auth_response_input == NULL ) {
 
-		msieve_client->skip_line = FALSE;
-	}
+		if ( msieve_client->skip_line ) {
+			if ( i_stream_next_line(client->input) == NULL )
+				return 0;
 
-	switch ( managesieve_parser_read_args(msieve_client->parser, 0, 0, &args) ) {
-	case -1:
-		/* error */
-		msg = managesieve_parser_get_error(msieve_client->parser, &fatal);
-		if (fatal) {
-			/* FIXME: What to do? */
+			msieve_client->skip_line = FALSE;
 		}
 
-		if ( i_stream_next_line(client->input) == NULL )
+		switch ( managesieve_parser_read_args(msieve_client->parser, 0,
+			MANAGESIEVE_PARSE_FLAG_STRING_STREAM, &args) ) {
+		case -1:
+			error = managesieve_parser_get_error(msieve_client->parser, &fatal);
+			if (fatal) {
+				client_send_bye(client, error);
+				client_destroy(client, t_strconcat
+					("Disconnected: parse error during auth: ", error, NULL));
+				*error_r = NULL;
+			} else {
+				*error_r = error;
+			}
 			msieve_client->skip_line = TRUE;
-		sasl_server_auth_failed(client, msg);
-		return -1;
-	case -2:
-		/* not enough data */
-		return 0;
+			return -1;
+
+		case -2:
+			/* not enough data */
+			return 0;
+
+		default:
+			break;
+		}
+
+		if (args[0].type == MANAGESIEVE_ARG_EOL) {
+			if (!initial) {
+				*error_r = "Received empty AUTHENTICATE client response line.";
+				msieve_client->skip_line = TRUE;
+				return -1;
+			}
+			msieve_client->skip_line = TRUE;
+			return 1;
+		}
+
+		if ( args[0].type != MANAGESIEVE_ARG_STRING_STREAM || 
+			args[1].type != MANAGESIEVE_ARG_EOL ) {
+			if ( !initial )
+				*error_r = "Invalid AUTHENTICATE client response.";
+			else
+				*error_r = "Invalid AUTHENTICATE initial response.";
+			msieve_client->skip_line = TRUE;
+			return -1;
+		}
+
+		msieve_client->auth_response_input =
+			MANAGESIEVE_ARG_STR_STREAM(&args[0]);
+
+		if ( i_stream_get_size
+			(msieve_client->auth_response_input, FALSE, &size) <= 0 )
+			size = 0;
+
+		if (client->auth_response == NULL)
+			client->auth_response = str_new(default_pool, I_MAX(size+1, 256));
 	}
-	
+
+	while ( (ret=i_stream_read_data
+		(msieve_client->auth_response_input, &data, &size, 0) ) > 0 ) {
+
+		if (str_len(client->auth_response) + size > LOGIN_MAX_AUTH_BUF_SIZE) {
+			client_destroy(client, "Authentication response too large");
+			*error_r = NULL;
+			return -1;
+		}
+
+		str_append_n(client->auth_response, data, size);
+		i_stream_skip(msieve_client->auth_response_input, size);
+	}
+
+	if ( ret == 0 ) return 0;
+
+	if ( msieve_client->auth_response_input->stream_errno != 0 ) {
+		if ( msieve_client->auth_response_input->stream_errno == EPROTO ) {
+			error = managesieve_parser_get_error(msieve_client->parser, &fatal);
+			if (error != NULL ) {
+				if (fatal) {
+					client_send_bye(client, error);
+					client_destroy(client, t_strconcat
+						("Disconnected: parse error during auth: ", error, NULL));
+					*error_r = NULL;
+				} else {
+					msieve_client->skip_line = TRUE;
+					*error_r = t_strconcat
+						("Error in AUTHENTICATE response string: ", error, NULL);
+				}
+				return -1;
+			}
+		}
+
+		client_destroy(client, "Disconnected");
+		return -1;
+	}
+
 	if ( i_stream_next_line(client->input) == NULL )
 		msieve_client->skip_line = TRUE;
 
-	if ( args[0].type != MANAGESIEVE_ARG_STRING || 
-		args[1].type != MANAGESIEVE_ARG_EOL ) {
-		sasl_server_auth_failed(client, "Invalid AUTHENTICATE client response.");
+	return 1;
+}
+
+int managesieve_client_auth_parse_response(struct client *client)
+{
+	struct managesieve_client *msieve_client =
+		(struct managesieve_client *) client;
+	const char *error = NULL;
+	int ret;
+
+	if ( (ret=managesieve_client_auth_read_response(msieve_client, FALSE, &error))
+		< 0 ) {
+		if ( error != NULL )
+			sasl_server_auth_failed(client, error);
 		return -1;
 	}
 
-	str_append(client->auth_response, MANAGESIEVE_ARG_STR(&args[0]));
+	if ( ret == 0 ) return 0;
 
 	if ( strcmp(str_c(client->auth_response), "*") == 0 ) {
 		sasl_server_auth_abort(client);
@@ -198,35 +290,56 @@ int managesieve_client_auth_parse_response(struct client *client)
 int cmd_authenticate
 (struct managesieve_client *msieve_client, struct managesieve_arg *args)
 {
-	const char *mech_name, *init_resp = NULL;
+	/* NOTE: This command's input is handled specially because the
+	   SASL-IR can be large. */
+	struct client *client = &msieve_client->common;
+	const char *mech_name, *init_response;
+	const char *error;
 	int ret;
+	
+	if (!msieve_client->auth_mech_name_parsed) {
+		i_assert(args != NULL);
 
-	/* one mandatory argument: authentication mechanism name */
-	if (args[0].type != MANAGESIEVE_ARG_STRING)
-		return -1;
-	if (args[1].type != MANAGESIEVE_ARG_EOL) {
-		/* optional SASL initial response */
-		if (args[1].type != MANAGESIEVE_ARG_STRING ||
-		    args[2].type != MANAGESIEVE_ARG_EOL)
+		/* one mandatory argument: authentication mechanism name */
+		if (args[0].type != MANAGESIEVE_ARG_STRING)
 			return -1;
-		init_resp = MANAGESIEVE_ARG_STR(&args[1]);
+
+		mech_name = MANAGESIEVE_ARG_STR(&args[0]);
+		if (*mech_name == '\0') 
+			return -1;
+
+		/* Refuse the ANONYMOUS mechanism. */
+		if ( strncasecmp(mech_name, "ANONYMOUS", 9) == 0 ) {
+			client_send_no(client, "ANONYMOUS login is not allowed.");
+			return 1;
+		}
+
+		i_free(client->auth_mech_name);
+		client->auth_mech_name = i_strdup(mech_name);
+		msieve_client->auth_mech_name_parsed = TRUE;
+
+		msieve_client->auth_response_input = NULL;
+		managesieve_parser_reset(msieve_client->parser);
 	}
 
-	mech_name = MANAGESIEVE_ARG_STR(&args[0]);
-	if (*mech_name == '\0') 
-		return -1;
-
-	/* Refuse the ANONYMOUS mechanism. */
-	if ( strncasecmp(mech_name, "ANONYMOUS", 9) == 0 ) {
-		client_send_no
-			(&msieve_client->common, "ANONYMOUS login is not allowed.");
-		return 0;
+	msieve_client->skip_line = FALSE;
+	if ( (ret=managesieve_client_auth_read_response(msieve_client, TRUE, &error))
+		< 0 ) {
+		if ( error != NULL )
+			client_send_no(client, error);
+		return 1;
 	}
 
-	ret = client_auth_begin(&msieve_client->common, mech_name, init_resp);
+	if ( ret == 0 ) return 0;
 
-	managesieve_parser_reset(msieve_client->parser);
+	init_response = ( client->auth_response == NULL ? NULL :
+		t_strdup(str_c(client->auth_response)) );
+	msieve_client->auth_mech_name_parsed = FALSE;
+	if ( (ret=client_auth_begin
+		(client, t_strdup(client->auth_mech_name), init_response)) < 0 )
+		return ret;
 
-	return ret;
+	msieve_client->cmd_finished = TRUE;
+	return 0;	
 }
 

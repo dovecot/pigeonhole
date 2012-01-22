@@ -10,6 +10,8 @@
 /* maximum length for managesieve command line. */
 #define MAX_MANAGESIEVE_LINE 8192
 
+struct managesieve_command;
+
 struct managesieve_client {
 	struct client common;
 
@@ -19,9 +21,14 @@ struct managesieve_client {
 	unsigned int proxy_state;	
 
 	const char *cmd_name;
+	struct managesieve_command *cmd;
+
+	struct istream *auth_response_input;
 
 	unsigned int cmd_finished:1;
+	unsigned int cmd_parsed_args:1;
 	unsigned int skip_line:1;
+	unsigned int auth_mech_name_parsed:1;
 
 	unsigned int proxy_starttls:1;
 	unsigned int proxy_sasl_plain:1;

@@ -125,7 +125,7 @@ static int proxy_input_capability
 	 */
 	line = t_strconcat(line, "\r\n", NULL);
 	input = i_stream_create_from_data(line, strlen(line));
-	parser = managesieve_parser_create(input, NULL, MAX_MANAGESIEVE_LINE);
+	parser = managesieve_parser_create(input, MAX_MANAGESIEVE_LINE);
 	managesieve_parser_reset(parser);
 
 	/* Parse input 

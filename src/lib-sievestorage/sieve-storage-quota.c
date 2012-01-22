@@ -30,6 +30,12 @@ bool sieve_storage_quota_validsize
 	return TRUE;
 }
 
+uint64_t sieve_storage_quota_max_script_size
+(struct sieve_storage *storage)
+{
+	return sieve_max_script_size(storage->svinst);
+}
+
 int sieve_storage_quota_havespace
 (struct sieve_storage *storage, const char *scriptname, size_t size,
 	enum sieve_storage_quota *quota_r, uint64_t *limit_r)

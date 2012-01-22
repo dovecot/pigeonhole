@@ -10,6 +10,11 @@
 #include "managesieve-client.h"
 #include "managesieve-quota.h"
 
+uint64_t managesieve_quota_max_script_size(struct client *client)
+{
+	return sieve_storage_quota_max_script_size(client->storage);
+}
+
 bool managesieve_quota_check_validsize(struct client *client, size_t size)
 {	
 	uint64_t limit;

@@ -146,7 +146,7 @@ struct client *client_create
 	client->io = io_add(fd_in, IO_READ, client_input, client);
 	client->last_input = ioloop_time;
 	client->parser = managesieve_parser_create
-		(client->input, client->output, set->managesieve_max_line_length);
+		(client->input, set->managesieve_max_line_length);
 	client->to_idle = timeout_add
 		(CLIENT_IDLE_TIMEOUT_MSECS, client_idle_timeout, client);
 
