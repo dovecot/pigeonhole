@@ -311,7 +311,6 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 				return cmd_putscript_cancel(ctx, TRUE);
 		}
 		
-		ctx->max_script_size = ctx->script_size;
 	} else {
 		ctx->max_script_size = managesieve_quota_max_script_size(client);		
 	}
@@ -343,7 +342,8 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 
 	if (ctx->save_ctx != NULL) {
 		while (ctx->script_size == 0 || ctx->input->v_offset != ctx->script_size) {
-			if ( ctx->input->v_offset > ctx->max_script_size ) {
+			if ( ctx->max_script_size > 0 &&
+				ctx->input->v_offset > ctx->max_script_size ) {
 				(void)managesieve_quota_check_validsize(client, ctx->input->v_offset);
 				cmd_putscript_finish(ctx);
 				return TRUE;
