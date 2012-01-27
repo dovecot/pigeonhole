@@ -495,14 +495,17 @@ static int cmd_test_message_print_operation_execute
 	}
 
 	printf("\n--MESSAGE: \n");
-		
+
 	/* Pipe the message to the outgoing SMTP transport */
 	while ((ret=i_stream_read_data(input, &data, &size, 0)) > 0) {
-		write(1, data, size);
-		i_stream_skip(input, size);
+		ssize_t wret;
+
+		if ( (wret=write(1, data, size)) <= 0 )
+			break;
+		i_stream_skip(input, wret);
 	}
 	printf("\n--MESSAGE--\n");
-	
+
 	return SIEVE_EXEC_OK;
 }
 
