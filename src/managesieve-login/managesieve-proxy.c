@@ -325,13 +325,13 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 
 			(void)client_skip_line(msieve_client);
 			client_proxy_finish_destroy_client(client);
-			
+
 			return 1;
-		} 
-		
+		}
+
 		/* Login failed */
 
-		if ( client->set->verbose_auth ) {
+		if ( client->set->auth_verbose ) {
 			const char *log_line = line;
 
 			if (strncasecmp(log_line, "NO ", 3) == 0)
@@ -347,6 +347,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		 */
 		client_send_no(client, AUTH_FAILED_MSG);
 
+		client->proxy_auth_failed = TRUE;
 		client_proxy_failed(client, FALSE);
 		return -1;
 
