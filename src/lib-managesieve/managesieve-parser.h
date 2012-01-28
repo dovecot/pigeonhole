@@ -4,40 +4,7 @@
 #ifndef __MANAGESIEVE_PARSER_H
 #define __MANAGESIEVE_PARSER_H
 
-/*
- * QUOTED-SPECIALS    = <"> / "\"
- */
-#define IS_QUOTED_SPECIAL(c) \
-	((c) == '"' || (c) == '\\')
-
-/* 
- * ATOM-SPECIALS      = "(" / ")" / "{" / SP / CTL / QUOTED-SPECIALS
- */
-#define IS_ATOM_SPECIAL(c) \
-	((c) == '(' || (c) == ')' || (c) == '{' || \
-	 (c) <= 32 || (c) == 0x7f || \
-	 IS_QUOTED_SPECIAL(c)) 
-
-/* 
- * CHAR               = %x01-7F
- */
-#define IS_CHAR(c) \
-	(((c) & 0x80) == 0)
-
-/* 
- * TEXT-CHAR          = %x01-09 / %x0B-0C / %x0E-7F
- *                       ;; any CHAR except CR and LF
- */
-#define IS_TEXT_CHAR(c) \
-	(IS_CHAR(c) && (c) != '\r' && (c) != '\n')
-
-/*
- * SAFE-CHAR          = %x01-09 / %x0B-0C / %x0E-21 /
- *                      %x23-5B / %x5D-7F
- *                      ;; any TEXT-CHAR except QUOTED-SPECIALS
- */
-#define IS_SAFE_CHAR(c) \
-	(IS_TEXT_CHAR(c) && !IS_QUOTED_SPECIAL(c))
+#include "managesieve-arg.h"
 
 enum managesieve_parser_flags {
 	/* Set this flag if you want to read a string argument as as stream. Useful
@@ -51,42 +18,7 @@ enum managesieve_parser_flags {
 	MANAGESIEVE_PARSE_FLAG_LITERAL_TYPE	= 0x04
 };
 
-enum managesieve_arg_type {
-	MANAGESIEVE_ARG_ATOM = 0,
-	MANAGESIEVE_ARG_STRING,
-	MANAGESIEVE_ARG_STRING_STREAM,
-
-	/* literals are returned as MANAGESIEVE_ARG_STRING by default */
-	MANAGESIEVE_ARG_LITERAL,
-
-	MANAGESIEVE_ARG_EOL /* end of argument list */
-};
-
 struct managesieve_parser;
-
-struct managesieve_arg {
-	enum managesieve_arg_type type;
-
-	union {
-		char *str;
-		struct istream *str_stream;
-	} _data;
-};
-
-#define MANAGESIEVE_ARG_STR(arg) \
-	((arg)->type == MANAGESIEVE_ARG_STRING || \
-   (arg)->type == MANAGESIEVE_ARG_ATOM || \
-	 (arg)->type == MANAGESIEVE_ARG_LITERAL ? \
-	 (arg)->_data.str : _managesieve_arg_str_error(arg))
-
-#define MANAGESIEVE_ARG_STR_STREAM(arg) \
-	(((arg)->type == MANAGESIEVE_ARG_STRING_STREAM) ? \
-	 (arg)->_data.str_stream : _managesieve_arg_str_stream_error(arg))
-
-struct managesieve_arg_list {
-	size_t size, alloc;
-	struct managesieve_arg args[1]; /* variable size */
-};
 
 /* Create new MANAGESIEVE argument parser. 
 
@@ -121,33 +53,16 @@ const char *managesieve_parser_get_error
    args is always of type MANAGESIEVE_ARG_EOL. */
 int managesieve_parser_read_args
 	(struct managesieve_parser *parser, unsigned int count,
-		enum managesieve_parser_flags flags, struct managesieve_arg **args);
+		enum managesieve_parser_flags flags, const struct managesieve_arg **args_r);
 
 /* just like managesieve_parser_read_args(), but assume \n at end of data in
    input stream. */
 int managesieve_parser_finish_line
 	(struct managesieve_parser *parser, unsigned int count,
-		enum managesieve_parser_flags flags, struct managesieve_arg **args);
+		enum managesieve_parser_flags flags, const struct managesieve_arg **args_r);
 
 /* Read one word - used for reading command name.
    Returns NULL if more data is needed. */
 const char *managesieve_parser_read_word(struct managesieve_parser *parser);
-
-/* Returns the managesieve argument as string. If it is no string this returns
-   NULL */
-const char *managesieve_arg_string(struct managesieve_arg *arg);
-
-/* Returns 1 if the argument is a number. If it is no number this returns -1.
- * The number itself is stored in *number.
- */
-int managesieve_arg_number
-  (struct managesieve_arg *arg, uoff_t *number);
-
-/* Error functions */
-char *_managesieve_arg_str_error(const struct managesieve_arg *arg);
-struct istream *_managesieve_arg_str_stream_error
-	(const struct managesieve_arg *arg);
-struct managesieve_arg_list *_managesieve_arg_list_error
-	(const struct managesieve_arg *arg);
 
 #endif

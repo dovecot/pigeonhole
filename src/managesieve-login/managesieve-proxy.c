@@ -82,10 +82,11 @@ static int proxy_write_login(struct managesieve_client *client, string_t *str)
 }
 
 static managesieve_response_t proxy_read_response
-(struct managesieve_arg *args)
+(const struct managesieve_arg *args)
 {
-	if ( args[0].type == MANAGESIEVE_ARG_ATOM ) {
-		const char *response = MANAGESIEVE_ARG_STR(&(args[0]));
+	const char *response;
+
+	if ( managesieve_arg_get_atom(&args[0], &response) ) {
 
 		if ( strcasecmp(response, "OK") == 0 ) {
 			/* Received OK response; greeting is finished */
@@ -111,7 +112,8 @@ static int proxy_input_capability
 {   
 	struct istream *input;
 	struct managesieve_parser *parser;
- 	struct managesieve_arg *args;
+ 	const struct managesieve_arg *args;
+	const char *capability;
 	int ret;
 	bool fatal = FALSE;
 
@@ -146,16 +148,15 @@ static int proxy_input_capability
 		
 				fatal = TRUE;
 			}
-      	} else if ( args[0].type == MANAGESIEVE_ARG_STRING ) {
-			const char *capability = MANAGESIEVE_ARG_STR(&(args[0]));
+		} else if ( managesieve_arg_get_string(&args[0], &capability) ) {
+			if ( strcasecmp(capability, "SASL") == 0 ) {
+				const char *sasl_mechs;
 
-        	if ( strcasecmp(capability, "SASL") == 0 ) {
 				/* Check whether the server supports the SASL mechanism 
-		    	 * we are going to use (currently only PLAIN supported). 
+				 * we are going to use (currently only PLAIN supported). 
 				 */
-				if ( ret == 2 && args[1].type == MANAGESIEVE_ARG_STRING ) {
-					const char *const *mechs = 
-						t_strsplit(MANAGESIEVE_ARG_STR(&(args[1])), " "); 
+				if ( ret == 2 && managesieve_arg_get_string(&args[1], &sasl_mechs) ) {
+					const char *const *mechs = t_strsplit(sasl_mechs, " "); 
 
 					if ( str_array_icase_find(mechs, "PLAIN") )
 						client->proxy_sasl_plain = TRUE;

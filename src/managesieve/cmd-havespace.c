@@ -17,7 +17,7 @@
 bool cmd_havespace(struct client_command_context *cmd)
 {
 	struct client *client = cmd->client;
-	struct managesieve_arg *args;
+	const struct managesieve_arg *args;
 	const char *scriptname;
 	uoff_t size;
 
@@ -25,12 +25,12 @@ bool cmd_havespace(struct client_command_context *cmd)
 	if ( !client_read_args(cmd, 2, 0, TRUE, &args) )
 	  return FALSE;
 
-	if ( (scriptname = managesieve_arg_string(&args[0])) == NULL ) {
+	if ( !managesieve_arg_get_string(&args[0], &scriptname) ) {
 		client_send_no(client, "Invalid string for scriptname.");
 		return TRUE;
 	}
 
-	if ( managesieve_arg_number(&args[1], &size) < 0 ) {
+	if ( !managesieve_arg_get_number(&args[1], &size) ) {
 		client_send_no(client, "Invalid scriptsize argument.");
 		return TRUE;
 	}

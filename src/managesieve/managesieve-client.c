@@ -412,9 +412,9 @@ void client_send_storage_error
 }
 
 bool client_read_args(struct client_command_context *cmd, unsigned int count,
-	unsigned int flags, bool no_more, struct managesieve_arg **args_r)
+	unsigned int flags, bool no_more, const struct managesieve_arg **args_r)
 {
-	struct managesieve_arg *dummy_args_r = NULL;
+	const struct managesieve_arg *dummy_args_r = NULL;
 	int ret;
 
 	if ( args_r == NULL ) args_r = &dummy_args_r; 
@@ -453,27 +453,26 @@ bool client_read_args(struct client_command_context *cmd, unsigned int count,
 bool client_read_string_args(struct client_command_context *cmd,
 			     unsigned int count, bool no_more, ...)
 {
-	struct managesieve_arg *managesieve_args;
+	const struct managesieve_arg *msieve_args;
 	va_list va;
 	const char *str;
 	unsigned int i;
 	bool result = TRUE;
 
-	if (!client_read_args(cmd, count, 0, no_more, &managesieve_args))
+	if ( !client_read_args(cmd, count, 0, no_more, &msieve_args) )
 		return FALSE;
 
 	va_start(va, no_more);
-	for (i = 0; i < count; i++) {
+	for ( i = 0; i < count; i++ ) {
 		const char **ret = va_arg(va, const char **);
 
-		if (managesieve_args[i].type == MANAGESIEVE_ARG_EOL) {
+		if ( MANAGESIEVE_ARG_IS_EOL(&msieve_args[i]) ) {
 			client_send_command_error(cmd, "Missing arguments.");
 			result = FALSE;
 			break;
 		}
 
-		str = managesieve_arg_string(&managesieve_args[i]);
-		if (str == NULL) {
+		if ( !managesieve_arg_get_string(&msieve_args[i], &str) ) {
 			client_send_command_error(cmd, "Invalid arguments.");
 			result = FALSE;
 			break;

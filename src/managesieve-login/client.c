@@ -30,7 +30,8 @@
 
 struct managesieve_command {
 	const char *name;
-	int (*func)(struct managesieve_client *client, struct managesieve_arg *args);
+	int (*func)
+		(struct managesieve_client *client, const struct managesieve_arg *args);
 	int preparsed_args;
 };
 
@@ -83,7 +84,8 @@ static void client_send_capabilities(struct client *client)
 }
 
 static int cmd_capability
-(struct managesieve_client *client, struct managesieve_arg *args ATTR_UNUSED)
+(struct managesieve_client *client,
+	const struct managesieve_arg *args ATTR_UNUSED)
 {
 	o_stream_cork(client->common.output);
 
@@ -96,27 +98,29 @@ static int cmd_capability
 }
 
 static int cmd_starttls
-(struct managesieve_client *client, struct managesieve_arg *args ATTR_UNUSED)
+(struct managesieve_client *client,
+	const struct managesieve_arg *args ATTR_UNUSED)
 {
 	client_cmd_starttls(&client->common);
 	return 1;
 }
 
 static int cmd_noop
-(struct managesieve_client *client, struct managesieve_arg *args)
+(struct managesieve_client *client,
+	const struct managesieve_arg *args)
 {
 	const char *text;
 	string_t *resp_code;
 
-	if ( args[0].type == MANAGESIEVE_ARG_EOL ) {
+	if ( MANAGESIEVE_ARG_IS_EOL(&args[0]) ) {
 		client_send_ok(&client->common, "NOOP Completed");
 		return 1;
 	}
 
-	if ( args[1].type != MANAGESIEVE_ARG_EOL )
+	if ( !MANAGESIEVE_ARG_IS_EOL(&args[1]) )
 		return -1;
 
-	if ( (text = managesieve_arg_string(&args[0])) == NULL ) {
+	if ( !managesieve_arg_get_string(&args[0], &text) ) {
 		client_send_no(&client->common, "Invalid echo tag.");
 		return 1;
 	}
@@ -130,7 +134,8 @@ static int cmd_noop
 }
 
 static int cmd_logout
-(struct managesieve_client *client, struct managesieve_arg *args ATTR_UNUSED)
+(struct managesieve_client *client,
+	const struct managesieve_arg *args ATTR_UNUSED)
 {
 	client_send_ok(&client->common, "Logout completed.");
 	client_destroy(&client->common, "Aborted login");
@@ -148,7 +153,7 @@ static struct managesieve_command commands[] = {
 
 static bool client_handle_input(struct managesieve_client *client)
 {
-	struct managesieve_arg *args = NULL;
+	const struct managesieve_arg *args = NULL;
 	const char *msg;
 	int ret = 1;
 	bool fatal;

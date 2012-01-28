@@ -144,7 +144,7 @@ static int managesieve_client_auth_read_response
 (struct managesieve_client *msieve_client, bool initial, const char **error_r)
 {
 	struct client *client = &msieve_client->common;
-	struct managesieve_arg *args;
+	const struct managesieve_arg *args;
 	const char *error;
 	bool fatal;
 	const unsigned char *data;
@@ -189,7 +189,7 @@ static int managesieve_client_auth_read_response
 			break;
 		}
 
-		if (args[0].type == MANAGESIEVE_ARG_EOL) {
+		if ( MANAGESIEVE_ARG_IS_EOL(&args[0]) ) {
 			if (!initial) {
 				*error_r = "Received empty AUTHENTICATE client response line.";
 				msieve_client->skip_line = TRUE;
@@ -199,8 +199,9 @@ static int managesieve_client_auth_read_response
 			return 1;
 		}
 
-		if ( args[0].type != MANAGESIEVE_ARG_STRING_STREAM || 
-			args[1].type != MANAGESIEVE_ARG_EOL ) {
+		if ( !managesieve_arg_get_string_stream
+				(&args[0], &msieve_client->auth_response_input) 
+			|| !MANAGESIEVE_ARG_IS_EOL(&args[1]) ) {
 			if ( !initial )
 				*error_r = "Invalid AUTHENTICATE client response.";
 			else
@@ -208,9 +209,6 @@ static int managesieve_client_auth_read_response
 			msieve_client->skip_line = TRUE;
 			return -1;
 		}
-
-		msieve_client->auth_response_input =
-			MANAGESIEVE_ARG_STR_STREAM(&args[0]);
 
 		if ( i_stream_get_size
 			(msieve_client->auth_response_input, FALSE, &size) <= 0 )
@@ -288,7 +286,7 @@ int managesieve_client_auth_parse_response(struct client *client)
 }
 
 int cmd_authenticate
-(struct managesieve_client *msieve_client, struct managesieve_arg *args)
+(struct managesieve_client *msieve_client, const struct managesieve_arg *args)
 {
 	/* NOTE: This command's input is handled specially because the
 	   SASL-IR can be large. */
@@ -301,10 +299,9 @@ int cmd_authenticate
 		i_assert(args != NULL);
 
 		/* one mandatory argument: authentication mechanism name */
-		if (args[0].type != MANAGESIEVE_ARG_STRING)
+		if ( !managesieve_arg_get_string(&args[0], &mech_name) )
 			return -1;
 
-		mech_name = MANAGESIEVE_ARG_STR(&args[0]);
 		if (*mech_name == '\0') 
 			return -1;
 

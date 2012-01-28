@@ -148,7 +148,7 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 {
 	struct client *client = cmd->client;
 	struct cmd_putscript_context *ctx = cmd->context;
-	struct managesieve_arg *args;
+	const struct managesieve_arg *args;
 	int ret;
 	
 	/* if error occurs, the CRLF is already read. */
@@ -167,7 +167,7 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 		return FALSE;
 	}
 
-	if (args[0].type == MANAGESIEVE_ARG_EOL) {
+	if ( MANAGESIEVE_ARG_IS_EOL(&args[0]) ) {
 		struct sieve_script *script;
 		bool success = TRUE;
 
@@ -263,7 +263,7 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 {
 	struct client *client = cmd->client;
 	struct cmd_putscript_context *ctx = cmd->context;
-	struct managesieve_arg *args;
+	const struct managesieve_arg *args;
 	int ret;
 
 	/* if error occurs, the CRLF is already read. */
@@ -284,12 +284,11 @@ static bool cmd_putscript_continue_parsing(struct client_command_context *cmd)
 	}
 
 	/* Validate the script argument */
-	if (args->type != MANAGESIEVE_ARG_STRING_STREAM ) {
+	if ( !managesieve_arg_get_string_stream(args,&ctx->input) ) {
 		client_send_command_error(cmd, "Invalid arguments.");
 		return cmd_putscript_cancel(ctx, FALSE);
 	}
 
-	ctx->input = MANAGESIEVE_ARG_STR_STREAM(args);
 	if ( i_stream_get_size(ctx->input, FALSE, &ctx->script_size) > 0 ) {
 		if ( ctx->script_size == 0 ) {
 			/* no script content, abort */

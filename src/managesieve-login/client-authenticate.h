@@ -17,9 +17,7 @@ void managesieve_client_auth_send_challenge
 int managesieve_client_auth_parse_response
 	(struct client *client);
 
-int cmd_login
-	(struct managesieve_client *client, struct managesieve_arg *args);
 int cmd_authenticate
-	(struct managesieve_client *client, struct managesieve_arg *args);
+	(struct managesieve_client *client, const struct managesieve_arg *args);
 
 #endif /* __CLIENT_AUTHENTICATE_H */

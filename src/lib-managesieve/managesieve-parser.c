@@ -11,7 +11,7 @@
 #define is_linebreak(c) \
 	((c) == '\r' || (c) == '\n')
 
-#define LIST_ALLOC_SIZE 7
+#define LIST_INIT_COUNT 7
 
 enum arg_parse_type {
 	ARG_PARSE_NONE = 0,
@@ -30,8 +30,9 @@ struct managesieve_parser {
 
 	/* reset by managesieve_parser_reset(): */
 	size_t line_size;
-	struct managesieve_arg_list *root_list;
-	struct managesieve_arg_list *cur_list;
+	ARRAY_TYPE(managesieve_arg_list) root_list;
+	ARRAY_TYPE(managesieve_arg_list) *cur_list;
+	struct managesieve_arg *list_arg;
 
 	enum arg_parse_type cur_type;
 	size_t cur_pos; /* parser position in input buffer */
@@ -52,22 +53,6 @@ struct managesieve_parser {
 static struct istream *quoted_string_istream_create
 	(struct managesieve_parser *parser);
 
-/* @UNSAFE */
-#define LIST_REALLOC(parser, old_list, new_size) \
-	p_realloc((parser)->pool, old_list, \
-		  sizeof(struct managesieve_arg_list) + \
-		  (old_list == NULL ? 0 : \
-		   sizeof(struct managesieve_arg_list) * (old_list)->alloc), \
-		  sizeof(struct managesieve_arg_list) * (new_size))
-
-static void managesieve_args_realloc(struct managesieve_parser *parser, size_t size)
-{
-	parser->cur_list = LIST_REALLOC(parser, parser->cur_list, size);
-	parser->cur_list->alloc = size;
-
-	parser->root_list = parser->cur_list;
-}
-
 struct managesieve_parser *
 managesieve_parser_create(struct istream *input, size_t max_line_size)
 {
@@ -78,7 +63,8 @@ managesieve_parser_create(struct istream *input, size_t max_line_size)
 	parser->input = input;
 	parser->max_line_size = max_line_size;
 
-	managesieve_args_realloc(parser, LIST_ALLOC_SIZE);
+	p_array_init(&parser->root_list, parser->pool, LIST_INIT_COUNT);
+	parser->cur_list = &parser->root_list;
 	return parser;
 }
 
@@ -98,8 +84,9 @@ void managesieve_parser_reset(struct managesieve_parser *parser)
 
 	parser->line_size = 0;
 
-	parser->root_list = NULL;
-	parser->cur_list = NULL;
+	p_array_init(&parser->root_list, parser->pool, LIST_INIT_COUNT);
+	parser->cur_list = &parser->root_list;
+	parser->list_arg = NULL;
 
 	parser->cur_type = ARG_PARSE_NONE;
 	parser->cur_pos = 0;
@@ -114,8 +101,6 @@ void managesieve_parser_reset(struct managesieve_parser *parser)
 
 	if ( parser->str_stream != NULL )
 		i_stream_unref(&parser->str_stream);
-
-	managesieve_args_realloc(parser, LIST_ALLOC_SIZE);
 }
 
 const char *managesieve_parser_get_error
@@ -146,18 +131,13 @@ static int managesieve_parser_skip_to_next(struct managesieve_parser *parser,
 	return *data_size > 0;
 }
 
-static struct managesieve_arg *managesieve_arg_create(struct managesieve_parser *parser)
+static struct managesieve_arg *managesieve_arg_create
+(struct managesieve_parser *parser)
 {
 	struct managesieve_arg *arg;
 
-	i_assert(parser->cur_list != NULL);
-
-	/* @UNSAFE */
-	if (parser->cur_list->size == parser->cur_list->alloc)
-		managesieve_args_realloc(parser, parser->cur_list->alloc * 2);
-
-	arg = &parser->cur_list->args[parser->cur_list->size];
-	parser->cur_list->size++;
+	arg = array_append_space(parser->cur_list);
+	arg->parent = parser->list_arg;
 
 	return arg;
 }
@@ -166,6 +146,7 @@ static void managesieve_parser_save_arg(struct managesieve_parser *parser,
 				 const unsigned char *data, size_t size)
 {
 	struct managesieve_arg *arg;
+	char *str;
 
 	arg = managesieve_arg_create(parser);
 
@@ -174,6 +155,7 @@ static void managesieve_parser_save_arg(struct managesieve_parser *parser,
 		/* simply save the string */
 		arg->type = MANAGESIEVE_ARG_ATOM;
 		arg->_data.str = p_strndup(parser->pool, data, size);
+		arg->str_len = size;
 		break;
 	case ARG_PARSE_STRING:
 		/* data is quoted and may contain escapes. */
@@ -184,15 +166,17 @@ static void managesieve_parser_save_arg(struct managesieve_parser *parser,
 			i_assert(size > 0);
 
 			arg->type = MANAGESIEVE_ARG_STRING;
-			arg->_data.str = p_strndup(parser->pool, data+1, size-1);
+			str = p_strndup(parser->pool, data+1, size-1);
 
 			/* remove the escapes */
 			if (parser->str_first_escape >= 0 &&
 				  (parser->flags & MANAGESIEVE_PARSE_FLAG_NO_UNESCAPE) == 0) {
 				/* -1 because we skipped the '"' prefix */
-				str_unescape(arg->_data.str +
-						   parser->str_first_escape-1);
+				str_unescape(str + parser->str_first_escape-1);
 			}
+	
+			arg->_data.str = str;
+			arg->str_len = strlen(str);
 		}
 		break;
 	case ARG_PARSE_LITERAL_DATA:
@@ -202,9 +186,11 @@ static void managesieve_parser_save_arg(struct managesieve_parser *parser,
 		} else if ((parser->flags & MANAGESIEVE_PARSE_FLAG_LITERAL_TYPE) != 0) {
 			arg->type = MANAGESIEVE_ARG_LITERAL;
 			arg->_data.str = p_strndup(parser->pool, data, size);
+			arg->str_len = size;
 		} else {
 			arg->type = MANAGESIEVE_ARG_STRING;
 			arg->_data.str = p_strndup(parser->pool, data, size);
+			arg->str_len = size;
 		}
 		break;
 	default:
@@ -511,72 +497,76 @@ static int managesieve_parser_read_arg(struct managesieve_parser *parser)
 
 /* ARG_PARSE_NONE checks that last argument isn't only partially parsed. */
 #define IS_UNFINISHED(parser) \
-        ((parser)->cur_type != ARG_PARSE_NONE || \
-	 (parser)->cur_list != parser->root_list)
+	((parser)->cur_type != ARG_PARSE_NONE || \
+	(parser)->cur_list != &parser->root_list)
 
-static int finish_line(struct managesieve_parser *parser, unsigned int count,
-		       struct managesieve_arg **args)
+static int finish_line
+(struct managesieve_parser *parser, unsigned int count,
+	const struct managesieve_arg **args_r)
 {
+	struct managesieve_arg *arg;
+	int ret = array_count(&parser->root_list);
+
 	parser->line_size += parser->cur_pos;
 	i_stream_skip(parser->input, parser->cur_pos);
 	parser->cur_pos = 0;
 
-	if (count >= parser->root_list->alloc) {
-		/* unused arguments must be NIL-filled. */
-		parser->root_list =
-			LIST_REALLOC(parser, parser->root_list, count+1);
-		parser->root_list->alloc = count+1;
+	/* fill the missing parameters with NILs */
+	while (count > array_count(&parser->root_list)) {
+		arg = array_append_space(&parser->root_list);
+		arg->type = MANAGESIEVE_ARG_NONE;
 	}
+	arg = array_append_space(&parser->root_list);
+	arg->type = MANAGESIEVE_ARG_EOL;
 
-	parser->root_list->args[parser->root_list->size].type = MANAGESIEVE_ARG_EOL;
-
-	*args = parser->root_list->args;
-	return parser->root_list->size;
+	*args_r = array_get(&parser->root_list, &count);
+	return ret;
 }
 
-int managesieve_parser_read_args(struct managesieve_parser *parser, unsigned int count,
-			  enum managesieve_parser_flags flags, struct managesieve_arg **args)
+int managesieve_parser_read_args
+(struct managesieve_parser *parser, unsigned int count,
+	enum managesieve_parser_flags flags, const struct managesieve_arg **args_r)
 {
 	parser->flags = flags;
 
-	while (!parser->eol && (count == 0 || parser->root_list->size < count ||
-				IS_UNFINISHED(parser))) {
-		if (!managesieve_parser_read_arg(parser))
+	while ( !parser->eol && (count == 0 || IS_UNFINISHED(parser)
+		|| array_count(&parser->root_list) < count) ) {
+		if ( !managesieve_parser_read_arg(parser) )
 			break;
 
-		if (parser->line_size > parser->max_line_size) {
+		if ( parser->line_size > parser->max_line_size ) {
 			parser->error = "MANAGESIEVE command line too large";
 			break;
 		}
 	}
 
-	if (parser->error != NULL) {
+	if ( parser->error != NULL ) {
 		/* error, abort */
 		parser->line_size += parser->cur_pos;
 		i_stream_skip(parser->input, parser->cur_pos);
 		parser->cur_pos = 0;
-		*args = NULL;
+		*args_r = NULL;
 		return -1;
-	} else if ((!IS_UNFINISHED(parser) && count > 0 &&
-		    parser->root_list->size >= count) || parser->eol) {
+	} else if ( (!IS_UNFINISHED(parser) && count > 0
+		&& array_count(&parser->root_list) >= count) || parser->eol ) {
 		/* all arguments read / end of line. */
-                return finish_line(parser, count, args);
+		return finish_line(parser, count, args_r);
 	} else {
 		/* need more data */
-		*args = NULL;
+		*args_r = NULL;
 		return -2;
 	}
 }
 
-int managesieve_parser_finish_line(struct managesieve_parser *parser, unsigned int count,
-			    enum managesieve_parser_flags flags,
-			    struct managesieve_arg **args)
+int managesieve_parser_finish_line
+(struct managesieve_parser *parser, unsigned int count,
+	enum managesieve_parser_flags flags, const struct managesieve_arg **args_r)
 {
 	const unsigned char *data;
 	size_t data_size;
 	int ret;
 
-	ret = managesieve_parser_read_args(parser, count, flags, args);
+	ret = managesieve_parser_read_args(parser, count, flags, args_r);
 	if (ret == -2) {
 		/* we should have noticed end of everything except atom */
 		if (parser->cur_type == ARG_PARSE_ATOM) {
@@ -584,7 +574,7 @@ int managesieve_parser_finish_line(struct managesieve_parser *parser, unsigned i
 			managesieve_parser_save_arg(parser, data, data_size);
 		}
 	}
-	return finish_line(parser, count, args);
+	return finish_line(parser, count, args_r);
 }
 
 const char *managesieve_parser_read_word(struct managesieve_parser *parser)
@@ -607,56 +597,6 @@ const char *managesieve_parser_read_word(struct managesieve_parser *parser)
 	} else {
 		return NULL;
 	}
-}
-
-const char *managesieve_arg_string(struct managesieve_arg *arg)
-{
-	if (arg->type == MANAGESIEVE_ARG_STRING) 
-		return arg->_data.str;
-
-	return NULL;
-}
-
-int managesieve_arg_number
-	(struct managesieve_arg *arg, uoff_t *number)
-{
-	int i = 0;
-	const char *data;
-
-	*number = 0;
-
-	if (arg->type == MANAGESIEVE_ARG_ATOM) {
-		data = arg->_data.str;
-		while (data[i] != '\0') {
-			if (data[i] < '0' || data[i] > '9')
-				return -1;
-	
-			*number = (*number)*10 + (data[i] -'0');
-			i++;
-		}
-    
-		return 1;
-	}
-
-	return -1;
-}
-
-char *_managesieve_arg_str_error(const struct managesieve_arg *arg)
-{
-	i_panic("Tried to access managesieve_arg type %d as string", arg->type);
-	return NULL;
-}
-
-struct istream *_managesieve_arg_str_stream_error(const struct managesieve_arg *arg)
-{
-	i_panic("Tried to access managesieve_arg type %d as string stream", arg->type);
-	return NULL;
-}
-
-struct managesieve_arg_list *_managesieve_arg_list_error(const struct managesieve_arg *arg)
-{
-	i_panic("Tried to access managesieve_arg type %d as list", arg->type);
-	return NULL;
 }
 
 /*

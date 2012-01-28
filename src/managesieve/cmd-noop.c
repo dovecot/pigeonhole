@@ -14,7 +14,7 @@
 bool cmd_noop(struct client_command_context *cmd)
 {
 	struct client *client = cmd->client;
-	struct managesieve_arg *args;
+	const struct managesieve_arg *args;
 	const char *text;
 	string_t *resp_code;
 
@@ -22,17 +22,17 @@ bool cmd_noop(struct client_command_context *cmd)
 	if ( !client_read_args(cmd, 0, 0, FALSE, &args) )
 		return FALSE;
 
-	if ( args[0].type == MANAGESIEVE_ARG_EOL ) {
+	if ( MANAGESIEVE_ARG_IS_EOL(&args[0]) ) {
 		client_send_ok(client, "NOOP Completed");
 		return TRUE;
 	}
 
-	if ( (text = managesieve_arg_string(&args[0])) == NULL ) {
+	if ( !managesieve_arg_get_string(&args[0], &text) ) {
 		client_send_no(client, "Invalid echo tag.");
 		return TRUE;
 	}
 
-	if ( args[1].type != MANAGESIEVE_ARG_EOL ) {
+	if ( !MANAGESIEVE_ARG_IS_EOL(&args[1]) ) {
 		client_send_command_error(cmd, "Too many arguments.");
 		return TRUE;
 	}
