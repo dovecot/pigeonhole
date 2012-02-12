@@ -366,3 +366,8 @@ void managesieve_proxy_reset(struct client *client ATTR_UNUSED)
 /*	struct managesieve_client *msieve_client =
 		(struct managesieve_client *) client; */
 }
+
+void managesieve_proxy_error(struct client *client, const char *text)
+{
+	client_send_reply_code(client, MANAGESIEVE_CMD_REPLY_NO, "TRYLATER", text);
+}

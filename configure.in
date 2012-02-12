@@ -1,4 +1,4 @@
-AC_INIT([Pigeonhole], [0.3.0], [dovecot@dovecot.org], [dovecot-2.1-pigeonhole])
+AC_INIT([Pigeonhole], [0.4.0], [dovecot@dovecot.org], [dovecot-2.2-pigeonhole])
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_MACRO_DIR([m4])
@@ -133,3 +133,6 @@ src/testsuite/Makefile
 stamp.h])
 
 AC_OUTPUT
+
+echo
+echo "NOTE: This is the UNSTABLE development branch of Pigeonhole for Dovecot v2.2."

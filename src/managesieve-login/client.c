@@ -105,6 +105,15 @@ static int cmd_starttls
 	return 1;
 }
 
+static void managesieve_client_notify_starttls
+(struct client *client, bool success, const char *text)
+{
+	if ( success )
+		client_send_ok(client, text);
+	else
+		client_send_no(client, text);
+}
+
 static int cmd_noop
 (struct managesieve_client *client,
 	const struct managesieve_arg *args)
@@ -323,7 +332,7 @@ static void managesieve_client_destroy(struct client *client)
 	managesieve_parser_destroy(&managesieve_client->parser);
 }
 
-static void managesieve_client_send_greeting(struct client *client)
+static void managesieve_client_notify_auth_ready(struct client *client)
 {
 	/* Cork the stream to send the capability data as a single tcp frame
 	 *   Some naive clients break if we don't.
@@ -335,7 +344,6 @@ static void managesieve_client_send_greeting(struct client *client)
 	client_send_ok(client, client->set->login_greeting);
 
 	o_stream_uncork(client->output);
-	client->greeting_sent = TRUE;
 }
 
 static void managesieve_client_starttls(struct client *client)
@@ -361,13 +369,15 @@ static void managesieve_client_starttls(struct client *client)
 	o_stream_uncork(client->output);	
 }
 
-void _client_send_response(struct client *client, 
-	const char *oknobye, const char *resp_code, const char *msg)
+static void
+client_send_reply_raw(struct client *client,
+				   const char *prefix, const char *resp_code,
+				   const char *text)
 {
 	T_BEGIN {
 		string_t *line = t_str_new(256);
 
-		str_append(line, oknobye);
+		str_append(line, prefix);
 		
 		if (resp_code != NULL) {
 			str_append(line, " [");
@@ -375,10 +385,9 @@ void _client_send_response(struct client *client,
 			str_append_c(line, ']');
 		}
 		
-		if ( msg != NULL )	
-		{
+		if ( text != NULL )	{
 			str_append_c(line, ' ');
-			managesieve_quote_append_string(line, msg, TRUE);
+			managesieve_quote_append_string(line, text, TRUE);
 		}
 
 		str_append(line, "\r\n");
@@ -387,42 +396,43 @@ void _client_send_response(struct client *client,
 	} T_END;
 }
 
-static void managesieve_client_send_line
-(struct client *client, enum client_cmd_reply reply, const char *text)
+void client_send_reply_code
+(struct client *client, enum managesieve_cmd_reply reply, const char *resp_code,
+	const char *text)
 {
-	const char *resp_code = NULL;
 	const char *prefix = "NO";
 
 	switch (reply) {
-	case CLIENT_CMD_REPLY_OK:
+	case MANAGESIEVE_CMD_REPLY_OK:
 		prefix = "OK";
 		break;
-	case CLIENT_CMD_REPLY_AUTH_FAILED:
+	case MANAGESIEVE_CMD_REPLY_NO:
 		break;
-	case CLIENT_CMD_REPLY_AUTHZ_FAILED:
-		break;
-	case CLIENT_CMD_REPLY_AUTH_FAIL_TEMP:
-		resp_code = "TRYLATER";
-		break;
-	case CLIENT_CMD_REPLY_AUTH_FAIL_REASON:
-		break;
-	case CLIENT_CMD_REPLY_AUTH_FAIL_NOSSL:
-		resp_code = "ENCRYPT-NEEDED";
-		break;
-	case CLIENT_CMD_REPLY_BAD:
-		prefix = "NO";
-		break;
-	case CLIENT_CMD_REPLY_BYE:
+	case MANAGESIEVE_CMD_REPLY_BYE:
 		prefix = "BYE";
-		break;
-	case CLIENT_CMD_REPLY_STATUS:
-		return;
-	case CLIENT_CMD_REPLY_STATUS_BAD:
-		prefix = "NO";
 		break;
 	}
 
-	_client_send_response(client, prefix, resp_code, text);
+	client_send_reply_raw(client, prefix, resp_code, text);
+}
+
+void client_send_reply
+(struct client *client, enum managesieve_cmd_reply reply, const char *text)
+{
+	client_send_reply_code(client, reply, NULL, text);
+}
+
+static void 
+managesieve_client_notify_disconnect
+(struct client *client, enum client_disconnect_reason reason, const char *text)
+{
+	if ( reason == CLIENT_DISCONNECT_SYSTEM_SHUTDOWN ) {
+		client_send_reply_code
+			(client, MANAGESIEVE_CMD_REPLY_BYE, "TRYLATER", text);
+	} else {
+		client_send_reply_code
+			(client, MANAGESIEVE_CMD_REPLY_BYE, NULL, text);
+	}
 }
 
 static void managesieve_login_preinit(void)
@@ -443,15 +453,18 @@ static struct client_vfuncs managesieve_client_vfuncs = {
 	managesieve_client_alloc,
 	managesieve_client_create,
 	managesieve_client_destroy,
-	managesieve_client_send_greeting,
+	managesieve_client_notify_auth_ready,
+	managesieve_client_notify_disconnect,
+	NULL,
+	managesieve_client_notify_starttls,
 	managesieve_client_starttls,
 	managesieve_client_input,
-	managesieve_client_send_line,
-	managesieve_client_auth_handle_reply,
 	managesieve_client_auth_send_challenge,
 	managesieve_client_auth_parse_response,
+	managesieve_client_auth_result,
 	managesieve_proxy_reset,
-	managesieve_proxy_parse_line
+	managesieve_proxy_parse_line,
+	managesieve_proxy_error
 };
 
 static const struct login_binary managesieve_login_binary = {

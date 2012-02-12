@@ -4,14 +4,12 @@
 #include "login-common.h"
 #include "base64.h"
 #include "buffer.h"
-#include "hostpid.h"
 #include "ioloop.h"
 #include "istream.h"
 #include "ostream.h"
 #include "safe-memset.h"
 #include "str.h"
 #include "str-sanitize.h"
-#include "time-util.h"
 #include "auth-client.h"
 
 #include "managesieve-parser.h"
@@ -49,17 +47,20 @@ const char *client_authenticate_get_capabilities
 	return str_c(str);
 }
 
-bool managesieve_client_auth_handle_reply
-(struct client *client, const struct client_auth_reply *reply)
+void managesieve_client_auth_result(struct client *client,
+				   enum client_auth_result result,
+				   const struct client_auth_reply *reply, const char *text)
 {
 	struct managesieve_client *msieve_client =
-		(struct managesieve_client *) client;
-	const char *timestamp, *msg;
+		(struct managesieve_client *)client;
+	string_t *referral;
 
-	if ( reply->host != NULL ) {
-		string_t *resp_code;
-		const char *reason;
-
+	switch (result) {
+	case CLIENT_AUTH_RESULT_SUCCESS:
+		/* nothing to be done for IMAP */
+		break;
+	case CLIENT_AUTH_RESULT_REFERRAL_SUCCESS:
+	case CLIENT_AUTH_RESULT_REFERRAL_NOLOGIN:
 		/* MANAGESIEVE referral
 
 		   [nologin] referral host=.. [port=..] [destuser=..]
@@ -69,56 +70,41 @@ bool managesieve_client_auth_handle_reply
 		   OK [...] "Logged in, but you should use this server instead."
 		   .. [REFERRAL ..] Reason from auth server
 		*/
-		resp_code = t_str_new(128);
-		str_printfa(resp_code, "REFERRAL sieve://%s;AUTH=%s@%s",
+		referral = t_str_new(128);
+		str_printfa(referral, "REFERRAL sieve://%s;AUTH=%s@%s",
 			    reply->destuser, client->auth_mech_name, reply->host);
 		if ( reply->port != 4190 )
-			str_printfa(resp_code, ":%u", reply->port);
+			str_printfa(referral, ":%u", reply->port);
 
-		if ( reply->reason == NULL ) {
-			if ( reply->nologin )
-				reason = "Try this server instead.";
-			else 
-				reason = "Logged in, but you should use "
-					"this server instead.";
+		if ( result == CLIENT_AUTH_RESULT_REFERRAL_SUCCESS ) {
+			client_send_okresp(client, str_c(referral), text);;
 		} else {
-			reason = reply->reason;
+			client_send_noresp(client, str_c(referral), text);
 		}
-
-		if ( !reply->nologin ) {
-			client_send_okresp(client, str_c(resp_code), reason);
-			client_destroy_success(client, "Login with referral");
-			return TRUE;
- 		}
-		client_send_noresp(client, str_c(resp_code), reason);
-	} else if (!reply->nologin) {
-		/* normal login/failure */
-		return FALSE;
-	} else if (reply->reason != NULL) {
-		client_send_line(client, CLIENT_CMD_REPLY_AUTH_FAIL_REASON,
-			reply->reason);
-	} else if (reply->temp) {
-		timestamp = t_strflocaltime("%Y-%m-%d %H:%M:%S", ioloop_time);
-		msg = t_strdup_printf(AUTH_TEMP_FAILED_MSG" [%s:%s]",
-				      my_hostname, timestamp);
-		client_send_line(client,
-				 CLIENT_CMD_REPLY_AUTH_FAIL_TEMP, msg);
-	} else if (reply->authz_failure) {
-		client_send_line(client, CLIENT_CMD_REPLY_AUTHZ_FAILED,
-				 "Authorization failed");
-	} else {
-		client_send_line(client, CLIENT_CMD_REPLY_AUTH_FAILED,
-				 AUTH_FAILED_MSG);
+		break;
+	case CLIENT_AUTH_RESULT_ABORTED:
+		client_send_no(client, text);
+		break;
+	case CLIENT_AUTH_RESULT_AUTHFAILED_REASON:
+		client_send_noresp(client, "ALERT", text);
+		break;
+	case CLIENT_AUTH_RESULT_AUTHZFAILED:
+		client_send_no(client, text);
+		break;
+	case CLIENT_AUTH_RESULT_TEMPFAIL:
+		client_send_noresp(client, "TRYLATER", text);
+		break;
+	case CLIENT_AUTH_RESULT_SSL_REQUIRED:
+		client_send_noresp(client, "ENCRYPT-NEEDED", text);
+		break;
+	case CLIENT_AUTH_RESULT_AUTHFAILED:
+	default:
+		client_send_no(client,  text);
+		break;
 	}
-
-	i_assert(reply->nologin);
 
 	msieve_client->auth_response_input = NULL;
 	managesieve_parser_reset(msieve_client->parser);
-
-	if ( !client->destroyed ) 
-		client_auth_failed(client);
-	return TRUE;
 }
 
 void managesieve_client_auth_send_challenge
@@ -261,7 +247,7 @@ static int managesieve_client_auth_read_response
 	return 1;
 }
 
-int managesieve_client_auth_parse_response(struct client *client)
+void managesieve_client_auth_parse_response(struct client *client)
 {
 	struct managesieve_client *msieve_client =
 		(struct managesieve_client *) client;
@@ -271,18 +257,21 @@ int managesieve_client_auth_parse_response(struct client *client)
 	if ( (ret=managesieve_client_auth_read_response(msieve_client, FALSE, &error))
 		< 0 ) {
 		if ( error != NULL )
-			sasl_server_auth_failed(client, error);
-		return -1;
+			client_auth_fail(client, error);
+		return;
 	}
 
-	if ( ret == 0 ) return 0;
+	if ( ret == 0 ) return;
 
 	if ( strcmp(str_c(client->auth_response), "*") == 0 ) {
-		sasl_server_auth_abort(client);
-		return -1;
+		client_auth_abort(client);
+		return;
 	}
 
-	return 1;
+	client_auth_respond(client, str_c(client->auth_response));
+
+	memset(str_c_modifiable(client->auth_response), 0,
+	       str_len(client->auth_response));
 }
 
 int cmd_authenticate
