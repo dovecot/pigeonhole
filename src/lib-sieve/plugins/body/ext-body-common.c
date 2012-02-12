@@ -83,6 +83,25 @@ static bool _is_wanted_content_type
 	return FALSE;
 }
 
+static bool _want_multipart_content_type
+(const char * const *wanted_types)
+{
+	for (; *wanted_types != NULL; wanted_types++) {
+		if (**wanted_types == '\0') {
+			/* empty string matches everything */
+			return TRUE;
+		}
+
+		/* match only main type */
+		if ( strncasecmp(*wanted_types, "multipart", 9) == 0 && 
+			( strlen(*wanted_types) == 9 || *(*wanted_types+9) == '/' ) )
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+
 static bool ext_body_get_return_parts
 (struct ext_body_message_context *ctx, const char * const *wanted_types,
 	bool decode_to_plain)
@@ -201,9 +220,10 @@ static bool ext_body_parts_add_missing
 	struct message_decoder_context *decoder;
 	struct message_block block, decoded;
 	struct message_part *parts, *prev_part = NULL;
+	ARRAY_DEFINE(part_index, struct message_part *);
 	struct istream *input;
 	unsigned int idx = 0;
-	bool save_body = FALSE, have_all;
+	bool save_body = FALSE, want_multipart, have_all;
 	int ret;
 
 	/* First check whether any are missing */
@@ -215,17 +235,23 @@ static bool ext_body_parts_add_missing
 	/* Get the message stream */
 	if ( mail_get_stream(mail, NULL, NULL, &input) < 0 )
 		return FALSE;
-	//if (mail_get_parts(mail, &parts) < 0)
-	//	return FALSE;
+
+	if (mail_get_parts(mail, &parts) < 0)
+		return FALSE;
+
+	if ( (want_multipart=_want_multipart_content_type(content_types)) ) {
+		t_array_init(&part_index, 8);
+	}
 
 	buffer_set_used_size(ctx->tmp_buffer, 0);
 	
 	/* Initialize body decoder */
 	decoder = decode_to_plain ? message_decoder_init(FALSE) : NULL;	
 
-	//parser = message_parser_init_from_parts(parts, input, 0, 0);
-	parser = message_parser_init(ctx->pool, input, 0, 0);
-
+	//parser = message_parser_init_from_parts(parts, input, 0,
+		//MESSAGE_PARSER_FLAG_INCLUDE_MULTIPART_BLOCKS);
+	parser = message_parser_init(ctx->pool, input, 0,
+		MESSAGE_PARSER_FLAG_INCLUDE_MULTIPART_BLOCKS);
 	while ( (ret = message_parser_parse_next_block(parser, &block)) > 0 ) {
 
 		if ( block.part != prev_part ) {
@@ -238,14 +264,39 @@ static bool ext_body_parts_add_missing
 					strcmp(body_part->content_type, "message/rfc822") == 0 ) {
 					message_rfc822 = TRUE;
 				} else {
-					if ( save_body ) 
+					if ( save_body ) { 
 						ext_body_part_save(ctx, body_part, decoder != NULL);
+					}
 				}
 			}
 
 			/* Start processing next */
 			body_part = array_idx_modifiable(&ctx->cached_body_parts, idx);
 			body_part->content_type = "text/plain";
+
+			/* Check whether this is the epilogue block of a wanted multipart part */
+			if ( want_multipart ) {
+				array_idx_set(&part_index, idx, &block.part);
+
+				if ( prev_part != NULL && prev_part->next != block.part &&
+					block.part->parent != prev_part ) {
+					struct message_part *const *iparts;
+					unsigned int count, i;
+
+					iparts = array_get(&part_index, &count);
+					for ( i = 0; i < count; i++ ) {
+						if ( iparts[i] == block.part ) {
+							const struct ext_body_part_cached *parent =
+								array_idx(&ctx->cached_body_parts, i);
+							body_part->content_type = parent->content_type;
+							body_part->have_body = TRUE;
+							save_body = _is_wanted_content_type
+								(content_types, body_part->content_type);		
+							break;
+						}
+					}
+				}
+			}
 
 			/* If this is message/rfc822 content retain the enveloping part for
 			 * storing headers as content.

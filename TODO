@@ -25,7 +25,6 @@ Next (mostly in order of descending priority/precedence):
 	  (posix regexes actually do support utf8, but only when locale is set
 	  accordingly)
 * Finish body extension:
-	- Implement proper :content "multipart" behavior
 	- Build test cases for decoding MIME encodings to UTF-8
 * Cleanup the test suite
 	- Restructure test scripts
