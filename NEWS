@@ -1,6 +1,55 @@
-v0.3.0 [TO BE RELEASED] Stephan Bosch <stephan@rename-it.nl>
+v0.3.0 16-02-2012 Stephan Bosch <stephan@rename-it.nl>
 
+	* Renamed sieve_global_path setting to sieve_default for clarity. Old name is
+	  still recognized for backwards compatibility. Support for the ancient (pre
+	  v1.1) name for this setting "global_script_path" is now dropped. 
+	* Added means to prohibit use of redirect action. Setting sieve_max_redirects
+	  to 0 now means that redirect is disallowed in stead of unlimited. Default
+	  value remains four.
+	* Fixed interaction of Sieve include extension with ManageSieve. It is updated
+	  to match new requirements in the draft include specification. Missing
+	  included scripts are no longer an error at upload time.
+	* Updated RFC2822 header field body verification to exclude non-printing
+	  characters (RFC5322). Only Sieve actions that can create unstructured header
+	  values (currently enotify/mailto and editheader) are affected by this
+	  change.
+	+ Completed sieve-filter tool to a useful state. The sieve-filter tool
+	  provides a means to (re)filter messages in a mailbox through a Sieve script.
+	+ Implemented the Sieve editheader extension. It is now possible to add and
+	  remove message headers from within Sieve.
+	+ ManageSieve: added support for reading quoted and literal strings as a
+	  stream. Fixes support for handing large SASL responses (analogous to similar
+	  changes in Dovecot). It is now also allowed to use a quoted string for the
+	  PUTSCRIPT script argument.
+	+ Added code to cleanup tmp directory in Sieve storage directory (sieve_dir)
+	  every once in a while.
+	+ Added support for substituting the entire message during Sieve processing.
+	  This is used for the filter action provided by the new sieve_extprograms
+	  plugin (provided separately for now). The filter action allows passing the
+	  message through an external program. 
+	+ Added support for restricting certain Sieve language extensions to
+	  (admin-controled) global scripts. Restricted extensions can be configured
+	  using the new sieve_global_extensions setting. This is particularly useful
+	  for some of the Dovecot-specific (plugin-based) Sieve extensions, that can
+	  be somewhat hazardous when under direct control of users (e.g.
+	  sieve_extprograms).
 
+v0.2.6 13-02-2012 Stephan Bosch <stephan@rename-it.nl>
+
+	* This release fixes unintentional behavior of the include extension. Included
+	  scriptnames with a name like "name.sieve" would implicitly map to a script
+	  file called "name.sieve" and not "name.sieve.sieve". Keep in mind that the
+	  .sieve file extension has no meaning from within the Sieve language. A Sieve
+	  script is always stored with an appended .sieve file extension, also when
+	  the name already ends with a .sieve suffix.
+	  IMPORTANT: Some installations have relied on this unintentional feature, so
+	  check your script includes for issues before upgrading. 
+	* Matched changes regarding auth_verbose setting in Dovecot. This means that
+	  this release will only compile against Dovecot v2.0.18. 
+	- Fixed problem in ManageSieve that caused it to omit a WARNINGS response code
+	  when the uploaded script compiled with warnings.
+	- Made sure that locations of Sieve error never report `line 0'.
+	- Fixed potential segfault occurring when interpreter initialization fails.	
 
 v0.2.5 19-11-2011 Stephan Bosch <stephan@rename-it.nl>
 
