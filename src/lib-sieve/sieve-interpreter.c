@@ -43,8 +43,6 @@ struct sieve_interpreter_extension_reg {
 
 struct sieve_interpreter {
 	pool_t pool;
-			
-	struct sieve_error_handler *ehandler;
 
 	/* Runtime data for extensions */
 	ARRAY_DEFINE(extensions, struct sieve_interpreter_extension_reg); 
@@ -88,7 +86,7 @@ static struct sieve_interpreter *_sieve_interpreter_create
 	interp = p_new(pool, struct sieve_interpreter, 1);
 	interp->pool = pool;
 
-	interp->ehandler = ehandler;
+	interp->runenv.ehandler = ehandler;
 	sieve_error_handler_ref(ehandler);
 
 	interp->runenv.interp = interp;
@@ -238,7 +236,7 @@ void sieve_interpreter_free(struct sieve_interpreter **interp)
 
 	sieve_binary_debug_reader_deinit(&(*interp)->dreader);
 	sieve_binary_unref(&(*interp)->runenv.sbin);
-	sieve_error_handler_unref(&(*interp)->ehandler);
+	sieve_error_handler_unref(&(*interp)->runenv.ehandler);
 
 	pool_unref(&((*interp)->pool));	
 	*interp = NULL;
@@ -262,7 +260,7 @@ struct sieve_script *sieve_interpreter_script
 struct sieve_error_handler *sieve_interpreter_get_error_handler
 (struct sieve_interpreter *interp)
 {
-	return interp->ehandler;
+	return interp->runenv.ehandler;
 }
 
 struct sieve_instance *sieve_interpreter_svinst
@@ -295,7 +293,7 @@ static inline void sieve_runtime_vmsg
 		if ( location == NULL )
 			location = sieve_runtime_get_full_command_location(renv);
 
-		msg_func(renv->interp->ehandler, location, fmt, args); 
+		msg_func(renv->ehandler, location, fmt, args); 
 	} T_END;
 }
 
@@ -345,7 +343,7 @@ void sieve_runtime_critical
 			location = sieve_runtime_get_full_command_location(renv);
 
 		sieve_vcritical
-			(renv->svinst, renv->interp->ehandler, location, user_prefix, fmt, args); 
+			(renv->svinst, renv->ehandler, location, user_prefix, fmt, args); 
 	} T_END;
 
 	va_end(args);

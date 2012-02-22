@@ -63,11 +63,8 @@ static bool ext_debug_interpreter_load
 (const struct sieve_extension *ext ATTR_UNUSED,
 	const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {
-	struct sieve_error_handler *ehandler =
-		sieve_interpreter_get_error_handler(renv->interp);
-
-	if ( ehandler != NULL ) {
-		sieve_error_handler_accept_infolog(ehandler, TRUE);
+	if ( renv->ehandler != NULL ) {
+		sieve_error_handler_accept_infolog(renv->ehandler, TRUE);
 	}
 
 	return TRUE;

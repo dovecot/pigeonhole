@@ -688,10 +688,9 @@ int ext_include_execute_include
 
 	if ( ctx->parent == NULL ) {
 		struct ext_include_interpreter_context *curctx = NULL;
-		struct sieve_error_handler *ehandler = 
-			sieve_interpreter_get_error_handler(renv->interp);
+		struct sieve_error_handler *ehandler = renv->ehandler;
 		struct sieve_interpreter *subinterp;
-		bool interrupted = FALSE;	
+		bool interrupted = FALSE;
 
 		/* We are the top-level interpreter instance */	
 		
