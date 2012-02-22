@@ -502,8 +502,7 @@ bool ext_enotify_runtime_method_validate
 		nenv.svinst = renv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create
-			(sieve_interpreter_get_error_handler(renv->interp),
-				sieve_runtime_get_full_command_location(renv),
+			(renv->ehandler, sieve_runtime_get_full_command_location(renv),
 				"valid_notify_method test");
 
 		/* Use the method check function to validate the URI */
@@ -567,8 +566,7 @@ const char *ext_enotify_runtime_get_method_capability
 		nenv.svinst = renv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create
-			(sieve_interpreter_get_error_handler(renv->interp),
-				sieve_runtime_get_full_command_location(renv),
+			(renv->ehandler, sieve_runtime_get_full_command_location(renv),
 				"notify_method_capability test");
 
 		/* Execute method function to acquire capability value */
@@ -602,8 +600,7 @@ int ext_enotify_runtime_check_operands
 		nenv.svinst = renv->svinst;
 		nenv.method = method;
 		nenv.ehandler = sieve_prefix_ehandler_create
-			(sieve_interpreter_get_error_handler(renv->interp),
-				sieve_runtime_get_full_command_location(renv),
+			(renv->ehandler, sieve_runtime_get_full_command_location(renv),
 				"notify action");
 
 		/* Execute check function */
