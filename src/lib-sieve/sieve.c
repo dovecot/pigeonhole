@@ -577,7 +577,8 @@ static void sieve_multiscript_execute
 
 bool sieve_multiscript_run
 (struct sieve_multiscript *mscript, struct sieve_binary *sbin,
-	struct sieve_error_handler *ehandler, unsigned int flags, bool final)
+	struct sieve_error_handler *ehandler, enum sieve_runtime_flags flags,
+	bool final)
 {
 	if ( !mscript->active ) return FALSE;
 	
