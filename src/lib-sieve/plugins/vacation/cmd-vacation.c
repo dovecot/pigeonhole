@@ -7,6 +7,7 @@
 #include "md5.h"
 #include "hostpid.h"
 #include "str-sanitize.h"
+#include "ostream.h"
 #include "message-address.h"
 #include "message-date.h"
 #include "ioloop.h"
@@ -901,7 +902,8 @@ static bool act_vacation_send
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	void *smtp_handle;
-	FILE *f;
+	struct ostream *output;
+	string_t *msg;
  	const char *outmsgid;
  	const char *const *headers;
 	const char *subject;
@@ -932,31 +934,32 @@ static bool act_vacation_send
 
 	/* Open smtp session */
 
-	smtp_handle = sieve_smtp_open(senv, reply_to, NULL, &f);
+	smtp_handle = sieve_smtp_open(senv, reply_to, NULL, &output);
 	outmsgid = sieve_message_get_new_id(senv);
 
 	/* Produce a proper reply */
 
-	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);    
-	rfc2822_header_field_write(f, "Message-ID", outmsgid);
-	rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
+	msg = t_str_new(512);
+	rfc2822_header_write(msg, "X-Sieve", SIEVE_IMPLEMENTATION);    
+	rfc2822_header_write(msg, "Message-ID", outmsgid);
+	rfc2822_header_write(msg, "Date", message_date_create(ioloop_time));
 
 	if ( ctx->from != NULL && *(ctx->from) != '\0' )
-		rfc2822_header_field_utf8_printf(f, "From", "%s", ctx->from);
+		rfc2822_header_utf8_printf(msg, "From", "%s", ctx->from);
 	else if ( reply_from != NULL ) 
-		rfc2822_header_field_printf(f, "From", "<%s>", reply_from);
+		rfc2822_header_printf(msg, "From", "<%s>", reply_from);
 	else
-		rfc2822_header_field_printf(f, "From", "Postmaster <%s>", senv->postmaster_address);
+		rfc2822_header_printf(msg, "From", "Postmaster <%s>", senv->postmaster_address);
 		
-	/* FIXME: If From header of message has same address, we should use that in 
-	 * stead properly include the phrase part.
+	/* FIXME: If From header of message has same address, we should use that
+	 * instead to properly include the phrase part.
 	 */
-	rfc2822_header_field_printf(f, "To", "<%s>", reply_to);
+	rfc2822_header_printf(msg, "To", "<%s>", reply_to);
 
 	if ( _contains_8bit(subject) )
-		rfc2822_header_field_utf8_printf(f, "Subject", "%s", subject);
+		rfc2822_header_utf8_printf(msg, "Subject", "%s", subject);
 	else 
-		rfc2822_header_field_printf(f, "Subject", "%s", subject);
+		rfc2822_header_printf(msg, "Subject", "%s", subject);
 
 	/* Compose proper in-reply-to and references headers */
 	
@@ -964,29 +967,30 @@ static bool act_vacation_send
 		(aenv->msgdata->mail, "references", &headers);
 			
 	if ( msgdata->id != NULL ) {
-		rfc2822_header_field_write(f, "In-Reply-To", msgdata->id);
+		rfc2822_header_write(msg, "In-Reply-To", msgdata->id);
 	
 		if ( ret >= 0 && headers[0] != NULL )
-			rfc2822_header_field_write
-				(f, "References", t_strconcat(headers[0], " ", msgdata->id, NULL));
+			rfc2822_header_write
+				(msg, "References", t_strconcat(headers[0], " ", msgdata->id, NULL));
 		else
-			rfc2822_header_field_write(f, "References", msgdata->id);
+			rfc2822_header_write(msg, "References", msgdata->id);
 	} else if ( ret >= 0 && headers[0] != NULL ) {
-		rfc2822_header_field_write(f, "References", headers[0]);
+		rfc2822_header_write(msg, "References", headers[0]);
 	}
 			
-	rfc2822_header_field_write(f, "Auto-Submitted", "auto-replied (vacation)");
-	rfc2822_header_field_write(f, "Precedence", "bulk");
+	rfc2822_header_write(msg, "Auto-Submitted", "auto-replied (vacation)");
+	rfc2822_header_write(msg, "Precedence", "bulk");
 	
-	rfc2822_header_field_write(f, "MIME-Version", "1.0");
+	rfc2822_header_write(msg, "MIME-Version", "1.0");
     
 	if ( !ctx->mime ) {
-		rfc2822_header_field_write(f, "Content-Type", "text/plain; charset=utf-8");
-		rfc2822_header_field_write(f, "Content-Transfer-Encoding", "8bit");
-		fprintf(f, "\r\n");
+		rfc2822_header_write(msg, "Content-Type", "text/plain; charset=utf-8");
+		rfc2822_header_write(msg, "Content-Transfer-Encoding", "8bit");
+		str_append(msg, "\r\n");
 	}
 
-	fprintf(f, "%s\r\n", ctx->reason);
+	str_printfa(msg, "%s\r\n", ctx->reason);
+  o_stream_send(output, str_data(msg), str_len(msg));
 
 	/* Close smtp session */    
 	if ( !sieve_smtp_close(senv, smtp_handle) ) {
@@ -1032,6 +1036,7 @@ static bool act_vacation_commit
 	const char *const *hdsp;
 	const char *const *headers;
 	const char *reply_from = NULL;
+	bool result;
 
 	/* Is the recipient unset? 
 	 */
@@ -1208,7 +1213,11 @@ static bool act_vacation_commit
 
 	/* Send the message */
 
-	if ( act_vacation_send(aenv, ctx, sender, reply_from) ) {
+	T_BEGIN {
+		result = act_vacation_send(aenv, ctx, sender, reply_from);
+	} T_END;
+
+	if ( result ) {
 		sieve_number_t seconds; 
 
 		sieve_result_global_log(aenv, "sent vacation response to <%s>", 
@@ -1226,8 +1235,6 @@ static bool act_vacation_commit
 			sieve_action_duplicate_mark
 				(senv, dupl_hash, sizeof(dupl_hash), ioloop_time + seconds);
 		}
-
-		return TRUE;
 	}
 
 	return TRUE;

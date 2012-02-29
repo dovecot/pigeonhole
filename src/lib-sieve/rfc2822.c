@@ -116,11 +116,10 @@ const char *rfc2822_header_field_name_sanitize(const char *name)
  */
  
 /* FIXME: This should be collected into a Dovecot API for composing internet
- * mail messages. These functions now use FILE * output streams, but this should
- * be changed to proper dovecot streams.
+ * mail messages.
  */
 
-unsigned int rfc2822_header_field_append
+unsigned int rfc2822_header_append
 (string_t *header, const char *name, const char *body, bool crlf,
 	uoff_t *body_offset_r)
 {
@@ -144,7 +143,8 @@ unsigned int rfc2822_header_field_append
 		
 	/* Add field body; fold it if necessary and account for existing folding */
 	while ( *bp != '\0' ) {
-		while ( *bp != '\0' && nlp == NULL && (wp == NULL || line_len < max_line) ) {
+		while ( *bp != '\0' && nlp == NULL &&
+			(wp == NULL || line_len < max_line) ) {
 			if ( *bp == ' ' || *bp == '\t' ) {
 			 	wp = bp;
 			} else if ( *bp == '\r' || *bp == '\n' ) {
@@ -208,70 +208,35 @@ unsigned int rfc2822_header_field_append
 	return lines;
 }
 
-static int rfc2822_header_field_write_real
-(FILE *f, const char *name, const char *body, size_t size)
-{	
-	string_t *header = t_str_new(strlen(name) + size + 256);
-
-	(void)rfc2822_header_field_append(header, name, body, TRUE, NULL);
-
-	if ( !fwrite(str_data(header), str_len(header), 1, f) != 1 )
-		return -1;
-
-	return str_len(header);
-}
-
-int rfc2822_header_field_write
-(FILE *f, const char *name, const char *body)
+void rfc2822_header_printf
+(string_t *header, const char *name, const char *fmt, ...)
 {
-	int ret;
-
-	T_BEGIN {
-		ret = rfc2822_header_field_write_real(f, name, body, strlen(body));
-	} T_END;
-	
-	return ret;
-}
-
-int rfc2822_header_field_printf
-(FILE *f, const char *name, const char *body_fmt, ...)
-{
-	string_t *body; 
 	va_list args;
-	int ret;
 
 	T_BEGIN {
-		body = t_str_new(256);
+		const char *body;
 
-		va_start(args, body_fmt);
-		str_vprintfa(body, body_fmt, args);
+		va_start(args, fmt);
+		body = t_strdup_vprintf(fmt, args);
 		va_end(args);
 	
-		ret = rfc2822_header_field_write_real
-			(f, name, (const char *) str_data(body), str_len(body));
+		rfc2822_header_write(header, name, body);
 	} T_END;
-
-	return ret;
 }
 
-int rfc2822_header_field_utf8_printf
-(FILE *f, const char *name, const char *body_fmt, ...)
+void rfc2822_header_utf8_printf
+(string_t *header, const char *name, const char *fmt, ...)
 {
-	string_t *body;
 	va_list args;
-	int ret;
 
 	T_BEGIN {
-		body = t_str_new(256);
+		string_t *body = t_str_new(256);
 
-		va_start(args, body_fmt);
-		message_header_encode(t_strdup_vprintf(body_fmt, args), body);
+		va_start(args, fmt);
+		message_header_encode(t_strdup_vprintf(fmt, args), body);
 		va_end(args);
 	
-		ret = rfc2822_header_field_write_real
-			(f, name, (const char *) str_data(body), str_len(body));
+		rfc2822_header_write(header, name, str_c(body));
 	} T_END;
-
-	return ret;
 }
 

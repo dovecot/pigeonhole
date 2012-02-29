@@ -27,17 +27,19 @@ const char *rfc2822_header_field_name_sanitize(const char *name);
  * Message composition
  */
 
-unsigned int rfc2822_header_field_append
+unsigned int rfc2822_header_append
 	(string_t *header, const char *name, const char *body, bool crlf,
 		uoff_t *body_offset_r);
 
-int rfc2822_header_field_write
-	(FILE *f, const char *name, const char *body);
-	
-int rfc2822_header_field_printf
-	(FILE *f, const char *name, const char *body_fmt, ...) ATTR_FORMAT(3, 4);
+static inline void rfc2822_header_write
+(string_t *header, const char *name, const char *body)
+{
+	(void)rfc2822_header_append(header, name, body, TRUE, NULL);
+}
 
-int rfc2822_header_field_utf8_printf
-	(FILE *f, const char *name, const char *body_fmt, ...) ATTR_FORMAT(3, 4);
+void rfc2822_header_printf
+	(string_t *header, const char *name, const char *fmt, ...);
+void rfc2822_header_utf8_printf
+	(string_t *header, const char *name, const char *fmt, ...);
 
 #endif /* __RFC2822_H */

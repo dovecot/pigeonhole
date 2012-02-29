@@ -153,7 +153,7 @@ struct sieve_script_env {
 	/* Interface for sending mail */
 	void *(*smtp_open)
 		(void *script_ctx, const char *destination, 
-			const char *return_path, FILE **file_r);
+			const char *return_path, struct ostream **output_r);
 	bool (*smtp_close)(void *script_ctx, void *handle);
 	
 	/* Interface for marking and checking duplicates */

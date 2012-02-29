@@ -14,7 +14,7 @@ void testsuite_smtp_reset(void);
  
 void *testsuite_smtp_open
 	(void *script_ctx, const char *destination, const char *return_path, 
-		FILE **file_r);
+		struct ostream **output_r);
 bool testsuite_smtp_close
 	(void *script_ctx, void *handle);
 

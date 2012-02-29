@@ -83,12 +83,13 @@ static const struct sieve_environment lda_sieve_env = {
 
 static void *lda_sieve_smtp_open
 (void *script_ctx, const char *destination,
-	const char *return_path, FILE **file_r)
+	const char *return_path, struct ostream **output_r)
 {
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *) script_ctx;
 
-	return (void *) smtp_client_open(dctx->set, destination, return_path, file_r);
+	return (void *)smtp_client_open
+		(dctx->set, destination, return_path, output_r);
 }
 
 static bool lda_sieve_smtp_close

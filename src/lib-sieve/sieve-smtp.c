@@ -14,13 +14,13 @@ bool sieve_smtp_available
 
 void *sieve_smtp_open
 (const struct sieve_script_env *senv, const char *destination,
-    const char *return_path, FILE **file_r)
+    const char *return_path, struct ostream **output_r)
 {
     if ( senv->smtp_open == NULL || senv->smtp_close == NULL )
         return NULL;
 
     return senv->smtp_open
-        (senv->script_context, destination, return_path, file_r);
+        (senv->script_context, destination, return_path, output_r);
 }
 
 bool sieve_smtp_close

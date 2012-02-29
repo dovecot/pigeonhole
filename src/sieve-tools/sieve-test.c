@@ -58,21 +58,24 @@ static void print_help(void)
 
 static void *sieve_smtp_open
 (void *script_ctx ATTR_UNUSED, const char *destination,
-	const char *return_path, FILE **file_r)
+	const char *return_path, struct ostream **output_r)
 {
 	i_info("sending message from <%s> to <%s>:",
 		( return_path == NULL ? "" : return_path ), destination);
 	printf("\nSTART MESSAGE:\n");
 	
-	*file_r = stdout;
+	*output_r = o_stream_create_fd(STDOUT_FILENO, (size_t)-1, FALSE);
 	
-	return NULL;	
+	return (void*)*output_r;	
 }
 
 static bool sieve_smtp_close
 (void *script_ctx ATTR_UNUSED, void *handle ATTR_UNUSED)
 {
+	struct ostream *output = (struct ostream *)handle;
+
 	printf("END MESSAGE\n\n");
+	o_stream_unref(&output);
 	return TRUE;
 }
 

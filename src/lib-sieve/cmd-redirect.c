@@ -5,8 +5,8 @@
 #include "ioloop.h"
 #include "str-sanitize.h"
 #include "istream.h"
-#include "istream-crlf.h"
 #include "istream-header-filter.h"
+#include "ostream.h"
 
 #include "rfc2822.h"
 
@@ -318,12 +318,9 @@ static bool act_redirect_send
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *sender = sieve_message_get_sender(msgctx);
 	const char *recipient = sieve_message_get_final_recipient(msgctx);
-	struct istream *input, *crlf_input;
+	struct istream *input;
+	struct ostream *output;
 	void *smtp_handle;
-	FILE *f;
-	const unsigned char *data;
-	size_t size;
-	int ret;
 	
 	/* Just to be sure */
 	if ( !sieve_smtp_available(senv) ) {
@@ -336,30 +333,25 @@ static bool act_redirect_send
 		return FALSE;
 		
 	/* Open SMTP transport */
-	smtp_handle = sieve_smtp_open(senv, ctx->to_address, sender, &f);
+	smtp_handle = sieve_smtp_open(senv, ctx->to_address, sender, &output);
 
 	/* Remove unwanted headers */
 	input = i_stream_create_header_filter
-		(input, HEADER_FILTER_EXCLUDE, hide_headers,
-			N_ELEMENTS(hide_headers), null_header_filter_callback, NULL);
-	
-	/* Make sure the message contains CRLF consistently */
-	crlf_input = i_stream_create_crlf(input);
+		(input, HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR, hide_headers,
+			N_ELEMENTS(hide_headers), null_header_filter_callback, NULL);	
 
-	/* Prepend sieve headers (should not affect signatures) */
-	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
-	if ( recipient != NULL )
-		rfc2822_header_field_write(f, "X-Sieve-Redirected-From", recipient);
+	T_BEGIN {
+		string_t *hdr = t_str_new(256);
+		
+		/* Prepend sieve headers (should not affect signatures) */
+		rfc2822_header_write(hdr, "X-Sieve", SIEVE_IMPLEMENTATION);
+		if ( recipient != NULL )
+			rfc2822_header_write(hdr, "X-Sieve-Redirected-From", recipient);
+	  o_stream_send(output, str_data(hdr), str_len(hdr));
+	} T_END;
 
-	/* Pipe the message to the outgoing SMTP transport */
-	while ((ret = i_stream_read_data(crlf_input, &data, &size, 0)) > 0) {	
-		if (fwrite(data, size, 1, f) == 0)
-			break;
-		i_stream_skip(crlf_input, size);
-	}
-
-	i_stream_unref(&crlf_input);
-	i_stream_unref(&input);
+	o_stream_send_istream(output, input);
+  i_stream_unref(&input);
 
 	/* Close SMTP transport */
 	if ( !sieve_smtp_close(senv, smtp_handle) ) {

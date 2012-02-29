@@ -23,6 +23,7 @@
 #include "str.h"
 #include "ioloop.h"
 #include "str-sanitize.h"
+#include "ostream.h"
 #include "message-date.h"
 #include "mail-storage.h"
 
@@ -386,9 +387,11 @@ static bool ntfy_mailto_send
 	const char *body = mtctx->uri->body;
 	string_t *to, *cc;
 	const struct uri_mailto_recipient *recipients;
+	const struct uri_mailto_header_field *headers;
 	void *smtp_handle;
-	unsigned int count, i;
-	FILE *f;
+	struct ostream *output;
+	string_t *msg;
+	unsigned int count, i, hcount, h;
 	const char *outmsgid;
 
 	/* Get recipients */
@@ -461,74 +464,81 @@ static bool ntfy_mailto_send
 		}
 	}
 
+	msg = t_str_new(512);
+	outmsgid = sieve_message_get_new_id(senv);
+	
+	rfc2822_header_write(msg, "X-Sieve", SIEVE_IMPLEMENTATION);
+	rfc2822_header_write(msg, "Message-ID", outmsgid);
+	rfc2822_header_write(msg, "Date", message_date_create(ioloop_time));
+	rfc2822_header_utf8_printf(msg, "Subject", "%s", subject);
+
+	rfc2822_header_utf8_printf(msg, "From", "%s", from);
+
+	if ( to != NULL )
+		rfc2822_header_utf8_printf(msg, "To", "%s", str_c(to));
+	
+	if ( cc != NULL )
+		rfc2822_header_utf8_printf(msg, "Cc", "%s", str_c(cc));
+		
+	rfc2822_header_printf(msg, "Auto-Submitted", 
+		"auto-notified; owner-email=\"%s\"", recipient);
+	rfc2822_header_write(msg, "Precedence", "bulk");
+
+	/* Set importance */
+	switch ( nact->importance ) {
+	case 1:
+		rfc2822_header_write(msg, "X-Priority", "1 (Highest)");
+		rfc2822_header_write(msg, "Importance", "High");
+		break;
+	case 3:
+		rfc2822_header_write(msg, "X-Priority", "5 (Lowest)");
+		rfc2822_header_write(msg, "Importance", "Low");
+		break;
+	case 2:
+	default:
+		rfc2822_header_write(msg, "X-Priority", "3 (Normal)");
+		rfc2822_header_write(msg, "Importance", "Normal");
+		break;
+	}
+	
+	/* Add custom headers */
+	
+	headers = array_get(&mtctx->uri->headers, &hcount);
+	for ( h = 0; h < hcount; h++ ) {
+		const char *name = rfc2822_header_field_name_sanitize(headers[h].name);
+	
+		rfc2822_header_write(msg, name, headers[h].body);
+	}
+		
+	/* Generate message body */
+
+	rfc2822_header_write(msg, "MIME-Version", "1.0");
+	if ( body != NULL ) {
+		if (_contains_8bit(body)) {
+			rfc2822_header_write
+				(msg, "Content-Type", "text/plain; charset=utf-8");
+			rfc2822_header_write(msg, "Content-Transfer-Encoding", "8bit");
+		} else {
+			rfc2822_header_write
+				(msg, "Content-Type", "text/plain; charset=us-ascii");
+			rfc2822_header_write(msg, "Content-Transfer-Encoding", "7bit");
+		}		
+		str_printfa(msg, "\r\n%s\r\n", body);
+		
+	} else {
+		rfc2822_header_write
+			(msg, "Content-Type", "text/plain; charset=US-ASCII");
+		rfc2822_header_write(msg, "Content-Transfer-Encoding", "7bit");
+
+		str_append(msg, "\r\nNotification of new message.\r\n");
+	}
+
 	/* Send message to all recipients */
 	for ( i = 0; i < count; i++ ) {
-		const struct uri_mailto_header_field *headers;
-		unsigned int h, hcount;
+		smtp_handle = sieve_smtp_open
+			(senv, recipients[i].normalized, from_smtp, &output);
 
-        smtp_handle = sieve_smtp_open
-            (senv, recipients[i].normalized, from_smtp, &f);
-		outmsgid = sieve_message_get_new_id(senv);
-	
-		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
-		rfc2822_header_field_write(f, "Message-ID", outmsgid);
-		rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
-		rfc2822_header_field_utf8_printf(f, "Subject", "%s", subject);
-
-		rfc2822_header_field_utf8_printf(f, "From", "%s", from);
-
-		if ( to != NULL )
-			rfc2822_header_field_utf8_printf(f, "To", "%s", str_c(to));
-		
-		if ( cc != NULL )
-			rfc2822_header_field_utf8_printf(f, "Cc", "%s", str_c(cc));
-			
-		rfc2822_header_field_printf(f, "Auto-Submitted", 
-			"auto-notified; owner-email=\"%s\"", recipient);
-		rfc2822_header_field_write(f, "Precedence", "bulk");
-
-		/* Set importance */
-		switch ( nact->importance ) {
-		case 1:
-			rfc2822_header_field_write(f, "X-Priority", "1 (Highest)");
-			rfc2822_header_field_write(f, "Importance", "High");
-			break;
-		case 3:
-			rfc2822_header_field_write(f, "X-Priority", "5 (Lowest)");
-			rfc2822_header_field_write(f, "Importance", "Low");
-			break;
-		case 2:
-		default:
-			rfc2822_header_field_write(f, "X-Priority", "3 (Normal)");
-			rfc2822_header_field_write(f, "Importance", "Normal");
-			break;
-		}
-		
-		/* Add custom headers */
-		
-		headers = array_get(&mtctx->uri->headers, &hcount);
-		for ( h = 0; h < hcount; h++ ) {
-			const char *name = rfc2822_header_field_name_sanitize(headers[h].name);
-		
-			rfc2822_header_field_write(f, name, headers[h].body);
-		}
-			
-		/* Generate message body */
-		if ( body != NULL ) {
-			if (_contains_8bit(body)) {
-				rfc2822_header_field_write(f, "MIME-Version", "1.0");
-				rfc2822_header_field_write
-					(f, "Content-Type", "text/plain; charset=UTF-8");
-				rfc2822_header_field_write(f, "Content-Transfer-Encoding", "8bit");
-			}
-			
-			fprintf(f, "\r\n");
-			fprintf(f, "%s\r\n", body);
-			
-		} else {
-			fprintf(f, "\r\n");
-			fprintf(f, "Notification of new message.\r\n");
-		}
+		o_stream_send(output, str_data(msg), str_len(msg));
 	
 		if ( sieve_smtp_close(senv, smtp_handle) ) {
 			sieve_enotify_global_info(nenv, 
@@ -552,6 +562,7 @@ static bool ntfy_mailto_action_execute
 	const char *const *headers;
 	const char *sender = sieve_message_get_sender(nenv->msgctx);
 	const char *recipient = sieve_message_get_final_recipient(nenv->msgctx);
+	bool result;
 
 	/* Is the recipient unset? 
 	 */
@@ -578,7 +589,11 @@ static bool ntfy_mailto_action_execute
 		}
 	}
 
-	return ntfy_mailto_send(nenv, nact, recipient);
+	T_BEGIN {
+		result = ntfy_mailto_send(nenv, nact, recipient);
+	} T_END;
+	
+	return result;
 }
 
 

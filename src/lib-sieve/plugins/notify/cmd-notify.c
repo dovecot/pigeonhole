@@ -6,6 +6,7 @@
 #include "str.h"
 #include "ioloop.h"
 #include "str-sanitize.h"
+#include "ostream.h"
 #include "message-date.h"
 #include "mail-storage.h"
 
@@ -690,8 +691,10 @@ static bool act_notify_send
 	const struct ext_notify_recipient *recipients;
 	void *smtp_handle;
 	unsigned int count, i;
-	FILE *f;
+	struct ostream *output;
+	string_t *msg;
 	const char *outmsgid;
+	size_t hdr_size;
 
 	/* Get recipients */
 	recipients = array_get(&act->recipients, &count);
@@ -707,60 +710,69 @@ static bool act_notify_send
 			"notify action has no means to send mail");
 		return TRUE;
 	}
-	
+
+	/* Compose common headers */
+	msg = t_str_new(512);
+	rfc2822_header_write(msg, "X-Sieve", SIEVE_IMPLEMENTATION);
+	rfc2822_header_write(msg, "Date", message_date_create(ioloop_time));
+
+	/* Set importance */
+	switch ( act->importance ) {
+	case 1:
+		rfc2822_header_write(msg, "X-Priority", "1 (Highest)");
+		rfc2822_header_write(msg, "Importance", "High");
+		break;
+	case 3:
+		rfc2822_header_write(msg, "X-Priority", "5 (Lowest)");
+		rfc2822_header_write(msg, "Importance", "Low");
+		break;
+	case 2:
+	default:
+		rfc2822_header_write(msg, "X-Priority", "3 (Normal)");
+		rfc2822_header_write(msg, "Importance", "Normal");
+		break;
+	}
+
+	rfc2822_header_printf(msg, "From",
+		"Postmaster <%s>", senv->postmaster_address);
+
+	rfc2822_header_write(msg, "Subject", "[SIEVE] New mail notification");
+
+	rfc2822_header_write(msg, "Auto-Submitted", "auto-generated (notify)");
+	rfc2822_header_write(msg, "Precedence", "bulk");
+
+	rfc2822_header_write(msg, "MIME-Version", "1.0");
+	if (contains_8bit(act->message)) {
+		rfc2822_header_write(msg,
+			"Content-Type", "text/plain; charset=utf-8");
+		rfc2822_header_write(msg, "Content-Transfer-Encoding", "8bit");
+	} else {
+		rfc2822_header_write(msg,
+			"Content-Type", "text/plain; charset=us-ascii");
+		rfc2822_header_write(msg, "Content-Transfer-Encoding", "7bit");
+	}
+		
+	hdr_size = str_len(msg);
+
 	/* Send message to all recipients */
 	for ( i = 0; i < count; i++ ) {
-
 		if ( sieve_message_get_sender(aenv->msgctx) != NULL )
 			smtp_handle = sieve_smtp_open
-				(senv, recipients[i].normalized, senv->postmaster_address, &f);
+				(senv, recipients[i].normalized, senv->postmaster_address, &output);
 		else		
 			smtp_handle = sieve_smtp_open
-				(senv, recipients[i].normalized, NULL, &f);
+				(senv, recipients[i].normalized, NULL, &output);
 
-		outmsgid = sieve_message_get_new_id(senv);
+		str_truncate(msg, hdr_size);
 	
-		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
-		rfc2822_header_field_write(f, "Message-ID", outmsgid);
-		rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
-
-		/* Set importance */
-		switch ( act->importance ) {
-		case 1:
-			rfc2822_header_field_write(f, "X-Priority", "1 (Highest)");
-			rfc2822_header_field_write(f, "Importance", "High");
-			break;
-		case 3:
-			rfc2822_header_field_write(f, "X-Priority", "5 (Lowest)");
-			rfc2822_header_field_write(f, "Importance", "Low");
-			break;
-		case 2:
-		default:
-			rfc2822_header_field_write(f, "X-Priority", "3 (Normal)");
-			rfc2822_header_field_write(f, "Importance", "Normal");
-			break;
-		}
-
-		rfc2822_header_field_printf(f, "From", "%s", 
-			t_strdup_printf("Postmaster <%s>", senv->postmaster_address));
-
-		rfc2822_header_field_printf(f, "To", "%s", recipients[i].full);
-
-		rfc2822_header_field_write(f, "Subject", "[SIEVE] New mail notification");
-
-		rfc2822_header_field_write(f, "Auto-Submitted", "auto-generated (notify)");
-		rfc2822_header_field_write(f, "Precedence", "bulk");
-
-		if (contains_8bit(act->message)) {
-			rfc2822_header_field_write(f, "MIME-Version", "1.0");
-			rfc2822_header_field_write(f, 
-				"Content-Type", "text/plain; charset=UTF-8");
-			rfc2822_header_field_write(f, "Content-Transfer-Encoding", "8bit");
-		}
+		outmsgid = sieve_message_get_new_id(senv);
+		rfc2822_header_write(msg, "Message-ID", outmsgid);
+		rfc2822_header_write(msg, "To", recipients[i].full);
 
 		/* Generate message body */
-		fprintf(f, "\r\n");
-		fprintf(f, "%s\r\n", act->message);
+		str_printfa(msg, "\r\n%s\r\n", act->message);
+
+		o_stream_send(output, str_data(msg), str_len(msg));
 			
 		if ( sieve_smtp_close(senv, smtp_handle) ) {
 			sieve_result_global_log(aenv, 
@@ -785,6 +797,7 @@ static bool act_notify_commit
 		(const struct ext_notify_action *) action->context;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const char *const *headers;
+	bool result;
 
 	/* Is the message an automatic reply ? */
 	if ( mail_get_headers
@@ -803,7 +816,11 @@ static bool act_notify_commit
 		}
 	}
 
-	return act_notify_send(aenv, act);
+	T_BEGIN {
+		result = act_notify_send(aenv, act);
+	} T_END;
+
+	return result;
 }
 
 

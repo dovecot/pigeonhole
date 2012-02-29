@@ -762,7 +762,7 @@ void edit_mail_header_add
 
 		message_header_encode(value, enc_value);
 
-		lines = rfc2822_header_field_append
+		lines = rfc2822_header_append
 			(data, field_name, str_c(enc_value), edmail->crlf, &field->body_offset);
 
 		/* Copy to new field */

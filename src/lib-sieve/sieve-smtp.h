@@ -11,7 +11,7 @@ bool sieve_smtp_available
 
 void *sieve_smtp_open
 	(const struct sieve_script_env *senv, const char *destination,
-    	const char *return_path, FILE **file_r);
+    	const char *return_path, struct ostream **output_r);
 
 bool sieve_smtp_close
 	(const struct sieve_script_env *senv, void *handle);

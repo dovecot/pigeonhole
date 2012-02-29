@@ -189,8 +189,13 @@ static struct mail_raw *mail_raw_create
 	}
 
 	if ( ret < 0 ) {
-		i_fatal("Can't open delivery mail as raw: %s",
-			mailbox_get_last_error(mailr->box, NULL));
+		if ( mailfile == NULL ) {
+			i_fatal("Can't open delivery mail as raw: %s",
+				mailbox_get_last_error(mailr->box, NULL));
+		} else {
+			i_fatal("Can't open delivery mail as raw (file=%s): %s",
+				mailfile, mailbox_get_last_error(mailr->box, NULL));
+		}
 	}
 
 	mailr->trans = mailbox_transaction_begin(mailr->box, 0);

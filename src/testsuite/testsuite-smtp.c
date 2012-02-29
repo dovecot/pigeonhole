@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "array.h"
+#include "ostream.h"
 #include "unlink-directory.h"
 
 #include "sieve-common.h" 
@@ -68,16 +69,17 @@ void testsuite_smtp_reset(void)
  
 struct testsuite_smtp {
 	const char *tmp_path;
-	FILE *mfile;
+	struct ostream *output;
 };
  
 void *testsuite_smtp_open
 (void *script_ctx ATTR_UNUSED, const char *destination, 
-	const char *return_path, FILE **file_r)
+	const char *return_path, struct ostream **output_r)
 {	
 	struct testsuite_smtp_message smtp_msg;
 	struct testsuite_smtp *smtp;
 	unsigned int smtp_count = array_count(&testsuite_smtp_messages);
+	int fd;
 	
 	smtp_msg.file = p_strdup_printf(testsuite_smtp_pool, 
 		"%s/%d.eml", testsuite_smtp_tmp, smtp_count);
@@ -89,12 +91,14 @@ void *testsuite_smtp_open
 	
 	smtp = t_new(struct testsuite_smtp, 1);
 	smtp->tmp_path = smtp_msg.file;
-	smtp->mfile = fopen(smtp->tmp_path, "w");
 
-	if ( smtp->mfile == NULL )
-		i_fatal("failed to open tmp file for SMTP simulation.");
+	if ( (fd=open(smtp->tmp_path, O_WRONLY | O_CREAT, 0600)) < 0 ) {
+		i_fatal("failed create tmp file for SMTP simulation: open(%s) failed: %m",
+			smtp->tmp_path);
+	}
 
-	*file_r = smtp->mfile;
+	smtp->output = o_stream_create_fd(fd, (size_t)-1, TRUE);
+	*output_r = smtp->output;
 	
 	return (void *) smtp;	
 }
@@ -104,8 +108,7 @@ bool testsuite_smtp_close
 {
 	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
 
-	fclose(smtp->mfile);
-	
+	o_stream_unref(&smtp->output);
 	return TRUE;
 }
 
