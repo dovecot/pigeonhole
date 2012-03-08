@@ -18,6 +18,10 @@
 /* Disconnect client when it sends too many bad commands in a row */
 #define CLIENT_MAX_BAD_COMMANDS 20
 
+#define CRITICAL_MSG \
+  "Internal error occured. Refer to server log for more information."
+#define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
+
 #include "lib.h"
 #include "managesieve-client.h"
 #include "managesieve-settings.h"

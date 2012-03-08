@@ -24,10 +24,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define CRITICAL_MSG \
-  "Internal error occured. Refer to server log for more information."
-#define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
-
 extern struct mail_storage_callbacks mail_storage_callbacks;
 struct managesieve_module_register managesieve_module_register = { 0 };
 
@@ -106,7 +102,7 @@ static struct sieve_storage *client_get_storage
 }
 
 struct client *client_create
-(int fd_in, int fd_out, struct mail_user *user,
+(int fd_in, int fd_out, const char *session_id, struct mail_user *user,
 	struct mail_storage_service_user *service_user,
 	const struct managesieve_settings *set)
 {
@@ -114,6 +110,7 @@ struct client *client_create
 	const char *ident;
 	struct sieve_instance *svinst;
 	struct sieve_storage *storage;
+	pool_t pool;
 
 	/* Always use nonblocking I/O */
 
@@ -132,9 +129,12 @@ struct client *client_create
 	net_set_nonblock(fd_in, TRUE);
 	net_set_nonblock(fd_out, TRUE);
 
-	client = i_new(struct client, 1);
+	pool = pool_alloconly_create("managesieve client", 1024);
+	client = p_new(pool, struct client, 1);
+	client->pool = pool;
 	client->set = set;
 	client->service_user = service_user;
+	client->session_id = p_strdup(pool, session_id);
 	client->fd_in = fd_in;
 	client->fd_out = fd_out;
 	client->input = i_stream_create_fd
@@ -179,6 +179,7 @@ static const char *client_stats(struct client *client)
 	static struct var_expand_table static_tab[] = {
 		{ 'i', NULL, "input" },
 		{ 'o', NULL, "output" },
+		{ '\0', NULL, "session" },
 		{ '\0', NULL, NULL }
 	};
 	struct var_expand_table *tab;
@@ -189,6 +190,7 @@ static const char *client_stats(struct client *client)
 
 	tab[0].value = dec2str(client->input->v_offset);
 	tab[1].value = dec2str(client->output->offset);
+	tab[2].value = client->session_id;
 
 	str = t_str_new(128);
 	var_expand(str, client->set->managesieve_logout_format, tab);
@@ -264,7 +266,7 @@ void client_destroy(struct client *client, const char *reason)
 	sieve_deinit(&client->svinst);
 
 	pool_unref(&client->cmd.pool);
-	i_free(client);
+	pool_unref(&client->pool);
 
 	master_service_client_connection_destroyed(master_service);
 	managesieve_refresh_proctitle();

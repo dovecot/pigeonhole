@@ -35,12 +35,14 @@ extern struct managesieve_module_register managesieve_module_register;
 struct client {
 	struct client *prev, *next;
 
+	const char *session_id;
 	int fd_in, fd_out;
 	struct io *io;
 	struct istream *input;
 	struct ostream *output;
 	struct timeout *to_idle, *to_idle_output;
 
+	pool_t pool;
 	struct mail_storage_service_user *service_user;
 	const struct managesieve_settings *set;
 
@@ -71,9 +73,10 @@ extern unsigned int managesieve_client_count;
 
 /* Create new client with specified input/output handles. socket specifies
    if the handle is a socket. */
-struct client *client_create(int fd_in, int fd_out, struct mail_user *user,
-			     struct mail_storage_service_user *service_user,
-			     const struct managesieve_settings *set);
+struct client *client_create
+	(int fd_in, int fd_out, const char *session_id, struct mail_user *user, 
+		struct mail_storage_service_user *service_user,
+		const struct managesieve_settings *set);
 void client_destroy(struct client *client, const char *reason);
 
 void client_dump_capability(struct client *client);
