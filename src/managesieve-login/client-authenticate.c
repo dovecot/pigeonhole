@@ -149,6 +149,7 @@ static int managesieve_client_auth_read_response
 	bool fatal;
 	const unsigned char *data;
 	size_t size;
+	uoff_t resp_size;
 	int ret;
 
 	if ( i_stream_read(client->input) == -1 ) {	
@@ -200,7 +201,7 @@ static int managesieve_client_auth_read_response
 		}
 
 		if ( !managesieve_arg_get_string_stream
-				(&args[0], &msieve_client->auth_response_input) 
+				(&args[0], &msieve_client->auth_response_input)
 			|| !MANAGESIEVE_ARG_IS_EOL(&args[1]) ) {
 			if ( !initial )
 				*error_r = "Invalid AUTHENTICATE client response.";
@@ -211,11 +212,11 @@ static int managesieve_client_auth_read_response
 		}
 
 		if ( i_stream_get_size
-			(msieve_client->auth_response_input, FALSE, &size) <= 0 )
-			size = 0;
+			(msieve_client->auth_response_input, FALSE, &resp_size) <= 0 )
+			resp_size = 0;
 
 		if (client->auth_response == NULL)
-			client->auth_response = str_new(default_pool, I_MAX(size+1, 256));
+			client->auth_response = str_new(default_pool, I_MAX(resp_size+1, 256));
 	}
 
 	while ( (ret=i_stream_read_data
