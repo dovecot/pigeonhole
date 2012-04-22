@@ -631,13 +631,15 @@ static int lda_sieve_deliver_mail
 			if ( default_location != NULL ) {
 				srctx.main_script = sieve_script_create_as
 					(svinst, default_location, "main script", master_ehandler, &error);
-			}
 
-			if ( srctx.main_script == NULL && error == SIEVE_ERROR_NOT_FOUND &&
-				debug ) {
-				sieve_sys_debug(svinst, "default user script %s doesn't exist",
-					default_location);
-			} 
+				if ( srctx.main_script == NULL && error == SIEVE_ERROR_NOT_FOUND &&
+					debug ) {
+					sieve_sys_debug(svinst, "default user script %s doesn't exist",
+						default_location);
+				}
+			} else {
+				sieve_sys_debug(svinst, "no default script configured for user");
+			}
 		}
 
 		if ( debug && srctx.main_script == NULL ) {
