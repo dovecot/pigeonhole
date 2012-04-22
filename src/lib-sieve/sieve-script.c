@@ -195,6 +195,7 @@ struct sieve_script *sieve_script_init
 	script->script_class = script_class;
 	script->refcount = 1;
 	script->svinst = svinst;
+
 	script->ehandler = ehandler;
 	
 	script->name = p_strdup_empty(script->pool, name);
@@ -205,7 +206,6 @@ struct sieve_script *sieve_script_init
 			"failed to access sieve script", "failed to parse script location: %s",
 			parse_error);
 		*error_r = SIEVE_ERROR_TEMP_FAIL;
-		pool_unref(&script->pool);
 		return NULL;
 	}
 
@@ -217,15 +217,12 @@ struct sieve_script *sieve_script_init
 		} else {
 			*error_r = error;
 		}
-
-		pool_unref(&script->pool);
 		return NULL;
 	}
 
 	i_assert( script->location != NULL );
 
 	sieve_error_handler_ref(ehandler);
-
 	return script;
 }
 
@@ -265,8 +262,13 @@ struct sieve_script *sieve_script_create
 	}
 
 	script = script_class->v.alloc();
-	return sieve_script_init
-		(script, svinst, script_class, data, name, ehandler, error_r);
+	if ( sieve_script_init
+		(script, svinst, script_class, data, name, ehandler, error_r) == NULL ) {
+		pool_unref(&script->pool);
+		return NULL;
+	}
+
+	return script;
 }
 
 struct sieve_script *sieve_script_create_as
@@ -301,10 +303,12 @@ void sieve_script_unref(struct sieve_script **_script)
 	if ( script->stream != NULL )
 		i_stream_unref(&script->stream);
 
-	sieve_error_handler_unref(&script->ehandler);
+	if ( script->ehandler != NULL )
+		sieve_error_handler_unref(&script->ehandler);
 
 	if ( script->v.destroy != NULL )
 		script->v.destroy(script);
+
 	pool_unref(&script->pool);
 	*_script = NULL;
 }

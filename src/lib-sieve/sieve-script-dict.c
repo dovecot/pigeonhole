@@ -110,6 +110,7 @@ static int sieve_dict_script_create
 			"sieve dict backend: failed to initialize dict with data `%s' "
 			"for user `%s'", data, username);
 		*error_r = SIEVE_ERROR_TEMP_FAIL;
+		dict_deinit(&script->dict);
 		return -1;
 	}
 
@@ -131,6 +132,7 @@ static int sieve_dict_script_create
 			*error_r = SIEVE_ERROR_NOT_FOUND;
 		}
 
+		dict_deinit(&script->dict);
 		return -1;
 	}
 
