@@ -1,7 +1,9 @@
 Current activities:
 
-* Update include extension to latest draft (v13 currently):
-	- Implement :optional tag.
+* Implement generic Sieve script object that abstracts from its location and
+  add support for retrieving scripts from dict database.
+	- Implement infrastructure for loading a sequence of global scripts from
+	  a database (for sieve_before/sieve_after).
 
 Parallel plugin-based efforts:
 
@@ -14,6 +16,13 @@ Parallel plugin-based efforts:
 
 Next (mostly in order of descending priority/precedence):
 
+* Make the sieve storage a base class with (possibly) various implementations, 
+  just like mail-storage. This aims to provide support for alternate types
+  of script storage like LDAP or SQL database.
+	- Implement read/write script storages for using ManageSieve with dict
+	  database
+* Update include extension to latest draft (v13 currently):
+	- Implement :optional tag.
 * Implement index extension
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
@@ -70,9 +79,6 @@ Next (mostly in order of descending priority/precedence):
 * Implement extlists extension as a plugin
 * Enotify extension: detect use of variable values extracted from the message 
   that are used in the method argument. RFC reports this as a security issue.
-* Make the sieve storage a base class with (possibly) various implementations, 
-  just like mail-storage. This aims to provide support for alternate types
-  of script storage like LDAP or SQL database.
 * Add support for stream matching for handling large values, e.g. from the body
   extension.
 * Implement message modification and extraction API in order to:

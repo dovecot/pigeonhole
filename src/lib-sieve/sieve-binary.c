@@ -59,7 +59,7 @@ struct sieve_binary *sieve_binary_create
 	p_array_init(&sbin->extensions, pool, ext_count);
 	p_array_init(&sbin->extension_index, pool, ext_count);
 	
-	p_array_init(&sbin->blocks, pool, 3);
+	p_array_init(&sbin->blocks, pool, 16);
 
 	/* Pre-load core language features implemented as 'extensions' */
 	ext_preloaded = sieve_extensions_get_preloaded(svinst, &ext_count); 
@@ -76,13 +76,18 @@ struct sieve_binary *sieve_binary_create
 struct sieve_binary *sieve_binary_create_new(struct sieve_script *script) 
 {
 	struct sieve_binary *sbin = sieve_binary_create
-		(sieve_script_svinst(script), script); 
+		(sieve_script_svinst(script), script);
+	struct sieve_binary_block *sblock;
+	unsigned int i;
 	
-	/* Extensions block */
-	(void) sieve_binary_block_create(sbin);
-	
-	/* Main program block */
-	(void) sieve_binary_block_create(sbin);
+	/* Create script metadata block */
+	sblock = sieve_binary_block_create(sbin);
+	sieve_script_binary_write_metadata(script, sblock);
+
+	/* Create other system blocks */
+	for ( i = 1; i < SBIN_SYSBLOCK_LAST; i++ ) {
+		(void) sieve_binary_block_create(sbin);
+	}
 	
 	return sbin;
 }
@@ -127,6 +132,10 @@ void sieve_binary_unref(struct sieve_binary **sbin)
 	*sbin = NULL;
 }
 
+/*
+ * Accessors
+ */
+
 pool_t sieve_binary_pool(struct sieve_binary *sbin)
 {
 	return sbin->pool;
@@ -155,7 +164,7 @@ bool sieve_binary_loaded(struct sieve_binary *sbin)
 const char *sieve_binary_source(struct sieve_binary *sbin)
 {
 	if ( sbin->script != NULL && (sbin->path == NULL || sbin->file == NULL) )
-		return sieve_script_path(sbin->script);
+		return sieve_script_location(sbin->script);
 
 	return sbin->path;
 }
@@ -165,11 +174,11 @@ struct sieve_instance *sieve_binary_svinst(struct sieve_binary *sbin)
 	return sbin->svinst;
 }
 
-bool sieve_binary_script_newer
-(struct sieve_binary *sbin, struct sieve_script *script)
+time_t sieve_binary_mtime
+(struct sieve_binary *sbin)
 {
 	i_assert(sbin->file != NULL);
-	return ( sieve_script_newer(script, sbin->file->st.st_mtime) );
+	return sbin->file->st.st_mtime;
 }
 
 const char *sieve_binary_script_name(struct sieve_binary *sbin)
@@ -177,9 +186,18 @@ const char *sieve_binary_script_name(struct sieve_binary *sbin)
 	return ( sbin->script == NULL ? NULL : sieve_script_name(sbin->script) );
 }
 
-const char *sieve_binary_script_path(struct sieve_binary *sbin)
+const char *sieve_binary_script_location(struct sieve_binary *sbin)
 {
-	return ( sbin->script == NULL ? NULL : sieve_script_path(sbin->script) );
+	return ( sbin->script == NULL ? NULL : sieve_script_location(sbin->script) );
+}
+
+/*
+ * Utility
+ */
+
+const char *sieve_binfile_from_name(const char *name)
+{
+	return t_strconcat(name, "."SIEVE_BINARY_FILEEXT, NULL);
 }
 
 /* 
@@ -294,12 +312,15 @@ bool sieve_binary_up_to_date
 (struct sieve_binary *sbin, enum sieve_compile_flags cpflags)
 {
 	struct sieve_binary_extension_reg *const *regs;
+	struct sieve_binary_block *sblock;
+	sieve_size_t offset = 0;
 	unsigned int ext_count, i;
 	
 	i_assert(sbin->file != NULL);
 
-	if ( sbin->script == NULL || sieve_script_newer
-		(sbin->script, sbin->file->st.st_mtime) )
+	sblock = sieve_binary_block_get(sbin, SBIN_SYSBLOCK_SCRIPT_DATA);
+	if ( sblock == NULL || sbin->script == NULL ||
+		sieve_script_binary_read_metadata(sbin->script, sblock, &offset) <= 0 )
 		return FALSE;
 	
 	regs = array_get(&sbin->extensions, &ext_count);	

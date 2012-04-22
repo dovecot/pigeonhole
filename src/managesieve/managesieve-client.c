@@ -30,34 +30,19 @@ struct managesieve_module_register managesieve_module_register = { 0 };
 struct client *managesieve_clients = NULL;
 unsigned int managesieve_client_count = 0;
 
-static const char *managesieve_sieve_get_homedir
-(void *context)
-{
-    struct mail_user *mail_user = (struct mail_user *) context;
-    const char *home = NULL;
-
-    if ( mail_user == NULL )
-        return NULL;
-
-    if ( mail_user_get_home(mail_user, &home) <= 0 )
-        return NULL;
-
-    return home;
-}
-
 static const char *managesieve_sieve_get_setting
 (void *context, const char *identifier)
 {
-    struct mail_user *mail_user = (struct mail_user *) context;
+	struct mail_user *mail_user = (struct mail_user *) context;
 
-    if ( mail_user == NULL )
-        return NULL;
+	if ( mail_user == NULL )
+		return NULL;
 
-    return mail_user_plugin_getenv(mail_user, identifier);
+	return mail_user_plugin_getenv(mail_user, identifier);
 }
 
-static const struct sieve_environment managesieve_sieve_env = {
-	managesieve_sieve_get_homedir,
+static const struct sieve_callbacks managesieve_sieve_callbacks = {
+	NULL,
 	managesieve_sieve_get_setting
 };
 
@@ -108,6 +93,7 @@ struct client *client_create
 {
 	struct client *client;
 	const char *ident;
+	struct sieve_environment svenv;
 	struct sieve_instance *svinst;
 	struct sieve_storage *storage;
 	pool_t pool;
@@ -119,7 +105,14 @@ struct client *client_create
 
 	/* Initialize Sieve instance */
 
-	svinst = sieve_init(&managesieve_sieve_env, (void *) user, set->mail_debug);
+	memset((void*)&svenv, 0, sizeof(svenv));
+	svenv.username = user->username;
+	(void)mail_user_get_home(user, &svenv.home_dir);
+	svenv.base_dir = user->set->base_dir;
+	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
+
+	svinst = sieve_init
+		(&svenv, &managesieve_sieve_callbacks, (void *) user, set->mail_debug);
 
 	/* Get Sieve storage */
 

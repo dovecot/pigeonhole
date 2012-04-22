@@ -10,6 +10,7 @@
 #include "eacces-error.h"
 
 #include "sieve-script-private.h"
+#include "sieve-script-file.h"
 
 #include "sieve-storage.h"
 #include "sieve-storage-private.h"
@@ -24,7 +25,7 @@
 #include <fcntl.h>
 
 struct sieve_storage_script {
-	struct sieve_script script;	
+	struct sieve_file_script file;	
 
 	struct sieve_storage *storage;
 };
@@ -58,12 +59,14 @@ struct sieve_script *sieve_storage_script_init_from_path
 
 	pool = pool_alloconly_create("sieve_storage_script", 4096);	
 	st_script = p_new(pool, struct sieve_storage_script, 1);
-	st_script->script.pool = pool;
+	st_script->file.script = sieve_file_script;
+	st_script->file.script.pool = pool;
 	st_script->storage = storage;
 
-	if ( sieve_script_init(&st_script->script, storage->svinst, path, scriptname, 
-		sieve_storage_get_error_handler(storage), &error) != NULL ) {
-		return &st_script->script;
+	if ( sieve_script_init
+		(&st_script->file.script, storage->svinst, &sieve_file_script, path,
+			scriptname,	sieve_storage_get_error_handler(storage), &error) != NULL ) {
+		return &st_script->file.script;
 	}
 
 	pool_unref(&pool);
@@ -298,7 +301,7 @@ int sieve_storage_script_is_active(struct sieve_script *script)
 	
 		if ( ret > 0 ) {
 		 	/* Is the requested script active? */
-			ret = ( strcmp(script->filename, afile) == 0 ? 1 : 0 );
+			ret = ( strcmp(st_script->file.filename, afile) == 0 ? 1 : 0 );
 		}
 	} T_END;
 
@@ -318,7 +321,7 @@ int sieve_storage_script_delete(struct sieve_script **script)
 			"Cannot delete the active sieve script.");
 		ret = -1;
 	} else {
-		ret = unlink((*script)->path);
+		ret = unlink(st_script->file.path);
 
 		if ( ret < 0 ) {
 			if ( errno == ENOENT ) 
@@ -327,7 +330,7 @@ int sieve_storage_script_delete(struct sieve_script **script)
 			else
 				sieve_storage_set_critical(
 					storage, "Performing unlink() failed on sieve file '%s': %m", 
-					(*script)->path);
+					st_script->file.path);
 		}	
 	}
 
@@ -484,14 +487,14 @@ static int _sieve_storage_script_activate(struct sieve_script *script)
 	ret = sieve_storage_get_active_scriptfile(storage, &afile);
 
 	/* Is the requested script already active? */
-	if ( ret <= 0 || strcmp(script->filename, afile) != 0 ) 
+	if ( ret <= 0 || strcmp(st_script->file.filename, afile) != 0 ) 
 		activated = 1; 
 
 	/* Check the scriptfile we are trying to activate */
-	if ( lstat(script->path, &st) != 0 ) {
+	if ( lstat(st_script->file.path, &st) != 0 ) {
 		sieve_storage_set_critical(storage, 
 		  "Stat on sieve script %s failed, but it is to be activated: %m.", 
-			script->path);
+			st_script->file.path);
 		return -1;
 	}
 
@@ -505,7 +508,7 @@ static int _sieve_storage_script_activate(struct sieve_script *script)
 
 	/* Just try to create the symlink first */
 	link_path = t_strconcat
-	  ( storage->link_path, script->filename, NULL );
+	  ( storage->link_path, st_script->file.filename, NULL );
 		
  	ret = symlink(link_path, storage->active_path);
 
@@ -566,7 +569,7 @@ int sieve_storage_script_rename
 		 */
 
 		/* Link to the new path */
-		ret = link(script->path, newpath);
+		ret = link(st_script->file.path, newpath);
 		if ( ret >= 0 ) {
 			/* Is the requested script active? */
 			if ( sieve_storage_script_is_active(script) ) {
@@ -579,16 +582,15 @@ int sieve_storage_script_rename
 
 			if ( ret >= 0 ) {
 				/* If all is good, remove the old link */
-				if ( unlink(script->path) < 0 ) {
+				if ( unlink(st_script->file.path) < 0 ) {
 					i_error("Failed to clean up old file link '%s' after rename: %m", 
-						script->path);
+						st_script->file.path);
 				}
 
 				if ( script->name != NULL && *script->name != '\0' )
 					script->name = p_strdup(script->pool, newname);
-				script->path = p_strdup(script->pool, newpath);
-				script->filename = p_strdup(script->pool, newfile);
-				script->basename = p_strdup(script->pool, newname);
+				st_script->file.path = p_strdup(script->pool, newpath);
+				st_script->file.filename = p_strdup(script->pool, newfile);
 			} else {
 				/* If something went wrong, remove the new link to restore previous 
 				 * state 
@@ -612,7 +614,7 @@ int sieve_storage_script_rename
 			default:
 				sieve_storage_set_critical(
 					storage, "Performing link(%s, %s) failed: %m", 
-						script->path, newpath);
+						st_script->file.path, newpath);
 			}				
 		}
 	} T_END;

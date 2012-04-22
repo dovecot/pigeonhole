@@ -23,10 +23,29 @@ struct sieve_script_env;
 struct sieve_exec_status;
 
 /*
+ * System environment
+ */
+
+enum sieve_flag {
+	/* Relative paths are resolved to HOME */
+	SIEVE_FLAG_HOME_RELATIVE = (1 << 0),
+};
+
+struct sieve_environment {
+	const char *hostname;
+	const char *base_dir;
+
+	const char *username;
+	const char *home_dir;
+
+	enum sieve_flag flags;
+};
+
+/*
  * Callbacks
  */
 
-struct sieve_environment {
+struct sieve_callbacks {
 	const char *(*get_homedir)(void *context);
 	const char *(*get_setting)(void *context, const char *identifier);
 };
@@ -136,13 +155,9 @@ struct sieve_script_env {
 	/* Mail-related */
 	struct mail_user *user;
 	const char *default_mailbox;
+	const char *postmaster_address;
 	bool mailbox_autocreate;
 	bool mailbox_autosubscribe;
-	
-	/* System-related */
-	const char *username;
-	const char *hostname;
-	const char *postmaster_address;
 		
 	/* External context data */
 
@@ -152,19 +167,19 @@ struct sieve_script_env {
 	
 	/* Interface for sending mail */
 	void *(*smtp_open)
-		(void *script_ctx, const char *destination, 
+		(const struct sieve_script_env *senv, const char *destination, 
 			const char *return_path, FILE **file_r);
-	bool (*smtp_close)(void *script_ctx, void *handle);
+	bool (*smtp_close)(const struct sieve_script_env *senv, void *handle);
 	
 	/* Interface for marking and checking duplicates */
 	int (*duplicate_check)
-		(void *script_ctx, const void *id, size_t id_size, const char *user);
+		(const struct sieve_script_env *senv, const void *id, size_t id_size);
 	void (*duplicate_mark)
-		(void *script_ctx, const void *id, size_t id_size, const char *user, 
+		(const struct sieve_script_env *senv, const void *id, size_t id_size,
 			time_t time);
 
 	/* Interface for rejecting mail */
-	int (*reject_mail)(void *script_ctx, const char *recipient,
+	int (*reject_mail)(const struct sieve_script_env *senv, const char *recipient,
 			const char *reason);
 	
 	/* Execution status record */	

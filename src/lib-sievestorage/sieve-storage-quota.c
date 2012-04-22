@@ -3,6 +3,11 @@
 
 #include "lib.h"
 #include "str.h"
+
+#include "sieve.h"
+#include "sieve-script.h"
+#include "sieve-script-file.h"
+
 #include "sieve-storage-private.h"
 #include "sieve-storage-script.h"
 #include "sieve-storage-quota.h"

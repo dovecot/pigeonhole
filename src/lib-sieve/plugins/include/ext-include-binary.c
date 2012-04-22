@@ -57,9 +57,10 @@ struct ext_include_binary_context {
 	ARRAY_DEFINE(include_index, struct ext_include_script_info *);
 
 	struct sieve_variable_scope_binary *global_vars;
+
+	unsigned int outdated:1;
 };
 
- 
 static struct ext_include_binary_context *ext_include_binary_create_context
 (const struct sieve_extension *this_ext, struct sieve_binary *sbin)
 {
@@ -224,6 +225,7 @@ static bool ext_include_binary_save
 		sieve_binary_emit_unsigned(sblock, sieve_binary_block_get_id(incscript->block));
 		sieve_binary_emit_byte(sblock, incscript->location);
 		sieve_binary_emit_cstring(sblock, sieve_script_name(incscript->script));
+		sieve_script_binary_write_metadata(incscript->script, sblock);
 	}
 
 	result = ext_include_variables_save(sblock, binctx->global_vars);
@@ -270,8 +272,9 @@ static bool ext_include_binary_open
 		struct sieve_binary_block *inc_block;
 		unsigned int location;
 		string_t *script_name;
-		const char *script_dir;
+		const char *script_location;
 		struct sieve_script *script;
+		int ret;
 		
 		if ( 
 			!sieve_binary_read_unsigned(sblock, &offset, &inc_block_id) ||
@@ -298,20 +301,33 @@ static bool ext_include_binary_open
 			/* Binary is corrupt, recompile */
 			sieve_sys_error(svinst,
 				"include: dependency block %d of binary %s "
-				"reports invalid script location (id %d)", 
+				"uses invalid script location (id %d)", 
 				block_id, sieve_binary_path(sbin), location); 
 			return FALSE;
 		}		
 		
 		/* Can we find/open the script dependency ? */
-		script_dir = ext_include_get_script_directory
+		script_location = ext_include_get_script_location
 			(ext, location, str_c(script_name));		
-		if ( script_dir == NULL || 
-			!(script=sieve_script_create_in_directory
-				(ext->svinst, script_dir, str_c(script_name), NULL, NULL)) ) {
+		if ( script_location == NULL || (script=sieve_script_create
+			(ext->svinst, script_location, str_c(script_name), NULL, NULL)) == NULL )
+			{
 			/* No, recompile */
 			return FALSE;
 		}
+
+		if ( (ret=sieve_script_binary_read_metadata(script, sblock, &offset))
+			< 0 ) {
+			/* Binary is corrupt, recompile */
+			sieve_sys_error(svinst,
+				"include: dependency block %d of binary %s "
+				"contains invalid script metadata for script %s", 
+				block_id, sieve_binary_path(sbin), sieve_script_location(script)); 
+			return FALSE;
+		}
+
+		if ( ret == 0 )
+			binctx->outdated = TRUE;
 		
 		(void)ext_include_binary_script_include
 			(binctx, script, location, inc_block);
@@ -327,29 +343,14 @@ static bool ext_include_binary_open
 }
 
 static bool ext_include_binary_up_to_date
-(const struct sieve_extension *ext ATTR_UNUSED, struct sieve_binary *sbin, 
-	void *context, enum sieve_compile_flags cpflags ATTR_UNUSED)
+(const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_binary *sbin ATTR_UNUSED, void *context,
+	enum sieve_compile_flags cpflags ATTR_UNUSED)
 {
 	struct ext_include_binary_context *binctx = 
 		(struct ext_include_binary_context *) context;
-	struct hash_iterate_context *hctx;
-	void *key, *value;
-		
-	/* Check all included scripts for changes */
-	hctx = hash_table_iterate_init(binctx->included_scripts);
-	while ( hash_table_iterate(hctx, &key, &value) ) {
-		struct ext_include_script_info *incscript = 
-			(struct ext_include_script_info *) value;
-		
-		/* Is the binary old than this dependency? */
-		if ( sieve_binary_script_newer(sbin, incscript->script) ) {
-			/* No, recompile */
-			return FALSE;
-		}
-	}
-	hash_table_iterate_deinit(&hctx);
 
-	return TRUE;
+	return !binctx->outdated;
 }
 
 static void ext_include_binary_free

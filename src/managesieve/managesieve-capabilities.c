@@ -88,11 +88,6 @@ static const char *plugin_settings_get
  * Sieve environment
  */
 
-static const char *sieve_get_homedir(void *context ATTR_UNUSED)
-{
-	return "/tmp";
-}
-
 static const char *sieve_get_setting
 (void *context, const char *identifier)
 {
@@ -101,8 +96,8 @@ static const char *sieve_get_setting
   return plugin_settings_get(set, identifier);
 }
 
-static const struct sieve_environment sieve_env = {
-	sieve_get_homedir,
+static const struct sieve_callbacks sieve_callbacks = {
+	NULL,
 	sieve_get_setting
 };
 
@@ -113,6 +108,7 @@ static const struct sieve_environment sieve_env = {
 void managesieve_capabilities_dump(void)
 {
 	const struct plugin_settings *global_plugin_settings;
+	struct sieve_environment svenv;
 	struct sieve_instance *svinst;
 	const char *notify_cap;
 	
@@ -122,7 +118,11 @@ void managesieve_capabilities_dump(void)
 
 	/* Initialize Sieve engine */
 
-	svinst = sieve_init(&sieve_env, (void *) global_plugin_settings, FALSE);
+	memset((void*)&svenv, 0, sizeof(svenv));
+	svenv.home_dir = "/tmp";
+
+	svinst = sieve_init
+		(&svenv, &sieve_callbacks, (void *) global_plugin_settings, FALSE);
 
 	/* Dump capabilities */
 

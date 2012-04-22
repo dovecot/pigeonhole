@@ -722,8 +722,7 @@ int sieve_action_duplicate_check
 	if ( senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
 		return 0;
 
-	return senv->duplicate_check
-		(senv->script_context, id, id_size, senv->username); 
+	return senv->duplicate_check(senv, id, id_size); 
 }
 
 void sieve_action_duplicate_mark
@@ -733,8 +732,7 @@ void sieve_action_duplicate_mark
 	if ( senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
 		return;
 
-	senv->duplicate_mark
-		(senv->script_context, id, id_size, senv->username, time);
+	senv->duplicate_mark(senv, id, id_size, time);
 }
 
 /* Rejecting the mail */
@@ -743,6 +741,7 @@ static bool sieve_action_do_reject_mail
 (const struct sieve_action_exec_env *aenv, const char *sender, 
 	const char *recipient, const char *reason)
 {
+	struct sieve_instance *svinst = aenv->svinst;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct istream *input;
@@ -764,8 +763,8 @@ static bool sieve_action_do_reject_mail
 
 	smtp_handle = sieve_smtp_open(senv, sender, NULL, &f);
 
-	new_msgid = sieve_message_get_new_id(senv);
-	boundary = t_strdup_printf("%s/%s", my_pid, senv->hostname);
+	new_msgid = sieve_message_get_new_id(svinst);
+	boundary = t_strdup_printf("%s/%s", my_pid, svinst->hostname);
 
 	rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
 	rfc2822_header_field_write(f, "Message-ID", new_msgid);
@@ -797,7 +796,7 @@ static bool sieve_action_do_reject_mail
 	fprintf(f, "--%s\r\n"
 		"Content-Type: message/disposition-notification\r\n\r\n", boundary);
 	fprintf(f, "Reporting-UA: %s; Dovecot Mail Delivery Agent\r\n",
-		senv->hostname);
+		svinst->hostname);
 	if (mail_get_first_header(msgdata->mail, "Original-Recipient", &header) > 0)
 		fprintf(f, "Original-Recipient: rfc822; %s\r\n", header);
 	fprintf(f, "Final-Recipient: rfc822; %s\r\n", recipient);
@@ -856,7 +855,7 @@ bool sieve_action_reject_mail
 	const struct sieve_script_env *senv = aenv->scriptenv;
 
 	if ( senv->reject_mail != NULL ) {
-		return ( senv->reject_mail(senv->script_context, recipient, reason) >= 0 );
+		return ( senv->reject_mail(senv, recipient, reason) >= 0 );
 	}
 		
 	return sieve_action_do_reject_mail(aenv, sender, recipient, reason);

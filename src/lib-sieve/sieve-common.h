@@ -155,8 +155,19 @@ struct sieve_instance {
 	/* Main engine pool */
 	pool_t pool;
 
+	/* System environment */
+	const char *hostname;
+	const char *base_dir;
+
+	/* User environment */
+	const char *username;
+	const char *home_dir;
+
+	/* Flags */
+	enum sieve_flag flags;
+
 	/* Callbacks */
-	const struct sieve_environment *env;
+	const struct sieve_callbacks *callbacks;
 	void *context;
 
 	/* Engine debug */

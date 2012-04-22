@@ -4,26 +4,22 @@
 #include "lib.h"
 #include "compat.h"
 #include "unichar.h"
+#include "str.h"
+#include "hash.h"
 #include "array.h"
-#include "abspath.h"
-#include "istream.h"
+#include "home-expand.h"
+#include "mkdir-parents.h"
 #include "eacces-error.h"
+#include "istream.h"
 
 #include "sieve-common.h"
 #include "sieve-limits.h"
+#include "sieve-settings.h"
 #include "sieve-error.h"
+#include "sieve-binary.h"
 
 #include "sieve-script-private.h"
-
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-/*
- * Configuration
- */
- 
-#define SIEVE_READ_BLOCK_SIZE (1024*8)
+#include "sieve-script-file.h"
 
 /*
  * Script name
@@ -92,201 +88,200 @@ bool sieve_script_name_is_valid(const char *scriptname)
 	return TRUE;
 }
 
-/*
- * Filename to name/name to filename
- */
-
-const char *sieve_scriptfile_get_script_name(const char *filename)
-{
-	const char *ext;
-
-	/* Extract the script name */
-	ext = strrchr(filename, '.');
-	if ( ext == NULL || ext == filename ||
-		strcmp(ext, "."SIEVE_SCRIPT_FILEEXT) != 0 )
-		return NULL;
-
-	return t_strdup_until(filename, ext);
-}
-
-bool sieve_scriptfile_has_extension(const char *filename)
-{
-	return ( sieve_scriptfile_get_script_name(filename) != NULL );
-}
-
-const char *sieve_scriptfile_from_name(const char *name)
-{
-	return t_strconcat(name, "."SIEVE_SCRIPT_FILEEXT, NULL);
-}
-
-const char *sieve_binfile_from_name(const char *name)
-{
-	return t_strconcat(name, "."SIEVE_BINARY_FILEEXT, NULL);
-}
-
-
-/*
- * Common error handling
- */
-
-static void sieve_script_handle_file_error
-(struct sieve_instance *svinst, const char *path, const char *name,
-	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
-{
-	switch ( errno ) {
-	case ENOENT:
-		if ( svinst->debug )
-			sieve_sys_debug(svinst, "script file %s not found", t_abspath(path));
-		if ( error_r == NULL )
-			sieve_error(ehandler, name, "sieve script does not exist");
-		else {
-			*error_r = SIEVE_ERROR_NOT_FOUND;
-		}
-		break;
-	case EACCES:
-		sieve_critical(svinst, ehandler, name, "failed to open sieve script", 
-			"failed to stat sieve script: %s", eacces_error_get("stat", path));
-		if ( error_r != NULL )
-			*error_r = SIEVE_ERROR_NO_PERM;
-		break;
-	default:
-		sieve_critical(svinst, ehandler, name, "failed to open sieve script", 
-			"failed to stat sieve script: stat(%s) failed: %m", path);
-		if ( error_r != NULL )
-			*error_r = SIEVE_ERROR_TEMP_FAIL;
-		break;
-	}
-}
-
 /* 
  * Script object 
  */
- 
-struct sieve_script *sieve_script_init
-(struct sieve_script *script, struct sieve_instance *svinst, 
-	const char *path, const char *name, struct sieve_error_handler *ehandler, 
-	enum sieve_error *error_r)
+
+static const char *split_next_arg(const char *const **_args)
 {
-	int ret;
-	pool_t pool;
-	struct stat st;
-	struct stat lnk_st;
-	const char *filename, *dirpath, *basename, *binpath;
+	const char *const *args = *_args;
+	const char *str = args[0];
+
+	/* join arguments for escaped ";" separator */
+
+	args++;
+	while (*args != NULL && **args == '\0') {
+		args++;
+		if (*args == NULL) {
+			/* string ends with ";", just ignore it. */
+			break;
+		}
+		str = t_strconcat(str, ";", *args, NULL);
+		args++;
+	}
+	*_args = args;
+	return str;
+}
+
+static bool sieve_script_location_parse
+(struct sieve_script *script, const char *data, const char **location_r,
+	const char *const **options_r, const char **error_r)
+{
+	ARRAY_TYPE(const_string) options;
+	const char *const *tmp;
+
+	if (*data == '\0') {
+		*options_r = NULL;
+		*location_r = data;		
+		return TRUE;
+	}
+
+	/* <location> */
+	tmp = t_strsplit(data, ";");
+	*location_r = split_next_arg(&tmp);
+
+	if ( options_r != NULL ) {
+		t_array_init(&options, 8);
+	
+		/* [<option> *(';' <option>)] */
+		while (*tmp != NULL) {
+			const char *option = split_next_arg(&tmp);
+
+			if ( strncasecmp(option, "name=", 5) == 0 ) {
+				if ( option[5] == '\0' ) {
+					*error_r = "empty name not allowed";
+					return FALSE;
+				}
+
+				if ( script->name == NULL )
+					script->name = p_strdup(script->pool, option+5);
+
+			} else if ( strncasecmp(option, "bindir=", 7) == 0 ) {
+				const char *bin_dir = option+7;
+
+				if ( bin_dir[0] == '\0' ) {
+					*error_r = "empty bindir not allowed";
+					return FALSE;
+				}
+
+				if ( bin_dir[0] == '~' ) {
+					/* home-relative path. change to absolute. */
+					const char *home = sieve_environment_get_homedir(script->svinst);
+
+					if ( home != NULL ) {
+						bin_dir = home_expand_tilde(bin_dir, home);
+					} else if ( bin_dir[1] == '/' || bin_dir[1] == '\0' ) {
+						*error_r = "bindir is relative to home directory (~/), "
+							"but home directory cannot be determined";
+						return FALSE;
+					}
+				}
+
+				script->bin_dir = p_strdup(script->pool, bin_dir);
+			} else {
+				array_append(&options, &option, 1);
+			}
+		}
+
+		(void)array_append_space(&options);
+		*options_r = array_idx(&options, 0);
+	}
+
+	return TRUE;
+}
+
+struct sieve_script *sieve_script_init
+(struct sieve_script *script, struct sieve_instance *svinst,
+	const struct sieve_script *script_class, const char *data, const char *name,
+	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
+{
+	enum sieve_error error;
+	const char *const *options = NULL;
+	const char *location = NULL, *parse_error = NULL;
 
 	if ( error_r != NULL )
 		*error_r = SIEVE_ERROR_NONE;
 
-	T_BEGIN {
+	script->script_class = script_class;
+	script->refcount = 1;
+	script->svinst = svinst;
+	script->ehandler = ehandler;
+	
+	script->name = p_strdup_empty(script->pool, name);
+	
+	if ( !sieve_script_location_parse
+		(script, data, &location, &options, &parse_error) ) {
+		sieve_critical(svinst, ehandler, NULL,
+			"failed to access sieve script", "failed to parse script location: %s",
+			parse_error);
+		*error_r = SIEVE_ERROR_TEMP_FAIL;
+		pool_unref(&script->pool);
+		return NULL;
+	}
 
-		/* Extract filename from path */
+	if ( script->v.create(script, location, options, &error) < 0 ) {
 
-		filename = strrchr(path, '/');
-		if ( filename == NULL ) {
-			dirpath = "";
-			filename = path;
+		if ( error_r == NULL ) {
+			if ( error == SIEVE_ERROR_NOT_FOUND )
+				sieve_error(ehandler, script->name, "sieve script does not exist");
 		} else {
-			dirpath = t_strdup_until(path, filename);
-			filename++;
+			*error_r = error;
 		}
 
-		if ( (basename=sieve_scriptfile_get_script_name(filename)) == NULL )
-			basename = filename;
+		pool_unref(&script->pool);
+		return NULL;
+	}
 
-		binpath = sieve_binfile_from_name(basename);
-		if ( *dirpath != '\0' )
-			binpath = t_strconcat(dirpath, "/", binpath, NULL);
-				
-		if ( name == NULL ) {
-			name = basename; 
-		} else if ( *name == '\0' ) {
-			name = NULL;
-		} else {
-			basename = name;
-		}
-			
-		/* First obtain stat data from the system */
-		
-		if ( (ret=lstat(path, &st)) < 0 ) {
-			sieve_script_handle_file_error(svinst, path, basename, ehandler, error_r);
-			script = NULL;
-			ret = 1;
+	i_assert( script->location != NULL );
 
-		} else {
-			/* Record stat information from the symlink */
-			lnk_st = st;
-
-			/* Only create/init the object if it stat()s without problems */
-			if ( S_ISLNK(st.st_mode) && (ret=stat(path, &st)) < 0 ) { 
-				sieve_script_handle_file_error
-					(svinst, path, basename, ehandler, error_r);
-				script = NULL;	
-				ret = 1;
-			}
-
-			if ( ret == 0 && !S_ISREG(st.st_mode) ) {
-				sieve_critical(svinst, ehandler, basename, 
-					"failed to open sieve script",
-					"sieve script file '%s' is not a regular file.", path);
-				if ( error_r != NULL )
-					*error_r = SIEVE_ERROR_NOT_POSSIBLE;
-				script = NULL;
-				ret = 1;
-			} 
-		}
-
-		if ( ret <= 0 ) {
-			if ( script == NULL ) {
-				pool = pool_alloconly_create("sieve_script", 1024);
-				script = p_new(pool, struct sieve_script, 1);
-				script->pool = pool;
-			} else 
-				pool = script->pool;
-		
-			script->refcount = 1;
-			script->svinst = svinst;
-
-			script->ehandler = ehandler;
-			sieve_error_handler_ref(ehandler);
-		
-			script->st = st;
-			script->lnk_st = lnk_st;
-			script->path = p_strdup(pool, path);
-			script->filename = p_strdup(pool, filename);
-			script->dirpath = p_strdup(pool, dirpath);
-			script->binpath = p_strdup(pool, binpath);
-			script->basename = p_strdup(pool, basename);
-
-			if ( name != NULL )
-				script->name = p_strdup(pool, name);
-			else
-				script->name = NULL;
-		}
-	} T_END;	
+	sieve_error_handler_ref(ehandler);
 
 	return script;
 }
 
 struct sieve_script *sieve_script_create
-(struct sieve_instance *svinst, const char *path, const char *name, 
+(struct sieve_instance *svinst, const char *location, const char *name, 
 	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
 {
-	return sieve_script_init(NULL, svinst, path, name, ehandler, error_r);
+	struct sieve_script *script;
+	const struct sieve_script *script_class;
+	const char *data, *p;
+
+	p = strchr(location, ':');
+	if ( p == NULL ) {
+		/* Default script driver is "file" (meaning that location is a fs path) */
+		data = location;
+		script_class = &sieve_file_script;
+	} else {
+		/* Lookup script driver */
+		T_BEGIN {
+			const char *driver;
+
+			data = p+1;
+			driver = t_strdup_until(location, p);
+
+			/* FIXME
+			script_class = sieve_script_class_lookup(driver);*/
+			if ( strcasecmp(driver, SIEVE_FILE_SCRIPT_DRIVER_NAME) == 0 ) 
+				script_class = &sieve_file_script;
+			else if ( strcasecmp(driver, SIEVE_DICT_SCRIPT_DRIVER_NAME) == 0 )
+				script_class = &sieve_dict_script;
+			else
+				script_class = NULL;
+			
+			if ( script_class == NULL )
+				i_error("Unknown sieve script driver module: %s", driver);
+		} T_END;
+	}
+
+	script = script_class->v.alloc();
+	return sieve_script_init
+		(script, svinst, script_class, data, name, ehandler, error_r);
 }
 
-struct sieve_script *sieve_script_create_in_directory
-(struct sieve_instance *svinst, const char *dirpath, const char *name,
+struct sieve_script *sieve_script_create_as
+(struct sieve_instance *svinst, const char *location, const char *name, 
 	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
 {
-	const char *path;
+	struct sieve_script *script;
 
-	if ( dirpath[strlen(dirpath)-1] == '/' )
-		path = t_strconcat(dirpath, 
-			sieve_scriptfile_from_name(name), NULL);
-	else
-		path = t_strconcat(dirpath, "/",
-			sieve_scriptfile_from_name(name), NULL);
+	if ( (script=sieve_script_create(svinst, location, NULL, ehandler, error_r))
+		== NULL )
+		return NULL;
 
-	return sieve_script_init(NULL, svinst, path, name, ehandler, error_r);
+	/* override name */
+	script->name = p_strdup(script->pool, name);
+	return script;	
 }
 
 void sieve_script_ref(struct sieve_script *script)
@@ -294,25 +289,28 @@ void sieve_script_ref(struct sieve_script *script)
 	script->refcount++;
 }
 
-void sieve_script_unref(struct sieve_script **script)
+void sieve_script_unref(struct sieve_script **_script)
 {
-	i_assert((*script)->refcount > 0);
+	struct sieve_script *script = *_script;
 
-	if (--(*script)->refcount != 0)
+	i_assert(script->refcount > 0);
+
+	if (--script->refcount != 0)
 		return;
 
-	if ( (*script)->stream != NULL )
-		i_stream_destroy(&(*script)->stream);
+	if ( script->stream != NULL )
+		i_stream_unref(&script->stream);
 
-	sieve_error_handler_unref(&(*script)->ehandler);
+	sieve_error_handler_unref(&script->ehandler);
 
-	pool_unref(&(*script)->pool);
-
-	*script = NULL;
+	if ( script->v.destroy != NULL )
+		script->v.destroy(script);
+	pool_unref(&script->pool);
+	*_script = NULL;
 }
 
 /* 
- * Accessors 
+ * Properties
  */
 
 const char *sieve_script_name(const struct sieve_script *script)
@@ -320,29 +318,9 @@ const char *sieve_script_name(const struct sieve_script *script)
 	return script->name;
 }
 
-const char *sieve_script_filename(const struct sieve_script *script)
+const char *sieve_script_location(const struct sieve_script *script)
 {
-	return script->filename;
-}
-
-const char *sieve_script_path(const struct sieve_script *script)
-{
-	return script->path;
-}
-
-const char *sieve_script_dirpath(const struct sieve_script *script)
-{
-	return script->dirpath;
-}
-
-const char *sieve_script_binpath(const struct sieve_script *script)
-{
-	return script->binpath;
-}
-
-mode_t sieve_script_permissions(const struct sieve_script *script)
-{
-	return script->st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+	return script->location;
 }
 
 struct sieve_instance *sieve_script_svinst(const struct sieve_script *script)
@@ -350,97 +328,216 @@ struct sieve_instance *sieve_script_svinst(const struct sieve_script *script)
 	return script->svinst;
 }
 
-size_t sieve_script_size(const struct sieve_script *script)
+int sieve_script_get_size(struct sieve_script *script, uoff_t *size_r)
 {
-	return script->st.st_size;
+	int ret;
+
+	if ( script->v.get_size != NULL ) {
+		if ( (ret=script->v.get_size(script, size_r)) != 0)
+			return ret;
+	}
+
+	/* Try getting size from the stream */
+	if ( script->stream == NULL && sieve_script_open(script, NULL) == NULL )
+		return -1;
+
+	return i_stream_get_size(script->stream, TRUE, size_r);
 }
 
 /* 
- * Stream manageement 
+ * Stream management 
  */
 
 struct istream *sieve_script_open
 (struct sieve_script *script, enum sieve_error *error_r)
 {
-	int fd;
-	struct stat st;
-	struct istream *result;
+	enum sieve_error error;
 
 	if ( error_r != NULL )
 		*error_r = SIEVE_ERROR_NONE;
 
-	if ( (fd=open(script->path, O_RDONLY)) < 0 ) {
-		sieve_script_handle_file_error
-			(script->svinst, script->path, script->basename, script->ehandler, 
-				error_r);
-		return NULL;
-	}	
-	
-	if ( fstat(fd, &st) != 0 ) {
-		sieve_critical(script->svinst, script->ehandler, script->basename,
-			"failed to open sieve script",
-			"failed to open sieve script: fstat(fd=%s) failed: %m", script->path);
-		if ( error_r != NULL )
-			*error_r = SIEVE_ERROR_TEMP_FAIL;
-		result = NULL;
-	} else {
-		/* Re-check the file type just to be sure */
-		if ( !S_ISREG(st.st_mode) ) {
-			sieve_critical(script->svinst, script->ehandler, script->basename,
-				"failed to open sieve script",
-				"sieve script file '%s' is not a regular file", script->path);
-			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_NOT_POSSIBLE;
-			result = NULL;
+	if ( script->stream == NULL ) {
+		T_BEGIN {
+			script->stream = script->v.open(script, &error);
+		} T_END;
+	}
+
+	if ( script->stream == NULL ) {
+		if ( error_r == NULL ) {
+			if ( error == SIEVE_ERROR_NOT_FOUND ) {
+				sieve_error(script->ehandler, script->name,
+					"sieve script does not exist");
+			}
 		} else {
-			result = script->stream = 
-				i_stream_create_fd(fd, SIEVE_READ_BLOCK_SIZE, TRUE);
-			script->st = script->lnk_st = st;
+			*error_r = error;
 		}
 	}
 
-	if ( result == NULL ) {
-		/* Something went wrong, close the fd */
-		if ( close(fd) != 0 ) {
-			sieve_sys_error(script->svinst, 
-				"failed to close sieve script: close(fd=%s) failed: %m", 
-				script->path);
-		}
-	}
-	
-	return result;
+	return script->stream;
 }
 
 void sieve_script_close(struct sieve_script *script)
 {
-	i_stream_destroy(&script->stream);
-}
+	if ( script->stream != NULL )
+		return;
 
-uoff_t sieve_script_get_size(const struct sieve_script *script)
-{
-	return script->st.st_size;
+	i_stream_unref(&script->stream);
+
+	if ( script->v.close != NULL ) { 
+		T_BEGIN {
+			script->v.close(script);
+		} T_END;
+	}
 }
 
 /* 
  * Comparison 
  */
 
-int sieve_script_cmp
-(const struct sieve_script *script1, const struct sieve_script *script2)
+bool sieve_script_equals
+(const struct sieve_script *script, const struct sieve_script *other)
 {
-	if ( script1 == NULL || script2 == NULL ) 
-		return -1;	
+	if ( script == other )
+		return TRUE;
 
-	return ( script1->st.st_ino == script2->st.st_ino ) ? 0 : -1;
+	if ( script == NULL || other == NULL )
+		return FALSE;
+
+	if ( script->script_class != other->script_class )
+		return FALSE;
+
+	if ( script->name != NULL && other->name != NULL &&
+		strcmp(script->name, other->name) == 0 )
+		return TRUE;
+
+	if ( script->v.equals == NULL )
+		return FALSE;
+
+	return script->v.equals(script, other);
 }
 
 unsigned int sieve_script_hash(const struct sieve_script *script)
 {	
-	return (unsigned int) script->st.st_ino;
+	return str_hash(script->name);
 }
 
-bool sieve_script_newer
-(const struct sieve_script *script, time_t time)
+/*
+ * Binary
+ */
+
+int sieve_script_binary_read_metadata
+(struct sieve_script *script, struct sieve_binary_block *sblock,
+	sieve_size_t *offset)
 {
-	return ( script->st.st_mtime > time || script->lnk_st.st_mtime > time );
+	struct sieve_instance *svinst = script->svinst;
+	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
+	string_t *script_class;
+	
+	if ( sieve_binary_block_get_size(sblock) - *offset == 0 )
+		return 0;
+
+	if ( !sieve_binary_read_string(sblock, offset, &script_class) ) {
+		sieve_sys_error(svinst,
+			"sieve script: binary %s has invalid metadata for script %s",
+			sieve_binary_path(sbin), sieve_script_location(script));
+		return -1;
+	}
+
+	if ( strcmp(str_c(script_class), script->driver_name) != 0 )
+		return 0;
+
+	if ( script->v.binary_read_metadata == NULL )
+		return 1;
+
+	return script->v.binary_read_metadata(script, sblock, offset);
 }
+
+void sieve_script_binary_write_metadata
+(struct sieve_script *script, struct sieve_binary_block *sblock)
+{
+	sieve_binary_emit_cstring(sblock, script->driver_name);
+
+	if ( script->v.binary_write_metadata == NULL )
+		return;
+
+	script->v.binary_write_metadata(script, sblock);
+}
+
+struct sieve_binary *sieve_script_binary_load
+(struct sieve_script *script, enum sieve_error *error_r)
+{
+	if ( script->v.binary_load == NULL ) {
+		*error_r = SIEVE_ERROR_NOT_POSSIBLE;
+		return NULL;
+	}
+
+	return script->v.binary_load(script, error_r);
+}
+
+int sieve_script_binary_save
+(struct sieve_script *script, struct sieve_binary *sbin, bool update,
+	enum sieve_error *error_r)
+{
+	struct sieve_script *bin_script = sieve_binary_script(sbin);
+
+	i_assert(bin_script == NULL || sieve_script_equals(bin_script, script));
+
+	if ( script->v.binary_save == NULL ) {
+		*error_r = SIEVE_ERROR_NOT_POSSIBLE;
+		return -1;
+	}
+
+	return script->v.binary_save(script, sbin, update, error_r);
+}
+
+int sieve_script_setup_bindir
+(struct sieve_script *script, mode_t mode)
+{
+	struct sieve_instance *svinst = script->svinst;
+	struct stat st;
+
+	if ( script->bin_dir == NULL )
+		return -1;
+
+	if ( stat(script->bin_dir, &st) == 0 )
+		return 0;
+
+	if ( errno == EACCES ) {
+		sieve_sys_error(svinst, "sieve script: "
+			"failed to setup directory for binaries: %s",
+			eacces_error_get("stat", script->bin_dir));
+		return -1;
+	} else if ( errno != ENOENT ) {
+		sieve_sys_error(svinst, "sieve script: "
+			"failed to setup directory for binaries: stat(%s) failed: %m",
+			script->bin_dir);
+		return -1;
+	}
+
+	if ( mkdir_parents(script->bin_dir, mode) == 0 ) {
+		if ( svinst->debug )
+			sieve_sys_debug(svinst, "sieve script: "
+				"created directory for binaries: %s", script->bin_dir);
+		return 1;
+	}
+
+	switch ( errno ) {
+	case EEXIST:
+		return 0;
+	case ENOENT:
+		sieve_sys_error(svinst, "sieve script: "
+			"directory for binaries was deleted while it was being created");
+		break;
+	case EACCES:
+		sieve_sys_error(svinst, "sieve script: %s",
+			eacces_error_get_creating("mkdir_parents_chgrp", script->bin_dir));
+		break;
+	default:
+		sieve_sys_error(svinst, "sieve script: "
+			"mkdir_parents_chgrp(%s) failed: %m", script->bin_dir);
+		break;
+	}
+
+	return -1;
+}
+

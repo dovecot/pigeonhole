@@ -718,7 +718,7 @@ static bool act_notify_send
 			smtp_handle = sieve_smtp_open
 				(senv, recipients[i].normalized, NULL, &f);
 
-		outmsgid = sieve_message_get_new_id(senv);
+		outmsgid = sieve_message_get_new_id(aenv->svinst);
 	
 		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
 		rfc2822_header_field_write(f, "Message-ID", outmsgid);

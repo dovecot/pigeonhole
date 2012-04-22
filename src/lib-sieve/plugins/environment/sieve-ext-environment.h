@@ -10,7 +10,8 @@ struct sieve_environment_item {
 	const char *name;
 	
 	const char *value;
-	const char *(*get_value)(const struct sieve_script_env *senv);
+	const char *(*get_value)
+		(struct sieve_instance *svinst, const struct sieve_script_env *senv);
 };
 
 void sieve_ext_environment_item_register

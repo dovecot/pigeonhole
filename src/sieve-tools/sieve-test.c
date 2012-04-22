@@ -57,7 +57,7 @@ static void print_help(void)
  */
 
 static void *sieve_smtp_open
-(void *script_ctx ATTR_UNUSED, const char *destination,
+(const struct sieve_script_env *senv ATTR_UNUSED, const char *destination,
 	const char *return_path, FILE **file_r)
 {
 	i_info("sending message from <%s> to <%s>:",
@@ -70,7 +70,7 @@ static void *sieve_smtp_open
 }
 
 static bool sieve_smtp_close
-(void *script_ctx ATTR_UNUSED, void *handle ATTR_UNUSED)
+(const struct sieve_script_env *senv ATTR_UNUSED, void *handle ATTR_UNUSED)
 {
 	printf("END MESSAGE\n\n");
 	return TRUE;
@@ -81,19 +81,18 @@ static bool sieve_smtp_close
  */
 
 static int duplicate_check
-(void *script_context ATTR_UNUSED, const void *id ATTR_UNUSED, 
-	size_t id_size ATTR_UNUSED, const char *user)
+(const struct sieve_script_env *senv, const void *id ATTR_UNUSED, 
+	size_t id_size ATTR_UNUSED)
 {
-	i_info("checked duplicate for user %s.\n", user);
+	i_info("checked duplicate for user %s.\n", senv->user->username);
 	return 0;
 }
 
 static void duplicate_mark
-(void *script_context ATTR_UNUSED, const void *id ATTR_UNUSED, 
-	size_t id_size ATTR_UNUSED, const char *user, 
-	time_t time ATTR_UNUSED)
+(const struct sieve_script_env *senv, const void *id ATTR_UNUSED, 
+	size_t id_size ATTR_UNUSED, time_t time ATTR_UNUSED)
 {
-	i_info("marked duplicate for user %s.\n", user);
+	i_info("marked duplicate for user %s.\n", senv->user->username);
 }
 
 /*
@@ -223,7 +222,7 @@ int main(int argc, char **argv)
 	if ( force_compile ) {
 		main_sbin = sieve_tool_script_compile(svinst, scriptfile, NULL);
 		if ( main_sbin != NULL )
-			(void) sieve_save(main_sbin, NULL, TRUE, NULL);
+			(void) sieve_save(main_sbin, TRUE, NULL);
 	} else {
 		main_sbin = sieve_tool_script_open(svinst, scriptfile);
 	}
@@ -269,8 +268,6 @@ int main(int argc, char **argv)
 		memset(&scriptenv, 0, sizeof(scriptenv));
 		scriptenv.default_mailbox = "INBOX";
 		scriptenv.user = sieve_tool_get_mail_user(sieve_tool);
-		scriptenv.username = sieve_tool_get_username(sieve_tool);
-		scriptenv.hostname = "host.example.com";
 		scriptenv.postmaster_address = "postmaster@example.com";
 		scriptenv.smtp_open = sieve_smtp_open;
 		scriptenv.smtp_close = sieve_smtp_close;
@@ -324,7 +321,7 @@ int main(int argc, char **argv)
 				if ( force_compile ) {
 					sbin = sieve_tool_script_compile(svinst, sfiles[i], sfiles[i]);
 					if ( sbin != NULL )
-						(void) sieve_save(sbin, NULL, FALSE, NULL);
+						(void) sieve_save(sbin, FALSE, NULL);
 				} else {
 					sbin = sieve_tool_script_open(svinst, sfiles[i]);
 				}

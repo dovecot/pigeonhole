@@ -466,9 +466,9 @@ static bool ntfy_mailto_send
 		const struct uri_mailto_header_field *headers;
 		unsigned int h, hcount;
 
-        smtp_handle = sieve_smtp_open
-            (senv, recipients[i].normalized, from_smtp, &f);
-		outmsgid = sieve_message_get_new_id(senv);
+		smtp_handle = sieve_smtp_open
+			(senv, recipients[i].normalized, from_smtp, &f);
+		outmsgid = sieve_message_get_new_id(nenv->svinst);
 	
 		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
 		rfc2822_header_field_write(f, "Message-ID", outmsgid);

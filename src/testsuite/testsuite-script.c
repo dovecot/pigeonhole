@@ -6,6 +6,7 @@
 #include "sieve.h"
 #include "sieve-common.h"
 #include "sieve-script.h"
+#include "sieve-script-file.h"
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"
 #include "sieve-runtime-trace.h"
@@ -45,8 +46,8 @@ static struct sieve_binary *_testsuite_script_compile
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "compile script `%s'", script);
 
-	script_path = sieve_script_dirpath(renv->script);
-	if ( script_path == NULL ) 
+	script_path = sieve_file_script_get_dirpath(renv->script);
+	if ( script_path == NULL )
 		return SIEVE_EXEC_FAILURE;
 
 	script_path = t_strconcat(script_path, "/", script, NULL);
@@ -95,8 +96,6 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	/* Compose script execution environment */
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	scriptenv.default_mailbox = "INBOX";
-	scriptenv.username = "user";
-	scriptenv.hostname = "host.example.com";
 	scriptenv.postmaster_address = "postmaster@example.com";
 	scriptenv.smtp_open = NULL;
 	scriptenv.smtp_close = NULL;
@@ -157,8 +156,6 @@ bool testsuite_script_multiscript
 	/* Compose script execution environment */
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	scriptenv.default_mailbox = "INBOX";
-	scriptenv.username = "user";
-	scriptenv.hostname = "host.example.com";
 	scriptenv.postmaster_address = "postmaster@example.com";
 	scriptenv.smtp_open = NULL;
 	scriptenv.smtp_close = NULL;

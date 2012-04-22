@@ -224,12 +224,30 @@ static struct sieve_storage *_sieve_storage_create
 	/* Get path to active Sieve script */
 
 	if ( active_path != NULL ) {
+		const char *p;
+
 		if ( *active_path == '\0' ) {
 			/* disabled */
 			if ( debug ) 
 				i_debug("sieve-storage: sieve is disabled (sieve=\"\")");
 			return NULL;
 		}
+
+		/* Parse full location into a file path */
+		p = strchr(active_path, ':');
+		if ( p != NULL ) {
+	 		if ( strncmp(active_path, "file", p-active_path) != 0 ) {
+				i_error("sieve-storage: Cannot open non-file script location "
+					"for active script `%s'",	active_path);
+				return NULL;
+			}
+			active_path = p+1;
+
+			p = strchr(active_path, ';');
+			if ( p != NULL )
+				active_path = t_strdup_until(active_path, p);
+		}
+
 	} else {
 		if ( debug ) {
 			i_debug("sieve-storage: sieve active script path is unconfigured; "
@@ -315,6 +333,23 @@ static struct sieve_storage *_sieve_storage_create
 			}
 		}
 	} else {
+		const char *p;
+
+		/* Parse full location into a file path */
+		p = strchr(sieve_data, ':');
+		if ( p != NULL ) {
+	 		if (strncmp(sieve_data, "file", p-sieve_data) != 0 ) {
+				i_error("sieve-storage: Cannot open non-file script storage `%s'",
+					sieve_data);
+				return NULL;
+			}
+			sieve_data = p+1;
+
+			p = strchr(sieve_data, ';');
+			if ( p != NULL )
+				sieve_data = t_strdup_until(sieve_data, p);
+		}
+
 		storage_dir = sieve_data;
 	}
 

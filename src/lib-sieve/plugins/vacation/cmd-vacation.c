@@ -933,7 +933,7 @@ static bool act_vacation_send
 	/* Open smtp session */
 
 	smtp_handle = sieve_smtp_open(senv, reply_to, NULL, &f);
-	outmsgid = sieve_message_get_new_id(senv);
+	outmsgid = sieve_message_get_new_id(aenv->svinst);
 
 	/* Produce a proper reply */
 

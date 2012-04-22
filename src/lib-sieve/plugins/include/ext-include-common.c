@@ -76,12 +76,15 @@ bool ext_include_load
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_include_context *ctx;
-	const char *sieve_dir, *home;
+	const char *sieve_dir;
 	unsigned long long int uint_setting;
 
 	if ( *context != NULL ) {
 		ext_include_unload(ext);
 	}
+
+	// FIXME: sieve_dir and sieve_global_dir settings have somewhat become
+	// misnomers; these are not necessary filesystem directories anymore. 
 
 	ctx = i_new(struct ext_include_context, 1);
 
@@ -98,22 +101,9 @@ bool ext_include_load
 	/* Get directory for :personal scripts */
  	sieve_dir = sieve_setting_get(svinst, "sieve_dir");
 
-	home = sieve_environment_get_homedir(svinst);
-
 	if ( sieve_dir == NULL ) {
-		if ( home == NULL )	{
-			if ( svinst->debug ) {		
-				sieve_sys_debug(svinst, "include: sieve_dir is not set "
-					"and no home directory is set for the default `~/sieve'; "
-					"it is currently not possible to include `:personal' scripts.");
-			}
-		} else {
-			sieve_dir = "~/sieve"; 
-		}
+		sieve_dir = "~/sieve"; 
 	}
-
-	if ( home != NULL )
-		sieve_dir = home_expand_tilde(sieve_dir, home);
 
 	ctx->personal_dir = i_strdup(sieve_dir);
 
@@ -154,7 +144,7 @@ void ext_include_unload
  * Script access 
  */
 
-const char *ext_include_get_script_directory
+const char *ext_include_get_script_location
 (const struct sieve_extension *ext, enum ext_include_script_location location,
    const char *script_name)
 {

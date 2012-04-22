@@ -11,6 +11,7 @@
 #include "sieve.h"
 #include "sieve-extensions.h"
 #include "sieve-script.h"
+#include "sieve-script-file.h"
 #include "sieve-tool.h"
 
 #include <stdio.h>
@@ -123,7 +124,7 @@ int main(int argc, char **argv)
 				sbin = sieve_tool_script_compile(svinst, file, dp->d_name);
 
 				if ( sbin != NULL ) {
-					sieve_save(sbin, NULL, TRUE, NULL);		
+					sieve_save(sbin, TRUE, NULL);		
 					sieve_close(&sbin);
 				}
 			}
@@ -143,7 +144,7 @@ int main(int argc, char **argv)
 			if ( dump ) 
 				sieve_tool_dump_binary_to(sbin, outfile, FALSE);
 			else {
-				sieve_save(sbin, outfile, TRUE, NULL);
+				sieve_save_as(sbin, outfile, TRUE, 0600, NULL);
 			}
 		
 			sieve_close(&sbin);

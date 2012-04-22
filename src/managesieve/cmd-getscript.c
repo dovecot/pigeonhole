@@ -18,7 +18,7 @@ struct cmd_getscript_context {
 
 	struct sieve_script *script;
 	struct istream *script_stream;
-	
+
 	unsigned int failed:1;
 };
 
@@ -54,8 +54,8 @@ static bool cmd_getscript_continue(struct client_command_context *cmd)
 
 	if ( ret < 0 ) {
 		sieve_storage_set_critical(ctx->storage,
-			"o_stream_send_istream(%s) failed: %m", 
-			sieve_script_filename(ctx->script));
+			"o_stream_send_istream() failed for script `%s' from %s: %m", 
+			sieve_script_name(ctx->script), sieve_script_location(ctx->script));
 		ctx->failed = TRUE;
 		return cmd_getscript_finish(ctx);
 	}
@@ -67,9 +67,9 @@ static bool cmd_getscript_continue(struct client_command_context *cmd)
 		if ( !i_stream_have_bytes_left(ctx->script_stream) ) {
 			/* Input stream gave less data than expected */
 			sieve_storage_set_critical(ctx->storage,
-				"GETSCRIPT for SCRIPT %s got too little data: "
+				"GETSCRIPT for script `%s' from %s got too little data: "
 				"%"PRIuUOFF_T" vs %"PRIuUOFF_T, sieve_script_name(ctx->script),
-				ctx->script_offset, ctx->script_size);
+				sieve_script_location(ctx->script), ctx->script_offset, ctx->script_size);
 
 			client_disconnect(ctx->client, "GETSCRIPT failed");
 			ctx->failed = TRUE;
@@ -108,13 +108,20 @@ bool cmd_getscript(struct client_command_context *cmd)
 	ctx->script_stream = sieve_script_open(ctx->script, &error);
 
 	if ( ctx->script_stream == NULL ) {
-		ctx->failed = TRUE;
 		if ( error == SIEVE_ERROR_NOT_FOUND )
-			sieve_storage_set_error(client->storage, error, "Script does not exist.");		
+			sieve_storage_set_error(client->storage, error, "Script does not exist.");
+		ctx->failed = TRUE;
 		return cmd_getscript_finish(ctx);
 	}
 
-	ctx->script_size = sieve_script_get_size(ctx->script);
+	if ( sieve_script_get_size(ctx->script, &ctx->script_size) <= 0 ) {
+		sieve_storage_set_critical(ctx->storage,
+			"failed to obtain script size for script `%s' from %s",
+			sieve_script_name(ctx->script), sieve_script_location(ctx->script));
+		ctx->failed = TRUE;
+		return cmd_getscript_finish(ctx);
+	}
+
 	ctx->script_offset = 0;	
 
 	client_send_line

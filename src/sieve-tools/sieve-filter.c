@@ -95,7 +95,7 @@ static int filter_message
 	msgdata.return_path = sender;
 	msgdata.orig_envelope_to = recipient;
 	msgdata.final_envelope_to = recipient;
-	msgdata.auth_user = senv->username;
+	msgdata.auth_user = senv->user->username;
 	(void)mail_get_first_header(mail, "Message-ID", &msgdata.id);
 					
 	if ( mail_get_virtual_size(mail, &size) < 0 ) {
@@ -483,13 +483,12 @@ int main(int argc, char **argv)
 	ehandler = sieve_stderr_ehandler_create(svinst, 0);
 	sieve_system_ehandler_set(ehandler);
 	sieve_error_handler_accept_infolog(ehandler, verbose);
-	sieve_error_handler_accept_debuglog(ehandler, svinst->debug);
 
 	/* Compile main sieve script */
 	if ( force_compile ) {
 		main_sbin = sieve_tool_script_compile(svinst, scriptfile, NULL);
 		if ( main_sbin != NULL )
-			(void) sieve_save(main_sbin, NULL, TRUE, NULL);
+			(void) sieve_save(main_sbin, TRUE, NULL);
 	} else {
 		main_sbin = sieve_tool_script_open(svinst, scriptfile);
 	}
@@ -538,8 +537,6 @@ int main(int argc, char **argv)
 	scriptenv.mailbox_autocreate = FALSE;
 	scriptenv.default_mailbox = dst_mailbox;
 	scriptenv.user = mail_user;
-	scriptenv.username = sieve_tool_get_username(sieve_tool);
-	scriptenv.hostname = "host.example.com";
 	scriptenv.postmaster_address = "postmaster@example.com";
 	scriptenv.smtp_open = NULL;
 	scriptenv.smtp_close = NULL;
