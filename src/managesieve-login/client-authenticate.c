@@ -235,7 +235,7 @@ static int managesieve_client_auth_read_response
 	if ( ret == 0 ) return 0;
 
 	if ( msieve_client->auth_response_input->stream_errno != 0 ) {
-		if ( msieve_client->auth_response_input->stream_errno == EPROTO ) {
+		if ( msieve_client->auth_response_input->stream_errno == EIO ) {
 			error = managesieve_parser_get_error(msieve_client->parser, &fatal);
 			if (error != NULL ) {
 				if (fatal) {
