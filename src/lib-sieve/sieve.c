@@ -406,6 +406,9 @@ int sieve_save_as
 (struct sieve_binary *sbin, const char *bin_path, bool update,
 	mode_t save_mode, enum sieve_error *error_r)
 {
+	if  ( bin_path == NULL )
+		return sieve_save(sbin, update, error_r);
+
 	return sieve_binary_save(sbin, bin_path, update, save_mode, error_r);
 }
 
