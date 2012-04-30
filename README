@@ -209,11 +209,11 @@ scripts using the sievec command line tool. For example:
 
 sievec /var/lib/dovecot/sieve/global/
 
-This is necessary for scripts listed in the sieve_default, sieve_before and
-sieve_after settings. For global scripts that are only included in other scripts
-using the include extension, this step is not necessary, since included scripts
-are incorporated into the binary produced for the main script located in a
-user directory.
+This is often necessary for scripts listed in the sieve_default, sieve_before
+and sieve_after settings. For global scripts that are only included in other
+scripts using the include extension, this step is not necessary, since included
+scripts are incorporated into the binary produced for the main script located in
+a user directory.
 
 Compile and Runtime Logging
 ===========================

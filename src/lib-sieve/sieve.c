@@ -6,6 +6,7 @@
 #include "istream.h"
 #include "buffer.h"
 #include "eacces-error.h"
+#include "home-expand.h"
 
 #include "sieve-limits.h"
 #include "sieve-settings.h"
@@ -714,6 +715,25 @@ struct sieve_directory *sieve_directory_open
 
 	if ( error_r != NULL )
 		*error_r = SIEVE_ERROR_NONE;
+
+	if ( (path[0] == '~' && (path[1] == '/' || path[1] == '\0')) || 
+		(((svinst->flags & SIEVE_FLAG_HOME_RELATIVE) != 0 ) && path[0] != '/') ) {
+		/* Home-relative path. change to absolute. */
+		const char *home = sieve_environment_get_homedir(svinst);
+
+		if ( home != NULL ) {
+			if ( path[0] == '~' && (path[1] == '/' || path[1] == '\0') )
+				path = home_expand_tilde(path, home);
+			else
+				path = t_strconcat(home, "/", path, NULL);
+		} else {
+			sieve_sys_error(svinst,
+				"sieve dir path %s is relative to home directory, "
+				"but home directory is not available.", path);
+			*error_r = SIEVE_ERROR_TEMP_FAIL;
+			return NULL;
+		}
+	}
 
 	/* Specified path can either be a regular file or a directory */
 	if ( stat(path, &st) != 0 ) {
