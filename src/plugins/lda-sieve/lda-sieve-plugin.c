@@ -500,10 +500,8 @@ static int lda_sieve_multiscript_execute
 
 		/* Open */
 
-		if ( (sbin=lda_sieve_open(srctx, script, cpflags, &error)) == NULL ) {
-			ret = ( error == SIEVE_ERROR_NOT_FOUND ? 0 : -1 );
+		if ( (sbin=lda_sieve_open(srctx, script, cpflags, &error)) == NULL )
 			break;
-		}
 
 		/* Execute */
 
@@ -523,10 +521,8 @@ static int lda_sieve_multiscript_execute
 				/* Recompile */
 
 				sbin=lda_sieve_recompile(srctx, script, cpflags, &error);
-				if ( sbin	== NULL ) {
-					ret = ( error == SIEVE_ERROR_NOT_FOUND ? 0 : -1 );
+				if ( sbin == NULL )
 					break;
-				}
 
 				/* Execute again */
 

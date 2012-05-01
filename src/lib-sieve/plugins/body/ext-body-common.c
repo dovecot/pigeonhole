@@ -204,7 +204,6 @@ static bool ext_body_parts_add_missing
 	struct istream *input;
 	unsigned int idx = 0;
 	bool save_body = FALSE, have_all;
-	int ret;
 
 	/* First check whether any are missing */
 	if (ext_body_get_return_parts(ctx, content_types, decode_to_plain)) {
@@ -226,7 +225,7 @@ static bool ext_body_parts_add_missing
 	//parser = message_parser_init_from_parts(parts, input, 0, 0);
 	parser = message_parser_init(ctx->pool, input, 0, 0);
 
-	while ( (ret = message_parser_parse_next_block(parser, &block)) > 0 ) {
+	while ( message_parser_parse_next_block(parser, &block) > 0 ) {
 
 		if ( block.part != prev_part ) {
 			bool message_rfc822 = FALSE;
@@ -277,6 +276,7 @@ static bool ext_body_parts_add_missing
 				}
 	
 				/* Save bodies only if we have a wanted content-type */
+				i_assert( body_part != NULL );
 				save_body = _is_wanted_content_type
 					(content_types, body_part->content_type);
 				continue;
@@ -285,9 +285,10 @@ static bool ext_body_parts_add_missing
 			/* Encountered the empty line that indicates the end of the headers and 
 			 * the start of the body
 			 */
-			if ( block.hdr->eoh )
+			if ( block.hdr->eoh ) {
+				i_assert( body_part != NULL );
 				body_part->have_body = TRUE;
-			else if ( header_part != NULL ) {
+			} else if ( header_part != NULL ) {
 				/* Save message/rfc822 header as part content */
 				if ( block.hdr->continued ) {
 					buffer_append(ctx->tmp_buffer, block.hdr->value, block.hdr->value_len);
@@ -312,6 +313,8 @@ static bool ext_body_parts_add_missing
 				block.hdr->use_full_value = TRUE;
 				continue;
 			}
+
+			i_assert( body_part != NULL );
 		
 			/* Parse the content type from the Content-type header */
 			T_BEGIN {
@@ -437,11 +440,14 @@ static bool ext_body_get_raw
 		i_stream_skip(input, hdr_size.physical_size);
 
 		/* Read raw message body */
-		while ( (ret = i_stream_read_data(input, &data, &size, 0)) > 0 ) {	
+		while ( (ret=i_stream_read_data(input, &data, &size, 0)) > 0 ) {	
 			buffer_append(buf, data, size);
 
 			i_stream_skip(input, size);
 		}
+
+		if ( ret == -1 && input->stream_errno != 0 )
+			return FALSE;
 	} else {
 		buf = ctx->raw_body;	
 	}

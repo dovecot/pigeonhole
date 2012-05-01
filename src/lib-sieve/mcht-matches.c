@@ -111,7 +111,6 @@ static int mcht_matches_match_key
 	vp = val;                   /* Value pointer */
 	kp = key;                   /* Key pointer */
 	wp = key;                   /* Wildcard (key) pointer */
-	pvp = val;                  /* Previous value Pointer */
 
 	/* Start match values list if requested */
 	if ( (mvalues = sieve_match_values_start(mctx->runenv)) != NULL ) {

@@ -323,7 +323,6 @@ static bool act_redirect_send
 	FILE *f;
 	const unsigned char *data;
 	size_t size;
-	int ret;
 	
 	/* Just to be sure */
 	if ( !sieve_smtp_available(senv) ) {
@@ -352,11 +351,13 @@ static bool act_redirect_send
 		rfc2822_header_field_write(f, "X-Sieve-Redirected-From", recipient);
 
 	/* Pipe the message to the outgoing SMTP transport */
-	while ((ret = i_stream_read_data(crlf_input, &data, &size, 0)) > 0) {	
+	while (i_stream_read_data(crlf_input, &data, &size, 0) > 0) {	
 		if (fwrite(data, size, 1, f) == 0)
 			break;
 		i_stream_skip(crlf_input, size);
 	}
+
+	// FIXME: handle stream error. Currently, we have no means to abort here.
 
 	i_stream_unref(&crlf_input);
 	i_stream_unref(&input);

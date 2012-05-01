@@ -205,7 +205,8 @@ struct sieve_script *sieve_script_init
 		sieve_critical(svinst, ehandler, NULL,
 			"failed to access sieve script", "failed to parse script location: %s",
 			parse_error);
-		*error_r = SIEVE_ERROR_TEMP_FAIL;
+		if ( error_r != NULL )
+			*error_r = SIEVE_ERROR_TEMP_FAIL;
 		return NULL;
 	}
 
@@ -260,6 +261,9 @@ struct sieve_script *sieve_script_create
 				i_error("Unknown sieve script driver module: %s", driver);
 		} T_END;
 	}
+
+	if ( script_class == NULL )
+		return NULL;
 
 	script = script_class->v.alloc();
 	if ( sieve_script_init

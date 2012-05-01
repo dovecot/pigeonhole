@@ -340,10 +340,8 @@ struct sieve_ast_argument *sieve_ast_stringlist_join
 #define sieve_ast_argument_count(node) __AST_NODE_LIST_COUNT(node, arguments)
 #define sieve_ast_argument_prev(argument) __AST_LIST_PREV(argument)
 #define sieve_ast_argument_next(argument) __AST_LIST_NEXT(argument)
-#define sieve_ast_argument_type(argument) \
-	((argument) == NULL ? SAAT_NONE : (argument)->type)
-#define sieve_ast_argument_line(argument) \
-	((argument) == NULL ? 0 : (argument)->source_line)
+#define sieve_ast_argument_type(argument) (argument)->type
+#define sieve_ast_argument_line(argument) (argument)->source_line
 
 #define sieve_ast_argument_str(argument) ((argument)->_value.str)
 #define sieve_ast_argument_strc(argument) (str_c((argument)->_value.str))

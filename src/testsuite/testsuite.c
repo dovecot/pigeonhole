@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 		("testsuite", &argc, &argv, "d:t:T:EDP:", TRUE);
 
 	/* Parse arguments */
-	scriptfile = dumpfile = tracefile = NULL;
+	dumpfile = tracefile = NULL;
 	memset(&tr_config, 0, sizeof(tr_config));
 	tr_config.level = SIEVE_TRLVL_ACTIONS;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {

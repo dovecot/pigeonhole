@@ -115,7 +115,7 @@ static struct istream *mail_raw_create_stream
 	if (ret > 0 && size >= 5 && memcmp(data, "From ", 5) == 0) {
 		/* skip until the first LF */
 		i_stream_skip(input, 5);
-		while ((ret = i_stream_read_data(input, &data, &size, 0)) > 0) {
+		while ( i_stream_read_data(input, &data, &size, 0) > 0 ) {
 			for (i = 0; i < size; i++) {
 				if (data[i] == '\n')
 					break;
@@ -223,7 +223,7 @@ struct mail_raw *mail_raw_open_file
 {
 	struct mail_raw *mailr;
 	struct istream *input = NULL;
-	time_t mtime;
+	time_t mtime = (time_t)-1;
 	const char *sender = NULL;
 	
 	if ( path == NULL || strcmp(path, "-") == 0 ) {

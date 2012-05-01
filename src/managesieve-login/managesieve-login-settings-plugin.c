@@ -105,7 +105,7 @@ static void capability_parse(const char *cap_string)
 static bool capability_dump(void)
 {
 	char buf[4096];
-	int fd[2], status;
+	int fd[2], status = 0;
 	ssize_t ret;
 	unsigned int pos;
 	pid_t pid;

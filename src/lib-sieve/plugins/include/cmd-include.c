@@ -279,8 +279,7 @@ static bool cmd_include_validate
 		ctx_data->script = script;
 	}
 	
-	arg = sieve_ast_arguments_detach(arg, 1);
-	
+	(void)sieve_ast_arguments_detach(arg, 1);
 	return TRUE;
 }
 

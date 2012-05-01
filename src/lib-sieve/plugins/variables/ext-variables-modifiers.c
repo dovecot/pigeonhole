@@ -220,7 +220,7 @@ bool mod_upper_modify(string_t *in, string_t **result)
 	str_append_str(*result, in);
 
 	content = str_c_modifiable(*result);
-	content = str_ucase(content);
+	(void)str_ucase(content);
 	
 	return TRUE;
 }
@@ -233,7 +233,7 @@ bool mod_lower_modify(string_t *in, string_t **result)
 	str_append_str(*result, in);
 
 	content = str_c_modifiable(*result);
-	content = str_lcase(content);
+	(void)str_lcase(content);
 
 	return TRUE;
 }

@@ -730,7 +730,8 @@ struct sieve_directory *sieve_directory_open
 			sieve_sys_error(svinst,
 				"sieve dir path %s is relative to home directory, "
 				"but home directory is not available.", path);
-			*error_r = SIEVE_ERROR_TEMP_FAIL;
+			if ( error_r != NULL )
+				*error_r = SIEVE_ERROR_TEMP_FAIL;
 			return NULL;
 		}
 	}

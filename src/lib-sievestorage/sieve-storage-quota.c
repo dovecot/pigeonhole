@@ -123,11 +123,10 @@ int sieve_storage_quota_havespace
 		if ( storage->max_storage > 0 ) { 
 			const char *path;
 			struct stat st;
-			int ret;
 
 			path = t_strconcat(storage->dir, "/", dp->d_name, NULL);
 		
-			if ( (ret=stat(path, &st)) < 0 ) {
+			if ( stat(path, &st) < 0 ) {
 				i_warning
 					("sieve-storage: quota: stat(%s) failed: %m", path);
 				continue;

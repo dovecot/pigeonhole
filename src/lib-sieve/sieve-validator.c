@@ -818,6 +818,8 @@ bool sieve_validate_positional_argument
 	struct sieve_ast_argument *arg, const char *arg_name, unsigned int arg_pos,
 	enum sieve_ast_argument_type req_type)
 {
+	i_assert( arg != NULL );
+
 	if ( sieve_ast_argument_type(arg) != req_type && 
 		(sieve_ast_argument_type(arg) != SAAT_STRING || 
 			req_type != SAAT_STRING_LIST) ) 
@@ -891,7 +893,7 @@ static bool sieve_validate_command_arguments
 	arg = sieve_ast_argument_first(cmd->ast_node);
 		
 	/* Visit tagged and optional arguments */
-	while ( sieve_ast_argument_type(arg) == SAAT_TAG ) {
+	while ( arg != NULL && sieve_ast_argument_type(arg) == SAAT_TAG ) {
 		struct sieve_ast_argument *parg;
 		void *arg_data = NULL; 
 		struct sieve_tag_registration *tag_reg = 
@@ -1192,7 +1194,7 @@ static bool sieve_validate_command_context
 			 	return FALSE;
 			} 
 			 
-			cmd_node->command = cmd = 
+			cmd_node->command =
 				sieve_command_create(cmd_node, cmd_reg->ext, cmd_def, cmd_reg); 
 		} else {
 			return FALSE;
@@ -1216,7 +1218,7 @@ static bool sieve_validate_command
 (struct sieve_validator *valdtr, struct sieve_ast_node *cmd_node, int *const_r) 
 {
 	enum sieve_ast_type ast_type = sieve_ast_node_type(cmd_node);
-	struct sieve_command *cmd = cmd_node->command;
+	struct sieve_command *cmd = ( cmd_node == NULL ? NULL : cmd_node->command );
 	const struct sieve_command_def *cmd_def = ( cmd != NULL ? cmd->def : NULL );
 	bool result = TRUE;
 	
