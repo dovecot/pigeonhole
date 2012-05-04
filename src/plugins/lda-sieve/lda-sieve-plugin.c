@@ -653,9 +653,9 @@ static int lda_sieve_deliver_mail
 		setting_name = "sieve_before";
 		sieve_before = mail_user_plugin_getenv(mdctx->dest_user, setting_name);
 		while ( sieve_before != NULL && *sieve_before != '\0' ) {
-			if ( debug && lda_sieve_multiscript_get_scripts
+			if ( lda_sieve_multiscript_get_scripts
 				(svinst, setting_name, sieve_before, master_ehandler,
-					&script_sequence) == 0 ) {
+					&script_sequence) == 0 && debug ) {
 				sieve_sys_debug(svinst, "%s location not found: %s",
 					setting_name, sieve_before);
 			}
