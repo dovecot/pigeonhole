@@ -1182,8 +1182,6 @@ static bool sieve_validate_command_context
 
 		/* Identifier = "" when the command was previously marked as unknown */
 		if ( *(cmd_def->identifier) != '\0' ) {
-			struct sieve_command *cmd;
-
 			if ( (cmd_def->type == SCT_COMMAND && ast_type == SAT_TEST)
 				|| (cmd_def->type == SCT_TEST && ast_type == SAT_COMMAND) ) {
 				sieve_validator_error(
