@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference anchor='SIEVE'>
+
+<front>
+<title>Sieve: An Email Filtering Language</title>
+<author initials='P.' surname='Guenther' fullname='P. Guenther'>
+<organization /></author>
+<author initials='T.' surname='Showalter' fullname='T. Showalter'>
+<organization /></author>
+<date year='2008' month='January' />
+<abstract>
+<t>This document describes a language for filtering email messages at time of final delivery.  It is designed to be implementable on either a mail client or mail server.  It is meant to be extensible, simple, and independent of access protocol, mail architecture, and operating system.  It is suitable for running on a mail server where users may not be allowed to execute arbitrary programs, such as on black box Internet Message Access Protocol (IMAP) servers, as the base language has no variables, loops, or ability to shell out to external programs. [STANDARDS-TRACK]</t></abstract></front>
+
+<seriesInfo name='RFC' value='5228' />
+<format type='TXT' octets='87531' target='http://www.rfc-editor.org/rfc/rfc5228.txt' />
+</reference>

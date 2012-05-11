@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<!-- used by XSLT processors -->
+<?rfc strict="yes" ?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="4"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes" ?>
+<?rfc compact="yes" ?>
+<?rfc subcompact="no" ?>
+<?rfc private="Pigeonhole Project" ?>
+
+<rfc category="info" docName="spec-bosch-sieve-pipe">
+<!-- ***** FRONT MATTER ***** -->
+
+<front>
+<title abbrev="Sieve: Detecting Duplicate Deliveries">
+Sieve Email Filtering: Detecting Duplicate Deliveries
+</title>
+
+<author fullname="Stephan Bosch" initials="S." surname="Bosch">
+  <organization/>
+  <address>
+    <postal>
+      <street></street>
+      <city>Enschede</city>
+      <country>NL</country>
+    </postal>
+    <email>stephan@rename-it.nl</email>
+  </address>
+</author>
+
+<date/>
+
+<area>General</area>
+<workgroup>Pigeonhole Project</workgroup>
+<keyword>sieve</keyword>
+<keyword>duplicate deliveries</keyword>
+
+<abstract>
+<t>
+This document defines a new vendor-defined test command "duplicate" for the
+"Sieve" email filtering language that tests whether an e-mail message is a
+duplicate, i.e. whether it was seen before by the delivery agent. Users can use
+this new test to remove duplicate deliveries commonly caused by mailing list
+subscriptions or mail account aliases. 
+</t>
+</abstract>
+</front>
+
+<middle>
+
+<section title="Introduction">
+<t>This is an extension to the Sieve filtering language defined by
+<xref target="SIEVE">RFC 5228</xref>. It adds a test to determine whether a
+message was seen before by the delivery agent based on the Message-ID header.
+</t>
+
+<t>Duplicate deliveries are a common side-effect of being subscribed to a
+mailing list. If a member of the list decides to reply to both the user and the
+mailing list itself, the user will get a copy of the message directly and
+through mailing list. In another scenario, the user has several aliases for his
+mail account and one of his contacts sends the message to multiple addresses
+that eventually map to the same account. Using the vnd.dovecot.duplicate
+extension, users have the means to detect such duplicates and deal with these
+appropriately, e.g. by discarding them.</t>
+
+<t>This extension is specific to the Pigeonhole Sieve implementation for the
+Dovecot Secure IMAP server. It will therefore most likely not be supported by
+web interfaces and GUI-based Sieve editors.
+</t>
+</section>
+
+<section title="Conventions Used in This Document">
+<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+document are to be interpreted as described in <xref target="KEYWORDS"/>.</t>
+<t>Conventions for notations are as in <xref target="SIEVE"/> Section 1.1,
+including use of the "Usage:" label for the definition of action and tagged
+arguments syntax.</t>
+</section>
+
+<section title="Test &quot;duplicate&quot;">
+<?rfc needLines="3" ?>
+<figure>
+<artwork><![CDATA[
+Usage: "duplicate" [<name: string>]
+]]></artwork>
+</figure>
+
+<t>The "duplicate" test keeps track of which Message-ID values were seen before
+by this test in an earlier delivery operation. It evaluates to "true" when the
+Message-ID header of the current message was seen before. If it is not known,
+the test evaluates to "false" and the Message-ID is added to a persistent
+internal tracking list. Implementations SHOULD limit the number of messages that
+are tracked and SHOULD let Message-ID entries expire after some short period of
+time.
+</t>
+
+<t>Using the "name" argument, the duplicate test can be employed for multiple
+independent purposes. Only when the Message-ID was seen before in an earlier
+script execution by a duplicate test with the same "name" argument, it is
+recognized as a duplicate.
+</t>
+</section>
+
+<section title="Sieve Capability Strings">
+<t>A Sieve implementation that defines the "duplicate" test command 
+will advertise the capability string "vnd.dovecot.duplicate".
+</t>
+</section>
+
+<section title="Example">
+<t>In this example, duplicate deliveries are stored in a special folder
+contained in the user's Trash folder. If the folder does not exist, it is
+created. This way, the user has a chance to recover messages when necessary.
+Messages that are not recognized as duplicates are stored in the user's inbox as
+normal.
+</t>
+
+<?rfc needLines="7" ?>
+<figure>
+<artwork><![CDATA[
+require ["vnd.dovecot.duplicate", "fileinto", "mailbox"];
+
+if duplicate {
+        fileinto :create "Trash/Duplicate";
+}
+]]></artwork>
+</figure>
+
+</section>
+
+<section anchor="Security" title="Security Considerations">
+<t>A flood of unique messages could cause the list of tracked Message-IDs to 
+grow indefinitely. Implementations therefore SHOULD implement limits on the 
+number and lifespan of entries in that list.</t>
+</section>
+</middle>
+
+<!--  *****BACK MATTER ***** -->
+
+<back>
+<!-- References split into informative and normative -->
+
+<references title="Normative References">
+  <?rfc include="reference.KEYWORDS.xml"?>
+  <?rfc include="reference.SIEVE.xml"?>
+</references>
+
+<!--<references title="Informative References">
+  
+</references> -->
+</back>
+
+</rfc>

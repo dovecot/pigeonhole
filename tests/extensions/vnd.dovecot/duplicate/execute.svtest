@@ -1,0 +1,12 @@
+require "vnd.dovecot.testsuite";
+require "vnd.dovecot.duplicate";
+
+test "Run" {
+	if duplicate {
+		test_fail "test erroneously reported a duplicate";
+	}
+
+	if duplicate "name" {
+		test_fail "test with name erroneously reported a duplicate";
+	}
+}

@@ -346,7 +346,8 @@ Sieve Interpreter - Extension Configuration
   to delete and add header fields.
 
   The editheader extension requires explicit configuration and is not enabled
-  for use by default. Refer to doc/editheader.txt for configuration information.
+  for use by default. Refer to doc/extensions/editheader.txt for configuration
+  information.
 
 - Vacation extension:
 
@@ -354,8 +355,8 @@ Sieve Interpreter - Extension Configuration
   automatic replies to incoming email messages.
 
   The vacation extension is available by default, but it has its own specific
-  configuration options. Refer to doc/vacation.txt for settings specific to the
-  vacation extension.
+  configuration options. Refer to doc/extensions/vacation.txt for settings
+  specific to the vacation extension.
 
 - Include extension:
 
@@ -363,8 +364,8 @@ Sieve Interpreter - Extension Configuration
   into another.
 
   The include extension is available by default, but it has its own specific
-  configuration options. Refer to doc/include.txt for settings specific to the
-  include extension.
+  configuration options. Refer to doc/extensions/include.txt for settings
+  specific to the include extension.
 
 - Spamtest and Virustest extensions:
 
@@ -379,7 +380,7 @@ Sieve Interpreter - Extension Configuration
 
   The spamtest, spamtestplus and virustest extensions require explicit
   configuration and are not enabled for use by default. Refer to
-  doc/spamtest-virustest.txt for configuration information.
+  doc/extensions/spamtest-virustest.txt for configuration information.
 
 Sieve Interpreter - Migration from CMUSieve (Dovecot v1.0/v1.1)
 ---------------------------------------------------------------

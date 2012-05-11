@@ -108,6 +108,7 @@ extern const struct sieve_extension_def editheader_extension;
 
 /* vnd.dovecot. */
 extern const struct sieve_extension_def debug_extension;
+extern const struct sieve_extension_def duplicate_extension;
 
 /*
  * List of native extensions
@@ -150,7 +151,7 @@ const struct sieve_extension_def *sieve_extra_extensions[] = {
 	&virustest_extension, &editheader_extension,
 
 	/* vnd.dovecot. */
-	&debug_extension
+	&debug_extension, &duplicate_extension
 };
 
 const unsigned int sieve_extra_extensions_count =
