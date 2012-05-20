@@ -52,8 +52,7 @@ static struct ext_editheader_header *ext_editheader_config_header_find
 bool ext_editheader_load
 (const struct sieve_extension *ext, void **context)
 {
-	struct ext_editheader_config *ext_config =
-		(struct ext_editheader_config *) *context;
+	struct ext_editheader_config *ext_config;
 	struct sieve_instance *svinst = ext->svinst;
 	const char *protected;
 	size_t max_header_size;

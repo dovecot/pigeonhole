@@ -636,7 +636,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 		if (ret <= 0 && (ret != -2 || stream->skip == 0)) {
 			if ( stream->istream.eof && stream->istream.stream_errno == 0 ) {
 				stream->istream.eof = 0;
-				stream->istream.stream_errno = EPROTO;
+				stream->istream.stream_errno = EIO;
 			} else {
 				stream->istream.stream_errno = stream->parent->stream_errno;
 				stream->istream.eof = stream->parent->eof;
@@ -673,7 +673,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 			if ( !IS_QUOTED_SPECIAL(data[i]) ) {
 				qsstream->parser->error =
 					"Escaped quoted-string character is not a QUOTED-SPECIAL.";
-				stream->istream.stream_errno = EPROTO;
+				stream->istream.stream_errno = EIO;
 				ret = -1;
 				break;
 			}
@@ -682,7 +682,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 
 		if ( (data[i] & 0x80) == 0 && ( data[i] == '\r' || data[i] == '\n' ) ) {
 			qsstream->parser->error = "String contains invalid character.";
-			stream->istream.stream_errno = EPROTO;
+			stream->istream.stream_errno = EIO;
 			ret = -1;
 			break;
 		}

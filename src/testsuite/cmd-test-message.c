@@ -486,7 +486,6 @@ static int cmd_test_message_print_operation_execute
 	struct istream *input;
 	const unsigned char *data;
 	size_t size;
-	int ret;
 
 	if (mail_get_stream(mail, NULL, NULL, &input) < 0) {
 		sieve_runtime_error(renv, NULL,
@@ -497,7 +496,7 @@ static int cmd_test_message_print_operation_execute
 	printf("\n--MESSAGE: \n");
 
 	/* Pipe the message to the outgoing SMTP transport */
-	while ((ret=i_stream_read_data(input, &data, &size, 0)) > 0) {
+	while (i_stream_read_data(input, &data, &size, 0) > 0) {
 		ssize_t wret;
 
 		if ( (wret=write(1, data, size)) <= 0 )

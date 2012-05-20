@@ -163,7 +163,7 @@ struct sieve_command {
 	( sieve_command_def_type_name((cmd)->def) )	
 
 #define sieve_commands_equal(cmd1, cmd2) \
-	( (cmd1)->def == (cmd2)->def )
+	( (cmd1) != NULL && (cmd2) != NULL && (cmd1)->def == (cmd2)->def )
 
 /* Context API */
 

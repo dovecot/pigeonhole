@@ -127,8 +127,8 @@ int main(int argc, char **argv)
 	t_array_init(&scriptfiles, 16);
 
 	/* Parse arguments */
-	scriptfile = recipient = final_recipient = sender = mailbox = dumpfile =
-		tracefile = mailfile = mailloc = NULL;
+	recipient = final_recipient = sender = mailbox = dumpfile =
+		tracefile = mailloc = NULL;
 	memset(&tr_config, 0, sizeof(tr_config));
 	tr_config.level = SIEVE_TRLVL_ACTIONS;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
@@ -269,7 +269,7 @@ int main(int argc, char **argv)
 		
 		/* Compose script environment */
 		memset(&scriptenv, 0, sizeof(scriptenv));
-		scriptenv.default_mailbox = "INBOX";
+		scriptenv.default_mailbox = mailbox;
 		scriptenv.user = sieve_tool_get_mail_user(sieve_tool);
 		scriptenv.postmaster_address = "postmaster@example.com";
 		scriptenv.smtp_open = sieve_smtp_open;

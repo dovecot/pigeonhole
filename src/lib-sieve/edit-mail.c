@@ -657,21 +657,23 @@ static int edit_mail_headers_parse
 	}
 
 	/* Insert header field index items in main list */
-	if ( edmail->header_fields_appended != NULL ) {
-		if ( edmail->header_fields_appended->prev != NULL ) {
-			edmail->header_fields_appended->prev->next = head;
-			head->prev = edmail->header_fields_appended->prev;
-		}
+	if ( head != NULL && tail != NULL ) {
+		if ( edmail->header_fields_appended != NULL ) {
+			if ( edmail->header_fields_appended->prev != NULL ) {
+				edmail->header_fields_appended->prev->next = head;
+				head->prev = edmail->header_fields_appended->prev;
+			}
 
-		tail->next = edmail->header_fields_appended;
-		edmail->header_fields_appended->prev = tail;
-	} else if ( edmail->header_fields_tail != NULL ) {
-		edmail->header_fields_tail->next = head;
-		head->prev = edmail->header_fields_tail;
-		edmail->header_fields_tail = tail;
-	} else {
-		edmail->header_fields_head = head;
-		edmail->header_fields_tail = tail;
+			tail->next = edmail->header_fields_appended;
+			edmail->header_fields_appended->prev = tail;
+		} else if ( edmail->header_fields_tail != NULL ) {
+			edmail->header_fields_tail->next = head;
+			head->prev = edmail->header_fields_tail;
+			edmail->header_fields_tail = tail;
+		} else {
+			edmail->header_fields_head = head;
+			edmail->header_fields_tail = tail;
+		}
 	}
 
 	/* Rebuild header index */

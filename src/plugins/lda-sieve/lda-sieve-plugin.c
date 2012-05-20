@@ -502,10 +502,8 @@ static int lda_sieve_multiscript_execute
 
 		/* Open */
 
-		if ( (sbin=lda_sieve_open(srctx, script, cpflags, &error)) == NULL ) {
-			ret = ( error == SIEVE_ERROR_NOT_FOUND ? 0 : -1 );
+		if ( (sbin=lda_sieve_open(srctx, script, cpflags, &error)) == NULL )
 			break;
-		}
 
 		/* Execute */
 
@@ -525,10 +523,8 @@ static int lda_sieve_multiscript_execute
 				/* Recompile */
 
 				sbin=lda_sieve_recompile(srctx, script, cpflags, &error);
-				if ( sbin	== NULL ) {
-					ret = ( error == SIEVE_ERROR_NOT_FOUND ? 0 : -1 );
+				if ( sbin == NULL )
 					break;
-				}
 
 				/* Execute again */
 
@@ -564,7 +560,9 @@ static int lda_sieve_deliver_mail
 	struct sieve_exec_status estatus;
 	struct sieve_error_handler *master_ehandler;
 	const char *user_location, *default_location, *sieve_before, *sieve_after;
+	const char *setting_name;
 	ARRAY_TYPE(sieve_scripts) script_sequence;
+	unsigned int after_index;
 	bool debug = mdctx->dest_user->mail_debug;
 	enum sieve_error error;
 	int ret = 0;
@@ -653,21 +651,27 @@ static int lda_sieve_deliver_mail
 
 		t_array_init(&script_sequence, 16);
 
-		sieve_before = mail_user_plugin_getenv(mdctx->dest_user, "sieve_before");
-		if ( sieve_before != NULL && *sieve_before != '\0' ) {
-			if ( lda_sieve_multiscript_get_scripts(svinst, "sieve_before",
-				sieve_before, master_ehandler, &script_sequence) == 0 && debug ) {
-				sieve_sys_debug(svinst, "sieve_before location not found: %s",
-					sieve_before);
+		i = 2;
+		setting_name = "sieve_before";
+		sieve_before = mail_user_plugin_getenv(mdctx->dest_user, setting_name);
+		while ( sieve_before != NULL && *sieve_before != '\0' ) {
+			if ( lda_sieve_multiscript_get_scripts
+				(svinst, setting_name, sieve_before, master_ehandler,
+					&script_sequence) == 0 && debug ) {
+				sieve_sys_debug(svinst, "%s location not found: %s",
+					setting_name, sieve_before);
 			}
+			setting_name = t_strdup_printf("sieve_before%u", i++);
+			sieve_before = mail_user_plugin_getenv(mdctx->dest_user, setting_name);
+		}
 
-			if ( debug ) {
-				scripts = array_get(&script_sequence, &count);
-				for ( i = 0; i < count; i ++ ) {
-					sieve_sys_debug(svinst, "executed before user's Sieve script(%d): %s",
-						i+1, sieve_script_location(scripts[i]));
-				}				
-			}
+		if ( debug ) {	
+			scripts = array_get(&script_sequence, &count);
+			for ( i = 0; i < count; i ++ ) {
+				sieve_sys_debug(svinst,
+					"executed before user's personal Sieve script(%d): %s",
+					i+1, sieve_script_location(scripts[i]));
+			}				
 		}
 
 		if ( srctx.main_script != NULL ) {
@@ -680,23 +684,27 @@ static int lda_sieve_deliver_mail
 			}
 		}
 
-		sieve_after = mail_user_plugin_getenv(mdctx->dest_user, "sieve_after");
-		if ( sieve_after != NULL && *sieve_after != '\0' ) {
-			unsigned int after_index = array_count(&script_sequence);
+		after_index = array_count(&script_sequence);
 
-			if ( lda_sieve_multiscript_get_scripts(svinst, "sieve_after",
+		i = 2;
+		setting_name = "sieve_after";
+		sieve_after = mail_user_plugin_getenv(mdctx->dest_user, setting_name);
+		while ( sieve_after != NULL && *sieve_after != '\0' ) {
+			if ( lda_sieve_multiscript_get_scripts(svinst, setting_name,
 				sieve_after, master_ehandler, &script_sequence) == 0 && debug ) {
-				sieve_sys_debug(svinst, "sieve_after location not found: %s",
-					sieve_after);
+				sieve_sys_debug(svinst, "%s location not found: %s",
+					setting_name, sieve_after);
 			}
-
-			if ( debug ) {
-				scripts = array_get(&script_sequence, &count);
-				for ( i = after_index; i < count; i ++ ) {
-					sieve_sys_debug(svinst, "executed after user's Sieve script(%d): %s",
-						i+1, sieve_script_location(scripts[i]));
-				}				
-			}
+			setting_name = t_strdup_printf("sieve_after%u", i++);
+			sieve_after = mail_user_plugin_getenv(mdctx->dest_user, setting_name);
+		}
+	
+		if ( debug ) {
+			scripts = array_get(&script_sequence, &count);
+			for ( i = after_index; i < count; i ++ ) {
+				sieve_sys_debug(svinst, "executed after user's Sieve script(%d): %s",
+					i+1, sieve_script_location(scripts[i]));
+			}				
 		}
 
 		srctx.scripts =

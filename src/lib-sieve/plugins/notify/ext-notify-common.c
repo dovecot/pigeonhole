@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "str.h"
+#include "istream.h"
 #include "rfc822-parser.h"
 #include "message-parser.h"
 #include "message-decoder.h"
@@ -158,7 +159,7 @@ static buffer_t *cmd_notify_extract_body_text
 	struct message_block block, decoded;
 	struct istream *input;
 	bool is_text, save_body;
-	int ret;
+	int ret = 1;
 	
 	/* Return cached result if available */
 	mctx = ext_notify_get_message_context(this_ext, renv->msgctx);
@@ -171,7 +172,7 @@ static buffer_t *cmd_notify_extract_body_text
 
 	/* Get the message stream */
 	if ( mail_get_stream(renv->msgdata->mail, NULL, NULL, &input) < 0 )
-		return FALSE;
+		return NULL;
 			
 	/* Initialize body decoder */
 	decoder = message_decoder_init(FALSE);
@@ -179,7 +180,7 @@ static buffer_t *cmd_notify_extract_body_text
 	parser = message_parser_init(mctx->pool, input, 0, 0);
 	is_text = TRUE;
 	save_body = FALSE;
-	while ( (ret = message_parser_parse_next_block(parser, &block)) > 0 ) {		
+	while ( (ret=message_parser_parse_next_block(parser, &block)) > 0 ) {
 		if ( block.hdr != NULL || block.size == 0 ) {
 			/* Decode block */
 			(void)message_decoder_decode_next_block(decoder, &block, &decoded);
@@ -222,6 +223,9 @@ static buffer_t *cmd_notify_extract_body_text
 	(void)message_parser_deinit(&parser, &parts);
 	message_decoder_deinit(&decoder);
 	
+	if ( ret < 0 && input->stream_errno != 0 )
+		return NULL;
+
 	/* Return status */
 	return mctx->body_text;
 }

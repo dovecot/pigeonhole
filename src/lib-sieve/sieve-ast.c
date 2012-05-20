@@ -924,16 +924,18 @@ static void sieve_ast_unparse_stringlist
 			printf("  ");	
 
 		stritem = sieve_ast_strlist_first(strlist);
-		sieve_ast_unparse_string(sieve_ast_strlist_str(stritem));
-		
-		stritem = sieve_ast_strlist_next(stritem);
-		while ( stritem != NULL ) {
-			printf(",\n");
-			for ( i = 0; i < level+2; i++ ) 
-				printf("  ");
+		if ( stritem != NULL ) {
 			sieve_ast_unparse_string(sieve_ast_strlist_str(stritem));
-		  stritem = sieve_ast_strlist_next(stritem);
-	  }
+		
+			stritem = sieve_ast_strlist_next(stritem);
+			while ( stritem != NULL ) {
+				printf(",\n");
+				for ( i = 0; i < level+2; i++ ) 
+					printf("  ");
+				sieve_ast_unparse_string(sieve_ast_strlist_str(stritem));
+				stritem = sieve_ast_strlist_next(stritem);
+			}
+		}
  
 		printf(" ]");
 	} else {

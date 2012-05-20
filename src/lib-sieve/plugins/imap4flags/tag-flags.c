@@ -299,6 +299,9 @@ static int seff_flags_do_read_context
 		}
 	}
 	
+	if ( ret < 0 )
+		return flag_list->exec_status;
+
 	*se_context = (void *) ctx;
 	
 	return SIEVE_EXEC_OK;

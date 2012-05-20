@@ -133,6 +133,8 @@ test_cases = \
 	tests/extensions/editheader/protected.svtest \
 	tests/extensions/editheader/errors.svtest \
 	tests/extensions/vnd.dovecot/debug/execute.svtest \
+	tests/extensions/vnd.dovecot/duplicate/errors.svtest \
+	tests/extensions/vnd.dovecot/duplicate/execute.svtest \
 	tests/deprecated/notify/basic.svtest \
 	tests/deprecated/notify/mailto.svtest \
 	tests/deprecated/notify/errors.svtest \

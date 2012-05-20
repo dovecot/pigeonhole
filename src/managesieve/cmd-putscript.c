@@ -371,7 +371,7 @@ static bool cmd_putscript_continue_script(struct client_command_context *cmd)
 		bool all_written = FALSE;
 
 		if ( ctx->script_size == 0 ) {
-			if ( ctx->input->stream_errno == EPROTO ) {
+			if ( ctx->input->stream_errno == EIO ) {
 				bool fatal;
 				const char *parse_error;
 

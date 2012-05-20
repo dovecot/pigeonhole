@@ -90,7 +90,7 @@ bool ext_variables_namespace_argument_activate
 	const struct sieve_variables_namespace *nspc;
 	struct arg_namespace_variable *var;
 	const struct sieve_variable_name *name_element = array_idx(var_name, 0);
-	void *var_data;
+	void *var_data = NULL;
 
 	nspc = ext_variables_namespace_create_instance
 		(this_ext, valdtr, cmd, str_c(name_element->identifier));

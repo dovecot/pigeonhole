@@ -368,8 +368,7 @@ int main(int argc, char **argv)
 	t_array_init(&scriptfiles, 16);
 
 	/* Parse arguments */
-	scriptfile =  NULL;
-	src_mailbox = dst_mailbox = move_mailbox = NULL;
+	dst_mailbox = move_mailbox = NULL;
 	force_compile = execute = source_write = verbose = FALSE;
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {

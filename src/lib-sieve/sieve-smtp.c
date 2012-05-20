@@ -29,6 +29,6 @@ bool sieve_smtp_close
     if ( senv->smtp_open == NULL || senv->smtp_close == NULL )
         return NULL;
 
-    return senv->smtp_close(senv->script_context, handle);
+    return senv->smtp_close(senv, handle);
 }
 

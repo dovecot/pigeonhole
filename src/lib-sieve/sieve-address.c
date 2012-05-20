@@ -348,7 +348,7 @@ static int parse_mailbox(struct sieve_message_address_parser *ctx)
 		return ret;
 	} 
 
-	if ((ret = parse_addr_spec(ctx)) < 0)
+	if (parse_addr_spec(ctx) < 0)
 		return -1;
 
 	if (*ctx->parser.data != '>') {
@@ -367,8 +367,6 @@ static bool parse_mailbox_address
 (struct sieve_message_address_parser *ctx, const unsigned char *address, 
 	unsigned int addr_size)
 {
-	int ret;
-	
 	/* Initialize parser */
 	
 	rfc822_parser_init(&ctx->parser, address, addr_size, NULL);
@@ -382,9 +380,8 @@ static bool parse_mailbox_address
 		return FALSE;
 	}
 	
-	if ((ret = parse_mailbox(ctx)) < 0) {
+	if (parse_mailbox(ctx) < 0)
 		return FALSE;
-	}
 
 	if (ctx->parser.data != ctx->parser.end) {
 		if ( *ctx->parser.data == ',' ) 
@@ -715,7 +712,7 @@ static int path_parse_domain
 			str_append_c(parser->str, *parser->data);
 			parser->data++;
 
-			if ( (ret=path_skip_white_space(parser)) <= 0 )
+			if ( path_skip_white_space(parser) <= 0 )
 				return -1;
 		}
 	}
@@ -739,10 +736,10 @@ static int path_skip_source_route(struct sieve_envelope_address_parser *parser)
 		parser->data++;
 	
 		for (;;) {
-			if ( (ret=path_skip_white_space(parser)) <= 0 )
+			if ( path_skip_white_space(parser) <= 0 )
 				return -1;	
 
-			if ( (ret=path_parse_domain(parser, TRUE)) <= 0 )
+			if ( path_parse_domain(parser, TRUE) <= 0 )
 				return -1;	
 
 			if ( (ret=path_skip_white_space(parser)) <= 0 )
@@ -753,7 +750,7 @@ static int path_skip_source_route(struct sieve_envelope_address_parser *parser)
 				break;
 			parser->data++;
 
-			if ( (ret=path_skip_white_space(parser)) <= 0 )
+			if ( path_skip_white_space(parser) <= 0 )
 				return -1;
 
 			if ( *parser->data != '@' )
@@ -835,7 +832,7 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 			str_append_c(parser->str, *parser->data);
 				parser->data++;
 	
-			if ( (ret=path_skip_white_space(parser)) <= 0 )
+			if ( path_skip_white_space(parser) <= 0 )
 				return -1;
 		}
 	}
@@ -860,7 +857,7 @@ static int path_parse_mailbox(struct sieve_envelope_address_parser *parser)
 
 	parser->data++;
 
-	if ( (ret=path_skip_white_space(parser)) <= 0 )
+	if ( path_skip_white_space(parser) <= 0 )
 		return -1;
 
 	return path_parse_domain(parser, FALSE);
@@ -881,7 +878,7 @@ static int path_parse(struct sieve_envelope_address_parser *parser)
 		parser->data++;
 		brackets = TRUE;
 
-		if ( (ret=path_skip_white_space(parser)) <= 0 ) 
+		if ( path_skip_white_space(parser) <= 0 ) 
 			return -1;
 
 		/* Null path? */
@@ -892,7 +889,7 @@ static int path_parse(struct sieve_envelope_address_parser *parser)
 	}
 
 	/*  [ A-d-l ":" ] Mailbox */
-	if ( (ret=path_skip_source_route(parser)) <= 0 )
+	if ( path_skip_source_route(parser) <= 0 )
 		return -1;
 
 	if ( (ret=path_parse_mailbox(parser)) < 0 )

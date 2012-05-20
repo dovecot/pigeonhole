@@ -219,7 +219,7 @@ static int sieve_file_script_create
 		if ( success ) {
 			if ( _script->bin_dir != NULL ) {
 				binpath = sieve_binfile_from_name(name);
-				binpath =	t_strconcat(_script->bin_dir, "/", binpath, NULL);
+				binpath = t_strconcat(_script->bin_dir, "/", binpath, NULL);
 			} else {
 				binpath = sieve_binfile_from_name(basename);
 				if ( *dirpath != '\0' )
@@ -232,7 +232,7 @@ static int sieve_file_script_create
 			script->filename = p_strdup(pool, filename);
 			script->dirpath = p_strdup(pool, dirpath);
 			script->binpath = p_strdup(pool, binpath);
-			
+
 			if ( script->script.name == NULL ||
 				strcmp(script->script.name, basename) == 0 )
 				script->script.location = script->path;
@@ -345,7 +345,7 @@ static int sieve_file_script_binary_save
 {
 	struct sieve_file_script *script = (struct sieve_file_script *)_script;
 
-	if ( sieve_script_setup_bindir(_script, 0700) < 0 )
+	if ( _script->bin_dir != NULL && sieve_script_setup_bindir(_script, 0700) < 0 )
 		return -1;
 
 	return sieve_binary_save(sbin, script->binpath, update,

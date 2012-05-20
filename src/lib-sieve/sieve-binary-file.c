@@ -284,7 +284,7 @@ int sieve_binary_save
 		if ( sbin->svinst->debug ) {
 			sieve_sys_debug(sbin->svinst, "binary save: not saving binary %s, "
 				"because it is already stored", path);
-		}		
+		}
 		return 0;
 	}
 

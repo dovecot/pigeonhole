@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 
 	sieve_tool = sieve_tool_init("sieve-dump", &argc, &argv, "hP:x:", FALSE);
 		
-	binfile = outfile = NULL;
+	outfile = NULL;
 
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {

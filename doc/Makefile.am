@@ -1,15 +1,14 @@
-SUBDIRS = man example-config
+SUBDIRS = man example-config rfc
 
 docfiles = \
-	vacation.txt \
-	spamtest-virustest.txt
+	script-location-dict.txt
 
 if BUILD_DOCS
 sieve_doc_DATA = $(docfiles)
 endif
 
 EXTRA_DIST = \
-	rfc \
 	devel \
+	extensions \
 	$(docfiles)
 
