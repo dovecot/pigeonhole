@@ -13,10 +13,10 @@ void testsuite_smtp_reset(void);
  */
  
 void *testsuite_smtp_open
-	(void *script_ctx, const char *destination, const char *return_path, 
-		struct ostream **output_r);
+	(const struct sieve_script_env *senv ATTR_UNUSED, const char *destination,
+		const char *return_path, struct ostream **output_r);
 bool testsuite_smtp_close
-	(void *script_ctx, void *handle);
+	(const struct sieve_script_env *senv, void *handle);
 
 /*
  * Access

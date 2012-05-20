@@ -16,27 +16,19 @@
 bool sieve_script_name_is_valid(const char *scriptname);
 
 /*
- * Sieve script filenames
- */
- 
-bool sieve_scriptfile_has_extension(const char *filename);
-const char *sieve_scriptfile_get_script_name(const char *filename);
-const char *sieve_scriptfile_from_name(const char *name);
-const char *sieve_binfile_from_name(const char *name);
-
-/*
  * Sieve script object
  */
 
 struct sieve_script;
 
-struct sieve_script *sieve_script_create
-	(struct sieve_instance *svinst, const char *path, const char *name, 
-		struct sieve_error_handler *ehandler, enum sieve_error *error_r);
+ARRAY_DEFINE_TYPE(sieve_scripts, struct sieve_script *);
 
-struct sieve_script *sieve_script_create_in_directory
-	(struct sieve_instance *svinst, const char *dirpath, const char *name,
-    	struct sieve_error_handler *ehandler, enum sieve_error *error_r);
+struct sieve_script *sieve_script_create
+	(struct sieve_instance *svinst, const char *location, const char *name, 
+		struct sieve_error_handler *ehandler, enum sieve_error *error_r);
+struct sieve_script *sieve_script_create_as
+	(struct sieve_instance *svinst, const char *location, const char *name, 
+		struct sieve_error_handler *ehandler, enum sieve_error *error_r);
 
 void sieve_script_ref(struct sieve_script *script);
 void sieve_script_unref(struct sieve_script **script);
@@ -46,15 +38,24 @@ void sieve_script_unref(struct sieve_script **script);
  */
  
 const char *sieve_script_name(const struct sieve_script *script);
-const char *sieve_script_filename(const struct sieve_script *script);
-const char *sieve_script_path(const struct sieve_script *script);
-const char *sieve_script_binpath(const struct sieve_script *script);
-const char *sieve_script_dirpath(const struct sieve_script *script);
-
-mode_t sieve_script_permissions(const struct sieve_script *script);
-
+const char *sieve_script_location(const struct sieve_script *script);
 struct sieve_instance *sieve_script_svinst(const struct sieve_script *script);
-size_t sieve_script_size(const struct sieve_script *script);
+
+/*
+ * Saving/loading Sieve binaries
+ */
+
+int sieve_script_binary_read_metadata
+	(struct sieve_script *script, struct sieve_binary_block *sblock,
+		sieve_size_t *offset);
+void sieve_script_binary_write_metadata
+	(struct sieve_script *script, struct sieve_binary_block *sblock);
+
+struct sieve_binary *sieve_script_binary_load
+	(struct sieve_script *script, enum sieve_error *error_r);
+int sieve_script_binary_save
+	(struct sieve_script *script, struct sieve_binary *sbin, bool update,
+		enum sieve_error *error_r);
 
 /* 
  * Stream management 
@@ -64,21 +65,21 @@ struct istream *sieve_script_open
 	(struct sieve_script *script, enum sieve_error *error_r);
 void sieve_script_close(struct sieve_script *script);
 
-uoff_t sieve_script_get_size(const struct sieve_script *script);
+int sieve_script_get_size(struct sieve_script *script, uoff_t *size_r);
 
 /*
  * Comparison
  */
  
-int sieve_script_cmp
-	(const struct sieve_script *script1, const struct sieve_script *script2);
-unsigned int sieve_script_hash(const struct sieve_script *script);
-bool sieve_script_newer(const struct sieve_script *script, time_t time);
+bool sieve_script_equals
+	(const struct sieve_script *script, const struct sieve_script *other);
 
-static inline bool sieve_script_equals
-	(const struct sieve_script *script1, const struct sieve_script *script2)
+unsigned int sieve_script_hash(const struct sieve_script *script);
+static inline int sieve_script_cmp
+(const struct sieve_script *script, const struct sieve_script *other)
 {
-	return ( sieve_script_cmp(script1, script2) == 0 );
+	return ( sieve_script_equals(script, other) ? 0 : -1 );
 }
+
 
 #endif /* __SIEVE_SCRIPT_H */

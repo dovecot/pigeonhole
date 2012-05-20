@@ -73,7 +73,7 @@ struct testsuite_smtp {
 };
  
 void *testsuite_smtp_open
-(void *script_ctx ATTR_UNUSED, const char *destination, 
+(const struct sieve_script_env *senv ATTR_UNUSED, const char *destination, 
 	const char *return_path, struct ostream **output_r)
 {	
 	struct testsuite_smtp_message smtp_msg;
@@ -104,7 +104,7 @@ void *testsuite_smtp_open
 }
 
 bool testsuite_smtp_close
-(void *script_ctx ATTR_UNUSED, void *handle)
+(const struct sieve_script_env *senv ATTR_UNUSED, void *handle)
 {
 	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
 

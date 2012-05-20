@@ -87,7 +87,7 @@ extern const struct sieve_operation_def global_operation;
  * Script access 
  */
 
-const char *ext_include_get_script_directory
+const char *ext_include_get_script_location
 	(const struct sieve_extension *ext,
 		enum ext_include_script_location location, const char *script_name);
 

@@ -13,6 +13,7 @@
 #include "sieve-plugins.h"
 
 #include "sieve-script.h"
+#include "sieve-script-file.h"
 #include "sieve-ast.h"
 #include "sieve-binary.h"
 #include "sieve-actions.h"
@@ -41,7 +42,8 @@
  */
 
 struct sieve_instance *sieve_init
-(const struct sieve_environment *env, void *context, bool debug)
+(const struct sieve_environment *env,
+	const struct sieve_callbacks *callbacks, void *context, bool debug)
 {
 	struct sieve_instance *svinst;
 	unsigned long long int uint_setting;
@@ -52,9 +54,14 @@ struct sieve_instance *sieve_init
 	pool = pool_alloconly_create("sieve", 8192);
 	svinst = p_new(pool, struct sieve_instance, 1);
 	svinst->pool = pool;
-	svinst->env = env;
+	svinst->callbacks = callbacks;
 	svinst->context = context;
 	svinst->debug = debug;
+	svinst->hostname = p_strdup_empty(pool, env->hostname);
+	svinst->base_dir = p_strdup_empty(pool, env->base_dir);
+	svinst->username = p_strdup_empty(pool, env->username);
+	svinst->home_dir = p_strdup_empty(pool, env->home_dir);
+	svinst->flags = env->flags;
 
 	sieve_errors_init(svinst);
 
@@ -240,7 +247,7 @@ struct sieve_binary *sieve_compile_script
 }
 
 struct sieve_binary *sieve_compile
-(struct sieve_instance *svinst, const char *script_path,
+(struct sieve_instance *svinst, const char *script_location,
 	const char *script_name, struct sieve_error_handler *ehandler,
 	enum sieve_compile_flags flags, enum sieve_error *error_r)
 {
@@ -248,17 +255,17 @@ struct sieve_binary *sieve_compile
 	struct sieve_binary *sbin;
 
 	if ( (script = sieve_script_create
-		(svinst, script_path, script_name, ehandler, error_r)) == NULL )
+		(svinst, script_location, script_name, ehandler, error_r)) == NULL )
 		return NULL;
 	
 	sbin = sieve_compile_script(script, ehandler, flags, error_r);
-	
-	sieve_script_unref(&script);
 
 	if ( svinst->debug && sbin != NULL ) {
-		sieve_sys_debug(svinst, "script file %s successfully compiled",
-			script_path);
+		sieve_sys_debug(svinst, "script `%s' from %s successfully compiled",
+			sieve_script_name(script), sieve_script_location(script));
 	}
+
+	sieve_script_unref(&script);
 	
 	return sbin;
 }
@@ -311,28 +318,16 @@ struct sieve_binary *sieve_load
 	return sieve_binary_open(svinst, bin_path, NULL, error_r);
 }
 
-struct sieve_binary *sieve_open
-(struct sieve_instance *svinst, const char *script_path, 
-	const char *script_name, struct sieve_error_handler *ehandler,
+struct sieve_binary *sieve_open_script
+(struct sieve_script *script, struct sieve_error_handler *ehandler,
 	enum sieve_compile_flags flags, enum sieve_error *error_r)
 {
-	struct sieve_script *script;
+	struct sieve_instance *svinst = sieve_script_svinst(script);
 	struct sieve_binary *sbin;
-	const char *bin_path;
 	
-	/* First open the scriptfile itself */
-	script = sieve_script_create
-		(svinst, script_path, script_name, ehandler, error_r);
-
-	if ( script == NULL ) {
-		/* Failed */
-		return NULL;
-	}
-
 	T_BEGIN {
 		/* Then try to open the matching binary */
-		bin_path = sieve_script_binpath(script);	
-		sbin = sieve_binary_open(svinst, bin_path, script, error_r);
+		sbin = sieve_script_binary_load(script, error_r);
 	
 		if (sbin != NULL) {
 			/* Ok, it exists; now let's see if it is up to date */
@@ -340,7 +335,7 @@ struct sieve_binary *sieve_open
 				/* Not up to date */
 				if ( svinst->debug )
 					sieve_sys_debug(svinst, "script binary %s is not up-to-date",
-						bin_path);
+						sieve_binary_path(sbin));
 
 				sieve_binary_unref(&sbin);
 				sbin = NULL;
@@ -353,7 +348,7 @@ struct sieve_binary *sieve_open
 		if ( sbin != NULL ) {
 			if ( svinst->debug )
 				sieve_sys_debug(svinst, "script binary %s successfully loaded",
-					bin_path);
+					sieve_binary_path(sbin));
 			
 		} else {	
 			sbin = sieve_compile_script(script, ehandler, flags, error_r);
@@ -361,12 +356,34 @@ struct sieve_binary *sieve_open
 			/* Save the binary if compile was successful */
 			if ( sbin != NULL ) {
 				if ( svinst->debug )
-					sieve_sys_debug(svinst, "script %s successfully compiled", 
-						script_path);
+					sieve_sys_debug(svinst, "script `%s' from %s successfully compiled", 
+						sieve_script_name(script), sieve_script_location(script));
 			}
 		}
 	} T_END;
+
+	return sbin;
+}
+
+struct sieve_binary *sieve_open
+(struct sieve_instance *svinst, const char *script_location, 
+	const char *script_name, struct sieve_error_handler *ehandler,
+	enum sieve_compile_flags flags, enum sieve_error *error_r)
+{
+	struct sieve_script *script;
+	struct sieve_binary *sbin;
 	
+	/* First open the scriptfile itself */
+	script = sieve_script_create
+		(svinst, script_location, script_name, ehandler, error_r);
+
+	if ( script == NULL ) {
+		/* Failed */
+		return NULL;
+	}
+
+	sbin = sieve_open_script(script, ehandler, flags, error_r);
+
 	/* Drop script reference, if sbin != NULL it holds a reference of its own. 
 	 * Otherwise the script object is freed here.
 	 */
@@ -385,11 +402,23 @@ bool sieve_is_loaded(struct sieve_binary *sbin)
 	return sieve_binary_loaded(sbin);
 }
 
-int sieve_save
+int sieve_save_as
 (struct sieve_binary *sbin, const char *bin_path, bool update,
-	enum sieve_error *error_r)
+	mode_t save_mode, enum sieve_error *error_r)
 {
-	return sieve_binary_save(sbin, bin_path, update, error_r);
+	return sieve_binary_save(sbin, bin_path, update, save_mode, error_r);
+}
+
+int sieve_save
+(struct sieve_binary *sbin, bool update, enum sieve_error *error_r)
+{
+	struct sieve_script *script = sieve_binary_script(sbin);
+
+	if ( script == NULL ) {
+		return sieve_binary_save(sbin, NULL, update, 0600, error_r);
+	}
+
+	return sieve_script_binary_save(script, sbin, update, error_r);
 }
 
 void sieve_close(struct sieve_binary **sbin)

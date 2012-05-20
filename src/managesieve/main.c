@@ -139,11 +139,11 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	if (set->verbose_proctitle)
 		verbose_proctitle = TRUE;
 
-	client = client_create(fd_in, fd_out, mail_user, user, set);
+	client = client_create
+		(fd_in, fd_out, input->session_id, mail_user, user, set);
 	T_BEGIN {
 		client_add_input(client, input_buf);
 	} T_END;
-
 	return 0;
 }
 
@@ -178,6 +178,7 @@ static void
 login_client_connected(const struct master_login_client *client,
 		       const char *username, const char *const *extra_fields)
 {
+#define MSG_BYE_INTERNAL_ERROR "BYE \""CRITICAL_MSG"\"\r\n"
 	struct mail_storage_service_input input;
 	const char *error;
 	buffer_t input_buf;
@@ -188,11 +189,17 @@ login_client_connected(const struct master_login_client *client,
 	input.remote_ip = client->auth_req.remote_ip;
 	input.username = username;
 	input.userdb_fields = extra_fields;
+	input.session_id = client->session_id;
 
 	buffer_create_const_data(&input_buf, client->data,
 				 client->auth_req.data_size);
 	if (client_create_from_input(&input, client->fd, client->fd,
 				     &input_buf, &error) < 0) {
+		if (write(client->fd, MSG_BYE_INTERNAL_ERROR,
+			  strlen(MSG_BYE_INTERNAL_ERROR)) < 0) {
+			if (errno != EAGAIN && errno != EPIPE)
+				i_error("write(client) failed: %m");
+		}
 		i_error("%s", error);
 		(void)close(client->fd);
 		master_service_client_connection_destroyed(master_service);

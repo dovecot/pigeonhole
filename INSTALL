@@ -85,23 +85,21 @@ The Sieve interpreter recognizes the following configuration options in the
 plugin section of the config file (default values are shown if applicable):
 
  sieve = ~/.dovecot.sieve
-   The path to the user's main active script. 
+   The location of the user's main active script. 
  
  sieve_default = 
-   The path to the default personal sieve script file, which gets executed ONLY
-   if user's private Sieve script does no exist, e.g.
-   /var/lib/dovecot/default.sieve. This is usually a global script, so sure to
-   pre-compile this script manually using the sievec command line tool, as
-   explained in the README file.
-
- sieve_global_path =
-   This is the DEPRECATED former name of the sieve_default setting.
+   The location of the default personal sieve script file, which gets executed
+   ONLY if user's private Sieve script does no exist, e.g.
+   /var/lib/dovecot/default.sieve. This is usually a global script, so be sure
+   to pre-compile this script manually using the sievec command line tool, as
+   explained in the README file. This setting used to be called
+   `sieve_global_path', but that name is now deprecated.
 
  sieve_global_dir =
-   Directory for :global include scripts for the Sieve include extension. 
+   Location for :global include scripts for the Sieve include extension. 
 
- sieve_dir = ~/
-   Directory for :personal include scripts for the Sieve include extension. 
+ sieve_dir = ~/sieve
+   Location for :personal include scripts for the Sieve include extension. 
 
  sieve_extensions =
    Which Sieve language extensions are available to users. By default, all 
@@ -130,6 +128,12 @@ plugin section of the config file (default values are shown if applicable):
    setting, the used plugins can be specified. Check the Dovecot wiki
    (wiki2.dovecot.org) or the pigeonhole website (http://pigeonhole.dovecot.org)
    for available plugins. 
+
+ sieve_user_log =
+   The path to the file where the user log file is written. If not configured, a
+   default location is used. If the main user's personal Sieve (as configured
+   with sieve=) is a file, the logfile is set to <filename>.log by default. If
+   it is not a file, the default user log file is ~/.dovecot.sieve.log. 
 
  recipient_delimiter = +
    The separator that is expected between the :user and :detail address parts 
@@ -176,7 +180,48 @@ Sieve Interpreter - Configurable Limits
    The maximum number of redirect actions that can be performed during a single
    script execution. If set to 0, no redirect actions are allowed.
 
-Sieve Interpreter - Per-user Sieve script location
+Sieve Interpreter - Script Locations
+------------------------------------
+
+The location of Sieve scripts is not limited to the file system. The Sieve
+interpreter can be extended to retrieve Sieve scripts from other sources as
+well, such as a database. Currently, all settings that are used to obtain the
+location of a single Sieve script, such as sieve=, sieve_default=, sieve_dir=
+and sieve_global_dir= accept the following extended syntax:
+
+location = [<type>:]path[;<option>[=<value>][;...]]
+
+The following script location types are implemented by default:
+
+  file    - The location path is a file system path pointing to the script file
+            or a directory containing script files with names structured as
+            `<script-name>.sieve'.
+	dict    - Dovecot dict lookup. The location path is a dict uri. Read
+            doc/scipt-location-dict.txt for more information and examples. 
+
+If the type prefix is omitted, the script location type is 'file'.
+
+The following options are defined for all location types:
+
+  name=<script-name>
+    Set the name of the Sieve script that this location points to. If the name
+    of the Sieve script is not contained in the location path, this option is
+    required (e.g. for dict locations that must point to a particular script).
+    If the name of the script is contained in the location, the value of the
+    name option overrides the name retrieved from the location. If the Sieve
+    interpreter explicitly queries for a specific name (e.g. to include a script
+    from the sieve_dir= location), this option has no effect.
+
+  bindir=<dirpath>
+		Points to the directory where the compiled binaries for this script location
+    are stored. If this option is omitted, the behavior depends on the location
+    type. For `file' type locations, the binary is then stored in the same
+    directory as where the script file was found if possible. For `dict' type
+    locations, the binary is not stored at all in that case. Don't specify the
+    same directory for different script locations, as this will result in
+    undefined behavior. 
+	
+Sieve Interpreter - Per-user Sieve Script Location
 --------------------------------------------------
 
 By default, the Pigeonhole LDA Sieve plugin looks for the user's Sieve script
@@ -184,8 +229,8 @@ file in the user's home directory (~/.dovecot.sieve). This requires that the
 home directory is set for the user.
 
 If you want to store the script elsewhere, you can override the default using 
-the sieve setting, which specifies the path to the user's script file. This can 
-be done in two ways:
+the sieve= setting, which specifies the location of the user's script file. This
+can be done in two ways:
 
  1. Define the sieve setting in the plugin section of dovecot.conf.
  2. Return sieve extra field from userdb extra fields. 

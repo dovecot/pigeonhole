@@ -8,8 +8,7 @@
  * Message transmission
  */
 
-const char *sieve_message_get_new_id
-	(const struct sieve_script_env *senv);
+const char *sieve_message_get_new_id(const struct sieve_instance *svinst);
 
 /* 
  * Message context 

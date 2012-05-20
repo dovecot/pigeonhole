@@ -765,7 +765,7 @@ static bool act_notify_send
 
 		str_truncate(msg, hdr_size);
 	
-		outmsgid = sieve_message_get_new_id(senv);
+		outmsgid = sieve_message_get_new_id(aenv->svinst);
 		rfc2822_header_write(msg, "Message-ID", outmsgid);
 		rfc2822_header_write(msg, "To", recipients[i].full);
 

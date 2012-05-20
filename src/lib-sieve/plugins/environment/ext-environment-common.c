@@ -103,8 +103,11 @@ const char *ext_environment_item_get_value
 	if ( item->value != NULL )
 		return item->value;
 
-	if ( item->get_value != NULL ) 
-		return item->get_value(senv);
+	if ( item->get_value != NULL ) {
+		const char *value = item->get_value(ext->svinst, senv);
+
+		return ( value == NULL ? "" : value );
+	}
 
 	return NULL; 
 }
@@ -130,9 +133,10 @@ const struct sieve_environment_item domain_env_item = {
  *   executing.
  */
 
-static const char *envit_host_get_value(const struct sieve_script_env *senv)
+static const char *envit_host_get_value
+(struct sieve_instance *svinst, const struct sieve_script_env *senv ATTR_UNUSED)
 {
-	return senv->hostname != NULL ? senv->hostname : "";
+	return svinst->hostname;
 }
 
 const struct sieve_environment_item host_env_item = {

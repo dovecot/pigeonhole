@@ -10,34 +10,93 @@
  * Script object
  */
 
+struct sieve_script_vfuncs {
+	struct sieve_script *(*alloc)(void);
+	int (*create)
+		(struct sieve_script *script, const char *data, const char *const *options,
+			enum sieve_error *error_r);
+	void (*destroy)
+		(struct sieve_script *script);
+
+	struct istream *(*open)
+		(struct sieve_script *script, enum sieve_error *error_r);
+	void (*close)
+		(struct sieve_script *script);
+
+	int (*binary_read_metadata)
+		(struct sieve_script *_script, struct sieve_binary_block *sblock,
+			sieve_size_t *offset);
+	void (*binary_write_metadata)
+		(struct sieve_script *script, struct sieve_binary_block *sblock);
+	struct sieve_binary *(*binary_load)
+		(struct sieve_script *script, enum sieve_error *error_r);
+	int (*binary_save)
+		(struct sieve_script *script, struct sieve_binary *sbin,	
+			bool update, enum sieve_error *error_r);
+
+	int (*get_size)
+		(const struct sieve_script *script, uoff_t *size_r);
+
+	bool (*equals)
+		(const struct sieve_script *script, const struct sieve_script *other);
+};
+
 struct sieve_script {
 	pool_t pool;
 	unsigned int refcount;
 
+	const char *driver_name;
+	const struct sieve_script *script_class;
+	struct sieve_script_vfuncs v;
+
 	struct sieve_instance *svinst;
-
-	struct stat st;
-	struct stat lnk_st;
-	time_t mtime;
-
 	struct sieve_error_handler *ehandler;
 
-	/* Parameters */
 	const char *name;
-	const char *basename;
-	const char *filename;
-	const char *path;
-	const char *dirpath;
-	const char *binpath;
+	const char *location;
+	const char *bin_dir;
 
 	/* Stream */
-	int fd; /* FIXME: we could use the stream's autoclose facility */
 	struct istream *stream;
 };
 
 struct sieve_script *sieve_script_init
-(struct sieve_script *script, struct sieve_instance *svinst,
-	const char *path, const char *name, struct sieve_error_handler *ehandler, 
-	enum sieve_error *error_r);
+	(struct sieve_script *script, struct sieve_instance *svinst,
+		const struct sieve_script *script_class, const char *data,
+		const char *name, struct sieve_error_handler *ehandler,
+		enum sieve_error *error_r);
+
+int sieve_script_setup_bindir
+	(struct sieve_script *script, mode_t mode);
+
+/*
+ * Built-in file script driver
+ */
+
+#define SIEVE_FILE_SCRIPT_DRIVER_NAME "file"
+
+struct sieve_file_script {
+	struct sieve_script script;
+
+	struct stat st;
+	struct stat lnk_st;
+
+	const char *path;
+	const char *dirpath;
+	const char *filename;
+	const char *binpath;
+
+	int fd;
+};
+
+extern const struct sieve_script sieve_file_script;
+
+/*
+ * Built-in dict script driver
+ */
+
+#define SIEVE_DICT_SCRIPT_DRIVER_NAME "dict"
+
+extern const struct sieve_script sieve_dict_script;
 
 #endif /* __SIEVE_SCRIPT_PRIVATE_H */

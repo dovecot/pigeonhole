@@ -30,14 +30,13 @@
  * Message transmission
  */
  
-const char *sieve_message_get_new_id
-(const struct sieve_script_env *senv)
+const char *sieve_message_get_new_id(const struct sieve_instance *svinst)
 {
 	static int count = 0;
 	
 	return t_strdup_printf("<dovecot-sieve-%s-%s-%d@%s>",
 		dec2str(ioloop_timeval.tv_sec), dec2str(ioloop_timeval.tv_usec),
-    count++, senv->hostname);
+    count++, svinst->hostname);
 }
 
 /* 

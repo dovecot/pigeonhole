@@ -80,6 +80,8 @@ libdovecot_sieve_la_SOURCES = \
 	sieve-smtp.c \
 	sieve-lexer.c \
 	sieve-script.c \
+	sieve-script-file.c \
+	sieve-script-dict.c \
 	sieve-ast.c \
 	sieve-binary.c \
 	sieve-binary-file.c \
@@ -126,6 +128,7 @@ headers = \
 	sieve-lexer.h \
 	sieve-script.h \
 	sieve-script-private.h \
+	sieve-script-file.h \
 	sieve-ast.h \
 	sieve-binary.h \
 	sieve-binary-private.h \

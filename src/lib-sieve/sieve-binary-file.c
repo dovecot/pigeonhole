@@ -269,30 +269,15 @@ static bool _sieve_binary_save
 } 
 
 int sieve_binary_save
-(struct sieve_binary *sbin, const char *path, bool update, 
+(struct sieve_binary *sbin, const char *path, bool update, mode_t save_mode,
 	enum sieve_error *error_r)
 {
 	int result, fd;
 	string_t *temp_path;
 	struct ostream *stream;
-	mode_t save_mode =
-		sbin->script == NULL ? 0600 : sieve_script_permissions(sbin->script);
 
 	if ( error_r != NULL )
 		*error_r = SIEVE_ERROR_NONE;
-	
-	/* Use default path if none is specified */
-	if ( path == NULL ) {
-		if ( sbin->script == NULL ) {
-			sieve_sys_error(sbin->svinst, 
-				"binary save: cannot determine default path "
-				"with missing script object");
-			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_NOT_POSSIBLE;
-			return -1;
-		}
-		path = sieve_script_binpath(sbin->script);
-	}
 
 	/* Check whether saving is necessary */
 	if ( !update && sbin->path != NULL && strcmp(sbin->path, path) == 0 ) {
@@ -853,13 +838,11 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 		ext_block = sieve_binary_block_get(sbin, SBIN_SYSBLOCK_EXTENSIONS);
 		if ( ext_block == NULL ) {
 			result = FALSE;
-		} else {
-			if ( !_read_extensions(ext_block) ) {
-				sieve_sys_error(sbin->svinst,
-					"binary open: binary %s is corrupt: failed to load extension block", 
-					sbin->path);
-				result = FALSE;
-			}
+		} else if ( !_read_extensions(ext_block) ) {
+			sieve_sys_error(sbin->svinst,
+				"binary open: binary %s is corrupt: failed to load extension block", 
+				sbin->path);
+			result = FALSE;
 		}
 	} T_END;
 		

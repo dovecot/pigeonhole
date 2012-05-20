@@ -202,7 +202,7 @@ static bool cmd_include_validate
 	struct cmd_include_context_data *ctx_data = 
 		(struct cmd_include_context_data *) cmd->data;
 	struct sieve_script *script;
-	const char *script_path, *script_name;
+	const char *script_location, *script_name;
 	enum sieve_error error = SIEVE_ERROR_NONE;
 	bool include = TRUE;
 	
@@ -235,9 +235,9 @@ static bool cmd_include_validate
 		return FALSE;
 	}
 		
-	script_path = ext_include_get_script_directory
+	script_location = ext_include_get_script_location
 		(this_ext, ctx_data->location, script_name);
-	if ( script_path == NULL ) {
+	if ( script_location == NULL ) {
 		sieve_argument_validate_error(valdtr, arg,
 			"include: %s location for included script '%s' is unavailable "
 			"(contact system administrator for more information)",
@@ -247,8 +247,8 @@ static bool cmd_include_validate
 	}
 	
 	/* Create script object */
-	script = sieve_script_create_in_directory
-		(this_ext->svinst, script_path, script_name, 
+	script = sieve_script_create
+		(this_ext->svinst, script_location, script_name, 
 			sieve_validator_error_handler(valdtr), &error);
 
 	if ( script == NULL ) {
@@ -343,11 +343,12 @@ static bool opc_include_dump
 	included = ext_include_binary_script_get_included(binctx, include_id);
 	if ( included == NULL )
 		return FALSE;
-		
+
 	sieve_code_descend(denv);
-	sieve_code_dumpf(denv, "script: %s %s[ID: %d, BLOCK: %d]", 
-		sieve_script_filename(included->script), (flags & 0x01 ? "(once) " : ""),
-		include_id, sieve_binary_block_get_id(included->block));
+	sieve_code_dumpf(denv, "script: `%s' from %s %s[ID: %d, BLOCK: %d]", 
+		sieve_script_name(included->script), sieve_script_location(included->script),
+		(flags & 0x01 ? "(once) " : ""), include_id,
+		sieve_binary_block_get_id(included->block));
 
 	return TRUE;
 }

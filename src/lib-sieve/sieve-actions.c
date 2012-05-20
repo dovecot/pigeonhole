@@ -723,8 +723,7 @@ int sieve_action_duplicate_check
 	if ( senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
 		return 0;
 
-	return senv->duplicate_check
-		(senv->script_context, id, id_size, senv->username); 
+	return senv->duplicate_check(senv, id, id_size); 
 }
 
 void sieve_action_duplicate_mark
@@ -734,8 +733,7 @@ void sieve_action_duplicate_mark
 	if ( senv->duplicate_check == NULL || senv->duplicate_mark == NULL)
 		return;
 
-	senv->duplicate_mark
-		(senv->script_context, id, id_size, senv->username, time);
+	senv->duplicate_mark(senv, id, id_size, time);
 }
 
 /* Rejecting the mail */
@@ -744,6 +742,7 @@ static bool sieve_action_do_reject_mail
 (const struct sieve_action_exec_env *aenv, const char *sender, 
 	const char *recipient, const char *reason)
 {
+	struct sieve_instance *svinst = aenv->svinst;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct istream *input;
@@ -763,8 +762,8 @@ static bool sieve_action_do_reject_mail
 
 	smtp_handle = sieve_smtp_open(senv, sender, NULL, &output);
 
-	new_msgid = sieve_message_get_new_id(senv);
-	boundary = t_strdup_printf("%s/%s", my_pid, senv->hostname);
+	new_msgid = sieve_message_get_new_id(svinst);
+	boundary = t_strdup_printf("%s/%s", my_pid, svinst->hostname);
 
   hdr = t_str_new(512);	
 	rfc2822_header_write(hdr, "X-Sieve", SIEVE_IMPLEMENTATION);
@@ -798,7 +797,7 @@ static bool sieve_action_do_reject_mail
 	rfc2822_header_write(hdr, "Content-Type", "message/disposition-notification");
 	str_append(hdr, "\r\n");
 	rfc2822_header_write(hdr, "Reporting-UA: %s; Dovecot Mail Delivery Agent",
-		senv->hostname);
+		svinst->hostname);
 	if (mail_get_first_header(msgdata->mail, "Original-Recipient", &header) > 0)
 		rfc2822_header_printf(hdr, "Original-Recipient", "rfc822; %s", header);
 	rfc2822_header_printf(hdr, "Final-Recipient", "rfc822; %s", recipient);

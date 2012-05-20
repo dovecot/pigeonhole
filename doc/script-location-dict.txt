@@ -1,0 +1,145 @@
+DICT Sieve Script Location Type
+
+Description
+===========
+
+This location type is used to retrieve Sieve scripts from a Dovecot dict lookup.
+Such dictionaries use a file or an SQL database as backend. Refer to the Dovecot
+dict documentation for more information on dict lookups.
+
+To retrieve a Sieve script from the dict database, two lookups are performed.
+First, the name of the Sieve script is queried from the dict path
+`/priv/sieve/name/<name>'. If the Sieve script exists, this yields a data ID
+which in turn points to the actual script text. The script text is subsequently
+queried from the dict path '/priv/sieve/data/<dict-id>'.
+
+The second query is only necessary when no compiled binary is available or when
+the script has changed and needs to be recompiled. The data ID is used to detect
+changes in the dict's underlying database. Changing a Sieve script in the
+database must be done by first making a new script data item with a new data ID.
+Then, the mapping from name to data ID must be changed to point to the new
+script text, thereby changing the data ID returned from the name lookup, i.e.
+the first query mentioned above. Script binaries compiled from Sieve scripts
+contained in a dict database record the data ID. While the data ID contained in
+the binary is identical to the one returned from the dict lookup, the binary is
+assumed up-to-date. When the returned data ID is different, the new script text
+is retrieved using the second query and compiled into a new binary containing
+the updated data ID.
+
+Note that, by default, compiled binaries are not stored at all for Sieve scripts
+retrieved from a dict database. The bindir= option needs to be specified in the
+location specification. Refer to the INSTALL file for more general information
+about configuration of script locations.
+
+Configuration
+=============
+
+The script location syntax is specialized as follows:
+
+location = dict:<dict-uri>[;<option>[=<value>][;...]]
+
+The following additional options are recognized:
+
+  user=<username>
+    Overrides the user name used for the dict lookup. Normally, the name of the
+    user running the Sieve interpreter is used.
+
+If the name of the Script is left unspecified and not otherwise provided by the
+Sieve interpreter, the name defaults to `default'. 
+
+Examples
+========
+
+Example 1
+---------
+
+This example is mainly useful for performing a quick test of the dict location
+configuration without configuring an actual (SQL) database. For this example, a
+very simple file dict is assumed to be contained in the file
+/etc/dovecot/sieve.dict:
+
+priv/sieve/name/keep
+1
+priv/sieve/name/discard
+2
+priv/sieve/name/spam
+3
+priv/sieve/data/1
+keep;
+priv/sieve/data/2
+discard;
+priv/sieve/data/3
+require ["fileinto", "mailbox"]; fileinto :create "spam";
+
+To use this file dict for the main active script, you can change the
+configuration as follows (e.g. in /etc/dovecot/conf.d/90-sieve.conf):
+
+plugin {
+  sieve = dict:file:/etc/dovecot/sieve.dict;name=keep;bindir=~/.sieve-bin
+}
+
+The Sieve script named "keep" is retrieved from the file dict as the main
+script. Binaries are stored in the ~/.sieve-bin directory. 
+
+Example 2
+---------
+
+This example uses a PostgreSQL database. Our database contains the following
+table:
+
+CREATE TABLE user_sieve_scripts (
+  id integer,
+  username varchar(40),
+  script_name varchar(256),
+  script_data varchar(10240),
+
+  PRIMARY KEY (id),
+  UNIQUE(username, script_name)
+);
+
+We create a file /etc/dovecot/dict-sieve-sql.conf with the following content:
+
+connect = host=localhost dbname=dovecot user=dovecot password=password
+map {
+  pattern = priv/sieve/name/$script_name
+  table = user_sieve_scripts
+  username_field = username
+  value_field = id
+  fields {
+    script_name = $script_name
+  }
+}
+map {
+  pattern = priv/sieve/data/$id
+  table = user_sieve_scripts
+  username_field = username
+  value_field = script_data
+  fields {
+    id = $id
+  }
+}
+
+These are the mappings used by the SQL dict. The first mapping is the name query
+that yields the id of the Sieve script. The second mapping is the query used to
+retrieve the Sieve script itself.
+
+Much like the dict configuration for mailbox quota, it is often not possible to
+directly use an SQL dict because the SQL drivers are not linked to binaries such
+as dovecot-lda and lmtp. You need to use the dict proxy service. Add the dict
+URI to the dict section (typically located in your main dovecot.conf):
+
+dict {
+  sieve = pgsql:/etc/dovecot/dict-sieve-sql.conf.ext
+}
+
+To use this SQL dict for the main active script, you can change the
+configuration as follows (e.g. in /etc/dovecot/conf.d/90-sieve.conf):
+
+plugin {
+  sieve = dict:proxy::sieve;name=active;bindir=~/.sieve-bin
+}
+
+This uses the proxy dict uri `proxy::sieve'. This refers to the `sieve =' entry
+in the dict {...} section above. With this configuration, a Sieve script called
+"main" is retrieved from the SQL dict. Binaries are stored in the ~/.sieve-bin
+directory.

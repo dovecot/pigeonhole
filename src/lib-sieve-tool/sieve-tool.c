@@ -89,7 +89,7 @@ static const char *sieve_tool_sieve_get_homedir
 	return sieve_tool_get_homedir(tool);
 }
 
-const struct sieve_environment sieve_tool_sieve_env = {
+const struct sieve_callbacks sieve_tool_callbacks = {
 	sieve_tool_sieve_get_homedir,
 	sieve_tool_sieve_get_setting
 };
@@ -223,6 +223,7 @@ struct sieve_instance *sieve_tool_init_finish
 		MAIL_STORAGE_SERVICE_FLAG_NO_LOG_INIT |
 		MAIL_STORAGE_SERVICE_FLAG_USE_SYSEXITS;
 	struct mail_storage_service_input service_input;
+	struct sieve_environment svenv;
 	const char *username = tool->username;
 	const char *homedir = tool->homedir;
 	const char *errstr;
@@ -261,9 +262,15 @@ struct sieve_instance *sieve_tool_init_finish
 		(master_service, "mail_full_filesystem_access=yes") < 0 )
 		i_unreached();
 
+	memset((void *)&svenv, 0, sizeof(svenv));
+	svenv.username = username;
+	(void)mail_user_get_home(tool->mail_user_dovecot, &svenv.home_dir);
+	svenv.hostname = "host.example.com";
+	svenv.base_dir = tool->mail_user_dovecot->set->base_dir;
+
 	/* Initialize Sieve Engine */
-	if ( (tool->svinst=sieve_init(&sieve_tool_sieve_env, tool, tool->debug)) 
-		== NULL )
+	if ( (tool->svinst=sieve_init
+		(&svenv, &sieve_tool_callbacks, tool, tool->debug)) == NULL )
 		i_fatal("failed to initialize sieve implementation");
 
 	/* Load Sieve plugins */
@@ -545,7 +552,7 @@ struct sieve_binary *sieve_tool_script_open
 
 	sieve_error_handler_unref(&ehandler);
 
-	sieve_save(sbin, NULL, FALSE, NULL);
+	sieve_save(sbin, FALSE, NULL);
 	return sbin;
 }
 

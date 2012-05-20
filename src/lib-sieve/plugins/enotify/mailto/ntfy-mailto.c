@@ -465,7 +465,7 @@ static bool ntfy_mailto_send
 	}
 
 	msg = t_str_new(512);
-	outmsgid = sieve_message_get_new_id(senv);
+	outmsgid = sieve_message_get_new_id(nenv->svinst);
 	
 	rfc2822_header_write(msg, "X-Sieve", SIEVE_IMPLEMENTATION);
 	rfc2822_header_write(msg, "Message-ID", outmsgid);

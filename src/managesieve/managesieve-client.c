@@ -24,44 +24,25 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#define CRITICAL_MSG \
-  "Internal error occured. Refer to server log for more information."
-#define CRITICAL_MSG_STAMP CRITICAL_MSG " [%Y-%m-%d %H:%M:%S]"
-
 extern struct mail_storage_callbacks mail_storage_callbacks;
 struct managesieve_module_register managesieve_module_register = { 0 };
 
 struct client *managesieve_clients = NULL;
 unsigned int managesieve_client_count = 0;
 
-static const char *managesieve_sieve_get_homedir
-(void *context)
-{
-    struct mail_user *mail_user = (struct mail_user *) context;
-    const char *home = NULL;
-
-    if ( mail_user == NULL )
-        return NULL;
-
-    if ( mail_user_get_home(mail_user, &home) <= 0 )
-        return NULL;
-
-    return home;
-}
-
 static const char *managesieve_sieve_get_setting
 (void *context, const char *identifier)
 {
-    struct mail_user *mail_user = (struct mail_user *) context;
+	struct mail_user *mail_user = (struct mail_user *) context;
 
-    if ( mail_user == NULL )
-        return NULL;
+	if ( mail_user == NULL )
+		return NULL;
 
-    return mail_user_plugin_getenv(mail_user, identifier);
+	return mail_user_plugin_getenv(mail_user, identifier);
 }
 
-static const struct sieve_environment managesieve_sieve_env = {
-	managesieve_sieve_get_homedir,
+static const struct sieve_callbacks managesieve_sieve_callbacks = {
+	NULL,
 	managesieve_sieve_get_setting
 };
 
@@ -106,14 +87,16 @@ static struct sieve_storage *client_get_storage
 }
 
 struct client *client_create
-(int fd_in, int fd_out, struct mail_user *user,
+(int fd_in, int fd_out, const char *session_id, struct mail_user *user,
 	struct mail_storage_service_user *service_user,
 	const struct managesieve_settings *set)
 {
 	struct client *client;
 	const char *ident;
+	struct sieve_environment svenv;
 	struct sieve_instance *svinst;
 	struct sieve_storage *storage;
+	pool_t pool;
 
 	/* Always use nonblocking I/O */
 
@@ -122,7 +105,14 @@ struct client *client_create
 
 	/* Initialize Sieve instance */
 
-	svinst = sieve_init(&managesieve_sieve_env, (void *) user, set->mail_debug);
+	memset((void*)&svenv, 0, sizeof(svenv));
+	svenv.username = user->username;
+	(void)mail_user_get_home(user, &svenv.home_dir);
+	svenv.base_dir = user->set->base_dir;
+	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
+
+	svinst = sieve_init
+		(&svenv, &managesieve_sieve_callbacks, (void *) user, set->mail_debug);
 
 	/* Get Sieve storage */
 
@@ -132,9 +122,12 @@ struct client *client_create
 	net_set_nonblock(fd_in, TRUE);
 	net_set_nonblock(fd_out, TRUE);
 
-	client = i_new(struct client, 1);
+	pool = pool_alloconly_create("managesieve client", 1024);
+	client = p_new(pool, struct client, 1);
+	client->pool = pool;
 	client->set = set;
 	client->service_user = service_user;
+	client->session_id = p_strdup(pool, session_id);
 	client->fd_in = fd_in;
 	client->fd_out = fd_out;
 	client->input = i_stream_create_fd
@@ -179,6 +172,7 @@ static const char *client_stats(struct client *client)
 	static struct var_expand_table static_tab[] = {
 		{ 'i', NULL, "input" },
 		{ 'o', NULL, "output" },
+		{ '\0', NULL, "session" },
 		{ '\0', NULL, NULL }
 	};
 	struct var_expand_table *tab;
@@ -189,6 +183,7 @@ static const char *client_stats(struct client *client)
 
 	tab[0].value = dec2str(client->input->v_offset);
 	tab[1].value = dec2str(client->output->offset);
+	tab[2].value = client->session_id;
 
 	str = t_str_new(128);
 	var_expand(str, client->set->managesieve_logout_format, tab);
@@ -264,7 +259,7 @@ void client_destroy(struct client *client, const char *reason)
 	sieve_deinit(&client->svinst);
 
 	pool_unref(&client->cmd.pool);
-	i_free(client);
+	pool_unref(&client->pool);
 
 	master_service_client_connection_destroyed(master_service);
 	managesieve_refresh_proctitle();

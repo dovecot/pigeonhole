@@ -13,7 +13,7 @@
  */
  
 #define SIEVE_BINARY_VERSION_MAJOR     0
-#define SIEVE_BINARY_VERSION_MINOR     3
+#define SIEVE_BINARY_VERSION_MINOR     4
 
 /*
  * Binary object
@@ -34,14 +34,19 @@ struct sieve_instance *sieve_binary_svinst(struct sieve_binary *sbin);
 const char *sieve_binary_path(struct sieve_binary *sbin);
 struct sieve_script *sieve_binary_script(struct sieve_binary *sbin);
 
-bool sieve_binary_script_newer
-	(struct sieve_binary *sbin, struct sieve_script *script);
+time_t sieve_binary_mtime(struct sieve_binary *sbin);
 const char *sieve_binary_script_name(struct sieve_binary *sbin);
-const char *sieve_binary_script_path(struct sieve_binary *sbin);
+const char *sieve_binary_script_location(struct sieve_binary *sbin);
 
 const char *sieve_binary_source(struct sieve_binary *sbin);
 bool sieve_binary_loaded(struct sieve_binary *sbin);
 bool sieve_binary_saved(struct sieve_binary *sbin);
+
+/*
+ * Utility
+ */
+
+const char *sieve_binfile_from_name(const char *name);
 
 /*
  * Activation after code generation
@@ -54,8 +59,8 @@ void sieve_binary_activate(struct sieve_binary *sbin);
  */
  
 int sieve_binary_save
-(struct sieve_binary *sbin, const char *path, bool update,
-	enum sieve_error *error_r);
+	(struct sieve_binary *sbin, const char *path, bool update, mode_t save_mode,
+		enum sieve_error *error_r);
 	
 /* 
  * Loading the binary
@@ -72,6 +77,7 @@ bool sieve_binary_up_to_date
  */
  
 enum sieve_binary_system_block {
+	SBIN_SYSBLOCK_SCRIPT_DATA,
 	SBIN_SYSBLOCK_EXTENSIONS,
 	SBIN_SYSBLOCK_MAIN_PROGRAM,
 	SBIN_SYSBLOCK_LAST

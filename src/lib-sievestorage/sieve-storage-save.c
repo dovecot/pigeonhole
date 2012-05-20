@@ -11,6 +11,7 @@
 #include "eacces-error.h"
 
 #include "sieve-script.h"
+#include "sieve-script-file.h"
 
 #include "sieve-storage-private.h"
 #include "sieve-storage-script.h"
