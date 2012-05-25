@@ -1,3 +1,31 @@
+v0.3.1 25-05-2012 Stephan Bosch <stephan@rename-it.nl>
+
+	* Added support for retrieving Sieve scripts from dict lookup. This means that
+	  Sieve scripts can now be downloaded from a database. Compiled script
+	  binaries are still put on disk somewhere if used. The INSTALL documentation
+	  is updated with information on this new feature and the
+	  (backwards-compatible) changes to the configuration. Note that his feature
+	  is currently not supported for sieve_before/sieve_after or script management
+	  through ManageSieve. 
+	+ Incorporated the sieve_duplicate plugin into main Pigeonhole tree as a
+	  normal extension (vnd.dovecot.duplicate). This Dovecot-specific extension
+	  adds the ability to check for duplicate deliveries based on message ID.
+	  Specification can be found in: doc/rfc/spec-bosch-sieve-duplicate.txt
+	+ Added support for specifying multiple sieve_before and sieve_after paths.
+	  This adds much more flexibility to the multiscript configuration. One
+	  application is to have user-specific Sieve scripts outside the user's
+	  normal control through ManageSieve.
+	+ Added a "session ID" string for managesieve connections, available in
+	  %{session} variable (analogous to Dovecot change).
+	- Fixed several small issues, including a few potential segfault bugs, based
+	  on static source code analysis.
+	- ManageSieve: changed use of EPROTO error to EIO in ManageSieve string stream
+	  implementation because it is apparently not known in BSD.
+	- Gave stamp.h.in (needed for autotools) some content to prevent it from
+	  disappearing in patch files.
+	- Fixed bug that caused a SunStudio CC compile failure (reported by Piotr
+	  Tarnowski).
+
 v0.3.0 16-02-2012 Stephan Bosch <stephan@rename-it.nl>
 
 	* Renamed sieve_global_path setting to sieve_default for clarity. Old name is
