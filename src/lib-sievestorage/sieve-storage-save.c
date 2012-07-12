@@ -318,19 +318,20 @@ struct sieve_script *sieve_storage_save_get_tempscript
 bool sieve_storage_save_will_activate
 (struct sieve_save_context *ctx)
 {
-	const char *scriptname;
-	int ret = 0;
+	bool result = FALSE;
 
-	T_BEGIN {
+	if ( ctx->scriptname != NULL ) T_BEGIN {
+		const char *scriptname;
+		int ret;
+
 		ret = sieve_storage_get_active_scriptfile(ctx->storage, &scriptname);
-	
 		if ( ret > 0 ) {
 		 	/* Is the requested script active? */
-			ret = ( strcmp(ctx->scriptname, scriptname) == 0 ? 1 : 0 );
+			result = ( strcmp(ctx->scriptname, scriptname) == 0 );
 		}
 	} T_END;
 
-	return ret;
+	return result;
 }
 
 int sieve_storage_save_commit(struct sieve_save_context **ctx)
