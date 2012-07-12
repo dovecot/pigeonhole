@@ -648,7 +648,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 	}
 
 	/* Allocate buffer space */
-	if (!i_stream_get_buffer_space(stream, size, NULL))
+	if (!i_stream_try_alloc(stream, size, NULL))
 		return -2;
 
 	/* Parse quoted string content */

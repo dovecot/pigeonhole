@@ -9,7 +9,6 @@
 #include "str-sanitize.h"
 #include "strescape.h"
 #include "safe-mkstemp.h"
-#include "close-keep-errno.h"
 #include "mkdir-parents.h"
 #include "abspath.h"
 #include "message-address.h"
@@ -88,7 +87,7 @@ static int seekable_fd_callback
 	if (unlink(str_c(path)) < 0) {
 		/* shouldn't happen.. */
 		i_error("unlink(%s) failed: %m", str_c(path));
-		close_keep_errno(fd);
+		i_close_fd(&fd);
 		return -1;
 	}
 

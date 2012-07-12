@@ -534,11 +534,9 @@ static inline char *_header_decode
 	/* hdr_data is already unfolded */
 
 	/* Decode MIME encoded-words. */
-	if ( message_header_decode_utf8
-		((const unsigned char *)hdr_data, hdr_data_len, str, FALSE))
-		return i_strdup(str_c(str));
-
-	return i_strndup(hdr_data, hdr_data_len);
+	message_header_decode_utf8
+		((const unsigned char *)hdr_data, hdr_data_len, str, FALSE);
+	return i_strdup(str_c(str));
 }
 
 static int edit_mail_headers_parse
