@@ -620,7 +620,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 	struct quoted_string_istream *qsstream =
 		(struct quoted_string_istream *)stream;
 	const unsigned char *data;
-	size_t i, dest, size;
+	size_t i, dest, size, avail;
 	ssize_t ret = 0;
 	bool slash;
 
@@ -648,7 +648,7 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 	}
 
 	/* Allocate buffer space */
-	if (!i_stream_try_alloc(stream, size, NULL))
+	if (!i_stream_try_alloc(stream, size, &avail))
 		return -2;
 
 	/* Parse quoted string content */
