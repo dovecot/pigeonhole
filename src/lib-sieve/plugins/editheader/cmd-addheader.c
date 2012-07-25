@@ -304,7 +304,6 @@ static int cmd_addheader_operation_execute
 		str_sanitize(str_c(field_name), 80), str_sanitize(str_c(value), 80));
 
 	edmail = sieve_message_edit(renv->msgctx);
-	edit_mail_header_add(edmail, str_c(field_name), str_c(value), last);
-
+	edit_mail_header_add(edmail, rfc2822_header_field_name_sanitize(str_c(field_name)), str_c(value), last);
 	return SIEVE_EXEC_OK;
 }
