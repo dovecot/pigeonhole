@@ -35,7 +35,7 @@ ARRAY_DEFINE(_testsuite_log_errors, struct _testsuite_log_message);
 ARRAY_DEFINE(_testsuite_log_warnings, struct _testsuite_log_message);
 ARRAY_DEFINE(_testsuite_log_messages, struct _testsuite_log_message);
 
-static void _testsuite_log_verror
+static void ATTR_FORMAT(4, 0) _testsuite_log_verror
 (struct sieve_error_handler *ehandler ATTR_UNUSED,
 	unsigned int flags ATTR_UNUSED, const char *location, const char *fmt,
 	va_list args)
@@ -61,7 +61,7 @@ static void _testsuite_log_verror
 	array_append(&_testsuite_log_errors, &msg, 1);	
 }
 
-static void _testsuite_log_main_verror
+static void ATTR_FORMAT(4, 0) _testsuite_log_main_verror
 (struct sieve_error_handler *ehandler ATTR_UNUSED,
 	unsigned int flags ATTR_UNUSED, const char *location, const char *fmt,
 	va_list args)
@@ -74,7 +74,7 @@ static void _testsuite_log_main_verror
 			"%s: error: %s\n", location, t_strdup_vprintf(fmt, args));
 }
 
-static void _testsuite_log_vwarning
+static void ATTR_FORMAT(4, 0) _testsuite_log_vwarning
 (struct sieve_error_handler *ehandler ATTR_UNUSED,
 	unsigned int flags ATTR_UNUSED, const char *location, const char *fmt,
 	va_list args)
@@ -100,7 +100,7 @@ static void _testsuite_log_vwarning
 	array_append(&_testsuite_log_warnings, &msg, 1);
 }
 
-static void _testsuite_log_vinfo
+static void ATTR_FORMAT(4, 0) _testsuite_log_vinfo
 (struct sieve_error_handler *ehandler ATTR_UNUSED,
 	unsigned int flags ATTR_UNUSED, const char *location, const char *fmt,
 	va_list args)

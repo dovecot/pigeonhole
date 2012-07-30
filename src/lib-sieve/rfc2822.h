@@ -33,7 +33,7 @@ unsigned int rfc2822_header_field_append
 
 int rfc2822_header_field_write
 	(FILE *f, const char *name, const char *body);
-	
+
 int rfc2822_header_field_printf
 	(FILE *f, const char *name, const char *body_fmt, ...) ATTR_FORMAT(3, 4);
 

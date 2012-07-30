@@ -83,7 +83,7 @@ void _sieve_runtime_trace_operand_error
  * Trace info
  */
 
-static inline void _sieve_runtime_trace_vprintf
+static inline void ATTR_FORMAT(4, 0) _sieve_runtime_trace_vprintf
 (const struct sieve_runtime_env *renv, sieve_size_t address,
 	unsigned int cmd_line, const char *fmt, va_list args)
 {	
@@ -94,7 +94,7 @@ static inline void _sieve_runtime_trace_vprintf
 	_trace_line_print(trline, renv);
 }
 
-static inline void _sieve_runtime_trace_printf
+static inline void ATTR_FORMAT(4, 5) _sieve_runtime_trace_printf
 (const struct sieve_runtime_env *renv, sieve_size_t address,
 	unsigned int cmd_line, const char *fmt, ...)
 {
@@ -105,7 +105,7 @@ static inline void _sieve_runtime_trace_printf
 	va_end(args);
 }
 
-void _sieve_runtime_trace
+void ATTR_FORMAT(2, 0) _sieve_runtime_trace
 (const struct sieve_runtime_env *renv, const char *fmt, va_list args)
 {	
 	_sieve_runtime_trace_vprintf

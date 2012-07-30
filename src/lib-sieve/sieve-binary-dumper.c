@@ -222,10 +222,11 @@ void sieve_binary_dumper_hexdump
 		size_t offset;
 
 		data = (const char *) buffer_get_data(blockbuf, &data_size);
-		
+
+		// FIXME: calculate offset more nicely.
 		sieve_binary_dump_sectionf
-			(denv, "Block %d (%"PRIuSIZE_T" bytes, file offset %08llx)", i, 
-				data_size, sblock->offset + 8 /* header size (yuck) */);
+			(denv, "Block %d (%"PRIuSIZE_T" bytes, file offset %08llx)", i,
+				data_size, (unsigned long long int) sblock->offset + 8);
 
 		line = t_str_new(128);
 		offset = 0;
