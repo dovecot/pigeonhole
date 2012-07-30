@@ -38,8 +38,8 @@ static inline void rfc2822_header_write
 }
 
 void rfc2822_header_printf
-	(string_t *header, const char *name, const char *fmt, ...);
+	(string_t *header, const char *name, const char *fmt, ...) ATTR_FORMAT(3, 4);
 void rfc2822_header_utf8_printf
-	(string_t *header, const char *name, const char *fmt, ...);
+	(string_t *header, const char *name, const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 #endif /* __RFC2822_H */

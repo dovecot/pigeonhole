@@ -67,7 +67,8 @@ struct sieve_result_print_env {
 };
 
 void sieve_result_vprintf
-	(const struct sieve_result_print_env *penv, const char *fmt, va_list args);
+	(const struct sieve_result_print_env *penv, const char *fmt, va_list args)
+		ATTR_FORMAT(2, 0);
 void sieve_result_printf
 	(const struct sieve_result_print_env *penv, const char *fmt, ...)
 		ATTR_FORMAT(2, 3);

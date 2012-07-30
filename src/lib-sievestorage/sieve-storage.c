@@ -500,7 +500,7 @@ struct sieve_error_handler *sieve_storage_get_error_handler
 	return storage->ehandler;
 }
 
-static void sieve_storage_verror
+static void ATTR_FORMAT(4, 0) sieve_storage_verror
 (struct sieve_error_handler *ehandler, unsigned int flags ATTR_UNUSED,
 	const char *location ATTR_UNUSED, const char *fmt, va_list args)
 {

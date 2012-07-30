@@ -25,9 +25,11 @@ pool_t sieve_binary_dumper_pool
  */
 
 void sieve_binary_dumpf
-	(const struct sieve_dumptime_env *denv, const char *fmt, ...);
+	(const struct sieve_dumptime_env *denv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 void sieve_binary_dump_sectionf
-	(const struct sieve_dumptime_env *denv, const char *fmt, ...);
+	(const struct sieve_dumptime_env *denv, const char *fmt, ...)
+		ATTR_FORMAT(2, 3);
 
 /*
  * Dumping the binary
