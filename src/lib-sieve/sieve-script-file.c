@@ -310,8 +310,8 @@ static bool sieve_file_script_equals
 	struct sieve_file_script *script = (struct sieve_file_script *)_script;
 	struct sieve_file_script *other = (struct sieve_file_script *)_other;
 
-	if ( script == NULL || other == NULL ) 
-		return -1;	
+	if ( script == NULL || other == NULL )
+		return FALSE;
 
 	return ( script->st.st_ino == other->st.st_ino );
 }

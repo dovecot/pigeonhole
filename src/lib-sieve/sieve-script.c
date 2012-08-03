@@ -414,18 +414,17 @@ bool sieve_script_equals
 	if ( script->script_class != other->script_class )
 		return FALSE;
 
-	if ( script->name != NULL && other->name != NULL &&
-		strcmp(script->name, other->name) == 0 )
-		return TRUE;
+	if ( script->v.equals == NULL ) {
+		i_assert ( script->location != NULL && other->location != NULL);
 
-	if ( script->v.equals == NULL )
-		return FALSE;
+		return ( strcmp(script->location, other->location) == 0 );
+	}
 
 	return script->v.equals(script, other);
 }
 
 unsigned int sieve_script_hash(const struct sieve_script *script)
-{	
+{
 	return str_hash(script->name);
 }
 
