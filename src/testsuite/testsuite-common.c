@@ -17,6 +17,7 @@
 #include "sieve-message.h"
 #include "sieve-commands.h"
 #include "sieve-extensions.h"
+#include "sieve-binary.h"
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -45,6 +46,7 @@
  */
 
 struct sieve_instance *testsuite_sieve_instance = NULL;
+char *testsuite_test_path = NULL;
 
 /* Test context */
 
@@ -100,6 +102,48 @@ bool testsuite_generator_context_initialize
 	sieve_generator_extension_set_context(gentr, this_ext, ctx);
 
 	return TRUE;
+}
+
+/*
+ * Interpreter context
+ */
+
+static void testsuite_interpreter_free
+(const struct sieve_extension *ext ATTR_UNUSED,
+        struct sieve_interpreter *interp ATTR_UNUSED, void *context)
+{
+	struct testsuite_interpreter_context *ctx =
+		(struct testsuite_interpreter_context *)context;
+
+	if ( ctx->compiled_script != NULL )
+		sieve_binary_unref(&ctx->compiled_script);
+}
+
+const struct sieve_interpreter_extension testsuite_interpreter_ext = {
+        &testsuite_extension,
+	NULL,
+        testsuite_interpreter_free,
+};
+
+bool testsuite_interpreter_context_initialize
+(struct sieve_interpreter *interp, const struct sieve_extension *this_ext)
+{
+	pool_t pool = sieve_interpreter_pool(interp);
+	struct testsuite_interpreter_context *ctx =
+		p_new(pool, struct testsuite_interpreter_context, 1);
+
+	sieve_interpreter_extension_register
+		(interp, this_ext, &testsuite_interpreter_ext, ctx);
+	return TRUE;
+}
+
+struct testsuite_interpreter_context *testsuite_interpreter_context_get
+(struct sieve_interpreter *interp, const struct sieve_extension *this_ext)
+{
+	struct testsuite_interpreter_context *ctx =
+		sieve_interpreter_extension_get_context(interp, this_ext);
+
+	return ctx;
 }
 
 /*
@@ -234,28 +278,34 @@ const char *testsuite_tmp_dir_get(void)
  * Main testsuite init/deinit
  */
 
-void testsuite_init(struct sieve_instance *svinst, bool log_stdout)
+void testsuite_init
+(struct sieve_instance *svinst, const char *test_path, bool log_stdout)
 {
 	testsuite_sieve_instance = svinst;
 
 	testsuite_test_context_init();
 	testsuite_log_init(log_stdout);
 	testsuite_tmp_dir_init();
-	
+
 	testsuite_script_init();
 	testsuite_binary_init();
 	testsuite_smtp_init();
 
 	testsuite_ext = sieve_extension_register
 		(svinst, &testsuite_extension, TRUE);
+
+
+	testsuite_test_path = i_strdup(test_path);
 }
 
 void testsuite_deinit(void)
 {
+	i_free(testsuite_test_path);
+
 	testsuite_smtp_deinit();
 	testsuite_binary_deinit();
 	testsuite_script_deinit();
-	
+
 	testsuite_tmp_dir_deinit();
 	testsuite_log_deinit();
 	testsuite_test_context_deinit();

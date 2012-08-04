@@ -45,6 +45,7 @@
 #include "sieve-result.h"
 
 #include "testsuite-common.h"
+#include "testsuite-variables.h"
 #include "testsuite-arguments.h"
 
 /* 
@@ -76,16 +77,17 @@ const struct sieve_operation_def *testsuite_operations[] = {
 	&test_binary_save_operation
 };
 
-/* 
- * Operands 
+/*
+ * Operands
  */
 
-const struct sieve_operand_def *testsuite_operands[] = { 
+const struct sieve_operand_def *testsuite_operands[] = {
 	&testsuite_object_operand,
-	&testsuite_substitution_operand
+	&testsuite_substitution_operand,
+	&testsuite_namespace_operand
 };
-    
-/* 
+
+/*
  * Extension
  */
 
@@ -95,6 +97,9 @@ static bool ext_testsuite_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 static bool ext_testsuite_generator_load
 	(const struct sieve_extension *ext, const struct sieve_codegen_env *cgenv);
+static bool ext_testsuite_interpreter_load
+	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
+		sieve_size_t *address);
 static bool ext_testsuite_binary_load
 	(const struct sieve_extension *ext, struct sieve_binary *sbin);
 
@@ -105,7 +110,7 @@ const struct sieve_extension_def testsuite_extension = {
 	NULL, NULL,
 	ext_testsuite_validator_load,
 	ext_testsuite_generator_load,
-	NULL,
+	ext_testsuite_interpreter_load,
 	ext_testsuite_binary_load, 
 	NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(testsuite_operations),
@@ -142,6 +147,8 @@ static bool ext_testsuite_validator_load
 /*	sieve_validator_argument_override(valdtr, SAT_VAR_STRING, ext,
 		&testsuite_string_argument);*/
 
+	testsuite_variables_init(ext, valdtr);
+
 	return testsuite_validator_context_initialize(valdtr);
 }
 
@@ -151,9 +158,15 @@ static bool ext_testsuite_generator_load
 	return testsuite_generator_context_initialize(cgenv->gentr, ext);
 }
 
+static bool ext_testsuite_interpreter_load
+(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
+	sieve_size_t *address ATTR_UNUSED)
+{
+	return testsuite_interpreter_context_initialize(renv->interp, ext);
+}
+
 static bool ext_testsuite_binary_load
-(const struct sieve_extension *ext ATTR_UNUSED, 
-	struct sieve_binary *sbin ATTR_UNUSED)
+(const struct sieve_extension *ext ATTR_UNUSED, struct sieve_binary *sbin ATTR_UNUSED)
 {
 	return TRUE;
 }

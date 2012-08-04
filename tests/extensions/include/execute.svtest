@@ -43,27 +43,26 @@ test "Actions Fileinto" {
 	}	
 }
 
-test "Namespace" {
-	set "global.a" "none";
-	include :personal "namespace";
+test "Namespace - file" {
+        if not test_script_compile "execute/namespace.sieve" {
+                test_fail "failed to compile sub-test";
+        }
 
-	if string "${global.a}" "none" {
-		test_fail "global script not executed";
-	}
-
-	if not string "${global.a}" "personal" {
-		test_fail "executed global instead of personal script: ${global.a}";
-	}
-
-	set "global.a" "none";
-	include :global "namespace";
-
-	if string "{global.a}" "none" {
-		test_fail "global script not executed";
-	}
-
-	if not string "${global.a}" "global" {
-		test_fail "executed personal instead of global script: ${global.a}";
-	}
+        if not test_script_run {
+                test_fail "failed to execute sub-test";
+        }
 }
 
+test "Namespace - dict" {
+	test_config_set "sieve_dir" "dict:file:${tst.path}/included/namespace.dict";
+	test_config_set "sieve_global_dir" "dict:file:${tst.path}/included-global/namespace.dict";
+	test_config_reload :extension "include";
+
+        if not test_script_compile "execute/namespace.sieve" {
+                test_fail "failed to compile sub-test";
+        }
+
+        if not test_script_run {
+                test_fail "failed to execute sub-test";
+        }
+}
