@@ -103,12 +103,9 @@ bool testsuite_varnamespace_generate
 {
 	const struct sieve_extension *this_ext = SIEVE_OBJECT_EXTENSION(nspc);
 	const char *variable = (const char *) var_data;
-	struct ext_testsuite_context *ext_data;
 
 	if ( this_ext == NULL )
 		return FALSE;
-
-	ext_data = (struct ext_testsuite_context *) this_ext->context;
 
 	sieve_variables_opr_namespace_variable_emit
 		(cgenv->sblock, testsuite_ext_variables, this_ext, &testsuite_namespace);
