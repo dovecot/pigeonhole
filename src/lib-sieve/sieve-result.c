@@ -588,7 +588,7 @@ static int _sieve_result_add_action
 	raction->action.location = p_strdup(result->pool, action.location);
 	raction->keep = keep;
 
-	if ( raction->prev == NULL ) {
+	if ( raction->prev == NULL && raction != result->first_action ) {
 		/* Add */
 		if ( result->first_action == NULL ) {
 			result->first_action = raction;
