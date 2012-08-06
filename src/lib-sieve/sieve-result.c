@@ -554,17 +554,19 @@ static int _sieve_result_add_action
 	}
 
 	/* Check policy limit on total number of actions */
-	if ( svinst->max_actions > 0 && result->action_count >= svinst->max_actions ) 
+	if ( svinst->max_actions > 0 && result->action_count >= svinst->max_actions )
 		{
-		sieve_runtime_error(renv, action.location, 
-			"total number of actions exceeds policy limit");
+		sieve_runtime_error(renv, action.location,
+			"total number of actions exceeds policy limit (%u > %u)",
+			result->action_count+1, svinst->max_actions);
 		return -1;
 	}
 
 	/* Check policy limit on number of this class of actions */
 	if ( instance_limit > 0 && instance_count >= instance_limit ) {
-		sieve_runtime_error(renv, action.location, 
-			"number of %s actions exceeds policy limit", act_def->name);
+		sieve_runtime_error(renv, action.location,
+			"number of %s actions exceeds policy limit (%u > %u)",
+			act_def->name, instance_count+1, instance_limit);
 		return -1;
 	}
 
