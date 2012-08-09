@@ -2,6 +2,7 @@ noinst_PROGRAMS = testsuite
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/lib-sieve \
+	-I$(top_srcdir)/src/lib-sieve/plugins/variables \
 	-I$(top_srcdir)/src/lib-sieve-tool \
 	$(LIBDOVECOT_INCLUDE) \
 	$(LIBDOVECOT_SERVICE_INCLUDE)
@@ -38,6 +39,7 @@ testsuite_SOURCES = \
 	testsuite-settings.c \
 	testsuite-objects.c \
 	testsuite-substitutions.c \
+	testsuite-variables.c \
 	testsuite-arguments.c \
 	testsuite-message.c \
 	testsuite-log.c \
@@ -56,6 +58,7 @@ noinst_HEADERS = \
 	testsuite-settings.h \
 	testsuite-objects.h \
 	testsuite-substitutions.h \
+	testsuite-variables.h \
 	testsuite-arguments.h \
 	testsuite-message.h \
 	testsuite-log.h \

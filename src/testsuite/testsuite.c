@@ -155,7 +155,7 @@ int main(int argc, char **argv)
 
 	/* Finish testsuite initialization */
 	svinst = sieve_tool_init_finish(sieve_tool, FALSE);	
-	testsuite_init(svinst, log_stdout);
+	testsuite_init(svinst, sieve_dir, log_stdout);
 
 	printf("Test case: %s:\n\n", scriptfile);
 

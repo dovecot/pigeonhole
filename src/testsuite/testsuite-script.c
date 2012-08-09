@@ -21,20 +21,14 @@
 
 /*
  * Tested script environment
- */ 
-
-struct sieve_binary *_testsuite_compiled_script;
+ */
 
 void testsuite_script_init(void)
 {
-	_testsuite_compiled_script = NULL;
 }
 
 void testsuite_script_deinit(void)
 {
-	if ( _testsuite_compiled_script != NULL ) {
-		sieve_binary_unref(&_testsuite_compiled_script);
-	}
 }
 
 static struct sieve_binary *_testsuite_script_compile
@@ -62,30 +56,49 @@ static struct sieve_binary *_testsuite_script_compile
 bool testsuite_script_compile
 (const struct sieve_runtime_env *renv, const char *script)
 {
+	struct testsuite_interpreter_context *ictx =
+		testsuite_interpreter_context_get(renv->interp, testsuite_ext);
 	struct sieve_binary *sbin;
 
+	i_assert(ictx != NULL);
 	testsuite_log_clear_messages();
 
 	if ( (sbin=_testsuite_script_compile(renv, script)) == NULL )
 		return FALSE;
 
-	if ( _testsuite_compiled_script != NULL ) {
-		sieve_binary_unref(&_testsuite_compiled_script);
+	if ( ictx->compiled_script != NULL ) {
+		sieve_binary_unref(&ictx->compiled_script);
 	}
 
-	_testsuite_compiled_script = sbin;
-
+	ictx->compiled_script = sbin;
 	return TRUE;
+}
+
+bool testsuite_script_is_subtest(const struct sieve_runtime_env *renv)
+{
+	struct testsuite_interpreter_context *ictx =
+		testsuite_interpreter_context_get(renv->interp, testsuite_ext);
+
+	i_assert(ictx != NULL);
+	if ( ictx->compiled_script == NULL )
+		return FALSE;
+
+	return ( sieve_binary_extension_get_index
+		(ictx->compiled_script, testsuite_ext) >= 0 );
 }
 
 bool testsuite_script_run(const struct sieve_runtime_env *renv)
 {
+	struct testsuite_interpreter_context *ictx =
+		testsuite_interpreter_context_get(renv->interp, testsuite_ext);
 	struct sieve_script_env scriptenv;
 	struct sieve_result *result;
 	struct sieve_interpreter *interp;
 	int ret;
 
-	if ( _testsuite_compiled_script == NULL ) {
+	i_assert(ictx != NULL);
+
+	if ( ictx->compiled_script == NULL ) {
 		sieve_runtime_error(renv, NULL,
 			"testsuite: trying to run script, but no script compiled yet");
 		return FALSE;
@@ -104,35 +117,46 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	scriptenv.user = renv->scriptenv->user;
 	scriptenv.trace_stream = renv->scriptenv->trace_stream;
 	scriptenv.trace_config = renv->scriptenv->trace_config;
-	
+
 	result = testsuite_result_get();
 
 	/* Execute the script */
-	interp=sieve_interpreter_create(_testsuite_compiled_script, renv->msgdata, 
+	interp=sieve_interpreter_create(ictx->compiled_script, renv->msgdata,
 		&scriptenv, testsuite_log_ehandler, 0);
-	
+
 	if ( interp == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
-		
+
 	ret = sieve_interpreter_run(interp, result);
 
 	sieve_interpreter_free(&interp);
 
-	return ( ret > 0 );
+	return ( ret > 0 || sieve_binary_extension_get_index
+                (ictx->compiled_script, testsuite_ext) >= 0 );
 }
 
-struct sieve_binary *testsuite_script_get_binary(void)
+struct sieve_binary *testsuite_script_get_binary(const struct sieve_runtime_env *renv)
 {
-	return _testsuite_compiled_script;
+	struct testsuite_interpreter_context *ictx =
+		testsuite_interpreter_context_get(renv->interp, testsuite_ext);
+
+	i_assert(ictx != NULL);
+	return ictx->compiled_script;
 }
 
-void testsuite_script_set_binary(struct sieve_binary *sbin)
+void testsuite_script_set_binary
+(const struct sieve_runtime_env *renv, struct sieve_binary *sbin)
 {
-	if ( _testsuite_compiled_script != NULL ) {
-		sieve_binary_unref(&_testsuite_compiled_script);
+	struct testsuite_interpreter_context *ictx =
+		testsuite_interpreter_context_get(renv->interp, testsuite_ext);
+
+	i_assert(ictx != NULL);
+
+	if ( ictx->compiled_script != NULL ) {
+		sieve_binary_unref(&ictx->compiled_script);
 	}
 
-	_testsuite_compiled_script = sbin;
+	ictx->compiled_script = sbin;
 	sieve_binary_ref(sbin);
 }
 
@@ -179,7 +203,6 @@ bool testsuite_script_multiscript
 		bool final = ( i == count - 1 );
 
 		/* Open */
-	
 		if ( (sbin=_testsuite_script_compile(renv, script)) == NULL ) {
 			result = FALSE;
 			break;

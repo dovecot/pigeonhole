@@ -13,7 +13,7 @@
 <?rfc subcompact="no" ?>
 <?rfc private="Pigeonhole Project" ?>
 
-<rfc category="info" docName="spec-bosch-sieve-pipe">
+<rfc category="info" docName="spec-bosch-sieve-duplicate">
 <!-- ***** FRONT MATTER ***** -->
 
 <front>

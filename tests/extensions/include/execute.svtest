@@ -1,4 +1,6 @@
 require "vnd.dovecot.testsuite";
+require "include";
+require "variables";
 
 test_set "message" text:
 From: idiot@example.com
@@ -39,4 +41,28 @@ test "Actions Fileinto" {
 	if not header "subject" "Frop!" {
 		test_fail "fileinto \"bbbb\" not executed.";
 	}	
+}
+
+test "Namespace - file" {
+        if not test_script_compile "execute/namespace.sieve" {
+                test_fail "failed to compile sub-test";
+        }
+
+        if not test_script_run {
+                test_fail "failed to execute sub-test";
+        }
+}
+
+test "Namespace - dict" {
+	test_config_set "sieve_dir" "dict:file:${tst.path}/included/namespace.dict";
+	test_config_set "sieve_global_dir" "dict:file:${tst.path}/included-global/namespace.dict";
+	test_config_reload :extension "include";
+
+        if not test_script_compile "execute/namespace.sieve" {
+                test_fail "failed to compile sub-test";
+        }
+
+        if not test_script_run {
+                test_fail "failed to execute sub-test";
+        }
 }

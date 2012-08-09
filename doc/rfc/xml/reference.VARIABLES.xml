@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference anchor='VARIABLES'>
+
+<front>
+<title>Sieve Email Filtering: Variables Extension</title>
+<author initials='K.' surname='Homme' fullname='K. Homme'>
+<organization /></author>
+<date year='2008' month='January' />
+<abstract>
+<t>In advanced mail filtering rule sets, it is useful to keep state or configuration details across rules.  This document updates the Sieve filtering language (RFC 5228) with an extension to support variables.  The extension changes the interpretation of strings, adds an action to store data in variables, and supplies a new test so that the value of a string can be examined. [STANDARDS-TRACK]</t></abstract></front>
+
+<seriesInfo name='RFC' value='5229' />
+<format type='TXT' octets='20023' target='http://www.rfc-editor.org/rfc/rfc5229.txt' />
+</reference>

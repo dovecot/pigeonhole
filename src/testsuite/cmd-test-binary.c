@@ -176,7 +176,7 @@ static int cmd_test_binary_operation_execute
 		}
 
 		if ( sbin != NULL ) {
-			testsuite_script_set_binary(sbin);
+			testsuite_script_set_binary(renv, sbin);
 
 			sieve_binary_unref(&sbin);
 		} else {
@@ -186,7 +186,7 @@ static int cmd_test_binary_operation_execute
 		}
 
 	} else if ( sieve_operation_is(oprtn, test_binary_save_operation) ) {
-		struct sieve_binary *sbin = testsuite_script_get_binary();
+		struct sieve_binary *sbin = testsuite_script_get_binary(renv);
 
 		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
 			sieve_runtime_trace(renv, 0, "testsuite: test_binary_save command");

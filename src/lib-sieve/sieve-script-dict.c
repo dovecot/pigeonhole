@@ -17,7 +17,8 @@ struct sieve_dict_script {
 	struct sieve_script script;
 
 	struct dict *dict;
-	
+	const char *dict_uri;
+
 	pool_t data_pool;
 	const char *data_id;
 	const char *data;
@@ -103,8 +104,9 @@ static int sieve_dict_script_create
 			"user=%s, uri=%s, script=%s", username, data, name);
 	}
 
+	script->dict_uri = p_strdup(_script->pool, data);
 	script->dict = dict_init
-		(data, DICT_DATA_TYPE_STRING, username, svinst->base_dir);
+		(script->dict_uri, DICT_DATA_TYPE_STRING, username, svinst->base_dir);
 	if ( script->dict == NULL ) {
 		sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 			"sieve dict backend: failed to initialize dict with data `%s' "
@@ -265,6 +267,24 @@ static int sieve_dict_script_binary_save
 	return sieve_binary_save(sbin, script->binpath, update, 0600, error_r);
 }
 
+static bool sieve_dict_script_equals
+(const struct sieve_script *_script, const struct sieve_script *_other)
+{
+        struct sieve_dict_script *script = (struct sieve_dict_script *)_script;
+        struct sieve_dict_script *other = (struct sieve_dict_script *)_other;
+
+        if ( script == NULL || other == NULL )
+                return FALSE;
+
+        if ( strcmp(script->dict_uri, other->dict_uri) != 0 )
+		return FALSE;
+
+	i_assert( _script->name != NULL && _other->name != NULL );
+
+        return ( strcmp(_script->name, _other->name) == 0 );
+}
+
+
 const struct sieve_script sieve_dict_script = {
 	.driver_name = SIEVE_DICT_SCRIPT_DRIVER_NAME,
 	.v = {
@@ -273,13 +293,14 @@ const struct sieve_script sieve_dict_script = {
 		sieve_dict_script_destroy,
 
 		sieve_dict_script_open,
-		sieve_dict_script_close,	
+		sieve_dict_script_close,
 
 		sieve_dict_script_binary_read_metadata,
 		sieve_dict_script_binary_write_metadata,
 		sieve_dict_script_binary_load,
 		sieve_dict_script_binary_save,
 
-		NULL, NULL
+		NULL,
+		sieve_dict_script_equals
 	}
 };

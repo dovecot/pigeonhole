@@ -20,6 +20,8 @@ extern const struct sieve_extension *testsuite_ext;
 
 extern const struct sieve_script_env *testsuite_scriptenv;
 
+extern char *testsuite_test_path;
+
 
 /* 
  * Validator context 
@@ -43,6 +45,19 @@ struct testsuite_generator_context {
 
 bool testsuite_generator_context_initialize
 	(struct sieve_generator *gentr, const struct sieve_extension *this_ext);
+
+/*
+ * Interpreter context
+ */
+
+struct testsuite_interpreter_context {
+	struct sieve_binary *compiled_script;
+};
+
+bool testsuite_interpreter_context_initialize
+	(struct sieve_interpreter *interp, const struct sieve_extension *this_ext);
+struct testsuite_interpreter_context *testsuite_interpreter_context_get
+	(struct sieve_interpreter *interp, const struct sieve_extension *this_ext);
 
 /*
  * Commands
@@ -136,7 +151,8 @@ extern const struct sieve_operand_def testsuite_substitution_operand;
 
 enum testsuite_operand_code {
 	TESTSUITE_OPERAND_OBJECT,
-	TESTSUITE_OPERAND_SUBSTITUTION
+	TESTSUITE_OPERAND_SUBSTITUTION,
+	TESTSUITE_OPERAND_NAMESPACE
 };
 
 /* 
@@ -163,7 +179,8 @@ const char *testsuite_tmp_dir_get(void);
  * Testsuite init/deinit 
  */
 
-void testsuite_init(struct sieve_instance *svinst, bool log_stdout);
+void testsuite_init
+	(struct sieve_instance *svinst, const char *test_path, bool log_stdout);
 void testsuite_deinit(void);
 
 #endif /* __TESTSUITE_COMMON_H */
