@@ -14,6 +14,7 @@
 #include "message-header-decode.h"
 #include "mail-user.h"
 #include "mail-storage-private.h"
+#include "index-mail.h"
 #include "raw-storage.h"
 
 #include "rfc2822.h"
@@ -1440,6 +1441,7 @@ static struct mail_vfuncs edit_mail_vfuncs = {
 	edit_mail_get_headers,
 	edit_mail_get_header_stream,
 	edit_mail_get_stream,
+	index_mail_get_binary_stream,
 	edit_mail_get_special,
 	edit_mail_get_real_mail,
 	edit_mail_update_flags,
