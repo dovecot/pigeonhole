@@ -30,19 +30,19 @@ bool cmd_capability(struct client_command_context *cmd)
 		max_redirects = sieve_max_redirects(client->svinst);
 
 		/* Default capabilities */
-  		client_send_line(client, t_strconcat("\"IMPLEMENTATION\" \"", 
+  		client_send_line(client, t_strconcat("\"IMPLEMENTATION\" \"",
 			client->set->managesieve_implementation_string, "\"", NULL));
-		client_send_line(client, t_strconcat("\"SIEVE\" \"", 
+		client_send_line(client, t_strconcat("\"SIEVE\" \"",
 			( sievecap == NULL ? "" : sievecap ), "\"", NULL));
 
 		/* Maximum number of redirects (if limited) */
 		if ( max_redirects > 0 )
-			client_send_line(client, 
+			client_send_line(client,
 				t_strdup_printf("\"MAXREDIRECTS\" \"%u\"", max_redirects));
 
 		/* Notify methods */
 		if ( notifycap != NULL ) {
-			client_send_line(client, t_strconcat("\"NOTIFY\" \"", 
+			client_send_line(client, t_strconcat("\"NOTIFY\" \"",
 				notifycap, "\"", NULL));
 		}
 

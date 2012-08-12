@@ -18,7 +18,7 @@ struct managesieve_client {
 	const struct managesieve_login_settings *set;
 	struct managesieve_parser *parser;
 
-	unsigned int proxy_state;	
+	unsigned int proxy_state;
 
 	const char *cmd_name;
 	struct managesieve_command *cmd;

@@ -12,21 +12,21 @@
 #define IS_QUOTED_SPECIAL(c) \
 	((c) == '"' || (c) == '\\')
 
-/* 
+/*
  * ATOM-SPECIALS      = "(" / ")" / "{" / SP / CTL / QUOTED-SPECIALS
  */
 #define IS_ATOM_SPECIAL(c) \
 	((c) == '(' || (c) == ')' || (c) == '{' || \
 	 (c) <= 32 || (c) == 0x7f || \
-	 IS_QUOTED_SPECIAL(c)) 
+	 IS_QUOTED_SPECIAL(c))
 
-/* 
+/*
  * CHAR               = %x01-7F
  */
 #define IS_CHAR(c) \
 	(((c) & 0x80) == 0)
 
-/* 
+/*
  * TEXT-CHAR          = %x01-09 / %x0B-0C / %x0E-7F
  *                       ;; any CHAR except CR and LF
  */

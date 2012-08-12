@@ -20,15 +20,15 @@ test "Basic match values 1" {
 
 		if not string :is "${1}" "antlr" {
 			test_fail "first match value is not correct";
-		}	
+		}
 
 		if not string :is "${2}" "interest" {
 			test_fail "second match value is not correct";
-		}	
+		}
 
 		if not string :is "${3}" "-bounces" {
 			test_fail "third match value is not correct";
-		}	
+		}
 
 		if string :is "${4}" "-bounces" {
 			test_fail "fourth match contains third value";
@@ -47,15 +47,15 @@ test "Basic match values 2" {
 
 		if not string :is "${2}" "antlr" {
 			test_fail "second match value is not correct: ${2}";
-		}	
+		}
 
 		if not string :is "${3}" "interest" {
 			test_fail "third match value is not correct: ${3}";
-		}	
+		}
 
 		if not string :is "${4}" "-bounces" {
 			test_fail "fourth match value is not correct: ${4}";
-		}	
+		}
 
 		if string :is "${5}" "-bounces" {
 			test_fail "fifth match contains fourth value: ${5}";

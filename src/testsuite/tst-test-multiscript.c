@@ -19,7 +19,7 @@
 /*
  * Test_multiscript command
  *
- * Syntax:   
+ * Syntax:
  *   test_multiscript <scripts: string-list>
  */
 
@@ -28,19 +28,19 @@ static bool tst_test_multiscript_validate
 static bool tst_test_multiscript_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *tst);
 
-const struct sieve_command_def tst_test_multiscript = { 
-	"test_multiscript", 
-	SCT_TEST, 
+const struct sieve_command_def tst_test_multiscript = {
+	"test_multiscript",
+	SCT_TEST,
 	1, 0, FALSE, FALSE,
 	NULL, NULL,
 	tst_test_multiscript_validate,
-	NULL, 
-	tst_test_multiscript_generate, 
-	NULL 
+	NULL,
+	tst_test_multiscript_generate,
+	NULL
 };
 
-/* 
- * Operation 
+/*
+ * Operation
  */
 
 static bool tst_test_multiscript_operation_dump
@@ -48,33 +48,33 @@ static bool tst_test_multiscript_operation_dump
 static int tst_test_multiscript_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def test_multiscript_operation = { 
+const struct sieve_operation_def test_multiscript_operation = {
 	"TEST_MULTISCRIPT",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_MULTISCRIPT,
-	tst_test_multiscript_operation_dump, 
-	tst_test_multiscript_operation_execute 
+	tst_test_multiscript_operation_dump,
+	tst_test_multiscript_operation_execute
 };
 
-/* 
- * Validation 
+/*
+ * Validation
  */
 
 static bool tst_test_multiscript_validate
-(struct sieve_validator *valdtr, struct sieve_command *tst) 
+(struct sieve_validator *valdtr, struct sieve_command *tst)
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
-	
+
 	if ( !sieve_validate_positional_argument
 		(valdtr, tst, arg, "scripts", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
-	
+
 	return sieve_validator_argument_activate(valdtr, tst, arg, FALSE);
 }
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool tst_test_multiscript_generate
@@ -86,17 +86,17 @@ static bool tst_test_multiscript_generate
 	return sieve_generate_arguments(cgenv, tst, NULL);
 }
 
-/* 
+/*
  * Code dump
  */
- 
+
 static bool tst_test_multiscript_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "TEST_MULTISCRIPT:");
 	sieve_code_descend(denv);
 
-	if ( !sieve_opr_stringlist_dump(denv, address, "scripts") ) 
+	if ( !sieve_opr_stringlist_dump(denv, address, "scripts") )
 		return FALSE;
 
 	return TRUE;
@@ -127,7 +127,7 @@ static int tst_test_multiscript_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, 
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
 		"testsuite: test_multiscript test");
 	sieve_runtime_trace_descend(renv);
 
@@ -141,7 +141,7 @@ static int tst_test_multiscript_operation_execute
 		array_append(&scriptfiles, &script, 1);
 	}
 
-	result = result && (ret >= 0) && 
+	result = result && (ret >= 0) &&
 		testsuite_script_multiscript(renv, &scriptfiles);
 
 	/* Set result */

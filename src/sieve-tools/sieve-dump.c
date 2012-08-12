@@ -37,7 +37,7 @@ static void print_help(void)
  * Tool implementation
  */
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 	struct sieve_instance *svinst;
 	struct sieve_binary *sbin;
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 	int c;
 
 	sieve_tool = sieve_tool_init("sieve-dump", &argc, &argv, "hP:x:", FALSE);
-		
+
 	outfile = NULL;
 
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
@@ -65,15 +65,15 @@ int main(int argc, char **argv)
 
 	if ( optind < argc ) {
 		binfile = argv[optind++];
-	} else { 
+	} else {
 		print_help();
 		i_fatal_status(EX_USAGE, "Missing <script-file> argument");
 	}
 
 	if ( optind < argc ) {
 		outfile = argv[optind++];
-	} 
-	
+	}
+
 	/* Finish tool initialization */
 	svinst = sieve_tool_init_finish(sieve_tool, FALSE);
 
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 	sbin = sieve_load(svinst, binfile, NULL);
 	if ( sbin != NULL ) {
 		sieve_tool_dump_binary_to(sbin, outfile == NULL ? "-" : outfile, hexdump);
-	
+
 		sieve_close(&sbin);
 	} else {
 		i_error("failed to load binary: %s", binfile);

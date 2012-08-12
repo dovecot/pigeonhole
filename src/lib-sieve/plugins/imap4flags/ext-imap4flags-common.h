@@ -12,9 +12,9 @@
 /*
  * Extension
  */
- 
+
 extern const struct sieve_extension_def imap4flags_extension;
-extern const struct sieve_interpreter_extension 
+extern const struct sieve_interpreter_extension
 	imap4flags_interpreter_extension;
 
 /*
@@ -32,7 +32,7 @@ extern const struct sieve_operand_def flags_side_effect_operand;
 /*
  * Operations
  */
- 
+
 enum ext_imap4flags_opcode {
 	ext_imap4flags_OPERATION_SETFLAG,
 	ext_imap4flags_OPERATION_ADDFLAG,
@@ -45,8 +45,8 @@ extern const struct sieve_operation_def addflag_operation;
 extern const struct sieve_operation_def removeflag_operation;
 extern const struct sieve_operation_def hasflag_operation;
 
-/* 
- * Commands 
+/*
+ * Commands
  */
 
 extern const struct sieve_command_def cmd_setflag;
@@ -64,14 +64,14 @@ bool ext_imap4flags_command_validate
 
 /*
  * Flags tagged argument
- */	
-	
+ */
+
 void ext_imap4flags_attach_flags_tag
 	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
 		const char *command, bool implicit);
 
-/* 
- * Flag management 
+/*
+ * Flag management
  */
 
 struct ext_imap4flags_iter {
@@ -82,7 +82,7 @@ struct ext_imap4flags_iter {
 
 void ext_imap4flags_iter_init
 	(struct ext_imap4flags_iter *iter, string_t *flags_list);
-	
+
 const char *ext_imap4flags_iter_get_flag
 	(struct ext_imap4flags_iter *iter);
 

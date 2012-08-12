@@ -28,12 +28,12 @@ test "References" {
 		test_fail "references header does not contain new id";
 	}
 
-	if anyof ( 
-		not header :contains "references" "1234@local.machine.example", 
+	if anyof (
+		not header :contains "references" "1234@local.machine.example",
 		not header :contains "references" "3456@example.net",
-		not header :contains "references" "435444@ttms.example.org", 
-		not header :contains "references" "4223@froop.example.net", 
-		not header :contains "references" "m345444444@message-id.exp" 
+		not header :contains "references" "435444@ttms.example.org",
+		not header :contains "references" "4223@froop.example.net",
+		not header :contains "references" "m345444444@message-id.exp"
 		) {
 		test_fail "references header does not contain all existing ids";
 	}

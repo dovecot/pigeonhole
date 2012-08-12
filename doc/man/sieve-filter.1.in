@@ -7,7 +7,7 @@ sieve\-filter \- Pigeonhole\(aqs Sieve mailbox filter tool
 \fBWARNING: \fRThis tool is still experimental. Read this manual carefully, and
 backup any important mail before using this tool. Also note that some of the
 features documented here are not actually implemented yet; this is clearly
-indicated where applicable. 
+indicated where applicable.
 .\"------------------------------------------------------------------------
 .SH SYNOPSIS
 .B sieve\-filter
@@ -21,7 +21,7 @@ The \fBsieve\-filter\fP command is part of the Pigeonhole Project
 (\fBpigeonhole\fR(7)), which adds Sieve (RFC 5228) support to the Dovecot
 secure IMAP and POP3 server (\fBdovecot\fR(1)).
 .PP
-The Sieve language was originally meant for filtering messages upon delivery. 
+The Sieve language was originally meant for filtering messages upon delivery.
 However, there are occasions when it is desirable to filter messages that are
 already stored in a mailbox, for instance when a bug in a Sieve script caused
 many messages to be delivered incorrectly. Using the sieve\-filter tool it is
@@ -30,14 +30,14 @@ possible to apply a Sieve script on all messages in a particular
 different mailbox, to change their content, and to change the assigned IMAP
 flags and keywords. Attempts to send messages to the outside world are ignored
 by default for obvious reasons, but, using the proper command line options, it
-is possible to capture and handle outgoing mail as well. 
+is possible to capture and handle outgoing mail as well.
 .PP
 If no options are specified, the sieve\-filter command runs in a simulation mode
 in which it only prints what would be performed, without actually doing
 anything. Use the \fB\-e\fP option to activate true script execution. Also, the
 \fIsource\-mailbox\fP is opened read\-only by default, meaning that it normally
 always remains unchanged. Use the \fB\-W\fP option to allow changes in the
-\fIsource\-mailbox\fP. 
+\fIsource\-mailbox\fP.
 .PP
 Even with the \fB\-W\fP option enabled, messages in the \fIsource\-mailbox\fP
 are only potentially modified or moved to a different folder. Messages are never
@@ -49,7 +49,7 @@ the Sieve interpreter using the \fIimap4flags\fP extension, provided that
 \fB\-W\fP is specified. If the message itself is modified by the Sieve
 interpreter (e.g. using the \fIeditheader\fP extension), a new message is stored
 and the old one is expunged. However, if \fB-W\fP is omitted, the original
-message is left untouched and the modifications are discarded. 
+message is left untouched and the modifications are discarded.
 
 .SS CAUTION
 Although this is a very useful tool, it can also be very destructive when used
@@ -84,7 +84,7 @@ Enable Sieve debugging.
 Turns on execution mode. By default, the sieve\-filter command runs in
 simulation mode in which it changes nothing, meaning that no mailbox is altered
 in any way and no actions are performed. It only prints what would be done.
-Using this option, the sieve\-filter command becomes active and performs the 
+Using this option, the sieve\-filter command becomes active and performs the
 requested actions.
 .TP
 .BI \-m\  default\-mailbox
@@ -99,7 +99,7 @@ Store outgoing e\-mail into the indicated \fIoutput\-mailbox\fP. By default,
 the sieve\-filter command ignores Sieve actions such as redirect, reject,
 vacation and notify, but using this option outgoing messages can be appended to
 the indicated mailbox. This option has no effect in simulation mode. Flags of
-redirected messages are not preserved. 
+redirected messages are not preserved.
 .TP
 .BI \-Q\  mail\-command\  \fB[not\ implemented\ yet]\fP
 Send outgoing e\-mail (e.g. as produced by redirect, reject and vacation)
@@ -123,7 +123,7 @@ Produce verbose output during filtering.
 .B \-W
 Enables write access to the \fIsource\-mailbox\fP. This allows (re)moving the
 messages from the \fIsource\-mailbox\fP, changing their contents, and changing
-the assigned IMAP flags and keywords. 
+the assigned IMAP flags and keywords.
 .TP
 .BI \-x\  extensions
 Set the available extensions. The parameter is a space\-separated list of the
@@ -135,7 +135,7 @@ are ignored and a warning is produced.
 
 For example \fB\-x\fP \(dq+imapflags \-enotify\(dq will enable the deprecated
 imapflags extension and disable the enotify extension. The rest of the active
-extensions depends on the \fIsieve_extensions\fP and 
+extensions depends on the \fIsieve_extensions\fP and
 \fIsieve_global_extensions\fP settings. By default, i.e.
 when \fIsieve_extensions\fP and \fIsieve_global_extensions\fP remain
 unconfigured, all supported extensions are available, except for deprecated
@@ -154,26 +154,26 @@ into a new binary.
 .TP
 .I source\-mailbox
 The name of the source mailbox containing the messages that the Sieve filter
-will act upon. This mailbox is not modified unless the \fB\-W\fP option is 
+will act upon. This mailbox is not modified unless the \fB\-W\fP option is
 specified.
-.TP 
+.TP
 .I discard\-action
 Specifies what is done with messages in the \fIsource\-mailbox\fP that where not
 kept or otherwise stored by the Sieve script; i.e. those messages that would
 normally be discarded if the Sieve script were executed at delivery.
 The \fIdiscard\-action\fP parameter accepts one of the following values:
 .RS 7
-.TP 
+.TP
 .BR keep\  (default)
-Keep discarded messages in source mailbox. 
-.TP 
+Keep discarded messages in source mailbox.
+.TP
 .BI move\  mailbox
 Move discarded messages to the indicated \fImailbox\fP. This is for instance
-useful to move messages to a Trash mailbox. 
-.TP 
+useful to move messages to a Trash mailbox.
+.TP
 .B delete
 Flag discarded messages as \\DELETED.
-.TP 
+.TP
 .B expunge
 Expunge discarded messages, meaning that these are removed irreversibly when the
 tool finishes filtering.
@@ -184,7 +184,7 @@ immutable and the specified \fIdiscard\-action\fP has no effect. This means that
 messages are at most \fIcopied\fP to a new location. In contrast, when the
 \fB\-W\fP is specified, messages that are successfully stored somewhere else by
 the Sieve script are \fBalways\fP expunged from the \fIsource\-mailbox\fP, with
-the effect that these are thus \fImoved\fP to the new location. This happens 
+the effect that these are thus \fImoved\fP to the new location. This happens
 irrespective of the specified \fIdiscard\-action\fP. Remember: only discarded
 messages are affected by the specified \fIdiscard\-action\fP.
 

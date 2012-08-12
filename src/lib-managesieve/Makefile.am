@@ -7,9 +7,9 @@ AM_CPPFLAGS = \
 libmanagesieve_a_SOURCES = \
 	managesieve-arg.c \
 	managesieve-quote.c \
-	managesieve-parser.c 
+	managesieve-parser.c
 
 noinst_HEADERS = \
 	managesieve-arg.h \
 	managesieve-quote.h \
-	managesieve-parser.h 
+	managesieve-parser.h

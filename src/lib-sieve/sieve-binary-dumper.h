@@ -20,8 +20,8 @@ void sieve_binary_dumper_free
 pool_t sieve_binary_dumper_pool
 	(struct sieve_binary_dumper *dumper);
 
-/* 
- * Formatted output 
+/*
+ * Formatted output
  */
 
 void sieve_binary_dumpf

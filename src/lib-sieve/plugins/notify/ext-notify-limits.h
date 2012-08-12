@@ -1,6 +1,6 @@
 /* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
- 
+
 #ifndef __EXT_NOTIFY_LIMITS_H
 #define __EXT_NOTIFY_LIMITS_H
 

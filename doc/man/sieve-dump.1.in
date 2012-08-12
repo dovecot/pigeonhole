@@ -54,7 +54,7 @@ are ignored and a warning is produced.
 
 For example \fB\-x\fP \(dq+imapflags \-enotify\(dq will enable the deprecated
 imapflags extension and disable the enotify extension. The rest of the active
-extensions depends on the \fIsieve_extensions\fP and 
+extensions depends on the \fIsieve_extensions\fP and
 \fIsieve_global_extensions\fP settings. By default, i.e.
 when \fIsieve_extensions\fP and \fIsieve_global_extensions\fP remain
 unconfigured, all supported extensions are available, except for deprecated

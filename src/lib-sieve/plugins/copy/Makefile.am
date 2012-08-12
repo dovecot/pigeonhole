@@ -8,7 +8,7 @@ libsieve_ext_copy_la_SOURCES = \
 	ext-copy.c
 
 public_headers = \
-	sieve-ext-copy.h 
+	sieve-ext-copy.h
 
 headers =
 

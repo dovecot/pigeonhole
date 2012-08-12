@@ -1,7 +1,7 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
- 
-/* Match-type ':is': 
+
+/* Match-type ':is':
  */
 
 #include "lib.h"
@@ -13,16 +13,16 @@
 #include <string.h>
 #include <stdio.h>
 
-/* 
- * Forward declarations 
+/*
+ * Forward declarations
  */
 
 static int mcht_is_match_key
-	(struct sieve_match_context *mctx, const char *val, size_t val_size, 
+	(struct sieve_match_context *mctx, const char *val, size_t val_size,
 		const char *key, size_t key_size);
 
-/* 
- * Match-type object 
+/*
+ * Match-type object
  */
 
 const struct sieve_match_type_def is_match_type = {
@@ -37,15 +37,15 @@ const struct sieve_match_type_def is_match_type = {
  */
 
 static int mcht_is_match_key
-(struct sieve_match_context *mctx ATTR_UNUSED, 
-	const char *val, size_t val_size, 
+(struct sieve_match_context *mctx ATTR_UNUSED,
+	const char *val, size_t val_size,
 	const char *key, size_t key_size)
 {
-	if ( val_size == 0 ) 
+	if ( val_size == 0 )
 		return ( key_size == 0 );
 
 	if ( mctx->comparator->def != NULL && mctx->comparator->def->compare != NULL )
-		return (mctx->comparator->def->compare(mctx->comparator, 
+		return (mctx->comparator->def->compare(mctx->comparator,
 			val, val_size, key, key_size) == 0);
 
 	return FALSE;

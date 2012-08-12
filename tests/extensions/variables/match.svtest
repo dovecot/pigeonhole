@@ -69,15 +69,15 @@ test "RFC - test short-circuit" {
 	}
 }
 
-# Test overwriting only on match 
+# Test overwriting only on match
 test "RFC - values overwrite" {
 	set "sentence1" "the cat jumps off the table";
 	set "sentence2" "the dog barks at the cat in the alley";
 
 	if not string :matches "${sentence1}" "the * jumps off the *" {
 		test_fail "failed to match first sentence";
-	} 
-	
+	}
+
 	if not string :is "${1}:${2}" "cat:table" {
 		test_fail "invalid match values";
 	}
@@ -102,14 +102,14 @@ test "RFC - values overwrite" {
 test "RFC - example" {
 	test_set "message" text:
 Subject: [acme-users] [fwd] version 1.0 is out
-List-Id: Dovecot Mailing List <dovecot@dovecot.example.net>     
+List-Id: Dovecot Mailing List <dovecot@dovecot.example.net>
 To: coyote@ACME.Example.COM
 Fom: stephan@example.org
 
 Test message.
 .
 ;
-	if header :matches "List-ID" "*<*@*" {	
+	if header :matches "List-ID" "*<*@*" {
 		if not string "INBOX.lists.${2}" "INBOX.lists.dovecot" {
 			test_fail "incorrect match value: INBOX.lists.${2}";
 		}
@@ -135,7 +135,7 @@ Test message.
 
 	# Imagine the header
 	# To: coyote@ACME.Example.COM
-	if address :matches ["To", "Cc"] ["coyote@**.com", 
+	if address :matches ["To", "Cc"] ["coyote@**.com",
 		"wile@**.com"] {
 		# ${0} is the matching address
 		# ${1} is always the empty string
@@ -147,7 +147,7 @@ Test message.
 			not string "${2}" "ACME.Example"
 		) {
 			test_fail "invalid match values: ${0}, ${1}, ${2}";
-		}      
+		}
 	} else {
 		# Control wouldn't reach this block if any match was
 		# successful, so no match variables are set at this
@@ -159,7 +159,7 @@ Test message.
 	if anyof (true, address :domain :matches "To" "*.com") {
 		# The second test is never evaluated, so there are
 		# still no match variables set.
-		
+
 		/* FIXME: not compliant */
 	}
 }
@@ -173,7 +173,7 @@ set "match1" "Test of general stupidity";
 test "Begin" {
 	if not string :matches "${match1}" "Test of *" {
 		test_fail "should have matched";
-	} 
+	}
 
 	if not string :is "${1}" "general stupidity" {
 		test_fail "match value incorrect";
@@ -203,7 +203,7 @@ set "match3" "ik ben een tukker met grote oren en een lelijke broek.";
 test "Multiple" {
 	if not string :matches "${match3}" "ik ben * met * en *." {
 		test_fail "should have matched";
-	} 
+	}
 
 	set "line" "Hij is ${1} met ${2} en ${3}!";
 
@@ -218,7 +218,7 @@ set "match4" "beter van niet?";
 test "Escape" {
 	if not string :matches "${match4}" "*\\?" {
 		test_fail "should have matched";
-	} 
+	}
 
 	if not string :is "${1}" "beter van niet" {
 		test_fail "match value incorrect: ${1}";
@@ -230,7 +230,7 @@ set "match5" "The quick brown fox jumps over the lazy dog.";
 test "Alphabet ?" {
 	if not string :matches "${match5}" "T?? ????? ????? ?o? ?u??? o?er ?he ???? ?o?." {
 		test_fail "should have matched";
-	} 
+	}
 
 	set "alphabet" "${22}${8}${6}${25}${2}${13}${26}${1}${5}${15}${7}${21}${16}${12}${10}${17}${3}${9}${18}${20}${4}${19}${11}${14}${24}${23}";
 
@@ -262,9 +262,9 @@ test "Letters begin ?" {
 	if not string :matches "${match7}" "??op" {
 		test_fail "should have matched";
 	}
-		
+
 	set "val" "${0}:${1}:${2}:${3}:";
-	
+
 	if not string :is "${val}" "frop:f:r::" {
 		test_fail "incorrect match values: ${val}";
 	}
@@ -290,7 +290,7 @@ test "Letters words *? - 1" {
 	}
 
 	set "val" ":${0}:${1}:${2}:${3}:${4}:${5}:";
-	
+
 	if not string :is "${val}" ":klopfropstroptop:klop:o:p:strop::" {
 		test_fail "incorrect match values: ${val}";
 	}
@@ -300,7 +300,7 @@ test "Letters words *? - 2" {
 	if not string :matches "${match8}" "?*fr??*top" {
 		test_fail "should have matched";
 	}
-	
+
 	set "val" ":${0}:${1}:${2}:${3}:${4}:${5}:${6}:";
 
 	if not string :is "${val}" ":klopfropstroptop:k:lop:o:p:strop::" {
@@ -314,7 +314,7 @@ test "Letters words *? backtrack" {
 	}
 
 	set "val" ":${0}:${1}:${2}:${3}:${4}:";
-	
+
 	if not string :is "${val}" ":klopfropstroptop:klopfropstrop:t:::" {
 		test_fail "incorrect match values: ${val}";
 	}

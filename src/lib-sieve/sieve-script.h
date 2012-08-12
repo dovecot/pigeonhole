@@ -24,10 +24,10 @@ struct sieve_script;
 ARRAY_DEFINE_TYPE(sieve_scripts, struct sieve_script *);
 
 struct sieve_script *sieve_script_create
-	(struct sieve_instance *svinst, const char *location, const char *name, 
+	(struct sieve_instance *svinst, const char *location, const char *name,
 		struct sieve_error_handler *ehandler, enum sieve_error *error_r);
 struct sieve_script *sieve_script_create_as
-	(struct sieve_instance *svinst, const char *location, const char *name, 
+	(struct sieve_instance *svinst, const char *location, const char *name,
 		struct sieve_error_handler *ehandler, enum sieve_error *error_r);
 
 void sieve_script_ref(struct sieve_script *script);
@@ -36,7 +36,7 @@ void sieve_script_unref(struct sieve_script **script);
 /*
  * Accessors
  */
- 
+
 const char *sieve_script_name(const struct sieve_script *script);
 const char *sieve_script_location(const struct sieve_script *script);
 struct sieve_instance *sieve_script_svinst(const struct sieve_script *script);
@@ -57,8 +57,8 @@ int sieve_script_binary_save
 	(struct sieve_script *script, struct sieve_binary *sbin, bool update,
 		enum sieve_error *error_r);
 
-/* 
- * Stream management 
+/*
+ * Stream management
  */
 
 struct istream *sieve_script_open
@@ -70,7 +70,7 @@ int sieve_script_get_size(struct sieve_script *script, uoff_t *size_r);
 /*
  * Comparison
  */
- 
+
 bool sieve_script_equals
 	(const struct sieve_script *script, const struct sieve_script *other);
 

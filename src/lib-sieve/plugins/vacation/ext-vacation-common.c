@@ -37,7 +37,7 @@ bool ext_vacation_load
 		default_period = EXT_VACATION_DEFAULT_PERIOD;
 	}
 
-	if ( max_period > 0 
+	if ( max_period > 0
 		&& (min_period > max_period || default_period < min_period
 			|| default_period > max_period) ) {
 		min_period = EXT_VACATION_DEFAULT_MIN_PERIOD;

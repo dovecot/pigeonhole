@@ -174,7 +174,7 @@ static void managesieve_parser_save_arg(struct managesieve_parser *parser,
 				/* -1 because we skipped the '"' prefix */
 				str_unescape(str + parser->str_first_escape-1);
 			}
-	
+
 			arg->_data.str = str;
 			arg->str_len = strlen(str);
 		}
@@ -396,7 +396,7 @@ static int managesieve_parser_read_literal_data(struct managesieve_parser *parse
 				parser->error = "Invalid UTF-8 character in literal string.";
 				return FALSE;
 			}
-			
+
 			managesieve_parser_save_arg(parser, data,
 					     (size_t)parser->literal_size);
 			parser->cur_pos = (size_t)parser->literal_size;

@@ -122,7 +122,7 @@ struct managesieve_client_workaround_list {
 	enum managesieve_client_workarounds num;
 };
 
-static const struct managesieve_client_workaround_list 
+static const struct managesieve_client_workaround_list
 	managesieve_client_workaround_list[] = {
 	{ NULL, 0 }
 };

@@ -28,7 +28,7 @@
 #include <sysexits.h>
 
 
-/* 
+/*
  * Configuration
  */
 
@@ -63,10 +63,10 @@ static void *sieve_smtp_open
 	i_info("sending message from <%s> to <%s>:",
 		( return_path == NULL ? "" : return_path ), destination);
 	printf("\nSTART MESSAGE:\n");
-	
+
 	*output_r = o_stream_create_fd(STDOUT_FILENO, (size_t)-1, FALSE);
-	
-	return (void*)*output_r;	
+
+	return (void*)*output_r;
 }
 
 static bool sieve_smtp_close
@@ -84,7 +84,7 @@ static bool sieve_smtp_close
  */
 
 static int duplicate_check
-(const struct sieve_script_env *senv, const void *id ATTR_UNUSED, 
+(const struct sieve_script_env *senv, const void *id ATTR_UNUSED,
 	size_t id_size ATTR_UNUSED)
 {
 	i_info("checked duplicate for user %s.\n", senv->user->username);
@@ -92,7 +92,7 @@ static int duplicate_check
 }
 
 static void duplicate_mark
-(const struct sieve_script_env *senv, const void *id ATTR_UNUSED, 
+(const struct sieve_script_env *senv, const void *id ATTR_UNUSED,
 	size_t id_size ATTR_UNUSED, time_t time ATTR_UNUSED)
 {
 	i_info("marked duplicate for user %s.\n", senv->user->username);
@@ -102,7 +102,7 @@ static void duplicate_mark
  * Tool implementation
  */
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 	struct sieve_instance *svinst;
 	ARRAY_TYPE (const_string) scriptfiles;
@@ -165,10 +165,10 @@ int main(int argc, char **argv)
 			/* dump file */
 			dumpfile = optarg;
 			break;
-		case 's': 
+		case 's':
 			/* scriptfile executed before main script */
 			{
-				const char *file;			
+				const char *file;
 
 				file = t_strdup(optarg);
 				array_append(&scriptfiles, &file, 1);
@@ -192,18 +192,18 @@ int main(int argc, char **argv)
 
 	if ( optind < argc ) {
 		scriptfile = argv[optind++];
-	} else { 
+	} else {
 		print_help();
 		i_fatal_status(EX_USAGE, "Missing <script-file> argument");
 	}
-	
+
 	if ( optind < argc ) {
 		mailfile = argv[optind++];
-	} else { 
+	} else {
 		print_help();
 		i_fatal_status(EX_USAGE, "Missing <mail-file> argument");
 	}
-	
+
 	if (optind != argc) {
 		print_help();
 		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 
 		if ( tracefile != NULL )
 			tracestream = sieve_tool_open_output_stream(tracefile);
-		
+
 		/* Compose script environment */
 		memset(&scriptenv, 0, sizeof(scriptenv));
 		scriptenv.default_mailbox = mailbox;
@@ -279,21 +279,21 @@ int main(int argc, char **argv)
 		scriptenv.trace_stream = tracestream;
 		scriptenv.trace_config = tr_config;
 		scriptenv.exec_status = &estatus;
-	
+
 		/* Run the test */
 		ret = 1;
 		if ( array_count(&scriptfiles) == 0 ) {
 			/* Single script */
 			sbin = main_sbin;
 			main_sbin = NULL;
-	
+
 			/* Execute/Test script */
 			if ( execute )
 				ret = sieve_execute
 					(sbin, &msgdata, &scriptenv, ehandler, 0, NULL);
 			else
 				ret = sieve_test
-					(sbin, &msgdata, &scriptenv, ehandler, teststream, 0, NULL);				
+					(sbin, &msgdata, &scriptenv, ehandler, teststream, 0, NULL);
 		} else {
 			/* Multiple scripts */
 			const char *const *sfiles;
@@ -308,18 +308,18 @@ int main(int argc, char **argv)
 			else
 				mscript = sieve_multiscript_start_test
 					(svinst, &msgdata, &scriptenv, teststream);
-		
+
 			/* Execute scripts sequentially */
-			sfiles = array_get(&scriptfiles, &count); 
+			sfiles = array_get(&scriptfiles, &count);
 			for ( i = 0; i < count && more; i++ ) {
-				if ( teststream != NULL ) 
-					o_stream_send_str(teststream, 
+				if ( teststream != NULL )
+					o_stream_send_str(teststream,
 						t_strdup_printf("\n## Executing script: %s\n", sfiles[i]));
-			
+
 				/* Close previous script */
-				if ( sbin != NULL )						
+				if ( sbin != NULL )
 					sieve_close(&sbin);
-		
+
 				/* Compile sieve script */
 				if ( force_compile ) {
 					sbin = sieve_tool_script_compile(svinst, sfiles[i], sfiles[i]);
@@ -328,37 +328,37 @@ int main(int argc, char **argv)
 				} else {
 					sbin = sieve_tool_script_open(svinst, sfiles[i]);
 				}
-			
+
 				if ( sbin == NULL ) {
 					ret = SIEVE_EXEC_FAILURE;
 					break;
 				}
-			
+
 				/* Execute/Test script */
 				more = sieve_multiscript_run(mscript, sbin, ehandler, 0, FALSE);
 			}
-		
+
 			/* Execute/Test main script */
 			if ( more && ret > 0 ) {
-				if ( teststream != NULL ) 
-					o_stream_send_str(teststream, 
+				if ( teststream != NULL )
+					o_stream_send_str(teststream,
 						t_strdup_printf("## Executing script: %s\n", scriptfile));
-				
+
 				/* Close previous script */
-				if ( sbin != NULL )						
-					sieve_close(&sbin);	
-				
+				if ( sbin != NULL )
+					sieve_close(&sbin);
+
 				sbin = main_sbin;
 				main_sbin = NULL;
-			
+
 				sieve_multiscript_run(mscript, sbin, ehandler, 0, TRUE);
 			}
-			
+
 			result = sieve_multiscript_finish(&mscript, ehandler, NULL);
-			
+
 			ret = ret > 0 ? result : ret;
 		}
-	
+
 		/* Run */
 		switch ( ret ) {
 		case SIEVE_EXEC_OK:
@@ -376,7 +376,7 @@ int main(int argc, char **argv)
 			exit_status = EXIT_FAILURE;
 			break;
 		default:
-			i_info("final result: unrecognized return value?!");	
+			i_info("final result: unrecognized return value?!");
 			exit_status = EXIT_FAILURE;
 			break;
 		}
@@ -387,7 +387,7 @@ int main(int argc, char **argv)
 		/* Cleanup remaining binaries */
 		if ( sbin != NULL )
 			sieve_close(&sbin);
-		if ( main_sbin != NULL ) 
+		if ( main_sbin != NULL )
 			sieve_close(&main_sbin);
 	}
 

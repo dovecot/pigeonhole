@@ -13,7 +13,7 @@
 #define EXT_VACATION_DEFAULT_PERIOD (7*24*60*60)
 #define EXT_VACATION_DEFAULT_MIN_PERIOD (24*60*60)
 #define EXT_VACATION_DEFAULT_MAX_PERIOD 0
- 
+
 struct ext_vacation_config {
 	unsigned int min_period;
 	unsigned int max_period;
@@ -22,19 +22,19 @@ struct ext_vacation_config {
 	bool dont_check_recipient;
 };
 
-/* 
- * Commands 
+/*
+ * Commands
  */
 
 extern const struct sieve_command_def vacation_command;
 
-/* 
- * Operations 
+/*
+ * Operations
  */
 
 extern const struct sieve_operation_def vacation_operation;
 
-/* 
+/*
  * Extensions
  */
 

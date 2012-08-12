@@ -1,6 +1,6 @@
 /*
  * Size test errors
- * 
+ *
  * Total errors: 6 (+1 = 7)
  */
 

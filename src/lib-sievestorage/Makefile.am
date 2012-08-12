@@ -10,7 +10,7 @@ libsievestorage_a_SOURCES = \
 	sieve-storage-script.c \
 	sieve-storage-list.c \
 	sieve-storage-quota.c \
-	sieve-storage.c 
+	sieve-storage.c
 
 noinst_HEADERS = \
 	sieve-storage-save.h \

@@ -23,8 +23,8 @@ extern const struct sieve_script_env *testsuite_scriptenv;
 extern char *testsuite_test_path;
 
 
-/* 
- * Validator context 
+/*
+ * Validator context
  */
 
 struct testsuite_validator_context {
@@ -35,8 +35,8 @@ bool testsuite_validator_context_initialize(struct sieve_validator *valdtr);
 struct testsuite_validator_context *testsuite_validator_context_get
 	(struct sieve_validator *valdtr);
 
-/* 
- * Generator context 
+/*
+ * Generator context
  */
 
 struct testsuite_generator_context {
@@ -90,8 +90,8 @@ extern const struct sieve_command_def tst_test_error;
 extern const struct sieve_command_def tst_test_result_action;
 extern const struct sieve_command_def tst_test_result_execute;
 
-/* 
- * Operations 
+/*
+ * Operations
  */
 
 enum testsuite_operation_code {
@@ -142,8 +142,8 @@ extern const struct sieve_operation_def test_mailbox_delete_operation;
 extern const struct sieve_operation_def test_binary_load_operation;
 extern const struct sieve_operation_def test_binary_save_operation;
 
-/* 
- * Operands 
+/*
+ * Operands
  */
 
 extern const struct sieve_operand_def testsuite_object_operand;
@@ -155,8 +155,8 @@ enum testsuite_operand_code {
 	TESTSUITE_OPERAND_NAMESPACE
 };
 
-/* 
- * Test context 
+/*
+ * Test context
  */
 
 void testsuite_test_start(string_t *name);
@@ -172,11 +172,11 @@ bool testsuite_testcase_result(void);
 /*
  * Testsuite temporary directory
  */
- 
+
 const char *testsuite_tmp_dir_get(void);
 
-/* 
- * Testsuite init/deinit 
+/*
+ * Testsuite init/deinit
  */
 
 void testsuite_init

@@ -16,15 +16,15 @@
 #include "testsuite-common.h"
 #include "testsuite-message.h"
 
-/* 
- * Testsuite message environment 
+/*
+ * Testsuite message environment
  */
- 
+
 struct sieve_message_data testsuite_msgdata;
 
 static struct mail *testsuite_mail;
 
-static const char *_default_message_data = 
+static const char *_default_message_data =
 "From: stephan@rename-it.nl\n"
 "To: sirius@drunksnipers.com\n"
 "Subject: Frop!\n"
@@ -41,28 +41,28 @@ pool_t message_pool;
 static void testsuite_message_set_data(struct mail *mail)
 {
 	const char *recipient = NULL, *sender = NULL;
-	
-	/* 
-	 * Collect necessary message data 
+
+	/*
+	 * Collect necessary message data
 	 */
-	 
-	/* Get recipient address */ 
+
+	/* Get recipient address */
 	(void)mail_get_first_header(mail, "Envelope-To", &recipient);
 	if ( recipient == NULL )
 		(void)mail_get_first_header(mail, "To", &recipient);
-	if ( recipient == NULL ) 
+	if ( recipient == NULL )
 		recipient = "recipient@example.com";
-	
+
 	/* Get sender address */
 	(void)mail_get_first_header(mail, "Return-path", &sender);
-	if ( sender == NULL ) 
+	if ( sender == NULL )
 		(void)mail_get_first_header(mail, "Sender", &sender);
-	if ( sender == NULL ) 
+	if ( sender == NULL )
 		(void)mail_get_first_header(mail, "From", &sender);
-	if ( sender == NULL ) 
+	if ( sender == NULL )
 		sender = "sender@example.com";
 
-	memset(&testsuite_msgdata, 0, sizeof(testsuite_msgdata));	
+	memset(&testsuite_msgdata, 0, sizeof(testsuite_msgdata));
 	testsuite_msgdata.mail = mail;
 	testsuite_msgdata.auth_user = sieve_tool_get_username(sieve_tool);
 	testsuite_msgdata.return_path = sender;
@@ -73,7 +73,7 @@ static void testsuite_message_set_data(struct mail *mail)
 }
 
 void testsuite_message_init(void)
-{		
+{
 	message_pool = pool_alloconly_create("testsuite_message", 6096);
 
 	string_t *default_message = str_new(message_pool, 1024);
@@ -170,5 +170,5 @@ void testsuite_envelope_set_auth_user
 		str_append(envelope_auth, value);
 
 	testsuite_msgdata.auth_user = str_c(envelope_auth);
-} 
- 
+}
+

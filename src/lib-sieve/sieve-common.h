@@ -12,11 +12,11 @@
 #include <sys/types.h>
 #include <stdlib.h>
 
-/* 
+/*
  * Types
  */
 
-typedef size_t sieve_size_t; 
+typedef size_t sieve_size_t;
 typedef uint32_t sieve_offset_t;
 typedef uint32_t sieve_number_t;
 
@@ -141,11 +141,11 @@ struct sieve_plugin;
 
 /* sieve.c */
 struct sieve_ast *sieve_parse
-	(struct sieve_script *script, struct sieve_error_handler *ehandler, 
+	(struct sieve_script *script, struct sieve_error_handler *ehandler,
 		enum sieve_error *error_r);
 bool sieve_validate
 	(struct sieve_ast *ast, struct sieve_error_handler *ehandler,
-		enum sieve_compile_flags flags, enum sieve_error *error_r);	
+		enum sieve_compile_flags flags, enum sieve_error *error_r);
 
 /*
  * Sieve engine instance

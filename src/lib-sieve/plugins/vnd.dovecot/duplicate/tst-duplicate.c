@@ -39,8 +39,8 @@ const struct sieve_command_def tst_duplicate = {
 	NULL,
 };
 
-/* 
- * Duplicate operation 
+/*
+ * Duplicate operation
  */
 
 static bool tst_duplicate_operation_dump
@@ -48,22 +48,22 @@ static bool tst_duplicate_operation_dump
 static int tst_duplicate_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def tst_duplicate_operation = { 
-	"DUPLICATE", &duplicate_extension, 
+const struct sieve_operation_def tst_duplicate_operation = {
+	"DUPLICATE", &duplicate_extension,
 	0,
 	tst_duplicate_operation_dump,
 	tst_duplicate_operation_execute
 };
 
-/* 
- * Validation 
+/*
+ * Validation
  */
 
 static bool tst_duplicate_validate
-(struct sieve_validator *valdtr, struct sieve_command *cmd) 
-{ 	
+(struct sieve_validator *valdtr, struct sieve_command *cmd)
+{
 	struct sieve_ast_argument *arg = cmd->first_positional;
-	
+
 	if ( arg == NULL )
 		return TRUE;
 
@@ -71,7 +71,7 @@ static bool tst_duplicate_validate
 		(valdtr, cmd, arg, "name", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-	
+
 	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
@@ -94,26 +94,26 @@ static bool tst_duplicate_generate
 	return TRUE;
 }
 
-/* 
+/*
  * Code dump
  */
- 
+
 static bool tst_duplicate_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "DUPLICATE");
 	sieve_code_descend(denv);
-	
+
 	return sieve_opr_string_dump_ex(denv, address, "name", "");
 }
 
-/* 
+/*
  * Code execution
  */
 
 static int tst_duplicate_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
-{	
+{
 	string_t *name = NULL;
 	bool duplicate = FALSE;
 	int ret;
@@ -139,11 +139,11 @@ static int tst_duplicate_operation_execute
 	if ( (duplicate=ext_duplicate_check(renv, name)) ) {
 		sieve_runtime_trace(renv,	SIEVE_TRLVL_TESTS,
 			"message is a duplicate");
-	}	else {	
+	}	else {
 		sieve_runtime_trace(renv,	SIEVE_TRLVL_TESTS,
 			"message is not a duplicate");
 	}
-	
+
 	/* Set test result for subsequent conditional jump */
 	sieve_interpreter_set_test_result(renv->interp, duplicate);
 	return SIEVE_EXEC_OK;

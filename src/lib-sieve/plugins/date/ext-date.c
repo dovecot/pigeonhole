@@ -30,8 +30,8 @@
 
 #include "ext-date-common.h"
 
-/* 
- * Extension 
+/*
+ * Extension
  */
 
 static bool ext_date_validator_load
@@ -42,14 +42,14 @@ const struct sieve_operation_def *ext_date_operations[] = {
 	&currentdate_operation
 };
 
-const struct sieve_extension_def date_extension = { 
-	"date", 
+const struct sieve_extension_def date_extension = {
+	"date",
 	NULL, NULL,
-	ext_date_validator_load, 
-	NULL, 
-	ext_date_interpreter_load, 
+	ext_date_validator_load,
+	NULL,
+	ext_date_interpreter_load,
 	NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATIONS(ext_date_operations), 
+	SIEVE_EXT_DEFINE_OPERATIONS(ext_date_operations),
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 

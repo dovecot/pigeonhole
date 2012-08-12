@@ -19,7 +19,7 @@
 /*
  * Test_script_run command
  *
- * Syntax:   
+ * Syntax:
  *   test_script_run
  */
 
@@ -29,18 +29,18 @@ static bool tst_test_script_run_registered
 static bool tst_test_script_run_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command_def tst_test_script_run = { 
-	"test_script_run", 
-	SCT_TEST, 
+const struct sieve_command_def tst_test_script_run = {
+	"test_script_run",
+	SCT_TEST,
 	0, 0, FALSE, FALSE,
-	tst_test_script_run_registered, 
+	tst_test_script_run_registered,
 	NULL, NULL, NULL,
-	tst_test_script_run_generate, 
-	NULL 
+	tst_test_script_run_generate,
+	NULL
 };
 
-/* 
- * Operation 
+/*
+ * Operation
  */
 
 static bool tst_test_script_run_operation_dump
@@ -48,12 +48,12 @@ static bool tst_test_script_run_operation_dump
 static int tst_test_script_run_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def test_script_run_operation = { 
+const struct sieve_operation_def test_script_run_operation = {
 	"test_script_run",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_SCRIPT_RUN,
-	tst_test_script_run_operation_dump, 
-	tst_test_script_run_operation_execute 
+	tst_test_script_run_operation_dump,
+	tst_test_script_run_operation_execute
 };
 
 /*
@@ -69,24 +69,24 @@ enum cmd_vacation_optional {
 
 /* Tags */
 
-static const struct sieve_argument_def append_result_tag = { 
-	"append_result",	
+static const struct sieve_argument_def append_result_tag = {
+	"append_result",
 	NULL, NULL, NULL, NULL, NULL
 };
 
 static bool tst_test_script_run_registered
 (struct sieve_validator *validator, const struct sieve_extension *ext,
-	struct sieve_command_registration *cmd_reg) 
+	struct sieve_command_registration *cmd_reg)
 {
 	sieve_validator_register_tag
-		(validator, cmd_reg, ext, &append_result_tag, OPT_APPEND_RESULT); 	
+		(validator, cmd_reg, ext, &append_result_tag, OPT_APPEND_RESULT);
 
 	return TRUE;
 }
 
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool tst_test_script_run_generate
@@ -103,11 +103,11 @@ static bool tst_test_script_run_generate
 
 static bool tst_test_script_run_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
-{	
+{
 	int opt_code = 0;
-	
+
 	sieve_code_dumpf(denv, "TEST_SCRIPT_RUN");
-	sieve_code_descend(denv);	
+	sieve_code_descend(denv);
 
 	/* Dump optional operands */
 	for (;;) {
@@ -120,13 +120,13 @@ static bool tst_test_script_run_operation_dump
 
 		switch ( opt_code ) {
 		case OPT_APPEND_RESULT:
-			sieve_code_dumpf(denv, "append_result");	
+			sieve_code_dumpf(denv, "append_result");
 			break;
 		default:
 			return FALSE;
 		}
 	}
-	
+
 	return TRUE;
 }
 
@@ -146,7 +146,7 @@ static int tst_test_script_run_operation_execute
 	 * Read operands
 	 */
 
-	/* Optional operands */	
+	/* Optional operands */
 	for (;;) {
 		int opt;
 
@@ -160,7 +160,7 @@ static int tst_test_script_run_operation_execute
 			append_result = TRUE;
 			break;
 		default:
-			sieve_runtime_trace_error(renv, 
+			sieve_runtime_trace_error(renv,
 				"unknown optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
@@ -170,12 +170,12 @@ static int tst_test_script_run_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, 
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
 		"testsuite: run compiled script [append_result=%s]",
 		( append_result ? "yes" : "no" ));
 
 	/* Reset result object */
-	if ( !append_result ) 
+	if ( !append_result )
 		testsuite_result_reset(renv);
 
 	/* Run script */
@@ -183,7 +183,7 @@ static int tst_test_script_run_operation_execute
 
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_TESTS) ) {
 		sieve_runtime_trace_descend(renv);
-		sieve_runtime_trace(renv, 0, "execution of script %s", 
+		sieve_runtime_trace(renv, 0, "execution of script %s",
 			( result ? "succeeded" : "failed" ));
 	}
 

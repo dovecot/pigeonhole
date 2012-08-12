@@ -78,7 +78,7 @@ test "Flag operations" {
 	if not hasflag "B" {
 		test_fail "flag \"B\" not added";
 	}
-	
+
 	if not hasflag "A" {
 		test_fail "flag \"A\" not retained";
 	}
@@ -87,7 +87,7 @@ test "Flag operations" {
 		test_fail "hasflag sees more than two flags";
 	}
 
-	addflag ["C", "D", "E F"];	
+	addflag ["C", "D", "E F"];
 
 	if not hasflag :comparator "i;ascii-numeric" :count "eq" "6" {
 		test_fail "hasflag sees more than two flags";
@@ -97,8 +97,8 @@ test "Flag operations" {
 
 	if not hasflag :comparator "i;ascii-numeric" :count "eq" "5" {
 		test_fail "hasflag sees more than two flags";
-	}	
-	
+	}
+
 	if hasflag "D" {
 		test_fail "removed flag still present";
 	}
@@ -137,7 +137,7 @@ test "Removal: one" {
 
 	removeflag "\\seen";
 
-	if hasflag "\\seen" { 
+	if hasflag "\\seen" {
 		test_fail "flag not removed";
 	}
 
@@ -155,13 +155,13 @@ test "Removal: first" {
 
 	removeflag "$frop";
 
-	if not hasflag "\\seen" { 
+	if not hasflag "\\seen" {
 		test_fail "wrong flag removed";
 	}
 
-	if hasflag "$frop" { 
+	if hasflag "$frop" {
 		test_fail "flag not removed";
-	}	
+	}
 
 	if not hasflag :comparator "i;ascii-numeric" :count "eq" "1" {
 		test_fail "more than one flag remains set";

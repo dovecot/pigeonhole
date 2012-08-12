@@ -36,7 +36,7 @@ test "Invalid field-name at runtime " {
 	}
 
 	if test_script_run {
-		test_fail "run should have failed";		
+		test_fail "run should have failed";
 	}
 
 	if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
@@ -94,7 +94,7 @@ test "Size limit" {
 
 	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
 		test_fail "wrong number of errors reported";
-	}	
+	}
 }
 
 
@@ -127,7 +127,7 @@ test "Size limit at runtime" {
 
 	if not test_error :count "eq" :comparator "i;ascii-numeric" "1" {
 		test_fail "wrong number of errors reported";
-	}	
+	}
 }
 
 /*
@@ -153,7 +153,7 @@ test "Implicit keep at runtime error" {
 	}
 
 	if test_result_execute {
-		test_fail "result execution should have failed";		
+		test_fail "result execution should have failed";
 	}
 
 	if not test_message :folder "INBOX" 0 {

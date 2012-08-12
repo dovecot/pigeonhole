@@ -25,11 +25,11 @@ struct sieve_runtime_env {
 	/* Executing binary */
 	struct sieve_binary *sbin;
 	struct sieve_binary_block *sblock;
-	
+
 	/* Current code */
 	sieve_size_t pc;
-	const struct sieve_operation *oprtn; 	
-	
+	const struct sieve_operation *oprtn;
+
 	/* Tested message */
 	const struct sieve_message_data *msgdata;
 	struct sieve_message_context *msgctx;

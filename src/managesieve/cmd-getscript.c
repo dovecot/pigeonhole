@@ -13,7 +13,7 @@
 struct cmd_getscript_context {
 	struct client *client;
 	struct client_command_context *cmd;
-	struct sieve_storage *storage;	
+	struct sieve_storage *storage;
 	uoff_t script_size, script_offset;
 
 	struct sieve_script *script;
@@ -54,7 +54,7 @@ static bool cmd_getscript_continue(struct client_command_context *cmd)
 
 	if ( ret < 0 ) {
 		sieve_storage_set_critical(ctx->storage,
-			"o_stream_send_istream() failed for script `%s' from %s: %m", 
+			"o_stream_send_istream() failed for script `%s' from %s: %m",
 			sieve_script_name(ctx->script), sieve_script_location(ctx->script));
 		ctx->failed = TRUE;
 		return cmd_getscript_finish(ctx);
@@ -104,7 +104,7 @@ bool cmd_getscript(struct client_command_context *cmd)
 		ctx->failed = TRUE;
 		return cmd_getscript_finish(ctx);
 	}
-			
+
 	ctx->script_stream = sieve_script_open(ctx->script, &error);
 
 	if ( ctx->script_stream == NULL ) {
@@ -122,7 +122,7 @@ bool cmd_getscript(struct client_command_context *cmd)
 		return cmd_getscript_finish(ctx);
 	}
 
-	ctx->script_offset = 0;	
+	ctx->script_offset = 0;
 
 	client_send_line
 		(client, t_strdup_printf("{%"PRIuUOFF_T"}", ctx->script_size));

@@ -1,7 +1,7 @@
 /* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
- 
-/* Match-type ':count' 
+
+/* Match-type ':count'
  */
 
 #include "lib.h"
@@ -24,7 +24,7 @@
 
 #include "ext-relational-common.h"
 
-/* 
+/*
  * Forward declarations
  */
 
@@ -32,10 +32,10 @@ static int mcht_count_match
 	(struct sieve_match_context *mctx, struct sieve_stringlist *value_list,
 		struct sieve_stringlist *key_list);
 
-/* 
+/*
  * Match-type objects
  */
- 
+
 const struct sieve_match_type_def count_match_type = {
 	SIEVE_OBJECT("count", &rel_match_type_operand, RELATIONAL_COUNT),
 	mcht_relational_validate,
@@ -51,7 +51,7 @@ const struct sieve_match_type_def rel_match_count_ ## name = { \
 	mcht_count_match,                                            \
 	NULL, NULL, NULL, NULL                                       \
 }
-	
+
 COUNT_MATCH_TYPE(gt, REL_MATCH_GREATER);
 COUNT_MATCH_TYPE(ge, REL_MATCH_GREATER_EQUAL);
 COUNT_MATCH_TYPE(lt, REL_MATCH_LESS);
@@ -59,8 +59,8 @@ COUNT_MATCH_TYPE(le, REL_MATCH_LESS_EQUAL);
 COUNT_MATCH_TYPE(eq, REL_MATCH_EQUAL);
 COUNT_MATCH_TYPE(ne, REL_MATCH_NOT_EQUAL);
 
-/* 
- * Match-type implementation 
+/*
+ * Match-type implementation
  */
 
 static int mcht_count_match
@@ -93,7 +93,7 @@ static int mcht_count_match
   /* Match to all key values */
   key_item = NULL;
 	match = 0;
-  while ( match == 0 && 
+  while ( match == 0 &&
 		(ret=sieve_stringlist_next_item(key_list, &key_item)) > 0 )
   {
 		match = mcht_value_match_key

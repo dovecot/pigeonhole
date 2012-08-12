@@ -6,7 +6,7 @@
 #include "sieve-code.h"
 #include "sieve-stringlist.h"
 #include "sieve-commands.h"
-#include "sieve-validator.h" 
+#include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-dump.h"
@@ -22,59 +22,59 @@
 static bool cmd_flag_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-/* Setflag command 
+/* Setflag command
  *
- * Syntax: 
+ * Syntax:
  *   setflag [<variablename: string>] <list-of-flags: string-list>
  */
- 
-const struct sieve_command_def cmd_setflag = { 
-	"setflag", 
+
+const struct sieve_command_def cmd_setflag = {
+	"setflag",
 	SCT_COMMAND,
 	-1, /* We check positional arguments ourselves */
-	0, FALSE, FALSE, 
+	0, FALSE, FALSE,
 	NULL, NULL,
 	ext_imap4flags_command_validate,
-	NULL, 
-	cmd_flag_generate, 
-	NULL 
+	NULL,
+	cmd_flag_generate,
+	NULL
 };
 
-/* Addflag command 
+/* Addflag command
  *
  * Syntax:
  *   addflag [<variablename: string>] <list-of-flags: string-list>
  */
 
-const struct sieve_command_def cmd_addflag = { 
-	"addflag", 
+const struct sieve_command_def cmd_addflag = {
+	"addflag",
 	SCT_COMMAND,
 	-1, /* We check positional arguments ourselves */
-	0, FALSE, FALSE, 
+	0, FALSE, FALSE,
 	NULL, NULL,
 	ext_imap4flags_command_validate,
 	NULL,
-	cmd_flag_generate, 
-	NULL 
+	cmd_flag_generate,
+	NULL
 };
 
 
-/* Removeflag command 
+/* Removeflag command
  *
  * Syntax:
  *   removeflag [<variablename: string>] <list-of-flags: string-list>
  */
 
-const struct sieve_command_def cmd_removeflag = { 
-	"removeflag", 
+const struct sieve_command_def cmd_removeflag = {
+	"removeflag",
 	SCT_COMMAND,
 	-1, /* We check positional arguments ourselves */
-	0, FALSE, FALSE, 
+	0, FALSE, FALSE,
 	NULL, NULL,
 	ext_imap4flags_command_validate,
 	NULL,
-	cmd_flag_generate, 
-	NULL 
+	cmd_flag_generate,
+	NULL
 };
 
 /*
@@ -90,7 +90,7 @@ static int cmd_flag_operation_execute
 
 /* Setflag operation */
 
-const struct sieve_operation_def setflag_operation = { 
+const struct sieve_operation_def setflag_operation = {
 	"SETFLAG",
 	&imap4flags_extension,
 	ext_imap4flags_OPERATION_SETFLAG,
@@ -100,42 +100,42 @@ const struct sieve_operation_def setflag_operation = {
 
 /* Addflag operation */
 
-const struct sieve_operation_def addflag_operation = { 
+const struct sieve_operation_def addflag_operation = {
 	"ADDFLAG",
 	&imap4flags_extension,
 	ext_imap4flags_OPERATION_ADDFLAG,
-	cmd_flag_operation_dump,	
+	cmd_flag_operation_dump,
 	cmd_flag_operation_execute
 };
 
 /* Removeflag operation */
 
-const struct sieve_operation_def removeflag_operation = { 
+const struct sieve_operation_def removeflag_operation = {
 	"REMOVEFLAG",
 	&imap4flags_extension,
 	ext_imap4flags_OPERATION_REMOVEFLAG,
-	cmd_flag_operation_dump, 
-	cmd_flag_operation_execute 
+	cmd_flag_operation_dump,
+	cmd_flag_operation_execute
 };
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool cmd_flag_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
 	/* Emit operation */
-	if ( sieve_command_is(cmd, cmd_setflag) ) 
+	if ( sieve_command_is(cmd, cmd_setflag) )
 		sieve_operation_emit(cgenv->sblock, cmd->ext, &setflag_operation);
-	else if ( sieve_command_is(cmd, cmd_addflag) ) 
+	else if ( sieve_command_is(cmd, cmd_addflag) )
 		sieve_operation_emit(cgenv->sblock, cmd->ext, &addflag_operation);
-	else if ( sieve_command_is(cmd, cmd_removeflag) ) 
+	else if ( sieve_command_is(cmd, cmd_removeflag) )
 		sieve_operation_emit(cgenv->sblock, cmd->ext, &removeflag_operation);
 
 	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
-		return FALSE;	
+		return FALSE;
 
 	return TRUE;
 }
@@ -151,23 +151,23 @@ bool cmd_flag_operation_dump
 
 	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(denv->oprtn));
 	sieve_code_descend(denv);
-	
+
 	sieve_code_mark(denv);
 	if ( !sieve_operand_read(denv->sblock, address, NULL, &oprnd) ) {
 		sieve_code_dumpf(denv, "ERROR: INVALID OPERAND");
 		return FALSE;
 	}
 
-	if ( sieve_operand_is_variable(&oprnd) ) {	
-		return 
+	if ( sieve_operand_is_variable(&oprnd) ) {
+		return
 			sieve_opr_string_dump_data(denv, &oprnd, address, "variable name") &&
 			sieve_opr_stringlist_dump(denv, address, "list of flags");
 	}
-	
-	return 
+
+	return
 		sieve_opr_stringlist_dump_data(denv, &oprnd, address, "list of flags");
 }
- 
+
 /*
  * Code execution
  */
@@ -182,33 +182,33 @@ static int cmd_flag_operation_execute
 	unsigned int var_index;
 	ext_imapflag_flag_operation_t flag_op;
 	int ret;
-		
-	/* 
-	 * Read operands 
+
+	/*
+	 * Read operands
 	 */
 
 	/* Read bare operand (two types possible) */
 	if ( (ret=sieve_operand_runtime_read
 		(renv, address, NULL, &oprnd)) <= 0 )
 		return ret;
-		
+
 	/* Variable operand (optional) */
-	if ( sieve_operand_is_variable(&oprnd) ) {		
+	if ( sieve_operand_is_variable(&oprnd) ) {
 		/* Read the variable operand */
 		if ( (ret=sieve_variable_operand_read_data
 				(renv, &oprnd, address, "variable", &storage, &var_index)) <= 0 )
 			return ret;
 
 		/* Read flag list */
-		if ( (ret=sieve_opr_stringlist_read(renv, address, "flag-list", &flag_list)) 
+		if ( (ret=sieve_opr_stringlist_read(renv, address, "flag-list", &flag_list))
 			<= 0 )
 			return ret;
-		
+
 	/* Flag-list operand */
-	} else if ( sieve_operand_is_stringlist(&oprnd) ) {	
+	} else if ( sieve_operand_is_stringlist(&oprnd) ) {
 		storage = NULL;
 		var_index = 0;
-		
+
 		/* Read flag list */
 		if ( (ret=sieve_opr_stringlist_read_data
 			(renv, &oprnd, address, "flag-list", &flag_list)) <= 0 )
@@ -221,11 +221,11 @@ static int cmd_flag_operation_execute
 				"but found %s", sieve_operand_name(&oprnd));
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
-	
+
 	/*
 	 * Perform operation
-	 */	
-	
+	 */
+
 	/* Determine what to do */
 
 	if ( sieve_operation_is(op, setflag_operation) ) {

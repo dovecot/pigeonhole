@@ -16,7 +16,7 @@ Wanna date?
 
 test "Defaults" {
 	if not date :originalzone "date" "std11" "mon, 20 jul 2009 21:44:43 +0300" {
-		test_fail "default comparator is not i;ascii-casemap";	
+		test_fail "default comparator is not i;ascii-casemap";
 	}
 
 	if anyof ( date "date" "std11" "Mon", date "date" "std11" "*") {
@@ -26,16 +26,16 @@ test "Defaults" {
 
 test "Count" {
 	if not date :count "eq" "date" "date" "1" {
-		test_fail "count of existing date header field is not 1";	
+		test_fail "count of existing date header field is not 1";
 	}
 
 	if not date :count "eq" "resent-date" "date" "0" {
-		test_fail "count of non-existent date header field is not 0";	
+		test_fail "count of non-existent date header field is not 0";
 	}
 }
 
 test "Invalid" {
 	if date :matches "invalid-date" "std11" "*" {
-		test_fail "matched invalid date: ${0}";	
+		test_fail "matched invalid date: ${0}";
 	}
 }

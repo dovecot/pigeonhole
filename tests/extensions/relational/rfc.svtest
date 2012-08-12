@@ -19,19 +19,19 @@ test "Example 1" {
 
 	if not address :count "ge" :comparator "i;ascii-numeric"
 		["to", "cc"] ["3"] {
-	
+
 		test_fail "should have counted three addresses";
 	}
 
     # would evaluate to true, and the test
 
-	if anyof ( 
+	if anyof (
 			address :count "ge" :comparator "i;ascii-numeric"
 				["to"] ["3"],
 			address :count "ge" :comparator "i;ascii-numeric"
-				["cc"] ["3"] 
+				["cc"] ["3"]
 	) {
-	
+
 		test_fail "should not have counted three addresses";
 	}
 
@@ -42,7 +42,7 @@ test "Example 1" {
 
 	if header :count "ge" :comparator "i;ascii-numeric"
  		["received"] ["3"] {
-	
+
 		test_fail "should not have counted three received headers";
 	}
 
@@ -55,7 +55,7 @@ test "Example 1" {
 	}
 
 	# would evaluate to true.
-	
+
 	# The test:
 
 	if header :count "ge" :comparator "i;ascii-numeric"

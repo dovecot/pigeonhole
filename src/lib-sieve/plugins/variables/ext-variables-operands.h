@@ -12,21 +12,21 @@
 #include "sieve-common.h"
 #include "ext-variables-common.h"
 
-/* 
- * Variable operand 
+/*
+ * Variable operand
  */
-		
-extern const struct sieve_operand_def variable_operand;	
+
+extern const struct sieve_operand_def variable_operand;
 
 bool ext_variables_opr_variable_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
 		struct sieve_variable_storage **storage, unsigned int *var_index);
 
-/* 
- * Match value operand 
+/*
+ * Match value operand
  */
-		
-extern const struct sieve_operand_def match_value_operand;	
+
+extern const struct sieve_operand_def match_value_operand;
 
 /*
  * Variable string operand
@@ -35,6 +35,6 @@ extern const struct sieve_operand_def match_value_operand;
 void ext_variables_opr_variable_string_emit
 	(struct sieve_binary *sbin, unsigned int elements);
 
-	
+
 #endif /* __EXT_VARIABLES_OPERANDS_H */
 

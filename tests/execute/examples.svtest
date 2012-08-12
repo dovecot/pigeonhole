@@ -1,6 +1,6 @@
 require "vnd.dovecot.testsuite";
 
-/* Compile and execute all example scripts to trigger 
+/* Compile and execute all example scripts to trigger
  * any Segfaults. No message is set and no results are checked.
  */
 

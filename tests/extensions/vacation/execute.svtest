@@ -18,7 +18,7 @@ test "Action" {
 	if not test_result_action :index 1 "vacation" {
 		test_fail "vacation action is not present as first item in result";
 	}
-	
+
 	if not test_result_action :index 2 "keep" {
 		test_fail "keep action is missing in result";
 	}
@@ -61,7 +61,7 @@ test "Using :seconds tag" {
 	if not test_result_action :index 1 "vacation" {
 		test_fail "vacation action is not present as first item in result";
 	}
-	
+
 	if not test_result_action :index 2 "keep" {
 		test_fail "keep action is missing in result";
 	}

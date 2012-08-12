@@ -48,12 +48,12 @@
 #include "testsuite-variables.h"
 #include "testsuite-arguments.h"
 
-/* 
- * Operations 
+/*
+ * Operations
  */
 
-const struct sieve_operation_def *testsuite_operations[] = { 
-	&test_operation, 
+const struct sieve_operation_def *testsuite_operations[] = {
+	&test_operation,
 	&test_finish_operation,
 	&test_fail_operation,
 	&test_config_set_operation,
@@ -105,13 +105,13 @@ static bool ext_testsuite_binary_load
 
 /* Extension object */
 
-const struct sieve_extension_def testsuite_extension = { 
-	"vnd.dovecot.testsuite", 
+const struct sieve_extension_def testsuite_extension = {
+	"vnd.dovecot.testsuite",
 	NULL, NULL,
 	ext_testsuite_validator_load,
 	ext_testsuite_generator_load,
 	ext_testsuite_interpreter_load,
-	ext_testsuite_binary_load, 
+	ext_testsuite_binary_load,
 	NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(testsuite_operations),
 	SIEVE_EXT_DEFINE_OPERANDS(testsuite_operands)

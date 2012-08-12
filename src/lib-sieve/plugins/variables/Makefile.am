@@ -23,7 +23,7 @@ libsieve_ext_variables_la_SOURCES = \
 	ext-variables.c
 
 public_headers = \
-	sieve-ext-variables.h 
+	sieve-ext-variables.h
 
 headers = \
 	ext-variables-common.h \

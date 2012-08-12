@@ -42,7 +42,7 @@ struct sieve_object {
 /*
  * Object coding
  */
- 
+
 void sieve_opr_object_emit
 	(struct sieve_binary_block *sblock, const struct sieve_extension *ext,
 		const struct sieve_object_def *obj_def);
@@ -53,12 +53,12 @@ bool sieve_opr_object_read_data
 		struct sieve_object *obj);
 
 bool sieve_opr_object_read
-	(const struct sieve_runtime_env *renv, 
+	(const struct sieve_runtime_env *renv,
 		const struct sieve_operand_class *opclass, sieve_size_t *address,
 		struct sieve_object *obj);
 
 bool sieve_opr_object_dump
-	(const struct sieve_dumptime_env *denv, 
+	(const struct sieve_dumptime_env *denv,
 		const struct sieve_operand_class *opclass, sieve_size_t *address,
 		struct sieve_object *obj);
 

@@ -30,7 +30,7 @@ bool cmd_renamescript(struct client_command_context *cmd)
 
 	if (sieve_storage_script_rename(script, newname) < 0)
 		client_send_storage_error(client, storage);
-	else    
+	else
 		client_send_ok(client, "Renamescript completed.");
 
 	return TRUE;

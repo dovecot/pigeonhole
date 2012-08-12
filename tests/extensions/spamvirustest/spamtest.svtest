@@ -136,7 +136,7 @@ test_set "message" text:
 From: legitimate@example.com
 To: victim@dovecot.example.net
 Subject: Not spammish
-X-Spam-Status: 
+X-Spam-Status:
 X-Spam-Status1: s
 X-Spam-Status2: sssssss
 X-Spam-Status3: ssssssss

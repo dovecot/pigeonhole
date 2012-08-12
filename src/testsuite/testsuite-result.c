@@ -74,9 +74,9 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 
 	testsuite_log_clear_messages();
 
-	/* Execute the result */	
+	/* Execute the result */
 	ret=sieve_result_execute(_testsuite_result, NULL);
-	
+
 	return ( ret > 0 );
 }
 
@@ -84,14 +84,14 @@ void testsuite_result_print
 (const struct sieve_runtime_env *renv)
 {
 	struct ostream *out;
-	
-	out = o_stream_create_fd(1, 0, FALSE);	
+
+	out = o_stream_create_fd(1, 0, FALSE);
 
 	o_stream_send_str(out, "\n--");
 	sieve_result_print(_testsuite_result, renv->scriptenv, out, NULL);
 	o_stream_send_str(out, "--\n\n");
 
-	o_stream_destroy(&out);	
+	o_stream_destroy(&out);
 }
 
 /*
@@ -118,7 +118,7 @@ struct sieve_stringlist *testsuite_result_stringlist_create
 (const struct sieve_runtime_env *renv, int index)
 {
 	struct testsuite_result_stringlist *strlist;
-	    
+
 	strlist = t_new(struct testsuite_result_stringlist, 1);
 	strlist->strlist.runenv = renv;
 	strlist->strlist.exec_status = SIEVE_EXEC_OK;
@@ -128,14 +128,14 @@ struct sieve_stringlist *testsuite_result_stringlist_create
 	strlist->result_iter = testsuite_result_iterate_init();
  	strlist->index = index;
 	strlist->pos = 0;
- 
+
 	return &strlist->strlist;
 }
 
 static int testsuite_result_stringlist_next_item
 (struct sieve_stringlist *_strlist, string_t **str_r)
 {
-	struct testsuite_result_stringlist *strlist = 
+	struct testsuite_result_stringlist *strlist =
 		(struct testsuite_result_stringlist *) _strlist;
 	const struct sieve_action *action;
 	const char *act_name;
@@ -146,15 +146,15 @@ static int testsuite_result_stringlist_next_item
 	if ( strlist->index > 0 && strlist->pos > 0 )
 		return 0;
 
-	do { 
+	do {
 		if ( (action=sieve_result_iterate_next(strlist->result_iter, &keep))
 			== NULL )
 			return 0;
-		
+
 		strlist->pos++;
 	} while ( strlist->pos < strlist->index );
-	
-	if ( keep ) 
+
+	if ( keep )
 		act_name = "keep";
 	else
 		act_name = ( action == NULL || action->def == NULL ||
@@ -167,7 +167,7 @@ static int testsuite_result_stringlist_next_item
 static void testsuite_result_stringlist_reset
 (struct sieve_stringlist *_strlist)
 {
-	struct testsuite_result_stringlist *strlist = 
+	struct testsuite_result_stringlist *strlist =
 		(struct testsuite_result_stringlist *) _strlist;
 
 	strlist->result_iter = testsuite_result_iterate_init();

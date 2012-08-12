@@ -9,28 +9,28 @@
 #include "sieve-code.h"
 #include "sieve-binary.h"
 
-/* 
- * Anyof test 
+/*
+ * Anyof test
  *
- * Syntax 
- *   anyof <tests: test-list>   
+ * Syntax
+ *   anyof <tests: test-list>
  */
 
-static bool tst_anyof_generate	
+static bool tst_anyof_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx,
 		struct sieve_jumplist *jumps, bool jump_true);
 static bool tst_anyof_validate_const
 	(struct sieve_validator *valdtr, struct sieve_command *tst,
 		int *const_current, int const_next);
 
-const struct sieve_command_def tst_anyof = { 
-	"anyof", 
-	SCT_TEST, 
+const struct sieve_command_def tst_anyof = {
+	"anyof",
+	SCT_TEST,
 	0, 2, FALSE, FALSE,
 	NULL, NULL, NULL,
 	tst_anyof_validate_const,
 	NULL,
-	tst_anyof_generate 
+	tst_anyof_generate
 };
 
 /*
@@ -51,11 +51,11 @@ static bool tst_anyof_validate_const
 	return TRUE;
 }
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
-static bool tst_anyof_generate	
+static bool tst_anyof_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx,
 		struct sieve_jumplist *jumps, bool jump_true)
 {
@@ -63,36 +63,36 @@ static bool tst_anyof_generate
 	struct sieve_ast_node *test;
 	struct sieve_jumplist true_jumps;
 
-	if ( sieve_ast_test_count(ctx->ast_node) > 1 ) {	
+	if ( sieve_ast_test_count(ctx->ast_node) > 1 ) {
 		if ( !jump_true ) {
 			/* Prepare jumplist */
 			sieve_jumplist_init_temp(&true_jumps, sblock);
 		}
-	
+
 		test = sieve_ast_test_first(ctx->ast_node);
-		while ( test != NULL ) {	
+		while ( test != NULL ) {
 			bool result;
 
 			/* If this test list must jump on true, all sub-tests can simply add their jumps
-			 * to the caller's jump list, otherwise this test redirects all true jumps to the 
+			 * to the caller's jump list, otherwise this test redirects all true jumps to the
 			 * end of the currently generated code. This is just after a final jump to the false
-			 * case 
+			 * case
 			 */
-			if ( !jump_true ) 
+			if ( !jump_true )
 				result = sieve_generate_test(cgenv, test, &true_jumps, TRUE);
 			else
 				result = sieve_generate_test(cgenv, test, jumps, TRUE);
 
 			if ( !result ) return FALSE;
-		
+
 			test = sieve_ast_test_next(test);
-		}	
-	
+		}
+
 		if ( !jump_true ) {
 			/* All tests failed, jump to case FALSE */
 			sieve_operation_emit(sblock, NULL, &sieve_jmp_operation);
 			sieve_jumplist_add(jumps, sieve_binary_emit_offset(sblock, 0));
-			
+
 			/* All true exits jump here */
 			sieve_jumplist_resolve(&true_jumps);
 		}
@@ -100,7 +100,7 @@ static bool tst_anyof_generate
 		/* Script author is being inefficient; we can optimize the allof test away */
 		test = sieve_ast_test_first(ctx->ast_node);
 		sieve_generate_test(cgenv, test, jumps, jump_true);
-	}		
-		
+	}
+
 	return TRUE;
 }

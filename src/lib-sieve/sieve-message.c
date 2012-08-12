@@ -29,18 +29,18 @@
 /*
  * Message transmission
  */
- 
+
 const char *sieve_message_get_new_id(const struct sieve_instance *svinst)
 {
 	static int count = 0;
-	
+
 	return t_strdup_printf("<dovecot-sieve-%s-%s-%d@%s>",
 		dec2str(ioloop_timeval.tv_sec), dec2str(ioloop_timeval.tv_usec),
     count++, svinst->hostname);
 }
 
-/* 
- * Message context 
+/*
+ * Message context
  */
 
 struct sieve_message_version {
@@ -55,7 +55,7 @@ struct sieve_message_context {
 	pool_t context_pool;
 	int refcount;
 
-	struct sieve_instance *svinst; 
+	struct sieve_instance *svinst;
 
 	struct mail_user *mail_user;
 	const struct sieve_message_data *msgdata;
@@ -99,7 +99,7 @@ static inline struct sieve_message_version *sieve_message_version_get
 	versions = array_get_modifiable(&msgctx->versions, &count);
 	if ( count == 0 )
 		return array_append_space(&msgctx->versions);
-	
+
 	return &versions[count-1];
 }
 
@@ -168,12 +168,12 @@ static void sieve_message_context_clear(struct sieve_message_context *msgctx)
 }
 
 void sieve_message_context_unref(struct sieve_message_context **msgctx)
-{	
+{
 	i_assert((*msgctx)->refcount > 0);
 
 	if (--(*msgctx)->refcount != 0)
 		return;
-		
+
 	if ( (*msgctx)->raw_mail_user != NULL )
 		mail_user_unref(&(*msgctx)->raw_mail_user);
 
@@ -190,11 +190,11 @@ static void sieve_message_context_flush(struct sieve_message_context *msgctx)
 {
 	if ( msgctx->context_pool != NULL )
 		pool_unref(&(msgctx->context_pool));
-	
+
 	msgctx->context_pool =
 		pool_alloconly_create("sieve_message_context_data", 1024);
 
-	p_array_init(&msgctx->ext_contexts, msgctx->context_pool, 
+	p_array_init(&msgctx->ext_contexts, msgctx->context_pool,
 		sieve_extensions_get_count(msgctx->svinst));
 }
 
@@ -217,23 +217,23 @@ pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
 /* Extension support */
 
 void sieve_message_context_extension_set
-(struct sieve_message_context *msgctx, const struct sieve_extension *ext, 
+(struct sieve_message_context *msgctx, const struct sieve_extension *ext,
 	void *context)
 {
 	if ( ext->id < 0 ) return;
 
-	array_idx_set(&msgctx->ext_contexts, (unsigned int) ext->id, &context);	
+	array_idx_set(&msgctx->ext_contexts, (unsigned int) ext->id, &context);
 }
 
 const void *sieve_message_context_extension_get
-(struct sieve_message_context *msgctx, const struct sieve_extension *ext) 
+(struct sieve_message_context *msgctx, const struct sieve_extension *ext)
 {
 	void * const *ctx;
 
 	if  ( ext->id < 0 || ext->id >= (int) array_count(&msgctx->ext_contexts) )
 		return NULL;
-	
-	ctx = array_idx(&msgctx->ext_contexts, (unsigned int) ext->id);		
+
+	ctx = array_idx(&msgctx->ext_contexts, (unsigned int) ext->id);
 
 	return *ctx;
 }
@@ -248,27 +248,27 @@ static void sieve_message_envelope_parse(struct sieve_message_context *msgctx)
 	/* FIXME: log parse problems properly; logs only 'failure' now */
 
 	msgctx->envelope_orig_recipient = sieve_address_parse_envelope_path
-		(msgctx->pool, msgdata->orig_envelope_to);	
+		(msgctx->pool, msgdata->orig_envelope_to);
 
 	if ( msgctx->envelope_orig_recipient == NULL ) {
 		sieve_sys_error(svinst,
 			"original envelope recipient address '%s' is unparsable",
-			msgdata->orig_envelope_to); 
+			msgdata->orig_envelope_to);
 	} else if ( msgctx->envelope_orig_recipient->local_part == NULL ) {
 		sieve_sys_error(svinst,
 			"original envelope recipient address '%s' is a null path",
 			msgdata->orig_envelope_to);
-	} 
+	}
 
 	msgctx->envelope_final_recipient = sieve_address_parse_envelope_path
-		(msgctx->pool, msgdata->final_envelope_to);	
-	
+		(msgctx->pool, msgdata->final_envelope_to);
+
 	if ( msgctx->envelope_final_recipient == NULL ) {
 		if ( msgctx->envelope_orig_recipient != NULL ) {
 			sieve_sys_error(svinst,
 				"final envelope recipient address '%s' is unparsable",
 				msgdata->final_envelope_to);
-		} 
+		}
 	} else if ( msgctx->envelope_final_recipient->local_part == NULL ) {
 		if ( strcmp(msgdata->orig_envelope_to, msgdata->final_envelope_to) != 0 ) {
 			sieve_sys_error(svinst,
@@ -278,11 +278,11 @@ static void sieve_message_envelope_parse(struct sieve_message_context *msgctx)
 	}
 
 	msgctx->envelope_sender = sieve_address_parse_envelope_path
-		(msgctx->pool, msgdata->return_path);	
+		(msgctx->pool, msgdata->return_path);
 
 	if ( msgctx->envelope_sender == NULL ) {
-		sieve_sys_error(svinst, 
-			"envelope sender address '%s' is unparsable", 
+		sieve_sys_error(svinst,
+			"envelope sender address '%s' is unparsable",
 			msgdata->return_path);
 	}
 
@@ -292,7 +292,7 @@ static void sieve_message_envelope_parse(struct sieve_message_context *msgctx)
 const struct sieve_address *sieve_message_get_orig_recipient_address
 (struct sieve_message_context *msgctx)
 {
-	if ( !msgctx->envelope_parsed ) 
+	if ( !msgctx->envelope_parsed )
 		sieve_message_envelope_parse(msgctx);
 
 	return msgctx->envelope_orig_recipient;
@@ -301,7 +301,7 @@ const struct sieve_address *sieve_message_get_orig_recipient_address
 const struct sieve_address *sieve_message_get_final_recipient_address
 (struct sieve_message_context *msgctx)
 {
-	if ( !msgctx->envelope_parsed ) 
+	if ( !msgctx->envelope_parsed )
 		sieve_message_envelope_parse(msgctx);
 
 	return msgctx->envelope_final_recipient;
@@ -310,16 +310,16 @@ const struct sieve_address *sieve_message_get_final_recipient_address
 const struct sieve_address *sieve_message_get_sender_address
 (struct sieve_message_context *msgctx)
 {
-	if ( !msgctx->envelope_parsed ) 
+	if ( !msgctx->envelope_parsed )
 		sieve_message_envelope_parse(msgctx);
 
-	return msgctx->envelope_sender;	
-} 
+	return msgctx->envelope_sender;
+}
 
 const char *sieve_message_get_orig_recipient
 (struct sieve_message_context *msgctx)
 {
-	if ( !msgctx->envelope_parsed ) 
+	if ( !msgctx->envelope_parsed )
 		sieve_message_envelope_parse(msgctx);
 
 	return sieve_address_to_string(msgctx->envelope_orig_recipient);
@@ -328,7 +328,7 @@ const char *sieve_message_get_orig_recipient
 const char *sieve_message_get_final_recipient
 (struct sieve_message_context *msgctx)
 {
-	if ( !msgctx->envelope_parsed ) 
+	if ( !msgctx->envelope_parsed )
 		sieve_message_envelope_parse(msgctx);
 
 	return sieve_address_to_string(msgctx->envelope_final_recipient);
@@ -337,7 +337,7 @@ const char *sieve_message_get_final_recipient
 const char *sieve_message_get_sender
 (struct sieve_message_context *msgctx)
 {
-	if ( !msgctx->envelope_parsed ) 
+	if ( !msgctx->envelope_parsed )
 		sieve_message_envelope_parse(msgctx);
 
 	return sieve_address_to_string(msgctx->envelope_sender);
@@ -379,7 +379,7 @@ int sieve_message_substitute
 	if ( msgctx->substitute_snapshot ) {
 		version = sieve_message_version_new(msgctx);
 	} else {
-		version = sieve_message_version_get(msgctx);	
+		version = sieve_message_version_get(msgctx);
 		sieve_message_version_free(version);
 	}
 
@@ -403,8 +403,8 @@ struct mail *sieve_message_get_mail
 {
 	const struct sieve_message_version *versions;
 	unsigned int count;
-	
-	versions = array_get(&msgctx->versions, &count); 
+
+	versions = array_get(&msgctx->versions, &count);
 	if ( count == 0 )
 		return msgctx->msgdata->mail;
 
@@ -424,13 +424,13 @@ struct edit_mail *sieve_message_edit
 	if ( version->edit_mail == NULL ) {
 		version->edit_mail = edit_mail_wrap
 			(( version->mail == NULL ? msgctx->msgdata->mail : version->mail ));
-	} else if ( msgctx->edit_snapshot ) {	
-		version->edit_mail = edit_mail_snapshot(version->edit_mail); 
+	} else if ( msgctx->edit_snapshot ) {
+		version->edit_mail = edit_mail_snapshot(version->edit_mail);
 	}
 
 	msgctx->edit_snapshot = FALSE;
 
-	return version->edit_mail; 
+	return version->edit_mail;
 }
 
 void sieve_message_snapshot
@@ -481,15 +481,15 @@ struct sieve_stringlist *sieve_message_header_stringlist_create
 	return &strlist->strlist;
 }
 
-static inline string_t *_header_right_trim(const char *raw) 
+static inline string_t *_header_right_trim(const char *raw)
 {
 	string_t *result;
 	int i;
-	
+
 	for ( i = strlen(raw)-1; i >= 0; i-- ) {
 		if ( raw[i] != ' ' && raw[i] != '\t' ) break;
 	}
-	
+
 	result = t_str_new(i+1);
 	str_append_n(result, raw, i + 1);
 	return result;
@@ -500,7 +500,7 @@ static inline string_t *_header_right_trim(const char *raw)
 static int sieve_message_header_stringlist_next_item
 (struct sieve_stringlist *_strlist, string_t **str_r)
 {
-	struct sieve_message_header_stringlist *strlist = 
+	struct sieve_message_header_stringlist *strlist =
 		(struct sieve_message_header_stringlist *) _strlist;
 	const struct sieve_runtime_env *renv = _strlist->runenv;
 	struct mail *mail = sieve_message_get_mail(renv->msgctx);
@@ -521,7 +521,7 @@ static int sieve_message_header_stringlist_next_item
 		int ret;
 
 		/* Read next header name from source list */
-		if ( (ret=sieve_stringlist_next_item(strlist->field_names, &hdr_item)) 
+		if ( (ret=sieve_stringlist_next_item(strlist->field_names, &hdr_item))
 			<= 0 )
 			return ret;
 
@@ -557,7 +557,7 @@ static int sieve_message_header_stringlist_next_item
 static void sieve_message_header_stringlist_reset
 (struct sieve_stringlist *_strlist)
 {
-	struct sieve_message_header_stringlist *strlist = 
+	struct sieve_message_header_stringlist *strlist =
 		(struct sieve_message_header_stringlist *) _strlist;
 
 	strlist->headers = NULL;

@@ -17,7 +17,7 @@ Frop
 test "UTF-8 Subject" {
 	/* Trigger vacation response with rediculous Russian subject */
 	vacation :subject "Auto: Я могу есть стекло, оно мне не вредит."
-		"I am not in today"; 
+		"I am not in today";
 
 	/* Execute Sieve result (sending message to dummy SMTP) */
 	if not test_result_execute {
@@ -60,7 +60,7 @@ Frop
 test "MIME Encoded Subject" {
 	/* Trigger vacation response with rediculous Russian subject */
 	vacation :subject "=?utf-8?b?w4TDlsOc?= sadasd"
-		"I am not in today"; 
+		"I am not in today";
 
 	/* Execute Sieve result (sending message to dummy SMTP) */
 	if not test_result_execute {

@@ -6,20 +6,20 @@
 
 #include "sieve-common.h"
 
-/* 
- * Variable argument 
+/*
+ * Variable argument
  */
 
 extern const struct sieve_argument_def variable_argument;
 
-/* 
- * Match value argument 
+/*
+ * Match value argument
  */
 
 extern const struct sieve_argument_def match_value_argument;
 
-/* 
- * Variable string argument 
+/*
+ * Variable string argument
  */
 
 extern const struct sieve_argument_def variable_string_argument;

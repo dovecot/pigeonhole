@@ -1,6 +1,6 @@
 /*
  * Tag errors
- * 
+ *
  * Total errors: 2 (+1 = 3)
  */
 

@@ -34,20 +34,20 @@
 #include "ext-include-binary.h"
 #include "ext-include-variables.h"
 
-/* 
- * Operations 
+/*
+ * Operations
  */
 
-static const struct sieve_operation_def *ext_include_operations[] = { 
-	&include_operation, 
+static const struct sieve_operation_def *ext_include_operations[] = {
+	&include_operation,
 	&return_operation,
 	&global_operation
 };
 
-/* 
+/*
  * Extension
  */
- 
+
 /* Forward declaration */
 
 static bool ext_include_validator_load
@@ -55,18 +55,18 @@ static bool ext_include_validator_load
 static bool ext_include_generator_load
 	(const struct sieve_extension *ext, const struct sieve_codegen_env *cgenv);
 static bool ext_include_interpreter_load
-	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
 		sieve_size_t *address);
 static bool ext_include_binary_load
 	(const struct sieve_extension *ext, struct sieve_binary *binary);
 
 /* Extension objects */
 
-const struct sieve_extension_def include_extension = { 
-	"include", 
+const struct sieve_extension_def include_extension = {
+	"include",
 	ext_include_load,
 	ext_include_unload,
-	ext_include_validator_load, 
+	ext_include_validator_load,
 	ext_include_generator_load,
 	ext_include_interpreter_load,
 	ext_include_binary_load,
@@ -92,7 +92,7 @@ static bool ext_include_validator_load
 	ext_include_variables_global_namespace_init(ext, valdtr);
 
 	return TRUE;
-}	
+}
 
 static bool ext_include_generator_load
 (const struct sieve_extension *ext, const struct sieve_codegen_env *cgenv)
@@ -103,11 +103,11 @@ static bool ext_include_generator_load
 }
 
 static bool ext_include_interpreter_load
-(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
 	sieve_size_t *address ATTR_UNUSED)
 {
 	ext_include_interpreter_context_init(ext, renv->interp);
-	
+
 	return TRUE;
 }
 

@@ -153,7 +153,7 @@ static struct istream *mail_raw_create_stream
  */
 
 struct mail_user *mail_raw_user_create
-(struct master_service *service, struct mail_user *mail_user) 
+(struct master_service *service, struct mail_user *mail_user)
 {
 	void **sets = master_service_settings_get_others(service);
 
@@ -165,7 +165,7 @@ struct mail_user *mail_raw_user_create
  */
 
 static struct mail_raw *mail_raw_create
-(struct mail_user *ruser, struct istream *input, 
+(struct mail_user *ruser, struct istream *input,
 	const char *mailfile, const char *sender, time_t mtime)
 {
 	struct mail_raw *mailr;
@@ -174,11 +174,11 @@ static struct mail_raw *mail_raw_create
 	int ret;
 
 	if ( mailfile != NULL && *mailfile != '/' )
-		mailfile = t_abspath(mailfile);		
+		mailfile = t_abspath(mailfile);
 
 	mailr = i_new(struct mail_raw, 1);
 
-	envelope_sender = sender != NULL ? sender : DEFAULT_ENVELOPE_SENDER;	
+	envelope_sender = sender != NULL ? sender : DEFAULT_ENVELOPE_SENDER;
 	if ( mailfile == NULL ) {
 		ret = raw_mailbox_alloc_stream(ruser, input, mtime,
 					       envelope_sender, &mailr->box);
@@ -214,14 +214,14 @@ struct mail_raw *mail_raw_open_data
 
 	input = i_stream_create_from_data(str_data(mail_data), str_len(mail_data));
 	i_stream_set_name(input, "data");
-	
+
 	mailr = mail_raw_create(ruser, input, NULL, NULL, (time_t)-1);
 
 	i_stream_unref(&input);
 
 	return mailr;
 }
-	
+
 struct mail_raw *mail_raw_open_file
 (struct mail_user *ruser, const char *path)
 {
@@ -229,7 +229,7 @@ struct mail_raw *mail_raw_open_file
 	struct istream *input = NULL;
 	time_t mtime = (time_t)-1;
 	const char *sender = NULL;
-	
+
 	if ( path == NULL || strcmp(path, "-") == 0 ) {
 		path = NULL;
 		input = mail_raw_create_stream(ruser, 0, &mtime, &sender);
@@ -243,7 +243,7 @@ struct mail_raw *mail_raw_open_file
 	return mailr;
 }
 
-void mail_raw_close(struct mail_raw **mailr) 
+void mail_raw_close(struct mail_raw **mailr)
 {
 	mail_free(&(*mailr)->mail);
 	mailbox_transaction_rollback(&(*mailr)->trans);

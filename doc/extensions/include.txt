@@ -15,7 +15,7 @@ are able to include their own personal scripts or site-wide scripts.
 
 Included scripts can include more scripts of their own, yielding a tree of
 included scripts with the main script (typically the user's personal script) at
-its root. 
+its root.
 
 Configuration
 =============
@@ -29,4 +29,4 @@ sieve_include_max_includes = 255
   of scripts involved in the include tree.
 
 sieve_include_max_nesting_depth = 10
-  The maximum nesting depth for the include tree. 
+  The maximum nesting depth for the include tree.

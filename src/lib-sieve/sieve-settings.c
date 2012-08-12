@@ -21,7 +21,7 @@ static bool sieve_setting_parse_uint
 			setting, str_value);
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -44,7 +44,7 @@ static bool sieve_setting_parse_int
 			setting, str_value);
 		return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -69,8 +69,8 @@ bool sieve_setting_get_uint_value
 			setting, str_value);
 		return FALSE;
 	}
-	
-	return TRUE;	
+
+	return TRUE;
 }
 
 bool sieve_setting_get_int_value
@@ -94,8 +94,8 @@ bool sieve_setting_get_int_value
 
 		return FALSE;
 	}
-	
-	return TRUE;	
+
+	return TRUE;
 }
 
 bool sieve_setting_get_size_value
@@ -146,7 +146,7 @@ bool sieve_setting_get_size_value
 	}
 
 	*value_r = (size_t) (value * multiply);
-	
+
 	return TRUE;
 }
 
@@ -197,7 +197,7 @@ bool sieve_setting_get_duration_value
 	case 's': /* seconds */
 		multiply = 1;
 		break;
-	case 'm': /* minutes */	
+	case 'm': /* minutes */
 		multiply = 60;
 		break;
 	case 'h': /* hours */
@@ -221,7 +221,7 @@ bool sieve_setting_get_duration_value
 	}
 
 	*value_r = (unsigned int) (value * multiply);
-	
+
 	return TRUE;
 }
 

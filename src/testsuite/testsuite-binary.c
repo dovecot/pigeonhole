@@ -32,13 +32,13 @@ static char *testsuite_binary_tmp = NULL;
  */
 
 void testsuite_binary_init(void)
-{	
+{
 	testsuite_binary_tmp = i_strconcat
 		(testsuite_tmp_dir_get(), "/binaries", NULL);
 
 	if ( mkdir(testsuite_binary_tmp, 0700) < 0 ) {
-		i_fatal("failed to create temporary directory '%s': %m.", 
-			testsuite_binary_tmp);		
+		i_fatal("failed to create temporary directory '%s': %m.",
+			testsuite_binary_tmp);
 	}
 }
 
@@ -48,8 +48,8 @@ void testsuite_binary_deinit(void)
 		i_warning("failed to remove temporary directory '%s': %m.",
 			testsuite_binary_tmp);
 	}
-	
-	i_free(testsuite_binary_tmp);		
+
+	i_free(testsuite_binary_tmp);
 }
 
 void testsuite_binary_reset(void)

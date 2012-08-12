@@ -24,11 +24,11 @@ bool ext_variables_modifier_exists
 const struct sieve_variables_modifier *ext_variables_modifier_create_instance
 	(const struct sieve_extension *var_ext, struct sieve_validator *valdtr,
 		struct sieve_command *cmd, const char *identifier);
-	
+
 void ext_variables_register_core_modifiers
 	(const struct sieve_extension *var_ext,
 		struct ext_variables_validator_context *ctx);
-	
+
 /*
  * Modifier operand
  */
@@ -38,7 +38,7 @@ extern const struct sieve_operand_def modifier_operand;
 static inline void ext_variables_opr_modifier_emit
 (struct sieve_binary_block *sblock, const struct sieve_extension *ext,
 	const struct sieve_variables_modifier_def *modf_def)
-{ 
+{
 	sieve_opr_object_emit(sblock, ext, &modf_def->obj_def);
 }
 
@@ -62,5 +62,5 @@ static inline bool ext_variables_opr_modifier_dump
 	return sieve_opr_object_dump
 		(denv, &sieve_variables_modifier_operand_class, address, NULL);
 }
-	
+
 #endif /* __EXT_VARIABLES_MODIFIERS_H */

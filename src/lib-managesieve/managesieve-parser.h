@@ -20,7 +20,7 @@ enum managesieve_parser_flags {
 
 struct managesieve_parser;
 
-/* Create new MANAGESIEVE argument parser. 
+/* Create new MANAGESIEVE argument parser.
 
    max_line_size can be used to approximately limit the maximum amount of
    memory that gets allocated when parsing a line. Input buffer size limits

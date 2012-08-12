@@ -22,7 +22,7 @@ test "RFC example" {
 
 	if not string :matches " ${state} " "* pending *" {
     	# the above test always succeeds
-		
+
 		test_fail "test should have matched: \" ${state} \"";
 	}
 }

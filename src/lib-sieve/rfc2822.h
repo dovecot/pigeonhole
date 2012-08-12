@@ -1,4 +1,4 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
 
 #ifndef __RFC2822_H
@@ -10,8 +10,8 @@
 
 /*
  * Verification
- */ 
- 
+ */
+
 bool rfc2822_header_field_name_verify
 	(const char *field_name, unsigned int len);
 bool rfc2822_header_field_body_verify

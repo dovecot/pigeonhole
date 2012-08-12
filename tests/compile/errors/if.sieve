@@ -1,5 +1,5 @@
 /*
- * If command errors 
+ * If command errors
  *
  * Total errors: 11 (+1 = 12)
  */
@@ -63,7 +63,7 @@ if true {
 
 # If used as test
 if if true {
-} 
+}
 
 # Else if in stead of elsif
 

@@ -15,8 +15,8 @@ Test!
 ;
 
 /* Empty line
- * 
- *  RFC 5173: 
+ *
+ *  RFC 5173:
  *    'The body test matches content in the body of an email message, that
  *     is, anything following the first empty line after the header.  (The
  *     empty line itself, if present, is not considered to be part of the
@@ -69,9 +69,9 @@ test "Defaults" {
 /* No body
  *
  *  RFC 5173:
- *    'If a message consists of a header only, not followed by an empty line, 
- *     then that set is empty and all "body" tests return false, including 
- *     those that test for an empty string.  (This is similar to how the 
+ *    'If a message consists of a header only, not followed by an empty line,
+ *     then that set is empty and all "body" tests return false, including
+ *     those that test for an empty string.  (This is similar to how the
  *     "header" test always fails when the named header fields aren't present.)'
  */
 

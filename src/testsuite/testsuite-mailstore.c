@@ -11,10 +11,10 @@
 #include "mail-namespace.h"
 #include "mail-storage.h"
 
-#include "sieve-common.h" 
+#include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-interpreter.h"
- 
+
 #include "testsuite-message.h"
 #include "testsuite-common.h"
 #include "testsuite-smtp.h"
@@ -46,13 +46,13 @@ static struct mail *testsuite_mailstore_mail = NULL;
  */
 
 void testsuite_mailstore_init(void)
-{	
+{
 	testsuite_mailstore_tmp = i_strconcat
 		(testsuite_tmp_dir_get(), "/mailstore", NULL);
 
 	if ( mkdir(testsuite_mailstore_tmp, 0700) < 0 ) {
-		i_fatal("failed to create temporary directory '%s': %m.", 
-			testsuite_mailstore_tmp);		
+		i_fatal("failed to create temporary directory '%s': %m.",
+			testsuite_mailstore_tmp);
 	}
 
 	sieve_tool_init_mail_user
@@ -67,8 +67,8 @@ void testsuite_mailstore_deinit(void)
 		i_warning("failed to remove temporary directory '%s': %m.",
 			testsuite_mailstore_tmp);
 	}
-	
-	i_free(testsuite_mailstore_tmp);		
+
+	i_free(testsuite_mailstore_tmp);
 }
 
 void testsuite_mailstore_reset(void)
@@ -105,7 +105,7 @@ static void testsuite_mailstore_close(void)
 
 	if ( testsuite_mailstore_trans != NULL )
 		mailbox_transaction_rollback(&testsuite_mailstore_trans);
-		
+
 	if ( testsuite_mailstore_box != NULL )
 		mailbox_free(&testsuite_mailstore_box);
 
@@ -124,9 +124,9 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 
 	if ( testsuite_mailstore_mail == NULL ) {
 		testsuite_mailstore_close();
-	} else if ( testsuite_mailstore_folder != NULL 
+	} else if ( testsuite_mailstore_folder != NULL
 		&& strcmp(folder, testsuite_mailstore_folder) != 0  ) {
-		testsuite_mailstore_close();	
+		testsuite_mailstore_close();
 	} else {
 		return testsuite_mailstore_mail;
 	}
@@ -136,9 +136,9 @@ static struct mail *testsuite_mailstore_open(const char *folder)
 		sieve_sys_error(testsuite_sieve_instance,
 			"testsuite: failed to open mailbox '%s'", folder);
 		mailbox_free(&box);
-		return NULL;	
+		return NULL;
 	}
-	
+
 	/* Sync mailbox */
 
 	if ( mailbox_sync(box, MAILBOX_SYNC_FLAG_FULL_READ) < 0 ) {

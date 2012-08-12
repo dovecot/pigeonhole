@@ -64,7 +64,7 @@ static const struct sieve_command_def cmd_unmark = {
     NULL, NULL, NULL
 };
 
-/* 
+/*
  * Extension
  */
 
@@ -76,24 +76,24 @@ static bool ext_imapflags_interpreter_load
 	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
 		sieve_size_t *address);
 
-const struct sieve_extension_def imapflags_extension = { 
-	"imapflags", 
-	ext_imapflags_load, 
+const struct sieve_extension_def imapflags_extension = {
+	"imapflags",
+	ext_imapflags_load,
 	NULL,
-	ext_imapflags_validator_load, 
+	ext_imapflags_validator_load,
 	NULL,
-	ext_imapflags_interpreter_load, 
+	ext_imapflags_interpreter_load,
 	NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
+	SIEVE_EXT_DEFINE_NO_OPERATIONS,
 	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_imapflags_load
 (const struct sieve_extension *ext, void **context)
 {
-	if ( *context == NULL ) {	
+	if ( *context == NULL ) {
 		/* Make sure real extension is registered, it is needed by the binary */
-		*context = (void *)	
+		*context = (void *)
 			sieve_extension_require(ext->svinst, &imap4flags_extension, FALSE);
 	}
 
@@ -105,7 +105,7 @@ static bool ext_imapflags_load
  */
 
 static bool ext_imapflags_validator_extension_validate
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr, 
+	(const struct sieve_extension *ext, struct sieve_validator *valdtr,
 		void *context, struct sieve_ast_argument *require_arg);
 
 const struct sieve_validator_extension imapflags_validator_extension = {
@@ -117,7 +117,7 @@ const struct sieve_validator_extension imapflags_validator_extension = {
 static bool ext_imapflags_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
-	const struct sieve_extension *master_ext = 
+	const struct sieve_extension *master_ext =
 		(const struct sieve_extension *) ext->context;
 
 	sieve_validator_extension_register
@@ -129,12 +129,12 @@ static bool ext_imapflags_validator_load
 	sieve_validator_register_command(valdtr, master_ext, &cmd_removeflag);
 
 	sieve_validator_register_command(valdtr, master_ext, &cmd_mark);
-	sieve_validator_register_command(valdtr, master_ext, &cmd_unmark);	
+	sieve_validator_register_command(valdtr, master_ext, &cmd_unmark);
 
     /* Attach implicit flags tag to keep and fileinto commands */
     ext_imap4flags_attach_flags_tag(valdtr, master_ext, "keep", TRUE);
     ext_imap4flags_attach_flags_tag(valdtr, master_ext, "fileinto", TRUE);
-	
+
 	return TRUE;
 }
 
@@ -142,7 +142,7 @@ static bool ext_imapflags_validator_extension_validate
 (const struct sieve_extension *ext, struct sieve_validator *valdtr,
 	void *context ATTR_UNUSED, struct sieve_ast_argument *require_arg)
 {
-	const struct sieve_extension *master_ext = 
+	const struct sieve_extension *master_ext =
 		(const struct sieve_extension *) ext->context;
 
 	if ( sieve_validator_extension_loaded(valdtr, master_ext) ) {
@@ -163,7 +163,7 @@ static bool ext_imapflags_interpreter_load
 (const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
 	sieve_size_t *address ATTR_UNUSED)
 {
-	const struct sieve_extension *master_ext = 
+	const struct sieve_extension *master_ext =
 		(const struct sieve_extension *) ext->context;
 
 	sieve_interpreter_extension_register
@@ -174,7 +174,7 @@ static bool ext_imapflags_interpreter_load
 
 /*
  * Command validation
- */ 
+ */
 
 static bool cmd_mark_validate
 (struct sieve_validator *valdtr, struct sieve_command *cmd)
@@ -189,7 +189,7 @@ static bool cmd_mark_validate
 
 	if ( !sieve_validator_argument_activate
 		(valdtr, cmd, cmd->first_positional, FALSE) )
-		return FALSE;	
-		
+		return FALSE;
+
 	return TRUE;
 }

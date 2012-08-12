@@ -142,7 +142,7 @@ static inline struct _header_field *_header_field_create(struct _header *header)
 	struct _header_field *hfield;
 
 	hfield = i_new(struct _header_field, 1);
-	hfield->refcount = 1;	
+	hfield->refcount = 1;
 	hfield->header = header;
 	if ( header != NULL )
 		_header_ref(header);
@@ -221,7 +221,7 @@ struct edit_mail *edit_mail_wrap(struct mail *mail)
 	/* Create dummy raw mailbox for our wrapper */
 
 	raw_mail_user = edit_mail_raw_storage_get(mail->box->storage->user);
-	
+
 	if ( raw_mailbox_alloc_stream(raw_mail_user, wrapped_stream, (time_t)-1,
 		"editor@example.com", &raw_box) < 0 ) {
 		i_error("edit-mail: failed to open raw box: %s",
@@ -285,7 +285,7 @@ struct edit_mail *edit_mail_snapshot(struct edit_mail *edmail)
 	edmail_new->wrapped_body_size = edmail->wrapped_body_size;
 	edmail_new->hdr_size = edmail->hdr_size;
 	edmail_new->body_size = edmail->body_size;
-	edmail_new->appended_hdr_size = edmail->appended_hdr_size;		
+	edmail_new->appended_hdr_size = edmail->appended_hdr_size;
 
 	edmail_new->wrapped_stream = edmail->wrapped_stream;
 	i_stream_ref(edmail_new->wrapped_stream);
@@ -328,12 +328,12 @@ struct edit_mail *edit_mail_snapshot(struct edit_mail *edmail)
 
 			if ( field_idx == edmail->header_fields_appended )
 				edmail_new->header_fields_appended = field_idx_new;
-		
+
 			field_idx = next;
 		}
 
 		edmail_new->modified = TRUE;
-	}	
+	}
 
 	edmail_new->headers_parsed = edmail->headers_parsed;
 
@@ -359,7 +359,7 @@ void edit_mail_reset(struct edit_mail *edmail)
 
 		_header_field_unref(field_idx->field);
 		i_free(field_idx);
-		
+
 		field_idx = next;
 	}
 
@@ -501,7 +501,7 @@ static void edit_mail_header_field_delete
 			i_free(header_idx);
 		} else if ( header_idx->first == field_idx ) {
 			struct _header_field_index *hfield = header_idx->first->next;
-		
+
 			while ( hfield != NULL && hfield->header != header_idx ) {
 				hfield = hfield->next;
 			}
@@ -510,7 +510,7 @@ static void edit_mail_header_field_delete
 			header_idx->first = hfield;
 		} else if ( header_idx->last == field_idx ) {
 			struct _header_field_index *hfield = header_idx->last->prev;
-		
+
 			while ( hfield != NULL && hfield->header != header_idx ) {
 				hfield = hfield->prev;
 			}
@@ -561,7 +561,7 @@ static int edit_mail_headers_parse
 
 	T_BEGIN {
 		hdr_data = t_str_new(1024);
-		while ( (ret=message_parse_header_next(hparser, &hdr)) > 0 ) {	
+		while ( (ret=message_parse_header_next(hparser, &hdr)) > 0 ) {
 			struct _header_field_index *field_idx_new;
 			struct _header_field *field;
 
@@ -571,7 +571,7 @@ static int edit_mail_headers_parse
 			}
 
 			if ( hdr == NULL || hdr->eoh ) break;
-	
+
 			/* We deny the existence of any `Content-Length:' header. This header is
 			 * non-standard and it can wreak havok when the message is modified.
 			 */
@@ -647,7 +647,7 @@ static int edit_mail_headers_parse
 
 			_header_field_unref(current->field);
 			i_free(current);
-		
+
 			current = next;
 		}
 
@@ -756,7 +756,7 @@ void edit_mail_header_add
 	/* Create header field data (folded if necessary) */
 	T_BEGIN {
 		string_t *enc_value, *data;
-		
+
 		enc_value = t_str_new(strlen(field_name) + strlen(value) + 64);
 		data = t_str_new(strlen(field_name) + strlen(value) + 128);
 
@@ -770,7 +770,7 @@ void edit_mail_header_add
 		field->size = str_len(data);
 		field->virtual_size = ( edmail->crlf ? field->size : field->size + lines );
 		field->lines = lines;
-	} T_END;	
+	} T_END;
 
 	/* Record original (utf8) value */
 	field->utf8_value = _header_value_unfold(value);
@@ -836,7 +836,7 @@ int edit_mail_header_delete
 	while ( field_idx != NULL ) {
 		struct _header_field_index *next =
 			( index >= 0 ? field_idx->next : field_idx->prev );
-	
+
 		if ( field_idx->field->header == header_idx->header ) {
 			bool final;
 
@@ -874,10 +874,10 @@ int edit_mail_header_delete
 				if ( header_idx->first == NULL )
 					header_idx->first = current;
 				header_idx->last = current;
-			}		
+			}
 			current = current->next;
 		}
-	} 
+	}
 
 	return ret;
 }
@@ -937,15 +937,15 @@ void edit_mail_headers_iterate_deinit
 	*edhiter = NULL;
 }
 
-static inline string_t *_header_right_trim(const char *raw) 
+static inline string_t *_header_right_trim(const char *raw)
 {
 	string_t *result;
 	int i;
-	
+
 	for ( i = strlen(raw)-1; i >= 0; i-- ) {
 		if ( raw[i] != ' ' && raw[i] != '\t' ) break;
 	}
-	
+
 	result = t_str_new(i+1);
 	str_append_n(result, raw, i + 1);
 	return result;
@@ -971,7 +971,7 @@ bool edit_mail_headers_iterate_next
 (struct edit_mail_header_iter *edhiter)
 {
 	do {
-		edhiter->current = 
+		edhiter->current =
 			( !edhiter->reverse ? edhiter->current->next : edhiter->current->next );
 	} while ( edhiter->current != NULL && edhiter->current->header != NULL &&
 		edhiter->header != NULL && edhiter->current->header != edhiter->header );
@@ -1022,7 +1022,7 @@ static void edit_mail_free(struct mail *mail)
 }
 
 static void edit_mail_set_seq
-(struct mail *mail ATTR_UNUSED, uint32_t seq ATTR_UNUSED, 
+(struct mail *mail ATTR_UNUSED, uint32_t seq ATTR_UNUSED,
 	bool saving ATTR_UNUSED)
 {
 	i_panic("edit_mail_set_seq() not implemented");
@@ -1120,7 +1120,7 @@ static int edit_mail_get_virtual_size(struct mail *mail, uoff_t *size_r)
 	} else {
 		*size_r = edmail->wrapped_body_size.virtual_size + 2;
 	}
-	
+
 	*size_r += edmail->hdr_size.virtual_size + edmail->body_size.virtual_size;
 	return 0;
 }
@@ -1140,7 +1140,7 @@ static int edit_mail_get_physical_size(struct mail *mail, uoff_t *size_r)
 		*size_r = edmail->wrapped_body_size.physical_size +
 			( edmail->eoh_crlf ? 2 : 1 );
 	}
-	
+
 	*size_r += edmail->hdr_size.physical_size + edmail->body_size.physical_size;
 	return 0;
 }
@@ -1166,7 +1166,7 @@ static int edit_mail_get_first_header
 		header_idx->count == 0 ) {
 
 		if ( !edmail->headers_parsed ) {
-			/* No new header */			
+			/* No new header */
 			return edmail->wrapped->v.get_first_header
 				(&edmail->wrapped->mail, field_name, decode_to_utf8, value_r);
 		}
@@ -1200,7 +1200,7 @@ static int edit_mail_get_first_header
 			if ( (ret=edmail->wrapped->v.get_first_header
 				(&edmail->wrapped->mail, field_name, decode_to_utf8, value_r)) != 0 )
 				return ret;
-			
+
 			/* Use first (apparently appended) header */
 			field = header_idx->first->field;
 		} else {
@@ -1265,7 +1265,7 @@ static int edit_mail_get_headers
 		if ( field_idx == edmail->header_fields_appended && headers != NULL ) {
 			while ( *headers != NULL ) {
 				array_append(&header_values, headers, 1);
-	
+
 				headers++;
 			}
 		}
@@ -1293,7 +1293,7 @@ static int edit_mail_get_headers
 	if ( headers != NULL ) {
 		while ( *headers != NULL ) {
 			array_append(&header_values, headers, 1);
-	
+
 			headers++;
 		}
 	}
@@ -1321,14 +1321,14 @@ static int edit_mail_get_stream
 	if ( edmail->stream == NULL ) {
 		edmail->stream = edit_mail_istream_create(edmail);
 	}
-	
+
 	if ( hdr_size != NULL ) {
 		*hdr_size = edmail->wrapped_hdr_size;
 		hdr_size->physical_size += edmail->hdr_size.physical_size;
 		hdr_size->virtual_size += edmail->hdr_size.virtual_size;
 		hdr_size->lines += edmail->hdr_size.lines;
 	}
-	
+
 	if ( body_size != NULL ) {
 		*body_size = edmail->wrapped_body_size;
 	}
@@ -1526,20 +1526,20 @@ static ssize_t edit_mail_istream_read(struct istream_private *stream)
 	if ( !edmail->headers_parsed && edmail->header_fields_appended != NULL ) {
 		/* Output headers from original stream */
 
-		/* At what offset does the header end (not including LF of final empty line) 
+		/* At what offset does the header end (not including LF of final empty line)
 		 * Any final CR is dealt with later
 		 */
 		hdr_size = edmail->wrapped_hdr_size.physical_size +
 			edmail->hdr_size.physical_size -
-			edmail->appended_hdr_size.physical_size - 1; 
+			edmail->appended_hdr_size.physical_size - 1;
 
 		if ( v_offset < hdr_size ) {
-			parent_v_offset = stream->parent_start_offset + 
+			parent_v_offset = stream->parent_start_offset +
 				(v_offset + edmail->appended_hdr_size.physical_size -
 				edmail->hdr_size.physical_size);
 
 			i_stream_seek(stream->parent, parent_v_offset);
-	
+
 			if ( (ret=i_stream_read_copy_from_parent(&stream->istream)) < 0 )
 				return ret;
 
@@ -1646,7 +1646,7 @@ static void edit_mail_istream_seek
 	if ( v_offset < offset ) {
 		stream_reset_to(edstream, v_offset);
 
-		/* Find the header */		
+		/* Find the header */
 		cur_header = edmail->header_fields_head;
 		i_assert( cur_header != NULL &&
 			cur_header != edmail->header_fields_appended );
@@ -1681,7 +1681,7 @@ static void edit_mail_istream_seek
 			stream_reset_to(edstream, v_offset);
 
 			offset -= edmail->appended_hdr_size.physical_size;
-		
+
 			cur_header = edmail->header_fields_appended;
 			i_assert( cur_header != NULL );
 			offset += cur_header->field->size;

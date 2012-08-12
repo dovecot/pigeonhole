@@ -3,9 +3,9 @@ require "notify";
 
 test "Execute" {
 	/* Test to catch runtime segfaults */
-	notify 
+	notify
 		:message "This is probably very important"
 		:low
-		:method "mailto" 
+		:method "mailto"
 		:options ["stephan@example.com", "stephan@example.org"];
 }

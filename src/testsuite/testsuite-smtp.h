@@ -1,9 +1,9 @@
 /* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
- 
+
 #ifndef __TESTSUITE_SMTP_H
 #define __TESTSUITE_SMTP_H
- 
+
 void testsuite_smtp_init(void);
 void testsuite_smtp_deinit(void);
 void testsuite_smtp_reset(void);
@@ -11,7 +11,7 @@ void testsuite_smtp_reset(void);
 /*
  * Simulated SMTP out
  */
- 
+
 void *testsuite_smtp_open
 	(const struct sieve_script_env *senv ATTR_UNUSED, const char *destination,
 		const char *return_path, struct ostream **output_r);

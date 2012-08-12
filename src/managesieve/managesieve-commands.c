@@ -9,8 +9,8 @@
 
 #include <stdlib.h>
 
-/* Might want to combine this somewhere in a commands-common.c 
- * to avoid duplicate code 
+/* Might want to combine this somewhere in a commands-common.c
+ * to avoid duplicate code
  */
 
 static const struct command managesieve_base_commands[] = {
@@ -27,7 +27,7 @@ static const struct command managesieve_base_commands[] = {
 	{ "NOOP", cmd_noop }
 };
 
-#define MANAGESIEVE_COMMANDS_COUNT N_ELEMENTS(managesieve_base_commands) 
+#define MANAGESIEVE_COMMANDS_COUNT N_ELEMENTS(managesieve_base_commands)
 
 static ARRAY_DEFINE(managesieve_commands, struct command);
 static bool commands_unsorted;
@@ -98,7 +98,7 @@ void commands_init(void)
 {
 	i_array_init(&managesieve_commands, 16);
 	commands_unsorted = FALSE;
-	
+
 	command_register_array(managesieve_base_commands, MANAGESIEVE_COMMANDS_COUNT);
 }
 

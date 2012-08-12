@@ -14,7 +14,7 @@
 #if 0
 #define debug_printf(...) printf ("lineinfo: " __VA_ARGS__)
 #else
-#define debug_printf(...) 
+#define debug_printf(...)
 #endif
 
 /*
@@ -63,19 +63,19 @@ void sieve_binary_debug_writer_deinit
 }
 
 void sieve_binary_debug_emit
-(struct sieve_binary_debug_writer *dwriter, sieve_size_t code_address, 
+(struct sieve_binary_debug_writer *dwriter, sieve_size_t code_address,
 	unsigned int code_line, unsigned int code_column)
 {
 	struct sieve_binary_block *sblock = dwriter->sblock;
 	sieve_size_t address_inc = code_address - dwriter->address;
 	unsigned int line_inc = code_line - dwriter->line;
 	unsigned int sp_opcode = 0;
-	
+
 	/* Check for applicability of special opcode */
 	if ( (LINPROG_LINE_BASE + LINPROG_LINE_RANGE - 1) >= line_inc ) {
-		sp_opcode = LINPROG_OP_SPECIAL_BASE + (line_inc - LINPROG_LINE_BASE) + 
+		sp_opcode = LINPROG_OP_SPECIAL_BASE + (line_inc - LINPROG_LINE_BASE) +
 			(LINPROG_LINE_RANGE * address_inc);
-		
+
 		if ( sp_opcode > 255 )
 			sp_opcode = 0;
 	}
@@ -92,7 +92,7 @@ void sieve_binary_debug_emit
 			(void)sieve_binary_emit_unsigned(sblock, address_inc);
 		}
 	} else {
-		(void)sieve_binary_emit_byte(sblock, sp_opcode); 	
+		(void)sieve_binary_emit_byte(sblock, sp_opcode);
 	}
 
 	/* Set column */
@@ -154,16 +154,16 @@ void sieve_binary_debug_reader_reset
 unsigned int sieve_binary_debug_read_line
 (struct sieve_binary_debug_reader *dreader, sieve_size_t code_address)
 {
-	size_t linprog_size; 
+	size_t linprog_size;
 	sieve_size_t address;
 	unsigned long int line;
 
 	if ( code_address < dreader->last_address )
 		sieve_binary_debug_reader_reset(dreader);
 
-	if ( code_address >= dreader->last_address && 
+	if ( code_address >= dreader->last_address &&
 		code_address < dreader->address ) {
-		debug_printf("%08llx: NOOP [%08llx]\n", 
+		debug_printf("%08llx: NOOP [%08llx]\n",
 			(unsigned long long) dreader->state, (unsigned long long) code_address);
 		return dreader->last_line;
 	}
@@ -171,7 +171,7 @@ unsigned int sieve_binary_debug_read_line
 	address = dreader->address;
 	line = dreader->line;
 
-	debug_printf("%08llx: READ [%08llx]\n", 
+	debug_printf("%08llx: READ [%08llx]\n",
 		(unsigned long long) dreader->state, (unsigned long long) code_address);
 
 	linprog_size = sieve_binary_block_get_size(dreader->sblock);
@@ -183,12 +183,12 @@ unsigned int sieve_binary_debug_read_line
 			switch ( opcode ) {
 
 			case LINPROG_OP_COPY:
-				debug_printf("%08llx: COPY ==> %08llx: %ld\n", 
-					(unsigned long long) dreader->state, (unsigned long long) address, 
+				debug_printf("%08llx: COPY ==> %08llx: %ld\n",
+					(unsigned long long) dreader->state, (unsigned long long) address,
 					line);
-			
-				dreader->last_address = dreader->address;				
-				dreader->last_line = dreader->line;				
+
+				dreader->last_address = dreader->address;
+				dreader->last_line = dreader->line;
 
 				dreader->address = address;
 				dreader->line = line;
@@ -231,7 +231,7 @@ unsigned int sieve_binary_debug_read_line
 				}
 				debug_printf("        : = %d\n", value);
 				dreader->column = value;
-				break;			
+				break;
 
 			default:
 				opcode -= LINPROG_OP_SPECIAL_BASE;
@@ -241,7 +241,7 @@ unsigned int sieve_binary_debug_read_line
 
 				debug_printf("%08llx: SPECIAL\n", (unsigned long long) dreader->state);
 				debug_printf("        :  +A %d +L %d\n", (opcode / LINPROG_LINE_RANGE),
-					LINPROG_LINE_BASE + (opcode % LINPROG_LINE_RANGE));				
+					LINPROG_LINE_BASE + (opcode % LINPROG_LINE_RANGE));
 				break;
 			}
 		} else {

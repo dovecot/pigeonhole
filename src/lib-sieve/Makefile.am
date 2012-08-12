@@ -114,7 +114,7 @@ libdovecot_sieve_la_SOURCES = \
 	$(tests) \
 	$(commands) \
 	$(extensions) \
-	sieve.c 
+	sieve.c
 
 headers = \
 	rfc2822.h \

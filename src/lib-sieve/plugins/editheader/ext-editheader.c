@@ -28,12 +28,12 @@
 
 #include "ext-editheader-common.h"
 
-/* 
- * Operations 
+/*
+ * Operations
  */
 
-const struct sieve_operation_def *editheader_operations[] = { 
-	&addheader_operation, 
+const struct sieve_operation_def *editheader_operations[] = {
+	&addheader_operation,
 	&deleteheader_operation
 };
 

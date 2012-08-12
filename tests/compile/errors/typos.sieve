@@ -5,8 +5,8 @@
 
 require "fileinto";
 
-/* 
- * Missing semicolon 
+/*
+ * Missing semicolon
  */
 
 fileinto "frop"
@@ -14,15 +14,15 @@ keep;
 
 /* Other situations */
 
-fileinto "frup" 
+fileinto "frup"
 true;
 
-fileinto "friep" 
+fileinto "friep"
 snot;
 
 /*
  * Forgot tag colon
- */ 
+ */
 
 if address matches "from" "*frop*" {
 	stop;

@@ -14,7 +14,7 @@ Frop.
 test "Actions Fileinto" {
 	test_mailbox_create "aaaa";
 	test_mailbox_create "bbbb";
-	
+
 	if not test_script_compile "execute/actions-fileinto.sieve" {
 		test_fail "failed to compile sieve script";
 	}
@@ -34,13 +34,13 @@ test "Actions Fileinto" {
 
 	if not header "subject" "Frop!" {
 		test_fail "fileinto \"aaaa\" not executed.";
-	}	
+	}
 
 	test_message :folder "bbbb" 0;
 
 	if not header "subject" "Frop!" {
 		test_fail "fileinto \"bbbb\" not executed.";
-	}	
+	}
 }
 
 test "Namespace - file" {

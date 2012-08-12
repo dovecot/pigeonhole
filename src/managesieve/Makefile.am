@@ -49,7 +49,7 @@ managesieve_SOURCES = \
 	managesieve-client.c \
 	managesieve-commands.c \
 	managesieve-capabilities.c \
-	main.c 
+	main.c
 
 noinst_HEADERS = \
 	managesieve-quota.h \
@@ -57,4 +57,4 @@ noinst_HEADERS = \
 	managesieve-commands.h \
 	managesieve-capabilities.h \
 	managesieve-settings.h \
-	managesieve-common.h 
+	managesieve-common.h

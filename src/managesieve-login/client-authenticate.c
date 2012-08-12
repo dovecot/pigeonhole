@@ -138,7 +138,7 @@ static int managesieve_client_auth_read_response
 	uoff_t resp_size;
 	int ret;
 
-	if ( i_stream_read(client->input) == -1 ) {	
+	if ( i_stream_read(client->input) == -1 ) {
 		/* disconnected */
 		client_destroy(client, "Disconnected");
 		return -1;
@@ -284,7 +284,7 @@ int cmd_authenticate
 	const char *mech_name, *init_response;
 	const char *error;
 	int ret;
-	
+
 	if (!msieve_client->auth_mech_name_parsed) {
 		i_assert(args != NULL);
 
@@ -292,7 +292,7 @@ int cmd_authenticate
 		if ( !managesieve_arg_get_string(&args[0], &mech_name) )
 			return -1;
 
-		if (*mech_name == '\0') 
+		if (*mech_name == '\0')
 			return -1;
 
 		/* Refuse the ANONYMOUS mechanism. */
@@ -327,6 +327,6 @@ int cmd_authenticate
 		return ret;
 
 	msieve_client->cmd_finished = TRUE;
-	return 0;	
+	return 0;
 }
 

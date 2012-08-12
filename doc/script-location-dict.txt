@@ -45,7 +45,7 @@ The following additional options are recognized:
     user running the Sieve interpreter is used.
 
 If the name of the Script is left unspecified and not otherwise provided by the
-Sieve interpreter, the name defaults to `default'. 
+Sieve interpreter, the name defaults to `default'.
 
 Examples
 ========
@@ -79,7 +79,7 @@ plugin {
 }
 
 The Sieve script named "keep" is retrieved from the file dict as the main
-script. Binaries are stored in the ~/.sieve-bin directory. 
+script. Binaries are stored in the ~/.sieve-bin directory.
 
 Example 2
 ---------

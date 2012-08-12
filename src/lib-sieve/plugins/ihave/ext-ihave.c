@@ -37,7 +37,7 @@ const struct sieve_extension_def ihave_extension = {
 	NULL, NULL,
 	ext_ihave_validator_load,
 	ext_ihave_generator_load,
-	NULL, 
+	NULL,
 	ext_ihave_binary_load,
 	ext_ihave_binary_dump,
 	NULL,

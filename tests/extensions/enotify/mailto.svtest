@@ -80,11 +80,11 @@ test "Multiple recipients" {
 
 	if not address :count "eq" :comparator "i;ascii-numeric" "to" "2" {
 		test_fail "too many recipients in To header";
-	} 
+	}
 
 	if not address :count "eq" :comparator "i;ascii-numeric" "cc" "1" {
 		test_fail "too many recipients in Cc header";
-	} 
+	}
 
 	if not header "subject" "Frop received" {
 		test_fail "subject header set incorrectly";
@@ -211,11 +211,11 @@ test "Envelope" {
 
 	if not envelope :is "to" "timo@example.com" {
 		test_fail "envelope sender set incorrectly";
-	}	
+	}
 }
 
-/* 
- * Envelope :from 
+/*
+ * Envelope :from
  */
 
 test_set "message" text:
@@ -258,11 +258,11 @@ test "Envelope :from" {
 
 	if not envelope :is "to" "timo@example.com" {
 		test_fail "envelope sender set incorrectly";
-	}	
+	}
 }
 
-/* 
- * Envelope <> 
+/*
+ * Envelope <>
  */
 
 test_set "message" text:
@@ -305,5 +305,5 @@ test "Envelope <>" {
 
 	if not envelope :is "to" "timo@example.com" {
 		test_fail "envelope sender set incorrectly";
-	}	
+	}
 }

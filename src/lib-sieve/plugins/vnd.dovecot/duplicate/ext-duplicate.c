@@ -11,25 +11,25 @@
  * Status: experimental
  *
  */
- 
+
 #include "lib.h"
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
-#include "sieve-binary.h" 
+#include "sieve-binary.h"
 
 #include "sieve-validator.h"
 
 #include "ext-duplicate-common.h"
 
-/* 
- * Extension 
+/*
+ * Extension
  */
 
 static bool ext_duplicate_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
-	
-const struct sieve_extension_def duplicate_extension = { 
+
+const struct sieve_extension_def duplicate_extension = {
 	"vnd.dovecot.duplicate",
 	ext_duplicate_load,
 	ext_duplicate_unload,

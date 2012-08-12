@@ -7,7 +7,7 @@
 /*
  * Sieve script filenames
  */
- 
+
 bool sieve_scriptfile_has_extension(const char *filename);
 const char *sieve_scriptfile_get_script_name(const char *filename);
 const char *sieve_scriptfile_from_name(const char *name);

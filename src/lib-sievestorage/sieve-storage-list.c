@@ -31,7 +31,7 @@ struct sieve_list_context {
 
 struct sieve_list_context *sieve_storage_list_init
 (struct sieve_storage *storage)
-{	
+{
 	struct sieve_list_context *ctx;
 	const char *active = NULL;
 	pool_t pool;
@@ -57,7 +57,7 @@ struct sieve_list_context *sieve_storage_list_init
 			ctx->seen_active = FALSE;
 		}
 	} T_END;
-		
+
 	return ctx;
 }
 
@@ -74,15 +74,15 @@ const char *sieve_storage_list_next
 		if ( (dp = readdir(ctx->dirp)) == NULL )
 			return NULL;
 
-		scriptname = sieve_scriptfile_get_script_name(dp->d_name);	
+		scriptname = sieve_scriptfile_get_script_name(dp->d_name);
 		if (scriptname != NULL ) {
-			/* Don't list our active sieve script link if the link 
+			/* Don't list our active sieve script link if the link
 			 * resides in the script dir (generally a bad idea).
 			 */
-			if ( *(storage->link_path) == '\0' && 
+			if ( *(storage->link_path) == '\0' &&
 				strcmp(storage->active_fname, dp->d_name) == 0 )
 				continue;
-		
+
 			break;
 		}
 	}
@@ -108,5 +108,5 @@ int sieve_storage_list_deinit(struct sieve_list_context **ctx)
 }
 
 
-	
-    
+
+

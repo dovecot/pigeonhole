@@ -6,11 +6,11 @@
 #include "sieve-validator.h"
 #include "sieve-generator.h"
 
-/* 
- * Not test 
+/*
+ * Not test
  *
  * Syntax:
- *   not <tests: test-list>   
+ *   not <tests: test-list>
  */
 
 static bool tst_not_generate
@@ -20,14 +20,14 @@ static bool tst_not_validate_const
 	(struct sieve_validator *valdtr, struct sieve_command *tst,
 		int *const_current, int const_next);
 
-const struct sieve_command_def tst_not = { 
-	"not", 
-	SCT_TEST, 
+const struct sieve_command_def tst_not = {
+	"not",
+	SCT_TEST,
 	0, 1, FALSE, FALSE,
 	NULL, NULL, NULL,
 	tst_not_validate_const,
-	NULL, 
-	tst_not_generate 
+	NULL,
+	tst_not_generate
 };
 
 /*
@@ -48,8 +48,8 @@ static bool tst_not_validate_const
 	return TRUE;
 }
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool tst_not_generate
@@ -57,10 +57,10 @@ static bool tst_not_generate
 	struct sieve_jumplist *jumps, bool jump_true)
 {
 	struct sieve_ast_node *test;
-	
+
 	/* Validator verified the existance of the single test already */
-	test = sieve_ast_test_first(ctx->ast_node); 
-	
+	test = sieve_ast_test_first(ctx->ast_node);
+
 	return sieve_generate_test(cgenv, test, jumps, !jump_true);
 }
 

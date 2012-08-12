@@ -37,34 +37,34 @@ static void sieve_storage_verror
 		const char *fmt, va_list args);
 
 static const char *sieve_storage_get_relative_link_path
-	(const char *active_path, const char *storage_dir) 
+	(const char *active_path, const char *storage_dir)
 {
 	const char *link_path, *p;
 	size_t pathlen;
-	
-	/* Determine to what extent the sieve storage and active script 
-	 * paths match up. This enables the managed symlink to be short and the 
-	 * sieve storages can be moved around without trouble (if the active 
+
+	/* Determine to what extent the sieve storage and active script
+	 * paths match up. This enables the managed symlink to be short and the
+	 * sieve storages can be moved around without trouble (if the active
 	 * script path is common to the script storage).
-	 */		
+	 */
 	p = strrchr(active_path, '/');
 	if ( p == NULL ) {
 		link_path = storage_dir;
-	} else { 
+	} else {
 		pathlen = p - active_path;
 
 		if ( strncmp( active_path, storage_dir, pathlen ) == 0 &&
-			(storage_dir[pathlen] == '/' || storage_dir[pathlen] == '\0') ) 
+			(storage_dir[pathlen] == '/' || storage_dir[pathlen] == '\0') )
 		{
-			if ( storage_dir[pathlen] == '\0' ) 
-				link_path = ""; 
-			else 
+			if ( storage_dir[pathlen] == '\0' )
+				link_path = "";
+			else
 				link_path = storage_dir + pathlen + 1;
-		} else 
+		} else
 			link_path = storage_dir;
 	}
 
-	/* Add trailing '/' when link path is not empty 
+	/* Add trailing '/' when link path is not empty
 	 */
 	pathlen = strlen(link_path);
     if ( pathlen != 0 && link_path[pathlen-1] != '/')
@@ -85,7 +85,7 @@ static mode_t get_dir_mode(mode_t mode)
 }
 
 static void sieve_storage_get_permissions
-(const char *path, mode_t *file_mode_r, mode_t *dir_mode_r, gid_t *gid_r, 
+(const char *path, mode_t *file_mode_r, mode_t *dir_mode_r, gid_t *gid_r,
 	const char **gid_origin_r, bool debug)
 {
 	struct stat st;
@@ -129,7 +129,7 @@ static void sieve_storage_get_permissions
 	}
 
 	if ( debug ) {
-		i_debug("sieve-storage: using permissions from %s: mode=0%o gid=%ld", 
+		i_debug("sieve-storage: using permissions from %s: mode=0%o gid=%ld",
 			path, (int)*dir_mode_r, *gid_r == (gid_t)-1 ? -1L : (long)*gid_r);
 	}
 }
@@ -228,7 +228,7 @@ static struct sieve_storage *_sieve_storage_create
 
 		if ( *active_path == '\0' ) {
 			/* disabled */
-			if ( debug ) 
+			if ( debug )
 				i_debug("sieve-storage: sieve is disabled (sieve=\"\")");
 			return NULL;
 		}
@@ -271,15 +271,15 @@ static struct sieve_storage *_sieve_storage_create
 	/* Get the filename for the active script link */
 
 	active_fname = strrchr(active_path, '/');
-	if ( active_fname == NULL ) 
+	if ( active_fname == NULL )
 		active_fname = active_path;
 	else
 		active_fname++;
 
-	if ( *active_fname == '\0' ) {	
+	if ( *active_fname == '\0' ) {
 		/* Link cannot be just a path */
 		i_error("sieve-storage: "
-			"path to active symlink must include the link's filename. Path is: %s", 
+			"path to active symlink must include the link's filename. Path is: %s",
 			active_path);
 
 		return NULL;
@@ -303,7 +303,7 @@ static struct sieve_storage *_sieve_storage_create
 	if ( sieve_data == NULL || *sieve_data == '\0' ) {
 		/* We'll need to figure out the storage location ourself.
 		 *
-		 * It's $HOME/sieve or /sieve when (presumed to be) chrooted.  
+		 * It's $HOME/sieve or /sieve when (presumed to be) chrooted.
 		 */
 		if ( home != NULL && *home != '\0' ) {
 			if (access(home, R_OK|W_OK|X_OK) == 0) {
@@ -375,16 +375,16 @@ static struct sieve_storage *_sieve_storage_create
 		i_debug("sieve-storage: "
 			"using active sieve script path: %s", active_path);
  		i_debug("sieve-storage: "
-			"using sieve script storage directory: %s", storage_dir); 
+			"using sieve script storage directory: %s", storage_dir);
 	}
 
 	/* Get permissions */
 
 	sieve_storage_get_permissions
-		(storage_dir, &file_create_mode, &dir_create_mode, &file_create_gid, 
+		(storage_dir, &file_create_mode, &dir_create_mode, &file_create_gid,
 			&file_create_gid_origin, debug);
 
-	/* 
+	/*
 	 * Ensure sieve local directory structure exists (full autocreate):
 	 *  This currently only consists of a ./tmp direcory
 	 */
@@ -418,7 +418,7 @@ static struct sieve_storage *_sieve_storage_create
 	storage->file_create_mode = file_create_mode;
 	storage->file_create_gid = file_create_gid;
 
-	/* Get the path to be prefixed to the script name in the symlink pointing 
+	/* Get the path to be prefixed to the script name in the symlink pointing
 	 * to the active script.
 	 */
 	link_path = sieve_storage_get_relative_link_path
@@ -447,11 +447,11 @@ static struct sieve_storage *_sieve_storage_create
 
 	if ( debug ) {
 		if ( storage->max_storage > 0 ) {
-			i_info("sieve-storage: quota: storage limit: %llu bytes", 
+			i_info("sieve-storage: quota: storage limit: %llu bytes",
 				(unsigned long long int) storage->max_storage);
 		}
 		if ( storage->max_scripts > 0 ) {
-			i_info("sieve-storage: quota: script count limit: %llu scripts", 
+			i_info("sieve-storage: quota: script count limit: %llu scripts",
 				(unsigned long long int) storage->max_scripts);
 		}
 	}
@@ -493,7 +493,7 @@ struct sieve_error_handler *sieve_storage_get_error_handler
 
 		ehandler->handler.verror = sieve_storage_verror;
 		ehandler->storage = storage;
-		
+
 		storage->ehandler = (struct sieve_error_handler *) ehandler;
 	}
 
@@ -504,12 +504,12 @@ static void ATTR_FORMAT(4, 0) sieve_storage_verror
 (struct sieve_error_handler *ehandler, unsigned int flags ATTR_UNUSED,
 	const char *location ATTR_UNUSED, const char *fmt, va_list args)
 {
-	struct sieve_storage_ehandler *sehandler = 
-		(struct sieve_storage_ehandler *) ehandler; 
+	struct sieve_storage_ehandler *sehandler =
+		(struct sieve_storage_ehandler *) ehandler;
 	struct sieve_storage *storage = sehandler->storage;
 
 	sieve_storage_clear_error(storage);
-	
+
 	if (fmt != NULL) {
 		storage->error = i_strdup_vprintf(fmt, args);
 	}
@@ -558,13 +558,13 @@ void sieve_storage_set_critical
 (struct sieve_storage *storage, const char *fmt, ...)
 {
 	va_list va;
-	
+
 	sieve_storage_clear_error(storage);
 	if (fmt != NULL) {
 		va_start(va, fmt);
 		i_error("sieve-storage: %s", t_strdup_vprintf(fmt, va));
 		va_end(va);
-		
+
 		/* critical errors may contain sensitive data, so let user
 		   see only "Internal error" with a timestamp to make it
 		   easier to look from log files the actual error message. */
@@ -577,10 +577,10 @@ const char *sieve_storage_get_last_error
 {
 	/* We get here only in error situations, so we have to return some
 	   error. If storage->error is NULL, it means we forgot to set it at
-	   some point.. 
+	   some point..
 	 */
-  
-	if ( error_r != NULL ) 
+
+	if ( error_r != NULL )
 		*error_r = storage->error_code;
 
 	return storage->error != NULL ? storage->error : "Unknown error";

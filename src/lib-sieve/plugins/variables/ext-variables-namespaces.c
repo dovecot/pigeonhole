@@ -19,19 +19,19 @@
 void sieve_variables_namespace_register
 (const struct sieve_extension *var_ext, struct sieve_validator *valdtr,
 	const struct sieve_extension *ext,
-	const struct sieve_variables_namespace_def *nspc_def) 
+	const struct sieve_variables_namespace_def *nspc_def)
 {
-	struct ext_variables_validator_context *ctx = 
+	struct ext_variables_validator_context *ctx =
 		ext_variables_validator_context_get(var_ext, valdtr);
-	
+
 	sieve_validator_object_registry_add(ctx->namespaces, ext, &nspc_def->obj_def);
 }
 
 bool ext_variables_namespace_exists
 (const struct sieve_extension *var_ext, struct sieve_validator *valdtr,
-	const char *identifier) 
+	const char *identifier)
 {
-	struct ext_variables_validator_context *ctx = 
+	struct ext_variables_validator_context *ctx =
 		ext_variables_validator_context_get(var_ext, valdtr);
 
 	return sieve_validator_object_registry_find
@@ -40,9 +40,9 @@ bool ext_variables_namespace_exists
 
 const struct sieve_variables_namespace *ext_variables_namespace_create_instance
 (const struct sieve_extension *var_ext, struct sieve_validator *valdtr,
-	struct sieve_command *cmd, const char *identifier) 
+	struct sieve_command *cmd, const char *identifier)
 {
-	struct ext_variables_validator_context *ctx = 
+	struct ext_variables_validator_context *ctx =
 		ext_variables_validator_context_get(var_ext, valdtr);
 	struct sieve_object object;
 	struct sieve_variables_namespace *nspc;
@@ -71,18 +71,18 @@ struct arg_namespace_variable {
 };
 
 static bool arg_namespace_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
 	struct sieve_command *context ATTR_UNUSED);
 
-const struct sieve_argument_def namespace_argument = { 
-	"@namespace", 
+const struct sieve_argument_def namespace_argument = {
+	"@namespace",
 	NULL, NULL, NULL, NULL,
-	arg_namespace_generate 
+	arg_namespace_generate
 };
 
 bool ext_variables_namespace_argument_activate
 (const struct sieve_extension *this_ext, struct sieve_validator *valdtr,
-	struct sieve_ast_argument *arg, struct sieve_command *cmd, 
+	struct sieve_ast_argument *arg, struct sieve_command *cmd,
 	ARRAY_TYPE(sieve_variable_name) *var_name, bool assignment)
 {
 	pool_t pool = sieve_command_pool(cmd);
@@ -95,8 +95,8 @@ bool ext_variables_namespace_argument_activate
 	nspc = ext_variables_namespace_create_instance
 		(this_ext, valdtr, cmd, str_c(name_element->identifier));
 	if ( nspc == NULL ) {
-		sieve_argument_validate_error(valdtr, arg, 
-			"referring to variable in unknown namespace '%s'", 
+		sieve_argument_validate_error(valdtr, arg,
+			"referring to variable in unknown namespace '%s'",
 			str_c(name_element->identifier));
 		return FALSE;
 	}
@@ -110,16 +110,16 @@ bool ext_variables_namespace_argument_activate
 	var = p_new(pool, struct arg_namespace_variable, 1);
 	var->namespace = nspc;
 	var->data = var_data;
-	
+
 	arg->argument = sieve_argument_create(ast, &namespace_argument, this_ext, 0);
 	arg->argument->data = (void *) var;
-	
+
 	return TRUE;
 }
 
 struct sieve_ast_argument *ext_variables_namespace_argument_create
-(const struct sieve_extension *this_ext, 
-	struct sieve_validator *valdtr, struct sieve_ast_argument *parent_arg, 
+(const struct sieve_extension *this_ext,
+	struct sieve_validator *valdtr, struct sieve_ast_argument *parent_arg,
 	struct sieve_command *cmd, ARRAY_TYPE(sieve_variable_name) *var_name)
 {
 	struct sieve_ast *ast = parent_arg->ast;
@@ -127,20 +127,20 @@ struct sieve_ast_argument *ext_variables_namespace_argument_create
 
 	new_arg = sieve_ast_argument_create(ast, sieve_ast_argument_line(parent_arg));
 	new_arg->type = SAAT_STRING;
-	
+
 	if ( !ext_variables_namespace_argument_activate
 		(this_ext, valdtr, new_arg, cmd, var_name, FALSE) )
 		return NULL;
-	
+
 	return new_arg;
 }
 
 static bool arg_namespace_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
 	struct sieve_command *cmd)
 {
 	struct sieve_argument *argument = arg->argument;
-	struct arg_namespace_variable *var = 
+	struct arg_namespace_variable *var =
 		(struct arg_namespace_variable *) argument->data;
 	const struct sieve_variables_namespace *nspc = var->namespace;
 
@@ -154,7 +154,7 @@ static bool arg_namespace_generate
  * Namespace variable operands
  */
 
-const struct sieve_operand_class sieve_variables_namespace_operand_class = 
+const struct sieve_operand_class sieve_variables_namespace_operand_class =
 	{ "variable-namespace" };
 
 static bool opr_namespace_variable_dump
@@ -164,14 +164,14 @@ static int opr_namespace_variable_read
 	(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
 		sieve_size_t *address, string_t **str_r);
 
-static const struct sieve_opr_string_interface namespace_variable_interface = { 
+static const struct sieve_opr_string_interface namespace_variable_interface = {
 	opr_namespace_variable_dump,
 	opr_namespace_variable_read
 };
-		
-const struct sieve_operand_def namespace_variable_operand = { 
-	"namespace", 
-	&variables_extension, 
+
+const struct sieve_operand_def namespace_variable_operand = {
+	"namespace",
+	&variables_extension,
 	EXT_VARIABLES_OPERAND_NAMESPACE_VARIABLE,
 	&string_class,
 	&namespace_variable_interface
@@ -181,7 +181,7 @@ void sieve_variables_opr_namespace_variable_emit
 (struct sieve_binary_block *sblock, const struct sieve_extension *var_ext,
 	const struct sieve_extension *ext,
 	const struct sieve_variables_namespace_def *nspc_def)
-{ 
+{
 	sieve_operand_emit(sblock, var_ext, &namespace_variable_operand);
 	sieve_opr_object_emit(sblock, ext, &nspc_def->obj_def);
 }
@@ -191,14 +191,14 @@ static bool opr_namespace_variable_dump
 	sieve_size_t *address)
 {
 	struct sieve_variables_namespace nspc;
-	struct sieve_operand nsoprnd; 
+	struct sieve_operand nsoprnd;
 
 	if ( !sieve_operand_read(denv->sblock, address, NULL, &nsoprnd) ) {
 		return FALSE;
 	}
 
 	if ( !sieve_opr_object_read_data
-		(denv->sblock, &nsoprnd, &sieve_variables_namespace_operand_class, address, 
+		(denv->sblock, &nsoprnd, &sieve_variables_namespace_operand_class, address,
 			&nspc.object) ) {
 		return FALSE;
   }
@@ -228,7 +228,7 @@ static int opr_namespace_variable_read
 
 	if ( nspc.def == NULL || nspc.def->read_variable == NULL )
 		return SIEVE_EXEC_FAILURE;
-		
+
 	return nspc.def->read_variable(renv, &nspc, oprnd, address, str_r);
 }
 

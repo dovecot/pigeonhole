@@ -29,7 +29,7 @@ struct ext_body_part {
 	const char *content;
 	unsigned long size;
 };
- 
+
 struct ext_body_part_cached {
 	const char *content_type;
 
@@ -37,7 +37,7 @@ struct ext_body_part_cached {
 	const char *decoded_body;
 	size_t raw_body_size;
 	size_t decoded_body_size;
-	
+
 	bool have_body; /* there's the empty end-of-headers line */
 };
 
@@ -93,7 +93,7 @@ static bool _want_multipart_content_type
 		}
 
 		/* match only main type */
-		if ( strncasecmp(*wanted_types, "multipart", 9) == 0 && 
+		if ( strncasecmp(*wanted_types, "multipart", 9) == 0 &&
 			( strlen(*wanted_types) == 9 || *(*wanted_types+9) == '/' ) )
 			return TRUE;
 	}
@@ -117,11 +117,11 @@ static bool ext_body_get_return_parts
 
 	/* Clear result array */
 	array_clear(&ctx->return_body_parts);
-	
+
 	/* Fill result array with requested content_types */
 	for (i = 0; i < count; i++) {
 		if (!body_parts[i].have_body) {
-			/* Part has no body; according to RFC this MUST not match to anything and 
+			/* Part has no body; according to RFC this MUST not match to anything and
 			 * therefore it is not included in the result.
 			 */
 			continue;
@@ -135,7 +135,7 @@ static bool ext_body_get_return_parts
 		return_part = array_append_space(&ctx->return_body_parts);
 
 		/* Depending on whether a decoded body part is requested, the appropriate
-		 * cache item is read. If it is missing, this function fails and the cache 
+		 * cache item is read. If it is missing, this function fails and the cache
 		 * needs to be completed by ext_body_parts_add_missing().
 		 */
 		if (decode_to_plain) {
@@ -179,7 +179,7 @@ static void ext_body_part_save
 		body_part->decoded_body = part_data;
 		body_part->decoded_body_size = part_size;
 	}
-	
+
 	/* Clear buffer */
 	buffer_set_used_size(buf, 0);
 }
@@ -208,10 +208,10 @@ static const char *_parse_content_type(const struct message_header_line *hdr)
 }
 
 /* ext_body_parts_add_missing():
- *   Add requested message body parts to the cache that are missing. 
+ *   Add requested message body parts to the cache that are missing.
  */
 static bool ext_body_parts_add_missing
-(struct sieve_message_context *msgctx, struct ext_body_message_context *ctx, 
+(struct sieve_message_context *msgctx, struct ext_body_message_context *ctx,
 	const char * const *content_types, bool decode_to_plain)
 {
 	struct mail *mail = sieve_message_get_mail(msgctx);
@@ -244,9 +244,9 @@ static bool ext_body_parts_add_missing
 	}
 
 	buffer_set_used_size(ctx->tmp_buffer, 0);
-	
+
 	/* Initialize body decoder */
-	decoder = decode_to_plain ? message_decoder_init(FALSE) : NULL;	
+	decoder = decode_to_plain ? message_decoder_init(FALSE) : NULL;
 
 	//parser = message_parser_init_from_parts(parts, input, 0,
 		//MESSAGE_PARSER_FLAG_INCLUDE_MULTIPART_BLOCKS);
@@ -264,7 +264,7 @@ static bool ext_body_parts_add_missing
 					strcmp(body_part->content_type, "message/rfc822") == 0 ) {
 					message_rfc822 = TRUE;
 				} else {
-					if ( save_body ) { 
+					if ( save_body ) {
 						ext_body_part_save(ctx, body_part, decoder != NULL);
 					}
 				}
@@ -291,7 +291,7 @@ static bool ext_body_parts_add_missing
 							body_part->content_type = parent->content_type;
 							body_part->have_body = TRUE;
 							save_body = _is_wanted_content_type
-								(content_types, body_part->content_type);		
+								(content_types, body_part->content_type);
 							break;
 						}
 					}
@@ -309,9 +309,9 @@ static bool ext_body_parts_add_missing
 			}
 
 			prev_part = block.part;
-			idx++;	
+			idx++;
 		}
-		
+
 		if ( block.hdr != NULL || block.size == 0 ) {
 			/* Reading headers */
 
@@ -326,15 +326,15 @@ static bool ext_body_parts_add_missing
 					ext_body_part_save(ctx, header_part, decoder != NULL);
 					header_part = NULL;
 				}
-	
+
 				/* Save bodies only if we have a wanted content-type */
 				i_assert( body_part != NULL );
 				save_body = _is_wanted_content_type
 					(content_types, body_part->content_type);
 				continue;
 			}
-			
-			/* Encountered the empty line that indicates the end of the headers and 
+
+			/* Encountered the empty line that indicates the end of the headers and
 			 * the start of the body
 			 */
 			if ( block.hdr->eoh ) {
@@ -353,12 +353,12 @@ static bool ext_body_parts_add_missing
 					buffer_append(ctx->tmp_buffer, "\r\n", 2);
 				}
 			}
-				
+
 			/* We're interested of only Content-Type: header */
 			if ( strcasecmp(block.hdr->name, "Content-Type" ) != 0 )
 				continue;
 
-			/* Header can have folding whitespace. Acquire the full value before 
+			/* Header can have folding whitespace. Acquire the full value before
 			 * continuing
 			 */
 			if ( block.hdr->continues ) {
@@ -367,13 +367,13 @@ static bool ext_body_parts_add_missing
 			}
 
 			i_assert( body_part != NULL );
-		
+
 			/* Parse the content type from the Content-type header */
 			T_BEGIN {
 				body_part->content_type =
 					p_strdup(ctx->pool, _parse_content_type(block.hdr));
 			} T_END;
-			
+
 			continue;
 		}
 
@@ -397,7 +397,7 @@ static bool ext_body_parts_add_missing
 
 	/* Try to fill the return_body_parts array once more */
 	have_all = ext_body_get_return_parts(ctx, content_types, decode_to_plain);
-	
+
 	/* This time, failure is a bug */
 	i_assert(have_all);
 
@@ -405,7 +405,7 @@ static bool ext_body_parts_add_missing
 	(void)message_parser_deinit(&parser, &parts);
 	if (decoder != NULL)
 		message_decoder_deinit(&decoder);
-	
+
 	/* Return status */
 	return ( input->stream_errno == 0 );
 }
@@ -414,28 +414,28 @@ static struct ext_body_message_context *ext_body_get_context
 (const struct sieve_extension *this_ext, struct sieve_message_context *msgctx)
 {
 	struct ext_body_message_context *ctx;
-	
+
 	/* Get message context (contains cached message body information) */
 	ctx = (struct ext_body_message_context *)
 		sieve_message_context_extension_get(msgctx, this_ext);
-	
+
 	/* Create it if it does not exist already */
 	if ( ctx == NULL ) {
 		pool_t pool;
 
 		pool = sieve_message_context_pool(msgctx);
-		ctx = p_new(pool, struct ext_body_message_context, 1);	
+		ctx = p_new(pool, struct ext_body_message_context, 1);
 		ctx->pool = pool;
 
 		p_array_init(&ctx->cached_body_parts, pool, 8);
 		p_array_init(&ctx->return_body_parts, pool, 8);
 		ctx->tmp_buffer = buffer_create_dynamic(pool, 1024*64);
-		ctx->raw_body = NULL;		
+		ctx->raw_body = NULL;
 
 		/* Register context */
 		sieve_message_context_extension_set(msgctx, this_ext, (void *) ctx);
 	}
-	
+
 	return ctx;
 }
 
@@ -444,7 +444,7 @@ static bool ext_body_get_content
 	int decode_to_plain, struct ext_body_part **parts_r)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
-	struct ext_body_message_context *ctx = 
+	struct ext_body_message_context *ctx =
 		ext_body_get_context(this_ext, renv->msgctx);
 	bool result = TRUE;
 
@@ -454,7 +454,7 @@ static bool ext_body_get_content
 			(renv->msgctx, ctx, content_types, decode_to_plain != 0) )
 			result = FALSE;
 	} T_END;
-	
+
 	/* Check status */
 	if ( !result ) return FALSE;
 
@@ -469,7 +469,7 @@ static bool ext_body_get_raw
 (const struct sieve_runtime_env *renv, struct ext_body_part **parts_r)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
-	struct ext_body_message_context *ctx = 
+	struct ext_body_message_context *ctx =
 		ext_body_get_context(this_ext, renv->msgctx);
 	struct ext_body_part *return_part;
 	buffer_t *buf;
@@ -492,7 +492,7 @@ static bool ext_body_get_raw
 		i_stream_skip(input, hdr_size.physical_size);
 
 		/* Read raw message body */
-		while ( (ret=i_stream_read_data(input, &data, &size, 0)) > 0 ) {	
+		while ( (ret=i_stream_read_data(input, &data, &size, 0)) > 0 ) {
 			buffer_append(buf, data, size);
 
 			i_stream_skip(input, size);
@@ -501,7 +501,7 @@ static bool ext_body_get_raw
 		if ( ret == -1 && input->stream_errno != 0 )
 			return FALSE;
 	} else {
-		buf = ctx->raw_body;	
+		buf = ctx->raw_body;
 	}
 
 	/* Clear result array */
@@ -510,7 +510,7 @@ static bool ext_body_get_raw
 	if ( buf->used > 0  ) {
 		/* Add terminating NUL to the body part buffer */
 		buffer_append_c(buf, '\0');
-	
+
 		/* Add single item to the result */
 		return_part = array_append_space(&ctx->return_body_parts);
 		return_part->content = buf->data;
@@ -582,7 +582,7 @@ struct sieve_stringlist *ext_body_get_part_list
 static int ext_body_stringlist_next_item
 (struct sieve_stringlist *_strlist, string_t **str_r)
 {
-	struct ext_body_stringlist *strlist = 
+	struct ext_body_stringlist *strlist =
 		(struct ext_body_stringlist *)_strlist;
 
 	*str_r = NULL;
@@ -591,14 +591,14 @@ static int ext_body_stringlist_next_item
 
 	*str_r = t_str_new_const
 		(strlist->body_parts_iter->content, strlist->body_parts_iter->size);
-	strlist->body_parts_iter++;		
+	strlist->body_parts_iter++;
 	return 1;
 }
 
 static void ext_body_stringlist_reset
 (struct sieve_stringlist *_strlist)
 {
-	struct ext_body_stringlist *strlist = 
+	struct ext_body_stringlist *strlist =
 		(struct ext_body_stringlist *)_strlist;
 
 	strlist->body_parts_iter = strlist->body_parts;

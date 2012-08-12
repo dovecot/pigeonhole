@@ -76,7 +76,7 @@ static int sieve_storage_create_tmp
 	string_t *path;
 	int fd;
 
-	path = t_str_new(256);	
+	path = t_str_new(256);
 	str_append(path, storage->dir);
 	str_append(path, "/tmp/");
 	prefix_len = str_len(path);
@@ -90,7 +90,7 @@ static int sieve_storage_create_tmp
 		   possibility of that happening is if time had moved
 		   backwards, but even then it's highly unlikely. */
 		if (stat(str_c(path), &st) == 0) {
-			/* try another file name */	
+			/* try another file name */
 		} else if (errno != ENOENT) {
 			sieve_storage_set_critical(storage,
 				"stat(%s) failed: %m", str_c(path));
@@ -118,7 +118,7 @@ static int sieve_storage_create_tmp
 			sieve_storage_set_critical(storage,
 				"open(%s) failed: %m", str_c(path));
 		}
-	} 
+	}
 
 	return fd;
 }
@@ -171,13 +171,13 @@ sieve_storage_save_init(struct sieve_storage *storage,
 	if ( scriptname != NULL ) {
 		/* Validate script name */
 		if ( !sieve_script_name_is_valid(scriptname) ) {
-			sieve_storage_set_error(storage, 
+			sieve_storage_set_error(storage,
 				SIEVE_ERROR_BAD_PARAMS,
 				"Invalid script name '%s'.", scriptname);
 			return NULL;
 		}
 
-		/* Prevent overwriting the active script link when it resides in the 
+		/* Prevent overwriting the active script link when it resides in the
 		 * sieve storage directory.
 		 */
 		if ( *(storage->link_path) == '\0' ) {
@@ -187,12 +187,12 @@ sieve_storage_save_init(struct sieve_storage *storage,
 			svext = strrchr(storage->active_fname, '.');
 			namelen = svext - storage->active_fname;
 			if ( svext != NULL && strncmp(svext+1, "sieve", 5) == 0 &&
-				strlen(scriptname) == namelen && 
-				strncmp(scriptname, storage->active_fname, namelen) == 0 ) 
+				strlen(scriptname) == namelen &&
+				strncmp(scriptname, storage->active_fname, namelen) == 0 )
 			{
 				sieve_storage_set_error(
-					storage, SIEVE_ERROR_BAD_PARAMS, 
-					"Script name '%s' is reserved for internal use.", scriptname); 
+					storage, SIEVE_ERROR_BAD_PARAMS,
+					"Script name '%s' is reserved for internal use.", scriptname);
 				return NULL;
 			}
 		}
@@ -261,7 +261,7 @@ int sieve_storage_save_finish(struct sieve_save_context *ctx)
 
 		if ( ctx->failed ) {
 			/* delete the tmp file */
-			if (unlink(ctx->tmp_path) < 0 && errno != ENOENT) 
+			if (unlink(ctx->tmp_path) < 0 && errno != ENOENT)
 				i_warning("sieve-storage: Unlink(%s) failed: %m", ctx->tmp_path);
 
 			errno = output_errno;
@@ -290,23 +290,23 @@ static void sieve_storage_save_destroy(struct sieve_save_context **ctx)
 struct sieve_script *sieve_storage_save_get_tempscript
 (struct sieve_save_context *ctx)
 {
-	const char *scriptname = 
-		( ctx->scriptname == NULL ? "" : ctx->scriptname ); 
+	const char *scriptname =
+		( ctx->scriptname == NULL ? "" : ctx->scriptname );
 
-	if (ctx->failed) 
+	if (ctx->failed)
 		return NULL;
 
 	if ( ctx->scriptobject != NULL )
 		return ctx->scriptobject;
 
 	ctx->scriptobject = sieve_storage_script_init_from_path
-		(ctx->storage, ctx->tmp_path, scriptname);	
+		(ctx->storage, ctx->tmp_path, scriptname);
 
 	if ( ctx->scriptobject == NULL ) {
 		if ( ctx->storage->error_code == SIEVE_ERROR_NOT_FOUND ) {
-			sieve_storage_set_critical(ctx->storage, 
+			sieve_storage_set_critical(ctx->storage,
 				"save: Temporary script file with name '%s' got lost, "
-				"which should not happen (possibly deleted externally).", 
+				"which should not happen (possibly deleted externally).",
 				ctx->tmp_path);
 		}
 		return NULL;
@@ -344,7 +344,7 @@ int sieve_storage_save_commit(struct sieve_save_context **ctx)
 	i_assert((*ctx)->scriptname != NULL);
 
 	T_BEGIN {
-		dest_path = t_strconcat((*ctx)->storage->dir, "/", 
+		dest_path = t_strconcat((*ctx)->storage->dir, "/",
 			sieve_scriptfile_from_name((*ctx)->scriptname), NULL);
 
 		failed = !sieve_storage_script_move((*ctx), dest_path);
@@ -359,7 +359,7 @@ void sieve_storage_save_cancel(struct sieve_save_context **ctx)
 {
 	(*ctx)->failed = TRUE;
 
-	if (!(*ctx)->finished) 
+	if (!(*ctx)->finished)
 		(void)sieve_storage_save_finish(*ctx);
 	else
 		(void)unlink((*ctx)->tmp_path);

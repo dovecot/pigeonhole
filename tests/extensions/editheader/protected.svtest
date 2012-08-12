@@ -29,14 +29,14 @@ test "Default protected" {
 
 	deleteheader "received";
 	deleteheader "auto-submitted";
-	
+
 	if not exists "received" {
 		test_fail "protected received header was deleted";
-	}	
+	}
 
 	if not exists "auto-submitted" {
 		test_fail "protected auto-submitted header was deleted";
-	}	
+	}
 }
 
 test_config_set "sieve_editheader_protected" "subject delivery-date x-frop";
@@ -59,14 +59,14 @@ test "Configured protected" {
 	deleteheader "delivery-date";
 	deleteheader "subject";
 	addheader "x-frop" "Frop!";
-	
+
 	if not exists "delivery-date" {
 		test_fail "protected delivery-date header was deleted";
-	}	
+	}
 
 	if exists "subject" {
 		test_fail "subject header cannot be protected, but it was not deleted";
-	}	
+	}
 
 	if exists "x-frop" {
 		test_fail "protected x-frop header was added";

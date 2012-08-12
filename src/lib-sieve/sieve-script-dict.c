@@ -43,9 +43,9 @@ static struct sieve_script *sieve_dict_script_alloc(void)
 
 	pool = pool_alloconly_create("sieve_dict_script", 1024);
 	script = p_new(pool, struct sieve_dict_script, 1);
-	script->script = sieve_dict_script; 
+	script->script = sieve_dict_script;
 	script->script.pool = pool;
-	
+
 	return &script->script;
 }
 
@@ -118,12 +118,12 @@ static int sieve_dict_script_create
 
 	path = t_strconcat
 		(DICT_SIEVE_NAME_PATH, dict_escape_string(name), NULL);
-	
+
 	ret = dict_lookup
 		(script->dict, script->script.pool, path, &script->data_id);
 	if ( ret <= 0 ) {
 		if ( ret < 0 ) {
-			sieve_critical(svinst, ehandler, name, "failed to open sieve script", 
+			sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 				"sieve dict backend: failed to lookup script id from path %s", path);
 			*error_r = SIEVE_ERROR_TEMP_FAIL;
 		} else {
@@ -176,7 +176,7 @@ static struct istream *sieve_dict_script_open
 
 	script->data_pool =
 		pool_alloconly_create("sieve_dict_script data pool", 1024);
-	
+
 	path = t_strconcat
 		(DICT_SIEVE_DATA_PATH, dict_escape_string(script->data_id), NULL);
 
@@ -184,12 +184,12 @@ static struct istream *sieve_dict_script_open
 		(script->dict, script->data_pool, path, &script->data);
 	if ( ret <= 0 ) {
 		if ( ret < 0 ) {
-			sieve_critical(svinst, ehandler, name, "failed to open sieve script", 
+			sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 				"sieve dict backend: failed to lookup data with id `%s' "
 				"for script `%s' from path %s",	script->data_id, name,
 				path);
 		} else {
-			sieve_critical(svinst, ehandler, name, "failed to open sieve script", 
+			sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 				"sieve dict backend: data with id `%s' for script `%s' "
 				"not found at path %s",	script->data_id, name, path);
 		}

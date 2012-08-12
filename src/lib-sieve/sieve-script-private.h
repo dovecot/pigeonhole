@@ -31,7 +31,7 @@ struct sieve_script_vfuncs {
 	struct sieve_binary *(*binary_load)
 		(struct sieve_script *script, enum sieve_error *error_r);
 	int (*binary_save)
-		(struct sieve_script *script, struct sieve_binary *sbin,	
+		(struct sieve_script *script, struct sieve_binary *sbin,
 			bool update, enum sieve_error *error_r);
 
 	int (*get_size)

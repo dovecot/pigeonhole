@@ -14,8 +14,8 @@ Test message.
 
 test "Basic example" {
 	if not address :regex :comparator "i;ascii-casemap" "from" [
-		"stephan(\\+.*)?@it\\.example\\.com", 
-		"stephan(\\+.*)?@friep\\.example\\.com" 
+		"stephan(\\+.*)?@it\\.example\\.com",
+		"stephan(\\+.*)?@friep\\.example\\.com"
 		] {
 		test_fail "failed to match";
 	}
@@ -25,7 +25,7 @@ test "No values" {
 	if header :regex "cc" [".*\\.com", ".*\\.nl"] {
 		test_fail "matched inappropriately";
 	}
-}	
+}
 
 
 test "More values" {
@@ -48,4 +48,4 @@ test "Variable regex" {
 	if not string "${1}" "sieve" {
 		test_fail "failed to extract proper match value from variable regex";
 	}
-}	
+}

@@ -7,13 +7,13 @@
 /*
  * Binary context management
  */
- 
+
 struct ext_ihave_binary_context;
 
 struct ext_ihave_binary_context *ext_ihave_binary_get_context
 	(const struct sieve_extension *this_ext, struct sieve_binary *sbin);
 struct ext_ihave_binary_context *ext_ihave_binary_init
-	(const struct sieve_extension *this_ext, struct sieve_binary *sbin, 
+	(const struct sieve_extension *this_ext, struct sieve_binary *sbin,
 		struct sieve_ast *ast);
 
 /*

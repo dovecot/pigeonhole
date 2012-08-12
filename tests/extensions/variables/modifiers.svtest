@@ -113,31 +113,31 @@ test "RFC examples" {
 	if not string "${a}" "juMBlEd lETteRS" {
 		test_fail "modified assignment failed (1): ${a}";
 	}
-	
+
 	set :length "b" "${a}";                # => "15"
 	if not string "${b}" "15" {
 		test_fail "modified assignment failed (2): ${a}";
 	}
-	
+
 	set :lower "b" "${a}";                 #  => "jumbled letters"
 	if not string "${b}" "jumbled letters" {
 		test_fail "modified assignment failed (3): ${a}";
 	}
-	
+
     set :upperfirst "b" "${a}";            # => "JuMBlEd lETteRS"
 	if not string "${b}" "JuMBlEd lETteRS" {
 		test_fail "modified assignment failed (4): ${a}";
 	}
-	
+
 	set :upperfirst :lower "b" "${a}";     # => "Jumbled letters"
 	if not string "${b}" "Jumbled letters" {
 		test_fail "modified assignment failed (5): ${a}";
 	}
-	
+
 	set :quotewildcard "b" "Rock*";        # => "Rock\*"
 	if not string "${b}" "Rock\\*" {
 		test_fail "modified assignment failed (6): ${a}";
-	}	
+	}
 }
 
 /* RFC mentions `characters' and not octets */

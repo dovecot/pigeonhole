@@ -4,14 +4,14 @@
 #ifndef __SIEVE_MESSAGE_H
 #define __SIEVE_MESSAGE_H
 
-/* 
+/*
  * Message transmission
  */
 
 const char *sieve_message_get_new_id(const struct sieve_instance *svinst);
 
-/* 
- * Message context 
+/*
+ * Message context
  */
 
 struct sieve_message_context;
@@ -30,7 +30,7 @@ pool_t sieve_message_context_pool
 /* Extension support */
 
 void sieve_message_context_extension_set
-	(struct sieve_message_context *msgctx, const struct sieve_extension *ext, 
+	(struct sieve_message_context *msgctx, const struct sieve_extension *ext,
 		void *context);
 const void *sieve_message_context_extension_get
 	(struct sieve_message_context *msgctx, const struct sieve_extension *ext);

@@ -106,6 +106,6 @@ test "No detail" {
 	}
 
 	if address :detail "from" "virus" {
-		test_fail ":detail matched non-existent detail element in from header (separator is missing)";		
+		test_fail ":detail matched non-existent detail element in from header (separator is missing)";
 	}
 }

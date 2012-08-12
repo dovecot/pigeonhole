@@ -5,7 +5,7 @@ require "comparator-i;ascii-numeric";
 
 /*
  * Errors triggered in the compiled scripts are pretty reduntant over the
- * tested commands, but we want to be thorough. 
+ * tested commands, but we want to be thorough.
  */
 
 /*
@@ -49,12 +49,12 @@ test "Header errors" {
 		test_fail "wrong number of errors reported";
 	}
 
-	if not test_error :index 1 :matches 
+	if not test_error :index 1 :matches
 		"unknown * ':all' for * header test *" {
 		test_fail "error 1 is invalid";
 	}
 
-	if not test_error :index 2 :matches 
+	if not test_error :index 2 :matches
 		"*header test * string list * 1 (header names), but * number *" {
 		test_fail "error 2 is invalid";
 	}
@@ -64,32 +64,32 @@ test "Header errors" {
 		test_fail "error 3 is invalid";
 	}
 
-	if not test_error :index 4 :matches 
+	if not test_error :index 4 :matches
 		"* unexpected tagged argument ':tag' while *" {
 		test_fail "error 4 is invalid";
 	}
 
-	if not test_error :index 5 :matches 
+	if not test_error :index 5 :matches
 		"* header test requires 2 *, but 1 *" {
 		test_fail "error 5 is invalid";
 	}
 
-	if not test_error :index 6 :matches 
+	if not test_error :index 6 :matches
 		"* header test requires 2 *, but 0 *" {
 		test_fail "error 6 is invalid";
 	}
 
-	if not test_error :index 7 :matches 
+	if not test_error :index 7 :matches
 		"*header test accepts no sub-tests* specified*" {
 		test_fail "error 7 is invalid";
 	}
 
-	if not test_error :index 8 :matches 
+	if not test_error :index 8 :matches
 		"* use test 'header' * command*" {
 		test_fail "error 8 is invalid";
 	}
 
-	if not test_error :index 9 :matches 
+	if not test_error :index 9 :matches
 		"* use test 'header' * command*" {
 		test_fail "error 9 is invalid";
 	}
@@ -97,7 +97,7 @@ test "Header errors" {
 	if test_error :index 4 :contains "radish" {
 		test_fail "error test matched nonsense";
 	}
-}	
+}
 
 /*
  * Address test
@@ -111,7 +111,7 @@ test "Address errors" {
 
 	if not test_error :count "eq" :comparator "i;ascii-numeric" "9" {
 		test_fail "wrong number of errors reported";
-	}	
+	}
 
 	if not test_error :index 1 :matches
 		"*unknown * ':nonsense' * address test*" {
@@ -169,7 +169,7 @@ test "If errors (FIXME: count only)" {
 
 	if not test_error :count "eq" :comparator "i;ascii-numeric" "12" {
 		test_fail "wrong number of errors reported";
-	}	
+	}
 }
 
 /*
@@ -183,7 +183,7 @@ test "Require errors (FIXME: count only)" {
 
 	if not test_error :count "eq" :comparator "i;ascii-numeric" "15" {
 		test_fail "wrong number of errors reported";
-	}	
+	}
 }
 
 /*

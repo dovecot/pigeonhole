@@ -61,7 +61,7 @@ The universal Sieve test tool for testing the effect of a Sieve script on a
 particular message.
 .TP
 .BR sieve\-filter (1)
-Filters all messages in a particular source mailbox through a Sieve script. 
+Filters all messages in a particular source mailbox through a Sieve script.
 .TP
 .BR sieve\-dump (1)
 Dumps the content of a Sieve binary file for (development) debugging purposes.

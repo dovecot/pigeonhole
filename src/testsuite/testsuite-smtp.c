@@ -6,10 +6,10 @@
 #include "ostream.h"
 #include "unlink-directory.h"
 
-#include "sieve-common.h" 
+#include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-interpreter.h"
- 
+
 #include "testsuite-message.h"
 #include "testsuite-common.h"
 #include "testsuite-smtp.h"
@@ -34,17 +34,17 @@ static ARRAY_DEFINE(testsuite_smtp_messages, struct testsuite_smtp_message);
 void testsuite_smtp_init(void)
 {
 	pool_t pool;
-	
-	testsuite_smtp_pool = pool = pool_alloconly_create("testsuite_smtp", 8192);	
-	
+
+	testsuite_smtp_pool = pool = pool_alloconly_create("testsuite_smtp", 8192);
+
 	testsuite_smtp_tmp = p_strconcat
 		(pool, testsuite_tmp_dir_get(), "/smtp", NULL);
 
 	if ( mkdir(testsuite_smtp_tmp, 0700) < 0 ) {
-		i_fatal("failed to create temporary directory '%s': %m.", 
-			testsuite_smtp_tmp);		
+		i_fatal("failed to create temporary directory '%s': %m.",
+			testsuite_smtp_tmp);
 	}
-	
+
 	p_array_init(&testsuite_smtp_messages, pool, 16);
 }
 
@@ -53,8 +53,8 @@ void testsuite_smtp_deinit(void)
 	if ( unlink_directory(testsuite_smtp_tmp, TRUE) < 0 )
 		i_warning("failed to remove temporary directory '%s': %m.",
 			testsuite_smtp_tmp);
-	
-	pool_unref(&testsuite_smtp_pool);		
+
+	pool_unref(&testsuite_smtp_pool);
 }
 
 void testsuite_smtp_reset(void)
@@ -66,29 +66,29 @@ void testsuite_smtp_reset(void)
 /*
  * Simulated SMTP out
  */
- 
+
 struct testsuite_smtp {
 	const char *tmp_path;
 	struct ostream *output;
 };
- 
+
 void *testsuite_smtp_open
-(const struct sieve_script_env *senv ATTR_UNUSED, const char *destination, 
+(const struct sieve_script_env *senv ATTR_UNUSED, const char *destination,
 	const char *return_path, struct ostream **output_r)
-{	
+{
 	struct testsuite_smtp_message smtp_msg;
 	struct testsuite_smtp *smtp;
 	unsigned int smtp_count = array_count(&testsuite_smtp_messages);
 	int fd;
-	
-	smtp_msg.file = p_strdup_printf(testsuite_smtp_pool, 
+
+	smtp_msg.file = p_strdup_printf(testsuite_smtp_pool,
 		"%s/%d.eml", testsuite_smtp_tmp, smtp_count);
-	smtp_msg.envelope_from = 
+	smtp_msg.envelope_from =
 		( return_path != NULL ? p_strdup(testsuite_smtp_pool, return_path) : NULL );
 	smtp_msg.envelope_to = p_strdup(testsuite_smtp_pool, destination);
-	 
+
 	array_append(&testsuite_smtp_messages, &smtp_msg, 1);
-	
+
 	smtp = t_new(struct testsuite_smtp, 1);
 	smtp->tmp_path = smtp_msg.file;
 
@@ -99,8 +99,8 @@ void *testsuite_smtp_open
 
 	smtp->output = o_stream_create_fd(fd, (size_t)-1, TRUE);
 	*output_r = smtp->output;
-	
-	return (void *) smtp;	
+
+	return (void *) smtp;
 }
 
 bool testsuite_smtp_close

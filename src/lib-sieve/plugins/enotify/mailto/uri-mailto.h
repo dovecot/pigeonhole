@@ -1,11 +1,11 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
 
 #ifndef __URI_MAILTO_H
 #define __URI_MAILTO_H
 
-/* 
- * Types 
+/*
+ * Types
  */
 
 struct uri_mailto_header_field {
@@ -31,13 +31,13 @@ struct uri_mailto {
 };
 
 bool uri_mailto_validate
-	(const char *uri_body, const char **reserved_headers, 
-		const char **unique_headers, int max_recipients, int max_headers, 
+	(const char *uri_body, const char **reserved_headers,
+		const char **unique_headers, int max_recipients, int max_headers,
 		struct sieve_error_handler *ehandler);
 
 struct uri_mailto *uri_mailto_parse
-(const char *uri_body, pool_t pool, const char **reserved_headers, 
-	const char **unique_headers, int max_recipients, int max_headers, 
+(const char *uri_body, pool_t pool, const char **reserved_headers,
+	const char **unique_headers, int max_recipients, int max_headers,
 	struct sieve_error_handler *ehandler);
 
 #endif /* __URI_MAILTO_H */

@@ -9,7 +9,7 @@
 
 struct testsuite_substitution_def {
 	struct sieve_object_def obj_def;
-	
+
 	bool (*get_value)(const char *param, string_t **result);
 };
 
@@ -20,7 +20,7 @@ struct testsuite_substitution {
 };
 
 struct sieve_ast_argument *testsuite_substitution_argument_create
-	(struct sieve_validator *valdtr, struct sieve_ast *ast, 
+	(struct sieve_validator *valdtr, struct sieve_ast *ast,
 		unsigned int source_line, const char *substitution, const char *param);
 
 #endif /* __TESTSUITE_SUBSTITUTIONS_H */

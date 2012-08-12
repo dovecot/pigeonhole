@@ -9,11 +9,11 @@
 #include "sieve-code.h"
 #include "sieve-binary.h"
 
-/* 
- * Allof test 
- * 
- * Syntax 
- *   allof <tests: test-list>   
+/*
+ * Allof test
+ *
+ * Syntax
+ *   allof <tests: test-list>
  */
 
 static bool tst_allof_generate
@@ -23,14 +23,14 @@ static bool tst_allof_validate_const
 	(struct sieve_validator *valdtr, struct sieve_command *tst,
 		int *const_current, int const_new);
 
-const struct sieve_command_def tst_allof = { 
-	"allof", 
-	SCT_TEST, 
+const struct sieve_command_def tst_allof = {
+	"allof",
+	SCT_TEST,
 	0, 2, FALSE, FALSE,
 	NULL, NULL, NULL,
 	tst_allof_validate_const,
 	NULL,
-	tst_allof_generate 
+	tst_allof_generate
 };
 
 /*
@@ -51,8 +51,8 @@ static bool tst_allof_validate_const
 	return TRUE;
 }
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool tst_allof_generate
@@ -63,36 +63,36 @@ static bool tst_allof_generate
 	struct sieve_ast_node *test;
 	struct sieve_jumplist false_jumps;
 
-	if ( sieve_ast_test_count(ctx->ast_node) > 1 ) {	
+	if ( sieve_ast_test_count(ctx->ast_node) > 1 ) {
 		if ( jump_true ) {
 			/* Prepare jumplist */
 			sieve_jumplist_init_temp(&false_jumps, sblock);
 		}
-	
+
 		test = sieve_ast_test_first(ctx->ast_node);
-		while ( test != NULL ) {	
-			bool result; 
+		while ( test != NULL ) {
+			bool result;
 
 			/* If this test list must jump on false, all sub-tests can simply add their jumps
-			 * to the caller's jump list, otherwise this test redirects all false jumps to the 
+			 * to the caller's jump list, otherwise this test redirects all false jumps to the
 			 * end of the currently generated code. This is just after a final jump to the true
-			 * case 
+			 * case
 			 */
-			if ( jump_true ) 
+			if ( jump_true )
 				result = sieve_generate_test(cgenv, test, &false_jumps, FALSE);
 			else
 				result = sieve_generate_test(cgenv, test, jumps, FALSE);
-		
+
 			if ( !result ) return FALSE;
 
 			test = sieve_ast_test_next(test);
-		}	
-	
+		}
+
 		if ( jump_true ) {
 			/* All tests succeeded, jump to case TRUE */
 			sieve_operation_emit(cgenv->sblock, NULL, &sieve_jmp_operation);
 			sieve_jumplist_add(jumps, sieve_binary_emit_offset(sblock, 0));
-			
+
 			/* All false exits jump here */
 			sieve_jumplist_resolve(&false_jumps);
 		}
@@ -101,7 +101,7 @@ static bool tst_allof_generate
 		test = sieve_ast_test_first(ctx->ast_node);
 		sieve_generate_test(cgenv, test, jumps, jump_true);
 	}
-		
+
 	return TRUE;
 }
 

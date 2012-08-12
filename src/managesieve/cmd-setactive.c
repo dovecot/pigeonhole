@@ -41,13 +41,13 @@ bool cmd_setactive(struct client_command_context *cmd)
 			 */
 			T_BEGIN {
 				struct sieve_error_handler *ehandler;
-				enum sieve_compile_flags cpflags = 
+				enum sieve_compile_flags cpflags =
 					SIEVE_COMPILE_FLAG_NOGLOBAL | SIEVE_COMPILE_FLAG_ACTIVATED;
 				struct sieve_binary *sbin;
 
 				/* Prepare error handler */
 				errors = str_new(default_pool, 1024);
-				ehandler = sieve_strbuf_ehandler_create(client->svinst, errors, TRUE, 
+				ehandler = sieve_strbuf_ehandler_create(client->svinst, errors, TRUE,
 					client->set->managesieve_max_compile_errors);
 
 				/* Compile */
@@ -62,7 +62,7 @@ bool cmd_setactive(struct client_command_context *cmd)
 				sieve_error_handler_unref(&ehandler);
 			} T_END;
 		}
-	
+
 		/* Activate only when script is valid (or already active) */
 		if ( success ) {
 			/* Refresh activation no matter what; this can also resolve some erroneous
@@ -75,7 +75,7 @@ bool cmd_setactive(struct client_command_context *cmd)
 				if ( warnings ) {
 					client_send_okresp(client, "WARNINGS", str_c(errors));
 				} else {
-					client_send_ok(client, ( ret > 0 ? 
+					client_send_ok(client, ( ret > 0 ?
 						"Setactive completed." :
 						"Script is already active." ));
 				}
@@ -91,13 +91,13 @@ bool cmd_setactive(struct client_command_context *cmd)
 	/* ... deactivate */
 	} else {
 		ret = sieve_storage_deactivate(storage);
-		
+
 		if ( ret < 0 )
 			client_send_storage_error(client, storage);
 		else
 			client_send_ok(client, ( ret > 0 ?
  				"Active script is now deactivated." :
-				"No scripts currently active." ));	
+				"No scripts currently active." ));
 	}
 
 	return TRUE;

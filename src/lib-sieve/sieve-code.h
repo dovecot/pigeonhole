@@ -1,6 +1,6 @@
 /* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
- 
+
 #ifndef __SIEVE_CODE_H
 #define __SIEVE_CODE_H
 
@@ -14,7 +14,7 @@
 #include "sieve-runtime-trace.h"
 #include "sieve-dump.h"
 
-/* 
+/*
  * Operand object
  */
 
@@ -24,10 +24,10 @@ struct sieve_operand_class {
 
 struct sieve_operand_def {
 	const char *name;
-	
+
 	const struct sieve_extension_def *ext_def;
 	unsigned int code;
-	
+
 	const struct sieve_operand_class *class;
 	const void *interface;
 };
@@ -48,7 +48,7 @@ sieve_size_t sieve_operand_emit
 	(struct sieve_binary_block *sblock, const struct sieve_extension *ext,
 		const struct sieve_operand_def *oprnd);
 bool sieve_operand_read
-	(struct sieve_binary_block *sblock, sieve_size_t *address, 
+	(struct sieve_binary_block *sblock, sieve_size_t *address,
 		const char *field_name, struct sieve_operand *oprnd);
 
 static inline int sieve_operand_runtime_read
@@ -68,11 +68,11 @@ static inline int sieve_operand_runtime_read
  */
 
 int sieve_opr_optional_next
-(struct sieve_binary_block *sblock, sieve_size_t *address, 
+(struct sieve_binary_block *sblock, sieve_size_t *address,
 	signed int *opt_code);
 
 static inline int sieve_opr_optional_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address, 
+(const struct sieve_dumptime_env *denv, sieve_size_t *address,
 	signed int *opt_code)
 {
 	sieve_size_t pc = *address;
@@ -82,11 +82,11 @@ static inline int sieve_opr_optional_dump
 		return ret;
 
 	sieve_code_mark_specific(denv, pc);
-	return ret; 
+	return ret;
 }
 
 static inline int sieve_opr_optional_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
 	signed int *opt_code)
 {
 	int ret;
@@ -100,7 +100,7 @@ static inline int sieve_opr_optional_read
 /*
  * Core operands
  */
- 
+
 /* Operand codes */
 
 enum sieve_core_operand {
@@ -136,7 +136,7 @@ extern const unsigned int sieve_operand_count;
 /* Operand object interfaces */
 
 struct sieve_opr_number_interface {
-	bool (*dump)	
+	bool (*dump)
 		(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
 			sieve_size_t *address);
 	int (*read)
@@ -146,10 +146,10 @@ struct sieve_opr_number_interface {
 
 struct sieve_opr_string_interface {
 	bool (*dump)
-		(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd, 
+		(const struct sieve_dumptime_env *denv, const struct sieve_operand *oprnd,
 			sieve_size_t *address);
 	int (*read)
-		(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd, 
+		(const struct sieve_runtime_env *renv, const struct sieve_operand *oprnd,
 		 	sieve_size_t *address, string_t **str_r);
 };
 
@@ -162,8 +162,8 @@ struct sieve_opr_stringlist_interface {
 			sieve_size_t *address, struct sieve_stringlist **strlist_r);
 };
 
-/* 
- * Core operand functions 
+/*
+ * Core operand functions
  */
 
 /* Omitted */
@@ -181,23 +181,23 @@ static inline bool sieve_operand_is_omitted
 
 void sieve_opr_number_emit
 	(struct sieve_binary_block *sblock, sieve_number_t number);
-bool sieve_opr_number_dump_data	
+bool sieve_opr_number_dump_data
 	(const struct sieve_dumptime_env *denv, struct sieve_operand *operand,
-		sieve_size_t *address, const char *field_name); 
-bool sieve_opr_number_dump	
+		sieve_size_t *address, const char *field_name);
+bool sieve_opr_number_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
-		const char *field_name); 
+		const char *field_name);
 int sieve_opr_number_read_data
 	(const struct sieve_runtime_env *renv, struct sieve_operand *operand,
 		sieve_size_t *address, const char *field_name, sieve_number_t *number_r);
 int sieve_opr_number_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
 		const char *field_name, sieve_number_t *number_r);
 
 static inline bool sieve_operand_is_number
 (const struct sieve_operand *operand)
 {
-	return ( operand != NULL && operand->def != NULL && 
+	return ( operand != NULL && operand->def != NULL &&
 		operand->def->class == &number_class );
 }
 
@@ -207,21 +207,21 @@ void sieve_opr_string_emit
 	(struct sieve_binary_block *sblock, string_t *str);
 bool sieve_opr_string_dump_data
 	(const struct sieve_dumptime_env *denv, struct sieve_operand *operand,
-		sieve_size_t *address, const char *field_name); 
+		sieve_size_t *address, const char *field_name);
 bool sieve_opr_string_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
-		const char *field_name); 
+		const char *field_name);
 bool sieve_opr_string_dump_ex
-	(const struct sieve_dumptime_env *denv, sieve_size_t *address, 
-		const char *field_name, const char *omitted_value); 
+	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+		const char *field_name, const char *omitted_value);
 int sieve_opr_string_read_data
 	(const struct sieve_runtime_env *renv, struct sieve_operand *operand,
 		sieve_size_t *address, const char *field_name, string_t **str_r);
 int sieve_opr_string_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
 		const char *field_name, string_t **str_r);
 int sieve_opr_string_read_ex
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
 		const char *field_name, bool optional, string_t **str_r, bool *literal_r);
 
 static inline bool sieve_operand_is_string
@@ -247,7 +247,7 @@ void sieve_opr_stringlist_emit_item
 void sieve_opr_stringlist_emit_end
 	(struct sieve_binary_block *sblock, void *context);
 bool sieve_opr_stringlist_dump_data
-	(const struct sieve_dumptime_env *denv, struct sieve_operand *operand, 
+	(const struct sieve_dumptime_env *denv, struct sieve_operand *operand,
 		sieve_size_t *address, const char *field_name);
 bool sieve_opr_stringlist_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
@@ -256,8 +256,8 @@ bool sieve_opr_stringlist_dump_ex
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address,
 		const char *field_name, const char *omitted_value);
 int sieve_opr_stringlist_read_data
-	(const struct sieve_runtime_env *renv, struct sieve_operand *operand, 
-		sieve_size_t *address, const char *field_name, 
+	(const struct sieve_runtime_env *renv, struct sieve_operand *operand,
+		sieve_size_t *address, const char *field_name,
 		struct sieve_stringlist **strlist_r);
 int sieve_opr_stringlist_read
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,
@@ -270,7 +270,7 @@ static inline bool sieve_operand_is_stringlist
 (const struct sieve_operand *operand)
 {
 	return ( operand != NULL && operand->def != NULL &&
-		(operand->def->class == &stringlist_class || 
+		(operand->def->class == &stringlist_class ||
 			operand->def->class == &string_class) );
 }
 
@@ -278,17 +278,17 @@ static inline bool sieve_operand_is_stringlist
 
 void sieve_opr_catenated_string_emit
 	(struct sieve_binary_block *sblock, unsigned int elements);
-	
+
 /*
  * Operation object
  */
- 
+
 struct sieve_operation_def {
 	const char *mnemonic;
-	
+
 	const struct sieve_extension_def *ext_def;
 	unsigned int code;
-	
+
 	bool (*dump)
 		(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 	int (*execute)
@@ -309,15 +309,15 @@ struct sieve_operation {
 
 sieve_size_t sieve_operation_emit
 	(struct sieve_binary_block *sblock, const struct sieve_extension *ext,
-		const struct sieve_operation_def *op_def);	
+		const struct sieve_operation_def *op_def);
 bool sieve_operation_read
 	(struct sieve_binary_block *sblock, sieve_size_t *address,
 		struct sieve_operation *oprtn);
 const char *sieve_operation_read_string
 	(struct sieve_binary_block *sblock, sieve_size_t *address);
 
-/* 
- * Core operations 
+/*
+ * Core operations
  */
 
 /* Opcodes */
@@ -327,18 +327,18 @@ enum sieve_operation_code {
 	SIEVE_OPERATION_JMP,
 	SIEVE_OPERATION_JMPTRUE,
 	SIEVE_OPERATION_JMPFALSE,
-	
+
 	SIEVE_OPERATION_STOP,
 	SIEVE_OPERATION_KEEP,
 	SIEVE_OPERATION_DISCARD,
 	SIEVE_OPERATION_REDIRECT,
-	
+
 	SIEVE_OPERATION_ADDRESS,
-	SIEVE_OPERATION_HEADER, 
-	SIEVE_OPERATION_EXISTS, 
+	SIEVE_OPERATION_HEADER,
+	SIEVE_OPERATION_EXISTS,
 	SIEVE_OPERATION_SIZE_OVER,
 	SIEVE_OPERATION_SIZE_UNDER,
-	
+
 	SIEVE_OPERATION_CUSTOM
 };
 
@@ -346,7 +346,7 @@ enum sieve_operation_code {
 
 extern const struct sieve_operation_def sieve_jmp_operation;
 extern const struct sieve_operation_def sieve_jmptrue_operation;
-extern const struct sieve_operation_def sieve_jmpfalse_operation; 
+extern const struct sieve_operation_def sieve_jmpfalse_operation;
 
 extern const struct sieve_operation_def *sieve_operations[];
 extern const unsigned int sieve_operations_count;

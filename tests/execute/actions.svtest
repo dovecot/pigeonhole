@@ -25,19 +25,19 @@ test "Fileinto" {
 
 	if not test_result_action :count "eq" :comparator "i;ascii-numeric" "3" {
 		test_fail "wrong number of actions in result";
-	} 
+	}
 
 	if not test_result_action :index 1 "store" {
 		test_fail "first action is not 'store'";
-	} 
+	}
 
 	if not test_result_action :index 2 "store" {
 		test_fail "second action is not 'store'";
-	} 
+	}
 
 	if not test_result_action :index 3 "keep" {
 		test_fail "third action is not 'keep'";
-	} 
+	}
 
 	if not test_result_execute {
 		test_fail "result execute failed";
@@ -55,23 +55,23 @@ test "Redirect" {
 
 	if not test_result_action :count "eq" :comparator "i;ascii-numeric" "4" {
 		test_fail "wrong number of actions in result";
-	} 
+	}
 
 	if not test_result_action :index 1 "redirect" {
 		test_fail "first action is not 'redirect'";
-	} 
+	}
 
 	if not test_result_action :index 2 "keep" {
 		test_fail "second action is not 'keep'";
-	} 
+	}
 
 	if not test_result_action :index 3 "redirect" {
 		test_fail "third action is not 'redirect'";
-	} 
+	}
 
 	if not test_result_action :index 4 "redirect" {
 		test_fail "fourth action is not 'redirect'";
-	} 
+	}
 
 	if not test_result_execute {
 		test_fail "result execute failed";

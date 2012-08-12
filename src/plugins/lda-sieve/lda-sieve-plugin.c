@@ -1,4 +1,4 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
 
 #include "lib.h"
@@ -32,7 +32,7 @@
 #define LDA_SIEVE_MAX_USER_ERRORS 30
 
 /*
- * Global variables 
+ * Global variables
  */
 
 static deliver_mail_func_t *next_deliver_mail;
@@ -93,7 +93,7 @@ static int lda_sieve_reject_mail
 {
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *) senv->script_context;
-	
+
 	return mail_send_rejection(dctx, recipient, reason);
 }
 
@@ -207,7 +207,7 @@ static int lda_sieve_multiscript_get_scripts
 				break;
 		}
 
-		if ( i == count ) 
+		if ( i == count )
 			array_append(&script_files, &file, 1);
 		else
 			array_insert(&script_files, i, &file, 1);
@@ -227,7 +227,7 @@ static int lda_sieve_multiscript_get_scripts
 				sieve_sys_warning
 					(svinst, "%s script %s doesn't exist", label, files[i]);
 				break;
-		
+
 			default:
 				sieve_sys_error
 					(svinst, "failed to access %s script %s", label, files[i]);
@@ -244,7 +244,7 @@ static int lda_sieve_multiscript_get_scripts
 }
 
 static void lda_sieve_binary_save
-(struct lda_sieve_run_context *srctx, struct sieve_binary *sbin, 
+(struct lda_sieve_run_context *srctx, struct sieve_binary *sbin,
 	struct sieve_script *script)
 {
 	enum sieve_error error;
@@ -288,7 +288,7 @@ static struct sieve_binary *lda_sieve_open
 				sieve_sys_debug(svinst, "script file %s is missing",
 					sieve_script_location(script));
 			}
-		} else if ( *error_r == SIEVE_ERROR_NOT_VALID && 
+		} else if ( *error_r == SIEVE_ERROR_NOT_VALID &&
 			script == srctx->user_script && srctx->userlog != NULL ) {
 			sieve_sys_error(svinst,	"failed to open script %s "
 				"(view user logfile %s for more information)",
@@ -332,9 +332,9 @@ static struct sieve_binary *lda_sieve_recompile
 
 		if ( *error_r == SIEVE_ERROR_NOT_FOUND ) {
 			if ( debug )
-				sieve_sys_debug(svinst, "script file %s is missing for re-compile", 
+				sieve_sys_debug(svinst, "script file %s is missing for re-compile",
 					sieve_script_location(script));
-		} else if ( *error_r == SIEVE_ERROR_NOT_VALID && 
+		} else if ( *error_r == SIEVE_ERROR_NOT_VALID &&
 			script == srctx->user_script && srctx->userlog != NULL ) {
 			sieve_sys_error(svinst,
 				"failed to re-compile script %s "
@@ -366,20 +366,20 @@ static int lda_sieve_handle_exec_status
 	switch ( status ) {
 	case SIEVE_EXEC_FAILURE:
 		sieve_sys_error(svinst,
-			"execution of script %s failed, but implicit keep was successful%s", 
+			"execution of script %s failed, but implicit keep was successful%s",
 			sieve_script_location(script), userlog_notice);
 		ret = 1;
 		break;
 	case SIEVE_EXEC_BIN_CORRUPT:
 		sieve_sys_error(svinst,
 			"!!BUG!!: binary compiled from %s is still corrupt; "
-			"bailing out and reverting to default delivery", 
+			"bailing out and reverting to default delivery",
 			sieve_script_location(script));
 		ret = -1;
 		break;
 	case SIEVE_EXEC_KEEP_FAILED:
 		sieve_sys_error(svinst,
-			"script %s failed with unsuccessful implicit keep%s", 
+			"script %s failed with unsuccessful implicit keep%s",
 			sieve_script_location(script), userlog_notice);
 		ret = -1;
 		break;
@@ -471,7 +471,7 @@ static int lda_sieve_multiscript_execute
 	struct sieve_script *last_script = NULL;
 	bool user_script = FALSE;
 	unsigned int i;
-	int ret = 1; 
+	int ret = 1;
 	bool more = TRUE;
 	enum sieve_error error;
 
@@ -532,7 +532,7 @@ static int lda_sieve_multiscript_execute
 
 				/* Save new version */
 
-				if ( more && 
+				if ( more &&
 					sieve_multiscript_status(mscript) != SIEVE_EXEC_BIN_CORRUPT ) {
 					lda_sieve_binary_save(srctx, sbin, script);
 				}
@@ -590,7 +590,7 @@ static int lda_sieve_deliver_mail
 
 	/* Find scripts and run them */
 
-	T_BEGIN { 
+	T_BEGIN {
 		struct sieve_script *const *scripts;
 		unsigned int count, i;
 
@@ -665,13 +665,13 @@ static int lda_sieve_deliver_mail
 			sieve_before = mail_user_plugin_getenv(mdctx->dest_user, setting_name);
 		}
 
-		if ( debug ) {	
+		if ( debug ) {
 			scripts = array_get(&script_sequence, &count);
 			for ( i = 0; i < count; i ++ ) {
 				sieve_sys_debug(svinst,
 					"executed before user's personal Sieve script(%d): %s",
 					i+1, sieve_script_location(scripts[i]));
-			}				
+			}
 		}
 
 		if ( srctx.main_script != NULL ) {
@@ -698,13 +698,13 @@ static int lda_sieve_deliver_mail
 			setting_name = t_strdup_printf("sieve_after%u", i++);
 			sieve_after = mail_user_plugin_getenv(mdctx->dest_user, setting_name);
 		}
-	
+
 		if ( debug ) {
 			scripts = array_get(&script_sequence, &count);
 			for ( i = after_index; i < count; i ++ ) {
 				sieve_sys_debug(svinst, "executed after user's Sieve script(%d): %s",
 					i+1, sieve_script_location(scripts[i]));
-			}				
+			}
 		}
 
 		srctx.scripts =
@@ -722,9 +722,9 @@ static int lda_sieve_deliver_mail
 			 * for a deliver plugin is is considered a failure. In deliver itself,
 			 * saved_mail and tried_default_save remain unset, meaning that deliver
 			 * will then attempt the default delivery. We return 0 to signify the lack
-			 * of a real error. 
+			 * of a real error.
 			 */
-			ret = 0; 
+			ret = 0;
 		} else {
 			/* Initialize user error handler */
 
@@ -744,8 +744,8 @@ static int lda_sieve_deliver_mail
 						}
 					} else {
 						/* Use script file as a basic (legacy behavior) */
-						log_path = t_strconcat(path, ".log", NULL);	
-					}	
+						log_path = t_strconcat(path, ".log", NULL);
+					}
 				} else if ( svenv.home_dir != NULL ) {
 					/* Expand home dir if necessary */
 					if ( log_path[0] == '~' ) {
@@ -817,13 +817,13 @@ static int lda_sieve_deliver_mail
 		/* Cleanup scripts */
 		for ( i = 0; i < srctx.script_count; i++ ) {
 			sieve_script_unref(&srctx.scripts[i]);
-		}				
+		}
 
 	} T_END;
 
 	sieve_deinit(&svinst);
 	sieve_error_handler_unref(&master_ehandler);
-	return ret; 
+	return ret;
 }
 
 /*

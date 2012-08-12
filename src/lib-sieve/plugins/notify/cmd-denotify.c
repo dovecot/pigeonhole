@@ -20,8 +20,8 @@
 #include "sieve-result.h"
 
 #include "ext-notify-common.h"
- 
-/* 
+
+/*
  * Denotify command
  *
  * Syntax:
@@ -46,7 +46,7 @@ const struct sieve_command_def cmd_denotify = {
 	cmd_denotify_pre_validate,
 	cmd_denotify_validate,
 	NULL,
-	cmd_denotify_generate, 
+	cmd_denotify_generate,
 	NULL
 };
 
@@ -81,8 +81,8 @@ enum cmd_denotify_optional {
 	OPT_MATCH_KEY
 };
 
-/* 
- * Denotify operation 
+/*
+ * Denotify operation
  */
 
 static bool cmd_denotify_operation_dump
@@ -90,7 +90,7 @@ static bool cmd_denotify_operation_dump
 static int cmd_denotify_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def denotify_operation = { 
+const struct sieve_operation_def denotify_operation = {
 	"DENOTIFY",
 	&notify_extension,
 	EXT_NOTIFY_OPERATION_DENOTIFY,
@@ -129,23 +129,23 @@ static bool tag_match_type_validate
 		return FALSE;
 
 	if ( *arg == NULL ) {
-		sieve_argument_validate_error(valdtr, tag, 
+		sieve_argument_validate_error(valdtr, tag,
 			"the MATCH-TYPE argument (:%s) for the denotify command requires "
-			"an additional key-string parameter, but no more arguments were found", 
+			"an additional key-string parameter, but no more arguments were found",
 			sieve_ast_argument_tag(tag));
-		return FALSE;	
+		return FALSE;
 	}
-	
-	if ( sieve_ast_argument_type(*arg) != SAAT_STRING ) 
+
+	if ( sieve_ast_argument_type(*arg) != SAAT_STRING )
 	{
-		sieve_argument_validate_error(valdtr, *arg, 
+		sieve_argument_validate_error(valdtr, *arg,
 			"the MATCH-TYPE argument (:%s) for the denotify command requires "
-			"an additional key-string parameter, but %s was found", 
+			"an additional key-string parameter, but %s was found",
 			sieve_ast_argument_tag(tag), sieve_ast_argument_name(*arg));
 		return FALSE;
 	}
 
-	if ( !sieve_validator_argument_activate(valdtr, cmd, *arg, FALSE) ) 
+	if ( !sieve_validator_argument_activate(valdtr, cmd, *arg, FALSE) )
 		return FALSE;
 
 	tag->argument->def = &match_type_tag;
@@ -199,9 +199,9 @@ static bool cmd_denotify_validate
     struct cmd_denotify_context_data *ctx_data =
         (struct cmd_denotify_context_data *) cmd->data;
 	struct sieve_ast_argument *key_arg = ctx_data->match_key_arg;
-	const struct sieve_match_type mcht_default = 
+	const struct sieve_match_type mcht_default =
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
-	const struct sieve_comparator cmp_default = 
+	const struct sieve_comparator cmp_default =
 		SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
 
 	if ( key_arg != NULL ) {
@@ -226,18 +226,18 @@ static bool cmd_denotify_generate
 	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
 
-/* 
+/*
  * Code dump
  */
- 
+
 static bool cmd_denotify_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
-{	
+{
 	const struct sieve_operation *op = denv->oprtn;
 	int opt_code = 0;
-	
+
 	sieve_code_dumpf(denv, "%s", sieve_operation_mnemonic(op));
-	sieve_code_descend(denv);	
+	sieve_code_descend(denv);
 
 	for (;;) {
 		int opt;
@@ -264,21 +264,21 @@ static bool cmd_denotify_operation_dump
 
 		if ( !opok ) return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
-/* 
+/*
  * Code execution
  */
 
 static int cmd_denotify_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
-{	
+{
 	int opt_code = 0;
-	struct sieve_match_type mcht = 
+	struct sieve_match_type mcht =
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
-	const struct sieve_comparator cmp = 
+	const struct sieve_comparator cmp =
 		SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
 	struct sieve_stringlist *match_key = NULL;
 	sieve_number_t importance = 0;
@@ -290,8 +290,8 @@ static int cmd_denotify_operation_execute
 	/*
 	 * Read operands
 	 */
-	
-	/* Optional operands */	
+
+	/* Optional operands */
 
 	for (;;) {
 		int opt;
@@ -318,14 +318,14 @@ static int cmd_denotify_operation_execute
 
 		if ( ret <= 0 ) return ret;
 	}
-		
+
 	/*
 	 * Perform operation
 	 */
 
 	/* Enforce 0 < importance < 4 (just to be sure) */
 
-	if ( importance < 1 ) 
+	if ( importance < 1 )
 		importance = 1;
 	else if ( importance > 3 )
 		importance = 3;
@@ -335,35 +335,35 @@ static int cmd_denotify_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, "denotify action");
 
 	/* Either do string matching or just kill all notify actions */
-	if ( match_key != NULL ) {	
+	if ( match_key != NULL ) {
 		/* Initialize match */
 		mctx = sieve_match_begin(renv, &mcht, &cmp);
 
 		/* Iterate through all notify actions and delete those that match */
 		rictx = sieve_result_iterate_init(renv->result);
-	
+
 		while ( (action=sieve_result_iterate_next(rictx, NULL)) != NULL ) {
-			if ( sieve_action_is(action, act_notify_old) ) {		
+			if ( sieve_action_is(action, act_notify_old) ) {
 				struct ext_notify_action *nact =
 					(struct ext_notify_action *) action->context;
-	
+
 				if ( importance == 0 || nact->importance == importance ) {
-					int match; 
+					int match;
 
 					if ( (match=sieve_match_value
 						(mctx, nact->id, strlen(nact->id), match_key)) < 0 )
 						break;
-	
+
 					if ( match > 0 )
 						sieve_result_iterate_delete(rictx);
 				}
 			}
 		}
-	
+
 		/* Finish match */
 		if ( sieve_match_end(&mctx, &ret) < 0 )
 			return ret;
- 
+
 	} else {
 		/* Delete all notify actions */
 		rictx = sieve_result_iterate_init(renv->result);
@@ -377,7 +377,7 @@ static int cmd_denotify_operation_execute
 				if ( importance == 0 || nact->importance == importance )
 					sieve_result_iterate_delete(rictx);
 			}
-		}	
+		}
 	}
 
 	return SIEVE_EXEC_OK;

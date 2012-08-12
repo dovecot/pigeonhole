@@ -23,8 +23,8 @@
 /*
  * test_result_action command
  *
- * Syntax:   
- *   test_result_action [MATCH-TYPE] [COMPARATOR] [:index number] 
+ * Syntax:
+ *   test_result_action [MATCH-TYPE] [COMPARATOR] [:index number]
  *     <key-list: string-list>
  */
 
@@ -36,20 +36,20 @@ static bool tst_test_result_action_validate
 static bool tst_test_result_action_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *ctx);
 
-const struct sieve_command_def tst_test_result_action = { 
-	"test_result_action", 
-	SCT_TEST, 
+const struct sieve_command_def tst_test_result_action = {
+	"test_result_action",
+	SCT_TEST,
 	1, 0, FALSE, FALSE,
-	tst_test_result_action_registered, 
+	tst_test_result_action_registered,
 	NULL,
 	tst_test_result_action_validate,
 	NULL,
-	tst_test_result_action_generate, 
-	NULL 
+	tst_test_result_action_generate,
+	NULL
 };
 
-/* 
- * Operation 
+/*
+ * Operation
  */
 
 static bool tst_test_result_action_operation_dump
@@ -57,17 +57,17 @@ static bool tst_test_result_action_operation_dump
 static int tst_test_result_action_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def test_result_action_operation = { 
+const struct sieve_operation_def test_result_action_operation = {
 	"TEST_RESULT_ACTION",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_RESULT_ACTION,
-	tst_test_result_action_operation_dump, 
-	tst_test_result_action_operation_execute 
+	tst_test_result_action_operation_dump,
+	tst_test_result_action_operation_execute
 };
 
 /*
  * Tagged arguments
- */ 
+ */
 
 /* FIXME: merge this with the test_error version of this tag */
 
@@ -131,19 +131,19 @@ static bool tst_test_result_action_registered
 	return TRUE;
 }
 
-/* 
- * Validation 
+/*
+ * Validation
  */
 
 static bool tst_test_result_action_validate
-(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command *tst) 
+(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command *tst)
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
-	struct sieve_comparator cmp_default = 
+	struct sieve_comparator cmp_default =
 		SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
-	struct sieve_match_type mcht_default = 
+	struct sieve_match_type mcht_default =
 		SIEVE_COMPARATOR_DEFAULT(is_match_type);
-	
+
 	if ( !sieve_validate_positional_argument
 		(valdtr, tst, arg, "key list", 2, SAAT_STRING_LIST) ) {
 		return FALSE;
@@ -157,8 +157,8 @@ static bool tst_test_result_action_validate
 		(valdtr, tst, arg, &mcht_default, &cmp_default);
 }
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool tst_test_result_action_generate
@@ -170,10 +170,10 @@ static bool tst_test_result_action_generate
 	return sieve_generate_arguments(cgenv, tst, NULL);
 }
 
-/* 
+/*
  * Code dump
  */
- 
+
 static bool tst_test_result_action_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
@@ -186,7 +186,7 @@ static bool tst_test_result_action_operation_dump
 	for (;;) {
 		int opt;
 
-		if ( (opt=sieve_match_opr_optional_dump(denv, address, &opt_code)) 
+		if ( (opt=sieve_match_opr_optional_dump(denv, address, &opt_code))
 			< 0 )
 			return FALSE;
 
@@ -198,7 +198,7 @@ static bool tst_test_result_action_operation_dump
 		} else {
 			return FALSE;
 		}
-	} 
+	}
 
 	return sieve_opr_stringlist_dump(denv, address, "key list");
 }
@@ -209,7 +209,7 @@ static bool tst_test_result_action_operation_dump
 
 static int tst_test_result_action_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
-{	
+{
 	int opt_code = 0;
 	struct sieve_comparator cmp = SIEVE_COMPARATOR_DEFAULT(i_octet_comparator);
 	struct sieve_match_type mcht = SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
@@ -223,7 +223,7 @@ static int tst_test_result_action_operation_execute
 
 	/* Read optional operands */
 	for (;;) {
-		sieve_number_t number; 
+		sieve_number_t number;
 		int opt;
 
 		if ( (opt=sieve_match_opr_optional_read
@@ -231,7 +231,7 @@ static int tst_test_result_action_operation_execute
 			return ret;
 
 		if ( opt == 0 ) break;
-	
+
 		if ( opt_code == OPT_INDEX ) {
 			if ( (ret=sieve_opr_number_read(renv, address, "index", &number)) <= 0 )
 				return ret;
@@ -239,7 +239,7 @@ static int tst_test_result_action_operation_execute
 		} else {
 			sieve_runtime_trace_error(renv, "invalid optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
-		}	
+		}
 	}
 
 	/* Read key-list */
@@ -250,7 +250,7 @@ static int tst_test_result_action_operation_execute
 	/*
 	 * Perform operation
 	 */
-	
+
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
 		"testsuite: test_result_action test; match result name (index: %d)", index);
 
@@ -259,8 +259,8 @@ static int tst_test_result_action_operation_execute
 
 	/* Perform match */
 	if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret)) < 0 )
-		return ret;	
-	
+		return ret;
+
 	/* Set test result for subsequent conditional jump */
 	sieve_interpreter_set_test_result(renv->interp, match > 0);
 	return SIEVE_EXEC_OK;

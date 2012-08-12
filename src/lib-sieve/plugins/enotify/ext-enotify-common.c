@@ -1,6 +1,6 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
- 
+
 #include "lib.h"
 #include "str.h"
 #include "str-sanitize.h"
@@ -61,10 +61,10 @@ extern const struct sieve_enotify_method_def mailto_notify;
 /*
  * Notify method registry
  */
- 
+
 static const struct sieve_enotify_method *ext_enotify_method_register
-(struct sieve_instance *svinst, struct ext_enotify_context *ectx, 
-	const struct sieve_enotify_method_def *nmth_def) 
+(struct sieve_instance *svinst, struct ext_enotify_context *ectx,
+	const struct sieve_enotify_method_def *nmth_def)
 {
 	struct sieve_enotify_method *nmth;
 	int nmth_id = (int) array_count(&ectx->notify_methods);
@@ -78,7 +78,7 @@ static const struct sieve_enotify_method *ext_enotify_method_register
 		nmth_def->load(nmth, &nmth->context);
 
 	return nmth;
-} 
+}
 
 void ext_enotify_methods_init
 (struct sieve_instance *svinst, struct ext_enotify_context *ectx)
@@ -92,7 +92,7 @@ void ext_enotify_methods_deinit(struct ext_enotify_context *ectx)
 {
 	const struct sieve_enotify_method *methods;
 	unsigned int meth_count, i;
-	 
+
 	methods = array_get(&ectx->notify_methods, &meth_count);
 	for ( i = 0; i < meth_count; i++ ) {
 		if ( methods[i].def != NULL && methods[i].def->unload != NULL )
@@ -103,14 +103,14 @@ void ext_enotify_methods_deinit(struct ext_enotify_context *ectx)
 }
 
 const struct sieve_enotify_method *sieve_enotify_method_register
-(struct sieve_instance *svinst, 
+(struct sieve_instance *svinst,
 	const struct sieve_enotify_method_def *nmth_def)
 {
 	const struct sieve_extension *ntfy_ext =
 		sieve_extension_get_by_name(svinst, "enotify");
 
 	if ( ntfy_ext != NULL ) {
-		struct ext_enotify_context *ectx = 
+		struct ext_enotify_context *ectx =
 			(struct ext_enotify_context *) ntfy_ext->context;
 
 		return ext_enotify_method_register(svinst, ectx, nmth_def);
@@ -127,29 +127,29 @@ void sieve_enotify_method_unregister
 		sieve_extension_get_by_name(svinst, "enotify");
 
 	if ( ntfy_ext != NULL ) {
-		struct ext_enotify_context *ectx = 
+		struct ext_enotify_context *ectx =
 			(struct ext_enotify_context *) ntfy_ext->context;
 		int nmth_id = nmth->id;
 
 		if ( nmth_id >= 0 && nmth_id < (int)array_count(&ectx->notify_methods) ) {
 			struct sieve_enotify_method *nmth_mod =
 				array_idx_modifiable(&ectx->notify_methods, nmth_id);
-			
+
 			nmth_mod->def = NULL;
 		}
 	}
 }
 
 const struct sieve_enotify_method *ext_enotify_method_find
-(const struct sieve_extension *ntfy_ext, const char *identifier) 
+(const struct sieve_extension *ntfy_ext, const char *identifier)
 {
-	struct ext_enotify_context *ectx = 
+	struct ext_enotify_context *ectx =
 		(struct ext_enotify_context *) ntfy_ext->context;
 	unsigned int meth_count, i;
 	const struct sieve_enotify_method *methods;
-	 
+
 	methods = array_get(&ectx->notify_methods, &meth_count);
-		
+
 	for ( i = 0; i < meth_count; i++ ) {
 		if ( methods[i].def == NULL ) continue;
 
@@ -157,21 +157,21 @@ const struct sieve_enotify_method *ext_enotify_method_find
 			return &methods[i];
 		}
 	}
-	
+
 	return NULL;
 }
 
 static const char *ext_notify_get_methods_string
 (const struct sieve_extension *ntfy_ext)
 {
-	struct ext_enotify_context *ectx = 
+	struct ext_enotify_context *ectx =
 		(struct ext_enotify_context *) ntfy_ext->context;
 	unsigned int meth_count, i;
 	const struct sieve_enotify_method *methods;
 	string_t *result = t_str_new(128);
-	 
+
 	methods = array_get(&ectx->notify_methods, &meth_count);
-	
+
 	if ( meth_count > 0 ) {
 		for ( i = 0; i < meth_count; i++ ) {
 			if ( str_len(result) > 0 )
@@ -180,50 +180,50 @@ static const char *ext_notify_get_methods_string
 			if ( methods[i].def != NULL )
 				str_append(result, methods[i].def->identifier);
 		}
-		
+
 		return str_c(result);
 	}
-	
+
 	return NULL;
 }
 
 /*
  * Compile-time argument validation
  */
- 
+
 static const char *ext_enotify_uri_scheme_parse(const char **uri_p)
 {
 	string_t *scheme = t_str_new(EXT_ENOTIFY_MAX_SCHEME_LEN);
 	const char *p = *uri_p;
 	unsigned int len = 0;
-	
+
 	/* RFC 3968:
 	 *
 	 *   scheme  = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
 	 *
 	 * FIXME: we do not allow '%' in schemes. Is this correct?
 	 */
-	 
+
 	if ( !i_isalpha(*p) )
 		return NULL;
-		
+
 	str_append_c(scheme, *p);
 	p++;
-		
+
 	while ( *p != '\0' && len < EXT_ENOTIFY_MAX_SCHEME_LEN ) {
-			
+
 		if ( !i_isalnum(*p) && *p != '+' && *p != '-' && *p != '.' )
 			break;
-	
+
 		str_append_c(scheme, *p);
 		p++;
 		len++;
 	}
-	
+
 	if ( *p != ':' )
 		return NULL;
 	p++;
-	
+
 	*uri_p = p;
 	return str_c(scheme);
 }
@@ -233,21 +233,21 @@ static bool ext_enotify_option_parse
 	const char **opt_name_r, const char **opt_value_r)
 {
 	const char *p = option;
-	
+
 	/* "<optionname>=<value>".
-	 * 
+	 *
 	 * l-d = ALPHA / DIGIT
 	 * l-d-p = l-d / "." / "-" / "_"
 	 * optionname = l-d *l-d-p
 	 * value = *(%x01-09 / %x0B-0C / %x0E-FF)
 	 */
-				
-	/* 
-	 * Parse option name 
+
+	/*
+	 * Parse option name
 	 *
 	 * optionname = l-d *l-d-p
 	 */
-	
+
 	/* Explicitly report empty option as such */
 	if ( *p == '\0' ) {
 		sieve_enotify_error(nenv, "empty option specified");
@@ -257,52 +257,52 @@ static bool ext_enotify_option_parse
 	/* l-d = ALPHA / DIGIT */
 	if ( i_isalnum(*p) ) {
 		p++;
-	
+
 		/* l-d-p = l-d / "." / "-" / "_" */
 		while ( i_isalnum(*p) || *p == '.' || *p == '-' || *p == '_' )
 			p++;
 	}
-	
+
 	/* Parsing must end at '=' and we must parse at least one character */
 	if ( *p != '=' || p == option ) {
 		sieve_enotify_error(nenv, "invalid option name specified in option '%s'",
 				str_sanitize(option, 80));
 		return FALSE;
 	}
-	
+
 	/* Assign option name */
-	if ( opt_name_r != NULL ) 
+	if ( opt_name_r != NULL )
 		*opt_name_r = t_strdup_until(option, p);
-	
+
 	/* Skip '=' */
 	p++;
-	
+
 	/* Exit now if only the option name is of interest */
 	if ( name_only )
 		return TRUE;
-			
-	/* 
+
+	/*
 	 * Parse option value
 	 */
-	 
+
 	/* value = *(%x01-09 / %x0B-0C / %x0E-FF) */
 	while ( *p != '\0' && *p != 0x0A && *p != 0x0D )
 		p++;
-		
+
 	/* Parse must end at end of string */
 	if ( *p != '\0' ) {
-		sieve_enotify_error(nenv, 
+		sieve_enotify_error(nenv,
 			"notify command: invalid option value specified in option '%s'",
 				str_sanitize(option, 80));
 		return FALSE;
 	}
-	
+
 	/* Assign option value */
 	if ( opt_value_r != NULL )
 		*opt_value_r = p;
-		
+
 	return TRUE;
-} 
+}
 
 struct _ext_enotify_option_check_context {
 	struct sieve_instance *svinst;
@@ -313,7 +313,7 @@ struct _ext_enotify_option_check_context {
 static int _ext_enotify_option_check
 (void *context, struct sieve_ast_argument *arg)
 {
-	struct _ext_enotify_option_check_context *optn_context = 
+	struct _ext_enotify_option_check_context *optn_context =
 		(struct _ext_enotify_option_check_context *) context;
 	struct sieve_validator *valdtr = optn_context->valdtr;
 	const struct sieve_enotify_method *method = optn_context->method;
@@ -321,28 +321,28 @@ static int _ext_enotify_option_check
 	const char *option = sieve_ast_argument_strc(arg);
 	const char *opt_name = NULL, *opt_value = NULL;
 	bool result = TRUE, check = TRUE;
-	
+
 	/* Compose log structure */
 	memset(&nenv, 0, sizeof(nenv));
 	nenv.svinst = optn_context->svinst;
-	nenv.method = method;	
+	nenv.method = method;
 	nenv.ehandler = sieve_prefix_ehandler_create
-		(sieve_validator_error_handler(valdtr), 
+		(sieve_validator_error_handler(valdtr),
 			sieve_error_script_location
-				(sieve_validator_script(valdtr), arg->source_line), 
+				(sieve_validator_script(valdtr), arg->source_line),
 			"notify command");
-		
+
 	/* Parse option */
 	if ( !sieve_argument_is_string_literal(arg) ) {
 		/* Variable string: partial option parse
-		 * 
+		 *
 		 * If the string item is not a string literal, it cannot be validated fully
 		 * at compile time. We can however check whether the '=' is in the string
 		 * specification and whether the part before the '=' is a valid option name.
 		 * In that case, the method option check function is called with the value
 		 * parameter equal to NULL, meaning that it should only check the validity
 		 * of the option itself and not the assigned value.
-		 */ 
+		 */
 		if ( !ext_enotify_option_parse(NULL, option, TRUE, &opt_name, &opt_value) )
 			check = FALSE;
 	} else {
@@ -351,12 +351,12 @@ static int _ext_enotify_option_check
 			(&nenv, option, FALSE, &opt_name, &opt_value) )
 			result = FALSE;
 	}
-	
+
 	/* Call method's option check function */
-	if ( result && check && method->def != NULL && 
-		method->def->compile_check_option != NULL ) 
-		result = method->def->compile_check_option(&nenv, opt_name, opt_value); 
-	
+	if ( result && check && method->def != NULL &&
+		method->def->compile_check_option != NULL )
+		result = method->def->compile_check_option(&nenv, opt_name, opt_value);
+
 	sieve_error_handler_unref(&nenv.ehandler);
 
 	return result;
@@ -364,7 +364,7 @@ static int _ext_enotify_option_check
 
 bool ext_enotify_compile_check_arguments
 (struct sieve_validator *valdtr, struct sieve_command *cmd,
-	struct sieve_ast_argument *uri_arg, struct sieve_ast_argument *msg_arg, 
+	struct sieve_ast_argument *uri_arg, struct sieve_ast_argument *msg_arg,
 	struct sieve_ast_argument *from_arg, struct sieve_ast_argument *options_arg)
 {
 	const struct sieve_extension *this_ext = cmd->ext;
@@ -380,18 +380,18 @@ bool ext_enotify_compile_check_arguments
 	 */
 	if ( !sieve_argument_is_string_literal(uri_arg) )
 		return TRUE;
-	
+
 	/* Parse scheme part of URI */
 	if ( (scheme=ext_enotify_uri_scheme_parse(&uri)) == NULL ) {
-		sieve_argument_validate_error(valdtr, uri_arg, 
-			"notify command: invalid scheme part for method URI '%s'", 
+		sieve_argument_validate_error(valdtr, uri_arg,
+			"notify command: invalid scheme part for method URI '%s'",
 			str_sanitize(sieve_ast_argument_strc(uri_arg), 80));
 		return FALSE;
 	}
-	
+
 	/* Find used method with the parsed scheme identifier */
 	if ( (method=ext_enotify_method_find(this_ext, scheme)) == NULL ) {
-		sieve_argument_validate_error(valdtr, uri_arg, 
+		sieve_argument_validate_error(valdtr, uri_arg,
 			"notify command: invalid method '%s'", scheme);
 		return FALSE;
 	}
@@ -401,15 +401,15 @@ bool ext_enotify_compile_check_arguments
 	/* Compose log structure */
 	memset(&nenv, 0, sizeof(nenv));
 	nenv.svinst = svinst;
-	nenv.method = method;	
-	
+	nenv.method = method;
+
 	/* Check URI itself */
 	if ( result && method->def->compile_check_uri != NULL ) {
 		/* Set log location to location of URI argument */
 		nenv.ehandler = sieve_prefix_ehandler_create
-		(sieve_validator_error_handler(valdtr), 
+		(sieve_validator_error_handler(valdtr),
 			sieve_error_script_location
-				(sieve_validator_script(valdtr), uri_arg->source_line), 
+				(sieve_validator_script(valdtr), uri_arg->source_line),
 			"notify command");
 
 		/* Execute method check function */
@@ -423,9 +423,9 @@ bool ext_enotify_compile_check_arguments
 		/* Set log location to location of :message argument */
 		sieve_error_handler_unref(&nenv.ehandler);
 		nenv.ehandler = sieve_prefix_ehandler_create
-		(sieve_validator_error_handler(valdtr), 
+		(sieve_validator_error_handler(valdtr),
 			sieve_error_script_location
-				(sieve_validator_script(valdtr), msg_arg->source_line), 
+				(sieve_validator_script(valdtr), msg_arg->source_line),
 			"notify command");
 
 		/* Execute method check function */
@@ -439,9 +439,9 @@ bool ext_enotify_compile_check_arguments
 		/* Set log location to location of :from argument */
 		sieve_error_handler_unref(&nenv.ehandler);
 		nenv.ehandler = sieve_prefix_ehandler_create
-		(sieve_validator_error_handler(valdtr), 
+		(sieve_validator_error_handler(valdtr),
 			sieve_error_script_location
-				(sieve_validator_script(valdtr), from_arg->source_line), 
+				(sieve_validator_script(valdtr), from_arg->source_line),
 				"notify command");
 
 		/* Execute method check function */
@@ -450,32 +450,32 @@ bool ext_enotify_compile_check_arguments
 	}
 
 	sieve_error_handler_unref(&nenv.ehandler);
-	
+
 	/* Check :options argument */
 	if ( result && options_arg != NULL ) {
 		struct sieve_ast_argument *option = options_arg;
-		struct _ext_enotify_option_check_context optn_context = 
+		struct _ext_enotify_option_check_context optn_context =
 			{ svinst, valdtr, method };
-		
+
 		/* Parse and check options */
 		result = ( sieve_ast_stringlist_map
 			(&option, (void *) &optn_context, _ext_enotify_option_check) > 0 );
-			
+
 		/* Discard argument if options are not accepted by method */
 		if ( result && method->def->compile_check_option == NULL ) {
-			sieve_argument_validate_warning(valdtr, options_arg, 
+			sieve_argument_validate_warning(valdtr, options_arg,
 				"notify command: method '%s' accepts no options", scheme);
 			(void)sieve_ast_arguments_detach(options_arg,1);
 		}
 	}
-	
+
 	return result;
 }
 
 /*
  * Runtime operand checking
  */
- 
+
 bool ext_enotify_runtime_method_validate
 (const struct sieve_runtime_env *renv, string_t *method_uri)
 {
@@ -528,7 +528,7 @@ static const struct sieve_enotify_method *ext_enotify_get_method
 	 */
 	if ( (scheme=ext_enotify_uri_scheme_parse(&uri)) == NULL ) {
 		sieve_runtime_error(renv, NULL,
-			"invalid scheme part for method URI '%s'", 
+			"invalid scheme part for method URI '%s'",
 			str_sanitize(str_c(method_uri), 80));
 		return NULL;
 	}
@@ -558,9 +558,9 @@ const char *ext_enotify_runtime_get_method_capability
 	if ( method == NULL ) return NULL;
 
 	/* Get requested capability */
-	if ( method->def != NULL && 
+	if ( method->def != NULL &&
 		method->def->runtime_get_method_capability != NULL ) {
-		struct sieve_enotify_env nenv; 
+		struct sieve_enotify_env nenv;
 
 		memset(&nenv, 0, sizeof(nenv));
 		nenv.svinst = renv->svinst;
@@ -580,8 +580,8 @@ const char *ext_enotify_runtime_get_method_capability
 
 int ext_enotify_runtime_check_operands
 (const struct sieve_runtime_env *renv,
-	string_t *method_uri, string_t *message, string_t *from, 
-	struct sieve_stringlist *options, 
+	string_t *method_uri, string_t *message, string_t *from,
+	struct sieve_stringlist *options,
 	const struct sieve_enotify_method **method_r, void **method_context)
 {
 	const struct sieve_enotify_method *method;
@@ -593,7 +593,7 @@ int ext_enotify_runtime_check_operands
 
 	/* Check provided operands */
 	if ( method->def != NULL && method->def->runtime_check_operands != NULL ) {
-		struct sieve_enotify_env nenv; 
+		struct sieve_enotify_env nenv;
 		int result = SIEVE_EXEC_OK;
 
 		memset(&nenv, 0, sizeof(nenv));
@@ -605,22 +605,22 @@ int ext_enotify_runtime_check_operands
 
 		/* Execute check function */
 		if ( method->def->runtime_check_operands
-			(&nenv, str_c(method_uri), uri_body, message, from, 
+			(&nenv, str_c(method_uri), uri_body, message, from,
 				sieve_result_pool(renv->result), method_context) ) {
 
 			/* Check any provided options */
-			if ( options != NULL ) {			
+			if ( options != NULL ) {
 				string_t *option = NULL;
 				int ret;
-			
+
 				/* Iterate through all provided options */
 				while ( (ret=sieve_stringlist_next_item(options, &option)) > 0 ) {
 					const char *opt_name = NULL, *opt_value = NULL;
-				
+
 					/* Parse option into <optionname> and <value> */
 					if ( ext_enotify_option_parse
 						(&nenv, str_c(option), FALSE, &opt_name, &opt_value) ) {
-					
+
 						/* Set option */
 						if ( method->def->runtime_set_option != NULL ) {
 							(void) method->def->runtime_set_option
@@ -628,7 +628,7 @@ int ext_enotify_runtime_check_operands
 						}
 					}
 				}
-			
+
 				/* Check for binary corruptions encountered during string list iteration
 				 */
 				if ( ret >= 0 ) {
@@ -641,11 +641,11 @@ int ext_enotify_runtime_check_operands
 				}
 
 			} else {
-				/* No options */			
+				/* No options */
 				*method_r = method;
 			}
 
-		} else { 	
+		} else {
 			/* Operand check failed */
 			result = SIEVE_EXEC_FAILURE;
 		}
@@ -655,7 +655,7 @@ int ext_enotify_runtime_check_operands
 	}
 
 	/* No check function defined: a most unlikely situation */
-	*method_context = NULL;	
+	*method_context = NULL;
 	*method_r = method;
 	return SIEVE_EXEC_OK;
 }
@@ -668,9 +668,9 @@ void sieve_enotify_method_printf
 (const struct sieve_enotify_print_env *penv, const char *fmt, ...)
 {
 	va_list args;
-	
-	va_start(args, fmt);	
+
+	va_start(args, fmt);
 	sieve_result_vprintf(penv->result_penv, fmt, args);
-	va_end(args);	 
+	va_end(args);
 }
 

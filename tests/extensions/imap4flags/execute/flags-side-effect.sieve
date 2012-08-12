@@ -1,8 +1,8 @@
-require "imap4flags"; 
+require "imap4flags";
 require "fileinto";
 
 /*
- * When keep/fileinto is used multiple times in a script and duplicate 
+ * When keep/fileinto is used multiple times in a script and duplicate
  * message elimination is performed, the last flag list value MUST win.
  */
 
