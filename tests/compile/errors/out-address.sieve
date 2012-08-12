@@ -1,6 +1,6 @@
 require "vacation";
 
-# Error 
+# Error
 
 redirect "@wrong.example.com";
 redirect "error";

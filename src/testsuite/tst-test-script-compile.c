@@ -18,7 +18,7 @@
 /*
  * Test_script_compile command
  *
- * Syntax:   
+ * Syntax:
  *   test_script_compile <scriptpath: string>
  */
 
@@ -27,19 +27,19 @@ static bool tst_test_script_compile_validate
 static bool tst_test_script_compile_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command_def tst_test_script_compile = { 
-	"test_script_compile", 
-	SCT_TEST, 
+const struct sieve_command_def tst_test_script_compile = {
+	"test_script_compile",
+	SCT_TEST,
 	1, 0, FALSE, FALSE,
 	NULL, NULL,
 	tst_test_script_compile_validate,
 	NULL,
-	tst_test_script_compile_generate, 
-	NULL 
+	tst_test_script_compile_generate,
+	NULL
 };
 
-/* 
- * Operation 
+/*
+ * Operation
  */
 
 static bool tst_test_script_compile_operation_dump
@@ -47,33 +47,33 @@ static bool tst_test_script_compile_operation_dump
 static int tst_test_script_compile_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def test_script_compile_operation = { 
+const struct sieve_operation_def test_script_compile_operation = {
 	"TEST_SCRIPT_COMPILE",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_SCRIPT_COMPILE,
-	tst_test_script_compile_operation_dump, 
-	tst_test_script_compile_operation_execute 
+	tst_test_script_compile_operation_dump,
+	tst_test_script_compile_operation_execute
 };
 
-/* 
- * Validation 
+/*
+ * Validation
  */
 
 static bool tst_test_script_compile_validate
-(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command *tst) 
+(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_command *tst)
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
-	
+
 	if ( !sieve_validate_positional_argument
 		(valdtr, tst, arg, "script", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-	
+
 	return sieve_validator_argument_activate(valdtr, tst, arg, FALSE);
 }
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool tst_test_script_compile_generate
@@ -85,17 +85,17 @@ static bool tst_test_script_compile_generate
 	return sieve_generate_arguments(cgenv, tst, NULL);
 }
 
-/* 
+/*
  * Code dump
  */
- 
+
 static bool tst_test_script_compile_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "TEST_SCRIPT_COMPILE:");
 	sieve_code_descend(denv);
 
-	if ( !sieve_opr_string_dump(denv, address, "script-name") ) 
+	if ( !sieve_opr_string_dump(denv, address, "script-name") )
 		return FALSE;
 
 	return TRUE;

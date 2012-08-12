@@ -12,7 +12,7 @@ test "Encodings - RFC examples" {
 		test_fail "failed 'the expansion of variable foo (${s}{fo\\o})'";
 	}
 
-	# "${fo\\o}" => ${fo\o} => illegal identifier => left verbatim.      
+	# "${fo\\o}" => ${fo\o} => illegal identifier => left verbatim.
 	if not string :is "${fo\\o}" "${s}{fo\\o}" {
 		test_fail "failed 'illegal identifier => left verbatim'";
 	}

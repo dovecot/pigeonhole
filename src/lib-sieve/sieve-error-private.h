@@ -10,7 +10,7 @@
  * Types
  */
 
-enum sieve_error_flags { 
+enum sieve_error_flags {
 	SIEVE_ERROR_FLAG_GLOBAL = (1 << 0)
 };
 
@@ -62,11 +62,11 @@ struct sieve_error_handler {
 };
 
 void sieve_error_handler_init
-	(struct sieve_error_handler *ehandler, struct sieve_instance *svinst, 
+	(struct sieve_error_handler *ehandler, struct sieve_instance *svinst,
 		pool_t pool, unsigned int max_errors);
 
 void sieve_error_handler_init_from_parent
-	(struct sieve_error_handler *ehandler, pool_t pool, 
+	(struct sieve_error_handler *ehandler, pool_t pool,
 		struct sieve_error_handler *parent);
 
 /*
@@ -92,9 +92,9 @@ static inline void sieve_direct_error
 {
 	va_list args;
 	va_start(args, fmt);
-	
+
 	sieve_direct_verror(svinst, ehandler, flags, location, fmt, args);
-	
+
 	va_end(args);
 }
 
@@ -104,9 +104,9 @@ static inline void sieve_direct_warning
 {
 	va_list args;
 	va_start(args, fmt);
-	
+
 	sieve_direct_vwarning(svinst, ehandler, flags, location, fmt, args);
-	
+
 	va_end(args);
 }
 
@@ -116,9 +116,9 @@ static inline void sieve_direct_info
 {
 	va_list args;
 	va_start(args, fmt);
-	
+
 	sieve_direct_vinfo(svinst, ehandler, flags, location, fmt, args);
-	
+
 	va_end(args);
 }
 

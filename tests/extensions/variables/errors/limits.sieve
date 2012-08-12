@@ -7,7 +7,7 @@ set "var123456789012345678901234567890" "value";
 set "var123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" "value";
 
 # Must yield unknown namespace error (no limit exceeded) (1)
-set "namespace.sub.sub.variable" "value"; 
+set "namespace.sub.sub.variable" "value";
 
 # Must yield unknown namespace error (exceeds element limit) (1)
 set "namespace.sub.sub.sub.variable" "value";

@@ -30,8 +30,8 @@ struct sieve_generator *sieve_generator_create
 		enum sieve_compile_flags flags);
 void sieve_generator_free(struct sieve_generator **generator);
 
-/* 
- * Accessors 
+/*
+ * Accessors
  */
 
 struct sieve_error_handler *sieve_generator_error_handler
@@ -44,32 +44,32 @@ struct sieve_binary *sieve_generator_get_binary
 struct sieve_binary_block *sieve_generator_get_block
 	(struct sieve_generator *gentr);
 
-/* 
- * Error handling 
+/*
+ * Error handling
  */
 
 void sieve_generator_warning
-(struct sieve_generator *gentr, unsigned int source_line, 
+(struct sieve_generator *gentr, unsigned int source_line,
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_generator_error
-(struct sieve_generator *gentr, unsigned int source_line, 
+(struct sieve_generator *gentr, unsigned int source_line,
 	const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_generator_critical
-(struct sieve_generator *gentr, unsigned int source_line, 
-	const char *fmt, ...) ATTR_FORMAT(3, 4); 
+(struct sieve_generator *gentr, unsigned int source_line,
+	const char *fmt, ...) ATTR_FORMAT(3, 4);
 
-/* 
- * Extension support 
+/*
+ * Extension support
  */
 
 void sieve_generator_extension_set_context
-	(struct sieve_generator *gentr, const struct sieve_extension *ext, 
+	(struct sieve_generator *gentr, const struct sieve_extension *ext,
 		void *context);
 const void *sieve_generator_extension_get_context
 	(struct sieve_generator *gentr, const struct sieve_extension *ext);
-    		
-/* 
- * Jump list 
+
+/*
+ * Jump list
  */
 
 struct sieve_jumplist {
@@ -88,24 +88,24 @@ void sieve_jumplist_add
 	(struct sieve_jumplist *jlist, sieve_size_t jump);
 void sieve_jumplist_resolve(struct sieve_jumplist *jlist);
 
-/* 
- * Code generation API 
+/*
+ * Code generation API
  */
 
 bool sieve_generate_argument
-	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
 		struct sieve_command *cmd);
 bool sieve_generate_arguments
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
 		struct sieve_ast_argument **last_arg_r);
 bool sieve_generate_argument_parameters
-	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
 		struct sieve_ast_argument *arg);
 
 bool sieve_generate_block
 	(const struct sieve_codegen_env *cgenv, struct sieve_ast_node *block);
 bool sieve_generate_test
-	(const struct sieve_codegen_env *cgenv, struct sieve_ast_node *tst_node, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_node *tst_node,
 		struct sieve_jumplist *jlist, bool jump_true);
 struct sieve_binary *sieve_generator_run
 	(struct sieve_generator *gentr, struct sieve_binary_block **sblock_r);

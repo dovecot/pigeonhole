@@ -16,7 +16,7 @@ struct testsuite_setting {
 	char *value;
 };
 
-static struct hash_table *settings; 
+static struct hash_table *settings;
 
 static const char *testsuite_setting_get
 	(void *context, const char *identifier);
@@ -31,11 +31,11 @@ void testsuite_settings_init(void)
 
 void testsuite_settings_deinit(void)
 {
-	struct hash_iterate_context *itx = 
+	struct hash_iterate_context *itx =
 		hash_table_iterate_init(settings);
-	void *key; 
+	void *key;
 	void *value;
-	
+
 	while ( hash_table_iterate(itx, &key, &value) ) {
 		struct testsuite_setting *setting = (struct testsuite_setting *) value;
 
@@ -44,7 +44,7 @@ void testsuite_settings_deinit(void)
 		i_free(setting);
 	}
 
-	hash_table_iterate_deinit(&itx); 	
+	hash_table_iterate_deinit(&itx);
 
 	hash_table_destroy(&settings);
 }
@@ -52,7 +52,7 @@ void testsuite_settings_deinit(void)
 static const char *testsuite_setting_get
 (void *context ATTR_UNUSED, const char *identifier)
 {
-	struct testsuite_setting *setting = (struct testsuite_setting *) 
+	struct testsuite_setting *setting = (struct testsuite_setting *)
 		hash_table_lookup(settings, identifier);
 
 	if ( setting == NULL ) {
@@ -64,7 +64,7 @@ static const char *testsuite_setting_get
 
 void testsuite_setting_set(const char *identifier, const char *value)
 {
-	struct testsuite_setting *setting = (struct testsuite_setting *) 
+	struct testsuite_setting *setting = (struct testsuite_setting *)
 		hash_table_lookup(settings, identifier);
 
 	if ( setting != NULL ) {
@@ -74,14 +74,14 @@ void testsuite_setting_set(const char *identifier, const char *value)
 		setting = i_new(struct testsuite_setting, 1);
 		setting->identifier = i_strdup(identifier);
 		setting->value = i_strdup(value);
-	
+
 		hash_table_insert(settings, (void *) identifier, (void *) setting);
 	}
 }
 
 void testsuite_setting_unset(const char *identifier)
 {
-	struct testsuite_setting *setting = (struct testsuite_setting *) 
+	struct testsuite_setting *setting = (struct testsuite_setting *)
 		hash_table_lookup(settings, identifier);
 
 	if ( setting != NULL ) {

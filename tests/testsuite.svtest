@@ -28,7 +28,7 @@ Friep!
 
 	if not header :is "from" "nico@frop.example.com" {
     	test_fail "message data not set properly.";
-	} 
+	}
 
 	keep;
 }

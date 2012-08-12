@@ -41,7 +41,7 @@ static const struct sieve_argument_def importance_low_tag = {
 
 static const struct sieve_argument_def importance_normal_tag = {
 	"normal",
-	NULL, 
+	NULL,
 	tag_importance_validate,
 	NULL, NULL, NULL
 };
@@ -76,7 +76,7 @@ static bool tag_importance_validate
 }
 
 void ext_notify_register_importance_tags
-(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg, 
+(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg,
 	const struct sieve_extension *ext, unsigned int id_code)
 {
 	sieve_validator_register_tag(valdtr, cmd_reg, ext, &importance_low_tag, id_code);
@@ -99,15 +99,15 @@ static struct ext_notify_message_context *ext_notify_get_message_context
 (const struct sieve_extension *this_ext, struct sieve_message_context *msgctx)
 {
 	struct ext_notify_message_context *ctx;
-	
+
 	/* Get message context (contains cached message body information) */
 	ctx = (struct ext_notify_message_context *)
 		sieve_message_context_extension_get(msgctx, this_ext);
-	
+
 	/* Create it if it does not exist already */
 	if ( ctx == NULL ) {
 		pool_t pool = sieve_message_context_pool(msgctx);
-		ctx = p_new(pool, struct ext_notify_message_context, 1);	
+		ctx = p_new(pool, struct ext_notify_message_context, 1);
 		ctx->pool = pool;
 		ctx->body_text = NULL;
 
@@ -115,7 +115,7 @@ static struct ext_notify_message_context *ext_notify_get_message_context
 		sieve_message_context_extension_set
 			(msgctx, this_ext, (void *) ctx);
 	}
-	
+
 	return ctx;
 }
 
@@ -150,7 +150,7 @@ static bool _is_text_content(const struct message_header_line *hdr)
 
 static buffer_t *cmd_notify_extract_body_text
 (const struct sieve_runtime_env *renv)
-{ 
+{
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_notify_message_context *mctx;
 	struct message_parser_ctx *parser;
@@ -160,11 +160,11 @@ static buffer_t *cmd_notify_extract_body_text
 	struct istream *input;
 	bool is_text, save_body;
 	int ret = 1;
-	
+
 	/* Return cached result if available */
 	mctx = ext_notify_get_message_context(this_ext, renv->msgctx);
 	if ( mctx->body_text != NULL ) {
-		return mctx->body_text;	
+		return mctx->body_text;
 	}
 
 	/* Create buffer */
@@ -173,10 +173,10 @@ static buffer_t *cmd_notify_extract_body_text
 	/* Get the message stream */
 	if ( mail_get_stream(renv->msgdata->mail, NULL, NULL, &input) < 0 )
 		return NULL;
-			
+
 	/* Initialize body decoder */
 	decoder = message_decoder_init(FALSE);
-	
+
 	parser = message_parser_init(mctx->pool, input, 0, 0);
 	is_text = TRUE;
 	save_body = FALSE;
@@ -190,19 +190,19 @@ static buffer_t *cmd_notify_extract_body_text
 				save_body = is_text;
 				continue;
 			}
-							
+
 			/* We're interested of only Content-Type: header */
 			if ( strcasecmp(block.hdr->name, "Content-Type" ) != 0)
 				continue;
 
-			/* Header can have folding whitespace. Acquire the full value before 
+			/* Header can have folding whitespace. Acquire the full value before
 			 * continuing
 			 */
 			if ( block.hdr->continues ) {
 				block.hdr->use_full_value = TRUE;
 				continue;
 			}
-		
+
 			/* Is it a text part? */
 			T_BEGIN {
 				is_text = _is_text_content(block.hdr);
@@ -215,14 +215,14 @@ static buffer_t *cmd_notify_extract_body_text
 		if ( save_body ) {
 			(void)message_decoder_decode_next_block(decoder, &block, &decoded);
 			buffer_append(mctx->body_text, decoded.data, decoded.size);
-			is_text = TRUE;			
+			is_text = TRUE;
 		}
 	}
 
 	/* Cleanup */
 	(void)message_parser_deinit(&parser, &parts);
 	message_decoder_deinit(&decoder);
-	
+
 	if ( ret < 0 && input->stream_errno != 0 )
 		return NULL;
 
@@ -231,7 +231,7 @@ static buffer_t *cmd_notify_extract_body_text
 }
 
 void ext_notify_construct_message
-(const struct sieve_runtime_env *renv, const char *msg_format, 
+(const struct sieve_runtime_env *renv, const char *msg_format,
 	string_t *out_msg)
 {
 	const struct sieve_message_data *msgdata = renv->msgdata;
@@ -239,7 +239,7 @@ void ext_notify_construct_message
 
 	if ( msg_format == NULL )
 		msg_format = "$from$: $subject$";
- 
+
 	/* Scan message for substitutions */
 	p = msg_format;
 	while ( *p != '\0' ) {
@@ -247,25 +247,25 @@ void ext_notify_construct_message
 
 		if ( strncasecmp(p, "$from$", 6) == 0 ) {
 			p += 6;
-		
+
 			/* Fetch sender from oriinal message */
 			if ( mail_get_headers_utf8(msgdata->mail, "from", &header) >= 0 )
-				 str_append(out_msg, header[0]); 
+				 str_append(out_msg, header[0]);
 
 		} else if ( strncasecmp(p, "$env-from$", 10) == 0 ) {
 			p += 10;
 
-			if ( msgdata->return_path != NULL ) 
+			if ( msgdata->return_path != NULL )
 				str_append(out_msg, msgdata->return_path);
 
-		} else if ( strncasecmp(p, "$subject$", 9) == 0 ) {	
+		} else if ( strncasecmp(p, "$subject$", 9) == 0 ) {
 			p += 9;
 
 			/* Fetch sender from oriinal message */
 			if ( mail_get_headers_utf8(msgdata->mail, "subject", &header) >= 0 )
-				 str_append(out_msg, header[0]); 
-			
-		} else if ( strncasecmp(p, "$text", 5) == 0 
+				 str_append(out_msg, header[0]);
+
+		} else if ( strncasecmp(p, "$text", 5) == 0
 			&& (p[5] == '[' || p[5] == '$') ) {
 			size_t num = 0;
 			const char *begin = p;
@@ -282,10 +282,10 @@ void ext_notify_construct_message
 
 				if ( *p++ != ']' || *p++ != '$' ) {
 					str_append_n(out_msg, begin, p-begin);
-					valid = FALSE;										
-				}	    	
+					valid = FALSE;
+				}
 			} else {
-				p += 1;			
+				p += 1;
 			}
 
 			if ( valid ) {
@@ -293,16 +293,16 @@ void ext_notify_construct_message
 				const char *body_text = (const char *)
 					buffer_get_data(cmd_notify_extract_body_text(renv), &body_size);
 
-				if ( num > 0 && num < body_size) 
+				if ( num > 0 && num < body_size)
 					str_append_n(out_msg, body_text, num);
-				else						
+				else
 					str_append_n(out_msg, body_text, body_size);
 			}
 		} else {
 			size_t len;
 
 			/* Find next substitution */
-			len = strcspn(p + 1, "$") + 1; 
+			len = strcspn(p + 1, "$") + 1;
 
 			/* Copy normal text */
 			str_append_n(out_msg, p, len);

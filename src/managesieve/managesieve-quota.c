@@ -16,21 +16,21 @@ uint64_t managesieve_quota_max_script_size(struct client *client)
 }
 
 bool managesieve_quota_check_validsize(struct client *client, size_t size)
-{	
+{
 	uint64_t limit;
 
 	if ( !sieve_storage_quota_validsize
 		(client->storage, size, &limit) ) {
-		client_send_noresp(client, "QUOTA/MAXSIZE", 
-			t_strdup_printf("Script is too large (max %llu bytes).", 
+		client_send_noresp(client, "QUOTA/MAXSIZE",
+			t_strdup_printf("Script is too large (max %llu bytes).",
 			(unsigned long long int) limit));
-	
+
 		return FALSE;
 	}
 
 	return TRUE;
 }
- 
+
 bool managesieve_quota_check_all
 (struct client *client, const char *scriptname, size_t size)
 {
@@ -44,19 +44,19 @@ bool managesieve_quota_check_all
 			switch ( quota ) {
 			case SIEVE_STORAGE_QUOTA_MAXSIZE:
 				client_send_noresp(client, "QUOTA/MAXSIZE", t_strdup_printf(
-					"Script is too large (max %llu bytes).", 
+					"Script is too large (max %llu bytes).",
 					(unsigned long long int) limit));
 				break;
 
 			case SIEVE_STORAGE_QUOTA_MAXSCRIPTS:
 				client_send_noresp(client, "QUOTA/MAXSCRIPTS", t_strdup_printf(
-					"Script count quota exceeded (max %llu scripts).", 
+					"Script count quota exceeded (max %llu scripts).",
 					(unsigned long long int) limit));
 				break;
 
 			case SIEVE_STORAGE_QUOTA_MAXSTORAGE:
 				client_send_noresp(client, "QUOTA/MAXSTORAGE", t_strdup_printf(
-					"Script storage quota exceeded (max %llu bytes).", 
+					"Script storage quota exceeded (max %llu bytes).",
 					(unsigned long long int) limit));
 				break;
 

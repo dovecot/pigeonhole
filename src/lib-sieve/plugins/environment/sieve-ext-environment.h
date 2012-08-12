@@ -8,14 +8,14 @@
 
 struct sieve_environment_item {
 	const char *name;
-	
+
 	const char *value;
 	const char *(*get_value)
 		(struct sieve_instance *svinst, const struct sieve_script_env *senv);
 };
 
 void sieve_ext_environment_item_register
-	(const struct sieve_extension *ext, 
+	(const struct sieve_extension *ext,
 		const struct sieve_environment_item *item);
 
 #endif

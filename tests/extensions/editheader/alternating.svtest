@@ -56,7 +56,7 @@ test "Alternating - add; delete" {
 	if not header :is "x-some-header" "Header content" {
 		test_fail "wrong content in redirected mail ";
 	}
-	
+
 	/* stored message message */
 
 	if not test_message :folder "folder1" 0 {
@@ -105,7 +105,7 @@ test "Alternating - delete; add" {
 	if exists "subject" {
 		test_fail "deleted header still present redirected mail";
 	}
-	
+
 	/* stored message message */
 
 	if not test_message :folder "folder2" 0 {

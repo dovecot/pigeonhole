@@ -86,7 +86,7 @@ static const struct setting_parser_info managesieve_login_setting_parser_info = 
 	.module_name = "managesieve-login",
 	.defines = managesieve_login_setting_defines,
 	.defaults = &managesieve_login_default_settings,
-	
+
 	.type_offset = (size_t)-1,
 	.struct_size = sizeof(struct managesieve_login_settings),
 

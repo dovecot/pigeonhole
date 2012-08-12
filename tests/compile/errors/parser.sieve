@@ -5,8 +5,8 @@
  */
 
 # Too many arguments (1)
-frop :this "is" "a" 2 :long "argument" "list" :and :it :should "fail" :during "parsing" :but "it" "should" "be" 
-	"recoverable" "." :this "is" "a" 2 :long "argument" "list" :and :it :should "fail" :during "parsing" :but 
+frop :this "is" "a" 2 :long "argument" "list" :and :it :should "fail" :during "parsing" :but "it" "should" "be"
+	"recoverable" "." :this "is" "a" 2 :long "argument" "list" :and :it :should "fail" :during "parsing" :but
 	"it" "should" "be" "recoverable" {
 	stop;
 }
@@ -31,22 +31,22 @@ if true { if true { if true { if true { if true { if true { if true { if true {
 if true { if true { if true { if true { if true { if true { if true { if true {
 	if true { if true { if true { if true { if true { if true { if true { if true {
 		if true { if true { if true { if true { if true { if true { if true { if true {
-			if true { if true {	if true { if true {	if true { if true { 
-				if	
-					anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( 
-					anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( 
-					anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( 
-					anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( 
+			if true { if true {	if true { if true {	if true { if true {
+				if
 					anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof (
-						true 
-					)))))))) 
-					)))))))) 
-					)))))))) 
-					)))))))) 
-					)))))))) 
+					anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof (
+					anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof (
+					anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof (
+					anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof ( anyof (
+						true
+					))))))))
+					))))))))
+					))))))))
+					))))))))
+					))))))))
 				{
 					stop;
-				} 
+				}
 			} } } } } }
 		} } } } } } } }
 	} } } } } } } }
@@ -56,8 +56,8 @@ if true { if true { if true { if true { if true { if true { if true { if true {
 if true { if true { if true { if true { if true { if true { if true { if true {
 	if true { if true { if true { if true { if true { if true { if true { if true {
 		if true { if true { if true { if true { if true { if true { if true { if true {
-			if true { if true {	if true { if true {	if true { if true { 
-				if	
+			if true { if true {	if true { if true {	if true { if true {
+				if
 					not not not not not not not not
 					not not not not not not not not
 					not not not not not not not not
@@ -65,7 +65,7 @@ if true { if true { if true { if true { if true { if true { if true { if true {
 					not not not not not not not not false
 				{
 					stop;
-				} 
+				}
 			} } } } } }
 		} } } } } } } }
 	} } } } } } } }

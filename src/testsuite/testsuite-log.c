@@ -18,7 +18,7 @@
 
 bool _testsuite_log_stdout = FALSE;
 
-/* 
+/*
  * Testsuite log error handlers
  */
 
@@ -65,7 +65,7 @@ static void ATTR_FORMAT(4, 0) _testsuite_log_verror
 	msg.location = p_strdup(pool, location);
 	msg.message = p_strdup_vprintf(pool, fmt, args);
 
-	array_append(&_testsuite_log_errors, &msg, 1);	
+	array_append(&_testsuite_log_errors, &msg, 1);
 }
 
 static void ATTR_FORMAT(4, 0) _testsuite_log_main_verror
@@ -74,10 +74,10 @@ static void ATTR_FORMAT(4, 0) _testsuite_log_main_verror
 	va_list args)
 {
 	if ( location == NULL || *location == '\0' )
-		fprintf(stderr, 
+		fprintf(stderr,
 			"error: %s\n", t_strdup_vprintf(fmt, args));
 	else
-		fprintf(stderr, 
+		fprintf(stderr,
 			"%s: error: %s\n", location, t_strdup_vprintf(fmt, args));
 }
 
@@ -188,11 +188,11 @@ void testsuite_log_init(bool log_stdout)
 {
 	_testsuite_log_stdout = log_stdout;
 
-	testsuite_log_ehandler = _testsuite_log_ehandler_create(); 
+	testsuite_log_ehandler = _testsuite_log_ehandler_create();
 	sieve_error_handler_accept_infolog(testsuite_log_ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(testsuite_log_ehandler, TRUE);
 
-	testsuite_log_main_ehandler = _testsuite_log_main_ehandler_create(); 
+	testsuite_log_main_ehandler = _testsuite_log_main_ehandler_create();
 	sieve_error_handler_accept_infolog(testsuite_log_main_ehandler, TRUE);
 	sieve_error_handler_accept_debuglog(testsuite_log_main_ehandler, TRUE);
 
@@ -232,7 +232,7 @@ struct sieve_stringlist *testsuite_log_stringlist_create
 (const struct sieve_runtime_env *renv, int index)
 {
 	struct testsuite_log_stringlist *strlist;
-	    
+
 	strlist = t_new(struct testsuite_log_stringlist, 1);
 	strlist->strlist.runenv = renv;
 	strlist->strlist.exec_status = SIEVE_EXEC_OK;
@@ -241,14 +241,14 @@ struct sieve_stringlist *testsuite_log_stringlist_create
 
  	strlist->index = index;
 	strlist->pos = 0;
- 
+
 	return &strlist->strlist;
 }
 
 static int testsuite_log_stringlist_next_item
 (struct sieve_stringlist *_strlist, string_t **str_r)
 {
-	struct testsuite_log_stringlist *strlist = 
+	struct testsuite_log_stringlist *strlist =
 		(struct testsuite_log_stringlist *) _strlist;
 	const struct _testsuite_log_message *msg;
 	int pos;
@@ -261,7 +261,7 @@ static int testsuite_log_stringlist_next_item
 	if ( strlist->index > 0 ) {
 		pos = strlist->index - 1;
 		strlist->pos = -1;
-	} else { 
+	} else {
 		pos = strlist->pos++;
 	}
 
@@ -279,7 +279,7 @@ static int testsuite_log_stringlist_next_item
 static void testsuite_log_stringlist_reset
 (struct sieve_stringlist *_strlist)
 {
-	struct testsuite_log_stringlist *strlist = 
+	struct testsuite_log_stringlist *strlist =
 		(struct testsuite_log_stringlist *) _strlist;
 
 	strlist->pos = 0;

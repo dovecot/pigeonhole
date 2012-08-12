@@ -25,7 +25,7 @@ struct sieve_dumptime_env {
 	/* Code position */
 	const struct sieve_operation *oprtn;
 	sieve_size_t offset;
-	
+
 	/* Output stream */
 	struct ostream *stream;
 };

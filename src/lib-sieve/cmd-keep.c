@@ -9,32 +9,32 @@
 #include "sieve-dump.h"
 #include "sieve-message.h"
 #include "sieve-actions.h"
-#include "sieve-validator.h" 
+#include "sieve-validator.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 #include "sieve-result.h"
 
-/* 
- * Keep command 
+/*
+ * Keep command
  *
  * Syntax:
  *   keep
- */	
+ */
 
 static bool cmd_keep_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command_def cmd_keep = { 
-	"keep", 
-	SCT_COMMAND, 
+const struct sieve_command_def cmd_keep = {
+	"keep",
+	SCT_COMMAND,
 	0, 0, FALSE, FALSE,
 	NULL, NULL, NULL, NULL,
-	cmd_keep_generate, 
+	cmd_keep_generate,
 	NULL
 };
 
-/* 
- * Keep operation 
+/*
+ * Keep operation
  */
 
 static bool cmd_keep_operation_dump
@@ -42,12 +42,12 @@ static bool cmd_keep_operation_dump
 static int cmd_keep_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def cmd_keep_operation = { 
+const struct sieve_operation_def cmd_keep_operation = {
 	"KEEP",
 	NULL,
 	SIEVE_OPERATION_KEEP,
-	cmd_keep_operation_dump, 
-	cmd_keep_operation_execute 
+	cmd_keep_operation_dump,
+	cmd_keep_operation_execute
 };
 
 /*
@@ -55,7 +55,7 @@ const struct sieve_operation_def cmd_keep_operation = {
  */
 
 static bool cmd_keep_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
 	/* Emit opcode */
 	sieve_operation_emit(cgenv->sblock, NULL, &cmd_keep_operation);
@@ -64,7 +64,7 @@ static bool cmd_keep_generate
 	return sieve_generate_arguments(cgenv, cmd, NULL);
 }
 
-/* 
+/*
  * Code dump
  */
 
@@ -92,17 +92,17 @@ static int cmd_keep_operation_execute
 	 */
 
 	/* Optional operands (side effects only) */
-	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 ) 
+	if ( sieve_action_opr_optional_read(renv, address, NULL, &ret, &slist) != 0 )
 		return ret;
 
 	/*
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS, 
+	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS,
 		"keep action; store message in default mailbox");
 
-	/* Add keep action to result. 
+	/* Add keep action to result.
 	 */
 	if ( sieve_result_add_keep(renv, slist) < 0 )
 		return SIEVE_EXEC_FAILURE;

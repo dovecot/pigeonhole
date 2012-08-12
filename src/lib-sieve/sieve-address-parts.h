@@ -1,6 +1,6 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
- 
+
 #ifndef __SIEVE_ADDRESS_PARTS_H
 #define __SIEVE_ADDRESS_PARTS_H
 
@@ -15,10 +15,10 @@
  */
 
 struct sieve_address_part_def {
-	struct sieve_object_def obj_def;		
+	struct sieve_object_def obj_def;
 
 	const char *(*extract_from)
-		(const struct sieve_address_part *addrp, 
+		(const struct sieve_address_part *addrp,
 			const struct sieve_address *address);
 };
 
@@ -43,7 +43,7 @@ struct sieve_address_part {
 /*
  * Core address parts
  */
- 
+
 enum sieve_address_part_code {
 	SIEVE_ADDRESS_PART_ALL,
 	SIEVE_ADDRESS_PART_LOCAL,
@@ -58,7 +58,7 @@ extern const struct sieve_address_part_def domain_address_part;
 /*
  * Address part tagged argument
  */
- 
+
 extern const struct sieve_argument_def address_part_tag;
 
 void sieve_address_parts_link_tags
@@ -68,11 +68,11 @@ void sieve_address_parts_link_tags
 /*
  * Address part registry
  */
-		
+
 void sieve_address_part_register
 	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
 		const struct sieve_address_part_def *addrp);
-		
+
 /*
  * Address part operand
  */
@@ -85,7 +85,7 @@ extern const struct sieve_operand_class sieve_address_part_operand_class;
 
 static inline void sieve_opr_address_part_emit
 (struct sieve_binary_block *sblock, const struct sieve_address_part *addrp)
-{ 
+{
 	sieve_opr_object_emit(sblock, addrp->object.ext, addrp->object.def);
 }
 
@@ -97,7 +97,7 @@ static inline bool sieve_opr_address_part_dump
 }
 
 static inline int sieve_opr_address_part_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
 	struct sieve_address_part *addrp)
 {
 	if ( !sieve_opr_object_read
@@ -116,8 +116,8 @@ struct sieve_stringlist *sieve_address_part_stringlist_create
 	(const struct sieve_runtime_env *renv, const struct sieve_address_part *addrp,
 		struct sieve_address_list *addresses);
 
-/* 
- * Match utility 
+/*
+ * Match utility
  */
 
 enum sieve_addrmatch_opt_operand {
@@ -132,7 +132,7 @@ int sieve_addrmatch_opr_optional_dump
 		signed int *opt_code);
 
 int sieve_addrmatch_opr_optional_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address, 
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
 		signed int *opt_code, int *exec_status, struct sieve_address_part *addrp,
 		struct sieve_match_type *mtch, struct sieve_comparator *cmp);
 

@@ -270,7 +270,7 @@ test "Reply for normal mail" {
 }
 
 /*
- * Reply for :addresses 
+ * Reply for :addresses
  */
 
 test_result_reset;

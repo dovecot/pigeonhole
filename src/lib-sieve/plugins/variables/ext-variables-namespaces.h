@@ -19,7 +19,7 @@ bool ext_variables_namespace_exists
 const struct sieve_variables_namespace *ext_variables_namespace_create_instance
 	(const struct sieve_extension *var_ext, struct sieve_validator *valdtr,
 		struct sieve_command *cmd, const char *identifier);
-	
+
 void ext_variables_register_core_namespaces
 	(const struct sieve_extension *var_ext,
 		struct ext_variables_validator_context *ctx);
@@ -29,14 +29,14 @@ void ext_variables_register_core_namespaces
  */
 
 struct sieve_ast_argument *ext_variables_namespace_argument_create
-	(const struct sieve_extension *this_ext, 
-		struct sieve_validator *valdtr, struct sieve_ast_argument *parent_arg, 
+	(const struct sieve_extension *this_ext,
+		struct sieve_validator *valdtr, struct sieve_ast_argument *parent_arg,
 		struct sieve_command *cmd, ARRAY_TYPE(sieve_variable_name) *var_name);
 bool ext_variables_namespace_argument_activate
 	(const struct sieve_extension *this_ext, struct sieve_validator *valdtr,
-		struct sieve_ast_argument *arg, struct sieve_command *cmd, 
+		struct sieve_ast_argument *arg, struct sieve_command *cmd,
 		ARRAY_TYPE(sieve_variable_name) *var_name, bool assignment);
-	
+
 /*
  * Namespace operand
  */

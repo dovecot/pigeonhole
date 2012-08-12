@@ -33,7 +33,7 @@ bool cmd_deletescript(struct client_command_context *cmd)
 		client_send_ok(client, "Deletescript completed.");
 	}
 
-	/* Script object is deleted no matter what in 
+	/* Script object is deleted no matter what in
 	 * sieve_script_delete()
 	 */
 

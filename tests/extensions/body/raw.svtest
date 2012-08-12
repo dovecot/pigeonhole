@@ -19,7 +19,7 @@ This is a nested multi-part message in MIME format.
 Content-Type: text/plain; charset="us-ascii"
 
 Hello
-        
+
 --inner
 Content-Type: text/html; charset="us-ascii"
 

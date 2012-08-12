@@ -6,7 +6,7 @@
 
 #include "ext-regex-common.h"
 
-/* 
+/*
  * Regex match type operand
  */
 

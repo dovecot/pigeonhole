@@ -58,20 +58,20 @@ static unsigned int test_failures;
 
 const struct sieve_extension *testsuite_ext;
 
-/* 
- * Validator context 
+/*
+ * Validator context
  */
 
 bool testsuite_validator_context_initialize(struct sieve_validator *valdtr)
 {
 	pool_t pool = sieve_validator_pool(valdtr);
-	struct testsuite_validator_context *ctx = 
+	struct testsuite_validator_context *ctx =
 		p_new(pool, struct testsuite_validator_context, 1);
-	
+
 	/* Setup object registry */
 	ctx->object_registrations = sieve_validator_object_registry_create(valdtr);
 	testsuite_register_core_objects(ctx);
-	
+
 	sieve_validator_extension_set_context(valdtr, testsuite_ext, ctx);
 
 	return TRUE;
@@ -84,8 +84,8 @@ struct testsuite_validator_context *testsuite_validator_context_get
 		sieve_validator_extension_get_context(valdtr, testsuite_ext);
 }
 
-/* 
- * Generator context 
+/*
+ * Generator context
  */
 
 bool testsuite_generator_context_initialize
@@ -93,12 +93,12 @@ bool testsuite_generator_context_initialize
 {
 	pool_t pool = sieve_generator_pool(gentr);
 	struct sieve_binary_block *sblock = sieve_generator_get_block(gentr);
-	struct testsuite_generator_context *ctx = 
+	struct testsuite_generator_context *ctx =
 		p_new(pool, struct testsuite_generator_context, 1);
-	
+
 	/* Setup exit jumplist */
 	ctx->exit_jumps = sieve_jumplist_create(pool, sblock);
-	
+
 	sieve_generator_extension_set_context(gentr, this_ext, ctx);
 
 	return TRUE;
@@ -149,11 +149,11 @@ struct testsuite_interpreter_context *testsuite_interpreter_context_get
 /*
  * Test context
  */
- 
+
 static void testsuite_test_context_init(void)
 {
 	test_name = str_new(default_pool, 128);
-	test_index = 0;	
+	test_index = 0;
 	test_failures = 0;
 }
 
@@ -181,7 +181,7 @@ void testsuite_test_failf(const char *fmt, ...)
 }
 
 void testsuite_test_fail_cstr(const char *reason)
-{	
+{
 	if ( str_len(test_name) == 0 ) {
 		if ( reason == NULL || *reason == '\0' )
 			printf("%2d: Test FAILED\n", test_index);
@@ -191,7 +191,7 @@ void testsuite_test_fail_cstr(const char *reason)
 		if ( reason == NULL || *reason == '\0' )
 			printf("%2d: Test '%s' FAILED\n", test_index, str_c(test_name));
 		else
-			printf("%2d: Test '%s' FAILED: %s\n", test_index, 
+			printf("%2d: Test '%s' FAILED: %s\n", test_index,
 				str_c(test_name), reason);
 	}
 
@@ -201,7 +201,7 @@ void testsuite_test_fail_cstr(const char *reason)
 }
 
 void testsuite_testcase_fail(const char *reason)
-{	
+{
 	if ( reason == NULL || *reason == '\0' )
 		printf("XX: Test CASE FAILED\n");
 	else
@@ -221,7 +221,7 @@ void testsuite_test_succeed(string_t *reason)
 		if ( reason == NULL || str_len(reason) == 0 )
 			printf("%2d: Test '%s' SUCCEEDED\n", test_index, str_c(test_name));
 		else
-			printf("%2d: Test '%s' SUCCEEDED: %s\n", test_index, 
+			printf("%2d: Test '%s' SUCCEEDED: %s\n", test_index,
 				str_c(test_name), str_c(reason));
 	}
 	str_truncate(test_name, 0);
@@ -255,8 +255,8 @@ static void testsuite_tmp_dir_init(void)
 		("/tmp/dsieve-testsuite.%s.%s", dec2str(time(NULL)), dec2str(getpid()));
 
 	if ( mkdir(testsuite_tmp_dir, 0700) < 0 ) {
-		i_fatal("failed to create temporary directory '%s': %m.", 
-			testsuite_tmp_dir);		
+		i_fatal("failed to create temporary directory '%s': %m.",
+			testsuite_tmp_dir);
 	}
 }
 

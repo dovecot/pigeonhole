@@ -1,13 +1,13 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
-  
+
 /* FIXME: URI syntax conforms to something somewhere in between RFC 2368 and
  *   draft-duerst-mailto-bis-05.txt. Should fully migrate to new specification
  *   when it matures. This requires modifications to the address parser (no
  *   whitespace allowed within the address itself) and UTF-8 support will be
  *   required in the URL.
  */
- 
+
 #include "lib.h"
 #include "array.h"
 #include "str.h"
@@ -26,7 +26,7 @@
 
 #define uri_mailto_error(PARSER, ...) \
 	sieve_error((PARSER)->ehandler, NULL, "invalid mailto URI: " __VA_ARGS__ )
-	
+
 #define uri_mailto_warning(PARSER, ...) \
 	sieve_warning((PARSER)->ehandler, NULL, "mailto URI: " __VA_ARGS__ )
 
@@ -45,10 +45,10 @@ struct uri_mailto_parser {
 	int max_headers;
 };
 
-/* 
- * Reserved and unique headers 
+/*
+ * Reserved and unique headers
  */
- 
+
 static inline bool uri_mailto_header_is_reserved
 (struct uri_mailto_parser *parser, const char *field_name)
 {
@@ -81,9 +81,9 @@ static inline bool uri_mailto_header_is_unique
 	}
 
 	return FALSE;
-} 
+}
 
-/* 
+/*
  * Low-level URI parsing.
  *
  * FIXME: much of this implementation will be common to other URI schemes. This
@@ -114,36 +114,36 @@ static inline bool _is_qchar(unsigned char c)
 {
 	return _qchar_lookup[c];
 }
-  
+
 static inline int _decode_hex_digit(unsigned char digit)
 {
 	switch ( digit ) {
-	case '0': case '1': case '2': case '3': case '4': 
-	case '5': case '6': case '7': case '8': case '9': 
+	case '0': case '1': case '2': case '3': case '4':
+	case '5': case '6': case '7': case '8': case '9':
 		return (int) digit - '0';
 
 	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
 		return (int) digit - 'a' + 0x0a;
-		
+
 	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
 		return (int) digit - 'A' + 0x0A;
 	}
-	
+
 	return -1;
 }
 
 static bool _parse_hex_value(const char **in, char *out)
 {
 	int value, digit;
-		
+
 	if ( (digit=_decode_hex_digit((unsigned char) **in)) < 0 )
 		return FALSE;
-	
+
 	value = digit << 4;
 	(*in)++;
-	
+
 	if ( (digit=_decode_hex_digit((unsigned char) **in)) < 0 )
-		return FALSE;	
+		return FALSE;
 
 	value |= digit;
 	(*in)++;
@@ -152,12 +152,12 @@ static bool _parse_hex_value(const char **in, char *out)
 		return FALSE;
 
 	*out = (char) value;
-	return TRUE;	
+	return TRUE;
 }
 
-/* 
- * URI recipient parsing 
- */ 
+/*
+ * URI recipient parsing
+ */
 
 static bool uri_mailto_add_valid_recipient
 (struct uri_mailto_parser *parser, string_t *recipient, bool cc)
@@ -168,41 +168,41 @@ static bool uri_mailto_add_valid_recipient
 	unsigned int count, i;
 	const char *error;
 	const char *normalized;
-	 
+
 	/* Verify recipient */
 	if ( (normalized=sieve_address_normalize(recipient, &error)) == NULL ) {
 		uri_mailto_error(parser, "invalid recipient '%s': %s",
 			str_sanitize(str_c(recipient), 80), error);
 		return FALSE;
 	}
-	
+
 	/* Add recipient to the uri */
-	if ( uri != NULL ) { 				
+	if ( uri != NULL ) {
 		/* Get current recipients */
 		rcpts = array_get_modifiable(&uri->recipients, &count);
-		
+
 		/* Enforce limits */
 		if ( parser->max_recipients > 0 && (int)count >= parser->max_recipients ) {
 			if ( (int)count == parser->max_recipients) {
-				uri_mailto_warning(parser, 
+				uri_mailto_warning(parser,
 					"more than the maximum %u recipients specified; "
 					"rest is discarded", parser->max_recipients);
 			}
-			return TRUE;	
+			return TRUE;
 		}
-	
+
 		/* Check for duplicate first */
 		for ( i = 0; i < count; i++ ) {
-			if ( sieve_address_compare(rcpts[i].normalized, normalized, TRUE) == 0 ) 
+			if ( sieve_address_compare(rcpts[i].normalized, normalized, TRUE) == 0 )
 				{
 				/* Upgrade existing Cc: recipient to a To: recipient if possible */
 				rcpts[i].carbon_copy = ( rcpts[i].carbon_copy && cc );
-			
+
 				uri_mailto_warning(parser, "ignored duplicate recipient '%s'",
 					str_sanitize(str_c(recipient), 80));
 				return TRUE;
-			} 
-		}			
+			}
+		}
 
 		/* Add */
 		new_recipient = array_append_space(&uri->recipients);
@@ -219,17 +219,17 @@ static bool uri_mailto_parse_recipients
 {
 	string_t *to = t_str_new(128);
 	const char *p = *uri_p;
-	
+
 	if ( *p == '\0' || *p == '?' )
 		return TRUE;
-		
+
 	while ( *p != '\0' && *p != '?' ) {
 		if ( *p == '%' ) {
 			/* % encoded character */
 			char ch;
-			
+
 			p++;
-			
+
 			/* Parse 2-digit hex value */
 			if ( !_parse_hex_value(&p, &ch) ) {
 				uri_mailto_error(parser, "invalid %% encoding");
@@ -241,7 +241,7 @@ static bool uri_mailto_parse_recipients
 				/* Verify and add recipient */
 				if ( !uri_mailto_add_valid_recipient(parser, to, FALSE) )
 					return FALSE;
-			
+
 				/* Reset for next recipient */
 				str_truncate(to, 0);
 			}	else {
@@ -259,11 +259,11 @@ static bool uri_mailto_parse_recipients
 			str_append_c(to, *p);
 			p++;
 		}
-	}	
-	
+	}
+
 	/* Skip '?' */
 	if ( *p != '\0' ) p++;
-	
+
 	/* Verify and add recipient */
 	if ( !uri_mailto_add_valid_recipient(parser, to, FALSE) )
 		return FALSE;
@@ -278,13 +278,13 @@ static bool uri_mailto_parse_header_recipients
 	string_t *to = t_str_new(128);
 	const char *p = (const char *) str_data(rcpt_header);
 	const char *pend = p + str_len(rcpt_header);
-		
+
 	while ( p < pend ) {
 		if ( *p == ',' ) {
 			/* Verify and add recipient */
 			if ( !uri_mailto_add_valid_recipient(parser, to, cc) )
 				return FALSE;
-			
+
 			/* Reset for next recipient */
 			str_truncate(to, 0);
 		} else {
@@ -292,20 +292,20 @@ static bool uri_mailto_parse_header_recipients
 			str_append_c(to, *p);
 		}
 		p++;
-	}	
-	
+	}
+
 	/* Verify and add recipient */
 	if ( !uri_mailto_add_valid_recipient(parser, to, cc) )
 		return FALSE;
 
-	return TRUE;	
+	return TRUE;
 }
 
 /* URI header parsing */
 
 static bool uri_mailto_header_is_duplicate
 (struct uri_mailto_parser *parser, const char *field_name)
-{	
+{
 	struct uri_mailto *uri = parser->uri;
 
 	if ( uri == NULL ) return FALSE;
@@ -314,13 +314,13 @@ static bool uri_mailto_header_is_duplicate
 		const struct uri_mailto_header_field *hdrs;
 		unsigned int count, i;
 
-		hdrs = array_get(&uri->headers, &count);	
+		hdrs = array_get(&uri->headers, &count);
 		for ( i = 0; i < count; i++ ) {
-			if ( strcasecmp(hdrs[i].name, field_name) == 0 ) 
+			if ( strcasecmp(hdrs[i].name, field_name) == 0 )
 				return TRUE;
 		}
 	}
-	
+
 	return FALSE;
 }
 
@@ -331,24 +331,24 @@ static bool uri_mailto_parse_headers
 	unsigned int header_count = 0;
 	string_t *field = t_str_new(128);
 	const char *p = *uri_p;
-					
+
 	while ( *p != '\0' ) {
 		enum {
-			_HNAME_IGNORED, 
+			_HNAME_IGNORED,
 			_HNAME_GENERIC,
 			_HNAME_TO,
 			_HNAME_CC,
-			_HNAME_SUBJECT, 
-			_HNAME_BODY 
+			_HNAME_SUBJECT,
+			_HNAME_BODY
 		} hname_type = _HNAME_GENERIC;
 		struct uri_mailto_header_field *hdrf = NULL;
 		const char *field_name;
-		
+
 		/* Parse field name */
 		while ( *p != '\0' && *p != '=' ) {
 			char ch = *p;
 			p++;
-			
+
 			if ( ch == '%' ) {
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
@@ -371,18 +371,18 @@ static bool uri_mailto_parse_headers
 			return FALSE;
 		}
 
-		if ( parser->max_headers > -1 && 
+		if ( parser->max_headers > -1 &&
 			(int)header_count >= parser->max_headers ) {
 			/* Refuse to accept more headers than allowed by policy */
 			if ( (int)header_count == parser->max_headers ) {
 				uri_mailto_warning(parser, "more than the maximum %u headers specified; "
 					"rest is discarded", parser->max_headers);
 			}
-			
+
 			hname_type = _HNAME_IGNORED;
 		} else {
 			/* Add new header field to array and assign its name */
-			
+
 			field_name = str_c(field);
 			if ( strcasecmp(field_name, "to") == 0 )
 				hname_type = _HNAME_TO;
@@ -398,7 +398,7 @@ static bool uri_mailto_parse_headers
 						hdrf = array_append_space(&uri->headers);
 						hdrf->name = p_strdup(parser->pool, field_name);
 					} else {
-						uri_mailto_warning(parser, 
+						uri_mailto_warning(parser,
 							"ignored duplicate for unique header field '%s'",
 							str_sanitize(field_name, 32));
 						hname_type = _HNAME_IGNORED;
@@ -412,17 +412,17 @@ static bool uri_mailto_parse_headers
 				hname_type = _HNAME_IGNORED;
 			}
 		}
-		
+
 		header_count++;
-			
+
 		/* Reset for field body */
 		str_truncate(field, 0);
-		
-		/* Parse field body */		
+
+		/* Parse field body */
 		while ( *p != '\0' && *p != '&' ) {
 			char ch = *p;
 			p++;
-			
+
 			if ( ch == '%' ) {
 				/* Encoded, parse 2-digit hex value */
 				if ( !_parse_hex_value(&p, &ch) ) {
@@ -437,10 +437,10 @@ static bool uri_mailto_parse_headers
 			str_append_c(field, ch);
 		}
 		if ( *p != '\0' ) p++;
-		
+
 		/* Verify field body */
 		if ( hname_type == _HNAME_BODY ) {
-			// FIXME: verify body ... 
+			// FIXME: verify body ...
 		} else {
 			if ( !rfc2822_header_field_body_verify
 				(str_c(field), str_len(field), FALSE, FALSE) ) {
@@ -448,7 +448,7 @@ static bool uri_mailto_parse_headers
 				return FALSE;
 			}
 		}
-		
+
 		/* Assign field body */
 
 		switch ( hname_type ) {
@@ -478,20 +478,20 @@ static bool uri_mailto_parse_headers
 			if ( uri != NULL ) {
 				if ( uri->body == NULL )
 					uri->body = p_strdup(parser->pool, str_c(field));
-				else 
+				else
 					uri_mailto_warning(parser, "ignored duplicate body field");
 			}
 			break;
 		case _HNAME_GENERIC:
-			if ( uri != NULL && hdrf != NULL ) 
+			if ( uri != NULL && hdrf != NULL )
 				hdrf->body = p_strdup(parser->pool, str_c(field));
 			break;
 		}
-			
+
 		/* Reset for next name */
 		str_truncate(field, 0);
-	}	
-	
+	}
+
 	/* Skip '&' */
 	if ( *p != '\0' ) p++;
 
@@ -503,8 +503,8 @@ static bool uri_mailto_parse_uri
 (struct uri_mailto_parser *parser, const char *uri_body)
 {
 	const char *p = uri_body;
-	
-	/* 
+
+	/*
 	 * mailtoURI   = "mailto:" [ to ] [ hfields ]
 	 * to          = [ addr-spec *("%2C" addr-spec ) ]
 	 * hfields     = "?" hfield *( "&" hfield )
@@ -518,8 +518,8 @@ static bool uri_mailto_parse_uri
 	 *               / "+" / "," / ";" / ":" / "@"
 	 *
 	 * to         ~= *tqchar
-	 * tqchar     ~= <qchar> without ";" and ":" 
-	 * 
+	 * tqchar     ~= <qchar> without ";" and ":"
+	 *
 	 * Scheme 'mailto:' already parsed, starting parse after colon
 	 */
 
@@ -527,16 +527,16 @@ static bool uri_mailto_parse_uri
 	 */
 
 	if ( !uri_mailto_parse_recipients(parser, &p) )
-		return FALSE;	
+		return FALSE;
 
-	/* Extract hfield items */	
-	
-	while ( *p != '\0' ) {		
+	/* Extract hfield items */
+
+	while ( *p != '\0' ) {
 		/* Extract hfield item by searching for '&' and decoding '%' items */
 		if ( !uri_mailto_parse_headers(parser, &p) )
-			return FALSE;		
+			return FALSE;
 	}
-	
+
 	return TRUE;
 }
 
@@ -545,8 +545,8 @@ static bool uri_mailto_parse_uri
  */
 
 bool uri_mailto_validate
-(const char *uri_body, const char **reserved_headers, 
-	const char **unique_headers, int max_recipients, int max_headers, 
+(const char *uri_body, const char **reserved_headers,
+	const char **unique_headers, int max_recipients, int max_headers,
 	struct sieve_error_handler *ehandler)
 {
 	struct uri_mailto_parser parser;
@@ -557,24 +557,24 @@ bool uri_mailto_validate
 	parser.max_headers = max_headers;
 	parser.reserved_headers = reserved_headers;
 	parser.unique_headers = unique_headers;
-	
+
 	/* If no errors are reported, we don't need to record any data */
-	if ( ehandler != NULL ) { 
+	if ( ehandler != NULL ) {
 		parser.pool = pool_datastack_create();
 
 		parser.uri = p_new(parser.pool, struct uri_mailto, 1);
 		p_array_init(&parser.uri->recipients, parser.pool, max_recipients);
 		p_array_init(&parser.uri->headers, parser.pool, max_headers);
 	}
-	
+
 	if ( !uri_mailto_parse_uri(&parser, uri_body) )
 		return FALSE;
-		
+
 	if ( ehandler != NULL ) {
 		if ( array_count(&parser.uri->recipients) == 0 )
 			uri_mailto_warning(&parser, "notification URI specifies no recipients");
 	}
-   
+
 	return TRUE;
 }
 
@@ -583,12 +583,12 @@ bool uri_mailto_validate
  */
 
 struct uri_mailto *uri_mailto_parse
-(const char *uri_body, pool_t pool, const char **reserved_headers, 
-	const char **unique_headers, int max_recipients, int max_headers, 
+(const char *uri_body, pool_t pool, const char **reserved_headers,
+	const char **unique_headers, int max_recipients, int max_headers,
 	struct sieve_error_handler *ehandler)
 {
 	struct uri_mailto_parser parser;
-	
+
 	parser.pool = pool;
 	parser.ehandler = ehandler;
 	parser.max_recipients = max_recipients;
@@ -599,10 +599,10 @@ struct uri_mailto *uri_mailto_parse
 	parser.uri = p_new(pool, struct uri_mailto, 1);
 	p_array_init(&parser.uri->recipients, pool, max_recipients);
 	p_array_init(&parser.uri->headers, pool, max_headers);
-	
+
 	if ( !uri_mailto_parse_uri(&parser, uri_body) )
 		return FALSE;
-		
+
 	if ( ehandler != NULL ) {
 		if ( array_count(&parser.uri->recipients) == 0 )
 			uri_mailto_warning(&parser, "notification URI specifies no recipients");

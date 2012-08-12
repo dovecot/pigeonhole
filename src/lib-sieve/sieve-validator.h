@@ -1,6 +1,6 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
- 
+
 #ifndef __SIEVE_VALIDATOR_H
 #define __SIEVE_VALIDATOR_H
 
@@ -17,7 +17,7 @@ enum sieve_argument_type {
 	SAT_CONST_STRING,
 	SAT_VAR_STRING,
 	SAT_STRING_LIST,
-	
+
 	SAT_COUNT
 };
 
@@ -26,7 +26,7 @@ struct sieve_command_registration;
 /*
  * Validator
  */
- 
+
 struct sieve_validator;
 
 struct sieve_validator *sieve_validator_create
@@ -40,7 +40,7 @@ bool sieve_validator_run(struct sieve_validator *valdtr);
 /*
  * Accessors
  */
- 
+
 struct sieve_error_handler *sieve_validator_error_handler
 	(struct sieve_validator *valdtr);
 struct sieve_ast *sieve_validator_ast
@@ -57,52 +57,52 @@ enum sieve_compile_flags sieve_validator_compile_flags
  */
 
 void sieve_validator_warning
-	(struct sieve_validator *valdtr, unsigned int source_line, 
+	(struct sieve_validator *valdtr, unsigned int source_line,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_validator_error
-	(struct sieve_validator *valdtr, unsigned int source_line, 
+	(struct sieve_validator *valdtr, unsigned int source_line,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_validator_critical
-	(struct sieve_validator *valdtr, unsigned int source_line, 
+	(struct sieve_validator *valdtr, unsigned int source_line,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
-		
-/* 
+
+/*
  * Command/Test registry
  */
- 
+
 void sieve_validator_register_command
 	(struct sieve_validator *valdtr, const struct sieve_extension *ext,
 		const struct sieve_command_def *command);
-	
-/* 
+
+/*
  * Per-command tagged argument registry
  */
 
 void sieve_validator_register_tag
 	(struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg,
-		const struct sieve_extension *ext, const struct sieve_argument_def *tag_def, 
+		const struct sieve_extension *ext, const struct sieve_argument_def *tag_def,
 		int id_code);
 void sieve_validator_register_external_tag
-	(struct sieve_validator *valdtr, const char *command, 
+	(struct sieve_validator *valdtr, const char *command,
 		const struct sieve_extension *ext, const struct sieve_argument_def *tag_def,
 		int id_code);
 void sieve_validator_register_persistent_tag
 	(struct sieve_validator *valdtr, const char *command,
-		const struct sieve_extension *ext, 
+		const struct sieve_extension *ext,
 		const struct sieve_argument_def *tag_def);
-	
+
 /*
  * Overriding the default literal arguments
- */	
- 
+ */
+
 void sieve_validator_argument_override
-(struct sieve_validator *valdtr, enum sieve_argument_type type, 
+(struct sieve_validator *valdtr, enum sieve_argument_type type,
 	const struct sieve_extension *ext, const struct sieve_argument_def *arg_def);
 bool sieve_validator_argument_activate_super
-(struct sieve_validator *valdtr, struct sieve_command *cmd, 
+(struct sieve_validator *valdtr, struct sieve_command *cmd,
 	struct sieve_ast_argument *arg, bool constant);
-		
-/* 
+
+/*
  * Argument validation API
  */
 
@@ -113,26 +113,26 @@ bool sieve_validate_positional_argument
 bool sieve_validator_argument_activate
 	(struct sieve_validator *valdtr, struct sieve_command *cmd,
 		struct sieve_ast_argument *arg, bool constant);
-		
+
 bool sieve_validate_tag_parameter
 	(struct sieve_validator *valdtr, struct sieve_command *cmd,
 		struct sieve_ast_argument *tag, struct sieve_ast_argument *param,
 		const char *arg_name, unsigned int arg_pos,
 		enum sieve_ast_argument_type req_type, bool constant);
-	
-/* 
+
+/*
  * Extension support
  */
 
 struct sieve_validator_extension {
-	const struct sieve_extension_def *ext;	
+	const struct sieve_extension_def *ext;
 
 	bool (*validate)
-		(const struct sieve_extension *ext, struct sieve_validator *valdtr, 
+		(const struct sieve_extension *ext, struct sieve_validator *valdtr,
 			void *context, struct sieve_ast_argument *require_arg);
 
 	void (*free)
-		(const struct sieve_extension *ext, struct sieve_validator *valdtr, 
+		(const struct sieve_extension *ext, struct sieve_validator *valdtr,
 			void *context);
 };
 
@@ -152,7 +152,7 @@ bool sieve_validator_extension_loaded
     (struct sieve_validator *valdtr, const struct sieve_extension *ext);
 
 void sieve_validator_extension_set_context
-(struct sieve_validator *valdtr, const struct sieve_extension *ext, 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext,
 	void *context);
 void *sieve_validator_extension_get_context
 (struct sieve_validator *valdtr, const struct sieve_extension *ext);

@@ -40,7 +40,7 @@ struct sieve_storage {
 	char *dir;
 	bool debug;
 
-	/* Private */	
+	/* Private */
 	char *active_path;
 	char *active_fname;
 	char *link_path;

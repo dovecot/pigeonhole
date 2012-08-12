@@ -34,10 +34,10 @@
 
 #define MCHT_REGEX_MAX_SUBSTITUTIONS SIEVE_MAX_MATCH_VALUES
 
-/* 
+/*
  * Match type
  */
- 
+
 static bool mcht_regex_validate_context
 (struct sieve_validator *valdtr, struct sieve_ast_argument *arg,
     struct sieve_match_type_context *ctx, struct sieve_ast_argument *key_arg);
@@ -55,28 +55,28 @@ const struct sieve_match_type_def regex_match_type = {
 	NULL,
 	mcht_regex_match_init,
 	mcht_regex_match_keys,
-	NULL, 
+	NULL,
 	mcht_regex_match_deinit
 };
 
-/* 
- * Match type validation 
+/*
+ * Match type validation
  */
 
 /* Wrapper around the regerror function for easy access */
 static const char *_regexp_error(regex_t *regexp, int errorcode)
 {
-	size_t errsize = regerror(errorcode, regexp, NULL, 0); 
+	size_t errsize = regerror(errorcode, regexp, NULL, 0);
 
 	if ( errsize > 0 ) {
 		char *errbuf;
 
-		buffer_t *error_buf = 
+		buffer_t *error_buf =
 			buffer_create_dynamic(pool_datastack_create(), errsize);
 		errbuf = buffer_get_space_unsafe(error_buf, 0, errsize);
 
 		errsize = regerror(errorcode, regexp, errbuf, errsize);
-	 
+
 		/* We don't want the error to start with a capital letter */
 		errbuf[0] = i_tolower(errbuf[0]);
 
@@ -89,9 +89,9 @@ static const char *_regexp_error(regex_t *regexp, int errorcode)
 }
 
 static int mcht_regex_validate_regexp
-(struct sieve_validator *valdtr, 
+(struct sieve_validator *valdtr,
 	struct sieve_match_type_context *mtctx ATTR_UNUSED,
-	struct sieve_ast_argument *key, int cflags) 
+	struct sieve_ast_argument *key, int cflags)
 {
 	int ret;
 	regex_t regexp;
@@ -99,10 +99,10 @@ static int mcht_regex_validate_regexp
 
 	if ( (ret=regcomp(&regexp, regex_str, cflags)) != 0 ) {
 		sieve_argument_validate_error(valdtr, key,
-			"invalid regular expression '%s' for regex match: %s", 
+			"invalid regular expression '%s' for regex match: %s",
 			str_sanitize(regex_str, 128), _regexp_error(&regexp, ret));
 
-		regfree(&regexp);	
+		regfree(&regexp);
 		return FALSE;
 	}
 
@@ -131,7 +131,7 @@ static int mcht_regex_validate_key_argument
 
 	return TRUE;
 }
-	
+
 static bool mcht_regex_validate_context
 (struct sieve_validator *valdtr, struct sieve_ast_argument *arg ATTR_UNUSED,
 	struct sieve_match_type_context *mtctx, struct sieve_ast_argument *key_arg)
@@ -141,16 +141,16 @@ static bool mcht_regex_validate_context
 	struct _regex_key_context keyctx;
 	struct sieve_ast_argument *kitem;
 
-	if ( cmp != NULL ) { 
+	if ( cmp != NULL ) {
 		if ( sieve_comparator_is(cmp, i_ascii_casemap_comparator) )
 			cflags =  REG_EXTENDED | REG_NOSUB | REG_ICASE;
 		else if ( sieve_comparator_is(cmp, i_octet_comparator) )
 			cflags =  REG_EXTENDED | REG_NOSUB;
 		else {
-			sieve_argument_validate_error(valdtr, mtctx->argument, 
+			sieve_argument_validate_error(valdtr, mtctx->argument,
 				"regex match type only supports "
 				"i;octet and i;ascii-casemap comparators" );
-			return FALSE;	
+			return FALSE;
 		}
 	}
 
@@ -168,8 +168,8 @@ static bool mcht_regex_validate_context
 	return TRUE;
 }
 
-/* 
- * Match type implementation 
+/*
+ * Match type implementation
  */
 
 struct mcht_regex_key {
@@ -190,7 +190,7 @@ static void mcht_regex_match_init
 	pool_t pool = mctx->pool;
 	struct mcht_regex_context *ctx;
 
-	/* Create context */	
+	/* Create context */
 	ctx = p_new(pool, struct mcht_regex_context, 1);
 
 	/* Create storage for match values if match values are requested */
@@ -201,7 +201,7 @@ static void mcht_regex_match_init
 		ctx->pmatch = NULL;
 		ctx->nmatch = 0;
 	}
-	
+
 	/* Assign context */
 	mctx->data = (void *) ctx;
 }
@@ -234,17 +234,17 @@ static int mcht_regex_match_key
 			/* Add match values from regular expression */
 			for ( i = 0; i < ctx->nmatch; i++ ) {
 				str_truncate(subst, 0);
-	
+
 				if ( ctx->pmatch[i].rm_so != -1 ) {
 					if ( skipped > 0 ) {
 						sieve_match_values_skip(mvalues, skipped);
 						skipped = 0;
 					}
-			
-					str_append_n(subst, val + ctx->pmatch[i].rm_so, 
+
+					str_append_n(subst, val + ctx->pmatch[i].rm_so,
 						ctx->pmatch[i].rm_eo - ctx->pmatch[i].rm_so);
 					sieve_match_values_add(mvalues, subst);
-				} else 
+				} else
 					skipped++;
 			}
 
@@ -259,7 +259,7 @@ static int mcht_regex_match_key
 }
 
 static int mcht_regex_match_keys
-(struct sieve_match_context *mctx, const char *val, size_t val_size ATTR_UNUSED, 
+(struct sieve_match_context *mctx, const char *val, size_t val_size ATTR_UNUSED,
 	struct sieve_stringlist *key_list)
 {
 	const struct sieve_runtime_env *renv = mctx->runenv;
@@ -281,7 +281,7 @@ static int mcht_regex_match_keys
 		i = 0;
 		match = 0;
 		while ( match == 0 &&
-			(ret=sieve_stringlist_next_item(key_list, &key_item)) > 0 ) {				
+			(ret=sieve_stringlist_next_item(key_list, &key_item)) > 0 ) {
 
 			T_BEGIN {
 				struct mcht_regex_key *rkey;
@@ -292,13 +292,13 @@ static int mcht_regex_match_keys
 					rkey = array_append_space(&ctx->reg_expressions);
 
 					/* Configure case-sensitivity according to comparator */
-					if ( sieve_comparator_is(cmp, i_octet_comparator) ) 
+					if ( sieve_comparator_is(cmp, i_octet_comparator) )
 						cflags =  REG_EXTENDED;
 					else if ( sieve_comparator_is(cmp, i_ascii_casemap_comparator) )
 						cflags =  REG_EXTENDED | REG_ICASE;
 					else
 						rkey->status = -1; /* Not supported */
-		
+
 					if ( rkey->status >= 0 ) {
 						const char *regex_str = str_c(key_item);
 						int rxret;
@@ -309,7 +309,7 @@ static int mcht_regex_match_keys
 						/* Compile regular expression */
 						if ( (rxret=regcomp(&rkey->regexp, regex_str, cflags)) != 0 ) {
 							sieve_runtime_error(renv, NULL,
-								"invalid regular expression '%s' for regex match: %s", 
+								"invalid regular expression '%s' for regex match: %s",
 								str_sanitize(regex_str, 128),
 								_regexp_error(&rkey->regexp, rxret));
 							rkey->status = -1;
@@ -319,14 +319,14 @@ static int mcht_regex_match_keys
 					}
 				} else {
 					rkey = array_idx_modifiable(&ctx->reg_expressions, 1);
-				} 
+				}
 
 				if ( rkey->status > 0 ) {
 					match = mcht_regex_match_key(mctx, val, &rkey->regexp);
 
 					if ( trace ) {
 						sieve_runtime_trace(renv, 0,
-							"with regex `%s' [id=%d] => %d", 
+							"with regex `%s' [id=%d] => %d",
 							str_sanitize(str_c(key_item), 80),
 							array_count(&ctx->reg_expressions)-1, match);
 					}

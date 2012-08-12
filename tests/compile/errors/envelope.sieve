@@ -6,7 +6,7 @@
 
 require "envelope";
 
-# Not an error 
+# Not an error
 if envelope :is "to" "frop@example.org" {
 }
 

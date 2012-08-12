@@ -1,6 +1,6 @@
 require "comparator-i;ascii-numeric";
 
-/* 
+/*
  * Address test errors
  *
  * Total count: 8 (+1 = 9)
@@ -8,7 +8,7 @@ require "comparator-i;ascii-numeric";
 
 /*
  * Command structure
- */ 
+ */
 
 # Invalid tag
 if address :nonsense :comparator "i;ascii-casemap" :localpart "From" "nico" {
@@ -49,7 +49,7 @@ if address :localpart :is :comparator "i;ascii-casemap" "from" ["frop", "frop"] 
  * Specified headers must contain addresses
  */
 
-# Invalid header 
+# Invalid header
 if address :is "frop" "frml" {
 	keep;
 }

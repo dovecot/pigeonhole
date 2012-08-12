@@ -139,7 +139,7 @@ test "Full Content Type" {
 test "Empty Content Type" {
 	if not body :content "" :matches "This is a text message.*" {
 		test_fail "failed to match text/plain content";
-	}	
+	}
 
 	if not body :content "" :matches "<html><body>This is HTML</body></html>*" {
 		test_fail "failed to match text/html content";
@@ -147,17 +147,17 @@ test "Empty Content Type" {
 
 	if not body :content "" :matches "keep;*" {
 		test_fail "failed to match application/sieve content";
-	}	
+	}
 
 	if body :content "" :matches "*blurdybloop*" {
 		test_fail "body :content \"\" test matches nonsense";
-	}	
+	}
 }
 
 test "Main Content Type" {
 	if not body :content "text" :matches "This is a text message.*" {
 		test_fail "failed to match text/plain content";
-	}	
+	}
 
 	if not body :content "text" :matches "<html><body>This is HTML</body></html>*" {
 		test_fail "failed to match text/html content";
@@ -165,7 +165,7 @@ test "Main Content Type" {
 
 	if body :content "text" :matches "keep;*" {
 		test_fail "erroneously matched application/sieve content";
-	}	
+	}
 }
 
 /*
@@ -190,7 +190,7 @@ This is a nested multi-part message in MIME format.
 Content-Type: text/plain; charset="us-ascii"
 
 Hello
-        
+
 --inner
 Content-Type: text/html; charset="us-ascii"
 
@@ -242,7 +242,7 @@ test "Nested Search" {
 	}
 
 	if not body :content "text" :contains "html" {
-		test_fail "failed match text content (1)";	
+		test_fail "failed match text content (1)";
 	}
 
 	if not body :content "text" :contains "hello" {
@@ -256,7 +256,7 @@ test "Nested Search" {
 	if not body :content "text" :contains "please say hello" {
 		test_fail "failed match nested message content as text/*";
 	}
-	
+
 	if not body :content "text" :count "eq" :comparator "i;ascii-numeric" "3" {
 		test_fail "matched wrong number of \"text/*\" body parts";
 	}
@@ -282,7 +282,7 @@ test "Multipart Content" {
 		"This is a nested multi-part message in MIME format" {
 		test_fail "missed second multipart body part";
 	}
-	
+
 /* FIXME: FAILS
 
 	if not body :content "multipart" :contains
@@ -293,7 +293,7 @@ test "Multipart Content" {
 	if not body :content "multipart" :contains
 		"This is the end of the outer MIME multipart." {
 		test_fail "missed fourth multipart body part";
-	}	
+	}
 
 	if body :content "multipart" :contains "--inner" {
 		test_fail "inner boundary is part of match";

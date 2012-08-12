@@ -12,8 +12,8 @@
 #include "sieve-common.h"
 #include "sieve-runtime.h"
 
-/* 
- * Interpreter 
+/*
+ * Interpreter
  */
 
 struct sieve_interpreter *sieve_interpreter_create
@@ -22,7 +22,7 @@ struct sieve_interpreter *sieve_interpreter_create
 		enum sieve_runtime_flags flags);
 struct sieve_interpreter *sieve_interpreter_create_for_block
 	(struct sieve_binary_block *sblock, struct sieve_script *script,
-		const struct sieve_message_data *msgdata, 
+		const struct sieve_message_data *msgdata,
 		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
 		enum sieve_runtime_flags flags);
 void sieve_interpreter_free(struct sieve_interpreter **interp);
@@ -81,8 +81,8 @@ unsigned int sieve_runtime_get_command_location
 const char *sieve_runtime_get_full_command_location
 	(const struct sieve_runtime_env *renv);
 
-/* 
- * Error handling 
+/*
+ * Error handling
  */
 
 void sieve_runtime_error
@@ -92,24 +92,24 @@ void sieve_runtime_warning
 	(const struct sieve_runtime_env *renv, const char *location,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_runtime_log
-	(const struct sieve_runtime_env *renv, const char *location, 
+	(const struct sieve_runtime_env *renv, const char *location,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_runtime_critical
 	(const struct sieve_runtime_env *renv, const char *location,
 		const char *user_prefix, const char *fmt, ...) ATTR_FORMAT(4, 5);
 
-/* 
- * Extension support 
+/*
+ * Extension support
  */
 
 struct sieve_interpreter_extension {
-	const struct sieve_extension_def *ext_def;	
+	const struct sieve_extension_def *ext_def;
 
 	void (*run)
-		(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+		(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
 			void *context);
 	void (*free)
-		(const struct sieve_extension *ext, struct sieve_interpreter *interp, 
+		(const struct sieve_extension *ext, struct sieve_interpreter *interp,
 			void *context);
 };
 
@@ -117,27 +117,27 @@ void sieve_interpreter_extension_register
 	(struct sieve_interpreter *interp, const struct sieve_extension *ext,
 		const struct sieve_interpreter_extension *intext, void *context);
 void sieve_interpreter_extension_set_context
-	(struct sieve_interpreter *interp, const struct sieve_extension *ext, 
+	(struct sieve_interpreter *interp, const struct sieve_extension *ext,
 		void *context);
 void *sieve_interpreter_extension_get_context
-	(struct sieve_interpreter *interp, const struct sieve_extension *ext); 
+	(struct sieve_interpreter *interp, const struct sieve_extension *ext);
 
-/* 
- * Opcodes and operands 
+/*
+ * Opcodes and operands
  */
-	
+
 int sieve_interpreter_handle_optional_operands
 	(const struct sieve_runtime_env *renv, sieve_size_t *address,
 		struct sieve_side_effects_list **list);
 
-/* 
- * Code execute 
+/*
+ * Code execute
  */
 
 int sieve_interpreter_continue
 	(struct sieve_interpreter *interp, bool *interrupted);
 int sieve_interpreter_start
-	(struct sieve_interpreter *interp, struct sieve_result *result, 
+	(struct sieve_interpreter *interp, struct sieve_result *result,
 		bool *interrupted);
 int sieve_interpreter_run
 	(struct sieve_interpreter *interp, struct sieve_result *result);

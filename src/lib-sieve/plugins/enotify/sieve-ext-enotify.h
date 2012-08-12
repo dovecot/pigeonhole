@@ -23,7 +23,7 @@ struct sieve_enotify_exec_env;
 
 /*
  * Notify method definition
- */ 
+ */
 
 struct sieve_enotify_method_def {
 	const char *identifier;
@@ -33,7 +33,7 @@ struct sieve_enotify_method_def {
 		(const struct sieve_enotify_method *nmth, void **context);
 	void (*unload)
 		(const struct sieve_enotify_method *nmth);
-	
+
 	/* Validation */
 	bool (*compile_check_uri)
 		(const struct sieve_enotify_env *nenv, const char *uri,
@@ -43,7 +43,7 @@ struct sieve_enotify_method_def {
 	bool (*compile_check_from)
 		(const struct sieve_enotify_env *nenv, string_t *from);
 	bool (*compile_check_option)
-		(const struct sieve_enotify_env *nenv, const char *option, 
+		(const struct sieve_enotify_env *nenv, const char *option,
 			const char *value);
 
 	/* Runtime */
@@ -51,11 +51,11 @@ struct sieve_enotify_method_def {
 		(const struct sieve_enotify_env *nenv, const char *uri,
 			const char *uri_body);
 	const char *(*runtime_get_method_capability)
-		(const struct sieve_enotify_env *nenv, const char *uri, 
+		(const struct sieve_enotify_env *nenv, const char *uri,
 			const char *uri_body, const char *capability);
 	bool (*runtime_check_operands)
-		(const struct sieve_enotify_env *nenv, const char *uri, 
-			const char *uri_body, string_t *message, string_t *from, 
+		(const struct sieve_enotify_env *nenv, const char *uri,
+			const char *uri_body, string_t *message, string_t *from,
 			pool_t context_pool, void **method_context);
 	bool (*runtime_set_option)
 		(const struct sieve_enotify_env *nenv, void *method_context,
@@ -63,18 +63,18 @@ struct sieve_enotify_method_def {
 
 	/* Action duplicates */
 	int (*action_check_duplicates)
-		(const struct sieve_enotify_env *nenv, 
-			const struct sieve_enotify_action *nact, 
+		(const struct sieve_enotify_env *nenv,
+			const struct sieve_enotify_action *nact,
 			const struct sieve_enotify_action *nact_other);
-		
+
 	/* Action print */
 	void (*action_print)
-		(const struct sieve_enotify_print_env *penv, 
-			const struct sieve_enotify_action *nact);	
-			
+		(const struct sieve_enotify_print_env *penv,
+			const struct sieve_enotify_action *nact);
+
 	/* Action execution */
 	bool (*action_execute)
-		(const struct sieve_enotify_exec_env *nenv, 
+		(const struct sieve_enotify_exec_env *nenv,
 			const struct sieve_enotify_action *nact);
 };
 
@@ -91,7 +91,7 @@ struct sieve_enotify_method {
 };
 
 const struct sieve_enotify_method *sieve_enotify_method_register
-	(struct sieve_instance *svinst, 
+	(struct sieve_instance *svinst,
 		const struct sieve_enotify_method_def *nmth_def);
 void  sieve_enotify_method_unregister
 	(const struct sieve_enotify_method *nmth);
@@ -122,7 +122,7 @@ void sieve_enotify_method_printf
 
 struct sieve_enotify_exec_env {
 	struct sieve_instance *svinst;
-	
+
 	const struct sieve_enotify_method *method;
 
 	const struct sieve_script_env *scriptenv;
@@ -135,11 +135,11 @@ struct sieve_enotify_exec_env {
 /*
  * Notify action
  */
- 
+
 struct sieve_enotify_action {
 	const struct sieve_enotify_method *method;
 	void *method_context;
-	
+
 	sieve_number_t importance;
 	const char *message;
 	const char *from;
@@ -151,7 +151,7 @@ struct sieve_enotify_action {
 
 #define sieve_enotify_error(ENV, ...) \
 	sieve_error((ENV)->ehandler, NULL, __VA_ARGS__ )
-	
+
 #define sieve_enotify_warning(ENV, ...) \
 	sieve_warning((ENV)->ehandler, NULL, __VA_ARGS__ )
 
@@ -160,7 +160,7 @@ struct sieve_enotify_action {
 
 #define sieve_enotify_global_error(ENV, ...) \
 	sieve_global_error((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
-	
+
 #define sieve_enotify_global_warning(ENV, ...) \
 	sieve_global_warning((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
 

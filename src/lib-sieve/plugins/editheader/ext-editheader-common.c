@@ -21,7 +21,7 @@
 
 struct ext_editheader_header {
 	const char *name;
-	
+
 	/* may extend this later */
 	unsigned int protected:1;
 };
@@ -39,14 +39,14 @@ static struct ext_editheader_header *ext_editheader_config_header_find
 {
 	struct ext_editheader_header *headers;
 	unsigned int count, i;
-	
+
 	headers = array_get_modifiable(&ext_config->headers, &count);
 	for ( i = 0; i < count; i++ ) {
 		if ( strcasecmp(hname, headers[i].name) == 0 )
 			return &headers[i];
 	}
 
-	return NULL;	
+	return NULL;
 }
 
 bool ext_editheader_load
@@ -79,7 +79,7 @@ bool ext_editheader_load
 				struct ext_editheader_header *header;
 
 				if ( !rfc2822_header_field_name_verify(*headers, strlen(*headers)) ) {
-					sieve_sys_warning(svinst, 
+					sieve_sys_warning(svinst,
 						"editheader: setting sieve_editheader_protected contains "
 						"invalid header field name `%s' (ignored)", *headers);
 					continue;
@@ -100,10 +100,10 @@ bool ext_editheader_load
 		if ( sieve_setting_get_size_value
 			(svinst, "sieve_editheader_max_header_size", &max_header_size) ) {
 			if ( max_header_size < EXT_EDITHEADER_MINIMUM_MAX_HEADER_SIZE ) {
-				sieve_sys_warning(svinst, 
+				sieve_sys_warning(svinst,
 					"editheader: value of sieve_editheader_max_header_size setting "
 					"(=%"PRIuSIZE_T") is less than the minimum (=%"PRIuSIZE_T") "
-					"(ignored)", max_header_size, 
+					"(ignored)", max_header_size,
 					(size_t) EXT_EDITHEADER_MINIMUM_MAX_HEADER_SIZE);
 			} else {
 				ext_config->max_header_size = max_header_size;
@@ -112,14 +112,14 @@ bool ext_editheader_load
 	} T_END;
 
 	*context = (void *) ext_config;
-	return TRUE;	
+	return TRUE;
 }
 
 void ext_editheader_unload(const struct sieve_extension *ext)
 {
-	struct ext_editheader_config *ext_config = 
+	struct ext_editheader_config *ext_config =
 		(struct ext_editheader_config *) ext->context;
-	
+
 	if ( ext_config != NULL ) {
 		pool_unref(&ext_config->pool);
 	}
@@ -132,11 +132,11 @@ void ext_editheader_unload(const struct sieve_extension *ext)
 bool ext_editheader_header_is_protected
 (const struct sieve_extension *ext, const char *hname)
 {
-	struct ext_editheader_config *ext_config = 
+	struct ext_editheader_config *ext_config =
 		(struct ext_editheader_config *) ext->context;
 	const struct ext_editheader_header *header;
-	
-	if ( strcasecmp(hname, "received") == 0 
+
+	if ( strcasecmp(hname, "received") == 0
 		|| strcasecmp(hname, "auto-submitted") == 0 ) {
 		return TRUE;
 	}
@@ -158,7 +158,7 @@ bool ext_editheader_header_is_protected
 bool ext_editheader_header_too_large
 (const struct sieve_extension *ext, size_t size)
 {
-	struct ext_editheader_config *ext_config = 
+	struct ext_editheader_config *ext_config =
 		(struct ext_editheader_config *) ext->context;
 
 	return size > ext_config->max_header_size;

@@ -37,8 +37,8 @@ enum ext_notify_opcode {
 	EXT_NOTIFY_OPERATION_DENOTIFY,
 };
 
-/* 
- * Actions 
+/*
+ * Actions
  */
 
 extern const struct sieve_action_def act_notify_old;
@@ -49,7 +49,7 @@ struct ext_notify_recipient {
 };
 
 ARRAY_DEFINE_TYPE(recipients, struct ext_notify_recipient);
-		
+
 struct ext_notify_action {
 	const char *id;
 	const char *message;
@@ -63,7 +63,7 @@ struct ext_notify_action {
  */
 
 void ext_notify_construct_message
-	(const struct sieve_runtime_env *renv, const char *msg_format, 
+	(const struct sieve_runtime_env *renv, const char *msg_format,
 		string_t *out_msg);
 
 #endif /* __EXT_NOTIFY_COMMON_H */

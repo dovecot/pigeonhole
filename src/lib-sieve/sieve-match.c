@@ -28,20 +28,20 @@
 
 struct sieve_match_context *sieve_match_begin
 (const struct sieve_runtime_env *renv,
-	const struct sieve_match_type *mcht, 
+	const struct sieve_match_type *mcht,
 	const struct sieve_comparator *cmp)
 {
 	struct sieve_match_context *mctx;
 	pool_t pool;
 
 	/* Reject unimplemented match-type */
-	if ( mcht->def == NULL || (mcht->def->match == NULL && 
+	if ( mcht->def == NULL || (mcht->def->match == NULL &&
 			mcht->def->match_keys == NULL && mcht->def->match_key == NULL) )
 			return NULL;
 
 	/* Create match context */
 	pool = pool_alloconly_create("sieve_match_context", 1024);
-	mctx = p_new(pool, struct sieve_match_context, 1);  
+	mctx = p_new(pool, struct sieve_match_context, 1);
 	mctx->pool = pool;
 	mctx->runenv = renv;
 	mctx->match_type = mcht;
@@ -79,7 +79,7 @@ int sieve_match_value
 	}
 
 	/* Match to key values */
-	
+
 	sieve_stringlist_reset(key_list);
 
 	if ( mctx->trace )
@@ -95,8 +95,8 @@ int sieve_match_value
 
 		/* Default key match loop */
 		match = 0;
-		while ( match == 0 && 
-			(ret=sieve_stringlist_next_item(key_list, &key_item)) > 0 ) {				
+		while ( match == 0 &&
+			(ret=sieve_stringlist_next_item(key_list, &key_item)) > 0 ) {
 			T_BEGIN {
 				match = mcht->def->match_key
 					(mctx, value, value_size, str_c(key_item), str_len(key_item));
@@ -119,8 +119,8 @@ int sieve_match_value
 
 	if ( mctx->match_status < 0 || match < 0 )
 		mctx->match_status = -1;
-	else 
-		mctx->match_status = 
+	else
+		mctx->match_status =
 			( mctx->match_status > match ? mctx->match_status : match );
 	return match;
 }
@@ -140,7 +140,7 @@ int sieve_match_end(struct sieve_match_context **mctx, int *exec_status)
 	pool_unref(&(*mctx)->pool);
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
-		"finishing match with result: %s", 
+		"finishing match with result: %s",
 		( match > 0 ? "matched" : ( match < 0 ? "error" : "not matched" ) ));
 	sieve_runtime_trace_ascend(renv);
 
@@ -149,10 +149,10 @@ int sieve_match_end(struct sieve_match_context **mctx, int *exec_status)
 
 int sieve_match
 (const struct sieve_runtime_env *renv,
-	const struct sieve_match_type *mcht, 
-	const struct sieve_comparator *cmp, 
+	const struct sieve_match_type *mcht,
+	const struct sieve_comparator *cmp,
 	struct sieve_stringlist *value_list,
-	struct sieve_stringlist *key_list, 
+	struct sieve_stringlist *key_list,
 	int *exec_status)
 {
 	struct sieve_match_context *mctx;
@@ -171,14 +171,14 @@ int sieve_match
 
 	if ( mcht->def->match != NULL ) {
 		/* Call match-type's match handler */
-		match = mctx->match_status = 
-			mcht->def->match(mctx, value_list, key_list); 
+		match = mctx->match_status =
+			mcht->def->match(mctx, value_list, key_list);
 
 	} else {
 		/* Default value match loop */
 
 		match = 0;
-		while ( match == 0 && 
+		while ( match == 0 &&
 			(ret=sieve_stringlist_next_item(value_list, &value_item)) > 0 ) {
 
 			match = sieve_match_value
@@ -198,7 +198,7 @@ int sieve_match
 /*
  * Reading match operands
  */
- 
+
 int sieve_match_opr_optional_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address, int *opt_code)
 {
@@ -245,14 +245,14 @@ int sieve_match_opr_optional_read
 	}
 
 	if ( exec_status != NULL )
-		*exec_status = SIEVE_EXEC_OK;			
+		*exec_status = SIEVE_EXEC_OK;
 
 	while ( status == SIEVE_EXEC_OK ) {
 		int opt;
 
 		if ( (opt=sieve_opr_optional_read(renv, address, opt_code)) <= 0 ){
 			if ( opt < 0 && exec_status != NULL )
-				*exec_status = SIEVE_EXEC_BIN_CORRUPT;				
+				*exec_status = SIEVE_EXEC_BIN_CORRUPT;
 			return opt;
 		}
 
@@ -275,7 +275,7 @@ int sieve_match_opr_optional_read
 	}
 
 	if ( exec_status != NULL )
-		*exec_status = status;	
+		*exec_status = status;
 	return -1;
 }
 

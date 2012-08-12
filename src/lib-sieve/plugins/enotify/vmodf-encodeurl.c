@@ -14,15 +14,15 @@
 /*
  * Encodeurl modifier
  */
- 
+
 bool mod_encodeurl_modify(string_t *in, string_t **result);
- 
+
 const struct sieve_variables_modifier_def encodeurl_modifier = {
 	SIEVE_OBJECT("encodeurl", &encodeurl_operand, 0),
 	15,
 	mod_encodeurl_modify
 };
- 
+
 /*
  * Modifier operand
  */
@@ -30,10 +30,10 @@ const struct sieve_variables_modifier_def encodeurl_modifier = {
 static const struct sieve_extension_objects ext_enotify_modifiers =
 	SIEVE_VARIABLES_DEFINE_MODIFIER(encodeurl_modifier);
 
-const struct sieve_operand_def encodeurl_operand = { 
-	"modifier", 
+const struct sieve_operand_def encodeurl_operand = {
+	"modifier",
 	&enotify_extension,
-	0, 
+	0,
 	&sieve_variables_modifier_operand_class,
 	&ext_enotify_modifiers
 };
@@ -63,22 +63,22 @@ static const char _uri_reserved_lookup[256] = {
 };
 
 bool mod_encodeurl_modify(string_t *in, string_t **result)
-{	
+{
 	unsigned int i;
 	const unsigned char *c;
 
 	*result = t_str_new(2*str_len(in));
 	c = str_data(in);
-	
+
 	for ( i = 0; i < str_len(in); i++, c++ ) {
 		if ( _uri_reserved_lookup[*c] ) {
 			str_printfa(*result, "%%%02X", *c);
 		} else {
-			str_append_c(*result, *c); 
-		}	
+			str_append_c(*result, *c);
+		}
 	}
 
 	return TRUE;
 }
- 
+
 

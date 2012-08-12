@@ -57,7 +57,7 @@ static void print_help(void)
 }
 
 static int testsuite_run
-(struct sieve_binary *sbin, const struct sieve_message_data *msgdata, 
+(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
 	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler)
 {
 	struct sieve_interpreter *interp;
@@ -81,7 +81,7 @@ static int testsuite_run
 	return ret;
 }
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
 	struct sieve_instance *svinst;
 	const char *scriptfile, *dumpfile, *tracefile;
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 		print_help();
 		i_fatal_status(EX_USAGE, "Missing <scriptfile> argument");
 	}
-	
+
 	if (optind != argc) {
 		print_help();
 		i_fatal_status(EX_USAGE, "Unknown argument: %s", argv[optind]);
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 
 	/* Initialize mail user */
 	sieve_tool_set_homedir(sieve_tool, t_abspath(""));
-	
+
 	/* Initialize settings environment */
 	testsuite_settings_init();
 
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
 		("sieve_global_dir", t_strconcat(sieve_dir, "included-global", NULL));
 
 	/* Finish testsuite initialization */
-	svinst = sieve_tool_init_finish(sieve_tool, FALSE);	
+	svinst = sieve_tool_init_finish(sieve_tool, FALSE);
 	testsuite_init(svinst, sieve_dir, log_stdout);
 
 	printf("Test case: %s:\n\n", scriptfile);

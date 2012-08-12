@@ -3,7 +3,7 @@ require "vnd.dovecot.testsuite";
 require "relational";
 require "comparator-i;ascii-numeric";
 
-/* 
+/*
  * Test message
  */
 
@@ -43,7 +43,7 @@ X-Count: x
 X-Count: y
 X-Count: z
 Subject: Test
-Comment:                                    
+Comment:
 
 Test!
 .
@@ -67,14 +67,14 @@ test "Value \"\" eq 40 (vs)" {
 	}
 }
 
-/* 
+/*
  * Match type :value
  */
 
 test "Value 300 eq 2" {
 	if header :value "eq" :comparator "i;ascii-numeric" "x-spam-score" "2" {
 		test_fail "should not have matched";
-	} 
+	}
 }
 
 test "Value 300 lt 2" {
@@ -143,7 +143,7 @@ test "Value abcdzyz gt aaaaaaa" {
 	}
 }
 
-/* 
+/*
  * Match type :count
  */
 

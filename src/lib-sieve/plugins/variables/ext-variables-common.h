@@ -15,14 +15,14 @@
 
 extern const struct sieve_extension_def variables_extension;
 
-/* 
- * Commands 
+/*
+ * Commands
  */
 
 extern const struct sieve_command_def cmd_set;
 extern const struct sieve_command_def tst_string;
 
-/* 
+/*
  * Operands
  */
 
@@ -45,42 +45,42 @@ enum ext_variables_opcode {
 	EXT_VARIABLES_OPERATION_STRING
 };
 
-/* 
- * Validator context 
+/*
+ * Validator context
  */
 
 struct ext_variables_validator_context {
 	bool active;
-	
+
 	struct sieve_validator_object_registry *modifiers;
 	struct sieve_validator_object_registry *namespaces;
-	
+
 	struct sieve_variable_scope *local_scope;
 };
 
 void ext_variables_validator_initialize
 	(const struct sieve_extension *this_ext, struct sieve_validator *validator);
-	
+
 struct ext_variables_validator_context *ext_variables_validator_context_get
 	(const struct sieve_extension *this_ext, struct sieve_validator *valdtr);
 
 struct sieve_variable *ext_variables_validator_get_variable
-	(const struct sieve_extension *this_ext, struct sieve_validator *validator, 
+	(const struct sieve_extension *this_ext, struct sieve_validator *validator,
 		const char *variable, bool declare);
 
 /*
  * Code generation
  */
- 
+
 bool ext_variables_generator_load
 	(const struct sieve_extension *ext, const struct sieve_codegen_env *cgenv);
 
 /*
  * Interpreter context
- */	
+ */
 
 bool ext_variables_interpreter_load
-	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv, 
+	(const struct sieve_extension *ext, const struct sieve_runtime_env *renv,
 		sieve_size_t *address);
-	
+
 #endif /* __EXT_VARIABLES_COMMON_H */

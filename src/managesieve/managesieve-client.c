@@ -58,7 +58,7 @@ static void client_idle_timeout(struct client *client)
 }
 
 static struct sieve_storage *client_get_storage
-(struct sieve_instance *svinst, struct mail_user *user, 
+(struct sieve_instance *svinst, struct mail_user *user,
 	const struct managesieve_settings *set)
 {
 	struct sieve_storage *storage;
@@ -116,7 +116,7 @@ struct client *client_create
 
 	/* Get Sieve storage */
 
-	storage = client_get_storage(svinst, user, set);	
+	storage = client_get_storage(svinst, user, set);
 
 	/* always use nonblocking I/O */
 	net_set_nonblock(fd_in, TRUE);
@@ -149,7 +149,7 @@ struct client *client_create
 	client->user = user;
 
 	client->svinst = svinst;
-	client->storage = storage; 
+	client->storage = storage;
 
 	ident = mail_user_get_anvil_userip_ident(client->user);
 	if (ident != NULL) {
@@ -168,7 +168,7 @@ struct client *client_create
 }
 
 static const char *client_stats(struct client *client)
-{	
+{
 	static struct var_expand_table static_tab[] = {
 		{ 'i', NULL, "input" },
 		{ 'o', NULL, "output" },
@@ -211,7 +211,7 @@ void client_destroy(struct client *client, const char *reason)
 		client->disconnected = TRUE;
 		if (reason == NULL)
 			reason = client_get_disconnect_reason(client);
-		i_info("%s %s", reason, client_stats(client));	
+		i_info("%s %s", reason, client_stats(client));
 	}
 
 	managesieve_client_count--;
@@ -286,7 +286,7 @@ void client_disconnect_with_error(struct client *client, const char *msg)
 	client_disconnect(client, msg);
 }
 
-int client_send_line(struct client *client, const char *data) 
+int client_send_line(struct client *client, const char *data)
 {
 	struct const_iovec iov[2];
 
@@ -314,7 +314,7 @@ void client_send_response
 (struct client *client, const char *oknobye, const char *resp_code, const char *msg)
 {
 	string_t *str;
-	
+
 	str = t_str_new(128);
 	str_append(str, oknobye);
 
@@ -412,7 +412,7 @@ bool client_read_args(struct client_command_context *cmd, unsigned int count,
 	const struct managesieve_arg *dummy_args_r = NULL;
 	int ret;
 
-	if ( args_r == NULL ) args_r = &dummy_args_r; 
+	if ( args_r == NULL ) args_r = &dummy_args_r;
 
 	i_assert(count <= INT_MAX);
 
@@ -428,7 +428,7 @@ bool client_read_args(struct client_command_context *cmd, unsigned int count,
 				return FALSE;
 			}
 		}
-	
+
 		/* all parameters read successfully */
 		return TRUE;
 	} else if (ret == -2) {

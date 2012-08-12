@@ -7,7 +7,7 @@
 #include "sieve-limits.h"
 
 /* From RFC 5229:
- * 
+ *
  * 6.  Implementation Limits
  *
  *  An implementation of this document MUST support at least 128 distinct

@@ -34,7 +34,7 @@ typedef enum {
 } managesieve_response_t;
 
 static void proxy_free_password(struct client *client)
-{   
+{
 	if (client->proxy_password == NULL)
 		return;
 
@@ -43,7 +43,7 @@ static void proxy_free_password(struct client *client)
 }
 
 static void get_plain_auth(struct client *client, string_t *dest)
-{   
+{
 	string_t *str, *base64;
 
 	str = t_str_new(128);
@@ -65,7 +65,7 @@ static void get_plain_auth(struct client *client, string_t *dest)
 }
 
 static int proxy_write_login(struct managesieve_client *client, string_t *str)
-{   
+{
 	if ( !client->proxy_sasl_plain ) {
 		client_log_err(&client->common, "proxy: "
 			"Server does not support required PLAIN SASL mechanism");
@@ -90,16 +90,16 @@ static managesieve_response_t proxy_read_response
 
 		if ( strcasecmp(response, "OK") == 0 ) {
 			/* Received OK response; greeting is finished */
-			return MANAGESIEVE_RESPONSE_OK; 
+			return MANAGESIEVE_RESPONSE_OK;
 
         } else if ( strcasecmp(response, "NO") == 0 ) {
 			/* Received OK response; greeting is finished */
-			return MANAGESIEVE_RESPONSE_NO; 
+			return MANAGESIEVE_RESPONSE_NO;
 
         } else if ( strcasecmp(response, "BYE") == 0 ) {
 			/* Received OK response; greeting is finished */
 			return MANAGESIEVE_RESPONSE_BYE;
- 
+
 		}
 	}
 
@@ -107,9 +107,9 @@ static managesieve_response_t proxy_read_response
 }
 
 static int proxy_input_capability
-(struct managesieve_client *client, const char *line, 
+(struct managesieve_client *client, const char *line,
 	managesieve_response_t *resp_r)
-{   
+{
 	struct istream *input;
 	struct managesieve_parser *parser;
  	const struct managesieve_arg *args;
@@ -119,7 +119,7 @@ static int proxy_input_capability
 
 	*resp_r = MANAGESIEVE_RESPONSE_NONE;
 
-	/* Build an input stream for the managesieve parser 
+	/* Build an input stream for the managesieve parser
 	 *  FIXME: It would be nice if the line-wise parsing could be
 	 *    substituded by something similar to the command line interpreter.
 	 *    However, the current login_proxy structure does not make streams
@@ -130,13 +130,13 @@ static int proxy_input_capability
 	parser = managesieve_parser_create(input, MAX_MANAGESIEVE_LINE);
 	managesieve_parser_reset(parser);
 
-	/* Parse input 
-	 *  FIXME: Theoretically the OK response could include a 
-	 *   response code which could be rejected by the parser. 
-	 */ 
+	/* Parse input
+	 *  FIXME: Theoretically the OK response could include a
+	 *   response code which could be rejected by the parser.
+	 */
 	(void)i_stream_read(input);
 	ret = managesieve_parser_read_args(parser, 2, 0, &args);
-		
+
 	if ( ret >= 1 ) {
 		if ( args[0].type == MANAGESIEVE_ARG_ATOM ) {
 			*resp_r = proxy_read_response(args);
@@ -145,18 +145,18 @@ static int proxy_input_capability
 				client_log_err(&client->common, t_strdup_printf("proxy: "
 					"Remote sent invalid response: %s",
 					str_sanitize(line,160)));
-		
+
 				fatal = TRUE;
 			}
 		} else if ( managesieve_arg_get_string(&args[0], &capability) ) {
 			if ( strcasecmp(capability, "SASL") == 0 ) {
 				const char *sasl_mechs;
 
-				/* Check whether the server supports the SASL mechanism 
-				 * we are going to use (currently only PLAIN supported). 
+				/* Check whether the server supports the SASL mechanism
+				 * we are going to use (currently only PLAIN supported).
 				 */
 				if ( ret == 2 && managesieve_arg_get_string(&args[1], &sasl_mechs) ) {
-					const char *const *mechs = t_strsplit(sasl_mechs, " "); 
+					const char *const *mechs = t_strsplit(sasl_mechs, " ");
 
 					if ( str_array_icase_find(mechs, "PLAIN") )
 						client->proxy_sasl_plain = TRUE;
@@ -188,7 +188,7 @@ static int proxy_input_capability
     } else if ( ret < 0 ) {
 		const char *error_str = managesieve_parser_get_error(parser, &fatal);
 		error_str = (error_str != NULL ? error_str : "unknown (bug)" );
-	
+
 		/* Do not accept faulty server */
 		client_log_err(&client->common, t_strdup_printf("proxy: "
 			"Protocol parse error(%d) in capability/greeting line: %s (line='%s')",
@@ -211,9 +211,9 @@ static int proxy_input_capability
 
 int managesieve_proxy_parse_line(struct client *client, const char *line)
 {
-	struct managesieve_client *msieve_client = 
+	struct managesieve_client *msieve_client =
 		(struct managesieve_client *) client;
-	struct ostream *output; 
+	struct ostream *output;
 	enum login_proxy_ssl_flags ssl_flags;
 	managesieve_response_t response = MANAGESIEVE_RESPONSE_NONE;
 	string_t *command;
@@ -234,7 +234,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 				client_log_err(client, "proxy: "
 					"Remote sent unexpected NO/BYE in stead of capability response");
 				client_proxy_failed(client, TRUE);
-				return -1;		
+				return -1;
 			}
 
 			command = t_str_new(128);
@@ -246,7 +246,7 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 						client_proxy_failed(client, TRUE);
 					return -1;
 				}
-        	
+
 				str_append(command, "STARTTLS\r\n");
 				msieve_client->proxy_state = PROXY_STATE_TLS_START;
 			} else {
@@ -270,14 +270,14 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 				client_proxy_failed(client, TRUE);
 				return -1;
 			}
-	
+
 			msieve_client->proxy_state = PROXY_STATE_TLS_READY;
 			return 1;
 		}
 
 		client_log_err(client, "proxy: Remote refused STARTTLS command");
 		client_proxy_failed(client, TRUE);
-		return -1;		
+		return -1;
 
 	case PROXY_STATE_TLS_READY:
 		if ( (ret=proxy_input_capability(msieve_client, line, &response)) < 0 ) {
@@ -288,8 +288,8 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		if ( ret == 0 ) {
 			if ( response != MANAGESIEVE_RESPONSE_OK ) {
 				/* STARTTLS failed */
-				client_log_err(client, 
-					t_strdup_printf("proxy: Remote STARTTLS failed: %s", 
+				client_log_err(client,
+					t_strdup_printf("proxy: Remote STARTTLS failed: %s",
 						str_sanitize(line, 160)));
 				client_proxy_failed(client, TRUE);
 				return -1;
@@ -302,12 +302,12 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 			}
 
 			(void)o_stream_send(output, str_data(command), str_len(command));
-		
+
 			msieve_client->proxy_state = PROXY_STATE_AUTHENTICATE;
 		}
 
 		return 0;
-	
+
 	case PROXY_STATE_AUTHENTICATE:
 
 		/* Check login status */

@@ -88,8 +88,8 @@ bool sieve_script_name_is_valid(const char *scriptname)
 	return TRUE;
 }
 
-/* 
- * Script object 
+/*
+ * Script object
  */
 
 static const char *split_next_arg(const char *const **_args)
@@ -122,7 +122,7 @@ static bool sieve_script_location_parse
 
 	if (*data == '\0') {
 		*options_r = NULL;
-		*location_r = data;		
+		*location_r = data;
 		return TRUE;
 	}
 
@@ -132,7 +132,7 @@ static bool sieve_script_location_parse
 
 	if ( options_r != NULL ) {
 		t_array_init(&options, 8);
-	
+
 		/* [<option> *(';' <option>)] */
 		while (*tmp != NULL) {
 			const char *option = split_next_arg(&tmp);
@@ -197,9 +197,9 @@ struct sieve_script *sieve_script_init
 	script->svinst = svinst;
 
 	script->ehandler = ehandler;
-	
+
 	script->name = p_strdup_empty(script->pool, name);
-	
+
 	if ( !sieve_script_location_parse
 		(script, data, &location, &options, &parse_error) ) {
 		sieve_critical(svinst, ehandler, NULL,
@@ -228,7 +228,7 @@ struct sieve_script *sieve_script_init
 }
 
 struct sieve_script *sieve_script_create
-(struct sieve_instance *svinst, const char *location, const char *name, 
+(struct sieve_instance *svinst, const char *location, const char *name,
 	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
 {
 	struct sieve_script *script;
@@ -250,13 +250,13 @@ struct sieve_script *sieve_script_create
 
 			/* FIXME
 			script_class = sieve_script_class_lookup(driver);*/
-			if ( strcasecmp(driver, SIEVE_FILE_SCRIPT_DRIVER_NAME) == 0 ) 
+			if ( strcasecmp(driver, SIEVE_FILE_SCRIPT_DRIVER_NAME) == 0 )
 				script_class = &sieve_file_script;
 			else if ( strcasecmp(driver, SIEVE_DICT_SCRIPT_DRIVER_NAME) == 0 )
 				script_class = &sieve_dict_script;
 			else
 				script_class = NULL;
-			
+
 			if ( script_class == NULL )
 				i_error("Unknown sieve script driver module: %s", driver);
 		} T_END;
@@ -276,7 +276,7 @@ struct sieve_script *sieve_script_create
 }
 
 struct sieve_script *sieve_script_create_as
-(struct sieve_instance *svinst, const char *location, const char *name, 
+(struct sieve_instance *svinst, const char *location, const char *name,
 	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
 {
 	struct sieve_script *script;
@@ -287,7 +287,7 @@ struct sieve_script *sieve_script_create_as
 
 	/* override name */
 	script->name = p_strdup(script->pool, name);
-	return script;	
+	return script;
 }
 
 void sieve_script_ref(struct sieve_script *script)
@@ -317,7 +317,7 @@ void sieve_script_unref(struct sieve_script **_script)
 	*_script = NULL;
 }
 
-/* 
+/*
  * Properties
  */
 
@@ -352,8 +352,8 @@ int sieve_script_get_size(struct sieve_script *script, uoff_t *size_r)
 	return i_stream_get_size(script->stream, TRUE, size_r);
 }
 
-/* 
- * Stream management 
+/*
+ * Stream management
  */
 
 struct istream *sieve_script_open
@@ -391,15 +391,15 @@ void sieve_script_close(struct sieve_script *script)
 
 	i_stream_unref(&script->stream);
 
-	if ( script->v.close != NULL ) { 
+	if ( script->v.close != NULL ) {
 		T_BEGIN {
 			script->v.close(script);
 		} T_END;
 	}
 }
 
-/* 
- * Comparison 
+/*
+ * Comparison
  */
 
 bool sieve_script_equals
@@ -439,7 +439,7 @@ int sieve_script_binary_read_metadata
 	struct sieve_instance *svinst = script->svinst;
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
 	string_t *script_class;
-	
+
 	if ( sieve_binary_block_get_size(sblock) - *offset == 0 )
 		return 0;
 

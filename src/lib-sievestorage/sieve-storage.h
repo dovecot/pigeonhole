@@ -21,7 +21,7 @@ struct sieve_error_handler *sieve_storage_get_error_handler
 void sieve_storage_clear_error(struct sieve_storage *storage);
 
 void sieve_storage_set_error
-	(struct sieve_storage *storage, enum sieve_error error, 
+	(struct sieve_storage *storage, enum sieve_error error,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 void sieve_storage_set_critical(struct sieve_storage *storage,

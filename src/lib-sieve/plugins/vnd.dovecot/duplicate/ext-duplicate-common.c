@@ -23,7 +23,7 @@
  */
 
 #define EXT_DUPLICATE_DEFAULT_PERIOD (1*24*60*60)
- 
+
 struct ext_duplicate_config {
 	unsigned int period;
 };
@@ -73,11 +73,11 @@ bool ext_duplicate_check
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	const struct sieve_script_env *senv = renv->scriptenv;
 	struct ext_duplicate_context *rctx;
-	pool_t pool;		
+	pool_t pool;
 
 	/* Get context; find out whether duplicate was checked earlier */
-	rctx = (struct ext_duplicate_context *) 
-		sieve_result_extension_get_context(renv->result, this_ext); 
+	rctx = (struct ext_duplicate_context *)
+		sieve_result_extension_get_context(renv->result, this_ext);
 
 	if ( rctx != NULL ) {
 		/* Already checked for duplicate */
@@ -115,6 +115,6 @@ bool ext_duplicate_check
 			(senv, dupl_hash, sizeof(dupl_hash), ioloop_time + ext_config->period);
 	}
 
-	return rctx->duplicate;	
+	return rctx->duplicate;
 }
-	
+

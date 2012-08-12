@@ -33,18 +33,18 @@ const struct sieve_operation_def *ext_notify_operations[] = {
 	&denotify_operation
 };
 
-/* 
+/*
  * Extension
  */
 
 static bool ext_notify_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
-const struct sieve_extension_def notify_extension = { 
-	"notify", 
+const struct sieve_extension_def notify_extension = {
+	"notify",
 	NULL,
 	NULL,
-	ext_notify_validator_load, 
+	ext_notify_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_notify_operations),
 	SIEVE_EXT_DEFINE_NO_OPERANDS,
@@ -55,7 +55,7 @@ const struct sieve_extension_def notify_extension = {
  */
 
 static bool ext_notify_validator_extension_validate
-	(const struct sieve_extension *ext, struct sieve_validator *valdtr, 
+	(const struct sieve_extension *ext, struct sieve_validator *valdtr,
 		void *context, struct sieve_ast_argument *require_arg);
 
 const struct sieve_validator_extension notify_validator_extension = {
@@ -74,12 +74,12 @@ static bool ext_notify_validator_load
 	/* Register new commands */
 	sieve_validator_register_command(valdtr, ext, &cmd_notify_old);
 	sieve_validator_register_command(valdtr, ext, &cmd_denotify);
-	
+
 	return TRUE;
 }
 
 static bool ext_notify_validator_extension_validate
-(const struct sieve_extension *ext, struct sieve_validator *valdtr, 
+(const struct sieve_extension *ext, struct sieve_validator *valdtr,
 	void *context ATTR_UNUSED, struct sieve_ast_argument *require_arg)
 {
 	const struct sieve_extension *ext_entfy;

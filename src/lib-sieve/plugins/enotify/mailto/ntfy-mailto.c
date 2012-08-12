@@ -1,6 +1,6 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
- 
+
 /* Notify method mailto
  * --------------------
  *
@@ -8,16 +8,16 @@
  * Specification: RFC 5436
  * Implementation: full
  * Status: testing
- * 
+ *
  */
- 
+
 /* FIXME: URI syntax conforms to something somewhere in between RFC 2368 and
  *   draft-duerst-mailto-bis-05.txt. Should fully migrate to new specification
  *   when it matures. This requires modifications to the address parser (no
  *   whitespace allowed within the address itself) and UTF-8 support will be
  *   required in the URL.
  */
- 
+
 #include "lib.h"
 #include "array.h"
 #include "str.h"
@@ -40,46 +40,46 @@
 /*
  * Configuration
  */
- 
+
 #define NTFY_MAILTO_MAX_RECIPIENTS  8
 #define NTFY_MAILTO_MAX_HEADERS     16
 #define NTFY_MAILTO_MAX_SUBJECT     256
 
-/* 
+/*
  * Mailto notification method
  */
- 
+
 static bool ntfy_mailto_compile_check_uri
 	(const struct sieve_enotify_env *nenv, const char *uri, const char *uri_body);
 static bool ntfy_mailto_compile_check_from
 	(const struct sieve_enotify_env *nenv, string_t *from);
 
 static const char *ntfy_mailto_runtime_get_notify_capability
-	(const struct sieve_enotify_env *nenv, const char *uri, const char *uri_body, 
+	(const struct sieve_enotify_env *nenv, const char *uri, const char *uri_body,
 		const char *capability);
 static bool ntfy_mailto_runtime_check_uri
 	(const struct sieve_enotify_env *nenv, const char *uri, const char *uri_body);
 static bool ntfy_mailto_runtime_check_operands
-	(const struct sieve_enotify_env *nenv, const char *uri,const char *uri_body, 
-		string_t *message, string_t *from, pool_t context_pool, 
+	(const struct sieve_enotify_env *nenv, const char *uri,const char *uri_body,
+		string_t *message, string_t *from, pool_t context_pool,
 		void **method_context);
 
 static int ntfy_mailto_action_check_duplicates
-	(const struct sieve_enotify_env *nenv, 
+	(const struct sieve_enotify_env *nenv,
 		const struct sieve_enotify_action *nact,
 		const struct sieve_enotify_action *nact_other);
 
 static void ntfy_mailto_action_print
-	(const struct sieve_enotify_print_env *penv, 
-		const struct sieve_enotify_action *nact);	
+	(const struct sieve_enotify_print_env *penv,
+		const struct sieve_enotify_action *nact);
 
 static bool ntfy_mailto_action_execute
-	(const struct sieve_enotify_exec_env *nenv, 
+	(const struct sieve_enotify_exec_env *nenv,
 		const struct sieve_enotify_action *nact);
 
 const struct sieve_enotify_method_def mailto_notify = {
 	"mailto",
-	NULL, NULL, 
+	NULL, NULL,
 	ntfy_mailto_compile_check_uri,
 	NULL,
 	ntfy_mailto_compile_check_from,
@@ -94,9 +94,9 @@ const struct sieve_enotify_method_def mailto_notify = {
 };
 
 /*
- * Reserved and unique headers 
+ * Reserved and unique headers
  */
- 
+
 static const char *_reserved_headers[] = {
 	"auto-submitted",
 	"received",
@@ -138,7 +138,7 @@ struct ntfy_mailto_context {
 static bool ntfy_mailto_compile_check_uri
 (const struct sieve_enotify_env *nenv, const char *uri ATTR_UNUSED,
 	const char *uri_body)
-{	
+{
 	return uri_mailto_validate
 		(uri_body, _reserved_headers, _unique_headers,
 			NTFY_MAILTO_MAX_RECIPIENTS, NTFY_MAILTO_MAX_HEADERS, nenv->ehandler);
@@ -167,19 +167,19 @@ static bool ntfy_mailto_compile_check_from
 /*
  * Runtime
  */
- 
+
 static const char *ntfy_mailto_runtime_get_notify_capability
-(const struct sieve_enotify_env *nenv ATTR_UNUSED, const char *uri ATTR_UNUSED, 
+(const struct sieve_enotify_env *nenv ATTR_UNUSED, const char *uri ATTR_UNUSED,
 	const char *uri_body, const char *capability)
 {
 	if ( !uri_mailto_validate(uri_body, _reserved_headers, _unique_headers,
 			NTFY_MAILTO_MAX_RECIPIENTS, NTFY_MAILTO_MAX_HEADERS, NULL) ) {
 		return NULL;
 	}
-	
-	if ( strcasecmp(capability, "online") == 0 ) 
+
+	if ( strcasecmp(capability, "online") == 0 )
 		return "maybe";
-	
+
 	return NULL;
 }
 
@@ -191,10 +191,10 @@ static bool ntfy_mailto_runtime_check_uri
 		(uri_body, _reserved_headers, _unique_headers,
 			NTFY_MAILTO_MAX_RECIPIENTS, NTFY_MAILTO_MAX_HEADERS, NULL);
 }
- 
+
 static bool ntfy_mailto_runtime_check_operands
 (const struct sieve_enotify_env *nenv, const char *uri ATTR_UNUSED,
-	const char *uri_body, string_t *message ATTR_UNUSED, string_t *from, 
+	const char *uri_body, string_t *message ATTR_UNUSED, string_t *from,
 	pool_t context_pool, void **method_context)
 {
 	struct ntfy_mailto_context *mtctx;
@@ -214,7 +214,7 @@ static bool ntfy_mailto_runtime_check_operands
 					"specified :from address '%s' is invalid for "
 					"the mailto method: %s",
 					str_sanitize(str_c(from), 128), error);
-			} else 
+			} else
 				mtctx->from_normalized = p_strdup(context_pool, normalized);
 		} T_END;
 
@@ -222,7 +222,7 @@ static bool ntfy_mailto_runtime_check_operands
 	}
 
 	if ( (parsed_uri=uri_mailto_parse
-		(uri_body, context_pool, _reserved_headers, 
+		(uri_body, context_pool, _reserved_headers,
 			_unique_headers, NTFY_MAILTO_MAX_RECIPIENTS, NTFY_MAILTO_MAX_HEADERS,
 			nenv->ehandler)) == NULL ) {
 		return FALSE;
@@ -230,7 +230,7 @@ static bool ntfy_mailto_runtime_check_operands
 
 	mtctx->uri = parsed_uri;
 	*method_context = (void *) mtctx;
-	return TRUE;	
+	return TRUE;
 }
 
 /*
@@ -238,13 +238,13 @@ static bool ntfy_mailto_runtime_check_operands
  */
 
 static int ntfy_mailto_action_check_duplicates
-(const struct sieve_enotify_env *nenv ATTR_UNUSED, 
-	const struct sieve_enotify_action *nact, 
+(const struct sieve_enotify_env *nenv ATTR_UNUSED,
+	const struct sieve_enotify_action *nact,
 	const struct sieve_enotify_action *nact_other)
 {
-	struct ntfy_mailto_context *mtctx = 
+	struct ntfy_mailto_context *mtctx =
 		(struct ntfy_mailto_context *) nact->method_context;
-	struct ntfy_mailto_context *mtctx_other = 
+	struct ntfy_mailto_context *mtctx_other =
 		(struct ntfy_mailto_context *) nact_other->method_context;
 	const struct uri_mailto_recipient *new_rcpts, *old_rcpts;
 	unsigned int new_count, old_count, i, j;
@@ -257,7 +257,7 @@ static int ntfy_mailto_action_check_duplicates
 		for ( j = 0; j < old_count; j++ ) {
 			if ( sieve_address_compare
 				(new_rcpts[i].normalized, old_rcpts[j].normalized, TRUE) == 0 )
-				break;				
+				break;
 		}
 
 		if ( j == old_count ) {
@@ -270,7 +270,7 @@ static int ntfy_mailto_action_check_duplicates
 				i -= del_len;
 				new_rcpts = array_get(&mtctx->uri->recipients, &new_count);
 			}
-			del_len = 0;		
+			del_len = 0;
 		} else {
 			/* Mark deletion */
 			if ( del_len == 0 )
@@ -281,7 +281,7 @@ static int ntfy_mailto_action_check_duplicates
 
 	/* Perform pending deletion */
 	if ( del_len > 0 ) {
-		array_delete(&mtctx->uri->recipients, del_start, del_len);			
+		array_delete(&mtctx->uri->recipients, del_start, del_len);
 	}
 
 	return ( array_count(&mtctx->uri->recipients) > 0 ? 0 : 1 );
@@ -290,17 +290,17 @@ static int ntfy_mailto_action_check_duplicates
 /*
  * Action printing
  */
- 
+
 static void ntfy_mailto_action_print
-(const struct sieve_enotify_print_env *penv, 
+(const struct sieve_enotify_print_env *penv,
 	const struct sieve_enotify_action *nact)
 {
 	unsigned int count, i;
 	const struct uri_mailto_recipient *recipients;
 	const struct uri_mailto_header_field *headers;
-	struct ntfy_mailto_context *mtctx = 
+	struct ntfy_mailto_context *mtctx =
 		(struct ntfy_mailto_context *) nact->method_context;
-	
+
 	/* Print main method parameters */
 
 	sieve_enotify_method_printf
@@ -336,18 +336,18 @@ static void ntfy_mailto_action_print
 	}
 
 	/* Print accepted headers for notification message */
-	
+
 	headers = array_get(&mtctx->uri->headers, &count);
 	if ( count > 0 ) {
-		sieve_enotify_method_printf(penv,   "    => headers      :\n" );	
+		sieve_enotify_method_printf(penv,   "    => headers      :\n" );
 		for ( i = 0; i < count; i++ ) {
-			sieve_enotify_method_printf(penv,   "       + %s: %s\n", 
+			sieve_enotify_method_printf(penv,   "       + %s: %s\n",
 				headers[i].name, headers[i].body);
 		}
 	}
 
 	/* Print body for notification message */
-	
+
 	if ( mtctx->uri->body != NULL )
 		sieve_enotify_method_printf
 			(penv, "    => body         : \n--\n%s\n--\n", mtctx->uri->body);
@@ -369,19 +369,19 @@ static bool _contains_8bit(const char *msg)
 		if ((*s & 0x80) != 0)
 			return TRUE;
 	}
-	
+
 	return FALSE;
 }
 
 static bool ntfy_mailto_send
-(const struct sieve_enotify_exec_env *nenv, 
+(const struct sieve_enotify_exec_env *nenv,
 	const struct sieve_enotify_action *nact, const char *recipient)
-{ 
+{
 	const struct sieve_message_data *msgdata = nenv->msgdata;
 	const struct sieve_script_env *senv = nenv->scriptenv;
-	struct ntfy_mailto_context *mtctx = 
-		(struct ntfy_mailto_context *) nact->method_context;	
-	const char *from = NULL, *from_smtp = NULL; 
+	struct ntfy_mailto_context *mtctx =
+		(struct ntfy_mailto_context *) nact->method_context;
+	const char *from = NULL, *from_smtp = NULL;
 	const char *subject = mtctx->uri->subject;
 	const char *body = mtctx->uri->body;
 	string_t *to, *cc;
@@ -394,18 +394,18 @@ static bool ntfy_mailto_send
 	/* Get recipients */
 	recipients = array_get(&mtctx->uri->recipients, &count);
 	if ( count == 0  ) {
-		sieve_enotify_warning(nenv, 
+		sieve_enotify_warning(nenv,
 			"notify mailto uri specifies no recipients; action has no effect");
 		return TRUE;
 	}
 
 	/* Just to be sure */
 	if ( !sieve_smtp_available(senv) ) {
-		sieve_enotify_global_warning(nenv, 
+		sieve_enotify_global_warning(nenv,
 			"notify mailto method has no means to send mail");
 		return TRUE;
 	}
-	
+
 	/* Determine message from address */
 	if ( nact->from == NULL ) {
 		from = t_strdup_printf("Postmaster <%s>", senv->postmaster_address);
@@ -421,18 +421,18 @@ static bool ntfy_mailto_send
 			from_smtp = mtctx->from_normalized;
 		}
 	}
-	
+
 	/* Determine subject */
 	if ( nact->message != NULL ) {
 		/* FIXME: handle UTF-8 */
 		subject = str_sanitize(nact->message, NTFY_MAILTO_MAX_SUBJECT);
 	} else if ( subject == NULL ) {
 		const char *const *hsubject;
-		
+
 		/* Fetch subject from original message */
 		if ( mail_get_headers_utf8
 			(msgdata->mail, "subject", &hsubject) >= 0 )
-			subject = str_sanitize(t_strdup_printf("Notification: %s", hsubject[0]), 
+			subject = str_sanitize(t_strdup_printf("Notification: %s", hsubject[0]),
 				NTFY_MAILTO_MAX_SUBJECT);
 		else
 			subject = "Notification: (no subject)";
@@ -469,7 +469,7 @@ static bool ntfy_mailto_send
 		smtp_handle = sieve_smtp_open
 			(senv, recipients[i].normalized, from_smtp, &f);
 		outmsgid = sieve_message_get_new_id(nenv->svinst);
-	
+
 		rfc2822_header_field_write(f, "X-Sieve", SIEVE_IMPLEMENTATION);
 		rfc2822_header_field_write(f, "Message-ID", outmsgid);
 		rfc2822_header_field_write(f, "Date", message_date_create(ioloop_time));
@@ -479,11 +479,11 @@ static bool ntfy_mailto_send
 
 		if ( to != NULL )
 			rfc2822_header_field_utf8_printf(f, "To", "%s", str_c(to));
-		
+
 		if ( cc != NULL )
 			rfc2822_header_field_utf8_printf(f, "Cc", "%s", str_c(cc));
-			
-		rfc2822_header_field_printf(f, "Auto-Submitted", 
+
+		rfc2822_header_field_printf(f, "Auto-Submitted",
 			"auto-notified; owner-email=\"%s\"", recipient);
 		rfc2822_header_field_write(f, "Precedence", "bulk");
 
@@ -503,16 +503,16 @@ static bool ntfy_mailto_send
 			rfc2822_header_field_write(f, "Importance", "Normal");
 			break;
 		}
-		
+
 		/* Add custom headers */
-		
+
 		headers = array_get(&mtctx->uri->headers, &hcount);
 		for ( h = 0; h < hcount; h++ ) {
 			const char *name = rfc2822_header_field_name_sanitize(headers[h].name);
-		
+
 			rfc2822_header_field_write(f, name, headers[h].body);
 		}
-			
+
 		/* Generate message body */
 		if ( body != NULL ) {
 			if (_contains_8bit(body)) {
@@ -521,23 +521,23 @@ static bool ntfy_mailto_send
 					(f, "Content-Type", "text/plain; charset=UTF-8");
 				rfc2822_header_field_write(f, "Content-Transfer-Encoding", "8bit");
 			}
-			
+
 			fprintf(f, "\r\n");
 			fprintf(f, "%s\r\n", body);
-			
+
 		} else {
 			fprintf(f, "\r\n");
 			fprintf(f, "Notification of new message.\r\n");
 		}
-	
+
 		if ( sieve_smtp_close(senv, smtp_handle) ) {
-			sieve_enotify_global_info(nenv, 
-				"sent mail notification to <%s>", 
+			sieve_enotify_global_info(nenv,
+				"sent mail notification to <%s>",
 				str_sanitize(recipients[i].normalized, 80));
 		} else {
 			sieve_enotify_global_error(nenv,
 				"failed to send mail notification to <%s> "
-				"(refer to system log for more information)", 
+				"(refer to system log for more information)",
 				str_sanitize(recipients[i].normalized, 80));
 		}
 	}
@@ -546,21 +546,21 @@ static bool ntfy_mailto_send
 }
 
 static bool ntfy_mailto_action_execute
-(const struct sieve_enotify_exec_env *nenv, 
+(const struct sieve_enotify_exec_env *nenv,
 	const struct sieve_enotify_action *nact)
 {
 	const char *const *headers;
 	const char *sender = sieve_message_get_sender(nenv->msgctx);
 	const char *recipient = sieve_message_get_final_recipient(nenv->msgctx);
 
-	/* Is the recipient unset? 
+	/* Is the recipient unset?
 	 */
 	if ( recipient == NULL ) {
-		sieve_enotify_global_warning(nenv, 
+		sieve_enotify_global_warning(nenv,
 			"notify mailto action aborted: envelope recipient is <>");
 		return TRUE;
 	}
-	
+
 	/* Is the message an automatic reply ? */
 	if ( mail_get_headers
 		(nenv->msgdata->mail, "auto-submitted", &headers) >= 0 ) {
@@ -569,8 +569,8 @@ static bool ntfy_mailto_action_execute
 		/* Theoretically multiple headers could exist, so lets make sure */
 		while ( *hdsp != NULL ) {
 			if ( strcasecmp(*hdsp, "no") != 0 ) {
-				sieve_enotify_global_info(nenv, 
-					"not sending notification for auto-submitted message from <%s>", 
+				sieve_enotify_global_info(nenv,
+					"not sending notification for auto-submitted message from <%s>",
 					str_sanitize(sender, 128));
 					return TRUE;
 			}

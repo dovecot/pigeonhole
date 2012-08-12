@@ -23,62 +23,62 @@ static bool cmd_test_config_generate
 
 /* Test_config_set command
  *
- * Syntax:   
+ * Syntax:
  *   test_config_set <setting: string> <value: string>
  */
 
 static bool cmd_test_config_set_validate
 	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 
-const struct sieve_command_def cmd_test_config_set = { 
-	"test_config_set", 
-	SCT_COMMAND, 
+const struct sieve_command_def cmd_test_config_set = {
+	"test_config_set",
+	SCT_COMMAND,
 	2, 0, FALSE, FALSE,
 	NULL, NULL,
 	cmd_test_config_set_validate,
 	NULL,
-	cmd_test_config_generate, 
-	NULL 
+	cmd_test_config_generate,
+	NULL
 };
 
 /* Test_config_unset command
  *
- * Syntax:   
- *   test_config_unset <setting: string> 
+ * Syntax:
+ *   test_config_unset <setting: string>
  */
 
 static bool cmd_test_config_unset_validate
 	(struct sieve_validator *valdtr, struct sieve_command *cmd);
 
-const struct sieve_command_def cmd_test_config_unset = { 
-	"test_config_unset", 
-	SCT_COMMAND, 
+const struct sieve_command_def cmd_test_config_unset = {
+	"test_config_unset",
+	SCT_COMMAND,
 	1, 0, FALSE, FALSE,
 	NULL, NULL,
 	cmd_test_config_unset_validate,
 	NULL,
-	cmd_test_config_generate, 
-	NULL 
+	cmd_test_config_generate,
+	NULL
 };
 
 /* Test_config_reload command
  *
- * Syntax:   
+ * Syntax:
  *   test_config_reload [:extension <extension: string>]
  */
 
 static bool cmd_test_config_reload_registered
 (struct sieve_validator *valdtr, const struct sieve_extension *ext,
-	struct sieve_command_registration *cmd_reg); 
+	struct sieve_command_registration *cmd_reg);
 
-const struct sieve_command_def cmd_test_config_reload = { 
-	"test_config_reload", 
-	SCT_COMMAND, 
+const struct sieve_command_def cmd_test_config_reload = {
+	"test_config_reload",
+	SCT_COMMAND,
 	0, 0, FALSE, FALSE,
-	cmd_test_config_reload_registered, 
+	cmd_test_config_reload_registered,
 	NULL, NULL, NULL,
-	cmd_test_config_generate, 
-	NULL 
+	cmd_test_config_generate,
+	NULL
 };
 
 /*
@@ -88,16 +88,16 @@ const struct sieve_command_def cmd_test_config_reload = {
 /* Forward declarations */
 
 static bool cmd_test_config_reload_validate_tag
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
 		struct sieve_command *cmd);
 
 /* Argument objects */
 
-static const struct sieve_argument_def test_config_reload_extension_tag = { 
-	"extension", 
-	NULL, 
-	cmd_test_config_reload_validate_tag, 
-	NULL, NULL, NULL, 
+static const struct sieve_argument_def test_config_reload_extension_tag = {
+	"extension",
+	NULL,
+	cmd_test_config_reload_validate_tag,
+	NULL, NULL, NULL,
 };
 
 /* Codes for optional arguments */
@@ -107,10 +107,10 @@ enum cmd_test_config_optional {
 	OPT_EXTENSION
 };
 
-/* 
+/*
  * Operations
- */ 
- 
+ */
+
 /* Test_config_set operation */
 
 static bool cmd_test_config_set_operation_dump
@@ -118,12 +118,12 @@ static bool cmd_test_config_set_operation_dump
 static int cmd_test_config_set_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def test_config_set_operation = { 
+const struct sieve_operation_def test_config_set_operation = {
 	"TEST_CONFIG_SET",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_CONFIG_SET,
-	cmd_test_config_set_operation_dump, 
-	cmd_test_config_set_operation_execute 
+	cmd_test_config_set_operation_dump,
+	cmd_test_config_set_operation_execute
 };
 
 /* Test_config_unset operation */
@@ -133,12 +133,12 @@ static bool cmd_test_config_unset_operation_dump
 static int cmd_test_config_unset_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def test_config_unset_operation = { 
+const struct sieve_operation_def test_config_unset_operation = {
 	"TEST_CONFIG_UNSET",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_CONFIG_UNSET,
-	cmd_test_config_unset_operation_dump, 
-	cmd_test_config_unset_operation_execute 
+	cmd_test_config_unset_operation_dump,
+	cmd_test_config_unset_operation_execute
 };
 
 /* Test_config_read operation */
@@ -148,12 +148,12 @@ static bool cmd_test_config_reload_operation_dump
 static int cmd_test_config_reload_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def test_config_reload_operation = { 
+const struct sieve_operation_def test_config_reload_operation = {
 	"TEST_CONFIG_RELOAD",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_CONFIG_RELOAD,
-	cmd_test_config_reload_operation_dump, 
-	cmd_test_config_reload_operation_execute 
+	cmd_test_config_reload_operation_dump,
+	cmd_test_config_reload_operation_execute
 };
 
 /*
@@ -161,7 +161,7 @@ const struct sieve_operation_def test_config_reload_operation = {
  */
 
 static bool cmd_test_config_reload_validate_tag
-(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
 	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
@@ -179,26 +179,26 @@ static bool cmd_test_config_reload_validate_tag
 
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
-	
+
 	return TRUE;
 }
 
-/* 
- * Command registration 
+/*
+ * Command registration
  */
 
 static bool cmd_test_config_reload_registered
 (struct sieve_validator *valdtr, const struct sieve_extension *ext,
-	struct sieve_command_registration *cmd_reg) 
+	struct sieve_command_registration *cmd_reg)
 {
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, ext, &test_config_reload_extension_tag, OPT_EXTENSION); 	
+		(valdtr, cmd_reg, ext, &test_config_reload_extension_tag, OPT_EXTENSION);
 
 	return TRUE;
 }
 
-/* 
- * Command validation 
+/*
+ * Command validation
  */
 
 static bool cmd_test_config_set_validate
@@ -213,7 +213,7 @@ static bool cmd_test_config_set_validate
 	if ( !sieve_validate_positional_argument
 		(valdtr, cmd, arg, "setting", 1, SAAT_STRING) ) {
 		return FALSE;
-	}	
+	}
 
 	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
 		return FALSE;
@@ -223,7 +223,7 @@ static bool cmd_test_config_set_validate
 	if ( !sieve_validate_positional_argument
 		(valdtr, cmd, arg, "value", 2, SAAT_STRING) ) {
 		return FALSE;
-	}	
+	}
 
 	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
@@ -245,20 +245,20 @@ static bool cmd_test_config_unset_validate
 	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool cmd_test_config_generate
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
-{	  	
-	if ( sieve_command_is(cmd, cmd_test_config_set) )	
+{
+	if ( sieve_command_is(cmd, cmd_test_config_set) )
 		sieve_operation_emit
 			(cgenv->sblock, cmd->ext, &test_config_set_operation);
-	else if ( sieve_command_is(cmd, cmd_test_config_unset) )	
+	else if ( sieve_command_is(cmd, cmd_test_config_unset) )
 		sieve_operation_emit
 			(cgenv->sblock, cmd->ext, &test_config_unset_operation);
-	else if ( sieve_command_is(cmd, cmd_test_config_reload) )	
+	else if ( sieve_command_is(cmd, cmd_test_config_reload) )
 		sieve_operation_emit
 			(cgenv->sblock, cmd->ext, &test_config_reload_operation);
 	else
@@ -271,17 +271,17 @@ static bool cmd_test_config_generate
 	return TRUE;
 }
 
-/* 
+/*
  * Code dump
  */
- 
+
 static bool cmd_test_config_set_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "TEST_CONFIG_SET:");
-	
+
 	sieve_code_descend(denv);
-	
+
 	return sieve_opr_string_dump(denv, address, "setting") &&
 		sieve_opr_string_dump(denv, address, "value");
 }
@@ -290,10 +290,10 @@ static bool cmd_test_config_unset_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "TEST_CONFIG_UNSET:");
-	
+
 	sieve_code_descend(denv);
 
-	return 
+	return
 		sieve_opr_string_dump(denv, address, "setting");
 }
 
@@ -301,8 +301,8 @@ static bool cmd_test_config_reload_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	int opt_code = 0;
-	
-	sieve_code_dumpf(denv, "TEST_CONFIG_RELOAD:");	
+
+	sieve_code_dumpf(denv, "TEST_CONFIG_RELOAD:");
 	sieve_code_descend(denv);
 
 	/* Dump optional operands */
@@ -334,7 +334,7 @@ static bool cmd_test_config_reload_operation_dump
 /*
  * Intepretation
  */
- 
+
 static int cmd_test_config_set_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -342,8 +342,8 @@ static int cmd_test_config_set_operation_execute
 	string_t *value;
 	int ret;
 
-	/* 
-	 * Read operands 
+	/*
+	 * Read operands
 	 */
 
 	/* Setting */
@@ -357,12 +357,12 @@ static int cmd_test_config_set_operation_execute
 	/*
 	 * Perform operation
 	 */
-		
+
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
 		sieve_runtime_trace(renv, 0,
 			"testsuite: test_config_set command");
 		sieve_runtime_trace_descend(renv);
-		sieve_runtime_trace(renv, 0, "set config `%s' = `%s'", 
+		sieve_runtime_trace(renv, 0, "set config `%s' = `%s'",
 			str_c(setting), str_c(value));
 	}
 
@@ -377,8 +377,8 @@ static int cmd_test_config_unset_operation_execute
 	string_t *setting;
 	int ret;
 
-	/* 
-	 * Read operands 
+	/*
+	 * Read operands
 	 */
 
 	/* Setting */
@@ -388,7 +388,7 @@ static int cmd_test_config_unset_operation_execute
 	/*
 	 * Perform operation
 	 */
-		
+
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
 		sieve_runtime_trace(renv, 0,
 			"testsuite: test_config_unset command");
@@ -409,10 +409,10 @@ static int cmd_test_config_reload_operation_execute
 	string_t *extension = NULL;
 	int ret;
 
-	/* 
-	 * Read operands 
+	/*
+	 * Read operands
 	 */
-	
+
 	/* Optional operands */
 	for (;;) {
 		int opt;
@@ -448,10 +448,10 @@ static int cmd_test_config_reload_operation_execute
 		testsuite_test_failf("test_config_reload: "
 			":extension argument is currently mandatory");
 		return SIEVE_EXEC_OK;
-	}	
+	}
 
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-		sieve_runtime_trace(renv, 0, "reload configuration for extension `%s'", 
+		sieve_runtime_trace(renv, 0, "reload configuration for extension `%s'",
 			str_c(extension));
 	}
 
@@ -460,7 +460,7 @@ static int cmd_test_config_reload_operation_execute
 		testsuite_test_failf("test_config_reload: "
 			"unknown extension '%s'", str_c(extension));
 		return SIEVE_EXEC_OK;
-	}	
+	}
 
 	sieve_extension_reload(ext);
 	return SIEVE_EXEC_OK;

@@ -7,7 +7,7 @@
 #include "managesieve-parser.h"
 #include "managesieve-quote.h"
 
-/* Turn the value string into a valid MANAGESIEVE string or literal, no matter 
+/* Turn the value string into a valid MANAGESIEVE string or literal, no matter
  * what. QUOTED-SPECIALS are escaped, but any invalid (UTF-8) character
  * is simply removed. Linebreak characters are not considered invalid, but
  * they do force the generation of a string literal.
@@ -17,9 +17,9 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 {
 	size_t i, extra = 0, escape = 0;
 	string_t *tmp;
-	bool 
-		last_lwsp = TRUE, 
-		literal = FALSE, 
+	bool
+		last_lwsp = TRUE,
+		literal = FALSE,
 		modify = FALSE;
 
  	if (value == NULL) {
@@ -73,7 +73,7 @@ void managesieve_quote_append(string_t *str, const unsigned char *value,
 			case '"':
 			case '\\':
 				last_lwsp = FALSE;
-				if (!literal) 
+				if (!literal)
 					str_append_c(tmp, '\\');
 				str_append_c(tmp, value[i]);
 				break;

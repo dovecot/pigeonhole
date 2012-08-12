@@ -33,7 +33,7 @@ test "Multiple variables" {
 
 /*
  * RFC examples
- */ 
+ */
 
 test "RFC hasflag example - :is" {
 	setflag "A B";
@@ -41,7 +41,7 @@ test "RFC hasflag example - :is" {
 	if not hasflag ["b","A"] {
 		test_fail "list representation did not match";
 	}
- 
+
 	if not hasflag :is "b A" {
 		test_fail "string representation did not match";
 	}
@@ -57,11 +57,11 @@ test "RFC hasflag example - :contains variable" {
 	if not hasflag :contains "MyVar" "forward" {
 		test_fail "failed true example 2";
 	}
-      
+
 	if not hasflag :contains "MyVar" ["label", "forward"] {
 		test_fail "failed true example 3";
 	}
-     
+
 	if not hasflag :contains "MyVar" ["junk", "forward"] {
 		test_fail "failed true example 4";
 	}

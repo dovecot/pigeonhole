@@ -84,7 +84,7 @@ test "Deleteheader - nonexistent" {
 
 	if not header :is "subject" "Frop!" {
 		test_fail "original subject header not retained in redirected mail";
-	}	
+	}
 
 	if not header :is "X-B" "omdat dit anders" {
 		test_fail "original X-B header not retained in redirected mail";
@@ -177,7 +177,7 @@ test "Deleteheader - one" {
 
 	if not header :is "subject" "Frop!" {
 		test_fail "original subject header not retained in redirected mail";
-	}	
+	}
 
 	if not header :is "X-B" "omdat dit anders" {
 		test_fail "original X-B header not retained in redirected mail";
@@ -274,7 +274,7 @@ test "Deleteheader - two (first)" {
 
 	if not header :is "subject" "Frop!" {
 		test_fail "original subject header not retained in redirected mail";
-	}	
+	}
 
 	if not header :is "X-B" "omdat dit anders" {
 		test_fail "original X-B header not retained in redirected mail";
@@ -937,9 +937,9 @@ test "Deleteheader - folded" {
 test_set "message" text:
 From: stephan@example.org
 To: nico@frop.example.com
-Subject:         Help        
+Subject:         Help
 X-A:     Text
-X-B: Text            
+X-B: Text
 
 Text
 .

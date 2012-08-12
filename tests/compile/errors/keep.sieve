@@ -7,7 +7,7 @@
 # Spurious string argument
 keep "frop";
 
-# Spurious test 
+# Spurious test
 keep true;
 
 # Not an error

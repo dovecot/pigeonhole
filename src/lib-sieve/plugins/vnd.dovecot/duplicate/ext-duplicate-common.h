@@ -18,7 +18,7 @@ void ext_duplicate_unload
 
 extern const struct sieve_extension_def duplicate_extension;
 
-/* 
+/*
  * Tests
  */
 

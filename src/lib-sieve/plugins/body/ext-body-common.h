@@ -1,6 +1,6 @@
 /* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
- 
+
 #ifndef __EXT_BODY_COMMON_H
 #define __EXT_BODY_COMMON_H
 
@@ -17,15 +17,15 @@ enum tst_body_transform {
 /*
  * Extension
  */
- 
+
 extern const struct sieve_extension_def body_extension;
 
-/* 
+/*
  * Commands
  */
 
 extern const struct sieve_command_def body_test;
- 
+
 /*
  * Operations
  */

@@ -6,7 +6,7 @@ Cc: frop@example.com
 To: test@dovecot.example.net
 X-Bullshit: f fr fro frop frob frobn frobnitzn
 Subject: Test Message
-Comment:                                 
+Comment:
 
 Test!
 .
@@ -56,7 +56,7 @@ test "Match similar beginnings" {
 
 test "Match case-insensitive" {
 	if not address :contains :comparator "i;ascii-casemap" "from" "EXAMPLE" {
-		test_fail "match fails to apply correct comparator";	
+		test_fail "match fails to apply correct comparator";
 	}
 
 	if not address :contains "from" "EXAMPLE" {

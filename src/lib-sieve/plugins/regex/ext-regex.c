@@ -41,26 +41,26 @@
 #include <sys/types.h>
 #include <regex.h>
 
-/* 
+/*
  * Extension
  */
 
 static bool ext_regex_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *validator);
 
-const struct sieve_extension_def regex_extension = { 
-	"regex", 
+const struct sieve_extension_def regex_extension = {
+	"regex",
 	NULL, NULL,
 	ext_regex_validator_load,
 	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS, 
+	SIEVE_EXT_DEFINE_NO_OPERATIONS,
 	SIEVE_EXT_DEFINE_OPERAND(regex_match_type_operand)
 };
 
 static bool ext_regex_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
-	sieve_match_type_register(valdtr, ext, &regex_match_type); 
+	sieve_match_type_register(valdtr, ext, &regex_match_type);
 
 	return TRUE;
 }

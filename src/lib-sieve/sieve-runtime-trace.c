@@ -18,17 +18,17 @@ static inline string_t *_trace_line_new
 {
 	string_t *trline;
 	unsigned int i;
-	
+
 	trline = t_str_new(128);
 	if ( (renv->trace->config.flags & SIEVE_TRFLG_ADDRESSES) > 0 )
 		str_printfa(trline, "%08llx: ", (unsigned long long) address);
-	if ( cmd_line > 0 )	
-		str_printfa(trline, "%4d: ", cmd_line); 
+	if ( cmd_line > 0 )
+		str_printfa(trline, "%4d: ", cmd_line);
 	else
-		str_append(trline, "      "); 
+		str_append(trline, "      ");
 
 	for ( i = 0; i < renv->trace->indent; i++ )
-		str_append(trline, "  "); 
+		str_append(trline, "  ");
 
 	return trline;
 }
@@ -86,11 +86,11 @@ void _sieve_runtime_trace_operand_error
 static inline void ATTR_FORMAT(4, 0) _sieve_runtime_trace_vprintf
 (const struct sieve_runtime_env *renv, sieve_size_t address,
 	unsigned int cmd_line, const char *fmt, va_list args)
-{	
+{
 	string_t *trline = _trace_line_new(renv, address, cmd_line);
-		
-	str_vprintfa(trline, fmt, args); 
-	
+
+	str_vprintfa(trline, fmt, args);
+
 	_trace_line_print(trline, renv);
 }
 
@@ -99,55 +99,55 @@ static inline void ATTR_FORMAT(4, 5) _sieve_runtime_trace_printf
 	unsigned int cmd_line, const char *fmt, ...)
 {
 	va_list args;
-	
+
 	va_start(args, fmt);
-	_sieve_runtime_trace_vprintf(renv, address, cmd_line, fmt, args); 
+	_sieve_runtime_trace_vprintf(renv, address, cmd_line, fmt, args);
 	va_end(args);
 }
 
 void ATTR_FORMAT(2, 0) _sieve_runtime_trace
 (const struct sieve_runtime_env *renv, const char *fmt, va_list args)
-{	
+{
 	_sieve_runtime_trace_vprintf
 		(renv, renv->oprtn->address, sieve_runtime_get_command_location(renv),
-			fmt, args); 
+			fmt, args);
 }
 
 void _sieve_runtime_trace_address
-(const struct sieve_runtime_env *renv, sieve_size_t address, 
+(const struct sieve_runtime_env *renv, sieve_size_t address,
 	const char *fmt, va_list args)
-{	
+{
 	_sieve_runtime_trace_vprintf
 		(renv, address, sieve_runtime_get_source_location(renv, address), fmt,
-			args); 
+			args);
 }
 
-/* 
+/*
  * Trace boundaries
  */
 
 void _sieve_runtime_trace_begin(const struct sieve_runtime_env *renv)
 {
-	const char *script_name = ( renv->script != NULL ? 
+	const char *script_name = ( renv->script != NULL ?
 		sieve_script_name(renv->script) : sieve_binary_path(renv->sbin) );
 
 	_trace_line_print_empty(renv);
-	_sieve_runtime_trace_printf(renv, renv->pc, 0, 
+	_sieve_runtime_trace_printf(renv, renv->pc, 0,
 		"## Started executing script '%s'", script_name);
 }
 
 void _sieve_runtime_trace_end(const struct sieve_runtime_env *renv)
 {
-	const char *script_name = ( renv->script != NULL ? 
+	const char *script_name = ( renv->script != NULL ?
 		sieve_script_name(renv->script) : sieve_binary_path(renv->sbin) );
 
-	_sieve_runtime_trace_printf(renv, renv->pc, 0, 
+	_sieve_runtime_trace_printf(renv, renv->pc, 0,
 		"## Finished executing script '%s'", script_name);
 	_trace_line_print_empty(renv);
 }
 
 void _sieve_runtime_trace_sep(const struct sieve_runtime_env *renv)
 {
-	_trace_line_print_empty(renv);	
+	_trace_line_print_empty(renv);
 }
 

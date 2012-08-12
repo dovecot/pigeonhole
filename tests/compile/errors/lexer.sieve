@@ -7,7 +7,7 @@
 /*
  * Number limits
  */
- 
+
 # Number too large
 if size :under 4294967300 {
 	stop;

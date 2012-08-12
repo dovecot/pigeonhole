@@ -1,4 +1,4 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
 
 #include "lib.h"
@@ -25,7 +25,7 @@
 
 #include <string.h>
 
-/* 
+/*
  * Default address parts
  */
 
@@ -33,11 +33,11 @@ const struct sieve_address_part_def *sieve_core_address_parts[] = {
 	&all_address_part, &local_address_part, &domain_address_part
 };
 
-const unsigned int sieve_core_address_parts_count = 
+const unsigned int sieve_core_address_parts_count =
 	N_ELEMENTS(sieve_core_address_parts);
 
-/* 
- * Address-part 'extension' 
+/*
+ * Address-part 'extension'
  */
 
 static bool addrp_validator_load
@@ -51,10 +51,10 @@ const struct sieve_extension_def address_part_extension = {
 	SIEVE_EXT_DEFINE_NO_OPERATIONS,
 	SIEVE_EXT_DEFINE_NO_OPERANDS /* Defined as core operand */
 };
-	
-/* 
+
+/*
  * Validator context:
- *   name-based address-part registry. 
+ *   name-based address-part registry.
  */
 
 static struct sieve_validator_object_registry *_get_object_registry
@@ -67,18 +67,18 @@ static struct sieve_validator_object_registry *_get_object_registry
 	adrp_ext = sieve_get_address_part_extension(svinst);
 	return sieve_validator_object_registry_get(valdtr, adrp_ext);
 }
- 
+
 void sieve_address_part_register
 (struct sieve_validator *valdtr, const struct sieve_extension *ext,
-	const struct sieve_address_part_def *addrp_def) 
+	const struct sieve_address_part_def *addrp_def)
 {
 	struct sieve_validator_object_registry *regs = _get_object_registry(valdtr);
-	
+
 	sieve_validator_object_registry_add(regs, ext, &addrp_def->obj_def);
 }
 
 static bool sieve_address_part_exists
-(struct sieve_validator *valdtr, const char *identifier) 
+(struct sieve_validator *valdtr, const char *identifier)
 {
 	struct sieve_validator_object_registry *regs = _get_object_registry(valdtr);
 
@@ -86,8 +86,8 @@ static bool sieve_address_part_exists
 }
 
 static const struct sieve_address_part *sieve_address_part_create_instance
-(struct sieve_validator *valdtr, struct sieve_command *cmd, 
-	const char *identifier) 
+(struct sieve_validator *valdtr, struct sieve_command *cmd,
+	const char *identifier)
 {
 	struct sieve_validator_object_registry *regs = _get_object_registry(valdtr);
 	struct sieve_object object;
@@ -106,7 +106,7 @@ static const struct sieve_address_part *sieve_address_part_create_instance
 static bool addrp_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
-	struct sieve_validator_object_registry *regs = 
+	struct sieve_validator_object_registry *regs =
 		sieve_validator_object_registry_init(valdtr, ext);
 	unsigned int i;
 
@@ -121,8 +121,8 @@ static bool addrp_validator_load
 
 void sieve_address_parts_link_tags
 (struct sieve_validator *valdtr, struct sieve_command_registration *cmd_reg,
-	int id_code) 
-{	
+	int id_code)
+{
 	struct sieve_instance *svinst;
 	const struct sieve_extension *adrp_ext;
 
@@ -130,40 +130,40 @@ void sieve_address_parts_link_tags
 	adrp_ext = sieve_get_address_part_extension(svinst);
 
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, adrp_ext, &address_part_tag, id_code); 	
+		(valdtr, cmd_reg, adrp_ext, &address_part_tag, id_code);
 }
 
-/* 
- * Address-part tagged argument 
+/*
+ * Address-part tagged argument
  */
- 
+
 /* Forward declarations */
 
 static bool tag_address_part_is_instance_of
 	(struct sieve_validator *valdtr, struct sieve_command *cmd,
 		const struct sieve_extension *ext, const char *identifier, void **data);
 static bool tag_address_part_validate
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
 		struct sieve_command *cmd);
 static bool tag_address_part_generate
-	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
+	(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
 		struct sieve_command *cmd);
 
 /* Argument object */
 
-const struct sieve_argument_def address_part_tag = { 
+const struct sieve_argument_def address_part_tag = {
 	"ADDRESS-PART",
-	tag_address_part_is_instance_of, 
+	tag_address_part_is_instance_of,
 	tag_address_part_validate,
 	NULL, NULL,
-	tag_address_part_generate 
+	tag_address_part_generate
 };
 
 /* Argument implementation */
-  
+
 static bool tag_address_part_is_instance_of
 (struct sieve_validator *valdtr, struct sieve_command *cmd,
-	const struct sieve_extension *ext ATTR_UNUSED, const char *identifier, 
+	const struct sieve_extension *ext ATTR_UNUSED, const char *identifier,
 	void **data)
 {
 	const struct sieve_address_part *addrp;
@@ -174,13 +174,13 @@ static bool tag_address_part_is_instance_of
 	if ( (addrp=sieve_address_part_create_instance
 		(valdtr, cmd, identifier)) == NULL )
 		return FALSE;
-	
+
 	*data = (void *) addrp;
 	return TRUE;
 }
- 
+
 static bool tag_address_part_validate
-(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast_argument **arg, 
+(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast_argument **arg,
 	struct sieve_command *cmd ATTR_UNUSED)
 {
 	/* NOTE: Currenly trivial, but might need to allow for further validation for
@@ -198,29 +198,29 @@ static bool tag_address_part_validate
 }
 
 static bool tag_address_part_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg, 
+(const struct sieve_codegen_env *cgenv, struct sieve_ast_argument *arg,
 	struct sieve_command *cmd ATTR_UNUSED)
 {
 	struct sieve_address_part *addrp =
 		(struct sieve_address_part *) arg->argument->data;
-		
-	sieve_opr_address_part_emit(cgenv->sblock, addrp); 
-		
+
+	sieve_opr_address_part_emit(cgenv->sblock, addrp);
+
 	return TRUE;
 }
 
 /*
  * Address-part operand
  */
- 
-const struct sieve_operand_class sieve_address_part_operand_class = 
+
+const struct sieve_operand_class sieve_address_part_operand_class =
 	{ "address part" };
 
 static const struct sieve_extension_objects core_address_parts =
 	SIEVE_EXT_DEFINE_MATCH_TYPES(sieve_core_address_parts);
 
-const struct sieve_operand_def address_part_operand = { 
-	"address-part", 
+const struct sieve_operand_def address_part_operand = {
+	"address-part",
 	NULL, SIEVE_OPERAND_ADDRESS_PART,
 	&sieve_address_part_operand_class,
 	&core_address_parts
@@ -268,7 +268,7 @@ struct sieve_stringlist *sieve_address_part_stringlist_create
 static int sieve_address_part_stringlist_next_item
 	(struct sieve_stringlist *_strlist, string_t **str_r)
 {
-	struct sieve_address_part_stringlist *strlist = 
+	struct sieve_address_part_stringlist *strlist =
 		(struct sieve_address_part_stringlist *)_strlist;
 	struct sieve_address item;
 	string_t *item_unparsed;
@@ -280,7 +280,7 @@ static int sieve_address_part_stringlist_next_item
 		if ( (ret=sieve_address_list_next_item
 			(strlist->addresses, &item, &item_unparsed)) <= 0 )
 			return ret;
-		
+
 		if ( item.local_part == NULL ) {
 			if ( item_unparsed != NULL ) {
 				if ( _strlist->trace ) {
@@ -305,21 +305,21 @@ static int sieve_address_part_stringlist_next_item
 					str_sanitize(sieve_address_to_string(&item), 80));
 			}
 
-			if ( addrp->def != NULL && addrp->def->extract_from ) 
+			if ( addrp->def != NULL && addrp->def->extract_from )
 				part = addrp->def->extract_from(addrp, &item);
 
 			if ( part != NULL )
 				*str_r = t_str_new_const(part, strlen(part));
 		}
 	}
-		
+
 	return 1;
 }
 
 static void sieve_address_part_stringlist_reset
 	(struct sieve_stringlist *_strlist)
 {
-	struct sieve_address_part_stringlist *strlist = 
+	struct sieve_address_part_stringlist *strlist =
 		(struct sieve_address_part_stringlist *)_strlist;
 
 	sieve_address_list_reset(strlist->addresses);
@@ -328,7 +328,7 @@ static void sieve_address_part_stringlist_reset
 static int sieve_address_part_stringlist_get_length
 	(struct sieve_stringlist *_strlist)
 {
-	struct sieve_address_part_stringlist *strlist = 
+	struct sieve_address_part_stringlist *strlist =
 		(struct sieve_address_part_stringlist *)_strlist;
 
 	return sieve_address_list_get_length(strlist->addresses);
@@ -337,19 +337,19 @@ static int sieve_address_part_stringlist_get_length
 static void sieve_address_part_stringlist_set_trace
 (struct sieve_stringlist *_strlist, bool trace)
 {
-	struct sieve_address_part_stringlist *strlist = 
+	struct sieve_address_part_stringlist *strlist =
 		(struct sieve_address_part_stringlist *)_strlist;
 
 	sieve_address_list_set_trace(strlist->addresses, trace);
 }
 
-/* 
+/*
  * Default ADDRESS-PART, MATCH-TYPE, COMPARATOR access
  */
- 
+
 int sieve_addrmatch_opr_optional_dump
-(const struct sieve_dumptime_env *denv, sieve_size_t *address, 
-	signed int *opt_code) 
+(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+	signed int *opt_code)
 {
 	signed int _opt_code = 0;
 	bool final = FALSE, opok = TRUE;
@@ -386,7 +386,7 @@ int sieve_addrmatch_opr_optional_dump
 int sieve_addrmatch_opr_optional_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address,
 	signed int *opt_code, int *exec_status, struct sieve_address_part *addrp,
-	struct sieve_match_type *mtch, struct sieve_comparator *cmp) 
+	struct sieve_match_type *mtch, struct sieve_comparator *cmp)
 {
 	signed int _opt_code = 0;
 	bool final = FALSE;
@@ -398,14 +398,14 @@ int sieve_addrmatch_opr_optional_read
 	}
 
 	if ( exec_status != NULL )
-		*exec_status = SIEVE_EXEC_OK;			
+		*exec_status = SIEVE_EXEC_OK;
 
 	while ( status == SIEVE_EXEC_OK ) {
 		int opt;
 
 		if ( (opt=sieve_opr_optional_read(renv, address, opt_code)) <= 0 ){
 			if ( opt < 0 && exec_status != NULL )
-				*exec_status = SIEVE_EXEC_BIN_CORRUPT;				
+				*exec_status = SIEVE_EXEC_BIN_CORRUPT;
 			return opt;
 		}
 
@@ -435,12 +435,12 @@ int sieve_addrmatch_opr_optional_read
 	return -1;
 }
 
-/* 
+/*
  * Core address-part modifiers
  */
- 
+
 static const char *addrp_all_extract_from
-(const struct sieve_address_part *addrp ATTR_UNUSED, 
+(const struct sieve_address_part *addrp ATTR_UNUSED,
 	const struct sieve_address *address)
 {
 	const char *local_part = address->local_part;

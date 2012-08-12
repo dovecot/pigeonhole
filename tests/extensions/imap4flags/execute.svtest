@@ -20,49 +20,49 @@ test "Flags Side Effect" {
 	}
 
 	if not test_result_execute {
-		test_fail "result execute failed";	
+		test_fail "result execute failed";
 	}
 
 	test_result_reset;
 
 	if not test_message :folder "INBOX.Junk" 0 {
-		test_fail "message not stored in INBOX.Junk";	
+		test_fail "message not stored in INBOX.Junk";
 	}
 
 	if not hasflag :count "eq" "1" {
-		test_fail "invalid number of flags for message in INBOX.Junk";	
+		test_fail "invalid number of flags for message in INBOX.Junk";
 	}
 
 	if not hasflag :is "NONSENSE" {
-		test_fail "invalid flag set for message in INBOX.Junk";	
+		test_fail "invalid flag set for message in INBOX.Junk";
 	}
 
 	test_result_reset;
 
 	if not test_message :folder "INBOX" 0 {
-		test_fail "message not stored in INBOX";	
+		test_fail "message not stored in INBOX";
 	}
 
 	if not hasflag :count "eq" "1" {
-		test_fail "invalid number of flags for message in INBOX";	
+		test_fail "invalid number of flags for message in INBOX";
 	}
 
 	if not hasflag :is "\\seen" {
-		test_fail "invalid flag set for message in INBOX";	
+		test_fail "invalid flag set for message in INBOX";
 	}
 
 	test_result_reset;
 
 	if not test_message :folder "INBOX.Nonsense" 0 {
-		test_fail "message not stored in INBOX.Nonsense";	
+		test_fail "message not stored in INBOX.Nonsense";
 	}
 
 	if not hasflag :count "eq" "1" {
-		test_fail "invalid number of flags for message in Inbox.Nonsense";	
+		test_fail "invalid number of flags for message in Inbox.Nonsense";
 	}
 
 	if not hasflag :is "IMPLICIT" {
-		test_fail "invalid flag set for message in Inbox.Nonsene";	
+		test_fail "invalid flag set for message in Inbox.Nonsene";
 	}
 
 }

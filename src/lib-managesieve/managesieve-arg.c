@@ -37,9 +37,9 @@ bool managesieve_arg_get_number
 
 		num = newnum;
 	}
-	
+
 	*number_r = num;
-	return TRUE;    
+	return TRUE;
 }
 
 bool managesieve_arg_get_quoted

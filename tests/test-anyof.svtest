@@ -1,11 +1,11 @@
 require "vnd.dovecot.testsuite";
 
-/* 
- * ## RFC 5228, Section 5.3. Test anyof (page 27) ## 
+/*
+ * ## RFC 5228, Section 5.3. Test anyof (page 27) ##
  */
 
 /* "The "anyof" test performs a logical OR on the tests supplied to it.
- * 
+ *
  *  Example:  anyof (false, false)  =>   false
  *            anyof (false, true)   =>   true
  *            anyof (true,  true)   =>   true
@@ -56,14 +56,14 @@ test "Basic functionality: static" {
 	} else {
 		test_fail "chose wrong first-true outcome: false";
 	}
-	
+
 	if anyof ( false, true, false ) {
 		/* Correct */
 	} else {
 		test_fail "chose wrong second-true outcome: false";
 	}
 
-	if anyof ( false, false, true ) {		
+	if anyof ( false, false, true ) {
 		/* Correct */
 	} else {
 		test_fail "chose wrong last-true outcome: false";
@@ -74,7 +74,7 @@ test "Basic functionality: static" {
 	} else {
 		test_fail "chose wrong first-false outcome: false";
 	}
-	
+
 	if anyof ( true, false, true ) {
 		/* Correct */
 	} else {
@@ -118,11 +118,11 @@ test "Basic functionality: dynamic" {
 	}
 
 	if anyof ( exists "to", exists "frop", exists "frml" ) {
-		/* Correct */		
+		/* Correct */
 	} else {
 		test_fail "chose wrong first-true outcome: false";
 	}
-	
+
 	if anyof ( exists "friep", exists "from", exists "frml" ) {
 		/* Correct */
 	} else {
@@ -140,7 +140,7 @@ test "Basic functionality: dynamic" {
 	} else {
 		test_fail "chose wrong first-false outcome: false";
 	}
-	
+
 	if anyof ( exists "to", exists "frop", exists "cc" ) {
 		/* Correct */
 	} else {
@@ -202,25 +202,25 @@ test "Basic functionality: static/dynamic" {
 	/* First true */
 
 	if anyof ( true, exists "frop", exists "frml" ) {
-		/* Correct */		
+		/* Correct */
 	} else {
 		test_fail "chose wrong first-true first-static outcome: false";
 	}
 
 	if anyof ( exists "to", false, exists "frml" ) {
-		/* Correct */		
+		/* Correct */
 	} else {
 		test_fail "chose wrong first-true second-static outcome: false";
 	}
 
 	if anyof ( exists "to", exists "frop", false ) {
-		/* Correct */		
+		/* Correct */
 	} else {
 		test_fail "chose wrong first-true third-static outcome: false";
 	}
 
 	/* Second true */
-	
+
 	if anyof ( false, exists "from", exists "frml" ) {
 		/* Correct */
 	} else {
@@ -280,7 +280,7 @@ test "Basic functionality: static/dynamic" {
 	}
 
 	/* Second false */
-	
+
 	if anyof ( true, exists "frop", exists "cc" ) {
 		/* Correct */
 	} else {

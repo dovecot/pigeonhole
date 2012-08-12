@@ -4,7 +4,7 @@ require "relational";
 
 test "Non-existent" {
 	if environment :contains "nonsense" "" {
-		test_fail "matched unknown environment item";	
+		test_fail "matched unknown environment item";
 	}
 }
 
@@ -21,7 +21,7 @@ test "Count" {
 		) {
 		test_fail "count should not match unknown environment item";
 	}
-		
+
 	if not environment :count "eq" "host" "1" {
 		test_fail "count of non-empty environment should be 1";
 	}

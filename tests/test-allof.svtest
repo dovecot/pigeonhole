@@ -1,7 +1,7 @@
 require "vnd.dovecot.testsuite";
 
-/* 
- * ## RFC 5228, Section 5.2. Test allof (page 27) ## 
+/*
+ * ## RFC 5228, Section 5.2. Test allof (page 27) ##
  */
 
 /* "The "allof" test performs a logical AND on the tests supplied to it.
@@ -58,7 +58,7 @@ test "Basic functionality: static" {
 	} else {
 		/* Correct */
 	}
-	
+
 	if allof ( false, true, false ) {
 		test_fail "chose wrong second-true outcome: true";
 	} else {
@@ -76,7 +76,7 @@ test "Basic functionality: static" {
 	} else {
 		/* Correct */
 	}
-	
+
 	if allof ( true, false, true ) {
 		test_fail "chose wrong second-false outcome: true";
 	} else {
@@ -124,7 +124,7 @@ test "Basic functionality: dynamic" {
 	} else {
 		/* Correct */
 	}
-	
+
 	if allof ( exists "friep", exists "from", exists "frml" ) {
 		test_fail "chose wrong second-true outcome: true";
 	} else {
@@ -142,7 +142,7 @@ test "Basic functionality: dynamic" {
 	} else {
 		/* Correct */
 	}
-	
+
 	if allof ( exists "to", exists "frop", exists "cc" ) {
 		test_fail "chose wrong second-false outcome: true";
 	} else {
@@ -222,7 +222,7 @@ test "Basic functionality: static/dynamic" {
 	}
 
 	/* Second true */
-	
+
 	if allof ( false, exists "from", exists "frml" ) {
 		test_fail "chose wrong second-true first-static outcome: true";
 	} else {
@@ -282,7 +282,7 @@ test "Basic functionality: static/dynamic" {
 	}
 
 	/* Second false */
-	
+
 	if allof ( true, exists "frop", exists "cc" ) {
 		test_fail "chose wrong second-false first-static outcome: true";
 	} else {

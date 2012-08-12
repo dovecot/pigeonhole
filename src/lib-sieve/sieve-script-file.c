@@ -22,7 +22,7 @@
 /*
  * Configuration
  */
- 
+
 #define SIEVE_FILE_READ_BLOCK_SIZE (1024*8)
 
 /*
@@ -70,12 +70,12 @@ static void sieve_file_script_handle_error
 		*error_r = SIEVE_ERROR_NOT_FOUND;
 		break;
 	case EACCES:
-		sieve_critical(svinst, ehandler, name, "failed to open sieve script", 
+		sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 			"failed to stat sieve script: %s", eacces_error_get("stat", path));
 		*error_r = SIEVE_ERROR_NO_PERM;
 		break;
 	default:
-		sieve_critical(svinst, ehandler, name, "failed to open sieve script", 
+		sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 			"failed to stat sieve script: stat(%s) failed: %m", path);
 		*error_r = SIEVE_ERROR_TEMP_FAIL;
 		break;
@@ -88,7 +88,7 @@ static void sieve_file_script_handle_error
 
 static int sieve_file_script_stat
 (const char *path, struct stat *st, struct stat *lnk_st)
-{	
+{
 	if ( lstat(path, st) < 0 )
 		return -1;
 
@@ -107,9 +107,9 @@ static struct sieve_script *sieve_file_script_alloc(void)
 
 	pool = pool_alloconly_create("sieve_file_script", 1024);
 	script = p_new(pool, struct sieve_file_script, 1);
-	script->script = sieve_file_script; 
+	script->script = sieve_file_script;
 	script->script.pool = pool;
-	
+
 	return &script->script;
 }
 
@@ -138,7 +138,7 @@ static int sieve_file_script_create
 	}
 
 	T_BEGIN {
-		if ( (path[0] == '~' && (path[1] == '/' || path[1] == '\0')) || 
+		if ( (path[0] == '~' && (path[1] == '/' || path[1] == '\0')) ||
 			(((svinst->flags & SIEVE_FLAG_HOME_RELATIVE) != 0 ) && path[0] != '/') ) {
 			/* home-relative path. change to absolute. */
 			const char *home = sieve_environment_get_homedir(svinst);
@@ -149,7 +149,7 @@ static int sieve_file_script_create
 				else
 					path = t_strconcat(home, "/", path, NULL);
 			} else {
-				sieve_critical(svinst, ehandler, NULL, 
+				sieve_critical(svinst, ehandler, NULL,
 					"failed to open sieve script",
 					"sieve script file path %s is relative to home directory, "
 					"but home directory is not available.", path);
@@ -162,13 +162,13 @@ static int sieve_file_script_create
 			if ( S_ISDIR(st.st_mode) ) {
 				/* Path is directory; name is used to find actual file */
 				if (name == 0 || *name == '\0') {
-					sieve_critical(svinst, ehandler, NULL, 
+					sieve_critical(svinst, ehandler, NULL,
 						"failed to open sieve script",
 						"sieve script file path '%s' is a directory.", path);
 					*error_r = SIEVE_ERROR_TEMP_FAIL;
 					success = FALSE;
 				}	else {
-					/* Extend path with filename */	
+					/* Extend path with filename */
 					filename = sieve_scriptfile_from_name(name);
 					basename = name;
 					dirpath = path;
@@ -177,7 +177,7 @@ static int sieve_file_script_create
 						path = t_strconcat(dirpath, filename, NULL);
 					else
 						path = t_strconcat(dirpath, "/", filename , NULL);
-			
+
 					ret = sieve_file_script_stat(path, &st, &lnk_st);
 				}
 
@@ -202,18 +202,18 @@ static int sieve_file_script_create
 		} else {
 			basename = name;
 		}
-			
+
 		if ( success ) {
 			if ( ret <= 0 ) {
 				sieve_file_script_handle_error(_script, path, name, error_r);
 				success = FALSE;
 			} else if (!S_ISREG(st.st_mode) ) {
-				sieve_critical(svinst, ehandler, name, 
+				sieve_critical(svinst, ehandler, name,
 					"failed to open sieve script",
 					"sieve script file '%s' is not a regular file.", path);
 				*error_r = SIEVE_ERROR_TEMP_FAIL;
 				success = FALSE;
-			} 
+			}
 		}
 
 		if ( success ) {
@@ -243,7 +243,7 @@ static int sieve_file_script_create
 			if ( script->script.name == NULL )
 				script->script.name = p_strdup(pool, basename);
 		}
-	} T_END;	
+	} T_END;
 
 	return ( success ? 0 : -1 );
 }
@@ -262,8 +262,8 @@ static struct istream *sieve_file_script_open
 	if ( (fd=open(script->path, O_RDONLY)) < 0 ) {
 		sieve_file_script_handle_error(_script, script->path, name, error_r);
 		return NULL;
-	}	
-	
+	}
+
 	if ( fstat(fd, &st) != 0 ) {
 		sieve_critical(svinst, ehandler, name,
 			"failed to open sieve script",
@@ -287,11 +287,11 @@ static struct istream *sieve_file_script_open
 	if ( result == NULL ) {
 		/* Something went wrong, close the fd */
 		if ( close(fd) != 0 ) {
-			sieve_sys_error(svinst, 
+			sieve_sys_error(svinst,
 				"failed to close sieve script: close(fd=%s) failed: %m", script->path);
 		}
 	}
-	
+
 	return result;
 }
 
@@ -324,7 +324,7 @@ static int sieve_file_script_binary_read_metadata
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
 	time_t time = ( script->st.st_mtime > script->lnk_st.st_mtime ?
 		script->st.st_mtime : script->lnk_st.st_mtime );
-	
+
 	if ( sieve_binary_mtime(sbin) <= time )
 		return 0;
 
@@ -360,7 +360,7 @@ const struct sieve_script sieve_file_script = {
 		NULL,
 
 		sieve_file_script_open,
-		NULL,	
+		NULL,
 
 		sieve_file_script_binary_read_metadata,
 		NULL,

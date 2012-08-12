@@ -63,7 +63,7 @@ test "Duplicates" {
 	}
 
 	test_message :folder "Folder" 0;
-	
+
 	if not header :is "subject" "First message" {
 		test_fail "first message incorrect";
 	}

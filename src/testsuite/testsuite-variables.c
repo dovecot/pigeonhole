@@ -39,7 +39,7 @@ bool testsuite_varnamespace_generate
 		struct sieve_ast_argument *arg, struct sieve_command *cmd, void *var_data);
 bool testsuite_varnamespace_dump_variable
 	(const struct sieve_dumptime_env *denv,
-		const struct sieve_variables_namespace *nspc, 
+		const struct sieve_variables_namespace *nspc,
 		const struct sieve_operand *oprnd, sieve_size_t *address);
 int testsuite_varnamespace_read_variable
 	(const struct sieve_runtime_env *renv,
@@ -55,7 +55,7 @@ static const struct sieve_variables_namespace_def testsuite_namespace = {
 };
 
 bool testsuite_varnamespace_validate
-(struct sieve_validator *valdtr, 
+(struct sieve_validator *valdtr,
 	const struct sieve_variables_namespace *nspc ATTR_UNUSED,
 	struct sieve_ast_argument *arg, struct sieve_command *cmd ATTR_UNUSED,
 	ARRAY_TYPE(sieve_variable_name) *var_name, void **var_data,

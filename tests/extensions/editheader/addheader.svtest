@@ -28,7 +28,7 @@ test "Addheader - first" {
 	if not size :over 76 {
 		test_fail "mail is not larger";
 	}
-	
+
 	if size :over 107 {
 		test_fail "mail is too large";
 	}
@@ -63,7 +63,7 @@ test "Addheader - first" {
 	if not size :over 76 {
 		test_fail "stored mail is not larger";
 	}
-	
+
 	if size :over 107 {
 		test_fail "stored mail is too large";
 	}
@@ -74,7 +74,7 @@ test "Addheader - first" {
 
 	if not header :is "subject" "Frop!" {
 		test_fail "original subject header not retained in stored mail";
-	}	
+	}
 
 	if not exists "x-some-header" {
 		test_fail "header not in stored mail";
@@ -94,7 +94,7 @@ test "Addheader - first" {
 
 	if not header :is "subject" "Frop!" {
 		test_fail "original subject header not retained in redirected mail";
-	}	
+	}
 
 	if not exists "x-some-header" {
 		test_fail "header not in redirected mail";
@@ -121,7 +121,7 @@ test "Addheader - last" {
 	if not size :over 76 {
 		test_fail "mail is not larger";
 	}
-	
+
 	if size :over 107 {
 		test_fail "mail is too large";
 	}
@@ -156,7 +156,7 @@ test "Addheader - last" {
 	if not size :over 76 {
 		test_fail "stored mail is not larger";
 	}
-	
+
 	if size :over 107 {
 		test_fail "stored mail is too large";
 	}
@@ -167,7 +167,7 @@ test "Addheader - last" {
 
 	if not header :is "subject" "Frop!" {
 		test_fail "original subject header not retained in stored mail";
-	}	
+	}
 
 	if not exists "x-some-header" {
 		test_fail "header not in stored mail";
@@ -187,7 +187,7 @@ test "Addheader - last" {
 
 	if not header :is "subject" "Frop!" {
 		test_fail "original subject header not retained in redirected mail";
-	}	
+	}
 
 	if not exists "x-some-header" {
 		test_fail "header not in redirected mail";
@@ -215,7 +215,7 @@ test "Addheader - framed" {
 	if not size :over 76 {
 		test_fail "mail is not larger";
 	}
-	
+
 	if size :over 160 {
 		test_fail "mail is too large";
 	}
@@ -258,7 +258,7 @@ test "Addheader - framed" {
 	if not size :over 76 {
 		test_fail "stored mail is not larger";
 	}
-	
+
 	if size :over 160 {
 		test_fail "stored mail is too large";
 	}
@@ -269,7 +269,7 @@ test "Addheader - framed" {
 
 	if not header :is "subject" "Frop!" {
 		test_fail "original subject header not retained in stored mail";
-	}	
+	}
 
 	if not exists "x-some-header-first" {
 		test_fail "first header not in stored mail";
@@ -297,7 +297,7 @@ test "Addheader - framed" {
 
 	if not header :is "subject" "Frop!" {
 		test_fail "original subject header not retained in redirected mail";
-	}	
+	}
 
 	if not exists "x-some-header-first" {
 		test_fail "first header not in redirected mail";
@@ -332,7 +332,7 @@ test "Addheader - folded" {
 	set "after"
 		"This is somewhat longer header content, folded to fit inside multiple header lines. This may cause problems, so that is why it is tested here.";
 
-	addheader "X-Some-Header-first" "${before}";	
+	addheader "X-Some-Header-first" "${before}";
 	addheader :last "X-Some-Header-last" "${after}";
 
 	if not header :is "subject" "Frop!" {
@@ -367,7 +367,7 @@ test "Addheader - folded" {
 
 	if not header :is "subject" "Frop!" {
 		test_fail "original subject header not retained in redirected mail";
-	}	
+	}
 
 	if not exists "x-some-header-first" {
 		test_fail "first header not in redirected mail";
@@ -419,7 +419,7 @@ This is somewhat longer header content
 	set "after_out"
 		"This is somewhat longer header content containing newlines. This may cause some problems, so that is why it is tested here.";
 
-	addheader "X-Some-Header-first" "${before}";	
+	addheader "X-Some-Header-first" "${before}";
 	addheader :last "X-Some-Header-last" "${after}";
 
 	if not header :is "subject" "Frop!" {
@@ -454,7 +454,7 @@ This is somewhat longer header content
 
 	if not header :is "subject" "Frop!" {
 		test_fail "original subject header not retained in redirected mail";
-	}	
+	}
 
 	if not exists "x-some-header-first" {
 		test_fail "first header not in redirected mail";
@@ -498,7 +498,7 @@ test "Addheader - implicit keep" {
 	if not size :over 76 {
 		test_fail "stored mail is not larger";
 	}
-	
+
 	if size :over 107 {
 		test_fail "stored mail is too large";
 	}

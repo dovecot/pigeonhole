@@ -1,4 +1,4 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
 
 #ifndef __SIEVE_TYPES_H
@@ -91,13 +91,13 @@ enum sieve_compile_flags {
 	/* Script is being uploaded (usually through ManageSieve) */
 	SIEVE_COMPILE_FLAG_UPLOADED = (1<<1),
 	/* Script is being activated (usually through ManageSieve) */
-	SIEVE_COMPILE_FLAG_ACTIVATED = (1<<2),	
+	SIEVE_COMPILE_FLAG_ACTIVATED = (1<<2),
 };
 
-/* 
+/*
  * Message data
  *
- * - The mail message + envelope data 
+ * - The mail message + envelope data
  */
 
 struct sieve_message_data {
@@ -142,10 +142,10 @@ struct sieve_trace_config {
 	unsigned int flags;
 };
 
-/* 
+/*
  * Script environment
  *
- * - Environment for currently executing script 
+ * - Environment for currently executing script
  */
 
 struct sieve_script_env {
@@ -158,19 +158,19 @@ struct sieve_script_env {
 	const char *postmaster_address;
 	bool mailbox_autocreate;
 	bool mailbox_autosubscribe;
-		
+
 	/* External context data */
 
 	void *script_context;
 
 	/* Callbacks */
-	
+
 	/* Interface for sending mail */
 	void *(*smtp_open)
-		(const struct sieve_script_env *senv, const char *destination, 
+		(const struct sieve_script_env *senv, const char *destination,
 			const char *return_path, FILE **file_r);
 	bool (*smtp_close)(const struct sieve_script_env *senv, void *handle);
-	
+
 	/* Interface for marking and checking duplicates */
 	int (*duplicate_check)
 		(const struct sieve_script_env *senv, const void *id, size_t id_size);
@@ -181,10 +181,10 @@ struct sieve_script_env {
 	/* Interface for rejecting mail */
 	int (*reject_mail)(const struct sieve_script_env *senv, const char *recipient,
 			const char *reason);
-	
-	/* Execution status record */	
+
+	/* Execution status record */
 	struct sieve_exec_status *exec_status;
-		
+
 	/* Runtime trace*/
 	struct ostream *trace_stream;
 	struct sieve_trace_config trace_config;
@@ -195,7 +195,7 @@ struct sieve_script_env {
 
 /*
  * Script execution status
- */	
+ */
 
 struct sieve_exec_status {
 	bool message_saved;

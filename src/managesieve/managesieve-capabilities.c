@@ -52,7 +52,7 @@ static const struct setting_parser_info *default_plugin_set_roots[] = {
 	NULL
 };
 
-static const struct setting_parser_info **plugin_set_roots = 
+static const struct setting_parser_info **plugin_set_roots =
 	default_plugin_set_roots;
 
 static struct plugin_settings *plugin_settings_read(void)
@@ -111,7 +111,7 @@ void managesieve_capabilities_dump(void)
 	struct sieve_environment svenv;
 	struct sieve_instance *svinst;
 	const char *notify_cap;
-	
+
 	/* Read plugin settings */
 
 	global_plugin_settings = plugin_settings_read();
@@ -128,7 +128,7 @@ void managesieve_capabilities_dump(void)
 
 	notify_cap = sieve_get_capabilities(svinst, "notify");
 
-	if ( notify_cap == NULL ) 
+	if ( notify_cap == NULL )
 		printf("SIEVE: %s\n", sieve_get_capabilities(svinst, NULL));
 	else
 		printf("SIEVE: %s, NOTIFY: %s\n", sieve_get_capabilities(svinst, NULL),

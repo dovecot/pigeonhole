@@ -5,7 +5,7 @@ require "vnd.dovecot.testsuite";
  *  the test is false.
  * "
  */
- 
+
 test_set "message" text:
 From: stephan@example.org
 To: nico@vestingbar.bl

@@ -12,7 +12,7 @@
 
 /*
 	Abstract Syntax Tree (AST) structure:
-	
+
 	sieve_ast (root)
 	[*command]
 	 |
@@ -26,30 +26,30 @@
 	 |                |   [number | tag | *string]
 	 |                .
 	 .
-	
+
 	 *test
 	 +-- test:
 	 |   ....
 	 +-- test:
 	 |   [identifier *argument                     *test]
-	 |               +-- argument:                 \-->  as from the top 
+	 |               +-- argument:                 \-->  as from the top
 	 .               |   ....                              of this tree
 	                 +-- argument:
 	                 |   [number | tag | *string]
 	                 .
-	                 
-	 Tests and commands are defined using the same structure: sieve_ast_node. 
-	 However, arguments and string-lists are described using sieve_ast_argument.  
+
+	 Tests and commands are defined using the same structure: sieve_ast_node.
+	 However, arguments and string-lists are described using sieve_ast_argument.
 */
 
-/* IMPORTANT NOTICE: Do not decorate the AST with objects other than those 
- * allocated on the ast's pool or static const objects. Otherwise it is possible 
+/* IMPORTANT NOTICE: Do not decorate the AST with objects other than those
+ * allocated on the ast's pool or static const objects. Otherwise it is possible
  * that pointers in the tree become dangling which is highly undesirable.
  */
 
 /*
  * Forward declarations
- */ 
+ */
 
 struct sieve_ast_list;
 struct sieve_ast_arg_list;
@@ -57,7 +57,7 @@ struct sieve_ast_arg_list;
 /*
  * Types
  */
- 
+
 enum sieve_ast_argument_type {
 	SAAT_NONE,
 	SAAT_NUMBER,
@@ -76,7 +76,7 @@ enum sieve_ast_type {
 /*
  * AST Nodes
  */
- 
+
 /* Argument node */
 
 struct sieve_ast_argument {
@@ -89,18 +89,18 @@ struct sieve_ast_argument {
 	struct sieve_ast_arg_list *list;
 	struct sieve_ast_argument *next;
 	struct sieve_ast_argument *prev;
-  
+
 	/* Parser-assigned data */
-  
-	union {	
+
+	union {
 		string_t *str;
 		struct sieve_ast_arg_list *strlist;
 		const char *tag;
 		unsigned int number;
 	} _value;
-  
+
 	unsigned int source_line;
-  
+
 	/* Assigned during validation */
 
 	/* Argument associated with this ast element  */
@@ -115,60 +115,60 @@ struct sieve_ast_node {
 
 	/* Back reference to the AST object */
 	struct sieve_ast *ast;
-	
+
 	/* Back reference to this node's parent */
 	struct sieve_ast_node *parent;
-	
+
 	/* Linked list references */
 	struct sieve_ast_list *list;
 	struct sieve_ast_node *next;
 	struct sieve_ast_node *prev;
-	
+
 	/* Commands (NULL if not allocated) */
 	bool block;
 	struct sieve_ast_list *commands;
-	
+
 	/* Tests (NULL if not allocated)*/
 	bool test_list;
 	struct sieve_ast_list *tests;
 
 	/* Arguments (NULL if not allocated) */
-	struct sieve_ast_arg_list *arguments;	
+	struct sieve_ast_arg_list *arguments;
 
 	/* Identifier of command or test */
-	const char *identifier;		
+	const char *identifier;
 
 	/* The location in the file where this command was started */
 	unsigned int source_line;
-		
+
 	/* Assigned during validation */
-		
+
 	/* Context */
-	struct sieve_command *command;	
+	struct sieve_command *command;
 };
 
 /*
  * AST node lists
  */
- 
+
 struct sieve_ast_list {
-	struct sieve_ast_node *head;		
+	struct sieve_ast_node *head;
 	struct sieve_ast_node *tail;
-	unsigned int len; 	
+	unsigned int len;
 };
 
 struct sieve_ast_arg_list {
-	struct sieve_ast_argument *head;		
+	struct sieve_ast_argument *head;
 	struct sieve_ast_argument *tail;
-	unsigned int len; 	
+	unsigned int len;
 };
 
 /*
- * AST object 
+ * AST object
  */
- 
-struct sieve_ast; 
- 
+
+struct sieve_ast;
+
 struct sieve_ast *sieve_ast_create(struct sieve_script *script);
 void sieve_ast_ref(struct sieve_ast *ast);
 void sieve_ast_unref(struct sieve_ast **ast);
@@ -180,9 +180,9 @@ struct sieve_script *sieve_ast_script(struct sieve_ast *ast);
 /* Extension support */
 
 struct sieve_ast_extension {
-	const struct sieve_extension_def *ext;	
+	const struct sieve_extension_def *ext;
 
-	void (*free)(const struct sieve_extension *ext, struct sieve_ast *ast, 
+	void (*free)(const struct sieve_extension *ext, struct sieve_ast *ast,
 		void *context);
 };
 
@@ -199,37 +199,37 @@ void sieve_ast_extension_set_context
 void *sieve_ast_extension_get_context
 	(struct sieve_ast *ast, const struct sieve_extension *ext);
 
-/* 
+/*
  * AST node manipulation
  */
- 
+
 /* Command nodes */
 
 struct sieve_ast_node *sieve_ast_test_create
-	(struct sieve_ast_node *parent, const char *identifier, 
+	(struct sieve_ast_node *parent, const char *identifier,
 		unsigned int source_line);
 struct sieve_ast_node *sieve_ast_command_create
-	(struct sieve_ast_node *parent, const char *identifier, 
+	(struct sieve_ast_node *parent, const char *identifier,
 		unsigned int source_line);
 
 struct sieve_ast_node *sieve_ast_node_detach
 	(struct sieve_ast_node *first);
 
 const char *sieve_ast_type_name(enum sieve_ast_type ast_type);
-	
+
 /* Argument nodes */
 
 struct sieve_ast_argument *sieve_ast_argument_create
 	(struct sieve_ast *ast, unsigned int source_line);
 
-struct sieve_ast_arg_list *sieve_ast_arg_list_create(pool_t pool);	
+struct sieve_ast_arg_list *sieve_ast_arg_list_create(pool_t pool);
 bool sieve_ast_arg_list_add
 	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument);
 bool sieve_ast_arg_list_insert
 	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *before,
 		struct sieve_ast_argument *argument);
 void sieve_ast_arg_list_substitute
-	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument, 
+	(struct sieve_ast_arg_list *list, struct sieve_ast_argument *argument,
 		struct sieve_ast_argument *replacement);
 
 struct sieve_ast_argument *sieve_ast_argument_string_create_raw
@@ -238,7 +238,7 @@ struct sieve_ast_argument *sieve_ast_argument_string_create
 	(struct sieve_ast_node *node, const string_t *str, unsigned int source_line);
 struct sieve_ast_argument *sieve_ast_argument_cstring_create
 	(struct sieve_ast_node *node, const char *str, unsigned int source_line);
-	
+
 struct sieve_ast_argument *sieve_ast_argument_tag_create
 	(struct sieve_ast_node *node, const char *tag, unsigned int source_line);
 
@@ -256,7 +256,7 @@ void sieve_ast_argument_number_substitute
 	(struct sieve_ast_argument *argument, unsigned int number);
 
 struct sieve_ast_argument *sieve_ast_argument_tag_insert
-(struct sieve_ast_argument *before, const char *tag, unsigned int source_line); 
+(struct sieve_ast_argument *before, const char *tag, unsigned int source_line);
 
 struct sieve_ast_argument *sieve_ast_argument_stringlist_create
 	(struct sieve_ast_node *node, unsigned int source_line);
@@ -267,19 +267,19 @@ struct sieve_ast_argument *sieve_ast_arguments_detach
 	(struct sieve_ast_argument *first, unsigned int count);
 bool sieve_ast_argument_attach
 	(struct sieve_ast_node *node, struct sieve_ast_argument *argument);
-	
+
 const char *sieve_ast_argument_type_name(enum sieve_ast_argument_type arg_type);
 #define sieve_ast_argument_name(argument) \
 	sieve_ast_argument_type_name((argument)->type)
 
 bool sieve_ast_stringlist_add
-	(struct sieve_ast_argument *list, const string_t *str, 
+	(struct sieve_ast_argument *list, const string_t *str,
 		unsigned int source_line);
 bool sieve_ast_stringlist_add_strc
-	(struct sieve_ast_argument *list, const char *str, 
+	(struct sieve_ast_argument *list, const char *str,
 		unsigned int source_line);
-		
-/* 
+
+/*
  * Utility
  */
 
@@ -288,9 +288,9 @@ int sieve_ast_stringlist_map
 		int (*map_function)(void *context, struct sieve_ast_argument *arg));
 struct sieve_ast_argument *sieve_ast_stringlist_join
 	(struct sieve_ast_argument *list, struct sieve_ast_argument *items);
-	
-/* 
- * AST access macros 
+
+/*
+ * AST access macros
  */
 
 /* Generic list access macros */
@@ -327,7 +327,7 @@ struct sieve_ast_argument *sieve_ast_stringlist_join
 #define sieve_ast_prev_cmd_is(cmd, id) \
 	( (cmd)->prev == NULL ? FALSE : \
 		strncasecmp((cmd)->prev->identifier, id, sizeof(id)-1) == 0 )
-	
+
 /* AST test macros */
 #define sieve_ast_test_count(node) __AST_NODE_LIST_COUNT(node, tests)
 #define sieve_ast_test_first(node) __AST_NODE_LIST_FIRST(node, tests)
@@ -361,8 +361,8 @@ struct sieve_ast_argument *sieve_ast_stringlist_join
 #define sieve_ast_strlist_str(str) sieve_ast_argument_str(str)
 #define sieve_ast_strlist_strc(str) sieve_ast_argument_strc(str)
 
-/* 
- * Debug 
+/*
+ * Debug
  */
 
 void sieve_ast_unparse(struct sieve_ast *ast);

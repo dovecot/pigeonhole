@@ -86,11 +86,11 @@ test "Multiple recipients" {
 
 	if not address :count "eq" :comparator "i;ascii-numeric" "to" "1" {
 		test_fail "too many recipients in To header";
-	} 
+	}
 
 	if not address :count "eq" :comparator "i;ascii-numeric" "cc" "0" {
 		test_fail "too many recipients in Cc header";
-	} 
+	}
 }
 
 /*
@@ -176,8 +176,8 @@ $text$
 
 You have been notified.
 .
-;	
-	
+;
+
 	if not test_result_execute {
 		test_fail "failed to execute notify";
 	}
@@ -190,7 +190,7 @@ You have been notified.
 
 	if not body :raw :contains "You have been notified" {
 		test_fail "notification has no footer";
-	}	
+	}
 
 	if not allof(
 		body :raw :contains "Test. Test",
@@ -220,8 +220,8 @@ $text[5]$
 
 You have been notified.
 .
-;	
-	
+;
+
 	if not test_result_execute {
 		test_fail "failed to execute notify";
 	}
@@ -234,7 +234,7 @@ You have been notified.
 
 	if not body :raw :contains "You have been notified" {
 		test_fail "notification has no footer";
-	}	
+	}
 
 	if anyof(
 		body :raw :contains "Test. Test",
@@ -244,7 +244,7 @@ You have been notified.
 
 	if not body :raw :contains "Test." {
 		test_fail "notification does not contain the required message";
-	}	
+	}
 }
 
 test_result_reset;
@@ -267,7 +267,7 @@ This is a nested multi-part message in MIME format.
 Content-Type: application/sieve; charset="us-ascii"
 
 keep;
-        
+
 --inner
 Content-Type: text/plain; charset="us-ascii"
 
@@ -300,8 +300,8 @@ $text$
 
 You have been notified.
 .
-;	
-	
+;
+
 	if not test_result_execute {
 		test_fail "failed to execute notify";
 	}

@@ -25,88 +25,88 @@ static bool cmd_test_binary_generate
 
 /* Test_binary_load command
  *
- * Syntax:   
+ * Syntax:
  *   test_binary_load <binary-name: string>
  */
 
-const struct sieve_command_def cmd_test_binary_load = { 
-	"test_binary_load", 
-	SCT_COMMAND, 
+const struct sieve_command_def cmd_test_binary_load = {
+	"test_binary_load",
+	SCT_COMMAND,
 	1, 0, FALSE, FALSE,
-	NULL, 
+	NULL,
 	NULL,
 	cmd_test_binary_validate,
 	NULL,
-	cmd_test_binary_generate, 
-	NULL 
+	cmd_test_binary_generate,
+	NULL
 };
 
 /* Test_binary_save command
  *
- * Syntax:   
+ * Syntax:
  *   test_binary_save <binary-name: string>
  */
 
-const struct sieve_command_def cmd_test_binary_save = { 
-	"test_binary_save", 
-	SCT_COMMAND, 
+const struct sieve_command_def cmd_test_binary_save = {
+	"test_binary_save",
+	SCT_COMMAND,
 	1, 0, FALSE, FALSE,
-	NULL, 
+	NULL,
 	NULL,
 	cmd_test_binary_validate,
 	NULL,
-	cmd_test_binary_generate, 
-	NULL 
+	cmd_test_binary_generate,
+	NULL
 };
 
-/* 
+/*
  * Operations
- */ 
+ */
 
 static bool cmd_test_binary_operation_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
 static int cmd_test_binary_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
- 
+
 /* test_binary_create operation */
 
-const struct sieve_operation_def test_binary_load_operation = { 
+const struct sieve_operation_def test_binary_load_operation = {
 	"TEST_BINARY_LOAD",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_BINARY_LOAD,
-	cmd_test_binary_operation_dump, 
-	cmd_test_binary_operation_execute 
+	cmd_test_binary_operation_dump,
+	cmd_test_binary_operation_execute
 };
 
 /* test_binary_delete operation */
 
-const struct sieve_operation_def test_binary_save_operation = { 
+const struct sieve_operation_def test_binary_save_operation = {
 	"TEST_BINARY_SAVE",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_BINARY_SAVE,
-	cmd_test_binary_operation_dump, 
-	cmd_test_binary_operation_execute 
+	cmd_test_binary_operation_dump,
+	cmd_test_binary_operation_execute
 };
 
-/* 
- * Validation 
+/*
+ * Validation
  */
 
 static bool cmd_test_binary_validate
-(struct sieve_validator *valdtr, struct sieve_command *cmd) 
-{	
+(struct sieve_validator *valdtr, struct sieve_command *cmd)
+{
 	struct sieve_ast_argument *arg = cmd->first_positional;
-			
+
 	if ( !sieve_validate_positional_argument
 		(valdtr, cmd, arg, "binary-name", 1, SAAT_STRING) ) {
 		return FALSE;
 	}
-	
+
 	return sieve_validator_argument_activate(valdtr, cmd, arg, FALSE);
 }
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool cmd_test_binary_generate
@@ -119,7 +119,7 @@ static bool cmd_test_binary_generate
 		sieve_operation_emit(cgenv->sblock, cmd->ext, &test_binary_save_operation);
 	else
 		i_unreached();
-		  	
+
  	/* Generate arguments */
 	if ( !sieve_generate_arguments(cgenv, cmd, NULL) )
 		return FALSE;
@@ -127,24 +127,24 @@ static bool cmd_test_binary_generate
 	return TRUE;
 }
 
-/* 
+/*
  * Code dump
  */
- 
+
 static bool cmd_test_binary_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
 	sieve_code_dumpf(denv, "%s:", sieve_operation_mnemonic(denv->oprtn));
-	
+
 	sieve_code_descend(denv);
-	
+
 	return sieve_opr_string_dump(denv, address, "binary-name");
 }
 
 /*
  * Intepretation
  */
- 
+
 static int cmd_test_binary_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -152,8 +152,8 @@ static int cmd_test_binary_operation_execute
 	string_t *binary_name = NULL;
 	int ret;
 
-	/* 
-	 * Read operands 
+	/*
+	 * Read operands
 	 */
 
 	/* Binary Name */
@@ -194,7 +194,7 @@ static int cmd_test_binary_operation_execute
 			sieve_runtime_trace(renv, 0, "save binary `%s'", str_c(binary_name));
 		}
 
-		if ( sbin != NULL ) 
+		if ( sbin != NULL )
 			testsuite_binary_save(sbin, str_c(binary_name));
 		else {
 			sieve_sys_error(testsuite_sieve_instance,

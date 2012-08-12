@@ -25,7 +25,7 @@ endif
 TESTSUITE_BIN = $(top_builddir)/src/testsuite/testsuite $(TESTSUITE_OPTIONS)
 
 if TESTSUITE_VALGRIND
-TEST_BIN = valgrind -q --error-exitcode=1 --show-reachable=yes --leak-check=full $(TESTSUITE_BIN) 
+TEST_BIN = valgrind -q --error-exitcode=1 --show-reachable=yes --leak-check=full $(TESTSUITE_BIN)
 else
 TEST_BIN = $(TESTSUITE_BIN)
 endif
@@ -33,7 +33,7 @@ endif
 if BUILD_UNFINISHED
 test_unfinished =
 else
-test_unfinished = 
+test_unfinished =
 endif
 
 test_cases = \

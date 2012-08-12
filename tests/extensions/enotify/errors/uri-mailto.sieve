@@ -9,7 +9,7 @@ notify "mailto:stephan@example.org?header<=frop";
 # 3: Invalid character in hvalue
 notify "mailto:stephan@example.org?header=fr>op";
 
-# 4: Invalid header name 
+# 4: Invalid header name
 notify "mailto:stephan@example.org?header:=frop";
 
 # 5: Invalid recipient

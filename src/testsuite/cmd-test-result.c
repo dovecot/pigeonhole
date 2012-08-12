@@ -25,36 +25,36 @@ static bool cmd_test_result_generate
 
 /* Test_result_reset command
  *
- * Syntax:   
+ * Syntax:
  *   test_result_reset
  */
 
-const struct sieve_command_def cmd_test_result_reset = { 
-	"test_result_reset", 
-	SCT_COMMAND, 
+const struct sieve_command_def cmd_test_result_reset = {
+	"test_result_reset",
+	SCT_COMMAND,
 	0, 0, FALSE, FALSE,
 	NULL, NULL, NULL, NULL,
-	cmd_test_result_generate, 
-	NULL 
+	cmd_test_result_generate,
+	NULL
 };
 
 /* Test_result_print command
  *
- * Syntax:   
+ * Syntax:
  *   test_result_print
  */
 
-const struct sieve_command_def cmd_test_result_print = { 
-	"test_result_print", 
-	SCT_COMMAND, 
+const struct sieve_command_def cmd_test_result_print = {
+	"test_result_print",
+	SCT_COMMAND,
 	0, 0, FALSE, FALSE,
 	NULL, NULL, NULL, NULL,
-	cmd_test_result_generate, 
-	NULL 
+	cmd_test_result_generate,
+	NULL
 };
 
-/* 
- * Operations 
+/*
+ * Operations
  */
 
 /* test_result_reset */
@@ -62,12 +62,12 @@ const struct sieve_command_def cmd_test_result_print = {
 static int cmd_test_result_reset_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def test_result_reset_operation = { 
+const struct sieve_operation_def test_result_reset_operation = {
 	"TEST_RESULT_RESET",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_RESULT_RESET,
-	NULL, 
-	cmd_test_result_reset_operation_execute 
+	NULL,
+	cmd_test_result_reset_operation_execute
 };
 
 /* test_result_print */
@@ -75,16 +75,16 @@ const struct sieve_operation_def test_result_reset_operation = {
 static int cmd_test_result_print_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def test_result_print_operation = { 
+const struct sieve_operation_def test_result_print_operation = {
 	"TEST_RESULT_PRINT",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_RESULT_PRINT,
-	NULL, 
-	cmd_test_result_print_operation_execute 
+	NULL,
+	cmd_test_result_print_operation_execute
 };
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool cmd_test_result_generate
@@ -107,7 +107,7 @@ static bool cmd_test_result_generate
 static int cmd_test_result_reset_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
 			"testsuite: test_result_reset command; reset script result");
 
 	testsuite_result_reset(renv);
@@ -119,7 +119,7 @@ static int cmd_test_result_reset_operation_execute
 static int cmd_test_result_print_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED)
 {
-	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, 
+	sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS,
 			"testsuite: test_result_print command; print script result ");
 
 	testsuite_result_print(renv);

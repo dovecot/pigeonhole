@@ -13,7 +13,7 @@
 struct ext_include_binary_context;
 
 struct ext_include_binary_context *ext_include_binary_init
-	(const struct sieve_extension *this_ext, struct sieve_binary *sbin, 
+	(const struct sieve_extension *this_ext, struct sieve_binary *sbin,
 		struct sieve_ast *ast);
 struct ext_include_binary_context *ext_include_binary_get_context
 	(const struct sieve_extension *this_ext, struct sieve_binary *sbin);
@@ -40,7 +40,7 @@ struct ext_include_script_info {
 
 const struct ext_include_script_info *ext_include_binary_script_include
 	(struct ext_include_binary_context *binctx, struct sieve_script *script,
-		enum ext_include_script_location location, 
+		enum ext_include_script_location location,
 		struct sieve_binary_block *block);
 bool ext_include_binary_script_is_included
 	(struct ext_include_binary_context *binctx, struct sieve_script *script,
@@ -60,8 +60,8 @@ unsigned int ext_include_binary_script_get_count
 bool ext_include_binary_dump
 	(const struct sieve_extension *ext, struct sieve_dumptime_env *denv);
 bool ext_include_code_dump
-	(const struct sieve_extension *ext, const struct sieve_dumptime_env *denv, 
+	(const struct sieve_extension *ext, const struct sieve_dumptime_env *denv,
 		sieve_size_t *address ATTR_UNUSED);
-		
+
 #endif /* __EXT_INCLUDE_BINARY_H */
 

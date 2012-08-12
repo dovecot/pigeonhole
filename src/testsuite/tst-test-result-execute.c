@@ -18,39 +18,39 @@
 /*
  * Test_result_execute command
  *
- * Syntax:   
+ * Syntax:
  *   test_result_execute
  */
 
 static bool tst_test_result_execute_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command_def tst_test_result_execute = { 
-	"test_result_execute", 
-	SCT_TEST, 
+const struct sieve_command_def tst_test_result_execute = {
+	"test_result_execute",
+	SCT_TEST,
 	0, 0, FALSE, FALSE,
 	NULL, NULL, NULL, NULL,
-	tst_test_result_execute_generate, 
-	NULL 
+	tst_test_result_execute_generate,
+	NULL
 };
 
-/* 
- * Operation 
+/*
+ * Operation
  */
 
 static int tst_test_result_execute_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def test_result_execute_operation = { 
+const struct sieve_operation_def test_result_execute_operation = {
 	"TEST_RESULT_EXECUTE",
-	&testsuite_extension, 
+	&testsuite_extension,
 	TESTSUITE_OPERATION_TEST_RESULT_EXECUTE,
-	NULL, 
-	tst_test_result_execute_operation_execute 
+	NULL,
+	tst_test_result_execute_operation_execute
 };
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool tst_test_result_execute_generate
@@ -74,14 +74,14 @@ static int tst_test_result_execute_operation_execute
 	 * Perform operation
 	 */
 
-	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, 
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
 		"testsuite: test_result_execute test");
 
 	result = testsuite_result_execute(renv);
 
 	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_TESTS) ) {
 		sieve_runtime_trace_descend(renv);
-		sieve_runtime_trace(renv, 0, "execution of result %s", 
+		sieve_runtime_trace(renv, 0, "execution of result %s",
 			( result ? "succeeded" : "failed" ));
 	}
 

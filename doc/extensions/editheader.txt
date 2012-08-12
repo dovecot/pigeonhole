@@ -16,7 +16,7 @@ Configuration
 =============
 
 The editheader is not available by default and needs to be enabled explicitly by
-adding it to the sieve_extensions setting. 
+adding it to the sieve_extensions setting.
 
 The following settings can be configured for the editheader extension (default
 values are indicated):
@@ -33,7 +33,7 @@ sieve_editheader_protected =
   RFC specification; adding one of these headers to this setting has no effect.
 
 Invalid values for the settings above will make the Sieve interpreter log
-a warning and revert to the default values. 
+a warning and revert to the default values.
 
 Example
 =======

@@ -6,7 +6,7 @@
 
 #include "sieve-common.h"
 
-/* 
+/*
  * Types
  */
 

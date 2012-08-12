@@ -18,11 +18,11 @@ struct ext_environment_context {
  */
 
 static const struct sieve_environment_item *core_env_items[] = {
-	&domain_env_item, 
-	&host_env_item, 
-	&location_env_item, 
-	&phase_env_item, 
-	&name_env_item, 
+	&domain_env_item,
+	&host_env_item,
+	&location_env_item,
+	&phase_env_item,
+	&name_env_item,
 	&version_env_item
 };
 
@@ -33,7 +33,7 @@ static unsigned int core_env_items_count = N_ELEMENTS(core_env_items);
  */
 
 static void ext_environment_item_register
-(struct ext_environment_context *ectx, 
+(struct ext_environment_context *ectx,
 	const struct sieve_environment_item *item)
 {
 	hash_table_insert
@@ -43,9 +43,9 @@ static void ext_environment_item_register
 void sieve_ext_environment_item_register
 (const struct sieve_extension *ext, const struct sieve_environment_item *item)
 {
-	struct ext_environment_context *ectx = 
+	struct ext_environment_context *ectx =
 		(struct ext_environment_context *) ext->context;
-	
+
 	ext_environment_item_register(ectx, item);
 }
 
@@ -54,9 +54,9 @@ void sieve_ext_environment_item_register
  */
 
 bool ext_environment_init
-(const struct sieve_extension *ext ATTR_UNUSED, void **context) 
+(const struct sieve_extension *ext ATTR_UNUSED, void **context)
 {
-	struct ext_environment_context *ectx = 
+	struct ext_environment_context *ectx =
 		i_new(struct ext_environment_context, 1);
 
 	unsigned int i;
@@ -75,7 +75,7 @@ bool ext_environment_init
 
 void ext_environment_deinit(const struct sieve_extension *ext)
 {
-	struct ext_environment_context *ectx = 
+	struct ext_environment_context *ectx =
 		(struct ext_environment_context *) ext->context;
 
 	hash_table_destroy(&ectx->environment_items);
@@ -88,13 +88,13 @@ void ext_environment_deinit(const struct sieve_extension *ext)
  */
 
 const char *ext_environment_item_get_value
-(const struct sieve_extension *ext, const char *name, 
+(const struct sieve_extension *ext, const char *name,
 	const struct sieve_script_env *senv)
 {
-	struct ext_environment_context *ectx = 
+	struct ext_environment_context *ectx =
 		(struct ext_environment_context *) ext->context;
-	const struct sieve_environment_item *item = 
-		(const struct sieve_environment_item *) 
+	const struct sieve_environment_item *item =
+		(const struct sieve_environment_item *)
 			hash_table_lookup(ectx->environment_items, name);
 
 	if ( item == NULL )
@@ -109,7 +109,7 @@ const char *ext_environment_item_get_value
 		return ( value == NULL ? "" : value );
 	}
 
-	return NULL; 
+	return NULL;
 }
 
 /*
@@ -118,7 +118,7 @@ const char *ext_environment_item_get_value
 
 /* "domain":
  *
- *   The primary DNS domain associated with the Sieve execution context, usually 
+ *   The primary DNS domain associated with the Sieve execution context, usually
  *   but not always a proper suffix of the host name.
  */
 const struct sieve_environment_item domain_env_item = {
@@ -129,7 +129,7 @@ const struct sieve_environment_item domain_env_item = {
 
 /* "host":
  *
- *   The fully-qualified domain name of the host where the Sieve script is 
+ *   The fully-qualified domain name of the host where the Sieve script is
  *   executing.
  */
 
@@ -147,11 +147,11 @@ const struct sieve_environment_item host_env_item = {
 
 /* "location":
  *
- *   Sieve evaluation can be performed at various different points as messages 
+ *   Sieve evaluation can be performed at various different points as messages
  *   are processed. This item provides additional information about the type of
  *   service that is evaluating the script.  Possible values are:
- *    "MTA" - the Sieve script is being evaluated by a Message Transfer Agent 
- *    "MDA" - evaluation is being performed by a Mail Delivery Agent 
+ *    "MTA" - the Sieve script is being evaluated by a Message Transfer Agent
+ *    "MDA" - evaluation is being performed by a Mail Delivery Agent
  *    "MUA" - evaluation is being performed by a Mail User Agent
  *    "MS"  - evaluation is being performed by a Message Store
  */
@@ -164,8 +164,8 @@ const struct sieve_environment_item location_env_item = {
 /* "phase":
  *
  *   The point relative to final delivery where the Sieve script is being
- *   evaluated.  Possible values are "pre", "during", and "post", referring 
- *   respectively to processing before, during, and after final delivery has 
+ *   evaluated.  Possible values are "pre", "during", and "post", referring
+ *   respectively to processing before, during, and after final delivery has
  *   taken place.
  */
 
@@ -187,7 +187,7 @@ const struct sieve_environment_item name_env_item = {
 
 /* "version":
  *
- * The product version associated with the Sieve interpreter. The meaning of the 
+ * The product version associated with the Sieve interpreter. The meaning of the
  * product version string is product-specific and should always be considered
  * in the context of the product name given by the "name" item.
  */

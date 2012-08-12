@@ -56,7 +56,7 @@ bool client_skip_line(struct managesieve_client *client)
 
 static void client_send_capabilities(struct client *client)
 {
-	struct managesieve_client *msieve_client = 
+	struct managesieve_client *msieve_client =
 		(struct managesieve_client *) client;
 	const char *saslcap;
 
@@ -64,12 +64,12 @@ static void client_send_capabilities(struct client *client)
 		saslcap = client_authenticate_get_capabilities(client);
 
 		/* Default capabilities */
-		client_send_raw(client, t_strconcat("\"IMPLEMENTATION\" \"", 
+		client_send_raw(client, t_strconcat("\"IMPLEMENTATION\" \"",
 			msieve_client->set->managesieve_implementation_string, "\"\r\n", NULL));
-		client_send_raw(client, t_strconcat("\"SIEVE\" \"", 
+		client_send_raw(client, t_strconcat("\"SIEVE\" \"",
 			msieve_client->set->managesieve_sieve_capability, "\"\r\n", NULL));
 		if ( msieve_client->set->managesieve_notify_capability != NULL )
-			client_send_raw(client, t_strconcat("\"NOTIFY\" \"", 
+			client_send_raw(client, t_strconcat("\"NOTIFY\" \"",
 				msieve_client->set->managesieve_notify_capability, "\"\r\n", NULL));
 		client_send_raw
 			(client, t_strconcat("\"SASL\" \"", saslcap, "\"\r\n", NULL));
@@ -180,7 +180,7 @@ static bool client_handle_input(struct managesieve_client *client)
 	if (client->cmd == NULL) {
 		struct managesieve_command *cmd;
 		const char *cmd_name;
-		
+
 		client->cmd_name = managesieve_parser_read_word(client->parser);
 		if (client->cmd_name == NULL)
 			return FALSE; /* need more data */
@@ -192,13 +192,13 @@ static bool client_handle_input(struct managesieve_client *client)
 				break;
 			cmd++;
 		}
-	
+
 		if ( cmd->name != NULL )
 			client->cmd = cmd;
 	}
 
 	if ( client->cmd != NULL && !client->cmd_parsed_args ) {
-		unsigned int arg_count = 
+		unsigned int arg_count =
 			( client->cmd->preparsed_args > 0 ? client->cmd->preparsed_args : 0 );
 		switch (managesieve_parser_read_args(client->parser, arg_count, 0, &args)) {
 		case -1:
@@ -250,12 +250,12 @@ static bool client_handle_input(struct managesieve_client *client)
 
 	if (ret < 0) {
 		if (++client->common.bad_counter >= CLIENT_MAX_BAD_COMMANDS) {
-			client_send_bye(&client->common,	
+			client_send_bye(&client->common,
 				"Too many invalid MANAGESIEVE commands.");
-			client_destroy(&client->common, 
+			client_destroy(&client->common,
 				"Disconnected: Too many invalid commands.");
 			return FALSE;
-		}  
+		}
 		client_send_no(&client->common,
 			"Error in MANAGESIEVE command received by server.");
 	}
@@ -265,7 +265,7 @@ static bool client_handle_input(struct managesieve_client *client)
 
 static void managesieve_client_input(struct client *client)
 {
-	struct managesieve_client *managesieve_client = 
+	struct managesieve_client *managesieve_client =
 		(struct managesieve_client *) client;
 
 	if (!client_read(client))
@@ -306,7 +306,7 @@ static struct client *managesieve_client_alloc(pool_t pool)
 static void managesieve_client_create
 (struct client *client, void **other_sets)
 {
-	struct managesieve_client *msieve_client = 
+	struct managesieve_client *msieve_client =
 		(struct managesieve_client *) client;
 
 	msieve_client->set = other_sets[0];
@@ -317,7 +317,7 @@ static void managesieve_client_create
 
 static void managesieve_client_destroy(struct client *client)
 {
-	struct managesieve_client *managesieve_client = 
+	struct managesieve_client *managesieve_client =
 		(struct managesieve_client *) client;
 
 	managesieve_parser_destroy(&managesieve_client->parser);
@@ -330,7 +330,7 @@ static void managesieve_client_send_greeting(struct client *client)
 	 */
 	o_stream_cork(client->output);
 
-	/* Send initial capabilities */   
+	/* Send initial capabilities */
 	client_send_capabilities(client);
 	client_send_ok(client, client->set->login_greeting);
 
@@ -340,7 +340,7 @@ static void managesieve_client_send_greeting(struct client *client)
 
 static void managesieve_client_starttls(struct client *client)
 {
-	struct managesieve_client *msieve_client = 
+	struct managesieve_client *msieve_client =
 		(struct managesieve_client *) client;
 
 	managesieve_parser_destroy(&msieve_client->parser);
@@ -358,24 +358,24 @@ static void managesieve_client_starttls(struct client *client)
 	client_send_capabilities(client);
 	client_send_ok(client, "TLS negotiation successful.");
 
-	o_stream_uncork(client->output);	
+	o_stream_uncork(client->output);
 }
 
-void _client_send_response(struct client *client, 
+void _client_send_response(struct client *client,
 	const char *oknobye, const char *resp_code, const char *msg)
 {
 	T_BEGIN {
 		string_t *line = t_str_new(256);
 
 		str_append(line, oknobye);
-		
+
 		if (resp_code != NULL) {
 			str_append(line, " [");
 			str_append(line, resp_code);
 			str_append_c(line, ']');
 		}
-		
-		if ( msg != NULL )	
+
+		if ( msg != NULL )
 		{
 			str_append_c(line, ' ');
 			managesieve_quote_append_string(line, msg, TRUE);

@@ -14,9 +14,9 @@
 #include "sieve-interpreter.h"
 #include "sieve-code-dumper.h"
 
-/* 
+/*
  * Exists test
- *  
+ *
  * Syntax:
  *    exists <header-names: string-list>
  */
@@ -26,20 +26,20 @@ static bool tst_exists_validate
 static bool tst_exists_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *tst);
 
-const struct sieve_command_def tst_exists = { 
-	"exists", 
-	SCT_TEST, 
+const struct sieve_command_def tst_exists = {
+	"exists",
+	SCT_TEST,
 	1, 0, FALSE, FALSE,
-	NULL, 
+	NULL,
 	NULL,
 	tst_exists_validate,
 	NULL,
-	tst_exists_generate, 
-	NULL 
+	tst_exists_generate,
+	NULL
 };
 
-/* 
- * Exists operation 
+/*
+ * Exists operation
  */
 
 static bool tst_exists_operation_dump
@@ -47,40 +47,40 @@ static bool tst_exists_operation_dump
 static int tst_exists_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def tst_exists_operation = { 
+const struct sieve_operation_def tst_exists_operation = {
 	"EXISTS",
 	NULL,
 	SIEVE_OPERATION_EXISTS,
-	tst_exists_operation_dump, 
-	tst_exists_operation_execute 
+	tst_exists_operation_dump,
+	tst_exists_operation_execute
 };
 
-/* 
- * Validation 
+/*
+ * Validation
  */
 
 static bool tst_exists_validate
-  (struct sieve_validator *valdtr, struct sieve_command *tst) 
+  (struct sieve_validator *valdtr, struct sieve_command *tst)
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
-		
+
 	if ( !sieve_validate_positional_argument
 		(valdtr, tst, arg, "header names", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
-	
+
 	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
 
 	return sieve_command_verify_headers_argument(valdtr, arg);
 }
 
-/* 
- * Code generation 
+/*
+ * Code generation
  */
 
 static bool tst_exists_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *tst) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *tst)
 {
 	sieve_operation_emit(cgenv->sblock, NULL, &tst_exists_operation);
 
@@ -88,8 +88,8 @@ static bool tst_exists_generate
     return sieve_generate_arguments(cgenv, tst, NULL);
 }
 
-/* 
- * Code dump 
+/*
+ * Code dump
  */
 
 static bool tst_exists_operation_dump
@@ -101,8 +101,8 @@ static bool tst_exists_operation_dump
 	return sieve_opr_stringlist_dump(denv, address, "header names");
 }
 
-/* 
- * Code execution 
+/*
+ * Code execution
  */
 
 static int tst_exists_operation_execute
@@ -113,7 +113,7 @@ static int tst_exists_operation_execute
 	string_t *hdr_item;
 	bool matched;
 	int ret;
-	
+
 	/*
 	 * Read operands
 	 */
@@ -136,12 +136,12 @@ static int tst_exists_operation_execute
 	while ( matched &&
 		(ret=sieve_stringlist_next_item(hdr_list, &hdr_item)) > 0 ) {
 		const char *const *headers;
-			
+
 		if ( mail_get_headers(mail, str_c(hdr_item), &headers) < 0 ||
 			headers[0] == NULL ) {
-			matched = FALSE;				 
-		}	
-	
+			matched = FALSE;
+		}
+
 		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
         	"header `%s' %s", str_sanitize(str_c(hdr_item), 80),
 			( matched ? "exists" : "is missing" ));
@@ -151,13 +151,13 @@ static int tst_exists_operation_execute
 		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING, "all headers exist");
 	else
 		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING, "headers are missing");
-	
+
 	/* Set test result for subsequent conditional jump */
 	if ( ret >= 0 ) {
 		sieve_interpreter_set_test_result(renv->interp, matched);
 		return SIEVE_EXEC_OK;
 	}
-	
+
 	sieve_runtime_trace_error(renv, "invalid header-list item");
 	return SIEVE_EXEC_BIN_CORRUPT;
 }

@@ -17,13 +17,13 @@ test "Append" {
 		test_fail "failed to compile and run first script";
 	}
 
-	if not allof ( 
+	if not allof (
 		test_script_compile "vacation.sieve",
 		test_script_run :append_result ) {
 		test_fail "failed to compile and run second script";
 	}
 
-	if not allof ( 
+	if not allof (
 		test_script_compile "notify.sieve",
 		test_script_run :append_result ) {
 		test_fail "failed to compile and run third script";

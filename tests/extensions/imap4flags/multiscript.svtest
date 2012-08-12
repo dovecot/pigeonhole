@@ -8,11 +8,11 @@ require "fileinto";
 test "Segfault Trigger 1" {
 
 	if not test_multiscript [
-		"multiscript/group-spam.sieve", 
-		"multiscript/spam.sieve", 
+		"multiscript/group-spam.sieve",
+		"multiscript/spam.sieve",
 		"multiscript/sent-store.sieve"]
 	{
-		test_fail "failed multiscript execution";	
+		test_fail "failed multiscript execution";
 	}
 }
 
@@ -31,15 +31,15 @@ test "Internal Flags" {
 	}
 
 	if not test_multiscript [
-		"multiscript/setflag.sieve", 
+		"multiscript/setflag.sieve",
 		"multiscript/fileinto.sieve"]
 	{
-		test_fail "failed multiscript execution";	
+		test_fail "failed multiscript execution";
 	}
-	
-	test_result_reset;	
+
+	test_result_reset;
 	test_message :folder "folder" 0;
-	
+
 	if not hasflag "\\answered" {
 		test_fail "\\answered flag not stored for message";
 	}

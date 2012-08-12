@@ -8,7 +8,7 @@ require "comparator-i;ascii-numeric";
  */
 
 /*
- * Commands 
+ * Commands
  */
 
 /* Missing semicolon */

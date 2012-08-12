@@ -1,6 +1,6 @@
 require "vnd.dovecot.testsuite";
 
-/* 
+/*
  * ## RFC 5228, Section 5.1. Test address (page 26) ##
  */
 
@@ -73,12 +73,12 @@ test "Basic functionality" {
 	/* First header */
 	if not address :contains ["to", "from"] ["fred", "nico", "henk"] {
 		test_fail "failed to match first header";
-	}	
+	}
 
 	/* Second header */
 	if not address :contains ["from", "to"] ["fred", "nico", "henk"] {
 		test_fail "failed to match second header";
-	}	
+	}
 
 	/* Comment */
 	if not address :is "cc" "tss@fi.iki" {
@@ -92,7 +92,7 @@ test "Basic functionality" {
 
 /* "Internet email addresses [RFC 2822] have the somewhat awkward characteristic
  *  that the local-part to the left of the at-sign is considered case sensitive,
- *  and the domain-part to the right of the at-sign is case insensitive. The 
+ *  and the domain-part to the right of the at-sign is case insensitive. The
  *  "address" command does not deal with this itself, but provides the
  *  ADDRESS-PART argument for allowing users to deal with it.
  * "
@@ -285,20 +285,20 @@ test "Address headers" {
 
 	if not address "resent-from" "ivo@boer.ex" {
 		test_fail "resent-from header not recognized";
-	}	
+	}
 
 	if not address "resent-to" "idioot@dombo.ex" {
 		test_fail "resent-to header not recognized";
-	}	
-}	
+	}
+}
 
 /* ## RFC 5228, Section 2.7.4. Comparisons against Addresses (page 16) ## */
 
 /*
  * TEST: Invalid addresses
- */ 
+ */
 
-/* 
+/*
  * "If an address is not syntactically valid, then it will not be matched
  *  by tests specifying ":localpart" or ":domain".
  * "
@@ -319,15 +319,15 @@ Test.
 test "Invalid addresses" {
 	if address :localpart "from" "stephan" {
 		test_fail ":localpart matched invalid address";
-	}	
+	}
 
 	if address :domain "to" "example.org" {
 		test_fail ":domain matched invalid address";
-	}	
+	}
 
 	if not address :is :all "resent-to" "" {
 		test_fail ":all failed to match empty address";
-	}	
+	}
 
 	if not address :is :all "cc" "nonsense" {
 		test_fail ":all failed to match invalid address";
@@ -339,7 +339,7 @@ test "Invalid addresses" {
 
 	if address :is :domain "cc" "example.org" {
 		test_fail ":domain matched invalid address";
-	}	
+	}
 }
 
 /*
@@ -364,7 +364,7 @@ test "Default address part" {
 		{
 		test_fail "invalid default address part (1)";
 	}
- 	
+
 	if not address :is :comparator "i;ascii-casemap" "to"
 		["harry@de.example.com"] {
 		test_fail "invalid default address part (2)";

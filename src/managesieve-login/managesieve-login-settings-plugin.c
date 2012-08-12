@@ -69,7 +69,7 @@ static void capability_parse(const char *cap_string)
 		i_warning("managesieve-login: capability string is empty.");
 		return;
 	}
-	
+
 	while ( *p != '\0' ) {
 		if ( *p == '\\' ) {
 			p++;
@@ -85,7 +85,7 @@ static void capability_parse(const char *cap_string)
 			else
 				i_warning("managesieve-login: unknown capability '%s' listed in "
 					"capability string (ignored).", str_c(part));
-			str_truncate(part, 0); 
+			str_truncate(part, 0);
 		} else if ( *p == ',' ) {
 			capability_store(cap_type, str_c(part));
 			str_truncate(part, 0);
@@ -96,7 +96,7 @@ static void capability_parse(const char *cap_string)
 		}
 		p++;
 	}
-	
+
 	if ( str_len(part) > 0 ) {
 		capability_store(cap_type, str_c(part));
 	}
@@ -130,8 +130,8 @@ static bool capability_dump(void)
 		const char *argv[5];
 
 		/* Child */
-		(void)close(fd[0]);		
-	
+		(void)close(fd[0]);
+
 		if (dup2(fd[1], STDOUT_FILENO) < 0)
 			i_fatal("managesieve-login: dump-capability dup2() failed: %m");
 
@@ -151,7 +151,7 @@ static bool capability_dump(void)
 
 	alarm(60);
 	if (wait(&status) == -1) {
-		i_error("managesieve-login: dump-capability failed: process %d got stuck", 
+		i_error("managesieve-login: dump-capability failed: process %d got stuck",
 			(int)pid);
 		return FALSE;
 	}

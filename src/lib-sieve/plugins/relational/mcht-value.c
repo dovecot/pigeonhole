@@ -24,7 +24,7 @@
  */
 
 const struct sieve_match_type_def value_match_type = {
-	SIEVE_OBJECT("value", &rel_match_type_operand, RELATIONAL_VALUE), 
+	SIEVE_OBJECT("value", &rel_match_type_operand, RELATIONAL_VALUE),
 	mcht_relational_validate,
 	NULL, NULL, NULL, NULL, NULL, NULL
 };
@@ -40,22 +40,22 @@ const struct sieve_match_type_def rel_match_value_ ## name = {  \
 }
 
 VALUE_MATCH_TYPE(gt, REL_MATCH_GREATER);
-VALUE_MATCH_TYPE(ge, REL_MATCH_GREATER_EQUAL); 
+VALUE_MATCH_TYPE(ge, REL_MATCH_GREATER_EQUAL);
 VALUE_MATCH_TYPE(lt, REL_MATCH_LESS);
-VALUE_MATCH_TYPE(le, REL_MATCH_LESS_EQUAL); 
+VALUE_MATCH_TYPE(le, REL_MATCH_LESS_EQUAL);
 VALUE_MATCH_TYPE(eq, REL_MATCH_EQUAL);
 VALUE_MATCH_TYPE(ne, REL_MATCH_NOT_EQUAL);
 
-/* 
- * Match-type implementation 
+/*
+ * Match-type implementation
  */
 
 int mcht_value_match_key
-(struct sieve_match_context *mctx, const char *val, size_t val_size, 
+(struct sieve_match_context *mctx, const char *val, size_t val_size,
 	const char *key, size_t key_size)
 {
 	const struct sieve_match_type *mtch = mctx->match_type;
-	unsigned int rel_match = REL_MATCH(mtch->object.def->code);	
+	unsigned int rel_match = REL_MATCH(mtch->object.def->code);
 	int cmp_result;
 
 	cmp_result = mctx->comparator->def->
@@ -77,8 +77,8 @@ int mcht_value_match_key
 	case REL_MATCH_INVALID:
  	default:
 		break;
-	}	
-	
+	}
+
 	return FALSE;
 }
 

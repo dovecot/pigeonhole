@@ -24,7 +24,7 @@ libsieve_ext_enotify_la_DEPENDENCIES = \
 	$(notify_methods)
 libsieve_ext_enotify_la_LIBADD = \
 	$(notify_methods)
-	
+
 libsieve_ext_enotify_la_SOURCES = \
 	ext-enotify.c \
 	ext-enotify-common.c \

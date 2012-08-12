@@ -44,7 +44,7 @@ test "User sub-part" {
 test "Detail sub-part" {
 	if not address :detail "to" "spam" {
 		test_fail "wrong :detail part extracted";
-	}	
+	}
 
 	if anyof (
 		address :detail :matches "cc" ["*", "?"],
@@ -55,5 +55,5 @@ test "Detail sub-part" {
 
 	if not address :detail "from" "" {
 		test_fail "wrong empty :detail part extracted";
-	}		
+	}
 }

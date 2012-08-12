@@ -34,9 +34,9 @@ struct ext_ihave_ast_context *ext_ihave_get_ast_context
 
 void ext_ihave_ast_add_missing_extension
 (const struct sieve_extension *this_ext, struct sieve_ast *ast,
-	const char *ext_name) 
+	const char *ext_name)
 {
-	struct ext_ihave_ast_context *actx = 
+	struct ext_ihave_ast_context *actx =
 		ext_ihave_get_ast_context(this_ext, ast);
 	const char *const *exts;
 	unsigned int i, count;

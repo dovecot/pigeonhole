@@ -7,7 +7,7 @@
 #include "lib.h"
 #include "mail-storage.h"
 
-#include "sieve-common.h" 
+#include "sieve-common.h"
 
 /*
  * Initialization
@@ -26,7 +26,7 @@ bool testsuite_mailstore_mailbox_create
 	(const struct sieve_runtime_env *renv ATTR_UNUSED, const char *folder);
 
 bool testsuite_mailstore_mail_index
-	(const struct sieve_runtime_env *renv, const char *folder, 
+	(const struct sieve_runtime_env *renv, const char *folder,
 		unsigned int index);
 
 #endif /* __TESTSUITE_MAILSTORE */

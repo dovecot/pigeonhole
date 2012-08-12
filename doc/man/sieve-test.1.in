@@ -91,7 +91,7 @@ The final envelope recipient address. Some tests and actions will
 use this as the script owner\(aqs e\-mail address. For example, this is what is
 used by the vacation action to check whether a reply is appropriate. If the
 \fB\-r\fP option is omitted, the orignal envelope recipient address will be used
-in stead (see \fB\-a\fP option for more info). 
+in stead (see \fB\-a\fP option for more info).
 .TP
 .BI \-s\  script\-file
 Specify additional scripts to be executed before the main script. Multiple
@@ -119,7 +119,7 @@ are ignored and a warning is produced.
 
 For example \fB\-x\fP \(dq+imapflags \-enotify\(dq will enable the deprecated
 imapflags extension and disable the enotify extension. The rest of the active
-extensions depends on the \fIsieve_extensions\fP and 
+extensions depends on the \fIsieve_extensions\fP and
 \fIsieve_global_extensions\fP settings. By default, i.e.
 when \fIsieve_extensions\fP and \fIsieve_global_extensions\fP remain
 unconfigured, all supported extensions are available, except for deprecated
@@ -182,7 +182,7 @@ addresses are equal to those listed in a binary dump produced using the
 .\"------------------------------------------------------------------------
 .SS DEBUG SIEVE EXTENSION
 .PP
-To improve script debugging, this Sieve implementation supports a custom Sieve 
+To improve script debugging, this Sieve implementation supports a custom Sieve
 language extension called \(aqvnd.dovecot.debug\(aq. It adds the \fBdebug_log\fP
 command that allows logging debug messages.
 .PP
@@ -203,7 +203,7 @@ the \fB\-x\fP option. The logged messages are written to \fBstdout\fP in this
 case.
 
 In contrast, for the actual Sieve plugin for the Dovecot LDA
-(\fBdovecot\-lda\fR(1)) the vnd.dovecot.debug extension needs to be enabled 
+(\fBdovecot\-lda\fR(1)) the vnd.dovecot.debug extension needs to be enabled
 explicitly using the \fIsieve_extensions\fP setting. The messages are then
 logged to the user's private script log file. If used in a global script, the
 messages are logged through the default Dovecot logging facility.

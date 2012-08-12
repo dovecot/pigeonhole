@@ -100,7 +100,7 @@ test "Envelope - invalid paths" {
 }
 
 /*
- * Syntax errors 
+ * Syntax errors
  */
 
 test "Envelope - syntax errors" {
@@ -157,7 +157,7 @@ test "Envelope - source route" {
 	if not envelope :localpart :is "from" "stephan" {
 		test_fail "parsing path with source route (dual) failed";
 	}
-	
+
 	/* Multiple */
 	test_set "envelope.from" "<@cola.example.org,@mx.utwente.nl,@smtp.example.net:stephan@example.org>";
 	if not envelope :localpart :is "from" "stephan" {
@@ -168,7 +168,7 @@ test "Envelope - source route" {
 	test_set "envelope.from" "@cola.example.org,@mx.utwente.nl,@smtp.example.net:stephan@example.org";
 	if not envelope :domain :is "from" "example.org" {
 		test_fail "parsing path with source route (bare) failed";
-	}	
+	}
 
 	/* Whitespace */
 	test_set "envelope.from" "   < @ cola . example . org , @ mx . utwente .   nl , 	@ smtp  .  iki  . fi	:   stephan		@     example   .		org >  ";

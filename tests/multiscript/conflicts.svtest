@@ -21,7 +21,7 @@ test "Graceful Conflicts" {
 		test_fail "result execute failed after first script";
 	}
 
-	if not allof ( 
+	if not allof (
 		test_script_compile "reject-1.sieve",
 		test_script_run :append_result ) {
 		test_fail "failed to compile and run second script";
@@ -31,7 +31,7 @@ test "Graceful Conflicts" {
 		test_fail "result execute failed after second script";
 	}
 
-	if not allof ( 
+	if not allof (
 		test_script_compile "reject-2.sieve",
 		test_script_run :append_result ) {
 		test_fail "failed to compile and run third script";
@@ -69,7 +69,7 @@ test "Duplicates" {
 		test_fail "result execute failed after first script";
 	}
 
-	if not allof ( 
+	if not allof (
 		test_script_compile "fileinto-inbox.sieve",
 		test_script_run :append_result ) {
 		test_fail "failed to compile and run second script";
@@ -79,7 +79,7 @@ test "Duplicates" {
 		test_fail "result execute failed after second script";
 	}
 
-	if not allof ( 
+	if not allof (
 		test_script_compile "keep.sieve",
 		test_script_run :append_result ) {
 		test_fail "failed to compile and run third script";

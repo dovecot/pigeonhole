@@ -32,7 +32,7 @@ test "Unknown variables" {
 test "One pass" {
 	set "something" "value";
 	set "s" "$";
-	
+
 	if string "${s}{something}" "value" {
 		test_fail "somehow variable string is scanned multiple times";
 	}
@@ -46,7 +46,7 @@ test "Syntax errors" {
 	set "s" "$";
 	set "variable" "nonsense";
 
-	if anyof ( 
+	if anyof (
 		not string "$" "${s}",
 		not string "${" "${s}{",
 		not string "${a" "${s}{a",
@@ -57,12 +57,12 @@ test "Syntax errors" {
 		not string "${doh!}" "${s}{doh!}" )
 	{
 		test_fail "variables substitution changed substring not matching variable-ref";
-	}	
+	}
 }
 
 test "RFC syntax examples" {
 	# The variable "company" holds the value "ACME".  No other variables
-    # are set. 
+    # are set.
 	set "company" "ACME";
 
 	# "${full}"         => the empty string
@@ -80,7 +80,7 @@ test "RFC syntax examples" {
 		test_fail "'BADACME' test did not yield expected result";
 	}
 
-	#"${President, ${Company} Inc.}" 
+	#"${President, ${Company} Inc.}"
 	#                        => "${President, ACME Inc.}"
 	if not string "${President, ${Company} Inc.}"
 		"${President, ACME Inc.}" {
@@ -176,7 +176,7 @@ test "Multi-line string substitution" {
 	set "name" "Stephan Bosch";
 	set "address" "stephan@example.org";
 	set "subject" "Test message";
-	
+
 	set "message" text: # Message with substitutions
 From: ${name} <${address}>
 To: Bertus van Asseldonk <b.vanasseldonk@nl.example.com>
@@ -217,7 +217,7 @@ test "Multiple substitutions" {
 
 	if not string :is "${sentence}" "The monkey eats a nut" {
 		test_fail "modified variable substitution failed";
-	}	
+	}
 }
 
 

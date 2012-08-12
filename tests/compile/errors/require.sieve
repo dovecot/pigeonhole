@@ -29,7 +29,7 @@ require "dovecot.test" true;
 require "_frop";
 
 # Spurious command block
-require "fileinto" { 
+require "fileinto" {
   keep;
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file 
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
 
 #include "lib.h"
@@ -22,7 +22,7 @@ typedef void (*sieve_plugin_unload_func_t)
 
 struct sieve_plugin {
 	struct module *module;
-	
+
 	void *context;
 
 	struct sieve_plugin *next;
@@ -72,7 +72,7 @@ void sieve_plugins_load
 
 	if ( plugins == NULL || *plugins == '\0' )
 		return;
-	
+
 	if ( path == NULL || *path == '\0' )
 		path = MODULEDIR"/sieve";
 
@@ -136,7 +136,7 @@ void sieve_plugins_load
 		/* Create plugin list item */
 		plugin = p_new(svinst->pool, struct sieve_plugin, 1);
 		plugin->module = module;
-	
+
 		/* Call load function */
 		load_func = (sieve_plugin_load_func_t) module_get_symbol
 			(module, t_strdup_printf("%s_load", module->name));
@@ -165,7 +165,7 @@ void sieve_plugins_unload(struct sieve_instance *svinst)
 
 	if ( svinst->plugins == NULL )
 		return;
-	
+
 	/* Call plugin unload functions for this instance */
 
 	plugin = svinst->plugins;

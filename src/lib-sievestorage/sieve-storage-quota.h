@@ -24,5 +24,5 @@ uint64_t sieve_storage_quota_max_script_size
 int sieve_storage_quota_havespace
 	(struct sieve_storage *storage, const char *scriptname, size_t size,
 		enum sieve_storage_quota *quota_r, uint64_t *limit_r);
-    
+
 #endif /* __SIEVE_STORAGE_QUOTA_H */

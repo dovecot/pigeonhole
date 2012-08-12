@@ -186,7 +186,7 @@ bool testsuite_script_multiscript
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
 	scriptenv.user = renv->scriptenv->user;
-	scriptenv.trace_stream = renv->scriptenv->trace_stream;	
+	scriptenv.trace_stream = renv->scriptenv->trace_stream;
 	scriptenv.trace_config = renv->scriptenv->trace_config;
 
 	/* Start execution */

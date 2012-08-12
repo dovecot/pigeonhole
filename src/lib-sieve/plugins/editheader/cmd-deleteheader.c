@@ -23,7 +23,7 @@
 
 #include "ext-editheader-common.h"
 
-/* 
+/*
  * Deleteheader command
  *
  * Syntax:
@@ -40,17 +40,17 @@ static bool cmd_deleteheader_validate
 static bool cmd_deleteheader_generate
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd);
 
-const struct sieve_command_def deleteheader_command = { 
-	"deleteheader", 
+const struct sieve_command_def deleteheader_command = {
+	"deleteheader",
 	SCT_COMMAND,
-	-1, /* We check positional arguments ourselves */ 
+	-1, /* We check positional arguments ourselves */
 	0, FALSE, FALSE,
-	cmd_deleteheader_registered, 
+	cmd_deleteheader_registered,
 	NULL,
 	cmd_deleteheader_validate,
 	NULL,
-	cmd_deleteheader_generate, 
-	NULL 
+	cmd_deleteheader_generate,
+	NULL
 };
 
 /*
@@ -60,23 +60,23 @@ const struct sieve_command_def deleteheader_command = {
 /* Forward declarations */
 
 static bool cmd_deleteheader_validate_index_tag
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
 		struct sieve_command *cmd);
 static bool cmd_deleteheader_validate_last_tag
-	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
 		struct sieve_command *cmd);
 
 /* Argument objects */
 
-static const struct sieve_argument_def deleteheader_index_tag = { 
-	"index",	
+static const struct sieve_argument_def deleteheader_index_tag = {
+	"index",
 	NULL,
 	cmd_deleteheader_validate_index_tag,
 	NULL, NULL, NULL
 };
 
-static const struct sieve_argument_def deleteheader_last_tag = { 
-	"last",	
+static const struct sieve_argument_def deleteheader_last_tag = {
+	"last",
 	NULL,
 	cmd_deleteheader_validate_last_tag,
 	NULL, NULL, NULL
@@ -89,8 +89,8 @@ enum cmd_deleteheader_optional {
 	OPT_LAST
 };
 
-/* 
- * Deleteheader operation 
+/*
+ * Deleteheader operation
  */
 
 static bool cmd_deleteheader_operation_dump
@@ -98,21 +98,21 @@ static bool cmd_deleteheader_operation_dump
 static int cmd_deleteheader_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
-const struct sieve_operation_def deleteheader_operation = { 
+const struct sieve_operation_def deleteheader_operation = {
 	"DELETEHEADER",
 	&editheader_extension,
 	EXT_EDITHEADER_OPERATION_DELETEHEADER,
-	cmd_deleteheader_operation_dump, 
-	cmd_deleteheader_operation_execute 
+	cmd_deleteheader_operation_dump,
+	cmd_deleteheader_operation_execute
 };
 
-/* 
- * Command registration 
+/*
+ * Command registration
  */
 
 static bool cmd_deleteheader_registered
-(struct sieve_validator *valdtr, const struct sieve_extension *ext ATTR_UNUSED, 
-	struct sieve_command_registration *cmd_reg) 
+(struct sieve_validator *valdtr, const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_command_registration *cmd_reg)
 {
 	/* The order of these is not significant */
 	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
@@ -129,14 +129,14 @@ static bool cmd_deleteheader_registered
 /*
  * Command validation context
  */
- 
+
 struct cmd_deleteheader_context_data {
 	struct sieve_ast_argument *arg_index;
 	struct sieve_ast_argument *arg_last;
 };
 
-/* 
- * Tag validation 
+/*
+ * Tag validation
  */
 
 static struct cmd_deleteheader_context_data *
@@ -156,16 +156,16 @@ cmd_deleteheader_get_context
 }
 
 static bool cmd_deleteheader_validate_index_tag
-(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
 	struct sieve_command *cmd)
 {
 	struct sieve_ast_argument *tag = *arg;
 	struct cmd_deleteheader_context_data *ctx_data;
 	sieve_number_t index;
-	
+
 	/* Detach the tag itself */
 	*arg = sieve_ast_arguments_detach(*arg,1);
-	
+
 	/* Check syntax:
 	 *   :index number
 	 */
@@ -189,45 +189,45 @@ static bool cmd_deleteheader_validate_index_tag
 
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
-	
+
 	return TRUE;
 }
 
 static bool cmd_deleteheader_validate_last_tag
-(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast_argument **arg, 
+(struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast_argument **arg,
 	struct sieve_command *cmd)
 {
 	struct cmd_deleteheader_context_data *ctx_data;
-		
+
 	ctx_data = cmd_deleteheader_get_context(cmd);
 	ctx_data->arg_last = *arg;
 
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
-	
+
 	return TRUE;
 }
 
-/* 
- * Validation 
+/*
+ * Validation
  */
- 
+
 static bool cmd_deleteheader_validate
-(struct sieve_validator *valdtr, struct sieve_command *cmd) 
-{ 		
+(struct sieve_validator *valdtr, struct sieve_command *cmd)
+{
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct cmd_deleteheader_context_data *ctx_data =
 		(struct cmd_deleteheader_context_data *)cmd->data;
-	struct sieve_comparator cmp_default = 
+	struct sieve_comparator cmp_default =
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
-	struct sieve_match_type mcht_default = 
+	struct sieve_match_type mcht_default =
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 
 	if ( ctx_data != NULL ) {
 		if ( ctx_data->arg_last != NULL && ctx_data->arg_index == NULL ) {
-			sieve_argument_validate_error(valdtr, ctx_data->arg_last, 
+			sieve_argument_validate_error(valdtr, ctx_data->arg_last,
 				"the :last tag for the %s %s cannot be specified "
-				"without the :index tag", 
+				"without the :index tag",
 				sieve_command_identifier(cmd), sieve_command_type_name(cmd));
 		}
 	}
@@ -235,17 +235,17 @@ static bool cmd_deleteheader_validate
 	/* Field name argument */
 
 	if ( arg == NULL ) {
-		sieve_command_validate_error(valdtr, cmd, 
-			"the %s %s expects at least one positional argument, but none was found", 
+		sieve_command_validate_error(valdtr, cmd,
+			"the %s %s expects at least one positional argument, but none was found",
 			sieve_command_identifier(cmd), sieve_command_type_name(cmd));
 		return FALSE;
 	}
-	
+
 	if ( !sieve_validate_positional_argument
 		(valdtr, cmd, arg, "field name", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
-	
+
 	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
 		return FALSE;
 
@@ -265,7 +265,7 @@ static bool cmd_deleteheader_validate
 				"modification will be denied", str_sanitize(str_c(fname), 80));
 		}
 	}
-	
+
 	/* Value patterns argument */
 
 	arg = sieve_ast_argument_next(arg);
@@ -280,7 +280,7 @@ static bool cmd_deleteheader_validate
 		(valdtr, cmd, arg, "value patterns", 2, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
-	
+
 	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
 		return FALSE;
 
@@ -290,11 +290,11 @@ static bool cmd_deleteheader_validate
 }
 
 /*
- * Code generation 
+ * Code generation
  */
 
 static bool cmd_deleteheader_generate
-(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd) 
+(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd)
 {
 	sieve_operation_emit(cgenv->sblock, cmd->ext, &deleteheader_operation);
 
@@ -309,8 +309,8 @@ static bool cmd_deleteheader_generate
 	return TRUE;
 }
 
-/* 
- * Code dump 
+/*
+ * Code dump
  */
 
 static bool cmd_deleteheader_operation_dump
@@ -337,20 +337,20 @@ static bool cmd_deleteheader_operation_dump
 			break;
 		case OPT_LAST:
 			sieve_code_dumpf(denv, "last");
-			break;	
-		default: 
+			break;
+		default:
 			return FALSE;
 		}
 	};
-	
+
 	if ( !sieve_opr_string_dump(denv, address, "field name") )
 		return FALSE;
 
 	return sieve_opr_stringlist_dump_ex(denv, address, "value patterns", "");
 }
 
-/* 
- * Code execution 
+/*
+ * Code execution
  */
 
 static int cmd_deleteheader_operation_execute
@@ -358,9 +358,9 @@ static int cmd_deleteheader_operation_execute
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	int opt_code = 0;
-	struct sieve_comparator cmp = 
+	struct sieve_comparator cmp =
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
-	struct sieve_match_type mcht = 
+	struct sieve_match_type mcht =
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	string_t *field_name;
 	struct sieve_stringlist *vpattern_list = NULL;
@@ -369,8 +369,8 @@ static int cmd_deleteheader_operation_execute
 	bool index_last = FALSE;
 	bool trace = FALSE;
 	int ret;
-	
-	/* 
+
+	/*
 	 * Read operands
 	 */
 
@@ -382,13 +382,13 @@ static int cmd_deleteheader_operation_execute
 			return ret;
 
 		if ( opt == 0 ) break;
-			
+
 		switch ( opt_code ) {
 		case OPT_INDEX:
 			if ( (ret=sieve_opr_number_read(renv, address, "index", &index_offset))
 				<= 0 )
 				return ret;
-			
+
 			if ( index_offset > INT_MAX ) {
 				sieve_runtime_trace_error(renv, "index is > %d", INT_MAX);
 				return SIEVE_EXEC_BIN_CORRUPT;
@@ -402,10 +402,10 @@ static int cmd_deleteheader_operation_execute
 			sieve_runtime_trace_error(renv, "unknown optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
-	} 
-		
+	}
+
 	/* Read field-name */
-	if ( (ret=sieve_opr_string_read(renv, address, "field-name", &field_name)) 
+	if ( (ret=sieve_opr_string_read(renv, address, "field-name", &field_name))
 		<= 0 )
 		return ret;
 
@@ -413,7 +413,7 @@ static int cmd_deleteheader_operation_execute
 	if ( (ret=sieve_opr_stringlist_read_ex
 		(renv, address, "value-patterns", TRUE, &vpattern_list)) <= 0 )
 		return ret;
-	
+
 	/*
 	 * Verify arguments
 	 */
@@ -452,16 +452,16 @@ static int cmd_deleteheader_operation_execute
 		if ( trace ) {
 			sieve_runtime_trace_descend(renv);
 			if ( index_offset != 0 ) {
-				sieve_runtime_trace(renv, 0, 
+				sieve_runtime_trace(renv, 0,
 					"deleting matching occurences of header `%s' at index %u%s",
 					str_c(field_name), index_offset, ( index_last ? " from last": ""));
 			} else {
-				sieve_runtime_trace(renv, 0, 
+				sieve_runtime_trace(renv, 0,
 					"deleting matching occurences of header `%s'", str_c(field_name));
 			}
 		}
 
-		/* Iterate through all headers and delete those that match */		
+		/* Iterate through all headers and delete those that match */
 		if ( (ret=edit_mail_headers_iterate_init
 			(edmail, str_c(field_name), index_last, &edhiter)) > 0 )
 		{
@@ -485,7 +485,7 @@ static int cmd_deleteheader_operation_execute
 					if ( (match=sieve_match_value
 						(mctx, value, strlen(value), vpattern_list)) < 0 )
 						break;
-	
+
 					if ( match > 0 ) {
 						/* Remove it and iterate to next */
 						sieve_runtime_trace(renv, 0, "deleting header with value `%s'",
@@ -506,7 +506,7 @@ static int cmd_deleteheader_operation_execute
 			if ( mret < 0 )
 				return ret;
 		}
-		
+
 		if ( ret == 0 ) {
 			sieve_runtime_trace(renv, 0, "header `%s' not found", str_c(field_name));
 		} else if ( ret < 0 ) {
@@ -514,7 +514,7 @@ static int cmd_deleteheader_operation_execute
 				"failed to delete occurences of header `%s' (this should not happen!)",
 				str_c(field_name));
 		}
-		 
+
 	} else {
 		int index = ( index_last ? -((int)index_offset) : ((int)index_offset) );
 
@@ -527,7 +527,7 @@ static int cmd_deleteheader_operation_execute
 				sieve_runtime_trace(renv, 0, "deleting header `%s'", str_c(field_name));
 			}
 		}
-	
+
 		/* Delete all occurences of header */
 		ret = edit_mail_header_delete(edmail, str_c(field_name), index);
 

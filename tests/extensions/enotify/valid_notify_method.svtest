@@ -3,14 +3,14 @@ require "vnd.dovecot.testsuite";
 require "enotify";
 
 test "Mailto: invalid header name" {
-	if valid_notify_method 
+	if valid_notify_method
 		"mailto:stephan@example.org?header:=frop" {
 		test_fail "invalid uri accepted";
 	}
 }
 
 test "Mailto: invalid recipient" {
-	if valid_notify_method 
+	if valid_notify_method
 		"mailto:stephan%23example.org" {
 		test_fail "invalid uri accepted";
 	}

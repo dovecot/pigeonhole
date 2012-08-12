@@ -24,10 +24,10 @@ struct sieve_error_handler;
  */
 
 typedef void (*sieve_error_vfunc_t)
-	(struct sieve_error_handler *ehandler, const char *location, 
+	(struct sieve_error_handler *ehandler, const char *location,
 		const char *fmt, va_list args);
 typedef void (*sieve_error_func_t)
-	(struct sieve_error_handler *ehandler, const char *location, 
+	(struct sieve_error_handler *ehandler, const char *location,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 /*
@@ -93,14 +93,14 @@ const char *sieve_error_script_location
 	(const struct sieve_script *script, unsigned int source_line);
 
 void sieve_verror
-	(struct sieve_error_handler *ehandler, const char *location, 
+	(struct sieve_error_handler *ehandler, const char *location,
 		const char *fmt, va_list args);
 void sieve_vwarning
-	(struct sieve_error_handler *ehandler, const char *location, 
-		const char *fmt, va_list args); 
+	(struct sieve_error_handler *ehandler, const char *location,
+		const char *fmt, va_list args);
 void sieve_vinfo
-	(struct sieve_error_handler *ehandler, const char *location, 
-		const char *fmt, va_list args); 
+	(struct sieve_error_handler *ehandler, const char *location,
+		const char *fmt, va_list args);
 void sieve_vdebug
 	(struct sieve_error_handler *ehandler, const char *location,
 		const char *fmt, va_list args);
@@ -110,13 +110,13 @@ void sieve_vcritical
 		va_list args);
 
 void sieve_error
-	(struct sieve_error_handler *ehandler, const char *location, 
+	(struct sieve_error_handler *ehandler, const char *location,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_warning
-	(struct sieve_error_handler *ehandler, const char *location, 
+	(struct sieve_error_handler *ehandler, const char *location,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_info
-	(struct sieve_error_handler *ehandler, const char *location, 
+	(struct sieve_error_handler *ehandler, const char *location,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 void sieve_debug
 	(struct sieve_error_handler *ehandler, const char *location,
@@ -153,8 +153,8 @@ void sieve_error_handler_unref(struct sieve_error_handler **ehandler);
 
 void sieve_error_handler_reset(struct sieve_error_handler *ehandler);
 
-/* 
- * Error handlers 
+/*
+ * Error handlers
  */
 
 /* Write errors to dovecot master log */
@@ -172,11 +172,11 @@ struct sieve_error_handler *sieve_strbuf_ehandler_create
 
 /* Write errors to a logfile */
 struct sieve_error_handler *sieve_logfile_ehandler_create
-	(struct sieve_instance *svinst, const char *logfile, unsigned int max_errors);  
+	(struct sieve_instance *svinst, const char *logfile, unsigned int max_errors);
 
 /* Wrapper: prefix all log messages */
 struct sieve_error_handler *sieve_prefix_ehandler_create
-	(struct sieve_error_handler *parent, const char *location, 
+	(struct sieve_error_handler *parent, const char *location,
 		const char *prefix);
 
 /* Wrapper: make messages part of var expansion */

@@ -20,27 +20,27 @@
 
 #include <ctype.h>
 
-/* 
- * Testsuite string argument 
+/*
+ * Testsuite string argument
  */
 
 static bool arg_testsuite_string_validate
-	(struct sieve_validator *validator, struct sieve_ast_argument **arg, 
+	(struct sieve_validator *validator, struct sieve_ast_argument **arg,
 		struct sieve_command *context);
 
-const struct sieve_argument_def testsuite_string_argument = { 
-	"@testsuite-string", 
-	NULL, 
-	arg_testsuite_string_validate, 
+const struct sieve_argument_def testsuite_string_argument = {
+	"@testsuite-string",
+	NULL,
+	arg_testsuite_string_validate,
 	NULL, NULL,
 	sieve_arg_catenated_string_generate,
 };
 
 static bool arg_testsuite_string_validate
-(struct sieve_validator *valdtr, struct sieve_ast_argument **arg, 
+(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
 	struct sieve_command *cmd)
 {
-	enum { ST_NONE, ST_OPEN, ST_SUBSTITUTION, ST_PARAM, ST_CLOSE } state = 
+	enum { ST_NONE, ST_OPEN, ST_SUBSTITUTION, ST_PARAM, ST_CLOSE } state =
 		ST_NONE;
 	pool_t pool = sieve_ast_pool((*arg)->ast);
 	struct sieve_arg_catenated_string *catstr = NULL;
@@ -51,10 +51,10 @@ static bool arg_testsuite_string_validate
 	bool result = TRUE;
 	string_t *subs_name = t_str_new(256);
 	string_t *subs_param = t_str_new(256);
-	
+
 	T_BEGIN {
 		/* Initialize substitution structure */
-	
+
 		p = strval;
 		strstart = p;
 		while ( result && p < strend ) {
@@ -76,24 +76,24 @@ static bool arg_testsuite_string_validate
 				if ( *p == '{' ) {
 					state = ST_SUBSTITUTION;
 					p++;
-				} else 
+				} else
 					state = ST_NONE;
 				break;
 
-			/* Got '%{' */ 
+			/* Got '%{' */
 			case ST_SUBSTITUTION:
-				state = ST_PARAM;	
+				state = ST_PARAM;
 
 				while ( *p != '}' && *p != ':' ) {
 					if ( !i_isalnum(*p) ) {
 						state = ST_NONE;
 						break;
-					}	
+					}
 					str_append_c(subs_name, *p);
 					p++;
 				}
 				break;
-				
+
 			/* Got '%{name' */
 			case ST_PARAM:
 				if ( *p == ':' ) {
@@ -108,26 +108,26 @@ static bool arg_testsuite_string_validate
 
 			/* Finished parsing param, expecting '}' */
 			case ST_CLOSE:
-				if ( *p == '}' ) {				
+				if ( *p == '}' ) {
 					struct sieve_ast_argument *strarg;
-				
-					/* We now know that the substitution is valid */	
-					
+
+					/* We now know that the substitution is valid */
+
 					if ( catstr == NULL ) {
 						catstr = sieve_arg_catenated_string_create(*arg);
 					}
-				
-					/* Add the substring that is before the substitution to the 
+
+					/* Add the substring that is before the substitution to the
 					 * variable-string AST.
 					 */
 					if ( substart > strstart ) {
 						string_t *newstr = str_new(pool, substart - strstart);
-						str_append_n(newstr, strstart, substart - strstart); 
-						
+						str_append_n(newstr, strstart, substart - strstart);
+
 						strarg = sieve_ast_argument_string_create_raw
 							((*arg)->ast, newstr, (*arg)->source_line);
 						sieve_arg_catenated_string_add_element(catstr, strarg);
-					
+
 						/* Give other substitution extensions a chance to do their work */
 						if ( !sieve_validator_argument_activate_super
 							(valdtr, cmd, strarg, FALSE) ) {
@@ -135,25 +135,25 @@ static bool arg_testsuite_string_validate
 							break;
 						}
 					}
-				
+
 					strarg = testsuite_substitution_argument_create
-						(valdtr, (*arg)->ast, (*arg)->source_line, str_c(subs_name), 
+						(valdtr, (*arg)->ast, (*arg)->source_line, str_c(subs_name),
 							str_c(subs_param));
-					
+
 					if ( strarg != NULL )
 						sieve_arg_catenated_string_add_element(catstr, strarg);
 					else {
-						sieve_argument_validate_error(valdtr, *arg, 
+						sieve_argument_validate_error(valdtr, *arg,
 							"unknown testsuite substitution type '%s'", str_c(subs_name));
 					}
 
 					strstart = p + 1;
 					substart = strstart;
 
-					p++;	
+					p++;
 				}
-		
-				/* Finished, reset for the next substitution */	
+
+				/* Finished, reset for the next substitution */
 				state = ST_NONE;
 			}
 		}
@@ -161,7 +161,7 @@ static bool arg_testsuite_string_validate
 
 	/* Bail out early if substitution is invalid */
 	if ( !result ) return FALSE;
-	
+
 	/* Check whether any substitutions were found */
 	if ( catstr == NULL ) {
 		/* No substitutions in this string, pass it on to any other substution
@@ -169,24 +169,24 @@ static bool arg_testsuite_string_validate
 		 */
 		return sieve_validator_argument_activate_super(valdtr, cmd, *arg, TRUE);
 	}
-	
-	/* Add the final substring that comes after the last substitution to the 
+
+	/* Add the final substring that comes after the last substitution to the
 	 * variable-string AST.
 	 */
 	if ( strend > strstart ) {
 		struct sieve_ast_argument *strarg;
 		string_t *newstr = str_new(pool, strend - strstart);
-		str_append_n(newstr, strstart, strend - strstart); 
+		str_append_n(newstr, strstart, strend - strstart);
 
 		strarg = sieve_ast_argument_string_create_raw
 			((*arg)->ast, newstr, (*arg)->source_line);
 		sieve_arg_catenated_string_add_element(catstr, strarg);
-			
-		/* Give other substitution extensions a chance to do their work */	
+
+		/* Give other substitution extensions a chance to do their work */
 		if ( !sieve_validator_argument_activate_super
 			(valdtr, cmd, strarg, FALSE) )
 			return FALSE;
-	}	
-	
+	}
+
 	return TRUE;
 }

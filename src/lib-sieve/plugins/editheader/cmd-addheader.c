@@ -54,8 +54,8 @@ const struct sieve_command_def addheader_command = {
 
 /* Argument objects */
 
-static const struct sieve_argument_def addheader_last_tag = { 
-	"last",	
+static const struct sieve_argument_def addheader_last_tag = {
+	"last",
 	NULL, NULL, NULL, NULL, NULL
 };
 
@@ -101,7 +101,7 @@ static bool cmd_addheader_validate
 
 	if ( !sieve_validator_argument_activate(valdtr, cmd, arg, FALSE) )
 		return FALSE;
-	
+
 	if ( sieve_argument_is_string_literal(arg) ) {
 		string_t *fname = sieve_ast_argument_str(arg);
 
@@ -153,8 +153,8 @@ static bool cmd_addheader_validate
 	return TRUE;
 }
 
-/* 
- * Command registration 
+/*
+ * Command registration
  */
 
 static bool cmd_addheader_registered
@@ -202,14 +202,14 @@ static bool cmd_addheader_operation_dump
 		if ( opt == 0 ) break;
 
 		if ( opt_code == OPT_LAST ) {
-			sieve_code_dumpf(denv, "last");	
+			sieve_code_dumpf(denv, "last");
 		} else {
 			return FALSE;
 		}
 	}
 
 	return
-		sieve_opr_string_dump(denv, address, "field-name") && 
+		sieve_opr_string_dump(denv, address, "field-name") &&
 		sieve_opr_string_dump(denv, address, "value");
 }
 
@@ -273,14 +273,14 @@ static int cmd_addheader_operation_execute
 			str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_FAILURE;
 	}
-	
+
 	if ( ext_editheader_header_is_protected(this_ext, str_c(field_name)) ) {
 		sieve_runtime_warning(renv, NULL, "addheader action: "
 			"specified header field `%s' is protected; modification denied",
 			str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_OK;
 	}
-	
+
 	if ( !rfc2822_header_field_body_verify
 		(str_c(value), str_len(value), TRUE, TRUE) ) {
 		sieve_runtime_error(renv, NULL, "addheader action: "
