@@ -154,7 +154,7 @@ int main(int argc, char **argv)
 		("sieve_global_dir", t_strconcat(sieve_dir, "included-global", NULL));
 
 	/* Finish testsuite initialization */
-	svinst = sieve_tool_init_finish(sieve_tool, FALSE);
+	svinst = sieve_tool_init_finish(sieve_tool, FALSE, FALSE);
 	testsuite_init(svinst, sieve_dir, log_stdout);
 
 	printf("Test case: %s:\n\n", scriptfile);

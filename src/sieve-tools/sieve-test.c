@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Finish tool initialization */
-	svinst = sieve_tool_init_finish(sieve_tool, execute && mailloc == NULL);
+	svinst = sieve_tool_init_finish(sieve_tool, execute && mailloc == NULL, FALSE);
 
 	/* Enable debug extension */
 	sieve_enable_debug_extension(svinst);

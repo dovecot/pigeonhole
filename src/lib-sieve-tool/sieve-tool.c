@@ -112,14 +112,14 @@ static void sieve_tool_get_user_data
 		home == NULL || *home == '\0' ) {
 
 		if ((pw = getpwuid(process_euid)) != NULL) {
-            user = pw->pw_name;
+			user = pw->pw_name;
 			home = pw->pw_dir;
 		}
 	}
 
 	if ( username_r != NULL ) {
 		if ( user == NULL || *user == '\0' ) {
-            i_fatal("couldn't lookup our username (uid=%s)",
+			i_fatal("couldn't lookup our username (uid=%s)",
 				dec2str(process_euid));
 		}
 
@@ -216,7 +216,7 @@ static void sieve_tool_load_plugins
 }
 
 struct sieve_instance *sieve_tool_init_finish
-(struct sieve_tool *tool, bool init_mailstore)
+(struct sieve_tool *tool, bool init_mailstore, bool preserve_root)
 {
 	enum mail_storage_service_flags storage_service_flags =
 		MAIL_STORAGE_SERVICE_FLAG_NO_CHDIR |
@@ -238,9 +238,15 @@ struct sieve_instance *sieve_tool_init_finish
 		if ( tool->homedir != NULL )
 			i_free(tool->homedir);
 		tool->homedir = i_strdup(homedir);
-	} else
+
+		if ( preserve_root ) {
+			storage_service_flags |=
+				MAIL_STORAGE_SERVICE_FLAG_NO_RESTRICT_ACCESS;
+		}
+	} else {
 		storage_service_flags |=
 			MAIL_STORAGE_SERVICE_FLAG_USERDB_LOOKUP;
+	}
 
 	if ( !init_mailstore )
 		storage_service_flags |=
