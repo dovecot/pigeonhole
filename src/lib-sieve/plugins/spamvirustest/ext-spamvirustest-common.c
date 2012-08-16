@@ -457,7 +457,6 @@ const char *ext_spamvirustest_get_value
 	const struct sieve_message_data *msgdata = renv->msgdata;
 	struct sieve_message_context *msgctx = renv->msgctx;
 	struct ext_spamvirustest_message_context *mctx;
-	const char *ext_name = sieve_extension_name(ext);
 	regmatch_t match_values[2];
 	const char *header_value, *error;
 	const char *status = NULL, *max = NULL;
@@ -470,7 +469,7 @@ const char *ext_spamvirustest_get_value
 	 */
 	if ( ext_data == NULL ) {
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-			"%s: extension not configured", ext_name);
+			"error: extension not configured");
 		return "0";
 	}
 
@@ -504,8 +503,8 @@ const char *ext_spamvirustest_get_value
 				(msgdata->mail, max_header->header_name, &header_value) < 0 ||
 				header_value == NULL ) {
 				sieve_runtime_trace(renv,  SIEVE_TRLVL_TESTS,
-					"%s: header '%s' not found in message",
-					ext_name, max_header->header_name);
+					"header '%s' not found in message",
+					max_header->header_name);
 				goto failed;
 			}
 
@@ -514,16 +513,16 @@ const char *ext_spamvirustest_get_value
 				if ( regexec(&max_header->regexp, header_value, 2, match_values, 0)
 					!= 0 ) {
 					sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-						"%s: regexp for header '%s' did not match "
-						"on value '%s'", ext_name, max_header->header_name, header_value);
+						"regexp for header '%s' did not match "
+						"on value '%s'", max_header->header_name, header_value);
 					goto failed;
 				}
 
 				max = _regexp_match_get_value(header_value, 1, match_values, 2);
 				if ( max == NULL ) {
 					sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-						"%s: regexp did not return match value "
-						"for string '%s'", ext_name, header_value);
+						"regexp did not return match value "
+						"for string '%s'", header_value);
 					goto failed;
 				}
 			} else {
@@ -532,7 +531,7 @@ const char *ext_spamvirustest_get_value
 
 			if ( !ext_spamvirustest_parse_decimal_value(max, &max_value, &error) ) {
 				sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-					"%s: failed to parse maximum value: %s", ext_name, error);
+					"failed to parse maximum value: %s", error);
 				goto failed;
 			}
 		} else {
@@ -541,7 +540,7 @@ const char *ext_spamvirustest_get_value
 
 		if ( max_value == 0 ) {
 			sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-				"%s: max value is 0", ext_name);
+				"error: max value is 0");
 			goto failed;
 		}
 	} else {
@@ -557,8 +556,8 @@ const char *ext_spamvirustest_get_value
 		(msgdata->mail, status_header->header_name, &header_value) < 0 ||
 		header_value == NULL ) {
 		sieve_runtime_trace(renv,  SIEVE_TRLVL_TESTS,
-			"%s: header '%s' not found in message",
-			ext_name, status_header->header_name);
+			"header '%s' not found in message",
+			status_header->header_name);
 		goto failed;
 	}
 
@@ -567,16 +566,16 @@ const char *ext_spamvirustest_get_value
 		if ( regexec(&status_header->regexp, header_value, 2, match_values, 0)
 			!= 0 ) {
 			sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-				"%s: regexp for header '%s' did not match on value '%s'",
-			ext_name, status_header->header_name, header_value);
+				"regexp for header '%s' did not match on value '%s'",
+				status_header->header_name, header_value);
 			goto failed;
 		}
 
 		status = _regexp_match_get_value(header_value, 1, match_values, 2);
 		if ( status == NULL ) {
 			sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-				"%s: regexp did not return match value for string '%s'",
-				ext_name, header_value);
+				"regexp did not return match value for string '%s'",
+				header_value);
 			goto failed;
 		}
 	} else {
@@ -588,8 +587,8 @@ const char *ext_spamvirustest_get_value
 		if ( !ext_spamvirustest_parse_decimal_value
 			(status, &status_value, &error) ) {
 			sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-				"%s: failed to parse status value '%s': %s",
-				ext_name, status, error);
+				"failed to parse status value '%s': %s",
+				status, error);
 			goto failed;
 		}
 		break;
@@ -597,8 +596,8 @@ const char *ext_spamvirustest_get_value
 		if ( !ext_spamvirustest_parse_strlen_value
 			(status, &status_value, &error) ) {
 			sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-				"%s: failed to parse status value '%s': %s",
-				ext_name, status, error);
+				"failed to parse status value '%s': %s",
+				status, error);
 			goto failed;
 		}
 		break;
@@ -618,8 +617,8 @@ const char *ext_spamvirustest_get_value
 
 		if ( i > max_text ) {
 			sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
-				"%s: failed to match textstatus value '%s'",
-				ext_name, status);
+				"failed to match textstatus value '%s'",
+				status);
 			goto failed;
 		}
 		break;
@@ -635,6 +634,10 @@ const char *ext_spamvirustest_get_value
 		mctx->score_ratio = 1;
 	else
 		mctx->score_ratio = (status_value / max_value);
+
+	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+		"extracted score=%.3f, max=%.3f, ratio=%.0f %%",
+		status_value, max_value, mctx->score_ratio * 100);
 
 	return ext_spamvirustest_get_score(ext, mctx->score_ratio, percent);
 
