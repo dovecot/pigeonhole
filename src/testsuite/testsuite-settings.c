@@ -35,7 +35,7 @@ void testsuite_settings_deinit(void)
 	const char *key;
 	struct testsuite_setting *setting;
 
-	while ( hash_table_iterate_t(itx, settings, &key, &setting) ) {
+	while ( hash_table_iterate(itx, settings, &key, &setting) ) {
 		i_free(setting->identifier);
 		i_free(setting->value);
 		i_free(setting);

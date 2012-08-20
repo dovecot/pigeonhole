@@ -363,7 +363,7 @@ static void ext_include_binary_free
 
 	/* Release references to all included script objects */
 	hctx = hash_table_iterate_init(binctx->included_scripts);
-	while ( hash_table_iterate_t(hctx, binctx->included_scripts, &script, &incscript) )
+	while ( hash_table_iterate(hctx, binctx->included_scripts, &script, &incscript) )
 		sieve_script_unref(&incscript->script);
 	hash_table_iterate_deinit(&hctx);
 
@@ -391,7 +391,7 @@ bool ext_include_binary_dump
 		return FALSE;
 
 	hctx = hash_table_iterate_init(binctx->included_scripts);
-	while ( hash_table_iterate_t(hctx, binctx->included_scripts, &script, &incscript) ) {
+	while ( hash_table_iterate(hctx, binctx->included_scripts, &script, &incscript) ) {
 		unsigned int block_id = sieve_binary_block_get_id(incscript->block);
 
 		sieve_binary_dump_sectionf(denv, "Included %s script '%s' (block: %d)",

@@ -186,7 +186,7 @@ bool sieve_variable_scope_iterate
 {
 	const char *key;
 
-	return hash_table_iterate_t
+	return hash_table_iterate
 		(iter->hctx, iter->scope->variables, &key, var_r);
 }
 

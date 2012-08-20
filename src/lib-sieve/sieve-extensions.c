@@ -753,7 +753,7 @@ void sieve_extension_capabilities_unregister
 	struct sieve_capability_registration *reg;
 
 	hictx = hash_table_iterate_init(ext_reg->capabilities_index);
-	while ( hash_table_iterate_t(hictx, ext_reg->capabilities_index, &name, &reg) ) {
+	while ( hash_table_iterate(hictx, ext_reg->capabilities_index, &name, &reg) ) {
 		if ( reg->ext == ext )
 			hash_table_remove(ext_reg->capabilities_index, name);
 	}
