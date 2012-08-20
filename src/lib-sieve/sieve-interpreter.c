@@ -45,7 +45,7 @@ struct sieve_interpreter {
 	pool_t pool;
 
 	/* Runtime data for extensions */
-	ARRAY_DEFINE(extensions, struct sieve_interpreter_extension_reg);
+	ARRAY(struct sieve_interpreter_extension_reg) extensions;
 
 	sieve_size_t reset_vector;
 

@@ -46,7 +46,7 @@ struct sieve_code_dumper {
 
 	struct sieve_binary_debug_reader *dreader;
 
-	ARRAY_DEFINE(extensions, struct sieve_code_dumper_extension_reg);
+	ARRAY(struct sieve_code_dumper_extension_reg) extensions;
 };
 
 struct sieve_code_dumper *sieve_code_dumper_create

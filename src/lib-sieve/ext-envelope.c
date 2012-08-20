@@ -183,7 +183,7 @@ static const struct sieve_envelope_part *_envelope_part_find
 static const struct sieve_address *const *_from_part_get_addresses
 (const struct sieve_runtime_env *renv)
 {
-	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
+	ARRAY(const struct sieve_address *) envelope_values;
 	const struct sieve_address *address =
 		sieve_message_get_sender_address(renv->msgctx);
 
@@ -202,7 +202,7 @@ static const struct sieve_address *const *_from_part_get_addresses
 static const char *const *_from_part_get_values
 (const struct sieve_runtime_env *renv)
 {
-	ARRAY_DEFINE(envelope_values, const char *);
+	ARRAY(const char *) envelope_values;
 
 	t_array_init(&envelope_values, 2);
 
@@ -218,7 +218,7 @@ static const char *const *_from_part_get_values
 static const struct sieve_address *const *_to_part_get_addresses
 (const struct sieve_runtime_env *renv)
 {
-	ARRAY_DEFINE(envelope_values, const struct sieve_address *);
+	ARRAY(const struct sieve_address *) envelope_values;
 	const struct sieve_address *address =
 		sieve_message_get_orig_recipient_address(renv->msgctx);
 
@@ -237,7 +237,7 @@ static const struct sieve_address *const *_to_part_get_addresses
 static const char *const *_to_part_get_values
 (const struct sieve_runtime_env *renv)
 {
-	ARRAY_DEFINE(envelope_values, const char *);
+	ARRAY(const char *) envelope_values;
 
 	t_array_init(&envelope_values, 2);
 
@@ -253,7 +253,7 @@ static const char *const *_to_part_get_values
 static const char *const *_auth_part_get_values
 (const struct sieve_runtime_env *renv)
 {
-	ARRAY_DEFINE(envelope_values, const char *);
+	ARRAY(const char *) envelope_values;
 
 	t_array_init(&envelope_values, 2);
 

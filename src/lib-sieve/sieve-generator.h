@@ -75,7 +75,7 @@ const void *sieve_generator_extension_get_context
 struct sieve_jumplist {
 	pool_t pool;
 	struct sieve_binary_block *block;
-	ARRAY_DEFINE(jumps, sieve_size_t);
+	ARRAY(sieve_size_t) jumps;
 };
 
 struct sieve_jumplist *sieve_jumplist_create

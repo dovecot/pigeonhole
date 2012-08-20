@@ -53,8 +53,9 @@ struct ext_include_binary_context {
 	struct sieve_binary *binary;
 	struct sieve_binary_block *dependency_block;
 
-	struct hash_table *included_scripts;
-	ARRAY_DEFINE(include_index, struct ext_include_script_info *);
+	HASH_TABLE(struct sieve_script *,
+		   struct ext_include_script_info *) included_scripts;
+	ARRAY(struct ext_include_script_info *) include_index;
 
 	struct sieve_variable_scope_binary *global_vars;
 
@@ -70,9 +71,8 @@ static struct ext_include_binary_context *ext_include_binary_create_context
 		p_new(pool, struct ext_include_binary_context, 1);
 
 	ctx->binary = sbin;
-	ctx->included_scripts = hash_table_create(default_pool, pool, 0,
-		(hash_callback_t *) sieve_script_hash,
-		(hash_cmp_callback_t *) sieve_script_cmp);
+	hash_table_create(&ctx->included_scripts, pool, 0,
+		sieve_script_hash, sieve_script_cmp);
 	p_array_init(&ctx->include_index, pool, 128);
 
 	sieve_binary_extension_set(sbin, this_ext, &include_binary_ext, ctx);
@@ -137,8 +137,7 @@ const struct ext_include_script_info *ext_include_binary_script_include
 	/* Unreferenced on binary_free */
 	sieve_script_ref(script);
 
-	hash_table_insert
-		(binctx->included_scripts, (void *) script, (void *) incscript);
+	hash_table_insert(binctx->included_scripts, script, incscript);
 	array_append(&binctx->include_index, &incscript, 1);
 
 	return incscript;
@@ -148,7 +147,7 @@ bool ext_include_binary_script_is_included
 (struct ext_include_binary_context *binctx, struct sieve_script *script,
 	const struct ext_include_script_info **script_info_r)
 {
-	struct ext_include_script_info *incscript = (struct ext_include_script_info *)
+	struct ext_include_script_info *incscript =
 		hash_table_lookup(binctx->included_scripts, script);
 
 	if ( incscript == NULL )
@@ -175,8 +174,7 @@ const struct ext_include_script_info *ext_include_binary_script_get_included
 const struct ext_include_script_info *ext_include_binary_script_get
 (struct ext_include_binary_context *binctx, struct sieve_script *script)
 {
-	return (struct ext_include_script_info *)
-		hash_table_lookup(binctx->included_scripts, script);
+	return hash_table_lookup(binctx->included_scripts, script);
 }
 
 unsigned int ext_include_binary_script_get_count
@@ -360,16 +358,13 @@ static void ext_include_binary_free
 	struct ext_include_binary_context *binctx =
 		(struct ext_include_binary_context *) context;
 	struct hash_iterate_context *hctx;
-	void *key, *value;
+	struct sieve_script *script;
+	struct ext_include_script_info *incscript;
 
 	/* Release references to all included script objects */
 	hctx = hash_table_iterate_init(binctx->included_scripts);
-	while ( hash_table_iterate(hctx, &key, &value) ) {
-		struct ext_include_script_info *incscript =
-			(struct ext_include_script_info *) value;
-
+	while ( hash_table_iterate_t(hctx, binctx->included_scripts, &script, &incscript) )
 		sieve_script_unref(&incscript->script);
-	}
 	hash_table_iterate_deinit(&hctx);
 
 	hash_table_destroy(&binctx->included_scripts);
@@ -389,15 +384,14 @@ bool ext_include_binary_dump
 	struct ext_include_binary_context *binctx =
 		ext_include_binary_get_context(ext, sbin);
 	struct hash_iterate_context *hctx;
-	void *key, *value;
+	struct sieve_script *script;
+	struct ext_include_script_info *incscript;
 
 	if ( !ext_include_variables_dump(denv, binctx->global_vars) )
 		return FALSE;
 
 	hctx = hash_table_iterate_init(binctx->included_scripts);
-	while ( hash_table_iterate(hctx, &key, &value) ) {
-		struct ext_include_script_info *incscript =
-			(struct ext_include_script_info *) value;
+	while ( hash_table_iterate_t(hctx, binctx->included_scripts, &script, &incscript) ) {
 		unsigned int block_id = sieve_binary_block_get_id(incscript->block);
 
 		sieve_binary_dump_sectionf(denv, "Included %s script '%s' (block: %d)",

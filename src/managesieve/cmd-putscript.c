@@ -43,9 +43,8 @@ struct cmd_putscript_context {
 static void cmd_putscript_finish(struct cmd_putscript_context *ctx);
 static bool cmd_putscript_continue_script(struct client_command_context *cmd);
 
-static void client_input_putscript(void *context)
+static void client_input_putscript(struct client *client)
 {
-	struct client *client = context;
 	struct client_command_context *cmd = &client->cmd;
 
 	i_assert(!client->destroyed);

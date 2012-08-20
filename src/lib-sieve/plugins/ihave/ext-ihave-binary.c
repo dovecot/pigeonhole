@@ -48,7 +48,7 @@ struct ext_ihave_binary_context {
 	struct sieve_binary *binary;
 	struct sieve_binary_block *block;
 
-	ARRAY_DEFINE(missing_extensions, const char *);
+	ARRAY(const char *) missing_extensions;
 };
 
 static struct ext_ihave_binary_context *ext_ihave_binary_create_context

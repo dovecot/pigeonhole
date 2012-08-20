@@ -29,7 +29,7 @@ struct ext_editheader_header {
 struct ext_editheader_config {
 	pool_t pool;
 
-	ARRAY_DEFINE(headers, struct ext_editheader_header);
+	ARRAY(struct ext_editheader_header) headers;
 
 	size_t max_header_size;
 };

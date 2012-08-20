@@ -51,7 +51,7 @@ static bool tst_ihave_validate
 	struct sieve_ast_argument *stritem;
 	enum sieve_compile_flags cpflags = sieve_validator_compile_flags(valdtr);
 	bool no_global = ( (cpflags & SIEVE_COMPILE_FLAG_NOGLOBAL) != 0 );
-	ARRAY_DEFINE(capabilities, struct _capability);
+	ARRAY(struct _capability) capabilities;
 	struct _capability capability;
 	const struct _capability *caps;
 	unsigned int i, count;

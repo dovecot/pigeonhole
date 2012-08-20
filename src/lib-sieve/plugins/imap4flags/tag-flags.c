@@ -187,7 +187,7 @@ static bool tag_flags_generate
 /* Context data */
 
 struct seff_flags_context {
-	ARRAY_DEFINE(keywords, const char *);
+	ARRAY(const char *) keywords;
 	enum mail_flags flags;
 };
 

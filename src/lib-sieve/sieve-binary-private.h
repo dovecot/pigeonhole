@@ -99,15 +99,15 @@ struct sieve_binary {
 	 * context data to the binary object in memory. This is stored in these
 	 * registration objects as well.
 	 */
-	ARRAY_DEFINE(extensions, struct sieve_binary_extension_reg *);
-	ARRAY_DEFINE(extension_index, struct sieve_binary_extension_reg *);
-	ARRAY_DEFINE(linked_extensions, struct sieve_binary_extension_reg *);
+	ARRAY(struct sieve_binary_extension_reg *) extensions;
+	ARRAY(struct sieve_binary_extension_reg *) extension_index;
+	ARRAY(struct sieve_binary_extension_reg *) linked_extensions;
 
 	/* Attributes of a loaded binary */
 	const char *path;
 
 	/* Blocks */
-	ARRAY_DEFINE(blocks, struct sieve_binary_block *);
+	ARRAY(struct sieve_binary_block *) blocks;
 };
 
 struct sieve_binary *sieve_binary_create

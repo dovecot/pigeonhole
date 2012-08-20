@@ -71,10 +71,10 @@ struct sieve_message_context {
 	/* Message versioning */
 
 	struct mail_user *raw_mail_user;
-	ARRAY_DEFINE(versions, struct sieve_message_version);
+	ARRAY(struct sieve_message_version) versions;
 
 	/* Context data for extensions */
-	ARRAY_DEFINE(ext_contexts, void *);
+	ARRAY(void *) ext_contexts;
 
 	unsigned int edit_snapshot:1;
 	unsigned int substitute_snapshot:1;

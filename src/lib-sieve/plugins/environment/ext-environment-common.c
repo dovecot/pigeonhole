@@ -10,7 +10,8 @@
 #include "ext-environment-common.h"
 
 struct ext_environment_context {
-	struct hash_table *environment_items;
+	HASH_TABLE(const char *,
+		   const struct sieve_environment_item *) environment_items;
 };
 
 /*
@@ -36,8 +37,7 @@ static void ext_environment_item_register
 (struct ext_environment_context *ectx,
 	const struct sieve_environment_item *item)
 {
-	hash_table_insert
-		(ectx->environment_items, (void *) item->name, (void *) item);
+	hash_table_insert(ectx->environment_items, item->name, item);
 }
 
 void sieve_ext_environment_item_register
@@ -61,8 +61,8 @@ bool ext_environment_init
 
 	unsigned int i;
 
-	ectx->environment_items = hash_table_create
-		(default_pool, default_pool, 0, str_hash, (hash_cmp_callback_t *)strcmp);
+	hash_table_create
+		(&ectx->environment_items, default_pool, 0, str_hash, strcmp);
 
 	for ( i = 0; i < core_env_items_count; i++ ) {
 		ext_environment_item_register(ectx, core_env_items[i]);
@@ -94,8 +94,7 @@ const char *ext_environment_item_get_value
 	struct ext_environment_context *ectx =
 		(struct ext_environment_context *) ext->context;
 	const struct sieve_environment_item *item =
-		(const struct sieve_environment_item *)
-			hash_table_lookup(ectx->environment_items, name);
+		hash_table_lookup(ectx->environment_items, name);
 
 	if ( item == NULL )
 		return NULL;

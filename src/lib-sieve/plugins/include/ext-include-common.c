@@ -43,7 +43,7 @@ static inline struct ext_include_generator_context *
 /* Interpreter context */
 
 struct ext_include_interpreter_global {
-	ARRAY_DEFINE(included_scripts, struct sieve_script *);
+	ARRAY(struct sieve_script *) included_scripts;
 
 	struct sieve_variable_scope_binary *var_scope;
 	struct sieve_variable_storage *var_storage;

@@ -1224,7 +1224,7 @@ static int edit_mail_get_headers
 	struct _header_index *header_idx;
 	struct _header_field_index *field_idx;
 	const char *const *headers;
-	ARRAY_DEFINE(header_values, const char *);
+	ARRAY(const char *) header_values;
 
 	if ( !edmail->modified || edmail->headers_head == NULL ) {
 		/* Unmodified */

@@ -25,7 +25,7 @@ struct testsuite_smtp_message {
 
 static pool_t testsuite_smtp_pool;
 static const char *testsuite_smtp_tmp;
-static ARRAY_DEFINE(testsuite_smtp_messages, struct testsuite_smtp_message);
+static ARRAY(struct testsuite_smtp_message) testsuite_smtp_messages;
 
 /*
  * Initialize

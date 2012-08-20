@@ -29,7 +29,7 @@ static const struct command managesieve_base_commands[] = {
 
 #define MANAGESIEVE_COMMANDS_COUNT N_ELEMENTS(managesieve_base_commands)
 
-static ARRAY_DEFINE(managesieve_commands, struct command);
+static ARRAY(struct command) managesieve_commands;
 static bool commands_unsorted;
 
 void command_register(const char *name, command_func_t *func)

@@ -29,7 +29,7 @@
 
 struct sieve_match_values {
 	pool_t pool;
-	ARRAY_DEFINE(values, string_t *);
+	ARRAY(string_t *) values;
 	unsigned count;
 };
 

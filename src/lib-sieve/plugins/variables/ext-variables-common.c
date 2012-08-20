@@ -47,8 +47,8 @@ struct sieve_variable_scope {
 
 	struct sieve_variable *error_var;
 
-	struct hash_table *variables;
-	ARRAY_DEFINE(variable_index, struct sieve_variable *);
+	HASH_TABLE(const char *, struct sieve_variable *) variables;
+	ARRAY(struct sieve_variable *) variable_index;
 };
 
 struct sieve_variable_scope_binary {
@@ -78,8 +78,7 @@ struct sieve_variable_scope *sieve_variable_scope_create
 	scope->svinst = svinst;
 	scope->ext = ext;
 
-	scope->variables = hash_table_create
-		(default_pool, pool, 0, strcase_hash, (hash_cmp_callback_t *)strcasecmp);
+	hash_table_create(&scope->variables, pool, 0, strcase_hash, strcasecmp);
 	p_array_init(&scope->variable_index, pool, 128);
 
 	return scope;
@@ -133,8 +132,7 @@ struct sieve_variable *sieve_variable_scope_declare
 	new_var->identifier = p_strdup(scope->pool, identifier);
 	new_var->index = array_count(&scope->variable_index);
 
-	hash_table_insert
-		(scope->variables, (void *) new_var->identifier, (void *) new_var);
+	hash_table_insert(scope->variables, new_var->identifier, new_var);
 	array_append(&scope->variable_index, &new_var, 1);
 
 	return new_var;
@@ -145,8 +143,7 @@ struct sieve_variable *sieve_variable_scope_get_variable
 {
 	struct sieve_variable *var;
 
-	var = (struct sieve_variable *)
-		hash_table_lookup(scope->variables, identifier);
+	var = hash_table_lookup(scope->variables, identifier);
 
 	if ( var == NULL && declare ) {
 		var = sieve_variable_scope_declare(scope, identifier);
@@ -163,8 +160,7 @@ struct sieve_variable *sieve_variable_scope_import
 	new_var = p_new(scope->pool, struct sieve_variable, 1);
 	memcpy(new_var, var, sizeof(struct sieve_variable));
 
-	hash_table_insert
-		(scope->variables, (void *) new_var->identifier, (void *) new_var);
+	hash_table_insert(scope->variables, new_var->identifier, new_var);
 
 	/* Not entered into the index because it is an external variable
 	 * (This can be done unlimited; only limited by the size of the external scope)
@@ -188,13 +184,10 @@ struct sieve_variable_scope_iter *sieve_variable_scope_iterate_init
 bool sieve_variable_scope_iterate
 (struct sieve_variable_scope_iter *iter, struct sieve_variable **var_r)
 {
-	void *key, *value;
+	const char *key;
 
-	if ( !hash_table_iterate(iter->hctx, &key, &value) )
-		return FALSE;
-
-	*var_r = (struct sieve_variable *) value;
-	return TRUE;
+	return hash_table_iterate_t
+		(iter->hctx, iter->scope->variables, &key, var_r);
 }
 
 void sieve_variable_scope_iterate_deinit
@@ -405,7 +398,7 @@ struct sieve_variable_storage {
 	struct sieve_variable_scope *scope;
 	struct sieve_variable_scope_binary *scope_bin;
 	unsigned int max_size;
-	ARRAY_DEFINE(var_values, string_t *);
+	ARRAY(string_t *) var_values;
 };
 
 struct sieve_variable_storage *sieve_variable_storage_create
@@ -690,7 +683,7 @@ struct ext_variables_interpreter_context {
 	struct sieve_variable_scope_binary *local_scope_bin;
 
 	struct sieve_variable_storage *local_storage;
-	ARRAY_DEFINE(ext_storages, struct sieve_variable_storage *);
+	ARRAY(struct sieve_variable_storage *) ext_storages;
 };
 
 static void ext_variables_interpreter_free

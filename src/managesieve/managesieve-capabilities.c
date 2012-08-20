@@ -22,7 +22,7 @@
  */
 
 struct plugin_settings {
-	ARRAY_DEFINE(plugin_envs, const char *);
+	ARRAY(const char *) plugin_envs;
 };
 
 static const struct setting_parser_info **plugin_set_roots;

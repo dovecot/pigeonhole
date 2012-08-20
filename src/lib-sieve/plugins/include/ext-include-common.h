@@ -120,7 +120,7 @@ static inline struct ext_include_context *ext_include_get_context
 struct ext_include_ast_context {
   struct sieve_variable_scope *global_vars;
 
-  ARRAY_DEFINE(included_scripts, struct sieve_script *);
+  ARRAY(struct sieve_script *) included_scripts;
 };
 
 struct ext_include_ast_context *ext_include_create_ast_context

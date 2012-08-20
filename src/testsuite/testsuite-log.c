@@ -31,9 +31,9 @@ struct _testsuite_log_message {
 };
 
 static pool_t _testsuite_logmsg_pool = NULL;
-ARRAY_DEFINE(_testsuite_log_errors, struct _testsuite_log_message);
-ARRAY_DEFINE(_testsuite_log_warnings, struct _testsuite_log_message);
-ARRAY_DEFINE(_testsuite_log_messages, struct _testsuite_log_message);
+ARRAY(struct _testsuite_log_message) _testsuite_log_errors;
+ARRAY(struct _testsuite_log_message) _testsuite_log_warnings;
+ARRAY(struct _testsuite_log_message) _testsuite_log_messages;
 
 static inline void ATTR_FORMAT(3, 0) _testsuite_stdout_vlog
 (const char *prefix, const char *location, const char *fmt,

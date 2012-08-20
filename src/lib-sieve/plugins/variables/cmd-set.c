@@ -73,7 +73,7 @@ const struct sieve_operation_def cmd_set_operation = {
  */
 
 struct cmd_set_context {
-	ARRAY_DEFINE(modifiers, const struct sieve_variables_modifier *);
+	ARRAY(const struct sieve_variables_modifier *) modifiers;
 };
 
 /*

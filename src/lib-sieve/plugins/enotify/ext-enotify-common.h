@@ -22,7 +22,7 @@ extern const struct sieve_extension_capabilities notify_capabilities;
 
 struct ext_enotify_context {
 	const struct sieve_extension *var_ext;
-	ARRAY_DEFINE(notify_methods, struct sieve_enotify_method);
+	ARRAY(struct sieve_enotify_method) notify_methods;
 };
 
 

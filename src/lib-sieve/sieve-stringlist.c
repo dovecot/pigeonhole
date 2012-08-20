@@ -17,7 +17,7 @@ int sieve_stringlist_read_all
 	const char * const **list_r)
 {
 	if ( strlist->read_all == NULL ) {
-		ARRAY_DEFINE(items, const char *);
+		ARRAY(const char *) items;
 		string_t *item;
 		int ret;
 

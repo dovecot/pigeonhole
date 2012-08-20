@@ -30,7 +30,7 @@ const struct sieve_code_dumper_extension variables_dump_extension = {
 
 struct ext_variables_dump_context {
 	struct sieve_variable_scope *local_scope;
-	ARRAY_DEFINE(ext_scopes, struct sieve_variable_scope *);
+	ARRAY(struct sieve_variable_scope *) ext_scopes;
 };
 
 static void ext_variables_code_dumper_free

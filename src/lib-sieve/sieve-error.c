@@ -1187,7 +1187,7 @@ struct sieve_varexpand_ehandler {
 	struct sieve_error_handler handler;
 
 	const char *format;
-	ARRAY_DEFINE(table, struct var_expand_table);
+	ARRAY(struct var_expand_table) table;
 };
 
 static const char *ATTR_FORMAT(3, 0) _expand_message

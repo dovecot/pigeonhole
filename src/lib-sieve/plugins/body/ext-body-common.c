@@ -43,8 +43,8 @@ struct ext_body_part_cached {
 
 struct ext_body_message_context {
 	pool_t pool;
-	ARRAY_DEFINE(cached_body_parts, struct ext_body_part_cached);
-	ARRAY_DEFINE(return_body_parts, struct ext_body_part);
+	ARRAY(struct ext_body_part_cached) cached_body_parts;
+	ARRAY(struct ext_body_part) return_body_parts;
 	buffer_t *tmp_buffer;
 	buffer_t *raw_body;
 };
@@ -220,7 +220,7 @@ static bool ext_body_parts_add_missing
 	struct message_decoder_context *decoder;
 	struct message_block block, decoded;
 	struct message_part *parts, *prev_part = NULL;
-	ARRAY_DEFINE(part_index, struct message_part *);
+	ARRAY(struct message_part *) part_index;
 	struct istream *input;
 	unsigned int idx = 0;
 	bool save_body = FALSE, want_multipart, have_all;

@@ -694,7 +694,7 @@ static int ext_vacation_operation_execute
 
 	/* Normalize all addresses */
 	if ( addresses != NULL ) {
-		ARRAY_DEFINE(norm_addresses, const char *);
+		ARRAY(const char *) norm_addresses;
 		string_t *raw_address;
 		int ret;
 

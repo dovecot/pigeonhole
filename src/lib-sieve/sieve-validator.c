@@ -48,9 +48,9 @@ struct sieve_command_registration {
 	const struct sieve_command_def *cmd_def;
 	const struct sieve_extension *ext;
 
-	ARRAY_DEFINE(normal_tags, struct sieve_tag_registration *);
-	ARRAY_DEFINE(instanced_tags, struct sieve_tag_registration *);
-	ARRAY_DEFINE(persistent_tags, struct sieve_tag_registration *);
+	ARRAY(struct sieve_tag_registration *) normal_tags;
+	ARRAY(struct sieve_tag_registration *) instanced_tags;
+	ARRAY(struct sieve_tag_registration *) persistent_tags;
 };
 
 /* Default (literal) arguments */
@@ -93,9 +93,9 @@ struct sieve_validator {
 
 	/* Registries */
 
-	struct hash_table *commands;
+	HASH_TABLE(const char *, struct sieve_command_registration *) commands;
 
-	ARRAY_DEFINE(extensions, struct sieve_validator_extension_reg);
+	ARRAY(struct sieve_validator_extension_reg) extensions;
 
 	/* This is currently a wee bit ugly and needs more thought */
 	struct sieve_default_argument default_arguments[SAT_COUNT];
@@ -179,8 +179,8 @@ struct sieve_validator *sieve_validator_create
 		sieve_extensions_get_count(valdtr->svinst));
 
 	/* Setup command registry */
-	valdtr->commands = hash_table_create
-		(default_pool, pool, 0, strcase_hash, (hash_cmp_callback_t *)strcasecmp);
+	hash_table_create
+		(&valdtr->commands, pool, 0, strcase_hash, strcasecmp);
 	sieve_validator_register_core_commands(valdtr);
 	sieve_validator_register_core_tests(valdtr);
 
@@ -306,8 +306,7 @@ static struct sieve_command_registration *
 sieve_validator_find_command_registration
 (struct sieve_validator *valdtr, const char *command)
 {
-	return (struct sieve_command_registration *)
-		hash_table_lookup(valdtr->commands, command);
+	return hash_table_lookup(valdtr->commands, command);
 }
 
 static struct sieve_command_registration *_sieve_validator_register_command
@@ -320,7 +319,7 @@ static struct sieve_command_registration *_sieve_validator_register_command
 	cmd_reg->cmd_def = cmd_def;
 	cmd_reg->ext = ext;
 
-	hash_table_insert(valdtr->commands, (void *) identifier, (void *) cmd_reg);
+	hash_table_insert(valdtr->commands, identifier, cmd_reg);
 
 	return cmd_reg;
 }
@@ -1402,7 +1401,7 @@ struct sieve_validator_object_reg {
 
 struct sieve_validator_object_registry {
 	struct sieve_validator *valdtr;
-	ARRAY_DEFINE(registrations, struct sieve_validator_object_reg);
+	ARRAY(struct sieve_validator_object_reg) registrations;
 };
 
 struct sieve_validator_object_registry *sieve_validator_object_registry_get

@@ -48,8 +48,8 @@ struct sieve_ast {
 
 	struct sieve_ast_node *root;
 
-	ARRAY_DEFINE(linked_extensions, const struct sieve_extension *);
-	ARRAY_DEFINE(extensions, struct sieve_ast_extension_reg);
+	ARRAY(const struct sieve_extension *) linked_extensions;
+	ARRAY(struct sieve_ast_extension_reg) extensions;
 };
 
 struct sieve_ast *sieve_ast_create

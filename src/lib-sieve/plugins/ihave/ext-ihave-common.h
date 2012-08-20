@@ -35,7 +35,7 @@ extern const struct sieve_operation_def error_operation;
  */
 
 struct ext_ihave_ast_context {
-  ARRAY_DEFINE(missing_extensions, const char *);
+  ARRAY(const char *) missing_extensions;
 };
 
 struct ext_ihave_ast_context *ext_ihave_get_ast_context

@@ -827,7 +827,7 @@ static bool sieve_action_do_reject_mail
     		HEADER_FILTER_EXCLUDE | HEADER_FILTER_NO_CR |
 		HEADER_FILTER_HIDE_BODY, exclude_headers,
 		N_ELEMENTS(exclude_headers),
-		null_header_filter_callback, NULL);
+		*null_header_filter_callback, (void *)NULL);
 
     ret = o_stream_send_istream(output, input);
     i_stream_unref(&input);

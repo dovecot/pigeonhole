@@ -72,7 +72,7 @@ struct sieve_generator {
 	struct sieve_codegen_env genenv;
 	struct sieve_binary_debug_writer *dwriter;
 
-	ARRAY_DEFINE(ext_contexts, void *);
+	ARRAY(void *) ext_contexts;
 };
 
 struct sieve_generator *sieve_generator_create
