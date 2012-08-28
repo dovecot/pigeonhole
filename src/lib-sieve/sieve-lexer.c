@@ -76,8 +76,8 @@ const struct sieve_lexer *sieve_lexer_create
 		return NULL;
 
 	/* Check script size */
-	st = i_stream_stat(stream, TRUE);
-	if ( st != NULL && st->st_size > 0 && svinst->max_script_size > 0 &&
+	if ( i_stream_stat(stream, TRUE, &st) >= 0 && st->st_size > 0 &&
+		svinst->max_script_size > 0 &&
 		(uoff_t)st->st_size > svinst->max_script_size ) {
 		sieve_error(ehandler, sieve_script_name(script),
 			"sieve script is too large (max %"PRIuSIZE_T" bytes)",

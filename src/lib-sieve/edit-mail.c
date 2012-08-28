@@ -1710,7 +1710,7 @@ edit_mail_istream_sync(struct istream_private *stream ATTR_UNUSED)
 	i_panic("edit-mail istream sync() not implemented");
 }
 
-static const struct stat *
+static int
 edit_mail_istream_stat(struct istream_private *stream, bool exact)
 {
 	struct edit_mail_istream *edstream =
@@ -1719,16 +1719,16 @@ edit_mail_istream_stat(struct istream_private *stream, bool exact)
 	const struct stat *st;
 
 	/* Stat the original stream */
-	st = i_stream_stat(stream->parent, exact);
-	if (st == NULL || st->st_size == -1 || !exact)
-		return st;
+	if (i_stream_stat(stream->parent, exact, &st) < 0)
+		return -1;
 
-	/* Adjust stat data */
 	stream->statbuf = *st;
+	if (st->st_size == -1 || !exact)
+		return 0;
 
 	if ( !edmail->headers_parsed ) {
 		if ( !edmail->modified )
-			return &stream->statbuf;
+			return 0;
 	} else {
 		stream->statbuf.st_size = edmail->wrapped_body_size.physical_size +
 			( edmail->eoh_crlf ? 2 : 1 );
@@ -1736,8 +1736,7 @@ edit_mail_istream_stat(struct istream_private *stream, bool exact)
 
 	stream->statbuf.st_size += edmail->hdr_size.physical_size +
 		edmail->body_size.physical_size;
-
-	return &stream->statbuf;
+	return 0;
 }
 
 struct istream *edit_mail_istream_create

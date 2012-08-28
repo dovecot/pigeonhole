@@ -712,10 +712,16 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 	return ret;
 }
 
-static const struct stat *quoted_string_istream_stat
+static int quoted_string_istream_stat
 (struct istream_private *stream, bool exact)
 {
-	return i_stream_stat(stream->parent, exact);
+	const struct stat *st;
+
+	if (i_stream_stat(stream->parent, exact, &st) < 0)
+		return -1;
+
+	stream->statbuf = *st;
+	return 0;
 }
 
 static struct istream *quoted_string_istream_create
