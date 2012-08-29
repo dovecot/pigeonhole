@@ -1466,7 +1466,7 @@ struct edit_mail_istream {
 
 	struct _header_field_index *cur_header;
 
-	unsigned int read_header;
+	unsigned int header_read:1;
 };
 
 static void edit_mail_istream_destroy(struct iostream_private *stream)
@@ -1478,17 +1478,146 @@ static void edit_mail_istream_destroy(struct iostream_private *stream)
 	pool_unref(&edstream->pool);
 }
 
+static ssize_t merge_from_parent
+(struct edit_mail_istream *edstream, uoff_t parent_v_offset,
+	uoff_t parent_end_v_offset, uoff_t copy_v_offset)
+{
+	struct istream_private *stream = &edstream->istream;
+	uoff_t v_offset = stream->istream.v_offset;
+	buffer_t *buffer = edstream->buffer;
+	const unsigned char *data;
+	size_t pos, cur_pos;
+	ssize_t ret;
+
+	if (v_offset < copy_v_offset) {
+		i_assert(stream->skip == 0);
+		if (buffer->used < copy_v_offset - v_offset) {
+			copy_v_offset = v_offset + buffer->used;
+		}
+	}
+
+	/* If we are still merging it with our local buffer, we need to update the
+   * parent seek offset to point to where we left of.
+	 */
+	if (v_offset < copy_v_offset) {
+		parent_v_offset += buffer->used - (copy_v_offset - v_offset) + stream->pos;
+		if (parent_v_offset >= parent_end_v_offset)
+			return 0;
+		cur_pos = 0;
+	} else {
+		buffer_set_used_size(buffer, 0);
+		stream->pos -= stream->skip;
+		stream->skip = 0;
+		cur_pos = stream->pos;
+	}
+
+	i_stream_seek(stream->parent, parent_v_offset);
+
+	/* Read from parent */
+	data = i_stream_get_data(stream->parent, &pos);
+	if (pos > cur_pos)
+		ret = 0;
+	else do {
+		if ((ret = i_stream_read(stream->parent)) == -2)
+			return -2;
+
+		stream->istream.stream_errno = stream->parent->stream_errno;
+		stream->istream.eof = stream->parent->eof;
+		data = i_stream_get_data(stream->parent, &pos);
+		/* check again, in case the parent stream had been seeked
+		   backwards and the previous read() didn't get us far
+		   enough. */
+	} while (pos <= cur_pos && ret > 0);
+
+	/* Don't read beyond parent end offset */
+	if (pos > (parent_end_v_offset - parent_v_offset))
+		pos = parent_end_v_offset - parent_v_offset;
+
+	if (v_offset < copy_v_offset) {
+		/* Merging with our local buffer; copying data from parent */
+		if (pos > 0) {
+			ret = (ssize_t)(pos);
+			buffer_append(buffer, data, pos);
+			stream->buffer = buffer_get_data(buffer, &pos);
+			i_assert(ret > 0);
+			stream->pos = pos;
+		} else {
+			ret = (ret == 0 ? 0 : -1);
+		}
+	} else {
+		/* Just passing buffers from parent; no copying */
+		ret = pos > stream->pos ? (ssize_t)(pos - stream->pos) :
+			(ret == 0 ? 0 : -1);
+		stream->buffer = data;
+		stream->pos = pos;
+	}
+
+	i_assert(ret != -1 || stream->istream.eof ||
+		 stream->istream.stream_errno != 0);
+	return ret;
+}
+
+static ssize_t merge_modified_headers(struct edit_mail_istream *edstream)
+{
+	struct istream_private *stream = &edstream->istream;
+	struct edit_mail *edmail = edstream->mail;
+	size_t pos;
+	ssize_t ret = 0;
+
+	if (edstream->cur_header != NULL) {
+		/* Merge remaining parent buffer, if any */
+		if (edstream->buffer->used == 0 && stream->skip < stream->pos ) {
+			buffer_append(edstream->buffer,
+				stream->buffer + stream->skip, stream->pos - stream->skip);
+		}
+
+		/* Add modified headers to buffer */
+		while ( edstream->cur_header != NULL && edstream->buffer->used < 1024 ) {
+			buffer_append(edstream->buffer, edstream->cur_header->field->data,
+				edstream->cur_header->field->size);
+
+			edstream->cur_header = edstream->cur_header->next;
+
+			/* Stop at end of prepended headers if original header is left unparsed */
+			if ( !edmail->headers_parsed
+				&& edstream->cur_header == edmail->header_fields_appended )
+				edstream->cur_header = NULL;
+		}
+
+		if ( edstream->buffer->used > 0 ) {
+			/* Output current buffer */
+			stream->buffer = buffer_get_data(edstream->buffer, &pos);
+			ret = (ssize_t)pos + stream->skip - stream->pos;
+			i_assert( ret >= 0 );
+			stream->pos = pos;
+			stream->skip = 0;
+
+			if ( ret != 0 )
+				return ret;
+
+			if ( edstream->buffer->used >= 1024 )
+				return -2;
+		}
+	}
+	return 0;
+}
+
 static ssize_t edit_mail_istream_read(struct istream_private *stream)
 {
 	struct edit_mail_istream *edstream =
 		(struct edit_mail_istream *)stream;
 	struct edit_mail *edmail = edstream->mail;
-	uoff_t parent_v_offset, hdr_size, v_offset = stream->istream.v_offset;
-	size_t pos;
+	uoff_t parent_v_offset, parent_end_v_offset, copy_v_offset;
+	uoff_t v_offset = stream->istream.v_offset;
+	uoff_t prep_hdr_size, hdr_size;
 	ssize_t ret = 0;
+
+	if (stream->istream.eof)
+		return -1;
 
 	if ( edstream->buffer->used > 0 ) {
 		if ( stream->skip > 0 ) {
+			/* Remove skipped data from buffer */
 			buffer_copy
 				(edstream->buffer, 0, edstream->buffer, stream->skip, (size_t)-1);
 			stream->pos -= stream->skip;
@@ -1497,93 +1626,88 @@ static ssize_t edit_mail_istream_read(struct istream_private *stream)
 		}
 	}
 
-	if ( edstream->buffer->used > 0 || stream->pos - stream->skip == 0 ) {
-		if ( edstream->cur_header != NULL ) {
-			while ( edstream->cur_header != NULL && edstream->buffer->used < 1024 ) {
-				buffer_append(edstream->buffer, edstream->cur_header->field->data,
-					edstream->cur_header->field->size);
-
-				edstream->cur_header = edstream->cur_header->next;
-
-				if ( !edmail->headers_parsed
-					&& edstream->cur_header == edmail->header_fields_appended )
-					edstream->cur_header = NULL;
-			}
-		}
+	/* Merge prepended headers */
+	if (edstream->cur_header != NULL) {
+		if ( (ret=merge_modified_headers(edstream)) != 0 )
+			return ret;
 	}
 
-	if ( edstream->buffer->used > 0 ) {
-		stream->buffer = buffer_get_data(edstream->buffer, &pos);
-		ret = (ssize_t)pos + stream->skip - stream->pos;
-		i_assert( ret >= 0 );
-		stream->pos = pos;
-		stream->skip = 0;
-
-		if ( ret == 0 )
-			return -2;
-
-		return ret;
-	}
-
-	if ( !edmail->headers_parsed && edmail->header_fields_appended != NULL ) {
+	if ( !edmail->headers_parsed &&	!edstream->header_read &&
+		edmail->header_fields_appended != NULL ) {
 		/* Output headers from original stream */
 
-		/* At what offset does the header end (not including LF of final empty line)
+		/* Size of the prepended header */
+		prep_hdr_size = edmail->hdr_size.physical_size -
+			edmail->appended_hdr_size.physical_size;
+
+		/* Offset of header end or appended header
 		 * Any final CR is dealt with later
 		 */
-		hdr_size = edmail->wrapped_hdr_size.physical_size +
-			edmail->hdr_size.physical_size -
-			edmail->appended_hdr_size.physical_size - 1;
+		hdr_size = prep_hdr_size + edmail->wrapped_hdr_size.physical_size;
 
-		if ( v_offset < hdr_size ) {
+		if ( v_offset < hdr_size - 1 ) {
 			parent_v_offset = stream->parent_start_offset +
-				(v_offset + edmail->appended_hdr_size.physical_size -
-				edmail->hdr_size.physical_size);
+				(v_offset - prep_hdr_size);
+			parent_end_v_offset = stream->parent_start_offset +
+				edmail->wrapped_hdr_size.physical_size - 1;
+			copy_v_offset = prep_hdr_size;
 
-			i_stream_seek(stream->parent, parent_v_offset);
-
-			if ( (ret=i_stream_read_copy_from_parent(&stream->istream)) < 0 )
+			if ( (ret=merge_from_parent(edstream, parent_v_offset,
+				parent_end_v_offset, copy_v_offset)) < 0 ) {
 				return ret;
+			}
 
 			if ( stream->pos >= hdr_size - 1 - v_offset ) {
-				/* Truncate buffer from original mail strictly to header */
-				ret -= stream->pos - (hdr_size - v_offset);
-				stream->pos = hdr_size - v_offset;
-
 				/* Strip final CR too when it is present */
 				if ( stream->buffer[stream->pos-1] == '\r' ) {
 					stream->pos--;
 					ret--;
+					if (edstream->buffer->used > 0) 
+						buffer_set_used_size(edstream->buffer, edstream->buffer->used-1);
 				}
 
 				i_assert(ret >= 0);
+				edstream->header_read = TRUE;
 				edstream->cur_header = edmail->header_fields_appended;
-				if ( ret == 0 )
-					return -2;
 			}
 
-			return ret;
+			if (ret != 0)
+				return ret;
+		}
+
+		/* Merge Appended headers */
+		if (edstream->cur_header != NULL) {
+			if ( (ret=merge_modified_headers(edstream)) != 0 )
+				return ret;
 		}
 	}
 
-	if ( !edmail->headers_parsed ) {
-		if ( v_offset < edmail->hdr_size.physical_size )
-			return -2;
+	/* Header does not come from original mail at all */
+	if ( edmail->headers_parsed ) {
+		parent_v_offset = stream->parent_start_offset +
+			(v_offset - edmail->hdr_size.physical_size) +
+			edmail->wrapped_hdr_size.physical_size - ( edmail->eoh_crlf ? 2 : 1);
+		copy_v_offset = edmail->hdr_size.physical_size;
 
+	/* Header comes partially from original mail and headers are added between
+	   header and body.
+	 */
+	} else if (edmail->header_fields_appended != NULL) {
+		parent_v_offset = stream->parent_start_offset +
+			(v_offset - edmail->hdr_size.physical_size);
+		copy_v_offset = edmail->hdr_size.physical_size +
+			edmail->wrapped_hdr_size.physical_size;
+
+	/* Header comes partially from original mail, but headers are only prepended.
+	 */
+	} else {
 		parent_v_offset = stream->parent_start_offset
 			+ (v_offset - edmail->hdr_size.physical_size);
-	} else {
-		if ( v_offset < edmail->hdr_size.physical_size )
-			return -2;
-
-		parent_v_offset = stream->parent_start_offset
-			+ edmail->wrapped_hdr_size.physical_size
-			+ (v_offset - edmail->hdr_size.physical_size)
-			- ( edmail->eoh_crlf ? 2 : 1);
+		copy_v_offset = edmail->hdr_size.physical_size;
 	}
 
-	i_stream_seek(stream->parent, parent_v_offset);
-	return i_stream_read_copy_from_parent(&stream->istream);
+	return merge_from_parent
+		(edstream, parent_v_offset, (uoff_t)-1, copy_v_offset);
 }
 
 static void
@@ -1627,6 +1751,8 @@ static void edit_mail_istream_seek
 	struct _header_field_index *cur_header;
 	struct edit_mail *edmail = edstream->mail;
 	uoff_t offset;
+
+	edstream->header_read = FALSE;
 
 	/* The beginning */
 	if ( v_offset == 0 ) {
@@ -1675,6 +1801,8 @@ static void edit_mail_istream_seek
 			edstream->cur_header = NULL;
 			return;
 		}
+
+		edstream->header_read = TRUE;
 
 		/* Inside appended header */
 		offset = edmail->hdr_size.physical_size +
