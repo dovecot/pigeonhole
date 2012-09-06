@@ -191,7 +191,7 @@ login_client_connected(const struct master_login_client *client,
 	input.userdb_fields = extra_fields;
 	input.session_id = client->session_id;
 
-	buffer_create_const_data(&input_buf, client->data,
+	buffer_create_from_const_data(&input_buf, client->data,
 				 client->auth_req.data_size);
 	if (client_create_from_input(&input, client->fd, client->fd,
 				     &input_buf, &error) < 0) {
