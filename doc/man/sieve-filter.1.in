@@ -92,7 +92,8 @@ The mailbox where the (implicit) \fBkeep\fP Sieve action stores messages. This
 is equal to the \fIsource\-mailbox\fP by default. Specifying a different folder
 will have the effect of moving (or copying if \fB\-W\fP is omitted) all kept
 messages to the indicated folder, instead of just leaving them in the
-\fIsource\-mailbox\fP.
+\fIsource\-mailbox\fP. Refer to the explanation of the \fIsource\-mailbox\fP
+argument for more information on mailbox naming.
 .TP
 .BI \-q\  output\-mailbox\  \fB[not\ implemented\ yet]\fP
 Store outgoing e\-mail into the indicated \fIoutput\-mailbox\fP. By default,
@@ -153,9 +154,18 @@ extension and with basename and path identical to the specified script. Use the
 into a new binary.
 .TP
 .I source\-mailbox
-The name of the source mailbox containing the messages that the Sieve filter
-will act upon. This mailbox is not modified unless the \fB\-W\fP option is
-specified.
+Specifies the source mailbox containing the messages that the Sieve filter will
+act upon.
+
+This is the name of a mailbox, as visible to IMAP clients, except in UTF-8
+format. The hierarchy separator between a parent and child mailbox is commonly
+.RB \(aq / \(aq
+or
+.RB \(aq . \(aq,
+but this depends on your selected mailbox storage format and
+namespace configuration. The mailbox names may also require a namespace prefix.
+
+This mailbox is not modified unless the \fB\-W\fP option is specified.
 .TP
 .I discard\-action
 Specifies what is done with messages in the \fIsource\-mailbox\fP that where not
@@ -169,7 +179,8 @@ Keep discarded messages in source mailbox.
 .TP
 .BI move\  mailbox
 Move discarded messages to the indicated \fImailbox\fP. This is for instance
-useful to move messages to a Trash mailbox.
+useful to move messages to a Trash mailbox. Refer to the explanation of
+the \fIsource\-mailbox\fP argument for more information on mailbox naming.
 .TP
 .B delete
 Flag discarded messages as \\DELETED.
