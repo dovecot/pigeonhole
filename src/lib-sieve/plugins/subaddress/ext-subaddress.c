@@ -57,12 +57,10 @@ static bool ext_subaddress_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *validator);
 
 const struct sieve_extension_def subaddress_extension = {
-	"subaddress",
-	ext_subaddress_load,
-	ext_subaddress_unload,
-	ext_subaddress_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS,
+	.name = "subaddress",
+	.load = ext_subaddress_load,
+	.unload = ext_subaddress_unload,
+	.validator_load = ext_subaddress_validator_load,
 	SIEVE_EXT_DEFINE_OPERAND(subaddress_operand)
 };
 

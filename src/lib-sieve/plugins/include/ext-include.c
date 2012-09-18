@@ -63,17 +63,16 @@ static bool ext_include_binary_load
 /* Extension objects */
 
 const struct sieve_extension_def include_extension = {
-	"include",
-	ext_include_load,
-	ext_include_unload,
-	ext_include_validator_load,
-	ext_include_generator_load,
-	ext_include_interpreter_load,
-	ext_include_binary_load,
-	ext_include_binary_dump,
-	ext_include_code_dump,
-	SIEVE_EXT_DEFINE_OPERATIONS(ext_include_operations),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "include",
+	.load = ext_include_load,
+	.unload = ext_include_unload,
+	.validator_load = ext_include_validator_load,
+	.generator_load = ext_include_generator_load,
+	.interpreter_load = ext_include_interpreter_load,
+	.binary_load = ext_include_binary_load,
+	.binary_dump = ext_include_binary_dump,
+	.code_dump = ext_include_code_dump,
+	SIEVE_EXT_DEFINE_OPERATIONS(ext_include_operations)
 };
 
 static bool ext_include_validator_load

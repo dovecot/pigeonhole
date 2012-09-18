@@ -43,14 +43,10 @@ const struct sieve_operation_def *ext_date_operations[] = {
 };
 
 const struct sieve_extension_def date_extension = {
-	"date",
-	NULL, NULL,
-	ext_date_validator_load,
-	NULL,
-	ext_date_interpreter_load,
-	NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATIONS(ext_date_operations),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "date",
+	.validator_load = ext_date_validator_load,
+	.interpreter_load = ext_date_interpreter_load,
+	SIEVE_EXT_DEFINE_OPERATIONS(ext_date_operations)
 };
 
 static bool ext_date_validator_load

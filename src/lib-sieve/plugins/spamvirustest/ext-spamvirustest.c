@@ -68,33 +68,27 @@ static bool ext_spamvirustest_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *validator);
 
 const struct sieve_extension_def spamtest_extension = {
-	"spamtest",
-	ext_spamvirustest_load,
-	ext_spamvirustest_unload,
-	ext_spamvirustest_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATION(spamtest_operation),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "spamtest",
+	.load = ext_spamvirustest_load,
+	.unload = ext_spamvirustest_unload,
+	.validator_load = ext_spamvirustest_validator_load,
+	SIEVE_EXT_DEFINE_OPERATION(spamtest_operation)
 };
 
 const struct sieve_extension_def spamtestplus_extension = {
-	"spamtestplus",
-	ext_spamvirustest_load,
-	ext_spamvirustest_unload,
-	ext_spamvirustest_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATION(spamtest_operation),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "spamtestplus",
+	.load = ext_spamvirustest_load,
+	.unload = ext_spamvirustest_unload,
+	.validator_load = ext_spamvirustest_validator_load,
+	SIEVE_EXT_DEFINE_OPERATION(spamtest_operation)
 };
 
 const struct sieve_extension_def virustest_extension = {
-	"virustest",
-	ext_spamvirustest_load,
-	ext_spamvirustest_unload,
-	ext_spamvirustest_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATION(virustest_operation),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "virustest",
+	.load = ext_spamvirustest_load,
+	.unload = ext_spamvirustest_unload,
+	.validator_load = ext_spamvirustest_validator_load,
+	SIEVE_EXT_DEFINE_OPERATION(virustest_operation)
 };
 
 /*

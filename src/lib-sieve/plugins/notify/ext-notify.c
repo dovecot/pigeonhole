@@ -41,13 +41,9 @@ static bool ext_notify_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
 const struct sieve_extension_def notify_extension = {
-	"notify",
-	NULL,
-	NULL,
-	ext_notify_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATIONS(ext_notify_operations),
-	SIEVE_EXT_DEFINE_NO_OPERANDS,
+	.name = "notify",
+	.validator_load = ext_notify_validator_load,
+	SIEVE_EXT_DEFINE_OPERATIONS(ext_notify_operations)
 };
 
 /*

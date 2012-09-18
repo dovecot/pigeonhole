@@ -56,12 +56,9 @@ static bool ext_reject_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
 const struct sieve_extension_def reject_extension = {
-	"reject",
-	NULL, NULL,
-	ext_reject_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATION(reject_operation),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "reject",
+	.validator_load =	ext_reject_validator_load,
+	SIEVE_EXT_DEFINE_OPERATION(reject_operation)
 };
 
 static bool ext_reject_validator_load
@@ -79,12 +76,9 @@ static bool ext_ereject_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
 const struct sieve_extension_def ereject_extension = {
-	"ereject",
-	NULL, NULL,
-	ext_ereject_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATION(ereject_operation),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "ereject",
+	.validator_load = ext_ereject_validator_load,
+	SIEVE_EXT_DEFINE_OPERATION(ereject_operation)
 };
 
 static bool ext_ereject_validator_load

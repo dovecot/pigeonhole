@@ -77,15 +77,10 @@ static bool ext_imapflags_interpreter_load
 		sieve_size_t *address);
 
 const struct sieve_extension_def imapflags_extension = {
-	"imapflags",
-	ext_imapflags_load,
-	NULL,
-	ext_imapflags_validator_load,
-	NULL,
-	ext_imapflags_interpreter_load,
-	NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS,
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "imapflags",
+	.load = ext_imapflags_load,
+	.validator_load = ext_imapflags_validator_load,
+	.interpreter_load = ext_imapflags_interpreter_load
 };
 
 static bool ext_imapflags_load

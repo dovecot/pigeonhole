@@ -46,11 +46,10 @@ static bool ext_enotify_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
 const struct sieve_extension_def enotify_extension = {
-	"enotify",
-	ext_enotify_load,
-	ext_enotify_unload,
-	ext_enotify_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
+	.name = "enotify",
+	.load = ext_enotify_load,
+	.unload = ext_enotify_unload,
+	.validator_load = ext_enotify_validator_load,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_enotify_operations),
 	SIEVE_EXT_DEFINE_OPERAND(encodeurl_operand)
 };

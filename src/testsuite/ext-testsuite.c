@@ -106,13 +106,11 @@ static bool ext_testsuite_binary_load
 /* Extension object */
 
 const struct sieve_extension_def testsuite_extension = {
-	"vnd.dovecot.testsuite",
-	NULL, NULL,
-	ext_testsuite_validator_load,
-	ext_testsuite_generator_load,
-	ext_testsuite_interpreter_load,
-	ext_testsuite_binary_load,
-	NULL, NULL,
+	.name = "vnd.dovecot.testsuite",
+	.validator_load = ext_testsuite_validator_load,
+	.generator_load = ext_testsuite_generator_load,
+	.interpreter_load = ext_testsuite_interpreter_load,
+	.binary_load = ext_testsuite_binary_load,
 	SIEVE_EXT_DEFINE_OPERATIONS(testsuite_operations),
 	SIEVE_EXT_DEFINE_OPERANDS(testsuite_operands)
 };

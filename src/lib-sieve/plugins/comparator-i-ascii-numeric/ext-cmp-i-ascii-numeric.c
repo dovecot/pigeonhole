@@ -38,11 +38,8 @@ static bool ext_cmp_i_ascii_numeric_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *validator);
 
 const struct sieve_extension_def comparator_i_ascii_numeric_extension = {
-	"comparator-i;ascii-numeric",
-	NULL, NULL,
-	ext_cmp_i_ascii_numeric_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS,
+	.name = "comparator-i;ascii-numeric",
+	.validator_load = ext_cmp_i_ascii_numeric_validator_load,
 	SIEVE_EXT_DEFINE_OPERAND(my_comparator_operand)
 };
 

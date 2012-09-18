@@ -32,10 +32,8 @@ static bool ext_mailbox_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
 const struct sieve_extension_def mailbox_extension = {
-	"mailbox",
-	NULL, NULL,
-	ext_mailbox_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
+	.name = "mailbox",
+	.validator_load = ext_mailbox_validator_load,
 	SIEVE_EXT_DEFINE_OPERATION(mailboxexists_operation),
 	SIEVE_EXT_DEFINE_OPERAND(mailbox_create_operand)
 };

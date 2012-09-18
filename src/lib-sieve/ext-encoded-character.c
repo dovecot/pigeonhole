@@ -28,12 +28,8 @@ static bool ext_encoded_character_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
 struct sieve_extension_def encoded_character_extension = {
-	"encoded-character",
-	NULL, NULL,
-	ext_encoded_character_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS,
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "encoded-character",
+	.validator_load = ext_encoded_character_validator_load,
 };
 
 /*

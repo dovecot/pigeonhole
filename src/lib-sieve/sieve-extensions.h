@@ -50,6 +50,8 @@ struct sieve_extension_def {
 	struct sieve_extension_objects operands;
 };
 
+/* Defining opcodes and operands */
+
 #define SIEVE_EXT_DEFINE_NO_OBJECTS \
 	{ NULL, 0 }
 #define SIEVE_EXT_DEFINE_OBJECT(OBJ) \
@@ -59,6 +61,20 @@ struct sieve_extension_def {
 
 #define SIEVE_EXT_GET_OBJECTS_COUNT(ext, field) \
 	ext->field->count;
+
+#define SIEVE_EXT_DEFINE_NO_OPERATIONS \
+	.operations = SIEVE_EXT_DEFINE_NO_OBJECTS
+#define SIEVE_EXT_DEFINE_OPERATION(OP) \
+	.operations = SIEVE_EXT_DEFINE_OBJECT(OP)
+#define SIEVE_EXT_DEFINE_OPERATIONS(OPS) \
+	.operations = SIEVE_EXT_DEFINE_OBJECTS(OPS)
+
+#define SIEVE_EXT_DEFINE_NO_OPERANDS \
+	.operands = SIEVE_EXT_DEFINE_NO_OBJECTS
+#define SIEVE_EXT_DEFINE_OPERAND(OP) \
+	.operands = SIEVE_EXT_DEFINE_OBJECT(OP)
+#define SIEVE_EXT_DEFINE_OPERANDS(OPS) \
+	.operands = SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 /*
  * Extension instance
@@ -84,18 +100,6 @@ struct sieve_extension {
 	(ext)->def->name
 #define sieve_extension_name_is(ext, _name) \
 	( strcmp((ext)->def->name, (_name)) == 0 )
-
-/*
- * Defining opcodes and operands
- */
-
-#define SIEVE_EXT_DEFINE_NO_OPERATIONS SIEVE_EXT_DEFINE_NO_OBJECTS
-#define SIEVE_EXT_DEFINE_OPERATION(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
-#define SIEVE_EXT_DEFINE_OPERATIONS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
-
-#define SIEVE_EXT_DEFINE_NO_OPERANDS SIEVE_EXT_DEFINE_NO_OBJECTS
-#define SIEVE_EXT_DEFINE_OPERAND(OP) SIEVE_EXT_DEFINE_OBJECT(OP)
-#define SIEVE_EXT_DEFINE_OPERANDS(OPS) SIEVE_EXT_DEFINE_OBJECTS(OPS)
 
 /*
  * Extensions init/deinit

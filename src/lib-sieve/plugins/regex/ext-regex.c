@@ -49,11 +49,8 @@ static bool ext_regex_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *validator);
 
 const struct sieve_extension_def regex_extension = {
-	"regex",
-	NULL, NULL,
-	ext_regex_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS,
+	.name = "regex",
+	.validator_load = ext_regex_validator_load,
 	SIEVE_EXT_DEFINE_OPERAND(regex_match_type_operand)
 };
 

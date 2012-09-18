@@ -49,12 +49,9 @@ static bool ext_imap4flags_interpreter_load
 		sieve_size_t *address);
 
 const struct sieve_extension_def imap4flags_extension = {
-	"imap4flags",
-	NULL, NULL,
-	ext_imap4flags_validator_load,
-	NULL,
-	ext_imap4flags_interpreter_load,
-	NULL, NULL, NULL,
+	.name = "imap4flags",
+	.validator_load = ext_imap4flags_validator_load,
+	.interpreter_load = ext_imap4flags_interpreter_load,
 	SIEVE_EXT_DEFINE_OPERATIONS(imap4flags_operations),
 	SIEVE_EXT_DEFINE_OPERAND(flags_side_effect_operand)
 };

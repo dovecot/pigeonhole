@@ -34,15 +34,11 @@ static bool ext_ihave_generator_load
 
 const struct sieve_extension_def ihave_extension = {
 	"ihave",
-	NULL, NULL,
-	ext_ihave_validator_load,
-	ext_ihave_generator_load,
-	NULL,
-	ext_ihave_binary_load,
-	ext_ihave_binary_dump,
-	NULL,
-	SIEVE_EXT_DEFINE_OPERATION(error_operation),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.validator_load = ext_ihave_validator_load,
+	.generator_load = ext_ihave_generator_load,
+	.binary_load = ext_ihave_binary_load,
+	.binary_dump = ext_ihave_binary_dump,
+	SIEVE_EXT_DEFINE_OPERATION(error_operation)
 };
 
 static bool ext_ihave_validator_load

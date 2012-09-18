@@ -36,11 +36,8 @@ static bool ext_relational_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
 const struct sieve_extension_def relational_extension = {
-	"relational",
-	NULL, NULL,
-	ext_relational_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS,
+	.name = "relational",
+	.validator_load = ext_relational_validator_load,
 	SIEVE_EXT_DEFINE_OPERAND(rel_match_type_operand)
 };
 

@@ -57,13 +57,11 @@ static bool ext_variables_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *validator);
 
 const struct sieve_extension_def variables_extension = {
-	"variables",
-	NULL, NULL,
-	ext_variables_validator_load,
-	ext_variables_generator_load,
-	ext_variables_interpreter_load,
-	NULL, NULL,
-	ext_variables_code_dump,
+	.name = "variables",
+	.validator_load = ext_variables_validator_load,
+	.generator_load = ext_variables_generator_load,
+	.interpreter_load = ext_variables_interpreter_load,
+	.code_dump = ext_variables_code_dump,
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_variables_operations),
 	SIEVE_EXT_DEFINE_OPERANDS(ext_variables_operands)
 };

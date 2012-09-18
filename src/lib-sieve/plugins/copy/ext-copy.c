@@ -39,11 +39,8 @@ static bool ext_copy_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
 const struct sieve_extension_def copy_extension = {
-	"copy",
-	NULL, NULL,
-	ext_copy_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS,
+	.name = "copy",
+	.validator_load = ext_copy_validator_load,
 	SIEVE_EXT_DEFINE_OPERAND(copy_side_effect_operand)
 };
 

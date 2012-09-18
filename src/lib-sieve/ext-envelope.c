@@ -48,12 +48,9 @@ static bool ext_envelope_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
 const struct sieve_extension_def envelope_extension = {
-	"envelope",
-	NULL, NULL,
-	ext_envelope_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATION(envelope_operation),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "envelope",
+	.validator_load = ext_envelope_validator_load,
+	SIEVE_EXT_DEFINE_OPERATION(envelope_operation)
 };
 
 static bool ext_envelope_validator_load

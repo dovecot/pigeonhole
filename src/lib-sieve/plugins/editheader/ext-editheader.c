@@ -45,13 +45,11 @@ static bool ext_editheader_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *validator);
 
 const struct sieve_extension_def editheader_extension = {
-	"editheader",
-	ext_editheader_load,
-	ext_editheader_unload,
-	ext_editheader_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATIONS(editheader_operations),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "editheader",
+	.load = ext_editheader_load,
+	.unload = ext_editheader_unload,
+	.validator_load = ext_editheader_validator_load,
+	SIEVE_EXT_DEFINE_OPERATIONS(editheader_operations)
 };
 
 static bool ext_editheader_validator_load

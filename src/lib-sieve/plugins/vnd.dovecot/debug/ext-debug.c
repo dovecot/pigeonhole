@@ -40,14 +40,10 @@ static bool ext_debug_interpreter_load
 
 
 const struct sieve_extension_def debug_extension = {
-	"vnd.dovecot.debug",
-	NULL, NULL,
-	ext_debug_validator_load,
-	NULL,
-	ext_debug_interpreter_load,
-	NULL, NULL, NULL,
+	.name = "vnd.dovecot.debug",
+	.validator_load = ext_debug_validator_load,
+	.interpreter_load = ext_debug_interpreter_load,
 	SIEVE_EXT_DEFINE_OPERATION(debug_log_operation),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
 };
 
 static bool ext_debug_validator_load

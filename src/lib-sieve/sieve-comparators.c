@@ -39,12 +39,8 @@ static bool cmp_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
 const struct sieve_extension_def comparator_extension = {
-	"@comparators",
-	NULL, NULL,
-	cmp_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS,
-	SIEVE_EXT_DEFINE_NO_OPERANDS    /* Defined as core operand */
+	.name = "@comparators",
+	.validator_load = cmp_validator_load
 };
 
 /*

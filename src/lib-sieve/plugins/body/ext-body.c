@@ -53,12 +53,9 @@ static bool ext_body_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr);
 
 const struct sieve_extension_def body_extension = {
-	"body",
-	NULL, NULL,
-	ext_body_validator_load,
-	NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_OPERATION(body_operation),
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "body",
+	.validator_load =	ext_body_validator_load,
+	SIEVE_EXT_DEFINE_OPERATION(body_operation)
 };
 
 static bool ext_body_validator_load

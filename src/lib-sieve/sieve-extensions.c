@@ -59,17 +59,11 @@ extern const struct sieve_extension_def address_part_extension;
 /* FIXME: This is stupid. Define a comparator-* extension and be done with it */
 
 static const struct sieve_extension_def comparator_i_octet_extension = {
-	"comparator-i;octet",
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS,
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "comparator-i;octet",
 };
 
 static const struct sieve_extension_def comparator_i_ascii_casemap_extension = {
-	"comparator-i;ascii-casemap",
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	SIEVE_EXT_DEFINE_NO_OPERATIONS,
-	SIEVE_EXT_DEFINE_NO_OPERANDS
+	.name = "comparator-i;ascii-casemap",
 };
 
 /*
