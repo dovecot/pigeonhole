@@ -12,8 +12,8 @@
  * Config
  */
 
-#define SIEVE_BINARY_VERSION_MAJOR     0
-#define SIEVE_BINARY_VERSION_MINOR     4
+#define SIEVE_BINARY_VERSION_MAJOR     1
+#define SIEVE_BINARY_VERSION_MINOR     0
 
 /*
  * Binary object

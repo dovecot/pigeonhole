@@ -23,6 +23,9 @@ struct sieve_extension_objects {
 struct sieve_extension_def {
 	const char *name;
 
+	/* Version */
+	unsigned int version;
+
 	/* Registration */
 	bool (*load)(const struct sieve_extension *ext, void **context);
 	void (*unload)(const struct sieve_extension *ext);
@@ -97,9 +100,13 @@ struct sieve_extension {
 #define sieve_extension_is(ext, definition) \
 	( (ext)->def == &(definition) )
 #define sieve_extension_name(ext) \
-	(ext)->def->name
+	((ext)->def->name)
 #define sieve_extension_name_is(ext, _name) \
 	( strcmp((ext)->def->name, (_name)) == 0 )
+#define sieve_extension_version(ext) \
+	((ext)->def->version)
+#define sieve_extension_version_is(ext, _version) \
+	((ext)->def->version == (_version))
 
 /*
  * Extensions init/deinit

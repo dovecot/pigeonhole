@@ -233,11 +233,11 @@ static bool _sieve_binary_save
 		sizeof(struct sieve_binary_block_index) * blk_count, &block_index) )
 		return FALSE;
 
-	/* Create block containing all used extensions
-	 *   FIXME: Per-extension this should also store binary version numbers.
-	 */
+	/* Create block containing all used extensions */
+
 	ext_block = sieve_binary_block_get(sbin, SBIN_SYSBLOCK_EXTENSIONS);
 	i_assert( ext_block != NULL );
+	sieve_binary_block_clear(ext_block);
 
 	ext_count = array_count(&sbin->linked_extensions);
 	sieve_binary_emit_unsigned(ext_block, ext_count);
@@ -248,6 +248,8 @@ static bool _sieve_binary_save
 
 		sieve_binary_emit_cstring
 			(ext_block, sieve_extension_name((*ext)->extension));
+		sieve_binary_emit_unsigned
+			(ext_block, sieve_extension_version((*ext)->extension));
 		sieve_binary_emit_unsigned(ext_block, (*ext)->block_id);
 	}
 
@@ -719,38 +721,48 @@ static bool _read_block_index_record
 	return TRUE;
 }
 
-static bool _read_extensions(struct sieve_binary_block *sblock)
+static int _read_extensions(struct sieve_binary_block *sblock)
 {
 	struct sieve_binary *sbin = sblock->sbin;
 	sieve_size_t offset = 0;
 	unsigned int i, count;
-	bool result = TRUE;
+	bool result = 1;
 
 	if ( !sieve_binary_read_unsigned(sblock, &offset, &count) )
-		return FALSE;
+		return -1;
 
-	for ( i = 0; result && i < count; i++ ) {
+	for ( i = 0; result > 0 && i < count; i++ ) {
 		T_BEGIN {
 			string_t *extension;
 			const struct sieve_extension *ext;
+			unsigned int version;
 
 			if ( sieve_binary_read_string(sblock, &offset, &extension) ) {
 				ext = sieve_extension_get_by_name(sbin->svinst, str_c(extension));
 
 				if ( ext == NULL ) {
 					sieve_sys_error(sbin->svinst,
-						"binary open: binary %s requires unknown extension '%s'",
+						"binary open: binary %s requires unknown extension `%s'",
 						sbin->path, str_sanitize(str_c(extension), 128));
-					result = FALSE;
+					result = 0;
 				} else {
 					struct sieve_binary_extension_reg *ereg = NULL;
 
 					(void) sieve_binary_extension_register(sbin, ext, &ereg);
-					if ( !sieve_binary_read_unsigned(sblock, &offset, &ereg->block_id) )
-						result = FALSE;
+					if ( !sieve_binary_read_unsigned(sblock, &offset, &version) ||
+						!sieve_binary_read_unsigned(sblock, &offset, &ereg->block_id) ) {
+						result = -1;
+					} else if ( !sieve_extension_version_is(ext, version) ) {
+						sieve_sys_debug(sbin->svinst,
+							"binary open: binary %s was compiled with different version "
+							"of the `%s' extension (compiled v%d, expected v%d;"
+							"automatically fixed when re-compiled)", sbin->path,
+							sieve_extension_name(ext), version, sieve_extension_version(ext));
+						result = 0;
+					}
 				}
 			}	else
-				result = FALSE;
+				result = -1;
 		} T_END;
 	}
 
@@ -764,6 +776,7 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 	const struct sieve_binary_header *header;
 	struct sieve_binary_block *ext_block;
 	unsigned int i, blk_count;
+	int ret;
 
 	/* Verify header */
 
@@ -838,10 +851,12 @@ static bool _sieve_binary_open(struct sieve_binary *sbin)
 		ext_block = sieve_binary_block_get(sbin, SBIN_SYSBLOCK_EXTENSIONS);
 		if ( ext_block == NULL ) {
 			result = FALSE;
-		} else if ( !_read_extensions(ext_block) ) {
-			sieve_sys_error(sbin->svinst,
-				"binary open: binary %s is corrupt: failed to load extension block",
-				sbin->path);
+		} else if ( (ret=_read_extensions(ext_block)) <= 0 ) {
+			if ( ret < 0 ) {
+				sieve_sys_error(sbin->svinst,
+					"binary open: binary %s is corrupt: failed to load extension block",
+					sbin->path);
+			}
 			result = FALSE;
 		}
 	} T_END;
