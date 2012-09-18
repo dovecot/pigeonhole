@@ -89,8 +89,8 @@ Next (mostly in order of descending priority/precedence):
 * Warn during compile if using non-existent folders.
 
 * Implement IMAP plugin for IMAPSieve support:
-	- Requires the same Sieve transaction support as the sieve-filter tool needs.
-	- Requires (IMAP) metadata support in Dovecot.
+	- Requires some sort of Sieve transaction support.
+	- Requires (IMAP) METADATA support in Dovecot.
 	- This may include support for manually running a script on a set of messages
 	  through IMAP (no specification for something like this is available; we will
 	  have to provide our own)
