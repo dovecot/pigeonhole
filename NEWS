@@ -1,3 +1,21 @@
+v0.3.2 18-09-2012 Stephan Bosch <stephan@rename-it.nl>
+
+	+ sieve-refilter tool: improved man page documentation by explicitly
+	  specifying the syntax used for mailbox arguments.
+	+ Sieve: spamtest and virustest extensions: improved trace debugging of score
+	  calculation.
+	+ Sieve: made error messages about exceeding the maximum number of actions
+	  more verbose.
+	- Sieve tools: fixed problems with running as root: sievec and sieve-dump now
+	  ignore mail_uid and mail_gid settings when run as root.
+	- Sieve: fixed bug in action accounting (for limit checking): increase action
+	  instance count only when an action is actually created.
+	- Sieve: include extension: fixed namespace separation of :global and
+	  :personal scripts.
+	- ManageSieve: fixed segfault bug triggered by CHECKSCRIPT command.
+	- Fixed linking with ld.gold.
+	- Fixed several Clang compile warnings and a few potential bugs.
+
 v0.3.1 25-05-2012 Stephan Bosch <stephan@rename-it.nl>
 
 	* Added support for retrieving Sieve scripts from dict lookup. This means that
