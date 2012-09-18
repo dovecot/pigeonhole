@@ -105,9 +105,9 @@ static int sieve_dict_script_create
 	}
 
 	script->dict_uri = p_strdup(_script->pool, data);
-	script->dict = dict_init
-		(script->dict_uri, DICT_DATA_TYPE_STRING, username, svinst->base_dir);
-	if ( script->dict == NULL ) {
+	ret = dict_init(script->dict_uri, DICT_DATA_TYPE_STRING, username,
+		svinst->base_dir, &script->dict);
+	if ( ret < 0 ) {
 		sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 			"sieve dict backend: failed to initialize dict with data `%s' "
 			"for user `%s'", data, username);

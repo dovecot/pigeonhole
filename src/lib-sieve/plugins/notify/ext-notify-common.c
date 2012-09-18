@@ -175,7 +175,7 @@ static buffer_t *cmd_notify_extract_body_text
 		return NULL;
 
 	/* Initialize body decoder */
-	decoder = message_decoder_init(FALSE);
+	decoder = message_decoder_init(NULL, 0);
 
 	parser = message_parser_init(mctx->pool, input, 0, 0);
 	is_text = TRUE;

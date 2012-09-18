@@ -246,7 +246,7 @@ static bool ext_body_parts_add_missing
 	buffer_set_used_size(ctx->tmp_buffer, 0);
 
 	/* Initialize body decoder */
-	decoder = decode_to_plain ? message_decoder_init(FALSE) : NULL;
+	decoder = decode_to_plain ? message_decoder_init(NULL, 0) : NULL;
 
 	//parser = message_parser_init_from_parts(parts, input, 0,
 		//MESSAGE_PARSER_FLAG_INCLUDE_MULTIPART_BLOCKS);
