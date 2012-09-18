@@ -1,3 +1,8 @@
+v0.3.3 18-09-2012 Stephan Bosch <stephan@rename-it.nl>
+
+	- Fixed compile against installed Dovecot headers. This was broken by the
+	  ld.gold fix in the previous release.
+
 v0.3.2 18-09-2012 Stephan Bosch <stephan@rename-it.nl>
 
 	+ sieve-refilter tool: improved man page documentation by explicitly
