@@ -113,7 +113,7 @@ static struct sieve_script *sieve_file_script_alloc(void)
 	return &script->script;
 }
 
-static int sieve_file_script_create
+static int sieve_file_script_open
 (struct sieve_script *_script, const char *path, const char *const *options,
 	enum sieve_error *error_r)
 {
@@ -248,8 +248,9 @@ static int sieve_file_script_create
 	return ( success ? 0 : -1 );
 }
 
-static struct istream *sieve_file_script_open
-(struct sieve_script *_script, enum sieve_error *error_r)
+static int sieve_file_script_get_stream
+(struct sieve_script *_script, struct istream **stream_r,
+	enum sieve_error *error_r)
 {
 	struct sieve_file_script *script = (struct sieve_file_script *)_script;
 	struct sieve_instance *svinst = _script->svinst;
@@ -261,7 +262,7 @@ static struct istream *sieve_file_script_open
 
 	if ( (fd=open(script->path, O_RDONLY)) < 0 ) {
 		sieve_file_script_handle_error(_script, script->path, name, error_r);
-		return NULL;
+		return -1;
 	}
 
 	if ( fstat(fd, &st) != 0 ) {
@@ -292,7 +293,8 @@ static struct istream *sieve_file_script_open
 		}
 	}
 
-	return result;
+	*stream_r = result;
+	return 0;
 }
 
 static int sieve_file_script_get_size
@@ -356,11 +358,11 @@ const struct sieve_script sieve_file_script = {
 	.driver_name = SIEVE_FILE_SCRIPT_DRIVER_NAME,
 	.v = {
 		sieve_file_script_alloc,
-		sieve_file_script_create,
 		NULL,
 
 		sieve_file_script_open,
-		NULL,
+
+		sieve_file_script_get_stream,
 
 		sieve_file_script_binary_read_metadata,
 		NULL,

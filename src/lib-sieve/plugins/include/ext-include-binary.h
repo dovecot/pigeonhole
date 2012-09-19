@@ -30,18 +30,19 @@ struct sieve_variable_scope_binary *ext_include_binary_get_global_scope
  */
 
 struct ext_include_script_info {
-    unsigned int id;
+	unsigned int id;
 
-    struct sieve_script *script;
-    enum ext_include_script_location location;
+	struct sieve_script *script;
+	enum ext_include_flags flags;
+	enum ext_include_script_location location;
 
-    struct sieve_binary_block *block;
+	struct sieve_binary_block *block;
 };
 
 const struct ext_include_script_info *ext_include_binary_script_include
-	(struct ext_include_binary_context *binctx, struct sieve_script *script,
-		enum ext_include_script_location location,
-		struct sieve_binary_block *block);
+	(struct ext_include_binary_context *binctx, 
+		enum ext_include_script_location location, enum ext_include_flags flags,
+		struct sieve_script *script, struct sieve_binary_block *inc_block);
 bool ext_include_binary_script_is_included
 	(struct ext_include_binary_context *binctx, struct sieve_script *script,
 		const struct ext_include_script_info **script_info_r);

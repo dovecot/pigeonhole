@@ -109,8 +109,7 @@ following list outlines the implementation status of each supported extension:
     relational (RFC 5231): fully supported.
     imap4flags (RFC 5232): fully supported.
     subaddress (RFC 5233): fully supported, but with limited configurability.
-    spamtest and virustest (RFC 5235): fully supported (v0.1.16+), but
-        currently considered experimental.
+    spamtest and virustest (RFC 5235): fully supported (v0.1.16+).
     date (RFC 5260; Section 4): fully supported (v0.1.12+).
     editheader (RFC 5293): fully supported (v0.3.0+).
     reject (RFC 5429; Section 2.2): fully supported.
@@ -121,8 +120,7 @@ following list outlines the implementation status of each supported extension:
     ihave (RFC 5463): fully supported (v0.2.4+).
     mailbox (RFC 5490; Section 3): fully supported (v0.1.10+), but ACL
         permissions are not verified for mailboxexists.
-    include (draft v05; not latest version): almost fully supported, but
-        interaction with ManageSieve is not in accordance with specification.
+    include (RFC 6609): fully supported (v0.4.0+)
     regex (draft v08; not latest version): almost fully supported, but
         UTF-8 is not supported.
 

@@ -49,7 +49,18 @@ static struct sieve_script *sieve_dict_script_alloc(void)
 	return &script->script;
 }
 
-static int sieve_dict_script_create
+static void sieve_dict_script_free(struct sieve_script *_script)
+{
+	struct sieve_dict_script *script = (struct sieve_dict_script *)_script;
+
+	if ( script->dict != NULL )
+		dict_deinit(&script->dict);
+
+	if ( script->data_pool != NULL )
+		pool_unref(&script->data_pool);
+}
+
+static int sieve_dict_script_open
 (struct sieve_script *_script, const char *data, const char *const *options,
 	enum sieve_error *error_r)
 {
@@ -154,19 +165,9 @@ static int sieve_dict_script_create
 	return 0;
 }
 
-static void sieve_dict_script_destroy(struct sieve_script *_script)
-{
-	struct sieve_dict_script *script = (struct sieve_dict_script *)_script;
-
-	if ( script->dict != NULL )
-		dict_deinit(&script->dict);
-
-	if ( script->data_pool != NULL )
-		pool_unref(&script->data_pool);
-}
-
-static struct istream *sieve_dict_script_open
-(struct sieve_script *_script, enum sieve_error *error_r)
+static int sieve_dict_script_get_stream
+(struct sieve_script *_script, struct istream **stream_r,
+	enum sieve_error *error_r)
 {
 	struct sieve_dict_script *script = (struct sieve_dict_script *)_script;
 	struct sieve_instance *svinst = _script->svinst;
@@ -194,21 +195,11 @@ static struct istream *sieve_dict_script_open
 				"not found at path %s",	script->data_id, name, path);
 		}
 		*error_r = SIEVE_ERROR_TEMP_FAIL;
-		return NULL;
+		return -1;
 	}
 
-	return i_stream_create_from_data(script->data, strlen(script->data));
-}
-
-static void sieve_dict_script_close(struct sieve_script *_script)
-{
-	struct sieve_dict_script *script = (struct sieve_dict_script *)_script;
-
-	pool_unref(&script->data_pool);
-
-	script->data_pool = NULL;
-	script->data_id = NULL;
-	script->data = NULL;
+	*stream_r = i_stream_create_from_data(script->data, strlen(script->data));
+	return 0;
 }
 
 static int sieve_dict_script_binary_read_metadata
@@ -270,18 +261,18 @@ static int sieve_dict_script_binary_save
 static bool sieve_dict_script_equals
 (const struct sieve_script *_script, const struct sieve_script *_other)
 {
-        struct sieve_dict_script *script = (struct sieve_dict_script *)_script;
-        struct sieve_dict_script *other = (struct sieve_dict_script *)_other;
+	struct sieve_dict_script *script = (struct sieve_dict_script *)_script;
+	struct sieve_dict_script *other = (struct sieve_dict_script *)_other;
 
-        if ( script == NULL || other == NULL )
-                return FALSE;
+	if ( script == NULL || other == NULL )
+		return FALSE;
 
-        if ( strcmp(script->dict_uri, other->dict_uri) != 0 )
+	if ( strcmp(script->dict_uri, other->dict_uri) != 0 )
 		return FALSE;
 
 	i_assert( _script->name != NULL && _other->name != NULL );
 
-        return ( strcmp(_script->name, _other->name) == 0 );
+	return ( strcmp(_script->name, _other->name) == 0 );
 }
 
 
@@ -289,11 +280,11 @@ const struct sieve_script sieve_dict_script = {
 	.driver_name = SIEVE_DICT_SCRIPT_DRIVER_NAME,
 	.v = {
 		sieve_dict_script_alloc,
-		sieve_dict_script_create,
-		sieve_dict_script_destroy,
+		sieve_dict_script_free,
 
 		sieve_dict_script_open,
-		sieve_dict_script_close,
+
+		sieve_dict_script_get_stream,
 
 		sieve_dict_script_binary_read_metadata,
 		sieve_dict_script_binary_write_metadata,

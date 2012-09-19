@@ -21,6 +21,12 @@ struct ext_include_binary_context;
  * Types
  */
 
+enum ext_include_flags { // stored in one byte
+	EXT_INCLUDE_FLAG_ONCE = 0x01,
+	EXT_INCLUDE_FLAG_OPTIONAL = 0x02,
+	EXT_INCLUDE_FLAG_MISSING_AT_UPLOAD = 0x04
+};
+
 enum ext_include_script_location {
 	EXT_INCLUDE_LOCATION_PERSONAL,
 	EXT_INCLUDE_LOCATION_GLOBAL,
@@ -144,8 +150,9 @@ void ext_include_register_generator_context
 
 int ext_include_generate_include
 	(const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
-		enum ext_include_script_location location, struct sieve_script *script,
-		const struct ext_include_script_info **included_r, bool once);
+		enum ext_include_script_location location,
+		enum ext_include_flags flags, struct sieve_script *script,
+		const struct ext_include_script_info **included_r);
 
 /* Interpreter context */
 

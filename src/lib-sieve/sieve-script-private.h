@@ -12,17 +12,16 @@
 
 struct sieve_script_vfuncs {
 	struct sieve_script *(*alloc)(void);
-	int (*create)
-		(struct sieve_script *script, const char *data, const char *const *options,
+	void (*destroy)(struct sieve_script *script);
+
+	int (*open)
+		(struct sieve_script *script, const char *data,
+			const char *const *options, enum sieve_error *error_r);
+
+	int (*get_stream)
+		(struct sieve_script *script, struct istream **stream_r,
 			enum sieve_error *error_r);
-	void (*destroy)
-		(struct sieve_script *script);
-
-	struct istream *(*open)
-		(struct sieve_script *script, enum sieve_error *error_r);
-	void (*close)
-		(struct sieve_script *script);
-
+	
 	int (*binary_read_metadata)
 		(struct sieve_script *_script, struct sieve_binary_block *sblock,
 			sieve_size_t *offset);
@@ -53,18 +52,20 @@ struct sieve_script {
 	struct sieve_error_handler *ehandler;
 
 	const char *name;
+	const char *data;
 	const char *location;
 	const char *bin_dir;
 
 	/* Stream */
 	struct istream *stream;
+
+	unsigned int open:1;
 };
 
-struct sieve_script *sieve_script_init
+void sieve_script_init
 	(struct sieve_script *script, struct sieve_instance *svinst,
 		const struct sieve_script *script_class, const char *data,
-		const char *name, struct sieve_error_handler *ehandler,
-		enum sieve_error *error_r);
+		const char *name, struct sieve_error_handler *ehandler);
 
 int sieve_script_setup_bindir
 	(struct sieve_script *script, mode_t mode);

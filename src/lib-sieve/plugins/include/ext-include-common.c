@@ -454,8 +454,9 @@ struct sieve_variable_storage *ext_include_interpreter_get_global_variables
 
 int ext_include_generate_include
 (const struct sieve_codegen_env *cgenv, struct sieve_command *cmd,
-	enum ext_include_script_location location, struct sieve_script *script,
-	const struct ext_include_script_info **included_r, bool once)
+	enum ext_include_script_location location, 	enum ext_include_flags flags,
+	struct sieve_script *script,
+	const struct ext_include_script_info **included_r)
 {
 	const struct sieve_extension *this_ext = cmd->ext;
 	struct ext_include_context *ext_ctx =
@@ -489,7 +490,7 @@ int ext_include_generate_include
 	}
 
 	/* Check for circular include */
-	if ( !once ) {
+	if ( (flags & EXT_INCLUDE_FLAG_ONCE) == 0 ) {
 		pctx = ctx;
 		while ( pctx != NULL ) {
 			if ( sieve_script_equals(pctx->script, script) ) {
@@ -517,7 +518,6 @@ int ext_include_generate_include
 	/* Is the script already compiled into the current binary? */
 	if ( !ext_include_binary_script_is_included(binctx, script, &included) )
 	{
-		struct sieve_binary_block *inc_block;
 		const char *script_name = sieve_script_name(script);
 		enum sieve_compile_flags cpflags = cgenv->flags;
 
@@ -532,55 +532,65 @@ int ext_include_generate_include
 
 		/* No, allocate a new block in the binary and mark the script as included.
 		 */
-		inc_block = sieve_binary_block_create(sbin);
-		included = ext_include_binary_script_include
-			(binctx, script, location, inc_block);
+		if ( !sieve_script_is_open(script) ) {
+			i_assert((flags & EXT_INCLUDE_FLAG_MISSING_AT_UPLOAD) != 0 ||
+				(flags & EXT_INCLUDE_FLAG_OPTIONAL) != 0);
+			included = ext_include_binary_script_include
+				(binctx, location, flags, script, NULL);
+			result = 0;
 
-		/* Parse */
-		if ( (ast = sieve_parse(script, ehandler, NULL)) == NULL ) {
-	 		sieve_command_generate_error(gentr, cmd,
-	 			"failed to parse included script '%s'", str_sanitize(script_name, 80));
-	 		return -1;
-		}
+		}	else {
+			struct sieve_binary_block *inc_block = sieve_binary_block_create(sbin);
 
-		/* Included scripts inherit global variable scope */
-		(void)ext_include_create_ast_context(this_ext, ast, cmd->ast_node->ast);
+			included = ext_include_binary_script_include
+				(binctx, location, flags, script, inc_block);
 
-		if ( location == EXT_INCLUDE_LOCATION_GLOBAL )
+			/* Parse */
+			if ( (ast = sieve_parse(script, ehandler, NULL)) == NULL ) {
+		 		sieve_command_generate_error(gentr, cmd,
+		 			"failed to parse included script '%s'", str_sanitize(script_name, 80));
+		 		return -1;
+			}
+
+			/* Included scripts inherit global variable scope */
+			(void)ext_include_create_ast_context(this_ext, ast, cmd->ast_node->ast);
+
+			if ( location == EXT_INCLUDE_LOCATION_GLOBAL )
 				cpflags &= ~SIEVE_RUNTIME_FLAG_NOGLOBAL;
-		else
+			else
 				cpflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
 
-		/* Validate */
-		if ( !sieve_validate(ast, ehandler, cpflags, NULL) ) {
-			sieve_command_generate_error(gentr, cmd,
-				"failed to validate included script '%s'",
-				str_sanitize(script_name, 80));
-	 		sieve_ast_unref(&ast);
-	 		return -1;
-	 	}
+			/* Validate */
+			if ( !sieve_validate(ast, ehandler, cpflags, NULL) ) {
+				sieve_command_generate_error(gentr, cmd,
+					"failed to validate included script '%s'",
+					str_sanitize(script_name, 80));
+		 		sieve_ast_unref(&ast);
+		 		return -1;
+		 	}
 
-		/* Generate
-		 *
-		 * FIXME: It might not be a good idea to recurse code generation for
-		 * included scripts.
-		 */
-	 	subgentr = sieve_generator_create(ast, ehandler, cpflags);
-		ext_include_initialize_generator_context(cmd->ext, subgentr, ctx, script);
+			/* Generate
+			 *
+			 * FIXME: It might not be a good idea to recurse code generation for
+			 * included scripts.
+			 */
+		 	subgentr = sieve_generator_create(ast, ehandler, cpflags);
+			ext_include_initialize_generator_context(cmd->ext, subgentr, ctx, script);
+	
+			if ( sieve_generator_run(subgentr, &inc_block) == NULL ) {
+				sieve_command_generate_error(gentr, cmd,
+					"failed to generate code for included script '%s'",
+					str_sanitize(script_name, 80));
+		 		result = -1;
+			}
 
-		if ( sieve_generator_run(subgentr, &inc_block) == NULL ) {
-			sieve_command_generate_error(gentr, cmd,
-				"failed to generate code for included script '%s'",
-				str_sanitize(script_name, 80));
-	 		result = -1;
+			sieve_generator_free(&subgentr);
+
+			/* Cleanup */
+			sieve_ast_unref(&ast);
 		}
-
-		sieve_generator_free(&subgentr);
-
-		/* Cleanup */
-		sieve_ast_unref(&ast);
 	}
-
+	
 	if ( result > 0 ) *included_r = included;
 
 	return result;

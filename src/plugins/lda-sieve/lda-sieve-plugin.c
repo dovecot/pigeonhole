@@ -605,7 +605,7 @@ static int lda_sieve_deliver_mail
 
 		user_location = lda_sieve_get_personal_location(svinst, mdctx->dest_user);
 		if ( user_location != NULL ) {
-			srctx.user_script = sieve_script_create_as
+			srctx.user_script = sieve_script_create_open_as
 				(svinst, user_location, "main script", master_ehandler, &error);
 
 			if ( srctx.user_script == NULL ) {
@@ -629,7 +629,7 @@ static int lda_sieve_deliver_mail
 		if ( srctx.user_script == NULL ) {
 			default_location = lda_sieve_get_default_location(mdctx->dest_user);
 			if ( default_location != NULL ) {
-				srctx.main_script = sieve_script_create_as
+				srctx.main_script = sieve_script_create_open_as
 					(svinst, default_location, "main script", master_ehandler, &error);
 
 				if ( srctx.main_script == NULL && error == SIEVE_ERROR_NOT_FOUND &&

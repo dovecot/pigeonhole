@@ -63,18 +63,18 @@ struct sieve_script *sieve_storage_script_init_from_path
 	st_script->file.script.pool = pool;
 	st_script->storage = storage;
 
-	if ( sieve_script_init
+	sieve_script_init
 		(&st_script->file.script, storage->svinst, &sieve_file_script, path,
-			scriptname,	sieve_storage_get_error_handler(storage), &error) != NULL ) {
-		return &st_script->file.script;
+			scriptname,	sieve_storage_get_error_handler(storage));
+
+	if ( sieve_script_open(&st_script->file.script, &error) < 0 ) {
+		if ( error == SIEVE_ERROR_NOT_FOUND )
+			sieve_storage_set_error(storage, error, "Script does not exist.");
+		pool_unref(&pool);
+		return NULL;
 	}
 
-	pool_unref(&pool);
-
-	if ( error == SIEVE_ERROR_NOT_FOUND )
-		sieve_storage_set_error(storage, error, "Script does not exist.");
-
-	return NULL;
+	return &st_script->file.script;
 }
 
 struct sieve_script *sieve_storage_script_init

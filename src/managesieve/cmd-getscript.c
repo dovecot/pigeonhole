@@ -105,9 +105,8 @@ bool cmd_getscript(struct client_command_context *cmd)
 		return cmd_getscript_finish(ctx);
 	}
 
-	ctx->script_stream = sieve_script_open(ctx->script, &error);
-
-	if ( ctx->script_stream == NULL ) {
+	if ( sieve_script_get_stream
+		(ctx->script, &ctx->script_stream, &error) < 0 ) {
 		if ( error == SIEVE_ERROR_NOT_FOUND )
 			sieve_storage_set_error(client->storage, error, "Script does not exist.");
 		ctx->failed = TRUE;

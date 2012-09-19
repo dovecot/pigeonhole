@@ -23,7 +23,7 @@
  * Include command
  *
  * Syntax:
- *   include [LOCATION] <value: string>
+ *   include [LOCATION] [":once"] [":optional"] <value: string>
  *
  * [LOCATION]:
  *   ":personal" / ":global"
@@ -74,11 +74,11 @@ const struct sieve_operation_def include_operation = {
 
 struct cmd_include_context_data {
 	enum ext_include_script_location location;
-	bool location_assigned;
-
-	bool include_once;
 
 	struct sieve_script *script;
+	enum ext_include_flags flags;
+
+	unsigned int location_assigned:1;
 };
 
 /*
@@ -103,16 +103,24 @@ static const struct sieve_argument_def include_global_tag = {
 	NULL, NULL, NULL
 };
 
-static bool cmd_include_validate_once_tag
+static bool cmd_include_validate_boolean_tag
 	(struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
 		struct sieve_command *cmd);
 
 static const struct sieve_argument_def include_once_tag = {
 	"once",
 	NULL,
-	cmd_include_validate_once_tag,
+	cmd_include_validate_boolean_tag,
 	NULL, NULL, NULL
 };
+
+static const struct sieve_argument_def include_optional_tag = {
+	"optional",
+	NULL,
+	cmd_include_validate_boolean_tag,
+	NULL, NULL, NULL
+};
+
 
 /*
  * Tag validation
@@ -147,14 +155,17 @@ static bool cmd_include_validate_location_tag
 	return TRUE;
 }
 
-static bool cmd_include_validate_once_tag
+static bool cmd_include_validate_boolean_tag
 (struct sieve_validator *valdtr ATTR_UNUSED, struct sieve_ast_argument **arg,
 	struct sieve_command *cmd)
 {
 	struct cmd_include_context_data *ctx_data =
 		(struct cmd_include_context_data *) cmd->data;
 
-	ctx_data->include_once = TRUE;
+	if ( sieve_argument_is(*arg, include_once_tag) )
+		ctx_data->flags |= EXT_INCLUDE_FLAG_ONCE;
+	else
+		ctx_data->flags |= EXT_INCLUDE_FLAG_OPTIONAL;
 
 	/* Delete this tag (for now) */
 	*arg = sieve_ast_arguments_detach(*arg, 1);
@@ -173,6 +184,7 @@ static bool cmd_include_registered
 	sieve_validator_register_tag(valdtr, cmd_reg, ext, &include_personal_tag, 0);
 	sieve_validator_register_tag(valdtr, cmd_reg, ext, &include_global_tag, 0);
 	sieve_validator_register_tag(valdtr, cmd_reg, ext, &include_once_tag, 0);
+	sieve_validator_register_tag(valdtr, cmd_reg, ext, &include_optional_tag, 0);
 
 	return TRUE;
 }
@@ -204,7 +216,7 @@ static bool cmd_include_validate
 	struct sieve_script *script;
 	const char *script_location, *script_name;
 	enum sieve_error error = SIEVE_ERROR_NONE;
-	bool include = TRUE;
+	int ret;
 
 	/* Check argument */
 	if ( !sieve_validate_positional_argument
@@ -251,33 +263,47 @@ static bool cmd_include_validate
 		(this_ext->svinst, script_location, script_name,
 			sieve_validator_error_handler(valdtr), &error);
 
-	if ( script == NULL ) {
+	ret = 0;
+	if ( script != NULL )
+		ret = sieve_script_open(script, &error);
+
+	if ( script == NULL || ret < 0 ) {
 		if ( error != SIEVE_ERROR_NOT_FOUND ) {
+			if ( script != NULL )
+				sieve_script_unref(&script);
 			return FALSE;
+
+		/* Not found */
 		} else {
 			enum sieve_compile_flags cpflags =
 				sieve_validator_compile_flags(valdtr);
 
-			if ( (cpflags & SIEVE_COMPILE_FLAG_UPLOADED) != 0 ) {
+			if ( (ctx_data->flags & EXT_INCLUDE_FLAG_OPTIONAL) != 0 ) {
+				/* :optional */
+
+			} else if ( (cpflags & SIEVE_COMPILE_FLAG_UPLOADED) != 0 ) {
+				/* Script is being uploaded */
 				sieve_argument_validate_warning(valdtr, arg,
 					"included %s script '%s' does not exist (ignored during upload)",
 					ext_include_script_location_name(ctx_data->location),
 					str_sanitize(script_name, 80));
-				include = FALSE;
+				ctx_data->flags |= EXT_INCLUDE_FLAG_MISSING_AT_UPLOAD;
+
 			} else {
+				/* Should have existed */
 				sieve_argument_validate_error(valdtr, arg,
 					"included %s script '%s' does not exist",
 					ext_include_script_location_name(ctx_data->location),
 					str_sanitize(script_name, 80));
+				if ( script != NULL )
+					sieve_script_unref(&script);
 				return FALSE;
 			}
 		}
 	}
 
-	if ( include ) {
-		ext_include_ast_link_included_script(cmd->ext, cmd->ast_node->ast, script);
-		ctx_data->script = script;
-	}
+	ext_include_ast_link_included_script(cmd->ext, cmd->ast_node->ast, script);
+	ctx_data->script = script;
 
 	(void)sieve_ast_arguments_detach(arg, 1);
 	return TRUE;
@@ -293,26 +319,20 @@ static bool cmd_include_generate
 	struct cmd_include_context_data *ctx_data =
 		(struct cmd_include_context_data *) cmd->data;
 	const struct ext_include_script_info *included;
-	unsigned int flags = ctx_data->include_once;
 	int ret;
 
-	/* Upon upload ctx_data->script may be NULL if the script was not found. We
-	 * don't emit any code for this include command in that case.
+	/* Compile (if necessary) and include the script into the binary.
+	 * This yields the id of the binary block containing the compiled byte code.
 	 */
-	if ( ctx_data->script != NULL ) {
-		/* Compile (if necessary) and include the script into the binary.
-		 * This yields the id of the binary block containing the compiled byte code.
-		 */
-		if ( (ret=ext_include_generate_include
-			(cgenv, cmd, ctx_data->location, ctx_data->script, &included,
-				ctx_data->include_once)) < 0 )
-	 		return FALSE;
+	if ( (ret=ext_include_generate_include
+		(cgenv, cmd, ctx_data->location, ctx_data->flags, ctx_data->script,
+			&included)) < 0 )
+ 		return FALSE;
 
-		if ( ret > 0 ) {
-		 	(void)sieve_operation_emit(cgenv->sblock, cmd->ext, &include_operation);
-			(void)sieve_binary_emit_unsigned(cgenv->sblock, included->id);
-			(void)sieve_binary_emit_byte(cgenv->sblock, flags);
-		}
+	if ( ret > 0 ) {
+	 	(void)sieve_operation_emit(cgenv->sblock, cmd->ext, &include_operation);
+		(void)sieve_binary_emit_unsigned(cgenv->sblock, included->id);
+		(void)sieve_binary_emit_byte(cgenv->sblock, ctx_data->flags);
 	}
 
 	return TRUE;
@@ -371,7 +391,8 @@ static int opc_include_execute
 		return SIEVE_EXEC_BIN_CORRUPT;
 	}
 
-	return ext_include_execute_include(renv, include_id, flags & 0x01);
+	return ext_include_execute_include
+		(renv, include_id, (enum ext_include_flags)flags);
 }
 
 

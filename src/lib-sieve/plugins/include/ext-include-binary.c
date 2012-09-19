@@ -122,16 +122,18 @@ struct ext_include_binary_context *ext_include_binary_init
  */
 
 const struct ext_include_script_info *ext_include_binary_script_include
-(struct ext_include_binary_context *binctx, struct sieve_script *script,
-	enum ext_include_script_location location, struct sieve_binary_block *inc_block)
+(struct ext_include_binary_context *binctx, 
+	enum ext_include_script_location location, enum ext_include_flags flags,
+	struct sieve_script *script,	struct sieve_binary_block *inc_block)
 {
 	pool_t pool = sieve_binary_pool(binctx->binary);
 	struct ext_include_script_info *incscript;
 
 	incscript = p_new(pool, struct ext_include_script_info, 1);
 	incscript->id = array_count(&binctx->include_index)+1;
-	incscript->script = script;
 	incscript->location = location;
+	incscript->flags = flags;
+	incscript->script = script;
 	incscript->block = inc_block;
 
 	/* Unreferenced on binary_free */
@@ -220,9 +222,15 @@ static bool ext_include_binary_save
 	for ( i = 0; i < script_count; i++ ) {
 		struct ext_include_script_info *incscript = scripts[i];
 
-		sieve_binary_emit_unsigned(sblock, sieve_binary_block_get_id(incscript->block));
+		if ( incscript->block != NULL ) {
+			sieve_binary_emit_unsigned
+				(sblock, sieve_binary_block_get_id(incscript->block));
+		} else {
+			sieve_binary_emit_unsigned(sblock, 0);
+		}
 		sieve_binary_emit_byte(sblock, incscript->location);
 		sieve_binary_emit_cstring(sblock, sieve_script_name(incscript->script));
+		sieve_binary_emit_byte(sblock, incscript->flags);
 		sieve_script_binary_write_metadata(incscript->script, sblock);
 	}
 
@@ -267,17 +275,19 @@ static bool ext_include_binary_open
 	/* Read dependencies */
 	for ( i = 0; i < depcount; i++ ) {
 		unsigned int inc_block_id;
-		struct sieve_binary_block *inc_block;
-		unsigned int location;
+		struct sieve_binary_block *inc_block = NULL;
+		unsigned int location, flags;
 		string_t *script_name;
 		const char *script_location;
 		struct sieve_script *script;
+		enum sieve_error error;
 		int ret;
 
 		if (
 			!sieve_binary_read_unsigned(sblock, &offset, &inc_block_id) ||
 			!sieve_binary_read_byte(sblock, &offset, &location) ||
-			!sieve_binary_read_string(sblock, &offset, &script_name) ) {
+			!sieve_binary_read_string(sblock, &offset, &script_name) ||
+			!sieve_binary_read_byte(sblock, &offset, &flags) ) {
 			/* Binary is corrupt, recompile */
 			sieve_sys_error(svinst,
 				"include: failed to read included script "
@@ -286,7 +296,8 @@ static bool ext_include_binary_open
 			return FALSE;
 		}
 
-		if ( (inc_block=sieve_binary_block_get(sbin, inc_block_id)) == NULL ) {
+		if ( inc_block_id != 0 &&
+			(inc_block=sieve_binary_block_get(sbin, inc_block_id)) == NULL ) {
 			sieve_sys_error(svinst,
 				"include: failed to find block %d for included script "
 				"from dependency block %d of binary %s", inc_block_id, block_id,
@@ -304,23 +315,59 @@ static bool ext_include_binary_open
 			return FALSE;
 		}
 
-		/* Can we find/open the script dependency ? */
+		/* Can we find the script dependency ? */
 		script_location = ext_include_get_script_location
 			(ext, location, str_c(script_name));
-		if ( script_location == NULL || (script=sieve_script_create
-			(ext->svinst, script_location, str_c(script_name), NULL, NULL)) == NULL )
-			{
+		if ( script_location == NULL ) {
 			/* No, recompile */
 			return FALSE;
 		}
 
-		if ( (ret=sieve_script_binary_read_metadata(script, sblock, &offset))
-			< 0 ) {
+		/* Can we open the script dependency ? */
+		script = sieve_script_create
+			(ext->svinst, script_location, str_c(script_name), NULL, &error);
+		if ( script == NULL ) {
+			/* No, recompile */
+			return FALSE;
+		}
+		if ( sieve_script_open(script, &error) < 0 ) {			
+			if ( error != SIEVE_ERROR_NOT_FOUND ) {
+				/* No, recompile */
+				return FALSE;
+			}
+
+			if ( (flags & EXT_INCLUDE_FLAG_OPTIONAL) == 0 &&
+				 (flags & EXT_INCLUDE_FLAG_MISSING_AT_UPLOAD) == 0) {
+				/* Not supposed to be missing, recompile */
+				if ( svinst->debug ) {
+					sieve_sys_debug(svinst,
+						"include: script '%s' contained in binary %s is now missing, "
+						"so recompile", str_c(script_name), sieve_binary_path(sbin));
+				}
+				return FALSE;
+			}
+
+		} else if (inc_block == NULL) {
+			/* Script exists, but it is missing from the binary, recompile no matter
+			 * what.
+			 */
+			if ( svinst->debug ) {
+				sieve_sys_debug(svinst,
+					"include: script '%s' is missing in binary %s, but is now available, "
+					"so recompile", str_c(script_name), sieve_binary_path(sbin));
+			}
+			return FALSE;
+		}
+
+		/* Can we read script metadata ? */
+		if ( (ret=sieve_script_binary_read_metadata
+			(script, sblock, &offset))	< 0 ) {
 			/* Binary is corrupt, recompile */
 			sieve_sys_error(svinst,
 				"include: dependency block %d of binary %s "
 				"contains invalid script metadata for script %s",
 				block_id, sieve_binary_path(sbin), sieve_script_location(script));
+			sieve_script_unref(&script);
 			return FALSE;
 		}
 
@@ -328,7 +375,7 @@ static bool ext_include_binary_open
 			binctx->outdated = TRUE;
 
 		(void)ext_include_binary_script_include
-			(binctx, script, location, inc_block);
+			(binctx, location, flags, script, inc_block);
 
 		sieve_script_unref(&script);
 	}
@@ -363,7 +410,8 @@ static void ext_include_binary_free
 
 	/* Release references to all included script objects */
 	hctx = hash_table_iterate_init(binctx->included_scripts);
-	while ( hash_table_iterate(hctx, binctx->included_scripts, &script, &incscript) )
+	while ( hash_table_iterate
+		(hctx, binctx->included_scripts, &script, &incscript) )
 		sieve_script_unref(&incscript->script);
 	hash_table_iterate_deinit(&hctx);
 
@@ -391,23 +439,31 @@ bool ext_include_binary_dump
 		return FALSE;
 
 	hctx = hash_table_iterate_init(binctx->included_scripts);
-	while ( hash_table_iterate(hctx, binctx->included_scripts, &script, &incscript) ) {
-		unsigned int block_id = sieve_binary_block_get_id(incscript->block);
+	while ( hash_table_iterate
+		(hctx, binctx->included_scripts, &script, &incscript) ) {
 
-		sieve_binary_dump_sectionf(denv, "Included %s script '%s' (block: %d)",
-			ext_include_script_location_name(incscript->location),
-			sieve_script_name(incscript->script), block_id);
+		if ( incscript->block == NULL ) {
+			sieve_binary_dump_sectionf(denv, "Included %s script '%s' (MISSING)",
+				ext_include_script_location_name(incscript->location),
+				sieve_script_name(incscript->script));
 
-		denv->sblock = incscript->block;
-		denv->cdumper = sieve_code_dumper_create(denv);
+		} else {
+			unsigned int block_id = sieve_binary_block_get_id(incscript->block);
 
-		if ( denv->cdumper == NULL )
-			return FALSE;
+			sieve_binary_dump_sectionf(denv, "Included %s script '%s' (block: %d)",
+				ext_include_script_location_name(incscript->location),
+				sieve_script_name(incscript->script), block_id);
 
-		sieve_code_dumper_run(denv->cdumper);
-		sieve_code_dumper_free(&(denv->cdumper));
+			denv->sblock = incscript->block;
+			denv->cdumper = sieve_code_dumper_create(denv);
+
+			if ( denv->cdumper == NULL )
+				return FALSE;
+
+			sieve_code_dumper_run(denv->cdumper);
+			sieve_code_dumper_free(&(denv->cdumper));
+		}
 	}
-
 	hash_table_iterate_deinit(&hctx);
 
 	return TRUE;

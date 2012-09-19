@@ -255,7 +255,7 @@ struct sieve_binary *sieve_compile
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
 
-	if ( (script = sieve_script_create
+	if ( (script = sieve_script_create_open
 		(svinst, script_location, script_name, ehandler, error_r)) == NULL )
 		return NULL;
 
@@ -375,10 +375,8 @@ struct sieve_binary *sieve_open
 	struct sieve_binary *sbin;
 
 	/* First open the scriptfile itself */
-	script = sieve_script_create
-		(svinst, script_location, script_name, ehandler, error_r);
-
-	if ( script == NULL ) {
+	if ( (script=sieve_script_create_open
+		(svinst, script_location, script_name, ehandler, error_r)) == NULL ) {
 		/* Failed */
 		return NULL;
 	}

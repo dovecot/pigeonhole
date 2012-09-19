@@ -64,6 +64,8 @@ static bool ext_include_binary_load
 
 const struct sieve_extension_def include_extension = {
 	.name = "include",
+	.version = 1,
+
 	.load = ext_include_load,
 	.unload = ext_include_unload,
 	.validator_load = ext_include_validator_load,
@@ -72,6 +74,7 @@ const struct sieve_extension_def include_extension = {
 	.binary_load = ext_include_binary_load,
 	.binary_dump = ext_include_binary_dump,
 	.code_dump = ext_include_code_dump,
+
 	SIEVE_EXT_DEFINE_OPERATIONS(ext_include_operations)
 };
 

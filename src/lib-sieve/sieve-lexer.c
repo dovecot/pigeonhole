@@ -71,8 +71,7 @@ const struct sieve_lexer *sieve_lexer_create
 	const struct stat *st;
 
 	/* Open script as stream */
-	stream = sieve_script_open(script, error_r);
-	if ( stream == NULL )
+	if ( sieve_script_get_stream(script, &stream, error_r) < 0 )
 		return NULL;
 
 	/* Check script size */
@@ -121,7 +120,6 @@ void sieve_lexer_free(const struct sieve_lexer **lexer)
 
 	i_stream_unref(&scanner->input);
 
-	sieve_script_close(scanner->script);
 	sieve_script_unref(&scanner->script);
 
 	sieve_error_handler_unref(&scanner->ehandler);

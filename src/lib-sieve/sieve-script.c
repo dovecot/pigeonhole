@@ -180,51 +180,19 @@ static bool sieve_script_location_parse
 	return TRUE;
 }
 
-struct sieve_script *sieve_script_init
+void sieve_script_init
 (struct sieve_script *script, struct sieve_instance *svinst,
-	const struct sieve_script *script_class, const char *data, const char *name,
-	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
+	const struct sieve_script *script_class, const char *data,
+	const char *name, struct sieve_error_handler *ehandler)
 {
-	enum sieve_error error;
-	const char *const *options = NULL;
-	const char *location = NULL, *parse_error = NULL;
-
-	if ( error_r != NULL )
-		*error_r = SIEVE_ERROR_NONE;
-
 	script->script_class = script_class;
 	script->refcount = 1;
 	script->svinst = svinst;
-
 	script->ehandler = ehandler;
-
+	script->data = p_strdup_empty(script->pool, data);
 	script->name = p_strdup_empty(script->pool, name);
 
-	if ( !sieve_script_location_parse
-		(script, data, &location, &options, &parse_error) ) {
-		sieve_critical(svinst, ehandler, NULL,
-			"failed to access sieve script", "failed to parse script location: %s",
-			parse_error);
-		if ( error_r != NULL )
-			*error_r = SIEVE_ERROR_TEMP_FAIL;
-		return NULL;
-	}
-
-	if ( script->v.create(script, location, options, &error) < 0 ) {
-
-		if ( error_r == NULL ) {
-			if ( error == SIEVE_ERROR_NOT_FOUND )
-				sieve_error(ehandler, script->name, "sieve script does not exist");
-		} else {
-			*error_r = error;
-		}
-		return NULL;
-	}
-
-	i_assert( script->location != NULL );
-
 	sieve_error_handler_ref(ehandler);
-	return script;
 }
 
 struct sieve_script *sieve_script_create
@@ -257,36 +225,109 @@ struct sieve_script *sieve_script_create
 			else
 				script_class = NULL;
 
-			if ( script_class == NULL )
-				i_error("Unknown sieve script driver module: %s", driver);
+			if ( script_class == NULL ) {
+				sieve_sys_error(svinst,
+					"Unknown sieve script driver module: %s", driver);
+			}
 		} T_END;
 	}
 
-	if ( script_class == NULL )
-		return NULL;
-
-	script = script_class->v.alloc();
-	if ( sieve_script_init
-		(script, svinst, script_class, data, name, ehandler, error_r) == NULL ) {
-		pool_unref(&script->pool);
+	if ( script_class == NULL ) {
+		if ( error_r != NULL )
+			*error_r = SIEVE_ERROR_TEMP_FAIL;
 		return NULL;
 	}
 
+	script = script_class->v.alloc();
+	sieve_script_init(script, svinst, script_class, data, name, ehandler);
 	return script;
 }
 
-struct sieve_script *sieve_script_create_as
+int sieve_script_open
+(struct sieve_script *script, enum sieve_error *error_r)
+{
+	struct sieve_instance *svinst = script->svinst;
+	struct sieve_error_handler *ehandler = script->ehandler;
+	enum sieve_error error;
+	const char *const *options = NULL;
+	const char *location = NULL, *parse_error = NULL;
+
+	if ( error_r != NULL )
+		*error_r = SIEVE_ERROR_NONE;
+
+	if ( script->open )
+		return 0;
+
+	if ( !sieve_script_location_parse
+		(script, script->data, &location, &options, &parse_error) ) {
+		sieve_critical(svinst, ehandler, NULL,
+			"failed to access sieve script", "failed to parse script location: %s",
+			parse_error);
+		if ( error_r != NULL )
+			*error_r = SIEVE_ERROR_TEMP_FAIL;
+		return -1;
+	}
+
+	if ( script->v.open(script, location, options, &error) < 0 ) {
+		if ( error_r == NULL ) {
+			if ( error == SIEVE_ERROR_NOT_FOUND )
+				sieve_error(ehandler, script->name, "sieve script does not exist");
+		} else {
+			*error_r = error;
+		}
+		return -1;
+	}
+
+	i_assert( script->location != NULL );
+	i_assert( script->name != NULL );
+	script->open = TRUE;
+	return 0;
+}
+
+int sieve_script_open_as
+(struct sieve_script *script, const char *name, enum sieve_error *error_r)
+{
+	if ( sieve_script_open(script, error_r) < 0 )
+		return -1;
+
+	/* override name */
+	script->name = p_strdup(script->pool, name);
+	return 0;
+}
+
+struct sieve_script *sieve_script_create_open
 (struct sieve_instance *svinst, const char *location, const char *name,
 	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
 {
 	struct sieve_script *script;
 
-	if ( (script=sieve_script_create(svinst, location, NULL, ehandler, error_r))
-		== NULL )
+	script = sieve_script_create(svinst, location, name, ehandler, error_r);
+	if ( script == NULL )
 		return NULL;
 
-	/* override name */
-	script->name = p_strdup(script->pool, name);
+	if ( sieve_script_open(script, error_r) < 0 ) {
+		sieve_script_unref(&script);
+		return NULL;
+	}
+	
+	return script;
+}
+
+struct sieve_script *sieve_script_create_open_as
+(struct sieve_instance *svinst, const char *location, const char *name,
+	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
+{
+	struct sieve_script *script;
+
+	script = sieve_script_create(svinst, location, name, ehandler, error_r);
+	if ( script == NULL )
+		return NULL;
+
+	if ( sieve_script_open_as(script, name, error_r) < 0 ) {
+		sieve_script_unref(&script);
+		return NULL;
+	}
+	
 	return script;
 }
 
@@ -338,6 +379,7 @@ struct sieve_instance *sieve_script_svinst(const struct sieve_script *script)
 
 int sieve_script_get_size(struct sieve_script *script, uoff_t *size_r)
 {
+	struct istream *stream;
 	int ret;
 
 	if ( script->v.get_size != NULL ) {
@@ -346,31 +388,42 @@ int sieve_script_get_size(struct sieve_script *script, uoff_t *size_r)
 	}
 
 	/* Try getting size from the stream */
-	if ( script->stream == NULL && sieve_script_open(script, NULL) == NULL )
+	if ( script->stream == NULL &&
+		sieve_script_get_stream(script, &stream, NULL) < 0 )
 		return -1;
 
 	return i_stream_get_size(script->stream, TRUE, size_r);
+}
+
+bool sieve_script_is_open(const struct sieve_script *script)
+{
+	return script->open;
 }
 
 /*
  * Stream management
  */
 
-struct istream *sieve_script_open
-(struct sieve_script *script, enum sieve_error *error_r)
+int sieve_script_get_stream
+(struct sieve_script *script, struct istream **stream_r,
+	enum sieve_error *error_r)
 {
 	enum sieve_error error;
+	int ret;
 
 	if ( error_r != NULL )
 		*error_r = SIEVE_ERROR_NONE;
 
-	if ( script->stream == NULL ) {
-		T_BEGIN {
-			script->stream = script->v.open(script, &error);
-		} T_END;
+	if ( script->stream != NULL ) {
+		*stream_r = script->stream;
+		return 0;
 	}
 
-	if ( script->stream == NULL ) {
+	T_BEGIN {
+		ret = script->v.get_stream(script, &script->stream, &error);
+	} T_END;
+
+	if ( ret < 0 ) {
 		if ( error_r == NULL ) {
 			if ( error == SIEVE_ERROR_NOT_FOUND ) {
 				sieve_error(script->ehandler, script->name,
@@ -379,23 +432,11 @@ struct istream *sieve_script_open
 		} else {
 			*error_r = error;
 		}
+		return -1;
 	}
 
-	return script->stream;
-}
-
-void sieve_script_close(struct sieve_script *script)
-{
-	if ( script->stream != NULL )
-		return;
-
-	i_stream_unref(&script->stream);
-
-	if ( script->v.close != NULL ) {
-		T_BEGIN {
-			script->v.close(script);
-		} T_END;
-	}
+	*stream_r = script->stream;
+	return 0;
 }
 
 /*
@@ -425,6 +466,8 @@ bool sieve_script_equals
 
 unsigned int sieve_script_hash(const struct sieve_script *script)
 {
+	i_assert( script->name != NULL );
+
 	return str_hash(script->name);
 }
 

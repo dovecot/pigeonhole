@@ -21,8 +21,6 @@ Next (mostly in order of descending priority/precedence):
   of script storage like LDAP or SQL database.
 	- Implement read/write script storages for using ManageSieve with dict
 	  database
-* Update include extension to latest draft (v13 currently):
-	- Implement :optional tag.
 * Implement index extension
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
