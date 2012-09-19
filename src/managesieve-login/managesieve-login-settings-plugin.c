@@ -199,9 +199,18 @@ static void managesieve_login_config_set
 }
 
 static void managesieve_login_config_parser_begin(struct config_parser_context *ctx)
-{
-	if (*ctx->module != '\0' && strcmp(ctx->module, "managesieve-login") != 0)
-		return;
+{	
+	const char *const *module = ctx->modules;
+
+	if ( module != NULL ) {
+		while ( module != NULL ) {
+			if ( strcmp(*module, "managesieve-login") == 0 )
+				break;
+			module++;
+		}
+		if ( module == NULL )
+			return;
+	}
 
 	if ( !capability_dumped ) {
 		(void)capability_dump();
