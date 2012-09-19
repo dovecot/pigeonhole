@@ -28,7 +28,7 @@
 static void print_help(void)
 {
 	printf(
-"Usage: sieve-dump [-c <config-file>] [-h] [-P <plugin>] [-x <extensions>]\n"
+"Usage: sieve-dump [-c <config-file>] [-D] [-h] [-P <plugin>] [-x <extensions>]\n"
 "                  <sieve-binary> [<out-file>]\n"
 	);
 }
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 	int exit_status = EXIT_SUCCESS;
 	int c;
 
-	sieve_tool = sieve_tool_init("sieve-dump", &argc, &argv, "hP:x:", FALSE);
+	sieve_tool = sieve_tool_init("sieve-dump", &argc, &argv, "DhP:x:", FALSE);
 
 	outfile = NULL;
 

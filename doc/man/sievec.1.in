@@ -57,6 +57,9 @@ The output is identical to what the \fBsieve\-dump\fP(1) command produces
 for a compiled Sieve binary file. Note that this option is not allowed when the
 \fIout\-file\fP argument is a directory.
 .TP
+.B \-D
+Enable Sieve debugging.
+.TP
 .BI \-x\  extensions
 Set the available extensions. The parameter is a space\-separated list of the
 active extensions. By prepending the extension identifiers with \fB+\fP or
