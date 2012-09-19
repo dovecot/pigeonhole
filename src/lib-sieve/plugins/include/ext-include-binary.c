@@ -337,12 +337,11 @@ static bool ext_include_binary_open
 				return FALSE;
 			}
 
-			if ( (flags & EXT_INCLUDE_FLAG_OPTIONAL) == 0 &&
-				 (flags & EXT_INCLUDE_FLAG_MISSING_AT_UPLOAD) == 0) {
+			if ( (flags & EXT_INCLUDE_FLAG_OPTIONAL) == 0 ) {
 				/* Not supposed to be missing, recompile */
 				if ( svinst->debug ) {
 					sieve_sys_debug(svinst,
-						"include: script '%s' contained in binary %s is now missing, "
+						"include: script '%s' included in binary %s is missing, "
 						"so recompile", str_c(script_name), sieve_binary_path(sbin));
 				}
 				sieve_script_unref(&script);

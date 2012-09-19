@@ -516,10 +516,18 @@ int ext_include_generate_include
 	binctx = ext_include_binary_init(this_ext, sbin, cgenv->ast);
 
 	/* Is the script already compiled into the current binary? */
-	if ( !ext_include_binary_script_is_included(binctx, script, &included) )
-	{
+	if ( ext_include_binary_script_is_included(binctx, script, &included) ) {
+		/* Yes, only update flags */
+		if ( (flags & EXT_INCLUDE_FLAG_OPTIONAL) == 0 )
+			flags &= ~EXT_INCLUDE_FLAG_OPTIONAL;
+		if ( (flags & EXT_INCLUDE_FLAG_ONCE) == 0 ) // for consistency
+			flags &= ~EXT_INCLUDE_FLAG_ONCE;
+
+	} else 	{
 		const char *script_name = sieve_script_name(script);
 		enum sieve_compile_flags cpflags = cgenv->flags;
+
+		/* No, include new script */
 
 		/* Check whether include limit is exceeded */
 		if ( ext_include_binary_script_get_count(binctx) >=
@@ -530,9 +538,10 @@ int ext_include_generate_include
 	 		return -1;
 		}
 
-		/* No, allocate a new block in the binary and mark the script as included.
+		/* Allocate a new block in the binary and mark the script as included.
 		 */
 		if ( !sieve_script_is_open(script) ) {
+			/* Just making an empty entry to mark a missing script */
 			i_assert((flags & EXT_INCLUDE_FLAG_MISSING_AT_UPLOAD) != 0 ||
 				(flags & EXT_INCLUDE_FLAG_OPTIONAL) != 0);
 			included = ext_include_binary_script_include
@@ -542,6 +551,7 @@ int ext_include_generate_include
 		}	else {
 			struct sieve_binary_block *inc_block = sieve_binary_block_create(sbin);
 
+			/* Real include */
 			included = ext_include_binary_script_include
 				(binctx, location, flags, script, inc_block);
 
