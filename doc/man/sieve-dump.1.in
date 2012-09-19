@@ -40,6 +40,9 @@ the binary.
 .BI \-c\  config\-file
 Alternative Dovecot configuration file path.
 .TP
+.B \-D
+Enable Sieve debugging.
+.TP
 .B \-h
 Produce per\-block hexdump output of the whole binary instead of the normal
 human\-readable output.
