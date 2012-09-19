@@ -293,7 +293,6 @@ static bool ext_include_binary_open
 				"include: failed to find block %d for included script "
 				"from dependency block %d of binary %s", inc_block_id, block_id,
 				sieve_binary_path(sbin));
-
 			return FALSE;
 		}
 
@@ -323,6 +322,7 @@ static bool ext_include_binary_open
 				"include: dependency block %d of binary %s "
 				"contains invalid script metadata for script %s",
 				block_id, sieve_binary_path(sbin), sieve_script_location(script));
+			sieve_script_unref(&script);
 			return FALSE;
 		}
 
