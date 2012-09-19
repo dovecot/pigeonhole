@@ -202,13 +202,13 @@ static void managesieve_login_config_parser_begin(struct config_parser_context *
 {	
 	const char *const *module = ctx->modules;
 
-	if ( module != NULL ) {
-		while ( module != NULL ) {
+	if ( module != NULL && *module != NULL ) {
+		while ( *module != NULL ) {
 			if ( strcmp(*module, "managesieve-login") == 0 )
 				break;
 			module++;
 		}
-		if ( module == NULL )
+		if ( *module == NULL )
 			return;
 	}
 
