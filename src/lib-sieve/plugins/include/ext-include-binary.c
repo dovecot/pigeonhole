@@ -333,6 +333,7 @@ static bool ext_include_binary_open
 		if ( sieve_script_open(script, &error) < 0 ) {			
 			if ( error != SIEVE_ERROR_NOT_FOUND ) {
 				/* No, recompile */
+				sieve_script_unref(&script);
 				return FALSE;
 			}
 
@@ -344,6 +345,7 @@ static bool ext_include_binary_open
 						"include: script '%s' contained in binary %s is now missing, "
 						"so recompile", str_c(script_name), sieve_binary_path(sbin));
 				}
+				sieve_script_unref(&script);
 				return FALSE;
 			}
 
@@ -356,6 +358,7 @@ static bool ext_include_binary_open
 					"include: script '%s' is missing in binary %s, but is now available, "
 					"so recompile", str_c(script_name), sieve_binary_path(sbin));
 			}
+			sieve_script_unref(&script);
 			return FALSE;
 		}
 
