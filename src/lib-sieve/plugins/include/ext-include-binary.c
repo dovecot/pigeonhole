@@ -302,7 +302,6 @@ static bool ext_include_binary_open
 				"include: failed to find block %d for included script "
 				"from dependency block %d of binary %s", inc_block_id, block_id,
 				sieve_binary_path(sbin));
-
 			return FALSE;
 		}
 

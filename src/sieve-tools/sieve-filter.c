@@ -473,7 +473,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Finish tool initialization */
-	svinst = sieve_tool_init_finish(sieve_tool, TRUE);
+	svinst = sieve_tool_init_finish(sieve_tool, TRUE, FALSE);
 
 	/* Enable debug extension */
 	sieve_enable_debug_extension(svinst);

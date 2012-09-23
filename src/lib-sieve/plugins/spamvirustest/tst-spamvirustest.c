@@ -290,7 +290,9 @@ static int tst_spamvirustest_operation_execute
 	}
 
 	/* Get score value */
+	sieve_runtime_trace_descend(renv);
 	score_value = ext_spamvirustest_get_value(renv, this_ext, percent);
+	sieve_runtime_trace_ascend(renv);
 
 	/* Construct value list */
 	value_list = sieve_single_stringlist_create_cstr(renv, score_value, TRUE);
