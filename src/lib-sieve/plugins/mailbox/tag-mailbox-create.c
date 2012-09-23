@@ -156,7 +156,7 @@ static bool seff_mailbox_create_pre_execute
 	}
 
 	/* Try opening again */
-	if ( mailbox_sync(trans->box, 0) < 0 ) {
+	if ( mailbox_open(trans->box) < 0 ) {
 		/* Failed definitively */
 		sieve_act_store_get_storage_error(aenv, trans);
 		return FALSE;
