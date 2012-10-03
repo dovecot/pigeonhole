@@ -4,7 +4,7 @@
 #ifndef __CLIENT_H
 #define __CLIENT_H
 
-#include "network.h"
+#include "net.h"
 #include "client-common.h"
 
 /* maximum length for managesieve command line. */
