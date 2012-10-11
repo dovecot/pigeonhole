@@ -830,7 +830,7 @@ static int lda_sieve_deliver_mail
  * Plugin interface
  */
 
-const char *sieve_plugin_version = DOVECOT_VERSION;
+const char *sieve_plugin_version = DOVECOT_ABI_VERSION;
 const char sieve_plugin_binary_dependency[] = "lda lmtp";
 
 void sieve_plugin_init(void)
