@@ -30,6 +30,11 @@ typedef void (*sieve_error_func_t)
 	(struct sieve_error_handler *ehandler, const char *location,
 		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
+typedef void (*sieve_sys_error_vfunc_t)
+	(struct sieve_instance *svinst, const char *fmt, va_list args);
+typedef void (*sieve_sys_error_func_t)
+	(struct sieve_instance *svinst, const char *fmt, ...) ATTR_FORMAT(2, 3);
+
 /*
  * System errors
  */
@@ -70,6 +75,12 @@ void sieve_global_vwarning
 void sieve_global_vinfo
 	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
 		const char *location, const char *fmt, va_list args);
+void sieve_global_info_verror
+	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
+		const char *location, const char *fmt, va_list args);
+void sieve_global_info_vwarning
+	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
+		const char *location, const char *fmt, va_list args);
 
 void sieve_global_error
 	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
@@ -78,6 +89,12 @@ void sieve_global_warning
 	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
 		const char *location, const char *fmt, ...) ATTR_FORMAT(4, 5);
 void sieve_global_info
+	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
+		const char *location, const char *fmt, ...) ATTR_FORMAT(4, 5);
+void sieve_global_info_error
+	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
+		const char *location, const char *fmt, ...) ATTR_FORMAT(4, 5);
+void sieve_global_info_warning
 	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
 		const char *location, const char *fmt, ...) ATTR_FORMAT(4, 5);
 

@@ -353,17 +353,29 @@ static int lda_sieve_handle_exec_status
 (struct lda_sieve_run_context *srctx, struct sieve_script *script, int status)
 {
 	struct sieve_instance *svinst = srctx->svinst;
+	struct sieve_exec_status *estatus = srctx->scriptenv->exec_status;
 	const char *userlog_notice = "";
+	sieve_sys_error_func_t error_func = sieve_sys_error;
 	int ret;
+
+	if ( estatus != NULL && estatus->last_storage != NULL ) {
+		enum mail_error mail_error;
+
+		mail_storage_get_last_error(estatus->last_storage, &mail_error);
+
+		/* Don't bother administrator too much with benign errors */
+		if ( mail_error == MAIL_ERROR_NOSPACE )
+			error_func = sieve_sys_info;
+	}
 
 	if ( script == srctx->user_script && srctx->userlog != NULL ) {
 		userlog_notice = t_strdup_printf
-			(" (user logfile %s may reveal additional details)", srctx->userlog);
+			(" (user logfile %s should reveal additional details)", srctx->userlog);
 	}
 
 	switch ( status ) {
 	case SIEVE_EXEC_FAILURE:
-		sieve_sys_error(svinst,
+		error_func(svinst,
 			"execution of script %s failed, but implicit keep was successful%s",
 			sieve_script_location(script), userlog_notice);
 		ret = 1;
@@ -376,7 +388,7 @@ static int lda_sieve_handle_exec_status
 		ret = -1;
 		break;
 	case SIEVE_EXEC_KEEP_FAILED:
-		sieve_sys_error(svinst,
+		error_func(svinst,
 			"script %s failed with unsuccessful implicit keep%s",
 			sieve_script_location(script), userlog_notice);
 		ret = -1;

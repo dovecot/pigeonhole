@@ -11,7 +11,8 @@
  */
 
 enum sieve_error_flags {
-	SIEVE_ERROR_FLAG_GLOBAL = (1 << 0)
+	SIEVE_ERROR_FLAG_GLOBAL = (1 << 0),
+	SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO = (1 << 1),
 };
 
 /*

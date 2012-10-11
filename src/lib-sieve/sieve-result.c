@@ -272,7 +272,6 @@ void sieve_result_global_warning
 	va_end(args);
 }
 
-
 void sieve_result_log
 (const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 {
@@ -290,6 +289,26 @@ void sieve_result_global_log
 
 	va_start(args, fmt);
 	sieve_global_vinfo(aenv->svinst, aenv->ehandler, NULL, fmt, args);
+	va_end(args);
+}
+
+void sieve_result_global_log_error
+(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sieve_global_info_verror(aenv->svinst, aenv->ehandler, NULL, fmt, args);
+	va_end(args);
+}
+
+void sieve_result_global_log_warning
+(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	sieve_global_info_vwarning(aenv->svinst, aenv->ehandler, NULL, fmt, args);
 	va_end(args);
 }
 
