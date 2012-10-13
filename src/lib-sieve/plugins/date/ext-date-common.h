@@ -60,8 +60,10 @@ struct ext_date_part {
 	const char *(*get_string)(struct tm *tm, int zone_offset);
 };
 
+const struct ext_date_part *ext_date_part_find(const char *part);
+
 const char *ext_date_part_extract
-	(const char *part, struct tm *tm, int zone_offset);
+	(const struct ext_date_part *dpart, struct tm *tm, int zone_offset);
 
 /*
  * Date stringlist
@@ -74,7 +76,7 @@ enum ext_date_timezone_special {
 
 struct sieve_stringlist *ext_date_stringlist_create
 (const struct sieve_runtime_env *renv, struct sieve_stringlist *field_values,
-	int time_zone, const char *date_part);
+	int time_zone, const struct ext_date_part *dpart);
 
 
 

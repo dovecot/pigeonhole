@@ -260,7 +260,7 @@ static bool tst_date_validate
 			return FALSE;
 
 		if ( !sieve_command_verify_headers_argument(valdtr, arg) )
-    	    return FALSE;
+			return FALSE;
 
 		arg = sieve_ast_argument_next(arg);
 	}
@@ -274,6 +274,16 @@ static bool tst_date_validate
 
 	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
+
+	if ( sieve_argument_is_string_literal(arg) ) {
+		const char * part = sieve_ast_argument_strc(arg);
+
+		if ( ext_date_part_find(part) == NULL ) {
+			sieve_argument_validate_warning
+				(valdtr, arg, "specified date part `%s' is not known",
+					str_sanitize(part, 80));
+		}
+	}
 
 	arg = sieve_ast_argument_next(arg);
 
@@ -349,7 +359,7 @@ static bool tst_date_operation_dump
 			if ( !sieve_opr_string_dump_ex(denv, address, "zone", "ORIGINAL") )
 				return FALSE;
 			break;
-    default:
+		default:
 			return FALSE;
 		}
 	}
@@ -381,6 +391,7 @@ static int tst_date_operation_execute
 	struct sieve_stringlist *hdr_list = NULL, *hdr_value_list;
 	struct sieve_stringlist *value_list, *key_list;
 	bool zone_specified = FALSE, zone_literal = TRUE;
+	const struct ext_date_part *dpart;
 	int time_zone;
 	int match, ret;
 
@@ -433,9 +444,17 @@ static int tst_date_operation_execute
 	} else if ( !ext_date_parse_timezone(str_c(zone), &time_zone) ) {
 		if ( !zone_literal )
 			sieve_runtime_warning(renv, NULL,
-				"specified :zone argument '%s' is not a valid timezone "
+				"specified :zone argument `%s' is not a valid timezone "
 				"(using local zone)", str_sanitize(str_c(zone), 40));
 		time_zone = EXT_DATE_TIMEZONE_LOCAL;
+	}
+
+	if ( (dpart=ext_date_part_find(str_c(date_part))) == NULL ) {
+		sieve_runtime_warning(renv, NULL,
+			"specified date part argument `%s' is not known",
+			str_sanitize(str_c(date_part), 40));
+		sieve_interpreter_set_test_result(renv->interp, FALSE);
+		return SIEVE_EXEC_OK;
 	}
 
 	/*
@@ -449,7 +468,7 @@ static int tst_date_operation_execute
 		/* Create value stringlist */
 		hdr_value_list = sieve_message_header_stringlist_create(renv, hdr_list, FALSE);
 		value_list = ext_date_stringlist_create
-			(renv, hdr_value_list, time_zone, str_c(date_part));
+			(renv, hdr_value_list, time_zone, dpart);
 
 	} else if ( sieve_operation_is(op, currentdate_operation) ) {
 		/* Use time stamp recorded at the time the script first started */
@@ -457,8 +476,7 @@ static int tst_date_operation_execute
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "currentdatedate test");
 
 		/* Create value stringlist */
-		value_list = ext_date_stringlist_create
-			(renv, NULL, time_zone, str_c(date_part));
+		value_list = ext_date_stringlist_create(renv, NULL, time_zone, dpart);
 	} else {
 		i_unreached();
 	}

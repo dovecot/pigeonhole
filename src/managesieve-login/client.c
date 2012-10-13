@@ -204,6 +204,8 @@ static bool client_handle_input(struct managesieve_client *client)
 
 		if ( cmd->name != NULL )
 			client->cmd = cmd;
+		else
+			client->skip_line = TRUE;
 	}
 
 	if ( client->cmd != NULL && !client->cmd_parsed_args ) {

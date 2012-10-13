@@ -283,21 +283,26 @@ static const struct ext_date_part *date_parts[] = {
 
 unsigned int date_parts_count = N_ELEMENTS(date_parts);
 
-const char *ext_date_part_extract
-(const char *part, struct tm *tm, int zone_offset)
+const struct ext_date_part *ext_date_part_find(const char *part)
 {
 	unsigned int i;
 
 	for ( i = 0; i < date_parts_count; i++ ) {
 		if ( strcasecmp(date_parts[i]->identifier, part) == 0 ) {
-			if ( date_parts[i]->get_string != NULL )
-				return date_parts[i]->get_string(tm, zone_offset);
-
-			return NULL;
+			return date_parts[i];
 		}
 	}
 
 	return NULL;
+}
+
+const char *ext_date_part_extract
+(const struct ext_date_part *dpart, struct tm *tm, int zone_offset)
+{
+	if ( dpart == NULL || dpart->get_string == NULL )
+		return NULL;
+
+	return dpart->get_string(tm, zone_offset);
 }
 
 /*
@@ -455,7 +460,7 @@ struct ext_date_stringlist {
 
 	struct sieve_stringlist *field_values;
 	int time_zone;
-	const char *date_part;
+	const struct ext_date_part *date_part;
 
 	time_t local_time;
 	int local_zone;
@@ -465,7 +470,7 @@ struct ext_date_stringlist {
 
 struct sieve_stringlist *ext_date_stringlist_create
 (const struct sieve_runtime_env *renv, struct sieve_stringlist *field_values,
-	int time_zone, const char *date_part)
+	int time_zone, const struct ext_date_part *dpart)
 {
 	struct ext_date_stringlist *strlist;
 
@@ -476,7 +481,7 @@ struct sieve_stringlist *ext_date_stringlist_create
 	strlist->strlist.reset = ext_date_stringlist_reset;
 	strlist->field_values = field_values;
 	strlist->time_zone = time_zone;
-	strlist->date_part = date_part;
+	strlist->date_part = dpart;
 
 	strlist->local_time = ext_date_get_current_date(renv, &strlist->local_zone);
 

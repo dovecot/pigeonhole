@@ -105,6 +105,12 @@ void sieve_result_log
 void sieve_result_global_log
 (const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 	ATTR_FORMAT(2, 3);
+void sieve_result_global_log_error
+(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+	ATTR_FORMAT(2, 3);
+void sieve_result_global_log_warning
+(const struct sieve_action_exec_env *aenv, const char *fmt, ...)
+	ATTR_FORMAT(2, 3);
 
 /*
  * Result composition

@@ -605,12 +605,15 @@ static void act_store_log_status
 				(mailbox_get_storage(trans->box), &error_code);
 		}
 
-		if ( error_code != MAIL_ERROR_NOTFOUND && error_code != MAIL_ERROR_PARAMS )
-			{
-			sieve_result_global_error(aenv, "failed to store into mailbox %s: %s",
-				mailbox_name, errstr);
-		} else {
+		if ( error_code == MAIL_ERROR_NOTFOUND ||
+			error_code == MAIL_ERROR_PARAMS ) {
 			sieve_result_error(aenv, "failed to store into mailbox %s: %s",
+				mailbox_name, errstr);
+		} else if ( error_code == MAIL_ERROR_NOSPACE ) {
+			sieve_result_global_log_error
+				(aenv, "failed to store into mailbox %s: %s", mailbox_name, errstr);
+		} else {
+			sieve_result_global_error(aenv, "failed to store into mailbox %s: %s",
 				mailbox_name, errstr);
 		}
 

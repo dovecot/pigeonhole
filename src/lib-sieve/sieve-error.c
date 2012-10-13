@@ -84,11 +84,17 @@ void sieve_direct_verror
 
 		VA_COPY(args_copy, args);
 
-		svinst->system_ehandler->verror
-			(svinst->system_ehandler, 0, location, fmt, args_copy);
+		if ( (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0 ) {
+			svinst->system_ehandler->vinfo
+				(svinst->system_ehandler, 0, location, fmt, args_copy);
+		} else {
+			svinst->system_ehandler->verror
+				(svinst->system_ehandler, 0, location, fmt, args_copy);
+		}
 	}
 
-	if ( ehandler == NULL ) return;
+	if ( ehandler == NULL )
+		return;
 
 	if ( ehandler->parent != NULL || sieve_errors_more_allowed(ehandler) ) {
 		if ( ehandler->verror != NULL )
@@ -111,11 +117,17 @@ void sieve_direct_vwarning
 
 		VA_COPY(args_copy, args);
 
-		svinst->system_ehandler->vwarning
-			(svinst->system_ehandler, 0, location, fmt, args_copy);
+		if ( (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0 ) {
+			svinst->system_ehandler->vinfo
+				(svinst->system_ehandler, 0, location, fmt, args_copy);
+		} else {
+			svinst->system_ehandler->vwarning
+				(svinst->system_ehandler, 0, location, fmt, args_copy);
+		}
 	}
 
-	if ( ehandler == NULL ) return;
+	if ( ehandler == NULL )
+		return;
 
 	if ( ehandler->vwarning != NULL )
 		ehandler->vwarning(ehandler, flags, location, fmt, args);
@@ -140,7 +152,8 @@ void sieve_direct_vinfo
 			(svinst->system_ehandler, 0, location, fmt, args_copy);
 	}
 
-	if ( ehandler == NULL ) return;
+	if ( ehandler == NULL )
+		return;
 
 	if ( ehandler->parent != NULL || ehandler->log_info ) {
 		if ( ehandler->vinfo != NULL )
@@ -164,7 +177,8 @@ void sieve_direct_vdebug
 			(svinst->system_ehandler, 0, location, fmt, args_copy);
 	}
 
-	if ( ehandler == NULL ) return;
+	if ( ehandler == NULL )
+		return;
 
 	if ( ehandler->parent != NULL || ehandler->log_debug ) {
 		if ( ehandler->vdebug != NULL )
@@ -300,6 +314,24 @@ void sieve_global_vinfo
 		(svinst, ehandler, SIEVE_ERROR_FLAG_GLOBAL, location, fmt, args);
 }
 
+void sieve_global_info_verror
+(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
+	const char *location, const char *fmt, va_list args)
+{
+	sieve_direct_verror(svinst, ehandler,
+		(SIEVE_ERROR_FLAG_GLOBAL | SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO),
+		location, fmt, args);
+}
+
+void sieve_global_info_vwarning
+(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
+	const char *location, const char *fmt, va_list args)
+{
+	sieve_direct_vwarning(svinst, ehandler,
+		(SIEVE_ERROR_FLAG_GLOBAL | SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO),
+		location, fmt, args);
+}
+
 void sieve_global_error
 (struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
 	const char *location, const char *fmt, ...)
@@ -337,6 +369,34 @@ void sieve_global_info
 
 	T_BEGIN {
 		sieve_global_vinfo(svinst, ehandler, location, fmt, args);
+	} T_END;
+
+	va_end(args);
+}
+
+void sieve_global_info_error
+(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
+	const char *location, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	T_BEGIN {
+		sieve_global_info_verror(svinst, ehandler, location, fmt, args);
+	} T_END;
+
+	va_end(args);
+}
+
+void sieve_global_info_warning
+(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
+	const char *location, const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+
+	T_BEGIN {
+		sieve_global_info_vwarning(svinst, ehandler, location, fmt, args);
 	} T_END;
 
 	va_end(args);
