@@ -68,7 +68,7 @@ static int sieve_dict_script_open
 	struct sieve_instance *svinst = _script->svinst;
 	struct sieve_error_handler *ehandler = _script->ehandler;
 	const char *username = NULL, *name = _script->name;
-	const char *path;
+	const char *path, *error;
 	int ret;
 
 	if ( options != NULL ) {
@@ -117,11 +117,11 @@ static int sieve_dict_script_open
 
 	script->dict_uri = p_strdup(_script->pool, data);
 	ret = dict_init(script->dict_uri, DICT_DATA_TYPE_STRING, username,
-		svinst->base_dir, &script->dict);
+		svinst->base_dir, &script->dict, &error);
 	if ( ret < 0 ) {
 		sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 			"sieve dict backend: failed to initialize dict with data `%s' "
-			"for user `%s'", data, username);
+			"for user `%s': error", data, username, error);
 		*error_r = SIEVE_ERROR_TEMP_FAIL;
 		return -1;
 	}
