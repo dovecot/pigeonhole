@@ -41,13 +41,12 @@ Sieve Email Filtering: Detecting Duplicate Deliveries
 <keyword>duplicate deliveries</keyword>
 
 <abstract>
-<t>
-This document defines a new vendor-defined test command "duplicate" for the
-"Sieve" email filtering language that tests whether an e-mail message is a
-duplicate, i.e. whether it was seen before by the delivery agent. Users can use
-this new test to remove duplicate deliveries commonly caused by mailing list
-subscriptions or mail account aliases. 
-</t>
+<t>This document defines a new vendor-defined test command "duplicate" for the
+"Sieve" email filtering language. It can be used to test whether a particular
+string value is a duplicate, i.e. whether it was seen before by the delivery
+agent that is executing the Sieve script. The main application for this new test
+is detecting duplicate message deliveries commonly caused by mailing list
+subscriptions or redirected mail addresses.</t>
 </abstract>
 </front>
 
@@ -56,22 +55,32 @@ subscriptions or mail account aliases.
 <section title="Introduction">
 <t>This is an extension to the Sieve filtering language defined by
 <xref target="SIEVE">RFC 5228</xref>. It adds a test to determine whether a
-message was seen before by the delivery agent based on the Message-ID header.
-</t>
+certain string value was seen before by the delivery agent in an earlier
+execution of the Sieve script. This can be used to detect and handle duplicate
+message deliveries.</t>
 
 <t>Duplicate deliveries are a common side-effect of being subscribed to a
-mailing list. If a member of the list decides to reply to both the user and the
-mailing list itself, the user will get a copy of the message directly and
-through mailing list. In another scenario, the user has several aliases for his
-mail account and one of his contacts sends the message to multiple addresses
-that eventually map to the same account. Using the vnd.dovecot.duplicate
-extension, users have the means to detect such duplicates and deal with these
-appropriately, e.g. by discarding them.</t>
+mailing list. For example, if a member of the list decides to reply to both the
+user and the mailing list itself, the user will get a copy of the message
+directly and through mailing list. Also, if someone cross-posts over several
+mailing lists to which the user is subscribed, the user will receive a copy from
+each of those lists. In another scenario, the user has several redirected
+mail addresses all pointing to his main mail account. If one of the user's
+contacts sends the message to more than one of those addresses, the user will
+receive more than a single copy. Using the "vnd.dovecot.duplicate" extension,
+users have the means to detect and handle such duplicates, e.g. by discarding
+them or putting them in a special folder.</t>
+
+<t>Duplicate messages are normally detected using the Message-ID header field,
+which is required to be unique for each message. However, the "duplicate" test
+is flexible enough to use different (weaker) criteria for defining what makes
+a message a duplicate, for example based on the subject line. Also, other
+applications of this new test command are possible, as long as the tracked
+value is a string.</t>
 
 <t>This extension is specific to the Pigeonhole Sieve implementation for the
 Dovecot Secure IMAP server. It will therefore most likely not be supported by
-web interfaces and GUI-based Sieve editors.
-</t>
+web interfaces and GUI-based Sieve editors.</t>
 </section>
 
 <section title="Conventions Used in This Document">
@@ -84,27 +93,60 @@ arguments syntax.</t>
 </section>
 
 <section title="Test &quot;duplicate&quot;">
-<?rfc needLines="3" ?>
+<?rfc needLines="4" ?>
 <figure>
 <artwork><![CDATA[
-Usage: "duplicate" [<name: string>]
+Usage: "duplicate" [":seconds" <timeout: number>]
+                   [":header" <header-name: string> /
+                       ":value" <value: string>]
+                   [":handle" <handle: string>]
 ]]></artwork>
 </figure>
 
-<t>The "duplicate" test keeps track of which Message-ID values were seen before
-by this test in an earlier delivery operation. It evaluates to "true" when the
-Message-ID header of the current message was seen before. If it is not known,
-the test evaluates to "false" and the Message-ID is added to a persistent
-internal tracking list. Implementations SHOULD limit the number of messages that
-are tracked and SHOULD let Message-ID entries expire after some short period of
-time.
-</t>
+<t>The "duplicate" test keeps track of which values were seen before by this
+test in an earlier execution of this Sieve script. In its basic form, the tested
+value is the content of the Message-ID header of the message. This way, this
+test can be used to detect duplicate deliveries of the same message. It can also
+detect duplicate deliveries based on other message header fields if requested
+and it can even use a user-provided string value, e.g. as composed from text
+extracted from the message using the "variables" <xref target="VARIABLES"/>
+extension.</t>
 
-<t>Using the "name" argument, the duplicate test can be employed for multiple
-independent purposes. Only when the Message-ID was seen before in an earlier
-script execution by a duplicate test with the same "name" argument, it is
+<t>The "duplicate" test evaluates to "true" when the provided value was seen
+before. If the value is not known, the test evaluates to "false" and the value
+is added to an internal value tracking list. Implementations SHOULD limit the
+number of values (and thereby messages) that are tracked. Also, implementations
+SHOULD let entries in the value tracking list expire after a short period of
+time.</t>
+
+<t>The user can explicitly control the length this expiration time by means of
+the ":seconds" argument. If the ":seconds" argument is omitted, an appropriate
+default MUST be used. Sites SHOULD impose a maximum limit on the expiration
+time. If that limit is exceeded, the maximum value MUST silently be substituted;
+exceeding the limit MUST NOT produce an error.</t>
+
+<t>By default the tracked value is the content of the message's Message-ID
+header field. For more advanced purposes, the content of another header can be
+chosen for tracking by specifying the ":header" argument. The tracked string
+value can also be  specified explicitly using the ":value" argument. The
+":header" and ":value" arguments are mutually exclusive and specifying both for
+a single "duplicate" test command MUST trigger an error at compile time. If the
+value is extracted from a header, i.e. when the ":value" argument is not used,
+leading and trailing whitespace (see Section 2.2 of
+<xref target="SIEVE">RFC 5228</xref>) MUST first be trimmed from the value
+before executing the test.</t>
+
+<t>Using the ":handle" argument, the duplicate test can be employed for multiple
+independent purposes. Only when the tracked value was seen before in an earlier
+script execution by a "duplicate" test with the same ":handle" argument, it is
 recognized as a duplicate.
 </t>
+
+<t>NOTE: The necessary mechanism to track duplicate messages is very similar to
+the mechanism that is needed for tracking duplicate responses for the "vacation"
+<xref target="VACATION"/> action. One way to implement the necessary mechanism
+for the "duplicate" test is therefore to store a hash of the tracked value and,
+if provided, the ":handle" argument.</t>
 </section>
 
 <section title="Sieve Capability Strings">
@@ -113,12 +155,13 @@ will advertise the capability string "vnd.dovecot.duplicate".
 </t>
 </section>
 
-<section title="Example">
-<t>In this example, duplicate deliveries are stored in a special folder
+<section title="Examples">
+<t>In the following basic example, message duplicates are detected by tracking
+the Message-ID header. Duplicate deliveries are stored in a special folder
 contained in the user's Trash folder. If the folder does not exist, it is
-created. This way, the user has a chance to recover messages when necessary.
-Messages that are not recognized as duplicates are stored in the user's inbox as
-normal.
+created automatically using the "mailbox" <xref target="MAILBOX"/> extension.
+This way, the user has a chance to recover messages when necessary. Messages
+that are not recognized as duplicates are stored in the user's inbox as normal.
 </t>
 
 <?rfc needLines="7" ?>
@@ -127,15 +170,49 @@ normal.
 require ["vnd.dovecot.duplicate", "fileinto", "mailbox"];
 
 if duplicate {
-        fileinto :create "Trash/Duplicate";
+  fileinto :create "Trash/Duplicate";
 }
 ]]></artwork>
 </figure>
 
+<t>The next example shows a more complex use of the "duplicate" test. The user
+gets network alerts from a set of remote automated monitoring systems. Multiple
+notifications can be received about the same event from different monitoring 
+systems. The Message-ID of these messages is different, because these are all
+distinct messages from different senders. To avoid being notified multiple times
+about the same event the user writes the following script:</t> 
+
+<?rfc needLines="9" ?>
+<figure>
+<artwork><![CDATA[
+require ["vnd.dovecot.duplicate", "variables", "imap4flags",
+  "fileinto"];
+
+if header :matches "subject" "ALERT: *" { 
+  if duplicate :seconds 60 :value "${1}" {
+    setflag "\\seen";
+  }
+  fileinto "Alerts";
+}
+]]></artwork>
+</figure>
+
+<t>The subjects of the notification message are structured with a predictable
+pattern which includes a description of the event. In the script above the 
+"duplicate" test is used to detect duplicate alert events. The message subject
+is matched against a pattern and the event description is extracted using the
+"variables" <xref target="VARIABLES"/> extension. If a  message with that
+event in the subject was received before, but more than a minute ago, it is not
+detected as a duplicate due to the specified ":seconds" argument. In the the
+event of a duplicate, the message is marked as seen using the "imap4flags"
+<xref target="IMAP4FLAGS"/> extension. All alert messages are put into the
+"Alerts" mailbox irrespective of wether those messages are duplicates or not.
+</t>
+
 </section>
 
 <section anchor="Security" title="Security Considerations">
-<t>A flood of unique messages could cause the list of tracked Message-IDs to 
+<t>A flood of unique messages could cause the list of tracked values to 
 grow indefinitely. Implementations therefore SHOULD implement limits on the 
 number and lifespan of entries in that list.</t>
 </section>
@@ -151,9 +228,12 @@ number and lifespan of entries in that list.</t>
   <?rfc include="reference.SIEVE.xml"?>
 </references>
 
-<!--<references title="Informative References">
-  
-</references> -->
+<references title="Informative References">
+  <?rfc include="reference.IMAP4FLAGS.xml"?>
+	<?rfc include="reference.MAILBOX.xml"?>
+  <?rfc include="reference.VACATION.xml"?>
+  <?rfc include="reference.VARIABLES.xml"?>
+</references>
 </back>
 
 </rfc>

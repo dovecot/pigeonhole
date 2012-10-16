@@ -1,5 +1,4 @@
-/* Copyright (c) 2002-2012 Sieve duplicate Plugin authors, see the included
- * COPYING file.
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
 
 #ifndef __EXT_DUPLICATE_COMMON_H
@@ -10,6 +9,11 @@
 /*
  * Extension
  */
+
+struct ext_duplicate_config {
+	unsigned int default_period;
+	unsigned int max_period;
+};
 
 bool ext_duplicate_load
 	(const struct sieve_extension *ext, void **context);
@@ -35,6 +39,7 @@ extern const struct sieve_operation_def tst_duplicate_operation;
  */
 
 bool ext_duplicate_check
-	(const struct sieve_runtime_env *renv, string_t *name);
+	(const struct sieve_runtime_env *renv, string_t *handle,
+		const char *value, size_t value_len, sieve_number_t period);
 
 #endif /* EXT_DUPLICATE_COMMON_H */
