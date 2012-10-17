@@ -8,13 +8,11 @@ Relevant specifications
 Description
 ===========
 
-Sieve (RFC 5228) is a highly extensible machine language specifically tailored
-for internet message filtering. For the Dovecot Secure IMAP server, Sieve
-support is provided by the Pigeonhole Sieve plugin. The vnd.dovecot.duplicate
-extension augments the Sieve filtering implementation with a test to verify
-whether a message was received earlier already based on its Message-ID. This can
-be used to prevent duplicate deliveries, e.g. caused by mailinglists when people
-reply both to the mailinglist and the user directly.
+The vnd.dovecot.duplicate extension augments the Sieve filtering implementation
+with a test to verify whether the evaluated string value was seen before in an
+earlier execution of the Sieve script. The main application for this new test is
+detecting and handling duplicate message deliveries, e.g. as caused by
+mailinglists when people reply both to the mailinglist and the user directly.
 
 This extension is specific to the Pigeonhole Sieve implementation for the
 Dovecot Secure IMAP server. It will therefore most likely not be supported by
@@ -35,14 +33,17 @@ Configuration
 =============
 
 The "vnd.dovecot.duplicate" extension is not enabled by default and thus it
-needs to be enabled explicitly.
+needs to be enabled explicitly by adding it to the `sieve_extensions' or the
+`sieve_global_extensions' setting. 
 
 The following configuration settings are used:
 
-sieve_duplicate_period = 1d
-  This option specifies after what period of time Message-IDs are purged from
-  the duplicate database. The period is specified in s(econds), unless followed
-  by a d(ay), h(our) or m(inute) specifier character.
+sieve_duplicate_default_period = 12h
+sieve_duplicate_max_period = 2d
+  These options respectively specify the default and the maximum value for the
+  period after which tracked values are purged from the duplicate tracking
+  database. The period is specified in s(econds), unless followed by a d(ay),
+  h(our) or m(inute) specifier character.
 
 Example
 =======
@@ -52,5 +53,6 @@ plugin {
 
   sieve_extensions = +vnd.dovecot.duplicate
 
-  sieve_duplicate_period = 6h
+  sieve_duplicate_default_period = 1h
+	sieve_duplicate_max_period = 1d
 }
