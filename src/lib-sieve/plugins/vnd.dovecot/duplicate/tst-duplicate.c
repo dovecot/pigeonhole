@@ -277,7 +277,7 @@ static int tst_duplicate_operation_execute
 	const struct ext_duplicate_config *config =
 		(const struct ext_duplicate_config *) ext->context;
 	int opt_code = 0;
-	string_t *handle = NULL, *header = NULL, *value;
+	string_t *handle = NULL, *header = NULL, *value = NULL;
 	const char *val = NULL;
 	size_t val_len = 0;
 	sieve_number_t seconds = config->default_period;
