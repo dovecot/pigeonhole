@@ -113,28 +113,48 @@ extracted from the message using the "variables" <xref target="VARIABLES"/>
 extension.</t>
 
 <t>The "duplicate" test evaluates to "true" when the provided value was seen
-before. If the value is not known, the test evaluates to "false" and the value
-is added to an internal value tracking list. Implementations SHOULD limit the
-number of values (and thereby messages) that are tracked. Also, implementations
-SHOULD let entries in the value tracking list expire after a short period of
-time.</t>
+before in an earlier Sieve execution for a previous message delivery. If the
+value was not seen earlier, the test evaluates to "false".</t>
 
-<t>The user can explicitly control the length this expiration time by means of
-the ":seconds" argument. If the ":seconds" argument is omitted, an appropriate
-default MUST be used. Sites SHOULD impose a maximum limit on the expiration
-time. If that limit is exceeded, the maximum value MUST silently be substituted;
-exceeding the limit MUST NOT produce an error.</t>
+<t>As a side-effect, the "duplicate" test adds the evaluated value to an
+internal duplicate tracking list, so that the test will evaluate to "true" the
+next time the Sieve script is executed and the same value is encountered.
+Note that the "duplicate" test MUST only check for duplicates amongst values
+encountered in previous executions of the Sieve script; it MUST NOT consider
+values encountered earlier in the current Sieve script execution as potential
+duplicates. This means that all "duplicate" tests in a Sieve script execution,
+including those located in scripts included using the "include"
+<xref target="INCLUDE"/> extension, MUST yield the same result if the arguments
+are identical.</t>
 
-<t>By default the tracked value is the content of the message's Message-ID
+<t>Implementations MUST prevent adding values to the internal duplicate tracking
+list when the Sieve script execution fails. For example, this can be implemented
+by deferring the definitive modification of the tracking list to the end of the
+Sieve script execution. If failed script executions would add values to the
+duplicate tracking list, all "duplicate" tests would erroneously yield "true"
+for the next delivery attempt of the same message, which can -- depending on the
+action taken for a duplicate -- easily lead to discarding the message without
+further notice.</t>
+
+<t>Implementations SHOULD limit the number of values (and thereby messages) that
+are tracked. Also, implementations SHOULD let entries in the value tracking list
+expire after a short period of time. The user can explicitly control the length
+of this expiration time by means of the ":seconds" argument. If the ":seconds"
+argument is omitted, an appropriate default MUST be used. Sites SHOULD impose a
+maximum limit on the expiration time. If that limit is exceeded, the maximum
+value MUST silently be substituted; exceeding the limit MUST NOT produce an
+error.</t>
+
+<t>By default, the tracked value is the content of the message's Message-ID
 header field. For more advanced purposes, the content of another header can be
 chosen for tracking by specifying the ":header" argument. The tracked string
-value can also be  specified explicitly using the ":value" argument. The
+value can also be specified explicitly using the ":value" argument. The
 ":header" and ":value" arguments are mutually exclusive and specifying both for
 a single "duplicate" test command MUST trigger an error at compile time. If the
 value is extracted from a header, i.e. when the ":value" argument is not used,
 leading and trailing whitespace (see Section 2.2 of
 <xref target="SIEVE">RFC 5228</xref>) MUST first be trimmed from the value
-before executing the test.</t>
+before performing the actual duplicate verification.</t>
 
 <t>Using the ":handle" argument, the duplicate test can be employed for multiple
 independent purposes. Only when the tracked value was seen before in an earlier
@@ -206,7 +226,7 @@ event in the subject was received before, but more than a minute ago, it is not
 detected as a duplicate due to the specified ":seconds" argument. In the the
 event of a duplicate, the message is marked as seen using the "imap4flags"
 <xref target="IMAP4FLAGS"/> extension. All alert messages are put into the
-"Alerts" mailbox irrespective of wether those messages are duplicates or not.
+"Alerts" mailbox irrespective of whether those messages are duplicates or not.
 </t>
 
 </section>
@@ -226,6 +246,7 @@ number and lifespan of entries in that list.</t>
 <references title="Normative References">
   <?rfc include="reference.KEYWORDS.xml"?>
   <?rfc include="reference.SIEVE.xml"?>
+	<?rfc include="reference.INCLUDE.xml"?>
 </references>
 
 <references title="Informative References">

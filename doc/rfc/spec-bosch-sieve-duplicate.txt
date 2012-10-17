@@ -2,7 +2,7 @@
 
 
 Pigeonhole Project                                              S. Bosch
-                                                        October 16, 2012
+                                                        October 17, 2012
 
 
          Sieve Email Filtering: Detecting Duplicate Deliveries
@@ -65,9 +65,9 @@ Table of Contents
    4.  Sieve Capability Strings  . . . . . . . . . . . . . . . . . . . 5
    5.  Examples  . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
    6.  Security Considerations . . . . . . . . . . . . . . . . . . . . 6
-   7.  References  . . . . . . . . . . . . . . . . . . . . . . . . . . 6
-     7.1.  Normative References  . . . . . . . . . . . . . . . . . . . 6
-     7.2.  Informative References  . . . . . . . . . . . . . . . . . . 6
+   7.  References  . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+     7.1.  Normative References  . . . . . . . . . . . . . . . . . . . 7
+     7.2.  Informative References  . . . . . . . . . . . . . . . . . . 7
    Author's Address  . . . . . . . . . . . . . . . . . . . . . . . . . 7
 
 
@@ -187,36 +187,36 @@ Bosch                                                           [Page 3]
    extension.
 
    The "duplicate" test evaluates to "true" when the provided value was
-   seen before.  If the value is not known, the test evaluates to
-   "false" and the value is added to an internal value tracking list.
+   seen before in an earlier Sieve execution for a previous message
+   delivery.  If the value was not seen earlier, the test evaluates to
+   "false".
+
+   As a side-effect, the "duplicate" test adds the evaluated value to an
+   internal duplicate tracking list, so that the test will evaluate to
+   "true" the next time the Sieve script is executed and the same value
+   is encountered.  Note that the "duplicate" test MUST only check for
+   duplicates amongst values encountered in previous executions of the
+   Sieve script; it MUST NOT consider values encountered earlier in the
+   current Sieve script execution as potential duplicates.  This means
+   that all "duplicate" tests in a Sieve script execution, including
+   those located in scripts included using the "include" [INCLUDE]
+   extension, MUST yield the same result if the arguments are identical.
+
+   Implementations MUST prevent adding values to the internal duplicate
+   tracking list when the Sieve script execution fails.  For example,
+   this can be implemented by deferring the definitive modification of
+   the tracking list to the end of the Sieve script execution.  If
+   failed script executions would add values to the duplicate tracking
+   list, all "duplicate" tests would erroneously yield "true" for the
+   next delivery attempt of the same message, which can -- depending on
+   the action taken for a duplicate -- easily lead to discarding the
+   message without further notice.
+
    Implementations SHOULD limit the number of values (and thereby
    messages) that are tracked.  Also, implementations SHOULD let entries
-   in the value tracking list expire after a short period of time.
-
-   The user can explicitly control the length this expiration time by
+   in the value tracking list expire after a short period of time.  The
+   user can explicitly control the length of this expiration time by
    means of the ":seconds" argument.  If the ":seconds" argument is
-   omitted, an appropriate default MUST be used.  Sites SHOULD impose a
-   maximum limit on the expiration time.  If that limit is exceeded, the
-   maximum value MUST silently be substituted; exceeding the limit MUST
-   NOT produce an error.
-
-   By default the tracked value is the content of the message's
-   Message-ID header field.  For more advanced purposes, the content of
-   another header can be chosen for tracking by specifying the ":header"
-   argument.  The tracked string value can also be specified explicitly
-   using the ":value" argument.  The ":header" and ":value" arguments
-   are mutually exclusive and specifying both for a single "duplicate"
-   test command MUST trigger an error at compile time.  If the value is
-   extracted from a header, i.e. when the ":value" argument is not used,
-   leading and trailing whitespace (see Section 2.2 of RFC 5228 [SIEVE])
-   MUST first be trimmed from the value before executing the test.
-
-   Using the ":handle" argument, the duplicate test can be employed for
-   multiple independent purposes.  Only when the tracked value was seen
-   before in an earlier script execution by a "duplicate" test with the
-   same ":handle" argument, it is recognized as a duplicate.
-
-   NOTE: The necessary mechanism to track duplicate messages is very
 
 
 
@@ -225,6 +225,29 @@ Bosch                                                           [Page 4]
                   Sieve: Detecting Duplicate Deliveries     October 2012
 
 
+   omitted, an appropriate default MUST be used.  Sites SHOULD impose a
+   maximum limit on the expiration time.  If that limit is exceeded, the
+   maximum value MUST silently be substituted; exceeding the limit MUST
+   NOT produce an error.
+
+   By default, the tracked value is the content of the message's
+   Message-ID header field.  For more advanced purposes, the content of
+   another header can be chosen for tracking by specifying the ":header"
+   argument.  The tracked string value can also be specified explicitly
+   using the ":value" argument.  The ":header" and ":value" arguments
+   are mutually exclusive and specifying both for a single "duplicate"
+   test command MUST trigger an error at compile time.  If the value is
+   extracted from a header, i.e. when the ":value" argument is not used,
+   leading and trailing whitespace (see Section 2.2 of RFC 5228 [SIEVE])
+   MUST first be trimmed from the value before performing the actual
+   duplicate verification.
+
+   Using the ":handle" argument, the duplicate test can be employed for
+   multiple independent purposes.  Only when the tracked value was seen
+   before in an earlier script execution by a "duplicate" test with the
+   same ":handle" argument, it is recognized as a duplicate.
+
+   NOTE: The necessary mechanism to track duplicate messages is very
    similar to the mechanism that is needed for tracking duplicate
    responses for the "vacation" [VACATION] action.  One way to implement
    the necessary mechanism for the "duplicate" test is therefore to
@@ -247,6 +270,16 @@ Bosch                                                           [Page 4]
    [MAILBOX] extension.  This way, the user has a chance to recover
    messages when necessary.  Messages that are not recognized as
    duplicates are stored in the user's inbox as normal.
+
+
+
+
+
+
+Bosch                                                           [Page 5]
+
+                  Sieve: Detecting Duplicate Deliveries     October 2012
+
 
    require ["vnd.dovecot.duplicate", "fileinto", "mailbox"];
 
@@ -273,14 +306,6 @@ Bosch                                                           [Page 4]
    }
 
    The subjects of the notification message are structured with a
-
-
-
-Bosch                                                           [Page 5]
-
-                  Sieve: Detecting Duplicate Deliveries     October 2012
-
-
    predictable pattern which includes a description of the event.  In
    the script above the "duplicate" test is used to detect duplicate
    alert events.  The message subject is matched against a pattern and
@@ -290,7 +315,7 @@ Bosch                                                           [Page 5]
    due to the specified ":seconds" argument.  In the the event of a
    duplicate, the message is marked as seen using the "imap4flags"
    [IMAP4FLAGS] extension.  All alert messages are put into the "Alerts"
-   mailbox irrespective of wether those messages are duplicates or not.
+   mailbox irrespective of whether those messages are duplicates or not.
 
 
 6.  Security Considerations
@@ -302,7 +327,20 @@ Bosch                                                           [Page 5]
 
 7.  References
 
+
+
+
+
+
+Bosch                                                           [Page 6]
+
+                  Sieve: Detecting Duplicate Deliveries     October 2012
+
+
 7.1.  Normative References
+
+   [INCLUDE]  Daboo, C. and A. Stone, "Sieve Email Filtering: Include
+              Extension", RFC 6609, May 2012.
 
    [KEYWORDS]
               Bradner, S., "Key words for use in RFCs to Indicate
@@ -330,13 +368,6 @@ Bosch                                                           [Page 5]
               RFC 5229, January 2008.
 
 
-
-
-Bosch                                                           [Page 6]
-
-                  Sieve: Detecting Duplicate Deliveries     October 2012
-
-
 Author's Address
 
    Stephan Bosch
@@ -344,37 +375,6 @@ Author's Address
    NL
 
    Email: stephan@rename-it.nl
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
