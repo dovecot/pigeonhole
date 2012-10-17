@@ -121,7 +121,7 @@ static int sieve_dict_script_open
 	if ( ret < 0 ) {
 		sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 			"sieve dict backend: failed to initialize dict with data `%s' "
-			"for user `%s': error", data, username, error);
+			"for user `%s': %s", data, username, error);
 		*error_r = SIEVE_ERROR_TEMP_FAIL;
 		return -1;
 	}
