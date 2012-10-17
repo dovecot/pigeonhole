@@ -334,7 +334,7 @@ static int tst_duplicate_operation_execute
 	} else if (value != NULL) {
 		val = str_c(value);
 		val_len = str_len(value);
-	} else {
+	} else if (renv->msgdata->id != NULL) {
 		val = renv->msgdata->id;
 		val_len = strlen(renv->msgdata->id);
 	}
