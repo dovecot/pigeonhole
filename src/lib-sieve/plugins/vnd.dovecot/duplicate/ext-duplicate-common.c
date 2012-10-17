@@ -24,7 +24,8 @@
  * Extension configuration
  */
 
-#define EXT_DUPLICATE_DEFAULT_PERIOD (1*24*60*60)
+#define EXT_DUPLICATE_DEFAULT_PERIOD (12*60*60)
+#define EXT_DUPLICATE_DEFAULT_MAX_PERIOD (2*24*60*60)
 
 bool ext_duplicate_load
 (const struct sieve_extension *ext, void **context)
@@ -43,7 +44,7 @@ bool ext_duplicate_load
 
 	if ( !sieve_setting_get_duration_value
 		(svinst, "sieve_duplicate_max_period", &max_period) ) {
-		max_period = EXT_DUPLICATE_DEFAULT_PERIOD;
+		max_period = EXT_DUPLICATE_DEFAULT_MAX_PERIOD;
 	}
 
 	config = i_new(struct ext_duplicate_config, 1);
