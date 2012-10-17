@@ -343,7 +343,9 @@ static int tst_duplicate_operation_execute
 	if (val == NULL) {
 		duplicate = FALSE;
 	} else {	
-		duplicate = ext_duplicate_check(renv, handle, val, val_len, seconds);
+		if ((ret=ext_duplicate_check(renv, handle, val, val_len, seconds)) < 0)
+			return SIEVE_EXEC_FAILURE;
+		duplicate = ( ret > 0 );
 	}
 
 	/* Trace */
