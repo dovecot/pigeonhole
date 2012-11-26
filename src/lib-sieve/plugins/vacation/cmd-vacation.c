@@ -1031,7 +1031,7 @@ static bool act_vacation_commit
 	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
 	const char *const *hdsp;
 	const char *const *headers;
-	const char *reply_from = NULL;
+	const char *reply_from = NULL, *orig_recipient = NULL;
 
 	/* Is the recipient unset?
 	 */
@@ -1142,52 +1142,58 @@ static bool act_vacation_commit
 		return TRUE;
 	}
 
+	/* Fetch original recipient if necessary */
+	if ( config->use_original_recipient  )
+		orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
+
 	/* Is the original message directly addressed to the user or the addresses
 	 * specified using the :addresses tag?
 	 */
-	if ( !config->dont_check_recipient ) {
-		const char *orig_recipient = NULL;
+	hdsp = _my_address_headers;
+	while ( *hdsp != NULL ) {
+		if ( mail_get_headers
+			(mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {
 
-		if ( config->use_original_recipient  )
-			orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
-
-		hdsp = _my_address_headers;
-		while ( *hdsp != NULL ) {
-			if ( mail_get_headers
-				(mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {
-
-				if ( _contains_my_address(headers, recipient) ) {
-					reply_from = recipient;
-					break;
-				}
-
-				if ( orig_recipient != NULL && _contains_my_address(headers, orig_recipient) ) {
-					reply_from = orig_recipient;
-					break;
-				}
-
-				if ( ctx->addresses != NULL ) {
-					bool found = FALSE;
-					const char * const *my_address = ctx->addresses;
-
-					while ( !found && *my_address != NULL ) {
-						if ( (found=_contains_my_address(headers, *my_address)) )
-							reply_from = *my_address;
-						my_address++;
-					}
-
-					if ( found ) break;
-				}
+			/* Final recipient directly listed in headers? */
+			if ( _contains_my_address(headers, recipient) ) {
+				reply_from = recipient;
+				break;
 			}
-			hdsp++;
+
+			/* Original recipient directly listed in headers? */
+			if ( orig_recipient != NULL &&
+				_contains_my_address(headers, orig_recipient) ) {
+				reply_from = orig_recipient;
+				break;
+			}
+
+			/* User-provided :addresses listed in headers? */
+			if ( ctx->addresses != NULL ) {
+				bool found = FALSE;
+				const char * const *my_address = ctx->addresses;
+
+				while ( !found && *my_address != NULL ) {
+					if ( (found=_contains_my_address(headers, *my_address)) )
+						reply_from = *my_address;
+					my_address++;
+				}
+
+				if ( found ) break;
+			}
 		}
+		hdsp++;
+	}
 
+	/* My address not found in the headers; we got an implicit delivery */
+	if ( *hdsp == NULL ) {
+		if ( config->dont_check_recipient ) {
+			/* Send reply from envelope recipient address */
+			reply_from = recipient;
 
-		/* My address not found in the headers; we got an implicit delivery */
-		if ( *hdsp == NULL ) {
+		} else {
 			const char *original_recipient = "";
 
-			/* No, bail out */
+			/* Bail out */
 
 			if ( config->use_original_recipient ) {
 				original_recipient = t_strdup_printf("original-recipient=<%s>, ",
