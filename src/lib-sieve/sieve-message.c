@@ -357,6 +357,7 @@ int sieve_message_substitute
 	struct sieve_message_version *version;
 	struct mailbox_header_lookup_ctx *headers_ctx;
 	struct mailbox *box = NULL;
+	const char *sender;
 	int ret;
 
 	if ( msgctx->raw_mail_user == NULL ) {
@@ -367,8 +368,10 @@ int sieve_message_substitute
 	}
 
 	i_stream_seek(input, 0);
+	sender = sieve_message_get_sender(msgctx);
+	sender = (sender == NULL ? DEFAULT_ENVELOPE_SENDER : sender );
 	ret = raw_mailbox_alloc_stream(msgctx->raw_mail_user, input, (time_t)-1,
-		sieve_message_get_sender(msgctx), &box);
+		sender, &box);
 
 	if ( ret < 0 ) {
 		sieve_sys_error(msgctx->svinst, "can't open substituted mail as raw: %s",
