@@ -70,8 +70,8 @@ plugins = \
 	$(extdir)/vnd.dovecot/duplicate/libsieve_ext_duplicate.la \
 	$(unfinished_plugins)
 
-libdovecot_sieve_la_DEPENDENCIES = $(plugins) $(LIBDOVECOT_LDA_DEPS)
-libdovecot_sieve_la_LIBADD = $(plugins) $(LIBDOVECOT) $(LIBDOVECOT_LDA)
+libdovecot_sieve_la_DEPENDENCIES = $(plugins) $(LIBDOVECOT_LDA_DEPS) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
+libdovecot_sieve_la_LIBADD = $(plugins) $(LIBDOVECOT_LDA) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT)
 
 libdovecot_sieve_la_SOURCES = \
 	rfc2822.c \
