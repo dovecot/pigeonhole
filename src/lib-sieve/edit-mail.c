@@ -1078,6 +1078,13 @@ static uint64_t edit_mail_get_modseq(struct mail *mail)
 	return edmail->wrapped->v.get_modseq(&edmail->wrapped->mail);
 }
 
+static uint64_t edit_mail_get_pvt_modseq(struct mail *mail)
+{
+	struct edit_mail *edmail = (struct edit_mail *)mail;
+
+	return edmail->wrapped->v.get_pvt_modseq(&edmail->wrapped->mail);
+}
+
 static int edit_mail_get_parts
 (struct mail *mail, struct message_part **parts_r)
 {
@@ -1397,6 +1404,13 @@ static void edit_mail_update_modseq(struct mail *mail, uint64_t min_modseq)
 	edmail->wrapped->v.update_modseq(&edmail->wrapped->mail, min_modseq);
 }
 
+static void edit_mail_update_pvt_modseq(struct mail *mail, uint64_t min_pvt_modseq)
+{
+	struct edit_mail *edmail = (struct edit_mail *)mail;
+
+	edmail->wrapped->v.update_pvt_modseq(&edmail->wrapped->mail, min_pvt_modseq);
+}
+
 static void edit_mail_update_pop3_uidl(struct mail *mail, const char *uidl)
 {
 	struct edit_mail *edmail = (struct edit_mail *)mail;
@@ -1431,6 +1445,7 @@ static struct mail_vfuncs edit_mail_vfuncs = {
 	edit_mail_get_keywords,
 	edit_mail_get_keyword_indexes,
 	edit_mail_get_modseq,
+	edit_mail_get_pvt_modseq,
 	edit_mail_get_parts,
 	edit_mail_get_date,
 	edit_mail_get_received_date,
@@ -1447,6 +1462,7 @@ static struct mail_vfuncs edit_mail_vfuncs = {
 	edit_mail_update_flags,
 	edit_mail_update_keywords,
 	edit_mail_update_modseq,
+	edit_mail_update_pvt_modseq,
 	edit_mail_update_pop3_uidl,
 	edit_mail_expunge,
 	edit_mail_set_cache_corrupted,
