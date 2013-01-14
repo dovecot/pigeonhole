@@ -3,7 +3,10 @@ require "vnd.dovecot.duplicate";
 # Used as a command
 duplicate;
 
-# Used with string argument (not an error)
+# Used with no argument (not an error)
+if duplicate {}
+
+# Used with string argument
 if duplicate "frop" { }
 
 # Used with numer argument

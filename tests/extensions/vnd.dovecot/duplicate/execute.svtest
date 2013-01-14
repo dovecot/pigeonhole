@@ -6,7 +6,15 @@ test "Run" {
 		test_fail "test erroneously reported a duplicate";
 	}
 
-	if duplicate "name" {
+	if duplicate :handle "handle" {
+		test_fail "test with name erroneously reported a duplicate";
+	}
+
+	if duplicate {
+		test_fail "test erroneously reported a duplicate";
+	}
+
+	if duplicate :handle "handle" {
 		test_fail "test with name erroneously reported a duplicate";
 	}
 }

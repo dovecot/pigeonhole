@@ -11,4 +11,6 @@
 #define SIEVE_SCRIPT_FILEEXT "sieve"
 #define SIEVE_BINARY_FILEEXT "svbin"
 
+#define DEFAULT_ENVELOPE_SENDER "MAILER-DAEMON"
+
 #endif

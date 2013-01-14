@@ -1,5 +1,4 @@
-/* Copyright (c) 2002-2012 Sieve duplicate Plugin authors, see the included
- * COPYING file.
+/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
  */
 
 /* Extension vnd.dovecot.duplicate

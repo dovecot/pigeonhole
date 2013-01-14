@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference anchor='MAILBOX'>
+
+<front>
+<title>The Sieve Mail-Filtering Language -- Extensions for Checking Mailbox Status and Accessing Mailbox Metadata</title>
+<author initials='A.' surname='Melnikov' fullname='A. Melnikov'>
+<organization /></author>
+<date year='2009' month='March' />
+<abstract>
+<t>This memo defines an extension to the Sieve mail filtering language (RFC 5228) for accessing mailbox and server annotations, checking for mailbox existence, and controlling mailbox creation on "fileinto" action. [STANDARDS-TRACK]</t></abstract></front>
+
+<seriesInfo name='RFC' value='5490' />
+<format type='TXT' octets='16065' target='http://www.rfc-editor.org/rfc/rfc5490.txt' />
+</reference>

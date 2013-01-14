@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference anchor='INCLUDE'>
+
+<front>
+<title>Sieve Email Filtering: Include Extension</title>
+<author initials='C.' surname='Daboo' fullname='C. Daboo'>
+<organization /></author>
+<author initials='A.' surname='Stone' fullname='A. Stone'>
+<organization /></author>
+<date year='2012' month='May' />
+<abstract>
+<t>The Sieve Email Filtering "include" extension permits users to include one Sieve script inside another.  This can make managing large scripts or multiple sets of scripts much easier, and allows a site and its users to build up libraries of scripts.  Users are able to include their own personal scripts or site-wide scripts. [STANDARDS-TRACK]</t></abstract></front>
+
+<seriesInfo name='RFC' value='6609' />
+<format type='TXT' octets='26142' target='http://www.rfc-editor.org/rfc/rfc6609.txt' />
+</reference>
