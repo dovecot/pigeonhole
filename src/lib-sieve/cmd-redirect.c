@@ -385,16 +385,18 @@ static bool act_redirect_commit
 		action->mail : sieve_message_get_mail(aenv->msgctx) );
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
+	const char *orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
 	const char *dupeid;
 
 	/* Prevent mail loops if possible */
-	dupeid = msgdata->id == NULL ?
-		NULL : t_strdup_printf("%s-%s", msgdata->id, ctx->to_address);
+	dupeid = msgdata->id == NULL ? NULL : t_strdup_printf
+		("%s-%s-%s", msgdata->id, orig_recipient, ctx->to_address);
 	if (dupeid != NULL) {
 		/* Check whether we've seen this message before */
 		if (sieve_action_duplicate_check(senv, dupeid, strlen(dupeid))) {
 			sieve_result_global_log(aenv, "discarded duplicate forward to <%s>",
 				str_sanitize(ctx->to_address, 128));
+			*keep = FALSE;
 			return TRUE;
 		}
 	}
