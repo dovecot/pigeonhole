@@ -1221,7 +1221,7 @@ struct sieve_error_handler *sieve_prefix_ehandler_create
 	if ( parent == NULL )
 		return NULL;
 
-	pool = pool_alloconly_create("sieve_prefix_error_handler", 256);
+	pool = pool_alloconly_create("sieve_prefix_error_handler", 512);
 	ehandler = p_new(pool, struct sieve_prefix_ehandler, 1);
 	sieve_error_handler_init_from_parent(&ehandler->handler, pool, parent);
 
@@ -1320,7 +1320,7 @@ struct sieve_error_handler *sieve_varexpand_ehandler_create
 		return parent;
 	}
 
-	pool = pool_alloconly_create("sieve_varexpand_error_handler", 1024);
+	pool = pool_alloconly_create("sieve_varexpand_error_handler", 2048);
 	ehandler = p_new(pool, struct sieve_varexpand_ehandler, 1);
 	sieve_error_handler_init_from_parent(&ehandler->handler, pool, parent);
 
