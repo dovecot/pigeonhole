@@ -659,9 +659,11 @@ static int edit_mail_headers_parse
 	/* Insert header field index items in main list */
 	if ( head != NULL && tail != NULL ) {
 		if ( edmail->header_fields_appended != NULL ) {
-			if ( edmail->header_fields_appended->prev != NULL ) {
+			if ( edmail->header_fields_head != edmail->header_fields_appended ) {
 				edmail->header_fields_appended->prev->next = head;
 				head->prev = edmail->header_fields_appended->prev;
+			} else {
+				edmail->header_fields_head = head;
 			}
 
 			tail->next = edmail->header_fields_appended;
