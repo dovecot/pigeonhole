@@ -321,6 +321,7 @@ struct edit_mail *edit_mail_snapshot(struct edit_mail *edmail)
 				(&edmail_new->header_fields_head, &edmail_new->header_fields_tail,
 					field_idx_new);
 
+			field_idx_new->header->count++;
 			if ( field_idx->header->first == field_idx )
 				field_idx_new->header->first = field_idx_new;
 			if ( field_idx->header->last == field_idx )
