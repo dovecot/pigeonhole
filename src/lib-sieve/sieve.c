@@ -66,6 +66,11 @@ struct sieve_instance *sieve_init
 
 	sieve_errors_init(svinst);
 
+	if ( debug ) {
+		sieve_sys_debug(svinst, "%s version %s initializing",
+			PIGEONHOLE_NAME, PIGEONHOLE_VERSION);
+	}
+
 	/* Read limits from configuration */
 
 	svinst->max_script_size = SIEVE_DEFAULT_MAX_SCRIPT_SIZE;
