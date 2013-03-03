@@ -370,8 +370,10 @@ static int lda_sieve_handle_exec_status
 	struct sieve_instance *svinst = srctx->svinst;
 	struct sieve_exec_status *estatus = srctx->scriptenv->exec_status;
 	const char *userlog_notice = "";
-	sieve_sys_error_func_t error_func = sieve_sys_error;
+	sieve_sys_error_func_t error_func, user_error_func; 
 	int ret;
+
+	error_func = user_error_func = sieve_sys_error;
 
 	if ( estatus != NULL && estatus->last_storage != NULL ) {
 		enum mail_error mail_error;
@@ -379,18 +381,21 @@ static int lda_sieve_handle_exec_status
 		mail_storage_get_last_error(estatus->last_storage, &mail_error);
 
 		/* Don't bother administrator too much with benign errors */
-		if ( mail_error == MAIL_ERROR_NOSPACE )
+		if ( mail_error == MAIL_ERROR_NOSPACE ) {
 			error_func = sieve_sys_info;
+			user_error_func = sieve_sys_info;
+		}
 	}
 
 	if ( script == srctx->user_script && srctx->userlog != NULL ) {
 		userlog_notice = t_strdup_printf
 			(" (user logfile %s should reveal additional details)", srctx->userlog);
+		user_error_func = sieve_sys_info;
 	}
 
 	switch ( status ) {
 	case SIEVE_EXEC_FAILURE:
-		error_func(svinst,
+		user_error_func(svinst,
 			"execution of script %s failed, but implicit keep was successful%s",
 			sieve_script_location(script), userlog_notice);
 		ret = 1;
@@ -494,10 +499,9 @@ static int lda_sieve_multiscript_execute
 	struct sieve_error_handler *ehandler = srctx->master_ehandler;
 	bool debug = srctx->mdctx->dest_user->mail_debug;
 	struct sieve_script *last_script = NULL;
-	bool user_script = FALSE;
+	bool user_script = FALSE, more = TRUE, compile_error = FALSE;
 	unsigned int i;
 	int ret = 1;
-	bool more = TRUE;
 	enum sieve_error error;
 
 	/* Start execution */
@@ -527,8 +531,10 @@ static int lda_sieve_multiscript_execute
 
 		/* Open */
 
-		if ( (sbin=lda_sieve_open(srctx, script, cpflags, &error)) == NULL )
+		if ( (sbin=lda_sieve_open(srctx, script, cpflags, &error)) == NULL ) {
+			compile_error = TRUE;
 			break;
+		}
 
 		/* Execute */
 
@@ -570,6 +576,13 @@ static int lda_sieve_multiscript_execute
 	/* Finish execution */
 
 	ret = sieve_multiscript_finish(&mscript, ehandler, NULL);
+
+	/* Don't log additional messages about compile failure */
+	if ( compile_error && ret == SIEVE_EXEC_FAILURE ) {
+		sieve_sys_info(svinst,
+                        "aborted script execution sequence with successful implicit keep");
+		return 1;
+	}
 
 	return lda_sieve_handle_exec_status(srctx, last_script, ret);
 }
