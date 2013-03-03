@@ -240,6 +240,7 @@ struct sieve_script *sieve_script_create
 
 	script = script_class->v.alloc();
 	sieve_script_init(script, svinst, script_class, data, name, ehandler);
+	script->location = p_strdup(script->pool, location);
 	return script;
 }
 
@@ -268,6 +269,7 @@ int sieve_script_open
 		return -1;
 	}
 
+	script->location = NULL;
 	if ( script->v.open(script, location, options, &error) < 0 ) {
 		if ( error_r == NULL ) {
 			if ( error == SIEVE_ERROR_NOT_FOUND )

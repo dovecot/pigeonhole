@@ -217,7 +217,7 @@ static int lda_sieve_multiscript_get_scripts
 
 	files = array_get(&script_files, &count);
 	for ( i = 0; i < count; i++ ) {
-		struct sieve_script *script = sieve_script_create
+		struct sieve_script *script = sieve_script_create_open
 			(svinst, files[i], NULL, ehandler, &error);
 
 		if ( script == NULL ) {
@@ -529,14 +529,21 @@ static int lda_sieve_multiscript_execute
 
 		/* Open */
 
+		if ( debug ) {
+			sieve_sys_debug
+				(svinst, "opening script %d of %d from %s", i+1, count,
+					sieve_script_location(script));
+		}
+
 		if ( (sbin=lda_sieve_open(srctx, script, cpflags, &error)) == NULL )
 			break;
 
 		/* Execute */
 
-		if ( debug )
+		if ( debug ) {
 			sieve_sys_debug
 				(svinst, "executing script from %s", sieve_get_source(sbin));
+		}
 
 		more = sieve_multiscript_run(mscript, sbin, ehandler, rtflags, final);
 
