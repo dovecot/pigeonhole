@@ -322,6 +322,7 @@ struct edit_mail *edit_mail_snapshot(struct edit_mail *edmail)
 				(&edmail_new->header_fields_head, &edmail_new->header_fields_tail,
 					field_idx_new);
 
+			field_idx_new->header->count++;
 			if ( field_idx->header->first == field_idx )
 				field_idx_new->header->first = field_idx_new;
 			if ( field_idx->header->last == field_idx )
@@ -658,9 +659,11 @@ static int edit_mail_headers_parse
 	/* Insert header field index items in main list */
 	if ( head != NULL && tail != NULL ) {
 		if ( edmail->header_fields_appended != NULL ) {
-			if ( edmail->header_fields_appended->prev != NULL ) {
+			if ( edmail->header_fields_head != edmail->header_fields_appended ) {
 				edmail->header_fields_appended->prev->next = head;
 				head->prev = edmail->header_fields_appended->prev;
+			} else {
+				edmail->header_fields_head = head;
 			}
 
 			tail->next = edmail->header_fields_appended;

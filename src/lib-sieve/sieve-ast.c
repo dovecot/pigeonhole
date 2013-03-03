@@ -59,7 +59,7 @@ struct sieve_ast *sieve_ast_create
 	struct sieve_ast *ast;
 	unsigned int ext_count;
 
-	pool = pool_alloconly_create("sieve_ast", 16384);
+	pool = pool_alloconly_create("sieve_ast", 32768);
 	ast = p_new(pool, struct sieve_ast, 1);
 	ast->pool = pool;
 	ast->refcount = 1;

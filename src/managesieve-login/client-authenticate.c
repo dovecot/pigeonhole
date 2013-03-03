@@ -243,7 +243,7 @@ static int managesieve_client_auth_read_response
 	}
 
 	if ( i_stream_next_line(client->input) == NULL )
-		msieve_client->skip_line = TRUE;
+		return 0;
 
 	return 1;
 }

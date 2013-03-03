@@ -64,7 +64,7 @@ bool ext_editheader_load
 	}
 
 	T_BEGIN {
-		pool = pool_alloconly_create("editheader_config", 512);
+		pool = pool_alloconly_create("editheader_config", 1024);
 		ext_config = p_new(pool, struct ext_editheader_config, 1);
 		ext_config->pool = pool;
 		ext_config->max_header_size = EXT_EDITHEADER_DEFAULT_MAX_HEADER_SIZE;

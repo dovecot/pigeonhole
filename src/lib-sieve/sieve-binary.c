@@ -43,7 +43,7 @@ struct sieve_binary *sieve_binary_create
 	const struct sieve_extension *const *ext_preloaded;
 	unsigned int i, ext_count;
 
-	pool = pool_alloconly_create("sieve_binary", 8192);
+	pool = pool_alloconly_create("sieve_binary", 16384);
 	sbin = p_new(pool, struct sieve_binary, 1);
 	sbin->pool = pool;
 	sbin->refcount = 1;

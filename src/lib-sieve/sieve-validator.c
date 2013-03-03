@@ -150,7 +150,7 @@ struct sieve_validator *sieve_validator_create
 	const struct sieve_extension *const *ext_preloaded;
 	unsigned int i, ext_count;
 
-	pool = pool_alloconly_create("sieve_validator", 8192);
+	pool = pool_alloconly_create("sieve_validator", 16384);
 	valdtr = p_new(pool, struct sieve_validator, 1);
 	valdtr->pool = pool;
 

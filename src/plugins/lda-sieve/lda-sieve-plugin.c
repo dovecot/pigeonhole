@@ -221,7 +221,7 @@ static int lda_sieve_multiscript_get_scripts
 			(svinst, files[i], NULL, ehandler, &error);
 
 		if ( script == NULL ) {
-			switch ( errno ) {
+			switch ( error ) {
 			case SIEVE_ERROR_NOT_FOUND:
 				/* Shouldn't normally happen, but the script could have disappeared */
 				sieve_sys_warning
@@ -277,25 +277,34 @@ static struct sieve_binary *lda_sieve_open
 		ehandler = srctx->master_ehandler;
 
 	if ( debug )
-		sieve_sys_debug(svinst, "opening script %s", sieve_script_location(script));
+		sieve_sys_debug(svinst, "loading script %s", sieve_script_location(script));
 
 	sieve_error_handler_reset(ehandler);
 
-	/* Open the sieve script */
+	/* Load or compile the sieve script */
 	if ( (sbin=sieve_open_script(script, ehandler, cpflags, error_r)) == NULL ) {
-		if ( *error_r == SIEVE_ERROR_NOT_FOUND ) {
+		switch ( *error_r ) {
+		/* Script not found */
+		case SIEVE_ERROR_NOT_FOUND:
 			if ( debug ) {
 				sieve_sys_debug(svinst, "script file %s is missing",
 					sieve_script_location(script));
 			}
-		} else if ( *error_r == SIEVE_ERROR_NOT_VALID &&
-			script == srctx->user_script && srctx->userlog != NULL ) {
-			sieve_sys_error(svinst,	"failed to open script %s "
-				"(view user logfile %s for more information)",
-				sieve_script_location(script), srctx->userlog);
-		} else {
+			break;
+		/* Compile failed */
+		case SIEVE_ERROR_NOT_VALID:
+			if (script == srctx->user_script && srctx->userlog != NULL ) {
+				sieve_sys_info(svinst, "failed to compile script %s "
+					"(view user logfile %s for more information)",
+					sieve_script_location(script), srctx->userlog);
+				break;
+			}
+			/* Fall through */
+		/* Something else */
+		default:
 			sieve_sys_error(svinst,	"failed to open script %s",
 				sieve_script_location(script));
+			break;
 		}
 
 		return NULL;
@@ -330,19 +339,25 @@ static struct sieve_binary *lda_sieve_recompile
 	if ( (sbin=sieve_compile_script(script, ehandler,	cpflags, error_r))
 		== NULL ) {
 
-		if ( *error_r == SIEVE_ERROR_NOT_FOUND ) {
-			if ( debug )
+		switch ( *error_r ) {
+		case SIEVE_ERROR_NOT_FOUND:
+			if ( debug ) {
 				sieve_sys_debug(svinst, "script file %s is missing for re-compile",
 					sieve_script_location(script));
-		} else if ( *error_r == SIEVE_ERROR_NOT_VALID &&
-			script == srctx->user_script && srctx->userlog != NULL ) {
-			sieve_sys_error(svinst,
-				"failed to re-compile script %s "
-				"(view user logfile %s for more information)",
-				sieve_script_location(script), srctx->userlog);
-		} else {
-			sieve_sys_error(svinst,
-				"failed to re-compile script %s", sieve_script_location(script));
+			}
+			break;
+		case SIEVE_ERROR_NOT_VALID:
+			if ( script == srctx->user_script && srctx->userlog != NULL ) {
+				sieve_sys_info(svinst,
+					"failed to re-compile script %s "
+					"(view user logfile %s for more information)",
+					sieve_script_location(script), srctx->userlog);
+				break;
+			}
+			/* Fall through */
+		default:
+			sieve_sys_error(svinst,	"failed to open script %s for re-compile",
+				sieve_script_location(script));
 		}
 
 		return NULL;

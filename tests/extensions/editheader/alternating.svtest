@@ -120,3 +120,62 @@ test "Alternating - delete; add" {
 		test_fail "wrong content in redirected mail ";
 	}
 }
+
+test_result_reset;
+
+test_set "message" "${message}";
+test "Alternating - add :last; delete any" {
+	addheader :last "X-Some-Header" "Header content";
+
+	if not exists "x-some-header" {
+		test_fail "header not added";
+	}
+
+	if not header :is "x-some-header" "Header content" {
+		test_fail "wrong content added";
+	}
+
+	redirect "frop@example.com";
+
+	deleteheader "X-Some-Other-Header";
+
+	if not exists "x-some-header" {
+		test_fail "header somehow deleted";
+	}
+
+	fileinto :create "folder3";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	/* redirected message */
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not exists "x-some-header" {
+		test_fail "added header not in redirected mail";
+	}
+
+	if not header :is "x-some-header" "Header content" {
+		test_fail "wrong content in redirected mail ";
+	}
+
+	/* stored message message */
+
+	if not test_message :folder "folder3" 0 {
+		test_fail "message not stored";
+	}
+
+	if not exists "x-some-header" {
+		test_fail "added header lost in stored mail";
+	}
+
+	if not header :is "x-some-header" "Header content" {
+		test_fail "wrong content in stored mail ";
+	}
+
+}
+
