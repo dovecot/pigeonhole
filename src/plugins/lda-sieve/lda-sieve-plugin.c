@@ -219,7 +219,7 @@ static int lda_sieve_multiscript_get_scripts
 			(svinst, files[i], NULL, ehandler, &error);
 
 		if ( script == NULL ) {
-			switch ( errno ) {
+			switch ( error ) {
 			case SIEVE_ERROR_NOT_FOUND:
 				/* Shouldn't normally happen, but the script could have disappeared */
 				sieve_sys_warning
