@@ -863,7 +863,7 @@ bool sieve_action_reject_mail
 	T_BEGIN {
 		if ( senv->reject_mail != NULL ) {
 			result =
-				( senv->reject_mail(senv->script_context, recipient, reason) >= 0 );
+				( senv->reject_mail(senv, recipient, reason) >= 0 );
 		} else {
 			result = sieve_action_do_reject_mail(aenv, sender, recipient, reason);
 		}
