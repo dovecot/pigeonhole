@@ -32,4 +32,7 @@ void sieve_storage_set_internal_error(struct sieve_storage *storage);
 const char *sieve_storage_get_last_error
 	(struct sieve_storage *storage, enum sieve_error *error_r);
 
+int sieve_storage_get_last_change
+	(struct sieve_storage *storage, time_t *last_change_r);
+
 #endif

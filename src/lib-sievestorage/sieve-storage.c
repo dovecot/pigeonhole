@@ -586,4 +586,21 @@ const char *sieve_storage_get_last_error
 	return storage->error != NULL ? storage->error : "Unknown error";
 }
 
+int sieve_storage_get_last_change
+(struct sieve_storage *storage, time_t *last_change_r)
+{
+	struct stat st;
+
+	if (stat(storage->dir, &st) < 0) {
+		if (errno == ENOENT) {
+			*last_change_r = 0;
+			return 0;
+		}
+		sieve_storage_set_critical(storage, "stat(%s) failed: %m",
+					   storage->dir);
+		return -1;
+	}
+	*last_change_r = st.st_mtime;
+	return 0;
+}
 

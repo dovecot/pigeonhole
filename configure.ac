@@ -127,6 +127,7 @@ src/lib-sieve-tool/Makefile
 src/lib-sievestorage/Makefile
 src/lib-managesieve/Makefile
 src/plugins/Makefile
+src/plugins/doveadm-sieve/Makefile
 src/plugins/lda-sieve/Makefile
 src/sieve-tools/Makefile
 src/managesieve/Makefile

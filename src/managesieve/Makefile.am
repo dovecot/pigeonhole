@@ -24,7 +24,7 @@ managesieve_LDFLAGS = -export-dynamic
 libs = \
 	managesieve-settings.lo \
 	$(top_builddir)/src/lib-managesieve/libmanagesieve.a \
-	$(top_builddir)/src/lib-sievestorage/libsievestorage.a \
+	$(top_builddir)/src/lib-sievestorage/libsievestorage.la \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la
 
 managesieve_LDADD = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT_LDA) $(LIBDOVECOT)
