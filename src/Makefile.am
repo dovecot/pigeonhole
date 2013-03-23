@@ -1,6 +1,8 @@
 
+
 sieve_subdirs = \
 	lib-sieve \
+	lib-sievestorage \
 	plugins \
 	lib-sieve-tool \
 	sieve-tools \
@@ -9,7 +11,6 @@ sieve_subdirs = \
 if BUILD_MANAGESIEVE
 managesieve_subdirs = \
 	lib-managesieve \
-	lib-sievestorage \
 	managesieve \
 	managesieve-login
 else
