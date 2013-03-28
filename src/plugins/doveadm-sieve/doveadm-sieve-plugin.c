@@ -268,8 +268,11 @@ sieve_attribute_get_active(struct mail_storage *storage,
 {
 	int ret;
 
-	/* FIXME: set value_r->last_change */
 	ret = sieve_storage_get_active_scriptname(sstorage, &value_r->value);
+	if (ret >= 0) {
+		ret = sieve_storage_get_active_script_last_change
+			(sstorage, &value_r->last_change);
+	}
 	if (ret < 0)
 		mail_storage_set_internal_error(storage);
 	return ret;

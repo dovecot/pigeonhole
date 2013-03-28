@@ -63,5 +63,7 @@ struct sieve_storage {
 struct sieve_script *sieve_storage_script_init_from_path
 	(struct sieve_storage *storage, const char *path, const char *scriptname);
 
+void sieve_storage_mark_modified(struct sieve_storage *storage);
+
 #endif
 

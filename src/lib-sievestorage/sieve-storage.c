@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <time.h>
+#include <utime.h>
 
 #define SIEVE_DEFAULT_PATH "~/.dovecot."SIEVE_SCRIPT_FILEEXT
 
@@ -584,6 +585,21 @@ const char *sieve_storage_get_last_error
 		*error_r = storage->error_code;
 
 	return storage->error != NULL ? storage->error : "Unknown error";
+}
+
+void sieve_storage_mark_modified(struct sieve_storage *storage)
+{
+	if ( utime(storage->dir, NULL) < 0 ) {
+		switch ( errno ) {
+		case ENOENT:
+			break;
+		case EACCES:
+			i_error("sieve-storage: %s", eacces_error_get("utime", storage->dir));
+			break;
+		default:
+			i_error("sieve-storage: utime(%s) failed: %m", storage->dir);
+		}
+	}
 }
 
 int sieve_storage_get_last_change

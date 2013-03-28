@@ -18,6 +18,8 @@ int sieve_storage_get_active_scriptname
 
 struct sieve_script *sieve_storage_get_active_script
 	(struct sieve_storage *storage);
+int sieve_storage_get_active_script_last_change
+	(struct sieve_storage *storage, time_t *last_change_r);
 
 int sieve_storage_script_is_active(struct sieve_script *script);
 

@@ -406,10 +406,12 @@ int sieve_storage_deactivate(struct sieve_storage *storage)
 			sieve_storage_set_critical(storage, "sieve_storage_deactivate(): "
 				"error on unlink(%s): %m", storage->active_path);
 			return -1;
-		} else
+		} else {
 			return 0;
+		}
 	}
 
+	sieve_storage_mark_modified(storage);
 	return 1;
 }
 
@@ -528,6 +530,7 @@ static int _sieve_storage_script_activate(struct sieve_script *script)
 		}
 	}
 
+	sieve_storage_mark_modified(storage);
 	return activated;
 }
 
@@ -540,6 +543,27 @@ int sieve_storage_script_activate(struct sieve_script *script)
 	} T_END;
 
 	return ret;
+}
+
+int sieve_storage_get_active_script_last_change
+(struct sieve_storage *storage, time_t *last_change_r)
+{
+	struct stat st;
+
+	/* Try direct lstat first */
+	if (lstat(storage->active_path, &st) == 0) {
+		*last_change_r = st.st_mtime;
+		return 0;
+	}
+
+	/* Check error */
+	if (errno != ENOENT) {
+		sieve_storage_set_critical(storage, "lstat(%s) failed: %m",
+			   storage->active_path);
+	}
+
+	/* Fall back to statting storage directory */
+	return sieve_storage_get_last_change(storage, last_change_r);
 }
 
 int sieve_storage_script_rename
