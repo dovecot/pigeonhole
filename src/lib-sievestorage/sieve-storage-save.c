@@ -202,7 +202,7 @@ sieve_storage_save_init(struct sieve_storage *storage,
 	ctx = p_new(pool, struct sieve_save_context, 1);
 	ctx->pool = pool;
 	ctx->storage = storage;
-	ctx->scriptname = scriptname;
+	ctx->scriptname = p_strdup(pool, scriptname);
 	ctx->scriptobject = NULL;
 
 	T_BEGIN {
@@ -305,7 +305,7 @@ struct sieve_script *sieve_storage_save_get_tempscript
 	if ( ctx->scriptobject == NULL ) {
 		if ( ctx->storage->error_code == SIEVE_ERROR_NOT_FOUND ) {
 			sieve_storage_set_critical(ctx->storage,
-				"save: Temporary script file with name '%s' got lost, "
+				"save: Temporary script file '%s' got lost, "
 				"which should not happen (possibly deleted externally).",
 				ctx->tmp_path);
 		}
@@ -324,7 +324,7 @@ bool sieve_storage_save_will_activate
 		const char *scriptname;
 		int ret;
 
-		ret = sieve_storage_get_active_scriptfile(ctx->storage, &scriptname);
+		ret = sieve_storage_get_active_scriptname(ctx->storage, &scriptname);
 		if ( ret > 0 ) {
 		 	/* Is the requested script active? */
 			result = ( strcmp(ctx->scriptname, scriptname) == 0 );
