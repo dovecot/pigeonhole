@@ -356,7 +356,7 @@ static bool sieve_storage_rescue_regular_file(struct sieve_storage *storage)
 
 	if ( S_ISLNK( st.st_mode ) ) {
 		if ( storage->debug )
-			i_info( "sieve-storage: nothing to rescue %s.", storage->active_path);
+			i_debug( "sieve-storage: nothing to rescue %s.", storage->active_path);
 		return TRUE; /* Nothing to rescue */
 	}
 

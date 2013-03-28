@@ -448,11 +448,11 @@ static struct sieve_storage *_sieve_storage_create
 
 	if ( debug ) {
 		if ( storage->max_storage > 0 ) {
-			i_info("sieve-storage: quota: storage limit: %llu bytes",
+			i_debug("sieve-storage: quota: storage limit: %llu bytes",
 				(unsigned long long int) storage->max_storage);
 		}
 		if ( storage->max_scripts > 0 ) {
-			i_info("sieve-storage: quota: script count limit: %llu scripts",
+			i_debug("sieve-storage: quota: script count limit: %llu scripts",
 				(unsigned long long int) storage->max_scripts);
 		}
 	}
