@@ -58,7 +58,7 @@ static struct module *sieve_plugin_module_find(const char *name)
 void sieve_plugins_load
 (struct sieve_instance *svinst, const char *path, const char *plugins)
 {
-	struct module *new_modules, *module;
+	struct module *module;
 	struct module_dir_load_settings mod_set;
 	const char **module_names;
 	unsigned int i;
@@ -83,21 +83,8 @@ void sieve_plugins_load
 
 	/* Load missing plugin modules */
 
-	new_modules = module_dir_load_missing
+	sieve_modules = module_dir_load_missing
 		(sieve_modules, path, plugins, &mod_set);
-
-	if ( sieve_modules == NULL ) {
-		/* No modules loaded yet */
-		sieve_modules = new_modules;
-	} else {
-		/* Find the end of the list */
-		module = sieve_modules;
-		while ( module != NULL && module->next != NULL )
-			module = module->next;
-
-		/* Add newly loaded modules */
-		module->next = new_modules;
-	}
 
 	/* Call plugin load functions for this Sieve instance */
 

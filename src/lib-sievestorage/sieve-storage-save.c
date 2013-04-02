@@ -9,6 +9,7 @@
 #include "ostream.h"
 #include "str.h"
 #include "eacces-error.h"
+#include "safe-mkstemp.h"
 
 #include "sieve-script.h"
 #include "sieve-script-file.h"
@@ -324,7 +325,7 @@ bool sieve_storage_save_will_activate
 		const char *scriptname;
 		int ret;
 
-		ret = sieve_storage_get_active_scriptname(ctx->storage, &scriptname);
+		ret = sieve_storage_active_script_get_name(ctx->storage, &scriptname);
 		if ( ret > 0 ) {
 		 	/* Is the requested script active? */
 			result = ( strcmp(ctx->scriptname, scriptname) == 0 );
@@ -367,4 +368,56 @@ void sieve_storage_save_cancel(struct sieve_save_context **ctx)
 	i_assert((*ctx)->output == NULL);
 
 	sieve_storage_save_destroy(ctx);
+}
+
+int sieve_storage_save_as_active_script(struct sieve_storage *storage,
+	struct istream *input)
+{
+	int fd;
+	string_t *temp_path;
+	struct ostream *output;
+
+	temp_path = t_str_new(256);
+	str_append(temp_path, storage->active_path);
+	str_append_c(temp_path, '.');
+	fd = safe_mkstemp_hostpid
+		(temp_path, storage->file_create_mode, (uid_t)-1, (gid_t)-1);
+	if ( fd < 0 ) {
+		if ( errno == EACCES ) {
+			sieve_storage_set_critical(storage,
+				"failed to create temporary file: %s",
+				eacces_error_get_creating("open", str_c(temp_path)));
+		} else {
+			sieve_storage_set_critical(storage,
+				"failed to create temporary file: open(%s) failed: %m",
+				str_c(temp_path));
+		}
+		return -1;
+	}
+
+	output = o_stream_create_fd(fd, 0, FALSE);
+	if (o_stream_send_istream(output, input) < 0) {
+		sieve_storage_set_critical(storage,
+			"o_stream_send_istream(%s) failed: %m", str_c(temp_path));
+		o_stream_destroy(&output);
+		(void)unlink(str_c(temp_path));
+		return -1;
+	}
+	o_stream_destroy(&output);
+
+	if (rename(str_c(temp_path), storage->active_path) < 0) {
+		if ( ENOSPACE(errno) ) {
+			sieve_storage_set_error(storage,
+				SIEVE_ERROR_NO_SPACE, "Not enough disk space");
+		} else if ( errno == EACCES ) {
+			sieve_storage_set_critical(storage,
+				"%s", eacces_error_get("rename", storage->active_path));
+		} else {
+			sieve_storage_set_critical(storage,
+				"rename(%s, %s) failed: %m", str_c(temp_path), storage->active_path);
+		}
+	}
+
+	(void)unlink(str_c(temp_path));
+	return 0;
 }

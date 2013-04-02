@@ -41,7 +41,7 @@ struct sieve_script *sieve_storage_script_init_from_path
 	/* Prevent initializing the active script link as a script when it
 	 * resides in the sieve storage directory.
 	 */
-	if ( *(storage->link_path) == '\0' ) {
+	if ( scriptname != NULL && *(storage->link_path) == '\0' ) {
 		const char *fname;
 
 		fname = strrchr(path, '/');
@@ -154,7 +154,7 @@ static int sieve_storage_read_active_link
 	return 1;
 }
 
-static const char *sieve_storage_parse_link
+static const char *sieve_storage_parse_active_link
 (struct sieve_storage *storage, const char *link, const char **scriptname_r)
 {
 	const char *fname, *scriptname, *scriptpath;
@@ -197,7 +197,7 @@ static const char *sieve_storage_parse_link
 	return fname;
 }
 
-int sieve_storage_get_active_scriptfile
+int sieve_storage_active_script_get_file
 (struct sieve_storage *storage, const char **file_r)
 {
 	const char *link, *scriptfile;
@@ -210,7 +210,7 @@ int sieve_storage_get_active_scriptfile
 		return ret;
 
 	/* Parse the link */
-	scriptfile = sieve_storage_parse_link(storage, link, NULL);
+	scriptfile = sieve_storage_parse_active_link(storage, link, NULL);
 
 	if (scriptfile == NULL) {
 		/* Obviously someone has been playing with our symlink,
@@ -224,7 +224,7 @@ int sieve_storage_get_active_scriptfile
 	return 1;
 }
 
-int sieve_storage_get_active_scriptname
+int sieve_storage_active_script_get_name
 (struct sieve_storage *storage, const char **name_r)
 {
 	const char *link;
@@ -236,7 +236,7 @@ int sieve_storage_get_active_scriptname
 	if ( (ret=sieve_storage_read_active_link(storage, &link)) <= 0 )
 		return ret;
 
-	if ( sieve_storage_parse_link(storage, link, name_r) == NULL ) {
+	if ( sieve_storage_parse_active_link(storage, link, name_r) == NULL ) {
 		/* Obviously someone has been playing with our symlink,
 		 * ignore this situation and report 'no active script'.
 		 * Activation should fix this situation.
@@ -247,7 +247,13 @@ int sieve_storage_get_active_scriptname
 	return 1;
 }
 
-struct sieve_script *sieve_storage_get_active_script
+const char *sieve_storage_active_script_get_path
+	(struct sieve_storage *storage)
+{
+	return storage->active_path;
+}
+
+struct sieve_script *sieve_storage_active_script_get
 (struct sieve_storage *storage)
 {
 	struct sieve_script *script;
@@ -268,7 +274,7 @@ struct sieve_script *sieve_storage_get_active_script
 	}
 
 	/* Parse the link */
-	scriptfile = sieve_storage_parse_link(storage, link, NULL);
+	scriptfile = sieve_storage_parse_active_link(storage, link, NULL);
 
 	if (scriptfile == NULL) {
 		/* Obviously someone has been playing with our symlink,
@@ -289,6 +295,54 @@ struct sieve_script *sieve_storage_get_active_script
 	return script;
 }
 
+int sieve_storage_active_script_get_last_change
+(struct sieve_storage *storage, time_t *last_change_r)
+{
+	struct stat st;
+
+	/* Try direct lstat first */
+	if (lstat(storage->active_path, &st) == 0) {
+		*last_change_r = st.st_mtime;
+		return 0;
+	}
+
+	/* Check error */
+	if (errno != ENOENT) {
+		sieve_storage_set_critical(storage, "lstat(%s) failed: %m",
+			   storage->active_path);
+	}
+
+	/* Fall back to statting storage directory */
+	return sieve_storage_get_last_change(storage, last_change_r);
+}
+
+int
+sieve_storage_active_script_is_no_link(struct sieve_storage *storage)
+{
+	struct stat st;
+
+	/* Stat the file */
+	if ( lstat(storage->active_path, &st) != 0 ) {
+		if ( errno != ENOENT ) {
+			sieve_storage_set_critical(storage,
+				"Failed to stat active sieve script symlink (%s): %m.",
+				storage->active_path);
+			return -1;
+		}
+		return 0;
+	}
+
+	if ( S_ISLNK( st.st_mode ) )
+		return 0;
+	if ( !S_ISREG( st.st_mode ) ) {
+		sieve_storage_set_critical( storage,
+			"Active sieve script file '%s' is no symlink nor a regular file.",
+			storage->active_path );
+		return -1;
+	}
+	return 1;
+}
+
 int sieve_storage_script_is_active(struct sieve_script *script)
 {
 	struct sieve_storage_script *st_script =
@@ -297,7 +351,7 @@ int sieve_storage_script_is_active(struct sieve_script *script)
 	int ret = 0;
 
 	T_BEGIN {
-		ret = sieve_storage_get_active_scriptfile(st_script->storage, &afile);
+		ret = sieve_storage_active_script_get_file(st_script->storage, &afile);
 
 		if ( ret > 0 ) {
 		 	/* Is the requested script active? */
@@ -486,7 +540,7 @@ static int _sieve_storage_script_activate(struct sieve_script *script)
 	 * resolves automatically. This step is only necessary to provide a
 	 * proper return value indicating whether the script was already active.
 	 */
-	ret = sieve_storage_get_active_scriptfile(storage, &afile);
+	ret = sieve_storage_active_script_get_file(storage, &afile);
 
 	/* Is the requested script already active? */
 	if ( ret <= 0 || strcmp(st_script->file.filename, afile) != 0 )
@@ -543,27 +597,6 @@ int sieve_storage_script_activate(struct sieve_script *script)
 	} T_END;
 
 	return ret;
-}
-
-int sieve_storage_get_active_script_last_change
-(struct sieve_storage *storage, time_t *last_change_r)
-{
-	struct stat st;
-
-	/* Try direct lstat first */
-	if (lstat(storage->active_path, &st) == 0) {
-		*last_change_r = st.st_mtime;
-		return 0;
-	}
-
-	/* Check error */
-	if (errno != ENOENT) {
-		sieve_storage_set_critical(storage, "lstat(%s) failed: %m",
-			   storage->active_path);
-	}
-
-	/* Fall back to statting storage directory */
-	return sieve_storage_get_last_change(storage, last_change_r);
 }
 
 int sieve_storage_script_rename

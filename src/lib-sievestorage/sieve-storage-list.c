@@ -45,7 +45,7 @@ struct sieve_list_context *sieve_storage_list_init
 
 	T_BEGIN {
 		/* Get the name of the active script */
-		if ( sieve_storage_get_active_scriptfile(storage, &active) < 0) {
+		if ( sieve_storage_active_script_get_file(storage, &active) < 0) {
 			ctx = NULL;
 		} else {
 			pool = pool_alloconly_create("sieve_list_context", 4096);

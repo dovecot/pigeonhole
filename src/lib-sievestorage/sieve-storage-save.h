@@ -26,5 +26,11 @@ void sieve_storage_save_cancel(struct sieve_save_context **ctx);
 
 int sieve_storage_save_commit(struct sieve_save_context **ctx);
 
+/* Saves input directly as a regular file at the active script path.
+ * This is needed for the doveadm-sieve plugin.
+ */
+int sieve_storage_save_as_active_script(struct sieve_storage *storage,
+	struct istream *input);
+
 #endif
 
