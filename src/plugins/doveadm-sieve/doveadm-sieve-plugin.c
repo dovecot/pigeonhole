@@ -83,11 +83,16 @@ static int
 mail_sieve_user_init
 (struct mail_user *user, struct sieve_storage **svstorage_r)
 {
-	/* delayed initialization of sieve storage until it's actually needed */
+	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
 	struct mail_user_vfuncs *v = user->vlast;
 	struct sieve_environment svenv;
-	struct sieve_mail_user *suser;
 
+	if (suser != NULL) {
+		*svstorage_r = suser->sieve_storage;
+		return 0;	
+	}
+
+	/* Delayed initialization of sieve storage until it's actually needed */
 	memset(&svenv, 0, sizeof(svenv));
 	svenv.username = user->username;
 	(void)mail_user_get_home(user, &svenv.home_dir);
