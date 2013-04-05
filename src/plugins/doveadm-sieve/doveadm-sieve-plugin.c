@@ -1,6 +1,7 @@
 /* Copyright (c) 2013 Dovecot authors, see the included COPYING file */
 
 #include "lib.h"
+#include "ioloop.h"
 #include "istream.h"
 #include "sieve-script.h"
 #include "sieve-script-file.h"
@@ -310,6 +311,7 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 		    const struct mail_attribute_value *value)
 {
 	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(t->box);
+	time_t ts = value->last_change != 0 ? value->last_change : ioloop_time;
 
 	if (t->box->storage->user->admin &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
@@ -317,10 +319,12 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) == 0) {
 		if (sieve_attribute_set_sieve(t->box->storage, key, value) < 0)
 			return -1;
+		/* FIXME: set value len to sieve script size / active name
+		   length */
 		if (value->value != NULL || value->value_stream != NULL)
-			mail_index_attribute_set(t->itrans, TRUE, key);
+			mail_index_attribute_set(t->itrans, TRUE, key, ts, 0);
 		else
-			mail_index_attribute_unset(t->itrans, TRUE, key);
+			mail_index_attribute_unset(t->itrans, TRUE, key, ts);
 		return 0;
 	}
 	return sbox->super.attribute_set(t, type, key, value);
