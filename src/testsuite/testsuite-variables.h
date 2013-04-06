@@ -1,4 +1,4 @@
-/* Copyright (c) 2002-2010 Sieve Extdata plugin authors, see the included COPYING file
+/* Copyright (c) 2002-2013 Pigeonhole authors, see the included COPYING file
  */
 
 #ifndef __TESTSUITE_VARIABLES_H

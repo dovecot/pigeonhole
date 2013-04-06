@@ -1,4 +1,4 @@
-/* Copyright (c) 2002-2012 Pigeonhole authors, see the included COPYING file
+/* Copyright (c) 2002-2013 Pigeonhole authors, see the included COPYING file
  */
 
 #ifndef __MANAGESIEVE_SETTINGS_H
