@@ -153,6 +153,15 @@ sieve_attribute_set_active(struct mail_storage *storage,
 	if (mailbox_attribute_value_to_string(storage, value, &scriptname) < 0)
 		return -1;
 	if (scriptname == NULL) {
+		/* don't affect non-link active script */
+		if ((ret=sieve_storage_active_script_is_no_link(svstorage)) != 0) {
+			if (ret < 0) {
+				mail_storage_set_internal_error(storage);
+				return -1;
+			}
+			return 0;
+		}
+
 		/* deactivate current script */
 		if (sieve_storage_deactivate(svstorage) < 0) {
 			mail_storage_set_critical(storage,
