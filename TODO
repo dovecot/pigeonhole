@@ -1,21 +1,21 @@
-Current activities:
-
-* Implement generic Sieve script object that abstracts from its location and
-  add support for retrieving scripts from dict database.
-	- Implement infrastructure for loading a sequence of global scripts from
-	  a database (for sieve_before/sieve_after).
+Active development is moved to Pigeonhole v0.4 for Dovecot v2.2. The v0.3.x
+series for Dovecot v2.1 is maintained for bug fixes and small updates. Check
+http://hg.rename-it.nl/dovecot-2.2-pigeonhole/raw-file/tip/TODO for the most
+up-to-date TODO list.
 
 Parallel plugin-based efforts:
 
-* Implement plugin to pipe messages to external programs. Will probably be
-  merged with the main tree eventually.
 * Implement enotify xmpp method as a plugin.
 * Implement metadata and servermetadata extensions as a plugin.
 	- Compiles against dovecot metadata plugin, as currently developed by
 	  Dennis Schridde.
 
-Next (mostly in order of descending priority/precedence):
+Open TODO issues for this revision:
 
+* Implement generic Sieve script object that abstracts from its location and
+  add support for retrieving scripts from dict database.
+	- Implement infrastructure for loading a sequence of global scripts from
+	  a database (for sieve_before/sieve_after).
 * Make the sieve storage a base class with (possibly) various implementations,
   just like mail-storage. This aims to provide support for alternate types
   of script storage like LDAP or SQL database.
