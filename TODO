@@ -1,7 +1,6 @@
-Active development is moved to Pigeonhole v0.4 for Dovecot v2.2. The v0.3.x
-series for Dovecot v2.1 is maintained for bug fixes and small updates. Check
-http://hg.rename-it.nl/dovecot-2.2-pigeonhole/raw-file/tip/TODO for the most
-up-to-date TODO list.
+Current activities:
+
+* Finish 0.4.0 release.
 
 Parallel plugin-based efforts:
 
@@ -10,7 +9,7 @@ Parallel plugin-based efforts:
 	- Compiles against dovecot metadata plugin, as currently developed by
 	  Dennis Schridde.
 
-Open TODO issues for this revision:
+Next (mostly in order of descending priority/precedence):
 
 * Implement generic Sieve script object that abstracts from its location and
   add support for retrieving scripts from dict database.
