@@ -1,3 +1,32 @@
+v0.3.4 06-04-2013 Stephan Bosch <stephan@rename-it.nl>
+
+	* Changed error handling to be less of a nuisance for administrators. Strictly
+	  user-caused errors are only reported in user log. Some errors are logged as
+	  info instead.
+	* Sieve: Changed behavior of redirect in case of a duplicate message delivery
+	  or a mail loop. If a duplicate is detected the implicit keep is canceled,
+	  as though the redirect was successful. This prevents getting local
+	  deliveries. The original SMTP recipient is used when it is available to
+	  augment the entry in the LDA duplicate database. This way, duplicates are
+	  only detected when (initially) addressed to the same recipient.
+	+ Sieve vnd.dovecot.duplicate extension: added new features to the duplicate
+	  test, making it possible to manually compose the key value for duplicate
+	  checking. This extension is in the process of being standardized
+	  (https://tools.ietf.org/html/draft-bosch-sieve-duplicate-01).
+	+ Sieve date extension: generate warning when invalid date part is specified.
+	- Sieve editheader extension: fixed crash occuring when addheader :last was
+	  used.
+	- Sieve include extension: fixed missing error cleanup that caused a resource
+	  leak.
+	- Sieve vacation extension: fixed determination of From: address for when
+	  sieve_vacation_dont_check_recipient is active.
+	- Sieve tools: the -D option wasn't enabled and documented for all tools.
+	- Siev dict script storage: fixed potential segfault occuring when dict
+		initialization fails.
+	- ManageSieve: fixed bug in skipping of CRLF at end of AUTHENTICATE command.
+	- ManageSieve: fixed handling of unkown commands pre-login.
+	- Fixed compile on Mageia Linux.
+
 v0.3.3 18-09-2012 Stephan Bosch <stephan@rename-it.nl>
 
 	- Fixed compile against installed Dovecot headers. This was broken by the
