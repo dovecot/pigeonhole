@@ -114,14 +114,6 @@ static ssize_t script_client_istream_read(struct istream_private *stream)
 	return ret;
 }
 
-static void ATTR_NORETURN script_client_istream_seek
-(struct istream_private *stream ATTR_UNUSED, uoff_t v_offset ATTR_UNUSED,
-	bool mark ATTR_UNUSED)
-{
-	// FIXME: implement forward seeking
-	i_panic("script_client_istream seek() not implemented");
-}
-
 static void ATTR_NORETURN script_client_istream_sync
 (struct istream_private *stream ATTR_UNUSED)
 {

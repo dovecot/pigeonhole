@@ -77,7 +77,7 @@ int sieve_extprogram_command_read_operands
 
 void sieve_extprogram_exec_error
 	(struct sieve_error_handler *ehandler, const char *location,
-		const char *fmt, ...);
+		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 struct sieve_extprogram *sieve_extprogram_create
 	(const struct sieve_extension *ext, const struct sieve_script_env *senv,
