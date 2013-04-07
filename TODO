@@ -6,8 +6,7 @@ Parallel plugin-based efforts:
 
 * Implement enotify xmpp method as a plugin.
 * Implement metadata and servermetadata extensions as a plugin.
-	- Compiles against dovecot metadata plugin, as currently developed by
-	  Dennis Schridde.
+	- Update to native Dovecot metadata implementation once it is created.
 
 Next (mostly in order of descending priority/precedence):
 
@@ -47,6 +46,13 @@ Next (mostly in order of descending priority/precedence):
 	- Verify outgoing mail addresses at runtime when necessary
 	  (e.g. after variables substitution)
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
+* Improve sieve_extprograms plugin:
+	- Redesign (forcible) local script termination. It should use SIGCHLD and
+	  a ioloop-based timeout.
+	- Add facility to trigger a temporary failure condition when a program
+	  fails rather than an implicit keep.
+	- Add a method to implicitly pass environment variables such as SENDER and
+	  RECIPIENT through the script socket service.
 * Properly implement Sieve internationalization support (utf-8 handling),
   currently it is not complete:
 	- Make this implementation fully conform section 2.7.2 of RFC5228 (Comparisons
@@ -70,7 +76,7 @@ Next (mostly in order of descending priority/precedence):
 * Build a server with test mail accounts that processes lots and lots of mail
   (e.g. spam, mailing lists etc.)
 
-* ## MAKE A FOURTH MAIN RELEASE (0.4.x) ##
+* ## MAKE A FIFTH MAIN RELEASE (0.5.x) ##
 
 * Implement extlists extension as a plugin
 * Enotify extension: detect use of variable values extracted from the message
