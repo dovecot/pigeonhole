@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference anchor='SUBADDRESS'>
+
+<front>
+<title>Sieve Email Filtering -- Subaddress Extension</title>
+<author initials='K.' surname='Murchison' fullname='K. Murchison'>
+<organization /></author>
+<date year='2003' month='September' />
+<abstract>
+<t>On email systems that allow for "subaddressing" or "detailed addressing" (e.g., "ken+sieve@example.org"), it is sometimes desirable to make comparisons against these sub-parts of addresses.  This document defines an extension to the Sieve mail filtering language that allows users to compare against the user and detail parts of an address. [STANDARDS-TRACK]</t></abstract></front>
+
+<seriesInfo name='RFC' value='3598' />
+<format type='TXT' octets='11151' target='http://www.rfc-editor.org/rfc/rfc3598.txt' />
+</reference>

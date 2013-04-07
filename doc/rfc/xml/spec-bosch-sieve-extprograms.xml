@@ -1,0 +1,616 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<!-- used by XSLT processors -->
+<?rfc strict="yes" ?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="4"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes" ?>
+<?rfc compact="yes" ?>
+<?rfc subcompact="no" ?>
+<?rfc private="Pigeonhole Project" ?>
+
+<rfc category="info" docName="spec-bosch-sieve-pipe">
+<!-- ***** FRONT MATTER ***** -->
+
+<front>
+<title abbrev="Sieve External Programs">
+Sieve Email Filtering: Invoking External Programs
+</title>
+
+<author fullname="Stephan Bosch" initials="S." surname="Bosch">
+  <organization/>
+  <address>
+    <postal>
+      <street></street>
+      <city>Enschede</city>
+      <country>NL</country>
+    </postal>
+    <email>stephan@rename-it.nl</email>
+  </address>
+</author>
+
+<date/>
+
+<area>General</area>
+<workgroup>Pigeonhole Project</workgroup>
+<keyword>sieve</keyword>
+<keyword>pipe</keyword>
+<keyword>external program</keyword>
+
+<abstract>
+<t>
+The Sieve filtering language (RFC 5228) is explicitly designed to be powerful
+enough to be useful yet limited in order to allow for a safe filtering system.
+The base specification of the language makes it impossible for users to do
+anything more complex (and dangerous) than write simple mail filters. One of
+the consequences of this security-minded design is that users cannot execute
+programs external to the Sieve filter. However, this can be a very useful and
+flexible feature for situations where Sieve cannot provide some uncommon
+functionality by itself. This document updates the Sieve filtering language with
+extensions that add support for invoking a predefined set of external programs. 
+Messages can be piped to or filtered through those programs and string data
+can be input to and retrieved from those programs.
+</t>
+</abstract>
+</front>
+
+<middle>
+
+<section title="Introduction">
+<t>This is an extension to the Sieve filtering language defined by
+<xref target="SIEVE">RFC 5228</xref>. It adds commands for invoking
+a predefined set of external programs. Messages can be piped to or filtered
+through those programs and, alternatively, string data can be passed to and
+retrieved from those programs.
+</t>
+
+<t>The Sieve language is explicitly designed to be powerful enough to be useful
+yet limited in order to allow for a safe server-side filtering system. Therefore,
+the base specification of the language makes it impossible for users to do
+anything more complex (and dangerous) than write simple mail filters. One of the
+consequences of this security-minded design is that users cannot execute
+external programs from their Sieve script. Particularly for server-side
+filtering setups in which mail accounts have no corresponding system account,
+allowing the execution of arbitrary programs from the mail filter can be a
+significant security risk. However, such functionality can also be very useful,
+for instance to easily implement a custom action or external effect that Sieve
+normally cannot provide.
+</t>
+
+<t>This document updates the Sieve filtering language with an extension to
+support invoking a predefined set of external programs using a set of new
+commands. To mitigate the security concerns, the external programs cannot
+be chosen arbitrarily; the available programs are restricted through
+administrator configuration.
+</t>
+
+<t>This extension is specific to the Pigeonhole Sieve implementation for the
+Dovecot Secure IMAP server. It will therefore most likely not be supported by
+web interfaces and GUI-based Sieve editors. This extension is primarily meant
+for use in small setups or global scripts that are managed by the system's
+administrator.
+</t>
+</section>
+
+<section title="Conventions Used in This Document">
+<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+document are to be interpreted as described in <xref target="KEYWORDS"/>.</t>
+<t>Conventions for notations are as in <xref target="SIEVE"/> Section 1.1,
+including use of the "Usage:" label for the definition of action and tagged
+arguments syntax.</t>
+</section>
+
+<section title="Naming of External Programs" anchor="naming">
+<t>An external program is identified by a name. This MUST not correspond to a
+file system path or otherwise have the ability to point to arbitrary programs on
+the system. The list of valid program names MUST be limited, subject to
+administrator configuration. 
+</t>
+
+<t>A program name is a sequence of Unicode characters encoded in UTF-8
+<xref target="UTF-8"/>. A program name MUST comply with Net-Unicode Definition
+(Section 2 of <xref target="NET-UNICODE"/>), with the additional restriction of
+prohibiting the following Unicode characters:
+</t>
+
+<t><list style="symbols">
+<t>0000-001F; [CONTROL CHARACTERS]
+</t>
+<t>002F; SLASH
+</t>
+<t>007F; DELETE
+</t>
+<t>0080-009F; [CONTROL CHARACTERS]
+</t>
+<t>2028; LINE SEPARATOR
+</t>
+<t>2029; PARAGRAPH SEPARATOR
+</t>
+</list></t>
+
+<t>Program names MUST be at least one octet (and hence Unicode character) long.
+Implementations MUST allow names of up to 128 Unicode characters in length
+(which can take up to 512 octets when encoded in UTF-8, not counting the
+terminating NUL), and MAY allow longer names. A server that receives a program
+name longer than its internal limit MUST reject the corresponding operation,
+in particular it MUST NOT truncate the program name.
+</t>
+
+<t>Implementations MUST NOT allow variables to be expanded into the program
+names; in other words, the "program-name" value MUST be a constant string as
+defined in <xref target="VARIABLES"/>, Section 3.
+</t>
+</section>
+
+<section title="Arguments for External Programs" anchor="arguments">
+<t>Optionally, arguments can be passed to an external program. The arguments are
+specified as a Sieve string list and are passed to the external program in
+sequence. Implementations SHOULD NOT impose any structure for these arguments;
+validity checks are the responsibility of the external program.
+</t>
+<t>However, implementations SHOULD limit the maximum number of arguments and the
+length of each argument. Implementations MUST accept at least 16 arguments with
+a length of at least 1024 octets each, and MAY allow more and longer arguments.
+Additionally, implementations MAY restrict the use of certain control characters
+such as CR and LF, if these can cause unexpected behavior or raise security
+concerns. 
+</t>
+<t>Note that implementations MAY also implicitly pass other data, such as the
+message envelope, to all executed programs avoiding the need to pass this
+information explicitly through program arguments.  
+</t>
+</section>
+
+<section title="Action &quot;pipe&quot;">
+
+<?rfc needLines="4" ?>
+<figure>
+<artwork><![CDATA[
+Usage: "pipe" [":try"] <program-name: string>
+              [<arguments: string-list>]
+]]></artwork>
+</figure>
+
+<t>The "pipe" action executes the external program identified by the 
+"program-name" argument and pipes the message to it. Much like the "fileinto"
+and "redirect" actions <xref target="SIEVE"/>, this action is a disposition-type
+action (it is intended to deliver the message) and therefore it cancels Sieve's
+implicit keep (see Section 2.10.2 of <xref target="SIEVE"/>) by default.
+</t>
+
+<t>The specified "program-name" argument MUST conform to the syntax and
+restrictions defined in <xref target="naming"/>. A script MUST fail with an
+appropriate error if it attempts to use the "filter" action with an invalid,
+restricted or unknown program name. The optional "arguments" argument lists the
+arguments that are passed to the external program, as explained in
+<xref target="arguments"/>.
+</t>
+
+<t>If the external program invoked by the "pipe" action fails to execute or
+finishes execution with an error, script execution MUST fail with an appropriate
+error (causing an implicit "keep" action to be executed), unless the ":try" tag
+is specified.
+</t>
+
+<t>When the ":try" tag is specified, the "pipe" instruction will attempt
+execution of the external program, but failure will not cause the whole Sieve
+script execution to fail with an error. Instead, the Sieve processing continues
+as if the "pipe" action was never triggered.
+</t>
+
+<t>If the execution of the external program is unsuccessful, the "pipe" action
+MUST NOT cancel the implicit keep.
+</t>
+
+<section title="Interactions with Other Sieve Actions">
+
+<t>By default, the "pipe" action cancels the implicit keep, thereby handing
+the responsibility for the message over to the external program. This behavior
+can be overridden using the Sieve "copy" extension <xref target="RFC3894"/> as
+described in <xref target="ext_copy"/>.
+</t>
+
+<t>The "pipe" action can only be executed once per script for a particular
+external program.  A script MUST fail with an appropriate error if it attempts
+to "pipe" messages to the same program multiple times.
+</t>
+
+<t>The "pipe" action is incompatible with the Sieve "reject" and "ereject"
+actions <xref target="RFC5429"/>.
+</t>
+</section>
+
+<section title="Interaction with the Sieve &quot;copy&quot; Extension"
+  anchor="ext_copy">
+
+<t>The Sieve "copy" extension <xref target="RFC3894"/> adds an optional ":copy" 
+tagged argument to the "fileinto" and "redirect" action commands. When 
+this tag is specified, these commands do not cancel the implicit "keep". 
+Instead, the requested action is performed in addition to whatever else
+is happening to the message.
+</t>
+
+<t>When the "vnd.dovecot.pipe" extension is active, the "copy" extension also
+adds the optional ":copy" tag to the "pipe" action command. This has the
+familiar effect that when the ":copy" tag is specified, the implicit "keep" will
+not be canceled by the "pipe" action. When the "copy" extension is active, the
+syntax of the "pipe" action is represented as follows:
+</t>
+
+<?rfc needLines="4" ?>
+<figure>
+<artwork><![CDATA[
+Usage: "pipe" [":copy"] [":try"] <program-name: string>
+              [<arguments: string-list>]
+]]></artwork>
+</figure>
+</section>
+</section>
+
+<section title="Action &quot;filter&quot;">
+
+<figure>
+<artwork><![CDATA[
+Usage: "filter" <program-name: string> [<arguments: string-list>]
+]]></artwork>
+</figure>
+
+<t>The "filter" action executes the external program identified by the 
+"program-name" argument and filters the message through it. This means that the
+message is provided as input to the external program and that the output of the
+external program is used as the new message. This way, the entire message can be
+altered using the external program. The "filter" action does not affect Sieve's
+implicit keep.
+</t>
+
+<t>The specified "program-name" argument MUST conform to the syntax and
+restrictions defined in <xref target="naming"/>. A script MUST fail with an
+appropriate error if it attempts to use the "filter" action with an invalid,
+restricted or unknown program name. The optional "arguments" argument lists the
+arguments that are passed to the external program, as explained in
+<xref target="arguments"/>.
+</t>
+
+<t>If the external program fails to execute, finishes execution with an error,
+or fails to provide message output, the "filter" action MUST terminate and leave
+the message unchanged. No error condition is raised, script processing
+continues, and prior or subsequent "filter" actions are not affected.
+</t>
+
+<section title="Interaction with Other Tests and Actions">
+<t>A successful "filter" action effectively changes the message, potentially
+substituting the message in its entirety with a new version. However, actions
+such as "reject" and "vacation" that generate <xref target="MDN"/>,
+<xref target="DSN"/>, or similar disposition messages MUST do so using the
+original, unmodified message. Similarly, if an error terminates processing of
+the script, the original message MUST be used when doing the implicit keep
+required by Section 2.10.6 of <xref target="SIEVE"/>. All other actions that
+store, send, or alter the message MUST do so with the current version of the
+message. This includes the "filter" action itself.
+</t>
+
+<t>When a disposition-type action, such as "fileinto", "redirect" or "pipe", is
+encountered, the current version of the message is "locked in" for that
+disposition-type action.  Whether the implementation performs the action at that
+point or batches it for later, it MUST perform the action on the message as it
+stood at the time, and MUST NOT include subsequent changes encountered later
+in the script processing.
+</t>
+
+<t>In addition, any tests done on the message and its parts will test the 
+message after all prior "filter" actions have been performed. Because the
+implicit keep, if it is in effect, acts on the final state of the message,
+all "filter" actions are performed before any implicit keep.
+</t>
+
+<t>The "filter" action does not affect the applicability of other actions; any
+action that was applicable before the "filter" invocation is equally applicable
+to the changed message afterward.
+</t>
+
+</section>
+</section>
+
+<section title="Action &quot;execute&quot;">
+
+<?rfc needLines="5" ?>
+<figure>
+<artwork><![CDATA[
+Usage: "execute" [":input" <input-data: string> / ":pipe"]
+                 [":output" <varname: string>]
+                 <program-name: string> [<arguments: string-list>]
+]]></artwork>
+</figure>
+
+<t>The "execute" action executes the external program identified by the 
+"program-name" argument. Input to the program can be provided using the
+":input" or ":pipe" tags. If used in combination with the "variables"
+extension <xref target="VARIABLES"/>, the "execute" action can redirect output
+from the program to the variable specified using the ":output" tag. This way,
+string data can be passed to and retrieved from an external program. The
+"execute" action does not change the message in any way and it never affects
+Sieve's implicit keep. 
+</t>
+
+<t>The specified "program-name" argument MUST conform to the syntax and
+restrictions defined in <xref target="naming"/>. A script MUST fail with an
+appropriate error if it attempts to use the "execute" action with an invalid,
+restricted or unknown program name. The optional "arguments" argument lists the
+arguments that are passed to the external program, as explained in
+<xref target="arguments"/>.
+</t>
+
+<t>The ":input" and ":pipe" tags are mutually exclusive, because these both
+specify input that is passed to the external program. Specifying both for a
+single "execute" command MUST trigger a compile error. The ":input" tag
+specifies a string that is passed to the external script as input. This string
+may also contain variable substitutions when the "variables" extension is
+active. If instead the ":pipe" tag is specified, the current version of the
+message itself is passed to the external program. If the ":input" and ":pipe"
+tags are both omitted, no input is provided to the external program.
+</t>
+
+<t>The ":output" tag specifies the variable to which the output of the external
+program is to be redirected. If the ":output" tag is omitted, any output from
+the external program is discarded. The ":output" tag requires the "variables"
+<xref target="VARIABLES"/> extension to be active. The use of the ":output" tag
+for the "execute" action without the "variables" extension in the require line
+MUST trigger a compile error.
+</t>
+
+<t>The "varname" parameter of the ":output" tag specifies the name of the
+variable. It MUST be a constant string and it MUST conform to the syntax of
+"variable-name" as defined in <xref target="VARIABLES"/>, Section 3. An invalid
+name MUST be detected as a syntax error. The referenced variable MUST be
+compatible with the "set" command as described in <xref target="VARIABLES"/>,
+Section 4. This means that match variables cannot be specified and that variable
+namespaces are only allowed when their specification explicitly indicates
+compatibility with the "set" command. Use of an incompatible variable MUST
+trigger a compile error.
+</t>
+
+<t>The data actually stored in the variable MAY be truncated to conform to an
+implementation-specific limit on variable length. If the execution of the
+external program fails, the contents of the variable referenced with ":output"
+MUST remain unchanged. 
+</t>
+
+</section>
+
+<section title="Actions &quot;filter&quot; and &quot;execute&quot; as Tests">
+<t>To simplify checking the successful invocation of the external program, 
+the "filter" and "execute" actions can also be used as tests. As such, these
+will attempt to execute the requested external program, and will evaluate to
+"true" if  the program executed successfully and, if applicable, output was
+retrieved from it successfully. The usage as a test is exactly the same as the
+usage as an action: as a test it doubles as an action and a test of the action's
+result at the same time.
+</t>
+<t>For the "execute" test, a "false" result is not necessarily equal to actual
+failure: it may just mean that the executed program returned a "false" result,
+e.g. an exit code higher than zero on Unix systems. Note that any output from
+the external program is discarded when it yields a "false" result. Similarly,
+for the "filter" test, programs may return a "false" result to indicate that the
+message was not changed. In that case the Sieve interpreter will not replace the
+active message with an identical one, which is beneficial for efficiency. The
+exact semantics of these tests thus partly depends on the program being
+executed. 
+</t>
+<t>To handle missing programs gracefully, implementations MAY let the "filter"
+and "execute" tests evaluate to "false" if an unknown program name is
+specified, instead of failing the script with an error as would happen if used
+as an action. In any other case and irrespective of whether the command is used
+as an action or a test, passing invalid arguments to the "filter" or "execute"
+commands, such as a syntactically invalid or restricted program name, MUST
+always cause the script to fail with an appropriate error.
+</t>
+</section>
+
+<section title="Sieve Capability Strings">
+<t>A Sieve implementation that defines the "pipe" action command 
+will advertise the capability string "vnd.dovecot.pipe".
+</t>
+
+<t>A Sieve implementation that defines the "filter" action command 
+will advertise the capability string "vnd.dovecot.filter".
+</t>
+
+<t>A Sieve implementation that defines the "execute" command will
+advertise the capability string "vnd.dovecot.execute".
+</t>
+</section>
+
+<section title="Examples">
+
+<t>The examples outlined in this section all refer to some external program.
+These programs are imaginary and are only available when the administrator would
+provide them.
+</t>
+
+<section title="Example 1">
+<t>The following example passes messages directed to a
+"user-request@example.com" address to an external program called
+"request-handler". The "-request" part of the recipient address is identified
+using the "subaddress" extension <xref target="SUBADDRESS"/>. If the program is
+executed successfully, the message is considered delivered and does not end up
+in the user's inbox.
+</t>
+
+<?rfc needLines="8" ?>
+<figure>
+<artwork><![CDATA[
+require [ "vnd.dovecot.pipe", "subaddress", "envelope" ];
+
+if envelope :detail "to" "request"
+{
+  pipe "request-handler";
+}
+]]></artwork>
+</figure>
+</section>
+
+<section title="Example 2">
+
+<t>The following example copies messages addressed to a particular recipient to
+a program called "printer". This program sends the message to some printer. In
+this case it is configured for "A4" page format and "draft" quality using the
+two arguments. Irrespective of whether the message is printed or not, it is also
+always stored in the user's inbox through Sieve's implicit keep action (which is
+not canceled due to the specified :copy tag).
+</t>
+
+<?rfc needLines="8" ?>
+<figure>
+<artwork><![CDATA[
+require [ "vnd.dovecot.pipe", "copy" ];
+
+if address "to" "snailmail@example.com" 
+{
+  pipe :copy "printer" ["A4", "draft"];
+}
+]]></artwork>
+</figure>
+</section>
+
+<section title="Example 3">
+
+<t>The following example translates a message from Dutch to English if
+appropriate. If the message's content language is indicated to be Dutch, the
+message is filtered through an external program called "translator" with
+arguments that request Dutch to English translation. Dutch messages are
+translated and filed into a special folder called "Translated". Other messages
+are delivered to the user's inbox. 
+</t>
+
+<?rfc needLines="10" ?>
+<figure>
+<artwork><![CDATA[
+require [ "vnd.dovecot.filter", "fileinto" ];
+
+if header "content-language" "nl" 
+{
+  filter "translator" ["nl", "en"];
+  fileinto "Translated";
+  stop;
+}
+]]></artwork>
+</figure>
+
+<t>Note that (formerly) Dutch messages are filed into the "Translated" folder,
+even when the "translator" program fails. In the following modified example this
+is prevented by using the filter action as a test:
+</t>
+
+<?rfc needLines="12" ?>
+<figure>
+<artwork><![CDATA[
+require [ "vnd.dovecot.filter", "fileinto" ];
+
+if header "content-language" "nl"
+{
+  if filter "translator" ["nl", "en"] 
+  {
+    fileinto "Translated";
+    stop;
+  }
+}
+]]></artwork>
+</figure>
+<t>This way, messages only end up in the "Translated" folder when translation
+was actually successful.
+</t>
+</section>
+
+<section title="Example 4">
+
+<t>The following example determines whether the user is on vacation by querying 
+an external source. The vacation message is obtained from the external source
+as well. The program that queries the external source is called "onvacation" and
+it has one argument: the localpart of the recipient address. The execute action
+is used as a test, which will evaluate to "true" when the user is determined to
+be on vacation. This means that the external program "onvacation" exits with a
+failure when the user is not on vacation. Of course, a vacation response is also
+not sent when the "onvacation" program truly fails somehow. 
+</t>
+
+<?rfc needLines="14" ?>
+<figure>
+<artwork><![CDATA[
+require [ "vnd.dovecot.execute", "vacation", "variables",
+          "envelope" ];
+
+if envelope :localpart :matches "to" "*"
+{ 
+  set "recipient" "${1}";
+}
+
+if execute :output "vacation_message" "onvacation" "${recipient}"
+{
+  vacation "${vacation_message}";
+}
+]]></artwork>
+</figure>
+</section>
+
+</section>
+
+<section anchor="Security" title="Security Considerations">
+<t>Allowing users to execute programs external to the Sieve filter can be a
+significant security risk, therefore the extensions presented in this
+specification must be implemented with great care. The external programs should
+execute with no more privileges than needed.
+</t>
+<t>Particularly the arguments passed to the external programs (see
+<xref target="arguments"/>) need to be handled with scrutiny. The external
+programs need to check the arguments for validity and SHOULD NOT pass these to
+system tools directly, as this may introduce the possibility of various kinds of
+insertion attacks. External programs that work with message content or string
+input from the Sieve script may have similar security concerns.
+</t>
+<t>Unlike the Sieve interpreter itself, an external program can easily
+consume a large amount of resources if not implemented carefully. This can be
+triggered by coincidence or intentionally by an attacker. Therefore, the amount
+of resources available to the external programs SHOULD be limited appropriately.
+For one, external programs MUST NOT be allowed to execute indefinitely.
+</t>
+<t>For improved security, implementations MAY restrict the use of this extension
+to administrator-controlled global Sieve scripts. In such setups, the external
+programs are never called directly from the user's personal script. For example, 
+using the "include" extension <xref target="INCLUDE"/>, the
+user's personal script can include global scripts that contain the actual
+external program invocations. This both abstracts the details of external
+program invocation from the user's view and it limits access to external
+programs to whatever the administrator defines.  
+</t>
+</section>
+</middle>
+
+<!--  *****BACK MATTER ***** -->
+
+<back>
+<!-- References split into informative and normative -->
+
+<references title="Normative References">
+  <?rfc include="reference.RFC.3894.xml"?>
+  <?rfc include="reference.KEYWORDS.xml"?>
+  <?rfc include="reference.SIEVE.xml"?>
+  <?rfc include="reference.VARIABLES.xml"?>
+  <?rfc include="reference.UTF-8.xml"?>
+  <?rfc include="reference.NET-UNICODE.xml"?>
+</references>
+
+<references title="Informative References">
+  <?rfc include="reference.RFC.5429.xml"?>
+	<?rfc include="reference.INCLUDE.xml"?>
+  <?rfc include="reference.DSN.xml"?>
+  <?rfc include="reference.MDN.xml"?>
+  <?rfc include="reference.SUBADDRESS.xml"?>
+</references>
+</back>
+
+</rfc>

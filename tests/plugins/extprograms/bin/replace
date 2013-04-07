@@ -1,0 +1,12 @@
+#!/bin/sh
+
+cat > /dev/null
+
+echo "From: hatseflat@example.com"
+echo "To: frutsel@example.org"
+echo "Subject: replacement message"
+echo
+echo "Replaced!"
+
+
+exit 0

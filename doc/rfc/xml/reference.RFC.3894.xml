@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference anchor='RFC3894'>
+
+<front>
+<title>Sieve Extension: Copying Without Side Effects</title>
+<author initials='J.' surname='Degener' fullname='J. Degener'>
+<organization /></author>
+<date year='2004' month='October' />
+<abstract>
+<t>The Sieve scripting language allows users to control handling and disposal of their incoming e-mail. By default, an e-mail message that is processed by a Sieve script is saved in the owner's "inbox". Actions such as "fileinto" and "redirect" cancel this default behavior.&lt;/t>&lt;t> This document defines a new keyword parameter, ":copy", to be used with the Sieve "fileinto" and "redirect" actions. Adding ":copy" to an action suppresses cancellation of the default "inbox" save. It allows users to add commands to an existing script without changing the meaning of the rest of the script. [STANDARDS-TRACK]</t></abstract></front>
+
+<seriesInfo name='RFC' value='3894' />
+<format type='TXT' octets='9018' target='http://www.rfc-editor.org/rfc/rfc3894.txt' />
+</reference>

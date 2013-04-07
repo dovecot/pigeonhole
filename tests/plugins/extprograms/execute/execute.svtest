@@ -1,0 +1,103 @@
+require "vnd.dovecot.testsuite";
+require "vnd.dovecot.execute";
+require "vnd.dovecot.debug";
+require "variables";
+require "relational";
+
+test_set "message" text:
+From: stephan@example.com
+To: pipe@example.net
+Subject: Frop!
+
+Frop!
+.
+;
+
+test_config_set "sieve_execute_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_reload :extension "vnd.dovecot.execute";
+test_result_reset;
+
+test "Execute - bare" {
+	execute "program";
+}
+
+test_result_reset;
+test "Execute - i/o" {
+	execute :input "FROP" :output "out" "frame";
+
+	if not string "${out}" "FRAMED { FROP }" {
+		test_fail "wrong string returned: ${out}";
+	}
+}
+
+test_result_reset;
+test "Execute - i/o and arguments" {
+	execute :input "FROP" :output "out" "frame" ["FRIEP "];
+
+	if not string "${out}" "FRAMED FRIEP { FROP }" {
+		test_fail "wrong string returned: ${out}";
+	}
+}
+
+test_result_reset;
+test "Execute - pipe" {
+	execute :pipe :output "msg" "cat";
+
+	if not string :contains "${msg}" "Subject: Frop!" {
+		test_fail "wrong string returned: ${out}";
+	}
+}
+
+test_result_reset;
+test "Execute - env" {
+	test_set "envelope.from" "stephan@sub.example.com";
+	test_set "envelope.to" "stephan@sub.example.net";
+	test_set "envelope.orig_to" "all@sub.example.net";
+
+	execute :output "out" "env" "SENDER";
+	if not string :is "${out}" "stephan@sub.example.com" {
+		test_fail "wrong SENDER env returned: '${out}'";
+	}
+
+	execute :output "out" "env" "RECIPIENT";
+	if not string :is "${out}" "stephan@sub.example.net" {
+		test_fail "wrong RECIPIENT env returned: '${out}'";
+	}
+
+	execute :output "out" "env" "ORIG_RECIPIENT";
+	if not string :is "${out}" "all@sub.example.net" {
+		test_fail "wrong ORIG_RECIPIENT env returned: '${out}'";
+	}
+
+	execute :output "out" "env" "HOST";
+	if not string :is "${out}" "host.example.com" {
+		test_fail "wrong ORIG_RECIPIENT env returned: '${out}'";
+	}
+
+	execute :output "out" "env" "HOME";
+	if string :count "eq" "${out}" "0" {
+		test_fail "empty HOME env returned";
+	}
+
+	execute :output "out" "env" "USER";
+	if string :count "eq" "${out}" "0" {
+		test_fail "empty USER env returned";
+	}
+}
+
+test_result_reset;
+test "Execute - used as test" {
+	if execute :pipe :output "msg" "dog" {
+		test_fail "execute action indicated success with invalid program";
+	}
+
+	if not execute :pipe :output "msg" "cat" {
+		test_fail "execute action indicated failure with valid program";
+	}
+
+	if not string :contains "${msg}" "Subject: Frop!" {
+		test_fail "wrong string returned: ${out}";
+	}
+}
+	
+	

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+eval echo -n "\${$1}"

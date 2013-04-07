@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference anchor='MDN'>
+
+<front>
+<title>Message Disposition Notification</title>
+<author initials='T.' surname='Hansen' fullname='T. Hansen'>
+<organization /></author>
+<author initials='G.' surname='Vaudreuil' fullname='G. Vaudreuil'>
+<organization /></author>
+<date year='2004' month='May' />
+<abstract>
+<t>This memo defines a MIME content-type that may be used by a mail user agent (MUA) or electronic mail gateway to report the disposition of a message after it has been successfully delivered to a recipient.  This content-type is intended to be machine-processable.  Additional message headers are also defined to permit Message Disposition Notifications (MDNs) to be requested by the sender of a message.  The purpose is to extend Internet Mail to support functionality often found in other messaging systems, such as X.400 and the proprietary "LAN-based" systems, and often referred to as "read receipts," "acknowledgements", or "receipt notifications." The intention is to do this while respecting privacy concerns, which have often been expressed when such functions have been discussed in the past.  Because many messages are sent between the Internet and other messaging systems (such as X.400 or the proprietary "LAN-based" systems), the MDN protocol is designed to be useful in a multi-protocol messaging environment.  To this end, the protocol described in this memo provides for the carriage of "foreign" addresses, in addition to those normally used in Internet Mail.  Additional attributes may also be defined to support "tunneling" of foreign notifications through Internet Mail. [STANDARDS-TRACK]</t></abstract></front>
+
+<seriesInfo name='RFC' value='3798' />
+<format type='TXT' octets='64049' target='http://www.rfc-editor.org/rfc/rfc3798.txt' />
+</reference>

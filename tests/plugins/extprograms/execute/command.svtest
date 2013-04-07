@@ -1,0 +1,27 @@
+require "vnd.dovecot.testsuite";
+require "vnd.dovecot.execute";
+require "variables";
+
+test_config_set "sieve_execute_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_reload :extension "vnd.dovecot.execute";
+
+test "Basic" {
+	execute "program";
+}
+
+test "Input message" {
+	execute :pipe "program";
+}
+
+test "Input string" {
+	execute :input "DATA" "program";
+}
+
+test "Input variable" {
+	set "DATA" "DATA";
+	execute :input "${DATA}" "program";
+}
+
+test "Output variable" {
+	execute :output "DATA" "program";
+}

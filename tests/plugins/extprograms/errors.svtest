@@ -1,0 +1,32 @@
+require "vnd.dovecot.testsuite";
+
+require "relational";
+require "comparator-i;ascii-numeric";
+
+/*
+ * Invalid program names
+ */
+
+test "Invalid Program Names" {
+        if test_script_compile "errors/programname.sieve" {
+                test_fail "compile should have failed";
+        }
+
+        if not test_error :count "eq" :comparator "i;ascii-numeric" "8" {
+                test_fail "wrong number of errors reported";
+        }
+}
+
+/*
+ * Invalid arguments
+ */
+
+test "Invalid Arguments" {
+        if test_script_compile "errors/arguments.sieve" {
+                test_fail "compile should have failed";
+        }
+
+        if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+                test_fail "wrong number of errors reported";
+        }
+}

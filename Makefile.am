@@ -20,7 +20,7 @@ ChangeLog: .hg/dirstate
 	hg log --style=changelog > ChangeLog
 endif
 
-# Testsuite tests
+# Testsuite tests (FIXME: ugly)
 
 TESTSUITE_BIN = $(top_builddir)/src/testsuite/testsuite $(TESTSUITE_OPTIONS)
 
@@ -148,8 +148,26 @@ test_cases = \
 $(test_cases):
 	@$(TEST_BIN) $(top_srcdir)/$@
 
-.PHONY: $(test_cases)
+TEST_EXTPROGRAMS_BIN = $(TEST_BIN) \
+	-P src/plugins/sieve-extprograms/.libs/sieve_extprograms
 
+extprograms_test_cases = \
+	tests/plugins/extprograms/errors.svtest \
+	tests/plugins/extprograms/pipe/command.svtest \
+	tests/plugins/extprograms/pipe/errors.svtest \
+	tests/plugins/extprograms/pipe/execute.svtest \
+	tests/plugins/extprograms/filter/command.svtest \
+	tests/plugins/extprograms/filter/errors.svtest \
+	tests/plugins/extprograms/filter/execute.svtest \
+	tests/plugins/extprograms/execute/command.svtest \
+	tests/plugins/extprograms/execute/errors.svtest \
+	tests/plugins/extprograms/execute/execute.svtest
+
+$(extprograms_test_cases):
+	@$(TEST_EXTPROGRAMS_BIN) 	$(top_srcdir)/$@
+
+.PHONY: $(test_cases) $(extprograms_test_cases)
 test: $(test_cases)
+test-plugins: $(extprograms_test_cases)
 
-check: check-am test all-am
+check: check-am test test-plugins all-am

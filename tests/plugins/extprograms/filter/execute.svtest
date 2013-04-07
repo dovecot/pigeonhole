@@ -1,0 +1,180 @@
+require "vnd.dovecot.testsuite";
+require "vnd.dovecot.filter";
+require "vnd.dovecot.debug";
+require "variables";
+require "editheader";
+require "body";
+require "fileinto";
+require "mailbox";
+
+test_set "message" text:
+From: stephan@example.com
+To: pipe@example.net
+Subject: Frop!
+
+Frop!
+.
+;
+
+test_config_set "sieve_filter_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_reload :extension "vnd.dovecot.filter";
+test_result_reset;
+
+test_result_reset;
+test "Replace" {
+	if header :contains "subject" "replacement" {
+		test_fail "message already replaced";
+	}
+
+	filter "replace";
+
+	if not header :contains "subject" "replacement" {
+		test_fail "message not replaced";
+	}
+}
+
+test_result_reset;
+test "Used as test" {
+	if filter "nonsense" {
+		test_fail "filter action indicated success with invalid program";
+	}
+
+	if not filter "replace" {
+		test_fail "filter action indicated failure with valid program";
+	}
+
+	if not header :contains "subject" "replacement" {
+		test_fail "message not replaced; filter not actually executed";
+	}
+}	
+
+test_result_reset;
+test "Modify" {
+	if anyof (
+		body :contains "extra",
+		exists "x-frop") {
+		test_fail "message already modified";
+	}
+
+	if not header "subject" "Frop!" {
+		test_fail "message is wrong";
+	}
+
+	filter "modify";
+
+	if not header "subject" "Frop!" {
+		test_fail "message replaced erroneously";
+	}
+
+	if not header :contains "x-frop" "extra" {
+		test_fail "message header not modified";
+	}
+
+	if not body :contains "Extra" {
+		test_fail "message body not modified";
+	}
+}
+
+test_result_reset;
+test "Editheader" {
+	if anyof ( exists "X-A", exists "X-B", exists "X-C", exists "X-D",
+		exists "X-E") {
+		test_fail "message already modified";
+	}
+
+	addheader "X-A" "1";
+	if not header "X-A" "1" {
+		test_fail "X-A header missing";
+	}
+
+	fileinto :create "A";
+
+	filter "addheader" ["X-B", "2"];
+	if not header "X-B" "2" {
+		test_fail "X-B header missing";
+	}
+
+	fileinto :create "B";
+
+	addheader "X-C" "3";
+	if not header "X-C" "3" {
+		test_fail "X-C header missing";
+	}
+
+	fileinto :create "C";
+
+	filter "addheader" ["X-D", "4"];
+	if not header "X-D" "4" {
+		test_fail "X-D header missing";
+	}
+
+	fileinto :create "D";
+
+	addheader "X-E" "5";
+	if not header "X-E" "5" {
+		test_fail "X-E header missing";
+	}
+
+	fileinto :create "E";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	test_message :folder "A" 0;
+
+	if not header "X-A" "1" {
+		test_fail "X-A header missing";
+	}
+	if anyof (
+		header "X-B" "2", header "X-C" "3",
+		header "X-D" "4", header "X-E" "5") {
+		test_fail "X-B, X-C, X-D or X-E header found";
+	}
+
+	test_message :folder "B" 0;
+
+	if not header "X-B" "2" {
+		test_fail "X-B header missing";
+	}
+	if anyof (
+		header "X-C" "3", header "X-D" "4", header "X-E" "5") {
+		test_fail "X-C, X-D or X-E header found";
+	}
+
+	test_message :folder "C" 0;
+
+	if not header "X-C" "3" {
+		test_fail "X-C header missing";
+	}
+	if anyof (header "X-D" "4", header "X-E" "5") {
+		test_fail "X-D or X-E header found";
+	}
+
+	test_message :folder "D" 0;
+
+	if not header "X-D" "4" {
+		test_fail "X-D header missing";
+	}
+	if anyof (header "X-E" "5") {
+		test_fail "X-E header found";
+	}
+
+	test_message :folder "E" 0;
+
+	if not header "X-A" "1" {
+		test_fail "X-A header missing in final message";
+	}
+	if not header "X-B" "2" {
+		test_fail "X-B header missing in final message";
+	}
+	if not header "X-C" "3" {
+		test_fail "X-C header missing in final message";
+	}
+	if not header "X-D" "4" {
+		test_fail "X-D header missing in final message";
+	}
+	if not header "X-E" "5" {
+		test_fail "X-E header missing in final message";
+	}
+}	

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+echo "X-Frop: Extra header"
+cat
+echo
+echo "Extra body content!"
+
+exit 0

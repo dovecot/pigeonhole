@@ -1,0 +1,18 @@
+require "vnd.dovecot.testsuite";
+
+require "relational";
+require "comparator-i;ascii-numeric";
+
+/*
+ * Command syntax
+ */
+
+test "Command syntax" {
+        if test_script_compile "errors/syntax.sieve" {
+                test_fail "compile should have failed";
+        }
+
+        if not test_error :count "eq" :comparator "i;ascii-numeric" "8" {
+                test_fail "wrong number of errors reported";
+        }
+}

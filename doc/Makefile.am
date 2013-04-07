@@ -10,5 +10,6 @@ endif
 EXTRA_DIST = \
 	devel \
 	extensions \
+	plugins \
 	$(docfiles)
 

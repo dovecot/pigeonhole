@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<reference anchor='DSN'>
+
+<front>
+<title>An Extensible Message Format for Delivery Status Notifications</title>
+<author initials='K.' surname='Moore' fullname='K. Moore'>
+<organization /></author>
+<author initials='G.' surname='Vaudreuil' fullname='G. Vaudreuil'>
+<organization /></author>
+<date year='2003' month='January' />
+<abstract>
+<t>This memo defines a Multipurpose Internet Mail Extensions (MIME) content-type that may be used by a message transfer agent (MTA) or electronic mail gateway to report the result of an attempt to deliver a message to one or more recipients.  This content-type is intended as a machine-processable replacement for the various types of delivery status notifications currently used in Internet electronic mail.  Because many messages are sent between the Internet and other messaging systems (such as X.400 or the so-called "Local Area Network (LAN)-based" systems), the Delivery Status Notification (DSN) protocol is designed to be useful in a multi-protocol messaging environment.  To this end, the protocol described in this memo provides for the carriage of "foreign" addresses and error codes, in addition to those normally used in Internet mail.  Additional attributes may also be defined to support "tunneling" of foreign notifications through Internet mail. [STANDARDS-TRACK]</t></abstract></front>
+
+<seriesInfo name='RFC' value='3464' />
+<format type='TXT' octets='83060' target='http://www.rfc-editor.org/rfc/rfc3464.txt' />
+</reference>

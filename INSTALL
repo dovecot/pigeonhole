@@ -127,7 +127,8 @@ plugin section of the config file (default values are shown if applicable):
    The Pigeonhole Sieve interpreter can have plugins of its own. Using this
    setting, the used plugins can be specified. Check the Dovecot wiki
    (wiki2.dovecot.org) or the pigeonhole website (http://pigeonhole.dovecot.org)
-   for available plugins.
+   for available plugins. The sieve_extprograms plugin is included in this
+   release.
 
  sieve_user_log =
    The path to the file where the user log file is written. If not configured, a
@@ -367,7 +368,7 @@ Sieve Interpreter - Extension Configuration
   configuration options. Refer to doc/extensions/include.txt for settings
   specific to the include extension.
 
-- Spamtest and Virustest extensions:
+- Spamtest and virustest extensions:
 
   Using the spamtest and virustest extensions (RFC 5235), the Sieve language
   provides a uniform and standardized command interface for evaluating spam and
@@ -381,6 +382,28 @@ Sieve Interpreter - Extension Configuration
   The spamtest, spamtestplus and virustest extensions require explicit
   configuration and are not enabled for use by default. Refer to
   doc/extensions/spamtest-virustest.txt for configuration information.
+
+- Vnd.dovecot.duplicate extension:
+
+  The vnd.dovecot.duplicate extension augments the Sieve filtering
+  implementation with a test that allows detecting and handling duplicate
+  message deliveries, e.g. as caused by mailinglists when people reply both to
+  the mailinglist and the user directly.
+
+  The vnd.dovecot.duplicate extension requires explicit configuration and is not
+  enabled for use by default. Refer to doc/extensions/vnd.dovecot.duplicate.txt
+  for configuration information.
+
+- Vnd.dovovecot.pipe, vnd.dovecot.filter, vnd.dovecot.execute extensions:
+
+  The "sieve_extprograms" plugin provides extensions to the Sieve filtering
+  language adding new action commands for invoking a predefined set of external
+  programs. Messages can be piped to or filtered through those programs	and
+  string data can be input to and retrieved from those programs.
+
+  This plugin and the extensions it provides require explicit configuration and
+  are not enabled for use by default. Refer to doc/plugins/sieve_extprograms.txt
+	for more information.
 
 Sieve Interpreter - Migration from CMUSieve (Dovecot v1.0/v1.1)
 ---------------------------------------------------------------

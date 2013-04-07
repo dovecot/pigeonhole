@@ -1,0 +1,20 @@
+#!/bin/sh
+
+echo "========================================" 1>&2
+echo "Test shell script successfully executed!" 1>&2
+echo 1>&2
+echo "Arguments: $1 $2" 1>&2
+echo 1>&2
+echo "Environment:" 1>&2
+env 1>&2
+echo 1>&2
+echo "Message:" 1>&2
+cat 1>&2
+echo "========================================" 1>&2
+echo 1>&2
+
+echo "Subject: frop!"
+echo "From: stephan@rename-it.nl"
+echo "To: tss@example.com"
+echo
+echo "Frop!"

@@ -1,0 +1,56 @@
+require "vnd.dovecot.testsuite";
+require "vnd.dovecot.pipe";
+require "vnd.dovecot.debug";
+require "variables";
+
+test_set "message" text:
+From: stephan@example.com
+To: pipe@example.net
+Subject: Frop!
+
+Frop!
+.
+;
+
+/* Basic pipe */
+
+test_config_set "sieve_pipe_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_reload :extension "vnd.dovecot.pipe";
+test_result_reset;
+
+test "Pipe" {
+	pipe "stderr" ["ONE", "TWO"];
+	
+	if not test_result_execute {
+		test_fail "failed to pipe message to script";
+	}	
+}
+
+/* Timeout */
+
+test_config_set "sieve_pipe_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_set "sieve_pipe_exec_timeout" "3s";
+test_config_reload :extension "vnd.dovecot.pipe";
+test_result_reset;
+
+test "Timeout 3s" {
+	pipe "sleep2";
+	
+	if not test_result_execute {
+		test_fail "failed to pipe message to script";
+	}	
+}
+
+test_result_reset;
+test_config_set "sieve_pipe_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_set "sieve_pipe_exec_timeout" "0";
+test_config_reload :extension "vnd.dovecot.pipe";
+test_result_reset;
+
+test "Timeout infinite" {
+	pipe "sleep2";
+	
+	if not test_result_execute {
+		test_fail "failed to pipe message to script";
+	}	
+}

@@ -1,0 +1,10 @@
+require "vnd.dovecot.testsuite";
+require "vnd.dovecot.pipe";
+
+test_config_set "sieve_pipe_dir" "./";
+test_config_reload :extension "vnd.dovecot.pipe";
+
+test "Basic" {
+	pipe "program";
+}
+
