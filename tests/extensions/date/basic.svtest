@@ -41,34 +41,33 @@ test "Invalid" {
 }
 
 test "Comparison" {
-	if not date :is "delivery-date" "date" "2009-07-22" {
-		if date :matches "delivery-date" "date" "*" { set "date" "${1}"; }
+	if not date :originalzone :is "delivery-date" "date" "2009-07-22" {
+		if date :originalzone :matches "delivery-date" "date" "*" { set "date" "${1}"; }
 		test_fail "date is invalid: ${date}";
 	}
-
-	if not date :value "ge" "delivery-date" "date" "2009-07-22" {
+	if not date :originalzone :value "ge" "delivery-date" "date" "2009-07-22" {
 		test_fail "date comparison ge failed equal";
 	}
 
-	if not date :value "ge" "delivery-date" "date" "2009-07-21" {
+	if not date :originalzone :value "ge" "delivery-date" "date" "2009-07-21" {
 		test_fail "date comparison ge failed greater";
 	}
 
-	if anyof (not date :value "ge" "delivery-date" "date" "2009-06-22",
-		not date :value "ge" "date" "date" "2006-07-22" ) {
+	if anyof (not date :originalzone :value "ge" "delivery-date" "date" "2009-06-22",
+		not date :originalzone :value "ge" "date" "date" "2006-07-22" ) {
 		test_fail "date comparison ge failed much greater";
 	}
 
-	if not date :value "le" "delivery-date" "date" "2009-07-22" {
+	if not date :originalzone :value "le" "delivery-date" "date" "2009-07-22" {
 		test_fail "date comparison le failed equal";
 	}
 
-	if not date :value "le" "delivery-date" "date" "2009-07-23" {
+	if not date :originalzone :value "le" "delivery-date" "date" "2009-07-23" {
 		test_fail "date comparison le failed less";
 	}
 
-	if anyof (not date :value "le" "delivery-date" "date" "2009-09-22",
-		not date :value "le" "date" "date" "2012-07-22" ) {
+	if anyof (not date :originalzone :value "le" "delivery-date" "date" "2009-09-22",
+		not date :originalzone :value "le" "date" "date" "2012-07-22" ) {
 		test_fail "date comparison ge failed much less";
 	}
 }
