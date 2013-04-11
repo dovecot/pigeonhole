@@ -49,6 +49,7 @@ struct sieve_instance *sieve_init
 	struct sieve_instance *svinst;
 	unsigned long long int uint_setting;
 	size_t size_setting;
+	const char  *domain;
 	pool_t pool;
 
 	/* Create Sieve engine instance */
@@ -58,11 +59,35 @@ struct sieve_instance *sieve_init
 	svinst->callbacks = callbacks;
 	svinst->context = context;
 	svinst->debug = debug;
-	svinst->hostname = p_strdup_empty(pool, env->hostname);
 	svinst->base_dir = p_strdup_empty(pool, env->base_dir);
 	svinst->username = p_strdup_empty(pool, env->username);
 	svinst->home_dir = p_strdup_empty(pool, env->home_dir);
 	svinst->flags = env->flags;
+	svinst->env_location = env->location;
+	svinst->delivery_phase = env->delivery_phase;
+
+	/* Determine domain */
+	if ( env->domainname != NULL && *(env->domainname) != '\0' ) {
+		domain = env->domainname;
+	} else {
+		/* Fall back to parsing username localpart@domain */
+		domain = strchr(svinst->username, '@');
+		if ( domain == NULL || *(domain+1) == '\0' ) {
+			/* Fall back to parsing hostname host.domain */
+			domain = ( env->hostname != NULL ? strchr(env->hostname, '.') : NULL );
+			if ( domain == NULL || *(domain+1) == '\0'
+				|| strchr(domain+1, '.') == NULL ) {
+				/* Fall back to bare hostname */
+				domain = env->hostname;
+			} else {
+				domain++;
+			}
+		} else {
+			domain++;
+		}
+	}
+	svinst->hostname = p_strdup_empty(pool, env->hostname);
+	svinst->domainname = p_strdup(pool, domain);
 
 	sieve_errors_init(svinst);
 

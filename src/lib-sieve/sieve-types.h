@@ -31,14 +31,39 @@ enum sieve_flag {
 	SIEVE_FLAG_HOME_RELATIVE = (1 << 0),
 };
 
+/* Sieve evaluation can be performed at various different points as messages
+   are processed. */
+enum sieve_env_location {
+	/* Unknown */
+	SIEVE_ENV_LOCATION_UNKNOWN = 0,
+	/* "MDA" - evaluation is being performed by a Mail Delivery Agent */
+	SIEVE_ENV_LOCATION_MDA,
+	/* "MTA" - the Sieve script is being evaluated by a Message Transfer Agent */
+	SIEVE_ENV_LOCATION_MTA,
+	/* "MS"  - evaluation is being performed by a Message Store */
+	SIEVE_ENV_LOCATION_MS
+};
+
+/* The point relative to final delivery where the Sieve script is being
+   evaluated. */
+enum sieve_delivery_phase {
+	SIEVE_DELIVERY_PHASE_UNKNOWN = 0,
+	SIEVE_DELIVERY_PHASE_PRE,
+	SIEVE_DELIVERY_PHASE_DURING,
+	SIEVE_DELIVERY_PHASE_POST,
+};
+
 struct sieve_environment {
 	const char *hostname;
-	const char *base_dir;
+	const char *domainname;
 
+	const char *base_dir;
 	const char *username;
 	const char *home_dir;
 
 	enum sieve_flag flags;
+	enum sieve_env_location location;
+	enum sieve_delivery_phase delivery_phase;
 };
 
 /*

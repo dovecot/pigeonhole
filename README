@@ -102,7 +102,7 @@ following list outlines the implementation status of each supported extension:
     body (RFC 5173): almost fully supported, but the text body-transform
         implementation is simple and some issues make it still not completely
         RFC compliant.
-    environment (RFC 5183): basic support is provided (v0.1.5+).
+    environment (RFC 5183): fully supported (v0.1.5+).
     variables (RFC 5229): fully supported.
     vacation (RFC 5230): fully supported.
       + vacation-seconds (RFC 6131): fully supported (v0.2.3+).

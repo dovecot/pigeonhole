@@ -157,6 +157,7 @@ struct sieve_instance {
 
 	/* System environment */
 	const char *hostname;
+	const char *domainname;
 	const char *base_dir;
 
 	/* User environment */
@@ -181,6 +182,8 @@ struct sieve_instance {
 
 	/* Plugin modules */
 	struct sieve_plugin *plugins;
+	enum sieve_env_location env_location;
+	enum sieve_delivery_phase delivery_phase;
 
 	/* Limits */
 	size_t max_script_size;

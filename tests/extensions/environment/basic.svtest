@@ -24,8 +24,10 @@ test "Name" {
 	}
 }
 
-test "Host" {
-	if not environment "host" "host.example.com" {
-		test_fail "wrong testsuite hostname";
+test "Location" {
+	if not environment "location" "MS" {
+		test_fail "wrong testsuite environment location";
 	}
 }
+
+

@@ -22,7 +22,7 @@ test "Count" {
 		test_fail "count should not match unknown environment item";
 	}
 
-	if not environment :count "eq" "host" "1" {
+	if not environment :count "eq" "location" "1" {
 		test_fail "count of non-empty environment should be 1";
 	}
 }

@@ -271,8 +271,10 @@ struct sieve_instance *sieve_tool_init_finish
 	memset((void *)&svenv, 0, sizeof(svenv));
 	svenv.username = username;
 	(void)mail_user_get_home(tool->mail_user_dovecot, &svenv.home_dir);
-	svenv.hostname = "host.example.com";
+	svenv.hostname = my_hostdomain();
 	svenv.base_dir = tool->mail_user_dovecot->set->base_dir;
+	svenv.location = SIEVE_ENV_LOCATION_MS;
+	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_POST;
 
 	/* Initialize Sieve Engine */
 	if ( (tool->svinst=sieve_init

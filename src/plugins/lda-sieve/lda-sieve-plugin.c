@@ -622,6 +622,8 @@ static int lda_sieve_deliver_mail
 	svenv.hostname = mdctx->set->hostname;
 	svenv.base_dir = mdctx->dest_user->set->base_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
+	svenv.location = SIEVE_ENV_LOCATION_MDA;
+	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_DURING;
 
 	svinst = sieve_init(&svenv, &lda_sieve_callbacks, mdctx, debug);
 

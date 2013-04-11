@@ -102,11 +102,8 @@ const char *ext_environment_item_get_value
 	if ( item->value != NULL )
 		return item->value;
 
-	if ( item->get_value != NULL ) {
-		const char *value = item->get_value(ext->svinst, senv);
-
-		return ( value == NULL ? "" : value );
-	}
+	if ( item->get_value != NULL )
+		return item->get_value(ext->svinst, senv);
 
 	return NULL;
 }
@@ -120,10 +117,17 @@ const char *ext_environment_item_get_value
  *   The primary DNS domain associated with the Sieve execution context, usually
  *   but not always a proper suffix of the host name.
  */
+
+static const char *envit_domain_get_value
+(struct sieve_instance *svinst,
+	const struct sieve_script_env *senv ATTR_UNUSED)
+{
+	return svinst->domainname;
+}
+
 const struct sieve_environment_item domain_env_item = {
-	"domain",
-	NULL,
-	NULL,
+	.name = "domain",
+	.get_value = envit_domain_get_value,
 };
 
 /* "host":
@@ -133,15 +137,15 @@ const struct sieve_environment_item domain_env_item = {
  */
 
 static const char *envit_host_get_value
-(struct sieve_instance *svinst, const struct sieve_script_env *senv ATTR_UNUSED)
+(struct sieve_instance *svinst,
+	const struct sieve_script_env *senv ATTR_UNUSED)
 {
 	return svinst->hostname;
 }
 
 const struct sieve_environment_item host_env_item = {
-	"host",
-	NULL,
-	envit_host_get_value,
+	.name = "host",
+	.get_value = envit_host_get_value,
 };
 
 /* "location":
@@ -151,13 +155,30 @@ const struct sieve_environment_item host_env_item = {
  *   service that is evaluating the script.  Possible values are:
  *    "MTA" - the Sieve script is being evaluated by a Message Transfer Agent
  *    "MDA" - evaluation is being performed by a Mail Delivery Agent
- *    "MUA" - evaluation is being performed by a Mail User Agent
+ *    "MUA" - evaluation is being performed by a Mail User Agent (right...)
  *    "MS"  - evaluation is being performed by a Message Store
  */
+
+static const char *envit_location_get_value
+(struct sieve_instance *svinst,
+	const struct sieve_script_env *senv ATTR_UNUSED)
+{
+	switch ( svinst->env_location ) {
+	case SIEVE_ENV_LOCATION_MDA:
+		return "MDA";
+	case SIEVE_ENV_LOCATION_MTA:
+		return "MTA";
+	case SIEVE_ENV_LOCATION_MS:
+		return "MS";
+	default:
+		break;
+	}
+	return NULL;
+}
+
 const struct sieve_environment_item location_env_item = {
-	"location",
-	NULL,
-	NULL,
+	.name = "location",
+	.get_value = envit_location_get_value
 };
 
 /* "phase":
@@ -168,20 +189,36 @@ const struct sieve_environment_item location_env_item = {
  *   taken place.
  */
 
+static const char *envit_phase_get_value
+(struct sieve_instance *svinst,
+	const struct sieve_script_env *senv ATTR_UNUSED)
+{
+	switch ( svinst->delivery_phase ) {
+	case SIEVE_DELIVERY_PHASE_PRE:
+		return "pre";
+	case SIEVE_DELIVERY_PHASE_DURING:
+		return "during";
+	case SIEVE_DELIVERY_PHASE_POST:
+		return "post";
+	default:
+		break;
+	}
+	return NULL;
+}
+
 const struct sieve_environment_item phase_env_item = {
-	"phase",
-	NULL,
-	NULL,
+	.name = "phase",
+	.get_value = envit_phase_get_value
 };
 
 /* "name":
  *
  *  The product name associated with the Sieve interpreter.
  */
+
 const struct sieve_environment_item name_env_item = {
-	"name",
-	PIGEONHOLE_NAME" Sieve",
-	NULL,
+	.name = "name",
+	.value = PIGEONHOLE_NAME" Sieve"
 };
 
 /* "version":
@@ -192,9 +229,8 @@ const struct sieve_environment_item name_env_item = {
  */
 
 const struct sieve_environment_item version_env_item = {
-	"version",
-	PIGEONHOLE_VERSION,
-	NULL,
+	.name = "version",
+	.value = PIGEONHOLE_VERSION,
 };
 
 
