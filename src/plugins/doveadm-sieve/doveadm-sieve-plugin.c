@@ -323,7 +323,7 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(t->box);
 	time_t ts = value->last_change != 0 ? value->last_change : ioloop_time;
 
-	if (t->box->storage->user->admin &&
+	if (t->box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
 	    strncmp(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE,
 		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) == 0) {
@@ -460,7 +460,7 @@ sieve_attribute_get(struct mailbox_transaction_context *t,
 {
 	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(t->box);
 
-	if (t->box->storage->user->admin &&
+	if (t->box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
 	    strncmp(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE,
 		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) == 0)
@@ -503,7 +503,8 @@ sieve_attribute_iter_init(struct mailbox *box, enum mail_attribute_type type,
 	siter->iter.box = box;
 	siter->super = sbox->super.attribute_iter_init(box, type, prefix);
 
-	if (box->storage->user->admin && type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
+	if (box->storage->user->dsyncing &&
+	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
 	    strncmp(prefix, MAILBOX_ATTRIBUTE_PREFIX_SIEVE,
 		    strlen(prefix)) == 0) {
 		if (sieve_attribute_iter_script_init(siter) < 0)
