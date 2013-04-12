@@ -71,7 +71,8 @@ struct sieve_instance *sieve_init
 		domain = env->domainname;
 	} else {
 		/* Fall back to parsing username localpart@domain */
-		domain = strchr(svinst->username, '@');
+		domain = svinst->username == NULL ? NULL :
+			strchr(svinst->username, '@');
 		if ( domain == NULL || *(domain+1) == '\0' ) {
 			/* Fall back to parsing hostname host.domain */
 			domain = ( env->hostname != NULL ? strchr(env->hostname, '.') : NULL );
