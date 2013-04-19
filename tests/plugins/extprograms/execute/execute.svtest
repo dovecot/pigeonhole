@@ -3,6 +3,7 @@ require "vnd.dovecot.execute";
 require "vnd.dovecot.debug";
 require "variables";
 require "relational";
+require "environment";
 
 test_set "message" text:
 From: stephan@example.com
@@ -70,8 +71,8 @@ test "Execute - env" {
 	}
 
 	execute :output "out" "env" "HOST";
-	if not string :is "${out}" "host.example.com" {
-		test_fail "wrong ORIG_RECIPIENT env returned: '${out}'";
+	if not environment :is "host" "${out}" {
+		test_fail "wrong HOST env returned: '${out}'";
 	}
 
 	execute :output "out" "env" "HOME";
