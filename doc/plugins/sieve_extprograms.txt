@@ -91,9 +91,9 @@ Sieve interpreter. Standard error is written to the LDA log file.
 
 The three extensions introduced by this plugin - "vnd.dovecot.pipe",
 "vnd.dovecot.filter" and "vnd.dovecot.pipe" - each have separate but similar
-configuration. The settings that specify a period are specified in s(econds),
-unless followed by a d(ay), h(our) or m(inute) specifier character. The
-following configuration settings are used, for which "<extension>" in the
+configuration. The settings that specify a time period are specified in
+s(econds), unless followed by a d(ay), h(our) or m(inute) specifier character.
+The following configuration settings are used, for which "<extension>" in the
 setting name is replaced by either "pipe", "filter" or "execute" depending on
 which extension is being configured.
 

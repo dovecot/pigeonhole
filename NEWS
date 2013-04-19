@@ -1,3 +1,23 @@
+v0.4.0 UNRELEASED Stephan Bosch <stephan@rename-it.nl>
+
+	+ Added doveadm-sieve plugin that provides the possibility to synch Sieve
+	  scripts using doveadm sync along with the user's mailboxes.
+	+ Added the Sieve extprograms plugin to the main Pigeonhole package. It is
+	  still a plugin, but it is now included so that a separate compile is no
+	  longer necessary and distributors are likely to include it. The extprograms
+	  plugin provides Sieve language extensions that allows executing 
+	  (administrator-controlled) external programs for message delivery,
+	  message filtering and string manipulation. Refer to
+	  doc/plugins/sieve_extprograms.txt for more information.
+	+ Added debug message showing Pigeonhole version at initialization. Makes it
+	  very clear that the plugin is properly loaded.
+	+ Finished implementation of the Sieve include extension. It should now
+	  fully conform to RFC 6609. The main addition is the new :optional tag which
+	  makes the include command ignore missing included scripts without an error.
+	+ Finished implementation of the Sieve environment extension as much as
+	  possible. Environment items "location", "phase" and "domain" now also
+	  return a usable value.
+
 v0.3.4 06-04-2013 Stephan Bosch <stephan@rename-it.nl>
 
 	* Changed error handling to be less of a nuisance for administrators. Strictly
@@ -22,7 +42,7 @@ v0.3.4 06-04-2013 Stephan Bosch <stephan@rename-it.nl>
 	  sieve_vacation_dont_check_recipient is active.
 	- Sieve tools: the -D option wasn't enabled and documented for all tools.
 	- Siev dict script storage: fixed potential segfault occuring when dict
-		initialization fails.
+	  initialization fails.
 	- ManageSieve: fixed bug in skipping of CRLF at end of AUTHENTICATE command.
 	- ManageSieve: fixed handling of unkown commands pre-login.
 	- Fixed compile on Mageia Linux.

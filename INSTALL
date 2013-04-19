@@ -394,7 +394,8 @@ Sieve Interpreter - Extension Configuration
   enabled for use by default. Refer to doc/extensions/vnd.dovecot.duplicate.txt
   for configuration information.
 
-- Vnd.dovovecot.pipe, vnd.dovecot.filter, vnd.dovecot.execute extensions:
+- Extprograms plugin;
+    vnd.dovovecot.pipe, vnd.dovecot.filter, vnd.dovecot.execute extensions:
 
   The "sieve_extprograms" plugin provides extensions to the Sieve filtering
   language adding new action commands for invoking a predefined set of external
@@ -644,7 +645,8 @@ interpreter on your particular platform. Note that the test suite is not
 available when this package is compiled against the Dovecot headers only. The
 test suite executes a list of test cases and halts when one of them fails. If it
 executes all test cases successfully, the test suite finishes. You can execute
-the test suite using `make test`.
+the basic test suite using `make test`, which does not include the plugins. You
+can execute the full test suite using `make check`.
 
 A failing test case is always a bug and a report is greatly appreciated.
 

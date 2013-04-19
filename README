@@ -102,7 +102,7 @@ following list outlines the implementation status of each supported extension:
     body (RFC 5173): almost fully supported, but the text body-transform
         implementation is simple and some issues make it still not completely
         RFC compliant.
-    environment (RFC 5183): fully supported (v0.1.5+).
+    environment (RFC 5183): fully supported (v0.4.0+).
     variables (RFC 5229): fully supported.
     vacation (RFC 5230): fully supported.
       + vacation-seconds (RFC 6131): fully supported (v0.2.3+).
@@ -132,6 +132,22 @@ following list outlines the implementation status of each supported extension:
 
     The availability of these deprecated extensions is disabled by default.
 
+  The following Dovecot-specific Sieve extensions are available:
+
+    vnd.dovecot.debug (v0.3.0+):
+        Allows logging debug messages
+    vnd.dovecot.duplicate (v0.3.1+):
+        Allows detecting duplicate message deliveries based on message ID and
+        other criteria.
+    vnd.dovecot.pipe (v0.4.0+; sieve_extprograms plugin):
+        Implements piping messages to a pre-defined set of external programs
+    vnd.dovecot.filter (v0.4.0+; sieve_extprograms plugin):
+        Implements filtering messages through a pre-defined set of external
+        programs
+    vnd.dovecot.execute (v0.4.0+; sieve_extprograms plugin):
+        Implements executing a pre-defined set of external programs with the
+        option to process string data through the external program 
+
   The following extensions are under development:
 
     ereject (RFC 5429; page 4): implemented, but currently equal to reject
@@ -159,19 +175,23 @@ exist in the src/sieve-tools/ directory of this package. After installation,
 these are available at your $prefix/bin directory. The following commands are
 installed:
 
-sievec     - Compiles sieve scripts into a binary representation for later
-             execution. Refer to the next section on manually compiling Sieve
-             scripts.
+sievec       - Compiles sieve scripts into a binary representation for later
+               execution. Refer to the next section on manually compiling Sieve
+               scripts.
 
-sieve-test - This is a universal Sieve test tool for testing the effect of a
-             Sieve script on a particular message. It allows compiling, running
-             and testing Sieve scripts. It can either be used to display the
-             actions that would be performed on the provided test message or it
-             can be used to test the actual delivery of the message and show the
-             messages that would normally be sent through SMTP.
+sieve-test   - This is a universal Sieve test tool for testing the effect of a
+               Sieve script on a particular message. It allows compiling,
+               running and testing Sieve scripts. It can either be used to
+               display the actions that would be performed on the provided test
+               message or it can be used to test the actual delivery of the
+               message and show the messages that would normally be sent through
+               SMTP.
 
-sieve-dump - Dumps the content of a Sieve binary file for (development)
-             debugging purposes.
+sieve-dump   - Dumps the content of a Sieve binary file for (development)
+               debugging purposes.
+
+sieve-filter - Allow running Sieve filters on messages already stored in a
+               mailbox. 
 
 When installed, man pages are also available for these commands. In this package
 the man pages are present in doc/man and can be viewed before install using

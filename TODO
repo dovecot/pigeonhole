@@ -1,8 +1,14 @@
 Current activities:
 
-* Finish 0.4.0 release.
+* Make the sieve storage a base class with (possibly) various implementations,
+  just like mail-storage. This aims to provide support for alternate types
+  of script storage like LDAP or SQL database.
+	- Implement read/write script storages for using ManageSieve with dict
+	  database
+	- Implement infrastructure for loading a sequence of global scripts from
+	  a database (for sieve_before/sieve_after).
 
-Parallel plugin-based efforts:
+Parallel plugin-based efforts (on hold at the moment):
 
 * Implement enotify xmpp method as a plugin.
 * Implement metadata and servermetadata extensions as a plugin.
@@ -10,15 +16,6 @@ Parallel plugin-based efforts:
 
 Next (mostly in order of descending priority/precedence):
 
-* Implement generic Sieve script object that abstracts from its location and
-  add support for retrieving scripts from dict database.
-	- Implement infrastructure for loading a sequence of global scripts from
-	  a database (for sieve_before/sieve_after).
-* Make the sieve storage a base class with (possibly) various implementations,
-  just like mail-storage. This aims to provide support for alternate types
-  of script storage like LDAP or SQL database.
-	- Implement read/write script storages for using ManageSieve with dict
-	  database
 * Implement index extension
 * Add normalize() method to comparators to normalize the string before matching
   (for efficiency).
@@ -65,7 +62,8 @@ Next (mostly in order of descending priority/precedence):
 	- Review the specification documents and check whether the given requirements
 	  are tested at least once.
 * Fix ManageSieve proxy to recognize response codes from the backend and forward
-  them to the user if appropriate/safe.
+  them to the user if appropriate/safe. Probably means implementing a proper
+  ManageSieve client library.
 * Test ManageSieve behavior thoroughly:
 	- Test pipelined behavior
 	- Test proxy authentication
@@ -76,7 +74,7 @@ Next (mostly in order of descending priority/precedence):
 * Build a server with test mail accounts that processes lots and lots of mail
   (e.g. spam, mailing lists etc.)
 
-* ## MAKE A FIFTH MAIN RELEASE (0.5.x) ##
+Low priority items:
 
 * Implement extlists extension as a plugin
 * Enotify extension: detect use of variable values extracted from the message
