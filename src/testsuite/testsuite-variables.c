@@ -77,7 +77,7 @@ bool testsuite_varnamespace_validate
 	name_element = array_idx(var_name, 1);
 	if ( name_element->num_variable >= 0 ) {
 		sieve_argument_validate_error(valdtr, arg,
-			"testsuite: invalid variable name within testsuite namespace 'testsuite.%d': "
+			"testsuite: invalid variable name within testsuite namespace 'tst.%d': "
 			"encountered numeric variable name", name_element->num_variable);
 		return FALSE;
 	}

@@ -14,7 +14,7 @@ Frop!
 
 /* Basic pipe */
 
-test_config_set "sieve_pipe_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_set "sieve_pipe_bin_dir" "${tst.path}/../bin";
 test_config_reload :extension "vnd.dovecot.pipe";
 test_result_reset;
 
@@ -28,7 +28,7 @@ test "Pipe" {
 
 /* Timeout */
 
-test_config_set "sieve_pipe_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_set "sieve_pipe_bin_dir" "${tst.path}/../bin";
 test_config_set "sieve_pipe_exec_timeout" "3s";
 test_config_reload :extension "vnd.dovecot.pipe";
 test_result_reset;
@@ -42,7 +42,7 @@ test "Timeout 3s" {
 }
 
 test_result_reset;
-test_config_set "sieve_pipe_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_set "sieve_pipe_bin_dir" "${tst.path}/../bin";
 test_config_set "sieve_pipe_exec_timeout" "0";
 test_config_reload :extension "vnd.dovecot.pipe";
 test_result_reset;

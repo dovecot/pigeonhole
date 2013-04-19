@@ -7,6 +7,9 @@ require "comparator-i;ascii-numeric";
  * Command syntax
  */
 
+test_config_set "sieve_filter_bin_dir" "${tst.path}/../bin";
+test_config_reload :extension "vnd.dovecot.filter";
+
 test "Command syntax" {
         if test_script_compile "errors/syntax.sieve" {
                 test_fail "compile should have failed";

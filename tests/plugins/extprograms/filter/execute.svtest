@@ -16,7 +16,7 @@ Frop!
 .
 ;
 
-test_config_set "sieve_filter_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_set "sieve_filter_bin_dir" "${tst.path}/../bin";
 test_config_reload :extension "vnd.dovecot.filter";
 test_result_reset;
 

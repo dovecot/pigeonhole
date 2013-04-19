@@ -1,4 +1,5 @@
 require "vnd.dovecot.testsuite";
+require "variables";
 
 require "relational";
 require "comparator-i;ascii-numeric";
@@ -28,7 +29,7 @@ Frop!
 .
 ;
 
-test_config_set "sieve_pipe_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_set "sieve_pipe_bin_dir" "${tst.path}/../bin";
 test_config_set "sieve_pipe_exec_timeout" "1s";
 test_config_reload :extension "vnd.dovecot.pipe";
 test_result_reset;

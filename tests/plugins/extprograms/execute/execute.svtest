@@ -14,7 +14,7 @@ Frop!
 .
 ;
 
-test_config_set "sieve_execute_bin_dir" "./tests/plugins/extprograms/bin";
+test_config_set "sieve_execute_bin_dir" "${tst.path}/../bin";
 test_config_reload :extension "vnd.dovecot.execute";
 test_result_reset;
 

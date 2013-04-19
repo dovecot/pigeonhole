@@ -3,6 +3,9 @@ require "vnd.dovecot.testsuite";
 require "relational";
 require "comparator-i;ascii-numeric";
 
+test_config_set "sieve_execute_bin_dir" "${tst.path}/../bin";
+test_config_reload :extension "vnd.dovecot.execute";
+
 /*
  * Command syntax
  */

@@ -1,3 +1,3 @@
 require "vnd.dovecot.pipe";
 
-pipe "sleep2";
+pipe "sleep10";
