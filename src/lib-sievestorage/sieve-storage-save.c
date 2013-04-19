@@ -416,6 +416,8 @@ int sieve_storage_save_as_active_script(struct sieve_storage *storage,
 			sieve_storage_set_critical(storage,
 				"rename(%s, %s) failed: %m", str_c(temp_path), storage->active_path);
 		}
+	} else {
+		sieve_storage_mark_modified(storage);
 	}
 
 	(void)unlink(str_c(temp_path));

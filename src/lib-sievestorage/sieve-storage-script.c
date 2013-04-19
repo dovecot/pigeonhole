@@ -302,6 +302,7 @@ int sieve_storage_active_script_get_last_change
 {
 	struct stat st;
 
+#if 0
 	/* Try direct lstat first */
 	if (lstat(storage->active_path, &st) == 0) {
 		*last_change_r = st.st_mtime;
@@ -313,6 +314,7 @@ int sieve_storage_active_script_get_last_change
 		sieve_storage_set_critical(storage, "lstat(%s) failed: %m",
 			   storage->active_path);
 	}
+#endif
 
 	/* Fall back to statting storage directory */
 	return sieve_storage_get_last_change(storage, last_change_r);
