@@ -26,10 +26,6 @@
 #define MAILBOX_ATTRIBUTE_SIEVE_SCRIPT \
 	MAILBOX_ATTRIBUTE_PREFIX_SIEVE"script"
 
-// FIXME: Sieve has its own 'critical' error handling functionality
-//         Passing the last sieve storage error in such situations to the
-//         mail storage error handler is a bit futile.
-
 struct sieve_mail_user {
 	union mail_user_module_context module_ctx;
 
@@ -86,12 +82,13 @@ mail_sieve_user_init
 (struct mail_user *user, struct sieve_storage **svstorage_r)
 {
 	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
+	enum sieve_storage_flags storage_flags = SIEVE_STORAGE_FLAG_SYNCHRONIZING;
 	struct mail_user_vfuncs *v = user->vlast;
 	struct sieve_environment svenv;
 
 	if (suser != NULL) {
 		*svstorage_r = suser->sieve_storage;
-		return 0;	
+		return 0;
 	}
 
 	/* Delayed initialization of sieve storage until it's actually needed */
@@ -106,10 +103,13 @@ mail_sieve_user_init
 	user->vlast = &suser->module_ctx.super;
 	v->deinit = mail_sieve_user_deinit;
 
+	if (user->mail_debug)
+		storage_flags |= SIEVE_STORAGE_FLAG_DEBUG;
+
 	suser->svinst = sieve_init(&svenv, &mail_sieve_callbacks,
 				   user, user->mail_debug);
 	suser->sieve_storage = sieve_storage_create(suser->svinst, user->username,
-					       svenv.home_dir, user->mail_debug);
+					       svenv.home_dir, storage_flags);
 
 	MODULE_CONTEXT_SET(user, sieve_user_module, suser);
 	*svstorage_r = suser->sieve_storage;
@@ -320,6 +320,7 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 		    enum mail_attribute_type type, const char *key,
 		    const struct mail_attribute_value *value)
 {
+	struct mail_user *user = t->box->storage->user;
 	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(t->box);
 	time_t ts = value->last_change != 0 ? value->last_change : ioloop_time;
 
@@ -329,6 +330,8 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) == 0) {
 		if (sieve_attribute_set_sieve(t->box->storage, key, value) < 0)
 			return -1;
+		if (user->mail_debug)
+			i_debug("doveadm-sieve: Assigned value for key `%s'", key);
 		/* FIXME: set value len to sieve script size / active name
 		   length */
 		if (value->value != NULL || value->value_stream != NULL)
@@ -348,9 +351,9 @@ sieve_attribute_get_active(struct mail_storage *storage,
 	int ret;
 
 	ret = sieve_storage_active_script_get_name(svstorage, &value_r->value);
-	if (ret >= 0) {
-		ret = sieve_storage_active_script_get_last_change
-			(svstorage, &value_r->last_change);
+	if (ret >= 0 && sieve_storage_active_script_get_last_change
+			(svstorage, &value_r->last_change) < 0) {
+		ret = -1;
 	}
 	if (ret < 0)
 		mail_storage_set_internal_error(storage);
@@ -403,6 +406,10 @@ sieve_attribute_get_active_script(struct mail_storage *storage,
 	int ret;
 
 	if ((ret=sieve_storage_active_script_is_no_link(svstorage)) <= 0) {
+		if (ret == 0 && sieve_storage_active_script_get_last_change
+			(svstorage, &value_r->last_change) < 0) {
+			ret = -1;
+		}
 		if (ret < 0)
 			mail_storage_set_internal_error(storage);
 		return ret;
@@ -459,12 +466,34 @@ sieve_attribute_get(struct mailbox_transaction_context *t,
 		    struct mail_attribute_value *value_r)
 {
 	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(t->box);
+	struct mail_user *user = t->box->storage->user;
+	int ret;
 
 	if (t->box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
 	    strncmp(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE,
-		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) == 0)
-		return sieve_attribute_get_sieve(t->box->storage, key, value_r);
+		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) == 0) {
+
+		ret = sieve_attribute_get_sieve(t->box->storage, key, value_r);
+		if (ret >= 0 && user->mail_debug) {
+			struct tm *tm = localtime(&value_r->last_change);
+			char str[256];
+			const char *timestamp = "";
+	
+			if (strftime(str, sizeof(str),
+				" (last change: %Y-%m-%d %H:%M:%S)", tm) > 0)
+				timestamp = str;
+
+			if (ret > 0) {
+				i_debug("doveadm-sieve: Retrieved value for key `%s'%s",
+					key, timestamp);
+			} else {
+				i_debug("doveadm-sieve: Value missing for key `%s'%s",
+					key, timestamp);
+			}
+		}
+		return ret;
+	}
 	return sbox->super.attribute_get(t, type, key, value_r);
 }
 
@@ -568,8 +597,7 @@ sieve_attribute_iter_next(struct mailbox_attribute_iter *iter)
 	if (siter->sieve_list != NULL) {
 		if ((key = sieve_attribute_iter_next_script(siter)) != NULL) {
 			if (user->mail_debug) {
-				i_debug("doveadm-sieve: Sieve mailbox attribute: %s",
-					str_c(siter->name));
+				i_debug("doveadm-sieve: Iterating Sieve mailbox attribute: %s", key);
 			}
 			return key;
 		}

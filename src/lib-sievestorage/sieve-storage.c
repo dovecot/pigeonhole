@@ -203,10 +203,12 @@ static int check_tmp(const char *path)
 }
 
 static struct sieve_storage *_sieve_storage_create
-(struct sieve_instance *svinst, const char *user, const char *home, bool debug)
+(struct sieve_instance *svinst, const char *user, const char *home,
+	enum sieve_storage_flags flags)
 {
 	pool_t pool;
 	struct sieve_storage *storage;
+	bool debug = ( (flags & SIEVE_STORAGE_FLAG_DEBUG) != 0 );
 	const char *tmp_dir, *link_path, *path;
 	const char *sieve_data, *active_path, *active_fname, *storage_dir;
 	mode_t dir_create_mode, file_create_mode;
@@ -408,7 +410,7 @@ static struct sieve_storage *_sieve_storage_create
 	pool = pool_alloconly_create("sieve-storage", 512+256);
 	storage = p_new(pool, struct sieve_storage, 1);
 	storage->svinst = svinst;
-	storage->debug = debug;
+	storage->flags = flags;
 	storage->pool = pool;
 	storage->dir = p_strdup(pool, storage_dir);
 	storage->user = p_strdup(pool, user);
@@ -461,12 +463,13 @@ static struct sieve_storage *_sieve_storage_create
 }
 
 struct sieve_storage *sieve_storage_create
-(struct sieve_instance *svinst, const char *user, const char *home, bool debug)
+(struct sieve_instance *svinst, const char *user, const char *home,
+	enum sieve_storage_flags flags)
 {
 	struct sieve_storage *storage;
 
 	T_BEGIN {
-		storage = _sieve_storage_create(svinst, user, home, debug);
+		storage = _sieve_storage_create(svinst, user, home, flags);
 	} T_END;
 
 	return storage;
@@ -574,20 +577,6 @@ void sieve_storage_set_error
 	storage->error_code = error;
 }
 
-void sieve_storage_set_internal_error(struct sieve_storage *storage)
-{
-	struct tm *tm;
-	char str[256];
-
-	tm = localtime(&ioloop_time);
-
-	i_free(storage->error);
-	storage->error_code = SIEVE_ERROR_TEMP_FAIL;
-	storage->error =
-	  strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ?
-	  i_strdup(str) : i_strdup(CRITICAL_MSG);
-}
-
 void sieve_storage_set_critical
 (struct sieve_storage *storage, const char *fmt, ...)
 {
@@ -595,14 +584,31 @@ void sieve_storage_set_critical
 
 	sieve_storage_clear_error(storage);
 	if (fmt != NULL) {
-		va_start(va, fmt);
-		i_error("sieve-storage: %s", t_strdup_vprintf(fmt, va));
-		va_end(va);
+		i_free(storage->error);
+		storage->error_code = SIEVE_ERROR_TEMP_FAIL;
 
-		/* critical errors may contain sensitive data, so let user
-		   see only "Internal error" with a timestamp to make it
-		   easier to look from log files the actual error message. */
-		sieve_storage_set_internal_error(storage);
+		if ( (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 ) {
+			struct tm *tm;
+			char str[256];
+
+			va_start(va, fmt);
+			i_error("sieve-storage: %s", t_strdup_vprintf(fmt, va));
+			va_end(va);
+
+			/* critical errors may contain sensitive data, so let user
+			   see only "Internal error" with a timestamp to make it
+			   easier to look from log files the actual error message. */
+			tm = localtime(&ioloop_time);
+			storage->error =
+				strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ?
+				i_strdup(str) : i_strdup(CRITICAL_MSG);
+		} else {
+			/* no user is involved while synchronizing, so do it the
+			   normal way */
+			va_start(va, fmt);
+			storage->error = i_strdup_vprintf(fmt, va);
+			va_end(va);
+		}
 	}
 }
 

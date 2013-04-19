@@ -126,18 +126,20 @@ static int sieve_storage_read_active_link
 	ret = readlink(storage->active_path, linkbuf, sizeof(linkbuf));
 
 	if ( ret < 0 ) {
-		if (errno == EINVAL) {
+		if ( errno == EINVAL ) {
 			/* Our symlink is no symlink. Report 'no active script'.
 			 * Activating a script will automatically resolve this, so
 			 * there is no need to panic on this one.
 			 */
-			i_warning
-			  ("sieve-storage: Active sieve script symlink %s is no symlink.",
-			   storage->active_path);
+			if ( (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 ) {
+				i_warning
+				  ("sieve-storage: Active sieve script symlink %s is no symlink.",
+				   storage->active_path);
+			}
 			return 0;
 		}
 
-		if (errno == ENOENT ) {
+		if ( errno == ENOENT ) {
 			/* Symlink not found */
 			return 0;
 		}
@@ -395,6 +397,7 @@ int sieve_storage_script_delete(struct sieve_script **script)
 
 static bool sieve_storage_rescue_regular_file(struct sieve_storage *storage)
 {
+	bool debug = ( (storage->flags & SIEVE_STORAGE_FLAG_DEBUG) != 0 );
 	struct stat st;
 
 	/* Stat the file */
@@ -409,7 +412,7 @@ static bool sieve_storage_rescue_regular_file(struct sieve_storage *storage)
 	}
 
 	if ( S_ISLNK( st.st_mode ) ) {
-		if ( storage->debug )
+		if ( debug )
 			i_debug( "sieve-storage: nothing to rescue %s.", storage->active_path);
 		return TRUE; /* Nothing to rescue */
 	}

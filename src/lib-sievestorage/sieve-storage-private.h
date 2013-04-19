@@ -9,14 +9,6 @@
 
 #include "sieve-storage.h"
 
-
-enum sieve_storage_flags {
-	/* Print debugging information while initializing the storage */
-	SIEVE_STORAGE_FLAG_DEBUG     = 0x01,
-	/* Use CRLF linefeeds when saving mails. */
-	SIEVE_STORAGE_FLAG_SAVE_CRLF   = 0x02,
-};
-
 #define SIEVE_READ_BLOCK_SIZE (1024*8)
 
 /* How often to scan tmp/ directory for old files (based on dir's atime) */
@@ -38,7 +30,6 @@ struct sieve_storage {
 
 	char *name;
 	char *dir;
-	bool debug;
 
 	/* Private */
 	char *active_path;

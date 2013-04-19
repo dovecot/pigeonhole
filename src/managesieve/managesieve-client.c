@@ -62,13 +62,17 @@ static struct sieve_storage *client_get_storage
 	const struct managesieve_settings *set)
 {
 	struct sieve_storage *storage;
+	enum sieve_storage_flags flags = 0;
 	const char *home;
 
 	if ( mail_user_get_home(user, &home) <= 0 )
 		home = NULL;
 
+	if ( set->mail_debug )
+		flags |= SIEVE_STORAGE_FLAG_DEBUG;
+
 	storage = sieve_storage_create
-		(svinst, user->username, home, set->mail_debug);
+		(svinst, user->username, home, flags);
 
 	if (storage == NULL) {
 		struct tm *tm;
