@@ -22,6 +22,9 @@ struct sieve_script *sieve_storage_save_get_tempscript
 bool sieve_storage_save_will_activate
 	(struct sieve_save_context *ctx);
 
+void sieve_storage_save_set_mtime
+	(struct sieve_save_context *ctx, time_t mtime);
+
 void sieve_storage_save_cancel(struct sieve_save_context **ctx);
 
 int sieve_storage_save_commit(struct sieve_save_context **ctx);
@@ -30,7 +33,7 @@ int sieve_storage_save_commit(struct sieve_save_context **ctx);
  * This is needed for the doveadm-sieve plugin.
  */
 int sieve_storage_save_as_active_script(struct sieve_storage *storage,
-	struct istream *input);
+	struct istream *input, time_t mtime);
 
 #endif
 

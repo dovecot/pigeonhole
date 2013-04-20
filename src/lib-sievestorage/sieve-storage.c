@@ -483,21 +483,6 @@ void sieve_storage_free(struct sieve_storage *storage)
 	pool_unref(&storage->pool);
 }
 
-void sieve_storage_mark_modified(struct sieve_storage *storage)
-{
-	if ( utime(storage->dir, NULL) < 0 ) {
-		switch ( errno ) {
-		case ENOENT:
-			break;
-		case EACCES:
-			i_error("sieve-storage: %s", eacces_error_get("utime", storage->dir));
-			break;
-		default:
-			i_error("sieve-storage: utime(%s) failed: %m", storage->dir);
-		}
-	}
-}
-
 int sieve_storage_get_last_change
 (struct sieve_storage *storage, time_t *last_change_r)
 {
@@ -514,6 +499,44 @@ int sieve_storage_get_last_change
 	}
 	*last_change_r = st.st_mtime;
 	return 0;
+}
+
+void sieve_storage_set_modified
+(struct sieve_storage *storage, time_t mtime)
+{
+	struct utimbuf times = { .actime = mtime, .modtime = mtime };
+	time_t cur_mtime;
+
+	if ( sieve_storage_get_last_change(storage, &cur_mtime) >= 0 &&
+		cur_mtime > mtime )
+		return;
+	
+	if ( utime(storage->dir, &times) < 0 ) {
+		switch ( errno ) {
+		case ENOENT:
+			break;
+		case EACCES:
+			i_error("sieve-storage: %s", eacces_error_get("utime", storage->dir));
+			break;
+		default:
+			i_error("sieve-storage: utime(%s) failed: %m", storage->dir);
+		}
+	}
+}
+
+void sieve_storage_mark_modified(struct sieve_storage *storage)
+{
+	if ( utime(storage->dir, NULL) < 0 ) {
+		switch ( errno ) {
+		case ENOENT:
+			break;
+		case EACCES:
+			i_error("sieve-storage: %s", eacces_error_get("utime", storage->dir));
+			break;
+		default:
+			i_error("sieve-storage: utime(%s) failed: %m", storage->dir);
+		}
+	}
 }
 
 /* Error handling */

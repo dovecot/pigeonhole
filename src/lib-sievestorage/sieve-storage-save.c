@@ -37,6 +37,8 @@ struct sieve_save_context {
 	int fd;
 	const char *tmp_path;
 
+	time_t mtime;
+
 	unsigned int failed:1;
 	unsigned int moving:1;
 	unsigned int finished:1;
@@ -205,6 +207,7 @@ sieve_storage_save_init(struct sieve_storage *storage,
 	ctx->storage = storage;
 	ctx->scriptname = p_strdup(pool, scriptname);
 	ctx->scriptobject = NULL;
+	ctx->mtime = (time_t)-1;
 
 	T_BEGIN {
 		ctx->fd = sieve_storage_create_tmp(storage, scriptname, &path);
@@ -279,6 +282,12 @@ int sieve_storage_save_finish(struct sieve_save_context *ctx)
 	return ( ctx->failed ? -1 : 0 );
 }
 
+void sieve_storage_save_set_mtime
+(struct sieve_save_context *ctx, time_t mtime)
+{
+	ctx->mtime = mtime;
+}
+
 static void sieve_storage_save_destroy(struct sieve_save_context **ctx)
 {
 	if ((*ctx)->scriptobject != NULL)
@@ -335,6 +344,23 @@ bool sieve_storage_save_will_activate
 	return result;
 }
 
+static void sieve_storage_update_mtime(const char *path, time_t mtime)
+{
+	struct utimbuf times = { .actime = mtime, .modtime = mtime };
+
+	if ( utime(path, &times) < 0 ) {
+		switch ( errno ) {	
+		case ENOENT:
+			break;
+		case EACCES:
+			i_error("sieve-storage: %s", eacces_error_get("utime", path));
+			break;
+		default:
+			i_error("sieve-storage: utime(%s) failed: %m", path);
+		}
+	}
+}
+
 int sieve_storage_save_commit(struct sieve_save_context **ctx)
 {
 	const char *dest_path;
@@ -350,6 +376,9 @@ int sieve_storage_save_commit(struct sieve_save_context **ctx)
 
 		failed = !sieve_storage_script_move((*ctx), dest_path);
 	} T_END;
+
+	if ( (*ctx)->mtime != (time_t)-1 )
+		sieve_storage_update_mtime(dest_path, (*ctx)->mtime);
 
 	sieve_storage_save_destroy(ctx);
 
@@ -371,7 +400,7 @@ void sieve_storage_save_cancel(struct sieve_save_context **ctx)
 }
 
 int sieve_storage_save_as_active_script(struct sieve_storage *storage,
-	struct istream *input)
+	struct istream *input, time_t mtime)
 {
 	int fd;
 	string_t *temp_path;
@@ -417,7 +446,7 @@ int sieve_storage_save_as_active_script(struct sieve_storage *storage,
 				"rename(%s, %s) failed: %m", str_c(temp_path), storage->active_path);
 		}
 	} else {
-		sieve_storage_mark_modified(storage);
+		sieve_storage_update_mtime(storage->active_path, mtime);
 	}
 
 	(void)unlink(str_c(temp_path));

@@ -40,5 +40,7 @@ const char *sieve_storage_get_last_error
 
 int sieve_storage_get_last_change
 	(struct sieve_storage *storage, time_t *last_change_r);
+void sieve_storage_set_modified
+	(struct sieve_storage *storage, time_t mtime);
 
 #endif
