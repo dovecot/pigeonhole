@@ -381,6 +381,17 @@ static struct sieve_storage *_sieve_storage_create
 			"using sieve script storage directory: %s", storage_dir);
 	}
 
+	/* get the storage mtime before we modify it ourself. FIXME: do this
+	   later, only just before modifying the sieve dir */
+	struct stat st;
+	if (stat(storage_dir, &st) < 0) {
+		if (errno != ENOENT) {
+			i_error("stat(%s) failed: %m", storage_dir);
+			return NULL;
+		}
+		st.st_mtime = 0;
+	}
+
 	/* Get permissions */
 
 	sieve_storage_get_permissions
@@ -416,6 +427,7 @@ static struct sieve_storage *_sieve_storage_create
 	storage->user = p_strdup(pool, user);
 	storage->active_path = p_strdup(pool, active_path);
 	storage->active_fname = p_strdup(pool, active_fname);
+	storage->prev_mtime = st.st_mtime;
 
 	storage->dir_create_mode = dir_create_mode;
 	storage->file_create_mode = file_create_mode;
@@ -458,7 +470,6 @@ static struct sieve_storage *_sieve_storage_create
 				(unsigned long long int) storage->max_scripts);
 		}
 	}
-
 	return storage;
 }
 
@@ -486,18 +497,7 @@ void sieve_storage_free(struct sieve_storage *storage)
 int sieve_storage_get_last_change
 (struct sieve_storage *storage, time_t *last_change_r)
 {
-	struct stat st;
-
-	if (stat(storage->dir, &st) < 0) {
-		if (errno == ENOENT) {
-			*last_change_r = 0;
-			return 0;
-		}
-		sieve_storage_set_critical(storage, "stat(%s) failed: %m",
-					   storage->dir);
-		return -1;
-	}
-	*last_change_r = st.st_mtime;
+	*last_change_r = storage->prev_mtime;
 	return 0;
 }
 
@@ -507,10 +507,12 @@ void sieve_storage_set_modified
 	struct utimbuf times = { .actime = mtime, .modtime = mtime };
 	time_t cur_mtime;
 
-	if ( sieve_storage_get_last_change(storage, &cur_mtime) >= 0 &&
-		cur_mtime > mtime )
-		return;
-	
+	if ( mtime != (time_t)-1 ) {
+		if ( sieve_storage_get_last_change(storage, &cur_mtime) >= 0 &&
+			cur_mtime > mtime )
+			return;
+	}
+
 	if ( utime(storage->dir, &times) < 0 ) {
 		switch ( errno ) {
 		case ENOENT:
@@ -521,21 +523,8 @@ void sieve_storage_set_modified
 		default:
 			i_error("sieve-storage: utime(%s) failed: %m", storage->dir);
 		}
-	}
-}
-
-void sieve_storage_mark_modified(struct sieve_storage *storage)
-{
-	if ( utime(storage->dir, NULL) < 0 ) {
-		switch ( errno ) {
-		case ENOENT:
-			break;
-		case EACCES:
-			i_error("sieve-storage: %s", eacces_error_get("utime", storage->dir));
-			break;
-		default:
-			i_error("sieve-storage: utime(%s) failed: %m", storage->dir);
-		}
+	} else {
+		storage->prev_mtime = mtime;
 	}
 }
 

@@ -68,7 +68,7 @@ bool cmd_setactive(struct client_command_context *cmd)
 			/* Refresh activation no matter what; this can also resolve some erroneous
 			 * situations.
 			 */
-			ret = sieve_storage_script_activate(script);
+			ret = sieve_storage_script_activate(script, (time_t)-1);
 			if ( ret < 0 ) {
 				client_send_storage_error(client, storage);
 			} else {
@@ -90,7 +90,7 @@ bool cmd_setactive(struct client_command_context *cmd)
 
 	/* ... deactivate */
 	} else {
-		ret = sieve_storage_deactivate(storage);
+		ret = sieve_storage_deactivate(storage, (time_t)-1);
 
 		if ( ret < 0 )
 			client_send_storage_error(client, storage);

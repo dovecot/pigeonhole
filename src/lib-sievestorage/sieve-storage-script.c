@@ -302,19 +302,18 @@ int sieve_storage_active_script_get_last_change
 {
 	struct stat st;
 
-#if 0
 	/* Try direct lstat first */
 	if (lstat(storage->active_path, &st) == 0) {
-		*last_change_r = st.st_mtime;
-		return 0;
+		if (!S_ISLNK(st.st_mode)) {
+			*last_change_r = st.st_mtime;
+			return 0;
+		}
 	}
-
 	/* Check error */
-	if (errno != ENOENT) {
+	else if (errno != ENOENT) {
 		sieve_storage_set_critical(storage, "lstat(%s) failed: %m",
 			   storage->active_path);
 	}
-#endif
 
 	/* Fall back to statting storage directory */
 	return sieve_storage_get_last_change(storage, last_change_r);
@@ -450,7 +449,7 @@ static bool sieve_storage_rescue_regular_file(struct sieve_storage *storage)
 	return FALSE;
 }
 
-int sieve_storage_deactivate(struct sieve_storage *storage)
+int sieve_storage_deactivate(struct sieve_storage *storage, time_t mtime)
 {
 	int ret;
 
@@ -470,7 +469,7 @@ int sieve_storage_deactivate(struct sieve_storage *storage)
 		}
 	}
 
-	sieve_storage_mark_modified(storage);
+	sieve_storage_set_modified(storage, mtime);
 	return 1;
 }
 
@@ -530,7 +529,7 @@ static int sieve_storage_replace_active_link
 	return 1;
 }
 
-static int _sieve_storage_script_activate(struct sieve_script *script)
+static int _sieve_storage_script_activate(struct sieve_script *script, time_t mtime)
 {
 	struct sieve_storage_script *st_script =
 		(struct sieve_storage_script *) script;
@@ -589,16 +588,16 @@ static int _sieve_storage_script_activate(struct sieve_script *script)
 		}
 	}
 
-	sieve_storage_mark_modified(storage);
+	sieve_storage_set_modified(storage, mtime);
 	return activated;
 }
 
-int sieve_storage_script_activate(struct sieve_script *script)
+int sieve_storage_script_activate(struct sieve_script *script, time_t mtime)
 {
 	int ret;
 
 	T_BEGIN {
-		ret = _sieve_storage_script_activate(script);
+		ret = _sieve_storage_script_activate(script, mtime);
 	} T_END;
 
 	return ret;

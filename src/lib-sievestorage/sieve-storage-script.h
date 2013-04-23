@@ -23,9 +23,9 @@ struct sieve_script *sieve_storage_active_script_get
 int sieve_storage_active_script_get_last_change
 	(struct sieve_storage *storage, time_t *last_change_r);
 
-int sieve_storage_deactivate(struct sieve_storage *storage);
+int sieve_storage_deactivate(struct sieve_storage *storage, time_t mtime);
 int sieve_storage_script_is_active(struct sieve_script *script);
-int sieve_storage_script_activate(struct sieve_script *script);
+int sieve_storage_script_activate(struct sieve_script *script, time_t mtime);
 int sieve_storage_script_delete(struct sieve_script **script);
 int sieve_storage_script_rename
 	(struct sieve_script *script, const char *newname);

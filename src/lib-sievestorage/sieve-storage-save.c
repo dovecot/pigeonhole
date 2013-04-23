@@ -375,10 +375,9 @@ int sieve_storage_save_commit(struct sieve_save_context **ctx)
 			sieve_scriptfile_from_name((*ctx)->scriptname), NULL);
 
 		failed = !sieve_storage_script_move((*ctx), dest_path);
+		if ( (*ctx)->mtime != (time_t)-1 )
+			sieve_storage_update_mtime(dest_path, (*ctx)->mtime);
 	} T_END;
-
-	if ( (*ctx)->mtime != (time_t)-1 )
-		sieve_storage_update_mtime(dest_path, (*ctx)->mtime);
 
 	sieve_storage_save_destroy(ctx);
 

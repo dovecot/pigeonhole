@@ -164,7 +164,7 @@ sieve_attribute_set_active(struct mail_storage *storage,
 		}
 
 		/* deactivate current script */
-		if (sieve_storage_deactivate(svstorage) < 0) {
+		if (sieve_storage_deactivate(svstorage, value->last_change) < 0) {
 			mail_storage_set_critical(storage,
 				"Failed to deactivate Sieve: %s",
 				sieve_storage_get_last_error(svstorage, NULL));
@@ -176,7 +176,7 @@ sieve_attribute_set_active(struct mail_storage *storage,
 	/* activate specified script */
 	script = sieve_storage_script_init(svstorage, scriptname);
 	ret = script == NULL ? -1 :
-		sieve_storage_script_activate(script);
+		sieve_storage_script_activate(script, value->last_change);
 	if (ret < 0) {
 		mail_storage_set_critical(storage,
 			"Failed to activate Sieve script '%s': %s", scriptname,
@@ -190,7 +190,7 @@ sieve_attribute_set_active(struct mail_storage *storage,
 
 static int
 sieve_attribute_unset_active_script(struct mail_storage *storage,
-			   struct sieve_storage *svstorage)
+			   struct sieve_storage *svstorage, time_t last_change)
 {
 	int ret;
 
@@ -200,7 +200,7 @@ sieve_attribute_unset_active_script(struct mail_storage *storage,
 		return ret;
 	}
 
-	if (sieve_storage_deactivate(svstorage) < 0) {
+	if (sieve_storage_deactivate(svstorage, last_change) < 0) {
 		mail_storage_set_critical(storage,
 			"Failed to deactivate sieve: %s",
 			sieve_storage_get_last_error(svstorage, NULL));
@@ -222,7 +222,7 @@ sieve_attribute_set_active_script(struct mail_storage *storage,
 		input = value->value_stream;
 		i_stream_ref(input);
 	} else {
-		return sieve_attribute_unset_active_script(storage, svstorage);
+		return sieve_attribute_unset_active_script(storage, svstorage, value->last_change);
 	}
 
 	if (sieve_storage_save_as_active_script
