@@ -531,9 +531,15 @@ static int cmd_deleteheader_operation_execute
 		/* Delete all occurences of header */
 		ret = edit_mail_header_delete(edmail, str_c(field_name), index);
 
-		if ( trace ) {
-			sieve_runtime_trace(renv, 0, "deleted %d headers", ret);
+		if ( ret < 0 ) {
+			sieve_runtime_warning(renv, NULL, "deleteheader action: "
+				"failed to delete occurences of header `%s' (this should not happen!)",
+				str_c(field_name));
+		} else if ( trace ) {
+			sieve_runtime_trace(renv, 0, "deleted %d occurences of header `%s'",
+				ret, str_c(field_name));
 		}
+
 	}
 
 	return SIEVE_EXEC_OK;
