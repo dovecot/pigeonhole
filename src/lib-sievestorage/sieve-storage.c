@@ -504,15 +504,19 @@ int sieve_storage_get_last_change
 void sieve_storage_set_modified
 (struct sieve_storage *storage, time_t mtime)
 {
-	struct utimbuf times = { .actime = mtime, .modtime = mtime };
+	struct utimbuf times;
 	time_t cur_mtime;
 
 	if ( mtime != (time_t)-1 ) {
 		if ( sieve_storage_get_last_change(storage, &cur_mtime) >= 0 &&
 			cur_mtime > mtime )
 			return;
+	} else {
+		mtime = ioloop_time;
 	}
 
+	times.actime = mtime;
+	times.modtime = mtime;
 	if ( utime(storage->dir, &times) < 0 ) {
 		switch ( errno ) {
 		case ENOENT:

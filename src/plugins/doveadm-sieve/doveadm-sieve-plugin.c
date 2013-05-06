@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "ioloop.h"
 #include "istream.h"
+#include "istream-concat.h"
 #include "sieve-script.h"
 #include "sieve-script-file.h"
 #include "sieve-storage.h"
@@ -21,10 +22,11 @@
 	MAILBOX_ATTRIBUTE_PREFIX_DOVECOT_PVT"sieve/"
 #define MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES \
 	MAILBOX_ATTRIBUTE_PREFIX_SIEVE"files/"
-#define MAILBOX_ATTRIBUTE_SIEVE_ACTIVE \
-	MAILBOX_ATTRIBUTE_PREFIX_SIEVE"active"
-#define MAILBOX_ATTRIBUTE_SIEVE_SCRIPT \
-	MAILBOX_ATTRIBUTE_PREFIX_SIEVE"script"
+#define MAILBOX_ATTRIBUTE_SIEVE_DEFAULT \
+	MAILBOX_ATTRIBUTE_PREFIX_SIEVE"default"
+
+#define MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_LINK 'L'
+#define MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_SCRIPT 'S'
 
 struct sieve_mail_user {
 	union mail_user_module_context module_ctx;
@@ -153,6 +155,9 @@ sieve_attribute_set_active(struct mail_storage *storage,
 
 	if (mailbox_attribute_value_to_string(storage, value, &scriptname) < 0)
 		return -1;
+	i_assert(scriptname[0] == MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_LINK);
+	scriptname++;
+
 	if (scriptname == NULL) {
 		/* don't affect non-link active script */
 		if ((ret=sieve_storage_active_script_is_no_link(svstorage)) != 0) {
@@ -224,6 +229,8 @@ sieve_attribute_set_active_script(struct mail_storage *storage,
 	} else {
 		return sieve_attribute_unset_active_script(storage, svstorage, value->last_change);
 	}
+	/* skip over the 'S' type */
+	i_stream_skip(input, 1);
 
 	if (sieve_storage_save_as_active_script
 		(svstorage, input, value->last_change) < 0) {
@@ -240,6 +247,37 @@ sieve_attribute_set_active_script(struct mail_storage *storage,
 }
 
 static int
+sieve_attribute_set_default(struct mail_storage *storage,
+			    struct sieve_storage *svstorage,
+			    const struct mail_attribute_value *value)
+{
+	const unsigned char *data;
+	size_t size;
+	ssize_t ret;
+	char type;
+
+	if (value->value != NULL) {
+		type = value->value[0];
+	} else {
+		ret = i_stream_read_data(value->value_stream, &data, &size, 0);
+		if (ret == -1) {
+			mail_storage_set_critical(storage, "read(%s) failed: %m",
+				i_stream_get_name(value->value_stream));
+			return -1;
+		}
+		i_assert(ret > 0);
+		type = data[0];
+	}
+	if (type == MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_LINK)
+		return sieve_attribute_set_active(storage, svstorage, value);
+	if (type == MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_SCRIPT)
+		return sieve_attribute_set_active_script(storage, svstorage, value);
+	mail_storage_set_error(storage, MAIL_ERROR_PARAMS,
+			       "Invalid value for default sieve attribute");
+	return -1;
+}
+
+static int
 sieve_attribute_set_sieve(struct mail_storage *storage,
 			  const char *key,
 			  const struct mail_attribute_value *value)
@@ -253,10 +291,8 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 	if (mail_sieve_user_init(storage->user, &svstorage) < 0)
 		return -1;
 
-	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_ACTIVE) == 0)
-		return sieve_attribute_set_active(storage, svstorage, value);
-	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_SCRIPT) == 0)
-		return sieve_attribute_set_active_script(storage, svstorage, value);
+	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT) == 0)
+		return sieve_attribute_set_default(storage, svstorage, value);
 	if (strncmp(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES,
 		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES)) != 0) {
 		mail_storage_set_error(storage, MAIL_ERROR_NOTFOUND,
@@ -349,28 +385,13 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 }
 
 static int
-sieve_attribute_get_active(struct mail_storage *storage,
-			   struct sieve_storage *svstorage,
-			   struct mail_attribute_value *value_r)
-{
-	int ret;
-
-	ret = sieve_storage_active_script_get_name(svstorage, &value_r->value);
-	if (ret >= 0 && sieve_storage_active_script_get_last_change
-			(svstorage, &value_r->last_change) < 0) {
-		ret = -1;
-	}
-	if (ret < 0)
-		mail_storage_set_internal_error(storage);
-	return ret;
-}
-
-static int
 sieve_attribute_retrieve_script(struct mail_storage *storage,
 			   struct sieve_storage *svstorage, struct sieve_script *script,
+			   bool add_type_prefix,
 			   struct mail_attribute_value *value_r, const char **errorstr_r)
 {
-	struct istream *input;
+	char type = MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_SCRIPT;
+	struct istream *input, *inputs[3];
 	const struct stat *st;
 	enum sieve_error error;
 
@@ -389,13 +410,20 @@ sieve_attribute_retrieve_script(struct mail_storage *storage,
 		*errorstr_r = sieve_storage_get_last_error(svstorage, &error);
 		return -1;
 	}
-	i_stream_ref(input);
-	value_r->value_stream = input;
 	if (i_stream_stat(input, FALSE, &st) < 0) {
 		mail_storage_set_critical(storage,
 			"stat(%s) failed: %m", i_stream_get_name(input));
 	} else {
 		value_r->last_change = st->st_mtime;
+	}
+	if (!add_type_prefix) {
+		i_stream_ref(input);
+		value_r->value_stream = input;
+	} else {
+		inputs[0] = i_stream_create_from_data(&type, 1);
+		inputs[1] = input;
+		inputs[2] = NULL;
+		value_r->value_stream = i_stream_create_concat(inputs);
 	}
 	sieve_script_unref(&script);
 	return 1;
@@ -423,10 +451,34 @@ sieve_attribute_get_active_script(struct mail_storage *storage,
 	if ((script=sieve_storage_active_script_get(svstorage)) == NULL)
 		return 0;
 	if ((ret=sieve_attribute_retrieve_script
-		(storage, svstorage, script, value_r, &errstr)) < 0) {
+		(storage, svstorage, script, TRUE, value_r, &errstr)) < 0) {
 		mail_storage_set_critical(storage,
 			"Failed to access active sieve script: %s", errstr);
 	}
+	return ret;
+}
+
+static int
+sieve_attribute_get_default(struct mail_storage *storage,
+			    struct sieve_storage *svstorage,
+			    struct mail_attribute_value *value_r)
+{
+	const char *scriptname;
+	int ret;
+
+	ret = sieve_storage_active_script_get_name(svstorage, &scriptname);
+	if (ret == 0)
+		return sieve_attribute_get_active_script(storage, svstorage, value_r);
+
+	if (ret > 0) {
+		value_r->value = t_strdup_printf("%c%s",
+			MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_LINK, scriptname);
+		if (sieve_storage_active_script_get_last_change
+				(svstorage, &value_r->last_change) < 0)
+			ret = -1;
+	}
+	if (ret < 0)
+		mail_storage_set_internal_error(storage);
 	return ret;
 }
 
@@ -442,10 +494,8 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 	if (mail_sieve_user_init(storage->user, &svstorage) < 0)
 		return -1;
 
-	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_ACTIVE) == 0)
-		return sieve_attribute_get_active(storage, svstorage, value_r);
-	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_SCRIPT) == 0)
-		return sieve_attribute_get_active_script(storage, svstorage, value_r);
+	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT) == 0)
+		return sieve_attribute_get_default(storage, svstorage, value_r);
 	if (strncmp(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES,
 		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES)) != 0)
 		return 0;
@@ -457,7 +507,7 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 	scriptname = key + strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES);
 	script = sieve_storage_script_init(svstorage, scriptname);
 	if ((ret=sieve_attribute_retrieve_script
-		(storage, svstorage, script, value_r, &errstr)) < 0) {
+		(storage, svstorage, script, FALSE, value_r, &errstr)) < 0) {
 		mail_storage_set_critical(storage,
 			"Failed to access sieve script '%s': %s",
 			scriptname, errstr);
@@ -584,10 +634,10 @@ sieve_attribute_iter_next_script(struct sieve_mailbox_attribute_iter *siter)
 
 	/* Regular file */
 	if (ret > 0)
-		return MAILBOX_ATTRIBUTE_SIEVE_SCRIPT	;	
+		return MAILBOX_ATTRIBUTE_SIEVE_DEFAULT;
 
 	/* Symlink or none active */
-	return siter->have_active ? MAILBOX_ATTRIBUTE_SIEVE_ACTIVE : NULL;
+	return siter->have_active ? MAILBOX_ATTRIBUTE_SIEVE_DEFAULT : NULL;
 }
 
 static const char *
