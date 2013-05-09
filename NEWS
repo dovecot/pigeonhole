@@ -1,3 +1,10 @@
+v0.3.5 09-05-2013 Stephan Bosch <stephan@rename-it.nl>
+
+	- Sieve editheader extension: fixed interaction with the Sieve body extension.
+	  If used together, the deleteheader action could fail after a body test was
+	  performed.
+	- Test suite: fixed a time zone dependency in the Sieve date extension tests.
+
 v0.3.4 06-04-2013 Stephan Bosch <stephan@rename-it.nl>
 
 	* Changed error handling to be less of a nuisance for administrators. Strictly
