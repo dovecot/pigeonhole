@@ -558,6 +558,7 @@ static int edit_mail_headers_parse
 
 	if ( edmail->headers_parsed ) return 1;
 
+	i_stream_seek(edmail->wrapped_stream, 0);
 	hparser = message_parse_header_init
 		(edmail->wrapped_stream, NULL, hparser_flags);
 
@@ -642,6 +643,9 @@ static int edit_mail_headers_parse
 	message_parse_header_deinit(&hparser);
 
 	if ( ret <= 0 ) {
+		/* blocking i/o required */
+		i_assert( ret != 0 );
+
 		/* Error; clean up */
 		current = head;
 		while ( current != NULL ) {
