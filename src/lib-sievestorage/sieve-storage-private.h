@@ -36,11 +36,13 @@ struct sieve_storage {
 	char *active_fname;
 	char *link_path;
 	char *error;
-	char *user; /* name of user accessing the storage */
+	char *username; /* name of user accessing the storage */
 
 	mode_t dir_create_mode;
 	mode_t file_create_mode;
 	gid_t file_create_gid;
+
+	struct mailbox *inbox;
 
 	uint64_t max_scripts;
 	uint64_t max_storage;
@@ -54,6 +56,14 @@ struct sieve_storage {
 
 struct sieve_script *sieve_storage_script_init_from_path
 	(struct sieve_storage *storage, const char *path, const char *scriptname);
+
+void sieve_storage_inbox_script_attribute_set
+	(struct sieve_storage *storage, const char *name);
+void sieve_storage_inbox_script_attribute_rename
+	(struct sieve_storage *storage, const char *oldname, const char *newname);
+void sieve_storage_inbox_script_attribute_unset
+	(struct sieve_storage *storage, const char *name);
+
 
 #endif
 

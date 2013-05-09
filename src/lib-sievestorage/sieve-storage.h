@@ -5,19 +5,31 @@
 #define __SIEVE_STORAGE_H
 
 #include "lib.h"
+#include "mail-storage.h"
 #include "mail-user.h"
 
 #include "sieve.h"
 
+#define MAILBOX_ATTRIBUTE_PREFIX_SIEVE \
+	MAILBOX_ATTRIBUTE_PREFIX_DOVECOT_PVT"sieve/"
+#define MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES \
+	MAILBOX_ATTRIBUTE_PREFIX_SIEVE"files/"
+#define MAILBOX_ATTRIBUTE_SIEVE_DEFAULT \
+	MAILBOX_ATTRIBUTE_PREFIX_SIEVE"default"
+
+#define MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_LINK 'L'
+#define MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_SCRIPT 'S'
+
 enum sieve_storage_flags {
-    /* Print debugging information */
-    SIEVE_STORAGE_FLAG_DEBUG             = 0x01,
-    /* This storage is used for synchronization (and not normal ManageSieve) */
-    SIEVE_STORAGE_FLAG_SYNCHRONIZING     = 0x02
+	/* Print debugging information */
+	SIEVE_STORAGE_FLAG_DEBUG             = 0x01,
+	/* This storage is used for synchronization (and not normal ManageSieve)
+	 */
+	SIEVE_STORAGE_FLAG_SYNCHRONIZING     = 0x02
 };
 
 struct sieve_storage *sieve_storage_create
-	(struct sieve_instance *svinst, const char *user, const char *home,
+	(struct sieve_instance *svinst, struct mail_user *user, const char *home,
 		enum sieve_storage_flags flags);
 void sieve_storage_free(struct sieve_storage *storage);
 

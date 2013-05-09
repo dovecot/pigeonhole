@@ -391,6 +391,10 @@ int sieve_storage_script_delete(struct sieve_script **script)
 		}
 	}
 
+	/* unset INBOX mailbox attribute */
+	if ( ret >= 0 )
+		sieve_storage_inbox_script_attribute_unset(storage, (*script)->name);
+
 	/* Always deinitialize the script object */
 	sieve_script_unref(script);
 	return ret;
@@ -609,7 +613,7 @@ int sieve_storage_script_rename
 	struct sieve_storage_script *st_script =
 		(struct sieve_storage_script *) script;
 	struct sieve_storage *storage = st_script->storage;
-	const char *newpath, *newfile, *link_path;
+	const char *oldname = script->name, *newpath, *newfile, *link_path;
 	int ret = 0;
 
 	/* Check script name */
@@ -679,6 +683,10 @@ int sieve_storage_script_rename
 			}
 		}
 	} T_END;
+
+	/* rename INBOX mailbox attribute */
+	if ( ret >= 0 && oldname != NULL )
+		sieve_storage_inbox_script_attribute_rename(storage, oldname, newname);
 
 	return ret;
 }

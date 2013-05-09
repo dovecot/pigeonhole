@@ -18,16 +18,6 @@
 #define SIEVE_USER_CONTEXT(obj) \
 	MODULE_CONTEXT(obj, sieve_user_module)
 
-#define MAILBOX_ATTRIBUTE_PREFIX_SIEVE \
-	MAILBOX_ATTRIBUTE_PREFIX_DOVECOT_PVT"sieve/"
-#define MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES \
-	MAILBOX_ATTRIBUTE_PREFIX_SIEVE"files/"
-#define MAILBOX_ATTRIBUTE_SIEVE_DEFAULT \
-	MAILBOX_ATTRIBUTE_PREFIX_SIEVE"default"
-
-#define MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_LINK 'L'
-#define MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_SCRIPT 'S'
-
 struct sieve_mail_user {
 	union mail_user_module_context module_ctx;
 
@@ -110,7 +100,7 @@ mail_sieve_user_init
 
 	suser->svinst = sieve_init(&svenv, &mail_sieve_callbacks,
 				   user, user->mail_debug);
-	suser->sieve_storage = sieve_storage_create(suser->svinst, user->username,
+	suser->sieve_storage = sieve_storage_create(suser->svinst, user,
 					       svenv.home_dir, storage_flags);
 
 	MODULE_CONTEXT_SET(user, sieve_user_module, suser);

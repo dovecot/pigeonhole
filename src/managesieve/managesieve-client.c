@@ -72,7 +72,7 @@ static struct sieve_storage *client_get_storage
 		flags |= SIEVE_STORAGE_FLAG_DEBUG;
 
 	storage = sieve_storage_create
-		(svinst, user->username, home, flags);
+		(svinst, user, home, flags);
 
 	if (storage == NULL) {
 		struct tm *tm;

@@ -361,25 +361,31 @@ static void sieve_storage_update_mtime(const char *path, time_t mtime)
 	}
 }
 
-int sieve_storage_save_commit(struct sieve_save_context **ctx)
+int sieve_storage_save_commit(struct sieve_save_context **_ctx)
 {
+	struct sieve_save_context *ctx = *_ctx;
+	struct sieve_storage *storage = ctx->storage;
 	const char *dest_path;
 	bool failed = FALSE;
 
-	i_assert((*ctx)->output == NULL);
-	i_assert((*ctx)->finished);
-	i_assert((*ctx)->scriptname != NULL);
+	i_assert(ctx->output == NULL);
+	i_assert(ctx->finished);
+	i_assert(ctx->scriptname != NULL);
 
 	T_BEGIN {
-		dest_path = t_strconcat((*ctx)->storage->dir, "/",
-			sieve_scriptfile_from_name((*ctx)->scriptname), NULL);
+		dest_path = t_strconcat(storage->dir, "/",
+			sieve_scriptfile_from_name(ctx->scriptname), NULL);
 
-		failed = !sieve_storage_script_move((*ctx), dest_path);
-		if ( (*ctx)->mtime != (time_t)-1 )
-			sieve_storage_update_mtime(dest_path, (*ctx)->mtime);
+		failed = !sieve_storage_script_move(ctx, dest_path);
+		if ( ctx->mtime != (time_t)-1 )
+			sieve_storage_update_mtime(dest_path, ctx->mtime);
 	} T_END;
 
-	sieve_storage_save_destroy(ctx);
+	/* set INBOX mailbox attribute */
+	if ( !failed )
+		sieve_storage_inbox_script_attribute_set(storage, ctx->scriptname);
+
+	sieve_storage_save_destroy(_ctx);
 
 	return ( failed ? -1 : 0 );
 }

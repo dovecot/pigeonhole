@@ -7,6 +7,7 @@
 #include "mkdir-parents.h"
 #include "eacces-error.h"
 #include "unlink-old-files.h"
+#include "mail-storage-private.h"
 
 #include "sieve.h"
 #include "sieve-common.h"
@@ -202,15 +203,36 @@ static int check_tmp(const char *path)
 	return 1;
 }
 
+static int _sieve_storage_open_inbox
+(struct mail_user *user, struct mailbox **box_r)
+{
+	struct mail_namespace *ns;
+	struct mailbox *box;
+	enum mailbox_flags flags = MAILBOX_FLAG_IGNORE_ACLS;
+	enum mail_error error;
+
+	ns = mail_namespace_find_inbox(user->namespaces);
+	*box_r = box = mailbox_alloc(ns->list, "INBOX", flags);
+	if (mailbox_open(box) == 0)
+		return 0;
+
+	i_warning("sieve-storage: "
+		"Failed to open user INBOX for attribute modifications: %s",
+		mailbox_get_last_error(box, &error));
+	return -1;
+}
+
 static struct sieve_storage *_sieve_storage_create
-(struct sieve_instance *svinst, const char *user, const char *home,
+(struct sieve_instance *svinst, struct mail_user *user, const char *home,
 	enum sieve_storage_flags flags)
 {
 	pool_t pool;
 	struct sieve_storage *storage;
+	struct mailbox *inbox = NULL;
 	bool debug = ( (flags & SIEVE_STORAGE_FLAG_DEBUG) != 0 );
 	const char *tmp_dir, *link_path, *path;
 	const char *sieve_data, *active_path, *active_fname, *storage_dir;
+	const char *username = user->username;
 	mode_t dir_create_mode, file_create_mode;
 	gid_t file_create_gid;
 	const char *file_create_gid_origin;
@@ -265,7 +287,8 @@ static struct sieve_storage *_sieve_storage_create
 	path = home_expand_tilde(active_path, home);
 	if ( path == NULL ) {
 		i_error("sieve-storage: userdb(%s) didn't return a home directory "
-			"for substitition in active script path (sieve=%s)", user, active_path);
+			"for substitition in active script path (sieve=%s)",
+			username, active_path);
 		return NULL;
 	}
 
@@ -368,7 +391,7 @@ static struct sieve_storage *_sieve_storage_create
 	if ( path == NULL ) {
 		i_error("sieve-storage: userdb(%s) didn't return a home directory "
 			"for substitition in storage root directory (sieve_dir=%s)",
-			user, storage_dir);
+			username, storage_dir);
 		return NULL;
 	}
 
@@ -414,6 +437,10 @@ static struct sieve_storage *_sieve_storage_create
 		file_create_gid_origin, debug) < 0 )
 		return NULL;
 
+	/* Open user's INBOX for attribute updates if necessary */
+	if ( (flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 )
+		(void)_sieve_storage_open_inbox(user, &inbox);
+
 	/*
 	 * Create storage object
 	 */
@@ -424,7 +451,7 @@ static struct sieve_storage *_sieve_storage_create
 	storage->flags = flags;
 	storage->pool = pool;
 	storage->dir = p_strdup(pool, storage_dir);
-	storage->user = p_strdup(pool, user);
+	storage->username = p_strdup(pool, username);
 	storage->active_path = p_strdup(pool, active_path);
 	storage->active_fname = p_strdup(pool, active_fname);
 	storage->prev_mtime = st.st_mtime;
@@ -432,6 +459,8 @@ static struct sieve_storage *_sieve_storage_create
 	storage->dir_create_mode = dir_create_mode;
 	storage->file_create_mode = file_create_mode;
 	storage->file_create_gid = file_create_gid;
+
+	storage->inbox = inbox;
 
 	/* Get the path to be prefixed to the script name in the symlink pointing
 	 * to the active script.
@@ -474,7 +503,7 @@ static struct sieve_storage *_sieve_storage_create
 }
 
 struct sieve_storage *sieve_storage_create
-(struct sieve_instance *svinst, const char *user, const char *home,
+(struct sieve_instance *svinst, struct mail_user *user, const char *home,
 	enum sieve_storage_flags flags)
 {
 	struct sieve_storage *storage;
@@ -486,9 +515,10 @@ struct sieve_storage *sieve_storage_create
 	return storage;
 }
 
-
 void sieve_storage_free(struct sieve_storage *storage)
 {
+	if (storage->inbox != NULL)
+		mailbox_free(&storage->inbox);
 	sieve_error_handler_unref(&storage->ehandler);
 
 	pool_unref(&storage->pool);
@@ -641,3 +671,74 @@ const char *sieve_storage_get_last_error
 
 	return storage->error != NULL ? storage->error : "Unknown error";
 }
+
+/*
+ * INBOX attributes
+ */
+
+static void sieve_storage_inbox_transaction_finish
+(struct sieve_storage *storage, struct mailbox_transaction_context **t)
+{
+	struct mailbox *inbox = storage->inbox;
+
+	if (mailbox_transaction_commit(t) < 0) {
+		enum mail_error error;
+		
+		i_warning("sieve-storage: Failed to update INBOX attributes: %s",
+			mail_storage_get_last_error(mailbox_get_storage(inbox), &error));
+	}
+}
+
+void sieve_storage_inbox_script_attribute_set
+(struct sieve_storage *storage, const char *name)
+{
+	struct mailbox_transaction_context *t;
+	const char *key;
+
+	if (storage->inbox == NULL)
+		return;
+
+	key = t_strconcat
+		(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, name, NULL);
+	t = mailbox_transaction_begin(storage->inbox, 0);	
+	mail_index_attribute_set(t->itrans, TRUE, key, ioloop_time, 0);
+	sieve_storage_inbox_transaction_finish(storage, &t);
+}
+
+void sieve_storage_inbox_script_attribute_rename
+(struct sieve_storage *storage, const char *oldname, const char *newname)
+{
+	struct mailbox_transaction_context *t;
+	const char *oldkey, *newkey;
+
+	if (storage->inbox == NULL)
+		return;
+
+	oldkey = t_strconcat
+		(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, oldname, NULL);
+	newkey = t_strconcat
+		(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, newname, NULL);
+
+	t = mailbox_transaction_begin(storage->inbox, 0);	
+	mail_index_attribute_unset(t->itrans, TRUE, oldkey, ioloop_time);
+	mail_index_attribute_set(t->itrans, TRUE, newkey, ioloop_time, 0);
+	sieve_storage_inbox_transaction_finish(storage, &t);
+}
+
+void sieve_storage_inbox_script_attribute_unset
+(struct sieve_storage *storage, const char *name)
+{
+	struct mailbox_transaction_context *t;
+	const char *key;
+
+	if (storage->inbox == NULL)
+		return;
+
+	key = t_strconcat
+		(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES, name, NULL);
+	
+	t = mailbox_transaction_begin(storage->inbox, 0);	
+	mail_index_attribute_unset(t->itrans, TRUE, key, ioloop_time);
+	sieve_storage_inbox_transaction_finish(storage, &t);
+}
+
