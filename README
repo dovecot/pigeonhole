@@ -1,4 +1,4 @@
-Pigeonhole for Dovecot v2.1
+Pigeonhole for Dovecot v2.2
 
 Introduction
 ============
@@ -100,8 +100,7 @@ following list outlines the implementation status of each supported extension:
 
     copy (RFC 3894): fully supported.
     body (RFC 5173): almost fully supported, but the text body-transform
-        implementation is simple and some issues make it still not completely
-        RFC compliant.
+        implementation is simple.
     environment (RFC 5183): fully supported (v0.4.0+).
     variables (RFC 5229): fully supported.
     vacation (RFC 5230): fully supported.
