@@ -646,7 +646,7 @@ available when this package is compiled against the Dovecot headers only. The
 test suite executes a list of test cases and halts when one of them fails. If it
 executes all test cases successfully, the test suite finishes. You can execute
 the basic test suite using `make test`, which does not include the plugins. You
-can execute the full test suite using `make check`.
+can test the plugins using `make test-plugins`.
 
 A failing test case is always a bug and a report is greatly appreciated.
 

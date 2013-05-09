@@ -170,4 +170,4 @@ $(extprograms_test_cases):
 test: $(test_cases)
 test-plugins: $(extprograms_test_cases)
 
-check: check-am test test-plugins all-am
+check: check-am test all-am
