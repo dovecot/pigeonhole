@@ -137,6 +137,3 @@ src/testsuite/Makefile
 stamp.h])
 
 AC_OUTPUT
-
-echo
-echo "NOTE: This is the UNSTABLE development branch of Pigeonhole for Dovecot v2.2."
