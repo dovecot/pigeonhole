@@ -211,32 +211,26 @@ unsigned int rfc2822_header_append
 void rfc2822_header_printf
 (string_t *header, const char *name, const char *fmt, ...)
 {
+	const char *body;
 	va_list args;
 
-	T_BEGIN {
-		const char *body;
+	va_start(args, fmt);
+	body = t_strdup_vprintf(fmt, args);
+	va_end(args);
 
-		va_start(args, fmt);
-		body = t_strdup_vprintf(fmt, args);
-		va_end(args);
-
-		rfc2822_header_write(header, name, body);
-	} T_END;
+	rfc2822_header_write(header, name, body);
 }
 
 void rfc2822_header_utf8_printf
 (string_t *header, const char *name, const char *fmt, ...)
 {
+	string_t *body = t_str_new(256);
 	va_list args;
 
-	T_BEGIN {
-		string_t *body = t_str_new(256);
+	va_start(args, fmt);
+	message_header_encode(t_strdup_vprintf(fmt, args), body);
+	va_end(args);
 
-		va_start(args, fmt);
-		message_header_encode(t_strdup_vprintf(fmt, args), body);
-		va_end(args);
-
-		rfc2822_header_write(header, name, str_c(body));
-	} T_END;
+	rfc2822_header_write(header, name, str_c(body));
 }
 
