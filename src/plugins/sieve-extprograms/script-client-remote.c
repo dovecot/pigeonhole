@@ -183,7 +183,7 @@ static void script_client_remote_connected(struct script_client *sclient)
 	io_remove(&sclient->io);
 	script_client_init_streams(sclient);
 
-	if ( sclient->output != NULL && !slclient->noreply ) {
+	if ( !slclient->noreply ) {
 		sclient->script_input = script_client_istream_create
 			(sclient, sclient->script_input);
 	}

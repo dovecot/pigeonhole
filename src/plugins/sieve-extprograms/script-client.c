@@ -145,7 +145,7 @@ static int script_client_script_output(struct script_client *sclient)
 	if ( input == NULL ) {
 		o_stream_unref(&sclient->script_output);
 
-		if ( sclient->output == NULL ) {
+		if ( sclient->script_input == NULL ) {
 			script_client_disconnect(sclient, FALSE);
 		} else {
 			sclient->close_output(sclient);
@@ -164,17 +164,19 @@ static void script_client_script_input(struct script_client *sclient)
 	size_t size;
 	int ret = 0;
 
-	if ( input != NULL && output != NULL ) {
-
+	if ( input != NULL ) {
 		while ( (ret=i_stream_read_data(input, &data, &size, 0)) > 0 ) {
-			ssize_t sent;
+			if ( output != NULL ) {
+				ssize_t sent;
 
-			if ( (sent=o_stream_send(output, data, size)) < 0 ) {
-				script_client_fail(sclient, SCRIPT_CLIENT_ERROR_IO);
-				return;
+				if ( (sent=o_stream_send(output, data, size)) < 0 ) {
+					script_client_fail(sclient, SCRIPT_CLIENT_ERROR_IO);
+					return;
+				}
+				size = (size_t)sent;
 			}
 
-			i_stream_skip(input, sent);
+			i_stream_skip(input, size);
 		}
 
 		if ( ret < 0 ) {
