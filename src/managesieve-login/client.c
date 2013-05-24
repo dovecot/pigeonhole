@@ -382,9 +382,9 @@ client_send_reply_raw(struct client *client,
 		str_append(line, prefix);
 
 		if (resp_code != NULL) {
-			str_append(line, " [");
+			str_append(line, " (");
 			str_append(line, resp_code);
-			str_append_c(line, ']');
+			str_append_c(line, ')');
 		}
 
 		if ( text != NULL )	{
