@@ -371,12 +371,12 @@ int main(int argc, char **argv)
 			i_info("final result: failed; resolved with successful implicit keep");
 			exit_status = EXIT_FAILURE;
 			break;
-		case SIEVE_EXEC_KEEP_FAILED:
-			i_info("final result: utter failure");
+		case SIEVE_EXEC_TEMP_FAILURE:
+			i_info("final result: temporary failure");
 			exit_status = EXIT_FAILURE;
 			break;
-		default:
-			i_info("final result: unrecognized return value?!");
+		case SIEVE_EXEC_KEEP_FAILED:
+			i_info("final result: utter failure");
 			exit_status = EXIT_FAILURE;
 			break;
 		}

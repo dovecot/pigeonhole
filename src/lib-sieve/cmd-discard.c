@@ -58,7 +58,7 @@ const struct sieve_operation_def cmd_discard_operation = {
 static void act_discard_print
 	(const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
-static bool act_discard_commit
+static int act_discard_commit
 	(const struct sieve_action *action,
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 
@@ -128,7 +128,7 @@ static void act_discard_print
 	*keep = FALSE;
 }
 
-static bool act_discard_commit
+static int act_discard_commit
 (const struct sieve_action *action ATTR_UNUSED,
 	const struct sieve_action_exec_env *aenv,
 	void *tr_context ATTR_UNUSED, bool *keep)
@@ -138,6 +138,6 @@ static bool act_discard_commit
 		"(discard action)");
 	*keep = FALSE;
 
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 

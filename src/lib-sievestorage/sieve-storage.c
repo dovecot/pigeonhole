@@ -596,7 +596,7 @@ static void ATTR_FORMAT(4, 0) sieve_storage_verror
 	if (fmt != NULL) {
 		storage->error = i_strdup_vprintf(fmt, args);
 	}
-	storage->error_code = SIEVE_ERROR_TEMP_FAIL;
+	storage->error_code = SIEVE_ERROR_TEMP_FAILURE;
 }
 
 void sieve_storage_clear_error(struct sieve_storage *storage)
@@ -631,7 +631,7 @@ void sieve_storage_set_critical
 	sieve_storage_clear_error(storage);
 	if (fmt != NULL) {
 		i_free(storage->error);
-		storage->error_code = SIEVE_ERROR_TEMP_FAIL;
+		storage->error_code = SIEVE_ERROR_TEMP_FAILURE;
 
 		if ( (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 ) {
 			struct tm *tm;

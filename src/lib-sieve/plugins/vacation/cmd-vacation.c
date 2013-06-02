@@ -190,7 +190,7 @@ int act_vacation_check_conflict
 static void act_vacation_print
 	(const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
-static bool act_vacation_commit
+static int act_vacation_commit
 	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv,
 		void *tr_context, bool *keep);
 
@@ -1018,7 +1018,7 @@ static void act_vacation_hash
 	md5_final(&ctx, hash_r);
 }
 
-static bool act_vacation_commit
+static int act_vacation_commit
 (const struct sieve_action *action, const struct sieve_action_exec_env *aenv,
 	void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
@@ -1043,14 +1043,14 @@ static bool act_vacation_commit
 	if ( recipient == NULL ) {
 		sieve_result_global_warning
 			(aenv, "vacation action aborted: envelope recipient is <>");
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	/* Is the return path unset ?
 	 */
 	if ( sender == NULL ) {
 		sieve_result_global_log(aenv, "discarded vacation reply to <>");
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	/* Are we perhaps trying to respond to ourselves ?
@@ -1059,7 +1059,7 @@ static bool act_vacation_commit
 		sieve_result_global_log(aenv,
 			"discarded vacation reply to own address <%s>",
 			str_sanitize(sender, 128));
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	/* Are we perhaps trying to respond to one of our alternative :addresses?
@@ -1073,7 +1073,7 @@ static bool act_vacation_commit
 					"discarded vacation reply to own address <%s> "
 					"(as specified using :addresses argument)",
 					str_sanitize(sender, 128));
-				return TRUE;
+				return SIEVE_EXEC_OK;
 			}
 			alt_address++;
 		}
@@ -1088,7 +1088,7 @@ static bool act_vacation_commit
 			sieve_result_global_log(aenv,
 				"discarded duplicate vacation response to <%s>",
 				str_sanitize(sender, 128));
-			return TRUE;
+			return SIEVE_EXEC_OK;
 		}
 	}
 
@@ -1101,7 +1101,7 @@ static bool act_vacation_commit
 			sieve_result_global_log(aenv,
 				"discarding vacation response to mailinglist recipient <%s>",
 				str_sanitize(sender, 128));
-			return TRUE;
+			return SIEVE_EXEC_OK;
 		}
 		hdsp++;
 	}
@@ -1116,7 +1116,7 @@ static bool act_vacation_commit
 				sieve_result_global_log(aenv,
 					"discarding vacation response to auto-submitted message from <%s>",
  					str_sanitize(sender, 128));
-					return TRUE;
+					return SIEVE_EXEC_OK;
 			}
 			hdsp++;
 		}
@@ -1133,7 +1133,7 @@ static bool act_vacation_commit
 				sieve_result_global_log(aenv,
 					"discarding vacation response to precedence=%s message from <%s>",
 					*hdsp, str_sanitize(sender, 128));
-					return TRUE;
+					return SIEVE_EXEC_OK;
 			}
 			hdsp++;
 		}
@@ -1144,7 +1144,7 @@ static bool act_vacation_commit
 		sieve_result_global_log(aenv,
 			"not sending vacation response to system address <%s>",
 			str_sanitize(sender, 128));
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	/* Fetch original recipient if necessary */
@@ -1213,7 +1213,7 @@ static bool act_vacation_commit
 				str_sanitize(recipient, 128), original_recipient,
 				(ctx->addresses == NULL ? " no" : ""));
 
-			return TRUE;
+			return SIEVE_EXEC_OK;
 		}
 	}
 
@@ -1243,7 +1243,7 @@ static bool act_vacation_commit
 		}
 	}
 
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 

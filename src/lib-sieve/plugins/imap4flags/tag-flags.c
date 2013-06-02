@@ -70,7 +70,7 @@ static int seff_flags_merge
 static void seff_flags_print
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
-static bool seff_flags_pre_execute
+static int seff_flags_pre_execute
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action,
 		const struct sieve_action_exec_env *aenv, void **context, void *tr_context);
 
@@ -383,7 +383,7 @@ static void seff_flags_print
 
 /* Result execution */
 
-static bool seff_flags_pre_execute
+static int seff_flags_pre_execute
 (const struct sieve_side_effect *seffect,
 	const struct sieve_action *action ATTR_UNUSED,
 	const struct sieve_action_exec_env *aenv, void **context, void *tr_context)
@@ -402,7 +402,7 @@ static bool seff_flags_pre_execute
 
 	sieve_act_store_add_flags(aenv, tr_context, keywords, ctx->flags);
 
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 

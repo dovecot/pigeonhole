@@ -218,15 +218,12 @@ static int filter_message
 		sieve_error(ehandler, NULL, "sieve script binary is corrupt");
 		return -1;
 	case SIEVE_EXEC_FAILURE:
+	case SIEVE_EXEC_TEMP_FAILURE:
 	case SIEVE_EXEC_KEEP_FAILED:
 		sieve_error(ehandler, NULL,
 			"sieve script execution failed for this message; "
 			"message left in source mailbox");
 		return 0;
-	default:
-		sieve_error(ehandler, NULL,
-			"sieve execution result: unrecognized return value?!");
-		return -1;
 	}
 
 	return 1;

@@ -439,12 +439,12 @@ struct sieve_extprogram *sieve_extprogram_create
 			case EACCES:
 				sieve_sys_error(svinst, "action %s: "
 					"failed to stat socket: %s", action, eacces_error_get("stat", path));
-				*error_r = SIEVE_ERROR_NO_PERM;
+				*error_r = SIEVE_ERROR_NO_PERMISSION;
 				return NULL;
 			default:
 				sieve_sys_error(svinst, "action %s: "
 					"failed to stat socket `%s': %m", action, path);
-				*error_r = SIEVE_ERROR_NOT_POSSIBLE;
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return NULL;
 			}
 			path = NULL;
@@ -476,12 +476,12 @@ struct sieve_extprogram *sieve_extprogram_create
 			case EACCES:
 				sieve_sys_error(svinst, "action %s: "
 					"failed to stat program: %s", action, eacces_error_get("stat", path));
-				*error_r = SIEVE_ERROR_NO_PERM;
+				*error_r = SIEVE_ERROR_NO_PERMISSION;
 				break;
 			default:
 				sieve_sys_error(svinst, "action %s: "
 					"failed to stat program `%s': %m", action, path);
-				*error_r = SIEVE_ERROR_NOT_POSSIBLE;
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				break;
 			}
 
@@ -496,7 +496,7 @@ struct sieve_extprogram *sieve_extprogram_create
 			sieve_sys_error(svinst, "action %s: "
 				"executable `%s' for program `%s' is world-writable",
 				action, path, program_name);
-			*error_r = SIEVE_ERROR_NO_PERM;
+			*error_r = SIEVE_ERROR_NO_PERMISSION;
 			return NULL;
 		}
 	}

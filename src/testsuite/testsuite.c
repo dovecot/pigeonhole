@@ -197,13 +197,12 @@ int main(int argc, char **argv)
 			break;
 		case SIEVE_EXEC_FAILURE:
 		case SIEVE_EXEC_KEEP_FAILED:
+		case SIEVE_EXEC_TEMP_FAILURE:
 			testsuite_testcase_fail("test script execution aborted due to error");
 			break;
 		case SIEVE_EXEC_BIN_CORRUPT:
 			testsuite_testcase_fail("compiled test script binary is corrupt");
 			break;
-		default:
-			testsuite_testcase_fail("unknown execution exit code");
 		}
 
 		sieve_close(&sbin);

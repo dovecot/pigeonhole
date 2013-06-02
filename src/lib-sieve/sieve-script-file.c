@@ -72,12 +72,12 @@ static void sieve_file_script_handle_error
 	case EACCES:
 		sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 			"failed to stat sieve script: %s", eacces_error_get("stat", path));
-		*error_r = SIEVE_ERROR_NO_PERM;
+		*error_r = SIEVE_ERROR_NO_PERMISSION;
 		break;
 	default:
 		sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 			"failed to stat sieve script: stat(%s) failed: %m", path);
-		*error_r = SIEVE_ERROR_TEMP_FAIL;
+		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		break;
 	}
 }
@@ -133,7 +133,7 @@ static int sieve_file_script_open
 
 		sieve_critical(svinst, ehandler, NULL, "failed to open sieve script",
 			"sieve file backend: invalid option `%s'", option);
-		*error_r = SIEVE_ERROR_TEMP_FAIL;
+		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
 
@@ -153,7 +153,7 @@ static int sieve_file_script_open
 					"failed to open sieve script",
 					"sieve script file path %s is relative to home directory, "
 					"but home directory is not available.", path);
-				*error_r = SIEVE_ERROR_TEMP_FAIL;
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				success = FALSE;
 			}
 		}
@@ -165,7 +165,7 @@ static int sieve_file_script_open
 					sieve_critical(svinst, ehandler, NULL,
 						"failed to open sieve script",
 						"sieve script file path '%s' is a directory.", path);
-					*error_r = SIEVE_ERROR_TEMP_FAIL;
+					*error_r = SIEVE_ERROR_TEMP_FAILURE;
 					success = FALSE;
 				}	else {
 					/* Extend path with filename */
@@ -211,7 +211,7 @@ static int sieve_file_script_open
 				sieve_critical(svinst, ehandler, name,
 					"failed to open sieve script",
 					"sieve script file '%s' is not a regular file.", path);
-				*error_r = SIEVE_ERROR_TEMP_FAIL;
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				success = FALSE;
 			}
 		}
@@ -269,7 +269,7 @@ static int sieve_file_script_get_stream
 		sieve_critical(svinst, ehandler, name,
 			"failed to open sieve script",
 			"failed to open sieve script: fstat(fd=%s) failed: %m", script->path);
-		*error_r = SIEVE_ERROR_TEMP_FAIL;
+		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		result = NULL;
 	} else {
 		/* Re-check the file type just to be sure */
@@ -277,7 +277,7 @@ static int sieve_file_script_get_stream
 			sieve_critical(svinst, ehandler, name,
 				"failed to open sieve script",
 				"sieve script file '%s' is not a regular file", script->path);
-			*error_r = SIEVE_ERROR_TEMP_FAIL;
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			result = NULL;
 		} else {
 			result = i_stream_create_fd(fd, SIEVE_FILE_READ_BLOCK_SIZE, TRUE);

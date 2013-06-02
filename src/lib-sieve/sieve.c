@@ -385,7 +385,6 @@ struct sieve_binary *sieve_open_script
 		} else {
 			sbin = sieve_compile_script(script, ehandler, flags, error_r);
 
-			/* Save the binary if compile was successful */
 			if ( sbin != NULL ) {
 				if ( svinst->debug )
 					sieve_sys_debug(svinst, "script `%s' from %s successfully compiled",
@@ -535,12 +534,17 @@ int sieve_execute
 	if ( ret > 0 ) {
 		/* Execute result */
 		ret = sieve_result_execute(result, keep);
-	} else if ( ret == 0 ) {
+	} else if ( ret == SIEVE_EXEC_FAILURE ) {
 		/* Perform implicit keep if script failed with a normal runtime error */
-		if ( !sieve_result_implicit_keep(result) ) {
-			ret = SIEVE_EXEC_KEEP_FAILED;
-		} else {
+		switch ( sieve_result_implicit_keep(result) ) {
+		case SIEVE_EXEC_OK:
 			if ( keep != NULL ) *keep = TRUE;
+			break;
+		case SIEVE_EXEC_TEMP_FAILURE:
+			ret = SIEVE_EXEC_TEMP_FAILURE;
+			break;
+		default:
+			ret = SIEVE_EXEC_KEEP_FAILED;
 		}
 	}
 
@@ -674,6 +678,39 @@ int sieve_multiscript_status(struct sieve_multiscript *mscript)
 	return mscript->status;
 }
 
+int sieve_multiscript_tempfail(struct sieve_multiscript **mscript,
+	struct sieve_error_handler *ehandler)
+{
+	struct sieve_result *result = (*mscript)->result;
+	int ret = (*mscript)->status;
+
+	if ( ehandler != NULL )
+		sieve_result_set_error_handler(result, ehandler);
+
+	if ( (*mscript)->active ) {
+		ret = SIEVE_EXEC_TEMP_FAILURE;
+
+		if ( !(*mscript)->teststream && sieve_result_executed(result) ) {
+			/* Part of the result is already executed, need to fall back to
+			 * to implicit keep (FIXME)
+			 */
+			switch ( sieve_result_implicit_keep(result) ) {
+			case SIEVE_EXEC_OK:
+				ret = SIEVE_EXEC_FAILURE;
+				break;
+			default:
+				ret = SIEVE_EXEC_KEEP_FAILED;
+			}
+		}
+	}
+
+	/* Cleanup */
+	sieve_result_unref(&result);
+	*mscript = NULL;
+
+	return ret;
+}
+
 int sieve_multiscript_finish(struct sieve_multiscript **mscript,
 	struct sieve_error_handler *ehandler, bool *keep)
 {
@@ -681,7 +718,7 @@ int sieve_multiscript_finish(struct sieve_multiscript **mscript,
 	int ret = (*mscript)->status;
 
 	if ( ehandler != NULL )
-		sieve_result_set_error_handler((*mscript)->result, ehandler);
+		sieve_result_set_error_handler(result, ehandler);
 
 	if ( (*mscript)->active ) {
 		ret = SIEVE_EXEC_FAILURE;
@@ -689,10 +726,19 @@ int sieve_multiscript_finish(struct sieve_multiscript **mscript,
 		if ( (*mscript)->teststream ) {
 			(*mscript)->keep = TRUE;
 		} else {
-			if ( !sieve_result_implicit_keep((*mscript)->result) )
-				ret = SIEVE_EXEC_KEEP_FAILED;
-			else
+			switch ( sieve_result_implicit_keep(result) ) {
+			case SIEVE_EXEC_OK:
 				(*mscript)->keep = TRUE;
+				break;
+			case SIEVE_EXEC_TEMP_FAILURE:
+				if (!sieve_result_executed(result)) {
+					ret = SIEVE_EXEC_TEMP_FAILURE;
+					break;
+				}
+				/* fall through */
+			default:
+				ret = SIEVE_EXEC_KEEP_FAILED;
+			}
 		}
 	}
 
@@ -760,7 +806,7 @@ struct sieve_directory *sieve_directory_open
 				"sieve dir path %s is relative to home directory, "
 				"but home directory is not available.", path);
 			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_TEMP_FAIL;
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			return NULL;
 		}
 	}
@@ -776,13 +822,13 @@ struct sieve_directory *sieve_directory_open
 			sieve_sys_error(svinst, "failed to open sieve dir: %s",
 				eacces_error_get("stat", path));
 			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_NO_PERM;
+				*error_r = SIEVE_ERROR_NO_PERMISSION;
 			break;
 		default:
 			sieve_sys_error(svinst, "failed to open sieve dir: stat(%s) failed: %m",
 				path);
 			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_TEMP_FAIL;
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			break;
 		}
 		return NULL;
@@ -801,13 +847,13 @@ struct sieve_directory *sieve_directory_open
 				sieve_sys_error(svinst, "failed to open sieve dir: %s",
 					eacces_error_get("opendir", path));
 				if ( error_r != NULL )
-					*error_r = SIEVE_ERROR_NO_PERM;
+					*error_r = SIEVE_ERROR_NO_PERMISSION;
 				break;
 			default:
 				sieve_sys_error(svinst, "failed to open sieve dir: opendir(%s) failed: "
 					"%m", path);
 				if ( error_r != NULL )
-					*error_r = SIEVE_ERROR_TEMP_FAIL;
+					*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				break;
 			}
 			return NULL;

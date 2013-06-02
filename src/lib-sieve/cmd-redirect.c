@@ -87,7 +87,7 @@ static int act_redirect_check_duplicate
 static void act_redirect_print
 	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		bool *keep);
-static bool act_redirect_commit
+static int act_redirect_commit
 	(const struct sieve_action *action, const struct sieve_action_exec_env *aenv,
 		void *tr_context, bool *keep);
 
@@ -307,7 +307,7 @@ static void act_redirect_print
 	*keep = FALSE;
 }
 
-static bool act_redirect_send
+static int act_redirect_send
 (const struct sieve_action_exec_env *aenv, struct mail *mail,
 	struct act_redirect_context *ctx)
 {
@@ -326,11 +326,11 @@ static bool act_redirect_send
 	if ( !sieve_smtp_available(senv) ) {
 		sieve_result_global_warning
 			(aenv, "redirect action has no means to send mail.");
-		return TRUE;
+		return SIEVE_EXEC_FAILURE;
 	}
 
 	if (mail_get_stream(mail, NULL, NULL, &input) < 0)
-		return FALSE;
+		return SIEVE_EXEC_TEMP_FAILURE;
 
 	/* Open SMTP transport */
 	smtp_handle = sieve_smtp_open(senv, ctx->to_address, sender, &output);
@@ -359,13 +359,13 @@ static bool act_redirect_send
 			"failed to redirect message to <%s> "
 			"(refer to server log for more information)",
 			str_sanitize(ctx->to_address, 80));
-		return FALSE;
+		return SIEVE_EXEC_FAILURE;
 	}
 
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
-static bool act_redirect_commit
+static int act_redirect_commit
 (const struct sieve_action *action,
 	const struct sieve_action_exec_env *aenv, void *tr_context ATTR_UNUSED,
 	bool *keep)
@@ -378,6 +378,7 @@ static bool act_redirect_commit
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *orig_recipient = sieve_message_get_orig_recipient(aenv->msgctx);
 	const char *dupeid;
+	int ret;
 
 	/* Prevent mail loops if possible */
 	dupeid = msgdata->id == NULL ? NULL : t_strdup_printf
@@ -388,12 +389,12 @@ static bool act_redirect_commit
 			sieve_result_global_log(aenv, "discarded duplicate forward to <%s>",
 				str_sanitize(ctx->to_address, 128));
 			*keep = FALSE;
-			return TRUE;
+			return SIEVE_EXEC_OK;
 		}
 	}
 
 	/* Try to forward the message */
-	if ( act_redirect_send(aenv, mail, ctx) ) {
+	if ( (ret=act_redirect_send(aenv, mail, ctx)) == SIEVE_EXEC_OK) {
 
 		/* Mark this message id as forwarded to the specified destination */
 		if (dupeid != NULL) {
@@ -410,10 +411,10 @@ static bool act_redirect_commit
 		/* Cancel implicit keep */
 		*keep = FALSE;
 
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
-	return FALSE;
+	return ret;
 }
 
 

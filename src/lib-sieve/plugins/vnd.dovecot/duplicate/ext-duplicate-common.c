@@ -77,7 +77,7 @@ struct act_duplicate_mark_data {
 static void act_duplicate_mark_print
 	(const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
-static bool act_duplicate_mark_commit
+static int act_duplicate_mark_commit
 	(const struct sieve_action *action,
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 
@@ -106,7 +106,7 @@ static void act_duplicate_mark_print
 	}
 }
 
-static bool act_duplicate_mark_commit
+static int act_duplicate_mark_commit
 (const struct sieve_action *action,
 	const struct sieve_action_exec_env *aenv,
 	void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
@@ -121,7 +121,7 @@ static bool act_duplicate_mark_commit
 	sieve_action_duplicate_mark
 		(senv, data->hash, sizeof(data->hash), ioloop_time + data->period);
 	
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 

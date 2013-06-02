@@ -191,6 +191,8 @@ bool sieve_multiscript_run
 
 int sieve_multiscript_status(struct sieve_multiscript *mscript);
 
+int sieve_multiscript_tempfail(struct sieve_multiscript **mscript,
+	struct sieve_error_handler *ehandler);
 int sieve_multiscript_finish
 	(struct sieve_multiscript **mscript, struct sieve_error_handler *ehandler,
 		bool *keep);

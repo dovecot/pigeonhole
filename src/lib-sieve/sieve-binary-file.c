@@ -301,13 +301,13 @@ int sieve_binary_save
 				"binary save: failed to create temporary file: %s",
 				eacces_error_get_creating("open", str_c(temp_path)));
 			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_NO_PERM;
+				*error_r = SIEVE_ERROR_NO_PERMISSION;
 		} else {
 			sieve_sys_error(sbin->svinst,
 				"binary save: failed to create temporary file: open(%s) failed: %m",
 				str_c(temp_path));
 			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_TEMP_FAIL;
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		}
 		return -1;
 	}
@@ -318,7 +318,7 @@ int sieve_binary_save
 	if ( !_sieve_binary_save(sbin, stream) ) {
 		result = -1;
 		if ( error_r != NULL )
-			*error_r = SIEVE_ERROR_TEMP_FAIL;
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 	}
 	o_stream_destroy(&stream);
 
@@ -335,12 +335,12 @@ int sieve_binary_save
 			sieve_sys_error(sbin->svinst, "binary save: failed to save binary: %s",
 				eacces_error_get_creating("rename", path));
 			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_NO_PERM;
+				*error_r = SIEVE_ERROR_NO_PERMISSION;
 		} else {
 			sieve_sys_error(sbin->svinst, "binary save: failed to save binary: "
 				"rename(%s, %s) failed: %m", str_c(temp_path), path);
 			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_TEMP_FAIL;
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		}
 		result = -1;
 	}
@@ -386,13 +386,13 @@ bool sieve_binary_file_open
 			sieve_sys_error(svinst, "binary open: failed to open: %s",
 				eacces_error_get("open", path));
 			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_NO_PERM;
+				*error_r = SIEVE_ERROR_NO_PERMISSION;
 			break;
 		default:
 			sieve_sys_error(svinst, "binary open: failed to open: "
 				"open(%s) failed: %m", path);
 			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_TEMP_FAIL;
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			break;
 		}
 		return FALSE;

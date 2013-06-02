@@ -181,7 +181,7 @@ int act_reject_check_conflict
 static void act_reject_print
 	(const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
-static bool act_reject_commit
+static int act_reject_commit
 	(const struct sieve_action *action ATTR_UNUSED,
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 
@@ -379,7 +379,7 @@ static void act_reject_print
 	*keep = FALSE;
 }
 
-static bool act_reject_commit
+static int act_reject_commit
 (const struct sieve_action *action, const struct sieve_action_exec_env *aenv,
 	void *tr_context ATTR_UNUSED, bool *keep)
 {
@@ -391,7 +391,7 @@ static bool act_reject_commit
 	if ( recipient == NULL ) {
 		sieve_result_global_warning(aenv,
 			"reject action aborted: envelope recipient is <>");
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	if ( rj_ctx->reason == NULL ) {
@@ -399,14 +399,14 @@ static bool act_reject_commit
 			"not sending reject message (would cause second response to sender)");
 
 		*keep = FALSE;
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	if ( sender == NULL ) {
 		sieve_result_global_log(aenv, "not sending reject message to <>");
 
 		*keep = FALSE;
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	if ( sieve_action_reject_mail(aenv, sender, recipient, rj_ctx->reason) ) {
@@ -415,10 +415,10 @@ static bool act_reject_commit
 			( rj_ctx->ereject ? "ereject" : "reject" ));
 
 		*keep = FALSE;
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
-	return FALSE;
+	return SIEVE_EXEC_FAILURE;
 }
 
 

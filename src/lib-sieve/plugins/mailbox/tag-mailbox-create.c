@@ -41,7 +41,7 @@ const struct sieve_argument_def mailbox_create_tag = {
 static void seff_mailbox_create_print
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
-static bool seff_mailbox_create_pre_execute
+static int seff_mailbox_create_pre_execute
 	(const struct sieve_side_effect *seffect, const struct sieve_action *action,
 		const struct sieve_action_exec_env *aenv, void **se_context,
 		void *tr_context);
@@ -113,7 +113,7 @@ static void seff_mailbox_create_print
 	sieve_result_seffect_printf(rpenv, "create mailbox if it does not exist");
 }
 
-static bool seff_mailbox_create_pre_execute
+static int seff_mailbox_create_pre_execute
 (const struct sieve_side_effect *seffect ATTR_UNUSED,
 	const struct sieve_action *action ATTR_UNUSED,
 	const struct sieve_action_exec_env *aenv ATTR_UNUSED,
@@ -126,16 +126,21 @@ static bool seff_mailbox_create_pre_execute
 
 	/* Check whether creation is necessary */
 	if ( trans->box == NULL || trans->disabled )
-		return TRUE;
+		return SIEVE_EXEC_OK;
 
 	/* Check whether creation has a chance of working */
-	if ( trans->error_code != MAIL_ERROR_NONE &&
-		trans->error_code != MAIL_ERROR_NOTFOUND )
-		return FALSE;
+	switch ( trans->error_code ) {
+	case MAIL_ERROR_NONE:
+	case MAIL_ERROR_NOTFOUND:
+		break;
+	case MAIL_ERROR_TEMP:
+		return SIEVE_EXEC_TEMP_FAILURE;
+	default:
+		return SIEVE_EXEC_FAILURE;
+	}
 
 	trans->error = NULL;
 	trans->error_code = MAIL_ERROR_NONE;
-
 
 	*storage = mailbox_get_storage(trans->box);
 
@@ -144,7 +149,8 @@ static bool seff_mailbox_create_pre_execute
 		(void)mail_storage_get_last_error(*storage, &error);
 		if ( error != MAIL_ERROR_EXISTS ) {
 			sieve_act_store_get_storage_error(aenv, trans);
-			return FALSE;
+			return ( trans->error_code == MAIL_ERROR_TEMP ?
+				SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE );
 		}
 	}
 
@@ -159,10 +165,11 @@ static bool seff_mailbox_create_pre_execute
 	if ( mailbox_open(trans->box) < 0 ) {
 		/* Failed definitively */
 		sieve_act_store_get_storage_error(aenv, trans);
-		return FALSE;
+		return ( trans->error_code == MAIL_ERROR_TEMP ?
+			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE );
 	}
 
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 

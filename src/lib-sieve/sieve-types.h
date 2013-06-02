@@ -83,13 +83,13 @@ enum sieve_error {
 	SIEVE_ERROR_NONE = 0,
 
 	/* Temporary internal error */
-	SIEVE_ERROR_TEMP_FAIL,
+	SIEVE_ERROR_TEMP_FAILURE,
 	/* It's not possible to do the wanted operation */
 	SIEVE_ERROR_NOT_POSSIBLE,
 	/* Invalid parameters (eg. script name not valid) */
 	SIEVE_ERROR_BAD_PARAMS,
 	/* No permission to do the request */
-	SIEVE_ERROR_NO_PERM,
+	SIEVE_ERROR_NO_PERMISSION,
 	/* Out of disk space */
 	SIEVE_ERROR_NO_SPACE,
 	/* Out of disk space */
@@ -235,10 +235,11 @@ struct sieve_exec_status {
  */
 
 enum sieve_execution_exitcode {
-	SIEVE_EXEC_OK          = 1,
-	SIEVE_EXEC_FAILURE     = 0,
-	SIEVE_EXEC_BIN_CORRUPT = -1,
-	SIEVE_EXEC_KEEP_FAILED = -2
+	SIEVE_EXEC_OK           = 1,
+	SIEVE_EXEC_FAILURE      = 0,
+	SIEVE_EXEC_TEMP_FAILURE = -1,
+	SIEVE_EXEC_BIN_CORRUPT  = -2,
+	SIEVE_EXEC_KEEP_FAILED  = -3
 };
 
 #endif /* __SIEVE_TYPES_H */

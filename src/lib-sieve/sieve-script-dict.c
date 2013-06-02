@@ -80,7 +80,7 @@ static int sieve_dict_script_open
 			} else {
 				sieve_critical(svinst, ehandler, NULL, "failed to open sieve script",
 					"sieve dict backend: invalid option `%s'", option);
-				*error_r = SIEVE_ERROR_TEMP_FAIL;
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 				return -1;
 			}
 
@@ -96,7 +96,7 @@ static int sieve_dict_script_open
 		if ( svinst->username == NULL ) {
 			sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 				"sieve dict backend: no username specified");
-			*error_r = SIEVE_ERROR_TEMP_FAIL;
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 		username = svinst->username;
@@ -106,7 +106,7 @@ static int sieve_dict_script_open
 		sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 			"sieve dict backend: BUG: Sieve interpreter is initialized without "
 			"a base_dir");
-		*error_r = SIEVE_ERROR_TEMP_FAIL;
+		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
 
@@ -122,7 +122,7 @@ static int sieve_dict_script_open
 		sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 			"sieve dict backend: failed to initialize dict with data `%s' "
 			"for user `%s': %s", data, username, error);
-		*error_r = SIEVE_ERROR_TEMP_FAIL;
+		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
 
@@ -135,7 +135,7 @@ static int sieve_dict_script_open
 		if ( ret < 0 ) {
 			sieve_critical(svinst, ehandler, name, "failed to open sieve script",
 				"sieve dict backend: failed to lookup script id from path %s", path);
-			*error_r = SIEVE_ERROR_TEMP_FAIL;
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		} else {
 			if ( svinst->debug ) {
 				sieve_sys_debug(svinst, "sieve dict backend: "
@@ -193,7 +193,7 @@ static int sieve_dict_script_get_stream
 				"sieve dict backend: data with id `%s' for script `%s' "
 				"not found at path %s",	script->data_id, name, path);
 		}
-		*error_r = SIEVE_ERROR_TEMP_FAIL;
+		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
 

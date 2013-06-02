@@ -92,7 +92,7 @@ static int act_pipe_check_duplicate
 static void act_pipe_print
 	(const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);	
-static bool act_pipe_commit
+static int act_pipe_commit
 	(const struct sieve_action *action,	
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 
@@ -328,7 +328,7 @@ static void act_pipe_print
 
 /* Result execution */
 
-static bool act_pipe_commit
+static int act_pipe_commit
 (const struct sieve_action *action, const struct sieve_action_exec_env *aenv, 
 	void *tr_context ATTR_UNUSED, bool *keep)
 {
@@ -354,6 +354,9 @@ static bool act_pipe_commit
 	if ( ret > 0 ) {
 		sieve_result_global_log(aenv, "pipe action: "
 			"piped message to program `%s'", str_sanitize(act->program_name, 128));
+
+		/* Indicate that message was successfully 'forwarded' */
+		aenv->exec_status->message_forwarded = TRUE;
 	} else {
 		if ( ret < 0 ) {
 			if ( error == SIEVE_ERROR_NOT_FOUND ) {
@@ -371,13 +374,13 @@ static bool act_pipe_commit
 				str_sanitize(act->program_name, 80));
 		}
 
-		if ( act->try ) return TRUE;
+		if ( act->try ) return SIEVE_EXEC_OK;
 
-		return FALSE;
+		return SIEVE_EXEC_FAILURE;
 	}
 
 	*keep = FALSE;
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 

@@ -190,13 +190,13 @@ static void act_store_print
 	(const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
 
-static bool act_store_start
+static int act_store_start
 	(const struct sieve_action *action,
 		const struct sieve_action_exec_env *aenv, void **tr_context);
-static bool act_store_execute
+static int act_store_execute
 	(const struct sieve_action *action,
 		const struct sieve_action_exec_env *aenv, void *tr_context);
-static bool act_store_commit
+static int act_store_commit
 	(const struct sieve_action *action,
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 static void act_store_rollback
@@ -283,16 +283,6 @@ void sieve_act_store_add_flags
 	trans->flags_altered = TRUE;
 }
 
-void sieve_act_store_get_storage_error
-(const struct sieve_action_exec_env *aenv, struct act_store_transaction *trans)
-{
-	pool_t pool = sieve_result_pool(aenv->result);
-
-	trans->error = p_strdup(pool,
-		mail_storage_get_last_error(mailbox_get_storage(trans->box),
-		&trans->error_code));
-}
-
 /* Equality */
 
 static bool act_store_equals
@@ -353,6 +343,17 @@ static void act_store_print
 
 /* Action implementation */
 
+void sieve_act_store_get_storage_error
+(const struct sieve_action_exec_env *aenv,
+	struct act_store_transaction *trans)
+{
+	pool_t pool = sieve_result_pool(aenv->result);
+
+	trans->error = p_strdup(pool,
+		mail_storage_get_last_error(mailbox_get_storage(trans->box),
+		&trans->error_code));
+}
+
 static bool act_store_mailbox_open
 (const struct sieve_action_exec_env *aenv, const char *mailbox,
 	struct mailbox **box_r, enum mail_error *error_code_r, const char **error_r)
@@ -384,7 +385,7 @@ static bool act_store_mailbox_open
 	return TRUE;
 }
 
-static bool act_store_start
+static int act_store_start
 (const struct sieve_action *action,
 	const struct sieve_action_exec_env *aenv, void **tr_context)
 {
@@ -434,8 +435,17 @@ static bool act_store_start
 
 	*tr_context = (void *)trans;
 
-	return ( trans->error_code == MAIL_ERROR_NONE ||
-		trans->error_code == MAIL_ERROR_NOTFOUND );
+	switch ( trans->error_code ) {
+	case MAIL_ERROR_NONE:
+	case MAIL_ERROR_NOTFOUND:
+		return SIEVE_EXEC_OK;
+	case MAIL_ERROR_TEMP:
+		return SIEVE_EXEC_TEMP_FAILURE;
+	default:
+		break;
+	}
+	
+	return SIEVE_EXEC_FAILURE;
 }
 
 static struct mail_keywords *act_store_keywords_create
@@ -461,7 +471,7 @@ static struct mail_keywords *act_store_keywords_create
 	return box_keywords;
 }
 
-static bool act_store_execute
+static int act_store_execute
 (const struct sieve_action *action,
 	const struct sieve_action_exec_env *aenv, void *tr_context)
 {
@@ -472,17 +482,27 @@ static bool act_store_execute
 	struct mail *real_mail = mail_get_real_mail(mail);
 	struct mail_save_context *save_ctx;
 	struct mail_keywords *keywords = NULL;
-	bool result = TRUE;
+	int status = SIEVE_EXEC_OK;
 
 	/* Verify transaction */
-	if ( trans == NULL ) return FALSE;
+	if ( trans == NULL ) return SIEVE_EXEC_FAILURE;
 
 	/* Check whether we need to do anything */
-	if ( trans->disabled ) return TRUE;
+	if ( trans->disabled ) return SIEVE_EXEC_OK;
 
 	/* Exit early if mailbox is not available */
-	if ( trans->box == NULL || trans->error_code != MAIL_ERROR_NONE )
-		return FALSE;
+	if ( trans->box == NULL )
+		return SIEVE_EXEC_FAILURE;
+
+	/* Exit early if transaction already failed */
+ 	switch ( trans->error_code ) {
+	case MAIL_ERROR_NONE:
+		break;
+	case MAIL_ERROR_TEMP:
+		return SIEVE_EXEC_TEMP_FAILURE;
+	default:
+		return SIEVE_EXEC_FAILURE;
+	}
 
 	/* If the message originates from the target mailbox, only update the flags
 	 * and keywords (if not read-only)
@@ -504,7 +524,7 @@ static bool act_store_execute
 			mail_update_flags(mail, MODIFY_REPLACE, trans->flags);
 		}
 
-		return TRUE;
+		return SIEVE_EXEC_OK;
 
 	/* If the message is modified, only store it in the source mailbox when it is
 	 * not opened read-only. Mail structs of modified messages have their own
@@ -516,7 +536,7 @@ static bool act_store_execute
 		&& ( mailbox_backends_equal(trans->box, aenv->msgdata->mail->box) ) ) {
 
 		trans->redundant = TRUE;
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	/* Mark attempt to store in default mailbox */
@@ -551,7 +571,8 @@ static bool act_store_execute
 
 	if ( mailbox_copy(&save_ctx, mail) < 0 ) {
 		sieve_act_store_get_storage_error(aenv, trans);
- 		result = FALSE;
+		status = ( trans->error_code == MAIL_ERROR_TEMP ?
+			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE );
 	}
 
 	/* Deallocate keywords */
@@ -559,7 +580,7 @@ static bool act_store_execute
  		mailbox_keywords_unref(&keywords);
  	}
 
-	return result;
+	return status;
 }
 
 static void act_store_log_status
@@ -597,13 +618,11 @@ static void act_store_log_status
 		const char *errstr;
 		enum mail_error error_code;
 
-		if ( trans->error != NULL ) {
-			errstr = trans->error;
-			error_code = trans->error_code;
-		} else {
-			errstr = mail_storage_get_last_error
-				(mailbox_get_storage(trans->box), &error_code);
-		}
+		if ( trans->error == NULL )
+			sieve_act_store_get_storage_error(aenv, trans);
+
+		errstr = trans->error;
+		error_code = trans->error_code;
 
 		if ( error_code == MAIL_ERROR_NOTFOUND ||
 			error_code == MAIL_ERROR_PARAMS ) {
@@ -629,7 +648,7 @@ static void act_store_log_status
 	}
 }
 
-static bool act_store_commit
+static int act_store_commit
 (const struct sieve_action *action ATTR_UNUSED,
 	const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep)
 {
@@ -638,7 +657,7 @@ static bool act_store_commit
 	bool status = TRUE;
 
 	/* Verify transaction */
-	if ( trans == NULL ) return FALSE;
+	if ( trans == NULL ) return SIEVE_EXEC_FAILURE;
 
 	/* Check whether we need to do anything */
 	if ( trans->disabled ) {
@@ -646,14 +665,14 @@ static bool act_store_commit
 		*keep = FALSE;
 		if ( trans->box != NULL )
 			mailbox_free(&trans->box);
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	} else if ( trans->redundant ) {
 		act_store_log_status(trans, aenv, FALSE, status);
 		aenv->exec_status->keep_original = TRUE;
 		aenv->exec_status->message_saved = TRUE;
 		if ( trans->box != NULL )
 			mailbox_free(&trans->box);
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	/* Mark attempt to use storage. Can only get here when all previous actions
@@ -682,7 +701,11 @@ static bool act_store_commit
 	if ( trans->box != NULL )
 		mailbox_free(&trans->box);
 
-	return status;
+	if (status)
+		return SIEVE_EXEC_OK;
+
+	return ( trans->error_code == MAIL_ERROR_TEMP ?
+			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE );
 }
 
 static void act_store_rollback

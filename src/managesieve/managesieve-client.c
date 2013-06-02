@@ -382,7 +382,7 @@ void client_send_storage_error
 	error = sieve_storage_get_last_error(storage, &error_code);
 
 	switch ( error_code ) {
-	case SIEVE_ERROR_TEMP_FAIL:
+	case SIEVE_ERROR_TEMP_FAILURE:
 		client_send_noresp(client, "TRYLATER", error);
 		break;
 

@@ -141,11 +141,13 @@ void sieve_result_set_failure_action
  * Result execution
  */
 
-bool sieve_result_implicit_keep(struct sieve_result *result);
+int sieve_result_implicit_keep(struct sieve_result *result);
 
 void sieve_result_mark_executed(struct sieve_result *result);
 
 int sieve_result_execute(struct sieve_result *result, bool *keep);
+
+bool sieve_result_executed(struct sieve_result *result);
 
 /*
  * Result evaluation

@@ -136,7 +136,7 @@ static int act_notify_check_duplicate
 static void act_notify_print
 	(const struct sieve_action *action, const struct sieve_result_print_env *rpenv,
 		bool *keep);
-static bool act_notify_commit
+static int act_notify_commit
 	(const struct sieve_action *action,	const struct sieve_action_exec_env *aenv,
 		void *tr_context, bool *keep);
 
@@ -566,7 +566,7 @@ static void act_notify_print
 
 /* Result execution */
 
-static bool act_notify_commit
+static int act_notify_commit
 (const struct sieve_action *action,	const struct sieve_action_exec_env *aenv,
 	void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
@@ -593,7 +593,7 @@ static bool act_notify_commit
 		sieve_error_handler_unref(&nenv.ehandler);
 	}
 
-	return result;
+	return ( result ? SIEVE_EXEC_OK : SIEVE_EXEC_FAILURE );
 }
 
 

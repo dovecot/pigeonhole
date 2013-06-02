@@ -234,7 +234,7 @@ struct sieve_script *sieve_script_create
 
 	if ( script_class == NULL ) {
 		if ( error_r != NULL )
-			*error_r = SIEVE_ERROR_TEMP_FAIL;
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		return NULL;
 	}
 
@@ -265,7 +265,7 @@ int sieve_script_open
 			"failed to access sieve script", "failed to parse script location: %s",
 			parse_error);
 		if ( error_r != NULL )
-			*error_r = SIEVE_ERROR_TEMP_FAIL;
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
 
