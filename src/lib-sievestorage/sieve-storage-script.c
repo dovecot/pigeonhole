@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "abspath.h"
 #include "mempool.h"
 #include "hostpid.h"
 #include "ioloop.h"
@@ -118,14 +119,13 @@ static struct sieve_script *sieve_storage_script_init_from_file
 static int sieve_storage_read_active_link
 (struct sieve_storage *storage, const char **link_r)
 {
-  char linkbuf[PATH_MAX];
-  int ret;
+	int ret;
 
-	*link_r = NULL;
-
-	ret = readlink(storage->active_path, linkbuf, sizeof(linkbuf));
+	ret = t_readlink(storage->active_path, link_r);
 
 	if ( ret < 0 ) {
+		*link_r = NULL;
+
 		if ( errno == EINVAL ) {
 			/* Our symlink is no symlink. Report 'no active script'.
 			 * Activating a script will automatically resolve this, so
@@ -152,7 +152,6 @@ static int sieve_storage_read_active_link
 	}
 
 	/* ret is now assured to be valid, i.e. > 0 */
-	*link_r = t_strndup(linkbuf, ret);
 	return 1;
 }
 
