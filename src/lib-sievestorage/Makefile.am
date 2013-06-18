@@ -1,6 +1,6 @@
 noinst_LIBRARIES = libsievestorage.a
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	$(LIBDOVECOT_INCLUDE) \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/src/lib-sieve
