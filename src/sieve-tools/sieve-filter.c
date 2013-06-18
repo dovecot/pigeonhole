@@ -505,7 +505,7 @@ int main(int argc, char **argv)
 	src_box = mailbox_alloc(ns->list, src_mailbox, open_flags);
 	if ( mailbox_open(src_box) < 0 ) {
 		i_fatal("Couldn't open source mailbox '%s': %s",
-			src_mailbox, mail_storage_get_last_error(ns->storage, &error));
+			src_mailbox, mailbox_get_last_error(src_box, &error));
 	}
 
 	/* Open move box if necessary */
@@ -520,7 +520,7 @@ int main(int argc, char **argv)
 		move_box = mailbox_alloc(ns->list, move_mailbox, open_flags);
 		if ( mailbox_open(move_box) < 0 ) {
 			i_fatal("Couldn't open mailbox '%s': %s",
-				move_mailbox, mail_storage_get_last_error(ns->storage, &error));
+				move_mailbox, mailbox_get_last_error(move_box, &error));
 		}
 
 		if ( mailbox_backends_equal(src_box, move_box) ) {
