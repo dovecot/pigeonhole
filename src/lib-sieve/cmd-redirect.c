@@ -344,10 +344,12 @@ static int act_redirect_send
 		string_t *hdr = t_str_new(256);
 
 		/* Prepend sieve headers (should not affect signatures) */
-		rfc2822_header_write(hdr, "X-Sieve", SIEVE_IMPLEMENTATION);
-		if ( recipient != NULL )
-			rfc2822_header_write(hdr, "X-Sieve-Redirected-From", recipient);
-	  o_stream_send(output, str_data(hdr), str_len(hdr));
+		rfc2822_header_append(hdr, "X-Sieve", SIEVE_IMPLEMENTATION, FALSE, NULL);
+		if ( recipient != NULL ) {
+			rfc2822_header_append
+				(hdr, "X-Sieve-Redirected-From", recipient, FALSE, NULL);
+		}
+		o_stream_send(output, str_data(hdr), str_len(hdr));
 	} T_END;
 
 	o_stream_send_istream(output, input);
