@@ -1,3 +1,20 @@
+v0.4.1 03-06-2013 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Added support for handling temporary failures. These are passed back to
+	  LDA/LTMP to produce an appropriate response towards the MTA. 
+	- Sieve storage: Removed PATH_MAX limitation for active symlink. This caused
+	  problems for GNU/Hurd.
+	- Fixed line endings in X-Sieve headers added by redirect command.
+	- ManageSieve: Fixed '[' ']' stupidity for response codes (only happened
+	  before login).
+	- Fixed setting name in example-config/conf.d/20-managesieve.conf.
+	- Sieve extprograms plugin: Fixed interaction between pipe command and remote
+	  script service. The output from the script service was never read, causing a
+	  broken pipe error at the script service. Apparently, this was broken since
+	  the I/O handling for extprograms was last revised. 
+	- Fixed assertion failure due to datastack problem in message header
+	  composition.
+
 v0.4.0 09-05-2013 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Added doveadm-sieve plugin that provides the possibility to synch Sieve
