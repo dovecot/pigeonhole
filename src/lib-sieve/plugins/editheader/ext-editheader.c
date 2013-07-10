@@ -6,8 +6,8 @@
  *
  * Authors: Stephan Bosch
  * Specification: RFC 5293
- * Implementation: partial
- * Status: experimental
+ * Implementation: full
+ * Status: testing
  *
  */
 

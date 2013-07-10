@@ -7,7 +7,7 @@
  * Authors: Stephan Bosch
  * Specification: RFC 5235
  * Implementation: full
- * Status: experimental
+ * Status: testing
  *
  */
 

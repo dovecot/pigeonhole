@@ -5,7 +5,7 @@
  * ---------------
  *
  * Authors: Stephan Bosch
- * Specification: vendor-defined
+ * Specification: vendor-defined; spec-bosch-sieve-debug
  * Implementation: full
  * Status: experimental
  *

@@ -6,8 +6,8 @@
  *
  * Authors: Stephan Bosch
  * Specification: RFC 5183
- * Implementation: basic
- * Status: experimental, not thoroughly tested
+ * Implementation: full
+ * Status: testing
  *
  */
 

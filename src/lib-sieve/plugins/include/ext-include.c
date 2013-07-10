@@ -5,9 +5,8 @@
  * -----------------
  *
  * Authors: Stephan Bosch
- * Specification: draft-ietf-sieve-include-01
- * Implementation: mostly full, but required ManageSieve behavior is not
- *                 implemented
+ * Specification: RFC 6609
+ * Implementation: full
  * Status: testing
  *
  */

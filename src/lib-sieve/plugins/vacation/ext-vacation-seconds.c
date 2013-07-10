@@ -5,7 +5,7 @@
  * --------------------------
  *
  * Authors: Stephan Bosch <stephan@rename-it.nl>
- * Specification: draft-ietf-sieve-vacation-seconds-03
+ * Specification: RFC 6131
  * Implementation: full
  * Status: testing
  *

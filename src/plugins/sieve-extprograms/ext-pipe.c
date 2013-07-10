@@ -5,17 +5,17 @@
  * -----------------------------
  *
  * Authors: Stephan Bosch
- * Specification: spec-bosch-sieve-extprograms
+ * Specification: vendor-define; spec-bosch-sieve-extprograms
  * Implementation: full
  * Status: experimental
  *
  */
- 
+
 #include "lib.h"
 
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
-#include "sieve-binary.h" 
+#include "sieve-binary.h"
 
 #include "sieve-validator.h"
 #include "sieve-interpreter.h"
@@ -24,8 +24,8 @@
 
 #include "sieve-extprograms-common.h"
 
-/* 
- * Extension 
+/*
+ * Extension
  */
 
 static bool ext_pipe_load(const struct sieve_extension *ext, void **context);

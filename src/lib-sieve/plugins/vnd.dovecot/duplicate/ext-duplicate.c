@@ -5,7 +5,7 @@
  * -------------------------------
  *
  * Authors: Stephan Bosch
- * Specification: spec-bosch-sieve-duplicate
+ * Specification: vendor-defined; spec-bosch-sieve-duplicate
  * Implementation: full
  * Status: experimental
  *
