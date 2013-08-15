@@ -935,12 +935,13 @@ static int lda_sieve_deliver_mail
 			ret = -1;
 		else
 			ret = lda_sieve_execute(&srctx, storage_r);
+	
+		for ( i = 0; i < srctx.script_count; i++ )
+			sieve_script_unref(&srctx.scripts[i]);
 	} T_END;
 
 	/* Clean up */
 
-	for ( i = 0; i < srctx.script_count; i++ )
-		sieve_script_unref(&srctx.scripts[i]);
 	if ( srctx.user_ehandler != NULL )
 		sieve_error_handler_unref(&srctx.user_ehandler);
 	sieve_error_handler_unref(&srctx.master_ehandler);
