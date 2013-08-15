@@ -546,11 +546,13 @@ bool sieve_validator_extension_load
 	struct sieve_validator_extension_reg *reg;
 
 	if ( ext->global && (valdtr->flags & SIEVE_COMPILE_FLAG_NOGLOBAL) != 0 ) {
-		sieve_argument_validate_error(valdtr, ext_arg,
-			"%s %s: failed to load Sieve capability `%s': "
-			"its use is restricted to global scripts",
-			sieve_command_identifier(cmd), sieve_command_type_name(cmd),
-			sieve_extension_name(ext));
+		if ( cmd != NULL && ext_arg != NULL ) {
+			sieve_argument_validate_error(valdtr, ext_arg,
+				"%s %s: failed to load Sieve capability `%s': "
+				"its use is restricted to global scripts",
+				sieve_command_identifier(cmd), sieve_command_type_name(cmd),
+				sieve_extension_name(ext));
+		}
 		return FALSE;
 	}
 

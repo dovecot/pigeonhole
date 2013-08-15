@@ -408,7 +408,8 @@ static int sieve_envelope_address_list_next_string_item
 
 	if ( addr.local_part != NULL ) {
 		const char *addr_str = sieve_address_to_string(&addr);
-		*str_r = t_str_new_const(addr_str, strlen(addr_str));
+		if (str_r != NULL)
+			*str_r = t_str_new_const(addr_str, strlen(addr_str));
 	}
 
 	return 1;

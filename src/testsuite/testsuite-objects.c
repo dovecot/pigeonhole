@@ -135,7 +135,7 @@ bool testsuite_object_read
 		return FALSE;
 
 	tobj->def = (const struct testsuite_object_def *) tobj->object.def;
-
+	i_assert(tobj->def != NULL);
 	return TRUE;
 }
 
@@ -147,7 +147,7 @@ bool testsuite_object_read_member
 		return FALSE;
 
 	*member_id_r = -1;
-	if ( tobj->def != NULL && tobj->def->get_member_id != NULL ) {
+	if ( tobj->def->get_member_id != NULL ) {
 		if ( !sieve_binary_read_code(sblock, address, member_id_r) )
 			return FALSE;
 	}

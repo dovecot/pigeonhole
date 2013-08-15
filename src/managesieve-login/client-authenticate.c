@@ -138,6 +138,8 @@ static int managesieve_client_auth_read_response
 	uoff_t resp_size;
 	int ret;
 
+	*error_r = NULL;
+
 	if ( i_stream_read(client->input) == -1 ) {
 		/* disconnected */
 		client_destroy(client, "Disconnected");
@@ -161,7 +163,6 @@ static int managesieve_client_auth_read_response
 				client_send_bye(client, error);
 				client_destroy(client, t_strconcat
 					("Disconnected: parse error during auth: ", error, NULL));
-				*error_r = NULL;
 			} else {
 				*error_r = error;
 			}
@@ -210,7 +211,6 @@ static int managesieve_client_auth_read_response
 
 		if (str_len(client->auth_response) + size > LOGIN_MAX_AUTH_BUF_SIZE) {
 			client_destroy(client, "Authentication response too large");
-			*error_r = NULL;
 			return -1;
 		}
 
@@ -228,7 +228,6 @@ static int managesieve_client_auth_read_response
 					client_send_bye(client, error);
 					client_destroy(client, t_strconcat
 						("Disconnected: parse error during auth: ", error, NULL));
-					*error_r = NULL;
 				} else {
 					msieve_client->skip_line = TRUE;
 					*error_r = t_strconcat
