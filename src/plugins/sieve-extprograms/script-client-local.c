@@ -158,7 +158,7 @@ static int script_client_local_disconnect
 	/* Calculate timeout */
 	runtime = ioloop_time - sclient->start_time;
 	if ( !force && sclient->set->input_idle_timeout_secs > 0 &&
-		runtime < sclient->set->input_idle_timeout_secs )
+		runtime < (time_t)sclient->set->input_idle_timeout_secs )
 		timeout = sclient->set->input_idle_timeout_secs - runtime;
 
 	if ( sclient->debug ) {
