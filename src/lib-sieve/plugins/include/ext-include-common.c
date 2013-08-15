@@ -520,9 +520,8 @@ int ext_include_generate_include
 		/* Yes, only update flags */
 		if ( (flags & EXT_INCLUDE_FLAG_OPTIONAL) == 0 )
 			flags &= ~EXT_INCLUDE_FLAG_OPTIONAL;
-		if ( (flags & EXT_INCLUDE_FLAG_ONCE) == 0 ) // for consistency
+		if ( (flags & EXT_INCLUDE_FLAG_ONCE) == 0 )
 			flags &= ~EXT_INCLUDE_FLAG_ONCE;
-
 	} else 	{
 		const char *script_name = sieve_script_name(script);
 		enum sieve_compile_flags cpflags = cgenv->flags;
@@ -648,7 +647,8 @@ static bool ext_include_runtime_include_mark
 }
 
 int ext_include_execute_include
-(const struct sieve_runtime_env *renv, unsigned int include_id, bool once)
+(const struct sieve_runtime_env *renv, unsigned int include_id,
+	enum ext_include_flags flags)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	int result = SIEVE_EXEC_OK;
@@ -656,6 +656,7 @@ int ext_include_execute_include
 	const struct ext_include_script_info *included;
 	struct ext_include_binary_context *binctx =
 		ext_include_binary_get_context(this_ext, renv->sbin);
+	bool once = ( (flags & EXT_INCLUDE_FLAG_ONCE) != 0 );
 	unsigned int block_id;
 
 	/* Check for invalid include id (== corrupt binary) */

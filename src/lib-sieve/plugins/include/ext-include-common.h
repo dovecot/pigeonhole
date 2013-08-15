@@ -160,7 +160,8 @@ void ext_include_interpreter_context_init
 	(const struct sieve_extension *this_ext, struct sieve_interpreter *interp);
 
 int ext_include_execute_include
-	(const struct sieve_runtime_env *renv, unsigned int block_id, bool once);
+	(const struct sieve_runtime_env *renv, unsigned int block_id,
+		enum ext_include_flags flags);
 void ext_include_execute_return(const struct sieve_runtime_env *renv);
 
 struct sieve_variable_storage *ext_include_interpreter_get_global_variables
