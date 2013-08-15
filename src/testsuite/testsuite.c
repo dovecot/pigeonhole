@@ -216,6 +216,7 @@ int main(int argc, char **argv)
 		if ( tracestream != NULL )
 			o_stream_unref(&tracestream);
 
+		testsuite_scriptenv = NULL;
 	} else {
 		testsuite_testcase_fail("failed to compile testcase script");
 	}
