@@ -105,7 +105,7 @@ mail_sieve_user_init
 
 	MODULE_CONTEXT_SET(user, sieve_user_module, suser);
 	*svstorage_r = suser->sieve_storage;
-	return 0;
+	return suser->sieve_storage != NULL ? 1 : 0;
 }
 
 static int sieve_attribute_unset_script(struct mail_storage *storage,
@@ -248,7 +248,7 @@ sieve_attribute_set_default(struct mail_storage *storage,
 
 	if (value->value != NULL) {
 		type = value->value[0];
-	} else {
+	} else if (value->value_stream != NULL) {
 		ret = i_stream_read_data(value->value_stream, &data, &size, 0);
 		if (ret == -1) {
 			mail_storage_set_critical(storage, "read(%s) failed: %m",
@@ -257,6 +257,8 @@ sieve_attribute_set_default(struct mail_storage *storage,
 		}
 		i_assert(ret > 0);
 		type = data[0];
+	} else {
+		type = MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_SCRIPT;
 	}
 	if (type == MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_LINK)
 		return sieve_attribute_set_active(storage, svstorage, value);
@@ -276,10 +278,15 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 	struct sieve_save_context *save_ctx;
 	struct istream *input;
 	const char *scriptname;
-	int ret = 0;
+	int ret;
 
-	if (mail_sieve_user_init(storage->user, &svstorage) < 0)
+	if ((ret = mail_sieve_user_init(storage->user, &svstorage)) <= 0) {
+		if (ret == 0) {
+			mail_storage_set_error(storage, MAIL_ERROR_NOTFOUND,
+					       "Sieve not enabled for user");
+		}
 		return -1;
+	}
 
 	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT) == 0)
 		return sieve_attribute_set_default(storage, svstorage, value);
@@ -312,6 +319,7 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 			sieve_storage_get_last_error(svstorage, NULL));
 		return -1;
 	}
+	ret = 0;
 	while (i_stream_read(input) > 0) {
 		if (sieve_storage_save_continue(save_ctx) < 0) {
 			mail_storage_set_critical(storage,
@@ -481,8 +489,8 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 	const char *scriptname, *errstr;
 	int ret;
 
-	if (mail_sieve_user_init(storage->user, &svstorage) < 0)
-		return -1;
+	if ((ret = mail_sieve_user_init(storage->user, &svstorage)) <= 0)
+		return ret;
 
 	if (strcmp(key, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT) == 0)
 		return sieve_attribute_get_default(storage, svstorage, value_r);
@@ -547,12 +555,13 @@ sieve_attribute_iter_script_init(struct sieve_mailbox_attribute_iter *siter)
 {
 	struct mail_user *user = siter->iter.box->storage->user;
 	struct sieve_storage *svstorage;
+	int ret;
 
 	if (user->mail_debug)
 		i_debug("doveadm-sieve: Iterating Sieve mailbox attributes");
 
-	if (mail_sieve_user_init(user, &svstorage) < 0)
-		return -1;
+	if ((ret = mail_sieve_user_init(user, &svstorage)) <= 0)
+		return ret;
 
 	siter->sieve_list = sieve_storage_list_init(svstorage);
 	if (siter->sieve_list == NULL) {
@@ -596,6 +605,9 @@ sieve_attribute_iter_next_script(struct sieve_mailbox_attribute_iter *siter)
 	const char *scriptname;
 	bool active;
 	int ret;
+
+	if (siter->sieve_list == NULL)
+		return NULL;
 
 	/* Iterate through all scripts in sieve_dir */
 	while ((scriptname = sieve_storage_list_next(siter->sieve_list, &active))
