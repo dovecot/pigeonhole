@@ -316,17 +316,17 @@ static int cmd_set_operation_execute
 		str_truncate(value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
 
 	/* Apply modifiers if necessary (sorted during code generation already) */
-	if ( str_len(value) > 0 ) {
-		for ( i = 0; i < mdfs; i++ ) {
-			string_t *new_value;
-			struct sieve_variables_modifier modf;
+	for ( i = 0; i < mdfs; i++ ) {
+		string_t *new_value;
+		struct sieve_variables_modifier modf;
 
-			if ( !ext_variables_opr_modifier_read(renv, address, &modf) ) {
-				value = NULL;
-				ret = SIEVE_EXEC_BIN_CORRUPT;
-				break;
-			}
+		if ( !ext_variables_opr_modifier_read(renv, address, &modf) ) {
+			value = NULL;
+			ret = SIEVE_EXEC_BIN_CORRUPT;
+			break;
+		}
 
+		if ( str_len(value) > 0 ) {
 			if ( modf.def != NULL && modf.def->modify != NULL ) {
 				if ( !modf.def->modify(value, &new_value) ) {
 					value = NULL;
