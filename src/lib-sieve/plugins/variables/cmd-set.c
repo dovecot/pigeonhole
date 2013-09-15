@@ -315,58 +315,56 @@ static int cmd_set_operation_execute
 	if ( str_len(value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
 		str_truncate(value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
 
-	T_BEGIN {
-		/* Apply modifiers if necessary (sorted during code generation already) */
-		if ( str_len(value) > 0 ) {
-			for ( i = 0; i < mdfs; i++ ) {
-				string_t *new_value;
-				struct sieve_variables_modifier modf;
+	/* Apply modifiers if necessary (sorted during code generation already) */
+	if ( str_len(value) > 0 ) {
+		for ( i = 0; i < mdfs; i++ ) {
+			string_t *new_value;
+			struct sieve_variables_modifier modf;
 
-				if ( !ext_variables_opr_modifier_read(renv, address, &modf) ) {
+			if ( !ext_variables_opr_modifier_read(renv, address, &modf) ) {
+				value = NULL;
+				ret = SIEVE_EXEC_BIN_CORRUPT;
+				break;
+			}
+
+			if ( modf.def != NULL && modf.def->modify != NULL ) {
+				if ( !modf.def->modify(value, &new_value) ) {
 					value = NULL;
-					ret = SIEVE_EXEC_BIN_CORRUPT;
+					ret = SIEVE_EXEC_FAILURE;
 					break;
 				}
 
-				if ( modf.def != NULL && modf.def->modify != NULL ) {
-					if ( !modf.def->modify(value, &new_value) ) {
-						value = NULL;
-						ret = SIEVE_EXEC_FAILURE;
-						break;
-					}
+				sieve_runtime_trace_here
+					(renv, SIEVE_TRLVL_COMMANDS, "modify :%s \"%s\" => \"%s\"",
+						sieve_variables_modifier_name(&modf), str_c(value), str_c(new_value));
 
-					sieve_runtime_trace_here
-						(renv, SIEVE_TRLVL_COMMANDS, "modify :%s \"%s\" => \"%s\"",
-							sieve_variables_modifier_name(&modf), str_c(value), str_c(new_value));
+				value = new_value;
+				if ( value == NULL )
+					break;
 
-					value = new_value;
-					if ( value == NULL )
-						break;
-
-					/* Hold value within limits */
-					if ( str_len(value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
-						str_truncate(value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
-				}
+				/* Hold value within limits */
+				if ( str_len(value) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
+					str_truncate(value, EXT_VARIABLES_MAX_VARIABLE_SIZE);
 			}
 		}
+	}
 
-		/* Actually assign the value if all is well */
-		if ( value != NULL ) {
-			if ( !sieve_variable_assign(storage, var_index, value) )
-				ret = SIEVE_EXEC_BIN_CORRUPT;
-			else {
-				if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-					const char *var_name, *var_id;
+	/* Actually assign the value if all is well */
+	if ( value != NULL ) {
+		if ( !sieve_variable_assign(storage, var_index, value) )
+			ret = SIEVE_EXEC_BIN_CORRUPT;
+		else {
+			if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+				const char *var_name, *var_id;
 
-					(void)sieve_variable_get_identifier(storage, var_index, &var_name);
-					var_id = sieve_variable_get_varid(storage, var_index);
+				(void)sieve_variable_get_identifier(storage, var_index, &var_name);
+				var_id = sieve_variable_get_varid(storage, var_index);
 
-					sieve_runtime_trace_here(renv, 0, "assign `%s' [%s] = \"%s\"",
-						var_name, var_id, str_c(value));
-				}
+				sieve_runtime_trace_here(renv, 0, "assign `%s' [%s] = \"%s\"",
+					var_name, var_id, str_c(value));
 			}
 		}
-	} T_END;
+	}
 
 	if ( ret <= 0 ) return ret;
 	if ( value == NULL ) return SIEVE_EXEC_FAILURE;
