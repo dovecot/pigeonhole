@@ -122,7 +122,7 @@ static bool ext_spamvirustest_header_spec_parse
 	spec->header_name = p_strdup_until(pool, data, p);
 	while ( *p == ' ' || *p == '\t' ) p++;
 
-	if ( p == '\0' ) {
+	if ( *p == '\0' ) {
 		spec->regexp_match = FALSE;
 		return TRUE;
 	}
