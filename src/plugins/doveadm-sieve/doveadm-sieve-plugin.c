@@ -145,8 +145,6 @@ sieve_attribute_set_active(struct mail_storage *storage,
 
 	if (mailbox_attribute_value_to_string(storage, value, &scriptname) < 0)
 		return -1;
-	i_assert(scriptname[0] == MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_LINK);
-	scriptname++;
 
 	if (scriptname == NULL) {
 		/* don't affect non-link active script */
@@ -167,6 +165,8 @@ sieve_attribute_set_active(struct mail_storage *storage,
 		}
 		return 0;
 	}
+	i_assert(scriptname[0] == MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_LINK);
+	scriptname++;
 
 	/* activate specified script */
 	script = sieve_storage_script_init(svstorage, scriptname);
