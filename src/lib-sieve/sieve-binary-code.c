@@ -214,7 +214,7 @@ void sieve_binary_emit_extension_object
 	((const int8_t *) (&_code[*address]))
 
 #define ADDR_BYTES_LEFT(address) \
-	((_code_size) - (*address))
+	((*address) > _code_size ? 0 : ((_code_size) - (*address)))
 #define ADDR_JUMP(address, offset) \
 	(*address) += offset
 
@@ -350,7 +350,7 @@ bool sieve_binary_read_extension
 
 	ADDR_CODE_READ(sblock);
 
-	if ( ADDR_BYTES_LEFT(address) <= 0 )
+	if ( ADDR_BYTES_LEFT(address) == 0 )
 		return FALSE;
 
 	(*offset_r) = code = ADDR_DATA_AT(address);
@@ -382,7 +382,7 @@ const void *sieve_binary_read_extension_object
 	if ( objs->count == 1 )
 		return objs->objects;
 
-	if ( ADDR_BYTES_LEFT(address) <= 0 )
+	if ( ADDR_BYTES_LEFT(address) == 0 )
 		return NULL;
 
 	code = ADDR_DATA_AT(address);

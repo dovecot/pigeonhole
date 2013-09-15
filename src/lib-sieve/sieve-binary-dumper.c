@@ -218,10 +218,10 @@ void sieve_binary_dumper_hexdump
 		buffer_t *blockbuf = sieve_binary_block_get_buffer(sblock);
 		string_t *line;
 		size_t data_size;
-		const char *data;
+		const unsigned char *data;
 		size_t offset;
 
-		data = (const char *) buffer_get_data(blockbuf, &data_size);
+		data = buffer_get_data(blockbuf, &data_size);
 
 		// FIXME: calculate offset more nicely.
 		sieve_binary_dump_sectionf
@@ -237,7 +237,7 @@ void sieve_binary_dumper_hexdump
 			str_printfa(line, "%08llx  ", (unsigned long long) offset);
 
 			for ( b = 0; b < len; b++ ) {
-				str_printfa(line, "%02x ", (unsigned int) data[offset+b]);
+				str_printfa(line, "%02x ", data[offset+b]);
 				if ( b == 7 ) str_append_c(line, ' ');
 			}
 
@@ -252,10 +252,10 @@ void sieve_binary_dumper_hexdump
 			str_append(line, " |");
 
 			for ( b = 0; b < len; b++ ) {
-				const char c = data[offset+b];
+				const unsigned char c = data[offset+b];
 
 				if ( c >= 32 && c <= 126 )
-					str_append_c(line, c);
+					str_append_c(line, (const char)c);
 				else
 					str_append_c(line, '.');
 			}
