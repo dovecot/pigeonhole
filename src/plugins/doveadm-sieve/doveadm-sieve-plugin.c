@@ -80,7 +80,7 @@ mail_sieve_user_init
 
 	if (suser != NULL) {
 		*svstorage_r = suser->sieve_storage;
-		return 0;
+		return suser->sieve_storage != NULL ? 1 : 0;
 	}
 
 	/* Delayed initialization of sieve storage until it's actually needed */
