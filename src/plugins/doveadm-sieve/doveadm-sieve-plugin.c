@@ -388,7 +388,7 @@ sieve_attribute_retrieve_script(struct mail_storage *storage,
 			   bool add_type_prefix,
 			   struct mail_attribute_value *value_r, const char **errorstr_r)
 {
-	char type = MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_SCRIPT;
+	static char type = MAILBOX_ATTRIBUTE_SIEVE_DEFAULT_SCRIPT;
 	struct istream *input, *inputs[3];
 	const struct stat *st;
 	enum sieve_error error;
