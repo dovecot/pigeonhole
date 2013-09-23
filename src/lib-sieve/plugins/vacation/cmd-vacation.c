@@ -897,16 +897,15 @@ static bool _contains_8bit(const char *text)
 
 static bool act_vacation_send
 (const struct sieve_action_exec_env *aenv, struct act_vacation_context *ctx,
-	const char *reply_to, const char *reply_from)
+ 	const char *reply_to, const char *reply_from, const char *smtp_from)
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	void *smtp_handle;
 	struct ostream *output;
 	string_t *msg;
- 	const char *outmsgid;
  	const char *const *headers;
-	const char *subject;
+	const char *outmsgid, *subject;
 	int ret;
 
 	/* Check smpt functions just to be sure */
@@ -934,7 +933,7 @@ static bool act_vacation_send
 
 	/* Open smtp session */
 
-	smtp_handle = sieve_smtp_open(senv, reply_to, NULL, &output);
+	smtp_handle = sieve_smtp_open(senv, reply_to, smtp_from, &output);
 	outmsgid = sieve_message_get_new_id(aenv->svinst);
 
 	/* Produce a proper reply */
@@ -1035,7 +1034,7 @@ static int act_vacation_commit
 	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
 	const char *const *hdsp;
 	const char *const *headers;
-	const char *reply_from = NULL, *orig_recipient = NULL;
+	const char *reply_from = NULL, *orig_recipient = NULL, *smtp_from = NULL;
 	bool result;
 
 	/* Is the recipient unset?
@@ -1162,6 +1161,7 @@ static int act_vacation_commit
 			/* Final recipient directly listed in headers? */
 			if ( _contains_my_address(headers, recipient) ) {
 				reply_from = recipient;
+				smtp_from = recipient;
 				break;
 			}
 
@@ -1169,6 +1169,7 @@ static int act_vacation_commit
 			if ( orig_recipient != NULL &&
 				_contains_my_address(headers, orig_recipient) ) {
 				reply_from = orig_recipient;
+				smtp_from = orig_recipient;
 				break;
 			}
 
@@ -1178,8 +1179,12 @@ static int act_vacation_commit
 				const char * const *my_address = ctx->addresses;
 
 				while ( !found && *my_address != NULL ) {
-					if ( (found=_contains_my_address(headers, *my_address)) )
+					if ( (found=_contains_my_address(headers, *my_address)) ) {
 						reply_from = *my_address;
+						/* Avoid letting user determine SMTP sender directly */
+						smtp_from =
+							( orig_recipient == NULL ? recipient : orig_recipient );
+					}
 					my_address++;
 				}
 
@@ -1220,7 +1225,8 @@ static int act_vacation_commit
 	/* Send the message */
 
 	T_BEGIN {
-		result = act_vacation_send(aenv, ctx, sender, reply_from);
+		result = act_vacation_send(aenv, ctx, sender, reply_from,
+			(config->send_from_recipient ? smtp_from : NULL));
 	} T_END;
 
 	if ( result ) {

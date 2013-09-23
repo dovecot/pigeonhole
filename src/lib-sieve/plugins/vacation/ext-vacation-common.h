@@ -20,6 +20,7 @@ struct ext_vacation_config {
 	unsigned int default_period;
 	bool use_original_recipient;
 	bool dont_check_recipient;
+	bool send_from_recipient;
 };
 
 /*

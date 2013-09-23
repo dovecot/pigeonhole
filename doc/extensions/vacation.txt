@@ -73,6 +73,14 @@ sieve_vacation_dont_check_recipient = no
   Sieve standards and can cause vacation replies to be sent for messages not
   directly addressed at the recipient.
 
+sieve_vacation_send_from_recipient = no
+  This setting determines whether vacation messages are sent with the SMTP MAIL
+  FROM envelope address set to the recipient address of the Sieve script owner.
+  Normally this is set to <>, which is the default as recommended in the
+  specification. This is meant to prevent mail loops. However, there are
+  situations for which a valid sender address is required and this setting can
+  be used to accommodate for those.
+
 Invalid values for the settings above will make the Sieve interpreter log a
 warning and revert to the default values.
 
