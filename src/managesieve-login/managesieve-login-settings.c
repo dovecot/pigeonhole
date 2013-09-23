@@ -23,7 +23,7 @@
 /* <settings checks> */
 
 static struct inet_listener_settings managesieve_login_inet_listeners_array[] = {
-    { "sieve", "", 4190, FALSE },
+    { "sieve", "", 4190, FALSE, FALSE },
 };
 static struct inet_listener_settings *managesieve_login_inet_listeners[] = {
 	&managesieve_login_inet_listeners_array[0]
