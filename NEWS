@@ -1,3 +1,24 @@
+v0.4.2 26-09-2013 Stephan Bosch <stephan@rename-it.nl>
+	
+	* Incompatible change in Sieve doveadm plugin: the root attribute for
+	  Sieve scripts is changed. Make sure that you update both sides of a dsync
+	  setup simultaneously when Sieve is involved, otherwise synchronization will
+	  likely fail.
+	+ Added support for sending Sieve vacation replies with an actual sender,
+	  rather than the default <> sender. Check the updated
+	  doc/extensions/vacation.txt for more information.
+	- Fixed a binary code read problem in the `set' command of the Sieve variables
+	  extension. Using the set command with a modifier and an empty string value
+	  would cause code corruption problems while running the script.
+	- Various fixes for doveadm-sieve plugin, mostly crashes. These include a fix
+	  for the `Invalid value for default sieve attribute' problem.
+	- Various fixes for compiler and static analyzer warnings, e.g. as reported
+	  by CLang and on 32 bit systems.
+	- Fixed the implementation of the new :options flag for the Sieve include
+	  extension.
+	- Fixed potential segfault bug at deinitialization of the lda-sieve plugin.
+	- Fixed messed up hex output for sieve-dump tool.
+
 v0.4.1 03-06-2013 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Added support for handling temporary failures. These are passed back to
