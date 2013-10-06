@@ -148,7 +148,7 @@ static int script_client_local_disconnect
 {
 	struct script_client_local *slclient = 
 		(struct script_client_local *) sclient;
-	pid_t pid = slclient->pid;
+	pid_t pid = slclient->pid, ret;
 	time_t runtime, timeout = 0;
 	int status;
 	
@@ -169,9 +169,12 @@ static int script_client_local_disconnect
 	/* Wait for child to exit */
 	force = force ||
 		(timeout == 0 && sclient->set->input_idle_timeout_secs > 0);
-	if ( !force )
+	if ( !force ) {
 		alarm(timeout);
-	if ( force || waitpid(pid, &status, 0) < 0 ) {
+		ret = waitpid(pid, &status, 0);
+		alarm(0);
+	}
+	if ( force || ret < 0 ) {
 		if ( !force && errno != EINTR ) {
 			i_error("waitpid(%s) failed: %m", sclient->path);
 			(void)kill(pid, SIGKILL);
@@ -197,7 +200,9 @@ static int script_client_local_disconnect
 			
 		/* Wait for it to die (give it some more time) */
 		alarm(5);
-		if ( waitpid(pid, &status, 0) < 0 ) {
+		ret = waitpid(pid, &status, 0);
+		alarm(0);
+		if ( ret < 0 ) {
 			if ( errno != EINTR ) {
 				i_error("waitpid(%s) failed: %m", sclient->path);
 				(void)kill(pid, SIGKILL); 
@@ -223,7 +228,7 @@ static int script_client_local_disconnect
 				return -1;
 			}
 		}
-	}	
+	}
 	
 	/* Evaluate child exit status */
 	sclient->exit_code = -1;
