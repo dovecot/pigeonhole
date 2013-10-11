@@ -1199,6 +1199,7 @@ static int act_vacation_commit
 		if ( config->dont_check_recipient ) {
 			/* Send reply from envelope recipient address */
 			reply_from = recipient;
+			smtp_from = recipient;
 
 		} else {
 			const char *original_recipient = "";
