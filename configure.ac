@@ -120,6 +120,7 @@ src/lib-sieve/plugins/date/Makefile
 src/lib-sieve/plugins/spamvirustest/Makefile
 src/lib-sieve/plugins/ihave/Makefile
 src/lib-sieve/plugins/editheader/Makefile
+src/lib-sieve/plugins/metadata/Makefile
 src/lib-sieve/plugins/vnd.dovecot/Makefile
 src/lib-sieve/plugins/vnd.dovecot/debug/Makefile
 src/lib-sieve/plugins/vnd.dovecot/duplicate/Makefile

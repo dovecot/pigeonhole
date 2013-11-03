@@ -99,6 +99,8 @@ extern const struct sieve_extension_def spamtestplus_extension;
 extern const struct sieve_extension_def virustest_extension;
 extern const struct sieve_extension_def ihave_extension;
 extern const struct sieve_extension_def editheader_extension;
+extern const struct sieve_extension_def mboxmetadata_extension;
+extern const struct sieve_extension_def servermetadata_extension;
 
 /* vnd.dovecot. */
 extern const struct sieve_extension_def debug_extension;
@@ -175,7 +177,7 @@ const unsigned int sieve_deprecated_extensions_count =
 extern const struct sieve_extension_def ereject_extension;
 
 const struct sieve_extension_def *sieve_unfinished_extensions[] = {
-	&ereject_extension
+	&ereject_extension, &mboxmetadata_extension, &servermetadata_extension
 };
 
 const unsigned int sieve_unfinished_extensions_count =

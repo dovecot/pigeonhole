@@ -42,7 +42,8 @@ comparators = \
 	cmp-i-ascii-casemap.c
 
 if BUILD_UNFINISHED
-unfinished_plugins =
+unfinished_plugins = \
+	$(extdir)/metadata/libsieve_ext_metadata.la
 endif
 
 # These are not actual plugins just yet...
