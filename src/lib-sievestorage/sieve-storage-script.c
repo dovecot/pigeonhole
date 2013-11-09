@@ -30,6 +30,53 @@ struct sieve_storage_script {
 	struct sieve_storage *storage;
 };
 
+static int _file_path_cmp(const char *path1, const char *path2)
+{
+	const char *p1, *p2;
+	int ret;
+	
+	p1 = path1; p2 = path2;
+	if (*p2 == '\0' && p1 != '\0')
+		return 1;
+	if (*p1 == '\0' && p2 != '\0')
+		return -1;
+	if (*p1 == '/' && *p2 != '/')
+		return 1;
+	if (*p2 == '/' && *p1 != '/')
+		return -1;	
+	for (;;) {
+		const char *s1, *s2;
+		size_t size1, size2;
+
+		/* skip repeated slashes */
+		for (; *p1 == '/'; p1++);
+		for (; *p2 == '/'; p2++);	
+		/* check for end of comparison */
+		if (*p1 == '\0' || *p2 == '\0')
+			break;
+		/* mark start of path element */
+		s1 = p1;
+		s2 = p2;
+		/* scan to end of path elements */
+		for (; *p1 != '\0' && *p1 != '/'; p1++);
+		for (; *p2 != '\0' && *p2 != '/'; p2++);
+		/* compare sizes */
+		size1 = p1 - s1;
+		size2 = p2 - s2;
+		if (size1 != size2)
+			return size1 - size2;
+		/* compare */
+		if (size1 > 0 && (ret=memcmp(s1, s2, size1)) != 0)
+			return ret;
+	}
+	if (*p1 == '\0') {
+		if (*p2 == '\0')
+			return 0;
+		return -1;
+	}
+	return 1;
+}
+
 struct sieve_script *sieve_storage_script_init_from_path
 (struct sieve_storage *storage, const char *path,
 	const char *scriptname)
@@ -182,8 +229,8 @@ static const char *sieve_storage_parse_link
 	}
 
 	/* Check whether the path is any good */
-	if ( strcmp(scriptpath, storage->link_path) != 0 &&
-		strcmp(scriptpath, storage->dir) != 0 ) {
+	if ( _file_path_cmp(scriptpath, storage->link_path) != 0 &&
+		_file_path_cmp(scriptpath, storage->dir) != 0 ) {
 		i_warning
 			("sieve-storage: Active sieve script symlink %s is broken: "
 				"invalid/unknown path to storage (points to %s).",
