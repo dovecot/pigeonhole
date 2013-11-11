@@ -56,6 +56,18 @@ v0.4.0 09-05-2013 Stephan Bosch <stephan@rename-it.nl>
 	  possible. Environment items "location", "phase" and "domain" now also
 	  return a usable value.
 
+v0.3.6 26-09-2013 Stephan Bosch <stephan@rename-it.nl>
+
+	- Fixed a binary code read problem in the `set' command of the Sieve variables
+	  extension. Using the set command with a modifier and an empty string value
+	  would cause code corruption problems while running the script.
+	- Various fixes for compiler and static analyzer warnings, as reported
+	  by CLang.
+	- ManageSieve: Fixed '[' ']' stupidity for response codes (only happened
+	  before login).
+	- Fixed setting name in example-config/conf.d/20-managesieve.conf.
+	- Fixed messed up hex output for sieve-dump tool.
+
 v0.3.5 09-05-2013 Stephan Bosch <stephan@rename-it.nl>
 
 	- Sieve editheader extension: fixed interaction with the Sieve body extension.
