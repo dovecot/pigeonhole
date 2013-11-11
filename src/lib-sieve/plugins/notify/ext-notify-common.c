@@ -243,14 +243,14 @@ void ext_notify_construct_message
 	/* Scan message for substitutions */
 	p = msg_format;
 	while ( *p != '\0' ) {
-		const char *const *header;
+		const char *header;
 
 		if ( strncasecmp(p, "$from$", 6) == 0 ) {
 			p += 6;
 
-			/* Fetch sender from oriinal message */
-			if ( mail_get_headers_utf8(msgdata->mail, "from", &header) >= 0 )
-				 str_append(out_msg, header[0]);
+			/* Fetch sender from original message */
+			if ( mail_get_first_header_utf8(msgdata->mail, "from", &header) > 0 )
+				 str_append(out_msg, header);
 
 		} else if ( strncasecmp(p, "$env-from$", 10) == 0 ) {
 			p += 10;
@@ -262,8 +262,8 @@ void ext_notify_construct_message
 			p += 9;
 
 			/* Fetch sender from oriinal message */
-			if ( mail_get_headers_utf8(msgdata->mail, "subject", &header) >= 0 )
-				 str_append(out_msg, header[0]);
+			if ( mail_get_first_header_utf8(msgdata->mail, "subject", &header) > 0 )
+				 str_append(out_msg, header);
 
 		} else if ( strncasecmp(p, "$text", 5) == 0
 			&& (p[5] == '[' || p[5] == '$') ) {

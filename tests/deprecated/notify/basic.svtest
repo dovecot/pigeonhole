@@ -1,5 +1,6 @@
 require "vnd.dovecot.testsuite";
 require "notify";
+require "body";
 
 test "Execute" {
 	/* Test to catch runtime segfaults */
@@ -8,4 +9,51 @@ test "Execute" {
 		:low
 		:method "mailto"
 		:options ["stephan@example.com", "stephan@example.org"];
+
+	if not test_result_execute {
+		test_fail "Execute failed";
+	}
 }
+
+test_result_reset;
+
+test_set "message" text:
+To: user@example.com
+From: stephan@example.org
+Subject: Mail
+
+Test!
+.
+;
+
+test "Substitutions" {
+	notify
+		:message "$from$: $subject$"
+		:options "stephan@example.com";
+	if not test_result_execute {
+		test_fail "Execute failed";
+	}
+	test_message :smtp 0;
+	if not body :contains "stephan@example.org: Mail" {
+		test_fail "Substitution failed";
+	}
+}
+
+test_result_reset;
+
+test_set "message" text:
+To: user@example.com
+
+Test!
+.
+;
+
+test "Empty substitutions" {
+	notify
+		:message "$from$: $subject$"
+		:options "stephan@example.com";
+	if not test_result_execute {
+		test_fail "Execute failed";
+	}
+}
+
