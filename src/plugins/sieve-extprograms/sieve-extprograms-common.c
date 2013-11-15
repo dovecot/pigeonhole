@@ -62,8 +62,7 @@ struct sieve_extprograms_config *sieve_extprograms_config_init
 	struct sieve_extprograms_config *ext_config;
 	const char *extname = sieve_extension_name(ext);
 	const char *bin_dir, *socket_dir;
-	sieve_number_t execute_timeout =
-		SIEVE_EXTPROGRAMS_DEFAULT_EXEC_TIMEOUT_SECS;
+	sieve_number_t execute_timeout;
 
 	extname = strrchr(extname, '.');
 	i_assert(extname != NULL);
@@ -75,6 +74,8 @@ struct sieve_extprograms_config *sieve_extprograms_config_init
 		(svinst, t_strdup_printf("sieve_%s_socket_dir", extname));
 	
 	ext_config = i_new(struct sieve_extprograms_config, 1);
+	ext_config->execute_timeout = 
+		SIEVE_EXTPROGRAMS_DEFAULT_EXEC_TIMEOUT_SECS;
 
 	if ( bin_dir == NULL && socket_dir == NULL ) {
 		if ( svinst->debug ) {
@@ -86,12 +87,12 @@ struct sieve_extprograms_config *sieve_extprograms_config_init
 	} else {
 		ext_config->bin_dir = i_strdup(bin_dir);
 		ext_config->socket_dir = i_strdup(socket_dir);
-	}
 
-	if (sieve_setting_get_duration_value
-		(svinst, t_strdup_printf("sieve_%s_exec_timeout", extname),
-			&execute_timeout)) {
-		ext_config->execute_timeout = execute_timeout;
+		if (sieve_setting_get_duration_value
+			(svinst, t_strdup_printf("sieve_%s_exec_timeout", extname),
+				&execute_timeout)) {
+			ext_config->execute_timeout = execute_timeout;
+		}
 	}
 
 	if ( sieve_extension_is(ext, pipe_extension) ) 
@@ -415,7 +416,8 @@ struct sieve_extprogram *sieve_extprogram_create
 			"running program: %s", action, program_name);
 	}
 
-	if ( ext_config == NULL ) {
+	if ( ext_config == NULL ||
+		(ext_config->bin_dir == NULL && ext_config->socket_dir == NULL) ) {
 		sieve_sys_error(svinst, "action %s: "
 			"failed to execute program `%s': "
 			"vnd.dovecot.%s extension is unconfigured", action, program_name, action);
