@@ -1,4 +1,5 @@
 require "vnd.dovecot.testsuite";
+require "variables";
 
 /*
  * ## RFC 5228, Section 5.7. Test header (page 29) ##
@@ -145,7 +146,7 @@ From: stephan@example.org
 To: nico@frop.example.com
 Subject:         Help
 X-A:     Text
-X-B: Text
+X-B: Text   
 
 Text
 .
@@ -153,15 +154,24 @@ Text
 
 test "Ignoring whitespace" {
 	if not header :is "x-a" "Text" {
-		test_fail "header test does not strip leading whitespace";
+		if header :matches "x-a" "*" {
+			set "header" "${1}"; 
+		}
+		test_fail "header test does not strip leading whitespace (header=`${header}`)";
 	}
 
 	if not header :is "x-b" "Text" {
-		test_fail "header test does not strip trailing whitespace";
+		if header :matches "x-b" "*" {
+			set "header" "${1}"; 
+		}
+		test_fail "header test does not strip trailing whitespace (header=`${header}`)";
 	}
 
 	if not header :is "subject" "Help" {
-		test_fail "header test does not strip both leading and trailing whitespace";
+		if header :matches "subject" "*" {
+			set "header" "${1}"; 
+		}
+		test_fail "header test does not strip both leading and trailing whitespace (header=`${header}`)";
 	}
 }
 
