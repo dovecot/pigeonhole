@@ -139,7 +139,6 @@ static int script_client_local_close_output(struct script_client *sclient)
 		i_error("shutdown(%s, SHUT_WR) failed: %m", sclient->path);
 		return -1;
 	}
-	sclient->fd_out = -1;
 	return 1;
 }
 

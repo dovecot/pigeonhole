@@ -39,6 +39,20 @@ static int script_client_connect(struct script_client *sclient)
 	return 1;
 }
 
+static int script_client_close_output(struct script_client *sclient)
+{
+	int ret;
+
+	if ( (ret=sclient->close_output(sclient)) < 0 )
+		return -1;
+	if ( sclient->script_output != NULL )
+		o_stream_destroy(&sclient->script_output);
+	sclient->script_output = NULL;
+	sclient->fd_out = -1;
+
+	return ret;
+}
+
 static void script_client_disconnect
 (struct script_client *sclient, bool force)
 {
@@ -50,7 +64,7 @@ static void script_client_disconnect
 	if ( sclient->disconnected )
 		return;
 
-	if ( (ret=sclient->close_output(sclient)) < 0 )
+	if ( (ret=script_client_close_output(sclient)) < 0 )
 		error = TRUE;
 	
 	if ( (ret=sclient->disconnect(sclient, force)) < 0 )
@@ -68,7 +82,8 @@ static void script_client_disconnect
 
 	if (sclient->fd_in != -1 && close(sclient->fd_in) < 0)
 		i_error("close(%s) failed: %m", sclient->path);
-	if (sclient->fd_out != -1 && sclient->fd_out != sclient->fd_out)
+	if (sclient->fd_out != -1 && sclient->fd_out != sclient->fd_in
+		&& close(sclient->fd_out) < 0)
 		i_error("close(%s/out) failed: %m", sclient->path);
 	sclient->fd_in = sclient->fd_out = -1;
 	
@@ -147,8 +162,8 @@ static int script_client_script_output(struct script_client *sclient)
 
 		if ( sclient->script_input == NULL ) {
 			script_client_disconnect(sclient, FALSE);
-		} else {
-			sclient->close_output(sclient);
+		} else if (script_client_close_output(sclient) < 0) {
+			return -1;
 		}
 		return 0;
 	}
