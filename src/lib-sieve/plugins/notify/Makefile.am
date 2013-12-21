@@ -2,6 +2,7 @@ noinst_LTLIBRARIES = libsieve_ext_notify.la
 
 AM_CPPFLAGS = \
 	-I$(srcdir)/../.. \
+	-I$(srcdir)/../../util \
 	$(LIBDOVECOT_INCLUDE)
 
 commands = \

@@ -1,7 +1,7 @@
 noinst_LTLIBRARIES = libsieve_ext_ihave.la
 
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/src/lib-sieve \
+	-I$(srcdir)/../.. \
 	$(LIBDOVECOT_INCLUDE)
 
 tests = \

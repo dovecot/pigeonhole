@@ -1,7 +1,8 @@
 noinst_LTLIBRARIES = libsieve_ext_editheader.la
 
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/src/lib-sieve \
+	-I$(srcdir)/../.. \
+	-I$(srcdir)/../../util \
 	$(LIBDOVECOT_INCLUDE)
 
 commands = \

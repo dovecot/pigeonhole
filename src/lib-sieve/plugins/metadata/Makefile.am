@@ -1,11 +1,10 @@
-
 noinst_LTLIBRARIES = libsieve_ext_metadata.la
 
 libsieve_ext_metadata_la_LDFLAGS = -module -avoid-version
 
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/src/lib-sieve \
-	-I$(top_srcdir)/src/lib-sieve/plugins/variables \
+	-I$(srcdir)/../.. \
+	-I$(srcdir)/../variables \
 	$(LIBDOVECOT_INCLUDE)
 
 tests = \

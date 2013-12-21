@@ -1,7 +1,8 @@
 noinst_LTLIBRARIES = libsieve_ext_vacation.la
 
 AM_CPPFLAGS = \
-	-I$(srcdir)/../../ \
+	-I$(srcdir)/../.. \
+	-I$(srcdir)/../../util \
 	$(LIBDOVECOT_INCLUDE)
 
 cmds = \

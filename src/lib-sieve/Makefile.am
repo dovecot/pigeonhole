@@ -1,4 +1,4 @@
-SUBDIRS = plugins
+SUBDIRS = util plugins
 
 dovecot_pkglib_LTLIBRARIES = libdovecot-sieve.la
 
@@ -6,6 +6,7 @@ AM_CPPFLAGS = \
 	$(LIBDOVECOT_INCLUDE) \
 	$(LIBDOVECOT_LDA_INCLUDE) \
 	$(LIBDOVECOT_SERVICE_INCLUDE) \
+	-I$(top_srcdir)/src/lib-sieve/util \
 	-DMODULEDIR=\""$(dovecot_moduledir)"\"
 
 tests = \
@@ -71,12 +72,20 @@ plugins = \
 	$(extdir)/vnd.dovecot/duplicate/libsieve_ext_duplicate.la \
 	$(unfinished_plugins)
 
-libdovecot_sieve_la_DEPENDENCIES = $(plugins) $(LIBDOVECOT_LDA_DEPS) $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
-libdovecot_sieve_la_LIBADD = $(plugins) $(LIBDOVECOT_LDA) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT)
+libdovecot_sieve_la_DEPENDENCIES = \
+	$(plugins) \
+	$(top_builddir)/src/lib-sieve/util/libsieve_util.la \
+	$(LIBDOVECOT_LDA_DEPS) \
+	$(LIBDOVECOT_STORAGE_DEPS) \
+	$(LIBDOVECOT_DEPS)
+libdovecot_sieve_la_LIBADD = \
+	$(plugins) \
+	$(top_builddir)/src/lib-sieve/util/libsieve_util.la \
+	$(LIBDOVECOT_LDA) \
+	$(LIBDOVECOT_STORAGE) \
+	$(LIBDOVECOT)
 
 libdovecot_sieve_la_SOURCES = \
-	rfc2822.c \
-	edit-mail.c \
 	sieve-settings.c \
 	sieve-message.c \
 	sieve-smtp.c \
@@ -118,8 +127,6 @@ libdovecot_sieve_la_SOURCES = \
 	sieve.c
 
 headers = \
-	rfc2822.h \
-	edit-mail.h \
 	sieve-config.h \
 	sieve-types.h \
 	sieve-common.h \
