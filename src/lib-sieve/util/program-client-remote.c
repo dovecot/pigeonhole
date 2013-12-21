@@ -10,7 +10,7 @@
 #include "istream-private.h"
 #include "ostream.h"
 
-#include "script-client-private.h"
+#include "program-client-private.h"
 
 #include <unistd.h>
 #include <sys/wait.h>
@@ -20,26 +20,26 @@
  * Script client input stream
  */
 
-struct script_client_istream {
+struct program_client_istream {
 	struct istream_private istream;
 
 	struct stat statbuf;
 
-	struct script_client *client;
+	struct program_client *client;
 };
 
-static void script_client_istream_destroy(struct iostream_private *stream)
+static void program_client_istream_destroy(struct iostream_private *stream)
 {
-	struct script_client_istream *scstream =
-		(struct script_client_istream *)stream;
+	struct program_client_istream *scstream =
+		(struct program_client_istream *)stream;
 
 	i_stream_unref(&scstream->istream.parent);
 }
 
-static ssize_t script_client_istream_read(struct istream_private *stream)
+static ssize_t program_client_istream_read(struct istream_private *stream)
 {
-	struct script_client_istream *scstream =
-		(struct script_client_istream *)stream;
+	struct program_client_istream *scstream =
+		(struct program_client_istream *)stream;
 	size_t pos, reserved;
 	ssize_t ret;
 
@@ -114,17 +114,17 @@ static ssize_t script_client_istream_read(struct istream_private *stream)
 	return ret;
 }
 
-static void ATTR_NORETURN script_client_istream_sync
+static void ATTR_NORETURN program_client_istream_sync
 (struct istream_private *stream ATTR_UNUSED)
 {
-	i_panic("script_client_istream sync() not implemented");
+	i_panic("program_client_istream sync() not implemented");
 }
 
-static int script_client_istream_stat
+static int program_client_istream_stat
 (struct istream_private *stream, bool exact)
 {
-	struct script_client_istream *scstream =
-		(struct script_client_istream *)stream;
+	struct program_client_istream *scstream =
+		(struct program_client_istream *)stream;
 	const struct stat *st;
 	int ret;
 
@@ -139,20 +139,20 @@ static int script_client_istream_stat
 	return ret;
 }
 
-static struct istream *script_client_istream_create
-(struct script_client *script_client, struct istream *input)
+static struct istream *program_client_istream_create
+(struct program_client *program_client, struct istream *input)
 {
-	struct script_client_istream *scstream;
+	struct program_client_istream *scstream;
 
-	scstream = i_new(struct script_client_istream, 1);
-	scstream->client = script_client;
+	scstream = i_new(struct program_client_istream, 1);
+	scstream->client = program_client;
 
 	scstream->istream.max_buffer_size = input->real_stream->max_buffer_size;
 
-	scstream->istream.iostream.destroy = script_client_istream_destroy;
-	scstream->istream.read = script_client_istream_read;
-	scstream->istream.sync = script_client_istream_sync;
-	scstream->istream.stat = script_client_istream_stat;
+	scstream->istream.iostream.destroy = program_client_istream_destroy;
+	scstream->istream.read = program_client_istream_read;
+	scstream->istream.sync = program_client_istream_sync;
+	scstream->istream.stat = program_client_istream_stat;
 
 	scstream->istream.istream.readable_fd = FALSE;
 	scstream->istream.istream.blocking = input->blocking;
@@ -164,28 +164,28 @@ static struct istream *script_client_istream_create
 }
 
 /*
- * Script client
+ * Program client
  */
 
-struct script_client_remote {
-	struct script_client client;
+struct program_client_remote {
+	struct program_client client;
 
 	unsigned int noreply:1;
 };
 
-static void script_client_remote_connected(struct script_client *sclient)
+static void program_client_remote_connected(struct program_client *pclient)
 {
-	struct script_client_remote *slclient =
-		(struct script_client_remote *)sclient;
-	const char **args = sclient->args;
+	struct program_client_remote *slclient =
+		(struct program_client_remote *)pclient;
+	const char **args = pclient->args;
 	string_t *str;
 
-	io_remove(&sclient->io);
-	script_client_init_streams(sclient);
+	io_remove(&pclient->io);
+	program_client_init_streams(pclient);
 
 	if ( !slclient->noreply ) {
-		sclient->script_input = script_client_istream_create
-			(sclient, sclient->script_input);
+		pclient->program_input = program_client_istream_create
+			(pclient, pclient->program_input);
 	}
 
 	str = t_str_new(1024);
@@ -203,77 +203,77 @@ static void script_client_remote_connected(struct script_client *sclient)
 	str_append_c(str, '\n');
 
 	if ( o_stream_send
-		(sclient->script_output, str_data(str), str_len(str)) < 0 ) {
-		script_client_fail(sclient, SCRIPT_CLIENT_ERROR_IO);
+		(pclient->program_output, str_data(str), str_len(str)) < 0 ) {
+		program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
 		return;
 	}
 	
-	(void)script_client_script_connected(sclient);
+	(void)program_client_connected(pclient);
 }
 
-static int script_client_remote_connect(struct script_client *sclient)
+static int program_client_remote_connect(struct program_client *pclient)
 {
-	struct script_client_remote *slclient =
-		(struct script_client_remote *)sclient;
+	struct program_client_remote *slclient =
+		(struct program_client_remote *)pclient;
 	int fd;
 
-	if ((fd = net_connect_unix(sclient->path)) < 0) {
+	if ((fd = net_connect_unix(pclient->path)) < 0) {
 		switch (errno) {
 		case EAGAIN:
 		case ECONNREFUSED:
 			// FIXME: retry;
 			return -1;
 		case EACCES:
-			i_error("%s", eacces_error_get("net_connect_unix", sclient->path));
+			i_error("%s", eacces_error_get("net_connect_unix", pclient->path));
 			return -1;
 		default:
-			i_error("net_connect_unix(%s) failed: %m", sclient->path);
+			i_error("net_connect_unix(%s) failed: %m", pclient->path);
 			return -1;
 		}
 	}
 
 	net_set_nonblock(fd, TRUE);
 	
-	sclient->fd_in = ( slclient->noreply && sclient->output == NULL ? -1 : fd );
-	sclient->fd_out = fd;
-	sclient->io = io_add(fd, IO_WRITE, script_client_remote_connected, sclient);
+	pclient->fd_in = ( slclient->noreply && pclient->output == NULL ? -1 : fd );
+	pclient->fd_out = fd;
+	pclient->io = io_add(fd, IO_WRITE, program_client_remote_connected, pclient);
 	return 1;
 }
 
-static int script_client_remote_close_output(struct script_client *sclient)
+static int program_client_remote_close_output(struct program_client *pclient)
 {
-	/* Shutdown output; script stdin will get EOF */
-	if ( shutdown(sclient->fd_out, SHUT_WR) < 0 ) {
-		i_error("shutdown(%s, SHUT_WR) failed: %m", sclient->path);
+	/* Shutdown output; program stdin will get EOF */
+	if ( shutdown(pclient->fd_out, SHUT_WR) < 0 ) {
+		i_error("shutdown(%s, SHUT_WR) failed: %m", pclient->path);
 		return -1;
 	}
 
 	return 1;
 }
 
-static int script_client_remote_disconnect
-(struct script_client *sclient, bool force)
+static int program_client_remote_disconnect
+(struct program_client *pclient, bool force)
 {
-	struct script_client_remote *slclient =
-		(struct script_client_remote *)sclient;
+	struct program_client_remote *slclient =
+		(struct program_client_remote *)pclient;
 	int ret = 0;
 	
-	if ( sclient->error == SCRIPT_CLIENT_ERROR_NONE && !slclient->noreply &&
-		sclient->script_input != NULL && !force) {
+	if ( pclient->error == PROGRAM_CLIENT_ERROR_NONE && !slclient->noreply &&
+		pclient->program_input != NULL && !force) {
 		const unsigned char *data;
 		size_t size;
 
-		/* Skip any remaining script output and parse the exit code */
+		/* Skip any remaining program output and parse the exit code */
 		while ((ret = i_stream_read_data
-			(sclient->script_input, &data, &size, 0)) > 0) {	
-			i_stream_skip(sclient->script_input, size);
+			(pclient->program_input, &data, &size, 0)) > 0) {	
+			i_stream_skip(pclient->program_input, size);
 		}
 
 		/* Get exit code */
-		if ( !sclient->script_input->eof )
+		if ( !pclient->program_input->eof )
 			ret = -1;
 		else
-			ret = sclient->exit_code;		
+			ret = pclient->exit_code;		
 	} else {
 		ret = 1;
 	}
@@ -281,39 +281,39 @@ static int script_client_remote_disconnect
 	return ret;
 }
 
-static void script_client_remote_failure
-(struct script_client *sclient, enum script_client_error error)
+static void program_client_remote_failure
+(struct program_client *pclient, enum program_client_error error)
 {
 	switch ( error ) {
-	case SCRIPT_CLIENT_ERROR_CONNECT_TIMEOUT:
+	case PROGRAM_CLIENT_ERROR_CONNECT_TIMEOUT:
 		i_error("program `%s' socket connection timed out (> %d msecs)",
-			sclient->path, sclient->set->client_connect_timeout_msecs);
+			pclient->path, pclient->set->client_connect_timeout_msecs);
 		break;
-	case SCRIPT_CLIENT_ERROR_RUN_TIMEOUT:
+	case PROGRAM_CLIENT_ERROR_RUN_TIMEOUT:
 		i_error("program `%s' execution timed out (> %d secs)",
-			sclient->path, sclient->set->input_idle_timeout_secs);
+			pclient->path, pclient->set->input_idle_timeout_secs);
 		break;
 	default:
 		break;
 	}
 }
 
-struct script_client *script_client_remote_create
+struct program_client *program_client_remote_create
 (const char *socket_path, const char *const *args, 
-	const struct script_client_settings *set, bool noreply)
+	const struct program_client_settings *set, bool noreply)
 {
-	struct script_client_remote *sclient;
+	struct program_client_remote *pclient;
 	pool_t pool;
 
-	pool = pool_alloconly_create("script client remote", 1024);
-	sclient = p_new(pool, struct script_client_remote, 1);
-	script_client_init(&sclient->client, pool, socket_path, args, set);
-	sclient->client.connect = script_client_remote_connect;
-	sclient->client.close_output = script_client_remote_close_output;
-	sclient->client.disconnect = script_client_remote_disconnect;
-	sclient->client.failure = script_client_remote_failure;
-	sclient->noreply = noreply;
+	pool = pool_alloconly_create("program client remote", 1024);
+	pclient = p_new(pool, struct program_client_remote, 1);
+	program_client_init(&pclient->client, pool, socket_path, args, set);
+	pclient->client.connect = program_client_remote_connect;
+	pclient->client.close_output = program_client_remote_close_output;
+	pclient->client.disconnect = program_client_remote_disconnect;
+	pclient->client.failure = program_client_remote_failure;
+	pclient->noreply = noreply;
 
-	return &sclient->client;
+	return &pclient->client;
 }
 

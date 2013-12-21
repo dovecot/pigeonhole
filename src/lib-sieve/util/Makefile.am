@@ -8,12 +8,17 @@ AM_CPPFLAGS = \
 libsieve_util_la_DEPENDENCIES = $(LIBDOVECOT_STORAGE_DEPS) $(LIBDOVECOT_DEPS)
 
 libsieve_util_la_SOURCES = \
+	edit-mail.c \
 	rfc2822.c \
-	edit-mail.c
+	program-client-local.c \
+	program-client-remote.c \
+	program-client.c
 
 headers = \
+	edit-mail.h \
 	rfc2822.h \
-	edit-mail.h
+	program-client-private.h \
+	program-client.h
 
 pkginc_libdir=$(dovecot_pkgincludedir)/sieve
 pkginc_lib_HEADERS = $(headers)

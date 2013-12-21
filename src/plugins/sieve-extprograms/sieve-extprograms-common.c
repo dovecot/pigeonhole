@@ -16,11 +16,7 @@
 #include "mail-user.h"
 #include "mail-storage.h"
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
+#include "program-client.h"
 
 #include "sieve-common.h"
 #include "sieve-settings.h"
@@ -38,8 +34,13 @@
 #include "sieve-ext-copy.h"
 #include "sieve-ext-variables.h"
 
-#include "script-client.h"
 #include "sieve-extprograms-common.h"
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/socket.h>
 
 /*
  * Limits
@@ -365,8 +366,8 @@ int sieve_extprogram_command_read_operands
 
 struct sieve_extprogram {
 	struct sieve_instance *svinst;
-	struct script_client_settings set;
-	struct script_client *script_client;
+	struct program_client_settings set;
+	struct program_client *program_client;
 };
 
 void sieve_extprogram_exec_error
@@ -520,30 +521,30 @@ struct sieve_extprogram *sieve_extprogram_create
 	sprog->set.debug = svinst->debug;
 
 	if ( fork ) {
-		sprog->script_client =
-			script_client_local_create(path, args, &sprog->set);
+		sprog->program_client =
+			program_client_local_create(path, args, &sprog->set);
 	} else {
-		sprog->script_client =
-			script_client_remote_create(path, args, &sprog->set, FALSE);
+		sprog->program_client =
+			program_client_remote_create(path, args, &sprog->set, FALSE);
 	}
 
 	if ( svinst->username != NULL )
-		script_client_set_env(sprog->script_client, "USER", svinst->username);
+		program_client_set_env(sprog->program_client, "USER", svinst->username);
 	if ( svinst->home_dir != NULL )
-		script_client_set_env(sprog->script_client, "HOME", svinst->home_dir);
+		program_client_set_env(sprog->program_client, "HOME", svinst->home_dir);
 	if ( svinst->hostname != NULL )
-		script_client_set_env(sprog->script_client, "HOST", svinst->hostname);
+		program_client_set_env(sprog->program_client, "HOST", svinst->hostname);
 	if ( msgdata->return_path != NULL ) {
-		script_client_set_env
-			(sprog->script_client, "SENDER", msgdata->return_path);
+		program_client_set_env
+			(sprog->program_client, "SENDER", msgdata->return_path);
 	}
 	if ( msgdata->final_envelope_to != NULL ) {
-		script_client_set_env
-			(sprog->script_client, "RECIPIENT", msgdata->final_envelope_to);
+		program_client_set_env
+			(sprog->program_client, "RECIPIENT", msgdata->final_envelope_to);
 	}
 	if ( msgdata->orig_envelope_to != NULL ) {
-		script_client_set_env
-			(sprog->script_client, "ORIG_RECIPIENT", msgdata->orig_envelope_to);
+		program_client_set_env
+			(sprog->program_client, "ORIG_RECIPIENT", msgdata->orig_envelope_to);
 	}
 
 	return sprog;
@@ -553,7 +554,7 @@ void sieve_extprogram_destroy(struct sieve_extprogram **_sprog)
 {
 	struct sieve_extprogram *sprog = *_sprog;
 
-	script_client_destroy(&sprog->script_client);
+	program_client_destroy(&sprog->program_client);
 	i_free(sprog);
 	*_sprog = NULL;
 }
@@ -563,13 +564,13 @@ void sieve_extprogram_destroy(struct sieve_extprogram **_sprog)
 void sieve_extprogram_set_output
 (struct sieve_extprogram *sprog, struct ostream *output)
 {
-	script_client_set_output(sprog->script_client, output);
+	program_client_set_output(sprog->program_client, output);
 }
 
 void sieve_extprogram_set_input
 (struct sieve_extprogram *sprog, struct istream *input)
 {
-	script_client_set_input(sprog->script_client, input);
+	program_client_set_input(sprog->program_client, input);
 }
 
 int sieve_extprogram_set_input_mail
@@ -583,7 +584,7 @@ int sieve_extprogram_set_input_mail
 	/* Make sure the message contains CRLF consistently */
 	input = i_stream_create_crlf(input);
 
-	script_client_set_input(sprog->script_client, input);
+	program_client_set_input(sprog->program_client, input);
 	i_stream_unref(&input);
 
 	return 1;
@@ -591,6 +592,6 @@ int sieve_extprogram_set_input_mail
 
 int sieve_extprogram_run(struct sieve_extprogram *sprog)
 {
-	return script_client_run(sprog->script_client);
+	return program_client_run(sprog->program_client);
 }
 
