@@ -48,7 +48,6 @@ static int script_client_close_output(struct script_client *sclient)
 	if ( sclient->script_output != NULL )
 		o_stream_destroy(&sclient->script_output);
 	sclient->script_output = NULL;
-	sclient->fd_out = -1;
 
 	return ret;
 }
@@ -135,10 +134,8 @@ static int script_client_script_output(struct script_client *sclient)
 			}
 		} while ( (ret=i_stream_read(input)) > 0 );
 
-		if ( ret == 0 ) {
-			// FIXME: not supposed to happen; returning 0 will poll the input stream
-			return 0;
-		}
+		if ( ret == 0 )
+			return 1;
 
 		if ( ret < 0 ) {
 			if ( !input->eof ) {
@@ -158,16 +155,12 @@ static int script_client_script_output(struct script_client *sclient)
 	}
 
 	if ( input == NULL ) {
-		o_stream_unref(&sclient->script_output);
-
 		if ( sclient->script_input == NULL ) {
 			script_client_disconnect(sclient, FALSE);
 		} else if (script_client_close_output(sclient) < 0) {
-			return -1;
+			script_client_fail(sclient, SCRIPT_CLIENT_ERROR_IO);
 		}
-		return 0;
 	}
-
 	return 1;
 }
 
