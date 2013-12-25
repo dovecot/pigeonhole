@@ -1190,7 +1190,7 @@ static int edit_mail_get_first_header
 		return 0;
 	}
 
-	/* Get the first occurence */
+	/* Get the first occurrence */
 	if ( edmail->header_fields_appended == NULL ) {
 		/* There are no appended headers, so first is found directly */
 		field = header_idx->first->field;

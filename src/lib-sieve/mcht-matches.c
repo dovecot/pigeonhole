@@ -313,7 +313,7 @@ static int mcht_matches_match_key
 					!cmp->def->char_match(cmp, &vp, vend, &needle, nend) ) {
 
 					/* Match failed: now we have a problem. We need to backtrack to the previous
-					 * '*' wildcard occurence and start scanning for the next possible match.
+					 * '*' wildcard occurrence and start scanning for the next possible match.
 					 */
 
 					debug_printf("  failed fixed match\n");

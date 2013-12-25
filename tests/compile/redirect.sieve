@@ -1,4 +1,4 @@
-# Test various white space occurences
+# Test various white space occurrences
 redirect "stephan@example.org";
 redirect " stephan@example.org";
 redirect "stephan @example.org";

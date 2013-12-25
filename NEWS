@@ -91,14 +91,14 @@ v0.3.4 06-04-2013 Stephan Bosch <stephan@rename-it.nl>
 	  checking. This extension is in the process of being standardized
 	  (https://tools.ietf.org/html/draft-bosch-sieve-duplicate-01).
 	+ Sieve date extension: generate warning when invalid date part is specified.
-	- Sieve editheader extension: fixed crash occuring when addheader :last was
+	- Sieve editheader extension: fixed crash occurring when addheader :last was
 	  used.
 	- Sieve include extension: fixed missing error cleanup that caused a resource
 	  leak.
 	- Sieve vacation extension: fixed determination of From: address for when
 	  sieve_vacation_dont_check_recipient is active.
 	- Sieve tools: the -D option wasn't enabled and documented for all tools.
-	- Siev dict script storage: fixed potential segfault occuring when dict
+	- Siev dict script storage: fixed potential segfault occurring when dict
 	  initialization fails.
 	- ManageSieve: fixed bug in skipping of CRLF at end of AUTHENTICATE command.
 	- ManageSieve: fixed handling of unkown commands pre-login.
@@ -296,7 +296,7 @@ v0.2.2 06-12-2010 Stephan Bosch <stephan@rename-it.nl>
 	  notice that the default limits are too low and you need to increase them.
 	  This problem will show up in logs as "out of memory" errors. See
 	  default_vsz_limit and service { vsz_limit } settings.
-	- Imap4flags: fixed segfault bug occuring in multiscript context.
+	- Imap4flags: fixed segfault bug occurring in multiscript context.
 	- Added version checking to the ManageSieve settings plugin. This plugin was
 	  forgotten when the LDA plugin was updated with this change in the previous
 	  release.
@@ -508,7 +508,7 @@ v0.1.13 18-10-2009 Stephan Bosch <stephan@rename-it.nl>
 	+ Body extension: implemented proper handling of the :raw transform and added
 	  various new tests to the test suite. However, :content "multipart" and
 	  :content "message/rfc822" are still not working.
-	+ Fixed race condition occuring when multiple instances are saving the same
+	+ Fixed race condition occurring when multiple instances are saving the same
 	  binary (patch by Timo Sirainen).
 	+ Test suite: added support for testing multiscript execution.
 	- Made compiler more lenient towars missing CRLF at the end of the script in a
@@ -519,7 +519,7 @@ v0.1.13 18-10-2009 Stephan Bosch <stephan@rename-it.nl>
 	- Fixed bugs in multiscript support; subsequent keep actions were not always
 	  merged correctly and implicit side effects were not always handled
 	  correctly.
-	- Fixed a segfault bug in the sieve-test tool occuring when compile fails.
+	- Fixed a segfault bug in the sieve-test tool occurring when compile fails.
 	- Fixed segfault bug in action procesing. It was triggered while merging side
 	  effects in duplicate actions.
 	- Fixed bug in the Sieve plugin that caused it to try to stat() a NULL path,
@@ -610,7 +610,7 @@ v0.1.9 22-07-2009  Stephan Bosch <stephan@rename-it.nl>
 	- Fixed a potential segfault in the argument validation. It didn't surface
 	  because no command could have a :tag followed by an associated parameter as
 	  last argument.
-	- Fixed segfault bug occuring in envelope test when performed on null (<>)
+	- Fixed segfault bug occurring in envelope test when performed on null (<>)
 	  envelope path. The fix involves a rather large restructuring of the code to
 	  make sure envelope addresses are properly handled everywhere (bug reported
 	  by Nikita Koshikov)
@@ -720,11 +720,11 @@ v0.1.3 12-02-2009  Stephan Bosch <stephan@rename-it.nl>
 	  compatibility with CMUSieve. This also implements the mark/unmark commands.
 	- Fixed bugs in the regex extension: 1) if an optional match value did not in
 	  fact match, subsequent match values would get unexpected indexes. 2) fixed
-	  segfault bug occuring when regex is freed.
+	  segfault bug occurring when regex is freed.
 	- Fixed bug in the use of the :from agrument for the vacation command. If this
 	  address included a phrase part, the response would not be a valid RFC822
 	  message.
-	- Plugged a theoretical security hole occuring when a directory is opened as a
+	- Plugged a theoretical security hole occurring when a directory is opened as a
 	  Sieve binary.
 	- Cleaned up and fixed various log messages.
 	- Fixed bug in the outgoing address verification. Addresses ending in ',' were
@@ -789,7 +789,7 @@ v0.11.11:
 	+ Added MAXREDIRECTS capability after login.
 	+ Implemented new script name rules specified in most recent ManageSieve
 	  draft.
-	- Fixed assertion failure occuring with challenge-response SASL mechanisms.
+	- Fixed assertion failure occurring with challenge-response SASL mechanisms.
 	- Made configure complain about trying to compile against installed Dovecot
 	  headers alone.
 	- Fixed compile warning for compilation against CMUSieve.
@@ -912,7 +912,7 @@ v0.10.1
 	  managesieve.
 	+ Added short proxy configuration explanation to the README file
 	+ Added 'Known Issues' section to the README file
-	- Fixed assert bug in sieve-storage occuring when save is canceled.
+	- Fixed assert bug in sieve-storage occurring when save is canceled.
 
 v0.10.0
 	* Upgraded to Dovecot 1.1:

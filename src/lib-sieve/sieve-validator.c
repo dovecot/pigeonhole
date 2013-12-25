@@ -904,7 +904,7 @@ static bool sieve_validate_command_arguments
 		if ( tag_reg == NULL ) {
 			sieve_argument_validate_error(valdtr, arg,
 				"unknown tagged argument ':%s' for the %s %s "
-				"(reported only once at first occurence)",
+				"(reported only once at first occurrence)",
 				sieve_ast_argument_tag(arg), sieve_command_identifier(cmd),
 				sieve_command_type_name(cmd));
 			sieve_validator_register_unknown_tag
@@ -1202,7 +1202,7 @@ static bool sieve_validate_command_context
 	}	else {
 		sieve_validator_error(
 			valdtr, cmd_node->source_line,
-			"unknown %s '%s' (only reported once at first occurence)",
+			"unknown %s '%s' (only reported once at first occurrence)",
 			sieve_ast_type_name(ast_type), cmd_node->identifier);
 
 		sieve_validator_register_unknown_command(valdtr, cmd_node->identifier);

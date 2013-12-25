@@ -453,11 +453,11 @@ static int cmd_deleteheader_operation_execute
 			sieve_runtime_trace_descend(renv);
 			if ( index_offset != 0 ) {
 				sieve_runtime_trace(renv, 0,
-					"deleting matching occurences of header `%s' at index %u%s",
+					"deleting matching occurrences of header `%s' at index %u%s",
 					str_c(field_name), index_offset, ( index_last ? " from last": ""));
 			} else {
 				sieve_runtime_trace(renv, 0,
-					"deleting matching occurences of header `%s'", str_c(field_name));
+					"deleting matching occurrences of header `%s'", str_c(field_name));
 			}
 		}
 
@@ -511,7 +511,7 @@ static int cmd_deleteheader_operation_execute
 			sieve_runtime_trace(renv, 0, "header `%s' not found", str_c(field_name));
 		} else if ( ret < 0 ) {
 			sieve_runtime_warning(renv, NULL, "deleteheader action: "
-				"failed to delete occurences of header `%s' (this should not happen!)",
+				"failed to delete occurrences of header `%s' (this should not happen!)",
 				str_c(field_name));
 		}
 
@@ -528,15 +528,15 @@ static int cmd_deleteheader_operation_execute
 			}
 		}
 
-		/* Delete all occurences of header */
+		/* Delete all occurrences of header */
 		ret = edit_mail_header_delete(edmail, str_c(field_name), index);
 
 		if ( ret < 0 ) {
 			sieve_runtime_warning(renv, NULL, "deleteheader action: "
-				"failed to delete occurences of header `%s' (this should not happen!)",
+				"failed to delete occurrences of header `%s' (this should not happen!)",
 				str_c(field_name));
 		} else if ( trace ) {
-			sieve_runtime_trace(renv, 0, "deleted %d occurences of header `%s'",
+			sieve_runtime_trace(renv, 0, "deleted %d occurrences of header `%s'",
 				ret, str_c(field_name));
 		}
 
