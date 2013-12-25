@@ -273,6 +273,7 @@ struct sieve_instance *sieve_tool_init_finish
 	(void)mail_user_get_home(tool->mail_user_dovecot, &svenv.home_dir);
 	svenv.hostname = my_hostdomain();
 	svenv.base_dir = tool->mail_user_dovecot->set->base_dir;
+	svenv.temp_dir = tool->mail_user_dovecot->set->mail_temp_dir;
 	svenv.location = SIEVE_ENV_LOCATION_MS;
 	svenv.delivery_phase = SIEVE_DELIVERY_PHASE_POST;
 

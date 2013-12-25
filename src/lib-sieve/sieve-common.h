@@ -159,6 +159,7 @@ struct sieve_instance {
 	const char *hostname;
 	const char *domainname;
 	const char *base_dir;
+	const char *temp_dir;
 
 	/* User environment */
 	const char *username;

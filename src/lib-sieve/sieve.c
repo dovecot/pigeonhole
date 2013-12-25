@@ -62,6 +62,7 @@ struct sieve_instance *sieve_init
 	svinst->base_dir = p_strdup_empty(pool, env->base_dir);
 	svinst->username = p_strdup_empty(pool, env->username);
 	svinst->home_dir = p_strdup_empty(pool, env->home_dir);
+	svinst->temp_dir = p_strdup_empty(pool, env->temp_dir);
 	svinst->flags = env->flags;
 	svinst->env_location = env->location;
 	svinst->delivery_phase = env->delivery_phase;

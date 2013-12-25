@@ -60,6 +60,7 @@ struct sieve_environment {
 	const char *base_dir;
 	const char *username;
 	const char *home_dir;
+	const char *temp_dir;
 
 	enum sieve_flag flags;
 	enum sieve_env_location location;
