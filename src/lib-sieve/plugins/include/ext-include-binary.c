@@ -23,26 +23,29 @@
  * Forward declarations
  */
 
-static bool ext_include_binary_save
-	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
+static bool ext_include_binary_pre_save
+	(const struct sieve_extension *ext, struct sieve_binary *sbin,
+		void *context, enum sieve_error *error_r);
 static bool ext_include_binary_open
-	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
+	(const struct sieve_extension *ext, struct sieve_binary *sbin,
+		void *context);
 static bool ext_include_binary_up_to_date
-	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context,
-		enum sieve_compile_flags cpflags);
+	(const struct sieve_extension *ext, struct sieve_binary *sbin,
+		void *context, enum sieve_compile_flags cpflags);
 static void ext_include_binary_free
-	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
+	(const struct sieve_extension *ext, struct sieve_binary *sbin,
+		void *context);
 
 /*
  * Binary include extension
  */
 
 const struct sieve_binary_extension include_binary_ext = {
-	&include_extension,
-	ext_include_binary_save,
-	ext_include_binary_open,
-	ext_include_binary_free,
-	ext_include_binary_up_to_date
+	.extension = &include_extension,
+	.binary_pre_save = ext_include_binary_pre_save,
+	.binary_open = ext_include_binary_open,
+	.binary_free = ext_include_binary_free,
+	.binary_up_to_date = ext_include_binary_up_to_date
 };
 
 /*
@@ -202,9 +205,10 @@ struct sieve_variable_scope_binary *ext_include_binary_get_global_scope
  * Binary extension
  */
 
-static bool ext_include_binary_save
+static bool ext_include_binary_pre_save
 (const struct sieve_extension *ext ATTR_UNUSED,
-	struct sieve_binary *sbin ATTR_UNUSED, void *context)
+	struct sieve_binary *sbin ATTR_UNUSED, void *context,
+	enum sieve_error *error_r)
 {
 	struct ext_include_binary_context *binctx =
 		(struct ext_include_binary_context *) context;
@@ -234,7 +238,7 @@ static bool ext_include_binary_save
 		sieve_script_binary_write_metadata(incscript->script, sblock);
 	}
 
-	result = ext_include_variables_save(sblock, binctx->global_vars);
+	result = ext_include_variables_save(sblock, binctx->global_vars, error_r);
 
 	return result;
 }

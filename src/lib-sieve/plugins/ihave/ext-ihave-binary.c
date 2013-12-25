@@ -20,24 +20,25 @@
  * Forward declarations
  */
 
-static bool ext_ihave_binary_save
-	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
+static bool ext_ihave_binary_pre_save
+	(const struct sieve_extension *ext, struct sieve_binary *sbin,
+		void *context, enum sieve_error *error_r);
 static bool ext_ihave_binary_open
-	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context);
+	(const struct sieve_extension *ext, struct sieve_binary *sbin,
+		void *context);
 static bool ext_ihave_binary_up_to_date
-	(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context,
-		enum sieve_compile_flags cpflags);
+	(const struct sieve_extension *ext, struct sieve_binary *sbin,
+		void *context, enum sieve_compile_flags cpflags);
 
 /*
  * Binary include extension
  */
 
 const struct sieve_binary_extension ihave_binary_ext = {
-	&ihave_extension,
-	ext_ihave_binary_save,
-	ext_ihave_binary_open,
-	NULL,
-	ext_ihave_binary_up_to_date
+	.extension = &ihave_extension,
+	.binary_pre_save = ext_ihave_binary_pre_save,
+	.binary_open = ext_ihave_binary_open,
+	.binary_up_to_date = ext_ihave_binary_up_to_date
 };
 
 /*
@@ -112,8 +113,9 @@ struct ext_ihave_binary_context *ext_ihave_binary_init
  * Binary extension
  */
 
-static bool ext_ihave_binary_save
-(const struct sieve_extension *ext, struct sieve_binary *sbin, void *context)
+static bool ext_ihave_binary_pre_save
+(const struct sieve_extension *ext, struct sieve_binary *sbin,
+	void *context, enum sieve_error *error_r)
 {
 	struct ext_ihave_binary_context *binctx =
 		(struct ext_ihave_binary_context *) context;

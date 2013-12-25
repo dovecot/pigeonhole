@@ -198,22 +198,11 @@ static bool _sieve_binary_save
 (struct sieve_binary *sbin, struct ostream *stream)
 {
 	struct sieve_binary_header header;
-	struct sieve_binary_extension_reg *const *regs;
 	struct sieve_binary_block *ext_block;
 	unsigned int ext_count, blk_count, i;
 	uoff_t block_index;
 
 	blk_count = sieve_binary_block_count(sbin);
-
-	/* Signal all extensions to finish generating their blocks */
-
-	regs = array_get(&sbin->extensions, &ext_count);
-	for ( i = 0; i < ext_count; i++ ) {
-		const struct sieve_binary_extension *binext = regs[i]->binext;
-
-		if ( binext != NULL && binext->binary_save != NULL )
-			binext->binary_save(regs[i]->extension, sbin, regs[i]->context);
-	}
 
 	/* Create header */
 
@@ -277,6 +266,8 @@ int sieve_binary_save
 	int result, fd;
 	string_t *temp_path;
 	struct ostream *stream;
+	struct sieve_binary_extension_reg *const *regs;
+	unsigned int ext_count, i;
 
 	if ( error_r != NULL )
 		*error_r = SIEVE_ERROR_NONE;
@@ -310,6 +301,18 @@ int sieve_binary_save
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		}
 		return -1;
+	}
+
+	/* Signal all extensions that we're about to save the binary */
+	regs = array_get(&sbin->extensions, &ext_count);
+	for ( i = 0; i < ext_count; i++ ) {
+		const struct sieve_binary_extension *binext = regs[i]->binext;
+
+		if ( binext != NULL && binext->binary_pre_save != NULL &&
+			!binext->binary_pre_save
+				(regs[i]->extension, sbin, regs[i]->context, error_r)) {
+			return -1;
+		}
 	}
 
 	/* Save binary */
@@ -353,9 +356,28 @@ int sieve_binary_save
 				str_c(temp_path));
 		}
 	} else {
-		if ( sbin->path == NULL ) {
+		if ( sbin->path == NULL )
 			sbin->path = p_strdup(sbin->pool, path);
+
+		/* Signal all extensions that we successfully saved the binary */
+		regs = array_get(&sbin->extensions, &ext_count);
+		for ( i = 0; i < ext_count; i++ ) {
+			const struct sieve_binary_extension *binext = regs[i]->binext;
+
+			if ( binext != NULL && binext->binary_post_save != NULL &&
+				!binext->binary_post_save
+					(regs[i]->extension, sbin, regs[i]->context, error_r)) {
+				result = -1;
+				break;
+			}
 		}
+
+		if ( result < 0 && unlink(path) < 0 && errno != ENOENT ) {
+			sieve_sys_error(sbin->svinst,
+				"binary save: failed to clean up after error: "
+				"unlink(%s) failed: %m", path);
+		}
+		sbin->path = NULL;
 	}
 
 	return result;

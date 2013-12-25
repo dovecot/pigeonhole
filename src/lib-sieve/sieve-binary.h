@@ -111,9 +111,12 @@ unsigned int sieve_binary_block_get_id
 struct sieve_binary_extension {
 	const struct sieve_extension_def *extension;
 
-	bool (*binary_save)
+	bool (*binary_pre_save)
 		(const struct sieve_extension *ext, struct sieve_binary *sbin,
-			void *context);
+			void *context, enum sieve_error *error_r);
+	bool (*binary_post_save)
+		(const struct sieve_extension *ext, struct sieve_binary *sbin,
+			void *context, enum sieve_error *error_r);
 	bool (*binary_open)
 		(const struct sieve_extension *ext, struct sieve_binary *sbin,
 			void *context);

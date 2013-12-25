@@ -24,7 +24,8 @@ struct sieve_variable *ext_include_variable_import_global
 
 bool ext_include_variables_save
 	(struct sieve_binary_block *sblock,
-		struct sieve_variable_scope_binary *global_vars);
+		struct sieve_variable_scope_binary *global_vars,
+		enum sieve_error *error_r);
 bool ext_include_variables_load
 	(const struct sieve_extension *this_ext, struct sieve_binary_block *sblock,
 		sieve_size_t *offset, struct sieve_variable_scope_binary **global_vars_r);
