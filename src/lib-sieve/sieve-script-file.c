@@ -354,6 +354,14 @@ static int sieve_file_script_binary_save
 		script->st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO), error_r);
 }
 
+static const char *sieve_file_script_binary_get_directory
+(struct sieve_script *_script)
+{
+	struct sieve_file_script *script = (struct sieve_file_script *)_script;
+	
+	return script->	dirpath;
+}
+
 const struct sieve_script sieve_file_script = {
 	.driver_name = SIEVE_FILE_SCRIPT_DRIVER_NAME,
 	.v = {
@@ -368,6 +376,7 @@ const struct sieve_script sieve_file_script = {
 		NULL,
 		sieve_file_script_binary_load,
 		sieve_file_script_binary_save,
+		sieve_file_script_binary_get_directory,
 
 		sieve_file_script_get_size,
 

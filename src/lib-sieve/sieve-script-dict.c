@@ -289,6 +289,7 @@ const struct sieve_script sieve_dict_script = {
 		sieve_dict_script_binary_write_metadata,
 		sieve_dict_script_binary_load,
 		sieve_dict_script_binary_save,
+		NULL,
 
 		NULL,
 		sieve_dict_script_equals

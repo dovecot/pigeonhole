@@ -68,6 +68,9 @@ int sieve_script_binary_save
 	(struct sieve_script *script, struct sieve_binary *sbin, bool update,
 		enum sieve_error *error_r);
 
+const char *sieve_script_binary_get_directory
+	(struct sieve_script *script);
+
 /*
  * Stream management
  */

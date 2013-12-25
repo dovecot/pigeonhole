@@ -542,6 +542,20 @@ int sieve_script_binary_save
 	return script->v.binary_save(script, sbin, update, error_r);
 }
 
+const char *sieve_script_binary_get_directory
+(struct sieve_script *script)
+{
+	if ( script->bin_dir != NULL &&
+		sieve_script_setup_bindir(script, 0700) >= 0 ) {
+		return script->bin_dir;
+	}
+
+	if ( script->v.binary_get_directory == NULL )
+		return NULL;
+
+	return script->v.binary_get_directory(script);
+}
+
 int sieve_script_setup_bindir
 (struct sieve_script *script, mode_t mode)
 {
