@@ -115,7 +115,7 @@ struct ext_ihave_binary_context *ext_ihave_binary_init
 
 static bool ext_ihave_binary_pre_save
 (const struct sieve_extension *ext, struct sieve_binary *sbin,
-	void *context, enum sieve_error *error_r)
+	void *context, enum sieve_error *error_r ATTR_UNUSED)
 {
 	struct ext_ihave_binary_context *binctx =
 		(struct ext_ihave_binary_context *) context;
