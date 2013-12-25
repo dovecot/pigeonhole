@@ -26,6 +26,11 @@ void program_client_set_input
 void program_client_set_output
 	(struct program_client *pclient, struct ostream *output);
 
+void program_client_set_output_seekable
+	(struct program_client *pclient, const char *temp_prefix);
+struct istream *program_client_get_output_seekable
+	(struct program_client *pclient);
+
 void program_client_set_env
 	(struct program_client *pclient, const char *name, const char *value);
 

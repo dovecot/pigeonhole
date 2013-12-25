@@ -4,14 +4,18 @@
 #include "lib.h"
 #include "ioloop.h"
 #include "array.h"
+#include "str.h"
+#include "safe-mkstemp.h"
 #include "istream-private.h"
+#include "istream-seekable.h"
 #include "ostream.h"
 
 #include "program-client-private.h"
 
 #include <unistd.h>
 
-#define MAX_OUTBUF_SIZE 16384
+#define MAX_OUTPUT_BUFFER_SIZE 16384
+#define MAX_OUTPUT_MEMORY_BUFFER (1024*128)
 
 static void program_client_timeout(struct program_client *pclient)
 {
@@ -35,7 +39,6 @@ static int program_client_connect(struct program_client *pclient)
 		program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
 		return -1;
 	}
-
 	return 1;
 }
 
@@ -69,8 +72,12 @@ static void program_client_disconnect
 	if ( (ret=pclient->disconnect(pclient, force)) < 0 )
 		error = TRUE;
 
-	if ( pclient->program_input != NULL )
-		i_stream_destroy(&pclient->program_input);
+	if ( pclient->program_input != NULL ) {
+		if (pclient->output_seekable)
+			i_stream_unref(&pclient->program_input);
+		else
+			i_stream_destroy(&pclient->program_input);
+	} 
 	if ( pclient->program_output != NULL )
 		o_stream_destroy(&pclient->program_output);
 
@@ -239,7 +246,7 @@ void program_client_init
 void program_client_set_input
 (struct program_client *pclient, struct istream *input)
 {
-	if ( pclient->input )
+	if ( pclient->input != NULL )
 		i_stream_unref(&pclient->input);
 	if ( input != NULL )
 		i_stream_ref(input);
@@ -249,11 +256,33 @@ void program_client_set_input
 void program_client_set_output
 (struct program_client *pclient, struct ostream *output)
 {
-	if ( pclient->output )
+	if ( pclient->output != NULL )
 		o_stream_unref(&pclient->output);
 	if ( output != NULL )
 		o_stream_ref(output);
 	pclient->output = output;
+	pclient->output_seekable = FALSE;
+	i_free(pclient->temp_prefix);
+}
+
+void program_client_set_output_seekable
+(struct program_client *pclient, const char *temp_prefix)
+{
+	if ( pclient->output != NULL )
+		o_stream_unref(&pclient->output);
+	pclient->temp_prefix = i_strdup(temp_prefix);
+	pclient->output_seekable = TRUE;
+}
+
+struct istream *program_client_get_output_seekable
+(struct program_client *pclient)
+{
+	struct istream *input = pclient->seekable_output;
+	
+	pclient->seekable_output = NULL;
+
+	i_stream_seek(input, 0);
+	return input;
 }
 
 void program_client_set_env
@@ -268,15 +297,56 @@ void program_client_set_env
 	array_append(&pclient->envs, &env, 1);
 }
 
+static int program_client_seekable_fd_callback
+(const char **path_r, void *context)
+{
+	struct program_client *pclient = (struct program_client *)context;
+	string_t *path;
+	int fd;
+
+	path = t_str_new(128);
+	str_append(path, pclient->temp_prefix);
+	fd = safe_mkstemp(path, 0600, (uid_t)-1, (gid_t)-1);
+	if (fd == -1) {
+		i_error("safe_mkstemp(%s) failed: %m", str_c(path));
+		return -1;
+	}
+
+	/* we just want the fd, unlink it */
+	if (unlink(str_c(path)) < 0) {
+		/* shouldn't happen.. */
+		i_error("unlink(%s) failed: %m", str_c(path));
+		i_close_fd(&fd);
+		return -1;
+	}
+
+	*path_r = str_c(path);
+	return fd;
+}
+
 void program_client_init_streams(struct program_client *pclient)
 {
 	if ( pclient->fd_out >= 0 ) {
 		pclient->program_output =
-			o_stream_create_fd(pclient->fd_out, MAX_OUTBUF_SIZE, FALSE);
+			o_stream_create_fd(pclient->fd_out, MAX_OUTPUT_BUFFER_SIZE, FALSE);
 	}
 	if ( pclient->fd_in >= 0 ) {
-		pclient->program_input =
-			i_stream_create_fd(pclient->fd_in, (size_t)-1, FALSE);
+		struct istream *input;
+		
+		input = i_stream_create_fd(pclient->fd_in, (size_t)-1, FALSE);
+
+		if (pclient->output_seekable) {
+			struct istream *input2 = input, *input_list[2];
+	
+			input_list[0] = input2; input_list[1] = NULL;
+			input = i_stream_create_seekable(input_list, MAX_OUTPUT_MEMORY_BUFFER,
+						 program_client_seekable_fd_callback, pclient);
+			i_stream_unref(&input2);
+			pclient->seekable_output = input;
+			i_stream_ref(pclient->seekable_output);
+		}
+
+		pclient->program_input = input;
 		pclient->io = io_add
 			(pclient->fd_in, IO_READ, program_client_program_input, pclient);
 	}
@@ -292,11 +362,13 @@ void program_client_destroy(struct program_client **_pclient)
 		i_stream_unref(&pclient->input);
 	if ( pclient->output != NULL )
 		o_stream_unref(&pclient->output);
+	if ( pclient->input != NULL )
+		i_stream_unref(&pclient->seekable_output);
 	if ( pclient->io != NULL )
 		io_remove(&pclient->io);
 	if ( pclient->ioloop != NULL )
 		io_loop_destroy(&pclient->ioloop);
-
+	i_free(pclient->temp_prefix);
 	pool_unref(&pclient->pool);
 	*_pclient = NULL;
 }
@@ -304,6 +376,12 @@ void program_client_destroy(struct program_client **_pclient)
 int program_client_run(struct program_client *pclient)
 {
 	int ret;
+
+	/* reset */
+	pclient->disconnected = FALSE;
+	pclient->exit_code = 0;
+	pclient->error = PROGRAM_CLIENT_ERROR_NONE;
+
 
 	pclient->ioloop = io_loop_create();
 

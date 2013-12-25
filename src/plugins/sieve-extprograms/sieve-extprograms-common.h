@@ -88,6 +88,11 @@ void sieve_extprogram_destroy(struct sieve_extprogram **_sprog);
 
 void sieve_extprogram_set_output
 	(struct sieve_extprogram *sprog, struct ostream *output);
+void sieve_extprogram_set_output_seekable
+	(struct sieve_extprogram *sprog);
+struct istream *sieve_extprogram_get_output_seekable
+	(struct sieve_extprogram *sprog);
+
 void sieve_extprogram_set_input
 	(struct sieve_extprogram *sprog, struct istream *input);
 int sieve_extprogram_set_input_mail

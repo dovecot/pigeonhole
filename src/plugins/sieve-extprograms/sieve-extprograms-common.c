@@ -366,6 +366,7 @@ int sieve_extprogram_command_read_operands
 
 struct sieve_extprogram {
 	struct sieve_instance *svinst;
+	const struct sieve_script_env *scriptenv;
 	struct program_client_settings set;
 	struct program_client *program_client;
 };
@@ -514,6 +515,7 @@ struct sieve_extprogram *sieve_extprogram_create
 
 	sprog = i_new(struct sieve_extprogram, 1);
 	sprog->svinst = ext->svinst;
+	sprog->scriptenv = senv;
 
 	sprog->set.client_connect_timeout_msecs =
 		SIEVE_EXTPROGRAMS_CONNECT_TIMEOUT_MSECS;
@@ -571,6 +573,22 @@ void sieve_extprogram_set_input
 (struct sieve_extprogram *sprog, struct istream *input)
 {
 	program_client_set_input(sprog->program_client, input);
+}
+
+void sieve_extprogram_set_output_seekable
+(struct sieve_extprogram *sprog)
+{
+	string_t *prefix;
+	prefix = t_str_new(128);
+	mail_user_set_get_temp_prefix(prefix, sprog->scriptenv->user->set);
+
+	program_client_set_output_seekable(sprog->program_client, str_c(prefix));
+}
+
+struct istream *sieve_extprogram_get_output_seekable
+(struct sieve_extprogram *sprog)
+{
+	return program_client_get_output_seekable(sprog->program_client);
 }
 
 int sieve_extprogram_set_input_mail

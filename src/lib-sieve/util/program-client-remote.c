@@ -234,7 +234,8 @@ static int program_client_remote_connect(struct program_client *pclient)
 
 	net_set_nonblock(fd, TRUE);
 	
-	pclient->fd_in = ( slclient->noreply && pclient->output == NULL ? -1 : fd );
+	pclient->fd_in = ( slclient->noreply && pclient->output == NULL &&
+		!pclient->output_seekable ? -1 : fd );
 	pclient->fd_out = fd;
 	pclient->io = io_add(fd, IO_WRITE, program_client_remote_connected, pclient);
 	return 1;

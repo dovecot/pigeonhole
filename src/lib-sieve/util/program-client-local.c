@@ -82,7 +82,8 @@ static int program_client_local_connect
 		(struct program_client_local *) pclient;
 	int fd[2] = { -1, -1 };
 
-	if ( pclient->input != NULL || pclient->output != NULL ) {
+	if ( pclient->input != NULL || pclient->output != NULL ||
+		pclient->output_seekable ) {
 		if ( socketpair(AF_UNIX, SOCK_STREAM, 0, fd) < 0 ) {
 			i_error("socketpair() failed: %m");
 			return -1;
@@ -114,7 +115,7 @@ static int program_client_local_connect
 
 		exec_child(pclient->path, pclient->args, envs,
 			( pclient->input != NULL ? fd[0] : -1 ),
-			( pclient->output != NULL ? fd[0] : -1 ));
+			( pclient->output != NULL || pclient->output_seekable ? fd[0] : -1 ));
 		i_unreached();
 	}
 
@@ -125,7 +126,8 @@ static int program_client_local_connect
 
 	if ( fd[1] >= 0 ) {
 		net_set_nonblock(fd[1], TRUE);
-		pclient->fd_in = ( pclient->output != NULL ? fd[1] : -1 );
+		pclient->fd_in =
+			( pclient->output != NULL || pclient->output_seekable ? fd[1] : -1 );
 		pclient->fd_out = ( pclient->input != NULL ? fd[1] : -1 );
 	}
 	program_client_init_streams(pclient);

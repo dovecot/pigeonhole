@@ -121,38 +121,6 @@ static bool cmd_filter_operation_dump
  * Code execution
  */
 
-static int cmd_filter_get_tempfile
-(const struct sieve_runtime_env *renv)
-{
-	struct sieve_instance *svinst = renv->svinst;
-	struct mail_user *mail_user = renv->scriptenv->user;
-	string_t *path;
-	int fd;
-
-	path = t_str_new(128);
-	mail_user_set_get_temp_prefix(path, mail_user->set);
-	fd = safe_mkstemp(path, 0600, (uid_t)-1, (gid_t)-1);
-	if (fd == -1) {
-		sieve_sys_error(svinst, "filter action: "
-			"safe_mkstemp(%s) failed: %m", str_c(path));
-		return -1;
-	}
-
-	/* We just want the fd, unlink it */
-	if (unlink(str_c(path)) < 0) {
-		/* Shouldn't happen.. */
-		sieve_sys_error(svinst, "filter action: "
-			"unlink(%s) failed: %m", str_c(path));
-		if ( close(fd) < 0 ) {
-			sieve_sys_error(svinst, "filter action: "
-				"close(%s) failed after error: %m", str_c(path));
-		}
-		return -1;
-	}
-
-	return fd;
-}
-
 static int cmd_filter_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {	
@@ -163,7 +131,8 @@ static int cmd_filter_operation_execute
 	string_t *pname = NULL;
 	const char *program_name = NULL;
 	const char *const *args = NULL;
-	int tmp_fd = -1;
+	struct istream *newmsg = NULL;
+	struct sieve_extprogram *sprog;
 	int ret;
 
 	/*
@@ -206,40 +175,29 @@ static int cmd_filter_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_ACTIONS,
 		"execute program `%s'", str_sanitize(program_name, 128));
 
-	ret = 1;
-	if ( (tmp_fd=cmd_filter_get_tempfile(renv)) < 0 ) {
+	sprog = sieve_extprogram_create
+		(this_ext, renv->scriptenv, renv->msgdata, "filter", program_name, args,
+			&error);
+
+	if ( sprog != NULL && sieve_extprogram_set_input_mail
+		(sprog, sieve_message_get_mail(renv->msgctx)) >= 0 ) {
+		sieve_extprogram_set_output_seekable(sprog);
+		ret = sieve_extprogram_run(sprog);
+	} else {
 		ret = -1;
 	}
 
-	if ( ret > 0 ) {
-		struct sieve_extprogram *sprog = sieve_extprogram_create
-			(this_ext, renv->scriptenv, renv->msgdata, "filter", program_name, args,
-				&error);
+	if ( ret > 0 )
+		newmsg = sieve_extprogram_get_output_seekable(sprog);
+	if ( sprog != NULL )
+		sieve_extprogram_destroy(&sprog);
 
-		if ( sprog != NULL && sieve_extprogram_set_input_mail
-			(sprog, sieve_message_get_mail(renv->msgctx)) >= 0 ) {
-			struct ostream *outdata =
-				o_stream_create_fd(tmp_fd, 0, FALSE);
-			sieve_extprogram_set_output(sprog, outdata);
-			o_stream_unref(&outdata);
-		
-			ret = sieve_extprogram_run(sprog);
-		} else {
-			ret = -1;
-		}
-	
-		if ( sprog != NULL )
-			sieve_extprogram_destroy(&sprog);
-	}
-
-	if ( ret > 0 ) {
-		struct istream *newmsg;
-
+	if ( ret > 0 && newmsg != NULL ) {
 		sieve_runtime_trace(renv,	SIEVE_TRLVL_ACTIONS,
 			"executed program successfully");
 
-		newmsg = i_stream_create_fd(tmp_fd, (size_t)-1, TRUE);
-
+		i_stream_set_name(newmsg,
+			t_strdup_printf("filter %s output", program_name));
 		if ( (ret=sieve_message_substitute(renv->msgctx, newmsg)) >= 0 ) {
 			sieve_runtime_trace(renv,	SIEVE_TRLVL_ACTIONS,
 				"changed message");
@@ -250,29 +208,21 @@ static int cmd_filter_operation_execute
 
 		i_stream_unref(&newmsg);
 
-	} else {
-		if ( tmp_fd >= 0 ) {
-			if ( close(tmp_fd) < 0 ) {
-				sieve_sys_error
-					(renv->svinst, "filter action: close(temp_file) failed: %m");
-			}
+	} else if ( ret < 0 ) {
+		if ( error == SIEVE_ERROR_NOT_FOUND ) {
+			sieve_runtime_error(renv, NULL,
+				"filter action: program `%s' not found",
+				str_sanitize(program_name, 80));
+		} else {
+			sieve_extprogram_exec_error(renv->ehandler,
+				sieve_runtime_get_full_command_location(renv),
+				"filter action: failed to execute to program `%s'",
+				str_sanitize(program_name, 80));
 		}
 
-		if ( ret < 0 ) {
-			if ( error == SIEVE_ERROR_NOT_FOUND ) {
-				sieve_runtime_error(renv, NULL,
-					"filter action: program `%s' not found",
-					str_sanitize(program_name, 80));
-			} else {
-				sieve_extprogram_exec_error(renv->ehandler,
-					sieve_runtime_get_full_command_location(renv),
-					"filter action: failed to execute to program `%s'",
-					str_sanitize(program_name, 80));
-			}
-		} else {
-			sieve_runtime_trace(renv,	SIEVE_TRLVL_ACTIONS,
-				"filter action: program indicated false result");
-		}
+	} else {
+		sieve_runtime_trace(renv,	SIEVE_TRLVL_ACTIONS,
+			"filter action: program indicated false result");
 	}
 
 	if ( is_test )

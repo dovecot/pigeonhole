@@ -28,8 +28,9 @@ struct program_client {
 	struct timeout *to;
 	time_t start_time;
 
-	struct istream *input, *program_input;
+	struct istream *input, *program_input, *seekable_output;
 	struct ostream *output, *program_output;
+	char *temp_prefix;
 
 	enum program_client_error error;
 	int exit_code;
@@ -42,6 +43,7 @@ struct program_client {
 	
 	unsigned int debug:1;
 	unsigned int disconnected:1;
+	unsigned int output_seekable:1;
 };
 
 void program_client_init
