@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo 'X-Spam-Status: Yes, score=66.5/5.0 tests=CONTAINS_LARGE_ROOSTER'
+cat
+
+exit 0

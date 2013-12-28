@@ -454,9 +454,9 @@ const char *ext_spamvirustest_get_value
 	struct ext_spamvirustest_data *ext_data =
 		(struct ext_spamvirustest_data *) ext->context;
 	struct ext_spamvirustest_header_spec *status_header, *max_header;
-	const struct sieve_message_data *msgdata = renv->msgdata;
 	struct sieve_message_context *msgctx = renv->msgctx;
 	struct ext_spamvirustest_message_context *mctx;
+	struct mail *mail;
 	regmatch_t match_values[2];
 	const char *header_value, *error;
 	const char *status = NULL, *max = NULL;
@@ -481,10 +481,14 @@ const char *ext_spamvirustest_get_value
 		sieve_message_context_extension_get(msgctx, ext);
 
 	if ( mctx == NULL ) {
+		/* Create new context */
 		mctx = p_new(pool, struct ext_spamvirustest_message_context, 1);
 		sieve_message_context_extension_set(msgctx, ext, (void *)mctx);
 	} else if ( mctx->reload == ext_data->reload ) {
+		/* Use cached result */
 		return ext_spamvirustest_get_score(ext, mctx->score_ratio, percent);
+	} else {
+		/* Extension was reloaded (probably in testsuite) */
 	}
 
 	mctx->reload = ext_data->reload;
@@ -493,6 +497,7 @@ const char *ext_spamvirustest_get_value
 	 * Get max status value
 	 */
 
+	mail = sieve_message_get_mail(renv->msgctx);
 	status_header = &ext_data->status_header;
 	max_header = &ext_data->max_header;
 
@@ -500,7 +505,7 @@ const char *ext_spamvirustest_get_value
 		if ( max_header->header_name != NULL ) {
 			/* Get header from message */
 			if ( mail_get_first_header_utf8
-				(msgdata->mail, max_header->header_name, &header_value) < 0 ||
+				(mail, max_header->header_name, &header_value) < 0 ||
 				header_value == NULL ) {
 				sieve_runtime_trace(renv,  SIEVE_TRLVL_TESTS,
 					"header '%s' not found in message",
@@ -553,7 +558,7 @@ const char *ext_spamvirustest_get_value
 
 	/* Get header from message */
 	if ( mail_get_first_header_utf8
-		(msgdata->mail, status_header->header_name, &header_value) < 0 ||
+		(mail, status_header->header_name, &header_value) < 0 ||
 		header_value == NULL ) {
 		sieve_runtime_trace(renv,  SIEVE_TRLVL_TESTS,
 			"header '%s' not found in message",

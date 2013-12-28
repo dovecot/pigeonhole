@@ -3,6 +3,7 @@ require "vnd.dovecot.filter";
 require "vnd.dovecot.debug";
 require "variables";
 require "editheader";
+require "spamtest";
 require "body";
 require "fileinto";
 require "mailbox";
@@ -177,4 +178,36 @@ test "Editheader" {
 	if not header "X-E" "5" {
 		test_fail "X-E header missing in final message";
 	}
-}	
+}
+
+test_config_set "sieve_spamtest_status_header"
+	"X-Spam-Status: [^,]*, score=(-?[[:digit:]]+\\.[[:digit:]]).*";
+test_config_set "sieve_spamtest_max_value" "10";
+test_config_set "sieve_spamtest_status_type" "score";
+test_config_reload :extension "spamtest";
+
+test_result_reset;
+test "Spamtest" {
+	if exists "x-spam-status" {
+		test_fail "message already modified";
+	}
+
+	if not header "subject" "Frop!" {
+		test_fail "message is wrong";
+	}
+
+	filter "spamc";
+
+	if not exists "x-spam-status" {
+		test_fail "x-spam-score header not added";
+	}
+
+	if spamtest :is "0" {
+		test_fail "spamtest not configured or test failed";
+	}
+
+	if not spamtest :is "10" {
+		test_fail "spamtest yields incorrect value";
+	}
+}
+
