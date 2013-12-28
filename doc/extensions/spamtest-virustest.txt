@@ -42,10 +42,10 @@ sieve_spamtest_status_header = <header-field> [ ":" <regexp> ]
   against "0".
 
   This is a structured setting. The first part specifies the header field name.
-  Optionally, a POSIX regular expression follows the header field name,
-  separated by a colon. Any whitespace directly following the colon is not part
-  of the regular expression. If the regular expression is omitted, any header
-  content is accepted and the full header value is used. When a regular
+  Optionally, an extended POSIX regular expression follows the header field
+	name, separated by a colon. Any whitespace directly following the colon is not
+	part of the regular expression. If the regular expression is omitted, any
+	header content is accepted and the full header value is used. When a regular
   expression is used, it must specify one match value (inside brackets) that
   yields the desired spam scanner result. If the header does not match the
   regular expression or if no value match is found, the spamtest will match
