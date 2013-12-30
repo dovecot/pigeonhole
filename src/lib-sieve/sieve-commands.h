@@ -67,6 +67,11 @@ struct sieve_argument {
 #define sieve_argument_validate_warning(validator, arg_node, ...) \
 	sieve_validator_warning(validator, (arg_node)->source_line, __VA_ARGS__)
 
+#define sieve_argument_generate_error(gentr, arg_node, ...) \
+	sieve_generator_error(gentr, (arg_node)->source_line, __VA_ARGS__)
+#define sieve_argument_generate_warning(gentr, arg_node, ...) \
+	sieve_generator_warning(gentr, (arg_node)->source_line, __VA_ARGS__)
+
 /* Argument API */
 
 struct sieve_argument *sieve_argument_create
