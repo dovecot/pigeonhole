@@ -1,4 +1,4 @@
-/* Copyright (c) 2002-2013 Pigeonhole authors, see the included COPYING file
+/* Copyright (c) 2002-2014 Pigeonhole authors, see the included COPYING file
  */
 
 #ifndef __EXT_EDITHEADER_LIMITS_H

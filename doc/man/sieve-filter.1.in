@@ -1,5 +1,5 @@
-.\" Copyright (c) 2010-2013 Pigeonhole authors, see the included COPYING file
-.TH "SIEVE\-FILTER" 1 "2013-05-09" "Pigeonhole for Dovecot v2.2" "Pigeonhole"
+.\" Copyright (c) 2010-2014 Pigeonhole authors, see the included COPYING file
+.TH "SIEVE\-FILTER" 1 "2014-01-01" "Pigeonhole for Dovecot v2.2" "Pigeonhole"
 .SH NAME
 sieve\-filter \- Pigeonhole\(aqs Sieve mailbox filter tool
 
