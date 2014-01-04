@@ -288,11 +288,11 @@ static void program_client_remote_failure
 	switch ( error ) {
 	case PROGRAM_CLIENT_ERROR_CONNECT_TIMEOUT:
 		i_error("program `%s' socket connection timed out (> %d msecs)",
-			pclient->path, pclient->set->client_connect_timeout_msecs);
+			pclient->path, pclient->set.client_connect_timeout_msecs);
 		break;
 	case PROGRAM_CLIENT_ERROR_RUN_TIMEOUT:
 		i_error("program `%s' execution timed out (> %d secs)",
-			pclient->path, pclient->set->input_idle_timeout_secs);
+			pclient->path, pclient->set.input_idle_timeout_secs);
 		break;
 	default:
 		break;

@@ -14,9 +14,20 @@ enum program_client_error {
 	PROGRAM_CLIENT_ERROR_UNKNOWN
 };
 
+struct program_client_extra_fd {
+	struct program_client *pclient;
+
+	int child_fd, parent_fd;
+	struct istream *input;
+	struct io *io;
+
+	program_client_fd_callback_t *callback;
+	void *context;
+};
+
 struct program_client {
 	pool_t pool;
-	const struct program_client_settings *set;
+	struct program_client_settings set;
 
 	char *path;
 	const char **args;
@@ -31,6 +42,8 @@ struct program_client {
 	struct istream *input, *program_input, *seekable_output;
 	struct ostream *output, *program_output;
 	char *temp_prefix;
+
+	ARRAY(struct program_client_extra_fd) extra_fds;
 
 	enum program_client_error error;
 	int exit_code;
