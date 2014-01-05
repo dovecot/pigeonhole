@@ -366,7 +366,7 @@ struct program_client *program_client_local_create
 	pool_t pool;
 
 	pool = pool_alloconly_create("program client local", 1024);
-	pclient = i_new(struct program_client_local, 1);
+	pclient = p_new(pool, struct program_client_local, 1);
 	program_client_init(&pclient->client, pool, bin_path, args, set);
 	pclient->client.connect = program_client_local_connect;
 	pclient->client.close_output = program_client_local_close_output;
