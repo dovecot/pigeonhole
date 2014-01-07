@@ -32,7 +32,7 @@ struct sieve_script_vfuncs {
 	int (*binary_save)
 		(struct sieve_script *script, struct sieve_binary *sbin,
 			bool update, enum sieve_error *error_r);
-	const char *(*binary_get_directory)
+	const char *(*binary_get_prefix)
 		(struct sieve_script *script);
 
 	int (*get_size)
@@ -88,6 +88,7 @@ struct sieve_file_script {
 	const char *dirpath;
 	const char *filename;
 	const char *binpath;
+	const char *binprefix;
 
 	int fd;
 };

@@ -542,18 +542,18 @@ int sieve_script_binary_save
 	return script->v.binary_save(script, sbin, update, error_r);
 }
 
-const char *sieve_script_binary_get_directory
+const char *sieve_script_binary_get_prefix
 (struct sieve_script *script)
 {
 	if ( script->bin_dir != NULL &&
 		sieve_script_setup_bindir(script, 0700) >= 0 ) {
-		return script->bin_dir;
+		return t_strconcat(script->bin_dir, "/", script->name, NULL);
 	}
 
-	if ( script->v.binary_get_directory == NULL )
+	if ( script->v.binary_get_prefix == NULL )
 		return NULL;
 
-	return script->v.binary_get_directory(script);
+	return script->v.binary_get_prefix(script);
 }
 
 int sieve_script_setup_bindir

@@ -122,7 +122,7 @@ static int sieve_file_script_open
 	struct sieve_error_handler *ehandler = _script->ehandler;
 	pool_t pool = _script->pool;
 	const char *name = _script->name;
-	const char *filename, *dirpath, *basename, *binpath;
+	const char *filename, *dirpath, *basename, *binpath, *binprefix;
 	struct stat st;
 	struct stat lnk_st;
 	bool success = TRUE;
@@ -220,10 +220,15 @@ static int sieve_file_script_open
 			if ( _script->bin_dir != NULL ) {
 				binpath = sieve_binfile_from_name(name);
 				binpath = t_strconcat(_script->bin_dir, "/", binpath, NULL);
+				binprefix = t_strconcat(_script->bin_dir, "/", name, NULL);
 			} else {
 				binpath = sieve_binfile_from_name(basename);
-				if ( *dirpath != '\0' )
+				if ( *dirpath != '\0' ) {
 					binpath = t_strconcat(dirpath, "/", binpath, NULL);
+					binprefix = t_strconcat(dirpath, "/", basename, NULL);
+				} else {
+					binprefix = basename;
+				}
 			}
 
 			script->st = st;
@@ -232,6 +237,7 @@ static int sieve_file_script_open
 			script->filename = p_strdup(pool, filename);
 			script->dirpath = p_strdup(pool, dirpath);
 			script->binpath = p_strdup(pool, binpath);
+			script->binprefix = p_strdup(pool, binprefix);
 
 			if ( script->script.name == NULL ||
 				strcmp(script->script.name, basename) == 0 )
@@ -354,12 +360,12 @@ static int sieve_file_script_binary_save
 		script->st.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO), error_r);
 }
 
-static const char *sieve_file_script_binary_get_directory
+static const char *sieve_file_script_binary_get_prefix
 (struct sieve_script *_script)
 {
 	struct sieve_file_script *script = (struct sieve_file_script *)_script;
 	
-	return script->	dirpath;
+	return script->	binprefix;
 }
 
 const struct sieve_script sieve_file_script = {
@@ -376,7 +382,7 @@ const struct sieve_script sieve_file_script = {
 		NULL,
 		sieve_file_script_binary_load,
 		sieve_file_script_binary_save,
-		sieve_file_script_binary_get_directory,
+		sieve_file_script_binary_get_prefix,
 
 		sieve_file_script_get_size,
 

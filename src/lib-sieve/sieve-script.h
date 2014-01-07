@@ -68,7 +68,7 @@ int sieve_script_binary_save
 	(struct sieve_script *script, struct sieve_binary *sbin, bool update,
 		enum sieve_error *error_r);
 
-const char *sieve_script_binary_get_directory
+const char *sieve_script_binary_get_prefix
 	(struct sieve_script *script);
 
 /*
