@@ -627,7 +627,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	user_location = lda_sieve_get_personal_location(svinst, mdctx->dest_user);
 	if ( user_location != NULL ) {
 		srctx->user_script = sieve_script_create_open_as
-			(svinst, user_location, "main script", master_ehandler, &error);
+			(svinst, user_location, "main_script", master_ehandler, &error);
 
 		if ( srctx->user_script == NULL ) {
 			switch ( error ) {
