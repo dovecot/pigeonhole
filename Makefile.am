@@ -12,6 +12,9 @@ EXTRA_DIST = \
 	COPYING.LGPL \
 	ChangeLog
 
+dist-hook:
+	rm -rf `find $(distdir)/tests -type f -name '*.svbin'`
+
 pkginc_libdir=$(dovecot_pkgincludedir)/sieve
 nodist_pkginc_lib_HEADERS = pigeonhole-config.h
 
