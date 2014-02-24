@@ -226,7 +226,12 @@ static int program_client_local_disconnect
 	time_t runtime, timeout = 0;
 	int status;
 	
-	i_assert( pid >= 0 );
+	if ( pid < 0 ) {
+		/* program never started */
+		pclient->exit_code = 0;
+		return 0;
+	}
+
 	slclient->pid = -1;
 
 	/* Calculate timeout */
