@@ -21,6 +21,7 @@ SUBDIRS = \
 	spamvirustest \
 	ihave \
 	editheader \
+	duplicate \
 	vnd.dovecot \
 	$(UNFINISHED)
 

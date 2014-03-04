@@ -1,3 +1,2 @@
-SUBDIRS = debug duplicate
-
+SUBDIRS = debug
 

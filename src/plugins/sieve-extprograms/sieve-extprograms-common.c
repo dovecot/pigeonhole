@@ -96,9 +96,9 @@ struct sieve_extprograms_config *sieve_extprograms_config_init
 		}
 	}
 
-	if ( sieve_extension_is(ext, pipe_extension) ) 
+	if ( sieve_extension_is(ext, vnd_pipe_extension) ) 
 		ext_config->copy_ext = sieve_ext_copy_get_extension(ext->svinst);
-	if ( sieve_extension_is(ext, execute_extension) ) 
+	if ( sieve_extension_is(ext, vnd_execute_extension) ) 
 		ext_config->var_ext = sieve_ext_variables_get_extension(ext->svinst);
 	return ext_config;
 }

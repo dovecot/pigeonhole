@@ -99,12 +99,11 @@ extern const struct sieve_extension_def spamtestplus_extension;
 extern const struct sieve_extension_def virustest_extension;
 extern const struct sieve_extension_def ihave_extension;
 extern const struct sieve_extension_def editheader_extension;
-extern const struct sieve_extension_def mboxmetadata_extension;
-extern const struct sieve_extension_def servermetadata_extension;
+extern const struct sieve_extension_def duplicate_extension;
 
 /* vnd.dovecot. */
-extern const struct sieve_extension_def debug_extension;
-extern const struct sieve_extension_def duplicate_extension;
+extern const struct sieve_extension_def vnd_debug_extension;
+extern const struct sieve_extension_def vnd_duplicate_extension;
 
 /*
  * List of native extensions
@@ -131,7 +130,7 @@ const struct sieve_extension_def *sieve_core_extensions[] = {
 	&relational_extension, &regex_extension, &imap4flags_extension,
 	&copy_extension, &include_extension, &body_extension,
 	&variables_extension, &enotify_extension, &environment_extension,
-	&mailbox_extension, &date_extension, &ihave_extension,
+	&mailbox_extension, &date_extension, &ihave_extension, &duplicate_extension
 };
 
 const unsigned int sieve_core_extensions_count =
@@ -147,7 +146,7 @@ const struct sieve_extension_def *sieve_extra_extensions[] = {
 	&virustest_extension, &editheader_extension,
 
 	/* vnd.dovecot. */
-	&debug_extension, &duplicate_extension
+	&vnd_debug_extension
 };
 
 const unsigned int sieve_extra_extensions_count =
@@ -162,7 +161,8 @@ extern const struct sieve_extension_def notify_extension;
 
 const struct sieve_extension_def *sieve_deprecated_extensions[] = {
 	&imapflags_extension,
-	&notify_extension
+	&notify_extension,
+	&vnd_duplicate_extension
 };
 
 const unsigned int sieve_deprecated_extensions_count =
@@ -175,6 +175,8 @@ const unsigned int sieve_deprecated_extensions_count =
 #ifdef HAVE_SIEVE_UNFINISHED
 
 extern const struct sieve_extension_def ereject_extension;
+extern const struct sieve_extension_def mboxmetadata_extension;
+extern const struct sieve_extension_def servermetadata_extension;
 
 const struct sieve_extension_def *sieve_unfinished_extensions[] = {
 	&ereject_extension, &mboxmetadata_extension, &servermetadata_extension
@@ -696,7 +698,7 @@ const struct sieve_extension *sieve_get_address_part_extension
 
 void sieve_enable_debug_extension(struct sieve_instance *svinst)
 {
-	(void) sieve_extension_register(svinst, &debug_extension, TRUE);
+	(void) sieve_extension_register(svinst, &vnd_debug_extension, TRUE);
 }
 
 /*

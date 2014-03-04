@@ -17,10 +17,10 @@
 /* Duplicate test
  *
  * Syntax:
- *   Usage: "duplicate" [":seconds" <timeout: number>]
+ *   Usage: "duplicate" [":handle" <handle: string>]
  *                      [":header" <header-name: string> /
- *                          ":value" <value: string>]
- *                      [":handle" <handle: string>]
+ *                          ":uniqueid" <value: string>]
+ *                      [":seconds" <timeout: number>] [":last"]
  */
 
 static bool tst_duplicate_registered
@@ -64,8 +64,15 @@ static const struct sieve_argument_def duplicate_header_tag = {
 	NULL, NULL, NULL
 };
 
+static const struct sieve_argument_def duplicate_uniqueid_tag = {
+	"uniqueid",
+	NULL,
+	tst_duplicate_validate_string_tag,
+	NULL, NULL, NULL
+};
+
 static const struct sieve_argument_def duplicate_value_tag = {
-	"value",
+	"value", /* vnd.dovecot.duplicate (deprecated) */
 	NULL,
 	tst_duplicate_validate_string_tag,
 	NULL, NULL, NULL
@@ -78,13 +85,19 @@ static const struct sieve_argument_def duplicate_handle_tag = {
 	NULL, NULL, NULL
 };
 
+static const struct sieve_argument_def duplicate_last_tag = {
+	"last",
+	NULL, NULL,	NULL, NULL, NULL
+};
+
 /* Codes for optional arguments */
 
 enum tst_duplicate_optional {
 	OPT_END,
 	OPT_SECONDS,
 	OPT_HEADER,
-	OPT_VALUE,
+	OPT_UNIQUEID,
+	OPT_LAST,
 	OPT_HANDLE
 };
 
@@ -143,7 +156,6 @@ static bool tst_duplicate_validate_number_tag
 
 	/* Skip parameter */
 	*arg = sieve_ast_argument_next(*arg);
-
 	return TRUE;
 }
 
@@ -151,6 +163,7 @@ static bool tst_duplicate_validate_string_tag
 (struct sieve_validator *valdtr, struct sieve_ast_argument **arg,
 	struct sieve_command *cmd)
 {
+	const struct sieve_extension *ext = cmd->ext;
 	struct sieve_ast_argument *tag = *arg;
 
 	/* Detach the tag itself */
@@ -166,19 +179,31 @@ static bool tst_duplicate_validate_string_tag
 		return FALSE;
 	}
 
-	if ((bool)cmd->data == TRUE) {
+	if ( (bool)cmd->data ) {
 		sieve_argument_validate_error(valdtr, *arg,
-			"conflicting :header and :value arguments specified "
-			"for the duplicate test");
-		return TRUE;
+			"conflicting :header and %s arguments specified "
+			"for the duplicate test",
+			(sieve_extension_is(ext, duplicate_extension) ? ":uniqueid" : ":value"));
+		return FALSE;
 	}
 
+	/* :header <header-name: string> */
 	if ( sieve_argument_is(tag, duplicate_header_tag) ) {
 		if ( !sieve_command_verify_headers_argument(valdtr, *arg) )
 			return FALSE;
-		cmd->data = (void*)TRUE;
+		cmd->data = (void *)TRUE;
+	/* :handle <handle: string> */
+	} else if ( sieve_argument_is(tag, duplicate_handle_tag) ) {
+		/* nothing to be done */
+	} else if ( sieve_argument_is(tag, duplicate_uniqueid_tag) ) {
+		i_assert(sieve_extension_is(ext, duplicate_extension));
+		cmd->data = (void *)TRUE;
+	/* :value <value: string> (vnd.dovecot.duplicate) */
 	} else if ( sieve_argument_is(tag, duplicate_value_tag) ) {
-		cmd->data = (void*)TRUE;
+		i_assert(sieve_extension_is(ext, vnd_duplicate_extension));
+		cmd->data = (void *)TRUE;
+	} else {
+		i_unreached();
 	}
 
 	/* Skip parameter */
@@ -197,9 +222,16 @@ static bool tst_duplicate_registered
 	sieve_validator_register_tag
 		(valdtr, cmd_reg, ext, &duplicate_seconds_tag, OPT_SECONDS);
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, ext, &duplicate_header_tag, OPT_HEADER);
+		(valdtr, cmd_reg, ext, &duplicate_last_tag, OPT_LAST);
 	sieve_validator_register_tag
-		(valdtr, cmd_reg, ext, &duplicate_value_tag, OPT_VALUE);
+		(valdtr, cmd_reg, ext, &duplicate_header_tag, OPT_HEADER);
+	if ( sieve_extension_is(ext, duplicate_extension) ) {
+		sieve_validator_register_tag
+			(valdtr, cmd_reg, ext, &duplicate_uniqueid_tag, OPT_UNIQUEID);
+	} else {
+		sieve_validator_register_tag
+			(valdtr, cmd_reg, ext, &duplicate_value_tag, OPT_UNIQUEID);
+	}
 	sieve_validator_register_tag
 		(valdtr, cmd_reg, ext, &duplicate_handle_tag, OPT_HANDLE);
 	return TRUE;
@@ -227,6 +259,7 @@ static bool tst_duplicate_generate
 static bool tst_duplicate_operation_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
+	const struct sieve_extension *ext = denv->oprtn->ext;
 	int opt_code = 0;
 
 	sieve_code_dumpf(denv, "DUPLICATE");
@@ -247,11 +280,17 @@ static bool tst_duplicate_operation_dump
 		case OPT_SECONDS:
 			opok = sieve_opr_number_dump(denv, address, "seconds");
 			break;
+		case OPT_LAST:
+			sieve_code_dumpf(denv, "last");
+			break;
 		case OPT_HEADER:
 			opok = sieve_opr_string_dump(denv, address, "header");
 			break;
-		case OPT_VALUE:
-			opok = sieve_opr_string_dump(denv, address, "value");
+		case OPT_UNIQUEID:
+			if ( sieve_extension_is(ext, duplicate_extension) )
+				opok = sieve_opr_string_dump(denv, address, "uniqueid");
+			else
+				opok = sieve_opr_string_dump(denv, address, "value");
 			break;
 		case OPT_HANDLE:
 			opok = sieve_opr_string_dump(denv, address, "handle");
@@ -277,11 +316,11 @@ static int tst_duplicate_operation_execute
 	const struct ext_duplicate_config *config =
 		(const struct ext_duplicate_config *) ext->context;
 	int opt_code = 0;
-	string_t *handle = NULL, *header = NULL, *value = NULL;
+	string_t *handle = NULL, *header = NULL, *uniqueid = NULL;
 	const char *val = NULL;
 	size_t val_len = 0;
 	sieve_number_t seconds = config->default_period;
-	bool duplicate = FALSE;
+	bool last = FALSE, duplicate = FALSE;
 	int ret;
 
 	/*
@@ -302,11 +341,18 @@ static int tst_duplicate_operation_execute
 		case OPT_SECONDS:
 			ret = sieve_opr_number_read(renv, address, "seconds", &seconds);
 			break;
+		case OPT_LAST:
+			last = TRUE;
+			ret = SIEVE_EXEC_OK;
+			break;
 		case OPT_HEADER:
 			ret = sieve_opr_string_read(renv, address, "header", &header);
 			break;
-		case OPT_VALUE:
-			ret = sieve_opr_string_read(renv, address, "value", &value);
+		case OPT_UNIQUEID:
+			if ( sieve_extension_is(ext, duplicate_extension) )
+				ret = sieve_opr_string_read(renv, address, "uniqueid", &uniqueid);
+			else
+				ret = sieve_opr_string_read(renv, address, "value", &uniqueid);
 			break;
 		case OPT_HANDLE:
 			ret = sieve_opr_string_read(renv, address, "handle", &handle);
@@ -328,22 +374,28 @@ static int tst_duplicate_operation_execute
 	sieve_runtime_trace_descend(renv);
 
 	/* Get value */
-	if (header != NULL) {
-		if (mail_get_first_header(renv->msgdata->mail, str_c(header), &val) > 0)
+	if ( uniqueid != NULL ) {
+		val = str_c(uniqueid);
+		val_len = str_len(uniqueid);
+	} else {
+		if ( header == NULL ) {
+			ret = mail_get_first_header_utf8
+				(renv->msgdata->mail, "Message-ID", &val);
+		} else {
+			ret = mail_get_first_header_utf8
+				(renv->msgdata->mail, str_c(header), &val);
+		}
+			
+		if ( ret > 0 )
 			val_len = strlen(val);
-	} else if (value != NULL) {
-		val = str_c(value);
-		val_len = str_len(value);
-	} else if (renv->msgdata->id != NULL) {
-		val = renv->msgdata->id;
-		val_len = strlen(renv->msgdata->id);
 	}
 
 	/* Check duplicate */
 	if (val == NULL) {
 		duplicate = FALSE;
 	} else {	
-		if ((ret=ext_duplicate_check(renv, handle, val, val_len, seconds)) < 0)
+		if ((ret=ext_duplicate_check
+			(renv, handle, val, val_len, seconds, last)) < 0)
 			return SIEVE_EXEC_FAILURE;
 		duplicate = ( ret > 0 );
 	}

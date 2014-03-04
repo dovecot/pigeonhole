@@ -68,8 +68,8 @@ plugins = \
 	$(extdir)/spamvirustest/libsieve_ext_spamvirustest.la \
 	$(extdir)/ihave/libsieve_ext_ihave.la \
 	$(extdir)/editheader/libsieve_ext_editheader.la \
+	$(extdir)/duplicate/libsieve_ext_duplicate.la \
 	$(extdir)/vnd.dovecot/debug/libsieve_ext_debug.la \
-	$(extdir)/vnd.dovecot/duplicate/libsieve_ext_duplicate.la \
 	$(unfinished_plugins)
 
 libdovecot_sieve_la_DEPENDENCIES = \

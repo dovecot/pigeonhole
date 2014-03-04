@@ -122,9 +122,9 @@ src/lib-sieve/plugins/spamvirustest/Makefile
 src/lib-sieve/plugins/ihave/Makefile
 src/lib-sieve/plugins/editheader/Makefile
 src/lib-sieve/plugins/metadata/Makefile
+src/lib-sieve/plugins/duplicate/Makefile
 src/lib-sieve/plugins/vnd.dovecot/Makefile
 src/lib-sieve/plugins/vnd.dovecot/debug/Makefile
-src/lib-sieve/plugins/vnd.dovecot/duplicate/Makefile
 src/lib-sieve-tool/Makefile
 src/lib-sievestorage/Makefile
 src/lib-managesieve/Makefile

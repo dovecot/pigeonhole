@@ -72,6 +72,7 @@ struct act_duplicate_mark_data {
 	const char *handle;
 	unsigned int period;
 	unsigned char hash[MD5_RESULTLEN];
+	unsigned int last:1;
 };
 
 static void act_duplicate_mark_print
@@ -97,15 +98,18 @@ static void act_duplicate_mark_print
 {
 	struct act_duplicate_mark_data *data =
 		(struct act_duplicate_mark_data *) action->context;
+	const char *last = (data->last ? " last" : "");
 
 	if (data->handle != NULL) {
-		sieve_result_action_printf(rpenv, "track duplicate with handle: %s",
-			str_sanitize(data->handle, 128));
+		sieve_result_action_printf(rpenv, "track%s duplicate with handle: %s",
+			last, str_sanitize(data->handle, 128));
 	} else {
-		sieve_result_action_printf(rpenv, "track duplicate");		
+		sieve_result_action_printf(rpenv, "track%s duplicate", last);
 	}
 }
 
+// FIXME: at commit phase the sieve script is still not guaranteed to finish
+//         successfully. We need a new final stage in Sieve result execution.
 static int act_duplicate_mark_commit
 (const struct sieve_action *action,
 	const struct sieve_action_exec_env *aenv,
@@ -131,6 +135,7 @@ static int act_duplicate_mark_commit
 
 struct ext_duplicate_handle {
 	const char *handle;
+	unsigned int last:1;
 	unsigned int duplicate:1;
 };
 
@@ -141,18 +146,40 @@ struct ext_duplicate_context {
 	unsigned int nohandle_checked:1;
 };
 
+static void ext_duplicate_hash
+(string_t *handle, const char *value, size_t value_len, bool last,
+	unsigned char hash_r[])
+{
+	static const char *id = "sieve duplicate";
+	struct md5_context md5ctx;
+
+	md5_init(&md5ctx);
+	md5_update(&md5ctx, id, strlen(id));
+	if (last)
+		md5_update(&md5ctx, "0", 1);
+	else
+		md5_update(&md5ctx, "+", 1);
+	if (handle != NULL) {
+		md5_update(&md5ctx, "h-", 2);
+		md5_update(&md5ctx, str_c(handle), str_len(handle));
+	} else {
+		md5_update(&md5ctx, "default", 7);
+	}
+	md5_update(&md5ctx, value, value_len);
+	md5_final(&md5ctx, hash_r);
+}
+
 int ext_duplicate_check
 (const struct sieve_runtime_env *renv, string_t *handle,
-	const char *value, size_t value_len, sieve_number_t period)
+	const char *value, size_t value_len, sieve_number_t period,
+	bool last)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	const struct sieve_script_env *senv = renv->scriptenv;
 	struct ext_duplicate_context *rctx;
 	bool duplicate = FALSE;
 	pool_t msg_pool = NULL, result_pool = NULL;
-	static const char *id = "sieve duplicate";
 	struct act_duplicate_mark_data *act;
-	struct md5_context ctx;
 
 	if ( !sieve_action_duplicate_check_available(senv) || value == NULL )
 		return 0;
@@ -175,7 +202,8 @@ int ext_duplicate_check
 		} else if ( array_is_created(&rctx->handles) ) {
 			const struct ext_duplicate_handle *record;
 			array_foreach (&rctx->handles, record) {
-				if ( strcmp(record->handle, str_c(handle)) == 0 )
+				if ( strcmp(record->handle, str_c(handle)) == 0 &&
+					record->last == last )
 					return ( record->duplicate ? 1 : 0 );
 			}
 		}
@@ -186,29 +214,31 @@ int ext_duplicate_check
 	if (handle != NULL)
 		act->handle = p_strdup(result_pool, str_c(handle));
 	act->period = period;
+	act->last = last;
 
 	/* Create hash */
-	md5_init(&ctx);
-	md5_update(&ctx, id, strlen(id));
-	if (handle != NULL) {
-		md5_update(&ctx, "h-", 2);
-		md5_update(&ctx, str_c(handle), str_len(handle));
-	} else {
-		md5_update(&ctx, "default", 7);
-	}
-	md5_update(&ctx, value, value_len);
-	md5_final(&ctx, act->hash);
+	ext_duplicate_hash(handle, value, value_len, last, act->hash);
 
 	/* Check duplicate */
 	duplicate = sieve_action_duplicate_check(senv, act->hash, sizeof(act->hash));
+
+	if (!duplicate && last) {
+		unsigned char no_last_hash[MD5_RESULTLEN];
+
+		/* Check for entry without :last */
+		ext_duplicate_hash(handle, value, value_len, FALSE, no_last_hash);
+		sieve_action_duplicate_check(senv, no_last_hash, sizeof(no_last_hash));
+	}
 
 	/* We may only mark the message as duplicate when Sieve script executes
 	 * successfully; therefore defer this operation until successful result
 	 * execution.
 	 */
-	if ( sieve_result_add_action
-		(renv, NULL, &act_duplicate_mark, NULL, (void *) act, 0, FALSE) < 0 )
-		return -1;
+	if (!duplicate || last) {
+		if ( sieve_result_add_action
+			(renv, NULL, &act_duplicate_mark, NULL, (void *) act, 0, FALSE) < 0 )
+			return -1;
+	}
 
 	/* Cache result */
 	if ( handle == NULL ) {
@@ -223,6 +253,7 @@ int ext_duplicate_check
 			p_array_init(&rctx->handles, msg_pool, 64);
 		record = array_append_space(&rctx->handles);
 		record->handle = p_strdup(msg_pool, str_c(handle));
+		record->last = last;
 		record->duplicate = duplicate;
 	}
 

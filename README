@@ -120,6 +120,7 @@ following list outlines the implementation status of each supported extension:
     mailbox (RFC 5490; Section 3): fully supported (v0.1.10+), but ACL
         permissions are not verified for mailboxexists.
     include (RFC 6609): fully supported (v0.4.0+)
+    duplicate (draft v03): fully supported (v0.4.3+).
     regex (draft v08; not latest version): almost fully supported, but
         UTF-8 is not supported.
 
@@ -135,9 +136,6 @@ following list outlines the implementation status of each supported extension:
 
     vnd.dovecot.debug (v0.3.0+):
         Allows logging debug messages
-    vnd.dovecot.duplicate (v0.3.1+):
-        Allows detecting duplicate message deliveries based on message ID and
-        other criteria.
     vnd.dovecot.pipe (v0.4.0+; sieve_extprograms plugin):
         Implements piping messages to a pre-defined set of external programs
     vnd.dovecot.filter (v0.4.0+; sieve_extprograms plugin):

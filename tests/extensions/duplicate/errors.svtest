@@ -1,0 +1,54 @@
+require "vnd.dovecot.testsuite";
+
+require "relational";
+require "comparator-i;ascii-numeric";
+
+/*
+ * Invalid syntax
+ */
+
+test "Invalid Syntax" {
+        if test_script_compile "errors/syntax.sieve" {
+                test_fail "compile should have failed";
+        }
+
+        if not test_error :count "eq" :comparator "i;ascii-numeric" "17" {
+                test_fail "wrong number of errors reported";
+        }
+}
+
+test "Invalid Syntax (vnd)" {
+        if test_script_compile "errors/syntax-vnd.sieve" {
+                test_fail "compile should have failed";
+        }
+
+        if not test_error :count "eq" :comparator "i;ascii-numeric" "5" {
+                test_fail "wrong number of errors reported";
+        }
+}
+
+/*
+ * Extension conflict
+ */
+
+test "Extension conflict" {
+        if test_script_compile "errors/conflict.sieve" {
+                test_fail "compile should have failed";
+        }
+
+        if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+                test_fail "wrong number of errors reported";
+        }
+}
+
+test "Extension conflict (vnd first)" {
+        if test_script_compile "errors/conflict-vnd.sieve" {
+                test_fail "compile should have failed";
+        }
+
+        if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
+                test_fail "wrong number of errors reported";
+        }
+}
+
+

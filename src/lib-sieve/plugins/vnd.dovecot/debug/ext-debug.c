@@ -39,7 +39,7 @@ static bool ext_debug_interpreter_load
 		const struct sieve_runtime_env *renv, sieve_size_t *address ATTR_UNUSED);
 
 
-const struct sieve_extension_def debug_extension = {
+const struct sieve_extension_def vnd_debug_extension = {
 	.name = "vnd.dovecot.debug",
 	.validator_load = ext_debug_validator_load,
 	.interpreter_load = ext_debug_interpreter_load,

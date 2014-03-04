@@ -33,7 +33,7 @@ static void ext_execute_unload(const struct sieve_extension *ext);
 static bool ext_execute_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 	
-const struct sieve_extension_def execute_extension = { 
+const struct sieve_extension_def vnd_execute_extension = { 
 	.name = "vnd.dovecot.execute",
 	.load = ext_execute_load,
 	.unload = ext_execute_unload,

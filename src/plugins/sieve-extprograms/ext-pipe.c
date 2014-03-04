@@ -33,7 +33,7 @@ static void ext_pipe_unload(const struct sieve_extension *ext);
 static bool ext_pipe_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 	
-const struct sieve_extension_def pipe_extension = { 
+const struct sieve_extension_def vnd_pipe_extension = { 
 	.name = "vnd.dovecot.pipe",
 	.load = ext_pipe_load,
 	.unload = ext_pipe_unload,
@@ -75,7 +75,7 @@ static bool ext_pipe_validator_extension_validate
 		void *context, struct sieve_ast_argument *require_arg);
 
 const struct sieve_validator_extension pipe_validator_extension = {
-	&pipe_extension,
+	&vnd_pipe_extension,
 	ext_pipe_validator_extension_validate,
 	NULL
 };

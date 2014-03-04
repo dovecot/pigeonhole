@@ -33,7 +33,7 @@ static void ext_filter_unload(const struct sieve_extension *ext);
 static bool ext_filter_validator_load
 	(const struct sieve_extension *ext, struct sieve_validator *valdtr);
 	
-const struct sieve_extension_def filter_extension = { 
+const struct sieve_extension_def vnd_filter_extension = { 
 	.name = "vnd.dovecot.filter",
 	.load = ext_filter_load,
 	.unload = ext_filter_unload,

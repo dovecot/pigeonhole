@@ -67,7 +67,7 @@ static int cmd_pipe_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def cmd_pipe_operation = { 
-	"PIPE", &pipe_extension, 0,
+	"PIPE", &vnd_pipe_extension, 0,
 	cmd_pipe_operation_dump, 
 	cmd_pipe_operation_execute
 };

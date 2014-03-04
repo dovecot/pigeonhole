@@ -1,0 +1,41 @@
+require "vnd.dovecot.testsuite";
+require "duplicate";
+
+# Simple execution tests; no duplicate verification can be tested yet.
+test "Run" {
+	if duplicate {
+		test_fail "test erroneously reported a duplicate";
+	}
+
+	if duplicate :handle "handle" {
+		test_fail "test with :handle erroneously reported a duplicate";
+	}
+
+	if duplicate {
+		test_fail "test erroneously reported a duplicate";
+	}
+
+	if duplicate :handle "handle" {
+		test_fail "test with :handle erroneously reported a duplicate";
+	}
+
+	if duplicate :header "X-frop" {
+		test_fail "test with :header erroneously reported a duplicate";
+	}
+
+	if duplicate :uniqueid "FROP!" {
+		test_fail "test with :uniqueid erroneously reported a duplicate";
+	}
+
+	if duplicate :seconds 90 {
+		test_fail "test with :seconds erroneously reported a duplicate";
+	}
+
+	if duplicate :seconds 90 :last {
+		test_fail "test with :seconds :last erroneously reported a duplicate";
+	}
+
+	if duplicate :last {
+		test_fail "test with :seconds :last erroneously reported a duplicate";
+	}
+}

@@ -24,11 +24,11 @@ void sieve_extprograms_plugin_load
 	struct _plugin_context *pctx = i_new(struct _plugin_context, 1);
 
 	pctx->ext_pipe = sieve_extension_register
-		(svinst, &pipe_extension, FALSE);
+		(svinst, &vnd_pipe_extension, FALSE);
 	pctx->ext_filter = sieve_extension_register
-		(svinst, &filter_extension, FALSE);
+		(svinst, &vnd_filter_extension, FALSE);
 	pctx->ext_execute = sieve_extension_register
-		(svinst, &execute_extension, FALSE);
+		(svinst, &vnd_execute_extension, FALSE);
 
 	if ( svinst->debug ) {
 		sieve_sys_debug(svinst, "Sieve Extprograms plugin for %s version %s loaded",

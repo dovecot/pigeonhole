@@ -29,9 +29,9 @@ void sieve_extprograms_config_deinit
  * Extensions
  */
 
-extern const struct sieve_extension_def pipe_extension;
-extern const struct sieve_extension_def filter_extension;
-extern const struct sieve_extension_def execute_extension;
+extern const struct sieve_extension_def vnd_pipe_extension;
+extern const struct sieve_extension_def vnd_filter_extension;
+extern const struct sieve_extension_def vnd_execute_extension;
 
 /* 
  * Commands 

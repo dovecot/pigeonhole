@@ -21,6 +21,7 @@ void ext_duplicate_unload
 	(const struct sieve_extension *ext);
 
 extern const struct sieve_extension_def duplicate_extension;
+extern const struct sieve_extension_def vnd_duplicate_extension;
 
 /*
  * Tests
@@ -40,6 +41,6 @@ extern const struct sieve_operation_def tst_duplicate_operation;
 
 int ext_duplicate_check
 	(const struct sieve_runtime_env *renv, string_t *handle,
-		const char *value, size_t value_len, sieve_number_t period);
+		const char *value, size_t value_len, sieve_number_t period, bool last);
 
 #endif /* EXT_DUPLICATE_COMMON_H */

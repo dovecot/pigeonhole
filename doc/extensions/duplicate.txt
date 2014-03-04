@@ -1,0 +1,47 @@
+Duplicate Extension
+
+Relevant specifications
+=======================
+
+	doc/rfc/draft-ietf-appsawg-sieve-duplicate-03.txt
+
+Description
+===========
+
+The duplicate extension augments the Sieve filtering implementation with a test
+to verify whether the evaluated string value was seen before in an earlier
+execution of the Sieve script. The main application for this new test is 
+detecting and handling duplicate message deliveries, e.g. as caused by
+mailinglists when people reply both to the mailinglist and the user directly.
+
+Refer to doc/rfc/draft-ietf-appsawg-sieve-duplicate-03.txt for a specification
+of the Sieve language extension. Previously, this extension was Dovecot-specific
+and available under the name "vnd.dovecot.duplicate". That implementation
+differs significantly from what is now published as an internet draft, but
+for backwards compatibility the original extension is still supported.
+
+Configuration
+=============
+
+The "duplicate" extension is not enabled by default. 
+
+The following configuration settings are used:
+
+sieve_duplicate_default_period = 14d
+sieve_duplicate_max_period = 7d
+  These options respectively specify the default and the maximum value for the
+  period after which tracked values are purged from the duplicate tracking
+  database. The period is specified in s(econds), unless followed by a d(ay),
+  h(our) or m(inute) specifier character.
+
+Example
+=======
+
+plugin {
+  sieve = ~/.dovecot.sieve
+
+  sieve_extensions = +vnd.dovecot.duplicate
+
+  sieve_duplicate_default_period = 1h
+	sieve_duplicate_max_period = 1d
+}d

@@ -8,7 +8,7 @@
  * Extensions
  */
 
-extern const struct sieve_extension_def debug_extension;
+extern const struct sieve_extension_def vnd_debug_extension;
 
 /*
  * Commands

@@ -50,7 +50,7 @@ static int cmd_debug_log_operation_execute
 
 const struct sieve_operation_def debug_log_operation = {
 	"debug_log",
-	&debug_extension,
+	&vnd_debug_extension,
 	0,
 	cmd_debug_log_operation_dump,
 	cmd_debug_log_operation_execute
