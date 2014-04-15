@@ -479,9 +479,9 @@ static int act_store_execute
 		(struct act_store_transaction *) tr_context;
 	struct mail *mail =	( action->mail != NULL ?
 		action->mail : aenv->msgdata->mail );
-	struct mail *real_mail = mail_get_real_mail(mail);
 	struct mail_save_context *save_ctx;
 	struct mail_keywords *keywords = NULL;
+	bool backends_equal = FALSE;
 	int status = SIEVE_EXEC_OK;
 
 	/* Verify transaction */
@@ -504,12 +504,22 @@ static int act_store_execute
 		return SIEVE_EXEC_FAILURE;
 	}
 
+
 	/* If the message originates from the target mailbox, only update the flags
 	 * and keywords (if not read-only)
 	 */
-	if ( mailbox_backends_equal(trans->box, mail->box) ||
-		(real_mail != mail && mailbox_backends_equal(trans->box, real_mail->box)) )
-		{
+	if ( mailbox_backends_equal(trans->box, mail->box) ) {
+		backends_equal = TRUE;
+	} else {
+		struct mail *real_mail;
+
+		if ( mail_get_backend_mail(mail, &real_mail) < 0 )
+			return SIEVE_EXEC_FAILURE;
+		if ( real_mail != mail &&
+			mailbox_backends_equal(trans->box, real_mail->box) )
+			backends_equal = TRUE;
+	}
+	if (backends_equal) {
 		trans->redundant = TRUE;
 
 		if ( trans->flags_altered && !mailbox_is_readonly(mail->box) ) {
