@@ -77,20 +77,27 @@ void sieve_direct_verror
 	unsigned int flags, const char *location, const char *fmt, va_list args)
 {
 	if ( (flags & SIEVE_ERROR_FLAG_GLOBAL) != 0 &&
-		(ehandler == NULL || ehandler->parent == NULL) &&
-		svinst->system_ehandler != ehandler &&
-		svinst->system_ehandler->verror != NULL ) {
-		va_list args_copy;
+		(ehandler == NULL || ehandler->parent == NULL)) {
+		if (svinst->system_ehandler != ehandler ||
+			(flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0) {
+			va_list args_copy;
 
-		VA_COPY(args_copy, args);
+			VA_COPY(args_copy, args);
 
-		if ( (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0 ) {
-			svinst->system_ehandler->vinfo
-				(svinst->system_ehandler, 0, location, fmt, args_copy);
-		} else {
-			svinst->system_ehandler->verror
-				(svinst->system_ehandler, 0, location, fmt, args_copy);
+			if ( (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0 ) {
+				if (svinst->system_ehandler->vinfo != NULL ) {
+					svinst->system_ehandler->vinfo
+						(svinst->system_ehandler, 0, location, fmt, args_copy);
+				}
+			} else {
+				if ( svinst->system_ehandler->verror != NULL ) {
+					svinst->system_ehandler->verror
+						(svinst->system_ehandler, 0, location, fmt, args_copy);
+				}
+			}
 		}
+		if (svinst->system_ehandler == ehandler)
+			return;
 	}
 
 	if ( ehandler == NULL )
@@ -110,20 +117,27 @@ void sieve_direct_vwarning
 	unsigned int flags, const char *location, const char *fmt, va_list args)
 {
 	if ( (flags & SIEVE_ERROR_FLAG_GLOBAL) != 0 &&
-		(ehandler == NULL || ehandler->parent == NULL) &&
-		svinst->system_ehandler != ehandler &&
-		svinst->system_ehandler->vwarning != NULL ) {
-		va_list args_copy;
+		(ehandler == NULL || ehandler->parent == NULL)) {
+		if (svinst->system_ehandler != ehandler ||
+			(flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0) {
+			va_list args_copy;
 
-		VA_COPY(args_copy, args);
+			VA_COPY(args_copy, args);
 
-		if ( (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0 ) {
-			svinst->system_ehandler->vinfo
-				(svinst->system_ehandler, 0, location, fmt, args_copy);
-		} else {
-			svinst->system_ehandler->vwarning
-				(svinst->system_ehandler, 0, location, fmt, args_copy);
+			if ( (flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0 ) {
+				if (svinst->system_ehandler->vinfo != NULL ) {
+					svinst->system_ehandler->vinfo
+						(svinst->system_ehandler, 0, location, fmt, args_copy);
+				}
+			} else {
+				if ( svinst->system_ehandler->vwarning != NULL ) {
+					svinst->system_ehandler->vwarning
+						(svinst->system_ehandler, 0, location, fmt, args_copy);
+				}
+			}
 		}
+		if (svinst->system_ehandler == ehandler)
+			return;
 	}
 
 	if ( ehandler == NULL )
