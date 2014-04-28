@@ -103,13 +103,14 @@ void *testsuite_smtp_open
 	return (void *) smtp;
 }
 
-bool testsuite_smtp_close
-(const struct sieve_script_env *senv ATTR_UNUSED, void *handle)
+int testsuite_smtp_close
+(const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
+	const char **error_r ATTR_UNUSED)
 {
 	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
 
 	o_stream_unref(&smtp->output);
-	return TRUE;
+	return 1;
 }
 
 /*

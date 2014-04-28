@@ -195,7 +195,10 @@ struct sieve_script_env {
 	void *(*smtp_open)
 		(const struct sieve_script_env *senv, const char *destination,
 			const char *return_path, struct ostream **output_r);
-	bool (*smtp_close)(const struct sieve_script_env *senv, void *handle);
+	/* Returns 1 on success, 0 on permanent failure, -1 on temporary failure. */
+	int (*smtp_close)
+		(const struct sieve_script_env *senv, void *handle,
+			const char **error_r);
 
 	/* Interface for marking and checking duplicates */
 	int (*duplicate_check)
@@ -205,8 +208,8 @@ struct sieve_script_env {
 			time_t time);
 
 	/* Interface for rejecting mail */
-	int (*reject_mail)(const struct sieve_script_env *senv, const char *recipient,
-			const char *reason);
+	int (*reject_mail)(const struct sieve_script_env *senv,
+		const char *recipient, const char *reason);
 
 	/* Execution status record */
 	struct sieve_exec_status *exec_status;

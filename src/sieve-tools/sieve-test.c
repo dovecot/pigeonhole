@@ -69,14 +69,15 @@ static void *sieve_smtp_open
 	return (void*)*output_r;
 }
 
-static bool sieve_smtp_close
-(const struct sieve_script_env *senv ATTR_UNUSED, void *handle ATTR_UNUSED)
+static int sieve_smtp_close
+(const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
+	const char **error_r ATTR_UNUSED)
 {
 	struct ostream *output = (struct ostream *)handle;
 
 	printf("END MESSAGE\n\n");
 	o_stream_unref(&output);
-	return TRUE;
+	return 1;
 }
 
 /*

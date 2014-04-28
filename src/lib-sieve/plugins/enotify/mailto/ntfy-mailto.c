@@ -392,7 +392,8 @@ static bool ntfy_mailto_send
 	struct ostream *output;
 	string_t *msg;
 	unsigned int count, i, hcount, h;
-	const char *outmsgid;
+	const char *outmsgid, *error;
+	int ret;
 
 	/* Get recipients */
 	recipients = array_get(&mtctx->uri->recipients, &count);
@@ -540,15 +541,22 @@ static bool ntfy_mailto_send
 
 		o_stream_send(output, str_data(msg), str_len(msg));
 
-		if ( sieve_smtp_close(senv, smtp_handle) ) {
+		if ( (ret=sieve_smtp_close(senv, smtp_handle, &error)) <= 0 ) {
+			if (ret < 0)  {
+				sieve_enotify_global_log_error(nenv,
+					"failed to send mail notification to <%s>: %s (temporary failure)",
+					str_sanitize(recipients[i].normalized, 256),
+					str_sanitize(error, 512));
+			} else {
+				sieve_enotify_global_error(nenv,
+					"failed to send mail notification to <%s>: %s (permanent failure)",
+					str_sanitize(recipients[i].normalized, 256),
+					str_sanitize(error, 512));
+			}
+		} else {
 			sieve_enotify_global_info(nenv,
 				"sent mail notification to <%s>",
-				str_sanitize(recipients[i].normalized, 80));
-		} else {
-			sieve_enotify_global_error(nenv,
-				"failed to send mail notification to <%s> "
-				"(refer to system log for more information)",
-				str_sanitize(recipients[i].normalized, 80));
+				str_sanitize(recipients[i].normalized, 256));
 		}
 	}
 

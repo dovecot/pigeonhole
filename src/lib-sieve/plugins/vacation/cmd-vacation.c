@@ -905,7 +905,7 @@ static bool act_vacation_send
 	struct ostream *output;
 	string_t *msg;
  	const char *const *headers;
-	const char *outmsgid, *subject;
+	const char *outmsgid, *subject, *error;
 	int ret;
 
 	/* Check smpt functions just to be sure */
@@ -992,11 +992,16 @@ static bool act_vacation_send
   o_stream_send(output, str_data(msg), str_len(msg));
 
 	/* Close smtp session */
-	if ( !sieve_smtp_close(senv, smtp_handle) ) {
-		sieve_result_global_error(aenv,
-			"failed to send vacation response to <%s> "
-			"(refer to server log for more information)",
-			str_sanitize(reply_to, 128));
+	if ( (ret=sieve_smtp_close(senv, smtp_handle, &error)) <= 0 ) {
+		if ( ret < 0 ) {
+			sieve_result_global_log_error(aenv,
+				"failed to send vacation response to <%s>: %s (temporary error)",
+				str_sanitize(reply_to, 256), str_sanitize(error, 512));
+		} else {
+			sieve_result_global_error(aenv,
+				"failed to send vacation response to <%s>: %s (permanent error)",
+				str_sanitize(reply_to, 256), str_sanitize(error, 512));
+		}
 		return FALSE;
 	}
 

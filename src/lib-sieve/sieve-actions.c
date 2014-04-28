@@ -784,8 +784,7 @@ static bool sieve_action_do_reject_mail
 	struct istream *input;
 	struct ostream *output;
 	void *smtp_handle;
-	const char *new_msgid, *boundary;
-	const char *header;
+	const char *new_msgid, *boundary, *header, *error;
   string_t *hdr;
 	int ret;
 
@@ -875,11 +874,19 @@ static bool sieve_action_do_reject_mail
   str_printfa(hdr, "\r\n\r\n--%s--\r\n", boundary);
   o_stream_send(output, str_data(hdr), str_len(hdr));
 
-	if ( !sieve_smtp_close(senv, smtp_handle) ) {
-		sieve_result_global_error(aenv,
-			"failed to send rejection message to <%s> "
-			"(refer to server log for more information)",
-			str_sanitize(sender, 80));
+	if ( (ret=sieve_smtp_close(senv, smtp_handle, &error)) <= 0 ) {
+		if ( ret < 0 ) {
+			sieve_result_global_log_error(aenv,
+				"failed to send rejection message to <%s>: %s "
+				"(temporary failure)",
+				str_sanitize(sender, 256), str_sanitize(error, 512));
+		} else {
+			sieve_result_global_error(aenv,
+				"failed to send rejection message to <%s>: %s "
+				"(permanent failure)",
+				str_sanitize(sender, 256), str_sanitize(error, 512));
+
+		}
 		return FALSE;
 	}
 

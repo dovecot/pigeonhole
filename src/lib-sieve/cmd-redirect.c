@@ -320,7 +320,9 @@ static int act_redirect_send
 	const char *recipient = sieve_message_get_final_recipient(msgctx);
 	struct istream *input;
 	struct ostream *output;
+	const char *error;
 	void *smtp_handle;
+	int ret;
 
 	/* Just to be sure */
 	if ( !sieve_smtp_available(senv) ) {
@@ -356,11 +358,19 @@ static int act_redirect_send
   i_stream_unref(&input);
 
 	/* Close SMTP transport */
-	if ( !sieve_smtp_close(senv, smtp_handle) ) {
-		sieve_result_global_error(aenv,
-			"failed to redirect message to <%s> "
-			"(refer to server log for more information)",
-			str_sanitize(ctx->to_address, 80));
+	if ( (ret=sieve_smtp_close(senv, smtp_handle, &error)) <= 0 ) {
+		if ( ret < 0 ) {
+			sieve_result_global_log_error(aenv,
+				"failed to redirect message to <%s>: %s "
+				"(temporary failure)",
+				str_sanitize(ctx->to_address, 256), str_sanitize(error, 512));
+		} else {
+			sieve_result_global_error(aenv,
+				"failed to redirect message to <%s>: %s "
+				"(permanent failure)",
+				str_sanitize(ctx->to_address, 256), str_sanitize(error, 512));
+
+		}
 		return SIEVE_EXEC_FAILURE;
 	}
 

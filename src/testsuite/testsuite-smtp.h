@@ -15,8 +15,8 @@ void testsuite_smtp_reset(void);
 void *testsuite_smtp_open
 	(const struct sieve_script_env *senv ATTR_UNUSED, const char *destination,
 		const char *return_path, struct ostream **output_r);
-bool testsuite_smtp_close
-	(const struct sieve_script_env *senv, void *handle);
+int testsuite_smtp_close
+	(const struct sieve_script_env *senv, void *handle, const char **error_r);
 
 /*
  * Access

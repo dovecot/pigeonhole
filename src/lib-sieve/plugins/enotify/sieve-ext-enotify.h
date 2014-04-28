@@ -167,5 +167,8 @@ struct sieve_enotify_action {
 #define sieve_enotify_global_info(ENV, ...) \
 	sieve_global_info((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
 
+#define sieve_enotify_global_log_error(ENV, ...) \
+	sieve_global_info_error((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
+
 #endif /* __SIEVE_EXT_ENOTIFY_H */
 

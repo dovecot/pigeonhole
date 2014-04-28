@@ -75,16 +75,17 @@ static void *lda_sieve_smtp_open
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *) senv->script_context;
 
-	return (void *)smtp_client_open
+	return (void *)smtp_client_init
 		(dctx->set, destination, return_path, output_r);
 }
 
-static bool lda_sieve_smtp_close
-(const struct sieve_script_env *senv ATTR_UNUSED, void *handle)
+static int lda_sieve_smtp_close
+(const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
+	const char **error_r)
 {
 	struct smtp_client *smtp_client = (struct smtp_client *) handle;
 
-	return ( smtp_client_close(smtp_client) == 0 );
+	return smtp_client_deinit(smtp_client, error_r);
 }
 
 static int lda_sieve_reject_mail
