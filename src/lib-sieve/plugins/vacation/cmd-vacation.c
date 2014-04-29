@@ -901,7 +901,7 @@ static bool act_vacation_send
 {
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
-	void *smtp_handle;
+	struct sieve_smtp_context *sctx;
 	struct ostream *output;
 	string_t *msg;
  	const char *const *headers;
@@ -933,7 +933,8 @@ static bool act_vacation_send
 
 	/* Open smtp session */
 
-	smtp_handle = sieve_smtp_open(senv, reply_to, smtp_from, &output);
+	sctx = sieve_smtp_start_single(senv, reply_to, smtp_from, &output);
+
 	outmsgid = sieve_message_get_new_id(aenv->svinst);
 
 	/* Produce a proper reply */
@@ -992,7 +993,7 @@ static bool act_vacation_send
   o_stream_send(output, str_data(msg), str_len(msg));
 
 	/* Close smtp session */
-	if ( (ret=sieve_smtp_close(senv, smtp_handle, &error)) <= 0 ) {
+	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
 		if ( ret < 0 ) {
 			sieve_result_global_log_error(aenv,
 				"failed to send vacation response to <%s>: %s (temporary error)",

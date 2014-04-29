@@ -68,48 +68,66 @@ void testsuite_smtp_reset(void)
  */
 
 struct testsuite_smtp {
-	const char *tmp_path;
+	char *msg_file, *return_path;
 	struct ostream *output;
 };
 
-void *testsuite_smtp_open
-(const struct sieve_script_env *senv ATTR_UNUSED, const char *destination,
-	const char *return_path, struct ostream **output_r)
+void testsuite_smtp_add_rcpt(void *handle, const char *address);
+struct ostream *testsuite_smtp_send(void *handle);
+int testsuite_smtp_finish
+	(void *handle, const char **error_r);
+
+
+void *testsuite_smtp_start
+(const struct sieve_script_env *senv ATTR_UNUSED, const char *return_path)
 {
-	struct testsuite_smtp_message smtp_msg;
 	struct testsuite_smtp *smtp;
 	unsigned int smtp_count = array_count(&testsuite_smtp_messages);
 	int fd;
 
-	smtp_msg.file = p_strdup_printf(testsuite_smtp_pool,
-		"%s/%d.eml", testsuite_smtp_tmp, smtp_count);
-	smtp_msg.envelope_from =
-		( return_path != NULL ? p_strdup(testsuite_smtp_pool, return_path) : NULL );
-	smtp_msg.envelope_to = p_strdup(testsuite_smtp_pool, destination);
+	smtp = i_new(struct testsuite_smtp, 1);
 
-	array_append(&testsuite_smtp_messages, &smtp_msg, 1);
-
-	smtp = t_new(struct testsuite_smtp, 1);
-	smtp->tmp_path = smtp_msg.file;
-
-	if ( (fd=open(smtp->tmp_path, O_WRONLY | O_CREAT, 0600)) < 0 ) {
+	smtp->msg_file = i_strdup_printf("%s/%d.eml", testsuite_smtp_tmp, smtp_count);
+	smtp->return_path = i_strdup(return_path);
+	
+	if ( (fd=open(smtp->msg_file, O_WRONLY | O_CREAT, 0600)) < 0 ) {
 		i_fatal("failed create tmp file for SMTP simulation: open(%s) failed: %m",
-			smtp->tmp_path);
+			smtp->msg_file);
 	}
 
 	smtp->output = o_stream_create_fd(fd, (size_t)-1, TRUE);
-	*output_r = smtp->output;
 
 	return (void *) smtp;
 }
 
-int testsuite_smtp_close
-(const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
-	const char **error_r ATTR_UNUSED)
+void testsuite_smtp_add_rcpt(void *handle, const char *address)
+{
+	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
+	struct testsuite_smtp_message *msg;
+
+	msg = array_append_space(&testsuite_smtp_messages);
+
+	msg->file = p_strdup(testsuite_smtp_pool, smtp->msg_file);
+	msg->envelope_from = p_strdup(testsuite_smtp_pool, smtp->return_path);
+	msg->envelope_to = p_strdup(testsuite_smtp_pool, address);
+}
+
+struct ostream *testsuite_smtp_send(void *handle)
+{
+	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
+
+	return smtp->output;
+}
+
+int testsuite_smtp_finish
+(void *handle,	const char **error_r ATTR_UNUSED)
 {
 	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
 
 	o_stream_unref(&smtp->output);
+	i_free(smtp->msg_file);
+	i_free(smtp->return_path);
+	i_free(smtp);
 	return 1;
 }
 

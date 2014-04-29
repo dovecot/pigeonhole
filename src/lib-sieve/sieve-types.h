@@ -192,13 +192,15 @@ struct sieve_script_env {
 	/* Callbacks */
 
 	/* Interface for sending mail */
-	void *(*smtp_open)
-		(const struct sieve_script_env *senv, const char *destination,
-			const char *return_path, struct ostream **output_r);
+	void *(*smtp_start)
+		(const struct sieve_script_env *senv, const char *return_path);
+	/* Add a new recipient */
+	void (*smtp_add_rcpt)	(void *handle, const char *address);
+	/* Get an output stream where the message can be written to. The recipients
+	   must already be added before calling this. */
+	struct ostream *(*smtp_send)(void *handle);
 	/* Returns 1 on success, 0 on permanent failure, -1 on temporary failure. */
-	int (*smtp_close)
-		(const struct sieve_script_env *senv, void *handle,
-			const char **error_r);
+	int (*smtp_finish)(void *handle, const char **error_r);
 
 	/* Interface for marking and checking duplicates */
 	int (*duplicate_check)

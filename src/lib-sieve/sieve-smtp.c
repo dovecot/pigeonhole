@@ -5,28 +5,75 @@
 #include "sieve-common.h"
 #include "sieve-smtp.h"
 
+struct sieve_smtp_context {
+	const struct sieve_script_env *senv;
+	void *handle;
+	
+	unsigned int sent:1;
+};
+
 bool sieve_smtp_available
 (const struct sieve_script_env *senv)
 {
-	return ( senv->smtp_open != NULL && senv->smtp_close != NULL );
+	return ( senv->smtp_start != NULL && senv->smtp_add_rcpt != NULL &&
+		senv->smtp_send != NULL && senv->smtp_finish != NULL );
 }
 
-void *sieve_smtp_open
-(const struct sieve_script_env *senv, const char *destination,
-    const char *return_path, struct ostream **output_r)
+struct sieve_smtp_context *sieve_smtp_start
+(const struct sieve_script_env *senv, const char *return_path)
 {
+	struct sieve_smtp_context *sctx;
+	void *handle;
+
 	if ( !sieve_smtp_available(senv) )
 		return NULL;
 
-	return senv->smtp_open(senv, destination, return_path, output_r);
+	handle = senv->smtp_start(senv, return_path);
+	i_assert( handle != NULL );
+	
+	sctx = i_new(struct sieve_smtp_context, 1);
+	sctx->senv = senv;
+	sctx->handle = handle;
+
+	return sctx;
 }
 
-int sieve_smtp_close
-(const struct sieve_script_env *senv, void *handle,
-	const char **error_r)
+void sieve_smtp_add_rcpt
+(struct sieve_smtp_context *sctx, const char *address)
 {
-	i_assert( sieve_smtp_available(senv) );
+	i_assert(!sctx->sent);
+	sctx->senv->smtp_add_rcpt(sctx->handle, address);
+}
 
-	return senv->smtp_close(senv, handle, error_r);
+struct ostream *sieve_smtp_send
+(struct sieve_smtp_context *sctx)
+{
+	i_assert(!sctx->sent);
+	sctx->sent = TRUE;
+
+	return sctx->senv->smtp_send(sctx->handle);
+}
+
+struct sieve_smtp_context *sieve_smtp_start_single
+(const struct sieve_script_env *senv, const char *destination,
+ 	const char *return_path, struct ostream **output_r)
+{
+	struct sieve_smtp_context *sctx;
+
+	sctx = sieve_smtp_start(senv, return_path);
+	sieve_smtp_add_rcpt(sctx, destination);
+	*output_r = sieve_smtp_send(sctx);
+
+	return sctx;
+}
+
+int sieve_smtp_finish
+(struct sieve_smtp_context *sctx, const char **error_r)
+{
+	const struct sieve_script_env *senv = sctx->senv;
+	void *handle = sctx->handle;
+
+	i_free(sctx);
+	return senv->smtp_finish(handle, error_r);
 }
 

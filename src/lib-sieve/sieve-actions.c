@@ -783,19 +783,19 @@ static bool sieve_action_do_reject_mail
 	const struct sieve_message_data *msgdata = aenv->msgdata;
 	struct istream *input;
 	struct ostream *output;
-	void *smtp_handle;
+	struct sieve_smtp_context *sctx;
 	const char *new_msgid, *boundary, *header, *error;
   string_t *hdr;
 	int ret;
 
+	sctx = sieve_smtp_start_single(senv, sender, NULL, &output);
+
 	/* Just to be sure */
-	if ( !sieve_smtp_available(senv) ) {
+	if ( sctx == NULL ) {
 		sieve_result_global_warning
 			(aenv, "reject action has no means to send mail");
 		return TRUE;
 	}
-
-	smtp_handle = sieve_smtp_open(senv, sender, NULL, &output);
 
 	new_msgid = sieve_message_get_new_id(svinst);
 	boundary = t_strdup_printf("%s/%s", my_pid, svinst->hostname);
@@ -874,7 +874,7 @@ static bool sieve_action_do_reject_mail
   str_printfa(hdr, "\r\n\r\n--%s--\r\n", boundary);
   o_stream_send(output, str_data(hdr), str_len(hdr));
 
-	if ( (ret=sieve_smtp_close(senv, smtp_handle, &error)) <= 0 ) {
+	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
 		if ( ret < 0 ) {
 			sieve_result_global_log_error(aenv,
 				"failed to send rejection message to <%s>: %s "
@@ -885,7 +885,6 @@ static bool sieve_action_do_reject_mail
 				"failed to send rejection message to <%s>: %s "
 				"(permanent failure)",
 				str_sanitize(sender, 256), str_sanitize(error, 512));
-
 		}
 		return FALSE;
 	}

@@ -68,20 +68,31 @@ static const struct sieve_callbacks lda_sieve_callbacks = {
  * Mail transmission
  */
 
-static void *lda_sieve_smtp_open
-(const struct sieve_script_env *senv, const char *destination,
-	const char *return_path, struct ostream **output_r)
+static void *lda_sieve_smtp_start
+(const struct sieve_script_env *senv, const char *return_path)
 {
 	struct mail_deliver_context *dctx =
 		(struct mail_deliver_context *) senv->script_context;
 
-	return (void *)smtp_client_init
-		(dctx->set, destination, return_path, output_r);
+	return (void *)smtp_client_init(dctx->set, return_path);
 }
 
-static int lda_sieve_smtp_close
-(const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
-	const char **error_r)
+static void lda_sieve_smtp_add_rcpt(void *handle, const char *address)
+{
+	struct smtp_client *smtp_client = (struct smtp_client *) handle;
+
+	smtp_client_add_rcpt(smtp_client, address);
+}
+
+static struct ostream *lda_sieve_smtp_send(void *handle)
+{
+	struct smtp_client *smtp_client = (struct smtp_client *) handle;
+
+	return smtp_client_send(smtp_client);
+}
+
+static int lda_sieve_smtp_finish
+(void *handle, const char **error_r)
 {
 	struct smtp_client *smtp_client = (struct smtp_client *) handle;
 
@@ -864,8 +875,10 @@ static int lda_sieve_execute
 		scriptenv.mailbox_autosubscribe = mdctx->set->lda_mailbox_autosubscribe;
 		scriptenv.user = mdctx->dest_user;
 		scriptenv.postmaster_address = mdctx->set->postmaster_address;
-		scriptenv.smtp_open = lda_sieve_smtp_open;
-		scriptenv.smtp_close = lda_sieve_smtp_close;
+		scriptenv.smtp_start = lda_sieve_smtp_start;
+		scriptenv.smtp_add_rcpt = lda_sieve_smtp_add_rcpt;
+		scriptenv.smtp_send = lda_sieve_smtp_send;
+		scriptenv.smtp_finish = lda_sieve_smtp_finish;
 		scriptenv.duplicate_mark = lda_sieve_duplicate_mark;
 		scriptenv.duplicate_check = lda_sieve_duplicate_check;
 		scriptenv.reject_mail = lda_sieve_reject_mail;

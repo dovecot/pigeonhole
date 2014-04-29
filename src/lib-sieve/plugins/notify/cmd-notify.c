@@ -689,12 +689,11 @@ static bool act_notify_send
 {
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const struct ext_notify_recipient *recipients;
-	void *smtp_handle;
+	struct sieve_smtp_context *sctx;
 	unsigned int count, i;
 	struct ostream *output;
-	string_t *msg;
+	string_t *msg, *to, *all;
 	const char *outmsgid, *error;
-	size_t hdr_size;
 	int ret;
 
 	/* Get recipients */
@@ -706,7 +705,7 @@ static bool act_notify_send
 	}
 
 	/* Just to be sure */
-	if ( senv->smtp_open == NULL || senv->smtp_close == NULL ) {
+	if ( !sieve_smtp_available(senv) ) {
 		sieve_result_global_warning(aenv,
 			"notify action has no means to send mail");
 		return TRUE;
@@ -753,45 +752,54 @@ static bool act_notify_send
 		rfc2822_header_write(msg, "Content-Transfer-Encoding", "7bit");
 	}
 
-	hdr_size = str_len(msg);
+	outmsgid = sieve_message_get_new_id(aenv->svinst);
+	rfc2822_header_write(msg, "Message-ID", outmsgid);
 
-	/* Send message to all recipients */
+	if ( sieve_message_get_sender(aenv->msgctx) != NULL )
+		sctx = sieve_smtp_start(senv, senv->postmaster_address);
+	else
+		sctx = sieve_smtp_start(senv, NULL);
+
+	/* Add all recipients (and compose To header field) */
+	to = t_str_new(128);
+	all = t_str_new(256);
 	for ( i = 0; i < count; i++ ) {
-		if ( sieve_message_get_sender(aenv->msgctx) != NULL )
-			smtp_handle = sieve_smtp_open
-				(senv, recipients[i].normalized, senv->postmaster_address, &output);
-		else
-			smtp_handle = sieve_smtp_open
-				(senv, recipients[i].normalized, NULL, &output);
-
-		str_truncate(msg, hdr_size);
-
-		outmsgid = sieve_message_get_new_id(aenv->svinst);
-		rfc2822_header_write(msg, "Message-ID", outmsgid);
-		rfc2822_header_write(msg, "To", recipients[i].full);
-
-		/* Generate message body */
-		str_printfa(msg, "\r\n%s\r\n", act->message);
-
-		o_stream_send(output, str_data(msg), str_len(msg));
-
-		if ( (ret=sieve_smtp_close(senv, smtp_handle, &error)) <= 0 ) {
-			if (ret < 0) {
-				sieve_result_global_log_error(aenv,
-					"failed to send mail notification to <%s>: %s (temporary failure)",
-					str_sanitize(recipients[i].normalized, 256),
-					str_sanitize(error, 512));
-			} else {
-				sieve_result_global_error(aenv,
-					"failed to send mail notification to <%s>: %s (permanent failure)",
-					str_sanitize(recipients[i].normalized, 256),
-					str_sanitize(error, 512));
-			}
-		} else {
-			sieve_result_global_log(aenv,
-				"sent mail notification to <%s>",
-				str_sanitize(recipients[i].normalized, 256));
+		sieve_smtp_add_rcpt(sctx, recipients[i].normalized);
+		if ( i > 0 )
+			str_append(to, ", ");
+		str_append(to, recipients[i].full);
+		if ( i < 3) {
+			if ( i > 0 )
+				str_append(all, ", ");
+			str_append_c(all, '<');
+			str_append(all, str_sanitize(recipients[i].normalized, 256));
+			str_append_c(all, '>');
+		} else if (i == 3) {
+			str_printfa(all, ", ... (%u total)", count);
 		}
+	}
+
+	rfc2822_header_write(msg, "To", str_c(to));
+
+	/* Generate message body */
+	str_printfa(msg, "\r\n%s\r\n", act->message);
+
+	output = sieve_smtp_send(sctx);
+	o_stream_send(output, str_data(msg), str_len(msg));
+
+	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
+		if (ret < 0) {
+			sieve_result_global_log_error(aenv,
+				"failed to send mail notification to %s: %s (temporary failure)",
+				str_c(all),	str_sanitize(error, 512));
+		} else {
+			sieve_result_global_error(aenv,
+				"failed to send mail notification to %s: %s (permanent failure)",
+				str_c(all),	str_sanitize(error, 512));
+		}
+	} else {
+		sieve_result_global_log(aenv,
+			"sent mail notification to %s", str_c(all));
 	}
 
 	return TRUE;

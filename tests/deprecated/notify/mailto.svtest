@@ -84,8 +84,8 @@ test "Multiple recipients" {
 		test_fail "auto-submitted header not found for third message";
 	}
 
-	if not address :count "eq" :comparator "i;ascii-numeric" "to" "1" {
-		test_fail "too many recipients in To header";
+	if not address :count "eq" :comparator "i;ascii-numeric" "to" "3" {
+		test_fail "wrong number of recipients in To header";
 	}
 
 	if not address :count "eq" :comparator "i;ascii-numeric" "cc" "0" {

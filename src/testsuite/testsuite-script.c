@@ -110,8 +110,10 @@ bool testsuite_script_run(const struct sieve_runtime_env *renv)
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	scriptenv.default_mailbox = "INBOX";
 	scriptenv.postmaster_address = "postmaster@example.com";
-	scriptenv.smtp_open = NULL;
-	scriptenv.smtp_close = NULL;
+	scriptenv.smtp_start = NULL;
+	scriptenv.smtp_add_rcpt = NULL;
+	scriptenv.smtp_send = NULL;
+	scriptenv.smtp_finish = NULL;
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
 	scriptenv.user = renv->scriptenv->user;
@@ -181,8 +183,10 @@ bool testsuite_script_multiscript
 	memset(&scriptenv, 0, sizeof(scriptenv));
 	scriptenv.default_mailbox = "INBOX";
 	scriptenv.postmaster_address = "postmaster@example.com";
-	scriptenv.smtp_open = NULL;
-	scriptenv.smtp_close = NULL;
+	scriptenv.smtp_start = NULL;
+	scriptenv.smtp_add_rcpt = NULL;
+	scriptenv.smtp_send = NULL;
+	scriptenv.smtp_finish = NULL;
 	scriptenv.duplicate_mark = NULL;
 	scriptenv.duplicate_check = NULL;
 	scriptenv.user = renv->scriptenv->user;

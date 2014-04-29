@@ -385,10 +385,10 @@ static bool ntfy_mailto_send
 	const char *from = NULL, *from_smtp = NULL;
 	const char *subject = mtctx->uri->subject;
 	const char *body = mtctx->uri->body;
-	string_t *to, *cc;
+	string_t *to, *cc, *all;
 	const struct uri_mailto_recipient *recipients;
 	const struct uri_mailto_header_field *headers;
-	void *smtp_handle;
+	struct sieve_smtp_context *sctx;
 	struct ostream *output;
 	string_t *msg;
 	unsigned int count, i, hcount, h;
@@ -445,6 +445,7 @@ static bool ntfy_mailto_send
 	/* Compose To and Cc headers */
 	to = NULL;
 	cc = NULL;
+	all = t_str_new(256);
 	for ( i = 0; i < count; i++ ) {
 		if ( recipients[i].carbon_copy ) {
 			if ( cc == NULL ) {
@@ -462,6 +463,15 @@ static bool ntfy_mailto_send
 				str_append(to, ", ");
 				str_append(to, recipients[i].full);
 			}
+		}
+		if ( i < 3) {
+			if ( i > 0 )
+				str_append(all, ", ");
+			str_append_c(all, '<');
+			str_append(all, str_sanitize(recipients[i].normalized, 256));
+			str_append_c(all, '>');
+		} else if (i == 3) {
+			str_printfa(all, ", ... (%u total)", count);
 		}
 	}
 
@@ -534,30 +544,28 @@ static bool ntfy_mailto_send
 		str_append(msg, "\r\nNotification of new message.\r\n");
 	}
 
+	sctx = sieve_smtp_start(senv, from_smtp);
+
 	/* Send message to all recipients */
-	for ( i = 0; i < count; i++ ) {
-		smtp_handle = sieve_smtp_open
-			(senv, recipients[i].normalized, from_smtp, &output);
+	for ( i = 0; i < count; i++ )
+		sieve_smtp_add_rcpt(sctx, recipients[i].normalized);
 
-		o_stream_send(output, str_data(msg), str_len(msg));
+	output = sieve_smtp_send(sctx);
+	o_stream_send(output, str_data(msg), str_len(msg));
 
-		if ( (ret=sieve_smtp_close(senv, smtp_handle, &error)) <= 0 ) {
-			if (ret < 0)  {
-				sieve_enotify_global_log_error(nenv,
-					"failed to send mail notification to <%s>: %s (temporary failure)",
-					str_sanitize(recipients[i].normalized, 256),
-					str_sanitize(error, 512));
-			} else {
-				sieve_enotify_global_error(nenv,
-					"failed to send mail notification to <%s>: %s (permanent failure)",
-					str_sanitize(recipients[i].normalized, 256),
-					str_sanitize(error, 512));
-			}
+	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
+		if (ret < 0)  {
+			sieve_enotify_global_log_error(nenv,
+				"failed to send mail notification to %s: %s (temporary failure)",
+				str_c(all),	str_sanitize(error, 512));
 		} else {
-			sieve_enotify_global_info(nenv,
-				"sent mail notification to <%s>",
-				str_sanitize(recipients[i].normalized, 256));
+			sieve_enotify_global_error(nenv,
+				"failed to send mail notification to %s: %s (permanent failure)",
+				str_c(all),	str_sanitize(error, 512));
 		}
+	} else {
+		sieve_enotify_global_info(nenv,
+			"sent mail notification to %s", str_c(all));
 	}
 
 	return TRUE;

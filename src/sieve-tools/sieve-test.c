@@ -56,22 +56,34 @@ static void print_help(void)
  * Dummy SMTP session
  */
 
-static void *sieve_smtp_open
-(const struct sieve_script_env *senv ATTR_UNUSED, const char *destination,
-	const char *return_path, struct ostream **output_r)
+static void *sieve_smtp_start
+(const struct sieve_script_env *senv ATTR_UNUSED,
+	const char *return_path)
 {
-	i_info("sending message from <%s> to <%s>:",
-		( return_path == NULL ? "" : return_path ), destination);
-	printf("\nSTART MESSAGE:\n");
+	struct ostream *output;
 
-	*output_r = o_stream_create_fd(STDOUT_FILENO, (size_t)-1, FALSE);
+	i_info("sending message from <%s>:",
+		( return_path == NULL ? "" : return_path ));
 
-	return (void*)*output_r;
+	output = o_stream_create_fd(STDOUT_FILENO, (size_t)-1, FALSE);
+	return (void*)output;
 }
 
-static int sieve_smtp_close
-(const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
-	const char **error_r ATTR_UNUSED)
+static void sieve_smtp_add_rcpt
+(void *handle ATTR_UNUSED, const char *address)
+{
+	printf("\nRECIPIENT: %s\n", address);
+}
+
+static struct ostream *sieve_smtp_send(void *handle)
+{
+	printf("START MESSAGE:\n");
+
+	return (struct ostream *)handle;
+}
+
+static int sieve_smtp_finish
+(void *handle, const char **error_r ATTR_UNUSED)
 {
 	struct ostream *output = (struct ostream *)handle;
 
@@ -273,8 +285,10 @@ int main(int argc, char **argv)
 		scriptenv.default_mailbox = mailbox;
 		scriptenv.user = sieve_tool_get_mail_user(sieve_tool);
 		scriptenv.postmaster_address = "postmaster@example.com";
-		scriptenv.smtp_open = sieve_smtp_open;
-		scriptenv.smtp_close = sieve_smtp_close;
+		scriptenv.smtp_start = sieve_smtp_start;
+		scriptenv.smtp_add_rcpt = sieve_smtp_add_rcpt;
+		scriptenv.smtp_send = sieve_smtp_send;
+		scriptenv.smtp_finish = sieve_smtp_finish;
 		scriptenv.duplicate_mark = duplicate_mark;
 		scriptenv.duplicate_check = duplicate_check;
 		scriptenv.trace_stream = tracestream;

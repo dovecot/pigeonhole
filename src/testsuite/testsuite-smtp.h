@@ -12,11 +12,13 @@ void testsuite_smtp_reset(void);
  * Simulated SMTP out
  */
 
-void *testsuite_smtp_open
-	(const struct sieve_script_env *senv ATTR_UNUSED, const char *destination,
-		const char *return_path, struct ostream **output_r);
-int testsuite_smtp_close
-	(const struct sieve_script_env *senv, void *handle, const char **error_r);
+void *testsuite_smtp_start
+	(const struct sieve_script_env *senv ATTR_UNUSED,
+		const char *return_path);
+void testsuite_smtp_add_rcpt(void *handle, const char *address);
+struct ostream *testsuite_smtp_send(void *handle);
+int testsuite_smtp_finish
+	(void *handle, const char **error_r);
 
 /*
  * Access

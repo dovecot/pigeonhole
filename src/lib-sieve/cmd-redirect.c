@@ -321,7 +321,7 @@ static int act_redirect_send
 	struct istream *input;
 	struct ostream *output;
 	const char *error;
-	void *smtp_handle;
+	struct sieve_smtp_context *sctx;
 	int ret;
 
 	/* Just to be sure */
@@ -335,7 +335,7 @@ static int act_redirect_send
 		return SIEVE_EXEC_TEMP_FAILURE;
 
 	/* Open SMTP transport */
-	smtp_handle = sieve_smtp_open(senv, ctx->to_address, sender, &output);
+	sctx = sieve_smtp_start_single(senv, ctx->to_address, sender, &output);
 
 	/* Remove unwanted headers */
 	input = i_stream_create_header_filter
@@ -358,7 +358,7 @@ static int act_redirect_send
   i_stream_unref(&input);
 
 	/* Close SMTP transport */
-	if ( (ret=sieve_smtp_close(senv, smtp_handle, &error)) <= 0 ) {
+	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
 		if ( ret < 0 ) {
 			sieve_result_global_log_error(aenv,
 				"failed to redirect message to <%s>: %s "
