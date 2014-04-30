@@ -1379,13 +1379,12 @@ static int edit_mail_get_special
 	return edmail->wrapped->v.get_special(&edmail->wrapped->mail, field, value_r);
 }
 
-static int
-edit_mail_get_real_mail(struct mail *mail, struct mail **real_mail_r)
+static struct mail *
+edit_mail_get_real_mail(struct mail *mail)
 {
 	struct edit_mail *edmail = (struct edit_mail *)mail;
 
-	*real_mail_r = edit_mail_get_mail(edmail);
-	return 0;
+	return edit_mail_get_mail(edmail);
 }
 
 static void edit_mail_update_flags
