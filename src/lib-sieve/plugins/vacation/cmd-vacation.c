@@ -1223,7 +1223,7 @@ static int act_vacation_commit
 				"no known (envelope) recipient address found in message headers "
 				"(recipient=<%s>, %sand%s additional `:addresses' are specified)",
 				str_sanitize(recipient, 128), original_recipient,
-				(ctx->addresses == NULL ? " no" : ""));
+				(ctx->addresses == NULL || *ctx->addresses == NULL ? " no" : ""));
 
 			return SIEVE_EXEC_OK;
 		}
