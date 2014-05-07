@@ -84,6 +84,24 @@ const struct sieve_operation_def addheader_operation = {
 };
 
 /*
+ * Utility
+ */
+
+static bool _str_contains_nul(const string_t *str)
+{
+	const unsigned char *p, *pend;
+
+	p = str_data(str);
+	pend = p + str_len(str);
+	while (p < pend) {
+		if (*p == '\0')
+			return TRUE;
+		p++;
+	}
+	return FALSE;
+}
+
+/*
  * Validation
  */
 
@@ -134,12 +152,18 @@ static bool cmd_addheader_validate
 	if ( sieve_argument_is_string_literal(arg) ) {
 		string_t *fvalue = sieve_ast_argument_str(arg);
 
+		if ( _str_contains_nul(fvalue) ) {
+			sieve_argument_validate_error(valdtr, arg,
+				"addheader command: specified value `%s' is invalid "
+				"(contains NUL character)",	str_sanitize(str_c(fvalue), 80));
+			return FALSE;
+		}	
+
 		if ( !rfc2822_header_field_body_verify
 			(str_c(fvalue), str_len(fvalue), TRUE, TRUE) ) {
-			sieve_argument_validate_error(valdtr, arg,
+			sieve_argument_validate_warning(valdtr, arg,
 				"addheader command: specified value `%s' is invalid",
 				str_sanitize(str_c(fvalue), 80));
-			return FALSE;
 		}
 
 		if ( ext_editheader_header_too_large(cmd->ext, str_len(fvalue)) ) {
@@ -281,10 +305,9 @@ static int cmd_addheader_operation_execute
 		return SIEVE_EXEC_OK;
 	}
 
-	if ( !rfc2822_header_field_body_verify
-		(str_c(value), str_len(value), TRUE, TRUE) ) {
+	if ( _str_contains_nul(value) ) {
 		sieve_runtime_error(renv, NULL, "addheader action: "
-			"specified value `%s' is invalid",
+			"specified value `%s' is invalid (contains NUL character)",
 			str_sanitize(str_c(value), 80));
 		return SIEVE_EXEC_FAILURE;
 	}
@@ -304,6 +327,8 @@ static int cmd_addheader_operation_execute
 		str_sanitize(str_c(field_name), 80), str_sanitize(str_c(value), 80));
 
 	edmail = sieve_message_edit(renv->msgctx);
-	edit_mail_header_add(edmail, rfc2822_header_field_name_sanitize(str_c(field_name)), str_c(value), last);
+	edit_mail_header_add(edmail,
+		rfc2822_header_field_name_sanitize(str_c(field_name)),
+		str_c(value), last);
 	return SIEVE_EXEC_OK;
 }

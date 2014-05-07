@@ -1,6 +1,7 @@
 require "vnd.dovecot.testsuite";
 require "comparator-i;ascii-numeric";
 require "relational";
+require "variables";
 
 require "editheader";
 
@@ -53,16 +54,12 @@ test "Invalid field value" {
 		test_fail "compile should have failed";
 	}
 
-	if not test_error :count "eq" :comparator "i;ascii-numeric" "3" {
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "2" {
 		test_fail "wrong number of errors reported";
 	}
 
-	if not test_error :index 1 :matches "*value*Yeah!?*invalid*" {
-		test_fail "wrong error reported (1)";
-	}
-
-	if not test_error :index 2 :matches "*value*Woah!*invalid*" {
-		test_fail "wrong error reported (2)";
+	if not test_error :index 1 :matches "*value*Woah*invalid*" {
+		test_fail "wrong error reported (1): ${0}";
 	}
 }
 

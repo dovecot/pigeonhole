@@ -8,8 +8,8 @@ addheader "X-field" "Frop";
 addheader "X-field" "Frop
 Frml";
 
-# Invalid 'BELL'
-addheader "X-field" "Yeah!${hex:07}";
+# Invalid 'BELL'; but not an error
+addheader "X-field" "Yeah${hex:07}!";
 
 # Invalid 'NUL'
-addheader "X-field" "Woah!${hex:00}";
+addheader "X-field" "Woah${hex:00}!";
