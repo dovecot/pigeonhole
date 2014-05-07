@@ -63,13 +63,9 @@ static int act_discard_commit
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 
 const struct sieve_action_def act_discard = {
-	"discard",
-	0,
-	NULL, NULL, NULL,
-	act_discard_print,
-	NULL, NULL,
-	act_discard_commit,
-	NULL
+	.name = "discard",
+	.print = act_discard_print,
+	.commit = act_discard_commit,
 };
 
 /*

@@ -77,10 +77,16 @@ struct sieve_action_def {
 			const struct sieve_action_exec_env *aenv, void *tr_context);
 	int (*commit)
 		(const struct sieve_action *action,
-			const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
+			const struct sieve_action_exec_env *aenv, void *tr_context,
+			bool *keep);
 	void (*rollback)
 		(const struct sieve_action *action,
-			const struct sieve_action_exec_env *aenv, void *tr_context, bool success);
+			const struct sieve_action_exec_env *aenv, void *tr_context,
+			bool success);
+	void (*finish)
+		(const struct sieve_action *action,
+			const struct sieve_action_exec_env *aenv, void *tr_context,
+			int status);
 };
 
 /*

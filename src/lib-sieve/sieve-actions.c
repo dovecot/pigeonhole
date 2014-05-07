@@ -206,16 +206,15 @@ static void act_store_rollback
 /* Action object */
 
 const struct sieve_action_def act_store = {
-	"store",
-	SIEVE_ACTFLAG_TRIES_DELIVER,
-	act_store_equals,
-	act_store_check_duplicate,
-	NULL,
-	act_store_print,
-	act_store_start,
-	act_store_execute,
-	act_store_commit,
-	act_store_rollback,
+	.name = "store",
+	.flags = SIEVE_ACTFLAG_TRIES_DELIVER,
+	.equals = act_store_equals,
+	.check_duplicate = act_store_check_duplicate,
+	.print = act_store_print,
+	.start = act_store_start,
+	.execute = act_store_execute,
+	.commit = act_store_commit,
+	.rollback = act_store_rollback,
 };
 
 /* API */

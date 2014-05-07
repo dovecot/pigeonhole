@@ -143,15 +143,10 @@ static int act_notify_commit
 /* Action object */
 
 const struct sieve_action_def act_notify = {
-	"notify",
-	0,
-	NULL,
-	act_notify_check_duplicate,
-	NULL,
-	act_notify_print,
-	NULL, NULL,
-	act_notify_commit,
-	NULL
+	.name = "notify",
+	.check_duplicate =act_notify_check_duplicate,
+	.print = act_notify_print,
+	.commit = act_notify_commit,
 };
 
 /*

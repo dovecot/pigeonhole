@@ -1002,7 +1002,7 @@ static int _sieve_result_implicit_keep
 		}
 	}
 
-	/* Finish keep action */
+	/* Commit keep action */
 	if ( status == SIEVE_EXEC_OK ) {
 		bool dummy = TRUE;
 
@@ -1020,14 +1020,18 @@ static int _sieve_result_implicit_keep
 					(sef, &act_keep, &result->action_env, tr_context, &keep);
 			rsef = rsef->next;
 		}
-
-		return status;
+	} else {
+		/* Failed, rollback */
+		if ( act_keep.def->rollback != NULL )
+			act_keep.def->rollback(&act_keep,
+				&result->action_env, tr_context, ( status == SIEVE_EXEC_OK ));
 	}
 
-	/* Failed, rollback */
-	if ( act_keep.def->rollback != NULL )
-		act_keep.def->rollback(&act_keep,
-			&result->action_env, tr_context, ( status == SIEVE_EXEC_OK ));
+	/* Finish keep action */
+	if ( act_keep.def->finish != NULL ) {
+		act_keep.def->finish
+			(&act_keep, &result->action_env, &rac->tr_context, status);
+	}
 
 	return status;
 }
@@ -1067,7 +1071,7 @@ int sieve_result_execute
 (struct sieve_result *result, bool *keep)
 {
 	bool implicit_keep = TRUE, executed = result->executed;
-	int status = SIEVE_EXEC_OK, commit_status;
+	int status = SIEVE_EXEC_OK, commit_status, result_status;
 	struct sieve_result_action *rac, *first_action;
 	struct sieve_result_action *last_attempted;
 	int ret;
@@ -1239,35 +1243,51 @@ int sieve_result_execute
 
 	if ( implicit_keep && keep != NULL ) *keep = TRUE;
 
-	/* Return value indicates whether the caller should attempt an implicit keep
-	 * of its own. So, if the above transaction fails, but the implicit keep below
-	 * succeeds, the return value is still true. An error is/should be logged
-	 * though.
-	 */
+	/* Perform implicit keep if necessary */
 
-	if ( !executed && commit_status == SIEVE_EXEC_TEMP_FAILURE )
-		return commit_status;
-
-	/* Execute implicit keep if the transaction failed or when the implicit keep
-	 * was not canceled during transaction.
-	 */
-	if ( commit_status != SIEVE_EXEC_OK || implicit_keep ) {
-		switch ((ret=_sieve_result_implicit_keep
-			(result, ( commit_status != SIEVE_EXEC_OK ))) ) {
-		case SIEVE_EXEC_OK:
-			break;
-		case SIEVE_EXEC_TEMP_FAILURE:
-			if (!executed)
-				return ret;
-		default:
-			return SIEVE_EXEC_KEEP_FAILED;
+	result_status = commit_status;
+	if ( executed || commit_status != SIEVE_EXEC_TEMP_FAILURE ) {
+		/* Execute implicit keep if the transaction failed or when the implicit
+		 * keep was not canceled during transaction.
+		 */
+		if ( commit_status != SIEVE_EXEC_OK || implicit_keep ) {
+			switch ((ret=_sieve_result_implicit_keep
+				(result, ( commit_status != SIEVE_EXEC_OK ))) ) {
+			case SIEVE_EXEC_OK:
+				break;
+			case SIEVE_EXEC_TEMP_FAILURE:
+				if (!executed) {
+					result_status = ret;
+					break;
+				}
+			default:
+				result_status = SIEVE_EXEC_KEEP_FAILED;
+			}
 		}
-
-		return commit_status;
+		if (commit_status == SIEVE_EXEC_OK)
+			commit_status = result_status;
 	}
 
-	/* success */
-	return SIEVE_EXEC_OK;
+	/* Finish execution */
+
+	rac = first_action;
+	while ( rac != NULL ) {
+		struct sieve_action *act = &rac->action;
+		/* Skip non-actions (inactive keep) and executed ones */
+		if ( act->def == NULL || act->executed ) {
+			rac = rac->next;
+			continue;
+		}
+
+		if ( act->def->finish != NULL ) {
+			act->def->finish
+				(act, &result->action_env, &rac->tr_context, commit_status);
+		}
+
+		rac = rac->next;
+	}
+
+	return result_status;
 }
 
 /*

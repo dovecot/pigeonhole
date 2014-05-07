@@ -197,15 +197,12 @@ static int act_vacation_commit
 /* Action object */
 
 const struct sieve_action_def act_vacation = {
-	"vacation",
-	SIEVE_ACTFLAG_SENDS_RESPONSE,
-	NULL,
-	act_vacation_check_duplicate,
-	act_vacation_check_conflict,
-	act_vacation_print,
-	NULL, NULL,
-	act_vacation_commit,
-	NULL
+	.name = "vacation",
+	.flags = SIEVE_ACTFLAG_SENDS_RESPONSE,
+	.check_duplicate = act_vacation_check_duplicate,
+	.check_conflict = act_vacation_check_conflict,
+	.print = act_vacation_print,
+	.commit = act_vacation_commit
 };
 
 /* Action context information */

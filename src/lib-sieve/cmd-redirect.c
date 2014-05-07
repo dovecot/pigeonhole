@@ -92,15 +92,12 @@ static int act_redirect_commit
 		void *tr_context, bool *keep);
 
 const struct sieve_action_def act_redirect = {
-	"redirect",
-	SIEVE_ACTFLAG_TRIES_DELIVER,
-	act_redirect_equals,
-	act_redirect_check_duplicate,
-	NULL,
-	act_redirect_print,
-	NULL, NULL,
-	act_redirect_commit,
-	NULL
+	.name = "redirect",
+	.flags = SIEVE_ACTFLAG_TRIES_DELIVER,
+	.equals = act_redirect_equals,
+	.check_duplicate = act_redirect_check_duplicate,
+	.print = act_redirect_print,
+	.commit = act_redirect_commit
 };
 
 struct act_redirect_context {

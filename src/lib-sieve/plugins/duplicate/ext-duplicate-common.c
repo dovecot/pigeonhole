@@ -15,6 +15,7 @@
 #include "sieve-message.h"
 #include "sieve-code.h"
 #include "sieve-runtime.h"
+#include "sieve-interpreter.h"
 #include "sieve-actions.h"
 #include "sieve-result.h"
 
@@ -78,18 +79,14 @@ struct act_duplicate_mark_data {
 static void act_duplicate_mark_print
 	(const struct sieve_action *action,
 		const struct sieve_result_print_env *rpenv, bool *keep);
-static int act_duplicate_mark_commit
+static void act_duplicate_mark_finish
 	(const struct sieve_action *action,
-		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
+		const struct sieve_action_exec_env *aenv, void *tr_context, int status);
 
 static const struct sieve_action_def act_duplicate_mark = {
-	"duplicate_mark",
-	0,
-	NULL, NULL, NULL,
-	act_duplicate_mark_print,
-	NULL, NULL,
-	act_duplicate_mark_commit,
-	NULL
+	.name = "duplicate_mark",
+	.print = act_duplicate_mark_print,
+	.finish = act_duplicate_mark_finish
 };
 
 static void act_duplicate_mark_print
@@ -108,26 +105,23 @@ static void act_duplicate_mark_print
 	}
 }
 
-// FIXME: at commit phase the sieve script is still not guaranteed to finish
-//         successfully. We need a new final stage in Sieve result execution.
-static int act_duplicate_mark_commit
+static void act_duplicate_mark_finish
 (const struct sieve_action *action,
 	const struct sieve_action_exec_env *aenv,
-	void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
+	void *tr_context ATTR_UNUSED, int status)
 {
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct act_duplicate_mark_data *data =
 		(struct act_duplicate_mark_data *) action->context;
 
-	/* Message was handled successfully until now, so track duplicate for this
-	 * message.
-	 */
-	sieve_action_duplicate_mark
-		(senv, data->hash, sizeof(data->hash), ioloop_time + data->period);
-	
-	return SIEVE_EXEC_OK;
+	if ( status == SIEVE_EXEC_OK ) {
+		/* Message was handled successfully, so track duplicate for this
+		 * message.
+		 */
+		sieve_action_duplicate_mark
+			(senv, data->hash, sizeof(data->hash), ioloop_time + data->period);
+	}
 }
-
 
 /*
  * Duplicate checking
@@ -181,7 +175,13 @@ int ext_duplicate_check
 	pool_t msg_pool = NULL, result_pool = NULL;
 	struct act_duplicate_mark_data *act;
 
-	if ( !sieve_action_duplicate_check_available(senv) || value == NULL )
+	if ( !sieve_action_duplicate_check_available(senv) ) {
+		sieve_runtime_warning(renv, NULL, "duplicate test: "
+			"duplicate checking not available in this context");
+		return 0;
+	}
+		
+	if ( value == NULL )
 		return 0;
 
 	/* Get context; find out whether duplicate was checked earlier */

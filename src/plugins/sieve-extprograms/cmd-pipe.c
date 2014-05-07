@@ -99,15 +99,11 @@ static int act_pipe_commit
 /* Action object */
 
 const struct sieve_action_def act_pipe = {
-	"pipe",
-	SIEVE_ACTFLAG_TRIES_DELIVER,
-	NULL,
-	act_pipe_check_duplicate, 
-	NULL,
-	act_pipe_print,
-	NULL, NULL,
-	act_pipe_commit,
-	NULL
+	.name = "pipe",
+	.flags = SIEVE_ACTFLAG_TRIES_DELIVER,
+	.check_duplicate = act_pipe_check_duplicate, 
+	.print = act_pipe_print,
+	.commit = act_pipe_commit
 };
 
 /* Action context information */

@@ -186,15 +186,12 @@ static int act_reject_commit
 		const struct sieve_action_exec_env *aenv, void *tr_context, bool *keep);
 
 const struct sieve_action_def act_reject = {
-	"reject",
-	SIEVE_ACTFLAG_SENDS_RESPONSE,
-	NULL,
-	act_reject_check_duplicate,
-	act_reject_check_conflict,
-	act_reject_print,
-	NULL, NULL,
-	act_reject_commit,
-	NULL
+	.name = "reject",
+	.flags = SIEVE_ACTFLAG_SENDS_RESPONSE,
+	.check_duplicate = act_reject_check_duplicate,
+	.check_conflict = act_reject_check_conflict,
+	.print = act_reject_print,
+	.commit = act_reject_commit,
 };
 
 struct act_reject_context {
