@@ -25,7 +25,7 @@ struct sieve_interpreter *sieve_interpreter_create_for_block
 		const struct sieve_message_data *msgdata,
 		const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
 		enum sieve_runtime_flags flags);
-void sieve_interpreter_free(struct sieve_interpreter **interp);
+void sieve_interpreter_free(struct sieve_interpreter **_interp);
 
 /*
  * Accessors
