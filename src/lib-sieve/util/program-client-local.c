@@ -177,6 +177,43 @@ static int program_client_local_connect
 				i_error("close(extra_fd[0]) failed: %m");
 		}
 
+		/* drop privileges if we have any */
+		if ( getuid() == 0 ) {
+			uid_t uid;
+			gid_t gid;
+
+			/* switch back to root */
+			if (seteuid(0) < 0)
+				i_fatal("seteuid(0) failed: %m");
+
+			/* drop gid first */
+			gid = getgid();
+			if ( gid == 0 || gid != pclient->set.gid ) {
+				if ( pclient->set.gid != 0 ) {
+					if ( setgid(pclient->set.gid) < 0 )
+						i_fatal("setgid(%d) failed: %m", pclient->set.gid);
+				} else {
+					gid = getegid();
+					if (gid != 0 && setgid(gid) < 0) {
+						i_fatal("setgid(%d) failed: %m", gid);
+					}
+				}
+			}
+		
+			/* drop uid */
+			if ( pclient->set.uid != 0 ) {
+				if ( setuid(pclient->set.uid) )
+					i_fatal("setuid(%d) failed: %m", pclient->set.uid);
+			} else {
+				uid = geteuid();
+				if ( uid != 0 && setuid(uid) < 0 )
+					i_fatal("setuid(%d) failed: %m", uid);
+			}
+		}
+
+		i_assert(getuid() != 0);
+		i_assert(getgid() != 0);
+
 		if ( array_is_created(&pclient->envs) )
 			envs = array_get(&pclient->envs, &count);
 

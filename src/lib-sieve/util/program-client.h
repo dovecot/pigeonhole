@@ -10,6 +10,9 @@ struct program_client_settings {
 	unsigned int client_connect_timeout_msecs;
 	unsigned int input_idle_timeout_secs;
 
+	uid_t uid;
+	gid_t gid;
+
 	unsigned int debug:1;
 	unsigned int drop_stderr:1;
 };
