@@ -436,11 +436,13 @@ This is somewhat longer header content
 	}
 
 	if not header :is "x-some-header-first" "${before_out}" {
-		test_fail "wrong first content added";
+		if header :matches "x-some-header-first" "*" {}
+		test_fail "wrong first content added: `${0}`";
 	}
 
 	if not header :is "x-some-header-last" "${after_out}" {
-		test_fail "wrong last content added";
+		if header :matches "x-some-header-last" "*" {}
+		test_fail "wrong last content added: `${0}`";
 	}
 
 	redirect "frop@example.com";
@@ -466,11 +468,13 @@ This is somewhat longer header content
 	}
 
 	if not header :is "x-some-header-first" "${before_out}" {
-		test_fail "wrong first header content in redirected mail ";
+		if header :matches "x-some-header-first" "*" {}
+		test_fail "wrong first header content in redirected mail: `${0}`";
 	}
 
 	if not header :is "x-some-header-last" "${after_out}" {
-		test_fail "wrong last header content in redirected mail ";
+		if header :matches "x-some-header-last" "*" {}
+		test_fail "wrong last header content in redirected mail: `${0}`";
 	}
 
 	if not body :matches "Frop!*" {
