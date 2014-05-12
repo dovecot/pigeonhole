@@ -471,7 +471,7 @@ int ext_include_generate_include
 		ext_include_get_generator_context(this_ext, gentr);
 	struct ext_include_generator_context *pctx;
 	struct sieve_error_handler *ehandler = sieve_generator_error_handler(gentr);
-	const struct ext_include_script_info *included;
+	struct ext_include_script_info *included;
 
 	*included_r = NULL;
 
@@ -516,12 +516,13 @@ int ext_include_generate_include
 	binctx = ext_include_binary_init(this_ext, sbin, cgenv->ast);
 
 	/* Is the script already compiled into the current binary? */
-	if ( ext_include_binary_script_is_included(binctx, script, &included) ) {
+	included = ext_include_binary_script_get_include_info(binctx, script);
+	if ( included != NULL ) {
 		/* Yes, only update flags */
 		if ( (flags & EXT_INCLUDE_FLAG_OPTIONAL) == 0 )
-			flags &= ~EXT_INCLUDE_FLAG_OPTIONAL;
+			included->flags &= ~EXT_INCLUDE_FLAG_OPTIONAL;
 		if ( (flags & EXT_INCLUDE_FLAG_ONCE) == 0 )
-			flags &= ~EXT_INCLUDE_FLAG_ONCE;
+			included->flags &= ~EXT_INCLUDE_FLAG_ONCE;
 	} else 	{
 		const char *script_name = sieve_script_name(script);
 		enum sieve_compile_flags cpflags = cgenv->flags;

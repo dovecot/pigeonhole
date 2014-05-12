@@ -124,7 +124,7 @@ struct ext_include_binary_context *ext_include_binary_init
  * Script inclusion
  */
 
-const struct ext_include_script_info *ext_include_binary_script_include
+struct ext_include_script_info *ext_include_binary_script_include
 (struct ext_include_binary_context *binctx, 
 	enum ext_include_script_location location, enum ext_include_flags flags,
 	struct sieve_script *script,	struct sieve_binary_block *inc_block)
@@ -148,18 +148,13 @@ const struct ext_include_script_info *ext_include_binary_script_include
 	return incscript;
 }
 
-bool ext_include_binary_script_is_included
-(struct ext_include_binary_context *binctx, struct sieve_script *script,
-	const struct ext_include_script_info **script_info_r)
+struct ext_include_script_info *ext_include_binary_script_get_include_info
+(struct ext_include_binary_context *binctx, struct sieve_script *script)
 {
 	struct ext_include_script_info *incscript =
 		hash_table_lookup(binctx->included_scripts, script);
 
-	if ( incscript == NULL )
-		return FALSE;
-
-	*script_info_r = incscript;
-	return TRUE;
+	return incscript;
 }
 
 const struct ext_include_script_info *ext_include_binary_script_get_included
