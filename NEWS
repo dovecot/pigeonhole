@@ -1,4 +1,4 @@
-v0.4.3 12-05-2013 Stephan Bosch <stephan@rename-it.nl>
+v0.4.3 12-05-2014 Stephan Bosch <stephan@rename-it.nl>
 
 	* Editheader extension: Made control characters allowed for editheader, except
 	  NUL. Before, this would cause a runtime error.
