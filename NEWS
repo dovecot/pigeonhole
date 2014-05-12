@@ -1,3 +1,34 @@
+v0.4.3 12-05-2013 Stephan Bosch <stephan@rename-it.nl>
+
+	* Editheader extension: Made control characters allowed for editheader, except
+	  NUL. Before, this would cause a runtime error.
+	+ Upgraded Dovecot-specific Sieve "vnd.dovecot.duplicate" extension to match
+	  the new draft "duplicate" extension.
+	- Fixed sieve_result_global_log_error to log only as i_info in administrator
+	  log (syslog) if executed from multiscript context.
+	- Sieve redirect extension: Adjusted loop detection to show leniency to resent
+	  messages.
+	- Sieve include extension: Fixed problem with handling of duplicate includes
+	  with different parameters :once or :optional.
+	- Sieve spamtest/virustest extensions: Tests were erroneously performed
+	  against the original message. When used together with extprograms filter to
+	  add the spam headers, the changes were not being used by the spamtest and
+	  virustest extensions. 
+	- Deprecated Sieve notify extension: Fixed segfault problems in message string
+	  substitution.
+	- ManageSieve: Fixed active link verification to handle redundant path slashes
+	  correctly.
+	- Sieve vacation extension:
+	  - Fixed interaction of sieve_vacation_dont_check_recipient with
+	    sieve_vacation_send_from_recipient setting.
+	  - Fixed log message for discarded response.
+	- Sieve extprograms plugin:
+	  - Forgot to disable the alarm() timeouts set for script execution.
+	  - Fixed fd leak and handling of output shutdown.
+	  - Fixed 'Bad filedescriptor' error occurring when disconnecting script
+	    client.
+	  - Made sure that programs are never forked with root privileges.
+
 v0.4.2 26-09-2013 Stephan Bosch <stephan@rename-it.nl>
 	
 	* Incompatible change in Sieve doveadm plugin: the root attribute for
