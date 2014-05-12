@@ -78,6 +78,7 @@ void sieve_direct_verror
 {
 	if ( (flags & SIEVE_ERROR_FLAG_GLOBAL) != 0 &&
 		(ehandler == NULL || ehandler->parent == NULL)) {
+		i_assert(svinst->system_ehandler != NULL);
 		if (svinst->system_ehandler != ehandler ||
 			(flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0) {
 			va_list args_copy;
@@ -118,6 +119,7 @@ void sieve_direct_vwarning
 {
 	if ( (flags & SIEVE_ERROR_FLAG_GLOBAL) != 0 &&
 		(ehandler == NULL || ehandler->parent == NULL)) {
+		i_assert(svinst->system_ehandler != NULL);
 		if (svinst->system_ehandler != ehandler ||
 			(flags & SIEVE_ERROR_FLAG_GLOBAL_MAX_INFO) != 0) {
 			va_list args_copy;
@@ -156,14 +158,16 @@ void sieve_direct_vinfo
 {
 	if ( (flags & SIEVE_ERROR_FLAG_GLOBAL) != 0 &&
 		(ehandler == NULL || ehandler->parent == NULL) &&
-		svinst->system_ehandler != ehandler &&
-		svinst->system_ehandler->vinfo != NULL ) {
-		va_list args_copy;
+		svinst->system_ehandler != ehandler) {
+		i_assert(svinst->system_ehandler != NULL);
+		if (svinst->system_ehandler->vinfo != NULL ) {
+			va_list args_copy;
 
-		VA_COPY(args_copy, args);
+			VA_COPY(args_copy, args);
 
-		svinst->system_ehandler->vinfo
-			(svinst->system_ehandler, 0, location, fmt, args_copy);
+			svinst->system_ehandler->vinfo
+				(svinst->system_ehandler, 0, location, fmt, args_copy);
+		}
 	}
 
 	if ( ehandler == NULL )
@@ -181,14 +185,16 @@ void sieve_direct_vdebug
 {
 	if ( (flags & SIEVE_ERROR_FLAG_GLOBAL) != 0 &&
 		(ehandler == NULL || ehandler->parent == NULL) &&
-		svinst->system_ehandler != ehandler &&
-		svinst->system_ehandler->vdebug != NULL ) {
-		va_list args_copy;
+		svinst->system_ehandler != ehandler) {
+		i_assert(svinst->system_ehandler != NULL);
+		if (svinst->system_ehandler->vdebug != NULL ) {
+			va_list args_copy;
 
-		VA_COPY(args_copy, args);
+			VA_COPY(args_copy, args);
 
-		svinst->system_ehandler->vdebug
-			(svinst->system_ehandler, 0, location, fmt, args_copy);
+			svinst->system_ehandler->vdebug
+				(svinst->system_ehandler, 0, location, fmt, args_copy);
+		}
 	}
 
 	if ( ehandler == NULL )
