@@ -274,7 +274,7 @@ struct sieve_binary *sieve_compile_script
 	sieve_ast_unref(&ast);
 
 	if ( error_r != NULL )
-		error_r = SIEVE_ERROR_NONE;
+		*error_r = SIEVE_ERROR_NONE;
 
 	return sbin;
 }

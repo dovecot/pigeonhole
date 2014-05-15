@@ -42,7 +42,7 @@ static struct sieve_binary *_testsuite_script_compile
 
 	script_path = sieve_file_script_get_dirpath(renv->script);
 	if ( script_path == NULL )
-		return SIEVE_EXEC_FAILURE;
+		return NULL;
 
 	script_path = t_strconcat(script_path, "/", script, NULL);
 

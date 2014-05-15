@@ -851,7 +851,7 @@ int edit_mail_header_delete
 			if ( index >= 0 ) {
 				pos++;
 				final = ( header_idx->last == field_idx );
-			} else if ( index < 0 ) {
+			} else {
 				pos--;
 				final = ( header_idx->first == field_idx );
 			}
@@ -943,20 +943,6 @@ void edit_mail_headers_iterate_deinit
 {
 	i_free(*edhiter);
 	*edhiter = NULL;
-}
-
-static inline string_t *_header_right_trim(const char *raw)
-{
-	string_t *result;
-	int i;
-
-	for ( i = strlen(raw)-1; i >= 0; i-- ) {
-		if ( raw[i] != ' ' && raw[i] != '\t' ) break;
-	}
-
-	result = t_str_new(i+1);
-	str_append_n(result, raw, i + 1);
-	return result;
 }
 
 void edit_mail_headers_iterate_get

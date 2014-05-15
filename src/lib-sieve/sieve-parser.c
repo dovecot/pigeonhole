@@ -19,8 +19,6 @@
 
 inline static void sieve_parser_error
 	(struct sieve_parser *parser, const char *fmt, ...) ATTR_FORMAT(2, 3);
-inline static void sieve_parser_warning
-	(struct sieve_parser *parser, const char *fmt, ...) ATTR_FORMAT(2, 3);
 
 static int sieve_parser_recover
 	(struct sieve_parser *parser, enum sieve_token_type end_token);
@@ -110,22 +108,6 @@ inline static void sieve_parser_error
 	}
 
 	parser->valid = FALSE;
-
-	va_end(args);
-}
-
-inline static void sieve_parser_warning
-(struct sieve_parser *parser, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-
-	T_BEGIN	{
-		sieve_vwarning(parser->ehandler,
-			sieve_error_script_location(parser->script,
-				sieve_lexer_token_line(parser->lexer)),
-			fmt, args);
-	} T_END;
 
 	va_end(args);
 }
