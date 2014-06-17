@@ -727,10 +727,12 @@ static inline char *_header_value_unfold
 				break;
 
 			switch ( value[i] ) {
+			case ' ': 
+				str_append_c(out, ' ');
+				break;
+			case '\t':
 			default:
 				str_append_c(out, '\t');
-			case ' ': case '\t':
-				str_append_c(out, value[i]);
 			}
 		} else {
 			if (value[i] != '\r')
