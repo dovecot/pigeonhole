@@ -95,7 +95,7 @@ void *testsuite_smtp_start
 			smtp->msg_file);
 	}
 
-	smtp->output = o_stream_create_fd(fd, (size_t)-1, TRUE);
+	smtp->output = o_stream_create_fd_autoclose(&fd, (size_t)-1);
 
 	return (void *) smtp;
 }

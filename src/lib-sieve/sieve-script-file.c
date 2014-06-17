@@ -286,14 +286,14 @@ static int sieve_file_script_get_stream
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			result = NULL;
 		} else {
-			result = i_stream_create_fd(fd, SIEVE_FILE_READ_BLOCK_SIZE, TRUE);
+			result = i_stream_create_fd_autoclose(&fd, SIEVE_FILE_READ_BLOCK_SIZE);
 			script->st = script->lnk_st = st;
 		}
 	}
 
 	if ( result == NULL ) {
 		/* Something went wrong, close the fd */
-		if ( close(fd) != 0 ) {
+		if ( fd >= 0 && close(fd) != 0 ) {
 			sieve_sys_error(svinst,
 				"failed to close sieve script: close(fd=%s) failed: %m", script->path);
 		}

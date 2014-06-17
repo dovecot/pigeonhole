@@ -89,8 +89,6 @@ struct sieve_file_script {
 	const char *filename;
 	const char *binpath;
 	const char *binprefix;
-
-	int fd;
 };
 
 extern const struct sieve_script sieve_file_script;

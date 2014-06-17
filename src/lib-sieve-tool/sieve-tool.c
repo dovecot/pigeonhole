@@ -515,7 +515,7 @@ struct ostream *sieve_tool_open_output_stream(const char *filename)
 			i_fatal("failed to open file for writing: %m");
 		}
 
-		outstream = o_stream_create_fd(fd, 0, TRUE);
+		outstream = o_stream_create_fd_autoclose(&fd, 0);
 	}
 
 	return outstream;
