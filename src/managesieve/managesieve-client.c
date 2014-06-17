@@ -218,9 +218,6 @@ void client_destroy(struct client *client, const char *reason)
 		i_info("%s %s", reason, client_stats(client));
 	}
 
-	managesieve_client_count--;
-	DLLIST_REMOVE(&managesieve_clients, client);
-
 	if (client->command_pending) {
 		/* try to deinitialize the command */
 		i_assert(client->cmd.func != NULL);
@@ -263,6 +260,9 @@ void client_destroy(struct client *client, const char *reason)
 	sieve_deinit(&client->svinst);
 
 	pool_unref(&client->cmd.pool);
+
+	managesieve_client_count--;
+	DLLIST_REMOVE(&managesieve_clients, client);
 	pool_unref(&client->pool);
 
 	master_service_client_connection_destroyed(master_service);
