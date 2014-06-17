@@ -222,14 +222,11 @@ static int cmd_pipe_operation_execute
 		switch ( opt_code ) {
 		case OPT_TRY:
 			try = TRUE;
-			ret = SIEVE_EXEC_OK;
 			break;
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
 			return SIEVE_EXEC_BIN_CORRUPT;
 		}
-
-		if ( ret <= 0 ) return ret;
 	}
 
 	/* Fixed operands */

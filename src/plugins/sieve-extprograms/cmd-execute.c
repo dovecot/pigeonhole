@@ -335,15 +335,13 @@ static int cmd_execute_operation_execute
 
 		switch ( opt_code ) {
 		case OPT_INPUT:
-			if ( (ret=sieve_opr_string_read_ex
-				(renv, address, "input", TRUE, &input, NULL)) <= 0 )
-				return ret;
+			ret = sieve_opr_string_read_ex
+				(renv, address, "input", TRUE, &input, NULL);
 			have_input = TRUE;
 			break;
 		case OPT_OUTPUT:
-			if ( (ret=sieve_variable_operand_read
-				(renv, address, "output", &var_storage, &var_index)) <= 0 )
-				return ret;
+			ret = sieve_variable_operand_read
+				(renv, address, "output", &var_storage, &var_index);
 			break;
 		default:
 			sieve_runtime_trace_error(renv, "unknown optional operand");
