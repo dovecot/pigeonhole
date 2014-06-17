@@ -459,6 +459,8 @@ struct sieve_binary *sieve_generator_run
 		sbin = sieve_binary_block_get_binary(sblock);
 	}
 
+	i_assert(sbin != NULL);
+
 	sieve_binary_ref(sbin);
 	gentr->genenv.sbin = sbin;
 	gentr->genenv.sblock = sblock;
@@ -472,7 +474,7 @@ struct sieve_binary *sieve_generator_run
 	/* Load extensions linked to the AST and emit a list in code */
 	extensions = sieve_ast_extensions_get(gentr->genenv.ast, &ext_count);
 	(void) sieve_binary_emit_unsigned(sblock, ext_count);
-	for ( i = 0; i < ext_count && sbin != NULL; i++ ) {
+	for ( i = 0; i < ext_count; i++ ) {
 		const struct sieve_extension *ext = extensions[i];
 
 		/* Link to binary */
