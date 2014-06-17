@@ -470,7 +470,7 @@ void program_client_destroy(struct program_client **_pclient)
 		i_stream_unref(&pclient->input);
 	if ( pclient->output != NULL )
 		o_stream_unref(&pclient->output);
-	if ( pclient->input != NULL )
+	if ( pclient->seekable_output != NULL )
 		i_stream_unref(&pclient->seekable_output);
 	if ( pclient->io != NULL )
 		io_remove(&pclient->io);
