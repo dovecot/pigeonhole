@@ -41,14 +41,15 @@ static inline void ATTR_FORMAT(3, 0) _testsuite_stdout_vlog
 {
 	if ( _testsuite_log_stdout ) {
 		va_list args_copy;
-		VA_COPY(args_copy, args);
 
+		VA_COPY(args_copy, args);
 		if ( location == NULL || *location == '\0' )
 			fprintf(stdout,
 				"LOG: %s: %s\n", prefix, t_strdup_vprintf(fmt, args_copy));
 		else
 			fprintf(stdout,
 				"LOG: %s: %s: %s\n", prefix, location, t_strdup_vprintf(fmt, args_copy));
+		va_end(args_copy);
 	}
 }
 

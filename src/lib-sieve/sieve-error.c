@@ -96,6 +96,7 @@ void sieve_direct_verror
 						(svinst->system_ehandler, 0, location, fmt, args_copy);
 				}
 			}
+			va_end(args_copy);
 		}
 		if (svinst->system_ehandler == ehandler)
 			return;
@@ -137,6 +138,7 @@ void sieve_direct_vwarning
 						(svinst->system_ehandler, 0, location, fmt, args_copy);
 				}
 			}
+			va_end(args_copy);
 		}
 		if (svinst->system_ehandler == ehandler)
 			return;
@@ -164,9 +166,9 @@ void sieve_direct_vinfo
 			va_list args_copy;
 
 			VA_COPY(args_copy, args);
-
 			svinst->system_ehandler->vinfo
 				(svinst->system_ehandler, 0, location, fmt, args_copy);
+			va_end(args_copy);
 		}
 	}
 
@@ -191,9 +193,9 @@ void sieve_direct_vdebug
 			va_list args_copy;
 
 			VA_COPY(args_copy, args);
-
 			svinst->system_ehandler->vdebug
 				(svinst->system_ehandler, 0, location, fmt, args_copy);
+			va_end(args_copy);
 		}
 	}
 
