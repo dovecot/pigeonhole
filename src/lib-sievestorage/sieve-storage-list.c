@@ -58,6 +58,9 @@ struct sieve_list_context *sieve_storage_list_init
 		}
 	} T_END;
 
+	if ( ctx == NULL && closedir(dirp) < 0)
+		i_error("sieve-storage: closedir(%s) failed: %m",	storage->dir);
+
 	return ctx;
 }
 
