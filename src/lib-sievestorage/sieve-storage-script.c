@@ -37,9 +37,9 @@ static int _file_path_cmp(const char *path1, const char *path2)
 	int ret;
 	
 	p1 = path1; p2 = path2;
-	if (*p2 == '\0' && p1 != '\0')
+	if (*p2 == '\0' && *p1 != '\0')
 		return 1;
-	if (*p1 == '\0' && p2 != '\0')
+	if (*p1 == '\0' && *p2 != '\0')
 		return -1;
 	if (*p1 == '/' && *p2 != '/')
 		return 1;
