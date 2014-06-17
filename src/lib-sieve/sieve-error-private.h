@@ -47,16 +47,16 @@ struct sieve_error_handler {
 
 	void (*verror)
 		(struct sieve_error_handler *ehandler, unsigned int flags,
-			const char *location, const char *fmt, va_list args);
+			const char *location, const char *fmt, va_list args) ATTR_FORMAT(4, 0);
 	void (*vwarning)
 		(struct sieve_error_handler *ehandler, unsigned int flags,
-			const char *location, const char *fmt, va_list args);
+			const char *location, const char *fmt, va_list args) ATTR_FORMAT(4, 0);;
 	void (*vinfo)
 		(struct sieve_error_handler *ehandler, unsigned int flags,
-			const char *location, const char *fmt, va_list args);
+			const char *location, const char *fmt, va_list args) ATTR_FORMAT(4, 0);;
 	void (*vdebug)
 		(struct sieve_error_handler *ehandler, unsigned int flags,
-			const char *location, const char *fmt, va_list args);
+			const char *location, const char *fmt, va_list args) ATTR_FORMAT(4, 0);;
 
 	void (*free)
 		(struct sieve_error_handler *ehandler);
@@ -76,18 +76,18 @@ void sieve_error_handler_init_from_parent
 
 void sieve_direct_verror
 	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
-		unsigned int flags, const char *location, const char *fmt, va_list args);
+		unsigned int flags, const char *location, const char *fmt, va_list args) ATTR_FORMAT(5, 0);
 void sieve_direct_vwarning
 	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
-		unsigned int flags, const char *location, const char *fmt, va_list args);
+		unsigned int flags, const char *location, const char *fmt, va_list args) ATTR_FORMAT(5, 0);
 void sieve_direct_vinfo
 	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
-		unsigned int flags, const char *location, const char *fmt, va_list args);
+		unsigned int flags, const char *location, const char *fmt, va_list args) ATTR_FORMAT(5, 0);
 void sieve_direct_vdebug
 	(struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
-		unsigned int flags, const char *location, const char *fmt, va_list args);
+		unsigned int flags, const char *location, const char *fmt, va_list args) ATTR_FORMAT(5, 0);
 
-static inline void sieve_direct_error
+static inline void ATTR_FORMAT(5, 6) sieve_direct_error
 (struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
 	unsigned int flags, const char *location, const char *fmt, ...)
 {
@@ -99,7 +99,7 @@ static inline void sieve_direct_error
 	va_end(args);
 }
 
-static inline void sieve_direct_warning
+static inline void ATTR_FORMAT(5, 6) sieve_direct_warning
 (struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
 	unsigned int flags, const char *location, const char *fmt, ...)
 {
@@ -111,7 +111,7 @@ static inline void sieve_direct_warning
 	va_end(args);
 }
 
-static inline void sieve_direct_info
+static inline void ATTR_FORMAT(5, 6) sieve_direct_info
 (struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
 	unsigned int flags, const char *location, const char *fmt, ...)
 {
@@ -123,7 +123,7 @@ static inline void sieve_direct_info
 	va_end(args);
 }
 
-static inline void sieve_direct_debug
+static inline void ATTR_FORMAT(5, 6) sieve_direct_debug
 (struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
 	unsigned int flags, const char *location, const char *fmt, ...)
 {
