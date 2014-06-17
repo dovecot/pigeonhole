@@ -914,10 +914,7 @@ int edit_mail_headers_iterate_init
 		return -1;
 	}
 
-	if ( field_name != NULL
-		&& (header_idx=edit_mail_header_find(edmail, field_name)) == NULL ) {
-		return 0;
-	}
+	header_idx = edit_mail_header_find(edmail, field_name);
 
  	edhiter = i_new(struct edit_mail_header_iter, 1);
 	edhiter->mail = edmail;
