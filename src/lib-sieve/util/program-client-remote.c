@@ -77,6 +77,7 @@ static ssize_t program_client_istream_read(struct istream_private *stream)
 					break;
 				case '-':
 					scstream->client->exit_code = 0;
+					break;
 				default:
 					scstream->client->exit_code = -1;
 				}
