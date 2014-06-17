@@ -280,15 +280,20 @@ void sieve_code_dumper_run(struct sieve_code_dumper *cdumper)
 					break;
 				}
 
-				sieve_code_dumpf(denv, "%s", sieve_extension_name(ext));
+				if ( ext->def == NULL) {
+					sieve_code_dumpf(denv, "[undefined]");
 
-				if ( ext->def != NULL && ext->def->code_dump != NULL ) {
-					sieve_code_descend(denv);
-					if ( !ext->def->code_dump(ext, denv, address) ) {
-						success = FALSE;
-						break;
+				} else {
+					sieve_code_dumpf(denv, "%s", sieve_extension_name(ext));
+
+					if (ext->def->code_dump != NULL ) {
+						sieve_code_descend(denv);
+						if ( !ext->def->code_dump(ext, denv, address) ) {
+							success = FALSE;
+							break;
+						}
+						sieve_code_ascend(denv);
 					}
-					sieve_code_ascend(denv);
 				}
 			} T_END;
 		}
