@@ -44,7 +44,7 @@ static inline const struct testsuite_substitution_def *
 testsuite_substitution_get
 (unsigned int code)
 {
-	if ( code > substitutions_count )
+	if ( code >= substitutions_count )
 		return NULL;
 
 	return substitutions[code];
