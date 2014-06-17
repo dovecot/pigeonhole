@@ -310,8 +310,6 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 		return sieve_attribute_unset_script(storage, svstorage, scriptname);
 	}
 
-	sieve_storage_save_set_mtime(save_ctx, value->last_change);
-
 	if (save_ctx == NULL) {
 		/* save initialization failed */
 		mail_storage_set_critical(storage,
@@ -319,6 +317,9 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 			sieve_storage_get_last_error(svstorage, NULL));
 		return -1;
 	}
+
+	sieve_storage_save_set_mtime(save_ctx, value->last_change);
+
 	ret = 0;
 	while (i_stream_read(input) > 0) {
 		if (sieve_storage_save_continue(save_ctx) < 0) {
