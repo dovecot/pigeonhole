@@ -63,23 +63,22 @@ int mcht_value_match_key
 
 	switch ( rel_match ) {
 	case REL_MATCH_GREATER:
-		return ( cmp_result > 0 );
+		return ( cmp_result > 0 ? 1 : 0 );
 	case REL_MATCH_GREATER_EQUAL:
-		return ( cmp_result >= 0 );
+		return ( cmp_result >= 0 ? 1 : 0 );
 	case REL_MATCH_LESS:
-		return ( cmp_result < 0 );
+		return ( cmp_result < 0 ? 1 : 0 );
 	case REL_MATCH_LESS_EQUAL:
-		return ( cmp_result <= 0 );
+		return ( cmp_result <= 0 ? 1 : 0 );
 	case REL_MATCH_EQUAL:
-		return ( cmp_result == 0 );
+		return ( cmp_result == 0 ? 1 : 0);
 	case REL_MATCH_NOT_EQUAL:
-		return ( cmp_result != 0 );
-	case REL_MATCH_INVALID:
+		return ( cmp_result != 0 ? 1 : 0);
  	default:
 		break;
 	}
 
-	return FALSE;
+	return -1;
 }
 
 
