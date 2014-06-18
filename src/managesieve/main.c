@@ -12,6 +12,7 @@
 #include "process-title.h"
 #include "restrict-access.h"
 #include "fd-close-on-exec.h"
+#include "settings-parser.h"
 #include "master-interface.h"
 #include "master-service.h"
 #include "master-login.h"
@@ -128,7 +129,7 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	struct mail_storage_service_user *user;
 	struct mail_user *mail_user;
 	struct client *client;
-	const struct managesieve_settings *set;
+	struct managesieve_settings *set;
 
 	if (mail_storage_service_lookup_next(storage_service, input,
 					     &user, &mail_user, error_r) <= 0)
@@ -138,6 +139,9 @@ client_create_from_input(const struct mail_storage_service_input *input,
 	set = mail_storage_service_user_get_set(user)[1];
 	if (set->verbose_proctitle)
 		verbose_proctitle = TRUE;
+
+	settings_var_expand(&managesieve_setting_parser_info, set, mail_user->pool,
+			    mail_user_var_expand_table(mail_user));
 
 	client = client_create
 		(fd_in, fd_out, input->session_id, mail_user, user, set);
@@ -195,13 +199,15 @@ login_client_connected(const struct master_login_client *client,
 				 client->auth_req.data_size);
 	if (client_create_from_input(&input, client->fd, client->fd,
 				     &input_buf, &error) < 0) {
-		if (write(client->fd, MSG_BYE_INTERNAL_ERROR,
+		int fd = client->fd;
+
+		if (write(fd, MSG_BYE_INTERNAL_ERROR,
 			  strlen(MSG_BYE_INTERNAL_ERROR)) < 0) {
 			if (errno != EAGAIN && errno != EPIPE)
 				i_error("write(client) failed: %m");
 		}
 		i_error("%s", error);
-		(void)close(client->fd);
+		i_close_fd(&fd);
 		master_service_client_connection_destroyed(master_service);
 	}
 }
@@ -276,13 +282,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	login_set.auth_socket_path = t_abspath("auth-master");
-	if (argv[optind] != NULL)
-		login_set.postlogin_socket_path = t_abspath(argv[optind]);
-	login_set.callback = login_client_connected;
-	login_set.failure_callback = login_client_failed;
-
-	master_service_init_finish(master_service);
 	master_service_set_die_callback(master_service, managesieve_die);
 
 	/* plugins may want to add commands, so this needs to be called early */
@@ -297,6 +296,7 @@ int main(int argc, char *argv[])
 	storage_service =
 		mail_storage_service_init(master_service,
 					  set_roots, storage_service_flags);
+	master_service_init_finish(master_service);
 
 	/* fake that we're running, so we know if client was destroyed
 		while handling its initial input */
@@ -307,6 +307,12 @@ int main(int argc, char *argv[])
 			main_stdio_run(username);
 		} T_END;
 	} else {
+		login_set.auth_socket_path = t_abspath("auth-master");
+		if (argv[optind] != NULL)
+			login_set.postlogin_socket_path = t_abspath(argv[optind]);
+		login_set.callback = login_client_connected;
+		login_set.failure_callback = login_client_failed;
+
 		master_login = master_login_init(master_service, &login_set);
 		io_loop_set_running(current_ioloop);
 	}

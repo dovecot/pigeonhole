@@ -102,11 +102,6 @@ struct client *client_create
 	struct sieve_storage *storage;
 	pool_t pool;
 
-	/* Always use nonblocking I/O */
-
-	net_set_nonblock(fd_in, TRUE);
-	net_set_nonblock(fd_out, TRUE);
-
 	/* Initialize Sieve instance */
 
 	memset((void*)&svenv, 0, sizeof(svenv));
@@ -138,9 +133,13 @@ struct client *client_create
 		(fd_in, set->managesieve_max_line_length, FALSE);
 	client->output = o_stream_create_fd(fd_out, (size_t)-1, FALSE);
 
+	o_stream_set_no_error_handling(client->output, TRUE);
+	i_stream_set_name(client->input, "<managesieve client>");
+	o_stream_set_name(client->output, "<managesieve client>");
+
 	o_stream_set_flush_callback(client->output, client_output, client);
 
-	client->io = io_add(fd_in, IO_READ, client_input, client);
+	client->io = io_add_istream(client->input, client_input, client);
 	client->last_input = ioloop_time;
 	client->parser = managesieve_parser_create
 		(client->input, set->managesieve_max_line_length);
@@ -185,7 +184,7 @@ static const char *client_stats(struct client *client)
 	tab = t_malloc(sizeof(static_tab));
 	memcpy(tab, static_tab, sizeof(static_tab));
 
-	tab[0].value = dec2str(client->input->v_offset);
+	tab[0].value = dec2str(i_stream_get_absolute_offset(client->input));
 	tab[1].value = dec2str(client->output->offset);
 	tab[2].value = client->session_id;
 
@@ -249,17 +248,15 @@ void client_destroy(struct client *client, const char *reason)
 	i_stream_destroy(&client->input);
 	o_stream_destroy(&client->output);
 
-	if (close(client->fd_in) < 0)
-		i_error("close(client in) failed: %m");
-	if (client->fd_in != client->fd_out) {
-		if (close(client->fd_out) < 0)
-			i_error("close(client out) failed: %m");
-	}
+	net_disconnect(client->fd_in);
+	if (client->fd_in != client->fd_out)
+		net_disconnect(client->fd_out);
 
 	sieve_storage_free(client->storage);
 	sieve_deinit(&client->svinst);
 
 	pool_unref(&client->cmd.pool);
+	mail_storage_service_user_free(&client->service_user);
 
 	managesieve_client_count--;
 	DLLIST_REMOVE(&managesieve_clients, client);
@@ -267,6 +264,11 @@ void client_destroy(struct client *client, const char *reason)
 
 	master_service_client_connection_destroyed(master_service);
 	managesieve_refresh_proctitle();
+}
+
+static void client_destroy_timeout(struct client *client)
+{
+	client_destroy(client, NULL);
 }
 
 void client_disconnect(struct client *client, const char *reason)
@@ -278,10 +280,15 @@ void client_disconnect(struct client *client, const char *reason)
 
 	i_info("Disconnected: %s %s", reason, client_stats(client));
 	client->disconnected = TRUE;
-	(void)o_stream_flush(client->output);
+	o_stream_flush(client->output);
+	o_stream_uncork(client->output);
 
 	i_stream_close(client->input);
 	o_stream_close(client->output);
+
+	if (client->to_idle != NULL)
+		timeout_remove(&client->to_idle);
+	client->to_idle = timeout_add(0, client_destroy_timeout, client);
 }
 
 void client_disconnect_with_error(struct client *client, const char *msg)
