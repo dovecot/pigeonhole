@@ -330,7 +330,7 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 			break;
 		}
 	}
-	i_assert(input->eof);
+	i_assert(input->eof || ret < 0);
 	if (input->stream_errno != 0) {
 		errno = input->stream_errno;
 		mail_storage_set_critical(storage,
