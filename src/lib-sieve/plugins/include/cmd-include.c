@@ -6,6 +6,7 @@
 
 #include "sieve-common.h"
 #include "sieve-script.h"
+#include "sieve-storage.h"
 #include "sieve-ast.h"
 #include "sieve-code.h"
 #include "sieve-extensions.h"
@@ -213,8 +214,9 @@ static bool cmd_include_validate
 	struct sieve_ast_argument *arg = cmd->first_positional;
 	struct cmd_include_context_data *ctx_data =
 		(struct cmd_include_context_data *) cmd->data;
+	struct sieve_storage *storage;
 	struct sieve_script *script;
-	const char *script_location, *script_name;
+	const char *script_name;
 	enum sieve_error error = SIEVE_ERROR_NONE;
 	int ret;
 
@@ -247,30 +249,41 @@ static bool cmd_include_validate
 		return FALSE;
 	}
 
-	script_location = ext_include_get_script_location
-		(this_ext, ctx_data->location, script_name);
-	if ( script_location == NULL ) {
-		sieve_argument_validate_error(valdtr, arg,
-			"include: %s location for included script '%s' is unavailable "
-			"(contact system administrator for more information)",
-			ext_include_script_location_name(ctx_data->location),
-			str_sanitize(script_name, 80));
+	storage = ext_include_get_script_storage
+		(this_ext, ctx_data->location, script_name,	&error);
+	if ( storage == NULL ) {
+		// FIXME: handle ':optional' in this case
+		if (error == SIEVE_ERROR_NOT_FOUND) {
+			sieve_argument_validate_error(valdtr, arg,
+				"include: %s location for included script `%s' is unavailable "
+				"(contact system administrator for more information)",
+				ext_include_script_location_name(ctx_data->location),
+				str_sanitize(script_name, 80));
+		} else {
+			sieve_argument_validate_error(valdtr, arg,
+				"include: failed to access %s location for included script `%s' "
+				"(contact system administrator for more information)",
+				ext_include_script_location_name(ctx_data->location),
+				str_sanitize(script_name, 80));
+		}
 		return FALSE;
 	}
 
 	/* Create script object */
-	script = sieve_script_create
-		(this_ext->svinst, script_location, script_name,
-			sieve_validator_error_handler(valdtr), &error);
+	script = sieve_storage_get_script
+		(storage, script_name, &error);
+	if ( script == NULL )
+		return FALSE;
 
-	ret = 0;
-	if ( script != NULL )
-		ret = sieve_script_open(script, &error);
-
-	if ( script == NULL || ret < 0 ) {
+	ret = sieve_script_open(script, &error);
+	if ( ret < 0 ) {
 		if ( error != SIEVE_ERROR_NOT_FOUND ) {
-			if ( script != NULL )
-				sieve_script_unref(&script);
+			sieve_argument_validate_error(valdtr, arg,
+				"failed to access included %s script '%s': %s",
+				ext_include_script_location_name(ctx_data->location),
+				str_sanitize(script_name, 80),
+				sieve_script_get_last_error_lcase(script));
+			sieve_script_unref(&script);
 			return FALSE;
 
 		/* Not found */
@@ -295,8 +308,7 @@ static bool cmd_include_validate
 					"included %s script '%s' does not exist",
 					ext_include_script_location_name(ctx_data->location),
 					str_sanitize(script_name, 80));
-				if ( script != NULL )
-					sieve_script_unref(&script);
+				sieve_script_unref(&script);
 				return FALSE;
 			}
 		}

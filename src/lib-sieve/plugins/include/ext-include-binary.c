@@ -7,6 +7,7 @@
 #include "sieve-common.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
+#include "sieve-storage.h"
 #include "sieve-binary.h"
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
@@ -277,7 +278,7 @@ static bool ext_include_binary_open
 		struct sieve_binary_block *inc_block = NULL;
 		unsigned int location, flags;
 		string_t *script_name;
-		const char *script_location;
+		struct sieve_storage *storage;
 		struct sieve_script *script;
 		enum sieve_error error;
 		int ret;
@@ -314,24 +315,24 @@ static bool ext_include_binary_open
 		}
 
 		/* Can we find the script dependency ? */
-		script_location = ext_include_get_script_location
-			(ext, location, str_c(script_name));
-		if ( script_location == NULL ) {
+		storage = ext_include_get_script_storage
+			(ext, location, str_c(script_name), NULL);
+		if ( storage == NULL ) {
 			/* No, recompile */
+			// FIXME: handle ':optional' in this case
 			return FALSE;
 		}
 
 		/* Can we open the script dependency ? */
-		script = sieve_script_create
-			(ext->svinst, script_location, str_c(script_name), NULL, &error);
+		script = sieve_storage_get_script
+			(storage, str_c(script_name), &error);
 		if ( script == NULL ) {
 			/* No, recompile */
 			return FALSE;
 		}
-		if ( sieve_script_open(script, &error) < 0 ) {			
+		if ( sieve_script_open(script, &error) < 0 ) {
 			if ( error != SIEVE_ERROR_NOT_FOUND ) {
 				/* No, recompile */
-				sieve_script_unref(&script);
 				return FALSE;
 			}
 
@@ -342,7 +343,6 @@ static bool ext_include_binary_open
 						"include: script '%s' included in binary %s is missing, "
 						"so recompile", str_c(script_name), sieve_binary_path(sbin));
 				}
-				sieve_script_unref(&script);
 				return FALSE;
 			}
 

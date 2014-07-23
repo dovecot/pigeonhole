@@ -5,7 +5,8 @@
 #include "ostream.h"
 #include "istream.h"
 
-#include "sieve-storage-script.h"
+#include "sieve-script.h"
+#include "sieve-storage.h"
 
 #include "managesieve-common.h"
 #include "managesieve-commands.h"
@@ -98,8 +99,9 @@ bool cmd_getscript(struct client_command_context *cmd)
 	ctx->client = client;
 	ctx->storage = client->storage;
 	ctx->failed = FALSE;
-	ctx->script = sieve_storage_script_init(client->storage, scriptname);
 
+	ctx->script = sieve_storage_open_script
+		(client->storage, scriptname, NULL);
 	if (ctx->script == NULL) {
 		ctx->failed = TRUE;
 		return cmd_getscript_finish(ctx);

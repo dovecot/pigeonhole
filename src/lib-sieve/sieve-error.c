@@ -468,9 +468,6 @@ void sieve_vcritical
 (struct sieve_instance *svinst, struct sieve_error_handler *ehandler,
 	const char *location, const char *user_prefix, const char *fmt, va_list args)
 {
-	char str[256];
-	struct tm *tm;
-
 	if ( location == NULL || *location == '\0' ) {
 		sieve_direct_verror
 			(svinst, svinst->system_ehandler, 0, NULL, fmt, args);
@@ -479,19 +476,7 @@ void sieve_vcritical
 			(svinst, svinst->system_ehandler, 0, location, fmt, args);
 	}
 
-	if ( ehandler == NULL || ehandler == svinst->system_ehandler ) return;
-
-	tm = localtime(&ioloop_time);
-
-	if ( user_prefix == NULL || *user_prefix == '\0' ) {
-		sieve_direct_error(svinst, ehandler, 0, location, "%s",
-			( strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ?
-				str : CRITICAL_MSG ));
-	} else {
-		sieve_direct_error(svinst, ehandler, 0, location, "%s: %s", user_prefix,
-			( strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ?
-				str : CRITICAL_MSG ));
-	}
+	sieve_internal_error(ehandler, location, user_prefix);
 }
 
 void sieve_error
@@ -554,6 +539,32 @@ void sieve_critical
 	} T_END;
 
 	va_end(args);
+}
+
+void sieve_internal_error
+(struct sieve_error_handler *ehandler, const char *location,
+	const char *user_prefix)
+{
+	char str[256];
+	struct tm *tm;
+
+	if ( ehandler == NULL ||
+		ehandler == ehandler->svinst->system_ehandler )
+		return;
+
+	tm = localtime(&ioloop_time);
+
+	if ( user_prefix == NULL || *user_prefix == '\0' ) {
+		sieve_direct_error(ehandler->svinst, ehandler, 0,
+			location, "%s",
+			( strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ?
+				str : CRITICAL_MSG ));
+	} else {
+		sieve_direct_error(ehandler->svinst, ehandler, 0,
+			location, "%s: %s", user_prefix,
+			( strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ?
+				str : CRITICAL_MSG ));
+	}
 }
 
 /*

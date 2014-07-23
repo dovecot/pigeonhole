@@ -132,6 +132,11 @@ struct sieve_side_effect_def;
 
 /* sieve-script.h */
 struct sieve_script;
+struct sieve_script_sequence;
+
+/* sieve-storage.h */
+struct sieve_storage_class_registry;
+struct sieve_storage;
 
 /* sieve-message.h */
 struct sieve_message_context;
@@ -177,6 +182,9 @@ struct sieve_instance {
 
 	/* Extension registry */
 	struct sieve_extension_registry *ext_reg;
+
+	/* Storage class registry */
+	struct sieve_storage_class_registry *storage_reg;
 
 	/* System error handler */
 	struct sieve_error_handler *system_ehandler;

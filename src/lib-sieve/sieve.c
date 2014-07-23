@@ -14,7 +14,7 @@
 #include "sieve-plugins.h"
 
 #include "sieve-script.h"
-#include "sieve-script-file.h"
+#include "sieve-storage-private.h"
 #include "sieve-ast.h"
 #include "sieve-binary.h"
 #include "sieve-actions.h"
@@ -125,24 +125,29 @@ struct sieve_instance *sieve_init
 		return NULL;
 	}
 
+	/* Initialize storage classes */
+	sieve_storages_init(svinst);
+
+	/* Initialize plugins */
 	sieve_plugins_load(svinst, NULL, NULL);
 
+	/* Configure extensions */
 	sieve_extensions_configure(svinst);
 
 	return svinst;
 }
 
-void sieve_deinit(struct sieve_instance **svinst)
+void sieve_deinit(struct sieve_instance **_svinst)
 {
-	sieve_plugins_unload(*svinst);
+	struct sieve_instance *svinst = *_svinst;
 
-	sieve_extensions_deinit(*svinst);
+	sieve_plugins_unload(svinst);
+	sieve_storages_deinit(svinst);
+	sieve_extensions_deinit(svinst);
+	sieve_errors_deinit(svinst);
 
-	sieve_errors_deinit(*svinst);
-
-	pool_unref(&(*svinst)->pool);
-
-	*svinst = NULL;
+	pool_unref(&(svinst)->pool);
+	*_svinst = NULL;
 }
 
 void sieve_set_extensions
@@ -247,10 +252,22 @@ struct sieve_binary *sieve_compile_script
 {
 	struct sieve_ast *ast;
 	struct sieve_binary *sbin;
+	enum sieve_error error;
+
+	if ( error_r != NULL )
+		*error_r = SIEVE_ERROR_NONE;
+	else
+		error_r = &error;
 
 	/* Parse */
 	if ( (ast = sieve_parse(script, ehandler, error_r)) == NULL ) {
- 		sieve_error(ehandler, sieve_script_name(script), "parse failed");
+		switch ( *error_r ) {
+		case SIEVE_ERROR_NOT_FOUND:
+			sieve_error(ehandler, sieve_script_name(script), "script not found");
+			break;
+		default:
+	 		sieve_error(ehandler, sieve_script_name(script), "parse failed");
+		}
 		return NULL;
 	}
 
@@ -286,15 +303,26 @@ struct sieve_binary *sieve_compile
 {
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
+	enum sieve_error error;
 
 	if ( (script = sieve_script_create_open
-		(svinst, script_location, script_name, ehandler, error_r)) == NULL )
+		(svinst, script_location, script_name, &error)) == NULL ) {
+		if (error_r != NULL)
+			*error_r = error;
+		switch ( error ) {
+		case SIEVE_ERROR_NOT_FOUND:
+			sieve_error(ehandler, script_name, "script not found");
+			break;
+		default:
+			sieve_internal_error(ehandler, script_name, "failed to open script");
+		}
 		return NULL;
+	}
 
 	sbin = sieve_compile_script(script, ehandler, flags, error_r);
 
 	if ( svinst->debug && sbin != NULL ) {
-		sieve_sys_debug(svinst, "script `%s' from %s successfully compiled",
+		sieve_sys_debug(svinst, "Script `%s' from %s successfully compiled",
 			sieve_script_name(script), sieve_script_location(script));
 	}
 
@@ -366,9 +394,10 @@ struct sieve_binary *sieve_open_script
 			/* Ok, it exists; now let's see if it is up to date */
 			if ( !sieve_binary_up_to_date(sbin, flags) ) {
 				/* Not up to date */
-				if ( svinst->debug )
-					sieve_sys_debug(svinst, "script binary %s is not up-to-date",
+				if ( svinst->debug ) {
+					sieve_sys_debug(svinst, "Script binary %s is not up-to-date",
 						sieve_binary_path(sbin));
+				}
 
 				sieve_binary_unref(&sbin);
 				sbin = NULL;
@@ -379,17 +408,21 @@ struct sieve_binary *sieve_open_script
 		 * to (re-)compile.
 		 */
 		if ( sbin != NULL ) {
-			if ( svinst->debug )
-				sieve_sys_debug(svinst, "script binary %s successfully loaded",
+			if ( svinst->debug ) {
+				sieve_sys_debug(svinst,
+					"Script binary %s successfully loaded",
 					sieve_binary_path(sbin));
+			}
 
 		} else {
 			sbin = sieve_compile_script(script, ehandler, flags, error_r);
 
 			if ( sbin != NULL ) {
-				if ( svinst->debug )
-					sieve_sys_debug(svinst, "script `%s' from %s successfully compiled",
+				if ( svinst->debug ) {
+					sieve_sys_debug(svinst,
+						"Script `%s' from %s successfully compiled",
 						sieve_script_name(script), sieve_script_location(script));
+				}
 			}
 		}
 	} T_END;
@@ -404,11 +437,21 @@ struct sieve_binary *sieve_open
 {
 	struct sieve_script *script;
 	struct sieve_binary *sbin;
+	enum sieve_error error;
 
 	/* First open the scriptfile itself */
 	if ( (script=sieve_script_create_open
-		(svinst, script_location, script_name, ehandler, error_r)) == NULL ) {
+		(svinst, script_location, script_name, &error)) == NULL ) {
 		/* Failed */
+		if (error_r != NULL)
+			*error_r = error;
+		switch ( error ) {
+		case SIEVE_ERROR_NOT_FOUND:
+			sieve_error(ehandler, script_name, "script not found");
+			break;
+		default:
+			sieve_internal_error(ehandler, script_name, "failed to open script");
+		}
 		return NULL;
 	}
 
@@ -769,161 +812,6 @@ unsigned int sieve_max_actions(struct sieve_instance *svinst)
 size_t sieve_max_script_size(struct sieve_instance *svinst)
 {
 	return svinst->max_script_size;
-}
-
-/*
- * Script directory
- */
-
-struct sieve_directory {
-		struct sieve_instance *svinst;
-		DIR *dirp;
-
-		const char *path;
-};
-
-struct sieve_directory *sieve_directory_open
-(struct sieve_instance *svinst, const char *path, enum sieve_error *error_r)
-{
-	struct sieve_directory *sdir = NULL;
-	DIR *dirp;
-	struct stat st;
-
-	if ( error_r != NULL )
-		*error_r = SIEVE_ERROR_NONE;
-
-	if ( (path[0] == '~' && (path[1] == '/' || path[1] == '\0')) ||
-		(((svinst->flags & SIEVE_FLAG_HOME_RELATIVE) != 0 ) && path[0] != '/') ) {
-		/* Home-relative path. change to absolute. */
-		const char *home = sieve_environment_get_homedir(svinst);
-
-		if ( home != NULL ) {
-			if ( path[0] == '~' && (path[1] == '/' || path[1] == '\0') )
-				path = home_expand_tilde(path, home);
-			else
-				path = t_strconcat(home, "/", path, NULL);
-		} else {
-			sieve_sys_error(svinst,
-				"sieve dir path %s is relative to home directory, "
-				"but home directory is not available.", path);
-			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_TEMP_FAILURE;
-			return NULL;
-		}
-	}
-
-	/* Specified path can either be a regular file or a directory */
-	if ( stat(path, &st) != 0 ) {
-		switch ( errno ) {
-		case ENOENT:
-			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_NOT_FOUND;
-			break;
-		case EACCES:
-			sieve_sys_error(svinst, "failed to open sieve dir: %s",
-				eacces_error_get("stat", path));
-			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_NO_PERMISSION;
-			break;
-		default:
-			sieve_sys_error(svinst, "failed to open sieve dir: stat(%s) failed: %m",
-				path);
-			if ( error_r != NULL )
-				*error_r = SIEVE_ERROR_TEMP_FAILURE;
-			break;
-		}
-		return NULL;
-	}
-
-	if ( S_ISDIR(st.st_mode) ) {
-
-		/* Open the directory */
-		if ( (dirp = opendir(path)) == NULL ) {
-			switch ( errno ) {
-			case ENOENT:
-				if ( error_r != NULL )
-					*error_r = SIEVE_ERROR_NOT_FOUND;
-				break;
-			case EACCES:
-				sieve_sys_error(svinst, "failed to open sieve dir: %s",
-					eacces_error_get("opendir", path));
-				if ( error_r != NULL )
-					*error_r = SIEVE_ERROR_NO_PERMISSION;
-				break;
-			default:
-				sieve_sys_error(svinst, "failed to open sieve dir: opendir(%s) failed: "
-					"%m", path);
-				if ( error_r != NULL )
-					*error_r = SIEVE_ERROR_TEMP_FAILURE;
-				break;
-			}
-			return NULL;
-		}
-
-		/* Create object */
-		sdir = t_new(struct sieve_directory, 1);
-		sdir->path = path;
-		sdir->dirp = dirp;
-	} else {
-		sdir = t_new(struct sieve_directory, 1);
-		sdir->path = path;
-		sdir->dirp = NULL;
-	}
-
-	sdir->svinst = svinst;
-
-	return sdir;
-}
-
-const char *sieve_directory_get_scriptfile(struct sieve_directory *sdir)
-{
-	const char *script = NULL;
-	struct dirent *dp;
-
-	if ( sdir->dirp != NULL ) {
-		while ( script == NULL ) {
-			const char *file;
-			struct stat st;
-
-			errno = 0;
-			if ( (dp = readdir(sdir->dirp)) == NULL ) {
-				if ( errno != 0 ) {
-					sieve_sys_error(sdir->svinst, "failed to read sieve dir: "
-						"readdir(%s) failed: %m", sdir->path);
-				}
-
-				return NULL;
-			}
-
-			if ( !sieve_scriptfile_has_extension(dp->d_name) )
-				continue;
-
-			if ( sdir->path[strlen(sdir->path)-1] == '/' )
-				file = t_strconcat(sdir->path, dp->d_name, NULL);
-			else
-				file = t_strconcat(sdir->path, "/", dp->d_name, NULL);
-
-			if ( stat(file, &st) != 0 || !S_ISREG(st.st_mode) )
-				continue;
-
-			script = file;
-		}
-	} else {
-		script = sdir->path;
-		sdir->path = NULL;
-	}
-
-	return script;
-}
-
-void sieve_directory_close(struct sieve_directory **sdir)
-{
-	/* Close the directory */
-	if ( (*sdir)->dirp != NULL && closedir((*sdir)->dirp) < 0 )
-		sieve_sys_error((*sdir)->svinst, "failed to close sieve dir: "
-			"closedir(%s) failed: %m", (*sdir)->path);
-
-	*sdir = NULL;
 }
 
 

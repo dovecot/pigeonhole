@@ -101,6 +101,9 @@ doc/rfc/Makefile
 src/Makefile
 src/lib-sieve/Makefile
 src/lib-sieve/util/Makefile
+src/lib-sieve/storage/Makefile
+src/lib-sieve/storage/file/Makefile
+src/lib-sieve/storage/dict/Makefile
 src/lib-sieve/plugins/Makefile
 src/lib-sieve/plugins/vacation/Makefile
 src/lib-sieve/plugins/subaddress/Makefile
@@ -126,7 +129,6 @@ src/lib-sieve/plugins/duplicate/Makefile
 src/lib-sieve/plugins/vnd.dovecot/Makefile
 src/lib-sieve/plugins/vnd.dovecot/debug/Makefile
 src/lib-sieve-tool/Makefile
-src/lib-sievestorage/Makefile
 src/lib-managesieve/Makefile
 src/plugins/Makefile
 src/plugins/doveadm-sieve/Makefile

@@ -6,7 +6,6 @@
 #include "sieve.h"
 #include "sieve-common.h"
 #include "sieve-script.h"
-#include "sieve-script-file.h"
 #include "sieve-binary.h"
 #include "sieve-interpreter.h"
 #include "sieve-runtime-trace.h"

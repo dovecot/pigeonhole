@@ -2,7 +2,6 @@
 
 sieve_subdirs = \
 	lib-sieve \
-	lib-sievestorage \
 	plugins \
 	lib-sieve-tool \
 	sieve-tools \

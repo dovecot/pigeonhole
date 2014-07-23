@@ -2,16 +2,15 @@
  */
 
 #include "lib.h"
+#include "str.h"
 #include "ioloop.h"
 #include "istream.h"
 #include "istream-concat.h"
-#include "sieve-script.h"
-#include "sieve-script-file.h"
-#include "sieve-storage.h"
-#include "sieve-storage-list.h"
-#include "sieve-storage-save.h"
-#include "sieve-storage-script.h"
 #include "mail-storage-private.h"
+
+#include "sieve.h"
+#include "sieve-script.h"
+#include "sieve-storage.h"
 
 #define SIEVE_MAIL_CONTEXT(obj) \
 	MODULE_CONTEXT(obj, sieve_storage_module)
@@ -29,7 +28,7 @@ struct sieve_mailbox_attribute_iter {
 	struct mailbox_attribute_iter iter;
 	struct mailbox_attribute_iter *super;
 
-	struct sieve_list_context *sieve_list;
+	struct sieve_storage_list_context *sieve_list;
 	string_t *name;
 
 	bool failed;
@@ -63,7 +62,7 @@ static void mail_sieve_user_deinit(struct mail_user *user)
 {
 	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
 
-	sieve_storage_free(suser->sieve_storage);
+	sieve_storage_unref(&suser->sieve_storage);
 	sieve_deinit(&suser->svinst);
 
 	suser->module_ctx.super.deinit(user);
@@ -74,7 +73,9 @@ mail_sieve_user_init
 (struct mail_user *user, struct sieve_storage **svstorage_r)
 {
 	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
-	enum sieve_storage_flags storage_flags = SIEVE_STORAGE_FLAG_SYNCHRONIZING;
+	enum sieve_storage_flags storage_flags =
+		SIEVE_STORAGE_FLAG_READWRITE |
+		SIEVE_STORAGE_FLAG_SYNCHRONIZING;
 	struct mail_user_vfuncs *v = user->vlast;
 	struct sieve_environment svenv;
 
@@ -95,13 +96,10 @@ mail_sieve_user_init
 	user->vlast = &suser->module_ctx.super;
 	v->deinit = mail_sieve_user_deinit;
 
-	if (user->mail_debug)
-		storage_flags |= SIEVE_STORAGE_FLAG_DEBUG;
-
 	suser->svinst = sieve_init(&svenv, &mail_sieve_callbacks,
 				   user, user->mail_debug);
-	suser->sieve_storage = sieve_storage_create(suser->svinst, user,
-					       svenv.home_dir, storage_flags);
+	suser->sieve_storage = sieve_storage_create_main
+			(suser->svinst, user, storage_flags, NULL);
 
 	MODULE_CONTEXT_SET(user, sieve_user_module, suser);
 	*svstorage_r = suser->sieve_storage;
@@ -117,9 +115,8 @@ static int sieve_attribute_unset_script(struct mail_storage *storage,
 	enum sieve_error error;
 	int ret = 0;
 
-	script = sieve_storage_script_init(svstorage, scriptname);
-	ret = script == NULL ? -1 :
-		sieve_storage_script_delete(&script);
+	script = sieve_storage_open_script(svstorage, scriptname, NULL);
+	ret = script == NULL ? -1 : sieve_script_delete(&script);
 	if (ret < 0) {
 		errstr = sieve_storage_get_last_error(svstorage, &error);
 		if (error == SIEVE_ERROR_NOT_FOUND) {
@@ -148,7 +145,7 @@ sieve_attribute_set_active(struct mail_storage *storage,
 
 	if (scriptname == NULL) {
 		/* don't affect non-link active script */
-		if ((ret=sieve_storage_active_script_is_no_link(svstorage)) != 0) {
+		if ((ret=sieve_storage_is_singular(svstorage)) != 0) {
 			if (ret < 0) {
 				mail_storage_set_internal_error(storage);
 				return -1;
@@ -169,9 +166,9 @@ sieve_attribute_set_active(struct mail_storage *storage,
 	scriptname++;
 
 	/* activate specified script */
-	script = sieve_storage_script_init(svstorage, scriptname);
+	script = sieve_storage_open_script(svstorage, scriptname, NULL);
 	ret = script == NULL ? -1 :
-		sieve_storage_script_activate(script, value->last_change);
+		sieve_script_activate(script, value->last_change);
 	if (ret < 0) {
 		mail_storage_set_critical(storage,
 			"Failed to activate Sieve script '%s': %s", scriptname,
@@ -189,7 +186,7 @@ sieve_attribute_unset_active_script(struct mail_storage *storage,
 {
 	int ret;
 
-	if ((ret=sieve_storage_active_script_is_no_link(svstorage)) <= 0) {
+	if ((ret=sieve_storage_is_singular(svstorage)) <= 0) {
 		if (ret < 0)
 			mail_storage_set_internal_error(storage);
 		return ret;
@@ -222,7 +219,7 @@ sieve_attribute_set_active_script(struct mail_storage *storage,
 	/* skip over the 'S' type */
 	i_stream_skip(input, 1);
 
-	if (sieve_storage_save_as_active_script
+	if (sieve_storage_save_as_active
 		(svstorage, input, value->last_change) < 0) {
 		mail_storage_set_critical(storage,
 			"Failed to save active sieve script: %s",
@@ -275,7 +272,7 @@ sieve_attribute_set_sieve(struct mail_storage *storage,
 			  const struct mail_attribute_value *value)
 {
 	struct sieve_storage *svstorage;
-	struct sieve_save_context *save_ctx;
+	struct sieve_storage_save_context *save_ctx;
 	struct istream *input;
 	const char *scriptname;
 	int ret;
@@ -437,7 +434,7 @@ sieve_attribute_get_active_script(struct mail_storage *storage,
 	const char *errstr;
 	int ret;
 
-	if ((ret=sieve_storage_active_script_is_no_link(svstorage)) <= 0) {
+	if ((ret=sieve_storage_is_singular(svstorage)) <= 0) {
 		if (ret == 0 && sieve_storage_active_script_get_last_change
 			(svstorage, &value_r->last_change) < 0) {
 			ret = -1;
@@ -447,8 +444,10 @@ sieve_attribute_get_active_script(struct mail_storage *storage,
 		return ret;
 	}
 
-	if ((script=sieve_storage_active_script_get(svstorage)) == NULL)
+	if ((script=sieve_storage_active_script_open
+		(svstorage, NULL)) == NULL)
 		return 0;
+
 	if ((ret=sieve_attribute_retrieve_script
 		(storage, svstorage, script, TRUE, value_r, &errstr)) < 0) {
 		mail_storage_set_critical(storage,
@@ -504,7 +503,7 @@ sieve_attribute_get_sieve(struct mail_storage *storage, const char *key,
 		return -1;
 	}
 	scriptname = key + strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE_FILES);
-	script = sieve_storage_script_init(svstorage, scriptname);
+	script = sieve_storage_open_script(svstorage, scriptname, NULL);
 	if ((ret=sieve_attribute_retrieve_script
 		(storage, svstorage, script, FALSE, value_r, &errstr)) < 0) {
 		mail_storage_set_critical(storage,
@@ -628,7 +627,7 @@ sieve_attribute_iter_next_script(struct sieve_mailbox_attribute_iter *siter)
 	}
 
 	/* Check whether active script is a proper symlink or a regular file */
-	if ((ret=sieve_storage_active_script_is_no_link(svstorage)) < 0) {
+	if ((ret=sieve_storage_is_singular(svstorage)) < 0) {
 		mail_storage_set_critical(siter->iter.box->storage,
 			"Failed to iterate sieve scripts: %s",
 			sieve_storage_get_last_error(svstorage, NULL));

@@ -4,8 +4,8 @@
 #include "lib.h"
 #include "strfuncs.h"
 
+#include "sieve.h"
 #include "sieve-storage.h"
-#include "sieve-storage-quota.h"
 
 #include "managesieve-client.h"
 #include "managesieve-quota.h"

@@ -6,11 +6,8 @@
 
 #include "sieve.h"
 #include "sieve-script.h"
-#include "sieve-script-file.h"
 
-#include "sieve-storage-private.h"
-#include "sieve-storage-script.h"
-#include "sieve-storage-quota.h"
+#include "sieve-file-storage.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,54 +18,22 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-bool sieve_storage_quota_validsize
-(struct sieve_storage *storage, size_t size, uint64_t *limit_r)
-{
-	uint64_t max_size;
-
-	max_size = sieve_max_script_size(storage->svinst);
-	if ( max_size > 0 && size > max_size ) {
-		*limit_r = max_size;
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-uint64_t sieve_storage_quota_max_script_size
-(struct sieve_storage *storage)
-{
-	return sieve_max_script_size(storage->svinst);
-}
-
-int sieve_storage_quota_havespace
+int sieve_file_storage_quota_havespace
 (struct sieve_storage *storage, const char *scriptname, size_t size,
 	enum sieve_storage_quota *quota_r, uint64_t *limit_r)
 {
+	struct sieve_file_storage *fstorage =
+		(struct sieve_file_storage *)storage;
 	struct dirent *dp;
 	DIR *dirp;
 	uint64_t script_count = 1;
 	uint64_t script_storage = size;
 	int result = 1;
 
-	*limit_r = 0;
-	*quota_r = SIEVE_STORAGE_QUOTA_NONE;
-
-	/* Check the script size */
-	if ( !sieve_storage_quota_validsize(storage, size, limit_r) ) {
-		*quota_r = SIEVE_STORAGE_QUOTA_MAXSIZE;
-        return 0;
-    }
-
-	/* Do we need to scan the storage (quota enabled) ? */
-	if ( storage->max_scripts == 0 && storage->max_storage == 0 ) {
-		return 1;
-	}
-
 	/* Open the directory */
-	if ( (dirp = opendir(storage->dir)) == NULL ) {
-		sieve_storage_set_critical
-			(storage, "quota: opendir(%s) failed: %m", storage->dir);
+	if ( (dirp = opendir(fstorage->path)) == NULL ) {
+		sieve_storage_set_critical(storage,
+			"quota: opendir(%s) failed: %m", fstorage->path);
 		return -1;
 	}
 
@@ -81,15 +46,15 @@ int sieve_storage_quota_havespace
 		errno = 0;
 		if ( (dp = readdir(dirp)) == NULL ) {
 			if ( errno != 0 ) {
-				sieve_storage_set_critical
-		            (storage, "quota: readdir(%s) failed: %m", storage->dir);
+				sieve_storage_set_critical(storage,
+					"quota: readdir(%s) failed: %m", fstorage->path);
 				result = -1;
 			}
 			break;
 		}
 
 		/* Parse filename */
-		name = sieve_scriptfile_get_script_name(dp->d_name);
+		name = sieve_script_file_get_scriptname(dp->d_name);
 
 		/* Ignore non-script files */
 		if ( name == NULL )
@@ -98,14 +63,14 @@ int sieve_storage_quota_havespace
 		/* Don't list our active sieve script link if the link
 		 * resides in the script dir (generally a bad idea).
 		 */
-		if ( *(storage->link_path) == '\0' &&
-			strcmp(storage->active_fname, dp->d_name) == 0 )
+		if ( *(fstorage->link_path) == '\0' &&
+			strcmp(fstorage->active_fname, dp->d_name) == 0 )
 			continue;
 
 		if ( strcmp(name, scriptname) == 0 )
 			replaced = TRUE;
 
-		/* Check cont quota if necessary */
+		/* Check count quota if necessary */
 		if ( storage->max_scripts > 0 ) {
 			if ( !replaced ) {
 				script_count++;
@@ -124,11 +89,11 @@ int sieve_storage_quota_havespace
 			const char *path;
 			struct stat st;
 
-			path = t_strconcat(storage->dir, "/", dp->d_name, NULL);
+			path = t_strconcat(fstorage->path, "/", dp->d_name, NULL);
 
 			if ( stat(path, &st) < 0 ) {
-				i_warning
-					("sieve-storage: quota: stat(%s) failed: %m", path);
+				sieve_storage_sys_warning(storage,
+					"quota: stat(%s) failed: %m", path);
 				continue;
 			}
 
@@ -147,10 +112,9 @@ int sieve_storage_quota_havespace
 
 	/* Close directory */
 	if ( closedir(dirp) < 0 ) {
-		sieve_storage_set_critical
-			(storage, "quota: closedir(%s) failed: %m", storage->dir);
+		sieve_storage_set_critical(storage,
+			"quota: closedir(%s) failed: %m", fstorage->path);
 	}
-
 	return result;
 }
 

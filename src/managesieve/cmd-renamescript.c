@@ -4,8 +4,9 @@
 #include "lib.h"
 #include "str.h"
 
+#include "sieve.h"
+#include "sieve-script.h"
 #include "sieve-storage.h"
-#include "sieve-storage-script.h"
 
 #include "managesieve-common.h"
 #include "managesieve-commands.h"
@@ -21,14 +22,14 @@ bool cmd_renamescript(struct client_command_context *cmd)
 	if (!client_read_string_args(cmd, 2, TRUE, &scriptname, &newname))
 		return FALSE;
 
-	script = sieve_storage_script_init(storage, scriptname);
-
+	script = sieve_storage_open_script
+		(storage, scriptname, NULL);
 	if (script == NULL) {
 		client_send_storage_error(client, storage);
 		return TRUE;
 	}
 
-	if (sieve_storage_script_rename(script, newname) < 0)
+	if (sieve_script_rename(script, newname) < 0)
 		client_send_storage_error(client, storage);
 	else
 		client_send_ok(client, "Renamescript completed.");

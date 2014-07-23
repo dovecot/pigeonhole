@@ -93,10 +93,10 @@ extern const struct sieve_operation_def global_operation;
  * Script access
  */
 
-const char *ext_include_get_script_location
+struct sieve_storage *ext_include_get_script_storage
 	(const struct sieve_extension *ext,
-		enum ext_include_script_location location, const char *script_name);
-
+		enum ext_include_script_location location,
+		const char *script_name, enum sieve_error *error_r);
 /*
  * Context
  */
@@ -108,8 +108,10 @@ struct ext_include_context {
 	const struct sieve_extension *var_ext;
 
 	/* Configuration */
- 	char *global_dir;
-	char *personal_dir;
+ 	char *global_location;
+
+	struct sieve_storage *global_storage;
+	struct sieve_storage *personal_storage;
 
 	unsigned int max_nesting_depth;
 	unsigned int max_includes;

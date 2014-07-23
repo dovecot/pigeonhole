@@ -4,8 +4,8 @@
 #include "lib.h"
 #include "str.h"
 
+#include "sieve.h"
 #include "sieve-storage.h"
-#include "sieve-storage-list.h"
 
 #include "managesieve-quote.h"
 
@@ -15,7 +15,7 @@
 bool cmd_listscripts(struct client_command_context *cmd)
 {
   struct client *client = cmd->client;
-	struct sieve_list_context *ctx;
+	struct sieve_storage_list_context *ctx;
 	const char *scriptname;
 	bool active;
 	string_t *str;

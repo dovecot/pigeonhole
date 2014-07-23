@@ -10,6 +10,7 @@
 #include "sieve-settings.h"
 #include "sieve-error.h"
 #include "sieve-script.h"
+#include "sieve-storage.h"
 #include "sieve-ast.h"
 #include "sieve-binary.h"
 #include "sieve-commands.h"
@@ -76,36 +77,26 @@ bool ext_include_load
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_include_context *ctx;
-	const char *sieve_dir;
+	const char *location;
 	unsigned long long int uint_setting;
 
 	if ( *context != NULL ) {
 		ext_include_unload(ext);
 	}
 
-	// FIXME: sieve_dir and sieve_global_dir settings have somewhat become
-	// misnomers; these are not necessary filesystem directories anymore.
-
 	ctx = i_new(struct ext_include_context, 1);
 
-	/* Get directory for :global scripts */
-	sieve_dir = sieve_setting_get(svinst, "sieve_global_dir");
+	/* Get location for :global scripts */
+	location = sieve_setting_get(svinst, "sieve_global");
+	if ( location == NULL )
+		location = sieve_setting_get(svinst, "sieve_global_dir");
 
-	if ( sieve_dir == NULL && svinst->debug ) {
-		sieve_sys_debug(svinst, "include: sieve_global_dir is not set; "
+	if ( location == NULL && svinst->debug ) {
+		sieve_sys_debug(svinst, "include: sieve_global is not set; "
 			"it is currently not possible to include `:global' scripts.");
 	}
 
-	ctx->global_dir = i_strdup(sieve_dir);
-
-	/* Get directory for :personal scripts */
- 	sieve_dir = sieve_setting_get(svinst, "sieve_dir");
-
-	if ( sieve_dir == NULL ) {
-		sieve_dir = "~/sieve";
-	}
-
-	ctx->personal_dir = i_strdup(sieve_dir);
+	ctx->global_location = i_strdup(location);
 
 	/* Get limits */
 	ctx->max_nesting_depth = EXT_INCLUDE_DEFAULT_MAX_NESTING_DEPTH;
@@ -135,8 +126,12 @@ void ext_include_unload
 	struct ext_include_context *ctx =
 		(struct ext_include_context *) ext->context;
 
-	i_free(ctx->personal_dir);
-	i_free(ctx->global_dir);
+	if ( ctx->global_storage != NULL )
+		sieve_storage_unref(&ctx->global_storage);
+	if ( ctx->personal_storage != NULL )
+		sieve_storage_unref(&ctx->personal_storage);
+
+	i_free(ctx->global_location);
 	i_free(ctx);
 }
 
@@ -144,44 +139,42 @@ void ext_include_unload
  * Script access
  */
 
-const char *ext_include_get_script_location
-(const struct sieve_extension *ext, enum ext_include_script_location location,
-   const char *script_name)
+struct sieve_storage *ext_include_get_script_storage
+(const struct sieve_extension *ext,
+	enum ext_include_script_location location,
+	const char *script_name, enum sieve_error *error_r)
 {
 	struct sieve_instance *svinst = ext->svinst;
 	struct ext_include_context *ctx =
 		(struct ext_include_context *) ext->context;
-	const char *sieve_dir;
 
 	switch ( location ) {
 	case EXT_INCLUDE_LOCATION_PERSONAL:
-
-		if ( ctx->personal_dir == NULL ) {
-			sieve_sys_error(svinst, "include: sieve_dir is unconfigured; "
-				"include of `:personal' script `%s' is therefore not possible",
-				str_sanitize(script_name, 80));
-			return NULL;
+		if ( ctx->personal_storage == NULL ) {
+			ctx->personal_storage = sieve_storage_create_main
+				(svinst, NULL, 0, error_r);
 		}
-
-		sieve_dir = ctx->personal_dir;
-		break;
+		return ctx->personal_storage;
 
 	case EXT_INCLUDE_LOCATION_GLOBAL:
-
-		if ( ctx->global_dir == NULL ) {
-			sieve_sys_error(svinst, "include: sieve_global_dir is unconfigured; "
+		if ( ctx->global_location == NULL ) {
+			sieve_sys_info(svinst, "include: sieve_global is unconfigured; "
 				"include of `:global' script `%s' is therefore not possible",
 				str_sanitize(script_name, 80));
+			*error_r = SIEVE_ERROR_NOT_FOUND;
 			return NULL;
 		}
-
-		sieve_dir = ctx->global_dir;
-		break;
+		if ( ctx->global_storage == NULL ) {
+			ctx->global_storage = sieve_storage_create
+				(svinst, ctx->global_location, 0, error_r);
+		}
+		return ctx->global_storage;
 	default:
-		i_unreached();
+		break;
 	}
 
-	return sieve_dir;
+	i_unreached();
+	return NULL;
 }
 
 /*

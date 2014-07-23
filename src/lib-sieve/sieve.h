@@ -26,7 +26,7 @@ struct sieve_instance *sieve_init
 /* sieve_deinit():
  *   Frees all memory allocated by the sieve engine.
  */
-void sieve_deinit(struct sieve_instance **svinst);
+void sieve_deinit(struct sieve_instance **_svinst);
 
 /* sieve_get_capabilities():
  *
@@ -48,7 +48,8 @@ void sieve_set_extensions
  */
 struct sieve_binary *sieve_compile_script
 	(struct sieve_script *script, struct sieve_error_handler *ehandler,
-		enum sieve_compile_flags flags, enum sieve_error *error_r);
+		enum sieve_compile_flags flags, enum sieve_error *error_r)
+		ATTR_NULL(2, 4);
 
 /* sieve_compile:
  *
@@ -57,7 +58,8 @@ struct sieve_binary *sieve_compile_script
 struct sieve_binary *sieve_compile
 	(struct sieve_instance *svinst, const char *script_location,
 		const char *script_name, struct sieve_error_handler *ehandler,
-		enum sieve_compile_flags flags, enum sieve_error *error_r);
+		enum sieve_compile_flags flags, enum sieve_error *error_r)
+		ATTR_NULL(3, 4, 6);
 
 /*
  * Reading/writing Sieve binaries
@@ -204,16 +206,5 @@ int sieve_multiscript_finish
 unsigned int sieve_max_redirects(struct sieve_instance *svinst);
 unsigned int sieve_max_actions(struct sieve_instance *svinst);
 size_t sieve_max_script_size(struct sieve_instance *svinst);
-
-/*
- * Script directory
- */
-
-struct sieve_directory;
-
-struct sieve_directory *sieve_directory_open
-	(struct sieve_instance *svinst, const char *path, enum sieve_error *error_r);
-const char *sieve_directory_get_scriptfile(struct sieve_directory *sdir);
-void sieve_directory_close(struct sieve_directory **sdir);
 
 #endif

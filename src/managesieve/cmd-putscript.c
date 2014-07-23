@@ -12,10 +12,8 @@
 #include "str.h"
 
 #include "sieve.h"
-
+#include "sieve-script.h"
 #include "sieve-storage.h"
-#include "sieve-storage-script.h"
-#include "sieve-storage-save.h"
 
 #include "managesieve-parser.h"
 
@@ -37,7 +35,7 @@ struct cmd_putscript_context {
 	uoff_t script_size, max_script_size;
 
 	struct managesieve_parser *save_parser;
-	struct sieve_save_context *save_ctx;
+	struct sieve_storage_save_context *save_ctx;
 };
 
 static void cmd_putscript_finish(struct cmd_putscript_context *ctx);
@@ -59,7 +57,7 @@ static void client_input_putscript(struct client *client)
 		/* Reset command so that client_destroy() doesn't try to call
 		   cmd_putscript_continue_script() anymore. */
 		_client_reset_command(client);
-		client_destroy(client, "Disconnected in PUTSCRIPT/SCRIPT");
+		client_destroy(client, "Disconnected in PUTSCRIPT/CHECKSCRIPT");
 		return;
 	case -2:
 		cmd_putscript_finish(cmd->context);
@@ -199,6 +197,7 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 			enum sieve_compile_flags cpflags =
 				SIEVE_COMPILE_FLAG_NOGLOBAL | SIEVE_COMPILE_FLAG_UPLOADED;
 			struct sieve_binary *sbin;
+			enum sieve_error error;
 			string_t *errors;
 
 			/* Mark this as an activation when we are replacing the active script */
@@ -213,8 +212,17 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 
 			/* Compile */
 			if ( (sbin=sieve_compile_script
-				(script, ehandler, cpflags, NULL)) == NULL ) {
-				client_send_no(client, str_c(errors));
+				(script, ehandler, cpflags, &error)) == NULL ) {
+				if ( error != SIEVE_ERROR_NOT_VALID ) {
+					const char *errormsg =
+						sieve_script_get_last_error(script, &error);
+					if ( error != SIEVE_ERROR_NONE )
+						client_send_no(client, errormsg);
+					else
+						client_send_no(client, str_c(errors));
+				} else {
+					client_send_no(client, str_c(errors));
+				}
 				success = FALSE;
 			} else {
 				sieve_close(&sbin);

@@ -1,0 +1,3 @@
+SUBDIRS = \
+	file \
+	dict 

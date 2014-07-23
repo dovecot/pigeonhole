@@ -8,8 +8,7 @@
 
 #include "sieve.h"
 #include "sieve-script.h"
-
-#include "sieve-storage-quota.h"
+#include "sieve-storage.h"
 
 #include "managesieve-client.h"
 #include "managesieve-quota.h"

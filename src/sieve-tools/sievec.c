@@ -11,7 +11,6 @@
 #include "sieve.h"
 #include "sieve-extensions.h"
 #include "sieve-script.h"
-#include "sieve-script-file.h"
 #include "sieve-tool.h"
 
 #include <stdio.h>
@@ -113,7 +112,7 @@ int main(int argc, char **argv)
 				break;
 			}
 
-			if ( sieve_scriptfile_has_extension(dp->d_name) ) {
+			if ( sieve_script_file_has_extension(dp->d_name) ) {
 				const char *file;
 
 				if ( scriptfile[strlen(scriptfile)-1] == '/' )

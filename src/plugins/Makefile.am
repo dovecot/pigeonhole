@@ -1,1 +1,4 @@
-SUBDIRS = doveadm-sieve lda-sieve sieve-extprograms
+SUBDIRS = \
+	doveadm-sieve \
+	lda-sieve \
+	sieve-extprograms

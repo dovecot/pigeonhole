@@ -14,6 +14,7 @@
 #include "mail-storage-service.h"
 #include "mail-namespace.h"
 
+#include "sieve.h"
 #include "sieve-storage.h"
 
 #include "managesieve-quote.h"
@@ -58,34 +59,35 @@ static void client_idle_timeout(struct client *client)
 }
 
 static struct sieve_storage *client_get_storage
-(struct sieve_instance *svinst, struct mail_user *user,
-	const struct managesieve_settings *set)
+(struct sieve_instance *svinst, struct mail_user *user)
 {
 	struct sieve_storage *storage;
-	enum sieve_storage_flags flags = 0;
-	const char *home;
+	enum sieve_error error;
 
-	if ( mail_user_get_home(user, &home) <= 0 )
-		home = NULL;
-
-	if ( set->mail_debug )
-		flags |= SIEVE_STORAGE_FLAG_DEBUG;
-
-	storage = sieve_storage_create
-		(svinst, user, home, flags);
-
+	storage = sieve_storage_create_main
+		(svinst, user, SIEVE_STORAGE_FLAG_READWRITE, &error);
 	if (storage == NULL) {
-		struct tm *tm;
-		char str[256];
+		switch (error) {
+		case SIEVE_ERROR_NOT_FOUND:
+			printf("BYE \"Sieve filtering is disabled for this user.\"\n");
 
-		tm = localtime(&ioloop_time);
+			i_fatal("Failed to open Sieve storage: Sieve disabled for user");
+			break;
+		default:
+			{ 
+				struct tm *tm;
+				char str[256];
 
-		printf("BYE \"%s\"\n",
-			strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ?
-				i_strdup(str) : i_strdup(CRITICAL_MSG));
+				tm = localtime(&ioloop_time);
 
-		i_fatal("Failed to open Sieve storage.");
-    }
+				printf("BYE \"%s\"\n",
+					strftime(str, sizeof(str), CRITICAL_MSG_STAMP, tm) > 0 ?
+						i_strdup(str) : i_strdup(CRITICAL_MSG));
+
+				i_fatal("Failed to open Sieve storage.");
+			}
+		}
+	}
 
 	return storage;
 }
@@ -102,7 +104,7 @@ struct client *client_create
 	struct sieve_storage *storage;
 	pool_t pool;
 
-	/* Initialize Sieve instance */
+	/* Initialize Sieve */
 
 	memset((void*)&svenv, 0, sizeof(svenv));
 	svenv.username = user->username;
@@ -115,7 +117,7 @@ struct client *client_create
 
 	/* Get Sieve storage */
 
-	storage = client_get_storage(svinst, user, set);
+	storage = client_get_storage(svinst, user);
 
 	/* always use nonblocking I/O */
 	net_set_nonblock(fd_in, TRUE);
@@ -252,7 +254,7 @@ void client_destroy(struct client *client, const char *reason)
 	if (client->fd_in != client->fd_out)
 		net_disconnect(client->fd_out);
 
-	sieve_storage_free(client->storage);
+	sieve_storage_unref(&client->storage);
 	sieve_deinit(&client->svinst);
 
 	pool_unref(&client->cmd.pool);

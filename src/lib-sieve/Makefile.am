@@ -1,4 +1,4 @@
-SUBDIRS = util plugins
+SUBDIRS = util storage plugins
 
 dovecot_pkglib_LTLIBRARIES = libdovecot-sieve.la
 
@@ -43,11 +43,17 @@ comparators = \
 	cmp-i-ascii-casemap.c
 
 if BUILD_UNFINISHED
+unfinished_storages =
 unfinished_plugins = \
 	$(extdir)/metadata/libsieve_ext_metadata.la
 endif
 
-# These are not actual plugins just yet...
+strgdir = $(top_builddir)/src/lib-sieve/storage
+storages = \
+	$(strgdir)/file/libsieve_storage_file.la \
+	$(strgdir)/dict/libsieve_storage_dict.la \
+	$(unfinished_storages)
+
 extdir = $(top_builddir)/src/lib-sieve/plugins
 plugins = \
 	$(extdir)/vacation/libsieve_ext_vacation.la \
@@ -73,12 +79,14 @@ plugins = \
 	$(unfinished_plugins)
 
 libdovecot_sieve_la_DEPENDENCIES = \
+	$(storages) \
 	$(plugins) \
 	$(top_builddir)/src/lib-sieve/util/libsieve_util.la \
 	$(LIBDOVECOT_LDA_DEPS) \
 	$(LIBDOVECOT_STORAGE_DEPS) \
 	$(LIBDOVECOT_DEPS)
 libdovecot_sieve_la_LIBADD = \
+	$(storages) \
 	$(plugins) \
 	$(top_builddir)/src/lib-sieve/util/libsieve_util.la \
 	$(LIBDOVECOT_LDA) \
@@ -91,8 +99,8 @@ libdovecot_sieve_la_SOURCES = \
 	sieve-smtp.c \
 	sieve-lexer.c \
 	sieve-script.c \
-	sieve-script-file.c \
-	sieve-script-dict.c \
+	sieve-storage.c \
+	sieve-storage-sync.c \
 	sieve-ast.c \
 	sieve-binary.c \
 	sieve-binary-file.c \
@@ -137,7 +145,8 @@ headers = \
 	sieve-lexer.h \
 	sieve-script.h \
 	sieve-script-private.h \
-	sieve-script-file.h \
+	sieve-storage.h \
+	sieve-storage-private.h \
 	sieve-ast.h \
 	sieve-binary.h \
 	sieve-binary-private.h \

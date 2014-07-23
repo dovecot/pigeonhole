@@ -143,6 +143,10 @@ void sieve_critical
 		const char *location, const char *user_prefix, const char *fmt, ...)
 		ATTR_FORMAT(5, 6);
 
+void sieve_internal_error
+(struct sieve_error_handler *ehandler, const char *location,
+	const char *user_prefix) ATTR_NULL(1, 2, 3);
+
 /*
  * Error handler configuration
  */

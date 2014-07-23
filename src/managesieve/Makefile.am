@@ -8,8 +8,7 @@ AM_CPPFLAGS = \
 	-DMODULEDIR=\""$(dovecot_moduledir)"\" \
 	-I$(top_srcdir) \
 	-I$(top_srcdir)/src/lib-sieve \
-	-I$(top_srcdir)/src/lib-managesieve \
-	-I$(top_srcdir)/src/lib-sievestorage
+	-I$(top_srcdir)/src/lib-managesieve
 
 libmanagesieve_settings_la_LDFLAGS = -module -avoid-version
 
@@ -24,7 +23,6 @@ managesieve_LDFLAGS = -export-dynamic
 libs = \
 	managesieve-settings.lo \
 	$(top_builddir)/src/lib-managesieve/libmanagesieve.a \
-	$(top_builddir)/src/lib-sievestorage/libsievestorage.la \
 	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la
 
 managesieve_LDADD = $(libs) $(LIBDOVECOT_STORAGE) $(LIBDOVECOT_LDA) $(LIBDOVECOT)

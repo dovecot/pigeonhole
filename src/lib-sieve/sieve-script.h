@@ -16,44 +16,50 @@
 bool sieve_script_name_is_valid(const char *scriptname);
 
 /*
- * Sieve script object
+ * Sieve script file
+ */
+
+bool sieve_script_file_has_extension(const char *filename);
+
+/*
+ * Sieve script class
+ */
+
+void sieve_script_class_register
+	(struct sieve_instance *svinst, const struct sieve_script *script_class);
+void sieve_script_class_unregister
+	(struct sieve_instance *svinst, const struct sieve_script *script_class);	
+
+/*
+ * Sieve script instance
  */
 
 struct sieve_script;
 
-ARRAY_DEFINE_TYPE(sieve_scripts, struct sieve_script *);
+ARRAY_DEFINE_TYPE(sieve_script, struct sieve_script *);
 
 struct sieve_script *sieve_script_create
 	(struct sieve_instance *svinst, const char *location, const char *name,
-		struct sieve_error_handler *ehandler, enum sieve_error *error_r);
+		enum sieve_error *error_r)
+		ATTR_NULL(3,4);
 
 void sieve_script_ref(struct sieve_script *script);
 void sieve_script_unref(struct sieve_script **script);
 
 int sieve_script_open
-	(struct sieve_script *script, enum sieve_error *error_r);
+	(struct sieve_script *script, enum sieve_error *error_r)
+		ATTR_NULL(2);
 int sieve_script_open_as
-	(struct sieve_script *script, const char *name, enum sieve_error *error_r);
+	(struct sieve_script *script, const char *name, enum sieve_error *error_r)
+		ATTR_NULL(3);
 
 struct sieve_script *sieve_script_create_open
 	(struct sieve_instance *svinst, const char *location, const char *name,
-		struct sieve_error_handler *ehandler, enum sieve_error *error_r);
-struct sieve_script *sieve_script_create_open_as
-	(struct sieve_instance *svinst, const char *location, const char *name,
-		struct sieve_error_handler *ehandler, enum sieve_error *error_r);
+		enum sieve_error *error_r)
+		ATTR_NULL(3,4);
 
 /*
- * Accessors
- */
-
-const char *sieve_script_name(const struct sieve_script *script);
-const char *sieve_script_location(const struct sieve_script *script);
-struct sieve_instance *sieve_script_svinst(const struct sieve_script *script);
-
-bool sieve_script_is_open(const struct sieve_script *script);
-
-/*
- * Saving/loading Sieve binaries
+ * Binary
  */
 
 int sieve_script_binary_read_metadata
@@ -77,8 +83,39 @@ const char *sieve_script_binary_get_prefix
 
 int sieve_script_get_stream
 	(struct sieve_script *script, struct istream **stream_r,
-		enum sieve_error *error_r);
+		enum sieve_error *error_r) ATTR_NULL(3);
+
+/*
+ * Management
+ */
+
+// FIXME: check read/write flag!
+
+int sieve_script_rename
+	(struct sieve_script *script, const char *newname);
+int sieve_script_is_active(struct sieve_script *script);
+int sieve_script_activate(struct sieve_script *script, time_t mtime);
+int sieve_script_delete(struct sieve_script **script);
+
+/*
+ * Properties
+ */
+
+const char *sieve_script_name
+	(const struct sieve_script *script) ATTR_PURE;
+const char *sieve_script_location
+	(const struct sieve_script *script) ATTR_PURE;
+struct sieve_instance *sieve_script_svinst
+	(const struct sieve_script *script) ATTR_PURE;
+
 int sieve_script_get_size(struct sieve_script *script, uoff_t *size_r);
+bool sieve_script_is_open
+	(const struct sieve_script *script) ATTR_PURE;
+
+const char *sieve_file_script_get_dirpath
+	(const struct sieve_script *script) ATTR_PURE;
+const char *sieve_file_script_get_path
+	(const struct sieve_script *script) ATTR_PURE;
 
 /*
  * Comparison
@@ -94,5 +131,27 @@ static inline int sieve_script_cmp
 	return ( sieve_script_equals(script, other) ? 0 : -1 );
 }
 
+/*
+ * Error handling
+ */
+
+const char *sieve_script_get_last_error
+	(struct sieve_script *script, enum sieve_error *error_r)
+	ATTR_NULL(2);
+const char *sieve_script_get_last_error_lcase
+	(struct sieve_script *script);
+
+/*
+ * Script sequence
+ */
+
+struct sieve_script_sequence;
+
+struct sieve_script_sequence *sieve_script_sequence_create
+(struct sieve_instance *svinst, const char *location,
+	enum sieve_error *error_r);
+struct sieve_script *sieve_script_sequence_next
+	(struct sieve_script_sequence *seq, enum sieve_error *error_r);
+void sieve_script_sequence_free(struct sieve_script_sequence **_seq);
 
 #endif /* __SIEVE_SCRIPT_H */

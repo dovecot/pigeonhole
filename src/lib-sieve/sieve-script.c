@@ -5,10 +5,9 @@
 #include "compat.h"
 #include "unichar.h"
 #include "str.h"
+#include "str-sanitize.h"
 #include "hash.h"
 #include "array.h"
-#include "home-expand.h"
-#include "mkdir-parents.h"
 #include "eacces-error.h"
 #include "istream.h"
 
@@ -18,8 +17,10 @@
 #include "sieve-error.h"
 #include "sieve-binary.h"
 
+#include "sieve-storage-private.h"
 #include "sieve-script-private.h"
-#include "sieve-script-file.h"
+
+#include <ctype.h>
 
 /*
  * Script name
@@ -89,200 +90,103 @@ bool sieve_script_name_is_valid(const char *scriptname)
 }
 
 /*
- * Script object
+ * Script instance
  */
 
-static const char *split_next_arg(const char *const **_args)
-{
-	const char *const *args = *_args;
-	const char *str = args[0];
-
-	/* join arguments for escaped ";" separator */
-
-	args++;
-	while (*args != NULL && **args == '\0') {
-		args++;
-		if (*args == NULL) {
-			/* string ends with ";", just ignore it. */
-			break;
-		}
-		str = t_strconcat(str, ";", *args, NULL);
-		args++;
-	}
-	*_args = args;
-	return str;
-}
-
-static bool sieve_script_location_parse
-(struct sieve_script *script, const char *data, const char **location_r,
-	const char *const **options_r, const char **error_r)
-{
-	ARRAY_TYPE(const_string) options;
-	const char *const *tmp;
-
-	if (*data == '\0') {
-		*options_r = NULL;
-		*location_r = data;
-		return TRUE;
-	}
-
-	/* <location> */
-	tmp = t_strsplit(data, ";");
-	*location_r = split_next_arg(&tmp);
-
-	if ( options_r != NULL ) {
-		t_array_init(&options, 8);
-
-		/* [<option> *(';' <option>)] */
-		while (*tmp != NULL) {
-			const char *option = split_next_arg(&tmp);
-
-			if ( strncasecmp(option, "name=", 5) == 0 ) {
-				if ( option[5] == '\0' ) {
-					*error_r = "empty name not allowed";
-					return FALSE;
-				}
-
-				if ( script->name == NULL )
-					script->name = p_strdup(script->pool, option+5);
-
-			} else if ( strncasecmp(option, "bindir=", 7) == 0 ) {
-				const char *bin_dir = option+7;
-
-				if ( bin_dir[0] == '\0' ) {
-					*error_r = "empty bindir not allowed";
-					return FALSE;
-				}
-
-				if ( bin_dir[0] == '~' ) {
-					/* home-relative path. change to absolute. */
-					const char *home = sieve_environment_get_homedir(script->svinst);
-
-					if ( home != NULL ) {
-						bin_dir = home_expand_tilde(bin_dir, home);
-					} else if ( bin_dir[1] == '/' || bin_dir[1] == '\0' ) {
-						*error_r = "bindir is relative to home directory (~/), "
-							"but home directory cannot be determined";
-						return FALSE;
-					}
-				}
-
-				script->bin_dir = p_strdup(script->pool, bin_dir);
-			} else {
-				array_append(&options, &option, 1);
-			}
-		}
-
-		(void)array_append_space(&options);
-		*options_r = array_idx(&options, 0);
-	}
-
-	return TRUE;
-}
-
 void sieve_script_init
-(struct sieve_script *script, struct sieve_instance *svinst,
-	const struct sieve_script *script_class, const char *data,
-	const char *name, struct sieve_error_handler *ehandler)
+(struct sieve_script *script, struct sieve_storage *storage,
+	const struct sieve_script *script_class,	const char *location,
+	const char *name)
 {
+	i_assert( storage != NULL );
+
 	script->script_class = script_class;
 	script->refcount = 1;
-	script->svinst = svinst;
-	script->ehandler = ehandler;
-	script->data = p_strdup_empty(script->pool, data);
-	script->name = p_strdup_empty(script->pool, name);
+	script->storage = storage;
+	script->location = p_strdup_empty(script->pool, location);
+	script->name = p_strdup(script->pool, name);
 
-	sieve_error_handler_ref(ehandler);
+	sieve_storage_ref(storage);
 }
 
 struct sieve_script *sieve_script_create
 (struct sieve_instance *svinst, const char *location, const char *name,
-	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
+	enum sieve_error *error_r)
 {
+	struct sieve_storage *storage;
 	struct sieve_script *script;
-	const struct sieve_script *script_class;
-	const char *data, *p;
+	enum sieve_error error;
 
-	p = strchr(location, ':');
-	if ( p == NULL ) {
-		/* Default script driver is "file" (meaning that location is a fs path) */
-		data = location;
-		script_class = &sieve_file_script;
-	} else {
-		/* Lookup script driver */
-		T_BEGIN {
-			const char *driver;
+	if ( error_r != NULL )
+		*error_r = SIEVE_ERROR_NONE;
+	else
+		error_r = &error;
 
-			data = p+1;
-			driver = t_strdup_until(location, p);
-
-			/* FIXME
-			script_class = sieve_script_class_lookup(driver);*/
-			if ( strcasecmp(driver, SIEVE_FILE_SCRIPT_DRIVER_NAME) == 0 )
-				script_class = &sieve_file_script;
-			else if ( strcasecmp(driver, SIEVE_DICT_SCRIPT_DRIVER_NAME) == 0 )
-				script_class = &sieve_dict_script;
-			else
-				script_class = NULL;
-
-			if ( script_class == NULL ) {
-				sieve_sys_error(svinst,
-					"Unknown sieve script driver module: %s", driver);
-			}
-		} T_END;
-	}
-
-	if ( script_class == NULL ) {
-		if ( error_r != NULL )
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+	storage = sieve_storage_create(svinst, location, 0, error_r);
+	if ( storage == NULL )
 		return NULL;
-	}
 
-	script = script_class->v.alloc();
-	sieve_script_init(script, svinst, script_class, data, name, ehandler);
-	script->location = p_strdup(script->pool, location);
+	script = sieve_storage_get_script(storage, name, error_r);
+	
+	sieve_storage_unref(&storage);
 	return script;
+}
+
+void sieve_script_ref(struct sieve_script *script)
+{
+	script->refcount++;
+}
+
+void sieve_script_unref(struct sieve_script **_script)
+{
+	struct sieve_script *script = *_script;
+
+	i_assert( script->refcount > 0 );
+
+	if ( --script->refcount != 0 )
+		return;
+
+	if ( script->stream != NULL )
+		i_stream_unref(&script->stream);
+
+	if ( script->v.destroy != NULL )
+		script->v.destroy(script);
+
+	sieve_storage_unref(&script->storage);
+	pool_unref(&script->pool);
+	*_script = NULL;
 }
 
 int sieve_script_open
 (struct sieve_script *script, enum sieve_error *error_r)
 {
-	struct sieve_instance *svinst = script->svinst;
-	struct sieve_error_handler *ehandler = script->ehandler;
 	enum sieve_error error;
-	const char *const *options = NULL;
-	const char *location = NULL, *parse_error = NULL;
 
 	if ( error_r != NULL )
 		*error_r = SIEVE_ERROR_NONE;
+	else
+		error_r = &error;
 
 	if ( script->open )
 		return 0;
 
-	if ( !sieve_script_location_parse
-		(script, script->data, &location, &options, &parse_error) ) {
-		sieve_critical(svinst, ehandler, NULL,
-			"failed to access sieve script", "failed to parse script location: %s",
-			parse_error);
-		if ( error_r != NULL )
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
-		return -1;
-	}
-
 	script->location = NULL;
-	if ( script->v.open(script, location, options, &error) < 0 ) {
-		if ( error_r == NULL ) {
-			if ( error == SIEVE_ERROR_NOT_FOUND )
-				sieve_error(ehandler, script->name, "sieve script does not exist");
-		} else {
-			*error_r = error;
-		}
+	if ( script->v.open(script, error_r) < 0 )
 		return -1;
-	}
 
 	i_assert( script->location != NULL );
 	i_assert( script->name != NULL );
 	script->open = TRUE;
+
+	if ( *script->name != '\0' ) {
+		sieve_script_sys_debug(script,
+			"Opened script `%s' from `%s'",
+			script->name, script->location);
+	} else {
+		sieve_script_sys_debug(script,
+			"Opened nameless script from `%s'",
+			script->location);
+	}
 	return 0;
 }
 
@@ -299,11 +203,11 @@ int sieve_script_open_as
 
 struct sieve_script *sieve_script_create_open
 (struct sieve_instance *svinst, const char *location, const char *name,
-	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
+	enum sieve_error *error_r)
 {
 	struct sieve_script *script;
 
-	script = sieve_script_create(svinst, location, name, ehandler, error_r);
+	script = sieve_script_create(svinst, location, name, error_r);
 	if ( script == NULL )
 		return NULL;
 
@@ -313,51 +217,6 @@ struct sieve_script *sieve_script_create_open
 	}
 	
 	return script;
-}
-
-struct sieve_script *sieve_script_create_open_as
-(struct sieve_instance *svinst, const char *location, const char *name,
-	struct sieve_error_handler *ehandler, enum sieve_error *error_r)
-{
-	struct sieve_script *script;
-
-	script = sieve_script_create(svinst, location, name, ehandler, error_r);
-	if ( script == NULL )
-		return NULL;
-
-	if ( sieve_script_open_as(script, name, error_r) < 0 ) {
-		sieve_script_unref(&script);
-		return NULL;
-	}
-	
-	return script;
-}
-
-void sieve_script_ref(struct sieve_script *script)
-{
-	script->refcount++;
-}
-
-void sieve_script_unref(struct sieve_script **_script)
-{
-	struct sieve_script *script = *_script;
-
-	i_assert(script->refcount > 0);
-
-	if (--script->refcount != 0)
-		return;
-
-	if ( script->stream != NULL )
-		i_stream_unref(&script->stream);
-
-	if ( script->ehandler != NULL )
-		sieve_error_handler_unref(&script->ehandler);
-
-	if ( script->v.destroy != NULL )
-		script->v.destroy(script);
-
-	pool_unref(&script->pool);
-	*_script = NULL;
 }
 
 /*
@@ -376,7 +235,7 @@ const char *sieve_script_location(const struct sieve_script *script)
 
 struct sieve_instance *sieve_script_svinst(const struct sieve_script *script)
 {
-	return script->svinst;
+	return script->storage->svinst;
 }
 
 int sieve_script_get_size(struct sieve_script *script, uoff_t *size_r)
@@ -415,27 +274,23 @@ int sieve_script_get_stream
 
 	if ( error_r != NULL )
 		*error_r = SIEVE_ERROR_NONE;
+	else
+		error_r = &error;
 
 	if ( script->stream != NULL ) {
 		*stream_r = script->stream;
 		return 0;
 	}
 
+	// FIXME: necessary?
+	i_assert( script->open );
+
 	T_BEGIN {
-		ret = script->v.get_stream(script, &script->stream, &error);
+		ret = script->v.get_stream(script, &script->stream, error_r);
 	} T_END;
 
-	if ( ret < 0 ) {
-		if ( error_r == NULL ) {
-			if ( error == SIEVE_ERROR_NOT_FOUND ) {
-				sieve_error(script->ehandler, script->name,
-					"sieve script does not exist");
-			}
-		} else {
-			*error_r = error;
-		}
+	if ( ret < 0 )
 		return -1;
-	}
 
 	*stream_r = script->stream;
 	return 0;
@@ -481,23 +336,36 @@ int sieve_script_binary_read_metadata
 (struct sieve_script *script, struct sieve_binary_block *sblock,
 	sieve_size_t *offset)
 {
-	struct sieve_instance *svinst = script->svinst;
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
-	string_t *script_class;
+	string_t *storage_class, *location;
 
 	if ( sieve_binary_block_get_size(sblock) - *offset == 0 )
 		return 0;
 
-	if ( !sieve_binary_read_string(sblock, offset, &script_class) ) {
-		sieve_sys_error(svinst,
-			"sieve script: binary %s has invalid metadata for script %s",
+	/* storage class */
+	if ( !sieve_binary_read_string(sblock, offset, &storage_class) ) {
+		sieve_script_sys_error(script,
+			"Binary %s has invalid metadata for script %s: "
+			"Invalid storage class",
 			sieve_binary_path(sbin), sieve_script_location(script));
 		return -1;
 	}
-
-	if ( strcmp(str_c(script_class), script->driver_name) != 0 )
+	if ( strcmp(str_c(storage_class), script->driver_name) != 0 )
 		return 0;
 
+	/* location */
+	if ( !sieve_binary_read_string(sblock, offset, &location) ) {
+		sieve_script_sys_error(script,
+			"Binary %s has invalid metadata for script %s: "
+			"Invalid location",
+			sieve_binary_path(sbin), sieve_script_location(script));
+		return -1;
+	}
+	if ( script->location == NULL )
+		return 0;
+	if ( strcmp(str_c(location), script->location) != 0 )
+		return 0;
+	
 	if ( script->v.binary_read_metadata == NULL )
 		return 1;
 
@@ -508,6 +376,8 @@ void sieve_script_binary_write_metadata
 (struct sieve_script *script, struct sieve_binary_block *sblock)
 {
 	sieve_binary_emit_cstring(sblock, script->driver_name);
+	sieve_binary_emit_cstring(sblock,
+		( script->location == NULL ? "" : script->location ));
 
 	if ( script->v.binary_write_metadata == NULL )
 		return;
@@ -532,6 +402,7 @@ int sieve_script_binary_save
 {
 	struct sieve_script *bin_script = sieve_binary_script(sbin);
 
+
 	i_assert(bin_script == NULL || sieve_script_equals(bin_script, script));
 
 	if ( script->v.binary_save == NULL ) {
@@ -545,9 +416,11 @@ int sieve_script_binary_save
 const char *sieve_script_binary_get_prefix
 (struct sieve_script *script)
 {
-	if ( script->bin_dir != NULL &&
-		sieve_script_setup_bindir(script, 0700) >= 0 ) {
-		return t_strconcat(script->bin_dir, "/", script->name, NULL);
+	struct sieve_storage *storage = script->storage;
+
+	if ( storage->bin_dir != NULL &&
+		sieve_storage_setup_bindir(storage, 0700) >= 0 ) {
+		return t_strconcat(storage->bin_dir, "/", script->name, NULL);
 	}
 
 	if ( script->v.binary_get_prefix == NULL )
@@ -556,54 +429,263 @@ const char *sieve_script_binary_get_prefix
 	return script->v.binary_get_prefix(script);
 }
 
-int sieve_script_setup_bindir
-(struct sieve_script *script, mode_t mode)
+/* 
+ * Management
+ */
+
+int sieve_script_rename
+(struct sieve_script *script, const char *newname)
 {
-	struct sieve_instance *svinst = script->svinst;
-	struct stat st;
+	struct sieve_storage *storage = script->storage;
+	const char *oldname = script->name;
+	int ret;
 
-	if ( script->bin_dir == NULL )
+	i_assert( newname != NULL );
+
+	/* Check script name */
+	if ( !sieve_script_name_is_valid(newname) ) {
+		sieve_script_set_error(script,
+			SIEVE_ERROR_BAD_PARAMS,
+			"Invalid new Sieve script name `%s'.",
+			str_sanitize(newname, 80));
 		return -1;
+	}
 
-	if ( stat(script->bin_dir, &st) == 0 )
+	i_assert( (script->storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
+	i_assert( script->open ); // FIXME: auto-open?
+
+	i_assert( script->v.rename != NULL );
+	ret = script->v.rename(script, newname);
+
+	/* rename INBOX mailbox attribute */
+	if ( ret >= 0 && oldname != NULL )
+		sieve_storage_sync_script_rename(storage, oldname, newname);
+
+	return ret;
+}
+
+int sieve_script_delete(struct sieve_script **_script)
+{
+	struct sieve_script *script = *_script;
+	struct sieve_storage *storage = script->storage;
+	int ret = 0;
+
+	i_assert( (script->storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
+	i_assert( script->open ); // FIXME: auto-open?
+
+	/* Is the requested script active? */
+	if ( sieve_script_is_active(script) ) {
+		sieve_script_set_error(script, SIEVE_ERROR_ACTIVE,
+			"Cannot delete the active Sieve script.");
+		ret = -1;
+	} else {
+		i_assert( script->v.delete != NULL );
+		ret = script->v.delete(script);
+	}
+
+	/* unset INBOX mailbox attribute */
+	if ( ret >= 0 )
+		sieve_storage_sync_script_delete(storage, script->name);
+
+	/* Always deinitialize the script object */
+	sieve_script_unref(_script);
+	return ret;
+}
+
+int sieve_script_is_active(struct sieve_script *script)
+{
+	if ( script->v.is_active == NULL )
 		return 0;
+	return script->v.is_active(script);
+}
 
-	if ( errno == EACCES ) {
-		sieve_sys_error(svinst, "sieve script: "
-			"failed to setup directory for binaries: %s",
-			eacces_error_get("stat", script->bin_dir));
-		return -1;
-	} else if ( errno != ENOENT ) {
-		sieve_sys_error(svinst, "sieve script: "
-			"failed to setup directory for binaries: stat(%s) failed: %m",
-			script->bin_dir);
-		return -1;
+int sieve_script_activate(struct sieve_script *script, time_t mtime)
+{
+	int ret;
+
+	i_assert( (script->storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
+	i_assert( script->open ); // FIXME: auto-open?
+
+	i_assert( script->v.activate != NULL );
+	ret = script->v.activate(script);
+
+	sieve_storage_set_modified(script->storage, mtime);
+
+	return ret;
+}
+
+/*
+ * Error handling
+ */
+
+void sieve_script_set_error
+(struct sieve_script *script, enum sieve_error error,
+	const char *fmt, ...)
+{
+	struct sieve_storage *storage = script->storage;
+	va_list va;
+
+	sieve_storage_clear_error(storage);
+
+	if (fmt != NULL) {
+		va_start(va, fmt);
+		storage->error = i_strdup_vprintf(fmt, va);
+		va_end(va);
 	}
+	storage->error_code = error;
+}
 
-	if ( mkdir_parents(script->bin_dir, mode) == 0 ) {
-		if ( svinst->debug )
-			sieve_sys_debug(svinst, "sieve script: "
-				"created directory for binaries: %s", script->bin_dir);
-		return 1;
+void sieve_script_set_internal_error
+(struct sieve_script *script)
+{
+	sieve_storage_set_internal_error(script->storage);
+}
+
+void sieve_script_set_critical
+(struct sieve_script *script, const char *fmt, ...)
+{
+	struct sieve_storage *storage = script->storage;
+
+	va_list va;
+
+	sieve_storage_clear_error(storage);
+	if (fmt != NULL) {
+		if ( (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 ) {
+			va_start(va, fmt);
+			sieve_sys_error(storage->svinst, "%s script: %s",
+				storage->driver_name, t_strdup_vprintf(fmt, va));
+			va_end(va);
+
+			sieve_storage_set_internal_error(storage);
+		} else {
+			/* no user is involved while synchronizing, so do it the
+			   normal way */
+			va_start(va, fmt);
+			storage->error = i_strdup_vprintf(fmt, va);
+			va_end(va);
+
+			storage->error_code = SIEVE_ERROR_TEMP_FAILURE;
+		}
 	}
+}
 
-	switch ( errno ) {
-	case EEXIST:
-		return 0;
-	case ENOENT:
-		sieve_sys_error(svinst, "sieve script: "
-			"directory for binaries was deleted while it was being created");
-		break;
-	case EACCES:
-		sieve_sys_error(svinst, "sieve script: %s",
-			eacces_error_get_creating("mkdir_parents_chgrp", script->bin_dir));
-		break;
-	default:
-		sieve_sys_error(svinst, "sieve script: "
-			"mkdir_parents_chgrp(%s) failed: %m", script->bin_dir);
-		break;
-	}
+const char *sieve_script_get_last_error
+(struct sieve_script *script, enum sieve_error *error_r)
+{
+	return sieve_storage_get_last_error(script->storage, error_r);
+}
 
-	return -1;
+const char *sieve_script_get_last_error_lcase
+(struct sieve_script *script)
+{
+	char *errormsg = t_strdup_noconst(script->storage->error);
+	errormsg[0] = i_tolower(errormsg[0]);		
+	return errormsg;
+}
+
+void sieve_script_sys_error
+(struct sieve_script *script, const char *fmt, ...)
+{
+	struct sieve_instance *svinst = script->storage->svinst;
+	va_list va;
+
+	va_start(va, fmt);
+	sieve_sys_error(svinst, "%s script: %s",
+		script->driver_name, t_strdup_vprintf(fmt, va));
+	va_end(va);	
+}
+
+void sieve_script_sys_warning
+(struct sieve_script *script, const char *fmt, ...)
+{
+	struct sieve_instance *svinst = script->storage->svinst;
+	va_list va;
+
+	va_start(va, fmt);
+	sieve_sys_warning(svinst, "%s script: %s",
+		script->driver_name, t_strdup_vprintf(fmt, va));
+	va_end(va);	
+}
+
+void sieve_script_sys_info
+(struct sieve_script *script, const char *fmt, ...)
+{
+	struct sieve_instance *svinst = script->storage->svinst;
+	va_list va;
+
+	va_start(va, fmt);
+	sieve_sys_info(svinst, "%s script: %s",
+		script->driver_name, t_strdup_vprintf(fmt, va));
+	va_end(va);	
+}
+
+void sieve_script_sys_debug
+(struct sieve_script *script, const char *fmt, ...)
+{
+	struct sieve_instance *svinst = script->storage->svinst;
+	va_list va;
+
+	if (!svinst->debug)
+		return;
+
+	va_start(va, fmt);
+	sieve_sys_debug(svinst, "%s script: %s",
+		script->driver_name, t_strdup_vprintf(fmt, va));
+	va_end(va);	
+}
+
+/*
+ * Script sequence
+ */
+
+void sieve_script_sequence_init
+(struct sieve_script_sequence *seq, struct sieve_storage *storage)
+{
+	seq->storage = storage;
+	sieve_storage_ref(storage);
+}
+
+struct sieve_script_sequence *sieve_script_sequence_create
+(struct sieve_instance *svinst, const char *location,
+	enum sieve_error *error_r)
+{
+	struct sieve_storage *storage;
+	struct sieve_script_sequence *seq;
+	enum sieve_error error;
+
+	if ( error_r != NULL )
+		*error_r = SIEVE_ERROR_NONE;
+	else
+		error_r = &error;
+
+	storage = sieve_storage_create(svinst, location, 0, error_r);
+	if ( storage == NULL )
+		return NULL;
+
+	seq = sieve_storage_get_script_sequence(storage, error_r);
+	
+	sieve_storage_unref(&storage);
+	return seq;
+}
+
+struct sieve_script *sieve_script_sequence_next
+(struct sieve_script_sequence *seq, enum sieve_error *error_r)
+{
+	struct sieve_storage *storage = seq->storage;
+
+	i_assert( storage->v.script_sequence_next != NULL );
+	return storage->v.script_sequence_next(seq, error_r);	
+}
+
+void sieve_script_sequence_free(struct sieve_script_sequence **_seq)
+{
+	struct sieve_script_sequence *seq = *_seq;
+	struct sieve_storage *storage = seq->storage;
+
+	if ( storage->v.script_sequence_destroy != NULL )
+		storage->v.script_sequence_destroy(seq);
+
+	sieve_storage_unref(&storage);
+	*_seq = NULL;
 }
 

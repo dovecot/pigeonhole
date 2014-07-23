@@ -263,9 +263,6 @@ static bool sieve_dict_script_equals
 	struct sieve_dict_script *script = (struct sieve_dict_script *)_script;
 	struct sieve_dict_script *other = (struct sieve_dict_script *)_other;
 
-	if ( script == NULL || other == NULL )
-		return FALSE;
-
 	if ( strcmp(script->dict_uri, other->dict_uri) != 0 )
 		return FALSE;
 
