@@ -1,0 +1,215 @@
+/* Copyright (c) 2002-2014 Pigeonhole authors, see the included COPYING file
+ */
+
+#include "lib.h"
+//#include "ldap.h"
+
+#include "sieve-common.h"
+
+#include "sieve-ldap-storage.h"
+
+#if defined(SIEVE_BUILTIN_LDAP) || defined(PLUGIN_BUILD)
+
+#include "sieve-error.h"
+
+/*
+ * Storage class
+ */
+
+static struct sieve_storage *sieve_ldap_storage_alloc(void)
+{
+	struct sieve_ldap_storage *lstorage;
+	pool_t pool;
+
+	pool = pool_alloconly_create("sieve_ldap_storage", 1024);
+	lstorage = p_new(pool, struct sieve_ldap_storage, 1);
+	lstorage->storage = sieve_ldap_storage;
+	lstorage->storage.pool = pool;
+
+	return &lstorage->storage;
+}
+
+static int sieve_ldap_storage_init
+(struct sieve_storage *storage, const char *const *options,
+	enum sieve_error *error_r)
+{
+	struct sieve_ldap_storage *lstorage =
+		(struct sieve_ldap_storage *)storage;
+	struct sieve_instance *svinst = storage->svinst;
+	const char *username = NULL;
+
+	if ( options != NULL ) {
+		while ( *options != NULL ) {
+			const char *option = *options;
+
+			if ( strncasecmp(option, "user=", 5) == 0 && option[5] != '\0' ) {
+				username = option+5;
+			} else {
+				sieve_storage_set_critical(storage,
+					"Invalid option `%s'", option);
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
+				return -1;
+			}
+
+			options++;
+		}
+	}
+
+	if ( username == NULL ) {
+		if ( svinst->username == NULL ) {
+			sieve_storage_set_critical(storage,
+				"No username specified");
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			return -1;
+		}
+		username = svinst->username;
+	}
+
+	sieve_storage_sys_debug(storage,
+		"user=%s, config=%s", username, storage->location);
+
+	if ( sieve_ldap_storage_read_settings(lstorage, storage->location) < 0 )
+		return -1;
+
+	lstorage->username = p_strdup(storage->pool, username);
+
+	lstorage->conn = sieve_ldap_db_init(lstorage);
+
+	return 0;
+}
+
+static void sieve_ldap_storage_destroy
+(struct sieve_storage *storage)
+{
+	struct sieve_ldap_storage *lstorage =
+		(struct sieve_ldap_storage *)storage;
+
+	if ( lstorage->conn != NULL )
+		sieve_ldap_db_unref(&lstorage->conn);
+}
+
+/*
+ * Script access
+ */
+
+static struct sieve_script *sieve_ldap_storage_get_script
+(struct sieve_storage *storage, const char *name)
+{
+	struct sieve_ldap_storage *lstorage =
+		(struct sieve_ldap_storage *)storage;
+	struct sieve_ldap_script *lscript;
+
+	T_BEGIN {
+		lscript = sieve_ldap_script_init(lstorage, name);
+	} T_END;
+
+	return &lscript->script;
+}
+
+/*
+ * Active script
+ */
+
+struct sieve_script *sieve_ldap_storage_active_script_open
+(struct sieve_storage *storage)
+{
+	struct sieve_ldap_storage *lstorage =
+		(struct sieve_ldap_storage *)storage;
+	struct sieve_ldap_script *lscript;
+
+	lscript = sieve_ldap_script_init
+		(lstorage, storage->script_name);
+	if ( sieve_script_open(&lscript->script, NULL) < 0 ) {
+		struct sieve_script *script = &lscript->script;
+		sieve_script_unref(&script);
+		return NULL;
+	}
+
+	return &lscript->script;
+}
+
+int sieve_ldap_storage_active_script_get_name
+(struct sieve_storage *storage, const char **name_r)
+{
+	if ( storage->script_name != NULL )
+		*name_r = storage->script_name;
+	else
+		*name_r = SIEVE_LDAP_SCRIPT_DEFAULT;
+	return 0;
+}
+
+/*
+ * Driver definition
+ */
+
+#ifndef PLUGIN_BUILD
+const struct sieve_storage sieve_ldap_storage = {
+#else
+const struct sieve_storage sieve_ldap_storage_plugin = {
+#endif
+	.driver_name = SIEVE_LDAP_STORAGE_DRIVER_NAME,
+	.v = {
+		.alloc = sieve_ldap_storage_alloc,
+		.init = sieve_ldap_storage_init,
+		.destroy = sieve_ldap_storage_destroy,
+
+		.get_script = sieve_ldap_storage_get_script,
+
+		.get_script_sequence = sieve_ldap_storage_get_script_sequence,
+		.script_sequence_next = sieve_ldap_script_sequence_next,
+		.script_sequence_destroy = sieve_ldap_script_sequence_destroy,
+
+		.active_script_get_name = sieve_ldap_storage_active_script_get_name,
+		.active_script_open = sieve_ldap_storage_active_script_open,
+
+		// FIXME: impement management interface
+	}
+};
+
+#ifndef SIEVE_BUILTIN_LDAP
+/* Building a plugin */
+
+void sieve_storage_ldap_plugin_load
+(struct sieve_instance *svinst, void **context);
+void sieve_storage_ldap_plugin_unload
+(struct sieve_instance *svinst, void *context);
+void sieve_storage_ldap_plugin_init(void);
+void sieve_storage_ldap_plugin_deinit(void);
+
+void sieve_storage_ldap_plugin_load
+(struct sieve_instance *svinst, void **context ATTR_UNUSED)
+{
+	sieve_storage_class_register
+		(svinst, &sieve_ldap_storage_plugin);	
+
+	if ( svinst->debug ) {
+		sieve_sys_debug(svinst,
+			"Sieve LDAP storage plugin for %s version %s loaded",
+			PIGEONHOLE_NAME, PIGEONHOLE_VERSION);
+	}
+}
+
+void sieve_script_ldap_plugin_unload
+(struct sieve_instance *svinst ATTR_UNUSED,
+	void *context ATTR_UNUSED)
+{
+	sieve_storage_class_unregister
+		(svinst, &sieve_ldap_storage_plugin);	
+}
+
+void sieve_script_ldap_plugin_init(void)
+{
+	/* Nothing */
+}
+
+void sieve_script_ldap_plugin_deinit(void)
+{
+	/* Nothing */
+}
+#endif
+
+#else /* !defined(SIEVE_BUILTIN_LDAP) && !defined(PLUGIN_BUILD) */
+const struct sieve_storage sieve_ldap_storage = {
+	.driver_name = SIEVE_LDAP_STORAGE_DRIVER_NAME
+};
+#endif

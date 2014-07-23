@@ -42,6 +42,7 @@ void sieve_storages_init(struct sieve_instance *svinst)
 
 	sieve_storage_class_register(svinst, &sieve_file_storage);
 	sieve_storage_class_register(svinst, &sieve_dict_storage);
+	sieve_storage_class_register(svinst, &sieve_ldap_storage);
 }
 
 void sieve_storages_deinit(struct sieve_instance *svinst ATTR_UNUSED)

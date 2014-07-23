@@ -7,3 +7,6 @@
 
 /* Define to build unfinished features/extensions. */
 #undef HAVE_SIEVE_UNFINISHED
+
+/* LDAP support is built in */
+#undef SIEVE_BUILTIN_LDAP

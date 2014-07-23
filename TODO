@@ -1,6 +1,10 @@
 Current activities:
 
-* Implement LDAP Sieve script storage for read-only access.
+* Finish LDAP Sieve script storage for read-only access.
+	- Consolidate LDAP connections when more than a single Sieve script must be
+	  loaded from different storages linked to the same LDAP server.
+	- Adjust Sieve script API to support asynchronous script retrieval to
+	  retrieve scripts in parallel when possible.
 
 Parallel plugin-based efforts (on hold at the moment):
 

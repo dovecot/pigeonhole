@@ -60,6 +60,25 @@ fi
 #
 #
 
+dnl TEST_WITH(name, value, [plugin])
+AC_DEFUN([TEST_WITH], [
+  want=want_`echo $1|sed s/-/_/g`
+  if test $2 = yes || test $2 = no || test $2 = auto; then
+    eval $want=$2
+  elif test $2 = plugin; then
+    if test "$3" = plugin; then
+      eval $want=plugin
+    else
+      AC_ERROR([--with-$1=plugin not supported])
+    fi
+  elif `echo $2|grep '^/' >/dev/null`; then
+    AC_ERROR([--with-$1=path not supported. You may want to use instead:
+CPPFLAGS=-I$2/include LDFLAGS=-L$2/lib ./configure --with-$1])
+  else
+    AC_ERROR([--with-$1: Unknown value: $2])
+  fi
+])
+
 AC_ARG_WITH(docs,
 [  --with-docs             Install documentation (default)],
     if test x$withval = xno; then
@@ -91,6 +110,63 @@ AC_ARG_WITH(managesieve,
         want_managesieve=yes)
 AM_CONDITIONAL(BUILD_MANAGESIEVE, test "$want_managesieve" = "yes")
 
+AC_ARG_WITH(ldap,
+AS_HELP_STRING([--with-ldap=yes|plugin], [Build with LDAP support]),
+  TEST_WITH(ldap, $withval, plugin),
+  want_ldap=no)
+
+# FIXME: Imported this from Dovecot auth for now. We're working on a proper
+# lib-ldap, but, until then, some code is duplicated.
+have_ldap=no
+if test $want_ldap != no; then
+	AC_CHECK_LIB(ldap, ldap_init, [
+		AC_CHECK_HEADER(ldap.h, [
+			AC_CHECK_LIB(ldap, ldap_initialize, [
+				AC_DEFINE(LDAP_HAVE_INITIALIZE,, Define if you have ldap_initialize)
+			])
+			AC_CHECK_LIB(ldap, ldap_start_tls_s, [
+				AC_DEFINE(LDAP_HAVE_START_TLS_S,, Define if you have ldap_start_tls_s)
+			])
+			LDAP_LIBS="-lldap"
+			AC_CHECK_LIB(ldap, ber_free, [
+			  # do nothing, default is to add -lldap to LIBS
+			  :
+			], [
+			  AC_CHECK_LIB(lber, ber_free, [
+			    LDAP_LIBS="$LDAP_LIBS -llber"
+			  ])
+			])
+			AC_SUBST(LDAP_LIBS)
+			if test $want_ldap != plugin; then
+				AC_DEFINE(SIEVE_BUILTIN_LDAP,, LDAP support is built in)
+			fi
+
+  		AC_DEFINE(STORAGE_LDAP,, Build with LDAP support)
+			AC_CHECK_HEADERS(sasl.h sasl/sasl.h)
+			have_ldap=yes
+		], [
+		  if test $want_ldap != auto; then
+		    AC_ERROR([Can't build with LDAP support: ldap.h not found])
+		  fi
+		])
+	], [
+	  if test $want_ldap != auto; then
+	    AC_ERROR([Can't build with LDAP support: libldap not found])
+	  fi
+	])
+fi
+
+if test $have_ldap = no; then
+  not_scriptloc="$not_scriptloc ldap"
+else
+  scriptloc="$scriptloc ldap"
+  if test $want_ldap = plugin; then
+    have_ldap_plugin=yes
+    scriptloc="$scriptloc (plugin)"
+  fi
+fi
+AM_CONDITIONAL(LDAP_PLUGIN, test "$have_ldap_plugin" = "yes")
+
 AC_CONFIG_FILES([
 Makefile
 doc/Makefile
@@ -104,6 +180,7 @@ src/lib-sieve/util/Makefile
 src/lib-sieve/storage/Makefile
 src/lib-sieve/storage/file/Makefile
 src/lib-sieve/storage/dict/Makefile
+src/lib-sieve/storage/ldap/Makefile
 src/lib-sieve/plugins/Makefile
 src/lib-sieve/plugins/vacation/Makefile
 src/lib-sieve/plugins/subaddress/Makefile
@@ -141,3 +218,13 @@ src/testsuite/Makefile
 stamp.h])
 
 AC_OUTPUT
+
+not_scriptloc=`echo "$not_scriptloc"|sed 's/ / -/g'`
+
+echo
+echo "Install prefix . : $prefix"
+echo "script drivers . : file dict$scriptloc"
+if test "$not_scriptloc" != ""; then
+  echo "                 :$not_scriptloc"
+fi
+

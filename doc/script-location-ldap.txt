@@ -1,0 +1,64 @@
+LDAP Sieve Script Location Type
+
+Description
+===========
+
+This location type is used to retrieve Sieve scripts from an LDAP database. To
+retrieve a Sieve script from the LDAP database, at most two lookups are
+performed. First, the LDAP entry containing the Sieve script is searched using
+the specified LDAP search filter. If the LDAP entry changed since it was last
+retrieved (or it was never retieved before), the attribute containing the actual
+Sieve script is retrieved in a second lookup. In the first lookup, a special
+attribute is read and checked for changes. Usually, this is the
+`modifyTimestamp' attribute, but an alternative can be configured.
+
+Note that, by default, compiled binaries are not stored at all for Sieve scripts
+retrieved from an LDAP database. The bindir= option needs to be specified in the
+location specification. Refer to the INSTALL file for more general information
+about configuration of script locations.
+
+Configuration
+=============
+
+The script location syntax is specialized as follows:
+
+location = ldap:<config-file>[;<option>[=<value>][;...]]
+
+The <config-file> is a filesystem path that points to a configuration file
+containing the actual configuration for this LDAP script location.
+
+The following additional location options are recognized:
+
+  user=<username>
+    Overrides the user name used for the lookup. Normally, the name of the
+    user running the Sieve interpreter is used.
+
+If the name of the Script is left unspecified and not otherwise provided by the
+Sieve interpreter, the name defaults to `default'.
+
+The configuration file is based on the auth userdb/passdb LDAP configuration
+(refer to Dovecot wiki at http://wiki2.dovecot.org/AuthDatabase/LDAP). The
+following options are specific to the Sieve ldap location type:
+
+  sieve_ldap_filter = (&(objectClass=posixAccount)(uid=%u))
+    The LDAP search filter that is used to find the entry containing the Sieve
+    script.
+
+  sieve_ldap_script_attr = mailSieveRuleSource
+    The name of the attribute containing the Sieve script itself.
+
+  sieve_ldap_mod_attr = modifyTimestamp
+    The name of the attribute used to detect modifications to the LDAP entry.
+	
+Examples
+========
+
+plugin {
+  sieve = ldap:/etc/dovecot/sieve-ldap.conf;bindir=~/.sieve-bin/
+}
+
+An example LDAP location configuration is available in this package as
+doc/example-config/sieve-ldap.conf.
+
+
+

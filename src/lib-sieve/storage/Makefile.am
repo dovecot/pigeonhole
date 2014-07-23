@@ -1,3 +1,4 @@
 SUBDIRS = \
 	file \
-	dict 
+	dict \
+	ldap
