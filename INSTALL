@@ -48,6 +48,12 @@ the Pigeonhole build:
    In fact, it may not compile at all. Enable this only when you are eager to
    test some of the new development functionality.
 
+ --with-ldap=no
+   Controls wether Sieve LDAP support is built. This allows retrieving Sieve
+   scripts from an LDAP database. When set to `yes', support is built in. When
+   set to `plugin', LDAP support is compiled into a Sieve plugin called
+   `sieve_storage_ldap'.
+
 Configuration
 =============
 
@@ -184,8 +190,9 @@ plugin section of the config file (default values are shown if applicable):
    The Pigeonhole Sieve interpreter can have plugins of its own. Using this
    setting, the used plugins can be specified. Check the Dovecot wiki
    (wiki2.dovecot.org) or the pigeonhole website (http://pigeonhole.dovecot.org)
-   for available plugins. The sieve_extprograms plugin is included in this
-   release.
+   for available plugins. The `sieve_extprograms' plugin is included in this
+   release. LDAP support may also be compiled as a plugin called
+   `sieve_storage_ldap'.
 
  sieve_user_log =
    The path to the file where the user log file is written. If not configured, a

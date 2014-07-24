@@ -17,10 +17,19 @@ retrieved from an LDAP database. The bindir= option needs to be specified in the
 location specification. Refer to the INSTALL file for more general information
 about configuration of script locations.
 
+Depending on how Pigeonhole was configured and compiled (refer to INSTALL file
+for more information), LDAP support may only be available from a plugin called
+`sieve_storage_ldap'.
+
 Configuration
 =============
 
-The script location syntax is specialized as follows:
+If support for the LDAP location type is compiled as a plugin, it needs to be
+added to the sieve_plugins setting before it can be used, e.g.:
+
+sieve_plugins = sieve_storage_ldap
+
+The script location syntax is specified as follows:
 
 location = ldap:<config-file>[;<option>[=<value>][;...]]
 
