@@ -288,9 +288,11 @@ struct sieve_script *sieve_file_storage_active_script_open
 		fscript = sieve_file_script_open_from_path(fstorage,
 			fstorage->active_path, NULL, NULL);
 		if ( fscript == NULL ) {
-			sieve_storage_set_critical(storage,
-				"Failed to open active path `%s' as regular file",
-				fstorage->active_path);
+			if ( storage->error_code != SIEVE_ERROR_NOT_FOUND ) {
+				sieve_storage_set_critical(storage,
+					"Failed to open active path `%s' as regular file: %s",
+					fstorage->active_path, storage->error);
+			}
 			return NULL;
 		}
 
