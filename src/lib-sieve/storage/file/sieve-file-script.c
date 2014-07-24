@@ -148,8 +148,18 @@ struct sieve_file_script *sieve_file_script_open_from_filename
 struct sieve_file_script *sieve_file_script_init_from_name
 (struct sieve_file_storage *fstorage, const char *name)
 {
-	return sieve_file_script_init_from_filename
-		(fstorage, sieve_script_file_from_name(name), name);
+	struct sieve_storage *storage = &fstorage->storage;
+	struct sieve_file_script *fscript;
+
+	if (name != NULL) {
+		return sieve_file_script_init_from_filename
+			(fstorage, sieve_script_file_from_name(name), name);
+	}
+
+	fscript = sieve_file_script_alloc();
+	sieve_script_init
+		(&fscript->script, storage, &sieve_file_script,	fstorage->path, NULL);
+	return fscript;
 }
 
 struct sieve_file_script *sieve_file_script_init_from_path

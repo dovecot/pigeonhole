@@ -27,6 +27,8 @@ struct sieve_file_script_sequence {
 
 	ARRAY_TYPE(const_string) script_files;
 	unsigned int index;
+
+	unsigned int storage_is_file:1;
 };
 
 static int sieve_file_script_sequence_read_dir
@@ -84,7 +86,7 @@ static int sieve_file_script_sequence_read_dir
 				file = t_strconcat(path, "/", dp->d_name, NULL);
 
 			if ( stat(file, &st) == 0 && S_ISREG(st.st_mode) )
-				file = p_strdup(fseq->pool, file);
+				file = p_strdup(fseq->pool, dp->d_name);
 			else
 				file = NULL;
 		} T_END;
@@ -163,9 +165,10 @@ struct sieve_script_sequence *sieve_file_storage_get_script_sequence
 	fseq = p_new(pool, struct sieve_file_script_sequence, 1);
 	fseq->pool = pool;
 	sieve_script_sequence_init(&fseq->seq, storage);
-	i_array_init(&fseq->script_files, 16);
 
 	if ( S_ISDIR(st.st_mode) ) {
+		i_array_init(&fseq->script_files, 16);
+
 		/* Path is directory */
 		if (name == 0 || *name == '\0') {
 			/* Read all '.sieve' files in directory */
@@ -179,7 +182,6 @@ struct sieve_script_sequence *sieve_file_storage_get_script_sequence
 		}	else {
 			/* Read specific script file */
 			file = sieve_script_file_from_name(name);
-			file = sieve_file_storage_path_extend(fstorage, file);
 			file = p_strdup(pool, file);
 			array_append(&fseq->script_files, &file, 1);
 		}
@@ -187,8 +189,7 @@ struct sieve_script_sequence *sieve_file_storage_get_script_sequence
 	} else {
 		/* Path is a file
 		   (apparently; we'll see about that once it is opened) */
-		file = p_strdup(pool, fstorage->path);
-		array_append(&fseq->script_files, &file, 1);
+		fseq->storage_is_file = TRUE;
 	}
 		
 	return &fseq->seq;
@@ -208,13 +209,19 @@ struct sieve_script *sieve_file_script_sequence_next
 	if ( error_r != NULL )
 		*error_r = SIEVE_ERROR_NONE;
 
-	files = array_get(&fseq->script_files, &count);
-
 	fscript = NULL;
-	while ( fseq->index < count ) {
-		fscript = sieve_file_script_open_from_filename
-			(fstorage, files[fseq->index++], NULL);
-		if (fscript == NULL) {
+	if ( fseq->storage_is_file ) {
+		if ( fseq->index++ < 1 )
+			fscript = sieve_file_script_init_from_name(fstorage, NULL);
+
+	} else {
+		files = array_get(&fseq->script_files, &count);
+
+		while ( fseq->index < count ) {
+			fscript = sieve_file_script_open_from_filename
+				(fstorage, files[fseq->index++], NULL);
+			if (fscript != NULL)
+				break;
 			if (seq->storage->error_code != SIEVE_ERROR_NOT_FOUND)
 				break;
 			sieve_storage_clear_error(seq->storage);
