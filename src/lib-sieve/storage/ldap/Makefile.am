@@ -1,6 +1,6 @@
 noinst_LTLIBRARIES = libsieve_storage_ldap.la
 
-sieve_plugindir = $(moduledir)/sieve
+sieve_plugindir = $(dovecot_moduledir)/sieve
 sieve_plugin_LTLIBRARIES =
 
 AM_CPPFLAGS = \

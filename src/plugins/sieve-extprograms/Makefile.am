@@ -1,4 +1,4 @@
-sieve_plugindir = $(moduledir)/sieve
+sieve_plugindir = $(dovecot_moduledir)/sieve
 
 sieve_plugin_LTLIBRARIES = lib90_sieve_extprograms_plugin.la
 
