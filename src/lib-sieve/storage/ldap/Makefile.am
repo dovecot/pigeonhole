@@ -22,11 +22,11 @@ noinst_HEADERS = \
 	sieve-ldap-storage.h
 
 if LDAP_PLUGIN
-sieve_plugin_LTLIBRARIES += lib10_sieve_script_ldap_plugin.la
+sieve_plugin_LTLIBRARIES += lib10_sieve_storage_ldap_plugin.la
 
-lib10_sieve_script_ldap_plugin_la_LDFLAGS = -module -avoid-version
-lib10_sieve_script_ldap_plugin_la_LIBADD = $(LDAP_LIBS)
-lib10_sieve_script_ldap_plugin_la_DEPENDENCIES = $(LDAP_LIBS)
-lib10_sieve_script_ldap_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) -DPLUGIN_BUILD
-lib10_sieve_script_ldap_plugin_la_SOURCES = $(ldap_sources)
+lib10_sieve_storage_ldap_plugin_la_LDFLAGS = -module -avoid-version
+lib10_sieve_storage_ldap_plugin_la_LIBADD = $(LDAP_LIBS)
+lib10_sieve_storage_ldap_plugin_la_DEPENDENCIES = $(LDAP_LIBS)
+lib10_sieve_storage_ldap_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) -DPLUGIN_BUILD
+lib10_sieve_storage_ldap_plugin_la_SOURCES = $(ldap_sources)
 endif

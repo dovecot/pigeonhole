@@ -189,7 +189,7 @@ void sieve_storage_ldap_plugin_load
 	}
 }
 
-void sieve_script_ldap_plugin_unload
+void sieve_storage_ldap_plugin_unload
 (struct sieve_instance *svinst ATTR_UNUSED,
 	void *context ATTR_UNUSED)
 {
@@ -197,12 +197,12 @@ void sieve_script_ldap_plugin_unload
 		(svinst, &sieve_ldap_storage_plugin);	
 }
 
-void sieve_script_ldap_plugin_init(void)
+void sieve_storage_ldap_plugin_init(void)
 {
 	/* Nothing */
 }
 
-void sieve_script_ldap_plugin_deinit(void)
+void sieve_storage_ldap_plugin_deinit(void)
 {
 	/* Nothing */
 }
