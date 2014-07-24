@@ -23,7 +23,11 @@ static struct sieve_storage *sieve_ldap_storage_alloc(void)
 
 	pool = pool_alloconly_create("sieve_ldap_storage", 1024);
 	lstorage = p_new(pool, struct sieve_ldap_storage, 1);
+#ifndef PLUGIN_BUILD
 	lstorage->storage = sieve_ldap_storage;
+#else
+	lstorage->storage = sieve_ldap_storage_plugin;
+#endif
 	lstorage->storage.pool = pool;
 
 	return &lstorage->storage;

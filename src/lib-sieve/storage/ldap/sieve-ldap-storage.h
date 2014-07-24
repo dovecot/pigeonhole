@@ -14,6 +14,8 @@ struct sieve_ldap_storage;
 
 #define SIEVE_LDAP_SCRIPT_DEFAULT "default"
 
+extern const struct sieve_storage sieve_ldap_storage_plugin;
+
 /*
  * LDAP settings
  */
