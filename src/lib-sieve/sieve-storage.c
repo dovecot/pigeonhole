@@ -394,7 +394,7 @@ struct sieve_storage *sieve_storage_create_main
 		set_sieve_dir = sieve_setting_get(svinst, "sieve_dir");
 		if ( set_sieve_dir == NULL )
 			set_sieve_dir = sieve_setting_get(svinst, "sieve_storage");
-	
+
 		if ( set_sieve_dir == NULL || *set_sieve_dir == '\0' ) {
 			storage_path = "";
 		} else {
@@ -422,7 +422,7 @@ struct sieve_storage *sieve_storage_create_main
 		}
 
 		storage = sieve_file_storage_init_legacy
-			(svinst, data, storage_path, flags, error_r);
+			(svinst, set_sieve, storage_path, flags, error_r);
 	}
 
 	if ( storage == NULL )

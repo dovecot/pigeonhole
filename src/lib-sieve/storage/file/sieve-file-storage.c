@@ -238,6 +238,7 @@ static struct sieve_storage *sieve_file_storage_alloc(void)
 static int sieve_file_storage_init_paths
 (struct sieve_file_storage *fstorage, const char *active_path,
 	const char *storage_path, enum sieve_error *error_r)
+	ATTR_NULL(2, 3)
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	struct sieve_instance *svinst = storage->svinst;
@@ -251,7 +252,6 @@ static int sieve_file_storage_init_paths
 
 	/* Active script path */
 
-	active_path = NULL;
 	if ( storage->main_storage ||
 		(storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ) {
 		if ( active_path == NULL || *active_path == '\0' ) {
