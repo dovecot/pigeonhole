@@ -11,9 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <dirent.h>
-#include <sys/stat.h>
 
 struct sieve_file_list_context {
 	struct sieve_storage_list_context context;

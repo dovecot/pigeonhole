@@ -12,6 +12,9 @@
 #include "sieve-script-private.h"
 #include "sieve-storage-private.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #define SIEVE_FILE_READ_BLOCK_SIZE (1024*8)
 
 #define SIEVE_FILE_DEFAULT_PATH "~/.dovecot."SIEVE_SCRIPT_FILEEXT
@@ -32,7 +35,7 @@ struct sieve_file_storage {
 	const char *active_path;
 	const char *active_fname;
 	const char *link_path;
-	
+
 	mode_t dir_create_mode;
 	mode_t file_create_mode;
 	gid_t file_create_gid;
@@ -137,7 +140,7 @@ struct sieve_file_script {
 struct sieve_file_script *sieve_file_script_init_from_filename
 	(struct sieve_file_storage *fstorage, const char *filename,
 		const char *scriptname);
-struct sieve_file_script *sieve_file_script_open_from_filename	
+struct sieve_file_script *sieve_file_script_open_from_filename
 	(struct sieve_file_storage *fstorage, const char *filename,
 		const char *scriptname);
 struct sieve_file_script *sieve_file_script_init_from_name

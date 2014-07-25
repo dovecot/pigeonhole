@@ -9,8 +9,6 @@
 
 #include "sieve-file-storage.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 static int _file_path_cmp(const char *path1, const char *path2)

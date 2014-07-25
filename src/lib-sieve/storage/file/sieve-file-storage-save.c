@@ -18,7 +18,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <utime.h>
-#include <sys/stat.h>
 
 struct sieve_file_save_context {
 	struct sieve_storage_save_context context;
