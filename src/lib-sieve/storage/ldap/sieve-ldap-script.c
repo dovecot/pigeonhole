@@ -125,17 +125,26 @@ static int sieve_ldap_script_binary_read_metadata
 {
 	struct sieve_ldap_script *lscript =
 		(struct sieve_ldap_script *)script;
+	struct sieve_ldap_storage *lstorage =
+		(struct sieve_ldap_storage *)script->storage;		
 	struct sieve_binary *sbin =
 		sieve_binary_block_get_binary(sblock);
 	string_t *dn, *modattr;
 
+	/* config file changed? */
+	if ( sieve_binary_mtime(sbin) <= lstorage->set_mtime )
+		return 0;
+
+	/* open script if not open already */
 	if ( lscript->dn == NULL &&
 		sieve_script_open(script, NULL) < 0 )
 		return 0;
 
+	/* if modattr not found recompile always */
 	if ( lscript->modattr == NULL || *lscript->modattr == '\0' )
 		return 0;
 
+	/* compare DN in binary and from search result */
 	if ( !sieve_binary_read_string(sblock, offset, &dn) ) {
 		sieve_script_sys_error(script,
 			"Binary `%s' has invalid metadata for script `%s': "
@@ -147,6 +156,7 @@ static int sieve_ldap_script_binary_read_metadata
 	if ( strcmp(str_c(dn), lscript->dn) != 0 )
 		return 0;
 
+	/* compare modattr in binary and from search result */
 	if ( !sieve_binary_read_string(sblock, offset, &modattr) ) {
 		sieve_script_sys_error(script,
 			"Binary `%s' has invalid metadata for script `%s': "

@@ -15,6 +15,10 @@
 
 #include "sieve-ldap-db.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #define DEF_STR(name) DEF_STRUCT_STR(name, sieve_ldap_storage_settings)
 #define DEF_INT(name) DEF_STRUCT_INT(name, sieve_ldap_storage_settings)
 #define DEF_BOOL(name) DEF_STRUCT_BOOL(name, sieve_ldap_storage_settings)
@@ -87,8 +91,18 @@ int sieve_ldap_storage_read_settings
 {
 	struct sieve_storage *storage = &lstorage->storage;
 	const char *str, *error;
+	struct stat st;
+
+	if ( stat(config_path, &st) < 0 ) {
+		sieve_storage_sys_error(storage,
+			"Failed to read LDAP storage config: "
+			"stat(%s) failed: %m", config_path);
+		return -1;
+	}
 
 	lstorage->set = default_settings;
+	lstorage->set_mtime = st.st_mtime;
+	
 	if (!settings_read_nosection
 		(config_path, parse_setting, lstorage, &error)) {
 		sieve_storage_set_critical(storage,
