@@ -190,6 +190,8 @@ static int lda_sieve_get_default_storage
 	enum sieve_error error;
 	const char *location;
 
+	*storage_r = NULL;
+
 	/* Use default script location, if one exists */
 	location = mail_user_plugin_getenv(user, "sieve_default");
 	if ( location == NULL ) {
@@ -716,8 +718,8 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 					break;
 				}
 			}
+			sieve_storage_unref(&default_storage);
 		}
-		sieve_storage_unref(&default_storage);
 	}
 
 	if ( debug && ret >= 0 && srctx->main_script == NULL ) {
