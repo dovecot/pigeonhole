@@ -687,9 +687,8 @@ struct sieve_storage_list_context *sieve_storage_list_init
 	i_assert(storage->v.list_init != NULL);
 	lctx = storage->v.list_init(storage);
 
-	if (lctx != NULL) {
+	if (lctx != NULL)
 		lctx->storage = storage;
-	}
 	
 	return lctx;
 }
@@ -723,7 +722,7 @@ int sieve_storage_list_deinit
 	i_assert(storage->v.list_deinit != NULL);
 	ret = storage->v.list_deinit(lctx);
 
-	_lctx = NULL;	
+	*_lctx = NULL;	
 	return ret;
 }
 
