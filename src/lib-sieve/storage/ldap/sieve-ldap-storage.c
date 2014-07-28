@@ -12,6 +12,12 @@
 
 #include "sieve-error.h"
 
+#ifndef PLUGIN_BUILD
+const struct sieve_storage sieve_ldap_storage;
+#else
+const struct sieve_storage sieve_ldap_storage_plugin;
+#endif
+
 /*
  * Storage class
  */

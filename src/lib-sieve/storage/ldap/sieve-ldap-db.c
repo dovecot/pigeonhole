@@ -6,7 +6,6 @@
 #include "sieve-common.h"
 
 #include "sieve-ldap-storage.h"
-#include "sieve-ldap-db.h"
 
 /* FIXME: Imported this from Dovecot auth for now. We're working on a proper
    lib-ldap, but, until then, some code is duplicated here. */

@@ -8,13 +8,13 @@
 #include "sieve-script-private.h"
 #include "sieve-storage-private.h"
 
+#define SIEVE_LDAP_SCRIPT_DEFAULT "default"
+
+#if defined(SIEVE_BUILTIN_LDAP) || defined(PLUGIN_BUILD)
+
 #include "sieve-ldap-db.h"
 
 struct sieve_ldap_storage;
-
-#define SIEVE_LDAP_SCRIPT_DEFAULT "default"
-
-extern const struct sieve_storage sieve_ldap_storage_plugin;
 
 /*
  * LDAP settings
@@ -104,5 +104,7 @@ struct sieve_script_sequence *sieve_ldap_storage_get_script_sequence
 struct sieve_script *sieve_ldap_script_sequence_next
     (struct sieve_script_sequence *seq, enum sieve_error *error_r);
 void sieve_ldap_script_sequence_destroy(struct sieve_script_sequence *seq);
+
+#endif
 
 #endif
