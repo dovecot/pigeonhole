@@ -58,29 +58,38 @@ extern const struct sieve_extension_def address_part_extension;
 
 /* FIXME: This is stupid. Define a comparator-* extension and be done with it */
 
-static const struct sieve_extension_def comparator_i_octet_extension = {
+const struct sieve_extension_def comparator_i_octet_extension = {
 	.name = "comparator-i;octet",
 };
 
-static const struct sieve_extension_def comparator_i_ascii_casemap_extension = {
+const struct sieve_extension_def comparator_i_ascii_casemap_extension = {
 	.name = "comparator-i;ascii-casemap",
 };
 
 /*
- * Core extensions
+ * List of native extensions
  */
+
+/* Dummy extensions */
+
+extern const struct sieve_extension_def comparator_i_octet_extension;
+extern const struct sieve_extension_def comparator_i_ascii_casemap_extension;
+
+const struct sieve_extension_def *sieve_dummy_extensions[] = {
+	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension
+};
+
+const unsigned int sieve_dummy_extensions_count =
+	N_ELEMENTS(sieve_dummy_extensions);
+
+/* Core */
 
 extern const struct sieve_extension_def fileinto_extension;
 extern const struct sieve_extension_def reject_extension;
 extern const struct sieve_extension_def envelope_extension;
 extern const struct sieve_extension_def encoded_character_extension;
 
-/*
- * Native 'plugin' extensions
- */
-
 extern const struct sieve_extension_def vacation_extension;
-extern const struct sieve_extension_def vacation_seconds_extension;
 extern const struct sieve_extension_def subaddress_extension;
 extern const struct sieve_extension_def comparator_i_ascii_numeric_extension;
 extern const struct sieve_extension_def relational_extension;
@@ -94,30 +103,8 @@ extern const struct sieve_extension_def enotify_extension;
 extern const struct sieve_extension_def environment_extension;
 extern const struct sieve_extension_def mailbox_extension;
 extern const struct sieve_extension_def date_extension;
-extern const struct sieve_extension_def spamtest_extension;
-extern const struct sieve_extension_def spamtestplus_extension;
-extern const struct sieve_extension_def virustest_extension;
 extern const struct sieve_extension_def ihave_extension;
-extern const struct sieve_extension_def editheader_extension;
 extern const struct sieve_extension_def duplicate_extension;
-
-/* vnd.dovecot. */
-extern const struct sieve_extension_def vnd_debug_extension;
-extern const struct sieve_extension_def vnd_duplicate_extension;
-
-/*
- * List of native extensions
- */
-
-const struct sieve_extension_def *sieve_dummy_extensions[] = {
-	/* Dummy extensions */
-	&comparator_i_octet_extension, &comparator_i_ascii_casemap_extension
-};
-
-const unsigned int sieve_dummy_extensions_count =
-	N_ELEMENTS(sieve_dummy_extensions);
-
-/* Core */
 
 const struct sieve_extension_def *sieve_core_extensions[] = {
 	/* Core extensions */
@@ -141,6 +128,14 @@ const unsigned int sieve_core_extensions_count =
  *   necessary to make these useful.
  */
 
+extern const struct sieve_extension_def vacation_seconds_extension;
+extern const struct sieve_extension_def spamtest_extension;
+extern const struct sieve_extension_def spamtestplus_extension;
+extern const struct sieve_extension_def virustest_extension;
+extern const struct sieve_extension_def editheader_extension;
+
+extern const struct sieve_extension_def vnd_debug_extension;
+
 const struct sieve_extension_def *sieve_extra_extensions[] = {
 	&vacation_seconds_extension, &spamtest_extension, &spamtestplus_extension,
 	&virustest_extension, &editheader_extension,
@@ -158,6 +153,7 @@ const unsigned int sieve_extra_extensions_count =
 
 extern const struct sieve_extension_def imapflags_extension;
 extern const struct sieve_extension_def notify_extension;
+extern const struct sieve_extension_def vnd_duplicate_extension;
 
 const struct sieve_extension_def *sieve_deprecated_extensions[] = {
 	&imapflags_extension,
