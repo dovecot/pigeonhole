@@ -25,6 +25,9 @@ void edit_mail_header_add
 		bool last);
 int edit_mail_header_delete
 	(struct edit_mail *edmail, const char *field_name, int index);
+int edit_mail_header_replace
+	(struct edit_mail *edmail, const char *field_name, int index,
+		const char *newname, const char *newvalue);
 
 /* Iterator */
 
@@ -41,8 +44,12 @@ void edit_mail_headers_iterate_get
 
 bool edit_mail_headers_iterate_next
 	(struct edit_mail_header_iter *edhiter);
+
 bool edit_mail_headers_iterate_remove
 	(struct edit_mail_header_iter *edhiter);
+bool edit_mail_headers_iterate_replace
+	(struct edit_mail_header_iter *edhiter,
+		const char *newname, const char *newvalue);
 
 
 

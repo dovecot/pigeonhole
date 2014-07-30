@@ -430,6 +430,45 @@ static inline void edit_mail_modify(struct edit_mail *edmail)
 
 /* Header modification */
 
+static inline char *_header_value_unfold
+(const char *value)
+{
+	string_t *out;
+	unsigned int i;
+
+	for ( i = 0; value[i] != '\0'; i++ ) {
+		if (value[i] == '\r' || value[i] == '\n')
+			break;
+	}
+	if ( value[i] == '\0' ) {
+		return i_strdup(value);
+	}
+
+	out = t_str_new(i + strlen(value+i) + 10);
+	str_append_n(out, value, i);
+	for ( ; value[i] != '\0'; i++ ) {
+		if (value[i] == '\n') {
+			i++;
+			if (value[i] == '\0')
+				break;
+
+			switch ( value[i] ) {
+			case ' ': 
+				str_append_c(out, ' ');
+				break;
+			case '\t':
+			default:
+				str_append_c(out, '\t');
+			}
+		} else {
+			if (value[i] != '\r')
+				str_append_c(out, value[i]);
+		}
+	}
+
+	return i_strndup(str_c(out), str_len(out));
+}
+
 static struct _header_index *edit_mail_header_find
 (struct edit_mail *edmail, const char *field_name)
 {
@@ -482,6 +521,50 @@ static struct _header_index *edit_mail_header_clone
 	return header_idx;
 }
 
+static struct _header_field_index *
+edit_mail_header_field_create
+(struct edit_mail *edmail, const char *field_name, const char *value)
+{
+	struct _header_index *header_idx;
+	struct _header *header;
+	struct _header_field_index *field_idx;
+	struct _header_field *field;
+	unsigned int lines;
+
+	/* Get/create header index item */
+	header_idx = edit_mail_header_create(edmail, field_name);
+	header = header_idx->header;
+
+	/* Create new field index item */
+	field_idx = i_new(struct _header_field_index, 1);
+	field_idx->header = header_idx;
+	field_idx->field = field = _header_field_create(header);
+
+	/* Create header field data (folded if necessary) */
+	T_BEGIN {
+		string_t *enc_value, *data;
+
+		enc_value = t_str_new(strlen(field_name) + strlen(value) + 64);
+		data = t_str_new(strlen(field_name) + strlen(value) + 128);
+
+		message_header_encode(value, enc_value);
+
+		lines = rfc2822_header_append
+			(data, field_name, str_c(enc_value), edmail->crlf, &field->body_offset);
+
+		/* Copy to new field */
+		field->data = i_strndup(str_data(data), str_len(data));
+		field->size = str_len(data);
+		field->virtual_size = ( edmail->crlf ? field->size : field->size + lines );
+		field->lines = lines;
+	} T_END;
+
+	/* Record original (utf8) value */
+	field->utf8_value = _header_value_unfold(value);
+
+	return field_idx;
+}
+
 static void edit_mail_header_field_delete
 (struct edit_mail *edmail, struct _header_field_index *field_idx,
 	bool update_index)
@@ -524,6 +607,86 @@ static void edit_mail_header_field_delete
 
 	DLLIST2_REMOVE
 		(&edmail->header_fields_head, &edmail->header_fields_tail, field_idx);
+	_header_field_unref(field_idx->field);
+	i_free(field_idx);
+}
+
+static void edit_mail_header_field_replace
+(struct edit_mail *edmail, struct _header_field_index *field_idx,
+	const char *newname, const char *newvalue, bool update_index)
+{
+	struct _header_field_index *field_idx_new;
+	struct _header_index *header_idx = field_idx->header, *header_idx_new;
+	struct _header_field *field = field_idx->field, *field_new;
+
+	i_assert( header_idx != NULL );
+	i_assert( newname != NULL || newvalue != NULL );
+
+	if ( newname == NULL )
+		newname = header_idx->header->name;
+	if ( newvalue == NULL )
+		newvalue = field_idx->field->utf8_value;
+	field_idx_new = edit_mail_header_field_create
+		(edmail, newname, newvalue);
+	field_new = field_idx_new->field;
+	header_idx_new = field_idx_new->header;
+
+	edmail->hdr_size.physical_size -= field->size;
+	edmail->hdr_size.virtual_size -= field->virtual_size;
+	edmail->hdr_size.lines -= field->lines;
+
+	edmail->hdr_size.physical_size += field_new->size;
+	edmail->hdr_size.virtual_size += field_new->virtual_size;
+	edmail->hdr_size.lines += field_new->lines;
+
+	/* Replace header field index */
+	field_idx_new->prev = field_idx->prev;
+	field_idx_new->next = field_idx->next;
+	if ( field_idx->prev != NULL )
+		field_idx->prev->next = field_idx_new;
+	if ( field_idx->next != NULL )
+		field_idx->next->prev = field_idx_new;
+	if (edmail->header_fields_head == field_idx)
+		edmail->header_fields_head = field_idx_new;
+	if (edmail->header_fields_tail == field_idx)
+		edmail->header_fields_tail = field_idx_new;
+
+	if ( header_idx_new == header_idx ) {
+		if (header_idx->first == field_idx)
+			header_idx->first = field_idx_new;
+		if (header_idx->last == field_idx)
+			header_idx->last = field_idx_new;
+	} else {
+		header_idx->count--;
+		header_idx_new->count++;
+
+		if ( update_index ) {
+			if ( header_idx->count == 0 ) {
+				DLLIST2_REMOVE(&edmail->headers_head, &edmail->headers_tail, header_idx);
+				_header_unref(header_idx->header);
+				i_free(header_idx);
+			} else if ( header_idx->first == field_idx ) {
+				struct _header_field_index *hfield = header_idx->first->next;
+
+				while ( hfield != NULL && hfield->header != header_idx ) {
+					hfield = hfield->next;
+				}
+
+				i_assert( hfield != NULL );
+				header_idx->first = hfield;
+			} else if ( header_idx->last == field_idx ) {
+				struct _header_field_index *hfield = header_idx->last->prev;
+
+				while ( hfield != NULL && hfield->header != header_idx ) {
+					hfield = hfield->prev;
+				}
+
+				i_assert( hfield != NULL );
+				header_idx->last = hfield;
+			}
+		}
+	}
+
 	_header_field_unref(field_idx->field);
 	i_free(field_idx);
 }
@@ -704,86 +867,19 @@ static int edit_mail_headers_parse
 	return 1;
 }
 
-static inline char *_header_value_unfold
-(const char *value)
-{
-	string_t *out;
-	unsigned int i;
-
-	for ( i = 0; value[i] != '\0'; i++ ) {
-		if (value[i] == '\r' || value[i] == '\n')
-			break;
-	}
-	if ( value[i] == '\0' ) {
-		return i_strdup(value);
-	}
-
-	out = t_str_new(i + strlen(value+i) + 10);
-	str_append_n(out, value, i);
-	for ( ; value[i] != '\0'; i++ ) {
-		if (value[i] == '\n') {
-			i++;
-			if (value[i] == '\0')
-				break;
-
-			switch ( value[i] ) {
-			case ' ': 
-				str_append_c(out, ' ');
-				break;
-			case '\t':
-			default:
-				str_append_c(out, '\t');
-			}
-		} else {
-			if (value[i] != '\r')
-				str_append_c(out, value[i]);
-		}
-	}
-
-	return i_strndup(str_c(out), str_len(out));
-}
-
 void edit_mail_header_add
-(struct edit_mail *edmail, const char *field_name, const char *value, bool last)
+(struct edit_mail *edmail, const char *field_name, const char *value,
+	bool last)
 {
 	struct _header_index *header_idx;
-	struct _header *header;
 	struct _header_field_index *field_idx;
 	struct _header_field *field;
-	unsigned int lines;
 
 	edit_mail_modify(edmail);
 
-	/* Get/create header index item */
-	header_idx = edit_mail_header_create(edmail, field_name);
-	header = header_idx->header;
-
-	/* Create new field index item */
-	field_idx = i_new(struct _header_field_index, 1);
-	field_idx->header = header_idx;
-	field_idx->field = field = _header_field_create(header);
-
-	/* Create header field data (folded if necessary) */
-	T_BEGIN {
-		string_t *enc_value, *data;
-
-		enc_value = t_str_new(strlen(field_name) + strlen(value) + 64);
-		data = t_str_new(strlen(field_name) + strlen(value) + 128);
-
-		message_header_encode(value, enc_value);
-
-		lines = rfc2822_header_append
-			(data, field_name, str_c(enc_value), edmail->crlf, &field->body_offset);
-
-		/* Copy to new field */
-		field->data = i_strndup(str_data(data), str_len(data));
-		field->size = str_len(data);
-		field->virtual_size = ( edmail->crlf ? field->size : field->size + lines );
-		field->lines = lines;
-	} T_END;
-
-	/* Record original (utf8) value */
-	field->utf8_value = _header_value_unfold(value);
+	field_idx = edit_mail_header_field_create(edmail, field_name, value);
+	header_idx = field_idx->header;
+	field = field_idx->field;
 
 	/* Add it to the header field index */
 	if ( last ) {
@@ -802,7 +898,7 @@ void edit_mail_header_add
 
 			edmail->appended_hdr_size.physical_size += field->size;
 			edmail->appended_hdr_size.virtual_size += field->virtual_size;
-			edmail->appended_hdr_size.lines += lines;
+			edmail->appended_hdr_size.lines += field->lines;
 		}
 	} else {
 		DLLIST2_PREPEND
@@ -817,7 +913,7 @@ void edit_mail_header_add
 
 	edmail->hdr_size.physical_size += field->size;
 	edmail->hdr_size.virtual_size += field->virtual_size;
-	edmail->hdr_size.lines += lines;
+	edmail->hdr_size.lines += field->lines;
 }
 
 int edit_mail_header_delete
@@ -873,6 +969,80 @@ int edit_mail_header_delete
 	}
 
 	if ( index == 0 || header_idx->count == 0 ) {
+		DLLIST2_REMOVE(&edmail->headers_head, &edmail->headers_tail, header_idx);
+		_header_unref(header_idx->header);
+		i_free(header_idx);
+	} else if ( header_idx->first == NULL || header_idx->last == NULL ) {
+		struct _header_field_index *current = edmail->header_fields_head;
+
+		while ( current != NULL ) {
+			if ( current->header == header_idx ) {
+				if ( header_idx->first == NULL )
+					header_idx->first = current;
+				header_idx->last = current;
+			}
+			current = current->next;
+		}
+	}
+
+	return ret;
+}
+
+int edit_mail_header_replace
+(struct edit_mail *edmail, const char *field_name, int index,
+	const char *newname, const char *newvalue)
+{
+	struct _header_index *header_idx;
+	struct _header_field_index *field_idx;
+	int pos = 0;
+	int ret = 0;
+
+	/* Make sure headers are parsed */
+	if ( edit_mail_headers_parse(edmail) <= 0 )
+		return -1;
+
+	/* Find the header entry */
+	if ( (header_idx=edit_mail_header_find(edmail, field_name)) == NULL ) {
+		/* Not found */
+		return 0;
+	}
+
+	/* Signal modification */
+	edit_mail_modify(edmail);
+
+	/* Iterate through all header fields and replace those that match */
+	field_idx = ( index >= 0 ? header_idx->first : header_idx->last );
+	while ( field_idx != NULL ) {
+		struct _header_field_index *next =
+			( index >= 0 ? field_idx->next : field_idx->prev );
+
+		if ( field_idx->field->header == header_idx->header ) {
+			bool final;
+
+			if ( index >= 0 ) {
+				pos++;
+				final = ( header_idx->last == field_idx );
+			} else {
+				pos--;
+				final = ( header_idx->first == field_idx );
+			}
+
+			if ( index == 0 || index == pos ) {
+				if ( header_idx->first == field_idx ) header_idx->first = NULL;
+				if ( header_idx->last == field_idx ) header_idx->last = NULL;
+				edit_mail_header_field_replace
+					(edmail, field_idx, newname, newvalue, FALSE);
+				ret++;
+			}
+
+			if ( final || (index != 0 && index == pos) )
+				break;
+		}
+
+		field_idx = next;
+	}
+
+	if ( header_idx->count == 0 ) {
 		DLLIST2_REMOVE(&edmail->headers_head, &edmail->headers_tail, header_idx);
 		_header_unref(header_idx->header);
 		i_free(header_idx);
@@ -989,6 +1159,24 @@ bool edit_mail_headers_iterate_remove
 	return next;
 }
 
+bool edit_mail_headers_iterate_replace
+(struct edit_mail_header_iter *edhiter,
+	const char *newname, const char *newvalue)
+{
+	struct _header_field_index *field_idx;
+	bool next;
+
+	i_assert( edhiter->current != NULL && edhiter->current->header != NULL);
+
+	edit_mail_modify(edhiter->mail);
+
+	field_idx = edhiter->current;
+	next = edit_mail_headers_iterate_next(edhiter);
+	edit_mail_header_field_replace
+		(edhiter->mail, field_idx, newname, newvalue, TRUE);
+
+	return next;
+}
 
 /* Body modification */
 
