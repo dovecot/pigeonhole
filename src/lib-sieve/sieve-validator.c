@@ -1279,9 +1279,7 @@ static bool sieve_validate_command
 			}
 		}
 
-		/* Skip block if result of test is const FALSEconst struct sieve_extension *sieve_validator_extension_load
-(struct sieve_validator *valdtr, struct sieve_command *cmd,
-	struct sieve_ast_argument *ext_arg, string_t *ext_name)  */
+		/* Skip block if result of test is const FALSE */
 		if ( result && *const_r == 0 )
 			return TRUE;
 
@@ -1351,13 +1349,11 @@ static bool sieve_validate_block
 			int const_value = -2;
 
 			next = sieve_ast_command_next(cmd_node);
-			command_success = sieve_validate_command_context(valdtr, cmd_node);
-			result = command_success && result;
 
 	 		/* Check if this is the first non-require command */
-			if ( command_success && sieve_ast_node_type(block) == SAT_ROOT
-				&& !valdtr->finished_require && cmd_node->command != NULL
-				&& !sieve_command_is(cmd_node->command, cmd_require) ) {
+			if ( sieve_ast_node_type(block) == SAT_ROOT
+				&& !valdtr->finished_require &&
+				strcasecmp(cmd_node->identifier, cmd_require.identifier) != 0 ) {
 				const struct sieve_validator_extension_reg *extrs;
 				unsigned int ext_count, i;
 
@@ -1370,12 +1366,16 @@ static bool sieve_validate_block
 						&& extrs[i].valext->validate != NULL ) {
 
 						if ( !extrs[i].valext->validate
-							(extrs[i].ext, valdtr, extrs[i].context, extrs[i].arg) )
-						fatal = TRUE;
-						break;
+							(extrs[i].ext, valdtr, extrs[i].context, extrs[i].arg) ) {
+							fatal = TRUE;
+							break;
+						}
 					}
 				}
 			}
+
+			command_success = sieve_validate_command_context(valdtr, cmd_node);
+			result = command_success && result;
 
 			result = !fatal && sieve_validate_command(valdtr, cmd_node, &const_value)
 				&& result;
