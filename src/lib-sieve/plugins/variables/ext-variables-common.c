@@ -523,6 +523,25 @@ bool sieve_variable_assign
 	return TRUE;
 }
 
+bool sieve_variable_assign_cstr
+(struct sieve_variable_storage *storage, unsigned int index,
+	const char *value)
+{
+	string_t *varval;
+
+	if ( !sieve_variable_get_modifiable(storage, index, &varval) )
+		return FALSE;
+
+	str_truncate(varval, 0);
+	str_append(varval, value);
+
+	/* Just a precaution, caller should prevent this in the first place */
+	if ( str_len(varval) > EXT_VARIABLES_MAX_VARIABLE_SIZE )
+		str_truncate(varval, EXT_VARIABLES_MAX_VARIABLE_SIZE);
+
+	return TRUE;
+}
+
 /*
  * AST Context
  */
