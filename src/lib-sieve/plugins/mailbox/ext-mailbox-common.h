@@ -6,6 +6,8 @@
 
 #include "sieve-common.h"
 
+#include "sieve-ext-mailbox.h"
+
 /*
  * Tagged arguments
  */

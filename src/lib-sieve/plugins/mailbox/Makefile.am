@@ -15,5 +15,12 @@ libsieve_ext_mailbox_la_SOURCES = \
 	$(tests) \
 	ext-mailbox.c
 
-noinst_HEADERS = \
+public_headers = \
+	sieve-ext-mailbox.h
+
+headers = \
 	ext-mailbox-common.h
+
+pkginc_libdir=$(dovecot_pkgincludedir)/sieve
+pkginc_lib_HEADERS = $(public_headers)
+noinst_HEADERS = $(headers)

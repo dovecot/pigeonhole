@@ -25,6 +25,21 @@
 #include "ext-mailbox-common.h"
 
 /*
+ * Tag registration
+ */
+
+void sieve_ext_mailbox_register_create_tag
+(struct sieve_validator *valdtr, const struct sieve_extension *mailbox_ext,
+	const char *command)
+{
+	if ( sieve_validator_extension_loaded(valdtr, mailbox_ext) ) {
+		sieve_validator_register_external_tag(valdtr, command,
+			mailbox_ext, &mailbox_create_tag, SIEVE_OPT_SIDE_EFFECT);
+	}
+}
+
+
+/*
  * Extension
  */
 

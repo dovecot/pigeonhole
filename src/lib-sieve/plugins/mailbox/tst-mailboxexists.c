@@ -7,6 +7,7 @@
 #include "mail-namespace.h"
 
 #include "sieve-common.h"
+#include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-stringlist.h"
 #include "sieve-code.h"
