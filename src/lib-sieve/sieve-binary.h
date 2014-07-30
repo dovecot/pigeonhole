@@ -206,30 +206,31 @@ void sieve_binary_emit_extension_object
 
 bool sieve_binary_read_byte
 	(struct sieve_binary_block *sblock, sieve_size_t *address,
-		unsigned int *byte_r);
+		unsigned int *byte_r) ATTR_NULL(3);
 bool sieve_binary_read_code
 	(struct sieve_binary_block *sblock, sieve_size_t *address,
-		signed int *code_r);
+		signed int *code_r) ATTR_NULL(3);
 bool sieve_binary_read_offset
 	(struct sieve_binary_block *sblock, sieve_size_t *address,
-		sieve_offset_t *offset_r);
+		sieve_offset_t *offset_r) ATTR_NULL(3);
 bool sieve_binary_read_integer
   (struct sieve_binary_block *sblock, sieve_size_t *address,
-		sieve_number_t *int_r);
+		sieve_number_t *int_r) ATTR_NULL(3);
 bool sieve_binary_read_string
   (struct sieve_binary_block *sblock, sieve_size_t *address,
-		string_t **str_r);
+		string_t **str_r) ATTR_NULL(3);
 
 static inline bool sieve_binary_read_unsigned
 (struct sieve_binary_block *sblock, sieve_size_t *address,
-	unsigned int *count_r)
+	unsigned int *count_r) ATTR_NULL(3)
 {
-	sieve_number_t integer;
+	sieve_number_t integer = 0;
 
 	if ( !sieve_binary_read_integer(sblock, address, &integer) )
 		return FALSE;
 
-	*count_r = integer;
+	if ( count_r != NULL )
+		*count_r = integer;
 
 	return TRUE;
 }

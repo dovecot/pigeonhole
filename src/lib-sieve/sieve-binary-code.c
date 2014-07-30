@@ -233,7 +233,8 @@ bool sieve_binary_read_byte
 		return TRUE;
 	}
 
-	*byte_r = 0;
+	if ( byte_r != NULL )
+		*byte_r = 0;
 	return FALSE;
 }
 
@@ -250,7 +251,8 @@ bool sieve_binary_read_code
 		return TRUE;
 	}
 
-	*code_r = 0;
+	if ( code_r != NULL )
+		*code_r = 0;
 	return FALSE;
 }
 
@@ -283,7 +285,7 @@ bool sieve_binary_read_integer
 (struct sieve_binary_block *sblock, sieve_size_t *address, sieve_number_t *int_r)
 {
 	int bits = sizeof(sieve_number_t) * 8;
-	*int_r = 0;
+	sieve_number_t integer = 0;
 
 	ADDR_CODE_READ(sblock);
 
@@ -293,11 +295,11 @@ bool sieve_binary_read_integer
 	/* Read first integer bytes [1xxxxxxx] */
 	while ( (ADDR_DATA_AT(address) & 0x80) > 0 ) {
 		if ( ADDR_BYTES_LEFT(address) > 0 && bits > 0) {
-			*int_r |= ADDR_DATA_AT(address) & 0x7F;
+			integer |= ADDR_DATA_AT(address) & 0x7F;
 			ADDR_JUMP(address, 1);
 
 			/* Each byte encodes 7 bits of the integer */
-			*int_r <<= 7;
+			integer <<= 7;
 			bits -= 7;
 		} else {
 			/* This is an error */
@@ -306,9 +308,11 @@ bool sieve_binary_read_integer
 	}
 
 	/* Read last byte [0xxxxxxx] */
-	*int_r |= ADDR_DATA_AT(address) & 0x7F;
+	integer |= ADDR_DATA_AT(address) & 0x7F;
 	ADDR_JUMP(address, 1);
 
+	if ( int_r != NULL )
+		*int_r = integer;
 	return TRUE;
 }
 
@@ -363,7 +367,8 @@ bool sieve_binary_read_extension
 			return FALSE;
 	}
 
-	(*ext_r) = ext;
+	if ( ext_r != NULL )
+		(*ext_r) = ext;
 
 	return TRUE;
 }
