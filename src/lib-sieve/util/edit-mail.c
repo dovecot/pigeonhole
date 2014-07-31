@@ -611,7 +611,8 @@ static void edit_mail_header_field_delete
 	i_free(field_idx);
 }
 
-static void edit_mail_header_field_replace
+static struct _header_field_index *
+edit_mail_header_field_replace
 (struct edit_mail *edmail, struct _header_field_index *field_idx,
 	const char *newname, const char *newvalue, bool update_index)
 {
@@ -684,11 +685,31 @@ static void edit_mail_header_field_replace
 				i_assert( hfield != NULL );
 				header_idx->last = hfield;
 			}
+			if ( header_idx_new->count > 0 ) {
+				struct _header_field_index *hfield;
+
+				hfield = edmail->header_fields_head;
+				while ( hfield != NULL && hfield->header != header_idx_new ) {
+					hfield = hfield->next;
+				}
+
+				i_assert( hfield != NULL );
+				header_idx_new->first = hfield;
+
+				hfield = edmail->header_fields_tail;
+				while ( hfield != NULL && hfield->header != header_idx_new ) {
+					hfield = hfield->prev;
+				}
+
+				i_assert( hfield != NULL );
+				header_idx_new->last = hfield;
+			}
 		}
 	}
 
 	_header_field_unref(field_idx->field);
 	i_free(field_idx);
+	return field_idx_new;
 }
 
 static inline char *_header_decode
@@ -992,8 +1013,8 @@ int edit_mail_header_replace
 (struct edit_mail *edmail, const char *field_name, int index,
 	const char *newname, const char *newvalue)
 {
-	struct _header_index *header_idx;
-	struct _header_field_index *field_idx;
+	struct _header_index *header_idx, *header_idx_new;
+	struct _header_field_index *field_idx, *field_idx_new;
 	int pos = 0;
 	int ret = 0;
 
@@ -1012,6 +1033,7 @@ int edit_mail_header_replace
 
 	/* Iterate through all header fields and replace those that match */
 	field_idx = ( index >= 0 ? header_idx->first : header_idx->last );
+	field_idx_new = NULL;
 	while ( field_idx != NULL ) {
 		struct _header_field_index *next =
 			( index >= 0 ? field_idx->next : field_idx->prev );
@@ -1030,7 +1052,7 @@ int edit_mail_header_replace
 			if ( index == 0 || index == pos ) {
 				if ( header_idx->first == field_idx ) header_idx->first = NULL;
 				if ( header_idx->last == field_idx ) header_idx->last = NULL;
-				edit_mail_header_field_replace
+				field_idx_new = edit_mail_header_field_replace
 					(edmail, field_idx, newname, newvalue, FALSE);
 				ret++;
 			}
@@ -1042,6 +1064,7 @@ int edit_mail_header_replace
 		field_idx = next;
 	}
 
+	/* Update old header index */
 	if ( header_idx->count == 0 ) {
 		DLLIST2_REMOVE(&edmail->headers_head, &edmail->headers_tail, header_idx);
 		_header_unref(header_idx->header);
@@ -1054,6 +1077,21 @@ int edit_mail_header_replace
 				if ( header_idx->first == NULL )
 					header_idx->first = current;
 				header_idx->last = current;
+			}
+			current = current->next;
+		}
+	}
+
+	/* Update new header index */	
+	if ( field_idx_new != NULL ) {
+		struct _header_field_index *current = edmail->header_fields_head;
+	
+		header_idx_new = field_idx_new->header;	
+		while ( current != NULL ) {
+			if ( current->header == header_idx_new ) {
+				if ( header_idx_new->first == NULL )
+					header_idx_new->first = current;
+				header_idx_new->last = current;
 			}
 			current = current->next;
 		}
