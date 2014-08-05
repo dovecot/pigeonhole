@@ -239,6 +239,7 @@ void sieve_file_script_sequence_destroy(struct sieve_script_sequence *seq)
 	struct sieve_file_script_sequence *fseq =
 		(struct sieve_file_script_sequence *)seq;
 
-	array_free(&fseq->script_files);
+	if ( array_is_created(&fseq->script_files) )
+		array_free(&fseq->script_files);
 	pool_unref(&fseq->pool);
 }
