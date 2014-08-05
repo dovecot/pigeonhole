@@ -99,6 +99,82 @@ test "Deleteheader - nonexistent" {
 	}
 }
 
+test_set "message" "${message}";
+test "Deleteheader - nonexistent (match)" {
+	if size :over 288 {
+		test_fail "original message is longer than 288 bytes?!";
+	}
+
+	if size :under 288 {
+		test_fail "original message is shorter than 288 bytes?!";
+	}
+
+	deleteheader :matches "X-Z" "*frop*";
+
+	if size :under 288 {
+		test_fail "message is shorter than original";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained";
+	}
+
+	redirect "frop@example.com";
+	fileinto :create "folder1b";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :folder "folder1b" 0 {
+		test_fail "message not stored";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in stored mail";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained in stored mail";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained in stored mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in stored mail";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if not header :is "subject" "Frop!" {
+		test_fail "original subject header not retained in redirected mail";
+	}
+
+	if not header :is "X-B" "omdat dit anders" {
+		test_fail "original X-B header not retained in redirected mail";
+	}
+
+	if not header :is "X-C" "niet via e-mail versturen" {
+		test_fail "original X-C header not retained in redirected mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}
+
 test_result_reset;
 test_set "message" "${message}";
 test "Deleteheader - one" {
@@ -867,9 +943,7 @@ test "Deleteheader - :matches" {
  *
  */
 
-test_result_reset;
-
-test_set "message" text:
+set "message2" text:
 X-A: Long folded header to test removal of folded
  headers from a message. This is the top header.
 X-B: First intermittent unfolded header
@@ -884,6 +958,8 @@ Frop!
 .
 ;
 
+test_result_reset;
+test_set "message" "${message2}";
 test "Deleteheader - folded" {
 	deleteheader "X-A";
 
@@ -929,6 +1005,55 @@ test "Deleteheader - folded" {
 		test_fail "body not retained in redirected mail";
 	}
 }
+
+test_result_reset;
+test_set "message" "${message2}";
+test "Deleteheader - folded (match)" {
+	deleteheader :matches "X-A" "*header*";
+
+	if exists "X-A" {
+		test_fail "original X-A (1) header not deleted";
+	}
+
+	if not header :is "X-B" "First intermittent unfolded header" {
+		test_fail "original X-B (2) header not retained";
+	}
+
+	if not header :is "X-B" "Second intermittent unfolded header" {
+		test_fail "original X-B (2) header not retained";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+
+	redirect "frop@example.com";
+
+	if not test_result_execute {
+		test_fail "failed to execute result";
+	}
+
+	if not test_message :smtp 0 {
+		test_fail "message not redirected";
+	}
+
+	if exists "X-A" {
+		test_fail "original X-A (1) header not deleted in redirected mail";
+	}
+
+	if not header :is "X-B" "First intermittent unfolded header" {
+		test_fail "original X-B (2) header not retained in redirected mail";
+	}
+
+	if not header :is "X-B" "Second intermittent unfolded header" {
+		test_fail "original X-B (2) header not retained in redirected mail";
+	}
+
+	if not body :matches "Frop!*" {
+		test_fail "body not retained in redirected mail";
+	}
+}
+
 
 /*
  * TEST: Ignoring whitespace

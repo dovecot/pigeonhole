@@ -472,7 +472,7 @@ static int cmd_deleteheader_operation_execute
 			mctx = sieve_match_begin(renv, &mcht, &cmp);
 
 			/* Match */
-			do {
+			for (;;) {
 				pos++;
 
 				/* Check index if any */
@@ -496,7 +496,9 @@ static int cmd_deleteheader_operation_execute
 					}
 				}
 
-			} while ( edit_mail_headers_iterate_next(edhiter) );
+				if ( !edit_mail_headers_iterate_next(edhiter) )
+					break;
+			}
 
 			/* Finish match */
 			mret = sieve_match_end(&mctx, &ret);

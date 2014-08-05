@@ -1115,6 +1115,7 @@ int edit_mail_headers_iterate_init
 {
 	struct edit_mail_header_iter *edhiter;
 	struct _header_index *header_idx = NULL;
+	struct _header_field_index *current = NULL;
 
 	/* Make sure headers are parsed */
 	if ( edit_mail_headers_parse(edmail) <= 0 ) {
@@ -1124,22 +1125,26 @@ int edit_mail_headers_iterate_init
 
 	header_idx = edit_mail_header_find(edmail, field_name);
 
+	if ( field_name != NULL && header_idx == NULL ) {
+		current = NULL;
+	} else if ( !reverse ) {
+		current =
+			( header_idx != NULL ? header_idx->first : edmail->header_fields_head );
+	} else {
+		current =
+			( header_idx != NULL ? header_idx->last : edmail->header_fields_tail );
+		if ( current->header == NULL )
+			current = current->prev;
+	}
+
+	if ( current ==  NULL )
+		return 0; 
+
  	edhiter = i_new(struct edit_mail_header_iter, 1);
 	edhiter->mail = edmail;
 	edhiter->header = header_idx;
 	edhiter->reverse = reverse;
-
-	if ( field_name != NULL && header_idx == NULL ) {
-		edhiter->current = NULL;
-	} else if ( !reverse ) {
-		edhiter->current =
-			( header_idx != NULL ? header_idx->first : edmail->header_fields_head );
-	} else {
-		edhiter->current =
-			( header_idx != NULL ? header_idx->last : edmail->header_fields_tail );
-		if ( edhiter->current->header == NULL )
-			edhiter->current = edhiter->current->prev;
-	}
+	edhiter->current = current;
 
 	*edhiter_r = edhiter;
 	return 1;
@@ -1171,9 +1176,12 @@ void edit_mail_headers_iterate_get
 bool edit_mail_headers_iterate_next
 (struct edit_mail_header_iter *edhiter)
 {
+	if ( edhiter->current == NULL )
+		return FALSE;
+
 	do {
-		edhiter->current =
-			( !edhiter->reverse ? edhiter->current->next : edhiter->current->next );
+		edhiter->current = 
+			( !edhiter->reverse ? edhiter->current->next : edhiter->current->prev );
 	} while ( edhiter->current != NULL && edhiter->current->header != NULL &&
 		edhiter->header != NULL && edhiter->current->header != edhiter->header );
 
