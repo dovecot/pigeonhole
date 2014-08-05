@@ -161,6 +161,25 @@ struct sieve_file_script *sieve_file_script_init_from_name
 	return fscript;
 }
 
+struct sieve_file_script *sieve_file_script_open_from_name
+(struct sieve_file_storage *fstorage, const char *name)
+{
+	struct sieve_file_script *fscript;
+	enum sieve_error error;
+
+	fscript = sieve_file_script_init_from_name(fstorage, name);
+	if ( fscript == NULL )
+		return NULL;
+
+	if ( sieve_script_open(&fscript->script, &error) < 0 ) {
+		struct sieve_script *script = &fscript->script;
+		sieve_script_unref(&script);
+		return NULL;
+	}
+
+	return fscript;
+}
+
 struct sieve_file_script *sieve_file_script_init_from_path
 (struct sieve_file_storage *fstorage, const char *path,
 	const char *scriptname, enum sieve_error *error_r)

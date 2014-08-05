@@ -210,7 +210,7 @@ struct sieve_script *sieve_file_script_sequence_next
 	fscript = NULL;
 	if ( fseq->storage_is_file ) {
 		if ( fseq->index++ < 1 )
-			fscript = sieve_file_script_init_from_name(fstorage, NULL);
+			fscript = sieve_file_script_open_from_name(fstorage, NULL);
 
 	} else {
 		files = array_get(&fseq->script_files, &count);
