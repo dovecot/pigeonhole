@@ -24,4 +24,9 @@ redirect "Ok Good <stephan@example.org>";
 redirect "ok@example.com";
 redirect " more  @  example.com  ";
 
+redirect ".japanese@example.com";
+redirect "japanese.@example.com";
+redirect "japanese...localpart@example.com";
+redirect "..japanese...localpart..@example.com";
+
 vacation :from "good@voorbeeld.nl.example.com" "Ik ben weg!";

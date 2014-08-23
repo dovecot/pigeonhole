@@ -244,3 +244,26 @@ test "Envelope - local part only" {
 		test_fail "failed to parse local_part only path with whitespace";
 	}
 }
+
+test "Envelope - Japanese localpart" {
+	test_set "envelope.to" ".japanese@example.com";
+	if not envelope :localpart :is "to" ".japanese" {
+		test_fail "failed to parse japanese local_part (1)";
+	}
+
+	test_set "envelope.to" "japanese.@example.com";
+	if not envelope :localpart :is "to" "japanese." {
+		test_fail "failed to parse japanese local_part (2)";
+	}
+
+	test_set "envelope.to" "japanese...localpart@example.com";
+	if not envelope :localpart :is "to" "japanese...localpart" {
+		test_fail "failed to parse japanese local_part (3)";
+	}
+
+	test_set "envelope.to" "..japanese...localpart..@example.com";
+	if not envelope :localpart :is "to" "..japanese...localpart.." {
+		test_fail "failed to parse japanese local_part (4)";
+	}
+
+}

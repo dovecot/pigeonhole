@@ -276,10 +276,28 @@ static int parse_local_part(struct sieve_message_address_parser *ctx)
 	}
 
 	str_truncate(ctx->local_part, 0);
-	if (*ctx->parser.data == '"')
+	if (*ctx->parser.data == '"') {
 		ret = rfc822_parse_quoted_string(&ctx->parser, ctx->local_part);
-	else
-		ret = rfc822_parse_dot_atom(&ctx->parser, ctx->local_part);
+	} else {
+		ret = -1;
+		/* NOTE: this deviates from dot-atom syntax to allow some Japanese
+		   mail addresses with dots at non-standard places to be accepted. */
+		do {
+			while (*ctx->parser.data == '.') {
+				str_append_c(ctx->local_part, '.');
+				ctx->parser.data++;
+				if (ctx->parser.data == ctx->parser.end) {
+					/* @domain is missing, but local-part
+					   parsing was successful */
+					return 0;
+				}
+				ret = 1;
+			}
+			if (*ctx->parser.data == '@')
+				break;
+			ret = rfc822_parse_atom(&ctx->parser, ctx->local_part);
+		} while (ret > 0 && *ctx->parser.data == '.');
+	}
 
 	if (ret < 0) {
 		sieve_address_error(ctx, "invalid local part");
@@ -780,6 +798,7 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 
 	str_truncate(parser->str, 0);
 	if ( *parser->data == '"' ) {
+		/* Quoted-string = DQUOTE *qcontent DQUOTE */
 		str_append_c(parser->str, *parser->data);
 		parser->data++;
 
@@ -813,13 +832,15 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 		if ( (ret=path_skip_white_space(parser)) < 0 )
 			return ret;
 	} else {
-		for (;;) {
-			if ( !IS_ATEXT(*parser->data) )
-				return -1;
-			str_append_c(parser->str, *parser->data);
-			parser->data++;
+		/* Dot-string = Atom *("." Atom) */
 
-			while ( parser->data < parser->end && IS_ATEXT(*parser->data)) {
+		/* NOTE: this deviates from Dot-String syntax to allow some Japanese
+		   mail addresses with dots at non-standard places to be accepted. */
+
+		if ( !IS_ATEXT(*parser->data) && *parser->data != '.' )
+			return -1;
+		while ( IS_ATEXT(*parser->data) || *parser->data == '.' ) {
+			while ( parser->data < parser->end && IS_ATEXT(*parser->data) ) {
 				str_append_c(parser->str, *parser->data);
 				parser->data++;
 			}
@@ -827,14 +848,13 @@ static int path_parse_local_part(struct sieve_envelope_address_parser *parser)
 			if ( (ret=path_skip_white_space(parser)) < 0 )
 				return ret;
 
-			if ( *parser->data != '.' )
-				break;
-
-			str_append_c(parser->str, *parser->data);
+			while ( parser->data < parser->end && *parser->data == '.' ) {
+				str_append_c(parser->str, *parser->data);
 				parser->data++;
+			}
 
-			if ( path_skip_white_space(parser) <= 0 )
-				return -1;
+			if ( (ret=path_skip_white_space(parser)) < 0 )
+				return ret;
 		}
 	}
 
