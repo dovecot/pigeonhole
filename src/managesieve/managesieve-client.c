@@ -396,7 +396,6 @@ void client_send_storage_error
 		break;
 
 	case SIEVE_ERROR_NO_QUOTA:
-	case SIEVE_ERROR_NO_SPACE: /* Not sure if this is appropriate */
 		client_send_noresp(client, "QUOTA", error);
 		break;
 

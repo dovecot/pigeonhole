@@ -111,10 +111,10 @@ static int sieve_file_storage_create_tmp
 
 	*fpath_r = str_c(path);
 	if (fd == -1) {
-		if (ENOSPACE(errno)) {
+		if (ENOQUOTA(errno)) {
 			sieve_storage_set_error(storage,
-				SIEVE_ERROR_NO_SPACE,
-				"Not enough disk space");
+				SIEVE_ERROR_NO_QUOTA,
+				"Not enough disk quota");
 		} else {
 			sieve_storage_set_critical(storage, "save: "
 				"open(%s) failed: %m", str_c(path));
@@ -142,10 +142,10 @@ static int sieve_file_storage_script_move
 			result = 0;
 		else {
 			result = -1;
-			if ( ENOSPACE(errno) ) {
+			if ( ENOQUOTA(errno) ) {
 				sieve_storage_set_error(storage,
-					SIEVE_ERROR_NO_SPACE,
-					"Not enough disk space");
+					SIEVE_ERROR_NO_QUOTA,
+					"Not enough disk quota");
 			} else if ( errno == EACCES ) {
 				sieve_storage_set_critical(storage, "save: "
 					"Failed to save Sieve script: "
@@ -275,10 +275,10 @@ int sieve_file_storage_save_finish
 			fsctx->tmp_path = NULL;
 			
 			errno = output_errno;
-			if ( ENOSPACE(errno) ) {
+			if ( ENOQUOTA(errno) ) {
 				sieve_storage_set_error(storage,
-					SIEVE_ERROR_NO_SPACE,
-					"Not enough disk space");
+					SIEVE_ERROR_NO_QUOTA,
+					"Not enough disk quota");
 			} else if ( errno != 0 ) {
 				sieve_storage_set_critical(storage, "save: "
 					"write(%s) failed: %m", fsctx->tmp_path);
@@ -428,10 +428,10 @@ int sieve_file_storage_save_as_active(struct sieve_storage *storage,
 	o_stream_destroy(&output);
 
 	if (rename(str_c(temp_path), fstorage->active_path) < 0) {
-		if ( ENOSPACE(errno) ) {
+		if ( ENOQUOTA(errno) ) {
 			sieve_storage_set_error(storage,
-				SIEVE_ERROR_NO_SPACE,
-				"Not enough disk space");
+				SIEVE_ERROR_NO_QUOTA,
+				"Not enough disk quota");
 		} else if ( errno == EACCES ) {
 			sieve_storage_set_critical(storage,
 				"%s", eacces_error_get("rename", fstorage->active_path));

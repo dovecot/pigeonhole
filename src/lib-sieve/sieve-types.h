@@ -92,8 +92,6 @@ enum sieve_error {
 	/* No permission to do the request */
 	SIEVE_ERROR_NO_PERMISSION,
 	/* Out of disk space */
-	SIEVE_ERROR_NO_SPACE,
-	/* Out of disk space */
 	SIEVE_ERROR_NO_QUOTA,
 	/* Item (e.g. script or binary) cannot be found */
 	SIEVE_ERROR_NOT_FOUND,

@@ -385,7 +385,7 @@ static int lda_sieve_handle_exec_status
 		mail_storage_get_last_error(estatus->last_storage, &mail_error);
 
 		/* Don't bother administrator too much with benign errors */
-		if ( mail_error == MAIL_ERROR_NOSPACE ) {
+		if ( mail_error == MAIL_ERROR_NOQUOTA ) {
 			error_func = sieve_sys_info;
 			user_error_func = sieve_sys_info;
 		}
