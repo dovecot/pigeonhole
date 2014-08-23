@@ -78,7 +78,8 @@ static int sieve_file_storage_active_read_link
 			 * Activating a script will automatically resolve this, so
 			 * there is no need to panic on this one.
 			 */
-			if ( (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 ) {
+			if ( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 &&
+				(storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 ) {
 				sieve_storage_sys_warning(storage,
 					"Active sieve script symlink %s is no symlink.",
 				  fstorage->active_path);
