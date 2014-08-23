@@ -166,6 +166,7 @@ int sieve_dict_storage_active_script_get_name
 
 const struct sieve_storage sieve_dict_storage = {
 	.driver_name = SIEVE_DICT_STORAGE_DRIVER_NAME,
+	.version = 0,
 	.v = {
 		.alloc = sieve_dict_storage_alloc,
 		.destroy = sieve_dict_storage_destroy,

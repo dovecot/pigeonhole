@@ -640,6 +640,7 @@ static struct sieve_script *sieve_file_storage_get_script
 
 const struct sieve_storage sieve_file_storage = {
 	.driver_name = SIEVE_FILE_STORAGE_DRIVER_NAME,
+	.version = 0,
 	.allows_synchronization = TRUE,
 	.v = {
 		.alloc = sieve_file_storage_alloc,

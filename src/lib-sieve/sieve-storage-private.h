@@ -93,6 +93,8 @@ struct sieve_storage {
 	struct sieve_instance *svinst;
 
 	const char *driver_name;
+	unsigned int version;
+
 	const struct sieve_storage *storage_class;
 	struct sieve_storage_vfuncs v;
 

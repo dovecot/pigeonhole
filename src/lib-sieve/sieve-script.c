@@ -338,6 +338,7 @@ int sieve_script_binary_read_metadata
 {
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
 	string_t *storage_class, *location;
+	unsigned int version;
 
 	if ( sieve_binary_block_get_size(sblock) - *offset == 0 )
 		return 0;
@@ -352,6 +353,23 @@ int sieve_script_binary_read_metadata
 	}
 	if ( strcmp(str_c(storage_class), script->driver_name) != 0 )
 		return 0;
+
+	/* version */
+	if ( !sieve_binary_read_unsigned(sblock, offset, &version) ) {
+		sieve_script_sys_error(script,
+			"Binary %s has invalid metadata for script %s: "
+			"Invalid version",
+			sieve_binary_path(sbin), sieve_script_location(script));
+		return -1;
+	}
+	if ( script->storage->version != version ) {
+		sieve_script_sys_debug(script,
+			"Binary %s was compiled with different version "
+			"of the `%s' script storage class (compiled v%d, expected v%d;"
+			"automatically fixed when re-compiled)", sieve_binary_path(sbin),
+			script->driver_name, version, script->storage->version);
+		return 0;
+	}
 
 	/* location */
 	if ( !sieve_binary_read_string(sblock, offset, &location) ) {
@@ -376,6 +394,7 @@ void sieve_script_binary_write_metadata
 (struct sieve_script *script, struct sieve_binary_block *sblock)
 {
 	sieve_binary_emit_cstring(sblock, script->driver_name);
+	sieve_binary_emit_unsigned(sblock, script->storage->version);
 	sieve_binary_emit_cstring(sblock,
 		( script->location == NULL ? "" : script->location ));
 

@@ -158,6 +158,7 @@ const struct sieve_storage sieve_ldap_storage = {
 const struct sieve_storage sieve_ldap_storage_plugin = {
 #endif
 	.driver_name = SIEVE_LDAP_STORAGE_DRIVER_NAME,
+	.version = 0,
 	.v = {
 		.alloc = sieve_ldap_storage_alloc,
 		.init = sieve_ldap_storage_init,
