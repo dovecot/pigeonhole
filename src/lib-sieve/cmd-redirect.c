@@ -357,17 +357,17 @@ static int act_redirect_send
 	/* Close SMTP transport */
 	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
 		if ( ret < 0 ) {
-			sieve_result_global_log_error(aenv,
+			sieve_result_global_error(aenv,
 				"failed to redirect message to <%s>: %s "
 				"(temporary failure)",
 				str_sanitize(ctx->to_address, 256), str_sanitize(error, 512));
-		} else {
-			sieve_result_global_error(aenv,
-				"failed to redirect message to <%s>: %s "
-				"(permanent failure)",
-				str_sanitize(ctx->to_address, 256), str_sanitize(error, 512));
-
+			return SIEVE_EXEC_TEMP_FAILURE;
 		}
+
+		sieve_result_global_log_error(aenv,
+			"failed to redirect message to <%s>: %s "
+			"(permanent failure)",
+			str_sanitize(ctx->to_address, 256), str_sanitize(error, 512));
 		return SIEVE_EXEC_FAILURE;
 	}
 

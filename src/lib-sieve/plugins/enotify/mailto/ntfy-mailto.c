@@ -555,11 +555,11 @@ static bool ntfy_mailto_send
 
 	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
 		if (ret < 0)  {
-			sieve_enotify_global_log_error(nenv,
+			sieve_enotify_global_error(nenv,
 				"failed to send mail notification to %s: %s (temporary failure)",
 				str_c(all),	str_sanitize(error, 512));
 		} else {
-			sieve_enotify_global_error(nenv,
+			sieve_enotify_global_log_error(nenv,
 				"failed to send mail notification to %s: %s (permanent failure)",
 				str_c(all),	str_sanitize(error, 512));
 		}

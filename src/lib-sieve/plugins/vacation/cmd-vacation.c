@@ -992,11 +992,11 @@ static bool act_vacation_send
 	/* Close smtp session */
 	if ( (ret=sieve_smtp_finish(sctx, &error)) <= 0 ) {
 		if ( ret < 0 ) {
-			sieve_result_global_log_error(aenv,
+			sieve_result_global_error(aenv,
 				"failed to send vacation response to <%s>: %s (temporary error)",
 				str_sanitize(reply_to, 256), str_sanitize(error, 512));
 		} else {
-			sieve_result_global_error(aenv,
+			sieve_result_global_log_error(aenv,
 				"failed to send vacation response to <%s>: %s (permanent error)",
 				str_sanitize(reply_to, 256), str_sanitize(error, 512));
 		}
