@@ -39,7 +39,6 @@ int sieve_storage_sync_init
 		return 0;
 	}
 
-
 	ns = mail_namespace_find_inbox(user->namespaces);
 	storage->sync_inbox = box = mailbox_alloc(ns->list, "INBOX", flags);
 	if (mailbox_open(box) == 0)
@@ -66,6 +65,8 @@ static void sieve_storage_sync_transaction_finish
 (struct sieve_storage *storage, struct mailbox_transaction_context **t)
 {
 	struct mailbox *inbox = storage->sync_inbox;
+
+	i_assert( storage->sync_inbox != NULL );
 
 	if (mailbox_transaction_commit(t) < 0) {
 		enum mail_error error;

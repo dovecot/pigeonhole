@@ -266,7 +266,16 @@ static struct sieve_storage *sieve_storage_init
 	else
 		error_r = &error;
 
-	i_assert( storage_class->v.init != NULL );	
+	i_assert( storage_class->v.init != NULL );
+
+	if ( (flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 &&
+		!storage_class->allows_synchronization ) {
+		sieve_sys_debug(svinst, "%s storage: "
+			"Storage does not support synchronization",
+			storage_class->driver_name);
+		*error_r = SIEVE_ERROR_NOT_POSSIBLE;
+		return NULL;
+	}
 
 	if ((flags & SIEVE_STORAGE_FLAG_READWRITE) &&
 		storage_class->v.save_init == NULL) {
