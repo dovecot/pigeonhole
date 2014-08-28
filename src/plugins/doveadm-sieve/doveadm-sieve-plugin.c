@@ -62,7 +62,8 @@ static void mail_sieve_user_deinit(struct mail_user *user)
 {
 	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
 
-	sieve_storage_unref(&suser->sieve_storage);
+	if (suser->sieve_storage != NULL)
+		sieve_storage_unref(&suser->sieve_storage);
 	sieve_deinit(&suser->svinst);
 
 	suser->module_ctx.super.deinit(user);
