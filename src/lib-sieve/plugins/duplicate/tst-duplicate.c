@@ -179,7 +179,7 @@ static bool tst_duplicate_validate_string_tag
 		return FALSE;
 	}
 
-	if ( (bool)cmd->data ) {
+	if ( !sieve_argument_is(tag, duplicate_handle_tag) && (bool)cmd->data ) {
 		sieve_argument_validate_error(valdtr, *arg,
 			"conflicting :header and %s arguments specified "
 			"for the duplicate test",
