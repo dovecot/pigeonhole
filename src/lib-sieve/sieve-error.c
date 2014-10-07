@@ -1032,14 +1032,22 @@ static void sieve_logfile_start(struct sieve_logfile_ehandler *ehandler)
 
 			/* Rotate logfile */
 			rotated = t_strconcat(ehandler->logfile, ".0", NULL);
-			if ( rename(ehandler->logfile, rotated) < 0 ) {
-				sieve_sys_error(svinst,
-					"failed to rotate logfile: rename(%s, %s) failed: %m",
-					ehandler->logfile, rotated);
+			if ( rename(ehandler->logfile, rotated) < 0 && errno != ENOENT ) {
+				if ( errno == EACCES ) {
+					sieve_sys_error(svinst,
+						"failed to rotate logfile: %s",
+						eacces_error_get_creating("rename",
+							t_strconcat(ehandler->logfile, ", ", rotated, NULL)));
+				} else {
+					sieve_sys_error(svinst,
+						"failed to rotate logfile: rename(%s, %s) failed: %m",
+						ehandler->logfile, rotated);
+				}
 			}
 
 			/* Open clean logfile (overwrites existing if rename() failed earlier) */
-			fd = open(ehandler->logfile, O_CREAT | O_WRONLY | O_TRUNC, 0600);
+			fd = open(ehandler->logfile,
+				O_CREAT | O_APPEND | O_WRONLY | O_TRUNC, 0600);
 			if (fd == -1) {
 				if ( errno == EACCES ) {
 					sieve_sys_error(svinst,
