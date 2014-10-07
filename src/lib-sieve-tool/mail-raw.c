@@ -9,7 +9,6 @@
 #include "str-sanitize.h"
 #include "strescape.h"
 #include "safe-mkstemp.h"
-#include "mkdir-parents.h"
 #include "abspath.h"
 #include "message-address.h"
 #include "mbox-from.h"
@@ -58,26 +57,12 @@ static int seekable_fd_callback
 (const char **path_r, void *context)
 {
 	struct mail_user *ruser = (struct mail_user *)context;
-	const char *dir, *p;
 	string_t *path;
 	int fd;
 
 	path = t_str_new(128);
 	mail_user_set_get_temp_prefix(path, ruser->set);
 	fd = safe_mkstemp(path, 0600, (uid_t)-1, (gid_t)-1);
-	if (fd == -1 && errno == ENOENT) {
-		dir = str_c(path);
-		p = strrchr(dir, '/');
-		if (p != NULL) {
-			dir = t_strdup_until(dir, p);
-			if ( mkdir_parents(dir, 0600) < 0 ) {
-				i_error("mkdir_parents(%s) failed: %m", dir);
-				return -1;
-			}
-			fd = safe_mkstemp(path, 0600, (uid_t)-1, (gid_t)-1);
-		}
-	}
-
 	if (fd == -1) {
 		i_error("safe_mkstemp(%s) failed: %m", str_c(path));
 		return -1;
