@@ -22,6 +22,7 @@
 #include "sieve-extensions.h"
 #include "sieve-runtime.h"
 #include "sieve-runtime-trace.h"
+#include "sieve-interpreter.h"
 #include "sieve-address.h"
 
 #include "sieve-message.h"
@@ -536,19 +537,23 @@ static int sieve_message_header_stringlist_next_item
 
 		/* Fetch all matching headers from the e-mail */
 		if ( strlist->mime_decode ) {
-			if ( mail_get_headers_utf8(mail, str_c(hdr_item), &strlist->headers) < 0 ||
-				( strlist->headers != NULL && strlist->headers[0] == NULL ) ) {
-				/* Try next item when this fails somehow */
-				strlist->headers = NULL;
-				continue;
-			}
+			ret = mail_get_headers_utf8(mail, str_c(hdr_item), &strlist->headers);			
 		} else {
-			if ( mail_get_headers(mail, str_c(hdr_item), &strlist->headers) < 0 ||
-				( strlist->headers != NULL && strlist->headers[0] == NULL ) ) {
-				/* Try next item when this fails somehow */
-				strlist->headers = NULL;
-				continue;
-			}
+			ret = mail_get_headers(mail, str_c(hdr_item), &strlist->headers);
+		}
+
+		if (ret < 0) {
+			sieve_runtime_critical(renv, NULL,
+				"failed to read header field",
+				"failed to read header field `%s': %s",
+				str_c(hdr_item), mailbox_get_last_error(mail->box, NULL));
+			_strlist->exec_status = SIEVE_EXEC_FAILURE;
+			return -1;
+		}
+
+		if ( strlist->headers == NULL || strlist->headers[0] == NULL ) {
+			/* Try next item when no headers found */
+			strlist->headers = NULL;
 		}
 	}
 
