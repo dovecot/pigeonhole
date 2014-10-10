@@ -381,7 +381,8 @@ static int lda_sieve_handle_exec_status
 
 	error_func = user_error_func = sieve_sys_error;
 
-	if ( estatus != NULL && estatus->last_storage != NULL ) {
+	if ( estatus != NULL && estatus->last_storage != NULL &&
+		estatus->store_failed) {
 		mail_storage_get_last_error(estatus->last_storage, &mail_error);
 
 		/* Don't bother administrator too much with benign errors */

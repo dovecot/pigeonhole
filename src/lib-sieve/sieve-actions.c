@@ -409,7 +409,8 @@ static int act_store_start
 	 * to NULL. This implementation will then skip actually storing the message.
 	 */
 	if ( senv->user != NULL ) {
-		if ( !act_store_mailbox_open(aenv, ctx->mailbox, &box, &error_code, &error) ) {
+		if ( !act_store_mailbox_open
+			(aenv, ctx->mailbox, &box, &error_code, &error) ) {
 			open_failed = TRUE;
 		}
 	} else {
@@ -697,6 +698,8 @@ static int act_store_commit
 	/* Note the fact that the message was stored at least once */
 	if ( status )
 		aenv->exec_status->message_saved = TRUE;
+	else
+		aenv->exec_status->store_failed = TRUE;
 
 	/* Log our status */
 	act_store_log_status(trans, aenv, FALSE, status);
@@ -722,6 +725,13 @@ static void act_store_rollback
 	struct act_store_transaction *trans =
 		(struct act_store_transaction *) tr_context;
 
+	i_assert( trans->box != NULL );
+
+	if (!success) {
+		aenv->exec_status->last_storage = mailbox_get_storage(trans->box);
+		aenv->exec_status->store_failed = TRUE;
+	}
+
 	/* Log status */
 	act_store_log_status(trans, aenv, TRUE, success);
 
@@ -734,8 +744,7 @@ static void act_store_rollback
 		mailbox_transaction_rollback(&trans->mail_trans);
 
 	/* Close the mailbox */
-	if ( trans->box != NULL )
-		mailbox_free(&trans->box);
+	mailbox_free(&trans->box);
 }
 
 /*

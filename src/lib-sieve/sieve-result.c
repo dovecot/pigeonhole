@@ -1143,7 +1143,6 @@ int sieve_result_execute
 			act->def->execute != NULL ) {
 			status = act->def->execute
 				(act, &result->action_env, rac->tr_context);
-			rac->success = ( status == SIEVE_EXEC_OK );
 		}
 
 		/* Execute post-execute event of side effects */
@@ -1156,6 +1155,7 @@ int sieve_result_execute
 			rsef = rsef->next;
 		}
 
+		rac->success = ( status == SIEVE_EXEC_OK );
 		rac = rac->next;
 	}
 
