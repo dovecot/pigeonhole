@@ -5,7 +5,6 @@
 #define __TESTSUITE_MAILSTORE_H
 
 #include "lib.h"
-#include "mail-storage.h"
 
 #include "sieve-common.h"
 

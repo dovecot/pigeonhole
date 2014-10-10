@@ -7,6 +7,7 @@
 #include "istream.h"
 #include "istream-header-filter.h"
 #include "ostream.h"
+#include "mail-storage.h"
 
 #include "rfc2822.h"
 

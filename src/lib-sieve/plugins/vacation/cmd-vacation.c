@@ -11,6 +11,7 @@
 #include "message-address.h"
 #include "message-date.h"
 #include "ioloop.h"
+#include "mail-storage.h"
 
 #include "rfc2822.h"
 

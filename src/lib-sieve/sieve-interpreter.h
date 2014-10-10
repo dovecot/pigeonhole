@@ -7,7 +7,6 @@
 #include "lib.h"
 #include "array.h"
 #include "buffer.h"
-#include "mail-storage.h"
 
 #include "sieve-common.h"
 #include "sieve-runtime.h"

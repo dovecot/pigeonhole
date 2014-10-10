@@ -5,7 +5,6 @@
 #define __SIEVE_FILE_STORAGE_H
 
 #include "lib.h"
-#include "mail-storage.h"
 #include "mail-user.h"
 
 #include "sieve.h"

@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "strfuncs.h"
+#include "mail-storage.h"
 
 #include "sieve-common.h"
 #include "sieve-settings.h"

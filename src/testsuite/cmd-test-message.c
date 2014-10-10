@@ -3,6 +3,7 @@
 
 #include "lib.h"
 #include "istream.h"
+#include "mail-storage.h"
 
 #include "sieve-common.h"
 #include "sieve-commands.h"

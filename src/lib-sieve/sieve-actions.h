@@ -5,7 +5,8 @@
 #define __SIEVE_ACTIONS_H
 
 #include "lib.h"
-#include "mail-storage.h"
+#include "mail-types.h"
+#include "mail-error.h"
 
 #include "sieve-common.h"
 #include "sieve-objects.h"

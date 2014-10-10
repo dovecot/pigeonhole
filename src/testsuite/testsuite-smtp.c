@@ -14,6 +14,8 @@
 #include "testsuite-common.h"
 #include "testsuite-smtp.h"
 
+#include <unistd.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 

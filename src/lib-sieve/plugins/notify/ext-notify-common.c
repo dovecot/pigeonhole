@@ -7,6 +7,7 @@
 #include "rfc822-parser.h"
 #include "message-parser.h"
 #include "message-decoder.h"
+#include "mail-storage.h"
 
 #include "sieve-common.h"
 #include "sieve-code.h"
