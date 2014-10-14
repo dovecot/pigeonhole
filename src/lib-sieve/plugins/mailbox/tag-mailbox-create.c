@@ -131,6 +131,7 @@ static int seff_mailbox_create_pre_execute
 	/* Check whether creation has a chance of working */
 	switch ( trans->error_code ) {
 	case MAIL_ERROR_NONE:
+		return SIEVE_EXEC_OK;
 	case MAIL_ERROR_NOTFOUND:
 		break;
 	case MAIL_ERROR_TEMP:
