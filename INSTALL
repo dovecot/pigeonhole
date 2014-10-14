@@ -208,6 +208,24 @@ plugin section of the config file (default values are shown if applicable):
    part is left of the separator and the :detail part is right. This setting is
    also used by Dovecot's LMTP service.
 
+ sieve_redirect_envelope_from = sender
+   Specifies what envelope sender address is used for redirected messages.
+   Normally, the Sieve "redirect" command copies the sender address for the
+   redirected message from the  processed message. So, the redirected message
+   appears to originate from the original sender. The following values are
+   supported for this setting:
+   
+     "sender"         - The sender address is used (default)
+     "recipient"      - The final recipient address is used
+     "orig_recipient" - The original recipient is used
+     "<user@domain>"  - Redirected messages are always sent from user@domain.
+                        The angle brackets are mandatory. The null "<>" address
+                        is also supported.
+
+	 When the envelope sender of the processed message is the null address "<>",
+   the envelope sender of the redirected message is also always "<>",
+   irrespective of what is configured for this setting. 
+
 For example:
 
 plugin {

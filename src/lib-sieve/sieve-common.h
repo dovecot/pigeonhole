@@ -22,6 +22,13 @@ typedef uint32_t sieve_number_t;
 
 #define SIEVE_MAX_NUMBER ((sieve_number_t) -1)
 
+enum sieve_redirect_envelope_from {
+	SIEVE_REDIRECT_ENVELOPE_FROM_SENDER,
+	SIEVE_REDIRECT_ENVELOPE_FROM_RECIPIENT,
+	SIEVE_REDIRECT_ENVELOPE_FROM_ORIG_RECIPIENT,
+	SIEVE_REDIRECT_ENVELOPE_FROM_EXPLICIT
+};
+
 /*
  * Forward declarations
  */
@@ -194,10 +201,12 @@ struct sieve_instance {
 	enum sieve_env_location env_location;
 	enum sieve_delivery_phase delivery_phase;
 
-	/* Limits */
+	/* Settings */
 	size_t max_script_size;
 	unsigned int max_actions;
 	unsigned int max_redirects;
+	enum sieve_redirect_envelope_from redirect_from;
+	const char *redirect_from_explicit;
 };
 
 #endif /* __SIEVE_COMMON_H */

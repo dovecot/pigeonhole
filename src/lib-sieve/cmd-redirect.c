@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "ioloop.h"
 #include "str-sanitize.h"
+#include "strfuncs.h"
 #include "istream.h"
 #include "istream-header-filter.h"
 #include "ostream.h"
@@ -316,6 +317,8 @@ static int act_redirect_send
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *sender = sieve_message_get_sender(msgctx);
 	const char *recipient = sieve_message_get_final_recipient(msgctx);
+	enum sieve_redirect_envelope_from env_from =
+		aenv->svinst->redirect_from;
 	struct istream *input;
 	struct ostream *output;
 	const char *error;
@@ -331,6 +334,36 @@ static int act_redirect_send
 
 	if (mail_get_stream(mail, NULL, NULL, &input) < 0)
 		return SIEVE_EXEC_TEMP_FAILURE;
+
+	/* Determine which sender to use
+
+	   From RFC 5228, Section 4.2:
+
+		 The envelope sender address on the outgoing message is chosen by the
+		 sieve implementation.  It MAY be copied from the message being
+		 processed.  However, if the message being processed has an empty
+		 envelope sender address the outgoing message MUST also have an empty
+		 envelope sender address.  This last requirement is imposed to prevent
+		 loops in the case where a message is redirected to an invalid address
+		 when then returns a delivery status notification that also ends up
+		 being redirected to the same invalid address.
+	 */
+	if ( sender != NULL &&
+		env_from != SIEVE_REDIRECT_ENVELOPE_FROM_SENDER ) {
+		switch ( env_from ) {
+		case SIEVE_REDIRECT_ENVELOPE_FROM_RECIPIENT:
+			sender = sieve_message_get_final_recipient(msgctx);
+			break;
+		case SIEVE_REDIRECT_ENVELOPE_FROM_ORIG_RECIPIENT:
+			sender = sieve_message_get_orig_recipient(msgctx);
+			break;
+		case SIEVE_REDIRECT_ENVELOPE_FROM_EXPLICIT:
+			sender = aenv->svinst->redirect_from_explicit;
+			break;
+		default:
+			i_unreached();
+		}
+	}
 
 	/* Open SMTP transport */
 	sctx = sieve_smtp_start_single(senv, ctx->to_address, sender, &output);

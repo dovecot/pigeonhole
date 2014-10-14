@@ -8,7 +8,6 @@
 #include "eacces-error.h"
 #include "home-expand.h"
 
-#include "sieve-limits.h"
 #include "sieve-settings.h"
 #include "sieve-extensions.h"
 #include "sieve-plugins.h"
@@ -47,9 +46,7 @@ struct sieve_instance *sieve_init
 	const struct sieve_callbacks *callbacks, void *context, bool debug)
 {
 	struct sieve_instance *svinst;
-	unsigned long long int uint_setting;
-	size_t size_setting;
-	const char  *domain;
+	const char *domain;
 	pool_t pool;
 
 	/* Create Sieve engine instance */
@@ -98,26 +95,9 @@ struct sieve_instance *sieve_init
 			PIGEONHOLE_NAME, PIGEONHOLE_VERSION);
 	}
 
-	/* Read limits from configuration */
+	/* Read configuration */
 
-	svinst->max_script_size = SIEVE_DEFAULT_MAX_SCRIPT_SIZE;
-	svinst->max_actions = SIEVE_DEFAULT_MAX_ACTIONS;
-	svinst->max_redirects = SIEVE_DEFAULT_MAX_REDIRECTS;
-
-	if ( sieve_setting_get_size_value
-		(svinst, "sieve_max_script_size", &size_setting) ) {
-		svinst->max_script_size = size_setting;
-	}
-
-	if ( sieve_setting_get_uint_value
-		(svinst, "sieve_max_actions", &uint_setting) ) {
-		svinst->max_actions = (unsigned int) uint_setting;
-	}
-
-	if ( sieve_setting_get_uint_value
-		(svinst, "sieve_max_redirects", &uint_setting) ) {
-		svinst->max_redirects = (unsigned int) uint_setting;
-	}
+	sieve_settings_load(svinst);
 
 	/* Initialize extensions */
 	if ( !sieve_extensions_init(svinst) ) {

@@ -2,6 +2,7 @@
  */
 
 #include "sieve-common.h"
+#include "sieve-settings.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-validator.h"
@@ -332,7 +333,7 @@ static bool cmd_test_config_reload_operation_dump
 }
 
 /*
- * Intepretation
+ * Interpretation
  */
 
 static int cmd_test_config_set_operation_execute
@@ -445,24 +446,30 @@ static int cmd_test_config_reload_operation_execute
 	}
 
 	if ( extension == NULL ) {
-		testsuite_test_failf("test_config_reload: "
-			":extension argument is currently mandatory");
-		return SIEVE_EXEC_OK;
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+			sieve_runtime_trace(renv, 0,
+				"reload configuration for sieve engine");
+		}
+
+		sieve_settings_load(renv->svinst);
+
+	} else {
+		if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
+			sieve_runtime_trace(renv, 0,
+				"reload configuration for extension `%s'",
+				str_c(extension));
+		}
+
+		ext = sieve_extension_get_by_name(renv->svinst, str_c(extension));
+		if ( ext == NULL ) {
+			testsuite_test_failf("test_config_reload: "
+				"unknown extension '%s'", str_c(extension));
+			return SIEVE_EXEC_OK;
+		}
+
+		sieve_extension_reload(ext);
 	}
 
-	if ( sieve_runtime_trace_active(renv, SIEVE_TRLVL_COMMANDS) ) {
-		sieve_runtime_trace(renv, 0, "reload configuration for extension `%s'",
-			str_c(extension));
-	}
-
-	ext = sieve_extension_get_by_name(renv->svinst, str_c(extension));
-	if ( ext == NULL ) {
-		testsuite_test_failf("test_config_reload: "
-			"unknown extension '%s'", str_c(extension));
-		return SIEVE_EXEC_OK;
-	}
-
-	sieve_extension_reload(ext);
 	return SIEVE_EXEC_OK;
 }
 

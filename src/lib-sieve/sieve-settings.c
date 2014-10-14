@@ -4,11 +4,39 @@
 #include "lib.h"
 
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-error.h"
 #include "sieve-settings.h"
 
 #include <stdlib.h>
 #include <ctype.h>
+
+// FIXME: add to dovecot
+static const char *t_str_trim(const char *str)
+{
+	const char *p, *pend, *begin;
+
+	p = str;
+	pend = str + strlen(str);
+	if (p == pend)
+		return "";
+
+	while (p < pend && (*p == ' ' || *p == '\t'))
+		p++;
+	begin = p;
+
+	p = pend - 1;
+	while (p > begin && (*p == ' ' || *p == '\t'))
+		p--;
+
+	if (p <= begin)
+		return "";
+	return t_strdup_until(begin, p+1);
+}
+
+/*
+ * Access to settings
+ */
 
 static bool sieve_setting_parse_uint
 (struct sieve_instance *svinst, const char *setting, const char *str_value,
@@ -157,8 +185,11 @@ bool sieve_setting_get_bool_value
 	const char *str_value;
 
 	str_value = sieve_setting_get(svinst, setting);
+	if ( str_value == NULL )
+		return FALSE;
 
-	if ( str_value == NULL || *str_value == '\0' )
+	str_value = t_str_trim(str_value);
+	if ( *str_value == '\0' )
 		return FALSE;
 
  	if ( strcasecmp(str_value, "yes" ) == 0) {
@@ -185,8 +216,11 @@ bool sieve_setting_get_duration_value
 	char *endp;
 
 	str_value = sieve_setting_get(svinst, setting);
+	if ( str_value == NULL )
+		return FALSE;
 
-	if ( str_value == NULL || *str_value == '\0' )
+	str_value = t_str_trim(str_value);
+	if ( *str_value == '\0' )
 		return FALSE;
 
 	if ( !sieve_setting_parse_uint(svinst, setting, str_value, &endp, &value) )
@@ -224,4 +258,67 @@ bool sieve_setting_get_duration_value
 
 	return TRUE;
 }
+
+/*
+ * Main Sieve engine settings
+ */
+
+void sieve_settings_load
+(struct sieve_instance *svinst)
+{
+	unsigned long long int uint_setting;
+	size_t size_setting;
+	const char *str_setting;
+
+	svinst->max_script_size = SIEVE_DEFAULT_MAX_SCRIPT_SIZE;
+	if ( sieve_setting_get_size_value
+		(svinst, "sieve_max_script_size", &size_setting) ) {
+		svinst->max_script_size = size_setting;
+	}
+
+	svinst->max_actions = SIEVE_DEFAULT_MAX_ACTIONS;
+	if ( sieve_setting_get_uint_value
+		(svinst, "sieve_max_actions", &uint_setting) ) {
+		svinst->max_actions = (unsigned int) uint_setting;
+	}
+
+	svinst->max_redirects = SIEVE_DEFAULT_MAX_REDIRECTS;
+	if ( sieve_setting_get_uint_value
+		(svinst, "sieve_max_redirects", &uint_setting) ) {
+		svinst->max_redirects = (unsigned int) uint_setting;
+	}
+
+	svinst->redirect_from = SIEVE_REDIRECT_ENVELOPE_FROM_SENDER;
+	svinst->redirect_from_explicit = NULL;
+	if ( (str_setting=sieve_setting_get
+		(svinst, "sieve_redirect_envelope_from")) != NULL ) {
+		size_t set_len;
+
+		str_setting = t_str_trim(str_setting);
+		str_setting = t_str_lcase(str_setting);
+		set_len = strlen(str_setting);
+		if ( set_len > 0 ) {
+			if ( strcmp(str_setting, "sender") == 0 ) {
+				svinst->redirect_from = SIEVE_REDIRECT_ENVELOPE_FROM_SENDER;
+			} else if ( strcmp(str_setting, "recipient") == 0 ) {
+				svinst->redirect_from = SIEVE_REDIRECT_ENVELOPE_FROM_RECIPIENT;
+			} else if ( strcmp(str_setting, "orig_recipient") == 0 ) {
+				svinst->redirect_from = SIEVE_REDIRECT_ENVELOPE_FROM_ORIG_RECIPIENT;
+			} else if ( str_setting[0] == '<' &&	str_setting[set_len-1] == '>') {
+				svinst->redirect_from = SIEVE_REDIRECT_ENVELOPE_FROM_EXPLICIT;
+
+				str_setting = t_str_trim(t_strndup(str_setting+1, set_len-2));
+				if ( *str_setting != '\0' ) {
+					svinst->redirect_from_explicit =
+						p_strdup(svinst->pool, str_setting);
+				}
+			} else {
+				sieve_sys_warning(svinst,
+					"Invalid value `%s' for sieve_redirect_envelope_from setting",
+					str_setting);
+			}
+		}
+	}
+}
+
 

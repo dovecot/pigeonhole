@@ -40,18 +40,148 @@ test "Redirect" {
 }
 
 test_result_reset;
+test_set "envelope.from" "<>";
 
 test "Redirect from <>" {
-	test_set "envelope.from" "<>";
-
 	redirect "cras@example.net";
 
 	if not test_result_execute {
 		test_fail "failed to execute redirect";
 	}
 
+	test_message :smtp 0;
+
 	if envelope :is "from" "sirius@example.org" {
 		test_fail "envelope sender incorrect (not changed)";
+	}
+
+	if not envelope :is "from" "" {
+		test_fail "envelope sender incorrect";
+	}
+}
+
+test_result_reset;
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "timo@example.net";
+
+test_config_set "sieve_redirect_envelope_from" " recipient ";
+test_config_reload;
+
+test "Redirect from [recipient]" {
+	redirect "cras@example.net";
+
+	if not test_result_execute {
+		test_fail "failed to execute redirect";
+	}
+
+	test_message :smtp 0;
+
+	if envelope :is "from" "sirius@example.org" {
+		test_fail "envelope sender incorrect (not changed)";
+	}
+
+	if not envelope :is "from" "timo@example.net" {
+		test_fail "envelope sender incorrect";
+	}
+}
+
+test_result_reset;
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "timo@example.net";
+test_set "envelope.orig_to" "tss@example.net";
+
+test_config_set "sieve_redirect_envelope_from" "orig_recipient ";
+test_config_reload;
+
+test "Redirect from [original recipient]" {
+	redirect "cras@example.net";
+
+	if not test_result_execute {
+		test_fail "failed to execute redirect";
+	}
+
+	test_message :smtp 0;
+
+	if envelope :is "from" "sirius@example.org" {
+		test_fail "envelope sender incorrect (not changed)";
+	}
+
+	if not envelope :is "from" "tss@example.net" {
+		test_fail "envelope sender incorrect";
+	}
+}
+
+
+test_result_reset;
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "timo@example.net";
+test_set "envelope.orig_to" "tss@example.net";
+
+test_config_set "sieve_redirect_envelope_from" "< backscatter@example.net> ";
+test_config_reload;
+
+test "Redirect from [<explicit>]" {
+	redirect "cras@example.net";
+
+	if not test_result_execute {
+		test_fail "failed to execute redirect";
+	}
+
+	test_message :smtp 0;
+
+	if envelope :is "from" "sirius@example.org" {
+		test_fail "envelope sender incorrect (not changed)";
+	}
+
+	if not envelope :is "from" "backscatter@example.net" {
+		test_fail "envelope sender incorrect";
+	}
+}
+
+test_result_reset;
+test_set "envelope.from" "sirius@example.org";
+test_set "envelope.to" "timo@example.net";
+
+test_config_set "sieve_redirect_envelope_from" "<>";
+test_config_reload;
+
+test "Redirect from [<>]" {
+	redirect "cras@example.net";
+
+	if not test_result_execute {
+		test_fail "failed to execute redirect";
+	}
+
+	test_message :smtp 0;
+
+	if envelope :is "from" "sirius@example.org" {
+		test_fail "envelope sender incorrect (not changed)";
+	}
+
+	if not envelope :is "from" "" {
+		test_fail "envelope sender incorrect";
+	}
+}
+
+test_result_reset;
+test_set "envelope.from" "<>";
+test_set "envelope.to" "timo@example.net";
+test_set "envelope.orig_to" "tss@example.net";
+
+test_config_set "sieve_redirect_envelope_from" "<backscatter@example.net>";
+test_config_reload;
+
+test "Redirect from <> with [<explicit>]" {
+	redirect "cras@example.net";
+
+	if not test_result_execute {
+		test_fail "failed to execute redirect";
+	}
+
+	test_message :smtp 0;
+
+	if envelope :is "from" "backscatter@example.net" {
+		test_fail "envelope sender incorrect (erroneously changed)";
 	}
 
 	if not envelope :is "from" "" {
