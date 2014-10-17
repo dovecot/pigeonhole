@@ -36,7 +36,8 @@ const char *sieve_action_get_location(const struct sieve_action_exec_env *aenv);
 
 enum sieve_action_flags {
 	SIEVE_ACTFLAG_TRIES_DELIVER = (1 << 0),
-	SIEVE_ACTFLAG_SENDS_RESPONSE = (1 << 1)
+	SIEVE_ACTFLAG_SENDS_RESPONSE = (1 << 1),
+	SIEVE_ACTFLAG_MAIL_STORAGE = (1 << 2)
 };
 
 /*

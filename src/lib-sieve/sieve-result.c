@@ -1067,32 +1067,13 @@ bool sieve_result_executed(struct sieve_result *result)
 	return result->executed;
 }
 
-int sieve_result_execute
-(struct sieve_result *result, bool *keep)
+static int sieve_result_transaction_start
+(struct sieve_result *result, struct sieve_result_action *first,
+	struct sieve_result_action **last_r)
 {
-	bool implicit_keep = TRUE, executed = result->executed;
-	int status = SIEVE_EXEC_OK, commit_status, result_status;
-	struct sieve_result_action *rac, *first_action;
-	struct sieve_result_action *last_attempted;
-	int ret;
+	struct sieve_result_action *rac = first;
+	int status = SIEVE_EXEC_OK;
 
-	if ( keep != NULL ) *keep = FALSE;
-
-	/* Prepare environment */
-
-	_sieve_result_prepare_execution(result);
-
-	/* Make notice of this attempt */
-
-	first_action = ( result->last_attempted_action == NULL ?
-		result->first_action : result->last_attempted_action->next );
-	result->last_attempted_action = result->last_action;
-
-	/*
-	 * Transaction start
-	 */
-
-	rac = first_action;
 	while ( status == SIEVE_EXEC_OK && rac != NULL ) {
 		struct sieve_action *act = &rac->action;
 
@@ -1111,12 +1092,16 @@ int sieve_result_execute
 		rac = rac->next;
 	}
 
-	/*
-	 * Transaction execute
-	 */
+	*last_r = rac;
+	return status;
+}
 
-	last_attempted = rac;
-	rac = first_action;
+static int sieve_result_transaction_execute
+(struct sieve_result *result, struct sieve_result_action *first)
+{
+	struct sieve_result_action *rac = first;
+	int status = SIEVE_EXEC_OK;
+
 	while ( status == SIEVE_EXEC_OK && rac != NULL ) {
 		struct sieve_action *act = &rac->action;
 		struct sieve_result_side_effect *rsef;
@@ -1159,118 +1144,158 @@ int sieve_result_execute
 		rac = rac->next;
 	}
 
-	/*
-	 * Transaction commit/rollback
-	 */
+	return status;
+}
 
-	commit_status = status;
-	rac = first_action;
-	while ( rac != NULL && rac != last_attempted ) {
-		struct sieve_action *act = &rac->action;
-		struct sieve_result_side_effect *rsef;
-		struct sieve_side_effect *sef;
+static int sieve_result_action_commit
+(struct sieve_result *result, struct sieve_result_action *rac,
+	bool *impl_keep)
+{
+	struct sieve_action *act = &rac->action;
+	struct sieve_result_side_effect *rsef;
+	int cstatus = SIEVE_EXEC_OK;
 
-		if ( status == SIEVE_EXEC_OK ) {
-			bool impl_keep = TRUE;
-			int cstatus = SIEVE_EXEC_OK;
-
-			if ( rac->keep && keep != NULL ) *keep = TRUE;
-
-			/* Skip non-actions (inactive keep) and executed ones */
-			if ( act->def == NULL || act->executed ) {
-				rac = rac->next;
-				continue;
-			}
-
-			if ( act->def->commit != NULL ) {
-				cstatus = act->def->commit
-					(act, &result->action_env, rac->tr_context, &impl_keep);
-				if ( cstatus == SIEVE_EXEC_OK ) {
-					act->executed = TRUE;
-					result->executed = TRUE;
-					executed = TRUE;
-				} else {
-					/* This is bad; try to salvage as much as possible */
-					if (commit_status == SIEVE_EXEC_OK) {
-						commit_status = cstatus;
-						if (!executed) {
-							/* We haven't executed anything yet; continue as rollback */
-							status = cstatus;
-						}
-					}
-					impl_keep = TRUE;
-				}
-			}
-
-			if ( cstatus == SIEVE_EXEC_OK ) {
-				/* Execute post_commit event of side effects */
-				rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
-				while ( rsef != NULL ) {
-					sef = &rsef->seffect;
-					if ( sef->def->post_commit != NULL )
-						sef->def->post_commit
-							(sef, act, &result->action_env, rac->tr_context, &impl_keep);
-					rsef = rsef->next;
-				}
-			}
-
-			implicit_keep = implicit_keep && impl_keep;
-		} else {
-			/* Skip non-actions (inactive keep) and executed ones */
-			if ( act->def == NULL || act->executed ) {
-				rac = rac->next;
-				continue;
-			}
-
-			if ( act->def->rollback != NULL ) {
-				act->def->rollback
-					(act, &result->action_env, rac->tr_context, rac->success);
-			}
-
-			/* Rollback side effects */
-			rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
-			while ( rsef != NULL ) {
-				sef = &rsef->seffect;
-				if ( sef->def && sef->def->rollback != NULL )
-					sef->def->rollback
-						(sef, act, &result->action_env, rac->tr_context, rac->success);
-				rsef = rsef->next;
-			}
+	if ( act->def->commit != NULL ) {
+		cstatus = act->def->commit
+			(act, &result->action_env, rac->tr_context, impl_keep);
+		if ( cstatus == SIEVE_EXEC_OK ) {
+			act->executed = TRUE;
+			result->executed = TRUE;
 		}
+	}
+
+	if ( cstatus == SIEVE_EXEC_OK ) {
+		/* Execute post_commit event of side effects */
+		rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
+		while ( rsef != NULL ) {
+			struct sieve_side_effect *sef = &rsef->seffect;
+			if ( sef->def->post_commit != NULL )
+				sef->def->post_commit
+					(sef, act, &result->action_env, rac->tr_context, impl_keep);
+			rsef = rsef->next;
+		}
+	}
+
+	return cstatus;
+}
+
+static void sieve_result_action_rollback
+(struct sieve_result *result, struct sieve_result_action *rac)
+{
+	struct sieve_action *act = &rac->action;
+	struct sieve_result_side_effect *rsef;
+
+	if ( act->def->rollback != NULL ) {
+		act->def->rollback
+			(act, &result->action_env, rac->tr_context, rac->success);
+	}
+
+	/* Rollback side effects */
+	rsef = rac->seffects != NULL ? rac->seffects->first_effect : NULL;
+	while ( rsef != NULL ) {
+		struct sieve_side_effect *sef = &rsef->seffect;
+		if ( sef->def && sef->def->rollback != NULL )
+			sef->def->rollback
+				(sef, act, &result->action_env, rac->tr_context, rac->success);
+		rsef = rsef->next;
+	}
+}
+
+static int sieve_result_action_commit_or_rollback
+(struct sieve_result *result, struct sieve_result_action *rac,
+	int status, bool *implicit_keep, bool *keep, int *commit_status)
+{
+	struct sieve_action *act = &rac->action;
+
+	if ( status == SIEVE_EXEC_OK ) {
+		bool impl_keep = TRUE;
+		int cstatus = SIEVE_EXEC_OK;
+
+		if ( rac->keep && keep != NULL ) *keep = TRUE;
+
+		/* Skip non-actions (inactive keep) and executed ones */
+		if ( act->def == NULL || act->executed )
+			return status;
+
+		cstatus = sieve_result_action_commit(result, rac, &impl_keep);
+		if (cstatus != SIEVE_EXEC_OK) {
+			/* This is bad; try to salvage as much as possible */
+			if (*commit_status == SIEVE_EXEC_OK) {
+				*commit_status = cstatus;
+				if (!result->executed) {
+					/* We haven't executed anything yet; continue as rollback */
+					status = cstatus;
+				}
+			}
+			impl_keep = TRUE;
+		}
+
+		*implicit_keep = *implicit_keep && impl_keep;
+	} else {
+		/* Skip non-actions (inactive keep) and executed ones */
+		if ( act->def == NULL || act->executed )
+			return status;
+
+		sieve_result_action_rollback(result, rac);
+	}
+
+	return status;
+}
+
+static int sieve_result_transaction_commit_or_rollback
+(struct sieve_result *result, int status,
+	struct sieve_result_action *first,
+	struct sieve_result_action *last,
+	bool *implicit_keep, bool *keep)
+{
+	struct sieve_result_action *rac;
+	int commit_status = status;
+
+	/* First commit/rollback all storage actions */
+	rac = first;
+	while ( rac != NULL && rac != last ) {
+		struct sieve_action *act = &rac->action;
+
+		if (act->def == NULL ||
+			(act->def->flags & SIEVE_ACTFLAG_MAIL_STORAGE) == 0) {
+			rac = rac->next;
+			continue;
+		}
+
+		status = sieve_result_action_commit_or_rollback
+			(result, rac, status, implicit_keep, keep, &commit_status);
 
 		rac = rac->next;
 	}
 
-	if ( implicit_keep && keep != NULL ) *keep = TRUE;
+	/* Then commit/rollback all other actions */
+	rac = first;
+	while ( rac != NULL && rac != last ) {
+		struct sieve_action *act = &rac->action;
 
-	/* Perform implicit keep if necessary */
-
-	result_status = commit_status;
-	if ( executed || commit_status != SIEVE_EXEC_TEMP_FAILURE ) {
-		/* Execute implicit keep if the transaction failed or when the implicit
-		 * keep was not canceled during transaction.
-		 */
-		if ( commit_status != SIEVE_EXEC_OK || implicit_keep ) {
-			switch ((ret=_sieve_result_implicit_keep
-				(result, ( commit_status != SIEVE_EXEC_OK ))) ) {
-			case SIEVE_EXEC_OK:
-				break;
-			case SIEVE_EXEC_TEMP_FAILURE:
-				if (!executed) {
-					result_status = ret;
-					break;
-				}
-			default:
-				result_status = SIEVE_EXEC_KEEP_FAILED;
-			}
+		if (act->def != NULL &&
+			(act->def->flags & SIEVE_ACTFLAG_MAIL_STORAGE) != 0) {
+			rac = rac->next;
+			continue;
 		}
-		if (commit_status == SIEVE_EXEC_OK)
-			commit_status = result_status;
+
+		status = sieve_result_action_commit_or_rollback
+			(result, rac, status, implicit_keep, keep, &commit_status);
+
+		rac = rac->next;
 	}
 
-	/* Finish execution */
+	if ( *implicit_keep && keep != NULL ) *keep = TRUE;
 
-	rac = first_action;
+	return commit_status;
+}
+
+static void sieve_result_transaction_finish
+(struct sieve_result *result, struct sieve_result_action *first,
+	int status)
+{
+	struct sieve_result_action *rac = first;
+
 	while ( rac != NULL ) {
 		struct sieve_action *act = &rac->action;
 		/* Skip non-actions (inactive keep) and executed ones */
@@ -1281,13 +1306,82 @@ int sieve_result_execute
 
 		if ( act->def->finish != NULL ) {
 			act->def->finish
-				(act, &result->action_env, &rac->tr_context, commit_status);
+				(act, &result->action_env, &rac->tr_context, status);
 		}
 
 		rac = rac->next;
 	}
+}
 
-	return result_status;
+int sieve_result_execute
+(struct sieve_result *result, bool *keep)
+{
+	int status = SIEVE_EXEC_OK, result_status;
+	struct sieve_result_action *first_action, *last_action;
+	bool implicit_keep = TRUE;
+	int ret;
+
+	if ( keep != NULL ) *keep = FALSE;
+
+	/* Prepare environment */
+
+	_sieve_result_prepare_execution(result);
+
+	/* Make notice of this attempt */
+
+	first_action = ( result->last_attempted_action == NULL ?
+		result->first_action : result->last_attempted_action->next );
+	result->last_attempted_action = result->last_action;
+
+	/* Transaction start */
+
+	status = sieve_result_transaction_start
+		(result, first_action, &last_action);
+
+	/* Transaction execute */
+
+	if (status == SIEVE_EXEC_OK) {
+		status = sieve_result_transaction_execute
+			(result, first_action);
+	}
+
+	/* Transaction commit/rollback */
+
+	status = sieve_result_transaction_commit_or_rollback
+		(result, status, first_action, last_action,
+			&implicit_keep, keep);
+
+	/* Perform implicit keep if necessary */
+
+	result_status = status;
+	if ( result->executed || status != SIEVE_EXEC_TEMP_FAILURE ) {
+		/* Execute implicit keep if the transaction failed or when the implicit
+		 * keep was not canceled during transaction.
+		 */
+		if ( status != SIEVE_EXEC_OK || implicit_keep ) {
+			switch ((ret=_sieve_result_implicit_keep
+				(result, ( status != SIEVE_EXEC_OK ))) ) {
+			case SIEVE_EXEC_OK:
+				break;
+			case SIEVE_EXEC_TEMP_FAILURE:
+				if (!result->executed) {
+					result_status = ret;
+					break;
+				}
+			default:
+				result_status = SIEVE_EXEC_KEEP_FAILED;
+			}
+		}
+		if (status == SIEVE_EXEC_OK)
+			status = result_status;
+	}
+
+	/* Finish execution */
+
+	sieve_result_transaction_finish
+		(result, first_action, status);
+
+	return status;
 }
 
 /*

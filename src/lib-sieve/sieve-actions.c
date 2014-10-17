@@ -207,7 +207,9 @@ static void act_store_rollback
 
 const struct sieve_action_def act_store = {
 	.name = "store",
-	.flags = SIEVE_ACTFLAG_TRIES_DELIVER,
+	.flags =
+		SIEVE_ACTFLAG_TRIES_DELIVER | 
+		SIEVE_ACTFLAG_MAIL_STORAGE,
 	.equals = act_store_equals,
 	.check_duplicate = act_store_check_duplicate,
 	.print = act_store_print,
