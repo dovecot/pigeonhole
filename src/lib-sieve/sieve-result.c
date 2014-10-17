@@ -1248,8 +1248,10 @@ static int sieve_result_transaction_commit_or_rollback
 	struct sieve_result_action *last,
 	bool *implicit_keep, bool *keep)
 {
+	const struct sieve_script_env *senv = result->action_env.scriptenv;
 	struct sieve_result_action *rac;
 	int commit_status = status;
+	bool dup_flushed = FALSE;
 
 	/* First commit/rollback all storage actions */
 	rac = first;
@@ -1260,6 +1262,11 @@ static int sieve_result_transaction_commit_or_rollback
 			(act->def->flags & SIEVE_ACTFLAG_MAIL_STORAGE) == 0) {
 			rac = rac->next;
 			continue;
+		}
+
+		if (!dup_flushed) {
+			sieve_action_duplicate_flush(senv);
+			dup_flushed = TRUE;
 		}
 
 		status = sieve_result_action_commit_or_rollback

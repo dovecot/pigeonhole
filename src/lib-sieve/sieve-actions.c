@@ -780,6 +780,15 @@ void sieve_action_duplicate_mark
 	senv->duplicate_mark(senv, id, id_size, time);
 }
 
+void sieve_action_duplicate_flush
+(const struct sieve_script_env *senv)
+{
+	if ( senv->duplicate_flush == NULL )
+		return;
+	senv->duplicate_flush(senv);
+}
+
+
 /* Rejecting the mail */
 
 static bool sieve_action_do_reject_mail

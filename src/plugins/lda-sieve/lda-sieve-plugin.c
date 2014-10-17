@@ -132,6 +132,14 @@ static void lda_sieve_duplicate_mark
 	duplicate_mark(dctx->dup_ctx, id, id_size, senv->user->username, time);
 }
 
+static void lda_sieve_duplicate_flush
+(const struct sieve_script_env *senv)
+{
+	struct mail_deliver_context *dctx =
+		(struct mail_deliver_context *) senv->script_context;
+	duplicate_flush(dctx->dup_ctx);
+}
+
 /*
  * Plugin implementation
  */
@@ -906,6 +914,7 @@ static int lda_sieve_execute
 		scriptenv.smtp_finish = lda_sieve_smtp_finish;
 		scriptenv.duplicate_mark = lda_sieve_duplicate_mark;
 		scriptenv.duplicate_check = lda_sieve_duplicate_check;
+		scriptenv.duplicate_flush = lda_sieve_duplicate_flush;
 		scriptenv.reject_mail = lda_sieve_reject_mail;
 		scriptenv.script_context = (void *) mdctx;
 		scriptenv.exec_status = &estatus;

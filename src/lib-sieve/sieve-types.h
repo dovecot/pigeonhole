@@ -206,6 +206,8 @@ struct sieve_script_env {
 	void (*duplicate_mark)
 		(const struct sieve_script_env *senv, const void *id, size_t id_size,
 			time_t time);
+	void (*duplicate_flush)
+		(const struct sieve_script_env *senv);
 
 	/* Interface for rejecting mail */
 	int (*reject_mail)(const struct sieve_script_env *senv,

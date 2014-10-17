@@ -265,6 +265,8 @@ int sieve_action_duplicate_check
 void sieve_action_duplicate_mark
 	(const struct sieve_script_env *senv, const void *id, size_t id_size,
 		time_t time);
+void sieve_action_duplicate_flush
+	(const struct sieve_script_env *senv);
 
 /* Rejecting mail */
 
