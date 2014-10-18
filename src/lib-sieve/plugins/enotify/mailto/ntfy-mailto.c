@@ -74,7 +74,7 @@ static void ntfy_mailto_action_print
 	(const struct sieve_enotify_print_env *penv,
 		const struct sieve_enotify_action *nact);
 
-static bool ntfy_mailto_action_execute
+static int ntfy_mailto_action_execute
 	(const struct sieve_enotify_exec_env *nenv,
 		const struct sieve_enotify_action *nact);
 
@@ -374,7 +374,7 @@ static bool _contains_8bit(const char *msg)
 	return FALSE;
 }
 
-static bool ntfy_mailto_send
+static int ntfy_mailto_send
 (const struct sieve_enotify_exec_env *nenv,
 	const struct sieve_enotify_action *nact, const char *recipient)
 {
@@ -400,14 +400,14 @@ static bool ntfy_mailto_send
 	if ( count == 0  ) {
 		sieve_enotify_warning(nenv,
 			"notify mailto uri specifies no recipients; action has no effect");
-		return TRUE;
+		return 0;
 	}
 
 	/* Just to be sure */
 	if ( !sieve_smtp_available(senv) ) {
 		sieve_enotify_global_warning(nenv,
 			"notify mailto method has no means to send mail");
-		return TRUE;
+		return 0;
 	}
 
 	/* Determine message from address */
@@ -568,48 +568,54 @@ static bool ntfy_mailto_send
 			"sent mail notification to %s", str_c(all));
 	}
 
-	return TRUE;
+	return 0;
 }
 
-static bool ntfy_mailto_action_execute
+static int ntfy_mailto_action_execute
 (const struct sieve_enotify_exec_env *nenv,
 	const struct sieve_enotify_action *nact)
 {
-	const char *const *headers;
+	struct mail *mail = nenv->msgdata->mail;
 	const char *sender = sieve_message_get_sender(nenv->msgctx);
 	const char *recipient = sieve_message_get_final_recipient(nenv->msgctx);
-	bool result;
+	const char *const *hdsp;
+	int ret;
 
 	/* Is the recipient unset?
 	 */
 	if ( recipient == NULL ) {
 		sieve_enotify_global_warning(nenv,
 			"notify mailto action aborted: envelope recipient is <>");
-		return TRUE;
+		return 0;
 	}
 
 	/* Is the message an automatic reply ? */
-	if ( mail_get_headers
-		(nenv->msgdata->mail, "auto-submitted", &headers) >= 0 ) {
-		const char *const *hdsp = headers;
+	if ( mail_get_headers(mail, "auto-submitted", &hdsp) < 0 ) {
+		sieve_enotify_critical(nenv,
+			"mailto notification: "
+				"failed to read `auto-submitted' header field",
+			"mailto notification: "
+				"failed to read `auto-submitted' header field: %s",
+			mailbox_get_last_error(mail->box, NULL));
+		return -1;
+	}
 
-		/* Theoretically multiple headers could exist, so lets make sure */
-		while ( *hdsp != NULL ) {
-			if ( strcasecmp(*hdsp, "no") != 0 ) {
-				sieve_enotify_global_info(nenv,
-					"not sending notification for auto-submitted message from <%s>",
-					str_sanitize(sender, 128));
-					return TRUE;
-			}
-			hdsp++;
+	/* Theoretically multiple headers could exist, so lets make sure */
+	while ( *hdsp != NULL ) {
+		if ( strcasecmp(*hdsp, "no") != 0 ) {
+			sieve_enotify_global_info(nenv,
+				"not sending notification for auto-submitted message from <%s>",
+				str_sanitize(sender, 128));
+				return 0;
 		}
+		hdsp++;
 	}
 
 	T_BEGIN {
-		result = ntfy_mailto_send(nenv, nact, recipient);
+		ret = ntfy_mailto_send(nenv, nact, recipient);
 	} T_END;
 
-	return result;
+	return ret;
 }
 
 

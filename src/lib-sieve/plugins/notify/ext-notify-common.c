@@ -149,11 +149,13 @@ static bool _is_text_content(const struct message_header_line *hdr)
 	return FALSE;
 }
 
-static buffer_t *cmd_notify_extract_body_text
-(const struct sieve_runtime_env *renv)
+static int cmd_notify_extract_body_text
+(const struct sieve_runtime_env *renv,
+	const char **body_text_r, size_t *body_size_r)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_notify_message_context *mctx;
+	struct mail *mail = renv->msgdata->mail;
 	struct message_parser_ctx *parser;
 	struct message_decoder_context *decoder;
 	struct message_part *parts;
@@ -162,18 +164,25 @@ static buffer_t *cmd_notify_extract_body_text
 	bool is_text, save_body;
 	int ret = 1;
 
+	*body_text_r = NULL;
+	*body_size_r = 0;
+
 	/* Return cached result if available */
 	mctx = ext_notify_get_message_context(this_ext, renv->msgctx);
 	if ( mctx->body_text != NULL ) {
-		return mctx->body_text;
+		*body_text_r = (const char *)
+			buffer_get_data(mctx->body_text, body_size_r);
+		return SIEVE_EXEC_OK;
 	}
 
 	/* Create buffer */
 	mctx->body_text = buffer_create_dynamic(mctx->pool, 1024*64);
 
 	/* Get the message stream */
-	if ( mail_get_stream(renv->msgdata->mail, NULL, NULL, &input) < 0 )
-		return NULL;
+	if ( mail_get_stream(mail, NULL, NULL, &input) < 0 ) {
+		return sieve_runtime_mail_error(renv, mail,
+			"notify action: failed to read input message");
+	}
 
 	/* Initialize body decoder */
 	decoder = message_decoder_init(NULL, 0);
@@ -224,19 +233,27 @@ static buffer_t *cmd_notify_extract_body_text
 	(void)message_parser_deinit(&parser, &parts);
 	message_decoder_deinit(&decoder);
 
-	if ( ret < 0 && input->stream_errno != 0 )
-		return NULL;
+	if ( ret < 0 && input->stream_errno != 0 ) {
+		sieve_runtime_critical(renv, NULL,
+			"notify action: failed to read input message",
+			"notify action: failed to read message stream: %s",
+			i_stream_get_error(input));
+		return SIEVE_EXEC_TEMP_FAILURE;
+	}
 
 	/* Return status */
-	return mctx->body_text;
+	*body_text_r = (const char *)
+		buffer_get_data(mctx->body_text, body_size_r);
+	return SIEVE_EXEC_OK;
 }
 
-void ext_notify_construct_message
+int ext_notify_construct_message
 (const struct sieve_runtime_env *renv, const char *msg_format,
 	string_t *out_msg)
 {
 	const struct sieve_message_data *msgdata = renv->msgdata;
 	const char *p;
+	int ret;
 
 	if ( msg_format == NULL )
 		msg_format = "$from$: $subject$";
@@ -250,8 +267,13 @@ void ext_notify_construct_message
 			p += 6;
 
 			/* Fetch sender from original message */
-			if ( mail_get_first_header_utf8(msgdata->mail, "from", &header) > 0 )
-				 str_append(out_msg, header);
+			if ( (ret=mail_get_first_header_utf8
+				(msgdata->mail, "from", &header)) < 0 ) {
+				return sieve_runtime_mail_error	(renv, msgdata->mail,
+					"failed to read header field `from'");
+			}
+			if ( ret > 0 )
+				str_append(out_msg, header);
 
 		} else if ( strncasecmp(p, "$env-from$", 10) == 0 ) {
 			p += 10;
@@ -263,7 +285,12 @@ void ext_notify_construct_message
 			p += 9;
 
 			/* Fetch sender from oriinal message */
-			if ( mail_get_first_header_utf8(msgdata->mail, "subject", &header) > 0 )
+			if ( (ret=mail_get_first_header_utf8
+				(msgdata->mail, "subject", &header)) < 0 ) {
+				return sieve_runtime_mail_error	(renv, msgdata->mail,
+					"failed to read header field `subject'");
+			}
+			if ( ret > 0 )
 				 str_append(out_msg, header);
 
 		} else if ( strncasecmp(p, "$text", 5) == 0
@@ -291,8 +318,12 @@ void ext_notify_construct_message
 
 			if ( valid ) {
 				size_t body_size;
-				const char *body_text = (const char *)
-					buffer_get_data(cmd_notify_extract_body_text(renv), &body_size);
+				const char *body_text;
+					
+				if ( (ret=cmd_notify_extract_body_text
+					(renv, &body_text, &body_size)) <= 0 ) {
+					return ret;
+				}
 
 				if ( num > 0 && num < body_size)
 					str_append_n(out_msg, body_text, num);
@@ -310,4 +341,6 @@ void ext_notify_construct_message
 			p += len;
 		}
   }
+
+	return SIEVE_EXEC_OK;
 }

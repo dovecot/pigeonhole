@@ -390,8 +390,14 @@ static int cmd_execute_operation_execute
 		}
 
 		if ( input == NULL && have_input ) {
-			ret = sieve_extprogram_set_input_mail
-				(sprog, sieve_message_get_mail(renv->msgctx));
+			struct mail *mail = sieve_message_get_mail(renv->msgctx);
+
+			if ( sieve_extprogram_set_input_mail(sprog, mail) < 0 ) {
+				sieve_extprogram_destroy(&sprog);
+				return sieve_runtime_mail_error(renv, mail,
+					"execute action: failed to read input message");
+			}
+			ret = 1;
 		} else if ( input != NULL ) {
 			struct istream *indata =
 				i_stream_create_from_data(str_data(input), str_len(input));

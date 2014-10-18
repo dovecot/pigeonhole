@@ -96,6 +96,9 @@ void sieve_runtime_log
 void sieve_runtime_critical
 	(const struct sieve_runtime_env *renv, const char *location,
 		const char *user_prefix, const char *fmt, ...) ATTR_FORMAT(4, 5);
+int sieve_runtime_mail_error
+	(const struct sieve_runtime_env *renv, struct mail *mail,
+		const char *fmt, ...) ATTR_FORMAT(3, 4);
 
 /*
  * Extension support

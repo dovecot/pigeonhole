@@ -6,6 +6,7 @@
 #include "mempool.h"
 #include "array.h"
 #include "hash.h"
+#include "mail-storage.h"
 
 #include "sieve-common.h"
 #include "sieve-script.h"
@@ -349,6 +350,24 @@ void sieve_runtime_critical
 	} T_END;
 
 	va_end(args);
+}
+
+int sieve_runtime_mail_error
+(const struct sieve_runtime_env *renv, struct mail *mail,
+	const char *fmt, ...)
+{
+	const char *error_msg, *user_prefix;
+	va_list args;
+
+	error_msg = mailbox_get_last_error(mail->box, NULL);
+
+	va_start(args, fmt);
+	user_prefix = t_strdup_vprintf(fmt, args);
+	sieve_runtime_critical(renv, NULL, user_prefix,
+		"%s: %s", user_prefix, error_msg);
+	va_end(args);
+
+	return 	SIEVE_EXEC_TEMP_FAILURE;
 }
 
 /*

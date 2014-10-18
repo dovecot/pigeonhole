@@ -112,6 +112,13 @@ void sieve_result_global_log_warning
 (const struct sieve_action_exec_env *aenv, const char *fmt, ...)
 	ATTR_FORMAT(2, 3);
 
+void sieve_result_critical
+(const struct sieve_action_exec_env *aenv,
+	const char *user_prefix, const char *fmt, ...) ATTR_FORMAT(3, 4);
+int sieve_result_mail_error
+(const struct sieve_action_exec_env *aenv, struct mail *mail,
+	const char *fmt, ...) ATTR_FORMAT(3, 4);
+
 /*
  * Result composition
  */

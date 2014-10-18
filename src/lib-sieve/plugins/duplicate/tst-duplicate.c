@@ -316,6 +316,7 @@ static int tst_duplicate_operation_execute
 	const struct sieve_extension *ext = renv->oprtn->ext;
 	const struct ext_duplicate_config *config =
 		(const struct ext_duplicate_config *) ext->context;
+	struct mail *mail = renv->msgdata->mail;
 	int opt_code = 0;
 	string_t *handle = NULL, *header = NULL, *uniqueid = NULL;
 	const char *val = NULL;
@@ -380,13 +381,21 @@ static int tst_duplicate_operation_execute
 		val_len = str_len(uniqueid);
 	} else {
 		if ( header == NULL ) {
-			ret = mail_get_first_header_utf8
-				(renv->msgdata->mail, "Message-ID", &val);
+			ret = mail_get_first_header_utf8(mail, "Message-ID", &val);
+			if ( ret < 0 ) {
+				return sieve_runtime_mail_error	(renv, mail,
+					"duplicate test: "
+					"failed to read header field `message-id'");
+			}
 		} else {
-			ret = mail_get_first_header_utf8
-				(renv->msgdata->mail, str_c(header), &val);
+			ret = mail_get_first_header_utf8(mail, str_c(header), &val);
+			if ( ret < 0 ) {
+				return sieve_runtime_mail_error	(renv, mail,
+					"duplicate test: "
+					"failed to read header field `%s'", str_c(header));
+			}
 		}
-			
+
 		if ( ret > 0 )
 			val_len = strlen(val);
 	}

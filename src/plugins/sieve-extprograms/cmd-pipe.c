@@ -322,7 +322,8 @@ static void act_pipe_print
 /* Result execution */
 
 static int act_pipe_commit
-(const struct sieve_action *action, const struct sieve_action_exec_env *aenv, 
+(const struct sieve_action *action,
+	const struct sieve_action_exec_env *aenv, 
 	void *tr_context ATTR_UNUSED, bool *keep)
 {
 	const struct ext_pipe_action *act = 
@@ -336,7 +337,12 @@ static int act_pipe_commit
 	sprog = sieve_extprogram_create
 		(action->ext, aenv->scriptenv, aenv->msgdata, "pipe",
 			act->program_name, act->args, &error);
-	if ( sprog != NULL && sieve_extprogram_set_input_mail(sprog, mail) >= 0 ) {
+	if ( sprog != NULL ) {
+		if ( sieve_extprogram_set_input_mail(sprog, mail) < 0 ) {
+			sieve_extprogram_destroy(&sprog);
+			return sieve_result_mail_error(aenv, mail,
+				"pipe action: failed to read input message");
+		}
 		ret = sieve_extprogram_run(sprog);
 	} else {
 		ret = -1;

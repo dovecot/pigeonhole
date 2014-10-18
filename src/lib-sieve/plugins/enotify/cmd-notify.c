@@ -569,7 +569,7 @@ static int act_notify_commit
 		(const struct sieve_enotify_action *) action->context;
 	const struct sieve_enotify_method *method = act->method;
 	struct sieve_enotify_exec_env nenv;
-	bool result = TRUE;
+	int ret = 0;
 
 	if ( method->def != NULL && method->def->action_execute != NULL )	{
 		/* Compose log structure */
@@ -583,12 +583,12 @@ static int act_notify_commit
 		nenv.ehandler = sieve_prefix_ehandler_create
 			(aenv->ehandler, NULL, "notify action");
 
-		result = method->def->action_execute(&nenv, act);
+		ret = method->def->action_execute(&nenv, act);
 
 		sieve_error_handler_unref(&nenv.ehandler);
 	}
 
-	return ( result ? SIEVE_EXEC_OK : SIEVE_EXEC_FAILURE );
+	return ( ret >= 0 ? SIEVE_EXEC_OK : SIEVE_EXEC_TEMP_FAILURE );
 }
 
 

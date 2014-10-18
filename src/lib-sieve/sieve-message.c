@@ -543,11 +543,8 @@ static int sieve_message_header_stringlist_next_item
 		}
 
 		if (ret < 0) {
-			sieve_runtime_critical(renv, NULL,
-				"failed to read header field",
-				"failed to read header field `%s': %s",
-				str_c(hdr_item), mailbox_get_last_error(mail->box, NULL));
-			_strlist->exec_status = SIEVE_EXEC_FAILURE;
+			_strlist->exec_status = sieve_runtime_mail_error
+				(renv, mail, "failed to read header field `%s'", str_c(hdr_item));
 			return -1;
 		}
 

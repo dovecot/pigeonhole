@@ -483,8 +483,9 @@ static int cmd_notify_operation_execute
 		/* Process message */
 
 		out_message = t_str_new(1024);
-		ext_notify_construct_message
-			(renv, (message == NULL ? NULL : str_c(message)), out_message);
+		if ( (ret=ext_notify_construct_message
+			(renv, (message == NULL ? NULL : str_c(message)), out_message)) <= 0 )
+			return ret;
 		act->message = p_strdup(pool, str_c(out_message));
 
 		/* Normalize and verify all :options addresses */
@@ -804,27 +805,29 @@ static int act_notify_commit
 (const struct sieve_action *action, const struct sieve_action_exec_env *aenv,
 	void *tr_context ATTR_UNUSED, bool *keep ATTR_UNUSED)
 {
+	struct mail *mail = aenv->msgdata->mail;
 	const struct ext_notify_action *act =
 		(const struct ext_notify_action *) action->context;
 	const struct sieve_message_data *msgdata = aenv->msgdata;
-	const char *const *headers;
+	const char *const *hdsp;
 	bool result;
 
 	/* Is the message an automatic reply ? */
-	if ( mail_get_headers
-		(msgdata->mail, "auto-submitted", &headers) >= 0 ) {
-		const char *const *hdsp = headers;
+	if ( mail_get_headers(mail, "auto-submitted", &hdsp) < 0 ) {
+		return sieve_result_mail_error(aenv, mail,
+			"notify action: "
+			"failed to read `auto-submitted' header field");
+	}
 
-		/* Theoretically multiple headers could exist, so lets make sure */
-		while ( *hdsp != NULL ) {
-			if ( strcasecmp(*hdsp, "no") != 0 ) {
-				sieve_result_global_log(aenv,
-					"not sending notification for auto-submitted message from <%s>",
-					str_sanitize(msgdata->return_path, 128));
-					return TRUE;
-			}
-			hdsp++;
+	/* Theoretically multiple headers could exist, so lets make sure */
+	while ( *hdsp != NULL ) {
+		if ( strcasecmp(*hdsp, "no") != 0 ) {
+			sieve_result_global_log(aenv,
+				"not sending notification for auto-submitted message from <%s>",
+				str_sanitize(msgdata->return_path, 128));
+			return SIEVE_EXEC_OK;
 		}
+		hdsp++;
 	}
 
 	T_BEGIN {

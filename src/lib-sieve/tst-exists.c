@@ -138,13 +138,17 @@ static int tst_exists_operation_execute
 		(ret=sieve_stringlist_next_item(hdr_list, &hdr_item)) > 0 ) {
 		const char *const *headers;
 
-		if ( mail_get_headers(mail, str_c(hdr_item), &headers) < 0 ||
-			headers[0] == NULL ) {
-			matched = FALSE;
+		if ( mail_get_headers(mail, str_c(hdr_item), &headers) < 0 ) {
+			return sieve_runtime_mail_error	(renv, mail,
+				"exists test: "
+				"failed to read header field `%s'",
+				str_c(hdr_item));
 		}
+		if ( headers[0] == NULL )
+			matched = FALSE;
 
 		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,
-        	"header `%s' %s", str_sanitize(str_c(hdr_item), 80),
+			"header `%s' %s", str_sanitize(str_c(hdr_item), 80),
 			( matched ? "exists" : "is missing" ));
 	}
 

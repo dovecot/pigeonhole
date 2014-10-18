@@ -211,11 +211,12 @@ static const char *_parse_content_type(const struct message_header_line *hdr)
 /* ext_body_parts_add_missing():
  *   Add requested message body parts to the cache that are missing.
  */
-static bool ext_body_parts_add_missing
-(struct sieve_message_context *msgctx, struct ext_body_message_context *ctx,
-	const char * const *content_types, bool decode_to_plain)
+static int ext_body_parts_add_missing
+(const struct sieve_runtime_env *renv,
+	struct ext_body_message_context *ctx,
+	const char *const *content_types, bool decode_to_plain)
 {
-	struct mail *mail = sieve_message_get_mail(msgctx);
+	struct mail *mail = sieve_message_get_mail(renv->msgctx);
 	struct ext_body_part_cached *body_part = NULL, *header_part = NULL;
 	struct message_parser_ctx *parser;
 	struct message_decoder_context *decoder;
@@ -230,15 +231,18 @@ static bool ext_body_parts_add_missing
 	/* First check whether any are missing */
 	if (ext_body_get_return_parts(ctx, content_types, decode_to_plain)) {
 		/* Cache hit; all are present */
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	/* Get the message stream */
-	if ( mail_get_stream(mail, NULL, NULL, &input) < 0 )
-		return FALSE;
-
-	if (mail_get_parts(mail, &parts) < 0)
-		return FALSE;
+	if ( mail_get_stream(mail, NULL, NULL, &input) < 0 ) {
+		return sieve_runtime_mail_error(renv, mail,
+			"body test: failed to read input message");
+	}
+	if (mail_get_parts(mail, &parts) < 0) {
+		return sieve_runtime_mail_error(renv, mail,
+			"body test: failed to parse input message");
+	}
 
 	if ( (want_multipart=_want_multipart_content_type(content_types)) ) {
 		t_array_init(&part_index, 8);
@@ -408,7 +412,14 @@ static bool ext_body_parts_add_missing
 		message_decoder_deinit(&decoder);
 
 	/* Return status */
-	return ( input->stream_errno == 0 );
+	if ( input->stream_errno != 0 ) {
+		sieve_runtime_critical(renv, NULL,
+			"body test: failed to read input message",
+			"body test: failed to read message stream: %s",
+			i_stream_get_error(input));
+		return SIEVE_EXEC_TEMP_FAILURE;
+	}
+	return SIEVE_EXEC_OK;
 }
 
 static struct ext_body_message_context *ext_body_get_context
@@ -440,33 +451,33 @@ static struct ext_body_message_context *ext_body_get_context
 	return ctx;
 }
 
-static bool ext_body_get_content
+static int ext_body_get_content
 (const struct sieve_runtime_env *renv, const char * const *content_types,
 	int decode_to_plain, struct ext_body_part **parts_r)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_body_message_context *ctx =
 		ext_body_get_context(this_ext, renv->msgctx);
-	bool result = TRUE;
+	int status;
 
 	T_BEGIN {
 		/* Fill the return_body_parts array */
-		if ( !ext_body_parts_add_missing
-			(renv->msgctx, ctx, content_types, decode_to_plain != 0) )
-			result = FALSE;
+		status = ext_body_parts_add_missing
+			(renv, ctx, content_types, decode_to_plain != 0);
 	} T_END;
 
 	/* Check status */
-	if ( !result ) return FALSE;
+	if ( status <= 0 )
+		return status;
 
 	/* Return the array of body items */
 	(void) array_append_space(&ctx->return_body_parts); /* NULL-terminate */
 	*parts_r = array_idx_modifiable(&ctx->return_body_parts, 0);
 
-	return result;
+	return status;
 }
 
-static bool ext_body_get_raw
+static int ext_body_get_raw
 (const struct sieve_runtime_env *renv, struct ext_body_part **parts_r)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
@@ -486,8 +497,10 @@ static bool ext_body_get_raw
 		ctx->raw_body = buf = buffer_create_dynamic(ctx->pool, 1024*64);
 
 		/* Get stream for message */
- 		if ( mail_get_stream(mail, &hdr_size, &body_size, &input) < 0 )
-			return FALSE;
+ 		if ( mail_get_stream(mail, &hdr_size, &body_size, &input) < 0 ) {
+			return sieve_runtime_mail_error(renv, mail,
+				"body test: failed to read input message");
+		}
 
 		/* Skip stream to beginning of body */
 		i_stream_skip(input, hdr_size.physical_size);
@@ -499,8 +512,13 @@ static bool ext_body_get_raw
 			i_stream_skip(input, size);
 		}
 
-		if ( ret == -1 && input->stream_errno != 0 )
-			return FALSE;
+		if ( ret == -1 && input->stream_errno != 0 ) {
+			sieve_runtime_critical(renv, NULL,
+				"body test: failed to read input message as raw",
+				"body test: failed to read raw message stream: %s",
+				i_stream_get_error(input));
+			return SIEVE_EXEC_TEMP_FAILURE;
+		}
 	} else {
 		buf = ctx->raw_body;
 	}
@@ -522,7 +540,7 @@ static bool ext_body_get_raw
 	(void) array_append_space(&ctx->return_body_parts); /* NULL-terminate */
 	*parts_r = array_idx_modifiable(&ctx->return_body_parts, 0);
 
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 /*
@@ -541,30 +559,35 @@ struct ext_body_stringlist {
 	struct ext_body_part *body_parts_iter;
 };
 
-struct sieve_stringlist *ext_body_get_part_list
+int ext_body_get_part_list
 (const struct sieve_runtime_env *renv, enum tst_body_transform transform,
-	const char * const *content_types)
+	const char * const *content_types, struct sieve_stringlist **strlist_r)
 {
 	static const char * const _no_content_types[] = { "", NULL };
 	struct ext_body_stringlist *strlist;
 	struct ext_body_part *body_parts;
+	int ret;
+
+	*strlist_r = NULL;
 
 	if ( content_types == NULL ) content_types = _no_content_types;
 
 	switch ( transform ) {
 	case TST_BODY_TRANSFORM_RAW:
-		if ( !ext_body_get_raw(renv, &body_parts) )
-			return NULL;
+		if ( (ret=ext_body_get_raw(renv, &body_parts)) <= 0 )
+			return ret;
 		break;
 	case TST_BODY_TRANSFORM_CONTENT:
 		/* FIXME: check these parameters */
-		if ( !ext_body_get_content(renv, content_types, TRUE, &body_parts) )
-			return NULL;
+		if ( (ret=ext_body_get_content
+			(renv, content_types, TRUE, &body_parts)) <= 0 )
+			return ret;
 		break;
 	case TST_BODY_TRANSFORM_TEXT:
 		/* FIXME: check these parameters */
-		if ( !ext_body_get_content(renv, content_types, TRUE, &body_parts) )
-			return NULL;
+		if ( (ret=ext_body_get_content
+			(renv, content_types, TRUE, &body_parts)) <= 0 )
+			return ret;
 		break;
 	default:
 		i_unreached();
@@ -577,7 +600,8 @@ struct sieve_stringlist *ext_body_get_part_list
 	strlist->body_parts = body_parts;
 	strlist->body_parts_iter = body_parts;
 
-	return &strlist->strlist;
+	*strlist_r = &strlist->strlist;
+	return SIEVE_EXEC_OK;
 }
 
 static int ext_body_stringlist_next_item

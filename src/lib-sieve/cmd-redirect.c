@@ -332,8 +332,10 @@ static int act_redirect_send
 		return SIEVE_EXEC_FAILURE;
 	}
 
-	if (mail_get_stream(mail, NULL, NULL, &input) < 0)
-		return SIEVE_EXEC_TEMP_FAILURE;
+	if (mail_get_stream(mail, NULL, NULL, &input) < 0) {
+		return sieve_result_mail_error(aenv, mail,
+			"redirect action: failed to read input message");
+	}
 
 	/* Determine which sender to use
 
@@ -386,6 +388,13 @@ static int act_redirect_send
 	} T_END;
 
 	o_stream_send_istream(output, input);
+	if (input->stream_errno != 0) {
+		sieve_result_critical(aenv,
+			"redirect action: failed to read input message",
+			"redirect action: failed to read message stream: %s",
+			i_stream_get_error(input));
+		return SIEVE_EXEC_TEMP_FAILURE;
+	}
   i_stream_unref(&input);
 
 	/* Close SMTP transport */
@@ -424,10 +433,19 @@ static int act_redirect_commit
 	int ret;
 
 	/* Prevent mail loops if possible */
-	(void)mail_get_first_header(msgdata->mail, "resent-message-id", &resent_id);
+	if ( mail_get_first_header
+		(msgdata->mail, "resent-message-id", &resent_id) < 0 ) {
+		return sieve_result_mail_error(aenv, mail,
+			"failed to read header field `resent-message-id'");
+	}
 	if ( msgdata->id != NULL || resent_id != NULL ) {
-		if ( resent_id == NULL )
-			(void)mail_get_first_header(msgdata->mail, "resent-from", &resent_from);
+		if ( resent_id == NULL ) {
+			if ( mail_get_first_header
+				(msgdata->mail, "resent-from", &resent_from) < 0 ) {
+				return sieve_result_mail_error(aenv, mail,
+					"failed to read header field `resent-from'");
+			}
+		}
 		dupeid = t_strdup_printf("%s-%s-%s-%s",
 			(msgdata->id == NULL ? "" : msgdata->id),
 			orig_recipient, ctx->to_address,

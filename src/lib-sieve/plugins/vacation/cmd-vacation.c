@@ -893,7 +893,7 @@ static bool _contains_8bit(const char *text)
 	return FALSE;
 }
 
-static bool act_vacation_send
+static int act_vacation_send
 (const struct sieve_action_exec_env *aenv, struct act_vacation_context *ctx,
  	const char *reply_to, const char *reply_from, const char *smtp_from)
 {
@@ -911,14 +911,19 @@ static bool act_vacation_send
 	if ( !sieve_smtp_available(senv) ) {
 		sieve_result_global_warning(aenv,
 			"vacation action has no means to send mail");
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	/* Make sure we have a subject for our reply */
 
 	if ( ctx->subject == NULL || *(ctx->subject) == '\0' ) {
 		if ( mail_get_headers_utf8
-			(msgdata->mail, "subject", &headers) >= 0 && headers[0] != NULL ) {
+			(msgdata->mail, "subject", &headers) < 0 ) {
+			return sieve_result_mail_error(aenv, msgdata->mail,
+				"vacation action: "
+				"failed to read header field `subject'");
+		}
+		if ( headers[0] != NULL ) {
 			subject = t_strconcat("Auto: ", headers[0], NULL);
 		}	else {
 			subject = "Automated reply";
@@ -961,18 +966,22 @@ static bool act_vacation_send
 
 	/* Compose proper in-reply-to and references headers */
 
-	ret = mail_get_headers
-		(aenv->msgdata->mail, "references", &headers);
+	if ( mail_get_headers
+		(msgdata->mail, "references", &headers) ) {
+		return sieve_result_mail_error(aenv, msgdata->mail,
+			"vacation action: "
+			"failed to read header field `references'");
+	}
 
 	if ( msgdata->id != NULL ) {
 		rfc2822_header_write(msg, "In-Reply-To", msgdata->id);
 
-		if ( ret >= 0 && headers[0] != NULL )
+		if ( headers[0] != NULL )
 			rfc2822_header_write
 				(msg, "References", t_strconcat(headers[0], " ", msgdata->id, NULL));
 		else
 			rfc2822_header_write(msg, "References", msgdata->id);
-	} else if ( ret >= 0 && headers[0] != NULL ) {
+	} else if ( headers[0] != NULL ) {
 		rfc2822_header_write(msg, "References", headers[0]);
 	}
 
@@ -1001,10 +1010,11 @@ static bool act_vacation_send
 				"failed to send vacation response to <%s>: %s (permanent error)",
 				str_sanitize(reply_to, 256), str_sanitize(error, 512));
 		}
-		return FALSE;
+		/* This error will be ignored in the end */
+		return SIEVE_EXEC_FAILURE;
 	}
 
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 static void act_vacation_hash
@@ -1028,7 +1038,6 @@ static int act_vacation_commit
 	const struct sieve_extension *ext = action->ext;
 	const struct ext_vacation_config *config =
 		(const struct ext_vacation_config *) ext->context;
-	const struct sieve_message_data *msgdata = aenv->msgdata;
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	struct act_vacation_context *ctx =
 		(struct act_vacation_context *) action->context;
@@ -1036,10 +1045,9 @@ static int act_vacation_commit
 	struct mail *mail = sieve_message_get_mail(aenv->msgctx);
 	const char *sender = sieve_message_get_sender(aenv->msgctx);
 	const char *recipient = sieve_message_get_final_recipient(aenv->msgctx);
-	const char *const *hdsp;
-	const char *const *headers;
+	const char *const *hdsp, *const *headers;
 	const char *reply_from = NULL, *orig_recipient = NULL, *smtp_from = NULL;
-	bool result;
+	int ret;
 
 	/* Is the recipient unset?
 	 */
@@ -1098,8 +1106,13 @@ static int act_vacation_commit
 	/* Are we trying to respond to a mailing list ? */
 	hdsp = _list_headers;
 	while ( *hdsp != NULL ) {
-		if ( mail_get_headers
-			(mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {
+		if ( mail_get_headers(mail, *hdsp, &headers) < 0 ) {
+			return sieve_result_mail_error(aenv, mail,
+				"vacation action: "
+				"failed to read header field `%s'", *hdsp);
+		}
+
+		if ( headers[0] != NULL ) {
 			/* Yes, bail out */
 			sieve_result_global_log(aenv,
 				"discarding vacation response to mailinglist recipient <%s>",
@@ -1111,35 +1124,41 @@ static int act_vacation_commit
 
 	/* Is the message that we are replying to an automatic reply ? */
 	if ( mail_get_headers
-		(msgdata->mail, "auto-submitted", &headers) >= 0 ) {
-		/* Theoretically multiple headers could exist, so lets make sure */
-		hdsp = headers;
-		while ( *hdsp != NULL ) {
-			if ( strcasecmp(*hdsp, "no") != 0 ) {
-				sieve_result_global_log(aenv,
-					"discarding vacation response to auto-submitted message from <%s>",
- 					str_sanitize(sender, 128));
-					return SIEVE_EXEC_OK;
-			}
-			hdsp++;
+		(mail, "auto-submitted", &headers) < 0 ) {
+		return sieve_result_mail_error(aenv, mail,
+			"vacation action: "
+			"failed to read header field `auto-submitted'");
+	}
+	/* Theoretically multiple headers could exist, so lets make sure */
+	hdsp = headers;
+	while ( *hdsp != NULL ) {
+		if ( strcasecmp(*hdsp, "no") != 0 ) {
+			sieve_result_global_log(aenv,
+				"discarding vacation response to auto-submitted message from <%s>",
+				str_sanitize(sender, 128));
+				return SIEVE_EXEC_OK;
 		}
+		hdsp++;
 	}
 
 	/* Check for the (non-standard) precedence header */
 	if ( mail_get_headers
-		(mail, "precedence", &headers) >= 0 ) {
-		/* Theoretically multiple headers could exist, so lets make sure */
-		hdsp = headers;
-		while ( *hdsp != NULL ) {
-			if ( strcasecmp(*hdsp, "junk") == 0 || strcasecmp(*hdsp, "bulk") == 0 ||
-				strcasecmp(*hdsp, "list") == 0 ) {
-				sieve_result_global_log(aenv,
-					"discarding vacation response to precedence=%s message from <%s>",
-					*hdsp, str_sanitize(sender, 128));
-					return SIEVE_EXEC_OK;
-			}
-			hdsp++;
+		(mail, "precedence", &headers) < 0 ) {
+		return sieve_result_mail_error(aenv, mail,
+			"vacation action: "
+			"failed to read header field `precedence'");
+	}
+	/* Theoretically multiple headers could exist, so lets make sure */
+	hdsp = headers;
+	while ( *hdsp != NULL ) {
+		if ( strcasecmp(*hdsp, "junk") == 0 || strcasecmp(*hdsp, "bulk") == 0 ||
+			strcasecmp(*hdsp, "list") == 0 ) {
+			sieve_result_global_log(aenv,
+				"discarding vacation response to precedence=%s message from <%s>",
+				*hdsp, str_sanitize(sender, 128));
+				return SIEVE_EXEC_OK;
 		}
+		hdsp++;
 	}
 
 	/* Do not reply to system addresses */
@@ -1159,8 +1178,12 @@ static int act_vacation_commit
 	 */
 	hdsp = _my_address_headers;
 	while ( *hdsp != NULL ) {
-		if ( mail_get_headers
-			(mail, *hdsp, &headers) >= 0 && headers[0] != NULL ) {
+		if ( mail_get_headers(mail, *hdsp, &headers) < 0 ) {
+			return sieve_result_mail_error(aenv, mail,
+				"vacation action: "
+				"failed to read header field `%s'", *hdsp);
+		}
+		if ( headers[0] != NULL ) {
 
 			/* Final recipient directly listed in headers? */
 			if ( _contains_my_address(headers, recipient) ) {
@@ -1230,11 +1253,11 @@ static int act_vacation_commit
 	/* Send the message */
 
 	T_BEGIN {
-		result = act_vacation_send(aenv, ctx, sender, reply_from,
+		ret = act_vacation_send(aenv, ctx, sender, reply_from,
 			(config->send_from_recipient ? smtp_from : NULL));
 	} T_END;
 
-	if ( result ) {
+	if ( ret == SIEVE_EXEC_OK ) {
 		sieve_number_t seconds;
 
 		sieve_result_global_log(aenv, "sent vacation response to <%s>",
@@ -1254,6 +1277,10 @@ static int act_vacation_commit
 		}
 	}
 
+	if ( ret == SIEVE_EXEC_TEMP_FAILURE )
+		return SIEVE_EXEC_TEMP_FAILURE;
+
+	/* Ignore all other errors */
 	return SIEVE_EXEC_OK;
 }
 

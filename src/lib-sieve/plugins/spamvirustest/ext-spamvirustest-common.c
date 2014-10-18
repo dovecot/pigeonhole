@@ -448,9 +448,9 @@ static const char *ext_spamvirustest_get_score
 	return t_strdup_printf("%d", score);
 }
 
-const char *ext_spamvirustest_get_value
+int ext_spamvirustest_get_value
 (const struct sieve_runtime_env *renv, const struct sieve_extension *ext,
-	 bool percent)
+	 bool percent, const char **value_r)
 {
 	struct ext_spamvirustest_data *ext_data =
 		(struct ext_spamvirustest_data *) ext->context;
@@ -465,13 +465,15 @@ const char *ext_spamvirustest_get_value
 	unsigned int i, max_text;
 	pool_t pool = sieve_interpreter_pool(renv->interp);
 
+	*value_r = "0";
+
 	/*
 	 * Check whether extension is properly configured
 	 */
 	if ( ext_data == NULL ) {
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
 			"error: extension not configured");
-		return "0";
+		return SIEVE_EXEC_OK;
 	}
 
 	/*
@@ -487,7 +489,8 @@ const char *ext_spamvirustest_get_value
 		sieve_message_context_extension_set(msgctx, ext, (void *)mctx);
 	} else if ( mctx->reload == ext_data->reload ) {
 		/* Use cached result */
-		return ext_spamvirustest_get_score(ext, mctx->score_ratio, percent);
+		*value_r = ext_spamvirustest_get_score(ext, mctx->score_ratio, percent);
+		return SIEVE_EXEC_OK;
 	} else {
 		/* Extension was reloaded (probably in testsuite) */
 	}
@@ -506,8 +509,12 @@ const char *ext_spamvirustest_get_value
 		if ( max_header->header_name != NULL ) {
 			/* Get header from message */
 			if ( mail_get_first_header_utf8
-				(mail, max_header->header_name, &header_value) < 0 ||
-				header_value == NULL ) {
+				(mail, max_header->header_name, &header_value) < 0 ) {
+				return sieve_runtime_mail_error	(renv, mail,
+					"%s test: failed to read header field `%s'",
+					sieve_extension_name(ext), max_header->header_name);
+			}
+			if (	header_value == NULL ) {
 				sieve_runtime_trace(renv,  SIEVE_TRLVL_TESTS,
 					"header '%s' not found in message",
 					max_header->header_name);
@@ -559,8 +566,12 @@ const char *ext_spamvirustest_get_value
 
 	/* Get header from message */
 	if ( mail_get_first_header_utf8
-		(mail, status_header->header_name, &header_value) < 0 ||
-		header_value == NULL ) {
+		(mail, status_header->header_name, &header_value) < 0 ) {
+		return sieve_runtime_mail_error	(renv, mail,
+			"%s test: failed to read header field `%s'",
+			sieve_extension_name(ext), status_header->header_name);
+	}
+	if ( header_value == NULL ) {
 		sieve_runtime_trace(renv,  SIEVE_TRLVL_TESTS,
 			"header '%s' not found in message",
 			status_header->header_name);
@@ -645,11 +656,13 @@ const char *ext_spamvirustest_get_value
 		"extracted score=%.3f, max=%.3f, ratio=%.0f %%",
 		status_value, max_value, mctx->score_ratio * 100);
 
-	return ext_spamvirustest_get_score(ext, mctx->score_ratio, percent);
+	*value_r = ext_spamvirustest_get_score(ext, mctx->score_ratio, percent);
+	return SIEVE_EXEC_OK;
 
 failed:
 	mctx->score_ratio = -1;
-	return "0";
+	*value_r = "0";
+	return SIEVE_EXEC_OK;
 }
 
 

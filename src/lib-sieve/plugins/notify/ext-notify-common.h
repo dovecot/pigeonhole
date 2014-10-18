@@ -62,7 +62,7 @@ struct ext_notify_action {
  * Message construct
  */
 
-void ext_notify_construct_message
+int ext_notify_construct_message
 	(const struct sieve_runtime_env *renv, const char *msg_format,
 		string_t *out_msg);
 

@@ -179,8 +179,14 @@ static int cmd_filter_operation_execute
 		(this_ext, renv->scriptenv, renv->msgdata, "filter", program_name, args,
 			&error);
 
-	if ( sprog != NULL && sieve_extprogram_set_input_mail
-		(sprog, sieve_message_get_mail(renv->msgctx)) >= 0 ) {
+	if ( sprog != NULL ) {
+		struct mail *mail = sieve_message_get_mail(renv->msgctx);
+
+		if ( sieve_extprogram_set_input_mail(sprog, mail) < 0 ) {
+			sieve_extprogram_destroy(&sprog);
+			return sieve_runtime_mail_error(renv, mail,
+				"filter action: failed to read input message");
+		}
 		sieve_extprogram_set_output_seekable(sprog);
 		ret = sieve_extprogram_run(sprog);
 	} else {

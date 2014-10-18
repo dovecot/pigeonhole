@@ -370,10 +370,9 @@ static int ext_body_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "body test");
 
 	/* Extract requested parts */
-	value_list = ext_body_get_part_list
-		(renv, (enum tst_body_transform) transform, content_types);
-	if ( value_list == FALSE )
-		return SIEVE_EXEC_FAILURE;
+	if ( (ret=ext_body_get_part_list(renv,
+		(enum tst_body_transform) transform, content_types,&value_list)) <= 0 )
+		return ret;
 
 	/* Disable match values processing as required by RFC */
 	mvalues_active = sieve_match_values_set_enabled(renv, FALSE);

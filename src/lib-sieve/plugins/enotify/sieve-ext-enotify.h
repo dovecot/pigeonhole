@@ -72,8 +72,10 @@ struct sieve_enotify_method_def {
 		(const struct sieve_enotify_print_env *penv,
 			const struct sieve_enotify_action *nact);
 
-	/* Action execution */
-	bool (*action_execute)
+	/* Action execution
+     (returns 0 if all is ok and -1 for temporary error)
+	 */
+	int (*action_execute)
 		(const struct sieve_enotify_exec_env *nenv,
 			const struct sieve_enotify_action *nact);
 };
@@ -157,6 +159,9 @@ struct sieve_enotify_action {
 
 #define sieve_enotify_info(ENV, ...) \
 	sieve_info((ENV)->ehandler, NULL, __VA_ARGS__ )
+
+#define sieve_enotify_critical(ENV, ...) \
+	sieve_critical((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )
 
 #define sieve_enotify_global_error(ENV, ...) \
 	sieve_global_error((ENV)->svinst, (ENV)->ehandler, NULL, __VA_ARGS__ )

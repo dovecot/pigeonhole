@@ -791,7 +791,7 @@ void sieve_action_duplicate_flush
 
 /* Rejecting the mail */
 
-static bool sieve_action_do_reject_mail
+static int sieve_action_do_reject_mail
 (const struct sieve_action_exec_env *aenv, const char *sender,
 	const char *recipient, const char *reason)
 {
@@ -801,7 +801,9 @@ static bool sieve_action_do_reject_mail
 	struct istream *input;
 	struct ostream *output;
 	struct sieve_smtp_context *sctx;
-	const char *new_msgid, *boundary, *header, *error;
+	const char *new_msgid, *boundary, *error;
+	const char *orig_recipient =
+		sieve_message_get_orig_recipient(aenv->msgctx);
   string_t *hdr;
 	int ret;
 
@@ -811,7 +813,7 @@ static bool sieve_action_do_reject_mail
 	if ( sctx == NULL ) {
 		sieve_result_global_warning
 			(aenv, "reject action has no means to send mail");
-		return TRUE;
+		return SIEVE_EXEC_OK;
 	}
 
 	new_msgid = sieve_message_get_new_id(svinst);
@@ -849,9 +851,11 @@ static bool sieve_action_do_reject_mail
 	rfc2822_header_write(hdr, "Content-Type", "message/disposition-notification");
 	str_append(hdr, "\r\n");
 	rfc2822_header_write(hdr, "Reporting-UA: %s; Dovecot Mail Delivery Agent",
-		svinst->hostname);
-	if (mail_get_first_header(msgdata->mail, "Original-Recipient", &header) > 0)
-		rfc2822_header_printf(hdr, "Original-Recipient", "rfc822; %s", header);
+		svinst->hostname);	
+	if ( orig_recipient != NULL ) {
+		rfc2822_header_printf
+			(hdr, "Original-Recipient", "rfc822; %s", orig_recipient);
+	}
 	rfc2822_header_printf(hdr, "Final-Recipient", "rfc822; %s", recipient);
 
 	if ( msgdata->id != NULL )
@@ -903,10 +907,10 @@ static bool sieve_action_do_reject_mail
 				"(permanent failure)",
 				str_sanitize(sender, 256), str_sanitize(error, 512));
 		}
-		return FALSE;
+		return SIEVE_EXEC_FAILURE;
 	}
 
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 bool sieve_action_reject_mail

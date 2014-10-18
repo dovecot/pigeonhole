@@ -10,6 +10,7 @@
 #include "str-sanitize.h"
 #include "var-expand.h"
 #include "message-address.h"
+#include "mail-storage.h"
 #include "mail-deliver.h"
 
 #include "sieve-common.h"
@@ -312,6 +313,40 @@ void sieve_result_global_log_warning
 	va_start(args, fmt);
 	sieve_global_info_vwarning(aenv->svinst, aenv->ehandler, NULL, fmt, args);
 	va_end(args);
+}
+
+void sieve_result_critical
+(const struct sieve_action_exec_env *aenv,
+	const char *user_prefix, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+
+	T_BEGIN {
+		sieve_vcritical
+			(aenv->svinst, aenv->ehandler, NULL, user_prefix, fmt, args);
+	} T_END;
+
+	va_end(args);
+}
+
+int sieve_result_mail_error
+(const struct sieve_action_exec_env *aenv, struct mail *mail,
+	const char *fmt, ...)
+{
+	const char *error_msg, *user_prefix;
+	va_list args;
+
+	error_msg = mailbox_get_last_error(mail->box, NULL);
+
+	va_start(args, fmt);
+	user_prefix = t_strdup_vprintf(fmt, args);
+	sieve_result_critical(aenv, user_prefix,
+		"%s: %s", user_prefix, error_msg);
+	va_end(args);
+
+	return 	SIEVE_EXEC_TEMP_FAILURE;
 }
 
 /*

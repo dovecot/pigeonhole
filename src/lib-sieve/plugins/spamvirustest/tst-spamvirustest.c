@@ -291,7 +291,9 @@ static int tst_spamvirustest_operation_execute
 
 	/* Get score value */
 	sieve_runtime_trace_descend(renv);
-	score_value = ext_spamvirustest_get_value(renv, this_ext, percent);
+	if ( (ret=ext_spamvirustest_get_value
+		(renv, this_ext, percent, &score_value)) <= 0 )
+		return ret;
 	sieve_runtime_trace_ascend(renv);
 
 	/* Construct value list */
