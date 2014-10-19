@@ -101,6 +101,7 @@ void managesieve_parser_reset(struct managesieve_parser *parser)
 
 	if ( parser->str_stream != NULL )
 		i_stream_unref(&parser->str_stream);
+	parser->str_stream = NULL;
 }
 
 const char *managesieve_parser_get_error
@@ -634,13 +635,15 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 	if (size == 0) {
 		ret = i_stream_read(stream->parent);
 		if (ret <= 0 && (ret != -2 || stream->skip == 0)) {
-			if ( stream->istream.eof && stream->istream.stream_errno == 0 ) {
-				stream->istream.eof = 0;
-				stream->istream.stream_errno = EIO;
-			} else {
-				stream->istream.stream_errno = stream->parent->stream_errno;
-				stream->istream.eof = stream->parent->eof;
+			if ( stream->parent->eof && stream->parent->stream_errno == 0 ) {
+				io_stream_set_error(&stream->iostream,
+					"Quoted string ends without closing quotes");
+				stream->istream.stream_errno = EINVAL;
+				return -1;
 			}
+
+			stream->istream.stream_errno = stream->parent->stream_errno;
+			stream->istream.eof = stream->parent->eof;
 			return ret;
 		}
 		data = i_stream_get_data(stream->parent, &size);
@@ -671,9 +674,9 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 			slash = FALSE;
 		} else if ( slash ) {
 			if ( !IS_QUOTED_SPECIAL(data[i]) ) {
-				qsstream->parser->error =
-					"Escaped quoted-string character is not a QUOTED-SPECIAL.";
-				stream->istream.stream_errno = EIO;
+				io_stream_set_error(&stream->iostream,
+					"Escaped quoted-string character is not a QUOTED-SPECIAL");
+				stream->istream.stream_errno = EINVAL;
 				ret = -1;
 				break;
 			}
@@ -681,8 +684,9 @@ static ssize_t quoted_string_istream_read(struct istream_private *stream)
 		}
 
 		if ( (data[i] & 0x80) == 0 && ( data[i] == '\r' || data[i] == '\n' ) ) {
-			qsstream->parser->error = "String contains invalid character.";
-			stream->istream.stream_errno = EIO;
+			io_stream_set_error(&stream->iostream,
+				"Quoted string contains an invalid character");
+			stream->istream.stream_errno = EINVAL;
 			ret = -1;
 			break;
 		}
