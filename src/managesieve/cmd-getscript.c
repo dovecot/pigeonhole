@@ -54,9 +54,15 @@ static bool cmd_getscript_continue(struct client_command_context *cmd)
 	ret = o_stream_send_istream(client->output, ctx->script_stream);
 
 	if ( ret < 0 ) {
-		sieve_storage_set_critical(ctx->storage,
-			"o_stream_send_istream() failed for script `%s' from %s: %m",
-			sieve_script_name(ctx->script), sieve_script_location(ctx->script));
+		if ( ctx->script_stream->stream_errno != 0 ) {
+			sieve_storage_set_critical(ctx->storage,
+				"o_stream_send_istream() failed for script `%s' from %s: %s",
+				sieve_script_name(ctx->script),
+				sieve_script_location(ctx->script),
+				i_stream_get_error(ctx->script_stream));
+		} else {
+			client_disconnect(ctx->client, NULL);
+		}
 		ctx->failed = TRUE;
 		return cmd_getscript_finish(ctx);
 	}
