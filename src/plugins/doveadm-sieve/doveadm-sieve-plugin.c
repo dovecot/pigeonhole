@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "str.h"
 #include "ioloop.h"
+#include "time-util.h"
 #include "istream.h"
 #include "istream-concat.h"
 #include "mail-storage-private.h"
@@ -360,16 +361,30 @@ sieve_attribute_set(struct mailbox_transaction_context *t,
 {
 	struct mail_user *user = t->box->storage->user;
 	union mailbox_module_context *sbox = SIEVE_MAIL_CONTEXT(t->box);
-	time_t ts = value->last_change != 0 ? value->last_change : ioloop_time;
 
 	if (t->box->storage->user->dsyncing &&
 	    type == MAIL_ATTRIBUTE_TYPE_PRIVATE &&
 	    strncmp(key, MAILBOX_ATTRIBUTE_PREFIX_SIEVE,
 		    strlen(MAILBOX_ATTRIBUTE_PREFIX_SIEVE)) == 0) {
+		time_t ts =
+			(value->last_change != 0 ? value->last_change : ioloop_time);
+
 		if (sieve_attribute_set_sieve(t->box->storage, key, value) < 0)
 			return -1;
-		if (user->mail_debug)
-			i_debug("doveadm-sieve: Assigned value for key `%s'", key);
+
+		if (user->mail_debug) {
+			const char *change;
+			if (value->last_change != 0) {
+				change = t_strflocaltime
+					("(last change: %Y-%m-%d %H:%M:%S)", value->last_change);
+			} else {
+				change = t_strflocaltime
+					("(time: %Y-%m-%d %H:%M:%S)", ioloop_time);
+			}
+			i_debug("doveadm-sieve: Assigned value for key `%s' %s",
+				key, change);
+		}
+
 		/* FIXME: set value len to sieve script size / active name
 		   length */
 		if (value->value != NULL || value->value_stream != NULL)
