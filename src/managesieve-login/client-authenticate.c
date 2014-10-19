@@ -221,20 +221,13 @@ static int managesieve_client_auth_read_response
 	if ( ret == 0 ) return 0;
 
 	if ( msieve_client->auth_response_input->stream_errno != 0 ) {
-		if ( msieve_client->auth_response_input->stream_errno == EIO ) {
-			error = managesieve_parser_get_error(msieve_client->parser, &fatal);
-			if (error != NULL ) {
-				if (fatal) {
-					client_send_bye(client, error);
-					client_destroy(client, t_strconcat
-						("Disconnected: parse error during auth: ", error, NULL));
-				} else {
-					msieve_client->skip_line = TRUE;
-					*error_r = t_strconcat
-						("Error in AUTHENTICATE response string: ", error, NULL);
-				}
-				return -1;
-			}
+		if ( !client->input->eof &&
+			msieve_client->auth_response_input->stream_errno == EINVAL ) {
+			msieve_client->skip_line = TRUE;
+			*error_r = t_strconcat
+				("Error in AUTHENTICATE response string: ",
+					i_stream_get_error(msieve_client->auth_response_input), NULL);
+			return -1;
 		}
 
 		client_destroy(client, "Disconnected");
