@@ -463,7 +463,6 @@ static struct mail_keywords *act_store_keywords_create
 		(void)array_append_space(keywords);
 		kwds = array_idx(keywords, 0);
 
-		/* FIXME: Do we need to clear duplicates? */
 		if ( mailbox_keywords_create(box, kwds, &box_keywords) < 0) {
 			sieve_result_error(aenv, "invalid keywords set for stored message");
 			return NULL;
