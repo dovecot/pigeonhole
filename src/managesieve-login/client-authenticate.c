@@ -83,11 +83,7 @@ void managesieve_client_auth_result(struct client *client,
 		}
 		break;
 	case CLIENT_AUTH_RESULT_ABORTED:
-		client_send_no(client, text);
-		break;
 	case CLIENT_AUTH_RESULT_AUTHFAILED_REASON:
-		client_send_noresp(client, "ALERT", text);
-		break;
 	case CLIENT_AUTH_RESULT_AUTHZFAILED:
 		client_send_no(client, text);
 		break;
