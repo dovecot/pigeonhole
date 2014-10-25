@@ -1473,7 +1473,7 @@ static int edit_mail_get_headers
 				(&edmail->wrapped->mail, field_name, decode_to_utf8, value_r);
 		}
 
-		t_array_init(&header_values, 1);
+		p_array_init(&header_values, edmail->mail.pool, 1);
 		(void)array_append_space(&header_values);
 		*value_r = array_idx(&header_values, 0);
 		return 0;
@@ -1489,7 +1489,7 @@ static int edit_mail_get_headers
 	}
 
 	/* Fill result array */
-	t_array_init(&header_values, 32);
+	p_array_init(&header_values, edmail->mail.pool, 32);
 	field_idx = header_idx->first;
 	while ( field_idx != NULL ) {
 
