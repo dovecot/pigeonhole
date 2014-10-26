@@ -26,21 +26,25 @@ int sieve_storage_sync_init
 {
 	struct mail_namespace *ns;
 	struct mailbox *box;
-	enum mailbox_flags flags = MAILBOX_FLAG_IGNORE_ACLS;
+	enum sieve_storage_flags sflags = storage->flags;
+	enum mailbox_flags mflags = MAILBOX_FLAG_IGNORE_ACLS;
 	enum mail_error error;
-		
-	if ( (flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
-		(flags & SIEVE_STORAGE_FLAG_READWRITE) == 0 )
+
+	if ( (sflags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
+		(sflags & SIEVE_STORAGE_FLAG_READWRITE) == 0 )
 		return 0;
 
 	if ( !storage->allows_synchronization ) {
-		if ( (flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 )
+		if ( (sflags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 )
 			return -1;
 		return 0;
 	}
 
+	sieve_storage_sys_debug(storage, "sync: "
+		"Opening INBOX for attribute modifications");
+
 	ns = mail_namespace_find_inbox(user->namespaces);
-	storage->sync_inbox = box = mailbox_alloc(ns->list, "INBOX", flags);
+	storage->sync_inbox = box = mailbox_alloc(ns->list, "INBOX", mflags);
 	if (mailbox_open(box) == 0)
 		return 0;
 
