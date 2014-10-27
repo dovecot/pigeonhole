@@ -482,7 +482,7 @@ void sieve_storage_unref(struct sieve_storage **_storage)
 	if (--storage->refcount != 0)
 		return;
 
-	(void)sieve_storage_sync_deinit(storage);
+	sieve_storage_sync_deinit(storage);
 
 	if ( storage->v.destroy != NULL )
 		storage->v.destroy(storage);
@@ -673,7 +673,7 @@ int sieve_storage_deactivate
 	
 	if (ret >= 0) {
 		sieve_storage_set_modified(storage, mtime);
-		sieve_storage_sync_deactivate(storage);
+		(void)sieve_storage_sync_deactivate(storage);
 	}
 
 	return ret;
@@ -865,7 +865,7 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 
 	/* set INBOX mailbox attribute */
 	if ( ret >= 0 )
-		sieve_storage_sync_script_save(storage, scriptname);
+		(void)sieve_storage_sync_script_save(storage, scriptname);
 
 	return ret;
 }

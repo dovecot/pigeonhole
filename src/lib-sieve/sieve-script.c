@@ -478,7 +478,7 @@ int sieve_script_rename
 
 	/* rename INBOX mailbox attribute */
 	if ( ret >= 0 && oldname != NULL )
-		sieve_storage_sync_script_rename(storage, oldname, newname);
+		(void)sieve_storage_sync_script_rename(storage, oldname, newname);
 
 	return ret;
 }
@@ -504,7 +504,7 @@ int sieve_script_delete(struct sieve_script **_script)
 
 	/* unset INBOX mailbox attribute */
 	if ( ret >= 0 )
-		sieve_storage_sync_script_delete(storage, script->name);
+		(void)sieve_storage_sync_script_delete(storage, script->name);
 
 	/* Always deinitialize the script object */
 	sieve_script_unref(_script);
@@ -531,7 +531,7 @@ int sieve_script_activate(struct sieve_script *script, time_t mtime)
 
 	if (ret >= 0) {
 		sieve_storage_set_modified(storage, mtime);
-		sieve_storage_sync_script_activate(storage);
+		(void)sieve_storage_sync_script_activate(storage);
 	}
 
 	return ret;

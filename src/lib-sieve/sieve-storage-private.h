@@ -109,7 +109,7 @@ struct sieve_storage {
 	const char *script_name;
 	const char *bin_dir;
 
-	struct mailbox *sync_inbox;
+	struct mail_namespace *sync_inbox_ns;
 
 	enum sieve_storage_flags flags;
 
@@ -235,17 +235,17 @@ int sieve_storage_sync_init
 void sieve_storage_sync_deinit
 	(struct sieve_storage *storage);
 
-void sieve_storage_sync_script_save
+int sieve_storage_sync_script_save
 	(struct sieve_storage *storage, const char *name);
-void sieve_storage_sync_script_rename
+int sieve_storage_sync_script_rename
 	(struct sieve_storage *storage, const char *oldname,
 		const char *newname);
-void sieve_storage_sync_script_delete
+int sieve_storage_sync_script_delete
 	(struct sieve_storage *storage, const char *name);
 
-void sieve_storage_sync_script_activate
+int sieve_storage_sync_script_activate
 (struct sieve_storage *storage);
-void sieve_storage_sync_deactivate
+int sieve_storage_sync_deactivate
 (struct sieve_storage *storage);
 
 
