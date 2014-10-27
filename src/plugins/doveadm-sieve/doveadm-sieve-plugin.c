@@ -188,7 +188,7 @@ sieve_attribute_unset_active_script(struct mail_storage *storage,
 {
 	int ret;
 
-	if ((ret=sieve_storage_is_singular(svstorage)) <= 0) {
+	if ((ret=sieve_storage_is_singular(svstorage)) != 0) {
 		if (ret < 0)
 			mail_storage_set_internal_error(storage);
 		return ret;

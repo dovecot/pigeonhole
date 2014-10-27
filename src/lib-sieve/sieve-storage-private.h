@@ -243,4 +243,10 @@ void sieve_storage_sync_script_rename
 void sieve_storage_sync_script_delete
 	(struct sieve_storage *storage, const char *name);
 
+void sieve_storage_sync_script_activate
+(struct sieve_storage *storage);
+void sieve_storage_sync_deactivate
+(struct sieve_storage *storage);
+
+
 #endif

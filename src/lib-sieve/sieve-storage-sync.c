@@ -134,3 +134,33 @@ void sieve_storage_sync_script_delete
 	mail_index_attribute_unset(t->itrans, TRUE, key, ioloop_time);
 	sieve_storage_sync_transaction_finish(storage, &t);
 }
+
+void sieve_storage_sync_script_activate
+(struct sieve_storage *storage)
+{
+	struct mailbox_transaction_context *t;
+
+	if (storage->sync_inbox == NULL)
+		return;
+
+	t = mailbox_transaction_begin(storage->sync_inbox, 0);	
+	mail_index_attribute_set
+		(t->itrans, TRUE, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT, ioloop_time, 0);
+	sieve_storage_sync_transaction_finish(storage, &t);
+}
+
+void sieve_storage_sync_deactivate
+(struct sieve_storage *storage)
+{
+	struct mailbox_transaction_context *t;
+
+	if (storage->sync_inbox == NULL)
+		return;
+	
+	t = mailbox_transaction_begin(storage->sync_inbox, 0);	
+	mail_index_attribute_unset
+		(t->itrans, TRUE, MAILBOX_ATTRIBUTE_SIEVE_DEFAULT, ioloop_time);
+	sieve_storage_sync_transaction_finish(storage, &t);
+}
+
+

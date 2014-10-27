@@ -520,15 +520,19 @@ int sieve_script_is_active(struct sieve_script *script)
 
 int sieve_script_activate(struct sieve_script *script, time_t mtime)
 {
+	struct sieve_storage *storage = script->storage;
 	int ret;
 
-	i_assert( (script->storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
+	i_assert( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
 	i_assert( script->open ); // FIXME: auto-open?
 
 	i_assert( script->v.activate != NULL );
 	ret = script->v.activate(script);
 
-	sieve_storage_set_modified(script->storage, mtime);
+	if (ret >= 0) {
+		sieve_storage_set_modified(storage, mtime);
+		sieve_storage_sync_script_activate(storage);
+	}
 
 	return ret;
 }

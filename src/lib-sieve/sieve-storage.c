@@ -670,8 +670,11 @@ int sieve_storage_deactivate
 
 	i_assert(storage->v.deactivate != NULL);
 	ret = storage->v.deactivate(storage);
-
-	sieve_storage_set_modified(storage, mtime);
+	
+	if (ret >= 0) {
+		sieve_storage_set_modified(storage, mtime);
+		sieve_storage_sync_deactivate(storage);
+	}
 
 	return ret;
 }
