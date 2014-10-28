@@ -296,7 +296,7 @@ static int sieve_file_script_open
 					filename = sieve_script_file_from_name(name);
 					basename = name;
 				}
-				if ( filename == NULL && *filename == '\0' ) {
+				if ( filename == NULL || *filename == '\0' ) {
 					sieve_script_set_critical(script,
 						"Sieve script file path '%s' is a directory.", path);
 					*error_r = SIEVE_ERROR_TEMP_FAILURE;
