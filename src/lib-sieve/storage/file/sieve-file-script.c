@@ -52,7 +52,7 @@ const char *sieve_script_file_from_name(const char *name)
 
 static void sieve_file_script_handle_error
 (struct sieve_file_script *fscript, const char *path,
-	enum sieve_error *error_r)
+	const char *name, enum sieve_error *error_r)
 {
 	struct sieve_script *script = &fscript->script;
 
@@ -61,8 +61,7 @@ static void sieve_file_script_handle_error
 		sieve_script_sys_debug(script, "File `%s' not found", t_abspath(path));
 		sieve_script_set_error(script,
 			SIEVE_ERROR_NOT_FOUND,
-			"Sieve script `%s' not found",
-			fscript->script.name);
+			"Sieve script `%s' not found", name);
 		*error_r = SIEVE_ERROR_NOT_FOUND;
 		break;
 	case EACCES:
@@ -262,6 +261,22 @@ static int sieve_file_script_stat
 	return 1;
 }
 
+static const char *
+path_split_filename(const char *path, const char **dirpath_r)
+{
+	const char *filename;
+
+	filename = strrchr(path, '/');
+	if ( filename == NULL ) {
+		*dirpath_r = "";
+		filename = path;
+	} else {
+		*dirpath_r = t_strdup_until(path, filename);
+		filename++;
+	}
+	return filename;
+}
+
 static int sieve_file_script_open
 (struct sieve_script *script, enum sieve_error *error_r)
 {
@@ -320,14 +335,7 @@ static int sieve_file_script_open
 			} else {
 
 				/* Extract filename from path */
-				filename = strrchr(path, '/');
-				if ( filename == NULL ) {
-					dirpath = "";
-					filename = path;
-				} else {
-					dirpath = t_strdup_until(path, filename);
-					filename++;
-				}
+				filename = path_split_filename(path, &dirpath);
 
 				if ( (basename=sieve_script_file_get_scriptname(filename)) == NULL )
 					basename = filename;
@@ -341,11 +349,21 @@ static int sieve_file_script_open
 
 		if ( success ) {
 			if ( ret <= 0 ) {
-				if ( fscript->script.name == NULL )
-					fscript->script.name = p_strdup(pool, basename);
-				sieve_file_script_handle_error(fscript, path, error_r);
+				/* Make sure we have a script name for the error */
+				if ( name == NULL ) {
+					if ( basename == NULL ) {
+						if ( filename == NULL )
+							filename = path_split_filename(path, &dirpath);
+						basename = sieve_script_file_get_scriptname(filename);
+						if ( basename == NULL )
+							basename = filename;
+					}
+					name = basename;
+				}
+				sieve_file_script_handle_error(fscript, path, name, error_r);
 				success = FALSE;
-			} else if (!S_ISREG(st.st_mode) ) {
+
+			} else if ( !S_ISREG(st.st_mode) ) {
 				sieve_script_set_critical(script,
 					"Sieve script file '%s' is not a regular file.", path);
 				*error_r = SIEVE_ERROR_TEMP_FAILURE;
@@ -412,7 +430,7 @@ static int sieve_file_script_get_stream
 
 	if ( (fd=open(fscript->path, O_RDONLY)) < 0 ) {
 		sieve_file_script_handle_error
-			(fscript, fscript->path, error_r);
+			(fscript, fscript->path, fscript->script.name, error_r);
 		return -1;
 	}
 
