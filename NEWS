@@ -1,3 +1,36 @@
+v0.4.4 28-10-2014 Stephan Bosch <stephan@rename-it.nl>
+
+	* Added support for Japanese mail addresses with dots at non-standard places
+	  in localpart.
+	* Changed handling of ENOSPACE into a normal temporary failure and added
+	  handling of ENOQUOTA as a user error.
+	* Restructured result execution, so that all actions which involve mail
+	  storage are always committed before all others.
+	+ Implemented support for generic Sieve storages. Using alternative storages
+	  now also possible for sieve_before/sieve_after.
+	+ Implemented storage driver for retrieving Sieve scripts from LDAP. This
+	  currently cannot be used with ManageSieve.
+	+ Implemented sieve_redirect_envelope_from setting, which allows configuring
+	  the envelope sender of redirected messages.
+	- Fixed handling of mail storage errors occurring while evaluating the input
+	  message.
+	- managesieve-login:
+	   - Removed bogus ALERT response code returned for AUTHENTICATE command.
+	   - Fixed handling of invalid initial response argument to AUTHENTICATE
+	     command.
+	- Fixed handling of stream errors in lexical scanner.
+	- Fixed handling of SMTP errors. Permanent and temporary errors were mixed up.
+	- Fixed several problems reported by CLang 3.4.
+	- duplicate extension: Fixed erroneous compile error about conflicting tags
+	  when `:handle' argument was used last.
+	- relational extension: Fixed error handling of `:value' match.
+	- editheader extension: Fixed header unfolding and header iteration.
+	- mailbox extension: Fixed the `:create' tag, which erroneously subscribed an
+	  existing folder.
+	- extprograms plugin: Fixed handling of error codes.
+	- doveadm-sieve plugin: Fixed several bugs. Synchronization of symbolic link
+	  in the file storage should now also work properly.
+
 v0.4.3 12-05-2014 Stephan Bosch <stephan@rename-it.nl>
 
 	* Editheader extension: Made control characters allowed for editheader, except
