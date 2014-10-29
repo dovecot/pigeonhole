@@ -12,6 +12,7 @@ config.sub
 config.rpath
 configure
 configure.scan
+pigeonhole-version.h
 libtool
 libtool-shared
 ltconfig
