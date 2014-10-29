@@ -196,7 +196,7 @@ void sieve_storage_ldap_plugin_load
 	if ( svinst->debug ) {
 		sieve_sys_debug(svinst,
 			"Sieve LDAP storage plugin for %s version %s loaded",
-			PIGEONHOLE_NAME, PIGEONHOLE_VERSION);
+			PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
 	}
 }
 

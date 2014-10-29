@@ -5,8 +5,9 @@
 #define __SIEVE_CONFIG_H
 
 #include "pigeonhole-config.h"
+#include "pigeonhole-version.h"
 
-#define SIEVE_IMPLEMENTATION PIGEONHOLE_NAME " Sieve " PIGEONHOLE_VERSION
+#define SIEVE_IMPLEMENTATION PIGEONHOLE_NAME " Sieve " PIGEONHOLE_VERSION_FULL
 
 #define SIEVE_SCRIPT_FILEEXT "sieve"
 #define SIEVE_BINARY_FILEEXT "svbin"

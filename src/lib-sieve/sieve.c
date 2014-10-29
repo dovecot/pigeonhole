@@ -92,7 +92,7 @@ struct sieve_instance *sieve_init
 
 	if ( debug ) {
 		sieve_sys_debug(svinst, "%s version %s initializing",
-			PIGEONHOLE_NAME, PIGEONHOLE_VERSION);
+			PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
 	}
 
 	/* Read configuration */

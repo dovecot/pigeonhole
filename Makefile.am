@@ -4,13 +4,17 @@ endif
 
 SUBDIRS = src $(DOCS)
 
+dist_pkginclude_HEADERS = \
+    pigeonhole-version.h
+
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = \
 	tests \
 	examples \
 	COPYING.LGPL \
-	ChangeLog
+	ChangeLog \
+	update-version.sh
 
 dist-hook:
 	rm -rf `find $(distdir)/tests -type f -name '*.svbin'`
@@ -22,6 +26,11 @@ if MAINTAINER_MODE
 ChangeLog: .hg/dirstate
 	hg log --style=changelog > ChangeLog
 endif
+
+pigeonhole-version.h: noop
+	$(SHELL) $(top_srcdir)/update-version.sh $(top_srcdir) $(top_builddir)
+
+noop:
 
 # Testsuite tests (FIXME: ugly)
 

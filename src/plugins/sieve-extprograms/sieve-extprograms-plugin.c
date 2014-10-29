@@ -32,7 +32,7 @@ void sieve_extprograms_plugin_load
 
 	if ( svinst->debug ) {
 		sieve_sys_debug(svinst, "Sieve Extprograms plugin for %s version %s loaded",
-			PIGEONHOLE_NAME, PIGEONHOLE_VERSION);
+			PIGEONHOLE_NAME, PIGEONHOLE_VERSION_FULL);
 	}
 
 	*context = (void *)pctx;
