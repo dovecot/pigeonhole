@@ -1,4 +1,5 @@
 SUBDIRS = \
 	doveadm-sieve \
 	lda-sieve \
-	sieve-extprograms
+	sieve-extprograms \
+	settings
