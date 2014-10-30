@@ -1423,7 +1423,7 @@ int sieve_result_execute
 	sieve_result_transaction_finish
 		(result, first_action, status);
 
-	return status;
+	return result_status;
 }
 
 /*
