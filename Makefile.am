@@ -17,8 +17,9 @@ dist-hook:
 	rm -rf `find $(distdir)/tests -type f -name '*.svbin'`
 
 pkginc_libdir=$(dovecot_pkgincludedir)/sieve
+dist_pkginc_lib_HEADERS = \
+    pigeonhole-version.h
 nodist_pkginc_lib_HEADERS = \
-    pigeonhole-version.h \
 	pigeonhole-config.h
 
 if MAINTAINER_MODE
@@ -30,6 +31,9 @@ pigeonhole-version.h: noop
 	$(SHELL) $(top_srcdir)/update-version.sh $(top_srcdir) $(top_builddir)
 
 noop:
+
+DISTCLEANFILES = \
+    $(top_builddir)/pigeonhole-version.h
 
 # Testsuite tests (FIXME: ugly)
 
