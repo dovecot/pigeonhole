@@ -1,3 +1,12 @@
+v0.4.5 30-10-2014 Stephan Bosch <stephan@rename-it.nl>
+
+	+ Added a Pigeonhole version banner to doveconf output. This way, future
+	  bug reports will also include Pigeonhole version information.
+	- Fixed handling of implicit keep. Last version erroneously reported that
+	  implicit keep succeeded after an earlier failure, while it in fact had
+	  failed. Particularly occurred for mailbox quota errors. 
+	- Fixed segfault occurring on SunOS systems when there is no active script.
+
 v0.4.4 28-10-2014 Stephan Bosch <stephan@rename-it.nl>
 
 	* Added support for Japanese mail addresses with dots at non-standard places
