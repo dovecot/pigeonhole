@@ -2,7 +2,10 @@ if BUILD_DOCS
 DOCS = doc
 endif
 
-SUBDIRS = src $(DOCS)
+SUBDIRS = \
+	. \
+	src \
+	$(DOCS)
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -11,6 +14,7 @@ EXTRA_DIST = \
 	examples \
 	COPYING.LGPL \
 	ChangeLog \
+	is-tagged.py \
 	update-version.sh
 
 dist-hook:
