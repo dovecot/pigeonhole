@@ -4,9 +4,6 @@ endif
 
 SUBDIRS = src $(DOCS)
 
-dist_pkginclude_HEADERS = \
-    pigeonhole-version.h
-
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = \
@@ -20,7 +17,9 @@ dist-hook:
 	rm -rf `find $(distdir)/tests -type f -name '*.svbin'`
 
 pkginc_libdir=$(dovecot_pkgincludedir)/sieve
-nodist_pkginc_lib_HEADERS = pigeonhole-config.h
+nodist_pkginc_lib_HEADERS = \
+    pigeonhole-version.h \
+	pigeonhole-config.h
 
 if MAINTAINER_MODE
 ChangeLog: .hg/dirstate
