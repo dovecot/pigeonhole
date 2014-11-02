@@ -1,3 +1,8 @@
+v0.4.6 02-11-2014 Stephan Bosch <stephan@rename-it.nl>
+
+	- After make distclean the distributed tarball would fail to recompile.
+	  This causes problems for some distribution builds.
+
 v0.4.5 30-10-2014 Stephan Bosch <stephan@rename-it.nl>
 
 	+ Added a Pigeonhole version banner to doveconf output. This way, future
