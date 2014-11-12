@@ -890,16 +890,19 @@ static bool sieve_validate_command_arguments
 	struct sieve_ast_argument *arg;
 	struct sieve_command_registration *cmd_reg = cmd->reg;
 
-	/* Validate any tags that might be present */
+	/* Resolve tagged arguments */
 	arg = sieve_ast_argument_first(cmd->ast_node);
-
-	/* Visit tagged and optional arguments */
-	while ( arg != NULL && sieve_ast_argument_type(arg) == SAAT_TAG ) {
-		struct sieve_ast_argument *parg;
+	while ( arg != NULL ) {
 		void *arg_data = NULL;
-		struct sieve_tag_registration *tag_reg =
-			sieve_validator_command_tag_get(valdtr, cmd, arg, &arg_data);
+		struct sieve_tag_registration *tag_reg;
 		const struct sieve_argument_def *tag_def;
+
+		if (sieve_ast_argument_type(arg) != SAAT_TAG) {
+			arg = sieve_ast_argument_next(arg);
+			continue;
+		}
+
+		tag_reg = sieve_validator_command_tag_get(valdtr, cmd, arg, &arg_data);
 
 		if ( tag_reg == NULL ) {
 			sieve_argument_validate_error(valdtr, arg,
@@ -923,13 +926,22 @@ static bool sieve_validate_command_arguments
 			(arg->ast, tag_def, tag_reg->ext, tag_reg->id_code);
 		arg->argument->data = arg_data;
 
+		arg = sieve_ast_argument_next(arg);
+	}
+
+	/* Validate tagged arguments */
+	arg = sieve_ast_argument_first(cmd->ast_node);
+	while ( arg != NULL && sieve_ast_argument_type(arg) == SAAT_TAG) {
+		const struct sieve_argument_def *tag_def = arg->argument->def;
+		struct sieve_ast_argument *parg;
+
 		/* Scan backwards for any duplicates */
 		parg = sieve_ast_argument_prev(arg);
 		while ( parg != NULL ) {
 			if ( (sieve_ast_argument_type(parg) == SAAT_TAG &&
-					parg->argument->def == tag_reg->tag_def)
-				|| (tag_reg->id_code > 0 && parg->argument != NULL &&
-					parg->argument->id_code == tag_reg->id_code) )
+					parg->argument->def == tag_def)
+				|| (arg->argument->id_code > 0 && parg->argument != NULL &&
+					parg->argument->id_code == arg->argument->id_code) )
 			{
 				const char *tag_id = sieve_ast_argument_tag(arg);
 				const char *tag_desc =
