@@ -66,4 +66,12 @@ struct sieve_stringlist *sieve_single_stringlist_create
 struct sieve_stringlist *sieve_single_stringlist_create_cstr
 (const struct sieve_runtime_env *renv, const char *cstr, bool count_empty);
 
+/*
+ * Index Stringlist
+ */
+
+struct sieve_stringlist *sieve_index_stringlist_create
+	(const struct sieve_runtime_env *renv, struct sieve_stringlist *source,
+		int index);
+
 #endif /* __SIEVE_STRINGLIST_H */
