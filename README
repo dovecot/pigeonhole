@@ -110,6 +110,7 @@ following list outlines the implementation status of each supported extension:
     subaddress (RFC 5233): fully supported, but with limited configurability.
     spamtest and virustest (RFC 5235): fully supported (v0.1.16+).
     date (RFC 5260; Section 4): fully supported (v0.1.12+).
+    index (RFC 5260; Section 6): fully supported (v0.4.7+).
     editheader (RFC 5293): fully supported (v0.3.0+).
     reject (RFC 5429; Section 2.2): fully supported.
     enotify (RFC 5435): fully supported (v0.1.3+).
@@ -120,7 +121,7 @@ following list outlines the implementation status of each supported extension:
     mailbox (RFC 5490; Section 3): fully supported (v0.1.10+), but ACL
         permissions are not verified for mailboxexists.
     include (RFC 6609): fully supported (v0.4.0+)
-    duplicate (draft v03): fully supported (v0.4.3+).
+    duplicate (RFC 7352): fully supported (v0.4.3+).
     regex (draft v08; not latest version): almost fully supported, but
         UTF-8 is not supported.
 
@@ -135,29 +136,38 @@ following list outlines the implementation status of each supported extension:
   The following Dovecot-specific Sieve extensions are available:
 
     vnd.dovecot.debug (v0.3.0+):
-        Allows logging debug messages
+        Allows logging debug messages.
     vnd.dovecot.pipe (v0.4.0+; sieve_extprograms plugin):
-        Implements piping messages to a pre-defined set of external programs
+        Implements piping messages to a pre-defined set of external programs.
     vnd.dovecot.filter (v0.4.0+; sieve_extprograms plugin):
         Implements filtering messages through a pre-defined set of external
-        programs
+        programs.
     vnd.dovecot.execute (v0.4.0+; sieve_extprograms plugin):
         Implements executing a pre-defined set of external programs with the
-        option to process string data through the external program 
+        option to process string data through the external program.
 
   The following extensions are under development:
 
+    mboxmetadata and servermetadata (RFC 5490): partially implemented;
+        Dovecot adjustments needed.
     ereject (RFC 5429; page 4): implemented, but currently equal to reject
 
   Many more extensions to the language exist. Not all of these extensions are
   useful for Dovecot in particular, but many of them are. Currently, the
   author has taken notice of the following extensions:
 
-    index (RFC 5260; page 7): planned.
     foreverypart, mime, replace, enclose, and extracttext (RFC 5703): planned.
+    imapsieve (RFC 6785): planned.
+    envelope-dsn, envelope-deliverby, redirect-dsn and
+      redirect-deliverby (RFC 6009): planned; depends on lib-smtp changes in
+        Dovecot.
+    extlists (RFC 6134): under consideration. 
 
     These extensions will be added as soon as the necessary infrastructure is
     available.
+
+Check the TODO file for an up-to-date list of open issues and current
+development. 
 
 Compiling and Configuring
 =========================
