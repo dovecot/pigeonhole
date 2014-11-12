@@ -76,6 +76,7 @@ plugins = \
 	$(extdir)/ihave/libsieve_ext_ihave.la \
 	$(extdir)/editheader/libsieve_ext_editheader.la \
 	$(extdir)/duplicate/libsieve_ext_duplicate.la \
+	$(extdir)/index/libsieve_ext_index.la \
 	$(extdir)/vnd.dovecot/debug/libsieve_ext_debug.la \
 	$(unfinished_plugins)
 

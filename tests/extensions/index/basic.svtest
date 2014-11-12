@@ -1,0 +1,93 @@
+require "vnd.dovecot.testsuite";
+require "index";
+require "date";
+require "variables";
+require "subaddress";
+
+test_set "message" text:
+To: first@friep.example.com
+X-A: First
+Received: from mx.example.com (127.0.0.13) by mx.example.org
+ (127.0.0.12) with Macrosoft SMTP Server (TLS) id 1.2.3.4;
+ Wed, 12 Nov 2014 18:18:31 +0100
+To: second@friep.example.com
+From: stephan@example.org
+Received: from mx.example.com (127.0.0.13) by mx.example.org
+ (127.0.0.12) with Macrosoft SMTP Server (TLS) id 1.2.3.4;
+ Wed, 12 Nov 2014 18:18:30 +0100
+X-A: Second
+To: third@friep.example.com
+X-A: Third
+Received: from mx.example.com (127.0.0.13) by mx.example.org
+ (127.0.0.12) with Macrosoft SMTP Server (TLS) id 1.2.3.4;
+ Wed, 12 Nov 2014 18:18:29 +0100
+Subject: Frop!
+X-A: Fourth
+To: fourth@friep.example.com
+Received: from mx.example.com (127.0.0.13) by mx.example.org
+ (127.0.0.12) with Macrosoft SMTP Server (TLS) id 1.2.3.4;
+ Wed, 12 Nov 2014 18:18:28 +0100
+
+Frop
+.
+;
+
+test "Header :index" {
+	if not header :index 3 "x-a" "Third" {
+		test_fail "wrong header retrieved";
+	}
+
+	if header :index 3 "x-a" ["First", "Second", "Fourth"] {
+		test_fail "other header retrieved";
+	}
+}
+
+test "Header :index :last" {
+	if not header :index 3 :last "x-a" "Second" {
+		test_fail "wrong header retrieved";
+	}
+
+	if header :index 3 :last "x-a" ["First", "Third", "Fourth"] {
+		test_fail "other header retrieved";
+	}
+}
+
+test "Address :index" {
+	if not address :localpart :index 2 "to" "second" {
+		test_fail "wrong header retrieved";
+	}
+
+	if address :localpart :index 2 "to" ["first", "third", "fourth"] {
+		test_fail "other header retrieved";
+	}
+}
+
+test "Address :index :last" {
+	if not address :localpart :index 2 :last "to" "third" {
+		test_fail "wrong header retrieved";
+	}
+
+	if address :localpart :index 2 :last "to" ["first", "second", "fourth"] {
+		test_fail "other header retrieved";
+	}
+}
+
+test "Date :index" {
+	if not date :index 1 "received" "second" "31" {
+		test_fail "wrong header retrieved";
+	}
+
+	if date :index 1 "received" "second" ["30", "29", "28"] {
+		test_fail "other header retrieved";
+	}
+}
+
+test "Date :index :last" {
+	if not date :index 1 :last "received" "second" "28"{
+		test_fail "wrong header retrieved";
+	}
+
+	if date :index 1 :last "received" "second" ["31", "30", "29"] {
+		test_fail "other header retrieved";
+	}
+}

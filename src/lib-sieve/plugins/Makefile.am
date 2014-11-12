@@ -22,6 +22,7 @@ SUBDIRS = \
 	ihave \
 	editheader \
 	duplicate \
+	index \
 	vnd.dovecot \
 	$(UNFINISHED)
 

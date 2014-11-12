@@ -140,6 +140,8 @@ test_cases = \
 	tests/extensions/date/basic.svtest \
 	tests/extensions/date/date-parts.svtest \
 	tests/extensions/date/zones.svtest \
+	tests/extensions/index/basic.svtest \
+	tests/extensions/index/errors.svtest \
 	tests/extensions/spamvirustest/spamtest.svtest \
 	tests/extensions/spamvirustest/virustest.svtest \
 	tests/extensions/spamvirustest/spamtestplus.svtest \

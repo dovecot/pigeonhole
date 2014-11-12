@@ -103,6 +103,7 @@ extern const struct sieve_extension_def enotify_extension;
 extern const struct sieve_extension_def environment_extension;
 extern const struct sieve_extension_def mailbox_extension;
 extern const struct sieve_extension_def date_extension;
+extern const struct sieve_extension_def index_extension;
 extern const struct sieve_extension_def ihave_extension;
 extern const struct sieve_extension_def duplicate_extension;
 
@@ -117,7 +118,8 @@ const struct sieve_extension_def *sieve_core_extensions[] = {
 	&relational_extension, &regex_extension, &imap4flags_extension,
 	&copy_extension, &include_extension, &body_extension,
 	&variables_extension, &enotify_extension, &environment_extension,
-	&mailbox_extension, &date_extension, &ihave_extension, &duplicate_extension
+	&mailbox_extension, &date_extension, &index_extension, &ihave_extension,
+	&duplicate_extension
 };
 
 const unsigned int sieve_core_extensions_count =
