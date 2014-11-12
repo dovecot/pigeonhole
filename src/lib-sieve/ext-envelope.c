@@ -436,10 +436,9 @@ static bool tst_envelope_registered
 	struct sieve_command_registration *cmd_reg)
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_AM_OPT_COMPARATOR);
+	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR);
+	sieve_match_types_link_tags(valdtr, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
 	sieve_address_parts_link_tags(valdtr, cmd_reg, SIEVE_AM_OPT_ADDRESS_PART);
-	sieve_match_types_link_tags(valdtr, cmd_reg, SIEVE_AM_OPT_MATCH_TYPE);
-
 	return TRUE;
 }
 

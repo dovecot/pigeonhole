@@ -7,6 +7,7 @@
 #include "message-address.h"
 
 #include "sieve-common.h"
+#include "sieve-match.h"
 #include "sieve-extensions.h"
 #include "sieve-objects.h"
 
@@ -121,10 +122,8 @@ struct sieve_stringlist *sieve_address_part_stringlist_create
  */
 
 enum sieve_addrmatch_opt_operand {
-	SIEVE_AM_OPT_END,
-	SIEVE_AM_OPT_COMPARATOR,
-	SIEVE_AM_OPT_ADDRESS_PART,
-	SIEVE_AM_OPT_MATCH_TYPE
+	SIEVE_AM_OPT_ADDRESS_PART = SIEVE_MATCH_OPT_LAST,
+	SIEVE_AM_OPT_LAST
 };
 
 int sieve_addrmatch_opr_optional_dump

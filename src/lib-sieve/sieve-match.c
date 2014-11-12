@@ -258,9 +258,21 @@ int sieve_match_opr_optional_read
 
 		switch ( *opt_code ) {
 		case SIEVE_MATCH_OPT_COMPARATOR:
+			if (cmp == NULL) {
+				sieve_runtime_trace_error(renv, "unexpected comparator operand");
+				if ( exec_status != NULL )
+					*exec_status = SIEVE_EXEC_BIN_CORRUPT;
+				return -1;
+			}
 			status = sieve_opr_comparator_read(renv, address, cmp);
 			break;
 		case SIEVE_MATCH_OPT_MATCH_TYPE:
+			if (mcht == NULL) {
+				sieve_runtime_trace_error(renv, "unexpected match-type operand");
+				if ( exec_status != NULL )
+					*exec_status = SIEVE_EXEC_BIN_CORRUPT;
+				return -1;
+			}
 			status = sieve_opr_match_type_read(renv, address, mcht);
 			break;
 		default:

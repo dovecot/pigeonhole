@@ -3,7 +3,6 @@
 
 #include "lib.h"
 #include "str-sanitize.h"
-#include "mail-storage.h"
 
 #include "sieve-common.h"
 #include "sieve-commands.h"
@@ -99,6 +98,10 @@ static bool tst_exists_operation_dump
 	sieve_code_dumpf(denv, "EXISTS");
 	sieve_code_descend(denv);
 
+	/* Optional operands */
+	if ( sieve_message_opr_optional_dump(denv, address, NULL) != 0 )
+		return FALSE;
+
 	return sieve_opr_stringlist_dump(denv, address, "header names");
 }
 
@@ -110,7 +113,7 @@ static int tst_exists_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	struct sieve_stringlist *hdr_list;
-	struct mail *mail = sieve_message_get_mail(renv->msgctx);
+	ARRAY_TYPE(sieve_message_override) svmos;
 	string_t *hdr_item;
 	bool matched;
 	int ret;
@@ -118,6 +121,12 @@ static int tst_exists_operation_execute
 	/*
 	 * Read operands
 	 */
+
+	/* Optional operands */
+	memset(&svmos, 0, sizeof(svmos));
+	if ( sieve_message_opr_optional_read
+		(renv, address, NULL, &ret, NULL, NULL, NULL, &svmos) < 0 )
+		return ret;
 
 	/* Read header-list */
 	if ( (ret=sieve_opr_stringlist_read(renv, address, "header-list", &hdr_list))
@@ -136,15 +145,19 @@ static int tst_exists_operation_execute
 	matched = TRUE;
 	while ( matched &&
 		(ret=sieve_stringlist_next_item(hdr_list, &hdr_item)) > 0 ) {
-		const char *const *headers;
+		struct sieve_stringlist *value_list;
+		string_t *dummy;
 
-		if ( mail_get_headers(mail, str_c(hdr_item), &headers) < 0 ) {
-			return sieve_runtime_mail_error	(renv, mail,
-				"exists test: "
-				"failed to read header field `%s'",
-				str_c(hdr_item));
-		}
-		if ( headers[0] == NULL )
+		/* Get header */
+		if ( (ret=sieve_message_get_header_fields
+			(renv, sieve_single_stringlist_create(renv, hdr_item, FALSE),
+				&svmos, &value_list) <= 0) )
+			return ret;
+
+		if ( (ret=sieve_stringlist_next_item(value_list, &dummy)) < 0)
+			return value_list->exec_status;
+
+		if ( ret == 0 )
 			matched = FALSE;
 
 		sieve_runtime_trace(renv, SIEVE_TRLVL_MATCHING,

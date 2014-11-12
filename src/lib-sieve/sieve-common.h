@@ -147,6 +147,8 @@ struct sieve_storage;
 
 /* sieve-message.h */
 struct sieve_message_context;
+struct sieve_message_override;
+struct sieve_message_override_def;
 
 /* sieve-plugins.h */
 struct sieve_plugin;

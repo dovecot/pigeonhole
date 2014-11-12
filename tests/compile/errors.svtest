@@ -65,7 +65,7 @@ test "Header errors" {
 	}
 
 	if not test_error :index 4 :matches
-		"* unexpected tagged argument ':tag' while *" {
+		"unknown tagged argument ':tag' for the header test *" {
 		test_fail "error 4 is invalid";
 	}
 

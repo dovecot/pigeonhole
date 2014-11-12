@@ -75,10 +75,12 @@ static bool tst_address_registered
 	struct sieve_command_registration *cmd_reg)
 {
 	/* The order of these is not significant */
-	sieve_comparators_link_tag(valdtr, cmd_reg, SIEVE_AM_OPT_COMPARATOR );
-	sieve_address_parts_link_tags(valdtr, cmd_reg, SIEVE_AM_OPT_ADDRESS_PART);
-	sieve_match_types_link_tags(valdtr, cmd_reg, SIEVE_AM_OPT_MATCH_TYPE);
-
+	sieve_comparators_link_tag
+		(valdtr, cmd_reg, SIEVE_MATCH_OPT_COMPARATOR );
+	sieve_match_types_link_tags
+		(valdtr, cmd_reg, SIEVE_MATCH_OPT_MATCH_TYPE);
+	sieve_address_parts_link_tags
+		(valdtr, cmd_reg, SIEVE_AM_OPT_ADDRESS_PART);
 	return TRUE;
 }
 
@@ -212,7 +214,7 @@ static bool tst_address_operation_dump
 	sieve_code_descend(denv);
 
 	/* Handle any optional arguments */
-	if ( sieve_addrmatch_opr_optional_dump(denv, address, NULL) != 0 )
+	if ( sieve_message_opr_optional_dump(denv, address, NULL) != 0 )
 		return FALSE;
 
 	return
@@ -235,11 +237,13 @@ static int tst_address_operation_execute
 		SIEVE_ADDRESS_PART_DEFAULT(all_address_part);
 	struct sieve_stringlist *hdr_list, *hdr_value_list, *value_list, *key_list;
 	struct sieve_address_list *addr_list;
+	ARRAY_TYPE(sieve_message_override) svmos;
 	int match, ret;
 
 	/* Read optional operands */
-	if ( sieve_addrmatch_opr_optional_read
-		(renv, address, NULL, &ret, &addrp, &mcht, &cmp) < 0 )
+	memset(&svmos, 0, sizeof(svmos));
+	if ( sieve_message_opr_optional_read
+		(renv, address, NULL, &ret, &addrp, &mcht, &cmp, &svmos) < 0 )
 		return ret;
 
 	/* Read header-list */
@@ -254,8 +258,14 @@ static int tst_address_operation_execute
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "address test");
 
+	/* Get header */
+	sieve_runtime_trace_descend(renv);
+	if ( (ret=sieve_message_get_header_fields
+		(renv, hdr_list, &svmos, &hdr_value_list)) <= 0 )
+		return ret;
+	sieve_runtime_trace_ascend(renv);
+
 	/* Create value stringlist */
-	hdr_value_list = sieve_message_header_stringlist_create(renv, hdr_list, FALSE);
 	addr_list = sieve_header_address_list_create(renv, hdr_value_list);
 	value_list = sieve_address_part_stringlist_create(renv, &addrp, addr_list);
 

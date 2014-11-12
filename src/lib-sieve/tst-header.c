@@ -139,7 +139,7 @@ static bool tst_header_operation_dump
 	sieve_code_descend(denv);
 
 	/* Optional operands */
-	if ( sieve_match_opr_optional_dump(denv, address, NULL) != 0 )
+	if ( sieve_message_opr_optional_dump(denv, address, NULL) != 0 )
 		return FALSE;
 
 	return
@@ -159,15 +159,17 @@ static int tst_header_operation_execute
 	struct sieve_match_type mcht =
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_stringlist *hdr_list, *key_list, *value_list;
+	ARRAY_TYPE(sieve_message_override) svmos;
 	int match, ret;
 
 	/*
 	 * Read operands
 	 */
 
-	/* Handle match-type and comparator operands */
-	if ( sieve_match_opr_optional_read(renv, address, NULL, &ret, &cmp, &mcht)
-		< 0 )
+	/* Optional operands */
+	memset(&svmos, 0, sizeof(svmos));
+	if ( sieve_message_opr_optional_read
+		(renv, address, NULL, &ret, NULL, &mcht, &cmp, &svmos) < 0 )
 		return ret;
 
 	/* Read header-list */
@@ -186,8 +188,12 @@ static int tst_header_operation_execute
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "header test");
 
-	/* Create header stringlist */
-	value_list = sieve_message_header_stringlist_create(renv, hdr_list, TRUE);
+	/* Get header */
+	sieve_runtime_trace_descend(renv);
+	if ( (ret=sieve_message_get_header_fields
+		(renv, hdr_list, &svmos, &value_list)) <= 0 )
+		return ret;
+	sieve_runtime_trace_ascend(renv);
 
 	/* Perform match */
 	if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret)) < 0 )

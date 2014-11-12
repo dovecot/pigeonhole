@@ -362,10 +362,10 @@ int sieve_addrmatch_opr_optional_dump
 			return opt;
 
 		switch ( *opt_code ) {
-		case SIEVE_AM_OPT_COMPARATOR:
+		case SIEVE_MATCH_OPT_COMPARATOR:
 			opok = sieve_opr_comparator_dump(denv, address);
 			break;
-		case SIEVE_AM_OPT_MATCH_TYPE:
+		case SIEVE_MATCH_OPT_MATCH_TYPE:
 			opok = sieve_opr_match_type_dump(denv, address);
 			break;
 		case SIEVE_AM_OPT_ADDRESS_PART:
@@ -406,13 +406,31 @@ int sieve_addrmatch_opr_optional_read
 		}
 
 		switch ( *opt_code ) {
-		case SIEVE_AM_OPT_COMPARATOR:
+		case SIEVE_MATCH_OPT_COMPARATOR:
+			if (cmp == NULL) {
+				sieve_runtime_trace_error(renv, "unexpected comparator operand");
+				if ( exec_status != NULL )
+					*exec_status = SIEVE_EXEC_BIN_CORRUPT;
+				return -1;
+			}
 			status = sieve_opr_comparator_read(renv, address, cmp);
 			break;
-		case SIEVE_AM_OPT_MATCH_TYPE:
+		case SIEVE_MATCH_OPT_MATCH_TYPE:
+			if (mtch == NULL) {
+				sieve_runtime_trace_error(renv, "unexpected match-type operand");
+				if ( exec_status != NULL )
+					*exec_status = SIEVE_EXEC_BIN_CORRUPT;
+				return -1;
+			}
 			status = sieve_opr_match_type_read(renv, address, mtch);
 			break;
 		case SIEVE_AM_OPT_ADDRESS_PART:
+			if (addrp == NULL) {
+				sieve_runtime_trace_error(renv, "unexpected address-part operand");
+				if ( exec_status != NULL )
+					*exec_status = SIEVE_EXEC_BIN_CORRUPT;
+				return -1;
+			}
 			status = sieve_opr_address_part_read(renv, address, addrp);
 			break;
 		default:

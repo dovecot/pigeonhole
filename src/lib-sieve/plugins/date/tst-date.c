@@ -139,7 +139,7 @@ const struct sieve_operation_def currentdate_operation = {
  */
 
 enum tst_date_optional {
-	OPT_DATE_ZONE = SIEVE_MATCH_OPT_LAST,
+	OPT_DATE_ZONE = SIEVE_AM_OPT_LAST,
 	OPT_DATE_LAST
 };
 
@@ -349,7 +349,7 @@ static bool tst_date_operation_dump
 	for (;;) {
 		int opt;
 
-		if ( (opt=sieve_match_opr_optional_dump(denv, address, &opt_code)) < 0 )
+		if ( (opt=sieve_message_opr_optional_dump(denv, address, &opt_code)) < 0 )
 			return FALSE;
 
 		if ( opt == 0 ) break;
@@ -387,6 +387,7 @@ static int tst_date_operation_execute
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_comparator cmp =
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
+	ARRAY_TYPE(sieve_message_override) svmos;
 	string_t *date_part = NULL, *zone = NULL;
 	struct sieve_stringlist *hdr_list = NULL, *hdr_value_list;
 	struct sieve_stringlist *value_list, *key_list;
@@ -399,8 +400,10 @@ static int tst_date_operation_execute
 	for (;;) {
 		int opt;
 
-		if ( (opt=sieve_match_opr_optional_read
-			(renv, address, &opt_code, &ret, &cmp, &mcht)) < 0 )
+		/* Optional operands */
+		memset(&svmos, 0, sizeof(svmos));
+		if ( (opt=sieve_message_opr_optional_read
+			(renv, address, &opt_code, &ret, NULL, &mcht, &cmp, &svmos)) < 0 )
 			return ret;
 
 		if ( opt == 0 ) break;
@@ -465,8 +468,14 @@ static int tst_date_operation_execute
 
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "date test");
 
+		/* Get header */
+		sieve_runtime_trace_descend(renv);
+		if ( (ret=sieve_message_get_header_fields
+			(renv, hdr_list, &svmos, &hdr_value_list)) <= 0 )
+			return ret;
+		sieve_runtime_trace_ascend(renv);
+
 		/* Create value stringlist */
-		hdr_value_list = sieve_message_header_stringlist_create(renv, hdr_list, FALSE);
 		value_list = ext_date_stringlist_create
 			(renv, hdr_value_list, time_zone, dpart);
 

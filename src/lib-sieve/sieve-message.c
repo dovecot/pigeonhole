@@ -20,8 +20,11 @@
 #include "sieve-stringlist.h"
 #include "sieve-error.h"
 #include "sieve-extensions.h"
+#include "sieve-code.h"
+#include "sieve-address-parts.h"
 #include "sieve-runtime.h"
 #include "sieve-runtime-trace.h"
+#include "sieve-match.h"
 #include "sieve-interpreter.h"
 #include "sieve-address.h"
 
@@ -569,3 +572,195 @@ static void sieve_message_header_stringlist_reset
 	strlist->headers_index = 0;
 	sieve_stringlist_reset(strlist->field_names);
 }
+
+/*
+ * Header override operand
+ */
+
+const struct sieve_operand_class sieve_message_override_operand_class =
+	{ "header-override" };
+
+bool sieve_opr_message_override_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address)
+{
+	struct sieve_message_override svmo;
+	const struct sieve_message_override_def *hodef;
+
+	if ( !sieve_opr_object_dump
+		(denv, &sieve_message_override_operand_class, address, &svmo.object) )
+		return FALSE;
+
+	hodef = svmo.def =
+		(const struct sieve_message_override_def *) svmo.object.def;
+
+	if ( hodef->dump_context != NULL ) {
+		sieve_code_descend(denv);
+		if ( !hodef->dump_context(&svmo, denv, address) ) {
+			return FALSE;
+		}
+		sieve_code_ascend(denv);
+	}
+
+	return TRUE;
+}
+
+bool sieve_opr_message_override_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	struct sieve_message_override *svmo)
+{
+	const struct sieve_message_override_def *hodef;
+
+	svmo->context = NULL;
+
+	if ( !sieve_opr_object_read
+		(renv, &sieve_message_override_operand_class, address, &svmo->object) )
+		return FALSE;
+
+	hodef = svmo->def =
+		(const struct sieve_message_override_def *) svmo->object.def;
+
+	if ( hodef->read_context != NULL &&
+		!hodef->read_context(svmo, renv, address, &svmo->context) ) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/*
+ * Optional operands
+ */
+
+int sieve_message_opr_optional_dump
+(const struct sieve_dumptime_env *denv, sieve_size_t *address,
+	signed int *opt_code)
+{
+	signed int _opt_code = 0;
+	bool final = FALSE, opok = TRUE;
+
+	if ( opt_code == NULL ) {
+		opt_code = &_opt_code;
+		final = TRUE;
+	}
+
+	while ( opok ) {
+		int opt;
+
+		if ( (opt=sieve_addrmatch_opr_optional_dump
+			(denv, address, opt_code)) <= 0 )
+			return opt;
+
+		if ( *opt_code == SIEVE_OPT_MESSAGE_OVERRIDE ) {
+			opok = sieve_opr_message_override_dump(denv, address);
+		} else {
+			return ( final ? -1 : 1 );
+		}
+	}
+
+	return -1;
+}
+
+int sieve_message_opr_optional_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	signed int *opt_code, int *exec_status,
+	struct sieve_address_part *addrp, struct sieve_match_type *mcht,
+	struct sieve_comparator *cmp, 
+	ARRAY_TYPE(sieve_message_override) *svmos)
+{
+	signed int _opt_code = 0;
+	bool final = FALSE;
+	int ret;
+
+	if ( opt_code == NULL ) {
+		opt_code = &_opt_code;
+		final = TRUE;
+	}
+
+	if ( exec_status != NULL )
+		*exec_status = SIEVE_EXEC_OK;
+
+	for ( ;; ) {
+		int opt;
+
+		if ( (opt=sieve_addrmatch_opr_optional_read
+			(renv, address, opt_code, exec_status, addrp, mcht, cmp)) <= 0 )
+			return opt;
+
+		if ( *opt_code == SIEVE_OPT_MESSAGE_OVERRIDE ) {
+			struct sieve_message_override svmo;
+			const struct sieve_message_override *svmo_idx;
+			unsigned int count, i;
+
+			if ( (ret=sieve_opr_message_override_read
+				(renv, address, &svmo)) <= 0 ) {
+				if ( exec_status != NULL )
+					*exec_status = ret;
+				return -1;
+			}
+
+			if ( !array_is_created(svmos) )
+				t_array_init(svmos, 8);
+			/* insert in sorted sequence */
+			svmo_idx = array_get(svmos, &count);
+			for (i = 0; i < count; i++) {
+				if (svmo.def->sequence < svmo_idx[i].def->sequence) {
+					array_insert(svmos, i, &svmo, 1);
+					break;
+				}
+			}
+			if (count == i)
+				array_append(svmos, &svmo, 1);
+		} else {
+			if ( final ) {
+				sieve_runtime_trace_error(renv, "invalid optional operand");
+				if ( exec_status != NULL )
+					*exec_status = SIEVE_EXEC_BIN_CORRUPT;
+				return -1;
+			}
+			return 1;
+		}
+	}
+
+	i_unreached();
+	return -1;
+}
+
+/*
+ * Message header
+ */
+
+int sieve_message_get_header_fields
+(const struct sieve_runtime_env *renv,
+	struct sieve_stringlist *field_names,
+	ARRAY_TYPE(sieve_message_override) *svmos,
+	struct sieve_stringlist **fields_r)
+{
+	const struct sieve_message_override *svmo;
+	unsigned int count, i;
+	int ret;
+
+	if ( svmos == NULL || !array_is_created(svmos) ||
+		array_count(svmos) == 0 ) {
+		*fields_r = sieve_message_header_stringlist_create
+			(renv, field_names, TRUE);
+		return SIEVE_EXEC_OK;
+	}
+
+	svmo = array_get(svmos, &count);
+	if ( svmo[0].def->sequence == 0 &&
+		svmo[0].def->header_override != NULL ) {
+		*fields_r = field_names;
+	} else {
+		*fields_r = sieve_message_header_stringlist_create
+			(renv, field_names, TRUE);
+	}
+
+	for ( i = 0; i < count; i++ ) {
+		if ( svmo[i].def->header_override != NULL &&
+			(ret=svmo[i].def->header_override(&svmo[i], renv, fields_r)) <= 0 )
+			return ret;
+	}
+	return SIEVE_EXEC_OK;
+}
+
+
