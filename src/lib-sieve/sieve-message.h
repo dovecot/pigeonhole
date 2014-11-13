@@ -135,12 +135,11 @@ static inline void sieve_opr_message_override_emit
 	sieve_opr_object_emit(sblock, ext, &seff->obj_def);
 }
 
-bool sieve_opr_message_override_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address,
-		struct sieve_message_override *svmo);
-
 bool sieve_opr_message_override_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+int sieve_opr_message_override_read
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
+		struct sieve_message_override *svmo);
 
 /*
  * Optional operands
