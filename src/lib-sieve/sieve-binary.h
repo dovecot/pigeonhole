@@ -13,7 +13,7 @@
  */
 
 #define SIEVE_BINARY_VERSION_MAJOR     1
-#define SIEVE_BINARY_VERSION_MINOR     2
+#define SIEVE_BINARY_VERSION_MINOR     3
 
 /*
  * Binary object

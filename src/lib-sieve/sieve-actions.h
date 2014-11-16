@@ -187,12 +187,11 @@ static inline void sieve_opr_side_effect_emit
 	sieve_opr_object_emit(sblock, ext, &seff->obj_def);
 }
 
-bool sieve_opr_side_effect_read
-	(const struct sieve_runtime_env *renv, sieve_size_t *address,
-		struct sieve_side_effect *seffect);
-
 bool sieve_opr_side_effect_dump
 	(const struct sieve_dumptime_env *denv, sieve_size_t *address);
+int sieve_opr_side_effect_read
+	(const struct sieve_runtime_env *renv, sieve_size_t *address,
+		struct sieve_side_effect *seffect);
 
 /*
  * Optional operands

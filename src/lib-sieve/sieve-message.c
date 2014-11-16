@@ -604,27 +604,27 @@ bool sieve_opr_message_override_dump
 	return TRUE;
 }
 
-bool sieve_opr_message_override_read
+int sieve_opr_message_override_read
 (const struct sieve_runtime_env *renv, sieve_size_t *address,
 	struct sieve_message_override *svmo)
 {
 	const struct sieve_message_override_def *hodef;
+	int ret;
 
 	svmo->context = NULL;
 
 	if ( !sieve_opr_object_read
 		(renv, &sieve_message_override_operand_class, address, &svmo->object) )
-		return FALSE;
+		return SIEVE_EXEC_BIN_CORRUPT;
 
 	hodef = svmo->def =
 		(const struct sieve_message_override_def *) svmo->object.def;
 
 	if ( hodef->read_context != NULL &&
-		!hodef->read_context(svmo, renv, address, &svmo->context) ) {
-		return FALSE;
-	}
+		(ret=hodef->read_context(svmo, renv, address, &svmo->context)) <= 0 )
+		return ret;
 
-	return TRUE;
+	return SIEVE_EXEC_OK;
 }
 
 /*

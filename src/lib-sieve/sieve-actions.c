@@ -37,29 +37,6 @@
 const struct sieve_operand_class sieve_side_effect_operand_class =
 	{ "SIDE-EFFECT" };
 
-bool sieve_opr_side_effect_read
-(const struct sieve_runtime_env *renv, sieve_size_t *address,
-	struct sieve_side_effect *seffect)
-{
-	const struct sieve_side_effect_def *sdef;
-
-	seffect->context = NULL;
-
-	if ( !sieve_opr_object_read
-		(renv, &sieve_side_effect_operand_class, address, &seffect->object) )
-		return FALSE;
-
-	sdef = seffect->def =
-		(const struct sieve_side_effect_def *) seffect->object.def;
-
-	if ( sdef->read_context != NULL &&
-		!sdef->read_context(seffect, renv, address, &seffect->context) ) {
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
 bool sieve_opr_side_effect_dump
 (const struct sieve_dumptime_env *denv, sieve_size_t *address)
 {
@@ -82,6 +59,30 @@ bool sieve_opr_side_effect_dump
 	}
 
 	return TRUE;
+}
+
+int sieve_opr_side_effect_read
+(const struct sieve_runtime_env *renv, sieve_size_t *address,
+	struct sieve_side_effect *seffect)
+{
+	const struct sieve_side_effect_def *sdef;
+	int ret;
+
+	seffect->context = NULL;
+
+	if ( !sieve_opr_object_read
+		(renv, &sieve_side_effect_operand_class, address, &seffect->object) )
+		return SIEVE_EXEC_BIN_CORRUPT;
+
+	sdef = seffect->def =
+		(const struct sieve_side_effect_def *) seffect->object.def;
+
+	if ( sdef->read_context != NULL && (ret=sdef->read_context
+		(seffect, renv, address, &seffect->context)) <= 0 ) {
+		return ret;
+	}
+
+	return SIEVE_EXEC_OK;
 }
 
 /*
