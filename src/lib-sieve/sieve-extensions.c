@@ -106,6 +106,8 @@ extern const struct sieve_extension_def date_extension;
 extern const struct sieve_extension_def index_extension;
 extern const struct sieve_extension_def ihave_extension;
 extern const struct sieve_extension_def duplicate_extension;
+extern const struct sieve_extension_def mboxmetadata_extension;
+extern const struct sieve_extension_def servermetadata_extension;
 
 const struct sieve_extension_def *sieve_core_extensions[] = {
 	/* Core extensions */
@@ -141,6 +143,7 @@ extern const struct sieve_extension_def vnd_debug_extension;
 const struct sieve_extension_def *sieve_extra_extensions[] = {
 	&vacation_seconds_extension, &spamtest_extension, &spamtestplus_extension,
 	&virustest_extension, &editheader_extension,
+	&mboxmetadata_extension, &servermetadata_extension,
 
 	/* vnd.dovecot. */
 	&vnd_debug_extension
@@ -173,11 +176,9 @@ const unsigned int sieve_deprecated_extensions_count =
 #ifdef HAVE_SIEVE_UNFINISHED
 
 extern const struct sieve_extension_def ereject_extension;
-extern const struct sieve_extension_def mboxmetadata_extension;
-extern const struct sieve_extension_def servermetadata_extension;
 
 const struct sieve_extension_def *sieve_unfinished_extensions[] = {
-	&ereject_extension, &mboxmetadata_extension, &servermetadata_extension
+	&ereject_extension
 };
 
 const unsigned int sieve_unfinished_extensions_count =

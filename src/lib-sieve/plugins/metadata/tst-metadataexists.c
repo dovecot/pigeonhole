@@ -17,6 +17,9 @@
 
 #include "ext-metadata-common.h"
 
+#include <ctype.h>
+
+
 /*
  * Command definitions
  */
@@ -175,14 +178,114 @@ static bool tst_metadataexists_operation_dump
  * Code execution
  */
 
+static inline const char *_lc_error(const char *error)
+{
+	char *lcerror = t_strdup_noconst(error);
+	lcerror[0] = i_tolower(lcerror[0]);
+
+	return lcerror;
+}
+
+static int tst_metadataexists_check_annotations
+(const struct sieve_runtime_env *renv, const char *mailbox,
+	struct sieve_stringlist *anames, bool *all_exist_r)
+{
+	struct mail_user *user = renv->scriptenv->user;
+	struct mailbox *box = NULL;
+	struct imap_metadata_transaction *imtrans;
+	string_t *aname;
+	bool all_exist = TRUE;
+	int ret, sret, status;
+
+	*all_exist_r = FALSE;
+
+	if ( user == NULL )
+		return SIEVE_EXEC_OK;
+
+	if ( mailbox != NULL ) {
+		struct mail_namespace *ns;
+		ns = mail_namespace_find(user->namespaces, mailbox);
+		box = mailbox_alloc(ns->list, mailbox, 0);
+		imtrans = imap_metadata_transaction_begin(box);
+	} else {
+		imtrans = imap_metadata_transaction_begin_server(user);
+	}
+
+	if ( mailbox != NULL ) {
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+			"checking annotations of mailbox `%s':",
+			str_sanitize(mailbox, 80));
+	} else {
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+			"checking server annotations");
+	}
+
+	aname = NULL;
+	status = SIEVE_EXEC_OK;
+	while ( all_exist &&
+		(sret=sieve_stringlist_next_item(anames, &aname)) > 0 ) {
+		struct mail_attribute_value avalue;
+		const char *error;
+
+		if ( !imap_metadata_verify_entry_name(str_c(aname), &error) ) {
+			sieve_runtime_warning(renv, NULL, "%s test: "
+				"specified annotation name `%s' is invalid: %s",
+				(mailbox != NULL ? "metadataexists" : "servermetadataexists"),
+				str_sanitize(str_c(aname), 256), _lc_error(error));
+			continue;
+		}
+
+		ret = imap_metadata_get(imtrans, str_c(aname), &avalue);
+		if (ret < 0) {
+			enum mail_error error_code;
+			const char *error;
+
+			error = imap_metadata_transaction_get_last_error
+				(imtrans, &error_code);
+			sieve_runtime_error(renv, NULL, "%s test: "
+				"failed to retrieve annotation `%s': %s%s",
+				(mailbox != NULL ? "metadataexists" : "servermetadataexists"),
+				str_sanitize(str_c(aname), 256), _lc_error(error),
+				(error_code == MAIL_ERROR_TEMP ? " (temporary failure)" : ""));
+
+			all_exist = FALSE;
+			status = ( error_code == MAIL_ERROR_TEMP ?
+				SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE );
+			break;
+
+		} else if (avalue.value == NULL && avalue.value_stream == NULL) {
+			all_exist = FALSE;
+			sieve_runtime_trace(renv, 0,
+				"annotation `%s': not found", str_c(aname));
+			break;
+
+		} else {
+			sieve_runtime_trace(renv, 0,
+				"annotation `%s': found", str_c(aname));
+		}
+	}
+
+	if ( sret < 0 ) {
+		sieve_runtime_trace_error
+			(renv, "invalid annotation name stringlist item");
+		status = SIEVE_EXEC_BIN_CORRUPT;
+	}
+
+	(void)imap_metadata_transaction_commit(&imtrans, NULL, NULL);
+	if ( box != NULL )
+		mailbox_free(&box);
+
+	*all_exist_r = all_exist;
+	return status;
+}
+
 static int tst_metadataexists_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
 	bool metadata = sieve_operation_is(renv->oprtn, metadataexists_operation);
-	struct sieve_stringlist *annotation_names;
-	string_t *mailbox, *annotation_item;
-	bool trace = FALSE;
-	bool all_exist = TRUE;
+	struct sieve_stringlist *anames;
+	string_t *mailbox;
+	bool trace = FALSE, all_exist = TRUE;
 	int ret;
 
 	/*
@@ -197,7 +300,7 @@ static int tst_metadataexists_operation_execute
 
 	/* Read annotation names */
 	if ( (ret=sieve_opr_stringlist_read
-		(renv, address, "annotation-names", &annotation_names)) <= 0 )
+		(renv, address, "annotation-names", &anames)) <= 0 )
 		return ret;
 
 	/*
@@ -215,30 +318,16 @@ static int tst_metadataexists_operation_execute
 		trace = sieve_runtime_trace_active(renv, SIEVE_TRLVL_MATCHING);
 	}
 
-	if ( renv->scriptenv->user != NULL ) {
-		int ret;
-
-		annotation_item = NULL;
-		while ( (ret=sieve_stringlist_next_item(annotation_names, &annotation_item))
-			> 0 ) {
-			//const char *annotation = str_c(annotation_item);
-
-			/* IMPLEMENT ... */
-			all_exist = FALSE;
-		}
-
-		if ( ret < 0 ) {
-			sieve_runtime_trace_error
-				(renv, "invalid annotation name stringlist item");
-			return SIEVE_EXEC_BIN_CORRUPT;
-		}
-	}
+	if ( (ret=tst_metadataexists_check_annotations
+		(renv, (metadata ? str_c(mailbox) : NULL), anames,
+			&all_exist)) <= 0 )
+		return ret;
 
 	if ( trace ) {
 		if ( all_exist )
 			sieve_runtime_trace(renv, 0, "all annotations exist");
 		else
-			sieve_runtime_trace(renv, 0, "some mailboxes no not exist");
+			sieve_runtime_trace(renv, 0, "some annotations do not exist");
 	}
 
 	sieve_interpreter_set_test_result(renv->interp, all_exist);

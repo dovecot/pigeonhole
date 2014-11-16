@@ -1,7 +1,12 @@
 /* Copyright (c) 2002-2014 Pigeonhole authors, see the included COPYING file
  */
 
+#include "lib.h"
+#include "str-sanitize.h"
+#include "istream.h"
+
 #include "sieve-common.h"
+#include "sieve-limits.h"
 #include "sieve-commands.h"
 #include "sieve-stringlist.h"
 #include "sieve-code.h"
@@ -14,6 +19,10 @@
 #include "sieve-match.h"
 
 #include "ext-metadata-common.h"
+
+#include <ctype.h>
+
+#define TST_METADATA_MAX_MATCH_SIZE SIEVE_MAX_STRING_LEN
 
 /*
  * Test definitions
@@ -102,7 +111,8 @@ const struct sieve_operation_def servermetadata_operation = {
  */
 
 static bool tst_metadata_registered
-(struct sieve_validator *valdtr, const struct sieve_extension *ext ATTR_UNUSED,
+(struct sieve_validator *valdtr,
+	const struct sieve_extension *ext ATTR_UNUSED,
 	struct sieve_command_registration *cmd_reg)
 {
 	/* The order of these is not significant */
@@ -125,7 +135,9 @@ static bool tst_metadata_validate
 	const struct sieve_comparator cmp_default =
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
 	unsigned int arg_index = 1;
+	const char *error;
 
+	/* mailbox */
 	if ( sieve_command_is(tst, metadata_test) ) {
 		if ( !sieve_validate_positional_argument
 			(valdtr, tst, arg, "mailbox", arg_index++, SAAT_STRING) ) {
@@ -138,6 +150,7 @@ static bool tst_metadata_validate
 		arg = sieve_ast_argument_next(arg);
 	}
 
+	/* annotation-name */
 	if ( !sieve_validate_positional_argument
 		(valdtr, tst, arg, "annotation-name", arg_index++, SAAT_STRING) ) {
 		return FALSE;
@@ -146,10 +159,25 @@ static bool tst_metadata_validate
 	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 		return FALSE;
 
+	if ( sieve_argument_is_string_literal(arg) ) {
+		string_t *aname = sieve_ast_argument_str(arg);
+
+		if ( !imap_metadata_verify_entry_name(str_c(aname), &error) ) {
+			char *lcerror = t_strdup_noconst(error);
+			lcerror[0] = i_tolower(lcerror[0]);
+			sieve_argument_validate_warning
+				(valdtr, arg, "%s test: "
+					"specified annotation name `%s' is invalid: %s",
+					sieve_command_identifier(tst),
+					str_sanitize(str_c(aname), 256), lcerror);
+		}
+	}
+
 	arg = sieve_ast_argument_next(arg);
 
+	/* key-list */
 	if ( !sieve_validate_positional_argument
-		(valdtr, tst, arg, "key list", arg_index++, SAAT_STRING_LIST) ) {
+		(valdtr, tst, arg, "key-list", arg_index++, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 
@@ -217,6 +245,63 @@ static bool tst_metadata_operation_dump
  * Code execution
  */
 
+static inline const char *_lc_error(const char *error)
+{
+	char *lcerror = t_strdup_noconst(error);
+	lcerror[0] = i_tolower(lcerror[0]);
+
+	return lcerror;
+}
+
+static int tst_metadata_get_annotation
+(const struct sieve_runtime_env *renv, const char *mailbox,
+	const char *aname, const char **annotation_r)
+{
+	struct mail_user *user = renv->scriptenv->user;
+	struct mailbox *box;
+	struct imap_metadata_transaction *imtrans;
+	struct mail_attribute_value avalue;
+	int status, ret;
+
+	*annotation_r = NULL;
+
+	if ( user == NULL )
+		return SIEVE_EXEC_OK;
+
+	if ( mailbox != NULL ) {
+		struct mail_namespace *ns;
+		ns = mail_namespace_find(user->namespaces, mailbox);
+		box = mailbox_alloc(ns->list, mailbox, 0);
+		imtrans = imap_metadata_transaction_begin(box);
+	} else {
+		imtrans = imap_metadata_transaction_begin_server(user);
+	}
+
+	status = SIEVE_EXEC_OK;
+	ret = imap_metadata_get(imtrans, aname, &avalue);
+	if (ret < 0) {
+		enum mail_error error_code;
+		const char *error;
+
+		error = imap_metadata_transaction_get_last_error
+			(imtrans, &error_code);
+
+		sieve_runtime_error(renv, NULL, "%s test: "
+			"failed to retrieve annotation `%s': %s%s",
+			(mailbox != NULL ? "metadata" : "servermetadata"),
+			str_sanitize(aname, 256), _lc_error(error),
+			(error_code == MAIL_ERROR_TEMP ? " (temporary failure)" : ""));
+
+		status = ( error_code == MAIL_ERROR_TEMP ?
+			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE );
+
+	} else if (avalue.value != NULL) {
+		*annotation_r = avalue.value;
+	}
+	(void)imap_metadata_transaction_commit(&imtrans, NULL, NULL);
+	return status;
+}
+
 static int tst_metadata_operation_execute
 (const struct sieve_runtime_env *renv, sieve_size_t *address)
 {
@@ -225,9 +310,9 @@ static int tst_metadata_operation_execute
 		SIEVE_MATCH_TYPE_DEFAULT(is_match_type);
 	struct sieve_comparator cmp =
 		SIEVE_COMPARATOR_DEFAULT(i_ascii_casemap_comparator);
-	string_t *mailbox, *annotation_name;
+	string_t *mailbox, *aname;
 	struct sieve_stringlist *value_list, *key_list;
-	const char *annotation = NULL;
+	const char *annotation = NULL, *error;
 	int match, ret;
 
 	/*
@@ -247,7 +332,7 @@ static int tst_metadata_operation_execute
 
 	/* Read annotation-name */
 	if ( (ret=sieve_opr_string_read
-		(renv, address, "annotation-name", &annotation_name)) <= 0 )
+		(renv, address, "annotation-name", &aname)) <= 0 )
 		return ret;
 
 	/* Read key-list */
@@ -263,24 +348,48 @@ static int tst_metadata_operation_execute
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "metadata test");
 	else
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "servermetadata test");
+	sieve_runtime_trace_descend(renv);
+
+	if ( !imap_metadata_verify_entry_name(str_c(aname), &error) ) {
+		sieve_runtime_warning(renv, NULL, "%s test: "
+			"specified annotation name `%s' is invalid: %s",
+			(metadata ? "metadata" : "servermetadata"),
+			str_sanitize(str_c(aname), 256), _lc_error(error));
+		sieve_interpreter_set_test_result(renv->interp, FALSE);
+		return SIEVE_EXEC_OK;
+	}
+
+	if ( metadata ) {
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+			"retrieving annotation `%s' from mailbox `%s'",
+			str_sanitize(str_c(aname), 256),
+			str_sanitize(str_c(mailbox), 80));
+	} else {
+		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
+			"retrieving server annotation `%s'",
+			str_sanitize(str_c(aname), 256));
+	}
 
 	/* Get annotation */
-	annotation = "FIXME";
-
-	/* Perform match */
-	if ( annotation != NULL ) {
-		/* Create value stringlist */
-		value_list = sieve_single_stringlist_create_cstr(renv, annotation, FALSE);
-
+	if ( (ret=tst_metadata_get_annotation
+		(renv, (metadata ? str_c(mailbox) : NULL), str_c(aname), &annotation))
+			== SIEVE_EXEC_OK ) {
 		/* Perform match */
-		if ( (match=sieve_match(renv, &mcht, &cmp, value_list, key_list, &ret))
-			< 0 )
-			return ret;
-	} else {
-		match = 0;
+		if ( annotation != NULL ) {
+			/* Create value stringlist */
+			value_list = sieve_single_stringlist_create_cstr(renv, annotation, FALSE);
+
+			/* Perform match */
+			if ( (match=sieve_match
+				(renv, &mcht, &cmp, value_list, key_list, &ret)) < 0 )
+				return ret;
+		} else {
+			match = 0;
+		}
 	}
 
 	/* Set test result for subsequent conditional jump */
-	sieve_interpreter_set_test_result(renv->interp, match > 0);
-	return SIEVE_EXEC_OK;
+	if (ret == SIEVE_EXEC_OK)
+		sieve_interpreter_set_test_result(renv->interp, match > 0);
+	return ret;
 }

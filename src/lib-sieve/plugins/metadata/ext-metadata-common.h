@@ -4,6 +4,10 @@
 #ifndef __EXT_METADATA_COMMON_H
 #define __EXT_METADATA_COMMON_H
 
+#include "lib.h"
+#include "mail-storage.h"
+#include "imap-metadata.h"
+
 #include "sieve-common.h"
 
 /*

@@ -1,5 +1,5 @@
 if BUILD_UNFINISHED
-UNFINISHED = metadata
+UNFINISHED = 
 endif
 
 SUBDIRS = \
@@ -23,6 +23,7 @@ SUBDIRS = \
 	editheader \
 	duplicate \
 	index \
+	metadata \
 	vnd.dovecot \
 	$(UNFINISHED)
 

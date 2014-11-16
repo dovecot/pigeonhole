@@ -44,8 +44,7 @@ comparators = \
 
 if BUILD_UNFINISHED
 unfinished_storages =
-unfinished_plugins = \
-	$(extdir)/metadata/libsieve_ext_metadata.la
+unfinished_plugins =
 endif
 
 strgdir = $(top_builddir)/src/lib-sieve/storage
@@ -77,6 +76,7 @@ plugins = \
 	$(extdir)/editheader/libsieve_ext_editheader.la \
 	$(extdir)/duplicate/libsieve_ext_duplicate.la \
 	$(extdir)/index/libsieve_ext_index.la \
+	$(extdir)/metadata/libsieve_ext_metadata.la \
 	$(extdir)/vnd.dovecot/debug/libsieve_ext_debug.la \
 	$(unfinished_plugins)
 

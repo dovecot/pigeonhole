@@ -5,7 +5,8 @@ libsieve_ext_metadata_la_LDFLAGS = -module -avoid-version
 AM_CPPFLAGS = \
 	-I$(srcdir)/../.. \
 	-I$(srcdir)/../variables \
-	$(LIBDOVECOT_INCLUDE)
+	$(LIBDOVECOT_INCLUDE) \
+	$(LIBDOVECOT_STORAGE_INCLUDE)
 
 tests = \
 	tst-metadata.c \
