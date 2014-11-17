@@ -299,6 +299,8 @@ static int tst_metadata_get_annotation
 		*annotation_r = avalue.value;
 	}
 	(void)imap_metadata_transaction_commit(&imtrans, NULL, NULL);
+	if ( box != NULL )
+		mailbox_free(&box);
 	return status;
 }
 

@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 		testsuite_message_init();
 
 		memset(&scriptenv, 0, sizeof(scriptenv));
-		scriptenv.user = sieve_tool_get_mail_user(sieve_tool);
+		scriptenv.user = testsuite_mailstore_get_user();
 		scriptenv.default_mailbox = "INBOX";
 		scriptenv.postmaster_address = "postmaster@example.com";
 		scriptenv.smtp_start = testsuite_smtp_start;

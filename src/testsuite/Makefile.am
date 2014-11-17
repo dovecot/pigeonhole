@@ -24,7 +24,8 @@ commands = \
 	cmd-test-result.c \
 	cmd-test-message.c \
 	cmd-test-mailbox.c \
-	cmd-test-binary.c
+	cmd-test-binary.c \
+	cmd-test-imap-metadata.c
 
 tests = \
 	tst-test-script-compile.c \

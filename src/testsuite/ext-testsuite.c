@@ -74,7 +74,8 @@ const struct sieve_operation_def *testsuite_operations[] = {
 	&test_mailbox_create_operation,
 	&test_mailbox_delete_operation,
 	&test_binary_load_operation,
-	&test_binary_save_operation
+	&test_binary_save_operation,
+	&test_imap_metadata_set_operation
 };
 
 /*
@@ -134,6 +135,7 @@ static bool ext_testsuite_validator_load
 	sieve_validator_register_command(valdtr, ext, &cmd_test_mailbox_delete);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_binary_load);
 	sieve_validator_register_command(valdtr, ext, &cmd_test_binary_save);
+	sieve_validator_register_command(valdtr, ext, &cmd_test_imap_metadata_set);
 
 	sieve_validator_register_command(valdtr, ext, &tst_test_script_compile);
 	sieve_validator_register_command(valdtr, ext, &tst_test_script_run);

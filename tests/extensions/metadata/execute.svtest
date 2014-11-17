@@ -1,0 +1,58 @@
+require "vnd.dovecot.testsuite";
+require "mboxmetadata";
+require "fileinto";
+
+test "MetadataExists - None exist" {
+	if metadataexists "INBOX" "/private/frop" {
+		test_fail "metadataexists confirms existence of unknown annotation";
+	}
+}
+
+test_imap_metadata_set "INBOX" "/private/frop" "FROP!";
+test_imap_metadata_set "INBOX" "/private/friep" "FRIEP!";
+
+test "MetadataExists - Not all exist" {
+	if metadataexists "INBOX"
+		["/private/frop", "/private/friep", "/private/frml"] {
+		test_fail "metadataexists confirms existence of unknown annotation";
+	}
+}
+
+test_imap_metadata_set "INBOX" "/private/friep" "FRIEP!";
+test_imap_metadata_set "INBOX" "/private/frml" "FRML!";
+
+test "MetadataExists - One exists" {
+	if not metadataexists "INBOX" ["/private/frop"] {
+		test_fail "metadataexists fails to recognize annotation";
+	}
+}
+
+test "MetadataExists - All exist" {
+	if not metadataexists "INBOX"
+		["/private/frop", "/private/friep", "/private/frml"] {
+		test_fail "metadataexists fails to recognize annotations";
+	}
+}
+
+test "Metadata" {
+	if not metadata :is "INBOX" "/private/frop" "FROP!" {
+		test_fail "invalid metadata value for /private/frop";
+	}
+	if metadata :is "INBOX" "/private/frop" "Hutsefluts" {
+		test_fail "unexpected match for /private/frop";
+	}
+
+	if not metadata :is "INBOX" "/private/friep" "FRIEP!" {
+		test_fail "invalid metadata value for /private/friep";
+	}
+	if metadata :is "INBOX" "/private/friep" "Hutsefluts" {
+		test_fail "unexpected match for /private/friep";
+	}
+
+	if not metadata :is "INBOX" "/private/frml" "FRML!" {
+		test_fail "invalid metadata value for /private/frml";
+	}
+	if metadata :is "INBOX" "/private/frml" "Hutsefluts" {
+		test_fail "unexpected match for /private/frml";
+	}
+}
