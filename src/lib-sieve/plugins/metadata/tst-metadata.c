@@ -274,6 +274,7 @@ static int tst_metadata_get_annotation
 		box = mailbox_alloc(ns->list, mailbox, 0);
 		imtrans = imap_metadata_transaction_begin(box);
 	} else {
+		box = NULL;
 		imtrans = imap_metadata_transaction_begin_server(user);
 	}
 
