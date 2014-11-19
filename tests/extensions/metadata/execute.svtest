@@ -1,5 +1,6 @@
 require "vnd.dovecot.testsuite";
 require "mboxmetadata";
+require "servermetadata";
 require "fileinto";
 
 test "MetadataExists - None exist" {
@@ -8,8 +9,8 @@ test "MetadataExists - None exist" {
 	}
 }
 
-test_imap_metadata_set "INBOX" "/private/frop" "FROP!";
-test_imap_metadata_set "INBOX" "/private/friep" "FRIEP!";
+test_imap_metadata_set :mailbox "INBOX" "/private/frop" "FROP!";
+test_imap_metadata_set :mailbox "INBOX" "/private/friep" "FRIEP!";
 
 test "MetadataExists - Not all exist" {
 	if metadataexists "INBOX"
@@ -18,8 +19,8 @@ test "MetadataExists - Not all exist" {
 	}
 }
 
-test_imap_metadata_set "INBOX" "/private/friep" "FRIEP!";
-test_imap_metadata_set "INBOX" "/private/frml" "FRML!";
+test_imap_metadata_set :mailbox "INBOX" "/private/friep" "FRIEP!";
+test_imap_metadata_set :mailbox "INBOX" "/private/frml" "FRML!";
 
 test "MetadataExists - One exists" {
 	if not metadataexists "INBOX" ["/private/frop"] {
@@ -53,6 +54,61 @@ test "Metadata" {
 		test_fail "invalid metadata value for /private/frml";
 	}
 	if metadata :is "INBOX" "/private/frml" "Hutsefluts" {
+		test_fail "unexpected match for /private/frml";
+	}
+}
+
+test "ServermetadataExists - None exist" {
+	if servermetadataexists "/private/frop" {
+		test_fail "servermetadataexists confirms existence of unknown annotation";
+	}
+}
+
+test_imap_metadata_set "/private/frop" "FROP!";
+test_imap_metadata_set "/private/friep" "FRIEP!";
+
+test "ServermetadataExists - Not all exist" {
+	if servermetadataexists 
+		["/private/frop", "/private/friep", "/private/frml"] {
+		test_fail "metadataexists confirms existence of unknown annotation";
+	}
+}
+
+test_imap_metadata_set "/private/friep" "FRIEP!";
+test_imap_metadata_set "/private/frml" "FRML!";
+
+test "ServermetadataExists - One exists" {
+	if not servermetadataexists ["/private/frop"] {
+		test_fail "servermetadataexists fails to recognize annotation";
+	}
+}
+
+test "ServermetadataExists - All exist" {
+	if not servermetadataexists
+		["/private/frop", "/private/friep", "/private/frml"] {
+		test_fail "metadataexists fails to recognize annotations";
+	}
+}
+
+test "Servermetadata" {
+	if not servermetadata :is "/private/frop" "FROP!" {
+		test_fail "invalid servermetadata value for /private/frop";
+	}
+	if servermetadata :is "/private/frop" "Hutsefluts" {
+		test_fail "unexpected match for /private/frop";
+	}
+
+	if not servermetadata :is "/private/friep" "FRIEP!" {
+		test_fail "invalid servermetadata value for /private/friep";
+	}
+	if servermetadata :is "/private/friep" "Hutsefluts" {
+		test_fail "unexpected match for /private/friep";
+	}
+
+	if not servermetadata :is "/private/frml" "FRML!" {
+		test_fail "invalid servermetadata value for /private/frml";
+	}
+	if servermetadata :is "/private/frml" "Hutsefluts" {
 		test_fail "unexpected match for /private/frml";
 	}
 }

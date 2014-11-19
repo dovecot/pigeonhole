@@ -256,6 +256,7 @@ int testsuite_mailstore_set_imap_metadata
 		box = mailbox_alloc(ns->list, mailbox, 0);
 		imtrans = imap_metadata_transaction_begin(box);
 	} else {
+		box = NULL;
 		imtrans = imap_metadata_transaction_begin_server
 			(testsuite_mailstore_user);
 	}
