@@ -1106,8 +1106,10 @@ static int sieve_result_transaction_start
 (struct sieve_result *result, struct sieve_result_action *first,
 	struct sieve_result_action **last_r)
 {
+	const struct sieve_script_env *senv = result->action_env.scriptenv;
 	struct sieve_result_action *rac = first;
 	int status = SIEVE_EXEC_OK;
+	bool dup_flushed = FALSE;
 
 	while ( status == SIEVE_EXEC_OK && rac != NULL ) {
 		struct sieve_action *act = &rac->action;
@@ -1116,6 +1118,12 @@ static int sieve_result_transaction_start
 		if ( act->def == NULL || act->executed ) {
 			rac = rac->next;
 			continue;
+		}
+
+		if ((act->def->flags & SIEVE_ACTFLAG_MAIL_STORAGE) != 0 &&
+			!dup_flushed) {
+			sieve_action_duplicate_flush(senv);
+			dup_flushed = TRUE;
 		}
 
 		if ( act->def->start != NULL ) {
@@ -1283,10 +1291,8 @@ static int sieve_result_transaction_commit_or_rollback
 	struct sieve_result_action *last,
 	bool *implicit_keep, bool *keep)
 {
-	const struct sieve_script_env *senv = result->action_env.scriptenv;
 	struct sieve_result_action *rac;
 	int commit_status = status;
-	bool dup_flushed = FALSE;
 
 	/* First commit/rollback all storage actions */
 	rac = first;
@@ -1297,11 +1303,6 @@ static int sieve_result_transaction_commit_or_rollback
 			(act->def->flags & SIEVE_ACTFLAG_MAIL_STORAGE) == 0) {
 			rac = rac->next;
 			continue;
-		}
-
-		if (!dup_flushed) {
-			sieve_action_duplicate_flush(senv);
-			dup_flushed = TRUE;
 		}
 
 		status = sieve_result_action_commit_or_rollback
