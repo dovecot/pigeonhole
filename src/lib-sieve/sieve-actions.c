@@ -932,6 +932,17 @@ bool sieve_action_reject_mail
 	return result;
 }
 
+/*
+ * Mailbox
+ */
 
+bool sieve_mailbox_check_name(const char *mailbox, const char **error_r)
+{
+	if ( !uni_utf8_str_is_valid(mailbox) ) {
+		*error_r = "mailbox is utf-8";
+		return FALSE;
+	}
+	return TRUE;
+}
 
 

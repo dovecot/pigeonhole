@@ -8,6 +8,7 @@
 #include "sieve-common.h"
 #include "sieve-limits.h"
 #include "sieve-commands.h"
+#include "sieve-actions.h"
 #include "sieve-stringlist.h"
 #include "sieve-code.h"
 #include "sieve-comparators.h"
@@ -146,6 +147,19 @@ static bool tst_metadata_validate
 
 		if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
 			return FALSE;
+
+		/* Check name validity when mailbox argument is not a variable */
+		if ( sieve_argument_is_string_literal(arg) ) {
+			const char *mailbox = sieve_ast_argument_strc(arg), *error;
+
+			if ( !sieve_mailbox_check_name(mailbox, &error) ) {
+				sieve_argument_validate_warning
+					(valdtr, arg, "%s test: "
+						"invalid mailbox name `%s' specified: %s",
+						sieve_command_identifier(tst),
+						str_sanitize(mailbox, 256), error);
+			}
+		}
 
 		arg = sieve_ast_argument_next(arg);
 	}
@@ -363,6 +377,15 @@ static int tst_metadata_operation_execute
 	}
 
 	if ( metadata ) {
+		if ( !sieve_mailbox_check_name(str_c(mailbox), &error) ) {
+			sieve_runtime_warning(renv, NULL, "%s test: "
+				"invalid mailbox name `%s' specified: %s",
+				(metadata ? "metadata" : "servermetadata"),
+				str_sanitize(str_c(mailbox), 256), error);
+			sieve_interpreter_set_test_result(renv->interp, FALSE);
+			return SIEVE_EXEC_OK;
+		}
+
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS,
 			"retrieving annotation `%s' from mailbox `%s'",
 			str_sanitize(str_c(aname), 256),

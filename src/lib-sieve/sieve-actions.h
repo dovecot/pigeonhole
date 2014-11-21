@@ -273,4 +273,11 @@ bool sieve_action_reject_mail
 (const struct sieve_action_exec_env *aenv,
 	const char *sender, const char *recipient, const char *reason);
 
+/*
+ * Mailbox
+ */
+
+// FIXME: move this to a more appropriate location
+bool sieve_mailbox_check_name(const char *mailbox, const char **error_r);
+
 #endif /* __SIEVE_ACTIONS_H */

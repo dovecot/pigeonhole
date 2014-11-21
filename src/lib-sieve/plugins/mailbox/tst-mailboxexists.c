@@ -7,6 +7,7 @@
 #include "mail-namespace.h"
 
 #include "sieve-common.h"
+#include "sieve-actions.h"
 #include "sieve-extensions.h"
 #include "sieve-commands.h"
 #include "sieve-stringlist.h"
@@ -62,17 +63,54 @@ const struct sieve_operation_def mailboxexists_operation = {
  * Test validation
  */
 
+struct _validate_context {
+	struct sieve_validator *valdtr;
+	struct sieve_command *tst;
+};
+
+static int tst_mailboxexists_mailbox_validate
+(void *context, struct sieve_ast_argument *arg)
+{
+	struct _validate_context *valctx =
+		(struct _validate_context *)context;
+
+	if ( sieve_argument_is_string_literal(arg) ) {
+		const char *mailbox = sieve_ast_argument_strc(arg), *error;
+
+		if ( !sieve_mailbox_check_name(mailbox, &error) ) {
+			sieve_argument_validate_warning
+				(valctx->valdtr, arg, "%s test: "
+					"invalid mailbox name `%s' specified: %s",
+					sieve_command_identifier(valctx->tst),
+					str_sanitize(mailbox, 256), error);
+		}
+	}
+
+	return TRUE;
+}
+
 static bool tst_mailboxexists_validate
 (struct sieve_validator *valdtr, struct sieve_command *tst)
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
+	struct sieve_ast_argument *aarg; 
+	struct _validate_context valctx;
 
 	if ( !sieve_validate_positional_argument
 		(valdtr, tst, arg, "mailbox-names", 1, SAAT_STRING_LIST) ) {
 		return FALSE;
 	}
 
-	return sieve_validator_argument_activate(valdtr, tst, arg, FALSE);
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+		return FALSE;
+
+	aarg = arg;
+	memset(&valctx, 0, sizeof(valctx));
+	valctx.valdtr = valdtr;
+	valctx.tst = tst;
+
+	return sieve_ast_stringlist_map
+		(&aarg, (void*)&valctx, tst_mailboxexists_mailbox_validate);
 }
 
 /*

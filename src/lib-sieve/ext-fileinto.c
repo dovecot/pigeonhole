@@ -117,11 +117,12 @@ static bool cmd_fileinto_validate
 
 	/* Check name validity when folder argument is not a variable */
 	if ( sieve_argument_is_string_literal(arg) ) {
-		const char *folder = sieve_ast_argument_strc(arg);
+		const char *folder = sieve_ast_argument_strc(arg), *error;
 
-		if ( !uni_utf8_str_is_valid(folder) ) {
+		if ( !sieve_mailbox_check_name(folder, &error) ) {
 			sieve_command_validate_error(valdtr, cmd,
-				"folder name specified for fileinto command is not utf-8: %s", folder);
+				"invalid folder name `%s' specified for fileinto command: %s",
+				str_sanitize(folder, 256), error);
 			return FALSE;
 		}
 	}
