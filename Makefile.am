@@ -159,6 +159,7 @@ test_cases = \
 	tests/extensions/duplicate/execute.svtest \
 	tests/extensions/duplicate/execute-vnd.svtest \
 	tests/extensions/metadata/execute.svtest \
+	tests/extensions/metadata/errors.svtest \
 	tests/extensions/vnd.dovecot/debug/execute.svtest \
 	tests/deprecated/notify/basic.svtest \
 	tests/deprecated/notify/mailto.svtest \

@@ -104,10 +104,41 @@ const struct sieve_operation_def servermetadataexists_operation = {
  * Test validation
  */
 
+struct _validate_context {
+	struct sieve_validator *valdtr;
+	struct sieve_command *tst;
+};
+
+static int tst_metadataexists_annotation_validate
+(void *context, struct sieve_ast_argument *arg)
+{
+	struct _validate_context *valctx =
+		(struct _validate_context *)context;
+
+	if ( sieve_argument_is_string_literal(arg) ) {
+		const char *aname = sieve_ast_strlist_strc(arg);
+		const char *error;
+
+		if ( !imap_metadata_verify_entry_name(aname, &error) ) {
+			char *lcerror = t_strdup_noconst(error);
+			lcerror[0] = i_tolower(lcerror[0]);
+			sieve_argument_validate_warning
+				(valctx->valdtr, arg, "%s test: "
+					"specified annotation name `%s' is invalid: %s",
+					sieve_command_identifier(valctx->tst),
+					str_sanitize(aname, 256), lcerror);
+		}
+	}
+
+	return TRUE; /* Can't check at compile time */
+}
+
 static bool tst_metadataexists_validate
 (struct sieve_validator *valdtr, struct sieve_command *tst)
 {
 	struct sieve_ast_argument *arg = tst->first_positional;
+	struct sieve_ast_argument *aarg; 
+	struct _validate_context valctx;
 	unsigned int arg_index = 1;
 
 	if ( sieve_command_is(tst, metadataexists_test) ) {
@@ -127,7 +158,16 @@ static bool tst_metadataexists_validate
 		return FALSE;
 	}
 
-	return sieve_validator_argument_activate(valdtr, tst, arg, FALSE);
+	if ( !sieve_validator_argument_activate(valdtr, tst, arg, FALSE) )
+		return FALSE;
+
+	aarg = arg;
+	memset(&valctx, 0, sizeof(valctx));
+	valctx.valdtr = valdtr;
+	valctx.tst = tst;
+
+	return sieve_ast_stringlist_map
+		(&aarg, (void*)&valctx, tst_metadataexists_annotation_validate);
 }
 
 /*
@@ -232,7 +272,8 @@ static int tst_metadataexists_check_annotations
 				"specified annotation name `%s' is invalid: %s",
 				(mailbox != NULL ? "metadataexists" : "servermetadataexists"),
 				str_sanitize(str_c(aname), 256), _lc_error(error));
-			continue;
+			all_exist = FALSE;
+			break;;
 		}
 
 		ret = imap_metadata_get(imtrans, str_c(aname), &avalue);
