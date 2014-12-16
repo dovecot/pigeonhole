@@ -31,7 +31,7 @@ execute :input 1 "frop";
 execute :input ["23423","21342"] "frop";
 
 # 11: error: invalid :input argument; invalid parameter
-execute :input :frop "frop";
+execute :input :friep "frop";
 
 # 12: error: :output not allowed without variables extension
 execute :output "${frop}" "frop";
