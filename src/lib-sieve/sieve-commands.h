@@ -164,8 +164,6 @@ struct sieve_command {
 	( (cmd)->def == &(definition) )
 #define sieve_command_identifier(cmd) \
 	( (cmd)->def->identifier )
-#define sieve_command_type_name(cmd) \
-	( sieve_command_def_type_name((cmd)->def) )
 
 #define sieve_commands_equal(cmd1, cmd2) \
 	( (cmd1) != NULL && (cmd2) != NULL && (cmd1)->def == (cmd2)->def )
@@ -179,6 +177,8 @@ struct sieve_command *sieve_command_create
 
 const char *sieve_command_def_type_name
 	(const struct sieve_command_def *cmd_def);
+const char *sieve_command_type_name
+	(const struct sieve_command *cmd);
 
 struct sieve_command *sieve_command_prev
 	(struct sieve_command *cmd);

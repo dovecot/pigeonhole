@@ -296,6 +296,24 @@ const char *sieve_command_def_type_name
 	case SCT_NONE: return "command of unspecified type (bug)";
 	case SCT_TEST: return "test";
 	case SCT_COMMAND: return "command";
+	case SCT_HYBRID: return "command or test";
+	default:
+		break;
+	}
+	return "??COMMAND-TYPE??";
+}
+
+const char *sieve_command_type_name
+	(const struct sieve_command *cmd)
+{
+	switch ( cmd->def->type ) {
+	case SCT_NONE: return "command of unspecified type (bug)";
+	case SCT_TEST: return "test";
+	case SCT_COMMAND: return "command";
+	case SCT_HYBRID:
+		if ( cmd->ast_node->type == SAT_TEST )
+			return "test";
+		return "command";
 	default:
 		break;
 	}
