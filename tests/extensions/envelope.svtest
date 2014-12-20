@@ -265,5 +265,31 @@ test "Envelope - Japanese localpart" {
 	if not envelope :localpart :is "to" "..japanese...localpart.." {
 		test_fail "failed to parse japanese local_part (4)";
 	}
+}
 
+test "Envelope - Non-standard hostnames" {
+	test_set "envelope.to" "japanese@_example.com";
+	if not envelope :domain :is "to" "_example.com" {
+		test_fail "failed to parse non-standard domain (1)";
+	}
+
+	test_set "envelope.to" "japanese@ex_ample.com";
+	if not envelope :domain :is "to" "ex_ample.com" {
+		test_fail "failed to parse non-standard domain (2)";
+	}
+
+	test_set "envelope.to" "japanese@example_.com";
+	if not envelope :domain :is "to" "example_.com" {
+		test_fail "failed to parse non-standard domain (3)";
+	}
+
+	test_set "envelope.to" "japanese@-example.com";
+	if not envelope :domain :is "to" "-example.com" {
+		test_fail "failed to parse non-standard domain (4)";
+	}
+
+	test_set "envelope.to" "japanese@example-.com";
+	if not envelope :domain :is "to" "example-.com" {
+		test_fail "failed to parse non-standard domain (5)";
+	}
 }

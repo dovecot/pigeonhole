@@ -696,6 +696,10 @@ static int path_parse_domain
 	 * sub-domain = Let-dig [Ldh-str]
 	 * Let-dig = ALPHA / DIGIT
 	 * Ldh-str = *( ALPHA / DIGIT / "-" ) Let-dig
+	 *
+	 * NOTE: A more generic syntax is accepted to be lenient towards
+	 *       systems that don't adhere to the standards. It allows
+	 *       '-' and '_' to occur anywhere in a sub-domain.
 	 */
 
 	str_truncate(parser->str, 0);
@@ -705,27 +709,27 @@ static int path_parse_domain
 		if ( ret < 0 ) return ret;
 	} else {
 		for (;;) {
-			if ( !i_isalnum(*parser->data) )
+			if ( parser->data >= parser->end ||
+				(!i_isalnum(*parser->data) && *parser->data != '-' &&
+				*parser->data != '_') )
 				return -1;
 
 			str_append_c(parser->str, *parser->data);
 			parser->data++;
 
 			while ( parser->data < parser->end ) {
-				if ( !i_isalnum(*parser->data) && *parser->data != '-' )
+				if ( !i_isalnum(*parser->data) && *parser->data != '-' &&
+					*parser->data != '_' )
 					break;
 
 				str_append_c(parser->str, *parser->data);
 				parser->data++;
 			}
 
-			if ( !i_isalnum(*(parser->data-1)) )
-				return -1;
-
 			if ( (ret=path_skip_white_space(parser)) < 0 )
 				return ret;
 
-			if ( *parser->data != '.' )
+			if ( parser->data >= parser->end || *parser->data != '.' )
 				break;
 
 			str_append_c(parser->str, *parser->data);
