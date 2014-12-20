@@ -255,11 +255,11 @@ static void sieve_message_envelope_parse(struct sieve_message_context *msgctx)
 		(msgctx->pool, msgdata->orig_envelope_to);
 
 	if ( msgctx->envelope_orig_recipient == NULL ) {
-		sieve_sys_error(svinst,
+		sieve_sys_warning(svinst,
 			"original envelope recipient address '%s' is unparsable",
 			msgdata->orig_envelope_to);
 	} else if ( msgctx->envelope_orig_recipient->local_part == NULL ) {
-		sieve_sys_error(svinst,
+		sieve_sys_warning(svinst,
 			"original envelope recipient address '%s' is a null path",
 			msgdata->orig_envelope_to);
 	}
@@ -269,13 +269,13 @@ static void sieve_message_envelope_parse(struct sieve_message_context *msgctx)
 
 	if ( msgctx->envelope_final_recipient == NULL ) {
 		if ( msgctx->envelope_orig_recipient != NULL ) {
-			sieve_sys_error(svinst,
+			sieve_sys_warning(svinst,
 				"final envelope recipient address '%s' is unparsable",
 				msgdata->final_envelope_to);
 		}
 	} else if ( msgctx->envelope_final_recipient->local_part == NULL ) {
 		if ( strcmp(msgdata->orig_envelope_to, msgdata->final_envelope_to) != 0 ) {
-			sieve_sys_error(svinst,
+			sieve_sys_warning(svinst,
 				"final envelope recipient address '%s' is a null path",
 				msgdata->final_envelope_to);
 		}
@@ -285,7 +285,7 @@ static void sieve_message_envelope_parse(struct sieve_message_context *msgctx)
 		(msgctx->pool, msgdata->return_path);
 
 	if ( msgctx->envelope_sender == NULL ) {
-		sieve_sys_error(svinst,
+		sieve_sys_warning(svinst,
 			"envelope sender address '%s' is unparsable",
 			msgdata->return_path);
 	}
