@@ -847,7 +847,7 @@ bool sieve_validate_tag_parameter
 			t_strdup_printf(" %d (%s)", arg_pos, arg_name) );
 
 		sieve_argument_validate_error(valdtr, tag,
-			"the :%s tag for the %s %s requires %s as parameter %s, "
+			"the :%s tag for the %s %s requires %s as parameter%s, "
 			"but no parameters were found", sieve_ast_argument_tag(tag),
 			sieve_command_identifier(cmd), sieve_command_type_name(cmd),
 			sieve_ast_argument_type_name(req_type), position);
