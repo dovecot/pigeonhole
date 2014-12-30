@@ -106,6 +106,7 @@ test_cases = \
 	tests/extensions/imap4flags/flagstring.svtest \
 	tests/extensions/imap4flags/flagstore.svtest \
 	tests/extensions/body/basic.svtest \
+	tests/extensions/body/errors.svtest \
 	tests/extensions/body/raw.svtest \
 	tests/extensions/body/content.svtest \
 	tests/extensions/body/match-values.svtest \
