@@ -243,6 +243,20 @@ test "Keep errors (FIXME: count only)" {
 }
 
 /*
+ * COMPARATOR errors
+ */
+
+test "COMPARATOR errors (FIXME: count only)" {
+	if test_script_compile "errors/comparator.sieve" {
+		test_fail "compile should have failed.";
+	}
+
+	if not test_error :count "eq" :comparator "i;ascii-numeric" "6" {
+		test_fail "wrong number of errors reported";
+	}
+}
+
+/*
  * ADDRESS-PART errors
  */
 

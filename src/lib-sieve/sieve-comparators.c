@@ -140,15 +140,10 @@ static bool tag_comparator_validate
 	/* Check syntax:
 	 *   ":comparator" <comparator-name: string>
 	 */
-	if ( (*arg)->type != SAAT_STRING ) {
-		sieve_argument_validate_error(valdtr, *arg,
-			":comparator tag requires one string argument, but %s was found",
-			sieve_ast_argument_name(*arg) );
+	if ( !sieve_validate_tag_parameter
+		(valdtr, cmd, tag, *arg, NULL, 0, SAAT_STRING, FALSE) ) {
 		return FALSE;
 	}
-
-	if ( !sieve_validator_argument_activate(valdtr, cmd, *arg, FALSE) )
-		return FALSE;
 
 	/* FIXME: We can currently only handle string literal argument, so
 	 * variables are not allowed.
