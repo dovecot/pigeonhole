@@ -5,6 +5,7 @@
 #include "mempool.h"
 #include "abspath.h"
 #include "istream.h"
+#include "time-util.h"
 #include "eacces-error.h"
 
 #include "sieve-binary.h"
@@ -475,12 +476,21 @@ static int sieve_file_script_binary_read_metadata
 	sieve_size_t *offset ATTR_UNUSED)
 {
 	struct sieve_file_script *fscript = (struct sieve_file_script *)script;
+	struct sieve_instance *svinst = script->storage->svinst;
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
-	time_t time = ( fscript->st.st_mtime > fscript->lnk_st.st_mtime ?
+	time_t bmtime = sieve_binary_mtime(sbin);
+	time_t smtime = ( fscript->st.st_mtime > fscript->lnk_st.st_mtime ?
 		fscript->st.st_mtime : fscript->lnk_st.st_mtime );
 
-	if ( sieve_binary_mtime(sbin) <= time )
+	if ( bmtime <= smtime ) {
+		if (svinst->debug) {
+			sieve_script_sys_debug(script,
+				"Sieve binary is not newer than the Sieve script (%s <= %s)",
+				t_strflocaltime("%Y-%m-%d %H:%M:%S", bmtime),
+				t_strflocaltime("%Y-%m-%d %H:%M:%S", smtime));
+		}
 		return 0;
+	}
 
 	return 1;
 }

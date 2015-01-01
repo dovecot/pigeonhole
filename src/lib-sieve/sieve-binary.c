@@ -315,13 +315,27 @@ bool sieve_binary_up_to_date
 	struct sieve_binary_block *sblock;
 	sieve_size_t offset = 0;
 	unsigned int ext_count, i;
+	int ret;
 
 	i_assert(sbin->file != NULL);
 
 	sblock = sieve_binary_block_get(sbin, SBIN_SYSBLOCK_SCRIPT_DATA);
-	if ( sblock == NULL || sbin->script == NULL ||
-		sieve_script_binary_read_metadata(sbin->script, sblock, &offset) <= 0 )
+	if ( sblock == NULL || sbin->script == NULL )
 		return FALSE;
+
+	if ( (ret=sieve_script_binary_read_metadata
+		(sbin->script, sblock, &offset)) <= 0 ) {
+		if (ret < 0) {
+			sieve_sys_debug(sbin->svinst, "binary up-to-date: "
+				"failed to read script metadata from binary %s",
+				sbin->path);
+		} else {
+			sieve_sys_debug(sbin->svinst, "binary up-to-date: "
+				"script metadata indicates that binary %s is not up-to-date",
+				sbin->path);
+		}
+		return FALSE;
+	}
 
 	regs = array_get(&sbin->extensions, &ext_count);
 	for ( i = 0; i < ext_count; i++ ) {
@@ -329,8 +343,12 @@ bool sieve_binary_up_to_date
 
 		if ( binext != NULL && binext->binary_up_to_date != NULL &&
 			!binext->binary_up_to_date
-				(regs[i]->extension, sbin, regs[i]->context, cpflags) )
+				(regs[i]->extension, sbin, regs[i]->context, cpflags) ) {
+			sieve_sys_debug(sbin->svinst, "binary up-to-date: "
+				"the %s extension indicates binary %s is not up-to-date",
+				sieve_extension_name(regs[i]->extension), sbin->path);
 			return FALSE;
+		}
 	}
 
 	return TRUE;
