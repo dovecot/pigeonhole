@@ -1,4 +1,5 @@
-/* Copyright (c) 2012-2013 Dovecot Oy, see the included COPYING file */
+/* Copyright (c) 2002-2015 Pigeonhole authors, see the included COPYING file
+ */
 
 #include "lib.h"
 #include "pigeonhole-config.h"
