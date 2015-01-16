@@ -986,6 +986,8 @@ void sieve_storage_set_internal_error
 	struct tm *tm;
 	char str[256];
 
+	sieve_storage_clear_error(storage);
+
 	/* critical errors may contain sensitive data, so let user
 	   see only "Internal error" with a timestamp to make it
 	   easier to look from log files the actual error message. */
@@ -1003,7 +1005,6 @@ void sieve_storage_set_critical
 {
 	va_list va;
 
-	sieve_storage_clear_error(storage);
 	if (fmt != NULL) {
 		if ( (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 ) {
 			va_start(va, fmt);
@@ -1012,7 +1013,10 @@ void sieve_storage_set_critical
 			va_end(va);
 
 			sieve_storage_set_internal_error(storage);
+
 		} else {
+			sieve_storage_clear_error(storage);
+
 			/* no user is involved while synchronizing, so do it the
 			   normal way */
 			va_start(va, fmt);

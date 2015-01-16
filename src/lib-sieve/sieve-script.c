@@ -571,7 +571,6 @@ void sieve_script_set_critical
 
 	va_list va;
 
-	sieve_storage_clear_error(storage);
 	if (fmt != NULL) {
 		if ( (storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 ) {
 			va_start(va, fmt);
@@ -580,7 +579,10 @@ void sieve_script_set_critical
 			va_end(va);
 
 			sieve_storage_set_internal_error(storage);
+
 		} else {
+			sieve_storage_clear_error(storage);
+
 			/* no user is involved while synchronizing, so do it the
 			   normal way */
 			va_start(va, fmt);
