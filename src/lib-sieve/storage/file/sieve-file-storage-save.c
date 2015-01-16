@@ -184,6 +184,7 @@ sieve_file_storage_save_init(struct sieve_storage *storage,
 		/* Prevent overwriting the active script link when it resides in the
 		 * sieve storage directory.
 		 */
+		i_assert( fstorage->link_path != NULL );
 		if ( *(fstorage->link_path) == '\0' ) {
 			const char *svext;
 			size_t namelen;

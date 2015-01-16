@@ -133,6 +133,7 @@ static const char *sieve_file_storage_active_parse_link
 	}
 
 	/* Check whether the path is any good */
+	i_assert( fstorage->link_path != NULL );
 	if ( _file_path_cmp(scriptpath, fstorage->link_path) != 0 &&
 		_file_path_cmp(scriptpath, fstorage->path) != 0 ) {
 		sieve_storage_sys_warning(storage,
@@ -284,8 +285,12 @@ struct sieve_script *sieve_file_storage_active_script_open
 			return NULL;
 
 		/* Try to open the active_path as a regular file */
-		fscript = sieve_file_script_open_from_path(fstorage,
-			fstorage->active_path, NULL, NULL);
+		if ( S_ISDIR(fstorage->st.st_mode) ) {
+			fscript = sieve_file_script_open_from_path(fstorage,
+				fstorage->active_path, NULL, NULL);			
+		} else {
+			fscript = sieve_file_script_open_from_name(fstorage, NULL);
+		}
 		if ( fscript == NULL ) {
 			if ( storage->error_code != SIEVE_ERROR_NOT_FOUND ) {
 				sieve_storage_set_critical(storage,

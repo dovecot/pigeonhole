@@ -52,7 +52,7 @@ const char *sieve_script_file_from_name(const char *name)
  */
 
 static void sieve_file_script_handle_error
-(struct sieve_file_script *fscript, const char *path,
+(struct sieve_file_script *fscript, const char *op, const char *path,
 	const char *name, enum sieve_error *error_r)
 {
 	struct sieve_script *script = &fscript->script;
@@ -67,12 +67,14 @@ static void sieve_file_script_handle_error
 		break;
 	case EACCES:
 		sieve_script_set_critical(script,
-			"Failed to stat sieve script: %s", eacces_error_get("stat", path));
+			"Failed to %s sieve script: %s",
+			op, eacces_error_get(op, path));
 		*error_r = SIEVE_ERROR_NO_PERMISSION;
 		break;
 	default:
 		sieve_script_set_critical(script,
-			"Failed to stat sieve script: stat(%s) failed: %m", path);
+			"Failed to %s sieve script: %s(%s) failed: %m",
+			op, op, path);
 		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		break;
 	}
@@ -150,14 +152,15 @@ struct sieve_file_script *sieve_file_script_init_from_name
 	struct sieve_storage *storage = &fstorage->storage;
 	struct sieve_file_script *fscript;
 
-	if (name != NULL) {
+	if (name != NULL && S_ISDIR(fstorage->st.st_mode)) {
 		return sieve_file_script_init_from_filename
 			(fstorage, sieve_script_file_from_name(name), name);
 	}
 
 	fscript = sieve_file_script_alloc();
 	sieve_script_init
-		(&fscript->script, storage, &sieve_file_script,	fstorage->path, NULL);
+		(&fscript->script, storage, &sieve_file_script,
+			fstorage->active_path, name);
 	return fscript;
 }
 
@@ -259,7 +262,7 @@ static int sieve_file_script_stat
 	if ( S_ISLNK(st->st_mode) && stat(path, st) < 0 )
 		return -1;
 
-	return 1;
+	return 0;
 }
 
 static const char *
@@ -289,67 +292,67 @@ static int sieve_file_script_open
 	pool_t pool = script->pool;
 	const char *filename, *name, *path;
 	const char *dirpath, *basename, *binpath, *binprefix;
-	struct stat st;
-	struct stat lnk_st;
+	struct stat st, lnk_st;
 	bool success = TRUE;
-	int ret;
+	int ret = 0;
 
 	filename = fscript->filename;
 	basename = NULL;
 	name = script->name;
-	path = fstorage->path;
+	st = fstorage->st;
+	lnk_st = fstorage->lnk_st;
 
 	if (name == NULL)
 		name = storage->script_name;
 
 	T_BEGIN {
-		if ( (ret=sieve_file_script_stat(path, &st, &lnk_st)) > 0 ) {
-			if ( S_ISDIR(st.st_mode) ) {
-				/* Path is directory */
-				if ( (filename == NULL || *filename == '\0') &&
-					name != NULL && *name != '\0' ) {
-					/* Name is used to find actual filename */
-					filename = sieve_script_file_from_name(name);
+		if ( S_ISDIR(st.st_mode) ) {
+			/* Storage is a directory */
+			path = fstorage->path;
+
+			if ( (filename == NULL || *filename == '\0') &&
+				name != NULL && *name != '\0' ) {
+				/* Name is used to find actual filename */
+				filename = sieve_script_file_from_name(name);
+				basename = name;
+			}
+			if ( filename == NULL || *filename == '\0' ) {
+				sieve_script_set_critical(script,
+					"Sieve script file path '%s' is a directory.", path);
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
+				success = FALSE;
+			}	else {
+				/* Extend storage path with filename */
+				if (name == NULL) {
+					if ( basename == NULL &&
+						(basename=sieve_script_file_get_scriptname(filename)) == NULL )
+						basename = filename;
+					name = basename;
+				} else if (basename == NULL) {
 					basename = name;
 				}
-				if ( filename == NULL || *filename == '\0' ) {
-					sieve_script_set_critical(script,
-						"Sieve script file path '%s' is a directory.", path);
-					*error_r = SIEVE_ERROR_TEMP_FAILURE;
-					success = FALSE;
-				}	else {
-					/* Extend storage path with filename */
-					if (name == NULL) {
-						if ( basename == NULL &&
-							(basename=sieve_script_file_get_scriptname(filename)) == NULL )
-							basename = filename;
-						name = basename;
-					} else if (basename == NULL) {
-						basename = name;
-					}
-					dirpath = path;
+				dirpath = path;
 
-					path = sieve_file_storage_path_extend(fstorage, filename);
-					ret = sieve_file_script_stat(path, &st, &lnk_st);
-				}
-
-			} else {
-
-				/* Extract filename from path */
-				filename = path_split_filename(path, &dirpath);
-
-				if ( (basename=sieve_script_file_get_scriptname(filename)) == NULL )
-					basename = filename;
-
-				if ( name == NULL )
-					name = basename;
+				path = sieve_file_storage_path_extend(fstorage, filename);
+				ret = sieve_file_script_stat(path, &st, &lnk_st);
 			}
+
 		} else {
-			basename = name;
+			/* Storage is a single file */
+			path = fstorage->active_path;
+
+			/* Extract filename from path */
+			filename = path_split_filename(path, &dirpath);
+
+			if ( (basename=sieve_script_file_get_scriptname(filename)) == NULL )
+				basename = filename;
+
+			if ( name == NULL )
+				name = basename;
 		}
 
 		if ( success ) {
-			if ( ret <= 0 ) {
+			if ( ret < 0 ) {
 				/* Make sure we have a script name for the error */
 				if ( name == NULL ) {
 					if ( basename == NULL ) {
@@ -361,7 +364,8 @@ static int sieve_file_script_open
 					}
 					name = basename;
 				}
-				sieve_file_script_handle_error(fscript, path, name, error_r);
+				sieve_file_script_handle_error
+					(fscript, "stat", path, name, error_r);
 				success = FALSE;
 
 			} else if ( !S_ISREG(st.st_mode) ) {
@@ -431,7 +435,7 @@ static int sieve_file_script_get_stream
 
 	if ( (fd=open(fscript->path, O_RDONLY)) < 0 ) {
 		sieve_file_script_handle_error
-			(fscript, fscript->path, fscript->script.name, error_r);
+			(fscript, "open", fscript->path, fscript->script.name, error_r);
 		return -1;
 	}
 
@@ -599,6 +603,8 @@ static int _sieve_file_storage_script_activate
 	if ( ret <= 0 || strcmp(fscript->filename, afile) != 0 )
 		activated = 1;
 
+	i_assert( fstorage->link_path != NULL );
+
 	/* Check the scriptfile we are trying to activate */
 	if ( lstat(fscript->path, &st) != 0 ) {
 		sieve_script_set_critical(script,
@@ -684,6 +690,7 @@ static int sieve_file_storage_script_rename
 			/* Is the requested script active? */
 			if ( sieve_script_is_active(script) ) {
 				/* Active; make active link point to the new copy */
+				i_assert( fstorage->link_path != NULL );
 				link_path = t_strconcat
 					( fstorage->link_path, newfile, NULL );
 

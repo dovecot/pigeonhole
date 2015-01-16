@@ -35,6 +35,9 @@ struct sieve_file_storage {
 	const char *active_fname;
 	const char *link_path;
 
+	struct stat st;
+	struct stat lnk_st;
+
 	mode_t dir_create_mode;
 	mode_t file_create_mode;
 	gid_t file_create_gid;

@@ -60,6 +60,7 @@ int sieve_file_storage_quota_havespace
 		/* Don't list our active sieve script link if the link
 		 * resides in the script dir (generally a bad idea).
 		 */
+		i_assert( fstorage->link_path != NULL );
 		if ( *(fstorage->link_path) == '\0' &&
 			strcmp(fstorage->active_fname, dp->d_name) == 0 )
 			continue;

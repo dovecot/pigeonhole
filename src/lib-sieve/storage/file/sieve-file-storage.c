@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "abspath.h"
 #include "home-expand.h"
 #include "ioloop.h"
 #include "mkdir-parents.h"
@@ -45,6 +46,46 @@ const char *sieve_file_storage_path_extend
 /*
  *
  */
+
+static int sieve_file_storage_stat
+(struct sieve_file_storage *fstorage, const char *path,
+	enum sieve_error *error_r)
+{
+	struct sieve_storage *storage = &fstorage->storage;
+	struct stat st;
+
+	if ( lstat(path, &st) == 0 ) {
+		fstorage->lnk_st = st;
+
+		if ( !S_ISLNK(st.st_mode) || stat(path, &st) == 0 ) {
+			fstorage->st = st;
+			return 0;
+		}
+	}
+
+	switch ( errno ) {
+	case ENOENT:
+		sieve_storage_sys_debug(storage,
+			"Storage path `%s' not found", t_abspath(path));
+		sieve_storage_set_internal_error(storage); // should be overriden
+		*error_r = SIEVE_ERROR_NOT_FOUND;
+		break;
+	case EACCES:
+		sieve_storage_set_critical(storage,
+			"Failed to stat sieve storage path: %s",
+			eacces_error_get("stat", path));
+		*error_r = SIEVE_ERROR_NO_PERMISSION;
+		break;
+	default:
+		sieve_storage_set_critical(storage,
+			"Failed to stat sieve storage path: "
+			"stat(%s) failed: %m", path);
+		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		break;
+	}
+
+	return -1;
+}
 
 static const char *sieve_storage_get_relative_link_path
 	(const char *active_path, const char *storage_dir)
@@ -92,58 +133,6 @@ static mode_t get_dir_mode(mode_t mode)
 	if ((mode & 0006) != 0) mode |= 0001;
 
 	return mode;
-}
-
-static void sieve_file_storage_get_permissions
-(struct sieve_storage *storage, const char *path,
-mode_t *file_mode_r, mode_t *dir_mode_r, gid_t *gid_r,
-	const char **gid_origin_r)
-{
-	struct stat st;
-
-	/* Use safe defaults */
-	*file_mode_r = 0600;
-	*dir_mode_r = 0700;
-	*gid_r = (gid_t)-1;
-	*gid_origin_r = "defaults";
-
-	if ( stat(path, &st) < 0 ) {
-		if ( !ENOTFOUND(errno) ) {
-			sieve_storage_sys_error(storage,
-				"stat(%s) failed: %m", path);
-		} else {
-			sieve_storage_sys_debug(storage,
-				"Permission lookup failed from %s", path);
-		}
-		return;
-
-	} else {
-		*file_mode_r = (st.st_mode & 0666) | 0600;
-		*dir_mode_r = (st.st_mode & 0777) | 0700;
-		*gid_origin_r = path;
-
-		if ( !S_ISDIR(st.st_mode) ) {
-			/* We're getting permissions from a file. Apply +x modes as necessary. */
-			*dir_mode_r = get_dir_mode(*dir_mode_r);
-		}
-
-		if (S_ISDIR(st.st_mode) && (st.st_mode & S_ISGID) != 0) {
-			/* Directory's GID is used automatically for new files */
-			*gid_r = (gid_t)-1;
-		} else if ((st.st_mode & 0070) >> 3 == (st.st_mode & 0007)) {
-			/* Group has same permissions as world, so don't bother changing it */
-			*gid_r = (gid_t)-1;
-		} else if (getegid() == st.st_gid) {
-			/* Using our own gid, no need to change it */
-			*gid_r = (gid_t)-1;
-		} else {
-			*gid_r = st.st_gid;
-		}
-	}
-
-	sieve_storage_sys_debug(storage,
-		"Using permissions from %s: mode=0%o gid=%ld",
-		path, (int)*dir_mode_r, *gid_r == (gid_t)-1 ? -1L : (long)*gid_r);
 }
 
 static int mkdir_verify
@@ -233,79 +222,16 @@ static struct sieve_storage *sieve_file_storage_alloc(void)
 	return &fstorage->storage;
 }
 
-static int sieve_file_storage_init_paths
-(struct sieve_file_storage *fstorage, const char *active_path,
-	const char *storage_path, enum sieve_error *error_r)
-	ATTR_NULL(2, 3)
+static int sieve_file_storage_get_full_path
+(struct sieve_file_storage *fstorage, const char **storage_path,
+	enum sieve_error *error_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
 	struct sieve_instance *svinst = storage->svinst;
-	const char *tmp_dir, *link_path, *path, *active_fname;
-	mode_t dir_create_mode, file_create_mode;
-	gid_t file_create_gid;
-	const char *file_create_gid_origin;
-	int ret;
+	const char *path = *storage_path;
 
-	fstorage->prev_mtime = (time_t)-1;
+	/* Get full storage path */
 
-	/* Active script path */
-
-	if ( storage->main_storage ||
-		(storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ) {
-		if ( active_path == NULL || *active_path == '\0' ) {
-			sieve_storage_sys_debug(storage,
-				"Active script path is unconfigured; "
-				"using default (path=%s)", SIEVE_FILE_DEFAULT_PATH);
-			active_path = SIEVE_FILE_DEFAULT_PATH;
-		}
-	}
-
-	path = active_path;
-	if ( path != NULL && *path != '\0' &&
-		((path[0] == '~' && (path[1] == '/' || path[1] == '\0')) ||
-		(((svinst->flags & SIEVE_FLAG_HOME_RELATIVE) != 0 ) && path[0] != '/'))
-		)	{
-		/* home-relative path. change to absolute. */
-		const char *home = sieve_environment_get_homedir(svinst);
-
-		if ( home != NULL ) {
-			if ( path[0] == '~' && (path[1] == '/' || path[1] == '\0') )
-				path = home_expand_tilde(path, home);
-			else
-				path = t_strconcat(home, "/", path, NULL);
-		} else {
-			sieve_storage_set_critical(storage,
-				"Sieve storage path `%s' is relative to home directory, "
-				"but home directory is not available.", path);
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
-			return -1;
-		}
-	}
-	active_path = path;
-
-	/* Get the filename for the active script link */
-
-	active_fname = NULL;
-	if ( active_path != NULL && *active_path != '\0' ) {
-		active_fname = strrchr(active_path, '/');
-		if ( active_fname == NULL )
-			active_fname = active_path;
-		else
-			active_fname++;
-
-		if ( *active_fname == '\0' ) {
-			/* Link cannot be just a path ending in '/' */
-			sieve_storage_set_critical(storage,
-				"Path to active symlink must include the link's filename "
-				"(path=%s)", active_path);
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
-			return -1;
-		}
-	}
-
-	/* Storage path */
-
-	path = storage_path;
 	if ( path != NULL &&
 		((path[0] == '~' && (path[1] == '/' || path[1] == '\0')) ||
 		(((svinst->flags & SIEVE_FLAG_HOME_RELATIVE) != 0 ) && path[0] != '/')) ) {
@@ -325,47 +251,165 @@ static int sieve_file_storage_init_paths
 			return -1;
 		}
 	}
-	storage_path = path;
+	*storage_path = path;
+	return 0;
+}
 
-	if (storage_path == NULL || *storage_path == '\0') {
-		sieve_storage_set_critical(storage,
-			"Storage path cannot be empty");
-		*error_r = SIEVE_ERROR_TEMP_FAILURE;
-		return -1;
+static int sieve_file_storage_get_full_active_path
+(struct sieve_file_storage *fstorage, const char **active_path,
+	enum sieve_error *error_r)
+{
+	struct sieve_storage *storage = &fstorage->storage;
+	struct sieve_instance *svinst = storage->svinst;
+	const char *path = *active_path;
+
+	if ( path != NULL && *path != '\0' &&
+		((path[0] == '~' && (path[1] == '/' || path[1] == '\0')) ||
+		(((svinst->flags & SIEVE_FLAG_HOME_RELATIVE) != 0 ) && path[0] != '/'))
+		)	{
+		/* home-relative path. change to absolute. */
+		const char *home = sieve_environment_get_homedir(svinst);
+
+		if ( home != NULL ) {
+			if ( path[0] == '~' && (path[1] == '/' || path[1] == '\0') )
+				path = home_expand_tilde(path, home);
+			else
+				path = t_strconcat(home, "/", path, NULL);
+		} else {
+			sieve_storage_set_critical(storage,
+				"Sieve storage active script path `%s' is relative to home directory, "
+				"but home directory is not available.", path);
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			return -1;
+		}
 	}
-	
-	sieve_storage_sys_debug(storage,
-		"Using script storage path: %s", storage_path);
+	*active_path = path;
+	return 0;
+}
 
-	fstorage->path = p_strdup(storage->pool, storage_path);
+static int sieve_file_storage_init_common
+(struct sieve_file_storage *fstorage, const char *active_path,
+	const char *storage_path, bool exists, enum sieve_error *error_r)
+	ATTR_NULL(2, 3)
+{
+	struct sieve_storage *storage = &fstorage->storage;
+	const char *tmp_dir, *link_path, *active_fname;
+	int ret;
 
+	fstorage->prev_mtime = (time_t)-1;
+
+	/* Get active script path */
+
+	if ( sieve_file_storage_get_full_active_path
+		(fstorage, &active_path, error_r) < 0 )
+		return -1;
+
+	/* Get the filename for the active script link */
+
+	active_fname = NULL;
 	if ( active_path != NULL && *active_path != '\0' ) {
+		active_fname = strrchr(active_path, '/');
+		if ( active_fname == NULL ) {
+			active_fname = active_path;
+		} else {
+			active_fname++;
+		}
+
+		if ( *active_fname == '\0' ) {
+			/* Link cannot be just a path ending in '/' */
+			sieve_storage_set_critical(storage,
+				"Path to %sscript must include the filename (path=%s)",
+				( storage_path != NULL ? "active link/" : "" ),
+				active_path);
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			return -1;
+		}
+
 		sieve_storage_sys_debug(storage,
-			"Using active Sieve script path: %s", active_path);
+			"Using %sSieve script path: %s",
+			( storage_path != NULL ? "active " : "" ),
+			active_path);
 
 		fstorage->active_path = p_strdup(storage->pool, active_path);
 		fstorage->active_fname = p_strdup(storage->pool, active_fname);
-
-		/* Get the path to be prefixed to the script name in the symlink pointing
-		 * to the active script.
-		 */
-		link_path = sieve_storage_get_relative_link_path
-			(fstorage->active_path, fstorage->path);
-
-		sieve_storage_sys_debug(storage,
-			"Relative path to sieve storage in active link: %s",
-			link_path);
-
-		fstorage->link_path = p_strdup(storage->pool, link_path);
 	}
+
+	/* Determine storage path */
+
+	if (storage_path != NULL && *storage_path != '\0') {
+		sieve_storage_sys_debug(storage,
+			"Using script storage path: %s", storage_path);
+
+		if ( active_path != NULL && *active_path != '\0' ) {
+			/* Get the path to be prefixed to the script name in the symlink pointing
+			 * to the active script.
+			 */
+			link_path = sieve_storage_get_relative_link_path
+				(fstorage->active_path, storage_path);
+
+			sieve_storage_sys_debug(storage,
+				"Relative path to sieve storage in active link: %s",
+				link_path);
+
+			fstorage->link_path = p_strdup(storage->pool, link_path);
+		}
+
+	} else if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ) {
+		sieve_storage_set_critical(storage,
+			"Storage path cannot be empty for write access");
+		*error_r = SIEVE_ERROR_TEMP_FAILURE;
+		return -1;
+	}
+
+	fstorage->path = ( storage_path != NULL ?
+		p_strdup(storage->pool, storage_path) : 
+		p_strdup(storage->pool, active_path) );
 
 	/* Prepare for write access */
 
 	if ( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ) {
-		/* Get permissions */
-		sieve_file_storage_get_permissions(storage,
-			fstorage->path, &file_create_mode, &dir_create_mode, &file_create_gid,
-			&file_create_gid_origin);
+		mode_t dir_create_mode, file_create_mode;
+		gid_t file_create_gid;
+		const char *file_create_gid_origin;
+
+		/* Use safe permission defaults */
+		file_create_mode = 0600;
+		dir_create_mode = 0700;
+		file_create_gid = (gid_t)-1;
+		file_create_gid_origin = "defaults";
+
+		/* Get actual permissions */
+		if ( exists ) {
+			file_create_mode = (fstorage->st.st_mode & 0666) | 0600;
+			dir_create_mode = (fstorage->st.st_mode & 0777) | 0700;
+			file_create_gid_origin = storage_path;
+
+			if ( !S_ISDIR(fstorage->st.st_mode) ) {
+				/* We're getting permissions from a file.
+				   Apply +x modes as necessary. */
+				dir_create_mode = get_dir_mode(dir_create_mode);
+			}
+
+			if (S_ISDIR(fstorage->st.st_mode) &&
+				(fstorage->st.st_mode & S_ISGID) != 0) {
+				/* Directory's GID is used automatically for new files */
+				file_create_gid = (gid_t)-1;
+			} else if ((fstorage->st.st_mode & 0070) >> 3 ==
+				(fstorage->st.st_mode & 0007)) {
+				/* Group has same permissions as world, so don't bother changing it */
+				file_create_gid = (gid_t)-1;
+			} else if (getegid() == fstorage->st.st_gid) {
+				/* Using our own gid, no need to change it */
+				file_create_gid = (gid_t)-1;
+			} else {
+				file_create_gid = fstorage->st.st_gid;
+			}
+		}
+
+		sieve_storage_sys_debug(storage,
+			"Using permissions from %s: mode=0%o gid=%ld",
+			storage_path, (int)dir_create_mode,
+			file_create_gid == (gid_t)-1 ? -1L : (long)file_create_gid);
 
 		/*
 		 * Ensure sieve local directory structure exists (full autocreate):
@@ -392,6 +436,13 @@ static int sieve_file_storage_init_paths
 		fstorage->file_create_gid = file_create_gid;
 	}
 
+	if ( !exists && sieve_file_storage_stat
+		(fstorage, fstorage->path, error_r) < 0 )
+		return -1;
+
+	if (storage->location == NULL)
+		storage->location = p_strdup(storage->pool, storage_path);
+
 	return 0;
 }
 
@@ -401,7 +452,9 @@ static int sieve_file_storage_init
 {
 	struct sieve_file_storage *fstorage =
 		(struct sieve_file_storage *)storage;
+	const char *storage_path = storage->location;
 	const char *active_path = "";
+	bool exists = FALSE;
 
 	if ( options != NULL ) {
 		while ( *options != NULL ) {
@@ -420,8 +473,181 @@ static int sieve_file_storage_init
 		}
 	}
 
-	return sieve_file_storage_init_paths
-		(fstorage, active_path, storage->location, error_r);
+	/* Get full storage path */
+
+	if ( sieve_file_storage_get_full_path
+		(fstorage, &storage_path, error_r) < 0 )
+		return -1;
+
+	/* Stat storage directory */
+
+	if ( storage_path != NULL && *storage_path != '\0' ) {
+		if ( sieve_file_storage_stat (fstorage, storage_path, error_r) < 0 ) {
+			if ( (*error_r != SIEVE_ERROR_NOT_FOUND) ||
+				(storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0  )
+				return -1;
+		} else {
+			exists = TRUE;
+
+			if ( !S_ISDIR(fstorage->st.st_mode) ) {
+				if ( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ) {
+					sieve_storage_set_critical(storage,
+						"Sieve storage path `%s' is not a directory, "
+						"but it is to be opened for write access", storage_path);
+					*error_r = SIEVE_ERROR_TEMP_FAILURE;
+					return -1;
+				}
+				if ( active_path != NULL && *active_path != '\0' ) {
+					sieve_storage_sys_warning(storage,
+						"Explicitly specified active script path `%s' is ignored; "
+						"storage path `%s' is not a directory",
+						active_path, storage_path);
+				}
+				active_path = storage_path;
+				storage_path = NULL;
+
+			} 
+		}
+	}
+
+	if ( active_path == NULL || *active_path == '\0' ) {
+		if ( storage->main_storage ||
+			(storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
+			sieve_storage_sys_debug(storage,
+				"Active script path is unconfigured; "
+				"using default (path=%s)", SIEVE_FILE_DEFAULT_PATH);
+				active_path = SIEVE_FILE_DEFAULT_PATH;
+		}
+	}
+
+	return sieve_file_storage_init_common
+		(fstorage, active_path, storage_path, exists, error_r);
+}
+
+static void sieve_file_storage_autodetect
+(struct sieve_file_storage *fstorage, const char **storage_path_r)
+{
+	struct sieve_storage *storage = &fstorage->storage;
+	struct sieve_instance *svinst = storage->svinst;
+	const char *home = sieve_environment_get_homedir(svinst);
+	int mode = ( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ?
+		R_OK|W_OK|X_OK : R_OK|X_OK );
+
+	sieve_storage_sys_debug(storage,
+		"Performing auto-detection");
+
+	/* We'll need to figure out the storage location ourself.
+	 *
+	 * It's $HOME/sieve or /sieve when (presumed to be) chrooted.
+	 */
+	if ( home != NULL && *home != '\0' ) {
+		if (access(home, mode) == 0) {
+			/* Use default ~/sieve */
+			sieve_storage_sys_debug(storage,
+				"Root exists (%s)", home);
+
+			*storage_path_r = t_strconcat(home, "/sieve", NULL);
+		} else {
+			/* Don't have required access on the home directory */
+
+			sieve_storage_sys_debug(storage,
+				"access(%s, rwx) failed: %m", home);
+		}
+	} else {
+			sieve_storage_sys_debug(storage,
+				"HOME is not set");
+
+		if (access("/sieve", mode) == 0) {
+			*storage_path_r = "/sieve";
+			sieve_storage_sys_debug(storage,
+				"Directory `/sieve' exists, assuming chroot");
+		}
+	}
+}
+
+static int sieve_file_storage_do_init_legacy
+(struct sieve_file_storage *fstorage, const char *active_path,
+	const char *storage_path, enum sieve_error *error_r)
+{
+	struct sieve_storage *storage = &fstorage->storage;
+	bool explicit = FALSE, exists = FALSE;
+
+	if ( storage_path == NULL || *storage_path == '\0' ) {
+		/* Try autodectection */	
+		sieve_file_storage_autodetect(fstorage, &storage_path);
+
+		if ( storage_path != NULL && *storage_path != '\0') {
+			/* Got something: stat it */
+			if (sieve_file_storage_stat
+				(fstorage, storage_path, error_r) < 0 ) {
+				if (*error_r != SIEVE_ERROR_NOT_FOUND) {
+					/* Error */
+					return -1;
+				}
+			} else 	if ( S_ISDIR(fstorage->st.st_mode) ) {
+				/* Success */
+				exists = TRUE;
+			}
+		}
+
+		if ( (storage_path == NULL || *storage_path == '\0') &&
+			(storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ) {
+			sieve_storage_set_critical(storage,
+				"Could not find storage root directory for write access; "
+				"path was left unconfigured and autodetection failed");
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			return -1;
+		}
+
+	} else { 
+		/* Get full storage path */
+		if ( sieve_file_storage_get_full_path
+			(fstorage, &storage_path, error_r) < 0 )
+			return -1;
+
+		/* Stat storage directory */
+		if ( sieve_file_storage_stat(fstorage, storage_path, error_r) < 0 ) {
+			if ( (*error_r != SIEVE_ERROR_NOT_FOUND) )
+				return -1;
+			if ( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0 )
+				storage_path = NULL;
+		} else {
+			exists = TRUE;
+		}
+	
+		/* Storage path must be a directory */
+		if ( exists && !S_ISDIR(fstorage->st.st_mode) ) {
+			sieve_storage_set_critical(storage,
+				"Sieve storage path `%s' configured using sieve_dir "
+				"is not a directory", storage_path);
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			return -1;
+		}
+
+		explicit = TRUE;
+	}
+
+	if ( (active_path == NULL || *active_path == '\0') ) {
+		if ( storage->main_storage ||
+		(storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0) {
+			sieve_storage_sys_debug(storage,
+				"Active script path is unconfigured; "
+				"using default (path=%s)", SIEVE_FILE_DEFAULT_PATH);
+			active_path = SIEVE_FILE_DEFAULT_PATH;
+		} else {
+			return -1;
+		}
+	}
+
+	if ( !explicit && !exists &&
+		active_path != NULL && *active_path != '\0' &&
+		(storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0 )
+		storage_path = NULL;
+	
+	if ( sieve_file_storage_init_common
+		(fstorage, active_path, storage_path, exists, error_r) < 0 )
+		return -1;
+	return 0;
 }
 
 struct sieve_storage *sieve_file_storage_init_legacy
@@ -434,54 +660,11 @@ struct sieve_storage *sieve_file_storage_init_legacy
 
 	storage = sieve_storage_alloc
 		(svinst, &sieve_file_storage, "", flags, TRUE);
-	storage->location = p_strdup(storage->pool, storage_path);
 	fstorage = (struct sieve_file_storage *)storage;
-	
+
 	T_BEGIN {
-		if ( storage_path == NULL || *storage_path == '\0' ) {
-			const char *home = sieve_environment_get_homedir(svinst);
-
-			sieve_storage_sys_debug(storage,
-				"Performing auto-detection");
-
-			/* We'll need to figure out the storage location ourself.
-			 *
-			 * It's $HOME/sieve or /sieve when (presumed to be) chrooted.
-			 */
-			if ( home != NULL && *home != '\0' ) {
-				if (access(home, R_OK|W_OK|X_OK) == 0) {
-					/* Use default ~/sieve */
-					sieve_storage_sys_debug(storage,
-						"Root exists (%s)", home);
-
-					storage_path = t_strconcat(home, "/sieve", NULL);
-				} else {
-					/* Don't have required access on the home directory */
-
-					sieve_storage_sys_debug(storage,
-						"access(%s, rwx) failed: %m", home);
-				}
-			} else {
-					sieve_storage_sys_debug(storage,
-						"HOME is not set");
-
-				if (access("/sieve", R_OK|W_OK|X_OK) == 0) {
-					storage_path = "/sieve";
-					sieve_storage_sys_debug(storage,
-						"Directory `/sieve' exists, assuming chroot");
-				}
-			}
-		}
-
-		if (storage_path == NULL || *storage_path == '\0') {
-			sieve_storage_set_critical(storage,
-				"Could not find storage root directory; "
-				"path was left unconfigured and autodetection failed");
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
-			sieve_storage_unref(&storage);
-			storage = NULL;
-		} else if (sieve_file_storage_init_paths
-			(fstorage, active_path, storage_path, error_r) < 0) {
+		if ( sieve_file_storage_do_init_legacy
+			(fstorage, active_path, storage_path, error_r) < 0 ) {
 			sieve_storage_unref(&storage);
 			storage = NULL;
 		}
@@ -497,16 +680,17 @@ struct sieve_file_storage *sieve_file_storage_init_from_path
 	struct sieve_storage *storage;
 	struct sieve_file_storage *fstorage;
 
+	i_assert( path != NULL );
+
 	storage = sieve_storage_alloc
 		(svinst, &sieve_file_storage, "", flags, FALSE);
-	storage->location = p_strdup(storage->pool, path);
 	fstorage = (struct sieve_file_storage *)storage;
 	
 	T_BEGIN {
-		if ( sieve_file_storage_init_paths
-			(fstorage, NULL, path, error_r) < 0 ) {
+		if ( sieve_file_storage_init_common
+			(fstorage, path, NULL, FALSE, error_r) < 0 ) {
 			sieve_storage_unref(&storage);
-			storage = NULL;
+			fstorage = NULL;
 		}
 	} T_END;
 
@@ -519,6 +703,9 @@ static int sieve_file_storage_is_singular
 	struct sieve_file_storage *fstorage =
 		(struct sieve_file_storage *)storage;
 	struct stat st;
+
+	if ( fstorage->active_path == NULL )
+		return 1;
 
 	/* Stat the file */
 	if ( lstat(fstorage->active_path, &st) != 0 ) {
@@ -541,7 +728,6 @@ static int sieve_file_storage_is_singular
 	}
 	return 1;
 }
-
 
 /*
  *
