@@ -1,32 +1,34 @@
 Current activities:
 
-* Finish LDAP Sieve script storage for read-only access.
-	- Consolidate LDAP connections when more than a single Sieve script must be
-	  loaded from different storages linked to the same LDAP server.
-	- Adjust Sieve script API to support asynchronous script retrieval to
-	  retrieve scripts in parallel when possible.
+* Rework string matching:
+	- Add support for stream matching for handling large values, e.g. from the
+	  body extension.
+	- Improve efficiency :matches and :contains match types.
+* Build proper comparator support:
+	- Add normalize() method to comparators to normalize the string before
+	  matching (for efficiency).
+	- Allow for the existence of dynamic comparators (i.e. specified by
+	  variables).
+	- Implement comparator-i;unicode-casemap.
 
 Parallel plugin-based efforts (on hold at the moment):
 
 * Implement enotify xmpp method as a plugin.
-* Implement metadata and servermetadata extensions as a plugin.
-	- Update to native Dovecot metadata implementation once it is created.
 
 Next (mostly in order of descending priority/precedence):
 
-* Implement index extension
-* Implement message modification and extraction API in order to:
-	- Implement replace, enclose, foreverypart, mime and extracttext extensions
-* Add normalize() method to comparators to normalize the string before matching
-  (for efficiency).
 * Properly implement Sieve internationalization support (utf-8 handling),
   currently it is not complete:
 	- Make this implementation fully conform section 2.7.2 of RFC5228 (Comparisons
 	  Across Character Sets).
 	- Verify validity of utf8 where necessary.
-	- Implement comparator-i;unicode-casemap.
-* Add support for stream matching for handling large values, e.g. from the body
-  extension.
+* Finish LDAP Sieve script storage for read-only access.
+	- Consolidate LDAP connections when more than a single Sieve script must be
+	  loaded from different storages linked to the same LDAP server.
+	- Adjust Sieve script API to support asynchronous script retrieval to
+	  retrieve scripts in parallel when possible.
+* Implement message modification and extraction API in order to:
+	- Implement replace, enclose, foreverypart, mime and extracttext extensions
 * Clean up doveadm sync implementation:
 	- Mostly comments referring specifically to the file storage type.
 	- API can be polished a lot as well.
@@ -49,8 +51,6 @@ Next (mostly in order of descending priority/precedence):
 	  vacation command's :addresses list.
 * Fix remaining RFC deviations:
 	- Fix issues listed in doc/rfc/RFC-questions.txt based on answers
-	- Allow for the existence of dynamic comparators (i.e. specified by
-	  variables).
 	- Verify outgoing mail addresses at runtime when necessary
 	  (e.g. after variables substitution)
 	- Improve handling of invalid addresses in headers (requires Dovecot changes)
@@ -87,7 +87,6 @@ Low priority items:
 * Provide a solution for mail_get_headers_utf8 reparsing the whole message each
   time it is called (header and address test; Timo might provide solution from
   within Dovecot)
-* Use lib/str-find.h for :contains and :matches match types
 * Warn during compile if using non-existent folders.
 
 * Implement IMAP plugin for IMAPSieve support:
