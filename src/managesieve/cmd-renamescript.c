@@ -34,6 +34,7 @@ bool cmd_renamescript(struct client_command_context *cmd)
 	else
 		client_send_ok(client, "Renamescript completed.");
 
+	sieve_script_unref(&script);
 	return TRUE;
 }
 
