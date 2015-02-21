@@ -115,7 +115,13 @@ static int sieve_attribute_unset_script(struct mail_storage *storage,
 	int ret = 0;
 
 	script = sieve_storage_open_script(svstorage, scriptname, NULL);
-	ret = script == NULL ? -1 : sieve_script_delete(&script);
+	if (script == NULL) { 
+		ret = -1;
+	} else {
+		ret = sieve_script_delete(script);
+		sieve_script_unref(&script);
+	}
+
 	if (ret < 0) {
 		errstr = sieve_storage_get_last_error(svstorage, &error);
 		if (error == SIEVE_ERROR_NOT_FOUND) {
