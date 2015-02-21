@@ -1,5 +1,5 @@
 .\" Copyright (c) 2010-2015 Pigeonhole authors, see the included COPYING file
-.TH "PIGEONHOLE" 7 "2014-01-01" "Pigeonhole for Dovecot v2.2" "Pigeonhole"
+.TH "PIGEONHOLE" 7 "2015-02-21" "Pigeonhole v0.4 for Dovecot v2.2" "Pigeonhole"
 .\"------------------------------------------------------------------------
 .SH NAME
 pigeonhole \- Overview of the Pigeonhole project\(aqs Sieve support for the
@@ -40,18 +40,22 @@ The LDA Sieve plugin for Dovecot\(aqs Local Delivery Agent (LDA)
 (\fBdovecot\-lda\fR(1)) that facilitates the actual Sieve filtering upon
 delivery.
 .IP \(bu
-The ManageSieve Service that implements the ManageSieve protocol through which
+The ManageSieve service that implements the ManageSieve protocol through which
 users can remotely manage Sieve scripts on the server.
 .IP \(bu
-Command line tools that provide the means to manually compile, analyse and test
-Sieve scripts.
+A plugin for Dovecot\(aqs
+.BR doveadm (1)
+command line tool that adds new the new
+.BR doveadm-sieve (1)
+commands for management of Sieve filtering.
 .PP
 The functionality and configuration of the LDA Sieve plugin and the ManageSieve
 service is described in detail in the README and INSTALL files contained in the
 Pigeonhole package and in the Dovecot Wiki
 <http://wiki2.dovecot.org/Pigeonhole>.
 .PP
-The following command line tools are available:
+The following command line tools are available outside of
+.BR doveadm :
 .TP
 .BR sievec (1)
 Compiles Sieve scripts into a binary representation for later execution.
@@ -78,6 +82,8 @@ LGPLv2.1 license, which is the same license as Dovecot, see
 .SH "SEE ALSO"
 .BR dovecot (1),
 .BR dovecot\-lda (1),
+.BR doveadm (1),
+.BR doveadm-sieve (1),
 .BR sieve\-dump (1),
 .BR sieve\-test (1),
 .BR sieve\-filter (1),

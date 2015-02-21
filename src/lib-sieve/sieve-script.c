@@ -483,9 +483,8 @@ int sieve_script_rename
 	return ret;
 }
 
-int sieve_script_delete(struct sieve_script **_script)
+int sieve_script_delete(struct sieve_script *script)
 {
-	struct sieve_script *script = *_script;
 	struct sieve_storage *storage = script->storage;
 	int ret = 0;
 
@@ -505,9 +504,6 @@ int sieve_script_delete(struct sieve_script **_script)
 	/* unset INBOX mailbox attribute */
 	if ( ret >= 0 )
 		(void)sieve_storage_sync_script_delete(storage, script->name);
-
-	/* Always deinitialize the script object */
-	sieve_script_unref(_script);
 	return ret;
 }
 

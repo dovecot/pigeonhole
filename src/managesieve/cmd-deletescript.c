@@ -23,19 +23,17 @@ bool cmd_deletescript(struct client_command_context *cmd)
 
 	script = sieve_storage_open_script
 		(storage, scriptname, NULL);
-	if (script == NULL) {
+	if ( script == NULL ) {
 		client_send_storage_error(client, storage);
 		return TRUE;
 	}
 
-	if (sieve_script_delete(&script) < 0) {
+	if ( sieve_script_delete(script) < 0 ) {
 		client_send_storage_error(client, storage);
 	} else {
 		client_send_ok(client, "Deletescript completed.");
 	}
 
-	/* Script object is deleted no matter what in
-	 * sieve_script_delete()
-	 */
+	sieve_script_unref(&script);
 	return TRUE;
 }

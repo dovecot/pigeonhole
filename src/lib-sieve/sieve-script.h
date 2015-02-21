@@ -95,7 +95,7 @@ int sieve_script_rename
 	(struct sieve_script *script, const char *newname);
 int sieve_script_is_active(struct sieve_script *script);
 int sieve_script_activate(struct sieve_script *script, time_t mtime);
-int sieve_script_delete(struct sieve_script **script);
+int sieve_script_delete(struct sieve_script *script);
 
 /*
  * Properties

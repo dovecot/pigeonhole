@@ -1,10 +1,13 @@
 pkgsysconfdir = $(sysconfdir)/dovecot
 rundir = ${prefix}/var/run/dovecot
 
+SUFFIXES = .1.in .1 .7.in .7
+
 dist_man1_MANS = \
 	sieved.1
 
 nodist_man1_MANS = \
+	doveadm-sieve.1 \
 	sievec.1 \
 	sieve-dump.1 \
 	sieve-test.1 \
@@ -14,9 +17,15 @@ nodist_man7_MANS = \
 	pigeonhole.7
 
 man_includefiles = \
+	$(srcdir)/global-options-formatter.inc \
+	$(srcdir)/global-options.inc \
+	$(srcdir)/option-A.inc \
+	$(srcdir)/option-S-socket.inc \
+	$(srcdir)/option-u-user.inc \
 	$(srcdir)/reporting-bugs.inc
 
 EXTRA_DIST = \
+	doveadm-sieve.1.in \
 	sievec.1.in \
 	sieve-dump.1.in \
 	sieve-test.1.in \
@@ -27,22 +36,11 @@ EXTRA_DIST = \
 
 CLEANFILES = $(nodist_man1_MANS) $(nodist_man7_MANS)
 
-sievec.1: $(srcdir)/sievec.1.in $(man_includefiles) Makefile
+.1.in.1: $(man_includefiles) Makefile
 	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
-		< $(srcdir)/sievec.1.in > sievec.1
+		$(pkglibexecdir) < $< > $@
+.7.in.7: $(man_includefiles) Makefile
+	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
+		$(pkglibexecdir) < $< > $@
 
-sieve-dump.1: $(srcdir)/sieve-dump.1.in $(man_includefiles) Makefile
-	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
-		< $(srcdir)/sieve-dump.1.in > sieve-dump.1
 
-sieve-filter.1: $(srcdir)/sieve-filter.1.in $(man_includefiles) Makefile
-	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
-		< $(srcdir)/sieve-filter.1.in > sieve-filter.1
-
-sieve-test.1: $(srcdir)/sieve-test.1.in $(man_includefiles) Makefile
-	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
-		< $(srcdir)/sieve-test.1.in > sieve-test.1
-
-pigeonhole.7: $(srcdir)/pigeonhole.7.in $(man_includefiles) Makefile
-	$(SHELL) $(srcdir)/sed.sh $(srcdir) $(rundir) $(pkgsysconfdir) \
-		< $(srcdir)/pigeonhole.7.in > pigeonhole.7

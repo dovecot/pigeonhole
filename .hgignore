@@ -56,6 +56,7 @@ m4/lt~obsolete.m4
 **/.libs
 **/.deps
 
+doc/man/doveadm-sieve.1
 doc/man/sievec.1
 doc/man/sieve-dump.1
 doc/man/sieve-test.1

@@ -1,0 +1,122 @@
+.\" Copyright (c) 2010-2015 Pigeonhole authors, see the included COPYING file
+.TH DOVEADM\-SIEVE 1 "2015-02-21" "Pigeonhole v0.4 for Dovecot v2.2" "Pigeonhole"
+.SH NAME
+doveadm\-sieve \- Commands related to handling Sieve scripts
+.\"------------------------------------------------------------------------
+.SH SYNOPSIS
+.BR doveadm " [" \-Dv "] [" \-f
+.IR formatter "] " sieve_cmd " [" options "] [" arguments ]
+.\"------------------------------------------------------------------------
+.SH DESCRIPTION
+.PP
+The
+.B doveadm sieve
+commands are part of the Pigeonhole Project (\fBpigeonhole\fR(7)), which adds
+Sieve (RFC 5228) and ManageSieve (RFC 5804) support to the Dovecot secure IMAP
+and POP3 server (\fBdovecot\fR(1)). The
+.B doveadm sieve
+commands can be used to manage Sieve filtering.
+.\"------------------------------------------------------------------------
+@INCLUDE:global-options-formatter@
+.\" --- command specific options --- "/.
+.PP
+Command specific
+.IR options :
+.\"-------------------------------------
+@INCLUDE:option-A@
+.\"-------------------------------------
+@INCLUDE:option-S-socket@
+.\"-------------------------------------
+@INCLUDE:option-u-user@
+.\"------------------------------------------------------------------------
+.SH ARGUMENTS
+.TP
+.I scriptname
+Is the name of a
+.IR Sieve\ script ,
+as visible to ManageSieve clients. 
+.\"------------------------------------------------------------------------
+.SH COMMANDS
+.SS sieve put
+.B doveadm sieve put
+[\fB\-A\fP|\fB\-u\fP \fIuser\fP]
+[\fB\-S\fP \fIsocket_path\fP]
+.RB [ \-a ]
+.IR scriptname
+.PP
+This command puts one new Sieve script in the script storage. The script
+is read from standard input. If the script compiles successfully, it is stored
+under the provided 
+.IR scriptname\ . 
+If the
+.B \-a
+option is present, the Sieve script is subsequently marked as the active script
+for execution at delivery.
+.\"------------------------------------------------------------------------
+.SS sieve get
+.B doveadm sieve get
+[\fB\-A\fP|\fB\-u\fP \fIuser\fP]
+[\fB\-S\fP \fIsocket_path\fP]
+.I scriptname
+.PP
+This command retrieves the Sieve script named
+.IR scriptname .
+.\"------------------------------------------------------------------------
+.SS sieve delete
+.B doveadm sieve delete
+[\fB\-A\fP|\fB\-u\fP \fIuser\fP]
+[\fB\-S\fP \fIsocket_path\fP]
+.RB [ \-a ]
+.IR scriptname\  ...
+.PP
+This command deletes one or more Sieve scripts. The deleted script may not be the
+active script, unless the 
+.B \-a
+option is present.
+.\"------------------------------------------------------------------------
+.SS sieve list
+.B doveadm sieve list
+[\fB\-A\fP|\fB\-u\fP \fIuser\fP]
+[\fB\-S\fP \fIsocket_path\fP]
+.I scriptname
+.PP
+Use this command to get an overview of existing Sieve scripts.
+.\"------------------------------------------------------------------------
+.SS sieve rename
+.B doveadm sieve rename
+[\fB\-A\fP|\fB\-u\fP \fIuser\fP]
+[\fB\-S\fP \fIsocket_path\fP]
+.I old_name
+.I new_name
+.PP
+The
+.B sieve rename
+command is used to rename the Sieve script
+.I old_name
+to
+.IR new_name .
+.\"------------------------------------------------------------------------
+.SS sieve activate
+.B doveadm sieve activate
+[\fB\-A\fP|\fB\-u\fP \fIuser\fP]
+[\fB\-S\fP \fIsocket_path\fP]
+.IR scriptname
+.PP
+This command marks the Sieve script named 
+.I scriptname
+as the active script for execution at delivery.
+.\"------------------------------------------------------------------------
+.SS sieve deactivate
+.B doveadm sieve deactivate
+[\fB\-A\fP|\fB\-u\fP \fIuser\fP]
+[\fB\-S\fP \fIsocket_path\fP]
+.I scriptname
+.PP
+This command deactivates Sieve processing.
+.\"------------------------------------------------------------------------
+@INCLUDE:reporting-bugs@
+.\"------------------------------------------------------------------------
+.SH SEE ALSO
+.BR doveadm (1)
+.BR dovecot\-lda (1),
+.BR pigeonhole (7)
