@@ -183,42 +183,53 @@ static int mcht_matches_match_key
 
 		pvp = vp;
 		if ( next_wcard == '\0' ) {
-			/* No more wildcards; find the needle substring at the end of string */
+			if ( wcard == '\0' ) {
+				/* No current wildcard; match needs to happen right at the beginning */
+				debug_printf("next_wcard = NULL && wcard = NUL; needle should be equal to value.\n");
 
-			const char *qp, *qend;
+				if ( (vend - vp) != (nend - needle) ||
+					!cmp->def->char_match(cmp, &vp, vend, &needle, nend) ) {
+					debug_printf("  key not equal to value\n");
+					break;
+				}
 
-			debug_printf("next_wcard = NUL; must find needle at end\n");
+			} else {
+				const char *qp, *qend;
 
-			/* Check if the value is still large enough */
-			if ( vend - str_len(section) < vp ) {
-				debug_printf("  wont match: value is too short\n");
-				break;
-			}
+				/* No more wildcards; find the needle substring at the end of string */
+				debug_printf("next_wcard = NUL; must find needle at end\n");
 
-			/* Move value pointer to where the needle should be */
-			vp = PTR_OFFSET(vend, -str_len(section));
+				/* Check if the value is still large enough */
+				if ( vend - str_len(section) < vp ) {
+					debug_printf("  wont match: value is too short\n");
+					break;
+				}
 
-			/* Record match values */
-			qend = vp;
-			qp = vp - key_offset;
+				/* Move value pointer to where the needle should be */
+				vp = PTR_OFFSET(vend, -str_len(section));
 
-			if ( mvalues != NULL )
-				str_append_n(mvalue, pvp, qp-pvp);
+				/* Record match values */
+				qend = vp;
+				qp = vp - key_offset;
 
-			/* Compare needle to end of value string */
-			if ( !cmp->def->char_match(cmp, &vp, vend, &needle, nend) ) {
-				debug_printf("  match at end failed\n");
-				break;
-			}
+				if ( mvalues != NULL )
+					str_append_n(mvalue, pvp, qp-pvp);
 
-			/* Add match values */
-			if ( mvalues != NULL ) {
-				/* Append '*' match value */
-				sieve_match_values_add(mvalues, mvalue);
+				/* Compare needle to end of value string */
+				if ( !cmp->def->char_match(cmp, &vp, vend, &needle, nend) ) {
+					debug_printf("  match at end failed\n");
+					break;
+				}
 
-				/* Append any initial '?' match values */
-				for ( ; qp < qend; qp++ )
-					sieve_match_values_add_char(mvalues, *qp);
+				/* Add match values */
+				if ( mvalues != NULL ) {
+					/* Append '*' match value */
+					sieve_match_values_add(mvalues, mvalue);
+
+					/* Append any initial '?' match values */
+					for ( ; qp < qend; qp++ )
+						sieve_match_values_add_char(mvalues, *qp);
+				}
 			}
 
 			/* Finish match */

@@ -210,4 +210,32 @@ test "Put '?' directly before '*'" {
 	}
 }
 
+test "Fixed beginning" {
+	if not header :matches "subject" "make your *" {
+		test_fail "should have matched";
+	}
+}
 
+test "Fixed end" {
+	if not header :matches "subject" "* very fast!!!" {
+		test_fail "should have matched";
+	}
+
+	if header :matches "subject" "* very fast!!" {
+		test_fail "should not have matched";
+	}
+}
+
+test "Fixed string" {
+	if not address :matches "to" "sirius@example.org" {
+		test_fail "should have matched";
+	}
+
+	if address :matches "to" "example.org" {
+		test_fail "should not have matched";
+	}
+
+	if address :matches "to" "sirius" {
+		test_fail "should not have matched";
+	}
+}
