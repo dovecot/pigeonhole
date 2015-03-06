@@ -64,7 +64,6 @@ const struct sieve_lexer *sieve_lexer_create
 (struct sieve_script *script, struct sieve_error_handler *ehandler,
 	enum sieve_error *error_r)
 {
-	pool_t pool;
 	struct sieve_lexical_scanner *scanner;
 	struct sieve_instance *svinst = sieve_script_svinst(script);
 	struct istream *stream;
@@ -86,9 +85,7 @@ const struct sieve_lexer *sieve_lexer_create
 		return NULL;
 	}
 
-	pool = pool_alloconly_create("sieve_lexer_scanner", 1024);
-	scanner = p_new(pool, struct sieve_lexical_scanner, 1);
-	scanner->pool = pool;
+	scanner = i_new(struct sieve_lexical_scanner, 1);
 	scanner->lexer.scanner = scanner;
 
 	scanner->ehandler = ehandler;
@@ -105,7 +102,7 @@ const struct sieve_lexer *sieve_lexer_create
 	scanner->buffer_pos = 0;
 
 	scanner->lexer.token_type = STT_NONE;
-	scanner->lexer.token_str_value = str_new(pool, 256);
+	scanner->lexer.token_str_value = str_new(default_pool, 256);
 	scanner->lexer.token_int_value = 0;
 	scanner->lexer.token_line = 1;
 
@@ -114,19 +111,18 @@ const struct sieve_lexer *sieve_lexer_create
 	return &scanner->lexer;
 }
 
-void sieve_lexer_free(const struct sieve_lexer **lexer)
+void sieve_lexer_free(const struct sieve_lexer **_lexer)
 {
-	struct sieve_lexical_scanner *scanner = (*lexer)->scanner;
+	const struct sieve_lexer *lexer = *_lexer;
+	struct sieve_lexical_scanner *scanner = lexer->scanner;
 
 	i_stream_unref(&scanner->input);
-
 	sieve_script_unref(&scanner->script);
-
 	sieve_error_handler_unref(&scanner->ehandler);
+	str_free(&scanner->lexer.token_str_value);
 
-	pool_unref(&scanner->pool);
-
-	*lexer = NULL;
+	i_free(scanner);
+	*_lexer = NULL;
 }
 
 /*
