@@ -9,6 +9,9 @@ lib10_doveadm_sieve_plugin_la_LDFLAGS = -module -avoid-version
 
 doveadm_module_LTLIBRARIES = lib10_doveadm_sieve_plugin.la
 
+lib10_doveadm_sieve_plugin_la_LIBADD = \
+	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la
+
 commands = \
 	doveadm-sieve-cmd-list.c \
 	doveadm-sieve-cmd-get.c \
@@ -22,5 +25,7 @@ lib10_doveadm_sieve_plugin_la_SOURCES = \
 	doveadm-sieve-cmd.c \
 	doveadm-sieve-sync.c \
 	doveadm-sieve-plugin.c
-lib10_doveadm_sieve_plugin_la_LIBADD = \
-	$(top_builddir)/src/lib-sieve/libdovecot-sieve.la
+
+noinst_HEADERS = \
+	doveadm-sieve-cmd.h \
+	doveadm-sieve-plugin.h
