@@ -67,7 +67,7 @@ void sieve_lexer_free(const struct sieve_lexer **lexer);
  * Scanning
  */
 
-bool sieve_lexer_skip_token(const struct sieve_lexer *lexer);
+void sieve_lexer_skip_token(const struct sieve_lexer *lexer);
 
 /*
  * Token access

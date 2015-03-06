@@ -285,13 +285,13 @@ sieve_lexer_scan_hash_comment(struct sieve_lexical_scanner *scanner)
 	while ( sieve_lexer_curchar(scanner) != '\n' ) {
 		switch( sieve_lexer_curchar(scanner) ) {
 		case -1:
-			if ( scanner->input->eof ) {
-				sieve_lexer_warning(lexer,
-					"no newline (CRLF) at end of hash comment at end of file");
-				lexer->token_type = STT_WHITESPACE;
-			} else {
+			if ( !scanner->input->eof ) {
 				lexer->token_type = STT_ERROR;
+				return FALSE;
 			}
+			sieve_lexer_warning(lexer,
+				"no newline (CRLF) at end of hash comment at end of file");
+			lexer->token_type = STT_WHITESPACE;
 			return TRUE;
 		case '\0':
 			sieve_lexer_error
@@ -532,10 +532,11 @@ sieve_lexer_scan_raw_token(struct sieve_lexical_scanner *scanner)
 
 	/* EOF */
 	case -1:
-		if ( scanner->input->eof )
-		  lexer->token_type = STT_EOF;
-		else
+		if ( !scanner->input->eof ) {
 			lexer->token_type = STT_ERROR;
+			return FALSE;
+		}
+		lexer->token_type = STT_EOF;
 		return TRUE;
 
 	default:
@@ -816,7 +817,7 @@ sieve_lexer_scan_raw_token(struct sieve_lexical_scanner *scanner)
 	}
 }
 
-bool sieve_lexer_skip_token(const struct sieve_lexer *lexer)
+void sieve_lexer_skip_token(const struct sieve_lexer *lexer)
 {
 	/* Scan token while skipping whitespace */
 	do {
@@ -830,10 +831,8 @@ bool sieve_lexer_skip_token(const struct sieve_lexer *lexer)
 					"error reading script during lexical analysis: %s",
 					i_stream_get_error(scanner->input));
 			}
-			return FALSE;
+			return;
 		}
 	} while ( lexer->token_type == STT_WHITESPACE );
-
-	return TRUE;
 }
 
