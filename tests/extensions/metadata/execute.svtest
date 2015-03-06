@@ -77,6 +77,9 @@ test "ServermetadataExists - None exist" {
 	}
 }
 
+# currently not possible to test servermetadata
+if false {
+
 test_imap_metadata_set "/private/frop" "FROP!";
 test_imap_metadata_set "/private/friep" "FRIEP!";
 
@@ -139,3 +142,4 @@ test "Servermetadata - Invalid" {
 	}
 }
 
+} #disabled
