@@ -26,11 +26,23 @@ sieve_editheader_max_header_size = 2048
   command. The minimum value for this setting is 1024 bytes. The value is in
   bytes, unless followed by a k(ilo).
 
+sieve_editheader_forbid_add =
+  A space-separated list of headers that cannot be added to the message header.
+  Addition of the `Subject:' header cannot be prohibited, as required by the RFC
+  specification. Therefore, adding this header to this setting has no effect.
+
+sieve_editheader_forbid_delete =
+  A space-separated list of headers that cannot be deleted from the message
+  header. Deleting the `Received:' and `Auto-Submitted:' fields is always 
+  forbidden, while removing the `Subject:' header cannot be prohibited,
+  as required by the RFC specification. Therefore, adding one of these headers
+  to this setting has no effect.
+
 sieve_editheader_protected =
-  A space-separated list of headers that cannot be added to nor removed from the
-  message header. The `Received:' and `Auto-Submitted:' fields are always
-  protected and the `Subject:' header cannot be protected, as required by the
-  RFC specification; adding one of these headers to this setting has no effect.
+  A space-separated list of headers that cannot be added to or deleted from
+  the message header. This setting is provided for backwards compatibility. It
+  is a combination of the sieve_editheader_forbid_add and
+  sieve_editheader_forbid_delete settings. The same limitations apply. 
 
 Invalid values for the settings above will make the Sieve interpreter log
 a warning and revert to the default values.
@@ -45,7 +57,8 @@ plugin {
   # Header fiels must not exceed one 1k
   sieve_editheader_max_header_size = 1k
 
-  # Protect special header
-  sieve_editheader_protected = X-Verified
+  # Protected special headers
+  sieve_editheader_forbid_add = X-Verified
+  sieve_editheader_forbid_delete = X-Verified X-Seen
 }
 

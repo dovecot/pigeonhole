@@ -9,6 +9,7 @@ Received: by example.com (Postfix, from userid 202)
 	id 32A131WFW23QWE4; Mon, 21 Nov 2011 05:25:26 +0200 (EET)
 Delivery-date: Mon, 21 Nov 2011 04:26:04 +0100
 Auto-Submitted: yes
+X-Friep: frop 3
 Subject: Frop!
 From: stephan@example.com
 To: tss@example.com
@@ -29,6 +30,7 @@ test "Default protected" {
 
 	deleteheader "received";
 	deleteheader "auto-submitted";
+	deleteheader "subject";
 
 	if not exists "received" {
 		test_fail "protected received header was deleted";
@@ -36,6 +38,10 @@ test "Default protected" {
 
 	if not exists "auto-submitted" {
 		test_fail "protected auto-submitted header was deleted";
+	}
+
+	if exists "subject" {
+		test_fail "subject header cannot be protected, but it was not deleted";
 	}
 }
 
@@ -70,5 +76,75 @@ test "Configured protected" {
 
 	if exists "x-frop" {
 		test_fail "protected x-frop header was added";
+	}
+}
+
+test_config_set "sieve_editheader_protected" "";
+test_config_set "sieve_editheader_forbid_add" "subject x-frop";
+test_config_set "sieve_editheader_forbid_delete" "subject x-friep";
+test_config_reload :extension "editheader";
+
+test_set "message" "${message}";
+test "Configured forbid_add/forbid_delete" {
+	if not exists "delivery-date" {
+		test_fail "received header did not exist in the first place";
+	}
+
+	if not exists "subject" {
+		test_fail "received header did not exist in the first place";
+	}
+
+	if not exists "x-friep" {
+		test_fail "x-friep header did not exist in the first place";
+	}
+
+	if exists "x-frop" {
+		test_fail "x-frop header already present";
+	}
+
+	deleteheader "delivery-date";
+	deleteheader "subject";
+	deleteheader "x-friep";
+
+	if exists "delivery-date" {
+		test_fail "unprotected delivery-date header was not deleted";
+	}
+
+	if exists "subject" {
+		test_fail "subject header cannot be protected, but it was not deleted";
+	}
+
+	if not exists "x-friep" {
+		test_fail "protected x-friep header was deleted";
+	}
+
+	addheader "delivery-date" "Yesterday";
+	addheader "subject" "Fropfrop!";
+	addheader "x-frop" "Frop!";
+	addheader "received" text:
+by sieve.example.com (My little Sieve script)
+id 3jhl22khhf23f; Mon, 24 Aug 2015 04:11:54 -0600;
+.
+;
+	addheader "auto-submitted" "no way";
+
+	if not header "delivery-date" "Yesterday" {
+		test_fail "unprotected delivery-date header was not added";
+	}
+
+	if not header "subject" "Fropfrop!" {
+		test_fail "subject header cannot be protected, but it was not added";
+	}
+
+	if exists "x-frop" {
+		test_fail "protected x-frop header was added";
+	}
+
+	if not header :contains "received" "sieve.example.com" {
+		test_fail "received header was not added";
+	}
+
+	if not header "auto-submitted" "no way" {
+		test_fail "autosubmitted header was not added";
 	}
 }

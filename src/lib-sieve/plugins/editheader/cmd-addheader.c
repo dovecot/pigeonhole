@@ -130,10 +130,13 @@ static bool cmd_addheader_validate
 			return FALSE;
 		}
 
-		if ( ext_editheader_header_is_protected(cmd->ext, str_c(fname)) ) {
-			sieve_argument_validate_warning(valdtr, arg, "addheader command: "
-				"specified header field `%s' is protected; "
-				"modification will be denied", str_sanitize(str_c(fname), 80));
+		if ( !ext_editheader_header_allow_add
+			(cmd->ext, str_c(fname)) ) {
+			sieve_argument_validate_warning
+				(valdtr, arg, "addheader command: "
+					"adding specified header field `%s' is forbidden; "
+					"modification will be denied",
+					str_sanitize(str_c(fname), 80));
 		}
 	}
 
@@ -298,10 +301,11 @@ static int cmd_addheader_operation_execute
 		return SIEVE_EXEC_FAILURE;
 	}
 
-	if ( ext_editheader_header_is_protected(this_ext, str_c(field_name)) ) {
+	if ( !ext_editheader_header_allow_add
+		(this_ext, str_c(field_name)) ) {
 		sieve_runtime_warning(renv, NULL, "addheader action: "
-			"specified header field `%s' is protected; modification denied",
-			str_sanitize(str_c(field_name), 80));
+			"adding specified header field `%s' is forbidden; "
+			"modification denied", str_sanitize(str_c(field_name), 80));
 		return SIEVE_EXEC_OK;
 	}
 

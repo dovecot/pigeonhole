@@ -22,8 +22,8 @@
 struct ext_editheader_header {
 	const char *name;
 
-	/* may extend this later */
-	unsigned int protected:1;
+	unsigned int forbid_add:1;
+	unsigned int forbid_delete:1;
 };
 
 struct ext_editheader_config {
@@ -49,12 +49,49 @@ static struct ext_editheader_header *ext_editheader_config_header_find
 	return NULL;
 }
 
+static void ext_editheader_config_headers
+(struct sieve_instance *svinst,
+	struct ext_editheader_config *ext_config,
+	const char *setting, bool forbid_add, bool forbid_delete)
+{
+	const char *setval;
+
+	setval = sieve_setting_get(svinst, setting);
+	if ( setval != NULL ) {
+		const char **headers = t_strsplit_spaces(setval, " \t");
+
+		while ( *headers != NULL ) {
+			struct ext_editheader_header *header;
+
+			if ( !rfc2822_header_field_name_verify
+				(*headers, strlen(*headers)) ) {
+				sieve_sys_warning(svinst, "editheader: "
+					"setting %s contains invalid header field name "
+					"`%s' (ignored)", setting, *headers);
+				continue;
+			}
+
+			header=ext_editheader_config_header_find(ext_config, *headers);
+			if ( header == NULL ) {
+				header = array_append_space(&ext_config->headers);
+				header->name = p_strdup(ext_config->pool, *headers);
+			}
+
+			if (forbid_add)
+				header->forbid_add = TRUE;
+			if (forbid_delete)
+				header->forbid_delete = TRUE;
+
+			headers++;
+		}
+	}
+}
+
 bool ext_editheader_load
 (const struct sieve_extension *ext, void **context)
 {
 	struct ext_editheader_config *ext_config;
 	struct sieve_instance *svinst = ext->svinst;
-	const char *protected;
 	size_t max_header_size;
 	pool_t pool;
 
@@ -71,31 +108,12 @@ bool ext_editheader_load
 
 		p_array_init(&ext_config->headers, pool, 16);
 
-		protected = sieve_setting_get(svinst, "sieve_editheader_protected");
-		if ( protected != NULL ) {
-			const char **headers = t_strsplit_spaces(protected, " \t");
-
-			while ( *headers != NULL ) {
-				struct ext_editheader_header *header;
-
-				if ( !rfc2822_header_field_name_verify(*headers, strlen(*headers)) ) {
-					sieve_sys_warning(svinst,
-						"editheader: setting sieve_editheader_protected contains "
-						"invalid header field name `%s' (ignored)", *headers);
-					continue;
-				}
-
-				header=ext_editheader_config_header_find(ext_config, *headers);
-				if ( header == NULL ) {
-					header = array_append_space(&ext_config->headers);
-					header->name = p_strdup(pool, *headers);
-				}
-
-				header->protected = TRUE;
-
-				headers++;
-			}
-		}
+		ext_editheader_config_headers(svinst, ext_config,
+			"sieve_editheader_protected", TRUE, TRUE);
+		ext_editheader_config_headers(svinst, ext_config,
+			"sieve_editheader_forbid_add", TRUE, FALSE);
+		ext_editheader_config_headers(svinst, ext_config,
+			"sieve_editheader_forbid_delete", FALSE, TRUE);
 
 		if ( sieve_setting_get_size_value
 			(svinst, "sieve_editheader_max_header_size", &max_header_size) ) {
@@ -129,7 +147,24 @@ void ext_editheader_unload(const struct sieve_extension *ext)
  * Protected headers
  */
 
-bool ext_editheader_header_is_protected
+bool ext_editheader_header_allow_add
+(const struct sieve_extension *ext, const char *hname)
+{
+	struct ext_editheader_config *ext_config =
+		(struct ext_editheader_config *) ext->context;
+	const struct ext_editheader_header *header;
+
+	if ( strcasecmp(hname, "subject") == 0 )
+		return TRUE;
+
+	if ( (header=ext_editheader_config_header_find
+		(ext_config, hname)) == NULL )
+		return TRUE;
+
+	return !header->forbid_add;
+}
+
+bool ext_editheader_header_allow_delete
 (const struct sieve_extension *ext, const char *hname)
 {
 	struct ext_editheader_config *ext_config =
@@ -137,18 +172,17 @@ bool ext_editheader_header_is_protected
 	const struct ext_editheader_header *header;
 
 	if ( strcasecmp(hname, "received") == 0
-		|| strcasecmp(hname, "auto-submitted") == 0 ) {
+		|| strcasecmp(hname, "auto-submitted") == 0 )
+		return FALSE;
+
+	if ( strcasecmp(hname, "subject") == 0 )
 		return TRUE;
-	}
 
-	if ( strcasecmp(hname, "subject") == 0 ) {
-		return FALSE;
-	}
+	if ( (header=ext_editheader_config_header_find
+		(ext_config, hname)) == NULL )
+		return TRUE;
 
-	if ( (header=ext_editheader_config_header_find(ext_config, hname)) == NULL )
-		return FALSE;
-
-	return header->protected;
+	return !header->forbid_delete;
 }
 
 /*

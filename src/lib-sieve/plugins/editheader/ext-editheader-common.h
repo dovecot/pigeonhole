@@ -37,8 +37,10 @@ void ext_editheader_unload(const struct sieve_extension *ext);
  * Protected headers
  */
 
-bool ext_editheader_header_is_protected
-	(const struct sieve_extension *ext, const char *header);
+bool ext_editheader_header_allow_add
+	(const struct sieve_extension *ext, const char *hname);
+bool ext_editheader_header_allow_delete
+	(const struct sieve_extension *ext, const char *hname);
 
 /*
  * Limits
