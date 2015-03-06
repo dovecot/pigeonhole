@@ -74,12 +74,6 @@ struct testsuite_smtp {
 	struct ostream *output;
 };
 
-void testsuite_smtp_add_rcpt(void *handle, const char *address);
-struct ostream *testsuite_smtp_send(void *handle);
-int testsuite_smtp_finish
-	(void *handle, const char **error_r);
-
-
 void *testsuite_smtp_start
 (const struct sieve_script_env *senv ATTR_UNUSED, const char *return_path)
 {
@@ -102,7 +96,9 @@ void *testsuite_smtp_start
 	return (void *) smtp;
 }
 
-void testsuite_smtp_add_rcpt(void *handle, const char *address)
+void testsuite_smtp_add_rcpt
+(const struct sieve_script_env *senv ATTR_UNUSED,
+	void *handle, const char *address)
 {
 	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
 	struct testsuite_smtp_message *msg;
@@ -114,7 +110,8 @@ void testsuite_smtp_add_rcpt(void *handle, const char *address)
 	msg->envelope_to = p_strdup(testsuite_smtp_pool, address);
 }
 
-struct ostream *testsuite_smtp_send(void *handle)
+struct ostream *testsuite_smtp_send
+(const struct sieve_script_env *senv ATTR_UNUSED, void *handle)
 {
 	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
 
@@ -122,7 +119,8 @@ struct ostream *testsuite_smtp_send(void *handle)
 }
 
 int testsuite_smtp_finish
-(void *handle,	const char **error_r ATTR_UNUSED)
+(const struct sieve_script_env *senv ATTR_UNUSED,
+	void *handle, const char **error_r ATTR_UNUSED)
 {
 	struct testsuite_smtp *smtp = (struct testsuite_smtp *) handle;
 

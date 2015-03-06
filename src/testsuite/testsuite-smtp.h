@@ -15,10 +15,15 @@ void testsuite_smtp_reset(void);
 void *testsuite_smtp_start
 	(const struct sieve_script_env *senv ATTR_UNUSED,
 		const char *return_path);
-void testsuite_smtp_add_rcpt(void *handle, const char *address);
-struct ostream *testsuite_smtp_send(void *handle);
+void testsuite_smtp_add_rcpt
+	(const struct sieve_script_env *senv ATTR_UNUSED,
+		void *handle, const char *address);
+struct ostream *testsuite_smtp_send
+	(const struct sieve_script_env *senv ATTR_UNUSED,
+		void *handle);
 int testsuite_smtp_finish
-	(void *handle, const char **error_r);
+	(const struct sieve_script_env *senv ATTR_UNUSED,
+		void *handle, const char **error_r);
 
 /*
  * Access

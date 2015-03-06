@@ -77,14 +77,17 @@ static void *lda_sieve_smtp_start
 	return (void *)smtp_client_init(dctx->set, return_path);
 }
 
-static void lda_sieve_smtp_add_rcpt(void *handle, const char *address)
+static void lda_sieve_smtp_add_rcpt
+(const struct sieve_script_env *senv ATTR_UNUSED, void *handle,
+	const char *address)
 {
 	struct smtp_client *smtp_client = (struct smtp_client *) handle;
 
 	smtp_client_add_rcpt(smtp_client, address);
 }
 
-static struct ostream *lda_sieve_smtp_send(void *handle)
+static struct ostream *lda_sieve_smtp_send
+(const struct sieve_script_env *senv ATTR_UNUSED, void *handle)
 {
 	struct smtp_client *smtp_client = (struct smtp_client *) handle;
 
@@ -92,11 +95,15 @@ static struct ostream *lda_sieve_smtp_send(void *handle)
 }
 
 static int lda_sieve_smtp_finish
-(void *handle, const char **error_r)
+(const struct sieve_script_env *senv, void *handle,
+	const char **error_r)
 {
+	struct mail_deliver_context *dctx =
+		(struct mail_deliver_context *) senv->script_context;
 	struct smtp_client *smtp_client = (struct smtp_client *) handle;
 
-	return smtp_client_deinit(smtp_client, error_r);
+	return smtp_client_deinit_timeout
+		(smtp_client, dctx->timeout_secs, error_r);
 }
 
 static int lda_sieve_reject_mail

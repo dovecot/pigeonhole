@@ -70,12 +70,15 @@ static void *sieve_smtp_start
 }
 
 static void sieve_smtp_add_rcpt
-(void *handle ATTR_UNUSED, const char *address)
+(const struct sieve_script_env *senv ATTR_UNUSED,
+	void *handle ATTR_UNUSED, const char *address)
 {
 	printf("\nRECIPIENT: %s\n", address);
 }
 
-static struct ostream *sieve_smtp_send(void *handle)
+static struct ostream *sieve_smtp_send
+(const struct sieve_script_env *senv ATTR_UNUSED,
+	void *handle)
 {
 	printf("START MESSAGE:\n");
 
@@ -83,7 +86,8 @@ static struct ostream *sieve_smtp_send(void *handle)
 }
 
 static int sieve_smtp_finish
-(void *handle, const char **error_r ATTR_UNUSED)
+(const struct sieve_script_env *senv ATTR_UNUSED,
+	void *handle, const char **error_r ATTR_UNUSED)
 {
 	struct ostream *output = (struct ostream *)handle;
 

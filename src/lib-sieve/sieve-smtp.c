@@ -42,7 +42,7 @@ void sieve_smtp_add_rcpt
 (struct sieve_smtp_context *sctx, const char *address)
 {
 	i_assert(!sctx->sent);
-	sctx->senv->smtp_add_rcpt(sctx->handle, address);
+	sctx->senv->smtp_add_rcpt(sctx->senv, sctx->handle, address);
 }
 
 struct ostream *sieve_smtp_send
@@ -51,7 +51,7 @@ struct ostream *sieve_smtp_send
 	i_assert(!sctx->sent);
 	sctx->sent = TRUE;
 
-	return sctx->senv->smtp_send(sctx->handle);
+	return sctx->senv->smtp_send(sctx->senv, sctx->handle);
 }
 
 struct sieve_smtp_context *sieve_smtp_start_single
@@ -74,6 +74,6 @@ int sieve_smtp_finish
 	void *handle = sctx->handle;
 
 	i_free(sctx);
-	return senv->smtp_finish(handle, error_r);
+	return senv->smtp_finish(senv, handle, error_r);
 }
 
