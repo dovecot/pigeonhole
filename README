@@ -120,6 +120,7 @@ following list outlines the implementation status of each supported extension:
     ihave (RFC 5463): fully supported (v0.2.4+).
     mailbox (RFC 5490; Section 3): fully supported (v0.1.10+), but ACL
         permissions are not verified for mailboxexists.
+    mboxmetadata and servermetadata (RFC 5490): fully supported (v0.4.7+)
     include (RFC 6609): fully supported (v0.4.0+)
     duplicate (RFC 7352): fully supported (v0.4.3+).
     regex (draft v08; not latest version): almost fully supported, but
@@ -148,8 +149,6 @@ following list outlines the implementation status of each supported extension:
 
   The following extensions are under development:
 
-    mboxmetadata and servermetadata (RFC 5490): partially implemented;
-        Dovecot adjustments needed.
     ereject (RFC 5429; page 4): implemented, but currently equal to reject
 
   Many more extensions to the language exist. Not all of these extensions are
