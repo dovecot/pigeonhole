@@ -1,3 +1,31 @@
+v0.4.7 xx-03-2015 Stephan Bosch <stephan@rename-it.nl>
+
+	* editheader extension: Made protection against addition and deletion of
+	  headers configurable separately. Also, the `Received' and `Auto-Submitted'
+	  headers are no longer protected against addition by default.
+	* Turned message envelope address parse errors into warnings.
+	* The interpreter now accepts non-standard domain names, e.g. containing '_'.
+	+ Implemented the Sieve index extension (RFC 5260).
+	+ Implemented support for the mboxmetadata and servermetadata extensions
+	  (RFC 5490).
+	+ Implemented new sieve commands for the doveadm command line utility. These
+	  commands are currently limited to ManageSieve operations, but the other
+	  current sieve tools will be migrated to doveadm in the near future as well.
+	+ Added more debug output to binary up-to-date checking.
+	- The Sieve interpreter now flushes duplicate database during start phase of
+	  result execution rather than commit phase. This makes sure locks on the
+	  duplicate database are released as soon as possible, preventing contention.
+	- Performed a few optimizations in the lexical scanner of the language.
+	- Fixed bug in `:matches' match-type that made a pattern without
+	  wildcards match as if there were a '*' at the beginning.
+	- file storage: Restructured storage initialization to address backwards
+	  compatibility issues.
+	- Fixed crash in validation of the string parameter of the comparator tag.
+	- extprograms extension: Made sure supplemental group privileges are also
+	  dropped. This was a problem reported by Debian lintian.
+	- Fixed bug in handling of binary errors for action side-effects and message
+	  overrides.
+
 v0.4.6 02-11-2014 Stephan Bosch <stephan@rename-it.nl>
 
 	- After make distclean the distributed tarball would fail to recompile.
