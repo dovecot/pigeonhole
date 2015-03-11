@@ -338,6 +338,7 @@ int sieve_script_binary_read_metadata
 {
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
 	string_t *storage_class, *location;
+	const char *script_location;
 	unsigned int version;
 
 	if ( sieve_binary_block_get_size(sblock) - *offset == 0 )
@@ -351,8 +352,13 @@ int sieve_script_binary_read_metadata
 			sieve_binary_path(sbin), sieve_script_location(script));
 		return -1;
 	}
-	if ( strcmp(str_c(storage_class), script->driver_name) != 0 )
+	if ( strcmp(str_c(storage_class), script->driver_name) != 0 ) {
+		sieve_script_sys_debug(script,
+			"Binary reports unexpected driver name "
+			"(`%s' rather than `%s')",
+			str_c(storage_class), script->driver_name);
 		return 0;
+	}
 
 	/* version */
 	if ( !sieve_binary_read_unsigned(sblock, offset, &version) ) {
@@ -379,10 +385,14 @@ int sieve_script_binary_read_metadata
 			sieve_binary_path(sbin), sieve_script_location(script));
 		return -1;
 	}
-	if ( script->location == NULL )
+	script_location = ( script->location == NULL ? "" : script->location);
+	if ( strcmp(str_c(location), script_location) != 0 ) {
+		sieve_script_sys_debug(script,
+			"Binary reports different script location "
+			"(`%s' rather than `%s')",
+			str_c(location), script_location);
 		return 0;
-	if ( strcmp(str_c(location), script->location) != 0 )
-		return 0;
+	}
 	
 	if ( script->v.binary_read_metadata == NULL )
 		return 1;
