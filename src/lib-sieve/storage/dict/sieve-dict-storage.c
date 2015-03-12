@@ -33,7 +33,7 @@ static int sieve_dict_storage_init
 	struct sieve_dict_storage *dstorage =
 		(struct sieve_dict_storage *)storage;
 	struct sieve_instance *svinst = storage->svinst;
-	const char *username = NULL;
+	const char *uri = storage->location, *username = NULL;
 
 	if ( options != NULL ) {
 		while ( *options != NULL ) {
@@ -70,9 +70,15 @@ static int sieve_dict_storage_init
 	}
 
 	sieve_storage_sys_debug(storage,
-		"user=%s, uri=%s", username, storage->location);
+		"user=%s, uri=%s", username, uri);
 
+	dstorage->uri = p_strdup(storage->pool, uri);
 	dstorage->username = p_strdup(storage->pool, username);
+
+	storage->location = p_strconcat(storage->pool,
+		SIEVE_DICT_STORAGE_DRIVER_NAME, ":", storage->location,
+		";user=", username, NULL);
+
 	return 0;
 }
 
@@ -86,12 +92,12 @@ int sieve_dict_storage_get_dict
 	int ret;
 
 	if ( dstorage->dict == NULL ) {
-		ret = dict_init(storage->location, DICT_DATA_TYPE_STRING,
+		ret = dict_init(dstorage->uri, DICT_DATA_TYPE_STRING,
 			dstorage->username, svinst->base_dir, &dstorage->dict, &error);
 		if ( ret < 0 ) {
 			sieve_storage_set_critical(storage,
 				"Failed to initialize dict with data `%s' for user `%s': %s",
-				storage->location, dstorage->username, error);
+				dstorage->uri, dstorage->username, error);
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}

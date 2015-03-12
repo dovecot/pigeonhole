@@ -35,13 +35,19 @@ struct sieve_dict_script *sieve_dict_script_init
 {
 	struct sieve_storage *storage = &dstorage->storage;
 	struct sieve_dict_script *dscript = NULL;
+	const char *location;
 
-	if ( name == NULL )
+	if ( name == NULL ) {
 		name = SIEVE_DICT_SCRIPT_DEFAULT;
+		location = storage->location;
+    } else {
+		location = t_strconcat
+			(storage->location, ";name=", name, NULL);
+    }
 
 	dscript = sieve_dict_script_alloc();
 	sieve_script_init(&dscript->script,
-		storage, &sieve_dict_script, storage->location, name);
+		storage, &sieve_dict_script, location, name);
 
 	return dscript;
 }
@@ -70,7 +76,7 @@ static int sieve_dict_script_open
 	if ( sieve_dict_storage_get_dict
 		(dstorage, &dscript->dict, error_r) < 0 )
 		return -1;
-		
+
 	path = t_strconcat
 		(DICT_SIEVE_NAME_PATH, dict_escape_string(name), NULL);
 
@@ -90,15 +96,6 @@ static int sieve_dict_script_open
 			*error_r = SIEVE_ERROR_NOT_FOUND;
 		}
 		return -1;
-	}
-
-	if ( strcmp(name, SIEVE_DICT_SCRIPT_DEFAULT) == 0 ) {
-		script->location = p_strconcat(script->pool,
-			SIEVE_DICT_STORAGE_DRIVER_NAME, ":", storage->location, NULL);
-	} else {
-		script->location = p_strconcat(script->pool,
-			SIEVE_DICT_STORAGE_DRIVER_NAME, ":", storage->location,
-				";name=", name, NULL);
 	}
 
 	return 0;

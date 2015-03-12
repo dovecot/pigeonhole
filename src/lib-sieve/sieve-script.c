@@ -170,7 +170,6 @@ int sieve_script_open
 	if ( script->open )
 		return 0;
 
-	script->location = NULL;
 	if ( script->v.open(script, error_r) < 0 )
 		return -1;
 

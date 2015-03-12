@@ -22,6 +22,7 @@ struct sieve_dict_storage {
 	struct sieve_storage storage;
 
 	const char *username;
+	const char *uri;
 
 	struct dict *dict;
 };

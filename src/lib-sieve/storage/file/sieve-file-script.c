@@ -409,12 +409,7 @@ static int sieve_file_script_open
 			fscript->binpath = p_strdup(pool, binpath);
 			fscript->binprefix = p_strdup(pool, binprefix);
 
-			if ( fscript->script.name == NULL || *fscript->script.name == '\0' ||
-				strcmp(fscript->script.name, basename) == 0 )
-				fscript->script.location = fscript->path;
-			else
-				fscript->script.location = p_strconcat
-					(pool, fscript->path, ";name=", fscript->script.name, NULL);
+			fscript->script.location = fscript->path;
 
 			if ( fscript->script.name == NULL )
 				fscript->script.name = p_strdup(pool, basename);

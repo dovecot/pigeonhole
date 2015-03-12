@@ -3,7 +3,8 @@ noinst_LTLIBRARIES = libsieve_storage_file.la
 AM_CPPFLAGS = \
 	$(LIBDOVECOT_INCLUDE) \
 	-I$(top_srcdir) \
-	-I$(top_srcdir)/src/lib-sieve
+	-I$(top_srcdir)/src/lib-sieve \
+	-I$(top_srcdir)/src/lib-sieve/util
 
 libsieve_storage_file_la_SOURCES = \
 	sieve-file-script.c \

@@ -36,13 +36,19 @@ struct sieve_ldap_script *sieve_ldap_script_init
 {
 	struct sieve_storage *storage = &lstorage->storage;
 	struct sieve_ldap_script *lscript = NULL;
+	const char *location;
 
-	if ( name == NULL )
+	if ( name == NULL ) {
 		name = SIEVE_LDAP_SCRIPT_DEFAULT;
+		location = storage->location;
+	} else {
+		location = t_strconcat
+			(storage->location, ";name=", name, NULL);
+	}
 
 	lscript = sieve_ldap_script_alloc();
 	sieve_script_init(&lscript->script,
-		storage, &sieve_ldap_script, storage->location, name);
+		storage, &sieve_ldap_script, location, name);
 	return lscript;
 }
 
@@ -54,7 +60,6 @@ static int sieve_ldap_script_open
 	struct sieve_storage *storage = script->storage;
 	struct sieve_ldap_storage *lstorage =
 		(struct sieve_ldap_storage *)storage;
-	const char *name = script->name;
 	int ret;
 
 	if ( sieve_ldap_db_connect(lstorage->conn) < 0 ) {
@@ -76,15 +81,6 @@ static int sieve_ldap_script_open
 		}
 		*error_r = script->storage->error_code;
 		return -1;
-	}
-
-	if ( strcmp(name, SIEVE_LDAP_SCRIPT_DEFAULT) == 0 ) {
-		script->location = p_strconcat(script->pool,
-			SIEVE_LDAP_STORAGE_DRIVER_NAME, ":", storage->location, NULL);
-	} else {
-		script->location = p_strconcat(script->pool,
-			SIEVE_LDAP_STORAGE_DRIVER_NAME, ":", storage->location,
-				";name=", name, NULL);
 	}
 
 	return 0;
@@ -238,7 +234,7 @@ static bool sieve_ldap_script_equals
 
 	if ( strcmp(storage->location, sother->location) != 0 )
 		return FALSE;
-	
+
 	i_assert( script->name != NULL && other->name != NULL );
 
 	return ( strcmp(script->name, other->name) == 0 );

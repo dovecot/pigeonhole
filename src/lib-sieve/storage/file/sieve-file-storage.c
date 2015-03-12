@@ -10,6 +10,8 @@
 #include "unlink-old-files.h"
 #include "mail-storage-private.h"
 
+#include "realpath.h"
+
 #include "sieve.h"
 #include "sieve-common.h"
 #include "sieve-settings.h"
@@ -308,10 +310,14 @@ static int sieve_file_storage_init_common
 
 	active_fname = NULL;
 	if ( active_path != NULL && *active_path != '\0' ) {
+		const char *active_dir;
+
 		active_fname = strrchr(active_path, '/');
 		if ( active_fname == NULL ) {
 			active_fname = active_path;
+			active_dir = "";
 		} else {
+			active_dir = t_strdup_until(active_path, active_fname);
 			active_fname++;
 		}
 
@@ -325,6 +331,15 @@ static int sieve_file_storage_init_common
 			return -1;
 		}
 
+		if (t_realpath(active_dir, &active_dir) < 0) {
+			sieve_storage_sys_error(storage,
+				"Failed to normalize active script directory (path=%s): %m",
+				active_dir);
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			return -1;
+		}
+		active_path = t_abspath_to(active_fname, active_dir);
+
 		sieve_storage_sys_debug(storage,
 			"Using %sSieve script path: %s",
 			( storage_path != NULL ? "active " : "" ),
@@ -337,6 +352,14 @@ static int sieve_file_storage_init_common
 	/* Determine storage path */
 
 	if (storage_path != NULL && *storage_path != '\0') {
+		if (t_realpath(storage_path, &storage_path) < 0) {
+			sieve_storage_sys_error(storage,
+				"Failed to normalize storage path (path=%s): %m",
+				active_path);
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			return -1;
+		}
+
 		sieve_storage_sys_debug(storage,
 			"Using script storage path: %s", storage_path);
 
@@ -440,8 +463,7 @@ static int sieve_file_storage_init_common
 		(fstorage, fstorage->path, error_r) < 0 )
 		return -1;
 
-	if (storage->location == NULL)
-		storage->location = p_strdup(storage->pool, storage_path);
+	storage->location = fstorage->path;
 
 	return 0;
 }

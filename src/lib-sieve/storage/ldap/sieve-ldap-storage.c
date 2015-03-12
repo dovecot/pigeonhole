@@ -82,8 +82,11 @@ static int sieve_ldap_storage_init
 		return -1;
 
 	lstorage->username = p_strdup(storage->pool, username);
-
 	lstorage->conn = sieve_ldap_db_init(lstorage);
+
+	storage->location = p_strconcat(storage->pool,
+		SIEVE_LDAP_STORAGE_DRIVER_NAME, ":", storage->location,
+		";user=", username, NULL);
 
 	return 0;
 }
