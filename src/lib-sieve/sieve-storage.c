@@ -164,9 +164,9 @@ static int sieve_storage_driver_parse
 	return ( storage_class == NULL ? -1 : 1 );
 }
 
-static bool sieve_storage_data_parse
+static int sieve_storage_data_parse
 (struct sieve_storage *storage, const char *data, const char **location_r,
-	const char *const **options_r, const char **error_r)
+	const char *const **options_r)
 {
 	ARRAY_TYPE(const_string) options;
 	const char *const *tmp;
@@ -174,7 +174,7 @@ static bool sieve_storage_data_parse
 	if (*data == '\0') {
 		*options_r = NULL;
 		*location_r = data;
-		return TRUE;
+		return 0;
 	}
 
 	/* <location> */
@@ -190,8 +190,10 @@ static bool sieve_storage_data_parse
 
 			if ( strncasecmp(option, "name=", 5) == 0 ) {
 				if ( option[5] == '\0' ) {
-					*error_r = "empty name not allowed";
-					return FALSE;
+					sieve_storage_sys_error(storage,
+						"Failed to parse storage location: "
+						"Empty name not allowed");
+					return -1;
 				}
 
 				if ( storage->script_name == NULL )
@@ -201,8 +203,10 @@ static bool sieve_storage_data_parse
 				const char *bin_dir = option+7;
 
 				if ( bin_dir[0] == '\0' ) {
-					*error_r = "empty bindir not allowed";
-					return FALSE;
+					sieve_storage_sys_error(storage,
+						"Failed to parse storage location: "
+						"Empty bindir not allowed");
+					return -1;
 				}
 
 				if ( bin_dir[0] == '~' ) {
@@ -212,9 +216,11 @@ static bool sieve_storage_data_parse
 					if ( home != NULL ) {
 						bin_dir = home_expand_tilde(bin_dir, home);
 					} else if ( bin_dir[1] == '/' || bin_dir[1] == '\0' ) {
-						*error_r = "bindir is relative to home directory (~/), "
-							"but home directory cannot be determined";
-						return FALSE;
+						sieve_storage_sys_error(storage,
+							"Failed to parse storage location: "
+							"bindir is relative to home directory (~/), "
+							"but home directory cannot be determined");
+						return -1;
 					}
 				}
 
@@ -228,7 +234,7 @@ static bool sieve_storage_data_parse
 		*options_r = array_idx(&options, 0);
 	}
 
-	return TRUE;
+	return 0;
 }
 
 struct sieve_storage *sieve_storage_alloc
@@ -258,7 +264,7 @@ static struct sieve_storage *sieve_storage_init
 {
 	struct sieve_storage *storage;
 	const char *const *options;
-	const char *location, *parse_error;
+	const char *location;
 	enum sieve_error error;
 
 	if ( error_r != NULL )
@@ -290,11 +296,8 @@ static struct sieve_storage *sieve_storage_init
 		storage = sieve_storage_alloc
 			(svinst, storage_class, data, flags, main);
 
-		if ( !sieve_storage_data_parse
-			(storage, data, &location, &options, &parse_error) ) {
-			sieve_sys_error(svinst, "%s storage: "
-				"Failed to parse storage location: %s",
-				storage_class->driver_name, parse_error);
+		if ( sieve_storage_data_parse
+			(storage, data, &location, &options) < 0 ) {
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			sieve_storage_unref(&storage);
 			storage = NULL;
