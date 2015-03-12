@@ -784,7 +784,8 @@ static bool sieve_file_script_equals
 	struct sieve_file_script *fother =
 		(struct sieve_file_script *)other;
 
-	return ( fscript->st.st_ino == fother->st.st_ino );
+	return ( CMP_DEV_T(fscript->st.st_dev, fother->st.st_dev) &&
+		fscript->st.st_ino == fother->st.st_ino );
 }
 
 /*
