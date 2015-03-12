@@ -7,56 +7,11 @@
 #include "hostpid.h"
 #include "file-copy.h"
 
+#include "realpath.h"
+
 #include "sieve-file-storage.h"
 
 #include <unistd.h>
-
-static int _file_path_cmp(const char *path1, const char *path2)
-{
-	const char *p1, *p2;
-	int ret;
-
-	p1 = path1; p2 = path2;
-	if (*p2 == '\0' && *p1 != '\0')
-		return 1;
-	if (*p1 == '\0' && *p2 != '\0')
-		return -1;
-	if (*p1 == '/' && *p2 != '/')
-		return 1;
-	if (*p2 == '/' && *p1 != '/')
-		return -1;
-	for (;;) {
-		const char *s1, *s2;
-		size_t size1, size2;
-
-		/* skip repeated slashes */
-		for (; *p1 == '/'; p1++);
-		for (; *p2 == '/'; p2++);
-		/* check for end of comparison */
-		if (*p1 == '\0' || *p2 == '\0')
-			break;
-		/* mark start of path element */
-		s1 = p1;
-		s2 = p2;
-		/* scan to end of path elements */
-		for (; *p1 != '\0' && *p1 != '/'; p1++);
-		for (; *p2 != '\0' && *p2 != '/'; p2++);
-		/* compare sizes */
-		size1 = p1 - s1;
-		size2 = p2 - s2;
-		if (size1 != size2)
-			return size1 - size2;
-		/* compare */
-		if (size1 > 0 && (ret=memcmp(s1, s2, size1)) != 0)
-			return ret;
-	}
-	if (*p1 == '\0') {
-		if (*p2 == '\0')
-			return 0;
-		return -1;
-	}
-	return 1;
-}
 
 /*
  * Symlink manipulation
@@ -108,7 +63,14 @@ static const char *sieve_file_storage_active_parse_link
 	const char **scriptname_r)
 {
 	struct sieve_storage *storage = &fstorage->storage;
-	const char *fname, *scriptname, *scriptpath;
+	const char *fname, *scriptname, *scriptpath, *link_dir;
+
+	/* Split off directory from link path */
+	fname = strrchr(fstorage->active_path, '/');
+	if (fname == NULL)
+		link_dir = "";
+	else
+		link_dir = t_strdup_until(fstorage->active_path, fname+1);
 
 	/* Split link into path and filename */
 	fname = strrchr(link, '/');
@@ -126,20 +88,25 @@ static const char *sieve_file_storage_active_parse_link
 	/* Warn if link is deemed to be invalid */
 	if ( scriptname == NULL ) {
 		sieve_storage_sys_warning(storage,
-			"Active sieve script symlink %s is broken: "
-			"invalid scriptname (points to %s).",
+			"Active Sieve script symlink %s is broken: "
+			"Invalid scriptname (points to %s).",
 			fstorage->active_path, link);
 		return NULL;
 	}
 
 	/* Check whether the path is any good */
-	i_assert( fstorage->link_path != NULL );
-	if ( _file_path_cmp(scriptpath, fstorage->link_path) != 0 &&
-		_file_path_cmp(scriptpath, fstorage->path) != 0 ) {
+	if ( t_normpath_to(scriptpath, link_dir, &scriptpath) < 0 ) {
+		sieve_storage_sys_warning(storage,
+			"Failed to check active Sieve script symlink %s: "
+			"Failed to normalize path (points to %s).",
+			fstorage->active_path, scriptpath);
+		return NULL;
+	}
+	if ( strcmp(scriptpath, fstorage->path) != 0 ) {
 		sieve_storage_sys_warning(storage,
 			"Active sieve script symlink %s is broken: "
-			"invalid/unknown path to storage (points to %s).",
-			fstorage->active_path, link);
+			"Invalid/unknown path to storage (points to %s).",
+			fstorage->active_path, scriptpath);
 		return NULL;
 	}
 
