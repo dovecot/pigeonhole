@@ -70,7 +70,7 @@ static int sieve_dict_script_open
 	struct sieve_dict_storage *dstorage =
 		(struct sieve_dict_storage *)storage;
 	const char *name = script->name;
-	const char *path;
+	const char *path, *data_id;
 	int ret;
 
 	if ( sieve_dict_storage_get_dict
@@ -81,7 +81,7 @@ static int sieve_dict_script_open
 		(DICT_SIEVE_NAME_PATH, dict_escape_string(name), NULL);
 
 	ret = dict_lookup
-		(dscript->dict, script->pool, path, &dscript->data_id);
+		(dscript->dict, script->pool, path, &data_id);
 	if ( ret <= 0 ) {
 		if ( ret < 0 ) {
 			sieve_script_set_critical(script,
@@ -98,6 +98,7 @@ static int sieve_dict_script_open
 		return -1;
 	}
 
+	dscript->data_id = p_strdup(script->pool, data_id);
 	return 0;
 }
 
@@ -107,7 +108,7 @@ static int sieve_dict_script_get_stream
 {
 	struct sieve_dict_script *dscript =
 		(struct sieve_dict_script *)script;
-	const char *path, *name = script->name;
+	const char *path, *name = script->name, *data;
 	int ret;
 
 	dscript->data_pool =
@@ -117,7 +118,7 @@ static int sieve_dict_script_get_stream
 		(DICT_SIEVE_DATA_PATH, dict_escape_string(dscript->data_id), NULL);
 
 	ret = dict_lookup
-		(dscript->dict, dscript->data_pool, path, &dscript->data);
+		(dscript->dict, dscript->data_pool, path, &data);
 	if ( ret <= 0 ) {
 		if ( ret < 0 ) {
 			sieve_script_set_critical(script,
@@ -133,7 +134,8 @@ static int sieve_dict_script_get_stream
 		*error_r = SIEVE_ERROR_TEMP_FAILURE;
 		return -1;
 	}
-
+	
+	dscript->data = p_strdup(script->pool, data);
 	*stream_r = i_stream_create_from_data(dscript->data, strlen(dscript->data));
 	return 0;
 }
