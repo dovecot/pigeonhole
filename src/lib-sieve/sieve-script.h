@@ -67,6 +67,10 @@ int sieve_script_binary_read_metadata
 		sieve_size_t *offset);
 void sieve_script_binary_write_metadata
 	(struct sieve_script *script, struct sieve_binary_block *sblock);
+bool sieve_script_binary_dump_metadata
+	(struct sieve_script *script, struct sieve_dumptime_env *denv,
+		struct sieve_binary_block *sblock, sieve_size_t *offset)
+		ATTR_NULL(1);
 
 struct sieve_binary *sieve_script_binary_load
 	(struct sieve_script *script, enum sieve_error *error_r);

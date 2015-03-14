@@ -13,6 +13,7 @@
 #include "strfuncs.h"
 
 #include "sieve-error.h"
+#include "sieve-dump.h"
 #include "sieve-binary.h"
 
 /*
@@ -208,6 +209,23 @@ static void sieve_ldap_script_binary_write_metadata
 		sieve_binary_emit_cstring(sblock, lscript->modattr);
 }
 
+static int sieve_ldap_script_binary_dump_metadata
+(struct sieve_script *script ATTR_UNUSED, struct sieve_dumptime_env *denv,
+	struct sieve_binary_block *sblock, sieve_size_t *offset)
+{
+	string_t *dn, *modattr;
+
+	if ( !sieve_binary_read_string(sblock, offset, &dn) )
+		return FALSE;
+	sieve_binary_dumpf(denv, "ldap.dn = %s\n", str_c(dn));
+
+	if ( !sieve_binary_read_string(sblock, offset, &modattr) )
+		return FALSE;
+	sieve_binary_dumpf(denv, "ldap.mod_attr = %s\n", str_c(modattr));
+
+	return TRUE;
+}
+
 static const char *sieve_ldap_script_get_binpath
 (struct sieve_ldap_script *lscript)
 {
@@ -279,6 +297,7 @@ const struct sieve_script sieve_ldap_script = {
 
 		.binary_read_metadata = sieve_ldap_script_binary_read_metadata,
 		.binary_write_metadata = sieve_ldap_script_binary_write_metadata,
+		.binary_dump_metadata = sieve_ldap_script_binary_dump_metadata,
 		.binary_load = sieve_ldap_script_binary_load,
 		.binary_save = sieve_ldap_script_binary_save,
 

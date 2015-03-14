@@ -10,6 +10,7 @@
 #include "sieve-common.h"
 #include "sieve-extensions.h"
 #include "sieve-dump.h"
+#include "sieve-script.h"
 
 #include "sieve-binary-private.h"
 
@@ -96,12 +97,17 @@ bool sieve_binary_dumper_run
 (struct sieve_binary_dumper *dumper, struct ostream *stream, bool verbose)
 {
 	struct sieve_binary *sbin = dumper->dumpenv.sbin;
+	struct sieve_script *script = sieve_binary_script(sbin);
 	struct sieve_dumptime_env *denv = &(dumper->dumpenv);
+	struct sieve_binary_block *sblock;
+	bool success = TRUE;
+	sieve_size_t offset;
 	int count, i;
 
 	dumper->dumpenv.stream = stream;
 
 	/* Dump list of binary blocks */
+
 	if ( verbose ) {
 		count = sieve_binary_block_count(sbin);
 
@@ -117,6 +123,19 @@ bool sieve_binary_dumper_run
 		}
 	}
 
+	/* Dump script metadata */
+
+	sieve_binary_dump_sectionf
+		(denv, "Script metadata (block: %d)", SBIN_SYSBLOCK_SCRIPT_DATA);
+	sblock = sieve_binary_block_get(sbin, SBIN_SYSBLOCK_SCRIPT_DATA);
+
+	T_BEGIN {
+		offset = 0;
+		success = sieve_script_binary_dump_metadata
+			(script, denv, sblock, &offset);
+	} T_END;
+	if ( !success ) return FALSE;
+
 	/* Dump list of used extensions */
 
 	count = sieve_binary_extensions_count(sbin);
@@ -128,8 +147,7 @@ bool sieve_binary_dumper_run
 			const struct sieve_extension *ext = sieve_binary_extension_get_by_index
 				(sbin, i);
 
-			struct sieve_binary_block *sblock = sieve_binary_extension_get_block
-				(sbin, ext);
+			sblock = sieve_binary_extension_get_block(sbin, ext);
 
 			if ( sblock == NULL ) {
 				sieve_binary_dumpf(denv, "%3d: %s (id: %d)\n",
@@ -147,7 +165,7 @@ bool sieve_binary_dumper_run
 	count = sieve_binary_extensions_count(sbin);
 	if ( count > 0 ) {
 		for ( i = 0; i < count; i++ ) {
-			bool success = TRUE;
+			success = TRUE;
 
 			T_BEGIN {
 				const struct sieve_extension *ext = sieve_binary_extension_get_by_index

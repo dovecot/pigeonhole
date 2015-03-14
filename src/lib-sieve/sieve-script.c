@@ -15,6 +15,7 @@
 #include "sieve-limits.h"
 #include "sieve-settings.h"
 #include "sieve-error.h"
+#include "sieve-dump.h"
 #include "sieve-binary.h"
 
 #include "sieve-storage-private.h"
@@ -413,6 +414,49 @@ void sieve_script_binary_write_metadata
 		return;
 
 	script->v.binary_write_metadata(script, sblock);
+}
+
+bool sieve_script_binary_dump_metadata
+(struct sieve_script *script, struct sieve_dumptime_env *denv,
+	struct sieve_binary_block *sblock, sieve_size_t *offset)
+{
+	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
+	struct sieve_instance *svinst = sieve_binary_svinst(sbin);
+	string_t *storage_class, *location;
+	struct sieve_script *adhoc_script = NULL;
+	unsigned int version;
+	bool result = TRUE;
+
+	/* storage class */
+	if ( !sieve_binary_read_string(sblock, offset, &storage_class) )
+		return FALSE;
+	sieve_binary_dumpf(denv, "class = %s\n", str_c(storage_class));
+
+	/* version */
+	if ( !sieve_binary_read_unsigned(sblock, offset, &version) )
+		return FALSE;
+	sieve_binary_dumpf(denv, "class.version = %d\n", version);
+
+	/* location */
+	if ( !sieve_binary_read_string(sblock, offset, &location) )
+		return FALSE;
+	sieve_binary_dumpf(denv, "location = %s\n", str_c(location));
+	
+	if ( script == NULL ) {
+		script = adhoc_script = sieve_script_create
+			(svinst, str_c(location), NULL, NULL);
+	}
+
+	if ( script != NULL ) {
+		if ( script->v.binary_dump_metadata == NULL )
+			return TRUE;
+
+		result = script->v.binary_dump_metadata(script, denv, sblock, offset);
+	}
+
+	if ( adhoc_script != NULL )
+		sieve_script_unref(&adhoc_script);
+	return result;
 }
 
 struct sieve_binary *sieve_script_binary_load

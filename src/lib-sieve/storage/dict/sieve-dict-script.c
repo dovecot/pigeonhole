@@ -9,6 +9,7 @@
 
 #include "sieve-common.h"
 #include "sieve-error.h"
+#include "sieve-dump.h"
 #include "sieve-binary.h"
 
 #include "sieve-dict-storage.h"
@@ -181,6 +182,19 @@ static void sieve_dict_script_binary_write_metadata
 	sieve_binary_emit_cstring(sblock, dscript->data_id);
 }
 
+static int sieve_dict_script_binary_dump_metadata
+(struct sieve_script *script ATTR_UNUSED, struct sieve_dumptime_env *denv,
+	struct sieve_binary_block *sblock, sieve_size_t *offset)
+{
+	string_t *data_id;
+
+	if ( !sieve_binary_read_string(sblock, offset, &data_id) )
+		return FALSE;
+	sieve_binary_dumpf(denv, "dict.data_id = %s\n", str_c(data_id));
+
+	return TRUE;
+}
+
 static const char * sieve_dict_script_get_binpath
 (struct sieve_dict_script *dscript)
 {
@@ -252,6 +266,7 @@ const struct sieve_script sieve_dict_script = {
 
 		.binary_read_metadata =sieve_dict_script_binary_read_metadata,
 		.binary_write_metadata = sieve_dict_script_binary_write_metadata,
+		.binary_dump_metadata = sieve_dict_script_binary_dump_metadata,
 		.binary_load = sieve_dict_script_binary_load,
 		.binary_save = sieve_dict_script_binary_save,
 
