@@ -295,7 +295,8 @@ static int sieve_file_storage_init_common
 	ATTR_NULL(2, 3)
 {
 	struct sieve_storage *storage = &fstorage->storage;
-	const char *tmp_dir, *link_path, *active_fname;
+	const char *tmp_dir, *link_path, *active_fname, *storage_dir;
+	bool have_link = FALSE;
 	int ret;
 
 	fstorage->prev_mtime = (time_t)-1;
@@ -351,42 +352,22 @@ static int sieve_file_storage_init_common
 
 	/* Determine storage path */
 
-	if (storage_path != NULL && *storage_path != '\0') {
-		if (t_realpath(storage_path, &storage_path) < 0) {
-			sieve_storage_sys_error(storage,
-				"Failed to normalize storage path (path=%s): %m",
-				active_path);
+	storage_dir = storage_path;
+	if ( storage_path != NULL && *storage_path != '\0' ) {
+		sieve_storage_sys_debug(storage,
+			"Using script storage path: %s", storage_path);
+		have_link = TRUE;
+
+	} else {
+		if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ) {
+			sieve_storage_set_critical(storage,
+				"Storage path cannot be empty for write access");
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
 
-		sieve_storage_sys_debug(storage,
-			"Using script storage path: %s", storage_path);
-
-		if ( active_path != NULL && *active_path != '\0' ) {
-			/* Get the path to be prefixed to the script name in the symlink pointing
-			 * to the active script.
-			 */
-			link_path = sieve_storage_get_relative_link_path
-				(fstorage->active_path, storage_path);
-
-			sieve_storage_sys_debug(storage,
-				"Relative path to sieve storage in active link: %s",
-				link_path);
-
-			fstorage->link_path = p_strdup(storage->pool, link_path);
-		}
-
-	} else if ((storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ) {
-		sieve_storage_set_critical(storage,
-			"Storage path cannot be empty for write access");
-		*error_r = SIEVE_ERROR_TEMP_FAILURE;
-		return -1;
+		storage_path = active_path;
 	}
-
-	fstorage->path = ( storage_path != NULL ?
-		p_strdup(storage->pool, storage_path) : 
-		p_strdup(storage->pool, active_path) );
 
 	/* Prepare for write access */
 
@@ -405,7 +386,7 @@ static int sieve_file_storage_init_common
 		if ( exists ) {
 			file_create_mode = (fstorage->st.st_mode & 0666) | 0600;
 			dir_create_mode = (fstorage->st.st_mode & 0777) | 0700;
-			file_create_gid_origin = storage_path;
+			file_create_gid_origin = storage_dir;
 
 			if ( !S_ISDIR(fstorage->st.st_mode) ) {
 				/* We're getting permissions from a file.
@@ -431,7 +412,7 @@ static int sieve_file_storage_init_common
 
 		sieve_storage_sys_debug(storage,
 			"Using permissions from %s: mode=0%o gid=%ld",
-			storage_path, (int)dir_create_mode,
+			file_create_gid_origin, (int)dir_create_mode,
 			file_create_gid == (gid_t)-1 ? -1L : (long)file_create_gid);
 
 		/*
@@ -439,7 +420,7 @@ static int sieve_file_storage_init_common
 		 *  This currently only consists of a ./tmp direcory
 		 */
 
-		tmp_dir = t_strconcat(fstorage->path, "/tmp", NULL);
+		tmp_dir = t_strconcat(storage_path, "/tmp", NULL);
 
 		/* Try to find and clean up tmp dir */
 		if ( (ret=check_tmp(storage, tmp_dir)) < 0 ) {
@@ -460,9 +441,32 @@ static int sieve_file_storage_init_common
 	}
 
 	if ( !exists && sieve_file_storage_stat
-		(fstorage, fstorage->path, error_r) < 0 )
+		(fstorage, storage_path, error_r) < 0 )
 		return -1;
 
+	if ( !have_link ) {
+		if ( t_realpath(storage_path, &storage_path) < 0 ) {
+			sieve_storage_sys_error(storage,
+				"Failed to normalize storage path (path=%s): %m",
+				storage_path);
+			*error_r = SIEVE_ERROR_TEMP_FAILURE;
+			return -1;
+		}
+	} else if ( active_path != NULL && *active_path != '\0' ) {
+		/* Get the path to be prefixed to the script name in the symlink
+		 * pointing to the active script.
+		 */
+		link_path = sieve_storage_get_relative_link_path
+			(fstorage->active_path, storage_path);
+
+		sieve_storage_sys_debug(storage,
+			"Relative path to sieve storage in active link: %s",
+			link_path);
+
+		fstorage->link_path = p_strdup(storage->pool, link_path);
+	}
+
+	fstorage->path = p_strdup(storage->pool, storage_path);
 	storage->location = fstorage->path;
 
 	return 0;
@@ -504,10 +508,30 @@ static int sieve_file_storage_init
 	/* Stat storage directory */
 
 	if ( storage_path != NULL && *storage_path != '\0' ) {
-		if ( sieve_file_storage_stat (fstorage, storage_path, error_r) < 0 ) {
-			if ( (*error_r != SIEVE_ERROR_NOT_FOUND) ||
-				(storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0  )
+		if ( sieve_file_storage_stat(fstorage, storage_path, error_r) < 0 ) {
+			if ( *error_r != SIEVE_ERROR_NOT_FOUND )
 				return -1;
+			if ( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) == 0 ) {
+				/* For backwards compatibility, recognize when storage directory
+				   does not exist while active script exists and is a regular
+				   file. */
+				if ( active_path == NULL || *active_path == '\0' )
+					return -1;
+				if ( sieve_file_storage_get_full_active_path
+					(fstorage, &active_path, error_r) < 0 )
+					return -1;
+				if ( sieve_file_storage_stat
+					(fstorage, active_path, error_r) < 0 )
+					return -1;
+				if ( !S_ISREG(fstorage->lnk_st.st_mode) )
+					return -1;
+				sieve_storage_sys_debug(storage,
+					"Sieve storage path `%s' not found, "
+					"but the active script `%s' is a regular file, "
+					"so this is used for backwards compatibility.",
+					storage_path, active_path);
+				storage_path = NULL;
+			}
 		} else {
 			exists = TRUE;
 
@@ -527,7 +551,6 @@ static int sieve_file_storage_init
 				}
 				active_path = storage_path;
 				storage_path = NULL;
-
 			} 
 		}
 	}
