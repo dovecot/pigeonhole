@@ -277,6 +277,8 @@ struct sieve_script *sieve_file_storage_active_script_open
 		 * ignore this situation and report 'no active script'.
 		 * Activation should fix this situation.
 		 */
+		sieve_storage_set_error(storage, SIEVE_ERROR_NOT_FOUND,
+			"Active script is invalid");
 		return NULL;
 	}
 
