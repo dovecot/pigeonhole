@@ -11,20 +11,24 @@ v0.4.7 xx-03-2015 Stephan Bosch <stephan@rename-it.nl>
 	+ Implemented new sieve commands for the doveadm command line utility. These
 	  commands are currently limited to ManageSieve operations, but the other
 	  current sieve tools will be migrated to doveadm in the near future as well.
-	+ Added more debug output to binary up-to-date checking.
-	- The Sieve interpreter now flushes duplicate database during start phase of
-	  result execution rather than commit phase. This makes sure locks on the
+	+ Added more debug output about binary up-to-date checking.
+	+ Added script metadata to binary dump output.
+	- Fixed Sieve script binary up-to-date checking by normalizing the script
+	  location.
+	- The Sieve interpreter now flushes the duplicate database during start phase
+	  of result execution rather than commit phase. This makes sure locks on the
 	  duplicate database are released as soon as possible, preventing contention.
 	- Performed a few optimizations in the lexical scanner of the language.
 	- Fixed bug in `:matches' match-type that made a pattern without
 	  wildcards match as if there were a '*' at the beginning.
-	- file storage: Restructured storage initialization to address backwards
-	  compatibility issues.
 	- Fixed crash in validation of the string parameter of the comparator tag.
 	- extprograms extension: Made sure supplemental group privileges are also
 	  dropped. This was a problem reported by Debian lintian.
 	- Fixed bug in handling of binary errors for action side-effects and message
 	  overrides.
+	- file script storage: Restructured storage initialization to address backwards
+	  compatibility issues.
+	- dict script storage: Fixed small memory allocation bug.
 
 v0.4.6 02-11-2014 Stephan Bosch <stephan@rename-it.nl>
 
