@@ -460,6 +460,7 @@ static int sieve_file_script_get_stream
 				"Failed to close sieve script: "
 				"close(fd=%s) failed: %m", fscript->path);
 		}
+		return -1;
 	}
 
 	*stream_r = result;
