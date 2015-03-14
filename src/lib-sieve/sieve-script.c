@@ -337,7 +337,6 @@ int sieve_script_binary_read_metadata
 {
 	struct sieve_binary *sbin = sieve_binary_block_get_binary(sblock);
 	string_t *storage_class, *location;
-	const char *script_location;
 	unsigned int version;
 
 	if ( sieve_binary_block_get_size(sblock) - *offset == 0 )
@@ -346,15 +345,16 @@ int sieve_script_binary_read_metadata
 	/* storage class */
 	if ( !sieve_binary_read_string(sblock, offset, &storage_class) ) {
 		sieve_script_sys_error(script,
-			"Binary %s has invalid metadata for script %s: "
+			"Binary `%s' has invalid metadata for script `%s': "
 			"Invalid storage class",
-			sieve_binary_path(sbin), sieve_script_location(script));
+			sieve_binary_path(sbin), script->location);
 		return -1;
 	}
 	if ( strcmp(str_c(storage_class), script->driver_name) != 0 ) {
 		sieve_script_sys_debug(script,
-			"Binary reports unexpected driver name "
+			"Binary `%s' reports unexpected driver name for script `%s' "
 			"(`%s' rather than `%s')",
+			sieve_binary_path(sbin), script->location,
 			str_c(storage_class), script->driver_name);
 		return 0;
 	}
@@ -362,34 +362,36 @@ int sieve_script_binary_read_metadata
 	/* version */
 	if ( !sieve_binary_read_unsigned(sblock, offset, &version) ) {
 		sieve_script_sys_error(script,
-			"Binary %s has invalid metadata for script %s: "
+			"Binary `%s' has invalid metadata for script `%s': "
 			"Invalid version",
-			sieve_binary_path(sbin), sieve_script_location(script));
+			sieve_binary_path(sbin), script->location);
 		return -1;
 	}
 	if ( script->storage->version != version ) {
 		sieve_script_sys_debug(script,
-			"Binary %s was compiled with different version "
-			"of the `%s' script storage class (compiled v%d, expected v%d;"
-			"automatically fixed when re-compiled)", sieve_binary_path(sbin),
-			script->driver_name, version, script->storage->version);
+			"Binary `%s' was compiled with "
+			"a different version of the `%s' script storage class "
+			"(compiled v%d, expected v%d; "
+				"automatically fixed when re-compiled)",
+			sieve_binary_path(sbin), script->driver_name,
+		 	version, script->storage->version);
 		return 0;
 	}
 
 	/* location */
 	if ( !sieve_binary_read_string(sblock, offset, &location) ) {
 		sieve_script_sys_error(script,
-			"Binary %s has invalid metadata for script %s: "
+			"Binary `%s' has invalid metadata for script `%s': "
 			"Invalid location",
-			sieve_binary_path(sbin), sieve_script_location(script));
+			sieve_binary_path(sbin), script->location);
 		return -1;
 	}
-	script_location = ( script->location == NULL ? "" : script->location);
-	if ( strcmp(str_c(location), script_location) != 0 ) {
+	i_assert( script->location != NULL );
+	if ( strcmp(str_c(location), script->location) != 0 ) {
 		sieve_script_sys_debug(script,
-			"Binary reports different script location "
-			"(`%s' rather than `%s')",
-			str_c(location), script_location);
+			"Binary `%s' reports different location "
+			"for script `%s' (binary points to `%s')",
+			sieve_binary_path(sbin), script->location, str_c(location));
 		return 0;
 	}
 	

@@ -68,6 +68,7 @@ struct sieve_ldap_storage {
 	struct sieve_ldap_storage_settings set;
 	time_t set_mtime;
 
+	const char *config_file;
 	const char *username; // FIXME: needed?
 
 	struct ldap_connection *conn;

@@ -161,8 +161,14 @@ static int sieve_dict_script_binary_read_metadata
 		return -1;
 	}
 	i_assert( dscript->data_id != NULL );
-	if ( strcmp(str_c(data_id), dscript->data_id) != 0 )
+	if ( strcmp(str_c(data_id), dscript->data_id) != 0 ) {
+		sieve_script_sys_debug(script,
+			"Binary `%s' reports different data ID for script `%s' "
+			"(`%s' rather than `%s')",
+			sieve_binary_path(sbin), sieve_script_location(script),
+			str_c(data_id), dscript->data_id);
 		return 0;
+	}
 	return 1;
 }
 

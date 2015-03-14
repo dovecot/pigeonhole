@@ -2,6 +2,7 @@
  */
 
 #include "lib.h"
+#include "time-util.h"
 #include "istream.h"
 
 #include "sieve-ldap-storage.h"
@@ -121,24 +122,41 @@ static int sieve_ldap_script_binary_read_metadata
 {
 	struct sieve_ldap_script *lscript =
 		(struct sieve_ldap_script *)script;
+	struct sieve_instance *svinst = script->storage->svinst;
 	struct sieve_ldap_storage *lstorage =
 		(struct sieve_ldap_storage *)script->storage;		
 	struct sieve_binary *sbin =
 		sieve_binary_block_get_binary(sblock);
+	time_t bmtime = sieve_binary_mtime(sbin);
 	string_t *dn, *modattr;
 
 	/* config file changed? */
-	if ( sieve_binary_mtime(sbin) <= lstorage->set_mtime )
+	if ( bmtime <= lstorage->set_mtime ) {
+		if ( svinst->debug ) {
+			sieve_script_sys_debug(script,
+				"Sieve binary `%s' is not newer "
+				"than the LDAP configuration `%s' (%s <= %s)",
+				sieve_binary_path(sbin), lstorage->config_file,
+				t_strflocaltime("%Y-%m-%d %H:%M:%S", bmtime),
+				t_strflocaltime("%Y-%m-%d %H:%M:%S", lstorage->set_mtime));
+		}
 		return 0;
+	}
 
 	/* open script if not open already */
 	if ( lscript->dn == NULL &&
 		sieve_script_open(script, NULL) < 0 )
 		return 0;
 
-	/* if modattr not found recompile always */
-	if ( lscript->modattr == NULL || *lscript->modattr == '\0' )
+	/* if modattr not found, recompile always */
+	if ( lscript->modattr == NULL || *lscript->modattr == '\0' ) {
+		sieve_script_sys_error(script,
+			"LDAP entry for script `%s' "
+			"has no modified attribute `%s'",
+			sieve_script_location(script),
+			lstorage->set.sieve_ldap_mod_attr);
 		return 0;
+	}
 
 	/* compare DN in binary and from search result */
 	if ( !sieve_binary_read_string(sblock, offset, &dn) ) {
@@ -149,8 +167,14 @@ static int sieve_ldap_script_binary_read_metadata
 		return -1;
 	}
 	i_assert( lscript->dn != NULL );
-	if ( strcmp(str_c(dn), lscript->dn) != 0 )
+	if ( strcmp(str_c(dn), lscript->dn) != 0 ) {
+		sieve_script_sys_debug(script,
+			"Binary `%s' reports different LDAP DN for script `%s' "
+			"(`%s' rather than `%s')",
+			sieve_binary_path(sbin), sieve_script_location(script),
+			str_c(dn), lscript->dn);
 		return 0;
+	}
 
 	/* compare modattr in binary and from search result */
 	if ( !sieve_binary_read_string(sblock, offset, &modattr) ) {
@@ -160,8 +184,14 @@ static int sieve_ldap_script_binary_read_metadata
 			sieve_binary_path(sbin), sieve_script_location(script));
 		return -1;
 	}
-	if ( strcmp(str_c(modattr), lscript->modattr) != 0 )
+	if ( strcmp(str_c(modattr), lscript->modattr) != 0 ) {
+		sieve_script_sys_debug(script,
+			"Binary `%s' reports different modified attribute content "
+			"for script `%s' (`%s' rather than `%s')",
+			sieve_binary_path(sbin), sieve_script_location(script),
+			str_c(modattr), lscript->modattr);
 		return 0;
+	}
 	return 1;
 }
 

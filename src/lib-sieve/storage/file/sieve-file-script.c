@@ -483,9 +483,11 @@ static int sieve_file_script_binary_read_metadata
 		fscript->st.st_mtime : fscript->lnk_st.st_mtime );
 
 	if ( bmtime <= smtime ) {
-		if (svinst->debug) {
+		if ( svinst->debug ) {
 			sieve_script_sys_debug(script,
-				"Sieve binary is not newer than the Sieve script (%s <= %s)",
+				"Sieve binary `%s' is not newer "
+				"than the Sieve script `%s' (%s <= %s)",
+				sieve_binary_path(sbin), sieve_script_location(script),
 				t_strflocaltime("%Y-%m-%d %H:%M:%S", bmtime),
 				t_strflocaltime("%Y-%m-%d %H:%M:%S", smtime));
 		}
