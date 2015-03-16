@@ -444,7 +444,7 @@ static int sieve_file_storage_init_common
 		(fstorage, storage_path, error_r) < 0 )
 		return -1;
 
-	if ( !have_link ) {
+	if ( have_link ) {
 		if ( t_realpath(storage_path, &storage_path) < 0 ) {
 			sieve_storage_sys_error(storage,
 				"Failed to normalize storage path (path=%s): %m",
@@ -452,18 +452,19 @@ static int sieve_file_storage_init_common
 			*error_r = SIEVE_ERROR_TEMP_FAILURE;
 			return -1;
 		}
-	} else if ( active_path != NULL && *active_path != '\0' ) {
-		/* Get the path to be prefixed to the script name in the symlink
-		 * pointing to the active script.
-		 */
-		link_path = sieve_storage_get_relative_link_path
-			(fstorage->active_path, storage_path);
+		if ( active_path != NULL && *active_path != '\0' ) {
+			/* Get the path to be prefixed to the script name in the symlink
+			 * pointing to the active script.
+			 */
+			link_path = sieve_storage_get_relative_link_path
+				(fstorage->active_path, storage_path);
 
-		sieve_storage_sys_debug(storage,
-			"Relative path to sieve storage in active link: %s",
-			link_path);
+			sieve_storage_sys_debug(storage,
+				"Relative path to sieve storage in active link: %s",
+				link_path);
 
-		fstorage->link_path = p_strdup(storage->pool, link_path);
+			fstorage->link_path = p_strdup(storage->pool, link_path);
+		}
 	}
 
 	fstorage->path = p_strdup(storage->pool, storage_path);
