@@ -333,13 +333,20 @@ static int sieve_file_storage_init_common
 		}
 
 		if (t_realpath(active_dir, &active_dir) < 0) {
-			sieve_storage_sys_error(storage,
-				"Failed to normalize active script directory (path=%s): %m",
-				active_dir);
-			*error_r = SIEVE_ERROR_TEMP_FAILURE;
-			return -1;
+			if (errno != ENOENT) {
+				sieve_storage_sys_error(storage,
+					"Failed to normalize active script directory (path=%s): %m",
+					active_dir);
+				*error_r = SIEVE_ERROR_TEMP_FAILURE;
+				return -1;
+			} 
+			sieve_storage_sys_debug(storage,
+				"Failed to normalize active script directory (path=%s): "
+				"Part of the path does not exist (yet)",
+				active_dir);			
+		} else {
+			active_path = t_abspath_to(active_fname, active_dir);
 		}
-		active_path = t_abspath_to(active_fname, active_dir);
 
 		sieve_storage_sys_debug(storage,
 			"Using %sSieve script path: %s",
