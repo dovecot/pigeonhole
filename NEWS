@@ -26,8 +26,8 @@ v0.4.7 xx-03-2015 Stephan Bosch <stephan@rename-it.nl>
 	  dropped. This was a problem reported by Debian lintian.
 	- Fixed bug in handling of binary errors for action side-effects and message
 	  overrides.
-	- file script storage: Restructured storage initialization to address backwards
-	  compatibility issues.
+	- file script storage: Restructured storage initialization to address
+	  backwards compatibility issues.
 	- dict script storage: Fixed small memory allocation bug.
 
 v0.4.6 02-11-2014 Stephan Bosch <stephan@rename-it.nl>
