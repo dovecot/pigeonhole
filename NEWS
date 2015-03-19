@@ -1,4 +1,4 @@
-v0.4.7 xx-03-2015 Stephan Bosch <stephan@rename-it.nl>
+v0.4.7 19-03-2015 Stephan Bosch <stephan@rename-it.nl>
 
 	* editheader extension: Made protection against addition and deletion of
 	  headers configurable separately. Also, the `Received' and `Auto-Submitted'
