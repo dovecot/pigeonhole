@@ -23,8 +23,6 @@ for backwards compatibility the original extension is still supported.
 Configuration
 =============
 
-The "duplicate" extension is not enabled by default. 
-
 The following configuration settings are used:
 
 sieve_duplicate_default_period = 14d
@@ -39,8 +37,6 @@ Example
 
 plugin {
   sieve = ~/.dovecot.sieve
-
-  sieve_extensions = +vnd.dovecot.duplicate
 
   sieve_duplicate_default_period = 1h
 	sieve_duplicate_max_period = 1d

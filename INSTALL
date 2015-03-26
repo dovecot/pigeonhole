@@ -86,14 +86,17 @@ location = [<type>:]path[;<option>[=<value>][;...]]
 
 The following script location types are implemented by default:
 
-  file    - The location path is a file system path pointing to the script file
-            or a directory containing script files with names structured as
-            `<script-name>.sieve'.
-  dict    - Dovecot dict lookup. The location path is a dict uri. Read
-            doc/scipt-location-dict.txt for more information and examples.
-  ldap    - LDAP database lookup. The location path is a configuration file with
-            LDAP options. Read doc/scipt-location-ldap.txt for more information
-            and examples.
+  file  - The location path is a file system path pointing to the script file
+          or a directory containing script files with names structured as
+          `<script-name>.sieve'. Read doc/locations/file.txt for more
+          information and examples.
+
+  dict  - The location path is a Dovecot dict uri. Read doc/locations/dict.txt
+          for more information and examples.
+
+  ldap  - LDAP database lookup. The location path is a configuration file with
+          LDAP options. Read doc/locations/ldap.txt for more information
+          and examples.
 
 If the type prefix is omitted, the script location type is 'file' and the 
 location is interpreted as a local filesystem path pointing to a Sieve script
@@ -144,12 +147,18 @@ protocol lmtp {
 The Sieve interpreter recognizes the following configuration options in the
 plugin section of the config file (default values are shown if applicable):
 
- sieve = ~/.dovecot.sieve
+ sieve = file:~/sieve;active=~/.dovecot.sieve
    The location of the user's main Sieve script or script storage. The LDA
    Sieve plugin uses this to find the active script for Sieve filtering at
    delivery. The "include" extension uses this location for retrieving
-   :personal" scripts. This is also where the  ManageSieve service will store
-   the user's scripts, if supported by the location type.
+   :personal" scripts.
+
+   This location is also where the ManageSieve service will store the user's
+   scripts, if supported by the location type. For the 'file' location type, the
+   location will then be the path to the storage directory for all the user's
+   personal Sieve scripts. ManageSieve maintains a symbolic link pointing to
+   the currently active script (the script executed at delivery). The location
+   of this symbolic link can be configured using the `;active=<path>' option.
 
  sieve_default =
    The location of the default personal sieve script file, which gets executed
@@ -425,16 +434,15 @@ Sieve Interpreter - Extension Configuration
   configuration and are not enabled for use by default. Refer to
   doc/extensions/spamtest-virustest.txt for configuration information.
 
-- Vnd.dovecot.duplicate extension:
+- Duplicate extension:
 
-  The vnd.dovecot.duplicate extension augments the Sieve filtering
-  implementation with a test that allows detecting and handling duplicate
-  message deliveries, e.g. as caused by mailinglists when people reply both to
-  the mailinglist and the user directly.
+  The duplicate extension augments the Sieve filtering implementation with a
+  test that facilitates detecting and handling duplicate message deliveries,
+  e.g. as caused by mailinglists when people reply both to the mailinglist and
+  the user directly.
 
-  The vnd.dovecot.duplicate extension requires explicit configuration and is not
-  enabled for use by default. Refer to doc/extensions/vnd.dovecot.duplicate.txt
-  for configuration information.
+  Refer to doc/extensions/vnd.dovecot.duplicate.txt for configuration
+  information.
 
 - Extprograms plugin;
     vnd.dovovecot.pipe, vnd.dovecot.filter, vnd.dovecot.execute extensions:

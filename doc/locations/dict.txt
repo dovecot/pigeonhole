@@ -34,7 +34,7 @@ about configuration of script locations.
 Configuration
 =============
 
-The script location syntax is specialized as follows:
+The script location syntax is specified as follows:
 
 location = dict:<dict-uri>[;<option>[=<value>][;...]]
 
