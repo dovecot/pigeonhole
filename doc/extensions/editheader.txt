@@ -8,15 +8,15 @@ Relevant specifications
 Description
 ===========
 
-The editheader extension [RFC5293] enables sieve scripts to interact with other
-components that consume or produce header fields by allowing the script to
-delete and add header fields.
+The editheader extension [RFC5293] enables Sieve scripts to delete and add
+message header fields, thereby allowing interaction with other components that
+consume or produce header fields.
 
 Configuration
 =============
 
-The editheader is not available by default and needs to be enabled explicitly by
-adding it to the sieve_extensions setting.
+The editheader extension is not available by default and needs to be enabled
+explicitly by adding it to the sieve_extensions setting.
 
 The following settings can be configured for the editheader extension (default
 values are indicated):
