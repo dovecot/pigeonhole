@@ -174,6 +174,9 @@ doc/man/Makefile
 doc/example-config/Makefile
 doc/example-config/conf.d/Makefile
 doc/rfc/Makefile
+doc/extensions/Makefile
+doc/locations/Makefile
+doc/plugins/Makefile
 src/Makefile
 src/lib-sieve/Makefile
 src/lib-sieve/util/Makefile

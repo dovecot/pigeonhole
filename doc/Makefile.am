@@ -1,7 +1,12 @@
-SUBDIRS = man example-config rfc
+SUBDIRS = \
+	man \
+	example-config \
+	rfc \
+	extensions \
+	locations \
+	plugins
 
-docfiles = \
-	script-location-dict.txt
+docfiles =
 
 if BUILD_DOCS
 sieve_doc_DATA = $(docfiles)
@@ -9,7 +14,5 @@ endif
 
 EXTRA_DIST = \
 	devel \
-	extensions \
-	plugins \
 	$(docfiles)
 
