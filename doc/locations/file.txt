@@ -14,7 +14,7 @@ with a ".sieve" extension are part of the sequence. The sequence order of the
 scripts in that directory is determined by the file names, using a normal 8bit
 per-character comparison.
  
-Unless overridden using the `bindir=<path' location option, compiled binaries
+Unless overridden using the `bindir=<path>' location option, compiled binaries
 for scripts retrieved from the `file' location type are by default stored in the
 same directory as where the script file was found if possible. Refer to the
 INSTALL file for more general information about configuration of script
@@ -23,7 +23,7 @@ locations.
 Configuration
 =============
 
-The script location syntax is specialized as follows:
+The script location syntax is specified as follows:
 
 location = file:<path>[;<option>[=<value>][;...]]
 
