@@ -32,12 +32,12 @@ The following additional options are recognized:
   active=<path>
     When ManageSieve is used, one script in the storage can be active; i.e.,
     evaluated at delivery. For the `file' location, the active script in the
-    storage directory pointed to by a symbolic link. This option configures
+    storage directory is pointed to by a symbolic link. This option configures
     where this symbolic link is located. If the `file' location path points to
     a regular file, this setting has no effect (and ManageSieve cannot be used).
 
-Examples
-========
+Example
+=======
 
 plugin {
 	...
