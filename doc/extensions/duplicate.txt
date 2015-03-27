@@ -3,27 +3,32 @@ Duplicate Extension
 Relevant specifications
 =======================
 
-	doc/rfc/draft-ietf-appsawg-sieve-duplicate-03.txt
+	doc/rfc/duplicate.rfc7352.txt
 
 Description
 ===========
 
-The duplicate extension augments the Sieve filtering implementation with a test
-to verify whether the evaluated string value was seen before in an earlier
-execution of the Sieve script. The main application for this new test is 
-detecting and handling duplicate message deliveries, e.g. as caused by
-mailinglists when people reply both to the mailinglist and the user directly.
+The "duplicate" extension adds a new test command called "duplicate" to the
+Sieve language. This test adds the ability to detect duplications. The main
+application for this new test is handling duplicate deliveries commonly caused
+by mailing list subscriptions or redirected mail addresses. The detection is
+normally performed by matching the message ID to an internal list of message
+IDs from previously delivered messages.  For more complex applications, the
+"duplicate" test can also use the content of a specific header field or other
+parts of the message.
 
-Refer to doc/rfc/draft-ietf-appsawg-sieve-duplicate-03.txt for a specification
-of the Sieve language extension. Previously, this extension was Dovecot-specific
-and available under the name "vnd.dovecot.duplicate". That implementation
-differs significantly from what is now published as an internet draft, but
-for backwards compatibility the original extension is still supported.
+Refer to doc/rfc/duplicate.rfc7352.txt for a specification of the Sieve language
+extension. Previously, this extension was Dovecot-specific and available under
+the name "vnd.dovecot.duplicate". That implementation differs significantly from
+what is now published as an RFC, but for backwards compatibility the original
+extension is still supported.
 
 Configuration
 =============
 
-The following configuration settings are used:
+The "duplicate" extension is available by default. The "duplicate" extension has
+its own specific settings. The following settings are available (default
+values are indicated):
 
 sieve_duplicate_default_period = 14d
 sieve_duplicate_max_period = 7d
@@ -40,4 +45,4 @@ plugin {
 
   sieve_duplicate_default_period = 1h
 	sieve_duplicate_max_period = 1d
-}d
+}
