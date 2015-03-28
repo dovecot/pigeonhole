@@ -3,7 +3,7 @@ Current activities:
 * Rework string matching:
 	- Add support for stream matching for handling large values, e.g. from the
 	  body extension.
-	- Improve efficiency :matches and :contains match types.
+	- Improve efficiency of :matches and :contains match types.
 * Build proper comparator support:
 	- Add normalize() method to comparators to normalize the string before
 	  matching (for efficiency).
@@ -22,6 +22,11 @@ Next (mostly in order of descending priority/precedence):
 	- Make this implementation fully conform section 2.7.2 of RFC5228 (Comparisons
 	  Across Character Sets).
 	- Verify validity of utf8 where necessary.
+* Further develop regex extension and update it to the latest draft:
+	- Implement the :quoteregex set modifier
+	- Investigate the use of the TRE regexp library to gain UTF-8 capability
+	  (posix regexes actually do support utf8, but only when locale is set
+	  accordingly)
 * Finish LDAP Sieve script storage for read-only access.
 	- Consolidate LDAP connections when more than a single Sieve script must be
 	  loaded from different storages linked to the same LDAP server.
@@ -29,16 +34,8 @@ Next (mostly in order of descending priority/precedence):
 	  retrieve scripts in parallel when possible.
 * Implement message modification and extraction API in order to:
 	- Implement replace, enclose, foreverypart, mime and extracttext extensions
-* Clean up doveadm sync implementation:
-	- Mostly comments referring specifically to the file storage type.
-	- API can be polished a lot as well.
 * Improve error handling.
 	- Implement dropping errors in the user's mailbox as a mail message.
-* Further develop regex extension and update it to the latest draft:
-	- Implement the :quoteregex set modifier
-	- Investigate the use of the TRE regexp library to gain UTF-8 capability
-	  (posix regexes actually do support utf8, but only when locale is set
-	  accordingly)
 * Finish body extension:
 	- Build test cases for decoding MIME encodings to UTF-8
 * Cleanup the test suite
