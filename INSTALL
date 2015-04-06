@@ -565,28 +565,43 @@ Additionally, the ManageSieve service uses the following settings from the
 plugin section of the config file. These settings are the same ones used by
 the LDA Sieve plugin.
 
- sieve_dir = ~/sieve
-   This specifies the path to the directory where the uploaded scripts are
-   stored. Scripts are stored as separate files with extension '.sieve'. All
-   other files are ignored when scripts are listed by a ManageSieve client. The
-   Sieve interpreter also uses this setting to locate the user's personal
-   scripts for use with the Sieve include extension. A storage location
-   specified by sieve_dir is always generated automatically if it does not exist
-   (as far as the system permits the user to do so; no root privileges are
-   used). This is similar to the behavior of the mail daemons regarding the
-   mail_location configuration.
+ sieve = file:~/sieve;active=~/.dovecot.sieve
+   This specifies the location where the scripts that are uploaded through
+   ManageSieve are stored. During delivery, the LDA Sieve plugin uses this
+   location setting to find the active script for Sieve filtering. The Sieve
+   "include" extension uses this location for retrieving ":personal" scripts.
+   If the location type does not allow uploading scripts, the ManageSieve
+   service cannot be used. Currently, only the 'file' location type supports
+   ManageSieve. 
 
- sieve = ~/.dovecot.sieve
-   This specifies the location of the symbolic link pointing to the active
-   script in the Sieve storage directory. The Sieve interpreter uses this
-   setting to locate the main script file that needs to be executed upon
-   delivery. When using ManageSieve, this is a symbolic link managed by the
-   ManageSieve service. ManageSieve thereby determines which script (if any) in
-   the sieve_dir directory is executed for incoming messages. If a regular file
-   already exists at the location specified by the sieve setting, it is moved to
-   the sieve_dir location before the symbolic link is installed. It is renamed
-   to dovecot.orig.sieve and therefore listed as `dovecot.orig' by a ManageSieve
-   client.
+   For the 'file' location type:
+
+    * The location is the path to the storage directory for all the user's
+      personal Sieve scripts. Scripts are stored as separate files with
+      extension .sieve. All other files are ignored when scripts are listed
+      by a ManageSieve client. The storage directory is always generated
+      automatically if it does not exist (as far as the system permits the
+      user to do so; no root privileges are used). This is similar to the
+      behavior of the mail daemons regarding the mail_location configuration.
+   
+    * ManageSieve maintains a symbolic link pointing to the currently active
+      script (the script executed at delivery). The location of this symbolic
+      link can be configured using the ;active=<path> option. If a regular
+      file already exists at the location specified by in the ;active=<path>
+      location option, it is moved to the storage directory before the
+      symbolic link is installed. It is renamed to dovecot.orig.sieve and
+      therefore listed as dovecot.orig by a ManageSieve client.
+
+      NOTE: It is not wise to place this active symbolic link inside your
+            mail store, as it may be mistaken for a mail folder. Inside a
+            maildir for instance, the default .dovecot.sieve would show up
+            as phantom folder /dovecot/sieve in your IMAP tree. 
+
+   For Pigeonhole versions before v0.3.1, this setting can only be a
+   filesystem path pointing to a script file, or - when ManageSieve is used -
+   it is the location of the symbolic link pointing to the active script in
+   the storage directory. That storage directory is then configured using the
+   deprecated `sieve_dir' setting. 
 
 The following provides an example configuration for Sieve and ManageSieve. Only
 sections and settings relevant to ManageSieve are shown. Refer to
@@ -614,8 +629,7 @@ protocol sieve {
 # ***  conf.d/90-sieve.conf ***
 
 plugin {
-  sieve=~/.dovecot.sieve
-  sieve_dir=~/sieve
+  sieve=file:~/sieve;active=~/.dovecot.sieve
 }
 
 # *** dovecot.conf ***
