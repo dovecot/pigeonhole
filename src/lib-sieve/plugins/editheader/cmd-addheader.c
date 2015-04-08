@@ -76,7 +76,7 @@ static int cmd_addheader_operation_execute
 	(const struct sieve_runtime_env *renv, sieve_size_t *address);
 
 const struct sieve_operation_def addheader_operation = {
-	"addheader",
+	"ADDHEADER",
 	&editheader_extension,
 	EXT_EDITHEADER_OPERATION_ADDHEADER,
 	cmd_addheader_operation_dump,
