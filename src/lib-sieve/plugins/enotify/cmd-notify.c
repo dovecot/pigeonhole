@@ -523,7 +523,7 @@ static int act_notify_check_duplicate
 	nenv.svinst = renv->svinst;
 	nenv.method = nact->method;
 	nenv.ehandler = sieve_prefix_ehandler_create
-		(sieve_result_get_error_handler(renv->result), act->location, "notify");
+		(renv->ehandler, act->location, "notify");
 
 	result = nmth_def->action_check_duplicates(&nenv, nact, nact_other);
 

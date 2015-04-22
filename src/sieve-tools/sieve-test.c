@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 	struct sieve_message_data msgdata;
 	struct sieve_script_env scriptenv;
 	struct sieve_exec_status estatus;
-	struct sieve_error_handler *ehandler;
+	struct sieve_error_handler *ehandler, *action_ehandler;
 	struct ostream *teststream = NULL;
 	struct ostream *tracestream = NULL;
 	bool force_compile = FALSE, execute = FALSE;
@@ -278,8 +278,14 @@ int main(int argc, char **argv)
 
 		/* Create streams for test and trace output */
 
-		if ( !execute )
+		if ( !execute ) {
+			action_ehandler = NULL;
 			teststream = o_stream_create_fd(1, 0, FALSE);
+		} else {
+			action_ehandler = sieve_prefix_ehandler_create
+				(ehandler, NULL, t_strdup_printf("msgid=%s",
+					( msgdata.id == NULL ? "unspecified" : msgdata.id )));
+		}
 
 		if ( tracefile != NULL )
 			tracestream = sieve_tool_open_output_stream(tracefile);
@@ -307,12 +313,13 @@ int main(int argc, char **argv)
 			main_sbin = NULL;
 
 			/* Execute/Test script */
-			if ( execute )
-				ret = sieve_execute
-					(sbin, &msgdata, &scriptenv, ehandler, 0, NULL);
-			else
-				ret = sieve_test
-					(sbin, &msgdata, &scriptenv, ehandler, teststream, 0, NULL);
+			if ( execute ) {
+				ret = sieve_execute(sbin, &msgdata, &scriptenv,
+					ehandler, action_ehandler, 0, NULL);
+			} else {
+				ret = sieve_test(sbin, &msgdata, &scriptenv,
+					ehandler, teststream, 0, NULL);
+			}
 		} else {
 			/* Multiple scripts */
 			const char *const *sfiles;
@@ -354,7 +361,8 @@ int main(int argc, char **argv)
 				}
 
 				/* Execute/Test script */
-				more = sieve_multiscript_run(mscript, sbin, ehandler, 0, FALSE);
+				more = sieve_multiscript_run(mscript, sbin,
+					ehandler, action_ehandler, 0, FALSE);
 			}
 
 			/* Execute/Test main script */
@@ -370,7 +378,8 @@ int main(int argc, char **argv)
 				sbin = main_sbin;
 				main_sbin = NULL;
 
-				sieve_multiscript_run(mscript, sbin, ehandler, 0, TRUE);
+				sieve_multiscript_run(mscript, sbin,
+					ehandler, ehandler, 0, TRUE);
 			}
 
 			result = sieve_multiscript_finish(&mscript, ehandler, NULL);
@@ -411,6 +420,8 @@ int main(int argc, char **argv)
 	}
 
 	/* Cleanup error handler */
+	if (action_ehandler != NULL)
+		sieve_error_handler_unref(&action_ehandler);
 	sieve_error_handler_unref(&ehandler);
 
 	sieve_tool_deinit(&sieve_tool);

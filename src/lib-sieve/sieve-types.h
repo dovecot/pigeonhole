@@ -173,9 +173,6 @@ struct sieve_trace_config {
  */
 
 struct sieve_script_env {
-	/* Logging related */
-	const char *action_log_format;
-
 	/* Mail-related */
 	struct mail_user *user;
 	const char *default_mailbox;

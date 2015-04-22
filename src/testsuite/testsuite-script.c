@@ -215,8 +215,8 @@ bool testsuite_script_multiscript
 
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "run script `%s'", script);
 
-		more = sieve_multiscript_run
-			(mscript, sbin, testsuite_log_ehandler, 0, final);
+		more = sieve_multiscript_run(mscript, sbin,
+			testsuite_log_ehandler, testsuite_log_ehandler, 0, final);
 
 		sieve_close(&sbin);
 	}

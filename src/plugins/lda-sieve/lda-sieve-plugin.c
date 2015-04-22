@@ -17,6 +17,7 @@
 #include "sieve-script.h"
 #include "sieve-storage.h"
 
+#include "lda-sieve-log.h"
 #include "lda-sieve-plugin.h"
 
 #include <stdlib.h>
@@ -168,6 +169,7 @@ struct lda_sieve_run_context {
 
 	struct sieve_error_handler *user_ehandler;
 	struct sieve_error_handler *master_ehandler;
+	struct sieve_error_handler *action_ehandler;
 	const char *userlog;
 };
 
@@ -455,9 +457,10 @@ static int lda_sieve_singlescript_execute
 (struct lda_sieve_run_context *srctx)
 {
 	struct sieve_instance *svinst = srctx->svinst;
+	struct mail_deliver_context *mdctx = srctx->mdctx;
 	struct sieve_script *script = srctx->scripts[0];
 	bool user_script = ( script == srctx->user_script );
-	struct sieve_error_handler *ehandler;
+	struct sieve_error_handler *exec_ehandler, *action_ehandler;
 	struct sieve_binary *sbin;
 	bool debug = srctx->mdctx->dest_user->mail_debug;
 	enum sieve_compile_flags cpflags = 0;
@@ -468,9 +471,9 @@ static int lda_sieve_singlescript_execute
 	if ( user_script ) {
 		cpflags |= SIEVE_COMPILE_FLAG_NOGLOBAL;
 		rtflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
-		ehandler = srctx->user_ehandler;
+		exec_ehandler = srctx->user_ehandler;
 	} else {
-		ehandler = srctx->master_ehandler;
+		exec_ehandler = srctx->master_ehandler;
 	}
 
 	/* Open the script */
@@ -495,8 +498,11 @@ static int lda_sieve_singlescript_execute
 			"Executing script from `%s'", sieve_get_source(sbin));
 	}
 
-	ret = sieve_execute
-		(sbin, srctx->msgdata, srctx->scriptenv, ehandler, rtflags, NULL);
+	action_ehandler = lda_sieve_log_ehandler_create
+		(exec_ehandler, mdctx);
+	ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv,
+		exec_ehandler, action_ehandler, rtflags, NULL);
+	sieve_error_handler_unref(&action_ehandler);
 
 	/* Recompile if corrupt binary */
 
@@ -527,8 +533,11 @@ static int lda_sieve_singlescript_execute
 				(svinst, "Executing script from `%s'", sieve_get_source(sbin));
 		}
 
-		ret = sieve_execute
-			(sbin, srctx->msgdata, srctx->scriptenv, ehandler, rtflags, NULL);
+		action_ehandler = lda_sieve_log_ehandler_create
+			(exec_ehandler, mdctx);
+		ret = sieve_execute(sbin, srctx->msgdata, srctx->scriptenv,
+			exec_ehandler, action_ehandler, rtflags, NULL);
+		sieve_error_handler_unref(&action_ehandler);
 
 		/* Save new version */
 
@@ -546,10 +555,11 @@ static int lda_sieve_multiscript_execute
 (struct lda_sieve_run_context *srctx)
 {
 	struct sieve_instance *svinst = srctx->svinst;
+	struct mail_deliver_context *mdctx = srctx->mdctx;
 	struct sieve_script *const *scripts = srctx->scripts;
 	unsigned int count = srctx->script_count;
 	struct sieve_multiscript *mscript;
-	struct sieve_error_handler *ehandler = srctx->master_ehandler;
+	struct sieve_error_handler *exec_ehandler, *action_ehandler;
 	bool debug = srctx->mdctx->dest_user->mail_debug;
 	struct sieve_script *last_script = NULL;
 	bool user_script = FALSE, more = TRUE, compile_error = FALSE;
@@ -564,6 +574,7 @@ static int lda_sieve_multiscript_execute
 
 	/* Execute scripts */
 
+	exec_ehandler = srctx->master_ehandler;
 	for ( i = 0; i < count && more; i++ ) {
 		struct sieve_binary *sbin = NULL;
 		struct sieve_script *script = scripts[i];
@@ -577,9 +588,9 @@ static int lda_sieve_multiscript_execute
 		if ( user_script ) {
 			cpflags |= SIEVE_COMPILE_FLAG_NOGLOBAL;
 			rtflags |= SIEVE_RUNTIME_FLAG_NOGLOBAL;
-			ehandler = srctx->user_ehandler;
+			exec_ehandler = srctx->user_ehandler;
 		} else {
-			ehandler = srctx->master_ehandler;
+			exec_ehandler = srctx->master_ehandler;
 		}
 
 		/* Open */
@@ -603,9 +614,14 @@ static int lda_sieve_multiscript_execute
 				(svinst, "Executing script from `%s'", sieve_get_source(sbin));
 		}
 
-		more = sieve_multiscript_run(mscript, sbin, ehandler, rtflags, final);
+		action_ehandler = lda_sieve_log_ehandler_create
+			(exec_ehandler, mdctx);
+		more = sieve_multiscript_run(mscript, sbin,
+			exec_ehandler, action_ehandler, rtflags, final);
+		sieve_error_handler_unref(&action_ehandler);
 
 		if ( !more ) {
+			sieve_error_handler_unref(&action_ehandler);
 			if ( sieve_multiscript_status(mscript) == SIEVE_EXEC_BIN_CORRUPT &&
 				sieve_is_loaded(sbin) ) {
 				/* Close corrupt script */
@@ -622,7 +638,11 @@ static int lda_sieve_multiscript_execute
 
 				/* Execute again */
 
-				more = sieve_multiscript_run(mscript, sbin, ehandler, rtflags, final);
+				action_ehandler = lda_sieve_log_ehandler_create
+					(exec_ehandler, mdctx);
+				more = sieve_multiscript_run(mscript, sbin,
+					exec_ehandler, action_ehandler, rtflags, final);
+				sieve_error_handler_unref(&action_ehandler);
 
 				/* Save new version */
 
@@ -637,10 +657,13 @@ static int lda_sieve_multiscript_execute
 	}
 
 	/* Finish execution */
+	action_ehandler = lda_sieve_log_ehandler_create
+		(exec_ehandler, mdctx);
 	if ( compile_error && error == SIEVE_ERROR_TEMP_FAILURE )
-		ret = sieve_multiscript_tempfail(&mscript, ehandler);
+		ret = sieve_multiscript_tempfail(&mscript, action_ehandler);
 	else
-		ret = sieve_multiscript_finish(&mscript, ehandler, NULL);
+		ret = sieve_multiscript_finish(&mscript, action_ehandler, NULL);
+	sieve_error_handler_unref(&action_ehandler);
 
 	/* Don't log additional messages about compile failure */
 	if ( compile_error && ret == SIEVE_EXEC_FAILURE ) {
@@ -909,7 +932,6 @@ static int lda_sieve_execute
 		memset(&scriptenv, 0, sizeof(scriptenv));
 		memset(&estatus, 0, sizeof(estatus));
 
-		scriptenv.action_log_format = mdctx->set->deliver_log_format;
 		scriptenv.default_mailbox = mdctx->dest_mailbox_name;
 		scriptenv.mailbox_autocreate = mdctx->set->lda_mailbox_autocreate;
 		scriptenv.mailbox_autosubscribe = mdctx->set->lda_mailbox_autosubscribe;

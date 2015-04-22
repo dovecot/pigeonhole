@@ -25,7 +25,7 @@ void testsuite_result_init(void)
 	struct sieve_instance *svinst = testsuite_sieve_instance;
 
 	_testsuite_result = sieve_result_create
-		(svinst, &testsuite_msgdata, testsuite_scriptenv, testsuite_log_ehandler);
+		(svinst, &testsuite_msgdata, testsuite_scriptenv);
 }
 
 void testsuite_result_deinit(void)
@@ -45,7 +45,7 @@ void testsuite_result_reset
 	}
 
 	_testsuite_result = sieve_result_create
-		(svinst, &testsuite_msgdata, testsuite_scriptenv, testsuite_log_ehandler);
+		(svinst, &testsuite_msgdata, testsuite_scriptenv);
 	sieve_interpreter_set_result(renv->interp, _testsuite_result);
 }
 
@@ -75,7 +75,8 @@ bool testsuite_result_execute(const struct sieve_runtime_env *renv)
 	testsuite_log_clear_messages();
 
 	/* Execute the result */
-	ret=sieve_result_execute(_testsuite_result, NULL);
+	ret=sieve_result_execute
+		(_testsuite_result, NULL, testsuite_log_ehandler);
 
 	return ( ret > 0 );
 }

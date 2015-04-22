@@ -21,8 +21,7 @@ struct sieve_result;
 
 struct sieve_result *sieve_result_create
 	(struct sieve_instance *svinst, const struct sieve_message_data *msgdata,
-		const struct sieve_script_env *senv,
-		struct sieve_error_handler *ehandler);
+		const struct sieve_script_env *senv);
 
 void sieve_result_ref(struct sieve_result *result);
 
@@ -33,11 +32,6 @@ pool_t sieve_result_pool(struct sieve_result *result);
 /*
  * Getters/Setters
  */
-
-struct sieve_error_handler *sieve_result_get_error_handler
-	(struct sieve_result *result);
-void sieve_result_set_error_handler
-	(struct sieve_result *result, struct sieve_error_handler *ehandler);
 
 const struct sieve_script_env *sieve_result_get_script_env
 	(struct sieve_result *result);
@@ -148,11 +142,14 @@ void sieve_result_set_failure_action
  * Result execution
  */
 
-int sieve_result_implicit_keep(struct sieve_result *result);
+int sieve_result_implicit_keep(struct sieve_result *result,
+	struct sieve_error_handler *ehandler);
 
 void sieve_result_mark_executed(struct sieve_result *result);
 
-int sieve_result_execute(struct sieve_result *result, bool *keep);
+int sieve_result_execute
+	(struct sieve_result *result, bool *keep,
+		struct sieve_error_handler *ehandler);
 
 bool sieve_result_executed(struct sieve_result *result);
 

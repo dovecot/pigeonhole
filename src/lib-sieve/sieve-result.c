@@ -26,12 +26,6 @@
 #include <stdio.h>
 
 /*
- * Defaults
- */
-
-#define DEFAULT_ACTION_LOG_FORMAT "msgid=%m: %$"
-
-/*
  * Types
  */
 
@@ -79,8 +73,6 @@ struct sieve_result {
 	/* Context data for extensions */
 	ARRAY(void *) ext_contexts;
 
-	struct sieve_error_handler *ehandler;
-
 	struct sieve_action_exec_env action_env;
 
 	struct sieve_action keep_action;
@@ -100,7 +92,7 @@ struct sieve_result {
 
 struct sieve_result *sieve_result_create
 (struct sieve_instance *svinst, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler)
+	const struct sieve_script_env *senv)
 {
 	pool_t pool;
 	struct sieve_result *result;
@@ -112,10 +104,6 @@ struct sieve_result *sieve_result_create
 	result->svinst = svinst;
 
 	p_array_init(&result->ext_contexts, pool, 4);
-
-	if ( ehandler != NULL )
-		sieve_error_handler_ref(ehandler);
-	result->ehandler = ehandler;
 
 	result->action_env.svinst = svinst;
 	result->action_env.result = result;
@@ -153,9 +141,6 @@ void sieve_result_unref(struct sieve_result **result)
 	if ( hash_table_is_created((*result)->action_contexts) )
         hash_table_destroy(&(*result)->action_contexts);
 
-	if ( (*result)->ehandler != NULL )
-		sieve_error_handler_unref(&(*result)->ehandler);
-
 	if ( (*result)->action_env.ehandler != NULL )
 		sieve_error_handler_unref(&(*result)->action_env.ehandler);
 
@@ -173,11 +158,6 @@ pool_t sieve_result_pool(struct sieve_result *result)
  * Getters/Setters
  */
 
-struct sieve_error_handler *sieve_result_get_error_handler
-(struct sieve_result *result)
-{
-	return result->ehandler;
-}
 const struct sieve_script_env *sieve_result_get_script_env
 (struct sieve_result *result)
 {
@@ -194,16 +174,6 @@ struct sieve_message_context *sieve_result_get_message_context
 (struct sieve_result *result)
 {
 	return result->action_env.msgctx;
-}
-
-void sieve_result_set_error_handler
-(struct sieve_result *result, struct sieve_error_handler *ehandler)
-{
-	if ( result->ehandler != ehandler ) {
-		sieve_error_handler_ref(ehandler);
-		sieve_error_handler_unref(&result->ehandler);
-		result->ehandler = ehandler;
-	}
 }
 
 /*
@@ -939,27 +909,15 @@ bool sieve_result_print
  * Result execution
  */
 
-static void _sieve_result_prepare_execution(struct sieve_result *result)
+static void _sieve_result_prepare_execution(struct sieve_result *result,
+	struct sieve_error_handler *ehandler)
 {
-	const struct sieve_message_data *msgdata = result->action_env.msgdata;
 	const struct sieve_script_env *senv = result->action_env.scriptenv;
-	const struct var_expand_table *tab;
 
-	tab = mail_deliver_get_log_var_expand_table(msgdata->mail, NULL);
+	result->action_env.ehandler = ehandler;
 	result->action_env.exec_status =
 		( senv->exec_status == NULL ?
 			t_new(struct sieve_exec_status, 1) : senv->exec_status );
-
-	if ( result->action_env.ehandler != NULL )
-		sieve_error_handler_unref(&result->action_env.ehandler);
-
-	if ( senv->action_log_format != NULL ) {
-		result->action_env.ehandler = sieve_varexpand_ehandler_create
-			(result->ehandler, senv->action_log_format, tab);
-	} else {
-		result->action_env.ehandler = sieve_varexpand_ehandler_create
-            (result->ehandler, DEFAULT_ACTION_LOG_FORMAT, tab);
-	}
 }
 
 static int _sieve_result_implicit_keep
@@ -1072,9 +1030,10 @@ static int _sieve_result_implicit_keep
 }
 
 int sieve_result_implicit_keep
-(struct sieve_result *result)
+(struct sieve_result *result,
+	struct sieve_error_handler *ehandler)
 {
-	_sieve_result_prepare_execution(result);
+	_sieve_result_prepare_execution(result, ehandler);
 
 	return _sieve_result_implicit_keep(result, TRUE);
 }
@@ -1357,7 +1316,8 @@ static void sieve_result_transaction_finish
 }
 
 int sieve_result_execute
-(struct sieve_result *result, bool *keep)
+(struct sieve_result *result, bool *keep,
+	struct sieve_error_handler *ehandler)
 {
 	int status = SIEVE_EXEC_OK, result_status;
 	struct sieve_result_action *first_action, *last_action;
@@ -1368,7 +1328,7 @@ int sieve_result_execute
 
 	/* Prepare environment */
 
-	_sieve_result_prepare_execution(result);
+	_sieve_result_prepare_execution(result, ehandler);
 
 	/* Make notice of this attempt */
 
@@ -1424,6 +1384,7 @@ int sieve_result_execute
 	sieve_result_transaction_finish
 		(result, first_action, status);
 
+	result->action_env.ehandler = NULL;
 	return result_status;
 }
 
