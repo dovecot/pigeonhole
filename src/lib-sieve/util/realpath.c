@@ -42,13 +42,13 @@ static int path_normalize(const char *path, bool resolve_links,
 	const char *p;
 	size_t asize;
 
-  if (path[0] != '/') {
+	if (path[0] != '/') {
 		/* relative; initialize npath with current directory */
 		if (t_getcwd_alloc(&npath, &asize) < 0)
 			return -1;
 		npath_pos = npath + strlen(npath);
 		i_assert(npath[0] == '/');
-  } else {
+	} else {
 		/* absolute; initialize npath with root */
 		asize = 128;
 		npath = t_buffer_get(asize);
@@ -77,9 +77,9 @@ static int path_normalize(const char *path, bool resolve_links,
     } else if (seglen == 2 && p[0] == '.' && p[1] == '.') {
   		/* a reference to parent segment; back up to previous slash */
 			if (npath_pos > npath + 1) {
-				if (*npath_pos == '/')
+				if (*(npath_pos-1) == '/')
 					npath_pos--;
-				for (; *npath_pos != '/'; npath_pos--);
+				for (; *(npath_pos-1) != '/'; npath_pos--);
 			}
 		} else {
 			/* make sure npath now ends in slash */
@@ -95,7 +95,7 @@ static int path_normalize(const char *path, bool resolve_links,
 		  }
 
 			/* copy segment to normalized path */
-			(void)memmove(npath_pos, p, segend - p);
+			(void)memmove(npath_pos, p, seglen);
 			npath_pos += seglen;
 		}
 
@@ -175,16 +175,16 @@ static int path_normalize(const char *path, bool resolve_links,
 
 				/* use as new source path */
 				path = segend = npath_link;
-			
+
 				if (path[0] == '/') {
 					/* absolute symlink; start over at root */
 					npath_pos = npath + 1;
 				} else {
 					/* relative symlink; back up to previous segment */
 					if (npath_pos > npath + 1) {
-						if (*npath_pos == '/')
+						if (*(npath_pos-1) == '/')
 							npath_pos--;
-						for (; *npath_pos != '/'; npath_pos--);
+						for (; *(npath_pos-1) != '/'; npath_pos--);
 					}
 				}
 
