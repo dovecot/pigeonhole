@@ -490,13 +490,11 @@ int program_client_run(struct program_client *pclient)
 	pclient->exit_code = 0;
 	pclient->error = PROGRAM_CLIENT_ERROR_NONE;
 
-
 	pclient->ioloop = io_loop_create();
 
 	if ( program_client_connect(pclient) >= 0 ) {
 		/* run output */
-		ret = 1;		
-		if ( pclient->program_output != NULL &&
+		if ( ret > 0 && pclient->program_output != NULL &&
 			(ret=o_stream_flush(pclient->program_output)) == 0 ) {
 			o_stream_set_flush_callback
 				(pclient->program_output, program_client_program_output, pclient);
@@ -505,7 +503,8 @@ int program_client_run(struct program_client *pclient)
 		/* run i/o event loop */
 		if ( ret < 0 ) {
 			pclient->error = PROGRAM_CLIENT_ERROR_IO;
-		} else if ( ret == 0 || program_client_input_pending(pclient) ) {
+		} else if ( !pclient->disconnected &&
+			(ret == 0 || program_client_input_pending(pclient)) ) {
 			io_loop_run(pclient->ioloop);
 		}
 

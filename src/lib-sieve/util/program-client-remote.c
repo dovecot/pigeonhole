@@ -239,7 +239,7 @@ static int program_client_remote_connect(struct program_client *pclient)
 		!pclient->output_seekable ? -1 : fd );
 	pclient->fd_out = fd;
 	pclient->io = io_add(fd, IO_WRITE, program_client_remote_connected, pclient);
-	return 1;
+	return 0;
 }
 
 static int program_client_remote_close_output(struct program_client *pclient)
