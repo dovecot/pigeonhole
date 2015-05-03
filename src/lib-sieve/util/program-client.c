@@ -492,7 +492,7 @@ int program_client_run(struct program_client *pclient)
 
 	pclient->ioloop = io_loop_create();
 
-	if ( program_client_connect(pclient) >= 0 ) {
+	if ( (ret=program_client_connect(pclient)) >= 0 ) {
 		/* run output */
 		if ( ret > 0 && pclient->program_output != NULL &&
 			(ret=o_stream_flush(pclient->program_output)) == 0 ) {
