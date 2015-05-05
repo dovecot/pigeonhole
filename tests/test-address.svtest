@@ -372,6 +372,30 @@ test "Default address part" {
 }
 
 /*
+ * TEST: Mime encoding of '@' in display name
+ */
+
+test_set "message" text:
+From: "Frop <frop@example.org>"
+To: =?UTF-8?B?RnJpZXBAZnJvcA0K?=
+	<friep@example.com>
+Subject: Test
+
+Frop!
+.
+;
+
+
+test "Mime encoding of '@' in display name" {
+        # Relevant sieve rule:
+
+        if not address :is "To" 
+			["friep@example.com"] {
+                test_fail "Invalid address extracted";
+        }
+}
+
+/*
  * TEST: Erroneous mime encoding
  */
 
@@ -393,4 +417,5 @@ test "Erroneous mime encoding" {
                 test_fail "Failed to match improperly encoded address headers";
         }
 }
+
 

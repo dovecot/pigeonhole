@@ -63,7 +63,7 @@ static int svmo_index_read_context
 static int svmo_index_header_override
 	(const struct sieve_message_override *svmo,
 		const struct sieve_runtime_env *renv,
-		struct sieve_stringlist **headers);
+		bool mime_decode, struct sieve_stringlist **headers);
 
 const struct sieve_message_override_def index_header_override = {
 	SIEVE_OBJECT("index", &index_operand, 0),
@@ -256,6 +256,7 @@ static int svmo_index_read_context
 static int svmo_index_header_override
 (const struct sieve_message_override *svmo,
 	const struct sieve_runtime_env *renv,
+	bool mime_decode ATTR_UNUSED,
 	struct sieve_stringlist **headers)
 {
 	struct svmo_index_context *ctx =

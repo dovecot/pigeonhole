@@ -733,7 +733,7 @@ int sieve_message_get_header_fields
 (const struct sieve_runtime_env *renv,
 	struct sieve_stringlist *field_names,
 	ARRAY_TYPE(sieve_message_override) *svmos,
-	struct sieve_stringlist **fields_r)
+	bool mime_decode, struct sieve_stringlist **fields_r)
 {
 	const struct sieve_message_override *svmo;
 	unsigned int count, i;
@@ -742,7 +742,7 @@ int sieve_message_get_header_fields
 	if ( svmos == NULL || !array_is_created(svmos) ||
 		array_count(svmos) == 0 ) {
 		*fields_r = sieve_message_header_stringlist_create
-			(renv, field_names, TRUE);
+			(renv, field_names, mime_decode);
 		return SIEVE_EXEC_OK;
 	}
 
@@ -752,12 +752,13 @@ int sieve_message_get_header_fields
 		*fields_r = field_names;
 	} else {
 		*fields_r = sieve_message_header_stringlist_create
-			(renv, field_names, TRUE);
+			(renv, field_names, mime_decode);
 	}
 
 	for ( i = 0; i < count; i++ ) {
 		if ( svmo[i].def->header_override != NULL &&
-			(ret=svmo[i].def->header_override(&svmo[i], renv, fields_r)) <= 0 )
+			(ret=svmo[i].def->header_override
+				(&svmo[i], renv, mime_decode, fields_r)) <= 0 )
 			return ret;
 	}
 	return SIEVE_EXEC_OK;

@@ -102,7 +102,7 @@ struct sieve_message_override_def {
 	int (*header_override)
 		(const struct sieve_message_override *svmo,
 			const struct sieve_runtime_env *renv,
-			struct sieve_stringlist **headers);
+			bool mime_decode, struct sieve_stringlist **headers);
 };
 
 struct sieve_message_override {
@@ -164,6 +164,6 @@ int sieve_message_get_header_fields
 	(const struct sieve_runtime_env *renv,
 		struct sieve_stringlist *field_names,
 		ARRAY_TYPE(sieve_message_override) *svmos,
-		struct sieve_stringlist **fields_r);
+		bool mime_decode, struct sieve_stringlist **fields_r);
 
 #endif /* __SIEVE_MESSAGE_H */

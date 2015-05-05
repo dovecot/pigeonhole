@@ -151,7 +151,7 @@ static int tst_exists_operation_execute
 		/* Get header */
 		if ( (ret=sieve_message_get_header_fields
 			(renv, sieve_single_stringlist_create(renv, hdr_item, FALSE),
-				&svmos, &value_list) <= 0) )
+				&svmos, FALSE, &value_list) <= 0) )
 			return ret;
 
 		if ( (ret=sieve_stringlist_next_item(value_list, &dummy)) < 0)

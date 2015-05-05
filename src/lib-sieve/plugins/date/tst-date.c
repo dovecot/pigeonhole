@@ -471,7 +471,7 @@ static int tst_date_operation_execute
 		/* Get header */
 		sieve_runtime_trace_descend(renv);
 		if ( (ret=sieve_message_get_header_fields
-			(renv, hdr_list, &svmos, &hdr_value_list)) <= 0 )
+			(renv, hdr_list, &svmos, FALSE, &hdr_value_list)) <= 0 )
 			return ret;
 		sieve_runtime_trace_ascend(renv);
 
