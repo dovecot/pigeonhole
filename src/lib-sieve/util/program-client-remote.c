@@ -208,7 +208,7 @@ static void program_client_remote_connected(struct program_client *pclient)
 		program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
 		return;
 	}
-	
+
 	(void)program_client_connected(pclient);
 }
 

@@ -29,17 +29,19 @@ static void program_client_connect_timeout(struct program_client *pclient)
 
 static int program_client_connect(struct program_client *pclient)
 {
+	int ret;
+
 	if (pclient->set.client_connect_timeout_msecs != 0) {
 		pclient->to = timeout_add
 			(pclient->set.client_connect_timeout_msecs,
 				program_client_connect_timeout, pclient);
 	}
 
-	if ( pclient->connect(pclient) < 0 ) {
+	if ( (ret=pclient->connect(pclient)) < 0 ) {
 		program_client_fail(pclient, PROGRAM_CLIENT_ERROR_IO);
 		return -1;
 	}
-	return 1;
+	return ret;
 }
 
 static int program_client_close_output(struct program_client *pclient)
@@ -487,7 +489,7 @@ int program_client_run(struct program_client *pclient)
 
 	/* reset */
 	pclient->disconnected = FALSE;
-	pclient->exit_code = 0;
+	pclient->exit_code = 1;
 	pclient->error = PROGRAM_CLIENT_ERROR_NONE;
 
 	pclient->ioloop = io_loop_create();

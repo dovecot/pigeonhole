@@ -23,6 +23,20 @@ test "Execute - bare" {
 }
 
 test_result_reset;
+test "Execute - i/-" {
+	execute :input "FROP" "frame";
+}
+
+test_result_reset;
+test "Execute - -/o" {
+	execute :output "out" "frame";
+
+	if not string "${out}" "FRAMED {  }" {
+		test_fail "wrong string returned: ${out}";
+	}
+}
+
+test_result_reset;
 test "Execute - i/o" {
 	execute :input "FROP" :output "out" "frame";
 
