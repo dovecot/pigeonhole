@@ -912,6 +912,7 @@ const struct sieve_storage sieve_file_storage = {
 		.save_get_tempscript = sieve_file_storage_save_get_tempscript,
 		.save_cancel = sieve_file_storage_save_cancel,
 		.save_commit = sieve_file_storage_save_commit,
+		.save_as = sieve_file_storage_save_as,
 		.save_as_active = sieve_file_storage_save_as_active,
 
 		.quota_havespace = sieve_file_storage_quota_havespace

@@ -186,64 +186,12 @@ static int lda_sieve_get_personal_storage
 			break;
 		case SIEVE_ERROR_TEMP_FAILURE:
 			sieve_sys_error(svinst,
-				"Failed to access user storage "
+				"Failed to access user's personal storage "
 				"(temporary failure)");
 			return -1;
 		default:
 			sieve_sys_error(svinst,
-				"Failed to access user storage");
-			break;
-		}
-		return 0;
-	}
-	return 1;
-}
-
-static int lda_sieve_get_default_storage
-(struct sieve_instance *svinst, struct mail_user *user,
-	struct sieve_storage **storage_r)
-{
-	bool debug = user->mail_debug;
-	enum sieve_error error;
-	const char *location;
-
-	*storage_r = NULL;
-
-	/* Use default script location, if one exists */
-	location = mail_user_plugin_getenv(user, "sieve_default");
-	if ( location == NULL ) {
-		/* For backwards compatibility */
-		location = mail_user_plugin_getenv(user, "sieve_global_path");
-	}
-
-	if ( location == NULL ) {
-		if ( debug ) {
-			sieve_sys_debug(svinst,
-				"No default script configured for user");
-		}
-		return 0;
-	}
-
-	*storage_r = sieve_storage_create(svinst, location, 0, &error);
-	if ( *storage_r == NULL ) {
-		switch ( error ) {
-		case SIEVE_ERROR_NOT_FOUND:
-			if ( debug ) {
-				sieve_sys_debug(svinst,
-					"Default user script location `%s' does not exist",
-					location);
-			}
-			break;
-		case SIEVE_ERROR_TEMP_FAILURE:
-			sieve_sys_error(svinst,
-				"Failed to access default user script location `%s' "
-				"(temporary failure)",
-				location);
-			return -1;
-		default:
-			sieve_sys_error(svinst,
-				"Failed to access default user script location `%s'",
-				location);
+				"Failed to access user's personal storage");
 			break;
 		}
 		return 0;
@@ -679,7 +627,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 {
 	struct mail_deliver_context *mdctx = srctx->mdctx;
 	struct sieve_instance *svinst = srctx->svinst;
-	struct sieve_storage *user_storage, *default_storage;
+	struct sieve_storage *main_storage;
 	const char *sieve_before, *sieve_after;
 	const char *setting_name;
 	enum sieve_error error;
@@ -692,73 +640,36 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 	/* Find the personal script to execute */
 
 	ret = lda_sieve_get_personal_storage
-		(svinst, mdctx->dest_user, &user_storage);
+		(svinst, mdctx->dest_user, &main_storage);
 	if ( ret > 0 ) {
-		srctx->user_script =
-			sieve_storage_active_script_open(user_storage, &error);
+		srctx->main_script =
+			sieve_storage_active_script_open(main_storage, &error);
 
 		if ( srctx->user_script == NULL ) {
 			switch ( error ) {
 			case SIEVE_ERROR_NOT_FOUND:
-				if ( debug ) {
-					sieve_sys_debug(svinst,
-						"No active Sieve script exists in user storage `%s' "
-						"(trying default script location instead)",
-						sieve_storage_location(user_storage));
-				}
+				sieve_sys_debug(svinst,
+					"User has no active script in storage `%s'",
+					sieve_storage_location(main_storage));
 				break;
 			case SIEVE_ERROR_TEMP_FAILURE:
 				sieve_sys_error(svinst,
 					"Failed to access active Sieve script in user storage `%s' "
 					"(temporary failure)",
-					sieve_storage_location(user_storage));
+					sieve_storage_location(main_storage));
 				ret = -1;
 				break;
 			default:
 				sieve_sys_error(svinst,
 					"Failed to access active Sieve script in user storage `%s' "
 					"(trying default script location instead)",
-					sieve_storage_location(user_storage));
+					sieve_storage_location(main_storage));
 				break;
 			}
-		} else {
-			srctx->main_script = srctx->user_script;
+		} else if ( !sieve_script_is_default(srctx->main_script) ) {
+			srctx->user_script = srctx->main_script;
 		}
-		sieve_storage_unref(&user_storage);
-	}
-
-	if ( ret >= 0 && srctx->user_script == NULL ) {
-		ret = lda_sieve_get_default_storage
-			(svinst, mdctx->dest_user, &default_storage);
-		if ( ret > 0 ) {
-			srctx->main_script = sieve_storage_open_script
-				(default_storage, NULL, &error);
-
-			if ( srctx->main_script == NULL ) {
-				switch ( error ) {
-				case SIEVE_ERROR_NOT_FOUND: 
-					if ( debug ) {
-						sieve_sys_debug(svinst,
-							"Default user script `%s' does not exist",
-							sieve_storage_location(default_storage));
-					}
-					break;
-				case SIEVE_ERROR_TEMP_FAILURE:
-					sieve_sys_error(svinst,
-						"Failed to access default user script `%s'"
-						"(temporary failure)",
-						sieve_storage_location(default_storage));
-					ret = -1;
-					break;
-				default:
-					sieve_sys_error(svinst,
-						"failed to access default user script %s",
-						sieve_storage_location(default_storage));
-					break;
-				}
-			}
-			sieve_storage_unref(&default_storage);
-		}
+		sieve_storage_unref(&main_storage);
 	}
 
 	if ( debug && ret >= 0 && srctx->main_script == NULL ) {

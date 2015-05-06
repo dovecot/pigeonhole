@@ -50,13 +50,17 @@ int sieve_script_open
 	(struct sieve_script *script, enum sieve_error *error_r)
 		ATTR_NULL(2);
 int sieve_script_open_as
-	(struct sieve_script *script, const char *name, enum sieve_error *error_r)
-		ATTR_NULL(3);
+	(struct sieve_script *script, const char *name,
+		enum sieve_error *error_r) ATTR_NULL(3);
 
 struct sieve_script *sieve_script_create_open
-	(struct sieve_instance *svinst, const char *location, const char *name,
-		enum sieve_error *error_r)
-		ATTR_NULL(3,4);
+	(struct sieve_instance *svinst, const char *location,
+		const char *name, enum sieve_error *error_r)
+		ATTR_NULL(3, 4);
+int sieve_script_check
+	(struct sieve_instance *svinst, const char *location,
+		const char *name, enum sieve_error *error_r)
+		ATTR_NULL(3, 4);
 
 /*
  * Binary
@@ -114,6 +118,8 @@ struct sieve_instance *sieve_script_svinst
 
 int sieve_script_get_size(struct sieve_script *script, uoff_t *size_r);
 bool sieve_script_is_open
+	(const struct sieve_script *script) ATTR_PURE;
+bool sieve_script_is_default
 	(const struct sieve_script *script) ATTR_PURE;
 
 const char *sieve_file_script_get_dirpath

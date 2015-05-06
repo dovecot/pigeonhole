@@ -50,6 +50,9 @@ struct sieve_script *sieve_storage_get_script
 struct sieve_script *sieve_storage_open_script
 	(struct sieve_storage *storage, const char *name,
 		enum sieve_error *error_r) ATTR_NULL(3);
+int sieve_storage_check_script
+	(struct sieve_storage *storage, const char *name,
+		enum sieve_error *error_r) ATTR_NULL(3);
 
 /*
  * Script sequence
@@ -116,6 +119,10 @@ void sieve_storage_save_cancel(struct sieve_storage_save_context **sctx);
 
 int sieve_storage_save_commit(struct sieve_storage_save_context **sctx);
 
+int sieve_storage_save_as
+	(struct sieve_storage *storage, struct istream *input,
+		const char *name);
+
 /* Saves input directly as a regular file at the active script path.
  * This is needed for the doveadm-sieve plugin.
  */
@@ -154,6 +161,8 @@ int sieve_storage_quota_havespace
  */
 
 const char *sieve_storage_location
+	(const struct sieve_storage *storage) ATTR_PURE;
+bool sieve_storage_is_default
 	(const struct sieve_storage *storage) ATTR_PURE;
 
 int sieve_storage_is_singular

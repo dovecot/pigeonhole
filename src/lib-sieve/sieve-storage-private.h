@@ -77,6 +77,9 @@ struct sieve_storage_vfuncs {
 		(struct sieve_storage_save_context *sctx);
 	void (*save_cancel)(struct sieve_storage_save_context *sctx);
 	int (*save_commit)(struct sieve_storage_save_context *sctx);
+	int (*save_as)
+		(struct sieve_storage *storage, struct istream *input,
+			const char *name);
 	int (*save_as_active)
 		(struct sieve_storage *storage, struct istream *input,
 			time_t mtime);
@@ -109,6 +112,10 @@ struct sieve_storage {
 	const char *script_name;
 	const char *bin_dir;
 
+	const char *default_name;
+	const char *default_location;
+	struct sieve_storage *default_for;
+
 	struct mail_namespace *sync_inbox_ns;
 
 	enum sieve_storage_flags flags;
@@ -116,6 +123,7 @@ struct sieve_storage {
 	/* this is the main personal storage */
 	unsigned int main_storage:1;
 	unsigned int allows_synchronization:1;
+	unsigned int is_default:1;
 };
 
 struct sieve_storage *sieve_storage_alloc
@@ -127,6 +135,13 @@ int sieve_storage_setup_bindir
 	(struct sieve_storage *storage, mode_t mode);
 
 /*
+ * Active script
+ */
+
+int sieve_storage_active_script_is_default
+	(struct sieve_storage *storage);
+
+/*
  * Listing scripts
  */
 
@@ -134,6 +149,7 @@ struct sieve_storage_list_context {
 	struct sieve_storage *storage;
 
 	unsigned int seen_active:1; // Just present for assertions
+	unsigned int seen_default:1;
 };
 
 /*
@@ -149,8 +165,10 @@ struct sieve_script_sequence {
  */
 
 struct sieve_storage_save_context {
+	pool_t pool;
 	struct sieve_storage *storage;
-	const char *scriptname;
+
+	const char *scriptname, *active_scriptname;
 	struct sieve_script *scriptobject;
 
 	struct istream *input;
@@ -212,6 +230,9 @@ extern const struct sieve_storage sieve_ldap_storage;
 
 void sieve_storage_set_internal_error
 	(struct sieve_storage *storage);
+
+void sieve_storage_copy_error
+	(struct sieve_storage *storage, const struct sieve_storage *source);
 
 void sieve_storage_sys_error
 	(struct sieve_storage *storage, const char *fmt, ...)

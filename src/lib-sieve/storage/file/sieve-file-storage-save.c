@@ -213,7 +213,7 @@ sieve_file_storage_save_init(struct sieve_storage *storage,
 			fsctx = p_new(pool, struct sieve_file_save_context, 1);
 			fsctx->context.scriptname = p_strdup(pool, scriptname);
 			fsctx->context.input = input;
-			fsctx->pool = pool;
+			fsctx->context.pool = pool;
 			fsctx->fd = fd;
 			fsctx->output = o_stream_create_fd(fsctx->fd, 0, FALSE);
 			fsctx->tmp_path = p_strdup(pool, path);
@@ -371,7 +371,7 @@ int sieve_file_storage_save_commit
 			sieve_file_storage_update_mtime(storage, dest_path, sctx->mtime);
 	} T_END;
 
-	pool_unref(&fsctx->pool);
+	pool_unref(&sctx->pool);
 	
 	return ( failed ? -1 : 0 );
 }
@@ -391,18 +391,18 @@ void sieve_file_storage_save_cancel(struct sieve_storage_save_context *sctx)
 	i_assert(fsctx->output == NULL);
 }
 
-int sieve_file_storage_save_as_active(struct sieve_storage *storage,
-	struct istream *input, time_t mtime)
+static int
+sieve_file_storage_save_to(struct sieve_file_storage *fstorage,
+	string_t *temp_path, struct istream *input,
+	const char *target)
 {
-	struct sieve_file_storage *fstorage =
-		(struct sieve_file_storage *)storage;
-	string_t *temp_path;
+	struct sieve_storage *storage = &fstorage->storage;
 	struct ostream *output;
 	int fd;
 
-	temp_path = t_str_new(256);
-	str_append(temp_path, fstorage->active_path);
-	str_append_c(temp_path, '.');
+	// FIXME: move this to base class
+	// FIXME: use io_stream_temp
+
 	fd = safe_mkstemp_hostpid
 		(temp_path, fstorage->file_create_mode, (uid_t)-1, (gid_t)-1);
 	if ( fd < 0 ) {
@@ -419,7 +419,7 @@ int sieve_file_storage_save_as_active(struct sieve_storage *storage,
 	}
 
 	output = o_stream_create_fd(fd, 0, FALSE);
-	if (o_stream_send_istream(output, input) < 0) {
+	if ( o_stream_send_istream(output, input) < 0 ) {
 		sieve_storage_set_critical(storage,
 			"o_stream_send_istream(%s) failed: %m", str_c(temp_path));
 		o_stream_destroy(&output);
@@ -428,25 +428,65 @@ int sieve_file_storage_save_as_active(struct sieve_storage *storage,
 	}
 	o_stream_destroy(&output);
 
-	if (rename(str_c(temp_path), fstorage->active_path) < 0) {
+	if ( rename(str_c(temp_path), target) < 0 ) {
 		if ( ENOQUOTA(errno) ) {
 			sieve_storage_set_error(storage,
 				SIEVE_ERROR_NO_QUOTA,
 				"Not enough disk quota");
 		} else if ( errno == EACCES ) {
 			sieve_storage_set_critical(storage,
-				"%s", eacces_error_get("rename", fstorage->active_path));
+				"%s", eacces_error_get("rename", target));
 		} else {
 			sieve_storage_set_critical(storage,
 				"rename(%s, %s) failed: %m",
-				str_c(temp_path), fstorage->active_path);
+				str_c(temp_path), target);
 		}
-	} else {
-		sieve_file_storage_update_mtime
-			(storage, fstorage->active_path, mtime);
 	}
 
 	(void)unlink(str_c(temp_path));
+	return 0;
+}
+
+int sieve_file_storage_save_as
+(struct sieve_storage *storage, struct istream *input,
+	const char *name)
+{
+	struct sieve_file_storage *fstorage =
+		(struct sieve_file_storage *)storage;
+	string_t *temp_path;
+	const char *dest_path;
+
+	temp_path = t_str_new(256);
+	str_append(temp_path, fstorage->path);
+	str_append(temp_path, "/tmp/");
+	str_append(temp_path, sieve_script_file_from_name(name));
+	str_append_c(temp_path, '.');
+
+	dest_path = t_strconcat(fstorage->path, "/",
+		sieve_script_file_from_name(name), NULL);
+
+	return sieve_file_storage_save_to
+		(fstorage, temp_path, input, dest_path);
+}
+
+int sieve_file_storage_save_as_active
+(struct sieve_storage *storage, struct istream *input,
+	time_t mtime)
+{
+	struct sieve_file_storage *fstorage =
+		(struct sieve_file_storage *)storage;
+	string_t *temp_path;
+
+	temp_path = t_str_new(256);
+	str_append(temp_path, fstorage->active_path);
+	str_append_c(temp_path, '.');
+
+	if ( sieve_file_storage_save_to
+		(fstorage, temp_path, input, fstorage->active_path) < 0 )
+		return -1;
+
+	sieve_file_storage_update_mtime
+		(storage, fstorage->active_path, mtime);
 	return 0;
 }
 

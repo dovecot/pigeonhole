@@ -78,9 +78,6 @@ int sieve_file_storage_deactivate
 
 int sieve_file_storage_active_script_get_last_change
 	(struct sieve_storage *storage, time_t *last_change_r);
-int sieve_file_storage_save_as_active
-	(struct sieve_storage *storage, struct istream *input,
-		time_t mtime);
 
 /* Listing */
 
@@ -106,6 +103,13 @@ int sieve_file_storage_save_commit
 	(struct sieve_storage_save_context *sctx);
 void sieve_file_storage_save_cancel
 	(struct sieve_storage_save_context *sctx);
+
+int sieve_file_storage_save_as
+	(struct sieve_storage *storage, struct istream *input,
+		const char *name);
+int sieve_file_storage_save_as_active
+	(struct sieve_storage *storage, struct istream *input,
+		time_t mtime);
 
 /* Quota */
 

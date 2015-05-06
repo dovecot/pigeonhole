@@ -219,6 +219,24 @@ struct sieve_script *sieve_script_create_open
 	return script;
 }
 
+int sieve_script_check
+(struct sieve_instance *svinst, const char *location, const char *name,
+	enum sieve_error *error_r)
+{
+	struct sieve_script *script;
+	enum sieve_error error;
+
+	if (error_r == NULL)
+		error_r = &error;
+
+	script = sieve_script_create_open(svinst, location, name, error_r);
+	if (script == NULL)
+		return ( *error_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
+
+	sieve_script_unref(&script);
+	return 1;
+}
+
 /*
  * Properties
  */
@@ -259,6 +277,11 @@ int sieve_script_get_size(struct sieve_script *script, uoff_t *size_r)
 bool sieve_script_is_open(const struct sieve_script *script)
 {
 	return script->open;
+}
+
+bool sieve_script_is_default(const struct sieve_script *script)
+{
+	return script->storage->is_default;
 }
 
 /*
@@ -525,15 +548,65 @@ int sieve_script_rename
 		return -1;
 	}
 
-	i_assert( (script->storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
 	i_assert( script->open ); // FIXME: auto-open?
 
-	i_assert( script->v.rename != NULL );
-	ret = script->v.rename(script, newname);
+	if ( storage->default_for == NULL ) {
+		i_assert( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
 
-	/* rename INBOX mailbox attribute */
-	if ( ret >= 0 && oldname != NULL )
-		(void)sieve_storage_sync_script_rename(storage, oldname, newname);
+		/* rename script */
+		i_assert( script->v.rename != NULL );
+		ret = script->v.rename(script, newname);
+
+		/* rename INBOX mailbox attribute */
+		if ( ret >= 0 && oldname != NULL )
+			(void)sieve_storage_sync_script_rename(storage, oldname, newname);
+
+	} else if ( sieve_storage_check_script
+			(storage->default_for, newname, NULL) > 0 ) {
+		sieve_script_set_error(script, SIEVE_ERROR_EXISTS,
+			"A sieve script with that name already exists.");
+		sieve_storage_copy_error(storage->default_for, storage);
+		ret = -1;
+
+	} else {
+		struct istream *input;
+		
+		/* copy from default */
+		if ( (ret=sieve_script_open(script, NULL)) >= 0 &&
+			(ret=sieve_script_get_stream(script, &input, NULL)) >= 0 ) {
+			ret = sieve_storage_save_as
+				(storage->default_for, input, newname);
+
+			if ( ret < 0 ) {
+				sieve_storage_copy_error(storage, storage->default_for);
+
+			} else if ( sieve_script_is_active(script) > 0 ) {
+				struct sieve_script *newscript;
+				enum sieve_error error;
+
+				newscript = sieve_storage_open_script
+					(storage->default_for, newname, &error);
+				if ( newscript == NULL ) {
+					/* Somehow not actually saved */
+					ret = ( error == SIEVE_ERROR_NOT_FOUND ? 0 : -1 );
+				} else if ( sieve_script_activate(newscript, (time_t)-1) < 0 ) {
+					/* Failed to activate; roll back */
+					ret = -1;
+					(void)sieve_script_delete(newscript);
+					sieve_script_unref(&newscript);
+				}
+
+				if (ret < 0) {
+					sieve_storage_sys_error(storage,
+						"Failed to implicitly activate script `%s' "
+						"after rename",	newname);
+					sieve_storage_copy_error(storage->default_for, storage);
+				}
+			}
+		} else {
+			sieve_storage_copy_error(storage->default_for, storage);
+		}
+	}
 
 	return ret;
 }
@@ -543,18 +616,27 @@ int sieve_script_delete(struct sieve_script *script)
 	struct sieve_storage *storage = script->storage;
 	int ret = 0;
 
-	i_assert( (script->storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
 	i_assert( script->open ); // FIXME: auto-open?
 
 	/* Is the requested script active? */
-	if ( sieve_script_is_active(script) ) {
+	if ( sieve_script_is_active(script) > 0 ) {
 		sieve_script_set_error(script, SIEVE_ERROR_ACTIVE,
 			"Cannot delete the active Sieve script.");
-		ret = -1;
-	} else {
-		i_assert( script->v.delete != NULL );
-		ret = script->v.delete(script);
+		if (storage->default_for != NULL)
+			sieve_storage_copy_error(storage->default_for, storage);
+		return -1;
 	}
+
+	/* Trying to delete the default script? */
+	if ( storage->is_default ) {
+		/* ignore */
+		return 0;
+	}
+
+	i_assert( (script->storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
+
+	i_assert( script->v.delete != NULL );
+	ret = script->v.delete(script);
 
 	/* unset INBOX mailbox attribute */
 	if ( ret >= 0 )
@@ -564,6 +646,17 @@ int sieve_script_delete(struct sieve_script *script)
 
 int sieve_script_is_active(struct sieve_script *script)
 {
+	struct sieve_storage *storage = script->storage;
+
+	/* Special handling if this is a default script */
+	if ( storage->default_for != NULL ) {
+		int ret = sieve_storage_active_script_is_default
+			(storage->default_for);
+		if (ret < 0)
+			sieve_storage_copy_error(storage, storage->default_for);
+		return ret;
+	}	
+
 	if ( script->v.is_active == NULL )
 		return 0;
 	return script->v.is_active(script);
@@ -572,17 +665,28 @@ int sieve_script_is_active(struct sieve_script *script)
 int sieve_script_activate(struct sieve_script *script, time_t mtime)
 {
 	struct sieve_storage *storage = script->storage;
-	int ret;
+	int ret = 0;
 
-	i_assert( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
 	i_assert( script->open ); // FIXME: auto-open?
 
-	i_assert( script->v.activate != NULL );
-	ret = script->v.activate(script);
+	if (storage->default_for == NULL) {
+		i_assert( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
+	
+		i_assert( script->v.activate != NULL );
+		ret = script->v.activate(script);
 
-	if (ret >= 0) {
-		sieve_storage_set_modified(storage, mtime);
-		(void)sieve_storage_sync_script_activate(storage);
+		if (ret >= 0) {
+			sieve_storage_set_modified(storage, mtime);
+			(void)sieve_storage_sync_script_activate(storage);
+		}
+
+	} else {
+		/* Activating the default script is equal to deactivating
+		   the storage */
+		ret = sieve_storage_deactivate
+			(storage->default_for, (time_t)-1);
+		if (ret < 0)
+			sieve_storage_copy_error(storage, storage->default_for);
 	}
 
 	return ret;
