@@ -196,8 +196,16 @@ static int sieve_storage_data_parse
 					return -1;
 				}
 
-				if ( storage->script_name == NULL )
+				if ( storage->script_name == NULL ) {
+					if ( !sieve_script_name_is_valid(option+5) ) {
+						sieve_storage_sys_error(storage,
+							"Failed to parse storage location: "
+							"Invalid script name `%s'.",
+							str_sanitize(option+5, 80));
+						return -1;
+					}
 					storage->script_name = p_strdup(storage->pool, option+5);
+				}
 
 			} else if ( strncasecmp(option, "bindir=", 7) == 0 ) {
 				const char *bin_dir = option+7;
@@ -486,12 +494,18 @@ struct sieve_storage *sieve_storage_create_main
 		set_default =
 			 sieve_setting_get(svinst, "sieve_global_path");
 	}
-	set_default_name =
-		 sieve_setting_get(svinst, "sieve_default_name");
 
 	/* Attempt to locate user's main storage */
 	storage = sieve_storage_do_create_main(svinst, user, flags, error_r);
 
+	set_default_name =
+		 sieve_setting_get(svinst, "sieve_default_name");
+	if ( !sieve_script_name_is_valid(set_default_name) ) {
+		sieve_storage_sys_error(storage,
+			"Invalid script name `%s' for `sieve_default_name' setting.",
+			str_sanitize(set_default_name, 80));
+		set_default_name = NULL;
+	}
 	storage->default_name =
 		p_strdup_empty(storage->pool, set_default_name);
 
