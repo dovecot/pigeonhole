@@ -126,11 +126,6 @@ The following options are defined for all location types:
     Multiple mail users can share a single script directory if the script
     location is the same and all users share the same system credentials (uid,
     gid).
- 
-  default=<script-name>
-    The name by which the default Sieve script (see `sieve_default=' setting
-    below) is visible to ManageSieve clients. Normally, it is not visible at
-    all. See "Visible Default Script" section below for more information.
 
 Sieve Interpreter - Basic Configuration
 ---------------------------------------
@@ -171,9 +166,12 @@ plugin section of the config file (default values are shown if applicable):
    /var/lib/dovecot/default.sieve. This is usually a global script, so be sure
    to pre-compile this script manually using the sievec command line tool, as
    explained in the README file. This setting used to be called
-   `sieve_global_path', but that name is now deprecated. See the "Visible
-   Default Script" section below for information on how to make the default
-   script visible from ManageSieve.
+   `sieve_global_path', but that name is now deprecated.
+
+ sieve_default_name = 
+   The name by which the default Sieve script is visible to ManageSieve
+   clients. Normally, it is not visible at all. See "Visible Default Script"
+   section below for more information.
 
  sieve_global =
    Location for :global include scripts for the Sieve include extension. This
@@ -401,8 +399,9 @@ Sieve Interpreter - Visible Default Script
 The `sieve_default=' setting specifies the location of a default script that
 is executed when the user has no active personal script. Normally, this
 default script is invisible to the user; i.e., it is not listed in ManageSieve.
-To give the user the ability to base a custom personal script on the default
-script, it is possible to make it visible under a specific configurable name.
+To give the user the ability to see and read the default script, it is possible
+to make it visible under a specific configurable name using the
+`sieve_default_name' setting.
 
 ManageSieve will magically list the default script under that name, even though
 it does not actually exist in the user's normal script storage location. This
@@ -420,19 +419,19 @@ edited script is saved through the ManageSieve client, it will will override the
 default script. If the user ever wants to revert to the default, the user only
 needs to delete the edited script and the default will reappear.
 
-To enable this feature, the the `;default=<script-name>' option must be
-specified for the `sieve=' setting. It configures the name by which the default
-script will be known. Of course, the `sieve_default=' setting needs to point to
-a valid script location as well for this to work. If the default script does not
-exist at the indicated location, it is not shown.
+The name by which the default script will be known is configured using the
+`sieve_default_name' setting. Of course, the `sieve_default' setting needs to
+point to a valid script location as well for this to work. If the default script
+does not exist at the indicated location, it is not shown.
 
 For example:
 
 plugin {
 ...
-  sieve = file:~/sieve;active=~/.dovecot.sieve;default=roundcube
+  sieve = file:~/sieve;active=~/.dovecot.sieve
 
   sieve_default = /var/lib/dovecot/sieve/default.sieve
+	sieve_default_name = roundcube
 }
 
 Sieve Interpreter - Extension Configuration

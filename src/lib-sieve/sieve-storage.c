@@ -199,15 +199,6 @@ static int sieve_storage_data_parse
 				if ( storage->script_name == NULL )
 					storage->script_name = p_strdup(storage->pool, option+5);
 
-			} else if ( strncasecmp(option, "default=", 8) == 0 ) {
-				if ( option[8] == '\0' ) {
-					/* skip if empty */
-					continue;
-				}
-
-				if ( storage->default_name == NULL )
-					storage->default_name = p_strdup(storage->pool, option+8);
-
 			} else if ( strncasecmp(option, "bindir=", 7) == 0 ) {
 				const char *bin_dir = option+7;
 
@@ -479,7 +470,7 @@ struct sieve_storage *sieve_storage_create_main
 	enum sieve_storage_flags flags, enum sieve_error *error_r)
 {
 	struct sieve_storage *storage;
-	const char *set_sieve_default;
+	const char *set_default, *set_default_name;
 	enum sieve_error error;
 
 	if ( error_r != NULL )
@@ -488,21 +479,26 @@ struct sieve_storage *sieve_storage_create_main
 		error_r = &error;
 
 	/* Determine location for default script */
-	set_sieve_default =
+	set_default =
 		 sieve_setting_get(svinst, "sieve_default");
-	if ( set_sieve_default == NULL ) {
+	if ( set_default == NULL ) {
 		/* For backwards compatibility */
-		set_sieve_default =
+		set_default =
 			 sieve_setting_get(svinst, "sieve_global_path");
 	}
+	set_default_name =
+		 sieve_setting_get(svinst, "sieve_default_name");
 
 	/* Attempt to locate user's main storage */
 	storage = sieve_storage_do_create_main(svinst, user, flags, error_r);
 
+	storage->default_name =
+		p_strdup_empty(storage->pool, set_default_name);
+
 	if ( storage != NULL ) {
 		/* Success; record default script location for later use */
 		storage->default_location =
-			p_strdup_empty(storage->pool, set_sieve_default);
+			p_strdup_empty(storage->pool, set_default);
 
 		if (storage->default_location != NULL &&
 			storage->default_name != NULL) {
@@ -516,33 +512,33 @@ struct sieve_storage *sieve_storage_create_main
 
 		/* Failed; try using default script location
 		   (not for temporary failures, read/write access, or dsync) */
-		if ( set_sieve_default == NULL ) {
+		if ( set_default == NULL ) {
 			sieve_sys_debug(svinst, "storage: "
 				"No default script location configured");
 		} else {
 			sieve_sys_debug(svinst, "storage: "
 				"Trying default script location `%s'",
-				set_sieve_default);
+				set_default);
 
 			storage = sieve_storage_create
-				(svinst, set_sieve_default, 0, error_r);
+				(svinst, set_default, 0, error_r);
 			if ( storage == NULL ) {
 				switch ( *error_r ) {
 				case SIEVE_ERROR_NOT_FOUND:
 					sieve_sys_debug(svinst, "storage: "
 						"Default script location `%s' not found",
-						set_sieve_default);
+						set_default);
 					break;
 				case SIEVE_ERROR_TEMP_FAILURE:
 					sieve_sys_error(svinst, "storage: "
 						"Failed to access default script location `%s' "
 						"(temporary failure)",
-						set_sieve_default);
+						set_default);
 					break;
 				default:
 					sieve_sys_error(svinst, "storage: "
 						"Failed to access default script location `%s'",
-						set_sieve_default);
+						set_default);
 					break;
 				}
 			}
