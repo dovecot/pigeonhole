@@ -686,7 +686,7 @@ static int sieve_file_storage_script_rename
 		ret = link(fscript->path, newpath);
 		if ( ret >= 0 ) {
 			/* Is the requested script active? */
-			if ( sieve_script_is_active(script) ) {
+			if ( sieve_script_is_active(script) > 0 ) {
 				/* Active; make active link point to the new copy */
 				i_assert( fstorage->link_path != NULL );
 				link_path = t_strconcat
