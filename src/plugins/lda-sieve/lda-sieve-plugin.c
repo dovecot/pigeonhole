@@ -645,7 +645,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 		srctx->main_script =
 			sieve_storage_active_script_open(main_storage, &error);
 
-		if ( srctx->user_script == NULL ) {
+		if ( srctx->main_script == NULL ) {
 			switch ( error ) {
 			case SIEVE_ERROR_NOT_FOUND:
 				sieve_sys_debug(svinst,
@@ -661,8 +661,7 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 				break;
 			default:
 				sieve_sys_error(svinst,
-					"Failed to access active Sieve script in user storage `%s' "
-					"(trying default script location instead)",
+					"Failed to access active Sieve script in user storage `%s'",
 					sieve_storage_location(main_storage));
 				break;
 			}
