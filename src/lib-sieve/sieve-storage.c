@@ -500,7 +500,8 @@ struct sieve_storage *sieve_storage_create_main
 
 	set_default_name =
 		 sieve_setting_get(svinst, "sieve_default_name");
-	if ( !sieve_script_name_is_valid(set_default_name) ) {
+	if ( set_default_name != NULL && *set_default_name != '\0' &&
+		!sieve_script_name_is_valid(set_default_name) ) {
 		sieve_storage_sys_error(storage,
 			"Invalid script name `%s' for `sieve_default_name' setting.",
 			str_sanitize(set_default_name, 80));
