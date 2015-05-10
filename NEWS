@@ -1,3 +1,21 @@
+v0.4.8 xx-05-2015 Stephan Bosch <stephan@rename-it.nl>
+
+	* LDA Sieve plugin: Dovecot changed the deliver_log_format setting to include
+	  %{delivery_time}. This prompted changes in Pigeonhole that make this release
+	  dependent on Dovecot v2.2.17.
+	+ Implemented magic to make sieve_default script visible from ManageSieve
+	  under a configurable name. This way, users can see the default rules, edit
+	  them and store a private adjusted version. This could also be achieved by
+	  copying the default script into the user's script storage, but that way
+	  updates to the global sieve_default script would be ignored.
+	- Fixed problem in address test: erroneously decoded mime-encoded words in
+	  address headers.
+	- extprograms plugin: Fixed failure occurring when connecting to script
+	  service without the need to read back the output from the external program.
+	- Fixed bug in script storage path normalization occurring with relative
+	  symbolic links below root.
+  - Fixed and updated various parts of the documentation 
+
 v0.4.7 19-03-2015 Stephan Bosch <stephan@rename-it.nl>
 
 	* editheader extension: Made protection against addition and deletion of
