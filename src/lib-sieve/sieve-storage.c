@@ -870,8 +870,7 @@ struct sieve_script *sieve_storage_active_script_open
 
 	if ( script != NULL ||
 		(storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) != 0 ||
-		storage->default_location == NULL ||
-		storage->default_name == NULL ) {
+		storage->default_location == NULL) {
 		if ( error_r != NULL )
 			*error_r = storage->error_code;
 		return script;
