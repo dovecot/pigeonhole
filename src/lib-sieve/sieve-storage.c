@@ -497,23 +497,22 @@ struct sieve_storage *sieve_storage_create_main
 
 	/* Attempt to locate user's main storage */
 	storage = sieve_storage_do_create_main(svinst, user, flags, error_r);
-
-	set_default_name =
-		 sieve_setting_get(svinst, "sieve_default_name");
-	if ( set_default_name != NULL && *set_default_name != '\0' &&
-		!sieve_script_name_is_valid(set_default_name) ) {
-		sieve_storage_sys_error(storage,
-			"Invalid script name `%s' for `sieve_default_name' setting.",
-			str_sanitize(set_default_name, 80));
-		set_default_name = NULL;
-	}
-	storage->default_name =
-		p_strdup_empty(storage->pool, set_default_name);
-
 	if ( storage != NULL ) {
 		/* Success; record default script location for later use */
 		storage->default_location =
 			p_strdup_empty(storage->pool, set_default);
+
+		set_default_name =
+			 sieve_setting_get(svinst, "sieve_default_name");
+		if ( set_default_name != NULL && *set_default_name != '\0' &&
+			!sieve_script_name_is_valid(set_default_name) ) {
+			sieve_storage_sys_error(storage,
+				"Invalid script name `%s' for `sieve_default_name' setting.",
+				str_sanitize(set_default_name, 80));
+			set_default_name = NULL;
+		}
+		storage->default_name =
+			p_strdup_empty(storage->pool, set_default_name);
 
 		if (storage->default_location != NULL &&
 			storage->default_name != NULL) {
