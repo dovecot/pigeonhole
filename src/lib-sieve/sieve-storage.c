@@ -673,11 +673,10 @@ void sieve_storage_set_modified
  * Script access
  */
 
-struct sieve_script *sieve_storage_get_script
+static struct sieve_script *sieve_storage_get_script_direct
 (struct sieve_storage *storage, const char *name,
 	enum sieve_error *error_r)
 {
-	struct sieve_instance *svinst = storage->svinst;
 	struct sieve_script *script;
 
 	if ( error_r != NULL )
@@ -697,7 +696,18 @@ struct sieve_script *sieve_storage_get_script
 
 	i_assert(storage->v.get_script != NULL);
 	script = storage->v.get_script(storage, name);
+	return script;
+}
 
+struct sieve_script *sieve_storage_get_script
+(struct sieve_storage *storage, const char *name,
+	enum sieve_error *error_r)
+{
+	struct sieve_instance *svinst = storage->svinst;
+	struct sieve_script *script;
+
+	script = sieve_storage_get_script_direct
+		(storage, name, error_r);
 	if ( script == NULL ) {
 		/* Error */
 		if ( storage->error_code == SIEVE_ERROR_NOT_FOUND &&
@@ -768,6 +778,26 @@ struct sieve_script *sieve_storage_open_script
 	return script;
 }
 
+static int sieve_storage_check_script_direct
+(struct sieve_storage *storage, const char *name,
+	enum sieve_error *error_r) ATTR_NULL(3)
+{
+	struct sieve_script *script;
+	enum sieve_error error;
+	int ret;
+
+	if ( error_r == NULL )
+		error_r = &error;
+
+	script = sieve_storage_get_script_direct(storage, name, error_r);
+	if ( script == NULL )
+		return ( *error_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1 );
+
+	ret = sieve_script_open(script, error_r);
+	return ( ret >= 0 ? 1 :
+		( *error_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1 ) );
+}
+
 int sieve_storage_check_script
 (struct sieve_storage *storage, const char *name,
 	enum sieve_error *error_r)
@@ -775,12 +805,12 @@ int sieve_storage_check_script
 	struct sieve_script *script;
 	enum sieve_error error;
 
-	if (error_r == NULL)
+	if ( error_r == NULL )
 		error_r = &error;
 
 	script = sieve_storage_open_script(storage, name, error_r);
-	if (script == NULL)
-		return ( *error_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1);
+	if ( script == NULL )
+		return ( *error_r == SIEVE_ERROR_NOT_FOUND ? 0 : -1 );
 
 	sieve_script_unref(&script);
 	return 1;
@@ -1117,7 +1147,9 @@ int sieve_storage_save_commit(struct sieve_storage_save_context **_sctx)
 		storage->default_location != NULL &&
 		(storage->flags & SIEVE_STORAGE_FLAG_SYNCHRONIZING) == 0 &&
 		strcmp(sctx->scriptname, storage->default_name) == 0 &&
-		sieve_storage_save_will_activate(sctx) )
+		sieve_storage_save_will_activate(sctx) &&
+		sieve_storage_check_script_direct
+			(storage, storage->default_name, NULL) <= 0 )
 		default_activate = TRUE;
 
 	scriptname = t_strdup(sctx->scriptname);
