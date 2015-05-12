@@ -118,7 +118,7 @@ static int sieve_attribute_unset_script(struct mail_storage *storage,
 	if (script == NULL) { 
 		ret = -1;
 	} else {
-		ret = sieve_script_delete(script);
+		ret = sieve_script_delete(script, TRUE);
 		sieve_script_unref(&script);
 	}
 

@@ -39,13 +39,9 @@ cmd_sieve_delete_run(struct doveadm_sieve_cmd_context *_ctx)
 		if (script == NULL) {
 			sret =  -1;
 		} else {
-			if (sieve_script_delete(script) < 0) {
+			if (sieve_script_delete(script, ctx->ignore_active) < 0) {
 				(void)sieve_storage_get_last_error(storage, &error);
-				if (!ctx->ignore_active || error != SIEVE_ERROR_ACTIVE ||
-					sieve_storage_deactivate(storage, (time_t)-1) < 0 ||
-					sieve_script_delete(script) < 0) {
-					sret = -1;
-				}
+				sret = -1;
 			}
 			sieve_script_unref(&script);
 		}

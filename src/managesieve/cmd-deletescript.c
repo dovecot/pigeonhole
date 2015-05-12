@@ -28,7 +28,7 @@ bool cmd_deletescript(struct client_command_context *cmd)
 		return TRUE;
 	}
 
-	if ( sieve_script_delete(script) < 0 ) {
+	if ( sieve_script_delete(script, FALSE) < 0 ) {
 		client_send_storage_error(client, storage);
 	} else {
 		client_send_ok(client, "Deletescript completed.");

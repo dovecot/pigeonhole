@@ -592,7 +592,7 @@ int sieve_script_rename
 				} else if ( sieve_script_activate(newscript, (time_t)-1) < 0 ) {
 					/* Failed to activate; roll back */
 					ret = -1;
-					(void)sieve_script_delete(newscript);
+					(void)sieve_script_delete(newscript, TRUE);
 					sieve_script_unref(&newscript);
 				}
 
@@ -611,20 +611,25 @@ int sieve_script_rename
 	return ret;
 }
 
-int sieve_script_delete(struct sieve_script *script)
+int sieve_script_delete(struct sieve_script *script,
+	bool ignore_active)
 {
 	struct sieve_storage *storage = script->storage;
+	bool is_active = FALSE;
 	int ret = 0;
 
 	i_assert( script->open ); // FIXME: auto-open?
 
 	/* Is the requested script active? */
 	if ( sieve_script_is_active(script) > 0 ) {
-		sieve_script_set_error(script, SIEVE_ERROR_ACTIVE,
-			"Cannot delete the active Sieve script.");
-		if (storage->default_for != NULL)
-			sieve_storage_copy_error(storage->default_for, storage);
-		return -1;
+		is_active = TRUE;
+		if ( !ignore_active ) {
+			sieve_script_set_error(script, SIEVE_ERROR_ACTIVE,
+				"Cannot delete the active Sieve script.");
+			if (storage->default_for != NULL)
+				sieve_storage_copy_error(storage->default_for, storage);
+			return -1;
+		}
 	}
 
 	/* Trying to delete the default script? */
@@ -634,6 +639,10 @@ int sieve_script_delete(struct sieve_script *script)
 	}
 
 	i_assert( (script->storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 );
+
+	/* Deactivate it explicity */
+	if ( ignore_active && is_active )
+		(void)sieve_storage_deactivate(storage, (time_t)-1);
 
 	i_assert( script->v.delete != NULL );
 	ret = script->v.delete(script);
