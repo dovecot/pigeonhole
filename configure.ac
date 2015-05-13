@@ -1,4 +1,4 @@
-AC_INIT([Pigeonhole], [0.4.8.rc2], [dovecot@dovecot.org], [dovecot-2.2-pigeonhole])
+AC_INIT([Pigeonhole], [0.4.8.rc3], [dovecot@dovecot.org], [dovecot-2.2-pigeonhole])
 AC_CONFIG_AUX_DIR([.])
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_MACRO_DIR([m4])

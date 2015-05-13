@@ -8,13 +8,21 @@ v0.4.8 xx-05-2015 Stephan Bosch <stephan@rename-it.nl>
 	  them and store a private adjusted version. This could also be achieved by
 	  copying the default script into the user's script storage, but that way
 	  updates to the global sieve_default script would be ignored.
+	+ ManageSieve: Implemented support for reporting command statistics at
+	  disconnect. Statistics include the number of bytes and scripts uploaded/
+	  downloaded/checked and the number of scripts deleted/renamed.
 	- Fixed problem in address test: erroneously decoded mime-encoded words in
 	  address headers.
 	- extprograms plugin: Fixed failure occurring when connecting to script
 	  service without the need to read back the output from the external program.
 	- Fixed bug in script storage path normalization occurring with relative
 	  symbolic links below root.
-  - Fixed and updated various parts of the documentation 
+	- Fixed and updated various parts of the documentation 
+	- ManageSieve: Used "managesieve" rather than "sieve" as login service name,
+	  which means that all managesieve-specific settings where ignored.
+	- Managesieve: Storage quota was not always enforced properly for scripts
+	  uploaded as quoted string. Nobody uses that, but it is allowed in the
+	  specification and we support it, so it should work properly.
 
 v0.4.7 19-03-2015 Stephan Bosch <stephan@rename-it.nl>
 
