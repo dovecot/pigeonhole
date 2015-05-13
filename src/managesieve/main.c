@@ -158,7 +158,8 @@ static void main_stdio_run(const char *username)
 	buffer_t *input_buf;
 
 	memset(&input, 0, sizeof(input));
-	input.module = input.service = "managesieve";
+	input.module = "managesieve";
+	input.service = "sieve";
 	input.username =  username != NULL ? username : getenv("USER");
 	if (input.username == NULL && IS_STANDALONE())
 		input.username = getlogin();
@@ -188,7 +189,8 @@ login_client_connected(const struct master_login_client *client,
 	buffer_t input_buf;
 
 	memset(&input, 0, sizeof(input));
-	input.module = input.service = "managesieve";
+	input.module = "managesieve";
+	input.service = "sieve";
 	input.local_ip = client->auth_req.local_ip;
 	input.remote_ip = client->auth_req.remote_ip;
 	input.username = username;
