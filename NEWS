@@ -6,8 +6,8 @@ v0.4.8 xx-05-2015 Stephan Bosch <stephan@rename-it.nl>
 	+ Implemented magic to make sieve_default script visible from ManageSieve
 	  under a configurable name. This way, users can see the default rules, edit
 	  them and store a private adjusted version. This could also be achieved by
-	  copying the default script into the user's script storage, but that way
-	  updates to the global sieve_default script would be ignored.
+	  copying the default script into the user's script storage, but updates to
+	  the global sieve_default script would be ignored that way.
 	+ ManageSieve: Implemented support for reporting command statistics at
 	  disconnect. Statistics include the number of bytes and scripts uploaded/
 	  downloaded/checked and the number of scripts deleted/renamed.
