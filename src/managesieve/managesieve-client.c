@@ -175,6 +175,14 @@ struct client *client_create
 static const char *client_stats(struct client *client)
 {
 	static struct var_expand_table static_tab[] = {
+		{ 't', NULL, "put_bytes" },
+		{ 'p', NULL, "put_count" },
+		{ 'b', NULL, "get_bytes" },
+		{ 'g', NULL, "get_count" },
+		{ 'v', NULL, "check_bytes" },
+		{ 'c', NULL, "check_count" },
+		{ 'd', NULL, "deleted_count" },
+		{ 'r', NULL, "renamed_count" },
 		{ 'i', NULL, "input" },
 		{ 'o', NULL, "output" },
 		{ '\0', NULL, "session" },
@@ -186,9 +194,17 @@ static const char *client_stats(struct client *client)
 	tab = t_malloc(sizeof(static_tab));
 	memcpy(tab, static_tab, sizeof(static_tab));
 
-	tab[0].value = dec2str(i_stream_get_absolute_offset(client->input));
-	tab[1].value = dec2str(client->output->offset);
-	tab[2].value = client->session_id;
+	tab[0].value = dec2str(client->put_bytes);
+	tab[1].value = dec2str(client->put_count);
+	tab[2].value = dec2str(client->get_bytes);
+	tab[3].value = dec2str(client->get_count);
+	tab[4].value = dec2str(client->check_bytes);
+	tab[5].value = dec2str(client->check_count);
+	tab[6].value = dec2str(client->deleted_count);
+	tab[7].value = dec2str(client->renamed_count);
+	tab[8].value = dec2str(i_stream_get_absolute_offset(client->input));
+	tab[9].value = dec2str(client->output->offset);
+	tab[10].value = client->session_id;
 
 	str = t_str_new(128);
 	var_expand(str, client->set->managesieve_logout_format, tab);

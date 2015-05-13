@@ -249,6 +249,14 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 
 			/* Report result to user */
 			if ( success ) {
+				if ( ctx->scriptname != NULL ) {
+					client->put_count++;
+					client->put_bytes += ctx->script_size;
+				} else {
+					client->check_count++;
+					client->check_bytes += ctx->script_size;
+				}
+
 				if ( sieve_get_warnings(ehandler) > 0 )
 					client_send_okresp(client, "WARNINGS", str_c(errors));
 				else {

@@ -40,6 +40,9 @@ static bool cmd_getscript_finish(struct cmd_getscript_context *ctx)
 		return TRUE;
 	}
 
+	client->get_count++;
+	client->get_bytes += ctx->script_size;
+
 	client_send_line(client, "");
 	client_send_ok(client, "Getscript completed.");
 	return TRUE;

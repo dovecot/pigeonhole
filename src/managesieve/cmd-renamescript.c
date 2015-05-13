@@ -29,10 +29,12 @@ bool cmd_renamescript(struct client_command_context *cmd)
 		return TRUE;
 	}
 
-	if (sieve_script_rename(script, newname) < 0)
+	if (sieve_script_rename(script, newname) < 0) {
 		client_send_storage_error(client, storage);
-	else
+	} else {
+		client->renamed_count++;
 		client_send_ok(client, "Renamescript completed.");
+	}
 
 	sieve_script_unref(&script);
 	return TRUE;

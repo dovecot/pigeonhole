@@ -57,6 +57,15 @@ struct client {
 	struct managesieve_parser *parser;
 	struct client_command_context cmd;
 
+	uoff_t put_bytes;
+	uoff_t get_bytes;
+	uoff_t check_bytes;
+	unsigned int put_count;
+	unsigned int get_count;
+	unsigned int check_count;
+	unsigned int deleted_count;
+	unsigned int renamed_count;
+
 	unsigned int disconnected:1;
 	unsigned int destroyed:1;
 	unsigned int command_pending:1;
