@@ -271,7 +271,14 @@ int sieve_script_get_size(struct sieve_script *script, uoff_t *size_r)
 		sieve_script_get_stream(script, &stream, NULL) < 0 )
 		return -1;
 
-	return i_stream_get_size(script->stream, TRUE, size_r);
+	if (i_stream_get_size(script->stream, TRUE, size_r) < 0) {
+		sieve_storage_set_critical(script->storage,
+			"i_stream_get_size(%s) failed: %s",
+			i_stream_get_name(script->stream),
+			i_stream_get_error(script->stream));
+		return -1;
+	}
+	return 0;
 }
 
 bool sieve_script_is_open(const struct sieve_script *script)
