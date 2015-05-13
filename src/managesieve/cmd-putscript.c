@@ -183,6 +183,11 @@ static bool cmd_putscript_finish_parsing(struct client_command_context *cmd)
 
 		/* If quoted string, the size was not known until now */
 		if ( ctx->script_size == 0 ) {
+			if (sieve_script_get_size(script, &ctx->script_size) < 0) {
+				client_send_storage_error(client, ctx->storage);
+				cmd_putscript_finish(ctx);
+				return TRUE;
+			}
 			/* Check quota; max size is already checked */
 			if ( ctx->scriptname != NULL && !managesieve_quota_check_all
 					(client, ctx->scriptname, ctx->script_size) ) {
