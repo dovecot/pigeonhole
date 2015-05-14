@@ -122,10 +122,10 @@ if test $want_ldap != no; then
 	AC_CHECK_LIB(ldap, ldap_init, [
 		AC_CHECK_HEADER(ldap.h, [
 			AC_CHECK_LIB(ldap, ldap_initialize, [
-				AC_DEFINE(LDAP_HAVE_INITIALIZE,, Define if you have ldap_initialize)
+				AC_DEFINE(LDAP_HAVE_INITIALIZE,, [Define if you have ldap_initialize])
 			])
 			AC_CHECK_LIB(ldap, ldap_start_tls_s, [
-				AC_DEFINE(LDAP_HAVE_START_TLS_S,, Define if you have ldap_start_tls_s)
+				AC_DEFINE(LDAP_HAVE_START_TLS_S,, [Define if you have ldap_start_tls_s])
 			])
 			LDAP_LIBS="-lldap"
 			AC_CHECK_LIB(ldap, ber_free, [
@@ -138,10 +138,10 @@ if test $want_ldap != no; then
 			])
 			AC_SUBST(LDAP_LIBS)
 			if test $want_ldap != plugin; then
-				AC_DEFINE(SIEVE_BUILTIN_LDAP,, LDAP support is built in)
+				AC_DEFINE(SIEVE_BUILTIN_LDAP,, [LDAP support is built in])
 			fi
 
-  		AC_DEFINE(STORAGE_LDAP,, Build with LDAP support)
+  		AC_DEFINE(STORAGE_LDAP,, [Build with LDAP support])
 			AC_CHECK_HEADERS(sasl.h sasl/sasl.h)
 			have_ldap=yes
 		], [
