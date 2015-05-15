@@ -1,4 +1,4 @@
-v0.4.8 xx-05-2015 Stephan Bosch <stephan@rename-it.nl>
+v0.4.8 15-05-2015 Stephan Bosch <stephan@rename-it.nl>
 
 	* LDA Sieve plugin: Dovecot changed the deliver_log_format setting to include
 	  %{delivery_time}. This prompted changes in Pigeonhole that make this release
