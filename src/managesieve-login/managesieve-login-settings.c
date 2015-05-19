@@ -23,7 +23,7 @@
 /* <settings checks> */
 
 static struct inet_listener_settings managesieve_login_inet_listeners_array[] = {
-    { "sieve", "", 4190, FALSE, FALSE },
+    { .name = "sieve", .address = "", .port = 4190 },
 };
 static struct inet_listener_settings *managesieve_login_inet_listeners[] = {
 	&managesieve_login_inet_listeners_array[0]
