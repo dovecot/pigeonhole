@@ -23,6 +23,7 @@ enum {
 	PROXY_STATE_INITIAL,
 	PROXY_STATE_TLS_START,
 	PROXY_STATE_TLS_READY,
+	PROXY_STATE_XCLIENT,
 	PROXY_STATE_AUTHENTICATE,
 };
 
@@ -64,8 +65,21 @@ static void get_plain_auth(struct client *client, string_t *dest)
 	managesieve_quote_append_string(dest, str_c(base64), FALSE);
 }
 
+static void proxy_write_xclient
+(struct managesieve_client *client, string_t *str)
+{
+	str_printfa(str,
+		"XCLIENT ADDR=%s PORT=%u SESSION=%s TTL=%u\r\n",
+		net_ip2addr(&client->common.ip),
+		client->common.remote_port,
+		client_get_session_id(&client->common),
+		client->common.proxy_ttl - 1);
+}
+
 static int proxy_write_login(struct managesieve_client *client, string_t *str)
 {
+	i_assert(client->common.proxy_ttl > 1);
+
 	if ( !client->proxy_sasl_plain ) {
 		client_log_err(&client->common, "proxy: "
 			"Server does not support required PLAIN SASL mechanism");
@@ -77,7 +91,6 @@ static int proxy_write_login(struct managesieve_client *client, string_t *str)
 	get_plain_auth(&client->common, str);
 	proxy_free_password(&client->common);
 	str_append(str, "\r\n");
-
 	return 1;
 }
 
@@ -171,6 +184,8 @@ static int proxy_input_capability
 
 			} else if ( strcasecmp(capability, "STARTTLS") == 0 ) {
 				client->proxy_starttls = TRUE;
+			} else if ( strcasecmp(capability, "XCLIENT") == 0 ) {
+				client->proxy_xclient = TRUE;
 			}
 
 		} else {
@@ -249,6 +264,11 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 
 				str_append(command, "STARTTLS\r\n");
 				msieve_client->proxy_state = PROXY_STATE_TLS_START;
+
+			} else if (msieve_client->proxy_xclient) {
+				proxy_write_xclient(msieve_client, command);
+				msieve_client->proxy_state = PROXY_STATE_XCLIENT;
+
 			} else {
 				if ( proxy_write_login(msieve_client, command) < 0 ) {
 					client_proxy_failed(client, TRUE);
@@ -296,17 +316,46 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 			}
 
 			command = t_str_new(128);
-			if ( proxy_write_login(msieve_client, command) < 0 ) {
+			if ( msieve_client->proxy_xclient ) {
+				proxy_write_xclient(msieve_client, command);
+				msieve_client->proxy_state = PROXY_STATE_XCLIENT;
+
+			} else {
+				if ( proxy_write_login(msieve_client, command) < 0 ) {
+					client_proxy_failed(client, TRUE);
+					return -1;
+				}
+				msieve_client->proxy_state = PROXY_STATE_AUTHENTICATE;
+			}
+			(void)o_stream_send(output, str_data(command), str_len(command));
+		}
+		return 0;
+
+	case PROXY_STATE_XCLIENT:
+		if ( strncasecmp(line, "OK", 2) == 0 &&
+			( strlen(line) == 2 || line[2] == ' ' ) ) {
+
+			/* STARTTLS successful, begin TLS negotiation. */
+			if ( login_proxy_starttls(client->login_proxy) < 0 ) {
 				client_proxy_failed(client, TRUE);
 				return -1;
 			}
 
+			command = t_str_new(128);
+			if ( proxy_write_login(msieve_client, command) < 0 ) {
+				client_proxy_failed(client, TRUE);
+				return -1;
+			}
 			(void)o_stream_send(output, str_data(command), str_len(command));
-
 			msieve_client->proxy_state = PROXY_STATE_AUTHENTICATE;
+			return 0;
 		}
 
-		return 0;
+		client_log_err(client, t_strdup_printf(
+			"proxy: Remote XCLIENT failed: %s",
+			str_sanitize(line, 160)));
+		client_proxy_failed(client, TRUE);
+		return -1;
 
 	case PROXY_STATE_AUTHENTICATE:
 

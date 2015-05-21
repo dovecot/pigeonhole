@@ -80,6 +80,10 @@ static void client_send_capabilities(struct client *client)
 
 		/* Protocol version */
 		client_send_raw(client, "\"VERSION\" \"1.0\"\r\n");
+
+		/* XCLIENT */
+	    if (client->trusted)
+        	client_send_raw(client, "\"XCLIENT\"\r\n");
 	} T_END;
 }
 
@@ -151,13 +155,58 @@ static int cmd_logout
 	return 1;
 }
 
+static int cmd_xclient
+(struct managesieve_client *client,
+	const struct managesieve_arg *args)
+{
+	unsigned int remote_port;
+	const char *arg;
+	bool args_ok = TRUE;
+
+	if ( !client->common.trusted ) {
+		client_send_no(&client->common,
+			"You are not from trusted IP");
+		return 1;
+	}
+	while (!MANAGESIEVE_ARG_IS_EOL(&args[0]) &&
+		managesieve_arg_get_atom(&args[0], &arg)) {
+		if ( strncasecmp(arg, "ADDR=", 5) == 0 ) {
+			if (net_addr2ip(arg + 5, &client->common.ip) < 0)
+				args_ok = FALSE;
+		} else if ( strncasecmp(arg, "PORT=", 5) == 0 ) {
+			if (str_to_uint(arg + 5, &remote_port) < 0 ||
+			    remote_port == 0 || remote_port > 65535)
+				args_ok = FALSE;
+			else
+				client->common.remote_port = remote_port;
+		} else if ( strncasecmp(arg, "SESSION=", 8) == 0 ) {
+			const char *value = arg + 8;
+
+			if (strlen(value) <= LOGIN_MAX_SESSION_ID_LEN) {
+				client->common.session_id =
+					p_strdup(client->common.pool, value);
+			}
+		} else if ( strncasecmp(arg, "TTL=", 4 ) == 0) {
+			if (str_to_uint(arg + 4, &client->common.proxy_ttl) < 0)
+				args_ok = FALSE;
+		}
+		args++;
+	}
+	if ( !args_ok || !MANAGESIEVE_ARG_IS_EOL(&args[0]))
+		return -1;
+
+	client_send_ok(&client->common, "Updated");
+	return 1;
+}
+
 static struct managesieve_command commands[] = {
 	{ "AUTHENTICATE", cmd_authenticate, 1 },
 	{ "CAPABILITY", cmd_capability, -1 },
 	{ "STARTTLS", cmd_starttls, -1 },
 	{ "NOOP", cmd_noop, 0 },
-	{	"LOGOUT", cmd_logout, -1},
-	{ NULL, NULL, 0}
+	{ "LOGOUT", cmd_logout, -1 },
+	{ "XCLIENT", cmd_xclient, 0 },
+	{ NULL, NULL, 0 }
 };
 
 static bool client_handle_input(struct managesieve_client *client)

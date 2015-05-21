@@ -32,6 +32,7 @@ struct managesieve_client {
 
 	unsigned int proxy_starttls:1;
 	unsigned int proxy_sasl_plain:1;
+	unsigned int proxy_xclient:1;
 };
 
 bool client_skip_line(struct managesieve_client *client);
