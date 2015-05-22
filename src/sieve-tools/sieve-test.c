@@ -141,6 +141,7 @@ int main(int argc, char **argv)
 	sieve_tool = sieve_tool_init
 		("sieve-test", &argc, &argv, "r:a:f:m:d:l:s:eCt:T:DP:x:u:", FALSE);
 
+	ehandler = action_ehandler = NULL;
 	t_array_init(&scriptfiles, 16);
 
 	/* Parse arguments */
