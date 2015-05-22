@@ -55,6 +55,19 @@ static void proxy_write_xclient
 		client->common.proxy_ttl - 1);
 }
 
+static void proxy_write_auth_data
+(const unsigned char *data, unsigned int data_len,
+	string_t *str)
+{
+	if (data_len == 0)
+		str_append(str, "\"\"");
+	else {
+		string_t *data_str = t_str_new(128);
+		base64_encode(data, data_len, data_str);
+		managesieve_quote_append_string(str, str_c(data_str), FALSE);
+	}
+}
+
 static int proxy_write_auth
 (struct managesieve_client *client, string_t *str)
 {
@@ -93,13 +106,9 @@ static int proxy_write_auth
 			mech_name, error));
 		return -1;
 	}
-	str_append_c(str, ' ');
-	if (len == 0)
-		str_append(str, "\"\"");
-	else {
-		string_t *resp = t_str_new(128);
-		base64_encode(output, len, resp);
-		managesieve_quote_append_string(str, str_c(resp), FALSE);
+	if (len > 0) {
+		str_append_c(str, ' ');
+		proxy_write_auth_data(output, len, str);
 	}
 	str_append(str, "\r\n");
 	proxy_free_password(&client->common);
@@ -175,7 +184,6 @@ static int proxy_write_auth_response
 	const char *error;
 	int ret;
 
-	str = t_str_new(256);
 	if (base64_decode(challenge, strlen(challenge), NULL, str) < 0) {
 		client_log_err(&client->common,
 			"proxy: Server sent invalid base64 data in AUTHENTICATE response");
@@ -196,7 +204,7 @@ static int proxy_write_auth_response
 	i_assert(ret == 0);
 
 	str_truncate(str, 0);
-	base64_encode(data, data_len, str);
+	proxy_write_auth_data(data, data_len, str);
 	str_append(str, "\r\n");
 	return 0;
 }
