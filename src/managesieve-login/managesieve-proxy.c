@@ -335,12 +335,6 @@ int managesieve_proxy_parse_line(struct client *client, const char *line)
 		if ( strncasecmp(line, "OK", 2) == 0 &&
 			( strlen(line) == 2 || line[2] == ' ' ) ) {
 
-			/* STARTTLS successful, begin TLS negotiation. */
-			if ( login_proxy_starttls(client->login_proxy) < 0 ) {
-				client_proxy_failed(client, TRUE);
-				return -1;
-			}
-
 			command = t_str_new(128);
 			if ( proxy_write_login(msieve_client, command) < 0 ) {
 				client_proxy_failed(client, TRUE);
