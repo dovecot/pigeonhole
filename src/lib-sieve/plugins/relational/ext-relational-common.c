@@ -146,7 +146,7 @@ bool mcht_relational_validate
  * Relational match-type operand
  */
 
-const const struct sieve_match_type_def *rel_match_types[] = {
+const struct sieve_match_type_def *rel_match_types[] = {
     &rel_match_value_gt, &rel_match_value_ge, &rel_match_value_lt,
     &rel_match_value_le, &rel_match_value_eq, &rel_match_value_ne,
     &rel_match_count_gt, &rel_match_count_ge, &rel_match_count_lt,
