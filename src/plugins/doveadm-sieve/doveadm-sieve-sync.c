@@ -439,6 +439,7 @@ sieve_attribute_retrieve_script(struct mail_storage *storage,
 		inputs[1] = input;
 		inputs[2] = NULL;
 		value_r->value_stream = i_stream_create_concat(inputs);
+		i_stream_unref(&inputs[0]);
 	}
 	sieve_script_unref(&script);
 	return 1;
