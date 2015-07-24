@@ -134,7 +134,7 @@ unsigned int rfc2822_header_append
 
 	/* Write header field name first */
 	str_append_n(header, name, line_len);
-	str_append_n(header, ": ", 2);
+	str_append(header, ": ");
 
 	if ( body_offset_r != NULL )
 		*body_offset_r = str_len(header);
@@ -166,9 +166,9 @@ unsigned int rfc2822_header_append
 			str_append_n(header, sp, nlp-sp);
 
 			if ( crlf )
-				str_append_n(header, "\r\n", 2);
+				str_append(header, "\r\n");
 			else
-				str_append_n(header, "\n", 1);
+				str_append(header, "\n");
 
 			if ( *bp != '\0' && (*bp == ' ' || *bp == '\t') ) {
 				/* Continued line; replace leading whitespace with single TAB */
@@ -187,9 +187,9 @@ unsigned int rfc2822_header_append
 				wp++;
 
 			if ( crlf )
-				str_append_n(header, "\r\n", 2);
+				str_append(header, "\r\n");
 			else
-				str_append_n(header, "\n", 1);
+				str_append(header, "\n");
 
 			/* Insert single TAB instead of the original whitespace */
 			str_append_c(header, '\t');
@@ -207,9 +207,9 @@ unsigned int rfc2822_header_append
 	if ( bp != sp || lines == 0 ) {
 		str_append_n(header, sp, bp-sp);
 		if ( crlf )
-			str_append_n(header, "\r\n", 2);
+			str_append(header, "\r\n");
 		else
-			str_append_n(header, "\n", 1);
+			str_append(header, "\n");
 		lines++;
 	}
 
