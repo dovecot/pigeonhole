@@ -158,33 +158,41 @@ unsigned int rfc2822_header_append
 		if ( *bp == '\0' ) break;
 
 		/* Existing newline ? */
-		if ( nlp != NULL ) {
+		if ( nlp != NULL ) {			
 			/* Replace any sort of newline for consistency */
 			while ( *bp == '\r' || *bp == '\n' )
 				bp++;
 
 			str_append_n(header, sp, nlp-sp);
 
-			if ( *bp != '\0' && *bp != ' ' && *bp != '\t' ) {
-				if ( crlf )
-					str_append_n(header, "\r\n\t", 3);
-				else
-					str_append_n(header, "\n\t", 2);
-			} else {
-				if ( crlf )
-					str_append_n(header, "\r\n", 2);
-				else
-					str_append_n(header, "\n", 1);
+			if ( crlf )
+				str_append_n(header, "\r\n", 2);
+			else
+				str_append_n(header, "\n", 1);
+
+			if ( *bp != '\0' && (*bp == ' ' || *bp == '\t') ) {
+				/* Continued line; replace leading whitespace with single TAB */
+				str_append_c(header, '\t');
+				while ( *bp == ' ' || *bp == '\t' )
+					bp++;
 			}
 
 			sp = bp;
 		} else {
 			/* Insert newline at last whitespace within the max_line limit */
 			str_append_n(header, sp, wp-sp);
+
+			/* Force continued line; drop any existing whitespace */
+			while ( *wp == ' ' || *wp == '\t' )
+				wp++;
+
 			if ( crlf )
 				str_append_n(header, "\r\n", 2);
 			else
 				str_append_n(header, "\n", 1);
+
+			/* Insert single TAB instead of the original whitespace */
+			str_append_c(header, '\t');
 
 			sp = wp;
 		}
