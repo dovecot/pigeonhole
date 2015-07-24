@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "str.h"
 #include "istream.h"
+#include "message-address.h"
 #include "mail-storage.h"
 #include "master-service.h"
 
@@ -38,6 +39,23 @@ static string_t *envelope_auth;
 
 pool_t message_pool;
 
+static const char *
+testsuite_message_get_address(struct mail *mail, const char *header)
+{
+	struct message_address *addr;
+	const char *str;
+
+	if (mail_get_first_header(mail, header, &str) <= 0)
+		return NULL;
+	addr = message_address_parse(pool_datastack_create(),
+	             (const unsigned char *)str,
+	             strlen(str), 1, FALSE);
+	return (addr == NULL ||
+		addr->mailbox == NULL || *addr->mailbox == '\0' ? NULL :
+			( addr->domain == NULL || *addr->domain == '\0' ? addr->mailbox :
+				t_strconcat(addr->mailbox, "@", addr->domain, NULL)));
+}
+
 static void testsuite_message_set_data(struct mail *mail)
 {
 	const char *recipient = NULL, *sender = NULL;
@@ -47,27 +65,36 @@ static void testsuite_message_set_data(struct mail *mail)
 	 */
 
 	/* Get recipient address */
-	(void)mail_get_first_header(mail, "Envelope-To", &recipient);
+	recipient = testsuite_message_get_address(mail, "Envelope-To");
 	if ( recipient == NULL )
-		(void)mail_get_first_header(mail, "To", &recipient);
+		recipient = testsuite_message_get_address(mail, "To");
 	if ( recipient == NULL )
 		recipient = "recipient@example.com";
 
 	/* Get sender address */
-	(void)mail_get_first_header(mail, "Return-path", &sender);
+	sender = testsuite_message_get_address(mail, "Return-path");
 	if ( sender == NULL )
-		(void)mail_get_first_header(mail, "Sender", &sender);
+		sender = testsuite_message_get_address(mail, "Sender");
 	if ( sender == NULL )
-		(void)mail_get_first_header(mail, "From", &sender);
+		sender = testsuite_message_get_address(mail, "From");
 	if ( sender == NULL )
 		sender = "sender@example.com";
 
 	memset(&testsuite_msgdata, 0, sizeof(testsuite_msgdata));
 	testsuite_msgdata.mail = mail;
 	testsuite_msgdata.auth_user = sieve_tool_get_username(sieve_tool);
-	testsuite_msgdata.return_path = sender;
-	testsuite_msgdata.orig_envelope_to = recipient;
-	testsuite_msgdata.final_envelope_to = recipient;
+
+	str_truncate(envelope_from, 0);
+	str_append(envelope_from, sender);
+	testsuite_msgdata.return_path = str_c(envelope_from);
+
+	str_truncate(envelope_to, 0);
+	str_append(envelope_to, recipient);
+	testsuite_msgdata.final_envelope_to = str_c(envelope_to);
+
+	str_truncate(envelope_orig_to, 0);
+	str_append(envelope_orig_to, recipient);
+	testsuite_msgdata.orig_envelope_to = str_c(envelope_orig_to);
 
 	(void)mail_get_first_header(mail, "Message-ID", &testsuite_msgdata.id);
 }
@@ -80,12 +107,13 @@ void testsuite_message_init(void)
 	str_append(default_message, _default_message_data);
 
 	testsuite_mail = sieve_tool_open_data_as_mail(sieve_tool, default_message);
-	testsuite_message_set_data(testsuite_mail);
 
 	envelope_to = str_new(message_pool, 256);
 	envelope_orig_to = str_new(message_pool, 256);
 	envelope_from = str_new(message_pool, 256);
 	envelope_auth = str_new(message_pool, 256);
+
+	testsuite_message_set_data(testsuite_mail);
 }
 
 void testsuite_message_set_string
