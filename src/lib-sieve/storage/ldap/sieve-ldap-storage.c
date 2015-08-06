@@ -184,6 +184,8 @@ const struct sieve_storage sieve_ldap_storage_plugin = {
 #ifndef SIEVE_BUILTIN_LDAP
 /* Building a plugin */
 
+const char *sieve_storage_ldap_plugin_version = PIGEONHOLE_ABI_VERSION;
+
 void sieve_storage_ldap_plugin_load
 (struct sieve_instance *svinst, void **context);
 void sieve_storage_ldap_plugin_unload

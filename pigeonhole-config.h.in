@@ -5,6 +5,9 @@
 /* Define to the version of Pigeonhole for Dovecot. */
 #undef PIGEONHOLE_VERSION
 
+/* Pigeonhole ABI version */
+#undef PIGEONHOLE_ABI_VERSION
+
 /* Define to build unfinished features/extensions. */
 #undef HAVE_SIEVE_UNFINISHED
 

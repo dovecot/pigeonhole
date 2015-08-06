@@ -18,6 +18,8 @@ struct _plugin_context {
 	const struct sieve_extension *ext_execute;		
 };
 
+const char *sieve_extprograms_plugin_version = PIGEONHOLE_ABI_VERSION;
+
 void sieve_extprograms_plugin_load
 (struct sieve_instance *svinst, void **context)
 {
