@@ -60,9 +60,11 @@ static void mail_sieve_user_deinit(struct mail_user *user)
 {
 	struct sieve_mail_user *suser = SIEVE_USER_CONTEXT(user);
 
-	if (suser->sieve_storage != NULL)
-		sieve_storage_unref(&suser->sieve_storage);
-	sieve_deinit(&suser->svinst);
+	if ( suser->svinst != NULL ) {
+		if (suser->sieve_storage != NULL)
+			sieve_storage_unref(&suser->sieve_storage);
+		sieve_deinit(&suser->svinst);
+	}
 
 	suser->module_ctx.super.deinit(user);
 }
@@ -75,10 +77,11 @@ mail_sieve_user_init
 	enum sieve_storage_flags storage_flags =
 		SIEVE_STORAGE_FLAG_READWRITE |
 		SIEVE_STORAGE_FLAG_SYNCHRONIZING;
-	struct mail_user_vfuncs *v = user->vlast;
 	struct sieve_environment svenv;
 
-	if (suser != NULL) {
+	i_assert( suser != NULL );
+
+	if ( suser->svinst != NULL ) {
 		*svstorage_r = suser->sieve_storage;
 		return suser->sieve_storage != NULL ? 1 : 0;
 	}
@@ -90,17 +93,11 @@ mail_sieve_user_init
 	svenv.base_dir = user->set->base_dir;
 	svenv.flags = SIEVE_FLAG_HOME_RELATIVE;
 
-	suser = p_new(user->pool, struct sieve_mail_user, 1);
-	suser->module_ctx.super = *v;
-	user->vlast = &suser->module_ctx.super;
-	v->deinit = mail_sieve_user_deinit;
-
 	suser->svinst = sieve_init(&svenv, &mail_sieve_callbacks,
 				   user, user->mail_debug);
 	suser->sieve_storage = sieve_storage_create_main
 			(suser->svinst, user, storage_flags, NULL);
 
-	MODULE_CONTEXT_SET(user, sieve_user_module, suser);
 	*svstorage_r = suser->sieve_storage;
 	return suser->sieve_storage != NULL ? 1 : 0;
 }
@@ -703,6 +700,19 @@ sieve_attribute_iter_deinit(struct mailbox_attribute_iter *iter)
 }
 
 static void
+sieve_mail_user_created(struct mail_user *user)
+{
+	struct sieve_mail_user *suser;
+	struct mail_user_vfuncs *v = user->vlast;
+
+	suser = p_new(user->pool, struct sieve_mail_user, 1);
+	suser->module_ctx.super = *v;
+	user->vlast = &suser->module_ctx.super;
+	v->deinit = mail_sieve_user_deinit;
+	MODULE_CONTEXT_SET(user, sieve_user_module, suser);
+}
+
+static void
 sieve_mailbox_allocated(struct mailbox *box)
 {
 	struct mailbox_vfuncs *v = box->vlast;
@@ -724,6 +734,7 @@ sieve_mailbox_allocated(struct mailbox *box)
 }
 
 static struct mail_storage_hooks doveadm_sieve_mail_storage_hooks = {
+	.mail_user_created = sieve_mail_user_created,
 	.mailbox_allocated = sieve_mailbox_allocated
 };
 
