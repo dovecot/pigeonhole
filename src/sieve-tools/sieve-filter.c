@@ -58,6 +58,7 @@ struct sieve_filter_data {
 
 	unsigned int execute:1;
 	unsigned int source_write:1;
+	unsigned int default_move:1;
 };
 
 struct sieve_filter_context {
@@ -227,6 +228,17 @@ static int filter_message
 		return -1;
 	case SIEVE_EXEC_FAILURE:
 	case SIEVE_EXEC_TEMP_FAILURE:
+		if ( source_write && execute && sfctx->data->default_move &&
+			!estatus.keep_original &&	estatus.message_saved ) {
+			/* The implicit keep action moved message to default mailbox, so
+			   the source message still needs to be expunged */
+			sieve_error(ehandler, NULL,
+				"sieve script execution failed for this message; "
+				"message moved to default mailbox");
+			mail_expunge(mail);
+			return 0;
+		}
+		/* Fall through */
 	case SIEVE_EXEC_KEEP_FAILED:
 		sieve_error(ehandler, NULL,
 			"sieve script execution failed for this message; "
@@ -360,7 +372,7 @@ int main(int argc, char **argv)
 	struct sieve_binary *main_sbin;
 	struct sieve_script_env scriptenv;
 	struct sieve_error_handler *ehandler;
-	bool force_compile, execute, source_write, verbose;
+	bool force_compile, execute, source_write, verbose, default_move;
 	struct mail_namespace *ns;
 	struct mailbox *src_box = NULL, *move_box = NULL;
 	enum mailbox_flags open_flags = MAILBOX_FLAG_IGNORE_ACLS;
@@ -374,7 +386,8 @@ int main(int argc, char **argv)
 
 	/* Parse arguments */
 	dst_mailbox = move_mailbox = NULL;
-	force_compile = execute = source_write = verbose = FALSE;
+	force_compile = execute = source_write = default_move = FALSE;
+	verbose = FALSE;	
 	while ((c = sieve_tool_getopt(sieve_tool)) > 0) {
 		switch (c) {
 		case 'm':
@@ -475,6 +488,9 @@ int main(int argc, char **argv)
 
 	if ( dst_mailbox == NULL ) {
 		dst_mailbox = src_mailbox;
+	} else {
+		/* The (implicit) keep action will move the message */
+		default_move = TRUE;
 	}
 
 	/* Finish tool initialization */
@@ -552,6 +568,7 @@ int main(int argc, char **argv)
 	sfdata.ehandler = ehandler;
 	sfdata.execute = execute;
 	sfdata.source_write = source_write;
+	sfdata.default_move = default_move;
 
 	/* Apply Sieve filter to all messages found */
 	(void) filter_mailbox(&sfdata, src_box);
