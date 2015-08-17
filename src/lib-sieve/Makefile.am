@@ -78,6 +78,7 @@ plugins = \
 	$(extdir)/index/libsieve_ext_index.la \
 	$(extdir)/metadata/libsieve_ext_metadata.la \
 	$(extdir)/vnd.dovecot/debug/libsieve_ext_debug.la \
+	$(extdir)/vnd.dovecot/environment/libsieve_ext_vnd_environment.la \
 	$(unfinished_plugins)
 
 libdovecot_sieve_la_DEPENDENCIES = \
