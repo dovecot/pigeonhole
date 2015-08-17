@@ -182,6 +182,7 @@ void sieve_variables_opr_namespace_variable_emit
 	const struct sieve_extension *ext,
 	const struct sieve_variables_namespace_def *nspc_def)
 {
+	i_assert( sieve_extension_is(var_ext, variables_extension) );
 	sieve_operand_emit(sblock, var_ext, &namespace_variable_operand);
 	sieve_opr_object_emit(sblock, ext, &nspc_def->obj_def);
 }

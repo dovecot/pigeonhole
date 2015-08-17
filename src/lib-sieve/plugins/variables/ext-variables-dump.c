@@ -49,9 +49,11 @@ static struct ext_variables_dump_context *ext_variables_dump_get_context
 (const struct sieve_extension *this_ext, const struct sieve_dumptime_env *denv)
 {
 	struct sieve_code_dumper *dumper = denv->cdumper;
-	struct ext_variables_dump_context *dctx = sieve_dump_extension_get_context
-		(dumper, this_ext);
+	struct ext_variables_dump_context *dctx;
 	pool_t pool;
+
+	i_assert( sieve_extension_is(this_ext, variables_extension) );
+	dctx = sieve_dump_extension_get_context(dumper, this_ext);
 
 	if ( dctx == NULL ) {
 		/* Create dumper context */

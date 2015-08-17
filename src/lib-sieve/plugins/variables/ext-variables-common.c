@@ -608,8 +608,10 @@ ext_variables_validator_context_create
 struct ext_variables_validator_context *ext_variables_validator_context_get
 (const struct sieve_extension *this_ext, struct sieve_validator *valdtr)
 {
-	struct ext_variables_validator_context *ctx =
-		(struct ext_variables_validator_context *)
+	struct ext_variables_validator_context *ctx;
+
+	i_assert( sieve_extension_is(this_ext, variables_extension) );
+	ctx = (struct ext_variables_validator_context *)
 		sieve_validator_extension_get_context(valdtr, this_ext);
 
 	if ( ctx == NULL ) {
@@ -768,8 +770,13 @@ static inline struct ext_variables_interpreter_context *
 ext_variables_interpreter_context_get
 	(const struct sieve_extension *this_ext, struct sieve_interpreter *interp)
 {
-	return (struct ext_variables_interpreter_context *)
+	struct ext_variables_interpreter_context *ctx;
+
+	i_assert( sieve_extension_is(this_ext, variables_extension) );
+	ctx = (struct ext_variables_interpreter_context *)
 		sieve_interpreter_extension_get_context(interp, this_ext);
+
+	return ctx;
 }
 
 struct sieve_variable_storage *sieve_ext_variables_runtime_get_storage

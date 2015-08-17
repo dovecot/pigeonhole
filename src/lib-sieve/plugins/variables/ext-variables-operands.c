@@ -52,6 +52,8 @@ void sieve_variables_opr_variable_emit
 (struct sieve_binary_block *sblock, const struct sieve_extension *var_ext,
 	struct sieve_variable *var)
 {
+	i_assert( sieve_extension_is(var_ext, variables_extension) );
+
 	if ( var->ext == NULL ) {
 		/* Default variable storage */
 		(void) sieve_operand_emit(sblock, var_ext, &variable_operand);
@@ -222,6 +224,7 @@ void sieve_variables_opr_match_value_emit
 (struct sieve_binary_block *sblock, const struct sieve_extension *var_ext,
 	unsigned int index)
 {
+	i_assert( sieve_extension_is(var_ext, variables_extension) );
 	(void) sieve_operand_emit(sblock, var_ext, &match_value_operand);
 	(void) sieve_binary_emit_unsigned(sblock, index);
 }
