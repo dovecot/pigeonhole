@@ -1,0 +1,19 @@
+require "vnd.dovecot.testsuite";
+require "environment";
+require "vnd.dovecot.environment";
+require "variables";
+require "relational";
+
+test "default_mailbox" {
+	if not string "${env.vnd.dovecot.default_mailbox}" "INBOX" {
+		test_fail "The env.vnd.dovecot.default_mailbox variable returned invalid value: `${env.vnd.dovecot.default_mailbox}'";
+	}
+}
+
+test "username" {
+	set :length "userlen" "${env.vnd.dovecot.username}";
+	if not string :value "ge" "${userlen}" "1" {
+		test_fail "The env.vnd.dovecot.username variable is empty or does not exist";
+	}
+}
+

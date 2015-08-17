@@ -1,0 +1,19 @@
+require "vnd.dovecot.testsuite";
+require "environment";
+require "vnd.dovecot.environment";
+require "variables";
+
+test "default-mailbox" {
+	if not environment :is "vnd.dovecot.default-mailbox" "INBOX" {
+		if environment :matches "vnd.dovecot.default-mailbox" "*" { set "env" "${1}"; }
+
+		test_fail "vnd.dovecot.default-mailbox environment returned invalid value(1): `${env}'";
+	}
+}
+
+test "username" {
+	if not environment :contains "vnd.dovecot.username" "" {
+		test_fail "vnd.dovecot.username environment does not exist";
+	}
+}
+
