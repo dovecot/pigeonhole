@@ -159,7 +159,6 @@ static int cmd_xclient
 (struct managesieve_client *client,
 	const struct managesieve_arg *args)
 {
-	unsigned int remote_port;
 	const char *arg;
 	bool args_ok = TRUE;
 
@@ -174,11 +173,8 @@ static int cmd_xclient
 			if (net_addr2ip(arg + 5, &client->common.ip) < 0)
 				args_ok = FALSE;
 		} else if ( strncasecmp(arg, "PORT=", 5) == 0 ) {
-			if (str_to_uint(arg + 5, &remote_port) < 0 ||
-			    remote_port == 0 || remote_port > 65535)
+			if (net_str2port(arg + 5, &client->common.remote_port) < 0)
 				args_ok = FALSE;
-			else
-				client->common.remote_port = remote_port;
 		} else if ( strncasecmp(arg, "SESSION=", 8) == 0 ) {
 			const char *value = arg + 8;
 
