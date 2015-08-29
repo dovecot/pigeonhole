@@ -6,13 +6,9 @@
 
 #include "sieve-common.h"
 #include "sieve-extensions.h"
+#include "sieve-interpreter.h"
 
 #include "ext-environment-common.h"
-
-struct ext_environment_context {
-	HASH_TABLE(const char *,
-		   const struct sieve_environment_item *) environment_items;
-};
 
 /*
  * Core environment items
@@ -30,71 +26,121 @@ static const struct sieve_environment_item *core_env_items[] = {
 static unsigned int core_env_items_count = N_ELEMENTS(core_env_items);
 
 /*
- * Registration
+ * Validator context
  */
 
-static void ext_environment_item_register
-(struct ext_environment_context *ectx,
-	const struct sieve_environment_item *item)
+struct ext_environment_interpreter_context {
+	HASH_TABLE(const char *,
+		   const struct sieve_environment_item *) environment_items;
+
+	unsigned int active:1;
+};
+
+static void ext_environment_interpreter_extension_free
+	(const struct sieve_extension *ext, struct sieve_interpreter *interp,
+		void *context);
+
+struct sieve_interpreter_extension environment_interpreter_extension = {
+	.ext_def = &environment_extension,
+	.free = ext_environment_interpreter_extension_free,
+};
+
+static struct ext_environment_interpreter_context *
+ext_environment_interpreter_context_create
+(const struct sieve_extension *this_ext, struct sieve_interpreter *interp)
 {
-	hash_table_insert(ectx->environment_items, item->name, item);
+	pool_t pool = sieve_interpreter_pool(interp);
+	struct ext_environment_interpreter_context *ctx;
+
+	ctx = p_new(pool, struct ext_environment_interpreter_context, 1);
+
+	hash_table_create
+		(&ctx->environment_items, default_pool, 0, str_hash, strcmp);
+
+	sieve_interpreter_extension_register
+		(interp, this_ext, &environment_interpreter_extension, (void *)ctx);
+	return ctx;
 }
 
-void sieve_ext_environment_item_register
-(const struct sieve_extension *ext, const struct sieve_environment_item *item)
+static void ext_environment_interpreter_extension_free
+(const struct sieve_extension *ext ATTR_UNUSED,
+	struct sieve_interpreter *interp ATTR_UNUSED, 	void *context)
 {
-	struct ext_environment_context *ectx =
-		(struct ext_environment_context *) ext->context;
+	struct ext_environment_interpreter_context *ctx =
+		(struct ext_environment_interpreter_context *)context;
 
-	ext_environment_item_register(ectx, item);
+	hash_table_destroy(&ctx->environment_items);
+}
+
+static struct ext_environment_interpreter_context *
+ext_environment_interpreter_context_get
+(const struct sieve_extension *this_ext, struct sieve_interpreter *interp)
+{
+	struct ext_environment_interpreter_context *ctx =
+		(struct ext_environment_interpreter_context *)
+		sieve_interpreter_extension_get_context(interp, this_ext);
+
+	if ( ctx == NULL )
+		ctx = ext_environment_interpreter_context_create(this_ext, interp);
+
+	return ctx;
+}
+
+void ext_environment_interpreter_init
+(const struct sieve_extension *this_ext, struct sieve_interpreter *interp)
+{
+	struct ext_environment_interpreter_context *ctx;
+	unsigned int i;
+
+	/* Create our context */
+	ctx = ext_environment_interpreter_context_get(this_ext, interp);
+
+	for ( i = 0; i < core_env_items_count; i++ ) {
+		const struct sieve_environment_item *item = core_env_items[i];
+		hash_table_insert(ctx->environment_items, item->name, item);
+	}
+
+	ctx->active = TRUE;
+}
+
+bool sieve_ext_environment_is_active
+(const struct sieve_extension *env_ext, struct sieve_interpreter *interp)
+{
+	struct ext_environment_interpreter_context *ctx =
+		ext_environment_interpreter_context_get(env_ext, interp);
+
+	return ( ctx != NULL && ctx->active );
 }
 
 /*
- * Initialization
+ * Registration
  */
 
-bool ext_environment_init
-(const struct sieve_extension *ext ATTR_UNUSED, void **context)
+void sieve_environment_item_register
+(const struct sieve_extension *env_ext, struct sieve_interpreter *interp,
+	const struct sieve_environment_item *item)
 {
-	struct ext_environment_context *ectx =
-		i_new(struct ext_environment_context, 1);
+	struct ext_environment_interpreter_context *ctx;
 
-	unsigned int i;
-
-	hash_table_create
-		(&ectx->environment_items, default_pool, 0, str_hash, strcmp);
-
-	for ( i = 0; i < core_env_items_count; i++ ) {
-		ext_environment_item_register(ectx, core_env_items[i]);
-	}
-
-	*context = (void *) ectx;
-
-	return TRUE;
+	i_assert( sieve_extension_is(env_ext, environment_extension) );
+	ctx = ext_environment_interpreter_context_get(env_ext, interp);
+	hash_table_insert(ctx->environment_items, item->name, item);
 }
-
-void ext_environment_deinit(const struct sieve_extension *ext)
-{
-	struct ext_environment_context *ectx =
-		(struct ext_environment_context *) ext->context;
-
-	hash_table_destroy(&ectx->environment_items);
-	i_free(ectx);
-}
-
 
 /*
  * Retrieval
  */
 
 const char *ext_environment_item_get_value
-(const struct sieve_extension *ext, const char *name,
-	const struct sieve_script_env *senv)
+(const struct sieve_extension *env_ext,
+	const struct sieve_runtime_env *renv, const char *name)
 {
-	struct ext_environment_context *ectx =
-		(struct ext_environment_context *) ext->context;
+	struct ext_environment_interpreter_context *ctx =
+		ext_environment_interpreter_context_get(env_ext, renv->interp);
 	const struct sieve_environment_item *item =
-		hash_table_lookup(ectx->environment_items, name);
+		hash_table_lookup(ctx->environment_items, name);
+
+	i_assert( sieve_extension_is(env_ext, environment_extension) );
 
 	if ( item == NULL )
 		return NULL;
@@ -103,7 +149,7 @@ const char *ext_environment_item_get_value
 		return item->value;
 
 	if ( item->get_value != NULL )
-		return item->get_value(ext->svinst, senv);
+		return item->get_value(renv);
 
 	return NULL;
 }
@@ -119,10 +165,9 @@ const char *ext_environment_item_get_value
  */
 
 static const char *envit_domain_get_value
-(struct sieve_instance *svinst,
-	const struct sieve_script_env *senv ATTR_UNUSED)
+(const struct sieve_runtime_env *renv)
 {
-	return svinst->domainname;
+	return renv->svinst->domainname;
 }
 
 const struct sieve_environment_item domain_env_item = {
@@ -137,10 +182,9 @@ const struct sieve_environment_item domain_env_item = {
  */
 
 static const char *envit_host_get_value
-(struct sieve_instance *svinst,
-	const struct sieve_script_env *senv ATTR_UNUSED)
+(const struct sieve_runtime_env *renv)
 {
-	return svinst->hostname;
+	return renv->svinst->hostname;
 }
 
 const struct sieve_environment_item host_env_item = {
@@ -160,10 +204,9 @@ const struct sieve_environment_item host_env_item = {
  */
 
 static const char *envit_location_get_value
-(struct sieve_instance *svinst,
-	const struct sieve_script_env *senv ATTR_UNUSED)
+(const struct sieve_runtime_env *renv)
 {
-	switch ( svinst->env_location ) {
+	switch ( renv->svinst->env_location ) {
 	case SIEVE_ENV_LOCATION_MDA:
 		return "MDA";
 	case SIEVE_ENV_LOCATION_MTA:
@@ -190,10 +233,9 @@ const struct sieve_environment_item location_env_item = {
  */
 
 static const char *envit_phase_get_value
-(struct sieve_instance *svinst,
-	const struct sieve_script_env *senv ATTR_UNUSED)
+(const struct sieve_runtime_env *renv)
 {
-	switch ( svinst->delivery_phase ) {
+	switch ( renv->svinst->delivery_phase ) {
 	case SIEVE_DELIVERY_PHASE_PRE:
 		return "pre";
 	case SIEVE_DELIVERY_PHASE_DURING:

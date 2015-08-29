@@ -800,12 +800,17 @@ int sieve_opr_stringlist_read_data
 			return SIEVE_EXEC_FAILURE;
 		}
 
-		if ( (ret=intf->read(renv, oprnd, address, NULL)) <= 0 )
-			return ret;
+		if ( strlist_r == NULL ) {
+			if ( (ret=intf->read(renv, oprnd, address, NULL)) <= 0 )
+				return ret;
+		} else {
+			string_t *stritem;
+			if ( (ret=intf->read(renv, oprnd, address, &stritem)) <= 0 )
+				return ret;
 
-		if ( strlist_r != NULL )
-			*strlist_r = sieve_code_stringlist_create
-				(renv, oprnd->address, 1, *address);
+			*strlist_r = sieve_single_stringlist_create
+				(renv, stritem, FALSE);
+		}
 		return SIEVE_EXEC_OK;
 	}
 

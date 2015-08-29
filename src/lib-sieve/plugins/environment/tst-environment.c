@@ -188,7 +188,7 @@ static int tst_environment_operation_execute
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "environment test");
 
 	env_item = ext_environment_item_get_value
-		(this_ext, str_c(name), renv->scriptenv);
+		(this_ext, renv, str_c(name));
 
 	if ( env_item != NULL ) {
 		/* Construct value list */

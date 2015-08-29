@@ -1,2 +1,2 @@
-SUBDIRS = debug
+SUBDIRS = debug environment
 

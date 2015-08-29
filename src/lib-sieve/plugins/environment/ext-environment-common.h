@@ -47,11 +47,10 @@ bool ext_environment_init(const struct sieve_extension *ext, void **context);
 void ext_environment_deinit(const struct sieve_extension *ext);
 
 /*
- * Environment item retrieval
+ * Validator context
  */
 
-const char *ext_environment_item_get_value
-	(const struct sieve_extension *ext, const char *name,
-		const struct sieve_script_env *senv);
+void ext_environment_interpreter_init
+(const struct sieve_extension *this_ext, struct sieve_interpreter *interp);
 
 #endif /* __EXT_VARIABLES_COMMON_H */

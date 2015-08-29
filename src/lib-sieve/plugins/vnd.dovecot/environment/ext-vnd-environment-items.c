@@ -1,0 +1,66 @@
+/* Copyright (c) 2002-2015 Pigeonhole authors, see the included COPYING file
+ */
+
+#include "lib.h"
+#include "array.h"
+
+#include "sieve-extensions.h"
+#include "sieve-commands.h"
+#include "sieve-comparators.h"
+#include "sieve-match-types.h"
+#include "sieve-address-parts.h"
+
+#include "sieve-validator.h"
+#include "sieve-generator.h"
+#include "sieve-binary.h"
+#include "sieve-interpreter.h"
+#include "sieve-dump.h"
+
+#include "ext-vnd-environment-common.h"
+
+/*
+ * Environment items
+ */
+
+/* default_mailbox */
+
+static const char *envit_default_mailbox_get_value
+(const struct sieve_runtime_env *renv)
+{
+	i_assert(renv->scriptenv->default_mailbox != NULL);
+	return renv->scriptenv->default_mailbox;
+}
+
+const struct sieve_environment_item default_mailbox_env_item = {
+	.name = "vnd.dovecot.default-mailbox",
+	.get_value = envit_default_mailbox_get_value
+};
+
+/* username */
+
+static const char *envit_username_get_value
+(const struct sieve_runtime_env *renv)
+{
+	return renv->svinst->username;
+}
+
+const struct sieve_environment_item username_env_item = {
+	.name = "vnd.dovecot.username",
+	.get_value = envit_username_get_value
+};
+
+/*
+ * Register
+ */
+
+void ext_vnd_environment_items_register
+(const struct sieve_extension *ext, const struct sieve_runtime_env *renv)
+{
+	struct ext_vnd_environment_context *ectx =
+		(struct ext_vnd_environment_context *) ext->context;
+
+	sieve_environment_item_register
+		(ectx->env_ext, renv->interp, &default_mailbox_env_item);
+	sieve_environment_item_register
+		(ectx->env_ext, renv->interp, &username_env_item);
+}
