@@ -38,60 +38,18 @@ static const char *t_str_trim(const char *str)
  * Access to settings
  */
 
-static bool sieve_setting_parse_uint
-(struct sieve_instance *svinst, const char *setting, const char *str_value,
-	char **endptr, unsigned long long int *value_r)
-{
-	if ( (*value_r = strtoull(str_value, endptr, 10)) == ULLONG_MAX
-		&& errno == ERANGE ) {
-		sieve_sys_warning(svinst,
-			"overflowing unsigned integer value for setting '%s': '%s'",
-			setting, str_value);
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-static bool sieve_setting_parse_int
-(struct sieve_instance *svinst, const char *setting, const char *str_value,
-	char **endptr, long long int *value_r)
-{
-	*value_r = strtoll(str_value, endptr, 10);
-
-	if ( *value_r == LLONG_MIN && errno == ERANGE ) {
-		sieve_sys_warning(svinst,
-			"underflowing integer value for setting '%s': '%s'",
-			setting, str_value);
-		return FALSE;
-	}
-
-	if ( *value_r == LLONG_MAX && errno == ERANGE ) {
-		sieve_sys_warning(svinst,
-			"overflowing integer value for setting '%s': '%s'",
-			setting, str_value);
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
 bool sieve_setting_get_uint_value
 (struct sieve_instance *svinst, const char *setting,
 	unsigned long long int *value_r)
 {
 	const char *str_value;
-	char *endp;
 
 	str_value = sieve_setting_get(svinst, setting);
 
 	if ( str_value == NULL || *str_value == '\0' )
 		return FALSE;
 
-	if ( !sieve_setting_parse_uint(svinst, setting, str_value, &endp, value_r) )
-		return FALSE;
-
-	if ( *endp != '\0' ) {
+	if ( str_to_ullong(str_value, value_r) < 0 ) {
 		sieve_sys_warning(svinst,
 			"invalid unsigned integer value for setting '%s': '%s'",
 			setting, str_value);
@@ -106,20 +64,16 @@ bool sieve_setting_get_int_value
 	long long int *value_r)
 {
 	const char *str_value;
-	char *endp;
 
 	str_value = sieve_setting_get(svinst, setting);
 
 	if ( str_value == NULL || *str_value == '\0' )
 		return FALSE;
 
-	if ( !sieve_setting_parse_int(svinst, setting, str_value, &endp, value_r) )
-		return FALSE;
-
-	if ( *endp != '\0' ) {
-		sieve_sys_warning(svinst, "invalid integer value for setting '%s': '%s'",
+	if ( str_to_llong(str_value, value_r) < 0 ) {
+		sieve_sys_warning(svinst,
+			"invalid integer value for setting '%s': '%s'",
 			setting, str_value);
-
 		return FALSE;
 	}
 
@@ -131,17 +85,20 @@ bool sieve_setting_get_size_value
 	size_t *value_r)
 {
 	const char *str_value;
-	unsigned long long int value, multiply = 1;
-	char *endp;
+	uintmax_t value, multiply = 1;
+	const char *endp;
 
 	str_value = sieve_setting_get(svinst, setting);
 
 	if ( str_value == NULL || *str_value == '\0' )
 		return FALSE;
 
-	if ( !sieve_setting_parse_uint(svinst, setting, str_value, &endp, &value) )
+	if ( str_parse_uintmax(str_value, &value, &endp) < 0 ) {
+		sieve_sys_warning(svinst,
+			"invalid size value for setting '%s': '%s'",
+			setting, str_value);
 		return FALSE;
-
+	}
 	switch (i_toupper(*endp)) {
 	case '\0': /* default */
 	case 'B': /* byte (useless) */
@@ -174,7 +131,6 @@ bool sieve_setting_get_size_value
 	}
 
 	*value_r = (size_t) (value * multiply);
-
 	return TRUE;
 }
 
@@ -202,7 +158,8 @@ bool sieve_setting_get_bool_value
 		return TRUE;
 	}
 
-	sieve_sys_warning(svinst, "invalid boolean value for setting '%s': '%s'",
+	sieve_sys_warning(svinst,
+		"invalid boolean value for setting '%s': '%s'",
 		setting, str_value);
 	return FALSE;
 }
@@ -212,8 +169,8 @@ bool sieve_setting_get_duration_value
 	sieve_number_t *value_r)
 {
 	const char *str_value;
-	unsigned long long int value, multiply = 1;
-	char *endp;
+	uintmax_t value, multiply = 1;
+	const char *endp;
 
 	str_value = sieve_setting_get(svinst, setting);
 	if ( str_value == NULL )
@@ -223,9 +180,12 @@ bool sieve_setting_get_duration_value
 	if ( *str_value == '\0' )
 		return FALSE;
 
-	if ( !sieve_setting_parse_uint(svinst, setting, str_value, &endp, &value) )
+	if ( str_parse_uintmax(str_value, &value, &endp) < 0 ) {
+		sieve_sys_warning(svinst,
+			"invalid duration value for setting '%s': '%s'",
+			setting, str_value);
 		return FALSE;
-
+	}
 	switch (i_tolower(*endp)) {
 	case '\0': /* default */
 	case 's': /* seconds */
@@ -255,7 +215,6 @@ bool sieve_setting_get_duration_value
 	}
 
 	*value_r = (unsigned int) (value * multiply);
-
 	return TRUE;
 }
 
