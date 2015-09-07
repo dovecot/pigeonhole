@@ -9,6 +9,7 @@
 #include "net.h"
 #include "istream.h"
 #include "ostream.h"
+#include "iostream.h"
 #include "var-expand.h"
 #include "master-service.h"
 #include "mail-storage-service.h"
@@ -211,19 +212,6 @@ static const char *client_stats(struct client *client)
 	return str_c(str);
 }
 
-static const char *client_get_disconnect_reason(struct client *client)
-{
-	errno = client->input->stream_errno != 0 ?
-		client->input->stream_errno :
-		client->output->stream_errno;
-	if (errno == 0 || errno == EPIPE)
-		return "Connection closed";
-	return t_strdup_printf("Connection closed: %s",
-			       client->input->stream_errno != 0 ?
-			       i_stream_get_error(client->input) :
-			       o_stream_get_error(client->output));
-}
-
 void client_destroy(struct client *client, const char *reason)
 {
 	int ret;
@@ -234,8 +222,10 @@ void client_destroy(struct client *client, const char *reason)
 
 	if (!client->disconnected) {
 		client->disconnected = TRUE;
-		if (reason == NULL)
-			reason = client_get_disconnect_reason(client);
+		if (reason == NULL) {
+			reason = io_stream_get_disconnect_reason(client->input,
+								 client->output);
+		}
 		i_info("%s %s", reason, client_stats(client));
 	}
 
