@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "ostream.h"
 #include "istream.h"
+#include "iostream.h"
 
 #include "sieve-script.h"
 #include "sieve-storage.h"
@@ -64,7 +65,9 @@ static bool cmd_getscript_continue(struct client_command_context *cmd)
 				sieve_script_location(ctx->script),
 				i_stream_get_error(ctx->script_stream));
 		} else {
-			client_disconnect(ctx->client, NULL);
+			client_disconnect(ctx->client,
+				io_stream_get_disconnect_reason
+					(client->input, client->output));
 		}
 		ctx->failed = TRUE;
 		return cmd_getscript_finish(ctx);
