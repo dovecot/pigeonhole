@@ -11,6 +11,6 @@ libsieve_ext_vnd_environment_la_SOURCES = \
 	ext-vnd-environment-items.c \
 	ext-vnd-environment-variables.c
 
-noinst_HEADERS =
+noinst_HEADERS = \
 	ext-vnd-environment-common.h
 
