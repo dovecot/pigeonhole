@@ -7,7 +7,6 @@
 #include "managesieve-common.h"
 #include "managesieve-commands.h"
 
-#include <stdlib.h>
 
 /* Might want to combine this somewhere in a commands-common.c
  * to avoid duplicate code

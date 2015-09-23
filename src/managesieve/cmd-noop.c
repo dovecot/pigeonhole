@@ -9,7 +9,6 @@
 #include "managesieve-common.h"
 #include "managesieve-commands.h"
 
-#include <stdlib.h>
 
 bool cmd_noop(struct client_command_context *cmd)
 {

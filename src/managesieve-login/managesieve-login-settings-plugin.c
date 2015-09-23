@@ -16,7 +16,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sysexits.h>
-#include <stdlib.h>
 
 typedef enum { CAP_SIEVE, CAP_NOTIFY } capability_type_t;
 

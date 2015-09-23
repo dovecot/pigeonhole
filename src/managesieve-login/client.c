@@ -23,7 +23,6 @@
 #include "managesieve-login-settings.h"
 #include "managesieve-proxy.h"
 
-#include <stdlib.h>
 
 /* Disconnect client when it sends too many bad commands */
 #define CLIENT_MAX_BAD_COMMANDS 3

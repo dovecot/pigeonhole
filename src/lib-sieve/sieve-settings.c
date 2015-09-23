@@ -8,7 +8,6 @@
 #include "sieve-error.h"
 #include "sieve-settings.h"
 
-#include <stdlib.h>
 #include <ctype.h>
 
 // FIXME: add to dovecot

@@ -23,7 +23,6 @@
 #include "ext-include-binary.h"
 #include "ext-include-variables.h"
 
-#include <stdlib.h>
 
 /*
  * Forward declarations

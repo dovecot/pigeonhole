@@ -33,7 +33,6 @@
 #include "testsuite-result.h"
 #include "testsuite-smtp.h"
 
-#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>

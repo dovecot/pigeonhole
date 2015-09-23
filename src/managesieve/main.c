@@ -24,7 +24,6 @@
 #include "managesieve-capabilities.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 #define IS_STANDALONE() \

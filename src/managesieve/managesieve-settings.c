@@ -12,7 +12,6 @@
 #include "managesieve-settings.h"
 
 #include <stddef.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 static bool managesieve_settings_verify(void *_set, pool_t pool,

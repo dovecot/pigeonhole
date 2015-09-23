@@ -19,7 +19,6 @@
 #include "client-authenticate.h"
 #include "managesieve-proxy.h"
 
-#include <stdlib.h>
 
 const char *client_authenticate_get_capabilities
 (struct client *client)

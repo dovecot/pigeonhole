@@ -20,7 +20,6 @@
 #include "lda-sieve-log.h"
 #include "lda-sieve-plugin.h"
 
-#include <stdlib.h>
 #include <sys/stat.h>
 #include <dirent.h>
 

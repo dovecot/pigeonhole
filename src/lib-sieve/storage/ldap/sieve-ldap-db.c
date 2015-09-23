@@ -24,7 +24,6 @@
 #include "istream.h"
 
 #include <stddef.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 struct db_ldap_result {

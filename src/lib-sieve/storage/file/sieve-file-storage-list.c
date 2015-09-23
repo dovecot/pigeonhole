@@ -10,7 +10,6 @@
 #include "sieve-file-storage.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <dirent.h>
 
 struct sieve_file_list_context {

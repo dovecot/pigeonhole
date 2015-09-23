@@ -23,7 +23,6 @@
 #include "sieve-generator.h"
 #include "sieve-interpreter.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 /*

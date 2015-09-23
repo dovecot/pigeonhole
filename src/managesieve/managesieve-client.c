@@ -23,7 +23,6 @@
 #include "managesieve-commands.h"
 #include "managesieve-client.h"
 
-#include <stdlib.h>
 #include <unistd.h>
 
 extern struct mail_storage_callbacks mail_storage_callbacks;
