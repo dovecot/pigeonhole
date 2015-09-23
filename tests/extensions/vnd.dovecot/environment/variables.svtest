@@ -1,5 +1,4 @@
 require "vnd.dovecot.testsuite";
-require "environment";
 require "vnd.dovecot.environment";
 require "variables";
 require "relational";

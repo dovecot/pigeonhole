@@ -62,7 +62,7 @@ static bool ext_vnd_environment_load
 		ext_vnd_environment_unload(ext);
 
 	ectx = i_new(struct ext_vnd_environment_context, 1);
-	ectx->env_ext = sieve_ext_environment_get_extension(ext->svinst);
+	ectx->env_ext = sieve_ext_environment_require_extension(ext->svinst);
 	ectx->var_ext = sieve_ext_variables_get_extension(ext->svinst);
 	*context = (void *) ectx;
 
@@ -85,6 +85,15 @@ static void ext_vnd_environment_unload
 static bool ext_vnd_environment_validator_load
 (const struct sieve_extension *ext, struct sieve_validator *valdtr)
 {
+	const struct sieve_extension *env_ext;
+
+	/* Load environment extension implicitly */
+
+	env_ext = sieve_validator_extension_load_implicit
+		(valdtr, environment_extension.name);
+	if ( env_ext == NULL )
+		return FALSE;
+
 	ext_environment_variables_init(ext, valdtr);
 	return TRUE;
 }
