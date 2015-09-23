@@ -10,12 +10,19 @@
  * Extension configuration
  */
 
+enum sieve_extprograms_eol {
+	SIEVE_EXTPROGRAMS_EOL_CRLF = 0,
+	SIEVE_EXTPROGRAMS_EOL_LF
+};
+
 struct sieve_extprograms_config {
 	const struct sieve_extension *copy_ext;
 	const struct sieve_extension *var_ext;
 
 	char *socket_dir;
 	char *bin_dir;
+
+	enum sieve_extprograms_eol default_input_eol;
 
 	unsigned int execute_timeout;
 };

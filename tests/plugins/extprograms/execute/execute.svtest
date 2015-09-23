@@ -4,6 +4,7 @@ require "vnd.dovecot.debug";
 require "variables";
 require "relational";
 require "environment";
+require "encoded-character";
 
 test_set "message" text:
 From: stephan@example.com
@@ -115,4 +116,34 @@ test "Execute - used as test" {
 	}
 }
 	
-	
+test_config_set "sieve_execute_input_eol" "crlf";
+test_config_reload :extension "vnd.dovecot.execute";
+test_result_reset;
+set "out" "";
+
+test "Execute - CRLF" {
+	execute
+		:input "FROP${hex:0A}FRIEP${hex:0a}"
+		:output "out"
+		"crlf";
+
+	if not string "${out}" "FROP#${hex:0A}FRIEP#${hex:0a}" {
+		test_fail "wrong string returned: '${out}'";
+	}
+}
+
+test_config_set "sieve_execute_input_eol" "lf";
+test_config_reload :extension "vnd.dovecot.execute";
+test_result_reset;
+set "out" "";
+
+test "Execute - LF" {
+	execute
+		:input "FROP${hex:0D 0A}FRIEP${hex:0d 0a}"
+		:output "out"
+		"crlf";
+
+	if not string "${out}" "FROP${hex:0A}FRIEP${hex:0a}" {
+		test_fail "wrong string returned: '${out}'";
+	}
+}

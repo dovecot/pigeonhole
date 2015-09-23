@@ -62,7 +62,7 @@ struct sieve_extprograms_config *sieve_extprograms_config_init
 	struct sieve_instance *svinst = ext->svinst;
 	struct sieve_extprograms_config *ext_config;
 	const char *extname = sieve_extension_name(ext);
-	const char *bin_dir, *socket_dir;
+	const char *bin_dir, *socket_dir, *input_eol;
 	sieve_number_t execute_timeout;
 
 	extname = strrchr(extname, '.');
@@ -73,6 +73,8 @@ struct sieve_extprograms_config *sieve_extprograms_config_init
 		(svinst, t_strdup_printf("sieve_%s_bin_dir", extname));
 	socket_dir = sieve_setting_get
 		(svinst, t_strdup_printf("sieve_%s_socket_dir", extname));
+	input_eol = sieve_setting_get
+		(svinst, t_strdup_printf("sieve_%s_input_eol", extname));
 	
 	ext_config = i_new(struct sieve_extprograms_config, 1);
 	ext_config->execute_timeout = 
@@ -94,6 +96,10 @@ struct sieve_extprograms_config *sieve_extprograms_config_init
 				&execute_timeout)) {
 			ext_config->execute_timeout = execute_timeout;
 		}
+
+		ext_config->default_input_eol = SIEVE_EXTPROGRAMS_EOL_CRLF;
+		if (input_eol != NULL && strcasecmp(input_eol, "lf") == 0)
+			ext_config->default_input_eol = SIEVE_EXTPROGRAMS_EOL_LF;
 	}
 
 	if ( sieve_extension_is(ext, vnd_pipe_extension) ) 
@@ -366,6 +372,8 @@ int sieve_extprogram_command_read_operands
 
 struct sieve_extprogram {
 	struct sieve_instance *svinst;
+	const struct sieve_extprograms_config *ext_config;
+
 	const struct sieve_script_env *scriptenv;
 	struct program_client_settings set;
 	struct program_client *program_client;
@@ -515,6 +523,7 @@ struct sieve_extprogram *sieve_extprogram_create
 
 	sprog = i_new(struct sieve_extprogram, 1);
 	sprog->svinst = ext->svinst;
+	sprog->ext_config = ext_config;
 	sprog->scriptenv = senv;
 
 	sprog->set.client_connect_timeout_msecs =
@@ -574,7 +583,20 @@ void sieve_extprogram_set_output
 void sieve_extprogram_set_input
 (struct sieve_extprogram *sprog, struct istream *input)
 {
+	switch (sprog->ext_config->default_input_eol) {
+	case SIEVE_EXTPROGRAMS_EOL_LF:
+		input = i_stream_create_lf(input);
+		break;
+	case SIEVE_EXTPROGRAMS_EOL_CRLF:
+		input = i_stream_create_crlf(input);
+		break;
+	default:
+		i_unreached();
+	}
+
 	program_client_set_input(sprog->program_client, input);
+
+	i_stream_unref(&input);
 }
 
 void sieve_extprogram_set_output_seekable
@@ -601,12 +623,7 @@ int sieve_extprogram_set_input_mail
 	if (mail_get_stream(mail, NULL, NULL, &input) < 0)
 		return -1;
 
-	/* Make sure the message contains CRLF consistently */
-	input = i_stream_create_crlf(input);
-
-	program_client_set_input(sprog->program_client, input);
-	i_stream_unref(&input);
-
+	sieve_extprogram_set_input(sprog, input);
 	return 1;
 }
 
