@@ -1,0 +1,224 @@
+
+
+
+Pigeonhole Project                                              S. Bosch
+                                                      September 23, 2015
+
+
+             Sieve Email Filtering: Logging Debug Messages
+
+Abstract
+
+   This document defines new vendor-defined items for the "environment"
+   extension of the Sieve mail filtering language.
+
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . . . 2
+   2.  Conventions Used in This Document . . . . . . . . . . . . . . . 2
+   3.  Dovecot Environment Items . . . . . . . . . . . . . . . . . . . 2
+   4.  Variables Namespace env . . . . . . . . . . . . . . . . . . . . 2
+   5.  Sieve Capability Strings  . . . . . . . . . . . . . . . . . . . 3
+   6.  Security Considerations . . . . . . . . . . . . . . . . . . . . 3
+   7.  Normative References  . . . . . . . . . . . . . . . . . . . . . 3
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . . . 4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Bosch                                                           [Page 1]
+
+                          Sieve: Debug Logging            September 2015
+
+
+1.  Introduction
+
+   This document describes an extension to the Sieve filtering language
+   defined by RFC 5228 [SIEVE].  This vendor-defined extension builds
+   upon the existing standard "environment" extension [ENVIRONMENT],
+   which allows Sieve scripts to access information about their
+   execution context, such as the name and version of the Sieve
+   interpreter implementation.  The new "vnd.dovecot.environment"
+   extension adds a few more environment items that can be accessed by
+   Sieve scripts.  Additionally, it makes the environment items
+   available directly as variables [VARIABLES].
+
+   This extension is specific to the Pigeonhole Sieve implementation for
+   the Dovecot Secure IMAP server.  It will therefore most likely not be
+   supported by web interfaces and GUI-based Sieve editors.
+
+
+2.  Conventions Used in This Document
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in [KEYWORDS].
+
+   Conventions for notations are as in [SIEVE] Section 1.1, including
+   use of the "Usage:" label for the definition of action and tagged
+   arguments syntax.
+
+
+3.  Dovecot Environment Items
+
+   The set of Dovecot-specific environment items is as follows:
+
+   "vnd.dovecot.default-mailbox"
+         The default mailbox that is used by the (implicit) keep action.
+         Normally, this will always yield "INBOX", unless this is
+         changed in the configuration.
+
+   "vnd.dovecot.username"
+         The username of the recipient for this particular message
+         delivery.
+
+
+4.  Variables Namespace env
+
+   This document defines the variables namespace "env", in accordance
+   with the "variables" extension document [VARIABLES], Section 3.  It
+   makes environment items directly available as variables.  Since
+   environment items are always read-only, variables in the "env"
+
+
+
+Bosch                                                           [Page 2]
+
+                          Sieve: Debug Logging            September 2015
+
+
+   namespace can never be modified.
+
+   Basically, the variable name for an environment item is composed of
+   the "env." namespace prefix followed by the full name of the
+   environment item.  This is also true when the environment item name
+   contains "." characters; those have no special meaning within the
+   "env" variables namespace.  However, since a variable name cannot
+   contain "-" characters, any "-" character in the name of the
+   environment item is mapped to an "_" character.  The environment item
+   called "vnd.dovecot.default-mailbox" is therefore available as the
+   variable "${env.vnd.dovecot.default_mailbox}".
+
+   Example:
+
+   require ["variables", "fileinto", "mailbox"];
+   require "vnd.dovecot.environment";
+
+   fileinto :create "User\${env.vnd.dovecot.username}";
+
+
+
+5.  Sieve Capability Strings
+
+   A Sieve implementation that supports the Dovecot-specific environment
+   items outlined in this document will advertise the capability string
+   "vnd.dovecot.environment".  Note that "vnd.dovecot.environment"
+   implies "environment", and a script with "vnd.dovecot.environment" in
+   a "require" list can omit "environment" from that list.
+
+
+6.  Security Considerations
+
+   All of the security considerations given in the base Sieve
+   specification [SIEVE] and the specification of the "environment"
+   extension [ENVIRONMENT] also apply to this extension.  Some of the
+   environment items added by this extension are somewhat more sensitive
+   than the standard ones, so enabling this extension should be
+   considered carefully.
+
+
+7.  Normative References
+
+   [ENVIRONMENT]
+              Freed, N., "Sieve Email Filtering: Environment Extension",
+              RFC 5183, DOI 10.17487/RFC5183, May 2008,
+              <http://www.rfc-editor.org/info/rfc5183>.
+
+   [KEYWORDS]
+
+
+
+Bosch                                                           [Page 3]
+
+                          Sieve: Debug Logging            September 2015
+
+
+              Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [SIEVE]    Guenther, P. and T. Showalter, "Sieve: An Email Filtering
+              Language", RFC 5228, January 2008.
+
+   [VARIABLES]
+              Homme, K., "Sieve Email Filtering: Variables Extension",
+              RFC 5229, January 2008.
+
+
+Author's Address
+
+   Stephan Bosch
+   Enschede
+   NL
+
+   Email: stephan@rename-it.nl
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Bosch                                                           [Page 4]
+

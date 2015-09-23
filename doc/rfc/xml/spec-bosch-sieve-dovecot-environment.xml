@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+
+<?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
+<!-- used by XSLT processors -->
+<?rfc strict="yes" ?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="4"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes" ?>
+<?rfc compact="yes" ?>
+<?rfc subcompact="no" ?>
+<?rfc private="Pigeonhole Project" ?>
+
+<rfc category="info" docName="spec-bosch-sieve-dovecot-environment">
+<!-- ***** FRONT MATTER ***** -->
+
+<front>
+<title abbrev="Sieve: Debug Logging">
+Sieve Email Filtering: Logging Debug Messages
+</title>
+
+<author fullname="Stephan Bosch" initials="S." surname="Bosch">
+  <organization/>
+  <address>
+    <postal>
+      <street></street>
+      <city>Enschede</city>
+      <country>NL</country>
+    </postal>
+    <email>stephan@rename-it.nl</email>
+  </address>
+</author>
+
+<date/>
+
+<area>General</area>
+<workgroup>Pigeonhole Project</workgroup>
+<keyword>sieve</keyword>
+<keyword>environment</keyword>
+<keyword>dovecot</keyword>
+
+<abstract>
+<t>
+This document defines new vendor-defined items for the "environment" extension
+of the Sieve mail filtering language.
+</t>
+</abstract>
+</front>
+
+<middle>
+
+<section title="Introduction">
+<t>This document describes an extension to the Sieve filtering language defined
+by <xref target="SIEVE">RFC 5228</xref>. This vendor-defined extension builds
+upon the existing standard "environment" extension <xref target="ENVIRONMENT"/>,
+which allows Sieve scripts to access information about their execution context,
+such as the name and version of the Sieve interpreter implementation. The new
+"vnd.dovecot.environment" extension adds a few more environment items that
+can be accessed by Sieve scripts. Additionally, it makes the environment
+items available directly as variables <xref target="VARIABLES"/>.</t>
+
+<t>This extension is specific to the Pigeonhole Sieve implementation for the
+Dovecot Secure IMAP server. It will therefore most likely not be supported by
+web interfaces and GUI-based Sieve editors.
+</t>
+</section>
+
+<section title="Conventions Used in This Document">
+<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+document are to be interpreted as described in <xref target="KEYWORDS"/>.</t>
+<t>Conventions for notations are as in <xref target="SIEVE"/> Section 1.1,
+including use of the "Usage:" label for the definition of action and tagged
+arguments syntax.</t>
+</section>
+
+<section title="Dovecot Environment Items">
+
+<t>
+The set of Dovecot-specific environment items is as follows:
+<list style="hanging" hangIndent="6">
+<t hangText="&quot;vnd.dovecot.default-mailbox&quot;">
+<vspace />
+The default mailbox that is used by the (implicit) keep action.
+Normally, this will always yield "INBOX", unless this is changed in the
+configuration.</t>
+<t hangText="&quot;vnd.dovecot.username&quot;">
+<vspace />
+The username of the recipient for this particular message delivery.</t>
+</list>
+</t>
+</section>
+
+<section title="Variables Namespace env"> 
+
+<t>This document defines the variables namespace "env", in accordance with
+the "variables" extension document <xref target="VARIABLES"/>, Section 3. 
+It makes environment items directly available as variables. Since environment
+items are always read-only, variables in the "env" namespace can never be
+modified.</t>
+
+<t>Basically, the variable name for an environment item is composed of the
+"env." namespace prefix followed by the full name of the environment item. This
+is also true when the environment item name contains "." characters; those have
+no special meaning within the "env" variables namespace. However, since a
+variable name cannot contain "-" characters, any "-" character in the name of
+the environment item is mapped to an "_" character. The environment item called
+"vnd.dovecot.default-mailbox" is therefore available as the variable
+"${env.vnd.dovecot.default_mailbox}".</t>
+
+<t>Example:</t>
+<?rfc needLines="3" ?>
+<figure>
+<artwork><![CDATA[
+require ["variables", "fileinto", "mailbox"];
+require "vnd.dovecot.environment";
+
+fileinto :create "User\${env.vnd.dovecot.username}";
+
+]]></artwork>
+</figure>
+</section>
+
+<section title="Sieve Capability Strings">
+<t>A Sieve implementation that supports the Dovecot-specific environment items
+outlined in this document will advertise the capability string
+"vnd.dovecot.environment". Note that "vnd.dovecot.environment" implies
+"environment", and a script with "vnd.dovecot.environment" in a "require" list
+can omit "environment" from that list.</t>
+</section>
+
+<section anchor="Security" title="Security Considerations">
+<t>All of the security considerations given in the base Sieve specification
+<xref target="SIEVE"/> and the specification of the "environment" extension
+<xref target="ENVIRONMENT"/> also apply to this extension. Some of the
+environment items added by this extension are somewhat more sensitive than the
+standard ones, so enabling this extension should be considered carefully.</t>
+</section>
+</middle>
+
+<!--  *****BACK MATTER ***** -->
+
+<back>
+<!-- References split into informative and normative -->
+
+<references title="Normative References">
+  <?rfc include="reference.KEYWORDS.xml"?>
+  <?rfc include="reference.SIEVE.xml"?>
+  <?rfc include="reference.ENVIRONMENT.xml"?>
+  <?rfc include="reference.VARIABLES.xml"?>
+</references>
+
+<!--<references title="Informative References">
+  
+</references> -->
+</back>
+
+</rfc>
