@@ -5,7 +5,8 @@
  * ---------------------------------
  *
  * Authors: Stephan Bosch
- * Specification: vendor-defined
+ * Specification: vendor-defined;
+ *   spec-bosch-sieve-dovecot-environment
  * Implementation: preliminary
  * Status: experimental
  *
