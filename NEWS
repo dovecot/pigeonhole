@@ -1,3 +1,30 @@
+v0.4.9 xx-10-2015 Stephan Bosch <stephan@rename-it.nl>
+
+	* Properly implemented checking of ABI version for Sieve interpreter plugins,
+	  much like Dovecot itself does for plugins. This will prevent plugin ABI
+	  mismatches. 
+	+ Implemented a vnd.dovecot.environment extension. This builds upon the
+	  standard environment extension and adds a few more environment items, such
+	  as username and default mailbox. It also creates a variables namespace so
+	  that environment items can be accessed directly. I am still thinking about
+	  more environment items that can be added.
+	+ Sieve extprograms plugin: Made line endings of the input passed to the
+	  external programs configurable. This can be configured separately for each
+	  of the three extensions.
+	+ ManageSieve: Implemented proxy XCLIENT support. This allows the proxy to
+	  pass client information to the back-end.
+	- ManageSieve: Fixed an assert failure occurring when a client disconnects
+	  during the GETSCRIPT command.
+	- doveadm sieve plugin: Fixed incorrect initialization of mail user. This
+	  caused a few memory leaks.
+	- sieve-filter command line tool: Fixed handling of failure-related implicit
+	  keep when there is an explicit default destination folder. This caused
+	  message duplication.
+	- lib-sieve: Fixed bug in RFC5322 header folding. Words longer than the
+	  optimal	line length caused empty lines in the output, which would break the
+	  resulting message header. This surfaced in References: headers with very
+	  long message IDs.
+
 v0.4.8 15-05-2015 Stephan Bosch <stephan@rename-it.nl>
 
 	* LDA Sieve plugin: Dovecot changed the deliver_log_format setting to include
