@@ -15,7 +15,7 @@ struct ext_vnd_environment_context {
 	const struct sieve_extension *var_ext;
 };
 
-const struct sieve_extension_def vnd_environment_extension;
+extern const struct sieve_extension_def vnd_environment_extension;
 
 /*
  * Operands
