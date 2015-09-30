@@ -378,7 +378,7 @@ int main(int argc, char **argv)
 				sbin = main_sbin;
 				main_sbin = NULL;
 
-				sieve_multiscript_run(mscript, sbin,
+				(void)sieve_multiscript_run(mscript, sbin,
 					ehandler, ehandler, 0, TRUE);
 			}
 
@@ -395,6 +395,7 @@ int main(int argc, char **argv)
 		case SIEVE_EXEC_BIN_CORRUPT:
 			i_info("corrupt binary deleted.");
 			(void) unlink(sieve_binary_path(sbin));
+			/* fall through */
 		case SIEVE_EXEC_FAILURE:
 			i_info("final result: failed; resolved with successful implicit keep");
 			exit_status = EXIT_FAILURE;
