@@ -163,7 +163,6 @@ static bool cmd_pipe_operation_dump
 	/* Dump optional operands */
 	for (;;) {
 		int opt;
-		bool opok = TRUE;
 
 		if ( (opt=sieve_action_opr_optional_dump(denv, address, &opt_code)) < 0 )
 			return FALSE;
@@ -177,8 +176,6 @@ static bool cmd_pipe_operation_dump
 		default:
 			return FALSE;
 		}
-
-		if ( !opok ) return FALSE;
 	}
 	
 	if ( !sieve_opr_string_dump(denv, address, "program-name") )
