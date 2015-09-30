@@ -298,6 +298,8 @@ static int sieve_file_storage_init_common
 	bool have_link = FALSE;
 	int ret;
 
+	i_assert( storage_path != NULL || active_path != NULL );
+
 	fstorage->prev_mtime = (time_t)-1;
 
 	/* Get active script path */

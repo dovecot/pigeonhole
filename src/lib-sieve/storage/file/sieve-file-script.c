@@ -354,13 +354,7 @@ static int sieve_file_script_open
 			if ( ret < 0 ) {
 				/* Make sure we have a script name for the error */
 				if ( name == NULL ) {
-					if ( basename == NULL ) {
-						if ( filename == NULL )
-							filename = path_split_filename(path, &dirpath);
-						basename = sieve_script_file_get_scriptname(filename);
-						if ( basename == NULL )
-							basename = filename;
-					}
+					i_assert( basename != NULL );
 					name = basename;
 				}
 				sieve_file_script_handle_error
