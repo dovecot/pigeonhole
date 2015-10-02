@@ -581,7 +581,7 @@ static int act_store_execute
 		mailbox_save_copy_flags(save_ctx, mail);
 	}
 
-	if ( mailbox_copy(&save_ctx, mail) < 0 ) {
+	if ( mailbox_save_using_mail(&save_ctx, mail) < 0 ) {
 		sieve_act_store_get_storage_error(aenv, trans);
 		status = ( trans->error_code == MAIL_ERROR_TEMP ?
 			SIEVE_EXEC_TEMP_FAILURE : SIEVE_EXEC_FAILURE );
