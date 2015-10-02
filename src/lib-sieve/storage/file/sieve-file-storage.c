@@ -377,6 +377,8 @@ static int sieve_file_storage_init_common
 		storage_path = active_path;
 	}
 
+	i_assert(storage_path != NULL);
+
 	/* Prepare for write access */
 
 	if ( (storage->flags & SIEVE_STORAGE_FLAG_READWRITE) != 0 ) {
