@@ -1,4 +1,4 @@
-v0.4.9 xx-10-2015 Stephan Bosch <stephan@rename-it.nl>
+v0.4.9 04-10-2015 Stephan Bosch <stephan@rename-it.nl>
 
 	* Properly implemented checking of ABI version for Sieve interpreter plugins,
 	  much like Dovecot itself does for plugins. This will prevent plugin ABI
@@ -21,7 +21,7 @@ v0.4.9 xx-10-2015 Stephan Bosch <stephan@rename-it.nl>
 	  keep when there is an explicit default destination folder. This caused
 	  message duplication.
 	- lib-sieve: Fixed bug in RFC5322 header folding. Words longer than the
-	  optimal	line length caused empty lines in the output, which would break the
+	  optimal line length caused empty lines in the output, which would break the
 	  resulting message header. This surfaced in References: headers with very
 	  long message IDs.
 
