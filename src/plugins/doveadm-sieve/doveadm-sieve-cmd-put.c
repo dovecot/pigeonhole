@@ -164,14 +164,14 @@ cmd_sieve_put_parse_arg(struct doveadm_mail_cmd_context *_ctx, int c)
 static struct doveadm_mail_cmd_context *
 cmd_sieve_put_alloc(void)
 {
-	struct doveadm_sieve_cmd_context *ctx;
+	struct doveadm_sieve_put_cmd_context *ctx;
 
-	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_cmd_context);
-	ctx->ctx.getopt_args = "a";
-	ctx->ctx.v.parse_arg = cmd_sieve_put_parse_arg;
-	ctx->ctx.v.init = cmd_sieve_put_init;
-	ctx->v.run = cmd_sieve_put_run;
-	return &ctx->ctx;
+	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_put_cmd_context);
+	ctx->ctx.ctx.getopt_args = "a";
+	ctx->ctx.ctx.v.parse_arg = cmd_sieve_put_parse_arg;
+	ctx->ctx.ctx.v.init = cmd_sieve_put_init;
+	ctx->ctx.v.run = cmd_sieve_put_run;
+	return &ctx->ctx.ctx;
 }
 
 struct doveadm_mail_cmd doveadm_sieve_cmd_put = {

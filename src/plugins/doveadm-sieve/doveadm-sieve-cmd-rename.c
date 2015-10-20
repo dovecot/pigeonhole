@@ -63,12 +63,12 @@ static void cmd_sieve_rename_init
 static struct doveadm_mail_cmd_context *
 cmd_sieve_rename_alloc(void)
 {
-	struct doveadm_sieve_cmd_context *ctx;
+	struct doveadm_sieve_rename_cmd_context *ctx;
 
-	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_cmd_context);
-	ctx->ctx.v.init = cmd_sieve_rename_init;
-	ctx->v.run = cmd_sieve_rename_run;
-	return &ctx->ctx;
+	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_rename_cmd_context);
+	ctx->ctx.ctx.v.init = cmd_sieve_rename_init;
+	ctx->ctx.v.run = cmd_sieve_rename_run;
+	return &ctx->ctx.ctx;
 }
 
 struct doveadm_mail_cmd doveadm_sieve_cmd_rename = {

@@ -107,12 +107,12 @@ static void cmd_sieve_activate_init
 static struct doveadm_mail_cmd_context *
 cmd_sieve_activate_alloc(void)
 {
-	struct doveadm_sieve_cmd_context *ctx;
+	struct doveadm_sieve_activate_cmd_context *ctx;
 
-	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_cmd_context);
-	ctx->ctx.v.init = cmd_sieve_activate_init;
-	ctx->v.run = cmd_sieve_activate_run;
-	return &ctx->ctx;
+	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_activate_cmd_context);
+	ctx->ctx.ctx.v.init = cmd_sieve_activate_init;
+	ctx->ctx.v.run = cmd_sieve_activate_run;
+	return &ctx->ctx.ctx;
 }
 
 static struct doveadm_mail_cmd_context *

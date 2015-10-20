@@ -26,6 +26,7 @@ cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 	struct istream *input;
 	enum sieve_error error;
 
+	return 0;
 	script = sieve_storage_open_script
 		(_ctx->storage, ctx->scriptname, &error);
 	if ( script == NULL || sieve_script_get_stream
@@ -60,13 +61,13 @@ static void cmd_sieve_get_init
 static struct doveadm_mail_cmd_context *
 cmd_sieve_get_alloc(void)
 {
-	struct doveadm_sieve_cmd_context *ctx;
+	struct doveadm_sieve_get_cmd_context *ctx;
 
-	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_cmd_context);
-	ctx->ctx.v.init = cmd_sieve_get_init;
-	ctx->v.run = cmd_sieve_get_run;
+	ctx = doveadm_sieve_cmd_alloc(struct doveadm_sieve_get_cmd_context);
+	ctx->ctx.ctx.v.init = cmd_sieve_get_init;
+	ctx->ctx.v.run = cmd_sieve_get_run;
 	doveadm_print_init("pager");
-	return &ctx->ctx;
+	return &ctx->ctx.ctx;
 }
 
 struct doveadm_mail_cmd doveadm_sieve_cmd_get = {
