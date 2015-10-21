@@ -21,11 +21,18 @@ typedef uint32_t sieve_number_t;
 
 #define SIEVE_MAX_NUMBER ((sieve_number_t) -1)
 
-enum sieve_redirect_envelope_from {
-	SIEVE_REDIRECT_ENVELOPE_FROM_SENDER,
-	SIEVE_REDIRECT_ENVELOPE_FROM_RECIPIENT,
-	SIEVE_REDIRECT_ENVELOPE_FROM_ORIG_RECIPIENT,
-	SIEVE_REDIRECT_ENVELOPE_FROM_EXPLICIT
+enum sieve_mail_sender_source {
+	SIEVE_MAIL_SENDER_SOURCE_DEFAULT = 0,
+	SIEVE_MAIL_SENDER_SOURCE_SENDER,
+	SIEVE_MAIL_SENDER_SOURCE_RECIPIENT,
+	SIEVE_MAIL_SENDER_SOURCE_ORIG_RECIPIENT,
+	SIEVE_MAIL_SENDER_SOURCE_POSTMASTER,
+	SIEVE_MAIL_SENDER_SOURCE_EXPLICIT
+};
+
+struct sieve_mail_sender {
+	enum sieve_mail_sender_source source;
+	const char *address;
 };
 
 /*
@@ -206,8 +213,7 @@ struct sieve_instance {
 	size_t max_script_size;
 	unsigned int max_actions;
 	unsigned int max_redirects;
-	enum sieve_redirect_envelope_from redirect_from;
-	const char *redirect_from_explicit;
+	struct sieve_mail_sender redirect_from;
 };
 
 #endif /* __SIEVE_COMMON_H */

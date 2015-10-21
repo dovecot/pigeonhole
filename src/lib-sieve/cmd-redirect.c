@@ -317,8 +317,8 @@ static int act_redirect_send
 	const struct sieve_script_env *senv = aenv->scriptenv;
 	const char *sender = sieve_message_get_sender(msgctx);
 	const char *recipient = sieve_message_get_final_recipient(msgctx);
-	enum sieve_redirect_envelope_from env_from =
-		aenv->svinst->redirect_from;
+	struct sieve_mail_sender *env_from =
+		&aenv->svinst->redirect_from;
 	struct istream *input;
 	struct ostream *output;
 	const char *error;
@@ -350,20 +350,22 @@ static int act_redirect_send
 		 when then returns a delivery status notification that also ends up
 		 being redirected to the same invalid address.
 	 */
-	if ( sender != NULL &&
-		env_from != SIEVE_REDIRECT_ENVELOPE_FROM_SENDER ) {
-		switch ( env_from ) {
-		case SIEVE_REDIRECT_ENVELOPE_FROM_RECIPIENT:
+	if ( sender != NULL ) {
+		switch ( env_from->source ) {
+		case SIEVE_MAIL_SENDER_SOURCE_RECIPIENT:
 			sender = sieve_message_get_final_recipient(msgctx);
 			break;
-		case SIEVE_REDIRECT_ENVELOPE_FROM_ORIG_RECIPIENT:
+		case SIEVE_MAIL_SENDER_SOURCE_ORIG_RECIPIENT:
 			sender = sieve_message_get_orig_recipient(msgctx);
 			break;
-		case SIEVE_REDIRECT_ENVELOPE_FROM_EXPLICIT:
-			sender = aenv->svinst->redirect_from_explicit;
+		case SIEVE_MAIL_SENDER_SOURCE_POSTMASTER:
+			sender = senv->postmaster_address;
+			break;
+		case SIEVE_MAIL_SENDER_SOURCE_EXPLICIT:
+			sender = env_from->address;
 			break;
 		default:
-			i_unreached();
+			break;
 		}
 	}
 

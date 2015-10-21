@@ -37,6 +37,10 @@ bool sieve_setting_get_duration_value
 	(struct sieve_instance *svinst, const char *setting,
 		sieve_number_t *value_r);
 
+bool sieve_setting_get_mail_sender_value
+	(struct sieve_instance *svinst, pool_t pool, const char *setting,
+		struct sieve_mail_sender *sender);
+
 /*
  * Main Sieve engine settings
  */

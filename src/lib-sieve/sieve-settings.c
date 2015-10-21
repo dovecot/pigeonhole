@@ -217,6 +217,48 @@ bool sieve_setting_get_duration_value
 	return TRUE;
 }
 
+bool sieve_setting_get_mail_sender_value
+(struct sieve_instance *svinst, pool_t pool, const char *setting,
+	struct sieve_mail_sender *sender)
+{
+	const char *str_value;
+	size_t set_len;
+
+	str_value = sieve_setting_get(svinst, setting);
+	if ( str_value == NULL )
+		return FALSE;
+
+	str_value = t_str_trim(str_value);
+	str_value = t_str_lcase(str_value);
+	set_len = strlen(str_value);
+	if ( set_len > 0 ) {
+		if ( strcmp(str_value, "default") == 0 ) {
+			sender->source = SIEVE_MAIL_SENDER_SOURCE_DEFAULT;
+		} else if ( strcmp(str_value, "sender") == 0 ) {
+			sender->source = SIEVE_MAIL_SENDER_SOURCE_SENDER;
+		} else if ( strcmp(str_value, "recipient") == 0 ) {
+			sender->source = SIEVE_MAIL_SENDER_SOURCE_RECIPIENT;
+		} else if ( strcmp(str_value, "orig_recipient") == 0 ) {
+			sender->source = SIEVE_MAIL_SENDER_SOURCE_ORIG_RECIPIENT;
+		} else if ( strcmp(str_value, "postmaster") == 0 ) {
+			sender->source = SIEVE_MAIL_SENDER_SOURCE_POSTMASTER;
+		} else if ( str_value[0] == '<' &&	str_value[set_len-1] == '>') {
+			sender->source = SIEVE_MAIL_SENDER_SOURCE_EXPLICIT;
+
+			str_value = t_str_trim(t_strndup(str_value+1, set_len-2));
+			sender->address = NULL;
+			if ( *str_value != '\0' )
+				sender->address = p_strdup(pool, str_value);
+		} else {
+			sieve_sys_warning(svinst,
+				"Invalid value for setting '%s': '%s'", setting,
+				str_value);
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
 /*
  * Main Sieve engine settings
  */
@@ -226,7 +268,6 @@ void sieve_settings_load
 {
 	unsigned long long int uint_setting;
 	size_t size_setting;
-	const char *str_setting;
 
 	svinst->max_script_size = SIEVE_DEFAULT_MAX_SCRIPT_SIZE;
 	if ( sieve_setting_get_size_value
@@ -246,36 +287,11 @@ void sieve_settings_load
 		svinst->max_redirects = (unsigned int) uint_setting;
 	}
 
-	svinst->redirect_from = SIEVE_REDIRECT_ENVELOPE_FROM_SENDER;
-	svinst->redirect_from_explicit = NULL;
-	if ( (str_setting=sieve_setting_get
-		(svinst, "sieve_redirect_envelope_from")) != NULL ) {
-		size_t set_len;
-
-		str_setting = t_str_trim(str_setting);
-		str_setting = t_str_lcase(str_setting);
-		set_len = strlen(str_setting);
-		if ( set_len > 0 ) {
-			if ( strcmp(str_setting, "sender") == 0 ) {
-				svinst->redirect_from = SIEVE_REDIRECT_ENVELOPE_FROM_SENDER;
-			} else if ( strcmp(str_setting, "recipient") == 0 ) {
-				svinst->redirect_from = SIEVE_REDIRECT_ENVELOPE_FROM_RECIPIENT;
-			} else if ( strcmp(str_setting, "orig_recipient") == 0 ) {
-				svinst->redirect_from = SIEVE_REDIRECT_ENVELOPE_FROM_ORIG_RECIPIENT;
-			} else if ( str_setting[0] == '<' &&	str_setting[set_len-1] == '>') {
-				svinst->redirect_from = SIEVE_REDIRECT_ENVELOPE_FROM_EXPLICIT;
-
-				str_setting = t_str_trim(t_strndup(str_setting+1, set_len-2));
-				if ( *str_setting != '\0' ) {
-					svinst->redirect_from_explicit =
-						p_strdup(svinst->pool, str_setting);
-				}
-			} else {
-				sieve_sys_warning(svinst,
-					"Invalid value `%s' for sieve_redirect_envelope_from setting",
-					str_setting);
-			}
-		}
+	if (!sieve_setting_get_mail_sender_value
+		(svinst, svinst->pool, "sieve_redirect_envelope_from",
+			&svinst->redirect_from)) {
+		svinst->redirect_from.source =
+			SIEVE_MAIL_SENDER_SOURCE_DEFAULT;
 	}
 }
 

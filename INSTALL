@@ -229,14 +229,15 @@ plugin section of the config file (default values are shown if applicable):
    appears to originate from the original sender. The following values are
    supported for this setting:
    
-     "sender"         - The sender address is used (default)
-     "recipient"      - The final recipient address is used
-     "orig_recipient" - The original recipient is used
+     "sender"         - The sender address is used (default).
+     "recipient"      - The final recipient address is used.
+     "orig_recipient" - The original recipient is used.
+     "postmaster"     - The postmaster_address configured for the LDA.
      "<user@domain>"  - Redirected messages are always sent from user@domain.
                         The angle brackets are mandatory. The null "<>" address
                         is also supported.
 
-	 When the envelope sender of the processed message is the null address "<>",
+   When the envelope sender of the processed message is the null address "<>",
    the envelope sender of the redirected message is also always "<>",
    irrespective of what is configured for this setting. 
 
