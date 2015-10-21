@@ -31,6 +31,7 @@
 #include "sieve-address.h"
 #include "sieve-message.h"
 #include "sieve-smtp.h"
+#include "sieve-settings.h"
 
 #include "sieve-ext-enotify.h"
 
@@ -47,8 +48,21 @@
 #define NTFY_MAILTO_MAX_SUBJECT     256
 
 /*
+ * Mailto notification configuration
+ */
+
+struct ntfy_mailto_config {
+	struct sieve_mail_sender envelope_from;
+};
+
+/*
  * Mailto notification method
  */
+
+static bool ntfy_mailto_load
+	(const struct sieve_enotify_method *nmth, void **context);
+static void ntfy_mailto_unload
+	(const struct sieve_enotify_method *nmth);
 
 static bool ntfy_mailto_compile_check_uri
 	(const struct sieve_enotify_env *nenv, const char *uri, const char *uri_body);
@@ -80,7 +94,8 @@ static int ntfy_mailto_action_execute
 
 const struct sieve_enotify_method_def mailto_notify = {
 	"mailto",
-	NULL, NULL,
+	ntfy_mailto_load,
+	ntfy_mailto_unload,
 	ntfy_mailto_compile_check_uri,
 	NULL,
 	ntfy_mailto_compile_check_from,
@@ -131,6 +146,45 @@ struct ntfy_mailto_context {
 	struct uri_mailto *uri;
 	const char *from_normalized;
 };
+
+/*
+ * Method registration
+ */
+
+static bool ntfy_mailto_load
+(const struct sieve_enotify_method *nmth, void **context)
+{
+	struct sieve_instance *svinst = nmth->svinst;
+	struct ntfy_mailto_config *config;
+
+	if ( *context != NULL ) {
+		ntfy_mailto_unload(nmth);
+	}
+
+	config = i_new(struct ntfy_mailto_config, 1);
+
+	if (!sieve_setting_get_mail_sender_value
+		(svinst, default_pool, "sieve_notify_mailto_envelope_from",
+			&config->envelope_from)) {
+		config->envelope_from.source =
+			SIEVE_MAIL_SENDER_SOURCE_DEFAULT;
+	}
+
+	*context = (void *) config;
+
+	return TRUE;
+}
+
+static void ntfy_mailto_unload
+(const struct sieve_enotify_method *nmth)
+{
+	struct ntfy_mailto_config *config =
+		(struct ntfy_mailto_config *) nmth->context;
+	char *address = (char *)config->envelope_from.address;
+
+	i_free(address);
+	i_free(config);
+}
 
 /*
  * Validation
@@ -382,6 +436,10 @@ static int ntfy_mailto_send
 	const struct sieve_script_env *senv = nenv->scriptenv;
 	struct ntfy_mailto_context *mtctx =
 		(struct ntfy_mailto_context *) nact->method_context;
+	struct ntfy_mailto_config *mth_config =
+		(struct ntfy_mailto_config *)nenv->method->context;
+	struct sieve_mail_sender *env_from =
+		&mth_config->envelope_from;
 	const char *from = NULL, *from_smtp = NULL;
 	const char *subject = mtctx->uri->subject;
 	const char *body = mtctx->uri->body;
@@ -417,12 +475,42 @@ static int ntfy_mailto_send
 		from = nact->from;
 	}
 
-	/* Determine SMTP from address */
-	if ( sieve_message_get_sender(nenv->msgctx) != NULL ) {
-		if ( mtctx->from_normalized == NULL ) {
+	/* Determine which sender to use
+
+	   From RFC 5436, Section 2.3:
+
+		 The ":from" tag overrides the default sender of the notification
+		 message.  "Sender", here, refers to the value used in the [RFC5322]
+		 "From" header.  Implementations MAY also use this value in the
+		 [RFC5321] "MAIL FROM" command (the "envelope sender"), or they may
+		 prefer to establish a mailbox that receives bounces from notification
+		 messages.
+	 */
+	from_smtp = sieve_message_get_sender(nenv->msgctx);
+	if ( from_smtp != NULL ) {
+		switch ( env_from->source ) {
+		case SIEVE_MAIL_SENDER_SOURCE_SENDER:
+			break;
+		case SIEVE_MAIL_SENDER_SOURCE_RECIPIENT:
+			from_smtp = sieve_message_get_final_recipient(nenv->msgctx);
+			break;
+		case SIEVE_MAIL_SENDER_SOURCE_ORIG_RECIPIENT:
+			from_smtp = sieve_message_get_orig_recipient(nenv->msgctx);
+			break;
+		case SIEVE_MAIL_SENDER_SOURCE_EXPLICIT:
+			from_smtp = env_from->address;
+			break;
+		case SIEVE_MAIL_SENDER_SOURCE_DEFAULT:
+			if ( mtctx->from_normalized != NULL ) {
+				from_smtp = mtctx->from_normalized;
+				break;
+			}
+			/* Fall through */
+		case SIEVE_MAIL_SENDER_SOURCE_POSTMASTER:
 			from_smtp = senv->postmaster_address;
-		} else {
-			from_smtp = mtctx->from_normalized;
+			break;
+		default:
+			break;
 		}
 	}
 
