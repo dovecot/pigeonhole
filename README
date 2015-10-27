@@ -99,8 +99,7 @@ following list outlines the implementation status of each supported extension:
   The following Sieve language extensions are also supported:
 
     copy (RFC 3894): fully supported.
-    body (RFC 5173): almost fully supported, but the text body-transform
-        implementation is simple.
+    body (RFC 5173): fully supported.
     environment (RFC 5183): fully supported (v0.4.0+).
     variables (RFC 5229): fully supported.
     vacation (RFC 5230): fully supported.

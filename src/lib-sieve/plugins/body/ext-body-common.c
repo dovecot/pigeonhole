@@ -11,6 +11,7 @@
 #include "message-date.h"
 #include "message-parser.h"
 #include "message-decoder.h"
+#include "mail-html2text.h"
 #include "mail-storage.h"
 
 #include "sieve-common.h"
@@ -21,11 +22,6 @@
 
 #include "ext-body-common.h"
 
-/* FIXME: This implementation is largely borrowed from the original sieve-cmu.c
- * of the old cmusieve plugin. This nees work to match current specification of
- * the body extension.
- */
-
 struct ext_body_part {
 	const char *content;
 	unsigned long size;
@@ -34,10 +30,10 @@ struct ext_body_part {
 struct ext_body_part_cached {
 	const char *content_type;
 
-	const char *raw_body;
 	const char *decoded_body;
-	size_t raw_body_size;
+	const char *text_body;
 	size_t decoded_body_size;
+	size_t text_body_size;
 
 	bool have_body; /* there's the empty end-of-headers line */
 };
@@ -105,7 +101,7 @@ static bool _want_multipart_content_type
 
 static bool ext_body_get_return_parts
 (struct ext_body_message_context *ctx, const char * const *wanted_types,
-	bool decode_to_plain)
+	bool extract_text)
 {
 	const struct ext_body_part_cached *body_parts;
 	unsigned int i, count;
@@ -139,16 +135,16 @@ static bool ext_body_get_return_parts
 		 * cache item is read. If it is missing, this function fails and the cache
 		 * needs to be completed by ext_body_parts_add_missing().
 		 */
-		if (decode_to_plain) {
+		if (extract_text) {
+			if (body_parts[i].text_body == NULL)
+				return FALSE;
+			return_part->content = body_parts[i].text_body;
+			return_part->size = body_parts[i].text_body_size;
+		} else {
 			if (body_parts[i].decoded_body == NULL)
 				return FALSE;
 			return_part->content = body_parts[i].decoded_body;
-			return_part->size = body_parts[i].decoded_body_size;
-		} else {
-			if (body_parts[i].raw_body == NULL)
-				return FALSE;
-			return_part->content = body_parts[i].raw_body;
-			return_part->size = body_parts[i].raw_body_size;
+			return_part->size = body_parts[i].decoded_body_size;			
 		}
 	}
 
@@ -157,32 +153,52 @@ static bool ext_body_get_return_parts
 
 static void ext_body_part_save
 (struct ext_body_message_context *ctx,
-	struct ext_body_part_cached *body_part, bool decoded)
+	struct ext_body_part_cached *body_part, bool extract_text)
 {
 	buffer_t *buf = ctx->tmp_buffer;
+	buffer_t *text_buf = NULL;
 	char *part_data;
 	size_t part_size;
 
 	/* Add terminating NUL to the body part buffer */
 	buffer_append_c(buf, '\0');
 
+	if ( extract_text ) {
+		if ( mail_html2text_content_type_match
+			(body_part->content_type) ) {
+			struct mail_html2text *html2text;
+
+			text_buf = buffer_create_dynamic(default_pool, 4096);
+
+			/* Remove HTML markup */
+			html2text = mail_html2text_init(0);
+			mail_html2text_more(html2text, buf->data, buf->used, text_buf);
+			mail_html2text_deinit(&html2text);
+	
+			buf = text_buf;
+		}
+	}
+
 	part_data = p_malloc(ctx->pool, buf->used);
 	memcpy(part_data, buf->data, buf->used);
 	part_size = buf->used - 1;
 
-	/* Depending on whether the part is decoded or not store message body in the
-	 * appropriate cache location.
+	if ( text_buf != NULL)
+		buffer_free(&text_buf);
+
+	/* Depending on whether the part is processed into text, store message
+	 * body in the appropriate cache location.
 	 */
-	if ( !decoded ) {
-		body_part->raw_body = part_data;
-		body_part->raw_body_size = part_size;
-	} else {
+	if ( !extract_text ) {
 		body_part->decoded_body = part_data;
 		body_part->decoded_body_size = part_size;
+	} else {
+		body_part->text_body = part_data;
+		body_part->text_body_size = part_size;
 	}
 
 	/* Clear buffer */
-	buffer_set_used_size(buf, 0);
+	buffer_set_used_size(ctx->tmp_buffer, 0);
 }
 
 static const char *_parse_content_type(const struct message_header_line *hdr)
@@ -214,8 +230,9 @@ static const char *_parse_content_type(const struct message_header_line *hdr)
 static int ext_body_parts_add_missing
 (const struct sieve_runtime_env *renv,
 	struct ext_body_message_context *ctx,
-	const char *const *content_types, bool decode_to_plain)
+	const char *const *content_types, bool extract_text)
 {
+	buffer_t *buf = ctx->tmp_buffer;
 	struct mail *mail = sieve_message_get_mail(renv->msgctx);
 	struct ext_body_part_cached *body_part = NULL, *header_part = NULL;
 	struct message_parser_ctx *parser;
@@ -229,7 +246,7 @@ static int ext_body_parts_add_missing
 	int ret;
 
 	/* First check whether any are missing */
-	if (ext_body_get_return_parts(ctx, content_types, decode_to_plain)) {
+	if (ext_body_get_return_parts(ctx, content_types, extract_text)) {
 		/* Cache hit; all are present */
 		return SIEVE_EXEC_OK;
 	}
@@ -248,10 +265,10 @@ static int ext_body_parts_add_missing
 		t_array_init(&part_index, 8);
 	}
 
-	buffer_set_used_size(ctx->tmp_buffer, 0);
+	buffer_set_used_size(buf, 0);
 
 	/* Initialize body decoder */
-	decoder = decode_to_plain ? message_decoder_init(NULL, 0) : NULL;
+	decoder = message_decoder_init(NULL, 0);
 
 	//parser = message_parser_init_from_parts(parts, input, 0,
 		//MESSAGE_PARSER_FLAG_INCLUDE_MULTIPART_BLOCKS);
@@ -270,7 +287,7 @@ static int ext_body_parts_add_missing
 					message_rfc822 = TRUE;
 				} else {
 					if ( save_body ) {
-						ext_body_part_save(ctx, body_part, decoder != NULL);
+						ext_body_part_save(ctx, body_part, extract_text);
 					}
 				}
 			}
@@ -321,14 +338,13 @@ static int ext_body_parts_add_missing
 			/* Reading headers */
 
 			/* Decode block */
-			if ( decoder != NULL )
-				(void)message_decoder_decode_next_block(decoder, &block, &decoded);
+			(void)message_decoder_decode_next_block(decoder, &block, &decoded);
 
 			/* Check for end of headers */
 			if ( block.hdr == NULL ) {
 				/* Save headers for message/rfc822 part */
 				if ( header_part != NULL ) {
-					ext_body_part_save(ctx, header_part, decoder != NULL);
+					ext_body_part_save(ctx, header_part, extract_text);
 					header_part = NULL;
 				}
 
@@ -348,14 +364,14 @@ static int ext_body_parts_add_missing
 			} else if ( header_part != NULL ) {
 				/* Save message/rfc822 header as part content */
 				if ( block.hdr->continued ) {
-					buffer_append(ctx->tmp_buffer, block.hdr->value, block.hdr->value_len);
+					buffer_append(buf, block.hdr->value, block.hdr->value_len);
 				} else {
-					buffer_append(ctx->tmp_buffer, block.hdr->name, block.hdr->name_len);
-					buffer_append(ctx->tmp_buffer, block.hdr->middle, block.hdr->middle_len);
-					buffer_append(ctx->tmp_buffer, block.hdr->value, block.hdr->value_len);
+					buffer_append(buf, block.hdr->name, block.hdr->name_len);
+					buffer_append(buf, block.hdr->middle, block.hdr->middle_len);
+					buffer_append(buf, block.hdr->value, block.hdr->value_len);
 				}
 				if ( !block.hdr->no_newline ) {
-					buffer_append(ctx->tmp_buffer, "\r\n", 2);
+					buffer_append(buf, "\r\n", 2);
 				}
 			}
 
@@ -384,32 +400,27 @@ static int ext_body_parts_add_missing
 
 		/* Reading body */
 		if ( save_body ) {
-			if ( decoder != NULL ) {
-				(void)message_decoder_decode_next_block(decoder, &block, &decoded);
-				buffer_append(ctx->tmp_buffer, decoded.data, decoded.size);
-			} else {
-				buffer_append(ctx->tmp_buffer, block.data, block.size);
-			}
+			(void)message_decoder_decode_next_block(decoder, &block, &decoded);
+			buffer_append(buf, decoded.data, decoded.size);
 		}
 	}
 
 	/* Save last body part if necessary */
 	if ( header_part != NULL ) {
-		ext_body_part_save(ctx, header_part, decoder != NULL);
+		ext_body_part_save(ctx, header_part, FALSE);
 	} else if ( body_part != NULL && save_body ) {
-		ext_body_part_save(ctx, body_part, decoder != NULL);
+		ext_body_part_save(ctx, body_part, extract_text);
 	}
 
 	/* Try to fill the return_body_parts array once more */
-	have_all = ext_body_get_return_parts(ctx, content_types, decode_to_plain);
+	have_all = ext_body_get_return_parts(ctx, content_types, extract_text);
 
 	/* This time, failure is a bug */
 	i_assert(have_all);
 
 	/* Cleanup */
 	(void)message_parser_deinit(&parser, &parts);
-	if (decoder != NULL)
-		message_decoder_deinit(&decoder);
+	message_decoder_deinit(&decoder);
 
 	/* Return status */
 	if ( input->stream_errno != 0 ) {
@@ -453,7 +464,7 @@ static struct ext_body_message_context *ext_body_get_context
 
 static int ext_body_get_content
 (const struct sieve_runtime_env *renv, const char * const *content_types,
-	int decode_to_plain, struct ext_body_part **parts_r)
+	struct ext_body_part **parts_r)
 {
 	const struct sieve_extension *this_ext = renv->oprtn->ext;
 	struct ext_body_message_context *ctx =
@@ -463,7 +474,41 @@ static int ext_body_get_content
 	T_BEGIN {
 		/* Fill the return_body_parts array */
 		status = ext_body_parts_add_missing
-			(renv, ctx, content_types, decode_to_plain != 0);
+			(renv, ctx, content_types, FALSE);
+	} T_END;
+
+	/* Check status */
+	if ( status <= 0 )
+		return status;
+
+	/* Return the array of body items */
+	(void) array_append_space(&ctx->return_body_parts); /* NULL-terminate */
+	*parts_r = array_idx_modifiable(&ctx->return_body_parts, 0);
+
+	return status;
+}
+
+static int ext_body_get_text
+(const struct sieve_runtime_env *renv, struct ext_body_part **parts_r)
+{
+	/* We currently only support extracting plain text from:
+
+	    - text/html -> HTML
+	    - application/xhtml+xml -> XHTML
+
+	   Other text types are read as is. Any non-text types are skipped.
+	 */
+	static const char * const _text_content_types[] =
+		{ "application/xhtml+xml", "text", NULL };
+	const struct sieve_extension *this_ext = renv->oprtn->ext;
+	struct ext_body_message_context *ctx =
+		ext_body_get_context(this_ext, renv->msgctx);
+	int status;
+
+	T_BEGIN {
+		/* Fill the return_body_parts array */
+		status = ext_body_parts_add_missing
+			(renv, ctx, _text_content_types, TRUE);
 	} T_END;
 
 	/* Check status */
@@ -565,7 +610,7 @@ int ext_body_get_part_list
 {
 	static const char * const _no_content_types[] = { "", NULL };
 	struct ext_body_stringlist *strlist;
-	struct ext_body_part *body_parts;
+	struct ext_body_part *body_parts = NULL;
 	int ret;
 
 	*strlist_r = NULL;
@@ -578,15 +623,12 @@ int ext_body_get_part_list
 			return ret;
 		break;
 	case TST_BODY_TRANSFORM_CONTENT:
-		/* FIXME: check these parameters */
 		if ( (ret=ext_body_get_content
-			(renv, content_types, TRUE, &body_parts)) <= 0 )
+			(renv, content_types, &body_parts)) <= 0 )
 			return ret;
 		break;
 	case TST_BODY_TRANSFORM_TEXT:
-		/* FIXME: check these parameters */
-		if ( (ret=ext_body_get_content
-			(renv, content_types, TRUE, &body_parts)) <= 0 )
+		if ( (ret=ext_body_get_text(renv, &body_parts)) <= 0 )
 			return ret;
 		break;
 	default:
