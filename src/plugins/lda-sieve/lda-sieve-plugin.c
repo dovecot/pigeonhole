@@ -181,6 +181,7 @@ static int lda_sieve_get_personal_storage
 	*storage_r = sieve_storage_create_main(svinst, user, 0, &error);
 	if (*storage_r == NULL) {
 		switch (error) {
+		case SIEVE_ERROR_NOT_POSSIBLE:
 		case SIEVE_ERROR_NOT_FOUND:
 			break;
 		case SIEVE_ERROR_TEMP_FAILURE:
@@ -640,6 +641,8 @@ static int lda_sieve_find_scripts(struct lda_sieve_run_context *srctx)
 
 	ret = lda_sieve_get_personal_storage
 		(svinst, mdctx->dest_user, &main_storage);
+	if ( ret == 0 && error == SIEVE_ERROR_NOT_POSSIBLE )
+		return 0;
 	if ( ret > 0 ) {
 		srctx->main_script =
 			sieve_storage_active_script_open(main_storage, &error);
@@ -920,11 +923,14 @@ static int lda_sieve_deliver_mail
 	T_BEGIN {
 		if (lda_sieve_find_scripts(&srctx) < 0)
 			ret = -1;
-		else
+		else if ( srctx.scripts == NULL )
+			ret = 0;
+		else {
 			ret = lda_sieve_execute(&srctx, storage_r);
 	
-		for ( i = 0; i < srctx.script_count; i++ )
-			sieve_script_unref(&srctx.scripts[i]);
+			for ( i = 0; i < srctx.script_count; i++ )
+				sieve_script_unref(&srctx.scripts[i]);
+		}
 	} T_END;
 
 	/* Clean up */

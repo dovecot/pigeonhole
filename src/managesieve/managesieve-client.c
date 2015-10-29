@@ -64,14 +64,23 @@ static struct sieve_storage *client_get_storage
 	struct sieve_storage *storage;
 	enum sieve_error error;
 
+	/* Open personal script storage */
+
 	storage = sieve_storage_create_main
 		(svinst, user, SIEVE_STORAGE_FLAG_READWRITE, &error);
 	if (storage == NULL) {
 		switch (error) {
-		case SIEVE_ERROR_NOT_FOUND:
-			printf("BYE \"Sieve filtering is disabled for this user.\"\n");
+		case SIEVE_ERROR_NOT_POSSIBLE:
+			printf("BYE \"Sieve processing is disabled for this user.\"\n");
 
-			i_fatal("Failed to open Sieve storage: Sieve disabled for user");
+			i_fatal("Failed to open Sieve storage: "
+				"Sieve is disabled for this user.");
+			break;
+		case SIEVE_ERROR_NOT_FOUND:
+			printf("BYE \"This user cannot manage personal Sieve scripts.\"\n");
+
+			i_fatal("Failed to open Sieve storage: "
+				"Personal script storage disabled or not found.");
 			break;
 		default:
 			{ 
