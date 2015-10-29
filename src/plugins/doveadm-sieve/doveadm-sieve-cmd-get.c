@@ -26,7 +26,6 @@ cmd_sieve_get_run(struct doveadm_sieve_cmd_context *_ctx)
 	struct istream *input;
 	enum sieve_error error;
 
-	return 0;
 	script = sieve_storage_open_script
 		(_ctx->storage, ctx->scriptname, &error);
 	if ( script == NULL || sieve_script_get_stream
