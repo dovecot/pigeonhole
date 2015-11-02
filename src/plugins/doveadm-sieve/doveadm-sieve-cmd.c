@@ -131,8 +131,14 @@ doveadm_sieve_cmd_run
 		(ctx->svinst, user, SIEVE_STORAGE_FLAG_READWRITE, &error);
 	if ( ctx->storage == NULL ) {
 		switch ( error ) {
+		case SIEVE_ERROR_NOT_POSSIBLE:
+			error = SIEVE_ERROR_NOT_FOUND;
+			i_error("Failed to open Sieve storage: "
+				"Sieve is disabled for this user");
+			break;
 		case SIEVE_ERROR_NOT_FOUND:
-			i_error("Failed to open Sieve storage: Sieve disabled for user");
+			i_error("Failed to open Sieve storage: "
+				"User cannot manage personal Sieve scripts.");
 			break;
 		default:
 			i_error("Failed to open Sieve storage.");
