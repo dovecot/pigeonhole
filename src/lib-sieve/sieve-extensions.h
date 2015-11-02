@@ -95,6 +95,7 @@ struct sieve_extension {
 	unsigned int enabled:1;
 	unsigned int dummy:1;
 	unsigned int global:1;
+	unsigned int overridden:1;
 };
 
 #define sieve_extension_is(ext, definition) \
@@ -136,6 +137,10 @@ const struct sieve_extension *sieve_extension_require
 bool sieve_extension_reload(const struct sieve_extension *ext);
 
 void sieve_extension_unregister(const struct sieve_extension *ext);
+
+void sieve_extension_override
+	(struct sieve_instance *svinst, const char *name,
+		const struct sieve_extension *ext);
 
 int sieve_extensions_get_count(struct sieve_instance *svinst);
 
