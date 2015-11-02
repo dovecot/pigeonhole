@@ -5,10 +5,12 @@
 #include "hash.h"
 #include "imem.h"
 #include "strfuncs.h"
+#include "mail-user.h"
 
 #include "sieve-common.h"
 
 #include "testsuite-common.h"
+#include "testsuite-mailstore.h"
 #include "testsuite-settings.h"
 
 struct testsuite_setting {
@@ -49,14 +51,17 @@ void testsuite_settings_deinit(void)
 static const char *testsuite_setting_get
 (void *context ATTR_UNUSED, const char *identifier)
 {
-	struct testsuite_setting *setting =
-		hash_table_lookup(settings, identifier);
+	struct testsuite_setting *setting;
+	struct mail_user *user;
 
-	if ( setting == NULL ) {
+	setting = hash_table_lookup(settings, identifier);
+	if ( setting != NULL )
+		return setting->value;
+
+	user = testsuite_mailstore_get_user();
+	if ( user == NULL )
 		return NULL;
-	}
-
-	return setting->value;
+	return mail_user_plugin_getenv(user, identifier);
 }
 
 void testsuite_setting_set(const char *identifier, const char *value)

@@ -125,6 +125,8 @@ void testsuite_mailstore_reset(void)
 
 struct mail_user *testsuite_mailstore_get_user(void)
 {
+	if (testsuite_mailstore_user == NULL)
+		return sieve_tool_get_mail_user(sieve_tool);
 	return testsuite_mailstore_user;
 }
 
