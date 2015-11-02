@@ -404,6 +404,11 @@ static void ext_imap4flags_iter_delete_last
 
 /* Flag operations */
 
+static string_t *ext_imap4flags_get_flag_variable
+(const struct sieve_runtime_env *renv,
+	struct sieve_variable_storage *storage, unsigned int var_index)
+	ATTR_NULL(2);
+
 static bool flags_list_flag_exists
 (string_t *flags_list, const char *flag)
 {
@@ -479,8 +484,8 @@ static void flags_list_clear_flags
 }
 
 static string_t *ext_imap4flags_get_flag_variable
-(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-	unsigned int var_index)
+(const struct sieve_runtime_env *renv,
+	struct sieve_variable_storage *storage, unsigned int var_index)
 {
 	string_t *flags;
 
@@ -504,9 +509,10 @@ static string_t *ext_imap4flags_get_flag_variable
 	return flags;
 }
 
-int ext_imap4flags_set_flags
-(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-	unsigned int var_index, struct sieve_stringlist *flags)
+int sieve_ext_imap4flags_set_flags
+(const struct sieve_runtime_env *renv,
+	struct sieve_variable_storage *storage, unsigned int var_index,
+	struct sieve_stringlist *flags)
 {
 	string_t *cur_flags = ext_imap4flags_get_flag_variable
 		(renv, storage, var_index);
@@ -531,9 +537,10 @@ int ext_imap4flags_set_flags
 	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
-int ext_imap4flags_add_flags
-(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-	unsigned int var_index, struct sieve_stringlist *flags)
+int sieve_ext_imap4flags_add_flags
+(const struct sieve_runtime_env *renv,
+	struct sieve_variable_storage *storage, unsigned int var_index,
+	struct sieve_stringlist *flags)
 {
 	string_t *cur_flags = ext_imap4flags_get_flag_variable
 		(renv, storage, var_index);
@@ -557,9 +564,10 @@ int ext_imap4flags_add_flags
 	return SIEVE_EXEC_BIN_CORRUPT;
 }
 
-int ext_imap4flags_remove_flags
-(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-	unsigned int var_index, struct sieve_stringlist *flags)
+int sieve_ext_imap4flags_remove_flags
+(const struct sieve_runtime_env *renv,
+	struct sieve_variable_storage *storage, 	unsigned int var_index,
+	struct sieve_stringlist *flags)
 {
 	string_t *cur_flags = ext_imap4flags_get_flag_variable
 		(renv, storage, var_index);
@@ -690,8 +698,9 @@ static void ext_imap4flags_stringlist_reset
 
 /* Flag access */
 
-struct sieve_stringlist *ext_imap4flags_get_flags
-(const struct sieve_runtime_env *renv, struct sieve_stringlist *flags_list)
+struct sieve_stringlist *sieve_ext_imap4flags_get_flags
+(const struct sieve_runtime_env *renv,
+	struct sieve_stringlist *flags_list)
 {
 	if ( flags_list == NULL )
 		return ext_imap4flags_stringlist_create_single

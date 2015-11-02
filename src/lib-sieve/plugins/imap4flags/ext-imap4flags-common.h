@@ -9,6 +9,8 @@
 #include "sieve-common.h"
 #include "sieve-ext-variables.h"
 
+#include "sieve-ext-imap4flags.h"
+
 /*
  * Extension
  */
@@ -89,23 +91,12 @@ const char *ext_imap4flags_iter_get_flag
 /* Flag operations */
 
 typedef int (*ext_imapflag_flag_operation_t)
-	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-		unsigned int var_index, struct sieve_stringlist *flags);
-
-int ext_imap4flags_set_flags
-	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-		unsigned int var_index, struct sieve_stringlist *flags);
-int ext_imap4flags_add_flags
-	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-		unsigned int var_index, struct sieve_stringlist *flags);
-int ext_imap4flags_remove_flags
-	(const struct sieve_runtime_env *renv, struct sieve_variable_storage *storage,
-		unsigned int var_index, struct sieve_stringlist *flags);
+	(const struct sieve_runtime_env *renv,
+		struct sieve_variable_storage *storage,
+		unsigned int var_index, struct sieve_stringlist *flags)
+		ATTR_NULL(2);
 
 /* Flags access */
-
-struct sieve_stringlist *ext_imap4flags_get_flags
-	(const struct sieve_runtime_env *renv, struct sieve_stringlist *flags_list);
 
 void ext_imap4flags_get_implicit_flags_init
 	(struct ext_imap4flags_iter *iter, const struct sieve_extension *this_ext,

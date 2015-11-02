@@ -22,6 +22,12 @@ libsieve_ext_imap4flags_la_SOURCES = \
 	ext-imap4flags.c \
 	ext-imapflags.c
 
+public_headers = \
+	sieve-ext-imap4flags.h
 
-noinst_HEADERS = \
+headers = \
 	ext-imap4flags-common.h
+
+pkginc_libdir=$(dovecot_pkgincludedir)/sieve
+pkginc_lib_HEADERS = $(public_headers)
+noinst_HEADERS = $(headers)

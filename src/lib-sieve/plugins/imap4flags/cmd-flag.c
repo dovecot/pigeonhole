@@ -230,13 +230,13 @@ static int cmd_flag_operation_execute
 
 	if ( sieve_operation_is(op, setflag_operation) ) {
 		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "setflag command");
-		flag_op = ext_imap4flags_set_flags;
+		flag_op = sieve_ext_imap4flags_set_flags;
 	} else if ( sieve_operation_is(op, addflag_operation) ) {
 		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "addflag command");
-		flag_op = ext_imap4flags_add_flags;
+		flag_op = sieve_ext_imap4flags_add_flags;
 	} else if ( sieve_operation_is(op, removeflag_operation) ) {
 		sieve_runtime_trace(renv, SIEVE_TRLVL_COMMANDS, "removeflag command");
-		flag_op = ext_imap4flags_remove_flags;
+		flag_op = sieve_ext_imap4flags_remove_flags;
 	} else {
 		i_unreached();
 	}

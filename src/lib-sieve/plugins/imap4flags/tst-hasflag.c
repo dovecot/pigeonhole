@@ -225,11 +225,11 @@ static int tst_hasflag_operation_execute
 
 	sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "hasflag test");
 
-	value_list = ext_imap4flags_get_flags(renv, variables_list);
+	value_list = sieve_ext_imap4flags_get_flags(renv, variables_list);
 
 	if ( sieve_match_type_is(&mcht, is_match_type) ||
 		sieve_match_type_is(&mcht, contains_match_type) )
-		key_list = ext_imap4flags_get_flags(renv, flag_list);
+		key_list = sieve_ext_imap4flags_get_flags(renv, flag_list);
 	else
 		key_list = flag_list;
 
