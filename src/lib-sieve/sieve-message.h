@@ -28,7 +28,7 @@ void sieve_message_context_unref(struct sieve_message_context **msgctx);
 void sieve_message_context_reset(struct sieve_message_context *msgctx);
 
 pool_t sieve_message_context_pool
-	(struct sieve_message_context *msgctx);
+	(struct sieve_message_context *msgctx) ATTR_PURE;
 
 /* Extension support */
 
@@ -165,5 +165,26 @@ int sieve_message_get_header_fields
 		struct sieve_stringlist *field_names,
 		ARRAY_TYPE(sieve_message_override) *svmos,
 		bool mime_decode, struct sieve_stringlist **fields_r);
+
+/*
+ * Message body
+ */
+
+struct sieve_message_body_part {
+	const char *content;
+	unsigned long size;
+};
+
+int sieve_message_body_get_content
+	(const struct sieve_runtime_env *renv,
+		const char * const *content_types,
+		struct sieve_message_body_part **parts_r);
+int sieve_message_body_get_text
+	(const struct sieve_runtime_env *renv,
+		struct sieve_message_body_part **parts_r);
+int sieve_message_body_get_raw
+	(const struct sieve_runtime_env *renv,
+		struct sieve_message_body_part **parts_r);
+
 
 #endif /* __SIEVE_MESSAGE_H */
