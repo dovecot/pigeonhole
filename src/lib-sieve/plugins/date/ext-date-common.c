@@ -33,12 +33,14 @@ static void ext_date_runtime_init
 {
 	struct ext_date_context *dctx;
 	pool_t pool;
-	struct tm *tm;
+	struct timeval msg_time;
 	time_t current_date;
+	struct tm *tm;
 	int zone_offset;
 
 	/* Get current time at instance main script is started */
-	time(&current_date);
+	sieve_message_context_time(renv->msgctx, &msg_time);
+	current_date = msg_time.tv_sec;
 
 	tm = localtime(&current_date);
 	zone_offset = utc_offset(tm, current_date);

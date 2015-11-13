@@ -76,6 +76,7 @@ struct sieve_message_context {
 	int refcount;
 
 	struct sieve_instance *svinst;
+	struct timeval time;
 
 	struct mail_user *mail_user;
 	const struct sieve_message_data *msgdata;
@@ -163,6 +164,9 @@ struct sieve_message_context *sieve_message_context_create
 	msgctx->mail_user = mail_user;
 	msgctx->msgdata = msgdata;
 
+	if (gettimeofday(&msgctx->time, NULL) < 0)
+		i_fatal("gettimeofday(): %m");
+
 	sieve_message_context_reset(msgctx);
 
 	return msgctx;
@@ -245,6 +249,12 @@ void sieve_message_context_reset(struct sieve_message_context *msgctx)
 pool_t sieve_message_context_pool(struct sieve_message_context *msgctx)
 {
 	return msgctx->context_pool;
+}
+
+void sieve_message_context_time(struct sieve_message_context *msgctx,
+   struct timeval *time)
+{
+   *time = msgctx->time;
 }
 
 /* Extension support */
