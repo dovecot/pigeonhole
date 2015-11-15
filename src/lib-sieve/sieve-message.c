@@ -61,6 +61,7 @@ struct sieve_message_version {
 
 struct sieve_message_body_part_cached {
 	const char *content_type;
+	const char *content_disposition;
 
 	const char *decoded_body;
 	const char *text_body;
@@ -892,6 +893,8 @@ static bool sieve_message_body_get_return_parts
 
 		/* Add new item to the result */
 		return_part = array_append_space(&msgctx->return_body_parts);
+		return_part->content_type = body_parts[i].content_type;
+		return_part->content_disposition = body_parts[i].content_disposition;
 
 		/* Depending on whether a decoded body part is requested, the appropriate
 		 * cache item is read. If it is missing, this function fails and the cache
@@ -988,6 +991,30 @@ _parse_content_type(const struct message_header_line *hdr)
 
 	/* Success */
 	return str_c(content_type);
+}
+
+static const char *
+_parse_content_disposition(const struct message_header_line *hdr)
+{
+	struct rfc822_parser_context parser;
+	string_t *content_disp;
+
+	/* Initialize parsing */
+	rfc822_parser_init(&parser, hdr->full_value, hdr->full_value_len, NULL);
+	(void)rfc822_skip_lwsp(&parser);
+
+	/* Parse content type */
+	content_disp = t_str_new(64);
+	if (rfc822_parse_mime_token(&parser, content_disp) < 0)
+		return "";
+
+	/* Content-type value must end here, otherwise it is invalid after all */
+	(void)rfc822_skip_lwsp(&parser);
+	if ( parser.data != parser.end && *parser.data != ';' )
+		return "";
+
+	/* Success */
+	return str_c(content_disp);
 }
 
 /* sieve_message_body_parts_add_missing():
@@ -1107,6 +1134,8 @@ static int sieve_message_body_parts_add_missing
 		}
 
 		if ( block.hdr != NULL || block.size == 0 ) {
+			bool is_ctype = FALSE;
+
 			/* Reading headers */
 
 			/* Decode block */
@@ -1150,7 +1179,9 @@ static int sieve_message_body_parts_add_missing
 			}
 
 			/* We're interested in only the Content-Type: header */
-			if ( strcasecmp(block.hdr->name, "Content-Type" ) != 0 )
+			if ( strcasecmp(block.hdr->name, "Content-Type" ) == 0 )
+				is_ctype = TRUE;
+			else if ( strcasecmp(block.hdr->name, "Content-Disposition" ) != 0 )
 				continue;
 
 			/* Header can have folding whitespace. Acquire the full value before
@@ -1165,8 +1196,13 @@ static int sieve_message_body_parts_add_missing
 
 			/* Parse the content type from the Content-type header */
 			T_BEGIN {
-				body_part->content_type =
-					p_strdup(pool, _parse_content_type(block.hdr));
+				if ( is_ctype ) {
+					body_part->content_type =
+						p_strdup(pool, _parse_content_type(block.hdr));
+				} else {
+					body_part->content_disposition =
+						p_strdup(pool, _parse_content_disposition(block.hdr));
+				}
 			} T_END;
 
 			continue;

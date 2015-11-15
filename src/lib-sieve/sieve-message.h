@@ -173,6 +173,9 @@ int sieve_message_get_header_fields
  */
 
 struct sieve_message_body_part {
+	const char *content_type;
+	const char *content_disposition;
+
 	const char *content;
 	unsigned long size;
 };
