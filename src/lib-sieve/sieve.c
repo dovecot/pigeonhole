@@ -664,12 +664,9 @@ bool sieve_multiscript_run
 (struct sieve_multiscript *mscript, struct sieve_binary *sbin,
 	struct sieve_error_handler *exec_ehandler,
 	struct sieve_error_handler *action_ehandler,
-	enum sieve_runtime_flags flags, bool final)
+	enum sieve_runtime_flags flags)
 {
 	if ( !mscript->active ) return FALSE;
-
-	if ( final )
-		sieve_result_set_keep_action(mscript->result, NULL, &act_store);
 
 	/* Run the script */
 	mscript->status = sieve_run(sbin, &mscript->result, mscript->msgdata,
@@ -685,7 +682,7 @@ bool sieve_multiscript_run
 				(mscript, action_ehandler, &mscript->keep);
 		}
 		mscript->active =
-			( mscript->active && mscript->keep && !final && mscript->status > 0 );
+			( mscript->active && mscript->keep && mscript->status > 0 );
 	}
 
 	if ( mscript->status <= 0 )
@@ -699,16 +696,20 @@ int sieve_multiscript_status(struct sieve_multiscript *mscript)
 	return mscript->status;
 }
 
-int sieve_multiscript_tempfail(struct sieve_multiscript **mscript,
+int sieve_multiscript_tempfail(struct sieve_multiscript **_mscript,
 	struct sieve_error_handler *action_ehandler)
 {
-	struct sieve_result *result = (*mscript)->result;
-	int ret = (*mscript)->status;
+	struct sieve_multiscript *mscript = *_mscript;
+	struct sieve_result *result = mscript->result;
+	int ret = mscript->status;
 
-	if ( (*mscript)->active ) {
+	sieve_result_set_keep_action
+		(mscript->result, NULL, &act_store);
+
+	if ( mscript->active ) {
 		ret = SIEVE_EXEC_TEMP_FAILURE;
 
-		if ( !(*mscript)->teststream && sieve_result_executed(result) ) {
+		if ( !mscript->teststream && sieve_result_executed(result) ) {
 			/* Part of the result is already executed, need to fall back to
 			 * to implicit keep (FIXME)
 			 */
@@ -725,27 +726,29 @@ int sieve_multiscript_tempfail(struct sieve_multiscript **mscript,
 
 	/* Cleanup */
 	sieve_result_unref(&result);
-	*mscript = NULL;
+	*_mscript = NULL;
 
 	return ret;
 }
 
-int sieve_multiscript_finish(struct sieve_multiscript **mscript,
+int sieve_multiscript_finish(struct sieve_multiscript **_mscript,
 	struct sieve_error_handler *action_ehandler, bool *keep)
 {
-	struct sieve_result *result = (*mscript)->result;
-	int ret = (*mscript)->status;
+	struct sieve_multiscript *mscript = *_mscript;
+	struct sieve_result *result = mscript->result;
+	int ret = mscript->status;
 
-	if ( (*mscript)->active ) {
-		ret = SIEVE_EXEC_FAILURE;
+	sieve_result_set_keep_action
+		(mscript->result, NULL, &act_store);
 
-		if ( (*mscript)->teststream ) {
-			(*mscript)->keep = TRUE;
+	if ( mscript->active ) {
+		if ( mscript->teststream ) {
+			mscript->keep = TRUE;
 		} else {
 			switch ( sieve_result_implicit_keep
 				(result, action_ehandler) ) {
 			case SIEVE_EXEC_OK:
-				(*mscript)->keep = TRUE;
+				mscript->keep = TRUE;
 				break;
 			case SIEVE_EXEC_TEMP_FAILURE:
 				if (!sieve_result_executed(result)) {
@@ -759,12 +762,11 @@ int sieve_multiscript_finish(struct sieve_multiscript **mscript,
 		}
 	}
 
-	if ( keep != NULL ) *keep = (*mscript)->keep;
+	if ( keep != NULL ) *keep = mscript->keep;
 
 	/* Cleanup */
 	sieve_result_unref(&result);
-	*mscript = NULL;
-
+	*_mscript = NULL;
 	return ret;
 }
 

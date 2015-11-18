@@ -203,7 +203,6 @@ bool testsuite_script_multiscript
 	for ( i = 0; i < count && more; i++ ) {
 		struct sieve_binary *sbin = NULL;
 		const char *script = scripts[i];
-		bool final = ( i == count - 1 );
 
 		/* Open */
 		if ( (sbin=_testsuite_script_compile(renv, script)) == NULL ) {
@@ -216,7 +215,7 @@ bool testsuite_script_multiscript
 		sieve_runtime_trace(renv, SIEVE_TRLVL_TESTS, "run script `%s'", script);
 
 		more = sieve_multiscript_run(mscript, sbin,
-			testsuite_log_ehandler, testsuite_log_ehandler, 0, final);
+			testsuite_log_ehandler, testsuite_log_ehandler, 0);
 
 		sieve_close(&sbin);
 	}

@@ -362,7 +362,7 @@ int main(int argc, char **argv)
 
 				/* Execute/Test script */
 				more = sieve_multiscript_run(mscript, sbin,
-					ehandler, action_ehandler, 0, FALSE);
+					ehandler, action_ehandler, 0);
 			}
 
 			/* Execute/Test main script */
@@ -379,7 +379,7 @@ int main(int argc, char **argv)
 				main_sbin = NULL;
 
 				(void)sieve_multiscript_run(mscript, sbin,
-					ehandler, ehandler, 0, TRUE);
+					ehandler, ehandler, 0);
 			}
 
 			result = sieve_multiscript_finish(&mscript, ehandler, NULL);

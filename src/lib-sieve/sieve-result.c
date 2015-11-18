@@ -1033,9 +1033,15 @@ int sieve_result_implicit_keep
 (struct sieve_result *result,
 	struct sieve_error_handler *ehandler)
 {
+	int ret;
+
 	_sieve_result_prepare_execution(result, ehandler);
 
-	return _sieve_result_implicit_keep(result, TRUE);
+	ret = _sieve_result_implicit_keep(result, TRUE);
+
+	result->action_env.ehandler = NULL;
+
+	return ret;
 }
 
 void sieve_result_mark_executed(struct sieve_result *result)
