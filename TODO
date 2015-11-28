@@ -1,6 +1,7 @@
 Current activities:
 
 * Rework string matching:
+	- Give Sieve its own runtime string type, rather than (ab)using string_t.
 	- Add support for stream matching for handling large values, e.g. from the
 	  body extension.
 	- Improve efficiency of :matches and :contains match types.
