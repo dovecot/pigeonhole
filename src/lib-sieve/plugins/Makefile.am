@@ -24,6 +24,7 @@ SUBDIRS = \
 	duplicate \
 	index \
 	metadata \
+	mime \
 	vnd.dovecot \
 	$(UNFINISHED)
 

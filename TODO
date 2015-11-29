@@ -33,7 +33,7 @@ Next (mostly in order of descending priority/precedence):
 	- Adjust Sieve script API to support asynchronous script retrieval to
 	  retrieve scripts in parallel when possible.
 * Implement message modification and extraction API in order to:
-	- Implement replace, enclose, foreverypart, mime and extracttext extensions
+	- Implement replace, enclose, and extracttext extensions
 * Improve error handling.
 	- Implement dropping errors in the user's mailbox as a mail message.
 * Finish body extension:

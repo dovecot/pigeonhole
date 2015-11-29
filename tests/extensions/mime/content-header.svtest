@@ -1,0 +1,161 @@
+require "vnd.dovecot.testsuite";
+require "relational";
+require "mime";
+
+test_set "message" text:
+From: stephan@example.com
+To: timo@example.com
+Subject: Frop
+Content-Type: text/plain
+
+Frop
+.
+;
+
+test "Simple Content-Type :type" {
+	if not header :mime :type "content-type" "text" {
+		test_fail "wrong type extracted";
+	}
+}
+
+test "Simple Content-Type :subype" {
+	if not header :mime :subtype "content-type" "plain" {
+		test_fail "wrong subtype extracted";
+	}
+}
+
+test "Simple Content-Type :contenttype" {
+	if not header :mime :contenttype "content-type" "text/plain" {
+		test_fail "wrong contenttype extracted";
+	}
+}
+
+test_set "message" text:
+From: stephan@example.com
+To: timo@example.com
+Subject: Frop
+Content-Type: text/calendar; method=request; charset=UTF-8;
+
+Frop
+.
+;
+
+test "Advanced Content-Type :type" {
+	if not header :mime :type "content-type" "text" {
+		test_fail "wrong type extracted";
+	}
+}
+
+test "Advanced Content-Type :subype" {
+	if not header :mime :subtype "content-type" "calendar" {
+		test_fail "wrong subtype extracted";
+	}
+}
+
+test "Advanced Content-Type :contenttype" {
+	if not header :mime :contenttype "content-type" "text/calendar" {
+		test_fail "wrong contenttype extracted";
+	}
+}
+
+test "Advanced Content-Type :param" {
+	if not header :mime :param "method" "content-type" "request" {
+		test_fail "wrong method param extracted";
+	}
+
+	if not header :mime :param "charset" "content-type" "UTF-8" {
+		test_fail "wrong charset param extracted";
+	}
+
+	if not header :mime :param ["method", "charset"]
+		"content-type" "request" {
+		test_fail "wrong method param extracted";
+	}
+
+	if not header :mime :param ["method", "charset"]
+		"content-type" "UTF-8" {
+		test_fail "wrong charset param extracted";
+	}
+
+	if not header :count "eq" :mime :param ["method", "charset"]
+		"content-type" "2" {
+		test_fail "wrong number of parameters";
+	}
+}
+
+test_set "message" text:
+From: stephan@example.com
+To: timo@example.com
+Subject: Frop
+Content-Type: application/x-stuff;
+	title*0*=us-ascii'en'This%20is%20even%20more%20;
+	title*1*=%2A%2A%2Afun%2A%2A%2A%20;
+	title*2="isn't it!"
+
+Frop
+.
+;
+
+test "Encoded Content-Type :param" {
+	if not header :mime :param "title" "content-type"
+		"This is even more ***fun*** isn't it!" {
+		test_fail "wrong method param extracted";
+	}
+}
+
+test_set "message" text:
+From: stephan@example.com
+To: timo@example.com
+Subject: Frop
+Content-Type: image/png
+Content-Disposition: inline; filename="frop.exe"; title="Frop!"
+
+Frop
+.
+;
+
+test "Content-Disposition :type" {
+	if not header :mime :type "content-disposition" "inline" {
+		test_fail "wrong type extracted";
+	}
+}
+
+test "Content-Disposition :subype" {
+	if not header :mime :subtype "content-disposition" "" {
+		test_fail "wrong subtype extracted";
+	}
+}
+
+test "Content-Disposition :contenttype" {
+	if not header :mime :contenttype "content-disposition" "inline" {
+		test_fail "wrong contenttype extracted";
+	}
+}
+
+test "Content-Disposition :param" {
+	if not header :mime :param "filename" "content-disposition" "frop.exe" {
+		test_fail "wrong filename param extracted";
+	}
+
+	if not header :mime :param "title" "content-disposition" "Frop!" {
+		test_fail "wrong title param extracted";
+	}
+
+	if not header :mime :param ["filename", "title"]
+		"content-disposition" "frop.exe" {
+		test_fail "wrong filename param extracted";
+	}
+
+	if not header :mime :param ["filename", "title"]
+		"content-disposition" "Frop!" {
+		test_fail "wrong title param extracted";
+	}
+
+	if not header :count "eq" :mime :param ["filename", "title"]
+		"content-disposition" "2" {
+		test_fail "wrong number of parameters";
+	}
+
+}
+
+

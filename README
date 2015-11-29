@@ -120,6 +120,8 @@ following list outlines the implementation status of each supported extension:
     mailbox (RFC 5490; Section 3): fully supported (v0.1.10+), but ACL
         permissions are not verified for mailboxexists.
     mboxmetadata and servermetadata (RFC 5490): fully supported (v0.4.7+)
+		foreverypart (RFC 5703; Section 3): fully supported (v0.4.10+).
+		mime (RFC 5703; Section 4): fully supported (v0.4.10+). 
     include (RFC 6609): fully supported (v0.4.0+)
     duplicate (RFC 7352): fully supported (v0.4.3+).
     regex (draft v08; not latest version): almost fully supported, but
@@ -154,7 +156,7 @@ following list outlines the implementation status of each supported extension:
   useful for Dovecot in particular, but many of them are. Currently, the
   author has taken notice of the following extensions:
 
-    foreverypart, mime, replace, enclose, and extracttext (RFC 5703): planned.
+    replace, enclose, and extracttext (RFC 5703): planned.
     imapsieve (RFC 6785): planned.
     envelope-dsn, envelope-deliverby, redirect-dsn and
       redirect-deliverby (RFC 6009): planned; depends on lib-smtp changes in
