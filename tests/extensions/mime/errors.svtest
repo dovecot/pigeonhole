@@ -3,7 +3,7 @@ require "vnd.dovecot.testsuite";
 require "relational";
 require "comparator-i;ascii-numeric";
 
-test "Foreverypart command" {
+/*test "Foreverypart command" {
 	if test_script_compile "errors/foreverypart.sieve" {
 		test_fail "compile should have failed";
 	}
@@ -61,4 +61,15 @@ test "Limits" {
 	if test_error :count "ne" :comparator "i;ascii-numeric" "2" {
 		test_fail "incorrect number of compile errors reported";
 	}
+}*/
+
+test "Limits - include" {
+	if not test_script_compile "errors/limits-include.sieve" {
+		test_fail "script compile failed";
+	}
+
+	if test_script_run {
+		test_fail "script run should have failed";
+	}
 }
+

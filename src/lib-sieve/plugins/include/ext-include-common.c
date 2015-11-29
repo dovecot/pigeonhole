@@ -708,8 +708,8 @@ int ext_include_execute_include
 			 * (first sub-interpreter)
 			 */
 			subinterp = sieve_interpreter_create_for_block
-				(included->block, included->script, renv->msgdata, renv->scriptenv,
-					ehandler, rtflags);
+				(included->block, included->script, renv->interp,
+					renv->msgdata, renv->scriptenv, ehandler, rtflags);
 
 			if ( subinterp != NULL ) {
 				curctx = ext_include_interpreter_context_init_child
@@ -767,7 +767,8 @@ int ext_include_execute_include
 
 							/* Create sub-interpreter */
 							subinterp = sieve_interpreter_create_for_block
-								(curctx->include->block, curctx->include->script, renv->msgdata,
+								(curctx->include->block, curctx->include->script,
+									curctx->interp, renv->msgdata,
 									renv->scriptenv, ehandler, rtflags);
 
 							if ( subinterp != NULL ) {

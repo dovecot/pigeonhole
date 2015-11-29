@@ -65,7 +65,7 @@ static int testsuite_run
 
 	/* Create the interpreter */
 	if ( (interp=sieve_interpreter_create
-		(sbin, msgdata, senv, ehandler, 0)) == NULL )
+		(sbin, NULL, msgdata, senv, ehandler, 0)) == NULL )
 		return SIEVE_EXEC_BIN_CORRUPT;
 
 	/* Run the interpreter */

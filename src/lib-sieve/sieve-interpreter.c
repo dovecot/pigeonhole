@@ -71,6 +71,7 @@ struct sieve_interpreter {
 	/* Loop stack */
 	ARRAY(struct sieve_interpreter_loop) loop_stack;
 	sieve_size_t loop_limit;
+	unsigned int parent_loop_level;
 
 	/* Runtime environment */
 	struct sieve_runtime_env runenv;
@@ -85,10 +86,15 @@ struct sieve_interpreter {
 };
 
 static struct sieve_interpreter *_sieve_interpreter_create
-(struct sieve_binary *sbin, struct sieve_binary_block *sblock,
-	struct sieve_script *script, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
+(struct sieve_binary *sbin,
+	struct sieve_binary_block *sblock,
+	struct sieve_script *script,
+	struct sieve_interpreter *parent,
+	const struct sieve_message_data *msgdata,
+	const struct sieve_script_env *senv,
+	struct sieve_error_handler *ehandler,
 	enum sieve_runtime_flags flags)
+	ATTR_NULL(3, 4)
 {
 	unsigned int i, ext_count;
 	struct sieve_interpreter *interp;
@@ -142,6 +148,12 @@ static struct sieve_interpreter *_sieve_interpreter_create
 	sieve_runtime_trace_begin(&(interp->runenv));
 
 	p_array_init(&interp->extensions, pool, sieve_extensions_get_count(svinst));
+
+	interp->parent_loop_level = 0;
+	if ( parent != NULL && array_is_created(&parent->loop_stack) ) {
+		interp->parent_loop_level = parent->parent_loop_level +
+			array_count(&parent->loop_stack);
+	}
 
 	/* Pre-load core language features implemented as 'extensions' */
 	ext_preloaded = sieve_extensions_get_preloaded(svinst, &ext_count);
@@ -211,8 +223,11 @@ static struct sieve_interpreter *_sieve_interpreter_create
 }
 
 struct sieve_interpreter *sieve_interpreter_create
-(struct sieve_binary *sbin, const struct sieve_message_data *msgdata,
-	const struct sieve_script_env *senv, struct sieve_error_handler *ehandler,
+(struct sieve_binary *sbin,
+	struct sieve_interpreter *parent,
+	const struct sieve_message_data *msgdata,
+	const struct sieve_script_env *senv,
+	struct sieve_error_handler *ehandler,
 	enum sieve_runtime_flags flags)
 {
 	struct sieve_binary_block *sblock;
@@ -221,20 +236,24 @@ struct sieve_interpreter *sieve_interpreter_create
 		== NULL )
 		return NULL;
 
- 	return _sieve_interpreter_create
-		(sbin, sblock, NULL, msgdata, senv, ehandler, flags);
+ 	return _sieve_interpreter_create(sbin, sblock, NULL,
+		parent, msgdata, senv, ehandler, flags);
 }
 
 struct sieve_interpreter *sieve_interpreter_create_for_block
-(struct sieve_binary_block *sblock, struct sieve_script *script,
-	const struct sieve_message_data *msgdata, const struct sieve_script_env *senv,
-	struct sieve_error_handler *ehandler, enum sieve_runtime_flags flags)
+(struct sieve_binary_block *sblock,
+	struct sieve_script *script,
+	struct sieve_interpreter *parent,
+	const struct sieve_message_data *msgdata,
+	const struct sieve_script_env *senv,
+	struct sieve_error_handler *ehandler,
+	enum sieve_runtime_flags flags)
 {
 	if ( sblock == NULL ) return NULL;
 
  	return _sieve_interpreter_create
-		(sieve_binary_block_get_binary(sblock), sblock, script, msgdata, senv,
-			ehandler, flags);
+		(sieve_binary_block_get_binary(sblock), sblock, script,
+			parent, msgdata, senv, ehandler, flags);
 }
 
 void sieve_interpreter_free(struct sieve_interpreter **_interp)
@@ -513,7 +532,7 @@ int sieve_interpreter_loop_start
 
 	if ( !array_is_created(&interp->loop_stack) )
 		p_array_init(&interp->loop_stack, interp->pool, 8);
-	else if ( array_count(&interp->loop_stack)
+	if ( (interp->parent_loop_level + array_count(&interp->loop_stack))
 		>= SIEVE_MAX_LOOP_DEPTH ) {
 		/* Should normally be caught at compile time */
 		sieve_runtime_error(renv, NULL,
