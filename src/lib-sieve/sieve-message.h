@@ -5,6 +5,7 @@
 #define __SIEVE_MESSAGE_H
 
 #include "sieve-common.h"
+#include "sieve-stringlist.h"
 #include "sieve-objects.h"
 
 /*
@@ -74,8 +75,42 @@ void sieve_message_snapshot
  * Header stringlist
  */
 
-struct sieve_stringlist *sieve_message_header_stringlist_create
-	(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_names,
+struct sieve_header_list {
+	struct sieve_stringlist strlist;
+
+	int (*next_item)
+		(struct sieve_header_list *_hdrlist, const char **name_r,
+			string_t **value_r) ATTR_NULL(2);
+};
+
+static inline int sieve_header_list_next_item
+(struct sieve_header_list *hdrlist, const char **name_r,
+	string_t **value_r) ATTR_NULL(2)
+{
+	return hdrlist->next_item(hdrlist, name_r, value_r);
+}
+
+static inline void sieve_header_list_reset
+(struct sieve_header_list *hdrlist)
+{
+	sieve_stringlist_reset(&hdrlist->strlist);
+}
+
+static inline int sieve_header_list_get_length
+(struct sieve_header_list *hdrlist)
+{
+	return sieve_stringlist_get_length(&hdrlist->strlist);
+}
+
+static inline void sieve_header_list_set_trace
+(struct sieve_header_list *hdrlist, bool trace)
+{
+	sieve_stringlist_set_trace(&hdrlist->strlist, trace);
+}
+
+struct sieve_header_list *sieve_message_header_list_create
+	(const struct sieve_runtime_env *renv,
+		struct sieve_stringlist *field_names,
 		bool mime_decode);
 
 /*

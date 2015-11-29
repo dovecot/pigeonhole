@@ -491,44 +491,50 @@ void sieve_message_snapshot
 }
 
 /*
- * Header stringlist
+ * Message header list
  */
 
 /* Forward declarations */
 
-static int sieve_message_header_stringlist_next_item
-	(struct sieve_stringlist *_strlist, string_t **str_r);
-static void sieve_message_header_stringlist_reset
+static int sieve_message_header_list_next_item
+	(struct sieve_header_list *_hdrlist, const char **name_r,
+		string_t **value_r);
+static int sieve_message_header_list_next_value
+	(struct sieve_stringlist *_strlist, string_t **value_r);
+static void sieve_message_header_list_reset
 	(struct sieve_stringlist *_strlist);
 
 /* String list object */
 
-struct sieve_message_header_stringlist {
-	struct sieve_stringlist strlist;
+struct sieve_message_header_list {
+	struct sieve_header_list hdrlist;
 
 	struct sieve_stringlist *field_names;
 
+	const char *header_name;
 	const char *const *headers;
 	int headers_index;
 
 	unsigned int mime_decode:1;
 };
 
-struct sieve_stringlist *sieve_message_header_stringlist_create
-(const struct sieve_runtime_env *renv, struct sieve_stringlist *field_names,
+struct sieve_header_list *sieve_message_header_list_create
+(const struct sieve_runtime_env *renv,
+	struct sieve_stringlist *field_names,
 	bool mime_decode)
 {
-	struct sieve_message_header_stringlist *strlist;
+	struct sieve_message_header_list *hdrlist;
 
-	strlist = t_new(struct sieve_message_header_stringlist, 1);
-	strlist->strlist.runenv = renv;
-	strlist->strlist.exec_status = SIEVE_EXEC_OK;
-	strlist->strlist.next_item = sieve_message_header_stringlist_next_item;
-	strlist->strlist.reset = sieve_message_header_stringlist_reset;
-	strlist->field_names = field_names;
-	strlist->mime_decode = mime_decode;
+	hdrlist = t_new(struct sieve_message_header_list, 1);
+	hdrlist->hdrlist.strlist.runenv = renv;
+	hdrlist->hdrlist.strlist.exec_status = SIEVE_EXEC_OK;
+	hdrlist->hdrlist.strlist.next_item = sieve_message_header_list_next_value;
+	hdrlist->hdrlist.strlist.reset = sieve_message_header_list_reset;
+	hdrlist->hdrlist.next_item = sieve_message_header_list_next_item;
+	hdrlist->field_names = field_names;
+	hdrlist->mime_decode = mime_decode;
 
-	return &strlist->strlist;
+	return &hdrlist->hdrlist;
 }
 
 static inline string_t *_header_right_trim(const char *raw)
@@ -547,73 +553,93 @@ static inline string_t *_header_right_trim(const char *raw)
 
 /* String list implementation */
 
-static int sieve_message_header_stringlist_next_item
-(struct sieve_stringlist *_strlist, string_t **str_r)
+static int sieve_message_header_list_next_item
+(struct sieve_header_list *_hdrlist, const char **name_r,
+	string_t **value_r)
 {
-	struct sieve_message_header_stringlist *strlist =
-		(struct sieve_message_header_stringlist *) _strlist;
-	const struct sieve_runtime_env *renv = _strlist->runenv;
+	struct sieve_message_header_list *hdrlist =
+		(struct sieve_message_header_list *) _hdrlist;
+	const struct sieve_runtime_env *renv = _hdrlist->strlist.runenv;
 	struct mail *mail = sieve_message_get_mail(renv->msgctx);
 
-	*str_r = NULL;
+	if ( name_r != NULL )
+		*name_r = NULL;
+	*value_r = NULL;
 
 	/* Check for end of current header list */
-	if ( strlist->headers == NULL ) {
-		strlist->headers_index = 0;
- 	} else if ( strlist->headers[strlist->headers_index] == NULL ) {
-		strlist->headers = NULL;
-		strlist->headers_index = 0;
+	if ( hdrlist->headers == NULL ) {
+		hdrlist->headers_index = 0;
+ 	} else if ( hdrlist->headers[hdrlist->headers_index] == NULL ) {
+		hdrlist->headers = NULL;
+		hdrlist->headers_index = 0;
 	}
 
 	/* Fetch next header */
-	while ( strlist->headers == NULL ) {
+	while ( hdrlist->headers == NULL ) {
 		string_t *hdr_item = NULL;
 		int ret;
 
 		/* Read next header name from source list */
-		if ( (ret=sieve_stringlist_next_item(strlist->field_names, &hdr_item))
-			<= 0 )
+		if ( (ret=sieve_stringlist_next_item
+			(hdrlist->field_names, &hdr_item)) <= 0 )
 			return ret;
 
-		if ( _strlist->trace ) {
+		hdrlist->header_name = str_c(hdr_item);
+
+		if ( _hdrlist->strlist.trace ) {
 			sieve_runtime_trace(renv, 0,
 				"extracting `%s' headers from message",
 				str_sanitize(str_c(hdr_item), 80));
 		}
 
 		/* Fetch all matching headers from the e-mail */
-		if ( strlist->mime_decode ) {
-			ret = mail_get_headers_utf8(mail, str_c(hdr_item), &strlist->headers);			
+		if ( hdrlist->mime_decode ) {
+			ret = mail_get_headers_utf8(mail,
+				str_c(hdr_item), &hdrlist->headers);
 		} else {
-			ret = mail_get_headers(mail, str_c(hdr_item), &strlist->headers);
+			ret = mail_get_headers(mail,
+				str_c(hdr_item), &hdrlist->headers);
 		}
 
 		if (ret < 0) {
-			_strlist->exec_status = sieve_runtime_mail_error
-				(renv, mail, "failed to read header field `%s'", str_c(hdr_item));
+			_hdrlist->strlist.exec_status =
+				sieve_runtime_mail_error(renv, mail,
+					"failed to read header field `%s'", str_c(hdr_item));
 			return -1;
 		}
 
-		if ( strlist->headers == NULL || strlist->headers[0] == NULL ) {
+		if ( hdrlist->headers == NULL || hdrlist->headers[0] == NULL ) {
 			/* Try next item when no headers found */
-			strlist->headers = NULL;
+			hdrlist->headers = NULL;
 		}
 	}
 
 	/* Return next item */
-	*str_r = _header_right_trim(strlist->headers[strlist->headers_index++]);
+	if ( name_r != NULL )
+		*name_r = hdrlist->header_name;
+	*value_r = _header_right_trim(hdrlist->headers[hdrlist->headers_index++]);
 	return 1;
 }
 
-static void sieve_message_header_stringlist_reset
-(struct sieve_stringlist *_strlist)
+static int sieve_message_header_list_next_value
+(struct sieve_stringlist *_strlist, string_t **value_r)
 {
-	struct sieve_message_header_stringlist *strlist =
-		(struct sieve_message_header_stringlist *) _strlist;
+	struct sieve_header_list *hdrlist =
+		(struct sieve_header_list *) _strlist;
 
-	strlist->headers = NULL;
-	strlist->headers_index = 0;
-	sieve_stringlist_reset(strlist->field_names);
+	return sieve_message_header_list_next_item
+		(hdrlist, NULL, value_r);
+}
+
+static void sieve_message_header_list_reset
+(struct sieve_stringlist *strlist)
+{
+	struct sieve_message_header_list *hdrlist =
+		(struct sieve_message_header_list *) strlist;
+
+	hdrlist->headers = NULL;
+	hdrlist->headers_index = 0;
+	sieve_stringlist_reset(hdrlist->field_names);
 }
 
 /*
@@ -784,8 +810,10 @@ int sieve_message_get_header_fields
 
 	if ( svmos == NULL || !array_is_created(svmos) ||
 		array_count(svmos) == 0 ) {
-		*fields_r = sieve_message_header_stringlist_create
+		struct sieve_header_list *headers;
+		headers = sieve_message_header_list_create
 			(renv, field_names, mime_decode);
+		*fields_r = &headers->strlist;
 		return SIEVE_EXEC_OK;
 	}
 
@@ -794,8 +822,10 @@ int sieve_message_get_header_fields
 		svmo[0].def->header_override != NULL ) {
 		*fields_r = field_names;
 	} else {
-		*fields_r = sieve_message_header_stringlist_create
+		struct sieve_header_list *headers;
+		headers = sieve_message_header_list_create
 			(renv, field_names, mime_decode);
+		*fields_r = &headers->strlist;
 	}
 
 	for ( i = 0; i < count; i++ ) {
