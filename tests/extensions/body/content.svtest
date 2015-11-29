@@ -283,8 +283,6 @@ test "Multipart Content" {
 		test_fail "missed second multipart body part";
 	}
 
-/* FIXME: FAILS
-
 	if not body :content "multipart" :contains
 		"This is the end of the inner MIME multipart" {
 		test_fail "missed third multipart body part";
@@ -302,7 +300,6 @@ test "Multipart Content" {
 	if body :content "multipart" :contains "--outer" {
 		test_fail "outer boundary is part of match";
 	}
-*/
 }
 
 /* RFC5173, Section 5.2:
@@ -329,5 +326,7 @@ Subject: Hello, this is an elaborate request for you to finally say hello
 		test_fail "header content does not match exactly";
 	}
 }
+
+
 
 

@@ -172,7 +172,7 @@ int sieve_message_get_header_fields
  * Message body
  */
 
-struct sieve_message_body_part {
+struct sieve_message_part_data {
 	const char *content_type;
 	const char *content_disposition;
 
@@ -183,13 +183,13 @@ struct sieve_message_body_part {
 int sieve_message_body_get_content
 	(const struct sieve_runtime_env *renv,
 		const char * const *content_types,
-		struct sieve_message_body_part **parts_r);
+		struct sieve_message_part_data **parts_r);
 int sieve_message_body_get_text
 	(const struct sieve_runtime_env *renv,
-		struct sieve_message_body_part **parts_r);
+		struct sieve_message_part_data **parts_r);
 int sieve_message_body_get_raw
 	(const struct sieve_runtime_env *renv,
-		struct sieve_message_body_part **parts_r);
+		struct sieve_message_part_data **parts_r);
 
 
 #endif /* __SIEVE_MESSAGE_H */

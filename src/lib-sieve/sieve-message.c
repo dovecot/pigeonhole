@@ -59,7 +59,9 @@ struct sieve_message_version {
 	struct edit_mail *edit_mail;
 };
 
-struct sieve_message_body_part_cached {
+struct sieve_message_part {
+	struct sieve_message_part *parent, *next, *children;
+
 	const char *content_type;
 	const char *content_disposition;
 
@@ -68,7 +70,8 @@ struct sieve_message_body_part_cached {
 	size_t decoded_body_size;
 	size_t text_body_size;
 
-	bool have_body; /* there's the empty end-of-headers line */
+	unsigned int have_body:1; /* there's the empty end-of-headers line */
+	unsigned int epilogue:1;  /* this is a multipart epilogue */
 };
 
 struct sieve_message_context {
@@ -101,8 +104,8 @@ struct sieve_message_context {
 
 	/* Body */
 
-	ARRAY(struct sieve_message_body_part_cached) cached_body_parts;
-	ARRAY(struct sieve_message_body_part) return_body_parts;
+	ARRAY(struct sieve_message_part *) cached_body_parts;
+	ARRAY(struct sieve_message_part_data) return_body_parts;
 	buffer_t *raw_body;
 
 	unsigned int edit_snapshot:1;
@@ -842,33 +845,15 @@ static bool _is_wanted_content_type
 	return FALSE;
 }
 
-static bool _want_multipart_content_type
-(const char * const *wanted_types)
-{
-	for (; *wanted_types != NULL; wanted_types++) {
-		if (**wanted_types == '\0') {
-			/* empty string matches everything */
-			return TRUE;
-		}
-
-		/* match only main type */
-		if ( strncasecmp(*wanted_types, "multipart", 9) == 0 &&
-			( strlen(*wanted_types) == 9 || *(*wanted_types+9) == '/' ) )
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
 static bool sieve_message_body_get_return_parts
 (const struct sieve_runtime_env *renv,
 	const char * const *wanted_types,
 	bool extract_text)
 {
 	struct sieve_message_context *msgctx = renv->msgctx;
-	const struct sieve_message_body_part_cached *body_parts;
+	struct sieve_message_part *const *body_parts;
 	unsigned int i, count;
-	struct sieve_message_body_part *return_part;
+	struct sieve_message_part_data *return_part;
 
 	/* Check whether any body parts are cached already */
 	body_parts = array_get(&msgctx->cached_body_parts, &count);
@@ -880,7 +865,7 @@ static bool sieve_message_body_get_return_parts
 
 	/* Fill result array with requested content_types */
 	for (i = 0; i < count; i++) {
-		if (!body_parts[i].have_body) {
+		if (!body_parts[i]->have_body) {
 			/* Part has no body; according to RFC this MUST not match to anything and
 			 * therefore it is not included in the result.
 			 */
@@ -888,37 +873,38 @@ static bool sieve_message_body_get_return_parts
 		}
 
 		/* Skip content types that are not requested */
-		if (!_is_wanted_content_type(wanted_types, body_parts[i].content_type))
+		if (!_is_wanted_content_type
+			(wanted_types, body_parts[i]->content_type))
 			continue;
 
 		/* Add new item to the result */
 		return_part = array_append_space(&msgctx->return_body_parts);
-		return_part->content_type = body_parts[i].content_type;
-		return_part->content_disposition = body_parts[i].content_disposition;
+		return_part->content_type = body_parts[i]->content_type;
+		return_part->content_disposition = body_parts[i]->content_disposition;
 
 		/* Depending on whether a decoded body part is requested, the appropriate
 		 * cache item is read. If it is missing, this function fails and the cache
-		 * needs to be completed by sieve_message_body_parts_add_missing().
+		 * needs to be completed by sieve_message_parts_add_missing().
 		 */
 		if (extract_text) {
-			if (body_parts[i].text_body == NULL)
+			if (body_parts[i]->text_body == NULL)
 				return FALSE;
-			return_part->content = body_parts[i].text_body;
-			return_part->size = body_parts[i].text_body_size;
+			return_part->content = body_parts[i]->text_body;
+			return_part->size = body_parts[i]->text_body_size;
 		} else {
-			if (body_parts[i].decoded_body == NULL)
+			if (body_parts[i]->decoded_body == NULL)
 				return FALSE;
-			return_part->content = body_parts[i].decoded_body;
-			return_part->size = body_parts[i].decoded_body_size;			
+			return_part->content = body_parts[i]->decoded_body;
+			return_part->size = body_parts[i]->decoded_body_size;				
 		}
 	}
 
 	return TRUE;
 }
 
-static void sieve_message_body_part_save
+static void sieve_message_part_save
 (const struct sieve_runtime_env *renv, buffer_t *buf,
-	struct sieve_message_body_part_cached *body_part,
+	struct sieve_message_part *body_part,
 	bool extract_text)
 {
 	struct sieve_message_context *msgctx = renv->msgctx;
@@ -1017,26 +1003,28 @@ _parse_content_disposition(const struct message_header_line *hdr)
 	return str_c(content_disp);
 }
 
-/* sieve_message_body_parts_add_missing():
+/* sieve_message_parts_add_missing():
  *   Add requested message body parts to the cache that are missing.
  */
-static int sieve_message_body_parts_add_missing
+static int sieve_message_parts_add_missing
 (const struct sieve_runtime_env *renv,
-	const char *const *content_types, bool extract_text)
+	const char *const *content_types,
+	bool extract_text)
 {
 	struct sieve_message_context *msgctx = renv->msgctx;
 	pool_t pool = msgctx->context_pool;
 	struct mail *mail = sieve_message_get_mail(renv->msgctx);
-	struct sieve_message_body_part_cached *body_part = NULL, *header_part = NULL;
+	enum message_parser_flags mparser_flags =
+		MESSAGE_PARSER_FLAG_INCLUDE_MULTIPART_BLOCKS;
+	struct sieve_message_part *body_part, *header_part, *last_part;
 	struct message_parser_ctx *parser;
 	struct message_decoder_context *decoder;
 	struct message_block block, decoded;
-	struct message_part *parts, *prev_part = NULL;
-	ARRAY(struct message_part *) part_index;
+	struct message_part *mparts, *prev_mpart = NULL;
 	buffer_t *buf;
 	struct istream *input;
 	unsigned int idx = 0;
-	bool save_body = FALSE, want_multipart, have_all;
+	bool save_body = FALSE, have_all;
 	int ret;
 
 	/* First check whether any are missing */
@@ -1051,71 +1039,91 @@ static int sieve_message_body_parts_add_missing
 		return sieve_runtime_mail_error(renv, mail,
 			"failed to open input message");
 	}
-	if (mail_get_parts(mail, &parts) < 0) {
+	if (mail_get_parts(mail, &mparts) < 0) {
 		return sieve_runtime_mail_error(renv, mail,
 			"failed to parse input message parts");
 	}
 
-	if ( (want_multipart=_want_multipart_content_type(content_types)) ) {
-		t_array_init(&part_index, 8);
-	}
-
 	buf = buffer_create_dynamic(default_pool, 4096);
+	body_part = header_part = last_part = NULL;
 
 	/* Initialize body decoder */
 	decoder = message_decoder_init(NULL, 0);
 
-	//parser = message_parser_init_from_parts(parts, input, 0,
-		//MESSAGE_PARSER_FLAG_INCLUDE_MULTIPART_BLOCKS);
-	parser = message_parser_init(pool_datastack_create(), input, 0,
-		MESSAGE_PARSER_FLAG_INCLUDE_MULTIPART_BLOCKS);
+	// FIXME: currently not tested with edit-mail.
+		//parser = message_parser_init_from_parts(parts, input, 0,
+		//mparser_flags);
+	parser = message_parser_init
+		(pool_datastack_create(), input, 0, mparser_flags);
 	while ( (ret=message_parser_parse_next_block
 		(parser, &block)) > 0 ) {
+		struct sieve_message_part **body_part_idx;
 
-		if ( block.part != prev_part ) {
+		if ( block.part != prev_mpart ) {
 			bool message_rfc822 = FALSE;
 
 			/* Save previous body part */
 			if ( body_part != NULL ) {
 				/* Treat message/rfc822 separately; headers become content */
-				if ( block.part->parent == prev_part &&
+				if ( block.part->parent == prev_mpart &&
 					strcmp(body_part->content_type, "message/rfc822") == 0 ) {
 					message_rfc822 = TRUE;
 				} else {
 					if ( save_body ) {
-						sieve_message_body_part_save
+						sieve_message_part_save
 							(renv, buf, body_part, extract_text);
 					}
 				}
 			}
 
-			/* Start processing next */
-			body_part = array_idx_modifiable
+			/* Start processing next part */
+			body_part_idx = array_idx_modifiable
 				(&msgctx->cached_body_parts, idx);
+			if (*body_part_idx == NULL)
+				*body_part_idx = p_new(pool, struct sieve_message_part, 1);
+			body_part = *body_part_idx;
 			body_part->content_type = "text/plain";
 
-			/* Check whether this is the epilogue block of a wanted multipart part */
-			if ( want_multipart ) {
-				array_idx_set(&part_index, idx, &block.part);
+			/* Copy tree structure */
+			if ( block.part->context != NULL ) {
+				struct sieve_message_part *epipart =
+					(struct sieve_message_part *)block.part->context;
+				i_assert(epipart != NULL);
 
-				if ( prev_part != NULL && prev_part->next != block.part &&
-					block.part->parent != prev_part ) {
-					struct message_part *const *iparts;
-					unsigned int count, i;
+				/* multipart epilogue */
+				body_part->content_type = epipart->content_type;
+				body_part->have_body = TRUE;
+				body_part->epilogue = TRUE;
+				save_body = _is_wanted_content_type
+					(content_types, body_part->content_type);
 
-					iparts = array_get(&part_index, &count);
-					for ( i = 0; i < count; i++ ) {
-						if ( iparts[i] == block.part ) {
-							const struct sieve_message_body_part_cached *parent =
-								array_idx(&msgctx->cached_body_parts, i);
-							body_part->content_type = parent->content_type;
-							body_part->have_body = TRUE;
-							save_body = _is_wanted_content_type
-								(content_types, body_part->content_type);
-							break;
-						}
+			} else {
+				struct sieve_message_part *parent = NULL;
+
+				if ( block.part->parent != NULL ) {
+					body_part->parent = parent =
+						(struct sieve_message_part *)
+							block.part->parent->context;
+				}
+
+				/* new part */
+				block.part->context = (void*)body_part;
+
+				if ( last_part != NULL ) {
+					i_assert( parent != NULL );
+					if ( last_part->parent == parent ) {
+						last_part->next = body_part;
+					}	else if (parent->children == NULL) {
+						parent->children = body_part;
+					} else {
+						struct sieve_message_part *child = parent->children;
+						while (child->next != NULL && child != body_part)
+							child = child->next;
+						if (child->next == NULL)
+							child->next = body_part;
 					}
 				}
+				last_part = body_part;
 			}
 
 			/* If this is message/rfc822 content, retain the enveloping part for
@@ -1123,13 +1131,13 @@ static int sieve_message_body_parts_add_missing
 			 */
 			if ( message_rfc822 ) {
 				i_assert(idx > 0);
-				header_part = array_idx_modifiable
+				header_part = *array_idx
 					(&msgctx->cached_body_parts, idx-1);
 			} else {
 				header_part = NULL;
 			}
 
-			prev_part = block.part;
+			prev_mpart = block.part;
 			idx++;
 		}
 
@@ -1146,7 +1154,7 @@ static int sieve_message_body_parts_add_missing
 			if ( block.hdr == NULL ) {
 				/* Save headers for message/rfc822 part */
 				if ( header_part != NULL ) {
-					sieve_message_body_part_save
+					sieve_message_part_save
 						(renv, buf, header_part, extract_text);
 					header_part = NULL;
 				}
@@ -1218,10 +1226,10 @@ static int sieve_message_body_parts_add_missing
 
 	/* Save last body part if necessary */
 	if ( header_part != NULL ) {
-		sieve_message_body_part_save
+		sieve_message_part_save
 			(renv, buf, header_part, FALSE);
 	} else if ( body_part != NULL && save_body ) {
-		sieve_message_body_part_save
+		sieve_message_part_save
 			(renv, buf, body_part, extract_text);
 	}
 
@@ -1233,7 +1241,7 @@ static int sieve_message_body_parts_add_missing
 	i_assert(have_all);
 
 	/* Cleanup */
-	(void)message_parser_deinit(&parser, &parts);
+	(void)message_parser_deinit(&parser, &mparts);
 	message_decoder_deinit(&decoder);
 	buffer_free(&buf);
 
@@ -1251,14 +1259,14 @@ static int sieve_message_body_parts_add_missing
 int sieve_message_body_get_content
 (const struct sieve_runtime_env *renv,
 	const char * const *content_types,
-	struct sieve_message_body_part **parts_r)
+	struct sieve_message_part_data **parts_r)
 {
 	struct sieve_message_context *msgctx = renv->msgctx;
 	int status;
 
 	T_BEGIN {
 		/* Fill the return_body_parts array */
-		status = sieve_message_body_parts_add_missing
+		status = sieve_message_parts_add_missing
 			(renv, content_types, FALSE);
 	} T_END;
 
@@ -1275,7 +1283,7 @@ int sieve_message_body_get_content
 
 int sieve_message_body_get_text
 (const struct sieve_runtime_env *renv,
-	struct sieve_message_body_part **parts_r)
+	struct sieve_message_part_data **parts_r)
 {
 	static const char * const _text_content_types[] =
 		{ "application/xhtml+xml", "text", NULL };
@@ -1292,7 +1300,7 @@ int sieve_message_body_get_text
 
 	T_BEGIN {
 		/* Fill the return_body_parts array */
-		status = sieve_message_body_parts_add_missing
+		status = sieve_message_parts_add_missing
 			(renv, _text_content_types, TRUE);
 	} T_END;
 
@@ -1309,10 +1317,10 @@ int sieve_message_body_get_text
 
 int sieve_message_body_get_raw
 (const struct sieve_runtime_env *renv,
-	struct sieve_message_body_part **parts_r)
+	struct sieve_message_part_data **parts_r)
 {
 	struct sieve_message_context *msgctx = renv->msgctx;
-	struct sieve_message_body_part *return_part;
+	struct sieve_message_part_data *return_part;
 	buffer_t *buf;
 
 	if ( msgctx->raw_body == NULL ) {
@@ -1372,6 +1380,4 @@ int sieve_message_body_get_raw
 
 	return SIEVE_EXEC_OK;
 }
-
-
 

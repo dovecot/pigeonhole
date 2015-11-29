@@ -30,8 +30,8 @@ static void ext_body_stringlist_reset
 struct ext_body_stringlist {
 	struct sieve_stringlist strlist;
 
-	struct sieve_message_body_part *body_parts;
-	struct sieve_message_body_part *body_parts_iter;
+	struct sieve_message_part_data *body_parts;
+	struct sieve_message_part_data *body_parts_iter;
 };
 
 int ext_body_get_part_list
@@ -40,7 +40,7 @@ int ext_body_get_part_list
 {
 	static const char * const _no_content_types[] = { "", NULL };
 	struct ext_body_stringlist *strlist;
-	struct sieve_message_body_part *body_parts = NULL;
+	struct sieve_message_part_data *body_parts = NULL;
 	int ret;
 
 	*strlist_r = NULL;
