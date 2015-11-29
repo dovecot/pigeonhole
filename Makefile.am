@@ -167,6 +167,7 @@ test_cases = \
 	tests/extensions/metadata/execute.svtest \
 	tests/extensions/metadata/errors.svtest \
 	tests/extensions/mime/errors.svtest \
+	tests/extensions/mime/execute.svtest \
 	tests/extensions/mime/content-header.svtest \
 	tests/extensions/vnd.dovecot/debug/execute.svtest \
 	tests/extensions/vnd.dovecot/environment/basic.svtest \

@@ -1,7 +1,14 @@
-require "ihave";
+require "foreverypart";
+require "variables";
 
-if ihave "nonsense-extension" {
-	nonsense_command "Frop!";
+foreverypart {
+	foreverypart {
+		foreverypart {
+			foreverypart {
+				set "a" "a${a}";
+			}
+		}
+	}
 }
 
-redirect "frop@example.com";
+
